@@ -26,11 +26,11 @@ integer function variables_NL(ID,local_description)
  use pars,          ONLY:SP,lchlen
  use units,         ONLY:AUT2FS, HA2EV, AU2KWCMm2
  use nl_optics,     ONLY:NL_damping,l_use_DIPOLES,NL_correlation,NL_er,NL_correlation,n_frequencies,      &
-&                        n_NL_descriptions,NL_description
+&                        n_NL_descriptions,NL_description,WF_sample_ondisk,n_order,NL_ng
  use real_time,     ONLY:Integrator_name,NE_steps,RT_step,l_RT_induced_field,RT_bands
  use electric,      ONLY:l_force_SndOrd
  use fields,        ONLY:Efield
- use IO_m,          ONLY:io_elemental,io_status
+ use IO_m,          ONLY:io_elemental,io_status,ver_is_gt_or_eq
  !
  implicit none
  integer,      intent(in) :: ID
@@ -46,7 +46,7 @@ integer function variables_NL(ID,local_description)
  !
  ! PARAMETERS
  !
- call io_elemental(ID,VAR="NLPARS",VAR_SZ=11,MENU=0)
+ call io_elemental(ID,VAR="NLPARS",VAR_SZ=12,MENU=0)
  i_desc=i_desc+1
  call io_elemental(ID,VAR=" [RT] Time steps       :",I0=NE_steps,     CHECK=.true.,OP=(/"=="/), &
 &         DESCRIPTION=local_description(i_desc))
@@ -57,7 +57,7 @@ integer function variables_NL(ID,local_description)
  call io_elemental(ID,VAR=" [NL] Damping      [fs]:",R0=NL_damping,   CHECK=.true.,OP=(/"=="/), &
 &         DESCRIPTION=local_description(i_desc),UNIT=HA2EV)
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [NL] Bands   ange     :",I1=RT_bands,     CHECK=.true.,OP=(/"==","=="/), &
+ call io_elemental(ID,VAR=" [NL] Bands  range     :",I1=RT_bands,     CHECK=.true.,OP=(/"==","=="/), &
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,VAR=" [NL] Energy range     :",R1=NL_er,        CHECK=.true.,OP=(/"==","=="/), &
@@ -74,12 +74,30 @@ integer function variables_NL(ID,local_description)
  i_desc=i_desc+1
  call io_elemental(ID,VAR=" [NL] Induced Field    :",L0=l_RT_induced_field,CHECK=.true.,OP=(/"=="/), & 
 &         DESCRIPTION=local_description(i_desc))
+ i_desc=i_desc+1
+ call io_elemental(ID,VAR="[NL] Number of G in NL-dynamics  :",I0=NL_ng,CHECK=.true.,OP=(/"=="/), &
+     &         DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ !
+ ! WF SAMPLING
+ !
+ if (ver_is_gt_or_eq(ID,revision=15726)) then !THIS NEEDS TO BE UPDATED IN CASE ENTERS INTO A DISTRO
+   call io_elemental(ID,VAR="WF_SAMPLE",VAR_SZ=3,MENU=0)
+   i_desc=i_desc+1
+   call io_elemental(ID,VAR=" [NL] WF sample order  :",I0=n_order,CHECK=.true.,OP=(/"=="/), & 
+        &         DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,VAR=" [NL] WF sample valence:",I0=WF_sample_ondisk%n_val,CHECK=.true.,OP=(/"=="/), & 
+        &         DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,VAR=" [NL] WF sample kpoints:",I0=WF_sample_ondisk%n_k,CHECK=.true.,OP=(/"=="/), & 
+        &         DESCRIPTION=local_description(i_desc))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ end if
  !
  ! INTEGRATOR
  !
  call io_elemental(ID,VAR="INTEGRATOR",CH0="",VAR_SZ=1,MENU=0)
- i_desc=i_desc+1
  call io_elemental(ID,CH0=Integrator_name,VAR=' [RT] Integrator           :',CHECK=.true.,OP=(/"=="/), &
 &        DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -90,7 +108,7 @@ integer function variables_NL(ID,local_description)
  i_desc=i_desc+1
  call io_elemental(ID,CH0=NL_correlation,VAR=' [NL] Correlation           :',CHECK=.true.,OP=(/"=="/), &
 &        DESCRIPTION=local_description(i_desc))
- call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ i_desc=i_desc+1
  !
  ! Efield 
  !

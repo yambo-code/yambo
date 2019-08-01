@@ -54,23 +54,18 @@ integer function io_QINDX(Xk,q,io_db)
    if (.not.ver_is_gt_or_eq(io_db,revision=5545)) io_QINDX=IO_OUTDATED_DB
    if (io_QINDX/=0) goto 1
    !
-   call io_elemental(io_db,VAR="PARS",VAR_SZ=10,MENU=0)
+   call io_elemental(io_db,VAR="PARS",VAR_SZ=9,MENU=0)
    !
    call io_elemental(io_db,I0=nXkbz)
-   call io_elemental(io_db,&
-&       VAR=" Polarization last K   :",I0=nXkibz)
-   call io_elemental(io_db,&
-&       VAR=" QP states             :",I1=QP_states_k,CHECK=.true.,OP=(/">=","<="/))
+   call io_elemental(io_db,VAR=" Polarization last K   :",I0=nXkibz)
+   call io_elemental(io_db,VAR=" QP states             :",I1=QP_states_k,CHECK=.true.,OP=(/">=","<="/))
    call io_elemental(io_db,I0=q%nibz)
    call io_elemental(io_db,I0=q%nbz)
-   call io_elemental(io_db,&
-&       VAR=" X grid is uniform     :",L0=Xk_grid_is_uniform)
+   call io_elemental(io_db,VAR=" X grid is uniform     :",L0=Xk_grid_is_uniform)
    io_QINDX=io_status(io_db)
    !
-   call io_elemental(io_db,&
-&       VAR=" BS scattering         :",L0=bse_scattering,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(io_db,&
-&       VAR=" COLL scattering       :",L0=coll_scattering,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(io_db,VAR=" BS scattering         :",L0=bse_scattering,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(io_db,VAR=" COLL scattering       :",L0=coll_scattering,CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(io_db,VAR="",VAR_SZ=0)
    ioScatt=io_status(io_db)

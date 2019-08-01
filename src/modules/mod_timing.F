@@ -323,10 +323,11 @@ MODULE timing_m
      CHARACTER(*), OPTIONAL, INTENT(in) :: form
      CHARACTER(4)                       :: form_
      CHARACTER(256)                     :: str
+     CHARACTER(15)                      :: sec_str
      CHARACTER(lchlen)                  :: local_ch
      INTEGER                            :: nday,nhour,nmin
      INTEGER                            :: call_number
-     REAL(DP)                           :: total_time
+     REAL(DP)                           :: total_time,effective_total_time
      REAL(DP)                           :: nsec
      !
      form_="sec "
@@ -352,6 +353,13 @@ MODULE timing_m
        !
      ENDIF
      !
+     sec_str=" sec avg)"
+     effective_total_time = total_time
+     if (total_time<1._DP) then
+       sec_str=" millisec avg)"
+       effective_total_time=total_time*1000._DP
+     endif
+     !
      SELECT CASE ( TRIM(form_) ) 
        CASE ( "dhms" )
          nday  = INT(  total_time/ 86400 )
@@ -376,21 +384,20 @@ MODULE timing_m
            call msg('r',local_ch(:100))
          ELSE
            IF (nday > 0) THEN
-             WRITE(local_ch,'(a40," : ",3x,i2,"d",i2,"h CPU (", &
-                   &  i8," calls,",f8.3," s avg)")') TRIM(obj%name), nday, nhour, &
-                   call_number , total_time / REAL( call_number, DP )
+             WRITE(local_ch,'(a40," : ",3x,i2,"d",i2,"h CPU (",i10," calls,",f8.3,a)') TRIM(obj%name), nday, nhour, &
+                   call_number , effective_total_time / REAL( call_number, DP ),sec_str
            ELSEIF (nhour > 0) THEN
              WRITE(local_ch,'(a40," : ",3x,i2,"h",i2,"m CPU (", &
-                   &  i8," calls,",f8.3," s avg)")') TRIM(obj%name), nhour, nmin, &
-                   call_number , total_time / REAL( call_number, DP )
+                   & i10," calls,",f8.3,a)') TRIM(obj%name), nhour, nmin, &
+                   call_number , effective_total_time / REAL( call_number, DP ),sec_str
            ELSEIF (nmin > 0) THEN
              WRITE (local_ch, '(a40," : ",i2,"m",f5.2,"s CPU (", &
-                   &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nmin, nsec, &
-                        call_number , total_time / REAL( call_number, DP )
+                   &   i10," calls,",f8.3,a)') TRIM(obj%name), nmin, nsec, &
+                        call_number , effective_total_time / REAL( call_number, DP ),sec_str
            ELSE
              WRITE (local_ch, '(a40," : ",3x,f5.2,"s CPU (", &
-                   &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nsec, &
-                        call_number , total_time / REAL( call_number, DP )
+                   &   i10," calls,",f8.3,a)') TRIM(obj%name), nsec, &
+                        call_number , effective_total_time / REAL( call_number, DP ),sec_str
            ENDIF
            if (log_as_a_file) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
            call msg('r',local_ch(:100))

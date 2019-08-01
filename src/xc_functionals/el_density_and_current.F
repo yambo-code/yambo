@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
+subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  !
  ! Electronic density (and current).
  !
@@ -64,7 +64,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  use timing_m,      ONLY:timing
 #endif
 #if defined _YPP_RT
- use real_time,     ONLY:RT_delta0_occupations,RT_ibz_coo,RT_Nk_ibz
+ use real_time,     ONLY:RT_delta_occupations,RT_ibz_coo,RT_Nk_ibz
 #endif
  !
 #include<memory.h>
@@ -165,7 +165,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
          endif
          !
        endif
-       !
+       !DEBUG>
        !if (l_J) then
        !  !
        !  call eval_Gradient(WF%c(:,:,i_wf),WF_der,n_spinor,"wave")
@@ -179,7 +179,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
        !  enddo
        !  !
        !endif
-       !
+       !DEBUG<
      enddo
      !
    enddo

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF, IM
@@ -70,10 +70,6 @@ subroutine PP_uspp_init()
  io_err=io_USPP_pwscf(ID)
  !
  pp_is_uspp=(io_err==0)
- !
-#ifndef _USPP
- if (pp_is_uspp) call error("[PPs] Ultrasoft PP not supported")
-#endif
  !
  if (.not.pp_is_uspp.or.nkb<=0) then
    pp_is_uspp=.false.

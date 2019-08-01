@@ -976,7 +976,7 @@ CONTAINS
       INTEGER,                INTENT(OUT) :: ierr
       !
       INTEGER        :: iunit_aux
-      CHARACTER(256) :: filename
+      CHARACTER(256) :: filename, str_tmp
       
       ierr = 0
       !
@@ -1001,8 +1001,13 @@ CONTAINS
       !
       if (present(nr1).or.present(nr2).or.present(nr3)) then 
          !
+         attr=""
          call iotk_scan_empty( iunit, "fft_grid", ATTR=attr, IERR=ierr )
-         if (ierr/=0) return
+         !if (ierr/=0) return
+         if (ierr/=0) then
+           call iotk_scan_dat( iunit, "fft_grid", str_tmp, ATTR=attr, IERR=ierr )
+           if (ierr/=0) return
+         endif
          !
          if (present(nr1)) then
             call iotk_scan_attr( attr, "nr1", nr1, IERR=ierr )
@@ -1021,8 +1026,13 @@ CONTAINS
       !
       if (present(nr1s).or.present(nr2s).or.present(nr3s)) then 
          !
+         attr=""
          call iotk_scan_empty( iunit, "fft_smooth", ATTR=attr, IERR=ierr )
-         if (ierr/=0) return
+         !if (ierr/=0) return
+         if (ierr/=0) then
+            call iotk_scan_dat( iunit, "fft_smooth",str_tmp, ATTR=attr, IERR=ierr )
+            if (ierr/=0) return
+         endif 
          !
          if (present(nr1s)) then
             call iotk_scan_attr( attr, "nr1", nr1s, IERR=ierr )

@@ -25,39 +25,28 @@ subroutine INIT_DephMatrix()
  !
  ! Dephasing Matrix -> input file
  !
- use drivers,        ONLY: infile_editing
- use it_m,           ONLY: nflines,flines,infile
- use parser_m,       ONLY: parser  
- implicit none
+ use pars,           ONLY:SP
+ use parser_m,       ONLY:PARSER_array
+ use real_time,      ONLY:RT_INPUT_Deph_limits
  !
- ! 
+#include<memory.h>
+ !
  ! Work Space
  !
- integer :: i1,nflines_save
- logical :: l_lines_in_input
- character(17) :: comment
+ integer :: n_fields
+ ! 
+ call PARSER_array(mode="REAL dimensions",VAR="DephMatrix",N=n_fields,M=4)
  !
- call parser('DephMatrix',l_lines_in_input)
- !
- !If there are already the QP lines or there's not the input file todo return
- !
- if (l_lines_in_input.and..not.infile_editing) return 
- !
- comment="[RT] Dephasing Matrix"
- !
- nflines_save=nflines
- write (flines(nflines+1),'(a,t32,a)') '%DephMatrix',&
-&      '# '//trim(comment)//' (bnd1 | bnd2 | kpt | dephasing(fs) |)'
- write (flines(nflines+2),'(3(i3,a),1(f4.1,a))') 1,'|',1,'|',1,'|',-1.,'|'
- flines(nflines+3)='%'
- nflines=nflines+3
- !
- ! Write to input file
- !
- open(unit=12,file=trim(infile),position='append')
- do i1=nflines_save+1,nflines
-   write (12,'(a)') trim(flines(i1))
- enddo 
- close(12)
+ if (n_fields>0) then
+   YAMBO_ALLOC(RT_INPUT_Deph_limits,(n_fields,4))
+   call PARSER_array(mode="read",VAR="DephMatrix",N=n_fields,M=4,R_v=RT_INPUT_Deph_limits)
+   call PARSER_array(mode="write",VAR="DephMatrix",&
+&                    DESC='[RT] Dephasing Matrix (bnd1 | bnd2 | kpt | dephasing(fs) |)',&
+&                    N=n_fields,M=4,R_v=RT_INPUT_Deph_limits,Kn=(/"i","i","i","r"/))
+ else
+   call PARSER_array(mode="write",VAR="DephMatrix",&
+&                    DESC='[RT] Dephasing Matrix (bnd1 | bnd2 | kpt | dephasing(fs) |)',&
+&                    N=1,M=4,R_v=reshape((/1._SP,1._SP,1._SP,-1._SP/),(/1,4/)),Kn=(/"i","i","i","r"/))
+ endif
  !
 end subroutine

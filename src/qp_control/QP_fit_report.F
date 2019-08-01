@@ -30,7 +30,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
  use QP_m,          ONLY:QP_t
  use electrons,     ONLY:n_sp_pol,levels,spin
  use R_lattice,     ONLY:bz_samp
- use stderr,        ONLY:string_remove
+ use stderr,        ONLY:STRING_remove
  use vec_operate,   ONLY:sort
  !
  implicit none
@@ -134,11 +134,11 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    !
    !
    fname(2)=QP_action(i_ACTION)%CTL(1)%db
-   fname(1)=string_remove(fname(2),"/ndb.QP")
+   fname(1)=STRING_remove(fname(2),"/ndb.QP")
    fname(2)=fname(1)
-   fname(1)=string_remove(fname(2),"/",replace="-")
+   fname(1)=STRING_remove(fname(2),"/",replace="-")
    fname(2)=fname(1)
-   fname(1)=string_remove(fname(2),".")
+   fname(1)=STRING_remove(fname(2),".")
    !
    if (n_sp_pol>1) then 
      if (i_spin==1) fname(2)=trim(fname(1))//"-spin-dn.fit"

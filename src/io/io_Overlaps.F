@@ -30,6 +30,7 @@ integer function io_Overlaps(X,ID)
 &                        io_bulk,read_is_on,io_header,io_extension,&
 &                        RD_CL_IF_END,RD_CL,io_action,&
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment
+ use IO_m,          ONLY:io_elemental,io_status
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
@@ -41,7 +42,7 @@ integer function io_Overlaps(X,ID)
  !
  ! Work Space
  !
- integer :: ik,ik_mem,i_fragment,ixyz,i_sp_pol,shift(2)
+ integer :: ik,ik_mem,i_fragment,ixyz,i_sp_pol,shift(2),io_err
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
  !
@@ -63,10 +64,20 @@ integer function io_Overlaps(X,ID)
    io_Overlaps=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,FRAG=frag_DIP)
    if (io_Overlaps/=0) goto 1
    !
-   io_Overlaps=variables_DIPOLES(X,ID)
-   if (io_Overlaps/=0) goto 1
+   call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
+   call io_elemental(ID,DB_I1=X%db_ib,&
+&     VAR=" X band range           :",I1=X%ib    ,CHECK=.true.,OP=(/">=","<="/))
+   call io_elemental(ID,DB_I1=X%db_ib_lim,&
+&     VAR=" X band range limits    :",I1=X%ib_lim,CHECK=.true.,OP=(/"<=",">="/))
+   call io_elemental(ID,&
+&     VAR=" RL vectors in the sum  :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0) 
+   !
+   io_Overlaps=io_status(ID)
    !
  endif
+ !
+ if(io_Overlaps/=0) goto 1
  !
  i_fragment=maxval(io_sec(ID,:))-1
  if(i_fragment<=nXkbz) then
@@ -85,7 +96,11 @@ integer function io_Overlaps(X,ID)
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_fragment=i_fragment)
+ call io_fragment(ID,i_fragment=i_fragment,ierr=io_err)
+ if(io_err/=0) then
+   io_Overlaps=io_err
+   goto 1
+ endif
  !
  ! Manage RD_CL_IF_END
  !

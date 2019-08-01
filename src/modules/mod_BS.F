@@ -30,6 +30,7 @@ module BS
  ! Modes and logicals
  !====================
  logical :: l_BSE_minimize_memory
+ logical :: l_restart_bse = .true.
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
  logical :: BS_res_K_exchange
@@ -119,6 +120,7 @@ module BS
    ! Matrix Block
    !--------------
    complex(SP), allocatable      :: mat(:,:)
+   character, allocatable        :: done(:,:)
    !
    ! Oscillators...
    !
@@ -246,6 +248,7 @@ module BS
      integer :: iB
      do iB=1,n_BS_blks
        YAMBO_FREE(BS_blk(iB)%mat)
+       deallocate(BS_blk(iB)%done)
      enddo
    end subroutine
    !

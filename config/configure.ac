@@ -234,6 +234,9 @@ m4_include([config/petsc_slepc.m4])
 #
 AC_LANG_PUSH(Fortran)
 # ============================================================================
+# YDB/YAMBOpy
+ACX_SCRIPTS
+# ============================================================================
 # BLAS/Lapack
 ACX_BLAS 
 ACX_LAPACK

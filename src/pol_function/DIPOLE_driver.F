@@ -61,7 +61,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold,&
 &                         l_X_terminator,DIP_S
- use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
+ use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_CL,OP_RD,&
 &                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,&
@@ -233,6 +233,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      use X_m,        ONLY:global_gauge
      use com,        ONLY:msg
      use IO_m,       ONLY:io_DIP
+     use parallel_m, ONLY:PAR_IND_Xk_bz
      !
      character(5), intent(in) :: read_or_write
      !
@@ -294,7 +295,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      if (io_err==0) then
        !
        if (reading) IO_ACTION=OP_RD_CL
-       if (writing) IO_ACTION=OP_APP_WR_CL
+       if (writing) IO_ACTION=OP_APP_CL
        !
        do ik=1,Xk%nibz
          if (.not.PAR_IND_DIPk_ibz%element_1D(ik)                   ) cycle
@@ -305,13 +306,19 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
           enddo
          endif
        enddo
-       if(use_covariant_approach.and.(write_header.or.reading)) then
+       if(use_covariant_approach) then
          do ik=1,Xk%nbz
+           if (.not.PAR_IND_Xk_bz%element_1D(ik)                   ) cycle
            do i_sp_pol=1,n_sp_pol
              call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nbz/),ID=ID_S)
              io_err=io_err+io_Overlaps(X,ID_S)
            enddo
          enddo
+         if(reading) then
+           do i_sp_pol=1,n_sp_pol
+             call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_DIPOLES%COMM)
+            enddo  
+         endif
        endif
        !
      endif

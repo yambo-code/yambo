@@ -4,7 +4,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, MG
+! Authors (see AUTHORS file for details): AM, MG, DV
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -29,7 +29,12 @@ module xc_functionals
  use xc_f90_lib_m
  use xc_f90_types_m
  use libxc_funcs_m
+ !
  implicit none
+ !
+ integer  :: xc_spin(2)
+ integer, allocatable :: xc_spin_map1(:,:)
+ integer, allocatable :: xc_spin_map2(:,:,:)
  !
  integer,  public:: GS_xc_KIND
  integer,  public:: GS_xc_FUNCTIONAL
@@ -62,7 +67,8 @@ module xc_functionals
     XC_FACTOR        = 1000,&
     XC_NOT_AVAILABLE = 999999, & 
     NOXC             = 0, &    
-    XC_LDA_C_KP      = 99
+    XC_LDA_C_KP      = 99, &
+    XC_HYB_GGA_XC_GAUPBE        = 999
  !
  character(*), parameter, dimension(3) :: XC_KIND_DESCR = (/'(X) ','(C) ','(XC)'/)
  !
@@ -163,9 +169,8 @@ module xc_functionals
        f(ixc)%exx_screening=exx_screen
        if (XC_libxcID(f(ixc)%id,ixc)==XC_HYB_GGA_XC_HSE06) &
 &        call xc_f90_hyb_gga_xc_hse_set_par(f(ixc)%conf,exx_frac_,exx_screen_)
-       if ((XC_libxcID(f(ixc)%id,ixc)==XC_HYB_GGA_XC_PBEH).or.&
-&          (XC_libxcID(f(ixc)%id,ixc)==XC_HYB_GGA_XC_B3LYP)) &
-&        call xc_f90_hyb_gga_xc_pbeh_set_par(f(ixc)%conf,exx_frac_)
+       if (XC_libxcID(f(ixc)%id,ixc)==XC_HYB_GGA_XC_PBEH) & 
+         call xc_f90_hyb_gga_xc_pbeh_set_par(f(ixc)%conf,exx_frac_)
      enddo    
    end subroutine xc_setup_hyb
    
@@ -177,6 +182,10 @@ module xc_functionals
      integer        :: ixc
      !
      xc_string = ''
+     if (functional.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+        xc_string="GAUPBE(XC)" 
+        return
+     endif
      call xc_setup_fnctl(f,functional,XC_UNPOLARIZED)
      !
      do ixc = 1,2  

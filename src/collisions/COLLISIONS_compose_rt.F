@@ -30,9 +30,12 @@ subroutine COLLISIONS_compose_rt(dG_in)
  use collision_ext,    ONLY:HXC_COLL_element,COLL_bands,HXC_collisions
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
- use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu
- use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,l_RT_uses_E_DbGd,RT_bands
+ use parallel_m,       ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_COM_Q_INDEX,&
+&                           PAR_IND_Xk_ibz,PAR_IND_Bp_mat
+ use hamiltonian,      ONLY:B_mat_index
+ use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,RT_bands
  use timing_m,         ONLY:timing
+ !
  implicit none
  !
  complex(SP), intent(in)   :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
@@ -44,11 +47,14 @@ subroutine COLLISIONS_compose_rt(dG_in)
  !
  if(.not.l_sc_fock.and..not.l_sc_coh.and..not.l_sc_sex.and..not.l_sc_exx.and..not.l_sc_hartree) return
  !
- call timing('COLLISIONS_compose_rt',OPR='start')
+ call timing('COLLISIONS (compose)',OPR='start')
  !
  G_avg=cZERO
  !
  do i_k=1,nXkibz
+   !
+   if (.not.PAR_IND_Xk_ibz%element_1D(i_k) ) cycle
+   !
    do i_k_RT=RT_ibz_coo(i_k,1),RT_ibz_coo(i_k,2)
      G_avg(:,:,i_k)=G_avg(:,:,i_k)+dG_in(:,:,i_k_RT)
    enddo
@@ -56,15 +62,25 @@ subroutine COLLISIONS_compose_rt(dG_in)
    ! The 1/real(RT_Nk_ibz(i_k),SP) factor is needed here because I'm integrating
    ! over kmq. With the DbGd the size of the integrating factor has to be reduced
    ! 
-   G_avg(:,:,i_k)=G_avg(:,:,i_k)/real(RT_Nk_ibz(i_k),SP)
+   G_avg(:,:,i_k)=G_avg(:,:,i_k)/real(RT_Nk_ibz(i_k),SP)/real(PAR_COM_Q_INDEX%n_CPU)
    !
  enddo
+ !
+ call timing('COLLISIONS (compose)',OPR='stop')
+ !
+ call timing('COLLISIONS (redux)',OPR='start')
+ !
+ call PP_redux_wait(G_avg,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ !
+ call timing('COLLISIONS (redux)',OPR='stop')
+ !
+ call timing('COLLISIONS (compose)',OPR='start')
  !
  RT_Vnl_xc=cZERO
  !
  do i_coll=1,HXC_collisions%N
    !
-   if (.not.(HXC_collisions%PAR_IND%element_1D(i_coll).and.HEAD_QP_cpu)) cycle
+   if (.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
    !
    i_k       =HXC_collisions%state(i_coll,3)
    i_n       =HXC_collisions%state(i_coll,1)
@@ -77,18 +93,21 @@ subroutine COLLISIONS_compose_rt(dG_in)
    if (i_n<RT_bands(1).or.i_n>RT_bands(2)) cycle
    if (i_m<RT_bands(1).or.i_m>RT_bands(2)) cycle
    !
-   i_comp=1
+   i_comp=0
    !
    do i_kmq=1,nXkibz
      !
      do ibp=COLL_bands(1),COLL_bands(2)
        do ib=COLL_bands(1),COLL_bands(2)
          !
-         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)/=0) then
-           RT_Vnl_xc(i_n,i_m,i_k,i_spin)=RT_Vnl_xc(i_n,i_m,i_k,i_spin) &
-&                                               -cI*HXC_COLL_element(i_coll_mem)%v_c(i_comp)*G_avg(ib,ibp,i_kmq)
-           i_comp=i_comp+1
-         endif
+         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)==0) cycle
+         !
+         i_comp=i_comp+1
+         !
+         if (.not.PAR_IND_Bp_mat%element_1D( B_mat_index(ib,ibp,COLL_bands) ) ) cycle
+         !
+         RT_Vnl_xc(i_n,i_m,i_k,i_spin)=RT_Vnl_xc(i_n,i_m,i_k,i_spin) &
+&                                      -cI*HXC_COLL_element(i_coll_mem)%v_c(i_comp)*G_avg(ib,ibp,i_kmq)
          !
        enddo
      enddo
@@ -97,22 +116,22 @@ subroutine COLLISIONS_compose_rt(dG_in)
    !
  enddo
  !
- ! Symmetrization
- !================
- do i_coll=1,HXC_collisions%N
-   !
-   if (.not.(HXC_collisions%PAR_IND%element_1D(i_coll).and.HEAD_QP_cpu)) cycle
-   i_k       =HXC_collisions%state(i_coll,3)
-   i_n       =HXC_collisions%state(i_coll,1)
-   i_m       =HXC_collisions%state(i_coll,2)
-   !
-   RT_Vnl_xc(i_n,i_n,i_k,:)= real(RT_Vnl_xc(i_n,i_n,i_k,:))
-   RT_Vnl_xc(i_m,i_n,i_k,:)=conjg(RT_Vnl_xc(i_n,i_m,i_k,:))
-   !
- enddo
+ ! All 2 All
+ !===========
  !
  call PP_redux_wait(RT_Vnl_xc)
  !
- call timing('COLLISIONS_compose_rt',OPR='stop')
+ ! Symmetrization
+ !================
+ do i_k=1,nXkibz
+   do i_n=COLL_bands(1),COLL_bands(2)
+     RT_Vnl_xc(i_n,i_n,i_k,:)= real(RT_Vnl_xc(i_n,i_n,i_k,:))
+     do i_m=i_n+1,COLL_bands(2)
+       RT_Vnl_xc(i_m,i_n,i_k,:)=conjg(RT_Vnl_xc(i_n,i_m,i_k,:))
+     enddo
+   enddo
+ enddo
+ !
+ call timing('COLLISIONS (compose)',OPR='stop')
  !
 end subroutine COLLISIONS_compose_rt

@@ -30,7 +30,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  use drivers,       ONLY:list_dbs
  use LOGO,          ONLY:code_version,code_revision,code_GPL_revision
  use com,           ONLY:warning
- use stderr,        ONLY:string_split
+ use stderr,        ONLY:STRING_split
  use D_lattice,     ONLY:Tel,alat,input_Tel_is_negative,Bose_Temp
  use electrons,     ONLY:n_sp_pol,n_spinor
  use parallel_m,    ONLY:CPU_structure
@@ -314,7 +314,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  if (present(XC_KIND)) then
    !
-   call string_split(XC_KIND,xc_string_kinds)
+   call STRING_split(XC_KIND,xc_string_kinds)
    !
    io_mode(ID)=MODE
    !

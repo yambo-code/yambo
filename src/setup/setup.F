@@ -36,9 +36,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use com,            ONLY:msg,error,warning
  use stderr,         ONLY:intc,real2ch
  use IO_m,           ONLY:REP,DUMP,NONE
- use vec_operate,    ONLY:cross_product,c2a
+ use vec_operate,    ONLY:cross_product,c2a,define_b_and_DL_vol
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
  use interfaces,     ONLY:OCCUPATIONS_Fermi
+ !
 #include <memory.h>
  !
  type(levels)    ::en,Xen,Ken
@@ -90,17 +91,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! DL vol
  !
- DL_vol=0.
- rv=cross_product(a(2,:),a(3,:))
- DL_vol=dot_product(a(1,:),rv)
- !
- ! RL unit vectors 
- !
- b(1,:)=cross_product(a(2,:),a(3,:))*2._SP*pi/DL_vol
- b(2,:)=cross_product(a(3,:),a(1,:))*2._SP*pi/DL_vol
- b(3,:)=cross_product(a(1,:),a(2,:))*2._SP*pi/DL_vol
- !
- DL_vol=abs(DL_vol)
+ call define_b_and_DL_vol()
  call msg('r','DL volume [au]:',DL_vol)
  RL_vol=(2._SP*pi)**3/DL_vol
  !
@@ -135,9 +126,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !=============================
  call msg('r','DL (S)ymmetries [cc]')
  !
- ! Spin symmetries
+ ! Spin symmetries & xc spin for libxc
  !
  call build_spin_sop()
+ !
+ call build_xc_spin_map()
  !
  YAMBO_ALLOC(rl_sop,(3,3,nsym))
  !
@@ -257,7 +250,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call section('=','Non periodic geometry')
    !========================================
    !
-   call check_periodic_directions()
+   call check_periodic_directions((/.false.,.false.,.false./))
    !
  endif
  !
@@ -300,7 +293,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
    en%nbf =nbf_m_SAVE(1)
    en%nbm =nbf_m_SAVE(2)
  endif
- !
  !
  n_met_bands =en%nbm
  n_full_bands=en%nbf

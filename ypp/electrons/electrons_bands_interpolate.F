@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,INTERP_E,CIRCUIT_dE)
+subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCUIT_dE)
  !
- use pars,           ONLY:SP
- use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,INTERP_grid,&
-&                         CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,INTERP_k,&
+ use pars,           ONLY:SP,schlen
+ use YPP,            ONLY:BANDS_steps,coo_in,coo_out,K_transform,INTERP_grid,&
+&                         CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
 &                         CIRCUIT_made_of_SPECIAL_k,BANDS_E_and_k_db,SPECIAL_k,&
 &                         BANDS_path,CIRCUIT_k_label,SPECIAL_k_label
  use electrons,      ONLY:levels,n_sp_pol
@@ -34,7 +34,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  use com,            ONLY:msg,error,warning
  use vec_operate,    ONLY:c2a,v_norm
  use parser_m,       ONLY:parser
- use interpolate,    ONLY:INTERPOLATION_coefficients,INTERPOLATION_BZ
+ use interpolate,    ONLY:INTERPOLATION_driver,GRID_k
  use interfaces,     ONLY:io_DB1_selective_scan
  !
 #include<memory.h>
@@ -43,15 +43,15 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  type(levels),  intent(in)  :: Xen
  type(levels),  intent(out) :: CIRCUIT_E
  integer      , intent(in)  :: BANDS_range(2)
- integer      , intent(out) :: ID_E_interp
  type(levels),  intent(out), optional :: CIRCUIT_dE
- type(levels),  intent(out), optional :: INTERP_E
+ type(levels),  intent(out), optional :: GRID_E
  !
  ! Work space
  !
  real(SP)              :: real_ctl,max_dist,v(3),db_a(3,3),db_alat(3),delta_align
- real(SP), allocatable :: distances(:),E_in(:,:,:),dE_in(:,:,:)
- integer               :: i1,ic,ib,ik,i_sp_pol,i_sp,i_err,ID_dE_interp,ik_special
+ real(SP), allocatable :: distances(:)
+ character(schlen)     :: coo_out_
+ integer               :: i1,ic,ib,ik,i_sp_pol,i_err,ik_special
  integer,  allocatable :: int_distances(:)
  !
  ! Input file parsing
@@ -79,10 +79,17 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
    USER_k%nbz =USER_k%nbz-1
    USER_k%nibz=USER_k%nbz
    !
-   coo_out="iku"
+   if (USER_k%nbz==0) then
+     call k_special(.TRUE.)
+     call error("No points given in input")
+   endif
+   !
+   coo_out_=coo_out
+   coo_out ="iku"
    do ik=1,USER_k%nbz
-     call k_transform(USER_k%pt(ik,:),coo_in)
+     call K_transform(USER_k%pt(ik,:),coo_in)
    enddo
+   coo_out =coo_out_
    !
  endif
  !
@@ -96,10 +103,6 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  if (any(BANDS_range<=0))                call error(" Wrong bands range")
  !
  if (BANDS_range(2)-BANDS_range(1)+1>20) call error(" YPP cannot interpolate more than 20 bands. Reduce bands range")
- !
- ! DEBUG>
- !if (BZ_DbGd_tot_Nkpts> 0) call error(" Interpolation and Double_Grid not yet implemented")
- ! DEBUG<
  !
  ! Define the path (CIRCUIT_K) from the user kpts if BANDS_steps>0
  !================================================================= 
@@ -163,6 +166,8 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
    BANDS_path=" "
    if (SPECIAL_k%nbz>0) then
      do ik=1,CIRCUIT_k%nbz
+       v=CIRCUIT_k%pt(ik,:)
+       call c2a(v_in=v,mode="ki2c")
        ik_special=k_the_nearest(CIRCUIT_k%pt(ik,:),SPECIAL_k%pt(:SPECIAL_k%nbz,:),SPECIAL_k%nbz,ROTATE_k_ref=.TRUE.,i_err=i_err)  
        if (i_err==0) then
          CIRCUIT_k_label(ik)=trim(SPECIAL_k_label(ik_special))
@@ -174,67 +179,34 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
    !
  endif
  !
- ! Define the regural grid for interpolation if (all(interp_grid>0))
- !===================================================================
- if(all(INTERP_grid>0)) then
-   call bz_samp_reset(INTERP_k)
-   INTERP_k%description="Interp"
-   call INTERPOLATION_grid(INTERP_k,'i',INTERP_grid)
- endif
- !
- ! Brillouine zone setup
- !========================
- call INTERPOLATION_BZ_setup(Xk)
- !
- ! Energies to be interpolated
- !=============================
- YAMBO_ALLOC(E_in,(BANDS_range(1):BANDS_range(2),Xk%nibz,n_sp_pol))
- if (allocated(Xen%Eo).and.BANDS_E_and_k_db) then
-   YAMBO_ALLOC(DE_in,(BANDS_range(1):BANDS_range(2),Xk%nibz,n_sp_pol))
- endif
- do i_sp_pol=1,n_sp_pol
-   do ib=BANDS_range(1),BANDS_range(2)
-     do ik=1,Xk%nibz
-       !
-       E_in(ib,ik,i_sp_pol)=Xen%E(ib,ik,i_sp_pol)
-       !
-       ! Interpolate only GW corrections?
-       !
-       if (allocated(Xen%Eo).and.BANDS_E_and_k_db) then
-         dE_in(ib,ik,i_sp_pol)=Xen%E(ib,ik,i_sp_pol)-Xen%Eo(ib,ik,i_sp_pol)
-       endif
-       !
-     enddo
-   enddo
-   !
- enddo
- !
  ! Interpolation
  !===============
  ! 1: interpolate on the circuit      if (BANDS_steps>0)
  ! 2: interpolate on the regular grid if (interp_grid>0)
  !
- call INTERPOLATION_coefficients(R2D=E_in,k=Xk,Nk=Xk%nibz,ID=ID_E_interp)
+ if(all(INTERP_grid>0)) call INTERPOLATION_driver(operation="GRID",GRID=INTERP_grid)
  !
- if (allocated(dE_in).and.present(CIRCUIT_dE)) then
-   call INTERPOLATION_coefficients(R2D=dE_in,k=Xk,Nk=Xk%nibz,ID=ID_dE_interp)
+ if (allocated(Xen%Eo).and.BANDS_E_and_k_db) then
+   call INTERPOLATION_driver(bands=BANDS_range,SEED_E=Xen,SEED_k=Xk,operation="dE_on_built_in",NEAREST=.FALSE.)
  endif
  !
+ call INTERPOLATION_driver(bands=BANDS_range,SEED_E=Xen,SEED_k=Xk,operation="E_on_built_in",NEAREST=.FALSE.)
+ !
  if (BANDS_steps> 0) then
-   YAMBO_ALLOC(CIRCUIT_E%E,(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nbz,n_sp_pol))
-   call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=CIRCUIT_E%E,ID=ID_E_interp)
-   if (allocated(dE_in).and.present(CIRCUIT_dE)) then
-     YAMBO_ALLOC(CIRCUIT_dE%E,(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nbz,n_sp_pol))
-     call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=CIRCUIT_dE%E,ID=ID_dE_interp)
+   !
+   call INTERPOLATION_driver(OUT_k=CIRCUIT_k,OUT_E=CIRCUIT_E,operation="E_on_built_in")
+   !
+   if (allocated(Xen%Eo).and.BANDS_E_and_k_db) then
+    call INTERPOLATION_driver(OUT_k=CIRCUIT_k,OUT_E=CIRCUIT_dE,operation="dE_on_built_in")
    endif
-   YAMBO_ALLOC(CIRCUIT_k%weights,(CIRCUIT_k%nbz))
-   CIRCUIT_k%weights=1./real( CIRCUIT_k%nbz )
+   !
  endif
  !
  if(all(INTERP_grid>0)) then
-   YAMBO_ALLOC(INTERP_E%E,(BANDS_range(1):BANDS_range(2),INTERP_k%nibz,n_sp_pol))
-   call INTERPOLATION_BZ(K=INTERP_k,R2D=INTERP_E%E,ID=ID_E_interp)
+   call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="E_on_built_in")
  endif
+ !
+ call INTERPOLATION_driver(operation="END")
  !
  ! Alignement
  !============
@@ -249,11 +221,5 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
      enddo
    enddo
  endif
- !
- ! Free
- !======
- !
- YAMBO_FREE(E_in)
- YAMBO_FREE(dE_in)
  !
 end subroutine electrons_bands_interpolate

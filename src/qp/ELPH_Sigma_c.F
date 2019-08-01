@@ -40,7 +40,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
                          PAR_COM_Q_A2A,PAR_COM_Q_INDEX,myid
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch,&
-&                        deliver_IO_error_message,OP_WR_CL,OP_APP_WR_CL
+&                        deliver_IO_error_message,OP_WR_CL,OP_APP_CL
  use QP_ctl_m,      ONLY:QP_apply
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
@@ -54,7 +54,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
 &                        elph_global_alloc,gsqF_energy_steps,eval_G_using_KK,ph_qpt,&
 &                        elph_branches,E_k_plus_q,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold,DW_deltaE_treshold
- use interfaces,    ONLY:PARALLEL_global_indexes
+ use interfaces,    ONLY:PARALLEL_global_indexes,QP_state_extract_print
  use functions,     ONLY:Fermi_fnc_derivative
  use timing_m,      ONLY:timing
  !
@@ -68,7 +68,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  integer          ::iq_db,iq_bz,iq_loop,iq_db_ref,iq_s,iq_ibz,ik,ok,ik_bz,okbz,ib,ob,is,il,i_qp,i2,&
 &                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,live_timing_steps,iq_range(2)
  type(w_samp)     ::Sc_W(qp%n_states)
- integer          ::io_err,ID,iv4(4)
+ integer          ::io_err,ID
  integer, external::io_ELPH,QP_state_extract
  character(schlen)::ch
  real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,factor,&
@@ -115,15 +115,10 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  call msg('r', '[GW/El-Ph] Bands range       :',(/1,QP_PH_n_G_bands/))
  if (trim(QP_solver)=='n') &
 &  call msg('r', '[GW/El-Ph] G damping     [ev]:',QP_G_damp*HA2EV)
- call msg('r','')
  !
- iv4=(/1,1,0,0/)
- do while(QP_state_extract(iv4)>0)
-   write (ch,'(4(a,i3.3))') 'QP @ K ',iv4(1),' - ',iv4(2),' : b ',iv4(3),' - ',iv4(4)
-   call msg('r',trim(ch))
- enddo
+ ! QP_table -> report
  !
- call msg('r','')
+ call QP_state_extract_print( )
  !
  ! ELPH DB
  !
@@ -483,7 +478,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    !
    do iq_loop=iq_range(1),iq_range(2)
-     call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/iq_loop+1/),ID=ID)
+     call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/iq_loop+1/),ID=ID)
      io_err=io_ELPH(ID,'gFsq')
    enddo
    !

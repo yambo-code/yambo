@@ -32,7 +32,7 @@ subroutine section(mode,name)
  !
  use pars,       ONLY:lchlen,schlen,DP
  use it_m,       ONLY:ofiles_append
- use stderr,     ONLY:string_pack
+ use stderr,     ONLY:STRING_pack
  use LIVE_t,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,&
 &                     date_and_time_string
  use parallel_m, ONLY:PP_redux_wait,ncpu
@@ -139,7 +139,7 @@ subroutine section(mode,name)
    call PP_redux_wait(cput_here)
    !
    ch=date_and_time_string(dt_in=date_time_at_start)
-   chp= string_pack(trim(ch),' [start]')
+   chp= STRING_pack(trim(ch),' [start]')
    !
    if (write_to_report) then
      open(unit=11,file=trim(repfile),position='append')
@@ -150,7 +150,7 @@ subroutine section(mode,name)
    call ofiles_append(line=chp(:len_trim(chp)))
    !
    ch = date_and_time_string(skip_host=.TRUE.)
-   chp= string_pack(trim(ch),repeat(' ',len_trim(chp)-len_trim(ch)-7)//'[end]')
+   chp= STRING_pack(trim(ch),repeat(' ',len_trim(chp)-len_trim(ch)-7)//'[end]')
    if (write_to_report) then
      open(unit=11,file=trim(repfile),position='append')
      write (11,'(1x,a)') chp(:len_trim(chp))

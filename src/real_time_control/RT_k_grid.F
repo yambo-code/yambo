@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function RT_k_grid(E,k,q)
+subroutine RT_k_grid(E,k,q)
  !
  !       K(BZ)                                                    K(IBZ)
  !               E_DbGd(DbGd_bz_coo(ikbz,:)=DbGd_ibz_coo(ik,:))
@@ -43,14 +43,14 @@ integer function RT_k_grid(E,k,q)
  use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,DbGd_is_symmetry_expanded
  use real_time,      ONLY:DbGd_bz_coo,DbGd_ibz_coo,DbGd_EE_scatt_table,&
 &                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
-&                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_DbGd,RT_bands,RT_DbGd_nk
+&                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_DbGd,RT_bands,RT_DbGd_nk,RT_nk
  use R_lattice,      ONLY:bz_samp
  !
 #include<memory.h>
  !
- type(levels), intent(in) :: E
- type(bz_samp),intent(in) :: k
- type(bz_samp),intent(in) :: q
+ type(levels), intent(in)    :: E
+ type(bz_samp),intent(in)    :: k
+ type(bz_samp),intent(in)    :: q
  !
  ! Work space
  !
@@ -70,7 +70,7 @@ integer function RT_k_grid(E,k,q)
  !==============================
  if (.not.l_RT_uses_E_DbGd) then
    !
-   RT_k_grid=k%nibz
+   RT_nk    =k%nibz
    !
    RT_Nk_ibz=1
    DbGd_EE_percent=0._SP
@@ -92,4 +92,4 @@ integer function RT_k_grid(E,k,q)
  endif
  !
  !
-end function RT_k_grid
+end subroutine RT_k_grid

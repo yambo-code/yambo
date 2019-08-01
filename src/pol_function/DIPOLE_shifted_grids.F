@@ -30,7 +30,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  use pars,                ONLY: SP,cZERO,lchlen,schlen
  use drivers,             ONLY: l_sc_run
  use com,                 ONLY: warning,msg,core_io_path,error,grid_paths
- use stderr,              ONLY: intc,string_split
+ use stderr,              ONLY: intc,STRING_split
  use LIVE_t,              ONLY: live_timing
  use electrons,           ONLY: levels,n_spinor,n_sp_pol
  use parallel_m,          ONLY: PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
@@ -88,7 +88,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
 &   call warning('All/most WF G-vectors should be used in the case of shifted grids')
  !
  grid_paths_vector=' '
- call string_split(grid_paths,grid_paths_vector)
+ call STRING_split(grid_paths,grid_paths_vector)
  !
  num_shifted_grids=0
  do iq=1,3

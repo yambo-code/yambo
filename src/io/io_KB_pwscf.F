@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -35,6 +35,7 @@ integer function io_KB_pwscf(ID)
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_pwscf
  use timing_m,       ONLY:timing
+ !
 #include<memory.h>
  !
  integer,intent(in) :: ID

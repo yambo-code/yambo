@@ -46,6 +46,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use X_m,            ONLY:DIP_iR,DIP_P,DIP_spin,DIP_orbital,global_gauge
  use parallel_m,     ONLY:PAR_Xk_nibz
  use RT_interfaces,  ONLY:RT_average_operator
+ use RT_control,     ONLY:RT_do_it
  !
  implicit none
  !
@@ -68,7 +69,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  ! 
  ! A : Current
  !
- call RT_average_operator(V_VALUE=RT_ind_J, V_MATRIX=-DIP_P,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(N_V=3,V_VALUE=RT_ind_J, V_MATRIX=-DIP_P,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
  ! Velocity gauge I must use the correct definition of the J operator
  !
@@ -81,7 +82,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  ! B : Polarization
  !
- call RT_average_operator(V_VALUE=RT_P, V_MATRIX=cI*DIP_iR,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(N_V=3,V_VALUE=RT_P, V_MATRIX=cI*DIP_iR,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
  RT_P    =RT_P/DL_vol
  !

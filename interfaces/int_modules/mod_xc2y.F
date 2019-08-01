@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): MG
+! Authors (see AUTHORS file for details): MG,DV
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -27,11 +27,11 @@ module mod_xc2y
  use libxc_funcs_m
  use xc_f90_lib_m,   ONLY:xc_f90_func_init, xc_f90_func_end, &
 &                         xc_f90_info_kind, XC_UNPOLARIZED
- use xc_functionals, ONLY:XC_FACTOR, XC_NOT_AVAILABLE, NOXC, XC_libxcID 
+ use xc_functionals, ONLY:XC_FACTOR, XC_NOT_AVAILABLE, NOXC, XC_libxcID,XC_HYB_GGA_XC_GAUPBE 
  !
  implicit none
  !
- integer, parameter :: N_Abinit_XC = 28,N_PW_X = 11, N_PW_C = 13, N_PW_GX = 19, N_PW_GC = 14
+ integer, parameter :: N_Abinit_XC = 28,N_PW_X = 12, N_PW_C = 13, N_PW_GX = 21, N_PW_GC = 14
  !
  !  Map for ABINIT/ETSF_IO
  !
@@ -68,20 +68,20 @@ module mod_xc2y
  ! Map for PWSCF (note that some of the acronims were used in past versions of pw.x 
  ! 
  character(len=6),parameter,dimension(N_PW_X) :: PW_X=&  
-& (/'NOX ', 'SLA ','LDA ', 'SL1 ', 'RXC ', 'OEP ', 'HF  ', 'PB0X', 'B3LP', 'KZK ', 'PZ  '/)
+& (/'NOX ', 'SLA ','LDA ', 'SL1 ', 'RXC ', 'OEP ', 'HF  ', 'PB0X', 'B3LP', 'KZK ', 'PZ  ','PW  '/)
  character(len=6),parameter,dimension(N_PW_C) :: PW_C=&  
 & (/ 'NOC ', 'PZ  ','LDA ', 'VWN ', 'LYP ', 'PW  ', 'WIG ', 'HL  ', 'OBZ ', &
 &    'OBW ', 'GL  ' , 'B3LP', 'KZK ' /)
  character(len=8),parameter,dimension(N_PW_GX) :: PW_GX=& 
 & (/ 'NOGX  ', 'B88   ', 'BLYP  ', 'GGX   ', 'PW91  ', 'PBX   ', 'PBE   ', 'RPB   ', 'HCTH  ', 'OPTX  ',&
-&    'META  ', 'PB0X  ', 'PBE0  ','PBESOL', 'B3LP  ', 'B3LYP ', 'PSX   ', 'WCX   ', 'HSE   '/)
+&    'META  ', 'PB0X  ', 'PBE0  ','PBESOL', 'B3LP  ', 'B3LYP ', 'PSX   ', 'WCX   ', 'HSE   ', 'GAUPBE', 'GAUP  '/)
  character(len=8),parameter,dimension(N_PW_GC) :: PW_GC=&
 & (/ 'NOGC  ', 'P86   ', 'GGC   ', 'PW91  ', 'BLYP  ', 'PBC   ', 'PBE   ','PBE0  ','PBESOL','HCTH  ', 'META  ',&
 &    'B3LP  ', 'B3LYP ', 'PSC   '/)
  ! 
  integer,parameter,dimension(N_PW_X) :: PWX2LIBXC=&
 & (/ NOXC, XC_LDA_X*XC_FACTOR, XC_LDA_X*XC_FACTOR, XC_LDA_X*XC_FACTOR+XC_LDA_C_XALPHA, XC_NOT_AVAILABLE, &
-&    XC_NOT_AVAILABLE, NOXC, NOXC, XC_NOT_AVAILABLE,XC_NOT_AVAILABLE,XC_LDA_X*XC_FACTOR/)
+&    XC_NOT_AVAILABLE, NOXC, NOXC, XC_NOT_AVAILABLE,XC_NOT_AVAILABLE,XC_LDA_X*XC_FACTOR,XC_LDA_X*XC_FACTOR/)
  integer,parameter,dimension(N_PW_C) :: PWC2LIBXC=&
 & (/ NOXC, XC_LDA_C_PZ, XC_LDA_C_PZ, XC_LDA_C_VWN, XC_GGA_C_LYP, XC_LDA_C_PW,&
 &    XC_LDA_C_WIGNER, XC_LDA_C_HL, XC_LDA_C_OB_PZ, XC_LDA_C_OB_PW,XC_LDA_C_GL,&
@@ -89,7 +89,8 @@ module mod_xc2y
  integer,parameter,dimension(N_PW_GX) :: PWGX2LIBXC=&
 & (/ NOXC, XC_GGA_X_B88, XC_GGA_X_B88, XC_GGA_X_PW91, XC_GGA_X_PW91, XC_GGA_X_PBE, XC_GGA_X_PBE, XC_GGA_X_PBE_R,&
 &    XC_GGA_XC_HCTH_93, XC_GGA_X_OPTX, XC_MGGA_X_TPSS, XC_HYB_GGA_XC_PBEH, XC_HYB_GGA_XC_PBEH,XC_GGA_X_PBE_SOL, &
-&    XC_HYB_GGA_XC_B3LYP, XC_HYB_GGA_XC_B3LYP, XC_GGA_X_PBE_SOL, XC_GGA_X_WC, XC_HYB_GGA_XC_HSE06/)
+&    XC_HYB_GGA_XC_B3LYP, XC_HYB_GGA_XC_B3LYP, XC_GGA_X_PBE_SOL, XC_GGA_X_WC, XC_HYB_GGA_XC_HSE06, XC_HYB_GGA_XC_GAUPBE,&
+&    XC_HYB_GGA_XC_GAUPBE/)
  integer,parameter,dimension(N_PW_GC) :: PWGC2LIBXC=&
 & (/ NOXC, XC_GGA_C_P86, XC_GGA_C_PW91, XC_GGA_C_PW91, XC_GGA_C_LYP, XC_GGA_C_PBE, XC_GGA_C_PBE, NOXC,&
 &    XC_GGA_C_PBE_SOL,NOXC, XC_MGGA_C_TPSS, NOXC, NOXC, XC_GGA_C_PBE_SOL/)
@@ -134,7 +135,6 @@ module mod_xc2y
          XC_yamboID = XC_yamboID + XC_yamboID_
        endif
        if (XC_yamboID == XC_NOT_AVAILABLE .or. XC_yamboID == NOXC) then ! Only if no GGAs or no 
-                                                                        ! XC are found I scan LDA (this avoids 'double counting')
          do ii=1,N_PW_X
            if (matches(PW_X(ii),pw_func)) XC_yamboID = PWX2LIBXC(ii)
          end do
@@ -174,7 +174,8 @@ module mod_xc2y
      lcheck = (ID==XC_GGA_XC_HCTH_93).or.&
              &(ID==XC_HYB_GGA_XC_PBEH).or.&
              &(ID==XC_HYB_GGA_XC_B3LYP).or.&
-             &(ID==XC_HYB_GGA_XC_HSE06)
+             &(ID==XC_HYB_GGA_XC_HSE06).or.&
+             &(ID==XC_HYB_GGA_XC_GAUPBE)
      XC_ComponentsAreSeparate=.not.lcheck
    end function XC_ComponentsAreSeparate
    !

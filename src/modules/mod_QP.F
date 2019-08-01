@@ -43,6 +43,7 @@ module QP_m
  integer           :: QP_ng_Sc
  integer           :: QP_ng_Sx
  integer           :: QP_ng_SH
+ integer           :: QP_ng_Vxc
  integer           :: QP_n_G_bands(2)
  integer           :: GWo_iterations
  logical           :: QP_dSc_test
@@ -115,7 +116,7 @@ module QP_m
    !
  end type QP_t
  !
- ! interface
+ ! Interface
  !
  interface
    !

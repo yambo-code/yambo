@@ -21,77 +21,82 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-!
-subroutine RT_1D_Fourier_Transform(mode,title,freqs,fw,nw,ft,nt,USE_FFT,I_sign)
+subroutine RT_1D_Fourier_Transform(mode,FT,RT,I_sign)
  !
  ! Here I calculate:
  !
  ! mode="T2W"
  !
- ! \tilde{FT}[ft] = \int_{T0}{\infty} ft(t) exp^(i w t) =  FT[ft]   (USE_FFT=.TRUE.)
+ ! \tilde{FT}[F_t] = \int_{T0}{\inF_t} F_t(t) exp^(i w t) =  FT[F_t]   (Use_FFT=.TRUE.)
  !
- ! \tilde{FT}[ft] = \int_{T0}{\infty} ft(t) exp^(i I_sign w t) =  FT[ft]   (USE_FFT=.FALSE.)
+ ! \tilde{FT}[F_t] = \int_{T0}{\inF_t} F_t(t) exp^(i I_sign w t) =  FT[F_t]   (Use_FFT=.FALSE.)
  !
- ! This definition follows from the fact that ft(t) is defined in input only for t>0.
+ ! This definition follows from the fact that F_t(t) is defined in input only for t>0.
  !
  ! mode="W2T" => no FFT support 
  !
- ! ft(t) = \int fw(w) exp^(-i w t) 
+ ! F_t(t) = \int F_w(w) exp^(-i w t) 
  !
- use YPP_real_time,  ONLY:RT_time
- use pars,           ONLY:SP,DP,cI
+ use YPP_real_time,  ONLY:RT_time,Use_FFT,OBS_el,RT_ctl
+ use pars,           ONLY:DP,cI,cZERO_DP
  use LIVE_t,         ONLY:live_timing
+ !
  implicit none
  !
- integer,     intent(in)   :: nw,nt,I_sign
- logical,     intent(in)   :: USE_FFT
- complex(SP), intent(in)   :: freqs(nw)
- character(*),intent(in)   :: mode
- character(*),intent(in)   :: title
- complex(DP), intent(inout):: ft(nt)
- complex(DP), intent(inout):: fw(nw)
+ character(*),intent(in)   ::mode
+ type(OBS_el),intent(inout)::FT
+ type(RT_ctl),intent(in)   ::RT
+ integer,     intent(in)   ::I_sign
  !
  ! Work Space 
  !
- integer    :: i_w,i_t,fft_sign
+ integer    :: i_w,i_t,fft_sign,i_c
  integer(8) :: fftw_plan
  logical    :: l_live_timing
  !
- l_live_timing=len_trim(title)>0
+ l_live_timing=len_trim(FT%title)>0
  !
  ! Time to Frequency
  !===================
  if (mode=="T2W") then
    !
-   fw=(0._DP,0._DP)
+   if (l_live_timing) call live_timing('FT@'//trim(FT%title)//':',RT%W_n_steps*FT%N)
+   !
+   FT%F_w=cZERO_DP
    !
    ! Numerical FT
    !
-   if (USE_FFT) then
+   do i_c=1,FT%N
      !
-     fftw_plan= 0
-     fft_sign =-1
-     !
+     if (Use_FFT) then
+       !
+       fftw_plan= 0
+       fft_sign =-1
+       !
 #if defined _FFTW
-      call fft_1d(ft,nt,fft_sign,fftw_plan)
+       call fft_1d(FT%F_t(:,i_c),RT%T_n_steps,fft_sign,fftw_plan)
 #else
-      call fft_1d(ft,nt,fft_sign)
+       call fft_1d(FT%F_t(:,i_c),RT%T_n_steps,fft_sign)
 #endif
-     !
-     fw(:)=conjg(ft(:nw))
-     !
-   else
-     !
-     if (l_live_timing) call live_timing('FT'//title//':',nw)
-     do i_w = 1, nw
-       do i_t = 1, nt-1
-         fw(i_w) = fw(i_w)+ft(i_t)*exp(cI*I_sign*freqs(i_w)*RT_time(i_t))*(RT_time(i_t+1)-RT_time(i_t))
+       !
+       FT%F_w(:,i_c)=conjg(FT%F_t(:RT%W_n_steps,i_c))
+       !
+       if (l_live_timing) call live_timing(steps=RT%W_n_steps)
+       !
+     else
+       !
+       do i_w = 1, RT%W_n_steps
+         do i_t = 1, RT%T_n_steps-1
+           FT%F_w(i_w,i_c) = FT%F_w(i_w,i_c)+FT%F_t(i_t,i_c)*exp(cI*I_sign*FT%W(i_w)*RT_time(i_t))*(RT_time(i_t+1)-RT_time(i_t))
+         enddo
+         if (l_live_timing) call live_timing(steps=1)
        enddo
-       if (l_live_timing) call live_timing(steps=1)
-     enddo
-     if (l_live_timing) call live_timing()
+       !
+     endif
      !
-   endif
+   enddo
+   !
+   if (l_live_timing) call live_timing()
    !
  endif
  !
@@ -99,14 +104,16 @@ subroutine RT_1D_Fourier_Transform(mode,title,freqs,fw,nw,ft,nt,USE_FFT,I_sign)
  !===================
  if (mode=="W2T") then
    !
-   ft=(0._DP,0._DP)
+   FT%F_t=cZERO_DP
    !
-   if (l_live_timing) call live_timing('FT'//title//':',nt)
-   do i_t = 1, nt
-     do i_w = 1, nw
-       ft(i_t) = ft(i_t)+fw(i_w)*(freqs(2)-freqs(1))*exp(-cI*freqs(i_w)*RT_time(i_t))
+   if (l_live_timing) call live_timing('FT'//trim(FT%title)//':',RT%T_n_steps*FT%N)
+   do i_c=1,FT%N
+     do i_t = 1, RT%T_n_steps
+       do i_w = 1, RT%W_n_steps
+         FT%F_t(i_t,i_c) = FT%F_t(i_t,i_c)+FT%F_w(i_w,i_c)*(FT%W(2)-FT%W(1))*exp(-cI*FT%W(i_w)*RT_time(i_t))
+       enddo
+       if (l_live_timing) call live_timing(steps=1)
      enddo
-     if (l_live_timing) call live_timing(steps=1)
    enddo
    if (l_live_timing) call live_timing()
    !

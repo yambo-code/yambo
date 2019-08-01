@@ -94,7 +94,7 @@ module pointers
      real(SP), pointer :: REAL_pointer(:,:,:,:,:)
      call C_F_POINTER(C_LOC(M), REAL_pointer, N )
    end function linkC2R_4D
-   !
+   ! 
    function linkC2R_5D(M,N) result(REAL_pointer)
      complex(SP), target  :: M(1,1,1,1,1)
      integer, intent(in)  :: N(:)

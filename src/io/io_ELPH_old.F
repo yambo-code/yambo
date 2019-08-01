@@ -59,7 +59,7 @@ integer function io_ELPH_old(ID,what)
  !
  call timing('io_ELPH_old',OPR='start')
  !
- if (what=='gkkp'.or.what=='no_gkkp') db_name='elph_gkkp'
+ if (what=='gkkp'.or.what=='no_matrix_elements') db_name='elph_gkkp'
  if (what=='gFsq')                    db_name='elph_gFsq'
  if (what=='gkkp_expanded') then
    db_name='elph_gkkp_expanded'
@@ -200,8 +200,8 @@ integer function io_ELPH_old(ID,what)
  ! Allocation
  !
  if (read_is_on(ID)) then
-   if (what/='no_gkkp') call elph_global_alloc('gkkp')
-   if (what=='no_gkkp') call elph_global_alloc('no_gkkp')
+   if (what/='no_matrix_elements') call elph_global_alloc('gkkp')
+   if (what=='no_matrix_elements') call elph_global_alloc('no_matrix_elements')
  endif
  !
  ! Manage RD_CL_IF_END
@@ -236,7 +236,7 @@ integer function io_ELPH_old(ID,what)
  !
  YAMBO_FREE(pol_vec_disk)
  !
- if (what=='no_gkkp') goto 1
+ if (what=='no_matrix_elements') goto 1
  ! 
  ! Ek+q (to be used when  elph_use_q_grid=.FALSE.)
  !

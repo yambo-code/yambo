@@ -23,9 +23,7 @@
 !                  
 subroutine NL_databases_IO(i_f,read_or_write)
  !
- use electrons,     ONLY:levels
- use X_m,           ONLY:X_t
- use IO_m,          ONLY:io_control,REP,OP_WR_CL,VERIFY,OP_APP_WR_CL,OP_RD_CL         
+ use IO_m,          ONLY:io_control,REP,OP_WR_CL,VERIFY,OP_APP_CL,OP_RD_CL         
  use nl_optics,     ONLY:ID
  use parallel_m,    ONLY:master_cpu
  !
@@ -55,7 +53,7 @@ subroutine NL_databases_IO(i_f,read_or_write)
  else
    !         
    if(reading) IO_ACTION=OP_RD_CL
-   if(writing) IO_ACTION=OP_APP_WR_CL
+   if(writing) IO_ACTION=OP_APP_CL
    !
    call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/i_f+1/),MODE=VERIFY,ID=ID(1))
    io_Nonlinear=io_NL(ID(1))

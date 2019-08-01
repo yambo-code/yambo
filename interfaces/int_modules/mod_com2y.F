@@ -33,7 +33,7 @@ module mod_com2y
  logical :: artificial_spin_pol
  logical :: verboseIO
  !
- integer :: ng_vec_abinit,wf_nb_io_user
+ integer :: ng_vec_abinit, wf_nb_io_user
  !
  real(SP):: alat_mult_factor
  !
@@ -41,7 +41,9 @@ module mod_com2y
    !
    subroutine interface_presets(in_string)
      !
-     use stderr,     ONLY:string_split
+     use stderr,         ONLY:STRING_split
+     use LIVE_t,         ONLY:live_timing_is_on
+     use parallel_m,     ONLY:master_cpu
      !
      implicit none
      !
@@ -50,9 +52,11 @@ module mod_com2y
      character(schlen)::str_piece(100)
      integer          ::i1
      !
+     live_timing_is_on=master_cpu
+     !
      ! Split the string in pieces
      !
-     call string_split(in_string,str_piece)
+     call STRING_split(in_string,str_piece)
      !
      use_SI_instead_of_TR =index(in_string,'notr')>0
      force_noSYMM         =index(in_string,'nosy')>0
@@ -158,7 +162,10 @@ module mod_com2y
      ! Identity was stripped in outkss: swap all
      ! symmetries with their inversions
      !
-     if (.not.l_identity.and.l_inversion) int_sop=-int_sop
+     if (.not.l_identity.and.l_inversion) then
+       call msg('s','[SYMS] Identity not found: swapping all symmetries')
+       int_sop=-int_sop
+     endif
      !
      if (force_noSYMM) i_time_rev=0
      ! 

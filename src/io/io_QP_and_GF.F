@@ -101,7 +101,10 @@ integer function io_QP_and_GF(what,qp,ID)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=.true.)
  end select
  !
- if (io_QP_and_GF/=0) goto 1
+ if (io_QP_and_GF/=0) then
+   call CLOSE_and_menu(.TRUE.)
+   return
+ endif
  !
  call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
  call io_elemental(ID,I0=qp%nb,DB_I0=QP_nb_disk,CHECK=.true.,OP=(/"<="/))
@@ -130,7 +133,11 @@ integer function io_QP_and_GF(what,qp,ID)
  endif
  !
  io_QP_and_GF=io_status(ID)
- if (.not.DB_is_OK(ID)) goto 1
+ !
+ if (.not.DB_is_OK(ID)) then
+   call CLOSE_and_menu(.TRUE.)
+   return
+ endif
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
@@ -160,10 +167,15 @@ integer function io_QP_and_GF(what,qp,ID)
      !
      if (i1<n_descs_disk) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      if (i1==n_descs_disk) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+     !
    enddo
    !
    io_QP_and_GF=io_status(ID)
-   if (.not.DB_is_OK(ID)) goto 1
+   !
+   if (.not.DB_is_OK(ID)) then
+     call CLOSE_and_menu(.TRUE.)
+     return
+   endif
    !
    ! The table is used to check the requested QP states with the disk ones.
    ! Note that I do not extract the W m.e. for a subset of Qp states
@@ -199,7 +211,11 @@ integer function io_QP_and_GF(what,qp,ID)
    YAMBO_FREE(qp_table_disk)
    !
    io_QP_and_GF=io_status(ID)
-   if (.not.DB_is_OK(ID)) goto 1
+   !
+   if (.not.DB_is_OK(ID)) then
+     call CLOSE_and_menu(.FALSE.)
+     return
+   endif
    !
  endif
  !
@@ -294,12 +310,18 @@ integer function io_QP_and_GF(what,qp,ID)
    endif
    !
    io_QP_and_GF=io_status(ID)
-   if (.not.DB_is_OK(ID)) goto 1
    !
  endif
  !
-1 call io_disconnect(ID=ID)
+ call CLOSE_and_menu(.FALSE.)
  !
- call timing('io_QP_and_GF',OPR='stop')
- !
+ contains 
+   !
+   subroutine CLOSE_and_menu(MENU)
+     logical :: MENU
+     if (MENU) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+     call io_disconnect(ID=ID)
+     call timing('io_QP_and_GF',OPR='stop')
+   end subroutine
+   !
 end function

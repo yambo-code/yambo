@@ -21,7 +21,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load,&
-&                     space,title,impose_free_and_alloc,force_WFo,keep_states_to_load)
+&                  space,title,impose_free_and_alloc,force_WFo,keep_states_to_load)
  !
  ! Load and (eventually) FFTs the wavefunctions
  !
@@ -82,8 +82,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  iGo_max=iGo_max_in
  !
- call Gclose(iG_max,'tRL')
- call Gclose(iGo_max,'tRL')
+ call PARSER_close_G(iG_max,'tRL')
+ call PARSER_close_G(iGo_max,'tRL')
  !
  wf_space_here='R'
  if (present(space)) wf_space_here=space
@@ -232,9 +232,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  if (.not.(QUIET_alloc.or.QUIET_free)) then
    if (buffer_is_ok.and.WF%space/="B") then
-     call msg('rns','[WF] Loading Wave-Functions from buffer')
+     call msg('rns','[WF'//trim(wf_title)//'] Loading Wave-Functions from buffer')
    else
-     call msg('rns','[WF] Performing Wave-Functions I/O from '//trim(core_io_path)//'/SAVE')
+     call msg('rns','[WF'//trim(wf_title)//'] Performing Wave-Functions I/O from '//trim(core_io_path)//'/SAVE')
    endif
  endif
  !
@@ -437,7 +437,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  enddo
  !
  wf_norm_test=.false.
- call msg('rn','[WF loader] Normalization (few states)  min/max  :',(/mndp,mxdp/))
+ call msg('rn','[WF'//trim(wf_title)//' loader] Normalization (few states)  min/max  :',(/mndp,mxdp/))
  !
  if (QUIET_alloc) call IO_and_Messaging_switch("+report +log ")
  !

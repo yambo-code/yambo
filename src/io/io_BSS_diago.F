@@ -37,7 +37,7 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
  !
  type(X_t),intent(in)           :: X_static
  integer                        :: iq,ID
- complex(SP)        , optional  :: bsE(:),bsRl(:),bsRr(:)
+ complex(SP)        , optional  :: bsE(BSS_n_eig),bsRl(BSS_n_eig),bsRr(BSS_n_eig)
  real(SP)   ,pointer, optional  :: BsE_corr(:,:),bsR_pl(:,:)
  complex(SP),pointer, optional  :: bsR_kerr(:)
  !

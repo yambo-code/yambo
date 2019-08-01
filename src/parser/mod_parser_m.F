@@ -30,10 +30,25 @@ module parser_m
 &                   r1qparser,rqparser,rmqparser,c1qparser
  end interface
  !
+ interface 
+   subroutine PARSER_array(mode,VAR,N,M,DESC,CH_v,R_v,I_v,Kn)
+     use pars,  ONLY:SP,lchlen
+     implicit none
+     character(*)                ::mode
+     integer                     ::N,M
+     character(*)                ::VAR
+     character(*)     , OPTIONAL ::DESC
+     character(*)     , OPTIONAL ::CH_v(N,M)
+     integer,           OPTIONAL ::I_v(N,M)
+     real(SP),          OPTIONAL ::R_v(N,M)
+     character(1),      OPTIONAL ::Kn(M)
+   end subroutine
+ end interface
+ !
  contains
    !
    subroutine chparser(name,res)
-     use parser_lib
+     use PARSER_lib
      use stderr, ONLY : cstr
      implicit none
      character(*), intent(in)  :: name
@@ -47,7 +62,7 @@ module parser_m
    end subroutine
    !
    subroutine chqparser(name,res)
-     use parser_lib
+     use PARSER_lib
      use stderr, ONLY : cstr
      implicit none
      character(*), intent(in)  :: name
@@ -62,7 +77,7 @@ module parser_m
    end subroutine
    !
    subroutine chmparser(name,res)
-     use parser_lib
+     use PARSER_lib
      use stderr, ONLY : cstr
      implicit none
      character(*), intent(in)  :: name
@@ -79,18 +94,18 @@ module parser_m
    !
    subroutine i1qparser(name,res)
      use stderr, ONLY : cstr
-     use parser_lib
+     use PARSER_lib
      implicit none
      character(*), intent(in) :: name
      integer, intent(out)     :: res
      integer :: def           !ws
      def=res
      call iparse_int(cstr(trim(name)),def,res)
-     call ps_convert(0._SP,res,name)
+     call PARSER_convert(0._SP,res,name)
    end subroutine
    !
    subroutine iqparser(name,res)
-     use parser_lib
+     use PARSER_lib
      use stderr, ONLY : cstr
      implicit none
      character(*), intent(in) :: name
@@ -100,12 +115,12 @@ module parser_m
      if (iparse_isdef(cstr(trim(name)))==0) return
      do i1=1,dim(1)
        call iparse_block_int(cstr(trim(name)),0,i1-1,res(i1))
-       call ps_convert(0._SP,res(i1),name)
+       call PARSER_convert(0._SP,res(i1),name)
      enddo
    end subroutine
    !
    subroutine imqparser(name,res)
-     use parser_lib
+     use PARSER_lib
      use stderr, ONLY : cstr
      implicit none
      character(*), intent(in) :: name
@@ -116,13 +131,13 @@ module parser_m
      do i1=1,dim(1)
        do i2=1,dim(2)
          call iparse_block_int(cstr(trim(name)),i1-1,i2-1,res(i1,i2))
-         call ps_convert(0._SP,res(i1,i2),name)
+         call PARSER_convert(0._SP,res(i1,i2),name)
        enddo
      enddo
    end subroutine
    !
    subroutine r1qparser(name,res)
-     use parser_lib
+     use PARSER_lib
      use stderr, ONLY : cstr
      implicit none
      character(*), intent(in) :: name
@@ -131,11 +146,11 @@ module parser_m
      ddef=res
      call iparse_double(cstr(trim(name)),ddef,dres)
      res=dres
-     call ps_convert(res,-1,name)
+     call PARSER_convert(res,-1,name)
    end subroutine
    !
    subroutine rqparser(name,res)
-     use parser_lib
+     use PARSER_lib
      use stderr, ONLY : cstr
      implicit none
      character(*), intent(in) :: name
@@ -148,12 +163,12 @@ module parser_m
        dres=res(i1)
        call iparse_block_double(cstr(trim(name)),0,i1-1,dres)
        res(i1)=dres
-       call ps_convert(res(i1),-1,name)
+       call PARSER_convert(res(i1),-1,name)
      enddo
    end subroutine
    !
    subroutine rmqparser(name,res)
-     use parser_lib
+     use PARSER_lib
      use stderr, ONLY : cstr
      implicit none
      character(*), intent(in) :: name
@@ -167,13 +182,13 @@ module parser_m
          dres=res(i1,i2)
          call iparse_block_double(cstr(trim(name)),i1-1,i2-1,dres)
          res(i1,i2)=dres
-         call ps_convert(res(i1,i2),-1,name)
+         call PARSER_convert(res(i1,i2),-1,name)
        enddo
      enddo
    end subroutine
    !
    subroutine lqparser(name,res)
-     use parser_lib
+     use PARSER_lib
      use stderr, ONLY : cstr
      character(*), intent(in) :: name
      logical,      intent(out):: res
@@ -181,7 +196,7 @@ module parser_m
    end subroutine
    !
    subroutine c1qparser(name,res)
-     use parser_lib
+     use PARSER_lib
      use stderr, ONLY : cstr
      implicit none
      character(*), intent(in) :: name
@@ -191,8 +206,8 @@ module parser_m
      ddef=res
      call iparse_complex(cstr(trim(name)),ddef,dres)
      r_r=real(dres);r_i=aimag(dres)
-     call ps_convert(r_r,-1,name)
-     call ps_convert(r_i,-1,name)
+     call PARSER_convert(r_r,-1,name)
+     call PARSER_convert(r_i,-1,name)
      res=r_r+(0._SP,1._SP)*r_i
    end subroutine
    !

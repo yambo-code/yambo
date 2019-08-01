@@ -80,21 +80,21 @@ EXE      = $(CORE) $(PH_PROJ) $(RT_PROJ) $(NL_PROJ) $(KERR_PROJ) $(SCRIPTS)
 # Libraries (ordered for compiling & linking)
 #
 BASIC_LIBS   = external_c modules memory matrices linear_algebra parallel parser communicate common io \
-               xc_functionals interface stop_and_restart wf_and_fft 
-BASIC_LIBS_LD= external_c memory modules matrices linear_algebra parallel parser communicate common io \
-               xc_functionals interface stop_and_restart wf_and_fft 
+               xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb 
+BASIC_LIBS_LD= external_c memory modules matrices linear_algebra bz_ops parallel parser communicate common io \
+               xc_functionals interface stop_and_restart wf_and_fft coulomb
 
-MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup \
+MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup \
                tddft pol_function qp bse
-MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops qp_control setup \
+MAIN_LIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup \
                tddft pol_function qp bse
 
-PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
+PJ_RTLIBS    = $(BASIC_LIBS) interpolate real_time_control qp_control setup \
                tddft pol_function qp bse collisions hamiltonian \
-               real_time_propagation real_time_common 
-PJ_RTLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup \
+               real_time_hamiltonian real_time_propagation real_time_common
+PJ_RTLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
                tddft pol_function qp bse collisions hamiltonian \
-               real_time_propagation real_time_common 
+               real_time_hamiltonian real_time_propagation real_time_common
 
 PJ_NLLIBS    = $(PJ_RTLIBS) nloptics
 PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
@@ -106,8 +106,8 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 #
 # YPP
 #
-YPP_BASIC_LIBS     = modules interpolate init qp plotting electrons 
-YPP_BASIC_LIBS_LD  = modules interpolate init qp plotting electrons 
+YPP_BASIC_LIBS     = modules interface qp plotting electrons 
+YPP_BASIC_LIBS_LD  = modules interface qp plotting electrons 
 YPP_LIBS           = $(YPP_BASIC_LIBS) excitons symmetries k-points bits 
 YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons symmetries k-points bits 
 YPPPH_LIBS         = $(YPP_BASIC_LIBS) elph excitons symmetries k-points bits 
@@ -115,15 +115,15 @@ YPPPH_LIBS_LD      = $(YPP_BASIC_LIBS_LD) elph excitons symmetries k-points bits
 YPPRT_LIBS         = $(YPP_BASIC_LIBS) elph real_time excitons symmetries k-points bits 
 YPPRT_LIBS_LD      = $(YPP_BASIC_LIBS_LD) elph real_time excitons symmetries k-points bits 
 #
-YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tddft pol_function qp bse
-YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) coulomb bz_ops qp_control setup interface tddft pol_function qp bse
-YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
+YPP_MAIN_LIBS      = $(BASIC_LIBS) interpolate qp_control setup interface tddft pol_function qp bse
+YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) interpolate qp_control setup interface tddft pol_function qp bse
+YPPRT_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setup interface \
                      pol_function qp bse collisions hamiltonian 
-YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup interface \
+YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) real_time_control interpolate qp_control setup interface \
                      pol_function qp bse collisions hamiltonian 
-YPPNL_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
+YPPNL_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setup interface \
                      pol_function qp bse collisions hamiltonian nloptics 
-YPPNL_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup interface \
+YPPNL_MAIN_LIBS_LD = $(BASIC_LIBS_LD) real_time_control interpolate qp_control setup interface \
                      pol_function qp bse collisions hamiltonian nloptics 
 
 .PHONY: interfaces
@@ -177,7 +177,7 @@ ext-libs:
 #
 # Internal libs #
 #
-int-libs:
+int-libs: ext-libs
 	@+LIBS2DO="qe_pseudo"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="slatec"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="math77"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
@@ -206,14 +206,14 @@ yambo: libs
 # Yambo PROJECTS #
 # 
 yambo_kerr: libs
-	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_KERR"; $(mksrc)
-	@+X2DO="yambo_kerr"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)";ADF="-D_KERR"; $(mkx)
+	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH -D_KERR"; $(mksrc)
+	@+X2DO="yambo_kerr"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)";ADF="-D_RT -D_ELPH -D_KERR"; $(mkx)
 yambo_rt: libs
-	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT"; $(mksrc)
-	@+X2DO="yambo_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)"; ADF="-D_RT"; $(mkx)
+	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH"; $(mksrc)
+	@+X2DO="yambo_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)"; ADF="-D_RT -D_ELPH"; $(mkx)
 yambo_nl: libs
-	@+LIBS2DO="$(PJ_NLLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_NL -D_RT"; $(mksrc)
-	@+X2DO="yambo_nl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_NLLIBS_LD)"; ADF="-D_NL -D_RT"; $(mkx)
+	@+LIBS2DO="$(PJ_NLLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_NL -D_RT -D_ELPH"; $(mksrc)
+	@+X2DO="yambo_nl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_NLLIBS_LD)"; ADF="-D_NL -D_RT -D_ELPH"; $(mkx)
 yambo_ph: libs
 	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELPH"; $(mksrc)
 	@+X2DO="yambo_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)"; ADF="-D_ELPH"; $(mkx)
@@ -223,8 +223,10 @@ yambo_ph: libs
 interfcs: libs
 	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
 	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
+#a2y: interfcs
+#	@+X2DO="a2y"; XPATH="interfaces/old_a2y"; VPATH="$(topdir)/interfaces/old_a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
 a2y: interfcs
-	@+X2DO="a2y"; XPATH="interfaces/a2y"; VPATH="$(topdir)/interfaces/a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
+	@+X2DO="a2y"; XPATH="interfaces/new_a2y"; VPATH="$(topdir)/interfaces/new_a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
 ifeq ($(do_p2y),yes)
 p2y: interfcs
 	@+X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; ADF="@PW_CPP@"; $(mkx) ;
@@ -249,15 +251,15 @@ ypp_ph: libs
 	@+X2DO="ypp_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPP_MAIN_LIBS_LD)"; \
 	X_ypp_LIBS="$(YPPPH_LIBS_LD) elph"; ADF="-D_YPP_ELPH"; $(mk_ypp_x)
 ypp_rt: libs
-	@+LIBS2DO="$(YPPRT_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_YPP_RT"; $(mksrc)
-	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_YPP_RT"; $(mk_ypp_src)
+	@+LIBS2DO="$(YPPRT_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH -D_YPP_RT"; $(mksrc)
+	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_ELPH -D_YPP_RT -D_YPP_ELPH"; $(mk_ypp_src)
 	@+X2DO="ypp_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPRT_MAIN_LIBS_LD)"; \
 	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; ADF="-D_YPP_RT"; $(mk_ypp_x)
 ypp_nl: libs
-	@+LIBS2DO="$(YPPNL_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_NL -D_YPP_NL"; $(mksrc)
-	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_YPP_RT -D_YPP_NL"; $(mk_ypp_src)
+	@+LIBS2DO="$(YPPNL_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_NL -D_ELPH -D_YPP_NL"; $(mksrc)
+	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_ELPH -D_YPP_RT -D_YPP_NL -D_YPP_ELPH"; $(mk_ypp_src)
 	@+X2DO="ypp_nl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPRT_MAIN_LIBS_LD)"; \
-	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; ADF="-D_YPP_NL -D_YPP_RT"; $(mk_ypp_x)
+	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; ADF="-D_YPP_NL -D_YPP_RT -D_YPP_ELPH"; $(mk_ypp_x)
 #
 clean_fast: 
 	@$(objects_clean)
@@ -410,7 +412,7 @@ endef
 #
 define objects_clean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
-        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' \) \
+        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' -o -name '*make.dep' \) \
         -type f -print | grep -v '\.\/Makefile' | \
         grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \
         grep -v '.*etsf_io.*\/Makefile'| grep -v '.*etsf_io.*\/*f90' | \
@@ -431,8 +433,10 @@ define lib_ext_clean
            -o -name 'H5*.h' -o -name 'hdf5*.h' -o -name 'netcdf*h' -o -name 'netcdf*inc' \
            -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
  find . -name 'xc*.h' -type f -print | xargs rm -f
+ echo "[CLEAN] External Libraries ... " 
  @for libtoclean in "libxc" "iotk" "netcdff" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
+   echo "[CLEAN] ... $$libtoclean" ; \
    cd $(libdir)/$$libtoclean ; \
    $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp *.inc ; \
    cd ../.. ; \
@@ -444,7 +448,6 @@ define lib_ext_clean
   $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp ; \
   cd ../.. ; \
  fi
- echo "[CLEAN] External libraries compilation directories ... done" 
 endef
 define sysincs_clean
  @if test -d $(prefix)/include/system/; then \
@@ -477,7 +480,9 @@ define lib_mod_clean
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
- rmdir $(bindir)
+ @if test -d $(bindir); then \
+  cd $(bindir) ; rm -f * ; cd .. ; rmdir $(bindir); \
+ fi
  echo "[CLEAN] Targets ... done" 
 endef
 define conf_clean

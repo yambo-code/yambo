@@ -42,6 +42,8 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  real(SP) :: k_shift(3),dshift
  character(schlen) :: dump_ch
  !
+ if(allocated(k_map%k_map_dir)) return
+ !
  YAMBO_FREE(WF_shifts)
  YAMBO_ALLOC(WF_shifts,(Xk%nbz,3))
  !

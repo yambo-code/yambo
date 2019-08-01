@@ -26,7 +26,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use pars,           ONLY:IP
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,warning
- use stderr,         ONLY:string_remove
+ use stderr,         ONLY:STRING_remove
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge

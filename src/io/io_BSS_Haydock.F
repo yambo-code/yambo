@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_Haydock(ID,it,reached_threshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)  
+integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)  
  !
  use pars,          ONLY:SP
  use BS,            ONLY:BS_identifier,BS_H_dim
@@ -35,7 +35,7 @@ integer function io_BSS_Haydock(ID,it,reached_threshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf
  implicit none
  !
  integer             :: ID,it
- real(SP)            :: reached_threshold,Bf(it+1),Af(it)
+ real(SP)            :: reached_treshold,Bf(it+1),Af(it)
  complex(SP)         :: Vnm1(BS_H_dim),Vn(BS_H_dim)
  complex(SP),optional:: Cf(it+1),Vnp1(BS_H_dim)
  complex(SP),optional:: Cf_kerr(it+1)
@@ -60,8 +60,8 @@ integer function io_BSS_Haydock(ID,it,reached_threshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf
    call io_elemental(ID,VAR=&
 &       " Haydock Iteration               :",I0=it,DB_I0=it_on_disk)
    call io_elemental(ID,VAR=&
-&       " Haydock reached Treshold        :",R0=reached_threshold,&
-&                                            DB_R0=reached_threshold)
+&       " Haydock reached Treshold        :",R0=reached_treshold,&
+&                                            DB_R0=reached_treshold)
    call io_elemental(ID,VAR=&
 &       " Field direction                 :",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
    !

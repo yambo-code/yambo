@@ -26,7 +26,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  use electrons,      ONLY:n_spin,n_spinor,spin
  use pars,           ONLY:SP,cZERO
  use FFT_m,          ONLY:fft_size
- use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
+ use QP_m,           ONLY:QP_table,QP_n_states
  use wave_func,      ONLY:WAVEs
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
  use matrix_operate, ONLY:UP_matrix_index
@@ -34,7 +34,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  use timing_m,       ONLY:timing
 #if defined _RT
  use drivers,        ONLY:l_real_time
- use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,HEAD_QP_cpu
+ use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k
 #endif
  implicit none
  !
@@ -52,7 +52,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  logical     :: PAR_IND_local(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  !
 #if defined _RT
- if (l_real_time.and.(.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu)) return
+ if (l_real_time.and.(.not.PAR_IND_WF_k%element_1D(ik))) return
 #endif
  !
  call timing('V_real_space_to_H',OPR='start')
@@ -85,11 +85,9 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  do ib=H_ref_bands(1),H_ref_bands(2)
    do ibp=ib,H_ref_bands(2)
    !
-   if (.not.HEAD_QP_cpu) cycle
    if (.not.PAR_IND_local(ib,ibp)) cycle
    !
    ! <i_wf|V_mat|i_wfp>
-   !
    !
    i_wf  =WF%index(ib ,ik,i_sp_pol)
    i_wfp =WF%index(ibp,ik,i_sp_pol)

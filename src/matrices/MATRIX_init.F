@@ -74,13 +74,13 @@ subroutine MATRIX_init( what, M_par, N, Nb)
    return
  endif
  !
+#if defined _SCALAPACK
  ! ... SLK
  !
  if (what=="SLK") then
-#if defined _SCALAPACK
    call SLK_matrix_init(M_par,N, Nb)
-#endif
  endif
+#endif
  !
  ! Response function. Only upper triangle is distributed.
  !

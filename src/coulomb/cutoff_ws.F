@@ -46,10 +46,8 @@ subroutine cutoff_ws(q)
  complex(SP), allocatable :: V_cut(:,:)
  !
  real(dp), external ::vcut_get
- 
  !
  ! build the superperiodicity direct lattice
- ! CONVERTI PRIMA IN RLU!!!!
  !
  nq=1
  rdum=1000
@@ -71,7 +69,6 @@ subroutine cutoff_ws(q)
  !
  call vcut_init(vcut,atws,real(ws_cutoff,DP))
  call vcut_info(vcut)
- 
  !
  ! workspace and further init
  !
@@ -80,8 +77,6 @@ subroutine cutoff_ws(q)
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/q%nibz,wf_ng/))
- !
- call live_timing('WS components',px%n_of_elements(myid+1)/n_threads)
  !
 !$omp parallel default(shared), private(ig,iq,v1,dummy)
  !
@@ -109,28 +104,16 @@ subroutine cutoff_ws(q)
  !
  call OPENMP_update(master_thread)
  !
- call live_timing()
+ if(master_thread) call live_timing()
  !
  ! MPI 2 all
  !
  call PP_redux_wait(V_cut)
  !
  forall (iq=1:q%nibz,ig=1:wf_ng) bare_qpg(iq,ig)=sqrt(1.0_SP/V_cut(iq,ig))
-
  !
  ! cleanup
  !
  deallocate(V_cut)
-
-!
-!
-! do ig=1,wf_ng
-!   do iq=1,nqibz
-!     dummy=sqrt(1. - cos(bare_qpg(iq,ig)*cyl_ph_radius) )
-!     if (abs(dummy)<1.E-5) dummy=1.E-5
-!     bare_qpg(iq,ig)=bare_qpg(iq,ig)/dummy
-!   enddo
-! enddo
-! bare_qpg(1,1)=sqrt(2.0)/cyl_ph_radius
 !
 end subroutine

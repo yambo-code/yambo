@@ -23,9 +23,11 @@
 !
 module IO_m
  !
- use pars,       ONLY:SP,DP,lchlen,schlen,max_io_units,max_active_sections
+ use pars,       ONLY:SP,DP,lchlen,schlen,max_io_units,max_io_vars_open,max_active_sections
  use LOGO,       ONLY:code_version,code_revision,code_GPL_revision
- use parallel_m, ONLY:myid
+#if defined _MPI
+ use parallel_m, ONLY:myid,MPI_INFO_NULL
+#endif
  use com,        ONLY:error
  use netcdf
  !
@@ -50,7 +52,7 @@ module IO_m
  logical           :: io_RESPONSE
  logical           :: io_HF
  logical           :: io_COLLs
- logical           :: io_J
+ logical           :: io_OBSERVABLES
  logical           :: io_CARRIERs
  logical           :: io_GF
  logical           :: io_SC
@@ -71,9 +73,10 @@ module IO_m
  !
  ! Actions
  !
- integer, parameter:: RD_CL=1,OP_RD_CL=2,OP_WR_CL=3,OP_APP_WR_CL=4,OP_RD=5,OP_APP=6,&
+ integer, parameter:: RD_CL=1,OP_RD_CL=2,OP_WR_CL=3,OP_APP_CL=4,OP_RD=5,OP_APP=6,&
 &                     OP_WR=7,RD=8,WR=9,RD_CL_IF_END=10,WR_CL=11,WR_CL_IF_END=12,   &
-&                     OP_IF_START_RD_CL_IF_END=13,OP_IF_START_WR_CL_IF_END=14
+&                     OP_IF_START_RD_CL_IF_END=13,OP_IF_START_WR_CL_IF_END=14,&
+&                     OP_IF_START_APP_CL_IF_END=15
  !
  ! Modes
  !
@@ -98,11 +101,15 @@ module IO_m
  integer, parameter:: IO_READ_MODE  =               nf90_nowrite
  !
 #if defined _NC_CLASSIC
- integer, parameter:: IO_CREATE_MODE=    nf90_share
+ integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_classic_model)
 #elif defined _HDF5_IO
- integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_hdf5)
+ integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_netcdf4)
 #else
  integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
+#endif
+ !
+#if defined _PAR_IO && defined _HDF5_IO
+ integer, parameter:: PAR_IO_CREATE_MODE=ior(nf90_mpiio,nf90_netcdf4)
 #endif
  !
  ! Units
@@ -119,7 +126,7 @@ module IO_m
  integer :: io_code_version(max_io_units,3)
  integer :: io_code_revision(max_io_units,2) ! devel,GPL
  integer :: io_serial_number(max_io_units)
- integer :: io_netcdf_var(max_io_units)
+ integer :: io_netcdf_var(max_io_units,max_io_vars_open)
  logical :: io_resetable(max_io_units)
  character(lchlen)          :: io_file(max_io_units)
  character(lchlen)          :: io_folder(max_io_units)
@@ -142,6 +149,8 @@ module IO_m
  ! Interface
  !
  interface 
+   !
+   ! OLD: def and IO in the same subroutine
    !
    subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                          R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
@@ -170,7 +179,7 @@ module IO_m
                       &                            IPOS)
      !
      use pars
-     integer      :: ID, error
+     integer      :: ID
      character(*),optional :: VAR
      integer,     optional :: VAR_SZ(:),IPOS(:)
      integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:),I5(:,:,:,:,:)
@@ -181,6 +190,80 @@ module IO_m
      integer(LP), optional :: L0,L1(:),L2(:,:),L3(:,:,:),L4(:,:,:,:)
      !
    end subroutine
+   !
+   integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
+     character(*)           :: desc
+     integer,      optional :: type,ID
+     character(*), optional :: subfolder
+     logical,      optional :: no_full_RESET
+     integer,      optional :: COMM
+   end function
+   !
+   !  NEW: def and IO subroutines split in two
+   !
+   subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
+     integer               :: ID
+     character(*)          :: VAR
+     integer               :: VAR_SZ
+     integer               :: VAR_KIND
+     integer               :: MENU
+     character(*),optional      :: par_io_kind
+   end subroutine def_variable_elemental
+   !
+   subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
+     use pars,              ONLY:schlen
+     integer                :: ID
+     character(*)           :: VAR
+     integer                :: VAR_ID
+     integer                :: VAR_SZ(:)
+     integer                :: VAR_KIND
+     character(schlen),optional :: dim_names(:)
+     character(*),optional      :: par_io_kind
+   end subroutine def_variable_bulk
+   !
+   subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
+        &                       I0, DB_I0, I1, DB_I1, &
+        &                       R0, DB_R0, R1, DB_R1, &
+        &                       D0, DB_D0, C0, DB_C0, &
+        &                       L0, DB_L0,            &
+        &                       CH0,DB_CH0,           &
+        &                       UNIT,DESCRIPTION,DO_NOT_DUMP)
+     !
+     use pars,   ONLY:SP,DP,LP,lchlen
+     integer               :: ID
+     character(*),optional :: VAR
+     character(*),optional :: OP(:)
+     integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
+     real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
+     real(DP),    optional :: D0,DB_D0
+     complex(SP), optional :: C0,DB_C0
+     logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
+     character(*),optional :: CH0,DB_CH0
+     character(lchlen),optional :: DESCRIPTION
+     !
+   end subroutine io_variable_elemental
+   !
+   subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,&
+                                        &  R0, R1, R2, R3, R4, R5,&
+                                        &  D0, D1, D2, D3, D4, D5,&
+                                        &  C0, C1, C2, C3, C4, C5,&
+                                        &  Z0, Z1, Z2, Z3, Z4, Z5,&
+                                        &  L0, L1, L2, L3, L4,    &
+                                        & CH0,CH1,CH2,CH3,CH4,    &
+                                        &                     IPOS)
+     !
+     use pars,   ONLY:SP,DP,LP
+     integer, intent(in)   :: ID, VAR_ID
+     integer,     optional :: IPOS(:)
+     integer,     optional ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
+     real(SP),    optional ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
+     real(DP),    optional ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
+     complex(SP), optional ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:)
+     complex(DP), optional ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
+     integer(LP), optional ::  L0, L1(:), L2(:,:), L3(:,:,:), L4(:,:,:,:)
+     character,   optional :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
+     !
+   end subroutine io_variable_bulk
    !
    integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,&
 &                             IMPOSE_GAUGE,PARALLEL_STRUCTURE,FRAG)
@@ -199,9 +282,9 @@ module IO_m
      logical, optional :: CONDITION
    end subroutine
    !
-   subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
+   subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
      integer           :: ID
-     integer, optional :: i_fragment,j_fragment,ierr
+     integer, optional :: i_fragment,j_fragment,ierr,COMM,cpu_id
    end subroutine
    !
  end interface
@@ -214,7 +297,7 @@ module IO_m
      !
      integer :: ID
      open_is_on=any((/io_action(ID)==OP_RD_CL,io_action(ID)==OP_WR_CL,&
-&                     io_action(ID)==OP_APP_WR_CL,io_action(ID)==OP_RD,&
+&                     io_action(ID)==OP_APP_CL,io_action(ID)==OP_RD,&
 &                     io_action(ID)==OP_APP,io_action(ID)==OP_WR/))
    end function
    !
@@ -222,7 +305,7 @@ module IO_m
      !
      integer :: ID
      close_is_on=any((/io_action(ID)==RD_CL,io_action(ID)==OP_RD_CL,&
-&                      io_action(ID)==OP_WR_CL,io_action(ID)==OP_APP_WR_CL,&
+&                      io_action(ID)==OP_WR_CL,io_action(ID)==OP_APP_CL,&
 &                      io_action(ID)==WR_CL/))
    end function
    !
@@ -237,9 +320,10 @@ module IO_m
    logical function write_is_on(ID)
      !
      integer :: ID
-     write_is_on=any((/io_action(ID)==OP_WR_CL       ,io_action(ID)==OP_APP_WR_CL,&
+     write_is_on=any((/io_action(ID)==OP_WR_CL       ,io_action(ID)==OP_APP_CL,&
 &                      io_action(ID)==   WR          ,io_action(ID)==OP_APP      ,&
 &                      io_action(ID)==OP_WR          ,io_action(ID)==       WR_CL,&
+&                                                     io_action(ID)==OP_IF_START_APP_CL_IF_END,&
 &                      io_action(ID)==   WR_CL_IF_END,io_action(ID)==OP_IF_START_WR_CL_IF_END/))
    end function
    ! 
@@ -247,163 +331,6 @@ module IO_m
      !
      integer :: ID
      DB_is_OK=any((/io_status(ID)==IO_NO_ERROR,io_status(ID)==IO_NO_BINDING_ERROR/))
-     !
-   end function
-   !
-   integer function io_connect(desc,subfolder,type,no_full_RESET,ID)
-     !
-     use stderr,        ONLY:string_pack
-     use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
-&                            num_of_alternative_locations,n_alt_jobstr
-     character(*)           :: desc
-     integer                :: type,ID
-     character(*), optional :: subfolder
-     logical,      optional :: no_full_RESET
-     !
-     ! Work Space
-     !
-     integer          ::CREATE_MODE,i_jobstr
-     character(lchlen)::alternative_file(num_of_alternative_locations),folder
-     character(schlen)::subfolder_
-     logical          ::file_found
-     !
-     io_connect=0
-     !
-     if ( (read_is_on(ID).and..not.IO_read).or.&
-&         (write_is_on(ID).and..not.IO_write) ) then
-       io_connect=IO_NOT_ALLOWED
-       call io_reset(ID)
-       return
-     endif
-     !
-     ! Build the file name
-     !
-     subfolder_=' '
-     if (present(subfolder)) subfolder_=subfolder
-     !
-     alternative_file=" "
-     !
-     if (len_trim(io_file(ID))==0) then
-       !
-       if (write_is_on(ID)) then
-         !
-         ! NEW databases are always written respecting the "type" (see mod_com.F)
-         !
-         io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
-         !
-       else if (read_is_on(ID)) then
-         !
-         io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
-         !
-         if (type==1.or.type==2) then
-           !
-           alternative_file=all_locations(desc,subfolder_)
-           !
-         endif
-         !
-       endif
-       !
-     endif
-     !
-     ! Keep the extension for the fragment-related procedures
-     !
-     if (len_trim(io_raw_extension(ID))==0) io_raw_extension(ID)=desc
-     io_extension(ID) =desc
-     io_folder(ID)    =trim(subfolder_)
-     !
-     ! Create Directories 
-     !
-     write (folder,'(2a)') trim(more_io_path),'/SAVE'
-     if (len_trim(jobstr)>0) write (folder,'(3a)') trim(more_io_path),'/',trim(jobstr)
-     if (write_is_on(ID).and.(type==2.or.len_trim(jobstr)==0)) then
-       call mk_dir(more_io_path)
-       call mk_dir(folder)
-       if (present(subfolder)) call mk_dir(string_pack(folder,"/",subfolder))
-     endif
-     !
-     ! Open if to open and to write
-     !
-     if (open_is_on(ID).and.write_is_on(ID)) then
-       !
-       if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
-         !
-         if( file_exists(trim(io_file(ID))) ) then
-           call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
-         else
-           call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
-           call netcdf_call(nf90_enddef(io_unit(ID)),ID)
-           if (io_action(ID)==OP_APP_WR_CL) io_action(ID)=OP_WR_CL
-           if (io_action(ID)==OP_APP) io_action(ID)=OP_WR
-         endif
-         !
-       else
-         !
-         call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
-         call netcdf_call(nf90_enddef(io_unit(ID)),ID)
-         !
-       endif
-       !
-       io_type(ID)=type
-       !
-     endif
-     !
-     ! Open if to open and to read
-     !
-     if (open_is_on(ID).and.read_is_on(ID)) then
-       !
-       if (.not.file_exists(trim(io_file(ID)))) then
-         !
-         file_found=.FALSE.
-         !
-         if (file_exists(trim(alternative_file(1)))) then
-           io_file(ID)=alternative_file(1)
-           file_found=.TRUE.
-         else if (file_exists(trim(alternative_file(2)))) then
-           io_file(ID)=alternative_file(2)
-           file_found=.TRUE.
-         else if (file_exists(trim(alternative_file(3)))) then
-           io_file(ID)=alternative_file(3)
-           file_found=.TRUE.
-         else if (file_exists(trim(alternative_file(4)))) then
-           io_file(ID)=alternative_file(4)
-           file_found=.TRUE.
-         endif
-         !
-         if (.not.file_found) then
-           do i_jobstr=1,n_alt_jobstr
-             if (file_exists(trim(alternative_file(3+2*i_jobstr)))) then
-               io_file(ID)=alternative_file(3+2*i_jobstr)
-               file_found=.TRUE.
-               exit
-             else if (file_exists(trim(alternative_file(4+2*i_jobstr)))) then
-               io_file(ID)=alternative_file(4+2*i_jobstr)
-               file_found=.TRUE.
-               exit
-             endif
-           enddo
-         endif
-         !
-         if (.not.file_found) then
-           io_connect=IO_NO_DATABASE
-           if (present(no_full_RESET)) then
-             io_file(ID)=''
-           else
-             call io_reset(ID)
-             io_type(ID)=0
-           endif
-           return
-         endif
-       endif
-       !
-       if (type==-2) then
-         open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
-       else
-         call netcdf_call(nf90_open(trim(io_file(ID)),IO_READ_MODE,io_unit(ID)),ID)
-       endif
-       !
-       io_type(ID)=type
-       !
-     endif
      !
    end function
    !
@@ -449,7 +376,7 @@ module IO_m
      ! Assign a new unit if the unit is not already open
      !
      if ( any((/ACTION==OP_RD_CL,ACTION==OP_WR_CL,&
-&               ACTION==OP_APP_WR_CL,ACTION==OP_RD,&
+&               ACTION==OP_APP_CL,ACTION==OP_RD,&
 &               ACTION==OP_APP,ACTION==OP_WR/)) ) then
        ID=-1
        do i1=1,max_io_units
@@ -473,21 +400,54 @@ module IO_m
      !
    end subroutine
    !
-   subroutine manage_OP_IF_START_and_CL_IF_END(ID,start_,end_)
+   subroutine manage_OP_IF_START_and_CL_IF_END(ID,NOW,FIRST,LAST,PAR_index)
      !
-     integer :: ID
-     integer :: start_,end_
+     use parallel_m, ONLY:PP_indexes
+     !
+     integer           :: ID,NOW
+     integer, optional :: FIRST,LAST
+     type(PP_indexes), optional :: PAR_index
+     !
+     integer :: start_,end_,ii
+     !
+     start_=1
+     end_  =1
+     if (present(LAST)) then
+       end_  =LAST
+     endif
+     if (present(FIRST)) then
+       start_=FIRST
+     endif
+     if (present(PAR_index)) then
+       start_=0
+       end_  =0
+       do ii=1,size(PAR_index%element_1D)
+         if (PAR_index%element_1D(ii)) then
+           if (start_==0) start_=ii
+           end_=ii
+         endif
+       enddo
+     endif
      !
      if (read_is_on(ID)) then
-       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_RD_CL
-       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_RD
-       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.              start_==end_) io_action(ID)=   RD_CL
-       if (io_action(ID)==            RD_CL_IF_END.and.              start_==end_) io_action(ID)=   RD_CL
+       !
+       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_RD_CL
+       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.NOW==start_              ) io_action(ID)=OP_RD
+       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.                NOW==end_) io_action(ID)=   RD_CL
+       if (io_action(ID)==            RD_CL_IF_END.and.                NOW==end_) io_action(ID)=   RD_CL
+       !
      else  if (write_is_on(ID)) then
-       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_WR_CL
-       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_WR
-       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.              start_==end_) io_action(ID)=   WR_CL
-       if (io_action(ID)==            WR_CL_IF_END.and.              start_==end_) io_action(ID)=   WR_CL
+       !
+       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_WR_CL
+       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.NOW==start_              ) io_action(ID)=OP_WR
+       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
+       if (io_action(ID)==            WR_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
+       !
+       if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_APP_CL
+       if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.NOW==start_              ) io_action(ID)=OP_APP
+       if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
+       if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
+       !
      endif
      !
    end subroutine
@@ -495,6 +455,7 @@ module IO_m
    subroutine io_reset(ID)
      integer :: ID
      io_status(ID)=0
+     !io_type(ID)=0
      io_unit(ID)=0
      io_mode(ID)=0
      io_sec(ID,:)=0
@@ -512,12 +473,32 @@ module IO_m
    end subroutine
    !
    subroutine mk_dir(dirname)
-     use stderr,         ONLY:cstr
+     use pars,           ONLY:schlen
+     use stderr,         ONLY:cstr,STRING_split
      implicit none
      character(*)      :: dirname
+     integer           :: i_j,n_s
+     character(schlen) :: dir(10)
+     character(lchlen) :: ch_tmp
      if (len_trim(dirname)==0) return
-     call imkdir( cstr(trim(dirname)) )
+     call STRING_split(trim(dirname),dir,"/",n_non_empty_strings=n_s)
+     ch_tmp=dir(1)
+     call imkdir( cstr(trim(ch_tmp)) )
+     do i_j=2,n_s
+       ch_tmp=trim(ch_tmp)//"/"//trim(dir(i_j))
+       call imkdir( cstr(trim(ch_tmp)) )
+     enddo
+   
    end subroutine
+   !
+   character(lchlen) function DB_path(dir_,job_,db_)
+     implicit none
+     character(*)      :: dir_,job_,db_
+     DB_path=" "
+     if (len_trim(dir_)>0) DB_path=trim(dir_)//"/"
+     if (len_trim(job_)>0) DB_path=trim(DB_path)//trim(job_)//"/"
+     DB_path=trim(DB_path)//trim(db_)
+   end function
    !
    subroutine cp_file(file_,dest_,ierr_)
      use stderr,         ONLY:cstr
@@ -593,19 +574,22 @@ module IO_m
      INQUIRE (FILE=trim(filename),OPENED=PLAIN_file_is_open)
    end function
    !
-   subroutine netcdf_call(status,ID,VAR)
+   subroutine netcdf_call(status,ID,VAR,ID_VAR)
      use com,           ONLY:error
      integer,      intent (in)           :: status
      integer,      intent (in)           :: ID
+     integer,      intent (in), optional :: ID_VAR
      character(*), intent (in), optional :: VAR
      character(lchlen) :: msg
      character(schlen) :: VARNAME,FILENAME
-     integer           :: local_error
+     integer           :: local_error,VARNUMBER
      if(status /= NF90_NOERR) then
        FILENAME=io_file(ID)
        VARNAME=' NOT DEFINED '
        if(.not.present(VAR)) then
-         local_error=nf90_inquire_variable(io_unit(ID),io_netcdf_var(ID),VARNAME)
+         if(     present(ID_VAR)) VARNUMBER=io_netcdf_var(ID,ID_VAR)
+         if(.not.present(ID_VAR)) VARNUMBER=io_netcdf_var(ID,1)
+         local_error=nf90_inquire_variable(io_unit(ID),VARNUMBER,VARNAME)
          if(local_error/=0) VARNAME=' NOT DEFINED '
        endif
        if(present(VAR)) VARNAME=VAR
@@ -614,12 +598,14 @@ module IO_m
      end if
    end subroutine
    !
-   integer function netcdf_dim(ID,DIM)
-     integer, intent ( in) :: ID,DIM
-     integer       :: dim_found
-     character(12) :: dim_strng
+   integer function netcdf_dim(ID,DIM,dim_name)
+     integer,intent(in)       :: ID,DIM
+     integer                  :: dim_found
+     character(schlen)          :: dim_strng
+     character(schlen),optional :: dim_name
      netcdf_dim=0
      write (dim_strng,'(a,i10.10)') 'D_',dim
+     if (present(dim_name)) dim_strng = dim_name
      dim_found=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
      if (dim_found/=NF90_NOERR) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
    end function

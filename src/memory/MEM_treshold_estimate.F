@@ -34,6 +34,6 @@ subroutine MEM_treshold_estimate( )
  !
  ! In Kb!
  !
- MEM_treshold=max(int(n_spin*nkibz*n_bands*wf_ng*2.*SP/Kilobyte/10.),1000)
+ MEM_treshold=max(int(n_spin*nkibz*n_bands*wf_ng*2.*SP/Kilobyte/10.),10000)
  !
 end subroutine

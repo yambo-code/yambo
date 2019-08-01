@@ -422,7 +422,7 @@ subroutine K_output_file(iq,mode)
      do iw=1,BSS_n_freqs 
        !
        output_data(1:5)=(/w(iw),aimag(beta(iw,1)),real(beta(iw,1)),&
-&                aimag(beta(iw,3)),real(beta(iw,3))/)
+&                aimag(beta(iw,2)),real(beta(iw,2))/)
        n_output_data=5
        if (l_print_col4) then ; n_output_data=7 ; output_data(6:7)=(/aimag(beta(iw,3)),real(beta(iw,3))/) ; endif
        if (l_IP)         then ; n_output_data=3 ; output_data(2:3)=output_data(4:5)                       ; endif

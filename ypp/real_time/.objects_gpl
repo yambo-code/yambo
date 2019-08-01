@@ -2,7 +2,7 @@
 RT_objects = RT_driver.o \
              RT_OBSERVABLES_IO_path.o RT_OBSERVABLES_IO.o \
              RT_X_LRR_real_field.o RT_X_response.o \
-             RT_OBSERVABLES_damp_and_write.o RT_1D_Fourier_Transform.o \
+             RT_OBSERVABLES_damp_and_write.o RT_1D_Fourier_setup.o RT_1D_Fourier_Transform.o \
              RT_write_descriptions.o RT_time_configuration_setup.o RT_damp_it.o
 #endif
 #if defined _YPP_NL

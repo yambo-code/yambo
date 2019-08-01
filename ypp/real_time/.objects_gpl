@@ -6,6 +6,6 @@ RT_objects = RT_driver.o \
              RT_write_descriptions.o RT_time_configuration_setup.o RT_damp_it.o
 #endif
 #if defined _YPP_NL
-NL_objects = NL_driver.o RT_coefficients_Inversion.o
+NL_objects = NL_driver.o RT_coefficients_Inversion.o NL_exc_driver.o
 #endif
 objs = $(RT_objects) $(NL_objects)

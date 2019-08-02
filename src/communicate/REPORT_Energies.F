@@ -44,7 +44,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,header)
  ! Work Space
  !
  integer           :: ik,is_pol,ib,i1
- character(schlen) :: dumb_ch1,dumb_ch2
+ character(schlen) :: dumb_ch1,dumb_ch2,dumb_ch3
  real(SP)          :: E_(n_bands_,n_sp_pol)
  !
  if (header.and..not.(k_range(1)==k_range(2).and.k_range(1)>1) )  &
@@ -61,18 +61,26 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,header)
    dumb_ch2='       '//trim(real2ch(k_al(1)))//' '//&
 &          trim(real2ch(k_al(2)))//' '//trim(real2ch(k_al(3)))//&
 &          ' (rlu) '
+   dumb_ch3='       '//trim(real2ch(k%pt(ik,1)))//' '//&
+&          trim(real2ch(k%pt(ik,2)))//' '//trim(real2ch(k%pt(ik,3)))//&
+&          ' (iku) '
    if(ik>  9) dumb_ch2=' '//trim(dumb_ch2)
    if(ik> 99) dumb_ch2=' '//trim(dumb_ch2)
    if(ik>999) dumb_ch2=' '//trim(dumb_ch2)
+   if(ik>  9) dumb_ch3=' '//trim(dumb_ch3)
+   if(ik> 99) dumb_ch3=' '//trim(dumb_ch3)
+   if(ik>999) dumb_ch3=' '//trim(dumb_ch3)
    !
    if (header) then
      if (ik> 1    ) call msg('r','')
      if (ik<=nXkibz) then
        call msg('r','*X* '//trim(dumb_ch1)//' * weight '//trim(real2ch(Xk%weights(ik))))
        call msg('r','    '//trim(dumb_ch2))
+       call msg('r','    '//trim(dumb_ch3))
      else
        call msg('r',trim(dumb_ch1))
        call msg('r',trim(dumb_ch2))
+       call msg('r',trim(dumb_ch3))
      endif
    endif
    !

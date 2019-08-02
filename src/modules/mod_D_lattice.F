@@ -80,8 +80,8 @@ module D_lattice
  !
  ! Centered cartesian coordinates inside the cell
  !
- real(SP),    allocatable :: x_cc(:,:)
- real(SP)                 :: x_zero_point(3)
+ real(SP),    allocatable :: x_cc(:,:,:)
+ real(SP)                 :: x_CM(3) ! position of the center of mass
  !
  ! Gradients
  !

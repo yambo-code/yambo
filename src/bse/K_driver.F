@@ -21,15 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
+subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  use pars,           ONLY:IP
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,warning
- use stderr,         ONLY:STRING_remove
+ use stderr,         ONLY:STRING_remove,intc
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
+ use DIPOLES,        ONLY:DIPOLE_t
  use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_add_antiresonant,BSS_damp_reference,&
 &                         BSS_uses_DbGd,BSS_q0,BSS_eval_JDOS
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
@@ -53,6 +54,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
  type(X_t)     ::X_static_pp
+ type(DIPOLE_t)::Dip
  type(w_samp)  ::Xw
  !
  ! Work Space
@@ -110,22 +112,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  if (.not.l_bs_fxc) call parser('bs_fxc',l_bs_fxc)
  !
- ! GPL_EXCLUDE_END
- !
- ! W RL size setup looking at the max index of G-G' 
- ! =========
- !
- if (.not.l_rpa_IP) then
-   Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
-   if (BS_n_g_W/= Max_G_m_G ) then
-     BS_n_g_W= Max_G_m_G
-     call warning (' W size reduced due to symmetry constraints')
-     call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
-   endif
- endif
- !
- ! GPL_EXCLUDE_START  
- !
  if (l_bs_fxc) then
    !==========
    !
@@ -181,31 +167,45 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n_freqs
  !
+ ! W RL size setup looking at the max index of G-G' 
+ ! ==================================================
+ if (BS_res_K_corr.or.BS_cpl_K_corr) then
+   Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
+   if (BS_n_g_W> Max_G_m_G ) then
+     call warning (' W size reduced from '//trim(intc(BS_n_g_W))//' to '//trim(intc(Max_G_m_G))//' due to symmetry constraints')
+     BS_n_g_W= Max_G_m_G
+     call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
+   endif
+ endif
+ !
+ !
  ! PARALLEL SETUP
  !================
  call X_duplicate(X_static_pp,X_oscillators) 
- X_oscillators%whoami=5
+ X_oscillators%whoami=X_static_pp%whoami
  X_oscillators%ib(1:2)=BS_bands(1:2)
  X_oscillators%q0=BSS_q0
  !
+ call DIPOLE_dimensions(Ken,Dip,BS_bands,BSS_q0)
+ !
  ! ... EH space (no parallelization)
- call K_Transitions_setup(iq,Ken,Xk,.FALSE.)
+ call K_Transitions_setup(iq,Ken,Xk,Dip,.FALSE.)
  !
  !... Parallel distribution
  call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
  !
  ! ... EH space (with parallelization) and Transition groups build-up
- call K_Transitions_setup(iq,Ken,Xk,.TRUE.)
+ call K_Transitions_setup(iq,Ken,Xk,Dip,.TRUE.)
  !
  !... Blocks build-up
  if (.not.l_rpa_IP) call K_blocks( )
  !
- ! 1. The IP Part (Dipoles included) ...
- ! ======================================
- call K_IP(iq,Ken,Xk,X_oscillators,W_bss)
+ ! 1. The IP Part
+ ! ===============
+ call K_IP(iq,Ken,Xk,Dip,W_bss)
  !
- ! Wave Functions distribution (overwrites the one done in K_IP to calculate the oscillators)
- !=============================---------------------------------------------------------------
+ ! Wave Functions distribution 
+ !=============================
  call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.FALSE.)
  !
  call PARALLEL_WF_index( )
@@ -240,7 +240,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    call PP_redux_wait
    X_tddft%iq=iq
    X_tddft%ng=BS_n_g_exch
-   call OPTICS_driver(Xen,Xk,q,W_bss,X_tddft) 
+   call OPTICS_driver(Xen,Xk,q,W_bss,X_tddft,Dip) 
    !
  endif
  !

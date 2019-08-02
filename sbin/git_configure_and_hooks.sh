@@ -68,6 +68,7 @@ if [ -f .check_configure ]; then
   echo "Regenerating configure after merge"
   cp configure configure_save
   autoconf configure.ac > configure
+  rm -fr autom4te.cache
   if [ \$(diff configure configure_save | head -c 5) ]; then
     echo "configure automatically updated after merge"
     rm configure_save

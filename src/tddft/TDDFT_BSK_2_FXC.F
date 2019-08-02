@@ -25,7 +25,8 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  use pars,          ONLY:SP
  use electrons,     ONLY:spin_occ,spin
- use X_m,           ONLY:DIP_projected,X_t
+ use DIPOLES,       ONLY:DIP_projected
+ use X_m,           ONLY:X_t
  use BS,            ONLY:BS_nT_at_k
  use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_eh_E,BSS_eh_W
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_K_diagonal,FXC,&

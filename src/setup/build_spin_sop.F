@@ -35,6 +35,9 @@ subroutine build_spin_sop()
  complex(SP)    ::spin_RX_delta(2,2),spin_RY_beta(2,2),spin_RZ_alpha(2,2)
  real(SP)       ::alpha,beta,delta,tmp_sop(3,3)
  integer        ::is,i1,i2
+ !DEBUG <
+ real(SP)       :: angles(3,nsym)
+ !DEBUG >
  !
  YAMBO_FREE(spin_sop)
  !
@@ -77,6 +80,10 @@ subroutine build_spin_sop()
    beta= beta /2._SP
    delta=delta/2._SP
    !
+   ! DEBUG <
+   !angles(:,is)=(/alpha,beta,delta/)/pi*180._SP
+   ! DEBUG >
+   !
    ! Sakurai p.166, eq. 3.2.44 + pag 159 eq. 3.2.3
    spin_RX_delta=sigma_0*cos(delta)-cI*sigma_x*sin(delta)
    spin_RY_beta =sigma_0*cos(beta) -cI*sigma_y*sin(beta)
@@ -93,5 +100,14 @@ subroutine build_spin_sop()
    enddo
    !
  enddo
+ !
+ ! DEBUG <
+ !do is=1,nsym
+ !  write(*,*) is, angles(:,is)
+ !  do i1=1,2
+ !    write(*,*) i1,spin_sop(:,i1,is)
+ !  enddo
+ !enddo
+ ! DEBUG >
  !
 end subroutine

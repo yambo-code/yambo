@@ -100,7 +100,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
      do ibp=COLL_bands(1),COLL_bands(2)
        do ib=COLL_bands(1),COLL_bands(2)
          !
-         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)==0) cycle
+         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)=='f') cycle
          !
          i_comp=i_comp+1
          !

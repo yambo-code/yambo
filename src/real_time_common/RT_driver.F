@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_driver(E,X,k,q)
+subroutine RT_driver(E,X,k,q,Dip)
  !
  use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_use_collisions,l_use_Hxc_collisions,l_elph_scatt,l_elel_scatt,l_elphoton_scatt
@@ -29,6 +29,7 @@ subroutine RT_driver(E,X,k,q)
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_spin,n_spinor
  use X_m,            ONLY:X_t
+ use DIPOLES,        ONLY:DIPOLE_t
  use wave_func,      ONLY:WF
  use FFT_m,          ONLY:fft_size
  use interfaces,     ONLY:WF_load,WF_free
@@ -37,15 +38,15 @@ subroutine RT_driver(E,X,k,q)
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,rho_n,magn_n,&
 &                         H_potential,H_kind,H_xc_functional,H_perturbation
  use RT_control,     ONLY:RT_control_alloc,RT_control_free,ID,&
-&                         NE_i_start_time,RT_carriers_object,TIME_adjust,RT_apply
+&                         NE_i_start_time,RT_carriers_object,RT_apply
  use real_time,      ONLY:RT_potential,RT_kind,RT_xc_functional,RT_perturbation,&
 &                         NE_steps,RT_step,G_lesser,RT_bands,&
 &                         RT_alloc,RT_free,NE_i_time,eval_energy,&
-&                         G_lesser_reference,rho_reference,magn_reference, &
-&                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,l_RT_is_WFfree,&
+&                         rho_reference,magn_reference, &
+&                         NE_time,RT_carriers,RT_dyn_step,l_RT_is_WFfree,&
 &                         dG_lesser,l_initial_equilibrium,NE_tot_time,&
 &                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
-&                         l_RT_update_Energies,l_NE_with_fields,l_update_SOC
+&                         l_RT_update_Energies,l_NE_with_fields,l_update_SOC,l_velocity_gauge_corr
  use plasma,          ONLY:PLASMA_free,EH_gas
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_tot,Efield
@@ -63,19 +64,17 @@ subroutine RT_driver(E,X,k,q)
  type(levels)      :: E
  type(bz_samp)     :: k,q
  type(X_t)         :: X(2)
+ type(DIPOLE_t)    :: Dip
  logical, external :: STOP_now
  ! 
  ! Work Space
  !
- integer           :: io_REF
+ integer           :: io_REF,io_err
+ logical           :: l_Dynamics_is_over
  character(schlen) :: sec_title(3)
  real(SP)          :: OBSERVABLES(25)
  !
- ! Timing windows
- !
- integer           :: LT_pump_steps
- logical           :: LT_pump
- real(SP)          :: LT_pump_duration
+ ! I/O
  !
  integer, external :: io_RT_components
  !
@@ -125,12 +124,8 @@ subroutine RT_driver(E,X,k,q)
  ! Dipoles
  !=========
  !
- call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,Bm_index=PAR_IND_B_mat,CLEAN_UP=.TRUE.)
- !
- ! before loading the WF in R-space I check and/or calculatethe optical collisions that 
- ! are done in G-space and would ! force the reloading of the WFs
- !
- call DIPOLE_driver(E,k,X(1),X(1)%q0)
+ call DIPOLE_dimensions(E,Dip,RT_bands,(/0._SP,0._SP,0._SP/))
+ call DIPOLE_IO(k,E,Dip,'read ',io_err,'RT')
  !
  ! In dipole_driver the IO is k-dictated. Here I want only the master to write
  !
@@ -161,6 +156,7 @@ subroutine RT_driver(E,X,k,q)
    ! GPL_EXCLUDE_START
    if(n_spinor==2.and.l_update_SOC) call WF_derivative((/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),(/.true.,.true.,.true./))
    ! GPL_EXCLUDE_END
+   !
    call WF_load(WF,WF_G_max,WF_Go_indx,(/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),space='R',title='-RT',keep_states_to_load=.true.)
    !
    ! As explained in PARALLEL_global_indexes if a QP parallelization is used (k=b=1 cpu)
@@ -193,7 +189,8 @@ subroutine RT_driver(E,X,k,q)
  !
  ! If I loaded the WFs just to compute HARTREE0 and XC0 I can now free the WFs 
  !
- if( (l_use_Hxc_collisions.or.trim(RT_potential)=="IP") .and. eval_energy .and. &
+ if( (l_use_Hxc_collisions.or.trim(RT_potential)=="IP").and. &
+&    .not.(eval_energy.or.l_velocity_gauge_corr)       .and. &
 &    (COLLISIONS_have_HARTREE.or.index(trim(RT_potential),"HARTREE")==0)        ) then
    !
    call WF_free(WF)
@@ -271,18 +268,7 @@ subroutine RT_driver(E,X,k,q)
  call section('=','Real-Time dynamics')
  !######################################
  !
- LT_pump=l_NE_with_fields
- if (l_NE_with_fields) then
-   LT_pump_duration=min(maxval(Efield(:)%width)*8,NE_tot_time)
-   LT_pump_steps=LT_pump_duration/RT_step
- endif
- if (NE_i_start_time<LT_pump_steps) then
-   call live_timing("[RT] Dynamics (T<"//trim(real2ch(real(LT_pump_duration/FS2AUT,SP)))//" fs) :",&
-&                   LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP)
- else
-   LT_pump=.FALSE.
-   call live_timing('[RT] Dynamics :',NE_steps-NE_i_start_time+1,DEPTH=0.01_SP)
- endif
+ call RT_timing(0)
  !
  do while (.not.l_Dynamics_is_over)
    !
@@ -302,11 +288,14 @@ subroutine RT_driver(E,X,k,q)
    ! Calculate the RT Hamiltonian Ho_plus_Sigma
    !============================================
    call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_tot,E,k)
-   !call RT_Hamiltonian(G_lesser(:,:,:,i_MEM_collision)+dG_lesser(:,:,:,i_MEM_collision),A_tot,E,k)
+   !
+   ! GPL_EXCLUDE_START
    !
    ! Rotation in the Coherent Hamiltonian basis
    !============================================
-   call RT_Hamiltonian_diagonalize(E,k,OBSERVABLES(22:25))
+   call RT_Hamiltonian_diagonalize(E,k,OBSERVABLES(22:25),A_tot)
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
@@ -335,45 +324,22 @@ subroutine RT_driver(E,X,k,q)
    ! Memory maps for the step (to be done before the NE_time/NE_i_time update)
    !=========================
    call RT_MEMORY_index( )
+   !	
+   ! Timing
+   !========
+   call RT_timing(nint(RT_dyn_step/RT_step))
    !
-   ! I (eventually) stop after all actions at the time just calculated in the previous step of the loop
+   ! I (eventually) stop 
    !=======================
-   !
-   call PP_redux_wait()
-   !
-   l_Dynamics_is_over=NE_i_time==NE_steps.or.NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now(.FALSE.)
-   !
    if (l_Dynamics_is_over) cycle
    !
    ! Integration
    !=============
-   call RT_Integrator(dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_tot,A_tot,RT_dyn_step,E,k,q,NE_time)
-   !
-   ! G_lesser update
-   !=================
-   G_lesser(:,:,:,i_MEM_next)=G_lesser_reference+dG_lesser(:,:,:,i_MEM_next)
-   !
-   ! Time Update
-   !=============
-   NE_i_time       = NE_i_time+nint(RT_dyn_step/RT_step)
-   NE_time         = TIME_adjust((NE_i_time-1)*RT_step)
-   i_MEM_collision = i_MEM_next
-   !	
-   ! Timing
-   !========
-   if (NE_i_time>=LT_pump_steps.and.LT_pump) then
-     !
-     LT_pump=.FALSE.
-     call live_timing( )
-     call live_timing('[RT] Dynamics (pump-free region) :',NE_steps-LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP) 
-     !
-   endif
-   !
-   call live_timing(steps=nint(RT_dyn_step/RT_step))
+   call RT_Integrator(G_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_tot,A_tot,E,k,q)
    !
  enddo
  !
- call live_timing( )
+ call RT_timing(-1)
  !
  ! Finalize & Free
  !-----------------
@@ -397,5 +363,51 @@ subroutine RT_driver(E,X,k,q)
      if (allocated(HXC_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
      call set_real_printed_length()
    end subroutine
+   !
+   subroutine RT_timing(steps)
+     !
+     integer :: steps
+     !
+     ! Timing windows
+     !
+     integer           :: LT_pump_steps
+     logical           :: LT_pump
+     real(SP)          :: LT_pump_duration
+     !
+     if (steps==0) then
+       !
+       LT_pump=l_NE_with_fields
+       if (l_NE_with_fields) then
+         LT_pump_duration=min(maxval(Efield(:)%width)*8,NE_tot_time)
+         LT_pump_steps=LT_pump_duration/RT_step
+       endif
+       if (NE_i_start_time<LT_pump_steps.and.l_NE_with_fields) then
+         call live_timing("[RT] Dynamics (T<"//trim(real2ch(real(LT_pump_duration/FS2AUT,SP)))//" fs) :",&
+      &                   LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP)
+       else
+         LT_pump=.FALSE.
+         call live_timing('[RT] Dynamics :',NE_steps-NE_i_start_time+1,DEPTH=0.01_SP)
+       endif
+       !
+     else if(steps>0) then
+       !
+       call PP_redux_wait()
+       !
+       l_Dynamics_is_over=NE_i_time==NE_steps.or.NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now(.FALSE.)
+       !
+       if (NE_i_time>=LT_pump_steps.and.LT_pump) then
+         LT_pump=.FALSE.
+         call live_timing( )
+         call live_timing('[RT] Dynamics (pump-free region) :',NE_steps-LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP) 
+       endif
+       call live_timing(steps=steps)
+       !
+     else if(steps<0) then
+       !
+       call live_timing()
+       !
+     endif
+     !
+   end subroutine RT_timing
    !
 end subroutine RT_driver

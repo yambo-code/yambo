@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine External_corrections(en,Xen,Ken,Xk,k,X)
+subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !
  use drivers,       ONLY:l_optics,l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_bss,l_gw0,l_bse,l_alda_fxc
  use X_m,           ONLY:X_t
- use electrons,     ONLY:levels,n_bands
+ use electrons,     ONLY:levels,n_bands,E_duplicate
  use R_lattice,     ONLY:bz_samp
  use BS,            ONLY:BS_bands
  use QP_CTL_m,      ONLY:QP_apply
@@ -46,7 +46,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  !
  implicit none
  !
- type(levels) ::en,Xen,Ken
+ type(levels) ::en,Xen,Ken,DIPen
  type(X_t)    ::X(4) 
  type(bz_samp)::k,Xk
  !
@@ -126,6 +126,10 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
 #endif
  !
  ! GPL_EXCLUDE_END
+ !
+ call E_duplicate(en,DIPen)
+ DIPen%nbf=minval((/en%nbf,Xen%nbf,Ken%nbf/))
+ DIPen%nbm=maxval((/en%nbm,Xen%nbm,Ken%nbm/))
  !
  call section('r',' ')
  !

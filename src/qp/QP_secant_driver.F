@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw)
+subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  !Procedure for non-perturbative solution of Dyson equation.
  !Here it`s solved real part of Dyson Eq. with a fixed
@@ -53,6 +53,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp,W_reset
+ use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q
  use QP_m,          ONLY:QP_t,QP_Vxc,QP_Vnl_xc,QP_Sc,QP_n_W_freqs,QP_W,QP_n_states,&
@@ -67,6 +68,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw)
  type(bz_samp)::Xk,k,q
  type(X_t):: X
  type(QP_t):: qp
+ type(DIPOLE_t) :: Dip
  type(w_samp)::Xw
  !
  ! Work Space 
@@ -81,7 +83,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw)
  !
  !I need to store on disk the <W> m. elemnts
  !
- call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0)
+ call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0)
  !
  !I prepare the Sc energy type
  !

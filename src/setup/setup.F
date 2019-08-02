@@ -24,6 +24,7 @@
 subroutine setup(en,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,pi,schlen
+ use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,&
 &                         BZ_DbGd_nbands,DbGd_is_symmetry_expanded,BZ_DbGd_tot_nk_levels
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
@@ -31,12 +32,12 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
- use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
+ use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
  use com,            ONLY:msg,error,warning
  use stderr,         ONLY:intc,real2ch
  use IO_m,           ONLY:REP,DUMP,NONE
- use vec_operate,    ONLY:cross_product,c2a
+ use vec_operate,    ONLY:c2a,define_b_and_DL_vol
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
  use interfaces,     ONLY:OCCUPATIONS_Fermi
 #if defined _SC
@@ -48,6 +49,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         X_xc_functional,setup_global_XC,K_kind,K_xc_functional,loaded_WF_xc_string,&
 &                         X_perturbation,G_perturbation,K_perturbation,WF_kind,WF_xc_functional,WF_perturbation
 #endif
+ !
 #include <memory.h>
  !
  type(levels)    ::en,Xen,Ken
@@ -99,17 +101,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! DL vol
  !
- DL_vol=0.
- rv=cross_product(a(2,:),a(3,:))
- DL_vol=abs(dot_product(a(1,:),rv))
+ call define_b_and_DL_vol()
  call msg('r','DL volume [au]:',DL_vol)
  RL_vol=(2._SP*pi)**3/DL_vol
- !
- ! RL unit vectors 
- !
- b(1,:)=cross_product(a(2,:),a(3,:))*2._SP*pi/DL_vol
- b(2,:)=cross_product(a(3,:),a(1,:))*2._SP*pi/DL_vol
- b(3,:)=cross_product(a(1,:),a(2,:))*2._SP*pi/DL_vol
  !
  call msg('nr','Reciprocal Lattice(RL) unit cell [iku  /  cc]')
  rv=b(1,:)
@@ -236,6 +230,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call section('=','K-grid lattice')
  !=================================
  !
+ Xk_grid_new_mapping=.false.
+ !
+ call parser('NoDiagSC',Xk_grid_new_mapping)
+ if(Xk_grid_new_mapping) call msg('sr','Using the new bz sampling setup')
+ !
  i_err=k_lattice(k,Xk,1,.TRUE.)
  if (i_err /= 0 ) then
    call warning('Trying to expand the k-grid')
@@ -266,7 +265,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call section('=','Non periodic geometry')
    !========================================
    !
-   call check_periodic_directions()
+   call check_periodic_directions((/.false.,.false.,.false./))
    !
  endif
  !

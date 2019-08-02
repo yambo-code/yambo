@@ -54,28 +54,34 @@ module parallel_m
  !    - return the maximum and the location 
  !
  use pars,       ONLY:SP,DP,schlen,lchlen,max_n_of_cpus,MAX_N_GROUPS,MAX_N_OF_CHAINS,n_CPU_str_max
+ !
 #include<memory.h>
  !
 #if defined _MPI
  include 'mpif.h'
 #else
  integer            :: mpi_comm_world=0
+ integer, parameter :: mpi_comm_null =0
 #endif
  !
  integer            :: myid
  integer            :: ncpu
- integer            :: n_nodes  = 1
- integer            :: n_MPI    = 1
-#if defined _MPI
- integer, parameter :: comm_default_value  = MPI_COMM_NULL
-#else
- integer, parameter :: comm_default_value  = 0
-#endif
+ integer            :: n_nodes(1)  = 1
+ integer            :: n_IO_nodes  = 1
+ integer            :: n_MPI       = 1
+ !
+ ! Node name
+ !
+ character(lchlen)  :: host_name
+ integer            :: host_name_length
+ !
+ ! This should be removed and mpi_comm_null used everywhere
+ !
+ integer, parameter :: comm_default_value  = mpi_comm_null
  !
  ! Logicals
  !
- logical            :: l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,&
-&                      l_par_X_G_finite_q,l_par_SE,l_par_RT,l_par_SC,l_par_NL
+ logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_SE,l_par_RT,l_par_SC,l_par_NL
  !
  ! In a parallel runs, when some loops not involving all CPU's are parallelized it is usefull to keep 
  ! the operations local in the cpu world
@@ -87,9 +93,9 @@ module parallel_m
  !
  ! Communicators
  !
- integer            :: n_groups                =0     ! groups of active chains
+ integer            :: n_groups                =0          ! groups of active chains
  integer            :: nchains_group(2*MAX_N_GROUPS)=0     ! chains limits in the group
- integer            :: ncpu_chain(MAX_N_OF_CHAINS)=1  ! #CPUs in each chain
+ integer            :: ncpu_chain(MAX_N_OF_CHAINS)=1       ! #CPUs in each chain
  !
  ! MPI intra-groups Communicators
  !
@@ -163,6 +169,20 @@ module parallel_m
    integer, allocatable :: first_of_1D(:)
  end type PP_indexes
  !
+ type PARk_str
+   type(MPI_comm)      :: COM_ibz_INDEX
+   type(MPI_comm)      :: COM_ibz_A2A
+   type(PP_indexes)    :: IND_ibz
+   type(PP_indexes)    :: IND_bz
+   integer,allocatable :: ibz_index(:)
+   integer,allocatable :: bz_index(:)
+   integer             :: nibz
+   integer             :: nbz
+   integer             :: comm_world
+ end type
+ !
+ type(PARk_str),SAVE   :: PAR_K_scheme
+ !
  ! Number of Bands to load
  !=========================
  !
@@ -192,11 +212,20 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_Xk_bz
  type(PP_indexes),SAVE :: PAR_IND_G_k
  !
- ! ... linear response
+ ! ... DIPOLES
+ type(PP_indexes),SAVE :: PAR_IND_DIPk_ibz
+ type(PP_indexes),SAVE :: PAR_IND_DIPk_bz
+ type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_DIP
+ type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_DIP
+ !
+ ! ... Overlaps
+ type(PP_indexes),SAVE :: PAR_IND_OVLPk_ibz
+ type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_OVLP
+ type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_OVLP
+ !
+ ! ... linear response & BSK
  type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_X(n_parallel_X_types)
  type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_X(n_parallel_X_types)
- type(PP_indexes),SAVE :: PAR_IND_DIPk_ibz
- type(PP_indexes),SAVE :: PAR_IND_OVLP_ibz
  !
  ! ... QP
  type(PP_indexes),SAVE :: PAR_IND_QP
@@ -251,6 +280,17 @@ module parallel_m
  integer            :: PAR_IND_Xk_bz_ID
  integer            :: PAR_IND_G_k_ID
  !
+ ! ... DIPOLES
+ integer            :: PAR_IND_DIPk_bz_ID
+ integer            :: PAR_IND_DIPk_ibz_ID
+ integer            :: PAR_IND_VAL_BANDS_DIP_ID
+ integer            :: PAR_IND_CON_BANDS_DIP_ID
+ !
+ ! ... Overlaps
+ integer            :: PAR_IND_OVLPk_ibz_ID
+ integer            :: PAR_IND_VAL_BANDS_OVLP_ID
+ integer            :: PAR_IND_CON_BANDS_OVLP_ID
+ !
  ! ... linear response & BSK
  integer            :: PAR_IND_VAL_BANDS_X_ID(n_parallel_X_types)
  integer            :: PAR_IND_CON_BANDS_X_ID(n_parallel_X_types)
@@ -267,9 +307,6 @@ module parallel_m
  !
  ! .... Frequencies
  integer            :: PAR_IND_freqs_ID
- !
- ! ... Optical oscillators
- integer            :: PAR_IND_DIPk_ID
  !
  ! ... Freqs
  integer            :: PAR_IND_FREQ_ID
@@ -317,17 +354,27 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_A2A
  !
+ ! ... DIPOLES
+ type(MPI_comm),SAVE :: PAR_COM_DIPk_ibz_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_DIPk_ibz_A2A
+ type(MPI_comm),SAVE :: PAR_COM_DIPk_bz_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_DIPk_bz_A2A
+ type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_DIP
+ type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_DIP
+ !
+ ! ... Overlaps
+ type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_OVLP
+ type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_OVLP
+ !
  ! ... linear response & BSK
- type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
- type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
+ type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_X(n_parallel_X_types)
+ type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_X(n_parallel_X_types)
  type(MPI_comm),SAVE :: PAR_COM_X_WORLD_RL_resolved
  type(MPI_comm),SAVE :: PAR_COM_X_WORLD
- type(MPI_comm),SAVE :: PAR_COM_DIPOLES
- type(MPI_comm),SAVE :: PAR_COM_DIPOLES_k_subgroup
  !
  ! ... BSK
- type(MPI_comm),SAVE :: PAR_COM_eh_A2A
  type(MPI_comm),SAVE :: PAR_COM_eh_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_eh_A2A
  type(MPI_comm),SAVE :: PAR_COM_T_INDEX
  !
  ! ... Haydock solver
@@ -347,6 +394,8 @@ module parallel_m
  integer            :: PAR_EH_range     = 0
  integer            :: PAR_QP_range     = 0
  integer            :: PAR_Q_range(2)   = 0
+ integer            :: PAR_Dip_ib(2)    = 0
+ integer            :: PAR_Dip_ib_lim(2)= 0
  integer            :: PAR_X_ib(2)      = 0
  integer            :: PAR_X_iq(2)      = 0
  integer            :: PAR_n_bands(2)   = 0
@@ -373,10 +422,12 @@ module parallel_m
  integer            :: PAR_Kk_nibz
  integer            :: PAR_Xk_nibz
  integer,allocatable:: PAR_Xk_ibz_index(:)
- integer            :: PAR_DIPk_nibz
- integer,allocatable:: PAR_DIPk_ibz_index(:)
  integer            :: PAR_Xk_nbz
  integer,allocatable:: PAR_Xk_bz_index(:)
+ integer            :: PAR_DIPk_nibz
+ integer,allocatable:: PAR_DIPk_ibz_index(:)
+ integer            :: PAR_DIPk_nbz
+ integer,allocatable:: PAR_DIPk_bz_index(:)
  integer            :: PAR_BS_nT_col_grps 
  integer,allocatable:: PAR_BS_T_grps_index(:)
  integer            :: PAR_nG_bands 
@@ -396,7 +447,6 @@ module parallel_m
 &                   i81share,                                        &
 &                   r0share,r1share,r2share,r3share,                 &
 &                   c0share,c1share,c2share,c3share,c4share,c5share, &
-&                   ch0share,                                        &
 #if ! defined _DOUBLE
                     d0share,d1share,d2share,d3share,                 &
 #endif
@@ -504,12 +554,12 @@ module parallel_m
    end subroutine CPU_and_ROLE_strings_restore
    !
    subroutine CPU_str_reset()
-     CPU_structure(1)%Long_Description="Response_G_space_Zero_Momentum"
-     CPU_structure(1)%Short_Description="X_q_0"
+     CPU_structure(1)%Long_Description="DIPOLES"
+     CPU_structure(1)%Short_Description="DIP"
      CPU_structure(2)%Long_Description="Response_G_space_Finite_Momentum"
      CPU_structure(2)%Short_Description="X_finite_q"
      CPU_structure(3)%Long_Description="Response_G_space"
-     CPU_structure(3)%Short_Description="X_all_q"
+     CPU_structure(3)%Short_Description="X"
      CPU_structure(4)%Long_Description="Response_T_space"
      CPU_structure(4)%Short_Description="BS"
      CPU_structure(5)%Long_Description="Self_Energy"
@@ -584,7 +634,7 @@ module parallel_m
      if (present(COMM)) then
        local_COMM=COMM
      endif
-     if (local_COMM==comm_default_value) local_COMM=mpi_comm_world
+     if (local_COMM==comm_default_value) return
      call mpi_barrier(local_COMM,i_err)
 #endif
    end subroutine
@@ -626,7 +676,7 @@ module parallel_m
    end subroutine
    !
    subroutine i1share(array,imode,COMM)
-     integer(4):: array(:)
+     integer:: array(:)
      integer, optional :: imode,COMM
 #if defined _MPI
      integer ::omode,LOCAL_COMM
@@ -743,29 +793,6 @@ module parallel_m
      call mpi_allreduce(array(1,1,1),larray,dimension,mpi_integer,mpi_sum,LOCAL_COMM,i_err)
      array=reshape(larray,dimensions)
      deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine ch0share(chval,COMM)
-     character(lchlen) :: chval
-     integer, optional :: COMM
-#if defined _MPI
-     integer          :: LOCAL_COMM   ! Work Space
-     character(lchlen):: local_chval  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     local_chval=' '
-     call mpi_allreduce(chval,local_chval,lchlen,MPI_CHARACTER,mpi_sum,LOCAL_COMM,i_err)
-     chval=local_chval
      call mpi_barrier(LOCAL_COMM,i_err)
 #endif
    end subroutine
@@ -1397,6 +1424,21 @@ module parallel_m
      if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,1, LOCAL_COMM,i_err)
      if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,1, LOCAL_COMM, MPI_status, i_err)
      !
+#endif
+   end subroutine
+   !
+   subroutine PARALLEL_host_name
+#if defined _MPI
+     character(MPI_MAX_PROCESSOR_NAME) :: machine_name
+     integer :: i_err
+     if (ncpu>1) then
+       call MPI_GET_PROCESSOR_NAME(machine_name,host_name_length,i_err)
+       host_name=machine_name
+     else
+       call igethname(host_name,host_name_length)
+     endif
+#else
+     call igethname(host_name,host_name_length)
 #endif
    end subroutine
    !

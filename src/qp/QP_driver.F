@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
+subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  use pars,          ONLY:SP,pi,cONE,cZERO
  use units,         ONLY:HA2EV
@@ -29,6 +29,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:real2ch
  use R_lattice,     ONLY:bz_samp
+ use DIPOLES,       ONLY:DIPOLE_t
  use frequency,     ONLY:w_samp
  use com,           ONLY:msg,warning
  use X_m,           ONLY:X_t
@@ -54,6 +55,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  type(bz_samp)::Xk,k,q
  type(X_t)    ::X
  type(w_samp) ::Xw
+ type(DIPOLE_t)::Dip
  !
  ! Work Space
  !
@@ -118,7 +120,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    GF_is_causal=Finite_Tel.or.l_elph_corr 
    !
- else if (.not.l_life) then
+ else if (l_life) then
+   call section('*','Dyson equation: QP lifetimes')
+   !
+ else
    return
    !
  endif
@@ -308,7 +313,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  if (trim(QP_solver)=='g') then
    !
-   if (l_elel_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+   if (l_elel_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
    !
 # if defined _ELPH 
    !
@@ -328,14 +333,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  if (l_life) then
    !
-   if (l_elel_corr)     call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+   if (l_elel_corr)     call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
    !
 #if defined _QED
    !
    ! Radiative Lifetimes (Using <p>)
    !=================================
    !
-   if (l_elphoton_corr) call QED_Radiative_Lifetimes(en,k,q,qp,X)
+   if (l_elphoton_corr) call QED_Radiative_Lifetimes(en,k,q,qp,X,Dip)
    !
 #endif
    !

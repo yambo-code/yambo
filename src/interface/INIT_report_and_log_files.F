@@ -34,6 +34,9 @@ subroutine INIT_report_and_log_files()
  !
  integer          :: i_r
  character(lchlen)::jch,rch
+ !
+ write_to_log      = write_to_log_default
+ live_timing_is_on = write_to_log_default
  ! 
  if (trim(jobstr)=='') write (repfile,'(2a)') trim(com_path),'/r'
  if (trim(jobstr)/='') write (repfile,'(4a)') trim(com_path),'/','r-',trim(jobstr)
@@ -57,12 +60,9 @@ subroutine INIT_report_and_log_files()
      logfile=jch
    endif
  enddo
- if (ncpu>1) then
+ if (ncpu>1.and.log_as_a_file) then
    jch=logfile
    logfile=trim(jch)//"_CPU_"//trim(intc(myid+1))
  endif
- !
- write_to_log      = write_to_log_default
- live_timing_is_on = write_to_log_default
  !
 end subroutine

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,31 +21,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_DIPOLES(X,ID)
+integer function io_DIPOLES(Dip,ID)
  !
  use pars,          ONLY:schlen
- use X_m,           ONLY:X_t,DIP_iR,DIP_P,X_alloc
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_v,DIP_alloc
  use electrons,     ONLY:n_spin
  use R_lattice,     ONLY:nXkibz
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,io_DIP,&
 &                        io_bulk,read_is_on,io_header,io_extension,&
 &                        IO_NOT_ALLOWED,io_fragment,manage_OP_IF_START_and_CL_IF_END
- use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_DIPk_nibz
 #if defined _RT
- use X_m,           ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
+ use DIPOLES,       ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
  use electrons,     ONLY:n_spinor
- use com,           ONLY:secnm
 #endif
 #if defined _SC || defined _RT
- use X_m,           ONLY:P_square
- use drivers,       ONLY:l_sc_run
+ use DIPOLES,       ONLY:P_square
  use drivers,       ONLY:l_real_time,l_sc_run
 #endif
+ use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
  !
  implicit none
- type(X_t)   ::X
- integer     ::ID
+ !
+ type(DIPOLE_t) :: Dip
+ integer        :: ID
  !
  ! Work Space
  !
@@ -65,14 +64,7 @@ integer function io_DIPOLES(X,ID)
  !
  call timing('io_DIPOLES',OPR='start')
  !
- io_extension(ID)='dip_iR_and_P'
-#if defined _SC
- if (l_sc_run)    io_extension(ID)='dip_iR_P_and_P2'
-#endif
-#if defined _RT
- l_real_time_magn_dipoles=l_real_time.and.n_spin>1.and.(.not.index(secnm,"Dielectric")/=0)
- if (l_real_time_magn_dipoles) io_extension(ID)='dip_iR_P_spin_and_P2'
-#endif
+ io_extension(ID)='dipoles'
  !
  io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
  if (io_DIPOLES/=0) goto 1
@@ -82,7 +74,7 @@ integer function io_DIPOLES(X,ID)
    io_DIPOLES=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,FRAG=frag_DIP)
    if (io_DIPOLES/=0) goto 1
    !
-   io_DIPOLES=variables_DIPOLES(X,ID)
+   io_DIPOLES=variables_DIPOLES(Dip,ID)
    if (io_DIPOLES/=0) goto 1
    !
  endif
@@ -98,12 +90,12 @@ integer function io_DIPOLES(X,ID)
  !
  if (ik==0) goto 1
  !
- ik_mem=PAR_DIPk_ibz_index(ik)
+ ik_mem=PAR_K_scheme%ibz_index(ik)
  !
  ! Reading size and position
  !
- DIP_size=(/2,3,X%db_ib(2)-X%db_ib_lim(2)+1,X%db_ib_lim(1)-X%db_ib(1)+1/)
- DIP_ipos=(/1,1,X%ib_lim(2)-X%db_ib_lim(2)+1,X%ib(1)-X%db_ib(1)+1/)
+ DIP_size=(/2,3,Dip%db_ib(2)-Dip%db_ib_lim(2)+1,Dip%db_ib_lim(1)-Dip%db_ib(1)+1/)
+ DIP_ipos=(/1,1,Dip%ib_lim(2)-Dip%db_ib_lim(2)+1,Dip%ib(1)-Dip%db_ib(1)+1/)
  !
 #if defined _RT
  Pspinor_size(1:4)=(/2,3,n_spinor,n_spinor/)
@@ -121,21 +113,26 @@ integer function io_DIPOLES(X,ID)
  P2_ipos(2:3)=DIP_ipos(3:4)
 #endif
  !
+#if defined _SC  || defined _RT
+ l_real_time_magn_dipoles=l_real_time.and.n_spin>1
+#endif
+ !
  if (read_is_on(ID)) then
-   call X_alloc('DIP_iR',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
-   call X_alloc('DIP_P' ,(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+   call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+   call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+   call DIP_alloc('DIP_v' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    !
    ! GPL_EXCLUDE_START
    !
 #if defined _RT
    if (l_real_time_magn_dipoles) then
-     call X_alloc('DIP_orbital',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
-     call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
-     if (n_spinor==2) call X_alloc('DIP_P_spinor',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+     call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+     call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+     if (n_spinor==2) call DIP_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    endif
 #endif
 #if defined _SC || defined _RT
-   if (l_sc_run.or.l_real_time)  call X_alloc('P_square',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+   if (l_sc_run.or.l_real_time)  call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
 #endif
    !
    ! GPL_EXCLUDE_END
@@ -161,6 +158,12 @@ integer function io_DIPOLES(X,ID)
  write (VAR_name,'(3(a,i4.4))') 'DIP_P_k_',ik,'_spin_',i_sp_pol
  call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
  call io_bulk(ID,C3=DIP_P(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
+ !
+ ! v
+ !
+ write (VAR_name,'(3(a,i4.4))') 'DIP_v_k_',ik,'_spin_',i_sp_pol
+ call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
+ call io_bulk(ID,C3=DIP_v(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
  !
  ! GPL_EXCLUDE_START
  !
@@ -206,7 +209,7 @@ integer function io_DIPOLES(X,ID)
    !
    write (VAR_name,'(3(a,i4.4))') 'P_square_k_',ik,'_spin_',i_sp_pol
    call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=P2_size)
-   call io_bulk(ID,C2=P_square(:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos )
+   call io_bulk(ID,C2=P_square(:,:,ik_mem,i_sp_pol),IPOS=P2_ipos )
    !
  endif
 #endif

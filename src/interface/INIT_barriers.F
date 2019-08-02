@@ -91,27 +91,27 @@ subroutine INIT_barriers()
  ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_real_time) then
-   on_runlevels='HF_and_locXC cohsex em1s negf collisions el_el_corr el_ph_corr '//&
+   on_runlevels='HF_and_locXC cohsex em1s dipoles negf collisions el_el_corr el_ph_corr '//&
 &               'el_el_scatt el_ph_scatt el_photon_scatt el_photon_corr'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
  !
  if (l_nl_optics) then
-   on_runlevels='chi tddft bse bsk bss ppa em1s em1d nloptics'
+   on_runlevels='chi tddft bse ss ppa em1s dipoles em1d nloptics'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
  !
  if (l_eval_collisions) then
-   on_runlevels='scrun HF_and_locXC cohsex em1s collisions el_el_corr el_ph_corr el_el_scatt '//&
+   on_runlevels='scrun HF_and_locXC cohsex em1s dipoles collisions el_el_corr el_ph_corr el_el_scatt '//&
 &               'el_ph_scatt el_photon_scatt el_photon_corr'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
  !
  if (l_sc_run) then
-   on_runlevels='scrun HF_and_locXC cohsex em1s negf magnetic el_el_corr collisions '
+   on_runlevels='scrun HF_and_locXC cohsex em1s dipoles negf magnetic electric el_el_corr collisions '
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
@@ -119,7 +119,7 @@ subroutine INIT_barriers()
  ! GPL_EXCLUDE_END SC_IGNORE
  !
  if (gw0_cohsex) then
-   call switch_off_runlevel('all',on_name='gw0 em1s cohsex el_el_corr el_ph_corr HF_and_locXC '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='gw0 em1s dipoles cohsex el_el_corr el_ph_corr HF_and_locXC '//trim(always_runlevels))
    goto 1
  endif
  !
@@ -158,7 +158,7 @@ subroutine INIT_barriers()
    goto 1
  endif
  if (tddft_r_space) then
-   call switch_off_runlevel('all',on_name='optics bse bsk bss tddft '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='optics bse bss tddft '//trim(always_runlevels))
    goto 1
  endif
  !
@@ -167,7 +167,7 @@ subroutine INIT_barriers()
  l_flag=l_bss.or.l_bse.or.l_photolum
 #endif
  if (l_flag) then
-   on_runlevels='optics bse bsk bss tddft em1s em1d ppa photolum'
+   on_runlevels='optics bse bss tddft em1s dipoles em1d ppa photolum'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
@@ -180,8 +180,8 @@ subroutine INIT_barriers()
  ! Non Uniform grids
  !===================
  if (.not.Xk_grid_is_uniform) then
-   on_runlevels='optics chi bse bsk bss'
-   if (l_elph_corr) on_runlevels='optics chi bse bsk bss el_ph_corr gw0'
+   on_runlevels='optics chi bse bss'
+   if (l_elph_corr) on_runlevels='optics chi bse bss el_ph_corr gw0'
    if (tddft_r_space.or.bse_sex.or.bse_bsfxc) BSK_mode='hartree'    
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
  endif 
@@ -189,10 +189,10 @@ subroutine INIT_barriers()
  ! SPIN
  !=============
  if (n_spin>2) then
-   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scrun'
+   on_runlevels='optics chi bse bss em1s dipoles em1d ppa HF_and_locXC cohsex gw0 magnetic electric scrun'
    on_runlevels=trim(on_runlevels)//' negf collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt'
    ! GPL_INCLUDE_START SC_IGNORE
-   !on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0'
+   !on_runlevels='optics chi bse bss em1s dipoles em1d ppa HF_and_locXC cohsex gw0'
    ! GPL_INCLUDE_END SC_IGNORE
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
  endif 

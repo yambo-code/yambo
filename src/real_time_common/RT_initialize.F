@@ -72,6 +72,7 @@ subroutine RT_initialize(E,k,q)
  ! Logicals
  !==========
  !
+ call parser('InducedField' ,        l_RT_induced_field)
  !
  eval_DFT     =  l_sc_is_libDFT
  eval_HARTREE =  l_sc_hartree

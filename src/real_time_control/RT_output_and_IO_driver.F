@@ -55,6 +55,13 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    call RT_output(what="open curr pol")
    !
    !
+   ! Field(s)
+   !==========
+   if (l_NE_with_fields) then
+     call RT_output(what="open ext")
+     if(l_RT_induced_field)  call RT_output(what="open tot ind")
+   endif
+   !
  case('write')
    !
    !

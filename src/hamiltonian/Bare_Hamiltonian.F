@@ -126,6 +126,17 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    !
  enddo
  !
+#if defined _RT
+ !
+ ! Save the reference xc and Hartree potentials 
+ !==============================================
+ !
+ if (l_real_time) then
+   REF_V_xc_sc=V_xc
+   REF_V_hartree_sc=V_hartree_sc
+ endif
+ !
+#endif
  !
  YAMBO_FREE(QP_Vxc)
  !

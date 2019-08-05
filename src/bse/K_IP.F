@@ -266,8 +266,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
    endif
    !
-   if (trim(global_gauge)=='length'  ) Epsilon_ii(:,3)=1._SP+Co_factor* Epsilon_ii(:,3)                / bare_qpg(1,1)**2
-   if (trim(global_gauge)=='velocity') Epsilon_ii(:,3)=1._SP+Co_factor*(Epsilon_ii(:,3)-diam_term_used)/W_bss%p(:)**2
+   if (trim(global_gauge)=='length'  ) Epsilon_ii(:,3)=Co_factor* Epsilon_ii(:,3)                / bare_qpg(1,1)**2
+   if (trim(global_gauge)=='velocity') Epsilon_ii(:,3)=Co_factor*(Epsilon_ii(:,3)-diam_term_used)/W_bss%p(:)**2
    !
    ! Drude term
    !============

@@ -178,8 +178,8 @@ subroutine RT_databases_IO(E)
  endif
 #endif
  !
- call timing('RT databases IO',OPR='stop')
- !
  ! GPL_EXCLUDE_END
+ !
+ call timing('RT databases IO',OPR='stop')
  !
 end subroutine RT_databases_IO

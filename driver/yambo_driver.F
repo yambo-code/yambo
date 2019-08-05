@@ -49,9 +49,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif
-#if defined _MEM_CHECK 
- use memory,        ONLY:MEM_manager
-#endif
  !
  implicit none
  !
@@ -310,7 +307,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
   !
   subroutine mem_manager_report
 #if defined _MEM_CHECK 
-    call MEM_manager("",REPORT="check")
+    call MEM_report("check")
 #endif
   end subroutine mem_manager_report
   !

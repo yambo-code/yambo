@@ -24,7 +24,7 @@
 subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  use pars,       ONLY:SP,cI,cZERO
- use com,        ONLY:msg,error
+ use com,        ONLY:msg,error,warning
  use IO_m,       ONLY:io_DIP
  use R_lattice,  ONLY:bz_samp
  use electrons,  ONLY:levels,n_sp_pol
@@ -68,6 +68,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    io_err=io_DIPOLES(Dip,ID)
    if(use_covariant_approach) then
+     call msg('s','[DIP] Writing Overlaps header ')
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
      io_err=io_Overlaps(Dip,ID_S)
    endif
@@ -80,12 +81,19 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    io_err=io_DIPOLES(Dip,ID)
    if(use_covariant_approach) then
+     call msg('s','[DIP] Checking overlaps header ')
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
      io_err=io_err+io_Overlaps(Dip,ID_S)
    endif
  endif
  !
- if (check.or.io_err/=0) return
+ if (check.or.io_err/=0) then
+   if (io_err/=0.and.     check) call warning(" DIPOLES database not correct or not present")
+   if (io_err/=0.and..not.check) call   error(" DIPOLES database not correct or not present")
+   return
+ endif
+ !
+ if(writing) call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  !
  if(writing) call fix_velocity(Dip,-1)
  !

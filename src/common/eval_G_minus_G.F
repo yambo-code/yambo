@@ -85,9 +85,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
    !
  endif
  !
-#if defined _OPENMP
 !$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
-#endif
  do i2=1,iGo_
    !
    if(present(COMM)) then
@@ -100,9 +98,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
      E_G_m_G(i1,i2)=0.5_SP*iku_v_norm(v1)**2
    enddo
  enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
  !
  if (present(COMM)) call PP_redux_wait(E_G_m_G,COMM=COMM%COMM)
 
@@ -165,9 +161,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  YAMBO_ALLOC(G_m_G,(iG_,iGo_))
  G_m_G=0
  !
-#if defined _OPENMP
 !$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
-#endif
  do i2=1,iGo_
    !
    if(present(COMM)) then
@@ -182,9 +176,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
      !
    enddo
  enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
  ! 
  if (present(COMM)) call PP_redux_wait(G_m_G,COMM=COMM%COMM)
  !

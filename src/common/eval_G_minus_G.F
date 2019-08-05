@@ -44,7 +44,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  ! Work Space
  !
  integer :: i1,i2,is
- integer :: iG_shell,iGo_shell,iG_shell_0,iG_shell_max,iG_,iGo_
+ integer :: iG_shell,iGo_shell,iG_shell_0,iG_shell_max,iG_,iGo_,iG_alloc,iGo_alloc
  real(SP):: E_iG, E_iGo, E_max
  real(SP):: v1(3)
  real(SP), allocatable :: E_G_m_G(:,:)
@@ -54,16 +54,22 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  ! Init
  !
- if (allocated(G_m_G)) then
-   eval_G_minus_G=size(G_m_G,1)
-   return
- endif
- !
- call timing("eval_G_minus_G",opr="start")
- !
  iG_=iG
  iGo_=iGo
  if (iGo==0) iGo_=iG
+ !
+ if (allocated(G_m_G)) then
+   iG_alloc =size(G_m_G(:,1))
+   iGo_alloc=size(G_m_G(1,:))
+   if(iG_alloc>=iG_ .and. iGo_alloc>=iGo_) then
+     eval_G_minus_G=size(G_m_G,1)
+     return
+   else
+     YAMBO_FREE(G_m_G)
+   endif
+ endif
+ !
+ call timing("eval_G_minus_G",opr="start")
  !
  ! aux data
  YAMBO_ALLOC(E_G_m_G,(iG_,iGo_))

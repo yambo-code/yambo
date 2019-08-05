@@ -33,7 +33,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  use pars,         ONLY:SP
  use vec_operate,  ONLY:iku_v_norm
  use parallel_m,   ONLY:MPI_comm,PP_redux_wait,PP_indexes,PP_indexes_reset,myid
- use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,minus_G,E_of_shell
+ use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,E_of_shell
  use interfaces,   ONLY:PARALLEL_index,PARALLEL_live_message
  use timing_m,     ONLY:timing
 #include<memory.h>
@@ -101,7 +101,6 @@ integer function eval_G_minus_G(iG,iGo,COMM)
 !$omp end parallel do
  !
  if (present(COMM)) call PP_redux_wait(E_G_m_G,COMM=COMM%COMM)
-
  !
  ! Find the shell corresponding to iGo
  !

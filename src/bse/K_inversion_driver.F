@@ -298,7 +298,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! Final Output
  !==============
  !
- Epsilon_ii(:,2)=1._SP+Epsilon_ii(:,2)
  if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*4._SP*pi/bare_qpg(1,1)**2
  !
  BSS_n_descs=BSS_n_descs+1

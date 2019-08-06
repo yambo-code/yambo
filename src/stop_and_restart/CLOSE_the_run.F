@@ -24,9 +24,6 @@
 subroutine CLOSE_the_run(MEM,TIME,INIT_stop)
  !
  use timing_m,       ONLY:timing_overview,timing_deallocate,global_list
-#if defined _MEM_CHECK 
- use memory,         ONLY:MEM_manager
-#endif
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_reset
@@ -58,20 +55,20 @@ subroutine CLOSE_the_run(MEM,TIME,INIT_stop)
    !
  endif
  !
+#if defined _MEM_CHECK 
+ !
  ! Memory Overview
  !=================
  !
  if (MEM) then
    !
-#if defined _MEM_CHECK 
-   !
    call section('*','Memory Overview')
    !
-   call MEM_manager("",REPORT="final")
-   !
-#endif
+   call MEM_report("final")
    !
  endif
+ !
+#endif
  !
  ! GAME OVER :(
  !==============

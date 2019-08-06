@@ -588,7 +588,9 @@ subroutine bz_samp_indexes(k,Xk,q)
      !
      if (force_gamma_only) then
        YAMBO_ALLOC(q%pt,(q%nibz,3))
-       YAMBO_ALLOC(q_sstar,(q%nbz,2))
+       if (.not.allocated(q_sstar)) then
+         YAMBO_ALLOC(q_sstar,(q%nbz,2))
+       endif
        q%pt=0._SP
        q_pt=0._SP
        k_pt=k%pt

@@ -173,8 +173,8 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
    if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
  endif
  !
- if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)               )*Co_factor/bare_qpg(1,1)**2
- if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)-diam_term_used)*Co_factor/   W%p(:)    **2
+ if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)=(Epsilon_ii(:,2)               )*Co_factor/bare_qpg(1,1)**2
+ if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)=(Epsilon_ii(:,2)-diam_term_used)*Co_factor/   W%p(:)    **2
  !
  ! Drude term
  !============

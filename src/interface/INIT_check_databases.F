@@ -40,7 +40,6 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  use parallel_m,     ONLY:ncpu
 #if defined _NL
  use wave_func,      ONLY:wf_ng
- use nl_optics,      ONLY:NL_ng
 #endif
 #if defined _SC || defined _RT
  use collision_ext,  ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
@@ -117,6 +116,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  ! proposed in the input file.
  !
  X(3)%ib=(/1,en%nb/)
+ Dip%ib= (/1,en%nb/)
  !
  ! gops
  !
@@ -131,9 +131,6 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  QP_ng_Vxc=ng_closed
  !
  BS_n_g_exch=ng_closed
-#if defined _NL
- NL_ng      =wf_ng
-#endif
  !
  ! kindx
  !

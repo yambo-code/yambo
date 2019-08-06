@@ -106,11 +106,15 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
    !
    call RT_Glesser_evolve(E,k,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),delta_T1,delta_T3)
    !
+   ! GPL_EXCLUDE_START
+   !
    ! ... Update of logicals before the occupations update
    !
    call RT_relaxation_logicals( )
    !
    call RT_occupations(dG_tmp(:,:,:,i_step))
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Fields @ T+dt2
    !

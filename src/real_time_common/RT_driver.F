@@ -125,16 +125,19 @@ subroutine RT_driver(E,X,k,q)
  ! before loading the WF in R-space I check and/or calculatethe optical collisions that 
  ! are done in G-space and would ! force the reloading of the WFs
  !
+ ! QP corrections 
+ !===========================
+ !
+ call QP_apply(RT_bands,E,k,     "G",msg_fmt='rs')
+ !
  call DIPOLE_driver(E,k,X(1),X(1)%q0)
  !
  ! In dipole_driver the IO is k-dictated. Here I want only the master to write
  !
  call IO_and_Messaging_switch("RESET")
  !
- ! QP & carriers corrections 
+ ! carriers corrections 
  !===========================
- !
- call QP_apply(RT_bands,E,k,     "G",msg_fmt='rs')
  !
  !
  ! Core initialization

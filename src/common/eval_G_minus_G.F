@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function eval_G_minus_G(iG,iGo,force_recompute,COMM)
+integer function eval_G_minus_G(iG,iGo,COMM)
  !
  ! Evaluates the  G-G' table :
  !
@@ -33,20 +33,18 @@ integer function eval_G_minus_G(iG,iGo,force_recompute,COMM)
  use pars,         ONLY:SP
  use vec_operate,  ONLY:iku_v_norm
  use parallel_m,   ONLY:MPI_comm,PP_redux_wait,PP_indexes,PP_indexes_reset,myid
- use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,minus_G,E_of_shell
+ use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,E_of_shell
  use interfaces,   ONLY:PARALLEL_index,PARALLEL_live_message
  use timing_m,     ONLY:timing
 #include<memory.h>
  !
  integer :: iG,iGo
- logical,        optional :: force_recompute
  type(MPI_comm), optional :: COMM
  !
  ! Work Space
  !
- logical :: force_recompute_
  integer :: i1,i2,is
- integer :: iG_shell,iGo_shell,iG_shell_0,iG_shell_max,iG_,iGo_
+ integer :: iG_shell,iGo_shell,iG_shell_0,iG_shell_max,iG_,iGo_,iG_alloc,iGo_alloc
  real(SP):: E_iG, E_iGo, E_max
  real(SP):: v1(3)
  real(SP), allocatable :: E_G_m_G(:,:)
@@ -56,23 +54,22 @@ integer function eval_G_minus_G(iG,iGo,force_recompute,COMM)
  !
  ! Init
  !
- force_recompute_=.false.
- if (present(force_recompute)) force_recompute_=force_recompute
- !
- if (force_recompute_ .and. allocated(G_m_G)) then
-   YAMBO_FREE(G_m_G)
- endif
- !
- if (allocated(G_m_G)) then
-   eval_G_minus_G=size(G_m_G,1)
-   return
- endif
- !
- call timing("eval_G_minus_G",opr="start")
- !
  iG_=iG
  iGo_=iGo
  if (iGo==0) iGo_=iG
+ !
+ if (allocated(G_m_G)) then
+   iG_alloc =size(G_m_G(:,1))
+   iGo_alloc=size(G_m_G(1,:))
+   if(iG_alloc>=iG_ .and. iGo_alloc>=iGo_) then
+     eval_G_minus_G=size(G_m_G,1)
+     return
+   else
+     YAMBO_FREE(G_m_G)
+   endif
+ endif
+ !
+ call timing("eval_G_minus_G",opr="start")
  !
  ! aux data
  YAMBO_ALLOC(E_G_m_G,(iG_,iGo_))
@@ -88,9 +85,7 @@ integer function eval_G_minus_G(iG,iGo,force_recompute,COMM)
    !
  endif
  !
-#if defined _OPENMP
 !$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
-#endif
  do i2=1,iGo_
    !
    if(present(COMM)) then
@@ -103,12 +98,9 @@ integer function eval_G_minus_G(iG,iGo,force_recompute,COMM)
      E_G_m_G(i1,i2)=0.5_SP*iku_v_norm(v1)**2
    enddo
  enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
  !
  if (present(COMM)) call PP_redux_wait(E_G_m_G,COMM=COMM%COMM)
-
  !
  ! Find the shell corresponding to iGo
  !
@@ -168,9 +160,7 @@ integer function eval_G_minus_G(iG,iGo,force_recompute,COMM)
  YAMBO_ALLOC(G_m_G,(iG_,iGo_))
  G_m_G=0
  !
-#if defined _OPENMP
 !$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
-#endif
  do i2=1,iGo_
    !
    if(present(COMM)) then
@@ -185,9 +175,7 @@ integer function eval_G_minus_G(iG,iGo,force_recompute,COMM)
      !
    enddo
  enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
  ! 
  if (present(COMM)) call PP_redux_wait(G_m_G,COMM=COMM%COMM)
  !

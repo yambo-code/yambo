@@ -242,8 +242,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
    if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
    !
-   if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)=(1._SP+ Epsilon_ii(:,i_eps)                *Co_factor/bare_qpg(iq,1)**2)
-   if(trim(global_gauge)=="velocity") Epsilon_ii(:,i_eps)=(1._SP+(Epsilon_ii(:,i_eps)-diam_term_used)*Co_factor/    W%p(:)    **2)
+   if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)= Epsilon_ii(:,i_eps)                *Co_factor/bare_qpg(iq,1)**2
+   if(trim(global_gauge)=="velocity") Epsilon_ii(:,i_eps)=(Epsilon_ii(:,i_eps)-diam_term_used)*Co_factor/    W%p(:)    **2
    !
    if (l_drude) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+X_drude_term(:)*Co_factor/bare_qpg(iq,1)**2
    if (skip_cond_sum_rule) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+(para_term_w0-diam_term_exact)*Co_factor/ W%p(:)**2

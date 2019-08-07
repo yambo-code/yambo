@@ -52,9 +52,9 @@ subroutine MEM_manager_alloc(what,Sz,Kn)
  !
  if (.not.master_thread) return
  !
- call MEM_manager_init(what,.true.,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUNK,just_started)
- !
 #if defined _MEM_CHECK
+ !
+ call MEM_manager_init(what,.true.,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUNK,just_started)
  !
  ! Error Message of an already allocated array and/or other errors
  !=================================================================
@@ -159,6 +159,8 @@ subroutine MEM_manager_free(what,Sz)
  !
  if (.not.master_thread) return
  !
+#if defined _MEM_CHECK
+ !
  if(Sz==-1 .and. verbose) then
    call warning("De-allocation attempt of "//what//" which was not allocated.")
    return
@@ -199,6 +201,8 @@ subroutine MEM_manager_free(what,Sz)
  endif
  !
  if(.not.just_started) call MEM_manager_messages(what,.false.,MEM_now_Kb)
+ !
+#endif
  !
 end subroutine MEM_manager_free
 !
@@ -247,6 +251,8 @@ subroutine MEM_manager_init(what,adding,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUN
  MEM_SAVE_treshold=10 *MEM_treshold
  MEM_jump_treshold=100*MEM_treshold
  !
+#if defined _MEM_CHECK
+ !
  just_started=infile_editing
  if (index(what_is_running,"YPP")==0.and.len_trim(repfile)==0) just_started=.TRUE.
  !
@@ -274,6 +280,8 @@ subroutine MEM_manager_init(what,adding,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUN
  endif
  i_SAVE =MEM_save_finder(trim(SHELF))
  !
+#endif
+ !
 end subroutine MEM_manager_init
 !
 !
@@ -294,6 +302,8 @@ subroutine MEM_manager_messages(what,adding,MEM_now_Kb)
  !
  logical           :: deliver_a_msg
  character(lchlen) :: msg_
+ !
+#if defined _MEM_CHECK
  !
  ! Messages
  !==========
@@ -323,5 +333,7 @@ subroutine MEM_manager_messages(what,adding,MEM_now_Kb)
    call msg("s",trim(msg_))
    TOT_MEM_Kb_SAVE=TOT_MEM_Kb
  endif
+ !
+#endif
  !
 end subroutine MEM_manager_messages

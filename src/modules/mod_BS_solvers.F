@@ -80,6 +80,7 @@ module BS_solvers
  logical  :: BSS_perturbative_width
  logical  :: BSS_eval_JDOS
  logical  :: BSS_add_antiresonant
+ logical  :: BSS_eels_to_eps
  !
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.

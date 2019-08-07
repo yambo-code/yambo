@@ -28,8 +28,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
 &                         K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
-&                         K_slk,K_inv_slk
- use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk,L_kind
+&                         K_slk,K_inv_slk,BSS_eels_to_eps
+ use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bare_qpg,bz_samp
@@ -299,8 +299,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! Final Output
  !==============
  !
- if(trim(L_kind)=="Lbar") Epsilon_ii(:,2)= 1._SP+Epsilon_ii(:,2)
- if(trim(L_kind)=="full") Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)
+ if (BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
  if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/bare_qpg(iq,1)**2
  !
  BSS_n_descs=BSS_n_descs+1

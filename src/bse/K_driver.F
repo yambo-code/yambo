@@ -32,15 +32,16 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
  use DIPOLES,        ONLY:DIPOLE_t
  use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_add_antiresonant,BSS_damp_reference,&
-&                         BSS_uses_DbGd,BSS_q0,BSS_eval_JDOS
+&                         BSS_uses_DbGd,BSS_q0,BSS_eval_JDOS,BSS_eels_to_eps
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BS_n_g_W,BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSE_mode,BS_Blocks_and_Transitions_free,l_BSE_minimize_memory,BSqpts
+&                         BSE_mode,BS_Blocks_and_Transitions_free,l_BSE_minimize_memory,BSqpts,L_kind
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
- use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
+ use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss,l_col_cut
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X
+ use D_lattice,      ONLY:l_0D,l_1D,l_2D
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
@@ -82,6 +83,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  ! Joint DOS
  !===========
  BSS_eval_JDOS = index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP
+ !
+ ! Need to convert eels to epsilon ? (part A)
+ !===========================================
+ ! If the Coulomb cutoff is not used (ie the system is 3D) eps/=eps^-1
+ if (.not.l_col_cut)          BSS_eels_to_eps=trim(L_kind)=="full"
+ ! If the Coulomb cutoff is     used and the system is 0D  eps= eps^-1=1 since vbar=0
+ if (     l_col_cut.and.l_0D) BSS_eels_to_eps=.false.
+ ! If the Coulomb cutoff is     used and the system is 1D or 2D it depends on the q-point (see later)
  !
  ! Copatibility with old inputs
  !==============================
@@ -199,6 +208,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    call section('*','Bethe Salpeter Equation @q'//trim(intc(iq)))
    !
+   ! Need to convert eels to epsilon ? (part B)
+   !===========================================
+   ! If the Coulomb cutoff is used and the system is 1D or 2D eps and eels are different at finite q
+   if (l_col_cut.and.(l_1D.or.l_2D)) then
+     if(iq==1) BSS_eels_to_eps=.false.
+     if(iq/=1) BSS_eels_to_eps=trim(L_kind)=="full"
+   endif
+   !
    ! BSS output arrays
    !===================
    call K_observables("ALLOC",W_bss)
@@ -215,7 +232,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
        iG_BSE =max(BS_n_g_exch,BS_n_g_W)
      endif
      !
-     Max_G_m_G=eval_G_minus_G(iG_BSE,iGo_BSE,force_recompute=.true.)
+     Max_G_m_G=eval_G_minus_G(iG_BSE,iGo_BSE)
      !
      if (.not.iq==1) then
        if (BS_n_g_exch> Max_G_m_G ) then

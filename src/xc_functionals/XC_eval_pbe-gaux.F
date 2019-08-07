@@ -66,7 +66,7 @@ integer  :: ir
  contains
 !this comes from QE
 !-----------------------------------------------------------------------
-      SUBROUTINE pbexgau_lsd(RHOA,RHOB,GRHOAA,GRHOBB,sx, &
+      subroutine pbexgau_lsd(RHOA,RHOB,GRHOAA,GRHOBB,sx, &
                             V1XA,V2XA,V1XB,V2XB,alpha_gau)
 !     ==--------------------------------------------------------------==
 !     ==--------------------------------------------------------------==
@@ -93,10 +93,10 @@ integer  :: ir
 
 !     ==--------------------------------------------------------------==
       RETURN
-      END SUBROUTINE pbexgau_lsd
+      end subroutine pbexgau_lsd
 !
 
-SUBROUTINE pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
+subroutine pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
 !-----------------------------------------------------------------------
 !
 !      use kinds, ONLY : DP
@@ -133,11 +133,11 @@ SUBROUTINE pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
 
 !     ==--------------------------------------------------------------==
       RETURN
-      END SUBROUTINE pbexgau
+      end subroutine pbexgau
 
 !
 !-----------------------------------------------------------------------
-      SUBROUTINE pbe_gauscheme(rho,s,alpha_gau,Fx,dFxdr,dFxds)
+      subroutine pbe_gauscheme(rho,s,alpha_gau,Fx,dFxdr,dFxds)
 !--------------------------------------------------------------------
 
       Implicit None
@@ -221,7 +221,7 @@ SUBROUTINE pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
       dFxds = d1Kxds * Nx + Kx * d1Nxds
 
       RETURN
-      END SUBROUTINE pbe_gauscheme
+      end subroutine pbe_gauscheme
 end subroutine XC_eval_pbegaux
 
       FUNCTION TayExp(X)

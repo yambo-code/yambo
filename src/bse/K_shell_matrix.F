@@ -30,12 +30,10 @@ subroutine K_shell_matrix(iq,slepc_mat)
  !  K = |                       |
  !      | (-cI*K_c^*)  (-K_r^*) |
  !
- use pars,           ONLY:SP
  use BS,             ONLY:BS_H_dim, BS_nT_grps, BS_blk, n_BS_blks
- use BS_solvers,     ONLY:Slepc_v,BS_HAYVEC_alloc,BSS_alloc
+ use BS_solvers,     ONLY:Slepc_v,BS_HAYVEC_alloc
  !REMOVE
- use BS,            ONLY : BS_T_grp,BS_nT_grps,BS_blk,n_BS_blks,BS_H_dim
- use parallel_m,    ONLY : PAR_IND_T_Haydock, myid
+ use BS,             ONLY:BS_nT_grps,BS_blk,n_BS_blks,BS_H_dim
  !REMOVE
  !
 #include <memory.h>
@@ -47,7 +45,7 @@ subroutine K_shell_matrix(iq,slepc_mat)
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
  !
- integer        iq, i_B, i_r, i_c, i_Tk, i_Tp
+ integer          :: iq, i_B, i_r, i_c, i_Tk, i_Tp
  PetscFortranInt  :: SL_H_dim,SL_K_dim
  Mat              :: slepc_mat
  PetscErrorCode   :: ierr

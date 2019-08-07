@@ -28,7 +28,7 @@ subroutine K_diago_driver(iq,W,X_static)
  ! 10/06/2015 Added by HM: Generic slepc method to solve 
  !
  use pars,           ONLY:SP
- use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_Blocks_symmetrize_K
+ use BS,             ONLY:BS_K_coupling,BS_H_dim
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig
  use X_m,            ONLY:X_t

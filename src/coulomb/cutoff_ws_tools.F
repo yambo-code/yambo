@@ -10,7 +10,7 @@
 ! Adapted to Y  by Andrea Ferretti & Daniele Varsano
 !
 !------------------------------------------
-  SUBROUTINE vcut_init(vcut,a,cutoff)
+  subroutine vcut_init(vcut,a,cutoff)
   !------------------------------------------
   !
   USE cutoff_ws_m
@@ -99,10 +99,10 @@
   !
   call PP_redux_wait(vcut%corrected)
   !
-END SUBROUTINE vcut_init
+end subroutine vcut_init
 
 !------------------------------------------
-  SUBROUTINE vcut_info(vcut)
+  subroutine vcut_info(vcut)
   !------------------------------------------
   !
   USE cutoff_ws_m
@@ -152,10 +152,10 @@ END SUBROUTINE vcut_init
      !
   ENDIF
   !
-END SUBROUTINE vcut_info
+end subroutine vcut_info
 
 !------------------------------------------
-  SUBROUTINE vcut_destroy(vcut)
+  subroutine vcut_destroy(vcut)
   !------------------------------------------
   !
   USE cutoff_ws_m
@@ -168,10 +168,10 @@ END SUBROUTINE vcut_info
   DEALLOCATE(vcut%corrected, STAT=ierr)
   IF ( ierr/=0 ) CALL error('deallocating vcut')
   !
-END SUBROUTINE vcut_destroy
+end subroutine vcut_destroy
 
 !------------------------------------------
-  FUNCTION vcut_get(vcut,q) RESULT(res)
+  function vcut_get(vcut,q) RESULT(res)
   !------------------------------------------
   !
   USE cutoff_ws_m
@@ -210,10 +210,10 @@ END SUBROUTINE vcut_destroy
      !
   ENDIF
   !
-END FUNCTION vcut_get
+end function vcut_get
 
 !------------------------------------------
-  FUNCTION vcut_spheric_get(vcut,q) RESULT(res)
+  function vcut_spheric_get(vcut,q) RESULT(res)
   !------------------------------------------
   !
   USE cutoff_ws_m
@@ -242,10 +242,10 @@ END FUNCTION vcut_get
     res=4.0d0*PI*e2*Rcut**2/2.0d0
   endif
   !
-END FUNCTION vcut_spheric_get
+end function vcut_spheric_get
 
 !---------------------------------------------------------
-  FUNCTION vcut_formula(q,a,b,a_omega,orthorombic) result(res)
+  function vcut_formula(q,a,b,a_omega,orthorombic) result(res)
   !---------------------------------------------------------
   !
   ! Define the FT of the Coulomb potential according to the
@@ -277,10 +277,10 @@ END FUNCTION vcut_spheric_get
   ! compute longrange and shortrange contributions
   res=vcut_formula_longrange(q,a,b,a_omega,sigma,6.0D0,orthorombic) &
      +vcut_formula_shortrange(q,sigma)
-END FUNCTION vcut_formula
+end function vcut_formula
 
 !---------------------------------------------------------
-  FUNCTION vcut_formula_longrange(q,a,b,a_omega,sigma,security,orthorombic) result(res)
+  function vcut_formula_longrange(q,a,b,a_omega,sigma,security,orthorombic) result(res)
   !---------------------------------------------------------
   ! compute the longrange contribution
   use cutoff_ws_m
@@ -365,10 +365,10 @@ END FUNCTION vcut_formula
       end do
     end do
   end do
- END FUNCTION vcut_formula_longrange
+ end function vcut_formula_longrange
 
 !---------------------------------------------------------
-FUNCTION vcut_formula_shortrange(q,sigma) result(res)
+function vcut_formula_shortrange(q,sigma) result(res)
   !---------------------------------------------------------
   use cutoff_ws_m
   implicit none
@@ -381,10 +381,10 @@ FUNCTION vcut_formula_shortrange(q,sigma) result(res)
   else
     res=e2*4.0d0*pi/sum(q**2)*(1.d0-exp(-0.5d0*sum(q**2)/(sigma*sigma)))
   end if
-END FUNCTION vcut_formula_shortrange
+end function vcut_formula_shortrange
 
 !---------------------------------------------------------
-FUNCTION vcut_minimal_image(a,b,r1,orthorombic) result(res)
+function vcut_minimal_image(a,b,r1,orthorombic) result(res)
   !---------------------------------------------------------
   use pars
   implicit none
@@ -426,7 +426,7 @@ FUNCTION vcut_minimal_image(a,b,r1,orthorombic) result(res)
     end do
   end if
   res=r_minimal
-END FUNCTION vcut_minimal_image
+end function vcut_minimal_image
 
 
 

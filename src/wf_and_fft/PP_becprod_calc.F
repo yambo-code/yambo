@@ -6,7 +6,7 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 !----------------------------------------------------------------------------
-SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, becpp )
+subroutine PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, becpp )
   !----------------------------------------------------------------------------
   !
   ! This routine computes
@@ -141,10 +141,10 @@ SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, 
      !
   END DO
   !
-END SUBROUTINE PP_becprod_calc
+end subroutine PP_becprod_calc
 !
 !----------------------------------------------------------------------------
-SUBROUTINE add_becprod_nc ( na, np, aux_nc, becprod, nspin_mag, domag )
+subroutine add_becprod_nc ( na, np, aux_nc, becprod, nspin_mag, domag )
 !----------------------------------------------------------------------------
   !
   ! This routine multiplies aux_nc by the identity and the Pauli matrices,
@@ -188,10 +188,10 @@ SUBROUTINE add_becprod_nc ( na, np, aux_nc, becprod, nspin_mag, domag )
   ENDDO
   ENDDO
   
-END SUBROUTINE add_becprod_nc
+end subroutine add_becprod_nc
 !
 !----------------------------------------------------------------------------
-SUBROUTINE add_becprod_so( na, np, aux_so, becprod, nspin_mag, domag )
+subroutine add_becprod_so( na, np, aux_so, becprod, nspin_mag, domag )
   !----------------------------------------------------------------------------
   !
   ! This routine multiplies aux_so by the identity and the Pauli matrices,
@@ -267,15 +267,15 @@ SUBROUTINE add_becprod_so( na, np, aux_so, becprod, nspin_mag, domag )
   ENDDO
   ENDDO
   !
-CONTAINS
-   LOGICAL FUNCTION same_lj(ih,jh,np)
+contains
+   LOGICAL function same_lj(ih,jh,np)
    INTEGER :: ih, jh, np
    !
    same_lj = ((nhtol(ih,np)==nhtol(jh,np)).AND. &
              (ABS(nhtoj(ih,np)-nhtoj(jh,np))<1.d8).AND. &
              (indv(ih,np)==indv(jh,np)) )
    !
-   END FUNCTION same_lj
+   end function same_lj
 
-END SUBROUTINE add_becprod_so
+end subroutine add_becprod_so
 

@@ -82,8 +82,9 @@ cat << EOF > AWK_separate
  if (index(\$0,"call")>0) found_call = "yes"
  if (index(\$0,"&")==0 && index(\$0,"real")==0  &&
      index(\$0,"integer")==0 && index(\$0,"complex")==0  &&
-     index(\$0,"logical")==0 && index(\$0,"use")==0 &&
+     index(\$0,"logical")==0 && index(\$0,"use")==0 && 
      index(\$0,"type")==0    && index(\$0,"character")==0 ) {  var_line = "no" }
+ if (var_line=="yes" && index(\$0,"write ")>0) { var_line = "no" }
  if (var_line=="yes" && index(\$0,"=")>0) { var_line = "no" }
  if (var_line=="yes" && index(\$0,"*")>0) { var_line = "no" }
  if (var_line=="yes" && found_call=="no") print \$0 > "VARIABLES"
@@ -115,9 +116,18 @@ cat << EOF > AWK_analyze
  gsub("&","",line)
  na = split (line,a)
  for (i = 1; i <= na; i++)  { 
-  if (index(a[i],"(")>0) {  a[i]=substr(a[i],1,index(a[i],"(")-1) }
+  if (index(a[i],"(")>0) { 
+   a[i]=substr(a[i],1,index(a[i],"(")-1) 
+   if (index(a[i+2],")")>0) {
+    a[i+1]=" "
+    a[i+2]=" "
+   }
+   if (index(a[i+1],")")>0) {a[i+1]=" "}
+  }
   gsub("\\\("," ",a[i])
   gsub("\\\)"," ",a[i])
+  gsub("\\\["," ",a[i])
+  gsub("\\\]"," ",a[i])
   gsub("="," ",a[i])
   gsub("'"," ",a[i])
   gsub("/"," ",a[i])
@@ -149,24 +159,55 @@ cat << EOF > AWK_analyze
 EOF
 
 ######### AWK SECTION ####################
+#
+# clean_unused_variables.tcsh clean
+# clean_unused_variables.tcsh list  all/changed [dir/file]
+# clean_unused_variables.tcsh clean all/changed [dir/file]
+#
+
+if ( $argv[1] =~ "clean" && $#argv == 1 ) then
+ git ls-files --others | xargs rm -f
+ exit 0
+endif
+
+set OBJ="."
+if ( $#argv == 3 ) then
+ set OBJ = $argv[3]
+endif
+if ( $#argv > 1 ) then
+ set filter=$argv[2]
+endif
+
+echo "ACTION   :" $argv[1]
+echo "FILTER   :" $filter
+echo "OBJ/FILE :" $OBJ
 
 set FILES = (  )
 
-if (-d $argv[1] || $argv[1] =~ "list") then
- set DIR=$argv[1]
- if ($argv[1] =~ "list") set DIR = "."
+if (-d $OBJ) then
  foreach kind ( "modified" "new" "renamed" )  
-  git status -uno  $DIR | grep $kind | grep -v '\.pl' | grep  -v '\.pm'  | grep -v '\.c' |grep -v '\.m4' | grep -v '\.git' |grep -v '\.\.\/' > LIST
+  git status -uno $OBJ | grep $kind | grep -v '\.pl' | grep  -v '\.pm'  | grep -v '\.c' |grep -v '\.m4' | grep -v '\.git' |grep -v '\.\.\/' > LIST
   cat LIST | grep -v "mod_" | grep -v "Makefile" | grep -v "configure" | grep -v "\.h" | grep -v "\.object" | grep -v "\.tcsh" > LIST
   sed -i -e 's/new file/new_file/g' LIST
   #echo $kind  
   set FILES=($FILES `awk '{print $2}' "LIST"`)
  end
 endif
-
-if (-f $argv[1]) then
- set FILES=$argv
+if ($filter =~ "all" && $OBJ =~ ".") then
+ set FILES = `find src -name '*.F' |grep -v "SLK_test" `
+ set FILES = ($FILES `find ypp -name '*.F' `)
+ set FILES = ($FILES `find interfaces -name '*.F' `)
 endif
+if ($filter =~ "all" && $OBJ !~ ".") then
+ set FILES = `find $OBJ -name '*.F' |grep -v "SLK_test" `
+endif
+
+if (-f $OBJ) then
+ set FILES=$OBJ
+endif
+
+#echo $FILES
+#exit
 
 foreach file ($FILES)
  gawk -f AWK_split ${file}
@@ -230,6 +271,6 @@ EOF
  rm -f tmp "${file}"_* MODULE_* CLEAN LIST
 end
 
-rm AWK* 
+rm -f AWK* 
 
 exit 0

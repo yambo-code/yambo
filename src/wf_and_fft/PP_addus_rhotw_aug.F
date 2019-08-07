@@ -7,7 +7,7 @@
 !
 !
 !----------------------------------------------------------------------
-SUBROUTINE PP_addus_rhotw_aug(isc)
+subroutine PP_addus_rhotw_aug(isc)
   !----------------------------------------------------------------------
   !
   ! ... Add US contribution to the rhotw matrix elements
@@ -94,5 +94,5 @@ SUBROUTINE PP_addus_rhotw_aug(isc)
   !
   call timing("PP_rhotw_aug","stop")
   !
-END SUBROUTINE PP_addus_rhotw_aug
+end subroutine PP_addus_rhotw_aug
 

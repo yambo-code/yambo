@@ -6,7 +6,7 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !-----------------------------------------------------------------------
 !
-SUBROUTINE block_distribute( nat, me_image, nproc_image, ia_s, ia_e, mykey )
+subroutine block_distribute( nat, me_image, nproc_image, ia_s, ia_e, mykey )
  !
  INTEGER, INTENT(IN)  :: nat, me_image, nproc_image  
  INTEGER, INTENT(OUT) :: ia_s, ia_e, mykey
@@ -51,9 +51,9 @@ SUBROUTINE block_distribute( nat, me_image, nproc_image, ia_s, ia_e, mykey )
  !
  RETURN
  !
-END SUBROUTINE
+end subroutine
 !
-SUBROUTINE GRID2D_DIMS( grid_shape, nproc, nprow, npcol )
+subroutine GRID2D_DIMS( grid_shape, nproc, nprow, npcol )
  !
  ! This subroutine factorizes the number of processors (NPROC)
  ! into NPROW and NPCOL according to the shape
@@ -82,9 +82,9 @@ SUBROUTINE GRID2D_DIMS( grid_shape, nproc, nprow, npcol )
  !
  RETURN
  !
-END SUBROUTINE
+end subroutine
 !
-SUBROUTINE GRID2D_COORDS( order, rank, nprow, npcol, row, col )
+subroutine GRID2D_COORDS( order, rank, nprow, npcol, row, col )
  !
  !  this subroutine compute the cartesian coordinetes "row" and "col"
  !  of the processor whose MPI task id is "rank". 
@@ -116,9 +116,9 @@ SUBROUTINE GRID2D_COORDS( order, rank, nprow, npcol, row, col )
  !
  RETURN
  !
-END SUBROUTINE
+end subroutine
 !
-SUBROUTINE GRID2D_RANK( order, nprow, npcol, row, col, rank )
+subroutine GRID2D_RANK( order, nprow, npcol, row, col, rank )
  !
  !  this subroutine compute the processor MPI task id "rank" of the processor  
  !  whose cartesian coordinate are "row" and "col".
@@ -140,7 +140,7 @@ SUBROUTINE GRID2D_RANK( order, nprow, npcol, row, col, rank )
  !
  RETURN
  !
-END SUBROUTINE
+end subroutine
 !
 ! Copyright (C) 2002 FPMD group
 ! This file is distributed under the terms of the
@@ -148,7 +148,7 @@ END SUBROUTINE
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-INTEGER FUNCTION ldim_cyclic(gdim, np, me)
+INTEGER function ldim_cyclic(gdim, np, me)
  ! gdim = global dimension of distributed array
  ! np   = number of processors
  ! me   = index of the calling processor (starting from 0)
@@ -188,9 +188,9 @@ INTEGER FUNCTION ldim_cyclic(gdim, np, me)
  !
  RETURN
  !
-END FUNCTION ldim_cyclic
+end function ldim_cyclic
 !
-INTEGER FUNCTION ldim_block(gdim, np, me)
+INTEGER function ldim_block(gdim, np, me)
  !
  ! gdim = global dimension of distributed array
  ! np   = number of processors
@@ -232,9 +232,9 @@ INTEGER FUNCTION ldim_block(gdim, np, me)
  !
  RETURN
  !
-END FUNCTION ldim_block
+end function ldim_block
 !
-INTEGER FUNCTION ldim_block_sca( gdim, np, me )
+INTEGER function ldim_block_sca( gdim, np, me )
  !
  ! gdim = global dimension of distributed array
  ! np   = number of processors
@@ -275,9 +275,9 @@ INTEGER FUNCTION ldim_block_sca( gdim, np, me )
  !
  RETURN
  !      
-END FUNCTION ldim_block_sca
+end function ldim_block_sca
 !
-INTEGER FUNCTION ldim_block_cyclic( N, NB, NPROCS, IPROC )
+INTEGER function ldim_block_cyclic( N, NB, NPROCS, IPROC )
  !
  !  -- Derived from:  NUMROC( N, NB, IPROC, ISRCPROC, NPROCS )
  !  -- ScaLAPACK tools routine (version 1.5) --
@@ -364,7 +364,7 @@ INTEGER FUNCTION ldim_block_cyclic( N, NB, NPROCS, IPROC )
  !
  ! End of NUMROC
  !
-END FUNCTION ldim_block_cyclic
+end function ldim_block_cyclic
 !
 ! Copyright (C) 2002 FPMD group
 ! This file is distributed under the terms of the
@@ -372,7 +372,7 @@ END FUNCTION ldim_block_cyclic
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-INTEGER FUNCTION lind_block(ig, nx, np, me)
+INTEGER function lind_block(ig, nx, np, me)
  !
  !   INPUT :
  !      ig  global index of the x dimension of array element
@@ -401,9 +401,9 @@ INTEGER FUNCTION lind_block(ig, nx, np, me)
  !
  RETURN 
  !      
-END FUNCTION lind_block
+end function lind_block
 !
-INTEGER FUNCTION lind_block_sca(ig, nx, np, me)
+INTEGER function lind_block_sca(ig, nx, np, me)
  !
  ! INPUT :
  !    ig  global index of the x dimension of array element
@@ -426,9 +426,9 @@ INTEGER FUNCTION lind_block_sca(ig, nx, np, me)
  lind_block_sca = ig - me * nb
  RETURN
  !
-END FUNCTION lind_block_sca
+end function lind_block_sca
 !
-INTEGER FUNCTION lind_cyclic(ig, nx, np, me)
+INTEGER function lind_cyclic(ig, nx, np, me)
  !
  ! INPUT :
  !    ig  global index of the x dimension of array element
@@ -450,9 +450,9 @@ INTEGER FUNCTION lind_cyclic(ig, nx, np, me)
  !
  RETURN 
  !
-END FUNCTION lind_cyclic
+end function lind_cyclic
 !
-INTEGER FUNCTION lind_block_cyclic( INDXGLOB, NB, NPROCS, IPROC )      
+INTEGER function lind_block_cyclic( INDXGLOB, NB, NPROCS, IPROC )      
  !
  !     Derived from:  INDXG2L( INDXGLOB, NB, IPROC, ISRCPROC, NPROCS )
  !  -- ScaLAPACK tools routine (version 1.5) --
@@ -507,9 +507,9 @@ INTEGER FUNCTION lind_block_cyclic( INDXGLOB, NB, NPROCS, IPROC )
  !
  !     End of INDXG2L
  !
-END FUNCTION lind_block_cyclic
+end function lind_block_cyclic
 !
-INTEGER FUNCTION gind_cyclic( lind, n, np, me )
+INTEGER function gind_cyclic( lind, n, np, me )
  !
  !  This function computes the global index of a distributed array entry
  !  pointed to by the local index lind of the process indicated by me.
@@ -527,9 +527,9 @@ INTEGER FUNCTION gind_cyclic( lind, n, np, me )
  !
  RETURN 
  !
-END FUNCTION gind_cyclic
+end function gind_cyclic
 !
-INTEGER FUNCTION gind_block( lind, n, np, me )
+INTEGER function gind_block( lind, n, np, me )
  !
  !  This function computes the global index of a distributed array entry
  !  pointed to by the local index lind of the process indicated by me.
@@ -554,9 +554,9 @@ INTEGER FUNCTION gind_block( lind, n, np, me )
  !
  RETURN
  !
-END FUNCTION gind_block
+end function gind_block
 !
-INTEGER FUNCTION gind_block_sca( lind, n, np, me )
+INTEGER function gind_block_sca( lind, n, np, me )
  !
  !  This function computes the global index of a distributed array entry
  !  pointed to by the local index lind of the process indicated by me.
@@ -582,9 +582,9 @@ INTEGER FUNCTION gind_block_sca( lind, n, np, me )
  !
  RETURN
  !
-END FUNCTION gind_block_sca
+end function gind_block_sca
 !
-INTEGER FUNCTION gind_block_cyclic( lind, n, nb, np, me )
+INTEGER function gind_block_cyclic( lind, n, nb, np, me )
  !
  !  This function computes the global index of a distributed array entry
  !  pointed to by the local index lind of the process indicated by me.
@@ -605,4 +605,4 @@ INTEGER FUNCTION gind_block_cyclic( lind, n, nb, np, me )
  !
  RETURN
  !     
-END FUNCTION gind_block_cyclic
+end function gind_block_cyclic

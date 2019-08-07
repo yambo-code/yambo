@@ -39,9 +39,6 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use stderr,              ONLY:intc,logfile,log_as_a_file
  use interfaces,          ONLY:PARALLEL_index,PARALLEL_live_message
  use qexml_module
-#if defined _MEM_CHECK 
- use memory,              ONLY : MEM_manager
-#endif
  !
 #include<memory.h>
  !
@@ -262,11 +259,11 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  call pw_close
  !
- ! Memory Overview
- !=================
 #if defined _MEM_CHECK 
  !
- call MEM_manager("",REPORT="final")
+ ! Memory Overview
+ !=================
+ call MEM_report("final")
  !
 #endif
  !

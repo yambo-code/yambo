@@ -25,7 +25,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! K = <2V-W>
  !
- use pars,         ONLY:IP,SP,schlen,pi,cZERO,cI
+ use pars,         ONLY:SP,schlen,pi,cZERO,cI
  use stderr,       ONLY:intc
  use LOGO,         ONLY:pickup_a_random
  use drivers,      ONLY:l_bs_fxc,l_td_hf,l_bss
@@ -33,14 +33,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use electrons,    ONLY:levels,spin_occ,spin,n_spin
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free
- use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,bz_samp,RIM_qpg,&
 &                       RIM_anisotropy,minus_G,bare_qpg
  use com,          ONLY:warning,error,msg
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
- use BS_solvers,   ONLY:BSS_q0
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,BS_n_g_W,BS_Block_size,&
 &                       O_ng,BS_n_g_exch,BS_identifier,BS_LiveTiming_steps,&
@@ -56,9 +54,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use wrapper_omp,   ONLY:V_dot_V_omp,Vstar_dot_V_omp,M_by_V_omp
- use global_XC,     ONLY:WF_kind,WF_xc_functional
+ use global_XC,     ONLY:WF_xc_functional,WF_kind
  use wave_func,     ONLY:WF
- use openmp,        ONLY:OPENMP_update,master_thread,n_threads_K
+ use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
  !
 #if defined _KERR
@@ -161,9 +159,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Oscillators Setup
  !===================
- O_ng=maxval(G_m_G)
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
+ O_ng=1
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
+   O_ng=maxval(G_m_G)
+   call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
+ endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -283,7 +284,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !======
  if (BS_K_is_ALDA) then
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
-   call XC_potential_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
+   call XC_potential_driver(Ken,Xk,WF_kind,WF_xc_functional,2)
  endif
  !
  ! Screened interaction
@@ -514,9 +515,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        if (H_pos(1)>H_pos(2)) cycle
        !
-       ig_W   =qindx_B(i_k_bz,i_p_bz,2)
-       iq_W   =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,1)
-       iq_W_s =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,2)
+       if (BS_res_K_corr.or.BS_cpl_K_corr) then
+         ig_W   =qindx_B(i_k_bz,i_p_bz,2)
+         iq_W   =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,1)
+         iq_W_s =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,2)
+       endif
        !
        H_x=cZERO
        H_c=cZERO

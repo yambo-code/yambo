@@ -265,7 +265,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call section('=','Non periodic geometry')
    !========================================
    !
-   call check_periodic_directions()
+   call check_periodic_directions((/.false.,.false.,.false./))
    !
  endif
  !

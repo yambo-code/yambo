@@ -86,6 +86,7 @@ module pw_data
   logical                    :: pw_lda_plus_u
 
 ! EXX part
+  character(256)             :: pw_exxdiv_treatment
   real(dp)                   :: pw_exx_fraction,pw_screening_parameter
   logical                    :: pw_exx_is_active
 

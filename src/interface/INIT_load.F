@@ -677,7 +677,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
 #endif
  !
- call DIP_mirror_bands( )
+ call DIP_mirror_bands(en)
  ! 
  contains 
    !
@@ -832,8 +832,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      !
    end subroutine
    !
-   subroutine DIP_mirror_bands( )
+   subroutine DIP_mirror_bands(E_in)
      use parser_m,       ONLY:parser
+     !
+     type(levels), intent(in) :: E_in
+     !
      logical :: is_def(10)
      integer :: i1,bands(2),tmp_bands(2)
      !
@@ -871,10 +874,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        if(i1==10) tmp_bands=COLL_bands
 #endif
        if(any((/bands==-1/))) then
-         bands=tmp_bands
+         bands(1)=max(tmp_bands(1),   1   )
+         bands(2)=min(tmp_bands(2),E_in%nb)
        else
-         bands(1)=min(tmp_bands(1),bands(1))
-         bands(2)=max(tmp_bands(2),bands(2))
+         bands(1)=max(min(tmp_bands(1),bands(1)),   1   )
+         bands(2)=min(max(tmp_bands(2),bands(2)),E_in%nb)
        endif
      enddo
      !

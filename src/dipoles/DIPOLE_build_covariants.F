@@ -37,8 +37,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  use matrix_operate, ONLY:hermitian
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                         PAR_DIPk_nbz,PAR_IND_OVLPk_ibz,&
-&                         PAR_IND_CON_BANDS_DIP, PAR_IND_VAL_BANDS_DIP,&
-&                         PAR_COM_DIPk_ibz_INDEX,PAR_COM_NULL
+&                         PAR_IND_CON_BANDS_DIP, PAR_IND_VAL_BANDS_DIP
  use com,            ONLY:error,warning,msg
  use D_lattice,      ONLY:a
  use parser_m,       ONLY:parser
@@ -75,7 +74,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  call PARALLEL_WF_distribute(K_index=PAR_IND_OVLPk_ibz,CLEAN_UP=.TRUE.)
  !
- call PARALLEL_WF_index(COMM=PAR_COM_NULL)
+ call PARALLEL_WF_index( )
  !
  call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
  !

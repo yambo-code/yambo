@@ -189,7 +189,7 @@ subroutine exciton_WFs(Xk,BS_E_degs)
        !
        wf_ = V_dot_V(BS_H_dim,BS_mat(1,i_l),wf_vc)
        !
-       v2plot(ir) = v2plot(ir)+abs(wf_)**2.  
+       v2plot(ir) = v2plot(ir)+abs(wf_)**2
        !
      enddo
      !

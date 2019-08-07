@@ -34,7 +34,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,spin_occ,filled_tresh,n_spinor
  use vec_operate,    ONLY:sort
- use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative
+ use functions,      ONLY:Fermi_fnc
  use com,            ONLY:msg,of_open_close,error
  use stderr,         ONLY:intc,real2ch
  use real_time,      ONLY:RT_carriers,l_RT_CCA_Kernel,RT_bands
@@ -99,7 +99,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  if (n_spinor==2) then
    call Load_and_Fit_alloc(DATA_grp(2),1,"spin-up")
    call Load_and_Fit_alloc(DATA_grp(3),1,"spin-dn")
-   YAMBO_ALLOC(spin_factors,(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_spinor))
+   YAMBO_ALLOC(spin_factors,(RT_carriers%nb(1):RT_carriers%nb(2),1:kpt%nibz,n_spinor))
    call electrons_spin_factors((/1,kpt%nibz/),RT_carriers%nb,spin_factors)
    n_groups=3
  endif

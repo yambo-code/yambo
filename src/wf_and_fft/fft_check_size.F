@@ -102,9 +102,9 @@ subroutine fft_check_size(iGo_max,NG_C,NG_HF,mode)
      call warning(' Bigger FFT kept due to ALLG input. Slow computation for corr part of '//trim(SKname))
    else
      NG_HF=ng_in_shell(i_shell-1)
-     call warning(' '//trim(Kindname)//' '//SKname//' FFT size is too big. '// &
+     call warning(' '//trim(Kindname)//' '//trim(SKname)//' FFT size is too big. '// &
                  &   NGname//' reduced: '//trim(intc(NG_HF_save))//' --> '//trim(intc(NG_HF)))
-     call warning(' Bigger '//SKname//' discarded to avoid slow computation for corr part of '//trim(SKname))
+     call warning(' Bigger FFT discarded to avoid slow computation for corr part of '//trim(SKname))
    endif
    !
  endif

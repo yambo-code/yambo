@@ -34,14 +34,14 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use BS,            ONLY:BS_K_dim,BS_K_coupling
  use BS_solvers,    ONLY:variables_BS
  use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,&
-&                        io_connect,io_disconnect,io_elemental,def_variable_bulk,&
+&                        io_connect,io_elemental,def_variable_bulk,&
 &                        io_header,io_mode,io_file
  !
  implicit none
  !
  type(X_t) :: X 
- integer :: io_BS, iq, mode_flag, stat, ID, dims(3)
- integer :: flattened_block_size_dim,block_size_dim,complex_dim
+ integer :: io_BS,iq,ID
+ integer :: flattened_block_size_dim,block_size_dim
  character(schlen) :: db_name, file_to_use, PARALLEL_STRUCTURE
  character(lchlen) :: local_description(100)
  character(schlen) :: dim_names(3), dim_names_done(2)
@@ -156,11 +156,8 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  ! For each block only the upper triangular part is written
  ! Each block has a status variables indicating if the matrix element was already calculated
  !
- use pars,          ONLY:SP,schlen,lchlen
- use X_m,           ONLY:X_t
- use stderr,        ONLY:intc
+ use pars,          ONLY:schlen
  use BS,            ONLY:BS_blk
- use IO_m,          ONLY:io_bulk,io_fragment,IO_NOT_ALLOWED,manage_OP_IF_START_and_CL_IF_END
  use timing_m,      ONLY:timing
  !
  implicit none

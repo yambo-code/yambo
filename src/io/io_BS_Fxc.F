@@ -23,7 +23,7 @@
 !
 integer function io_BS_Fxc(iq,FXC_W,ID,X)
  !
- use pars,           ONLY:SP,schlen,lchlen
+ use pars,           ONLY:schlen,lchlen
  use units,          ONLY:HA2EV
  use stderr,         ONLY:intc
  use BS,             ONLY:BS_K_dim
@@ -34,7 +34,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,io_mode,&
-&                         read_is_on,write_is_on,io_header,DUMP,&
+&                         read_is_on,io_header,DUMP,&
 &                         close_is_on,RD_CL,io_action
 #include<memory.h>
  type(w_samp)        ::FXC_W

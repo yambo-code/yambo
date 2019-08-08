@@ -94,6 +94,7 @@ cat << EOF > AWK_separate
      index(line,"integer")==0 && index(line,"complex")==0  &&
      index(line,"logical")==0 && index(line,"use")==0 && 
      index(line,"type")==0    && index(line,"character")==0 ) {  var_line = "no" }
+ if (var_line=="yes" && index(line,"data ")>0) { var_line = "no" }
  if (var_line=="yes" && index(line,"write ")>0) { var_line = "no" }
  if (var_line=="yes" && index(line,".not.")>0) { var_line = "no" }
  if (var_line=="yes" && index(line,".or.")>0) { var_line = "no" }
@@ -281,6 +282,7 @@ cat << EOF > AWK_replace
  if (index(\$0,"use")>1 && index(\$0,":")==0) {print_the_var = "no" } 
  if (index(\$0,"logical")>1 && index(\$0,"::")==0) {print_the_var = "no" }
  if (index(\$0,"integer")>1 && index(\$0,"::")==0) {print_the_var = "no" }
+ if (index(\$0,"character")>1 && index(\$0,"::")==0) {print_the_var = "no" }
  if (index(\$0,"real")>1 && index(\$0,"::")==0) {print_the_var = "no" }
  if (print_the_var=="yes") {print \$0 $var}
 }

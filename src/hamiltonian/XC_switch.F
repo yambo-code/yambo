@@ -24,11 +24,10 @@
 subroutine XC_switch()
  !
  use drivers,        ONLY:l_oep_kli,l_oep_exact,l_oep_ceda,l_oep_slater,l_sc_exx
- use hamiltonian,    ONLY:H_kind,H_xc_functional,H_potential,H_perturbation,l_sc_XC_is_local,l_sc_V_is_local
+ use hamiltonian,    ONLY:H_kind,H_potential,H_perturbation
 #if defined _SC
  use SC,             ONLY:OEP_approx,l_oep_EWeight,l_oep_iterative
 #endif
- use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE
 #if defined _MAGNETIC
  use drivers,        ONLY:l_sc_magnetic
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM

@@ -56,7 +56,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  logical     :: l_eval_polarization,l_force_SndOrd
  integer     :: ik,iv,ic,ic_min,iv_max,i_sp_pol,ikm1,id_red,idir,idx(3),ikbz,ik_mem
  integer     :: istep,max_step
- real(SP)    :: Ev_m_Ec
+ real(SP)    :: Ev_m_Ec_KS
  complex(SP) :: Sm1_plus (Xen%nbf,Xen%nbm,6)
  complex(SP) :: Sm1_minus(Xen%nbf,Xen%nbm,6)
  complex(SP) :: S_det(6)
@@ -194,11 +194,10 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
          if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
          do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
            if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
-           ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
-           Dip%v_eff=.true.
-           Ev_m_Ec=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
+           Ev_m_Ec_KS   =Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
+           if (allocated(Xen%Eo)) Ev_m_Ec_KS   =Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
            do idir=1,3
-             DIP_v(idir,ic,iv,ik_mem,i_sp_pol)=DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec
+             DIP_v(idir,ic,iv,ik_mem,i_sp_pol)=DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec_KS
            enddo
            !
          enddo

@@ -70,7 +70,7 @@ integer :: ierr
  complex(SP), allocatable, device :: kbv_d(:,:,:,:)
 #endif
  complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),P2
- real(SP)                     :: Ev_m_Ec,Dipole_Energy_treshold
+ real(SP)                     :: Ev_m_Ev_KS,Dipole_Energy_treshold
  !
  !I/O and external functions
  !
@@ -245,7 +245,7 @@ integer :: ierr
          if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,DEV_VARNAME(kbv))
          !
          ! define a different thr for val-val transitions
-         ! used for XTerm (here Ev_m_Ec may become very large)
+         ! used for XTerm (here Ev_m_Ev_KS may become very large)
          !
          Dipole_Energy_treshold=Dip%Energy_treshold 
          if(l_X_terminator.and.ic<=Dip%ib_lim(1)) Dipole_Energy_treshold=Dip%Energy_treshold_vv
@@ -278,11 +278,11 @@ integer :: ierr
            !             =   P_vc/(Ev-Ec) -i<v|[x,Vnl]|c>/(Ev-Ec)
            !
            !
-           if (.not.allocated(Xen%Eo)) Ev_m_Ec=Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
-           if (     allocated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
+           if (.not.allocated(Xen%Eo)) Ev_m_Ev_KS=Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
+           if (     allocated(Xen%Eo)) Ev_m_Ev_KS=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
            !
-           if (abs(Ev_m_Ec)> Dipole_Energy_treshold) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=rho/Ev_m_Ec
-           if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=cZERO
+           if (abs(Ev_m_Ev_KS)> Dipole_Energy_treshold) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=rho/Ev_m_Ev_KS
+           if (abs(Ev_m_Ev_KS)<=Dipole_Energy_treshold) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=cZERO
            !
          endif
          !

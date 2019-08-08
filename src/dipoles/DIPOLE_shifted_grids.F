@@ -76,7 +76,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  integer                      :: ik,ik_mem,ic_wf,iv_wf,ic,iv,iq,n_LT_steps,&
 &                                i_spin,i_spinor,i_sp_pol,ir,grid_order(3),ic_min
  complex(SP)                  :: rho
- real(SP)                     :: Ev_m_Ec,q_mod(3)
+ real(SP)                     :: Ev_m_Ec_KS,q_mod(3)
  !
  !ioDB1 shifted grids
  !
@@ -176,10 +176,10 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
            !
            rho=cZERO
            !
-           Ev_m_Ec   =Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
-           if (allocated(Xen%Eo)) Ev_m_Ec   =Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
+           Ev_m_Ec_KS   =Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
+           if (allocated(Xen%Eo)) Ev_m_Ec_KS   =Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
            !
-           if (abs(Ev_m_Ec)<=Dip%Energy_treshold .or. iv==ic) then
+           if (abs(Ev_m_Ec_KS)<=Dip%Energy_treshold .or. iv==ic) then
              call live_timing(steps=1)
              cycle
            endif
@@ -207,11 +207,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
            !=====
            ! <v>
            !=====
-           if(.not.Dip%force_v_g_space) then
-             ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
-             Dip%v_eff=.true.
-             DIP_v(ir,ic,iv,ik_mem,i_sp_pol)=rho/q0_shift_norm*Ev_m_Ec
-           endif
+           if(.not.Dip%force_v_g_space) DIP_v(ir,ic,iv,ik_mem,i_sp_pol)=rho/q0_shift_norm*Ev_m_Ec_KS
            !
            call live_timing(steps=1)
            !

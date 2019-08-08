@@ -49,7 +49,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use global_XC,     ONLY:WF_exx_screening
  use pseudo,        ONLY:becp, pp_is_uspp
  use qe_pseudo_m,   ONLY:beccopy
- use dev_util_m,    ONLY:dev_memcpy
+ use device_util_m, ONLY:dev_memcpy
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -249,7 +249,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
          call DEV_SUBNAME(scatter_Bamp)(iscp)
        else
          ! iscp%rhotw = isc%rhotw
-         call dev_memcpy(DEV_VARNAME(iscp%rhotw),DEV_VARNAME(isc%rhotw),(/1,isc%ngrho/))
+         call dev_memcpy(DEV_VARNAME(iscp%rhotw),DEV_VARNAME(isc%rhotw))
        endif
        !
        DP_Sx_l=Vstar_dot_VV(isc%ngrho,DEV_VARNAME(iscp%rhotw),&

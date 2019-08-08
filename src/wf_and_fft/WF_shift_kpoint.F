@@ -33,7 +33,7 @@ subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,
 #endif
  use wave_func,     ONLY:wf_ng
  use interfaces,    ONLY:eval_G_minus_G
- use dev_util_m,    ONLY:dev_memcpy
+ use device_util_m, ONLY:dev_memcpy
  !
  implicit none
  !
@@ -60,7 +60,7 @@ subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,
  ik = Xk%sstar(ikbz,1)
  is = Xk%sstar(ikbz,2)
  !
- call dev_memcpy(WF_tmp,WF_k_in, (/1,wf_ng/),(/1,n_spinor/),b_to_shift,(/1,n_sp_pol/))
+ call dev_memcpy(WF_tmp,WF_k_in)
  !
  if(all(k_map%g0_idx==-1)) then
     call k_find_smallest_g0(g0_idx,g0_length)
@@ -113,11 +113,12 @@ subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,
      enddo
 #endif
    else
-     call dev_memcpy(WF_k_out,WF_tmp, (/1,wf_ng/),(/1,n_spinor/),b_to_shift,(/1,n_sp_pol/))
+     call dev_memcpy(WF_k_out,WF_tmp)
    endif
    !
-   call dev_memcpy(WF_tmp,WF_k_out, (/1,wf_ng/),(/1,n_spinor/),b_to_shift,(/1,n_sp_pol/))
+   call dev_memcpy(WF_tmp,WF_k_out)
    !
  enddo
  !
 end subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)
+

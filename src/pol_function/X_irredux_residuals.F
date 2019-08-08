@@ -46,7 +46,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
 #ifdef _CUDA
  use R_lattice,     ONLY:g_rot_d,G_m_G_d
 #endif
- use dev_util_m
+ use device_util_m
 #include<dev_defs.h>
  !
  implicit none
@@ -260,7 +260,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      X_ng=X%ng
      sop_inv_l=sop_inv(is)
      !
-     call dev_memcpy(rhotw_save2_d,Xo_scatt_rhotw_d,(/1,X%ng/))
+     call dev_memcpy(rhotw_save2_d,Xo_scatt_rhotw_d)
      !
      if (X%ng==1) then
        Xo_scatt%rhotw_d(1)=cONE 
@@ -269,7 +269,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      endif
      !
      ! symm
-     call dev_memcpy(rhotw_save_d,Xo_scatt_rhotw_d,(/1,X%ng/))
+     call dev_memcpy(rhotw_save_d,Xo_scatt_rhotw_d)
      !
      !$cuf kernel do(1) <<<*,*>>>
      do ig1=1,X_ng
@@ -278,7 +278,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      enddo
      !
      if (is>nsym/(i_time_rev+1)) then
-       call dev_conjg(Xo_scatt_rhotw_d,(/1,X%ng/))
+       call dev_conjg(Xo_scatt_rhotw_d)
      endif
      !
 #else
@@ -337,7 +337,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      !
 #endif
      !
-     call dev_memcpy(DEV_VARNAME(Xo_scatt%rhotw),DEV_VARNAME(rhotw_save2),(/1,X%ng/))
+     call dev_memcpy(DEV_VARNAME(Xo_scatt%rhotw),DEV_VARNAME(rhotw_save2))
      !
    endif
    !

@@ -30,7 +30,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use LOGO,         ONLY:pickup_a_random
  use drivers,      ONLY:l_bs_fxc,l_td_hf,l_bss
  use frequency,    ONLY:w_samp
- use electrons,    ONLY:levels,spin_occ,spin,n_spin
+ use electrons,    ONLY:levels,spin_occ,spin,n_spin,E_SOC_nbands
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free
  use functions,    ONLY:K_scatter
@@ -107,7 +107,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Constants & Setup
  !==================
  !
- Co=4._SP*real(spin_occ)*pi/DL_vol/real(q%nbz,SP)
+ if(E_SOC_nbands==0) Co=4._SP*real(spin_occ)*pi/DL_vol/real(q%nbz,SP)
+ if(E_SOC_nbands/=0) Co=4._SP               *pi/DL_vol/real(q%nbz,SP)
  io_BS_err    =-1
  io_BS_Fxc_err=-1
  !
@@ -371,7 +372,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Anisotropy correction. Note that isc%gamp(1,1)=RIM_anisotropy while
    ! the \delta(G,G') term must be multiplied by the standard RIM_qpg(1,1)
    !
-   if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2.-RIM_anisotropy/2.
+   if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
    !
    YAMBO_FREE(isc%gamp)
    !

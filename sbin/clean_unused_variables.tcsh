@@ -2,6 +2,11 @@
 #
 unalias mv rm cp
 
+rm -f tmp  MODULE_* CLEAN LIST
+if (-f $argv[1] ) then
+ rm -f "${file}"_*
+endif
+
 ######### AWK SECTION ####################
 
 cat << EOF > AWK_split
@@ -49,10 +54,12 @@ cat << EOF > AWK_nl
 {
  na = split (\$0,a)
  if (substr(a[1],1,1) == "!" ) {next}
+ in_clean=\$0
+ if (index(\$0,"!")>5) {in_clean=substr(\$0,1,index(\$0,"!")-1)}
  if (NR==1) {
-  line=\$0
+  line=in_clean
   next
-  na = split (\$0,a)
+  na = split (in_clean,a)
  }
  if (a[1] == "&" ) {
   for (i = 2; i <= na; i++)  { 
@@ -61,14 +68,14 @@ cat << EOF > AWK_nl
  }else{
   na = split (line,a)
   if (na==0) {
-   line=\$0
+   line=in_clean
    next
   }
   if( a[1]=="function" || a[1]=="subroutine" || a[2] == "function" || a[2] == "subroutine") {
     print line  >> "HEADER"
    }else{
     print line >> "PP"}
-  line=\$0
+  line=in_clean
  }
 }
 EOF
@@ -88,6 +95,9 @@ cat << EOF > AWK_separate
      index(line,"logical")==0 && index(line,"use")==0 && 
      index(line,"type")==0    && index(line,"character")==0 ) {  var_line = "no" }
  if (var_line=="yes" && index(line,"write ")>0) { var_line = "no" }
+ if (var_line=="yes" && index(line,".not.")>0) { var_line = "no" }
+ if (var_line=="yes" && index(line,".or.")>0) { var_line = "no" }
+ if (var_line=="yes" && index(line,".and.")>0) { var_line = "no" }
  if (var_line=="yes" && index(line,"=")>0) { var_line = "no" }
  if (var_line=="yes" && index(line,"*")>0) { var_line = "no" }
  if (var_line=="yes" && found_call=="no") print line > "VARIABLES"
@@ -252,11 +262,27 @@ cat << EOF > AWK_replace
  if (substr(a[1],1,1) == "!" ) 
  {print \$0
   next}
+ if (index(\$0,"${var}")==0)
+ {print \$0
+  next}
  gsub("${var},&","&")
+ gsub("${var} ,&","&")
+ gsub("${var}  ,&","&")
  gsub("${var},","")
  gsub(",${var}","")
+ gsub(", ${var}","")
+ gsub(",  ${var}","")
+ gsub(":${var}","")
+ gsub(": ${var}","")
+ gsub(":  ${var}","")
  gsub("${var}","")
- print \$0
+ # Check if the USE call is empty
+ print_the_var="yes"
+ if (index(\$0,"use")>1 && index(\$0,":")==0) {print_the_var = "no" } 
+ if (index(\$0,"logical")>1 && index(\$0,"::")==0) {print_the_var = "no" }
+ if (index(\$0,"integer")>1 && index(\$0,"::")==0) {print_the_var = "no" }
+ if (index(\$0,"real")>1 && index(\$0,"::")==0) {print_the_var = "no" }
+ if (print_the_var=="yes") {print \$0 $var}
 }
 EOF
     gawk -f AWK_replace $source > CLEAN  
@@ -270,7 +296,7 @@ EOF
    echo "-----------------------------------------------------------------------------"
   endif
  end
- if ($N_unused>0 && $argv[1] !~ "list") then
+ if ($N_unused>0 && $argv[1] !~ "quiet") then
   cat MODULE_* > $file
  endif
  rm -f tmp "${file}"_* MODULE_* CLEAN LIST

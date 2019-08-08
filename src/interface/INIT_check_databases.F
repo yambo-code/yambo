@@ -231,7 +231,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  if (nqibz>0) then
    !
-   if (trim(code_branch)=="devel-cumulant".or.trim(code_branch)=="devel-BSE-finite-q") BS_q=(/1,nqibz/)
+   if (trim(code_branch)=="devel-cumulant") BS_q=(/1,nqibz/)
    !
    do i1=1,4 ! Xx Xs Xd Xp
      !

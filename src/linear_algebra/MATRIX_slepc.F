@@ -28,7 +28,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
   ! This routine can be called from within Matrix_driver.F but should be kept in
   ! a separate souce file for clarity.
   !
-  use pars,          ONLY : SP,cONE,cZERO,schlen
+  use pars,          ONLY : SP,schlen
   use com,           ONLY : error,msg
   !
   implicit none
@@ -60,27 +60,25 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
   ! 
   ! internal variables
   !
-  integer                :: n_mat        !size of the matrix
   !
   ! slepc
   !
-  external MyEPSMonitor !function to monitor the convergence
+  external :: MyEPSMonitor !function to monitor the convergence
   ! 
-  Mat            A
-  EPS            eps
-  !EPSType        tname
-  EPSExtraction  extr
-  PetscReal      tol, ferror
-  PetscErrorCode ierr
-  PetscInt       nev, ncv, mpd, maxit, its, nconv, n, i, j
-  PetscInt       idx(2)
-  PetscScalar    kr, ki
+  Mat            :: A
+  EPS            :: eps
+  EPSExtraction  :: extr
+  PetscReal      :: tol, ferror
+  PetscErrorCode ::ierr
+  PetscInt       :: nev, ncv, mpd, maxit, its, nconv, n, i, j
+  PetscInt       :: idx(2)
+  PetscScalar    :: kr, ki
   PetscScalar, pointer :: xsr(:), xsi(:)
   PetscScalar, pointer :: M(:,:)          !pointer to matrix
-  Vec            xr, xi, vout
-  PetscViewer    viewer, hdf5v
-  PetscMPIInt    rank
-  VecScatter     ctx
+  Vec            ::  xr, xi, vout
+  PetscViewer    ::  viewer, hdf5v
+  PetscMPIInt    ::  rank
+  VecScatter     ::  ctx
   character(len=30) :: rowfmt
   !
   ! Non hermitian not implemented yet!
@@ -252,15 +250,15 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
 
-  EPS            eps
-  Vec            x
-  PetscErrorCode ierr
-  PetscInt       its,nconv,nest,dummy
-  PetscScalar    eigr(*),eigi(*)
-  PetscReal      re,errest(*)
-  PetscMPIInt    rank
+  EPS            :: eps
+  Vec            :: x
+  PetscErrorCode :: ierr
+  PetscInt       :: its,nconv,nest,dummy
+  PetscScalar    :: eigr(*),eigi(*)
+  PetscReal      :: re,errest(*)
+  PetscMPIInt    :: rank
 
-  character(12)  c_nconv, c_err, c_its
+  character(12)  :: c_nconv, c_err, c_its
 
   ! write the number of converged eigenvalues
   write(c_nconv,'(i5)') nconv

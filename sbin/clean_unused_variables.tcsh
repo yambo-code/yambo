@@ -2,9 +2,34 @@
 #
 unalias mv rm cp
 
+set OBJ="."
+set action="clean"
+set filter="changed"
+
+#######################################################################
+#
+# clean_unused_variables.tcsh clean/list [dir/file] [all/changed]
+#
+if ( $argv[1] =~ "clean" && $#argv == 1 ) then
+ git ls-files --others | xargs rm -f
+ exit 0
+endif
+
+if ( $#argv >= 2 ) then
+ set OBJ = $argv[2]
+endif
+if ( $#argv == 3 ) then
+ set filter=$argv[3]
+endif
+
+echo "ACTION   :" $action
+echo "FILTER   :" $filter
+echo "OBJ/FILE :" $OBJ
+#######################################################################
+
 rm -f tmp  MODULE_* CLEAN LIST
-if (-f $argv[1] ) then
- rm -f "${file}"_*
+if (-f $OBJ ) then
+ rm -f "${OBJ}"_*
 endif
 
 ######### AWK SECTION ####################
@@ -17,19 +42,21 @@ cat << EOF > AWK_split
   start="no"
   contains="no"
  }
+ MOD_NAME="MODULE_"
+ if (N<10) MOD_NAME="MODULE_0"
  if (substr(a[1],1,1) == "!" ) {
-  print \$0  >> "MODULE_"N
+  print \$0  >> MOD_NAME N
   next
  }
  if (a[1]=="module" || a[1]=="MODULE") {nextfile}
  if (a[1]=="contains") {
   contains="yes"
-  print \$0 >> "MODULE_"N
+  print \$0 >>  MOD_NAME N
   next
  }
  if (a[1]=="function" || a[1]=="subroutine" || a[2] == "function" || a[2] == "subroutine") {
   if (contains=="yes") {
-   print \$0 >> "MODULE_"N
+  print \$0 >>  MOD_NAME N
    next
   }
   if (start=="no") 
@@ -40,13 +67,13 @@ cat << EOF > AWK_split
   else
   {
    start="no"
-   print \$0 >> "MODULE_"N
+   print \$0 >>  MOD_NAME N
    N=N+1
    next
    #print N \$0  
   }
  }
- print \$0 >> "MODULE_"N
+ print \$0 >>  MOD_NAME N
 }
 EOF
 
@@ -163,6 +190,7 @@ cat << EOF > AWK_analyze
    gsub("9","",tmp_var)
   }
   is_var="yes"
+  if (index(a[i],"%") > 0 ) {is_var="no"}
   if (length(a[i]) == 0 || length(tmp_var) ==0 ) {is_var="no"}
   if (is_var == "yes") 
   {
@@ -176,27 +204,6 @@ EOF
 
 ######### AWK SECTION ####################
 #
-# clean_unused_variables.tcsh clean
-# clean_unused_variables.tcsh list  all/changed [dir/file]
-# clean_unused_variables.tcsh clean all/changed [dir/file]
-#
-
-if ( $argv[1] =~ "clean" && $#argv == 1 ) then
- git ls-files --others | xargs rm -f
- exit 0
-endif
-
-set OBJ="."
-if ( $#argv == 3 ) then
- set OBJ = $argv[3]
-endif
-if ( $#argv > 1 ) then
- set filter=$argv[2]
-endif
-
-echo "ACTION   :" $argv[1]
-echo "FILTER   :" $filter
-echo "OBJ/FILE :" $OBJ
 
 set FILES = (  )
 
@@ -233,7 +240,6 @@ foreach file ($FILES)
   #echo "$file $source..."
   gawk -f AWK_nl $source
   if (! -f PP) then
-   echo
    continue
   endif
   mv PP ${file}"_PP"
@@ -298,7 +304,7 @@ EOF
    echo "-----------------------------------------------------------------------------"
   endif
  end
- if ($N_unused>0 && $argv[1] !~ "quiet") then
+ if ($N_unused>0 && $action !~ "quiet") then
   cat MODULE_* > $file
  endif
  rm -f tmp "${file}"_* MODULE_* CLEAN LIST

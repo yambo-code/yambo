@@ -8,10 +8,10 @@
 !
 subroutine block_distribute( nat, me_image, nproc_image, ia_s, ia_e, mykey )
  !
- INTEGER, INTENT(IN)  :: nat, me_image, nproc_image  
- INTEGER, INTENT(OUT) :: ia_s, ia_e, mykey
- INTEGER :: na_loc, r, nproc_ia
- INTEGER, EXTERNAL :: ldim_block, gind_block
+ integer, INTENT(IN)  :: nat, me_image, nproc_image  
+ integer, INTENT(OUT) :: ia_s, ia_e, mykey
+ integer :: na_loc, r, nproc_ia
+ integer, EXTERNAL :: ldim_block, gind_block
  !
  ! Parallel: divide among processors for the same image
  !
@@ -60,11 +60,11 @@ subroutine GRID2D_DIMS( grid_shape, nproc, nprow, npcol )
  !
  !    Written by Carlo Cavazzoni
  !
- IMPLICIT NONE
- CHARACTER, INTENT(IN) :: grid_shape
- INTEGER, INTENT(IN)  :: nproc
- INTEGER, INTENT(OUT) :: nprow, npcol
- INTEGER :: sqrtnp, i
+ implicit none
+ character, INTENT(IN) :: grid_shape
+ integer, INTENT(IN)  :: nproc
+ integer, INTENT(OUT) :: nprow, npcol
+ integer :: sqrtnp, i
  !
  sqrtnp = INT( SQRT( REAL( nproc ) + 0.1 ) )
  !
@@ -92,12 +92,12 @@ subroutine GRID2D_COORDS( order, rank, nprow, npcol, row, col )
  !  all processors whose MPI task id is greather or equal 
  !  than nprow * npcol are placed on the diagonal extension of the grid itself
  !
- IMPLICIT NONE
+ implicit none
  !
- CHARACTER, INTENT(IN) :: order
- INTEGER, INTENT(IN)   ::  rank          ! process index starting from 0
- INTEGER, INTENT(IN)   ::  nprow, npcol  ! dimensions of the processor grid
- INTEGER, INTENT(OUT)  ::  row, col
+ character, INTENT(IN) :: order
+ integer, INTENT(IN)   ::  rank          ! process index starting from 0
+ integer, INTENT(IN)   ::  nprow, npcol  ! dimensions of the processor grid
+ integer, INTENT(OUT)  ::  row, col
  !
  IF( rank >= 0 .AND. rank < nprow * npcol ) THEN
    IF( order == 'C' .OR. order == 'c' ) THEN
@@ -124,11 +124,11 @@ subroutine GRID2D_RANK( order, nprow, npcol, row, col, rank )
  !  whose cartesian coordinate are "row" and "col".
  !  Note that the subroutine assume cyclic indexing ( row = nprow = 0 )
  !
- IMPLICIT NONE
- CHARACTER, INTENT(IN) :: order
- INTEGER, INTENT(OUT) ::  rank         ! process index starting from 0
- INTEGER, INTENT(IN)  ::  nprow, npcol  ! dimensions of the processor grid
- INTEGER, INTENT(IN)  ::  row, col
+ implicit none
+ character, INTENT(IN) :: order
+ integer, INTENT(OUT) ::  rank         ! process index starting from 0
+ integer, INTENT(IN)  ::  nprow, npcol  ! dimensions of the processor grid
+ integer, INTENT(IN)  ::  row, col
  !
  IF( order == 'C' .OR. order == 'c' ) THEN
    !  grid in COLUMN MAJOR ORDER
@@ -148,7 +148,7 @@ end subroutine
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-INTEGER function ldim_cyclic(gdim, np, me)
+integer function ldim_cyclic(gdim, np, me)
  ! gdim = global dimension of distributed array
  ! np   = number of processors
  ! me   = index of the calling processor (starting from 0)
@@ -169,8 +169,8 @@ INTEGER function ldim_cyclic(gdim, np, me)
  !  a(9)           |   0
  !  a(10)          |   1
  !
- IMPLICIT NONE
- INTEGER :: gdim, np, me, r, q
+ implicit none
+ integer :: gdim, np, me, r, q
  !
  IF( me >= np .OR. me < 0 ) THEN
    WRITE(6,*) ' ** ldim_cyclic: arg no. 3 out of range '
@@ -190,7 +190,7 @@ INTEGER function ldim_cyclic(gdim, np, me)
  !
 end function ldim_cyclic
 !
-INTEGER function ldim_block(gdim, np, me)
+integer function ldim_block(gdim, np, me)
  !
  ! gdim = global dimension of distributed array
  ! np   = number of processors
@@ -212,8 +212,8 @@ INTEGER function ldim_block(gdim, np, me)
  !  a(9)           |   3
  !  a(10)          |   3
  !
- IMPLICIT NONE
- INTEGER :: gdim, np, me, r, q
+ implicit none
+ integer :: gdim, np, me, r, q
  !
  IF( me >= np .OR. me < 0 ) THEN
    WRITE(6,*) ' ** ldim_block: arg no. 3 out of range '
@@ -234,7 +234,7 @@ INTEGER function ldim_block(gdim, np, me)
  !
 end function ldim_block
 !
-INTEGER function ldim_block_sca( gdim, np, me )
+integer function ldim_block_sca( gdim, np, me )
  !
  ! gdim = global dimension of distributed array
  ! np   = number of processors
@@ -256,8 +256,8 @@ INTEGER function ldim_block_sca( gdim, np, me )
  !  a(9)           |   2
  !  a(10)          |   3
  !
- IMPLICIT NONE
- INTEGER :: gdim, np, me, nb
+ implicit none
+ integer :: gdim, np, me, nb
  !
  IF( me >= np .OR. me < 0 ) THEN
    WRITE(6,*) ' ** ldim_block: arg no. 3 out of range '
@@ -277,7 +277,7 @@ INTEGER function ldim_block_sca( gdim, np, me )
  !      
 end function ldim_block_sca
 !
-INTEGER function ldim_block_cyclic( N, NB, NPROCS, IPROC )
+integer function ldim_block_cyclic( N, NB, NPROCS, IPROC )
  !
  !  -- Derived from:  NUMROC( N, NB, IPROC, ISRCPROC, NPROCS )
  !  -- ScaLAPACK tools routine (version 1.5) --
@@ -286,8 +286,8 @@ INTEGER function ldim_block_cyclic( N, NB, NPROCS, IPROC )
  !     May 1, 1997
  !
  !     .. Scalar Arguments ..
- IMPLICIT NONE
- INTEGER              IPROC, ISRCPROC, N, NB, NPROCS, NUMROC
+ implicit none
+ integer              IPROC, ISRCPROC, N, NB, NPROCS, NUMROC
  !     ..
  !
  !  Purpose
@@ -299,22 +299,22 @@ INTEGER function ldim_block_cyclic( N, NB, NPROCS, IPROC )
  !  Arguments
  !  =========
  !
- !  N         (global input) INTEGER
+ !  N         (global input) integer
  !            The number of rows/columns in distributed matrix.
  !
- !  NB        (global input) INTEGER
+ !  NB        (global input) integer
  !            Block size, size of the blocks the distributed matrix is
  !            split into.
  !
- !  IPROC     (local input) INTEGER
+ !  IPROC     (local input) integer
  !            The coordinate of the process whose local array row or
  !            column is to be determined.
  !
- !  ISRCPROC  (global input) INTEGER
+ !  ISRCPROC  (global input) integer
  !            The coordinate of the process that possesses the first
  !            row or column of the distributed matrix.
  !
- !  NPROCS    (global input) INTEGER
+ !  NPROCS    (global input) integer
  !            The total number processes over which the matrix is
  !            distributed.
  !
@@ -322,7 +322,7 @@ INTEGER function ldim_block_cyclic( N, NB, NPROCS, IPROC )
  !
  !     .. Local Scalars ..
  !      
- INTEGER              EXTRABLKS, MYDIST, NBLOCKS
+ integer              EXTRABLKS, MYDIST, NBLOCKS
  !     ..
  !     .. Intrinsic Functions ..
  INTRINSIC            MOD
@@ -372,7 +372,7 @@ end function ldim_block_cyclic
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-INTEGER function lind_block(ig, nx, np, me)
+integer function lind_block(ig, nx, np, me)
  !
  !   INPUT :
  !      ig  global index of the x dimension of array element
@@ -386,9 +386,9 @@ INTEGER function lind_block(ig, nx, np, me)
  !      lind_block return the local index corresponding to the
  !      global index "ig" for a balanced block distribution
  !   
- IMPLICIT NONE
+ implicit none
  !
- INTEGER :: ig, nx, np, me, r, q
+ integer :: ig, nx, np, me, r, q
  !
  q = INT(nx/np)
  r = MOD(nx,np) 
@@ -403,7 +403,7 @@ INTEGER function lind_block(ig, nx, np, me)
  !      
 end function lind_block
 !
-INTEGER function lind_block_sca(ig, nx, np, me)
+integer function lind_block_sca(ig, nx, np, me)
  !
  ! INPUT :
  !    ig  global index of the x dimension of array element
@@ -417,9 +417,9 @@ INTEGER function lind_block_sca(ig, nx, np, me)
  !    lind_block_sca return the local index corresponding to the
  !    global index "ig" for an equal block distribution
  ! 
- IMPLICIT NONE
+ implicit none
  !
- INTEGER :: ig, nx, np, me, nb
+ integer :: ig, nx, np, me, nb
  !
  nb = INT( nx / np )
  IF( MOD( nx,  np ) /= 0 ) nb = nb+1
@@ -428,7 +428,7 @@ INTEGER function lind_block_sca(ig, nx, np, me)
  !
 end function lind_block_sca
 !
-INTEGER function lind_cyclic(ig, nx, np, me)
+integer function lind_cyclic(ig, nx, np, me)
  !
  ! INPUT :
  !    ig  global index of the x dimension of array element
@@ -442,9 +442,9 @@ INTEGER function lind_cyclic(ig, nx, np, me)
  !    lind_cyclic return the local index corresponding to the
  !    global index "ig" for a cyclic distribution
  !   
- IMPLICIT NONE
+ implicit none
  !
- INTEGER :: ig, nx, np, me
+ integer :: ig, nx, np, me
  !
  lind_cyclic = (ig-1)/np + 1
  !
@@ -452,7 +452,7 @@ INTEGER function lind_cyclic(ig, nx, np, me)
  !
 end function lind_cyclic
 !
-INTEGER function lind_block_cyclic( INDXGLOB, NB, NPROCS, IPROC )      
+integer function lind_block_cyclic( INDXGLOB, NB, NPROCS, IPROC )      
  !
  !     Derived from:  INDXG2L( INDXGLOB, NB, IPROC, ISRCPROC, NPROCS )
  !  -- ScaLAPACK tools routine (version 1.5) --
@@ -461,8 +461,8 @@ INTEGER function lind_block_cyclic( INDXGLOB, NB, NPROCS, IPROC )
  !     May 1, 1997
  !
  !     .. Scalar Arguments ..
- IMPLICIT NONE
- INTEGER  INDXGLOB, IPROC, ISRCPROC, NB, NPROCS, INDXG2L
+ implicit none
+ integer  INDXGLOB, IPROC, ISRCPROC, NB, NPROCS, INDXG2L
  !     ..
  !
  !  Purpose
@@ -474,22 +474,22 @@ INTEGER function lind_block_cyclic( INDXGLOB, NB, NPROCS, IPROC )
  !  Arguments
  !  =========
  !
- !  INDXGLOB  (global input) INTEGER
+ !  INDXGLOB  (global input) integer
  !            The global index of the distributed matrix entry.
  !
- !  NB        (global input) INTEGER
+ !  NB        (global input) integer
  !            Block size, size of the blocks the distributed matrix is
  !            split into.
  !
- !  IPROC     (local dummy) INTEGER
+ !  IPROC     (local dummy) integer
  !            Dummy argument in this case in order to unify the calling
  !            sequence of the tool-routines.
  !
- !  ISRCPROC  (local dummy) INTEGER
+ !  ISRCPROC  (local dummy) integer
  !            Dummy argument in this case in order to unify the calling
  !            sequence of the tool-routines.
  !
- !  NPROCS    (global input) INTEGER
+ !  NPROCS    (global input) integer
  !            The total number processes over which the distributed
  !            matrix is distributed.
  !
@@ -509,7 +509,7 @@ INTEGER function lind_block_cyclic( INDXGLOB, NB, NPROCS, IPROC )
  !
 end function lind_block_cyclic
 !
-INTEGER function gind_cyclic( lind, n, np, me )
+integer function gind_cyclic( lind, n, np, me )
  !
  !  This function computes the global index of a distributed array entry
  !  pointed to by the local index lind of the process indicated by me.
@@ -520,8 +520,7 @@ INTEGER function gind_cyclic( lind, n, np, me )
  !  np        The total number processes over which the distributed
  !            matrix is distributed.
  !
- INTEGER, INTENT(IN) :: lind, n, me, np
- INTEGER r, q
+ integer, INTENT(IN) :: lind, n, me, np
  !
  gind_cyclic = (lind-1) * np + me + 1
  !
@@ -529,7 +528,7 @@ INTEGER function gind_cyclic( lind, n, np, me )
  !
 end function gind_cyclic
 !
-INTEGER function gind_block( lind, n, np, me )
+integer function gind_block( lind, n, np, me )
  !
  !  This function computes the global index of a distributed array entry
  !  pointed to by the local index lind of the process indicated by me.
@@ -540,8 +539,8 @@ INTEGER function gind_block( lind, n, np, me )
  !  np        The total number processes over which the distributed
  !            matrix is distributed.
  !
- INTEGER, INTENT(IN) :: lind, n, me, np
- INTEGER r, q
+ integer, INTENT(IN) :: lind, n, me, np
+ integer r, q
  !
  q = INT(n/np)
  r = MOD(n,np)
@@ -556,7 +555,7 @@ INTEGER function gind_block( lind, n, np, me )
  !
 end function gind_block
 !
-INTEGER function gind_block_sca( lind, n, np, me )
+integer function gind_block_sca( lind, n, np, me )
  !
  !  This function computes the global index of a distributed array entry
  !  pointed to by the local index lind of the process indicated by me.
@@ -567,8 +566,8 @@ INTEGER function gind_block_sca( lind, n, np, me )
  !  np        The total number processes over which the distributed
  !            matrix is distributed.
  !
- INTEGER, INTENT(IN) :: lind, n, me, np
- INTEGER nb
+ integer, INTENT(IN) :: lind, n, me, np
+ integer nb
  !
  IF( me >= np .OR. me < 0 ) THEN
    WRITE(6,*) ' ** ldim_block: arg no. 3 out of range '
@@ -584,7 +583,7 @@ INTEGER function gind_block_sca( lind, n, np, me )
  !
 end function gind_block_sca
 !
-INTEGER function gind_block_cyclic( lind, n, nb, np, me )
+integer function gind_block_cyclic( lind, n, nb, np, me )
  !
  !  This function computes the global index of a distributed array entry
  !  pointed to by the local index lind of the process indicated by me.
@@ -596,8 +595,8 @@ INTEGER function gind_block_cyclic( lind, n, nb, np, me )
  !  np        The total number processes over which the distributed
  !            matrix is distributed.
  !
- INTEGER, INTENT(IN) :: lind, n, nb, me, np
- INTEGER r, q, isrc
+ integer, INTENT(IN) :: lind, n, nb, me, np
+ integer :: r,  isrc
  !
  isrc = 0
  !

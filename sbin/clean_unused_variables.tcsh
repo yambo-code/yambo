@@ -76,19 +76,22 @@ EOF
 cat << EOF > AWK_separate
 {
  if (NR==1) found_call="no"
- na = split (\$0,a)
+ line=\$0
+ if (index(\$0,"!")>5) {line=substr(\$0,1,index(\$0,"!")-1)}
+ #print line length(\$0) index(\$0,"!")
+ na = split (line,a)
  var_line = "yes"
- if (index(\$0,"use")>0 && index (\$0,"only")==0 &&  index (\$0,"ONLY")==0 ) var_line = "no"
- if (index(\$0,"call")>0) found_call = "yes"
- if (index(\$0,"&")==0 && index(\$0,"real")==0  &&
-     index(\$0,"integer")==0 && index(\$0,"complex")==0  &&
-     index(\$0,"logical")==0 && index(\$0,"use")==0 && 
-     index(\$0,"type")==0    && index(\$0,"character")==0 ) {  var_line = "no" }
- if (var_line=="yes" && index(\$0,"write ")>0) { var_line = "no" }
- if (var_line=="yes" && index(\$0,"=")>0) { var_line = "no" }
- if (var_line=="yes" && index(\$0,"*")>0) { var_line = "no" }
- if (var_line=="yes" && found_call=="no") print \$0 > "VARIABLES"
- if (var_line=="no" || found_call=="yes") print \$0 > "BODY"
+ if (index(line,"use")>0 && index (line,"only")==0 &&  index (line,"ONLY")==0 ) var_line = "no"
+ if (index(line,"call")>0) found_call = "yes"
+ if (index(line,"&")==0 && index(line,"real")==0  &&
+     index(line,"integer")==0 && index(line,"complex")==0  &&
+     index(line,"logical")==0 && index(line,"use")==0 && 
+     index(line,"type")==0    && index(line,"character")==0 ) {  var_line = "no" }
+ if (var_line=="yes" && index(line,"write ")>0) { var_line = "no" }
+ if (var_line=="yes" && index(line,"=")>0) { var_line = "no" }
+ if (var_line=="yes" && index(line,"*")>0) { var_line = "no" }
+ if (var_line=="yes" && found_call=="no") print line > "VARIABLES"
+ if (var_line=="no" || found_call=="yes") print line > "BODY"
 }
 EOF
 
@@ -148,7 +151,9 @@ cat << EOF > AWK_analyze
    gsub("8","",tmp_var)
    gsub("9","",tmp_var)
   }
-  if (length(a[i]) > 0 && length(tmp_var) >0 ) 
+  is_var="yes"
+  if (length(a[i]) == 0 || length(tmp_var) ==0 ) {is_var="no"}
+  if (is_var == "yes") 
   {
    NV++
    V[NV]=a[i]

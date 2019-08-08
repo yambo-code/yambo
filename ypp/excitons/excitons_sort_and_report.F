@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_sort_and_report(BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
+subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  !
  use pars,          ONLY:SP,schlen,pi
  use units,         ONLY:HA2EV
@@ -36,6 +36,7 @@ subroutine excitons_sort_and_report(BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  !
  implicit none 
  !
+ integer                      :: iq
  complex(SP)                  :: BS_R(BSS_n_eig),BS_E(BSS_n_eig)
  real(SP),pointer             :: BS_E_SOC_corr(:,:)
  type(EXCITON_spin),optional  :: EXC_spin
@@ -71,11 +72,11 @@ subroutine excitons_sort_and_report(BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
    I_mode=i_mod==2
    !
    if (E_mode) then
-     ch_dummy='exc_E_sorted'
-     if (write_spin) ch_dummy='exc_E+spin_sorted'
+     ch_dummy='exc_qpt'//trim(intc(iq))//'_E_sorted'
+     if (write_spin) ch_dummy='exc_qpt'//trim(intc(iq))//'_E+spin_sorted'
    else if (I_mode) then
-     ch_dummy='exc_I_sorted'
-     if (write_spin) ch_dummy='exc_I+spin_sorted'
+     ch_dummy='exc_qpt'//trim(intc(iq))//'_I_sorted'
+     if (write_spin) ch_dummy='exc_qpt'//trim(intc(iq))//'_I+spin_sorted'
    endif
    !
    call of_open_close(ch_dummy,'ot')

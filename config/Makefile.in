@@ -59,7 +59,7 @@ CFGFILES = config/setup config/Makefile config/report config/msg_ydb \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
            sbin/objects_store.sh driver/editor.h lib/archive/keep-extlibs-stamp \
-           include/c_defs.h sbin/generate_gpl.sh
+           include/c_defs.h sbin/generate_gpl.sh include/branch.inc
 ifeq ($(do_p2y),yes)
   p2y   = p2y
 endif

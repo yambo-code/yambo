@@ -24,6 +24,7 @@ driver/codever.h
 driver/editor.h
 driver/yambo_cpp.h
 driver/ypp_cpp.h
+include/branch.inc
 include/netcdf.h
 include/netcdf_*.h
 include/netcdf.inc

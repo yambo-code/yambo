@@ -103,10 +103,10 @@ subroutine PARSER_convert(rvar,ivar,v_name)
      call PARSER_close_G(ivar,'feV')
      call set_itp_unit('eV',1)
    else if (index(v_line,'Gb')/=0) then
-     ivar=ivar*Gigabyte/Kilobyte
+     ivar=ivar*nint(Gigabyte/Kilobyte)
      call set_itp_unit('Gb',1)
    else if (index(v_line,'Mb')/=0) then
-     ivar=ivar*Megabyte/Kilobyte
+     ivar=ivar*nint(Megabyte/Kilobyte)
      call set_itp_unit('Mb',1)
    endif
    return

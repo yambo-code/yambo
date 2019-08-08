@@ -31,6 +31,7 @@ module LOGO
  integer      :: code_GPL_revision
  integer      :: code_revision
  character(50):: code_hash
+ character(50):: code_branch
  !
  integer                     :: n_logo_lines
  integer                     :: ID_logo
@@ -68,10 +69,10 @@ module LOGO
      ! 
      ! Work Space
      !
-     character(schlen) :: comment(3),ch,MPI_string,OMP_string,CUDA_string,SLK_string,SLEPC_string
+     character(schlen) :: comment(4),ch,MPI_string,OMP_string,CUDA_string,SLK_string,SLEPC_string
      integer           :: max_length,i1,left_space,iA,ic
      !
-     ! Get version and revision
+     ! Get version, revision and branch string
      !
      include 'version.inc'
      !
@@ -110,9 +111,12 @@ module LOGO
 #if defined _SLEPC
      SLEPC_string="+SLEPC"
 #endif
-     comment(2)=trim(MPI_string)//trim(OMP_string)//trim(CUDA_string)//trim(SLK_string)//trim(SLEPC_string)//" Build"
      !
-     comment(3)='http://www.yambo-code.org'
+     comment(2)="Branch is "//trim(code_branch)
+     !
+     comment(3)=trim(MPI_string)//trim(OMP_string)//trim(CUDA_string)//trim(SLK_string)//trim(SLEPC_string)//" Build"
+     !
+     comment(4)='http://www.yambo-code.org'
      !
      if (ID_logo<0) then
        ID_logo=pickup_a_random(10._SP)
@@ -311,7 +315,7 @@ module LOGO
      n_logo_lines=n_logo_lines+1
      logo_line(n_logo_lines)=' '
      !
-     do ic=1,3
+     do ic=1,4
        n_logo_lines=n_logo_lines+1
        logo_line(n_logo_lines)=trim(comment(ic))
        left_space=(max_length-len_trim(comment(ic)))/2+1

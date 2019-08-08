@@ -113,7 +113,7 @@ subroutine section(mode,name)
    depth=2
  case ('-')
    depth=depth-1
-   isec(depth+1:)=0
+   isec(depth+2:)=0
  end select
  !
  ! Write out the Section header (in secnm)

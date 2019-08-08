@@ -25,11 +25,12 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
 &                          io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err)
  !
  use electrons,      ONLY:levels,n_spinor
+ use LOGO,           ONLY:code_branch
  use drivers,        ONLY:infile_editing
  use X_m,            ONLY:X_t,X_duplicate
  use DIPOLES,        ONLY:DIPOLE_t
  use frequency,      ONLY:w_samp,W_duplicate
- use BS,             ONLY:BS_n_g_exch
+ use BS,             ONLY:BS_n_g_exch,BS_q
  use R_lattice,      ONLY:ng_closed,nqibz,bz_samp
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_ng_Vxc
  use wave_func,      ONLY:io_WF
@@ -229,6 +230,8 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  ! When no setup has been done nqibz=0
  !
  if (nqibz>0) then
+   !
+   if (trim(code_branch)=="devel-cumulant") BS_q=(/1,nqibz/)
    !
    do i1=1,4 ! Xx Xs Xd Xp
      !

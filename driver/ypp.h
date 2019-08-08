@@ -57,7 +57,7 @@
 #if defined _YPP_ELPH  && ! defined _YPP_RT
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave,(e)lias,(g)kkp]",0,0,1,0,0}, 
 #else
-  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave]",0,0,1,0,0}, 
+  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave;qindex]",0,0,2,0,0}, 
 #endif
   {"freehole","f","Free hole position [excitons plot]",0,0,0,0,0}, 
   {"kpts_map","m","BZ map fine grid to coarse",0,0,0,0,0}, 

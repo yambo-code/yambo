@@ -12,11 +12,11 @@ SLEPC_objects = K_stored_in_a_slepc_matrix.o K_shell_matrix.o \
 SLK_objects = K_inversion_do_it_SLK.o
 #endif
 objs =	K_blocks.o K_driver.o K_IP.o K_Transitions_setup.o K_WF_phases.o \
-        K.o K_correlation_collisions.o K_exchange_collisions.o \
-        K_solvers.o K_Haydock.o \
+        K.o K_correlation_collisions.o K_exchange_collisions.o K_correlation_kernel.o K_exchange_kernel.o \
+        K_solvers.o K_Haydock.o K_screened_interaction.o \
         K_inversion_do_it_full.o EPS_via_perturbative_inversion.o \
         K_inversion_driver.o K_diagonal.o K_inversion_Lo.o  K_inversion_restart.o K_inversion_engine.o \
         K_diago_driver.o K_diago_non_hermitian_residuals.o K_diago_hermitian_residuals.o \
         K_diago_perturbative.o K_diago_compute_epsilon.o K_eps_interpolate.o \
         K_output_file.o K_multiply_by_V.o K_dot_product.o K_components_folded_in_serial_arrays.o \
-        K_stored_in_a_big_matrix.o $(KERR_objects) $(PL_objects) $(SLEPC_objects) $(SLK_objects)
+        K_stored_in_a_big_matrix.o K_observables.o $(KERR_objects) $(PL_objects) $(SLEPC_objects) $(SLK_objects)

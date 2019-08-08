@@ -100,11 +100,12 @@ subroutine cutoff_ws(q)
    enddo
  enddo
 !$omp end do
+ !
+ if(master_thread) call live_timing()
+ !
 !$omp end parallel
  !
  call OPENMP_update(master_thread)
- !
- if(master_thread) call live_timing()
  !
  ! MPI 2 all
  !

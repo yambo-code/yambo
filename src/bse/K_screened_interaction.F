@@ -51,6 +51,8 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  type(elemental_collision), target ::isc
 #ifdef _CUDA
  complex(SP), pointer, device :: gamp_d(:,:)
+ real(SP)   :: rtmp
+ integer    :: nibz
 #endif
  !
  integer    :: BS_W_size2,i_g2,i_g3,iq_W

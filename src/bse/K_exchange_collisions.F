@@ -100,8 +100,13 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      ! G==0 term
      !
+#ifdef _CUDA
+     if(trim(L_kind)=="full") BS_T_grp(i_T_grp)%O_x_d(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_R(i_T_el)
+     if(trim(L_kind)=="Lbar") BS_T_grp(i_T_grp)%O_x_d(1,i_T_el)=cZERO
+#else
      if(trim(L_kind)=="full") BS_T_grp(i_T_grp)%O_x(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_R(i_T_el)
      if(trim(L_kind)=="Lbar") BS_T_grp(i_T_grp)%O_x(1,i_T_el)=cZERO
+#endif
      !
      ! G/=0 terms
      !
@@ -128,7 +133,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        call DEV_SUBNAME(scatter_Bamp)(K_EXCH_collision)
        !
 #ifdef _CUDA
-       call dev_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d )
+       call dev_memcpy(BS_T_grp(i_T_grp)%O_x_d(2:,i_T_el),K_EXCH_collision%rhotw_d(2:) )
 #else
        !$omp parallel do default(shared), private(i_g1)
        do i_g1=2,BS_n_g_exch

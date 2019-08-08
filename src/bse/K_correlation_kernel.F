@@ -49,8 +49,8 @@ function K_correlation_kernel(i_block,i_p,i_pmq,                               &
  complex(SP)  :: PHASE_1,PHASE_2,O1(BS_n_g_W),O2(BS_n_g_W),O_times_W(BS_n_g_W)
 #ifdef _CUDA
  attributes(device)   :: O1,O2,O_times_W
- complex(SP), pointer, device :: O_c_d_iocc(:),O_c_d_iocv(:)
- complex(SP), pointer, device :: O_c_d_iovc(:),O_c_d_iovv(:)
+ complex(SP), pointer, device :: O_c_d_iO1(:)
+ complex(SP), pointer, device :: O_c_d_iO2(:)
 #endif
  !
  if (i_k_sp_pol/=i_p_sp_pol) then
@@ -72,8 +72,8 @@ function K_correlation_kernel(i_block,i_p,i_pmq,                               &
  !
 #ifdef _CUDA
  !
- O_c_d_1 => BS_blk(i_block_1)%O_c_d(:,iO1)
- O_c_d_2 => BS_blk(i_block_2)%O_c_d(:,iO2)
+ O_c_d_iO1 => BS_blk(i_block_1)%O_c_d(:,iO1)
+ O_c_d_iO2 => BS_blk(i_block_2)%O_c_d(:,iO2)
  !$cuf kernel do(1) <<<*,*>>>
  do i_g1=1,BS_n_g_W
    i_g2=g_rot_d(G_m_G_d(g_rot_d(i_g1,iq_W_s)   ,ig_W   ),i_k_s_m1  )

@@ -30,7 +30,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use LOGO,         ONLY:pickup_a_random
  use drivers,      ONLY:l_bs_fxc,l_td_hf,l_bss
  use frequency,    ONLY:w_samp
- use electrons,    ONLY:levels,spin_occ,spin,n_spin,E_SOC_nbands
+ use electrons,    ONLY:levels,spin_occ,spin,n_spin
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free
  use functions,    ONLY:K_scatter
@@ -48,7 +48,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,&
-&                       l_BSE_minimize_memory, l_restart_bse
+&                       l_BSE_minimize_memory,BS_pert_SOC,l_restart_bse
  use collision_el, ONLY:elemental_collision,elemental_collision_free
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_WR,OP_APP_CL,DUMP,&
@@ -107,8 +107,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Constants & Setup
  !==================
  !
- if(E_SOC_nbands==0) Co=4._SP*real(spin_occ)*pi/DL_vol/real(q%nbz,SP)
- if(E_SOC_nbands/=0) Co=4._SP               *pi/DL_vol/real(q%nbz,SP)
+ if(.not.BS_pert_SOC) Co=4._SP*real(spin_occ)*pi/DL_vol/real(q%nbz,SP)
+ if(     BS_pert_SOC) Co=4._SP               *pi/DL_vol/real(q%nbz,SP)
  io_BS_err    =-1
  io_BS_Fxc_err=-1
  !

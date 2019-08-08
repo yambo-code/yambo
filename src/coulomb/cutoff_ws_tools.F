@@ -77,8 +77,9 @@
   do i3=-n3,n3
     do i2=-n2,n2
       !
-      if (master_thread) call live_timing(steps=1)
       if (.not.px%element_2D(i2+n2+1,i3+n3+1)) cycle
+      !
+      if (master_thread) call live_timing(steps=1)
       !
       do i1=-n1,n1
         !
@@ -94,6 +95,8 @@
   enddo
   !$omp end do
   !$omp end parallel
+  !
+  call OPENMP_update(master_thread)
   !
   call live_timing()
   !

@@ -273,8 +273,10 @@ cat << EOF > AWK_replace
 {
  na = split (\$0,a)
  if (substr(a[1],1,1) == "!" ) 
- {print \$0
-  next}
+ {
+  print \$0
+  next
+ }
  #
  gsub("\\\(","_PARL_")
  gsub("\\\)","_PARR_")
@@ -297,8 +299,8 @@ cat << EOF > AWK_replace
  #
  if (index(\$0,PATTERN)==0)
  {
-   gsub("_PARL_","\\(")
-   gsub("_PARR_","\\)")
+  gsub("_PARL_","(")
+  gsub("_PARR_",")")
   print \$0
   next
  }
@@ -321,10 +323,10 @@ cat << EOF > AWK_replace
  if (index(\$0,"logical")>1 && index(\$0,"::")==0) {print_the_var = "no" }
  if (index(\$0,"integer")>1 && index(\$0,"::")==0) {print_the_var = "no" }
  if (index(\$0,"character")>1 && index(\$0,"::")==0) {print_the_var = "no" }
- if (index(\$0,"real_PARL_")1 && index(\$0,"::")==0) {print_the_var = "no" }
+ if (index(\$0,"real_PARL_")>1 && index(\$0,"::")==0) {print_the_var = "no" }
  if (index(\$0,"complex_PARL_")>1 && index(\$0,"::")==0) {print_the_var = "no" }
- gsub("_PARL_","\\(")
- gsub("_PARR_","\\)")
+ gsub("_PARL_","(")
+ gsub("_PARR_",")")
  if (print_the_var=="yes") {print \$0}
 }
 EOF

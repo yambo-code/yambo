@@ -29,7 +29,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  use nl_optics,     ONLY:NL_bands
  use IO_m,          ONLY:IO_and_Messaging_switch
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use parallel_m,    ONLY:ncpu,COMM_copy,PAR_build_index
+ use parallel_m,    ONLY:ncpu,COMM_copy,PAR_build_index,PAR_INDEX_copy
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_freqs_INDEX,PAR_COM_freqs_A2A,PAR_COM_freqs,PAR_COM_DIPk_ibz_INDEX,&
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_WF_k_INDEX,&

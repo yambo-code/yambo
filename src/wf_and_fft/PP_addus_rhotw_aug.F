@@ -17,7 +17,6 @@ subroutine PP_addus_rhotw_aug(isc)
   USE gvect,        ONLY: eigts1, eigts2, eigts3, mill
   USE uspp,         ONLY: okvan
   USE uspp_param,   ONLY: upf, nh, nhm
-  use cell_base,    ONLY: omega
   use collision_el, ONLY: elemental_collision
   use timing_m,     ONLY: timing
   !

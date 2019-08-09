@@ -4,7 +4,7 @@ unalias mv rm cp
 
 set OBJ="."
 set action="clean"
-set filter="changed"
+set filter="all"
 
 #######################################################################
 #
@@ -15,10 +15,16 @@ if ( $argv[1] =~ "clean" && $#argv == 1 ) then
  exit 0
 endif
 
-if ( $#argv >= 2 ) then
+if ( $#argv == 1 ) then
+ set OBJ = $argv[1]
+endif
+if ( $#argv == 2 ) then
+ set action = $argv[1]
  set OBJ = $argv[2]
 endif
 if ( $#argv == 3 ) then
+ set action = $argv[1]
+ set OBJ = $argv[2]
  set filter=$argv[3]
 endif
 
@@ -269,28 +275,57 @@ cat << EOF > AWK_replace
  if (substr(a[1],1,1) == "!" ) 
  {print \$0
   next}
- if (index(\$0,"${var}")==0)
- {print \$0
-  next}
- gsub("${var},&","&")
- gsub("${var} ,&","&")
- gsub("${var}  ,&","&")
- gsub("${var},","")
- gsub(",${var}","")
- gsub(", ${var}","")
- gsub(",  ${var}","")
- gsub(":${var}","")
- gsub(": ${var}","")
- gsub(":  ${var}","")
- gsub("${var}","")
+ #
+ gsub("\\\(","_PARL_")
+ gsub("\\\)","_PARR_")
+ # Isolate the real var
+ PATTERN="${var}"
+ line=\$0
+ gsub(",${var}"," ${var}",line)
+ na = split (line,a," ")
+ for (i = 1; i <= na; i++)  { 
+   if (index(a[i],"${var}_PARL_")>0) 
+   {
+    #print "S" i a[i]
+    PATTERN=a[i]
+    #print PATTERN,"PATT"
+    #print \$0
+    #gsub(PATTERN,"")
+    #print \$0
+   }
+ }
+ #
+ if (index(\$0,PATTERN)==0)
+ {
+   gsub("_PARL_","\\(")
+   gsub("_PARR_","\\)")
+  print \$0
+  next
+ }
+ gsub(PATTERN",&","&")
+ gsub(PATTERN" ,&","&")
+ gsub(PATTERN"  ,&","&")
+ gsub(PATTERN",","")
+ gsub(PATTERN" ,","")
+ gsub(PATTERN"  ,","")
+ gsub(","PATTERN,"")
+ gsub(", "PATTERN,"")
+ gsub(",  "PATTERN,"")
+ gsub(":"PATTERN,"")
+ gsub(": "PATTERN,"")
+ gsub(":  "PATTERN,"")
+ gsub(PATTERN",","")
  # Check if the USE call is empty
  print_the_var="yes"
  if (index(\$0,"use")>1 && index(\$0,":")==0) {print_the_var = "no" } 
  if (index(\$0,"logical")>1 && index(\$0,"::")==0) {print_the_var = "no" }
  if (index(\$0,"integer")>1 && index(\$0,"::")==0) {print_the_var = "no" }
  if (index(\$0,"character")>1 && index(\$0,"::")==0) {print_the_var = "no" }
- if (index(\$0,"real")>1 && index(\$0,"::")==0) {print_the_var = "no" }
- if (print_the_var=="yes") {print \$0 $var}
+ if (index(\$0,"real_PARL_")1 && index(\$0,"::")==0) {print_the_var = "no" }
+ if (index(\$0,"complex_PARL_")>1 && index(\$0,"::")==0) {print_the_var = "no" }
+ gsub("_PARL_","\\(")
+ gsub("_PARR_","\\)")
+ if (print_the_var=="yes") {print \$0}
 }
 EOF
     gawk -f AWK_replace $source > CLEAN  

@@ -10,12 +10,12 @@ set filter="all"
 #
 # clean_unused_variables.tcsh clean/list [dir/file] [all/changed]
 #
-if ( $argv[1] =~ "clean" && $#argv == 1 ) then
- git ls-files --others | xargs rm -f
- exit 0
-endif
 
 if ( $#argv == 1 ) then
+ if ( $argv[1] =~ "clean" ) then
+  git ls-files --others | xargs rm -f
+  exit 0
+ endif
  set OBJ = $argv[1]
 endif
 if ( $#argv == 2 ) then

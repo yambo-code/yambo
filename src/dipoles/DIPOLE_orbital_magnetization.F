@@ -25,7 +25,7 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
  !
  ! This routine returns <L>
  !
- use pars,                ONLY:SP,cI,pi
+ use pars,                ONLY:SP,cI
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_sp_pol
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index

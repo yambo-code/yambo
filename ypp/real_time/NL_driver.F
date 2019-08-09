@@ -47,7 +47,7 @@ subroutine NL_driver(en,k)
  ! Working Space
  !
  integer, external::io_NL
- integer  :: ID,i_Probe
+ integer  :: io_Nonlinear,ID,i_Probe
  integer  :: i_f,i_d,i_order
  real(SP) :: W_step,T_period,time_range_save(2)
  real(SP),    allocatable  :: RT_P_probe(:,:,:),Harmonic_Frequency(:,:),Probe_frequency(:)

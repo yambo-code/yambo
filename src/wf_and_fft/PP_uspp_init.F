@@ -27,7 +27,7 @@ subroutine PP_uspp_init()
  ! general USPP vars
  !
  use drivers,       ONLY:l_HF_and_locXC,l_col_cut,&
-&                        list_dbs,l_setup,l_rim,l_sc_magnetic
+&                        list_dbs,l_setup,l_rim
  use pars,          ONLY:SP,DP
  use com,           ONLY:error
  use vec_operate,   ONLY:c2a

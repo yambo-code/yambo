@@ -33,7 +33,7 @@ subroutine RT_Glesser_rotate(dG)
  !
  ! Work Space
  !
- integer                 :: ik,ib
+ integer                 :: ik
  !
  do ik=1,RT_nk
    !

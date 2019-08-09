@@ -42,7 +42,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  ! Work Space
  !
- integer           :: ikbz,ikbzp,is,isp,ib,ibp,idor,i_sp_pol,ik,ikp
+ integer           :: ikbz,ikbzp,is,isp,ib,ibp,i_sp_pol,ik,ikp
  integer           :: id,idx_kp(3),idx_k(3),shift(3),max_step,istep
  complex(SP)       :: WF_symm(wf_ng,n_spinor,Dip%ib(2),n_sp_pol)
  complex(SP)       :: WF_shifted(wf_ng,n_spinor,Dip%ib(2),n_sp_pol)

@@ -34,13 +34,12 @@ void input_file(struct yambo_seed_struct y,struct tool_struct t,int *use_editor)
  /*
   External functions
  */
-#if !defined _DRIVER_TEST
  extern int guess_winsize();
  /*
   stdlog?
  */
  ttd=guess_winsize();
-#endif
+ /* */
  strcpy(edit_line,t.editor);
  strcpy(file_name,y.in_file);
  if (y.parenv_file !=NULL) {strcpy(file_name,y.parenv_file);};

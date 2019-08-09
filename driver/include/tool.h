@@ -24,27 +24,6 @@
   tool & desc
 
 */
-#if defined _DRIVER_TEST
- #if defined _a2y_driver
- char *tool="a2y";
- #endif
- #if defined _ypp_driver
- char *tool="ypp";
- #endif
- #if defined _yambo_driver
- char *tool="yambo";
- #endif
- #if defined _c2y_driver
- char *tool="c2y";
- #endif
- #if defined _e2y_driver
- char *tool="e2y";
- #endif
- #if defined _p2y_driver
- char *tool="p2y";
- #endif
- char *tool_desc="Testing Driver";
-#endif
 #if defined _yambo 
  char *tool="yambo";
  char *tool_desc="A shiny pot of fun and happiness [C.D.Hogan]";

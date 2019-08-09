@@ -234,12 +234,6 @@ yambo: libs
 	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; $(mksrc)
 	@+X2DO="yambo"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)"; $(mkx)
 #
-# DRIVERs tests #
-# 
-driver_yambo: libs
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_DRIVER_TEST -D_yambo_driver"; $(mk_driver_src)
-	@+X2DO="yambo"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_DRIVER_TEST -D_yambo_driver -D_ELPH";XLIBS="$(DRIVER_LIBS_LD)"; $(mkx)
-#
 # Yambo PROJECTS #
 # 
 yambo_magnetic: libs

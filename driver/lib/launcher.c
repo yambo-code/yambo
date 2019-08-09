@@ -56,11 +56,6 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
    MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
  };
 #endif
-#if defined _DRIVER_TEST
- F90_FUNC(driver_test)(
-#include <fortran_arguments.h>
- );
-#endif
 #if defined _yambo
  /* 
    Running the Fortran YAMBO driver 

@@ -24,14 +24,6 @@
 /* 
  Tool drivers 
 */
-/* TEST */
-#if defined _DRIVER_TEST
- #if defined _FORTRAN_US
-  int driver_test_
- #else
-  int driver_test
- #endif
-#endif
 /* YAMBO */
 #if defined _yambo
  #if defined _FORTRAN_US

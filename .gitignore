@@ -16,6 +16,16 @@
 
 # source #
 ##########
+driver/include/editor.h
+driver/include/version.h
+include/driver.h
+include/editor.h
+include/fortran_arguments.h
+include/fortran_driver.h
+include/kind.h
+include/tool.h
+include/version.h
+src/tools/.objects
 config.status
 config/report
 config/setup

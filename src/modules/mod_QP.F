@@ -380,6 +380,5 @@ module QP_m
      if (dE>0..and.abs(F)>epsilon(1.)) h2ht=1
      if (h2ht==0) F=0.
    end function
-
    !
 end module 

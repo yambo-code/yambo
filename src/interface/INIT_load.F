@@ -26,6 +26,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
+ use LOGO,          ONLY:code_branch
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time,V_nl_optics
@@ -46,7 +47,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
-&                        BS_n_g_W,BS_n_g_exch
+&                        BS_n_g_W,BS_n_g_exch,L_kind
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig
@@ -274,6 +275,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! BSE/BSK
  !
  call it(defs,'BSEmod',  '[BSE] resonant/retarded/coupling',BSE_mode,case="a")
+ call it(defs,'Lkind',   '[BSE] Lbar (default) / full',L_kind,verb_level=V_resp)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
@@ -579,11 +581,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! BSE
  !
- call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',&
-&        BS_eh_win,verb_level=V_resp)
- call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=V_resp)
- call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&
-&                        E_unit,verb_level=V_resp)
+ call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',BS_eh_win,verb_level=V_resp)
+ call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=0)
+ call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,E_unit,verb_level=V_resp)
  !
  ! Xx
  !

@@ -53,6 +53,7 @@ subroutine RT_Fermi_excitation(E,k)
  !
  if(h_mu_autotune_thr > 0._SP) then ! h_mu autotune loop at fixed e_mu
    delta_Nho=-1000._SP ! Fills up with negative sign
+   delta_Nel=0._SP
    mu_step=0.01_SP/HA2EV
    i_mu=0
    do while (abs(-delta_Nho-delta_Nel)>h_mu_autotune_thr)

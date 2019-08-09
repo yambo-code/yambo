@@ -58,7 +58,8 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
    i_Tk  =BS_blk(i_B)%iT_k
    i_Tp  =BS_blk(i_B)%iT_p
    !
-   if (BS_blk(i_B)%mode == "R") then
+   select case(BS_blk(i_B)%mode)
+   case("R")
      !
      ! Resonant part 
      !
@@ -71,7 +72,8 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
           &                     Vo(i_Tp)%fragment(:),1)
      if (i_Tk.eq.i_Tp)& !add the energy diffs on the diagonal 
           &          Vo(i_Tk)%fragment(:) = Vo(i_Tk)%fragment(:) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:)
-   else
+     !
+   case("C")
      !
      ! Coupling part
      !
@@ -82,7 +84,20 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
           &         call M_by_V('t',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),alpha,&
           &                     BS_blk(i_B)%mat,BS_blk(i_B)%size(1),conjg(Vi(i_Tk)%fragment(:)),1,cONE,&
           &                     Vo(i_Tp)%fragment(:),1)
-   end if
+     !
+   case("A")
+     !
+     ! Anti-Resonant part 
+     !
+     ! TO DO
+     !
+   case("Q")
+     !
+     ! Anti-Coupling part 
+     !
+     ! TO DO
+     !
+   end select
    !
  end do
  !

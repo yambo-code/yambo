@@ -1,4 +1,4 @@
-
+!
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
@@ -260,6 +260,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_wavefunction   =trim(rstr_piece(i1+1))=='w'
      l_sort           =trim(rstr_piece(i1+1))=='s'
      l_amplitude      =trim(rstr_piece(i1+1))=='a'
+     if (l_sort)  read(rstr_piece(i1+2),'(i10)') BSiq
 #if defined _YPP_ELPH
      l_gkkp           =trim(rstr_piece(i1+1))=='g'
 #endif

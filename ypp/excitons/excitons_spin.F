@@ -36,8 +36,8 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  use wave_func,     ONLY:WF,wf_ng
  use wrapper,       ONLY:Vstar_dot_V
  use YPP_interfaces,ONLY:excitons_sort_and_report
- use YPPm,          ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,&
-&                        EXCITON_kin,excitons_degeneracy_average,EXCITON_spin
+ use YPP,           ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,&
+&                        EXCITON_kin,excitons_degeneracy_average,EXCITON_spin,BSiq
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  !
 #include<memory.h>
@@ -175,7 +175,7 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  ! Sorting & reporting'
  !=====================
  !
- call excitons_sort_and_report(BS_R_right,BS_E,EXC_spin=EXC_spin)
+ call excitons_sort_and_report(BSiq,BS_R_right,BS_E,EXC_spin=EXC_spin)
  !
  do i_c=1,EXCITONS_n_user_states
    !

@@ -23,26 +23,26 @@
 !
 subroutine YPP_SET_defaults()
  !
- use YPPm,           ONLY:DOS_broadening,DOS_E_range,r_hole,deg_energy,&
+ use YPP,            ONLY:DOS_broadening,DOS_E_range,r_hole,deg_energy ,EXCITON_weight_treshold,&
                           WF_multiplier,gamma_radius,SOC_split,alat_used_for_output,BANDS_bands,BANDS_steps,&
 &                         coo_in,coo_out,DOS_E_steps,INTERP_grid ,l_amplitude,l_bands,l_current,l_density  ,&
 &                         l_dos,l_exc_wf   ,l_mag,l_norm_to_one,l_sort,l_sp_wf,l_spin,l_wannier,mag_dir    ,&
 &                         N_path_pts,ncell ,ord_dgrid_ipol ,output_fname,p_dir,p_format   ,perturbative_SOC_path,&
 &                         plot_title,PtsPath,seed_name,SOC_bands_buffer,SOC_bands_to_map,state_ctl ,V_value,&
 &                         w90_fname,wannier_bands,WF_ref,what_to_write,SP,HA2EV,E_field,Nel_fac,DOS_bands,  &
-&                         l_pdos,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,EXCITON_Res_treshold,&
-&                         EXCITON_E_treshold,EXCITON_weight_treshold
+&                         BSiq,l_pdos,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,EXCITON_Res_treshold,EXCITON_E_treshold
  use units,          ONLY:FS2AUT
  use D_lattice,      ONLY:alat
  use interpolate,    ONLY:INTERP_shell_factor,interpls,max_interpls
+ use electrons,      ONLY:n_bands
  use com,            ONLY:write_to_report
  use stderr,         ONLY:write_to_log  
  use LIVE_t,         ONLY:live_timing_is_on
 #if defined _YPP_SC
- use YPPm,           ONLY:l_mean_potential
+ use YPP,            ONLY:l_mean_potential
 #endif
 #if defined _YPP_MAGNETIC
- use YPPm,           ONLY:B_field,B_psi,B_theta,l_angular_momentum,l_position
+ use YPP,            ONLY:B_field,B_psi,B_theta,l_angular_momentum,l_position
 #endif
 #if defined _YPP_RT
  use YPP_real_time,  ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_BZ_regions,Eh_pumped_pair_BZ_width,&
@@ -72,7 +72,7 @@ subroutine YPP_SET_defaults()
  DOS_broadening=0.1_SP/HA2EV
  DOS_E_range=(/1._SP,-1._SP/)/HA2EV
  DOS_E_steps=500
- DOS_bands=0
+ DOS_bands=(/1,n_bands/)
  WF_ref=0
  !
  l_pdos=.false.
@@ -109,7 +109,7 @@ subroutine YPP_SET_defaults()
  !
  ! BANDS
  !
- BANDS_bands=0
+ BANDS_bands=(/1,n_bands/)
  BANDS_steps=10
  l_bands=.false.
  INTERP_shell_factor=20._SP
@@ -151,8 +151,9 @@ subroutine YPP_SET_defaults()
  deg_energy =0.01_SP/HA2EV
  EXCITON_Res_treshold =0.0_SP
  EXCITON_E_treshold =0.0_SP
- EXCITON_weight_treshold =0.01_SP
+ EXCITON_weight_treshold =0.05_SP
  WF_multiplier=1._SP
+ BSiq=1
  !
 #if defined _YPP_ELPH
  !
@@ -194,14 +195,14 @@ subroutine YPP_SET_defaults()
  ! WFs perturbative SOC
  !
  perturbative_SOC_path=""
- SOC_bands_to_map=0
+ SOC_bands_to_map=(/ 1, n_bands /)
  SOC_bands_buffer=1
  SOC_split=0.1_SP/HA2EV
  !
  ! BXSF interpolation
  !
  w90_fname="./w90.bxsf"
- wannier_bands=0
+ wannier_bands=(/1,n_bands/)
  ord_dgrid_ipol = 0
  !
  ! GPL_EXCLUDE_START

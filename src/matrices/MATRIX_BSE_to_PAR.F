@@ -61,7 +61,7 @@ subroutine MATRIX_BSE_to_PAR( M_bse , M_slk )
  do i_B=1,n_BS_blks
    !
    if (M_bse(i_B)%mode=="R") BSE_components(myid+1,i_B,7)=1
-   if (M_bse(i_B)%mode=="A") BSE_components(myid+1,i_B,7)=2
+   if (M_bse(i_B)%mode=="C") BSE_components(myid+1,i_B,7)=2
    !
    BSE_components(myid+1,i_B,5:6)=(/M_bse(i_B)%iT_k,M_bse(i_B)%iT_p/)
    !

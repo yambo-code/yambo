@@ -126,7 +126,10 @@ cat << EOF > AWK_separate
  if (index(line,"&")==0 && index(line,"real")==0  &&
      index(line,"integer")==0 && index(line,"complex")==0  &&
      index(line,"logical")==0 && index(line,"use")==0 && 
-     index(line,"type")==0    && index(line,"character")==0 ) {  var_line = "no" }
+     index(line,"type")==0    && index(line,"character")==0 &&
+     index(line,"REAL")==0  &&
+     index(line,"INTEGER")==0 && index(line,"COMPLEX")==0  &&
+     index(line,"LOGICAL")==0 && index(line,"CHARACTER")==0 ) {  var_line = "no" }
  if (var_line=="yes" && index(line,"data ")>0) { var_line = "no" }
  if (var_line=="yes" && index(line,"write ")>0) { var_line = "no" }
  if (var_line=="yes" && index(line,".not.")>0) { var_line = "no" }
@@ -245,12 +248,21 @@ foreach file ($FILES)
  foreach source (MODULE_*)
   #echo "$file $source..."
   gawk -f AWK_nl $source
-  if (! -f PP) then
+  if (! -f PP || ! -f HEADER) then
+   echo "-----------------------------------------------------------------------------"
+   echo "WARNING->"$file"/"$source": impossible to split"
+   echo "-----------------------------------------------------------------------------"
    continue
   endif
   mv PP ${file}"_PP"
   mv HEADER ${file}"_HEADER"
   gawk -f AWK_separate ${file}"_PP"
+  if (! -f VARIABLES) then
+   echo "-----------------------------------------------------------------------------"
+   echo "WARNING->"$file"/"$source": VARIABLES not found"
+   echo "-----------------------------------------------------------------------------"
+   continue
+  endif
   mv VARIABLES ${file}"_VARIABLES"
   mv BODY ${file}"_BODY"
   echo "EOF" >>  ${file}"_VARIABLES"

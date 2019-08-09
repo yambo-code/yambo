@@ -28,7 +28,7 @@ subroutine PP_addus_vloc_aug(becprod,ngm,nspin_mag,ldrho,rhog)
   !
   INTEGER :: ngm_s, ngm_e, ngm_l
   ! starting/ending indices, local number of G-vectors
-  INTEGER :: ig, na, nt, ih, jh, ijh, is, nab, nb, nh_l
+  INTEGER :: ig, na, nt, ih, jh,  is, nab, nb, nh_l
   ! counters
 
   COMPLEX(DP), ALLOCATABLE :: tbecprod(:,:,:,:)

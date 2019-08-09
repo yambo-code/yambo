@@ -23,7 +23,6 @@ subroutine PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, 
   USE uspp_param,    ONLY : upf, nh, nhm
   USE noncollin_module,     ONLY : noncolin, npol
   USE becmod,        ONLY : bec_type
-  use timing_m,      ONLY : timing
   !
   IMPLICIT NONE
   COMPLEX(SP),    INTENT(OUT):: becprod(nhm,nhm,nat,nspin)
@@ -33,7 +32,7 @@ subroutine PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, 
   !
   COMPLEX(SP), ALLOCATABLE :: auxk1(:,:), auxk2(:,:), aux_nc(:,:)
   COMPLEX(SP), ALLOCATABLE :: aux_gk(:,:)
-  INTEGER :: ikb, ih, jh, na, np, is, js, i_err
+  INTEGER :: ikb, ih, jh, na, np, is,  i_err
   
   !
   DO np = 1, ntyp
@@ -165,8 +164,7 @@ subroutine add_becprod_nc ( na, np, aux_nc, becprod, nspin_mag, domag )
   !
   ! ... local variables
   !
-  INTEGER :: ih, jh, ijh
-  REAL(SP) :: fac
+  INTEGER :: ih, jh
   !
   DO jh = 1, nh(np)
   DO ih = 1, nh(np)
@@ -214,7 +212,7 @@ subroutine add_becprod_so( na, np, aux_so, becprod, nspin_mag, domag )
   !
   ! ... local variables
   !
-  INTEGER :: ih, jh, lh, kh, ijh, is1, is2
+  INTEGER :: ih, jh, lh, kh,  is1, is2
   COMPLEX(SP) :: fac
   
   becprod(:,:,na,:) = 0.0

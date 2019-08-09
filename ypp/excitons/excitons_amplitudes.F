@@ -28,7 +28,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
  use R_lattice,     ONLY:bz_samp,qindx_X
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:intc,real2ch
- use YPP,           ONLY:EXCITON_weight_treshold,EXCITONS_user_indexes,EXCITONS_n_user_states
+ use YPPm,          ONLY:EXCITON_weight_treshold,EXCITONS_user_indexes,EXCITONS_n_user_states
  use BS_solvers,    ONLY:BS_mat,BSS_eh_table,BSS_n_descs,BSS_description,BSS_n_eig
  use BS,            ONLY:BS_H_dim
  use com,           ONLY:msg,of_open_close

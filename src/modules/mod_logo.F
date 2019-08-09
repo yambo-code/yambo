@@ -27,6 +27,8 @@ module LOGO
  ! 
  implicit none
  !
+ character(50):: code_branch
+ !
  integer                     :: n_logo_lines
  integer                     :: ID_logo
  integer                     :: ID_logo_stderr

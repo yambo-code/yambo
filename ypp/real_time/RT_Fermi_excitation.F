@@ -27,13 +27,11 @@ subroutine RT_Fermi_excitation(E,k)
  use units,          ONLY:BO2ANG,HA2EV
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp
- use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ
  use com,            ONLY:msg
  use functions,      ONLY:Fermi_fnc
- use vec_operate,    ONLY:v_is_zero,c2a
- use real_time,      ONLY:RT_carriers,RT_bands,RT_Nk_ibz
- use YPP_real_time,  ONLY:Eh_mu,Eh_temp,l_RTpump_Fermi,h_mu_autotune_thr
+ use real_time,      ONLY:RT_carriers
+ use YPP_real_time,  ONLY:Eh_mu,Eh_temp,h_mu_autotune_thr
  !
  implicit none
  !

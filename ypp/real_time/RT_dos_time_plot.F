@@ -35,7 +35,6 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  use YPP_real_time,  ONLY:RT_time
  use IO_m,           ONLY:IO_and_Messaging_switch
  use com,            ONLY:msg
- use functions,      ONLY:Fermi_fnc_derivative
  use LIVE_t,         ONLY:live_timing
  use RT_control,     ONLY:RT_output,RT_apply,RT_carriers_to_RT_k,RT_carriers_to_RT_E
  use real_time,      ONLY:RT_carriers,RT_bands

@@ -29,7 +29,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,BANDS_bands,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
-&                         l_wannier,l_wavefunction,MAX_DbGd_DBs,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
+&                         l_wannier,l_wavefunction,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,l_angular_momentum,l_position
  use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev

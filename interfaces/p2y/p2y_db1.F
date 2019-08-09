@@ -24,7 +24,7 @@
 subroutine p2y_db1(en,k)
  !
  use P2Ym,                  ONLY : get_dimensions,get_cell,get_atoms,get_symmetries,get_xc,get_k_points,get_more,get_energies,&
-&                                  get_r_vectors,get_igk
+&                                  get_igk,get_R_vectors
  use electrons,             ONLY : levels
  use com,                   ONLY : msg,warning
  use mod_com2y,             ONLY : print_interface_dimensions

@@ -37,7 +37,7 @@ void options_help(struct options_struct options[],int *i_opt)
  options[*i_opt].long_opt="help";
  options[*i_opt].serial_var=1;
  options[*i_opt].optional_var=1;
- options[*i_opt].n_char=1;
+ options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Code version & libraries";

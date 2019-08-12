@@ -48,7 +48,7 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].short_opt='v';
  options[*i_opt].bin="yambo_sc yambo_magnetic yambo_rt yambo_electric";
  options[*i_opt].yambo_string="potential";
- options[*i_opt].n_char=1;
+ options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Self-Consistent Magnetic Calculations";
@@ -83,11 +83,11 @@ void options_projects(struct options_struct options[],int *i_opt)
  /* GPL_EXCLUDE_START */
  options[*i_opt].short_desc="NEQ Real-time dynamics";
  options[*i_opt].long_desc[0]="<string>=(p)ump or probe,(pp)ump & probe, (pn) n external fields";
- options[*i_opt].n_char=1;
+ options[*i_opt].char_var=1;
  /* GPL_EXCLUDE_END */
  /* GPL_INCLUDE_START 
  options[*i_opt].short_desc="Real-time Bethe-Salpeter Equation";
- options[*i_opt].n_char=0;
+ options[*i_opt].char_var=0;
     GPL_INCLUDE_END */
  options[*i_opt].long_opt="rt";
  options[*i_opt].short_opt='n';
@@ -108,7 +108,7 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].short_opt='s';
  options[*i_opt].bin="yambo_rt";
  options[*i_opt].yambo_string="scattp";
- options[*i_opt].n_char=1;
+ options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Correlation kind";

@@ -55,7 +55,6 @@ integer function e2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  integer                      :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp
  integer,     external        :: io_DB1, io_KB_abinit
  complex(SP), allocatable     :: wf_disk(:,:,:)
- logical                      :: force_kbpp
  ! 
  ! Work Space
  !

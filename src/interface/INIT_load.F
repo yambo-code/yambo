@@ -26,8 +26,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
- use LOGO,          ONLY:code_branch
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
+ use it_tools,      ONLY:it
+ use it_m,          ONLY:initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time,V_nl_optics
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,&

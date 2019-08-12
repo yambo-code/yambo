@@ -36,7 +36,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].long_opt="grid";
  options[*i_opt].short_opt='k';
  options[*i_opt].bin="ypp";
- options[*i_opt].n_char=1;
+ options[*i_opt].char_var=1;
  options[*i_opt].yambo_string="bzgrids";
  options[*i_opt].section="Brillouin Zone";
  *i_opt=*i_opt+1;
@@ -70,7 +70,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].long_desc[0]="<string>=(p)erturbative SOC mapping, (c)onversion";
  options[*i_opt].short_opt='w';
  options[*i_opt].bin="ypp";
- options[*i_opt].n_char=1;
+ options[*i_opt].char_var=1;
  options[*i_opt].yambo_string="WFs";
  options[*i_opt].section="Convertions";
  *i_opt=*i_opt+1;
@@ -87,7 +87,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp";
  options[*i_opt].yambo_string="QPDBs";
  options[*i_opt].section="Convertions";
- options[*i_opt].n_char=1;
+ options[*i_opt].char_var=1;
 #if !defined _YPP_RT  
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="gkkp databases";
@@ -101,13 +101,20 @@ void options_ypp(struct options_struct options[],int *i_opt)
   Plots
  */
  *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="Exctionic State Momentum";
+ options[*i_opt].long_opt= "BSiq";
+ options[*i_opt].short_opt='b';
+ options[*i_opt].bin="ypp";
+ options[*i_opt].yambo_string="BSiq";
+ options[*i_opt].section="Plots";
+ options[*i_opt].int_var=1;
+ *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Mean Potential";
  options[*i_opt].long_opt= "potential";
  options[*i_opt].short_opt='v';
  options[*i_opt].bin="ypp_sc";
  options[*i_opt].yambo_string="MeanPot";
  options[*i_opt].section="Plots";
-
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Electronic properties";
  /* GPL_EXCLUDE_START */
@@ -125,11 +132,10 @@ void options_ypp(struct options_struct options[],int *i_opt)
     GPL_INCLUDE_END */
  options[*i_opt].long_opt="electron";
  options[*i_opt].short_opt='s';
- options[*i_opt].bin="ypp ypp_ph ypp_magnetic";
+ options[*i_opt].bin="ypp"; 
  options[*i_opt].yambo_string="electrons";
  options[*i_opt].section="Plots";
- options[*i_opt].n_char=1;
-
+ options[*i_opt].char_var=1;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Excitonic properties";
  options[*i_opt].long_opt="exciton";
@@ -141,21 +147,20 @@ void options_ypp(struct options_struct options[],int *i_opt)
 #else
  options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave";
 #endif
+ options[*i_opt].long_desc[1]="<string>=excitonic index (sort mode)";
  /* GPL_EXCLUDE_END */
  /* GPL_INCLUDE_START 
  options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave";
     GPL_INCLUDE_END */
  options[*i_opt].yambo_string="excitons";
  options[*i_opt].section="Plots";
- options[*i_opt].n_char=1;
-
+ options[*i_opt].char_var=1;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Free hole position in the excitonic plot";
  options[*i_opt].long_opt="freehole";
  options[*i_opt].bin="ypp";
  options[*i_opt].yambo_string="freehole";
  options[*i_opt].section="Plots";
-
 #if !defined _YPP_RT  
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Phononic properties";
@@ -165,7 +170,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp_ph";
  options[*i_opt].yambo_string="phonons";
  options[*i_opt].section="Plots";
- options[*i_opt].n_char=1;
+ options[*i_opt].char_var=1;
 #endif
 /*
   Real-Time
@@ -186,7 +191,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp_rt";
  options[*i_opt].yambo_string="RTDBs";
  options[*i_opt].section="Real-Time";
- options[*i_opt].n_char=1;
+ options[*i_opt].char_var=1;
  /* GPL_EXCLUDE_END */
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="TD polarization post-processing";
@@ -196,7 +201,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  /* GPL_INCLUDE_START 
  options[*i_opt].long_desc[0]="<string>=(X)response";
     GPL_INCLUDE_END */
- options[*i_opt].n_char=1;
+ options[*i_opt].char_var=1;
  options[*i_opt].long_opt= "polarization";
  options[*i_opt].short_opt='t';
  options[*i_opt].bin="ypp_rt";
@@ -207,7 +212,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].short_desc="TD components post-processing";
  options[*i_opt].long_opt="rtplot";
  options[*i_opt].short_opt='n';
- options[*i_opt].n_char=2;
+ options[*i_opt].char_var=2;
  options[*i_opt].bin="ypp_rt";
  options[*i_opt].yambo_string="TDplots"; /* TDplots */
  options[*i_opt].section="Real-Time";

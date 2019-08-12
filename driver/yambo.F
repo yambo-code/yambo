@@ -39,7 +39,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use X_m,           ONLY:X_t
  use DIPOLES,       ONLY:DIPOLE_t
  use parallel_m,    ONLY:myid,ncpu
- use it_m,          ONLY:it_reset,infile
+ use it_tools,      ONLY:it_reset
+ use it_m,          ONLY:infile
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset

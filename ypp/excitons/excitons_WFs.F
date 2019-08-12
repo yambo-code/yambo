@@ -37,7 +37,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
 &                        EXCITONS_user_indexes,EXCITONS_n_user_states
  use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_n_descs,BSS_description,&
 &                        BSS_n_eig
- use BS,            ONLY:BS_bands,BS_H_dim,BSqpts
+ use BS,            ONLY:BS_bands,BS_H_dim
  use interfaces,    ONLY:PARALLEL_index,WF_load,WF_free
  use wave_func,     ONLY:WF,WF_symm,wf_ng
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset

@@ -43,9 +43,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
- use it_m,           ONLY:it,initactivate,initdefs,rstatus,initmode,initinfio,&
-&                         infile,infile_dump,ofiles_append,runlevel_is_on,&
-&                         switch_off_runlevel,check_verbosity,nrnlvls,rnlvls
+ use it_tools,       ONLY:it,initactivate,initinfio,infile_dump,ofiles_append,&
+&                         switch_off_runlevel,check_verbosity,runlevel_is_on
+ use it_m,           ONLY:initdefs,rstatus,initmode,infile,nrnlvls,rnlvls
  use parallel_m,     ONLY:PP_redux_wait,master_cpu
  use com,            ONLY:msg,repfile,com_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report

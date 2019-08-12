@@ -32,7 +32,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use D_lattice,           ONLY:input_GS_Tel,alat,nsym
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP,mk_dir
  use com,                 ONLY:msg,more_io_path,com_path
- use it_m,                ONLY:it_reset,infile
+ use it_tools,            ONLY:it_reset
+ use it_m,                ONLY:infile
  use wave_func,           ONLY:io_WF
  use interfaces,          ONLY:PARALLEL_global_indexes
  use YPPm,                ONLY:l_bxsf,l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&

@@ -41,13 +41,13 @@ void options_interfaces(struct options_struct options[],int *i_opt)
  options[*i_opt].short_opt='b';
  options[*i_opt].bin="p2y a2y c2y";
  options[*i_opt].yambo_string="fragnb";
- options[*i_opt].n_int=1;
+ options[*i_opt].int_var=1;
  options[*i_opt].section="Interface";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Lattice constants rescaling factor";
  options[*i_opt].long_opt=  "alat_factor";
  options[*i_opt].short_opt='a';
- options[*i_opt].n_float=1;
+ options[*i_opt].float_var=1;
  options[*i_opt].bin="p2y a2y c2y";
  options[*i_opt].yambo_string="alat_f";
  options[*i_opt].section="Interface";

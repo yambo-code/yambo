@@ -21,28 +21,44 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INIT_QP_ctl_switch(what)
+subroutine PARSER_force_command_line_value(defs,name,I1,R1,CHAR)
  !
- use it_tools,   ONLY:initactivate
- use electrons,  ONLY:n_sp_pol
+ use it_m,       ONLY:initdefs,ni1v,i1vars,nr1v,r1vars,nchv,chvars
+ use pars,       ONLY:SP
+ !
  implicit none
  !
- character(1)::what
+ type(initdefs)        :: defs
+ character(*)          :: name
+ integer, optional     :: I1
+ real(SP),optional     :: R1
+ character(*),optional :: CHAR
  !
  ! Work Space
  !
- call initactivate(1,what//'fnQPdb '//what//'fnQP_N '//what//'fnFdb')
- if (n_sp_pol==1) then
-   call initactivate(1,what//'fnQP_E '//what//'fnQP_Z')   
-   call initactivate(1,what//'fnQP_Wv_E '//what//'fnQP_Wv '//what//'fnQP_Wv_dos ')
-   call initactivate(1,what//'fnQP_Wc_E '//what//'fnQP_Wc '//what//'fnQP_Wc_dos ')
- else
-   call initactivate(1,what//'fnQP_up_E '//what//'fnQP_up_Z')   
-   call initactivate(1,what//'fnQP_up_Wv_E '//what//'fnQP_up_Wv '//what//'fnQP_up_Wv_dos ')
-   call initactivate(1,what//'fnQP_up_Wc_E '//what//'fnQP_up_Wc '//what//'fnQP_up_Wc_dos ')
-   call initactivate(1,what//'fnQP_dn_E '//what//'fnQP_dn_Z')   
-   call initactivate(1,what//'fnQP_dn_Wv_E '//what//'fnQP_dn_Wv '//what//'fnQP_dn_Wv_dos ')
-   call initactivate(1,what//'fnQP_dn_Wc_E '//what//'fnQP_dn_Wc '//what//'fnQP_dn_Wc_dos ')
+ integer :: i_var
+ !
+ !
+ if (present(I1)) then
+   do i_var=1,ni1v
+     if (trim(i1vars(i_var,1))==trim(name)) then
+       defs%i1def(i_var)=I1
+     endif
+   enddo
+ endif
+ if (present(R1)) then
+   do i_var=1,nr1v
+     if (trim(r1vars(i_var,1))==trim(name)) then
+       defs%r1def(i_var)=R1
+     endif
+   enddo
+ endif
+ if (present(CHAR)) then
+   do i_var=1,nchv
+     if (trim(chvars(i_var,1))==trim(name)) then
+       defs%chdef(i_var)=CHAR
+     endif
+   enddo
  endif
  !
 end subroutine

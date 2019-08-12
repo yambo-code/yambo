@@ -49,7 +49,7 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  !
  ! Work Space
  !
- integer :: i1,i2,im,idx(3),id,ikp,id_red,ikm
+ integer :: i1,i2,im,id,id_red
  integer :: ikbz,istep,max_step
  complex(SP) :: Wk(3,NL_bands(2),NL_bands(2))
  complex(SP) :: Wop(NL_bands(2),NL_bands(2),2)

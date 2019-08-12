@@ -23,7 +23,7 @@
 !
 subroutine INIT_C_driver_runlevels(defs)
  !
- use it_m,          ONLY:it,initdefs
+ use it_tools,      ONLY:it,initdefs
  use pars,          ONLY:lchlen,schlen
  use C_driver,      ONLY:get_runlevel,code_bin,code_tool
  use stderr,        ONLY:STRING_split

@@ -72,7 +72,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  integer                  ::iq,neh
  !
- call section('*','Excitonic Properties')
+ call section('*','Excitonic Properties @ Q-index #'//trim(intc(BSiq)))
  !
  ! GPL_EXCLUDE_START
  !
@@ -97,7 +97,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_err=io_BSS_diago(iq,io_ID,Xbsk)
  !
- if (io_err/=0) call error(' ndb.BSS_diago not found')
+ if (io_err/=0) call error(' ndb.BS_diago not found')
  !
  ! Apply quasi-particle correction if presents
  ! 

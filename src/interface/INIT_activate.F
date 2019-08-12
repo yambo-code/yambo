@@ -23,7 +23,7 @@
 !
 subroutine INIT_activate()
  !
- use it_m,           ONLY:initactivate
+ use it_tools,       ONLY:initactivate
  use BS_solvers,     ONLY:BSS_mode
  use QP_m,           ONLY:QP_solver,COHSEX_use_empties
  use stderr,         ONLY:intc

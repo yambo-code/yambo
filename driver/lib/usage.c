@@ -30,7 +30,7 @@
 
 void usage(options_struct *options, struct tool_struct t, char *what, int n_options)
 {
- int i_opt,i,i_o,n_blanks,n_chars;
+ int i_opt,i,i_o,n_blanks,n_strings;
 
  char *pj   = running_project();
  char *tool = running_tool();
@@ -63,11 +63,11 @@ void usage(options_struct *options, struct tool_struct t, char *what, int n_opti
 
   title(stderr,"",t);
 
-  n_chars=0;
+  n_strings=0;
   for(i_opt=0;i_opt<n_options;i_opt++) {
    if (use_me(options,t,i_opt)==0) continue;
-   n_blanks=options[i_opt].n_int*6+options[i_opt].n_float*7+options[i_opt].n_char*9;
-   if (n_blanks>n_chars) n_chars=n_blanks;
+   n_blanks=options[i_opt].int_var*6+options[i_opt].float_var*7+options[i_opt].char_var*9;
+   if (n_blanks>n_strings) n_strings=n_blanks;
   };
 
   for(i_o=0;i_o<n_orders;i_o++) {
@@ -89,10 +89,10 @@ void usage(options_struct *options, struct tool_struct t, char *what, int n_opti
      {fprintf(stderr," (-%c)",options[i_opt].short_opt);}
     else
      {for(i=1;i<=5;i++) fprintf(stderr," ");};
-    for(i=1;i<=options[i_opt].n_int;i++)   {fprintf(stderr," %s","<int>");};
-    for(i=1;i<=options[i_opt].n_float;i++) {fprintf(stderr," %s","<real>");};
-    for(i=1;i<=options[i_opt].n_char;i++)  {fprintf(stderr," %s","<string>");};
-    n_blanks=n_chars+2-options[i_opt].n_int*6-options[i_opt].n_float*7-options[i_opt].n_char*9;
+    for(i=1;i<=options[i_opt].int_var;i++)   {fprintf(stderr," %s","<int>");};
+    for(i=1;i<=options[i_opt].float_var;i++) {fprintf(stderr," %s","<real>");};
+    for(i=1;i<=options[i_opt].char_var;i++)  {fprintf(stderr," %s","<string>");};
+    n_blanks=n_strings+2-options[i_opt].int_var*6-options[i_opt].float_var*7-options[i_opt].char_var*9;
     for(i=1;i<=n_blanks;i++) fprintf(stderr," "); 
     fprintf(stderr," :%s",options[i_opt].short_desc);
     if (options[i_opt].long_desc[0]!= NULL) fprintf(stderr," %s%s%s","(more with -h ",options[i_opt].long_opt,")");
@@ -122,12 +122,12 @@ void usage(options_struct *options, struct tool_struct t, char *what, int n_opti
   fprintf(stderr,"\n");
   fprintf(stderr," Long  option: %s\n",options[i_opt].long_opt);
   if (options[i_opt].short_opt>57) fprintf(stderr," Short option: %c\n",options[i_opt].short_opt);
-  if (options[i_opt].n_int+options[i_opt].n_float+options[i_opt].n_char>0) 
+  if (options[i_opt].int_var+options[i_opt].float_var+options[i_opt].char_var>0) 
   {
    fprintf(stderr," Variables   :");
-   for(i=1;i<=options[i_opt].n_int;i++)   {fprintf(stderr," %s","<int>");};
-   for(i=1;i<=options[i_opt].n_float;i++) {fprintf(stderr," %s","<real>");};
-   for(i=1;i<=options[i_opt].n_char;i++)  {fprintf(stderr," %s","<string>");};
+   for(i=1;i<=options[i_opt].int_var;i++)   {fprintf(stderr," %s","<int>");};
+   for(i=1;i<=options[i_opt].float_var;i++) {fprintf(stderr," %s","<real>");};
+   for(i=1;i<=options[i_opt].char_var;i++)  {fprintf(stderr," %s","<string>");};
    fprintf(stderr,"\n");
   }
   if (options[i_opt].long_desc[0]!= NULL)

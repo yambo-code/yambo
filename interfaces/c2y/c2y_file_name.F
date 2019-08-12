@@ -23,7 +23,7 @@
 !
 integer function c2y_file_name(inf,file_name_)
  !
- use pars,             ONLY:lchlen,schlen
+ use pars,             ONLY:lchlen
  use com,              ONLY:file_exists 
  implicit none
  character(*)              :: inf

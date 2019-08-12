@@ -23,7 +23,8 @@
 !
 subroutine INIT_ypp_load(defs)
  !
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
+ use it_tools,      ONLY:it
+ use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,&
 &                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
@@ -261,7 +262,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'ResTresh', '[o/o] Treshold on processed polaronic residuals',elph_residual_treshold)
 #endif
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
- call it(defs,'Qpts','Index q of the BS state(s)',BSiq)
+ call it(defs,'BSQindex','Q-Index of the BS state(s)',BSiq)
  !
 #if defined _YPP_MAGNETIC
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')

@@ -63,9 +63,9 @@ typedef struct options_struct
  char *bin;
  char *yambo_string;
  char *section;
- int   n_int;
- int   n_float;
- int   n_char;
+ int   int_var;
+ int   float_var;
+ int   char_var;
  int   optional_var;
  int   serial_var;
 } options_struct;

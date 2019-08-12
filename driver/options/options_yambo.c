@@ -43,7 +43,7 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].short_opt='p';
  options[*i_opt].bin="yambo";
  options[*i_opt].yambo_string="gwapprx";
- options[*i_opt].n_char=1;
+ options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Dyson Equation solver";
@@ -52,7 +52,7 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].short_opt='g';
  options[*i_opt].bin="yambo";
  options[*i_opt].yambo_string="gw0";
- options[*i_opt].n_char=1;
+ options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="GoWo Quasiparticle lifetimes";
@@ -87,7 +87,7 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].short_opt='o';
  options[*i_opt].bin="yambo";
  options[*i_opt].yambo_string="optics";
- options[*i_opt].n_char=1;
+ options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Dynamical Inverse Dielectric Matrix";
@@ -120,7 +120,7 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].short_opt='k';
  options[*i_opt].bin="yambo";
  options[*i_opt].yambo_string="kernel";
- options[*i_opt].n_char=1;
+ options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="BSE solver";
@@ -130,7 +130,7 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].short_opt='y';
  options[*i_opt].bin="yambo";
  options[*i_opt].yambo_string="bss";
- options[*i_opt].n_char=1;
+ options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
 
  desc="Total Energy";

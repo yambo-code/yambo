@@ -4,7 +4,7 @@ unalias mv rm cp
 
 set OBJ="."
 set action="clean"
-set filter="all"
+set filter="changed"
 
 #######################################################################
 #

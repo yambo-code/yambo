@@ -37,9 +37,9 @@ void options_maker(struct options_struct options[], int n_options)
   for(i=0;i<10;i++) options[i_opt].long_desc[i]=NULL;
   options[i_opt].yambo_string="unused";
   options[i_opt].bin="all";
-  options[i_opt].n_int=0;
-  options[i_opt].n_float=0;
-  options[i_opt].n_char=0;
+  options[i_opt].int_var=0;
+  options[i_opt].float_var=0;
+  options[i_opt].char_var=0;
   options[i_opt].serial_var=0;
   options[i_opt].optional_var=0;
   options[i_opt].section="undef";

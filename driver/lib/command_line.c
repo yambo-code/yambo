@@ -91,7 +91,7 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct options_str
   long_options[n_active].flag=0;
   long_options[n_active].val=opts[i_opt].short_opt;
   /* VARS */
-  n_vars=opts[i_opt].n_int+opts[i_opt].n_float+opts[i_opt].n_char;
+  n_vars=opts[i_opt].int_var+opts[i_opt].float_var+opts[i_opt].char_var;
   sprintf(ch,"%c",opts[i_opt].short_opt);
   if (n_vars ==0) {
    long_options[n_active].has_arg=no_argument;

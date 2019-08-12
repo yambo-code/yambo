@@ -30,7 +30,7 @@ subroutine INIT_q_points( )
  !
  use drivers,     ONLY:infile_editing
  use pars,        ONLY:SP,schlen,DP
- use it_m,        ONLY:check_verbosity
+ use it_tools,    ONLY:check_verbosity
  use R_lattice,   ONLY:nqibz,q_pt,bz_samp,q_source
 #if defined _ELPH
  use ELPH,        ONLY:ph_qpt,elph_use_q_grid,elph_nDBs,elph_grids_are_expanded

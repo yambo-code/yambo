@@ -33,10 +33,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,l_angular_momentum,l_position
  use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev
- use it_m,           ONLY:initdefs,initmode,ofiles_append,&
-&                         initinfio,infile,infile_dump,initactivate,&
-&                         nrnlvls,rnlvls,runlevel_is_on,&
-&                         infile_verbosity,V_general,V_qp,V_all,V_real_time,V_nl_optics
+ use it_tools,       ONLY:ofiles_append,initinfio,initactivate,infile_dump,runlevel_is_on,&
+&                         PARSER_force_command_line_value
+ use it_m,           ONLY:initdefs,initmode,infile,nrnlvls,rnlvls,infile_verbosity,&
+                          V_general,V_qp,V_all,V_real_time,V_nl_optics
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists,write_to_report,repfile,write_the_logo,rename_file
  use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile
@@ -79,7 +79,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  logical          ::l_init_QP,l_flag
  type(initdefs)   ::defs
  integer, external::io_RIM,io_COL_CUT,io_ATMPROJ_pwscf
- integer          ::i1,i2,ID,io_err
+ integer          ::i1,i2,ID,io_err,i_cycle
  character(schlen)::rstr_piece(60) 
  !
 #if defined _YPP_SC
@@ -206,194 +206,204 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    !
    call initactivate(1,'ElecTemp BoseTemp')
    !
-   do i2=1,nrnlvls
-     if ( trim(rstr_piece(i1)) == trim(rnlvls(i2,1)) ) then
-       infile_editing=.true.
-       call initactivate(1,trim(rnlvls(i2,1)))
+   do i_cycle=1,2
+     !
+     do i2=1,nrnlvls
+       if ( trim(rstr_piece(i1)) == trim(rnlvls(i2,1)) ) then
+         infile_editing=.true.
+         call initactivate(1,trim(rnlvls(i2,1)))
+       endif
+     enddo
+     !
+     if ( trim(rstr_piece(i1)) == 'bzgrids') then
+       l_k_grid=trim(rstr_piece(i1+1))=='k'
+       l_q_grid=trim(rstr_piece(i1+1))=='q'
+       l_shifted_grid=trim(rstr_piece(i1+1))=='s'
+       l_random_grid=trim(rstr_piece(i1+1))=='r'
+       !
+       ! GPL_EXCLUDE_START 
+       !
+       l_high_sym_pts=trim(rstr_piece(i1+1))=='h'
+       !
+       ! GPL_EXCLUDE_END
+       !
+       if (l_k_grid) call initactivate(1,"K_grid")
+       if (l_q_grid) call initactivate(1,"Q_grid")
+       if (l_shifted_grid) call initactivate(1,"Shifted_Grid")
+       if (l_random_grid)  call initactivate(1,"Random_Grid")
+       if (l_high_sym_pts) call initactivate(1,"High_Symm")
      endif
-   enddo
-   !
-   if ( trim(rstr_piece(i1)) == 'bzgrids') then
-     l_k_grid=trim(rstr_piece(i1+1))=='k'
-     l_q_grid=trim(rstr_piece(i1+1))=='q'
-     l_shifted_grid=trim(rstr_piece(i1+1))=='s'
-     l_random_grid=trim(rstr_piece(i1+1))=='r'
      !
-     ! GPL_EXCLUDE_START 
+     if ( trim(rstr_piece(i1)) == 'WFs') then
+       call initactivate(1,'WFs')
+       l_fix_save=trim(rstr_piece(i1+1))=='c'
+       l_map_WFs  =trim(rstr_piece(i1+1))=='p'
+       if (l_map_WFs) call initactivate(1,'WFs_map')
+     endif
      !
-     l_high_sym_pts=trim(rstr_piece(i1+1))=='h'
-     !
-     ! GPL_EXCLUDE_END
-     !
-     if (l_k_grid) call initactivate(1,"K_grid")
-     if (l_q_grid) call initactivate(1,"Q_grid")
-     if (l_shifted_grid) call initactivate(1,"Shifted_Grid")
-     if (l_random_grid)  call initactivate(1,"Random_Grid")
-     if (l_high_sym_pts) call initactivate(1,"High_Symm")
-   endif
-   !
-   if ( trim(rstr_piece(i1)) == 'WFs') then
-     call initactivate(1,'WFs')
-     l_fix_save=trim(rstr_piece(i1+1))=='c'
-     l_map_WFs  =trim(rstr_piece(i1+1))=='p'
-     if (l_map_WFs) call initactivate(1,'WFs_map')
-   endif
-   !
-   if ( trim(rstr_piece(i1)) == 'QPDBs') then
-     call initactivate(1,'QPDBs')
-     l_QP_DBs_create_and_modify=trim(rstr_piece(i1+1))=='g'
-     l_QP_DBs_manipulate            =trim(rstr_piece(i1+1))=='m'
-     if (l_QP_DBs_create_and_modify) call initactivate(1,'QPDB_edit')
-     if (l_QP_DBs_manipulate)        call initactivate(1,'QPDB_merge')
-   endif
-   !
-#if defined _YPP_ELPH
-   if ( trim(rstr_piece(i1)) == 'phonons') then
-     l_dos              =trim(rstr_piece(i1+1))=='d'
-     l_eliashberg       =trim(rstr_piece(i1+1))=='e'
-     l_atomic_amplitude =trim(rstr_piece(i1+1))=='a'
-     if (l_atomic_amplitude) infile_editing=.false.
-     if (l_eliashberg)   call initactivate(1,'eliashberg')
-   endif
-#endif
-   if ( trim(rstr_piece(i1)) == 'excitons') then
-     l_wavefunction   =trim(rstr_piece(i1+1))=='w'
-     l_sort           =trim(rstr_piece(i1+1))=='s'
-     l_amplitude      =trim(rstr_piece(i1+1))=='a'
-     if (l_sort)  read(rstr_piece(i1+2),'(i10)') BSiq
-#if defined _YPP_ELPH
-     l_gkkp           =trim(rstr_piece(i1+1))=='g'
-#endif
-     !
-     l_spin  =trim(rstr_piece(i1+1))=='sp'.and.n_spin>1
-     l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
-     !
-     ! GPL_EXCLUDE_START
+     if ( trim(rstr_piece(i1)) == 'QPDBs') then
+       call initactivate(1,'QPDBs')
+       l_QP_DBs_create_and_modify=trim(rstr_piece(i1+1))=='g'
+       l_QP_DBs_manipulate            =trim(rstr_piece(i1+1))=='m'
+       if (l_QP_DBs_create_and_modify) call initactivate(1,'QPDB_edit')
+       if (l_QP_DBs_manipulate)        call initactivate(1,'QPDB_merge')
+     endif
      !
 #if defined _YPP_ELPH
-     l_eliashberg      =trim(rstr_piece(i1+1))=='e'
+     if ( trim(rstr_piece(i1)) == 'phonons') then
+       l_dos              =trim(rstr_piece(i1+1))=='d'
+       l_eliashberg       =trim(rstr_piece(i1+1))=='e'
+       l_atomic_amplitude =trim(rstr_piece(i1+1))=='a'
+       if (l_atomic_amplitude) infile_editing=.false.
+       if (l_eliashberg)   call initactivate(1,'eliashberg')
+     endif
 #endif
-     ! GPL_EXCLUDE_END
-     !
-   endif
-   if ( trim(rstr_piece(i1)) == 'electrons') then
-     !
-     l_current        =trim(rstr_piece(i1+1))=='c'
-     l_density        =trim(rstr_piece(i1+1))=='d'
-     l_dos            =trim(rstr_piece(i1+1))=='s'
-     l_wavefunction   =trim(rstr_piece(i1+1))=='w'
-     l_bands          =trim(rstr_piece(i1+1))=='b'
-     l_mag            =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
-     !
+     if ( trim(rstr_piece(i1)) == 'BSiq') then
+       !
+       read(rstr_piece(i1+1),'(i10)') BSiq 
+       if (l_sort) infile_editing=.false.
+       !
+       call PARSER_force_command_line_value(defs,"BSQindex",I1=BSiq)
+       !
+     endif
+     if ( trim(rstr_piece(i1)) == 'excitons') then
+       l_wavefunction   =trim(rstr_piece(i1+1))=='w'
+       l_sort           =trim(rstr_piece(i1+1))=='s'
+       l_amplitude      =trim(rstr_piece(i1+1))=='a'
 #if defined _YPP_ELPH
-     l_eliashberg       =trim(rstr_piece(i1+1))=='e'
+       l_gkkp           =trim(rstr_piece(i1+1))=='g'
 #endif
-     !
+       !
+       l_spin  =trim(rstr_piece(i1+1))=='sp'.and.n_spin>1
+       l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
+       !
+       ! GPL_EXCLUDE_START
+       !
+#if defined _YPP_ELPH
+       l_eliashberg      =trim(rstr_piece(i1+1))=='e'
+#endif
+       ! GPL_EXCLUDE_END
+       !
+     endif
+     if ( trim(rstr_piece(i1)) == 'electrons') then
+       !
+       l_current        =trim(rstr_piece(i1+1))=='c'
+       l_density        =trim(rstr_piece(i1+1))=='d'
+       l_dos            =trim(rstr_piece(i1+1))=='s'
+       l_wavefunction   =trim(rstr_piece(i1+1))=='w'
+       l_bands          =trim(rstr_piece(i1+1))=='b'
+       l_mag            =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
+       !
+#if defined _YPP_ELPH
+       l_eliashberg       =trim(rstr_piece(i1+1))=='e'
+#endif
+       !
 #if defined _YPP_MAGNETIC
-     l_angular_momentum =trim(rstr_piece(i1+1))=='l'
-     l_position         =trim(rstr_piece(i1+1))=='p'
+       l_angular_momentum =trim(rstr_piece(i1+1))=='l'
+       l_position         =trim(rstr_piece(i1+1))=='p'
 #endif
+       !
+     endif
      !
-   endif
-   !
 #if defined _YPP_RT
-   !
-   ! GPL_EXCLUDE_START
-   !
-   if ( trim(rstr_piece(i1)) == 'RTDBs') then
-     l_RTpump_energy=trim(rstr_piece(i1+1))=='e'
-     l_RTpump_kspace=trim(rstr_piece(i1+1))=='k'
-     l_RTpump_Fermi =trim(rstr_piece(i1+1))=='f'
-   endif
-   !
-   ! GPL_EXCLUDE_END
-   !
-   if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDpol') then
-     !
-     l_RT_X           =trim(rstr_piece(i1+1))=='X'
      !
      ! GPL_EXCLUDE_START
-     l_RT_abs         =trim(rstr_piece(i1+1))=='a'
+     !
+     if ( trim(rstr_piece(i1)) == 'RTDBs') then
+       l_RTpump_energy=trim(rstr_piece(i1+1))=='e'
+       l_RTpump_kspace=trim(rstr_piece(i1+1))=='k'
+       l_RTpump_Fermi =trim(rstr_piece(i1+1))=='f'
+     endif
+     !
      ! GPL_EXCLUDE_END
      !
-   endif
-   !
-   ! GPL_EXCLUDE_START
-   !
-   if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDplots') then
+     if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDpol') then
+       !
+       l_RT_X           =trim(rstr_piece(i1+1))=='X'
+       !
+       ! GPL_EXCLUDE_START
+       l_RT_abs         =trim(rstr_piece(i1+1))=='a'
+       ! GPL_EXCLUDE_END
+       !
+     endif
      !
-     l_RT_occupations =index(rstr_piece(i1+1),'o')>0
-     l_RT_lifetimes   =index(rstr_piece(i1+1),'l')>0
-     l_RT_density     =trim(rstr_piece(i1+1))=='d'
+     ! GPL_EXCLUDE_START
      !
-     l_RT_bands       =trim(rstr_piece(i1+2))=='b'
-     l_RT_time        =trim(rstr_piece(i1+2))=='t'
-     l_RT_energy      =trim(rstr_piece(i1+2))=='e'
-     l_RT_dos         =trim(rstr_piece(i1+2))=='d'
+     if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDplots') then
+       !
+       l_RT_occupations =index(rstr_piece(i1+1),'o')>0
+       l_RT_lifetimes   =index(rstr_piece(i1+1),'l')>0
+       l_RT_density     =trim(rstr_piece(i1+1))=='d'
+       !
+       l_RT_bands       =trim(rstr_piece(i1+2))=='b'
+       l_RT_time        =trim(rstr_piece(i1+2))=='t'
+       l_RT_energy      =trim(rstr_piece(i1+2))=='e'
+       l_RT_dos         =trim(rstr_piece(i1+2))=='d'
+       !
+     endif
      !
-   endif
-   !
-   ! GPL_EXCLUDE_END
-   !
+     ! GPL_EXCLUDE_END
+     !
 #endif
-   !
+     !
 #if defined _YPP_NL
-   l_NL_X   =  trim(rstr_piece(i1)) == 'nonlinear'
+     l_NL_X   =  trim(rstr_piece(i1)) == 'nonlinear'
 #endif   
-   !    
-   if ( trim(rstr_piece(i1)) == 'excitons'.or. trim(rstr_piece(i1)) == 'electrons') then
-     if (l_amplitude)      call initactivate(1,'amplitude')
-     if (l_spin)           call initactivate(1,'spin')
-     if (l_mag)            call initactivate(1,'magnetization')
-     if (l_wavefunction)   call initactivate(1,'wavefunction')
+     !    
+     if ( trim(rstr_piece(i1)) == 'excitons'.or. trim(rstr_piece(i1)) == 'electrons') then
+       if (l_amplitude)      call initactivate(1,'amplitude')
+       if (l_spin)           call initactivate(1,'spin')
+       if (l_mag)            call initactivate(1,'magnetization')
+       if (l_wavefunction)   call initactivate(1,'wavefunction')
 #if defined _YPP_ELPH
-     if (l_eliashberg)       call initactivate(1,'eliashberg')
-     if (l_gkkp)             call initactivate(1,'gkkp')
+       if (l_eliashberg)       call initactivate(1,'eliashberg')
+       if (l_gkkp)             call initactivate(1,'gkkp')
 #endif
 #if defined _YPP_MAGNETIC
-     if (l_angular_momentum) call initactivate(1,'angular_m')
-     if (l_position)         call initactivate(1,'position')
+       if (l_angular_momentum) call initactivate(1,'angular_m')
+       if (l_position)         call initactivate(1,'position')
 #endif
-     if (l_current)        call initactivate(1,'current')
-     if (l_density)        call initactivate(1,'density')
-     if (l_sort)           infile_editing=.false.
-   endif
-   if ( trim(rstr_piece(i1)) == 'phonons'.or. trim(rstr_piece(i1)) == 'electrons') then
-     if (l_dos)            call initactivate(1,'dos')
-   endif
-   if ( trim(rstr_piece(i1)) == 'electrons') then
-     if (l_bands)          call initactivate(1,'bnds')
-   endif
+       if (l_current)        call initactivate(1,'current')
+       if (l_density)        call initactivate(1,'density')
+       if (l_sort)           infile_editing=.false.
+     endif
+     if ( trim(rstr_piece(i1)) == 'phonons'.or. trim(rstr_piece(i1)) == 'electrons') then
+       if (l_dos)            call initactivate(1,'dos')
+     endif
+     if ( trim(rstr_piece(i1)) == 'electrons') then
+       if (l_bands)          call initactivate(1,'bnds')
+     endif
 #if defined _YPP_RT
-   !
-   ! GPL_EXCLUDE_START
-   !
-   if ( trim(rstr_piece(i1)) == 'RTDBs') then
-     if (l_RTpump_energy) call initactivate(1,'Select_energy')
-     if (l_RTpump_kspace) call initactivate(1,'Select_kspace')
-   endif
-   !
-   ! GPL_EXCLUDE_END
-   !
-   if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDpol' .or. trim(rstr_piece(i1)) == 'TDplots') then
-     !
-     if (l_RT_X)           call initactivate(1,'RT_X')
      !
      ! GPL_EXCLUDE_START
      !
-     if (l_RT_abs)         call initactivate(1,'RTabs')
-     if (l_RT_occupations) call initactivate(1,'RToccupations')
-     if (l_RT_lifetimes)   call initactivate(1,'RTlifetimes')
-     if (l_RT_density)     call initactivate(1,'RTdeltaRho')
-     if (l_RT_bands)       call initactivate(1,'RTfitbands')
-     if (l_RT_time)        call initactivate(1,'RTtime')
-     if (l_RT_energy)      call initactivate(1,'RTenergy')
-     if (l_RT_dos)         call initactivate(1,'RTdos')
+     if ( trim(rstr_piece(i1)) == 'RTDBs') then
+       if (l_RTpump_energy) call initactivate(1,'Select_energy')
+       if (l_RTpump_kspace) call initactivate(1,'Select_kspace')
+     endif
      !
      ! GPL_EXCLUDE_END
      !
-   endif
+     if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDpol' .or. trim(rstr_piece(i1)) == 'TDplots') then
+       !
+       if (l_RT_X)           call initactivate(1,'RT_X')
+       !
+       ! GPL_EXCLUDE_START
+       !
+       if (l_RT_abs)         call initactivate(1,'RTabs')
+       if (l_RT_occupations) call initactivate(1,'RToccupations')
+       if (l_RT_lifetimes)   call initactivate(1,'RTlifetimes')
+       if (l_RT_density)     call initactivate(1,'RTdeltaRho')
+       if (l_RT_bands)       call initactivate(1,'RTfitbands')
+       if (l_RT_time)        call initactivate(1,'RTtime')
+       if (l_RT_energy)      call initactivate(1,'RTenergy')
+       if (l_RT_dos)         call initactivate(1,'RTdos')
+       !
+       ! GPL_EXCLUDE_END
+       !
+     endif
 #endif
+   enddo
  enddo
  !
 #if defined _YPP_NL
@@ -643,7 +653,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_spin.and..not.l_excitons) call initactivate(1,"FFTGvecs")
  !
  if (l_excitons) then
-   call initactivate(1,"States En_treshold Res_treshold")
+   call initactivate(1,"States En_treshold Res_treshold BSQindex")
    if (l_amplitude) then
      call INIT_QP_ctl_switch('G')
      call initactivate(1,"DipWeight")

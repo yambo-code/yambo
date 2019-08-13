@@ -194,31 +194,34 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].char_var=1;
  /* GPL_EXCLUDE_END */
  *i_opt=*i_opt+1;
- options[*i_opt].short_desc="TD polarization post-processing";
- /* GPL_EXCLUDE_START */
- options[*i_opt].long_desc[0]="<string>=(X)response,Tr(a)bs";
- /* GPL_EXCLUDE_END */
- /* GPL_INCLUDE_START 
- options[*i_opt].long_desc[0]="<string>=(X)response";
-    GPL_INCLUDE_END */
- options[*i_opt].char_var=1;
- options[*i_opt].long_opt= "polarization";
- options[*i_opt].short_opt='t';
- options[*i_opt].bin="ypp_rt";
- options[*i_opt].yambo_string="TDpol"; /* TDpol */
- options[*i_opt].section="Real-Time";
- /* GPL_EXCLUDE_START */
- *i_opt=*i_opt+1;
- options[*i_opt].short_desc="TD components post-processing";
+ options[*i_opt].short_desc="TD observables plot";
  options[*i_opt].long_opt="rtplot";
  options[*i_opt].short_opt='n';
- options[*i_opt].char_var=2;
+ options[*i_opt].char_var=1;
  options[*i_opt].bin="ypp_rt";
  options[*i_opt].yambo_string="TDplots"; /* TDplots */
  options[*i_opt].section="Real-Time";
- options[*i_opt].long_desc[0]="<string#1>=(o)ccupations,(l)ifetimes,(d)ensity";
- options[*i_opt].long_desc[1]="<string#1>=o => <string#2>=(b)ands,(t)ime,(e)nergy,(d)os";
- options[*i_opt].long_desc[2]="<string#1>=l => <string#2>=(b)ands,(t)ime,(e)nergy";
- options[*i_opt].long_desc[3]="<string#1>=d => <string#2>=(t)ime";
+ /* GPL_EXCLUDE_START */
+ options[*i_opt].long_desc[0]="<string1>=(X)response,Tr(a)bs,(o)ccupations,(l)ifetimes,(d)ensity";
+ /* GPL_EXCLUDE_END */
+ /* GPL_INCLUDE_START 
+ options[*i_opt].long_desc[0]="<string1>=(X)response,Tr(a)bs";
+    GPL_INCLUDE_END */
+ *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="TD plot control";
+ options[*i_opt].char_var=1;
+ options[*i_opt].long_opt= "rtmode";
+ options[*i_opt].short_opt='t';
+ options[*i_opt].bin="ypp_rt";
+ options[*i_opt].yambo_string="TDplotmode"; /* TDpol */
+ options[*i_opt].section="Real-Time";
+ /* GPL_INCLUDE_START 
+ options[*i_opt].long_desc[0]="rtplot=X/a => <string>=(t)ime";
+    GPL_INCLUDE_END */
+ /* GPL_EXCLUDE_START */
+ options[*i_opt].long_desc[0]="rtplot=X/a => <string>=(t)ime";
+ options[*i_opt].long_desc[1]="rtplot=o   => <string>=(b)ands,(t)ime,(e)nergy,(d)os";
+ options[*i_opt].long_desc[2]="rtplot=l   => <string>=(b)ands,(t)ime,(e)nergy";
+ options[*i_opt].long_desc[3]="rtplot=d   => <string>=(t)ime";
  /* GPL_EXCLUDE_END */
 };

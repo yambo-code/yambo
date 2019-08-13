@@ -110,8 +110,6 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="yambo";
  options[*i_opt].yambo_string="dipoles";
  options[*i_opt].section=desc;
-
- desc="Bethe-Salpeter Equation";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Kernel";
  options[*i_opt].long_desc[0]="<string>=hartree/alda/lrc/hf/sex/bsfxc";
@@ -122,6 +120,8 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].yambo_string="kernel";
  options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
+
+ desc="Bethe-Salpeter Equation";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="BSE solver";
  options[*i_opt].long_desc[0]="<string>=h/d/s/(p/f)i/t";

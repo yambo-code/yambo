@@ -317,23 +317,22 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      !
      ! GPL_EXCLUDE_END
      !
-     if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDpol') then
+     if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDplots') then
        !
-       l_RT_X           =trim(rstr_piece(i1+1))=='X'
+       l_RT_X           =index(rstr_piece(i1+1),'X')>0
        !
        ! GPL_EXCLUDE_START
-       l_RT_abs         =trim(rstr_piece(i1+1))=='a'
+       l_RT_occupations =index(rstr_piece(i1+1),'o')>0
+       l_RT_lifetimes   =index(rstr_piece(i1+1),'l')>0
+       l_RT_density     =index(rstr_piece(i1+1),'d')>0
+       l_RT_abs         =index(rstr_piece(i1+1),'a')>0
        ! GPL_EXCLUDE_END
        !
      endif
      !
      ! GPL_EXCLUDE_START
      !
-     if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDplots') then
-       !
-       l_RT_occupations =index(rstr_piece(i1+1),'o')>0
-       l_RT_lifetimes   =index(rstr_piece(i1+1),'l')>0
-       l_RT_density     =trim(rstr_piece(i1+1))=='d'
+     if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDplotmode') then
        !
        l_RT_bands       =trim(rstr_piece(i1+2))=='b'
        l_RT_time        =trim(rstr_piece(i1+2))=='t'

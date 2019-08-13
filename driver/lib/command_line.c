@@ -124,8 +124,8 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct options_str
    if (opts[i_opt].short_opt==opt) {break;};
   }
   /*
-  if (opt > 0) {printf ("GETOPT ouput: %c %s",opts[i_opt].short_opt,opts[i_opt].long_opt);}
   if (optarg != NULL) {printf (" with arg %s", optarg);}
+  if (opt > 0) {printf ("GETOPT ouput: %c %s",opts[i_opt].short_opt,opts[i_opt].long_opt);}
   printf ("\n");
   */
   /* help */

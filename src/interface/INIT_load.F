@@ -82,7 +82,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        NE_MEM_treshold,NE_time_step_update_jump_SAVE,          &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
-&                        RT_MAX_step,RT_RTA_temp,RT_RTA_chem
+&                        RT_MAX_step,RT_RTA_temp,RT_RTA_chem,RAD_magnification
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
@@ -411,7 +411,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
- call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
+ call it(defs,'RADLifeTime',  '[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
+ call it(defs,'RAD_prefactor','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
  call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
  !
  ! Dynamics

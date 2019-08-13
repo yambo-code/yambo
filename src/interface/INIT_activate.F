@@ -273,7 +273,7 @@ subroutine INIT_activate()
  !
  ! BSE solver
  !
- if (l_optics.and.l_bse.and.l_bss) then
+ if (l_optics.and.l_bse.and.l_bss.or.(l_bse.and.l_rpa_IP)) then
    !
    call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
    !
@@ -287,11 +287,7 @@ subroutine INIT_activate()
    if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF BSSPertWidth')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
    if (index(BSS_mode,'s')/=0)  then
-      call initactivate(1,'BSSNEig')
-      call initactivate(1,'BSSEnTarget')
-      call initactivate(1,'BSSSlepcExtraction')
-      call initactivate(1,'BSSSlepcNCV')
-      call initactivate(1,'BSSSlepcTol')
+     call initactivate(1,'BSSNEig BSSEnTarget BSSSlepcExtraction BSSSlepcNCV BSSSlepcTol WRbsWF')
    endif
    !
    ! Special project dependent variables
@@ -520,7 +516,8 @@ subroutine INIT_activate()
    ! GPL_EXCLUDE_START
    !
    call INIT_RT_ctl_switch('G')
-   call initactivate(1,'RTskipImposeN RTeeImposeE InducedField VelGaugeCorr VelGaugeDiam PfromJ RTUpdateSOC RTUpdateE SaveGhistory')
+   call initactivate(1,'RTskipImposeN RTeeImposeE InducedField')
+   call initactivate(1,'Gauge VelGaugeCorr VelGaugeDiam PfromJ RTUpdateSOC RTUpdateE SaveGhistory')
    call initactivate(1,'RTEqScatt RTImpForMet RTzeroTempRef RTEvalEnergy RTEvalEntropy')
    call initactivate(1,'dTupdateTime dTupdateJump dTupdateTresh dT_MAX')
    if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) &
@@ -530,7 +527,7 @@ subroutine INIT_activate()
    !
    ! GPL_EXCLUDE_END
    !
-   call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
+   call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime RAD_prefactor PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
    call initactivate(1,'IOtime')
    !

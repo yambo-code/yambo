@@ -35,15 +35,24 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].short_opt='s';
  options[*i_opt].bin="yambo_sc yambo_electric yambo_magnetic";
  options[*i_opt].yambo_string="scrun";
+ options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Self-Consistent Potential";
  /* GPL_EXCLUDE_START */
- options[*i_opt].long_desc[0]="<string>=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)";
- /* GPL_EXCLUDE_END */
- /* GPL_INCLUDE_START 
- options[*i_opt].long_desc[0]="<string>=(h)artree,(f)ock,(coh),(sex),(cohsex),(d)ef,(ip)";
-    GPL_INCLUDE_END */
- options[*i_opt].long_desc[1]="(h)artree can be combined with others, i.e. hf, hsex, ... ";
+ options[*i_opt].long_desc[0]="Hartree => <string>=h";
+ options[*i_opt].long_desc[1]="Fock    => <string>=h";
+ options[*i_opt].long_desc[2]="Coh     => <string>=coh";
+ options[*i_opt].long_desc[3]="Sex     => <string>=sex";
+ options[*i_opt].long_desc[4]="exx     => <string>=exx";
+ options[*i_opt].long_desc[5]="exxc    => <string>=exxc";
+ options[*i_opt].long_desc[6]="srpa    => <string>=srpa";
+ options[*i_opt].long_desc[7]="default => <string>=d";
+ options[*i_opt].long_desc[8]="IP      => <string>=ip";
+ options[*i_opt].long_desc[9]="LDA_X   => <string>=ldax";
+ options[*i_opt].long_desc[10]="PZ      => <string>=pz";
+ options[*i_opt].long_desc[11]="GS      => <string>=gs";
+ options[*i_opt].long_desc[12]=" ";
+ options[*i_opt].long_desc[13]="Potentials can be combined. Example: use hf for Hartree-Fock";
  options[*i_opt].long_opt="potential";
  options[*i_opt].short_opt='v';
  options[*i_opt].bin="yambo_sc yambo_magnetic yambo_rt yambo_electric";

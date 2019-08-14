@@ -379,6 +379,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      if ( trim(rstr_piece(i1)) == 'RTDBs') then
        if (l_RTpump_energy) call initactivate(1,'Select_energy')
        if (l_RTpump_kspace) call initactivate(1,'Select_kspace')
+       if (l_RTpump_Fermi ) call initactivate(1,'Select_Fermi')
      endif
      !
      ! GPL_EXCLUDE_END

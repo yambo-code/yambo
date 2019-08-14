@@ -311,6 +311,12 @@ subroutine INIT_read_command_line(rstr,init_)
          if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
        else if ( index(trim(rstr_piece(i1+1)),'f')>0) then
          H_potential='FOCK'
+       else if ( index(trim(rstr_piece(i1+1)),'ldax')>0) then
+         H_potential='LDA_X'
+       else if ( index(trim(rstr_piece(i1+1)),'pz')>0) then
+         H_potential='PZ'
+       else if ( index(trim(rstr_piece(i1+1)),'gs')>0) then
+         H_potential='GS_XC'
        endif
        !
        if ( index(trim(rstr_piece(i1+1)),'h')==1 ) then

@@ -59,7 +59,7 @@ typedef struct options_struct
  char  short_opt;
  char *long_opt;
  char *short_desc;
- char *long_desc[10];
+ char *long_desc[20];
  char *bin;
  char *yambo_string;
  char *section;

@@ -40,6 +40,7 @@ module BS
  logical :: BS_K_is_ALDA
  logical :: BS_not_const_eh_f
  logical :: BS_K_has_been_calculated_loaded=.FALSE.
+ character(schlen) :: L_kind
  character(schlen) :: BSE_mode
  character(schlen) :: BSK_mode
  character(schlen) :: BS_res_mode
@@ -52,6 +53,7 @@ module BS
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier
+ real(SP),allocatable :: BSqpts(:,:)
  !
  ! Live Timing
  !=============
@@ -127,7 +129,8 @@ module BS
    ! ... correlation
    !------------------
    integer                       :: N_oscillators 
-   integer,     allocatable      :: O_table(:,:,:,:,:) ! 2,sym,n,n',spin @ k = (iOnn,i_block_ref)
+   integer,     allocatable      :: kp_table(:,:)           ! 2,nkibz @ k = (i_kmq,i_pmq)
+   integer,     allocatable      :: O_table(:,:,:,:,:,:,:)  ! 2,sym,nkmq,npmq,n,n',spin @ k = (iOnn,i_block_ref)
    complex(SP), allocatable      :: O_c(:,:)
    !
  end type BS_block
@@ -138,6 +141,11 @@ module BS
  ! WF phases
  !===========
  complex(SP),allocatable :: WF_phase(:,:,:,:)
+ !
+ ! Screened interaction
+ !======================
+ complex(SP),allocatable ::BS_W(:,:,:)
+ !
  !
  contains
    !
@@ -198,13 +206,14 @@ module BS
        if (.not.allocated(BS_blk(iB)%O_c)) exit
        YAMBO_FREE(BS_blk(iB)%O_c)
        YAMBO_FREE(BS_blk(iB)%O_table)
+       YAMBO_FREE(BS_blk(iB)%kp_table)
      enddo
      !
    end subroutine
    !
    subroutine BS_Blocks_and_Transitions_alloc(E,iT)
      !
-     use pars,       ONLY:IP
+     use pars,       ONLY:IP,cZERO
      use drivers,    ONLY:l_kerr,l_photolum
      use stderr,     ONLY:intc
      use electrons,  ONLY:levels,E_SOC_nbands,n_sp_pol
@@ -219,6 +228,8 @@ module BS
      !
      YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A,(nT))
+     BS_T_grp(iT)%dipoles_R=cZERO
+     BS_T_grp(iT)%dipoles_A=cZERO
      if(l_kerr) then
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_kerr,(nT))
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_kerr,(nT))
@@ -283,6 +294,9 @@ module BS
        YAMBO_FREE(BS_T_grp(iT)%E_SOC_corr)
        !
      enddo
+     !
+     YAMBO_FREE(BS_T_grp)
+     YAMBO_FREE(BS_blk)
      !
    end subroutine
    !

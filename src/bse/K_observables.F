@@ -21,21 +21,49 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module YPP_interfaces
+subroutine K_observables(WHAT,W)
  !
- interface
-   !
-   subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
-     use pars,          ONLY:SP
-     use BS,            ONLY:BS_H_dim
-     use YPP,           ONLY:EXCITON_spin
-     implicit none
-     integer                      :: iq
-     complex(SP)                  :: BS_R(BS_H_dim),BS_E(BS_H_dim)
-     real(SP),   optional,pointer :: BS_E_SOC_corr(:,:)
-     type(EXCITON_spin),optional  :: EXC_spin
-   end subroutine
-   !
- end interface
+ use pars,          ONLY:cZERO
+ use X_m,           ONLY:X_alloc,Epsilon_ij,Epsilon_ii,Joint_DOS
+ use frequency,     ONLY:w_samp
+#if defined _PL
+ use PHOTOLUM,      ONLY:PL,PL_init
+#endif
+ use BS_solvers,    ONLY:BSS_n_freqs
  !
-end module YPP_interfaces
+#include<memory.h>
+ !
+ character(*) :: WHAT
+ type(w_samp) :: W
+ !
+ if (WHAT=="ALLOC") then
+   !
+#if defined _KERR
+   YAMBO_ALLOC(Epsilon_ij,(BSS_n_freqs,4))
+   Epsilon_ij=cZERO
+   Epsilon_ij(:,1)=W%p(:)
+#endif
+#if defined _PL
+   call PL_init( )
+   PL(:,1) = W%p(:)  
+#endif
+   !
+   call X_alloc("EPS",(/BSS_n_freqs,4/))
+   Epsilon_ii(:,1)   =W%p(:)
+   Joint_DOS(:,1)    =W%p(:)
+   !
+ else if (WHAT=="FREE") then
+   !
+#if defined _KERR
+   YAMBO_FREE(Epsilon_ij)
+#endif
+   !
+#if defined _PL
+   YAMBO_FREE(PL)
+#endif
+   !
+   call X_alloc("EPS")
+   !
+ endif
+ !
+end subroutine

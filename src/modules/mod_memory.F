@@ -78,21 +78,21 @@ module memory
  interface MEM_dri
    module procedure MEM_clean,MEM_error,&
 #ifdef _CUDA
-&                             MEM_i1g, MEM_i2g, MEM_i3g, MEM_i4g, MEM_i5g,             &
-&                             MEM_c1g, MEM_c2g, MEM_c3g, MEM_c4g, MEM_c5g, MEM_c6g,    &
+&                             MEM_i1g, MEM_i2g, MEM_i3g, MEM_i4g, MEM_i5g,                  &
+&                             MEM_c1g, MEM_c2g, MEM_c3g, MEM_c4g, MEM_c5g, MEM_c6g,         &
 #  ifndef _DOUBLE
-&                             MEM_cd1g,MEM_cd2g,MEM_cd3g,MEM_cd4g,MEM_cd5g,MEM_cd6g,   &
+&                             MEM_cd1g,MEM_cd2g,MEM_cd3g,MEM_cd4g,MEM_cd5g,MEM_cd6g,        &
 #  endif
 #endif
-&                             MEM_i1,  MEM_i2,  MEM_i3,  MEM_i4,  MEM_i5,              &
-&                             MEM_r1,  MEM_r2,  MEM_r3,  MEM_r4,  MEM_r5,              &
-&                             MEM_c1,  MEM_c2,  MEM_c3,  MEM_c4,  MEM_c5,  MEM_c6,     &
+&                             MEM_i1,  MEM_i2,  MEM_i3,  MEM_i4,  MEM_i5,  MEM_i6,  MEM_i7, &
+&                             MEM_r1,  MEM_r2,  MEM_r3,  MEM_r4,  MEM_r5,                   &
+&                             MEM_c1,  MEM_c2,  MEM_c3,  MEM_c4,  MEM_c5,  MEM_c6,          &
 #ifndef _DOUBLE
-&                             MEM_rd1, MEM_rd2, MEM_rd3,                               &
-&                             MEM_cd1, MEM_cd2, MEM_cd3, MEM_cd4, MEM_cd5, MEM_cd6,    &
+&                             MEM_rd1, MEM_rd2, MEM_rd3,                                    &
+&                             MEM_cd1, MEM_cd2, MEM_cd3, MEM_cd4, MEM_cd5, MEM_cd6,         &
 #endif
-&                             MEM_l1,  MEM_l2,  MEM_l3,  MEM_l4,                       &
-&                             MEM_lp1,          MEM_lp3,                               &
+&                             MEM_l1,  MEM_l2,  MEM_l3,  MEM_l4,  MEM_l5,  MEM_l6,          &
+&                             MEM_lp1,          MEM_lp3,                                    &
 &                             MEM_ch1,          MEM_ch3
  end interface MEM_dri
  !
@@ -193,6 +193,16 @@ module memory
      character(*)::name
      integer     ::i(:,:,:,:,:)
      call MEM_manager_alloc(name,size(i,KIND=8),kind(i(1,1,1,1,1)))
+   end subroutine
+   subroutine MEM_i6(name,i)
+     character(*)::name
+     integer     ::i(:,:,:,:,:,:)
+     call MEM_manager_alloc(name,size(i,KIND=8),kind(i(1,1,1,1,1,1)))
+   end subroutine
+   subroutine MEM_i7(name,i)
+     character(*)::name
+     integer     ::i(:,:,:,:,:,:,:)
+     call MEM_manager_alloc(name,size(i,KIND=8),kind(i(1,1,1,1,1,1,1)))
    end subroutine
 #ifdef _CUDA
    subroutine MEM_i1g(name,i)
@@ -408,5 +418,15 @@ module memory
      character(*)::name
      logical     ::l(:,:,:,:)
      call MEM_manager_alloc(name,size(l,KIND=8),kind(l(1,1,1,1)))
+   end subroutine
+   subroutine MEM_l5(name,l)
+     character(*)::name
+     logical     ::l(:,:,:,:,:)
+     call MEM_manager_alloc(name,size(l,KIND=8),kind(l(1,1,1,1,1)))
+   end subroutine
+   subroutine MEM_l6(name,l)
+     character(*)::name
+     logical     ::l(:,:,:,:,:,:)
+     call MEM_manager_alloc(name,size(l,KIND=8),kind(l(1,1,1,1,1,1)))
    end subroutine
 end module memory

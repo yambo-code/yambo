@@ -36,7 +36,7 @@ subroutine ypp_INIT_load(defs)
                          gamma_radius,INTERP_grid,mag_dir,N_path_pts,ncell,ord_dgrid_ipol,p_dir,p_format,PDOS_atoms,&
                          PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
                          SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,w90_fname,wannier_bands,&
-&                        WF_multiplier,WF_ref,what_to_write
+&                        WF_multiplier,WF_ref,what_to_write,BSiq
 #if defined _YPP_RT
  use YPP,           ONLY:Nel_fac
  use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
@@ -272,6 +272,7 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'ResTresh', '[o/o] Treshold on processed polaronic residuals',elph_residual_treshold)
 #endif
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
+ call it(defs,'Qpts','Index q of the BS state(s)',BSiq)
  !
 #if defined _YPP_MAGNETIC
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')

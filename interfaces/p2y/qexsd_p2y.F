@@ -1467,6 +1467,7 @@ CONTAINS
       integer,                intent(out) :: ierr
       !
       integer :: nbnd_, nkpts_, nspin_, ik, ndim
+      integer :: nbnd_up_, nbnd_dw_
       logical :: lsda_, noncolin_, lfound
       real(dbl) :: rvec(3)
       real(dbl), allocatable :: eig_(:), occ_(:)
@@ -1498,8 +1499,17 @@ CONTAINS
          if (ierr/=0) return
       endif
       !
-      call iotk_scan_dat( iunit, "nbnd", nbnd_, IERR=ierr)
+      call iotk_scan_dat( iunit, "nbnd", nbnd_, FOUND=lfound, IERR=ierr)
       if (ierr/=0) return
+      !
+      if (.not. lfound) then
+         call iotk_scan_dat( iunit, "nbnd_up", nbnd_up_, IERR=ierr)
+         if (ierr/=0) return
+         call iotk_scan_dat( iunit, "nbnd_dw", nbnd_dw_, IERR=ierr)
+         if (ierr/=0) return
+         nbnd_=nbnd_up_+nbnd_dw_
+      endif
+      !
       if (nspin_==2) nbnd_=nbnd_/2
       if (present(nbnd)) nbnd=nbnd_
       !

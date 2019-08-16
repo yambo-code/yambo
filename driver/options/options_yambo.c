@@ -39,6 +39,9 @@ void options_yambo(struct options_struct options[],int *i_opt)
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="GW approximation";
  options[*i_opt].long_desc[0]="<string>=(p)PA/(c)HOSEX/(r)eal-axis";
+#if defined _ELPH
+ options[*i_opt].long_desc[1]="<string>=fan";
+#endif
  options[*i_opt].long_opt="gw0";
  options[*i_opt].short_opt='p';
  options[*i_opt].bin="yambo";

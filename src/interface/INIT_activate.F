@@ -202,11 +202,15 @@ subroutine INIT_activate()
    !
  endif
  !
- ! Double Grid
- !
  if (l_optics.or.l_life) then
    !
+   ! Double Grid
+   !
    call initactivate(1,'DbGdQsize')
+   !
+   ! Dipoles & Gauges
+   !
+   call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge')
    !
  endif
  !
@@ -251,7 +255,7 @@ subroutine INIT_activate()
    !
    ! GPL_EXCLUDE_END
    !
-   call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')
+   call initactivate(1,'NoCondSumRule MetDamp')
    !
 #if defined _NL || defined _ELECTRIC
    call initactivate(1,'EvPolarization FrSndOrd')

@@ -32,7 +32,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_K_dim,BS_K_coupling
- use BS_solvers,    ONLY:variables_BS
+ use BS_solvers,    ONLY:variables_BS,BSS_n_descs,BSS_description
  use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,&
 &                        io_connect,io_elemental,def_variable_bulk,&
 &                        io_header,io_mode,io_file
@@ -47,7 +47,6 @@ subroutine io_BS_PAR_init(iq,X,ID)
  character(schlen) :: db_name, PARALLEL_STRUCTURE
  character(lchlen) :: local_description(100),ch(4)
  character(schlen) :: dim_names(3), dim_names_done(2)
- !
  !
  ! Connect to parallel netCDF file.
  !
@@ -65,6 +64,18 @@ subroutine io_BS_PAR_init(iq,X,ID)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    call error('Invalid dimensions found in BSE restart file '//trim(io_file(ID))//&
  &            ' Remove the file or change the input file')
+ else
+   !
+   ! Descriptions transfer
+   !   
+   if (BSS_n_descs==0) then
+     do i1=1,100
+       if (len_trim(local_description(i1))>0) then
+         BSS_n_descs=BSS_n_descs+1
+         BSS_description(BSS_n_descs)=local_description(i1)
+       endif
+     enddo
+   endif
  endif
  ! 
  ! Define vars

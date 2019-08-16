@@ -25,7 +25,7 @@ subroutine INIT_read_command_line(rstr,init_)
  !
  use pars,           ONLY:schlen
  use drivers,        ONLY:infile_editing,l_bse,l_alda_fxc,l_chi,l_elel_corr,&
-&                         l_elel_scatt,l_elph_corr,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt
+&                         l_elel_scatt,l_elph_corr,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1s,l_em1d,l_ppa
  use BS,             ONLY:BSK_mode
  use BS_solvers,     ONLY:BSS_mode
  use X_m,            ONLY:Chi_mode
@@ -55,8 +55,13 @@ subroutine INIT_read_command_line(rstr,init_)
  ! Work Space
  !
  integer            ::i1,i2,i_field,n_pieces,i_cycle
+ logical            ::l_user_kernel
  integer, parameter ::n_strings_not_allowed=8
  character(schlen)  ::rstr_piece(2*nrnlvls),strings_to_not_use_as_runlevels(n_strings_not_allowed)
+ !
+ ! Keep track if the user provided a kernel option
+ !
+ l_user_kernel=.FALSE.
  !
  ! Bug fix (17/9/2012). If any string following a -### identifier contains 
  ! a string related to a runlevel this is erronously switched on. 
@@ -153,11 +158,14 @@ subroutine INIT_read_command_line(rstr,init_)
        call initactivate(1,'dipoles')
      endif
      !
-     if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' .or.&
-&             runlevel_is_on('em1s')         .or.  runlevel_is_on('em1d')  .or. &
-&             runlevel_is_on('life')         .or.  runlevel_is_on('cohsex') .or. &
-&             runlevel_is_on('ppa')) &
-&           Chi_mode='HARTREE'
+     if ( trim(rstr_piece(i1)) == 'screen') then
+       l_em1s= (trim(rstr_piece(i1+1))=='s' )
+       l_em1d= (trim(rstr_piece(i1+1))=='f' )
+       l_ppa = (trim(rstr_piece(i1+1))=='p' )
+       if (l_em1s) call initactivate(1,'em1s')
+       if (l_em1d) call initactivate(1,'em1d')
+       if (l_ppa)  call initactivate(1,'ppa')
+     endif
      !
      ! BSE/LLR
      !
@@ -181,23 +189,6 @@ subroutine INIT_read_command_line(rstr,init_)
      !
      if ( i_cycle==2 .and. trim(rstr_piece(i1)) == 'kernel' )  then
        !
-       ! if the optics option is not present define defaults
-       ! since kernel does not correspond to a runlevel, set 
-       ! infile_editing=.true.           
-       !
-       if (.not.l_bse.and..not.l_chi) then
-         l_chi =((trim(rstr_piece(i1+1)) == 'hartree').or.&
-                &( trim(rstr_piece(i1+1)) == 'lrc'))
-         l_bse =((trim(rstr_piece(i1+1)) == 'alda').or.&
-                &(trim(rstr_piece(i1+1)) == 'sex').or.&
-                &(trim(rstr_piece(i1+1)) == 'hf').or.&
-                &( trim(rstr_piece(i1+1)) == 'bsfxc'))
-         infile_editing=.true.           
-         call initactivate(1,'optics')
-         if (l_chi) call initactivate(1,'chi')
-         if (l_bse) call initactivate(1,'bse')
-       end if
-       !
        BSK_mode='HARTREE'
        Chi_mode='HARTREE'
        !
@@ -207,7 +198,7 @@ subroutine INIT_read_command_line(rstr,init_)
          if( trim(rstr_piece(i1+1)) == 'alda')     BSK_mode='ALDA'
          if(trim(rstr_piece(i1+1))  == 'sex')      BSK_mode='SEX'
          if( trim(rstr_piece(i1+1)) == 'bsfxc')    BSK_mode='BSfxc'
-       else if(l_chi) then
+       else if(l_chi.or.l_em1s.or.l_em1d.or.l_ppa) then
          if(trim(rstr_piece(i1+1))  == 'hartree')  Chi_mode='HARTREE'
          if( trim(rstr_piece(i1+1)) == 'alda')     Chi_mode='ALDA'
          if( trim(rstr_piece(i1+1)) == 'lrc')      Chi_mode='LRC'
@@ -219,7 +210,7 @@ subroutine INIT_read_command_line(rstr,init_)
 &             (trim(rstr_piece(i1+1)) == 'pf').or.&
 &             (trim(rstr_piece(i1+1)) == 'bsfxc')) call initactivate(1,'tddft')
        !
-       if(trim(BSK_mode)=="SEX" .and. .not.(runlevel_is_on('ppa'))) call initactivate(1,'em1s')
+       l_user_kernel=.TRUE.
        !
      endif
      !
@@ -244,12 +235,12 @@ subroutine INIT_read_command_line(rstr,init_)
      !
      ! Dyson Solver
      !
-     if ( trim(rstr_piece(i1)) == 'gw0' ) then
+     if ( trim(rstr_piece(i1)) == 'dyson' ) then
        QP_solver=trim(rstr_piece(i1+1))
        if (trim(QP_solver)/='n'.and.trim(QP_solver)/='s'.and.&
 &              trim(QP_solver)/='g') QP_solver='n'
 #if !defined  _ELPH && !defined _QED
-       l_elel_corr=.true.
+         l_elel_corr=.true.
 #endif
        !
        if ( i_cycle == 2 .and. trim(Chi_mode)==' ') Chi_mode='HARTREE'
@@ -272,16 +263,23 @@ subroutine INIT_read_command_line(rstr,init_)
      !
      ! GW approximation 
      !
-     if ( trim(rstr_piece(i1)) == 'gwapprx' ) then
+     if ( trim(rstr_piece(i1)) == 'gw0' ) then
+       !
+       call initactivate(1,'gw0')
        !
        if (trim(rstr_piece(i1+1))=='p') then
          infile_editing=.true.
+         l_ppa=.TRUE.
+         QP_solver="n"
          call initactivate(1,'ppa')
        else if (trim(rstr_piece(i1+1))=='c') then
-         !
          infile_editing=.true.
-         call initactivate(1,'cohsex gw0') 
-         !
+         QP_solver="n"
+         call initactivate(1,'cohsex dyson') 
+       else if (trim(rstr_piece(i1+1))=='r') then
+         infile_editing=.true.
+         QP_solver="s"
+         call initactivate(1,'em1d') 
        endif
        !
      endif
@@ -454,6 +452,8 @@ subroutine INIT_read_command_line(rstr,init_)
    enddo INPUT_strings_loop
    !
  enddo
+ !
+ if (.not.l_user_kernel.and.len_trim(Chi_mode)==0) Chi_mode='HARTREE'
  !
  if (infile_editing) init_=1
  !

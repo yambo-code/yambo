@@ -1,4 +1,4 @@
-!
+
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
@@ -123,7 +123,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  endif
  !
 #if defined _SC || defined _RT
- force_v_g_space_approach=force_v_g_space_approach.or.l_sc_run.or.l_real_time
+ force_v_g_space_approach=force_v_g_space_approach.or.l_sc_run.or.l_real_time.or.l_nl_optics
 #endif
  force_v_g_space_approach=force_v_g_space_approach.and.(.not.use_g_space_approach)
  use_dipole_transverse   =force_v_g_space_approach.or.       use_g_space_approach

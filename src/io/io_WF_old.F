@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,9 +32,7 @@ integer function io_WF_old(ID,wf_old)
 &                           io_bulk,io_header,ver_is_gt_or_eq,&
 &                           RD_CL_IF_END,RD_CL,io_action,io_fragment,&
 &                           io_elemental,frag_WF
-#if defined _TIMING
  use timing_m,         ONLY:timing
-#endif
  implicit none
  integer,       intent(in) :: ID
  real(SP),      optional   :: wf_old(:,:,:,:)
@@ -42,9 +40,7 @@ integer function io_WF_old(ID,wf_old)
  integer                   :: ik,ib_grp,head_io
  character(schlen)         :: VAR_NAME
  !
-#if defined _TIMING
  call timing('io_WF_old',OPR='start')
-#endif
  !
  head_io=0
  select case ( count((/io_sec(ID,:)/=0/)) )
@@ -129,8 +125,6 @@ integer function io_WF_old(ID,wf_old)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_WF_old',OPR='stop')
-#endif
  !
 end function io_WF_old

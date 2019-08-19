@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -79,7 +79,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  call parser('RmSpaceInv',Rm_INV)
  if (i_space_inv==0) Rm_INV=.false.
  !
- Reduce_syms=any((/use_B_field,use_E_field,has_magnetization,Rm_all_syms,Rm_TR/))
+ Reduce_syms=any((/use_B_field,use_E_field,has_magnetization,Rm_all_syms,Rm_TR,Rm_INV/))
  !
  ! Check if we are using mag symmetries
  !

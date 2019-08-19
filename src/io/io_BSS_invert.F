@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,9 +30,7 @@ integer function io_BSS_invert(iq,W,ID)
  use BS_solvers,    ONLY:BSS_q0,BSS_uses_DbGd,BSS_dr,BSS_damp_reference,K_INV_EPS,K_INV_PL
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_status,io_bulk,&
 &                        io_header,read_is_on
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
 #include<memory.h>
  integer      :: iq
  type(w_samp) :: W
@@ -41,9 +39,7 @@ integer function io_BSS_invert(iq,W,ID)
  !
  integer     :: ID
  !
-#if defined _TIMING
  call timing('io_BSS_invert',OPR='start')
-#endif
  !
  io_BSS_invert=io_connect(desc='BS_invert_Q'//trim(intc(iq)),type=2,ID=ID)
  !
@@ -137,8 +133,6 @@ integer function io_BSS_invert(iq,W,ID)
  !
 1 call io_disconnect(ID)
  !
-#if defined _TIMING
  call timing('io_BSS_invert',OPR='stop')
-#endif
  !
 end function

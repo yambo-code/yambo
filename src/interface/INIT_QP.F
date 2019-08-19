@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,61 +21,68 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INIT_QP(use_for_QP,Energy_range)
+subroutine INIT_QP(comment)
  !
  ! QP_state -> input file
  !
- use QP_m,      ONLY: QP_nk,QP_nb,QP_state
- use drivers,   ONLY: infile_editing
- use it_m,      ONLY: nflines,flines,infile,ADDITIONAL_flines,nADDITIONAL_flines
- implicit none
+ use pars,      ONLY:SP
+ use QP_m,      ONLY:QP_nk,QP_nb,QP_state
+ use parser_m,  ONLY:PARSER_array
+ use it_m,      ONLY:check_verbosity
  !
- logical :: use_for_QP,Energy_range
+#include<memory.h>
+ !
+ character(*) ::comment
  ! 
  ! Work Space
  !
- integer :: i1,state(4),nflines_save
- character(7) :: comment
- integer, external :: QP_state_extract
+ integer              :: n_states,state(4),i_c
+ integer,    external :: QP_state_extract
+ integer ,allocatable :: I_states(:,:)
+ real(SP),allocatable :: R_states(:,:)
  !
- comment= ''
- if (use_for_QP) comment="[GW] QP"
- !
- nflines_save=nflines
- write (flines(nflines+1),'(a,t30,2a)') '%QPkrange',&
-&      '# '//trim(comment)//' generalized Kpoint/Band indices'
- nflines=nflines+1
- if (.not.allocated(QP_state)) then 
-   write (flines(nflines+1),'(4(i3,a))') 1,'|',QP_nk,'|',1,'|',QP_nb,'|'
-   nflines=nflines+1
+ call PARSER_array(mode="REAL dimensions",VAR="QPkrange",N=n_states,M=4)
+ if (n_states==0) then
+   if (allocated(QP_state)) then
+     do i_c=1,2
+       state=(/1,1,0,0/)
+       n_states=0
+       do while(QP_state_extract(state)>0)
+         n_states=n_states+1
+         if (i_c==2) I_states(n_states,:)=state
+       enddo
+       if (i_c==1) then
+         YAMBO_ALLOC(I_states,(n_states,4)) 
+       endif
+     enddo
+   else
+     n_states=1
+     YAMBO_ALLOC(I_states,(n_states,4)) 
+     I_states(1,:)=(/1,QP_nk,1,QP_nb/)
+   endif
  else
-   state=(/1,1,0,0/)
-   do while(QP_state_extract(state)>0)
-     write (flines(nflines+1),'(4(i3,a))') state(1),'|',state(2),'|',state(3),'|',state(4),'|'
-     nflines=nflines+1
-   enddo
+   YAMBO_ALLOC(I_states,(n_states,4)) 
+   call PARSER_array(mode="read",VAR="QPkrange",N=n_states,M=4,I_v=I_states)
  endif
- flines(nflines+1)='%'
- nflines=nflines+1
+ call PARSER_array(mode="write",VAR="QPkrange",DESC='# '//trim(comment)//' generalized Kpoint/Band indices',&
+&                  N=n_states,M=4,I_v=I_states)
  !
- if (Energy_range) then
-   write (flines(nflines+1),'(a,t30,a)') '%QPerange',&
-&      '# '//trim(comment)//' generalized Kpoint/Energy indices'
-   write (flines(nflines+2),'(2(i3,a),2(f4.1,a))') 1,'|',QP_nk,'|',0.,'|',-1.,'|'
-   flines(nflines+3)='%'
-   nflines=nflines+3
+ YAMBO_FREE(I_states)
+ !
+ if (check_verbosity("qp")) then
+   call PARSER_array(mode="REAL dimensions",VAR="QPerange",N=n_states,M=4)
+   if (n_states==0) then
+     n_states=1
+     YAMBO_ALLOC(R_states,(n_states,4)) 
+     R_states(1,:)=(/1,QP_nk,0,-1/)
+   else
+     YAMBO_ALLOC(R_states,(n_states,4)) 
+     call PARSER_array(mode="read",VAR="QPerange",N=N_states,M=4,R_v=R_states)
+   endif
+   call PARSER_array(mode="write",VAR="QPerange",DESC='# '//trim(comment)//' generalized Kpoint/Energy indices',&
+&                    N=n_states,M=4,R_v=R_states,Kn=(/"i","i","r","r"/))
  endif
  !
- ! Write (eventually) to input file
- !
- ADDITIONAL_flines=" "
- !
- if (infile_editing) open(unit=12,file=trim(infile),position='append')
- do i1=nflines_save+1,nflines
-   nADDITIONAL_flines=nADDITIONAL_flines+1
-   ADDITIONAL_flines(nADDITIONAL_flines)=flines(i1)
-   if (infile_editing) write (12,'(a)') trim(flines(i1))
- enddo 
- if (infile_editing) close(12)
+ YAMBO_FREE(R_states)
  !
 end subroutine

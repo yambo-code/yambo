@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2018 the YAMBO team
+#        Copyright (C) 2000-2019 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -23,27 +23,33 @@
 #
 AC_DEFUN([ACX_GET_FC_KIND],
 [
-FCVERSION="unknown"
+INTELVERSION="unknown"
 FCKIND="unknown"
 case "${FC}" in
     *ftn*)
-      ;;
-    *pgf9*)
-      FCKIND="pgi"
+      FCVERSION=`$FC --version`
       ;;
     *abf90*)
+      FCVERSION=`$FC --version`
       ;;
-    *ifc*)
-      FCKIND="intel"
+    *pgf*)
+      FCKIND="pgi"
+      FCVERSION=`$FC --version`
       ;;
     *gfortran*)
       FCKIND="gfortran" 
+      FCVERSION=`$FC --version`
       ;;
     *g95*)
       FCKIND="g95"
       ;;
+    *ifc*)
+      FCKIND="intel"
+      FCVERSION=`$FC -v`
+      ;;
     *ifort*)
       FCKIND="intel"
+      FCVERSION=`$FC -v`
       $FC -v >& ver_
       VER_8=`grep 8. ver_   | wc -l`
       VER_9=`grep 9. ver_   | wc -l`
@@ -57,26 +63,30 @@ case "${FC}" in
       VER_17=`grep 17. ver_ | wc -l`
       VER_18=`grep 18. ver_ | wc -l`
       VER_19=`grep 19. ver_ | wc -l`
-      if ! test "$VER_8" = "0";  then FCVERSION="8"  ; fi
-      if ! test "$VER_9" = "0";  then FCVERSION="9"  ; fi
-      if ! test "$VER_10" = "0"; then FCVERSION="10" ; fi
-      if ! test "$VER_11" = "0"; then FCVERSION="11" ; fi
-      if ! test "$VER_12" = "0"; then FCVERSION="12" ; fi
-      if ! test "$VER_13" = "0"; then FCVERSION="13" ; fi
-      if ! test "$VER_14" = "0"; then FCVERSION="14" ; fi
-      if ! test "$VER_15" = "0"; then FCVERSION="15" ; fi
-      if ! test "$VER_16" = "0"; then FCVERSION="16" ; fi
-      if ! test "$VER_17" = "0"; then FCVERSION="17" ; fi
-      if ! test "$VER_18" = "0"; then FCVERSION="18" ; fi
-      if ! test "$VER_19" = "0"; then FCVERSION="19" ; fi
+      if ! test "$VER_8" = "0";  then INTELVERSION="8"  ; fi
+      if ! test "$VER_9" = "0";  then INTELVERSION="9"  ; fi
+      if ! test "$VER_10" = "0"; then INTELVERSION="10" ; fi
+      if ! test "$VER_11" = "0"; then INTELVERSION="11" ; fi
+      if ! test "$VER_12" = "0"; then INTELVERSION="12" ; fi
+      if ! test "$VER_13" = "0"; then INTELVERSION="13" ; fi
+      if ! test "$VER_14" = "0"; then INTELVERSION="14" ; fi
+      if ! test "$VER_15" = "0"; then INTELVERSION="15" ; fi
+      if ! test "$VER_16" = "0"; then INTELVERSION="16" ; fi
+      if ! test "$VER_17" = "0"; then INTELVERSION="17" ; fi
+      if ! test "$VER_18" = "0"; then INTELVERSION="18" ; fi
+      if ! test "$VER_19" = "0"; then INTELVERSION="19" ; fi
       rm -f ver_
       ;;
     *)
 esac
+#
+FCVERSION=`echo "$FCVERSION" | sed "/^\s*$/d" | head -n 1`
+#
 AC_MSG_CHECKING([for $FC kind and version])
 AC_MSG_RESULT([$FCKIND $FCVERSION])
 
 AC_SUBST(FCKIND)
 AC_SUBST(FCVERSION)
+AC_SUBST(INTELVERSION)
 
 ])

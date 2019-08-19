@@ -1,7 +1,18 @@
 MAGNETIC_objects = 
 #if defined _MAGNETIC
-MAGNETIC_objects = MAG_initial_check.o MAG_Hamiltonian.o MAG_common_build_A.o MAG_A_phase.o \
-                   MAG_pseudo_nl.o MAG_H_pseudo.o
+MAGNETIC_objects = MAG_initial_check.o MAG_Hamiltonian.o MAG_common_build_A.o MAG_A_phase.o
 #endif
-objs = Bare_Hamiltonian.o V_Hartree.o XC_switch.o V_qp_basis_to_H.o V_real_space_to_H.o Vgrad_real_space_to_H.o \
-       Check_symmetries.o WF_and_dipole_dimensions.o ${MAGNETIC_objects}
+PSEUDO_objects =
+#if defined _RT || defined _MAGNETIC
+PSEUDO_objects = Pseudo_Hamiltonian.o Pseudo_KB_G_to_R_space.o Pseudo_KB_FFT.o Pseudo_KB_gauge_factor.o
+#endif
+NL_objects = 
+#if defined _NL
+NL_objects = Build_Overlaps_det_NEQ.o Build_tilde_vbands.o Build_W_operator.o Berry_polarization_NEQ.o 
+#endif
+#if defined _ELECTRIC
+ELECTRIC_objects = Build_Overlaps_det_NEQ.o Build_W_operator.o Berry_polarization_NEQ.o 
+#endif
+objs = Bare_Hamiltonian.o V_Hartree.o XC_switch.o XC_potentials.o V_qp_basis_to_H.o V_real_space_to_H.o Vgrad_real_space_to_H.o \
+       Check_symmetries.o WF_and_dipole_dimensions.o \
+       ${MAGNETIC_objects} ${PSEUDO_objects} ${NL_objects} ${ELECTRIC_objects}

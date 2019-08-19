@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -44,10 +44,7 @@ integer function io_ELPH_old(ID,what)
  use parallel_m,     ONLY:PAR_Q_index
  use vec_operate,    ONLY:rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
- !
 #include<memory.h>
  !
  integer      ::ID
@@ -60,11 +57,9 @@ integer function io_ELPH_old(ID,what)
  real(SP), allocatable  ::data_disk(:,:,:,:),pol_vec_disk(:,:,:,:)
  character(schlen)      ::db_name
  !
-#if defined _TIMING
  call timing('io_ELPH_old',OPR='start')
-#endif
  !
- if (what=='gkkp'.or.what=='no_gkkp') db_name='elph_gkkp'
+ if (what=='gkkp'.or.what=='no_matrix_elements') db_name='elph_gkkp'
  if (what=='gFsq')                    db_name='elph_gFsq'
  if (what=='gkkp_expanded') then
    db_name='elph_gkkp_expanded'
@@ -205,8 +200,8 @@ integer function io_ELPH_old(ID,what)
  ! Allocation
  !
  if (read_is_on(ID)) then
-   if (what/='no_gkkp') call elph_global_alloc('gkkp')
-   if (what=='no_gkkp') call elph_global_alloc('no_gkkp')
+   if (what/='no_matrix_elements') call elph_global_alloc('gkkp')
+   if (what=='no_matrix_elements') call elph_global_alloc('no_matrix_elements')
  endif
  !
  ! Manage RD_CL_IF_END
@@ -241,7 +236,7 @@ integer function io_ELPH_old(ID,what)
  !
  YAMBO_FREE(pol_vec_disk)
  !
- if (what=='no_gkkp') goto 1
+ if (what=='no_matrix_elements') goto 1
  ! 
  ! Ek+q (to be used when  elph_use_q_grid=.FALSE.)
  !
@@ -316,8 +311,6 @@ integer function io_ELPH_old(ID,what)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_ELPH_old',OPR='stop')
-#endif
  !
 end function

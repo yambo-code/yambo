@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
+subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  !
  ! Out: 
  !
@@ -43,12 +43,14 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !end type BS_T_group
  !
  use pars,         ONLY:SP
- use com,          ONLY:warning,error
+ use stderr,       ONLY:intc
+ use com,          ONLY:warning,error,isec
  use BS_solvers,   ONLY:BSS_add_antiresonant,BSS_mode
  use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
 &                       BS_bands,BS_nT_at_k,BSE_mode,BS_T_grp,BS_nT_grps,&
 &                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc
- use X_m,          ONLY:global_gauge,Dipole_Energy_treshold
+ use DIPOLES,      ONLY:DIPOLE_t
+ use X_m,          ONLY:global_gauge
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_ordered,PAR_IND_T_groups,&
 &                       PAR_IND_T_Haydock
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,E_SOC_nbands,E_SOC_table
@@ -72,12 +74,14 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  type(levels) :: Ken
  type(bz_samp):: Xk
+ type(DIPOLE_t):: Dip
  integer      :: iq
  logical      :: FILL_the_groups,l_trans_in_group,l_grp_to_grp
  !
  ! Work Space
  !
- integer :: ikbz,iv,ic,iv_SOC(2/n_sp_pol),ic_SOC(2/n_sp_pol),ik,ikp,i_sp,i_star,nb(2),&
+ character(1) :: sec
+ integer :: ikbz,ikpbz,iv,ic,iv_SOC(2/n_sp_pol),ic_SOC(2/n_sp_pol),ik,ikp,i_sp,i_star,nb(2),&
 &           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp,pert_range(2/n_sp_pol,2)
  real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2/n_sp_pol),E_v_SOC(2/n_sp_pol),E_c_SOC(2/n_sp_pol),f_eh,f_eh_RES,f_eh_REF,f_e,f_h
  integer, allocatable :: i_T_at_k(:)
@@ -98,7 +102,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  if (FILL_the_groups) then
    !
-   call section('+','Transition Groups build-up')
+   if (isec(3)/=0) sec="-"
+   if (isec(3)==0) sec="+"
+   !
+   call section(sec,'Transition Groups build-up @q'//trim(intc(iq)))
    !
    allocate(BS_T_grp(BS_nT_grps))
    do i_g=1,BS_nT_grps
@@ -147,7 +154,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
          do i_star=1,Xk%nstar(ik)
            !
            ikbz=Xk%k_table(ik,Xk%star(ik,i_star))
-           ikp =Xk%sstar(qindx_X(iq,ikbz,1),1)
+           !
+           ikpbz=qindx_X(iq,ikbz,1)
+           ikp  =Xk%sstar(ikpbz,1)
            !
            do i_sp=1,n_sp_pol
              !
@@ -215,11 +224,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
              !
              if (allocated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=abs(Ken%W(ic,ik,i_sp))+abs(Ken%W(iv,ikp,i_sp))
              !
-             ! GPL_EXCLUDE_START
-             !
              if (E_SOC_nbands/=0) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
-             !
-             ! GPL_EXCLUDE_END
              !
            enddo ! spin
          enddo ! symmetries
@@ -231,12 +236,13 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  enddo ! loop
  !
  BS_H_dim=BS_K_dim
+ !
  if (BS_K_coupling) BS_H_dim=2*BS_K_dim
  !
  if (.not.FILL_the_groups) then
    !
    if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
-   if (sum(BS_nT_at_k)==0) call   error(' The whole BSE hase zero dimension !')
+   if (sum(BS_nT_at_k)==0) call   error(' The whole BSE has zero dimension !')
    !
    if (.not.BSS_add_antiresonant.and.BS_not_const_eh_f.and..not.BS_K_coupling) then
      call warning('Fractional e/h occupations. Retarded BSEmode forced.')
@@ -265,9 +271,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      if(.not.allocated(Ken%Eo)) Eo_eh= E_eh
      !
      ! Small energy transitions. Dipoles in length gauge are not defined
-     if ( abs(Eo_eh) < Dipole_Energy_treshold .and. trim(global_gauge)=="length" ) T_is_ok=.FALSE.
-     !
-     ! GPL_EXCLUDE_START
+     if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length" .and. iq==1 ) T_is_ok=.FALSE.
      !
      if(E_SOC_nbands/=0) then
        if(n_sp_pol==1) pert_range=reshape((/1,2,1,2/),(/2,2/))
@@ -280,8 +284,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
        if(.not.all(ic_SOC/=0)) E_c_SOC(:)=Ken%E(ic,ik ,i_sp)
        E_eh_SOC_corr(:)=E_c_SOC(:)-E_v_SOC(:)-Eo_eh
      endif
-     !
-     ! GPL_EXCLUDE_END
      !
      ! Occupations Factors
      !=====================

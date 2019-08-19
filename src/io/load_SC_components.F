@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -27,7 +27,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
  use drivers,     ONLY:l_sc_run
  use SC,          ONLY:compatible_SC_DB,SC_bands,SC_kind,&
 &                      SC_xc_functional,SC_perturbation,found_SC_DB
- use hamiltonian, ONLY:H_nl_sc,SC_R
+ use hamiltonian, ONLY:H_nl_sc,H_rotation
  use electrons,   ONLY:levels,E_reset,n_sp_pol
  use R_lattice,   ONLY:nkibz
  use IO_m,        ONLY:io_control,OP_RD_CL,RD_CL_IF_END,OP_RD,RD_CL,&
@@ -94,7 +94,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
    case("WF")
      io_err=io_SC_components('WF',E_dummy,ID)
      if (io_err==0) then
-       YAMBO_ALLOC(SC_R,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),nkibz,n_sp_pol))
+       YAMBO_ALLOC(H_rotation,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),nkibz,n_sp_pol))
        do ip_sp_pol=1,n_sp_pol
          do ip=1,nkibz
            call io_control(ACTION=RD_CL_IF_END,SEC=(/ip+1+(ip_sp_pol-1)*nkibz/),ID=ID)
@@ -110,8 +110,8 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
      endif
      !
    case("WF_clean")
-     if (allocated(SC_R)) then
-       YAMBO_FREE(SC_R)
+     if (allocated(H_rotation)) then
+       YAMBO_FREE(H_rotation)
        return
      endif
      ! 

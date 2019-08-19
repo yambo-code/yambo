@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,8 @@
 !
 module D_lattice
  !
- use pars,      ONLY:SP,lchlen,cONE,cZERO,cI
+ use pars,        ONLY:SP,lchlen,cONE,cZERO,cI,schlen
+ use com,         ONLY:error
  !
 #include<memory.h>
  !
@@ -52,6 +53,8 @@ module D_lattice
  complex(SP),allocatable :: spin_sop(:,:,:)
  integer, allocatable    :: sop_tab(:,:)
  integer, allocatable    :: sop_inv(:)
+ integer, allocatable    :: irt(:,:,:)     ! (nsym,nat,n_at_species) gives the index of a rotated atomic position
+ integer, allocatable    :: icell(:,:,:,:) ! (3,nsym,nat,n_at_species) gives the referene cell after a symm is operated
  !
  ! Pauli matrices
  !
@@ -62,6 +65,7 @@ module D_lattice
  !
  ! Cell & atoms
  !
+ logical  :: l_0D,l_1D,l_2D,l_3D
  integer  :: n_atoms
  integer  :: n_atoms_species_max
  integer  :: n_atomic_species
@@ -73,12 +77,12 @@ module D_lattice
  integer,  allocatable :: Z_species(:)
  real(SP), allocatable :: atom_pos(:,:,:)
  character(lchlen)     :: atoms_string
- character(7)          :: lattice
+ character(schlen)     :: lattice
  !
  ! Centered cartesian coordinates inside the cell
  !
- real(SP),    allocatable :: x_cc(:,:)
- real(SP)                 :: x_zero_point(3)
+ real(SP),    allocatable :: x_cc(:,:,:)
+ real(SP)                 :: x_CM(3) ! position of the center of mass
  !
  ! Gradients
  !
@@ -95,6 +99,7 @@ module D_lattice
      !
      use pars,           ONLY:SP,IP
      use com,            ONLY:error,msg
+     implicit none
      !
      character(*) :: msg_where
      !
@@ -125,12 +130,12 @@ module D_lattice
      if (any(sop_inv==0)) call error('[SYMs] check the input symmetries!')
      call msg(msg_where,'[SYMs] Group table built correctly')
      !
-   end subroutine
-   !
+   end subroutine symmetry_group_table
    !
    subroutine atoms_spatial_inversion()
      use pars,           ONLY:zero_dfl
      use matrix_operate, ONLY:m3inv
+     implicit none
      !
      ! Work Space
      !
@@ -163,7 +168,129 @@ module D_lattice
        enddo atoms_loop
      enddo
      !
-   end subroutine
+   end subroutine atoms_spatial_inversion
+   !
+   subroutine symmetry_equiv_atoms()
+     use pars,           ONLY:zero_dfl
+     use matrix_operate, ONLY:m3inv
+     implicit none
+     !
+     ! Work Space
+     !
+     integer  :: ia,iap,is,isym,itmp(3)
+     real(SP) :: v1(3),at_diff(3),a_m1(3,3)
+     logical  :: lfound
+     !
+     if (n_atoms_species_max==0) return
+     !
+     YAMBO_FREE(irt)
+     YAMBO_FREE(icell)
+     YAMBO_ALLOC(irt,(nsym,maxval(n_atoms_species),n_atomic_species))
+     YAMBO_ALLOC(icell,(3,nsym,maxval(n_atoms_species),n_atomic_species))
+     !
+     call m3inv(transpose(a),a_m1)
+     !
+     do isym=1,nsym
+         !
+         ! handle time-reversal
+         if(isym>nsym/(1+i_time_rev)) then
+           !
+           irt(isym,:,:)=irt(isym-nsym/(1+i_time_rev),:,:)
+           icell(:,isym,:,:)=icell(:,isym-nsym/(1+i_time_rev),:,:)
+           !
+           cycle
+         endif
+         !
+         do is=1,n_atomic_species
+         do ia=1,n_atoms_species(is)
+           !
+           v1=matmul(dl_sop(:,:,isym),atom_pos(:,ia,is))
+           !
+           lfound=.false.
+           !
+           search_loop:&
+           do iap=1,n_atoms_species(is)
+             !
+             at_diff=matmul(a_m1,atom_pos(:,iap,is)-v1(:))
+             itmp=nint(at_diff)
+             !
+             if (all(abs(at_diff-itmp)<=zero_dfl)) then
+                lfound=.true.
+                irt(isym,ia,is)=iap
+                ! The - sign comes from a convention definition
+                ! shared with WanT
+                icell(:,isym,ia,is)=-itmp(:)
+                exit search_loop
+             endif
+             !
+           enddo search_loop
+           !
+           if (.not.lfound) call error(' [SYMs] equivalent atom not found')
+           !
+         enddo
+         enddo
+         !
+     enddo
+     !
+   end subroutine symmetry_equiv_atoms
+
+   subroutine atom_mapper(nat,tau,tau_units,map)
+     use pars,           ONLY:zero_dfl
+     implicit none
+     !
+     integer, intent(in) :: nat
+     real(SP),intent(in) :: tau(3,nat)
+     character(*), intent(in) :: tau_units  ! "c" | "a" | "i"
+     integer, intent(out):: map(maxval(n_atoms_species),n_atomic_species)
+     !
+     ! Work Space
+     !
+     integer  :: ia,iap,is
+     real(SP), allocatable :: tau_(:,:)
+     real(SP) :: at_diff(3)
+     !
+     YAMBO_ALLOC(tau_,(3,nat))
+     !
+     select case(trim(tau_units))
+     case("c","cc") ! cartesian units in bohr
+       tau_=tau
+     !case("a","rlu") 
+     !  do ia = 1, nat
+     !    call c2a(a,tau(:,ia),tau_(:,ia),"a2c")
+     !  enddo
+     !case("i","iku")
+     !  do ia = 1, nat
+     !    call c2a(a,tau(:,ia),tau_(:,ia),"i2c")
+     !  enddo
+     case default
+       call error(' [Atoms] Invalid tau_units = '//trim(tau_units))
+     end select
+     !
+     do is=1,n_atomic_species
+     do ia=1,n_atoms_species(is)
+        !
+        map(ia,is)=0
+        !
+        search_loop:&
+        do iap = 1, nat
+          !
+          at_diff=atom_pos(:,ia,is)-tau_(:,iap)
+          !
+          if (all(abs(at_diff)<=zero_dfl)) then
+            map(ia,is)=iap
+            exit search_loop
+          endif
+          !
+        enddo search_loop
+        !
+        if (any(map(:,:)==0)) call error(' [Atoms] incomplete mapping found')
+        !
+     enddo
+     enddo
+     !
+     YAMBO_FREE(tau_)
+     !
+   end subroutine atom_mapper
    !
    integer function atomic_number(atom_name)
      character(len=2) :: atom_name

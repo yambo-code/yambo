@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -61,6 +61,7 @@ module pars
  !
  !...I/O
  integer, parameter :: max_io_units=10
+ integer, parameter :: max_io_vars_open=10
  integer, parameter :: max_active_sections=10
  !
  !...QP
@@ -77,6 +78,7 @@ module pars
 #else
  integer, parameter  :: SP = selected_real_kind(6,30)
 #endif
+ integer, parameter  :: IP16= selected_int_kind(16)
  integer, parameter  :: IP  = selected_int_kind(8)
  integer, parameter  :: IP4 = selected_int_kind(4)
  integer, parameter  :: IP2 = selected_int_kind(2)
@@ -87,7 +89,7 @@ module pars
 #if defined _DOUBLE
  integer, parameter  :: nf90_SP = nf90_double
 #else
- integer, parameter  :: nf90_SP = nf90_real
+ integer, parameter  :: nf90_SP = nf90_float
 #endif
  !
  ! Equivalent to OneByteInt in NetCdf (normal integer is 4 byte)

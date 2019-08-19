@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA
@@ -30,6 +30,7 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  use R_lattice,      ONLY:bz_samp,bz_map,WF_shifts
  use com,            ONLY:msg,error
  use pars,           ONLY:zero_dfl
+ !
 #include<memory.h>
  !
  type(bz_map), intent(inout) :: k_map
@@ -41,11 +42,13 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  real(SP) :: k_shift(3),dshift
  character(schlen) :: dump_ch
  !
+ YAMBO_FREE(WF_shifts)
  YAMBO_ALLOC(WF_shifts,(Xk%nbz,3))
  !
  ! Map k-points on a regular grid with information and the neighboars
  ! along the reciprocal lattice vectors 
  !
+ if(allocated(Xk%ptbz)) call k_ibz2bz(Xk,'d',.false.)
  call k_ibz2bz(Xk,'a',.false.)
  !
  ! Check the points out of the BZ before bring them inside
@@ -146,15 +149,15 @@ subroutine k_find_smallest_q(ptbz,q_step,nbz)
    enddo
  enddo
  !
- if(any(q_step==10000)) call msg("s"," System with reduced dimensionality ")
+ if(any(q_step==10000)) call msg("r"," System with reduced dimensionality ")
  !
  where(q_step==10000)
    q_step = 0._SP
  end where
  !
- call msg("s"," Smallest q vectors :")
+ call msg("r"," Smallest q vectors (crystal coordinates) :")
  write(dump_ch,'(3f14.6)') q_step(:)
- call msg("s",dump_ch)
+ call msg("r",dump_ch)
  !
 end subroutine k_find_smallest_q
 

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA
@@ -72,10 +72,9 @@ subroutine WF_shift_kpoint(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
  do id=1,3
    !
    if(WF_shift(id)/=0) then
-     do ig=1,wf_ng
-       if(ig>ng_max) cycle
+     do ig=1,min(wf_ng,ng_max)
        igp=G_m_G(ig,g0_idx(id,WF_shift(id)))
-       if(igp>wf_ng.or.ig>wf_ng) cycle
+       if(igp>wf_ng.or.igp>ng_max) cycle
        WF_k_out(igp,:,:,:)=WF_tmp(ig,:,:,:)
      enddo
    else

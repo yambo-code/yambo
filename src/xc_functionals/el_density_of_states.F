@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -21,15 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,&
-&                               USE_the_DbGd,USE_Eo,WF_fac)
+subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,&
+&                               USE_the_DbGd,USE_Eo,USE_occupations,WF_fac,PDOS_fac)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp,nkbz
+ use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use functions,      ONLY:Fermi_fnc_derivative
- use parser_m,       ONLY:parser
  use electrons,      ONLY:spin,n_sp_pol,n_spinor,n_spin,spin_occ, &
 &                         BZ_DbGd_nkpt,BZ_DbGd_table
  !
@@ -38,42 +37,50 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
  type(bz_samp), intent(in) ::Xk
  type(levels),  intent(in) ::Xen
  !
- real(SP),   intent(in)  :: dos_E,dos_broadening
- integer,    intent(in)  :: dos_bands(2)
+ real(SP),   intent(in)  :: dos_E,DOS_broadening
+ integer,    intent(in)  :: DOS_bands(2)
  real(SP),   intent(out) :: dos_value(n_spin)
- logical,  optional, intent(in) :: USE_Eo
- logical,  optional, intent(in) :: USE_the_DbGd
- real(SP), optional, intent(in) :: WF_fac(dos_bands(1):dos_bands(2),Xk%nibz,2)
+ logical,  optional, intent(in) :: USE_Eo,USE_the_DbGd,USE_occupations
+ real(SP), optional, pointer, intent(in) :: WF_fac(:,:,:)
+ real(SP), optional, pointer, intent(in) :: PDOS_fac(:,:,:)
  !
  ! Work space
  !
  integer   :: i_sp_pol,ik_bz,ik,ik_rand,i1,ib
- real(SP)  :: el_dos_tmp(n_sp_pol),f_occ,dos_norm,E
- logical   :: ik_ibz_done(Xk%nibz),l_prt_occ_only,USE_Eo_,USE_the_DbGd_
- !
- call parser('PrtOccOnly',l_prt_occ_only)
+ real(SP)  :: el_dos_tmp(n_sp_pol),f_occ,dos_norm,E,proj_fac(n_spin)
+ logical   :: ik_ibz_done(Xk%nibz),USE_Eo_,USE_the_DbGd_,USE_occ,USE_WFs,USE_PDOS
  !
  dos_value=0._SP
  !
  USE_Eo_=.FALSE.
- if (present(USE_Eo)) USE_Eo_=USE_Eo
+ if (present(USE_Eo))          USE_Eo_=USE_Eo
+ !
+ USE_occ=.FALSE.
+ if (present(USE_occupations)) USE_occ=USE_occupations
  !
  USE_the_DbGd_=.FALSE.
- if (present(USE_the_DbGd)) USE_the_DbGd_=USE_the_DbGd
+ if (present(USE_the_DbGd))    USE_the_DbGd_=USE_the_DbGd
+ !
+ USE_WFs=.FALSE.
+ if (present(WF_fac))          USE_WFs=associated(WF_fac)
+ !
+ USE_PDOS=.FALSE.
+ if (present(PDOS_fac))        USE_PDOS=associated(PDOS_fac)
  !
  do i_sp_pol=1,n_sp_pol
    !
    ik_ibz_done=.false.
    !
-   do ik_bz=1,nkbz
+   do ik_bz=1,Xk%nbz
      !
      ik=Xk%sstar(ik_bz,1)
      if (.not.USE_the_DbGd_) then
-       if(ik_ibz_done(ik)) cycle
+       if (ik_ibz_done(ik)) cycle
        ik_ibz_done(ik)=.true.
      endif
      !
-     do ib=dos_bands(1),dos_bands(2)
+     !
+     do ib=DOS_bands(1),DOS_bands(2)
        !
        el_dos_tmp=0._SP
        f_occ=spin_occ
@@ -82,10 +89,9 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
          !
          do i1=1,BZ_DbGd_nkpt(ik_bz)
            ik_rand=BZ_DbGd_table(ik_bz,i1,1)
-           if ( abs(Xen%E_DbGd(ib,ik_rand,i_sp_pol)-dos_E)>20._SP*dos_broadening ) cycle
-           if (l_prt_occ_only) f_occ=Xen%f_DbGd(ib,ik_rand,i_sp_pol)
+           if (USE_occ) f_occ=Xen%f_DbGd(ib,ik_rand,i_sp_pol)
            el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*&
-&                      Fermi_fnc_derivative(Xen%E_DbGd(ib,ik_rand,i_sp_pol)-dos_E,dos_broadening)
+&                      Fermi_fnc_derivative(Xen%E_DbGd(ib,ik_rand,i_sp_pol)-dos_E,DOS_broadening)
          enddo
          ! 
        else
@@ -95,24 +101,34 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
            E=Xen%Eo(ib,ik,i_sp_pol)
          endif
          !
-         if ( abs(E-dos_E)>20._SP*dos_broadening ) cycle
-         if (l_prt_occ_only ) f_occ=Xen%f(ib,ik,i_sp_pol)
-         el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*Xk%weights(ik)*Fermi_fnc_derivative(E-dos_E,dos_broadening)
+         if (USE_occ ) f_occ=Xen%f(ib,ik,i_sp_pol)
+         el_dos_tmp(i_sp_pol)=f_occ*Xk%weights(ik)*Fermi_fnc_derivative(E-dos_E,DOS_broadening)
          !
        endif
+       !
+       ! Projections
+       !
+       proj_fac=1._SP
        !
        ! Project on SOC coefficients
        !
        if(n_spinor==2) then
-         if(present(WF_fac)) then
-           dos_value(1)=dos_value(1)+el_dos_tmp(1)*WF_fac(ib,ik,1)
-           dos_value(2)=dos_value(2)+el_dos_tmp(1)*WF_fac(ib,ik,2)
+         if(USE_WFs) then
+           proj_fac(1)=proj_fac(1)*WF_fac(ib,ik,1)
+           proj_fac(2)=proj_fac(2)*WF_fac(ib,ik,2)
          else
-           dos_value(:)=dos_value(:)+el_dos_tmp(1)*0.5_SP
+           proj_fac   =proj_fac*0.5_SP
          endif
-       else
-         dos_value=dos_value+el_dos_tmp
        endif
+       !
+       ! Project on PSOC coefficients
+       !
+       if(USE_PDOS) proj_fac=proj_fac*PDOS_fac(ib,ik,i_sp_pol)
+       !
+       if(n_spinor==1) dos_value(i_sp_pol)=dos_value(i_sp_pol)+el_dos_tmp(i_sp_pol)*proj_fac(i_sp_pol)
+       !
+       if(n_spinor==2) dos_value          =dos_value          +el_dos_tmp(1)       *proj_fac
+       !
      enddo  ! ib
      !
    enddo    ! ik

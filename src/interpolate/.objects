@@ -1,0 +1,5 @@
+objs = INTERPOLATION_driver.o INTERPOLATION_BZ_coeff.o INTERPOLATION_BZ.o INTERPOLATION_BZ_setup.o \
+       INTERPOLATION_coefficients.o INTERPOLATION_fourier.o \
+       INTERPOLATION_create_the_grid.o \
+       INTERPOLATION_vec_in_star.o \
+       INTERPOLATION_nearest_E.o INTERPOLATION_nearest_k.o INTERPOLATION_integral_respect.o

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, DS
@@ -21,20 +21,19 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_EULER_step(dG_old,dG_inp,dG_out,ik,deltaT)
+subroutine RT_EULER_step(dG_in,dG_out,ik,deltaT)
  !
  use pars,           ONLY:SP,cZERO,cI
  use real_time,      ONLY:l_RT_PERT
  use wrapper_omp,    ONLY:M_by_M_omp
- use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nbands,RT_nk, &
+ use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nbands, &
 &                         G_lesser_reference
  !
  implicit none
  !
  integer,     intent(in)  :: ik
  real(SP),    intent(in)  :: deltaT
- complex(SP), intent(in)  :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP), intent(in)  :: dG_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP), intent(in)  :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(out) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
  ! Workspace
@@ -48,8 +47,8 @@ subroutine RT_EULER_step(dG_old,dG_inp,dG_out,ik,deltaT)
  ! I1 = Ho_plus_Sigma*G   
  ! I2 = G*Ho_plus_Sigma
  !
- if (.not.l_RT_PERT) G_k=dG_inp+G_lesser_reference(:,:,ik)
- if (     l_RT_PERT) G_k=       G_lesser_reference(:,:,ik)
+ if (.not.l_RT_PERT) G_k=dG_in+G_lesser_reference(:,:,ik)
+ if (     l_RT_PERT) G_k=      G_lesser_reference(:,:,ik)
  !
  call M_by_M_omp('n','n',RT_nbands,Ho_plus_Sigma(:,:,ik,1),G_k,I1_k)
  call M_by_M_omp('n','n',RT_nbands,G_k,Ho_plus_Sigma(:,:,ik,1),I2_k)
@@ -62,7 +61,7 @@ subroutine RT_EULER_step(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  I1_k=cZERO
  I2_k=cZERO
- G_k=dG_inp+G_lesser_reference(:,:,ik)
+ G_k=dG_in+G_lesser_reference(:,:,ik)
  !
  call M_by_M_omp('n','n',RT_nbands,Ho_plus_Sigma(:,:,ik,1),G_k,I1_k)
  call M_by_M_omp('n','n',RT_nbands,G_k,Ho_plus_Sigma(:,:,ik,1),I2_k)

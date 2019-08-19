@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM
@@ -24,13 +24,11 @@
 subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  !
  use pars,            ONLY:SP
- use parallel_m,      ONLY:master_cpu
+ use parallel_m,      ONLY:master_cpu,PP_redux_wait
  use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
- use IO_m,            ONLY:io_control,REP,OP_APP_WR_CL,OP_WR_CL,io_COLLs
+ use IO_m,            ONLY:io_control,REP,OP_APP_CL,OP_WR_CL,io_COLLs
  use COLL_interfaces, ONLY:io_COLLISIONS
-#if defined _TIMING
  use timing_m,        ONLY:timing
-#endif
  !
  implicit none                                              
  !
@@ -46,18 +44,15 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  real(SP)  :: COLLISIONS_max
  !
  if (i_coll==0) then
-   ! GPL_EXCLUDE_START
    if(io_COLLs.and.master_cpu) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
      io_err=io_COLLISIONS(ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
    endif
-   ! GPL_EXCLUDE_END
+   call PP_redux_wait()
    return
  endif
  !
-#if defined _TIMING
  call timing('COLLISIONS_linearize_and_IO',OPR='start')
-#endif
  !
  l_COH      = index(what,"COH")     >0 
  l_HXC      = index(what,"HXC")     >0
@@ -72,7 +67,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  !
  if ( l_HXC .or. l_COH ) COLLISIONS_max=maxval(abs(COLL_element(1)%v3_c(:,:,:)))        
  !
- COLL_element(i_ref)%table(:,:,:)=0
+ COLL_element(i_ref)%table(:,:,:)='f'
  !
  do i_cycle=1,2
    !
@@ -94,7 +89,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
            ic=ic+1
            if (i_cycle==2) then
              !
-             COLL_element(i_ref)%table(i1,i2,i3)=1
+             COLL_element(i_ref)%table(i1,i2,i3)='t'
              if (l_HXC   .or.l_COH   ) COLL_element(i_ref)%v_c(ic) = COLL_element(1)%v3_c(i1,i2,i3)
              if (l_GW_NEQ.or.l_QED_P ) COLL_element(i_ref)%v_r(ic) = COLL_element(1)%v3_r(i1,i2,i3)
              !
@@ -111,21 +106,15 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
    !
  enddo
  !
- ! GPL_EXCLUDE_START
- !
  if (IO_colls) then
    !
-   call io_control(ACTION=OP_APP_WR_CL,SEC=(/2,3/),ID=ID)
+   call io_control(ACTION=OP_APP_CL,SEC=(/2,3/),ID=ID)
    io_err=io_COLLISIONS(ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
    !
    call COLLISIONS_alloc_and_free(what,"v1","clean",1)
    !
  endif
  !
- ! GPL_EXCLUDE_END
- !
-#if defined _TIMING
  call timing('COLLISIONS_linearize_and_IO',OPR='stop')
-#endif
  !
 end subroutine COLLISIONS_linearize_and_IO

@@ -84,8 +84,8 @@ MODULE qexml_module
             qexml_read_planewaves, qexml_read_spin, qexml_read_xc,    &
             qexml_read_occ, qexml_read_bz, qexml_read_phonon,         &
             qexml_read_bands, qexml_read_bands_info,qexml_read_exx,   &
-            qexml_read_gk, qexml_read_wfc, qexml_read_rho,            &
-            read_pseudo_header, read_pseudo_data
+            qexml_read_gk, qexml_read_wfc, qexml_read_rho
+  PUBLIC :: fmt_is_qexml
 
 CONTAINS
 
@@ -2323,12 +2323,12 @@ CONTAINS
       ! call iotk_scan_dat(iunit, "nqx1", nqx1, IERR=ierr )
       ! call iotk_scan_dat(iunit, "nqx2", nqx2, IERR=ierr )
       ! call iotk_scan_dat(iunit, "nqx3", nqx3, IERR=ierr )
-      ! call iotk_scan_dat(iunit, "exxdiv_treatment", exxdiv_treatment, IERR=ierr )
+       call iotk_scan_dat(iunit, "exxdiv_treatment", exxdiv_treatment, IERR=ierr )
       ! call iotk_scan_dat(iunit, "yukawa", yukawa, IERR=ierr )
       ! call iotk_scan_dat(iunit, "ecutvcut", ecutvcut, IERR=ierr )
       call iotk_scan_dat(iunit, "exx_fraction", exx_fraction, IERR=ierr )
       IF ( ierr/=0 ) RETURN
-       call iotk_scan_dat(iunit, "screening_parameter", screening_parameter, IERR=ierr )
+      call iotk_scan_dat(iunit, "screening_parameter", screening_parameter, IERR=ierr )
       call iotk_scan_dat(iunit, "exx_is_active", exx_is_active, IERR=ierr )
       IF ( ierr/=0 ) RETURN
       CALL iotk_scan_end(iunit, "EXACT_EXCHANGE", IERR=ierr )
@@ -3015,413 +3015,43 @@ CONTAINS
       !
     END SUBROUTINE qexml_read_rho
 
-subroutine read_pseudo_header(iunaux,z,psfile,nmesh,nbeta,psp_has_so) 
-  use pars,   ONLY:SP
-  IMPLICIT NONE
-  CHARACTER(LEN=*), INTENT(IN) :: psfile
-  INTEGER,  INTENT(OUT) :: nmesh,nbeta
-  REAL(SP), INTENT(OUT)    :: z
-  LOGICAL, OPTIONAL, INTENT(OUT) :: psp_has_so
-  !
-  CHARACTER(256) :: filename
-  character(50) :: dummy
-  logical       :: ldummy
-  INTEGER :: i,idummy,idummy2, unit, iostat, iunaux,ierr
-  logical :: psp_has_so_
-  CHARACTER(len=iotk_attlenx) :: attr,root
-  !
-  CALL iotk_free_unit(iunaux)
-  filename= TRIM(datadir_in)//trim(psfile)
-  !
-  CALL read_upf_header_v2( iunaux, filename, z, nmesh, nbeta, psfile, psp_has_so_, ierr )
-  !
-  if(ierr>0) CALL read_upf_header_v1( iunaux, filename , z, nmesh, nbeta, psfile, ierr )
-  !
-  if(ierr>0) CALL errore('read_pseudo_header', &
-&                'Cannot open file: '//TRIM(filename),1)
-  !
-  if(present(psp_has_so)) psp_has_so=psp_has_so_
-  !
-  return
-  !
-end subroutine read_pseudo_header
+    logical function fmt_is_qexml(dirname)
+       implicit none
+       character(len=*) :: dirname
+       !
+       character(256) :: filename, fmt_name
+       logical :: lfound
+       integer :: ierr, iun
 
-subroutine read_upf_header_v2( u, filename, z, nmesh, nbeta, psfile, psp_has_so, ierr )
-  use pars,        ONLY:SP
-  implicit none
-  INTEGER, INTENT(OUT) :: nmesh,nbeta
-  REAL(SP), INTENT(OUT) :: z
-  LOGICAL, INTENT(OUT) :: psp_has_so
-  CHARACTER(LEN=*), INTENT(IN) :: psfile
-  CHARACTER(256), INTENT(IN) :: filename
-  !
-  CHARACTER(len=iotk_attlenx) :: attr,root
-  INTEGER :: i,idummy,idummy2, unit, iostat, u,ios,ierr,ierr_
-  LOGICAL :: found, tvanp, norm_conserving
-  CHARACTER(LEN=20) :: typ=''      ! Pseudo type ( NC or US or PAW)
-  !
-  ierr=0
-  !
-  CALL iotk_open_read(u, FILE = TRIM(filename), ATTR=attr, ROOT=root, IERR=ierr_ )
-  !
-  IF((abs(ierr_)>0) .or. .not. matches('UPF',root) ) THEN
-       CALL iotk_close_read(u, ierr=ierr_)
-       ierr = 1 ! have to force error to make v1 called
-       RETURN
-   ENDIF
-   CALL iotk_scan_begin(u,'PP_INFO',found=found)
-   if(found) CALL iotk_scan_end(u,'PP_INFO')
-   CALL iotk_scan_empty(u, 'PP_HEADER', attr=attr)
-   CALL iotk_scan_attr(attr, 'pseudo_type',    typ)
-   norm_conserving=(trim(typ) == "NC" .or. trim(typ) == "SL" .or. trim(typ) == "NL")
-   if(.not.norm_conserving) call errore( 'check_pseudo : ',trim(psfile)//' file not norm conserving!',1)
-   CALL iotk_scan_attr(attr, 'is_ultrasoft',   tvanp) 
-   CALL iotk_scan_attr(attr, 'z_valence',      z)
-   if(tvanp) call errore( 'check_pseudo : ','Ultrasoft '//trim(psfile)//' not supported',1)
-   CALL iotk_scan_attr(attr, 'mesh_size',      nmesh)
-   CALL iotk_scan_attr(attr, 'number_of_proj', nbeta)
-   CALL iotk_scan_attr(attr, 'has_so', psp_has_so)
-  !
-  CALL iotk_close_read(u, ierr=ierr)
-  !
-  return
-  !
-end subroutine read_upf_header_v2
-
-subroutine read_upf_header_v1( u, filename, z, nmesh, nbeta, psfile, ierr )
-  use pars,       ONLY:SP
-  implicit none
-  INTEGER, INTENT(IN)  :: u
-  INTEGER, INTENT(OUT) :: nmesh,nbeta
-  REAL(SP), INTENT(OUT) :: z
-  CHARACTER(LEN=*), INTENT(IN) :: psfile
-  CHARACTER(256), INTENT(IN) :: filename
-  INTEGER, INTENT(INOUT) :: ierr
-  !
-  CHARACTER(len=iotk_attlenx) :: attr,root
-  CHARACTER(LEN=20) :: typ=''      ! Pseudo type ( NC or US or PAW)
-  character (len=75) :: rstring
-  character(50) :: dummy
-  logical       :: ldummy
-  INTEGER :: i,idummy,idummy2, iostat, ios
-
-  !------->Search for Header
-  !
-  open(unit=u,file=trim(filename),status='old',form='formatted', iostat=iostat)
-  !
-  rewind(u)
-  call iotk_scan_begin(u, "PP_HEADER")
-  !
-  read(u,*,iostat=iostat) dummy
-  read(u,*,iostat=iostat) dummy
-  read(u,*,iostat=iostat) dummy
-  if(trim(dummy) == "USPP") call errore( 'check_pseudo : ','Ultrasoft'//trim(psfile)//' not supported',1)
-  if(.not. trim(dummy) == "NC") call errore( 'check_pseudo :',trim(psfile)//' file not norm conserving!',1)
-  read(u,*,iostat=iostat) ldummy
-  read(u,*,iostat=iostat) dummy
-  read(u,*,iostat=iostat) z
-  read(u,*,iostat=iostat) dummy
-  read(u,*,iostat=iostat) dummy
-  read(u,*,iostat=iostat) dummy
-  read(u,*,iostat=iostat) nmesh
-  read(u,*,iostat=iostat) idummy,nbeta
-  read(u,'(a)') dummy
-  do i = 1, idummy
-     read (u, * ) 
-  enddo
-  !
-  call iotk_scan_end(u, "PP_HEADER",ierr=ierr)
-  !
-  rewind(u) 
-  !  
-  close(u)
-  !
-  return
-  !   
-end subroutine read_upf_header_v1
-
- !-----------------------------------------------------------------------
-  logical function matches (string1, string2)
-    !-----------------------------------------------------------------------
-    !
-    ! .true. if string 1 is contained in string2, .false. otherwise
-    !
-    implicit none
-    character (len=*) :: string1, string2
-    integer :: len1, len2, l
-
-
-    len1 = len_trim(string1)
-    len2 = len_trim(string2)
-    do l = 1, len2 - len1 + 1
-       if (string1 (1:len1) .eq.string2 (l:l + len1 - 1) ) then
-          matches = .true.
-          return
+       fmt_is_qexml=.false.
+       call iotk_free_unit(iun)
+       !
+       call qexml_init(unit_in=iun,dir=dirname)
+       !
+       filename=trim(dirname)//"/data-file.xml"
+       call qexml_openfile(filename,"read",IERR=ierr)
+       if (ierr/=0) return
+       !
+       call qexml_read_header(format_name=fmt_name,IERR=ierr)
+       if (ierr/=0) return
+       !
+       if (trim(fmt_name)/="QEXML") return
+       !
+       call qexml_closefile("read",IERR=ierr)
+       if (ierr/=0) return
+       !
+       filename=trim(dirname)//"/K00001/evc.dat"
+       inquire(file=filename, exist=lfound)
+       !
+       if (.not.lfound) then
+          filename=trim(dirname)//"/K00001/evc1.dat"
+          inquire(file=filename, exist=lfound)
        endif
-    enddo
+       if (.not.lfound) return
+       !
+       fmt_is_qexml=.true.
+       return
+    end function
 
-    matches = .false.
-    return
-  end function matches
-
-subroutine read_pseudo_data(psfile,nmesh,nbeta,z,mesh,&
-&          wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psp_has_so) 
-  use pars,      ONLY:SP
-  IMPLICIT NONE
-  CHARACTER(LEN=*), INTENT(IN) :: psfile
-  !
-  INTEGER, INTENT(INOUT) :: nmesh,nbeta
-  REAL(SP), INTENT(OUT)      :: z
-  REAL(SP), INTENT(OUT)      :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
-  INTEGER, INTENT(OUT)   :: lbeta(:),mesh_beta(:)
-  LOGICAL, INTENT(INOUT) :: psp_has_so
-    !
-    character(50) :: dummy
-    logical       :: ldummy
-    INTEGER :: idummy,ibeta,idummy2
-    INTEGER        :: i, iostat, u
-
-    !
-    ! Header data (sets value of unit u)
-    !
-    call read_pseudo_header(u,z,psfile, nmesh, nbeta, psp_has_so=psp_has_so)
-    !
-    call read_pseudo_parameters(u,nmesh,nbeta,mesh,psp_has_so, &
-&                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile)
-    !
-    return
-    ! 
-end subroutine read_pseudo_data
-
-subroutine read_pseudo_parameters(u,nmesh,nbeta,mesh,psp_has_so, &
-&                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile)
-  use pars,    ONLY:SP
-  IMPLICIT NONE
-  CHARACTER(LEN=*), INTENT(IN) :: psfile
-  LOGICAL, INTENT(IN)          :: psp_has_so
-  !
-  INTEGER, INTENT(IN) :: nmesh,nbeta
-  REAL(SP),INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
-  INTEGER, INTENT(OUT) :: lbeta(:),mesh_beta(:)
-  !
-  CHARACTER(256) :: filename
-  character(50) :: dummy
-  logical       :: ldummy
-  INTEGER :: idummy,ibeta,idummy2
-  INTEGER        :: i, iostat, ierr, u
-  
-  !
-  CALL iotk_free_unit(u)
-  filename= TRIM(datadir_in)//trim(psfile)
-  !
-  CALL read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
-&                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
-  !
-  if(ierr>0) THEN
-      REWIND(u)
-      jbeta=0.
-      CALL read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
-&                 wmesh,vloc,lbeta,mesh_beta,beta,d,psfile,ierr)
-  ENDIF
-  !
-  IF(ierr>0) CALL errore('read_pseudo_parameters', &
-&                 'Cannot open file: '//TRIM(filename),1)
-  !
-  return
-  !
-end subroutine
-
-subroutine read_upf_parameters_v1(u,filename,nmesh,nbeta,mesh, &
-&                 wmesh,vloc,lbeta,mesh_beta,beta,d,psfile,ierr)
-  use pars,    ONLY:SP
-  use interfaces,     ONLY:LINEAR_ALGEBRA_driver
-  use linear_algebra, ONLY:DIAGO
-  IMPLICIT NONE
-  CHARACTER(LEN=*), INTENT(IN) :: psfile
-  !
-  INTEGER, INTENT(IN)  :: nmesh,nbeta
-  REAL(SP), INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:)
-  INTEGER, INTENT(OUT) :: lbeta(:),mesh_beta(:)
-  CHARACTER(256), INTENT(IN) :: filename
-  !
-  REAL(SP)      :: beta_tmp(nmesh,nbeta),d_tmp(nbeta,nbeta),rdummy
-  COMPLEX(SP)   :: cd_tmp(nbeta,nbeta)
-  character(50) :: dummy
-  logical       :: ldummy
-  INTEGER :: idummy,ibeta,ibetap,i_dij,n_dij,idummy2,i1
-  INTEGER        :: i, iostat, u ,ierr, ios
-  !
-  open(unit=u,file=trim(filename),status='old',form='formatted', iostat=iostat)
-  !
-  rewind(u)
-  call iotk_scan_begin(u,"PP_MESH")
-  call iotk_scan_begin(u,"PP_R")
-  read(u,*,iostat=iostat) mesh
-  call iotk_scan_end  (u,"PP_R")
-  call iotk_scan_begin(u,"PP_RAB")
-  read(u,*,iostat=iostat) wmesh
-  call iotk_scan_end(u,"PP_RAB")
-  call iotk_scan_end(u,"PP_MESH",ierr=ierr)
-  !
-  ! Local data
-  !
-  rewind(u)
-  call iotk_scan_begin(u,"PP_LOCAL")
-  read(u,*,iostat=iostat) vloc
-  call iotk_scan_end(u,"PP_LOCAL",ierr=ierr)
-  !
-  ! Nonlocal data
-  !
-  if(nbeta==0) then
-    rewind(u)
-    close(u)
-    return
-  endif 
-  !
-  rewind(u)
-  call iotk_scan_begin(u,"PP_NONLOCAL")
-  do ibeta=1,nbeta
-    call iotk_scan_begin(u,"PP_BETA")
-    read(u,*,iostat=iostat) idummy,lbeta(ibeta)
-    !if(idummy/=ibeta) ERROR(tools_char(idummy,10))
-    read(u,*,iostat=iostat) mesh_beta(ibeta)
-    beta(:,ibeta) = 0.0
-    read(u,*,iostat=iostat) beta_tmp(1:mesh_beta(ibeta),ibeta)
-    call iotk_scan_end(u,"PP_BETA")
-  end do
-  call iotk_scan_begin(u,"PP_DIJ")
-  read(u,*,iostat=iostat) n_dij
-  !if(idummy/=nbeta) ERROR(tools_char(idummy,10))
-  d_tmp=0._SP
-  do i_dij=1,n_dij
-    read(u,*,iostat=iostat) ibeta,ibetap,rdummy
-    d_tmp(ibeta ,ibetap)=rdummy
-    d_tmp(ibetap,ibeta )=rdummy
-  end do
-  call iotk_scan_end(u,"PP_DIJ")
-  call iotk_scan_end(u,"PP_NONLOCAL",ierr=ierr)
-  !
-  if(nbeta>1) then
-    cd_tmp=cmplx(d_tmp,0._SP)
-    call LINEAR_ALGEBRA_driver(DIAGO,M=cd_tmp,E_real=d)
-    d_tmp=real(cd_tmp)
-  else
-    d=d_tmp(1,1)
-    d_tmp(1,1)=1._SP
-  endif
-  !
-  lbeta=nint(matmul(transpose(d_tmp)**2,real(lbeta)))
-  forall (i1=1:nmesh) beta(i1,:)=matmul(transpose(d_tmp),beta_tmp(i1,:))
-  !
-  rewind(u)
-  !
-  close(u)
-  !
-  return
-  !
-end subroutine
-
-subroutine read_upf_parameters_v2(u,filename,nmesh,nbeta,mesh,psp_has_so, &
-&                 wmesh,vloc,lbeta,jbeta,mesh_beta,beta,d,psfile,ierr)
-  !
-  use interfaces,     ONLY:LINEAR_ALGEBRA_driver
-  use linear_algebra, ONLY:DIAGO
-  use pars,           ONLY:SP
-  use stderr,         ONLY:intc
-  !
-  IMPLICIT NONE
-  CHARACTER(LEN=*), INTENT(IN) :: psfile
-  LOGICAL, INTENT(IN)          :: psp_has_so
-  !
-  INTEGER,  INTENT(IN)  :: nmesh,nbeta
-  REAL(SP), INTENT(OUT)    :: mesh(:), wmesh(:), vloc(:), beta(:,:), d(:), jbeta(:)
-  INTEGER,  INTENT(OUT) :: lbeta(:),mesh_beta(:)
-  CHARACTER(256), INTENT(IN) :: filename
-  !
-  real(SP)    :: beta_tmp(nmesh,nbeta),d_tmp(nbeta,nbeta)
-  complex(SP) :: cd_tmp(nbeta,nbeta)
-  !
-  character(50) :: dummy
-  logical       :: ldummy
-  INTEGER :: idummy,ibeta,idummy2,i1
-  INTEGER        :: i, iostat, u, ierr, ierr_
-  CHARACTER(len=iotk_attlenx) :: attr
-  CHARACTER(len=iotk_namlenx) :: root
-  !
-  ierr=0
-  !
-  CALL iotk_open_read(u, FILE = TRIM(filename), attr=attr, root=root, ierr=ierr_)
-  !
-  IF((abs(ierr_)>0) .or. .not. matches('UPF',root) ) THEN
-       call iotk_close_read(u, ierr=ierr_)
-       ierr = 1
-       RETURN
-  ENDIF
-  ! 
-  !  I need: PP_MESH, PP_R, PP_RAB, PP_LOCAL,PP_NONLOCAL,PP_BETA,PPDJ 
-  !
-  CALL iotk_scan_begin(u, 'PP_MESH', attr=attr)
-  !
-  CALL iotk_scan_dat(u, 'PP_R',   mesh)
-  !
-  CALL iotk_scan_dat(u, 'PP_RAB', wmesh)
-  !
-  CALL iotk_scan_end(u, 'PP_MESH')
-  !
-  CALL iotk_scan_dat(u, 'PP_LOCAL', vloc)
-  !
-  if (nbeta>0) then
-    !
-    CALL iotk_scan_begin(u, 'PP_NONLOCAL')
-    !
-    DO ibeta=1,nbeta
-      CALL iotk_scan_dat(u, 'PP_BETA.'//intc(ibeta), &
-                             beta_tmp(:,ibeta), attr=attr)
-      CALL iotk_scan_attr(attr, 'size',  mesh_beta(ibeta))
-      CALL iotk_scan_attr(attr, 'angular_momentum',  lbeta(ibeta))
-    ENDDO
-    !
-    CALL iotk_scan_dat(u, 'PP_DIJ', d_tmp , attr=attr)
-    !
-    if(nbeta>1) then
-      cd_tmp=cmplx(d_tmp,0._SP)
-      call LINEAR_ALGEBRA_driver(DIAGO,M=cd_tmp,E_real=d)
-      d_tmp=real(cd_tmp)
-    else
-      d=d_tmp(1,1)
-      d_tmp(1,1)=1._SP
-    endif
-    !
-    lbeta=nint(matmul(transpose(d_tmp)**2,real(lbeta)))
-    forall (i1=1:nmesh) beta(i1,:)=matmul(transpose(d_tmp),beta_tmp(i1,:))
-    !
-    CALL iotk_scan_end(u, 'PP_NONLOCAL')
-    !
-  endif
-  !
-  if(psp_has_so) then
-    !
-    CALL iotk_scan_begin(u, 'PP_SPIN_ORB')
-    !
-    DO ibeta = 1,nbeta
-      CALL iotk_scan_empty(u, 'PP_RELBETA.'//intc(ibeta),attr=attr)
-      CALL iotk_scan_attr(attr, 'jjj',   jbeta(ibeta))
-    ENDDO
-    jbeta=matmul(transpose(d_tmp)**2,jbeta)
-    !
-    CALL iotk_scan_end(u, 'PP_SPIN_ORB')
-    !
-    !
-  endif
-  !
-  call iotk_close_read(u, ierr=ierr_)
-  ! 
-  ierr=0
-  !
-  RETURN
-  !
-end subroutine
-    !
-    !
-END MODULE qexml_module
+end module qexml_module
 

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,6 +25,8 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
  !
  ! On output : - k(k_the_nearest,:) is the nearest to k_ref
  !             - k(k_the_nearest,:)==k_ref when i_err=0
+ !
+ ! All k-points must be in IKU coordinates
  !
  use com,            ONLY:error
  use pars,           ONLY:SP,zero_dfl
@@ -88,9 +90,9 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
      !
      if(.not.present(k_symm)) then
        call c2a(v_in=v,mode='ki2a')
-       v(1)=abs(v(1)-nint(v(1)))     
-       v(2)=abs(v(2)-nint(v(2)))     
-       v(3)=abs(v(3)-nint(v(3)))   
+       v(1)=v(1)-nint(v(1))     
+       v(2)=v(2)-nint(v(2))     
+       v(3)=v(3)-nint(v(3))   
        call c2a(v_in=v,mode='ka2i')
      endif
      !

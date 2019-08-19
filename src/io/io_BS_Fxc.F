@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 integer function io_BS_Fxc(iq,FXC_W,ID,X)
  !
- use pars,           ONLY:SP,schlen,lchlen
+ use pars,           ONLY:schlen,lchlen
  use units,          ONLY:HA2EV
  use stderr,         ONLY:intc
  use BS,             ONLY:BS_K_dim
@@ -34,7 +34,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,io_mode,&
-&                         read_is_on,write_is_on,io_header,DUMP,&
+&                         read_is_on,io_header,DUMP,&
 &                         close_is_on,RD_CL,io_action
 #include<memory.h>
  type(w_samp)        ::FXC_W
@@ -105,11 +105,11 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
    !
    if (io_BS_Fxc==0) then
      if (present(X)) then
-       io_BS_Fxc=variables_BS(ID,local_description,X=X) 
+       io_BS_Fxc=variables_BS(ID,iq,local_description,.TRUE.,X=X) 
      else
        i1=io_mode(ID)
        io_mode(ID)=DUMP
-       io_BS_Fxc=variables_BS(ID,local_description,X=X_dummy) 
+       io_BS_Fxc=variables_BS(ID,iq,local_description,.TRUE.,X=X_dummy) 
        io_mode(ID)=i1
      endif
    endif

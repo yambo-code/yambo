@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -38,6 +38,8 @@ subroutine XCo_driver(E,k,Xk,q)
  use interfaces,    ONLY:WF_free
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening
+ use xc_functionals,ONLY:E_xc_val
+ use pseudo,        ONLY:PP_nlcc_free
 #if defined _SC
  use global_XC,     ONLY:WF_kind,H_SE_FOCK,H_SE_HARTREE,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXX,H_SE_EXXC,H_SE_SRPA
 #endif
@@ -119,10 +121,10 @@ subroutine XCo_driver(E,k,Xk,q)
    !
  else
    !
-   if (l_screen_hyb) then                          ! 
-     call XCo_Hartree_Fock(E,k,xk,q,mode='hyb')    ! For screened hybrids calculate the 
-     QP_Vnl_sex=QP_Vnl_xc                          ! model nonlocal screened exchange part
-     QP_Vnl_xc=cZERO                               !  
+   if (l_screen_hyb) then                           
+     call XCo_Hartree_Fock(E,k,xk,q,mode='hyb')    ! For screened hybrids calculate the  model nonlocal screened exchange part
+     QP_Vnl_sex=QP_Vnl_xc                        
+     QP_Vnl_xc=cZERO                                
    end if
    !
    call XCo_Hartree_Fock(E,k,xk,q)
@@ -152,10 +154,15 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  if (.not.l_sc_run.and..not.l_real_time) then
    !
+   ! non-linear core corrections (NLCC)
+   !
+   call XC_nlcc_setup()
+   !
 #if defined _SC
    if( WF_kind/=H_SE_COHSEX .and. WF_kind/=H_SE_COH .and. WF_kind/=H_SE_SEX ) call XCo_local(E,Xk)
 #else
    call XCo_local(E,Xk)
+!
    if (.not.l_screen_hyb) then
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...
    else
@@ -163,6 +170,8 @@ subroutine XCo_driver(E,k,Xk,q)
      YAMBO_FREE(QP_Vnl_sex)
    endif
 #endif
+   !
+   call PP_nlcc_free()
    !
  endif
  !
@@ -201,6 +210,9 @@ subroutine XCo_driver(E,k,Xk,q)
 #else
      Vxc_kind='DFT'
 #endif
+     !
+     call msg('nr','[xc] E_xc :  '//trim(real2ch(E_xc_val))//' [Ha]')
+     call msg( 'r','     E_xc :  '//trim(real2ch(E_xc_val*2.0))//' [Ry]')
      !
      call QP_reset(qp)
      call E_reset(E_dummy)

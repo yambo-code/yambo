@@ -17,6 +17,9 @@ TARBALL=$(tarball_libxc)
 # redefinitions
 #
 AUXFLAGS=--prefix=$(LIBPATH)
+#
+# workaround for PGI compiler
+fcflags_aux=`echo $(fcflags) | sed 's/-Mnomain//'`
 
 #
 # MAIN target
@@ -33,8 +36,10 @@ configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	        ./configure $(AUXFLAGS) \
 	        CC="$(cc)" \
-	        CPP="$(cpp)" \
+	        CFLAGS="$(cflags)" \
 	        FC="$(fc)" \
+	        FCFLAGS="$(fcflags_aux)" \
+	        CPP="$(cpp)" \
 		FCCPP="$(fpp)" ); \
 	fi
 	touch configure-stamp
@@ -42,25 +47,25 @@ configure-stamp: uncompress-stamp
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) ) ; fi
-	#
 	touch package-ready-stamp
 
-$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
-	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) install ) ; fi
-	#
-	chmod u+x $(LIBPATH)/lib/*xc*.a
+package-installed: uncompress-stamp configure-stamp package-ready-stamp
+	if ! test -e package-installed ; then ($(install)); fi
+	touch package-installed
 
+$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
 
 #
 # cleaning
 #
 clean:
-	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
-	@- rm -rf package-ready-stamp configure-stamp
+	@if test -d $(PACKAGE) && test -e configure-stamp ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
+	@- rm -rf package-ready-stamp configure-stamp package-installed
 
 clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
-	@- rm -rf uncompress-stamp
+	@- rm -rf uncompress-stamp 
 	
-
+define install
+ cd $(PACKAGE);  $(make) install; chmod u+x $(LIBPATH)/lib/*xc*.a
+endef 

@@ -1,18 +1,23 @@
 RT_objects = 
 #if defined _RT
-RT_objects = io_RT_components.o variables_RT.o
+RT_objects =  io_COLLISIONS.o io_RT_components.o variables_RT.o
+#endif
+NL_objects =
+#if defined _NL 
+NL_objects = variables_NL.o io_NL.o
 #endif
 ELPH_objects = 
 #if defined _ELPH 
 ELPH_objects = io_ELPH.o io_ELPH_old.o
 #endif
 objs = ver_is_gt_or_eq.o IO_and_Messaging_switch.o io_fragment.o \
-       io_Vnl.o       \
+       io_Vnl.o       io_E_SOC_map.o \
        io_RIM.o       io_GROT.o     $(ELPH_objects) \
        io_DIPOLES.o   io_QINDX.o    io_QP_and_GF.o   io_X.o \
        io_DB1.o       io_WF.o       io_KB_abinit.o   io_KB_pwscf.o   io_HF_and_locXC.o \
-       io_BS.o        io_WF_old.o   io_KB_abinit_old.o   io_BS_Fxc.o  \
-       io_BSS_diago.o  io_BSS_Haydock.o io_BSS_invert.o \
-       io_elemental.o io_bulk.o io_header.o io_Double_Grid.o \
+       io_BS.o        io_WF_old.o   io_KB_abinit_old.o   io_BS_Fxc.o  io_NLCC_pwscf.o \
+       io_BSS_diago.o  io_BSS_Haydock.o io_BSS_invert.o io_USPP_pwscf.o \
+       io_elemental.o io_bulk.o io_connect.o io_header.o io_Double_Grid.o io_Overlaps.o \
+       def_variable_elemental.o io_variable_elemental.o def_variable_bulk.o io_variable_bulk.o \
        io_COL_CUT.o    io_DB1_selective_scan.o variables_BS.o variables_X.o variables_DIPOLES.o \
-       io_out_of_date.o $(RT_objects)
+       io_out_of_date.o $(RT_objects) $(NL_objects)

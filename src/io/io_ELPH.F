@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -42,10 +42,7 @@ integer function io_ELPH(ID,what)
  use parallel_m,     ONLY:PAR_Q_index
  use vec_operate,    ONLY:rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
- !
 #include<memory.h>
  !
  integer      ::ID
@@ -53,29 +50,39 @@ integer function io_ELPH(ID,what)
  !
  !Work Space
  !
- integer                ::iq,ik,ierr,iq_mem
+ integer                ::iq,ierr,iq_mem
  real(SP)               ::v(3)
  character(schlen)      ::db_name
+ logical                ::l_no_matrix_elements,l_gFsq,l_gkkp
  !
-#if defined _TIMING
  call timing('io_ELPH',OPR='start')
-#endif
  !
- if (what=='gkkp'.or.what=='no_gkkp') db_name='elph_gkkp'
- if (what=='gFsq')                    db_name='elph_gFsq'
- if (what=='gkkp_expanded') then
+ l_no_matrix_elements=.FALSE.
+ l_gFsq              =.FALSE.
+ l_gkkp              =.FALSE.
+ !
+ ! DB name
+ !
+ if (index(what,'gkkp_expanded')>0) then
    db_name='elph_gkkp_expanded'
-   elph_grids_are_expanded=.TRUE.
+ else if (index(what,'gFsq')>0) then
+   db_name='elph_gFsq'
+ else 
+   db_name='elph_gkkp'
+   l_gkkp=.TRUE.
  endif
  !
+ elph_grids_are_expanded=index(what,'gkkp_expanded')>0
+ l_gFsq                 =index(what,'gFsq')>0
+ l_no_matrix_elements   =index(what,'no_matrix_elements')>0
  !
  io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (io_ELPH/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   if (what/='gkkp_expanded') io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.true.,FRAG=frag_ELPH)
-   if (what=='gkkp_expanded') io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.false.,IMPOSE_SN=.FALSE.,FRAG=frag_ELPH)
+   if (.not.elph_grids_are_expanded) io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.true.,FRAG=frag_ELPH)
+   if (     elph_grids_are_expanded) io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.false.,IMPOSE_SN=.FALSE.,FRAG=frag_ELPH)
    if (io_ELPH/=0) goto 1
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
@@ -85,7 +92,7 @@ integer function io_ELPH(ID,what)
    call io_elemental(ID,&
 &       VAR=" Q points        [avail]:",I0=elph_nDBs,CHECK=.true.,OP=(/"=="/))
    !
-   if (what=='gFsq') then
+   if (l_gFsq) then
      call io_elemental(ID,&
 &       VAR="                  [used]:",I0=elph_nDBs_used,CHECK=.true.,OP=(/"=="/))
    endif
@@ -97,7 +104,7 @@ integer function io_ELPH(ID,what)
    call io_elemental(ID,&
 &       VAR=" Using the Q-grid       :",L0=elph_use_q_grid,CHECK=.true.,OP=(/"=="/))
    !
-   if (what=='gFsq') then
+   if (l_gFsq) then
      call io_elemental(ID,VAR="QP_nb_nk_n_states",VAR_SZ=3,MENU=0)
      call io_elemental(ID,I0=QP_nb)
      call io_elemental(ID,I0=QP_nk)
@@ -131,7 +138,7 @@ integer function io_ELPH(ID,what)
    call io_bulk(ID,VAR="PH_Q",VAR_SZ=(/elph_nDBs,3/) )
    call io_bulk(ID,R2=ph_qpt(:,:))
    !
-   if (what=='gkkp'.and.allocated(q_pt).and.elph_use_q_grid) then
+   if (l_gkkp.and.allocated(q_pt).and.elph_use_q_grid) then
      do iq=1,nqibz
        call c2a(v_in=q_pt(iq,:)+ph_qpt(iq,:),v_out=v,mode="ki2a")
        if (.not.rlu_v_is_zero(v,zero_=k_rlu_zero)) then
@@ -141,7 +148,7 @@ integer function io_ELPH(ID,what)
      enddo
    endif
    !
-   if (what=='gkkp_expanded') then
+   if (elph_grids_are_expanded) then
      !
      call io_bulk(ID,VAR="PH_K",VAR_SZ=(/nkbz,3/) )
      call io_bulk(ID,R2=ph_kpt_bz(:,:))
@@ -166,7 +173,7 @@ integer function io_ELPH(ID,what)
    goto 1
  endif
  !
- if (what=='gFsq') then
+ if (l_gFsq) then
    !
    if (iq==1) then
      call io_bulk(ID,VAR="QP_table",VAR_SZ=(/QP_n_states,3+n_sp_pol-1/))
@@ -203,8 +210,8 @@ integer function io_ELPH(ID,what)
  ! Allocation
  !
  if (read_is_on(ID)) then
-   if (what/='no_gkkp') call elph_global_alloc('gkkp')
-   if (what=='no_gkkp') call elph_global_alloc('no_gkkp')
+   if (.not.l_no_matrix_elements) call elph_global_alloc('gkkp')
+   if (     l_no_matrix_elements) call elph_global_alloc('no_gkkp')
  endif
  !
  ! Manage RD_CL_IF_END
@@ -221,7 +228,7 @@ integer function io_ELPH(ID,what)
  call io_bulk(ID,VAR="POLARIZATION_VECTORS",VAR_SZ=(/2,ph_modes,sum(n_atoms_species),3/))
  call io_bulk(ID,C3=pol_vector)
  ! 
- if (what=='no_gkkp') goto 1
+ if (l_no_matrix_elements) goto 1
  ! 
  ! Ek+q (to be used when  elph_use_q_grid=.FALSE.)
  !
@@ -248,8 +255,6 @@ integer function io_ELPH(ID,what)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_ELPH',OPR='stop')
-#endif
  !
 end function

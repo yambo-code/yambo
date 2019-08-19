@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,9 +23,11 @@
 !
 module YPP
  !
- use pars,    ONLY:SP,DP,lchlen,schlen
- use units,   ONLY:HA2EV
- use QP_m,    ONLY:QP_t
+ use pars,      ONLY:SP,DP,lchlen,schlen
+ use R_lattice, ONLY:bz_samp
+ use units,     ONLY:HA2EV
+ use QP_m,      ONLY:QP_t
+ use electrons, ONLY:levels
  !
  implicit none
  !
@@ -49,26 +51,54 @@ module YPP
  !
  integer  :: n_u_k_pts,n_u_q_pts,n_u_interp_pts
  !
- real(SP) :: U_k_pts(10,3)
- real(SP) :: U_q_pts(10,3)
- real(SP) :: U_q_shifts(3,3)
- real(SP) :: U_interp_pts(10,3)
+ real(SP), allocatable :: U_k_pts(:,:)
+ real(SP), allocatable :: U_q_pts(:,:)
+ real(SP), allocatable :: U_interp_pts(:,:)
+ real(SP)              :: U_q_shifts(3,3)
+ ! 
+ ! DOS/BANDS/SPECIAL-K/INTERP grids
+ !
+ integer, parameter        :: n_SPECIAL_k_MAX=20
+ character(2), allocatable :: CIRCUIT_k_label(:)
+ character(2) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
+ type(bz_samp):: SPECIAL_k
+ type(bz_samp):: USER_k
+ type(bz_samp):: CIRCUIT_k
+ logical      :: CIRCUIT_made_of_SPECIAL_k
  ! 
  ! DOS
  !
  logical      ::l_dos ! electrons and phonons
- real(SP)     ::dos_broadening ! electrons
- real(SP)     ::dos_E_range(2) ! Energy Range
- integer      ::dos_bands(2)   ! Bands Range
- integer      ::dos_E_steps    ! Energy steps
+ real(SP)     ::DOS_broadening ! electrons
+ real(SP)     ::DOS_E_range(2) ! Energy Range
+ integer      ::DOS_bands(2)   ! Bands Range
+ integer      ::DOS_E_steps    ! Energy steps
+ real(SP)     ::DOS_E_step     ! Energy step
+ !
+ ! PDOS
+ !
+ logical      ::l_pdos
+ integer      ::PDOS_atoms(2)
+ integer      ::PDOS_kinds(2)
+ integer      ::PDOS_wfcs(2)
+ integer      ::PDOS_l(2)
+ real(SP)     ::PDOS_j(2)
+ integer      ::PDOS_m(2)
  !
  ! BANDS
  !
+ integer               ::BANDS_bands(2)
  integer               ::BANDS_steps
- integer               ::interp_grid(3)  ! Interpolation Grid
+ character(lchlen)     ::CIRCUIT_E_DB_path  = "none"
+ character(schlen)     ::BANDS_path  = " "
+ type(levels)          ::CIRCUIT_E_db
+ integer               ::INTERP_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac
+ logical               ::BANDS_print_internal_energies
+ logical               ::BANDS_E_and_k_db
  !
  ! SPIN and SOC
+ !
  integer      ::WF_ref(2)
  !
  ! REAL SPACE PLOT
@@ -111,12 +141,31 @@ module YPP
  logical      ::l_free_hole
  logical      ::l_angular_momentum
  logical      ::l_position
- integer      ::ncell(3)     
+ integer      ::ncell(3) 
+ integer      ::BSiq    
  real(SP)     ::r_hole(3)    
  real(SP)     ::deg_energy   
- real(SP)     ::min_weight   
+ real(SP)     ::EXCITON_E_treshold
+ real(SP)     ::EXCITON_Res_treshold
+ real(SP)     ::EXCITON_weight_treshold   
  real(SP)     ::WF_multiplier   
- character(schlen) ::state_ctl 
+ character(schlen)    ::state_ctl 
+ integer              :: EXCITONS_n_user_states=0
+ integer, allocatable :: EXCITONS_user_indexes(:)
+ type EXCITON_spin
+   integer               :: N
+   real(SP), allocatable :: N_SM(:,:,:)
+   real(SP), allocatable :: S_sq(:)
+   real(SP), allocatable :: S_z(:)
+ end type EXCITON_spin
+ type EXCITON_kin
+   integer           :: ik_bz = 0
+   integer           :: ik_ibz = 0
+   integer           :: ik_sym = 0
+   integer           :: iv = 0
+   integer           :: ic = 0
+   integer           :: spin = 0
+ end type EXCITON_kin
  !
  ! Wannier interface
  !
@@ -149,10 +198,12 @@ module YPP
  logical     :: l_QP_DBs_create_and_modify
  logical     :: l_QP_DBs_manipulate
  integer     :: n_QP_dbs 
+ character(lchlen),  allocatable :: QP_db_input_control(:,:)
  character(lchlen),  allocatable :: QP_db_name(:)
  character(schlen),  allocatable :: QP_db_what(:)
  character(schlen),  allocatable :: QP_db_operation(:)
  real(SP),           allocatable :: QP_db_prefactor(:)
+ real(SP),           allocatable :: QP_user_corrections(:,:)
  type(QP_t),         allocatable :: QP_db(:)
  !
  ! Surface spectroscopy
@@ -201,17 +252,41 @@ module YPP
  !
  interface
    !
-   subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
+   subroutine k_grid_printer(nk,k,coo_in,form,wk,coo_out)
      use pars,          ONLY:SP
-     use BS,            ONLY:BS_H_dim
-     use electrons,     ONLY:levels
-     implicit none
-     type(levels)       :: E
-     complex(SP)        :: BS_R(BS_H_dim),BS_E(BS_H_dim)
-     real(SP),optional,pointer :: BS_E_SOC_corr(:,:)
-     real(SP),optional  :: S_z(BS_H_dim)
-     real(SP),optional  :: S_sq(BS_H_dim)
+     integer               ::nk
+     real(SP)              ::k(nk,3)
+     character(*)          ::coo_in
+     character(*)          ::form
+     real(SP),    optional ::wk(nk)
+     character(*),optional ::coo_out
+     !
    end subroutine
+   !
+   subroutine excitons_degeneracy_average(N,BS_E_degs,R,C,VERB)
+     use pars,          ONLY:SP
+     use BS_solvers,    ONLY:BSS_n_eig
+     implicit none
+     integer               :: N,BS_E_degs(BSS_n_eig)
+     real(SP),   optional  :: R(N)
+     complex(SP),optional  :: C(N)
+     logical,    optional  :: VERB
+   end subroutine
+   !
+   subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,WF_fac,PDOS_fac,USE_the_DbGd,QUIET,FORCE_occ)
+     use pars,           ONLY:SP
+     use electrons,      ONLY:levels
+     use R_lattice,      ONLY:bz_samp 
+     use electrons,      ONLY:n_spin
+     implicit none
+     type(bz_samp), intent(in) :: k
+     type(levels),  intent(in) :: E
+     integer,       intent(in) :: bands(2)
+     real(SP),      intent(out):: el_dos(:,:),dos_E(:)
+     real(SP), pointer,  intent(in) :: WF_fac(:,:,:)
+     real(SP), pointer,  intent(in) :: PDOS_fac(:,:,:)
+     logical,  optional, intent(in) :: USE_the_DbGd,QUIET,FORCE_occ
+   end subroutine electrons_dos_elemental
    !
  end interface
  !

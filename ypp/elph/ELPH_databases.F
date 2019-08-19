@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,9 +34,12 @@ integer function ELPH_databases(k,E,q)
  use D_lattice,           ONLY:nsym,n_atoms
  use parser_m,            ONLY:parser
  use YPP_ELPH,            ONLY:ph_freqs_file,ph_modes_file
- use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
- use LIVE_t,              ONLY:live_timing
+ use IO_m,                ONLY:io_control,OP_APP_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
+ use LIVE_t,              ONLY:live_timing 
+ use YPP,                 ONLY:k_grid_printer,alat_used_for_output
+ !
 #include<memory.h>
+ !
  type(bz_samp) ::k,q
  type(levels)  ::E
  !
@@ -45,7 +48,7 @@ integer function ELPH_databases(k,E,q)
  !... shadows ...
  !
  integer, parameter ::max_nq_in_db=10000
- real(SP)           ::ph_qpt_(max_nq_in_db,3)
+ real(SP)           ::ph_qpt_(max_nq_in_db,3),ph_q_disk(max_nq_in_db,3)
  !
  !... I/O 
  !
@@ -67,7 +70,10 @@ integer function ELPH_databases(k,E,q)
  !
  call parser('GkkpExpand',l_gkkp_expand)
  !
- if (l_gkkp_expand.and..not.allocated(qindx_B)) call error("Missing extended k/q scattering database. Please run a bse setup")
+ if (l_gkkp_expand.and..not.allocated(qindx_B)) then
+   call msg('s',"Missing k/q scattering database")
+   call error("Please run a setup with the BSEscatt flag activated")
+ endif
  !
  call msg('s','PW(ELPH) databases ...')
  !
@@ -214,11 +220,14 @@ integer function ELPH_databases(k,E,q)
        !
        ph_freqs_sq(iq_bz,:)=ph_freqs_sq(iq,:)
        !
-       if (iq_bz==1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/1,iq_bz+1/),ID=ID)
-       if (iq_bz >1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq_bz+1/),ID=ID)
+       if (iq_bz==1) then
+         call io_control(ACTION=OP_APP_CL,SEC=(/1/),ID=ID)
+         io_elph_err=io_ELPH(ID,trim(db_name))
+       endif
        !
        call ELPH_gkkp_expand(iq_bz,iq_s,k)
        !
+       call io_control(ACTION=OP_APP_CL,SEC=(/iq_bz+1/),ID=ID)
        io_elph_err=io_ELPH(ID,trim(db_name))
        !
      enddo
@@ -234,9 +243,12 @@ integer function ELPH_databases(k,E,q)
      !
      if (io_err==-4) call warning("K-grid is not fully q-connected @ Q"//trim(intc(iq)))
      !
-     if (idb==1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/1,iq+1/),ID=ID)
-     if (idb/=1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID)
+     if (idb==1) then
+       call io_control(ACTION=OP_APP_CL,SEC=(/1/),ID=ID)
+       io_elph_err=io_ELPH(ID,trim(db_name))
+     endif
      !
+     call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID)
      io_elph_err=io_ELPH(ID,trim(db_name))
      !
    endif
@@ -251,6 +263,11 @@ integer function ELPH_databases(k,E,q)
  !
  call msg("s",':: Modes           :',ph_modes)
  call msg("s",':: Bands range     :',elph_nb)
+ !
+ ! Print the list of PW q-points (to be used with matdyn, for example)
+ !
+ call msg("s",'Databases Q-points PW-formatted')
+ call k_grid_printer(elph_nDBs,ph_q_disk(:elph_nDBs,:),'iku',"PW",coo_out="alat")
  !
  call elph_global_free()
  !
@@ -302,7 +319,7 @@ integer function ELPH_databases(k,E,q)
    integer           :: ID,io_err,type_
    character(schlen) :: db_name
    character(1)      :: ws_ch(2)
-   real(SP)          :: dVRY2Ha,ph_q_disk(3),ph_q(3),K_(3,k%nbz),w_vec_pot(6),pol_vec_norm
+   real(SP)          :: dVRY2Ha,h_q_disk(max_nq_in_db,3),ph_q(3),K_(3,k%nbz),w_vec_pot(6),pol_vec_norm
    real(DP)          :: K_DP(3,k%nbz),alat_DP,Q_DP(3),Ek(n_bands),&
 &                       Ek_p_q(n_bands),GS_E_k_shift
    real(DP),    allocatable :: ph_freqs_sq_disk(:)
@@ -336,8 +353,8 @@ integer function ELPH_databases(k,E,q)
    !
    if (abinit_DB) then
      if (idb_==-1) call msg("l","[ABINIT] ...")
-     ph_q_disk(:)=Q_DP(:)
-     call c2a(v_in=ph_q_disk,mode="ka2i")
+     ph_q_disk(iabs(idb_),:)=Q_DP(:)
+     call c2a(v_in=ph_q_disk(iabs(idb_),:),mode="ka2i")
      K_=K_DP
      do i1=1,elph_nk
        call c2a(v_in=K_(:,i1),mode="ka2i")
@@ -350,7 +367,9 @@ integer function ELPH_databases(k,E,q)
      !  K_pw=K_cc*alat_DP/2/pi
      !  K_yambo=K_cc*alat(:)/2/pi=K_pw*alat(:)/alat_DP
      !
-     ph_q_disk(:)=Q_DP(:)/alat_DP*alat(:)
+     ph_q_disk(iabs(idb_),:)=Q_DP(:)/alat_DP*alat(:)
+     !
+     alat_used_for_output=alat_DP
      !
      forall (i1=1:elph_nk) K_(:,i1)=K_DP(:,i1)/alat_DP*alat(:)
      !
@@ -361,7 +380,7 @@ integer function ELPH_databases(k,E,q)
      iq_check=0
      !
      do i1=1,nqibz
-       if (v_is_zero(ph_q_disk(:)+q%pt(i1,:),zero_=k_iku_zero)) iq_check=i1
+       if (v_is_zero(ph_q_disk(iabs(idb_),:)+q%pt(i1,:),zero_=k_iku_zero)) iq_check=i1
      enddo
      !
      if (iq_check==0) elph_use_q_grid=.false.
@@ -372,7 +391,7 @@ integer function ELPH_databases(k,E,q)
      !
      if (iq_check==0) iq_check=iabs(idb_)
      !
-     ph_qpt_(iq_check,:)=ph_q_disk
+     ph_qpt_(iq_check,:)=ph_q_disk(iabs(idb_),:)
      !
    endif
    !
@@ -579,7 +598,7 @@ integer function ELPH_databases(k,E,q)
    !
    ! The small group of q
    ! 
-   call q_small(ph_q_disk,small,nsmall)
+   call q_small(ph_q_disk(iabs(idb_),:),small,nsmall)
    !
    ! The GS K-grid is reduced using the small group of q. 
    ! I need to expand the K-grid to define the missing elements of elph_dV

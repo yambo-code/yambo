@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
+subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
  !
  use pars,           ONLY:SP,schlen,pi,DP
  use units,          ONLY:HA2EV
@@ -33,6 +33,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use linear_algebra, ONLY:INV,USE_LK
  use interfaces,     ONLY:PARALLEL_index,WF_load,WF_free,el_density_and_current,LINEAR_ALGEBRA_driver 
+ use DIPOLES,        ONLY:DIPOLE_t
  use R_lattice,      ONLY:bz_samp,bare_qpg,nqibz
  use electrons,      ONLY:levels,nel
  use D_lattice,      ONLY:DL_vol
@@ -44,11 +45,13 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
 &                         XC_LDA_X,XC_CORRELATION,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional
+ !
 #include<memory.h>
  !
- type(levels) ::Xen,En
- type(bz_samp)::Xk,q,k
- type(X_t)    ::X
+ type(levels)  ::Xen,En
+ type(bz_samp) ::Xk,q,k
+ type(X_t)     ::X
+ type(DIPOLE_t)::Dip
  ! 
  ! Work Space
  !
@@ -185,7 +188,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
      Xw%dr=(/freq(1),freq(ACFDT_n_freqs)/)
      YAMBO_ALLOC(Xw%p,(ACFDT_n_freqs))
      Xw%p(:)=(0.,1.)*freq(:)
-     i_err=X_dielectric_matrix(Xen,Xk,q,X,Xw,iqibz>1)
+     i_err=X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,iqibz>1)
      if (i_err==0) exit
    enddo
    !

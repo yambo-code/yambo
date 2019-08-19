@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
+subroutine QED_Radiative_Lifetimes(E,k,q,qp,X,Dip)
  !
  use drivers,             ONLY:l_elel_corr,l_elph_corr
  use units,               ONLY:HA2EV,SPEED_OF_LIGHT
@@ -33,13 +33,12 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
  use R_lattice,           ONLY:bz_samp
  use parallel_m,          ONLY:PAR_IND_QP,PAR_IND_G_b,PAR_IND_DIPk_ibz,PAR_nG_bands,PAR_nQP,PP_redux_wait,&
 &                              PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_DIPk_ibz_index
- use X_m,                 ONLY:DIP_P,X_t
+ use DIPOLES,             ONLY:DIP_P,DIPOLE_t
+ use X_m,                 ONLY:X_t
  use wave_func,           ONLY:wf_ng
  use LIVE_t,              ONLY:live_timing
  use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
-#if defined _TIMING
  use timing_m,            ONLY:timing
-#endif
  !
  implicit none
  !
@@ -47,10 +46,11 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
  type(bz_samp) ::k,q
  type(QP_t)    ::qp
  type(X_t)     ::X
+ type(DIPOLE_t)::Dip
  !
  ! Work Space
  !
- integer     :: i_k,i_n,i_spin,i_m,i_qp,i_k_mem
+ integer     :: i_k,i_n,i_spin,i_m,i_qp,i_k_mem,io_err
  real(SP)    :: E_diff,f_m,Sc_im,P_square,pre_factor
  !
  if (l_elel_corr.or.l_elph_corr) then
@@ -59,9 +59,7 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
    call section('=','Correlation: Radiative Lifetimes')
  endif
  !
-#if defined _TIMING
  call timing('Radiative Lifetimes',OPR='start')
-#endif
  !
  ! PARALLEL distribution
  !=======================
@@ -74,11 +72,9 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
  !
  ! Dipoles
  !=========
- X%ib  =QP_n_G_bands
- X%ng  =wf_ng
- io_DIP=.FALSE.
  !
- call DIPOLE_driver(E,k,X,X%q0)
+ call DIPOLE_dimensions(E,Dip,QP_n_G_bands,(/0._SP,0._SP,0._SP/))
+ call DIPOLE_IO(k,E,Dip,'read ',io_err,'QED')
  !
  ! Loop
  !======
@@ -140,9 +136,7 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
  !
  qp%E(:)=QP_sc(:,1)
  !
-#if defined _TIMING
  call timing('Radiative Lifetimes',OPR='stop')
-#endif
  !
 end subroutine QED_Radiative_Lifetimes
 

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
+subroutine ELPH_excitonic_gkkp(Xk)
  !
  use pars,                ONLY:SP,schlen,cZERO
  use units,               ONLY:HA2EV,HA2FSm1
@@ -37,11 +37,11 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
  use functions,           ONLY:Fermi_fnc_derivative
  use com,                 ONLY:msg,of_open_close
  use stderr,              ONLY:intc
+ use YPP,                 ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
  !
 #include<memory.h>
  !
  type(bz_samp) :: Xk
- integer       :: lambda_s(n_lambda),n_lambda
  !
  ! Work Space
  !
@@ -54,13 +54,13 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
  type(PP_indexes)          ::px
  character(schlen)         ::ch
  !
- call section("+","Excitonic gkkp factors")
+ call section("+","Excitonic GKKP factors")
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
  io_err=io_ELPH(ID,'gkkp')
  if (io_err/=0.or.elph_use_q_grid) return
  !
- YAMBO_ALLOC(diagonal_xhi,(elph_nDBS_used,ph_modes,n_lambda))
+ YAMBO_ALLOC(diagonal_xhi,(elph_nDBS_used,ph_modes,EXCITONS_n_user_states))
  YAMBO_ALLOC(ph_freqs,(ph_modes))
  diagonal_xhi = cZERO
  !
@@ -93,9 +93,9 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
      !
      ikk=sum(BS_nT_at_k(:ik_ibz-1))
      !
-     do i_lambda=1,n_lambda
+     do i_lambda=1,EXCITONS_n_user_states
        !
-       lambda=lambda_s(i_lambda)
+       lambda=EXCITONS_user_indexes(i_lambda)
        !
        do neh1=1,BS_nT_at_k(ik_ibz)
           !
@@ -148,7 +148,7 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
  call PP_redux_wait(diagonal_xhi)
  call PP_indexes_reset(px)
  !
- ch='gkkpF_'//trim(intc(lambda_s(1)))
+ ch='gkkpF_'//trim(intc(EXCITONS_user_indexes(1)))
  call of_open_close(trim(ch),'ot')
  call msg('o gkkp','#',(/'E      [meV]', '|gkkp| [meV]','|gkkp|  [fs]'/),INDENT=0,USE_TABS=.true.)  
  call msg('o gkkp','#')

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -58,9 +58,6 @@ module KERR
      endif
    end subroutine
    !
-   !
-   ! GPL_EXCLUDE_START
-   !
    subroutine BSS_KERR_alloc( )
      use pars,       ONLY:cZERO
      use BS,         ONLY:BS_H_dim,BS_K_dim
@@ -73,7 +70,5 @@ module KERR
      if (.not.l_kerr) return
      YAMBO_FREE(BSS_dipoles_kerr)
    end subroutine
-   !
-   ! GPL_EXCLUDE_END
    !
 end module

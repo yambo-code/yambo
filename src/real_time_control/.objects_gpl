@@ -1,3 +1,4 @@
-objs = RT_current_AND_polarization.o RT_output.o RT_databases_IO.o \
-       RT_average_operator.o \
-       RT_k_grid.o
+objs = RT_current_AND_polarization.o RT_output_INIT.o RT_output.o RT_databases_IO.o \
+       RT_Observables.o RT_average_operator.o \
+       RT_k_grid.o \
+       RT_output_and_IO_driver.o

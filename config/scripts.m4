@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2018 the YAMBO team
+#        Copyright (C) 2000-2019 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -44,9 +44,14 @@ if test "x$enable_ydb" = "xyes"; then
   mkdir -p scripts
   git clone $url_ydb scripts/ydb
   #
-  cd bin
-  ln -s ../scripts/ydb/ydb.pl .
-  cd ..
+  if test -d "scripts/ydb"; then 
+   cd $exec_prefix/bin
+   ln -s ../scripts/ydb/ydb.pl .
+   cd $srcdir
+  else
+   enable_ydb="no"
+   AC_MSG_WARN([Impossible to install YDB.])
+  fi
  fi
  #
  YDB_dir="$PWD/scripts/ydb"

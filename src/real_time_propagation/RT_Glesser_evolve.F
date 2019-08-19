@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -29,9 +29,9 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  !
  !  T0+dt = T+dt'
  !
- use pars,           ONLY:SP,cZERO,cONE
+ use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:levels,spin_occ
- use parallel_m,     ONLY:HEAD_k_cpu,PAR_IND_WF_k
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV, &
 &                         l_RT_RWA,l_RT_DIAG,l_RT_ACC,  &
 &                         G_lesser_reference,RT_bands,RT_nk,RT_all2ibz
@@ -47,7 +47,7 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  !
  ! Work space
  !
- logical :: l_RT_std
+ logical :: l_RT_STD
  integer :: ik
  !
  dG_out=cZERO
@@ -56,12 +56,12 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  !
  do ik=1,RT_nk
    !
-   !if( .not.PAR_IND_WF_k%element_1D(RT_all2ibz(ik)) ) cycle
+   if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
    !
    if (l_RT_EXP.and.l_RT_ACC ) call RT_EXP_step_accurate(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    if (l_RT_EXP.and.l_RT_STD ) call RT_EXP_step_std(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
-   if (l_RT_EULER            ) call RT_EULER_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   if (l_RT_EULER            ) call RT_EULER_step(dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
    if (l_RT_INV.and.l_RT_ACC ) call RT_INV_step_accurate(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    if (l_RT_INV.and.l_RT_DIAG) call RT_INV_step_diago(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
@@ -91,8 +91,6 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
    !
  enddo
  !
- !call PP_redux_wait(dG_out)
- !
  contains
    !
    subroutine RT_G_symmetrization(G_inout,ik)
@@ -104,27 +102,26 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
      real(SP)               :: E_occ_tmp,H_occ_tmp
      complex(SP)            :: tmp
      !
+     do ib=RT_bands(1),RT_bands(2)
        !
-       do ib=RT_bands(1),RT_bands(2)
+       G_inout(ib,ib)=cmplx(0._SP,aimag(G_inout(ib,ib)))
+       !
+       E_occ_tmp= aimag(G_inout(ib,ib))+            aimag(G_lesser_reference(ib,ib,ik))
+       H_occ_tmp=-aimag(G_inout(ib,ib))+ ( spin_occ-aimag(G_lesser_reference(ib,ib,ik)) )
+       !
+       if ( E_occ_tmp<0._SP .or. H_occ_tmp>spin_occ ) G_inout(ib,ib)=                      G_lesser_reference(ib,ib,ik)
+       if ( H_occ_tmp<0._SP .or. E_occ_tmp>spin_occ ) G_inout(ib,ib)=cmplx(0._SP,spin_occ)-G_lesser_reference(ib,ib,ik)
+       !
+       do ibp=ib+1,RT_bands(2)
          !
-         G_inout(ib,ib)=cmplx(0._SP,aimag(G_inout(ib,ib)))
+         tmp=( G_inout(ib,ibp)-conjg(G_inout(ibp,ib)) )/2._SP
          !
-         E_occ_tmp= aimag(G_inout(ib,ib))+            aimag(G_lesser_reference(ib,ib,ik))
-         H_occ_tmp=-aimag(G_inout(ib,ib))+ ( spin_occ-aimag(G_lesser_reference(ib,ib,ik)) )
-         !
-         if ( E_occ_tmp<0._SP .or. H_occ_tmp>spin_occ ) G_inout(ib,ib)=                      G_lesser_reference(ib,ib,ik)
-         if ( H_occ_tmp<0._SP .or. E_occ_tmp>spin_occ ) G_inout(ib,ib)=cmplx(0._SP,spin_occ)-G_lesser_reference(ib,ib,ik)
-         !
-         do ibp=ib+1,RT_bands(2)
-           !
-           tmp=( G_inout(ib,ibp)-conjg(G_inout(ibp,ib)) )/2._SP
-           !
-           G_inout(ib,ibp)=       tmp
-           G_inout(ibp,ib)=-conjg(tmp)
-           !
-         enddo
+         G_inout(ib,ibp)=       tmp
+         G_inout(ibp,ib)=-conjg(tmp)
          !
        enddo
+       !
+     enddo
      !
    end subroutine
    !

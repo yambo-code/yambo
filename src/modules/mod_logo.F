@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -22,6 +22,8 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module LOGO
+ !
+ use pars,     ONLY:schlen
  ! 
  implicit none
  !
@@ -29,6 +31,7 @@ module LOGO
  integer      :: code_GPL_revision
  integer      :: code_revision
  character(50):: code_hash
+ character(50):: code_branch
  !
  integer                     :: n_logo_lines
  integer                     :: ID_logo
@@ -59,17 +62,17 @@ module LOGO
    !
    subroutine pickup_a_logo(unit_)
      !
-     use pars,     ONLY:schlen,SP
+     use pars,     ONLY:SP
      use stderr,   ONLY:intc,slash
      !
      integer      :: unit_
      ! 
      ! Work Space
      !
-     character(schlen) :: comment(3),ch,MPI_string,OMP_string
+     character(schlen) :: comment(4),ch,MPI_string,OMP_string
      integer           :: max_length,i1,left_space,iA,ic
      !
-     ! Get version and revision
+     ! Get version, revision and branch string
      !
      include 'version.inc'
      !
@@ -99,9 +102,11 @@ module LOGO
 #if defined _OPENMP
      OMP_string="+OpenMP"
 #endif
-     comment(2)=trim(MPI_string)//trim(OMP_string)//" Build"
+     comment(2)="Branch is "//trim(code_branch)
      !
-     comment(3)='http://www.yambo-code.org'
+     comment(3)=trim(MPI_string)//trim(OMP_string)//" Build"
+     !
+     comment(4)='http://www.yambo-code.org'
      !
      if (ID_logo<0) then
        ID_logo=pickup_a_random(10._SP)
@@ -300,7 +305,7 @@ module LOGO
      n_logo_lines=n_logo_lines+1
      logo_line(n_logo_lines)=' '
      !
-     do ic=1,3
+     do ic=1,4
        n_logo_lines=n_logo_lines+1
        logo_line(n_logo_lines)=trim(comment(ic))
        left_space=(max_length-len_trim(comment(ic)))/2+1

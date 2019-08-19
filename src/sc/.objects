@@ -1,6 +1,10 @@
+ELECTR_objects =
+#if defined _ELECTRIC 
+ELECTR_objects = ELECTR_initial_check.o SC_add_efield.o 
+#endif
 objs = SC_driver.o SC_start_and_restart.o SC_Energy.o \
        OEP_exact_inversion.o V_Mean_Potential.o \
        SC_add_XC.o SC_precondition.o \
        SC_History.o OEP_driver.o OEP_Hole.o \
        OEP_iterative.o OEP_app_inversion.o OEP_Weighted_Density.o\
-       OEP_ApplySigmaX.o OEP_ApplySigmaCSX.o
+       OEP_ApplySigmaX.o OEP_ApplySigmaCSX.o $(ELECTR_objects)

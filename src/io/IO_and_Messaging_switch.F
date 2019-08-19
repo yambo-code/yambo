@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,12 +27,10 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  use IO_m,           ONLY:IO_write,IO_read
  use com,            ONLY:write_to_report,write_to_of
  use parallel_m,     ONLY:IO_write_default,myid,master_cpu
- use stderr,         ONLY:string_split,write_to_log
+ use stderr,         ONLY:STRING_split,write_to_log
  use LIVE_t,         ONLY:live_timing_is_on,what_is_running
  use stderr,         ONLY:write_fragments_IO_log,write_to_log_default
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  implicit none
  !
  character(*)      :: what
@@ -46,9 +44,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  !
  logical,    SAVE ::IO_read_now,IO_write_now,write_to_of_now,write_to_report_now,write_to_log_now,live_timing_is_on_now
  !
-#if defined _TIMING
  call timing('IO_and_Messaging_switch',OPR='start')
-#endif
  !
  local_TRUE            = .TRUE.
  local_FALSE           = .FALSE.
@@ -63,7 +59,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  !
  if (len_trim(what)>0) then
    !
-   call string_split(what,ch_piece)
+   call STRING_split(what,ch_piece)
    !
    do ich=1,10
      !
@@ -116,26 +112,26 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
      if (trim(ch_piece(ich))=="-report") write_to_report=local_FALSE
      if (trim(ch_piece(ich))=="-timing") live_timing_is_on=local_FALSE
      if (trim(ch_piece(ich))=="+report") write_to_report=local_master
-     if (trim(ch_piece(ich))=="+timing") live_timing_is_on=local_TRUE
+     if (trim(ch_piece(ich))=="+timing") live_timing_is_on=(local_TRUE.and.write_to_log_default)
      !
      ! Log 
      !
      if (trim(ch_piece(ich))=="-log") write_to_log=local_FALSE
-     if (trim(ch_piece(ich))=="+log") write_to_log=local_TRUE
+     if (trim(ch_piece(ich))=="+log") write_to_log=(local_TRUE.and.write_to_log_default)
      !
      ! Ouput files
      !
      if (trim(ch_piece(ich))=="-output") write_to_of=local_FALSE
-     if (trim(ch_piece(ich))=="+output") write_to_of=local_TRUE
+     if (trim(ch_piece(ich))=="+output") write_to_of=local_master
      !
      ! I/O
      !
      if (trim(ch_piece(ich))=="-io_in" ) IO_read=local_FALSE
      if (trim(ch_piece(ich))=="-io_out") IO_write=local_FALSE
      if (trim(ch_piece(ich))=="+io_in" ) IO_read=local_TRUE
-     if (trim(ch_piece(ich))=="+io_out") IO_write=local_TRUE
-     if (trim(ch_piece(ich))=="+fragments_IO_log") write_fragments_IO_log=local_TRUE
+     if (trim(ch_piece(ich))=="+io_out") IO_write=local_master
      if (trim(ch_piece(ich))=="-fragments_IO_log") write_fragments_IO_log=local_FALSE
+     if (trim(ch_piece(ich))=="+fragments_IO_log") write_fragments_IO_log=(local_TRUE.and.write_to_log_default)
      !
    enddo
    !
@@ -145,8 +141,6 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  !
  if (index(what_is_running,'YPP')>0) write_to_report = local_write_to_report
  !
-#if defined _TIMING
  call timing('IO_and_Messaging_switch',OPR='stop')
-#endif
  !
 end subroutine IO_and_Messaging_switch

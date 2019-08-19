@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,9 +33,7 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !
  use pars,          ONLY:SP
  use linear_algebra,ONLY:LINEAR_ALGEBRA_error,M_eigenvalues,LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
 #include<memory.h>
  !
  integer           :: n
@@ -46,9 +44,7 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  YAMBO_ALLOC(WS%v_real,(2*n))
  call M_eigenvalues(n,M,E,V_left,V_right,WS%v_cmplx,-1,WS%v_real,WS%i_fail)
  !
-#if defined _TIMING
  call timing('SERIAL_diagonalization',OPR='start')
-#endif
  !
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('M_eigenvalues (SD)','WS%v_cmplxspace failed')
  !
@@ -61,8 +57,6 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
  !
-#if defined _TIMING
  call timing('SERIAL_diagonalization',OPR='stop')
-#endif
  !
 end subroutine

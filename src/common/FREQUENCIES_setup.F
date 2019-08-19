@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -37,6 +37,7 @@ subroutine FREQUENCIES_setup(W)
  integer          :: i1
  logical          :: metallic_damping
  real(SP)         :: delta_w,w_n
+ complex(SP)      :: w_tmp
  real(SP),external:: FREQUENCIES_damping
  !
  !If %p is associated and consitent with %er/%dr return
@@ -71,6 +72,7 @@ subroutine FREQUENCIES_setup(W)
  !
  do i1=1,W%n_freqs
    W%p(i1)=real(W%p(i1))+FREQUENCIES_damping(W,real(W%p(i1)))*cI
+   if(abs(W%p(i1))==0._SP) W%p(i1)=W%p(i1)+1.E-10_SP
  enddo
  !
  call parser('MetDamp',metallic_damping)
@@ -92,8 +94,10 @@ subroutine FREQUENCIES_setup(W)
  enddo
  !
  do i1=1,W%n_freqs
-   if ( real(W%p(i1))>=0._SP ) W%p(i1)= sqrt(real(W%p(i1))*(real(W%p(i1))+2._SP*aimag(W%p(i1))*cI))
-   if ( real(W%p(i1))< 0._SP ) W%p(i1)=-sqrt(real(W%p(i1))*(real(W%p(i1))+2._SP*aimag(W%p(i1))*cI))
+   w_tmp=W%p(i1)
+   if ( real(w_tmp)>=0._SP ) W%p(i1)= sqrt(real(w_tmp)*(real(w_tmp)+2._SP*aimag(w_tmp)*cI))
+   if ( real(w_tmp)< 0._SP ) W%p(i1)=-sqrt(real(w_tmp)*(real(w_tmp)+2._SP*aimag(w_tmp)*cI))
+   if (abs(W%p(i1))==0._SP ) W%p(i1)= W%p(i1)+1.E-10_SP
  enddo
  !
 end subroutine

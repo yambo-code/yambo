@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
+subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  !
  ! This routine closes the main DB and opens the fragment. 
  !
@@ -38,23 +38,37 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
                       frag_SC,frag_RT,frag_ELPH,frag_BS_K,frag_SCREEN
  use stderr,     ONLY:intc,write_fragments_IO_log,logfile
  use interfaces, ONLY:PARALLEL_live_message
- use parallel_m, ONLY:ncpu
+ use parallel_m, ONLY:ncpu,PP_bcast
+ use timing_m,   ONLY:timing
  !
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
  implicit none
  !
  integer           :: ID
  integer, optional :: i_fragment,j_fragment,ierr
+ integer, optional :: COMM,cpu_id
  !
  ! Work Space
  !
  integer           :: ierr_,i_frag
- logical           :: close_is_on_save
+ logical           :: close_is_on_save,disconnect,par_IO
  character(schlen) :: fragment_filename
  !
  if (present(ierr)) ierr=0
+ !
+ disconnect=.true.
+ if (present(cpu_id)) disconnect=(cpu_id==0).or.read_is_on(ID)
+ !
+ par_IO=.false.
+#if defined _PAR_IO
+ if (present(COMM)) par_IO=present(COMM).and.write_is_on(ID).and.ncpu>1
+#endif
+ !
+ if (par_IO) then
+   call PP_bcast(io_raw_extension(ID),0,COMM=COMM)
+   call PP_bcast(    io_extension(ID),0,COMM=COMM)
+   call PP_bcast(       io_folder(ID),0,COMM=COMM)
+   call PP_bcast(         io_type(ID),0,COMM=COMM)
+ endif
  !
  select case (trim(io_raw_extension(ID)))
    case("Vnl","wf","kb_pp","kb_pp_pwscf")
@@ -67,7 +81,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
      if (.not.frag_HF) return
    case("em1s","em1d","pp","Xx")
      if (.not.frag_RESPONSE) return
-   case("carriers","THETA","JPSM","G","REF")
+   case("carriers","THETA","OBSERVABLES","G","REF")
      if (.not.frag_RT) return
    case("scE","scWFs","scV","sc_MeanPotential")
      if (.not.frag_SC) return
@@ -77,9 +91,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  !
  if (index(trim(io_raw_extension(ID)),"BS_Q")>0 .and. .not.frag_BS_K) return
  !
-#if defined _TIMING
  call timing('io_fragment',OPR='start')
-#endif
  !
  close_is_on_save=close_is_on(ID)
  !
@@ -93,19 +105,22 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  !
  io_resetable(ID)=.false.
  !
- call io_disconnect(ID)
+ if(disconnect) call io_disconnect(ID)
  !
  ! io_file is redefined by io_connect
  !
  io_file(ID)=' '
  !
  fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(intc(i_frag))
+ ! Cannot use the following line in place of the following three becasue of the name "fragments" instead of "fragment"
+ !if (present(j_fragment)) fragment_filename=trim(fragment_filename)//"_"//trim(intc(j_fragment))
  if (present(j_fragment)) then
    fragment_filename=trim(io_extension(ID)) &
 &                    //"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))
  endif
  !
- ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID)
+ if(     par_IO) ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID,comm=COMM)
+ if(.not.par_IO) ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID)
  if (present(ierr)) ierr=ierr_
  !
  if (ncpu>1.and.write_fragments_IO_log.and.index(logfile,"stderr")==0) then
@@ -117,8 +132,6 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  !
  if (close_is_on_save) io_resetable(ID)=.true.
  !
-#if defined _TIMING
  call timing('io_fragment',OPR='stop')
-#endif
  !
 end subroutine 

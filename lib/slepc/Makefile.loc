@@ -7,7 +7,7 @@ include ../../config/setup
 include ../archive/package.list
 
 LIBNAME=libslepc.a
-LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${yprecision}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_slepc)
@@ -51,24 +51,29 @@ package-ready-stamp: uncompress-stamp configure-stamp
 	fi
 	touch package-ready-stamp
 
-$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
-	if test -d $(PACKAGE) ; then \
-	  unset PETSC_ARCH; \
-	  cd $(PACKAGE); \
-	  $(make) -j1 \
-	  SLEPC_DIR=$(PWD)/$(PACKAGE) \
-	  PETSC_DIR=$(LIBPATH) \
-	  install; \
-	fi
-	#
-	chmod u+x $(LIBPATH)/lib/*slepc*.a
+package-installed: uncompress-stamp configure-stamp package-ready-stamp
+	if ! test -e package-installed ; then ($(install)); fi
+	touch package-installed
+
+$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
 
 #
 # cleaning
 #
 clean:
-	@- rm -rf package-ready-stamp configure-stamp
+	@- rm -rf package-ready-stamp configure-stamp package-installed
 
-clean_all: 
+clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
-	@- rm -rf uncompress-stamp
+	@- rm -rf make.sys uncompress-stamp 
+	
+#
+define install
+ unset PETSC_ARCH; \
+ cd $(PACKAGE); \
+ $(make) -j1 \
+ SLEPC_DIR=$(PWD)/$(PACKAGE) \
+ PETSC_DIR=$(LIBPATH) \
+ install; \
+ chmod u+x $(LIBPATH)/lib/*slepc*.a     
+endef

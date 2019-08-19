@@ -1,7 +1,0 @@
-RT_OBJ = 
-#if defined _RT
-RT_OBJ = el_density_matrix.o el_magnetization_matrix.o
-#endif
-objs =  xc_rpa_kp.o \
-        el_magnetization.o el_density_and_current.o el_density_of_states.o $(RT_OBJ) eval_Gradient.o XC_potential_driver.o\
-        XC_libxc_driver.o XC_eval_gga_potential.o Build_V_xc_mat.o

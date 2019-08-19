@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2018 the YAMBO team
+#        Copyright (C) 2000-2019 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): DS
@@ -63,10 +63,11 @@ AC_SUBST(enable_keep_extlibs)
 # DP
 AC_ARG_ENABLE(dp, AC_HELP_STRING([--enable-dp], [Double-precision build. Default is no.]))
 def_dp=""
-if test x"$enable_dp" = "x"; then enable_dp="no"; fi
-if test x"$enable_dp" = "xyes"; then def_dp="-D_DOUBLE"; fi
+if test x"$enable_dp" = "x";    then enable_dp="no";     build_precision="single"; fi
+if test x"$enable_dp" = "xyes"; then def_dp="-D_DOUBLE"; build_precision="double"; fi
 AC_SUBST(enable_dp)
 AC_SUBST(def_dp)
+AC_SUBST(build_precision)
 #
 # ============================================================================
 #
@@ -80,6 +81,19 @@ if test x"$enable_time_profile" = "xyes"; then
  def_time_profile="-D_TIMING"
 fi
 AC_SUBST(def_time_profile)
+#
+# ============================================================================
+#
+# USPP
+#
+AC_ARG_ENABLE(uspp, AC_HELP_STRING([--enable-uspp],[Enable Ultrasoft PP support]))
+if test x"$enable_uspp" = "x"; then enable_uspp="no"; fi
+#
+def_uspp=" "
+if test x"$enable_uspp" = "xyes"; then
+   def_uspp="-D_USPP"
+fi
+AC_SUBST(def_uspp)
 #
 # ============================================================================
 #
@@ -117,12 +131,13 @@ AC_SUBST(editor)
 # Copyright (C) 2001-2016 Quantum ESPRESSO Foundation
 #
 # check if the structure mallinfo is present in malloc.h
+SAVE=$CFLAGS
 AC_CHECK_HEADER(malloc.h,have_malloc_h=1,have_malloc_h=0, )
+CFLAGS=$SAVE
 if test "$have_malloc_h" -ne 0
 then
 AC_CHECK_MEMBER([struct mallinfo.arena],
                 [AC_DEFINE(HAVE_MALLINFO)],
                 ,
                 [#include <malloc.h>])
-
 fi

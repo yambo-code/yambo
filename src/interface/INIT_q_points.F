@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,87 +21,71 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INIT_q_points(io_QINDX_err,l_WRITE)
+subroutine INIT_q_points( )
  !
  ! This routine:
  !
  ! 1. reads the q-points from the input file
  ! 2. reads the q-points from the e-p DB's 
  !
+ use drivers,     ONLY:infile_editing
  use pars,        ONLY:SP,schlen,DP
- use it_m,        ONLY:nflines,flines,infile,infile_verbosity,V_kpt,V_all
- use R_lattice,   ONLY:nqibz,q_pt,bz_samp,bz_samp_reset,q_source
+ use it_m,        ONLY:check_verbosity
+ use R_lattice,   ONLY:nqibz,q_pt,bz_samp,q_source
 #if defined _ELPH
  use ELPH,        ONLY:ph_qpt,elph_use_q_grid,elph_nDBs,elph_grids_are_expanded
 #endif
- use vec_operate, ONLY:c2a
-#include<memory.h>
+ use parser_m,    ONLY:PARSER_array
  !
- logical :: l_WRITE
- integer :: io_QINDX_err
+#include<memory.h>
  !
  ! Work Space
  !
- integer       :: i1,nflines_save
+ integer       :: ic,nq_input
  type(bz_samp) :: q
  real(DP)      :: q_pt_db(3)
  !
- if (io_QINDX_err==0) return
+ ! Load (eventually) the q-points from the e-p database
  !
- if (l_WRITE.and. (infile_verbosity==V_kpt.or.infile_verbosity==V_all)) then
-   nflines_save=nflines
-   write (flines(nflines+1),'(a,t30,a)') '% QptCoord',&
-&        '# [KPT] [iku] Q-points coordinates (compatibility)'
-   nflines=nflines+1
-   if (nqibz>0) then
-     do i1=1,nqibz
-       write (flines(nflines+1),'(3(f10.3,a))') q_pt(i1,1),'|',&
-&             q_pt(i1,2),'|',q_pt(i1,3),'|'
-       nflines=nflines+1
-     enddo
-   endif
-   flines(nflines+1)='%'
-   nflines=nflines+1
- else if (get_e_p_q_point(1,q_pt_db)==0) then
+#if defined _ELPH
+ if (get_e_p_q_point(1,q_pt_db)==0) then
    q_source="Electron-Phonon databases"
-   do i1=1,2
+   do ic=1,2
      nqibz=0
      do while(get_e_p_q_point(nqibz+1,q_pt_db)==0) 
        nqibz=nqibz+1
-       if (i1==2) q_pt(nqibz,:)=-real(q_pt_db,SP)
+       if (ic==2) q_pt(nqibz,:)=-real(q_pt_db,SP)
      enddo
-     if (i1==1.and..not.allocated(q_pt)) then
+     if (ic==1.and..not.allocated(q_pt)) then
        YAMBO_ALLOC(q_pt,(nqibz,3))
      endif
    enddo
-   return
-#if defined _ELPH
  else if (allocated(ph_qpt).and.elph_use_q_grid.and..not.elph_grids_are_expanded) then
    q_source="Electron-Phonon databases"
    nqibz=elph_nDBs
    YAMBO_ALLOC(q_pt,(nqibz,3))
    q_pt(:,:)=-real(ph_qpt(:,:),SP)
-   return
+ endif
 #endif
- else
-   call bz_samp_reset(q)
-   call init_parse_K_list(q,'QptCoord')
-   nqibz=q%nibz
-   if (nqibz>0)  then
+ !
+ if (.not.check_verbosity("kpt")) return
+ !
+ ! Now check the input file
+ !
+ if (nqibz==0) then
+   call PARSER_array(mode="REAL dimensions",VAR="QptCoord",N=nq_input,M=3)
+   if (nq_input==0.and.infile_editing) then
+     nqibz=1
      YAMBO_ALLOC(q_pt,(nqibz,3))
-     q_pt=q%pt
+     q_pt=0.
+   else if (nq_input>0) then
+     nqibz=nq_input
+     YAMBO_ALLOC(q_pt,(nqibz,3))
+     call PARSER_array(mode="read",VAR="QptCoord",N=nq_input,M=3,R_v=q_pt)
    endif
-   call bz_samp_reset(q)
-   return
- endif 
- !
- ! Write to input file
- !
- open(unit=12,file=trim(infile),position='append')
- do i1=nflines_save+1,nflines
-   write (12,'(a)') trim(flines(i1))
- enddo 
- close(12)
+   call PARSER_array(mode="write",VAR="QptCoord",DESC="[KPT] [iku] Q-points coordinates (compatibility)",&
+&                    N=nqibz,M=3,R_v=q_pt)
+ endif
  !
  contains 
    !
@@ -120,7 +104,7 @@ subroutine INIT_q_points(io_QINDX_err,l_WRITE)
      !
      call io_control(ACTION=OP_RD_CL,ID=ID)
      write (db_name,'(a,i6.6)') 's.dbph_',iabs(i_q)
-     io_err=io_connect(desc=trim(db_name),type=-2,ID=ID)
+     io_err=io_connect(desc=trim(db_name),type=-4,ID=ID)
      get_e_p_q_point=io_err
      !
      if (io_err==0) then

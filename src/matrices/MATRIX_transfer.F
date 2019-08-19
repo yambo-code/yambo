@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,16 +25,14 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  !
  ! General, multi-purpose M <-> M transfer
  !
- use parallel_m,     ONLY:MPI_comm,PAR_COM_WORLD,COMM_copy,COMM_reset,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q
+ use parallel_m,     ONLY:MPI_comm,PAR_COM_WORLD,COMM_copy,COMM_reset,l_par_X_G,l_par_X_G_finite_q
  use interfaces,     ONLY:MATRIX_duplicate
  use pars,           ONLY:SP
  use BS,             ONLY:BS_block
  use X_m,            ONLY:X_FILL_UP_matrix_only
  use D_lattice,      ONLY:i_space_inv
  use matrix,         ONLY:PAR_matrix,I_do_SND,I_do_RCV,TRANSFER_world,PAR_to_PAR_comm_NAME
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  !
  type(PAR_matrix), optional :: M_in
@@ -90,16 +88,13 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  ! PAR 2 PAR COMM
  !
  if (present(COMM_name)) then 
-   if (l_par_X_G_q0)       PAR_to_PAR_comm_NAME="X_G_q0_"//trim(COMM_name)
    if (l_par_X_G_finite_q) PAR_to_PAR_comm_NAME="X_G_finite_q_"//trim(COMM_name)
-   if (l_par_X_G_all_q)    PAR_to_PAR_comm_NAME="X_G_all_q_"//trim(COMM_name)
+   if (l_par_X_G)          PAR_to_PAR_comm_NAME="X_G_"//trim(COMM_name)
  else
    PAR_to_PAR_comm_NAME="NONE"
  endif
  !
-#if defined _TIMING
  call timing('MATRIX transfer ('//trim(PAR_to_PAR_comm_NAME)//')',OPR='start')
-#endif
  !
  ! Transfer World
  !
@@ -149,8 +144,6 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  !
  call COMM_reset(TRANSFER_world)
  !
-#if defined _TIMING
  call timing('MATRIX transfer ('//trim(PAR_to_PAR_comm_NAME)//')',OPR='stop')
-#endif
  !
 end SUBROUTINE

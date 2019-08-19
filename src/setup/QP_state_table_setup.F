@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,7 +29,7 @@ subroutine QP_state_table_setup(en)
  ! QP_table gives the band/k indexes for any QP state
  ! QP_state is T if that band/k is a QP state
  !
- ! QP_state is read from QP based DBs (xxvxc/QP...)
+ ! QP_state is read from QP based DBs
  !
  ! IN :  either input_file or QP_state
  ! Out:  QP_table(1:QP_n_states,:) = (n,n`,ikibz)
@@ -37,10 +37,10 @@ subroutine QP_state_table_setup(en)
  !
  use pars,          ONLY:SP
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_sc_run,l_real_time,l_eval_collisions
+ use drivers,       ONLY:l_sc_run,l_real_time,l_eval_collisions,l_nl_optics
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,SC_bands_mixed,SC_band_mixing 
  use electrons,     ONLY:levels,n_sp_pol
- use parser_m,      ONLY:parser
+ use parser_m,      ONLY:PARSER_array
 #if defined _SC || defined _RT
  use hamiltonian,   ONLY:H_ref_bands,H_potential
  use drivers,       ONLY:l_elel_scatt
@@ -54,9 +54,8 @@ subroutine QP_state_table_setup(en)
  !
  ! Work Space
  !
- integer :: e_rng_lines,k_rng_lines,icheck,ik,ib,i1,i2,i3,&
+ integer :: e_rng_lines,k_rng_lines,ik,ib,i1,i2,i3,&
 &           QP_k_nk,QP_e_nk,QP_k_nb,QP_e_nb,i_sp,bands_mixed,v(2)
- real(SP):: rcheck
  logical :: Mixing
  integer,    allocatable:: QP_i_limits(:,:)
  real(SP)   ,allocatable:: QP_r_limits(:,:)
@@ -65,44 +64,29 @@ subroutine QP_state_table_setup(en)
    !
    !Input File -> QP_table
    !
-   ! %QPkrange fields
-   !
-   k_rng_lines=1
-   icheck=1
-   do while(icheck/=0)
-     YAMBO_FREE(QP_i_limits)
+   call PARSER_array(mode="INT dimensions",VAR="QPkrange",N=k_rng_lines,M=4)
+   if (k_rng_lines>0) then
      YAMBO_ALLOC(QP_i_limits,(k_rng_lines,4))
-     QP_i_limits=0
-     call parser('QPkrange',QP_i_limits)
-     icheck=sum(QP_i_limits(k_rng_lines,:))
-     if (any(QP_i_limits(k_rng_lines,:)<0)) icheck=0
-     k_rng_lines=k_rng_lines+1
-   enddo
-   k_rng_lines=k_rng_lines-2
-   do i1=1,k_rng_lines,1
-     call i_check(QP_i_limits(i1,:2),en%nk)
-     call i_check(QP_i_limits(i1,3:),en%nb)
-   enddo
+     call PARSER_array(mode="read",VAR="QPkrange",N=k_rng_lines,M=4,I_v=QP_i_limits)
+     do i1=1,k_rng_lines
+       call i_check(QP_i_limits(i1,:2),en%nk)
+       call i_check(QP_i_limits(i1,3:),en%nb)
+     enddo
+   endif
    !
    ! %QPerange fields
    !
-   e_rng_lines=1
-   rcheck=1._SP
-   do while(rcheck>0._SP)
-     YAMBO_FREE(QP_r_limits)
+   call PARSER_array(mode="REAL dimensions",VAR="QPerange",N=e_rng_lines,M=4)
+   if (e_rng_lines>0) then
      YAMBO_ALLOC(QP_r_limits,(e_rng_lines,4))
-     QP_r_limits(e_rng_lines,3:4)=(/0._SP,-1._SP/)
-     call parser('QPerange',QP_r_limits)
-     rcheck=QP_r_limits(e_rng_lines,4)-QP_r_limits(e_rng_lines,3)
-     e_rng_lines=e_rng_lines+1
-   enddo
-   QP_r_limits(:,3:4)=QP_r_limits(:,3:4)/HA2EV
-   e_rng_lines=e_rng_lines-2
-   do i1=1,e_rng_lines,1
-     v=int(QP_r_limits(i1,:2))
-     call i_check(v,en%nk)
-     QP_r_limits(i1,:2)=real(v,SP)
-   enddo
+     call PARSER_array(mode="read",VAR="QPerange",N=e_rng_lines,M=4,R_v=QP_r_limits)
+     do i1=1,e_rng_lines
+       QP_r_limits(i1,3:4)=QP_r_limits(i1,3:4)/HA2EV
+       v=int(QP_r_limits(i1,:2))
+       call i_check(v,en%nk)
+       QP_r_limits(i1,:2)=real(v,SP)
+     enddo
+   endif
    !
    ! Non null %QPerange/%QPkrange fields
    !
@@ -177,7 +161,7 @@ subroutine QP_state_table_setup(en)
  !
  Mixing=.FALSE.
 #if defined _SC || defined _RT
- Mixing=l_sc_run.or.l_real_time.or.l_eval_collisions
+ Mixing=l_sc_run.or.l_real_time.or.l_eval_collisions.or.l_nl_optics
  if (l_eval_collisions) Mixing=l_elel_scatt.or.trim(H_potential)=="HARTREE+FOCK".or.trim(H_potential)=="COHSEX"
 #endif
  !

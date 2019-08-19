@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -27,13 +27,13 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  ! In the future the RT code can be based on those, at least partially
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
+ use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt,l_real_time
  use electrons,      ONLY:n_sp_pol,spin_occ,levels,BZ_DbGd_kpts
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:RT_t,REF_lifetime,E_E_Hole_lifetime,E_E_Electron_lifetime,   &
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Ho_abs_lifetime, &
 &                         E_P_El_abs_lifetime,l_RT_uses_E_DbGd,RT_ibz_coo,DbGd_ibz_coo,  &
-&                         RT_nk,RT_all2ibz,RT_delta0_occupations,RT_Nk_ibz,RT_bands,&
+&                         RT_nk,RT_all2ibz,RT_delta_occupations,RT_Nk_ibz,RT_bands,&
 &                         RT_obj_alloc,RT_obj_free,RT_E_and_k,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime
  use hamiltonian,    ONLY:E_reference
@@ -117,17 +117,17 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        ! Occupations
        !
        if (what=="fill") then
-         RT%delta_f(i_RT)=RT_delta0_occupations(i_b,i_k_RT)
-       else if (what=="dump".and.allocated(RT_delta0_occupations)) then
-         RT_delta0_occupations(i_b,i_k_RT)=RT%delta_f(i_RT)
+         RT%delta_f(i_RT)=RT_delta_occupations(i_b,i_k_RT)
+       else if (what=="dump".and.allocated(RT_delta_occupations)) then
+         RT_delta_occupations(i_b,i_k_RT)=RT%delta_f(i_RT)
        endif
        !
        ! Energies
        !
        if (what=="fill") then
-         RT%delta_E(i_RT)=RT_E_and_k%En(i_b,i_k_RT,i_spin)-RT%E_bare(i_RT)
-       else if (what=="dump".and.allocated(RT_E_and_k%En)) then
-         RT_E_and_k%En(i_b,i_k_RT,i_spin)=RT%E_bare(i_RT)+RT%delta_E(i_RT)
+         RT%delta_E(i_RT)=RT_E_and_k%E(i_b,i_k_RT,i_spin)-RT%E_bare(i_RT)
+       else if (what=="dump".and.allocated(RT_E_and_k%E)) then
+         RT_E_and_k%E(i_b,i_k_RT,i_spin)=RT%E_bare(i_RT)+RT%delta_E(i_RT)
        endif
        !
        ! Lifetimes

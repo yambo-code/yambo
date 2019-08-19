@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -25,6 +25,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! HXC collisions 
  !
+ use drivers,       ONLY:l_use_COH_collisions
  use pars,          ONLY:SP,pi,cZERO
  use com,           ONLY:msg
  use frequency,     ONLY:w_samp
@@ -35,15 +36,14 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use D_lattice,     ONLY:DL_vol,sop_inv
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,MPI_COMM_NULL,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
- use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,&
-&                        COLL_bands,HXC_COLL_element,HXC_collisions,COH_COLL_element,COH_collisions
-#if defined _TIMING
+ use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_HXC_local,COLLISIONS_HXC_MB,&
+&                        COLL_bands,HXC_COLL_element,HXC_collisions,COH_COLL_element,COH_collisions,&
+&                        COLLISIONS_HXC_use_TDDFT
  use timing_m,      ONLY:timing
-#endif
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,Io_and_Messaging_switch,io_COLLs
  use X_m,           ONLY:X_alloc,X_mat,X_t
@@ -63,11 +63,10 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! Work Space
  !
- integer                 :: i_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,iGo_max,NG_max,NG_XC,&
+ integer                 :: i_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,iGo_max,NG_max,NG_XC,LOCAL_COMM(2),&
 &                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs_H,N_g_vecs_X,N_g_vecs_C,i_star,i_p,i_p_s,&
 &                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local,n_steps,bands_to_load(2),n_colls
- logical                 :: l_HXC_collisions,l_COH_collisions,l_MBPT_XC_collisions,l_loc_HXC_collisions,&
-&                           eval_coll,l_compute_screening,l_tddft
+ logical                 :: l_HXC_collisions,eval_coll,l_compute_screening
  !
  type(elemental_collision):: isc_XC,iscp_XC,isc_H,iscp_H
  real(SP)                 :: Co
@@ -78,9 +77,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  integer, external        :: io_X
  complex(SP),   external  :: TDDFT_ALDA_R_space
  !
-#if defined _TIMING
  call timing(trim(H_potential)//' Collisions',OPR='start')
-#endif
  !
  ! Reset
  !
@@ -94,13 +91,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! Setup
  !
- l_loc_HXC_collisions = index(H_potential,"HARTREE")>0 .or. index(H_potential,"GS_xc")>0 .or. index(H_potential,"default")>0
- l_MBPT_XC_collisions = index(H_potential,"FOCK")>0    .or. index(H_potential,"SEX")>0
- l_COH_collisions     = index(H_potential,"COH")>0
  l_compute_screening  = index(H_potential,"COH")>0   .or. index(H_potential,"SEX")>0
- l_tddft              = index(H_potential,"GS_xc")>0 .or. index(H_potential,"default")>0 
- !
- l_HXC_collisions     = l_loc_HXC_collisions .or. l_MBPT_XC_collisions 
+ l_HXC_collisions     = COLLISIONS_HXC_local .or. COLLISIONS_HXC_MB 
  !
  call k_build_up_BZ_tables(k)
  call k_build_up_BZ_tables(q)
@@ -128,15 +120,15 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  N_g_vecs_C =0
  iGo_max    =maxval(qindx_S(:,:,2))
  !
- if(l_loc_HXC_collisions                     ) N_g_vecs_H  = QP_ng_SH
- if(l_MBPT_XC_collisions                     ) N_g_vecs_X  = QP_ng_Sx
- if(l_MBPT_XC_collisions .or.l_COH_collisions) N_g_vecs_C  = QP_ng_Sc
+ if(COLLISIONS_HXC_local                      ) N_g_vecs_H  = QP_ng_SH
+ if(COLLISIONS_HXC_MB                         ) N_g_vecs_X  = QP_ng_Sx
+ if(COLLISIONS_HXC_MB .or.l_use_COH_collisions) N_g_vecs_C  = QP_ng_Sc
  !
- call fft_check_size(iGo_max,N_g_vecs_C,N_g_vecs_H)
- call fft_check_size(iGo_max,N_g_vecs_C,N_g_vecs_X)
+ call fft_check_size(iGo_max,N_g_vecs_C,N_g_vecs_H,"SH")
+ call fft_check_size(iGo_max,N_g_vecs_C,N_g_vecs_X,"SF")
  !
- if(l_loc_HXC_collisions) QP_ng_SH=N_g_vecs_H
- if(l_MBPT_XC_collisions) QP_ng_Sx=N_g_vecs_X
+ if(COLLISIONS_HXC_local) QP_ng_SH=N_g_vecs_H
+ if(COLLISIONS_HXC_MB) QP_ng_Sx=N_g_vecs_X
  !
  NG_max=maxval((/N_g_vecs_H,N_g_vecs_X,N_g_vecs_C/))
  NG_XC =max(N_g_vecs_X,N_g_vecs_C)
@@ -146,7 +138,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  ! WFs
  !
  bands_to_load=COLL_bands
- if (l_tddft) then
+ if (COLLISIONS_HXC_use_TDDFT) then
    bands_to_load(1)=1
    bands_to_load(2)=max(COLL_bands(2),E%nbm)
  endif
@@ -155,7 +147,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  call WF_load(WF,NG_max,iGo_max,bands_to_load,(/1,k%nibz/),title='-'//trim(H_potential)//' Collisions')
  !
- if (l_loc_HXC_collisions) then
+ if (COLLISIONS_HXC_local) then
    !
    iscp_H%qs   =1
    iscp_H%iqref=0
@@ -202,7 +194,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  endif
  !
  Co=1._SP
- if (l_tddft) then
+ if (COLLISIONS_HXC_use_TDDFT) then
    Co=4._SP*pi/DL_vol/real(q%nbz,SP)
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
    if (n_spin>1) then
@@ -233,13 +225,23 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  endif
  !
  n_steps=0
- if (l_loc_HXC_collisions)                     n_steps=n_steps+PAR_NC_local*K%nibz*PAR_n_Bp_mat_elements
- if (l_MBPT_XC_collisions.or.l_COH_collisions) n_steps=n_steps+PAR_NC_local*PAR_nQ*PAR_n_Bp_mat_elements
+ if (COLLISIONS_HXC_local)                      n_steps=n_steps+PAR_NC_local*K%nibz*PAR_n_Bp_mat_elements
+ if (COLLISIONS_HXC_MB.or.l_use_COH_collisions) n_steps=n_steps+PAR_NC_local*PAR_nQ*PAR_n_Bp_mat_elements
+ !
+ ! Define the local COMM
+ !
+ if (COLLISIONS_parallel_SC_structure) then
+   LOCAL_COMM(1)=PAR_COM_QP_A2A%COMM
+   LOCAL_COMM(2)=PAR_COM_Q_INDEX%COMM
+ else
+   LOCAL_COMM(1)=PAR_COM_G_b_A2A%COMM
+   LOCAL_COMM(2)=MPI_COMM_NULL
+ endif
  !
  ! Write Database Header 
  !
- if (l_HXC_collisions) call COLLISIONS_linearize_and_IO("HXC",0,HXC_collisions,HXC_COLL_element)
- if (l_COH_collisions) call COLLISIONS_linearize_and_IO("COH",0,COH_collisions,COH_COLL_element)
+ if (l_HXC_collisions    ) call COLLISIONS_linearize_and_IO("HXC",0,HXC_collisions,HXC_COLL_element)
+ if (l_use_COH_collisions) call COLLISIONS_linearize_and_IO("COH",0,COH_collisions,COH_COLL_element)
  !
  call live_timing("Collisions",n_steps)
  !
@@ -247,14 +249,14 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    !
    if (l_HXC_collisions) then
      if(.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
-   else if (l_COH_collisions) then
+   else if (l_use_COH_collisions) then
      if (.not.COH_collisions%PAR_IND%element_1D(i_coll)) cycle
    endif
    !
    if (io_COLLs.and.l_HXC_collisions) then
      if (HXC_collisions%IO_status(i_coll)/=-1) cycle
    endif
-   if (io_COLLs.and.l_COH_collisions) then
+   if (io_COLLs.and.l_use_COH_collisions) then
      if (COH_collisions%IO_status(i_coll)/=-1) cycle
    endif
    !
@@ -270,33 +272,28 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      i_sp    = COH_collisions%state(i_coll,4)
    endif   
    !
-   if( l_HXC_collisions ) HXC_COLL_element(1)%v3_c=cZERO
-   if( l_COH_collisions ) COH_COLL_element(1)%v3_c=cZERO
+   if( l_HXC_collisions )     HXC_COLL_element(1)%v3_c=cZERO
+   if( l_use_COH_collisions ) COH_COLL_element(1)%v3_c=cZERO
    !
    ! HARTREE collisions
    !
-   if ( l_loc_HXC_collisions )                     call compute_loc_HXC_collisions()
+   if ( COLLISIONS_HXC_local )                      call compute_loc_HXC_collisions()
    !
    ! XC collisions within MBPT
    !
-   if ( l_MBPT_XC_collisions.or.l_COH_collisions ) call compute_MBPT_XC_collisions()
+   if ( COLLISIONS_HXC_MB.or.l_use_COH_collisions ) call compute_MBPT_XC_collisions()
    !
-   if (COLLISIONS_parallel_SC_structure) then
-     if(l_HXC_collisions) then
-       call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=PAR_COM_Q_INDEX%COMM)
-     endif
-     if(l_COH_collisions) then
-       call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=PAR_COM_Q_INDEX%COMM)
-     endif
-   else
-     if(l_HXC_collisions) call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
-     if(l_COH_collisions) call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
+   if(l_HXC_collisions) then
+     call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=LOCAL_COMM(1))
+     call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=LOCAL_COMM(2))
+     call COLLISIONS_linearize_and_IO("HXC",i_coll,HXC_collisions,HXC_COLL_element)
    endif
    !
-   if (l_HXC_collisions) call COLLISIONS_linearize_and_IO("HXC",i_coll,HXC_collisions,HXC_COLL_element)
-   if (l_COH_collisions) call COLLISIONS_linearize_and_IO("COH",i_coll,COH_collisions,COH_COLL_element)
+   if(l_use_COH_collisions) then
+     call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=LOCAL_COMM(1))
+     call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=LOCAL_COMM(2))
+     call COLLISIONS_linearize_and_IO("COH",i_coll,COH_collisions,COH_COLL_element)
+   endif
    !
  enddo ! loop on i_coll
  !
@@ -313,14 +310,12 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    call elemental_collision_free(iscp_XC)
  endif
  !
- if (l_tddft) then
+ if (COLLISIONS_HXC_use_TDDFT) then
    YAMBO_FREE(F_xc)
    YAMBO_FREE(magn)
  endif
  !
-#if defined _TIMING
  call timing(trim(H_potential)//' Collisions',OPR='stop')
-#endif
  !
  contains
    !
@@ -357,9 +352,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
        !
        i_p_bz  =qindx_S(i_k,i_q_fake,1)
        i_p     =k%sstar(i_p_bz,1)
-       i_p_s   =k%sstar(i_p_bz,2)
        !
-       if (i_p_s/=1) cycle
+       if (k%sstar(i_p_bz,2)/=1) cycle
        !
        do i_mp=COLL_bands(1),COLL_bands(2)
          do i_np=i_mp,COLL_bands(2)
@@ -380,15 +374,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
              !
              i_p_s =k%star(i_p,i_star)
              !
-#if defined _OPENMP
              !$omp parallel do default(shared), private(ig1)
-#endif
              do ig1=2,N_g_vecs_H
                rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(ig1,sop_inv(i_p_s)))
              enddo
-#if defined _OPENMP
              !$omp end parallel do
-#endif
              !
            enddo
            !
@@ -396,19 +386,15 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
              !
              pre_factor1=cZERO
              if(index(H_potential,"HARTREE")>0) then
-#if defined _OPENMP
                !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor1)
-#endif
                do ig1=2,N_g_vecs_H
                  pre_factor1=pre_factor1+conjg(rhotw_tmp(ig1))*isc_H%gamp(ig1,1)*isc_H%rhotw(ig1)
                enddo
-#if defined _OPENMP
                !$omp end parallel do
-#endif
              endif
              !
              pre_factor2=cZERO
-             if(l_tddft) then
+             if(COLLISIONS_HXC_use_TDDFT) then
                do i_star=1,k%nstar(i_p)
                  i_p_s =k%star(i_p,i_star)
                  iscp_H%is(3) = i_p_s
@@ -429,19 +415,15 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
              !
              pre_factor1=cZERO
              if(index(H_potential,"HARTREE")>0) then
-#if defined _OPENMP
                !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor1)
-#endif
                do ig1=2,N_g_vecs_H
                  pre_factor1=pre_factor1+rhotw_tmp(minus_G(ig1))*isc_H%gamp(ig1,1)*isc_H%rhotw(ig1)
                enddo
-#if defined _OPENMP
                !$omp end parallel do
-#endif
              endif
              !
              pre_factor2=cZERO
-             if(l_tddft) then
+             if(COLLISIONS_HXC_use_TDDFT) then
                do i_star=1,k%nstar(i_p)
                  i_p_s =k%star(i_p,i_star)
                  iscp_H%is(3) = i_p_s
@@ -476,6 +458,12 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      !                     /     G_{np,mp}       \
      !     (i_n,i_k,1)-->--.---------->----------.---->----(i_m,i_k,1)
      !                          (i_kmq,i_kmq_s)
+     !
+     if (l_compute_screening) then
+       call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1/),ID=ID)
+       io_err=io_X(X,Xw,ID)
+     endif
+     !
      do iqbz=1,q%nbz
        !
        if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
@@ -509,33 +497,24 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
          !
          call scatter_Gamp(isc_XC ,'c')
          !
-         call Io_and_Messaging_switch("-fragments_IO_log")
-         !
          ! I/O
          !
-         if (q%nbz==1) then
-           call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1,2,3/),ID=ID)
-         else
-           if (iqbz ==1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1,2,2*iqibz+1/),ID=ID)
-           if (iqbz>  1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
-         endif
+         call IO_and_Messaging_switch("-fragments_IO_log")
+         !
+         call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
          io_err=io_X(X,Xw,ID)
          !
-         call Io_and_Messaging_switch("+fragments_IO_log")
+         call IO_and_Messaging_switch("+fragments_IO_log")
          !
          ! Poles and Residuals
          !
-#if defined _OPENMP
          !$omp parallel do default(shared), private(ig1,ig2)
-#endif
          do ig1=1,N_g_vecs_C
            do ig2=1,N_g_vecs_C
              EM1s(ig1,ig2)=X_mat(ig1,ig2,1)*isc_XC%gamp(ig1,ig2)
            enddo
          enddo
-#if defined _OPENMP
          !$omp end parallel do
-#endif
          !
        endif
        !
@@ -561,30 +540,22 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
            !
            pre_factor1=cZERO
            if(index(H_potential,"FOCK")>0.or.index(H_potential,"SEX")>0) then 
-#if defined _OPENMP
              !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor1)
-#endif
              do ig1=1,N_g_vecs_X
                pre_factor1=pre_factor1+isc_XC%rhotw(ig1)*iscp_XC%gamp(ig1,1)*conjg(iscp_XC%rhotw(ig1))
              enddo
-#if defined _OPENMP
              !$omp end parallel do
-#endif
            endif
            !
            pre_factor2=cZERO
            if(index(H_potential,"COH")>0.or.index(H_potential,"SEX")>0) then 
-#if defined _OPENMP
              !$omp parallel do default(shared), private(ig1,ig2), reduction(+:pre_factor2)
-#endif
              do ig1=1,N_g_vecs_C
                do ig2=1,N_g_vecs_C
                  pre_factor2=pre_factor2+isc_XC%rhotw(ig2)*EM1s(ig2,ig1)*conjg(iscp_XC%rhotw(ig1))
                enddo
              enddo
-#if defined _OPENMP
              !$omp end parallel do
-#endif
            endif
            !
            if(index(H_potential,"SEX")>0 .or. index(H_potential,"FOCK")>0) &

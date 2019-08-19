@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,10 +24,11 @@
 subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  use com,            ONLY:warning
+ use stderr,         ONLY:intc
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use X_m,            ONLY:X_t,Epsilon_ii,Joint_DOS,X_drude_term
+ use X_m,            ONLY:X_t,Joint_DOS
  use BS_solvers,     ONLY:BSS_mode,BSS_n_descs,BSS_eval_JDOS,BSS_free,BS_mat,&
 &                         run_Haydock,run_inversion,run_Diago
 #if defined _SLEPC
@@ -41,15 +42,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use drivers,        ONLY:l_photolum
  use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
- !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
- use X_m,            ONLY:Epsilon_ij
  use KERR,           ONLY:BSS_KERR_free
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #include<memory.h>
  type(levels) ::Ken
@@ -66,7 +61,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  if (.not. BS_K_has_been_calculated_loaded ) return
  !
- call section('*','BSE solver(s)')
+ call section('-','BSE solver(s) @q'//trim(intc(iq)))
  !
  ! GPL_EXCLUDE_START
  !
@@ -97,7 +92,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #endif
  !
  ! I/O. All read. Only master writes.
- !
+ ! 
  call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
  !
  if (run_Haydock.and.allocated(Ken%W)) then
@@ -111,12 +106,12 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
    call PARALLEL_assign_LA_COMMs("Response_T_space",DIAGO,CPU_structure(4)%nCPU_lin_algebra_DIAGO)
    !
-   call K_diago_driver(iq,W_bss)
+   call K_diago_driver(iq,W_bss,X_static)
    !
  endif
  !
 #if defined _SLEPC
- if (run_Slepc)           call K_slepc_driver(iq,W_bss)
+ if (run_Slepc)           call K_diago_driver(iq,W_bss,X_static)
 #endif
  !
  ! No JDOS in Inversion/Hadydock
@@ -124,7 +119,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  if (BSS_eval_JDOS) then
    YAMBO_FREE(Joint_DOS)
  endif
- BSS_eval_JDOS=.FALSE.
  !
  ! Inversion
  !
@@ -139,6 +133,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  ! CLEAN: diago/invertion workspace
  !
  call BSS_free( )
+ !
+ ! CLEAN: BS_mat
+ !
  YAMBO_FREE(BS_mat)
  !
  ! Haydock
@@ -158,17 +155,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! CLEAN (final)
  !
- YAMBO_FREE(X_drude_term)
- YAMBO_FREE(Epsilon_ii)
- !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
- YAMBO_FREE(Epsilon_ij)
  call BSS_KERR_free( )
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #if defined _PL
  call BSS_PL_free( )

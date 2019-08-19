@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
+subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
  !
  use pars,          ONLY:SP,schlen,pi
  use vec_operate,   ONLY:v_norm
  use D_lattice,     ONLY:alat,sop_inv,a,DL_vol
  use R_lattice,     ONLY:bz_samp,cyl_ph_radius,bare_qpg,cyl_length,box_length,&
-&                        g_vec,g_rot
+&                        g_vec,g_rot,nqibz
  use wave_func,     ONLY:wf_ng
  use com,           ONLY:msg,of_open_close
  use LIVE_t,        ONLY:live_timing
@@ -35,7 +35,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  use interfaces,    ONLY:PARALLEL_index
  implicit none
  type(bz_samp):: q
- logical      :: cut_is_sphere,cut_is_box,cut_is_cyl,is_cut(3)
+ logical      :: cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut(3)
  !
  ! Work Space
  !
@@ -45,9 +45,10 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  real(SP):: pl_xy_pt(n_dl_pts**2,3),v_xy(n_dl_pts**2,2),&
 &           pl_yz_pt(n_dl_pts**2,3),v_yz(n_dl_pts**2,2),&
 &           pl_xz_pt(n_dl_pts**2,3),v_xz(n_dl_pts**2,2),&
-&           dummy(3),max_val
- integer :: iqibz,iqbz,ig,ir1,ir2,ip,ig_r,is
+&           dummy(3),max_val,rdum(3),atws(3,3)
+ integer :: iqibz,iqbz,ig,ir1,ir2,ip,ig_r,is,nq(3),i1
  type(PP_indexes) ::px
+
  !
  ! CutOff Test
  !
@@ -64,20 +65,44 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
  !
  if (cut_is_sphere) dummy=2._SP*plot_factor*cyl_ph_radius
+ if (cut_is_ws) then 
+!
+! build the superperiodicity direct lattice
+!
+  nq=1
+  rdum=1000
+  do iqibz=1,nqibz
+   if(abs(q%pt(iqibz,1))/=0..and.(abs(q%pt(iqibz,1))<rdum(1))) rdum(1)=q%pt(iqibz,1)
+   if(abs(q%pt(iqibz,2))/=0..and.(abs(q%pt(iqibz,2))<rdum(2))) rdum(2)=q%pt(iqibz,2)
+   if(abs(q%pt(iqibz,3))/=0..and.(abs(q%pt(iqibz,3))<rdum(3))) rdum(3)=q%pt(iqibz,3)
+  enddo
+  nq=abs(nint(1./rdum))
+  do i1=1,3
+    if (nq(i1)==0) nq(i1)=1
+  enddo
+  dummy=2._SP*plot_factor*dummy*nq
+ !
+  do i1=1,3
+    atws(:,i1) = a(i1,:)
+    atws(:,i1) = atws(:,i1) * nq(i1)
+  enddo
+!
+
+ endif
  !
  if (cut_is_cyl) then
    dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
-   if (is_cut(1).and.cyl_length==0) dummy(1)=2._SP*plot_factor*dummy(1)*10
-   if (is_cut(2).and.cyl_length==0) dummy(2)=2._SP*plot_factor*dummy(2)*10
-   if (is_cut(3).and.cyl_length==0) dummy(3)=2._SP*plot_factor*dummy(3)*10
+   if (is_cut(1).and.cyl_length==0) dummy(1)=2.0_SP*plot_factor*dummy(1)*10.0
+   if (is_cut(2).and.cyl_length==0) dummy(2)=2.0_SP*plot_factor*dummy(2)*10.0
+   if (is_cut(3).and.cyl_length==0) dummy(3)=2.0_SP*plot_factor*dummy(3)*10.0
  endif
  if (cut_is_box) then
-   if (is_cut(1)) dummy(1)=2._SP*plot_factor*box_length(1)
-   if (is_cut(2)) dummy(2)=2._SP*plot_factor*box_length(2)
-   if (is_cut(3)) dummy(3)=2._SP*plot_factor*box_length(3)
+   if (is_cut(1)) dummy(1)=2.0_SP*plot_factor*box_length(1)
+   if (is_cut(2)) dummy(2)=2.0_SP*plot_factor*box_length(2)
+   if (is_cut(3)) dummy(3)=2.0_SP*plot_factor*box_length(3)
  endif
  !
- do ir1=1,n_dl_pts
+do ir1=1,n_dl_pts
    do ir2=1,n_dl_pts
      ip=n_dl_pts*(ir1-1)+ir2
      pl_xy_pt(ip,:)=-((/dummy(1)/2,dummy(2)/2,0._SP   /)-&
@@ -86,7 +111,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
 &      (/0._SP,dummy(2)*(ir1-1)/(n_dl_pts-1),dummy(3)*(ir2-1)/(n_dl_pts-1)/))
      pl_xz_pt(ip,:)=-((/dummy(1)/2.,0._SP    ,dummy(3)/2./)-&
 &      (/dummy(1)*(ir1-1)/(n_dl_pts-1),0._SP,dummy(3)*(ir2-1)/(n_dl_pts-1)/))
-    
+
      if (cut_is_sphere) then
        v_xy(ip,1)=V_in_sphere( pl_xy_pt(ip,:) )
        v_yz(ip,1)=V_in_sphere( pl_yz_pt(ip,:) )
@@ -103,8 +128,14 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
        v_yz(ip,1)=V_in_cyl( pl_yz_pt(ip,:) )
        v_xz(ip,1)=V_in_cyl( pl_xz_pt(ip,:) )
      endif
+     if (cut_is_ws) then
+       v_xy(ip,1)=V_in_ws( pl_xy_pt(ip,:) )
+       v_yz(ip,1)=V_in_ws( pl_yz_pt(ip,:) )
+       v_xz(ip,1)=V_in_ws( pl_xz_pt(ip,:) )
+     endif
    enddo
  enddo
+ !
  !
  ! CutOffed potential using qpg_bare
  !
@@ -143,7 +174,8 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
    call live_timing(steps=1)
    !
  enddo
- !
+!
+!
  call PP_redux_wait(v_xy(:,2))
  call PP_redux_wait(v_yz(:,2))
  call PP_redux_wait(v_xz(:,2))
@@ -181,8 +213,8 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  !
  max_val=0._SP
  !
- do iqbz=1,q%nbz
-   do ig=1,wf_ng
+ do ig=1,wf_ng 
+   do iqbz=1,q%nbz 
      !
      iqibz = q%sstar(iqbz,1)
      is    = q%sstar(iqbz,2)
@@ -195,13 +227,14 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
      !
      if (dummy(2)>max_val) max_val=dummy(2)
      !
-     if (dummy(2)<max_val/100) cycle
+     if (dummy(2)<max_val/1000) cycle
      !
      call msg('o RL_','',dummy,INDENT=-2,USE_TABS=.true.)
      !
    enddo
    !
  enddo
+ !
  !
  call of_open_close(of_name(1))
  call of_open_close(of_name(2))
@@ -230,15 +263,23 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
      real(SP) :: r(3)
      V_in_cyl=0.
      if (cyl_length>0) then 
-       if ( (is_cut(1).and.abs(r(1))<cyl_length.and.abs(r(2))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
+       if ((is_cut(1).and.abs(r(1))<cyl_length.and.abs(r(2))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
 &           (is_cut(2).and.abs(r(2))<cyl_length.and.abs(r(1))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
-&           (is_cut(3).and.abs(r(3))<cyl_length.and.abs(r(1))**2+abs(r(2))**2<cyl_ph_radius**2) ) &
+&           (is_cut(3).and.abs(r(3))<cyl_length.and.abs(r(1))**2+abs(r(2))**2<cyl_ph_radius**2)) &
 &       V_in_cyl=1./v_norm(r)
      else
-       if ( (is_cut(1).and.abs(r(2))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
+       if ((is_cut(1).and.abs(r(2))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
 &           (is_cut(2).and.abs(r(1))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
 &           (is_cut(3).and.abs(r(1))**2+abs(r(2))**2<cyl_ph_radius**2)) V_in_cyl=1._SP/v_norm(r)
      endif
+   end function
+
+   real(SP) function V_in_ws(r)
+     real(SP) :: r(3)
+     V_in_ws=0.
+     if ((.not.is_cut(1).or.abs(r(1))<atws(1,1)/2.).and.&
+&         (.not.is_cut(2).or.abs(r(2))<atws(2,2)/2.).and.&
+&         (.not.is_cut(3).or.abs(r(3))<atws(3,3)/2.)) V_in_ws=1./v_norm(r)
    end function
  !
 end subroutine

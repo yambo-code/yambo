@@ -39,6 +39,7 @@ module BS
  logical :: BS_cpl_K_corr
  logical :: BS_K_is_ALDA
  logical :: BS_not_const_eh_f
+ logical :: BS_perturbative_SOC=.FALSE.
  logical :: BS_K_has_been_calculated_loaded=.FALSE.
  character(schlen) :: L_kind
  character(schlen) :: BSE_mode
@@ -145,7 +146,6 @@ module BS
  ! Screened interaction
  !======================
  complex(SP),allocatable ::BS_W(:,:,:)
- !
  !
  contains
    !

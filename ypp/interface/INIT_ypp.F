@@ -334,10 +334,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      !
      if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDplotmode') then
        !
-       l_RT_bands       =trim(rstr_piece(i1+2))=='b'
-       l_RT_time        =trim(rstr_piece(i1+2))=='t'
-       l_RT_energy      =trim(rstr_piece(i1+2))=='e'
-       l_RT_dos         =trim(rstr_piece(i1+2))=='d'
+       l_RT_bands       =trim(rstr_piece(i1+1))=='b'
+       l_RT_time        =trim(rstr_piece(i1+1))=='t'
+       l_RT_energy      =trim(rstr_piece(i1+1))=='e'
+       l_RT_dos         =trim(rstr_piece(i1+1))=='d'
        !
      endif
      !
@@ -349,62 +349,63 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_NL_X   =  trim(rstr_piece(i1)) == 'nonlinear'
 #endif   
      !    
-     if ( trim(rstr_piece(i1)) == 'excitons'.or. trim(rstr_piece(i1)) == 'electrons') then
-       if (l_amplitude)      call initactivate(1,'amplitude')
-       if (l_spin)           call initactivate(1,'spin')
-       if (l_mag)            call initactivate(1,'magnetization')
-       if (l_wavefunction)   call initactivate(1,'wavefunction')
-#if defined _YPP_ELPH
-       if (l_eliashberg)       call initactivate(1,'eliashberg')
-       if (l_gkkp)             call initactivate(1,'gkkp')
-#endif
-#if defined _YPP_MAGNETIC
-       if (l_angular_momentum) call initactivate(1,'angular_m')
-       if (l_position)         call initactivate(1,'position')
-#endif
-       if (l_current)        call initactivate(1,'current')
-       if (l_density)        call initactivate(1,'density')
-       if (l_sort)           infile_editing=.false.
-     endif
-     if ( trim(rstr_piece(i1)) == 'phonons'.or. trim(rstr_piece(i1)) == 'electrons') then
-       if (l_dos)            call initactivate(1,'dos')
-     endif
-     if ( trim(rstr_piece(i1)) == 'electrons') then
-       if (l_bands)          call initactivate(1,'bnds')
-     endif
-#if defined _YPP_RT
-     !
-     ! GPL_EXCLUDE_START
-     !
-     if ( trim(rstr_piece(i1)) == 'RTDBs') then
-       if (l_RTpump_energy) call initactivate(1,'Select_energy')
-       if (l_RTpump_kspace) call initactivate(1,'Select_kspace')
-       if (l_RTpump_Fermi ) call initactivate(1,'Select_Fermi')
-     endif
-     !
-     ! GPL_EXCLUDE_END
-     !
-     if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDpol' .or. trim(rstr_piece(i1)) == 'TDplots') then
-       !
-       if (l_RT_X)           call initactivate(1,'RT_X')
-       !
-       ! GPL_EXCLUDE_START
-       !
-       if (l_RT_abs)         call initactivate(1,'RTabs')
-       if (l_RT_occupations) call initactivate(1,'RToccupations')
-       if (l_RT_lifetimes)   call initactivate(1,'RTlifetimes')
-       if (l_RT_density)     call initactivate(1,'RTdeltaRho')
-       if (l_RT_bands)       call initactivate(1,'RTfitbands')
-       if (l_RT_time)        call initactivate(1,'RTtime')
-       if (l_RT_energy)      call initactivate(1,'RTenergy')
-       if (l_RT_dos)         call initactivate(1,'RTdos')
-       !
-       ! GPL_EXCLUDE_END
-       !
-     endif
-#endif
    enddo
  enddo
+ !
+#if defined _YPP_RT
+ !
+ if (l_RT_X)           call initactivate(1,'RT_X')
+ !
+ ! GPL_EXCLUDE_START
+ !
+ if (l_RT_abs)         call initactivate(1,'RTabs')
+ if (l_RT_occupations) call initactivate(1,'RToccupations')
+ if (l_RT_lifetimes)   call initactivate(1,'RTlifetimes')
+ if (l_RT_density)     call initactivate(1,'RTdeltaRho')
+ if (l_RT_bands)       call initactivate(1,'RTfitbands')
+ if (l_RT_time)        call initactivate(1,'RTtime')
+ if (l_RT_energy)      call initactivate(1,'RTenergy')
+ if (l_RT_dos)         call initactivate(1,'RTdos')
+#endif
+ !
+ if (l_amplitude)      call initactivate(1,'amplitude')
+ if (l_spin)           call initactivate(1,'spin')
+ if (l_mag)            call initactivate(1,'magnetization')
+ if (l_wavefunction)   call initactivate(1,'wavefunction')
+ !
+#if defined _YPP_ELPH
+ !
+ if (l_eliashberg)       call initactivate(1,'eliashberg')
+ if (l_gkkp)             call initactivate(1,'gkkp')
+ !
+#endif
+#if defined _YPP_MAGNETIC
+ !
+ if (l_angular_momentum) call initactivate(1,'angular_m')
+ if (l_position)         call initactivate(1,'position')
+ !
+#endif
+ !
+ if (l_current)        call initactivate(1,'current')
+ if (l_density)        call initactivate(1,'density')
+ if (l_sort)           infile_editing=.false.
+ if (l_dos)            call initactivate(1,'dos')
+ if (l_bands)          call initactivate(1,'bnds')
+ !
+#if defined _YPP_RT
+ !
+ ! GPL_EXCLUDE_START
+ !
+ if (l_RTpump_energy) call initactivate(1,'Select_energy')
+ if (l_RTpump_kspace) call initactivate(1,'Select_kspace')
+ if (l_RTpump_Fermi ) call initactivate(1,'Select_Fermi')
+ !
+ ! GPL_EXCLUDE_END
+ !
+#endif
+ !
+ ! GPL_EXCLUDE_END
+ !
  !
 #if defined _YPP_NL
  if (l_NL_X)         call initactivate(1,'nonlinear')

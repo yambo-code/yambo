@@ -377,13 +377,14 @@ module stderr
     enddo
   end subroutine
   !
-  logical function STRING_match(strIn,MATCH)
+  logical function STRING_match(strIn,MATCH,partof)
     !
     ! Adapted from http://www.star.le.ac.uk/~cgp/fortran.html (25 May 2012)
     ! Original author: Clive Page
     !
     character(len=*), intent(in) :: strIn
     character(len=*), intent(in) :: MATCH
+    logical         , optional   :: partof
     !
     character(len=len(strIn)) :: str_
     character(len=len(MATCH)) :: MATCH_
@@ -391,7 +392,9 @@ module stderr
     !
     STRING_match=.FALSE.
     !
-    if (len(strIn)/=len(MATCH)) return
+    if (.not.present(partof)) then
+      if (len(strIn)/=len(MATCH)) return
+    endif
     !
     do i = 1, len(strIn)
       !
@@ -405,7 +408,11 @@ module stderr
       !
     end do
     !
-    STRING_match=trim(str_)==trim(MATCH_)
+    if (present(partof)) then
+      STRING_match=index(str_,trim(MATCH_))>0
+    else
+      STRING_match=trim(str_)==trim(MATCH_)
+    endif
     !
   end function STRING_match
   !

@@ -26,7 +26,7 @@ subroutine INIT_activate()
  use it_tools,       ONLY:initactivate
  use BS_solvers,     ONLY:BSS_mode
  use QP_m,           ONLY:QP_solver,COHSEX_use_empties
- use stderr,         ONLY:intc
+ use stderr,         ONLY:intc,STRING_match
  use drivers,        ONLY:l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bss,&
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh,&
@@ -478,12 +478,14 @@ subroutine INIT_activate()
    call initactivate( 1,'HXC_Potential FFTGvecs')
    !
    call initactivate(-1,'QpntsRXs')
-   if( index(H_potential,"HARTREE")>0 )                           call initactivate(1,'EXXCut HARRLvcs ALLGHAR')
-   if( index(H_potential,"default")>0 )                           call initactivate(1,'VXCRLvcs')
+   if( STRING_match(trim(H_potential),"HARTREE",partof=.TRUE.) ) call initactivate(1,'EXXCut HARRLvcs ALLGHAR')
+   if( STRING_match(trim(H_potential),"default",partof=.TRUE.) ) call initactivate(1,'VXCRLvcs HARRLvcs')
    !
    if (l_eval_collisions) then
-     if( index(H_potential,"SEX")>0.or.index(H_potential,"FOCK")>0) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
-     if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0 ) call initactivate(1,'CORRLvcs ALLGexx')
+     if( STRING_match(trim(H_potential),"SEX",partof=.TRUE.).or.&
+&        STRING_match(trim(H_potential),"FOCK",partof=.TRUE.)) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
+     if( STRING_match(trim(H_potential),"SEX",partof=.TRUE.).or.&
+&        STRING_match(trim(H_potential),"COH",partof=.TRUE.) ) call initactivate(1,'CORRLvcs ALLGexx')
    endif
    !
  endif
@@ -500,9 +502,11 @@ subroutine INIT_activate()
    !
    call initactivate( 1,'SCBands')
    !
-   if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0  ) call initactivate(1,'UseEbands SCUpWIter')
+   if( STRING_match(trim(H_potential),"SEX",partof=.TRUE.).or.&
+&      STRING_match(trim(H_potential),"COH",partof=.TRUE.)  ) call initactivate(1,'UseEbands SCUpWIter')
    !
-   if( index(H_potential,"EXX")>0.or.index(H_potential,"SRPA")>0 ) call initactivate(1,'OEPapprox OEPItSolver') 
+   if( STRING_match(trim(H_potential),"EXX",partof=.TRUE.).or.&
+&      STRING_match(trim(H_potential),"SRPA",partof=.TRUE.) ) call initactivate(1,'OEPapprox OEPItSolver') 
    !
    call initactivate(1,'SCIter SCEtresh SCRhoTresh SC_precondition')
    call initactivate(1,'SCmixing SClwBand SCnlMix BandMix')

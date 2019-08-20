@@ -341,7 +341,7 @@ subroutine INIT_read_command_line(rstr,init_)
      if ( trim(rstr_piece(i1)) == 'potential' )  then
        !
        H_potential=""
-       if ( index(trim(rstr_piece(i1+1)),'cohsex')>0) then
+       if (  index(trim(rstr_piece(i1+1)),'cohsex')>0) then
          H_potential='COH+SEX'
          if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
        else if ( index(trim(rstr_piece(i1+1)),'sex')>0 ) then
@@ -351,6 +351,10 @@ subroutine INIT_read_command_line(rstr,init_)
          H_potential='FOCK'
        else if ( trim(rstr_piece(i1+1)) == 'ip') then
          H_potential='IP'
+       else if (  index(trim(rstr_piece(i1+1)),'gs')>0 ) then
+         H_potential='GS_xc'
+       else if (  index(trim(rstr_piece(i1+1)),'d')>0 ) then
+         H_potential='DEFAULT'
        endif
        !
        if ( index(trim(rstr_piece(i1+1)),'h')==1 ) then

@@ -45,6 +45,7 @@ lib/*/lapack-*
 lib/*/fftw-*
 lib/*/blacs*
 lib/*/scalapack-*
+lib/*/package-installed
 lib/hdf5/hdf5*
 lib/external/*
 compile.sh

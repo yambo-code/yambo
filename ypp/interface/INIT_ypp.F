@@ -39,7 +39,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
                           V_general,V_qp,V_all,V_real_time,V_nl_optics
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists,write_to_report,repfile,write_the_logo,rename_file
- use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile
+ use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile,STRING_match,STRING_same
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:live_timing_is_on
@@ -197,11 +197,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    ! Verbosity
    !
    if (i1<50) then
-     if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='gen' ) infile_verbosity=V_general
-     if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='rt' )  infile_verbosity=V_real_time
-     if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='nl' )  infile_verbosity=V_nl_optics
-     if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='qp' )  infile_verbosity=V_qp
-     if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='all' ) infile_verbosity=V_all
+     if( trim(rstr_piece(i1)) == 'infver' .and. STRING_same(rstr_piece(i1+1),'gen') ) infile_verbosity=V_general
+     if( trim(rstr_piece(i1)) == 'infver' .and. STRING_same(rstr_piece(i1+1),'rt')  )  infile_verbosity=V_real_time
+     if( trim(rstr_piece(i1)) == 'infver' .and. STRING_same(rstr_piece(i1+1),'nl')  )  infile_verbosity=V_nl_optics
+     if( trim(rstr_piece(i1)) == 'infver' .and. STRING_same(rstr_piece(i1+1),'qp')  )  infile_verbosity=V_qp
+     if( trim(rstr_piece(i1)) == 'infver' .and. STRING_same(rstr_piece(i1+1),'all') ) infile_verbosity=V_all
    endif
    !
    call initactivate(1,'ElecTemp BoseTemp')
@@ -216,14 +216,14 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      enddo
      !
      if ( trim(rstr_piece(i1)) == 'bzgrids') then
-       l_k_grid=trim(rstr_piece(i1+1))=='k'
-       l_q_grid=trim(rstr_piece(i1+1))=='q'
-       l_shifted_grid=trim(rstr_piece(i1+1))=='s'
-       l_random_grid=trim(rstr_piece(i1+1))=='r'
+       l_k_grid=STRING_match(rstr_piece(i1+1),'k')
+       l_q_grid=STRING_match(rstr_piece(i1+1),'q')
+       l_shifted_grid=STRING_match(rstr_piece(i1+1),'s')
+       l_random_grid=STRING_match(rstr_piece(i1+1),'r')
        !
        ! GPL_EXCLUDE_START 
        !
-       l_high_sym_pts=trim(rstr_piece(i1+1))=='h'
+       l_high_sym_pts=STRING_match(rstr_piece(i1+1),'h')
        !
        ! GPL_EXCLUDE_END
        !
@@ -236,24 +236,24 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      !
      if ( trim(rstr_piece(i1)) == 'WFs') then
        call initactivate(1,'WFs')
-       l_fix_save=trim(rstr_piece(i1+1))=='c'
-       l_map_WFs  =trim(rstr_piece(i1+1))=='p'
+       l_fix_save=STRING_match(rstr_piece(i1+1),'c')
+       l_map_WFs =STRING_match(rstr_piece(i1+1),'p')
        if (l_map_WFs) call initactivate(1,'WFs_map')
      endif
      !
      if ( trim(rstr_piece(i1)) == 'QPDBs') then
        call initactivate(1,'QPDBs')
-       l_QP_DBs_create_and_modify=trim(rstr_piece(i1+1))=='g'
-       l_QP_DBs_manipulate            =trim(rstr_piece(i1+1))=='m'
+       l_QP_DBs_create_and_modify=STRING_match(rstr_piece(i1+1),'g')
+       l_QP_DBs_manipulate            =STRING_match(rstr_piece(i1+1),'m')
        if (l_QP_DBs_create_and_modify) call initactivate(1,'QPDB_edit')
        if (l_QP_DBs_manipulate)        call initactivate(1,'QPDB_merge')
      endif
      !
 #if defined _YPP_ELPH
      if ( trim(rstr_piece(i1)) == 'phonons') then
-       l_dos              =trim(rstr_piece(i1+1))=='d'
-       l_eliashberg       =trim(rstr_piece(i1+1))=='e'
-       l_atomic_amplitude =trim(rstr_piece(i1+1))=='a'
+       l_dos              =STRING_match(rstr_piece(i1+1),'d')
+       l_eliashberg       =STRING_match(rstr_piece(i1+1),'e')
+       l_atomic_amplitude =STRING_match(rstr_piece(i1+1),'a')
        if (l_atomic_amplitude) infile_editing=.false.
        if (l_eliashberg)   call initactivate(1,'eliashberg')
      endif
@@ -267,40 +267,40 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
        !
      endif
      if ( trim(rstr_piece(i1)) == 'excitons') then
-       l_wavefunction   =trim(rstr_piece(i1+1))=='w'
-       l_sort           =trim(rstr_piece(i1+1))=='s'
-       l_amplitude      =trim(rstr_piece(i1+1))=='a'
+       l_wavefunction   =STRING_match(rstr_piece(i1+1),'w')
+       l_sort           =STRING_match(rstr_piece(i1+1),'s')
+       l_amplitude      =STRING_match(rstr_piece(i1+1),'a')
 #if defined _YPP_ELPH
-       l_gkkp           =trim(rstr_piece(i1+1))=='g'
+       l_gkkp           =STRING_match(rstr_piece(i1+1),'g')
 #endif
        !
-       l_spin  =trim(rstr_piece(i1+1))=='sp'.and.n_spin>1
-       l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
+       l_spin  =STRING_match(rstr_piece(i1+1),'sp').and.n_spin>1
+       l_mag   =STRING_match(rstr_piece(i1+1),'m').and.n_spin>1
        !
        ! GPL_EXCLUDE_START
        !
 #if defined _YPP_ELPH
-       l_eliashberg      =trim(rstr_piece(i1+1))=='e'
+       l_eliashberg      =STRING_match(rstr_piece(i1+1),'e')
 #endif
        ! GPL_EXCLUDE_END
        !
      endif
      if ( trim(rstr_piece(i1)) == 'electrons') then
        !
-       l_current        =trim(rstr_piece(i1+1))=='c'
-       l_density        =trim(rstr_piece(i1+1))=='d'
-       l_dos            =trim(rstr_piece(i1+1))=='s'
-       l_wavefunction   =trim(rstr_piece(i1+1))=='w'
-       l_bands          =trim(rstr_piece(i1+1))=='b'
-       l_mag            =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
+       l_current        =STRING_match(rstr_piece(i1+1),'c')
+       l_density        =STRING_match(rstr_piece(i1+1),'d')
+       l_dos            =STRING_match(rstr_piece(i1+1),'s')
+       l_wavefunction   =STRING_match(rstr_piece(i1+1),'w')
+       l_bands          =STRING_match(rstr_piece(i1+1),'b')
+       l_mag            =STRING_match(rstr_piece(i1+1),'m').and.n_spin>1
        !
 #if defined _YPP_ELPH
-       l_eliashberg       =trim(rstr_piece(i1+1))=='e'
+       l_eliashberg       =STRING_match(rstr_piece(i1+1),'e')
 #endif
        !
 #if defined _YPP_MAGNETIC
-       l_angular_momentum =trim(rstr_piece(i1+1))=='l'
-       l_position         =trim(rstr_piece(i1+1))=='p'
+       l_angular_momentum =STRING_match(rstr_piece(i1+1),'l')
+       l_position         =STRING_match(rstr_piece(i1+1),'p')
 #endif
        !
      endif
@@ -310,22 +310,22 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      ! GPL_EXCLUDE_START
      !
      if ( trim(rstr_piece(i1)) == 'RTDBs') then
-       l_RTpump_energy=trim(rstr_piece(i1+1))=='e'
-       l_RTpump_kspace=trim(rstr_piece(i1+1))=='k'
-       l_RTpump_Fermi =trim(rstr_piece(i1+1))=='f'
+       l_RTpump_energy=STRING_match(rstr_piece(i1+1),'e')
+       l_RTpump_kspace=STRING_match(rstr_piece(i1+1),'k')
+       l_RTpump_Fermi =STRING_match(rstr_piece(i1+1),'f')
      endif
      !
      ! GPL_EXCLUDE_END
      !
      if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDplots') then
        !
-       l_RT_X           =index(rstr_piece(i1+1),'X')>0
+       l_RT_X           =STRING_match(rstr_piece(i1+1),'X')
        !
        ! GPL_EXCLUDE_START
-       l_RT_occupations =index(rstr_piece(i1+1),'o')>0
-       l_RT_lifetimes   =index(rstr_piece(i1+1),'l')>0
-       l_RT_density     =index(rstr_piece(i1+1),'d')>0
-       l_RT_abs         =index(rstr_piece(i1+1),'a')>0
+       l_RT_occupations =STRING_match(rstr_piece(i1+1),'o')
+       l_RT_lifetimes   =STRING_match(rstr_piece(i1+1),'l')
+       l_RT_density     =STRING_match(rstr_piece(i1+1),'d')
+       l_RT_abs         =STRING_match(rstr_piece(i1+1),'a')
        ! GPL_EXCLUDE_END
        !
      endif
@@ -334,10 +334,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      !
      if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDplotmode') then
        !
-       l_RT_bands       =trim(rstr_piece(i1+1))=='b'
-       l_RT_time        =trim(rstr_piece(i1+1))=='t'
-       l_RT_energy      =trim(rstr_piece(i1+1))=='e'
-       l_RT_dos         =trim(rstr_piece(i1+1))=='d'
+       l_RT_bands       =STRING_match(rstr_piece(i1+1),'b')
+       l_RT_time        =STRING_match(rstr_piece(i1+1),'t')
+       l_RT_energy      =STRING_match(rstr_piece(i1+1),'e')
+       l_RT_dos         =STRING_match(rstr_piece(i1+1),'d')
        !
      endif
      !

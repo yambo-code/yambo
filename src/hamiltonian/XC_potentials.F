@@ -33,7 +33,7 @@ subroutine XC_potentials(POTENTIALS_string,mode)
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE,COLLISIONS_HXC_local,COLLISIONS_HXC_MB,COLLISIONS_HXC_use_TDDFT
  use electrons,      ONLY:n_full_bands,n_met_bands
  use com,            ONLY:error,warning
- use stderr,         ONLY:STRING_split,STRING_match
+ use stderr,         ONLY:STRING_split,STRING_same
  !
  implicit none
  !
@@ -74,14 +74,14 @@ subroutine XC_potentials(POTENTIALS_string,mode)
    !
    if (len_trim(potentials(i_c))==0) cycle
    !
-   if (STRING_match(trim(potentials(i_c)),'IP')) then
+   if (STRING_same(trim(potentials(i_c)),'IP')) then
      if (l_SC) then
        ! This means Hartree and V_xc are frozed: IP=KS-IP
        l_sc_ip=.true.
        H_kind=-1
        H_xc_functional=0
      endif
-   else if (STRING_match(trim(potentials(i_c)),'DEFAULT')) then
+   else if (STRING_same(trim(potentials(i_c)),'DEFAULT')) then
      if (l_SC) then
        l_sc_hartree=.true.
        l_sc_is_libDFT=.true.
@@ -93,7 +93,7 @@ subroutine XC_potentials(POTENTIALS_string,mode)
        COLLISIONS_HXC_local=.TRUE.
        l_use_Hxc_collisions=.TRUE.
      endif
-   else if (STRING_match(trim(potentials(i_c)),'HARTREE')) then
+   else if (STRING_same(trim(potentials(i_c)),'HARTREE')) then
      if (l_SC) then
        l_sc_hartree=.true.
        H_kind=H_kind+H_SE_HARTREE
@@ -102,7 +102,7 @@ subroutine XC_potentials(POTENTIALS_string,mode)
        COLLISIONS_HXC_local=.TRUE.
        l_use_Hxc_collisions=.TRUE.
      endif
-   else if (STRING_match(trim(potentials(i_c)),'GS_XC')) then
+   else if (STRING_same(trim(potentials(i_c)),'GS_XC')) then
      if (l_SC) then
        l_sc_is_libDFT=.true.
        H_kind=H_kind+GS_xc_KIND
@@ -113,7 +113,7 @@ subroutine XC_potentials(POTENTIALS_string,mode)
        COLLISIONS_HXC_local=.TRUE.
        l_use_Hxc_collisions=.TRUE.
      endif
-   else if (STRING_match(trim(potentials(i_c)),'FOCK')) then
+   else if (STRING_same(trim(potentials(i_c)),'FOCK')) then
      if (l_SC) then
        l_sc_fock=.true.
        l_sc_V_is_local=.false.
@@ -122,27 +122,27 @@ subroutine XC_potentials(POTENTIALS_string,mode)
        COLLISIONS_HXC_MB=.TRUE.
        l_use_Hxc_collisions=.TRUE.
      endif
-   else if (STRING_match(trim(potentials(i_c)),'LDA_X')) then
+   else if (STRING_same(trim(potentials(i_c)),'LDA_X')) then
      if (l_SC) then
        l_sc_is_libDFT=.true.
        H_kind=H_kind+XC_EXCHANGE
        if(H_xc_functional/=0) call error(' Cannot use two DFT XC flavors. Set one only in input')
        H_xc_functional=XC_LDA_X
      endif
-   else if (STRING_match(trim(potentials(i_c)),'PZ')) then
+   else if (STRING_same(trim(potentials(i_c)),'PZ')) then
      if (l_SC) then
        l_sc_is_libDFT=.true.
        H_kind=H_kind+XC_EXCHANGE_CORRELATION
        if(H_xc_functional/=0) call error(' Cannot use two DFT XC flavors. Set one only in input')
        H_xc_functional=XC_LDA_C_PZ
      endif
-   else if (STRING_match(trim(potentials(i_c)),'EXX')) then
+   else if (STRING_same(trim(potentials(i_c)),'EXX')) then
      if (l_SC) then
        l_sc_exx=.true.
        H_kind=H_kind+H_SE_EXX
        if (n_full_bands/=n_met_bands) return
      endif
-   else if (STRING_match(trim(potentials(i_c)),'EXXC')) then
+   else if (STRING_same(trim(potentials(i_c)),'EXXC')) then
      if (l_SC) then
        l_sc_exx=.true.
        l_sc_is_libDFT=.true.
@@ -151,14 +151,14 @@ subroutine XC_potentials(POTENTIALS_string,mode)
        H_xc_functional=XC_LDA_C_PZ
        if (n_full_bands/=n_met_bands) return
      endif
-   else if (STRING_match(trim(potentials(i_c)),'SRPA')) then
+   else if (STRING_same(trim(potentials(i_c)),'SRPA')) then
      if (l_SC) then
        l_sc_exx=.true.
        l_sc_srpa=.true.
        H_kind=H_kind+H_SE_SRPA
        if (n_full_bands/=n_met_bands) return
      endif
-   else if (STRING_match(trim(potentials(i_c)),'COH')) then
+   else if (STRING_same(trim(potentials(i_c)),'COH')) then
      if (l_SC) then
        l_sc_coh=.true.
        l_sc_XC_is_local=.false.
@@ -167,7 +167,7 @@ subroutine XC_potentials(POTENTIALS_string,mode)
      else if (l_COLL) then
        l_use_COH_collisions=.TRUE.
      endif
-   else if (STRING_match(trim(potentials(i_c)),'SEX')) then
+   else if (STRING_same(trim(potentials(i_c)),'SEX')) then
      if (l_SC) then
        l_sc_sex=.true.
        l_sc_V_is_local=.false.
@@ -177,7 +177,7 @@ subroutine XC_potentials(POTENTIALS_string,mode)
        COLLISIONS_HXC_MB=.TRUE.
        l_use_Hxc_collisions=.TRUE.
      endif
-   else if (STRING_match(trim(potentials(i_c)),'COHSEX')) then
+   else if (STRING_same(trim(potentials(i_c)),'COHSEX')) then
      if (l_SC) then
        l_sc_coh=.true.
        l_sc_sex=.true.
@@ -185,7 +185,7 @@ subroutine XC_potentials(POTENTIALS_string,mode)
        l_sc_XC_is_local=.false.
        H_kind=H_kind+H_SE_SEX+H_SE_COH
      endif
-   else if (STRING_match(trim(potentials(i_c)),'NONE')) then
+   else if (STRING_same(trim(potentials(i_c)),'NONE')) then
      call warning("NULL SC potential! ")
    else
      call error("Unknown SC potential! ")

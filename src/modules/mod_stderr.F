@@ -358,6 +358,10 @@ module stderr
   end function
   !
   subroutine STRING_to_LOWER(strIn)
+    !
+    ! Adapted from http://www.star.le.ac.uk/~cgp/fortran.html (25 May 2012)
+    ! Original author: Clive Page
+    !
     character(len=*), intent(inout) :: strIn
     integer :: i,j
     do i = 1, len(strIn)
@@ -368,6 +372,10 @@ module stderr
   end subroutine
   !
   subroutine STRING_to_UPPER(strIn)
+    !
+    ! Adapted from http://www.star.le.ac.uk/~cgp/fortran.html (25 May 2012)
+    ! Original author: Clive Page
+    !
     character(len=*), intent(inout) :: strIn
     integer :: i,j
     do i = 1, len(strIn)
@@ -377,14 +385,36 @@ module stderr
     enddo
   end subroutine
   !
-  logical function STRING_match(strIn,MATCH,partof)
+  logical function STRING_same(strIn,MATCH)
     !
     ! Adapted from http://www.star.le.ac.uk/~cgp/fortran.html (25 May 2012)
     ! Original author: Clive Page
     !
     character(len=*), intent(in) :: strIn
     character(len=*), intent(in) :: MATCH
-    logical         , optional   :: partof
+    !
+    character(len=len(strIn)) :: str_
+    character(len=len(MATCH)) :: MATCH_
+    integer :: i,j
+    !
+    STRING_same=.FALSE.
+    !
+    str_  =trim(strIN)
+    MATCH_=trim(MATCH)
+    call STRING_to_UPPER(str_)
+    call STRING_to_UPPER(MATCH_)
+    !
+    STRING_same=trim(str_)==trim(MATCH_)
+    !
+  end function STRING_same
+  !
+  logical function STRING_match(strIn,MATCH)
+    !
+    ! Adapted from http://www.star.le.ac.uk/~cgp/fortran.html (25 May 2012)
+    ! Original author: Clive Page
+    !
+    character(len=*), intent(in) :: strIn
+    character(len=*), intent(in) :: MATCH
     !
     character(len=len(strIn)) :: str_
     character(len=len(MATCH)) :: MATCH_
@@ -392,27 +422,12 @@ module stderr
     !
     STRING_match=.FALSE.
     !
-    if (.not.present(partof)) then
-      if (len(strIn)/=len(MATCH)) return
-    endif
+    str_  =trim(strIN)
+    MATCH_=trim(MATCH)
+    call STRING_to_UPPER(str_)
+    call STRING_to_UPPER(MATCH_)
     !
-    do i = 1, len(strIn)
-      !
-      j = iachar(strIn(i:i))
-      if (j>= iachar("a") .and. j<=iachar("z") ) j=j-32
-      str_(i:i) = achar(j)
-      !
-      j = iachar(MATCH(i:i))
-      if (j>= iachar("a") .and. j<=iachar("z") ) j=j-32
-      MATCH_(i:i) = achar(j)
-      !
-    end do
-    !
-    if (present(partof)) then
-      STRING_match=index(str_,trim(MATCH_))>0
-    else
-      STRING_match=trim(str_)==trim(MATCH_)
-    endif
+    STRING_match=index(str_,trim(MATCH_))>0
     !
   end function STRING_match
   !

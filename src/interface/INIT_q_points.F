@@ -29,6 +29,7 @@ subroutine INIT_q_points( )
  ! 2. reads the q-points from the e-p DB's 
  !
  use drivers,     ONLY:infile_editing
+ use vec_operate, ONLY:v_is_zero
  use pars,        ONLY:SP,schlen,DP
  use it_tools,    ONLY:check_verbosity
  use R_lattice,   ONLY:nqibz,q_pt,bz_samp,q_source
@@ -44,6 +45,7 @@ subroutine INIT_q_points( )
  integer       :: ic,nq_input
  type(bz_samp) :: q
  real(DP)      :: q_pt_db(3)
+ logical       :: l_write_the_q_field
  !
  ! Load (eventually) the q-points from the e-p database
  !
@@ -68,8 +70,6 @@ subroutine INIT_q_points( )
  endif
 #endif
  !
- if (.not.check_verbosity("kpt")) return
- !
  ! Now check the input file
  !
  if (nqibz==0) then
@@ -83,6 +83,14 @@ subroutine INIT_q_points( )
      YAMBO_ALLOC(q_pt,(nqibz,3))
      call PARSER_array(mode="read",VAR="QptCoord",N=nq_input,M=3,R_v=q_pt)
    endif
+   !
+   if (nqibz>0) then
+     l_write_the_q_field=nqibz>1
+     if (.not.l_write_the_q_field) l_write_the_q_field=nqibz==1.and..not.v_is_zero(q_pt(1,:))
+   endif
+   if (.not.l_write_the_q_field) l_write_the_q_field=check_verbosity("kpt")
+   if (.not.l_write_the_q_field) return
+   !
    call PARSER_array(mode="write",VAR="QptCoord",DESC="[KPT] [iku] Q-points coordinates (compatibility)",&
 &                    N=nqibz,M=3,R_v=q_pt)
  endif

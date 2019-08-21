@@ -478,14 +478,14 @@ subroutine INIT_activate()
    call initactivate( 1,'HXC_Potential FFTGvecs')
    !
    call initactivate(-1,'QpntsRXs')
-   if( STRING_match(trim(H_potential),"HARTREE",partof=.TRUE.) ) call initactivate(1,'EXXCut HARRLvcs ALLGHAR')
-   if( STRING_match(trim(H_potential),"default",partof=.TRUE.) ) call initactivate(1,'VXCRLvcs HARRLvcs')
+   if( STRING_match(trim(H_potential),"HARTREE") ) call initactivate(1,'EXXCut HARRLvcs ALLGHAR')
+   if( STRING_match(trim(H_potential),"default") ) call initactivate(1,'VXCRLvcs HARRLvcs')
    !
    if (l_eval_collisions) then
-     if( STRING_match(trim(H_potential),"SEX",partof=.TRUE.).or.&
-&        STRING_match(trim(H_potential),"FOCK",partof=.TRUE.)) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
-     if( STRING_match(trim(H_potential),"SEX",partof=.TRUE.).or.&
-&        STRING_match(trim(H_potential),"COH",partof=.TRUE.) ) call initactivate(1,'CORRLvcs ALLGexx')
+     if( STRING_match(trim(H_potential),"SEX").or.&
+&        STRING_match(trim(H_potential),"FOCK")) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
+     if( STRING_match(trim(H_potential),"SEX").or.&
+&        STRING_match(trim(H_potential),"COH") ) call initactivate(1,'CORRLvcs ALLGexx')
    endif
    !
  endif
@@ -502,11 +502,11 @@ subroutine INIT_activate()
    !
    call initactivate( 1,'SCBands')
    !
-   if( STRING_match(trim(H_potential),"SEX",partof=.TRUE.).or.&
-&      STRING_match(trim(H_potential),"COH",partof=.TRUE.)  ) call initactivate(1,'UseEbands SCUpWIter')
+   if( STRING_match(trim(H_potential),"SEX").or.&
+&      STRING_match(trim(H_potential),"COH")  ) call initactivate(1,'UseEbands SCUpWIter')
    !
-   if( STRING_match(trim(H_potential),"EXX",partof=.TRUE.).or.&
-&      STRING_match(trim(H_potential),"SRPA",partof=.TRUE.) ) call initactivate(1,'OEPapprox OEPItSolver') 
+   if( STRING_match(trim(H_potential),"EXX").or.&
+&      STRING_match(trim(H_potential),"SRPA") ) call initactivate(1,'OEPapprox OEPItSolver') 
    !
    call initactivate(1,'SCIter SCEtresh SCRhoTresh SC_precondition')
    call initactivate(1,'SCmixing SClwBand SCnlMix BandMix')

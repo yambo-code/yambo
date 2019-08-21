@@ -31,7 +31,7 @@ subroutine INIT_read_command_line(rstr,init_)
  use X_m,            ONLY:Chi_mode
  use QP_m,           ONLY:QP_solver
  use LIVE_t,         ONLY:USER_wall_time_string,GET_user_WALL_time
- use stderr,         ONLY:STRING_split
+ use stderr,         ONLY:STRING_split,STRING_match
  use it_tools,       ONLY:runlevel_is_on,switch_off_runlevel,initactivate
  use it_m,           ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,      &
 &                         V_real_time,V_nl_optics,V_all,V_parallel,        &
@@ -375,17 +375,14 @@ subroutine INIT_read_command_line(rstr,init_)
      !
 #if defined _MAGNETIC
      if ( trim(rstr_piece(i1)) == 'magnetic' )  then
-       if ( trim(rstr_piece(i1+1)) == 'p' ) then
+       if ( STRING_match(rstr_piece(i1+1),'p') ) then
          MAG_hamiltonian_type='pauli'
          MAG_pauli=.true.
-       else if ( trim(rstr_piece(i1+1)) == 'l' ) then
+       else if ( STRING_match(rstr_piece(i1+1),'l') ) then
          MAG_hamiltonian_type='landau'
          MAG_landau=.true.
-       else if ( trim(rstr_piece(i1+1)) == 'a') then
-         MAG_hamiltonian_type='all'
-         MAG_landau=.true.
-         MAG_pauli=.true.
        endif
+       if (MAG_landau.and.MAG_pauli) MAG_hamiltonian_type='all'
      endif
 #endif
      !

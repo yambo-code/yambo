@@ -64,6 +64,8 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].long_opt="magnetic";
  options[*i_opt].bin="yambo_magnetic";
  options[*i_opt].yambo_string="magnetic";
+ options[*i_opt].long_desc[0]="<string>=(p)auli/(l)andau";
+ options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Self-Consistent Static Electric Field Calculations";

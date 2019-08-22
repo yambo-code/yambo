@@ -62,6 +62,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_NL 
  use nl_optics,      ONLY:NL_damping
+ use pars,           ONLY:SP
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH

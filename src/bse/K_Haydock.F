@@ -702,8 +702,6 @@ subroutine K_Haydock(iq,W)
          Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*gauge_factor
        endif
        !
-       if (ii==1) Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*gauge_factor
-       !
 #if defined _KERR
        !
        ! I add the term describing the Anomalous Hall effect which is

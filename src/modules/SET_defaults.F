@@ -28,7 +28,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ! GPL_EXCLUDE_END
  use pars,       ONLY:SP,cZERO
  use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
- use LOGO,       ONLY:ID_logo,ID_logo_stderr
+ use LOGO,       ONLY:ID_logo,ID_logo_stderr,code_branch
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                     eval_alpha,&
@@ -72,7 +72,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
-&                     BS_K_is_ALDA,BSE_mode
+&                     BS_K_is_ALDA,BSE_mode,L_kind
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
@@ -136,6 +136,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  integer           :: i1,i2
  !
  ! Printed reals format lengths 
+ !
+ include 'branch.inc'
  !
  call set_real_printed_length()
  !
@@ -414,6 +416,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BS_eh_win=100._SP
  BS_res_mode='xc'
  BS_cpl_mode='none'
+ L_kind='Lbar'
  BSE_mode='retarded'
  BSK_mode=' '
  TDDFT_mode=' '

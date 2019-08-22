@@ -31,11 +31,11 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use QP_CTL_m,      ONLY:QP_apply
  use electrons,     ONLY:levels,n_spin,n_sp_pol,spin
  use YPP_interfaces,ONLY:excitons_sort_and_report
- use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,EXCITONS_user_indexes
+ use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,EXCITONS_user_indexes,BSiq
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
- use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_q,BS_K_coupling,BS_cpl_mode,&
-&                        BS_cpl_K_exchange,BS_cpl_K_corr
+ use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_K_coupling,BS_cpl_mode,&
+&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSqpts
 #if defined _YPP_ELPH
  use YPP_ELPH,      ONLY:l_eliashberg,l_gkkp
 #endif
@@ -85,7 +85,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! GPL_EXCLUDE_END
  !
- iq=BS_q(1)
+ iq = BSiq
+ YAMBO_ALLOC(BSqpts,(3,iq))
  !
  ! X type. Also used in PARALLEL setup
  !
@@ -129,6 +130,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
  endif
  !
+ !
  do i_sec=1,2
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
    io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
@@ -137,7 +139,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Sort energies and write to output
  !===================================
- if (l_sort) call excitons_sort_and_report(BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
+ if (l_sort) call excitons_sort_and_report(iq,BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
  !
  ! Sort energies to find degenerate states
  !========================================
@@ -188,11 +190,11 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Exciton's Amplitude
  !=====================
- if (l_amplitude)  call excitons_amplitudes(Xk,Xen,BS_E_degs)
+ if (l_amplitude)  call excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
  !
  ! Exciton's WFs
  !=====================
- if (l_exc_wf)     call exciton_WFs(Xk,BS_E_degs)
+ if (l_exc_wf)     call exciton_WFs(Xk,BS_E_degs,iq)
  !
  !
  !GPL_EXCLUDE_START

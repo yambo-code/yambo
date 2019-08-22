@@ -30,7 +30,7 @@ subroutine YPP_SET_defaults()
 &                         N_path_pts,ncell ,ord_dgrid_ipol ,output_fname,p_dir,p_format   ,perturbative_SOC_path,&
 &                         plot_title,PtsPath,seed_name,SOC_bands_buffer,SOC_bands_to_map,state_ctl ,V_value,&
 &                         w90_fname,wannier_bands,WF_ref,what_to_write,SP,HA2EV,E_field,Nel_fac,DOS_bands,  &
-&                         l_pdos,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,EXCITON_Res_treshold,EXCITON_E_treshold
+&                         BSiq,l_pdos,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,EXCITON_Res_treshold,EXCITON_E_treshold
  use units,          ONLY:FS2AUT
  use D_lattice,      ONLY:alat
  use interpolate,    ONLY:INTERP_shell_factor,interpls,max_interpls
@@ -151,8 +151,9 @@ subroutine YPP_SET_defaults()
  deg_energy =0.01_SP/HA2EV
  EXCITON_Res_treshold =0.0_SP
  EXCITON_E_treshold =0.0_SP
- EXCITON_weight_treshold =0.01_SP
+ EXCITON_weight_treshold =0.05_SP
  WF_multiplier=1._SP
+ BSiq=1
  !
 #if defined _YPP_ELPH
  !

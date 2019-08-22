@@ -39,8 +39,8 @@ subroutine INIT_input_file()
  if (trim(com_path)==".") return
  !
  call mk_dir(com_path)
- infile_copy=trim(com_path)//"/"//trim(filename(infile))//".in"
- if (trim(jobstr)/='') infile_copy=trim(com_path)//"/"//trim(filename(infile))//"_"//trim(jobstr)//".in"
+ infile_copy=trim(com_path)//"/"//trim(filename(infile))
+ if (trim(jobstr)/='') infile_copy=trim(com_path)//"/"//trim(filename(infile))//"_"//trim(jobstr)
  call cp_file(trim(infile),trim(infile_copy),io_err)
  infile=infile_copy 
  !

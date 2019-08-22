@@ -142,7 +142,8 @@ module YPP
  logical      ::l_free_hole
  logical      ::l_angular_momentum
  logical      ::l_position
- integer      ::ncell(3)     
+ integer      ::ncell(3) 
+ integer      ::BSiq    
  real(SP)     ::r_hole(3)    
  real(SP)     ::deg_energy   
  real(SP)     ::EXCITON_E_treshold

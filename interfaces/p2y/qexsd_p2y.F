@@ -1502,15 +1502,17 @@ CONTAINS
       call iotk_scan_dat( iunit, "nbnd", nbnd_, FOUND=lfound, IERR=ierr)
       if (ierr/=0) return
       !
+      if (lfound.and.nspin_==2) nbnd_=nbnd_/2
+      !
       if (.not. lfound) then
          call iotk_scan_dat( iunit, "nbnd_up", nbnd_up_, IERR=ierr)
          if (ierr/=0) return
          call iotk_scan_dat( iunit, "nbnd_dw", nbnd_dw_, IERR=ierr)
          if (ierr/=0) return
-         nbnd_=nbnd_up_+nbnd_dw_
+         if (nbnd_up_==nbnd_dw_) nbnd_=(nbnd_up_+nbnd_dw_)/2
+         if (nbnd_up_/=nbnd_dw_) CALL errore( 'qexsd_read_band_structure', 'different number of up and down bands', 1 )
       endif
       !
-      if (nspin_==2) nbnd_=nbnd_/2
       if (present(nbnd)) nbnd=nbnd_
       !
       if (present(nbnd_up)) then

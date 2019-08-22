@@ -48,7 +48,7 @@ subroutine NL_start_and_restart(E,k,X)
  use parallel_m,     ONLY:master_cpu
  use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_freqs_todo,NL_LRC_alpha,Alpha_ED,NL_bands, &
 &                         V_xc_0,NL_initial_P,l_use_DIPOLES,n_frequencies,freqs_done,JGM,E_xc_0,I_relax,l_use_DIPOLES, &
-&                         VAL_BANDS,NL_J,l_eval_CURRENT
+&                         VAL_BANDS,NL_J,l_eval_CURRENT,NL_J,NL_initial_J
  use IO_m,           ONLY:OP_RD_CL,io_control,NONE,file_is_present,VERIFY
  use parallel_m,     ONLY:PAR_IND_freqs,PP_redux_wait
  use stderr,         ONLY:intc
@@ -148,6 +148,7 @@ subroutine NL_start_and_restart(E,k,X)
  !
  if(l_eval_CURRENT) then
     call NL_current(k,E,V_bands)
+    NL_initial_J=NL_J
  endif
  !
  call msg('r','')

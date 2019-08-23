@@ -40,6 +40,7 @@ module BS_solvers
    complex(SP), allocatable :: fragment(:)
    !
  end type Haydock_vector
+ !
 #if defined _SLEPC
  !
  ! Slepc
@@ -79,6 +80,7 @@ module BS_solvers
  logical  :: BSS_perturbative_width
  logical  :: BSS_eval_JDOS
  logical  :: BSS_add_antiresonant
+ logical  :: BSS_eels_to_eps
  !
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.
@@ -143,12 +145,13 @@ module BS_solvers
  !
  interface 
    !
-   integer function variables_BS(ID,local_description,X)
+   integer function variables_BS(ID,iq,local_description,CLOSE_the_menu,X)
      use pars,       ONLY:lchlen
      use X_m,        ONLY:X_t
      implicit none
-     integer            ::ID
+     integer            ::ID,iq
      character(lchlen)  ::local_description(100)
+     logical            ::CLOSE_the_menu
      type(X_t), optional::X
    end function
    !

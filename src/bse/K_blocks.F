@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, HM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_blocks( )
+subroutine K_blocks(iq)
  !
  ! Create and Fill the BSK blocks
  !
@@ -31,7 +31,7 @@ subroutine K_blocks( )
  !  integer                       :: iT_k       ! Index (among n_BS_T_grps) of the cv transitions @ k
  !  integer                       :: iT_p       ! Index (among n_BS_T_grps) of the cv transitions @ p
  !  integer                       :: size(2)    ! rows x columns
- !  character(1)                  :: mode       ! "R"esonant/"A"ntiresonant
+ !  character(1)                  :: mode       ! "R"esonant/"C"oupling
  !  complex(SP), allocatable      :: mat(:,:)
  !end type BS_block
  !
@@ -44,18 +44,16 @@ subroutine K_blocks( )
  !
 #include<memory.h>
  !
+ integer, intent(in)  :: iq
+ !
  ! Work Space
  !
  integer    :: i_T,j_T,i_block,iB,n_new_blocks
  real(SP)   :: N_Ts_total,N_Ts_local
  !
- call section('=','CPU-dependent Block structure')
- !                 =============================
- if (BS_K_coupling) then 
-    n_new_blocks = 2
- else                    
-    n_new_blocks = 1
- end if
+ if (.not.BS_K_coupling           ) n_new_blocks=1
+ if (     BS_K_coupling.and. iq==1) n_new_blocks=2
+ if (     BS_K_coupling.and. iq/=1) n_new_blocks=4
  !
  ! Count the blocks
  n_BS_blks=count(PAR_IND_T_ordered%element_2D)
@@ -76,7 +74,9 @@ subroutine K_blocks( )
         bs_blk(ib)%done(:,:)="f"
         BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
         if (i_block==1) BS_blk(iB)%mode="R"
-        if (i_block==2) BS_blk(iB)%mode="A"
+        if (i_block==2) BS_blk(iB)%mode="C"
+        if (i_block==3) BS_blk(iB)%mode="A"
+        if (i_block==4) BS_blk(iB)%mode="Q"
         BS_blk(iB)%iT_k=i_T
         BS_blk(iB)%iT_p=j_T
         BS_blk(iB)%ik=BS_T_grp(i_T)%ik

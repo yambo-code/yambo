@@ -31,7 +31,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
- use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor,diam_term_exact
+ use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor,diam_term_exact,BSS_eels_to_eps
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nkbz,bare_qpg
  !
@@ -172,8 +172,10 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
    if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
  endif
  !
- if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)=(Epsilon_ii(:,2)               )*Co_factor/bare_qpg(1,1)**2
- if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)=(Epsilon_ii(:,2)-diam_term_used)*Co_factor/   W%p(:)    **2
+ if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)= (Epsilon_ii(:,2)               )*Co_factor/bare_qpg(iq,1)**2
+ if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)= (Epsilon_ii(:,2)-diam_term_used)*Co_factor/  W%p(:)  **2
+ !
+ if(BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
  !
  ! Drude term
  !============
@@ -184,12 +186,12 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
 #if defined _KERR
  !
  if(l_kerr) then
-   if(trim(global_gauge)=='length'  ) Epsilon_ij(:,2)=Epsilon_ij(:,2)*Co_factor/bare_qpg(1,1)**2
-   if(trim(global_gauge)=='velocity') Epsilon_ij(:,2)=Epsilon_ij(:,2)*Co_factor/   W%p(:)    **2
+   if(trim(global_gauge)=='length'  ) Epsilon_ij(:,2)=Epsilon_ij(:,2)*Co_factor/bare_qpg(iq,1)**2
+   if(trim(global_gauge)=='velocity') Epsilon_ij(:,2)=Epsilon_ij(:,2)*Co_factor/    W%p(:)    **2
    !
    if(l_anomalous_Hall) then
      if(BSS_add_antiresonant) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
-     if(trim(global_gauge)=='length'  ) B_Hall(2)=B_Hall(2)*Co_factor/bare_qpg(1,1)**2
+     if(trim(global_gauge)=='length'  ) B_Hall(2)=B_Hall(2)*Co_factor/bare_qpg(iq,1)**2
      if(trim(global_gauge)=='velocity') B_Hall(2)=B_Hall(2)*Co_factor
      !
      ! I add the term describing the Anomalous Hall effect which is

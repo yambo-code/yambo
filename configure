@@ -2779,7 +2779,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 SVERSION="4"
 SSUBVERSION="4"
 SPATCHLEVEL="0"
-SREVISION="148"
+SREVISION="149"
 BASE_REV="16916"
 SHASH="1b9e3c306"
 

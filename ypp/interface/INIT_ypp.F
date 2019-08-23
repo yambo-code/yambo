@@ -62,6 +62,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_NL 
  use nl_optics,      ONLY:NL_damping
+ use pars,           ONLY:SP
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH
@@ -541,15 +542,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (l_fix_syms.and.n_spinor==2.and.i_time_rev==0) call initactivate(1,"ExpandSymm")
  !
- ! GPL_INCLUDE_START
- !
- !if (l_fix_syms) call initactivate(1,"RmAllSymm RmTimeRev")
- !
- ! GPL_INCLUDE_END
- !
  if (l_fix_save) infile_editing=.false.
- !
- ! GPL_EXCLUDE_START
  !
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv")
  !
@@ -561,6 +554,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
  !
 #endif
+ !
+ ! GPL_EXCLUDE_START
  !
  ! Wannier 90 interface
  !

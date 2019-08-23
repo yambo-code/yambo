@@ -174,9 +174,9 @@ subroutine RT_databases_IO(E)
      enddo
      !
    endif
+#endif
    !
  endif
-#endif
  !
  ! GPL_EXCLUDE_END
  !

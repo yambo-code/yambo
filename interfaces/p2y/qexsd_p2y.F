@@ -1467,6 +1467,7 @@ CONTAINS
       integer,                intent(out) :: ierr
       !
       integer :: nbnd_, nkpts_, nspin_, ik, ndim
+      integer :: nbnd_up_, nbnd_dw_
       logical :: lsda_, noncolin_, lfound
       real(dbl) :: rvec(3)
       real(dbl), allocatable :: eig_(:), occ_(:)
@@ -1498,9 +1499,20 @@ CONTAINS
          if (ierr/=0) return
       endif
       !
-      call iotk_scan_dat( iunit, "nbnd", nbnd_, IERR=ierr)
+      call iotk_scan_dat( iunit, "nbnd", nbnd_, FOUND=lfound, IERR=ierr)
       if (ierr/=0) return
-      if (nspin_==2) nbnd_=nbnd_/2
+      !
+      if (lfound.and.nspin_==2) nbnd_=nbnd_/2
+      !
+      if (.not. lfound) then
+         call iotk_scan_dat( iunit, "nbnd_up", nbnd_up_, IERR=ierr)
+         if (ierr/=0) return
+         call iotk_scan_dat( iunit, "nbnd_dw", nbnd_dw_, IERR=ierr)
+         if (ierr/=0) return
+         if (nbnd_up_==nbnd_dw_) nbnd_=(nbnd_up_+nbnd_dw_)/2
+         if (nbnd_up_/=nbnd_dw_) CALL errore( 'qexsd_read_band_structure', 'different number of up and down bands', 1 )
+      endif
+      !
       if (present(nbnd)) nbnd=nbnd_
       !
       if (present(nbnd_up)) then

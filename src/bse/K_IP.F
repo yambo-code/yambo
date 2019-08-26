@@ -78,7 +78,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  type(elemental_collision):: BSE_scatt
  !
  !
- call section('=','EH space - Independent Particles absorption @q'//trim(intc(iq)))
+ call section('=','Independent Particles absorption @q'//trim(intc(iq)))
  !
  if (l_bs_fxc) return
  !

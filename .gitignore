@@ -43,6 +43,7 @@ lib/install/make_iotk.inc
 lib/iotk/make.sys
 lib/iotk/make_iotk.inc
 lib/*/*stamp
+lib/*/package-installed
 lib/*/lib
 lib/*/bin
 lib/*/tmp

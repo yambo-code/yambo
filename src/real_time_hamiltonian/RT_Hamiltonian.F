@@ -65,8 +65,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use fields,         ONLY:gauge_field!,Efield,n_ext_fields
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A,PP_redux_wait
- use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
- use global_XC,      ONLY:WF_kind,WF_xc_functional 
+ use xc_functionals, ONLY:V_xc,XC_potential_driver
+ use global_XC,      ONLY:WF_xc_functional,WF_kind
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use timing_m,       ONLY:timing
  use H_interfaces,   ONLY:V_real_space_to_H
@@ -133,7 +133,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    ! The Vxc term
    !--------------
    if (eval_DFT) then
-     call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
+     call XC_potential_driver(E,k,WF_kind,WF_xc_functional,1)
      V_xc_sc=V_xc-REF_V_xc_sc
    endif
    !

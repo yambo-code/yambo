@@ -23,7 +23,7 @@
 !
 integer function io_GROT(io_db)
  !
- use it_m,           ONLY:initactivate
+ use it_tools,       ONLY:initactivate
  use D_lattice,      ONLY:nsym,inv_index
  use R_lattice,      ONLY:n_g_shells,ng_closed,ng_in_shell,E_of_shell,g_rot,&
 &                         minus_G

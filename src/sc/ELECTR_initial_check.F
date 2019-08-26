@@ -29,9 +29,7 @@ subroutine ELECTR_initial_check(k)
  use X_m,         ONLY:Dipole_approach
  use vec_operate, ONLY:normalize_v
  use SC,          ONLY:SC_potential
- use parser_m,    ONLY:parser
- use fields,      ONLY:Efield,Efield_strength,EtoT
- use vec_operate, ONLY:v_norm
+ use fields,      ONLY:Efield,Efield_strength
  use R_lattice,   ONLY:k_map,bz_samp
  !
  implicit none

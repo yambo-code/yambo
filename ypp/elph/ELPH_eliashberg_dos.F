@@ -28,7 +28,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use com,                 ONLY:msg,of_open_close
  use electrons,           ONLY:levels,n_met_bands,n_full_bands
  use R_lattice,           ONLY:bz_samp
- use YPP,                 ONLY:l_dos
+ use YPPm,                ONLY:l_dos
  use YPP_ELPH,            ONLY:elph_steps,elph_Ef,elph_gamma_broad,&
 &                              ph_broad,l_eliashberg
  use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,ph_freqs_sq,&

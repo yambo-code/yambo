@@ -37,7 +37,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  use SC,            ONLY:SC_bands
 #endif
 #if defined _NL
- use nl_optics,     ONLY:n_frequencies,NL_bands
+ use nl_optics,     ONLY:n_frequencies
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_bands

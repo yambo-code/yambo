@@ -28,12 +28,11 @@ subroutine Build_tilde_vbands(V_bands,en,Xk,ikbz,i_sp,istep,id_red,V_tilde)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use electrons,      ONLY:levels,n_sp_pol
- use electric,       ONLY:Sm1_plus,Sm1_minus,l_force_SndOrd
+ use electric,       ONLY:Sm1_plus,Sm1_minus
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands,NL_nbands
  use R_lattice,      ONLY:bz_samp,k_map
  use vec_operate,    ONLY:k_periodic_idx
- use matrix_operate, ONLY:hermitian
  use DIPOLES,        ONLY:DIP_S
  use wrapper_omp,    ONLY:M_by_M_omp
  !

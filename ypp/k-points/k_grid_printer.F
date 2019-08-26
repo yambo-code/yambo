@@ -29,7 +29,7 @@ subroutine k_grid_printer(nk,k,coo_in,form,wk,coo_out)
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:c2a
  use com,                 ONLY:msg
- use YPP,                 ONLY:K_transform,alat_used_for_output
+ use YPPm,                ONLY:K_transform,alat_used_for_output
  !
  implicit none
  !

@@ -1,1 +1,1 @@
-objs = netcdf_data.o a2y_i.o a2y_db1.o a2y_wf.o a2y_kb_pp.o
+objs = netcdf_data.o a2y.o a2y_db1.o a2y_wf.o a2y_kb_pp.o

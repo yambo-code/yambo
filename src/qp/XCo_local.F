@@ -32,8 +32,8 @@ subroutine XCo_local(E,Xk)
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:WF
- use xc_functionals,ONLY:E_xc,V_xc,xc_string,XC_potential_driver,magn,XC_potential_driver
- use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_exx_fraction,WF_exx_screening
+ use xc_functionals,ONLY:E_xc,V_xc,XC_potential_driver,magn,XC_potential_driver
+ use global_XC,     ONLY:WF_xc_functional,WF_exx_fraction,WF_exx_screening,WF_kind
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear 
  use pseudo,        ONLY:pp_is_uspp
@@ -65,7 +65,6 @@ subroutine XCo_local(E,Xk)
  integer     ::nb
 #endif
  integer     ::i1,ifft,iwf,iwfp,ib,ibp,ik,i_sp_pol
- real(SP)    ::E_xc_
  complex(SP) ::c_ws(fft_size,n_spinor)
  !
  ! Spin support (collinear and not collinear)
@@ -89,7 +88,7 @@ subroutine XCo_local(E,Xk)
  ! Precompiler options in case a non-DFT potential is required
  !
 #if defined _SC
- if (mod(WF_KIND,1000)< 300) then
+ if (mod(WF_kind,1000)< 300) then
    !
    ! ...LDA (and more) Vxc
    !
@@ -97,14 +96,14 @@ subroutine XCo_local(E,Xk)
    !
 #if defined _RT
    if (l_real_time) then
-     call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1)
+     call XC_potential_driver(E,Xk,WF_kind,WF_xc_functional,1)
    else
 #endif
      ! evaluate E_xc as a double check against DFT
-     call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,0,&
+     call XC_potential_driver(E,Xk,WF_kind,WF_xc_functional,0,&
 &         exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
      ! evaluate v_xc
-     call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1,&
+     call XC_potential_driver(E,Xk,WF_kind,WF_xc_functional,1,&
 &                             exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
 #if defined _RT
    endif

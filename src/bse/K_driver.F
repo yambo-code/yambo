@@ -122,7 +122,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  if (.not.l_bs_fxc) call parser('bs_fxc',l_bs_fxc)
  !
- if (Ken%nb_SOC/=0) BS_pert_soc=.true.
+ if (Ken%nb_SOC/=0) BS_perturbative_SOC=.true.
  !
  if (l_bs_fxc) then
    !==========

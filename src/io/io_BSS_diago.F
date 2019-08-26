@@ -25,7 +25,7 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
  !
  use pars,          ONLY:SP,lchlen,schlen,IP
  use stderr,        ONLY:intc
- use BS,            ONLY:BS_K_dim,BS_H_dim,BSqpts,BS_pert_SOC
+ use BS,            ONLY:BS_K_dim,BS_H_dim,BSqpts,BS_perturbative_SOC
  use BS_solvers,    ONLY:BSS_q0,BSS_write_eig_2_db,BSS_eh_table,BS_mat,variables_BS,BSS_n_eig
  use X_m,           ONLY:X_t
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
@@ -93,7 +93,7 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
      !
    endif
    !
-   if (present(bsE_corr).and.BS_pert_soc) then
+   if (present(bsE_corr).and.BS_perturbative_SOC) then
      if (associated(bsE_corr)) then
        call io_bulk(ID,'BS_Energies_SOC_corr',VAR_SZ=(/2/n_sp_pol,BSS_n_eig/))
        call io_bulk(ID,R2=BsE_corr)

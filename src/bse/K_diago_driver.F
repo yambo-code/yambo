@@ -29,7 +29,7 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  use pars,           ONLY:SP
  use stderr,         ONLY:intc
- use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_pert_soc !,BS_Blocks_symmetrize_K
+ use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_perturbative_SOC !,BS_Blocks_symmetrize_K
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig
  use X_m,            ONLY:X_t
@@ -271,7 +271,7 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  ! Define perturbative corrections
  !=================================
- if( BS_pert_soc ) then
+ if( BS_perturbative_SOC ) then
    !
    ! To check if the expression for the non hermitian case is correct
    if (     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections,2/n_sp_pol,'SOC')
@@ -333,7 +333,7 @@ subroutine K_diago_driver(iq,W,X_static)
      case("E")
        !
        YAMBO_ALLOC(BS_E,(BSS_n_eig))
-       if( BS_pert_soc) then
+       if( BS_perturbative_SOC) then
          YAMBO_ALLOC(BS_corrections,(2/n_sp_pol,BSS_n_eig))
          YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
        endif

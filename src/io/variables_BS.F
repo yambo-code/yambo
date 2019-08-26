@@ -26,7 +26,6 @@ integer function variables_BS(ID,iq,local_description,CLOSE_the_menu,X)
  use pars,          ONLY:lchlen
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_td_hf
- use electrons,     ONLY:E_SOC_nbands
  use X_m,           ONLY:X_t
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts,cut_geometry
  use BS,            ONLY:BS_identifier,BS_K_dim,BS_bands,&
@@ -227,18 +226,14 @@ integer function variables_BS(ID,iq,local_description,CLOSE_the_menu,X)
 &     VAR='    |Random points      [col]:',CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc),DO_NOT_DUMP=.TRUE.)
    !
+   !
+   ! Perturbative SOC
+   !
    if (write_is_on(ID).or.variable_exist(ID,"PERT_SOC")) then
-     !
-     ! SOC
-     !
-     call io_elemental(ID,VAR="PERT_SOC",VAR_SZ=2,MENU=0)
+     call io_elemental(ID,VAR="PERT_SOC",VAR_SZ=1,MENU=0)
      i_local_desc=i_local_desc+1
      call io_elemental(ID,L0=BS_perturbative_SOC,&
 &       VAR=' SOC|Perturbative SOC        :',CHECK=.true.,OP=(/"=="/),&
-&       DESCRIPTION=local_description(i_local_desc),DO_NOT_DUMP=.TRUE.)
-     i_local_desc=i_local_desc+1
-     call io_elemental(ID,I0=E_SOC_nbands,&
-&       VAR='    |Bands in the MAP db     :',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_local_desc),DO_NOT_DUMP=.TRUE.)
    endif
    !

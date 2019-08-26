@@ -27,7 +27,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  use stderr,              ONLY:intc
  use R_lattice,           ONLY:bz_samp
  use com,                 ONLY:msg
- use YPP,                 ONLY:n_FineGd_DBs
+ use YPPm,                ONLY:n_FineGd_DBs
  use electrons,           ONLY:levels
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  !

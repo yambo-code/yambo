@@ -38,7 +38,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_projected
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
 &                        Co_factor,diam_term_exact,BSS_Wd
- use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_pert_soc,L_kind
+ use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
  use parser_m,      ONLY:parser
@@ -92,13 +92,13 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Oscillators I/O & Eps0
  !========================
  !
- if( .not.BS_pert_soc.or.n_sp_pol==2) then
+ if( .not.BS_perturbative_SOC.or.n_sp_pol==2) then
    n_SOC=1
    Co_factor=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
  endif
  !
  !
- if( BS_pert_soc.and.n_sp_pol==1) then
+ if( BS_perturbative_SOC.and.n_sp_pol==1) then
    n_SOC=2
    Co_factor=    1._SP     /(2._SP*pi)**3*d3k_factor*4._SP*pi
  endif
@@ -143,9 +143,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
      if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
      !
-     if (.not.BS_pert_soc) E_plus_W=E_plus_W0
+     if (.not.BS_perturbative_SOC) E_plus_W=E_plus_W0
      !
-     if (     BS_pert_soc) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
+     if (     BS_perturbative_SOC) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
      ! *length*   : DIP_projected(c,v,k) is    iq*<v|r|c> while I need    iq*<c|r|v> = -conjg(   iq*<v|r|c>)
      ! *velocity* : DIP_projected(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> =  conjg(q_ver*<v|r|c>)

@@ -49,7 +49,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
 &                       BS_bands,BS_nT_at_k,BSE_mode,BS_T_grp,BS_nT_grps,&
 &                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc,&
-&                       BS_pert_SOC
+&                       BS_perturbative_SOC
  use DIPOLES,      ONLY:DIPOLE_t
  use X_m,          ONLY:global_gauge
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_ordered,PAR_IND_T_groups,&
@@ -228,7 +228,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
              !
              if (allocated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=abs(Ken%W(ic,ik,i_sp))+abs(Ken%W(iv,ikp,i_sp))
              !
-             if ( BS_pert_soc ) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
+             if ( BS_perturbative_SOC ) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
              !
            enddo ! spin
          enddo ! symmetries
@@ -277,7 +277,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      ! Small energy transitions. Dipoles in length gauge are not defined
      if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length" .and. iq==1 ) T_is_ok=.FALSE.
      !
-     if( BS_pert_soc ) then
+     if( BS_perturbative_SOC ) then
        if(n_sp_pol==1) pert_range=reshape((/1,2,1,2/),(/2,2/))
        if(n_sp_pol==2) pert_range=reshape((/i_sp,1 /),(/1,2/))
        iv_SOC(pert_range(:,2))=Ken%table_SOC(pert_range(:,1),iv,ikp)

@@ -32,7 +32,6 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  use vec_operate,    ONLY:k_periodic_idx
  use DIPOLES,        ONLY:DIP_S
  use wrapper_omp,    ONLY:M_by_M_omp
- use matrix_operate, ONLY:hermitian
  use QP_m,           ONLY:QP_nk
  use electric,       ONLY:l_force_SndOrd
  !
@@ -49,7 +48,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  !
  ! Work Space
  !
- integer     :: i2,idx(3),id,ikp,ikm
+ integer     :: idx(3),id,ikp,ikm
  integer     :: ikm_ibz,ikp_ibz,ik_ibz,max_step,istep
  complex(SP) :: V_tmp(NL_bands(2),en%nbf),tmp_det
  !

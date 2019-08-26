@@ -29,7 +29,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  use electrons,           ONLY:levels,n_sp_pol
  use R_lattice,           ONLY:bz_samp
  use frequency,           ONLY:w_samp,W_reset
- use YPP,                 ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
+ use YPPm,                ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
  use YPP_ELPH,            ONLY:elph_steps,ph_broad
  use stderr,              ONLY:intc
  use ELPH,                ONLY:W_debye,elph_nDBs_used,ph_modes,elph_global_free,&

@@ -23,7 +23,7 @@
 !
 subroutine WF_map_perturbative_SOC(kpt,En)
  !
- use YPP,                 ONLY:perturbative_SOC_path,SOC_split,SOC_bands_to_map,&
+ use YPPm,                ONLY:perturbative_SOC_path,SOC_split,SOC_bands_to_map,&
 &                              SOC_bands_buffer
  use pars,                ONLY:lchlen,rZERO,cZERO,cI,SP
  use stderr,              ONLY:real2ch,intc

@@ -58,7 +58,6 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  ! 
  ! Work Space
  !
- integer           :: i4(4)
  integer, save     :: n_descs_save
  integer, external :: QP_state_extract
  !

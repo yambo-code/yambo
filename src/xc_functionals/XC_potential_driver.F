@@ -26,7 +26,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  ! Wrapper for calculation of the XC potential. If available libxc,
  ! will be used instead of internal routines
  !
- use pars,           ONLY:SP,rZERO,schlen
+ use pars,           ONLY:SP,rZERO
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use com,            ONLY:msg
@@ -56,7 +56,6 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  ! Work space
  !
  real(SP)          :: local_exx_fraction, local_exx_screening
- character(schlen) :: local_mute_ch
  !
  call timing('XC_potential_driver',OPR='start')
  !

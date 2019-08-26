@@ -27,7 +27,7 @@ subroutine XC_nlcc_setup()
  ! in reciprocal space from DB (if present), and sets
  ! all the quantities needed to evaluate E_xc and V_xc 
  !
- use pars,          ONLY:SP,DP
+ use pars,          ONLY:DP
  use com,           ONLY:error
  use D_lattice,     ONLY:DL_vol
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table

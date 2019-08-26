@@ -30,8 +30,7 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  use drivers,        ONLY:l_sc_is_libDFT,l_sc_hartree
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_sp_pol,n_spin,nel
- use parallel_m,     ONLY:master_cpu
- use xc_functionals, ONLY:V_xc,E_xc,XC_potential_driver,magn
+ use xc_functionals, ONLY:V_xc,E_xc,XC_potential_driver
  use FFT_m,          ONLY:fft_size
  use hamiltonian,    ONLY:l_sc_V_is_local,V_hartree_sc,E_reference
  use SC,             ONLY:SC_kind,SC_xc_functional

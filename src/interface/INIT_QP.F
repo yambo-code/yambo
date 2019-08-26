@@ -28,7 +28,7 @@ subroutine INIT_QP(comment)
  use pars,      ONLY:SP
  use QP_m,      ONLY:QP_nk,QP_nb,QP_state
  use parser_m,  ONLY:PARSER_array
- use it_m,      ONLY:check_verbosity
+ use it_tools,  ONLY:check_verbosity
  !
 #include<memory.h>
  !

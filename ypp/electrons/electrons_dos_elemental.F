@@ -27,7 +27,7 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,&
  use pars,           ONLY:SP,rZERO
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp 
- use YPP,            ONLY:DOS_broadening,DOS_E_step,DOS_E_steps
+ use YPPm,           ONLY:DOS_broadening,DOS_E_step,DOS_E_steps
  use interfaces,     ONLY:PARALLEL_index,el_density_of_states
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait,PP_indexes_reset

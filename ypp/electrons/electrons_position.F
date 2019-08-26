@@ -31,7 +31,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  use electrons,      ONLY:n_sp_pol
  use LIVE_t,         ONLY:live_timing
  use com,            ONLY:msg,of_open_close,error
- use YPP,            ONLY:output_fname
+ use YPPm,           ONLY:output_fname
  use wrapper,        ONLY:Vstar_dot_V
  use stderr,         ONLY:intc
  use interfaces,     ONLY:WF_load,WF_free

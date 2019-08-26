@@ -32,7 +32,7 @@ subroutine RT_manual_excitation(E,k)
  use com,            ONLY:msg
  use vec_operate,    ONLY:v_is_zero
  use real_time,      ONLY:RT_carriers,RT_bands,RT_Nk_ibz
- use YPP,            ONLY:K_transform
+ use YPPm,           ONLY:K_transform
  use YPP_real_time,  ONLY:Eh_pumped_pair_energy,Eh_pumped_pair_width,        &
 &                         Eh_pumped_pair_BZ_regions,Eh_pumped_pair_deltaE,  &
 &                         Eh_pumped_pair_BZ_width,Eh_pumped_Nel,Eh_pumped_pair_n_BZ_regions,   &

@@ -31,7 +31,6 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,           ONLY:bz_samp
- use X_m,                 ONLY:X_t
  use DIPOLES,             ONLY:DIP_spin,DIPOLE_t
  use fft_m,               ONLY:fft_size
  use wave_func,           ONLY:WF
@@ -50,7 +49,7 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
  ! Work Space
  !
  integer                      :: ik,ic_wf,iv_wf,ic,iv,&
-&                                i_sp_pol,i_spinor,i_spin,n_LT_steps,ik_mem
+&                                i_sp_pol,n_LT_steps,ik_mem
  !
  ! Parallelization Mask 
  !======================

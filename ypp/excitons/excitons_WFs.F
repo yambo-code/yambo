@@ -31,13 +31,13 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  use FFT_m,         ONLY:fft_dim
  use com,           ONLY:msg,warning,of_open_close,error
  use electrons,     ONLY:spin,n_spinor
- use YPP,           ONLY:v2plot,ncell,r_hole,l_free_hole,&
+ use YPPm,          ONLY:v2plot,ncell,r_hole,l_free_hole,&
 &                        nr,nr_tot,output_fname,&
 &                        use_xcrysden,use_gnuplot,use_cube,plot_dim,&
 &                        EXCITONS_user_indexes,EXCITONS_n_user_states
  use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_n_descs,BSS_description,&
 &                        BSS_n_eig
- use BS,            ONLY:BS_bands,BS_H_dim,BSqpts
+ use BS,            ONLY:BS_bands,BS_H_dim
  use interfaces,    ONLY:PARALLEL_index,WF_load,WF_free
  use wave_func,     ONLY:WF,WF_symm,wf_ng
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset

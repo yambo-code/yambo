@@ -26,7 +26,7 @@ integer function io_DB1(E,k,ID)
  use pars,             ONLY:SP
  use units,            ONLY:HA2EV
  use com,              ONLY:error,msg
- use LOGO,             ONLY:code_version,code_revision,code_GPL_revision
+ use C_driver,         ONLY:code_version,code_revision,code_GPL_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
 &                           n_spinor
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, input_GS_Tel, dl_sop, &
@@ -242,6 +242,7 @@ integer function io_DB1(E,k,ID)
      wf_nb_io=E%nb
      QP_nb=E%nb
      QP_n_G_bands=(/1,E%nb/)
+     !
      if(any(BS_bands(:)==0)) BS_bands=(/1,E%nb/)
 #if defined _SC || defined _RT
      if(any(COLL_bands(:)==0)) COLL_bands=(/1,E%nb/)

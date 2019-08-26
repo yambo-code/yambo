@@ -36,7 +36,7 @@ integer function ELPH_databases(k,E,q)
  use YPP_ELPH,            ONLY:ph_freqs_file,ph_modes_file
  use IO_m,                ONLY:io_control,OP_APP_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
  use LIVE_t,              ONLY:live_timing 
- use YPP,                 ONLY:k_grid_printer,alat_used_for_output
+ use YPPm,                ONLY:k_grid_printer,alat_used_for_output
  !
 #include<memory.h>
  !

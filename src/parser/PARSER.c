@@ -17,11 +17,13 @@
  02111-1307, USA.
 */
 
-#include <c_defs.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
-#include "parser.h"
-#include "symbols.h"
+#include <parser.h>
+#include <symbols.h>
+#include <string.h>
 
 static FILE *fout;
 

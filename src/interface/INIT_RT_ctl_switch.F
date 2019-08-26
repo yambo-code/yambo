@@ -23,7 +23,7 @@
 !
 subroutine INIT_RT_ctl_switch(what)
  !
- use it_m,       ONLY:initactivate
+ use it_tools,   ONLY:initactivate
  !
  implicit none
  !

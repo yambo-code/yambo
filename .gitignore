@@ -16,20 +16,27 @@
 
 # source #
 ##########
+driver/include/editor.h
+driver/include/version.h
+include/driver.h
+include/editor.h
+include/fortran_arguments.h
+include/fortran_driver.h
+include/kind.h
+include/tool.h
+include/version.h
+src/tools/.objects
 config.status
 config/report
 config/setup
 config/msg_ydb
 driver/codever.h
 driver/editor.h
-driver/yambo_cpp.h
-driver/ypp_cpp.h
-include/branch.inc
 include/netcdf.h
 include/netcdf_*.h
 include/netcdf.inc
 include/xc*.h
-include/c_defs.h
+include/headers/common/have_malloc.h
 include/system/*
 lib/archive/keep-extlibs-stamp
 lib/install/make_iotk.inc
@@ -62,6 +69,7 @@ lib/bin/*
 # source #
 ##########
 src/external_c/.objects
+.check_configure
 *__lock*
 Makefile.locks
 Makefile.archive

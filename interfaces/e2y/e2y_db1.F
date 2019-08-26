@@ -43,7 +43,7 @@ subroutine e2y_db1(en,k,ncid)
  use etsf_io
  use etsf_io_low_level
  use etsf_data
- use pars,                 only : SP, DP, PI, schlen
+ use pars,                 only : SP,   schlen
  use com,                  only : msg, error, warning
  use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, l_spin_orbit
  use wave_func,            only : wf_ncx
@@ -59,7 +59,7 @@ subroutine e2y_db1(en,k,ncid)
  ! 
  ! Work Space
  !
- integer                       :: i1,i2,ik,ib,is
+ integer                       :: i1,ik,ib,is
  !ETSF library stuff
  logical                       :: lstat ! to get informed on error
  type(etsf_io_low_error)       :: error_data ! to store informations about errors

@@ -24,11 +24,10 @@
 subroutine XC_switch()
  !
  use drivers,        ONLY:l_oep_kli,l_oep_exact,l_oep_ceda,l_oep_slater,l_sc_exx
- use hamiltonian,    ONLY:H_kind,H_xc_functional,H_potential,H_perturbation,l_sc_XC_is_local,l_sc_V_is_local
+ use hamiltonian,    ONLY:H_kind,H_potential,H_perturbation
 #if defined _SC
  use SC,             ONLY:OEP_approx,l_oep_EWeight,l_oep_iterative
 #endif
- use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE
 #if defined _MAGNETIC
  use drivers,        ONLY:l_sc_magnetic
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
@@ -36,7 +35,7 @@ subroutine XC_switch()
 #endif
  use global_XC,      ONLY:EXT_NONE
  use com,            ONLY:error
- use stderr,         ONLY:STRING_match
+ use stderr,         ONLY:STRING_same
  !
  implicit none
  !
@@ -54,29 +53,29 @@ subroutine XC_switch()
  !
 #if defined _SC
  if (l_sc_exx) then
-   if (STRING_match(trim(OEP_approx),'n')) then
+   if (STRING_same(trim(OEP_approx),'n')) then
      l_oep_exact=.true.
      if (l_oep_iterative) l_oep_EWeight=.true.
-   else if (STRING_match(trim(OEP_approx),'k')) then
+   else if (STRING_same(trim(OEP_approx),'k')) then
      l_oep_kli=.true.
      H_kind=H_kind+KLI_APPRX 
-   else if (STRING_match(trim(OEP_approx),'s')) then
+   else if (STRING_same(trim(OEP_approx),'s')) then
      l_oep_slater=.true.
      l_oep_iterative=.false.
      H_kind=H_kind+SLT_APPRX
-   else if (STRING_match(trim(OEP_approx),'c')) then
+   else if (STRING_same(trim(OEP_approx),'c')) then
      l_oep_ceda=.true.
      H_kind=H_kind+CED_APPRX
-   else if (STRING_match(trim(OEP_approx),'sw')) then
+   else if (STRING_same(trim(OEP_approx),'sw')) then
      l_oep_slater=.true.
      l_oep_EWeight=.true.
      l_oep_iterative=.false.
      H_kind=H_kind+LEVY_APPRX
-   else if (STRING_match(trim(OEP_approx),'kw')) then
+   else if (STRING_same(trim(OEP_approx),'kw')) then
      l_oep_kli=.true.
      l_oep_EWeight=.true.
      H_kind=H_kind+LEVY_APPRX
-   else if (STRING_match(trim(OEP_approx),'cw')) then
+   else if (STRING_same(trim(OEP_approx),'cw')) then
      l_oep_ceda=.true.
      l_oep_EWeight=.true.
      H_kind=H_kind+LEVY_APPRX

@@ -1,0 +1,92 @@
+#! /bin/bash
+
+BIN="";
+case "$1"
+in
+e2y) BIN="-D_e2y_driver";;
+p2y) BIN="-D_p2y_driver";;
+c2y) BIN="-D_c2y_driver";;
+a2y) BIN="-D_a2y_driver";;
+ypp) BIN="-D_ypp_driver";;
+yambo) BIN="-D_yambo_driver";;
+esac
+
+PJ=$2
+case "${PJ}"
+in
+e2y) OPT="-D_e2y";;
+p2y) OPT="-D_p2y";;
+c2y) OPT="-D_c2y";;
+a2y) OPT="-D_a2y";;
+ypp) OPT="-D_ypp";;
+ph) OPT="-D_ELPH -D_YPP_ELPH";;
+pl) OPT="-D_RT -D_SC -D_ELPH -D_PL";;
+sc) OPT="-D_SC -D_YPP_SC";;
+rt) OPT="-D_RT -D_ELPH -D_YPP_RT -D_YPP_ELPH";;
+nl) OPT="-D_NL -D_RT -D_ELPH -D_YPP_RT -D_YPP_ELPH -D_YPP_NL";;
+qed) OPT="-D_QED -D_RT -D_ELPH";;
+kerr) OPT="-D_RT -D_ELPH -D_KERR";;
+m) OPT="-D_MAGNETIC -D_SC -D_YPP_MAGNETIC -D_YPP_SC";;
+e) OPT="-D_ELECTRIC -D_SC";;
+esac
+
+LIB="-D_MPI -D_CUDA -D_SCALAPACK -D_SLEPC -D_PAR_IO -D_HDF5_IO -D_HDF5_LIB"
+COMP=" -D_FORTRAN_US -D_DRIVER_TEST -D_C_US"
+echo " $COMP $LIB $OPT $BIN"
+#
+rm -f driver/lib/*.o driver/lib/*.a driver/interface/*.o driver/include/*.a driver.x
+
+cd driver
+
+cd interface
+file_list=`find . -maxdepth 1 -type f | grep -E '\.c' |grep -v .swp`
+for file in $file_list; do
+ echo $file
+ mpicc $COMP $LIB $OPT $BIN -c $file -I../include  -I../../include/headers/common 
+done
+ar -r ../include/driver_lib.a *.o
+cd ../
+
+cd lib
+file_list=`find . -maxdepth 1 -type f | grep -E '\.c' |grep -v .swp`
+for file in $file_list; do
+ echo $file
+ mpicc $COMP $LIB $OPT $BIN -c $file -I../include  -I../../include/headers/common 
+done
+ar -r ../include/driver_lib.a *.o
+cd ../
+
+cd options
+file_list=`find . -maxdepth 1 -type f | grep -E '\.c' |grep -v .swp`
+for file in $file_list; do
+ echo $file
+ mpicc $COMP $LIB $OPT $BIN -c $file -I../include  -I../../include/headers/common 
+done
+ar -r ../include/driver_lib.a *.o
+cd ../
+
+cd interface
+cp mod_C_driver.F mod_C_driver.f90
+cp C_driver_transfer.F C_driver_transfer.f90
+file_list=`find . -maxdepth 1 -type f | grep -E '\.f90' |grep -v .swp`
+for file in $file_list; do
+ echo $file
+ mpif90 $COMP $LIB $OPT $BIN -c $file -I../include  -I../../include/headers/common 
+done
+cp *.mod ../include
+ar -r ../include/driver_lib.a *.o 
+cd ../
+
+mpicc $COMP $LIB $OPT $BIN -c driver.c -I include -I options -I ../include/headers/common/ 
+
+cp driver_test.F driver_test.f90
+mpif90 -I include -c driver_test.f90
+cd ../
+
+rm -f driver.x
+mpif90 -I driver/include -o driver.x driver/driver.o driver/driver_test.o driver/include/driver_lib.a  
+
+#./driver.x -h
+#./driver.x -x -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file -nompi -noopenmp -setup -opt chi -Q
+#./driver.x -x -optics c -y d -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file -t
+

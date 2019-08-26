@@ -45,7 +45,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
 &                        COLLISIONS_HXC_use_TDDFT
  use timing_m,      ONLY:timing
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,Io_and_Messaging_switch,io_COLLs
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,IO_and_Messaging_switch,io_COLLs
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO

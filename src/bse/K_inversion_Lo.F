@@ -33,7 +33,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
 &                         BSS_eh_table,BSS_eh_E,BSS_eh_f,&
 &                         BSS_n_descs,BSS_description,BSS_eh_W,&
 &                         BSS_add_antiresonant,K_diago_in_BS_mat,BS_diagonal,BSS_uses_DbGd
- use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode
+ use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use LIVE_t,         ONLY:live_timing
  !
@@ -257,6 +257,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    YAMBO_FREE(X_DbGd_nkpt_at_q)
    YAMBO_FREE(X_DbGd_nkpt_at_q_table)
  endif  
+ !
+ if (iq>BS_q(1)) return
  !
  BSS_n_descs=BSS_n_descs+2
  BSS_description(BSS_n_descs-1)=' '

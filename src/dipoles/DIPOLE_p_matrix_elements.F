@@ -27,7 +27,7 @@
 !
 subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P2)
  !
- use pars,          ONLY:SP,cZERO,cONE,pi
+ use pars,          ONLY:SP,cZERO,pi
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
  use D_lattice,     ONLY:alat
  use wave_func,     ONLY:WF,wf_ng

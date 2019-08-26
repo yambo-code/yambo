@@ -25,7 +25,7 @@ subroutine QP_state_extract_print(qp)
  !
  ! Print the contents of the QP_state logical array
  !
- use pars,      ONLY:lchlen,schlen
+ use pars,      ONLY:lchlen
  use QP_m,      ONLY:QP_state,QP_t
  use com,       ONLY:msg
  use stderr,    ONLY:intc

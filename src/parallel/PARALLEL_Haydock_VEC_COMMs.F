@@ -25,31 +25,20 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
  ! Set up the mask and communicators for the Haydock part.  
  !
  use BS,          ONLY:BS_nT_grps
- use parallel_m,  ONLY:mpi_comm_world,PAR_IND_T_groups,PAR_IND_T_Haydock,&
-&                      PAR_COM_T_Haydock,CREATE_the_COMM
+ use parallel_m,  ONLY:PAR_IND_T_groups,PAR_IND_T_Haydock,&
+&                      PAR_COM_T_Haydock,PAR_COM_WORLD,CREATE_the_COMM,ncpu
 #include<memory.h>
  !
  character(*),       intent(in) :: what     
  !
  ! Work Space
  !
- integer :: i_g,local_key
+ integer :: i_g,local_key,ierr
  !
  select case (what)
    case('assign')
      !
 #if defined _MPI
-     !
-     !YAMBO_ALLOCATE(PAR_IND_T_Haydock%element_1D,(BS_nT_grps))
-     !Y_MEM(PAR_IND_T_Haydock%element_1D)
-     !
-     !PAR_IND_T_Haydock%element_1D = .false.
-     !do i_b=1,n_BS_blks
-     !  iT_grp_k = BS_blk(i_b)%iT_k
-     !  iT_grp_p = BS_blk(i_b)%iT_p
-     !  PAR_IND_T_Haydock%element_1D(iT_grp_k)=.true.
-     !  PAR_IND_T_Haydock%element_1D(iT_grp_p)=.true.
-     !end do
      !
      ! Communicators along each groups (this will be row of the _full_ matrix)
      ! Needed in distributed M|V> and <V|W> (redux) and |Vn> initialization (bcast)
@@ -76,7 +65,7 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
          !
        endif
        !
-       call CREATE_the_COMM(mpi_comm_world,PAR_COM_T_Haydock(i_g),local_key)
+       call CREATE_the_COMM(PAR_COM_WORLD%COMM,PAR_COM_T_Haydock(i_g),local_key)
        !
      enddo
      !
@@ -89,13 +78,13 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
      case('reset')
        !
 #if defined _MPI
-       do i_g=1,BS_nT_grps
-         call MPI_Comm_free(PAR_COM_T_Haydock(i_g)%COMM)
-       enddo
+       if(ncpu>1) then
+         do i_g=1,BS_nT_grps
+           call MPI_Comm_free(PAR_COM_T_Haydock(i_g)%COMM,ierr)
+         enddo
+       endif
        deallocate(PAR_COM_T_Haydock)
 #endif
-       ! This is allocated in K_Transitions setup
-       YAMBO_FREE(PAR_IND_T_Haydock%element_1D)
        !
    end select
    !

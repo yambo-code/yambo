@@ -30,26 +30,29 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:msg
  use vec_operate,   ONLY:v_norm
- use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg,q0_def_norm
+ use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg,q0_def_norm,qindx_X
+ use stderr,        ONLY:intc
+ use wave_func,     ONLY:WF
+ use interfaces,    ONLY:WF_load,WF_free
  use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel,n_sp_pol
  use X_m,           ONLY:Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        X_drude_term,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
-&                        BSS_n_freqs,Co_factor,diam_term_exact,BSS_Wd
- use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps
+&                        Co_factor,diam_term_exact,BSS_Wd
+ use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,L_kind,BS_bands
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
+ use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use parser_m,      ONLY:parser
  use timing_m,      ONLY:timing
 #if defined _PL
  use drivers,       ONLY:l_photolum
- use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights,PL_init
+ use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
 #endif
 #if defined _KERR
  use drivers,       ONLY:l_kerr
- use X_m,           ONLY:Epsilon_ij
  use KERR,          ONLY:A_drude
 #endif
 #include<memory.h>
@@ -61,7 +64,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  ! Work space
  !
- integer           ::ik_bz,iv,ic,i_sp_pol,i_T_g,i_T,ik_bz_mem,n_SOC,i_pert_SOC,io_err
+ integer           ::ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol,i_T_g,i_T,n_SOC,i_pert_SOC,io_err
  real(SP)          ::conjg_fac,Z_
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2/n_sp_pol),&
 &                    para_term_w0,diam_term_used
@@ -70,16 +73,18 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  real(SP)          ::res_PL(2)
 #endif
  !
- character(6)          :: DIP_kind
- complex(SP)           :: DIP_projected,field_dir(3)
+ character(6)             :: DIP_kind
+ complex(SP)              :: DIP_projected,field_dir(3)
+ type(elemental_collision):: BSE_scatt
  !
  !
- call section('=','Independent Particles absorption') 
+ call section('=','EH space - Independent Particles absorption @q'//trim(intc(iq)))
+ !
+ if (l_bs_fxc) return
+ !
  !===================================================
  !
  call timing('T_space IP',OPR='start')
- !
- if (l_bs_fxc) goto 1
  !
  ! Polarizability ?
  !==================
@@ -90,30 +95,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if(trim(global_gauge)=="velocity") call parser('NoCondSumRule',skip_cond_sum_rule)
  !
- ! Eps_0
- !=======
- YAMBO_ALLOC(Epsilon_ii,(BSS_n_freqs,4))!2(int)3(nonint)4(n-1 Haydock/inv shifted)
- YAMBO_ALLOC(X_drude_term,(BSS_n_freqs))
- Epsilon_ii   = cZERO
- X_drude_term = cZERO
- !
- Epsilon_ii(:,1)=W_bss%p(:)  
- if (BSS_eval_JDOS) then
-   YAMBO_ALLOC(Joint_DOS,(BSS_n_freqs,4))
-   Joint_DOS=cZERO
-   Joint_DOS(:,1) =W_bss%p(:)
- endif
- !
-#if defined _PL
- !
- ! PL_0
- !=======
- call PL_init( )
- !
- PL(:,1) = W_bss%p(:)  
- !
-#endif
- !
  !...Drude
  call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,drude_GreenF)
  if (l_drude) drude_GreenF=drude_GreenF*(Ken%f(Ken%bf,Ken%kf,Ken%sf)*(spin_occ-Ken%f(Ken%bf,Ken%kf,Ken%sf)))
@@ -121,7 +102,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Oscillators I/O & Eps0
  !========================
  !
- if (iq==1) then
+ !if (iq==1) then
    !
    if( E_SOC_nbands==0.or.n_sp_pol==2) then
      n_SOC=1
@@ -137,8 +118,21 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    para_term_w0=cZERO
    !
+   ! The residuals of the BSE are <wf_k|e^{iqr}|wf_k+q>
+   ! These are trivial to compute at finite q, instead they are 
+   ! obtained via the dipoles in the q->0 limit and stored to disk
    !
-   call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err,'K')
+   if (iq==1) then
+     call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err,'K')
+     !call DIPOLE_expand_and_project(Xk,Dip)
+   else
+     call WF_load(WF,1,maxval(qindx_X(:,:,2)),BS_bands,(/1,Xk%nibz/),title='-Oscillators/R space')
+     call elemental_collision_free(BSE_scatt)
+     call elemental_collision_alloc(BSE_scatt,NG=1,TITLE="BSE") 
+     ! Alternative form presently not working since uGo shift of the WFs is missing
+     !call DIPOLE_real_space_finiteq(Xen,Xk,Dip,iq)
+     !call DIPOLE_gspace_finiteq(Ken,Xk,Dip,iq)
+   endif
    !
    BSS_Vnl_included=Dip%Vnl_included
    !
@@ -153,7 +147,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      field_dir=Dip%q0/v_norm(Dip%q0)
    endif
    !
-   if (l_rpa_IP) call live_timing('IP absorption',PAR_BS_nT_col_grps)
+ !endif
+   !
+   if (l_rpa_IP.or.iq>1) call live_timing('IP absorption',PAR_BS_nT_col_grps)
    !
    do i_T_g=1,BS_nT_grps
      !
@@ -177,7 +173,30 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        ! *velocity* : DIP_projected(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> =  conjg(q_ver*<v|r|c>)
        !              see definition of conjg_fac few lines before for the -1
        !
-       DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ik_bz,i_sp_pol,dip_kind,Xk))
+       if(iq==1) then
+         !
+         DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ik_bz,i_sp_pol,dip_kind,Xk))
+         !
+       else
+         !
+         ok_bz=qindx_X(iq,ik_bz,1)
+         iGo  =qindx_X(iq,ik_bz,2)
+         !
+         ik   =Xk%sstar(ik_bz,1) 
+         isymm=Xk%sstar(ik_bz,2) 
+         !
+         ok   =Xk%sstar(ok_bz,1)
+         osymm=Xk%sstar(ok_bz,2)
+         !
+         BSE_scatt%is=(/ic,ik,isymm,i_sp_pol/)
+         BSE_scatt%os=(/iv,ok,osymm,i_sp_pol/)
+         BSE_scatt%qs=(/iGo,iq,1/)
+         !
+         if(trim(global_gauge)=="length")   call scatter_Bamp(BSE_scatt)
+         if(trim(global_gauge)=="velocity") call scatter_Bamp_using_the_gradient(BSE_scatt,"o")
+         DIP_projected=-conjg(BSE_scatt%rhotw(1))
+         !
+       endif
        !
        BS_T_grp(i_T_g)%dipoles_R(i_T)=   conjg_fac*conjg(DIP_projected)
        if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected
@@ -188,7 +207,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
 #endif
        !
-       if ( abs(real(E_plus_W0)) < Dip%Energy_treshold ) cycle
+       if ( abs(real(E_plus_W0)) < Dip%Energy_treshold .and. iq==1 ) cycle
        !
        ! Residuals DIP_cv * DIP_vc
        !
@@ -219,10 +238,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
            if (BSS_eval_JDOS) Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
          endif
          !
-         if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+res*E_plus_W(i_pert_SOC)/bare_qpg(1,1)**2
+         if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+res*E_plus_W(i_pert_SOC)/bare_qpg(iq,1)**2
          if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+res/E_plus_W(i_pert_SOC)
          if (BSS_add_antiresonant.or.BS_K_coupling) then
-           if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+conjg(res*E_plus_W(i_pert_SOC))/bare_qpg(1,1)**2
+           if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+conjg(res*E_plus_W(i_pert_SOC))/bare_qpg(iq,1)**2
            if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+conjg(res/E_plus_W(i_pert_SOC))
          endif
          !
@@ -239,16 +258,17 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
      enddo
      !
-     if (l_rpa_IP) call live_timing(steps=1)
+     if (l_rpa_IP.or.iq>1) call live_timing(steps=1)
      !
    enddo
    !
-   if (l_rpa_IP) call live_timing()
+   if (l_rpa_IP.or.iq>1) call live_timing()
    !
    ! ALL 2 ALL
    !
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
+   !
    if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_eh_INDEX%COMM )
    !
@@ -262,6 +282,17 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    endif
 #endif
    !
+   if (trim(L_kind)=="full") then
+     do i_T_g=1,BS_nT_grps
+       if (.not.allocated(BS_T_grp(i_T_g)%dipoles_R) ) then
+         YAMBO_ALLOC(BS_T_grp(i_T_g)%dipoles_R,(BS_T_grp(i_T_g)%size))
+         BS_T_grp(i_T_g)%dipoles_R=cZERO
+       endif
+       call PP_redux_wait(BS_T_grp(i_T_g)%dipoles_R(:), COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+       call PP_redux_wait(BS_T_grp(i_T_g)%dipoles_R(:), COMM=PAR_COM_eh_INDEX%COMM )
+     enddo
+   endif
+   !
    ! DOS
    !=====
    if (BSS_eval_JDOS) Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor
@@ -271,12 +302,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
    endif
    !
-   if (trim(global_gauge)=='length'  ) Epsilon_ii(:,3)=Co_factor* Epsilon_ii(:,3)                / bare_qpg(1,1)**2
+   if (trim(global_gauge)=='length'  ) Epsilon_ii(:,3)=Co_factor* Epsilon_ii(:,3)                / bare_qpg(iq,1)**2
    if (trim(global_gauge)=='velocity') Epsilon_ii(:,3)=Co_factor*(Epsilon_ii(:,3)-diam_term_used)/W_bss%p(:)**2
    !
    ! Drude term
    !============
-   if (l_drude           ) X_drude_term(:)=       -drude_GreenF(:)       *Co_factor/ bare_qpg(1,1)**2
+   if (l_drude           ) X_drude_term(:)=       -drude_GreenF(:)       *Co_factor/ bare_qpg(iq,1)**2
    if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W_bss%p(:)**2
    !
    Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
@@ -291,7 +322,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
 #endif
    !
- endif
  !
  ! CLEAN
  !
@@ -306,6 +336,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    call DIP_alloc('DIP_P_spinor')
  endif
  !
+ if(iq>1) then
+   call elemental_collision_free(BSE_scatt)
+   call WF_free(WF)
+ endif
+ !
  if (l_rpa_IP) then
    !
    ! Initialize & write the output file
@@ -313,19 +348,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    call K_output_file(iq,"open IP")
    call K_output_file(iq,"IP")
    !
-   YAMBO_FREE(Epsilon_ii)
-   YAMBO_FREE(X_drude_term)
-   YAMBO_FREE(Joint_DOS)
-#if defined _KERR
-   YAMBO_FREE(Epsilon_ij)
-#endif
-#if defined _PL
-   YAMBO_FREE(PL)
-#endif
-   !
  endif
- !
-1 continue
  !
  call timing('T_space IP',OPR='stop')
  !

@@ -30,7 +30,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,MAX_DbGd_DBs,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
-&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,l_angular_momentum,l_position
+&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,BSiq,l_angular_momentum,l_position
  use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
@@ -62,6 +62,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_NL 
  use nl_optics,      ONLY:NL_damping
+ use pars,           ONLY:SP
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH
@@ -271,6 +272,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_wavefunction   =trim(rstr_piece(i1+1))=='w'
      l_sort           =trim(rstr_piece(i1+1))=='s'
      l_amplitude      =trim(rstr_piece(i1+1))=='a'
+     if (l_sort)  read(rstr_piece(i1+2),'(i10)') BSiq
 #if defined _YPP_ELPH
      l_gkkp           =trim(rstr_piece(i1+1))=='g'
 #endif
@@ -533,15 +535,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (l_fix_syms.and.n_spinor==2.and.i_time_rev==0) call initactivate(1,"ExpandSymm")
  !
- ! GPL_INCLUDE_START
- !
- !if (l_fix_syms) call initactivate(1,"RmAllSymm RmTimeRev")
- !
- ! GPL_INCLUDE_END
- !
  if (l_fix_save) infile_editing=.false.
- !
- ! GPL_EXCLUDE_START
  !
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv")
  !
@@ -553,6 +547,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
  !
 #endif
+ !
+ ! GPL_EXCLUDE_START
  !
  ! Wannier 90 interface
  !
@@ -645,7 +641,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_spin.and..not.l_excitons) call initactivate(1,"FFTGvecs")
  !
  if (l_excitons) then
-   call initactivate(1,"States En_treshold Res_treshold")
+   call initactivate(1,"States En_treshold Res_treshold Qpts")
    if (l_amplitude) then
      call INIT_QP_ctl_switch('G')
      call initactivate(1,"DipWeight")

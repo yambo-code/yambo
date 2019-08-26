@@ -31,7 +31,8 @@ subroutine K_Haydock(iq,W)
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
  use BS_solvers,     ONLY:BSS_n_descs,Haydock_threshold,BSS_description,io_BSS_Haydock,Co_factor,diam_term_exact,&
-&                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod,Haydock_iterIO
+&                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod,Haydock_iterIO,&
+&                         BSS_eels_to_eps
  use BS,             ONLY:BS_K_Coupling,BSE_mode,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,BS_K_dim
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
@@ -70,6 +71,7 @@ subroutine K_Haydock(iq,W)
  character(schlen)  ::dumb_ch
  logical            ::use_cpl_scheme
  logical, external  ::STOP_now
+ character(1)       ::sec
  !
  ! I/O
  !
@@ -79,11 +81,9 @@ subroutine K_Haydock(iq,W)
  !
  call timing('Haydock Solver',OPR='start')
  !
- if (isec(2)/=0) then
-   call section('=','Haydock solver')
- else if (isec(2)==0) then
-   call section('+','Haydock solver')
- endif
+ if (isec(4)/=0) sec="="
+ if (isec(4)==0) sec="+"
+ call section(sec,'Haydock Solver @q'//trim(intc(iq)))
  !
  call BS_Blocks_symmetrize_K()
  !
@@ -548,6 +548,11 @@ subroutine K_Haydock(iq,W)
    !
  end if
  !
+ call PARALLEL_Haydock_VEC_COMMs('reset')
+ !
+ ! This is allocated in K_Transitions setup
+ YAMBO_FREE(PAR_IND_T_Haydock%element_1D)
+ !
  call timing('Haydock Solver',OPR='stop')
  !
  contains
@@ -594,7 +599,7 @@ subroutine K_Haydock(iq,W)
      para_term_w0  =cZERO
      diam_term_used=cZERO
      !
-     if(trim(global_gauge)=='length'  ) gauge_factor=cONE*Co/bare_qpg(1,1)**2
+     if(trim(global_gauge)=='length'  ) gauge_factor=cONE*Co/bare_qpg(iq,1)**2
      !
      if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
      if (coupling) allocate(X_i(2,it))
@@ -692,7 +697,10 @@ subroutine K_Haydock(iq,W)
        if (ii==1) Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor
        if (ii==2) Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+diam_term_used(:))*gauge_factor
        !
-       if (ii==1) Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*gauge_factor
+       if (ii==1) then
+         if(BSS_eels_to_eps) Epsilon_ii(iw,i_eps(:))=(1._SP-Epsilon_ii(iw,i_eps(:)))**(-1)-1._SP
+         Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*gauge_factor
+       endif
        !
 #if defined _KERR
        !
@@ -701,7 +709,7 @@ subroutine K_Haydock(iq,W)
        !
        if (l_anomalous_Hall) then
          if (trim(global_gauge)=='length') then
-           B_Hall(2)=B_Hall(2)*Co/bare_qpg(1,1)**2
+           B_Hall(2)=B_Hall(2)*Co/bare_qpg(iq,1)**2
            Epsilon_ij(iw,2)=Epsilon_ij(iw,2)+B_Hall(2)/W%p(iw)
          else if (trim(global_gauge)=='velocity') then
            B_Hall(2)=B_Hall(2)*Co

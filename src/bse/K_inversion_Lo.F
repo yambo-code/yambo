@@ -164,20 +164,20 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        !
        ! Analytical GFs
        !================
-       call X_GreenF_analytical(1,transition,W_mins,E,k,Lo(i_res,:,1),"r","eh",.FALSE.)
+       call X_GreenF_analytical(iq,transition,W_mins,E,k,Lo(i_res,:,1),"r","eh",.FALSE.)
 #if defined _PL
-       call X_GreenF_analytical(1,transition,W,E,k,SF(:,1),"r","eh",.TRUE.)
+       call X_GreenF_analytical(iq,transition,W,E,k,SF(:,1),"r","eh",.TRUE.)
        Lo(i_res,:,1+Lo_n_loop)=BSS_PL_f(1,i_res)/BSS_eh_f(i_res)**2*aimag(W%p(1))/pi
 #endif
        !
        if (BSS_add_antiresonant.or.BS_K_coupling) then
          !
-         call X_GreenF_analytical(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra","eh",.FALSE.)
+         call X_GreenF_analytical(iq,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra","eh",.FALSE.)
 #if defined _PL
          !
          ! The -1 coming from SF(:,2) and -abs(Lo)...compensate each other
          !
-         call X_GreenF_analytical(1,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.)
+         call X_GreenF_analytical(iq,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.)
          Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(2,i_res)/BSS_eh_f(i_res)**2*aimag(W%p(1))/pi
 #endif
          !
@@ -189,11 +189,11 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        !
        ! Convoluted GFs
        !================
-       call X_GreenF_convoluted(1,transition,W_mins,E,k,Lo(i_res,:,1),"r")
+       call X_GreenF_convoluted(iq,transition,W_mins,E,k,Lo(i_res,:,1),"r")
        !
        if (BSS_add_antiresonant.or.BS_K_coupling) then
          !
-         call X_GreenF_convoluted(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra")
+         call X_GreenF_convoluted(iq,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra")
          !
        endif
        !
@@ -242,10 +242,10 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
    if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
    !
-   if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)= Epsilon_ii(:,i_eps)                *Co_factor/bare_qpg(1,1)**2
-   if(trim(global_gauge)=="velocity") Epsilon_ii(:,i_eps)=(Epsilon_ii(:,i_eps)-diam_term_used)*Co_factor/  W%p(:) **2
+   if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)= Epsilon_ii(:,i_eps)                *Co_factor/bare_qpg(iq,1)**2
+   if(trim(global_gauge)=="velocity") Epsilon_ii(:,i_eps)=(Epsilon_ii(:,i_eps)-diam_term_used)*Co_factor/    W%p(:)    **2
    !
-   if (l_drude) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+X_drude_term(:)*Co_factor/bare_qpg(1,1)**2
+   if (l_drude) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+X_drude_term(:)*Co_factor/bare_qpg(iq,1)**2
    if (skip_cond_sum_rule) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+(para_term_w0-diam_term_exact)*Co_factor/ W%p(:)**2
    !
  enddo

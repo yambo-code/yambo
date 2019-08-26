@@ -27,7 +27,7 @@ subroutine excitons_find_degeneracies(BS_E,BS_E_degs)
  use com,           ONLY:msg
  use vec_operate,   ONLY:sort
  use BS_solvers,    ONLY:BSS_n_eig
- use YPP,           ONLY:deg_energy
+ use YPPm,          ONLY:deg_energy
  !
  implicit none
  !

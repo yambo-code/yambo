@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module YPP
+module YPPm
  !
  use pars,      ONLY:SP,DP,lchlen,schlen
  use R_lattice, ONLY:bz_samp
@@ -325,4 +325,4 @@ module YPP
      !
    end subroutine
    !
-end module YPP
+end module YPPm

@@ -1,4 +1,8 @@
-objs = yambo_driver.o 
+objs = yambo.o 
 #if defined _ypp || _ypp_ph || _ypp_rt || _ypp_surf || _ypp_magnetic || _ypp_sc || _ypp_nl
-objs = ypp_driver.o 
+objs = ypp.o 
 #endif
+#if defined _DRIVER_TEST
+objs = driver_test.o 
+#endif
+

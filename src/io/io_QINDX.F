@@ -27,8 +27,8 @@ integer function io_QINDX(Xk,q,io_db)
  use R_lattice,      ONLY:nqibz,nqbz,qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,QP_states_k,nXkibz,qindx_alloc,&
 &                         Xk_grid_is_uniform,bz_samp,nXkbz,coll_scattering,q_pt
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,frag_QINDX,write_is_on,         &
-&                         io_elemental,io_status,read_is_on,write_is_on,io_header,&
+ use IO_m,           ONLY:io_connect,io_disconnect,io_sec,frag_QINDX,         &
+&                         io_elemental,io_status,read_is_on,io_header,&
 &                         ver_is_gt_or_eq,io_extension,io_fragment,IO_OUTDATED_DB,        &
 &                         def_variable_bulk,io_variable_bulk
  use timing_m,       ONLY:timing

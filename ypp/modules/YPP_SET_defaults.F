@@ -23,7 +23,7 @@
 !
 subroutine YPP_SET_defaults()
  !
- use YPP,            ONLY:DOS_broadening,DOS_E_range,r_hole,deg_energy ,EXCITON_weight_treshold,&
+ use YPPm,           ONLY:DOS_broadening,DOS_E_range,r_hole,deg_energy ,EXCITON_weight_treshold,&
                           WF_multiplier,gamma_radius,SOC_split,alat_used_for_output,BANDS_bands,BANDS_steps,&
 &                         coo_in,coo_out,DOS_E_steps,INTERP_grid ,l_amplitude,l_bands,l_current,l_density  ,&
 &                         l_dos,l_exc_wf   ,l_mag,l_norm_to_one,l_sort,l_sp_wf,l_spin,l_wannier,mag_dir    ,&
@@ -39,10 +39,10 @@ subroutine YPP_SET_defaults()
  use stderr,         ONLY:write_to_log  
  use LIVE_t,         ONLY:live_timing_is_on
 #if defined _YPP_SC
- use YPP,            ONLY:l_mean_potential
+ use YPPm,           ONLY:l_mean_potential
 #endif
 #if defined _YPP_MAGNETIC
- use YPP,            ONLY:B_field,B_psi,B_theta,l_angular_momentum,l_position
+ use YPPm,           ONLY:B_field,B_psi,B_theta,l_angular_momentum,l_position
 #endif
 #if defined _YPP_RT
  use YPP_real_time,  ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_BZ_regions,Eh_pumped_pair_BZ_width,&

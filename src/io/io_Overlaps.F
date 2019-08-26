@@ -30,7 +30,6 @@ integer function io_Overlaps(Dip,ID)
 &                        io_bulk,read_is_on,io_header,io_extension,&
 &                        RD_CL_IF_END,RD_CL,io_action,&
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment
- use parallel_m,    ONLY:PAR_DIPk_bz_index,PAR_DIPk_nbz,PAR_IND_DIPk_bz
  use timing_m,      ONLY:timing
  !
  implicit none
@@ -39,7 +38,7 @@ integer function io_Overlaps(Dip,ID)
  !
  ! Work Space
  !
- integer :: ik,ik_mem,i_fragment,ixyz,i_sp_pol,shift(2),io_err
+ integer :: ik,ik_mem,i_fragment,i_sp_pol,io_err
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
  !
@@ -99,7 +98,7 @@ integer function io_Overlaps(Dip,ID)
  !
  write (VAR_name,'(3(a,i4.4))') 'DIP_S_k_',ik,'_sp_pol_',i_sp_pol
  call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/2,Dip%ib(2),Dip%ib(2),6/))
- call io_bulk(ID,C3=DIP_S(:,:,:,ik_mem,i_sp_pol))
+ !call io_bulk(ID,C3=DIP_S(:,:,:,ik_mem,i_sp_pol))
  !
 1 call io_disconnect(ID=ID)
  !

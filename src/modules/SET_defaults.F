@@ -72,7 +72,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
-&                     BS_K_is_ALDA,BSE_mode,L_kind
+&                     BS_K_is_ALDA,BSE_mode,L_kind,BS_perturbative_SOC,BS_K_has_been_calculated_loaded,&
+&                     l_restart_bse
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
@@ -409,6 +410,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! BS/BSS
  !
+ l_restart_bse = .true.
  BS_n_g_W=1
  BS_eh_en=(/-1._SP,-1._SP/)/HA2EV
  BS_identifier=0
@@ -434,6 +436,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_damp_reference=0._SP
  BS_K_is_ALDA=.FALSE.
  BS_not_const_eh_f=.FALSE.
+ BS_perturbative_SOC=.FALSE.
+ BS_K_has_been_calculated_loaded=.FALSE.
  Haydock_threshold=-0.02_SP
  Haydock_iterIO=100
  BSS_Vnl_included=.FALSE.

@@ -30,7 +30,7 @@ module BS
  ! Modes and logicals
  !====================
  logical :: l_BSE_minimize_memory
- logical :: l_restart_bse = .true.
+ logical :: l_restart_bse
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
  logical :: BS_res_K_exchange
@@ -39,8 +39,8 @@ module BS
  logical :: BS_cpl_K_corr
  logical :: BS_K_is_ALDA
  logical :: BS_not_const_eh_f
- logical :: BS_K_has_been_calculated_loaded=.FALSE.
- logical :: BS_pert_soc
+ logical :: BS_perturbative_SOC
+ logical :: BS_K_has_been_calculated_loaded
  character(schlen) :: L_kind
  character(schlen) :: BSE_mode
  character(schlen) :: BSK_mode
@@ -146,7 +146,6 @@ module BS
  ! Screened interaction
  !======================
  complex(SP),allocatable ::BS_W(:,:,:)
- !
  !
  contains
    !

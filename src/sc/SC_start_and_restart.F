@@ -24,14 +24,14 @@
 subroutine SC_start_and_restart(X,E,Xk)
  !
  use pars,           ONLY:schlen
- use electrons,      ONLY:levels,n_sp_pol,n_spin
+ use electrons,      ONLY:levels,n_spin
  use parser_m,       ONLY:parser 
  use com,            ONLY:msg,warning
  use electrons,      ONLY:E_reset,E_duplicate
  use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_use_Hxc_collisions,&
 &                         l_oep_exact,l_oep_kli,l_oep_slater, l_oep_ceda
  use units,          ONLY:HA2EV
- use R_lattice,      ONLY:bz_samp,nkibz
+ use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties
  use hamiltonian,    ONLY:H_potential,H_kind,H_xc_functional,H_perturbation,    &
 &                         WF_G_max,WF_Go_indx,E_reference,l_sc_V_is_local,      &

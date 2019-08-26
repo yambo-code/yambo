@@ -27,7 +27,7 @@ subroutine bxsf_read(Xk,Xen)
  use units,               ONLY:pi,HA2EV,BO2ANG
  use R_lattice,           ONLY:bz_samp,b,k_grid,k_the_nearest
  use parser_m,            ONLY:parser
- use YPP,                 ONLY:wannier_bands, ord_dgrid_ipol
+ use YPPm,                ONLY:wannier_bands, ord_dgrid_ipol
  use electrons,           ONLY:levels,n_spin
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:file_exists,msg,error

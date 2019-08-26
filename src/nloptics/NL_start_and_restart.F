@@ -44,7 +44,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  use X_m,            ONLY:X_t 
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use QP_m,           ONLY:QP_nk
- use global_XC,      ONLY:WF_kind,WF_xc_functional
+ use global_XC,      ONLY:WF_xc_functional,WF_kind
  use fields,         ONLY:A_tot,A_ext,A_vecpot_reset
  use parallel_m,     ONLY:master_cpu
  use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_freqs_todo,NL_LRC_alpha,NL_bands, &
@@ -107,7 +107,7 @@ subroutine NL_start_and_restart(E,k,Dip)
    ! Calculate V_xc
    !
    call IO_and_Messaging_switch("-report -log -io_in -io_out",CONDITION=master_cpu)
-   call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
+   call XC_potential_driver(E,k,WF_kind,WF_xc_functional,1)
    call IO_and_Messaging_switch("+report +log +io_in +io_out")
    V_xc_0=V_xc
    !       

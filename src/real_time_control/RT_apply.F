@@ -25,7 +25,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  !
  use drivers,        ONLY:l_elel_corr,l_rt_carriers_in_use,l_real_time
  use pars,           ONLY:schlen,SP
- use stderr,         ONLY:STRING_split,real2ch,intc,STRING_match
+ use stderr,         ONLY:STRING_split,real2ch,intc,STRING_same
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -114,12 +114,12 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
        db_name=db_piece(i1+1)
        if (len_trim(db_name)==0) return
        do i2=i1+1,n_pieces
-         if (STRING_match(trim(db_piece(i2)),"ubi" )) l_BOLTZ=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"ubi" )) l_BOLTZ=.TRUE.
        enddo
        do i2=1,i1-1
-         if (STRING_match(trim(db_piece(i2)),"e" )) l_E=.TRUE.
-         if (STRING_match(trim(db_piece(i2)),"f" )) l_f=.TRUE.
-         if (STRING_match(trim(db_piece(i2)),"w" )) l_W=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"e" )) l_E=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"f" )) l_f=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"w" )) l_W=.TRUE.
        enddo
      endif
      if (trim(db_piece(i1))=="@") then

@@ -35,7 +35,6 @@ subroutine PP_vloc_augment(QP_Vloc,Vloc,ik,ib,ibp)
  use FFT_m,         ONLY:fftw_plan
 #endif
  use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm,becprod
- use timing_m,      ONLY:timing
  !
 #include<memory.h>
  !

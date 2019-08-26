@@ -81,6 +81,7 @@ module BS_solvers
  logical  :: BSS_eval_JDOS
  logical  :: BSS_add_antiresonant
  logical  :: BSS_eels_to_eps
+ logical  :: BSS_uses_pert_SOC=.FALSE.
  !
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.

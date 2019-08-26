@@ -203,7 +203,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    io_V=io_SC_components('V' ,E,ID(3))
  endif
  !
- !
  if (l_SC_RESTART) then
    !
    if ((1._SP-SC_cycle_mixing)>1.E-5) call &

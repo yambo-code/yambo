@@ -29,7 +29,7 @@ subroutine QP_DBs_initialize()
  use parser_m,  ONLY:PARSER_array
  use IO_m,      ONLY:OP_RD_CL,DUMP,io_control,NONE
  use units,     ONLY:HA2EV
- use YPP,       ONLY:l_QP_DBs_create_and_modify,n_QP_dbs,&
+ use YPPm,      ONLY:l_QP_DBs_create_and_modify,n_QP_dbs,&
 &                    QP_user_corrections,QP_db_input_control
  !
 #include<memory.h>

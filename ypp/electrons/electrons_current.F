@@ -29,7 +29,7 @@ subroutine electrons_current(Xk,Xen)
  use FFT_m,          ONLY:fft_size
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use YPP,            ONLY:plot_title,l_norm_to_one,current_dir,plot_dim,output_fname,use_gnuplot,&
+ use YPPm,           ONLY:plot_title,l_norm_to_one,current_dir,plot_dim,output_fname,use_gnuplot,&
 &                         use_cube,use_xcrysden,plot_is_1D,v2plot
  use com,            ONLY:msg,of_open_close,error
  use interfaces,     ONLY:el_density_and_current

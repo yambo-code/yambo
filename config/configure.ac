@@ -98,7 +98,6 @@ fi
 AC_SUBST(MAKE)
 # ============================================================================
 #AR 
-#AC_DISABLE_SHARED
 AC_CHECK_TOOL(AR, ar, false)
 test -z "$AR" && AR=ar
 test -z "$AR_FLAGS" && AR_FLAGS="-ru"
@@ -276,11 +275,11 @@ ACX_LIBXC
 # Prepare the REPORT file variables
 ACX_REPORT()
 # ============================================================================
-AC_CONFIG_HEADERS([include/c_defs.h:include/c_defs.h.in])
+AC_CONFIG_HEADERS([include/headers/common/have_malloc.h:include/headers/common/have_malloc.h.in])
 AC_CONFIG_FILES([config/setup config/Makefile config/report config/msg_ydb
                  src/wf_and_fft/sgfft.F
                  sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh
-                 driver/codever.h driver/editor.h src/external_c/.objects include/branch.inc])
+                 driver/include/editor.h src/tools/.objects driver/include/version.h include/branch.inc])
 #
 AC_OUTPUT
 #

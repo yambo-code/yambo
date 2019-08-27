@@ -40,8 +40,8 @@ AC_SUBST(enable_keep_objects)
 #
 # ============================================================================= 
 # KEEP SOURCE FILES 
-AC_ARG_ENABLE(keep-src, AC_HELP_STRING([--enable-keep-src], [Keep preprocessed.f90 file. Default is no.]))
-if test x"$enable_keep_src" = "x";    then enable_keep_src="no" ; fi
+AC_ARG_ENABLE(keep-src, AC_HELP_STRING([--enable-keep-src], [Keep preprocessed.f90 file. Default is yes.]))
+if test x"$enable_keep_src" = "x";    then enable_keep_src="yes" ; fi
 if test x"$enable_keep_src" = "xyes"; then enable_keep_src="yes"; fi
 AC_SUBST(enable_keep_src)
 #

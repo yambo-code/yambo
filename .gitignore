@@ -25,6 +25,7 @@ include/fortran_driver.h
 include/kind.h
 include/tool.h
 include/version.h
+include/branch.inc
 src/tools/.objects
 config.status
 config/report
@@ -44,6 +45,7 @@ lib/install/make_iotk.inc
 lib/iotk/make.sys
 lib/iotk/make_iotk.inc
 lib/*/*stamp
+lib/*/package-installed
 lib/*/lib
 lib/*/bin
 lib/*/tmp

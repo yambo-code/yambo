@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module YPP
+module YPPm
  !
  use pars,      ONLY:SP,DP,lchlen,schlen
  use R_lattice, ONLY:bz_samp
@@ -141,7 +141,8 @@ module YPP
  logical      ::l_free_hole
  logical      ::l_angular_momentum
  logical      ::l_position
- integer      ::ncell(3)     
+ integer      ::ncell(3) 
+ integer      ::BSiq    
  real(SP)     ::r_hole(3)    
  real(SP)     ::deg_energy   
  real(SP)     ::EXCITON_E_treshold
@@ -324,4 +325,4 @@ module YPP
      !
    end subroutine
    !
-end module YPP
+end module YPPm

@@ -28,7 +28,7 @@ subroutine XC_eval_gga_kernel(v2rho2,v2rhosigma,v2sigma2)
  use pars,           ONLY:SP
  use com,            ONLY:error
  use electrons,      ONLY:n_spin
- use xc_functionals, ONLY:xc_spin,F_xc
+ use xc_functionals, ONLY:xc_spin
  use FFT_m,          ONLY:fft_size
  !
  implicit none

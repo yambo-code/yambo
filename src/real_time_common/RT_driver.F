@@ -121,6 +121,11 @@ subroutine RT_driver(E,X,k,q,Dip)
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
  call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
  !
+ ! QP & carriers corrections 
+ !===========================
+ !
+ call QP_apply(RT_bands,E,k,     "G",msg_fmt='rs')
+ !
  ! Dipoles
  !=========
  !
@@ -130,11 +135,6 @@ subroutine RT_driver(E,X,k,q,Dip)
  ! In dipole_driver the IO is k-dictated. Here I want only the master to write
  !
  call IO_and_Messaging_switch("RESET")
- !
- ! QP & carriers corrections 
- !===========================
- !
- call QP_apply(RT_bands,E,k,     "G",msg_fmt='rs')
  !
  ! GPL_EXCLUDE_START
  !
@@ -289,9 +289,13 @@ subroutine RT_driver(E,X,k,q,Dip)
    !============================================
    call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_tot,E,k)
    !
+   ! GPL_EXCLUDE_START
+   !
    ! Rotation in the Coherent Hamiltonian basis
    !============================================
    call RT_Hamiltonian_diagonalize(E,k,OBSERVABLES(22:25),A_tot)
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================

@@ -33,7 +33,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_magnons
+&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
@@ -43,19 +43,19 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
- use it_m,           ONLY:it,initactivate,initdefs,rstatus,initmode,initinfio,&
-&                         infile,infile_dump,ofiles_append,runlevel_is_on,&
-&                         switch_off_runlevel,check_verbosity
+ use it_tools,       ONLY:it,initactivate,initinfio,infile_dump,ofiles_append,&
+&                         switch_off_runlevel,check_verbosity,runlevel_is_on
+ use it_m,           ONLY:initdefs,rstatus,initmode,infile,nrnlvls,rnlvls
  use parallel_m,     ONLY:PP_redux_wait,master_cpu
  use com,            ONLY:msg,repfile,com_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
- use LIVE_t,         ONLY:live_timing_is_on,what_is_running
+ use LIVE_t,         ONLY:live_timing_is_on
  use QP_m,           ONLY:QP_t,QP_state,QP_reset,&
 &                         QP_table,COHSEX_use_empties
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset
- use stderr,         ONLY:write_to_log,log_as_a_file,logfile,STRING_add,STRING_remove,STRING_match
+ use stderr,         ONLY:write_to_log,log_as_a_file,logfile,STRING_add,STRING_remove,STRING_same
  use R_lattice,      ONLY:q0_def_norm,bz_samp,bz_samp_reset 
  use BS,             ONLY:BS_bands,BS_n_g_W,&
 &                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode,BSK_mode
@@ -93,35 +93,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(w_samp)     ::Xxcw
  type(levels)     ::en_sc
  !
- integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err
- !
- ! What is running ?
- !
- what_is_running='YAMBO'
-#if defined _ELPH 
- what_is_running='YAMBO_PH'
-#endif
-#if defined _SC
- what_is_running='YAMBO_SC'
-#endif
-#if defined _RT
- what_is_running='YAMBO_RT'
-#endif
-#if defined _NL
- what_is_running='YAMBO_NL'
-#endif
-#if defined _MAGNETIC
- what_is_running='YAMBO_MAGNETIC'
-#endif
-#if defined _ELECTRIC
- what_is_running='YAMBO_ELECTRIC'
-#endif
-#if defined _QED
- what_is_running='YAMBO_QED'
-#endif
-#if defined _PL
- what_is_running='YAMBO_PL'
-#endif
+ integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err,i_r
  !
  ! Presets
  !
@@ -231,7 +203,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !RUNLEVELS VARIABLES ACTIVATION (LOGICALS FROM INPUT FILE)
  !
- if (.not.any(rstatus>0)) rstatus(1)=-1
+ if (.not.any(rstatus>0)) then
+   do i_r=1,nrnlvls
+     if (trim(rnlvls(i_r,1))=="setup") rstatus(i_r)=-1
+   enddo
+ endif
  call logicalson
  call varsetup2
  call logicalson
@@ -328,7 +304,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _PL
        l_photolum=runlevel_is_on('photolum')
 #endif
-       l_magnons=runlevel_is_on('magnons')
        l_tddft=runlevel_is_on('tddft')
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
@@ -412,12 +387,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      ! Setup logicals which are not runlevels
      !
-     l_rpa_IP     = STRING_match(trim(Chi_mode),"IP").or.STRING_match(trim(BSK_mode),"IP")
-     l_td_hartree = STRING_match(trim(Chi_mode),"HARTREE").or.STRING_match(trim(BSK_mode),"HARTREE")
-     l_alda_fxc   = STRING_match(trim(Chi_mode),"ALDA").or.STRING_match(trim(BSK_mode),"ALDA")
-     l_lrc_fxc    = STRING_match(trim(Chi_mode),"LRC")
-     l_pf_fxc     = STRING_match(Chi_mode,'PF')      
-     l_bs_fxc     = STRING_match(trim(Chi_mode),"BSFXC").or.STRING_match(trim(BSK_mode),"BSFXC")
+     l_rpa_IP     = STRING_same(trim(Chi_mode),"IP").or.STRING_same(trim(BSK_mode),"IP")
+     l_td_hartree = STRING_same(trim(Chi_mode),"HARTREE").or.STRING_same(trim(BSK_mode),"HARTREE")
+     l_alda_fxc   = STRING_same(trim(Chi_mode),"ALDA").or.STRING_same(trim(BSK_mode),"ALDA")
+     l_lrc_fxc    = STRING_same(trim(Chi_mode),"LRC")
+     l_pf_fxc     = STRING_same(Chi_mode,'PF')      
+     l_bs_fxc     = STRING_same(trim(Chi_mode),"BSFXC").or.STRING_same(trim(BSK_mode),"BSFXC")
      l_tddft      = l_alda_fxc.or.l_lrc_fxc.or.l_bs_fxc
      l_td_hf      = trim(BSK_mode)=="HF"
      l_W_eh       = trim(BSK_mode)=="SEX"
@@ -433,7 +408,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      Dip%bands_ordered=.not.all_bands
 #if defined _SC  || defined _RT || defined _NL
-     l_local=l_sc_run.or.l_real_time.or.l_nl_optics.or.l_magnons
+     l_local=l_sc_run.or.l_real_time.or.l_nl_optics
      if (l_local)         Dip%bands_ordered=.false.
 #endif
 #if defined _QED 
@@ -536,7 +511,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
      !
      if (len_trim(BSE_mode)==0                ) BSE_mode="retarded"
-     if (STRING_match(trim(BSE_mode),"causal")) BSE_mode="retarded"
+     if (STRING_same(trim(BSE_mode),"causal")) BSE_mode="retarded"
      !
      if (l_bse) then
        if (l_rpa_IP)                   BS_res_mode='none'

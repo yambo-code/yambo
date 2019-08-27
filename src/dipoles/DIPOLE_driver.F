@@ -94,6 +94,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  l_magn_dipoles=.false.
 #if defined _SC  || defined _RT
+ call parser('EvalMagnons'  ,   l_magnons)
  l_magn_dipoles=(l_real_time.or.l_magnons).and.n_spin>1
 #endif
  !

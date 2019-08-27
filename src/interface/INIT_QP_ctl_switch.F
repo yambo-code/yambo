@@ -23,7 +23,7 @@
 !
 subroutine INIT_QP_ctl_switch(what)
  !
- use it_m,       ONLY:initactivate
+ use it_tools,   ONLY:initactivate
  use electrons,  ONLY:n_sp_pol
  implicit none
  !

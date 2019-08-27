@@ -47,7 +47,7 @@ subroutine cutoff_driver(q)
  use vec_operate,   ONLY:v_is_zero
  use com,           ONLY:msg
  use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp,cut_description,ws_cutoff
- use stderr,        ONLY:string_split,string_pack
+ use stderr,        ONLY:STRING_split,STRING_pack
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY,NONE
  use parser_m,      ONLY:parser
  use drivers,       ONLY:l_col_cut
@@ -78,16 +78,6 @@ subroutine cutoff_driver(q)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
  io_err=io_COL_CUT(ID)
- if (io_err==0) then
-   call section('*','Coloumb potential CutOff :'//trim(cut_geometry))
-   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
-   io_err=io_COL_CUT(ID)
-   return
- endif
- !
- ! Real-Space Test 
- !
- call parser('CUTCol_test',l_col_test)
  !
  ! Parsing the cut_geometry string
  !
@@ -106,13 +96,22 @@ subroutine cutoff_driver(q)
  !
  if (cut_is_sphere) is_cut=.true.
  !
- if (.not.cut_is_box) box_length=0.
+ if(any(is_cut)) call check_periodic_directions(is_cut)
+ !
+ if (io_err==0) then
+   call section('*','Coloumb potential CutOff :'//trim(cut_geometry))
+   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
+   io_err=io_COL_CUT(ID)
+   return
+ endif
+ !
+ if (.not.cut_is_box)                        box_length=0.
  if (.not.cut_is_sphere.and..not.cut_is_cyl) cyl_ph_radius=0.
- if (.not.cut_is_cyl) cyl_length=0.
- if (.not.is_cut(1)) box_length(1)=0.
- if (.not.is_cut(2)) box_length(2)=0.
- if (.not.is_cut(3)) box_length(3)=0.
- if (.not.cut_is_ws) ws_cutoff=0.
+ if (.not.cut_is_cyl)                        cyl_length=0.
+ if (.not.is_cut(1))                         box_length(1)=0.
+ if (.not.is_cut(2))                         box_length(2)=0.
+ if (.not.is_cut(3))                         box_length(3)=0.
+ if (.not.cut_is_ws)                         ws_cutoff=0.
  !
  ! Return conditions
  !
@@ -231,7 +230,9 @@ subroutine cutoff_driver(q)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=io_COL_CUT(ID)
+ !
  if (io_err/=0) then
+   !
    if (cut_is_sphere) call cutoff_sphere()
    if (cut_is_box)    call cutoff_box(q,is_cut)
    if (cut_is_cyl)    call cutoff_cylinder(q,is_cut)
@@ -240,8 +241,12 @@ subroutine cutoff_driver(q)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=io_COL_CUT(ID)
    !
-   ! Test
-   !
+ endif
+ !
+ ! Real-Space Test 
+ !
+ if (io_err/=0) then
+   call parser('CUTCol_test',l_col_test)
    if (l_col_test) call cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
  endif
  !

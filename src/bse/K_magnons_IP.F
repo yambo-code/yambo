@@ -49,12 +49,6 @@ subroutine K_magnons_IP(iq,w,Dip)
  complex(SP)       :: E_plus_W0,res(2),E_plus_W(2/n_sp_pol)
  integer           :: ik_bz,iv,ic,i_sp_pol,i_sp_pol_rev,i_T,i_T_g,ik_mem,i_pert_SOC,n_SOC
  !
- YAMBO_ALLOC(X_magnons,(BSS_n_freqs,2,4))
- X_magnons=cZERO
- !
- X_magnons(:,1,1)=w(:)
- X_magnons(:,2,1)=w(:)
- !
  n_SOC=1
  i_sp_pol_rev=1
  !

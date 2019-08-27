@@ -24,7 +24,6 @@
 subroutine ELPH_simmetrize_and_distribute_gsqF(en)
  !
  use electrons,     ONLY:levels
- use functions,     ONLY:bose_f
  use QP_m,          ONLY:QP_states_simmetrize
  use R_lattice,     ONLY:nqbz
  use parallel_m,    ONLY:PAR_COM_Q_A2A,PAR_COM_Q_A2A,PP_redux_wait,&

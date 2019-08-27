@@ -49,12 +49,17 @@ m4_include([config/acx_get_fc_kind.m4])
 m4_include([config/acx_get_mpi_kind.m4])
 m4_include([config/acx_fortran_flags.m4])
 m4_include([config/acx_mpi.m4])
+m4_include([config/acx_branch.m4])
 # 
 #  Report
 #
 m4_include([config/acx_report.m4])
+# ============================================================================
+# Current branch
+ACX_BRANCH
 #
 # Checks for library functions.
+# ============================================================================
 AC_CHECK_HEADERS([malloc.h stdlib.h unistd.h string.h sys/time.h])
 AC_FUNC_ALLOCA
 AC_C_CONST
@@ -93,7 +98,6 @@ fi
 AC_SUBST(MAKE)
 # ============================================================================
 #AR 
-#AC_DISABLE_SHARED
 AC_CHECK_TOOL(AR, ar, false)
 test -z "$AR" && AR=ar
 test -z "$AR_FLAGS" && AR_FLAGS="-ru"
@@ -271,11 +275,11 @@ ACX_LIBXC
 # Prepare the REPORT file variables
 ACX_REPORT()
 # ============================================================================
-AC_CONFIG_HEADERS([include/c_defs.h:include/c_defs.h.in])
+AC_CONFIG_HEADERS([include/headers/common/have_malloc.h:include/headers/common/have_malloc.h.in])
 AC_CONFIG_FILES([config/setup config/Makefile config/report config/msg_ydb
                  src/wf_and_fft/sgfft.F
                  sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh
-                 driver/codever.h driver/editor.h src/external_c/.objects])
+                 driver/include/editor.h src/tools/.objects driver/include/version.h include/branch.inc])
 #
 AC_OUTPUT
 #

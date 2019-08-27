@@ -24,7 +24,7 @@
 subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCUIT_dE)
  !
  use pars,           ONLY:SP,schlen
- use YPP,            ONLY:BANDS_steps,coo_in,coo_out,K_transform,INTERP_grid,&
+ use YPPm,           ONLY:BANDS_steps,coo_in,coo_out,K_transform,INTERP_grid,&
 &                         CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
 &                         CIRCUIT_made_of_SPECIAL_k,BANDS_E_and_k_db,SPECIAL_k,&
 &                         BANDS_path,CIRCUIT_k_label,SPECIAL_k_label

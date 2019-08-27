@@ -118,6 +118,7 @@ module X_output
        message(2) = '# EELS @ Q('//trim(intc(iq))//')  [iku]:'
        message(3) = '# Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//') [iku]'
        message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [iku]:'
+       message(9) = '# Joint density of states @ Q('//trim(intc(iq))//') [iku] :'
      else  if (ig/=1) then
        message(1) = '# Absorption @ Q('//trim(intc(iq))//') + G('//trim(intc(ig))//') [iku] :'
        message(2) = '# EELS @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//') [iku]:'

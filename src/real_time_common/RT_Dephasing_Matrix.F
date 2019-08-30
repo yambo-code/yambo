@@ -78,7 +78,7 @@ subroutine RT_Dephasing_Matrix(E)
    ! Scalar Phase value
    !--------------------
    !
-   call msg('rs','[RT] External scalar Dephasing applied')
+   call msg('rs','[RT] Constant Dephasing applied')
    !
    do ib_1=RT_bands(1),RT_bands(2)
      do ib_2=ib_1+1,RT_bands(2)

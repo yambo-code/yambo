@@ -58,16 +58,10 @@ subroutine WF_shift_kpoint(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
  !
  ! Generate G_m_G if it is not present
  !
- if(allocated(G_m_G).and.size(G_m_G)==1) deallocate(G_m_G)
+ deallocate(G_m_G)
  !
- if(.not.allocated(G_m_G)) then
-   iG0=max(maxval(g0_idx(:,1)),maxval(g0_idx(:,2)))
-   ng_max=eval_G_minus_G(wf_ng,iG0)
- else
-   ng_max=size(G_m_G(:,1))
- endif
- !
- WF_k_out=cZERO
+ iG0=max(maxval(g0_idx(:,1)),maxval(g0_idx(:,2)))
+ ng_max=eval_G_minus_G(wf_ng,iG0)
  !
  do id=1,3
    !

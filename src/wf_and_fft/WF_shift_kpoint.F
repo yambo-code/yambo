@@ -50,15 +50,13 @@ subroutine WF_shift_kpoint(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
  WF_tmp=WF_k_in
  !
  if(all(k_map%g0_idx==-1)) then
-    call k_find_smallest_g0(g0_idx,g0_length)
+   call k_find_smallest_g0(g0_idx,g0_length)
  else
-    g0_idx   =k_map%g0_idx
-    g0_length=k_map%g0_length
+   g0_idx   =k_map%g0_idx
+   g0_length=k_map%g0_length
  endif
  !
  ! Generate G_m_G if it is not present
- !
- deallocate(G_m_G)
  !
  iG0=max(maxval(g0_idx(:,1)),maxval(g0_idx(:,2)))
  ng_max=eval_G_minus_G(wf_ng,iG0)

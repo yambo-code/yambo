@@ -39,7 +39,7 @@ subroutine RT_Dephasing_Matrix(E)
  !
  integer :: ik,ib_1,ib_2,i1
  real(SP), parameter   :: tresh=1.E-5_SP
- real(SP), parameter   :: deg_tresh=1.E-3_SP
+ real(SP), parameter   :: deg_tresh=1.E-5_SP
  !
  ! %DephMatrix fields
  !
@@ -124,8 +124,8 @@ subroutine RT_Dephasing_Matrix(E)
    call msg('rs','[RT] Quasiparticle Dephasing applied')
    !
    do ik=1,nXkibz
-     do ib_1=RT_bands(1),E%nbm
-       do ib_2=E%nbf+1,RT_bands(2)
+     do ib_1=RT_bands(1),RT_bands(2)
+       do ib_2=ib_1+1,RT_bands(2)
          if ( abs(E%E(ib_1,ik,1)-E%E(ib_2,ik,1))<deg_tresh ) cycle
          RT_Deph_Matrix(ib_1,ib_2,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))
          RT_Deph_Matrix(ib_2,ib_1,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))

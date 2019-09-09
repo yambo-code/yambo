@@ -23,7 +23,7 @@
 !
 subroutine RT_Dephasing_Matrix(E)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,pi
  use units,         ONLY:FS2AUT
  use com,           ONLY:error,msg
  use electrons,     ONLY:levels
@@ -65,7 +65,7 @@ subroutine RT_Dephasing_Matrix(E)
    call msg('rs','[RT] External scalar Radiative Scattering lifetime applied')
    !
    do ib_1=RT_bands(1),RT_bands(2)
-     RT_Deph_Matrix(ib_1,ib_1,:)=1._SP/RAD_LifeTime
+     RT_Deph_Matrix(ib_1,ib_1,:)=2._SP*pi/RAD_LifeTime
    enddo
    !
  endif
@@ -78,12 +78,12 @@ subroutine RT_Dephasing_Matrix(E)
    ! Scalar Phase value
    !--------------------
    !
-   call msg('rs','[RT] External scalar Dephasing applied')
+   call msg('rs','[RT] External Scalar Dephasing applied')
    !
    do ib_1=RT_bands(1),RT_bands(2)
      do ib_2=ib_1+1,RT_bands(2)
-       RT_Deph_Matrix(ib_1,ib_2,:)=RT_Deph_Matrix(ib_1,ib_2,:)+1._SP/Phase_LifeTime
-       RT_Deph_Matrix(ib_2,ib_1,:)=RT_Deph_Matrix(ib_2,ib_1,:)+1._SP/Phase_LifeTime
+       RT_Deph_Matrix(ib_1,ib_2,:)=RT_Deph_Matrix(ib_1,ib_2,:)+2._SP*pi/Phase_LifeTime
+       RT_Deph_Matrix(ib_2,ib_1,:)=RT_Deph_Matrix(ib_2,ib_1,:)+2._SP*pi/Phase_LifeTime
      enddo
    enddo
    !
@@ -93,6 +93,10 @@ subroutine RT_Dephasing_Matrix(E)
    !
    Matr_Deph=.true.
    if (any(RT_INPUT_Deph_limits(:,4)<0._SP)) Matr_Deph =.false.
+   !
+   ! Convert fs to atomic units
+   !
+   RT_INPUT_Deph_limits(:,4)=RT_INPUT_Deph_limits(:,4)*FS2AUT
    !
    if(Matr_Deph) then
      !
@@ -107,8 +111,8 @@ subroutine RT_Dephasing_Matrix(E)
        if(any((/ib_1,ib_2/)>RT_bands(2)).or.any((/ib_1,ib_2/)<RT_bands(1))) &
 &                               call error("DephMatrix indexes out of the range! Wrong band assignment") 
        if(ik<=0.or.ik>nXkibz)   call error("DephMatrix indexes out of the range! Wrong kpoint assignment") 
-       RT_Deph_Matrix(ib_1,ib_2,ik)  =RT_Deph_Matrix(ib_1,ib_2,ik)+1._SP/RT_INPUT_Deph_limits(i1,4)/FS2AUT
-       RT_Deph_Matrix(ib_2,ib_1,ik)  =RT_Deph_Matrix(ib_2,ib_1,ik)+1._SP/RT_INPUT_Deph_limits(i1,4)/FS2AUT
+       RT_Deph_Matrix(ib_1,ib_2,ik)  =RT_Deph_Matrix(ib_1,ib_2,ik)+2._SP*pi/RT_INPUT_Deph_limits(i1,4)
+       RT_Deph_Matrix(ib_2,ib_1,ik)  =RT_Deph_Matrix(ib_2,ib_1,ik)+2._SP*pi/RT_INPUT_Deph_limits(i1,4)
      enddo
      !
    endif

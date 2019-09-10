@@ -21,17 +21,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function G_index(v1)
+integer function G_index(v1,accept_fail)
  !
  use pars,         ONLY:SP
  use zeros,        ONLY:G_iku_zero
  use vec_operate,  ONLY:v_is_zero,iku_v_norm
  use R_lattice,    ONLY:g_vec,ng_in_shell,n_g_shells,E_of_shell
- use com,          ONLY:error
+ use com,          ONLY:error,warning
  !
  implicit none
  !
  real(SP), intent(in)  :: v1(3)
+ logical,  intent(in)  :: accept_fail
  !
  integer   :: ig,i_shell,ng1,ng2
  real(SP)  :: E_of_shell_v1
@@ -69,7 +70,11 @@ integer function G_index(v1)
    endif
  enddo
  !
- if(G_index==0) call error(" Error search for G=G1-G2 !!")
+ if(G_index==0) then
+   if(.not.accept_fail) call error(" Error search for G=G1-G2 !!")
+   if(     accept_fail) call warning(" Error search for G=G1-G2 !!")
+ endif
+ !
  return
  !
 end function

@@ -266,8 +266,10 @@ subroutine bz_samp_indexes(k,Xk,q)
      v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)-q%ptbz(iqbz,:)
      call c2a(v_in=v1,mode='ka2i')
      !
-     if (iqs==1)         qindx_X(iqibz,ikbz  ,2)=G_index(v1)
-     if (bse_scattering) qindx_B(ikbz ,ikbz_p,2)=G_index(v1)
+     if (iqs==1)         qindx_X(iqibz,ikbz  ,2)=G_index(v1,.true.)
+     if (bse_scattering) qindx_B(ikbz ,ikbz_p,2)=G_index(v1,.false.)
+     !
+     if ( iqs==1 .and. qindx_X(iqibz,ikbz,2)==0 ) exit
      !
    enddo
    !
@@ -361,8 +363,8 @@ subroutine bz_samp_indexes(k,Xk,q)
      if (coll_scattering) qindx_C(ikbz,iqbz,1)=ikbz_p
      v1=k%ptbz(ikbz,:)-k%ptbz(ikbz_p,:)-q%ptbz(iqbz,:)
      call c2a(v_in=v1,mode='ka2i')
-     if (iks==1) qindx_S(ikibz,iqbz,2)=G_index(v1)
-     if (coll_scattering) qindx_C(ikbz,iqbz,2)=G_index(v1)
+     if (iks==1) qindx_S(ikibz,iqbz,2)=G_index(v1,.false.)
+     if (coll_scattering) qindx_C(ikbz,iqbz,2)=G_index(v1,.false.)
    enddo
    !
    if (master_thread) call live_timing(steps=1)

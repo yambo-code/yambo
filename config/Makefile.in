@@ -405,7 +405,7 @@ define mksrc
  done
 endef
 define mk_driver_src
- then cp -r $(topdir)/driver/include/*.h $(topdir)/driver/options/*.h include/ ;\
+ cp -r $(topdir)/driver/include/*.h $(topdir)/driver/options/*.h include/ ;\
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/libdriver_$$ldir.a" || test "$(keep_objs)" = yes  ; then \
    rm -f "$(libdir)/libdriver_$$ldir.a" ; \

@@ -33,6 +33,7 @@ config/setup
 config/msg_ydb
 driver/codever.h
 driver/editor.h
+include/branch.inc
 include/netcdf.h
 include/netcdf_*.h
 include/netcdf.inc

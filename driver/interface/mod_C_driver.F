@@ -33,6 +33,7 @@ module C_driver
  character(50):: code_project
  character(50):: code_hash
  character(50):: code_libraries
+ character(50):: code_branch
  !
  interface  
    !

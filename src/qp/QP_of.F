@@ -30,7 +30,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  use electrons, ONLY:levels,spin,n_sp_pol
  use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Vnl_xc,QP_table,&
 &                    QP_solver,QP_n_states,l_extended_output,Vxc_kind,&
-&                    use_GreenF_to_eval_QP,Vnlxc_kind,&
+&                    use_GreenF_to_eval_QP,Vnlxc_kind,report_Vxc,&
 &                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral,&
 &                    QP_states_simmetrize,QP_G_info,Time_of
  use stderr,    ONLY:set_real_printed_length
@@ -113,8 +113,16 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
 #endif
  endif
  if (what=='hf') then
-   ntitles=6
-   titles_order(:ntitles)=(/9,10,4,26,1,11/)
+   ntitles=4
+   titles_order(:ntitles)=(/9,10,4,26/)
+   if (report_Vxc) then
+     ntitles=ntitles+1
+     titles_order(ntitles)=1
+   endif 
+   if (report_Vnlxc) then
+     ntitles=ntitles+1
+     titles_order(ntitles)=11
+   endif 
  endif
  !
  if (l_extended_output) then
@@ -156,7 +164,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        i_desc_min=2
    end select
    !
-   if (what==          'hf') call msg('o '//what,'# Hartree-Fock Components and Corrections')
+   if (what==        'hf') call msg('o '//what,'# Hartree-Fock Components and Corrections')
    !
    if (index(what,"qp")>0) call msg('o '//what,'#')
    !
@@ -189,10 +197,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
            else
              values(8)=real(qp%E(i1)-qp%E_bare(i1))*HA2EV
            endif
-         if (report_Vnlxc) then
-           values(1)=real(QP_Vxc(i1))*HA2EV
-           values(11)=real(QP_Vnl_xc(i1))*HA2EV
-         endif
+         if (report_Vxc)     values(1) =real(QP_Vxc(i1))*HA2EV
+         if (report_Vnlxc)   values(11)=real(QP_Vnl_xc(i1))*HA2EV
        endif
        !
        values(4:6)  =(/qp%E_bare(i1)*HA2EV,real(qp%E(i1)*HA2EV),real(qp%Z(i1))/)
@@ -224,8 +230,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        values(4:5)  =(/qp%E_bare(i1)*HA2EV,real(qp%E(i1)*HA2EV)/)
        values(8)=real(qp%E(i1)-qp%E_bare(i1))*HA2EV
        values(9:10) =(/real(qp_k),real(qp_b)/)
-       values(1)=real(QP_Vxc(i1))*HA2EV
-       values(11)=real(QP_Vnl_xc(i1))*HA2EV
+       if (report_Vxc)   values(1)=real(QP_Vxc(i1))*HA2EV
+       if (report_Vnlxc) values(11)=real(QP_Vnl_xc(i1))*HA2EV
        values(26)=values(5)
      endif
      !

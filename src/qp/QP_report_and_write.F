@@ -31,7 +31,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  use QP_m,          ONLY:QP_t,QP_dSc,QP_Sc,QP_Vnl_xc,QP_Vxc,QP_table,&
 &                        QP_n_states,QP_dSc_steps,use_GreenF_to_eval_QP,On_Mass_Shell_approx,&
 &                        QP_solver,report_Vnlxc,report_Sc,report_dSc,Vxc_kind,Vnlxc_kind,&
-&                        l_QP_Expand,QP_reset,Time_of
+&                        l_QP_Expand,QP_reset,Time_of,report_Vxc
 #if defined _ELPH
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
@@ -75,6 +75,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
  report_Sc=.not.QPdb_read_err==0.and..not.On_Mass_Shell_approx.and..not.use_GreenF_to_eval_QP
  report_Vnlxc=l_elel_corr.and..not.l_life
+ report_Vxc  =report_Vnlxc
  report_dSc=.not.On_Mass_Shell_approx.and..not.trim(QP_solver)=='g'.and..not.use_GreenF_to_eval_QP.and..not.l_cohsex
  do_IO=.TRUE.
  if (l_life.or.QPdb_read_err==0) then

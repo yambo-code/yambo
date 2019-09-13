@@ -86,12 +86,13 @@ module QP_m
  !
  ! Logicals used for reporting
  !
+ logical           :: report_Vxc
  logical           :: report_Vnlxc
  logical           :: report_Sc
  logical           :: report_dSc
  logical           :: l_extended_output
- character(12)     :: Vnlxc_kind
- character(10)     :: Vxc_kind
+ character(schlen) :: Vnlxc_kind
+ character(schlen) :: Vxc_kind
  !
  type QP_t
    !

@@ -122,8 +122,6 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
  found_SC_DB      = .not.(io_err==IO_NO_DATABASE)
  compatible_SC_DB = io_err == 0
  !
- if (what=="check_WF_DB")  compatible_SC_DB = n_bands<= SC_bands(2)
- !
  if (io_err==0.and.present(kind)) then
    kind=SC_kind
    xc_functional=SC_xc_functional

@@ -26,15 +26,11 @@ subroutine XCo_report(qp,E,k)
  use drivers,       ONLY:l_real_time,l_gw0
  use units,         ONLY:HA2EV
  use parallel_m,    ONLY:PP_redux_wait
- use pars,          ONLY:schlen,SP
+ use pars,          ONLY:schlen
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol,spin,E_reset,E_duplicate
  use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind,&
 &                        QP_t,QP_nb,QP_nk,QP_reset,report_Vnlxc,report_Sc,report_dSc,report_Vxc
-#if defined _SC
- use global_XC,     ONLY:WF_kind,H_SE_FOCK,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXX,H_SE_EXXC,H_SE_SRPA
-#endif
- use global_XC,     ONLY:G_WF_xc_string
  use com,           ONLY:msg
  use stderr,        ONLY:intc,real2ch
  use xc_functionals,ONLY:E_xc_val
@@ -52,39 +48,15 @@ subroutine XCo_report(qp,E,k)
  character(schlen) ::sec_mode_and_message(2),ch,ch_spin,nloc_fmt,loc_fmt
  logical           ::l_Vxc,l_Vnl_xc
  !
+ ! Logicals
  !
  l_Vxc   =allocated(QP_Vxc)
  l_Vnl_xc=allocated(QP_Vnl_xc)
  !
-#if defined _SC
- if (WF_kind < 100) then
-   Vxc_kind='LDA'
- elseif  (WF_kind < 200) then
-   Vxc_kind='GGA'
- elseif  (WF_kind == H_SE_EXX) then
-   Vxc_kind='SC_EXX'
- elseif  (WF_kind == H_SE_EXXC) then
-   Vxc_kind='SC_EXX+C'
- elseif  (WF_kind == H_SE_SRPA) then
-   Vxc_kind='SC_SRPA'
- else
-   Vxc_kind='none'
+ if (l_Vxc) then
+   call msg('nr','[xc] E_xc :  '//trim(real2ch(E_xc_val))//' [Ha]')
+   call msg( 'r','     E_xc :  '//trim(real2ch(E_xc_val*2.0))//' [Ry]')
  endif
- if (WF_kind == H_SE_COHSEX) then 
-   Vnlxc_kind='SC_COHSEX'
- else if (WF_kind == H_SE_COH) then 
-   Vnlxc_kind='SC_COH'
- else if (WF_kind == H_SE_SEX) then 
-   Vnlxc_kind='SC_SEX'
- else if (WF_kind == H_SE_FOCK) then 
-   Vnlxc_kind='SC_FOCK'
- endif
-#else
- Vxc_kind=trim(G_WF_xc_string)
-#endif
- !
- call msg('nr','[xc] E_xc :  '//trim(real2ch(E_xc_val))//' [Ha]')
- call msg( 'r','     E_xc :  '//trim(real2ch(E_xc_val*2.0))//' [Ry]')
  !
  call QP_reset(qp)
  call E_reset(E_dummy)
@@ -103,9 +75,6 @@ subroutine XCo_report(qp,E,k)
  YAMBO_ALLOC(qp%E,(qp%n_states))
  YAMBO_ALLOC(qp%E_bare,(qp%n_states))
  !
- loc_fmt =' '
- nloc_fmt=' '
- !
  ik=-1
  do i_qp=1,QP_n_states
    !
@@ -115,13 +84,17 @@ subroutine XCo_report(qp,E,k)
    i_s=spin(QP_table(i_qp,:))
    !
    if (ib==ibp) then
-     E_dummy%E(ib,ikp,i_s)=E%E(ib,ikp,i_s)+real(QP_Vnl_xc(i_qp)-QP_Vxc(i_qp),SP)
+     E_dummy%E(ib,ikp,i_s)=E%E(ib,ikp,i_s)
+     if (l_Vnl_xc) E_dummy%E(ib,ikp,i_s)=E_dummy%E(ib,ikp,i_s)+real(QP_Vnl_xc(i_qp))
+     if (l_Vxc)    E_dummy%E(ib,ikp,i_s)=E_dummy%E(ib,ikp,i_s)-real(QP_Vxc(i_qp))
      qp%E(i_qp)           =E_dummy%E(ib,ikp,i_s)
      qp%E_bare(i_qp)      =E%E(ib,ikp,i_s)
    endif
    !
    if (ikp/=ik) then
      ik=ikp
+     loc_fmt =' '
+     nloc_fmt=' '
      if (l_Vxc)    loc_fmt ='+  Local '//trim(Vxc_kind)
      if (l_Vnl_xc) nloc_fmt='Non-Local '//trim(Vnlxc_kind)
      call msg('nr',trim(nloc_fmt)//trim(loc_fmt)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))

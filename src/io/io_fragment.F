@@ -112,8 +112,6 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  io_file(ID)=' '
  !
  fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(intc(i_frag))
- ! Cannot use the following line in place of the following three becasue of the name "fragments" instead of "fragment"
- !if (present(j_fragment)) fragment_filename=trim(fragment_filename)//"_"//trim(intc(j_fragment))
  if (present(j_fragment)) then
    fragment_filename=trim(io_extension(ID)) &
 &                    //"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))

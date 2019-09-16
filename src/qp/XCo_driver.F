@@ -28,13 +28,15 @@ subroutine XCo_driver(E,k,Xk,q)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use QP_m,          ONLY:QP_Vxc,QP_Vnl_xc,QP_n_states,XCo_Hartree_Fock,QP_t
+ use QP_m,          ONLY:QP_Vxc,QP_Vnl_xc,QP_n_states,XCo_Hartree_Fock,QP_t,Vxc_kind,Vnlxc_kind
  use interfaces,    ONLY:WF_free
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening
  use pseudo,        ONLY:PP_nlcc_free
 #if defined _SC
- use global_XC,     ONLY:WF_kind,H_SE_FOCK,H_SE_HARTREE,H_SE_COH,H_SE_SEX
+ use hamiltonian,   ONLY:l_sc_V_is_local
+ use global_XC,     ONLY:WF_kind,H_SE_FOCK,H_SE_HARTREE,H_SE_COH,H_SE_SEX,EXT_NONE,&
+&                        global_XC_string,WF_perturbation,WF_xc_functional
 #endif
  !
 #include<memory.h>
@@ -71,9 +73,9 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  ! XCo=any local => QP_Vnl_xc=F             & QP_Vxc=any local
  ! XCo=COH       => QP_Vnl_xc=F-SC_COH      & QP_Vxc= 0.
- ! XCo=SEX       => QP_Vnl_xc=2*F-SC_SEX    & QP_Vxc= 0.
- ! XCo=COHSEX    => QP_Vnl_xc=2*F-SC_COHSEX & QP_Vxc= 0.
- ! XCo=HF        => QP_Vnl_xc=0.            & QP_Vxc= 0.  (BUT COULD PRINT FOR INTERNAL CHECK THE <FOCK>)
+ ! XCo=SEX       => QP_Vnl_xc=F-SC_SEX      & QP_Vxc= 0.
+ ! XCo=COHSEX    => QP_Vnl_xc=F-SC_COHSEX   & QP_Vxc= 0.
+ ! XCo=HF        => QP_Vnl_xc=0             & QP_Vxc= 0.  (BUT COULD PRINT FOR INTERNAL CHECK THE <FOCK>)
  ! XCo=EXX       => QP_Vnl_xc=F             & QP_Vxc= EXX
  ! XCo=EXXC      => QP_Vnl_xc=F             & QP_Vxc= EXXc
  ! XCo=SRPA      => QP_Vnl_xc=F             & QP_Vxc= SRPA
@@ -91,7 +93,7 @@ subroutine XCo_driver(E,k,Xk,q)
  if (WF_kind_no_H==H_SE_SEX)          l_Vxc   =.FALSE.
  if (WF_kind_no_H==H_SE_SEX+H_SE_COH) l_Vxc   =.FALSE.
  !
- if (WF_kind_no_H==H_SE_FOCK) l_Vnl_xc   =.FALSE.
+ if (WF_kind_no_H==H_SE_FOCK)      l_Vnl_xc   =.FALSE.
 #endif
  !
  if (.not.l_Vxc.and..not.l_Vnl_xc) then
@@ -102,8 +104,8 @@ subroutine XCo_driver(E,k,Xk,q)
  ! Section
  !
  sec_mode_and_message(1)='*'
- if (l_Vxc     .and.l_Vnl_xc) sec_mode_and_message(2)='Local + Non-Local Exchange-Correlation'
- if (.not.l_Vxc.and.l_Vnl_xc) sec_mode_and_message(2)='Non-Local Exchange-Correlation'
+ if (l_Vxc     .and.l_Vnl_xc) sec_mode_and_message(2)='Local Exchange-Correlation + Non-Local Fock'
+ if (.not.l_Vxc.and.l_Vnl_xc) sec_mode_and_message(2)='Non-Local Fock'
  if (l_Vxc.and..not.l_Vnl_xc) sec_mode_and_message(2)='Local Exchange-Correlation'
  if (l_acfdt)   sec_mode_and_message(1)='p'
  !
@@ -176,6 +178,26 @@ subroutine XCo_driver(E,k,Xk,q)
    !
  endif
  !
+ ! Kind transfer
+ !===============
+ !
+ Vxc_kind=trim(global_XC_string(WF_kind,WF_xc_functional,EXT_NONE))
+ Vnlxc_kind="Hartree-Fock"
+#if defined _SC
+ if (.not.l_sc_V_is_local) then
+   Vnlxc_kind="Hartree-Fock-("//trim(global_XC_string(WF_kind,WF_xc_functional,WF_perturbation))//")"
+ endif
+ !
+ ! Non-local part of SC xc => V_nlxc
+ !===================================
+ !
+ call QP_load_SC_xc( )
+ !
+#endif
+ !
+ ! I/O
+ !=====
+ !
  if (.not.l_sc_run)  then
    call WF_free(WF)
    call XCo_report(qp,E,k)
@@ -183,21 +205,23 @@ subroutine XCo_driver(E,k,Xk,q)
    io_err=io_HF_and_locXC(ID)
  endif
  !
+ stop
+ !
  contains
    !
    subroutine LOCAL_alloc()
      if (.not.allocated(QP_Vnl_xc).and.l_Vnl_xc) then
        YAMBO_ALLOC(QP_Vnl_xc,(QP_n_states))
+       QP_Vnl_xc=cZERO
      endif
      if (.not.allocated(QP_Vxc).and.l_Vxc) then
        YAMBO_ALLOC(QP_Vxc,(QP_n_states))
+       QP_Vxc=cZERO
      endif
      if (.not.allocated(QP_Vnl_sex).and.l_screen_hyb) then
        YAMBO_ALLOC(QP_Vnl_sex,(QP_n_states))
        QP_Vnl_sex=cZERO
      endif
-     QP_Vnl_xc=cZERO
-     QP_Vxc=cZERO
    end subroutine
    !
 end subroutine

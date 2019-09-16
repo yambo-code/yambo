@@ -6,7 +6,7 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 !----------------------------------------------------------------------------
-SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, becpp )
+subroutine PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, becpp )
   !----------------------------------------------------------------------------
   !
   ! This routine computes
@@ -23,7 +23,6 @@ SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, 
   USE uspp_param,    ONLY : upf, nh, nhm
   USE noncollin_module,     ONLY : noncolin, npol
   USE becmod,        ONLY : bec_type
-  use timing_m,      ONLY : timing
   !
   IMPLICIT NONE
   COMPLEX(SP),    INTENT(OUT):: becprod(nhm,nhm,nat,nspin)
@@ -33,7 +32,7 @@ SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, 
   !
   COMPLEX(SP), ALLOCATABLE :: auxk1(:,:), auxk2(:,:), aux_nc(:,:)
   COMPLEX(SP), ALLOCATABLE :: aux_gk(:,:)
-  INTEGER :: ikb, ih, jh, na, np, is, js, i_err
+  INTEGER :: ikb, ih, jh, na, np, is,  i_err
   
   !
   DO np = 1, ntyp
@@ -141,10 +140,10 @@ SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, 
      !
   END DO
   !
-END SUBROUTINE PP_becprod_calc
+end subroutine PP_becprod_calc
 !
 !----------------------------------------------------------------------------
-SUBROUTINE add_becprod_nc ( na, np, aux_nc, becprod, nspin_mag, domag )
+subroutine add_becprod_nc ( na, np, aux_nc, becprod, nspin_mag, domag )
 !----------------------------------------------------------------------------
   !
   ! This routine multiplies aux_nc by the identity and the Pauli matrices,
@@ -165,8 +164,7 @@ SUBROUTINE add_becprod_nc ( na, np, aux_nc, becprod, nspin_mag, domag )
   !
   ! ... local variables
   !
-  INTEGER :: ih, jh, ijh
-  REAL(SP) :: fac
+  INTEGER :: ih, jh
   !
   DO jh = 1, nh(np)
   DO ih = 1, nh(np)
@@ -188,10 +186,10 @@ SUBROUTINE add_becprod_nc ( na, np, aux_nc, becprod, nspin_mag, domag )
   ENDDO
   ENDDO
   
-END SUBROUTINE add_becprod_nc
+end subroutine add_becprod_nc
 !
 !----------------------------------------------------------------------------
-SUBROUTINE add_becprod_so( na, np, aux_so, becprod, nspin_mag, domag )
+subroutine add_becprod_so( na, np, aux_so, becprod, nspin_mag, domag )
   !----------------------------------------------------------------------------
   !
   ! This routine multiplies aux_so by the identity and the Pauli matrices,
@@ -214,7 +212,7 @@ SUBROUTINE add_becprod_so( na, np, aux_so, becprod, nspin_mag, domag )
   !
   ! ... local variables
   !
-  INTEGER :: ih, jh, lh, kh, ijh, is1, is2
+  INTEGER :: ih, jh, lh, kh,  is1, is2
   COMPLEX(SP) :: fac
   
   becprod(:,:,na,:) = 0.0
@@ -267,15 +265,15 @@ SUBROUTINE add_becprod_so( na, np, aux_so, becprod, nspin_mag, domag )
   ENDDO
   ENDDO
   !
-CONTAINS
-   LOGICAL FUNCTION same_lj(ih,jh,np)
+contains
+   LOGICAL function same_lj(ih,jh,np)
    INTEGER :: ih, jh, np
    !
    same_lj = ((nhtol(ih,np)==nhtol(jh,np)).AND. &
              (ABS(nhtoj(ih,np)-nhtoj(jh,np))<1.d8).AND. &
              (indv(ih,np)==indv(jh,np)) )
    !
-   END FUNCTION same_lj
+   end function same_lj
 
-END SUBROUTINE add_becprod_so
+end subroutine add_becprod_so
 

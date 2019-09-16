@@ -23,18 +23,13 @@
 !
 subroutine DIPOLE_gspace_finiteq(Xen,Xk,Dip,iq)
  !
- use drivers,            ONLY:l_sc_run
- use pars,               ONLY:SP,cI,cZERO
+ use pars,               ONLY:cZERO
  use X_m,                ONLY:global_gauge
- use D_lattice,          ONLY:x_cc
- use wave_func,          ONLY:WF,wf_ng
+ use wave_func,          ONLY:WF
  use interfaces,         ONLY:WF_load,WF_free,PARALLEL_WF_distribute,PARALLEL_WF_index
- use wrapper_omp,        ONLY:Vstar_dot_V_omp
- use FFT_m,              ONLY:fft_size
  use R_lattice,          ONLY:qindx_X,bz_samp
- use electrons,          ONLY:levels,n_sp_pol,n_spinor
+ use electrons,          ONLY:levels,n_sp_pol
  use DIPOLES,            ONLY:DIPOLE_t,DIP_projected,DIP_alloc
- use com,                ONLY:error
  use LIVE_t,             ONLY:live_timing
  use collision_el,       ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use parallel_m,         ONLY:PAR_IND_Xk_bz,PAR_Xk_bz_index,PAR_Xk_nbz

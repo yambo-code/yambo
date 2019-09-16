@@ -26,9 +26,7 @@ subroutine DIPOLE_real_space_finiteq(Xen,Xk,Dip,iq)
  ! This is an alternative form of the subroutine DIPOLE_gspace_finiteq
  ! However it misses the shift of the WFs by iGo
  !
- use drivers,            ONLY:l_sc_run
- use pars,               ONLY:SP,cI,cZERO
- use D_lattice,          ONLY:x_cc
+ use pars,               ONLY:SP,cZERO
  use wave_func,          ONLY:WF
  use interfaces,         ONLY:WF_load,WF_free,PARALLEL_WF_distribute,PARALLEL_WF_index
  use wrapper_omp,        ONLY:Vstar_dot_V_omp
@@ -36,7 +34,6 @@ subroutine DIPOLE_real_space_finiteq(Xen,Xk,Dip,iq)
  use R_lattice,          ONLY:qindx_X,bz_samp
  use electrons,          ONLY:levels,n_sp_pol,n_spinor
  use DIPOLES,            ONLY:DIPOLE_t,DIP_projected,DIP_alloc
- use com,                ONLY:error
  use LIVE_t,             ONLY:live_timing
  use parallel_m,         ONLY:PAR_IND_Xk_bz,PAR_Xk_bz_index,PAR_Xk_nbz
  !

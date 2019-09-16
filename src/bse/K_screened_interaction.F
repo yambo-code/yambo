@@ -111,7 +111,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
    io_X_err=io_X(X,Xw,XID)
    if (io_X_err<0) then
-     call warning('Reading of io_X heared failed depite previous check.')
+     call warning('Reading of io_X heared failed despite previous check.')
      return
    endif
  endif
@@ -126,7 +126,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
      io_X_err=io_X(X,Xw,XID)
      if (io_X_err<0) then
-       call warning('Reading of io_X for iq='//trim(intc(iq_W))//' failed depite previous check.')
+       call warning('Reading of io_X for iq='//trim(intc(iq_W))//' failed despite previous check.')
        return
      endif
      !

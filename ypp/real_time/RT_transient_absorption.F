@@ -25,7 +25,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  use pars,            ONLY:SP,pi,cZERO,cI
  use units,           ONLY:AUT2FS,HA2EV,SPEED_OF_LIGHT
- use R_lattice,       ONLY:bz_samp,q0_def_norm,d3k_factor,q_norm,bare_qpg
+ use R_lattice,       ONLY:bz_samp,q0_def_norm,d3k_factor
  use D_lattice,       ONLY:alat
  use electrons,       ONLY:levels,n_sp_pol,spin,spin_occ
  use LIVE_t,          ONLY:live_timing

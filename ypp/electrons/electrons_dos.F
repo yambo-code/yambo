@@ -29,7 +29,7 @@ subroutine electrons_dos(Xk,Xen)
  use R_lattice,      ONLY:bz_samp
  use pointers,       ONLY:linkM2M
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol
- use YPP,            ONLY:output_fname,DOS_bands,DOS_E_step,K_transform,&
+ use YPPm,           ONLY:output_fname,DOS_bands,DOS_E_step,K_transform,&
 &                         DOS_E_steps,INTERP_grid,electrons_dos_elemental,&
 &                         l_pdos
  use com,            ONLY:msg,of_open_close,warning

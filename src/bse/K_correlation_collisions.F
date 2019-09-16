@@ -40,7 +40,6 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
  ! where |k2 ib s1^{-1} x s2 > = PHASE * |k2 ib is_in_the_star_of_k2>
  !
  use pars,          ONLY:SP
- use parallel_m,    ONLY:myid
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
  use R_lattice,     ONLY:qindx_B,qindx_X,bz_samp!,G_m_G
  use BS,            ONLY:O_ng,WF_phase,BS_bands,BS_res_K_corr,BS_cpl_K_corr,BS_blk,&

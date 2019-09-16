@@ -31,6 +31,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
+ use vec_operate,   ONLY:degeneration_finder
  use com,           ONLY:msg,error
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
@@ -66,8 +67,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  type(w_samp) ::Xw
  integer      ::GW_iter
  !
- complex(SP), external :: QP_ppa_EET_terminator
- !
  ! Work Space
  !
  integer                  ::i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
@@ -79,7 +78,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
  complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,sp_dummy,ctmp
  !
- integer, external::io_X,QP_state_extract
+ integer,     external ::io_X,QP_state_extract
+ complex(SP), external ::QP_ppa_EET_terminator
+ !
+ ! ... degeneration finder
+ !
+ integer                  :: first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp,i_c
  !
  ! Reset & checks
  !
@@ -244,10 +248,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Poles and Residuals
      !
-!DV
-! When cutoff is used, here it needs a careful check. Because of qpg can be imaginary, also are some component of X_mat, I'm not sure
-! that the definition here below of  X_mat(i1,i2,X_range(2)) are correct.
-!
+     ! DV comment:
+     ! When cutoff is used, here it needs a careful check. Because of qpg can be imaginary, also are some component of X_mat, I'm not sure
+     ! that the definition here below of X_mat(ig1,ig2,:) is correct.
+     !
 #if defined _SC
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif
@@ -540,6 +544,27 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  enddo Q_loop 
  !
  call live_timing()
+ !
+ ! AM, Sept 2019. The COH potential seems to break (in some case of a large amount) the
+ ! energy degenerations. Short cut here is to symmetrize the QP_Sc if COH is included
+ !
+ if (((l_sc_srpa.or.l_sc_coh.or.l_cohsex).and..not.COHSEX_use_empties).or.l_GW_terminator) then
+   !
+   call degeneration_finder(qp%E_bare,qp%n_states,first_el,n_of_el,n_deg_grp,1.E-10_SP)
+   !
+   do ig1=1,n_deg_grp
+     !
+     dc(1)=0._SP
+     do i_c=1,2
+       do i_qp=first_el(ig1),first_el(ig1)+n_of_el(ig1)-1
+         if (i_c==1) dc(1)=dc(1)+QP_Sc(i_qp,1)/real( n_of_el(ig1) )
+         if (i_c==2) QP_Sc(i_qp,1)=dc(1)
+       enddo
+     enddo
+     !
+   enddo
+   !
+ endif
  !
  ! CLEAN
  !

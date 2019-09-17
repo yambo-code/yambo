@@ -25,11 +25,11 @@ integer function io_WF(ID,wf,wf_d)
  !
  use pars,             ONLY:SP,schlen
  use com,              ONLY:error
- use electrons,        ONLY:n_sp_pol,n_spinor
+ use electrons,        ONLY:n_spinor
  use stderr,           ONLY:intc
  use R_lattice,        ONLY:nkibz
  use wave_func,        ONLY:wf_ncx,wf_nb_io,wf_nb_to_load,wf_b_indx,wf_nb_io_groups
- use IO_m,             ONLY:io_connect, io_disconnect, io_sec,io_bulk,io_header,ver_is_gt_or_eq,&
+ use IO_m,             ONLY:io_connect, io_disconnect, io_sec,io_bulk,io_header,&
 &                           io_fragment,io_elemental,io_resetable,frag_WF
  use timing_m,         ONLY:timing
  implicit none

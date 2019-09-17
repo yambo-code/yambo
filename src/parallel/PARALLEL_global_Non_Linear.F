@@ -26,27 +26,25 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use collision_ext, ONLY:HXC_collisions
- use matrix_operate,ONLY:UP_matrix_index
- use hamiltonian,   ONLY:B_mat_index
  use nl_optics,     ONLY:NL_bands
  use IO_m,          ONLY:IO_and_Messaging_switch
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use parallel_m,    ONLY:ncpu,PAR_Q_range,PAR_n_bands,COMM_copy,PAR_index_copy,PAR_build_index
+ use parallel_m,    ONLY:ncpu,COMM_copy,PAR_build_index,PAR_INDEX_copy
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_freqs_INDEX,PAR_COM_freqs_A2A,PAR_COM_freqs,PAR_COM_DIPk_ibz_INDEX,&
-&                        PAR_COM_Xk_ibz_INDEX,PAR_COM_G_b_A2A,PAR_COM_G_b_INDEX,PAR_COM_WF_k_INDEX,&
-&                        PAR_COM_WF_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_A2A,PAR_COM_DIPk_bz_INDEX
+&                        PAR_COM_Xk_ibz_INDEX,PAR_COM_WF_k_INDEX,&
+&                        PAR_COM_Xk_ibz_A2A
  ! IND
  use parallel_m,    ONLY:PAR_IND_freqs,PAR_IND_OVLPk_ibz,PAR_IND_Xk_ibz, &
-&                        PAR_IND_G_b,PAR_IND_WF_b,PAR_IND_B_mat_ordered,PAR_IND_QP,PAR_IND_B_mat, &
+&                        PAR_IND_QP, &
 &                        PAR_IND_DIPk_ibz,PAR_IND_Q,PAR_IND_WF_k,PAR_IND_Xk_bz,PAR_IND_DIPk_bz
  ! INDEX
  use parallel_m,    ONLY:PAR_freqs_index,PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_DIPk_ibz_index, &
-&                        PAR_G_bands_index,PAR_QP_index,PAR_G_bands_index
+&                        PAR_QP_index
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_n_freqs,PAR_DIPk_nibz,PAR_nG_bands,PAR_nQP,PAR_Xk_nbz,PAR_Xk_nibz
+ use parallel_m,    ONLY:PAR_n_freqs,PAR_DIPk_nibz,PAR_nQP,PAR_Xk_nbz,PAR_Xk_nibz
  ! ID's
- use parallel_m,    ONLY:PAR_IND_freqs_ID,PAR_IND_G_b_ID,PAR_IND_Q_ID,PAR_IND_WF_b_ID,PAR_IND_WF_k_ID,&
+ use parallel_m,    ONLY:PAR_IND_freqs_ID,PAR_IND_Q_ID,PAR_IND_WF_k_ID,&
 &                        PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz_ID
  use nl_optics,     ONLY:n_frequencies
  use openmp,        ONLY:n_threads_NL,OPENMP_set_threads

@@ -56,10 +56,10 @@ libdir      = @prefix@/lib
 includedir  = @prefix@/include
 libbindir   = @prefix@/lib/bin
 CFGFILES = config/setup config/Makefile config/report \
-           sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
+           sbin/make_makefile.sh include/headers/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
-           sbin/objects_store.sh driver/editor.h lib/archive/keep-extlibs-stamp \
-           include/c_defs.h
+           sbin/objects_store.sh include/headers/editor.h lib/archive/keep-extlibs-stamp \
+           include/headers/c_defs.h include/headers/load_environments.h
 ifeq ($(do_p2y),yes)
   p2y   = p2y
 endif

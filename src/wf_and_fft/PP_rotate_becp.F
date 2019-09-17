@@ -39,10 +39,9 @@ subroutine PP_rotate_becp(isc,ibec,obec)
  use pseudo,        ONLY:pp_is_uspp,qe_atoms_map
  use electrons,     ONLY:l_spin_orbit,n_spinor
  use D_lattice,     ONLY:nsym,i_time_rev,idt_index,dl_sop,sop_inv,a,&
-&                        irt,icell,atom_pos,n_atoms_species,n_atomic_species
+&                        irt,atom_pos,n_atoms_species,n_atomic_species
  use R_lattice,     ONLY:k_pt,b
- use qe_pseudo_m,   ONLY:bec_type,allocate_bec_type,deallocate_bec_type,&
-&                        beccopy,d1,d2,d3,nh,upf,indv_ijkb0
+ use qe_pseudo_m,   ONLY:bec_type,beccopy,d1,d2,d3,nh,upf,indv_ijkb0
  !
 #include<memory.h>
  !
@@ -60,7 +59,7 @@ subroutine PP_rotate_becp(isc,ibec,obec)
  real(SP)    :: xk(3),arg,tau(3),tau_rot(3)
  complex(SP) :: c1(3,3),c2(5,5),c3(7,7),phase
  logical     :: use_trev
- integer     :: iaeq,ll,jj,ibs,ibseq,ibsn,iben,n
+ integer     :: iaeq,ll,ibs,ibseq,ibsn,iben,n
  integer,     allocatable :: check(:)
 
  if (.not.pp_is_uspp) return

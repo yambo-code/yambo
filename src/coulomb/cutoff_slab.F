@@ -33,7 +33,7 @@ subroutine cutoff_slab(q,is_cut)
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:bz_samp,g_vec,bare_qpg,k_grid_uc_vol
  use com,           ONLY:error
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use parallel_m,    ONLY:PP_indexes,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
 
 ! use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,nqibz
@@ -48,7 +48,7 @@ subroutine cutoff_slab(q,is_cut)
  logical       :: is_cut(3)
  integer       :: ipar1,ipar2,iort
  integer       :: iq,ig
- real(SP)      :: slab_vz,slab_vplane,lcut,VBZgamma
+ real(SP)      :: slab_vz,slab_vplane,lcut
  complex(SP)   :: dummy
  type(PP_indexes) ::px
  character(schlen)  :: of_name

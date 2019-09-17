@@ -38,10 +38,9 @@ function QP_ppa_EET_terminator(W,E,vs,Ep,ig1,ig2,iq,cutoff0,cutoff1)
  !            used in the BG 2008 correction
  !
  use pars,          ONLY:SP
- use R_lattice,     ONLY:q_norm,q_pt,G_vec
+ use R_lattice,     ONLY:q_norm,q_pt,g_vec
  use electrons,     ONLY:levels,spin_occ
  use vec_operate,   ONLY:iku_v_norm
- use functions,     ONLY:bose_f
  use drivers,       ONLY:Finite_Tel
  use QP_m,          ONLY:GW_terminator_E,GW_terminator_Kind
  !

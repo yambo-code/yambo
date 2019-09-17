@@ -27,7 +27,7 @@ module cuda_m
 #ifdef _CUDA
   use cudafor
   use cublas
-  use cusolverDn_m
+  use cusolverdn_y
 #endif
   implicit none
   public

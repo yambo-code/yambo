@@ -34,6 +34,7 @@ AC_SUBST(extlibs_path)
 # DEBUG
 AC_ARG_ENABLE(keep-objects, AC_HELP_STRING([--enable-keep-objects],
               [Objects are not removed but saved in appropriate directories. Default is yes.]))
+if test x"$enable_keep_objects" = "xno"; then enable_keep_objects="no"; fi
 if test x"$enable_keep_objects" = "x"; then enable_keep_objects="yes"; fi
 AC_SUBST(enable_keep_objects)
 #

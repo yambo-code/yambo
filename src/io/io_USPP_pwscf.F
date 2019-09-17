@@ -23,11 +23,11 @@
 !
 integer function io_USPP_pwscf(ID)
  !
- use pars,             ONLY: DP,SP,LP
+ use pars,             ONLY: SP,LP
  use stderr,           ONLY: intc
  use IO_m,             ONLY: io_connect,io_disconnect,io_sec, &
 &                            io_elemental,io_bulk,io_header,&
-&                            read_is_on,write_is_on,io_mode,DUMP
+&                            read_is_on,write_is_on
  use D_lattice,        ONLY: n_atoms,n_atomic_species
  use electrons,        ONLY: l_spin_orbit,n_spinor,n_sp_pol
  !
@@ -47,11 +47,9 @@ integer function io_USPP_pwscf(ID)
  ! Work Space
  !
  integer :: i,is
- integer :: ivar
  integer(LP) :: lvar
  logical :: ltmp
-
-
+ !
  io_USPP_pwscf=io_connect(desc="uspp_pp_pwscf",type=0,ID=ID)
  if (io_USPP_pwscf/=0) goto 1
  !

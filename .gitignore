@@ -25,6 +25,7 @@ include/fortran_driver.h
 include/kind.h
 include/tool.h
 include/version.h
+include/branch.inc
 src/tools/.objects
 config.status
 config/report

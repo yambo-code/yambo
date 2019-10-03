@@ -79,7 +79,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
  complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,sp_dummy,ctmp
  !
- integer, external::io_X,QP_state_extract
+ integer, external::io_X
  !
  ! Reset & checks
  !

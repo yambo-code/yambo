@@ -31,7 +31,7 @@ integer function QP_state_extract(state)
  ! 
  ! Work Space
  !
- integer :: i1,i2,i3,ik1,ik2,ib1,ib2,proposed_state(4)
+ integer :: ikp_loop,ik_loop,ik1,ik2,ik3,ib1,ib2,proposed_state(4),ib_loop,i2
  logical :: flag
  !
  QP_state_extract=1
@@ -43,18 +43,20 @@ integer function QP_state_extract(state)
  !
 3 continue
  !
- do i1=state(1),QP_nk
-   i3=1
-   if (i1==state(1)) i3=state(4)+1
-   do i2=i3,QP_nb
-     if (QP_state(i2,i1)) goto 1
+ do ik_loop=state(1),QP_nk
+   ib_loop=1
+   if (ik_loop==state(1)) ib_loop=state(4)+1
+   do i2=ib_loop,QP_nb
+     if (QP_state(i2,ik_loop)) goto 1
    enddo
  enddo
  QP_state_extract=-1
  !
  return
  !
-1 ik1=i1 
+1 continue
+ !
+ ik1=ik_loop 
  ib1=i2
  !
  if (ib1==state(4).and.ik1==state(1)) then
@@ -62,40 +64,42 @@ integer function QP_state_extract(state)
    return
  endif
  !
- do i1=ib1,QP_nb
-   if (.not.QP_state(i1,ik1)) goto 2
+ do ib_loop=ib1,QP_nb
+   if (.not.QP_state(ib_loop,ik1)) goto 2
  enddo
  !
-2 ib2=i1-1
+2 continue
+ !
+ ib2=ib_loop-1
  !
  ! Check FORWARD for a set of contiguous K-points with same bands range
  !
  ik2=ik1
- do i1=ik1+1,QP_nk
+ do ik_loop=ik1+1,QP_nk
    flag=.true.
    do i2=ib1,ib2
-     do i3=ik1+1,i1
-       if (.not.QP_state(i2,i3)) flag=.false.
+     do ik3=ik1+1,ik_loop
+       if (.not.QP_state(i2,ik3)) flag=.false.
      enddo
    enddo
-   if (flag.and.ib1/=1    ) flag=.not.QP_state(ib1-1,i1)
-   if (flag.and.ib2/=QP_nb) flag=.not.QP_state(ib2+1,i1)
-   if (flag) ik2=i1
+   if (flag.and.ib1/=1    ) flag=.not.QP_state(ib1-1,ik_loop)
+   if (flag.and.ib2/=QP_nb) flag=.not.QP_state(ib2+1,ik_loop)
+   if (flag) ik2=ik_loop
  enddo
  !
  proposed_state=(/ik1,ik2,ib1,ib2/)
  !
  ! Check BACKWARD if ALL K-points have same bands range
  !
- do i1=ik1-1,1,-1
+ do ikp_loop=ik1-1,1,-1
    flag=.true.
    do i2=ib1,ib2
-     do i3=i1,ik1-1
-       if (.not.QP_state(i2,i3)) flag=.false.
+     do ik_loop=ikp_loop,ik1-1
+       if (.not.QP_state(i2,ik_loop)) flag=.false.
      enddo
    enddo
-   if (flag.and.ib1/=1    ) flag=.not.QP_state(ib1-1,i1)
-   if (flag.and.ib2/=QP_nb) flag=.not.QP_state(ib2+1,i1)
+   if (flag.and.ib1/=1    ) flag=.not.QP_state(ib1-1,ikp_loop)
+   if (flag.and.ib2/=QP_nb) flag=.not.QP_state(ib2+1,ikp_loop)
    if (flag) then
      state=proposed_state
      goto 3

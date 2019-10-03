@@ -47,10 +47,12 @@ subroutine INIT_QP(comment)
      do i_c=1,2
        state=(/1,1,0,0/)
        n_states=0
+ write (*,*) n_states
        do while(QP_state_extract(state)>0)
          n_states=n_states+1
          if (i_c==2) I_states(n_states,:)=state
        enddo
+ write (*,*) n_states
        if (i_c==1) then
          YAMBO_ALLOC(I_states,(n_states,4)) 
        endif

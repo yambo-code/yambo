@@ -67,7 +67,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  integer              :: ig
  integer              :: ikibz,i_sp_pol
- integer, external    :: QP_state_extract
  !
  ! Resets & basis setup
  !

@@ -69,7 +69,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,live_timing_steps,iq_range(2)
  type(w_samp)     ::Sc_W(qp%n_states)
  integer          ::io_err,ID
- integer, external::io_ELPH,QP_state_extract
+ integer, external::io_ELPH
  character(schlen)::ch
  real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,factor,&
 &                   E_k_plus_q_at_gamma(elph_nb,k%nbz),elph_gkkp_sq,gsqF_damping,E_random_shift

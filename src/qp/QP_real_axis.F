@@ -76,7 +76,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  complex(SP)      :: lrhotw(X%ng),X_mat_ws(X%ng,X%ng),W_dummy
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
- integer, external   ::io_X,QP_state_extract,io_QP_and_GF,X_dielectric_matrix,QP_life_transitions
+ integer, external   ::io_X,io_QP_and_GF,X_dielectric_matrix,QP_life_transitions
  character(schlen)   ::ch,Sc_name
  logical             ::X_is_TR_rotated
  !

@@ -74,9 +74,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! Iterations
  !
  integer                  :: it
- real(SP)                 :: spread(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol),&
-&                            E_previous(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol),dE(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol),&
-&                            E_total,E_tot_Hartree,E_tot_xc,max_overlap(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol)
+ real(SP)                 :: spread(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol),     &
+&                            E_previous(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol), &
+&                            dE(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol),         &
+&                            max_overlap(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol),&
+&                            E_total,E_tot_bands,E_tot_zero,E_tot_Hartree,E_tot_xc
  real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:),magn_nm1(:,:)
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: H_nl_nm1(:,:,:,:)
@@ -92,7 +94,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! Work Space
  !
  integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_sp_pol,i_io,io_X_err,io_DIP_err
- real(SP)                 :: max_proj,V_xc_sc_shift(n_spin),ELEC,HOLE,DELTA
+ real(SP)                 :: max_proj,V_xc_sc_shift(n_spin),ELEC,HOLE,DELTA,DELTA_NEW(2)
  character(schlen)        :: dumb_ch,dumb_ch2
  integer, external        :: io_SC_components,X_dielectric_matrix
  logical, external        :: STOP_now
@@ -369,6 +371,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    if (.not.l_sc_V_is_local) call io_control(ACTION=OP_WR,   COM=NONE,SEC=(/1/),ID=ID(3))
    io_V=io_SC_components('V' ,E,ID(3))
    !
+   DELTA_NEW=0.
    do i_sp_pol=1,n_sp_pol
    !
    do ik = 1, QP_nk 
@@ -390,7 +393,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        ! Rotate H_nl_sc in the WFo basis.
        !
        if (.not.l_use_collisions.and.it_now>1) call OBS_rotate(H_rotation(:,:,ik,i_sp_pol),H_nl_sc,SC_nbands,-1)
-       ! 
+       !
        ! I/O [H_nl_sc]
        !
        call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(3))
@@ -426,6 +429,22 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      H_nl_sc = H_nl_sc + Hzero(:,:,ik,i_sp_pol)
      !
+     if(trim(SC_neq_kind)=="matsubara") then
+       !
+       ! Compute DELTA_NEW
+       !
+       H_tmp=H_nl_sc
+       call OBS_rotate(H_rotation_ref(:,:,ik,1),H_tmp,SC_nbands,i_sp_pol)
+       do ib=SC_bands(1),SC_bands(2)
+         do ibp=SC_bands(1),SC_bands(2)
+           if( .not.( E_reference%E(ib,ik,i_sp_pol)>SC_mu(1) .and. E_reference%E(ibp,ik,i_sp_pol)<=SC_mu(1) ) ) cycle
+           DELTA_NEW(1)=DELTA_NEW(1)+abs(H_tmp(ib,ibp))**2*Xk%weights(ik)
+           if(ik==1) DELTA_NEW(2)=DELTA_NEW(2)+abs(H_tmp(ib,ibp))**2
+         enddo
+       enddo
+       !
+     endif
+     !
      ! Diagonalize H_nl_sc 
      !=====================
      !
@@ -450,6 +469,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    enddo ! ik
    !
    enddo ! i_sp_pol
+   !
+   DELTA_NEW(:)=sqrt(DELTA_NEW(:))*HA2EV 
    !
    if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
    !
@@ -514,7 +535,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      ! Total Energy 
      !==============
      !
-     call SC_Energy(E_total,E_tot_Hartree,E_tot_xc,E,k,rho_n)
+     call SC_Energy(E_total,E_tot_bands,E_tot_zero,E_tot_Hartree,E_tot_xc,E,k,rho_n)
      !
      ! Convergences
      !==============
@@ -561,18 +582,19 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      endif
      !
      if(trim(SC_neq_kind)=="matsubara") then
-       if(it_now==it_to_start) dumb_ch =trim(dumb_ch)//'     -  ELECS  /  HOLES  /  DELTA    '
-       dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(ELEC))//'/'//trim(real2ch(HOLE))//'/'//trim(real2ch(DELTA))
+       if(it_now==it_to_start) dumb_ch =trim(dumb_ch)//'    -  ELECS  /  HOLES  /  RHOIJ  / DELTA  '
+       dumb_ch2=trim(dumb_ch2)//' - '//trim(real2ch(ELEC))//'/'//trim(real2ch(HOLE))//'/'&
+       &                      //trim(real2ch(DELTA))//'/'//trim(real2ch(DELTA_NEW(1)))
      endif
      !
 #if defined _ELECTRIC
      if(l_sc_electric) then
        if(it==1) then
-         dumb_ch= trim(dumb_ch) //'     -  Polarization;'
-         dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(sqrt(sum(real(Initial_Pol(:))**2))))
+         dumb_ch= trim(dumb_ch) //'    -  Polarization;'
+         dumb_ch2=trim(dumb_ch2)//' - '//trim(real2ch(sqrt(sum(real(Initial_Pol(:))**2))))
        else
-          dumb_ch= trim(dumb_ch) //'    -  Polarization;'
-          dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(sqrt(sum(real(Polarization(:))**2))))
+          dumb_ch= trim(dumb_ch) //'   -  Polarization;'
+          dumb_ch2=trim(dumb_ch2)//' - '//trim(real2ch(sqrt(sum(real(Polarization(:))**2))))
        endif
      endif
 #endif
@@ -641,7 +663,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! Hartree and xc Energy 
  !=======================
  !
- call SC_Energy(E_total,E_tot_Hartree,E_tot_xc,E,k,rho_n)
+ call SC_Energy(E_total,E_tot_bands,E_tot_zero,E_tot_Hartree,E_tot_xc,E,k,rho_n)
  !
  if (l_SC_cycle) then
    !
@@ -655,7 +677,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    if (.not.l_sc_V_is_local)  call msg('r','')
    if(trim(SC_neq_kind)=="matsubara") then
                        call msg('r' ,'[SC] Electrons and Holes            :',(/ELEC,HOLE/))
-                       call msg('r' ,'[SC] Order Parameter                :',DELTA)
+                       call msg('r' ,'[SC] Trace over rho_ij              :',DELTA)
+                       call msg('r' ,'[SC] Order Parameter           [eV] :',DELTA_NEW)
    endif
 #if defined _ELECTRIC
    if(l_sc_electric) then
@@ -663,6 +686,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
       call msg('r' ,'[SC] Polarization [Im]              :',aimag(Polarization)   )
    endif
 #endif
+   if (l_sc_hartree)   call msg('r' ,'[SC] Bands Energy            [Ha/Ry]:',E_tot_bands*(/1._SP,2._SP/))
+   if (l_sc_hartree)   call msg('r' ,'[SC] T+V Energy              [Ha/Ry]:',E_tot_zero*(/1._SP,2._SP/))
    if (l_sc_hartree)   call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1._SP,2._SP/))
    if (l_sc_is_libDFT) call msg('rn','[SC] xc Energy               [Ha/Ry]:',E_tot_xc*(/1._SP,2._SP/))
    !

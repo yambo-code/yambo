@@ -28,7 +28,7 @@ logical function STOP_now(DO_IT_NOW)
  use LIVE_t,         ONLY:cput_tot,USER_wall_time,USER_wall_time_string
  use parser_m,       ONLY:parser
  use com,            ONLY:warning
- use it_m,           ONLY:it_reset
+ use it_tools,       ONLY:it_reset
  !
  implicit none
  !

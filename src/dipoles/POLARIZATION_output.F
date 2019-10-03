@@ -25,12 +25,11 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  ! 
  ! Print the intrisic Polarization of the system
  !
- use pars,          ONLY:SP,lchlen,schlen
+ use pars,          ONLY:SP,lchlen
  use units,         ONLY:e_SI,AU2M
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:bz_samp,k_map
  use com,           ONLY:msg
- use X_m,           ONLY:X_t
  use D_lattice,     ONLY:DL_vol,a,n_atomic_species,Z_species
  use DIPOLES,       ONLY:DIPOLE_t
  use vec_operate,   ONLY:get_id_perpendicular
@@ -51,7 +50,6 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  complex(SP) :: Sm1_plus (Xen%nbm,Xen%nbm,6)
  complex(SP) :: Sm1_minus(Xen%nbm,Xen%nbm,6)
  character(lchlen) :: dumb_ch
- character(schlen) :: berry_file_name
  integer           :: id,Nperpend,id2,id3,ia,mod_tot,ikbz,i_sp_pol
  logical           :: l_odd
  !

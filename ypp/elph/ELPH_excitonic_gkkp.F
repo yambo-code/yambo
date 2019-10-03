@@ -34,10 +34,9 @@ subroutine ELPH_excitonic_gkkp(Xk)
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid
  use interfaces,          ONLY:PARALLEL_index
  use LIVE_t,              ONLY:live_timing
- use functions,           ONLY:Fermi_fnc_derivative
  use com,                 ONLY:msg,of_open_close
  use stderr,              ONLY:intc
- use YPP,                 ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
+ use YPPm,                ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
  !
 #include<memory.h>
  !

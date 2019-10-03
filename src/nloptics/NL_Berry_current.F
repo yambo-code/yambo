@@ -26,16 +26,14 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  ! Evalute current using Eq. D1 of Souza et al. 
  ! PRB 69, 085106 (2004) 
  !
- use pars,           ONLY:DP,SP,cI,cZERO,pi,cONE
- use electrons,      ONLY:n_sp_pol,levels,spin_occ,n_spin
+ use pars,           ONLY:SP,cZERO,pi
+ use electrons,      ONLY:n_sp_pol,levels,spin_occ
  use R_lattice,      ONLY:bz_samp,bz_map,nXkbz
- use D_lattice,      ONLY:a,DL_vol
+ use D_lattice,      ONLY:a
  use vec_operate,    ONLY:get_id_perpendicular
- use electric,       ONLY:l_force_SndOrd
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_bz,PAR_COM_Xk_bz_INDEX
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands
- use wrapper_omp,    ONLY:V_dot_V_omp
  !
  implicit none           
  !
@@ -47,8 +45,8 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  !
  ! Work Space
  !
- integer       :: ik,i1,i2,i3,iv,isp,ikbz,Nperpend,id,id2,id3
- integer       :: idx(3),id_red,istep,max_step
+ integer       :: ik,i1,iv,isp,ikbz,Nperpend,id,id2,id3
+ integer       :: id_red,istep,max_step
  complex(SP)   :: NL_J_red(3)
  complex(SP)   :: VH_bands(NL_bands(2),en%nbf,nXkbz,n_sp_pol)
  complex(SP)   :: V_tilde(en%nbf,NL_bands(2),2)

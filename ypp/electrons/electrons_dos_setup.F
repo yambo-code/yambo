@@ -24,7 +24,7 @@
 subroutine electrons_dos_setup( E, dos_E , bands )
  !
  use pars,           ONLY:SP
- use YPP,            ONLY:DOS_E_step,DOS_E_range,DOS_E_steps,DOS_broadening
+ use YPPm,           ONLY:DOS_E_step,DOS_E_range,DOS_E_steps,DOS_broadening
  use electrons,      ONLY:levels
  !
  implicit none

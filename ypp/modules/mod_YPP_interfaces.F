@@ -28,7 +28,7 @@ module YPP_interfaces
    subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
      use pars,          ONLY:SP
      use BS,            ONLY:BS_H_dim
-     use YPP,           ONLY:EXCITON_spin
+     use YPPm,          ONLY:EXCITON_spin
      implicit none
      integer                      :: iq
      complex(SP)                  :: BS_R(BS_H_dim),BS_E(BS_H_dim)

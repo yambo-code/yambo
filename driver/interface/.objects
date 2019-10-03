@@ -1,0 +1,2 @@
+objs = get_running_tool.o get_running_project.o get_runlevel.o get_libraries.o get_version.o mod_C_driver.o \
+       C_driver_transfer.o

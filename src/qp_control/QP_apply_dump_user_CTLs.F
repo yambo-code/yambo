@@ -28,7 +28,7 @@ subroutine QP_apply_dump_user_CTLs( E, object )
  use parser_m,      ONLY:parser
  use QP_CTL_m,      ONLY:QP_action,n_QP_actions,QP_ctl_what,QP_ctl_interp_neigh,&
 &                        QP_ctl_db,QP_ctl_ID,QP_CTL_is_active,QP_CTL_fill
- use stderr,        ONLY:STRING_split,STRING_match
+ use stderr,        ONLY:STRING_split,STRING_same
  !
 #include<memory.h>
  !
@@ -63,15 +63,15 @@ subroutine QP_apply_dump_user_CTLs( E, object )
        QP_action(n_QP_actions)%CTL%db=db_piece(i_p+1)
        QP_action(n_QP_actions)%CTL%interp_neigh=QP_ctl_interp_neigh(QP_ctl_ID)
        do i2=max(i_p-3,1),i_p-1
-         if (STRING_match(trim(db_piece(i2)),"e")) QP_action(n_QP_actions)%plan(1)=.TRUE.
-         if (STRING_match(trim(db_piece(i2)),"w")) QP_action(n_QP_actions)%plan(2)=.TRUE.
-         if (STRING_match(trim(db_piece(i2)),"z")) QP_action(n_QP_actions)%plan(3)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"e")) QP_action(n_QP_actions)%plan(1)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"w")) QP_action(n_QP_actions)%plan(2)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"z")) QP_action(n_QP_actions)%plan(3)=.TRUE.
        enddo
        do i2=i_p,min(i_p+2,n_pieces)
-         if (STRING_match(trim(db_piece(i2)),"ui" )) QP_action(n_QP_actions)%plan(4)=.TRUE.
-         if (STRING_match(trim(db_piece(i2)),"uki")) QP_action(n_QP_actions)%plan(4)=.TRUE.
-         if (STRING_match(trim(db_piece(i2)),"uei")) QP_action(n_QP_actions)%plan(5)=.TRUE.
-         if (STRING_match(trim(db_piece(i2)),"ubi")) QP_action(n_QP_actions)%plan(6)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"ui" )) QP_action(n_QP_actions)%plan(4)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"uki")) QP_action(n_QP_actions)%plan(4)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"uei")) QP_action(n_QP_actions)%plan(5)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"ubi")) QP_action(n_QP_actions)%plan(6)=.TRUE.
        enddo
        if (.not.any((/QP_action(n_QP_actions)%plan(4:6)/))) QP_action(n_QP_actions)%plan(4)=.TRUE.
        !

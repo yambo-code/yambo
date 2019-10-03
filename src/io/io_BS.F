@@ -129,7 +129,7 @@ integer function io_BS(iq,X,ID)
    if (BS_blk(i_block)%mode=="C") VAR_ID=2
    if (BS_blk(i_block)%mode=="A") VAR_ID=3
    if (BS_blk(i_block)%mode=="Q") VAR_ID=4
-   if(i_block<=n_blocks) call def_variable_bulk(ID,trim(ch),VAR_ID,(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/),SP)
+   if (i_block<=n_blocks) call def_variable_bulk(ID,trim(ch),VAR_ID,(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/),SP)
    n1=BS_blk(i_block)%size(1)
    n2=BS_blk(i_block)%size(2)
    block_pos=sum(BS_blk(:i_block-1)%size(1)*BS_blk(:i_block-1)%size(2))+1

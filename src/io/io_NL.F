@@ -23,17 +23,16 @@
 !
 integer function io_NL(ID)
  !
- use pars,          ONLY:SP,schlen,lchlen
+ use pars,          ONLY:schlen,lchlen
  use units,         ONLY:HA2EV, AU2KWCMm2, AUT2FS
- use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t,NL_damping,l_use_DIPOLES, &
-&                        NL_er,n_frequencies
- use real_time,     ONLY:Integrator_name,NE_steps,RT_step
+ use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t, &
+&                        n_frequencies
+ use real_time,     ONLY:NE_steps
  use RT_control,    ONLY:OBS_RT_IO_t
  use fields,        ONLY:Efield
- use electrons,     ONLY:levels
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
-&                        RD_CL_IF_END,RD_CL,io_action,io_fragment,io_elemental,io_status
+&                        RD_CL_IF_END,RD_CL,io_action,io_fragment,io_elemental
  !
 #if defined _TIMING
  use timing_m,      ONLY:timing

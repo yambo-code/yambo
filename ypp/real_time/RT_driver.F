@@ -37,7 +37,6 @@ subroutine RT_driver(en,k,q)
  ! LOGICALS
  !----------
  call parser('SkipOBS_IO',l_skip_OBS_IO)
- if (.not.l_skip_OBS_IO)  call parser('SkipJP_IO',l_skip_OBS_IO)
  call parser('FrMinDamp',l_force_min_damp)
  call parser('NormN',l_integral_respect)
  !

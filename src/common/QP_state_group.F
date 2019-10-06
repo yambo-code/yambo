@@ -62,13 +62,11 @@ subroutine QP_state_group(N,states)
      ! step 1: find the largest square box
      !
      BOX_LOOP: do i_scan=1,max(QP_nb,QP_nk)
-       if (ik+i_scan>QP_nk.or.ib+i_scan>QP_nb)     exit BOX_LOOP
-       if (.not.QP_state_cpy(ib+i_scan,ik)       ) exit BOX_LOOP
-       if (.not.QP_state_cpy(ib,ik+i_scan)       ) exit BOX_LOOP
-       if (.not.QP_state_cpy(ib+i_scan,ik+i_scan)) exit BOX_LOOP
-       QP_state_cpy(ib+i_scan,ik)       =.FALSE.
-       QP_state_cpy(ib,ik+i_scan)       =.FALSE.
-       QP_state_cpy(ib+i_scan,ik+i_scan)=.FALSE.
+       if (ik+i_scan>QP_nk.or.ib+i_scan>QP_nb)             exit BOX_LOOP
+       if (.not.all(QP_state_cpy(ib:ib+i_scan,ik+i_scan))) exit BOX_LOOP
+       if (.not.all(QP_state_cpy(ib+i_scan,ik:ik+i_scan))) exit BOX_LOOP
+       QP_state_cpy(ib:ib+i_scan,ik+i_scan)    =.FALSE.
+       QP_state_cpy(ib+i_scan,ik:ik+i_scan)    =.FALSE.
        state_ws(2)=ik+i_scan
        state_ws(4)=ib+i_scan
      enddo BOX_LOOP

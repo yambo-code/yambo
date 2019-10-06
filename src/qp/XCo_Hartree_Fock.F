@@ -44,7 +44,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use timing_m,      ONLY:timing
  use openmp,        ONLY:OPENMP_update,master_thread,n_threads_SE
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load,QP_state_extract_print
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load,QP_state_print
  use wrapper_omp,   ONLY:V_dot_V_omp
  use global_XC,     ONLY:WF_exx_screening
  use pseudo,        ONLY:becp, pp_is_uspp
@@ -84,7 +84,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  ! QP_table -> report
  !
- call QP_state_extract_print( )
+ call QP_state_print( )
  !
  if(.not.l_sc_run .and. .not.l_real_time) then
    !

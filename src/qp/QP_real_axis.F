@@ -40,7 +40,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
 &                        n_WF_bands_to_load,PAR_Q_index,PAR_nQP,&
 &                        PAR_nG_bands,PAR_nQ_bz
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
-&                        PARALLEL_WF_distribute,QP_state_extract_print
+&                        PARALLEL_WF_distribute,QP_state_print
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use wave_func,     ONLY:WF
  use DIPOLES,       ONLY:DIPOLE_t
@@ -139,7 +139,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  if (.not.l_life) call msg('r', '[GW] Bands range     :',QP_n_G_bands)
  call msg('r', '[GW] G damping   [ev]:',QP_G_damp*HA2EV)
  !
- call QP_state_extract_print( )
+ call QP_state_print( )
  !
  if (.not.l_life) then
    !

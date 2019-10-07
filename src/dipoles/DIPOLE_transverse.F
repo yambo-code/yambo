@@ -183,7 +183,7 @@ integer :: ierr
      if (io_KB_abinit_err==0.and.l_use_comm) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
      if (io_KB_pwscf_err ==0.and.l_use_comm) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
 #ifdef _CUDA
-     if ((io_KB_abinit_err==0.or.io_KB_pwscf_err ==0).and.l_use_comm) kbv_d=kbv
+     if ((io_KB_abinit_err==0.or.io_KB_pwscf_err ==0).and.l_use_comm.and.size(kbv)>0) kbv_d=kbv
 #endif
      !
      do iv=Dip%ib(1),Dip%ib_lim(1) 

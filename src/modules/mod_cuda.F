@@ -46,7 +46,22 @@ module cuda_m
   type(cusolverDnHandle)   :: cusolv_h
   public :: cusolv_h
 #endif
+  
+  !
+  ! streams
+  !
+#ifdef _CUDA
+  integer, parameter :: stream_kind=Cuda_Stream_Kind
+#else
+  integer, parameter :: stream_kind=kind(1)
+#endif
+  integer(stream_kind) :: stream_default
+  integer(stream_kind) :: stream_h2d
+  integer(stream_kind) :: stream_d2h
 
+  !
+  ! public
+  !
   public :: have_cuda
   public :: have_cuda_devices
   public :: cuda_visible_devices
@@ -54,16 +69,26 @@ module cuda_m
   public :: cuda_linalg_init
   public :: cuda_linalg_setup
   public :: cuda_getstat
+  !
+  public :: stream_kind
+  public :: stream_default
+  public :: stream_h2d
+  public :: stream_h2d
 
 contains
 
   subroutine cuda_setup()
     implicit none
+    integer :: ierr
     !
 #if defined _CUDA
     have_cuda_devices=.false. 
     call get_environment_variable("CUDA_VISIBLE_DEVICES",cuda_visible_devices)
     if (len_trim(cuda_visible_devices) >0) have_cuda_devices=.true.
+    !
+    stream_default=cudaforGetDefaultStream()
+    ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
+    ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
 #else
     have_cuda_devices=.false.
 #endif

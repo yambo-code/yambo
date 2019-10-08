@@ -26,6 +26,7 @@ module matrix
  use pars,       ONLY:schlen,SP
  use parallel_m, ONLY:MPI_comm
  !
+#include<dev_defs.h>
 #include<memory.h>
  !
  ! Distributed Matrix structure
@@ -77,9 +78,9 @@ module matrix
    !
    integer :: Nb         = 1  ! # of Blocks
    !
-   complex(SP), allocatable :: blc(:,:,:)
+   complex(SP), allocatable DEV_PINNED :: blc(:,:,:)
 #ifdef _CUDA
-   complex(SP), allocatable, device :: blc_d(:,:,:)
+   complex(SP), allocatable, device    :: blc_d(:,:,:)
 #endif
    !
  end type PAR_matrix 

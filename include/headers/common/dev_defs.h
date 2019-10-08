@@ -35,10 +35,12 @@
 #  define DEV_SUBNAME_ALT(x)    CAT(x,_gpu)
 #  define DEV_VARNAME(x)        CAT(x,_d)
 #  define DEV_ATTRIBUTE         , device
+#  define DEV_PINNED            , pinned
 #else
 #  define DEV_SUBNAME(x)        x
 #  define DEV_SUBNAME_ALT(x)    CAT(x,_cpu)
 #  define DEV_VARNAME(x)        x
 #  define DEV_ATTRIBUTE
+#  define DEV_PINNED
 #endif
 

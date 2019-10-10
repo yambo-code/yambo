@@ -30,10 +30,7 @@ function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   use pars,         ONLY: SP,rZERO
   use BS,           ONLY: BS_T_group
   use wrapper_omp,  ONLY: Vstar_dot_V_omp
-  use R_lattice,    ONLY: bare_qpg
-#ifdef _CUDA
-  use R_lattice,    ONLY: bare_qpg_d
-#endif
+  use R_lattice,    ONLY: bare_qpg, bare_qpg_d
   implicit none
   !
   integer,                  intent(in) :: iq,BS_n_g_exch,i_Tp,i_Tk
@@ -56,7 +53,7 @@ function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   H_x_i=rZERO
   !$cuf kernel do(1) <<<*,*>>>
   do ig = 1, BS_n_g_exch
-    H_x=conjg(BS_T_grp_ip_O_x_d(ig,i_Tp))*BS_T_grp_ik_O_x_d(ig,i_Tk)/bare_qpg_d(iq,ig)**2
+    H_x=conjg(BS_T_grp_ip_O_x_d(ig,i_Tp))*BS_T_grp_ik_O_x_d(ig,i_Tk)/bare_qpg_d(ig,iq)**2
     H_x_r=H_x_r+real(H_x,SP)
     H_x_i=H_x_i+aimag(H_x)
   enddo
@@ -64,7 +61,7 @@ function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   !
 #else
   H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp_ip%O_x(:,i_Tp),&
-                                   BS_T_grp_ik%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+                                   BS_T_grp_ik%O_x(:,i_Tk)/bare_qpg1(:BS_n_g_exch,iq)**2)
 #endif
   !
 end function K_exchange_kernel_resonant
@@ -81,10 +78,7 @@ function K_exchange_kernel_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   use pars,         ONLY: SP,rZERO
   use BS,           ONLY: BS_T_group
   use wrapper_omp,  ONLY: V_dot_V_omp
-  use R_lattice,    ONLY: bare_qpg, minus_G
-#ifdef _CUDA
-  use R_lattice,    ONLY: bare_qpg_d, minus_G_d
-#endif
+  use R_lattice,    ONLY: bare_qpg, minus_G, bare_qpg_d, minus_G_d
   implicit none
   !
   integer,                  intent(in) :: iq, BS_n_g_exch,i_Tp,i_Tk
@@ -107,7 +101,7 @@ function K_exchange_kernel_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   H_x_i=rZERO
   !$cuf kernel do(1) <<<*,*>>>
   do ig = 1, BS_n_g_exch
-    H_x = BS_T_grp_ip_O_x_d( minus_G_d(ig),i_Tp) *BS_T_grp_ik_O_x_d(ig,i_Tk)/bare_qpg_d(iq,ig)**2
+    H_x = BS_T_grp_ip_O_x_d( minus_G_d(ig),i_Tp) *BS_T_grp_ik_O_x_d(ig,i_Tk)/bare_qpg_d(ig,iq)**2
     H_x_r=H_x_r+real(H_x,SP)
     H_x_i=H_x_i+aimag(H_x)
   enddo

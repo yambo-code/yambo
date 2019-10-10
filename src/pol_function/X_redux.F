@@ -229,6 +229,8 @@ subroutine X_redux(iq,X_par,Xw,X)
      !
    endif
    !
+   if (use_cuda) then
+     !
 #if defined _CUDA
    !
    BUFFER_blc_d=>BUFFER%blc_d(:,:,:)
@@ -236,7 +238,7 @@ subroutine X_redux(iq,X_par,Xw,X)
    !$cuf kernel do(2) <<<*,*>>>
    do ig2=Xo_cols(1),Xo_cols(2)
      do ig1=Xo_rows(1),Xo_rows(2)
-       BUFFER_blc_d(ig1,ig2,iw_par)=BUFFER_blc_d(ig1,ig2,iw_par)*4._SP*pi/bare_qpg_d(iq,ig1)/bare_qpg_d(iq,ig2)
+       BUFFER_blc_d(ig1,ig2,iw_par)=BUFFER_blc_d(ig1,ig2,iw_par)*4._SP*pi/bare_qpg_d(ig1,iq)/bare_qpg_d(ig2,iq)
      enddo
    enddo
    !
@@ -351,7 +353,7 @@ contains
      !$cuf kernel do(2) <<<*,*>>>
      do ig2=Xo_cols(1),Xo_cols(2)
        do ig1=Xo_rows(1),Xo_rows(2)
-         KERNEL_blc_d(ig1,ig2,1) =KERNEL_blc_d(ig1,ig2,1)-Xo_blc_d(ig1,ig2,1)*4._SP*pi/bare_qpg_d(iq,ig2)**2
+         KERNEL_blc_d(ig1,ig2,1) =KERNEL_blc_d(ig1,ig2,1)-Xo_blc_d(ig1,ig2,1)*4._SP*pi/bare_qpg_d(ig2,iq)**2
          if (ig1==ig2) KERNEL_blc_d(ig1,ig1,1)=KERNEL_blc_d(ig1,ig1,1)+cONE
        enddo
      enddo

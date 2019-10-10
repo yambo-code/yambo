@@ -233,7 +233,8 @@ subroutine scatter_Gamp_gpu(isc,mode)
  endif
 
  if (.not.allocated(bare_qpg_d)) then
-   allocate(bare_qpg_d, source=bare_qpg)
+   allocate(bare_qpg_d, mold=bare_qpg)
+   bare_qpg_d=transpose(bare_qpg)
  endif
  !
  ng=shape(isc%gamp)
@@ -259,7 +260,7 @@ subroutine scatter_Gamp_gpu(isc,mode)
        gamp_d(i1,i2)=RIM_qpg_d(iq,ig1,ig2)/2._SP
        cycle
      else
-       gamp_d(i1,i2)=q_weight/bare_qpg_d(iq,ig1)/bare_qpg_d(iq,ig2)
+       gamp_d(i1,i2)=q_weight/bare_qpg_d(ig1,iq)/bare_qpg_d(ig2,iq)
      endif
      !
      ! Head and wings point special treatment (with no RIM only Gamma is possible)
@@ -286,22 +287,22 @@ subroutine scatter_Gamp_gpu(isc,mode)
      if (ig1==1.and.(ig2>RIM_ng.or.(RIM_is_diagonal.and.ig2>1))) then
        !
        if (iq==1) then
-         gamp_d(i1,i2)=R_sphere/2._SP*reg_q_m2/bare_qpg_d(iq,ig2)
+         gamp_d(i1,i2)=R_sphere/2._SP*reg_q_m2/bare_qpg_d(ig2,iq)
        else
          !
          ! the sqrt(q_weight) is needed as the sqrt(reg_q_m2) contains
          ! implicitly the q_weight
          ! 
          gamp_d(i1,i2)=gamp_d(i1,i2)*&
-&                         bare_qpg_d(iq,ig1)*sqrt(reg_q_m2)/sqrt(q_weight)
+&                         bare_qpg_d(ig1,iq)*sqrt(reg_q_m2)/sqrt(q_weight)
        endif
      endif
      if (ig2==1.and.(ig1>RIM_ng.or.(RIM_is_diagonal.and.ig1>1))) then
        if (iq==1) then
-         gamp_d(i1,i2)=R_sphere/2._SP*reg_q_m2/bare_qpg_d(iq,ig1)
+         gamp_d(i1,i2)=R_sphere/2._SP*reg_q_m2/bare_qpg_d(ig1,iq)
        else
          gamp_d(i1,i2)=gamp_d(i1,i2)*&
-&                         bare_qpg_d(iq,ig2)*sqrt(reg_q_m2)/sqrt(q_weight)
+&                         bare_qpg_d(ig2,iq)*sqrt(reg_q_m2)/sqrt(q_weight)
        endif
      endif
      !

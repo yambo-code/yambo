@@ -140,6 +140,8 @@ module R_lattice
  complex(SP),allocatable :: bare_qpg_d(:,:)
 #ifdef _CUDA
  attributes(device) :: bare_qpg_d
+ ! AF: for the sake of performance, this variable is defined 
+ !     as the transpose of the host variable bare_qpg
 #endif
  logical                 :: CUTOFF_plus_RIM
  real(SP)                :: cyl_vr_save

@@ -13,10 +13,10 @@
 #  define __CUDA
 #endif
 !
-module device_util_m
+module device_fbuff_m
   implicit none
 
-#include<../src/common/device_util_interf.F>
+#include<device_fbuff_interf.F>
 
-end module device_util_m
+end module device_fbuff_m
 

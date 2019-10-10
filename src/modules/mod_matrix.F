@@ -48,8 +48,7 @@ module matrix
    !
    character(3) :: kind = "NAN" ! "PAR" "SLK" "XUP" "XDN" "SER"
    !
-   ! Dimensions
-   !
+   ! Dimensions !
    integer :: I          = 1  ! Block element
    integer :: N          = -1 ! Global dimension (Parent Matrix)
    integer :: rows(2)    = 0  ! Real
@@ -78,10 +77,8 @@ module matrix
    !
    integer :: Nb         = 1  ! # of Blocks
    !
-   complex(SP), allocatable DEV_PINNED :: blc(:,:,:)
-#ifdef _CUDA
-   complex(SP), allocatable, device    :: blc_d(:,:,:)
-#endif
+   complex(SP), allocatable DEV_PINNED    :: blc(:,:,:)         ! pinned host var if CUDA
+   complex(SP), allocatable DEV_ATTRIBUTE :: blc_d(:,:,:)       ! device var if CUDA
    !
  end type PAR_matrix 
  !

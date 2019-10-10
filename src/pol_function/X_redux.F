@@ -39,10 +39,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,&
 &                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
- use R_lattice,     ONLY:bare_qpg
-#ifdef _CUDA
- use R_lattice,     ONLY:bare_qpg_d
-#endif
+ use R_lattice,     ONLY:bare_qpg, bare_qpg_d
  use frequency,     ONLY:w_samp
  use linear_algebra,ONLY:INV,SVD_INV,LIN_SYS,MAT_MUL
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
@@ -72,9 +69,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  type(PAR_matrix) :: K_FXC
  type(PAR_matrix), target :: BUFFER,KERNEL,Xo
 #ifdef _CUDA
- complex(SP), device, pointer :: BUFFER_blc_d(:,:,:)
- complex(SP), device, pointer :: KERNEL_blc_d(:,:,:)
- complex(SP), device, pointer :: Xo_blc_d(:,:,:)
+     complex(SP), device, pointer :: BUFFER_blc_d(:,:,:)
 #endif
  !
  ! Setup 
@@ -208,35 +203,13 @@ subroutine X_redux(iq,X_par,Xw,X)
    !
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
-#ifdef _CUDA
+   if (have_cuda) then
+      if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) KERNEL%blc_d=KERNEL%blc
+      Xo%blc_d(:,:,1)=Xo%blc(:,:,1)
+   endif
    !
-   if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) KERNEL%blc_d=KERNEL%blc
-   Xo%blc_d(:,:,1)=Xo%blc(:,:,1)
+   call X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
 
-   KERNEL_blc_d=>KERNEL%blc_d(:,:,:)
-   BUFFER_blc_d=>BUFFER%blc_d(:,:,:)
-   Xo_blc_d    => Xo%blc_d(:,:,:)
-   !
-   !$cuf kernel do(2) <<<*,*>>>
-   do ig2=Xo_cols(1),Xo_cols(2)
-     do ig1=Xo_rows(1),Xo_rows(2)
-       KERNEL_blc_d(ig1,ig2,1) =KERNEL_blc_d(ig1,ig2,1)-Xo_blc_d(ig1,ig2,1)*4._SP*pi/bare_qpg_d(iq,ig2)**2
-       if (ig1==ig2) KERNEL_blc_d(ig1,ig1,1)=KERNEL_blc_d(ig1,ig1,1)+cONE
-     enddo
-   enddo
-   !
-#else
-   !
-   !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
-   do ig2=Xo%cols(1),Xo%cols(2)
-     do ig1=Xo%rows(1),Xo%rows(2)
-       KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
-       if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
-     enddo
-   enddo
-   !$omp end parallel do
-   !
-#endif
    !
    ! X(g,gp)=Sum_gpp[KERNEL]^-1_(g,gpp)*Xo(gpp,gp)
    !
@@ -245,7 +218,6 @@ subroutine X_redux(iq,X_par,Xw,X)
      ! Linear System
      !
      call dev_memcpy(DEV_VARNAME(BUFFER%blc)(:,:,BUFFER%I),DEV_VARNAME(Xo%blc)(:,:,1))
-     !
      call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)
      !
    else
@@ -268,9 +240,6 @@ subroutine X_redux(iq,X_par,Xw,X)
      enddo
    enddo
    !
-   call dev_stream_sync(stream_default)
-   call dev_memcpy_async(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
-   !
 #else
    !
    !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
@@ -282,6 +251,11 @@ subroutine X_redux(iq,X_par,Xw,X)
    !$omp end parallel do
    !
 #endif
+   !
+   if (have_cuda) then
+      call dev_stream_sync(stream_default)
+      call dev_memcpy_async(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
+   endif
    !
    if (PAR_n_freqs>0) call live_timing(steps=1)
    !
@@ -357,4 +331,44 @@ subroutine X_redux(iq,X_par,Xw,X)
  YAMBO_FREE(PAR_FREQS_index)
  call PP_indexes_reset(PAR_IND_freqs)
  !
+contains
+   !
+   subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
+     use R_lattice,     ONLY:bare_qpg, bare_qpg_d
+     use pars,          ONLY:pi,cONE
+     implicit none
+     type(PAR_matrix), target :: BUFFER,KERNEL,Xo
+     integer, intent(in)      :: Xo_rows(2),Xo_cols(2)
+     integer :: ig1,ig2
+     !
+#ifdef _CUDA
+     complex(SP), device, pointer :: KERNEL_blc_d(:,:,:)
+     complex(SP), device, pointer :: Xo_blc_d(:,:,:)
+     !
+     KERNEL_blc_d=>KERNEL%blc_d(:,:,:)
+     Xo_blc_d    => Xo%blc_d(:,:,:)
+     !
+     !$cuf kernel do(2) <<<*,*>>>
+     do ig2=Xo_cols(1),Xo_cols(2)
+       do ig1=Xo_rows(1),Xo_rows(2)
+         KERNEL_blc_d(ig1,ig2,1) =KERNEL_blc_d(ig1,ig2,1)-Xo_blc_d(ig1,ig2,1)*4._SP*pi/bare_qpg_d(iq,ig2)**2
+         if (ig1==ig2) KERNEL_blc_d(ig1,ig1,1)=KERNEL_blc_d(ig1,ig1,1)+cONE
+       enddo
+     enddo
+     !
+#else
+     !
+     !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
+     do ig2=Xo%cols(1),Xo%cols(2)
+       do ig1=Xo%rows(1),Xo%rows(2)
+         KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
+         if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
+       enddo
+     enddo
+     !$omp end parallel do
+     !
+#endif
+   !
+   end subroutine X_redux_build_kernel
+   !
 end subroutine

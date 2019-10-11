@@ -51,7 +51,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
  use timing_m,      ONLY:timing
  use cuda_m
- use device_util_m
+ use deviceXlib_m
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -238,7 +238,7 @@ subroutine X_redux(iq,X_par,Xw,X)
    if (have_cuda) then
       !
       call dev_mat_upd_dMd(Xo_rows(2)-Xo_rows(1)+1,Xo_cols(2)-Xo_cols(1)+1,BUFFER%blc_d(:,:,iw_par),&
-                           bare_qpg_d(Xo_rows(1):,iq),"R",bare_qpg_d(Xo_cols(1):,iq),"R",scal=4._SP*pi) 
+&                          bare_qpg_d(Xo_rows(1):,iq),"R",bare_qpg_d(Xo_cols(1):,iq),"R",scal=cmplx(4._SP*pi,kind=SP)) 
       !
       call dev_stream_sync(stream_default)
       call dev_memcpy_async(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
@@ -253,8 +253,6 @@ subroutine X_redux(iq,X_par,Xw,X)
       enddo
       !$omp end parallel do
       !
-   endif
-   !
    endif
    !
    if (PAR_n_freqs>0) call live_timing(steps=1)

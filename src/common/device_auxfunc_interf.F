@@ -139,10 +139,10 @@ interface dev_conjg
     !
 end interface dev_conjg
 
-interface dev_v_remap
+interface dev_vec_upd_remap
     !
 
-    subroutine dp_dev_v_remap_v_r1d(ndim, vout, v1, map1, v2, scal)
+    subroutine dp_dev_vec_upd_remap_v_r1d(ndim, vout, v1, map1, v2, scal)
        implicit none
        !   
        integer, parameter :: PRCSN = selected_real_kind(14,200)
@@ -156,9 +156,9 @@ interface dev_v_remap
        attributes(device) :: vout, v1, v2, map1
 #endif
        !
-    end subroutine dp_dev_v_remap_v_r1d
+    end subroutine dp_dev_vec_upd_remap_v_r1d
     !
-    subroutine dp_dev_v_remap_v_c1d(ndim, vout, v1, map1, v2, scal)
+    subroutine dp_dev_vec_upd_remap_v_c1d(ndim, vout, v1, map1, v2, scal)
        implicit none
        !   
        integer, parameter :: PRCSN = selected_real_kind(14,200)
@@ -172,9 +172,9 @@ interface dev_v_remap
        attributes(device) :: vout, v1, v2, map1
 #endif
        !
-    end subroutine dp_dev_v_remap_v_c1d
+    end subroutine dp_dev_vec_upd_remap_v_c1d
     !
-    subroutine sp_dev_v_remap_v_r1d(ndim, vout, v1, map1, v2, scal)
+    subroutine sp_dev_vec_upd_remap_v_r1d(ndim, vout, v1, map1, v2, scal)
        implicit none
        !   
        integer, parameter :: PRCSN = selected_real_kind(6, 37)
@@ -188,9 +188,9 @@ interface dev_v_remap
        attributes(device) :: vout, v1, v2, map1
 #endif
        !
-    end subroutine sp_dev_v_remap_v_r1d
+    end subroutine sp_dev_vec_upd_remap_v_r1d
     !
-    subroutine sp_dev_v_remap_v_c1d(ndim, vout, v1, map1, v2, scal)
+    subroutine sp_dev_vec_upd_remap_v_c1d(ndim, vout, v1, map1, v2, scal)
        implicit none
        !   
        integer, parameter :: PRCSN = selected_real_kind(6, 37)
@@ -204,15 +204,15 @@ interface dev_v_remap
        attributes(device) :: vout, v1, v2, map1
 #endif
        !
-    end subroutine sp_dev_v_remap_v_c1d
+    end subroutine sp_dev_vec_upd_remap_v_c1d
     !
     !
-end interface dev_v_remap
+end interface dev_vec_upd_remap
 
-interface dev_v_remap_v
+interface dev_vec_upd_v_remap_v
     !
 
-    subroutine dp_dev_v_remap_v_r1d(ndim, vout, v1, map1, v2, scal)
+    subroutine dp_dev_vec_upd_v_remap_v_r1d(ndim, vout, v1, map1, v2, scal)
        implicit none
        !   
        integer, parameter :: PRCSN = selected_real_kind(14,200)
@@ -226,9 +226,9 @@ interface dev_v_remap_v
        attributes(device) :: vout, v1, v2, map1
 #endif
     !
-    end subroutine dp_dev_v_remap_v_r1d
+    end subroutine dp_dev_vec_upd_v_remap_v_r1d
     !
-    subroutine dp_dev_v_remap_v_c1d(ndim, vout, v1, map1, v2, scal)
+    subroutine dp_dev_vec_upd_v_remap_v_c1d(ndim, vout, v1, map1, v2, scal)
        implicit none
        !   
        integer, parameter :: PRCSN = selected_real_kind(14,200)
@@ -242,9 +242,9 @@ interface dev_v_remap_v
        attributes(device) :: vout, v1, v2, map1
 #endif
     !
-    end subroutine dp_dev_v_remap_v_c1d
+    end subroutine dp_dev_vec_upd_v_remap_v_c1d
     !
-    subroutine sp_dev_v_remap_v_r1d(ndim, vout, v1, map1, v2, scal)
+    subroutine sp_dev_vec_upd_v_remap_v_r1d(ndim, vout, v1, map1, v2, scal)
        implicit none
        !   
        integer, parameter :: PRCSN = selected_real_kind(6, 37)
@@ -258,9 +258,9 @@ interface dev_v_remap_v
        attributes(device) :: vout, v1, v2, map1
 #endif
     !
-    end subroutine sp_dev_v_remap_v_r1d
+    end subroutine sp_dev_vec_upd_v_remap_v_r1d
     !
-    subroutine sp_dev_v_remap_v_c1d(ndim, vout, v1, map1, v2, scal)
+    subroutine sp_dev_vec_upd_v_remap_v_c1d(ndim, vout, v1, map1, v2, scal)
        implicit none
        !   
        integer, parameter :: PRCSN = selected_real_kind(6, 37)
@@ -274,12 +274,12 @@ interface dev_v_remap_v
        attributes(device) :: vout, v1, v2, map1
 #endif
     !
-    end subroutine sp_dev_v_remap_v_c1d
+    end subroutine sp_dev_vec_upd_v_remap_v_c1d
     !
     !
 
 
-    subroutine dp_dev_v_remap_v_x_c1d(ndim, vout, v1,op1, map1, v2,op2, scal)
+    subroutine dp_dev_vec_upd_v_remap_v_x_c1d(ndim, vout, v1,op1, map1, v2,op2, scal)
        implicit none
        !   
        integer, parameter :: PRCSN = selected_real_kind(14,200)
@@ -294,9 +294,9 @@ interface dev_v_remap_v
        attributes(device) :: vout, v1, v2, map1
 #endif
        !
-    end subroutine dp_dev_v_remap_v_x_c1d
+    end subroutine dp_dev_vec_upd_v_remap_v_x_c1d
     !
-    subroutine sp_dev_v_remap_v_x_c1d(ndim, vout, v1,op1, map1, v2,op2, scal)
+    subroutine sp_dev_vec_upd_v_remap_v_x_c1d(ndim, vout, v1,op1, map1, v2,op2, scal)
        implicit none
        !   
        integer, parameter :: PRCSN = selected_real_kind(6, 37)
@@ -311,15 +311,15 @@ interface dev_v_remap_v
        attributes(device) :: vout, v1, v2, map1
 #endif
        !
-    end subroutine sp_dev_v_remap_v_x_c1d
+    end subroutine sp_dev_vec_upd_v_remap_v_x_c1d
     !
     !
-end interface dev_v_remap_v
+end interface dev_vec_upd_v_remap_v
 
-interface dev_diag_mat_diag
+interface dev_mat_upd_dMd
     !
 
-    subroutine dp_dev_diag_mat_diag_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
+    subroutine dp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
        !   
        ! performs: mat(i,j) = scal * op1(v1(i)) * mat(i,j) * op2(v2(j))
        ! op = 'N', 'R', 'C',       'RC'
@@ -337,9 +337,9 @@ interface dev_diag_mat_diag
        attributes(device) :: mat, v1, v2
 #endif
        !
-    end subroutine dp_dev_diag_mat_diag_r2d
+    end subroutine dp_dev_mat_upd_dMd_r2d
     !
-    subroutine dp_dev_diag_mat_diag_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
+    subroutine dp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
        !   
        ! performs: mat(i,j) = scal * op1(v1(i)) * mat(i,j) * op2(v2(j))
        ! op = 'N', 'R', 'C',       'RC'
@@ -357,9 +357,9 @@ interface dev_diag_mat_diag
        attributes(device) :: mat, v1, v2
 #endif
        !
-    end subroutine dp_dev_diag_mat_diag_c2d
+    end subroutine dp_dev_mat_upd_dMd_c2d
     !
-    subroutine sp_dev_diag_mat_diag_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
+    subroutine sp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
        !   
        ! performs: mat(i,j) = scal * op1(v1(i)) * mat(i,j) * op2(v2(j))
        ! op = 'N', 'R', 'C',       'RC'
@@ -377,9 +377,9 @@ interface dev_diag_mat_diag
        attributes(device) :: mat, v1, v2
 #endif
        !
-    end subroutine sp_dev_diag_mat_diag_r2d
+    end subroutine sp_dev_mat_upd_dMd_r2d
     !
-    subroutine sp_dev_diag_mat_diag_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
+    subroutine sp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
        !   
        ! performs: mat(i,j) = scal * op1(v1(i)) * mat(i,j) * op2(v2(j))
        ! op = 'N', 'R', 'C',       'RC'
@@ -397,7 +397,7 @@ interface dev_diag_mat_diag
        attributes(device) :: mat, v1, v2
 #endif
        !
-    end subroutine sp_dev_diag_mat_diag_c2d
+    end subroutine sp_dev_mat_upd_dMd_c2d
     !
     !
-end interface dev_diag_mat_diag
+end interface dev_mat_upd_dMd

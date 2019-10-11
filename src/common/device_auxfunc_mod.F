@@ -16,7 +16,7 @@
 module device_auxfunc_m
   implicit none
 
-#include<device_auxfunc_interf.F>
+#include<../src/common/device_auxfunc_interf.F>
 
 end module device_auxfunc_m
 

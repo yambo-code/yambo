@@ -16,7 +16,7 @@
 module device_fbuff_m
   implicit none
 
-#include<device_fbuff_interf.F>
+#include<../src/common/device_fbuff_interf.F>
 
 end module device_fbuff_m
 

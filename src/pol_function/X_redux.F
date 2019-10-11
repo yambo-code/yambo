@@ -35,6 +35,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  ! SER/SLK -> PAR/SER interface
  !
  use pars,          ONLY:SP,pi,cZERO,cONE
+ use com,           ONLY:error
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,&
@@ -193,6 +194,8 @@ subroutine X_redux(iq,X_par,Xw,X)
      if (Xo%kind=="SLK") then
 #if defined _SCALAPACK
        call PARALLEL_M_by_M(Xo,K_FXC,KERNEL,"N","N",X%ng,FXC_n_g_corr,FXC_n_g_corr)
+#else
+       call error("[LA] SLK library required but not available")
 #endif
      else
        call M_by_M('N','N',X%ng,FXC_n_g_corr,FXC_n_g_corr,cONE,-Xo%blc(:,:FXC_n_g_corr,1),X%ng,&
@@ -228,35 +231,30 @@ subroutine X_redux(iq,X_par,Xw,X)
      call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=KERNEL,B_slk=Xo,C_slk=BUFFER)
      !
    endif
+
    !
-   if (use_cuda) then
-     !
-#if defined _CUDA
-   !
-   BUFFER_blc_d=>BUFFER%blc_d(:,:,:)
-   !
-   !$cuf kernel do(2) <<<*,*>>>
-   do ig2=Xo_cols(1),Xo_cols(2)
-     do ig1=Xo_rows(1),Xo_rows(2)
-       BUFFER_blc_d(ig1,ig2,iw_par)=BUFFER_blc_d(ig1,ig2,iw_par)*4._SP*pi/bare_qpg_d(ig1,iq)/bare_qpg_d(ig2,iq)
-     enddo
-   enddo
-   !
-#else
-   !
-   !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
-   do ig2=Xo%cols(1),Xo%cols(2)
-     do ig1=Xo%rows(1),Xo%rows(2)
-       BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
-     enddo
-   enddo
-   !$omp end parallel do
-   !
-#endif
+   ! update X by multiplying left and right for v_coul^1/2 (diagonal in reciprocal space)
    !
    if (have_cuda) then
+      !
+      call dev_mat_upd_dMd(Xo_rows(2)-Xo_rows(1)+1,Xo_cols(2)-Xo_cols(1)+1,BUFFER%blc_d(:,:,iw_par),&
+                           bare_qpg_d(Xo_rows(1):,iq),"R",bare_qpg_d(Xo_cols(1):,iq),"R",scal=4._SP*pi) 
+      !
       call dev_stream_sync(stream_default)
       call dev_memcpy_async(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
+      !
+   else
+      !
+      !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
+      do ig2=Xo%cols(1),Xo%cols(2)
+        do ig1=Xo%rows(1),Xo%rows(2)
+          BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+        enddo
+      enddo
+      !$omp end parallel do
+      !
+   endif
+   !
    endif
    !
    if (PAR_n_freqs>0) call live_timing(steps=1)

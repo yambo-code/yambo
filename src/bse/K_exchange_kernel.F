@@ -61,7 +61,7 @@ function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   !
 #else
   H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp_ip%O_x(:,i_Tp),&
-                                   BS_T_grp_ik%O_x(:,i_Tk)/bare_qpg1(:BS_n_g_exch,iq)**2)
+                                   BS_T_grp_ik%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
 #endif
   !
 end function K_exchange_kernel_resonant

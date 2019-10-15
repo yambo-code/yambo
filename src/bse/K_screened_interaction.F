@@ -37,7 +37,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
 #endif
  use BS,           ONLY:BS_n_g_W,BS_W_is_diagonal,BS_W
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD,RD_CL,RD_CL_IF_END
- use device_util_m,ONLY:dev_memcpy
+ use deviceXlib_m, ONLY:dev_memcpy
  !
 #include<dev_defs.h>
 #include<memory.h>

@@ -49,7 +49,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use global_XC,     ONLY:WF_exx_screening
  use pseudo,        ONLY:becp, pp_is_uspp
  use qe_pseudo_m,   ONLY:beccopy
- use device_util_m, ONLY:dev_memcpy
+ use deviceXlib_m,  ONLY:dev_memcpy
  !
 #include<dev_defs.h>
 #include<memory.h>

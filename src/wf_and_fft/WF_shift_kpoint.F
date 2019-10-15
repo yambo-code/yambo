@@ -33,7 +33,7 @@ subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,
 #endif
  use wave_func,     ONLY:wf_ng
  use interfaces,    ONLY:eval_G_minus_G
- use device_util_m, ONLY:dev_memcpy
+ use deviceXlib_m,  ONLY:dev_memcpy
  !
  implicit none
  !

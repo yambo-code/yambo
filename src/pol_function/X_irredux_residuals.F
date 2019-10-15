@@ -46,7 +46,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
 #ifdef _CUDA
  use R_lattice,     ONLY:g_rot_d,G_m_G_d
 #endif
- use device_util_m
+ use deviceXlib_m
 #include<dev_defs.h>
  !
  implicit none

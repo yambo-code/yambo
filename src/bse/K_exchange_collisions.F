@@ -30,7 +30,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  use timing_m,       ONLY:timing
  use openmp,         ONLY:OPENMP_update,master_thread
  use collision_el,   ONLY:elemental_collision_free,elemental_collision_alloc
- use device_util_m,  ONLY:dev_memcpy
+ use deviceXlib_m,   ONLY:dev_memcpy
 #ifdef _CUDA
  use D_lattice,      ONLY:sop_inv_d
  use R_lattice,      ONLY:g_rot_d
@@ -62,7 +62,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  call elemental_collision_free(K_EXCH_collision)
  call BS_oscillators_alloc(.TRUE.,i_T_grp,.FALSE.,0)
  !
-#ifdef __NOTNOW && !defined _CUDA
+#if defined(__NOTNOW) && ! defined(_CUDA)
  !$omp parallel default(shared), private( K_EXCH_collision, &
  !$omp &        i_T_el,i_k_bz,i_k,i_s, i_p_bz,i_p,i_sp, i_v,i_c,i_spin, &
  !$omp &        i_T_grp_last_with_identity_sym, i_T_el_last_with_identity_sym, &
@@ -73,7 +73,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  !
  call elemental_collision_alloc(K_EXCH_collision,NG=BS_n_g_exch,TITLE="EXCH_COLL")
  !
-#ifdef __NOTNOW && !defined _CUDA
+#if defined(__NOTNOW) && ! defined(_CUDA)
  !$omp do schedule(dynamic)
 #endif
  T_loop: do i_T_el=1,BS_T_grp(i_T_grp)%size
@@ -190,12 +190,12 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
    endif
    !
  enddo T_loop
-#ifdef __NOTNOW && !defined _CUDA
+#if defined(__NOTNOW) && ! defined(_CUDA)
  !$omp end do
 #endif
  !
  call elemental_collision_free(K_EXCH_collision) 
-#ifdef _NOTNOW && !defined _CUDA
+#if defined(__NOTNOW) && ! defined(_CUDA)
  !$omp end parallel
 #endif
  !

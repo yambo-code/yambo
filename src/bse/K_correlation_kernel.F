@@ -34,7 +34,7 @@ function K_correlation_kernel(i_block,i_p,i_pmq,                               &
  use R_lattice,    ONLY:G_m_G_d,g_rot_d
 #endif
  use wrapper,      ONLY:V_by_V_pwise,M_by_V,Vstar_dot_V
- use device_util_m,ONLY:dev_conjg
+ use deviceXlib_m, ONLY:dev_conjg
  !
  implicit none
  !

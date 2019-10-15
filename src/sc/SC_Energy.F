@@ -58,7 +58,6 @@ subroutine SC_Energy(E_total,E_eigen,E_zero,E_Hartree,E_xc_,E,k,rho)
  E_total  =0._SP
  !
  if (.not.l_sc_is_libDFT .and. .not.l_sc_hartree .and. .not.l_sc_V_is_local) return
- write(*,*) 'pippo'
  !
  call V_Hartree(rho,V_hartree_sc)                           ! V_Hartree
  call XC_potential_driver(E,k,SC_kind,SC_xc_functional,1)   ! V_xc

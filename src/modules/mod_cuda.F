@@ -73,7 +73,7 @@ module cuda_m
   public :: stream_kind
   public :: stream_default
   public :: stream_h2d
-  public :: stream_h2d
+  public :: stream_d2h
 
 contains
 

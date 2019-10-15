@@ -842,7 +842,7 @@ subroutine dp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
     if (op1=="N".and.op2=="N") then
        if (present(scal)) then
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -856,7 +856,7 @@ subroutine dp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
 #endif
        else
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -872,7 +872,7 @@ subroutine dp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
     elseif (op1=="R".and.op2=="R") then
        if (present(scal)) then
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -886,7 +886,7 @@ subroutine dp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
 #endif
        else
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -927,7 +927,7 @@ subroutine dp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
     if (op1=="N".and.op2=="N") then
        if (present(scal)) then
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -941,7 +941,7 @@ subroutine dp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
 #endif
        else
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -957,7 +957,7 @@ subroutine dp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
     elseif (op1=="R".and.op2=="R") then
        if (present(scal)) then
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -971,7 +971,7 @@ subroutine dp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
 #endif
        else
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -987,7 +987,7 @@ subroutine dp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
     elseif (op1=="C".and.op2=="C") then
        if (present(scal)) then
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -1001,7 +1001,7 @@ subroutine dp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
 #endif
        else
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -1042,7 +1042,7 @@ subroutine sp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
     if (op1=="N".and.op2=="N") then
        if (present(scal)) then
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -1056,7 +1056,7 @@ subroutine sp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
 #endif
        else
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -1072,7 +1072,7 @@ subroutine sp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
     elseif (op1=="R".and.op2=="R") then
        if (present(scal)) then
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -1086,7 +1086,7 @@ subroutine sp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
 #endif
        else
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -1127,7 +1127,7 @@ subroutine sp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
     if (op1=="N".and.op2=="N") then
        if (present(scal)) then
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -1141,7 +1141,7 @@ subroutine sp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
 #endif
        else
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -1157,7 +1157,7 @@ subroutine sp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
     elseif (op1=="R".and.op2=="R") then
        if (present(scal)) then
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -1171,7 +1171,7 @@ subroutine sp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
 #endif
        else
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -1187,7 +1187,7 @@ subroutine sp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
     elseif (op1=="C".and.op2=="C") then
        if (present(scal)) then
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif
@@ -1201,7 +1201,7 @@ subroutine sp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
 #endif
        else
 #ifndef _CUDA
-         !$omp parallel do(2)
+         !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
 #endif

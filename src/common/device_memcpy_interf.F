@@ -1293,6 +1293,7 @@ interface dev_memcpy_async
     end subroutine sp_memcpy_d2h_async_c4d
     !
     !
+#if defined(__HAVE_DEVICE)
     subroutine dp_memcpy_h2d_async_r1d(array_out, array_in, stream, &
                                              range1, lbound1  )
 #if defined(__CUDA)
@@ -1685,6 +1686,8 @@ interface dev_memcpy_async
        !
     end subroutine sp_memcpy_h2d_async_c4d
     !
+    !
+#endif
     !
 end interface dev_memcpy_async
 !

@@ -345,11 +345,9 @@ module stderr
          ! depending on the compiler 1.E9 is written  as 0.1E10. Therefore I need to uses
          ! a reference iexp=8 to distinguish the two possible formats.
          !
-         if (iexp< 9) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-5,'E1'
-         !
-         !  g_format_length-6: 6 because of '-1.','E00'
-         !
-         if (iexp> 8) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-6,''
+         if (iexp< 9)  write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-5,'E1'   !G9.4E1  g_format_length-5: 5 because of '-1.','E0'
+         if (iexp>=9)  write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-6,'E2'   !G9.3E2  g_format_length-6: 6 because of '-1.','E00'
+         if (iexp>=99) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-7,'E3'   !G9.2E3  g_format_length-7: 7 because of '-1.','E000'
          !
        endif
        !

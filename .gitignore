@@ -33,6 +33,7 @@ config/setup
 config/msg_ydb
 driver/codever.h
 driver/editor.h
+include/branch.inc
 include/netcdf.h
 include/netcdf_*.h
 include/netcdf.inc
@@ -44,6 +45,7 @@ lib/install/make_iotk.inc
 lib/iotk/make.sys
 lib/iotk/make_iotk.inc
 lib/*/*stamp
+lib/*/package-installed
 lib/*/lib
 lib/*/bin
 lib/*/tmp

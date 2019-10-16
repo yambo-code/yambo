@@ -46,7 +46,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 #if defined _SC
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB,SC_bands
- use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_perturbation,global_XC_string
+ use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_perturbation,global_XC_string,G_WF_xc_string,&
+&                        X_WF_xc_string,K_WF_xc_string,Dipole_WF_xc_string,loaded_WF_xc_string
 #endif
  use pseudo,        ONLY:pp_is_uspp,becp
  use qe_pseudo_m,   ONLY:vkb,tpiba
@@ -454,6 +455,13 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    call msg('rns','[WF'//trim(wf_title)//' loader] '//&
 &                             trim(global_XC_string(WF_kind,WF_xc_functional,WF_perturbation))//&
 &                             ' WFs loaded. Bands range',SC_bands)
+   !
+   ! Kind trasnfer
+   !
+   G_WF_xc_string     =loaded_WF_xc_string
+   X_WF_xc_string     =loaded_WF_xc_string
+   K_WF_xc_string     =loaded_WF_xc_string
+   Dipole_WF_xc_string=loaded_WF_xc_string
    !
    if (WF%space=='R') wf_grid_size=fft_size
    if (WF%space=='G') wf_grid_size=wf_ng

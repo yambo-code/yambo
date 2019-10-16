@@ -347,14 +347,14 @@ subroutine setup(en,Xen,Ken,k,Xk)
    !
    ! SC wavefunctions
    !
-   ! Here I only check for the existence of the SC WF DB. Band checking will be done later
+   ! Here I only check for the existence of the SC WF DB.
    !
    call load_SC_components('check_WF_DB',n_bands=0,&
 &                          kind=WF_kind,xc_functional=WF_xc_functional,perturbation=WF_perturbation)
    !
    if (found_SC_DB) then
      call setup_global_XC('WF',WF_kind,WF_xc_functional,WF_perturbation)
-     call warning(trim(loaded_WF_xc_string)//' wavefunctions found. Bands check at loading time.')
+     call warning(trim(loaded_WF_xc_string)//' wavefunctions found')
    endif
    !
  endif

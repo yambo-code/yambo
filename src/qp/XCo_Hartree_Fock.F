@@ -51,6 +51,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use qe_pseudo_m,   ONLY:beccopy
  !
 #include<memory.h>
+ !
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
  character(*),optional ::mode

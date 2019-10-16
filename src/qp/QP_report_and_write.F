@@ -74,8 +74,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !============================================================
  !
  report_Sc=.not.QPdb_read_err==0.and..not.On_Mass_Shell_approx.and..not.use_GreenF_to_eval_QP
- report_Vnlxc=l_elel_corr.and..not.l_life
- report_Vxc  =report_Vnlxc
+ report_Vnlxc=l_elel_corr.and..not.l_life.and.allocated(QP_Vnl_xc)
+ report_Vxc  =allocated(QP_Vxc)
  report_dSc=.not.On_Mass_Shell_approx.and..not.trim(QP_solver)=='g'.and..not.use_GreenF_to_eval_QP.and..not.l_cohsex
  do_IO=.TRUE.
  if (l_life.or.QPdb_read_err==0) then
@@ -153,6 +153,9 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' nlXC='
      shadow(n_shadows)=real(QP_Vnl_xc(iqp))*HA2EV
+   endif
+   !
+   if (report_Vxc) then
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' lXC='
      shadow(n_shadows)=real(QP_Vxc(iqp))*HA2EV

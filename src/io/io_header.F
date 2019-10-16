@@ -322,29 +322,29 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
      xc_kind_force=trim(xc_string_kinds(i1+1))=='force'
      select case (trim(xc_string_kinds(i1)))
        case('G')
-         call XC_E_KIND_io('G',G_E_xc_string,  ' Green`s function   energies      :')
-         call XC_WF_KIND_io('G',G_WF_xc_string, '                    wavefunctions :')
+         call XC_KIND_io('E','G',G_E_xc_string,  ' Green`s function   energies      :')
+         call XC_KIND_io('WF','G',G_WF_xc_string, '                    wavefunctions :')
        case('G_WF')
-         call XC_WF_KIND_io('G',G_WF_xc_string,' Green`s function   wavefunctions :')
+         call XC_KIND_io('WF','G',G_WF_xc_string,' Green`s function   wavefunctions :')
        case('Xx')
-         call XC_E_KIND_io('Xx',X_E_xc_string(1),  ' Polariz. function  energies      :')
-         call XC_WF_KIND_io('Xx',X_WF_xc_string(1), '                    wavefunctions :')
+         call XC_KIND_io('E','Xx',X_E_xc_string(1),  ' Polariz. function  energies      :')
+         call XC_KIND_io('WF','Xx',X_WF_xc_string(1), '                    wavefunctions :')
        case('Xs')
-         call XC_E_KIND_io('Xs',X_E_xc_string(2),  ' Static diel. fun.  energies      :')
-         call XC_WF_KIND_io('Xs',X_WF_xc_string(2), '                    wavefunctions :')
+         call XC_KIND_io('E','Xs',X_E_xc_string(2),  ' Static diel. fun.  energies      :')
+         call XC_KIND_io('WF','Xs',X_WF_xc_string(2), '                    wavefunctions :')
        case('Xp')
-         call XC_E_KIND_io('Xp',X_E_xc_string(3),  ' PPA    diel. fun.  energies      :')
-         call XC_WF_KIND_io('Xp',X_WF_xc_string(3), '                    wavefunctions :')
+         call XC_KIND_io('E','Xp',X_E_xc_string(3),  ' PPA    diel. fun.  energies      :')
+         call XC_KIND_io('WF','Xp',X_WF_xc_string(3), '                    wavefunctions :')
        case('Xd')
-         call XC_E_KIND_io('Xd',X_E_xc_string(4),  ' Dyn. dielectric f. energies      :')
-         call XC_WF_KIND_io('Xd',X_WF_xc_string(4), '                    wavefunctions :')
+         call XC_KIND_io('E','Xd',X_E_xc_string(4),  ' Dyn. dielectric f. energies      :')
+         call XC_KIND_io('WF','Xd',X_WF_xc_string(4), '                    wavefunctions :')
        case('K')
-         call XC_E_KIND_io('K',K_E_xc_string,  ' BS kernel          energies      :')
-         call XC_WF_KIND_io('K',K_WF_xc_string, '                    wavefunctions :')
+         call XC_KIND_io('E','K',K_E_xc_string,  ' BS kernel          energies      :')
+         call XC_KIND_io('WF','K',K_WF_xc_string, '                    wavefunctions :')
        case('K_E')
-         call XC_E_KIND_io('K',K_E_xc_string,  ' BS kernel          energies      :')
+         call XC_KIND_io('E','K',K_E_xc_string,  ' BS kernel          energies      :')
        case('K_WF')
-         call XC_WF_KIND_io('K',K_WF_xc_string, ' BS kernel          wavefunctions :')
+         call XC_KIND_io('WF','K',K_WF_xc_string, ' BS kernel          wavefunctions :')
      end select
    enddo
    !
@@ -379,37 +379,22 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  contains
    !
-   subroutine XC_E_KIND_io(VAR_,string_,desc_)
+   subroutine XC_KIND_io(what,VAR_,string_,desc_)
      !
-     character(*)      :: VAR_,desc_
+     character(*)      :: what,VAR_,desc_
      character(lchlen) :: string_
      !
-     call io_elemental(ID,VAR=VAR_//'_energies_xc_KIND',CH0="",VAR_SZ=1,MENU=MENU)
-     MENU=0
-     if (xc_kind_force) then
-       call io_elemental(ID,CH0=string_,VAR=desc_,CHECK=WARN,OP=(/"=="/))
-     else
-       call io_elemental(ID,CH0=string_,VAR=desc_,WARN=WARN,OP=(/"=="/))
-     endif
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     !
-   end subroutine
-   !
-   subroutine XC_WF_KIND_io(VAR_,string_,desc_)
-     !
-     character(*)      :: VAR_,desc_
-     character(lchlen) :: string_
-     !
-     call io_elemental(ID,VAR=VAR_//'_wavefunctions_xc_KIND',CH0="",VAR_SZ=1,MENU=MENU)
+     if (what=="WF") call io_elemental(ID,VAR=VAR_//'_wavefunctions_xc_KIND',CH0="",VAR_SZ=1,MENU=MENU)
+     if (what=="E" ) call io_elemental(ID,VAR=VAR_//'_energies_xc_KIND',CH0="",VAR_SZ=1,MENU=MENU)
      MENU=0
      if (read_is_on(ID)) then
        if (IO_mode(ID)==DUMP) then
          call io_elemental(ID,CH0=string_,VAR=desc_)
        else
          if (xc_kind_force) then
-           call io_elemental(ID,DB_CH0=string_,CH0=loaded_WF_xc_string,VAR=desc_,CHECK=WARN,OP=(/"=="/),DO_NOT_DUMP=.TRUE.)
+           call io_elemental(ID,CH0=string_,VAR=desc_,CHECK=WARN,OP=(/"=="/),DO_NOT_DUMP=.TRUE.)
          else
-           call io_elemental(ID,DB_CH0=string_,CH0=loaded_WF_xc_string,VAR=desc_,WARN=WARN,OP=(/"=="/),DO_NOT_DUMP=.TRUE.)
+           call io_elemental(ID,CH0=string_,VAR=desc_,WARN=WARN,OP=(/"=="/),DO_NOT_DUMP=.TRUE.)
          endif
        endif
      else

@@ -23,7 +23,7 @@
 !
 subroutine XCo_driver(E,k,Xk,q)
  !
- use drivers,       ONLY:l_acfdt,l_sc_run
+ use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time
  use pars,          ONLY:schlen,rZERO,SP,cZERO
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -53,7 +53,7 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  character(schlen) ::sec_mode_and_message(2),ch
  integer           ::WF_kind_no_H
- logical           ::l_Vxc,l_Vnl_xc
+ logical           ::l_Vxc,l_Vnl_xc,l_section
  type(QP_t)        ::qp
  !
  ! IO
@@ -81,7 +81,7 @@ subroutine XCo_driver(E,k,Xk,q)
  ! XCo=SRPA      => QP_Vnl_xc=F             & QP_Vxc= SRPA
  !
 #endif
- l_Vxc   =.TRUE.
+ l_Vxc   =.not.l_sc_run.and..not.l_real_time
  l_Vnl_xc=.TRUE.
  !
 #if defined _SC
@@ -94,6 +94,7 @@ subroutine XCo_driver(E,k,Xk,q)
  if (WF_kind_no_H==H_SE_SEX+H_SE_COH) l_Vxc   =.FALSE.
  !
  if (WF_kind_no_H==H_SE_FOCK)      l_Vnl_xc   =.FALSE.
+ !
 #endif
  !
  if (.not.l_Vxc.and..not.l_Vnl_xc) then
@@ -109,7 +110,11 @@ subroutine XCo_driver(E,k,Xk,q)
  if (l_Vxc.and..not.l_Vnl_xc) sec_mode_and_message(2)='Local Exchange-Correlation'
  if (l_acfdt)   sec_mode_and_message(1)='p'
  !
- call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
+ l_section=.TRUE.
+#if defined _SC
+ l_section=.not.l_sc_run.and.(WF_kind/=H_SE_FOCK.and.WF_kind/=H_SE_FOCK+H_SE_HARTREE)
+#endif
+ if (l_section) call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
  !
  ! QP states setup
  !
@@ -130,6 +135,9 @@ subroutine XCo_driver(E,k,Xk,q)
  io_err=io_HF_and_locXC(ID)
  !
  if (io_err==0) then
+   !
+   Vxc_kind=trim(global_XC_string(WF_kind,WF_xc_functional,EXT_NONE))
+   Vnlxc_kind="Hartree-Fock"
    !
    call XCo_report(qp,E,k)
    !
@@ -188,8 +196,8 @@ subroutine XCo_driver(E,k,Xk,q)
    Vnlxc_kind="Hartree-Fock-("//trim(global_XC_string(WF_kind,WF_xc_functional,WF_perturbation))//")"
  endif
  !
- ! Non-local part of SC xc => V_nlxc
- !===================================
+ ! Non-local part of SC xc must be subtracted from V_nlxc
+ !========================================================
  !
  call QP_load_SC_xc( )
  !
@@ -205,21 +213,24 @@ subroutine XCo_driver(E,k,Xk,q)
    io_err=io_HF_and_locXC(ID)
  endif
  !
- stop
- !
  contains
    !
    subroutine LOCAL_alloc()
      if (.not.allocated(QP_Vnl_xc).and.l_Vnl_xc) then
        YAMBO_ALLOC(QP_Vnl_xc,(QP_n_states))
-       QP_Vnl_xc=cZERO
      endif
      if (.not.allocated(QP_Vxc).and.l_Vxc) then
        YAMBO_ALLOC(QP_Vxc,(QP_n_states))
-       QP_Vxc=cZERO
      endif
      if (.not.allocated(QP_Vnl_sex).and.l_screen_hyb) then
        YAMBO_ALLOC(QP_Vnl_sex,(QP_n_states))
+       QP_Vnl_sex=cZERO
+     endif
+     if (l_Vnl_xc) then
+       QP_Vnl_xc=cZERO
+     else if (l_Vxc) then
+       QP_Vxc=cZERO
+     else if (l_screen_hyb) then
        QP_Vnl_sex=cZERO
      endif
    end subroutine

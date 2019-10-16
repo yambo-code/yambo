@@ -136,8 +136,10 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  if (io_err==0) then
    !
+#if defined _SC
    Vxc_kind=trim(global_XC_string(WF_kind,WF_xc_functional,EXT_NONE))
    Vnlxc_kind="Hartree-Fock"
+#endif
    !
    call XCo_report(qp,E,k)
    !
@@ -186,12 +188,13 @@ subroutine XCo_driver(E,k,Xk,q)
    !
  endif
  !
+#if defined _SC
+ !
  ! Kind transfer
  !===============
  !
  Vxc_kind=trim(global_XC_string(WF_kind,WF_xc_functional,EXT_NONE))
  Vnlxc_kind="Hartree-Fock"
-#if defined _SC
  if (.not.l_sc_V_is_local) then
    Vnlxc_kind="Hartree-Fock-("//trim(global_XC_string(WF_kind,WF_xc_functional,WF_perturbation))//")"
  endif

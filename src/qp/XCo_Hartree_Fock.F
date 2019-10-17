@@ -71,13 +71,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  integer              :: ig
  integer              :: ikibz,i_sp_pol
  integer, external    :: QP_state_extract
- !
-#if defined _CUDA
- integer              :: isc_ngrho
- complex(SP), pointer, device :: isc_rhotw_d(:)
- complex(SP), pointer, device :: iscp_rhotw_d(:)
- complex(SP), pointer, device :: isc_gamp_d(:,:)
-#endif
+
  !
  ! Resets & basis setup
  !

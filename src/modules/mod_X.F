@@ -27,6 +27,7 @@ module X_m
  use units,          ONLY:HA2EV
  use matrix,         ONLY:PAR_matrix
  !
+#include <dev_defs.h>
 #include <memory.h>
  !
  ! Polarizability
@@ -112,10 +113,8 @@ module X_m
  logical                       :: X_lower_triangle_matrix_in_use=.FALSE.
  integer                       :: X_rows(2) = 0
  integer                       :: X_cols(2) = 0
- complex(SP)     , allocatable :: X_mat(:,:,:)
-#ifdef _CUDA
- complex(SP)     , allocatable, device :: X_mat_d(:,:,:)
-#endif
+ complex(SP),      allocatable :: X_mat(:,:,:)
+ complex(SP),      allocatable DEV_ATTRIBUTE :: X_mat_d(:,:,:)
  !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
@@ -191,9 +190,7 @@ module X_m
          ! and the matrix itself
          !
          YAMBO_FREE(X_mat)
-#ifdef _CUDA
-         deallocate(X_mat_d)
-#endif
+         YAMBO_FREE(X_mat_d)
          !
        end select
      endif

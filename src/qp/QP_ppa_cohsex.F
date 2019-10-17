@@ -44,7 +44,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind
- use X_m,           ONLY:X_alloc,X_mat,X_t
+ use X_m,           ONLY:X_alloc,X_mat,X_mat_d,X_t
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
@@ -57,13 +57,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use parallel_m,    ONLY:PAR_COM_QP_A2A
  use SC,            ONLY:it_now,it_to_start
 #endif
+ use deviceXlib_m,  ONLY:dev_memcpy
+ use cuda_m,        ONLY:have_cuda
 #ifdef _CUDA
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
- use X_m,           ONLY:X_mat_d
 #endif
  !
+#include<dev_defs.h>
 #include<memory.h>
  !
  type(levels) ::E
@@ -241,12 +243,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      X_range=(/1,Xw%n_freqs/)
      if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
-#ifdef _CUDA
-     call scatter_Gamp_gpu(isc,'c')
-     isc%gamp = isc%gamp_d
-#else
-     call scatter_Gamp(isc,'c')
-#endif
+     call DEV_SUBNAME(scatter_Gamp)(isc,'c')
+     if (have_cuda) call dev_memcpy(isc%gamp,isc%gamp_d)
      !
      ! I/O
      !
@@ -317,9 +315,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (l_ppa) call mat_transpose(X_mat(:,:,X_range(2)))
      X_is_TR_rotated=.true.
    endif
-#ifdef _CUDA
-   X_mat_d = X_mat
-#endif
+   !
+   if (have_cuda) call dev_memcpy(X_mat_d, X_mat)
    !
    QP_loop: do i_qp=i_qp_to_start,QP_n_states
      !
@@ -356,12 +353,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        isc%os=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
        isc%qs=(/1,1,1/)
 
-#ifdef _CUDA
-       call scatter_Bamp_gpu(isc)
-       isc%rhotw = isc%rhotw_d
-#else
-       call scatter_Bamp(isc)
-#endif
+       call DEV_SUBNAME(scatter_Bamp)(isc)
+       if (have_cuda) call dev_memcpy(isc%rhotw,isc%rhotw_d)
        !
        if (l_GW_terminator) then
          do is=1,n_sp_pol
@@ -448,26 +441,16 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        isc%os(1)=ib
        !
-#ifdef _CUDA
-       call scatter_Bamp_gpu(isc)
-       isc%rhotw = isc%rhotw_d
-#else
-       call scatter_Bamp(isc)
-#endif
+       call DEV_SUBNAME(scatter_Bamp)(isc)
+       if (have_cuda) call dev_memcpy(isc%rhotw, isc%rhotw_d)
        iscp%os=isc%os
        !
        if (any(isc%is/=iscp%is)) then
-#ifdef _CUDA
-         call scatter_Bamp_gpu(iscp)
-         iscp%rhotw = iscp%rhotw_d
-#else
-         call scatter_Bamp(iscp)
-#endif
+         call DEV_SUBNAME(scatter_Bamp)(iscp)
+         if (have_cuda) call dev_memcpy(iscp%rhotw, iscp%rhotw_d)
        else
          iscp%rhotw=isc%rhotw
-#ifdef _CUDA
-         iscp%rhotw_d=iscp%rhotw
-#endif
+         if (have_cuda) call dev_memcpy(iscp%rhotw_d, iscp%rhotw)
        endif
        !
        dc=cZERO
@@ -475,7 +458,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        if (l_ppa) then
          !
          if(l_GW_terminator) then
-#if defined _OPENMP
            !$omp parallel do default(shared), private(ig1,ig2)
            do ig2=1,X%ng
              do ig1=1,X%ng
@@ -483,11 +465,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              enddo
            enddo
            !$omp end parallel do
-#else
-           forall(ig1=1:X%ng,ig2=1:X%ng)
-             eet_factor(ig1,ig2)=eet_factor(ig1,ig2)-isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))
-           end forall
-#endif
          endif
          !
          forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E_bare(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
@@ -517,7 +494,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            do ig2=1,Xng
              do ig1=1,Xng
                !
-               PPA_E= real(XppaE/X_mat_d(ig1,ig2,Xr2))
+               PPA_E= real(XppaE/X_mat_d(ig1,ig2,Xr2),kind=SP)
                PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
 
                ! inline bose_f function
@@ -539,7 +516,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                sp_dummy_r=sp_dummy_r+real(ctmp)
                sp_dummy_i=sp_dummy_i+imag(ctmp)
                !
-               !
              enddo
            enddo
            !
@@ -556,7 +532,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            do ig2=1,X%ng
              do ig1=1,X%ng
                !
-               PPA_E= real(X%ppaE/X_mat(ig1,ig2,X_range(2)))
+               PPA_E= real(X%ppaE/X_mat(ig1,ig2,X_range(2)),kind=SP)
                PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
                !
                ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
@@ -580,16 +556,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          call M_by_V('N', X%ng, X_mat(:,:,X_range(1)), conjg(iscp%rhotw), local_rhotw)
          !
-#if defined _OPENMP
          pre_factor=0.0_SP
          !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor)
          do ig1=1,X%ng
            pre_factor=pre_factor+isc%rhotw(ig1)*local_rhotw(ig1)
          enddo
          !$omp end parallel do
-#else
-         pre_factor=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
-#endif
+
          !
          ! SEX
          !
@@ -654,7 +627,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      dc(1)=0._SP
      do i_c=1,2
        do i_qp=first_el(ig1),first_el(ig1)+n_of_el(ig1)-1
-         if (i_c==1) dc(1)=dc(1)+QP_Sc(i_qp,1)/real( n_of_el(ig1) )
+         if (i_c==1) dc(1)=dc(1)+QP_Sc(i_qp,1)/real(n_of_el(ig1), kind=SP)
          if (i_c==2) QP_Sc(i_qp,1)=dc(1)
        enddo
      enddo

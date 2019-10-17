@@ -31,6 +31,7 @@ module collision_el
  use parallel_m,  ONLY:PP_indexes
  use qe_pseudo_m, ONLY:bec_type,deallocate_bec_type
  !
+#include<dev_defs.h>
 #include<memory.h>
  !
  type elemental_collision
@@ -68,9 +69,9 @@ module collision_el
    complex(SP), allocatable :: becprod(:,:,:,:)
    complex(SP), allocatable :: eiqtau(:)
    !
+   complex(SP), allocatable DEV_ATTRIBUTE :: rhotw_d(:)
+   complex(SP), allocatable DEV_ATTRIBUTE :: gamp_d(:,:)
 #if defined _CUDA
-   complex(SP), allocatable, device :: rhotw_d(:)
-   complex(SP), allocatable, device :: gamp_d(:,:)
    complex(DP), allocatable, device :: rho_tw_rs_d(:)
    complex(SP), allocatable, device :: WF_symm_i_d(:,:)
    complex(SP), allocatable, device :: WF_symm_o_d(:,:)
@@ -96,9 +97,9 @@ module collision_el
      YAMBO_FREE(ggw%WF_symm_i)
      YAMBO_FREE(ggw%WF_symm_o)
      ! 
-#if defined _CUDA
      YAMBO_FREE(ggw%gamp_d)
      YAMBO_FREE(ggw%rhotw_d)
+#if defined _CUDA
      YAMBO_FREE(ggw%rho_tw_rs_d)
      YAMBO_FREE(ggw%WF_symm_i_d)
      YAMBO_FREE(ggw%WF_symm_o_d)

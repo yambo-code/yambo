@@ -31,12 +31,12 @@ subroutine XCo_driver(E,k,Xk,q)
  use QP_m,          ONLY:QP_Vxc,QP_Vnl_xc,QP_n_states,XCo_Hartree_Fock,QP_t,Vxc_kind,Vnlxc_kind
  use interfaces,    ONLY:WF_free
  use wave_func,     ONLY:WF
- use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening
+ use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening,EXT_NONE,WF_kind,&
+&                        global_XC_string,WF_perturbation,WF_xc_functional
  use pseudo,        ONLY:PP_nlcc_free
 #if defined _SC
  use hamiltonian,   ONLY:l_sc_V_is_local
- use global_XC,     ONLY:WF_kind,H_SE_FOCK,H_SE_HARTREE,H_SE_COH,H_SE_SEX,EXT_NONE,&
-&                        global_XC_string,WF_perturbation,WF_xc_functional
+ use global_XC,     ONLY:H_SE_FOCK,H_SE_HARTREE,H_SE_COH,H_SE_SEX
 #endif
  !
 #include<memory.h>
@@ -53,7 +53,7 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  character(schlen) ::sec_mode_and_message(2),ch
  integer           ::WF_kind_no_H
- logical           ::l_Vxc,l_Vnl_xc,l_section
+ logical           ::l_Vxc,l_Vnl_xc,l_section,l_load_SC_V
  type(QP_t)        ::qp
  !
  ! IO
@@ -81,6 +81,7 @@ subroutine XCo_driver(E,k,Xk,q)
  ! XCo=SRPA      => QP_Vnl_xc=F             & QP_Vxc= SRPA
  !
 #endif
+ !
  l_Vxc   =.not.l_sc_run.and..not.l_real_time
  l_Vnl_xc=.TRUE.
  !
@@ -136,10 +137,8 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  if (io_err==0) then
    !
-#if defined _SC
    Vxc_kind=trim(global_XC_string(WF_kind,WF_xc_functional,EXT_NONE))
    Vnlxc_kind="Hartree-Fock"
-#endif
    !
    call XCo_report(qp,E,k)
    !
@@ -188,13 +187,14 @@ subroutine XCo_driver(E,k,Xk,q)
    !
  endif
  !
-#if defined _SC
- !
  ! Kind transfer
  !===============
  !
  Vxc_kind=trim(global_XC_string(WF_kind,WF_xc_functional,EXT_NONE))
  Vnlxc_kind="Hartree-Fock"
+ !
+#if defined _SC
+ !
  if (.not.l_sc_V_is_local) then
    Vnlxc_kind="Hartree-Fock-("//trim(global_XC_string(WF_kind,WF_xc_functional,WF_perturbation))//")"
  endif
@@ -202,7 +202,12 @@ subroutine XCo_driver(E,k,Xk,q)
  ! Non-local part of SC xc must be subtracted from V_nlxc
  !========================================================
  !
- call QP_load_SC_xc( )
+ l_load_SC_V=.FALSE.
+ if (WF_kind_no_H==H_SE_FOCK)         l_load_SC_V   =.TRUE.
+ if (WF_kind_no_H==H_SE_COH)          l_load_SC_V   =.TRUE.
+ if (WF_kind_no_H==H_SE_SEX)          l_load_SC_V   =.TRUE.
+ if (WF_kind_no_H==H_SE_SEX+H_SE_COH) l_load_SC_V   =.TRUE.
+ if (l_load_SC_V) call QP_load_SC_xc( )
  !
 #endif
  !
@@ -210,10 +215,13 @@ subroutine XCo_driver(E,k,Xk,q)
  !=====
  !
  if (.not.l_sc_run)  then
-   call WF_free(WF)
-   call XCo_report(qp,E,k)
+   !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=io_HF_and_locXC(ID)
+   !
+   call WF_free(WF)
+   call XCo_report(qp,E,k)
+   !
  endif
  !
  contains

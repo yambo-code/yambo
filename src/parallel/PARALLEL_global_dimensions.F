@@ -59,8 +59,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  integer              :: i_k
  logical :: computing_Fock
  !
- computing_Fock= ( l_HF_and_locXC .and. index(secnm,"Bare local and non-local Exchange-Correlation")/=0 )
- !
+ computing_Fock= ( l_HF_and_locXC .and. index(secnm,"Non-Local Fock")/=0 )
  !
  ! K-pts
  !-------

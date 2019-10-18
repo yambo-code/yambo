@@ -38,7 +38,7 @@ subroutine K_kerr_IP(iq,w,Dip)
 &                         PAR_IND_T_groups,PAR_Xk_bz_index,&
 &                         PAR_COM_eh_INDEX,PAR_COM_Xk_ibz_INDEX
  !
-#include<memory.h>
+ implicit none
  !
  type(DIPOLE_t), intent(in) :: Dip
  integer,    intent(in) :: iq
@@ -49,11 +49,6 @@ subroutine K_kerr_IP(iq,w,Dip)
  real(SP)          :: conjg_fac
  complex(SP)       :: E_plus_W0,res,E_plus_W(2/n_sp_pol)
  integer           :: ik_bz,iv,ic,i_sp_pol,i_T,i_T_g,ik_mem,i_pert_SOC,n_SOC
- !
- YAMBO_ALLOC(Epsilon_ij,(BSS_n_freqs,4))
- Epsilon_ij=cZERO
- !
- Epsilon_ij(:,1)=w(:)
  !
  n_SOC=1
  !
@@ -127,8 +122,8 @@ subroutine K_kerr_IP(iq,w,Dip)
  B_Hall(1)=B_Hall(1)*Co_factor
  if (BSS_add_antiresonant.or.BS_K_coupling) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !
- if(trim(global_gauge)=='length'   ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/bare_qpg(1,1)**2
- if(trim(global_gauge)=='velocity' ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/  w(:)   **2
+ if(trim(global_gauge)=='length'   ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/bare_qpg(iq,1)**2
+ if(trim(global_gauge)=='velocity' ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/     w(:)     **2
  !
  ! I add the term describing the Anomalous Hall effect which is
  ! missing in the length gauge (this should be zero for systems with a gap)

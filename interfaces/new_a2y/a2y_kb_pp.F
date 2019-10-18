@@ -23,7 +23,6 @@
 !
 subroutine a2y_kb_pp( ikibz, ncid )
   !
-  !
   ! Structure of ETSF library data: (fortran order, opp to netcdf order)
   !   kb_formfactors(  dims%max_number_of_coefficients,    &
   !   &                dims%number_of_kpoints,             &
@@ -48,11 +47,10 @@ subroutine a2y_kb_pp( ikibz, ncid )
   use netcdf
   use netcdf_data
   use pars,                 only : SP
-  use R_lattice,            only : ng_vec
-  use D_lattice,            only : n_atomic_species,n_atoms_species_max
-  use pseudo,               only : pp_n_l_times_proj_max,pp_n_l_comp,&
-&                                  pp_kbs,pp_kb,pp_kbd,pp_n_l_max
-  use wave_func,            only : wf_ncx,wf_nc_k
+  use D_lattice,            only : n_atomic_species
+  use pseudo,               only : pp_n_l_times_proj_max,&
+&                                  pp_kb,pp_kbd
+  use wave_func,            only : wf_ncx
   !
   implicit none
   !
@@ -117,10 +115,9 @@ subroutine a2y_kb_pp_wfk( ikibz, ncid )
   use netcdf_data
   use pars,                 only : SP
   use vec_operate,          only : sort
-  use R_lattice,            only : ng_vec
-  use D_lattice,            only : n_atomic_species,n_atoms_species_max
-  use pseudo,               only : pp_n_l_times_proj_max,pp_n_l_comp,&
-&                                  pp_kbs,pp_kb,pp_kbd,pp_n_l_max
+  use D_lattice,            only : n_atomic_species
+  use pseudo,               only : pp_n_l_times_proj_max,&
+&                                  pp_kb,pp_kbd
   use wave_func,            only : wf_ncx,wf_nc_k,wf_igk
   !
   implicit none
@@ -131,11 +128,13 @@ subroutine a2y_kb_pp_wfk( ikibz, ncid )
   !
   integer               :: ig, ic, ib, ip, ia
   integer               :: wf_igk_indx(wf_nc_k(ikibz))
+  integer               :: wf_igk_tmp(wf_nc_k(ikibz))
   integer               :: start(4), varid, netcdf_error
   real(SP),allocatable  :: pp_section(:,:,:)
   !
   allocate(pp_section( wf_ncx, pp_n_l_times_proj_max, n_atomic_species ))
-  call sort(wf_igk(:wf_nc_k(ikibz),ikibz),indx=wf_igk_indx)
+  wf_igk_tmp = wf_igk(:wf_nc_k(ikibz),ikibz)
+  call sort(wf_igk_tmp,indx=wf_igk_indx)
   start = [1,1,1,ikibz]
   !
   ! Form factors 

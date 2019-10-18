@@ -36,8 +36,8 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  use wave_func,     ONLY:WF,wf_ng
  use wrapper,       ONLY:Vstar_dot_V
  use YPP_interfaces,ONLY:excitons_sort_and_report
- use YPP,           ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,&
-&                        EXCITON_kin,excitons_degeneracy_average,EXCITON_spin
+ use YPPm,          ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,&
+&                        EXCITON_kin,excitons_degeneracy_average,EXCITON_spin,BSiq
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  !
 #include<memory.h>
@@ -97,6 +97,8 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
      !
      call excitons_kinematics(Xk,eh_p,i_eh_p)
      !
+     if (eh%ik_bz /= eh_p%ik_bz) cycle
+     !
      call elemental_compose(eh%ic,eh_p%ic,cc)
      !
      call elemental_compose(eh%iv,eh_p%iv,vv)
@@ -107,7 +109,7 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
        do i_S=0,1
          do i_M=-i_S,i_S
             cc_vv(i_S,i_M)=cc_vv(i_S,i_M)+P(i_S,i_M,eh%spin,eh%spin)*P(i_S,i_M,eh_p%spin,eh_p%spin)*&
-&                                          conjg(cc(eh%spin,eh_p%spin))*vv(eh%spin,eh_p%spin)
+&                                              cc(eh%spin,eh_p%spin)*conjg(vv(eh%spin,eh_p%spin))
          enddo
        enddo
      else
@@ -173,25 +175,13 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  ! Sorting & reporting'
  !=====================
  !
- call excitons_sort_and_report(BS_R_right,BS_E,EXC_spin=EXC_spin)
+ call excitons_sort_and_report(BSiq,BS_R_right,BS_E,EXC_spin=EXC_spin)
  !
  do i_c=1,EXCITONS_n_user_states
    !
    i_l=EXCITONS_user_indexes(i_c)
    !
    if (BS_E_degs(i_l)/=i_l.or.myid>0) cycle
-   !
-   !write (*,*) 
-   !write (*,*) "Exciton: ",i_l
-   !write (*,*) "N(0,0):", EXC_spin%N_SM(i_l,0,0) 
-   !write (*,*) "N(1,-1):", EXC_spin%N_SM(i_l,1,-1) 
-   !write (*,*) "N(1,0):", EXC_spin%N_SM(i_l,1,0) 
-   !write (*,*) "N(1,1):", EXC_spin%N_SM(i_l,1,1) 
-   !write (*,*) 
-   !write (*,*) "S:", (-1.+sqrt(1.+4*EXC_spin%S_sq(i_l)))/2.
-   !write (*,*) "S_z:", EXC_spin%S_z(i_l)
-   !write (*,*) 
-   !write (*,*) "SUM:", sum(EXC_spin%N_SM(i_l,:,:))
    !
  enddo
  !

@@ -38,7 +38,6 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
 &                        GW_NEQ_COLL_element,COLL_bands,GW_NEQ_collisions
  use plasma,        ONLY:EH_gas
  use timing_m,      ONLY:timing
- use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,Io_and_Messaging_switch,io_COLLs
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use interfaces,    ONLY:WF_load

@@ -25,7 +25,7 @@ subroutine excitons_kinematics(Xk,eh,i_s)
  !
  use electrons,     ONLY:spin
  use R_lattice,     ONLY:bz_samp
- use YPP,           ONLY:EXCITON_kin
+ use YPPm,          ONLY:EXCITON_kin
  use BS_solvers,    ONLY:BSS_eh_table
  !
  implicit none

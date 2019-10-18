@@ -30,7 +30,7 @@ subroutine QP_DBs_create_and_modify(en,k)
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use QP_m,          ONLY:QP_t,QP_reset,QP_state,QP_nb,QP_nk,QP_n_states,QP_alloc
  use R_lattice,     ONLY:bz_samp
- use YPP,           ONLY:QP_user_corrections
+ use YPPm,          ONLY:QP_user_corrections
  !
 #include<memory.h>
  !
@@ -39,18 +39,38 @@ subroutine QP_DBs_create_and_modify(en,k)
  !
  ! Work Space
  !
- integer  :: io_QP_and_GF_err,ID,i1,ib,ik,ic,is
- integer  ::ikrange(2),ibrange(2)
- integer, external     :: io_QP_and_GF
- logical,  allocatable :: QP_done(:,:,:,:)
+ integer  :: io_QP_and_GF_err,ID,i_u,ib,ik,ic,is
+ integer, external    :: io_QP_and_GF
+ logical, allocatable :: QP_done(:,:,:,:)
  type(QP_t) :: qp
  !
  call section("=",'QP databases creation')
  !========================================
  !
- call QP_reset(qp)
+ ! ...resets
  !
+ call QP_reset(qp)
  YAMBO_FREE(QP_state)
+ YAMBO_ALLOC(QP_state,(en%nb,en%nk))
+ QP_state=.FALSE.
+ QP_nb=-1
+ QP_nk=-1
+ !
+ ! ...mark the states to correct
+ !
+ do i_u=1,size(QP_user_corrections,1)
+   do is=1,n_sp_pol
+     do ik=int(QP_user_corrections(i_u,1)),int(QP_user_corrections(i_u,2))
+       do ib=int(QP_user_corrections(i_u,3)),int(QP_user_corrections(i_u,4))
+         QP_state(ib,ik)=.TRUE.
+         QP_nb=max(QP_nb,ib)
+         QP_nk=max(QP_nk,ib)
+       enddo
+     enddo
+   enddo
+ enddo
+ !
+ ! ... not turn QP_state into QP_table
  !
  call QP_state_table_setup(en)
  !
@@ -63,30 +83,31 @@ subroutine QP_DBs_create_and_modify(en,k)
  YAMBO_ALLOC(QP_done,(QP_nb,QP_nb,QP_nk,n_sp_pol))
  QP_done=.FALSE.
  !
+ ! ...let's fill now
+ !
  ic=1
- do i1=1,size(QP_user_corrections,1)
+ do i_u=1,size(QP_user_corrections,1)
    !
-   ikrange(1:2)=int(QP_user_corrections(i1,1:2))
-   ibrange(1:2)=int(QP_user_corrections(i1,3:4))
-   !
-   if (QP_user_corrections(i1,7)<epsilon(1._SP)) QP_user_corrections(i1,7)=1.
-   !
-   if(ikrange(2)>en%nk.or.ibrange(2)>en%nb) call error("Indices out of the range!")
+   if (QP_user_corrections(i_u,7)<epsilon(1._SP)) QP_user_corrections(i_u,7)=1.
    !
    do is=1,n_sp_pol
-     do ik=ikrange(1),ikrange(2)
-       do ib=ibrange(1),ibrange(2)
+     do ik=int(QP_user_corrections(i_u,1)),int(QP_user_corrections(i_u,2))
+       do ib=int(QP_user_corrections(i_u,3)),int(QP_user_corrections(i_u,4))
+         !
          qp%E_bare(ic) =en%E(ib,ik,is)
-         qp%E(ic)      =cmplx(QP_user_corrections(i1,5)/HA2EV+en%E(ib,ik,is),QP_user_corrections(i1,6)/HA2EV,kind=SP)
-         qp%Z(ic)      =cmplx(QP_user_corrections(i1,7),0.,kind=SP)
+         qp%E(ic)      =cmplx(QP_user_corrections(i_u,5)/HA2EV+en%E(ib,ik,is),QP_user_corrections(i_u,6)/HA2EV,kind=SP)
+         qp%Z(ic)      =cmplx(QP_user_corrections(i_u,7),0.,kind=SP)
          qp%table(ic,1)=ib
          qp%table(ic,2)=ib
          qp%table(ic,3)=ik
          if(n_sp_pol==2) qp%table(ic,4)=is
-         qp%k(qp%table(ic,3),:)       =k%pt(qp%table(ic,3),:)
+         qp%k(qp%table(ic,3),:)  =k%pt(qp%table(ic,3),:)
+         !
          if(QP_done(ib,ib,ik,is)) call error("Duplicated quasi-particle index found")
+         !
          QP_done(ib,ib,ik,is)=.TRUE.
          ic=ic+1   
+         !
        enddo
      enddo
    enddo

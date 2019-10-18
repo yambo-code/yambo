@@ -976,7 +976,7 @@ CONTAINS
       INTEGER,                INTENT(OUT) :: ierr
       !
       INTEGER        :: iunit_aux
-      CHARACTER(256) :: filename
+      CHARACTER(256) :: filename, str_tmp
       
       ierr = 0
       !
@@ -1001,8 +1001,13 @@ CONTAINS
       !
       if (present(nr1).or.present(nr2).or.present(nr3)) then 
          !
+         attr=""
          call iotk_scan_empty( iunit, "fft_grid", ATTR=attr, IERR=ierr )
-         if (ierr/=0) return
+         !if (ierr/=0) return
+         if (ierr/=0) then
+           call iotk_scan_dat( iunit, "fft_grid", str_tmp, ATTR=attr, IERR=ierr )
+           if (ierr/=0) return
+         endif
          !
          if (present(nr1)) then
             call iotk_scan_attr( attr, "nr1", nr1, IERR=ierr )
@@ -1021,8 +1026,13 @@ CONTAINS
       !
       if (present(nr1s).or.present(nr2s).or.present(nr3s)) then 
          !
+         attr=""
          call iotk_scan_empty( iunit, "fft_smooth", ATTR=attr, IERR=ierr )
-         if (ierr/=0) return
+         !if (ierr/=0) return
+         if (ierr/=0) then
+            call iotk_scan_dat( iunit, "fft_smooth",str_tmp, ATTR=attr, IERR=ierr )
+            if (ierr/=0) return
+         endif 
          !
          if (present(nr1s)) then
             call iotk_scan_attr( attr, "nr1", nr1s, IERR=ierr )
@@ -1457,6 +1467,7 @@ CONTAINS
       integer,                intent(out) :: ierr
       !
       integer :: nbnd_, nkpts_, nspin_, ik, ndim
+      integer :: nbnd_up_, nbnd_dw_
       logical :: lsda_, noncolin_, lfound
       real(dbl) :: rvec(3)
       real(dbl), allocatable :: eig_(:), occ_(:)
@@ -1488,9 +1499,20 @@ CONTAINS
          if (ierr/=0) return
       endif
       !
-      call iotk_scan_dat( iunit, "nbnd", nbnd_, IERR=ierr)
+      call iotk_scan_dat( iunit, "nbnd", nbnd_, FOUND=lfound, IERR=ierr)
       if (ierr/=0) return
-      if (nspin_==2) nbnd_=nbnd_/2
+      !
+      if (lfound.and.nspin_==2) nbnd_=nbnd_/2
+      !
+      if (.not. lfound) then
+         call iotk_scan_dat( iunit, "nbnd_up", nbnd_up_, IERR=ierr)
+         if (ierr/=0) return
+         call iotk_scan_dat( iunit, "nbnd_dw", nbnd_dw_, IERR=ierr)
+         if (ierr/=0) return
+         if (nbnd_up_==nbnd_dw_) nbnd_=(nbnd_up_+nbnd_dw_)/2
+         if (nbnd_up_/=nbnd_dw_) CALL errore( 'qexsd_read_band_structure', 'different number of up and down bands', 1 )
+      endif
+      !
       if (present(nbnd)) nbnd=nbnd_
       !
       if (present(nbnd_up)) then

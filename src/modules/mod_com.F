@@ -334,7 +334,7 @@ module com
      !
      do i1=1,n_logo_lines
        if (unit_/=6) write (unit_,trim(space_)) logo_line(i1)
-       if (unit_==6.and.i1>=n_logo_lines-2) cycle
+       if (unit_==6.and.i1>=n_logo_lines-3) cycle
        if (unit_==6) call LIVE_message(logo_line(i1),"n","","%s",CPU_TIME=.false.,CPU_ID=.false.)
      enddo
      if (unit_/=6.and.trim(comment_)=='')  write (unit_,'(a)') ' '
@@ -399,7 +399,7 @@ module com
      use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
      use stderr,     ONLY:STRING_pack
 #if defined _MPI
-     use parallel_m, ONLY:mpi_comm_world
+     use parallel_m, ONLY:mpi_comm_world,ncpu
      integer         :: ierr
 #endif
      character(*)    :: mesg
@@ -415,7 +415,7 @@ module com
      call LIVE_message("","n","","%s")
      !
 #if defined _MPI
-     call MPI_Abort(mpi_comm_world,1,ierr)
+     if (ncpu>1) call MPI_Abort(mpi_comm_world,1,ierr)
 #endif
      stop
      !

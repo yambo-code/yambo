@@ -89,9 +89,11 @@ EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KE
 DRIVER_LIBS    = interface lib options
 DRIVER_LIBS_LD = driver_options driver_interface driver_lib 
 
-BASIC_LIBS   = tools modules memory matrices linear_algebra parallel parser communicate common io \
+IO_LIB       = modules io_lib
+
+BASIC_LIBS   = tools modules memory matrices linear_algebra parallel parser communicate common io_lib io \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
-BASIC_LIBS_LD= $(DRIVER_LIBS_LD) tools memory modules matrices linear_algebra bz_ops parallel parser communicate common io \
+BASIC_LIBS_LD= $(DRIVER_LIBS_LD) tools memory modules matrices linear_algebra bz_ops parallel parser communicate common io_lib io \
                xc_functionals interface stop_and_restart wf_and_fft coulomb
 
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup \
@@ -121,8 +123,8 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 #
 # Interfaces
 #
-2YLIBS       = tools modules memory matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
-2YLIBS_LD    = $(DRIVER_LIBS_LD) tools memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
+2YLIBS       = tools modules memory matrices linear_algebra parallel parser communicate common io_lib io setup interface stop_and_restart bz_ops
+2YLIBS_LD    = $(DRIVER_LIBS_LD) tools memory modules matrices linear_algebra parallel parser communicate common io_lib io setup interface stop_and_restart bz_ops
 #
 # YPP
 #
@@ -212,6 +214,11 @@ int-libs: ext-libs
 	@+LIBS2DO="slatec"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="math77"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="local" ; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
+#
+# Yambo libs
+#
+io-lib:
+	@+LIBS2DO="$(IO_LIB)"; DIR2GO="src"; VPATH="$(topdir)/src"; ADF="-D_io_lib"; $(mklib_yambo)
 #
 # All libs #
 #
@@ -437,6 +444,20 @@ define mk_ypp_src
  done
 endef
 define mklib_internal
+ for ldir in $$LIBS2DO; do \
+  if test ! -f "$(libdir)/lib$$ldir.a" ; then \
+   echo " " ; \
+   echo ">>>[Making $$ldir]<<<" ; \
+   if test ! -d "$$DIR2GO/$$ldir" ; then mkdir -p "$$DIR2GO/$$ldir" ; fi ; \
+   if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
+    cp $$VPATH/$$ldir/.objects $$DIR2GO/$$ldir ; \
+   fi ; \
+   ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $(xcpp) $$ADF ; \
+   cd $$DIR2GO/$$ldir ; $(MAKE) VPATH=$$VPATH/$$ldir || exit "$$?" ; cd ../../; \
+  fi \
+ done
+endef
+define mklib_yambo
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" ; then \
    echo " " ; \

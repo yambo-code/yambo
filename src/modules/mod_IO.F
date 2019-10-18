@@ -24,9 +24,8 @@
 module IO_m
  !
  use pars,       ONLY:SP,DP,lchlen,schlen,max_io_units,max_io_vars_open,max_active_sections
+#if !defined _io_lib
  use C_driver,   ONLY:code_version,code_revision,code_GPL_revision
-#if defined _MPI
- use parallel_m, ONLY:myid,MPI_INFO_NULL
 #endif
  use com,        ONLY:error
  use netcdf
@@ -268,6 +267,7 @@ module IO_m
      !
    end subroutine io_variable_bulk
    !
+#if !defined _io_lib
    integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,&
 &                             IMPOSE_GAUGE,PARALLEL_STRUCTURE,FRAG)
      integer               :: ID
@@ -289,6 +289,7 @@ module IO_m
      integer           :: ID
      integer, optional :: i_fragment,j_fragment,ierr,COMM,cpu_id
    end subroutine
+#endif
    !
  end interface
  !
@@ -403,6 +404,7 @@ module IO_m
      !
    end subroutine
    !
+#if !defined _io_lib
    subroutine manage_OP_IF_START_and_CL_IF_END(ID,NOW,FIRST,LAST,PAR_index)
      !
      use parallel_m, ONLY:PP_indexes
@@ -454,6 +456,7 @@ module IO_m
      endif
      !
    end subroutine
+#endif
    !
    subroutine io_reset(ID)
      integer :: ID
@@ -469,8 +472,10 @@ module IO_m
      io_extension(ID)=' ' 
      io_rec_pos(ID)=1
      io_restart_point(ID)=1
+#if !defined _io_lib
      io_code_version(ID,:)=code_version
      io_code_revision(ID,:)=(/code_revision,code_GPL_revision/)
+#endif
      io_serial_number(ID)=serial_number
      io_resetable(ID)=.true.
    end subroutine

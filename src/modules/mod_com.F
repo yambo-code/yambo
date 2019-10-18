@@ -308,6 +308,7 @@ module com
      !
    end subroutine
    !
+#if !defined _io_lib
    subroutine write_the_logo(unit_,comment_)
      !
      use LIVE_t,       ONLY:LIVE_message
@@ -343,6 +344,7 @@ module com
      if (unit_==11) close(11)
      !
    end subroutine
+#endif
    !
    logical function OF_exists(name)
      character(*) ::name
@@ -388,15 +390,21 @@ module com
    end subroutine
    !
    subroutine warning(mesg)
+#if !defined _io_lib
      use LIVE_t,     ONLY:LIVE_message
+#endif
      use stderr,     ONLY:STRING_pack
      character(*) :: mesg
      call msg('nr',STRING_pack('[WARNING] ',trim(mesg)))
+#if !defined _io_lib
      call LIVE_message(STRING_pack('[WARNING] ',trim(mesg)),"n","","%s")
+#endif
    end subroutine
    !
    subroutine error(mesg)
+#if !defined _io_lib
      use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
+#endif
      use stderr,     ONLY:STRING_pack
 #if defined _MPI
      use parallel_m, ONLY:mpi_comm_world,ncpu
@@ -404,15 +412,21 @@ module com
 #endif
      character(*)    :: mesg
      !
+#if !defined _io_lib
      live_timing_is_on=.FALSE.
+#endif
      !
      if (len_trim(secnm)>0) then
        call msg('nr',STRING_pack('[ERROR] STOP signal received while in :',trim(secnm)))
+#if !defined _io_lib
        call LIVE_message(STRING_pack('[ERROR] STOP signal received while in :',trim(secnm)),"nn","","%s")
+#endif
      endif
      call msg('nr',STRING_pack('[ERROR] ',trim(mesg)))
+#if !defined _io_lib
      call LIVE_message(STRING_pack('[ERROR] ',trim(mesg)),"n","","%s")
      call LIVE_message("","n","","%s")
+#endif
      !
 #if defined _MPI
      if (ncpu>1) call MPI_Abort(mpi_comm_world,1,ierr)
@@ -493,7 +507,9 @@ module com
    !
    subroutine namsg(how,mesg,val,USE_TABS,INDENT)
      use stderr,   ONLY: c_print,write_to_log,log_as_a_file
+#if !defined _io_lib
      use LIVE_t,   ONLY: LIVE_message
+#endif
      character(*)     :: mesg
      character(*)     :: how
      character(*)     :: val(:)
@@ -530,12 +546,16 @@ module com
      write (lch,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
      if (index(how,'l')/=0.and..not.log_as_a_file) &
 &       call c_print(terminator(3),lch,terminator(4),"%s")
+#if !defined _io_lib
      if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
+#endif
    end subroutine
    !
    subroutine nimsg(how,mesg,val,USE_TABS,INDENT)
      use stderr,   ONLY: c_print,write_to_log,log_as_a_file
+#if !defined _io_lib
      use LIVE_t,   ONLY: LIVE_message
+#endif
      character(*)     :: mesg
      character(*)     :: how
      integer          :: val(:)
@@ -568,12 +588,16 @@ module com
      write (lch,trim(msgfmt)) mesg,val 
      if (index(how,'l')/=0.and..not.log_as_a_file) &
 &       call c_print(terminator(3),lch,terminator(4),"%s")
+#if !defined _io_lib
      if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
+#endif
    end subroutine
    !
    subroutine nrmsg(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatted_msg)
      use stderr,   ONLY: c_print,write_to_log,log_as_a_file
+#if !defined _io_lib
      use LIVE_t,   ONLY: LIVE_message
+#endif
      character(*)     :: mesg
      character(*)     :: how
      real(SP)         :: val(:)
@@ -622,7 +646,9 @@ module com
      write (lch,trim(msgfmt)) mesg,val 
      if (index(how,'l')/=0.and..not.log_as_a_file) call &
 &       c_print(terminator(3),lch,terminator(4),"%s")
+#if !defined _io_lib
      if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
+#endif
    end subroutine
    !
    character(lchlen) function composed_fmt(basic_fmt,n,USE_TABS,INDENT)

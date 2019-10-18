@@ -31,7 +31,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  use R_lattice,      ONLY:bz_samp,bz_map,nXkbz
  use D_lattice,      ONLY:a
  use vec_operate,    ONLY:get_id_perpendicular
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz,PAR_IND_Xk_bz
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_COM_Xk_bz_INDEX
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands
  !
@@ -87,7 +87,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
      !
      do ikbz=1,nXkbz
        !
-       if(.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
+!       if(.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
        !
        do istep=1,max_step
          call Build_tilde_vbands(V_bands,en,Xk,ikbz,isp,istep,id_red,V_tilde)
@@ -122,6 +122,6 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
    NL_J(id)=-sum(NL_J_red(:)*a(:,id))/(4.0*pi)
  enddo
  !
- call PP_redux_wait(NL_J,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+! call PP_redux_wait(NL_J,COMM=PAR_COM_Xk_bz_INDEX%COMM)
  !
 end subroutine NL_Berry_current

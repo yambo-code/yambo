@@ -239,9 +239,11 @@ subroutine XCo_driver(E,k,Xk,q)
      endif
      if (l_Vnl_xc) then
        QP_Vnl_xc=cZERO
-     else if (l_Vxc) then
+     endif
+     if (l_Vxc) then
        QP_Vxc=cZERO
-     else if (l_screen_hyb) then
+     endif
+     if (l_screen_hyb) then
        QP_Vnl_sex=cZERO
      endif
    end subroutine

@@ -25,7 +25,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
 &                          io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err)
  !
  use electrons,      ONLY:levels,n_spinor
- use LOGO,           ONLY:code_branch
+ use C_driver,       ONLY:code_branch
  use drivers,        ONLY:infile_editing
  use X_m,            ONLY:X_t,X_duplicate
  use DIPOLES,        ONLY:DIPOLE_t

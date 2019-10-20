@@ -40,7 +40,7 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].short_desc="Self-Consistent Potential";
  /* GPL_EXCLUDE_START */
  options[*i_opt].long_desc[0]="Hartree => <string>=h";
- options[*i_opt].long_desc[1]="Fock    => <string>=h";
+ options[*i_opt].long_desc[1]="Fock    => <string>=f";
  options[*i_opt].long_desc[2]="Coh     => <string>=coh";
  options[*i_opt].long_desc[3]="Sex     => <string>=sex";
  options[*i_opt].long_desc[4]="exx     => <string>=exx";

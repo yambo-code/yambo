@@ -23,7 +23,7 @@
 !
 subroutine C_driver_transfer()
  !
- use C_driver,       ONLY:code_version,code_GPL_revision,code_revision,code_hash,&
+ use C_driver,       ONLY:code_version,code_revision,code_hash,&
 &                         code_libraries,get_version,get_libraries,get_running_tool,&
 &                         get_running_project,code_bin,code_tool,code_project
  !
@@ -33,7 +33,8 @@ subroutine C_driver_transfer()
  call get_running_tool(code_tool)
  code_project=" "
  call get_running_project(code_project)
- code_bin=trim(code_tool)//"_"//trim(code_project)
+ code_bin=trim(code_tool)
+ if (len_trim(code_project)>0) code_bin=trim(code_tool)//"_"//trim(code_project)
  code_libraries=" "
  call get_libraries(code_libraries)
  code_hash=" "

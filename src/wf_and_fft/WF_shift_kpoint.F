@@ -50,31 +50,24 @@ subroutine WF_shift_kpoint(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
  WF_tmp=WF_k_in
  !
  if(all(k_map%g0_idx==-1)) then
-    call k_find_smallest_g0(g0_idx,g0_length)
+   call k_find_smallest_g0(g0_idx,g0_length)
  else
-    g0_idx   =k_map%g0_idx
-    g0_length=k_map%g0_length
+   g0_idx   =k_map%g0_idx
+   g0_length=k_map%g0_length
  endif
  !
  ! Generate G_m_G if it is not present
  !
- if(allocated(G_m_G).and.size(G_m_G)==1) deallocate(G_m_G)
- !
- if(.not.allocated(G_m_G)) then
-   iG0=max(maxval(g0_idx(:,1)),maxval(g0_idx(:,2)))
-   ng_max=eval_G_minus_G(wf_ng,iG0)
- else
-   ng_max=size(G_m_G(:,1))
- endif
- !
- WF_k_out=cZERO
+ iG0=max(maxval(g0_idx(:,1)),maxval(g0_idx(:,2)))
+ ng_max=eval_G_minus_G(wf_ng,iG0)
  !
  do id=1,3
    !
    if(WF_shift(id)/=0) then
-     do ig=1,min(wf_ng,ng_max)
+     do ig=1,wf_ng
+       if(ig>ng_max) cycle
        igp=G_m_G(ig,g0_idx(id,WF_shift(id)))
-       if(igp>wf_ng.or.igp>ng_max) cycle
+       if(igp>wf_ng.or.ig>wf_ng) cycle
        WF_k_out(igp,:,:,:)=WF_tmp(ig,:,:,:)
      enddo
    else

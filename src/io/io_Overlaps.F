@@ -98,7 +98,7 @@ integer function io_Overlaps(Dip,ID)
  !
  write (VAR_name,'(3(a,i4.4))') 'DIP_S_k_',ik,'_sp_pol_',i_sp_pol
  call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/2,Dip%ib(2),Dip%ib(2),6/))
- !call io_bulk(ID,C3=DIP_S(:,:,:,ik_mem,i_sp_pol))
+ call io_bulk(ID,C3=DIP_S(:,:,:,ik_mem,i_sp_pol))
  !
 1 call io_disconnect(ID=ID)
  !

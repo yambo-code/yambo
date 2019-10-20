@@ -1,7 +1,11 @@
 RT_objects=
 #if defined _RT
-RT_objects=INIT_DephMatrix.o INIT_RT_ctl_load.o INIT_RT_ctl_switch.o
+RT_objects= INIT_DephMatrix.o INIT_RT_ctl_load.o INIT_RT_ctl_switch.o
+#endif
+#if defined _RT || defined _SC
+RT_SC_objects= INIT_read_command_line_potentials.o
 #endif
 objs = INIT_C_driver_runlevels.o INIT_load.o INIT.o INIT_read_command_line.o INIT_check_databases.o INIT_activate.o \
+       $(RT_SC_objects) \
        INIT_QP.o INIT_report_and_log_files.o INIT_input_file.o \
        INIT_q_points.o INIT_barriers.o INIT_QP_ctl_load.o INIT_QP_ctl_switch.o $(RT_objects)

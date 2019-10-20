@@ -10,7 +10,6 @@ set filter="changed"
 #
 # clean_unused_variables.tcsh clean/list [dir/file] [all/changed]
 #
-
 if ( $#argv == 1 ) then
  if ( $argv[1] =~ "clean" ) then
   git ls-files --others | xargs rm -f

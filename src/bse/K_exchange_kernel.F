@@ -57,7 +57,7 @@ function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
     H_x_r=H_x_r+real(H_x,SP)
     H_x_i=H_x_i+aimag(H_x)
   enddo
-  H_x=cmplx(H_x_r,H_x_i,SP)
+  H_x=cmplx(H_x_r,H_x_i,kind=SP)
   !
 #else
   H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp_ip%O_x(:,i_Tp),&

@@ -146,7 +146,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      forall(i_g2=1:BS_n_g_W) X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1._SP
      !
 #ifdef _CUDA
-     ! host->device transfer
+     ! device <- host transfer
      X_mat_d=X_mat
      !
      ! CUDA Fortran workarounds
@@ -156,7 +156,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      if (BS_W_is_diagonal) then
        !$cuf kernel do(1) <<<*,*>>>
        do i_g2=1, BS_n_g_W
-          BS_W(i_g2,1,iq_W)=real(X_mat_d(i_g2,i_g2,1))*gamp_d(i_g2,1)
+          BS_W(i_g2,1,iq_W)=real(X_mat_d(i_g2,i_g2,1),SP)*gamp_d(i_g2,1)
        enddo
      else if (.not.BS_W_is_diagonal) then
        !$cuf kernel do(2) <<<*,*>>>
@@ -169,7 +169,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      endif
 #else
      if (BS_W_is_diagonal) then
-       forall(i_g2=1:BS_n_g_W) BS_W(i_g2,1,iq_W)=real(X_mat(i_g2,i_g2,1))*isc%gamp(i_g2,1)
+       forall(i_g2=1:BS_n_g_W) BS_W(i_g2,1,iq_W)=real(X_mat(i_g2,i_g2,1),SP)*isc%gamp(i_g2,1)
      else if (.not.BS_W_is_diagonal) then
        do i_g3=1,BS_n_g_W
          do i_g2=1,BS_n_g_W

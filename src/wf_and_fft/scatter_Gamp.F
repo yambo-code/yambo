@@ -81,9 +81,7 @@ subroutine scatter_Gamp(isc,mode)
  !
  ng=shape(isc%gamp)
  !
-#if defined _OPENMP
 !$omp parallel do default(shared), private(i1,i2,ig1,ig2,l_RIM)
-#endif
  do i1=1,ng(1)
    do i2=1,ng(2)
      ig1=i1
@@ -152,9 +150,7 @@ subroutine scatter_Gamp(isc,mode)
      !
    enddo
  enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
  !
  ! Anisotropy correction
  !
@@ -181,7 +177,8 @@ subroutine scatter_Gamp_gpu(isc,mode)
 &                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts
  use R_lattice,     ONLY:RIM_qpg_d, bare_qpg_d
  use timing_m
- implicit none
+#include<memory.h>
+ !
  type(elemental_collision), target::isc
  character(1)             ::mode
  !
@@ -233,7 +230,7 @@ subroutine scatter_Gamp_gpu(isc,mode)
  endif
 
  if (.not.allocated(bare_qpg_d)) then
-   allocate(bare_qpg_d, mold=bare_qpg)
+   YAMBO_ALLOC(bare_qpg_d,(size(bare_qpg,2),size(bare_qpg,1)))
    bare_qpg_d=transpose(bare_qpg)
  endif
  !

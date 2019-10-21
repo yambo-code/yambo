@@ -178,7 +178,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      if(trim(L_kind)=="full") i_g0=1
      if(trim(L_kind)=="Lbar") i_g0=2
 #ifdef _CUDA
-     call dev_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d)
+     call dev_memcpy(BS_T_grp(i_T_grp)%O_x_d(i_g0:,i_T_el),K_EXCH_collision%rhotw_d(i_g0:))
 #else
      !$omp parallel do default(shared), private(i_g1)
      do i_g1=i_g0,BS_n_g_exch

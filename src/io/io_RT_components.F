@@ -64,7 +64,7 @@ integer function io_RT_components(what,ID)
 #if defined _PAR_IO
  integer               :: k_range(2),local_COMM
 #endif
- integer               :: nbands,ik,i_spin,i_memory,i_time,db_type
+ integer               :: nbands,ik,i_spin,i_memory,i_time,i_MEM_start,db_type
  logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_track_history,l_JP,l_M,l_D,par_IO
  !
  ! DB kind and name...
@@ -128,6 +128,9 @@ integer function io_RT_components(what,ID)
  if (l_G)        l_track_history=io_sec(ID,1)> 1 .and. SAVE_G_history
  !
  if (l_track_history) db_name=trim(db_name)//"_Time_"//trim(TIME_string( (NE_i_time-1)*RT_step))
+ !
+ i_MEM_start=1
+ if(SAVE_G_history) i_MEM_start=G_MEM_steps
  !
 #if defined _PAR_IO
  if(l_G.and.io_sec(ID,1)> 1) then
@@ -308,7 +311,7 @@ integer function io_RT_components(what,ID)
    !
 #if defined _PAR_IO
    !
-   do i_memory=1,G_MEM_steps
+   do i_memory=i_MEM_start,G_MEM_steps
      !
      i_time=NE_i_time-G_MEM_steps+i_memory
      if(i_time<=0) cycle

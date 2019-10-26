@@ -268,6 +268,7 @@ contains
   !===========================================================
   subroutine import_basisdata_group
     !
+    use pars,                 only : pi
     use vec_operate,          only : sort, iku_v_norm
     use R_lattice,            only : g_vec, b, ng_vec
     use D_lattice,            only : alat, i_space_inv, i_time_rev
@@ -410,6 +411,7 @@ contains
   ! K-points (convert to new units)
   !===========================================================
   subroutine import_kpoints_group
+    use pars,                 only : pi
     use R_lattice,            only : b
     use D_lattice,            only : alat
     implicit none

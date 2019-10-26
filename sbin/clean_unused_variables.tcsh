@@ -10,7 +10,6 @@ set filter="changed"
 #
 # clean_unused_variables.tcsh clean/list [dir/file] [all/changed]
 #
-
 if ( $#argv == 1 ) then
  if ( $argv[1] =~ "clean" ) then
   git ls-files --others | xargs rm -f
@@ -221,8 +220,11 @@ if (-d $OBJ) then
   git status -uno $OBJ | grep $kind | grep -v '\.pl' | grep  -v '\.pm'  | grep -v '\.c' |grep -v '\.m4' | grep -v '\.git' |grep -v '\.\.\/' > LIST
   cat LIST | grep -v "mod_" | grep -v "Makefile" | grep -v "configure" | grep -v "\.h" | grep -v "\.object" | grep -v "\.tcsh" > LIST
   sed -i -e 's/new file/new_file/g' LIST
-  #echo $kind  
-  set FILES=($FILES `awk '{print $2}' "LIST"`)
+  if ($kind =~ "renamed") then
+   set FILES=($FILES `awk '{print $4}' "LIST"`)
+  else
+   set FILES=($FILES `awk '{print $2}' "LIST"`)
+  endif
  end
 endif
 if ($filter =~ "all" && $OBJ =~ ".") then
@@ -237,9 +239,6 @@ endif
 if (-f $OBJ) then
  set FILES=$OBJ
 endif
-
-#echo $FILES
-#exit
 
 foreach file ($FILES)
  gawk -f AWK_split ${file}

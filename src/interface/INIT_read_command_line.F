@@ -54,10 +54,11 @@ subroutine INIT_read_command_line(rstr,init_)
  !
  ! Work Space
  !
- integer            ::i1,i2,i_field,n_pieces,i_cycle
- logical            ::l_user_kernel
+ integer            ::i1,i2,i3,i_field,n_pieces,i_cycle
+ logical            ::l_user_kernel,V_is_defined
+ logical, external  ::INIT_read_command_line_potentials
  integer, parameter ::n_strings_not_allowed=8
- character(schlen)  ::rstr_piece(2*nrnlvls),strings_to_not_use_as_runlevels(n_strings_not_allowed)
+ character(schlen)  ::rstr_piece(2*nrnlvls),strings_to_not_use_as_runlevels(n_strings_not_allowed),V_string
  !
  ! Keep track if the user provided a kernel option
  !
@@ -284,52 +285,43 @@ subroutine INIT_read_command_line(rstr,init_)
        !
      endif
      !
+#if defined _SC || defined _RT
+     !
+     if ( trim(rstr_piece(i1)) == 'potential' )  then
+       !
+       H_potential=""
+       V_string=trim(rstr_piece(i1+1))
+       P_loop: do i3=i1+2,n_pieces
+         do i2=1,nrnlvls
+           if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i3))) cycle P_loop
+         enddo
+         V_string=trim(V_string)//" "//trim(rstr_piece(i3))  
+       enddo P_loop
+     endif
+     !
+#endif
+     !
 #if defined _SC
      !
      ! SC
      !
      if ( trim(rstr_piece(i1)) == 'potential' )  then
        !
-       H_potential=""
-       if ( index(trim(rstr_piece(i1+1)),'exx')>0 ) then
-         H_potential='EXX'
-         if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
-       else if ( index(trim(rstr_piece(i1+1)),'exxc')>0 ) then
-         H_potential='EXXC'
-       else if ( index(trim(rstr_piece(i1+1)),'srpa')>0 ) then
-         H_potential='SRPA'
-       else if ( index(trim(rstr_piece(i1+1)),'cohsex')>0 ) then
-         H_potential='COH+SEX'
-         if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
-       else if ( index(trim(rstr_piece(i1+1)),'coh')>0 ) then
-         H_potential='COH'
-         if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
-       else if ( index(trim(rstr_piece(i1+1)),'sex')>0 ) then
-         H_potential='SEX'
-         if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
-       else if ( index(trim(rstr_piece(i1+1)),'f')>0) then
-         H_potential='FOCK'
-       else if ( index(trim(rstr_piece(i1+1)),'ldax')>0) then
-         H_potential='LDA_X'
-       else if ( index(trim(rstr_piece(i1+1)),'pz')>0) then
-         H_potential='PZ'
-       else if ( index(trim(rstr_piece(i1+1)),'gs')>0) then
-         H_potential='GS_XC'
-       endif
-       !
-       if ( index(trim(rstr_piece(i1+1)),'h')==1 ) then
-         if(trim(H_potential)/="") H_potential='HARTREE+'//trim(H_potential)
-         if(trim(H_potential)=="") H_potential='HARTREE'
-       endif
-       !
-       if ( trim(rstr_piece(i1+1)) == 'd') then
-         H_potential='DEFAULT'
-       endif
-       !
-       if ( trim(rstr_piece(i1+1)) == 'ip') then
-         H_potential='IP'
-       endif
-       !
+       V_is_defined=INIT_read_command_line_potentials(V_string,"exx")
+       if (i_cycle==2.and..not.runlevel_is_on('negf').and.V_is_defined) call initactivate(1,'em1s')
+       V_is_defined=INIT_read_command_line_potentials(V_string,"exxc")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"srpa")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"coh")
+       if (i_cycle==2.and..not.runlevel_is_on('negf').and.V_is_defined) call initactivate(1,'em1s')
+       V_is_defined=INIT_read_command_line_potentials(V_string,"sex")
+       if (i_cycle==2.and..not.runlevel_is_on('negf').and.V_is_defined) call initactivate(1,'em1s')
+       V_is_defined=INIT_read_command_line_potentials(V_string,"ldax")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"pz")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"gs")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"d")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"ip")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"f")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"h")
        !
      endif
 #endif
@@ -340,35 +332,15 @@ subroutine INIT_read_command_line(rstr,init_)
      !
      if ( trim(rstr_piece(i1)) == 'potential' )  then
        !
-       H_potential=""
-       if (  index(trim(rstr_piece(i1+1)),'cohsex')>0) then
-         H_potential='COH+SEX'
-         if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
-       else if ( index(trim(rstr_piece(i1+1)),'sex')>0 ) then
-         H_potential='SEX'
-         if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
-       else if ( index(trim(rstr_piece(i1+1)),'f')>0) then
-         H_potential='FOCK'
-       else if ( trim(rstr_piece(i1+1)) == 'ip') then
-         H_potential='IP'
-       else if (  index(trim(rstr_piece(i1+1)),'gs')>0 ) then
-         H_potential='GS_xc'
-       else if (  index(trim(rstr_piece(i1+1)),'d')>0 ) then
-         H_potential='DEFAULT'
-       endif
-       !
-       if ( index(trim(rstr_piece(i1+1)),'h')==1 ) then
-         if(trim(H_potential)/="") H_potential='HARTREE+'//trim(H_potential)
-         if(trim(H_potential)=="") H_potential='HARTREE'
-       endif
-       !
-       if ( trim(rstr_piece(i1+1)) == 'd') then
-         H_potential='DEFAULT'
-       endif
-       !
-       if ( trim(rstr_piece(i1+1)) == 'ip') then
-         H_potential='IP'
-       endif
+       V_is_defined=INIT_read_command_line_potentials(V_string,"coh")
+       if (i_cycle==2.and..not.runlevel_is_on('negf').and.V_is_defined) call initactivate(1,'em1s')
+       V_is_defined=INIT_read_command_line_potentials(V_string,"sex")
+       if (i_cycle==2.and..not.runlevel_is_on('negf').and.V_is_defined) call initactivate(1,'em1s')
+       V_is_defined=INIT_read_command_line_potentials(V_string,"gs")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"d")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"ip")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"f")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"h")
        !
      endif
 #endif

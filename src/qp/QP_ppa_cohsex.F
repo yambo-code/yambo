@@ -25,12 +25,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Plasmon Pole & COHSEX Correlation Self-Energy
  !
- use pars,          ONLY:SP,pi,schlen,cZERO,cI
+ use pars,          ONLY:DP,SP,pi,schlen,cZERO,cI
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
+ use vec_operate,   ONLY:degeneration_finder
  use com,           ONLY:msg,error
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
@@ -49,7 +50,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
-&                        PARALLEL_WF_distribute,QP_state_extract_print
+&                        PARALLEL_WF_distribute,QP_state_print
  use matrix_operate,ONLY:mat_transpose
  use timing_m,      ONLY:timing
 #if defined _SC
@@ -66,8 +67,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  type(w_samp) ::Xw
  integer      ::GW_iter
  !
- complex(SP), external :: QP_ppa_EET_terminator
- !
  ! Work Space
  !
  integer                  ::i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
@@ -77,9 +76,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  character(schlen)::ch,SECTION_name
  logical          ::X_is_TR_rotated,l_X_alloc
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
- complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,sp_dummy,ctmp
+ complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,ctmp
+ complex(DP)      ::dp_dummy
  !
- integer, external::io_X,QP_state_extract
+ integer,     external ::io_X
+ complex(SP), external ::QP_ppa_EET_terminator
+ !
+ ! ... degeneration finder
+ !
+ integer                  :: first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp,i_c
  !
  ! Reset & checks
  !
@@ -125,7 +130,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    endif
    ch=trim(SECTION_name)
    !
-   call QP_state_extract_print( )
+   call QP_state_print( )
    !
  endif
  !
@@ -244,10 +249,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Poles and Residuals
      !
-!DV
-! When cutoff is used, here it needs a careful check. Because of qpg can be imaginary, also are some component of X_mat, I'm not sure
-! that the definition here below of  X_mat(i1,i2,X_range(2)) are correct.
-!
+     ! DV comment:
+     ! When cutoff is used, here it needs a careful check. Because of qpg can be imaginary, also are some component of X_mat, I'm not sure
+     ! that the definition here below of X_mat(ig1,ig2,:) is correct.
+     !
 #if defined _SC
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif
@@ -363,27 +368,27 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
        else
          !
-         sp_dummy = 0.0_SP
+         dp_dummy = 0.0_DP
          !
          if (X_is_TR_rotated) then
-!$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
+!$omp parallel do default(shared), private(ig1,ig2), reduction(+:dp_dummy)
            do ig2=1,X%ng
              do ig1=1,X%ng
-               sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*X_mat(ig1,ig2,X_range(1))
+               dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*X_mat(ig1,ig2,X_range(1)),kind=DP)
              enddo
            enddo
 !$omp end parallel do
          else
-!$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
+!$omp parallel do default(shared), private(ig1,ig2), reduction(+:dp_dummy)
            do ig2=1,X%ng
              do ig1=1,X%ng
-               sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,X_range(1))
+               dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,X_range(1)),kind=DP)
              enddo
            enddo
 !$omp end parallel do
          endif
          !
-         dc(1) = sp_dummy
+         dc(1) = cmplx(dp_dummy,kind=SP)
          !
          ! Bug spotted by D.V. (April 2014). HEAD_QP_cpu is defined differently when
          ! the _SC flag is used. The point is that in SE calculations HEAD_QP_cpu is used
@@ -450,9 +455,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          do i_w=1,QP_dSc_steps
            !
-           sp_dummy = 0.0_SP
+           dp_dummy = 0.0_DP
            !
-!$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:sp_dummy)
+!$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:dp_dummy)
            do ig2=1,X%ng
              do ig1=1,X%ng
                !
@@ -463,13 +468,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i_w))-E_kmq+PPA_E))
                !
-               sp_dummy=sp_dummy+ctmp
+               dp_dummy=dp_dummy+cmplx(ctmp,kind=DP)
                !
              enddo
            enddo
 !$omp end parallel do
            !
-           dc(i_w) = sp_dummy
+           dc(i_w) = cmplx(dp_dummy,kind=SP)
            !
          enddo
          !
@@ -512,24 +517,24 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        do i_w=1,QP_dSc_steps
          !
-         sp_dummy=0.0_SP
+         dp_dummy=0.0_DP
          !
-!$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:sp_dummy)
+!$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:dp_dummy)
          do ig2=1,X%ng
            do ig1=1,X%ng
              !
              PPA_E=X%ppaE/real(X_mat(ig1,ig2,X_range(2)))
              PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
              !
-             sp_dummy=sp_dummy +4._SP/spin_occ*pi*PPA_R*eet_factor(ig1,ig2)* &
+             dp_dummy=dp_dummy +cmplx(4._SP/spin_occ*pi*PPA_R*eet_factor(ig1,ig2)* &
 &                         QP_ppa_EET_terminator(W_(i_w),E,isc%is,PPA_E,ig1,ig2,isc%qs(2),&
-&                                               eet_cutoff0(1),eet_cutoff1(1))
+&                                               eet_cutoff0(1),eet_cutoff1(1)),kind=DP)
              !
            enddo
          enddo
 !$omp end parallel do
          !
-         QP_Sc(i_qp,i_w)=QP_Sc(i_qp,i_w)+sp_dummy
+         QP_Sc(i_qp,i_w)=QP_Sc(i_qp,i_w)+cmplx(dp_dummy,kind=SP)
          !
        enddo
        !
@@ -540,6 +545,27 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  enddo Q_loop 
  !
  call live_timing()
+ !
+ ! AM, Sept 2019. The COH potential seems to break (in some case of a large amount) the
+ ! energy degenerations. Short cut here is to symmetrize the QP_Sc if COH is included
+ !
+ if (((l_sc_srpa.or.l_sc_coh.or.l_cohsex).and..not.COHSEX_use_empties).or.l_GW_terminator) then
+   !
+   call degeneration_finder(qp%E_bare,qp%n_states,first_el,n_of_el,n_deg_grp,1.E-10_SP)
+   !
+   do ig1=1,n_deg_grp
+     !
+     dc(1)=0._SP
+     do i_c=1,2
+       do i_qp=first_el(ig1),first_el(ig1)+n_of_el(ig1)-1
+         if (i_c==1) dc(1)=dc(1)+QP_Sc(i_qp,1)/real( n_of_el(ig1) )
+         if (i_c==2) QP_Sc(i_qp,1)=dc(1)
+       enddo
+     enddo
+     !
+   enddo
+   !
+ endif
  !
  ! CLEAN
  !

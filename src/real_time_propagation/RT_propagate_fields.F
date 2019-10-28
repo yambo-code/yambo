@@ -90,11 +90,13 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
    !
    call A_vecpot_reset(A_null)
    !
-   call RT_current_AND_polarization(k,E,G_inp,A_null,(/0.,0.,0./))
+   call RT_current_AND_polarization(k,E,G_inp,A_null,(/0._SP,0._SP,0._SP/))
    !
    ! OPTION 1: "velocity gauge"
    !
-   ! Induced potential A(t) from j(t)
+   ! Induced potential A(t) from P(t)
+   ! If the logical l_P_integrating_J is activated from input (variable 'PfromJ'),
+   ! then P(t)=P[J](t) and thus A(t) comes from J(t)
    !
    ! Integrate the eq. for the vector potential
    !
@@ -119,7 +121,7 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
    !
    ! Option 2: length gauge
    !
-   !  Induced potential A(t) from P(t)
+   !  Induced field E(t) from P(t)
    !
    !
    ! Integrate the eq. for the vector potential

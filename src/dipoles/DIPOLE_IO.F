@@ -201,9 +201,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    do iv=Dip%ib(1),Dip%ib_lim(1) 
      do ic=Dip%ib_lim(2),Dip%ib(2)
        !
-       if ( iv<=Xen%nbf.and.ic<=Xen%nbf ) &
+       if (ic<=Xen%nbf ) &
        & DIP_spin(:,ic,iv,:,:,2)=DIP_spin(:,ic,iv,:,:,1)
-       if ( iv> Xen%nbf.and.ic> Xen%nbf ) &
+       if (ic> Xen%nbf ) &
        & DIP_spin(:,ic,iv,:,:,3)=DIP_spin(:,ic,iv,:,:,1)
        !
      enddo

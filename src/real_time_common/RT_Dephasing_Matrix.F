@@ -25,7 +25,7 @@ subroutine RT_Dephasing_Matrix(E)
  !
  use pars,          ONLY:SP
  use units,         ONLY:FS2AUT
- use com,           ONLY:error,msg
+ use com,           ONLY:warning,msg
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:nXkibz
  use real_time,     ONLY:RT_Deph_Matrix,RT_is_statically_dephased,Phase_LifeTime,&
@@ -90,6 +90,8 @@ subroutine RT_Dephasing_Matrix(E)
      do ib_1=RT_bands(1),RT_bands(2)
        do ib_2=ib_1+1,RT_bands(2)
          if ( abs(E%E(ib_1,ik,1)-E%E(ib_2,ik,1))<deg_tresh ) cycle
+         !if ( ib_1> E%nbf )  cycle
+         !if ( ib_2<=E%nbf )  cycle
          RT_Deph_Matrix(ib_1,ib_2,ik)=1._SP/Phase_LifeTime
          RT_Deph_Matrix(ib_2,ib_1,ik)=1._SP/Phase_LifeTime
        enddo
@@ -106,10 +108,15 @@ subroutine RT_Dephasing_Matrix(E)
      ib_1=int(RT_INPUT_Deph_limits(i1,1))
      ib_2=int(RT_INPUT_Deph_limits(i1,2))
      ik=int(RT_INPUT_Deph_limits(i1,3))
+     if(any((/ib_1,ib_2/)>RT_bands(2)).or.any((/ib_1,ib_2/)<RT_bands(1))) then
+       call warning("DephMatrix indexes out of the range. Ignoring wrong band   assignment") 
+       cycle
+     endif
+     if(ik<=0.or.ik>nXkibz) then
+       call warning("DephMatrix indexes out of the range. Ignoring wrong kpoint assignment") 
+       cycle
+     endif
      if ( abs(E%E(ib_1,ik,1)-E%E(ib_2,ik,1))<deg_tresh ) cycle
-     if(any((/ib_1,ib_2/)>RT_bands(2)).or.any((/ib_1,ib_2/)<RT_bands(1))) &
-&                             call error("DephMatrix indexes out of the range! Wrong band assignment") 
-     if(ik<=0.or.ik>nXkibz)   call error("DephMatrix indexes out of the range! Wrong kpoint assignment") 
      RT_Deph_Matrix(ib_1,ib_2,ik)  =1._SP/RT_INPUT_Deph_limits(i1,4)/FS2AUT
      RT_Deph_Matrix(ib_2,ib_1,ik)  =1._SP/RT_INPUT_Deph_limits(i1,4)/FS2AUT
    enddo
@@ -127,6 +134,8 @@ subroutine RT_Dephasing_Matrix(E)
      do ib_1=RT_bands(1),RT_bands(2)
        do ib_2=ib_1+1,RT_bands(2)
          if ( abs(E%E(ib_1,ik,1)-E%E(ib_2,ik,1))<deg_tresh ) cycle
+         !if ( ib_1> E%nbf )  cycle
+         !if ( ib_2<=E%nbf )  cycle
          RT_Deph_Matrix(ib_1,ib_2,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))
          RT_Deph_Matrix(ib_2,ib_1,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))
        enddo     

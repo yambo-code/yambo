@@ -26,7 +26,7 @@ subroutine RT_driver(en,k,q)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use YPP_real_time,  ONLY:l_RT_X,l_RT_occupations,l_RT_lifetimes,l_RT_density,&
-&                         l_skip_OBS_IO,l_force_min_damp
+&                         l_RT_G_lesser,l_skip_OBS_IO,l_force_min_damp
  use interpolate,    ONLY:l_integral_respect
  use parser_m,       ONLY:parser
  implicit none
@@ -57,6 +57,10 @@ subroutine RT_driver(en,k,q)
  ! Plotting 
  !===========
  if (l_RT_density)                         call RT_density(en,k,q)
+ !
+ ! G lesser 
+ !===========
+ if (l_RT_G_lesser)                        call RT_G_lesser(en,k,q)
  !
  ! GPL_EXCLUDE_END
  !

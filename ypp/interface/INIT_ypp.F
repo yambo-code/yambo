@@ -54,7 +54,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use electrons,      ONLY:levels,E_reset
 #endif
 #if defined _YPP_RT 
- use YPP_real_time,  ONLY:l_RealTime,l_RT_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
+ use YPP_real_time,  ONLY:l_RealTime,l_RT_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,l_RT_G_lesser,&
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_RTpump_Fermi,&
 &                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions,&
 &                         l_NL_X,l_NL_exc,RT_conf
@@ -329,6 +329,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_RT_occupations =index(rstr_piece(i1+1),'o')>0
      l_RT_lifetimes   =index(rstr_piece(i1+1),'l')>0
      l_RT_density     =trim(rstr_piece(i1+1))=='d'
+     l_RT_G_lesser    =trim(rstr_piece(i1+1))=='g'
      !
      l_RT_bands       =trim(rstr_piece(i1+2))=='b'
      l_RT_time        =trim(rstr_piece(i1+2))=='t'
@@ -387,6 +388,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      if (l_RT_occupations) call initactivate(1,'RToccupations')
      if (l_RT_lifetimes)   call initactivate(1,'RTlifetimes')
      if (l_RT_density)     call initactivate(1,'RTdeltaRho')
+     if (l_RT_G_lesser)    call initactivate(1,'RTGlesser')
      if (l_RT_bands)       call initactivate(1,'RTfitbands')
      if (l_RT_time)        call initactivate(1,'RTtime')
      if (l_RT_energy)      call initactivate(1,'RTenergy')
@@ -447,6 +449,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_RT_occupations   = runlevel_is_on('RToccupations')
  l_RT_lifetimes     = runlevel_is_on('RTlifetimes')
  l_RT_density       = runlevel_is_on('RTdeltaRho')
+ l_RT_G_lesser      = runlevel_is_on('RTGlesser')
  !
  l_RT_bands         = runlevel_is_on('RTfitbands')
  l_RT_time          = runlevel_is_on('RTtime')
@@ -600,13 +603,14 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    !
    l_flag=l_RT_occupations.or.l_RT_abs
    if (l_flag)      call init_RT_ctl_switch('G')
-   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes.or.l_RT_abs
+   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes.or.l_RT_abs.or.l_RT_G_lesser
    if (l_flag)      call initactivate(1,"TimeStep TimeRange")
    !
    l_flag=l_RT_time.and.l_RT_occupations
    if (l_flag)           call initactivate(1,"OCCgroup")
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
    if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
+   if (l_RT_G_lesser)    call initactivate(1,"LoadGhistory IncludeEQocc EnRngeRt ETStpsRt")
    if (l_RT_dos)  then
      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc NoOcc")
      call initactivate(1,"Proj_DOS PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")

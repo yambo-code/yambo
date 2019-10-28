@@ -43,6 +43,7 @@ module YPP_real_time
  logical  :: l_RT_occupations
  logical  :: l_RT_lifetimes
  logical  :: l_RT_density
+ logical  :: l_RT_G_lesser
  logical  :: l_RT_X
  logical  :: l_NL_X
  logical  :: l_NL_exc

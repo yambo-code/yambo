@@ -23,8 +23,8 @@
 !
 subroutine RT_G_lesser(en,kpt,qpt)
  !
- use pars,           ONLY:SP,schlen,cZERO,cI
- use units,          ONLY:FS2AUT
+ use pars,           ONLY:SP,DP,schlen,cZERO,cI
+ use units,          ONLY:FS2AUT,HA2EV
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
@@ -36,7 +36,7 @@ subroutine RT_G_lesser(en,kpt,qpt)
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,RT_nbands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,I1_matrix
- use YPP_real_time,  ONLY:RT_time,RT_conf
+ use YPP_real_time,  ONLY:RT_time,RT_conf,OBS_el
  use interfaces,     ONLY:WF_load,WF_free,el_density_and_current
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -45,10 +45,11 @@ subroutine RT_G_lesser(en,kpt,qpt)
  !
  type(levels)  :: en
  type(bz_samp) :: kpt,qpt
+ type(OBS_el)  :: FT
  !
  ! Workspace
  !
- integer               :: ID,ik,ib1,ib2,io_err,i_T(2),i_T1,i_T2,i_Tc,i_dT,i_kind
+ integer               :: ID,ik,ib1,ib2,io_err,i_T(2),i_w,i_T1,i_T2,i_Tc,i_dT,i_kind,j_kind
  character(schlen)     :: ch_ws(3)
  logical               :: include_eq_occ
  !
@@ -57,7 +58,7 @@ subroutine RT_G_lesser(en,kpt,qpt)
  complex(SP), allocatable :: rho_T(:,:,:,:),H_rho_T(:,:,:,:),&
 &                            G_lesser_k_tmtp(:,:),G_lesser_k_w(:,:),&
 &                            G_ret(:,:,:,:),G_adv(:,:,:,:),&
-&                            G_tmp(:,:)
+&                            G_tmp(:,:,:)
  !
  integer, external     :: io_RT_components
  !
@@ -81,7 +82,9 @@ subroutine RT_G_lesser(en,kpt,qpt)
  !
  call msg('s',trim(ch_ws(1)))
  !
- YAMBO_ALLOC(G_tmp,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)))
+ RT_nbands=RT_bands(2)-RT_bands(1)+1
+ !
+ YAMBO_ALLOC(G_tmp,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),2))
  G_tmp=cZERO
  !
  YAMBO_ALLOC(  rho_T,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,2))
@@ -89,8 +92,16 @@ subroutine RT_G_lesser(en,kpt,qpt)
  rho_T=cZERO
  H_rho_T=cZERO
  !
+ YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,1))
+ Ho_plus_Sigma=cZERO
  YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
  dG_lesser=cZERO
+ !
+ if(include_eq_occ) then
+   YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),ID=ID) 
+   io_err=io_RT_components('REF',ID)
+ endif
  !
  YAMBO_ALLOC(G_ret,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,2))
  YAMBO_ALLOC(G_adv,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,2))
@@ -121,6 +132,7 @@ subroutine RT_G_lesser(en,kpt,qpt)
  ! First step i_Tc
  !
  i_Tc=(RT_conf%T_n_steps+1)/2
+ if(mod(RT_conf%T_n_steps,2)==0) call error("Number of time steps must be odd")
  !
  NE_time=RT_time(i_Tc)
  NE_i_time=nint(NE_time/RT_step)+1
@@ -137,31 +149,40 @@ subroutine RT_G_lesser(en,kpt,qpt)
  enddo
 #endif
  !
- if(     include_eq_occ) rho_T(:,:,:,1)=dG_lesser(:,:,:,1)+G_lesser_reference
- if(.not.include_eq_occ) rho_T(:,:,:,1)=dG_lesser(:,:,:,1)
+ if(     include_eq_occ) rho_T(:,:,:,1)=-cI*(dG_lesser(:,:,:,1)+G_lesser_reference)
+ if(.not.include_eq_occ) rho_T(:,:,:,1)=-cI* dG_lesser(:,:,:,1)
  !
  H_rho_T(:,:,:,1)=Ho_plus_sigma(:,:,:,1)
  !
+ write(*,*) 'H '
+ do ib1=RT_bands(1),RT_bands(2)
+   write(*,*) real(Ho_plus_sigma(:,ib1,1,1))*HA2EV,aimag(Ho_plus_sigma(:,ib1,1,1))*HA2EV
+ enddo
+ !
  ! Build G_ret and G_adv
  !
- G_ret(:,:,:,:)=-cI
- G_adv(:,:,:,:)=-cI
+ do i_kind=1,2
+   do ik=1,RT_nk
+     G_ret(:,:,ik,i_kind)=-cI*I1_matrix(:,:)
+     G_adv(:,:,ik,i_kind)= cI*I1_matrix(:,:)
+   enddo 
+ enddo
  !
  ! Build G_lesser
  !
  do ik=1,RT_nk
    G_tmp=cZERO
-   call M_by_M('n','n',RT_nbands,G_ret(:,:,ik,1),rho_T(:,:,ik,1),G_tmp)
-   call M_by_M('n','n',RT_nbands,rho_T(:,:,ik,1),G_adv(:,:,ik,1),G_tmp)
+   call M_by_M('n','n',RT_nbands,G_ret(:,:,ik,1),rho_T(:,:,ik,1),G_tmp(:,:,1))
+   call M_by_M('n','n',RT_nbands,rho_T(:,:,ik,1),G_adv(:,:,ik,1),G_tmp(:,:,2))
    !
    do ib1=RT_bands(1),RT_bands(2)
      do ib2=RT_bands(1),RT_bands(2)
-       G_lesser_k_tmtp(ik,i_Tc)=G_lesser_k_tmtp(ik,i_Tc)+G_tmp(ib1,ib2)
+       G_lesser_k_tmtp(ik,i_Tc)=G_lesser_k_tmtp(ik,i_Tc)-G_tmp(ib1,ib2,1)+G_tmp(ib1,ib2,2)
      enddo
    enddo
  enddo
  !
- do i_T1=i_Tc,RT_conf%T_n_steps
+ do i_T1=i_Tc+1,RT_conf%T_n_steps
    !
    i_T2=i_Tc+(i_Tc-i_T1)
    !
@@ -188,8 +209,8 @@ subroutine RT_G_lesser(en,kpt,qpt)
      enddo
 #endif
      !
-     if(     include_eq_occ) rho_T(:,:,:,i_kind)=dG_lesser(:,:,:,1)+G_lesser_reference
-     if(.not.include_eq_occ) rho_T(:,:,:,i_kind)=dG_lesser(:,:,:,1)
+     if(     include_eq_occ) rho_T(:,:,:,i_kind)=-cI*(dG_lesser(:,:,:,G_MEM_steps)+G_lesser_reference)
+     if(.not.include_eq_occ) rho_T(:,:,:,i_kind)=-cI* dG_lesser(:,:,:,G_MEM_steps)
      !
      H_rho_T(:,:,:,i_kind)=Ho_plus_sigma(:,:,:,1)
      !
@@ -201,13 +222,19 @@ subroutine RT_G_lesser(en,kpt,qpt)
    !
    ! e^{-ih_{HSEX}[rho(T)]dt} G^{(r)}_prev e^{-ih_{HSEX}[rho(T)]dt} with dt=RT_conf%delta_T
    !
-   call RT_multiply_eH_Gret_eH(H_rho_T(:,:,:,1),G_ret(:,:,:,1),H_rho_T(:,:,:,2),RT_conf%delta_T,3)  ! i_T1=i_Tc+i_dT
-   call RT_multiply_eH_Gret_eH(H_rho_T(:,:,:,2),G_ret(:,:,:,2),H_rho_T(:,:,:,1),RT_conf%delta_T,3)  ! i_T2=i_Tc-i_dT
+   do ik=1,RT_nk
+     call RT_multiply_eH_Gret_eH(+H_rho_T(:,:,ik,2),G_ret(:,:,ik,1),+H_rho_T(:,:,ik,1),RT_conf%delta_T/2._SP,3)  ! i_T1=i_Tc+i_dT ;  i_T2=i_Tc-i_dT
+     call RT_multiply_eH_Gret_eH(-H_rho_T(:,:,ik,1),G_ret(:,:,ik,2),-H_rho_T(:,:,ik,2),RT_conf%delta_T/2._SP,3)  ! i_T1=i_Tc-i_dT ;  i_T2=i_Tc+i_dT (to check)
+     !G_ret(:,:,ik,2)=(G_ret(:,:,ik,1))
+   enddo
    !
    do i_kind=1,2
      !
+     if(i_kind==1) j_kind=2
+     if(i_kind==2) j_kind=1
+     !
      do ik=1,RT_nk
-       G_adv(:,:,ik,i_kind)=hermitian(G_ret(:,:,ik,i_kind))
+       G_adv(:,:,ik,j_kind)=hermitian(G_ret(:,:,ik,i_kind))
      enddo
      !
      ! Build G_lesser
@@ -215,17 +242,40 @@ subroutine RT_G_lesser(en,kpt,qpt)
      do ik=1,RT_nk
        !
        G_tmp=cZERO
-       call M_by_M('n','n',RT_nbands,G_ret(:,:,ik,i_kind),rho_T(:,:,ik,i_kind),G_tmp)
-       call M_by_M('n','n',RT_nbands,rho_T(:,:,ik,i_kind),G_adv(:,:,ik,i_kind),G_tmp)
+       call M_by_M('n','n',RT_nbands,G_ret(:,:,ik,i_kind),rho_T(:,:,ik,j_kind),G_tmp(:,:,1))
+       call M_by_M('n','n',RT_nbands,rho_T(:,:,ik,i_kind),G_adv(:,:,ik,i_kind),G_tmp(:,:,2))
        !
        do ib1=RT_bands(1),RT_bands(2)
          do ib2=RT_bands(1),RT_bands(2)
-           G_lesser_k_tmtp(ik,i_T(i_kind))=G_lesser_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib2)
+           G_lesser_k_tmtp(ik,i_T(i_kind))=G_lesser_k_tmtp(ik,i_T(i_kind))-G_tmp(ib1,ib2,1)+G_tmp(ib1,ib2,2)
          enddo
        enddo
        !
      enddo
      !
+   enddo
+   !
+ enddo
+ !
+ ! 1D FFT setup
+ !--------------
+ FT%title="G<(t,t')"
+ call RT_1D_Fourier_setup(FT,RT_conf,RT_nk) 
+ !
+ do ik=1,RT_nk
+   FT%F_T(:,ik)=cmplx(G_lesser_k_tmtp(ik,:),kind=DP)
+ enddo
+ !
+ call RT_1D_Fourier_Transform('T2W',FT,RT_conf,RT_nk)
+ !
+ do ik=1,RT_nk
+   !
+   do i_dT=1,RT_conf%T_n_steps
+     write(100+ik,*) RT_time(i_dT)/FS2AUT,real(FT%F_T(i_dT,ik),SP),real(aimag(FT%F_T(i_dT,ik)),SP)
+   enddo
+   !
+   do i_w=1,RT_conf%W_n_steps
+     write(200+ik,*) real(FT%W(i_w))*HA2EV,real(-cI*FT%F_W(i_w,ik),SP),real(aimag(-cI*FT%F_W(i_w,ik)),SP)
    enddo
    !
  enddo

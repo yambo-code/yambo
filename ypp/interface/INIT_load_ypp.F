@@ -130,6 +130,7 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
  call it('r',defs,'RTlifetimes',  '[R] Analize time-dependent lifetimes')
  call it('r',defs,'RTdeltaRho',   '[R] Analize the density')
+ call it('r',defs,'RTGlesser',    '[R] Construct G<(t,tp)')
  !
  call it('r',defs,'RTfitbands',   '[R] Post-Processing kind: fit on bands')
  call it('r',defs,'RTtime',       '[R] Post-Processing kind: function of time')

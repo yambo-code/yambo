@@ -62,11 +62,12 @@ subroutine RT_multiply_eH_Gret_eH(H1,Gret,H2,deltaT,n_order)
  ! However in the EOM for rho I need to expand U^dag(t)\rhoU(t) and not U(t) only
  !
  ! U1 = exp ( -i * H1 * dt)
- ! U2 = exp ( +i + H2 * dt)
+ ! U2 = exp ( -i * H2 * dt)
  !
  ! Order 1 is :
- U1=I1_matrix-cI*deltaT*H1
- U2=I1_matrix+cI*deltaT*H2
+ !
+ U1=-cI*deltaT*H1
+ U2=-cI*deltaT*H2
  !
  M1a_tmp=U1
  M1b_tmp=U1
@@ -80,14 +81,17 @@ subroutine RT_multiply_eH_Gret_eH(H1,Gret,H2,deltaT,n_order)
    call M_by_M_omp('n','n',RT_nbands,M2a_tmp,M2b_tmp/real(i_order,SP),M2c_tmp)
    !
    U1=U1+(-1._SP)**i_order*M1c_tmp
-   U2=U2+(+1._SP)**i_order*M2c_tmp
+   U2=U2+(-1._SP)**i_order*M2c_tmp
    !
    if (i_order<n_order) M1b_tmp=M1c_tmp
    if (i_order<n_order) M2b_tmp=M2c_tmp
    !
  enddo
  !
- ! Gret(t+dt,t'-dt) = U1(t;dt) Gret(t,t') U2(T;-dt)
+ U1=U1+I1_matrix
+ U2=U2+I1_matrix
+ !
+ ! Gret(t+dt,t'-dt) = U1(t';-dt) Gret(t,t') U2(t;dt)
  !
  G_tmp=cZERO
  call M_by_M_omp('n','n',RT_nbands,U1,Gret,G_tmp)

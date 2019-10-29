@@ -245,8 +245,8 @@ subroutine RT_initialize(E,k,q)
      if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%frequency(1)==0._SP) &
 &      call error("External "//trim(Efield(i1)%ef_name)//" field has zero frequency.")
      !
-     if(Efield(i1)%intensity==0._SP) &
-&      call error("External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
+!     if(Efield(i1)%intensity==0._SP) &
+!&      call error("External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
      !
      if( all( abs(Efield(i1)%versor(:))<epsilon(1.) ) ) &
 &      call error("External "//trim(Efield(i1)%ef_name)//" field has undefined direction.")

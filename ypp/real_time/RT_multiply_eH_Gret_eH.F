@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_multiply_eH_Gret_eH(H1,Gret,H2,deltaT,n_order)
+subroutine RT_multiply_eH_Gret_eH(H1,Gret,H2,deltaT,eta,n_order)
  !
  ! The EXP integrator is better than the EULER integrator if Ho_plus_Sigma
  ! changes in time more slowly that G
@@ -34,6 +34,7 @@ subroutine RT_multiply_eH_Gret_eH(H1,Gret,H2,deltaT,n_order)
  !
  integer,     intent(in)    :: n_order
  real(SP),    intent(in)    :: deltaT
+ real(SP),    intent(in)    :: eta
  complex(SP), intent(in)    :: H1(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(inout) :: Gret(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(in)    :: H2(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -88,10 +89,10 @@ subroutine RT_multiply_eH_Gret_eH(H1,Gret,H2,deltaT,n_order)
    !
  enddo
  !
- U1=U1+I1_matrix
- U2=U2+I1_matrix
+ U1=(U1+I1_matrix)*exp(-deltaT*eta)
+ U2=(U2+I1_matrix)*exp(-deltaT*eta)
  !
- ! Gret(t+dt,t'-dt) = U1(t';-dt) Gret(t,t') U2(t;dt)
+ ! Gret(t+dt,t'-dt) = U1(t';-dt) Gret(t,t') U2(t;dt) exp(-deph*dt)
  !
  G_tmp=cZERO
  call M_by_M_omp('n','n',RT_nbands,U1,Gret,G_tmp)

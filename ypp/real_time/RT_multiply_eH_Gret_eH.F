@@ -58,7 +58,7 @@ subroutine RT_multiply_eH_Gret_eH(H1,Gret,H2,deltaT,eta,n_order)
  ! The code below does an expansion up to arbitrary order
  ! of the U(t) matrix. Taylor expansion:
  !
- ! U(t) = exp(H*t) = 1 + (Ht) + (Ht)^2/2! + (Ht)^3/3! + (Ht)^4/4! + (Ht)^5/5! + O(Ht^6)
+ ! U(t) = exp(-iHt) = 1 + (-iHt) + (iHt)^2/2! + (iHt)^3/3! + (iHt)^4/4! + (iHt)^5/5! + O(Ht^6)
  !
  ! However in the EOM for rho I need to expand U^dag(t)\rhoU(t) and not U(t) only
  !
@@ -81,8 +81,8 @@ subroutine RT_multiply_eH_Gret_eH(H1,Gret,H2,deltaT,eta,n_order)
    call M_by_M_omp('n','n',RT_nbands,M1a_tmp,M1b_tmp/real(i_order,SP),M1c_tmp)
    call M_by_M_omp('n','n',RT_nbands,M2a_tmp,M2b_tmp/real(i_order,SP),M2c_tmp)
    !
-   U1=U1+(-1._SP)**i_order*M1c_tmp
-   U2=U2+(-1._SP)**i_order*M2c_tmp
+   U1=U1+M1c_tmp
+   U2=U2+M2c_tmp
    !
    if (i_order<n_order) M1b_tmp=M1c_tmp
    if (i_order<n_order) M2b_tmp=M2c_tmp

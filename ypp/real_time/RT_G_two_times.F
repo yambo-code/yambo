@@ -51,9 +51,15 @@ subroutine RT_G_two_times(en,kpt,qpt)
  ! Workspace
  !
  real(SP)              :: T_c
- integer               :: ID,ik,ib1,io_err,i_T(2),i_w,i_T1,i_T2,i_Tc,i_dT,i_kind,j_kind
+ integer               :: ID,ik,ib1,ib2,io_err,i_T(2),i_w,i_T1,i_T2,i_Tc,i_dT,i_kind,j_kind
  character(2)          :: function_name
- logical               :: include_eq_occ,build_G_ret,build_G_adv,build_G_les,build_G_grt,build_Spect
+ logical               :: include_eq_occ,build_G_ret,build_G_adv,build_G_les,build_G_grt,build_Spect,  &
+&                         diag_c_only=.false.,&
+&                         diag_v_only=.true., &
+&                         off_only   =.false.,&
+&                         remove_vv  =.false.,&
+&                         proj_cc    =.false.,&
+&                         proj_vv    =.false.
  !
  ! Allocs
  !
@@ -100,7 +106,7 @@ subroutine RT_G_two_times(en,kpt,qpt)
  !
  YAMBO_ALLOC(  rho_T,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,2))
  YAMBO_ALLOC(b_rho_T,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,2))
- YAMBO_ALLOC(H_rho_T,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,2))
+ YAMBO_ALLOC(H_rho_T,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,4))
    rho_T=cZERO
  b_rho_T=cZERO
  H_rho_T=cZERO
@@ -118,6 +124,8 @@ subroutine RT_G_two_times(en,kpt,qpt)
  !
  YAMBO_ALLOC(G_ret,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,2))
  YAMBO_ALLOC(G_adv,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,2))
+ G_ret=cZERO
+ G_adv=cZERO
  !
  ! I need to keep k resolution to interpolate on a path
  !
@@ -176,12 +184,45 @@ subroutine RT_G_two_times(en,kpt,qpt)
    if(     include_eq_occ) TMP_M(:,:,2)=( I1_matrix+cI*G_lesser_reference(:,:,ik) )
    if(.not.include_eq_occ) TMP_M(:,:,2)=( I1_matrix                               )
    !
-     rho_T(:,:,ik,1)= TMP_M(:,:,1)+rho_T(:,:,ik,1)
    b_rho_T(:,:,ik,1)= TMP_M(:,:,2)-rho_T(:,:,ik,1)
+     rho_T(:,:,ik,1)= TMP_M(:,:,1)+rho_T(:,:,ik,1)
+   !
+   if(diag_v_only) then
+     do ib1=RT_bands(1),RT_bands(2)
+       if(ib1> en%nbf) rho_T(ib1,ib1,ik,1)= cZERO
+       do ib2=RT_bands(1),ib1-1
+         rho_T(ib1,ib2,ik,1)= cZERO
+         rho_T(ib2,ib1,ik,1)= cZERO
+       enddo
+     enddo
+   endif
+   !
+   if(diag_c_only) then
+     do ib1=RT_bands(1),RT_bands(2)
+       if(ib1<=en%nbf) rho_T(ib1,ib1,ik,1)= cZERO
+       do ib2=ib1+1,RT_bands(2)
+         rho_T(ib1,ib2,ik,1)= cZERO
+         rho_T(ib2,ib1,ik,1)= cZERO
+       enddo
+     enddo
+   endif
+   !
+   if(off_only) then
+     do ib1=RT_bands(1),RT_bands(2)
+       rho_T(ib1,ib1,ik,1)= cZERO
+     enddo
+   endif
+   !
+   if(remove_vv) then
+     do ib1=RT_bands(1),en%nbf
+       rho_T(ib1,ib1,ik,1)= cZERO
+     enddo
+   endif
    !
  enddo
  !
- H_rho_T(:,:,:,1)=Ho_plus_sigma(:,:,:,1)
+ !H_rho_T(:,:,:,1)=Ho_plus_sigma(:,:,:,1)
+ !H_rho_T(:,:,:,2)=Ho_plus_sigma(:,:,:,1)
  !
  !write(*,*)  ' '
  !do ik=1,RT_nk
@@ -200,6 +241,9 @@ subroutine RT_G_two_times(en,kpt,qpt)
    enddo 
  enddo
  !
+ H_rho_T(:,:,:,3)=Ho_plus_sigma(:,:,:,1)
+ H_rho_T(:,:,:,4)=Ho_plus_sigma(:,:,:,1)
+ !
  !
  ! Build G_lesser / G_ret / Spectr
  !
@@ -207,24 +251,27 @@ subroutine RT_G_two_times(en,kpt,qpt)
    !
    if(build_G_les) then
      G_tmp=cZERO
-     call M_by_M('n','n',RT_nbands,G_ret(:,:,ik,1),rho_T(:,:,ik,1),G_tmp(:,:,1))
-     call M_by_M('n','n',RT_nbands,rho_T(:,:,ik,1),G_adv(:,:,ik,1),G_tmp(:,:,2))
+     call M_by_M('n','n',RT_nbands,-G_ret(:,:,ik,1),rho_T(:,:,ik,1),G_tmp(:,:,1))
+     call M_by_M('n','n',RT_nbands,+rho_T(:,:,ik,1),G_adv(:,:,ik,1),G_tmp(:,:,2))
    endif
    !
    if(build_G_grt) then
      G_tmp=cZERO
-     call M_by_M('n','n',RT_nbands,G_ret(:,:,ik,1),b_rho_T(:,:,ik,1),G_tmp(:,:,1))
-     call M_by_M('n','n',RT_nbands,b_rho_T(:,:,ik,1),G_adv(:,:,ik,1),G_tmp(:,:,2))
+     call M_by_M('n','n',RT_nbands,+G_ret(:,:,ik,1),b_rho_T(:,:,ik,1),G_tmp(:,:,1))
+     call M_by_M('n','n',RT_nbands,-b_rho_T(:,:,ik,1),G_adv(:,:,ik,1),G_tmp(:,:,2))
    endif
    !
    do ib1=RT_bands(1),RT_bands(2)
-     if(build_G_les) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)-G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
-     if(build_G_grt) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+G_tmp(ib1,ib1,1)-G_tmp(ib1,ib1,2)
+     if(ib1<=en%nbf.and.proj_cc) cycle
+     if(ib1> en%nbf.and.proj_vv) cycle
+     if(build_G_les) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
+     if(build_G_grt) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
      if(build_G_ret) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+ G_ret(ib1,ib1,ik,1)
      if(build_G_adv) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+ G_adv(ib1,ib1,ik,1)
      if(build_Spect) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+(G_ret(ib1,ib1,ik,1)-G_adv(ib1,ib1,ik,1))
    enddo
  enddo
+ !
  !
  call live_timing("Build "//function_name//"(t,t'):",RT_conf%T_n_steps)
  !
@@ -267,8 +314,40 @@ subroutine RT_G_two_times(en,kpt,qpt)
        if(     include_eq_occ) TMP_M(:,:,2)=( I1_matrix+cI*G_lesser_reference(:,:,ik) )
        if(.not.include_eq_occ) TMP_M(:,:,2)=( I1_matrix                               )
        !
-         rho_T(:,:,ik,i_kind)= TMP_M(:,:,1)+rho_T(:,:,ik,i_kind)
        b_rho_T(:,:,ik,i_kind)= TMP_M(:,:,2)-rho_T(:,:,ik,i_kind)
+         rho_T(:,:,ik,i_kind)= TMP_M(:,:,1)+rho_T(:,:,ik,i_kind)
+       !
+       if(diag_v_only) then
+         do ib1=RT_bands(1),RT_bands(2)
+           if(ib1> en%nbf) rho_T(ib1,ib1,ik,i_kind)= cZERO
+           do ib2=RT_bands(1),ib1-1
+             rho_T(ib1,ib2,ik,i_kind)= cZERO
+             rho_T(ib2,ib1,ik,i_kind)= cZERO
+           enddo
+         enddo
+       endif
+       !
+       if(diag_c_only) then
+         do ib1=RT_bands(1),RT_bands(2)
+           if(ib1<=en%nbf) rho_T(ib1,ib1,ik,i_kind)= cZERO
+           do ib2=ib1+1,RT_bands(2)
+             rho_T(ib1,ib2,ik,i_kind)= cZERO
+             rho_T(ib2,ib1,ik,i_kind)= cZERO
+           enddo
+         enddo
+       endif
+       !
+       if(off_only) then
+         do ib1=RT_bands(1),RT_bands(2)
+           rho_T(ib1,ib1,ik,i_kind)= cZERO
+         enddo
+       endif
+       !
+       if(remove_vv) then
+         do ib1=RT_bands(1),en%nbf
+           rho_T(ib1,ib1,ik,i_kind)= cZERO
+         enddo
+       endif
        !
      enddo
      !
@@ -280,16 +359,22 @@ subroutine RT_G_two_times(en,kpt,qpt)
    !   - G^{(r)}(t1,t2) kind 1
    !   - G^{(r)}(t2,t1) kind 2
    !
-   ! e^{-ih_{HSEX}[rho(T)]dt/2} G^{(r)}_prev e^{-ih_{HSEX}[rho(T)]dt/2} with dt=RT_conf%delta_T
+   ! e^{-ih_{HSEX}[rho(T)]dt} G^{(r)}_prev e^{-ih_{HSEX}[rho(T)]dt} with dt=RT_conf%delta_T
    !
    do ik=1,RT_nk
-     call RT_multiply_eH_Gret_eH(+H_rho_T(:,:,ik,2),G_ret(:,:,ik,1),+H_rho_T(:,:,ik,1),RT_conf%delta_T/2._SP,RT_conf%damp_factor,3)  ! i_T1=i_Tc+i_dT ;  i_T2=i_Tc-i_dT
-     !call RT_multiply_eH_Gret_eH(-H_rho_T(:,:,ik,1),G_ret(:,:,ik,2),-H_rho_T(:,:,ik,2),RT_conf%delta_T/2._SP,RT_conf%damp_factor,3)  ! i_T1=i_Tc-i_dT ;  i_T2=i_Tc+i_dT (to check)
+     TMP_M(:,:,1)=(H_rho_T(:,:,ik,1)+H_rho_T(:,:,ik,3))/2._SP
+     TMP_M(:,:,2)=(H_rho_T(:,:,ik,2)+H_rho_T(:,:,ik,4))/2._SP
+     call RT_multiply_eH_Gret_eH(TMP_M(:,:,2),G_ret(:,:,ik,1),TMP_M(:,:,1),RT_conf%delta_T,RT_conf%damp_factor,3)  ! i_T1=i_Tc+i_dT ;  i_T2=i_Tc-i_dT
      G_ret(:,:,ik,2)=-hermitian(G_ret(:,:,ik,1)) ! PRA 92, 033419 (2015), Eq.(18)
      !
      G_adv(:,:,ik,1)= hermitian(G_ret(:,:,ik,2))
      G_adv(:,:,ik,2)= hermitian(G_ret(:,:,ik,1))
    enddo
+   !
+   ! Store previous H_rho_T
+   !
+   H_rho_T(:,:,:,3)=H_rho_T(:,:,:,1)
+   H_rho_T(:,:,:,4)=H_rho_T(:,:,:,2)
    !
    do i_kind=1,2
      !
@@ -301,28 +386,32 @@ subroutine RT_G_two_times(en,kpt,qpt)
        if(build_G_les) then
          !
          ! Build G<
+         ! PRA 92, 033419 (2015), Eq.(19a)
          !
          G_tmp=cZERO
-         call M_by_M('n','n',RT_nbands,G_ret(:,:,ik,i_kind),rho_T(:,:,ik,j_kind),G_tmp(:,:,1))
-         call M_by_M('n','n',RT_nbands,rho_T(:,:,ik,i_kind),G_adv(:,:,ik,i_kind),G_tmp(:,:,2))
+         call M_by_M('n','n',RT_nbands,-G_ret(:,:,ik,i_kind),rho_T(:,:,ik,j_kind),G_tmp(:,:,1))
+         call M_by_M('n','n',RT_nbands,+rho_T(:,:,ik,i_kind),G_adv(:,:,ik,i_kind),G_tmp(:,:,2))
          !
        endif
        !
        if(build_G_grt) then
          !
          ! Build G>
+         ! PRA 92, 033419 (2015), Eq.(19b)
          !
          G_tmp=cZERO
-         call M_by_M('n','n',RT_nbands,G_ret(:,:,ik,i_kind),b_rho_T(:,:,ik,j_kind),G_tmp(:,:,1))
-         call M_by_M('n','n',RT_nbands,b_rho_T(:,:,ik,i_kind),G_adv(:,:,ik,i_kind),G_tmp(:,:,2))
+         call M_by_M('n','n',RT_nbands,+G_ret(:,:,ik,i_kind),b_rho_T(:,:,ik,j_kind),G_tmp(:,:,1))
+         call M_by_M('n','n',RT_nbands,-b_rho_T(:,:,ik,i_kind),G_adv(:,:,ik,i_kind),G_tmp(:,:,2))
          !
        endif
        !
        ! Trace
        !
        do ib1=RT_bands(1),RT_bands(2)
-         if(build_G_les) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))-G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
-         if(build_G_grt) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib1,1)-G_tmp(ib1,ib1,2)
+         if(ib1<=en%nbf.and.proj_cc) cycle
+         if(ib1> en%nbf.and.proj_vv) cycle
+         if(build_G_les) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
+         if(build_G_grt) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
          if(build_G_ret) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_ret(ib1,ib1,ik,i_kind)
          if(build_G_adv) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_adv(ib1,ib1,ik,i_kind)
          if(build_Spect) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+(G_ret(ib1,ib1,ik,i_kind)-G_adv(ib1,ib1,ik,i_kind))
@@ -342,21 +431,13 @@ subroutine RT_G_two_times(en,kpt,qpt)
  !--------------
  !
  FT%title=function_name//"(t,t')"
- RT_time=RT_time-T_c
+ RT_time=(RT_time-T_c)*2._SP
  !
  call RT_1D_Fourier_setup(FT,RT_conf,RT_nk) 
  !
- if(build_G_les) then
-   do ik=1,RT_nk
-     FT%F_T(:,ik)=cmplx(F_k_tmtp(ik,:),kind=DP)
-   enddo
- endif
- !
- if(build_G_ret) then
-   do ik=1,RT_nk
-     FT%F_T(:,ik)=cmplx(F_k_tmtp(ik,:),kind=DP)
-   enddo
- endif
+ do ik=1,RT_nk
+   FT%F_T(:,ik)=cmplx(F_k_tmtp(ik,:),kind=DP)
+ enddo
  !
  call RT_1D_Fourier_Transform('T2W',FT,RT_conf,1)
  !
@@ -367,7 +448,7 @@ subroutine RT_G_two_times(en,kpt,qpt)
    enddo
    !
    do i_w=1,RT_conf%W_n_steps
-     write(200+ik,*) real(FT%W(i_w))*HA2EV,real(-cI*FT%F_W(i_w,ik)),real(aimag(-cI*FT%F_W(i_w,ik)),SP)
+     write(200+ik,*) real(FT%W(i_w))*HA2EV,real(-cI*FT%F_W(i_w,ik),SP),real(aimag(-cI*FT%F_W(i_w,ik)),SP)
    enddo
    !
  enddo

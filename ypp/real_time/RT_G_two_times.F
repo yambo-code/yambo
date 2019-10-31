@@ -55,7 +55,7 @@ subroutine RT_G_two_times(en,kpt,qpt)
  character(2)          :: function_name
  logical               :: include_eq_occ,build_G_ret,build_G_adv,build_G_les,build_G_grt,build_Spect,  &
 &                         diag_c_only=.false.,&
-&                         diag_v_only=.true., &
+&                         diag_v_only=.false.,&
 &                         off_only   =.false.,&
 &                         remove_vv  =.false.,&
 &                         proj_cc    =.false.,&

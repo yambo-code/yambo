@@ -273,7 +273,7 @@ subroutine RT_G_two_times(en,kpt,qpt)
  enddo
  !
  !
- call live_timing("Build "//function_name//"(t,t'):",RT_conf%T_n_steps)
+ call live_timing("Build "//function_name//"(t,t'):",(RT_conf%T_n_steps-i_Tc))
  !
  do i_T1=i_Tc+1,RT_conf%T_n_steps
    !
@@ -412,9 +412,16 @@ subroutine RT_G_two_times(en,kpt,qpt)
          if(ib1> en%nbf.and.proj_vv) cycle
          if(build_G_les) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
          if(build_G_grt) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
-         if(build_G_ret) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_ret(ib1,ib1,ik,i_kind)
-         if(build_G_adv) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_adv(ib1,ib1,ik,i_kind)
-         if(build_Spect) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+(G_ret(ib1,ib1,ik,i_kind)-G_adv(ib1,ib1,ik,i_kind))
+       enddo
+       !
+       ! Sum over all terms
+       !
+       do ib1=RT_bands(1),RT_bands(2)
+         do ib2=RT_bands(1),RT_bands(2)
+           if(build_G_ret) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_ret(ib1,ib2,ik,i_kind)
+           if(build_G_adv) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_adv(ib1,ib2,ik,i_kind)
+           if(build_Spect) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+(G_ret(ib1,ib2,ik,i_kind)-G_adv(ib1,ib2,ik,i_kind))
+         enddo
        enddo
        !
      enddo
@@ -448,7 +455,11 @@ subroutine RT_G_two_times(en,kpt,qpt)
    enddo
    !
    do i_w=1,RT_conf%W_n_steps
-     write(200+ik,*) real(FT%W(i_w))*HA2EV,real(-cI*FT%F_W(i_w,ik),SP),real(aimag(-cI*FT%F_W(i_w,ik)),SP)
+     if(build_G_les) write(200+ik,*) real(FT%W(i_w))*HA2EV,real(-cI*FT%F_W(i_w,ik),SP),real(aimag(-cI*FT%F_W(i_w,ik)),SP)
+     if(build_G_grt) write(200+ik,*) real(FT%W(i_w))*HA2EV,real(-cI*FT%F_W(i_w,ik),SP),real(aimag(-cI*FT%F_W(i_w,ik)),SP)
+     if(build_G_ret) write(200+ik,*) real(FT%W(i_w))*HA2EV,real(    FT%F_W(i_w,ik),SP),real(aimag(    FT%F_W(i_w,ik)),SP)
+     if(build_G_adv) write(200+ik,*) real(FT%W(i_w))*HA2EV,real(    FT%F_W(i_w,ik),SP),real(aimag(    FT%F_W(i_w,ik)),SP)
+     if(build_Spect) write(200+ik,*) real(FT%W(i_w))*HA2EV,real( cI*FT%F_W(i_w,ik),SP),real(aimag( cI*FT%F_W(i_w,ik)),SP)
    enddo
    !
  enddo

@@ -140,7 +140,7 @@ module parallel_m
  integer          :: PARALLEL_n_structures_active = 0
  logical          :: PARALLEL_ENV_uses_default(n_CPU_str_max) = .false.
  logical          :: linear_algebra_is_parallel = .false.
- character(schlen):: PARALLEL_default_mode="balanced" ! "memory"/"workload"
+ character(schlen):: PARALLEL_default_mode="memory" ! "memory"/"workload"
  !
  !... Logging CPUs ...
  !

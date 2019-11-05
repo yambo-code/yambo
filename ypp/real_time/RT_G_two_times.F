@@ -55,11 +55,12 @@ subroutine RT_G_two_times(en,kpt,qpt)
  character(2)          :: function_name
  logical               :: include_eq_occ,build_G_ret,build_G_adv,build_G_les,build_G_grt,build_Spect,  &
 &                         diag_c_only=.false.,&
-&                         diag_v_only=.false.,&
-&                         off_only   =.false.,&
+&                         diag_v_only=.false., &
+&                         off_only   =.false., &
 &                         remove_vv  =.false.,&
-&                         proj_cc    =.false.,&
-&                         proj_vv    =.false.
+&                         proj_cc    =.true., &
+&                         proj_vv    =.false.,&
+&                         implementation2= .true.
  !
  ! Allocs
  !
@@ -308,15 +309,6 @@ subroutine RT_G_two_times(en,kpt,qpt)
      !
      do ik=1,RT_nk
        !
-       if(     include_eq_occ) TMP_M(:,:,1)=           -cI*G_lesser_reference(:,:,ik)
-       if(.not.include_eq_occ) TMP_M(:,:,1)=  cZERO
-       !
-       if(     include_eq_occ) TMP_M(:,:,2)=( I1_matrix+cI*G_lesser_reference(:,:,ik) )
-       if(.not.include_eq_occ) TMP_M(:,:,2)=( I1_matrix                               )
-       !
-       b_rho_T(:,:,ik,i_kind)= TMP_M(:,:,2)-rho_T(:,:,ik,i_kind)
-         rho_T(:,:,ik,i_kind)= TMP_M(:,:,1)+rho_T(:,:,ik,i_kind)
-       !
        if(diag_v_only) then
          do ib1=RT_bands(1),RT_bands(2)
            if(ib1> en%nbf) rho_T(ib1,ib1,ik,i_kind)= cZERO
@@ -349,6 +341,15 @@ subroutine RT_G_two_times(en,kpt,qpt)
          enddo
        endif
        !
+       if(     include_eq_occ) TMP_M(:,:,1)=           -cI*G_lesser_reference(:,:,ik)
+       if(.not.include_eq_occ) TMP_M(:,:,1)=  cZERO
+       !
+       if(     include_eq_occ) TMP_M(:,:,2)=( I1_matrix+cI*G_lesser_reference(:,:,ik) )
+       if(.not.include_eq_occ) TMP_M(:,:,2)=( I1_matrix                               )
+       !
+       b_rho_T(:,:,ik,i_kind)= TMP_M(:,:,2)-rho_T(:,:,ik,i_kind)
+         rho_T(:,:,ik,i_kind)= TMP_M(:,:,1)+rho_T(:,:,ik,i_kind)
+       !
      enddo
      !
      H_rho_T(:,:,:,i_kind)=Ho_plus_sigma(:,:,:,1)
@@ -364,11 +365,15 @@ subroutine RT_G_two_times(en,kpt,qpt)
    do ik=1,RT_nk
      TMP_M(:,:,1)=(H_rho_T(:,:,ik,1)+H_rho_T(:,:,ik,3))/2._SP
      TMP_M(:,:,2)=(H_rho_T(:,:,ik,2)+H_rho_T(:,:,ik,4))/2._SP
-     call RT_multiply_eH_Gret_eH(TMP_M(:,:,2),G_ret(:,:,ik,1),TMP_M(:,:,1),RT_conf%delta_T,RT_conf%damp_factor,3)  ! i_T1=i_Tc+i_dT ;  i_T2=i_Tc-i_dT
-     G_ret(:,:,ik,2)=-hermitian(G_ret(:,:,ik,1)) ! PRA 92, 033419 (2015), Eq.(18)
      !
-     G_adv(:,:,ik,1)= hermitian(G_ret(:,:,ik,2))
-     G_adv(:,:,ik,2)= hermitian(G_ret(:,:,ik,1))
+     call RT_multiply_eH_Gret_eH(TMP_M(:,:,2),G_ret(:,:,ik,1),TMP_M(:,:,1),RT_conf%delta_T,RT_conf%damp_factor,3)  ! i_T1=i_Tc+i_dT ;  i_T2=i_Tc-i_dT : T1>T2
+     G_ret(:,:,ik,2)=0._SP                                                                                         ! i_T1=i_Tc+i_dT ;  i_T2=i_Tc-i_dT : T1<T2
+     !
+     ! PRA 92, 033419 (2015), Below Eq.(19)
+     !
+     G_adv(:,:,ik,1)= 0._SP                        ! : T1>T2
+     G_adv(:,:,ik,2)= hermitian(G_ret(:,:,ik,1))   ! : T2>T1
+     !call RT_multiply_eH_Gret_eH(TMP_M(:,:,1),G_adv(:,:,ik,1),TMP_M(:,:,2),-RT_conf%delta_T,-RT_conf%damp_factor,3)  ! i_T1=i_Tc+i_dT ;  i_T2=i_Tc-i_dT : T1>T2
    enddo
    !
    ! Store previous H_rho_T
@@ -378,12 +383,14 @@ subroutine RT_G_two_times(en,kpt,qpt)
    !
    do i_kind=1,2
      !
+     if (implementation2 .and. i_kind==2 .and. ( build_G_les.or.build_G_grt ) ) cycle
+     !
      if(i_kind==1) j_kind=2
      if(i_kind==2) j_kind=1
      !
      do ik=1,RT_nk
        !
-       if(build_G_les) then
+       if( build_G_les ) then
          !
          ! Build G<
          ! PRA 92, 033419 (2015), Eq.(19a)
@@ -405,24 +412,43 @@ subroutine RT_G_two_times(en,kpt,qpt)
          !
        endif
        !
-       ! Trace
-       !
-       do ib1=RT_bands(1),RT_bands(2)
-         if(ib1<=en%nbf.and.proj_cc) cycle
-         if(ib1> en%nbf.and.proj_vv) cycle
-         if(build_G_les) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
-         if(build_G_grt) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
-       enddo
-       !
-       ! Sum over all terms
-       !
-       do ib1=RT_bands(1),RT_bands(2)
-         do ib2=RT_bands(1),RT_bands(2)
-           if(build_G_ret) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_ret(ib1,ib2,ik,i_kind)
-           if(build_G_adv) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_adv(ib1,ib2,ik,i_kind)
-           if(build_Spect) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+(G_ret(ib1,ib2,ik,i_kind)-G_adv(ib1,ib2,ik,i_kind))
+       if( build_G_les.or.build_G_grt ) then
+         !
+         ! Trace
+         !
+         do ib1=RT_bands(1),RT_bands(2)
+           if(ib1<=en%nbf.and.proj_cc) cycle
+           if(ib1> en%nbf.and.proj_vv) cycle
+           if(build_G_les) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
+           if(build_G_grt) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
          enddo
-       enddo
+         !
+         !  PRA 92, 033419 (2015), Eq.(18):
+         !    G<(t,t')=-hermitian(G<(t',t))
+         !    G>(t,t')=-hermitian(G>(t',t))
+         !
+         if (implementation2) then
+           do ib1=RT_bands(1),RT_bands(2)
+             if(ib1<=en%nbf.and.proj_cc) cycle
+             if(ib1> en%nbf.and.proj_vv) cycle
+             if(build_G_les) F_k_tmtp(ik,i_T(2))=F_k_tmtp(ik,i_T(2))-conjg(G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2))
+             if(build_G_grt) F_k_tmtp(ik,i_T(2))=F_k_tmtp(ik,i_T(2))-conjg(G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2))
+           enddo
+         endif
+         !
+       else
+         !
+         ! Sum over all terms
+         !
+         do ib1=RT_bands(1),RT_bands(2)
+           do ib2=RT_bands(1),RT_bands(2)
+             if(build_G_ret) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_ret(ib1,ib2,ik,i_kind)
+             if(build_G_adv) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_adv(ib1,ib2,ik,i_kind)
+             if(build_Spect) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+(G_ret(ib1,ib2,ik,i_kind)-G_adv(ib1,ib2,ik,i_kind))
+           enddo
+         enddo
+         !
+       endif
        !
      enddo
      !

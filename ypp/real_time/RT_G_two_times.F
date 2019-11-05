@@ -53,19 +53,21 @@ subroutine RT_G_two_times(en,kpt,qpt)
  real(SP)              :: T_c
  integer               :: ID,ik,ib1,ib2,io_err,i_T(2),i_w,i_T1,i_T2,i_Tc,i_dT,i_kind,j_kind
  character(2)          :: function_name
- logical               :: include_eq_occ,build_G_ret,build_G_adv,build_G_les,build_G_grt,build_Spect,  &
-&                         diag_c_only=.false.,&
-&                         diag_v_only=.false., &
-&                         off_only   =.false., &
-&                         remove_vv  =.false.,&
-&                         proj_cc    =.true., &
-&                         proj_vv    =.false.,&
-&                         implementation2= .true.
+ logical               :: include_eq_occ,&
+&                         build_G_ret,build_G_adv,build_G_les,build_G_grt,build_Spect,  &
+&                         proj_cc,proj_vv,&
+&                         implementation2= .true. 
+! DEBUG <
+!&                         diag_c_only=.false.,&
+!&                         diag_v_only=.false.,&
+!&                         off_only   =.false.,&
+!&                         remove_vv  =.false.,&
+! DEBUG >
  !
  ! Allocs
  !
  complex(SP), allocatable :: rho_T(:,:,:,:),b_rho_T(:,:,:,:),H_rho_T(:,:,:,:),&
-&                            F_k_tmtp(:,:),                  & !F_k_w(:,:),       &
+&                            F_k_tmtp(:,:),                  &
 &                            G_ret(:,:,:,:),G_adv(:,:,:,:),  &
 &                            G_tmp(:,:,:),TMP_M(:,:,:)
  !
@@ -79,6 +81,8 @@ subroutine RT_G_two_times(en,kpt,qpt)
  call parser('BuildGadv',   build_G_adv)
  call parser('BuildGles',   build_G_les)
  call parser('BuildGgrt',   build_G_grt)
+ call parser('ProjCond',    proj_cc)
+ call parser('ProjVal',     proj_vv)
  !
  call RT_k_grid(en,kpt,qpt)
  !
@@ -131,9 +135,7 @@ subroutine RT_G_two_times(en,kpt,qpt)
  ! I need to keep k resolution to interpolate on a path
  !
  YAMBO_ALLOC(F_k_tmtp,(RT_nk,RT_conf%T_n_steps)) ! F(k,t-t') for a given T
- !AMBO_ALLOC(F_k_w,   (RT_nk,RT_conf%W_n_steps)) ! F(k,w)    for a given T
  F_k_tmtp=cZERO
- !F_k_w   =cZERO
  !
  YAMBO_ALLOC(TMP_M,    (RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),2))
  YAMBO_ALLOC(I1_matrix,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)))
@@ -173,55 +175,7 @@ subroutine RT_G_two_times(en,kpt,qpt)
  enddo
 #endif
  !
- rho_T(:,:,:,1)=-cI* dG_lesser(:,:,:,1)
- !
- ! rho and 1-rho
- !
- do ik=1,RT_nk
-   !
-   if(     include_eq_occ) TMP_M(:,:,1)=           -cI*G_lesser_reference(:,:,ik)
-   if(.not.include_eq_occ) TMP_M(:,:,1)=  cZERO
-   !
-   if(     include_eq_occ) TMP_M(:,:,2)=( I1_matrix+cI*G_lesser_reference(:,:,ik) )
-   if(.not.include_eq_occ) TMP_M(:,:,2)=( I1_matrix                               )
-   !
-   b_rho_T(:,:,ik,1)= TMP_M(:,:,2)-rho_T(:,:,ik,1)
-     rho_T(:,:,ik,1)= TMP_M(:,:,1)+rho_T(:,:,ik,1)
-   !
-   if(diag_v_only) then
-     do ib1=RT_bands(1),RT_bands(2)
-       if(ib1> en%nbf) rho_T(ib1,ib1,ik,1)= cZERO
-       do ib2=RT_bands(1),ib1-1
-         rho_T(ib1,ib2,ik,1)= cZERO
-         rho_T(ib2,ib1,ik,1)= cZERO
-       enddo
-     enddo
-   endif
-   !
-   if(diag_c_only) then
-     do ib1=RT_bands(1),RT_bands(2)
-       if(ib1<=en%nbf) rho_T(ib1,ib1,ik,1)= cZERO
-       do ib2=ib1+1,RT_bands(2)
-         rho_T(ib1,ib2,ik,1)= cZERO
-         rho_T(ib2,ib1,ik,1)= cZERO
-       enddo
-     enddo
-   endif
-   !
-   if(off_only) then
-     do ib1=RT_bands(1),RT_bands(2)
-       rho_T(ib1,ib1,ik,1)= cZERO
-     enddo
-   endif
-   !
-   if(remove_vv) then
-     do ib1=RT_bands(1),en%nbf
-       rho_T(ib1,ib1,ik,1)= cZERO
-     enddo
-   endif
-   !
- enddo
- !
+ ! DEBUG <
  !H_rho_T(:,:,:,1)=Ho_plus_sigma(:,:,:,1)
  !H_rho_T(:,:,:,2)=Ho_plus_sigma(:,:,:,1)
  !
@@ -232,6 +186,58 @@ subroutine RT_G_two_times(en,kpt,qpt)
  !    write(*,*) real(Ho_plus_sigma(:,ib1,ik,1))*HA2EV,aimag(Ho_plus_sigma(:,ib1,ik,1))*HA2EV
  !  enddo
  !enddo
+ ! DEBUG >
+ !
+ rho_T(:,:,:,1)=-cI* dG_lesser(:,:,:,1)
+ !
+ ! rho and 1-rho
+ !
+ do ik=1,RT_nk
+   !
+   ! DEBUG <
+   !if(diag_v_only) then
+   !  do ib1=RT_bands(1),RT_bands(2)
+   !    if(ib1> en%nbf) rho_T(ib1,ib1,ik,1)= cZERO
+   !    do ib2=RT_bands(1),ib1-1
+   !      rho_T(ib1,ib2,ik,1)= cZERO
+   !      rho_T(ib2,ib1,ik,1)= cZERO
+   !    enddo
+   !  enddo
+   !endif
+   !!
+   !if(diag_c_only) then
+   !  do ib1=RT_bands(1),RT_bands(2)
+   !    if(ib1<=en%nbf) rho_T(ib1,ib1,ik,1)= cZERO
+   !    do ib2=ib1+1,RT_bands(2)
+   !      rho_T(ib1,ib2,ik,1)= cZERO
+   !      rho_T(ib2,ib1,ik,1)= cZERO
+   !    enddo
+   !  enddo
+   !endif
+   !!
+   !if(off_only) then
+   !  do ib1=RT_bands(1),RT_bands(2)
+   !    rho_T(ib1,ib1,ik,1)= cZERO
+   !  enddo
+   !endif
+   !!
+   !if(remove_vv) then
+   !  do ib1=RT_bands(1),en%nbf
+   !    rho_T(ib1,ib1,ik,1)= cZERO
+   !  enddo
+   !endif
+   ! DEBUG >
+   !
+   if(     include_eq_occ) TMP_M(:,:,1)=           -cI*G_lesser_reference(:,:,ik)
+   if(.not.include_eq_occ) TMP_M(:,:,1)=  cZERO
+   !
+   if(     include_eq_occ) TMP_M(:,:,2)=( I1_matrix+cI*G_lesser_reference(:,:,ik) )
+   if(.not.include_eq_occ) TMP_M(:,:,2)=( I1_matrix                               )
+   !
+   b_rho_T(:,:,ik,1)= TMP_M(:,:,2)-rho_T(:,:,ik,1)
+     rho_T(:,:,ik,1)= TMP_M(:,:,1)+rho_T(:,:,ik,1)
+   !
+ enddo
  !
  ! Build G_ret and G_adv
  !
@@ -263,14 +269,19 @@ subroutine RT_G_two_times(en,kpt,qpt)
    endif
    !
    do ib1=RT_bands(1),RT_bands(2)
-     if(ib1<=en%nbf.and.proj_cc) cycle
-     if(ib1> en%nbf.and.proj_vv) cycle
-     if(build_G_les) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
-     if(build_G_grt) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
-     if(build_G_ret) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+ G_ret(ib1,ib1,ik,1)
-     if(build_G_adv) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+ G_adv(ib1,ib1,ik,1)
-     if(build_Spect) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+(G_ret(ib1,ib1,ik,1)-G_adv(ib1,ib1,ik,1))
+     do ib2=RT_bands(1),RT_bands(2)
+       if((ib1<=en%nbf.or.ib2<=en%nbf).and.proj_cc) cycle
+       if((ib1> en%nbf.or.ib2> en%nbf).and.proj_vv) cycle
+       if((ib1> en%nbf.and.ib2<=en%nbf)) cycle
+       if((ib1<=en%nbf.and.ib2> en%nbf)) cycle
+       if(build_G_les) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+G_tmp(ib1,ib2,1)+G_tmp(ib1,ib2,2)
+       if(build_G_grt) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+G_tmp(ib1,ib2,1)+G_tmp(ib1,ib2,2)
+       if(build_G_ret) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+ G_ret(ib1,ib2,ik,1)
+       if(build_G_adv) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+ G_adv(ib1,ib2,ik,1)
+       if(build_Spect) F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+(G_ret(ib1,ib2,ik,1)-G_adv(ib1,ib2,ik,1))
+     enddo
    enddo
+   !
  enddo
  !
  !
@@ -303,43 +314,47 @@ subroutine RT_G_two_times(en,kpt,qpt)
      enddo
 #endif
      !
-     rho_T(:,:,:,i_kind)=-cI* dG_lesser(:,:,:,G_MEM_steps)
+     H_rho_T(:,:,:,i_kind)=     Ho_plus_sigma(:,:,:,1)
+     !
+       rho_T(:,:,:,i_kind)=-cI* dG_lesser(:,:,:,G_MEM_steps)
      !
      ! rho and 1-rho
      !
      do ik=1,RT_nk
        !
-       if(diag_v_only) then
-         do ib1=RT_bands(1),RT_bands(2)
-           if(ib1> en%nbf) rho_T(ib1,ib1,ik,i_kind)= cZERO
-           do ib2=RT_bands(1),ib1-1
-             rho_T(ib1,ib2,ik,i_kind)= cZERO
-             rho_T(ib2,ib1,ik,i_kind)= cZERO
-           enddo
-         enddo
-       endif
-       !
-       if(diag_c_only) then
-         do ib1=RT_bands(1),RT_bands(2)
-           if(ib1<=en%nbf) rho_T(ib1,ib1,ik,i_kind)= cZERO
-           do ib2=ib1+1,RT_bands(2)
-             rho_T(ib1,ib2,ik,i_kind)= cZERO
-             rho_T(ib2,ib1,ik,i_kind)= cZERO
-           enddo
-         enddo
-       endif
-       !
-       if(off_only) then
-         do ib1=RT_bands(1),RT_bands(2)
-           rho_T(ib1,ib1,ik,i_kind)= cZERO
-         enddo
-       endif
-       !
-       if(remove_vv) then
-         do ib1=RT_bands(1),en%nbf
-           rho_T(ib1,ib1,ik,i_kind)= cZERO
-         enddo
-       endif
+       ! DEBUG <
+       !if(diag_v_only) then
+       !  do ib1=RT_bands(1),RT_bands(2)
+       !    if(ib1> en%nbf) rho_T(ib1,ib1,ik,i_kind)= cZERO
+       !    do ib2=RT_bands(1),ib1-1
+       !      rho_T(ib1,ib2,ik,i_kind)= cZERO
+       !      rho_T(ib2,ib1,ik,i_kind)= cZERO
+       !    enddo
+       !  enddo
+       !endif
+       !!
+       !if(diag_c_only) then
+       !  do ib1=RT_bands(1),RT_bands(2)
+       !    if(ib1<=en%nbf) rho_T(ib1,ib1,ik,i_kind)= cZERO
+       !    do ib2=ib1+1,RT_bands(2)
+       !      rho_T(ib1,ib2,ik,i_kind)= cZERO
+       !      rho_T(ib2,ib1,ik,i_kind)= cZERO
+       !    enddo
+       !  enddo
+       !endif
+       !!
+       !if(off_only) then
+       !  do ib1=RT_bands(1),RT_bands(2)
+       !    rho_T(ib1,ib1,ik,i_kind)= cZERO
+       !  enddo
+       !endif
+       !!
+       !if(remove_vv) then
+       !  do ib1=RT_bands(1),en%nbf
+       !    rho_T(ib1,ib1,ik,i_kind)= cZERO
+       !  enddo
+       !endif
+       ! DEBUG >
        !
        if(     include_eq_occ) TMP_M(:,:,1)=           -cI*G_lesser_reference(:,:,ik)
        if(.not.include_eq_occ) TMP_M(:,:,1)=  cZERO
@@ -351,8 +366,6 @@ subroutine RT_G_two_times(en,kpt,qpt)
          rho_T(:,:,ik,i_kind)= TMP_M(:,:,1)+rho_T(:,:,ik,i_kind)
        !
      enddo
-     !
-     H_rho_T(:,:,:,i_kind)=Ho_plus_sigma(:,:,:,1)
      !
    enddo
    !
@@ -366,7 +379,7 @@ subroutine RT_G_two_times(en,kpt,qpt)
      TMP_M(:,:,1)=(H_rho_T(:,:,ik,1)+H_rho_T(:,:,ik,3))/2._SP
      TMP_M(:,:,2)=(H_rho_T(:,:,ik,2)+H_rho_T(:,:,ik,4))/2._SP
      !
-     call RT_multiply_eH_Gret_eH(TMP_M(:,:,2),G_ret(:,:,ik,1),TMP_M(:,:,1),RT_conf%delta_T,RT_conf%damp_factor,3)  ! i_T1=i_Tc+i_dT ;  i_T2=i_Tc-i_dT : T1>T2
+     call RT_multiply_eH_Gret_eH(TMP_M(:,:,2),G_ret(:,:,ik,1),TMP_M(:,:,1),RT_conf%delta_T,RT_conf%damp_factor,5)  ! i_T1=i_Tc+i_dT ;  i_T2=i_Tc-i_dT : T1>T2
      G_ret(:,:,ik,2)=0._SP                                                                                         ! i_T1=i_Tc+i_dT ;  i_T2=i_Tc-i_dT : T1<T2
      !
      ! PRA 92, 033419 (2015), Below Eq.(19)
@@ -417,10 +430,14 @@ subroutine RT_G_two_times(en,kpt,qpt)
          ! Trace
          !
          do ib1=RT_bands(1),RT_bands(2)
-           if(ib1<=en%nbf.and.proj_cc) cycle
-           if(ib1> en%nbf.and.proj_vv) cycle
-           if(build_G_les) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
-           if(build_G_grt) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2)
+           do ib2=RT_bands(1),RT_bands(2)
+             if((ib1<=en%nbf.or.ib2<=en%nbf).and.proj_cc) cycle
+             if((ib1> en%nbf.or.ib2> en%nbf).and.proj_vv) cycle
+             if((ib1> en%nbf.and.ib2<=en%nbf)) cycle
+             if((ib1<=en%nbf.and.ib2> en%nbf)) cycle
+             if(build_G_les) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib2,1)+G_tmp(ib1,ib2,2)
+             if(build_G_grt) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib2,1)+G_tmp(ib1,ib2,2)
+           enddo
          enddo
          !
          !  PRA 92, 033419 (2015), Eq.(18):
@@ -429,10 +446,14 @@ subroutine RT_G_two_times(en,kpt,qpt)
          !
          if (implementation2) then
            do ib1=RT_bands(1),RT_bands(2)
-             if(ib1<=en%nbf.and.proj_cc) cycle
-             if(ib1> en%nbf.and.proj_vv) cycle
-             if(build_G_les) F_k_tmtp(ik,i_T(2))=F_k_tmtp(ik,i_T(2))-conjg(G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2))
-             if(build_G_grt) F_k_tmtp(ik,i_T(2))=F_k_tmtp(ik,i_T(2))-conjg(G_tmp(ib1,ib1,1)+G_tmp(ib1,ib1,2))
+             do ib2=RT_bands(1),RT_bands(2)
+               if((ib1<=en%nbf.or.ib2<=en%nbf).and.proj_cc) cycle
+               if((ib1> en%nbf.or.ib2> en%nbf).and.proj_vv) cycle
+               if((ib1> en%nbf.and.ib2<=en%nbf)) cycle
+               if((ib1<=en%nbf.and.ib2> en%nbf)) cycle
+               if(build_G_les) F_k_tmtp(ik,i_T(2))=F_k_tmtp(ik,i_T(2))-conjg(G_tmp(ib2,ib1,1)+G_tmp(ib2,ib1,2))
+               if(build_G_grt) F_k_tmtp(ik,i_T(2))=F_k_tmtp(ik,i_T(2))-conjg(G_tmp(ib2,ib1,1)+G_tmp(ib2,ib1,2))
+             enddo
            enddo
          endif
          !
@@ -442,6 +463,8 @@ subroutine RT_G_two_times(en,kpt,qpt)
          !
          do ib1=RT_bands(1),RT_bands(2)
            do ib2=RT_bands(1),RT_bands(2)
+             if((ib1<=en%nbf.or.ib2<=en%nbf).and.proj_cc) cycle
+             if((ib1> en%nbf.or.ib2> en%nbf).and.proj_vv) cycle
              if(build_G_ret) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_ret(ib1,ib2,ik,i_kind)
              if(build_G_adv) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_adv(ib1,ib2,ik,i_kind)
              if(build_Spect) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+(G_ret(ib1,ib2,ik,i_kind)-G_adv(ib1,ib2,ik,i_kind))

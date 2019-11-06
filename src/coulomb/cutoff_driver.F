@@ -57,7 +57,7 @@ subroutine cutoff_driver(q)
  !
  ! Work Space
  !
- logical ::cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_ws_ib,is_cut(3)
+ logical ::cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab,is_cut(3)
  integer ::i1,i2,i3,i4
  real(SP)::length(3)
  logical ::l_col_test
@@ -88,7 +88,7 @@ subroutine cutoff_driver(q)
  cut_is_box=trim(str_piece(1))=='box'
  cut_is_cyl=trim(str_piece(1))=='cylinder'
  cut_is_ws=trim(str_piece(1))=='ws'
- cut_is_ws_ib=trim(str_piece(1))=='ws_ib'
+ cut_is_slab=trim(str_piece(1))=='slab'
  !
  ! Cutoffed directions
  !
@@ -117,7 +117,7 @@ subroutine cutoff_driver(q)
  !
  ! Return conditions
  !
- if (.not.any((/cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_ws_ib/))) then
+ if (.not.any((/cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab/))) then
    l_col_cut=.false.
    return
  endif
@@ -166,12 +166,12 @@ subroutine cutoff_driver(q)
    call msg('r','WS Cutoff   [units to be defined]:',ws_cutoff)
    write (cut_description,'(a,f6.3)') trim(cut_geometry)//' ', ws_cutoff
  endif
- if (cut_is_ws_ib) then
+ if (cut_is_slab) then
    dir=""
    if (is_cut(1)) dir="X"
    if (is_cut(2)) dir="Y"
    if (is_cut(3)) dir="Z"
-   call msg('r','WS IB Cutoff:',dir)
+   call msg('r','Slab Cutoff:',dir)
    write (cut_description,'(a)') trim(cut_geometry)
  endif
  if (cut_is_box) then
@@ -247,6 +247,7 @@ subroutine cutoff_driver(q)
    if (cut_is_box)    call cutoff_box(q,is_cut)
    if (cut_is_cyl)    call cutoff_cylinder(q,is_cut)
    if (cut_is_ws)     call cutoff_ws(q)
+   if (cut_is_slab)   call cutoff_slab(q,is_cut)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=io_COL_CUT(ID)

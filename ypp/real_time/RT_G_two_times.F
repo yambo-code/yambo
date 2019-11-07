@@ -37,9 +37,6 @@ subroutine RT_G_two_times(en,kpt,qpt)
  use real_time,      ONLY:RT_nk,RT_bands,RT_nbands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,I1_matrix
  use YPP_real_time,  ONLY:RT_time,RT_conf,OBS_el
- use interfaces,     ONLY:WF_load,WF_free,el_density_and_current
- use wave_func,      ONLY:WF,wf_ng
- use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use LIVE_t,         ONLY:live_timing
  !
 #include<memory.h>
@@ -143,14 +140,6 @@ subroutine RT_G_two_times(en,kpt,qpt)
  do ib1=RT_bands(1),RT_bands(2)
    I1_matrix(ib1,ib1)=1._SP
  enddo
- !
- ! Parallel Setups & WF_load
- !===========================
- call PARALLEL_global_indexes(en,kpt,qpt," ",RESET=.TRUE.)
- call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
- call PARALLEL_WF_index( )
- !
- call WF_load(WF,wf_ng,1,RT_bands,(/1,kpt%nibz/),space='R',title='-WF',impose_free_and_alloc=.TRUE.)
  !
  ! First step i_Tc
  !
@@ -526,7 +515,5 @@ subroutine RT_G_two_times(en,kpt,qpt)
  !
  !AMBO_FREE(F_k_w)
  YAMBO_FREE(F_k_tmtp)
- !
- call WF_free(WF)
  !
 end subroutine RT_G_two_times

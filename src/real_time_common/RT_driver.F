@@ -289,9 +289,13 @@ subroutine RT_driver(E,X,k,q,Dip)
    !============================================
    call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_tot,E,k)
    !
+   ! GPL_EXCLUDE_START
+   !
    ! Rotation in the Coherent Hamiltonian basis
    !============================================
    call RT_Hamiltonian_diagonalize(E,k,OBSERVABLES(22:25),A_tot)
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================

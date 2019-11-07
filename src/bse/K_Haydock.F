@@ -692,7 +692,7 @@ subroutine K_Haydock(iq,W)
        if (ii==1) Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor
        if (ii==2) Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+diam_term_used(:))*gauge_factor
        !
-       if (ii==1) Epsilon_ii(iw,i_eps(:))=1._SP+Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*gauge_factor
+       if (ii==1) Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*gauge_factor
        !
 #if defined _KERR
        !

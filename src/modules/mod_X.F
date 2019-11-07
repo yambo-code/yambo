@@ -193,6 +193,8 @@ module X_m
      type(X_t)::X
      X%ng           =1
      X%ng_db        =0
+     !X%ib           =(/1,-1/)
+     !X%ib_lim       =(/1,-1/)
      X%iq           =(/1,-1/)
      X%ngostnts     =0
      X%whoami       =0

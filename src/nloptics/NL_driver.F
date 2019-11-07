@@ -27,6 +27,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  use drivers,        ONLY:l_use_Hxc_collisions
  use stderr,         ONLY:set_real_printed_length
  use com,            ONLY:error,warning
+ use QP_m,           ONLY: QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t
@@ -39,10 +40,10 @@ subroutine NL_driver(E,X,k,q,Dip)
  use QP_CTL_m,       ONLY:QP_apply
  use R_lattice,      ONLY:qindx_S
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
-&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,NL_ng,JGM,TDDFT, &
+&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
- use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_P,RT_step,RT_nbands,RT_bands
+ use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_step,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz
@@ -119,6 +120,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  if(l_use_DIPOLES) then
    call DIP_alloc('DIP_S')
  else
+!    call DIP_alloc('DIP_R')
    if(.not.l_eval_CURRENT) then
      call DIP_alloc('DIP_R')
      call DIP_alloc('DIP_v')
@@ -129,7 +131,11 @@ subroutine NL_driver(E,X,k,q,Dip)
  !=============
  !
  wf_ng_save =wf_ng
- wf_ng      =NL_ng
+ if(eval_DFT) then
+   wf_ng      =max(QP_ng_Sx,QP_ng_SH)
+ else
+   wf_ng      =QP_ng_SH
+ endif
  WF_Go_indx =1
  !
  if(io_COLLs) then
@@ -234,7 +240,7 @@ subroutine NL_driver(E,X,k,q,Dip)
      !
      ! Store Variables
      !
-     NL_P_t (NE_i_time,:)=real(RT_P,SP)
+     NL_P_t (NE_i_time,:)=real(NL_P(1:3),SP)
      E_ext_t(NE_i_time,:)=E_ext
      E_tot_t(NE_i_time,:)=E_tot
      E_ks_t (NE_i_time,:)=E_ks

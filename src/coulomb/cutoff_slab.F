@@ -44,8 +44,7 @@ subroutine cutoff_slab(q,is_cut)
  logical       :: is_cut(3)
  integer       :: ipar1,ipar2,iort
  integer       :: iq,ig
- real(SP)      :: slab_vz,slab_vplane,lcut
- complex(SP)   :: dummy
+ real(SP)      :: slab_vz,slab_vplane,lcut,pre_factor
  type(PP_indexes) ::px
  character(schlen)  :: of_name
  !
@@ -90,18 +89,20 @@ call of_open_close(of_name,'ot')
 ! k=0 case
      if (iq==1.and.ig==1) cycle
 ! all other
-     dummy=sqrt(1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut))
-     call msg('o deb','',(/real(bare_qpg(iq,ig)),aimag(bare_qpg(iq,ig)),real(dummy),aimag(dummy)/),INDENT=-2,USE_TABS=.true.) 
+     pre_factor=sqrt(1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut))
+     call msg('o deb','',(/real(bare_qpg(iq,ig)),pre_factor/),INDENT=-2,USE_TABS=.true.) 
 
 !marg: check if needed/makes sense
-     if (abs(dummy)<1.E-5) dummy=1.E-5
-     bare_qpg(iq,ig)=bare_qpg(iq,ig)/dummy
+!check it!
+     if (abs(pre_factor)<1.E-5) pre_factor=1.E-5
+     bare_qpg(iq,ig)=bare_qpg(iq,ig)/pre_factor
    enddo
  enddo
 
- dummy=2.0*pi*sqrt(lcut*k_grid_uc_vol)
+!check this not sure is correct
+ pre_factor=2.0*pi*sqrt(lcut*k_grid_uc_vol)
   
- bare_qpg(1,1)=1.0/dummy
+ bare_qpg(1,1)=1.0/pre_factor
 
 call of_open_close(of_name) 
  !

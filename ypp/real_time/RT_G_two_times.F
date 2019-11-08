@@ -53,7 +53,7 @@ subroutine RT_G_two_times(en,kpt,qpt)
  logical               :: include_eq_occ,&
 &                         build_G_ret,build_G_adv,build_G_les,build_G_grt,build_Spect,  &
 &                         proj_cc,proj_vv,&
-&                         implementation2= .true. 
+&                         use_Gles_Ggrt_symm= .true. 
 ! DEBUG <
 !&                         diag_c_only=.false.,&
 !&                         diag_v_only=.false.,&
@@ -362,12 +362,13 @@ subroutine RT_G_two_times(en,kpt,qpt)
    !   - G^{(r)}(t1,t2) kind 1
    !   - G^{(r)}(t2,t1) kind 2
    !
-   ! e^{-ih_{HSEX}[rho(T)]dt} G^{(r)}_prev e^{-ih_{HSEX}[rho(T)]dt} with dt=RT_conf%delta_T
+   ! e^{-ih_{HSEX}[rho(t'-dt)]dt} G^{(r)}(t,t') e^{-ih_{HSEX}[rho(t+dt)]dt} with dt=RT_conf%delta_T
    !
    do ik=1,RT_nk
      TMP_M(:,:,1)=(H_rho_T(:,:,ik,1)+H_rho_T(:,:,ik,3))/2._SP
      TMP_M(:,:,2)=(H_rho_T(:,:,ik,2)+H_rho_T(:,:,ik,4))/2._SP
      !
+     !G_ret(:,:,ik,1)=G_ret(:,:,ik,1)
      call RT_multiply_eH_Gret_eH(TMP_M(:,:,2),G_ret(:,:,ik,1),TMP_M(:,:,1),RT_conf%delta_T,RT_conf%damp_factor,5)  ! i_T1=i_Tc+i_dT ;  i_T2=i_Tc-i_dT : T1>T2
      G_ret(:,:,ik,2)=0._SP                                                                                         ! i_T1=i_Tc+i_dT ;  i_T2=i_Tc-i_dT : T1<T2
      !
@@ -385,7 +386,7 @@ subroutine RT_G_two_times(en,kpt,qpt)
    !
    do i_kind=1,2
      !
-     if (implementation2 .and. i_kind==2 .and. ( build_G_les.or.build_G_grt ) ) cycle
+     if (use_Gles_Ggrt_symm .and. i_kind==2 .and. ( build_G_les.or.build_G_grt ) ) cycle
      !
      if(i_kind==1) j_kind=2
      if(i_kind==2) j_kind=1
@@ -398,8 +399,8 @@ subroutine RT_G_two_times(en,kpt,qpt)
          ! PRA 92, 033419 (2015), Eq.(19a)
          !
          G_tmp=cZERO
-         call M_by_M('n','n',RT_nbands,-G_ret(:,:,ik,i_kind),rho_T(:,:,ik,j_kind),G_tmp(:,:,1))
-         call M_by_M('n','n',RT_nbands,+rho_T(:,:,ik,i_kind),G_adv(:,:,ik,i_kind),G_tmp(:,:,2))
+         if(i_kind==1) call M_by_M('n','n',RT_nbands,-G_ret(:,:,ik,i_kind),rho_T(:,:,ik,j_kind),G_tmp(:,:,1))
+         if(i_kind==2) call M_by_M('n','n',RT_nbands,+rho_T(:,:,ik,i_kind),G_adv(:,:,ik,i_kind),G_tmp(:,:,2))
          !
        endif
        !
@@ -409,14 +410,14 @@ subroutine RT_G_two_times(en,kpt,qpt)
          ! PRA 92, 033419 (2015), Eq.(19b)
          !
          G_tmp=cZERO
-         call M_by_M('n','n',RT_nbands,+G_ret(:,:,ik,i_kind),b_rho_T(:,:,ik,j_kind),G_tmp(:,:,1))
-         call M_by_M('n','n',RT_nbands,-b_rho_T(:,:,ik,i_kind),G_adv(:,:,ik,i_kind),G_tmp(:,:,2))
+         if(i_kind==1) call M_by_M('n','n',RT_nbands,+G_ret(:,:,ik,i_kind),b_rho_T(:,:,ik,j_kind),G_tmp(:,:,1))
+         if(i_kind==2) call M_by_M('n','n',RT_nbands,-b_rho_T(:,:,ik,i_kind),G_adv(:,:,ik,i_kind),G_tmp(:,:,2))
          !
        endif
        !
        if( build_G_les.or.build_G_grt ) then
          !
-         ! Trace
+         ! Sum over all terms but cv and vc
          !
          do ib1=RT_bands(1),RT_bands(2)
            do ib2=RT_bands(1),RT_bands(2)
@@ -424,27 +425,14 @@ subroutine RT_G_two_times(en,kpt,qpt)
              if((ib1> en%nbf.or.ib2> en%nbf).and.proj_vv) cycle
              if((ib1> en%nbf.and.ib2<=en%nbf)) cycle
              if((ib1<=en%nbf.and.ib2> en%nbf)) cycle
-             if(build_G_les) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib2,1)+G_tmp(ib1,ib2,2)
-             if(build_G_grt) F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib2,1)+G_tmp(ib1,ib2,2)
+             F_k_tmtp(ik,i_T(i_kind))=F_k_tmtp(ik,i_T(i_kind))+G_tmp(ib1,ib2,1)+G_tmp(ib1,ib2,2)
+             if (use_Gles_Ggrt_symm) then
+               !  PRA 92, 033419 (2015), Eq.(18):
+               !    G<(t,t')=-hermitian(G<(t',t))   and   G>(t,t')=-hermitian(G>(t',t))
+               F_k_tmtp(ik,i_T(2))=F_k_tmtp(ik,i_T(2))-conjg(G_tmp(ib2,ib1,1)+G_tmp(ib2,ib1,2))
+             endif
            enddo
          enddo
-         !
-         !  PRA 92, 033419 (2015), Eq.(18):
-         !    G<(t,t')=-hermitian(G<(t',t))
-         !    G>(t,t')=-hermitian(G>(t',t))
-         !
-         if (implementation2) then
-           do ib1=RT_bands(1),RT_bands(2)
-             do ib2=RT_bands(1),RT_bands(2)
-               if((ib1<=en%nbf.or.ib2<=en%nbf).and.proj_cc) cycle
-               if((ib1> en%nbf.or.ib2> en%nbf).and.proj_vv) cycle
-               if((ib1> en%nbf.and.ib2<=en%nbf)) cycle
-               if((ib1<=en%nbf.and.ib2> en%nbf)) cycle
-               if(build_G_les) F_k_tmtp(ik,i_T(2))=F_k_tmtp(ik,i_T(2))-conjg(G_tmp(ib2,ib1,1)+G_tmp(ib2,ib1,2))
-               if(build_G_grt) F_k_tmtp(ik,i_T(2))=F_k_tmtp(ik,i_T(2))-conjg(G_tmp(ib2,ib1,1)+G_tmp(ib2,ib1,2))
-             enddo
-           enddo
-         endif
          !
        else
          !

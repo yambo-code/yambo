@@ -124,8 +124,8 @@ module parallel_m
    character(schlen)    :: ROLE_string = " "
    character(schlen)    :: Long_Description  = " "
    character(schlen)    :: Short_Description = " "
-   integer              :: nCPU_lin_algebra_INV   =1
-   integer              :: nCPU_lin_algebra_DIAGO =1
+   integer              :: nCPU_lin_algebra_INV   =-1
+   integer              :: nCPU_lin_algebra_DIAGO =-1
  end type CPU_stru
  !
  character(schlen)   :: CPU_string_save(n_CPU_str_max)

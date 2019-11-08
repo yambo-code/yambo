@@ -41,17 +41,18 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
  if (ncpu==1) return
  !
- ! Set default for Inversion/Diagonalization
+ ! Set default for INVERSION/DIAGONALIZATION
+ ! Default equal to maxval(ncpu/4, 16)
  !
- n_par_diago=minval((/ncpu/8,8/))           ! I use maximum 8 cores for INV/DIAGO 
+ n_par_diago=minval((/ncpu/4,16/))  
  if(n_par_diago==0) n_par_diago=1         
  if(CPU_structure(i_PAR_structure)%nCPU_lin_algebra_INV==-1)  then
    CPU_structure(i_PAR_structure)%nCPU_lin_algebra_INV  =n_par_diago
-   call msg('sr',' Using '//intc(n_par_diago)//' cores for matrix inversion ')
+   call msg('sr','[PARALLEL] Using '//intc(n_par_diago)//' cores for matrix inversion ')
  endif
  if(CPU_structure(i_PAR_structure)%nCPU_lin_algebra_DIAGO==-1)  then
    CPU_structure(i_PAR_structure)%nCPU_lin_algebra_DIAGO=n_par_diago
-   call msg('sr',' Using '//intc(n_par_diago)//' cores for matrix diagonalization ')
+   call msg('sr','[PARALLEL] Using '//intc(n_par_diago)//' cores for matrix diagonalization ')
  endif
  !
  if (.not.PARALLEL_ENV_uses_default(i_PAR_structure).and.&

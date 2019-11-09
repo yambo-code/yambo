@@ -21,10 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_multiply_eH_Gret_eH(H1,Gret,H2,deltaT,eta,n_order)
+subroutine RT_apply_Texp(H1,Gret,H2,deltaT,eta,n_order)
  !
- ! The EXP integrator is better than the EULER integrator if Ho_plus_Sigma
- ! changes in time more slowly that G
+ !
  !
  use pars,           ONLY:SP,cI,cZERO
  use wrapper_omp,    ONLY:M_by_M_omp
@@ -98,4 +97,4 @@ subroutine RT_multiply_eH_Gret_eH(H1,Gret,H2,deltaT,eta,n_order)
  call M_by_M_omp('n','n',RT_nbands,U1,Gret,G_tmp)
  call M_by_M_omp('n','n',RT_nbands,G_tmp,U2,Gret)
  !
-end subroutine RT_multiply_eH_Gret_eH
+end subroutine RT_apply_Texp

@@ -55,7 +55,7 @@ subroutine RT_G_two_times(en,kpt,qpt)
  !
  ! Allocs
  !
- complex(SP), allocatable :: rho_T(:,:,:,:),b_rho_T(:,:,:,:),H_rho_T(:,:,:,:),&
+ complex(SP), allocatable :: rho_T(:,:,:),b_rho_T(:,:,:),H_rho_T(:,:,:,:),&
 &                            F_k_tmtp(:,:),G_ret(:,:,:),G_tmp(:,:),TMP_M(:,:,:)
  !
  integer, external     :: io_RT_components
@@ -97,8 +97,8 @@ subroutine RT_G_two_times(en,kpt,qpt)
  YAMBO_ALLOC(G_tmp,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)))
  G_tmp=cZERO
  !
- YAMBO_ALLOC(  rho_T,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,2))
- YAMBO_ALLOC(b_rho_T,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,2))
+ YAMBO_ALLOC(  rho_T,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
+ YAMBO_ALLOC(b_rho_T,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
  YAMBO_ALLOC(H_rho_T,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,4))
    rho_T=cZERO
  b_rho_T=cZERO
@@ -163,8 +163,8 @@ subroutine RT_G_two_times(en,kpt,qpt)
    if(     include_eq_occ) TMP_M(:,:,2)=( I1_matrix+cI*G_lesser_reference(:,:,ik) )
    if(.not.include_eq_occ) TMP_M(:,:,2)=( I1_matrix                               )
    !
-   b_rho_T(:,:,ik,1)= TMP_M(:,:,2)-rho_T(:,:,ik,1)
-     rho_T(:,:,ik,1)= TMP_M(:,:,1)+rho_T(:,:,ik,1)
+   b_rho_T(:,:,ik)= TMP_M(:,:,2)-rho_T(:,:,ik)
+     rho_T(:,:,ik)= TMP_M(:,:,1)+rho_T(:,:,ik)
    !
  enddo
  !
@@ -183,13 +183,13 @@ subroutine RT_G_two_times(en,kpt,qpt)
  do ik=1,RT_nk
    !
    if(build_G_les) then
-     call M_by_M('n','n',RT_nbands,-G_ret(:,:,ik),rho_T(:,:,ik,1),cZERO,G_tmp)
-     call M_by_M('n','c',RT_nbands,+rho_T(:,:,ik,1),G_ret(:,:,ik),cONE ,G_tmp)
+     call M_by_M('n','n',RT_nbands,-G_ret(:,:,ik),rho_T(:,:,ik),cZERO,G_tmp)
+     call M_by_M('n','c',RT_nbands,+rho_T(:,:,ik),G_ret(:,:,ik),cONE ,G_tmp)
    endif
    !
    if(build_G_grt) then
-     call M_by_M('n','n',RT_nbands,+G_ret(:,:,ik),b_rho_T(:,:,ik,1),G_tmp)
-     call M_by_M('n','c',RT_nbands,-b_rho_T(:,:,ik,1),G_ret(:,:,ik),G_tmp)
+     call M_by_M('n','n',RT_nbands,+G_ret(:,:,ik),b_rho_T(:,:,ik),G_tmp)
+     call M_by_M('n','c',RT_nbands,-b_rho_T(:,:,ik),G_ret(:,:,ik),G_tmp)
    endif
    !
    if(build_G_ret) G_tmp=G_ret(:,:,ik)
@@ -238,24 +238,28 @@ subroutine RT_G_two_times(en,kpt,qpt)
      enddo
 #endif
      !
-     H_rho_T(:,:,:,i_kind)=     Ho_plus_sigma(:,:,:,1)
+     H_rho_T(:,:,:,i_kind)=Ho_plus_sigma(:,:,:,1)
      !
-       rho_T(:,:,:,i_kind)=-cI* dG_lesser(:,:,:,G_MEM_steps)
-     !
-     ! rho and 1-rho
-     !
-     do ik=1,RT_nk
+     if(i_kind==2) then
        !
-       if(     include_eq_occ) TMP_M(:,:,1)=           -cI*G_lesser_reference(:,:,ik)
-       if(.not.include_eq_occ) TMP_M(:,:,1)=  cZERO
+       rho_T(:,:,:)=-cI* dG_lesser(:,:,:,G_MEM_steps)
        !
-       if(     include_eq_occ) TMP_M(:,:,2)=( I1_matrix+cI*G_lesser_reference(:,:,ik) )
-       if(.not.include_eq_occ) TMP_M(:,:,2)=( I1_matrix                               )
+       ! rho and 1-rho
        !
-       b_rho_T(:,:,ik,i_kind)= TMP_M(:,:,2)-rho_T(:,:,ik,i_kind)
-         rho_T(:,:,ik,i_kind)= TMP_M(:,:,1)+rho_T(:,:,ik,i_kind)
+       do ik=1,RT_nk
+         !
+         if(     include_eq_occ) TMP_M(:,:,1)=           -cI*G_lesser_reference(:,:,ik)
+         if(.not.include_eq_occ) TMP_M(:,:,1)=  cZERO
+         !
+         if(     include_eq_occ) TMP_M(:,:,2)=( I1_matrix+cI*G_lesser_reference(:,:,ik) )
+         if(.not.include_eq_occ) TMP_M(:,:,2)=( I1_matrix                               )
+         !
+         b_rho_T(:,:,ik)= TMP_M(:,:,2)-rho_T(:,:,ik)
+           rho_T(:,:,ik)= TMP_M(:,:,1)+rho_T(:,:,ik)
+         !
+       enddo
        !
-     enddo
+     endif
      !
    enddo
    !
@@ -279,7 +283,7 @@ subroutine RT_G_two_times(en,kpt,qpt)
        ! Build G<
        ! PRA 92, 033419 (2015), Eq.(19a)
        !
-       call M_by_M('n','n',RT_nbands,-G_ret(:,:,ik),rho_T(:,:,ik,2),G_tmp)
+       call M_by_M('n','n',RT_nbands,-G_ret(:,:,ik),rho_T(:,:,ik),G_tmp)
        !
      endif
      !
@@ -288,7 +292,7 @@ subroutine RT_G_two_times(en,kpt,qpt)
        ! Build G>
        ! PRA 92, 033419 (2015), Eq.(19b)
        !
-       call M_by_M('n','n',RT_nbands,+G_ret(:,:,ik),b_rho_T(:,:,ik,2),G_tmp)
+       call M_by_M('n','n',RT_nbands,+G_ret(:,:,ik),b_rho_T(:,:,ik),G_tmp)
        !
      endif
      !

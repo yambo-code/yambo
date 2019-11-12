@@ -181,12 +181,19 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  ! W RL size setup looking at the max index of G-G' 
  ! ==================================================
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
+   !
+   if(BS_n_g_W<0) then
+     BS_n_g_W=X_static_pp%ng
+     call msg('s','[BSE-W] Use all G-vectors of W :',BS_n_g_W)
+   endif
+   !
    Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
    if (BS_n_g_W> Max_G_m_G ) then
      call warning (' W size reduced from '//trim(intc(BS_n_g_W))//' to '//trim(intc(Max_G_m_G))//' due to symmetry constraints')
      BS_n_g_W= Max_G_m_G
      call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
    endif
+   !
  endif
  !
  !

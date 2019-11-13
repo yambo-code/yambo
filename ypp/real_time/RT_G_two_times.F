@@ -50,7 +50,7 @@ subroutine RT_G_two_times(en,kpt,qpt)
  real(SP)              :: T_c
  integer               :: ID,ik,ib1,ib2,io_err,i_T(2),i_w,i_T1,i_T2,i_Tc,i_dT,i_kind
  character(2)          :: function_name
- logical               :: include_eq_occ,proj_cc,proj_vv,keep_off,&
+ logical               :: include_eq_occ,keep_cc,keep_vv,keep_cv,keep_vc,&
 &                         build_G_ret,build_G_adv,build_G_les,build_G_grt,build_Spect
  !
  ! Allocs
@@ -68,9 +68,10 @@ subroutine RT_G_two_times(en,kpt,qpt)
  call parser('BuildGadv',   build_G_adv)
  call parser('BuildGles',   build_G_les)
  call parser('BuildGgrt',   build_G_grt)
- call parser('ProjCond',    proj_cc)
- call parser('ProjVal',     proj_vv)
- call parser('KeepOff',     keep_off)
+ call parser('KeepCC' ,     keep_cc)
+ call parser('KeepVV',      keep_vv)
+ call parser('KeepCV' ,     keep_cv)
+ call parser('KeepVC',      keep_vc)
  !
  call RT_k_grid(en,kpt,qpt)
  !
@@ -198,10 +199,12 @@ subroutine RT_G_two_times(en,kpt,qpt)
    !
    do ib1=RT_bands(1),RT_bands(2)
      do ib2=RT_bands(1),RT_bands(2)
-       if((ib1<=en%nbf.or.ib2<=en%nbf) .and.      proj_cc  ) cycle
-       if((ib1> en%nbf.or.ib2> en%nbf) .and.      proj_vv  ) cycle
-       if((ib1> en%nbf.and.ib2<=en%nbf).and.(.not.keep_off)) cycle
-       if((ib1<=en%nbf.and.ib2> en%nbf).and.(.not.keep_off)) cycle
+       if((ib1<=en%nbf.and.ib2<=en%nbf).and.(.not.keep_vv) ) cycle
+       if((ib1> en%nbf.and.ib2> en%nbf).and.(.not.keep_cc) ) cycle
+       if((ib1> en%nbf.and.ib2<=en%nbf).and.(.not.keep_cv) ) cycle
+       if((ib1<=en%nbf.and.ib2> en%nbf).and.(.not.keep_vc) ) cycle
+       !if ( build_G_ret .and. (ib1> en%nbf.and.ib2<=en%nbf).and. keep_cv ) G_tmp(ib1,ib2)=G_tmp(ib1,ib2)*rho_T(ib2,ib1,ik)
+       !if ( build_G_ret .and. (ib1<=en%nbf.and.ib2> en%nbf).and. keep_vc ) G_tmp(ib1,ib2)=G_tmp(ib1,ib2)*rho_T(ib2,ib1,ik)
        F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+G_tmp(ib1,ib2)
      enddo
    enddo
@@ -308,10 +311,15 @@ subroutine RT_G_two_times(en,kpt,qpt)
      !
      do ib1=RT_bands(1),RT_bands(2)
        do ib2=RT_bands(1),RT_bands(2)
-         if((ib1<=en%nbf.or.ib2<=en%nbf) .and.      proj_cc  ) cycle
-         if((ib1> en%nbf.or.ib2> en%nbf) .and.      proj_vv  ) cycle
-         if((ib1> en%nbf.and.ib2<=en%nbf).and.(.not.keep_off)) cycle
-         if((ib1<=en%nbf.and.ib2> en%nbf).and.(.not.keep_off)) cycle
+         if((ib1<=en%nbf.and.ib2<=en%nbf).and.(.not.keep_vv) ) cycle
+         if((ib1> en%nbf.and.ib2> en%nbf).and.(.not.keep_cc) ) cycle
+         if((ib1> en%nbf.and.ib2<=en%nbf).and.(.not.keep_cv) ) cycle
+         if((ib1<=en%nbf.and.ib2> en%nbf).and.(.not.keep_vc) ) cycle
+         !
+         !if ( build_G_ret .and. (ib1> en%nbf.and.ib2<=en%nbf).and. keep_cv ) G_tmp(ib1,ib2)=G_tmp(ib1,ib2)*rho_T(ib2,ib1,ik)
+         !if ( build_G_ret .and. (ib1<=en%nbf.and.ib2> en%nbf).and. keep_vc ) G_tmp(ib1,ib2)=G_tmp(ib1,ib2)*rho_T(ib2,ib1,ik)
+         !if ( build_G_adv .and. (ib1> en%nbf.and.ib2<=en%nbf).and. keep_cv ) G_tmp(ib2,ib1)=rho_T(ib1,ib2,ik)*G_tmp(ib1,ib2)
+         !if ( build_G_adv .and. (ib1<=en%nbf.and.ib2> en%nbf).and. keep_vc ) G_tmp(ib2,ib1)=rho_T(ib1,ib2,ik)*G_tmp(ib1,ib2)
          !
          if( .not.build_G_adv ) F_k_tmtp(ik,i_T(1))=F_k_tmtp(ik,i_T(1))+      G_tmp(ib1,ib2)  ! G_adv is zero for t>t'
          if( .not.build_G_ret ) F_k_tmtp(ik,i_T(2))=F_k_tmtp(ik,i_T(2))-conjg(G_tmp(ib2,ib1)) ! G_ret is zero for t<t'
@@ -348,11 +356,7 @@ subroutine RT_G_two_times(en,kpt,qpt)
    enddo
    !
    do i_w=1,RT_conf%W_n_steps
-     if(build_G_les) write(200+ik,*) real(FT%W(i_w))*HA2EV,real(-cI*FT%F_W(i_w,ik),SP),real(aimag(-cI*FT%F_W(i_w,ik)),SP)
-     if(build_G_grt) write(200+ik,*) real(FT%W(i_w))*HA2EV,real(-cI*FT%F_W(i_w,ik),SP),real(aimag(-cI*FT%F_W(i_w,ik)),SP)
-     if(build_G_ret) write(200+ik,*) real(FT%W(i_w))*HA2EV,real(    FT%F_W(i_w,ik),SP),real(aimag(    FT%F_W(i_w,ik)),SP)
-     if(build_G_adv) write(200+ik,*) real(FT%W(i_w))*HA2EV,real(    FT%F_W(i_w,ik),SP),real(aimag(    FT%F_W(i_w,ik)),SP)
-     if(build_Spect) write(200+ik,*) real(FT%W(i_w))*HA2EV,real( cI*FT%F_W(i_w,ik),SP),real(aimag( cI*FT%F_W(i_w,ik)),SP)
+     write(200+ik,*) real(FT%W(i_w))*HA2EV,real(-cI*FT%F_W(i_w,ik),SP),real(aimag(-cI*FT%F_W(i_w,ik)),SP)
    enddo
    !
  enddo

@@ -24,17 +24,13 @@
 subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  !
  use pars,           ONLY:SP,cZERO
- use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
+ use D_lattice,      ONLY:nsym,i_time_rev,sop_inv,sop_inv_d
  use BS,             ONLY:BS_T_grp,K_EXCH_collision,BS_oscillators_alloc,BS_n_g_exch,L_kind
- use R_lattice,      ONLY:g_rot,qindx_X,bz_samp
+ use R_lattice,      ONLY:g_rot,g_rot_d,qindx_X,bz_samp
  use timing_m,       ONLY:timing
  use openmp,         ONLY:OPENMP_update,master_thread
  use collision_el,   ONLY:elemental_collision_free,elemental_collision_alloc
- use deviceXlib_m,   ONLY:dev_memcpy
-#ifdef _CUDA
- use D_lattice,      ONLY:sop_inv_d
- use R_lattice,      ONLY:g_rot_d
-#endif
+ use deviceXlib_m,   ONLY:dev_memcpy,dev_conjg
  !
 #include<dev_defs.h>
  !
@@ -100,13 +96,8 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      ! G==0 term
      !
-#ifdef _CUDA
-     if(trim(L_kind)=="full") BS_T_grp(i_T_grp)%O_x_d(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_R(i_T_el)
-     if(trim(L_kind)=="Lbar") BS_T_grp(i_T_grp)%O_x_d(1,i_T_el)=cZERO
-#else
-     if(trim(L_kind)=="full") BS_T_grp(i_T_grp)%O_x(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_R(i_T_el)
-     if(trim(L_kind)=="Lbar") BS_T_grp(i_T_grp)%O_x(1,i_T_el)=cZERO
-#endif
+     if(trim(L_kind)=="full") BS_T_grp(i_T_grp)%DEV_VARNAME(O_x)(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_R(i_T_el)
+     if(trim(L_kind)=="Lbar") BS_T_grp(i_T_grp)%DEV_VARNAME(O_x)(1,i_T_el)=cZERO
      !
      ! G/=0 terms
      !
@@ -133,13 +124,9 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        call DEV_SUBNAME(scatter_Bamp)(K_EXCH_collision)
        !
 #ifdef _CUDA
-       call dev_memcpy(BS_T_grp(i_T_grp)%O_x_d(2:,i_T_el),K_EXCH_collision%rhotw_d(2:) )
+       call dev_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d,range1=(/2,BS_n_g_exch/) )
 #else
-       !$omp parallel do default(shared), private(i_g1)
-       do i_g1=2,BS_n_g_exch
-         BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
-       enddo
-       !$omp end parallel do
+       call dev_memcpy(BS_T_grp(i_T_grp)%O_x(:,i_T_el),K_EXCH_collision%rhotw,range1=(/2,BS_n_g_exch/) )
 #endif
        !
      else
@@ -153,7 +140,6 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        do i_g1=2,BS_n_g_exch
          i_g2=g_rot_d(i_g1,sop_inv_d(i_s))
          O_x_d(i_g1,i_T_el) = O_x_sym_d(i_g2,i_T_el_last_with_identity_sym)
-         if (i_s>nsym/(i_time_rev+1)) O_x_d(i_g1,i_T_el)=conjg(O_x_d(i_g1,i_T_el))
        enddo
        !
 #else
@@ -162,11 +148,11 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        do i_g1=2,BS_n_g_exch
          i_g2=g_rot(i_g1,sop_inv(i_s))
          BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=BS_T_grp(i_T_grp_last_with_identity_sym)%O_x(i_g2,i_T_el_last_with_identity_sym)
-         if (i_s>nsym/(i_time_rev+1)) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=conjg(BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el))
        enddo
        !$omp end parallel do
        !
 #endif
+       if (i_s>nsym/(i_time_rev+1)) call dev_conjg(BS_T_grp(i_T_grp)%DEV_VARNAME(O_x)(:,i_T_el))
        !
      endif
      !
@@ -174,17 +160,14 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      call DEV_SUBNAME(scatter_Bamp)(K_EXCH_collision)
      !
-     BS_T_grp(i_T_grp)%O_x(1,i_T_el)=cZERO
+     BS_T_grp(i_T_grp)%DEV_VARNAME(O_x)(1,i_T_el)=cZERO
      if(trim(L_kind)=="full") i_g0=1
      if(trim(L_kind)=="Lbar") i_g0=2
+     !
 #ifdef _CUDA
-     call dev_memcpy(BS_T_grp(i_T_grp)%O_x_d(i_g0:,i_T_el),K_EXCH_collision%rhotw_d(i_g0:))
+     call dev_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d, range1=(/i_g0,BS_n_g_exch/))
 #else
-     !$omp parallel do default(shared), private(i_g1)
-     do i_g1=i_g0,BS_n_g_exch
-       BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
-     enddo
-     !$omp end parallel do
+     call dev_memcpy(BS_T_grp(i_T_grp)%O_x(:,i_T_el),K_EXCH_collision%rhotw, range1=(/i_g0,BS_n_g_exch/))
 #endif
      !
    endif

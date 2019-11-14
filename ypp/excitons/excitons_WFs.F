@@ -41,6 +41,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  use interfaces,    ONLY:PARALLEL_index,WF_load,WF_free
  use wave_func,     ONLY:WF,WF_symm,wf_ng
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use openmp,        ONLY:OPENMP_update,master_thread
  use LIVE_t,        ONLY:live_timing
  use wrapper,       ONLY:V_dot_V
  use vec_operate,   ONLY:c2a
@@ -55,9 +56,9 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  type(PP_indexes)  :: px
  integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_l,i_lambda,j_lambda,i_spin,ir,ir_hole,j1,&
 &                     n_lambda_deg
- integer          :: ikpbz,ikp,isp
+ integer           :: ikpbz,ikp,isp
  real(SP)          :: r_hole_rlu(3),kp_dot_r_h,k_dot_r_e
- complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor)
+ complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor),phase
  !
  integer,  allocatable :: rindex(:)
  real(SP), allocatable :: r_cell_cc(:,:)
@@ -151,11 +152,18 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    call live_timing('ExcWF@'//trim(intc(j_lambda)),px%n_of_elements(myid+1))  
    !
    v2plot  =0._SP
-   wf_vc   =cZERO
    !
+   !$omp parallel default(shared), firstprivate(ir_hole,r_hole), &
+   !$omp private(wf_vc, ir,neh, ikbz,iv,ic,i_spin,ikibz,is, ikpbz,ikp,isp, &
+   !$omp &       k_dot_r_e,kp_dot_r_h, WF1_ir,WF2_ir,phase, i_l,wf_ )
+   !
+   call OPENMP_update(master_thread)
+   !
+   !$omp do schedule(dynamic)
    do ir=1,nr_tot
      !
      if (.not.px%element_1D(ir)) cycle
+     wf_vc   =cZERO
      !
      if (l_free_hole) then
        ir_hole=ir
@@ -176,9 +184,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
        ikp   = Xk%sstar(ikpbz,1)
        isp   = Xk%sstar(ikpbz,2)
        !
-       k_dot_r_e = dot_product(r_cell_cc(:,ir),Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
+       k_dot_r_e  = dot_product(r_cell_cc(:,ir),Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
        kp_dot_r_h = dot_product(r_hole,Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
-        
        !
        WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))
        WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))
@@ -186,7 +193,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
        wf_vc(neh) = conjg(WF1_ir(1))*WF2_ir(1)
        if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF1_ir(2))*WF2_ir(2)
        !
-       wf_vc(neh) = wf_vc(neh)*exp(cI*k_dot_r_e)*exp(-cI*kp_dot_r_h)
+       phase=cmplx(cos(k_dot_r_e-kp_dot_r_h),sin(k_dot_r_e-kp_dot_r_h),kind=SP)
+       wf_vc(neh) = wf_vc(neh)*phase
        ! 
      enddo  !Matrix elements
      !
@@ -198,9 +206,12 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
        !
      enddo
      !
-     call live_timing(steps=1)
+     if (master_thread) call live_timing(steps=1)
      !
    enddo   !grid points
+   !
+   !$omp end do
+   !$omp end parallel
    !
    call live_timing()
    !
@@ -208,10 +219,9 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    !
    ! PLOT
    !
-
-   if (use_cube)     output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
-   if (use_xcrysden)     output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.xsf'
-   if (use_gnuplot)     output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))
+   if (use_cube)      output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
+   if (use_xcrysden)  output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.xsf'
+   if (use_gnuplot)   output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))
    !
    if (use_cube) then 
      call of_open_close(trim(output_fname),'o')

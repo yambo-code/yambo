@@ -69,9 +69,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  integer          :: Xo_rows(2), Xo_cols(2)
  type(PAR_matrix) :: K_FXC
  type(PAR_matrix), target :: BUFFER,KERNEL,Xo
-#ifdef _CUDA
-     complex(SP), device, pointer :: BUFFER_blc_d(:,:,:)
-#endif
+ complex(SP), pointer DEV_ATTRIBUTE :: BUFFER_blc_d(:,:,:)
  !
  ! Setup 
  !
@@ -159,9 +157,7 @@ subroutine X_redux(iq,X_par,Xw,X)
    iw         = PAR_FREQS_index(iw_par)
    BUFFER%I   = iw_par
    KERNEL%blc = cZERO
-#ifdef _CUDA
-   KERNEL%blc_d = cZERO
-#endif
+   if (have_cuda) KERNEL%blc_d = cZERO
    !
    Xo_cols(:)=Xo%cols(:)
    Xo_rows(:)=Xo%rows(:)

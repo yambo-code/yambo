@@ -34,10 +34,10 @@ subroutine X_redux(iq,X_par,Xw,X)
  ! Therefore the loop is dived in a PAR/SER -> SER/SLK interface, a SER/SLK solver and, finally, a
  ! SER/SLK -> PAR/SER interface
  !
- use pars,          ONLY:SP,pi,cZERO,cONE
+ use pars,          ONLY:SP,DP,pi,cZERO,cONE
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,&
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,MPI_COMPLEX,MPI_DOUBLE_COMPLEX,myid,&
 &                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
  use R_lattice,     ONLY:bare_qpg
  use frequency,     ONLY:w_samp
@@ -60,7 +60,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  ! Work Space
  !
  type(PP_indexes) ::PAR_IND_freqs
- integer          ::ig1,ig2,iw_par,iw,iw_X(1),INV_MODE,i_LA_pool,&
+ integer          ::ig1,ig2,iw_par,iw,iw_X(1),INV_MODE,i_LA_pool,i_err,&
 &                   PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%n_CPU)
  type(PAR_matrix) ::KERNEL,Xo,BUFFER,K_FXC
  !
@@ -254,6 +254,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  ! From all CPU of the SLK group to one of the RL group.
  !
+ print *, "before loops", PAR_COM_SLK_INDEX_local%n_CPU, PAR_n_freqs_global
  do i_LA_pool=1,PAR_COM_SLK_INDEX_local%n_CPU
    !
    do iw_par=1,PAR_n_freqs_global(i_LA_pool)
@@ -273,12 +274,21 @@ subroutine X_redux(iq,X_par,Xw,X)
      iw=iw_par
      if (iw_par>PAR_n_freqs) iw=1
      !
+     print *, "myid",myid,"iw_par",iw_par, "iw_X", iw_X(1)
      call MATRIX_transfer(M_in=BUFFER,M_out=X_par,INDEX_in=iw,INDEX_out=iw_X(1),&
 &                         SND=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
+&                         RCV=PAR_COM_X_WORLD%CPU_id==0,&
 &                         COMM=PAR_COM_X_WORLD,COMM_name="X_redux_2_"//trim(intc(i_LA_pool)))
      !
    enddo
  enddo
+ print *, "myid",myid,"after MATRIX transfer"
+ if (SP/=DP) then
+   call MPI_BCAST(X_par%blc, size(X_par%blc), MPI_COMPLEX, 0, PAR_COM_X_WORLD%COMM, i_err)
+ else
+   call MPI_BCAST(X_par%blc, size(X_par%blc), MPI_DOUBLE_COMPLEX, 0, PAR_COM_X_WORLD%COMM, i_err)
+ endif
+ print *, "myid",myid,"after BCAST"
  !
  call timing('X (REDUX)',OPR='stop')
  !

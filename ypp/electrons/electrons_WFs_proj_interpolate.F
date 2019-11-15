@@ -28,7 +28,7 @@ subroutine electrons_WFs_proj_interpolate(Xen,SEED_k,OUT_k,BANDS_range,proj_fac,
  use electrons,      ONLY:levels
  use electrons,      ONLY:n_spinor
  use R_lattice,      ONLY:bz_samp
- use interpolate,    ONLY:INTERPOLATION_driver
+ use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do
  use SC,             ONLY:load_SC_components,SC_bands
  use hamiltonian,    ONLY:H_rotation,H_rotation_ref
  use IO_m,           ONLY:DUMP,NONE
@@ -40,11 +40,11 @@ subroutine electrons_WFs_proj_interpolate(Xen,SEED_k,OUT_k,BANDS_range,proj_fac,
  type(bz_samp), intent(in)    :: SEED_k
  integer      , intent(in)    :: BANDS_range(2)
  integer      , intent(out)   :: ID_proj
- real(SP)     , intent(out)   :: proj_fac(BANDS_range(1):BANDS_range(2),SEED_k%nibz,2)
  type(bz_samp), intent(inout) :: OUT_k
  !
  ! Work space
  !
+ real(SP)     :: proj_fac(BANDS_range(1):BANDS_range(2),SEED_k%nibz,2)
  complex(SP)  :: H_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  integer      :: ik,ib,ibp
  !
@@ -70,7 +70,7 @@ subroutine electrons_WFs_proj_interpolate(Xen,SEED_k,OUT_k,BANDS_range,proj_fac,
  !
  call load_SC_components('WF_clean')
  !
- call INTERPOLATION_driver(bands=BANDS_range,SEED_k=SEED_k,SEED_R3=proj_fac,operation="SCporj",ID_op=ID_proj)
- call INTERPOLATION_driver(OUT_k=OUT_k,operation="SCproj")
+ call INTERPOLATION_driver_seed("SCporj",BANDS_range,SEED_k,SEED_R3=proj_fac,ID_op=ID_proj)
+ call INTERPOLATION_driver_do("SCproj",OUT_k)
  !
 end subroutine electrons_WFs_proj_interpolate

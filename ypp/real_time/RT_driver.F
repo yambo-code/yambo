@@ -29,6 +29,7 @@ subroutine RT_driver(en,k,q)
 &                         l_RT_G_two_times,l_skip_OBS_IO,l_force_min_damp
  use interpolate,    ONLY:l_integral_respect
  use parser_m,       ONLY:parser
+ !
  implicit none
  !
  type(levels)  :: en
@@ -60,7 +61,7 @@ subroutine RT_driver(en,k,q)
  !
  ! G lesser 
  !===========
- if (l_RT_G_two_times)                     call RT_G_two_times(en,k,q)
+ if (l_RT_G_two_times)                     call RT_G_two_times_driver(en,k,q)
  !
  ! GPL_EXCLUDE_END
  !

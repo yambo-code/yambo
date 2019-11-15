@@ -41,7 +41,8 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  use stderr,        ONLY:real2ch
  use QP_m,          ONLY:QP_t
  use QP_CTL_m,      ONLY:QP_action,QP_ctl_msg_fmt,QP_ctl_xc_STRING
- use interpolate,   ONLY:NN_MAX_real_nearest,INTERPOLATION_driver,INTERP_obj,INTERPOLATE_msg_fmt
+ use interpolate,   ONLY:NN_MAX_real_nearest,INTERP_obj,INTERPOLATE_msg_fmt,&
+&                        INTERPOLATION_driver_seed,INTERPOLATION_driver_do
  !
 #include<memory.h>
  !
@@ -80,13 +81,12 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
    !
    call QP_transfer('init')
    !
-   call INTERPOLATION_driver(bands=bands,SEED_k=QP_k,SEED_QP=qp,&
-&                            operation=trim(what)//"_from_DB",ID_op=ID,NEAREST=QP_action(i_ACTION)%plan(4))
-   call INTERPOLATION_driver(OUT_k=k,operation=trim(what)//"_from_DB")
+   call INTERPOLATION_driver_seed(trim(what)//"_from_DB",bands,QP_k,SEED_QP=qp,ID_op=ID,NEAREST=QP_action(i_ACTION)%plan(4))
+   call INTERPOLATION_driver_do(trim(what)//"_from_DB",k)
    !
    call QP_transfer('appl')
    !
-   call INTERPOLATION_driver(operation="END",ID_op=ID)
+   call INTERPOLATION_driver_end(ID)
    !
  else if (QP_action(i_ACTION)%plan(5)) then
    !
@@ -215,7 +215,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
                if(QP_action(i_ACTION)%plan(3)) then
                  i_c=i_c+1
                  en%Z(iband,ik,i_spin)=cmplx(INTERP_obj(ID)%INTERP(iband,ik,i_c),&
-&                                            INTERP_obj(ID)%INTERP(iband,ik,i_c+1))
+&                                            INTERP_obj(ID)%INTERP(iband,ik,i_c+1),kind=SP)
                  QP_action(i_ACTION)%STATES_done(iband,ik,i_spin)=1
                endif
              enddo

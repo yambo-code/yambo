@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_G_two_times(en,kpt,qpt)
+subroutine RT_G_two_times_build(en,kpt,qpt)
  !
  use pars,           ONLY:SP,DP,cZERO,cI,cONE,cZERO
  use units,          ONLY:FS2AUT,HA2EV
@@ -36,14 +36,13 @@ subroutine RT_G_two_times(en,kpt,qpt)
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,RT_nbands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,I1_matrix
- use YPP_real_time,  ONLY:RT_time,RT_conf,OBS_el
+ use YPP_real_time,  ONLY:RT_time,RT_conf,GreenF_T_and_W
  use LIVE_t,         ONLY:live_timing
  !
 #include<memory.h>
  !
- type(levels)  :: en
- type(bz_samp) :: kpt,qpt
- type(OBS_el)  :: FT
+ type(levels),  intent(in)    :: en
+ type(bz_samp), intent(in)    :: kpt,qpt
  !
  ! Workspace
  !
@@ -338,28 +337,30 @@ subroutine RT_G_two_times(en,kpt,qpt)
  ! 1D FFT setup
  !--------------
  !
- FT%title=function_name//"(t,t')"
+ GreenF_T_and_W%title=function_name//"(t,t')"
  RT_time=(RT_time-T_c)*2._SP
  !
- call RT_1D_Fourier_setup(FT,RT_conf,RT_nk) 
+ call RT_1D_Fourier_setup(GreenF_T_and_W,RT_conf,RT_nk) 
  !
  do ik=1,RT_nk
-   FT%F_T(:,ik)=cmplx(F_k_tmtp(ik,:),kind=DP)
+   GreenF_T_and_W%F_T(:,ik)=cmplx(F_k_tmtp(ik,:),kind=DP)
  enddo
  !
- call RT_1D_Fourier_Transform('T2W',FT,RT_conf,1)
+ call RT_1D_Fourier_Transform('T2W',GreenF_T_and_W,RT_conf,1)
  !
- do ik=1,RT_nk
-   !
-   do i_dT=1,RT_conf%T_n_steps
-     write(100+ik,*) RT_time(i_dT)/FS2AUT,real(FT%F_T(i_dT,ik),SP),real(aimag(FT%F_T(i_dT,ik)),SP)
-   enddo
-   !
-   do i_w=1,RT_conf%W_n_steps
-     write(200+ik,*) real(FT%W(i_w))*HA2EV,real(-cI*FT%F_W(i_w,ik),SP),real(aimag(-cI*FT%F_W(i_w,ik)),SP)
-   enddo
-   !
- enddo
+ ! DEBUG <
+ !do ik=1,RT_nk
+ !  !
+ !  do i_dT=1,RT_conf%T_n_steps
+ !    write(100+ik,*) RT_time(i_dT)/FS2AUT,real(GreenF_T_and_W%F_T(i_dT,ik),SP),real(aimag(GreenF_T_and_W%F_T(i_dT,ik)),SP)
+ !  enddo
+ !  !
+ !  do i_w=1,RT_conf%W_n_steps
+ !    write(200+ik,*) real(GreenF_T_and_W%W(i_w))*HA2EV,real(-cI*GreenF_T_and_W%F_W(i_w,ik),SP),real(aimag(-cI*GreenF_T_and_W%F_W(i_w,ik)),SP)
+ !  enddo
+ !  !
+ !enddo
+ ! DEBUG >
  !
  YAMBO_FREE(TMP_M)
  YAMBO_FREE(I1_matrix)
@@ -375,4 +376,4 @@ subroutine RT_G_two_times(en,kpt,qpt)
  !
  YAMBO_FREE(F_k_tmtp)
  !
-end subroutine RT_G_two_times
+end subroutine RT_G_two_times_build

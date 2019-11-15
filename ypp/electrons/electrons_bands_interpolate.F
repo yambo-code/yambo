@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCUIT_dE)
+subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRID_E,CIRCUIT_dE)
  !
  use pars,           ONLY:SP,schlen
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,K_transform,INTERP_grid,&
@@ -34,7 +34,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCU
  use com,            ONLY:msg,error,warning
  use vec_operate,    ONLY:c2a,v_norm
  use parser_m,       ONLY:parser
- use interpolate,    ONLY:INTERPOLATION_driver,GRID_k
+ use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k
  use interfaces,     ONLY:io_DB1_selective_scan
  !
 #include<memory.h>
@@ -42,7 +42,8 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCU
  type(bz_samp), intent(in)  :: Xk
  type(levels),  intent(in)  :: Xen
  type(levels),  intent(out) :: CIRCUIT_E
- integer      , intent(in)  :: BANDS_range(2)
+ integer     ,  intent(in)  :: BANDS_range(2)
+ integer     ,  intent(out) :: ID_bands(2)
  type(levels),  intent(out), optional :: CIRCUIT_dE
  type(levels),  intent(out), optional :: GRID_E
  !
@@ -184,29 +185,18 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCU
  ! 1: interpolate on the circuit      if (BANDS_steps>0)
  ! 2: interpolate on the regular grid if (interp_grid>0)
  !
- if(all(INTERP_grid>0)) call INTERPOLATION_driver(operation="GRID",GRID=INTERP_grid)
+ if(all(INTERP_grid>0)) call INTERPOLATION_driver_create_grid(INTERP_grid)
  !
- if (allocated(Xen%Eo).and.BANDS_E_and_k_db) then
-   call INTERPOLATION_driver(bands=BANDS_range,SEED_E=Xen,SEED_k=Xk,operation="dE_on_built_in",NEAREST=.FALSE.)
+ call INTERPOLATION_driver_seed("E_on_built_in",BANDS_range,Xk,SEED_E=Xen,NEAREST=.FALSE.,ID_op=ID_bands(1))
+ if (BANDS_steps> 0)    call INTERPOLATION_driver_do("E_on_built_in",CIRCUIT_k,OUT_E=CIRCUIT_E)
+ if(all(INTERP_grid>0)) call INTERPOLATION_driver_do("E_on_built_in",GRID_k,   OUT_E=GRID_E   )
+ !
+ if (BANDS_steps> 0.and.allocated(Xen%Eo).and.BANDS_E_and_k_db) then
+   call INTERPOLATION_driver_seed("dE_on_built_in",BANDS_range,Xk,SEED_E=Xen,NEAREST=.FALSE.,ID_op=ID_bands(2))
+   call INTERPOLATION_driver_do("dE_on_built_in",CIRCUIT_k,OUT_E=CIRCUIT_dE)
  endif
  !
- call INTERPOLATION_driver(bands=BANDS_range,SEED_E=Xen,SEED_k=Xk,operation="E_on_built_in",NEAREST=.FALSE.)
- !
- if (BANDS_steps> 0) then
-   !
-   call INTERPOLATION_driver(OUT_k=CIRCUIT_k,OUT_E=CIRCUIT_E,operation="E_on_built_in")
-   !
-   if (allocated(Xen%Eo).and.BANDS_E_and_k_db) then
-    call INTERPOLATION_driver(OUT_k=CIRCUIT_k,OUT_E=CIRCUIT_dE,operation="dE_on_built_in")
-   endif
-   !
- endif
- !
- if(all(INTERP_grid>0)) then
-   call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="E_on_built_in")
- endif
- !
- call INTERPOLATION_driver(operation="END")
+ call INTERPOLATION_driver_end(0)
  !
  ! Alignement
  !============

@@ -131,6 +131,7 @@ module YPP_real_time
  type(OBS_el) :: Pol 
  type(OBS_el) :: Curr 
  type(OBS_el) :: ElField 
+ type(OBS_el) :: GreenF_T_and_W
  !
  interface
    !

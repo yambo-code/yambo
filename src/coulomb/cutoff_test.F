@@ -206,9 +206,9 @@ do ir1=1,n_dl_pts
  call msg('o RL_','#')
  !
  do ip=1,n_dl_pts**2
-   call msg('o xy','',(/pl_xy_pt(ip,1),pl_xy_pt(ip,2),v_xy(ip,:)/),INDENT=-2,USE_TABS=.true.)
-   call msg('o xz','',(/pl_xz_pt(ip,1),pl_xz_pt(ip,3),v_xz(ip,:)/),INDENT=-2,USE_TABS=.true.)
-   call msg('o yz','',(/pl_yz_pt(ip,2),pl_yz_pt(ip,3),v_yz(ip,:)/),INDENT=-2,USE_TABS=.true.)
+   call msg('o xy','',(/pl_xy_pt(ip,1),pl_xy_pt(ip,2),v_xy(ip,1),v_xy(ip,2)/),INDENT=-2,USE_TABS=.true.)
+   call msg('o xz','',(/pl_xz_pt(ip,1),pl_xz_pt(ip,3),v_xz(ip,1),v_xz(ip,2)/),INDENT=-2,USE_TABS=.true.)
+   call msg('o yz','',(/pl_yz_pt(ip,2),pl_yz_pt(ip,3),v_yz(ip,1),v_yz(ip,2)/),INDENT=-2,USE_TABS=.true.)
  enddo
  !
  max_val=0._SP

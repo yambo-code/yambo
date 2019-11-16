@@ -65,6 +65,7 @@ module D_lattice
  !
  ! Cell & atoms
  !
+ logical  :: l_0D,l_1D,l_2D,l_3D
  integer  :: n_atoms
  integer  :: n_atoms_species_max
  integer  :: n_atomic_species

@@ -144,10 +144,11 @@ module interfaces
    end subroutine
 #endif
    !
-   integer function eval_G_minus_G(iG,iGo,COMM)
+   integer function eval_G_minus_G(iG,iGo,force_recompute,COMM)
      use parallel_m,      ONLY:MPI_comm
      implicit none
      integer :: iG,iGo
+     logical,        optional :: force_recompute
      type(MPI_comm), optional :: COMM
    end function
    !
@@ -298,7 +299,7 @@ module interfaces
      real(SP),optional :: db1_alat(3) 
    end function
    !
-   subroutine QP_state_extract_print(qp)
+   subroutine QP_state_print(qp)
      use QP_m,          ONLY:QP_t
      implicit none
      type(QP_t),optional ::qp              

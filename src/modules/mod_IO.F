@@ -24,7 +24,7 @@
 module IO_m
  !
  use pars,       ONLY:SP,DP,lchlen,schlen,max_io_units,max_io_vars_open,max_active_sections
- use LOGO,       ONLY:code_version,code_revision,code_GPL_revision
+ use C_driver,   ONLY:code_version,code_revision,code_GPL_revision
 #if defined _MPI
  use parallel_m, ONLY:myid,MPI_INFO_NULL
 #endif

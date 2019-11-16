@@ -47,7 +47,7 @@ subroutine cutoff_driver(q)
  use vec_operate,   ONLY:v_is_zero
  use com,           ONLY:msg
  use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp,cut_description,ws_cutoff
- use stderr,        ONLY:string_split,string_pack
+ use stderr,        ONLY:STRING_split,STRING_pack
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY,NONE
  use parser_m,      ONLY:parser
  use drivers,       ONLY:l_col_cut
@@ -240,16 +240,13 @@ subroutine cutoff_driver(q)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=io_COL_CUT(ID)
-   !
- endif
  !
  ! Real-Space Test 
  !
- if (io_err/=0) then
    call parser('CUTCol_test',l_col_test)
    if (l_col_test) call cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
+   !
  endif
- !
  call timing('Coulomb Cutoff',OPR='stop')
  !
  contains

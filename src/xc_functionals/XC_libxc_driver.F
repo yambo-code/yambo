@@ -42,12 +42,11 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use xc_functionals, ONLY:E_xc,E_xc_val,F_xc,magn,V_xc,xc_setup_hyb,&
 &                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl,    &
 &                         xc_spin,xc_spin_map1, &
-&                         XC_HYB_GGA_XC_GAUPBE,XC_FACTOR,XC_HYB_GGA_XC_PBEH
+&                         XC_HYB_GGA_XC_GAUPBE,XC_FACTOR
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  use libxc_funcs_m,  ONLY:XC_GGA_X_PBE, XC_GGA_C_PBE
  use interfaces,     ONLY:el_density_and_current
  use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc
- use IO_m,           ONLY:io_control,OP_RD_CL,REP
  !
 #include<memory.h>
  !
@@ -58,8 +57,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ! Work Space
  !
- integer  :: i1,i2,i3,is_xc,ic,is1,is2,ixc,ifft
- integer  :: io_err,ID
+ integer  :: i1,i2,is_xc,ic,is1,is2,ixc,ifft
  real(SP) :: mod_magn
  real(SP) :: local_exx_fraction 
  real(DP) :: exsr

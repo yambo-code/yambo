@@ -77,7 +77,7 @@ subroutine Berry_polarization_NEQ(Xen,Xk,V_bands,Polarization)
  !
 !$omp parallel do default(shared), private(id)
  do id=1,3
-   Polarization(id)=sum(Polarization_red(:)*a(:,id))/DL_Vol
+   Polarization(id)=sum(Polarization_red(:)*a(:,id))/DL_vol
  enddo
 !$omp end parallel do
  !

@@ -30,7 +30,7 @@ subroutine k_grids(en,k,Xk,q)
  use com,                 ONLY:msg,warning
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:c2a,rlu_v_is_zero,v_is_zero,v_norm
- use YPP,                 ONLY:coo_in,coo_out,l_k_grid,l_q_grid,&
+ use YPPm,                ONLY:coo_in,coo_out,l_k_grid,l_q_grid,&
 &                              l_shifted_grid,l_high_sym_pts,K_transform,&
 &                              n_u_k_pts,n_u_q_pts,l_random_grid,&
 &                              U_k_pts,U_q_pts,U_q_shifts,USER_k,k_grid_printer

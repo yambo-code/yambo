@@ -28,7 +28,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use wrapper,       ONLY:V_dot_V
  use X_m,           ONLY:X_t
- use wave_func,     ONLY:WF,wf_ng
+ use wave_func,     ONLY:WF
  use FFT_m,         ONLY:fft_size
  use pseudo,        ONLY:pp_kbv_dim
  use R_lattice,     ONLY:bz_samp

@@ -27,7 +27,7 @@ subroutine k_random(No_Weight)
  use stderr,              ONLY:set_real_printed_length
  use com,                 ONLY:msg,of_open_close
  use vec_operate,         ONLY:v_norm,c2a,k2bz
- use YPP,                 ONLY:BZ_random_nkpts,gamma_radius,K_transform
+ use YPPm,                ONLY:BZ_random_nkpts,gamma_radius,K_transform
  use LIVE_t,              ONLY:live_timing
  !
  implicit none

@@ -23,19 +23,18 @@
 !
 subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
- use pars,           ONLY:SP,schlen,lchlen
+ use pars,           ONLY:SP,schlen,lchlen,zero_dfl
  use units,          ONLY:HA2EV,AUT2FS
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
  use com,            ONLY:msg,of_open_close,error,file_exists,warning,msg_deliver
- use YPP,            ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
+ use YPPm,           ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,&
 &                         CIRCUIT_E_db,CIRCUIT_k_label
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
  use stderr,         ONLY:real2ch,intc
  use vec_operate,    ONLY:iku_v_norm
- use parser_m,       ONLY:parser
  use RT_control,     ONLY:RT_apply,RT_carriers_object,RT_carriers_to_RT_k,RT_carriers_to_RT_E
  use real_time,      ONLY:RT_carriers,RT_bands
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,electrons_bands_interpolate,INTERP_obj,INTERP_mode
@@ -54,14 +53,11 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
  character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation
  character(lchlen)     :: of_string
- logical               :: l_normalize_Nel,l_Nel_fac
+ logical               :: l_normalize_Nel
  integer               :: ib,ik,i_RT,i_T,n_values,ID_df_or_G,ID_spin,ID_magn,ID_bands(2)
  !
  call section('*','Interpolation tool')
  !=====================================
- !
- ! Nel renomarlization?
- call parser('NelFac',  l_Nel_fac)
  !
  if(all(INTERP_grid>0).or.BANDS_steps<=0) then
    call error(" Interpolation of occupations/lifetimes only on a band circuit")
@@ -78,7 +74,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  if (BANDS_bands(1)<RT_bands(1).or.BANDS_bands(2)>RT_bands(2)) then
    BANDS_bands(1)=max(BANDS_bands(1),RT_bands(1))
    BANDS_bands(2)=min(BANDS_bands(2),RT_bands(2))
-   call warning("User bands restricted to "//trim(intc(RT_bands(1)))//" - "//trim(intc(RT_bands(2))))
+   call warning("User bands restricted to "//trim(intc(BANDS_bands(1)))//" - "//trim(intc(BANDS_bands(2))))
  endif
  !
  call section('+',"Loading special Points for the "//trim(lattice)//" lattice")
@@ -213,7 +209,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
        !
        values(3)=INTERP_obj(ID_df_or_G)%INTERP(ib,ik,1)
        if (l_RT_lifetimes   ) values(3)=values(3)*HA2EV*1000._SP
-       if (l_RT_occupations .and. Max_occ>0. .and. l_Nel_fac ) values(3)=values(3)/Max_occ*Nel_fac
+       if (l_RT_occupations .and. Max_occ>0. .and. abs(Nel_fac-1.)>zero_dfl ) values(3)=values(3)/Max_occ*Nel_fac
        if (l_RT_occupations .and. n_spinor==2) then
          values(4)=values(3)*INTERP_obj(ID_spin)%INTERP(ib,ik,1)
          values(5)=values(3)*INTERP_obj(ID_spin)%INTERP(ib,ik,2)

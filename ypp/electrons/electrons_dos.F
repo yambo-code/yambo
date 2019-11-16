@@ -29,7 +29,7 @@ subroutine electrons_dos(Xk,Xen)
  use R_lattice,      ONLY:bz_samp
  use pointers,       ONLY:linkM2M
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol
- use YPP,            ONLY:output_fname,DOS_bands,DOS_E_steps,K_transform,&
+ use YPPm,           ONLY:output_fname,DOS_bands,DOS_E_steps,K_transform,&
 &                         INTERP_grid,electrons_dos_elemental,l_pdos
  use com,            ONLY:msg,of_open_close,warning
  use QP_CTL_m,       ONLY:QP_apply
@@ -121,7 +121,7 @@ subroutine electrons_dos(Xk,Xen)
      call INTERPOLATION_driver_seed("SPIN_factors_on_built_in",DOS_bands,Xk,SEED_R3=PDOS_fac_v,ID_op=IDp)
      call INTERPOLATION_driver_do("PDOS_factors_on_built_in",GRID_k)
      PDOS_fac_p => linkM2M(INTERP_obj(IDp)%INTERP,shape(INTERP_obj(IDp)%INTERP),&
-     &                     lbound(INTERP_obj(IDp)%INTERP),ubound(INTERP_obj(IDp)%INTERP))
+ &                         lbound(INTERP_obj(IDp)%INTERP),ubound(INTERP_obj(IDp)%INTERP))
    endif
    !
    if (n_spinor==2) then

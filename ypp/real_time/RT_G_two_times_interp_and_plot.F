@@ -24,7 +24,7 @@
 subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  !
  use pars,           ONLY:SP
- use ypp,            ONLY:CIRCUIT_k
+ use YPPm,           ONLY:CIRCUIT_k
  use real_time,      ONLY:RT_nk
  use YPP_real_time,  ONLY:RT_conf,GreenF_T_and_W,l_RT_G_two_times
  use electrons,      ONLY:levels

@@ -26,12 +26,12 @@ subroutine NL_build_valence_bands(en,V_input,VAL_BANDS,lowest_band)
  ! Construct time-dependent valence bands
  !
  use pars,        ONLY:SP,cZERO
- use electrons,   ONLY:levels,n_sp_pol,spin_occ,n_spinor
+ use electrons,   ONLY:levels,n_sp_pol,n_spinor
  use nl_optics,   ONLY:NL_bands
  use FFT_m,       ONLY:fft_size
  use QP_m,        ONLY:QP_nk
  use wave_func,   ONLY:WF
- use parallel_m,  ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,myid,PAR_Xk_ibz_index,PAR_Xk_nibz
+ use parallel_m,  ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_Xk_nibz
  !
  implicit none
  !
@@ -42,7 +42,7 @@ subroutine NL_build_valence_bands(en,V_input,VAL_BANDS,lowest_band)
  !
  ! Work Space
  !
- integer :: ib,is,ir,ik,i_wf,i_v,ik_mem,i_spinor
+ integer :: ib,is,ik,i_wf,i_v,ik_mem,i_spinor
  !
  Val_bands=cZERO
  !

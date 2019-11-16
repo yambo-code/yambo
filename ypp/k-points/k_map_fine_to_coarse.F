@@ -31,7 +31,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
  use com,                 ONLY:msg,error,warning
- use YPP,                 ONLY:BZ_DbGd_nkpts_to_use,DbGd_DB1_paths,MAX_DbGd_DBs,n_DbGd_DBs
+ use YPPm,                ONLY:BZ_DbGd_nkpts_to_use,DbGd_DB1_paths,MAX_DbGd_DBs,n_DbGd_DBs
  use electrons,           ONLY:levels,default_nel,n_bands,BZ_ASSOCIATED_nkpts,&
 &                              BZ_DbGd_nbands,BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_kpts,&
 &                              BZ_DbGd_tot_nk_levels,BZ_DbGd_tot_nk,n_sp_pol,BZ_DbGd_max_filling,&

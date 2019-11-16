@@ -25,9 +25,10 @@ subroutine X_pre_setup(Xen,X)
  !
  use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,l_X_terminator,X_use_lin_sys,Chi_linalg_mode,X_ng
  use electrons,     ONLY:levels,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,DbGd_is_symmetry_expanded
- use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_gw0,l_cohsex,l_rt_carriers_in_use
+ use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_cohsex,l_rt_carriers_in_use
  use com,           ONLY:error,warning
  use R_lattice,     ONLY:nqibz
+ use QP_m,          ONLY:COHSEX_use_empties
  use TDDFT,         ONLY:FXC_n_g_corr
  use interfaces,    ONLY:eval_G_minus_G
  use parallel_m,    ONLY:PAR_COM_WORLD
@@ -68,9 +69,11 @@ subroutine X_pre_setup(Xen,X)
    call warning("Found a Double Grid not symmetry expanded. This is incompatible with the current runlevel")
  endif
  !
- ! CHO checks
+ ! COH check: when the X terminator is used or the empty bands are NOT used the
+ ! response function is accessed in G-G' mode. Here I ensure that all G-G' are in the
+ ! range provided externally
  !
- if ((l_gw0.and.l_cohsex).or.l_X_terminator) X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
+ if ((l_cohsex.and..not.COHSEX_use_empties).or.l_X_terminator) X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
  !
  ! Fxc Checks
  !

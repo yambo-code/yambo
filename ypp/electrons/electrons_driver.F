@@ -29,11 +29,10 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_table,QP_state
- use YPP,            ONLY:l_density,l_mag,v2plot,&
+ use YPPm,           ONLY:l_density,l_mag,v2plot,&
 &                         nr,l_sp_wf,DOS_bands,&
 &                         plot_title,l_dos,l_bands,l_current,&
 &                         l_angular_momentum,l_position,l_mean_potential
- use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
  use interfaces,     ONLY:WF_load,WF_free,PARALLEL_WF_index,PARALLEL_global_indexes,PARALLEL_WF_distribute
  !

@@ -23,7 +23,7 @@
 !
 integer function variables_NL(ID,local_description)
  !
- use pars,          ONLY:SP,lchlen
+ use pars,          ONLY:lchlen
  use units,         ONLY:AUT2FS, HA2EV, AU2KWCMm2
  use nl_optics,     ONLY:NL_damping,l_use_DIPOLES,NL_correlation,NL_er,NL_correlation,n_frequencies,      &
 &                        n_NL_descriptions,NL_description,WF_sample_ondisk,n_order

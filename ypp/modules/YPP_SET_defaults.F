@@ -23,14 +23,14 @@
 !
 subroutine YPP_SET_defaults()
  !
- use YPP,            ONLY:DOS_broadening,DOS_E_range,r_hole,deg_energy ,EXCITON_weight_treshold,&
+ use YPPm,           ONLY:DOS_broadening,DOS_E_range,r_hole,deg_energy ,EXCITON_weight_treshold,&
                           WF_multiplier,gamma_radius,SOC_split,alat_used_for_output,BANDS_bands,BANDS_steps,&
 &                         coo_in,coo_out,DOS_E_steps,INTERP_grid ,l_amplitude,l_bands,l_current,l_density  ,&
 &                         l_dos,l_exc_wf   ,l_mag,l_norm_to_one,l_sort,l_sp_wf,l_spin,l_wannier,mag_dir    ,&
 &                         N_path_pts,ncell ,ord_dgrid_ipol ,output_fname,p_dir,p_format   ,perturbative_SOC_path,&
 &                         plot_title,PtsPath,seed_name,SOC_bands_buffer,SOC_bands_to_map,state_ctl ,V_value,&
 &                         w90_fname,wannier_bands,WF_ref,what_to_write,SP,HA2EV,E_field,Nel_fac,DOS_bands,  &
-&                         l_pdos,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,EXCITON_Res_treshold,EXCITON_E_treshold
+&                         BSiq,l_pdos,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,EXCITON_Res_treshold,EXCITON_E_treshold
  use units,          ONLY:FS2AUT
  use D_lattice,      ONLY:alat
  use interpolate,    ONLY:INTERP_shell_factor,interpls,max_interpls
@@ -39,10 +39,10 @@ subroutine YPP_SET_defaults()
  use stderr,         ONLY:write_to_log  
  use LIVE_t,         ONLY:live_timing_is_on
 #if defined _YPP_SC
- use YPP,            ONLY:l_mean_potential
+ use YPPm,           ONLY:l_mean_potential
 #endif
 #if defined _YPP_MAGNETIC
- use YPP,            ONLY:B_field,B_psi,B_theta,l_angular_momentum,l_position
+ use YPPm,           ONLY:B_field,B_psi,B_theta,l_angular_momentum,l_position
 #endif
 #if defined _YPP_RT
  use YPP_real_time,  ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_BZ_regions,Eh_pumped_pair_BZ_width,&
@@ -152,8 +152,9 @@ subroutine YPP_SET_defaults()
  deg_energy =0.01_SP/HA2EV
  EXCITON_Res_treshold =0.0_SP
  EXCITON_E_treshold =0.0_SP
- EXCITON_weight_treshold =0.01_SP
+ EXCITON_weight_treshold =0.05_SP
  WF_multiplier=1._SP
+ BSiq=1
  !
 #if defined _YPP_ELPH
  !

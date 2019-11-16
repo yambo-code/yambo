@@ -41,7 +41,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
  !
  ! ------------------------------------------------------------
  !
- use pars,           ONLY:SP,cI,cZERO,cONE
+ use pars,           ONLY:SP,cZERO
  use com,            ONLY:error
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:RK2,EULEREXP,RK2EXP,INVINT,RK4,RK4EXP,HEUN,CRANK_NICOLSON,I_relax,&
@@ -49,12 +49,10 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
  use real_time,      ONLY:RT_step,Ho_plus_Sigma
  use electrons,      ONLY:levels,n_sp_pol
  use X_m,            ONLY:X_t
- use fields,         ONLY:gauge_field
  use R_lattice,      ONLY:bz_samp
- use wrapper_omp,    ONLY:M_by_M_omp,M_by_V_omp
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
 #if defined _TIMING
- use timing_m,         ONLY:timing
+ use timing_m,       ONLY:timing
 #endif
  ! 
  implicit none
@@ -578,7 +576,7 @@ end subroutine NL_Integrator
    end subroutine EXP_op
    !  
    subroutine EXP_step(K_out,V_in,H_in,I_in,nbf,dT)
-     use pars,           ONLY:SP,cI,cZERO,cONE
+     use pars,           ONLY:SP,cZERO
      use nl_optics,      ONLY:NL_bands
      implicit none
      integer,     intent(in)  :: nbf
@@ -592,7 +590,7 @@ end subroutine NL_Integrator
      !
      complex(SP)  :: U(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
      complex(SP)  :: H(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
-     integer      :: i1,ib
+     integer      :: ib
      !
      ! Expand U=exp(-i*dt*H) up to the fourth (eigth) order
      !
@@ -675,7 +673,7 @@ end subroutine NL_Integrator
    end subroutine INVINT_step
    !
    subroutine RK_basestep(K_out,V_in,H_in,I_in,nbf)
-     use pars,           ONLY:SP,cI,cZERO,cONE
+     use pars,           ONLY:SP,cI,cZERO
      use nl_optics,      ONLY:NL_bands
      implicit none
      integer,     intent(in)  :: nbf

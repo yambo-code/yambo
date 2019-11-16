@@ -214,7 +214,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    io_V=io_SC_components('V' ,E,ID(3))
  endif
  !
- !
  if (l_SC_RESTART) then
    !
    if ((1._SP-SC_cycle_mixing)>1.E-5) call &
@@ -842,8 +841,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
            !
            max_overlap(ib,ik,i_sp_pol)=maxloc(abs(H_rotation(ib,SC_bands(1):SC_bands(2),ik,i_sp_pol)),1)
            ! 
-           ! simmetrize the spreads summing over all possible degenerate
-           ! bands
+           ! simmetrize the spreads summing over all possible degenerate bands
            !
            forall (ibp=SC_bands(1):SC_bands(2)) WS_spread(ibp)=abs(H_rotation(ibp,ib,ik,i_sp_pol))**2*100._SP/HA2EV
            !

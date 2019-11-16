@@ -33,7 +33,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  use pars,           ONLY:SP,schlen,lchlen,rZERO
  use units,          ONLY:HA2EV
- use YPP,            ONLY:BANDS_steps,INTERP_grid,&
+ use YPPm,           ONLY:BANDS_steps,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
 &                         PtsPath,BANDS_path,n_path_pts,CIRCUIT_made_of_SPECIAL_k,&
 &                         BANDS_E_and_k_db

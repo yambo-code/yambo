@@ -324,14 +324,14 @@ integer function io_RT_components(what,ID)
    !
    ch="Ho_plus_Sigma_TIME"//trim(TIME_string( (i_time-1)*RT_step ))
    VAR_ID=i_memory
-   if ( SAVE_G_history .and. (variable_exist(ID,trim(ch)).or.write_is_on(ID)) ) then
+   if ( SAVE_G_History .and. (allocated(Ho_plus_sigma) .and. (variable_exist(ID,trim(ch))).or.write_is_on(ID)) ) then
      call def_variable_bulk(ID,trim(ch),G_MEM_steps+1,(/2,RT_nbands,RT_nbands,RT_nk/),SP,par_io_kind='independent')
      call  io_variable_bulk(ID,VAR_ID,C3=Ho_plus_sigma(:,:,k_range(1):k_range(2),i_spin),IPOS=(/1,1,1,k_range(1)/))
    endif
    !
    ch="H_rotation_TIME"//trim(TIME_string( (i_time-1)*RT_step ))
    VAR_ID=i_memory+1
-   if ( l_RT_rotate_DM .and. (variable_exist(ID,trim(ch)).or.write_is_on(ID)) ) then
+   if ( l_RT_rotate_DM .and. ((allocated(H_rotation).and.variable_exist(ID,trim(ch))).or.write_is_on(ID)) ) then
      call def_variable_bulk(ID,trim(ch),G_MEM_steps+1,(/2,RT_nbands,RT_nbands,RT_nk/),SP,par_io_kind='independent')
      call  io_variable_bulk(ID,VAR_ID,C3=H_rotation(:,:,k_range(1):k_range(2),i_spin),IPOS=(/1,1,1,k_range(1)/))
    endif

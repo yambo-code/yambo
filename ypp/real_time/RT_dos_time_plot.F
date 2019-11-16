@@ -168,21 +168,21 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    if (n_spin==2) el_dos_integral(i_T,1)=RIntegrate(el_dos(:,1,1)+el_dos(:,2,1),dos_E,DOS_E_steps)*DL_vol
    !
    if (l_interp) then
-     call INTERPOLATION_driver_seed("E_on_RT_grid",RT_bands,RT_k,SEED_E=RT_E,ID_op=ID_E)
-     call INTERPOLATION_driver_seed("f_on_RT_grid",RT_bands,RT_k,SEED_E=RT_E,ID_op=ID_f)
-     call INTERPOLATION_driver_do("E_on_RT_grid",GRID_k,OUT_E=GRID_E,QUIET=.TRUE.)
-     call INTERPOLATION_driver_do("f_on_RT_grid",GRID_k,OUT_E=GRID_E,QUIET=.TRUE.)
+     call INTERPOLATION_driver_seed("E_on_RT_grid",ID_E,RT_bands,RT_k,SEED_E=RT_E)
+     call INTERPOLATION_driver_seed("f_on_RT_grid",ID_f,RT_bands,RT_k,SEED_E=RT_E)
+     call INTERPOLATION_driver_do("E_on_RT_grid",ID_E,GRID_k,OUT_E=GRID_E,QUIET=.TRUE.)
+     call INTERPOLATION_driver_do("f_on_RT_grid",ID_f,GRID_k,OUT_E=GRID_E,QUIET=.TRUE.)
      !
      if (l_pdos) then
-       call INTERPOLATION_driver_seed("PDOS_factors_on_RT_grid",RT_bands,RT_k,SEED_R3=RT_PDOS_fac,ID_op=ID_pdos)
-       call INTERPOLATION_driver_do("PDOS_factors_on_RT_grid",GRID_k)
+       call INTERPOLATION_driver_seed("PDOS_factors_on_RT_grid",ID_pdos,RT_bands,RT_k,SEED_R3=RT_PDOS_fac)
+       call INTERPOLATION_driver_do("PDOS_factors_on_RT_grid",ID_pdos,GRID_k)
        PDOS_fac_p => linkM2M(INTERP_obj(ID_pdos)%INTERP,shape(INTERP_obj(ID_pdos)%INTERP),&
        &                     lbound(INTERP_obj(ID_pdos)%INTERP),ubound(INTERP_obj(ID_pdos)%INTERP))
      endif
      !
      if (n_spinor==2) then
-       call INTERPOLATION_driver_seed("SPIN_fac_on_RT_grid",RT_bands,RT_k,SEED_R3=RT_SPIN_fac,ID_op=ID_spin)
-       call INTERPOLATION_driver_do("SPIN_fac_on_RT_grid",GRID_k)
+       call INTERPOLATION_driver_seed("SPIN_fac_on_RT_grid",ID_spin,RT_bands,RT_k,SEED_R3=RT_SPIN_fac)
+       call INTERPOLATION_driver_do("SPIN_fac_on_RT_grid",ID_spin,GRID_k)
        SPIN_fac_p => linkM2M(INTERP_obj(ID_spin)%INTERP,shape(INTERP_obj(ID_spin)%INTERP),&
        &                     lbound(INTERP_obj(ID_spin)%INTERP),ubound(INTERP_obj(ID_spin)%INTERP))
      endif

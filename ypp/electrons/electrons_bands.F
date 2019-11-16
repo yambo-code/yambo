@@ -186,12 +186,6 @@ subroutine electrons_bands(Xk,Xen)
  call E_reset(CIRCUIT_DE)
  call E_reset(CIRCUIT_E_db)
  !
- if (n_spinor>1 .and. BANDS_steps> 0) then
-   call INTERPOLATION_driver_end(ID_spin)
-   call INTERPOLATION_driver_end(ID_magn)
- endif
-#if defined _YPP_SC
- if(proj_wfc) call INTERPOLATION_driver_end(ID_proj)
-#endif
+ call INTERPOLATION_driver_end(0)
  !
 end subroutine

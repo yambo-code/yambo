@@ -45,18 +45,16 @@ subroutine electrons_spin_and_magn_interpolate(what,SEED_k,OUT_k,BANDS_range,ID_
  !------
  if (index(what,"S") > 0) then
    call electrons_spin_factors((/1,SEED_k%nibz/),BANDS_range,spin_fac)
-   call INTERPOLATION_driver_seed(dims=BANDS_range,SEED_k=SEED_k,SEED_R3=spin_fac,operation="spin",&
-&                            ID_op=ID_spin,NEAREST=.TRUE.)
-   call INTERPOLATION_driver_do(OUT_k=OUT_k,operation="spin")
+   call INTERPOLATION_driver_seed("spin",ID_spin,BANDS_range,SEED_k,SEED_R3=spin_fac,NEAREST=.TRUE.)
+   call INTERPOLATION_driver_do("spin",ID_spin,OUT_k)
  endif
  !
  ! MAGNETIZATION
  !---------------
  if (index(what,"M") > 0) then
    call electrons_magn_factors((/1,SEED_k%nibz/),BANDS_range,magn_fac)
-   call INTERPOLATION_driver_seed(dims=BANDS_range,SEED_k=SEED_k,SEED_R3=magn_fac,operation="magnetization",&
-&                            ID_op=ID_magn,NEAREST=.TRUE.)
-   call INTERPOLATION_driver_do("magnetization",OUT_k)
+   call INTERPOLATION_driver_seed("magnetization",ID_magn,BANDS_range,SEED_k,SEED_R3=magn_fac,NEAREST=.TRUE.)
+   call INTERPOLATION_driver_do("magnetization",ID_magn,OUT_k)
  endif
  !
 end subroutine electrons_spin_and_magn_interpolate

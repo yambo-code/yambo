@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_driver_seed(dims,operation,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,ID_op,NEAREST)
+subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,NEAREST)
  !
  use pars,                 ONLY:SP
  use real_time,            ONLY:RT_t
@@ -35,19 +35,19 @@ subroutine INTERPOLATION_driver_seed(dims,operation,SEED_k,SEED_E,SEED_RT,SEED_Q
  !
  implicit none
  !
- integer,       intent(in)           :: dims(2)
  character(*),  intent(in)           :: operation
+ integer,       intent(out)          :: ID
+ integer,       intent(in)           :: dims(2)
  type(bz_samp), intent(in)           :: SEED_k
  type(RT_t),    intent(in), optional :: SEED_RT
  type(levels),  intent(in), optional :: SEED_E
  type(QP_t),    intent(in), optional :: SEED_QP
  real(SP),      intent(in), optional :: SEED_R3(:,:,:)
  logical,       intent(in), optional :: NEAREST
- integer,       intent(out),optional :: ID_op
  !
  ! Work Space
  !
- integer               :: i_dim,ID,i_obj
+ integer               :: i_dim,i_obj
  !
  ! Actions
  !=========
@@ -69,13 +69,10 @@ subroutine INTERPOLATION_driver_seed(dims,operation,SEED_k,SEED_E,SEED_RT,SEED_Q
  !
  ID=-1
  do i_obj=1,max_interpls
-   if (.not.INTERP_obj(i_obj)%in_use) then 
-     ID=i_obj
-     exit
-   endif
+   if (INTERP_obj(i_obj)%in_use) cycle
+   ID=i_obj
+   exit
  enddo
- !
- if (present(ID_op)) ID_op=ID
  !
  ! SEED
  !======
@@ -121,9 +118,10 @@ subroutine INTERPOLATION_driver_seed(dims,operation,SEED_k,SEED_E,SEED_RT,SEED_Q
 end subroutine INTERPOLATION_driver_seed
 !
 !
-subroutine INTERPOLATION_driver_do(operation,OUT_k,OUT_E,QUIET)
+subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,QUIET)
  !
  use R_lattice,            ONLY:bz_samp
+ use com,                  ONLY:error
  use electrons,            ONLY:levels
  use interpolate_tools,    ONLY:INTERPOLATION_nearest_k_report
  use interpolate,          ONLY:INTERP_obj,max_interpls,INTERPOLATION_coefficients,&
@@ -135,13 +133,14 @@ subroutine INTERPOLATION_driver_do(operation,OUT_k,OUT_E,QUIET)
 #include<memory.h>
  !
  character(*),  intent(in)              :: operation
+ integer,       intent(in)              :: ID
  type(bz_samp), intent(inout)           :: OUT_k
  type(levels),  intent(inout), optional :: OUT_E
  logical,       intent(in),    optional :: QUIET
  !
  ! Work Space
  !
- integer               :: ID,i_obj,n(2),nk
+ integer               :: n(2),nk
  logical               :: QUIET_
  !
  QUIET_=.false.
@@ -149,9 +148,7 @@ subroutine INTERPOLATION_driver_do(operation,OUT_k,OUT_E,QUIET)
  !
  if (QUIET_) call IO_and_Messaging_switch("-log")
  !
- do i_obj=1,max_interpls
-   if (operation==trim(INTERP_obj(i_obj)%what)) ID=i_obj
- enddo
+ if (operation/=trim(INTERP_obj(ID)%what)) call error(' Interopolation ID did not match operation name')
  !
  ! ... Allocation
  !
@@ -213,7 +210,7 @@ subroutine INTERPOLATION_driver_create_grid(GRID)
 end subroutine INTERPOLATION_driver_create_grid
 !
 !
-subroutine INTERPOLATION_driver_end(ID_op)
+subroutine INTERPOLATION_driver_end(ID)
  !
  use interpolate_tools,    ONLY:INTERPOLATION_reset
  use interpolate,          ONLY:INTERPOLATE_msg_fmt,INTERPOLATE_initialized,&
@@ -221,20 +218,22 @@ subroutine INTERPOLATION_driver_end(ID_op)
  !
 #include<memory.h>
  !
- integer, intent(in) :: ID_op
+ integer, intent(in) :: ID
  !
  ! Work space
  !
  integer             :: i_obj
  !
- if (ID_op==0) then
+ if (ID>0) then
    !
-   if (ID_op==0)                      return 
-   if (.not.INTERP_obj(ID_op)%in_use) return 
+   ! Reset only specific ID
    !
-   call INTERPOLATION_reset(ID_op)
+   if (.not.INTERP_obj(ID)%in_use) return 
+   call INTERPOLATION_reset(ID)
    !
  else
+   !
+   ! Reset all IDs and clear lattice vectors
    !
    do i_obj=1,max_interpls
      call INTERPOLATION_reset(i_obj)

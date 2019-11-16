@@ -149,8 +149,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    if (l_RT_occupations) operation="df_on_RT_grid"
    if (l_RT_lifetimes)   operation="G_on_RT_grid"
    !
-   call INTERPOLATION_driver_seed(trim(operation),RT_bands,RT_k,SEED_RT=RT_carriers,ID_op=ID_df_or_G)
-   call INTERPOLATION_driver_do(trim(operation),CIRCUIT_k,QUIET=(i_T>1.and..not.n_T_steps==1))
+   call INTERPOLATION_driver_seed(trim(operation),ID_df_or_G,RT_bands,RT_k,SEED_RT=RT_carriers)
+   call INTERPOLATION_driver_do(trim(operation),ID_df_or_G,CIRCUIT_k,QUIET=(i_T>1.and..not.n_T_steps==1))
    !
    ! Normalize the occupations
    !
@@ -241,6 +241,5 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  call RT_carriers_object(RT_carriers,WHAT='free')
  call E_reset(CIRCUIT_E)
  call E_reset(RT_E)
- if(n_spinor>1 .and. BANDS_steps> 0) call INTERPOLATION_driver_end(ID_spin)
  !
 end subroutine RT_occ_bands_interpolation

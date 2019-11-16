@@ -187,13 +187,13 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  !
  if(all(INTERP_grid>0)) call INTERPOLATION_driver_create_grid(INTERP_grid)
  !
- call INTERPOLATION_driver_seed("E_on_built_in",BANDS_range,Xk,SEED_E=Xen,NEAREST=.FALSE.,ID_op=ID_bands(1))
- if (BANDS_steps> 0)    call INTERPOLATION_driver_do("E_on_built_in",CIRCUIT_k,OUT_E=CIRCUIT_E)
- if(all(INTERP_grid>0)) call INTERPOLATION_driver_do("E_on_built_in",GRID_k,   OUT_E=GRID_E   )
+ call INTERPOLATION_driver_seed("E_on_built_in",ID_bands(1),BANDS_range,Xk,SEED_E=Xen,NEAREST=.FALSE.)
+ if (BANDS_steps> 0)    call INTERPOLATION_driver_do("E_on_built_in",ID_bands(1),CIRCUIT_k,OUT_E=CIRCUIT_E)
+ if(all(INTERP_grid>0)) call INTERPOLATION_driver_do("E_on_built_in",ID_bands(1),GRID_k,   OUT_E=GRID_E   )
  !
  if (BANDS_steps> 0.and.allocated(Xen%Eo).and.BANDS_E_and_k_db) then
-   call INTERPOLATION_driver_seed("dE_on_built_in",BANDS_range,Xk,SEED_E=Xen,NEAREST=.FALSE.,ID_op=ID_bands(2))
-   call INTERPOLATION_driver_do("dE_on_built_in",CIRCUIT_k,OUT_E=CIRCUIT_dE)
+   call INTERPOLATION_driver_seed("dE_on_built_in",ID_bands(2),BANDS_range,Xk,SEED_E=Xen,NEAREST=.FALSE.)
+   call INTERPOLATION_driver_do("dE_on_built_in",ID_bands(2),CIRCUIT_k,OUT_E=CIRCUIT_dE)
  endif
  !
  call INTERPOLATION_driver_end(0)

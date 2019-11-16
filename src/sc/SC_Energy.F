@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_Energy(E_total,E_eigen,E_zero,E_Hartree,E_xc_,E,k,rho)
+subroutine SC_Energy(E_total,E_eigen,E_zero,E_Hartree,E_xc_,E_fermi,E,k,rho)
  !
  ! Total energy defined in terms of the KS orbitals
  !
@@ -101,12 +101,12 @@ subroutine SC_Energy(E_total,E_eigen,E_zero,E_Hartree,E_xc_,E,k,rho)
    E_Vxc_rho=E_Vxc_rho-real_V_dot_V(fft_size,rho,V_xc(:,i_spin))
  enddo
  !
- ! E_total =  \sum_v E_v -E_Hartree +(E_xc -\int rho(r) V_xc(r) -\int magn(r) B_xc(r))
- !
- E_total=E_eigen-E_Hartree+(E_xc_-E_Vxc_rho)
- !
  ! Fermi level contribution to E_total
  !
- !E_total=E_total+(E%E_Fermi+E_reference%E_Fermi)*nel
+ E_Fermi=(E%E_Fermi+E_reference%E_Fermi)*nel
+ !
+ ! E_total =  \sum_v E_v -E_Hartree +(E_xc -\int rho(r) V_xc(r) -\int magn(r) B_xc(r))+E_Fermi
+ !
+ E_total=E_eigen-E_Hartree+(E_xc_-E_Vxc_rho)+E_Fermi
  !
 end subroutine SC_Energy

@@ -104,37 +104,29 @@ subroutine electrons_dos(Xk,Xen)
    !
    N_files=2
    !
-   IDe=0
-   IDf=0
-   IDp=0
-   IDs=0
-   !
    call INTERPOLATION_driver_create_grid(INTERP_grid)
    !
-   call INTERPOLATION_driver_seed("E_on_built_in",DOS_bands,Xk,SEED_E=Xen,ID_op=IDe)
-   call INTERPOLATION_driver_do("E_on_built_in",GRID_k,OUT_E=GRID_E)
+   call INTERPOLATION_driver_seed("E_on_built_in",IDe,DOS_bands,Xk,SEED_E=Xen)
+   call INTERPOLATION_driver_do("E_on_built_in",IDe,GRID_k,OUT_E=GRID_E)
    !
-   call INTERPOLATION_driver_seed("f_on_built_in",DOS_bands,Xk,SEED_E=Xen,ID_op=IDf)
-   call INTERPOLATION_driver_do("f_on_built_in",GRID_k,OUT_E=GRID_E,QUIET=.TRUE.)
+   call INTERPOLATION_driver_seed("f_on_built_in",IDf,DOS_bands,Xk,SEED_E=Xen)
+   call INTERPOLATION_driver_do("f_on_built_in",IDf,GRID_k,OUT_E=GRID_E,QUIET=.TRUE.)
    !
    if (l_pdos) then
-     call INTERPOLATION_driver_seed("SPIN_factors_on_built_in",DOS_bands,Xk,SEED_R3=PDOS_fac_v,ID_op=IDp)
-     call INTERPOLATION_driver_do("PDOS_factors_on_built_in",GRID_k)
+     call INTERPOLATION_driver_seed("SPIN_factors_on_built_in",IDp,DOS_bands,Xk,SEED_R3=PDOS_fac_v)
+     call INTERPOLATION_driver_do("PDOS_factors_on_built_in",IDp,GRID_k)
      PDOS_fac_p => linkM2M(INTERP_obj(IDp)%INTERP,shape(INTERP_obj(IDp)%INTERP),&
  &                         lbound(INTERP_obj(IDp)%INTERP),ubound(INTERP_obj(IDp)%INTERP))
    endif
    !
    if (n_spinor==2) then
-     call INTERPOLATION_driver_seed("SPIN_factors_on_built_in",DOS_bands,Xk,SEED_R3=SPIN_fac_v,ID_op=IDs)
-     call INTERPOLATION_driver_do("SPIN_factors_on_built_in",GRID_k)
+     call INTERPOLATION_driver_seed("SPIN_factors_on_built_in",IDs,DOS_bands,Xk,SEED_R3=SPIN_fac_v)
+     call INTERPOLATION_driver_do("SPIN_factors_on_built_in",IDs,GRID_k)
      SPIN_fac_p   => linkM2M(INTERP_obj(IDs)%INTERP,shape(INTERP_obj(IDs)%INTERP),&
 &                            lbound(INTERP_obj(IDs)%INTERP),ubound(INTERP_obj(IDs)%INTERP))
    endif
    !
-   call INTERPOLATION_driver_end(IDe)
-   call INTERPOLATION_driver_end(IDf)
-   call INTERPOLATION_driver_end(IDs)
-   call INTERPOLATION_driver_end(IDp)
+   call INTERPOLATION_driver_end(0)
    !
    do is=1,n_sp_pol
      !

@@ -150,7 +150,7 @@ module interpolate
      type(levels),  intent(out), optional  :: CIRCUIT_dE
    end subroutine electrons_bands_interpolate
    !
-   subroutine INTERPOLATION_driver_seed(operation,dims,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,ID_op,NEAREST)
+   subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,NEAREST)
      use pars,        ONLY:SP
      use real_time,   ONLY:RT_t
      use R_lattice,   ONLY:bz_samp
@@ -158,6 +158,7 @@ module interpolate
      use QP_m,        ONLY:QP_t
      implicit none
      character(*),  intent(in)              :: operation
+     integer,       intent(out)             :: ID
      integer,       intent(in)              :: dims(2)
      type(bz_samp), intent(in)              :: SEED_k
      real(SP),      intent(in),    optional :: SEED_R3(:,:,:)
@@ -165,10 +166,9 @@ module interpolate
      type(QP_t),    intent(in),    optional :: SEED_QP
      type(levels),  intent(in),    optional :: SEED_E
      logical,       intent(in),    optional :: NEAREST
-     integer,       intent(out),   optional :: ID_op
    end subroutine INTERPOLATION_driver_seed
    !
-   subroutine INTERPOLATION_driver_do(operation,OUT_k,OUT_E,QUIET)
+   subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,QUIET)
      use pars,        ONLY:SP
      use real_time,   ONLY:RT_t
      use R_lattice,   ONLY:bz_samp
@@ -176,6 +176,7 @@ module interpolate
      use QP_m,        ONLY:QP_t
      implicit none
      character(*),  intent(in)              :: operation
+     integer,       intent(in)              :: ID
      type(bz_samp), intent(inout)           :: OUT_k
      type(levels),  intent(inout), optional :: OUT_E
      logical,       intent(in),    optional :: QUIET

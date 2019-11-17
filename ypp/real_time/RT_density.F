@@ -144,8 +144,8 @@ subroutine RT_density(en,kpt,qpt)
      enddo
 #endif
      !
-     if(     include_eq_occ) G_loc=dG_lesser(:,:,:,1)+G_lesser_reference
-     if(.not.include_eq_occ) G_loc=dG_lesser(:,:,:,1)
+     if(     include_eq_occ) G_loc=dG_lesser(:,:,:,G_MEM_steps)+G_lesser_reference
+     if(.not.include_eq_occ) G_loc=dG_lesser(:,:,:,G_MEM_steps)
      !
      call el_density_matrix(G_loc,en,kpt,drho,RT_bands(1))
      !

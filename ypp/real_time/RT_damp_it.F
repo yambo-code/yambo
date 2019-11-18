@@ -25,7 +25,7 @@ subroutine RT_damp_it(damp_type,damp_factor,ft,lda)
  !
  use YPP_real_time,  ONLY:RT_time,RT_conf
  use pars,           ONLY:SP,DP
- use com,            ONLY:warning
+ !
  implicit none
  !
  integer,      intent(in)      :: lda

@@ -26,7 +26,6 @@ subroutine plot_check_and_launch(check_only)
  use pars,        ONLY:SP
  use YPPm,        ONLY:p_format,p_dir,plot_dim,use_gnuplot,use_xcrysden,use_cube,&
 &                      plot_is_1D,plot_is_2D,plot_is_3D
- use com,         ONLY:warning
  use D_lattice,   ONLY:a
  use vec_operate, ONLY:v_is_zero
  implicit none

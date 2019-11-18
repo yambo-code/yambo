@@ -28,7 +28,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
- use com,            ONLY:msg,of_open_close,error,file_exists,warning,msg_deliver
+ use com,            ONLY:msg,of_open_close
  use YPPm,           ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,&
 &                         CIRCUIT_E_db,CIRCUIT_k_label
@@ -37,7 +37,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use vec_operate,    ONLY:iku_v_norm
  use RT_control,     ONLY:RT_apply,RT_carriers_object,RT_carriers_to_RT_k,RT_carriers_to_RT_E
  use real_time,      ONLY:RT_carriers,RT_bands
- use interpolate,    ONLY:INTERPOLATION_driver,electrons_bands_interpolate,INTERP_obj,INTERP_mode
+ use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,electrons_bands_interpolate,INTERP_obj,INTERP_mode
  use LIVE_t,         ONLY:live_timing
  !
 #include<memory.h>
@@ -54,7 +54,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation
  character(lchlen)     :: of_string
  logical               :: l_normalize_Nel
- integer               :: ib,ik,i_RT,i_T,n_values,ID_df_or_G,ID_spin,ID_magn
+ integer               :: ib,ik,i_RT,i_T,n_values,ID_df_or_G,ID_spin,ID_magn,ID_bands(2)
+ !
+ logical, external     :: file_exists
  !
  call section('*','Interpolation tool')
  !=====================================
@@ -87,7 +89,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  call k_special(.FALSE.)
  !
  CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
- CIRCUIT_k%nibz=CIRCUIT_k%nbz
+ !
+ call k_define_circuit(k)
  !
  call section('=',"Interpolation")
  !================================
@@ -101,7 +104,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  ! Perform the energies interpolation
  !======================================
- call electrons_bands_interpolate(RT_E,RT_k,RT_bands,CIRCUIT_E,CIRCUIT_dE=CIRCUIT_dE)
+ call electrons_bands_interpolate(RT_E,RT_k,RT_bands,ID_bands,CIRCUIT_E,CIRCUIT_dE=CIRCUIT_dE)
  !
  ! Perform interpolation of spinorial factors and magnetization
  !==============================================================
@@ -149,9 +152,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    if (l_RT_occupations) operation="df_on_RT_grid"
    if (l_RT_lifetimes)   operation="G_on_RT_grid"
    !
-   call INTERPOLATION_driver(bands=RT_bands,SEED_RT=RT_carriers,SEED_k=RT_k,operation=trim(operation),&
-&                            QUIET=.TRUE.,ID_op=ID_df_or_G)
-   call INTERPOLATION_driver(OUT_k=CIRCUIT_k,operation=trim(operation),QUIET=i_T>1.and..not.n_T_steps==1)
+   call INTERPOLATION_driver_seed(trim(operation),ID_df_or_G,RT_bands,RT_k,SEED_RT=RT_carriers)
+   call INTERPOLATION_driver_do(trim(operation),ID_df_or_G,CIRCUIT_k,QUIET=(i_T>1.and..not.n_T_steps==1))
    !
    ! Normalize the occupations
    !
@@ -226,7 +228,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      !
    enddo
    !
-   call INTERPOLATION_driver(operation="END",ID_op=ID_df_or_G)
+   call INTERPOLATION_driver_end(ID_df_or_G)
    !
    call of_open_close(file_name_rt)
    !
@@ -238,10 +240,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  ! Clean
  !
- call INTERPOLATION_driver(operation="END")
+ call INTERPOLATION_driver_end(0)
  call RT_carriers_object(RT_carriers,WHAT='free')
  call E_reset(CIRCUIT_E)
  call E_reset(RT_E)
- if(n_spinor>1 .and. BANDS_steps> 0) call INTERPOLATION_driver(operation="END",ID_op=ID_spin)
  !
 end subroutine RT_occ_bands_interpolation

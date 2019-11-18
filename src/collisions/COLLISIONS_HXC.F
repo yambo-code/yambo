@@ -31,7 +31,6 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_spin
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:error,warning
  use hamiltonian,   ONLY:H_potential
  use D_lattice,     ONLY:DL_vol,sop_inv
  use xc_functionals,ONLY:F_xc,XC_potential_driver

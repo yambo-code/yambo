@@ -45,7 +45,7 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  ! Same procedure for the current
  !
  use pars,          ONLY:SP,DP
- use com,           ONLY:warning,error,msg
+ use com,           ONLY:msg
  use stderr,        ONLY:real2ch
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,     ONLY:bz_samp,b

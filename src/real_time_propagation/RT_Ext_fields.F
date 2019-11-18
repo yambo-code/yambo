@@ -46,7 +46,6 @@ subroutine RT_Ext_fields(A,time)
  use real_time,      ONLY:RT_dyn_step,NE_i_time
  use fields,         ONLY:n_ext_fields,Efield,small_a,gauge_field
  use functions,      ONLY:theta_function
- use com,            ONLY:error
  !
  implicit none
  !

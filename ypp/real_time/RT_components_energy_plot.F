@@ -35,7 +35,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  use electrons,      ONLY:levels,spin,spin_occ,filled_tresh,n_spinor
  use vec_operate,    ONLY:sort
  use functions,      ONLY:Fermi_fnc
- use com,            ONLY:msg,of_open_close,error
+ use com,            ONLY:msg,of_open_close
  use stderr,         ONLY:intc,real2ch
  use real_time,      ONLY:RT_carriers,l_RT_CCA_Kernel,RT_bands
  !

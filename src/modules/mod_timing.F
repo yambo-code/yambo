@@ -12,7 +12,6 @@
 MODULE timing_m
  !
  USE pars,          ONLY:SP,DP
- USE com,           ONLY:error
  USE parallel_m,    ONLY:ncpu,PP_redux_wait,mpi_comm_world
  USE openmp,        ONLY:master_thread
  USE stderr,        ONLY:log_as_a_file

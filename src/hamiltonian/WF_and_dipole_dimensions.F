@@ -24,7 +24,7 @@
 subroutine WF_and_dipole_dimensions(X)
  !
  use drivers,      ONLY:l_real_time,l_sc_fock,l_sc_exx,l_sc_coh,l_sc_sex,l_sc_srpa,l_use_Hxc_collisions
- use com,          ONLY:warning,msg
+ use com,          ONLY:msg
  use X_m,          ONLY:X_t
  use wave_func,    ONLY:wf_ng
  use QP_m,         ONLY:QP_ng_Sx,QP_ng_SH,QP_ng_Vxc,QP_n_G_bands,COHSEX_use_empties

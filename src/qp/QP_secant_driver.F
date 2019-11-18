@@ -61,7 +61,6 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
 &                        QP_W_dr,QP_W_er,QP_dSc_delta
  use IO_m,          ONLY:io_control,NONE,RD,RD_CL,OP_RD,OP_RD_CL,io_SCREEN
  use stderr,        ONLY:intc
- use com,           ONLY:warning
  !
 #include<memory.h>
  type(levels)::en,Xen

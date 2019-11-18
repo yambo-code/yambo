@@ -34,7 +34,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
- use com,            ONLY:msg,error,warning
+ use com,            ONLY:msg
  use stderr,         ONLY:intc,real2ch
  use IO_m,           ONLY:REP,DUMP,NONE
  use vec_operate,    ONLY:c2a,define_b_and_DL_vol

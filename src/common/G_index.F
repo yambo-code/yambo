@@ -27,7 +27,6 @@ integer function G_index(v1)
  use zeros,        ONLY:G_iku_zero
  use vec_operate,  ONLY:v_is_zero,iku_v_norm
  use R_lattice,    ONLY:g_vec,ng_in_shell,n_g_shells,E_of_shell
- use com,          ONLY:error
  !
  implicit none
  !

@@ -23,7 +23,7 @@
 !
 subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  !
- use com,                 ONLY:msg,warning
+ use com,                 ONLY:msg
  use vec_operate,         ONLY:v_norm,sort
  use wave_func,           ONLY:wf_nc_k, wf_igk,wf_ncx,wf_ng
  use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,ng_vec

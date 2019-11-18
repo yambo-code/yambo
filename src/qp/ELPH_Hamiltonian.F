@@ -28,7 +28,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use ELPH,          ONLY:elph_global_alloc,elph_global_free,elph_Ham_bands,elph_Ham_ik,&
 &                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector,RES_tresh
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,mk_dir
- use com,           ONLY:error,msg,of_open_close,file_exists,jobstr,jobdir,core_io_path
+ use com,           ONLY:msg,of_open_close,jobstr,jobdir,core_io_path
  use R_lattice,     ONLY:nqbz,bz_samp,qindx_S
  use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev,n_atoms
  use electrons,     ONLY:levels
@@ -84,6 +84,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
  integer            :: iV
  real               :: A_nk_sq,B_nkq_sq
  complex(SP), allocatable :: mean_u_sq(:,:,:)
+ !
+ logical, external  :: file_exists
  !
  call section('*','Correlation: Electron-Phonon Hamiltonian')
  !

@@ -140,7 +140,7 @@ module parallel_m
  integer          :: PARALLEL_n_structures_active = 0
  logical          :: PARALLEL_ENV_uses_default(n_CPU_str_max) = .false.
  logical          :: linear_algebra_is_parallel = .false.
- character(schlen):: PARALLEL_default_mode="balanced" ! "memory"/"workload"
+ character(schlen):: PARALLEL_default_mode="memory" ! "memory"/"workload"
  !
  !... Logging CPUs ...
  !
@@ -454,10 +454,7 @@ module parallel_m
  end interface PP_redux_wait
  !
  interface PP_bcast
-   module procedure r1bcast,c0bcast,c1bcast,c2bcast,c3bcast,i0bcast,i1bcast,ch0bcast
-#if ! defined _DOUBLE
-   module procedure                                 z3bcast
-#endif
+   module procedure c0bcast,c1bcast,r1bcast,c2bcast,i0bcast,i1bcast,ch0bcast
  end interface PP_bcast
  !
  interface PP_send_and_receive
@@ -468,8 +465,10 @@ module parallel_m
    !
    subroutine PAR_build_index(PAR_ind,N_elements,V_ind,n_V_ind)
      !
-     integer           ::N_elements,n_V_ind,V_ind(N_elements),i_p
-     type(PP_indexes)  ::PAR_ind
+     type(PP_indexes), intent(in)   :: PAR_ind
+     integer,          intent(in)   :: N_elements
+     integer,          intent(out)  :: n_V_ind,V_ind(N_elements)
+     integer                        :: i_p
      !
      V_ind  =0
      n_V_ind=0
@@ -1238,7 +1237,7 @@ module parallel_m
      integer, intent(in) :: node
      integer, optional   :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
+     integer::LOCAL_COMM  ! Work Space  
      if (ncpu==1) return
      !
      if (present(COMM)) then
@@ -1257,7 +1256,7 @@ module parallel_m
      integer, intent(in) :: node
      integer, optional   :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
+     integer::LOCAL_COMM  ! Work Space  
      if (ncpu==1) return
      !
      if (present(COMM)) then
@@ -1276,7 +1275,7 @@ module parallel_m
      integer, intent(in) :: node
      integer, optional :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
+     integer::LOCAL_COMM  ! Work Space  
      if (ncpu==1) return
      !
      if (present(COMM)) then
@@ -1298,7 +1297,7 @@ module parallel_m
      integer, intent(in) :: node
      integer, optional :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
+     integer::LOCAL_COMM  ! Work Space  
      if (ncpu==1) return
      !
      if (present(COMM)) then
@@ -1320,7 +1319,7 @@ module parallel_m
      integer, intent(in) :: node
      integer, optional :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
+     integer::LOCAL_COMM  ! Work Space  
      if (ncpu==1) return
      !
      if (present(COMM)) then
@@ -1342,7 +1341,7 @@ module parallel_m
      integer, intent(in) :: node
      integer, optional :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
+     integer::LOCAL_COMM  ! Work Space  
      integer::imsg(len(chval)), i
      if (ncpu==1) return
      !
@@ -1365,83 +1364,18 @@ module parallel_m
 #endif
    end subroutine
    !
-   subroutine c2bcast(array,node,COMM)
-     implicit none
+   subroutine c2bcast(array,node)
      complex(SP):: array(:,:)
      integer, intent(in) :: node
-     integer, optional :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
-     integer::local_type
-     !
      if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
      !
      local_type=MPI_COMPLEX
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
      !
-     call mpi_bcast(array,size(array),local_type, node, LOCAL_COMM, i_err)
+     call mpi_bcast(array(1,1),size(array),local_type, node,mpi_comm_world , i_err)
 #endif
-   end subroutine c2bcast
-   !
-   subroutine c3bcast(array,node,COMM)
-     implicit none
-     complex(SP):: array(:,:,:)
-     integer, intent(in) :: node
-     integer, optional :: COMM
-#if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
-     integer::local_type
-     !
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_COMPLEX
-     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_bcast(array,size(array),local_type, node, LOCAL_COMM, i_err)
-#endif
-   end subroutine c3bcast
-   !
-#if ! defined _DOUBLE
-   !
-   subroutine z3bcast(array,node,COMM)
-     implicit none
-     complex(DP):: array(:,:,:)
-     integer, intent(in) :: node
-     integer, optional :: COMM
-#if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
-     integer::local_type
-     !
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_bcast(array,size(array),local_type, node, LOCAL_COMM, i_err)
-#endif
-   end subroutine z3bcast
-   !
-#endif
+   end subroutine
    !
    subroutine PP_snd_rcv_c2(mode,array,node,COMM)
      character(*):: mode
@@ -1450,7 +1384,7 @@ module parallel_m
      integer, optional   :: COMM
 #if defined _MPI
      integer, dimension(MPI_STATUS_SIZE) :: MPI_status
-     integer::LOCAL_COMM,i_err! Work Space
+     integer::LOCAL_COMM,i_err! Work Space  
      if (ncpu==1) return
      !
      local_type=MPI_COMPLEX
@@ -1476,7 +1410,7 @@ module parallel_m
      integer, optional   :: COMM
 #if defined _MPI
      integer, dimension(MPI_STATUS_SIZE) :: MPI_status
-     integer::LOCAL_COMM,i_err! Work Space
+     integer::LOCAL_COMM,i_err! Work Space  
      if (ncpu==1) return
      !
      local_type=MPI_COMPLEX

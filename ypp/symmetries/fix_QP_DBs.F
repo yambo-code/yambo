@@ -27,7 +27,7 @@ subroutine fix_QP_DBs(k,k_save,kpoints_map,action_kind)
  use QP_m,                ONLY:QP_t,QP_reset
  use stderr,              ONLY:intc
  use vec_operate,         ONLY:v_is_zero
- use com,                 ONLY:core_io_path,warning
+ use com,                 ONLY:core_io_path
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_RD_CL,DUMP
  use electrons,           ONLY:n_sp_pol
  use R_lattice,           ONLY:bz_samp

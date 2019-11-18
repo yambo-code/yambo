@@ -27,7 +27,7 @@ subroutine k_special(LIST)
  use units,               ONLY:pi
  use R_lattice,           ONLY:bz_samp_reset,b
  use D_lattice,           ONLY:alat,lattice,a
- use com,                 ONLY:msg,of_open_close,msg_deliver,warning
+ use com,                 ONLY:msg,of_open_close
  use vec_operate,         ONLY:c2a,v_norm
  use YPPm,                ONLY:n_path_pts,PtsPath,K_transform,l_high_sym_pts,&
 &                              SPECIAL_k,n_SPECIAL_k_MAX,CIRCUIT_k,SPECIAL_k_label,&
@@ -41,7 +41,8 @@ subroutine k_special(LIST)
  logical :: LIST
  !
  ! Work Space
- ! 
+ !
+ logical          :: l_use_yambo_b
  integer          :: ik,il,n_lines,ip,i_str,K_position(n_SPECIAL_k_MAX)
  real(SP)         :: trial_b(3,3),K_norm,ap,bp,cp,fp,ep,K_sign(n_SPECIAL_k_MAX),k_l(3),k_lp1(3)
  character(schlen):: Path_strings(50),dumb_ch,k_f_name(2)
@@ -57,24 +58,30 @@ subroutine k_special(LIST)
  !  http://cst-www.nrl.navy.mil/bind/kpts/index.html
  !  http://lamp.tu-graz.ac.at/
  !
+ !
+ ! 2019/02/01:
+ ! If yambo "b" is different
+ ! i.e. in case for example the FCC has
+ ! b(1,:)=(/-0.5, 0.5, 0.5/)*2.*pi/alat(1)
+ ! b(2,:)=(/ 0.5,-0.5.,0.5/)*2.*pi/alat(1)
+ ! b(3,:)=(/ 0.5, 0.5,-0.5/)*2.*pi/alat(1)
+ ! to properly detect special k-points
+ ! set the following logical to .true.
+ !
+ l_use_yambo_b=.true.
+ !
+ !
  select case (trim(lattice))
    !
    case('FCC')
      !
-     trial_b(1,:)=(/-1., 1., 1./)*2.*pi/alat(1)
-     trial_b(2,:)=(/ 1.,-1., 1./)*2.*pi/alat(1)
-     trial_b(3,:)=(/ 1., 1.,-1./)*2.*pi/alat(1)
-     !
-     ! 2019/02/01:
-     ! If yambo "b" is different
-     ! i.e. in case for example
-     ! b(1,:)=(/-0.5, 0.5, 0.5/)*2.*pi/alat(1)
-     ! b(2,:)=(/ 0.5,-0.5.,0.5/)*2.*pi/alat(1)
-     ! b(3,:)=(/ 0.5, 0.5,-0.5/)*2.*pi/alat(1)
-     ! to properly detect special k-points
-     ! uncomment the following line
-     !
-     !trial_b=b
+     if(l_use_yambo_b) then
+       trial_b=b
+     else
+       trial_b(1,:)=(/-1., 1., 1./)*2.*pi/alat(1)
+       trial_b(2,:)=(/ 1.,-1., 1./)*2.*pi/alat(1)
+       trial_b(3,:)=(/ 1., 1.,-1./)*2.*pi/alat(1)
+     endif
      !
      SPECIAL_k%nbz=6
      !
@@ -97,9 +104,13 @@ subroutine k_special(LIST)
      !
    case('BCC')
      !
-     trial_b(1,:)=(/ 0._SP, 1._SP, 1._SP/)*2._SP*pi/alat(1)
-     trial_b(2,:)=(/ 1._SP, 0._SP, 1._SP/)*2._SP*pi/alat(1)
-     trial_b(3,:)=(/ 1._SP, 0._SP,-1._SP/)*2._SP*pi/alat(1)
+     if(l_use_yambo_b) then
+       trial_b=b
+     else
+       trial_b(1,:)=(/ 0._SP, 1._SP, 1._SP/)*2._SP*pi/alat(1)
+       trial_b(2,:)=(/ 1._SP, 0._SP, 1._SP/)*2._SP*pi/alat(1)
+       trial_b(3,:)=(/ 1._SP, 0._SP,-1._SP/)*2._SP*pi/alat(1)
+     endif
      !
      SPECIAL_k%nbz=4
      !
@@ -184,9 +195,13 @@ subroutine k_special(LIST)
      !
    case('CUB')
      !
-     trial_b(1,:)=(/ 1., 0., 0./)*2.*pi/alat(1)
-     trial_b(2,:)=(/ 0., 1., 0./)*2.*pi/alat(1)
-     trial_b(3,:)=(/ 0., 0., 1./)*2.*pi/alat(1)
+     if(l_use_yambo_b) then
+       trial_b=b
+     else
+       trial_b(1,:)=(/ 1., 0., 0./)*2.*pi/alat(1)
+       trial_b(2,:)=(/ 0., 1., 0./)*2.*pi/alat(1)
+       trial_b(3,:)=(/ 0., 0., 1./)*2.*pi/alat(1)
+     endif
      !
      SPECIAL_k%nbz=4
      !
@@ -205,9 +220,13 @@ subroutine k_special(LIST)
      !
    case('HCP')
      !
-     trial_b(1,:)=(/ 1.,-1./sqrt(3.), 0./)*2.*pi/alat(1)
-     trial_b(2,:)=(/ 1., 1./sqrt(3.), 0./)*2.*pi/alat(1)
-     trial_b(3,:)=(/ 0., 0.,          1./)*2.*pi/alat(3)
+     if(l_use_yambo_b) then
+       trial_b=b
+     else
+       trial_b(1,:)=(/ 1.,-1./sqrt(3.), 0./)*2.*pi/alat(1)
+       trial_b(2,:)=(/ 1., 1./sqrt(3.), 0./)*2.*pi/alat(1)
+       trial_b(3,:)=(/ 0., 0.,          1./)*2.*pi/alat(3)
+     endif
      !
      SPECIAL_k%nbz=7
      !
@@ -289,7 +308,7 @@ subroutine k_special(LIST)
    !
  endif
  !
- CIRCUIT_k%nbz=n_path_pts* ( n_lines -1 )
+ CIRCUIT_k%nbz =n_path_pts* ( n_lines -1 )
  !
  if (CIRCUIT_k%nbz>0) then
    !
@@ -314,6 +333,7 @@ subroutine k_special(LIST)
      enddo
    enddo
    CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
+   CIRCUIT_k%nibz=CIRCUIT_k%nbz
    CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=SPECIAL_k%pt(K_position(n_lines),:)*K_sign(n_lines)
    if (k_sign(n_lines)>0.) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(n_lines) )
    if (k_sign(n_lines)<0.) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(n_lines) )
@@ -371,4 +391,4 @@ subroutine k_special(LIST)
     !
    end subroutine
    !
-end subroutine
+end subroutine k_special

@@ -192,7 +192,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
- call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_RL) 
+ call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit) 
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt)
@@ -251,9 +251,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
  call it('f',defs,'UseEbands', '[GW] Force COHSEX to use empty bands',verb_level=V_qp)
 #endif
- call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
+ call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit,verb_level=V_qp)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
- call it(defs,'dScStep',  '[GW] Energy step to evaluate Z factors',QP_dSc_delta,E_unit)
+ call it(defs,'dScStep',  '[GW] Energy step to evaluate Z factors',QP_dSc_delta,E_unit,verb_level=V_qp)
  call it(defs,'DysSolver','[GW] Dyson Equation solver ("n","s","g")',QP_solver,protect=.FALSE.,case="a")
  call it(defs,'GEnSteps', '[GW] Green`s Function (GF) energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',  '[GW] GF energy range',QP_G_er,E_unit)
@@ -280,7 +280,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSEmod',  '[BSE] resonant/retarded/coupling',BSE_mode,case="a")
  call it(defs,'Lkind',   '[BSE] Lbar (default) / full',L_kind,verb_level=V_resp)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
- call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
+ call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]', &
+&         BS_n_g_W,G_unit,verb_level=V_resp)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  !
@@ -314,7 +315,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',BSS_Wd,E_unit,verb_level=V_resp)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
- call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs',verb_level=V_resp)
+ call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs')
 #if defined _SLEPC
  call it(defs,'BSSNEig',    '[SLEPC] Number of eigenvalues to compute',BSS_n_eig)
  call it(defs,'BSSEnTarget','[SLEPC] Target energy to find eigenvalues',BSS_target_E,E_unit,verb_level=V_resp)
@@ -501,22 +502,22 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! Non liner optics
  !
- call it(defs,'NLBands',      '[NL] Bands',NL_bands)
+ call it(defs,'NLBands',      '[NL] Bands range',NL_bands)
  call it(defs,'NLverbosity',  '[NL] Verbosity level (low | high)',NL_verb_name) 
- call it(defs,'NLstep',       '[NL] Real Time step length',RT_step,unit=Time_unit(1),Verb_level=V_nl_optics)
+ call it(defs,'NLstep',       '[NL] Time step length',RT_step,unit=Time_unit(1),Verb_level=V_nl_optics)
  call it(defs,'NLtime',       '[NL] Simulation Time',NE_tot_time,unit=Time_unit(1))
  call it(defs,'NLintegrator', '[NL] Integrator ("EULEREXP/RK2/RK4/RK2EXP/HEUN/INVINT/CRANKNIC")',Integrator_name)
  call it(defs,'NLCorrelation','[NL] Correlation ("IPA/HARTREE/TDDFT/LRC/LRW/JGM/SEX") ',NL_correlation)
  call it(defs,'NLLrcAlpha',   '[NL] Long Range Correction',NL_LRC_alpha)
- call it(defs,'NLDamping',    '[NL] Damping',NL_damping,unit=E_unit)
+ call it(defs,'NLDamping',    '[NL] Damping (or dephasing)',NL_damping,unit=E_unit)
  call it(defs,'NLEnRange',    '[NL] Energy range',NL_er,E_unit)
  call it(defs,'NLEnSteps',    '[NL] Energy steps',n_frequencies)
  call it('f',defs,'UseDipoles','[NL] Use Covariant Dipoles (just for test purpose)',verb_level=V_nl_optics)
  call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_nl_optics)
  call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
  !
- call it(defs,'ExtF_Dir',             '[NL ExtF] Versor',Efield(1)%versor)
- call it(defs,'ExtF_Int',             '[NL ExtF] Intensity',Efield(1)%intensity,unit=I_unit  ,verb_level=V_nl_optics)
+ call it(defs,'ExtF_Dir',             '[NL ExtF] Field Versor',Efield(1)%versor)
+ call it(defs,'ExtF_Int',             '[NL ExtF] Field Intensity',Efield(1)%intensity,unit=I_unit  ,verb_level=V_nl_optics)
  call it(defs,'ExtF_Width',           '[NL ExtF] Field Width',Efield(1)%width,unit=Time_unit(1),verb_level=V_nl_optics)
  call it(defs,'ExtF_kind',            '[NL ExtF] Kind(SIN|SOFTSIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',Efield(1)%ef_name)
  call it(defs,'ExtF_Tstart',          '[NL ExtF] Initial Time',Efield(1)%t_initial,unit=Time_unit(1),               &
@@ -768,10 +769,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        call it(defs,trim(name),'[PARALLEL] CPUs roles '//trim(possible_fields),&
 &              CPU_structure(i_s)%ROLE_string,verb_level=V_parallel)
        name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg_INV"
-       call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra',&
+       call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra (if -1 it is automatically set)',&
 &              CPU_structure(i_s)%nCPU_lin_algebra_INV,verb_level=V_parallel)
        name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg_DIAGO"
-       call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra',&
+       call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra (if -1 it is automatically set)',&
 &              CPU_structure(i_s)%nCPU_lin_algebra_DIAGO,verb_level=V_parallel)
      enddo
      !
@@ -789,7 +790,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      ! 
      ! Work Space
      ! 
-     integer           ::i1,V_iq
+     integer           ::i1,V_iq,V_DmRnge
      integer,parameter ::n_des=14
      character(8)      ::nms(n_des),sfx
      character(100)    ::des(n_des)
@@ -823,13 +824,17 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        write (nms(i1),'(2a)')  lch2(1:6),trim(sfx)
      enddo
      !
-     V_iq  =0
+     V_iq     =0
+     V_DmRnge = 0
      !
-     if (.not.X%whoami==3) V_iq  =V_resp 
+     if (.not.X%whoami==3) then
+       V_iq     = V_resp 
+       V_DmRnge = V_resp
+     endif
      !
      call it(defs,nms( 1),des( 1),X%ordering,verb_level=V_resp)
      call it(defs,nms( 2),des( 2),wv%er,E_unit,verb_level=0) 
-     call it(defs,nms( 3),des( 3),wv%dr,E_unit,verb_level=0)
+     call it(defs,nms( 3),des( 3),wv%dr,E_unit,verb_level=V_DmRnge)
      call it(defs,nms( 4),des( 4),X%cg_percentual,verb_level=V_resp)
      call it(defs,nms( 5),des( 5),wv%n_freqs,verb_level=0)
      call it(defs,nms( 6),des( 6),wv%per_memstps,verb_level=V_resp)

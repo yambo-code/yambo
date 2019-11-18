@@ -60,7 +60,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  ! Work Space
  !
  type(PP_indexes) ::PAR_IND_freqs
- integer          ::ig1,ig2,iw_par,iw,iw_X(1),INV_MODE,i_LA_pool,i_err,&
+ integer          ::ig1,ig2,iw_par,iw,iw_X(1),INV_MODE,i_LA_pool,&
 &                   PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%n_CPU)
  type(PAR_matrix) ::KERNEL,Xo,BUFFER,K_FXC
  !

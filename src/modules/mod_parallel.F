@@ -1238,7 +1238,7 @@ module parallel_m
      integer, intent(in) :: node
      integer, optional   :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space  
+     integer::LOCAL_COMM  ! Work Space
      if (ncpu==1) return
      !
      if (present(COMM)) then
@@ -1257,7 +1257,7 @@ module parallel_m
      integer, intent(in) :: node
      integer, optional   :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space  
+     integer::LOCAL_COMM  ! Work Space
      if (ncpu==1) return
      !
      if (present(COMM)) then
@@ -1276,7 +1276,7 @@ module parallel_m
      integer, intent(in) :: node
      integer, optional :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space  
+     integer::LOCAL_COMM  ! Work Space
      if (ncpu==1) return
      !
      if (present(COMM)) then
@@ -1298,7 +1298,7 @@ module parallel_m
      integer, intent(in) :: node
      integer, optional :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space  
+     integer::LOCAL_COMM  ! Work Space
      if (ncpu==1) return
      !
      if (present(COMM)) then
@@ -1320,7 +1320,7 @@ module parallel_m
      integer, intent(in) :: node
      integer, optional :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space  
+     integer::LOCAL_COMM  ! Work Space
      if (ncpu==1) return
      !
      if (present(COMM)) then
@@ -1342,7 +1342,7 @@ module parallel_m
      integer, intent(in) :: node
      integer, optional :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space  
+     integer::LOCAL_COMM  ! Work Space
      integer::imsg(len(chval)), i
      if (ncpu==1) return
      !
@@ -1371,7 +1371,7 @@ module parallel_m
      integer, intent(in) :: node
      integer, optional :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space  
+     integer::LOCAL_COMM  ! Work Space
      integer::local_type
      !
      if (ncpu==1) return
@@ -1396,7 +1396,7 @@ module parallel_m
      integer, intent(in) :: node
      integer, optional :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space  
+     integer::LOCAL_COMM  ! Work Space
      integer::local_type
      !
      if (ncpu==1) return
@@ -1423,7 +1423,7 @@ module parallel_m
      integer, intent(in) :: node
      integer, optional :: COMM
 #if defined _MPI
-     integer::LOCAL_COMM  ! Work Space  
+     integer::LOCAL_COMM  ! Work Space
      integer::local_type
      !
      if (ncpu==1) return
@@ -1450,7 +1450,7 @@ module parallel_m
      integer, optional   :: COMM
 #if defined _MPI
      integer, dimension(MPI_STATUS_SIZE) :: MPI_status
-     integer::LOCAL_COMM,i_err! Work Space  
+     integer::LOCAL_COMM,i_err! Work Space
      if (ncpu==1) return
      !
      local_type=MPI_COMPLEX
@@ -1476,7 +1476,7 @@ module parallel_m
      integer, optional   :: COMM
 #if defined _MPI
      integer, dimension(MPI_STATUS_SIZE) :: MPI_status
-     integer::LOCAL_COMM,i_err! Work Space  
+     integer::LOCAL_COMM,i_err! Work Space
      if (ncpu==1) return
      !
      local_type=MPI_COMPLEX

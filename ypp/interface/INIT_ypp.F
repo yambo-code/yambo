@@ -38,7 +38,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use it_m,           ONLY:initdefs,initmode,infile,nrnlvls,rnlvls,infile_verbosity,&
                           V_general,V_qp,V_all,V_real_time,V_nl_optics
  use drivers,        ONLY:infile_editing
- use com,            ONLY:file_exists,write_to_report,repfile,write_the_logo,rename_file
+ use com,            ONLY:write_to_report,repfile
  use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile,STRING_match,STRING_same
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
@@ -79,9 +79,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  logical          ::l_init_QP,l_flag
  type(initdefs)   ::defs
- integer, external::io_RIM,io_COL_CUT,io_ATMPROJ_pwscf
  integer          ::i1,i2,ID,io_err,i_cycle
  character(schlen)::rstr_piece(60) 
+ !
+ integer, external::io_RIM,io_COL_CUT,io_ATMPROJ_pwscf
+ logical, external::file_exists 
  !
 #if defined _YPP_SC
  type(levels)     ::E_dummy

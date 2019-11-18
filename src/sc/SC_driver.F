@@ -45,7 +45,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,WF_free, &
 &                         PARALLEL_WF_distribute,PARALLEL_WF_index,LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
  use H_interfaces,   ONLY:V_real_space_to_H
- use com,            ONLY:msg,warning,error
+ use com,            ONLY:msg
  use X_m,            ONLY:X_t,current_iq,X_alloc
  use DIPOLES,        ONLY:DIPOLE_t
  use LIVE_t,         ONLY:LIVE_message
@@ -78,7 +78,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
 &                            E_previous(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol), &
 &                            dE(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol),         &
 &                            max_overlap(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol),&
-&                            E_total,E_tot_bands,E_tot_zero,E_tot_Hartree,E_tot_xc
+&                            E_total,E_Fermi,E_tot_bands,E_tot_zero,E_tot_Hartree,E_tot_xc
  real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:),magn_nm1(:,:)
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: H_nl_nm1(:,:,:,:)

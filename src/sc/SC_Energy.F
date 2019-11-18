@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_Energy(E_total,E_eigen,E_zero,E_Hartree,E_xc_,E_fermi,E,k,rho)
+subroutine SC_Energy(E_total,E_eigen,E_zero,E_Hartree,E_xc_,E_Fermi,E,k,rho)
  !
  ! Total energy defined in terms of the KS orbitals
  !
@@ -40,7 +40,7 @@ subroutine SC_Energy(E_total,E_eigen,E_zero,E_Hartree,E_xc_,E_fermi,E,k,rho)
  !
  type(levels) ::E
  type(bz_samp)::k
- real(SP)     ::E_eigen,E_zero,E_total,E_Hartree,E_xc_
+ real(SP)     ::E_eigen,E_zero,E_total,E_Hartree,E_xc_,E_Fermi
  real(SP)     ::rho(fft_size)
  !
  ! Work Space

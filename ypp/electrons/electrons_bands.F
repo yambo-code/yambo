@@ -40,7 +40,7 @@ subroutine electrons_bands(Xk,Xen)
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
- use com,            ONLY:msg,file_exists,msg_deliver
+ use com,            ONLY:msg
  use parser_m,       ONLY:parser
  use interpolate,    ONLY:electrons_bands_interpolate,GRID_k
  use QP_CTL_m,       ONLY:QP_apply
@@ -64,6 +64,8 @@ subroutine electrons_bands(Xk,Xen)
  integer               :: ID_proj
  logical               :: proj_wfc
 #endif
+ !
+ logical, external     :: file_exists
  !
  ! Apply QP corrections
  !====================== 

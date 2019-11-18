@@ -27,7 +27,7 @@ subroutine k_define_circuit(Xk)
  use R_lattice,      ONLY:bz_samp,bz_samp_reset,k_the_nearest
  use D_lattice,      ONLY:alat,a
  use electrons,      ONLY:n_sp_pol
- use com,            ONLY:msg,error,warning
+ use com,            ONLY:msg
  use parser_m,       ONLY:parser
  use interfaces,     ONLY:io_DB1_selective_scan
  use vec_operate,    ONLY:c2a,v_norm

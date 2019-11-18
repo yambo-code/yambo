@@ -25,7 +25,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  use pars,          ONLY:SP,pi,schlen
  use R_lattice,     ONLY:bz_samp
- use com,           ONLY:error
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
  use QP_CTL_m,      ONLY:QP_apply
@@ -240,7 +239,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
      use pars,   ONLY:schlen
      use stderr, ONLY:STRING_split,intc
      use YPPm,   ONLY:state_ctl,EXCITONS_user_indexes,EXCITONS_n_user_states,EXCITON_E_treshold,EXCITON_Res_treshold
-     use com,    ONLY:warning,msg
+     use com,    ONLY:msg
      !
      implicit none
      !

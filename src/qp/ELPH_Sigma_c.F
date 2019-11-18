@@ -33,7 +33,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,spin_occ
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg,error
+ use com,           ONLY:msg
  use drivers,       ONLY:l_elel_corr
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index,PAR_IND_QP,&
 &                        PAR_IND_Q_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&

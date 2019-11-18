@@ -28,7 +28,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
- use com,            ONLY:msg,of_open_close,error,file_exists,warning,msg_deliver
+ use com,            ONLY:msg,of_open_close
  use YPPm,           ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,&
 &                         CIRCUIT_E_db,CIRCUIT_k_label
@@ -55,6 +55,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  character(lchlen)     :: of_string
  logical               :: l_normalize_Nel
  integer               :: ib,ik,i_RT,i_T,n_values,ID_df_or_G,ID_spin,ID_magn,ID_bands(2)
+ !
+ logical, external     :: file_exists
  !
  call section('*','Interpolation tool')
  !=====================================

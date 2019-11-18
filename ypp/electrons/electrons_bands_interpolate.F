@@ -28,7 +28,6 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
 &                         CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp,bz_samp_reset,k_the_nearest
- use com,            ONLY:error
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k
  !
  implicit none

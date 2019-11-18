@@ -25,7 +25,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  !
  use units,          ONLY:HA2EV
  use pars,           ONLY:SP,schlen
- use com,            ONLY:msg,of_open_close,error
+ use com,            ONLY:msg,of_open_close
  use electrons,      ONLY:levels,n_sp_pol,n_spinor
  use vec_operate,    ONLY:v_norm,iku_v_norm
  use R_lattice,      ONLY:bz_samp
@@ -51,6 +51,9 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  character(schlen)     :: file_name(maxval(nfiles)),headings(dims(2)-dims(1)+1+4)
  real(SP)              :: value_k(4),values(dims(2)-dims(1)+1),tmp_dist(3),tmp_k(3),&
 &                         tmp_var(dims(1):dims(2),maxval(nfiles),nquantities)
+#if defined _YPP_SC
+ logical               :: proj_wfc
+#endif
  !
  ! Allocs
  !

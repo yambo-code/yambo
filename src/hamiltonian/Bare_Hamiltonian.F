@@ -37,7 +37,6 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use timing_m,       ONLY:timing
 #if defined _SC
  use drivers,        ONLY:l_sc_run
- use com,            ONLY:error
 #endif
 #if defined _RT
  use drivers,        ONLY:l_real_time

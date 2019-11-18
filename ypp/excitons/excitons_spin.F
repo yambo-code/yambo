@@ -26,12 +26,11 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  use pars,          ONLY:SP,cZERO,rZERO
  use BS,            ONLY:BS_bands
  use BS_solvers,    ONLY:BS_mat,BSS_n_eig
- use com,           ONLY:msg,error,warning
+ use com,           ONLY:msg
  use FFT_m,         ONLY:fft_size
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:n_spinor,n_sp_pol,n_spin
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg,error,warning
  use interfaces,    ONLY:WF_load,WF_free,PARALLEL_index
  use wave_func,     ONLY:WF,wf_ng
  use wrapper,       ONLY:Vstar_dot_V

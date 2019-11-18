@@ -24,7 +24,7 @@
 subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_kind)
  !
  use pars,                ONLY:SP,lchlen,cZERO
- use com,                 ONLY:msg,core_io_path,more_io_path,error
+ use com,                 ONLY:msg,core_io_path,more_io_path
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_CL,OP_WR,OP_RD,&
 &                              OP_APP,OP_RD_CL,RD_CL,RD,frag_WF
  use wave_func,           ONLY:io_WF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &

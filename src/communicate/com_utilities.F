@@ -262,3 +262,64 @@ subroutine msg_deliver(of_name,formatted_msg)
  enddo
  !
 end subroutine msg_deliver
+!
+!
+subroutine msg_manager(how)
+ !
+ ! how = '(n)s(n)' '(n)r(n)' '(n)l(n)' 'o PATTERN'
+ !
+ ! r(eport)
+ ! s(tderr)
+ ! oN=msgunits(N) 
+ !
+ use pars,    ONLY:schlen,lchlen
+ use stderr,  ONLY:STRING_split,STRING_remove
+ use com,     ONLY:terminator,opened_of,of_unit,max_open_ofs,write_to_report,jobstr
+ !
+ implicit none
+ !
+ character(*) how
+ ! 
+ ! Work Space
+ !
+ integer          ::i1,i2
+ character(schlen)::ch_piece(10)
+ character(lchlen)::stripped_file_name
+ !
+ terminator(1)='('
+ terminator(2)=')'
+ !
+ ! o. files
+ !
+ if (how(:1)=="o") then
+   call STRING_split(how,ch_piece)
+   do i2=2,10
+     if (len_trim(ch_piece(i2))==0) cycle
+     do i1=1,max_open_ofs-1
+       if (len_trim(opened_of(i1))==0) cycle
+       stripped_file_name=STRING_remove(opened_of(i1),trim(jobstr))
+       if (index( stripped_file_name,trim(ch_piece(i2)) )/=0) then
+         of_unit(i1) =-of_unit(i1)
+       endif
+     enddo
+   enddo
+   return
+ endif
+ !
+ ! Report
+ !
+ if (index(how,'r' )/=0.and.write_to_report) then
+   of_unit(max_open_ofs) =-of_unit(max_open_ofs)
+   if (index(how,'nr')/=0) terminator(1)='(/'
+   if (index(how,'rn')/=0) terminator(2)='/)'
+ endif
+ !
+ ! Log 
+ !
+ if (index(how,'l' )/=0) then
+   terminator(3:4)=' '
+   if (index(how,'nl')/=0) terminator(3)='n'
+   if (index(how,'ln')/=0) terminator(4)='n'
+ endif
+ !
+end subroutine msg_manager

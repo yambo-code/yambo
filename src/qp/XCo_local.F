@@ -47,7 +47,6 @@ subroutine XCo_local(E,Xk)
 #endif
 #if defined _SC
  use hamiltonian,   ONLY:V_xc_sc,V_hartree_sc
- use com,           ONLY:error
  use IO_m,          ONLY:REP,VERIFY
  use SC,            ONLY:load_SC_components,SC_fft_size,compatible_SC_DB
 #endif

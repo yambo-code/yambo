@@ -31,7 +31,7 @@ subroutine electrons_dos(Xk,Xen)
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol
  use YPPm,           ONLY:output_fname,DOS_bands,DOS_E_steps,K_transform,&
 &                         INTERP_grid,electrons_dos_elemental,l_pdos
- use com,            ONLY:msg,of_open_close,warning
+ use com,            ONLY:msg,of_open_close
  use QP_CTL_m,       ONLY:QP_apply
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k,INTERP_obj
  use stderr,         ONLY:intc

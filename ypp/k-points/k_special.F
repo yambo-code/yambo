@@ -27,7 +27,7 @@ subroutine k_special(LIST)
  use units,               ONLY:pi
  use R_lattice,           ONLY:bz_samp_reset,b
  use D_lattice,           ONLY:alat,lattice,a
- use com,                 ONLY:msg,of_open_close,msg_deliver,warning
+ use com,                 ONLY:msg,of_open_close
  use vec_operate,         ONLY:c2a,v_norm
  use YPPm,                ONLY:n_path_pts,PtsPath,K_transform,l_high_sym_pts,&
 &                              SPECIAL_k,n_SPECIAL_k_MAX,CIRCUIT_k,SPECIAL_k_label,&

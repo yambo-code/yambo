@@ -26,6 +26,7 @@ module D_lattice
  use pars,        ONLY:SP,lchlen,cONE,cZERO,cI,schlen
  use com,         ONLY:error
  !
+#include<dev_defs.h>
 #include<memory.h>
  !
  ! Non periodic directions
@@ -51,14 +52,13 @@ module D_lattice
  logical :: mag_syms
  real(SP),allocatable    :: dl_sop(:,:,:)
  complex(SP),allocatable :: spin_sop(:,:,:)
-#if defined _CUDA
- complex(SP),allocatable, device :: spin_sop_d(:,:,:)
- integer,    allocatable, device :: sop_inv_d(:)
-#endif
  integer, allocatable    :: sop_tab(:,:)
  integer, allocatable    :: sop_inv(:)
  integer, allocatable    :: irt(:,:,:)     ! (nsym,nat,n_at_species) gives the index of a rotated atomic position
  integer, allocatable    :: icell(:,:,:,:) ! (3,nsym,nat,n_at_species) gives the referene cell after a symm is operated
+ ! device memory
+ complex(SP),allocatable DEV_ATTRIBUTE :: spin_sop_d(:,:,:)
+ integer,    allocatable DEV_ATTRIBUTE :: sop_inv_d(:)
  !
  ! Pauli matrices
  !

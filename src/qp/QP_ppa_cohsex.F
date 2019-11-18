@@ -84,13 +84,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  character(schlen)::ch,SECTION_name
  logical          ::X_is_TR_rotated,l_X_alloc
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
- complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,ctmp
- complex(DP)      ::dp_dummy
+ complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor
+ complex(DP)      ::dp_dummy,ctmp
  !
 #ifdef _CUDA
  integer                      :: Xng, Xr1, Xr2
  real(SP)                     :: XppaE, bose_PPA_E
- real(SP)                     :: dp_dummy_r, dp_dummy_i
+ real(DP)                     :: dp_dummy_r, dp_dummy_i
  complex(SP)                  :: W_i_w
  complex(SP), pointer, device :: isc_rhotw_d(:)
  complex(SP), pointer, device :: iscp_rhotw_d(:)
@@ -268,7 +268,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! Poles and Residuals
      !
      ! DV comment:
-     ! When cutoff is used, here it needs a careful check. Because of qpg can be imaginary, also are some component of X_mat, I'm not sure
+     ! When cutoff is used, here a careful check is needed.
+     ! Because of qpg can be imaginary, also are some component of X_mat, I'm not sure
      ! that the definition here below of X_mat(ig1,ig2,:) is correct.
      !
 #if defined _SC
@@ -514,15 +515,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_i_w-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_i_w)-E_kmq+PPA_E))
                !
-               dp_dummy_r=dp_dummy_r+real(ctmp,kind=DP)
-               dp_dummy_i=dp_dummy_i+real(aimag(ctmp),kind=DP)
+               dp_dummy_r=dp_dummy_r+real(ctmp)   ! real(ctmp,DP)
+               dp_dummy_i=dp_dummy_i+imag(ctmp)
                !
              enddo
            enddo
            !
            dp_dummy%re = dp_dummy_r
            dp_dummy%im = dp_dummy_i
-           dc(i_w) = dp_dummy
+           dc(i_w) = cmplx(dp_dummy,kind=SP)
            !
          enddo
 #else
@@ -540,7 +541,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i_w))-E_kmq+PPA_E))
                !
-               dp_dummy=dp_dummy+cmplx(ctmp,kind=DP)
+               dp_dummy=dp_dummy+ctmp
                !
              enddo
            enddo

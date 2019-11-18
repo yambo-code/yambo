@@ -188,7 +188,7 @@ contains
    use R_lattice,             ONLY : ng_vec
    use D_lattice,             ONLY : input_GS_Tel, n_atomic_species
    use wave_func,             ONLY : wf_ncx 
-   use com,                   ONLY : msg, error
+   use com,                   ONLY : msg
    use LIVE_t,                ONLY : live_timing_is_on
    use units,                 ONLY : HA2KEL
    type(levels),     intent(out)  :: en     ! Energies
@@ -462,7 +462,6 @@ contains
  subroutine get_symmetries
    use pars
    use mod_com2y,  ONLY : symmetries_check_and_load,force_noWFs
-   use com,        ONLY : warning,error
    use vec_operate,ONLY : v_is_zero
    use D_lattice,  ONLY : a
    use R_lattice,  ONLY : b
@@ -551,7 +550,6 @@ contains
    use R_lattice,   ONLY:bz_samp
    use D_lattice,   ONLY:alat
    use vec_operate, ONLY:v_is_zero
-   use com,         ONLY:warning
 #include<memory.h>
    type(bz_samp) :: k
    !
@@ -677,7 +675,7 @@ contains
    use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng
    use R_lattice,             ONLY : bz_samp, ng_vec
    use mod_com2y,             ONLY : force_noWFs
-   use com,                   ONLY : msg, error
+   use com,                   ONLY : msg
    character(lchlen) :: lch
    type(bz_samp) :: k
    integer i1,ik,nfft_tmp(3)
@@ -840,7 +838,6 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_xc
-   use com,            ONLY: warning,error
    use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION, GS_exx_SCREENING,&
 &                            XC_FACTOR,XC_HYB_GGA_XC_GAUPBE,XC_HYB_GGA_XC_PBEH,XC_HYB_GGA_XC_B3LYP      
    use mod_xc2y,       ONLY: XC_yamboID,  XC_yamboID2kind

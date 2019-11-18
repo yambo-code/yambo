@@ -75,7 +75,7 @@ module mod_com2y
    !
    subroutine symmetries_check_and_load(int_sop,nsym_,trevsym,t_rev)
      !
-     use com,       ONLY:msg,error
+     use com,       ONLY:msg
      use electrons, ONLY:l_spin_orbit,n_spin_den
      use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,mag_syms,inv_index,&
 &                        atoms_spatial_inversion,i_space_inv,alat

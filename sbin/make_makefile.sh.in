@@ -183,7 +183,7 @@ FC_NOOPT_SRC= ${FC_NOOPT_SRC}
 #
 \$(FC_NOOPT_SRC):
 	${rm_command}
-	${PREFIX}(eval \$(fpp) \$(dopts) \$(srcdir)/$cdir/\$*.F > \$*.tmp_source)
+	${PREFIX}(eval \$(fpp) \$(dopts) \$(linclude) \$(srcdir)/$cdir/\$*.F > \$*.tmp_source)
 	@\$(srcdir)/sbin/replacer.sh \$*.tmp_source
 	@mv \$*.tmp_source_space \$*\$(f90suffix)
 	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(lf90include) \$(lf90libinclude) \$*\$(f90suffix)) > /dev/null

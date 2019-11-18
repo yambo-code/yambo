@@ -57,7 +57,6 @@ module com
  ! 
  ! Output Files/Report File
  !
- integer, parameter :: num_of_alternative_locations=4+2*n_max_jobstr
  character(lchlen)  :: of(nofs)
  character(lchlen)  :: opened_of(max_open_ofs)
  integer            :: of_unit(max_open_ofs)
@@ -289,8 +288,7 @@ module com
        composed_fmt=STRING_pack(terminator(1),'a,')
        lch=composed_fmt
        do i1=1,n-1
-         write (lch,'(2a,i3.3,3a)') trim(composed_fmt),'t',&
-&                                   of_tabs(i1)+2+INDENT,',',basic_fmt,','
+         write (lch,'(2a,i3.3,3a)') trim(composed_fmt),'t',of_tabs(i1)+2+INDENT,',',basic_fmt,','
          composed_fmt=lch
        enddo
        write (composed_fmt,'(2a,i3.3,3a)') trim(lch),'t',of_tabs(n)+2+INDENT,&

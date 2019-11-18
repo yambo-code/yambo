@@ -300,11 +300,10 @@ module IO_m
    end function get_name
    !
    function all_locations(desc,subfolder)
-     use pars,       ONLY:lchlen
-     use com,        ONLY:num_of_alternative_locations
+     use pars,       ONLY:lchlen,num_of_alternative_locations
      character(*)           ::desc
      character(*), optional ::subfolder
-     character(lchlen)      ::all_locations(num_of_alternative_locations)
+     character(lchlen), dimension(num_of_alternative_locations) :: all_locations
    end function all_locations
    !
  end interface
@@ -554,7 +553,7 @@ module IO_m
    !
    logical function file_is_present(desc,subfolder)
      !
-     use com,           ONLY:num_of_alternative_locations
+     use pars,         ONLY:num_of_alternative_locations
      !
      character(*)           :: desc
      character(*), optional :: subfolder

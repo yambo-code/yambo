@@ -138,14 +138,13 @@ end function get_name
 !
 function all_locations(desc,subfolder)
  !
- use pars,            ONLY:lchlen
+ use pars,            ONLY:lchlen,num_of_alternative_locations
  use IO_m,            ONLY:get_name
- use com,             ONLY:num_of_alternative_locations,n_alt_jobstr, &
-&                          alt_jobdir,alt_jobstr,n_max_jobstr
+ use com,             ONLY:n_alt_jobstr,alt_jobdir,alt_jobstr,n_max_jobstr
  !
  implicit none
  !
- character(lchlen)      ::all_locations(num_of_alternative_locations)
+ character(lchlen), dimension(num_of_alternative_locations) :: all_locations
  !
  character(*)           ::desc
  character(*), optional ::subfolder

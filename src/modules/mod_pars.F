@@ -24,6 +24,7 @@
 module pars
  !
  use netcdf
+ use iso_fortran_env, ONLY:int32,int64
  !
  implicit none
  !
@@ -78,11 +79,9 @@ module pars
 #else
  integer, parameter  :: SP = selected_real_kind(6,30)
 #endif
- integer, parameter  :: IP16= selected_int_kind(16)
- integer, parameter  :: IP  = selected_int_kind(8)
- integer, parameter  :: IP4 = selected_int_kind(4)
- integer, parameter  :: IP2 = selected_int_kind(2)
- integer, parameter  :: IP1 = selected_int_kind(1)
+ !
+ integer, parameter  :: IP  = int32      ! 4 bytes integer, == selected_int_kind(8)
+ integer, parameter  :: IPL = int64      ! 8 bytes integer, == selected_int_kind(16)
  !
  ! NetCDF types
  !==============

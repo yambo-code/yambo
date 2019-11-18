@@ -34,8 +34,6 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
 #if defined _PAR_IO && defined _HDF5_IO
  use IO_m,          ONLY:PAR_IO_CREATE_MODE,PAR_IO_WRITE_MODE
  use parallel_m,    ONLY:MPI_INFO_NULL
-#else
- use com,           ONLY:error
 #endif
  use netcdf,        ONLY:nf90_open,nf90_create,nf90_enddef
 #if defined _PAR_IO && defined _HDF5_IO

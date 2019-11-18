@@ -45,6 +45,7 @@ integer function io_WF(ID,wf,wf_d)
  !
  call timing('io_WF',OPR='start')
  !
+ io_WF=0
  head_io=0
  select case ( count((/io_sec(ID,:)/=0/)) )
    case(0)

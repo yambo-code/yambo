@@ -25,7 +25,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Plasmon Pole & COHSEX Correlation Self-Energy
  !
- use pars,          ONLY:SP,pi,schlen,cZERO,cI
+ use pars,          ONLY:DP,SP,pi,schlen,cZERO,cI
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
@@ -50,7 +50,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
-&                        PARALLEL_WF_distribute,QP_state_extract_print
+&                        PARALLEL_WF_distribute,QP_state_print
  use matrix_operate,ONLY:mat_transpose
  use timing_m,      ONLY:timing
 #if defined _SC
@@ -84,7 +84,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  character(schlen)::ch,SECTION_name
  logical          ::X_is_TR_rotated,l_X_alloc
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
- complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,sp_dummy,ctmp
+ complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,ctmp
+ complex(DP)      ::dp_dummy
  !
 #ifdef _CUDA
  integer                      :: Xng, Xr1, Xr2
@@ -95,7 +96,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), pointer, device :: iscp_rhotw_d(:)
  complex(SP), pointer, device :: isc_gamp_d(:,:)
 #endif
- integer,     external ::io_X,QP_state_extract
+ integer,     external ::io_X
  complex(SP), external ::QP_ppa_EET_terminator
  !
  ! ... degeneration finder
@@ -146,7 +147,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    endif
    ch=trim(SECTION_name)
    !
-   call QP_state_extract_print( )
+   call QP_state_print( )
    !
  endif
  !
@@ -387,13 +388,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
        else
          !
-         sp_dummy = 0.0_SP
+         dp_dummy = 0.0_DP
          !
          if (X_is_TR_rotated) then
            !$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
            do ig2=1,X%ng
              do ig1=1,X%ng
-               sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*X_mat(ig1,ig2,X_range(1))
+               dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*X_mat(ig1,ig2,X_range(1)),kind=DP)
              enddo
            enddo
            !$omp end parallel do
@@ -401,13 +402,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
            do ig2=1,X%ng
              do ig1=1,X%ng
-               sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,X_range(1))
+               dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,X_range(1)),kind=DP)
              enddo
            enddo
            !$omp end parallel do
          endif
          !
-         dc(1) = sp_dummy
+         dc(1) = cmplx(dp_dummy,kind=SP)
          !
          ! Bug spotted by D.V. (April 2014). HEAD_QP_cpu is defined differently when
          ! the _SC flag is used. The point is that in SE calculations HEAD_QP_cpu is used
@@ -539,13 +540,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i_w))-E_kmq+PPA_E))
                !
-               sp_dummy=sp_dummy+ctmp
+               dp_dummy=dp_dummy+cmplx(ctmp,kind=DP)
                !
              enddo
            enddo
            !$omp end parallel do
            !
-           dc(i_w) = sp_dummy
+           dc(i_w) = cmplx(dp_dummy,kind=SP)
            !
          enddo
 #endif
@@ -586,7 +587,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        do i_w=1,QP_dSc_steps
          !
-         sp_dummy=0.0_SP
+         dp_dummy=0.0_DP
          !
          !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:sp_dummy)
          do ig2=1,X%ng
@@ -595,15 +596,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              PPA_E=X%ppaE/real(X_mat(ig1,ig2,X_range(2)))
              PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
              !
-             sp_dummy=sp_dummy +4._SP/spin_occ*pi*PPA_R*eet_factor(ig1,ig2)* &
+             dp_dummy=dp_dummy +cmplx(4._SP/spin_occ*pi*PPA_R*eet_factor(ig1,ig2)* &
 &                         QP_ppa_EET_terminator(W_(i_w),E,isc%is,PPA_E,ig1,ig2,isc%qs(2),&
-&                                               eet_cutoff0(1),eet_cutoff1(1))
+&                                               eet_cutoff0(1),eet_cutoff1(1)),kind=DP)
              !
            enddo
          enddo
          !$omp end parallel do
          !
-         QP_Sc(i_qp,i_w)=QP_Sc(i_qp,i_w)+sp_dummy
+         QP_Sc(i_qp,i_w)=QP_Sc(i_qp,i_w)+cmplx(dp_dummy,kind=SP)
          !
        enddo
        !

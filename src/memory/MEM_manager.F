@@ -23,7 +23,7 @@
 !
 subroutine MEM_manager_alloc(what,Sz,Kn)
  !
- use pars,         ONLY:schlen,DP
+ use pars,         ONLY:schlen,DP,IPL
  use com,          ONLY:warning,secnm,error
  use units,        ONLY:Kilobyte
  use openmp,       ONLY:master_thread
@@ -36,7 +36,7 @@ subroutine MEM_manager_alloc(what,Sz,Kn)
  implicit none
  !
  character(*), intent(in) :: what
- integer(8),   intent(in) :: Sz
+ integer(IPL), intent(in) :: Sz
  integer,      intent(in) :: Kn
  ! 
  ! Defined in the init
@@ -133,7 +133,7 @@ end subroutine MEM_manager_alloc
 !
 subroutine MEM_manager_free(what,Sz)
  !
- use pars,         ONLY:schlen,DP
+ use pars,         ONLY:schlen,DP,IPL
  use units,        ONLY:Kilobyte
  use com,          ONLY:warning
  use openmp,       ONLY:master_thread
@@ -142,7 +142,7 @@ subroutine MEM_manager_free(what,Sz)
  implicit none
  !
  character(*), intent(in) :: what
- integer(8),   intent(in) :: Sz
+ integer(IPL), intent(in) :: Sz
  ! 
  ! Defined in the init
  !
@@ -222,7 +222,7 @@ end subroutine MEM_manager_error
 !
 subroutine MEM_manager_init(what,adding,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUNK,just_started)
  !
- use pars,         ONLY:schlen
+ use pars,         ONLY:schlen,IPL
  use drivers,      ONLY:infile_editing
  use com,          ONLY:repfile,secnm
  use C_driver,     ONLY:code_bin
@@ -233,7 +233,7 @@ subroutine MEM_manager_init(what,adding,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUN
  !
  character(*),     intent(in)  :: what
  logical,          intent(in)  :: adding
- integer(8),       intent(in)  :: Sz
+ integer(IPL),     intent(in)  :: Sz
  integer,          intent(out) :: i_SHELF,i_COMPONENT,i_SAVE
  character(schlen),intent(out) :: SHELF,TRUNK
  logical,          intent(out) :: just_started

@@ -90,7 +90,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #ifdef _CUDA
  integer                      :: Xng, Xr1, Xr2
  real(SP)                     :: XppaE, bose_PPA_E
- real(SP)                     :: sp_dummy_r, sp_dummy_i
+ real(SP)                     :: dp_dummy_r, dp_dummy_i
  complex(SP)                  :: W_i_w
  complex(SP), pointer, device :: isc_rhotw_d(:)
  complex(SP), pointer, device :: iscp_rhotw_d(:)
@@ -391,7 +391,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          dp_dummy = 0.0_DP
          !
          if (X_is_TR_rotated) then
-           !$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
+           !$omp parallel do default(shared), private(ig1,ig2), reduction(+:dp_dummy)
            do ig2=1,X%ng
              do ig1=1,X%ng
                dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*X_mat(ig1,ig2,X_range(1)),kind=DP)
@@ -399,7 +399,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            enddo
            !$omp end parallel do
          else
-           !$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
+           !$omp parallel do default(shared), private(ig1,ig2), reduction(+:dp_dummy)
            do ig2=1,X%ng
              do ig1=1,X%ng
                dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,X_range(1)),kind=DP)
@@ -488,8 +488,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !
            ! NOTE: Split reduction done here to work around PGI bug with complex
            ! CUF reductions.
-           sp_dummy_r = 0.0_SP
-           sp_dummy_i = 0.0_SP
+           dp_dummy_r = 0.0_DP
+           dp_dummy_i = 0.0_DP
            !
            !$cuf kernel do(2)
            do ig2=1,Xng
@@ -514,22 +514,22 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_i_w-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_i_w)-E_kmq+PPA_E))
                !
-               sp_dummy_r=sp_dummy_r+real(ctmp)
-               sp_dummy_i=sp_dummy_i+imag(ctmp)
+               dp_dummy_r=dp_dummy_r+real(ctmp,kind=DP)
+               dp_dummy_i=dp_dummy_i+real(aimag(ctmp),kind=DP)
                !
              enddo
            enddo
            !
-           sp_dummy%re = sp_dummy_r
-           sp_dummy%im = sp_dummy_i
-           dc(i_w) = sp_dummy
+           dp_dummy%re = dp_dummy_r
+           dp_dummy%im = dp_dummy_i
+           dc(i_w) = dp_dummy
            !
          enddo
 #else
          do i_w=1,QP_dSc_steps
            !
-           sp_dummy = 0.0_SP
-           !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:sp_dummy)
+           dp_dummy = 0.0_DP
+           !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:dp_dummy)
            do ig2=1,X%ng
              do ig1=1,X%ng
                !
@@ -589,7 +589,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          dp_dummy=0.0_DP
          !
-         !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:sp_dummy)
+         !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:dp_dummy)
          do ig2=1,X%ng
            do ig1=1,X%ng
              !

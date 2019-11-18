@@ -349,17 +349,19 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  call RT_1D_Fourier_Transform('T2W',GreenF_T_and_W,RT_conf,1)
  !
  ! DEBUG <
- !do ik=1,RT_nk
- !  !
- !  do i_dT=1,RT_conf%T_n_steps
- !    write(100+ik,*) RT_time(i_dT)/FS2AUT,real(GreenF_T_and_W%F_T(i_dT,ik),SP),real(aimag(GreenF_T_and_W%F_T(i_dT,ik)),SP)
- !  enddo
- !  !
- !  do i_w=1,RT_conf%W_n_steps
- !    write(200+ik,*) real(GreenF_T_and_W%W(i_w))*HA2EV,real(-cI*GreenF_T_and_W%F_W(i_w,ik),SP),real(aimag(-cI*GreenF_T_and_W%F_W(i_w,ik)),SP)
- !  enddo
- !  !
- !enddo
+ do ik=1,RT_nk
+   !
+   do i_dT=1,RT_conf%T_n_steps
+     write(100+ik,*) RT_time(i_dT)/FS2AUT,&
+     &  real(GreenF_T_and_W%F_T(i_dT,ik),SP),real(aimag(GreenF_T_and_W%F_T(i_dT,ik)),SP)
+   enddo
+   !
+   do i_w=1,RT_conf%W_n_steps
+     write(200+ik,*) real(GreenF_T_and_W%W(i_w))*HA2EV,&
+     & real(-cI*GreenF_T_and_W%F_W(i_w,ik),SP),real(aimag(-cI*GreenF_T_and_W%F_W(i_w,ik)),SP)
+   enddo
+   !
+ enddo
  ! DEBUG >
  !
  YAMBO_FREE(TMP_M)

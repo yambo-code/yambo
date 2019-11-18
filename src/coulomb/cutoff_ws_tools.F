@@ -15,7 +15,7 @@
   !
   USE cutoff_ws_m
   use pars,          ONLY:pi
-  use com,           ONLY:error,msg
+  use com,           ONLY:msg
   use LIVE_t,        ONLY:live_timing
   use openmp,        ONLY:OPENMP_update,n_threads,master_thread
   use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
@@ -306,7 +306,6 @@ end subroutine vcut_info
   !------------------------------------------
   !
   USE cutoff_ws_m
-  use com,           ONLY:error
   IMPLICIT NONE
   !
   TYPE(vcut_type), INTENT(INOUT) :: vcut
@@ -322,7 +321,6 @@ end subroutine vcut_destroy
   !------------------------------------------
   !
   USE cutoff_ws_m
-  use com,           ONLY:error
   IMPLICIT NONE
   !
   TYPE(vcut_type), INTENT(IN) :: vcut

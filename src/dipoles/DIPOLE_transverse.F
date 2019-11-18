@@ -42,7 +42,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  use X_m,                 ONLY:l_X_terminator
  use IO_m,                ONLY:io_control,RD_CL,RD
  use wave_func,           ONLY:wf_ng,WF
- use com,                 ONLY:error,msg
+ use com,                 ONLY:msg
  use timing_m,            ONLY:timing
 #if defined _RT
  use drivers,             ONLY:l_real_time

@@ -26,7 +26,6 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used,&
 &                        ncpu,CPU_structure,i_PAR_structure,PARALLEL_ENV_uses_default,PARALLEL_CPU_role
  use interfaces,    ONLY:PARALLEL_live_message
- use com,           ONLY:error
  use stderr,        ONLY:intc
  !
  implicit none

@@ -201,7 +201,7 @@ end subroutine build_matrix
  subroutine inverse_check( ndim, Amat, Ainv )
  !===========================================
  use pars,       ONLY:SP
- use com,        ONLY:error,msg
+ use com,        ONLY:msg
  use parallel_m, ONLY:mpi_comm_world
  use wrapper,    ONLY:M_by_M
 #include<memory.h>
@@ -253,7 +253,7 @@ end subroutine inverse_check
  subroutine matrix_check( label, ndim1, ndim2, Amat, Bmat)
  !========================================================
  use pars,       ONLY:SP
- use com,        ONLY:error,msg
+ use com,        ONLY:msg
  use parallel_m, ONLY:mpi_comm_world
  implicit none
  !

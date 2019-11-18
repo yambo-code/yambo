@@ -40,7 +40,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  use drivers,        ONLY:l_optics
  use pars,           ONLY:SP,cZERO
- use com,            ONLY:warning
  use electrons,      ONLY:levels,n_sp_pol
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_DIP

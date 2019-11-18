@@ -24,11 +24,12 @@
 subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  !
  use pars,           ONLY:SP
- use YPPm,           ONLY:CIRCUIT_k
+ use YPPm,           ONLY:BANDS_steps,CIRCUIT_k,n_path_pts,PtsPath
  use real_time,      ONLY:RT_nk
  use YPP_real_time,  ONLY:RT_conf,GreenF_T_and_W,l_RT_G_two_times
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:lattice
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do
  !
 #include<memory.h>
@@ -53,14 +54,26 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  !
  YAMBO_FREE(GreenF_T_and_W%F_W)
  !
- call section('=','Interpolation@work: Circuit')
+ call section('=',"Loading special Points for the "//trim(lattice)//" lattice")
+ !============================================================================= 
+ !
+ PtsPath="  "
+ n_path_pts=BANDS_steps
  !
  call k_special(.FALSE.)
+ !
+ call k_define_circuit(kpt)
+ !
+ call section('=','Interpolation@work: Circuit')
+ !============================================================================= 
  !
  call INTERPOLATION_driver_seed("RT_G_w",ID_RT,(/1,RT_conf%W_n_steps/),kpt,SEED_R3=G_w_t_real)
  call INTERPOLATION_driver_do("RT_G_w",ID_RT,CIRCUIT_k)
  !
- call plot_interpolated_values(kpt,en,0._SP,CIRCUIT_k,ID_RT,(/1,RT_conf%W_n_steps/),1,1,"interpolated","G_k_w")
+ call section('=','Plotting')
+ !============================================================================= 
+ !
+ call plot_interpolated_values(kpt,en,0._SP,CIRCUIT_k,(/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"interpolated","G_k_w")
  !
  call INTERPOLATION_driver_end(0)
  !

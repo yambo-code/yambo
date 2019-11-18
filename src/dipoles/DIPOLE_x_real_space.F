@@ -34,7 +34,6 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  use electrons,          ONLY:levels,n_sp_pol,n_spinor
  use DIPOLES,            ONLY:DIPOLE_t,DIP_iR,DIP_v
  use X_m,                ONLY:l_X_terminator
- use com,                ONLY:error
  use LIVE_t,             ONLY:live_timing
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&

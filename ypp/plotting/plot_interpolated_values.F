@@ -41,21 +41,16 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  type(bz_samp),    intent(in)  :: Xk,LOCAL_k
  type(levels),     intent(in)  :: Xen
  real(SP),         intent(in)  :: Ef
- integer,          intent(in)  :: IDs(nquantities),dims(2),nquantities,nfiles
- character(schlen),intent(in)  :: basename,int_kind 
+ integer,          intent(in)  :: IDs(nquantities),dims(2),nquantities,nfiles(nquantities)
+ character(*),     intent(in)  :: basename,int_kind 
  !
  ! Local variables
  !
- integer               :: ndims,ik_local,ik_ibz_grid,ik_bz_grid,i1,i_dim,ifile,i_sp_pol,ivalue
+ integer               :: ndims,ik_local,ik_ibz_grid,ik_bz_grid,iqnt,i_dim,ifile,i_sp_pol,ivalue
  logical               :: PLOT_BANDS,PLOT_G2,PLOT_E_and_k_DB,PLOT_interpolate,PLOT_internal
- character(schlen)     :: file_name(nfiles),headings(dims(2)-dims(1)+1+4)
- real(SP)              :: value_k(4),values(dims(2)-dims(1)+1,nquantities),tmp_dist(3),tmp_k(3),&
-&                         tmp_E(dims(1):dims(2),n_sp_pol),tmp_spin(dims(1):dims(2),2),&
-&                         tmp_magn(dims(1):dims(2),3)
-#if defined _YPP_SC
- real(SP)              :: tmp_proj(dims(1):dims(2),2)
- logical               :: proj_wfc
-#endif
+ character(schlen)     :: file_name(maxval(nfiles)),headings(dims(2)-dims(1)+1+4)
+ real(SP)              :: value_k(4),values(dims(2)-dims(1)+1),tmp_dist(3),tmp_k(3),&
+&                         tmp_var(dims(1):dims(2),maxval(nfiles),nquantities)
  !
  ! Allocs
  !
@@ -69,7 +64,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  PLOT_E_and_k_DB  = trim(basename)=="from_DB"
  !
  PLOT_BANDS       = trim(int_kind)=="bands"
- PLOT_G2          = trim(int_kind)=="G2"
+ PLOT_G2          = trim(int_kind)=="G_k_w"
  !
  ndims=dims(2)-dims(1)+1
  !
@@ -115,18 +110,28 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  file_name= " "
  !
  ifile=0
- do i_sp_pol=1,n_sp_pol
-   ifile=ifile+1
-   if (n_sp_pol>1.and.i_sp_pol==1) file_name(ifile)="bands_"//trim(basename)//"_spin-up"
-   if (n_sp_pol>1.and.i_sp_pol==2) file_name(ifile)="bands_"//trim(basename)//"_spin-dn"
- enddo
+ file_name(1:nfiles(1))=trim(int_kind)//"_"//trim(basename)
+ if(PLOT_BANDS) then
+   do i_sp_pol=1,n_sp_pol
+     ifile=ifile+1
+     if (n_sp_pol>1.and.i_sp_pol==1) file_name(ifile)=trim(file_name(ifile))//"_spin-up"
+     if (n_sp_pol>1.and.i_sp_pol==2) file_name(ifile)=trim(file_name(ifile))//"_spin-dn"
+   enddo
+ endif
+ if(PLOT_G2) then
+   do iqnt=1,2
+     ifile=ifile+1
+     if(ifile==1) file_name(ifile)=trim(file_name(ifile))//"_Re"
+     if(ifile==2) file_name(ifile)=trim(file_name(ifile))//"_Im"
+   enddo
+ endif
  !
  if(PLOT_INTERPOLATE.and.PLOT_BANDS.and.n_spinor==2) then
-   file_name(ifile+1)="spin_factors_UP"
-   file_name(ifile+2)="spin_factors_DN"
-   file_name(ifile+3)="magnetization_x"
-   file_name(ifile+4)="magnetization_y"
-   file_name(ifile+5)="magnetization_z"
+   file_name(ifile+1)="spin_factors_UP"//trim(basename)
+   file_name(ifile+2)="spin_factors_DN"//trim(basename)
+   file_name(ifile+3)="magnetization_x"//trim(basename)
+   file_name(ifile+4)="magnetization_y"//trim(basename)
+   file_name(ifile+5)="magnetization_z"//trim(basename)
    ifile=ifile+5
  endif
  !
@@ -139,19 +144,20 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  endif
 #endif
  !
- if(ifile /= nfiles) call error(" something went wrong")
+ if(ifile /= sum(nfiles)) call error(" something went wrong")
  !
  ! Defined headers
  !
  headings(1)=" |k| (a.u.) "
  do i_dim=dims(1),dims(2)
-   headings(1+i_dim-dims(1)+1)=' b'//intc(i_dim)
+   if(PLOT_BANDS) headings(1+i_dim-dims(1)+1)=' b'//intc(i_dim)
+   if(PLOT_G2   ) headings(1+i_dim-dims(1)+1)=' w'//intc(i_dim)
  enddo
  headings(ndims+2:ndims+4)=(/"k_x ("//trim(coo_out)//")","k_y ("//trim(coo_out)//")","k_z ("//trim(coo_out)//")"/)
  !
  ! Open files and print headers
  !
- do ifile=1,nfiles
+ do ifile=1,sum(nfiles)
    call of_open_close(trim(file_name(ifile)),'ot')
    call msg('o '//trim(file_name(ifile)),"#",headings,INDENT=0,USE_TABS=.true.)
    call msg('o '//trim(file_name(ifile)),"#")
@@ -174,39 +180,25 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
      tmp_dist=Xk%ptbz(ik_bz_grid,:)-LOCAL_k%pt(ik_local,:)
      tmp_k=Xk%ptbz(ik_bz_grid,:)
      !
-     if (PLOT_BANDS) then
-       ! Bands on CIRCUIT using the energy of the nearest in the internal list 
-       tmp_E=INTERP_obj(IDs(1))%SEED(dims(1):dims(2),ik_ibz_grid,:)
-       if(n_spinor==2) then
-         ! Spins...
-         tmp_spin=INTERP_obj(IDs(2))%SEED(dims(1):dims(2),ik_ibz_grid,:)
-         ! Magnetization...
-         tmp_magn=INTERP_obj(IDs(3))%SEED(dims(1):dims(2),ik_ibz_grid,:)
-       endif
-#if defined _YPP_SC
-       if(proj_wfc) tmp_proj=INTERP_obj(IDs(4))%SEED(dims(1):dims(2),ik_ibz_grid,:)
-#endif
-     endif
+     do iqnt=1,nquantities
+       tmp_var(:,1:nfiles(iqnt),iqnt)=INTERP_obj(IDs(iqnt))%SEED(dims(1):dims(2),ik_ibz_grid,:)
+     enddo
+     !
    endif
    !
    if (PLOT_interpolate) then
      !
      tmp_k=LOCAL_k%pt(ik_local,:)
      !
-     if (PLOT_BANDS) then
-       tmp_E=INTERP_obj(IDs(1))%INTERP(dims(1):dims(2),ik_local,:)
-       if (allocated(Xen%Eo).and.allocated(CIRCUIT_E_db%E)) &
-       &  tmp_E=tmp_E+CIRCUIT_E_db%E(dims(1):dims(2),ik_local,:)
-       tmp_E=tmp_E+Ef
-       if(n_spinor==2) then
-         ! Spins...
-         tmp_spin=INTERP_obj(IDs(2))%INTERP(dims(1):dims(2),ik_local,:)
-         ! Magnetization...
-         tmp_magn=INTERP_obj(IDs(3))%INTERP(dims(1):dims(2),ik_local,:)
+     do iqnt=1,nquantities
+       tmp_var(:,1:nfiles(iqnt),iqnt)=INTERP_obj(IDs(iqnt))%INTERP(dims(1):dims(2),ik_local,:)
+     enddo
+     !
+     if( PLOT_BANDS) then
+       if(allocated(Xen%Eo).and.allocated(CIRCUIT_E_db%E) ) then
+         tmp_var(:,1:nfiles(1),1)=tmp_var(:,1:nfiles(1),1)+CIRCUIT_E_db%E(dims(1):dims(2),ik_local,:)
        endif
-#if defined _YPP_SC
-       if(proj_wfc) tmp_proj=INTERP_obj(IDs(4))%INTERP(dims(1):dims(2),ik_local,:)
-#endif
+       tmp_var(:,1:nfiles(1),1)=tmp_var(:,1:nfiles(1),1)+Ef
      endif
      !
    endif
@@ -216,7 +208,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    if (PLOT_E_and_k_DB.and.PLOT_BANDS) then
      !
      tmp_k=LOCAL_k%pt(ik_local,:)
-     tmp_E=CIRCUIT_E_db%E(dims(1):dims(2),ik_local,:)+Ef
+     tmp_var(:,1:n_sp_pol,1)=CIRCUIT_E_db%E(dims(1):dims(2),ik_local,:)+Ef
      !
    endif
    !
@@ -227,47 +219,23 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    !
    ivalue=0
    !
-   if (PLOT_BANDS) then
-     ! Bands
-     do i_sp_pol=1,n_sp_pol
+   do iqnt=1,nquantities
+     do ifile=1,nfiles(iqnt)
        ivalue=ivalue+1
-       values(1:ndims,ivalue)=tmp_E(:,i_sp_pol)*HA2EV
+       values=tmp_var(:,ifile,iqnt)
+       if(PLOT_BANDS .and. ivalue<=2) values=values*HA2EV
+       !
+       call msg('o '//trim(file_name(ivalue)),' ',&
+       &        (/value_k(1)+iku_v_norm(tmp_k),values,value_k(2:4)/),INDENT=0,USE_TABS=.true.)
+       !
      enddo
-   endif
-   !
-   if(n_spinor==2 .and. .not.PLOT_E_and_k_DB) then
-     ! Spins
-     do i1=1,2
-       ivalue=ivalue+1
-       values(1:ndims,ivalue)=tmp_spin(:,i1)
-     enddo
-     ! Magnetization
-     do i1=1,3
-       ivalue=ivalue+1
-       values(1:ndims,ivalue)=tmp_magn(:,i1)
-     enddo
-   endif
-   !
-#if defined _YPP_SC
-   if(proj_wfc .and. .not.PLOT_E_and_k_DB) then
-     ! Proj_wfc
-     do i1=1,2
-       ivalue=ivalue+1
-       values(1:ndims,ivalue)=tmp_proj(:,i1)
-     enddo
-   endif
-#endif
-   !
-   do ifile=1,nfiles
-     call msg('o '//trim(file_name(ifile)),' ',&
-     &        (/value_k(1)+iku_v_norm(tmp_k),values(:,ifile),value_k(2:4)/),INDENT=0,USE_TABS=.true.)
    enddo
    !
  enddo
  !
  ! Close files
  !
- do ifile=1,nfiles
+ do ifile=1,sum(nfiles)
    call of_open_close(trim(file_name(ifile)))
  enddo
  !

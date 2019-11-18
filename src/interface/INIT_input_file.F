@@ -26,13 +26,15 @@ subroutine INIT_input_file()
  use pars,           ONLY:lchlen
  use drivers,        ONLY:infile_editing
  use it_m,           ONLY:infile
- use com,            ONLY:com_path,jobstr,filename
+ use com,            ONLY:com_path,jobstr
  use IO_m,           ONLY:mk_dir,cp_file
  !
  implicit none
  !
  character(lchlen) :: infile_copy
  integer           :: io_err
+ !
+ character(lchlen), external :: filename
  !
  if (len_trim(com_path)==0) return
  if (infile_editing) return

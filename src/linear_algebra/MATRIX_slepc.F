@@ -29,7 +29,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  ! a separate source file for clarity.
  !
  use pars,          ONLY : SP,schlen
- use com,           ONLY : error,msg
+ use com,           ONLY : msg
  !
  implicit none
  !

@@ -57,14 +57,21 @@ subroutine electrons_bands(Xk,Xen)
  ! Work Space
  !
  type(levels)          :: GRID_E,CIRCUIT_E,CIRCUIT_dE
- integer               :: ID_spin,ID_magn,ID_bands(2),IDs(5),nfiles,nqnt
+ integer               :: ID_spin,ID_magn,ID_bands(2),IDs(5),nfiles(5),nqnt
  real(SP)              :: dEf
  logical               :: BANDS_internal,BANDS_interpolate,GRID_interpolate
 #if defined _YPP_SC
  integer               :: ID_proj
  logical               :: proj_wfc
 #endif
-
+ !
+ ! Apply QP corrections
+ !====================== 
+ call QP_apply(BANDS_bands,Xen,Xk,'G',msg_fmt='s')
+ !
+ ! IBZ => BZ: need to be done here as QP_apply cleans the %ptbz allocation
+ !
+ call k_ibz2bz(Xk,'iku',.TRUE.)
  !
  call section('*','Interpolation tool')
  !=====================================
@@ -87,22 +94,15 @@ subroutine electrons_bands(Xk,Xen)
  call k_special(.FALSE.)
  !
  CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
- CIRCUIT_k%nibz=CIRCUIT_k%nbz
- !
- ! Apply QP corrections
- !====================== 
- call QP_apply(BANDS_bands,Xen,Xk,'G',msg_fmt='s')
- !
- ! IBZ => BZ: need to be done here as QP_apply cleans the %ptbz allocation
- !
- call k_ibz2bz(Xk,'iku',.TRUE.)
  !
  if (BANDS_interpolate) then
    !
    ! Perform the energies interpolation
    !====================================
-   if (BANDS_interpolate.and..not.GRID_interpolate) call section('=','Interpolation@work: Circuit')
-   if (BANDS_interpolate.and.GRID_interpolate     ) call section('=','Interpolation@work: Circuit and Grid')
+   if (.not.GRID_interpolate) call section('=','Interpolation@work: Circuit')
+   if (     GRID_interpolate) call section('=','Interpolation@work: Circuit and Grid')
+   !
+   if (     GRID_interpolate) call k_define_circuit(Xk)
    !
    call electrons_bands_interpolate(Xen,Xk,BANDS_bands,ID_bands,CIRCUIT_E,GRID_E=GRID_E,CIRCUIT_dE=CIRCUIT_dE)
    !
@@ -153,33 +153,28 @@ subroutine electrons_bands(Xk,Xen)
  !
  IDs=0
  nqnt=1
- nfiles=n_sp_pol
+ nfiles(1)=n_sp_pol
  IDs(1)=ID_bands(1)
  if(allocated(Xen%Eo).and.BANDS_E_and_k_db) IDs(1)=ID_bands(2)
- !if(allocated(Xen%Eo).and.BANDS_E_and_k_db) then
- !  nqnt=nqnt+1
- !  nfiles=nfiles+2
- !  IDs(nqnt)=ID_bands(2)
- !endif
  if(n_spinor==2) then
    nqnt=nqnt+2
-   nfiles=nfiles+5
+   nfiles(nqnt-1:nqnt)=(/2,3/)
    IDs(nqnt-1:nqnt)=(/ID_spin,ID_magn/)
  endif
 #if defined _YPP_SC
  if( proj_wfc  ) then
    nqnt=nqnt+1
-   nfiles=nfiles+2
+   nfiles(nqnt)=2
    IDs(nqnt)=ID_proj
  endif
 #endif
  !
- if (BANDS_internal.and.USER_k%nbz>0)  &
- &  call plot_interpolated_values(Xk,Xen,dEf,USER_k,   IDs(1:nqnt),Bands_bands,nqnt,nfiles,"built_in",    "bands")
- if (BANDS_E_and_k_db               )  &
- &  call plot_interpolated_values(Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),Bands_bands,nqnt,nfiles,"from_DB",     "bands")
- if (BANDS_interpolate              )  &
- &  call plot_interpolated_values(Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),Bands_bands,nqnt,nfiles,"interpolated","bands")
+ if (BANDS_internal.and.USER_k%nbz>0)  call plot_interpolated_values &
+ &  (Xk,Xen,dEf,USER_k,   IDs(1:nqnt),Bands_bands,nqnt,nfiles(1:nqnt),"built_in",    "bands")
+ if (BANDS_E_and_k_db               )  call plot_interpolated_values &
+ &  (Xk,Xen,dEf,USER_k,   IDs(1:1),   Bands_bands,1,   nfiles(1:1),   "from_DB",     "bands")
+ if (BANDS_interpolate              )  call plot_interpolated_values &
+ &  (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),Bands_bands,nqnt,nfiles(1:nqnt),"interpolated","bands")
  !
  call E_reset(GRID_E)
  call E_reset(CIRCUIT_E)

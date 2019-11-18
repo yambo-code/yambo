@@ -42,7 +42,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  use pars,          ONLY:SP,cZERO,schlen
  use wrapper,       ONLY:V_by_V_plus_V
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg,warning
+ use com,           ONLY:msg
  use matrix,        ONLY:PAR_matrix
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF

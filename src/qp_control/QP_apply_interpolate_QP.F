@@ -35,7 +35,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
  use electrons,     ONLY:n_sp_pol,spin
- use com,           ONLY:msg,warning
+ use com,           ONLY:msg
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use stderr,        ONLY:real2ch

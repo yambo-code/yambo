@@ -1,7 +1,3 @@
-
-
-
-
 !
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
@@ -32,7 +28,6 @@ subroutine cutoff_slab(q,is_cut)
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:bz_samp,g_vec,bare_qpg,k_grid_uc_vol
- use com,           ONLY:error
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
 

@@ -508,11 +508,12 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if ((l_dos.or.l_bands).and.n_spinor==2) call initactivate(1,'WFReference')
  !
+ l_flag=l_bands
 #if defined _YPP_RT
- if (l_bands.or.l_RT_bands) then
-#else
- if (l_bands) then
+ l_flag=l_bands.or.l_RT_bands.or.l_RT_G_two_times
 #endif
+ !
+ if (l_flag) then
    !
    call initactivate(1,"INTERP_mode OutputAlat cooIn cooOut NormN NelFac")
    !
@@ -535,9 +536,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  ! GPL_EXCLUDE_START
  !
 #if defined _YPP_SC
- if (l_mean_potential) then
-   call initactivate(1,"PotValue")
- endif
+ if (l_mean_potential) call initactivate(1,"PotValue")
 #endif
  !
  ! GPL_EXCLUDE_END

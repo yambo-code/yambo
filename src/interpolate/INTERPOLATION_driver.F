@@ -121,7 +121,6 @@ end subroutine INTERPOLATION_driver_seed
 subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,QUIET)
  !
  use R_lattice,            ONLY:bz_samp
- use com,                  ONLY:error
  use electrons,            ONLY:levels
  use interpolate_tools,    ONLY:INTERPOLATION_nearest_k_report
  use interpolate,          ONLY:INTERP_obj,max_interpls,INTERPOLATION_coefficients,&

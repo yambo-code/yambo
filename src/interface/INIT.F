@@ -47,8 +47,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         switch_off_runlevel,check_verbosity,runlevel_is_on
  use it_m,           ONLY:initdefs,rstatus,initmode,infile,nrnlvls,rnlvls
  use parallel_m,     ONLY:PP_redux_wait,master_cpu
- use com,            ONLY:msg,repfile,com_path,&
-&                         write_the_logo,file_exists,rename_file,write_to_report
+ use com,            ONLY:msg,repfile,com_path,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on
  use QP_m,           ONLY:QP_t,QP_state,QP_reset,&
@@ -94,6 +93,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(levels)     ::en_sc
  !
  integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err,i_r
+ !
+ logical, external:: file_exists
  !
  ! Presets
  !

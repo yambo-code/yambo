@@ -32,7 +32,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use vec_operate,   ONLY:degeneration_finder
- use com,           ONLY:msg,error
+ use com,           ONLY:msg
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_IND_Q_ID,PAR_IND_QP_ID,&

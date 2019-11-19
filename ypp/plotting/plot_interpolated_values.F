@@ -24,13 +24,13 @@
 subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfiles,basename,int_kind)
  !
  use units,          ONLY:HA2EV
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,lchlen
  use com,            ONLY:msg,of_open_close
  use electrons,      ONLY:levels,n_sp_pol,n_spinor
  use vec_operate,    ONLY:v_norm,iku_v_norm
  use R_lattice,      ONLY:bz_samp
  use stderr,         ONLY:intc,set_real_printed_length
- use YPPm,           ONLY:coo_out,K_transform,CIRCUIT_E_db
+ use YPPm,           ONLY:coo_out,K_transform,CIRCUIT_E_db,CIRCUIT_k_label
  use interpolate,    ONLY:INTERP_obj
  !
 #include<memory.h>
@@ -44,10 +44,11 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  ! Local variables
  !
  integer               :: ndims,ik_local,ik_ibz_grid,ik_bz_grid,iqnt,i_dim,ifile,i_sp_pol,ivalue,nval
- logical               :: PLOT_BANDS,PLOT_E_and_k_DB,PLOT_interpolate,PLOT_internal
+ logical               :: PLOT_BANDS,PLOT_E_and_k_DB,PLOT_interpolate,PLOT_internal,l_print_k_name
+ character(lchlen)     :: of_string
  character(schlen)     :: headings_k(4),headings(dims(2)-dims(1)+1+4), &
-&                         file_name(maxval(nfiles))
- real(SP)              :: value_k(4),     values(dims(2)-dims(1)+1+4), &
+&                         file_name(maxval(nfiles)),k_name
+ real(SP)              :: value_k,        values(dims(2)-dims(1)+1+4), &
 &                         tmp_var(dims(1):dims(2),maxval(nfiles),nquantities),tmp_dist(3),tmp_k(3)
  !
  ! Allocs
@@ -130,7 +131,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  headings_k(2:4)=(/"k_x ("//trim(coo_out)//")","k_y ("//trim(coo_out)//")","k_z ("//trim(coo_out)//")"/)
  !
  if(PLOT_BANDS) then
-   headings(1)=" |k| (a.u.) "
+   headings(1)=headings_k(1)
    headings(ndims+2:ndims+4)=headings_k(2:4)
    nval=ndims+4
  endif
@@ -153,10 +154,12 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  !
  ! print values
  !
- value_k(1)=0._SP
- tmp_dist  =0._SP
+ value_k =0._SP
+ tmp_dist=0._SP
  !
  do ik_local=1,LOCAL_k%nbz
+   !
+   l_print_k_name=.false.
    !
    if (PLOT_internal) then
      !
@@ -173,9 +176,18 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
      !
    endif
    !
-   if (PLOT_interpolate) then
+   if (PLOT_interpolate.or.PLOT_E_and_k_DB) then
      !
      tmp_k=LOCAL_k%pt(ik_local,:)
+     !
+     if (len_trim(CIRCUIT_k_label(ik_local))>0) then
+       k_name="  ["//trim(CIRCUIT_k_label(ik_local))//"]"
+       l_print_k_name=.true.
+     endif
+     !
+   endif
+   !
+   if (PLOT_interpolate) then
      !
      do iqnt=1,nquantities
        tmp_var(:,1:nfiles(iqnt),iqnt)=INTERP_obj(IDs(iqnt))%INTERP(dims(1):dims(2),ik_local,:)
@@ -199,13 +211,13 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
      !
    endif
    !
-   if (ik_local>1) value_k(1)=value_k(1)+iku_v_norm(LOCAL_k%pt(ik_local,:)-LOCAL_k%pt(ik_local-1,:))
+   !
+   if (ik_local>1) value_k=value_k+iku_v_norm(LOCAL_k%pt(ik_local,:)-LOCAL_k%pt(ik_local-1,:))
    !
    call K_transform(tmp_k,'iku')
-   value_k(2:4)=tmp_k(1:3)
    !
-   values(1)=value_k(1)+iku_v_norm(tmp_dist)
-   values(ndims+2:ndims+4)=value_k(2:4)
+   values(1)=value_k+iku_v_norm(tmp_dist)
+   values(ndims+2:ndims+4)=tmp_k(1:3)
    !
    ivalue=0
    !
@@ -213,9 +225,15 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
      do ifile=1,nfiles(iqnt)
        ivalue=ivalue+1
        values(2:ndims+1)=tmp_var(:,ifile,iqnt)
-       if(PLOT_BANDS .and. ivalue<=2) values=values*HA2EV
+       if(PLOT_BANDS .and. ivalue==1) values(2:ndims+1)=values(2:ndims+1)*HA2EV
        !
-       call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.true.)
+       if (l_print_k_name) then
+         call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
+         of_string=trim(of_string)//trim(k_name)
+         call msg_deliver(trim(file_name(ivalue)),of_string)
+       else
+         call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.true.)
+       endif
        !
      enddo
    enddo

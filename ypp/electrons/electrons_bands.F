@@ -147,7 +147,7 @@ subroutine electrons_bands(Xk,Xen)
  &  (Xk,Xen,dEf,USER_k,   IDs(1:nqnt),Bands_bands,nqnt,nfiles(1:nqnt),"built_in",    "bands")
  !
  if (BANDS_interpolate.and.BANDS_E_and_k_db)  call plot_interpolated_values &
- &  (Xk,Xen,dEf,USER_k,   IDs(1:1),   Bands_bands,1,   nfiles(1:1),   "from_DB",     "bands")
+ &  (Xk,Xen,dEf,CIRCUIT_k,IDs(1:1),   Bands_bands,1,   nfiles(1:1),   "from_DB",     "bands")
  !
  if(BANDS_interpolate                      ) call plot_interpolated_values &
  &  (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),Bands_bands,nqnt,nfiles(1:nqnt),"interpolated","bands")

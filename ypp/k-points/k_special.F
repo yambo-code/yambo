@@ -68,7 +68,7 @@ subroutine k_special(LIST)
  ! to properly detect special k-points
  ! set the following logical to .true.
  !
- l_use_yambo_b=.true.
+ l_use_yambo_b=.false.
  !
  !
  select case (trim(lattice))
@@ -337,8 +337,8 @@ subroutine k_special(LIST)
    CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
    CIRCUIT_k%nibz=CIRCUIT_k%nbz
    CIRCUIT_k%pt(CIRCUIT_k%nbz,:)=SPECIAL_k%pt(K_position(n_lines),:)*K_sign(n_lines)
-   if (k_sign(n_lines)>0.) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(n_lines) )
-   if (k_sign(n_lines)<0.) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(n_lines) )
+   if (k_sign(n_lines)>0._SP) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(n_lines) )
+   if (k_sign(n_lines)<0._SP) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(n_lines) )
    K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
    CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
    !
@@ -348,6 +348,8 @@ subroutine k_special(LIST)
    do ik=1,SPECIAL_k%nbz
      call c2a(v_in=SPECIAL_k%pt(ik,:),mode='kc2i')
    enddo
+   !
+   
    !
    if (l_high_sym_pts) then
      !

@@ -144,7 +144,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  do ifile=1,sum(nfiles)
    call of_open_close(trim(file_name(ifile)),'ot')
    if(PLOT_BANDS) then
-     call msg('o '//trim(file_name(ifile)),"#",headings,INDENT=0)
+     call msg('o '//trim(file_name(ifile)),"#",headings,INDENT=0,USE_TABS=.true.)
      call msg('o '//trim(file_name(ifile)),"#")
    endif
  enddo
@@ -202,7 +202,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    if (ik_local>1) value_k(1)=value_k(1)+iku_v_norm(LOCAL_k%pt(ik_local,:)-LOCAL_k%pt(ik_local-1,:))
    !
    call K_transform(tmp_k,'iku')
-   value_k(2:4)=tmp_k
+   value_k(2:4)=tmp_k(1:3)
    !
    values(1)=value_k(1)+iku_v_norm(tmp_dist)
    values(ndims+2:ndims+4)=value_k(2:4)
@@ -215,7 +215,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
        values(2:ndims+1)=tmp_var(:,ifile,iqnt)
        if(PLOT_BANDS .and. ivalue<=2) values=values*HA2EV
        !
-       call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0)
+       call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.true.)
        !
      enddo
    enddo

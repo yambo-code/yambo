@@ -213,7 +213,7 @@ subroutine INTERPOLATION_driver_end(ID)
  !
  use interpolate_tools,    ONLY:INTERPOLATION_reset
  use interpolate,          ONLY:INTERPOLATE_msg_fmt,INTERPOLATE_initialized,&
-&                               lattice_vectors,INTERP_obj,max_interpls
+&                               lattice_vectors,INTERP_obj,max_interpls,int_sop
  !
 #include<memory.h>
  !
@@ -240,6 +240,7 @@ subroutine INTERPOLATION_driver_end(ID)
    !
    YAMBO_FREE_P(lattice_vectors)
    !
+   YAMBO_FREE(int_sop)
    INTERPOLATE_initialized=.FALSE.
    INTERPOLATE_msg_fmt="rs"
    !

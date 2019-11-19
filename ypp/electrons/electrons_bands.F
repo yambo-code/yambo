@@ -54,7 +54,7 @@ subroutine electrons_bands(Xk,Xen)
  ! Work Space
  !
  type(levels)          :: GRID_E,CIRCUIT_E,CIRCUIT_dE
- integer               :: ID_spin,ID_magn,ID_bands(2),IDs(5),nfiles(5),nqnt
+ integer               :: ID_spin,ID_magn,ID_bands(3),IDs(5),nfiles(5),nqnt
  real(SP)              :: dEf
  logical               :: BANDS_internal,BANDS_interpolate,GRID_interpolate
  !
@@ -110,7 +110,6 @@ subroutine electrons_bands(Xk,Xen)
    !
  endif
  !
- !
  ! Fermi Levels
  !==============
  !
@@ -136,19 +135,21 @@ subroutine electrons_bands(Xk,Xen)
  IDs=0
  nqnt=1
  nfiles(1)=n_sp_pol
- IDs(1)=ID_bands(1)
- if(allocated(Xen%Eo).and.BANDS_E_and_k_db) IDs(1)=ID_bands(2)
+ IDs(1)=ID_bands(2)
+ if(allocated(Xen%Eo).and.BANDS_E_and_k_db) IDs(1)=ID_bands(3)
  if(n_spinor==2) then
    nqnt=nqnt+2
    nfiles(nqnt-1:nqnt)=(/2,3/)
    IDs(nqnt-1:nqnt)=(/ID_spin,ID_magn/)
  endif
  !
- if (BANDS_internal.and.USER_k%nbz>0)  call plot_interpolated_values &
+ if (BANDS_internal.and.USER_k%nbz>0       )  call plot_interpolated_values &
  &  (Xk,Xen,dEf,USER_k,   IDs(1:nqnt),Bands_bands,nqnt,nfiles(1:nqnt),"built_in",    "bands")
- if (BANDS_E_and_k_db               )  call plot_interpolated_values &
+ !
+ if (BANDS_interpolate.and.BANDS_E_and_k_db)  call plot_interpolated_values &
  &  (Xk,Xen,dEf,USER_k,   IDs(1:1),   Bands_bands,1,   nfiles(1:1),   "from_DB",     "bands")
- if (BANDS_interpolate              )  call plot_interpolated_values &
+ !
+ if(BANDS_interpolate                      ) call plot_interpolated_values &
  &  (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),Bands_bands,nqnt,nfiles(1:nqnt),"interpolated","bands")
  !
  call E_reset(GRID_E)

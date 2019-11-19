@@ -31,7 +31,7 @@ subroutine k_special(LIST)
  use vec_operate,         ONLY:c2a,v_norm
  use YPPm,                ONLY:n_path_pts,PtsPath,K_transform,l_high_sym_pts,&
 &                              SPECIAL_k,n_SPECIAL_k_MAX,CIRCUIT_k,SPECIAL_k_label,&
-&                              n_SPECIAL_k_MAX,CIRCUIT_k_label,coo_out
+&                              n_SPECIAL_k_MAX,CIRCUIT_k_label,CIRCUIT_k_norm,coo_out
  use stderr,              ONLY:STRING_split,STRING_same
  use LIVE_t,              ONLY:live_timing_is_on
  use stderr,              ONLY:intc
@@ -315,7 +315,8 @@ subroutine k_special(LIST)
    call msg('s','Found '//trim(intc(n_lines-1))//' segments and  '//&
 &                trim(intc(CIRCUIT_k%nbz+1))//' points along the path: '//trim(PtsPath))
    !
-   YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz+1,4))
+   YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz+1,3))
+   allocate(CIRCUIT_k_norm(CIRCUIT_k%nbz+1))
    allocate(CIRCUIT_k_label(CIRCUIT_k%nbz+1))
    CIRCUIT_k%nbz=0
    K_norm=0.
@@ -329,16 +330,17 @@ subroutine k_special(LIST)
        if (ip==1.and.K_sign(il)<0.) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(il) )
        CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=k_l+(k_lp1-k_l)/n_path_pts*(ip-1)
        if (CIRCUIT_k%nbz>1) K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
-       CIRCUIT_k%pt(CIRCUIT_k%nbz,4)= K_norm
+       CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
      enddo
    enddo
+   !
    CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
    CIRCUIT_k%nibz=CIRCUIT_k%nbz
-   CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=SPECIAL_k%pt(K_position(n_lines),:)*K_sign(n_lines)
+   CIRCUIT_k%pt(CIRCUIT_k%nbz,:)=SPECIAL_k%pt(K_position(n_lines),:)*K_sign(n_lines)
    if (k_sign(n_lines)>0.) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(n_lines) )
    if (k_sign(n_lines)<0.) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(n_lines) )
    K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
-   CIRCUIT_k%pt(CIRCUIT_k%nbz,4)= K_norm
+   CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
    !
    do ik=1,CIRCUIT_k%nbz
      call c2a(v_in=CIRCUIT_k%pt(ik,:),mode='kc2i')
@@ -359,12 +361,12 @@ subroutine k_special(LIST)
      !
      do ik=1,CIRCUIT_k%nbz
        !
-       call K_transform(CIRCUIT_k%pt(ik,:3),'iku')
+       call K_transform(CIRCUIT_k%pt(ik,:),'iku')
        !
-       call msg('o  path',"",CIRCUIT_k%pt(ik,:),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
+       call msg('o  path',"",(/CIRCUIT_k%pt(ik,:),CIRCUIT_k_norm(ik)/),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
        if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// CIRCUIT_k_label(ik)//']'
        call msg_deliver('path',trim(of_string))
-       call msg('o PWSCF',"",(/CIRCUIT_k%pt(ik,:3),1._SP/),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
+       call msg('o PWSCF',"",(/CIRCUIT_k%pt(ik,:),1._SP/),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
        if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// CIRCUIT_k_label(ik)//']'
        call msg_deliver('PWSCF',trim(of_string))
      enddo

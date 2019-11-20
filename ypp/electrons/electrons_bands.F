@@ -98,7 +98,7 @@ subroutine electrons_bands(Xk,Xen)
    if (.not.GRID_interpolate) call section('=','Interpolation@work: Circuit')
    if (     GRID_interpolate) call section('=','Interpolation@work: Circuit and Grid')
    !
-   if (     GRID_interpolate) call k_define_circuit(Xk)
+   call k_define_circuit(Xk)
    !
    call electrons_bands_interpolate(Xen,Xk,BANDS_bands,ID_bands,CIRCUIT_E,GRID_E=GRID_E,CIRCUIT_dE=CIRCUIT_dE)
    !

@@ -54,7 +54,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation
  character(lchlen)     :: of_string
  logical               :: l_normalize_Nel
- integer               :: ib,ik,i_RT,i_T,n_values,ID_df_or_G,ID_spin,ID_magn,ID_bands(2)
+ integer               :: ib,ik,i_RT,i_T,n_values,ID_df_or_G,ID_spin,ID_magn,ID_bands(3)
  !
  logical, external     :: file_exists
  !

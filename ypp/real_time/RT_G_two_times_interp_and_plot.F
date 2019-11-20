@@ -24,7 +24,8 @@
 subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  !
  use pars,           ONLY:SP
- use YPPm,           ONLY:BANDS_steps,CIRCUIT_k,n_path_pts,PtsPath
+ use com,            ONLY:of_open_close
+ use YPPm,           ONLY:BANDS_steps,CIRCUIT_k,USER_k,n_path_pts,PtsPath
  use real_time,      ONLY:RT_nk
  use YPP_real_time,  ONLY:RT_conf,GreenF_T_and_W,l_RT_G_two_times
  use electrons,      ONLY:levels
@@ -60,6 +61,8 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  PtsPath="  "
  n_path_pts=BANDS_steps
  !
+ call k_ibz2bz(kpt,'iku',.TRUE.)
+ !
  call k_special(.FALSE.)
  !
  call k_define_circuit(kpt)
@@ -74,6 +77,7 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  !============================================================================= 
  !
  call plot_interpolated_values(kpt,en,0._SP,CIRCUIT_k,(/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"interpolated","G_k_w")
+ !call plot_interpolated_values(kpt,en,0._SP,USER_k,   (/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"built_in",    "G_k_w")
  !
  call INTERPOLATION_driver_end(0)
  !

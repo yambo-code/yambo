@@ -36,7 +36,7 @@ subroutine electrons_bands(Xk,Xen)
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
 &                         PtsPath,BANDS_path,n_path_pts,CIRCUIT_made_of_SPECIAL_k,&
-&                         BANDS_E_and_k_db
+&                         BANDS_from_db
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
@@ -57,9 +57,9 @@ subroutine electrons_bands(Xk,Xen)
  ! Work Space
  !
  type(levels)          :: GRID_E,CIRCUIT_E,CIRCUIT_dE
- integer               :: ID_spin,ID_magn,ID_bands(2),IDs(5),nfiles(5),nqnt
+ integer               :: ID_spin,ID_magn,ID_bands(3),IDs(5),nfiles(5),nqnt
  real(SP)              :: dEf
- logical               :: BANDS_internal,BANDS_interpolate,GRID_interpolate
+ logical               :: BANDS_built_in,BANDS_interpolated,GRID_interpolate
 #if defined _YPP_SC
  integer               :: ID_proj
  logical               :: proj_wfc
@@ -77,18 +77,19 @@ subroutine electrons_bands(Xk,Xen)
  !
  call section('*','Interpolation tool')
  !=====================================
- call parser('BANDS_built_in',BANDS_internal)
+ call parser('BANDS_built_in',BANDS_built_in)
  !
  if (.not.file_exists(trim(CIRCUIT_E_DB_path)//"/SAVE/ns.db1")) CIRCUIT_E_DB_path="none"
  !
- BANDS_E_and_k_db    = trim(CIRCUIT_E_DB_path)/="none"
- BANDS_interpolate   = BANDS_steps>0.or.trim(CIRCUIT_E_DB_path)/="none"
- if (BANDS_E_and_k_db) BANDS_internal=.FALSE.
+ BANDS_from_db       = trim(CIRCUIT_E_DB_path)/="none"
+ BANDS_interpolated  = BANDS_steps>0.or.trim(CIRCUIT_E_DB_path)/="none"
+ BANDS_built_in      = BANDS_built_in .and. (.not. BANDS_from_db)
+ !
  GRID_interpolate    = all(INTERP_grid>0)
  !
  call section('+',"Loading special Points for the "//trim(lattice)//" lattice")
  !============================================================================= 
- if (BANDS_E_and_k_db) BANDS_path= " " 
+ if (BANDS_from_db) BANDS_path= " " 
  !
  PtsPath=BANDS_path
  n_path_pts=BANDS_steps
@@ -97,14 +98,14 @@ subroutine electrons_bands(Xk,Xen)
  !
  CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
  !
- if (BANDS_interpolate) then
+ if (BANDS_interpolated) then
    !
    ! Perform the energies interpolation
    !====================================
    if (.not.GRID_interpolate) call section('=','Interpolation@work: Circuit')
    if (     GRID_interpolate) call section('=','Interpolation@work: Circuit and Grid')
    !
-   if (     GRID_interpolate) call k_define_circuit(Xk)
+   call k_define_circuit(Xk)
    !
    call electrons_bands_interpolate(Xen,Xk,BANDS_bands,ID_bands,CIRCUIT_E,GRID_E=GRID_E,CIRCUIT_dE=CIRCUIT_dE)
    !
@@ -129,7 +130,6 @@ subroutine electrons_bands(Xk,Xen)
 #endif
    !
  endif
- !
  !
  ! Fermi Levels
  !==============
@@ -156,8 +156,8 @@ subroutine electrons_bands(Xk,Xen)
  IDs=0
  nqnt=1
  nfiles(1)=n_sp_pol
- IDs(1)=ID_bands(1)
- if(allocated(Xen%Eo).and.BANDS_E_and_k_db) IDs(1)=ID_bands(2)
+ IDs(1)=ID_bands(2)
+ if(allocated(Xen%Eo).and.BANDS_from_db) IDs(1)=ID_bands(3)
  if(n_spinor==2) then
    nqnt=nqnt+2
    nfiles(nqnt-1:nqnt)=(/2,3/)
@@ -171,11 +171,13 @@ subroutine electrons_bands(Xk,Xen)
  endif
 #endif
  !
- if (BANDS_internal.and.USER_k%nbz>0)  call plot_interpolated_values &
+ if (BANDS_built_in.and.USER_k%nbz>0     )  call plot_interpolated_values &
  &  (Xk,Xen,dEf,USER_k,   IDs(1:nqnt),Bands_bands,nqnt,nfiles(1:nqnt),"built_in",    "bands")
- if (BANDS_E_and_k_db               )  call plot_interpolated_values &
- &  (Xk,Xen,dEf,USER_k,   IDs(1:1),   Bands_bands,1,   nfiles(1:1),   "from_DB",     "bands")
- if (BANDS_interpolate              )  call plot_interpolated_values &
+ !
+ if (BANDS_interpolated.and.BANDS_from_db)  call plot_interpolated_values &
+ &  (Xk,Xen,dEf,CIRCUIT_k,IDs(1:1),   Bands_bands,1,   nfiles(1:1),   "from_DB",     "bands")
+ !
+ if(BANDS_interpolated                   ) call plot_interpolated_values &
  &  (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),Bands_bands,nqnt,nfiles(1:nqnt),"interpolated","bands")
  !
  call E_reset(GRID_E)

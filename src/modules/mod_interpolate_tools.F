@@ -72,6 +72,7 @@ module interpolate_tools
      INTERP_obj(ID)%in_use=.FALSE.
      INTERP_obj(ID)%what=" "
      YAMBO_FREE(INTERP_obj(ID)%k)
+     YAMBO_FREE(INTERP_obj(ID)%weights)
      YAMBO_FREE(INTERP_obj(ID)%SEED)
      YAMBO_FREE(INTERP_obj(ID)%INTERP)
      !

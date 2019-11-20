@@ -33,7 +33,7 @@ subroutine k_define_circuit(Xk)
  use vec_operate,    ONLY:c2a,v_norm
  use YPPm,           ONLY:BANDS_steps,coo_in,coo_out,K_transform,INTERP_grid,&
 &                         CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
-&                         CIRCUIT_made_of_SPECIAL_k,BANDS_E_and_k_db,SPECIAL_k,&
+&                         CIRCUIT_made_of_SPECIAL_k,BANDS_from_db,SPECIAL_k,&
 &                         BANDS_path,CIRCUIT_k_label,SPECIAL_k_label
  !
 #include<memory.h>
@@ -42,11 +42,9 @@ subroutine k_define_circuit(Xk)
  !
  ! Work space
  !
- real(SP)              :: real_ctl,max_dist,v(3),db_a(3,3),db_alat(3)
- real(SP), allocatable :: distances(:)
+ real(SP)              :: real_ctl,v(3),db_a(3,3),db_alat(3)
  character(schlen)     :: coo_out_
- integer               :: i1,ic,ik,i_err,ik_special
- integer,  allocatable :: int_distances(:)
+ integer               :: ik,i_err,ik_special
  !
  ! Input file parsing
  !====================
@@ -98,43 +96,10 @@ subroutine k_define_circuit(Xk)
  !
  ! Define the path (CIRCUIT_K) from the user kpts if BANDS_steps>0
  !================================================================= 
-   !
+ !
  if (trim(CIRCUIT_E_DB_path)=="none".and.BANDS_steps> 0) then
    !
-   allocate(distances(USER_k%nbz-1),int_distances(USER_k%nbz-1))
-   !
-   do ik=1,USER_k%nbz-1
-     v=USER_k%pt(ik,:)-USER_k%pt(ik+1,:)
-     call c2a(v_in=v,mode="ki2c")
-     distances(ik)=v_norm(v)
-   enddo
-   !
-   max_dist=maxval(distances)
-   !
-   do ik=1,USER_k%nbz-1
-     int_distances(ik)=maxval((/nint(BANDS_steps*distances(ik)/max_dist),1/))
-   enddo
-   CIRCUIT_k%nbz =sum(int_distances)+1
-   CIRCUIT_k%nibz=CIRCUIT_k%nbz
-   !
-   call msg("s",'Number of K-points in the circuit :',CIRCUIT_k%nbz)
-   !
-   YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz,3))
-   YAMBO_ALLOC(CIRCUIT_k%weights,(CIRCUIT_k%nbz))
-   !
-   CIRCUIT_k%weights=1._SP/real(CIRCUIT_k%nbz,SP)
-   !
-   ic=1
-   do ik=1,USER_k%nbz-1
-     v=(USER_k%pt(ik+1,:)-USER_k%pt(ik,:))/int_distances(ik)
-     do i1=1,int_distances(ik)
-       CIRCUIT_k%pt(ic,:)= USER_k%pt(ik,:)+(i1-1._SP)*v
-       ic=ic+1
-     enddo
-   enddo
-   CIRCUIT_k%pt(CIRCUIT_k%nbz,:)=USER_k%pt(USER_k%nbz,:)
-   !
-   deallocate(distances,int_distances)
+   call k_generate_circuit(USER_k,CIRCUIT_k,BANDS_steps)
    !
  else 
    !
@@ -148,7 +113,7 @@ subroutine k_define_circuit(Xk)
    YAMBO_ALLOC(CIRCUIT_E_db%E,(CIRCUIT_E_db%nb,CIRCUIT_k%nbz,n_sp_pol))
    i_err=io_DB1_selective_scan('E K',trim(CIRCUIT_E_DB_path),CIRCUIT_E_db,CIRCUIT_k)
    if (i_err/=0) call error("Reading the "//trim(CIRCUIT_E_DB_path)//" SAVE database")
-   BANDS_E_and_k_db=.TRUE.
+   BANDS_from_db=.TRUE.
    !
  endif
  !
@@ -169,3 +134,65 @@ subroutine k_define_circuit(Xk)
  endif
  !
 end subroutine k_define_circuit
+!
+!
+subroutine k_generate_circuit(USER_k,CIRCUIT_k,n_steps)
+ !
+ use pars,           ONLY:SP,schlen
+ use R_lattice,      ONLY:bz_samp,bz_samp_reset,k_the_nearest
+ use com,            ONLY:msg
+ use vec_operate,    ONLY:c2a,v_norm
+ !
+#include<memory.h>
+ !
+ type(bz_samp), intent(in)  :: USER_k
+ integer      , intent(in)  :: n_steps
+ type(bz_samp), intent(out) :: CIRCUIT_k
+ !
+ ! Work space
+ !
+ real(SP)              :: max_dist,v(3)
+ real(SP), allocatable :: distances(:)
+ integer               :: ik,ic,i1
+ integer,  allocatable :: int_distances(:)
+ !
+ ! Generate a circuit
+ !====================
+ !
+ allocate(distances(USER_k%nbz-1),int_distances(USER_k%nbz-1))
+ !
+ do ik=1,USER_k%nbz-1
+    v=USER_k%pt(ik,:)-USER_k%pt(ik+1,:)
+    call c2a(v_in=v,mode="ki2c")
+    distances(ik)=v_norm(v)
+ enddo
+ !
+ max_dist=maxval(distances)
+ !
+ do ik=1,USER_k%nbz-1
+   int_distances(ik)=maxval((/nint(n_steps*distances(ik)/max_dist),1/))
+ enddo
+ !
+ CIRCUIT_k%nbz =sum(int_distances)+1
+ CIRCUIT_k%nibz=CIRCUIT_k%nbz
+ !
+ call msg("s",'Number of Q/K-points in the circuit :',CIRCUIT_k%nbz)
+ !
+ YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz,3))
+ YAMBO_ALLOC(CIRCUIT_k%weights,(CIRCUIT_k%nbz))
+ !
+ CIRCUIT_k%weights=1._SP/real(CIRCUIT_k%nbz,SP)
+ !
+ ic=1
+ do ik=1,USER_k%nbz-1
+   v=(USER_k%pt(ik+1,:)-USER_k%pt(ik,:))/int_distances(ik)
+   do i1=1,int_distances(ik)
+     CIRCUIT_k%pt(ic,:)= USER_k%pt(ik,:)+(i1-1._SP)*v
+     ic=ic+1
+   enddo
+ enddo
+ CIRCUIT_k%pt(CIRCUIT_k%nbz,:)=USER_k%pt(USER_k%nbz,:)
+ !
+ deallocate(distances,int_distances)
+ !
+end subroutine k_generate_circuit

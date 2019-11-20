@@ -33,7 +33,7 @@ subroutine k_define_circuit(Xk)
  use vec_operate,    ONLY:c2a,v_norm
  use YPPm,           ONLY:BANDS_steps,coo_in,coo_out,K_transform,INTERP_grid,&
 &                         CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
-&                         CIRCUIT_made_of_SPECIAL_k,BANDS_E_and_k_db,SPECIAL_k,&
+&                         CIRCUIT_made_of_SPECIAL_k,BANDS_from_db,SPECIAL_k,&
 &                         BANDS_path,CIRCUIT_k_label,SPECIAL_k_label
  !
 #include<memory.h>
@@ -113,7 +113,7 @@ subroutine k_define_circuit(Xk)
    YAMBO_ALLOC(CIRCUIT_E_db%E,(CIRCUIT_E_db%nb,CIRCUIT_k%nbz,n_sp_pol))
    i_err=io_DB1_selective_scan('E K',trim(CIRCUIT_E_DB_path),CIRCUIT_E_db,CIRCUIT_k)
    if (i_err/=0) call error("Reading the "//trim(CIRCUIT_E_DB_path)//" SAVE database")
-   BANDS_E_and_k_db=.TRUE.
+   BANDS_from_db=.TRUE.
    !
  endif
  !

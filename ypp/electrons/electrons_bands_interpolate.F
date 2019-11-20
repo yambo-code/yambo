@@ -24,7 +24,7 @@
 subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRID_E,CIRCUIT_dE)
  !
  use pars,           ONLY:SP
- use YPPm,           ONLY:BANDS_steps,INTERP_grid,CIRCUIT_k,BANDS_E_and_k_db,&
+ use YPPm,           ONLY:BANDS_steps,INTERP_grid,CIRCUIT_k,BANDS_from_db,&
 &                         CIRCUIT_E_db
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp,bz_samp_reset,k_the_nearest
@@ -50,7 +50,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  !
  if (BANDS_range(2)-BANDS_range(1)+1>20) call error(" YPP cannot interpolate more than 20 bands. Reduce bands range")
  !
- l_interp_dE= (allocated(Xen%Eo).and.BANDS_E_and_k_db)
+ l_interp_dE= (allocated(Xen%Eo).and.BANDS_from_db)
  !
  ! Interpolation
  !===============

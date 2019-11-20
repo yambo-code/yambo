@@ -97,7 +97,7 @@ module YPPm
  integer               ::INTERP_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac
  logical               ::BANDS_print_internal_energies
- logical               ::BANDS_E_and_k_db
+ logical               ::BANDS_from_db
  !
  ! SPIN and SOC
  !

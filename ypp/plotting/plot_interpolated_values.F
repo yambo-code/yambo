@@ -180,8 +180,6 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    endif
  enddo
  !
- call msg('o path',"#"," ",INDENT=0)
- !
  ! print values
  !
  value_k =0._SP

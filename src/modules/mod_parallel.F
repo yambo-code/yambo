@@ -168,6 +168,7 @@ module parallel_m
    integer, allocatable :: n_of_elements(:)
    integer, allocatable :: weight_1D(:)
    integer, allocatable :: first_of_1D(:)
+   integer, allocatable :: last_of_1D(:)
  end type PP_indexes
  !
  type PARk_str
@@ -617,6 +618,11 @@ module parallel_m
        YAMBO_ALLOC(IND_out%first_of_1D,(dim_))
        IND_out%first_of_1D=IND_in%first_of_1D
      endif
+     if (allocated(IND_in%last_of_1D)) then
+       dim_=size(IND_in%last_of_1D)
+       YAMBO_ALLOC(IND_out%last_of_1D,(dim_))
+       IND_out%last_of_1D=IND_in%last_of_1D
+     endif
    end subroutine
    !
    subroutine PP_indexes_reset(IND_out)
@@ -626,6 +632,7 @@ module parallel_m
      YAMBO_FREE(IND_out%weight_1D)
      YAMBO_FREE(IND_out%n_of_elements)
      YAMBO_FREE(IND_out%first_of_1D)
+     YAMBO_FREE(IND_out%last_of_1D)
    end subroutine
    !
    subroutine PARALLEL_wait(COMM)

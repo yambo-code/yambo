@@ -30,6 +30,10 @@ subroutine of_open_close(of_name,mode)
  use pars,            ONLY:lchlen,max_open_ofs
  use com,             ONLY:of,nofs,opened_of,of_unit,write_to_of
  use IO_m,            ONLY:get_name
+#if defined _NC_OUTPUT
+ use com,             ONLY:of_nc_IDs,of_nc_pos
+ use IO_m,            ONLY:io_control,io_connect,io_disconnect,OP_WR,WR_CL,NONE
+#endif
  !
  implicit none
  !
@@ -38,14 +42,23 @@ subroutine of_open_close(of_name,mode)
  ! 
  ! Work Space
  !
+#if defined _NC_OUTPUT
+ integer          :: io_out
+ character(lchlen):: of_nc_name
+#endif
  integer          :: i2,i3,file_index
  character(lchlen):: local_file_name
  !
  if (len_trim(of_name)==0) return
  !
  if (present(mode)) then
+   !
+   ! Open file
    !  
    local_file_name=of_name
+#if defined _NC_OUTPUT
+   of_nc_name=of_name
+#endif
    !
    ! Flush output
    !
@@ -63,8 +76,7 @@ subroutine of_open_close(of_name,mode)
    ! Here I open the unit using file_name to define the name
    !
    if (index(mode,'a')==0.and.index(mode,'O')==0) then
-     local_file_name=get_name(desc=trim(of_name),type=3,CORE_IO=.false.,&
-&                                 MORE_IO=.false.,COM_IO=.true.)
+     local_file_name=get_name(desc=trim(of_name),type=3,CORE_IO=.false.,MORE_IO=.false.,COM_IO=.true.)
      call rename_file(local_file_name)
    endif
    !
@@ -87,18 +99,29 @@ subroutine of_open_close(of_name,mode)
    opened_of(file_index)=local_file_name
    !
    if (index(mode,'a')==0) open(of_unit(file_index),file=trim(opened_of(file_index)))
-   if (index(mode,'a')/=0) open(of_unit(file_index),file=trim(opened_of(file_index)),&
-&                                   position='append')
+   if (index(mode,'a')/=0) open(of_unit(file_index),file=trim(opened_of(file_index)),position='append')
    if (index(mode,"t")>0) call write_the_logo(of_unit(file_index),'#')
 
    of_unit(file_index)=-of_unit(file_index)
    !
+#if defined _NC_OUTPUT
+   call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(file_index))
+   io_out=io_connect(desc=trim(of_nc_name),type=2,   ID=of_nc_IDs(file_index))
+   of_nc_pos(file_index)=0
+#endif
+   !
  else
    !
+   ! Close file
+   !  
    do i2=1,max_open_ofs
      if (index(opened_of(i2),trim(of_name))/=0) then
        close(iabs(of_unit(i2)))
        of_unit(i2)=0
+#if defined _NC_OUTPUT
+       call io_control(ACTION=WR_CL,COM=NONE,SEC=(/1/),ID=of_nc_IDs(i2))
+       call io_disconnect(ID=of_nc_IDs(i2)) 
+#endif
        if (.not.any(of==of_name)) then
          do i3=1,nofs
            if (len_trim(of(i3))==0) then
@@ -111,6 +134,7 @@ subroutine of_open_close(of_name,mode)
        exit
      endif
    enddo
+   !
  endif
  !
 end subroutine of_open_close
@@ -291,6 +315,44 @@ subroutine msg_manager(how)
  endif
  !
 end subroutine msg_manager
+!
+!
+subroutine of_netcdf_shadow(i1,val)
+ !
+ use pars,     ONLY:SP
+#if defined _NC_OUTPUT
+ use com,      ONLY:of_nc_pos,of_nc_IDs
+ use netcdf,   ONLY:nf90_unlimited
+ use IO_m,     ONLY:WR,NONE,io_control,def_variable_bulk,io_variable_bulk
+#endif
+ !
+ implicit none
+ !
+ integer,  intent(in)   :: i1
+ real(SP), intent(in)   :: val(:)
+ !
+#if defined _NC_OUTPUT
+ !
+ real(SP), allocatable :: nc_var(:,:)
+ !
+ allocate(nc_var(size(val),1))
+ !
+ if(of_nc_pos(i1)==0) call def_variable_bulk(of_nc_IDs(i1),"output",1,(/size(val),nf90_unlimited/),SP)
+ !
+ of_nc_pos(i1)=of_nc_pos(i1)+1
+ nc_var(:,1)=val
+ !
+ call io_control(ACTION=WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(i1))
+ call io_variable_bulk(of_nc_IDs(i1),1,R2=nc_var,IPOS=(/1,of_nc_pos(i1)/))
+ !
+ deallocate(nc_var)
+ !
+#endif
+ !
+ return
+ !
+end subroutine of_netcdf_shadow
+!
 !
 ! FUNCTIONS
 !===========

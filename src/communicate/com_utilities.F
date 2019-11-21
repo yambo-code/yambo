@@ -316,6 +316,44 @@ subroutine msg_manager(how)
  !
 end subroutine msg_manager
 !
+!
+subroutine of_netcdf_shadow(i1,val)
+ !
+ use pars,     ONLY:SP
+#if defined _NC_OUTPUT
+ use com,      ONLY:of_nc_pos,of_nc_IDs
+ use netcdf,   ONLY:nf90_unlimited
+ use IO_m,     ONLY:WR,NONE,io_control,def_variable_bulk,io_variable_bulk
+#endif
+ !
+ implicit none
+ !
+ integer,  intent(in)   :: i1
+ real(SP), intent(in)   :: val(:)
+ !
+#if defined _NC_OUTPUT
+ !
+ real(SP), allocatable :: nc_var(:,:)
+ !
+ allocate(nc_var(size(val),1))
+ !
+ if(of_nc_pos(i1)==0) call def_variable_bulk(of_nc_IDs(i1),"output",1,(/size(val),nf90_unlimited/),SP)
+ !
+ of_nc_pos(i1)=of_nc_pos(i1)+1
+ nc_var(:,1)=val
+ !
+ call io_control(ACTION=WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(i1))
+ call io_variable_bulk(of_nc_IDs(i1),1,R2=nc_var,IPOS=(/1,of_nc_pos(i1)/))
+ !
+ deallocate(nc_var)
+ !
+#endif
+ !
+ return
+ !
+end subroutine of_netcdf_shadow
+!
+!
 ! FUNCTIONS
 !===========
 !

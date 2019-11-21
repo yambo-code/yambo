@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,8 +23,8 @@
 !
 module com
  !
- use pars,       ONLY:lchlen,SP,schlen,nofs,max_open_ofs,n_max_jobstr
- use stderr,     ONLY:gen_fmt
+ use pars,          ONLY:SP,lchlen,schlen,nofs,max_open_ofs,n_max_jobstr
+ use com_interfcs,  ONLY:msg_characters_vector_int,msg_integers_vector_int,msg_reals_vector_int
  !
  implicit none
  !
@@ -70,20 +70,14 @@ module com
  !
  interface
    !
+   ! This interfaces is not really needed and could be easely
+   ! dropped splitting of_open_close in two different subrtouines:
+   ! of_open and of_close
+   !
    subroutine of_open_close(of_name,mode)
      character(*)           :: of_name
      character(*),optional  :: mode
    end subroutine of_open_close
-   !
-   function composed_fmt(basic_fmt,n,USE_TABS,INDENT)
-     use pars,   ONLY:lchlen
-     !
-     character(lchlen) :: composed_fmt 
-     !
-     character(*)     :: basic_fmt
-     integer          :: n,INDENT
-     logical          :: USE_TABS
-   end function composed_fmt
    !
  end interface
  !
@@ -132,7 +126,7 @@ module com
      character(*)     :: val
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     call msg_characters_vector(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT)
+     call msg_characters_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT)
    end subroutine
    !
    subroutine msg_integer(how,mesg,val,USE_TABS,INDENT)
@@ -141,7 +135,7 @@ module com
      integer          :: val
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     call msg_integers_vector(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT)
+     call msg_integers_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT)
    end subroutine
    !
    subroutine msg_real(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT)
@@ -151,96 +145,28 @@ module com
      integer,optional :: INDENT
      logical,optional :: USE_TABS
      logical,optional :: EXT_FORMAT
-     call msg_reals_vector(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT,EXT_FORMAT=EXT_FORMAT)
+     call msg_reals_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT,EXT_FORMAT=EXT_FORMAT)
    end subroutine
    !
    subroutine msg_characters_vector(how,mesg,val,USE_TABS,INDENT)
-     use stderr,   ONLY: c_print,write_to_log,log_as_a_file
-     use LIVE_t,   ONLY: LIVE_message
      character(*)     :: mesg
      character(*)     :: how
      character(*)     :: val(:)
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     ! 
-     ! Work Space
-     !
-     integer          :: i1,i2,l_indent 
-     character(lchlen):: msgfmt,lch
-     logical          :: l_tabs
-     !
-     if (len_trim(how)==0) return
-     call msg_manager(how)
-     l_tabs=.false.
-     l_indent=-1
-     if (present(USE_TABS)) l_tabs   = USE_TABS
-     if (present(INDENT))   l_indent = INDENT
-     msgfmt=composed_fmt('a',size(val),l_tabs,l_indent)
-     if(trim(msgfmt)=="(/00x,a, 01(a,1x))") msgfmt="(/99x,a, 01(a,1x))"
-     do i1=1,max_open_ofs
-       if (of_unit(i1)<=0) cycle
-       if (of_unit(i1)==11) then
-         if (len_trim(repfile)==0) cycle
-         open(unit=11,file=trim(repfile),position='append')
-       endif
-       write (of_unit(i1),trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
-       if (of_unit(i1)==11) close(11)
-       of_unit(i1)=-of_unit(i1)
-     enddo
-     if (index(how,'o')>0.or.index(how,'O')>0) return
-     if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
-     msgfmt=composed_fmt('a',-size(val),.false.,-1)
-     write (lch,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
-     if (index(how,'l')/=0.and..not.log_as_a_file) &
-&       call c_print(terminator(3),lch,terminator(4),"%s")
-     if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
+     call msg_characters_vector_int(how,mesg,val,USE_TABS=USE_TABS,INDENT=INDENT)
    end subroutine
    !
    subroutine msg_integers_vector(how,mesg,val,USE_TABS,INDENT)
-     use stderr,   ONLY: c_print,write_to_log,log_as_a_file
-     use LIVE_t,   ONLY: LIVE_message
      character(*)     :: mesg
      character(*)     :: how
      integer          :: val(:)
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     ! 
-     ! Work Space
-     !
-     integer :: i1,l_indent
-     logical :: l_tabs
-     character(lchlen)::lch,msgfmt
-     !
-     if (len_trim(how)==0) return
-     call msg_manager(how)
-     l_tabs    = .false.
-     l_indent  = -1
-     if (present(USE_TABS))   l_tabs   = USE_TABS
-     if (present(INDENT))     l_indent = INDENT
-     msgfmt=composed_fmt(trim(gen_fmt(val)),size(val),l_tabs,l_indent)
-     do i1=1,max_open_ofs
-       if (of_unit(i1)<=0) cycle
-       if (of_unit(i1)==11) open(unit=11,file=trim(repfile),position='append')
-       write (of_unit(i1),trim(msgfmt)) mesg,val
-       if (of_unit(i1)==11) close(11)
-       of_unit(i1)=-of_unit(i1)
-     enddo
-     if (index(how,'o')>0.or.index(how,'O')>0) return
-     if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
-     msgfmt=composed_fmt(trim(gen_fmt(val)),-size(val),.false.,-1)
-     write (lch,trim(msgfmt)) mesg,val 
-     if (index(how,'l')/=0.and..not.log_as_a_file) &
-&       call c_print(terminator(3),lch,terminator(4),"%s")
-     if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
+     call msg_integers_vector_int(how,mesg,val,USE_TABS=USE_TABS,INDENT=INDENT)
    end subroutine
    !
    subroutine msg_reals_vector(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatted_msg)
-     use stderr,   ONLY: c_print,write_to_log,log_as_a_file
-     use LIVE_t,   ONLY: LIVE_message
-#if defined _NC_OUTPUT
-     use netcdf,   ONLY: nf90_unlimited
-     use IO_m,     ONLY: WR,NONE,io_control,def_variable_bulk,io_variable_bulk
-#endif
      character(*)     :: mesg
      character(*)     :: how
      real(SP)         :: val(:)
@@ -248,62 +174,7 @@ module com
      logical,optional :: USE_TABS
      logical,optional :: EXT_FORMAT
      character(lchlen), optional :: formatted_msg
-     ! 
-     ! Work Space
-     !
-     integer  :: i1,l_indent
-     character(schlen):: gen_fmt_local
-     character(lchlen):: lch,msgfmt
-     logical          :: l_tabs,l_ext_fmt
-#if defined _NC_OUTPUT
-     real(SP), allocatable :: nc_var(:,:)
-#endif
-     if (len_trim(how)==0) return
-     call msg_manager(how)
-     l_ext_fmt = .false.
-     l_tabs    = .false.
-     l_indent  = -1
-     if (present(EXT_FORMAT)) l_ext_fmt = EXT_FORMAT
-     if (present(USE_TABS))   l_tabs    = USE_TABS
-     if (present(INDENT))     l_indent  = INDENT
-     if (.not.l_ext_fmt) msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),size(val),l_tabs,l_indent)
-     if (     l_ext_fmt) then
-       write(gen_fmt_local,'(a)') 'F11.06'
-       msgfmt=composed_fmt(trim(gen_fmt_local),size(val),l_tabs,l_indent)
-     endif
-     do i1=1,max_open_ofs
-       if (of_unit(i1)<=0) cycle
-       if (of_unit(i1)==11) open(unit=11,file=trim(repfile),position='append')
-       if (present(formatted_msg)) then
-         write (formatted_msg,trim(msgfmt)) mesg,val
-       else
-         write (of_unit(i1),trim(msgfmt)) mesg,val
-         if (of_unit(i1)==11) close(11)
-         of_unit(i1)=-of_unit(i1)
-       endif
-#if defined _NC_OUTPUT
-       if (abs(of_unit(i1))/=11) then
-         allocate(nc_var(size(val),1))
-         if(of_nc_pos(i1)==0) call def_variable_bulk(of_nc_IDs(i1),"output",1,(/size(val),nf90_unlimited/),SP)
-         of_nc_pos(i1)=of_nc_pos(i1)+1
-         nc_var(:,1)=val
-         call io_control(ACTION=WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(i1))
-         call io_variable_bulk(of_nc_IDs(i1),1,R2=nc_var,IPOS=(/1,of_nc_pos(i1)/))
-         deallocate(nc_var)
-       endif
-#endif
-     enddo
-     if (index(how,'o')>0.or.index(how,'O')>0) return
-     if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
-     if (.not.l_ext_fmt) msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),-size(val),.false.,-1)
-     if (     l_ext_fmt) then
-       write(gen_fmt_local,'(a)') 'F11.06'
-       msgfmt=composed_fmt(trim(gen_fmt_local),-size(val),.false.,-1)
-     endif
-     write (lch,trim(msgfmt)) mesg,val 
-     if (index(how,'l')/=0.and..not.log_as_a_file) call &
-&       c_print(terminator(3),lch,terminator(4),"%s")
-     if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
+     call msg_reals_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT,EXT_FORMAT=EXT_FORMAT,formatted_msg=formatted_msg)
    end subroutine
    !
 end module com

@@ -35,11 +35,13 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
 &                     io_sec,io_extension,io_action,read_is_on,write_is_on,&
 &                     OP_RD_CL,OP_WR_CL,io_type,io_disconnect,io_folder,io_raw_extension
  use IO_m,       ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,&
-                      frag_SC,frag_RT,frag_ELPH,frag_BS_K,frag_SCREEN
+                      frag_SC,frag_RT,frag_ELPH,frag_BS_K
  use stderr,     ONLY:intc,write_fragments_IO_log,logfile
- use interfaces, ONLY:PARALLEL_live_message
  use parallel_m, ONLY:ncpu,PP_bcast
+#if ! defined _io_lib
+ use interfaces, ONLY:PARALLEL_live_message
  use timing_m,   ONLY:timing
+#endif
  !
  implicit none
  !
@@ -91,7 +93,9 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  !
  if (index(trim(io_raw_extension(ID)),"BS_Q")>0 .and. .not.frag_BS_K) return
  !
+#if ! defined _io_lib
  call timing('io_fragment',OPR='start')
+#endif
  !
  close_is_on_save=close_is_on(ID)
  !
@@ -123,15 +127,19 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  if(.not.par_IO) ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID)
  if (present(ierr)) ierr=ierr_
  !
+#if ! defined _io_lib
  if (ncpu>1.and.write_fragments_IO_log.and.index(logfile,"stderr")==0) then
    if (write_is_on(ID)) call PARALLEL_live_message("Writing "//trim(fragment_filename))
    if (read_is_on(ID) ) call PARALLEL_live_message("Reading "//trim(fragment_filename))
  endif
+#endif
  !
  ! io_action must be saved otherwise any io_disconnect call would call io_reset (like in ioWF)
  !
  if (close_is_on_save) io_resetable(ID)=.true.
  !
+#if ! defined _io_lib
  call timing('io_fragment',OPR='stop')
+#endif
  !
 end subroutine 

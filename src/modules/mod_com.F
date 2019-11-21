@@ -60,6 +60,11 @@ module com
  character(lchlen)  :: of(nofs)
  character(lchlen)  :: opened_of(max_open_ofs)
  integer            :: of_unit(max_open_ofs)
+#if defined _NC_OUTPUT
+ integer, parameter :: of_nc_max_size=10000
+ integer            :: of_nc_IDs(max_open_ofs)
+ integer            :: of_nc_pos(max_open_ofs)
+#endif
  logical            :: write_to_of
  logical            :: write_to_report
  !
@@ -232,6 +237,10 @@ module com
    subroutine msg_reals_vector(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatted_msg)
      use stderr,   ONLY: c_print,write_to_log,log_as_a_file
      use LIVE_t,   ONLY: LIVE_message
+#if defined _NC_OUTPUT
+     use netcdf,   ONLY: nf90_unlimited
+     use IO_m,     ONLY: WR,NONE,io_control,def_variable_bulk,io_variable_bulk
+#endif
      character(*)     :: mesg
      character(*)     :: how
      real(SP)         :: val(:)
@@ -246,6 +255,9 @@ module com
      character(schlen):: gen_fmt_local
      character(lchlen):: lch,msgfmt
      logical          :: l_tabs,l_ext_fmt
+#if defined _NC_OUTPUT
+     real(SP), allocatable :: nc_var(:,:)
+#endif
      if (len_trim(how)==0) return
      call msg_manager(how)
      l_ext_fmt = .false.
@@ -266,6 +278,17 @@ module com
          write (formatted_msg,trim(msgfmt)) mesg,val
        else
          write (of_unit(i1),trim(msgfmt)) mesg,val
+#if defined _NC_OUTPUT
+         if (of_unit(i1)/=11) then
+           allocate(nc_var(size(val),1))
+           if(of_nc_pos(i1)==0) call def_variable_bulk(of_nc_IDs(i1),"output",1,(/size(val),nf90_unlimited/),SP)
+           of_nc_pos(i1)=of_nc_pos(i1)+1
+           nc_var(:,1)=val
+           call io_control(ACTION=WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(i1))
+           call io_variable_bulk(of_nc_IDs(i1),1,R2=nc_var,IPOS=(/1,of_nc_pos(i1)/))
+           deallocate(nc_var)
+         endif
+#endif
          if (of_unit(i1)==11) close(11)
          of_unit(i1)=-of_unit(i1)
        endif

@@ -36,8 +36,8 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
  integer,      intent(in)  :: VAR_ID
  integer,      intent(in)  :: VAR_SZ(:)
  integer,      intent(in)  :: VAR_KIND
- character(schlen), optional :: dim_names(:)
- character(*),      optional :: par_io_kind
+ character(schlen), intent(in), optional :: dim_names(:)
+ character(*),      intent(in), optional :: par_io_kind
  !
  ! Work Space
  !

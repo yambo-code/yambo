@@ -49,10 +49,8 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCU
  ! Work space
  !
  real(SP)              :: real_ctl,max_dist,v(3),db_a(3,3),db_alat(3),delta_align
- real(SP), allocatable :: distances(:)
  character(schlen)     :: coo_out_
  integer               :: i1,ic,ib,ik,i_sp_pol,i_err,ik_special
- integer,  allocatable :: int_distances(:)
  !
  ! Input file parsing
  !====================
@@ -110,40 +108,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCU
    !
    if (trim(CIRCUIT_E_DB_path)=="none".and.BANDS_steps> 0) then
      !
-     allocate(distances(USER_k%nbz-1),int_distances(USER_k%nbz-1))
-     !
-     do ik=1,USER_k%nbz-1
-       v=USER_k%pt(ik,:)-USER_k%pt(ik+1,:)
-       call c2a(v_in=v,mode="ki2c")
-       distances(ik)=v_norm(v)
-     enddo
-     !
-     max_dist=maxval(distances)
-     !
-     do ik=1,USER_k%nbz-1
-       int_distances(ik)=maxval((/nint(BANDS_steps*distances(ik)/max_dist),1/))
-     enddo
-     CIRCUIT_k%nbz =sum(int_distances)+1
-     CIRCUIT_k%nibz=CIRCUIT_k%nbz
-     !
-     call msg("s",'Number of K-points in the circuit :',CIRCUIT_k%nbz)
-     !
-     YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz,3))
-     YAMBO_ALLOC(CIRCUIT_k%weights,(CIRCUIT_k%nbz))
-     !
-     CIRCUIT_k%weights=1._SP/real(CIRCUIT_k%nbz,SP)
-     !
-     ic=1
-     do ik=1,USER_k%nbz-1
-       v=(USER_k%pt(ik+1,:)-USER_k%pt(ik,:))/int_distances(ik)
-       do i1=1,int_distances(ik)
-         CIRCUIT_k%pt(ic,:)= USER_k%pt(ik,:)+(i1-1._SP)*v
-         ic=ic+1
-       enddo
-     enddo
-     CIRCUIT_k%pt(CIRCUIT_k%nbz,:)=USER_k%pt(USER_k%nbz,:)
-     !
-     deallocate(distances,int_distances)
+     call generate_circuit(USER_k,CIRCUIT_k,BANDS_steps)
      !
    else 
      !

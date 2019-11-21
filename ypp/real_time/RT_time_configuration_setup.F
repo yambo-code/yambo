@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -32,13 +32,13 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !
 #include<memory.h>
  !
- character(*) :: what 
- type(RT_IO_t):: GENERAL_RT_IO_t
+ character(*),  intent(in) :: what
+ type(RT_IO_t), intent(in) :: GENERAL_RT_IO_t
  !
  ! Work Space
  !
- integer  :: i_t,i_ref(2),i_range(2),i_io(2),i_c,j_ref
- logical  :: UNIFORM,l_use_non_uniform_time_grid
+ integer  :: i_t,i_ref(2),i_range(2),i_io(2),i_c,j_ref,step_ratio
+ logical  :: UNIFORM,l_carriers,l_current,l_G_lesser
  real(SP) :: STEP,TIME,TIME_diff
  !
  ! Definitions
@@ -47,6 +47,10 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  TIME  = GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)
  STEP  = RT_step
  if (GENERAL_RT_IO_t%N> 1) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
+ !
+ l_carriers=(what=="CARRIERS")
+ l_current =(what=="CURRENT")
+ l_G_lesser=(what=="Glesser")
  !
  ! Time range ...
  !===============
@@ -86,8 +90,6 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    !
  endif 
  !
- RT_conf%T_range=(/GENERAL_RT_IO_t%Time(i_ref(1)),GENERAL_RT_IO_t%Time(i_ref(2))/)
- !
  ! Uniform time sampling?
  !========================
  !
@@ -97,14 +99,12 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    if (TIME_diff>RT_step) UNIFORM=.FALSE.
  enddo
  !
- l_use_non_uniform_time_grid=what=="CURRENT"
- !
  ! Time step ...
  !
  ! N.B.: This is needed for the carriers post-processing only
  !============================================================
  !
- if ( (RT_conf%delta_T>0._SP.or..not.UNIFORM) .and. .not.l_use_non_uniform_time_grid) then
+ if ( (RT_conf%delta_T>0._SP .or. .not.UNIFORM) .and. l_carriers ) then
    !
    if (.not.UNIFORM) STEP = GENERAL_RT_IO_t%Time(i_ref(2))-GENERAL_RT_IO_t%Time(i_ref(2)-1)
    !
@@ -120,7 +120,8 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
        !
        do i_t=i_ref(2)-1,i_ref(1),-1
          TIME_diff= abs ( GENERAL_RT_IO_t%Time(j_ref)-GENERAL_RT_IO_t%Time(i_t) - RT_conf%delta_T )
-         if (TIME_diff<RT_step) then
+         ! Here it is checked against zero, a treshold should be given instead
+         if (TIME_diff-RT_step<0._SP) then
            RT_conf%T_n_steps=RT_conf%T_n_steps+1
            j_ref            = i_t
          endif
@@ -129,7 +130,6 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
        YAMBO_ALLOC(RT_time,(RT_conf%T_n_steps))
        !
        i_ref(1)          =j_ref
-       RT_conf%T_range(1)=GENERAL_RT_IO_t%Time(i_ref(1))
        !
      else
        !
@@ -151,19 +151,27 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    !
  else
    !
-   RT_conf%delta_T   = STEP
-   RT_conf%T_n_steps = i_ref(2)-i_ref(1)+1
+   if(RT_conf%delta_T==0._SP) RT_conf%delta_T   = STEP
+   if(RT_conf%delta_T> 0._SP) RT_conf%delta_T   = max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
+   !
+   step_ratio=nint(RT_conf%delta_T/STEP)
+   do i_c=1,step_ratio
+     if(mod(i_ref(2)-i_ref(1),step_ratio)==0) exit
+     i_ref(2)=i_ref(2)-i_c
+   enddo
+   RT_conf%T_n_steps = (i_ref(2)-i_ref(1))/step_ratio+1
    !
    YAMBO_ALLOC(RT_time,(RT_conf%T_n_steps))
+   j_ref=0
    do i_t=i_ref(1),i_ref(2)
-     RT_time(i_t-i_ref(1)+1) = GENERAL_RT_IO_t%Time(i_t)
+     if(mod(i_t-1,step_ratio)/=0) cycle
+     j_ref=j_ref+1
+     RT_time(j_ref) = GENERAL_RT_IO_t%Time(i_t)
    enddo
    !
  endif
  !
- ! Field deduced dumping
- !=======================
- RT_conf%Field_damp_factor= 2._SP*pi/(real(RT_conf%T_n_steps-1,SP)*RT_conf%delta_T)
+ RT_conf%T_range=(/GENERAL_RT_IO_t%Time(i_ref(1)),GENERAL_RT_IO_t%Time(i_ref(2))/)
  !
  ! Messaging
  !===========
@@ -173,9 +181,15 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  call msg('s','['//what//'] Time step      [fs]:',RT_conf%delta_T*AUT2FS)
  call msg('s','['//what//'] Time steps         :',RT_conf%T_n_steps)
  !
- if (l_use_non_uniform_time_grid) return
+ if (.not.(l_current.or.l_G_lesser)) return
  !
  call msg('s','['//what//'] Damping       [meV]:',RT_conf%damp_factor*1000._SP*HA2EV)
+ !
+ if (.not.l_current) return
+ !
+ ! Field deduced dumping
+ !=======================
+ RT_conf%Field_damp_factor= 2._SP*pi/(real(RT_conf%T_n_steps-1,SP)*RT_conf%delta_T)
  call msg('s','['//what//'] Field damping [meV]:',RT_conf%Field_damp_factor*1000._SP*HA2EV)
  !
 end subroutine RT_time_configuration_setup

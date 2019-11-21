@@ -103,12 +103,6 @@ test -z "$AR" && AR=ar
 test -z "$AR_FLAGS" && AR_FLAGS="-ru"
 AC_SUBST(AR_FLAGS)
 #
-# FC module flag
-#
-IFLAG=$ax_cv_f90_modflag
-if test -z "$IFLAG" ; then IFLAG="-I" ; fi
-AC_SUBST(IFLAG)
-#
 # ============================================================================
 #
 # C options specific for driver.c
@@ -194,8 +188,11 @@ AC_LANG_POP(Fortran)
 #=============================================================================
 # FLAGS TO INCLUDE MODULE
 AX_F90_MODULE_FLAG
-F90_MODULE_FLAG="$ax_cv_f90_modflag"
-AC_SUBST([F90_MODULE_FLAG])
+#F90_MODULE_FLAG="$ax_cv_f90_modflag"
+IFLAG="$ax_cv_f90_modflag"
+if test -z "$IFLAG" ; then IFLAG="-I" ; fi
+#AC_SUBST([F90_MODULE_FLAG])
+AC_SUBST(IFLAG)
 #
 # ============================================================================
 # CPP check & flags

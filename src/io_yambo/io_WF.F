@@ -24,7 +24,6 @@
 integer function io_WF(ID,wf)
  !
  use pars,             ONLY:SP,schlen
- use com,              ONLY:error
  use electrons,        ONLY:n_spinor
  use stderr,           ONLY:intc
  use R_lattice,        ONLY:nkibz

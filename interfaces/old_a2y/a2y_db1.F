@@ -24,7 +24,7 @@
 subroutine a2y_db1(en,k,KSS_file_name)
  !
  use pars,                  ONLY: SP, DP,pi
- use com,                   ONLY: msg,warning,error
+ use com,                   ONLY: msg
  use electrons,             ONLY: levels, default_nel,n_bands,n_spin,n_sp_pol,&
 &                                 n_spinor,l_spin_orbit,n_spin_den 
  use R_lattice,             ONLY: b, bz_samp, ng_vec, g_vec,nkibz

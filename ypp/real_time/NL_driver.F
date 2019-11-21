@@ -33,7 +33,7 @@ subroutine NL_driver(en,k)
  use nl_optics,      ONLY:n_frequencies,NL_P_t
  use fields,         ONLY:Efield,EtoT,Divide_by_Field,ext_field,Efield_duplicate,Efield_strength
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
- use com,            ONLY:msg,error,warning
+ use com,            ONLY:msg
  use real_time,      ONLY:NE_steps,RT_step,NE_steps
  use stderr,         ONLY:intc,real2ch
  use RT_control,     ONLY:OBS_RT_IO_t

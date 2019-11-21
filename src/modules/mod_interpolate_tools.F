@@ -28,7 +28,6 @@ module interpolate_tools
 &                       l_INTERP_W,NN_nk_exact,NN_MAX_real_nearest,NN_n_of_nearest,l_INTERP_Z,&
 &                       INTERPOLATE_msg_fmt
  use electrons,    ONLY:n_sp_pol
- use com,          ONLY:error
  !
 #include<memory.h>
  !  
@@ -73,6 +72,7 @@ module interpolate_tools
      INTERP_obj(ID)%in_use=.FALSE.
      INTERP_obj(ID)%what=" "
      YAMBO_FREE(INTERP_obj(ID)%k)
+     YAMBO_FREE(INTERP_obj(ID)%weights)
      YAMBO_FREE(INTERP_obj(ID)%SEED)
      YAMBO_FREE(INTERP_obj(ID)%INTERP)
      !

@@ -38,7 +38,6 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  ! where   v_x^{NL} is the nonlocal(state-dependent) exchange potential
  !
  use pars,            ONLY:SP,lchlen
- use com,             ONLY:warning
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,nkibz
  use D_lattice,       ONLY:nsym

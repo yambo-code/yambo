@@ -34,9 +34,6 @@ subroutine RT_databases_IO(E)
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,HEAD_k_cpu,ncpu,myid
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,RT_all2ibz
  use timing_m,       ONLY:timing
-#if defined  _PAR_IO
- use com,            ONLY:error
-#endif
  !
  implicit none
  !

@@ -24,7 +24,6 @@
 subroutine PARSER_close_G(ng,what)
  !
  use pars,        ONLY:SP
- use com,         ONLY:error
  use units,       ONLY:HA2EV
  use R_lattice,   ONLY:n_g_shells,E_of_shell,ng_in_shell
  implicit none

@@ -25,7 +25,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  ! 
  use units,          ONLY:HA2EV,HA2KEL,SPEED_OF_LIGHT,AU2KWCMm2,PS2AUT,AU2VMm1
  use pars,           ONLY:SP,schlen
- use com,            ONLY:msg,of_open_close,warning
+ use com,            ONLY:msg,of_open_close
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,l_use_Hxc_collisions
  use QP_m,           ONLY:Time_of
  use fields,         ONLY:A_tot,A_ind,A_ext

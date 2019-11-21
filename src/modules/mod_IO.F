@@ -27,7 +27,6 @@ module IO_m
 #if !defined _io_lib
  use C_driver,   ONLY:code_version,code_revision,code_GPL_revision
 #endif
- use com,        ONLY:error
  use netcdf
  !
  implicit none
@@ -291,6 +290,23 @@ module IO_m
    end subroutine
 #endif
    !
+   character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING,ALT_JOB_DIR)
+     use pars,       ONLY:lchlen
+     character(*)           ::desc
+     integer                ::type
+     logical                ::CORE_IO,MORE_IO,COM_IO
+     character(*), optional ::subfolder
+     character(*), optional ::ALT_JOB_STRING
+     character(*), optional ::ALT_JOB_DIR
+   end function get_name
+   !
+   function all_locations(desc,subfolder)
+     use pars,       ONLY:lchlen,num_of_alternative_locations
+     character(*)           ::desc
+     character(*), optional ::subfolder
+     character(lchlen), dimension(num_of_alternative_locations) :: all_locations
+   end function all_locations
+   !
  end interface
  !
  contains
@@ -542,7 +558,7 @@ module IO_m
    !
    logical function file_is_present(desc,subfolder)
      !
-     use com,           ONLY:all_locations,file_exists,num_of_alternative_locations
+     use pars,         ONLY:num_of_alternative_locations
      !
      character(*)           :: desc
      character(*), optional :: subfolder
@@ -552,6 +568,8 @@ module IO_m
      integer            :: i_f
      character(lchlen)  :: possible_locations(num_of_alternative_locations)
      character(schlen)  :: subfolder_
+     !
+     logical, external :: file_exists
      !
      subfolder_=' '
      if (present(subfolder)) subfolder_=subfolder
@@ -583,7 +601,6 @@ module IO_m
    end function
    !
    subroutine netcdf_call(status,ID,VAR,ID_VAR)
-     use com,           ONLY:error
      integer,      intent (in)           :: status
      integer,      intent (in)           :: ID
      integer,      intent (in), optional :: ID_VAR
@@ -633,8 +650,6 @@ module IO_m
    end function
    !
    subroutine deliver_IO_error_message(i_err,DB,STOP_it)
-     !
-     use com,        ONLY:warning,error
      !
      integer          :: i_err
      logical,optional :: STOP_it

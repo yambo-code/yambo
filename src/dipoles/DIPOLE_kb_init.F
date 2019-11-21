@@ -27,7 +27,7 @@ subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
  use stderr,              ONLY:intc
  use DIPOLES,             ONLY:DIPOLE_t
  use electrons,           ONLY:levels,n_spinor
- use com,                 ONLY:msg,warning
+ use com,                 ONLY:msg
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD_CL,OP_RD
  use D_lattice,           ONLY:n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table, &

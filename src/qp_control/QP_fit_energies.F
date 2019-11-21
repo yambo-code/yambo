@@ -28,7 +28,6 @@ subroutine QP_fit_energies(i_ACTION,bands,en,qp)
  ! the mod_QP_CTL module
  !
  use pars,          ONLY:SP
- use com,           ONLY:warning
  use QP_m,          ONLY:QP_t
  use QP_CTL_m,      ONLY:QP_action
  use electrons,     ONLY:levels,n_sp_pol,spin

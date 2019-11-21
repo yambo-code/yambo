@@ -36,7 +36,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
  use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,minus_G,bare_qpg,qindx_X
- use com,          ONLY:warning,error,msg
+ use com,          ONLY:msg
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_t

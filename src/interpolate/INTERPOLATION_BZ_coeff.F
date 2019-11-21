@@ -36,7 +36,6 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  use D_lattice,         ONLY:nsym
  use R_lattice,         ONLY:bz_samp
  use vec_operate,       ONLY:c2a
- use com,               ONLY:error
  !
 #include<memory.h>
  !
@@ -167,7 +166,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
    use units,          ONLY:HA2EV
    use pars,           ONLY:SP,lchlen
    use R_lattice,      ONLY:bz_samp
-   use com,            ONLY:warning,msg
+   use com,            ONLY:msg
    !
    type(bz_samp), intent(in) :: Xk
    integer,       intent(in) :: nvalues,nshells,Nk

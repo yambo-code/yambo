@@ -37,7 +37,7 @@ subroutine section(mode,name)
 &                     date_and_time_string
  use parallel_m, ONLY:PP_redux_wait,ncpu
  use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&
-&                     write_to_report,write_the_logo,repfile
+&                     write_to_report,repfile
  use timing_m,   ONLY:timing_upto_now
  implicit none
  !

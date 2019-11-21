@@ -691,7 +691,7 @@ module it_tools
      use stderr,       ONLY: intc
      use drivers,      ONLY: infile_editing
      use stderr,       ONLY: gen_fmt
-     use com,          ONLY: write_the_logo,repfile
+     use com,          ONLY: repfile
      use parallel_m,   ONLY: master_cpu
      type(initdefs)::defs
      integer       :: ou

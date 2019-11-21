@@ -75,8 +75,8 @@ module com
    ! of_open and of_close
    !
    subroutine of_open_close(of_name,mode)
-     character(*)           :: of_name
-     character(*),optional  :: mode
+     character(*), intent(in)            :: of_name
+     character(*), intent(in), optional  :: mode
    end subroutine of_open_close
    !
  end interface

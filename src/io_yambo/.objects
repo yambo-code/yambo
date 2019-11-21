@@ -27,7 +27,7 @@ ELPH_objects = io_ELPH.o io_ELPH_old.o
 #if defined _PAR_IO
 PARIO_objects = io_BS_PAR.o
 #endif
-objs = io_utilities.o ver_is_gt_or_eq.o IO_and_Messaging_switch.o io_fragment.o \
+objs = ver_is_gt_or_eq.o IO_and_Messaging_switch.o io_fragment.o \
        io_Vnl.o       io_E_SOC_map.o \
        io_RIM.o       io_GROT.o     $(ELPH_objects) \
        io_DIPOLES.o   io_QINDX.o    io_QP_and_GF.o   io_X.o \

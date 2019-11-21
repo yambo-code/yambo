@@ -147,6 +147,9 @@ subroutine write_the_logo(unit_,comment_)
  use LOGO,         ONLY:pickup_a_logo,logo_line,n_logo_lines
  use pars,         ONLY:schlen
  use com,          ONLY:repfile
+ !
+ implicit none
+ !
  integer     ::unit_
  character(1)::comment_
  character(schlen)::space_,ch ! Work Space
@@ -182,8 +185,11 @@ end subroutine write_the_logo
 !
 !
 subroutine rename_file(name)
+ !
  use pars,       ONLY:schlen,lchlen
+ !
  implicit none
+ !
  character(lchlen):: name
  character(lchlen):: ch 
  integer          :: i1
@@ -197,25 +203,31 @@ subroutine rename_file(name)
    if (i1> 99) write (ch,'(2a,i3.3)') trim(name),'_',i1
  enddo
  name=ch
+ !
 end subroutine rename_file
 !
 !
 subroutine warning(mesg)
+ !
 #if !defined _io_lib
  use LIVE_t,     ONLY:LIVE_message
 #endif
  use stderr,     ONLY:STRING_pack
  use com,        ONLY:msg
+ !
  implicit none
+ !
  character(*) :: mesg
  call msg('nr',STRING_pack('[WARNING] ',trim(mesg)))
 #if !defined _io_lib
  call LIVE_message(STRING_pack('[WARNING] ',trim(mesg)),"n","","%s")
 #endif
+ !
 end subroutine warning
 !
 !
 subroutine error(mesg)
+ !
 #if !defined _io_lib
  use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
 #endif
@@ -223,6 +235,11 @@ subroutine error(mesg)
  use com,        ONLY:secnm,msg
 #if defined _MPI
  use parallel_m, ONLY:mpi_comm_world,ncpu
+#endif
+ !
+ implicit none
+ !
+#if defined _MPI
  integer         :: ierr
 #endif
  character(*)    :: mesg
@@ -251,11 +268,15 @@ end subroutine error
 !
 !
 subroutine msg_deliver(of_name,formatted_msg)
+ !
  use pars,      ONLY:max_open_ofs
  use com,       ONLY:opened_of,repfile,of_unit
+ !
  implicit none
+ !
  character(*) :: of_name,formatted_msg
  integer      :: i_unit
+ !
  do i_unit=1,max_open_ofs
    if (index(opened_of(i_unit),trim(of_name))==0) cycle
    if (of_unit(i_unit)<=0) cycle
@@ -370,24 +391,32 @@ end subroutine of_netcdf_shadow
 !===========
 !
 logical function OF_exists(name)
+ !
  use pars,      ONLY:max_open_ofs
  use com,       ONLY:opened_of
+ !
  implicit none
+ !
  character(*) ::name
  integer      ::i_f
  OF_exists=.false. 
  do i_f=1,max_open_ofs
    if (index(opened_of(i_f),name)/=0) OF_exists=.TRUE.
  enddo
+ !
 end function OF_exists
 !
 !
 logical function file_exists(name)
+ !
  implicit none
+ !
  character(*) name
+ !
  file_exists=.false.
  if (len_trim(name)==0) return
  inquire(file=name,exist=file_exists)
+ !
 end function file_exists
 !
 !
@@ -427,8 +456,12 @@ end function composed_fmt
 !
 !
 function filename(name)
+ !
  use stderr,     ONLY:STRING_split,STRING_remove
  use pars,       ONLY:schlen,lchlen
+ !
+ implicit none
+ !
  character(lchlen) :: filename
  character(*)      :: name
  integer           :: N
@@ -438,4 +471,5 @@ function filename(name)
  name_=STRING_remove(name_,"/",replace=" ")
  call STRING_split(name_,names,n_non_empty_strings=N)
  filename=trim(names(N))
+ !
 end function filename

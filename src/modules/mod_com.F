@@ -278,20 +278,20 @@ module com
          write (formatted_msg,trim(msgfmt)) mesg,val
        else
          write (of_unit(i1),trim(msgfmt)) mesg,val
-#if defined _NC_OUTPUT
-         if (of_unit(i1)/=11) then
-           allocate(nc_var(size(val),1))
-           if(of_nc_pos(i1)==0) call def_variable_bulk(of_nc_IDs(i1),"output",1,(/size(val),nf90_unlimited/),SP)
-           of_nc_pos(i1)=of_nc_pos(i1)+1
-           nc_var(:,1)=val
-           call io_control(ACTION=WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(i1))
-           call io_variable_bulk(of_nc_IDs(i1),1,R2=nc_var,IPOS=(/1,of_nc_pos(i1)/))
-           deallocate(nc_var)
-         endif
-#endif
          if (of_unit(i1)==11) close(11)
          of_unit(i1)=-of_unit(i1)
        endif
+#if defined _NC_OUTPUT
+       if (abs(of_unit(i1))/=11) then
+         allocate(nc_var(size(val),1))
+         if(of_nc_pos(i1)==0) call def_variable_bulk(of_nc_IDs(i1),"output",1,(/size(val),nf90_unlimited/),SP)
+         of_nc_pos(i1)=of_nc_pos(i1)+1
+         nc_var(:,1)=val
+         call io_control(ACTION=WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(i1))
+         call io_variable_bulk(of_nc_IDs(i1),1,R2=nc_var,IPOS=(/1,of_nc_pos(i1)/))
+         deallocate(nc_var)
+       endif
+#endif
      enddo
      if (index(how,'o')>0.or.index(how,'O')>0) return
      if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return

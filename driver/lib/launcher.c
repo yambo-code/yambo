@@ -132,14 +132,4 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
   if (*use_mpi==1) { MPI_Abort(MPI_COMM_WORLD,1); };
 #endif 
  }
- /* 
-   CLEAN & EXIT
- ===========================================================================
- */
-#if defined _MPI
-  if (*use_mpi==1) {
-   MPI_Barrier(MPI_COMM_WORLD);
-   MPI_Finalize();
-  };
-#endif 
 };

@@ -115,6 +115,7 @@ subroutine cutoff_ws(q)
  !
  ! cleanup
  !
+ call PP_indexes_reset(px)
  deallocate(V_cut)
-!
+ !
 end subroutine

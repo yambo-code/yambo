@@ -1,7 +1,3 @@
-
-
-
-
 !
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
@@ -107,6 +103,7 @@ call of_open_close(of_name,'ot')
   
  bare_qpg(1,1)=1.0/dummy
 
-call of_open_close(of_name) 
+ call of_open_close(of_name) 
+ call PP_indexes_reset(px)
  !
 end subroutine

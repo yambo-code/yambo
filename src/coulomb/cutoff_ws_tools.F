@@ -101,6 +101,7 @@
   call live_timing()
   !
   call PP_redux_wait(vcut%corrected)
+  call PP_indexes_reset(px)
   !
 end subroutine vcut_init
 !

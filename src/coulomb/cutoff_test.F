@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM,DV
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
+subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab,is_cut,q)
  !
  use pars,          ONLY:SP,schlen,pi
  use vec_operate,   ONLY:v_norm
@@ -35,7 +35,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
  use interfaces,    ONLY:PARALLEL_index
  implicit none
  type(bz_samp):: q
- logical      :: cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut(3)
+ logical      :: cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab,is_cut(3)
  !
  ! Work Space
  !
@@ -65,33 +65,31 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
  dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
  !
  if (cut_is_sphere) dummy=2._SP*plot_factor*cyl_ph_radius
- if (cut_is_ws) then 
+ if (cut_is_ws.or.cut_is_slab) then 
 !
 ! build the superperiodicity direct lattice
 !
-  nq=1
-  rdum=1000
-  do iqibz=1,nqibz
-   if(abs(q%pt(iqibz,1))/=0..and.(abs(q%pt(iqibz,1))<rdum(1))) rdum(1)=q%pt(iqibz,1)
-   if(abs(q%pt(iqibz,2))/=0..and.(abs(q%pt(iqibz,2))<rdum(2))) rdum(2)=q%pt(iqibz,2)
-   if(abs(q%pt(iqibz,3))/=0..and.(abs(q%pt(iqibz,3))<rdum(3))) rdum(3)=q%pt(iqibz,3)
-  enddo
-  nq=abs(nint(1./rdum))
-  do i1=1,3
-    if (nq(i1)==0) nq(i1)=1
-  enddo
-  dummy=2._SP*plot_factor*dummy*nq
+   nq=1
+   rdum=1000
+   do iqibz=1,nqibz
+     if(abs(q%pt(iqibz,1))/=0..and.(abs(q%pt(iqibz,1))<rdum(1))) rdum(1)=q%pt(iqibz,1)
+     if(abs(q%pt(iqibz,2))/=0..and.(abs(q%pt(iqibz,2))<rdum(2))) rdum(2)=q%pt(iqibz,2)
+     if(abs(q%pt(iqibz,3))/=0..and.(abs(q%pt(iqibz,3))<rdum(3))) rdum(3)=q%pt(iqibz,3)
+   enddo
+   nq=abs(nint(1./rdum))
+   do i1=1,3
+     if (nq(i1)==0) nq(i1)=1
+   enddo
+   dummy=2._SP*plot_factor*dummy*nq
  !
-  do i1=1,3
-    atws(:,i1) = a(i1,:)
-    atws(:,i1) = atws(:,i1) * nq(i1)
-  enddo
+   do i1=1,3
+     atws(:,i1) = a(i1,:)
+     atws(:,i1) = atws(:,i1) * nq(i1)
+   enddo
 !
-
  endif
  !
  if (cut_is_cyl) then
-   dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
    if (is_cut(1).and.cyl_length==0) dummy(1)=2.0_SP*plot_factor*dummy(1)*10.0
    if (is_cut(2).and.cyl_length==0) dummy(2)=2.0_SP*plot_factor*dummy(2)*10.0
    if (is_cut(3).and.cyl_length==0) dummy(3)=2.0_SP*plot_factor*dummy(3)*10.0
@@ -102,7 +100,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
    if (is_cut(3)) dummy(3)=2.0_SP*plot_factor*box_length(3)
  endif
  !
-do ir1=1,n_dl_pts
+ do ir1=1,n_dl_pts
    do ir2=1,n_dl_pts
      ip=n_dl_pts*(ir1-1)+ir2
      pl_xy_pt(ip,:)=-((/dummy(1)/2,dummy(2)/2,0._SP   /)-&
@@ -128,7 +126,7 @@ do ir1=1,n_dl_pts
        v_yz(ip,1)=V_in_cyl( pl_yz_pt(ip,:) )
        v_xz(ip,1)=V_in_cyl( pl_xz_pt(ip,:) )
      endif
-     if (cut_is_ws) then
+     if (cut_is_ws.or.cut_is_slab) then
        v_xy(ip,1)=V_in_ws( pl_xy_pt(ip,:) )
        v_yz(ip,1)=V_in_ws( pl_yz_pt(ip,:) )
        v_xz(ip,1)=V_in_ws( pl_xz_pt(ip,:) )
@@ -206,9 +204,9 @@ do ir1=1,n_dl_pts
  call msg('o RL_','#')
  !
  do ip=1,n_dl_pts**2
-   call msg('o xy','',(/pl_xy_pt(ip,1),pl_xy_pt(ip,2),v_xy(ip,:)/),INDENT=-2,USE_TABS=.true.)
-   call msg('o xz','',(/pl_xz_pt(ip,1),pl_xz_pt(ip,3),v_xz(ip,:)/),INDENT=-2,USE_TABS=.true.)
-   call msg('o yz','',(/pl_yz_pt(ip,2),pl_yz_pt(ip,3),v_yz(ip,:)/),INDENT=-2,USE_TABS=.true.)
+   call msg('o xy','',(/pl_xy_pt(ip,1),pl_xy_pt(ip,2),v_xy(ip,1),v_xy(ip,2)/),INDENT=-2,USE_TABS=.true.)
+   call msg('o xz','',(/pl_xz_pt(ip,1),pl_xz_pt(ip,3),v_xz(ip,1),v_xz(ip,2)/),INDENT=-2,USE_TABS=.true.)
+   call msg('o yz','',(/pl_yz_pt(ip,2),pl_yz_pt(ip,3),v_yz(ip,1),v_yz(ip,2)/),INDENT=-2,USE_TABS=.true.)
  enddo
  !
  max_val=0._SP

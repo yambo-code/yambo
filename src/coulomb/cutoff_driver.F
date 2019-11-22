@@ -252,14 +252,13 @@ subroutine cutoff_driver(q)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=io_COL_CUT(ID)
    !
+   ! Test
+   !
+   call parser('CUTCol_test',l_col_test)
+   if (l_col_test) call cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab,is_cut,q)
  endif
  !
  ! Real-Space Test 
- !
- if (io_err/=0) then
-   call parser('CUTCol_test',l_col_test)
-   if (l_col_test) call cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
- endif
  !
  call timing('Coulomb Cutoff',OPR='stop')
  !

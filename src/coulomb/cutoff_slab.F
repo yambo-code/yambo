@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM,DV
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,32 +21,27 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine cutoff_slab(q,is_cut)
+ subroutine cutoff_slab(q,is_cut)
  !
  use com,           ONLY:msg,of_open_close
  use pars,          ONLY:SP,pi,schlen
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:alat
- use R_lattice,     ONLY:bz_samp,g_vec,bare_qpg,k_grid_uc_vol
+ use R_lattice,     ONLY:bz_samp,g_vec,bare_qpg,q0_def_norm
  use com,           ONLY:error
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
-
-! use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,nqibz
-! use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,nqibz
-
+ !
  implicit none
  !
  ! Work Space
  ! 
-! real(SP)::dummy
  type(bz_samp) :: q
  logical       :: is_cut(3)
  integer       :: ipar1,ipar2,iort
  integer       :: iq,ig
  real(SP)      :: slab_vz,slab_vplane,lcut,pre_factor
  type(PP_indexes) ::px
- character(schlen)  :: of_name
  !
  call PP_indexes_reset(px)
 
@@ -71,10 +66,7 @@ subroutine cutoff_slab(q,is_cut)
 
  lcut=alat(iort)/2.
 
-call PARALLEL_index(px,(/q%nibz,wf_ng/))
-
-of_name='debug'
-call of_open_close(of_name,'ot')
+ call PARALLEL_index(px,(/q%nibz,wf_ng/))
  !
  do ig=1,wf_ng
    do iq=1,q%nibz
@@ -90,20 +82,16 @@ call of_open_close(of_name,'ot')
      if (iq==1.and.ig==1) cycle
 ! all other
      pre_factor=sqrt(1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut))
-     call msg('o deb','',(/real(bare_qpg(iq,ig)),pre_factor/),INDENT=-2,USE_TABS=.true.) 
-
-!marg: check if needed/makes sense
-!check it!
-     if (abs(pre_factor)<1.E-5) pre_factor=1.E-5
      bare_qpg(iq,ig)=bare_qpg(iq,ig)/pre_factor
    enddo
  enddo
-
-!check this not sure is correct
- pre_factor=2.0*pi*sqrt(lcut*k_grid_uc_vol)
-  
- bare_qpg(1,1)=1.0/pre_factor
-
-call of_open_close(of_name) 
- !
+!
+!MM: check this not sure is correct:
+!!pre_factor=2.0*pi*sqrt(lcut*k_grid_uc_vol)
+!DV: I do not understand the expression above.
+!Divergency V(q_xy=0)=zc/q_xy to be treated separately when calculateing W(q=0)
+ pre_factor=sqrt(lcut/q0_def_norm)
+!commentented for the moment
+! bare_qpg(1,1)=1.0/pre_factor
+!
 end subroutine

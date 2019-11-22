@@ -32,29 +32,31 @@ subroutine cutoff_box(q,is_cut)
  use pars,          ONLY:SP,pi,rZERO,cI
  use wave_func,     ONLY:wf_ng
  use vec_operate,   ONLY:iku_v_norm,v_norm
- use D_lattice,     ONLY:DL_vol,alat,sop_inv,a
+ use D_lattice,     ONLY:DL_vol,alat,sop_inv,a,sop_inv_d
  use R_lattice,     ONLY:bare_qpg,RL_vol,RIM_ng,RIM_qpg,bz_samp,&
 &                        box_length,g_vec,g_rot,ng_closed,RIM_anisotropy,&
-&                        CUTOFF_plus_RIM
+&                        CUTOFF_plus_RIM,g_rot_d
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
  use LIVE_t,        ONLY:live_timing
  use zeros,         ONLY:k_iku_zero,G_iku_zero
  use openmp,        ONLY:OPENMP_update,n_threads,master_thread,OPENMP_set_threads
+ use cuda_m,        ONLY:have_cuda
  !
-#include<memory.h> 
+#include<memory.h>
  !
  logical      ::is_cut(3)
  type(bz_samp)::q
  !
  ! Work Space
  !
- integer      ::iq,ig,iqbz,ig_p,is,ig_r,iqibz,i1,nq_looped
- real(SP)     ::v1(3),v2(3),vol_factor,V_cut_tmp
- type(PP_indexes) ::px
- real(SP), allocatable :: V_bare(:,:),V_cut(:,:)
- real(SP), allocatable :: g_vec_r(:,:),q_pt_r(:,:),q_ptbz_r(:,:)
- real(SP)     ::k_zero(3),G_zero(3)
+ integer      :: iq,ig,iqbz,ig_p,is,ig_r,iqibz,i1,nq_looped
+ integer      :: ig_first,ig_last
+ real(SP)     :: v1(3),v2(3),vol_factor,V_cut_tmp
+ type(PP_indexes)  :: px
+ real(SP),    allocatable :: V_bare(:,:),V_cut(:,:)
+ real(SP),    allocatable :: g_vec_r(:,:),q_pt_r(:,:),q_ptbz_r(:,:)
+ real(SP)     :: k_zero(3),G_zero(3),F_box(3)
  !
  call PP_indexes_reset(px)
  !
@@ -89,6 +91,7 @@ subroutine cutoff_box(q,is_cut)
    !$omp end parallel do
    !
  endif
+
  !
  ! BOX
  !
@@ -120,14 +123,14 @@ subroutine cutoff_box(q,is_cut)
  V_cut=rZERO
  !
  call PARALLEL_index(px,(/wf_ng/),CONSECUTIVE=.true.)
- !
-!write(0,*) myid, "first, last", px%first_of_1D(myid+1),px%last_of_1D(myid+1)
+ ig_first=px%first_of_1D(myid+1)
+ ig_last=px%last_of_1D(myid+1)
  !
  call OPENMP_set_threads( )
  !
 !$omp parallel num_threads(n_threads) default(shared), &
 !$omp &    private(ig,iq, v1,nq_looped, iqbz,iqibz,is,i1,V_cut_tmp, &
-!$omp &            ig_p,ig_r,v2)
+!$omp &            ig_p,ig_r,v2,F_box)
  ! 
  ! Local Threads involved
  !
@@ -136,11 +139,9 @@ subroutine cutoff_box(q,is_cut)
  call live_timing('Box',px%n_of_elements(myid+1)/n_threads)
  !
 !$omp do schedule(dynamic)
- do ig=px%first_of_1D(myid+1),px%last_of_1D(myid+1)
+ do ig=ig_first,ig_last
    !
    do iq=1,q%nibz
-     !
-     v1= ( q_pt_r(:,iq)+g_vec_r(:,ig) )
      !
      nq_looped=0
      !
@@ -165,9 +166,20 @@ subroutine cutoff_box(q,is_cut)
          enddo
          !
          ig_r=g_rot( ig_p, sop_inv(is) )
+         v1= ( q_pt_r(:,iq)+g_vec_r(:,ig) )
          v2= ( q_ptbz_r(:,iqbz)+g_vec_r(:,ig_p) )
          !
-         V_cut_tmp=V_cut_tmp+V_bare(ig_r,iqibz)*F_box(v1,v2)
+         F_box=1._SP
+         do i1=1,3
+           if (.not.is_cut(i1)) cycle
+           if (abs(v1(i1)-v2(i1))<=1.E-5_SP) then
+             F_box(i1)=box_length(i1)
+           else
+             F_box(i1)=2._SP*sin((v1(i1)-v2(i1))*box_length(i1)/2._SP)/(v1(i1)-v2(i1))
+           endif
+         enddo
+         !
+         V_cut_tmp=V_cut_tmp+V_bare(ig_r,iqibz)*F_box(1)*F_box(2)*F_box(3)
          !
        enddo g_loop
        !
@@ -235,22 +247,4 @@ subroutine cutoff_box(q,is_cut)
  YAMBO_FREE(V_cut)
  call PP_indexes_reset(px)
  !
- contains
-   !
-   real(SP) function F_box(v1,v2)
-     !
-     real(SP) :: v1(3),v2(3)
-     integer  :: i_s
-     !
-     F_box=1._SP
-     do i_s=1,3
-       if (.not.is_cut(i_s)) cycle
-       if (abs(v1(i_s)-v2(i_s))<=1.E-5_SP) then
-         F_box=F_box*box_length(i_s)
-       else
-         F_box=F_box*2._SP*sin((v1(i_s)-v2(i_s))*box_length(i_s)/2._SP)/(v1(i_s)-v2(i_s))
-       endif
-     enddo
-   end function
-   !
 end subroutine

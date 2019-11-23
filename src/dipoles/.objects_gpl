@@ -1,10 +1,4 @@
-#if defined _SC
-SC_objects = DIPOLE_rotate.o
-#endif
-#if defined _RT
-RT_objects = DIPOLE_orbital_magnetization.o DIPOLE_spin_magnetization.o
-#endif
-#if defined _NL | defined _ELECTRIC
+#if defined _NL
 NL_objects = Berry_polarization_EQ.o Ionic_polarization.o POLARIZATION_output.o           
 #endif
 objs = Build_Overlaps_Det_EQ.o $(SC_objects) $(RT_objects) $(NL_objects) \

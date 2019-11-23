@@ -119,11 +119,11 @@ YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) interpolate qp_control setup interface tdd
 YPPRT_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setup interface \
                      dipoles pol_function qp bse collisions hamiltonian 
 YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) real_time_control interpolate qp_control setup interface \
-                     dipoles pol_function qp bse collisions hamiltonian 
+                     dipoles pol_function qp bse hamiltonian collisions
 YPPNL_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setup interface \
                      dipoles pol_function qp bse collisions hamiltonian nloptics 
 YPPNL_MAIN_LIBS_LD = $(BASIC_LIBS_LD) real_time_control interpolate qp_control setup interface \
-                     dipoles pol_function qp bse collisions hamiltonian nloptics 
+                     dipoles pol_function qp bse hamiltonian collisions nloptics 
 
 .PHONY: interfaces
 

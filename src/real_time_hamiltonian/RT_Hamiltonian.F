@@ -218,9 +218,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
  endif
  !
- ! Pseudo potential terms needed for velocity gauge
- !==================================================
- if (l_velocity_gauge_corr) call Pseudo_Hamiltonian(k,E,.false.)
  !
  call timing('RT Hamiltonian',OPR='stop')
  !

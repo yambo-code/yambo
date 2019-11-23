@@ -50,6 +50,7 @@ sbin/objects_store.sh
 src/wf_and_fft/sgfft.F
 lib/bin/
 bin/*
+bin-*
 
 # source #
 ##########

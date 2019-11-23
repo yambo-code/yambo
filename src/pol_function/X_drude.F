@@ -126,11 +126,11 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    rxi=real(xi)
    !
    if (abs(W)<=10*fac) then
-     Jellium_drude=-1./(2.*pi**2.*q0_norm)*(2.*fac+xi*log((xi-fac)/xi)-&
+     Jellium_drude=-1._SP/(2._SP*pi**2*q0_norm)*(2._SP*fac+xi*log((xi-fac)/xi)-&
 &                  conjg(xi)*log((conjg(xi)+fac)/conjg(xi)))
    else
-     Jellium_drude=-Kf*fac/(2.*pi**2.)*(-1./(2.*xi)+1./(2.*conjg(xi))-&
-&                  fac/(3.*rxi**2.)-fac/(3.*rxi**2.))
+     Jellium_drude=-Kf*fac/(2._SP*pi**2)*(-1._SP/(2._SP*xi)+1._SP/(2._SP*conjg(xi))-&
+&                  fac/(3._SP*rxi**2)-fac/(3._SP*rxi**2))
    endif
    !
   end function Jellium_drude

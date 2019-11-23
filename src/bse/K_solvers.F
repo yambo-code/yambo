@@ -24,10 +24,11 @@
 subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  use com,            ONLY:warning
+ use stderr,         ONLY:intc
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use X_m,            ONLY:X_t,Epsilon_ii,Joint_DOS,X_drude_term
+ use X_m,            ONLY:X_t,Joint_DOS
  use BS_solvers,     ONLY:BSS_mode,BSS_n_descs,BSS_eval_JDOS,BSS_free,BS_mat,&
 &                         run_Haydock,run_inversion,run_Diago
 #if defined _SLEPC
@@ -37,9 +38,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_m,           ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO
- !
 #if defined _KERR
- use X_m,            ONLY:Epsilon_ij
  use KERR,           ONLY:BSS_KERR_free
 #endif
  !
@@ -58,7 +57,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  if (.not. BS_K_has_been_calculated_loaded ) return
  !
- call section('*','BSE solver(s)')
+ call section('-','BSE solver(s) @q'//trim(intc(iq)))
  !
  !
  ! Solvers
@@ -99,7 +98,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  if (BSS_eval_JDOS) then
    YAMBO_FREE(Joint_DOS)
  endif
- BSS_eval_JDOS=.FALSE.
  !
  ! Inversion
  !
@@ -114,6 +112,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  ! CLEAN: diago/invertion workspace
  !
  call BSS_free( )
+ !
+ ! CLEAN: BS_mat
+ !
  YAMBO_FREE(BS_mat)
  !
  ! Haydock
@@ -133,11 +134,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! CLEAN (final)
  !
- YAMBO_FREE(X_drude_term)
- YAMBO_FREE(Epsilon_ii)
- !
 #if defined _KERR
- YAMBO_FREE(Epsilon_ij)
  call BSS_KERR_free( )
 #endif
  !

@@ -36,14 +36,13 @@ module nl_optics
  ! Time steps and step length defined in module real_time.F
  ! --------------------------------------------------------
  !
- integer           :: NL_ng      ! number of G-vectors in the Hartree/TDDFT
- ! 
  ! Polarization 
  ! ------------
  ! Calculated from the string-averaged discretized geometric phase
  ! see ref. PRB 47, 1651 (1993), or from DIPOLES
  !
- complex(SP)    :: NL_initial_P(3) ! in principle it can be different from zero
+ complex(SP)    :: NL_P(6)  ! NL_P(1:3) Berry Pol, NL_P(4:6) Dip Pol
+ complex(SP)    :: NL_initial_P(6) ! in principle it can be different from zero
  !
  ! Current
  !
@@ -118,7 +117,6 @@ module nl_optics
  !
  logical :: eval_COLLISIONS
  logical :: eval_dG
- logical :: eval_OVERLAPS
  !
  ! Non-linear spectra parameters
  !

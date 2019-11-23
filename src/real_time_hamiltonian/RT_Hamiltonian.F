@@ -60,15 +60,16 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc, &
 &                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,         &
 &                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_potential,      &
-&                         RT_bands,RT_nbands,RT_nk,    &
-&                         l_update_SOC
- use fields,         ONLY:gauge_field
+&                         RT_bands,RT_nbands,RT_nk,l_update_SOC,l_velocity_gauge_corr!,&
+!&                        NE_time
+ use fields,         ONLY:gauge_field!,Efield,n_ext_fields
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A,PP_redux_wait
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use timing_m,       ONLY:timing
+ use H_interfaces,   ONLY:V_real_space_to_H
  !
  implicit none
  !
@@ -145,11 +146,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
      !
-     if (n_spinor==1 )   call V_real_space_to_H(ik,1,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
-     if (n_spinor==2 ) then
-       if(eval_HARTREE)  call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')
-       if(eval_DFT)      call V_real_space_to_H(ik,1,V_xc_sc     ,H_nl_sc,WF,'xc ')
-     endif
+     call V_real_space_to_H(ik,1,H_nl_sc,WF,'def+xc',V=V_hartree_sc,Vxc=V_xc_sc)
      !
      call PP_redux_wait(H_nl_sc,COMM=PAR_COM_Xk_ibz_A2A%COMM)
      !
@@ -187,6 +184,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! The External Field
  !====================
+ !if (l_NE_with_fields.and.any((/Efield(:n_ext_fields)%t_final>=NE_time/))) then
  if (l_NE_with_fields) then
    !
    do ik=1,nXkibz 
@@ -219,6 +217,10 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    enddo
    !
  endif
+ !
+ ! Pseudo potential terms needed for velocity gauge
+ !==================================================
+ if (l_velocity_gauge_corr) call Pseudo_Hamiltonian(k,E,.false.)
  !
  call timing('RT Hamiltonian',OPR='stop')
  !

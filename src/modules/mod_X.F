@@ -49,10 +49,6 @@ module X_m
  real(SP)                 :: q_plus_G_direction(3)
  integer                  :: Q_Shift_Order
  !
- ! Warning about non-local commutator
- !
- logical                  :: Vnl_commutator_warning
- !
  ! Double Grid
  !
  ! Logical used to decid how to use the double grid in X_os
@@ -63,26 +59,6 @@ module X_m
  real(SP)             :: X_DbGd_percentual=0.5
  integer ,allocatable :: X_DbGd_nkpt_at_q(:)
  integer ,allocatable :: X_DbGd_nkpt_at_q_table(:,:,:)
- !
- ! Dipole M.E.
- !
- character(schlen)        :: Dipole_approach
- logical                  :: use_covariant_approach
- logical                  :: use_shifted_grids_approach
- logical                  :: use_g_space_approach
- logical                  :: use_real_space_approach
- logical                  :: force_v_g_space_approach
- integer                  :: num_shifted_grids
- real(SP)                 :: Dipole_Energy_treshold
- real(SP)                 :: Dipole_Energy_treshold_vv
- complex(SP), allocatable :: DIP_projected(:,:,:,:)
- complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
- complex(SP), allocatable :: DIP_P(:,:,:,:,:)
- complex(SP), allocatable :: DIP_S(:,:,:,:,:)
- complex(SP), allocatable :: DIP_orbital(:,:,:,:,:,:)
- complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
- complex(SP), allocatable :: DIP_P_spinor(:,:,:,:,:,:)
- complex(SP), allocatable :: P_square(:,:,:,:)
  !
  ! Absorption & Polarizability
  !
@@ -175,45 +151,25 @@ module X_m
      !
      if (present(d)) then
        select case(what)
+       case('EPS')
+         if (allocated(Epsilon_ii)) return
+         YAMBO_ALLOC(Epsilon_ii,(d(1),d(2))) !2(int)3(nonint)4(n-1 Haydock/inv shifted)
+         YAMBO_ALLOC(X_drude_term,(d(1)))
+         YAMBO_ALLOC(Joint_DOS,(d(1),d(2)))
+         Epsilon_ii   = cZERO
+         X_drude_term = cZERO
+         Joint_DOS    = cZERO
        case('X')
          if (allocated(X_mat)) return
          YAMBO_ALLOC(X_mat,(d(1),d(2),d(3)))
          X_mat=cZERO
-       case('DIP_iR')
-         if (allocated(DIP_iR)) return
-         YAMBO_ALLOC(DIP_iR,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         DIP_iR=cZERO
-       case('DIP_P')
-         if (allocated(DIP_P)) return
-         YAMBO_ALLOC(DIP_P,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         DIP_P=cZERO
-       case('DIP_S')
-         if (allocated(DIP_S)) return
-         YAMBO_ALLOC(DIP_S,(d(1),d(2),d(3),d(4),n_sp_pol))
-         DIP_S=cZERO
-       case('DIP_orbital')
-         if (allocated(DIP_orbital)) return
-         YAMBO_ALLOC(DIP_orbital,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol,2))
-         DIP_orbital=cZERO
-       case('DIP_spin')
-         if (allocated(DIP_spin)) return
-         YAMBO_ALLOC(DIP_spin,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         DIP_spin=cZERO
-       case('DIP_P_spinor')
-         if (allocated(DIP_P_spinor).or.n_spinor==1) return
-         YAMBO_ALLOC(DIP_P_spinor,(d(1),n_spinor,n_spinor,d(2):d(3),d(4):d(5),d(6)))
-         DIP_P_spinor=cZERO
-       case('DIP_projected')
-         if (allocated(DIP_projected)) return
-         YAMBO_ALLOC(DIP_projected,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
-         DIP_projected=cZERO
-       case('P_square')
-         if (allocated(P_square)) return
-         YAMBO_ALLOC(P_square,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
-         P_square=cZERO
        end select
      else
        select case(what)
+       case('EPS')
+         YAMBO_FREE(Epsilon_ii)
+         YAMBO_FREE(X_drude_term)
+         YAMBO_FREE(Joint_DOS)
        case('X')
          !
          ! I clean the RL components mapping
@@ -224,32 +180,9 @@ module X_m
          !
          YAMBO_FREE(X_mat)
          !
-       case('DIP_iR')
-         if (.not.allocated(DIP_iR)) return
-         YAMBO_FREE(DIP_iR)
-       case('DIP_P')
-         if (.not.allocated(DIP_P)) return
-         YAMBO_FREE(DIP_P)
-       case('DIP_S')
-         if (.not.allocated(DIP_S)) return
-         YAMBO_FREE(DIP_S)
-       case('DIP_orbital')
-         if (.not.allocated(DIP_orbital)) return
-         YAMBO_FREE(DIP_orbital)
-       case('DIP_spin')
-         if (.not.allocated(DIP_spin)) return
-         YAMBO_FREE(DIP_spin)
-       case('DIP_P_spinor')
-         if (.not.allocated(DIP_P_spinor)) return
-         YAMBO_FREE(DIP_P_spinor)
-       case('DIP_projected')
-         if (.not.allocated(DIP_projected)) return
-         YAMBO_FREE(DIP_projected)
-       case('P_square')
-         if (.not.allocated(P_square)) return
-         YAMBO_FREE(P_square)
        end select
      endif
+     !
    end subroutine
    !
    subroutine X_duplicate(Xi,Xo)
@@ -278,6 +211,8 @@ module X_m
      type(X_t)::X
      X%ng           =1
      X%ng_db        =0
+     !X%ib           =(/1,-1/)
+     !X%ib_lim       =(/1,-1/)
      X%iq           =(/1,-1/)
      X%ngostnts     =0
      X%whoami       =0

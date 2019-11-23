@@ -32,7 +32,8 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use parallel_m,     ONLY:n_nodes,ncpu,PARALLEL_message,n_CPU_str_max,PAR_COM_WORLD,&
-&                         mpi_comm_world,myid,COMM_reset,PAR_COM_NULL
+&                         mpi_comm_world,myid,COMM_reset,PAR_COM_NULL,host_name,&
+&                         master_cpu,PP_redux_wait,n_IO_nodes,PP_bcast
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
  use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads
@@ -44,9 +45,10 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! 
  ! Work Space
  !
- integer           :: ID,io_err,i_s,n_max_threads
+ integer           :: ID,i_err,i_s,n_max_threads,i_cpu
  character(lchlen) :: dumb_ch
  integer, external :: io_DB1
+ !
  !
  call section('*','CPU structure, Files & I/O Directories') 
  !
@@ -66,6 +68,19 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  PAR_COM_WORLD%COMM  =mpi_comm_world
  PAR_COM_WORLD%CPU_id=myid
  PAR_COM_WORLD%n_CPU =ncpu
+ !
+ ! Nodes
+ !==========================
+ if (master_cpu) dumb_ch=host_name
+ call PP_bcast(dumb_ch,0)
+ do i_cpu=2,ncpu
+   if (myid+1==i_cpu) then
+     if (trim(host_name)==trim(dumb_ch)) n_nodes=0
+     dumb_ch=host_name
+   endif
+   call PP_bcast(dumb_ch,i_cpu-1)
+ enddo
+ call PP_redux_wait(n_nodes)
  !
  ! GET ENVIROMENT definitions
  !============================
@@ -97,21 +112,22 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  !
  call msg('r', '* THREADS    (max):',n_max_threads)
  call msg('r', '* THREADS TOT(max):',n_max_threads*ncpu)
- call msg('r', '* I/O NODES       :',n_nodes)
+ call msg('r', '* NODES(computing):',n_nodes(1))
+ call msg('r', '*            (I/O):',n_IO_nodes)
  !
  ! I/O and more
  !===============
  !
  call msg('rn','* Fragmented WFs  :',frag_WF)
- call msg('r','CORE databases in   ',trim(core_io_path))
- call msg('r','Additional I/O in   ',trim(more_io_path))
- call msg('r','Communications in   ',trim(com_path))
- call msg('r','Input file     is   ',trim(infile))
- call msg('r','Report file    is   ',trim(repfile))
+ call msg('r', 'CORE databases in   ',trim(core_io_path))
+ call msg('r', 'Additional I/O in   ',trim(more_io_path))
+ call msg('r', 'Communications in   ',trim(com_path))
+ call msg('r', 'Input file     is   ',trim(infile))
+ call msg('r', 'Report file    is   ',trim(repfile))
 #if defined _DOUBLE
- call msg('r','Precision      is   ','DOUBLE')
+ call msg('r', 'Precision      is   ','DOUBLE')
 #else
- call msg('r','Precision      is   ','SINGLE')
+ call msg('r', 'Precision      is   ','SINGLE')
 #endif
  if (log_as_a_file      ) call msg('r','Log files      in   ',trim(trim(com_path)//"/LOG"))
  !
@@ -141,7 +157,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
 #if !defined _YPP_RT
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=REP,ID=ID)
- io_err=io_DB1(en,k,ID)
+ i_err=io_DB1(en,k,ID)
  !
 #endif
  !

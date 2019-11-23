@@ -52,15 +52,16 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use collision_ext, ONLY:COLL_bands,COH_collisions,HXC_collisions,P_collisions
  use parallel_m,    ONLY:PAR_n_c_bands,PAR_n_v_bands,COMM_copy
  ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_G_b_INDEX
+ use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_G_b_INDEX,&
+&                        PAR_COM_CON_INDEX_X,PAR_COM_VAL_INDEX_X
  ! IND
- use parallel_m,    ONLY:PAR_IND_DIPk_ibz,PAR_IND_Bp_mat,PAR_IND_QP,PAR_IND_Q
+ use parallel_m,    ONLY:PAR_IND_Bp_mat,PAR_IND_QP,PAR_IND_Q
  ! INDEX
  use parallel_m,    ONLY:PAR_DIPk_ibz_index
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_DIPk_nibz
  ! ID's
- use parallel_m,    ONLY:PAR_IND_Bp_mat_ID,PAR_IND_DIPk_ID
+ use parallel_m,    ONLY:PAR_IND_Bp_mat_ID
 #endif
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
@@ -152,7 +153,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    !   
 #endif
    !
-   ! 00000000          <- q
+   ! 0000     0000     <- q
    ! 0000     0000     <- g
    ! x0 x0    x0 x0    <- qp
    ! 0 0 0 0  0 0 0 0  <- b
@@ -168,7 +169,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  ! K-points
  !
  call PARALLEL_add_Q_to_K_list('k_qp_q_'//trim(WHAT),PAR_IND_QP,PAR_IND_QP_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
-&                              PAR_IND_Q,PAR_COM_QP_INDEX,(/0,0/),Xk,q)
+&                                PAR_IND_Q,PAR_COM_QP_INDEX,(/0,0/),Xk,q)
  !
  ! G bands
  !=========
@@ -212,8 +213,8 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    nb_mat=(COLL_bands(2)-COLL_bands(1)+1)**2
    call G_b_to_B_mat(PAR_COM_G_b_INDEX,'Bp',COLL_bands)
    call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT="Self_Energy",&
-&                           LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
-&                           TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
+&                             LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
+&                             TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
    !
    call PARALLEL_index(PAR_IND_G_k,(/QP_nk/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
    !
@@ -226,21 +227,16 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  if (l_elphoton_corr.and.l_life) then
    !
    ! Oscillators needed to evaluate the Radiative Lifetimes
-   ! 
+   !
    PAR_n_c_bands=QP_n_G_bands
    PAR_n_v_bands=QP_n_G_bands
-   ! 
-   ! As there will be a mismatch between the k-distribution here and in the self-energy (qp-loop)
-   ! I cannot distribute the k-pts. Therefore the PAR_COM_DIPOLES_k_subgroup is the WORLD
    !
-   call PARALLEL_index(PAR_IND_DIPk_ibz,(/nXkibz/),COMM=PAR_COM_Q_INDEX,NO_EMPTIES=.TRUE.)
-   PAR_IND_DIPk_ID=PAR_IND_Q_ID
    YAMBO_ALLOC(PAR_DIPk_ibz_index,(nXkibz))
    do i_k=1,nXkibz
      PAR_DIPk_ibz_index(i_k)=i_k
    enddo
    PAR_DIPk_nibz=nXkibz
-   !
+   ! 
  endif
  !
 #endif
@@ -259,7 +255,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  if (ncpu>1) then
    if (l_eval_collisions.and.io_COLLs) then
-     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_INDEX%CPU_id==0)
+   call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_INDEX%CPU_id==0)
    else 
      call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
    endif

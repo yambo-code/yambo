@@ -1,4 +1,4 @@
-objs = electrons_driver.o electrons_spin_factors.o electrons_magn_factors.o \
+objs = electrons_driver.o electrons_spin_factors.o electrons_pdos_factors.o electrons_magn_factors.o \
        electrons_dos.o electrons_dos_elemental.o electrons_dos_setup.o electrons_density.o electrons_bands.o \
        electrons_WFs.o electrons_current.o electrons_magnetization.o \
        electrons_bands_interpolate.o electrons_spin_and_magn_interpolate.o

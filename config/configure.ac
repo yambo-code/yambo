@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -53,8 +53,9 @@ m4_include([config/acx_mpi.m4])
 #  Report
 #
 m4_include([config/acx_report.m4])
-#
+# ============================================================================
 # Checks for library functions.
+# ============================================================================
 AC_CHECK_HEADERS([malloc.h stdlib.h unistd.h string.h sys/time.h])
 AC_FUNC_ALLOCA
 AC_C_CONST
@@ -275,3 +276,4 @@ AC_OUTPUT
 m4_include([config/yambo_folders.m4])
 #
 cat config/report
+#

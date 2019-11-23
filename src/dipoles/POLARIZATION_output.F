@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine POLARIZATION_output(Xen,Xk,X)
+subroutine POLARIZATION_output(Xen,Xk,Dip)
  ! 
  ! Print the intrisic Polarization of the system
  !
@@ -32,16 +32,18 @@ subroutine POLARIZATION_output(Xen,Xk,X)
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
  use D_lattice,     ONLY:DL_vol,a,n_atomic_species,Z_species
+ use DIPOLES,       ONLY:DIPOLE_t
  use vec_operate,   ONLY:get_id_perpendicular
  use stderr,        ONLY:intc
  !
  implicit none
  type(levels)  ::Xen
- type(bz_samp) ::Xk,k,q
- type(X_t)     ::X              
+ type(bz_samp) ::Xk
+ type(DIPOLE_t)::Dip
  ! 
  ! Work Space
  !
+ type(bz_samp)::k,q
  complex(SP) :: P_Berry_RED(3)  ! In reduced (crystaline) coordinated 
  real(SP)    :: I_Berry_RED(3),Tot_Berry_RED(3)  ! In reduced (crystaline) coordinated 
  real(SP)    :: modfac,rmod

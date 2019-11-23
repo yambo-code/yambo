@@ -21,12 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_kerr_IP(iq,w)
+subroutine K_kerr_IP(iq,w,Dip)
  !
  use pars,           ONLY:SP,cZERO,cI
  use LIVE_t,         ONLY:live_timing
  use drivers,        ONLY:l_rpa_IP
- use X_m,            ONLY:Epsilon_ij,global_gauge,Dipole_Energy_treshold
+ use DIPOLES,        ONLY:DIPOLE_t
+ use X_m,            ONLY:Epsilon_ij,global_gauge
  use KERR,           ONLY:DIP_projected_r90,KERR_alloc,B_Hall
  use BS_solvers,     ONLY:BSS_add_antiresonant,BSS_n_freqs,Co_factor
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_coupling
@@ -37,8 +38,9 @@ subroutine K_kerr_IP(iq,w)
 &                         PAR_IND_T_groups,PAR_Xk_bz_index,&
 &                         PAR_COM_eh_INDEX,PAR_COM_Xk_ibz_INDEX
  !
-#include<memory.h>
+ implicit none
  !
+ type(DIPOLE_t), intent(in) :: Dip
  integer,    intent(in) :: iq
  complex(SP),intent(in) :: w(BSS_n_freqs) 
  !
@@ -47,11 +49,6 @@ subroutine K_kerr_IP(iq,w)
  real(SP)          :: conjg_fac
  complex(SP)       :: E_plus_W0,res,E_plus_W(2/n_sp_pol)
  integer           :: ik_bz,iv,ic,i_sp_pol,i_T,i_T_g,ik_mem,i_pert_SOC,n_SOC
- !
- YAMBO_ALLOC(Epsilon_ij,(BSS_n_freqs,4))
- Epsilon_ij=cZERO
- !
- Epsilon_ij(:,1)=w(:)
  !
  n_SOC=1
  !
@@ -87,7 +84,7 @@ subroutine K_kerr_IP(iq,w)
      BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)=conjg_fac*conjg(DIP_projected_r90(ic,iv,ik_mem,i_sp_pol))
      if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_kerr(i_T)=DIP_projected_r90(ic,iv,ik_mem,i_sp_pol)
      !
-     if ( abs(real(E_plus_W0)) < Dipole_Energy_treshold ) cycle
+     if ( abs(real(E_plus_W0)) < Dip%Energy_treshold ) cycle
      !
      ! Residuals
      res=BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R_kerr(i_T))*BS_T_grp(i_T_g)%f_RES(i_T)
@@ -125,8 +122,8 @@ subroutine K_kerr_IP(iq,w)
  B_Hall(1)=B_Hall(1)*Co_factor
  if (BSS_add_antiresonant.or.BS_K_coupling) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !
- if(trim(global_gauge)=='length'   ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/bare_qpg(1,1)**2
- if(trim(global_gauge)=='velocity' ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/  w(:)   **2
+ if(trim(global_gauge)=='length'   ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/bare_qpg(iq,1)**2
+ if(trim(global_gauge)=='velocity' ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/     w(:)     **2
  !
  ! I add the term describing the Anomalous Hall effect which is
  ! missing in the length gauge (this should be zero for systems with a gap)

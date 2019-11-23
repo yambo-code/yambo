@@ -188,7 +188,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
        endif
        if (l_alloc.and.(l_table.or.l_all)) then
          YAMBO_ALLOC(COLL(J)%table,(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
-         COLL(J)%table=0
+         COLL(J)%table='f'
          COLL_grp%D=D
          mem_size(5)=mem_size(5)+size(COLL(J)%table)
        endif

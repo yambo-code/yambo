@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_kb_init(Xen,X,io_err,ID)
+subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
  !
  use pars,                ONLY:SP,pi
  use stderr,              ONLY:intc
- use X_m,                 ONLY:X_t
+ use DIPOLES,             ONLY:DIPOLE_t
  use electrons,           ONLY:levels,n_spinor
  use com,                 ONLY:msg,warning
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD_CL,OP_RD
@@ -36,7 +36,7 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
 #include<memory.h>
  !
  type(levels),  intent(in)    :: Xen
- type(X_t),     intent(inout) :: X
+ type(DIPOLE_t),intent(inout) :: Dip
  !
  integer                      :: io_err(3)
  integer                      :: ID
@@ -49,7 +49,7 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
  !
  integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
  !
- X%Vnl_included=.false.
+ Dip%Vnl_included=.false.
  !
  io_Vnl_err     =-1
  io_KB_abinit_err=-1
@@ -59,7 +59,7 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
  !
  ! Check for the Vnl DB
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_Vnl_err=io_Vnl(X,Xen,ID)
+ io_Vnl_err=io_Vnl(Dip,Xen,ID)
  !
  ! Check for the KB pwscf DB 
  if(.not.io_KB_abinit_err==0) then
@@ -73,7 +73,7 @@ subroutine Dipole_kb_init(Xen,X,io_err,ID)
    io_KB_abinit_err=io_KB_abinit(ID)
  endif
  !
- X%Vnl_included= any((/io_KB_abinit_err==0,io_KB_pwscf_err==0,io_Vnl_err==0/))
+ Dip%Vnl_included= any((/io_KB_abinit_err==0,io_KB_pwscf_err==0,io_Vnl_err==0/))
  !
  ! Here the pp_kbv_dim is evaluated
  ! The abinit and the pwscf approach are identical if n_spin=1 (a part from trivial factors)

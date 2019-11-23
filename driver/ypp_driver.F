@@ -97,6 +97,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  else
    call mk_dir(more_io_path)
    call mk_dir(com_path)
+   if (ncpu>1) call mk_dir(trim(com_path)//"/LOG")
  endif
  !
 #if defined _MEM_CHECK
@@ -259,7 +260,7 @@ contains
       if (len_trim(STRING)==0) call section('X','Game Over')
       call msg("nln"," ")
     endif
-    call INIT_ypp(en,instr,lnstr,.TRUE.)
+    if (.not.infile_editing) call INIT_ypp(en,instr,lnstr,.TRUE.)
   end subroutine
   !
 end function ypp_driver

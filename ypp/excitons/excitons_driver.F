@@ -23,18 +23,19 @@
 !
 subroutine excitons_driver(k,Xk,en,Xen,q)
  !
- use pars,          ONLY:SP,pi,schlen,lchlen
+ use pars,          ONLY:SP,pi,schlen
  use R_lattice,     ONLY:bz_samp
  use com,           ONLY:error
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
  use QP_CTL_m,      ONLY:QP_apply
  use electrons,     ONLY:levels,n_spin,n_sp_pol,spin,E_SOC_nbands
- use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,excitons_sort_and_report
- use IO_m,          ONLY:io_control,io_connect,OP_RD_CL,DUMP,NONE,REP,VERIFY
- use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig,variables_BS
- use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_q,BS_K_coupling,BS_cpl_mode,&
-&                        BS_cpl_K_exchange,BS_cpl_K_corr
+ use YPP_interfaces,ONLY:excitons_sort_and_report
+ use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,EXCITONS_user_indexes,BSiq
+ use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
+ use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
+ use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_K_coupling,BS_cpl_mode,&
+&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSqpts
 #if defined _YPP_ELPH
  use YPP_ELPH,      ONLY:l_eliashberg,l_gkkp
 #endif
@@ -51,9 +52,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  logical          :: l_flag
  !
- integer :: n_lambda
  integer ,allocatable :: BS_E_degs(:)
- integer ,allocatable :: lambda_s(:)
  !
  !... I/0
  !
@@ -72,13 +71,12 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  complex(SP), pointer     ::BS_R_kerr(:)       => null()
  !
  integer                  ::iq,neh
- character(schlen)        ::db_name
- character(lchlen)        ::local_description(100)
  !
  call section('*','Excitonic Properties')
  !
  !
- iq=BS_q(1)
+ iq = BSiq
+ YAMBO_ALLOC(BSqpts,(3,iq))
  !
  ! X type. Also used in PARALLEL setup
  !
@@ -102,11 +100,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  BS_H_dim=BS_K_dim
  if (BS_K_coupling) BS_H_dim=2*BS_K_dim
  !
- ! Get state indexes
- !
- n_lambda = get_lambda()
- !
- l_flag=l_sort .or. (l_exc_wf.and.n_lambda>0) .or. (l_amplitude.and.n_lambda>0) .or. l_spin
+ l_flag=l_sort .or. l_exc_wf .or.l_amplitude .or. l_spin
 #if defined _YPP_ELPH
  l_flag=l_flag .or. l_eliashberg .or. l_gkkp
 #endif
@@ -116,10 +110,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  if(.not.l_flag) return
  !
- YAMBO_ALLOC(lambda_s,(n_lambda))
- n_lambda = get_lambda()
- !
- ! Allocation of energies and residuum, then also eigenvector
+ ! Allocation of energies and residuals, then also eigenvector
  !
  YAMBO_ALLOC(BS_R_right,(BSS_n_eig))
  YAMBO_ALLOC(BS_R_left,(BSS_n_eig))
@@ -127,6 +118,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  if(E_SOC_nbands/=0) then
    YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
  endif
+ !
  !
  do i_sec=1,2
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
@@ -136,7 +128,16 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Sort energies and write to output
  !===================================
- if (l_sort) call excitons_sort_and_report(Xen,BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
+ if (l_sort) call excitons_sort_and_report(iq,BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
+ !
+ ! Sort energies to find degenerate states
+ !========================================
+ YAMBO_ALLOC(BS_E_degs,(BSS_n_eig))
+ call excitons_find_degeneracies(BS_E,BS_E_degs)
+ !
+ ! Define the USER set of excitonic states
+ !=========================================
+ call get_user_excitonic_states( )
  !
  if(.not.l_sort) then
    !
@@ -144,11 +145,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &    call error(' Diagonalization database does not contain excitonic eigenstates.'//&
 &               ' Re-run yambo using the WRbsWF flag in the input file.')
    !
-   YAMBO_ALLOC(BS_E_degs,(BSS_n_eig))
-   !
-   ! Sort energies to find degenerate states
-   !========================================
-   call excitons_find_degeneracies(BS_E,BS_E_degs)
+   ! Adjust the user provided indexes to the average ones.
    !
    ! Loading tables and eigenvectors
    !
@@ -163,12 +160,14 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    !
    if (BS_K_coupling) then
      do neh=BS_K_dim+1,BS_H_dim
-       BSS_eh_table(neh,:)=BSS_eh_table(neh-BS_K_dim,1)
+       !
+       BSS_eh_table(neh,:)=BSS_eh_table(neh-BS_K_dim,:)
        !
        ! invert conduction <-> valence order
        !
        BSS_eh_table(neh,2)=BSS_eh_table(neh-BS_K_dim,3)
        BSS_eh_table(neh,3)=BSS_eh_table(neh-BS_K_dim,2)
+       !
      enddo
    endif
    !
@@ -176,15 +175,15 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! 
  ! Exciton's spin
  !=====================
- if (l_spin)       call exciton_spin(Xk,Xen,BS_R_right,BS_E,BS_E_degs,lambda_s,n_lambda)
+ if (l_spin)       call excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  !
  ! Exciton's Amplitude
  !=====================
- if (l_amplitude)  call excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
+ if (l_amplitude)  call excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
  !
  ! Exciton's WFs
  !=====================
- if (l_exc_wf)     call exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
+ if (l_exc_wf)     call exciton_WFs(Xk,BS_E_degs,iq)
  !
  !
  !
@@ -194,7 +193,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  YAMBO_FREE(BS_R_left)
  YAMBO_FREE(BS_R_right)
  YAMBO_FREE(BS_E)
- YAMBO_FREE(lambda_s)
+ YAMBO_FREE(EXCITONS_user_indexes)
  if(.not.l_sort) then
    YAMBO_FREE(BSS_eh_table)
    YAMBO_FREE(BS_mat)
@@ -205,24 +204,28 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  contains
    !
-    integer function get_lambda()
+   subroutine get_user_excitonic_states( )
      !
      use pars,   ONLY:schlen
-     use stderr, ONLY:STRING_split
-     use YPP,    ONLY:state_ctl
+     use stderr, ONLY:STRING_split,intc
+     use YPP,    ONLY:state_ctl,EXCITONS_user_indexes,EXCITONS_n_user_states,EXCITON_E_treshold,EXCITON_Res_treshold
+     use com,    ONLY:warning,msg
      !
      implicit none
      !
-     integer          ::i_start,i_end,i_str,i_st
+     integer          ::i_start,i_end,i_str,i_st,TMP_index(BSS_n_eig),n_user
+     real(SP)         ::Residuals(BSS_n_eig)
      character(schlen)::str_piece(50)
      !
      call STRING_split(state_ctl,str_piece)
      !
-     get_lambda=0
-     if (allocated(lambda_s)) lambda_s=0
+     EXCITONS_n_user_states=0
+     n_user    =0
+     TMP_index =0
      !
-     i_str=1
-     !
+     ! 1. Using the "States" variable
+     !--------------------------------
+     i_str     =1
      do while (i_str<50)
        !
        if (len_trim(str_piece(i_str))==0) exit
@@ -239,22 +242,55 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
        !
        do i_st=i_start,i_end
          !
-         if (allocated(BS_E_degs)) then
-           if (i_st>i_start.and.BS_E_degs(i_st)/=i_st) cycle
-         endif
+         n_user=n_user+1
          !
-         if (allocated(lambda_s)) then
-           if (.not.any(lambda_s==i_st)) then
-             get_lambda=get_lambda+1
-             lambda_s(get_lambda)=i_st
-           endif
-         else
-           get_lambda=get_lambda+1
-         endif
+         call ADD_me_to_the_list(i_st,TMP_index)
+         !
        enddo
      enddo
      !
-   end function
+     ! 2. Using the "En_treshold" variable
+     !------------------------------------
+     if (EXCITON_E_treshold>0.) then
+       do i_st=1,BSS_n_eig
+         if (real(BS_E(i_st))<EXCITON_E_treshold) call ADD_me_to_the_list(i_st,TMP_index)
+       enddo
+     endif
+     !
+     ! 3. Using the "Res_treshold" variable
+     !--------------------------------------
+     if (EXCITON_Res_treshold>0.) then
+       Residuals(:) = BS_R_right(:)*conjg(BS_R_right(:))
+       do i_st=1,BSS_n_eig
+         if (real(Residuals(i_st))>EXCITON_Res_treshold*maxval(Residuals)) call ADD_me_to_the_list(i_st,TMP_index)
+       enddo
+     endif
+     !
+     if (EXCITONS_n_user_states==0) return
+     !
+     if (EXCITONS_n_user_states>n_user) call warning(" "//trim(intc(EXCITONS_n_user_states-n_user))//&
+&                                                    " excitonic states added to the USER selection to preserve degeneracy")
+     call msg("s"," "//trim(intc(EXCITONS_n_user_states))//" excitonic states selected")
+     !
+     YAMBO_ALLOC(EXCITONS_user_indexes,(EXCITONS_n_user_states))
+     EXCITONS_user_indexes=TMP_index(:EXCITONS_n_user_states)
+     !
+   end subroutine
    !
+   subroutine ADD_me_to_the_list(i_state,TMP_index)
+     !
+     use YPP,    ONLY:EXCITONS_n_user_states
+     !
+     integer i_st_p,i_state,TMP_index(BSS_n_eig)
+     !
+     do i_st_p=1,BSS_n_eig
+       if (BS_E_degs(i_st_p)==BS_E_degs(i_state)) then
+         if (.not.any(TMP_index==i_st_p)) then
+           EXCITONS_n_user_states=EXCITONS_n_user_states+1
+           TMP_index(EXCITONS_n_user_states)=i_st_p
+         endif
+       endif
+     enddo
+   end subroutine
    !
 end subroutine

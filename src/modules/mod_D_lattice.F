@@ -65,6 +65,7 @@ module D_lattice
  !
  ! Cell & atoms
  !
+ logical  :: l_0D,l_1D,l_2D,l_3D
  integer  :: n_atoms
  integer  :: n_atoms_species_max
  integer  :: n_atomic_species
@@ -80,8 +81,8 @@ module D_lattice
  !
  ! Centered cartesian coordinates inside the cell
  !
- real(SP),    allocatable :: x_cc(:,:)
- real(SP)                 :: x_zero_point(3)
+ real(SP),    allocatable :: x_cc(:,:,:)
+ real(SP)                 :: x_CM(3) ! position of the center of mass
  !
  ! Gradients
  !

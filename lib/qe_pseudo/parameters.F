@@ -7,11 +7,12 @@
 !
 !
 MODULE parameters
-  
+
   IMPLICIT NONE
   SAVE
 
   INTEGER, PARAMETER :: &
+       nstrx  = 256,    &! string size
        ntypx  = 10,     &! max number of different types of atom
        npsx   = ntypx,  &! max number of different PPs (obsolete)
        nsx    = ntypx,  &! max number of atomic species (CP)

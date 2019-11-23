@@ -201,7 +201,7 @@ subroutine PARALLEL_collisions( k, COLL )
    !
    if (l_eval_collisions) then
      !
-     if ( (.not.l_par_SE) .and. (.not.l_PAR_NL) ) then
+     if ( (.not.l_par_SE) ) then
        !
        do i_q=1,nqbz
          !

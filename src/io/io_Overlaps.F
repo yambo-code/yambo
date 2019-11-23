@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM CA MG
+! Authors (see AUTHORS file for details): AM CA MG DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,24 +21,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_Overlaps(X,ID)
+integer function io_Overlaps(Dip,ID)
  !
  use pars,          ONLY:schlen
- use X_m,           ONLY:X_t,X_alloc,DIP_S
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_S
  use R_lattice,     ONLY:nXkbz
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,&
 &                        io_bulk,read_is_on,io_header,io_extension,&
 &                        RD_CL_IF_END,RD_CL,io_action,&
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment
- use IO_m,          ONLY:io_elemental,io_status
-#if defined _TIMING
+ use parallel_m,    ONLY:PAR_DIPk_bz_index,PAR_DIPk_nbz,PAR_IND_DIPk_bz
  use timing_m,      ONLY:timing
-#endif
  !
- use timing_m,       ONLY:timing
  implicit none
- type(X_t)   ::X
- integer     ::ID
+ type(DIPOLE_t) :: Dip
+ integer        :: ID
  !
  ! Work Space
  !
@@ -64,16 +61,8 @@ integer function io_Overlaps(X,ID)
    io_Overlaps=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,FRAG=frag_DIP)
    if (io_Overlaps/=0) goto 1
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
-   call io_elemental(ID,DB_I1=X%db_ib,&
-&     VAR=" X band range           :",I1=X%ib    ,CHECK=.true.,OP=(/">=","<="/))
-   call io_elemental(ID,DB_I1=X%db_ib_lim,&
-&     VAR=" X band range limits    :",I1=X%ib_lim,CHECK=.true.,OP=(/"<=",">="/))
-   call io_elemental(ID,&
-&     VAR=" RL vectors in the sum  :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0) 
-   !
-   io_Overlaps=io_status(ID)
+   io_Overlaps=variables_DIPOLES(Dip,ID)
+   if (io_Overlaps/=0) goto 1
    !
  endif
  !
@@ -92,7 +81,7 @@ integer function io_Overlaps(X,ID)
  !
  ik_mem=ik 
  !
- if (read_is_on(ID)) call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,nXkbz/))
+ if (read_is_on(ID)) call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,nXkbz/))
  !
  ! Fragmentation
  !
@@ -106,10 +95,10 @@ integer function io_Overlaps(X,ID)
  !
  if (io_action(ID)==RD_CL_IF_END.and.ik==nXkbz) io_action(ID)=RD_CL
  !
- ! S
+ ! DIP_S
  !
  write (VAR_name,'(3(a,i4.4))') 'DIP_S_k_',ik,'_sp_pol_',i_sp_pol
- call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/2,X%ib(2),X%ib(2),6/))
+ call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/2,Dip%ib(2),Dip%ib(2),6/))
  call io_bulk(ID,C3=DIP_S(:,:,:,ik_mem,i_sp_pol))
  !
 1 call io_disconnect(ID=ID)

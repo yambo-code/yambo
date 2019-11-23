@@ -42,7 +42,7 @@ module openmp
  integer     :: n_threads_RT    = 0  
  integer     :: n_threads_DIP   = 0  
  integer     :: n_threads_K     = 0  
- integer     :: n_threads_NL  = 0
+ integer     :: n_threads_NL    = 0
  integer     :: n_threads_now   = 0
  logical     :: master_thread   = .TRUE.
  !

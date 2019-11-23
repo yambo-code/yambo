@@ -39,9 +39,6 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use stderr,              ONLY:intc,logfile,log_as_a_file
  use interfaces,          ONLY:PARALLEL_index,PARALLEL_live_message
  use qexml_module
-#if defined _MEM_CHECK 
- use memory,              ONLY : MEM_manager
-#endif
  !
 #include<memory.h>
  !
@@ -57,6 +54,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  character(icd),   intent(in) :: com_dir   
  !
  character(lchlen)     :: lch
+ character(schlen)     :: atm_file
  integer               :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp
  complex(SP), allocatable :: wf_disk(:,:,:)
  type(PP_indexes)      :: PAR_IND_wfc_io
@@ -237,20 +235,31 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    call msg('s','Vnl support only with QE v5.0 or later (QEXML, QEXSD).')
  endif
  !
+ if ( file_exists('atomic_proj.xml') .or. file_exists('atomic_proj.dat') ) then
+   call msg('s','== DB4 (Atomproj parameters) ... ')
+   if ( file_exists('atomic_proj.xml') ) atm_file='atomic_proj.xml'
+   if ( file_exists('atomic_proj.dat') ) atm_file='atomic_proj.dat'
+   call p2y_atmproj(atm_file,k)
+   if(verboseIO) then
+     call msg('s','== DB4 (Atomproj parameters) ... done ==')
+   else
+     call msg('l',' done ==')
+   endif
+ endif
+ !
  call PARALLEL_wait()
  !
  call pw_close
  !
- ! Memory Overview
- !=================
 #if defined _MEM_CHECK 
  !
- call MEM_manager("",REPORT="final")
+ ! Memory Overview
+ !=================
+ call MEM_report("final")
  !
 #endif
  !
  call msg('s',' == P2Y completed ==')
  call msg('s' ,' ')
  !
- end function p2y_i
-
+end function p2y_i

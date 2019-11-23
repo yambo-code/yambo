@@ -27,8 +27,8 @@ subroutine K_output_file(iq,mode)
  use units,     ONLY:HA2EV
  use drivers,   ONLY:l_col_cut
  use BS_solvers,ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
-&                    BSS_n_descs,BSS_n_freqs,BSS_q0,K_diago_in_BS_mat
- use BS,        ONLY:BSE_mode,BS_K_is_ALDA
+&                    BSS_n_descs,BSS_n_freqs,K_diago_in_BS_mat
+ use BS,        ONLY:BSE_mode,BS_K_is_ALDA,BSqpts
  use X_m,       ONLY:Epsilon_ii,Joint_DOS,eval_alpha,eps_2_alpha,alpha_dim,OPTICS_eels
  use com,       ONLY:msg,of_open_close
  use parser_m,  ONLY:parser
@@ -81,10 +81,10 @@ subroutine K_output_file(iq,mode)
  !
  if (l_INIT) then
    if (l_IP) then
-     call X_setup_file_names(1,trim(name_),' ',' ')
+     call X_setup_file_names(iq,trim(name_),' ',' ')
    else
-     call X_setup_file_names(1,trim(name_),' ','bse')
-     if (BS_K_is_ALDA) call X_setup_file_names(1,trim(name_),'alda','bse')
+     call X_setup_file_names(iq,trim(name_),' ','bse')
+     if (BS_K_is_ALDA) call X_setup_file_names(iq,trim(name_),'alda','bse')
    endif
  endif
  !
@@ -119,7 +119,7 @@ subroutine K_output_file(iq,mode)
 #endif
  if(l_print_jdos) call of_open_close(jdos_file_name,title_mode)
  !
- call X_write_q_plus_g(1,BSS_q0,ig=1)
+ call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1)
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
  !
  ! Description of the run and headers for output files:

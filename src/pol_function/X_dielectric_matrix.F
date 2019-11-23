@@ -21,12 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
+integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
  use pars,          ONLY:SP,cZERO
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table
@@ -47,11 +48,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
 #include<memory.h>
  !
- type(levels) ::Xen 
- type(bz_samp)::Xk,q
- type(X_t)    ::X
- type(w_samp) ::Xw
- logical      ::APPEND_NO_VERIFY
+ type(levels)  ::Xen 
+ type(bz_samp) ::Xk,q
+ type(X_t)     ::X
+ type(DIPOLE_t)::Dip
+ type(w_samp)  ::Xw
+ logical       ::SILENT_MODE
  !
  ! Work Space
  !
@@ -69,6 +71,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
  endif
  !
+ X%ngostnts=Dip%ng
+ !
  ! TDDFT SETUP (-1 argument)
  !
  ! X%f_xc is setup when using ALDA, so that 
@@ -84,11 +88,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  X_dielectric_matrix=-1
  !
  if (X%whoami==2) then
-   if (.not.APPEND_NO_VERIFY) call section(sec_mode,'Static Dielectric Matrix')
+   if (.not.SILENT_MODE) call section(sec_mode,'Static Dielectric Matrix')
    Xw%n_freqs    =1
    X_MEM_n_freqs =1
  else if (X%whoami==3) then
-   if (.not.APPEND_NO_VERIFY) call section(sec_mode,'Dynamical Dielectric Matrix')
+   if (.not.SILENT_MODE) call section(sec_mode,'Dynamical Dielectric Matrix')
    if (l_gw0) self_detect_E_range=.true.
    !
    ! X_n_freqs defines the size of each q-block loaded in memory when io_RESPONSE=.FALSE.
@@ -98,7 +102,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (l_life) X_MEM_n_freqs = QP_n_W_freqs_redux
    !
  else if (X%whoami==4) then
-   if (.not.APPEND_NO_VERIFY) call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
+   if (.not.SILENT_MODE) call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
    Xw%n_freqs    =2
    X_MEM_n_freqs =2
    Xw%er=(/epsilon(1._SP),0._SP/)
@@ -118,11 +122,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  io_X_done=-1
  !
  if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
- !
- ! X%ngostnts is defined in DIPOLE_driver. It may happen that this is called only for the group of CPU's that eval q=1. 
- ! To avoid erroneous errors in the VERIFY mode this value must be spread to all CPUs before doing the IO of the header
- !
- if (l_life .and. X%iq(1)>1) call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_X_WORLD%COMM)
  !
  if (io_RESPONSE) then
    !
@@ -203,6 +202,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  do iq=X%iq(1),X%iq(2)
    !
+   if (     io_X_done(iq) > 0       ) cycle
+   if (.not.PAR_IND_Q%element_1D(iq)) cycle
+   !
    ! TDDFT setup
    !
    call TDDFT_do_X_W_typs(iq,X,Xw)
@@ -221,8 +223,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      !
    endif
    !
-   if (     io_X_done(iq) > 0       ) cycle
-   if (.not.PAR_IND_Q%element_1D(iq)) cycle
+   if(iq==1) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
+     i_err=io_X(X,Xw,Xdb)
+   endif
    !
    ! Allocation
    !
@@ -230,12 +234,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (io_RESPONSE) iq_mem=1
    call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
    !
-   call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X)  
-   !
-   if(iq==1) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
-     i_err=io_X(X,Xw,Xdb)
-   endif
+   call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
    !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
@@ -244,27 +243,27 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 #if defined _PAR_IO
    if(.not.io_RESPONSE) then
 #endif
-   !
-   ! PAR => SER for I/O or for cases where I/O is not done
-   !
-   do iw=1,Xw%n_freqs
      !
-     X_par(iq_mem)%I=iw
+     ! PAR => SER for I/O or for cases where I/O is not done
      !
-     if (     io_RESPONSE) iw_X_mat=iw
-     if (.not.io_RESPONSE) iw_X_mat=(iq_mem-1)*X_MEM_n_freqs+iw
+     do iw=1,Xw%n_freqs
+       !
+       X_par(iq_mem)%I=iw
+       !
+       if (     io_RESPONSE) iw_X_mat=iw
+       if (.not.io_RESPONSE) iw_X_mat=(iq_mem-1)*X_MEM_n_freqs+iw
+       !
+       X_mat(:,:,iw_X_mat)=cZERO
+       !
+       if (PAR_COM_X_WORLD_RL_resolved%CPU_id==0) then
+         X_mat(X_par(iq_mem)%rows(1):X_par(iq_mem)%rows(2),&
+&              X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)=X_par(iq_mem)%blc(:,:,iw)
+       endif
+       !
+       call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
+       !
+     enddo
      !
-     X_mat(:,:,iw_X_mat)=cZERO
-     !
-     if (PAR_COM_X_WORLD_RL_resolved%CPU_id==0) then
-       X_mat(X_par(iq_mem)%rows(1):X_par(iq_mem)%rows(2),&
-&            X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)=X_par(iq_mem)%blc(:,:,iw)
-     endif
-     !
-     call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
-     !
-   enddo
-   !
 #if defined _PAR_IO
    endif
 #endif
@@ -313,7 +312,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  if (allocated(FXC)) then
    YAMBO_FREE(FXC)
  endif
- call X_alloc('DIP_projected')
- if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free(WF)
+ call DIP_alloc('DIP_projected')
+ if (.not.SILENT_MODE.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
 end function

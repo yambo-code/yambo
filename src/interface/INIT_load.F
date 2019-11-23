@@ -21,17 +21,19 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INIT_load(defs,en,q,k,X,Xw)
+subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
+ use LOGO,          ONLY:code_branch
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time,V_nl_optics
- use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
-&                        global_gauge,Dipole_approach,Chi_linalg_mode, &
+ use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,&
+&                        global_gauge,Chi_linalg_mode, &
 &                        X_terminator_Kind,X_terminator_E,X_DbGd_percentual
+ use DIPOLES,       ONLY:DIPOLE_t
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
@@ -45,7 +47,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
-&                        BS_n_g_W,BS_n_g_exch
+&                        BS_n_g_W,BS_n_g_exch,L_kind
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig
@@ -77,7 +79,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _NL
  use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha, &
-&                        NL_verb_name,n_order,NL_ng                         
+&                        NL_verb_name,n_order
 #endif 
 #if defined _NL | defined _ELECTRIC
  use fields,        ONLY:Efield
@@ -102,6 +104,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  type(levels)  ::en          
  type(bz_samp) ::q,k
  type(X_t)     ::X(4)
+ type(DIPOLE_t)::Dip
  type(w_samp)  ::Xw(4)
  !
  ! Work Space
@@ -118,9 +121,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('r',defs,'optics',  '[R OPT] Optics')
  call it('r',defs,'chi',     '[R CHI] Dyson equation for Chi.')
  call it('r',defs,'bse',     '[R BSE] Bethe Salpeter Equation.')
- call it('r',defs,'bsk',     '[R BSK] Bethe Salpeter Equation kernel')
  call it('r',defs,'bss',     '[R BSS] Bethe Salpeter Equation solver')
  call it('r',defs,'tddft',   '[R   K] Use TDDFT kernel')
+ call it('r',defs,'dipoles', '[R   ] Compute the dipoles')
  call it('r',defs,'em1s',    '[R Xs] Static Inverse Dielectric Matrix')
  call it('r',defs,'em1d',    '[R Xd] Dynamical Inverse Dielectric Matrix')
  call it('r',defs,'ppa',     '[R Xp] Plasmon Pole Approximation')
@@ -188,6 +191,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nDBs_used,verb_level=V_kpt) 
 #endif
  call it('f',defs,'WFbuffIO','[IO] Wave-functions buffered I/O',verb_level=V_io) 
+ call it('f',defs,'NoDiagSC','New setup for non-diagonal supercells',verb_level=V_general) 
  !
  ! Parallel Setup
  !
@@ -249,6 +253,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! BSE/BSK
  !
  call it(defs,'BSEmod',  '[BSE] resonant/retarded/coupling',BSE_mode,case="a")
+ call it(defs,'Lkind',   '[BSE] Lbar (default) / full',L_kind,verb_level=V_resp)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
@@ -389,8 +394,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('f',defs,'SaveGhistory',  '[RT] Save the history of the green function',Verb_level=V_real_time)
  !
  ! ... updates ...
- call it('f',defs,'RTUpdateSOC',   '[RT] Update the SOC interaction on-the-fl',Verb_level=V_real_time)
+ call it('f',defs,'RTUpdateSOC',     '[RT] Update the SOC interaction',Verb_level=V_real_time)
  call it('f',defs,'RTUpdateE',     '[RT] Update the Enery levels on-the-fly',Verb_level=V_real_time)
+ !
+ call it('f',defs,'RTEqScatt',     '[RT] Include Gamma0f0 term in scattering',Verb_level=V_real_time)
+ call it('f',defs,'RTImpForMet',   '[RT] Impose structure optimized for metals',Verb_level=V_real_time)
+ call it('f',defs,'RTzeroTempRef', '[RT] Use zero temperature Fermi districution as reference',Verb_level=V_real_time)
  !
  ! Scattering
  !
@@ -423,13 +432,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
    call Afield(i_field)
  enddo
  !
- ! OLD / EXPERIMENTAL
- !
- ! 1 - Induced Field
- !
  call it('f',defs,'InducedField','[RT] Include induced field in coupling and current',verb_level=V_real_time)
+ call it('f',defs,'VelGaugeCorr','[RT] Correct the non local term of the pseudo with the vector potential',verb_level=V_real_time)
  !
- ! 2 - Other
+ ! OLD / EXPERIMENTAL
  !
  call it(defs,'RTAveDeph',    '[RT] Dephasing for all elements not included in RTDePhMatrix', &
 &                             RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit(1))
@@ -447,24 +453,20 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'NLverbosity', '[NL] Verbosity level (low | high)',NL_verb_name) 
  call it(defs,'NLstep',       '[NL] Real Time step length',RT_step,unit=Time_unit(1),Verb_level=V_nl_optics)
  call it(defs,'NLtime',       '[NL] Simulation Time',NE_tot_time,unit=Time_unit(1))
- call it(defs,'NLintegrator', '[NL] Integrator ("EULEREXP/RK2/RK4/RK2EXP/HEUN/INVINT/CRANKNIC")',Integrator_name,&
-&     Verb_level=V_nl_optics)
+ call it(defs,'NLintegrator', '[NL] Integrator ("EULEREXP/RK2/RK4/RK2EXP/HEUN/INVINT/CRANKNIC")',Integrator_name)
  call it(defs,'NLCorrelation','[NL] Correlation ("IPA/HARTREE/TDDFT/LRC/LRW/JGM/SEX") ',NL_correlation)
  call it(defs,'NLLrcAlpha',   '[NL] Long Range Correction',NL_LRC_alpha)
  call it(defs,'NLDamping',    '[NL] Damping',NL_damping,unit=E_unit)
  call it(defs,'NLEnRange',    '[NL] Energy range',NL_er,E_unit)
  call it(defs,'NLEnSteps',    '[NL] Energy steps',n_frequencies)
- call it(defs,'NLGvecs', '[NL] Number of G vectors in NL dynamics for Hartree/TDDFT',NL_ng,unit=G_unit)
  call it('f',defs,'UseDipoles','[NL] Use Covariant Dipoles (just for test purpose)',verb_level=V_nl_optics)
  call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_nl_optics)
- call it('f',defs,'EvalCurrent','[NL] Evaluate the current',verb_level=V_nl_optics)
+ call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
  !
  call it(defs,'ExtF_Dir',             '[NL ExtF] Versor',Efield(1)%versor)
  call it(defs,'ExtF_Int',             '[NL ExtF] Intensity',Efield(1)%intensity,unit=I_unit  ,verb_level=V_nl_optics)
- call it(defs,'ExtF_FrStep',          '[NL ExtF] Frequency step',Efield(1)%W_step,unit=E_unit,verb_level=V_nl_optics)
  call it(defs,'ExtF_Width',           '[NL ExtF] Field Width',Efield(1)%width,unit=Time_unit(1),verb_level=V_nl_optics)
- call it(defs,'ExtF_kind',            '[NL ExtF] Kind(SIN|SOFTSIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',Efield(1)%ef_name,& 
-&    verb_level=V_nl_optics)
+ call it(defs,'ExtF_kind',            '[NL ExtF] Kind(SIN|SOFTSIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',Efield(1)%ef_name)
  call it(defs,'ExtF_Tstart',          '[NL ExtF] Initial Time',Efield(1)%t_initial,unit=Time_unit(1),               &
 &    verb_level=V_nl_optics)
  call it(defs,'NLSampleWF',  '[NL] Sample the WFs (sampling NL order)',n_order,verb_level=V_nl_optics)
@@ -499,17 +501,33 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call INIT_QP_ctl_load(defs,2)
  call INIT_QP_ctl_load(defs,3)
  !
+ call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,E_unit,verb_level=V_resp)
+ !
+ ! Xx
+ !
+ call Xload(X(1),Xw(1))
+ !
+ ! ACFDT
+ !
+ call it(defs,'AC_n_LAM', '[ACFDT] Coupling Costant GL-grid points',ACFDT_n_lambda)
+ call it(defs,'AC_n_FR',  '[ACFDT] Integration frequency points',ACFDT_n_freqs)
+ call it(defs,'AC_E_Rng', '[ACFDT] Imaginary axis 2nd & 3rd energy points',ACFDT_E_range,E_unit)
+ !
+ ! GPL_EXCLUDE_END
  !
  ! DIPOLES
  !
- call it(defs,'DipoleEtresh',   '[Xd] Treshold in the definition of R=P/deltaE',Dipole_Energy_treshold,&
+ call it(defs,'DipBands',       '[DIP] Bands range for dipoles',Dip%ib,verb_level=V_resp)
+ call it(defs,'DipQpts',        '[DIP] Qpts range for dipoles',Dip%iq,verb_level=V_resp)
+ call it(defs,'DipoleEtresh',   '[DIP] Treshold in the definition of R=P/deltaE',Dip%Energy_treshold,&
 &                                                                               verb_level=V_resp,unit=E_unit)
- call it(defs,'DipApproach',    '[Xd] [G-space v/R-space x/Covariant/Shifted grids]',Dipole_approach,verb_level=V_resp)
+ call it(defs,'DipApproach',    '[DIP] [G-space v/R-space x/Covariant/Shifted grids]',Dip%approach,verb_level=V_resp)
+ call it(defs,'ShiftedPaths',   '[DIP] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
+ call it('f',defs,'DipPDirect', '[DIP] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
+ call it('f',defs,'DipBandsALL','[DIP] Compute all bands range, not only valence and conduction',verb_level=V_resp)
 #if defined _NL
- call it('f',defs,'EvPolarization',    '[Xd] Evaluate Polarization (require DipApproach=Covariant)',verb_level=V_resp)
+ call it('f',defs,'EvPolarization','[DIP] Evaluate Polarization (require DipApproach=Covariant)',verb_level=V_resp)
 #endif
- call it(defs,'ShiftedPaths',   '[Xd] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
- call it('f',defs,'DipPDirect', '[Xd] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
  !
  ! El-Ph
  !
@@ -543,7 +561,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call TMP_mirror_bands( )
 #endif
  !
-
+ !
+ call DIP_mirror_bands(en)
  ! 
  contains 
    !
@@ -583,9 +602,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
        if (is_def.and.n_ext_fields==0) n_ext_fields=n_ext_fields+1
        call parser(trim(name)//'_FWHM',is_def)
        if (is_def) then
-         Efield(i_field)%width=Efield(i_field)%FWHM/(2.*sqrt(2.*log(2.)))
+         Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
        else
-         Efield(i_field)%FWHM=Efield(i_field)%width*2.*sqrt(2.*log(2.))
+         Efield(i_field)%FWHM=Efield(i_field)%width*(2._SP*sqrt(2._SP*log(2._SP)))
        endif
      endif
      !
@@ -605,9 +624,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      !
      do i_s=1,n_CPU_str_max 
        !
-       if (i_s==1) possible_fields='(g,k,c,v)'   ! X_q_0
+       if (i_s==1) possible_fields='(k,c,v)'     ! DIP
        if (i_s==2) possible_fields='(q,g,k,c,v)' ! X_finite_q
-       if (i_s==3) possible_fields='(q,g,k,c,v)' ! X_all_q
+       if (i_s==3) possible_fields='(q,g,k,c,v)' ! X
        if (i_s==4) possible_fields='(k,eh,t)'    ! BS
        if (i_s==5) possible_fields='(q,qp,b)'    ! SE
        if (i_s==6) possible_fields='(k,b,q,qp)'  ! RT
@@ -695,6 +714,57 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      call it(defs,nms(12),des(12),X%iq,verb_level=V_iq)
      call it(defs,nms(13),des(13),X%ib,verb_level=0)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)
+     !
+   end subroutine
+   !
+   subroutine DIP_mirror_bands(E_in)
+     use parser_m,       ONLY:parser
+     !
+     type(levels), intent(in) :: E_in
+     !
+     logical :: is_def(10)
+     integer :: i1,bands(2),tmp_bands(2)
+     !
+     if(initmode/=4) return
+     !
+     is_def=.false.
+     !
+     call parser('BndsRnXx', is_def(1))
+     call parser('BndsRnXs', is_def(2))
+     call parser('BndsRnXd', is_def(3))
+     call parser('BndsRnXp', is_def(4))
+     call parser('DipBands', is_def(5))
+     call parser('BSEBands', is_def(6))
+     call parser('RTBands',  is_def(7))
+     call parser('SCBands',  is_def(8))
+     call parser('NLBands',  is_def(9))
+     call parser('COLLBands',is_def(10))
+     !
+     bands=-1
+     do i1=1,10
+       if(.not.(is_def(i1))) cycle
+       if(i1< 5) tmp_bands=X(i1)%ib
+       if(i1==5) tmp_bands=Dip%ib
+       if(i1==6) tmp_bands=BS_bands
+#if defined _RT || defined _NL
+       if(i1==7) tmp_bands=RT_bands
+#endif
+#if defined _NL
+       if(i1==9) tmp_bands=NL_bands
+#endif
+#if defined _RT || defined _SC || defined _NL
+       if(i1==10) tmp_bands=COLL_bands
+#endif
+       if(any((/bands==-1/))) then
+         bands(1)=max(tmp_bands(1),   1   )
+         bands(2)=min(tmp_bands(2),E_in%nb)
+       else
+         bands(1)=max(min(tmp_bands(1),bands(1)),   1   )
+         bands(2)=min(max(tmp_bands(2),bands(2)),E_in%nb)
+       endif
+     enddo
+     !
+     Dip%ib=bands
      !
    end subroutine
    !

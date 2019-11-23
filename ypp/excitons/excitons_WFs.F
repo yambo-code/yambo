@@ -21,22 +21,23 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
+subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
  use pars,          ONLY:SP,cZERO,cI,pi
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,qindx_X
  use units,         ONLY:BO2ANG
  use stderr,        ONLY:intc
  use D_lattice,     ONLY:a,alat
  use FFT_m,         ONLY:fft_dim
- use com,           ONLY:msg,warning,of_open_close
+ use com,           ONLY:msg,warning,of_open_close,error
  use electrons,     ONLY:spin,n_spinor
  use YPP,           ONLY:v2plot,ncell,r_hole,l_free_hole,&
 &                        nr,nr_tot,output_fname,&
-&                        use_xcrysden,use_gnuplot,use_cube,plot_dim
+&                        use_xcrysden,use_gnuplot,use_cube,plot_dim,&
+&                        EXCITONS_user_indexes,EXCITONS_n_user_states
  use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_n_descs,BSS_description,&
 &                        BSS_n_eig
- use BS,            ONLY:BS_H_dim,BS_bands
+ use BS,            ONLY:BS_bands,BS_H_dim,BSqpts
  use interfaces,    ONLY:PARALLEL_index,WF_load,WF_free
  use wave_func,     ONLY:WF,WF_symm,wf_ng
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
@@ -47,14 +48,15 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
 #include<memory.h>
  !
  type(bz_samp)     :: Xk
- integer           :: BS_E_degs(BSS_n_eig),lambda_s(n_lambda),n_lambda
+ integer           :: BS_E_degs(BSS_n_eig),iq
  ! 
  ! Workspace
  !
  type(PP_indexes)  :: px
  integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_l,i_lambda,j_lambda,i_spin,ir,ir_hole,j1,&
 &                     n_lambda_deg
- real(SP)          :: r_eh(3),k_dot_r,r_hole_rlu(3)
+ integer          :: ikpbz,ikp,isp
+ real(SP)          :: r_hole_rlu(3),kp_dot_r_h,k_dot_r_e
  complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor)
  !
  integer,  allocatable :: rindex(:)
@@ -97,6 +99,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
    call c2a(b_in=a,v_in=r_hole,v_out=r_hole_rlu,mode='kc2a')
    r_hole_rlu(:)=nint(r_hole_rlu(:)*fft_dim(:))
    ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
+   if (ir_hole.lt.0) call error(' Hole coordinates in input must be positive') 
    call msg('s','::      position in the FFT grid [cc]:',r_cell_cc(:,ir_hole))
    !
    ! [3] Translation in the center of the Big grid
@@ -133,11 +136,11 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
  ! Loop on exc states
  !===================
  !
- call msg('s','Processing '//trim(intc(n_lambda))//' states')
+ call msg('s','Processing '//trim(intc(EXCITONS_n_user_states))//' states')
  !
- do i_lambda=1,n_lambda
+ do i_lambda=1,EXCITONS_n_user_states
    !
-   j_lambda=lambda_s(i_lambda)
+   j_lambda=EXCITONS_user_indexes(i_lambda)
    !
    n_lambda_deg=count(BS_E_degs==BS_E_degs(j_lambda))
    !
@@ -155,10 +158,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
      if (.not.px%element_1D(ir)) cycle
      !
      if (l_free_hole) then
-       r_eh(:)=0._SP
        ir_hole=ir
-     else
-       r_eh(:)=r_cell_cc(:,ir)-r_hole(:)
+       r_hole=r_cell_cc(:,ir)
      endif
      !
      do neh = 1,BS_H_dim
@@ -171,15 +172,21 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
        ikibz = Xk%sstar(ikbz,1)
        is    = Xk%sstar(ikbz,2)
        !
-       k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
+       ikpbz = qindx_X(iq,ikbz,1)
+       ikp   = Xk%sstar(ikpbz,1)
+       isp   = Xk%sstar(ikpbz,2)
        !
-       WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikibz,is,i_spin/))
+       k_dot_r_e = dot_product(r_cell_cc(:,ir),Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
+       kp_dot_r_h = dot_product(r_hole,Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
+        
+       !
+       WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))
        WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))
        !
        wf_vc(neh) = conjg(WF1_ir(1))*WF2_ir(1)
        if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF1_ir(2))*WF2_ir(2)
        !
-       wf_vc(neh) = wf_vc(neh)*exp(cI*k_dot_r)
+       wf_vc(neh) = wf_vc(neh)*exp(cI*k_dot_r_e)*exp(-cI*kp_dot_r_h)
        ! 
      enddo  !Matrix elements
      !
@@ -187,7 +194,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
        !
        wf_ = V_dot_V(BS_H_dim,BS_mat(1,i_l),wf_vc)
        !
-       v2plot(ir) = v2plot(ir)+abs(wf_)**2.  
+       v2plot(ir) = v2plot(ir)+abs(wf_)**2
        !
      enddo
      !
@@ -201,9 +208,10 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
    !
    ! PLOT
    !
-   if (use_cube)     output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
-   if (use_xcrysden) output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.xsf'
-   if (use_gnuplot)  output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))
+
+   if (use_cube)     output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
+   if (use_xcrysden)     output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.xsf'
+   if (use_gnuplot)     output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))
    !
    if (use_cube) then 
      call of_open_close(trim(output_fname),'o')

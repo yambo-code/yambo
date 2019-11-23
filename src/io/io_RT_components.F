@@ -34,14 +34,19 @@ integer function io_RT_components(what,ID)
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,io_fragment, &
-&                         manage_OP_IF_START_and_CL_IF_END,frag_RT
+&                         manage_OP_IF_START_and_CL_IF_END,frag_RT, &
+&                         def_variable_bulk,io_variable_bulk,write_is_on,variable_exist
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
-&                         dG_lesser,RT_carriers,RT_obj_alloc,&
+&                         dG_lesser,RT_carriers,RT_obj_alloc,l_RT_rotate_DM,&
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
 &                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference,RT_all2ibz
  use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,RT_carriers_object,RT_IO_t,&
 &                         GF_RT_IO_t,TIME_string,IO_OBS_cache_steps,SAVE_G_history
  use fields,         ONLY:A_tot
+ use hamiltonian,    ONLY:H_rotation
+#if defined _PAR_IO
+ use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
+#endif
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
 #endif
@@ -53,11 +58,14 @@ integer function io_RT_components(what,ID)
  ! Work Space
  !
  integer, external     :: variables_RT
- character(lchlen)     :: local_description(100),db_name
+ character(lchlen)     :: local_description(100),db_name,ch
  character(schlen)     :: what_
  !
+#if defined _PAR_IO
+ integer               :: k_range(2),local_COMM
+#endif
  integer               :: nbands,ik,i_spin,i_memory,i_time,db_type
- logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_track_history,l_JP,l_M,l_D
+ logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_track_history,l_JP,l_M,l_D,par_IO
  !
  ! DB kind and name...
  !=====================
@@ -90,13 +98,23 @@ integer function io_RT_components(what,ID)
    db_type=-3
  endif
  !
+ par_IO=.false.
  if (l_THETA.or.l_G) ik = maxval(io_sec(ID,:))-1
+#if defined _PAR_IO
+ if (l_G) then
+   if (write_is_on(ID)) local_COMM=PAR_COM_Xk_ibz_INDEX%COMM
+   if ( read_is_on(ID)) local_COMM=mpi_comm_world
+   par_IO=.true.
+   k_range(1)=io_sec(ID,1)-1
+   k_range(2)=io_sec(ID,2)-1
+ endif
+#endif
  !
  ! ACTION
  !========
  !
  if (l_OBS.or.l_carriers) call manage_OP_IF_START_and_CL_IF_END(ID,NOW=NE_i_time,LAST=NE_steps)
- if (l_G     .or.l_THETA) then
+ if ( (l_G.or.l_THETA) .and. (.not.par_IO) ) then
    if (ik>0.and.allocated(PAR_IND_Xk_ibz%element_1D)) then
      call manage_OP_IF_START_and_CL_IF_END(ID,NOW=RT_all2ibz(ik),PAR_index=PAR_IND_Xk_ibz)
    else
@@ -111,8 +129,21 @@ integer function io_RT_components(what,ID)
  !
  if (l_track_history) db_name=trim(db_name)//"_Time_"//trim(TIME_string( (NE_i_time-1)*RT_step))
  !
+#if defined _PAR_IO
+ if(l_G.and.io_sec(ID,1)> 1) then
+   if(.not.l_track_history) db_name=trim(db_name)//"_last"
+   !
+   io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID,COMM=local_COMM)
+   if (io_RT_components/=0) goto 1
+ else
+#endif
+ !
  io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
  if (io_RT_components/=0) goto 1
+ !
+#if defined _PAR_IO
+ endif
+#endif
  !
  ! 1st SECTION
  !=============

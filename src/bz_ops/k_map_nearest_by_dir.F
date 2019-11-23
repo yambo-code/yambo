@@ -42,8 +42,6 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  real(SP) :: k_shift(3),dshift
  character(schlen) :: dump_ch
  !
- if(allocated(k_map%k_map_dir)) return
- !
  YAMBO_FREE(WF_shifts)
  YAMBO_ALLOC(WF_shifts,(Xk%nbz,3))
  !
@@ -151,15 +149,15 @@ subroutine k_find_smallest_q(ptbz,q_step,nbz)
    enddo
  enddo
  !
- if(any(q_step==10000)) call msg("s"," System with reduced dimensionality ")
+ if(any(q_step==10000)) call msg("r"," System with reduced dimensionality ")
  !
  where(q_step==10000)
    q_step = 0._SP
  end where
  !
- call msg("s"," Smallest q vectors :")
+ call msg("r"," Smallest q vectors (crystal coordinates) :")
  write(dump_ch,'(3f14.6)') q_step(:)
- call msg("s",dump_ch)
+ call msg("r",dump_ch)
  !
 end subroutine k_find_smallest_q
 

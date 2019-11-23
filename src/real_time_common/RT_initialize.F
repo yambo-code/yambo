@@ -50,7 +50,8 @@ subroutine RT_initialize(E,k,q)
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
 &                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
-&                         l_RT_impose_for_metals,l_RT_rotate_DM
+&                         l_velocity_gauge_corr,l_velocity_gauge_diam,l_RT_impose_for_metals, &
+&                         l_P_integrating_J,l_RT_rotate_DM
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -66,7 +67,7 @@ subroutine RT_initialize(E,k,q)
  integer                  :: i1,N_T_samplings
  character(6)             :: MSG_ch
  real(SP)                 :: T_memory
- logical                  :: l_Full_RT_T_evolution,l_skip_it
+ logical                  :: l_Full_RT_T_evolution,l_skip_it,l_velocity_gauge_tmp
  integer,         external:: RT_Lifetimes_evaluation_plan
  !
  ! Logicals
@@ -88,6 +89,8 @@ subroutine RT_initialize(E,k,q)
    call warning(" Not a valid gauge in input. Switching to length gauge")
    global_gauge="length"
  endif
+ if(l_velocity_gauge_corr) l_velocity_gauge_corr=(trim(global_gauge)=="velocity")
+ if(l_velocity_gauge_diam) l_velocity_gauge_diam=(trim(global_gauge)=="velocity")
  !
  ! Use NE_tot_time if provided
  !==============================
@@ -198,7 +201,8 @@ subroutine RT_initialize(E,k,q)
  endif
  !
  !
- l_RT_is_WFfree = (l_use_Hxc_collisions .or. trim(RT_potential)=="IP") .and. (.not.eval_energy) .and. &
+ l_RT_is_WFfree = (l_use_Hxc_collisions .or. trim(RT_potential)=="IP")   .and.     &
+&                 (.not.eval_energy) .and. (.not.l_velocity_gauge_corr)  .and.     &
 &                 (COLLISIONS_have_HARTREE.or.index(trim(RT_potential),"HARTREE")==0)
  !
  !

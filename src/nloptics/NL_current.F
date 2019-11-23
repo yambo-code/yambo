@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine NL_current(k,E,V_input)
+subroutine NL_current(k,E,V_input,NL_J)
  !
  ! Evalute current 
  ! The current includes the diamagnetic contribution only in the velocity gauge.
@@ -29,29 +29,32 @@ subroutine NL_current(k,E,V_input)
  ! j(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
  ! p(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) r \psi_j(k)
  !
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp,k_map
  use D_lattice,      ONLY:DL_vol
- use electrons,      ONLY:nel,levels,n_spin,n_sp_pol
+ use electrons,      ONLY:nel,levels,n_sp_pol
  use fields,         ONLY:A_ext
- use X_m,            ONLY:global_gauge,DIP_P
- use nl_optics,      ONLY:NL_J,NL_bands,l_use_DIPOLES
+ use X_m,            ONLY:global_gauge
+ use DIPOLES,        ONLY:DIP_v
+ use nl_optics,      ONLY:NL_bands,l_use_DIPOLES
  use QP_m,           ONLY:QP_nk
- use interfaces,     ONLY:NL_average_operator
+ use NL_interfaces,  ONLY:NL_average_operator
+ use parallel_m,     ONLY:PAR_Xk_nibz
  !
  implicit none          
  ! 
- type(bz_samp),     intent(in) :: k
- type(levels),      intent(in) :: E
- complex(SP),       intent(in) :: V_input(NL_bands(2),E%nbf,QP_nk,n_sp_pol) 
+ type(bz_samp),     intent(in)  :: k
+ type(levels),      intent(in)  :: E
+ complex(SP),       intent(in)  :: V_input(NL_bands(2),E%nbf,QP_nk,n_sp_pol) 
+ complex(SP),       intent(out) :: NL_J(6)
  !
  ! Work Space
  !
  ! A : Current
  !
- call NL_average_operator(V_VALUE=NL_J(4:6), V_MATRIX=DIP_P(:,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),:,:),  &
-     &  V_bands=V_input,k=k,en=E,TRANS=.TRUE.,nK_mem=k%nibz)
+ call NL_average_operator(V_VALUE=NL_J(4:6), V_MATRIX=DIP_v(:,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),:,:),  &
+     &  V_bands=V_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
  if(trim(global_gauge)=='velocity') then
    !

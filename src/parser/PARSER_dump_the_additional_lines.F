@@ -35,7 +35,7 @@ subroutine PARSER_dump_the_additional_lines(ou)
  !
  integer :: i1
  !
- if (infile_editing) open(unit=ou,file=trim(infile),position='append')
+ if (infile_editing.and.ou==12) open(unit=ou,file=trim(infile),position='append')
  do i1=1,nADDITIONAL_flines
    if (master_cpu) then
       if (ou==12) write (ou,'(a)') trim(ADDITIONAL_flines(i1))

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2014 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DV,AF
@@ -100,11 +100,12 @@ subroutine cutoff_ws(q)
    enddo
  enddo
 !$omp end do
+ !
+ if(master_thread) call live_timing()
+ !
 !$omp end parallel
  !
  call OPENMP_update(master_thread)
- !
- if(master_thread) call live_timing()
  !
  ! MPI 2 all
  !

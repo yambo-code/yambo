@@ -404,27 +404,38 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  ! "o" = calculated
  ! "x" = to be filled now
  !
- !$omp parallel default(shared), private(ig_col,ig_row,ig_row_transp,ig_col_transp)
- !$omp do
- do ig_col=X_par%cols(1),X_par%cols(2)
-   ig_row_transp=ig_col
-   if (X_FILL_UP_matrix_only) then
+ if (X_FILL_UP_matrix_only) then
+   !
+   !$omp parallel do default(shared), private(iw,ig_col,ig_row,ig_row_transp,ig_col_transp), collapse(2)
+   do iw=1,Xw%n_freqs
+   do ig_col=X_par%cols(1),X_par%cols(2)
+     ig_row_transp=ig_col
      do ig_row=max(ig_col+1,X_par%rows(1)),X_par%rows(2)
        ig_col_transp=ig_row
-       if (i_space_inv==1) X_par%blc(ig_row,ig_col,:)=      X_par%blc(ig_row_transp,ig_col_transp,:)
-       if (i_space_inv==0) X_par%blc(ig_row,ig_col,:)=conjg(X_par%blc(ig_row_transp,ig_col_transp,:))
+       if (i_space_inv==1) X_par%blc(ig_row,ig_col,iw)=      X_par%blc(ig_row_transp,ig_col_transp,iw)
+       if (i_space_inv==0) X_par%blc(ig_row,ig_col,iw)=conjg(X_par%blc(ig_row_transp,ig_col_transp,iw))
      enddo
-   else if (PAR_COM_RL_INDEX%n_CPU>1) then
+   enddo
+   enddo
+   !$omp end parallel do
+   !
+ else if (PAR_COM_RL_INDEX%n_CPU>1) then
+   !
+   !$omp parallel do default(shared), private(iw,ig_col,ig_row,ig_row_transp,ig_col_transp), collapse(2)
+   do iw=1,Xw%n_freqs
+   do ig_col=X_par%cols(1),X_par%cols(2)
+     ig_row_transp=ig_col
      do ig_row=max(ig_col,X_par%rows(1)),X_par%rows(2)
        ig_col_transp=ig_row
        ! FILL THE UPPER PART OF X_par_lower
-       X_par_lower_triangle%blc(ig_row_transp,ig_col_transp,:)=X_par%blc(ig_row_transp,ig_col_transp,:)
+       X_par_lower_triangle%blc(ig_row_transp,ig_col_transp,iw)=X_par%blc(ig_row_transp,ig_col_transp,iw)
        ! FILL THE LOWER PART OF X_par
-       X_par%blc(ig_row,ig_col,:)                             =X_par_lower_triangle%blc(ig_row,ig_col,:)
+       X_par%blc(ig_row,ig_col,iw)                             =X_par_lower_triangle%blc(ig_row,ig_col,iw)
      enddo
-   endif
- enddo
- !$omp end do
- !$omp end parallel
+   enddo
+   enddo
+   !$omp end parallel do
+   !
+ endif
  !
 end subroutine

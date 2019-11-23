@@ -608,7 +608,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! BSE
  !
  call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',BS_eh_win,verb_level=V_resp)
+ !GPL_EXCLUDE_START
  call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=0)
+ !GPL_EXCLUDE_END
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,E_unit,verb_level=V_resp)
  !
  ! Xx

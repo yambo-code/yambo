@@ -113,14 +113,18 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    ! These are trivial to compute at finite q, instead they are 
    ! obtained via the dipoles in the q->0 limit and stored to disk
    !
+   ! GPL_EXCLUDE_START
    if (iq==1) then
+   ! GPL_EXCLUDE_END
      call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err,'K')
      call DIPOLE_expand_and_project(Xk,Dip)
+   ! GPL_EXCLUDE_START
    else
      ! Alternative form presently not working since uGo shift of the WFs is missing
      !call DIPOLE_real_space_finiteq(Xen,Xk,Dip,iq)
      call DIPOLE_gspace_finiteq(Ken,Xk,Dip,iq)
    endif
+   ! GPL_EXCLUDE_END
    !
    BSS_Vnl_included=Dip%Vnl_included
    !

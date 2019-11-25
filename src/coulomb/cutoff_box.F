@@ -207,6 +207,7 @@ subroutine cutoff_box(q,is_cut)
 #endif
  !
  call k_ibz2bz(q,'d',.true.)
+ call PP_indexes_reset(px)
  !
  contains
    !

@@ -39,8 +39,9 @@ subroutine PARALLEL_structure(n_elements,ROLE)
  !
  ! Work Space 
  !
- integer     ::ID(n_elements),i_cpu,i_chain,i_chain_lim(2),chain_now,i_order,&
+ integer     ::ID(n_elements),i_cpu,i_chain,chain_now,i_order,&
 &              tmp_comm_inter,tmp_comm_intra,i_structure,PHASE_space
+ integer, volatile :: i_chain_lim(2)
  logical     ::USER_structure_is_ok
  character(schlen) ::USER_structure_msg
  !

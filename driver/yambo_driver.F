@@ -220,6 +220,43 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  if (driver_now) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
  if (driver_now) call mem_manager_report
  !
+ !
+#if defined _RT
+ !
+ ! RT
+ !====
+ !
+ driver_now=l_real_time
+ !
+ if (driver_now) call RT_driver(en,X(:2),k,q,Dip)
+ if (driver_now) call mem_manager_report
+ !
+#endif
+ !
+#if defined _NL
+ !
+ ! RT
+ !====
+ !
+ driver_now=l_nl_optics
+ !
+ if (driver_now) call NL_driver(en,X(:2),k,q,Dip)
+ if (driver_now) call mem_manager_report
+ !
+#endif
+ !
+ !
+#if defined _SCALAPACK 
+ !
+ ! SLK TESTER
+ !============
+ !
+ driver_now=l_slk_test
+ !
+ if (driver_now) call SLK_test(en,k,q)
+ if (driver_now) call mem_manager_report
+ !
+#endif
  ! 
  ! CLOSING
  !=========

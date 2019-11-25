@@ -37,14 +37,13 @@ subroutine of_open_close(of_name,mode)
  !
  implicit none
  !
- character(*)           :: of_name
- character(*),optional  :: mode
+ character(*), intent(in)            :: of_name
+ character(*), intent(in), optional  :: mode
  ! 
  ! Work Space
  !
 #if defined _NC_OUTPUT
  integer          :: io_out
- character(lchlen):: of_nc_name
 #endif
  integer          :: i2,i3,file_index
  character(lchlen):: local_file_name
@@ -55,10 +54,7 @@ subroutine of_open_close(of_name,mode)
    !
    ! Open file
    !  
-   local_file_name=of_name
-#if defined _NC_OUTPUT
-   of_nc_name=of_name
-#endif
+   local_file_name=get_name(desc=trim(of_name),type=3,CORE_IO=.false.,MORE_IO=.false.,COM_IO=.true.)
    !
    ! Flush output
    !
@@ -75,10 +71,7 @@ subroutine of_open_close(of_name,mode)
    !
    ! Here I open the unit using file_name to define the name
    !
-   if (index(mode,'a')==0.and.index(mode,'O')==0) then
-     local_file_name=get_name(desc=trim(of_name),type=3,CORE_IO=.false.,MORE_IO=.false.,COM_IO=.true.)
-     call rename_file(local_file_name)
-   endif
+   if (index(mode,'a')==0.and.index(mode,'O')==0) call rename_file(local_file_name)
    !
    ! Check first if already open
    !
@@ -95,7 +88,6 @@ subroutine of_open_close(of_name,mode)
        exit
      endif
    enddo
-   of_name=local_file_name
    opened_of(file_index)=local_file_name
    !
    if (index(mode,'a')==0) open(of_unit(file_index),file=trim(opened_of(file_index)))
@@ -106,7 +98,7 @@ subroutine of_open_close(of_name,mode)
    !
 #if defined _NC_OUTPUT
    call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(file_index))
-   io_out=io_connect(desc=trim(of_nc_name),type=2,   ID=of_nc_IDs(file_index))
+   io_out=io_connect(desc=trim(of_name),type=2, ID=of_nc_IDs(file_index))
    of_nc_pos(file_index)=0
 #endif
    !
@@ -146,6 +138,9 @@ subroutine write_the_logo(unit_,comment_)
  use LOGO,         ONLY:pickup_a_logo,logo_line,n_logo_lines
  use pars,         ONLY:schlen
  use com,          ONLY:repfile
+ !
+ implicit none
+ !
  integer     ::unit_
  character(1)::comment_
  character(schlen)::space_,ch ! Work Space
@@ -180,8 +175,11 @@ end subroutine write_the_logo
 !
 !
 subroutine rename_file(name)
+ !
  use pars,       ONLY:schlen,lchlen
+ !
  implicit none
+ !
  character(lchlen):: name
  character(lchlen):: ch 
  integer          :: i1
@@ -195,26 +193,37 @@ subroutine rename_file(name)
    if (i1> 99) write (ch,'(2a,i3.3)') trim(name),'_',i1
  enddo
  name=ch
+ !
 end subroutine rename_file
 !
 !
 subroutine warning(mesg)
+ !
  use LIVE_t,     ONLY:LIVE_message
  use stderr,     ONLY:STRING_pack
  use com,        ONLY:msg
+ !
  implicit none
+ !
  character(*) :: mesg
  call msg('nr',STRING_pack('[WARNING] ',trim(mesg)))
  call LIVE_message(STRING_pack('[WARNING] ',trim(mesg)),"n","","%s")
+ !
 end subroutine warning
 !
 !
 subroutine error(mesg)
+ !
  use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
  use stderr,     ONLY:STRING_pack
  use com,        ONLY:secnm,msg
 #if defined _MPI
  use parallel_m, ONLY:mpi_comm_world,ncpu
+#endif
+ !
+ implicit none
+ !
+#if defined _MPI
  integer         :: ierr
 #endif
  character(*)    :: mesg
@@ -239,11 +248,15 @@ end subroutine error
 !
 !
 subroutine msg_deliver(of_name,formatted_msg)
+ !
  use pars,      ONLY:max_open_ofs
  use com,       ONLY:opened_of,repfile,of_unit
+ !
  implicit none
+ !
  character(*) :: of_name,formatted_msg
  integer      :: i_unit
+ !
  do i_unit=1,max_open_ofs
    if (index(opened_of(i_unit),trim(of_name))==0) cycle
    if (of_unit(i_unit)<=0) cycle
@@ -317,7 +330,7 @@ subroutine msg_manager(how)
 end subroutine msg_manager
 !
 !
-subroutine of_netcdf_shadow(i1,val)
+subroutine of_netcdf_shadow(i1,nval,val)
  !
  use pars,     ONLY:SP
 #if defined _NC_OUTPUT
@@ -328,24 +341,20 @@ subroutine of_netcdf_shadow(i1,val)
  !
  implicit none
  !
- integer,  intent(in)   :: i1
- real(SP), intent(in)   :: val(:)
+ integer,  intent(in)  :: i1,nval
+ real(SP), intent(in)  :: val(nval)
  !
 #if defined _NC_OUTPUT
  !
- real(SP), allocatable :: nc_var(:,:)
+ real(SP)              :: nc_var(nval,1)
  !
- allocate(nc_var(size(val),1))
- !
- if(of_nc_pos(i1)==0) call def_variable_bulk(of_nc_IDs(i1),"output",1,(/size(val),nf90_unlimited/),SP)
+ if(of_nc_pos(i1)==0) call def_variable_bulk(of_nc_IDs(i1),"output",1,(/nval,nf90_unlimited/),SP)
  !
  of_nc_pos(i1)=of_nc_pos(i1)+1
  nc_var(:,1)=val
  !
  call io_control(ACTION=WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(i1))
  call io_variable_bulk(of_nc_IDs(i1),1,R2=nc_var,IPOS=(/1,of_nc_pos(i1)/))
- !
- deallocate(nc_var)
  !
 #endif
  !
@@ -358,24 +367,32 @@ end subroutine of_netcdf_shadow
 !===========
 !
 logical function OF_exists(name)
+ !
  use pars,      ONLY:max_open_ofs
  use com,       ONLY:opened_of
+ !
  implicit none
+ !
  character(*) ::name
  integer      ::i_f
  OF_exists=.false. 
  do i_f=1,max_open_ofs
    if (index(opened_of(i_f),name)/=0) OF_exists=.TRUE.
  enddo
+ !
 end function OF_exists
 !
 !
 logical function file_exists(name)
+ !
  implicit none
+ !
  character(*) name
+ !
  file_exists=.false.
  if (len_trim(name)==0) return
  inquire(file=name,exist=file_exists)
+ !
 end function file_exists
 !
 !
@@ -415,8 +432,12 @@ end function composed_fmt
 !
 !
 function filename(name)
+ !
  use stderr,     ONLY:STRING_split,STRING_remove
  use pars,       ONLY:schlen,lchlen
+ !
+ implicit none
+ !
  character(lchlen) :: filename
  character(*)      :: name
  integer           :: N
@@ -426,4 +447,5 @@ function filename(name)
  name_=STRING_remove(name_,"/",replace=" ")
  call STRING_split(name_,names,n_non_empty_strings=N)
  filename=trim(names(N))
+ !
 end function filename

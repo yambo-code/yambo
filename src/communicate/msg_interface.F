@@ -168,7 +168,7 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatte
      if (of_unit(i1)==11) close(11)
      of_unit(i1)=-of_unit(i1)
    endif
-   if (abs(of_unit(i1))/=11) call of_netcdf_shadow(i1,val)
+   if (abs(of_unit(i1))/=11.and.index(mesg,"#")==0) call of_netcdf_shadow(i1,size(val),val)
  enddo
  if (index(how,'o')>0.or.index(how,'O')>0) return
  if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return

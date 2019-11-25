@@ -102,7 +102,14 @@ module LOGO
 #if defined _OPENMP
      OMP_string="+OpenMP"
 #endif
+     !
+     ! GPL_EXCLUDE_START
      comment(2)="Branch is "//trim(code_branch)
+     ! GPL_EXCLUDE_END
+     !
+     ! GPL_INCLUDE_START
+     !comment(2)=""
+     ! GPL_INCLUDE_END
      !
      comment(3)=trim(MPI_string)//trim(OMP_string)//" Build"
      !

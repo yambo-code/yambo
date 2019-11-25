@@ -139,7 +139,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! Printed reals format lengths 
  !
+ ! GPL_EXCLUDE_START
  include 'branch.inc'
+ ! GPL_EXCLUDE_END
  !
  call set_real_printed_length()
  !

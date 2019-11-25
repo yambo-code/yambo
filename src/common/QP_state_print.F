@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_state_extract_print(qp)
+subroutine QP_state_print(qp)
  !
  ! Print the contents of the QP_state logical array
  !
@@ -30,14 +30,14 @@ subroutine QP_state_extract_print(qp)
  use com,       ONLY:msg
  use stderr,    ONLY:intc
  !
- implicit none
+#include<memory.h>
  !
  type(QP_t), optional :: qp    
  !
  ! Work Space
  !
- integer, external :: QP_state_extract
- integer           :: i4(4)
+ integer              :: n_states,i_s
+ integer ,allocatable :: states(:,:)
  character(lchlen) :: ch
  !
  if (.not.present(qp)) call msg('r','')
@@ -47,10 +47,15 @@ subroutine QP_state_extract_print(qp)
    qp%description(qp%n_descs)=""
  endif
  !
- i4=(/1,1,0,0/)
- do while(QP_state_extract(i4)>0)
+ n_states=-1
+ call QP_state_group(n_states,(/0,0,0,0/))
+ YAMBO_ALLOC(states,(n_states,4)) 
+ call QP_state_group(n_states,states)
+ !
+ do i_s=1,n_states
    !
-   ch='QP @ K '//trim(intc(i4(1)))//' - '//trim(intc(i4(2)))//' : b '//trim(intc(i4(3)))//' - '//trim(intc(i4(4)))
+   ch='QP @ K '//trim(intc(states(i_s,1)))//' - '//trim(intc(states(i_s,2)))//' : b '//&
+&                trim(intc(states(i_s,3)))//' - '//trim(intc(states(i_s,4)))
    !
    if (present(qp)) then
      qp%n_descs=qp%n_descs+1
@@ -60,6 +65,8 @@ subroutine QP_state_extract_print(qp)
    endif
    !
  enddo  
+ !
+ YAMBO_FREE(states)
  !
  if (.not.present(qp)) call msg('r','')
  !

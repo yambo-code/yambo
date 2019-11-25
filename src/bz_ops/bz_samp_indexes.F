@@ -73,7 +73,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  integer, external :: G_index
  !
  character(lchlen) :: string
- integer :: io_db,io_err,io_QINDX
+ integer :: io_db,io_err
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,iqs,iks,id
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3),q_step(3)
  logical :: connected_grids,user_defined_qpts,gamma_point_only
@@ -81,6 +81,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  logical :: bse_setup_scatt
 #endif
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
+ !
+ integer, external    :: io_QINDX 
  !
  call section('*','Transferred momenta grid')
  !

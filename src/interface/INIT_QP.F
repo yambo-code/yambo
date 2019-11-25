@@ -36,27 +36,19 @@ subroutine INIT_QP(comment)
  ! 
  ! Work Space
  !
- integer              :: n_states,state(4),i_c
- integer,    external :: QP_state_extract
+ integer              :: n_states
  integer ,allocatable :: I_states(:,:)
  real(SP),allocatable :: R_states(:,:)
  !
  call PARSER_array(mode="REAL dimensions",VAR="QPkrange",N=n_states,M=4)
  if (n_states==0) then
+   n_states=1
    if (allocated(QP_state)) then
-     do i_c=1,2
-       state=(/1,1,0,0/)
-       n_states=0
-       do while(QP_state_extract(state)>0)
-         n_states=n_states+1
-         if (i_c==2) I_states(n_states,:)=state
-       enddo
-       if (i_c==1) then
-         YAMBO_ALLOC(I_states,(n_states,4)) 
-       endif
-     enddo
+     n_states=-1
+     call QP_state_group(n_states,(/0,0,0,0/))
+     YAMBO_ALLOC(I_states,(n_states,4)) 
+     call QP_state_group(n_states,I_states)
    else
-     n_states=1
      YAMBO_ALLOC(I_states,(n_states,4)) 
      I_states(1,:)=(/1,QP_nk,1,QP_nb/)
    endif

@@ -148,7 +148,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Define the USER set of excitonic states
  !=========================================
- call get_user_excitonic_states( )
+ if(.not.l_sort) call get_user_excitonic_states( )
  !
  if(.not.l_sort) then
    !

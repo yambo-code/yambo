@@ -37,7 +37,7 @@ module LOGO
  integer                     :: ID_logo
  integer                     :: ID_logo_stderr
  integer, parameter, private :: max_n_logo_lines=100
- character(60)               :: logo_line(max_n_logo_lines)
+ character(70)               :: logo_line(max_n_logo_lines)
  !
  contains
    !

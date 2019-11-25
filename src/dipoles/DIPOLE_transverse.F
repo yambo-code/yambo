@@ -80,7 +80,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  !
 #if defined _PL
  l_eval_DIP_V =l_eval_DIP_V.or.l_photolum
-#elif defined _NL
+#endif
+#if defined _NL && !defined _PL
  l_eval_DIP_V =l_eval_DIP_V.or.l_nl_optics
 #endif
  !

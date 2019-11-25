@@ -61,7 +61,7 @@
   {"nloptics","u","Non-linear spectroscopy",0,0,0,0,0}, 
 #endif
 #if defined _RT
-  {"negf",   "q","Real-time dynamics [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0,0}, 
+  {"negf",   "n","Real-time dynamics [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0,0}, 
 #endif
 #if defined _RT
   {"collisions", "e","Evaluate Collisions",0,0,0,0,0}, 

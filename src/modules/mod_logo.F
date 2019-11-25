@@ -93,7 +93,9 @@ module LOGO
 #if defined _OPENMP
      OMP_string="+OpenMP"
 #endif
-     comment(2)="Branch is "//trim(code_branch)
+     !
+     !
+     comment(2)=""
      !
      comment(3)=trim(MPI_string)//trim(OMP_string)//" Build"
      !

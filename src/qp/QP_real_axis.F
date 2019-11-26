@@ -432,7 +432,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
          i2=life_W_table(iqibz,QP_n_W_freqs)
          !
          do i3=1,X%ng
-           lrhotw(i3)=V_dot_V_omp(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
+           lrhotw(i3)=V_dot_V_omp(X%ng,scattering_main%rhotw,X_mat(:,i3,i2+X_range(1)-1))
          enddo
          !
          ! To compensate the Tel/w divergence of the Bose function at finite
@@ -464,7 +464,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
          do i2=1,QP_n_W_freqs
            !
            do i3=1,X%ng
-             lrhotw(i3)=V_dot_V(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
+             lrhotw(i3)=V_dot_V(X%ng,scattering_main%rhotw,X_mat(:,i3,i2+X_range(1)-1))
            enddo
            !
            W_dummy=Vstar_dot_V_omp(X%ng,scattering_prime%rhotw,lrhotw)

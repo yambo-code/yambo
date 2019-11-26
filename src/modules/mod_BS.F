@@ -100,10 +100,13 @@ module BS
    ! Exchange Oscillators
    !
    complex(SP), allocatable      :: O_x(:,:)
+#ifdef _CUDA
+   complex(SP), allocatable, device :: O_x_d(:,:)
+#endif
    !
  end type BS_T_group
  !
- type(BS_T_group), allocatable  :: BS_T_grp(:)
+ type(BS_T_group), allocatable, target :: BS_T_grp(:)
  integer         , allocatable  :: BS_T_grp_1st_el(:)
  integer         , allocatable  :: BS_nT_at_k(:)
  integer                        :: BS_nT_grps
@@ -132,11 +135,14 @@ module BS
    integer,     allocatable      :: kp_table(:,:)           ! 2,nkibz @ k = (i_kmq,i_pmq)
    integer,     allocatable      :: O_table(:,:,:,:,:,:,:)  ! 2,sym,nkmq,npmq,n,n',spin @ k = (iOnn,i_block_ref)
    complex(SP), allocatable      :: O_c(:,:)
+#ifdef _CUDA
+   complex(SP), allocatable, device :: O_c_d(:,:)
+#endif
    !
  end type BS_block
  !
  integer                    :: n_BS_blks = 0
- type(BS_block), allocatable:: BS_blk(:)
+ type(BS_block), allocatable, target :: BS_blk(:)
  !
  ! WF phases
  !===========
@@ -145,7 +151,9 @@ module BS
  ! Screened interaction
  !======================
  complex(SP),allocatable ::BS_W(:,:,:)
- !
+#ifdef _CUDA
+ attributes(device)      ::BS_W
+#endif
  !
  contains
    !
@@ -175,11 +183,18 @@ module BS
      if (EXCHANGE) then
        if (BS_T_grp(iG)%size==0) return
        YAMBO_ALLOC(BS_T_grp(iG)%O_x,(BS_n_g_exch,BS_T_grp(iG)%size))
+#ifdef _CUDA
+       allocate(BS_T_grp(iG)%O_x_d,mold=BS_T_grp(iG)%O_x)
+#endif
+
      endif
      !
      if (CORRELATION) then
        if (BS_blk(iB)%N_oscillators==0) return
        YAMBO_ALLOC(BS_blk(iB)%O_c,(O_ng,BS_blk(iB)%N_oscillators))
+#ifdef _CUDA
+       allocate(BS_blk(iB)%O_c_d,mold=BS_blk(iB)%O_c)
+#endif
      endif
      !
    end subroutine
@@ -190,6 +205,9 @@ module BS
      integer :: iG,iB,ik_loop,ip_loop,ik_now,ip_now
      do iG=iG_ref,1,-1
        YAMBO_FREE(BS_T_grp(iG)%O_x)
+#ifdef _CUDA
+       if (allocated(BS_T_grp(iG)%O_x_d)) deallocate(BS_T_grp(iG)%O_x_d)
+#endif
      enddo
      if(iB_ref==0) return
      ik_now=BS_blk(iB_ref)%ik
@@ -207,6 +225,9 @@ module BS
        YAMBO_FREE(BS_blk(iB)%O_c)
        YAMBO_FREE(BS_blk(iB)%O_table)
        YAMBO_FREE(BS_blk(iB)%kp_table)
+#ifdef _CUDA
+       if (allocated(BS_blk(iB)%O_c_d)) deallocate(BS_blk(iB)%O_c_d)
+#endif
      enddo
      !
    end subroutine

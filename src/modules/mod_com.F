@@ -63,7 +63,7 @@ module com
 #if defined _NC_OUTPUT
  integer, parameter :: of_nc_max_size=10000
  integer            :: of_nc_IDs(max_open_ofs)
- integer            :: of_nc_pos(2,max_open_ofs)
+ integer            :: of_nc_pos(4,max_open_ofs)
  character(schlen)  :: of_nc_var_names(max_open_ofs)
 #endif
  logical            :: write_to_of

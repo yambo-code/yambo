@@ -354,24 +354,23 @@ subroutine of_netcdf_shadow_real(i1,imsg,nval,val)
  !
  !
  if(imsg==0) then
-   def_var=(of_nc_pos(1,i1)==0)
-   of_nc_pos(1,i1)=of_nc_pos(1,i1)+1
-   dim_names(1)=trim(of_nc_var_names(i1))//'_n_values'
-   dim_names(2)=trim(of_nc_var_names(i1))//'_unlim'
    VAR_ID  =4
-   VAR_NAME=trim(of_nc_var_names(i1))//'_test'
+   dim_names(1)='n_values'
+   dim_names(2)='unlim'
+   VAR_NAME=trim(of_nc_var_names(i1))//'_values'
    VAR_SIZE=(/nval,nf90_unlimited/)
-   VAR_POS =(/1,of_nc_pos(1,i1)/)
  endif
  if(imsg> 0) then
-   def_var=.true.
- dim_names(1)=trim(of_nc_var_names(i1))//'_n_values_more'
-   dim_names(2)=trim(of_nc_var_names(i1))//'_single'
    VAR_ID  =3
-   VAR_NAME=trim(of_nc_var_names(i1))//"_more"
-   VAR_SIZE=(/nval,1/)
-   VAR_POS =(/1,1/)
+   dim_names(1)='n_head_values'
+   dim_names(2)='max_head_values_lines'
+   VAR_NAME=trim(of_nc_var_names(i1))//"_head_values"
+   VAR_SIZE=(/nval,50/)
  endif
+ !
+ def_var=(of_nc_pos(VAR_ID,i1)==0)
+ of_nc_pos(VAR_ID,i1)=of_nc_pos(VAR_ID,i1)+1
+ VAR_POS =(/1,of_nc_pos(VAR_ID,i1)/)
  !
  if(def_var) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME),VAR_ID,VAR_SIZE,SP,dim_names)
  nc_var(:,1)=val
@@ -390,6 +389,7 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
  !
  use pars,     ONLY:SP,schlen
 #if defined _NC_OUTPUT
+ use stderr,   ONLY:intc
  use com,      ONLY:of_nc_pos,of_nc_IDs,of_nc_var_names
  use netcdf,   ONLY:nf90_unlimited
  use IO_m,     ONLY:WR,NONE,io_control,io_variable_bulk,def_variable_bulk
@@ -418,31 +418,33 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
  !
  if(.not.write_nc) return
  !
- dim_names(1)='schlen'
- !
  if (nval==1) then
-   allocate(nc_var(schlen,nval))
-   def_var=(of_nc_pos(2,i1)==0)
-   strlen(1)=len(trim(val(1)))
-   of_nc_pos(2,i1)=of_nc_pos(2,i1)+1
-   dim_names(2)=trim(of_nc_var_names(i1))//'_head'
    VAR_ID  =2
+   def_var=(of_nc_pos(VAR_ID,i1)==0)
+   of_nc_pos(VAR_ID,i1)=of_nc_pos(VAR_ID,i1)+1
+   allocate(nc_var(schlen,nval))
+   strlen(1)=len(trim(val(1)))
+   dim_names(1)='schlen'
+   dim_names(2)='max_headers_lines'
    VAR_NAME=trim(of_nc_var_names(i1))//"_headers"
    VAR_SZ  =(/schlen,50/)
-   VAR_POS =(/1,of_nc_pos(2,i1)/)
+   VAR_POS =(/1,of_nc_pos(VAR_ID,i1)/)
  endif
  if (nval> 1) then
-   def_var =.true.
+   VAR_ID  =1
+   def_var=.true.
+   of_nc_pos(VAR_ID,i1)=of_nc_pos(VAR_ID,i1)+1
    do i_var=1,nval
      strlen(i_var)=len(trim(val(i_var))) 
    enddo
    allocate(nc_var(maxval(strlen),nval))
-   dim_names(2)=trim(of_nc_var_names(i1))//'_cols'
-   VAR_ID  =1
-   VAR_NAME=trim(of_nc_var_names(i1))//"_col_names"
+   dim_names(1)='maxval_strin_len_'//trim(intc(of_nc_pos(VAR_ID,i1)))
+   dim_names(2)='n_headers_'//trim(intc(of_nc_pos(VAR_ID,i1)))
+   VAR_NAME=trim(of_nc_var_names(i1))//"_head_names_"//trim(intc(of_nc_pos(VAR_ID,i1)))
    VAR_SZ  =(/maxval(strlen),nval/)
    VAR_POS =(/1,1/)
  endif
+ !
  !
  if(def_var) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME),VAR_ID,VAR_SZ,0,dim_names)
  !

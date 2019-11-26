@@ -31,7 +31,7 @@ subroutine of_open_close(of_name,mode)
  use com,             ONLY:of,nofs,opened_of,of_unit,write_to_of
  use IO_m,            ONLY:get_name
 #if defined _NC_OUTPUT
- use com,             ONLY:of_nc_IDs,of_nc_pos
+ use com,             ONLY:of_nc_pos,of_nc_var_names,of_nc_IDs
  use IO_m,            ONLY:io_control,io_connect,io_disconnect,OP_WR,WR_CL,NONE
 #endif
  !
@@ -98,8 +98,9 @@ subroutine of_open_close(of_name,mode)
    !
 #if defined _NC_OUTPUT
    call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(file_index))
-   io_out=io_connect(desc=trim(of_name),type=2, ID=of_nc_IDs(file_index))
-   of_nc_pos(file_index)=0
+   io_out=io_connect(desc="output_"//trim(of_name),type=2, ID=of_nc_IDs(file_index))
+   of_nc_var_names(file_index)=trim(of_name)
+   of_nc_pos(:,file_index)=0
 #endif
    !
  else
@@ -330,37 +331,139 @@ subroutine msg_manager(how)
 end subroutine msg_manager
 !
 !
-subroutine of_netcdf_shadow(i1,nval,val)
+subroutine of_netcdf_shadow_real(i1,imsg,nval,val)
  !
- use pars,     ONLY:SP
+ use pars,     ONLY:SP,schlen
 #if defined _NC_OUTPUT
- use com,      ONLY:of_nc_pos,of_nc_IDs
+ use com,      ONLY:of_nc_pos,of_nc_IDs,of_nc_var_names
  use netcdf,   ONLY:nf90_unlimited
- use IO_m,     ONLY:WR,NONE,io_control,def_variable_bulk,io_variable_bulk
+ use IO_m,     ONLY:WR,NONE,io_control,io_variable_bulk,def_variable_bulk
 #endif
  !
  implicit none
  !
- integer,  intent(in)  :: i1,nval
+ integer,  intent(in)  :: i1,imsg,nval
  real(SP), intent(in)  :: val(nval)
  !
 #if defined _NC_OUTPUT
  !
+ logical               :: def_var
+ integer               :: VAR_ID,VAR_POS(2),VAR_SIZE(2)
  real(SP)              :: nc_var(nval,1)
+ character(schlen)     :: dim_names(2),VAR_NAME
  !
- if(of_nc_pos(i1)==0) call def_variable_bulk(of_nc_IDs(i1),"output",1,(/nval,nf90_unlimited/),SP)
  !
- of_nc_pos(i1)=of_nc_pos(i1)+1
+ if(imsg==0) then
+   def_var=(of_nc_pos(1,i1)==0)
+   of_nc_pos(1,i1)=of_nc_pos(1,i1)+1
+   dim_names(1)=trim(of_nc_var_names(i1))//'_n_values'
+   dim_names(2)=trim(of_nc_var_names(i1))//'_unlim'
+   VAR_ID  =4
+   VAR_NAME=trim(of_nc_var_names(i1))//'_test'
+   VAR_SIZE=(/nval,nf90_unlimited/)
+   VAR_POS =(/1,of_nc_pos(1,i1)/)
+ endif
+ if(imsg> 0) then
+   def_var=.true.
+ dim_names(1)=trim(of_nc_var_names(i1))//'_n_values_more'
+   dim_names(2)=trim(of_nc_var_names(i1))//'_single'
+   VAR_ID  =3
+   VAR_NAME=trim(of_nc_var_names(i1))//"_more"
+   VAR_SIZE=(/nval,1/)
+   VAR_POS =(/1,1/)
+ endif
+ !
+ if(def_var) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME),VAR_ID,VAR_SIZE,SP,dim_names)
  nc_var(:,1)=val
  !
  call io_control(ACTION=WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(i1))
- call io_variable_bulk(of_nc_IDs(i1),1,R2=nc_var,IPOS=(/1,of_nc_pos(i1)/))
+ call io_variable_bulk(of_nc_IDs(i1),VAR_ID,R2=nc_var,IPOS=VAR_POS)
  !
 #endif
  !
  return
  !
-end subroutine of_netcdf_shadow
+end subroutine of_netcdf_shadow_real
+!
+!
+subroutine of_netcdf_shadow_char(i1,nval,val)
+ !
+ use pars,     ONLY:SP,schlen
+#if defined _NC_OUTPUT
+ use com,      ONLY:of_nc_pos,of_nc_IDs,of_nc_var_names
+ use netcdf,   ONLY:nf90_unlimited
+ use IO_m,     ONLY:WR,NONE,io_control,io_variable_bulk,def_variable_bulk
+#endif
+ !
+ implicit none
+ !
+ integer,      intent(in)  :: i1,nval
+ character(*), intent(in)  :: val(nval)
+ !
+#if defined _NC_OUTPUT
+ !
+ logical               :: write_nc,def_var
+ integer               :: i_var,i_char,strlen(nval),VAR_ID,VAR_POS(2),VAR_SZ(2)
+ character(schlen)     :: VAR_NAME
+ character(3)          :: end_string
+ character(schlen)     :: dim_names(2)
+ character(1), allocatable  :: nc_var(:,:)
+ !
+ write_nc=.false.
+ do i_var=1,nval
+   if(trim(val(i_var))=="") cycle
+   write_nc=.true.
+   exit
+ enddo
+ !
+ if(.not.write_nc) return
+ !
+ dim_names(1)='schlen'
+ !
+ if (nval==1) then
+   allocate(nc_var(schlen,nval))
+   def_var=(of_nc_pos(2,i1)==0)
+   strlen(1)=len(trim(val(1)))
+   of_nc_pos(2,i1)=of_nc_pos(2,i1)+1
+   dim_names(2)=trim(of_nc_var_names(i1))//'_head'
+   VAR_ID  =2
+   VAR_NAME=trim(of_nc_var_names(i1))//"_headers"
+   VAR_SZ  =(/schlen,50/)
+   VAR_POS =(/1,of_nc_pos(2,i1)/)
+ endif
+ if (nval> 1) then
+   def_var =.true.
+   do i_var=1,nval
+     strlen(i_var)=len(trim(val(i_var))) 
+   enddo
+   allocate(nc_var(maxval(strlen),nval))
+   dim_names(2)=trim(of_nc_var_names(i1))//'_cols'
+   VAR_ID  =1
+   VAR_NAME=trim(of_nc_var_names(i1))//"_col_names"
+   VAR_SZ  =(/maxval(strlen),nval/)
+   VAR_POS =(/1,1/)
+ endif
+ !
+ if(def_var) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME),VAR_ID,VAR_SZ,0,dim_names)
+ !
+ end_string=" # "
+ nc_var=""
+ do i_var=1,nval
+   do i_char=1,strlen(i_var)
+     nc_var(i_char,i_var)=val(i_var)(i_char:i_char)
+   enddo
+ enddo
+ !
+ call io_control(ACTION=WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(i1))
+ call io_variable_bulk(of_nc_IDs(i1),VAR_ID,CH2=nc_var,IPOS=VAR_POS)
+ !
+ deallocate(nc_var)
+ !
+#endif
+ !
+ return
+ !
+end subroutine of_netcdf_shadow_char
 !
 !
 ! FUNCTIONS

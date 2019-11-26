@@ -60,6 +60,7 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
    write (of_unit(i1),trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
    if (of_unit(i1)==11) close(11)
    of_unit(i1)=-of_unit(i1)
+   if (abs(of_unit(i1))/=11) call of_netcdf_shadow_char(i1,size(val),val)
  enddo
  if (index(how,'o')>0.or.index(how,'O')>0) return
  if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
@@ -140,7 +141,7 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatte
  ! 
  ! Work Space
  !
- integer  :: i1,l_indent
+ integer  :: i1,l_indent,imsg
  character(schlen):: gen_fmt_local
  character(lchlen):: lch,msgfmt
  logical          :: l_tabs,l_ext_fmt
@@ -168,7 +169,10 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatte
      if (of_unit(i1)==11) close(11)
      of_unit(i1)=-of_unit(i1)
    endif
-   if (abs(of_unit(i1))/=11.and.index(mesg,"#")==0) call of_netcdf_shadow(i1,size(val),val)
+   if (abs(of_unit(i1))/=11) then
+     imsg=index(mesg,"#")
+     call of_netcdf_shadow_real(i1,imsg,size(val),val)
+   endif
  enddo
  if (index(how,'o')>0.or.index(how,'O')>0) return
  if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return

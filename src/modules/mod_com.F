@@ -63,7 +63,8 @@ module com
 #if defined _NC_OUTPUT
  integer, parameter :: of_nc_max_size=10000
  integer            :: of_nc_IDs(max_open_ofs)
- integer            :: of_nc_pos(max_open_ofs)
+ integer            :: of_nc_pos(2,max_open_ofs)
+ character(schlen)  :: of_nc_var_names(max_open_ofs)
 #endif
  logical            :: write_to_of
  logical            :: write_to_report
@@ -71,7 +72,7 @@ module com
  interface
    !
    ! This interfaces is not really needed and could be easely
-   ! dropped splitting of_open_close in two different subrtouines:
+   ! dropped splitting of_open_close in two different subroutines:
    ! of_open and of_close
    !
    subroutine of_open_close(of_name,mode)

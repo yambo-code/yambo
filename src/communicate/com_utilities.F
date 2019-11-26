@@ -335,6 +335,7 @@ subroutine of_netcdf_shadow_real(i1,imsg,nval,val)
  !
  use pars,     ONLY:SP,schlen
 #if defined _NC_OUTPUT
+ use stderr,   ONLY:intc
  use com,      ONLY:of_nc_pos,of_nc_IDs,of_nc_var_names
  use netcdf,   ONLY:nf90_unlimited
  use IO_m,     ONLY:WR,NONE,io_control,io_variable_bulk,def_variable_bulk
@@ -348,29 +349,33 @@ subroutine of_netcdf_shadow_real(i1,imsg,nval,val)
 #if defined _NC_OUTPUT
  !
  logical               :: def_var
- integer               :: VAR_ID,VAR_POS(2),VAR_SIZE(2)
+ integer, parameter    :: max_head_values_lines=50
+ integer               :: VAR_ID,i_var,VAR_POS(2),VAR_SIZE(2)
  real(SP)              :: nc_var(nval,1)
  character(schlen)     :: dim_names(2),VAR_NAME
  !
  !
  if(imsg==0) then
    VAR_ID  =4
+   def_var=(of_nc_pos(VAR_ID,i1)==0)
+   of_nc_pos(VAR_ID,i1)=of_nc_pos(VAR_ID,i1)+1
    dim_names(1)='n_values'
    dim_names(2)='unlim'
    VAR_NAME=trim(of_nc_var_names(i1))//'_values'
    VAR_SIZE=(/nval,nf90_unlimited/)
+   VAR_POS =(/1,of_nc_pos(VAR_ID,i1)/)
  endif
  if(imsg> 0) then
    VAR_ID  =3
+   def_var=(mod(of_nc_pos(VAR_ID,i1),max_head_values_lines)==0)
+   of_nc_pos(VAR_ID,i1)=of_nc_pos(VAR_ID,i1)+1
+   i_var=(of_nc_pos(VAR_ID,i1)-1)/max_head_values_lines
    dim_names(1)='n_head_values'
    dim_names(2)='max_head_values_lines'
-   VAR_NAME=trim(of_nc_var_names(i1))//"_head_values"
-   VAR_SIZE=(/nval,50/)
+   VAR_NAME=trim(of_nc_var_names(i1))//"_head_values_"//trim(intc(i_var))
+   VAR_SIZE=(/nval,max_head_values_lines/)
+   VAR_POS =(/1,of_nc_pos(VAR_ID,i1)-i_var*max_head_values_lines/)
  endif
- !
- def_var=(of_nc_pos(VAR_ID,i1)==0)
- of_nc_pos(VAR_ID,i1)=of_nc_pos(VAR_ID,i1)+1
- VAR_POS =(/1,of_nc_pos(VAR_ID,i1)/)
  !
  if(def_var) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME),VAR_ID,VAR_SIZE,SP,dim_names)
  nc_var(:,1)=val
@@ -403,6 +408,7 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
 #if defined _NC_OUTPUT
  !
  logical               :: write_nc,def_var
+ integer, parameter    :: max_headers_lines=50
  integer               :: i_var,i_char,strlen(nval),VAR_ID,VAR_POS(2),VAR_SZ(2)
  character(schlen)     :: VAR_NAME
  character(3)          :: end_string
@@ -420,15 +426,16 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
  !
  if (nval==1) then
    VAR_ID  =2
-   def_var=(of_nc_pos(VAR_ID,i1)==0)
+   def_var=(mod(of_nc_pos(VAR_ID,i1),max_headers_lines)==0)
    of_nc_pos(VAR_ID,i1)=of_nc_pos(VAR_ID,i1)+1
+   i_var=(of_nc_pos(VAR_ID,i1)-1)/max_headers_lines
    allocate(nc_var(schlen,nval))
    strlen(1)=len(trim(val(1)))
    dim_names(1)='schlen'
    dim_names(2)='max_headers_lines'
-   VAR_NAME=trim(of_nc_var_names(i1))//"_headers"
-   VAR_SZ  =(/schlen,50/)
-   VAR_POS =(/1,of_nc_pos(VAR_ID,i1)/)
+   VAR_NAME=trim(of_nc_var_names(i1))//"_headers_"//trim(intc(i_var))
+   VAR_SZ  =(/schlen,max_headers_lines/)
+   VAR_POS =(/1,of_nc_pos(VAR_ID,i1)-i_var*max_headers_lines/)
  endif
  if (nval> 1) then
    VAR_ID  =1
@@ -445,6 +452,7 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
    VAR_POS =(/1,1/)
  endif
  !
+ write(*,*) VAR_SZ,VAR_POS
  !
  if(def_var) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME),VAR_ID,VAR_SZ,0,dim_names)
  !

@@ -416,7 +416,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! BS/BSS
  !
- BS_n_g_W=1
+ BS_n_g_W=-1
  BS_eh_en=(/-1._SP,-1._SP/)/HA2EV
  BS_identifier=0
  BS_q=1

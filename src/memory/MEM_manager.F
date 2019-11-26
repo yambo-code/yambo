@@ -127,6 +127,8 @@ subroutine MEM_manager_alloc(what,Sz,Kn)
  !
  if(.not.just_started) call MEM_manager_messages(what,.true.,MEM_now_Kb)
  !
+#else
+ if (MEM_err/=0) call error("Allocation of "//what//" failed")
 #endif
  !
 end subroutine MEM_manager_alloc

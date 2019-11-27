@@ -51,7 +51,8 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  !
  integer     :: idx(3),id,ikp,ikm,i1,i2
  integer     :: ikm_ibz,ikp_ibz,ik_ibz,max_step,istep
- complex(SP) :: V_tmp(NL_bands(2),en%nbf),tmp_det,vtmp(NL_bands(2))
+ !complex(SP) :: V_tmp(NL_bands(2),en%nbf) ! used in full construction of overlaps
+ complex(SP) :: tmp_det,vtmp(NL_bands(2))
  !
  S_det    =cZERO
  Sm1_plus =cZERO
@@ -103,7 +104,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
 !       call M_by_M_omp('C','N',NL_bands(2),en%nbf,NL_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),&
 !&                          NL_bands(2),V_bands(:,:,ikm_ibz,i_sp),NL_bands(2),cZERO,V_tmp,NL_bands(2))
-!       !
+       !
 !       call M_by_M_omp('C','N',en%nbf,en%nbf,NL_bands(2),cONE,V_bands(:,:,ik_ibz,i_sp),&
 !&                      NL_bands(2),V_tmp,NL_bands(2),cZERO,Sm1_minus(:,:,id+(istep-1)*3),en%nbf)
        !
@@ -133,7 +134,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        do i2=NL_bands(1),en%nbf
          call M_by_V_omp('C',NL_bands(2),DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),V_bands(:,i2,ikm_ibz,i_sp),vtmp)
          !
-         call mv_cgemv_omp('C',en%nbf,NL_bands(2),cONE,V_bands(:,:,ik_ibz,i_sp),&
+         call mv_cgemv_omp('C',NL_bands(2),en%nbf,cONE,V_bands(:,:,ik_ibz,i_sp),&
 &                      NL_bands(2),vtmp,1,cZERO,Sm1_minus(:,i2,id+(istep-1)*3),1)
        enddo
        !

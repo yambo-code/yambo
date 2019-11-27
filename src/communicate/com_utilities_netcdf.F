@@ -142,8 +142,6 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
    VAR_POS =(/1,1/)
  endif
  !
- write(*,*) VAR_SZ,VAR_POS
- !
  if(def_var) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME),VAR_ID,VAR_SZ,0,dim_names)
  !
  end_string=" # "

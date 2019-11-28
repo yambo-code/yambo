@@ -32,6 +32,10 @@
 #
 # > I/O: @NETCDF_info@ @HDF5_info@
 #
+# [@FUTILE_str@] FUTILE  : @FUTILE_LIBS@
+#                 @FUTILE_INCS@
+# [@YAML_str@] YAML    : @YAML_LIBS@
+#                 @YAML_INCS@
 # [@IOTK_str@] IOTK    : @IOTK_LIBS@ (QE @PW_VER@)
 #                 @IOTK_INCS@
 # [@ETSF_str@] ETSF_IO : @ETSF_LIBS@

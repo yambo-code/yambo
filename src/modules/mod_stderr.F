@@ -40,7 +40,7 @@ module stderr
  !
  ! Slash
  !
-#if defined _aix || defined _XLF
+#if defined _aix || defined _XLF || defined _PGI
  character(2), parameter :: slash="\\"
 #else 
  character(1), parameter :: slash="\"

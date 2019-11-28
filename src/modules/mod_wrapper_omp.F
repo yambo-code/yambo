@@ -30,7 +30,7 @@ module wrapper_omp
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
  use pars,    ONLY:DP,SP,cZERO,cONE,cZERO_DP,cONE_DP
- use wrapper, ONLY:V_copy,MM_caxpy,vv_caxpy,vv_saxpy,Vstar_dot_V,real_V_dot_V,V_dot_V
+ use wrapper, ONLY:V_copy,MM_caxpy,vv_caxpy,vv_saxpy,Vstar_dot_V,V_dot_V
  use openmp,  ONLY:n_threads_now
  !
  implicit none
@@ -51,10 +51,13 @@ module wrapper_omp
    module procedure vv_saxpy_omp,vv_caxpy_omp,MM_caxpy_omp
  end interface
  !
+ interface V_dot_V_omp
+   module procedure V_dot_V_r1_omp, V_dot_V_c1_omp, V_dot_V_c2_omp
+ end interface
+ !
  public :: V_copy_omp
  public :: Vstar_dot_V_omp
  public :: V_dot_V_omp
- public :: real_V_dot_V_omp
  public :: M_by_V_omp
  !
  contains
@@ -312,7 +315,7 @@ module wrapper_omp
      !
    end function Vstar_dot_V_omp   
    !
-   real(SP) function real_V_dot_V_omp(N,CX,CY)
+   real(SP) function V_dot_V_r1_omp(N,CX,CY)
      integer, intent(in) :: N
      real(SP),intent(in) :: CX(*),CY(*)
      !
@@ -326,16 +329,16 @@ module wrapper_omp
          rtmp=rtmp +CX(i)*CY(i)
        enddo 
        !$omp end parallel do
-       real_V_dot_V_omp=rtmp
+       V_dot_V_r1_omp=rtmp
      else
-       real_V_dot_V_omp=real_V_dot_V(N,CX,CY)
+       V_dot_V_r1_omp=V_dot_V(N,CX,CY)
      endif
 #else
-     real_V_dot_V_omp=real_V_dot_V(N,CX,CY)
+     V_dot_V_r1_omp=V_dot_V(N,CX,CY)
 #endif
-   end function real_V_dot_V_omp
+   end function V_dot_V_r1_omp
    !
-   complex(SP) function V_dot_V_omp(N,CX,CY)
+   complex(SP) function V_dot_V_c1_omp(N,CX,CY)
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(*),CY(*)
      !
@@ -349,14 +352,40 @@ module wrapper_omp
          ctmp=ctmp +CX(i)*CY(i)
        enddo 
        !$omp end parallel do
-       V_dot_V_omp=ctmp
+       V_dot_V_c1_omp=ctmp
      else
-       V_dot_V_omp=V_dot_V(N,CX,CY)
+       V_dot_V_c1_omp=V_dot_V(N,CX,CY)
      endif
 #else
-     V_dot_V_omp=V_dot_V(N,CX,CY)
+     V_dot_V_c1_omp=V_dot_V(N,CX,CY)
 #endif
      !
-   end function V_dot_V_omp
+   end function V_dot_V_c1_omp
+   !
+   complex(SP) function V_dot_V_c2_omp(N,CX,CY)
+     integer,    intent(in) :: N
+     complex(SP),intent(in) :: CX(:,:),CY(:,:)
+     !
+#if defined _OPENMP_INT_LINALG
+     integer     :: i,j
+     complex(SP) :: ctmp
+     if (n_threads_now>1) then
+       ctmp=0.0_SP
+       !$omp parallel do default(shared), private(i), reduction(+:ctmp), collapse(2)
+       do j=1,N/size(CX,1)
+       do i=1,size(CX,1)
+         ctmp=ctmp +CX(i,j)*CY(i,j)
+       enddo 
+       enddo 
+       !$omp end parallel do
+       V_dot_V_c2_omp=ctmp
+     else
+       V_dot_V_c2_omp=V_dot_V(N,CX,CY)
+     endif
+#else
+     V_dot_V_c2_omp=V_dot_V(N,CX,CY)
+#endif
+     !
+   end function V_dot_V_c2_omp
    !
 end module

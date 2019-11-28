@@ -92,12 +92,15 @@ module interpolate_tools
      INTERP_obj(ID)%use_NN=trim(INTERP_mode)=="NN"
      INTERP_obj(ID)%what=operation
      !
+     YAMBO_FREE(INTERP_obj(ID)%k)
      YAMBO_ALLOC(INTERP_obj(ID)%k,(k%nibz,3))
      INTERP_obj(ID)%k=k%pt
      !
+     YAMBO_FREE(INTERP_obj(ID)%weights)
      YAMBO_ALLOC(INTERP_obj(ID)%weights,(k%nibz))
      INTERP_obj(ID)%weights=k%weights
      !
+     YAMBO_FREE(INTERP_obj(ID)%SEED)
      YAMBO_ALLOC(INTERP_obj(ID)%SEED,(bands(1):bands(2),k%nibz,INTERP_obj(ID)%D))
      INTERP_obj(ID)%SEED=rZERO
      !

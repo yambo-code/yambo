@@ -46,6 +46,7 @@ AC_ARG_WITH(futile_libdir, AC_HELP_STRING([--with-futile-libdir=<path>],
 AC_ARG_WITH(futile_includedir, AC_HELP_STRING([--with-futile-includedir=<path>],
             [Path to the FUTILE include directory],[32]),[],[])
 
+def_yaml=""
 enable_yaml="no"
 compile_yaml="no"
 internal_yaml="no"
@@ -206,6 +207,11 @@ else
   AC_MSG_RESULT([no])
 fi
 #
+if test $enable_yaml = "yes" && test $enable_futile = "yes" ; then
+  def_yaml="-D_YAML_OUTPUT"
+fi
+#
+AC_SUBST(def_yaml)
 AC_SUBST(enable_yaml)
 AC_SUBST(compile_yaml)
 AC_SUBST(internal_yaml)

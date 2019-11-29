@@ -30,6 +30,11 @@ subroutine of_open_close(of_name,mode)
  use com,             ONLY:of_nc_pos,of_nc_var_names,of_nc_IDs
  use IO_m,            ONLY:io_control,io_connect,io_disconnect,OP_WR,WR_CL,NONE
 #endif
+#if defined _YAML_OUTPUT
+ use f_utils,         ONLY:f_get_free_unit
+ use com,             ONLY:of_yaml_pos,of_yaml_var_names,of_yaml_IDs
+ use yaml_output,     ONLY:yaml_set_stream,yaml_close_stream,yaml_stream_connected
+#endif
  !
  implicit none
  !
@@ -77,6 +82,10 @@ subroutine of_open_close(of_name,mode)
    !
    ! Find the first free unit
    !
+#if defined _YAML_OUTPUT
+   file_index=f_get_free_unit()
+   of_unit(file_index)=20+file_index
+#else
    do i2=1,max_open_ofs
      if (of_unit(i2)==0) then
        file_index=i2
@@ -84,12 +93,13 @@ subroutine of_open_close(of_name,mode)
        exit
      endif
    enddo
+#endif
    opened_of(file_index)=local_file_name
    !
    if (index(mode,'a')==0) open(of_unit(file_index),file=trim(opened_of(file_index)))
    if (index(mode,'a')/=0) open(of_unit(file_index),file=trim(opened_of(file_index)),position='append')
    if (index(mode,"t")>0) call write_the_logo(of_unit(file_index),'#')
-
+   !
    of_unit(file_index)=-of_unit(file_index)
    !
 #if defined _NC_OUTPUT
@@ -97,6 +107,10 @@ subroutine of_open_close(of_name,mode)
    io_out=io_connect(desc="output_"//trim(of_name),type=2, ID=of_nc_IDs(file_index))
    of_nc_var_names(file_index)=trim(of_name)
    of_nc_pos(:,file_index)=0
+#endif
+#if defined _YAML_OUTPUT
+   call yaml_set_stream(filename=trim(local_file_name)//".yaml")
+   call yaml_stream_connected(trim(local_file_name)//".yaml",of_yaml_IDs(file_index))
 #endif
    !
  else
@@ -110,6 +124,9 @@ subroutine of_open_close(of_name,mode)
 #if defined _NC_OUTPUT
        call io_control(ACTION=WR_CL,COM=NONE,SEC=(/1/),ID=of_nc_IDs(i2))
        call io_disconnect(ID=of_nc_IDs(i2)) 
+#endif
+#if defined _YAML_OUTPUT
+       call yaml_close_stream(unit=of_yaml_IDs(i2))
 #endif
        if (.not.any(of==of_name)) then
          do i3=1,nofs

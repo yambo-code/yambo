@@ -66,6 +66,11 @@ module com
  integer            :: of_nc_pos(4,max_open_ofs)
  character(schlen)  :: of_nc_var_names(max_open_ofs)
 #endif
+#if defined _YAML_OUTPUT
+ integer            :: of_yaml_IDs(max_open_ofs)
+ integer            :: of_yaml_pos(4,max_open_ofs)
+ character(schlen)  :: of_yaml_var_names(max_open_ofs)
+#endif
  logical            :: write_to_of
  logical            :: write_to_report
  !

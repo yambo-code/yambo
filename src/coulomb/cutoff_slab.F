@@ -27,7 +27,7 @@
  use pars,          ONLY:SP,pi,schlen
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:alat
- use R_lattice,     ONLY:bz_samp,g_vec,bare_qpg,q0_def_norm
+ use R_lattice, ONLY:bz_samp,g_vec,bare_qpg,q0_def_norm,k_grid_uc_vol,d3q_factor
  use com,           ONLY:error
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
@@ -40,7 +40,7 @@
  logical       :: is_cut(3)
  integer       :: ipar1,ipar2,iort
  integer       :: iq,ig
- real(SP)      :: slab_vz,slab_vplane,lcut,pre_factor
+ real(SP)      :: slab_vz,slab_vplane,lcut,pre_factor,R_sphere,q_weight
  type(PP_indexes) ::px
  !
  call PP_indexes_reset(px)
@@ -70,8 +70,6 @@
  !
  do ig=1,wf_ng
    do iq=1,q%nibz
-!marg: shall I put this px thing? 
-     if (.not.px%element_2D(iq,ig)) cycle
 ! kz
      slab_vz=(q%pt(iq,iort)+g_vec(ig,iort) )*2.*pi/alat(iort)
 ! kxy
@@ -82,16 +80,23 @@
      if (iq==1.and.ig==1) cycle
 ! all other
      pre_factor=sqrt(1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut))
+     if (abs(pre_factor)<1.E-5_SP) pre_factor=1.E-5_SP
      bare_qpg(iq,ig)=bare_qpg(iq,ig)/pre_factor
    enddo
  enddo
 !
 !MM: check this not sure is correct:
-!!pre_factor=2.0*pi*sqrt(lcut*k_grid_uc_vol)
+!pre_factor=2.0*pi*sqrt(lcut*k_grid_uc_vol)
 !DV: I do not understand the expression above.
 !Divergency V(q_xy=0)=zc/q_xy to be treated separately when calculateing W(q=0)
- pre_factor=sqrt(lcut/q0_def_norm)
-!commentented for the moment
-! bare_qpg(1,1)=1.0/pre_factor
+! Just for TESTING  PURPOSE Vcut oculd be regolarized in a small equivalen sphere
+! 
+! \int_q (region) Vcut /(2*pi)**3 = 4piR+4pi/lcut(exp(-lcut*R)-1) 
+! CHeck prefactors.
+ R_sphere=(3._SP/4._SP/pi)**(1._SP/3._SP)*d3q_factor**(1._SP/3._SP)
+ q_weight=d3q_factor/(2._SP*pi)**3
+ pre_factor=4._SP*pi*R_sphere+4_SP*pi*(exp(-(lcut*R_sphere))-1)/lcut
+ pre_factor=pre_factor/d3q_factor
+ bare_qpg(1,1)=1._SP/sqrt(pre_factor)
 !
 end subroutine

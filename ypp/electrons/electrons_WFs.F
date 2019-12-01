@@ -37,6 +37,7 @@ subroutine electrons_WFs(Xen)
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
 #if defined _YPP_ELPH
+ use interfaces,     ONLY:WF_apply_symm
  use YPP_ELPH,       ONLY:elph_residual_treshold
  use pars,           ONLY:cZERO
  use ELPH,           ONLY:elph_Ham_bands

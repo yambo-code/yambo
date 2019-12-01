@@ -23,20 +23,20 @@
 !
 subroutine MEM_manager_alloc(what,Sz,Kn)
  !
- use pars,         ONLY:schlen,DP
+ use pars,         ONLY:schlen,DP,IPL
  use com,          ONLY:warning,secnm,error
  use units,        ONLY:Kilobyte
  use openmp,       ONLY:master_thread
  use memory,       ONLY:TOT_MEM_Kb,MEM_element_copy,&
 &                       MEM_err,N_MEM_elements,LARGE_MEMs,N_MEM_SAVE_max,&
-&                       N_MEM_SAVE_elements,N_MEM_SAVE_max,MEM_LIBs,&
+&                       N_MEM_SAVE_elements,N_MEM_SAVE_max,&
 &                       MEM_SAVE_treshold,MAX_MEM_Kb,MEMs,&
 &                       N_MEM_max_element_components
  !
  implicit none
  !
  character(*), intent(in) :: what
- integer(8),   intent(in) :: Sz
+ integer(IPL), intent(in) :: Sz
  integer,      intent(in) :: Kn
  ! 
  ! Defined in the init
@@ -48,7 +48,7 @@ subroutine MEM_manager_alloc(what,Sz,Kn)
  ! Work
  !
  real(DP):: LARGE_wk
- integer :: i_mem,i_el,MEM_now_Kb
+ integer :: MEM_now_Kb
  !
  if (.not.master_thread) return
  !
@@ -127,14 +127,15 @@ subroutine MEM_manager_alloc(what,Sz,Kn)
  !
  if(.not.just_started) call MEM_manager_messages(what,.true.,MEM_now_Kb)
  !
+#else
+ if (MEM_err/=0) call error("Allocation of "//what//" failed")
 #endif
  !
 end subroutine MEM_manager_alloc
 !
-!
 subroutine MEM_manager_free(what,Sz)
  !
- use pars,         ONLY:schlen,DP
+ use pars,         ONLY:schlen,DP,IPL
  use units,        ONLY:Kilobyte
  use com,          ONLY:warning
  use openmp,       ONLY:master_thread
@@ -143,7 +144,7 @@ subroutine MEM_manager_free(what,Sz)
  implicit none
  !
  character(*), intent(in) :: what
- integer(8),   intent(in) :: Sz
+ integer(IPL), intent(in) :: Sz
  ! 
  ! Defined in the init
  !
@@ -206,7 +207,6 @@ subroutine MEM_manager_free(what,Sz)
  !
 end subroutine MEM_manager_free
 !
-!
 subroutine MEM_manager_error(what)
  !
  use com,          ONLY:error
@@ -222,21 +222,20 @@ subroutine MEM_manager_error(what)
  !
 end subroutine MEM_manager_error
 !
-!
 subroutine MEM_manager_init(what,adding,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUNK,just_started)
  !
- use pars,         ONLY:schlen
+ use pars,         ONLY:schlen,IPL
  use drivers,      ONLY:infile_editing
  use com,          ONLY:repfile,secnm
  use LIVE_t,       ONLY:what_is_running
- use memory,       ONLY:MEM_treshold,MEM_shelf,MEM_jump_treshold,MEM_libs,MEMs,&
+ use memory,       ONLY:MEM_treshold,MEM_shelf,MEM_jump_treshold,MEM_LIBs,MEMs,&
 &                       MEM_SAVE_treshold
  !
  implicit none
  !
  character(*),     intent(in)  :: what
  logical,          intent(in)  :: adding
- integer(8),       intent(in)  :: Sz
+ integer(IPL),     intent(in)  :: Sz
  integer,          intent(out) :: i_SHELF,i_COMPONENT,i_SAVE
  character(schlen),intent(out) :: SHELF,TRUNK
  logical,          intent(out) :: just_started
@@ -254,7 +253,7 @@ subroutine MEM_manager_init(what,adding,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUN
 #if defined _MEM_CHECK
  !
  just_started=infile_editing
- if (index(what_is_running,"YPP")==0.and.len_trim(repfile)==0) just_started=.TRUE.
+ if (index(what_is_running,"ypp")==0.and.len_trim(repfile)==0) just_started=.TRUE.
  !
  ! Search the element
  !====================
@@ -283,7 +282,6 @@ subroutine MEM_manager_init(what,adding,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUN
 #endif
  !
 end subroutine MEM_manager_init
-!
 !
 subroutine MEM_manager_messages(what,adding,MEM_now_Kb)
  !

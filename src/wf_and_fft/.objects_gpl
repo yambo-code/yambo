@@ -15,7 +15,17 @@ FFT_object = fft_3d_fftw.o
 #if defined _FFTSG
 FFT_object = fft_3d_sg.o sgfft.o 
 #endif
-objs = fft_setup.o fft_free.o $(FFT_object) $(FFT_more) \
+
+
+
+
+
+
+
+#if defined _CUDA
+FFT_cuda = fft_3d_cuda.o
+#endif
+objs = fft_setup.o fft_free.o $(FFT_object) $(FFT_more) $(FFT_cuda) \
        fft_check_size.o WF_free.o WF_alloc.o WF_shift_kpoint.o WF_symm_kpoint.o  \
        scatter_Bamp.o scatter_Gamp.o WF_spatial_inversion.o \
        WF_load.o WF_symm.o WF_apply_symm.o \

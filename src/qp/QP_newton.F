@@ -79,7 +79,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    if (l_elel_corr) then
      if (l_ppa.or.l_cohsex) then
        !
-       call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
+       !call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter) ! Dario: changing to MPA
+       call QP_mpa(X,Xk,en,k,q,qp,Xw,iter) 
        !
      else 
        !

@@ -11,7 +11,7 @@ QED_objects =
 #if defined _QED
 QED_objects = QED_Radiative_Lifetimes.o QED_Sigma_c.o 
 #endif
-objs = QP_driver.o QP_newton.o QP_ppa_cohsex.o QP_ppa_EET_terminator.o \
+objs = QP_driver.o QP_newton.o QP_mpa.o QP_ppa_cohsex.o QP_ppa_EET_terminator.o \
        QP_secant_driver.o QP_real_axis.o QP_W2Sc.o QP_life_transitions.o QP_secant.o QP_bracket.o \
        $(ELPH_objects) \
        QP_expand.o QP_descriptions.o QP_report_and_write.o  \

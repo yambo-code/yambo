@@ -28,11 +28,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use pars,          ONLY:SP,pi,schlen,cZERO,cI
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
- use frequency,     ONLY:w_samp
+ use frequency,     ONLY:w_samp ! Dario: I have to import the file from my repository 
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error
- use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run
+ use drivers,       ONLY:l_ppa,l_sc_run
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_IND_Q_ID,PAR_IND_QP_ID,&
 &                        PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu
@@ -41,8 +41,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
 &                        io_RESPONSE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
-&                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
-&                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind
+&                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
@@ -50,7 +49,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
 &                        PARALLEL_WF_distribute,QP_state_extract_print
- use matrix_operate,ONLY:mat_transpose
+ use matrix_operate,ONLY:mat_transpose,mat_transpose_r
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
@@ -64,17 +63,21 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Work Space
  !
- integer                  ::i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
-&                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,timing_steps
- complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
- type(elemental_collision)::isc,iscp
- character(schlen)::ch,SECTION_name
- logical          ::X_is_TR_rotated,l_X_alloc
- real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
- complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,sp_dummy,ctmp
+ integer                  :: i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
+&                            i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,timing_steps,  cond_g, cond_b
+ complex(SP), allocatable :: W_(:),dc(:),eet_factor(:,:)
+ type(elemental_collision):: isc,iscp
+ character(schlen):: ch,SECTION_name
+ logical          :: X_is_TR_rotated,l_X_alloc
+ real(SP)         :: eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
+ complex(SP)      :: MPA_Q,MPA_R,PPA_R,local_rhotw(X%ng),pre_factor,sp_dummy,ctmp
+ !complex(SP), allocatable :: MPA_E_mat(:,:)
+ complex(SP), allocatable :: MPA_R_mat(:,:)
+ real(SP),    allocatable :: MPA_E_mat(:,:)
  !
  integer, external::io_X,QP_state_extract
  !
+ cond_g= 0; cond_b= 0;
  ! Reset & checks
  !
  call elemental_collision_free(isc)
@@ -97,7 +100,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (GW_iter==0) then
    call msg('r', '[  GW  ] Bands range     :',QP_n_G_bands)
    if (l_ppa) then
-     call msg('r', '[GW/PPA] G damping   [ev]:',QP_G_damp*HA2EV)
+     call msg('r', '[GW/MPA] G damping   [ev]:',QP_G_damp*HA2EV)
      call msg('r','')
    endif
    ch=trim(SECTION_name)
@@ -148,7 +151,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=io_X(X,Xw,ID)
- if (io_err<0.and.io_RESPONSE) call error('Incomplete and/or broken PPA/Static diel. fun. database')
+ if (io_err<0.and.io_RESPONSE) call error('Incomplete and/or broken MPA/Static diel. fun. database')
  !
  ! Test the spatial Inversion
  !   
@@ -157,17 +160,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! ALLOCATION
  !------------
  !
- if (l_sc_coh.or.l_sc_sex.or.l_cohsex.or.l_sc_srpa) then
-   if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,1/))
-   allocate(dc(2))
- else
-   if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,2/))
-   allocate(W_(QP_dSc_steps))
-   allocate(dc(QP_dSc_steps),stat=alloc_err)
-   if(l_GW_terminator) then
-     YAMBO_ALLOC(eet_factor,(X%ng,X%ng))
-   endif
- endif
+ if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,2/))
+ allocate(W_(QP_dSc_steps))
+ allocate(dc(QP_dSc_steps),stat=alloc_err)
+ YAMBO_ALLOC(MPA_E_mat,(X%ng,X%ng))
+ YAMBO_ALLOC(MPA_R_mat,(X%ng,X%ng))
  !
  call PP_redux_wait
  !
@@ -218,12 +215,22 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      do ig2=1,X%ng
        do ig1=1,X%ng
            if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
-             X_mat(ig1,ig2,X_range(2))=X%ppaE
+             !X_mat(ig1,ig2,X_range(2))=X%ppaE
+             MPA_E_mat(ig1,ig2)=1._SP
+             MPA_R_mat(ig1,ig2)=-X_mat(ig1,ig2,X_range(1))/2._SP*MPA_E_mat(ig1,ig2)*isc%gamp(ig1,ig2)
+             cond_b = cond_b + 1
            else
-             X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
+             !X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
+             MPA_R_mat(ig1,ig2)=-(X_mat(ig1,ig2,X_range(1))*0._SP  -  X_mat(ig1,ig2,X_range(2))*(X%ppaE)**2 )/ &
+&                                (X_mat(ig1,ig2,X_range(1)) - X_mat(ig1,ig2,X_range(2)))  
+             MPA_E_mat(ig1,ig2)=real(sqrt(MPA_R_mat(ig1,ig2)))  
+             MPA_R_mat(ig1,ig2)=-X_mat(ig1,ig2,X_range(1))/2._SP*MPA_E_mat(ig1,ig2)*isc%gamp(ig1,ig2)
+             cond_g = cond_g + 1
            endif
        enddo
      enddo
+     call msg('r','Dario: PPA condition good ', cond_g)
+     call msg('r','Dario: PPA condition bad ', cond_b )
      !$omp end parallel do
      !
      X_is_TR_rotated=.false.
@@ -243,8 +250,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Note (AF) that $omp directives are inside mat_transpose
      !
-     call mat_transpose(X_mat(:,:,X_range(1)))
-     if (l_ppa) call mat_transpose(X_mat(:,:,X_range(2)))
+     !call mat_transpose(X_mat(:,:,X_range(1)))
+     call mat_transpose_r(MPA_E_mat)
+     call mat_transpose(MPA_R_mat)
+     !if (l_ppa) call mat_transpose(X_mat(:,:,X_range(2)))
      X_is_TR_rotated=.true.
    endif
    !
@@ -257,13 +266,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if (i_qp==QP_n_states) i_qp_to_start=1
      !
-!#if defined _SC  
-!     !
-!     ! In OEP only vc matrix elements so ... no cc' no vv' 
-!     ! (cv is not permitted by the order in QP_table)
-!     !                       (c)         (v)
-!     if (l_sc_srpa.and.(QP_table(i_qp,1)>E%nbf.or.QP_table(i_qp,2)<=E%nbf)) cycle
-!#endif
      !
      isc%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
      isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),spin(QP_table(i_qp,:))/)
@@ -291,7 +293,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        dc=cZERO
        !
-       if (l_ppa) then
+       !if (l_ppa) then
          !
          forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E_bare(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
          !
@@ -305,13 +307,17 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
 !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:sp_dummy)
            do ig2=1,X%ng
              do ig1=1,X%ng
+!               !
+!               PPA_E= real(X%ppaE/X_mat(ig1,ig2,X_range(2)))
+!               PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
+!               !
+!               ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
+!&                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
+!&                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i_w))-E_kmq+PPA_E))
                !
-               PPA_E= real(X%ppaE/X_mat(ig1,ig2,X_range(2)))
-               PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
-               !
-               ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
-&                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
-&                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i_w))-E_kmq+PPA_E))
+               ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-MPA_R_mat(ig1,ig2))*&
+&                     ( (spin_occ-f_kmq+bose_f(MPA_E_mat(ig1,ig2)))/(W_(i_w)-E_kmq-MPA_E_mat(ig1,ig2))+&
+&                       (f_kmq+bose_f(MPA_E_mat(ig1,ig2)))/(conjg(W_(i_w))-E_kmq+MPA_E_mat(ig1,ig2)))
                !
                sp_dummy=sp_dummy+ctmp
                !
@@ -337,9 +343,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! CLEAN
  !
  deallocate(dc)
- if(l_ppa) then
+ !if(l_ppa) then
    deallocate(W_)
- endif
+ !endif
  l_X_alloc=.true.
  if(l_X_alloc) call X_alloc('X')
  !
@@ -356,4 +362,4 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  call PP_redux_wait(QP_Sc)
  call timing('GW(REDUX)',OPR='stop')
  !
-end subroutine
+end subroutine QP_mpa

@@ -112,7 +112,12 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      !
    endif
    !
+   ! workaround for possible compiler bug
+#ifdef _PGI
+   if (iq>1.and.size(PAR_IND_Q%n_of_elements)>1) then
+#else
    if (iq>1) then
+#endif
      if (.not.PAR_IND_Q%element_1D(iq)) cycle
    endif
    !

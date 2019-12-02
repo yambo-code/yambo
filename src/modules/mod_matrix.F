@@ -26,7 +26,8 @@ module matrix
  use pars,       ONLY:schlen,SP
  use parallel_m, ONLY:MPI_comm
  !
- implicit none
+#include<dev_defs.h>
+#include<memory.h>
  !
  ! Distributed Matrix structure
  !
@@ -47,8 +48,7 @@ module matrix
    !
    character(3) :: kind = "NAN" ! "PAR" "SLK" "XUP" "XDN" "SER"
    !
-   ! Dimensions
-   !
+   ! Dimensions !
    integer :: I          = 1  ! Block element
    integer :: N          = -1 ! Global dimension (Parent Matrix)
    integer :: rows(2)    = 0  ! Real
@@ -77,7 +77,8 @@ module matrix
    !
    integer :: Nb         = 1  ! # of Blocks
    !
-   complex(SP), allocatable :: blc(:,:,:)
+   complex(SP), allocatable DEV_PINNED    :: blc(:,:,:)         ! pinned host var if CUDA
+   complex(SP), allocatable DEV_ATTRIBUTE :: blc_d(:,:,:)       ! device var if CUDA
    !
  end type PAR_matrix 
  !
@@ -110,6 +111,11 @@ module matrix
      !
      call COMM_reset(M_par%INTER_comm)
      call COMM_reset(M_par%INTRA_comm)
+     !
+     YAMBO_FREE(M_par%blc)
+#ifdef _CUDA
+     YAMBO_FREE(M_par%blc_d)
+#endif
      !
    end subroutine
  !

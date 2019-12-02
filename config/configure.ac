@@ -49,6 +49,7 @@ m4_include([config/acx_get_fc_kind.m4])
 m4_include([config/acx_get_mpi_kind.m4])
 m4_include([config/acx_fortran_flags.m4])
 m4_include([config/acx_mpi.m4])
+m4_include([config/cuda.m4])
 m4_include([config/acx_branch.m4])
 # 
 #  Report
@@ -268,6 +269,9 @@ AC_HAVE_ETSF_IO
 # ============================================================================
 # LIBXC
 ACX_LIBXC
+# ============================================================================
+# CUDA
+AC_HAVE_CUDA
 # ============================================================================
 # Prepare the REPORT file variables
 ACX_REPORT()

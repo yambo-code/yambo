@@ -28,6 +28,7 @@ module YPPm
  use units,     ONLY:HA2EV
  use QP_m,      ONLY:QP_t
  use electrons, ONLY:levels
+ use X_m,       ONLY:X_t
  !
  implicit none
  !
@@ -108,6 +109,7 @@ module YPPm
  logical      ::l_density
  logical      ::l_bands
  logical      ::l_mag
+ logical      ::l_interp
  logical      ::l_current
  logical      ::l_sp_wf
  logical      ::l_exc_wf
@@ -249,6 +251,16 @@ module YPPm
  ! Convert wave--functions
  !
  logical     :: l_fix_save
+ !
+ ! BSE data
+ !
+ complex(SP), allocatable ::BS_R_left(:)
+ complex(SP), allocatable ::BS_R_right(:)
+ complex(SP), allocatable ::BS_E(:)
+ real(SP),    pointer     ::BS_E_SOC_corr(:,:) => null()
+ real(SP),    pointer     ::BS_R_PL(:,:)       => null()
+ complex(SP), pointer     ::BS_R_kerr(:)       => null()
+ type(X_t)         ::Xbsk 
  !
  interface
    !

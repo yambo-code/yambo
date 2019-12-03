@@ -54,10 +54,12 @@ subroutine col_driver(bare_NG,q)
  use D_lattice,     ONLY:DL_vol
  use R_lattice,     ONLY:d3q_factor,RIM_is_diagonal,RIM_qpg,bare_qpg,&
 &                        nqibz,g_vec,q_pt,nqbz,RIM_ng,RIM_n_rand_pts,&
-&                        bz_samp,q_norm,cutoff_presets
+&                        bz_samp,q_norm,cutoff_presets, &
+&                        bare_qpg_d
  use wave_func,     ONLY:wf_ng
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
 #include<memory.h>
+ !
  integer       :: bare_NG
  type(bz_samp) :: q
  !
@@ -145,9 +147,27 @@ subroutine col_driver(bare_NG,q)
  !
  if (.not.l_col_cut) then
    call cutoff_presets()
+#ifdef _CUDA
+   YAMBO_FREE(bare_qpg_d)
+   if (size(bare_qpg)>0) then
+     YAMBO_ALLOC(bare_qpg_d,(size(bare_qpg,2),size(bare_qpg,1)))
+     bare_qpg_d=transpose(bare_qpg)
+   endif
+#endif
    return
  endif
  !
  call cutoff_driver(q)
+ !
+ ! copy again,
+ ! bare_qpg is modified by cutff_driver
+ !
+#ifdef _CUDA
+ YAMBO_FREE(bare_qpg_d)
+ if (size(bare_qpg)>0) then
+   YAMBO_ALLOC(bare_qpg_d,(size(bare_qpg,2),size(bare_qpg,1)))
+   bare_qpg_d=transpose(bare_qpg)
+ endif
+#endif
  !
 end subroutine

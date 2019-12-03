@@ -122,14 +122,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (iq==1) then
    call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err,'K')
-   !call DIPOLE_expand_and_project(Xk,Dip)
  else
    call WF_load(WF,1,maxval(qindx_X(:,:,2)),BS_bands,(/1,Xk%nibz/),title='-Oscillators/R space')
    call elemental_collision_free(BSE_scatt)
    call elemental_collision_alloc(BSE_scatt,NG=1,TITLE="BSE") 
-   ! Alternative form presently not working since uGo shift of the WFs is missing
-   !call DIPOLE_real_space_finiteq(Xen,Xk,Dip,iq)
-   !call DIPOLE_gspace_finiteq(Ken,Xk,Dip,iq)
  endif
  !
  BSS_Vnl_included=Dip%Vnl_included

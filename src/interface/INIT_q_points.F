@@ -72,6 +72,8 @@ subroutine INIT_q_points( )
  !
  ! Now check the input file
  !
+ l_write_the_q_field=.FALSE.
+ !
  if (nqibz==0) then
    call PARSER_array(mode="REAL dimensions",VAR="QptCoord",N=nq_input,M=3)
    if (nq_input==0.and.infile_editing) then

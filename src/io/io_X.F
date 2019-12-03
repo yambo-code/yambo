@@ -124,6 +124,7 @@ integer function io_X(X,Xw,ID)
    call io_bulk(ID,R2=RL_vecs_disk)
    !
    if (io_serial_number(ID)/=serial_number.and.read_is_on(ID).and.allocated(g_vec)) then
+     YAMBO_FREE(X_RLcomp_ig)
      YAMBO_ALLOC(X_RLcomp_ig,(X%ng))
      i_err = X_RLcomp_table() 
      if ( i_err < 0 ) io_status(ID) = IO_INCOMPATIBLE_VAR

@@ -31,8 +31,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use QP_CTL_m,      ONLY:QP_apply
  use electrons,     ONLY:levels,n_spin,n_sp_pol,spin,E_SOC_nbands
  use YPP_interfaces,ONLY:excitons_sort_and_report
- use YPPm,          ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,EXCITONS_user_indexes,BSiq
- use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
+ use YPPm,          ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,EXCITONS_user_indexes,BSiq, &
+&                        BS_R_left,BS_R_right,BS_E,BS_E_SOC_corr,BS_R_PL,BS_R_kerr,Xbsk
  use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
  use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_K_coupling,BS_cpl_mode,&
 &                        BS_cpl_K_exchange,BS_cpl_K_corr,BSqpts
@@ -58,57 +58,14 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  integer           ::io_err,io_ID,i_sec
  integer, external ::io_BS,io_E_SOC_map
- type(X_t)         ::Xbsk
- !
- !... Energies and Residulas
- !
- complex(SP), allocatable ::BS_R_left(:)
- complex(SP), allocatable ::BS_R_right(:)
- complex(SP), allocatable ::BS_E(:)
- !
- real(SP),    pointer     ::BS_E_SOC_corr(:,:) => null()
- real(SP),    pointer     ::BS_R_PL(:,:)       => null()
- complex(SP), pointer     ::BS_R_kerr(:)       => null()
  !
  integer                  ::iq,neh
  !
  call section('*','Excitonic Properties @ Q-index #'//trim(intc(BSiq)))
  !
- ! GPL_EXCLUDE_START
- !
- ! E SOC perturbative
- ! 
- if(n_spin==1) then
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
-   io_err=io_E_SOC_map(en,k,io_ID)
- endif
- !
- ! GPL_EXCLUDE_END
- !
  iq = BSiq
- YAMBO_ALLOC(BSqpts,(3,iq))
  !
- ! X type. Also used in PARALLEL setup
- !
- Xbsk%whoami=2
- !
- ! Here I read information from the BSS_diago database
- !
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_BSS_diago(iq,io_ID,Xbsk)
- !
- if (io_err/=0) call error(' ndb.BS_diago not found')
- !
- ! Apply quasi-particle correction if presents
- ! 
- call QP_apply(BS_bands,Xen,Xk,'G',msg_fmt='s')
- !
- if (BS_cpl_K_exchange)                   BS_cpl_mode='x'
- if (BS_cpl_K_corr)                       BS_cpl_mode='c'
- if (BS_cpl_K_exchange.and.BS_cpl_K_corr) BS_cpl_mode='xc'
- !
- BS_H_dim=BS_K_dim
- if (BS_K_coupling) BS_H_dim=2*BS_K_dim
+ call excitons_read(k,Xk,en,Xen,BSiq,"check")
  !
  l_flag=l_sort .or. l_exc_wf .or.l_amplitude .or. l_spin
 #if defined _YPP_ELPH
@@ -120,21 +77,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  if(.not.l_flag) return
  !
- ! Allocation of energies and residuals, then also eigenvector
- !
- YAMBO_ALLOC(BS_R_right,(BSS_n_eig))
- YAMBO_ALLOC(BS_R_left,(BSS_n_eig))
- YAMBO_ALLOC(BS_E,(BSS_n_eig))
- if(E_SOC_nbands/=0) then
-   YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
- endif
- !
- !
- do i_sec=1,2
-   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
-   if (io_err/=0) call error(' ndb.BSS_diago, SEC '//trim(intc(i_sec))//', not compatible with ypp input')
- enddo
+ call excitons_read(k,Xk,en,Xen,BSiq,"eigenvalues")
  !
  ! Sort energies and write to output
  !===================================
@@ -147,41 +90,9 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Define the USER set of excitonic states
  !=========================================
- call get_user_excitonic_states( )
+ if(.not.l_sort) call get_user_excitonic_states( )
  !
- if(.not.l_sort) then
-   !
-   if(.not.BSS_write_eig_2_db) &
-&    call error(' Diagonalization database does not contain excitonic eigenstates.'//&
-&               ' Re-run yambo using the WRbsWF flag in the input file.')
-   !
-   ! Adjust the user provided indexes to the average ones.
-   !
-   ! Loading tables and eigenvectors
-   !
-   YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,3+n_sp_pol-1))
-   YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
-   !
-   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
-   if (io_err/=0) call error(' ndb.BSS_diago, SEC 3, not compatible with ypp input')
-   !
-   ! Create the anti-resonant part of the eh_table
-   !
-   if (BS_K_coupling) then
-     do neh=BS_K_dim+1,BS_H_dim
-       !
-       BSS_eh_table(neh,:)=BSS_eh_table(neh-BS_K_dim,:)
-       !
-       ! invert conduction <-> valence order
-       !
-       BSS_eh_table(neh,2)=BSS_eh_table(neh-BS_K_dim,3)
-       BSS_eh_table(neh,3)=BSS_eh_table(neh-BS_K_dim,2)
-       !
-     enddo
-   endif
-   !
- endif
+ if(.not.l_sort) call excitons_read(k,Xk,en,Xen,BSiq,"eigenvectors")
  ! 
  ! Exciton's spin
  !=====================
@@ -218,20 +129,11 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  !GPL_EXCLUDE_END
  !
- !
  ! CLEAN
  !
- YAMBO_FREE(BS_R_left)
- YAMBO_FREE(BS_R_right)
- YAMBO_FREE(BS_E)
+ call excitons_read(k,Xk,en,Xen,BSiq,"clean")
+ !
  YAMBO_FREE(EXCITONS_user_indexes)
- if(.not.l_sort) then
-   YAMBO_FREE(BSS_eh_table)
-   YAMBO_FREE(BS_mat)
- endif
- if(associated(BS_E_SOC_corr)) then
-   YAMBO_FREE_P(BS_E_SOC_corr)
- endif
  !
  contains
    !

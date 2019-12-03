@@ -316,10 +316,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  if (allocated(FXC)) then
    YAMBO_FREE(FXC)
  endif
- call DIP_alloc('DIP_projected')
-#if defined _PL
- if (l_photolum) call DIP_alloc('DIP_P')
-#endif
+ call DIP_alloc('DIP_iR')
+ call DIP_alloc('DIP_P')
+ call DIP_alloc('DIP_v')
  if (.not.SILENT_MODE.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
 end function

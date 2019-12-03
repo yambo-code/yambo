@@ -35,18 +35,21 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
 #ifdef _CUDA
  use X_m,           ONLY:rhotw_save_d,rhotw_save2_d
 #endif
- use DIPOLES,       ONLY:DIPOLE_t,DIP_projected
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_rotated
  use X_m,           ONLY:X_t,X_poles_tab,l_X_terminator,X_cols,X_rows
  use parallel_m,    ONLY:PAR_Xk_bz_index
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N,coarse_grid_pt
  use collision_el,  ONLY:elemental_collision
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
- use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G
+ use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G,q0_def_norm
 #ifdef _CUDA
  use R_lattice,     ONLY:g_rot_d,G_m_G_d
 #endif
+ use vec_operate,   ONLY:v_norm
+ use collision_el,  ONLY:elemental_collision
  use deviceXlib_m
+ !
 #include<dev_defs.h>
  !
  implicit none
@@ -77,14 +80,20 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  real(SP)           :: Z_eh_occ
  logical            :: l_X_term_vv
  integer            :: ngrho
- integer            :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
+ integer            :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,&
 &                      isp,iv,ic,isave(4),n_poles,n_drude_poles,i_bg,ig_start,ROWS(2)
  !
- isave       = 0
- n_poles     = sum(bare_grid_N(1:i_cg-1))
+ ! DIPOLES
+ !
+ complex(SP)        :: DIP_projected,field_dir(3)
+ !
+ field_dir=Dip%q0/v_norm(Dip%q0)*q0_def_norm
+ !
+ isave         = 0
+ n_poles       = sum(bare_grid_N(1:i_cg-1))
  n_drude_poles = 0
- Xo_res(:,:) = cZERO
- Z_          = cONE
+ Xo_res        = cZERO
+ Z_            = cONE
  !
  ngrho     = Xo_scatt%ngrho
  !
@@ -145,7 +154,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      Xo_scatt%is = (/ic,ik,1,i_spin/)
      Xo_scatt%os = (/iv,ik,1,i_spin/)
      Xo_scatt%qs = (/1,1,1/)
-     ik_bz_mem   = PAR_Xk_bz_index(ikbz)
      if (.not. X%ng==1) then
        if ( any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/)) ) then
          !
@@ -181,9 +189,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      endif
      !
      ! iG=1 case
-     ik_bz_mem=PAR_Xk_bz_index(ikbz)
-     if(iv/=ic) DEV_VARNAME(Xo_scatt%rhotw)(1)=    -conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
-     if(iv==ic) DEV_VARNAME(Xo_scatt%rhotw)(1)=cONE-conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
+     DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ikbz,i_spin,"DIP_iR",Xk))
+     if(iv/=ic) DEV_VARNAME(Xo_scatt%rhotw)(1)=    -conjg(DIP_projected)
+     if(iv==ic) DEV_VARNAME(Xo_scatt%rhotw)(1)=cONE-conjg(DIP_projected)
      !
      if (l_X_term_vv.and.iv==ic) DEV_VARNAME(Xo_scatt%rhotw)(1)=0.0_SP
      !

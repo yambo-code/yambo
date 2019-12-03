@@ -162,7 +162,6 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  YAMBO_FREE(rhotw_sum)
  YAMBO_FREE(rhotw_sum_TR)
  YAMBO_FREE(rho_tw_rs)
- call DIP_alloc('DIP_projected')
  !
  ! Add c.c. contribution
  !

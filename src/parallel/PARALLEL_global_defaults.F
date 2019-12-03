@@ -26,7 +26,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used,&
 &                        ncpu,CPU_structure,i_PAR_structure,PARALLEL_ENV_uses_default,PARALLEL_CPU_role
  use interfaces,    ONLY:PARALLEL_live_message
- use com,           ONLY:error
+ use com,           ONLY:error,msg
  use stderr,        ONLY:intc
  !
  implicit none
@@ -35,11 +35,26 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
  ! Work Space
  ! 
- integer :: i_p,NC,BASIS
+ integer :: i_p,NC,BASIS,n_par_diago
  !
  ! Is there anything to do?
  !
  if (ncpu==1) return
+ !
+ ! Set default for INVERSION/DIAGONALIZATION
+ ! Default equal to maxval(ncpu/4, 16)
+ !
+ n_par_diago=minval((/ncpu/4,16/))  
+ if(n_par_diago==0) n_par_diago=1         
+ if(CPU_structure(i_PAR_structure)%nCPU_lin_algebra_INV==-1)  then
+   CPU_structure(i_PAR_structure)%nCPU_lin_algebra_INV  =n_par_diago
+   call msg('sr','[PARALLEL] Using '//intc(n_par_diago)//' cores for matrix inversion ')
+ endif
+ if(CPU_structure(i_PAR_structure)%nCPU_lin_algebra_DIAGO==-1)  then
+   CPU_structure(i_PAR_structure)%nCPU_lin_algebra_DIAGO=n_par_diago
+   call msg('sr','[PARALLEL] Using '//intc(n_par_diago)//' cores for matrix diagonalization ')
+ endif
+ !
  if (.not.PARALLEL_ENV_uses_default(i_PAR_structure).and.&
 &    product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))==ncpu) return
  !

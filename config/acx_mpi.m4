@@ -31,7 +31,13 @@ acx_mpi_ok=no
 AC_LANG_CASE([C], [
         AC_REQUIRE([AC_PROG_CC])
         AC_ARG_VAR(MPICC,[Parallel C compiler command])
-        AC_CHECK_PROGS(MPICC_test,$MPICC mpiicc mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)
+        if test x"$MPICC" = "x" ; then
+          AC_CHECK_PROGS(MPICC_test,$MPICC mpiicc mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)
+        else
+          AC_CHECK_FILES($MPICC,
+                         [MPICC_test=$MPICC],
+                         [AC_CHECK_PROGS(MPICC_test,$MPICC mpiicc mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)])
+        fi
         MPICC=$MPICC_test
         CC=$MPICC_test
 ],
@@ -45,14 +51,30 @@ AC_LANG_CASE([C], [
 [Fortran 77], [
         AC_REQUIRE([AC_PROG_F77])
         AC_ARG_VAR(MPIF77,[Parallel Fortran 77 compiler command])
-        AC_CHECK_PROGS(MPIF77_test,$MPIF77 $MPIFC mpiifort mpifort mpif77 hf77 mpxlf mpf77 mpif90 mpf90 mpxlf90 mpxlf95 mpxlf_r cmpifc cmpif90c, $F77)
+        if ! test x"$MPIF77" = "x" ; then
+          AC_CHECK_FILE($MPIF77,
+                         [MPIF77_test=$MPIF77],
+                         [AC_CHECK_PROGS(MPIF77_test,$MPIF77 $MPIFC mpiifort mpifort mpif77 hf77 mpxlf mpf77 mpif90 mpf90 mpxlf90 mpxlf95 mpxlf_r cmpifc cmpif90c, $F77)])
+        elif ! test x"$MPIFC" = "x" ; then
+          AC_CHECK_FILE($MPIFC,
+                         [MPIF77_test=$MPIFC],
+                         [AC_CHECK_PROGS(MPIF77_test,$MPIF77 $MPIFC mpiifort mpifort mpif77 hf77 mpxlf mpf77 mpif90 mpf90 mpxlf90 mpxlf95 mpxlf_r cmpifc cmpif90c, $F77)])
+        else
+          AC_CHECK_PROGS(MPIF77_test,$MPIF77 $MPIFC mpiifort mpifort mpif77 hf77 mpxlf mpf77 mpif90 mpf90 mpxlf90 mpxlf95 mpxlf_r cmpifc cmpif90c, $F77)
+        fi
         MPIF77=$MPIF77_test
         F77=$MPIF77_test
 ],
 [Fortran], [
         AC_REQUIRE([AC_PROG_FC])
         AC_ARG_VAR(MPIFC,[Parallel Fortran compiler command])
-        AC_CHECK_PROGS(MPIFC_test,$MPIFC mpiifort mpifort mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)
+        if test x"$MPIFC" = "x" ; then
+          AC_CHECK_PROGS(MPIFC_test,$MPIFC mpiifort mpifort mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)
+        else
+          AC_CHECK_FILE($MPIFC,
+                        [MPIFC_test=$MPIFC],
+                        [AC_CHECK_PROGS(MPIFC_test,$MPIFC mpiifort mpifort mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)])
+        fi
         MPIFC=$MPIFC_test
         FC=$MPIFC_test
 ])

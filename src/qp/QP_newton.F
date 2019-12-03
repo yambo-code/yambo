@@ -77,10 +77,14 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    ! GPL_EXCLUDE_END
    !
    if (l_elel_corr) then
-     if (l_ppa.or.l_cohsex) then
+     if (l_ppa) then
        !
-       !call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter) ! Dario: changing to MPA
+       !call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
        call QP_mpa(X,Xk,en,k,q,qp,Xw,iter) 
+       !
+     else if (l_cohsex) then
+       !
+       call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
        !
      else 
        !

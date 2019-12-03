@@ -25,7 +25,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Multi-pole approximation to the Correlation Self-Energy
  !
- use pars,          ONLY:SP,pi,schlen,cZERO,cI
+ use pars,          ONLY:SP,DP,pi,schlen,cZERO,cI
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp ! Dario: I have to import the file from my repository 
@@ -64,20 +64,22 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Work Space
  !
  integer                  :: i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
-&                            i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,timing_steps,  cond_g, cond_b
+&                            i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,timing_steps,&
+&                            cond_g, cond_b
  complex(SP), allocatable :: W_(:),dc(:),eet_factor(:,:)
  type(elemental_collision):: isc,iscp
  character(schlen):: ch,SECTION_name
  logical          :: X_is_TR_rotated,l_X_alloc
- real(SP)         :: eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
- complex(SP)      :: MPA_Q,MPA_R,PPA_R,local_rhotw(X%ng),pre_factor,sp_dummy,ctmp
+ real(SP)         :: eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol)
+ complex(SP)      :: local_rhotw(X%ng),pre_factor
+ complex(DP)      :: dp_dummy,ctmp
+ !
  !complex(SP), allocatable :: MPA_E_mat(:,:)
  complex(SP), allocatable :: MPA_R_mat(:,:)
  real(SP),    allocatable :: MPA_E_mat(:,:)
  !
  integer, external::io_X,QP_state_extract
  !
- cond_g= 0; cond_b= 0;
  ! Reset & checks
  !
  call elemental_collision_free(isc)
@@ -91,7 +93,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  SECTION_name=''
  if (.not.l_sc_run) then
    SECTION_name='G'//trim(intc(GW_iter))
-   if (     l_ppa                  ) SECTION_name=trim(SECTION_name)//'W0 (W PPA)'
+   SECTION_name=trim(SECTION_name)//'W0 (W MPA)'
  endif
  !
  if (GW_iter==0) call section('+',trim(SECTION_name))
@@ -99,10 +101,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  if (GW_iter==0) then
    call msg('r', '[  GW  ] Bands range     :',QP_n_G_bands)
-   if (l_ppa) then
-     call msg('r', '[GW/MPA] G damping   [ev]:',QP_G_damp*HA2EV)
-     call msg('r','')
-   endif
+   call msg('r', '[GW/MPA] G damping   [ev]:',QP_G_damp*HA2EV)
+   call msg('r','')
    ch=trim(SECTION_name)
    !
    call QP_state_extract_print( )
@@ -211,7 +211,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Poles and Residuals
      !
-     !$omp parallel do default(shared), private(ig1,ig2)
+     cond_b=0
+     cond_g=0
+     !
+     !$omp parallel do default(shared), private(ig1,ig2), reduction(+:cond_b,cond_g), collapse(2)
      do ig2=1,X%ng
        do ig1=1,X%ng
            if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
@@ -221,17 +224,18 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
              cond_b = cond_b + 1
            else
              !X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
-             MPA_R_mat(ig1,ig2)=-(X_mat(ig1,ig2,X_range(1))*0._SP  -  X_mat(ig1,ig2,X_range(2))*(X%ppaE)**2 )/ &
-&                                (X_mat(ig1,ig2,X_range(1)) - X_mat(ig1,ig2,X_range(2)))  
+             MPA_R_mat(ig1,ig2)=-(X_mat(ig1,ig2,X_range(1))*0._SP  -X_mat(ig1,ig2,X_range(2))*(X%ppaE)**2 )/ &
+&                                (X_mat(ig1,ig2,X_range(1)) -X_mat(ig1,ig2,X_range(2)))  
              MPA_E_mat(ig1,ig2)=real(sqrt(MPA_R_mat(ig1,ig2)))  
              MPA_R_mat(ig1,ig2)=-X_mat(ig1,ig2,X_range(1))/2._SP*MPA_E_mat(ig1,ig2)*isc%gamp(ig1,ig2)
              cond_g = cond_g + 1
            endif
        enddo
      enddo
-     call msg('r','Dario: PPA condition good ', cond_g)
-     call msg('r','Dario: PPA condition bad ', cond_b )
      !$omp end parallel do
+     !
+     call msg('r',' PPA condition good [iqibz,count]: ', (/iqibz,cond_g/) )
+     call msg('r',' PPA condition fail [iqibz,count]: ', (/iqibz,cond_b/) )
      !
      X_is_TR_rotated=.false.
      !
@@ -251,9 +255,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! Note (AF) that $omp directives are inside mat_transpose
      !
      !call mat_transpose(X_mat(:,:,X_range(1)))
+     !call mat_transpose(X_mat(:,:,X_range(2)))
+     !
      call mat_transpose_r(MPA_E_mat)
      call mat_transpose(MPA_R_mat)
-     !if (l_ppa) call mat_transpose(X_mat(:,:,X_range(2)))
+     !
      X_is_TR_rotated=.true.
    endif
    !
@@ -302,30 +308,23 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          do i_w=1,QP_dSc_steps
            !
-           sp_dummy = 0.0_SP
+           dp_dummy = 0.0_DP
            !
-!$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:sp_dummy)
+           !$omp parallel do default(shared), private(ig1,ig2,ctmp), reduction(+:dp_dummy), collapse(2)
            do ig2=1,X%ng
              do ig1=1,X%ng
-!               !
-!               PPA_E= real(X%ppaE/X_mat(ig1,ig2,X_range(2)))
-!               PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
-!               !
-!               ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
-!&                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
-!&                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i_w))-E_kmq+PPA_E))
                !
-               ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-MPA_R_mat(ig1,ig2))*&
+               ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-MPA_R_mat(ig1,ig2))*&
 &                     ( (spin_occ-f_kmq+bose_f(MPA_E_mat(ig1,ig2)))/(W_(i_w)-E_kmq-MPA_E_mat(ig1,ig2))+&
 &                       (f_kmq+bose_f(MPA_E_mat(ig1,ig2)))/(conjg(W_(i_w))-E_kmq+MPA_E_mat(ig1,ig2)))
                !
-               sp_dummy=sp_dummy+ctmp
+               dp_dummy=dp_dummy+ctmp
                !
              enddo
            enddo
-!$omp end parallel do
+           !$omp end parallel do
            !
-           dc(i_w) = sp_dummy
+           dc(i_w) = dp_dummy
            !
          enddo
          !
@@ -343,11 +342,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! CLEAN
  !
  deallocate(dc)
- !if(l_ppa) then
-   deallocate(W_)
- !endif
- l_X_alloc=.true.
- if(l_X_alloc) call X_alloc('X')
+ deallocate(W_)
+ call X_alloc('X')
  !
  call timing('GW(mpa)',OPR='stop')
  !

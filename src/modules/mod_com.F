@@ -413,6 +413,7 @@ module com
      call msg('nr',STRING_pack('[ERROR] ',trim(mesg)))
      call LIVE_message(STRING_pack('[ERROR] ',trim(mesg)),"n","","%s")
      call LIVE_message("","n","","%s")
+     flush(6)
      !
 #if defined _MPI
      if (ncpu>1) call MPI_Abort(mpi_comm_world,1,ierr)

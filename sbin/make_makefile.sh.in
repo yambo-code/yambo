@@ -66,45 +66,42 @@ for arg in $@; do
 done
 #
 llibs="-L\$(libdir) $llibs"
-lf90include="@F90_MODULE_FLAG@\$(includedir) @F90_MODULE_FLAG@\$(sysinclude)"
+lf90include="@IFLAG@\$(includedir) @IFLAG@\$(sysinclude) @IFLAG@\$(includedir)/headers/common @IFLAG@\$(includedir)/headers/parser @IFLAG@\$(srcdir)/driver/include"
 linclude="-I\$(includedir) -I\$(sysinclude) -I\$(includedir)/headers/common -I\$(includedir)/headers/parser -I\$(srcdir)/driver/include"
-if [ @F90_MODULE_FLAG@ != "-I" ]; then
-lf90include="$lf90include $linclude"
-fi
-llibinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ipetsc) \$(islepc)"
+lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ipetsc) \$(islepc)"
 #
 case $target in
   yambo*)
    llibs="$llibs -lqe_pseudo -lmath77 -lslatec -llocal \$(lscalapack) \$(lslepc) \$(lpetsc) \$(llapack) \$(lblacs) \$(lblas)"
    llibs="$llibs \$(liotk) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
-   linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ihdf5) \$(ilibxc) \$(ifft)"
+   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ihdf5) \$(ilibxc) \$(ifft)"
     ;;
   a2y|elk2y|c2y)
    llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
-   linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
+   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
     ;;
   p2y*)
    llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(liotk) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
-   linclude="$linclude \$(iiotk) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
+   lf90libinclude="\$(iiotk) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
     ;;
   e2y)
    llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(letsf) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
-   linclude="$linclude \$(ietsf) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
+   lf90libinclude="\$(ietsf) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
     ;;
   ypp*)
    llibs="$llibs -lqe_pseudo -llocal -lmath77 -lslatec \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
-   linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)"
+   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)"
     ;;
   lib*)
-   linclude="$linclude \$(iiotk) \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc)"
+   lf90libinclude="\$(iiotk) \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc)"
     ;;
 esac
 
 cat config/setup >>$cdir/Makefile
 echo "llibs=$llibs" >> $cdir/Makefile
 echo "linclude=$linclude" >> $cdir/Makefile
-echo "llibinclude=$llibinclude" >> $cdir/Makefile
-echo "lf90include=$lf90include $llibinclude" >> $cdir/Makefile
+echo "lf90libinclude=$lf90libinclude" >> $cdir/Makefile
+echo "lf90include=$lf90include" >> $cdir/Makefile
 echo "mfiles=find . -name '*.mod'" >> $cdir/Makefile
 echo "target=$target" >> $cdir/Makefile
 echo "dmpi=$dmpi" >> $cdir/Makefile
@@ -155,7 +152,7 @@ define driver
  @echo
 endef
 define link
- ${PREFIX}(eval \$(fc) \$(fcflags) \$(lf90include) -o \$@ driver.o \$(objs) \$(llibs) ) > /dev/null
+ ${PREFIX}(eval \$(fc) \$(fcflags) \$(lf90include) \$(lf90libinclude) -o \$@ driver.o \$(objs) \$(llibs) ) > /dev/null
 endef
 define modmove
  ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 || mv *.mod \$(includedir)
@@ -170,15 +167,28 @@ F77_NOOPT_SRC= xerbla.o slamch.o
 #
 \$(F77_NOOPT_SRC):
 	${PREFIX}(eval \$(f77) -c \$(fuflags) \$(srcdir)/$cdir/\$*.f) > /dev/null
+EOF
+rm_command="@rm -f \$*\$(f90suffix)"
+if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
+FC_NOOPT_SRC="mod_parser_m.o mod_logo.o"
+for arg in $@; do
+ case $arg in
+  -D_PGI)
+   FC_NOOPT_SRC="$FC_NOOPT_SRC bz_samp_indexes.o" ;;
+ esac
+done
+cat << EOF >> $cdir/Makefile
 #
-FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
+FC_NOOPT_SRC= ${FC_NOOPT_SRC}
 #
 \$(FC_NOOPT_SRC):
-	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(fpp) \$(dopts) \$(srcdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
-	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(lf90include) \$*\$(f90suffix)) > /dev/null
+	${rm_command}
+	${PREFIX}(eval \$(fpp) \$(dopts) \$(linclude) \$(srcdir)/$cdir/\$*.F > \$*.tmp_source)
+	@\$(srcdir)/sbin/replacer.sh \$*.tmp_source
+	@mv \$*.tmp_source_space \$*\$(f90suffix)
+	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(lf90include) \$(lf90libinclude) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$* " "
-	@rm -f \$*\$(f90suffix)
+	${rm_command}
 #
 # Special sources
 #
@@ -186,7 +196,7 @@ FC_LOCAL_SRC= sgfft.o
 \$(FC_LOCAL_SRC):
 	@rm -f \$*\$(f90suffix)
 	${PREFIX}(eval \$(fpp) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
-	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(lf90libinclude) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$*".F "
 
 #
@@ -201,15 +211,13 @@ FC_LOCAL_SRC= sgfft.o
 # Rules
 #
 EOF
-rm_command="@rm -f \$*\$(f90suffix)"
-if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 cat << EOF >> $cdir/Makefile
 .F.o:
 	${rm_command}
-	${PREFIX}(eval \$(fpp) \$(dopts) \$(linclude) \$(srcdir)/$cdir/\$*.F > \$*.tmp_source)
+	${PREFIX}(eval \$(fpp) \$(dopts) \$(lf90include) \$(lf90libinclude) \$(srcdir)/$cdir/\$*.F > \$*.tmp_source)
 	@\$(srcdir)/sbin/replacer.sh \$*.tmp_source
 	@mv \$*.tmp_source_space \$*\$(f90suffix)
-	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(lf90libinclude) \$*\$(f90suffix)) > /dev/null
 	${rm_command}
 	@echo $ECHO_N \$*".F "
 EOF

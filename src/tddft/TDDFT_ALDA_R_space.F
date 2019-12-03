@@ -44,6 +44,7 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  use electrons,      ONLY:n_spinor,n_sp_pol,n_spin
  use com,            ONLY:error
  use timing_m,       ONLY:timing
+ use interfaces,     ONLY:WF_apply_symm
  !
  implicit none
  !

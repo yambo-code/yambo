@@ -53,7 +53,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
 &                        elph_global_alloc,gsqF_energy_steps,eval_G_using_KK,ph_qpt,&
 &                        elph_branches,E_k_plus_q,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold,DW_deltaE_treshold
- use interfaces,    ONLY:PARALLEL_global_indexes,QP_state_extract_print
+ use interfaces,    ONLY:PARALLEL_global_indexes,QP_state_print
  use functions,     ONLY:Fermi_fnc_derivative
  use timing_m,      ONLY:timing
  !
@@ -68,7 +68,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,live_timing_steps,iq_range(2)
  type(w_samp)     ::Sc_W(qp%n_states)
  integer          ::io_err,ID
- integer, external::io_ELPH,QP_state_extract
+ integer, external::io_ELPH
  character(schlen)::ch
  real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,factor,&
 &                   E_k_plus_q_at_gamma(elph_nb,k%nbz),elph_gkkp_sq,gsqF_damping,E_random_shift
@@ -117,7 +117,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! QP_table -> report
  !
- call QP_state_extract_print( )
+ call QP_state_print( )
  !
  ! ELPH DB
  !

@@ -43,6 +43,7 @@ subroutine electrons_WFs(Xen)
  use R_lattice,      ONLY:qindx_S
 #endif
 #if defined _YPP_ELPH
+ use interfaces,     ONLY:WF_apply_symm
  use YPP_ELPH,       ONLY:elph_residual_treshold
  use pars,           ONLY:cZERO
  use ELPH,           ONLY:elph_Ham_bands

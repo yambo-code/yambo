@@ -150,12 +150,12 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! OpenMP
  !
- omp_is_off    = .FALSE.
  !
 #if defined _OPENMP
- !
+ omp_is_off    = .FALSE.
  if (index(INSTR,'noopenmp')>0) omp_is_off=.TRUE.
- !
+#else
+ omp_is_off    = .TRUE.
 #endif
  !
  call OPENMP_initialize( )
@@ -416,7 +416,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! BS/BSS
  !
- BS_n_g_W=1
+ BS_n_g_W=-1
  BS_eh_en=(/-1._SP,-1._SP/)/HA2EV
  BS_identifier=0
  BS_q=1

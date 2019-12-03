@@ -123,7 +123,7 @@ subroutine electrons_dos(Xk,Xen)
 &                                operation="SPIN_factors_on_built_in",ID_op=IDp)
      call INTERPOLATION_driver(OUT_k=GRID_k,operation="PDOS_factors_on_built_in")
      PDOS_fac_p => linkM2M(INTERP_obj(IDp)%INTERP,shape(INTERP_obj(IDp)%INTERP),&
-     &                     lbound(INTERP_obj(IDp)%INTERP),ubound(INTERP_obj(IDp)%INTERP))
+ &                         lbound(INTERP_obj(IDp)%INTERP),ubound(INTERP_obj(IDp)%INTERP))
    endif
    !
    if (n_spinor==2) then

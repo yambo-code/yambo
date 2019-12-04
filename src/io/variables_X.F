@@ -66,7 +66,7 @@ integer function variables_X(ID,local_description,X)
  call io_elemental(ID,VAR=trim(X_label)//"PARS_2",VAR_SZ=1,CH0="",MENU=0)
  i_local_desc=i_local_desc+1
  call io_elemental(ID,&
-&     VAR=" X Time ordering        :",CH0=X%ordering,CHECK=.true.,&
+&     VAR=" X Time ordering        :",CH0=X%ordering,WARN=.true.,&
 &     DESCRIPTION=local_description(i_local_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  if (ver_is_gt_or_eq(ID,(/3,0,5/))) then

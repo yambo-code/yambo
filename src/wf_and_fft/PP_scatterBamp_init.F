@@ -28,8 +28,7 @@ subroutine PP_scatterBamp_init(isc)
  use pars,          ONLY:SP,DP,pi
  use qe_pseudo_m,   ONLY:lmaxq,g,nhm,nh,upf,nat,nsp,nspin,tpiba,omega,tau
  use collision_el,  ONLY:elemental_collision
- use R_lattice,     ONLY:k_pt,q_pt,b,rl_sop
- use D_lattice,     ONLY:nsym,i_time_rev,dl_sop
+ use R_lattice,     ONLY:q_pt,b,rl_sop
  use vec_operate,   ONLY:c2a
  use timing_m,      ONLY:timing
  !

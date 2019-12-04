@@ -32,11 +32,11 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  use electrons,     ONLY:n_spinor,n_sp_pol,n_spin
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error,warning
- use interfaces,    ONLY:WF_load,WF_free,PARALLEL_index
+ use interfaces,    ONLY:WF_load,WF_free,WF_apply_symm,PARALLEL_index
  use wave_func,     ONLY:WF,wf_ng
  use wrapper,       ONLY:Vstar_dot_V
  use YPP_interfaces,ONLY:excitons_sort_and_report
- use YPP,           ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,&
+ use YPPm,          ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,&
 &                        EXCITON_kin,excitons_degeneracy_average,EXCITON_spin,BSiq
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  !
@@ -167,7 +167,7 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
    do i_S=0,1
      do i_M=-i_S,i_S
        EXC_spin%S_sq(i_l)=EXC_spin%S_sq(i_l)+real(i_S)*real(i_S+1)*EXC_spin%N_SM(i_l,i_S,i_M)
-       EXC_spin%S_z(i_l) =EXC_spin%S_z(i_l)+abs(i_M)*EXC_spin%N_SM(i_l,i_S,i_M)
+       EXC_spin%S_z(i_l) =EXC_spin%S_z(i_l)+      i_M             *EXC_spin%N_SM(i_l,i_S,i_M)
      enddo
    enddo
  enddo 
@@ -182,18 +182,6 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
    i_l=EXCITONS_user_indexes(i_c)
    !
    if (BS_E_degs(i_l)/=i_l.or.myid>0) cycle
-   !
-   !write (*,*) 
-   !write (*,*) "Exciton: ",i_l
-   !write (*,*) "N(0,0):", EXC_spin%N_SM(i_l,0,0) 
-   !write (*,*) "N(1,-1):", EXC_spin%N_SM(i_l,1,-1) 
-   !write (*,*) "N(1,0):", EXC_spin%N_SM(i_l,1,0) 
-   !write (*,*) "N(1,1):", EXC_spin%N_SM(i_l,1,1) 
-   !write (*,*) 
-   !write (*,*) "S:", (-1.+sqrt(1.+4*EXC_spin%S_sq(i_l)))/2.
-   !write (*,*) "S_z:", EXC_spin%S_z(i_l)
-   !write (*,*) 
-   !write (*,*) "SUM:", sum(EXC_spin%N_SM(i_l,:,:))
    !
  enddo
  !

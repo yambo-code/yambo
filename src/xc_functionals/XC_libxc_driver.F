@@ -38,16 +38,15 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
 #endif
  use electrons,      ONLY:levels,n_spin,n_spinor
  use FFT_m,          ONLY:fft_size
- use wrapper,        ONLY:real_V_dot_V
+ use wrapper,        ONLY:V_dot_V
  use xc_functionals, ONLY:E_xc,E_xc_val,F_xc,magn,V_xc,xc_setup_hyb,&
 &                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl,    &
 &                         xc_spin,xc_spin_map1, &
-&                         XC_HYB_GGA_XC_GAUPBE,XC_FACTOR,XC_HYB_GGA_XC_PBEH
+&                         XC_HYB_GGA_XC_GAUPBE,XC_FACTOR
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  use libxc_funcs_m,  ONLY:XC_GGA_X_PBE, XC_GGA_C_PBE
  use interfaces,     ONLY:el_density_and_current
  use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc
- use IO_m,           ONLY:io_control,OP_RD_CL,REP
  !
 #include<memory.h>
  !
@@ -58,8 +57,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ! Work Space
  !
- integer  :: i1,i2,i3,is_xc,ic,is1,is2,ixc,ifft
- integer  :: io_err,ID
+ integer  :: i1,i2,is_xc,ic,is1,is2,ixc,ifft
  real(SP) :: mod_magn
  real(SP) :: local_exx_fraction 
  real(DP) :: exsr
@@ -198,7 +196,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      do is1 = 1,n_spin
        do is2 = is1,n_spin
          is_xc = xc_spin_map1(is1,is2)
-         sigma(is_xc,i1) = real(real_V_dot_V(3,drho(i1,is1,:),drho(i1,is2,:)),DP)
+         sigma(is_xc,i1) = real(V_dot_V(3,drho(i1,is1,:),drho(i1,is2,:)),DP)
        end do
      end do
    end do
@@ -225,7 +223,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
        forall (i1=1:fft_size) rspts(i1)=(3._DP/4._DP/pi/spin_rho_SP(i1,1)/DL_vol)**(1._DP/3._DP)
        call xc_rpa_kp(rspts,tmp_exc)
        E_xc = real(tmp_exc,SP) 
-       E_xc_val = real_V_dot_V(fft_size,rho,E_xc(:))
+       E_xc_val = V_dot_V(fft_size,rho,E_xc(:))
      case(1)
        call error(' Vxc not coded for LDA C KP')
      case(2)
@@ -282,7 +280,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  enddo
  !
  if (order==0) then 
-   E_xc_val = real_V_dot_V(fft_size,rho,E_xc(:))
+   E_xc_val = V_dot_V(fft_size,rho,E_xc(:))
    if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)  E_xc_val= E_xc_val-EXX_FRACTION*exsr
  endif
  !
@@ -300,7 +298,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    YAMBO_FREE(v2sigma2)
  endif
  if (EvaluateDGradient.and.(FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)) then
-
    YAMBO_FREE(vx1)
    YAMBO_FREE(vx2)
  endif

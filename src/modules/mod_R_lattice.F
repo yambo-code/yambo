@@ -104,6 +104,13 @@ module R_lattice
  integer ,allocatable :: minus_G(:)
  real(SP),allocatable :: g_vec(:,:)
  real(SP),allocatable :: E_of_shell(:)
+ real(SP),allocatable :: g_vec_d(:,:)
+ integer ,allocatable :: g_rot_d(:,:)
+ integer ,allocatable :: G_m_G_d(:,:)
+ integer ,allocatable :: minus_G_d(:)
+#ifdef _CUDA
+ attributes(device) :: g_vec_d, g_rot_d, G_m_G_d, minus_G_d
+#endif
  !
  ! RIM
  !
@@ -115,6 +122,10 @@ module R_lattice
  real(SP):: RIM_epsm1(3)
  real(SP):: RIM_anisotropy
  real(SP),   allocatable :: RIM_qpg(:,:,:)
+ real(SP),   allocatable :: RIM_qpg_d(:,:,:)
+#ifdef _CUDA
+ attributes(device) :: RIM_qpg_d
+#endif
  !
  ! Coulomb (including Cutoff)
  !
@@ -126,6 +137,12 @@ module R_lattice
  character(schlen)       :: cut_geometry
  character(schlen)       :: cut_description
  complex(SP),allocatable :: bare_qpg(:,:)
+ complex(SP),allocatable :: bare_qpg_d(:,:)
+#ifdef _CUDA
+ attributes(device) :: bare_qpg_d
+ ! AF: for the sake of performance, this variable is defined 
+ !     as the transpose of the host variable bare_qpg
+#endif
  logical                 :: CUTOFF_plus_RIM
  real(SP)                :: cyl_vr_save
  real(SP)                :: cyl_vz_save

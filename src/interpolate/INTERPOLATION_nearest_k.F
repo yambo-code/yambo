@@ -26,7 +26,6 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
  use pars,           ONLY:SP
  use R_lattice,      ONLY:k_the_nearest
  use interpolate,    ONLY:NN_nk_exact,NN_n_of_nearest,NN_MAX_real_nearest
- use vec_operate,    ONLY:sort
  !
 #include<memory.h>
  !

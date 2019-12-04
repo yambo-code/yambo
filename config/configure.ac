@@ -49,6 +49,7 @@ m4_include([config/acx_get_fc_kind.m4])
 m4_include([config/acx_get_mpi_kind.m4])
 m4_include([config/acx_fortran_flags.m4])
 m4_include([config/acx_mpi.m4])
+m4_include([config/cuda.m4])
 m4_include([config/acx_branch.m4])
 # 
 #  Report
@@ -98,17 +99,10 @@ fi
 AC_SUBST(MAKE)
 # ============================================================================
 #AR 
-#AC_DISABLE_SHARED
 AC_CHECK_TOOL(AR, ar, false)
 test -z "$AR" && AR=ar
 test -z "$AR_FLAGS" && AR_FLAGS="-ru"
 AC_SUBST(AR_FLAGS)
-#
-# FC module flag
-#
-IFLAG=$ax_cv_f90_modflag
-if test -z "$IFLAG" ; then IFLAG="-I" ; fi
-AC_SUBST(IFLAG)
 #
 # ============================================================================
 #
@@ -195,8 +189,11 @@ AC_LANG_POP(Fortran)
 #=============================================================================
 # FLAGS TO INCLUDE MODULE
 AX_F90_MODULE_FLAG
-F90_MODULE_FLAG="$ax_cv_f90_modflag"
-AC_SUBST([F90_MODULE_FLAG])
+#F90_MODULE_FLAG="$ax_cv_f90_modflag"
+IFLAG="$ax_cv_f90_modflag"
+if test -z "$IFLAG" ; then IFLAG="-I" ; fi
+#AC_SUBST([F90_MODULE_FLAG])
+AC_SUBST(IFLAG)
 #
 # ============================================================================
 # CPP check & flags
@@ -273,14 +270,17 @@ AC_HAVE_ETSF_IO
 # LIBXC
 ACX_LIBXC
 # ============================================================================
+# CUDA
+AC_HAVE_CUDA
+# ============================================================================
 # Prepare the REPORT file variables
 ACX_REPORT()
 # ============================================================================
-AC_CONFIG_HEADERS([include/c_defs.h:include/c_defs.h.in])
+AC_CONFIG_HEADERS([include/headers/common/have_malloc.h:include/headers/common/have_malloc.h.in])
 AC_CONFIG_FILES([config/setup config/Makefile config/report config/msg_ydb
                  src/wf_and_fft/sgfft.F
                  sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh
-                 driver/codever.h driver/editor.h src/external_c/.objects include/branch.inc])
+                 driver/include/editor.h src/tools/.objects driver/include/version.h include/branch.inc])
 #
 AC_OUTPUT
 #

@@ -17,50 +17,51 @@
  02111-1307, USA.
 */
 
-#include <c_defs.h>
+#include <string.h>
+#include <wrapper.h>
 #include <ctype.h>
 #include <math.h>
-#include "symbols.h"
-#include "parser.h"
+#include <parser.h>
+#include <symbols.h>
 
 /* Interface to the parsing routines */
-int F90_FUNC_(iparse_init, IPARSE_INIT)
+int C_FUNC(iparse_init, IPARSE_INIT)
 		 (char *in, char *out)
 { 
 	return parse_init(in, out); 
 }
 
-void F90_FUNC_(iparse_end, IPARSE_END)
+void C_FUNC(iparse_end, IPARSE_END)
 		 ()
 { 
 	parse_end(); 
 }
 
-int F90_FUNC_(iparse_isdef, IPARSE_ISDEF)
+int C_FUNC(iparse_isdef, IPARSE_ISDEF)
 		 (char *name)
 { 
 	return parse_isdef(name); 
 }
 
-void F90_FUNC_(iparse_int, IPARSE_INT)
+void C_FUNC(iparse_int, IPARSE_INT)
 		 (char *name, int *def, int *res)
 { 
 	*res = parse_int(name, *def); 
 }
 
-void F90_FUNC_(iparse_double, IPARSE_DOUBLE)
+void C_FUNC(iparse_double, IPARSE_DOUBLE)
 		 (char *name, double *def, double *res)
 {
 	*res = parse_double(name, *def); 
 }
 
-void F90_FUNC_(iparse_complex, IPARSE_COMPLEX)
+void C_FUNC(iparse_complex, IPARSE_COMPLEX)
 		 (char *name, gsl_complex *def, gsl_complex *res)
 {
 	*res = parse_complex(name, *def); 
 }
 
-void F90_FUNC_(iparse_string, IPARSE_STRING)
+void C_FUNC(iparse_string, IPARSE_STRING)
 		 (char *name, char *def, char *res)
 {
 	char *c = parse_string(name, def);
@@ -76,34 +77,34 @@ static void parse_block_error(char *type, char *name, int l, int c){
 	exit(1);*/
 }
 
-int F90_FUNC_(iparse_block_n, IPARSE_BLOCK_N)
+int C_FUNC(iparse_block_n, IPARSE_BLOCK_N)
 		 (char *name)
 {
 	return parse_block_n(name);
 }
 
-void F90_FUNC_(iparse_block_int, IPARSE_BLOCK_INT)
+void C_FUNC(iparse_block_int, IPARSE_BLOCK_INT)
 		 (char *name, int *l, int *c, int *res)
 {
 	if(parse_block_int(name, *l, *c, res) != 0)
 		parse_block_error("int", name, *l, *c);
 }
 
-void F90_FUNC_(iparse_block_double, IPARSE_BLOCK_DOUBLE)
+void C_FUNC(iparse_block_double, IPARSE_BLOCK_DOUBLE)
 		 (char *name, int *l, int *c, double *res)
 {
 	if(parse_block_double(name, *l, *c, res) != 0)
 		parse_block_error("double", name, *l, *c);
 }
 
-void F90_FUNC_(iparse_block_complex, IPARSE_BLOCK_COMPLEX)
+void C_FUNC(iparse_block_complex, IPARSE_BLOCK_COMPLEX)
 		 (char *name, int *l, int *c, gsl_complex *res)
 {
 	if(parse_block_complex(name, *l, *c, res) != 0)
 		parse_block_error("complex", name, *l, *c);
 }
 
-void F90_FUNC_(iparse_block_string, IPARSE_BLOCK_STRING)
+void C_FUNC(iparse_block_string, IPARSE_BLOCK_STRING)
 		 (char *name, int *l, int *c, char *res)
 {
 	char *s;

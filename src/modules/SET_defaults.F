@@ -26,9 +26,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ! GPL_EXCLUDE_START
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
+ use C_driver,   ONLY:code_branch
  use pars,       ONLY:SP,cZERO
  use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
- use LOGO,       ONLY:ID_logo,ID_logo_stderr,code_branch
+ use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                     eval_alpha,&
@@ -139,7 +140,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! Printed reals format lengths 
  !
+ ! GPL_EXCLUDE_START
  include 'branch.inc'
+ ! GPL_EXCLUDE_END
  !
  call set_real_printed_length()
  !
@@ -149,12 +152,12 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! OpenMP
  !
- omp_is_off    = .FALSE.
  !
 #if defined _OPENMP
- !
+ omp_is_off    = .FALSE.
  if (index(INSTR,'noopenmp')>0) omp_is_off=.TRUE.
- !
+#else
+ omp_is_off    = .TRUE.
 #endif
  !
  call OPENMP_initialize( )
@@ -415,7 +418,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! BS/BSS
  !
- BS_n_g_W=1
+ BS_n_g_W=-1
  BS_eh_en=(/-1._SP,-1._SP/)/HA2EV
  BS_identifier=0
  BS_q=1

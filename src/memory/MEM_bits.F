@@ -71,10 +71,11 @@ end function
 !
 integer function MEM_component_finder( i_SHELF, name, Sz, desc, ADD )
  !
- use pars,   ONLY:schlen
+ use pars,   ONLY:schlen,IPL
  use memory, ONLY:MEMs
  implicit none
- integer      :: i_SHELF,Sz
+ integer      :: i_SHELF
+ integer(IPL) :: Sz
  character(*) :: name,desc
  logical      :: ADD
  !ws

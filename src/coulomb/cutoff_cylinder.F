@@ -187,7 +187,6 @@ subroutine cutoff_cylinder(q,is_cut)
      enddo
    enddo
    YAMBO_FREE(work)
-   YAMBO_FREE(work)
  endif
  !
  ! MPI 2 all
@@ -201,5 +200,8 @@ subroutine cutoff_cylinder(q,is_cut)
  call live_timing()
  !
  forall (iq=1:q%nibz,ig=1:wf_ng) bare_qpg(iq,ig)=sqrt(1./V_cut(iq,ig))
+ !
+ ! cleanup
+ call PP_indexes_reset(px)
  !
 end subroutine

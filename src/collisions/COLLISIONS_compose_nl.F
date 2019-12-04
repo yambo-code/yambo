@@ -27,9 +27,8 @@ subroutine COLLISIONS_compose_nl(G_in)
  ! 
  use pars,             ONLY:SP,cZERO,cI
  use drivers,          ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_sc_hartree!l_sc_hf,l_sc_cohsex,l_sc_exx
- use QP_m,             ONLY:QP_table,QP_nk,QP_n_states
  use collision_ext,        ONLY:HXC_COLL_element,COLL_bands,&
-&                           HXC_collisions,COLLISIONS_group,COLLISIONS_element
+&                           HXC_collisions
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
  use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu,PAR_COM_freqs_A2A
@@ -44,7 +43,6 @@ subroutine COLLISIONS_compose_nl(G_in)
  !
  ! Work Space
  !
- logical           :: l_expand
  integer           :: i_coll,ib,ibp,i_k,i_k_NL,i_kmq,i_comp,i_coll_mem,i_spin
  integer           :: i_n,i_m
  !

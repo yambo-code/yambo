@@ -202,7 +202,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].yambo_string="TDplots"; /* TDplots */
  options[*i_opt].section="Real-Time";
  /* GPL_EXCLUDE_START */
- options[*i_opt].long_desc[0]="<string1>=(X)response,Tr(a)bs,(o)ccupations,(l)ifetimes,(d)ensity";
+ options[*i_opt].long_desc[0]="<string1>=(X)response,Tr(a)bs,(o)ccupations,(l)ifetimes,(d)ensity,(g)reenfunction";
  /* GPL_EXCLUDE_END */
  /* GPL_INCLUDE_START 
  options[*i_opt].long_desc[0]="<string1>=(X)response,Tr(a)bs";

@@ -23,10 +23,10 @@
 !
 subroutine INIT_activate()
  !
- use it_m,           ONLY:initactivate
+ use it_tools,       ONLY:initactivate
  use BS_solvers,     ONLY:BSS_mode
  use QP_m,           ONLY:QP_solver,COHSEX_use_empties
- use stderr,         ONLY:intc
+ use stderr,         ONLY:intc,STRING_match
  use drivers,        ONLY:l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bss,&
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh,&
@@ -154,7 +154,7 @@ subroutine INIT_activate()
  if (l_em1s.or.l_em1d)             call initactivate(1,'Chimod ChiLinAlgMod')
  if (l_optics.and.l_chi)           call initactivate(1,'Chimod ChiLinAlgMod')
  if (l_optics.and.l_bse)           call initactivate(1,'BSEmod')
- if (l_optics.and.l_bse)           call initactivate(1,'BSKmod')
+ if (l_optics.and.l_bse)           call initactivate(1,'BSKmod Lkind')
  if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
  !
  if (l_dipoles) call initactivate(1,'DipBands DipBandsALL DipQpt DipApproach DipPDirect ShiftedPaths')
@@ -202,11 +202,15 @@ subroutine INIT_activate()
    !
  endif
  !
- ! Double Grid
- !
  if (l_optics.or.l_life) then
    !
+   ! Double Grid
+   !
    call initactivate(1,'DbGdQsize')
+   !
+   ! Dipoles & Gauges
+   !
+   call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge')
    !
  endif
  !
@@ -251,7 +255,7 @@ subroutine INIT_activate()
    !
    ! GPL_EXCLUDE_END
    !
-   call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')
+   call initactivate(1,'NoCondSumRule MetDamp')
    !
 #if defined _NL || defined _ELECTRIC
    call initactivate(1,'EvPolarization FrSndOrd')
@@ -263,7 +267,12 @@ subroutine INIT_activate()
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
+   !GPL_EXCLUDE_START
    call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')
+   !GPL_EXCLUDE_END
+   !GPL_INCLUDE_START
+   !call initactivate(1,'BSEBands BSEEhEny BSehWind')
+   !GPL_INCLUDE_END
    !
 #if defined _RT
    call initactivate(1,'ForceEqTrans')
@@ -273,7 +282,7 @@ subroutine INIT_activate()
  !
  ! BSE solver
  !
- if (l_optics.and.l_bse.and.l_bss) then
+ if (l_optics.and.l_bse.and.l_bss.or.(l_bse.and.l_rpa_IP)) then
    !
    call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
    !
@@ -287,11 +296,7 @@ subroutine INIT_activate()
    if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF BSSPertWidth')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
    if (index(BSS_mode,'s')/=0)  then
-      call initactivate(1,'BSSNEig')
-      call initactivate(1,'BSSEnTarget')
-      call initactivate(1,'BSSSlepcExtraction')
-      call initactivate(1,'BSSSlepcNCV')
-      call initactivate(1,'BSSSlepcTol')
+     call initactivate(1,'BSSNEig BSSEnTarget BSSSlepcExtraction BSSSlepcNCV BSSSlepcTol WRbsWF')
    endif
    !
    ! Special project dependent variables
@@ -478,12 +483,14 @@ subroutine INIT_activate()
    call initactivate( 1,'HXC_Potential FFTGvecs')
    !
    call initactivate(-1,'QpntsRXs')
-   if( index(H_potential,"HARTREE")>0 )                           call initactivate(1,'HARRLvcs ALLGHAR')
-   if( index(H_potential,"default")>0 )                           call initactivate(1,'VXCRLvcs')
+   if( STRING_match(trim(H_potential),"HARTREE") ) call initactivate(1,'EXXCut HARRLvcs ALLGHAR')
+   if( STRING_match(trim(H_potential),"default") ) call initactivate(1,'VXCRLvcs HARRLvcs')
    !
    if (l_eval_collisions) then
-     if( index(H_potential,"SEX")>0.or.index(H_potential,"FOCK")>0) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
-     if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0 ) call initactivate(1,'CORRLvcs ALLGexx')
+     if( STRING_match(trim(H_potential),"SEX").or.&
+&        STRING_match(trim(H_potential),"FOCK")) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
+     if( STRING_match(trim(H_potential),"SEX").or.&
+&        STRING_match(trim(H_potential),"COH") ) call initactivate(1,'CORRLvcs ALLGexx')
    endif
    !
  endif
@@ -500,9 +507,11 @@ subroutine INIT_activate()
    !
    call initactivate( 1,'SCBands')
    !
-   if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0  ) call initactivate(1,'UseEbands SCUpWIter')
+   if( STRING_match(trim(H_potential),"SEX").or.&
+&      STRING_match(trim(H_potential),"COH")  ) call initactivate(1,'UseEbands SCUpWIter')
    !
-   if( index(H_potential,"EXX")>0.or.index(H_potential,"SRPA")>0 ) call initactivate(1,'OEPapprox OEPItSolver') 
+   if( STRING_match(trim(H_potential),"EXX").or.&
+&      STRING_match(trim(H_potential),"SRPA") ) call initactivate(1,'OEPapprox OEPItSolver') 
    !
    call initactivate(1,'SCIter SCEtresh SCRhoTresh SC_precondition')
    call initactivate(1,'SCmixing SClwBand SCnlMix BandMix')
@@ -520,7 +529,8 @@ subroutine INIT_activate()
    ! GPL_EXCLUDE_START
    !
    call INIT_RT_ctl_switch('G')
-   call initactivate(1,'RTskipImposeN RTeeImposeE InducedField VelGaugeCorr VelGaugeDiam PfromJ RTUpdateSOC RTUpdateE SaveGhistory')
+   call initactivate(1,'RTskipImposeN RTeeImposeE InducedField')
+   call initactivate(1,'Gauge VelGaugeCorr VelGaugeDiam PfromJ RTUpdateSOC RTUpdateE SaveGhistory')
    call initactivate(1,'RTEqScatt RTImpForMet RTzeroTempRef RTEvalEnergy RTEvalEntropy')
    call initactivate(1,'dTupdateTime dTupdateJump dTupdateTresh dT_MAX')
    if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) &
@@ -530,7 +540,7 @@ subroutine INIT_activate()
    !
    ! GPL_EXCLUDE_END
    !
-   call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
+   call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime RAD_prefactor PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
    call initactivate(1,'IOtime')
    !

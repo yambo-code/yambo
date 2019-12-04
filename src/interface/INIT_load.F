@@ -26,7 +26,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
+ use it_tools,      ONLY:it
+ use it_m,          ONLY:initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time,V_nl_optics
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,&
@@ -46,7 +47,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
-&                        BS_n_g_W,BS_n_g_exch
+&                        BS_n_g_W,BS_n_g_exch,L_kind
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig
@@ -81,7 +82,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        NE_MEM_treshold,NE_time_step_update_jump_SAVE,          &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
-&                        RT_MAX_step,RT_RTA_temp,RT_RTA_chem
+&                        RT_MAX_step,RT_RTA_temp,RT_RTA_chem,RAD_magnification
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
@@ -128,62 +129,41 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
  real(SP) :: IO_times(3)
  !
+ ! RunLevels...
+ !==============
+ !
+ ! ... from C_driver
+ !
+ call INIT_C_driver_runlevels(defs)
+ !
+ ! ... derived
+ !=============
+ !
  !===============
  ! GPL RUNLEVELS
  !===============
- call it('r',defs,'setup',   '[R INI] Initialization') 
- call it('r',defs,'optics',  '[R OPT] Optics')
- call it('r',defs,'chi',     '[R CHI] Dyson equation for Chi.')
- call it('r',defs,'bse',     '[R BSE] Bethe Salpeter Equation.')
- call it('r',defs,'bss',     '[R BSS] Bethe Salpeter Equation solver')
- call it('r',defs,'tddft',   '[R   K] Use TDDFT kernel')
- call it('r',defs,'dipoles', '[R   ] Compute the dipoles')
- call it('r',defs,'em1s',    '[R Xs] Static Inverse Dielectric Matrix')
- call it('r',defs,'em1d',    '[R Xd] Dynamical Inverse Dielectric Matrix')
- call it('r',defs,'ppa',     '[R Xp] Plasmon Pole Approximation')
- call it('r',defs,'HF_and_locXC',   '[R XX] Hartree-Fock Self-energy and Vxc')
- call it('r',defs,'gw0',     '[R GW] GoWo Quasiparticle energy levels')
- call it('r',defs,'life',    '[R GW] GoWo Quasiparticle lifetimes')
- call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb potential')
- call it('r',defs,'cohsex',  '[R Xp] COlumb Hole Screened EXchange')
+ call it('r',defs,'chi',     '[R][CHI] Dyson equation for Chi.')
+ call it('r',defs,'bse',     '[R][BSE] Bethe Salpeter Equation.')
+ call it('r',defs,'tddft',   '[R][K] Use TDDFT kernel')
+ call it('r',defs,'cohsex',  '[R][Xp] COlumb Hole Screened EXchange')
+ call it('r',defs,'em1s',    '[R][Xs] Statically Screened Interaction')
+ call it('r',defs,'em1d',    '[R][X] Dynamically Screened Interaction')
+ call it('r',defs,'ppa',     '[R][Xp] Plasmon Pole Approximation for the Screened Interaction')
  !
  ! GPL_EXCLUDE_START
  !
  !===================
  ! NON GPL RUNLEVELS
  !===================
- call it('r',defs,'acfdt',   '[R ETOT] ACFDT Total Energy')
-#if defined _ELPH 
- call it('r',defs,'ElPhHam', '[R] Frohlich Hamiltonian') 
-#endif
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _SC && !defined _RT
- call it('r',defs,'scrun',      '[R] Self-Consistent single-particle calculation') 
-#endif
-#if defined _SC || defined _RT
- call it('r',defs,'collisions', '[R] Eval the extended Collisions')
-#endif
-#if defined _PL
- call it('r',defs,'photolum',   '[R] Photo-Luminescence') 
-#endif
 #if defined _RT
- call it('r',defs,'negf',       '[R] Real-Time dynamics') 
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
 #endif
-#if defined _NL
- call it('r',defs,'nloptics',   '[R NL] Non-linear optics') 
-#endif
 #if defined _RT 
  call it('r',defs,'el_photon_scatt','[R] Electron-Photon   Scattering')   
-#endif
-#if defined _MAGNETIC
- call it('r',defs,'magnetic','[R] Magnetic fields')
-#endif
-#if defined _ELECTRIC
- call it('r',defs,'electric','[R] Static Electric Field')
 #endif
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',    '[R] Electron-Phonon Correlation')   
@@ -193,9 +173,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _QED
  call it('r',defs,'el_photon_corr','[R] Electron-Photon Correlation') 
-#endif
-#if defined _SCALAPACK
- call it('r',defs,'slktest','[R] ScaLapacK test') 
 #endif
  !
  !=======
@@ -300,8 +277,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! BSE/BSK
  !
  call it(defs,'BSEmod',  '[BSE] resonant/retarded/coupling',BSE_mode,case="a")
+ call it(defs,'Lkind',   '[BSE] Lbar (default) / full',L_kind,verb_level=V_resp)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
- call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
+ call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]', &
+&         BS_n_g_W,G_unit,verb_level=V_resp)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  !
@@ -317,8 +296,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! GPL_EXCLUDE_END
  !
- call it(defs,'Gauge' ,  '[BSE] Gauge (length|velocity)',global_gauge,verb_level=V_resp)
- call it('f',defs,'NoCondSumRule' ,'[BSE] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
+ call it(defs,'Gauge' ,  '[BSE/X] Gauge (length|velocity)',global_gauge,verb_level=V_resp)
+ call it('f',defs,'NoCondSumRule' ,'[BSE/X] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
  call it('f',defs,'MetDamp' ,      '[BSE] Define '//slash//'w+=sqrt('//slash//'w*('//slash//'w+i'//slash//'eta))',verb_level=V_resp)
  call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
@@ -436,7 +415,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
- call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
+ call it(defs,'RAD_prefactor','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
+ call it(defs,'PhLifeTime', '[RT] Constant Dephasing Time',Phase_LifeTime,unit=Time_unit(1))
  !
  ! Dynamics
  !
@@ -521,22 +501,22 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! Non liner optics
  !
- call it(defs,'NLBands',      '[NL] Bands',NL_bands)
- call it(defs,'NLverbosity', '[NL] Verbosity level (low | high)',NL_verb_name) 
- call it(defs,'NLstep',       '[NL] Real Time step length',RT_step,unit=Time_unit(1),Verb_level=V_nl_optics)
+ call it(defs,'NLBands',      '[NL] Bands range',NL_bands)
+ call it(defs,'NLverbosity',  '[NL] Verbosity level (low | high)',NL_verb_name) 
+ call it(defs,'NLstep',       '[NL] Time step length',RT_step,unit=Time_unit(1),Verb_level=V_nl_optics)
  call it(defs,'NLtime',       '[NL] Simulation Time',NE_tot_time,unit=Time_unit(1))
  call it(defs,'NLintegrator', '[NL] Integrator ("EULEREXP/RK2/RK4/RK2EXP/HEUN/INVINT/CRANKNIC")',Integrator_name)
  call it(defs,'NLCorrelation','[NL] Correlation ("IPA/HARTREE/TDDFT/LRC/LRW/JGM/SEX") ',NL_correlation)
  call it(defs,'NLLrcAlpha',   '[NL] Long Range Correction',NL_LRC_alpha)
- call it(defs,'NLDamping',    '[NL] Damping',NL_damping,unit=E_unit)
+ call it(defs,'NLDamping',    '[NL] Damping (or dephasing)',NL_damping,unit=E_unit)
  call it(defs,'NLEnRange',    '[NL] Energy range',NL_er,E_unit)
  call it(defs,'NLEnSteps',    '[NL] Energy steps',n_frequencies)
  call it('f',defs,'UseDipoles','[NL] Use Covariant Dipoles (just for test purpose)',verb_level=V_nl_optics)
  call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_nl_optics)
  call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
  !
- call it(defs,'ExtF_Dir',             '[NL ExtF] Versor',Efield(1)%versor)
- call it(defs,'ExtF_Int',             '[NL ExtF] Intensity',Efield(1)%intensity,unit=I_unit  ,verb_level=V_nl_optics)
+ call it(defs,'ExtF_Dir',             '[NL ExtF] Field Versor',Efield(1)%versor)
+ call it(defs,'ExtF_Int',             '[NL ExtF] Field Intensity',Efield(1)%intensity,unit=I_unit  ,verb_level=V_nl_optics)
  call it(defs,'ExtF_Width',           '[NL ExtF] Field Width',Efield(1)%width,unit=Time_unit(1),verb_level=V_nl_optics)
  call it(defs,'ExtF_kind',            '[NL ExtF] Kind(SIN|SOFTSIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',Efield(1)%ef_name)
  call it(defs,'ExtF_Tstart',          '[NL ExtF] Initial Time',Efield(1)%t_initial,unit=Time_unit(1),               &
@@ -605,11 +585,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! BSE
  !
- call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',&
-&        BS_eh_win,verb_level=V_resp)
- call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=V_resp)
- call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&
-&                        E_unit,verb_level=V_resp)
+ call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',BS_eh_win,verb_level=V_resp)
+ !GPL_EXCLUDE_START
+ call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=0)
+ !GPL_EXCLUDE_END
+ call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,E_unit,verb_level=V_resp)
  !
  ! Xx
  !
@@ -710,6 +690,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _RT
    !
    subroutine Afield(i_field)
+     use units,    ONLY  :AU2KWCMm2
      use parser_m, ONLY  : parser
      character(10)      :: name
      integer            :: i_field
@@ -739,14 +720,15 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &            Efield(i_field)%t_initial,unit=Time_unit(1))
      !
      if (initmode==4) then
-       call parser(trim(name)//'_Int',is_def)
-       if (is_def.and.n_ext_fields==0) n_ext_fields=n_ext_fields+1
        call parser(trim(name)//'_FWHM',is_def)
        if (is_def) then
          Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
        else
          Efield(i_field)%FWHM=Efield(i_field)%width*(2._SP*sqrt(2._SP*log(2._SP)))
        endif
+       call parser(trim(name)//'_Int',is_def)
+       if (i_field==1) n_ext_fields=0
+       if (is_def.and.Efield(i_field)%intensity*AU2KWCMm2>0.) n_ext_fields=n_ext_fields+1
      endif
      !
    end subroutine
@@ -782,10 +764,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        call it(defs,trim(name),'[PARALLEL] CPUs roles '//trim(possible_fields),&
 &              CPU_structure(i_s)%ROLE_string,verb_level=V_parallel)
        name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg_INV"
-       call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra',&
+       call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra (if -1 it is automatically set)',&
 &              CPU_structure(i_s)%nCPU_lin_algebra_INV,verb_level=V_parallel)
        name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg_DIAGO"
-       call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra',&
+       call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra (if -1 it is automatically set)',&
 &              CPU_structure(i_s)%nCPU_lin_algebra_DIAGO,verb_level=V_parallel)
      enddo
      !

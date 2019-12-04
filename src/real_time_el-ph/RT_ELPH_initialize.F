@@ -41,7 +41,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  use parser_m,       ONLY:parser
  use R_lattice,      ONLY:RIM_n_rand_pts
  use parallel_m,     ONLY:PAR_Q_index,PAR_IND_Q,PAR_nQ,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
-&                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_index
+&                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX
  !
 #include<memory.h>
  !
@@ -256,7 +256,7 @@ subroutine RT_ELPH_initialize(E,k,q)
        !
        if (RIM_n_rand_pts>0.and.q_mod(iq)<=q0_mod .and. il<=3) then
          q_weight_RT(iq,il,1)=q_weight_tmp(iq,1)/ph_mean_speed(il)
-         q_weight_RT(iq,il,2)=Bose_temp*q_weight_tmp(iq,2)/ph_mean_speed(il)**2/spin_occ
+         q_weight_RT(iq,il,2)=Bose_Temp*q_weight_tmp(iq,2)/ph_mean_speed(il)**2/spin_occ
        endif
        !
      enddo

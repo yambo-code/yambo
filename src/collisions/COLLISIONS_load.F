@@ -123,6 +123,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    l_warning=.not.l_use_Hxc_collisions.and..not.l_use_COH_collisions.and..not.l_use_P_collisions
    l_error  =l_warning.and.l_real_time.and.(l_sc_sex.or.l_sc_fock)
    !
+   if (l_use_COH_collisions.and.l_sc_sex.and..not.l_use_Hxc_collisions) l_error=.TRUE.
+   !
    if (l_error)   call error(  ' HXC collisions not found / not compatible')
    if (l_warning) call warning(' HXC collisions not found. Potential is computed on the fly.')
    !

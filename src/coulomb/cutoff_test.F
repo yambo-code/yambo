@@ -66,28 +66,27 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
  !
  if (cut_is_sphere) dummy=2._SP*plot_factor*cyl_ph_radius
  if (cut_is_ws) then 
-!
-! build the superperiodicity direct lattice
-!
-  nq=1
-  rdum=1000
-  do iqibz=1,nqibz
-   if(abs(q%pt(iqibz,1))/=0..and.(abs(q%pt(iqibz,1))<rdum(1))) rdum(1)=q%pt(iqibz,1)
-   if(abs(q%pt(iqibz,2))/=0..and.(abs(q%pt(iqibz,2))<rdum(2))) rdum(2)=q%pt(iqibz,2)
-   if(abs(q%pt(iqibz,3))/=0..and.(abs(q%pt(iqibz,3))<rdum(3))) rdum(3)=q%pt(iqibz,3)
-  enddo
-  nq=abs(nint(1./rdum))
-  do i1=1,3
-    if (nq(i1)==0) nq(i1)=1
-  enddo
-  dummy=2._SP*plot_factor*dummy*nq
- !
-  do i1=1,3
-    atws(:,i1) = a(i1,:)
-    atws(:,i1) = atws(:,i1) * nq(i1)
-  enddo
-!
-
+   !
+   ! build the superperiodicity direct lattice
+   !
+   nq=1
+   rdum=1000
+   do iqibz=1,nqibz
+     if(abs(q%pt(iqibz,1))/=0..and.(abs(q%pt(iqibz,1))<rdum(1))) rdum(1)=q%pt(iqibz,1)
+     if(abs(q%pt(iqibz,2))/=0..and.(abs(q%pt(iqibz,2))<rdum(2))) rdum(2)=q%pt(iqibz,2)
+     if(abs(q%pt(iqibz,3))/=0..and.(abs(q%pt(iqibz,3))<rdum(3))) rdum(3)=q%pt(iqibz,3)
+   enddo
+   nq=abs(nint(1./rdum))
+   do i1=1,3
+     if (nq(i1)==0) nq(i1)=1
+   enddo
+   dummy=2._SP*plot_factor*dummy*nq
+   !
+   do i1=1,3
+     atws(:,i1) = a(i1,:)
+     atws(:,i1) = atws(:,i1) * nq(i1)
+   enddo
+   !
  endif
  !
  if (cut_is_cyl) then
@@ -102,7 +101,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
    if (is_cut(3)) dummy(3)=2.0_SP*plot_factor*box_length(3)
  endif
  !
-do ir1=1,n_dl_pts
+ do ir1=1,n_dl_pts
    do ir2=1,n_dl_pts
      ip=n_dl_pts*(ir1-1)+ir2
      pl_xy_pt(ip,:)=-((/dummy(1)/2,dummy(2)/2,0._SP   /)-&
@@ -174,8 +173,7 @@ do ir1=1,n_dl_pts
    call live_timing(steps=1)
    !
  enddo
-!
-!
+ !
  call PP_redux_wait(v_xy(:,2))
  call PP_redux_wait(v_yz(:,2))
  call PP_redux_wait(v_xz(:,2))
@@ -206,9 +204,9 @@ do ir1=1,n_dl_pts
  call msg('o RL_','#')
  !
  do ip=1,n_dl_pts**2
-   call msg('o xy','',(/pl_xy_pt(ip,1),pl_xy_pt(ip,2),v_xy(ip,:)/),INDENT=-2,USE_TABS=.true.)
-   call msg('o xz','',(/pl_xz_pt(ip,1),pl_xz_pt(ip,3),v_xz(ip,:)/),INDENT=-2,USE_TABS=.true.)
-   call msg('o yz','',(/pl_yz_pt(ip,2),pl_yz_pt(ip,3),v_yz(ip,:)/),INDENT=-2,USE_TABS=.true.)
+   call msg('o xy','',(/pl_xy_pt(ip,1),pl_xy_pt(ip,2),v_xy(ip,1),v_xy(ip,2)/),INDENT=-2,USE_TABS=.true.)
+   call msg('o xz','',(/pl_xz_pt(ip,1),pl_xz_pt(ip,3),v_xz(ip,1),v_xz(ip,2)/),INDENT=-2,USE_TABS=.true.)
+   call msg('o yz','',(/pl_yz_pt(ip,2),pl_yz_pt(ip,3),v_yz(ip,1),v_yz(ip,2)/),INDENT=-2,USE_TABS=.true.)
  enddo
  !
  max_val=0._SP
@@ -242,6 +240,7 @@ do ir1=1,n_dl_pts
  call of_open_close(of_name(4))
  !
  call k_ibz2bz(q,'d',.false.)
+ call PP_indexes_reset(px)
  !
  contains
    !

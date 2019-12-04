@@ -21,23 +21,25 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function variables_BS(ID,local_description,X)
+integer function variables_BS(ID,iq,local_description,CLOSE_the_menu,X)
  !
  use pars,          ONLY:lchlen
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_td_hf
+ use electrons,     ONLY:E_SOC_nbands
  use X_m,           ONLY:X_t
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts,cut_geometry
  use BS,            ONLY:BS_identifier,BS_K_dim,BS_bands,&
 &                        BS_K_coupling,BS_res_K_exchange,BS_res_K_corr,&
 &                        BS_n_g_exch,BS_n_g_W,BS_eh_en,BS_eh_win,BS_W_is_diagonal,&
 &                        BS_K_is_ALDA,BS_cpl_K_exchange,&
-&                        BS_cpl_K_corr
- use IO_m,          ONLY: io_elemental,io_status,ver_is_gt_or_eq
+&                        BS_cpl_K_corr,BSqpts,BS_perturbative_SOC
+ use IO_m,          ONLY:io_elemental,io_status,ver_is_gt_or_eq,variable_exist,write_is_on
  implicit none
  !
- integer            ::ID
+ integer            ::ID,iq
  character(lchlen)  ::local_description(100)
+ logical            ::CLOSE_the_menu
  type(X_t), optional::X
  !
  ! Work Space
@@ -49,7 +51,8 @@ integer function variables_BS(ID,local_description,X)
  ! PARS1
  !
  var_size=29
- if (ver_is_gt_or_eq(ID,(/3,0,9/))) var_size=30
+ if (ver_is_gt_or_eq(ID,(/3,0,9/)))      var_size=30
+ if (ver_is_gt_or_eq(ID,revision=16339)) var_size=33
  !
  i_local_desc=1
  local_description=' '
@@ -58,6 +61,12 @@ integer function variables_BS(ID,local_description,X)
  call io_elemental(ID,&
 &     VAR=" BSK|Identifier              :",I0=BS_identifier,&
 &     DESCRIPTION=local_description(i_local_desc))
+ i_local_desc=i_local_desc+1
+ if(iq>1) then
+   call io_elemental(ID,VAR=&
+&     "    |Q-point                 :",R1=BSqpts(:,iq),CHECK=.true.,OP=(/"==","==","=="/),&
+&     DESCRIPTION=local_description(i_local_desc))
+ endif
  i_local_desc=i_local_desc+1
  call io_elemental(ID,&
 &     VAR="    |Dimension               :",I0=BS_K_dim,CHECK=.true.,OP=(/"=="/),&
@@ -218,9 +227,25 @@ integer function variables_BS(ID,local_description,X)
 &     VAR='    |Random points      [col]:',CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc),DO_NOT_DUMP=.TRUE.)
    !
+   if (write_is_on(ID).or.variable_exist(ID,"PERT_SOC")) then
+     !
+     ! SOC
+     !
+     call io_elemental(ID,VAR="PERT_SOC",VAR_SZ=2,MENU=0)
+     i_local_desc=i_local_desc+1
+     call io_elemental(ID,L0=BS_perturbative_SOC,&
+&       VAR=' SOC|Perturbative SOC        :',CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_local_desc),DO_NOT_DUMP=.TRUE.)
+     i_local_desc=i_local_desc+1
+     call io_elemental(ID,I0=E_SOC_nbands,&
+&       VAR='    |Bands in the MAP db     :',CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_local_desc),DO_NOT_DUMP=.TRUE.)
+   endif
+   !
  endif
  !
- call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+ if (     CLOSE_the_menu) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+ if (.not.CLOSE_the_menu) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  variables_BS=io_status(ID)
  !

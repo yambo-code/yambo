@@ -25,13 +25,13 @@ subroutine a2y_db1(en,k,ncid)
  !
  use netcdf
  use netcdf_data
- use pars,                 only : SP, DP, PI, schlen
- use com,                  only : msg, error, warning
+ use pars,                 only : SP,pi
+ use com,                  only : msg, error
  use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, l_spin_orbit
  use wave_func,            only : wf_ncx
  use R_lattice,            only : ng_vec, bz_samp, nkibz
  use D_lattice,            only : nsym, n_atoms, n_atomic_species
- use mod_com2y,            only : print_interface_dimensions, ng_vec_abinit, artificial_spin_pol
+ use mod_com2y,            only : print_interface_dimensions,  artificial_spin_pol
  !
 #include<memory.h>
  !
@@ -43,7 +43,7 @@ subroutine a2y_db1(en,k,ncid)
  !
  integer                       :: i1,i2,ik,ib,is
  integer                       :: dimid, netcdf_error
-
+ !
  call msg('s','Header/K-points/Energies...')
  !
  ! Directly read dimensions

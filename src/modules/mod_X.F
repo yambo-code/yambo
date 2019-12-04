@@ -27,6 +27,7 @@ module X_m
  use units,          ONLY:HA2EV
  use matrix,         ONLY:PAR_matrix
  !
+#include <dev_defs.h>
 #include <memory.h>
  !
  ! Polarizability
@@ -59,6 +60,12 @@ module X_m
  real(SP)             :: X_DbGd_percentual=0.5
  integer ,allocatable :: X_DbGd_nkpt_at_q(:)
  integer ,allocatable :: X_DbGd_nkpt_at_q_table(:,:,:)
+#ifdef _CUDA
+ !
+ ! GPU X_irredux_residuals workspace
+ !
+ complex(SP), allocatable, device :: rhotw_save_d(:), rhotw_save2_d(:)
+#endif
  !
  ! Absorption & Polarizability
  !
@@ -101,12 +108,13 @@ module X_m
  !
  ! PARALLEL distribution
  !
- type(PAR_matrix), allocatable :: X_par(:)
- type(PAR_matrix)              :: X_par_lower_triangle
+ type(PAR_matrix), allocatable, target :: X_par(:)
+ type(PAR_matrix), target      :: X_par_lower_triangle
  logical                       :: X_lower_triangle_matrix_in_use=.FALSE.
  integer                       :: X_rows(2) = 0
  integer                       :: X_cols(2) = 0
- complex(SP)     , allocatable :: X_mat(:,:,:)
+ complex(SP),      allocatable :: X_mat(:,:,:)
+ complex(SP),      allocatable DEV_ATTRIBUTE :: X_mat_d(:,:,:)
  !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
@@ -150,19 +158,41 @@ module X_m
      integer, optional :: d(:)
      !
      if (present(d)) then
-       if (allocated(X_mat)) return
-       YAMBO_ALLOC(X_mat,(d(1),d(2),d(3)))
-       X_mat=cZERO
+       select case(what)
+       case('EPS')
+         if (allocated(Epsilon_ii)) return
+         YAMBO_ALLOC(Epsilon_ii,(d(1),d(2))) !2(int)3(nonint)4(n-1 Haydock/inv shifted)
+         YAMBO_ALLOC(X_drude_term,(d(1)))
+         YAMBO_ALLOC(Joint_DOS,(d(1),d(2)))
+         Epsilon_ii   = cZERO
+         X_drude_term = cZERO
+         Joint_DOS    = cZERO
+       case('X')
+         if (allocated(X_mat)) return
+         YAMBO_ALLOC(X_mat,(d(1),d(2),d(3)))
+         X_mat=cZERO
+#ifdef _CUDA
+         allocate(X_mat_d, source=X_mat)
+#endif
+       end select
      else
-       !
-       ! I clean the RL components mapping
-       !
-       YAMBO_FREE(X_RLcomp_ig)
-       !
-       ! and the matrix itself
-       !
-       YAMBO_FREE(X_mat)
-       !
+       select case(what)
+       case('EPS')
+         YAMBO_FREE(Epsilon_ii)
+         YAMBO_FREE(X_drude_term)
+         YAMBO_FREE(Joint_DOS)
+       case('X')
+         !
+         ! I clean the RL components mapping
+         !
+         YAMBO_FREE(X_RLcomp_ig)
+         !
+         ! and the matrix itself
+         !
+         YAMBO_FREE(X_mat)
+         YAMBO_FREE(X_mat_d)
+         !
+       end select
      endif
      !
    end subroutine
@@ -193,8 +223,10 @@ module X_m
      type(X_t)::X
      X%ng           =1
      X%ng_db        =0
+     !DEBUG>
      !X%ib           =(/1,-1/)
      !X%ib_lim       =(/1,-1/)
+     !DEBUG<
      X%iq           =(/1,-1/)
      X%ngostnts     =0
      X%whoami       =0

@@ -27,16 +27,11 @@ module LOGO
  ! 
  implicit none
  !
- integer      :: code_version(3)
- integer      :: code_GPL_revision
- integer      :: code_revision
- character(50):: code_hash
- !
  integer                     :: n_logo_lines
  integer                     :: ID_logo
  integer                     :: ID_logo_stderr
  integer, parameter, private :: max_n_logo_lines=100
- character(60)               :: logo_line(max_n_logo_lines)
+ character(70)               :: logo_line(max_n_logo_lines)
  !
  contains
    !
@@ -61,6 +56,7 @@ module LOGO
    !
    subroutine pickup_a_logo(unit_)
      !
+     use C_driver, ONLY:code_version,code_revision,code_hash,code_libraries,code_branch
      use pars,     ONLY:SP
      use stderr,   ONLY:intc,slash
      !
@@ -68,12 +64,8 @@ module LOGO
      ! 
      ! Work Space
      !
-     character(schlen) :: comment(3),ch,MPI_string,OMP_string
+     character(schlen) :: comment(4),ch
      integer           :: max_length,i1,left_space,iA,ic
-     !
-     ! Get version and revision
-     !
-     include 'version.inc'
      !
      ! GPL_EXCLUDE_START
      !
@@ -90,20 +82,17 @@ module LOGO
 !&                '.'//' (Based on r.'//trim(intc(code_revision))//' h.'//trim(code_hash)//')'
      ! GPL_INCLUDE_END
      !
-     MPI_string="Serial"
-#if defined _MPI
-     MPI_string="MPI"
-#endif
-#if defined _SCALAPACK
-     MPI_string="MPI+SLK"
-#endif
-     OMP_string=" "
-#if defined _OPENMP
-     OMP_string="+OpenMP"
-#endif
-     comment(2)=trim(MPI_string)//trim(OMP_string)//" Build"
+     ! GPL_EXCLUDE_START
+     comment(2)="Branch is "//trim(code_branch)
+     ! GPL_EXCLUDE_END
      !
-     comment(3)='http://www.yambo-code.org'
+     ! GPL_INCLUDE_START
+     !comment(2)=""
+     ! GPL_INCLUDE_END
+     !
+     comment(3)=trim(code_libraries)//" Build"
+     !
+     comment(4)='http://www.yambo-code.org'
      !
      if (ID_logo<0) then
        ID_logo=pickup_a_random(10._SP)
@@ -302,7 +291,7 @@ module LOGO
      n_logo_lines=n_logo_lines+1
      logo_line(n_logo_lines)=' '
      !
-     do ic=1,3
+     do ic=1,4
        n_logo_lines=n_logo_lines+1
        logo_line(n_logo_lines)=trim(comment(ic))
        left_space=(max_length-len_trim(comment(ic)))/2+1

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_sort_and_report(BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
+subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  !
  use pars,          ONLY:SP,schlen,pi
  use units,         ONLY:HA2EV
@@ -32,18 +32,19 @@ subroutine excitons_sort_and_report(BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  use R_lattice,     ONLY:d3k_factor,q0_def_norm
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,atom_pos,Z_species
  use vec_operate,   ONLY:sort
- use YPP,           ONLY:EXCITONS_user_indexes,EXCITON_spin
+ use YPPm,          ONLY:EXCITONS_user_indexes,EXCITON_spin
  !
  implicit none 
  !
+ integer                      :: iq
  complex(SP)                  :: BS_R(BSS_n_eig),BS_E(BSS_n_eig)
  real(SP),pointer             :: BS_E_SOC_corr(:,:)
  type(EXCITON_spin),optional  :: EXC_spin
  !
  ! Work Space
  !
- integer            :: j1,j2,ia,is,i_mod,ic,n_elements,i_S,i_M,S_indx(BSS_n_eig)
- real(SP)           :: Residuals(BSS_n_eig),v2sort(BSS_n_eig),Rmax,rv(20)
+ integer            :: j1,j2,ia,is,i_mod,n_elements,i_S,i_M,S_indx(BSS_n_eig)
+ real(SP)           :: Residuals(BSS_n_eig),v2sort(BSS_n_eig),Rmax,ERmax,rv(20)
  character(schlen)  :: titles(20),ch_dummy,dump_ch
  logical            :: write_widths,write_soc_corr,write_spin,E_mode,I_mode
  !
@@ -71,11 +72,11 @@ subroutine excitons_sort_and_report(BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
    I_mode=i_mod==2
    !
    if (E_mode) then
-     ch_dummy='exc_E_sorted'
-     if (write_spin) ch_dummy='exc_E+spin_sorted'
+     ch_dummy='exc_qpt'//trim(intc(iq))//'_E_sorted'
+     if (write_spin) ch_dummy='exc_qpt'//trim(intc(iq))//'_E+spin_sorted'
    else if (I_mode) then
-     ch_dummy='exc_I_sorted'
-     if (write_spin) ch_dummy='exc_I+spin_sorted'
+     ch_dummy='exc_qpt'//trim(intc(iq))//'_I_sorted'
+     if (write_spin) ch_dummy='exc_qpt'//trim(intc(iq))//'_I+spin_sorted'
    endif
    !
    call of_open_close(ch_dummy,'ot')
@@ -122,19 +123,36 @@ subroutine excitons_sort_and_report(BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
      titles(n_elements  )='dE(2)[meV]'
    endif
    !
-   Residuals(:) = BS_R(:)*conjg(BS_R(:))
+   Residuals(:) = real(BS_R(:)*conjg(BS_R(:)),SP)
    if (write_widths)  Residuals(:) = abs(BS_R(:))
    Residuals(:) = Residuals(:)*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/q0_def_norm**2*HA2EV
-   Rmax = maxval(Residuals)
    !
-   if (trim(R_normalize)=='yes') Residuals=Residuals/Rmax
+   if (trim(R_normalize)=='yes') then
+     Rmax = maxval(Residuals)
+     Residuals=Residuals/Rmax
+     write(dump_ch,'(a,1e10.5)') " Maximum Residual Value = ",Rmax
+   endif
+   !
+   if (trim(R_normalize)=='yes_deg') then
+      v2sort=Residuals
+      call sort(arrin=v2sort,indx=S_indx)
+      Rmax=0._SP
+      do j1=BSS_n_eig,1,-1
+        j2=S_indx(j1)
+        if(j1==BSS_n_eig) ERmax=real(BS_E(j2),SP)
+        if(abs(ERmax-BS_E(j2))>1.E-5_SP) exit
+        Rmax=Rmax+v2sort(j1)**2
+      enddo
+      Rmax=sqrt(Rmax/real(BSS_n_eig-j1,SP))
+      write(dump_ch,'(a,1e10.5)') " Maximum Residual Value (summed over degenerate states) = ",Rmax
+      Residuals=Residuals/Rmax
+   endif
    !
    if (E_mode) v2sort=real(BS_E,SP)
    if (I_mode) v2sort=Residuals
    !
    call sort(arrin=v2sort,indx=S_indx)
    !
-   write(dump_ch,'(a,1e10.5)') " Maximum Residual Value = ",Rmax   
    call msg('o sort','#',dump_ch,USE_TABS=.TRUE.)
    call msg('o sort','#','',USE_TABS=.TRUE.)
    !

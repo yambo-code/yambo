@@ -25,7 +25,7 @@ subroutine NL_damping(E,V_bands,ik,i_sp_pol)
  !
  ! Output: I_relax
  !
- use pars,           ONLY:SP,cI,cZERO
+ use pars,           ONLY:SP,cI
  use zeros,          ONLY:zero_dfl
  use electrons,      ONLY:levels,n_sp_pol
  use QP_m,           ONLY:QP_nk

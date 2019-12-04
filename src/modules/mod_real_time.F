@@ -551,6 +551,9 @@ module real_time
      YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
      YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
+     G_lesser_reference=cZERO
+     dG_lesser         =cZERO
+     G_lesser          =cZERO
      !
      ! Occ's ...
      YAMBO_ALLOC(RT_H_occupations,(RT_bands(1):RT_bands(2),RT_nk))
@@ -601,7 +604,6 @@ module real_time
      call DIP_alloc('DIP_spin')
      call DIP_alloc('DIP_orbital')
      call DIP_alloc('P_square') 
-     call DIP_alloc('DIP_projected')
      call DIP_alloc('DIP_P_spinor')
      !
      YAMBO_FREE(DbGd_ibz_coo)

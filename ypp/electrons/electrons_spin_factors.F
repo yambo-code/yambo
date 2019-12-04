@@ -25,7 +25,7 @@ subroutine electrons_spin_factors(kpts,bands,spin_factors)
  !
  use pars,           ONLY:SP
  use wave_func,      ONLY:WF
- use YPP,            ONLY:WF_ref
+ use YPPm,           ONLY:WF_ref
  use FFT_m,          ONLY:fft_size
  use LIVE_t,         ONLY:live_timing
  use interfaces,     ONLY:PARALLEL_index,WF_load,WF_free

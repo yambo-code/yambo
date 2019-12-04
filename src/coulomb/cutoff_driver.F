@@ -94,7 +94,7 @@ subroutine cutoff_driver(q)
  is_cut(2)=index(str_piece(2),'y')/=0.or.index(str_piece(2),'Y')/=0
  is_cut(3)=index(str_piece(2),'z')/=0.or.index(str_piece(2),'Z')/=0
  !
- if (cut_is_sphere) is_cut=.true.
+ if (cut_is_sphere.or.cut_is_ws) is_cut=.true.
  !
  if(any(is_cut)) call check_periodic_directions(is_cut)
  !

@@ -80,8 +80,12 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  if (nindxs==1.and.local_CONSECUTIVE) then
    !
    YAMBO_ALLOC(px%element_1D,(uplim(1)))
+   YAMBO_ALLOC(px%first_of_1D,(ncpu_loop))
+   YAMBO_ALLOC(px%last_of_1D,(ncpu_loop))
    allocate(i_done(uplim(1)))
    px%element_1D=.false.
+   px%first_of_1D=0
+   px%last_of_1D=0
    i_done=1
    i_done(:lowlim(1))=0
    average_steps=(uplim(1)-lowlim(1)+1)/ncpu_loop
@@ -98,6 +102,8 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
          i_range(1)=i_range(1)+missing_cpus
          i_range(2)=i_range(2)+missing_cpus
        endif
+       px%first_of_1D(myid_loop+1)=i_range(1)
+       px%last_of_1D(myid_loop+1)=i_range(2)
        px%element_1D(i_range(1):i_range(2))=.TRUE.
        i_done(i_range(1):i_range(2))=i_done(i_range(1):i_range(2))-1
      endif

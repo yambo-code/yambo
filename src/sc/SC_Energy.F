@@ -26,7 +26,7 @@ subroutine SC_Energy(E_total,E_eigen,E_zero,E_Hartree,E_xc_,E_Fermi,E,k,rho)
  ! Total energy defined in terms of the KS orbitals
  !
  use pars,           ONLY:SP
- use wrapper,        ONLY:real_V_dot_V
+ use wrapper,        ONLY:V_dot_V
  use drivers,        ONLY:l_sc_is_libDFT,l_sc_hartree
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_sp_pol,n_spin,nel
@@ -89,16 +89,16 @@ subroutine SC_Energy(E_total,E_eigen,E_zero,E_Hartree,E_xc_,E_Fermi,E,k,rho)
  ! Hartree:
  ! E_Hartree= 1/2 \int rho(r) V_hartree(r)= 1/2 \int\int rho(r) v(r-r') rho(r')
  !
- E_Hartree=real_V_dot_V(fft_size,rho,(0.5_SP*V_hartree_sc(:,1)))
+ E_Hartree=V_dot_V(fft_size,rho,(0.5_SP*V_hartree_sc(:,1)))
  !
  ! DFT Exc:
  ! E_xc=  \int rho(r) E_xc(r)
  !
- E_xc_=real_V_dot_V(fft_size,rho,E_xc(:))
+ E_xc_=V_dot_V(fft_size,rho,E_xc(:))
  !
  ! DAVIDE (11/06/2015): to be fixed with spin, the term -\int magn(r) B_xc(r) is missing
  do i_spin=1,n_spin
-   E_Vxc_rho=E_Vxc_rho-real_V_dot_V(fft_size,rho,V_xc(:,i_spin))
+   E_Vxc_rho=E_Vxc_rho-V_dot_V(fft_size,rho,V_xc(:,i_spin))
  enddo
  !
  ! Fermi level contribution to E_total

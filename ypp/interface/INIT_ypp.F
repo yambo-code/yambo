@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
+subroutine INIT_ypp(E,instr,FINALIZE)
  !
  use units,          ONLY:FS2AUT
  use YPPm,           ONLY:l_plot,l_map_WFs,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,BSiq,&
@@ -71,8 +71,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #include<memory.h>
  !
  type(levels)     ::E
- integer          ::lnstr
- character(lnstr) ::instr
+ character(*)     ::instr
  logical          ::FINALIZE
  !
  ! Work Space
@@ -201,9 +200,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    !
    if (i1<50) then
      if( trim(rstr_piece(i1)) == 'infver' .and. STRING_same(rstr_piece(i1+1),'gen') ) infile_verbosity=V_general
-     if( trim(rstr_piece(i1)) == 'infver' .and. STRING_same(rstr_piece(i1+1),'rt')  )  infile_verbosity=V_real_time
-     if( trim(rstr_piece(i1)) == 'infver' .and. STRING_same(rstr_piece(i1+1),'nl')  )  infile_verbosity=V_nl_optics
-     if( trim(rstr_piece(i1)) == 'infver' .and. STRING_same(rstr_piece(i1+1),'qp')  )  infile_verbosity=V_qp
+     if( trim(rstr_piece(i1)) == 'infver' .and. STRING_same(rstr_piece(i1+1),'rt')  ) infile_verbosity=V_real_time
+     if( trim(rstr_piece(i1)) == 'infver' .and. STRING_same(rstr_piece(i1+1),'nl')  ) infile_verbosity=V_nl_optics
+     if( trim(rstr_piece(i1)) == 'infver' .and. STRING_same(rstr_piece(i1+1),'qp')  ) infile_verbosity=V_qp
      if( trim(rstr_piece(i1)) == 'infver' .and. STRING_same(rstr_piece(i1+1),'all') ) infile_verbosity=V_all
    endif
    !

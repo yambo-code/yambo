@@ -415,7 +415,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
- call it(defs,'RADLifeTime',  '[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
+ call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
  call it(defs,'RAD_prefactor','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
  call it(defs,'PhLifeTime', '[RT] Constant Dephasing Time',Phase_LifeTime,unit=Time_unit(1))
  !
@@ -587,7 +587,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! BSE
  !
  call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',BS_eh_win,verb_level=V_resp)
+ !GPL_EXCLUDE_START
  call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=0)
+ !GPL_EXCLUDE_END
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,E_unit,verb_level=V_resp)
  !
  ! Xx

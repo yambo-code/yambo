@@ -35,6 +35,9 @@ integer function io_DB1(E,k,ID)
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
 &                           QP_states_k,nXkibz,ng_closed
  use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng,wf_nb_io
+#ifdef _CUDA
+ use wave_func,        ONLY:wf_igk_d
+#endif
  use LIVE_t,           ONLY:live_timing_is_on
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec,variable_exist, &
 &                           io_elemental, io_status, io_bulk,read_is_on,&
@@ -284,6 +287,9 @@ integer function io_DB1(E,k,ID)
    YAMBO_ALLOC(k%pt,(k%nibz,3))
    YAMBO_ALLOC(wf_nc_k,(k%nibz))
    YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
+#ifdef _CUDA
+   YAMBO_ALLOC(wf_igk_d,(wf_ncx,k%nibz))
+#endif
    !
    if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
      YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
@@ -346,6 +352,11 @@ integer function io_DB1(E,k,ID)
  !
  call io_bulk(ID, VAR="WFC_GRID", VAR_SZ=shape(wf_igk) )
  call io_bulk(ID, I2=wf_igk )
+#ifdef _CUDA
+ if(read_is_on(ID)) then
+   wf_igk_d = wf_igk
+ endif
+#endif
  !
 1 call io_disconnect(ID=ID)
  !

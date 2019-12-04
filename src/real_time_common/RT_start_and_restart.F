@@ -265,11 +265,12 @@ subroutine RT_start_and_restart(E,k,q)
  ! Pseudo potential terms needed for velocity gauge
  !==================================================
  !
+ ! GPL_EXCLUDE_START
  if (l_velocity_gauge_corr) then
    call Pseudo_KB_G_to_R_space(k,E)
    call Pseudo_Hamiltonian(k,E,.true.)
  endif
- !
+ ! GPL_EXCLUDE_END
  !
  call msg('r','')
  !

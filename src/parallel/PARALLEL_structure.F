@@ -29,8 +29,11 @@ subroutine PARALLEL_structure(n_elements,ROLE)
 &                      PARALLEL_CPU_role,PARALLEL_CPU_used,PARALLEL_n_structures_active,&
 &                      ncpu_chain,mpi_comm_world,CREATE_the_COMM
  use parallel_m,  ONLY:PAR_Q_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,PAR_K_range,PAR_n_bands,&
-&                      PAR_EH_range,PAR_n_G_vectors,PAR_n_freqs
+&                      PAR_EH_range,PAR_n_G_vectors,PAR_n_freqs,mycuda_dev
  use interfaces,  ONLY:PARALLEL_check_phase_space
+!#ifdef _CUDA
+! use mpiDeviceUtil
+!#endif
  !
  implicit none
  !
@@ -39,8 +42,9 @@ subroutine PARALLEL_structure(n_elements,ROLE)
  !
  ! Work Space 
  !
- integer     ::ID(n_elements),i_cpu,i_chain,i_chain_lim(2),chain_now,i_order,&
+ integer     ::ID(n_elements),i_cpu,i_chain,chain_now,i_order,&
 &              tmp_comm_inter,tmp_comm_intra,i_structure,PHASE_space
+ integer, volatile :: i_chain_lim(2)
  logical     ::USER_structure_is_ok
  character(schlen) ::USER_structure_msg
  !
@@ -145,6 +149,10 @@ subroutine PARALLEL_structure(n_elements,ROLE)
    tmp_comm_inter = INTER_CHAIN(i_chain)%COMM
    !
  enddo
+ !
+!#ifdef _CUDA
+! call assignDevice(mycuda_dev)
+!#endif
  !
 #endif
  !

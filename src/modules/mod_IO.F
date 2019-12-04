@@ -214,13 +214,13 @@ module IO_m
    !
    subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
      use pars,              ONLY:schlen
-     integer                :: ID
-     character(*)           :: VAR
-     integer                :: VAR_ID
-     integer                :: VAR_SZ(:)
-     integer                :: VAR_KIND
-     character(schlen),optional :: dim_names(:)
-     character(*),optional      :: par_io_kind
+     integer,      intent(in)  :: ID
+     character(*), intent(in)  :: VAR
+     integer,      intent(in)  :: VAR_ID
+     integer,      intent(in)  :: VAR_SZ(:)
+     integer,      intent(in)  :: VAR_KIND
+     character(schlen), optional, intent(in) :: dim_names(:)
+     character(*),      optional, intent(in) :: par_io_kind
    end subroutine def_variable_bulk
    !
    subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
@@ -257,14 +257,14 @@ module IO_m
      !
      use pars,   ONLY:SP,DP,LP
      integer, intent(in)   :: ID, VAR_ID
-     integer,     optional :: IPOS(:)
-     integer,     optional ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
-     real(SP),    optional ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
-     real(DP),    optional ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
-     complex(SP), optional, target ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
-     complex(DP), optional, target ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
-     integer(LP), optional ::  L0, L1(:), L2(:,:), L3(:,:,:), L4(:,:,:,:)
-     character,   optional :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
+     integer,     optional, intent(in)    :: IPOS(:)
+     integer,     optional, intent(inout) ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
+     real(SP),    optional, intent(inout) ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
+     real(DP),    optional, intent(inout) ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
+     complex(SP), optional, target, intent(inout) ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
+     complex(DP), optional, target, intent(inout) ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
+     integer(LP), optional, intent(inout) ::  L0, L1(:), L2(:,:), L3(:,:,:), L4(:,:,:,:)
+     character,   optional, intent(inout) :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
      !
    end subroutine io_variable_bulk
    !

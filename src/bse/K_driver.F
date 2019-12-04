@@ -277,14 +277,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !... Blocks build-up
    if (.not.l_rpa_IP) call K_blocks(iq)
    !
-   ! 1. The IP Part
-   ! ===============
-   call K_IP(iq,Ken,Xk,Dip,W_bss)
-   !
    ! Wave Functions distribution 
    !=============================
    call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.FALSE.)
    call PARALLEL_WF_index( )
+   !
+   ! 1. The IP Part
+   ! ===============
+   call K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    ! 2. The KERNEL
    ! ================

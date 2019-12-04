@@ -374,7 +374,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  call MATRIX_reset(X_par(1))
  call MATRIX_reset(X_par_lower_triangle)
  deallocate(X_par)
- call DIP_alloc('DIP_projected')
  call WF_free(WF)
  call PP_redux_wait
  call set_real_printed_length()

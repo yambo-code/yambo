@@ -25,7 +25,7 @@
 
 MODULE mod_sampling
 
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,DP
 
 IMPLICIT NONE
 

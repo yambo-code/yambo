@@ -242,6 +242,7 @@ subroutine cutoff_box(q,is_cut)
 !$omp end parallel do
  !
  call k_ibz2bz(q,'d',.true.)
+ call PP_indexes_reset(px)
  !
  YAMBO_FREE(V_bare)
  YAMBO_FREE(V_cut)

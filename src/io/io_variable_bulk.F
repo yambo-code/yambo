@@ -289,7 +289,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  !
  if (present(C5)) then
    isize_loc=(/2,size(C5,1),size(C5,2),size(C5,3),size(C5,4),size(C5,5)/)
-   !RC5 => linkC2R(C5,isize_loc)
    call C_F_POINTER(C_LOC(C5), RC5, isize_loc )
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC5, ipos_loc, isize_loc)
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC5, ipos_loc, isize_loc)

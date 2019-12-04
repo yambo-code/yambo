@@ -29,7 +29,7 @@ scalapack   = @def_scalapack@
 slepc       = @def_slepc@
 precision   = @def_dp@
 fft         = @def_fft@
-xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@ @def_uspp@ @def_cuda@
+xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@ @def_uspp@ @def_cuda@ @def_yaml@
 keep_objs   = @enable_keep_objects@
 do_blacs    = @compile_blacs@
 do_slk      = @compile_slk@
@@ -37,6 +37,8 @@ do_lapack   = @compile_lapack@
 do_fftw     = @compile_fftw@
 do_fftqe    = @compile_fftqe@
 do_iotk     = @compile_iotk@
+do_futile   = @compile_futile@
+do_yaml     = @compile_yaml@
 do_hdf5     = @compile_hdf5@
 do_netcdf   = @compile_netcdf@
 do_etsf     = @compile_etsf@
@@ -92,7 +94,7 @@ DRIVER_LIBS_LD = driver_options driver_interface driver_lib
 
 BASIC_LIBS   = tools modules memory matrices linear_algebra parallel parser communicate common io \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
-BASIC_LIBS_LD= $(DRIVER_LIBS_LD) tools memory communicate io modules matrices linear_algebra bz_ops parallel parser communicate common io \
+BASIC_LIBS_LD= $(DRIVER_LIBS_LD) tools memory io communicate modules matrices linear_algebra bz_ops parallel parser communicate common io \
                xc_functionals interface stop_and_restart wf_and_fft coulomb
 
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup \
@@ -123,7 +125,7 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 # Interfaces
 #
 2YLIBS       = tools modules memory matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
-2YLIBS_LD    = $(DRIVER_LIBS_LD) tools memory communicate io modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
+2YLIBS_LD    = $(DRIVER_LIBS_LD) tools memory io communicate modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
 #
 # YPP
 #
@@ -191,6 +193,10 @@ ext-libs:
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_fftqe)" = yes ; then LIBS2DO="fftqe" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); $(mklib_internal); fi
+	@+if test "$(do_yaml)" = yes ; then LIBS2DO="yaml" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+	@+if test "$(do_futile)" = yes ; then LIBS2DO="futile" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_iotk)" = yes ; then LIBS2DO="iotk" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_hdf5)" = yes ; then LIBS2DO="hdf5" ; \
@@ -516,6 +522,8 @@ endef
 #
 define makefiles_clean
  find . \( -name 'Makefile' -o -name '*make.dep' \) -type f -print | grep -v '\.\/Makefile' | \
+        grep -v '.*yaml.*\/Makefile' |  \
+        grep -v '.*futile.*\/Makefile' |  \
         grep -v '.*iotk.*\/Makefile' |  \
         grep -v '.*etsf_io.*\/Makefile' | \
         grep -v '.*hdf5.*\/Makefile' | grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | \
@@ -526,6 +534,8 @@ define objects_clean
  find . \( -name '*.o' -o -name '*.f90' \
         -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' \) \
         -type f -print | \
+        grep -v '.*yaml.*\/*f90' | \
+        grep -v '.*futile.*\/*f90' | \
         grep -v '.*iotk.*\/*f90' | \
         grep -v '.*etsf_io.*\/*f90' | \
         grep -v '.*lapack*' | grep -v '.*blacs*' |  \
@@ -545,7 +555,7 @@ define lib_ext_clean
            -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
  find . -name 'xc*.h' -type f -print | xargs rm -f
  echo "[CLEAN] External Libraries ... " 
- @for libtoclean in "libxc" "iotk" "netcdff" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
+ @for libtoclean in "libxc" "yaml" "futile" "iotk" "netcdff" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    echo "[CLEAN] ... $$libtoclean" ; \
    cd $(libdir)/$$libtoclean ; \
@@ -583,7 +593,7 @@ define lib_ext_remove
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | \
-       grep -v hdf5 | grep -v netcdf | grep -v xc | grep -v iotk | grep -v typesize | grep -v etsf_io | grep -v fftw | xargs rm -f 
+       grep -v hdf5 | grep -v netcdf | grep -v xc | grep -v yaml | grep -v futile | grep -v iotk | grep -v typesize | grep -v etsf_io | grep -v fftw | xargs rm -f 
  @if test -d $(libbindir); then \
   cd $(libbindir) ; rm -f * ; cd .. ; rmdir $(libbindir); \
  fi

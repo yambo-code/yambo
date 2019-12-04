@@ -28,6 +28,10 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  use LIVE_t,       ONLY:LIVE_message
  use com,          ONLY:repfile,terminator,of_unit
  use com_interfcs, ONLY:composed_fmt
+#if defined _YAML_OUTPUT
+ use com,          ONLY:of_yaml_IDs
+ use yaml_output,  ONLY:yaml_map
+#endif
  !
  implicit none
  !
@@ -60,6 +64,10 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
    write (of_unit(i1),trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
    if (of_unit(i1)==11) close(11)
    of_unit(i1)=-of_unit(i1)
+   if (abs(of_unit(i1))/=11) call of_netcdf_shadow_char(i1,size(val),val)
+#if defined _YAML_OUTPUT
+   if (abs(of_unit(i1))/=11) call yaml_map(mesg,val,unit=of_yaml_IDs(i1))
+#endif
  enddo
  if (index(how,'o')>0.or.index(how,'O')>0) return
  if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
@@ -80,6 +88,10 @@ subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
  use LIVE_t,       ONLY:LIVE_message
  use com,          ONLY:repfile,of_unit,terminator
  use com_interfcs, ONLY:composed_fmt
+#if defined _YAML_OUTPUT
+ use com,          ONLY:of_yaml_IDs
+ use yaml_output,  ONLY:yaml_map
+#endif
  !
  implicit none
  !
@@ -108,6 +120,9 @@ subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
    write (of_unit(i1),trim(msgfmt)) mesg,val
    if (of_unit(i1)==11) close(11)
    of_unit(i1)=-of_unit(i1)
+#if defined _YAML_OUTPUT
+   if (abs(of_unit(i1))/=11) call yaml_map(mesg,val,unit=of_yaml_IDs(i1))
+#endif
  enddo
  if (index(how,'o')>0.or.index(how,'O')>0) return
  if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
@@ -127,6 +142,10 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatte
  use LIVE_t,       ONLY:LIVE_message
  use com,          ONLY:repfile,of_unit,terminator
  use com_interfcs, ONLY:composed_fmt
+#if defined _YAML_OUTPUT
+ use com,          ONLY:of_yaml_IDs
+ use yaml_output,  ONLY:yaml_map
+#endif
  !
  implicit none
  !
@@ -140,7 +159,7 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatte
  ! 
  ! Work Space
  !
- integer  :: i1,l_indent
+ integer  :: i1,l_indent,imsg
  character(schlen):: gen_fmt_local
  character(lchlen):: lch,msgfmt
  logical          :: l_tabs,l_ext_fmt
@@ -168,7 +187,13 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatte
      if (of_unit(i1)==11) close(11)
      of_unit(i1)=-of_unit(i1)
    endif
-   if (abs(of_unit(i1))/=11.and.index(mesg,"#")==0) call of_netcdf_shadow(i1,size(val),val)
+   if (abs(of_unit(i1))/=11) then
+     imsg=index(mesg,"#")
+     call of_netcdf_shadow_real(i1,imsg,size(val),val)
+#if defined _YAML_OUTPUT
+     call yaml_map(mesg,val,unit=of_yaml_IDs(i1))
+#endif
+   endif
  enddo
  if (index(how,'o')>0.or.index(how,'O')>0) return
  if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return

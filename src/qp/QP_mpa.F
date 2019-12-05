@@ -327,15 +327,17 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
            dp_dummy = 0.0_DP
            !
            !$omp parallel do default(shared), private(ig1,ig2,ctmp), reduction(+:dp_dummy), collapse(2)
-           do ig2=1,X%ng
-             do ig1=1,X%ng
+           do i_np=1,npoles
+             do ig2=1,X%ng
+               do ig1=1,X%ng
+                 !
+                 ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-MPA_R_mat(ig1,ig2,i_np))*&
+&                       ( (spin_occ-f_kmq+bose_f(MPA_E_mat(ig1,ig2,i_np)))/(W_(i_w)-E_kmq-MPA_E_mat(ig1,ig2,i_np))+&
+&                         (f_kmq+bose_f(MPA_E_mat(ig1,ig2,i_np)))/(conjg(W_(i_w))-E_kmq+MPA_E_mat(ig1,ig2,i_np)))
+                 !
+                   dp_dummy=dp_dummy+ctmp
                !
-               ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-MPA_R_mat(ig1,ig2,npoles))*&
-&                     ( (spin_occ-f_kmq+bose_f(MPA_E_mat(ig1,ig2,npoles)))/(W_(i_w)-E_kmq-MPA_E_mat(ig1,ig2,npoles))+&
-&                       (f_kmq+bose_f(MPA_E_mat(ig1,ig2,npoles)))/(conjg(W_(i_w))-E_kmq+MPA_E_mat(ig1,ig2,npoles)))
-               !
-               dp_dummy=dp_dummy+ctmp
-               !
+               enddo
              enddo
            enddo
            !$omp end parallel do

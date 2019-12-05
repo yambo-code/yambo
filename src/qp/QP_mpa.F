@@ -52,7 +52,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use matrix_operate,ONLY:mat_transpose,mat_transpose_r
  use timing_m,      ONLY:timing
  !
-! use mod_exact_3p   ! Dario: module with exact solution up to 3 poles in the MPA
+ use mod_exact_3p   ! Dario: module with exact solution up to 3 poles in the MPA
  use mod_sampling   ! Dario: module with the frequency sampling in the MPA
  !
 #include<memory.h>
@@ -226,22 +226,24 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      cond_g=0
      !
      !$omp parallel do default(shared), private(ig1,ig2), reduction(+:cond_b,cond_g), collapse(2)
-     do ig2=1,X%ng
-       do ig1=1,X%ng
-           if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
-             !X_mat(ig1,ig2,X_range(2))=X%ppaE
-             MPA_E_mat(ig1,ig2,npoles)=1._SP
-             MPA_R_mat(ig1,ig2,npoles)=-X_mat(ig1,ig2,X_range(1))/2._SP*MPA_E_mat(ig1,ig2,npoles)*isc%gamp(ig1,ig2)
-             cond_b = cond_b + 1
-           else
-             !X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
-             MPA_pols(1)=X_mat(ig1,ig2,X_range(1)); MPA_pols(2)=X_mat(ig1,ig2,X_range(2));
-             MPA_R_mat(ig1,ig2,npoles)=-(MPA_pols(1)*MPA_freqs(1)**2  -MPA_pols(2)*MPA_freqs(2)**2 )/ &
+     do i_np =1,npoles
+       do ig2=1,X%ng
+         do ig1=1,X%ng
+             if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
+               !X_mat(ig1,ig2,X_range(2))=X%ppaE
+               MPA_E_mat(ig1,ig2,i_np)=1._SP
+               MPA_R_mat(ig1,ig2,i_np)=-X_mat(ig1,ig2,X_range(1))/2._SP*MPA_E_mat(ig1,ig2,i_np)*isc%gamp(ig1,ig2)
+               cond_b = cond_b + 1
+             else
+               !X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
+               MPA_pols(1)=X_mat(ig1,ig2,X_range(1)); MPA_pols(2)=X_mat(ig1,ig2,X_range(2));
+               MPA_R_mat(ig1,ig2,i_np)=-(MPA_pols(1)*MPA_freqs(1)**2  -MPA_pols(2)*MPA_freqs(2)**2 )/ &
 &                                       (MPA_pols(1) -MPA_pols(2))  
-             MPA_E_mat(ig1,ig2,npoles)=real(sqrt(MPA_R_mat(ig1,ig2,npoles)))  
-             MPA_R_mat(ig1,ig2,npoles)=-X_mat(ig1,ig2,X_range(1))/2._SP*MPA_E_mat(ig1,ig2,npoles)*isc%gamp(ig1,ig2)
-             cond_g = cond_g + 1
-           endif
+               MPA_E_mat(ig1,ig2,i_np)=real(sqrt(MPA_R_mat(ig1,ig2,i_np)))  
+               MPA_R_mat(ig1,ig2,i_np)=-X_mat(ig1,ig2,X_range(1))/2._SP*MPA_E_mat(ig1,ig2,i_np)*isc%gamp(ig1,ig2)
+               cond_g = cond_g + 1
+             endif
+         enddo
        enddo
      enddo
      !$omp end parallel do
@@ -269,8 +271,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !call mat_transpose(X_mat(:,:,X_range(1)))
      !call mat_transpose(X_mat(:,:,X_range(2)))
      !
-     call mat_transpose_r(MPA_E_mat(:,:,npoles))
-     call mat_transpose(MPA_R_mat(:,:,npoles))
+     do i_np=1,npoles
+       call mat_transpose_r(MPA_E_mat(:,:,i_np))
+       call mat_transpose(MPA_R_mat(:,:,i_np))
+     enddo
      !
      X_is_TR_rotated=.true.
    endif

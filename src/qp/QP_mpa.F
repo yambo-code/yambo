@@ -52,6 +52,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use matrix_operate,ONLY:mat_transpose,mat_transpose_r
  use timing_m,      ONLY:timing
  !
+! use mod_exact_3p   ! Dario: module with exact solution up to 3 poles in the MPA
+ use mod_sampling   ! Dario: module with the frequency sampling in the MPA
+ !
 #include<memory.h>
  !
  type(levels) ::E
@@ -74,12 +77,16 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP)      :: local_rhotw(X%ng),pre_factor
  complex(DP)      :: dp_dummy,ctmp
  !
- !complex(SP), allocatable :: MPA_E_mat(:,:)
- complex(SP), allocatable :: MPA_R_mat(:,:)
- real(SP),    allocatable :: MPA_E_mat(:,:)
+ integer                  :: i_np,npoles ! Dario: mpa variables
+ !complex(SP), allocatable :: MPA_E_mat(:,:,:)
+ complex(SP), allocatable :: MPA_R_mat(:,:,:)
+ real(SP),    allocatable :: MPA_E_mat(:,:,:)
+ real(SP),    allocatable :: MPA_freqs(:)
+ complex(SP), allocatable :: MPA_pols(:),MPA_Q(:)
  !
  integer, external::io_X,QP_state_extract
  !
+ npoles=1;
  ! Reset & checks
  !
  call elemental_collision_free(isc)
@@ -163,8 +170,12 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,2/))
  allocate(W_(QP_dSc_steps))
  allocate(dc(QP_dSc_steps),stat=alloc_err)
- YAMBO_ALLOC(MPA_E_mat,(X%ng,X%ng))
- YAMBO_ALLOC(MPA_R_mat,(X%ng,X%ng))
+ YAMBO_ALLOC(MPA_E_mat,(X%ng,X%ng,npoles))  ! Dario: allocating all the MPA arrays
+ YAMBO_ALLOC(MPA_R_mat,(X%ng,X%ng,npoles))
+ YAMBO_ALLOC(MPA_pols,(2*npoles))
+ YAMBO_ALLOC(MPA_freqs,(2*npoles))
+ YAMBO_ALLOC(MPA_Q,(2*npoles))
+ call HPPS_all(npoles,2*(X%ppaE),MPA_freqs) ! Dario: sampling the frequency domain
  !
  call PP_redux_wait
  !
@@ -219,15 +230,16 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        do ig1=1,X%ng
            if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
              !X_mat(ig1,ig2,X_range(2))=X%ppaE
-             MPA_E_mat(ig1,ig2)=1._SP
-             MPA_R_mat(ig1,ig2)=-X_mat(ig1,ig2,X_range(1))/2._SP*MPA_E_mat(ig1,ig2)*isc%gamp(ig1,ig2)
+             MPA_E_mat(ig1,ig2,npoles)=1._SP
+             MPA_R_mat(ig1,ig2,npoles)=-X_mat(ig1,ig2,X_range(1))/2._SP*MPA_E_mat(ig1,ig2,npoles)*isc%gamp(ig1,ig2)
              cond_b = cond_b + 1
            else
              !X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
-             MPA_R_mat(ig1,ig2)=-(X_mat(ig1,ig2,X_range(1))*0._SP  -X_mat(ig1,ig2,X_range(2))*(X%ppaE)**2 )/ &
-&                                (X_mat(ig1,ig2,X_range(1)) -X_mat(ig1,ig2,X_range(2)))  
-             MPA_E_mat(ig1,ig2)=real(sqrt(MPA_R_mat(ig1,ig2)))  
-             MPA_R_mat(ig1,ig2)=-X_mat(ig1,ig2,X_range(1))/2._SP*MPA_E_mat(ig1,ig2)*isc%gamp(ig1,ig2)
+             MPA_pols(1)=X_mat(ig1,ig2,X_range(1)); MPA_pols(2)=X_mat(ig1,ig2,X_range(2));
+             MPA_R_mat(ig1,ig2,npoles)=-(MPA_pols(1)*MPA_freqs(1)**2  -MPA_pols(2)*MPA_freqs(2)**2 )/ &
+&                                       (MPA_pols(1) -MPA_pols(2))  
+             MPA_E_mat(ig1,ig2,npoles)=real(sqrt(MPA_R_mat(ig1,ig2,npoles)))  
+             MPA_R_mat(ig1,ig2,npoles)=-X_mat(ig1,ig2,X_range(1))/2._SP*MPA_E_mat(ig1,ig2,npoles)*isc%gamp(ig1,ig2)
              cond_g = cond_g + 1
            endif
        enddo
@@ -257,8 +269,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !call mat_transpose(X_mat(:,:,X_range(1)))
      !call mat_transpose(X_mat(:,:,X_range(2)))
      !
-     call mat_transpose_r(MPA_E_mat)
-     call mat_transpose(MPA_R_mat)
+     call mat_transpose_r(MPA_E_mat(:,:,npoles))
+     call mat_transpose(MPA_R_mat(:,:,npoles))
      !
      X_is_TR_rotated=.true.
    endif
@@ -314,9 +326,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
            do ig2=1,X%ng
              do ig1=1,X%ng
                !
-               ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-MPA_R_mat(ig1,ig2))*&
-&                     ( (spin_occ-f_kmq+bose_f(MPA_E_mat(ig1,ig2)))/(W_(i_w)-E_kmq-MPA_E_mat(ig1,ig2))+&
-&                       (f_kmq+bose_f(MPA_E_mat(ig1,ig2)))/(conjg(W_(i_w))-E_kmq+MPA_E_mat(ig1,ig2)))
+               ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-MPA_R_mat(ig1,ig2,npoles))*&
+&                     ( (spin_occ-f_kmq+bose_f(MPA_E_mat(ig1,ig2,npoles)))/(W_(i_w)-E_kmq-MPA_E_mat(ig1,ig2,npoles))+&
+&                       (f_kmq+bose_f(MPA_E_mat(ig1,ig2,npoles)))/(conjg(W_(i_w))-E_kmq+MPA_E_mat(ig1,ig2,npoles)))
                !
                dp_dummy=dp_dummy+ctmp
                !

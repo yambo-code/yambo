@@ -174,7 +174,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  YAMBO_ALLOC(MPA_R_mat,(X%ng,X%ng,npoles))
  YAMBO_ALLOC(MPA_pols,(2*npoles))
  YAMBO_ALLOC(MPA_freqs,(2*npoles))
- YAMBO_ALLOC(MPA_Q,(2*npoles))
+ YAMBO_ALLOC(MPA_Q,(npoles))
  call HPPS_all(npoles,2*(X%ppaE),MPA_freqs) ! Dario: sampling the frequency domain
  !
  call PP_redux_wait
@@ -237,9 +237,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
              else
                !X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
                MPA_pols(1)=X_mat(ig1,ig2,X_range(1)); MPA_pols(2)=X_mat(ig1,ig2,X_range(2));
-               MPA_R_mat(ig1,ig2,i_np)=-(MPA_pols(1)*MPA_freqs(1)**2  -MPA_pols(2)*MPA_freqs(2)**2 )/ &
-&                                       (MPA_pols(1) -MPA_pols(2))  
-               MPA_E_mat(ig1,ig2,i_np)=real(sqrt(MPA_R_mat(ig1,ig2,i_np)))  
+               call RQ_1p_solver_I(MPA_freqs, MPA_pols, MPA_R_mat(ig1,ig2,i_np), MPA_Q(i_np))
+!               MPA_R_mat(ig1,ig2,i_np)=-(MPA_pols(1)*MPA_freqs(1)**2  -MPA_pols(2)*MPA_freqs(2)**2 )/ &
+!&                                       (MPA_pols(1) -MPA_pols(2))  
+               MPA_E_mat(ig1,ig2,i_np)=real(sqrt(MPA_Q(i_np)))  
                MPA_R_mat(ig1,ig2,i_np)=-X_mat(ig1,ig2,X_range(1))/2._SP*MPA_E_mat(ig1,ig2,i_np)*isc%gamp(ig1,ig2)
                cond_g = cond_g + 1
              endif

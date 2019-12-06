@@ -32,7 +32,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error
- use drivers,       ONLY:l_ppa,l_sc_run
+ use drivers,       ONLY:l_sc_run
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_IND_Q_ID,PAR_IND_QP_ID,&
 &                        PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu
@@ -53,7 +53,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use timing_m,      ONLY:timing
  !
  use mod_exact_3p   ! Dario: module with exact solution up to 3 poles in the MPA
- use mod_sampling   ! Dario: module with the frequency sampling in the MPA
  !
 #include<memory.h>
  !
@@ -77,12 +76,14 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP)      :: local_rhotw(X%ng),pre_factor
  complex(DP)      :: dp_dummy,ctmp
  !
- integer                  :: i_np,npoles ! Dario: mpa variables
+ ! MPA variables (Dario)
+ !
+ integer                  :: i_np,npoles
  !complex(SP), allocatable :: MPA_E_mat(:,:,:)
  complex(SP), allocatable :: MPA_R_mat(:,:,:)
  real(SP),    allocatable :: MPA_E_mat(:,:,:)
  real(SP),    allocatable :: MPA_freqs(:)
- complex(SP), allocatable :: MPA_pols(:),MPA_Q(:)
+ complex(SP), allocatable :: MPA_Xo(:),MPA_Q(:)
  !
  integer, external::io_X,QP_state_extract
  !
@@ -170,13 +171,18 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,2/))
  allocate(W_(QP_dSc_steps))
  allocate(dc(QP_dSc_steps),stat=alloc_err)
- YAMBO_ALLOC(MPA_E_mat,(X%ng,X%ng,npoles))  ! Dario: allocating all the MPA arrays
- YAMBO_ALLOC(MPA_R_mat,(X%ng,X%ng,npoles))
- YAMBO_ALLOC(MPA_pols,(2*npoles))
- YAMBO_ALLOC(MPA_freqs,(2*npoles))
- YAMBO_ALLOC(MPA_Q,(npoles))
- call HPPS_all(npoles,2*(X%ppaE),MPA_freqs) ! Dario: sampling the frequency domain
  !
+ ! MPA workspace
+ !
+ YAMBO_ALLOC(MPA_E_mat,(X%ng,X%ng,npoles))
+ YAMBO_ALLOC(MPA_R_mat,(X%ng,X%ng,npoles))
+ YAMBO_ALLOC(MPA_freqs,(2*npoles))
+ !
+ ! Sampling the frequency domain  (Dario)
+ !
+ MPA_freqs=Xw%p
+ 
+
  call PP_redux_wait
  !
  timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
@@ -222,34 +228,39 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Poles and Residuals
      !
-     cond_b=0
-     cond_g=0
+     !$omp parallel default(shared), private(ig1,ig2,i_np,MPA_Xo,MPA_Q)
      !
-     !$omp parallel do default(shared), private(ig1,ig2), reduction(+:cond_b,cond_g), collapse(2)
-     do i_np =1,npoles
-       do ig2=1,X%ng
-         do ig1=1,X%ng
-             if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
-               !X_mat(ig1,ig2,X_range(2))=X%ppaE
-               MPA_E_mat(ig1,ig2,i_np)=1._SP
-               MPA_R_mat(ig1,ig2,i_np)=-X_mat(ig1,ig2,X_range(1))/2._SP*MPA_E_mat(ig1,ig2,i_np)*isc%gamp(ig1,ig2)
-               cond_b = cond_b + 1
-             else
-               !X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
-               MPA_pols(1)=X_mat(ig1,ig2,X_range(1)); MPA_pols(2)=X_mat(ig1,ig2,X_range(2));
-               call RQ_1p_solver_I(MPA_freqs, MPA_pols, MPA_R_mat(ig1,ig2,i_np), MPA_Q(i_np))
-               MPA_E_mat(ig1,ig2,i_np)=real(sqrt(MPA_Q(i_np)))  
-               !MPA_R_mat(ig1,ig2,i_np)=-MPA_R_mat(ig1,ig2,i_np)/(2._DP*MPA_E_mat(ig1,ig2,i_np))*isc%gamp(ig1,ig2)
-               MPA_R_mat(ig1,ig2,i_np)=-MPA_pols(1)/2._SP*MPA_E_mat(ig1,ig2,i_np)*isc%gamp(ig1,ig2)
-               cond_g = cond_g + 1
-             endif
+     YAMBO_ALLOC(MPA_Xo,(2*npoles))
+     YAMBO_ALLOC(MPA_Q,(npoles))
+     !
+     !$omp do collapse(2)
+     do ig2=1,X%ng
+       do ig1=1,X%ng
+         !
+         MPA_Xo(1:2*npoles)=X_mat(ig1,ig2,1:2*npoles) 
+         !
+         select case(npoles)
+         case(1)
+           call RQ_1p_solver_I(MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,1), MPA_Q(1))
+         case default
+           ! ...
+         end select
+         !
+         do i_np=1,npoles
+           !
+           MPA_E_mat(ig1,ig2,i_np)=real(sqrt(MPA_Q(i_np)),SP)  
+           MPA_R_mat(ig1,ig2,i_np)=-MPA_R_mat(ig1,ig2,i_np)/(2._DP*MPA_E_mat(ig1,ig2,i_np))*isc%gamp(ig1,ig2)
+           !
          enddo
+         !
        enddo
      enddo
-     !$omp end parallel do
+     !$omp end do
      !
-     call msg('r',' PPA condition good [iqibz,count]: ', (/iqibz,cond_g/) )
-     call msg('r',' PPA condition fail [iqibz,count]: ', (/iqibz,cond_b/) )
+     YAMBO_FREE(MPA_Xo)
+     YAMBO_FREE(MPA_Q)
+     !
+     !$omp end parallel
      !
      X_is_TR_rotated=.false.
      !
@@ -315,39 +326,37 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        dc=cZERO
        !
-       !if (l_ppa) then
+       forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E_bare(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+       !
+       E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
+       f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
+       !
+       do i_w=1,QP_dSc_steps
          !
-         forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E_bare(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+         dp_dummy = 0.0_DP
          !
-         E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
-         f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
-         !
-         do i_w=1,QP_dSc_steps
-           !
-           dp_dummy = 0.0_DP
-           !
-           !$omp parallel do default(shared), private(ig1,ig2,ctmp), reduction(+:dp_dummy), collapse(2)
-           do i_np=1,npoles
-             do ig2=1,X%ng
-               do ig1=1,X%ng
-                 !
-                 ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-MPA_R_mat(ig1,ig2,i_np))*&
-&                       ( (spin_occ-f_kmq+bose_f(MPA_E_mat(ig1,ig2,i_np)))/(W_(i_w)-E_kmq-MPA_E_mat(ig1,ig2,i_np))+&
-&                         (f_kmq+bose_f(MPA_E_mat(ig1,ig2,i_np)))/(conjg(W_(i_w))-E_kmq+MPA_E_mat(ig1,ig2,i_np)))
-                 !
-                   dp_dummy=dp_dummy+ctmp
+         !$omp parallel do default(shared), private(ig1,ig2,ctmp), reduction(+:dp_dummy), collapse(2)
+         do i_np=1,npoles
+           do ig2=1,X%ng
+             do ig1=1,X%ng
                !
-               enddo
+               ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-MPA_R_mat(ig1,ig2,i_np))*&
+&                     ( (spin_occ-f_kmq+bose_f(MPA_E_mat(ig1,ig2,i_np)))/(W_(i_w)-E_kmq-MPA_E_mat(ig1,ig2,i_np))+&
+&                       (f_kmq+bose_f(MPA_E_mat(ig1,ig2,i_np)))/(conjg(W_(i_w))-E_kmq+MPA_E_mat(ig1,ig2,i_np)))
+               !
+               dp_dummy=dp_dummy+ctmp
+               !
              enddo
            enddo
-           !$omp end parallel do
-           !
-           dc(i_w) = dp_dummy
-           !
          enddo
+         !$omp end parallel do
          !
-         QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
+         dc(i_w) = dp_dummy
          !
+       enddo
+       !
+       QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
+       !
        !
      enddo ! loop on scattering states
      !

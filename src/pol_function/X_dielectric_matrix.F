@@ -49,6 +49,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset
  use timing_m,      ONLY:timing
+ use mod_sampling,  ONLY:HPPS_all
  !
 #include<memory.h>
  !
@@ -65,6 +66,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X,X_eh_setup
  character(1)         :: sec_mode
+ real(SP),allocatable :: MPA_freq(:)
  !
  ! logicals and control
  !
@@ -112,6 +114,21 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    Xw%er=(/epsilon(1._SP),0._SP/)
    Xw%dr=(/0._SP,X%ppaE/)
    X%ordering='R'
+   !
+ else if (X%whoami==5) then
+   if (.not.SILENT_MODE) call section(sec_mode,'Dynamic Dielectric Matrix (MPA)')
+   Xw%n_freqs    =2*X%mpa_npoles
+   X_MEM_n_freqs =2*X%mpa_npoles
+   YAMBO_ALLOC(Xw%p,(2*X%mpa_npoles))
+   X%ordering='T'
+   !
+   ! generate the grid
+   YAMBO_ALLOC(MPA_freq,(2*X%mpa_npoles))
+   call HPPS_all(X%mpa_npoles,2.0_SP*(X%ppaE),MPA_freq)
+   !
+   Xw%p=MPA_freq
+   YAMBO_FREE(MPA_freq)
+   !
  endif
  !
  call X_pre_setup(Xen,X)

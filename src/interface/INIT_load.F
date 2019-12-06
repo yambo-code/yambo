@@ -118,9 +118,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  type(initdefs)::defs
  type(levels)  ::en          
  type(bz_samp) ::q,k
- type(X_t)     ::X(4)
+ type(X_t)     ::X(5)
  type(DIPOLE_t)::Dip
- type(w_samp)  ::Xw(4)
+ type(w_samp)  ::Xw(5)
  !
  ! Work Space
  !
@@ -149,6 +149,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('r',defs,'em1s',    '[R][Xs] Statically Screened Interaction')
  call it('r',defs,'em1d',    '[R][X] Dynamically Screened Interaction')
  call it('r',defs,'ppa',     '[R][Xp] Plasmon Pole Approximation for the Screened Interaction')
+ call it('r',defs,'mpa',     '[R][Xp] Multi Pole Approximation for the Screened Interaction')
  !
  ! GPL_EXCLUDE_START
  !
@@ -270,6 +271,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
+ call Xload(X(5),Xw(5))
  call it(defs,'XTermKind','[X] X terminator ("none","BG" Bruneval-Gonze)',X_terminator_Kind,verb_level=V_resp)
  call it(defs,'XTermEn',  '[X] X terminator energy (only for kind="BG")',X_terminator_E,E_unit,verb_level=V_resp)
  call it('f',defs,'DrClassic', '[X] Use a classical model for the drude term',verb_level=V_resp)
@@ -786,14 +788,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      ! Work Space
      ! 
      integer           ::i1,V_iq
-     integer,parameter ::n_des=14
+     integer,parameter ::n_des=15
      character(8)      ::nms(n_des),sfx
      character(100)    ::des(n_des)
      character(schlen) ::lch1,lch2
      !
      nms=(/'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &          'DrudeW','LongDr','EhEngy','PPAPnt',&
-&          'NGsBlk','QpntsR','BndsRn','DmERef'/)
+&          'NGsBlk','QpntsR','BndsRn','DmERef','NplMPA'/)
      des(1) ='Green`s function (T)ordered,(R)etarded,(r)senant,(a)ntiresonant [T, R, r, Ta, Ra]'
      des(2) ='Energy range'
      des(3) ='Damping range'
@@ -808,6 +810,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      des(12)='Transferred momenta'
      des(13)='Polarization function bands'
      des(14)='Damping reference energy'
+     des(15)='Number of poles for MPA'
      !
      do i1=1,n_des
        lch1=des(i1);lch2=nms(i1)
@@ -815,6 +818,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        if (X%whoami==2) sfx='Xs'
        if (X%whoami==3) sfx='Xd'
        if (X%whoami==4) sfx='Xp'
+       if (X%whoami==5) sfx='Xp'
        write (des(i1),'(4a)')  '[',trim(sfx),'] ',trim(lch1)
        write (nms(i1),'(2a)')  lch2(1:6),trim(sfx)
      enddo
@@ -837,6 +841,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call it(defs,nms(12),des(12),X%iq,verb_level=V_iq)
      call it(defs,nms(13),des(13),X%ib,verb_level=0)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)
+     call it(defs,nms(15),des(15),X%mpa_npoles,verb_level=V_resp)
      !
    end subroutine
    !

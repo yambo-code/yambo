@@ -75,9 +75,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  type(levels)    ::en        
  type(bz_samp)   ::q,k
- type(X_t)       ::X(4)
+ type(X_t)       ::X(5)
  type(DIPOLE_t)  ::Dip
- type(w_samp)    ::Xw(4)
+ type(w_samp)    ::Xw(5)
  integer         ::lnstr
  character(lnstr)::instr
  logical         ::CLOSE_Gs,FINALIZE,QP_field
@@ -115,10 +115,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call W_reset(Xw(2))
    call W_reset(Xw(3))
    call W_reset(Xw(4))
+   call W_reset(Xw(5))
    call X_reset(X(1),type=1)
    call X_reset(X(2),type=2)
    call X_reset(X(3),type=3)
    call X_reset(X(4),type=4)
+   call X_reset(X(5),type=5)
    call DIPOLES_reset(Dip)
  endif
  !

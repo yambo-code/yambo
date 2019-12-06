@@ -117,7 +117,7 @@ module X_m
  complex(SP),      allocatable DEV_ATTRIBUTE :: X_mat_d(:,:,:)
  !
  type X_t
-   integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
+   integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:ppa 5:mpa
    integer    :: ng
    integer    :: ng_db
    integer    :: iq(2)
@@ -126,6 +126,7 @@ module X_m
    integer    :: db_ib(2)
    integer    :: db_ib_lim(2)
    integer    :: ngostnts
+   integer    :: mpa_npoles
    real(SP)   :: ehe(2)
    real(SP)   :: q0(3)
    real(SP)   :: cg_percentual
@@ -207,6 +208,7 @@ module X_m
      Xo%db_ib        =Xi%db_ib
      Xo%db_ib_lim    =Xi%db_ib_lim
      Xo%ngostnts     =Xi%ngostnts
+     Xo%mpa_npoles   =Xi%mpa_npoles
      Xo%ordering     =Xi%ordering
      Xo%Vnl_included =Xi%Vnl_included
      Xo%ehe          =Xi%ehe
@@ -229,6 +231,7 @@ module X_m
      !DEBUG<
      X%iq           =(/1,-1/)
      X%ngostnts     =0
+     X%mpa_npoles   =0
      X%whoami       =0
      X%Vnl_included =.false.
      if (present(type)) X%whoami=type

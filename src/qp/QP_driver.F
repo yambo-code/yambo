@@ -25,9 +25,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  use pars,          ONLY:SP,pi,cONE,cZERO
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr
+ use drivers,       ONLY:l_life,l_mpa,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr
  use electrons,     ONLY:levels,n_sp_pol,spin
- use stderr,        ONLY:real2ch
+ use stderr,        ONLY:real2ch,intc
  use R_lattice,     ONLY:bz_samp
  use DIPOLES,       ONLY:DIPOLE_t
  use frequency,     ONLY:w_samp
@@ -142,6 +142,15 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    if ( GWo_iterations > 0 ) QP_DB_kind=QP_SE_GWo_PPA
    !
    ! GPL_EXCLUDE_END
+   !
+ else if (l_mpa) then
+   !
+   qp%description(2)=' == MPA GW =='
+   qp%description(3)=' '
+   qp%description(4)=' MPA number of poles :'//trim(intc(X%mpa_npoles))
+   qp%n_descs=4
+   !
+   QP_DB_kind=QP_SE_GoWo_PPA
    !
  else if (l_cohsex) then
    !

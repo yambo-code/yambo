@@ -25,7 +25,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  use pars,          ONLY:SP,cZERO
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_ppa,l_elel_corr,l_cohsex
+ use drivers,       ONLY:l_ppa,l_mpa,l_elel_corr,l_cohsex
  use com,           ONLY:msg
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t
@@ -79,7 +79,10 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    if (l_elel_corr) then
      if (l_ppa) then
        !
-       !call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
+       call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
+       !
+     else if (l_mpa) then
+       !
        call QP_mpa(X,Xk,en,k,q,qp,Xw,iter) 
        !
      else if (l_cohsex) then

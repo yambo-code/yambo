@@ -54,7 +54,7 @@ module R_lattice
  !
  type bz_samp
    integer           :: nibz,nbz
-   integer,  allocatable :: nstar(:)      ! n° of points in the star
+   integer,  allocatable :: nstar(:)      ! number of points in the star
    integer,  allocatable :: star(:,:)     ! ik,ikstar --> is     is sends ik in ikstar
    integer,  allocatable :: sstar(:,:)    ! ik_bz     --> ik,is  is sends ik in ikbz
    integer,  allocatable :: s_table(:,:)  ! ik,is     --> sym@k_bz  revers of sstar(2)

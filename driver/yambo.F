@@ -57,8 +57,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! 
  ! 4 response function & energies types: x s d p
  !
- type(X_t)    ::X(4) 
- type(w_samp) ::Xw(4)
+ type(X_t)    ::X(5) 
+ type(w_samp) ::Xw(5)
  !
  type(DIPOLE_t) :: Dip
  !

@@ -31,7 +31,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !   /   /      Y88b /          Y888b 888__/    `88_-~   
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
-&                        l_optics,l_chi,l_em1s,l_ppa,l_bss,l_bse,l_em1d,&
+&                        l_optics,l_chi,l_em1s,l_ppa,l_mpa,l_bss,l_bse,l_em1d,&
 &                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
@@ -161,13 +161,14 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! Logicals for \eps^-1
  !======================
  !
- l_dyn_X = l_em1d .or. (l_optics.and.l_chi) .or. l_life .or. l_ppa
+ l_dyn_X = l_em1d .or. (l_optics.and.l_chi) .or. l_life .or. l_ppa .or. l_mpa
  l_sta_X = l_em1s .or. (l_optics.and.l_bse)
  !
  if ( l_real_time .or. l_sc_run) i_X_kind=1
- if ( l_sta_X .and. .not.l_ppa ) i_X_kind=2
- if ( l_dyn_X .and. .not.l_ppa ) i_X_kind=3
- if (                    l_ppa ) i_X_kind=4
+ if ( l_sta_X .and..not.l_ppa .and..not.l_mpa) i_X_kind=2
+ if ( l_dyn_X .and..not.l_ppa .and..not.l_mpa) i_X_kind=3
+ if (                   l_ppa .and..not.l_mpa) i_X_kind=4
+ if (                   l_mpa )                i_X_kind=4
  !
  ! DIPOLES
  !=========
@@ -188,7 +189,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================
  !
- driver_now=l_em1s.or.(l_em1d.and..not.l_life).or.l_ppa
+ driver_now=l_em1s.or.(l_em1d.and..not.l_life).or.l_ppa.or.l_mpa
  !
  if (driver_now) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
  if (driver_now) call mem_manager_report

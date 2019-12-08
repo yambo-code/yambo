@@ -33,7 +33,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics
+&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_mpa
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
@@ -310,6 +310,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
        l_ppa=runlevel_is_on('ppa')
+       l_mpa=runlevel_is_on('mpa')
        l_dipoles=runlevel_is_on('dipoles')
        l_HF_and_locXC=runlevel_is_on('HF_and_locXC')
        l_gw0=runlevel_is_on('gw0')
@@ -441,11 +442,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_em1s)   call initactivate(1,'dipoles')
      if (l_em1d)   call initactivate(1,'dipoles')
      if (l_optics) call initactivate(1,'dipoles')
+     if (l_cohsex) call initactivate(1,'em1s dipoles')
      if (l_ppa)    call initactivate(1,'em1d dipoles')
-     if (l_gw0.and..not.l_ppa.and..not.l_cohsex.and..not.&
+     if (l_mpa)    call initactivate(1,'em1d dipoles')
+     if (l_gw0.and..not.l_ppa.and..not.l_mpa.and..not.l_cohsex.and..not.&
 &        l_HF_and_locXC.and..not.l_elph_corr.and..not.l_elphoton_corr)  &
 &                  call initactivate(1,'em1d dipoles')
-     if (l_cohsex) call initactivate(1,'em1s dipoles')
      if (l_bss)    call initactivate(1,'optics dipoles bse')
      if (l_bs_fxc) BSS_mode="t"
      !
@@ -480,12 +482,13 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_dipoles) then
        n_threads_DIP=0
      endif
-     if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa.or.l_bse) then
+     if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa.or.l_mpa.or.l_bse) then
        n_threads_K=0
        n_threads_X=0
        n_threads_DIP=0
      endif
-     if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run) n_threads_SE=0
+     if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run&
+&                               .or.l_ppa.or.l_mpa)       n_threads_SE=0
      if (l_real_time)                                     n_threads_RT=0
      if (l_nl_optics)                                     n_threads_NL=0
 #endif
@@ -510,8 +513,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      X(2)%q0(:)=X(2)%q0(:)*q0_def_norm/v_norm(X(2)%q0)
      X(3)%q0(:)=X(3)%q0(:)*q0_def_norm/v_norm(X(3)%q0)
      X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
+     X(5)%q0(:)=X(5)%q0(:)*q0_def_norm/v_norm(X(5)%q0)
      !
-     if (len_trim(BSE_mode)==0                ) BSE_mode="retarded"
+     if (len_trim(BSE_mode)==0               ) BSE_mode="retarded"
      if (STRING_same(trim(BSE_mode),"causal")) BSE_mode="retarded"
      !
      if (l_bse) then
@@ -543,6 +547,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        if (io_BS_err==0) then
          if (l_ppa)      call X_duplicate(Xbsk,X(4))
+         if (l_mpa)      call X_duplicate(Xbsk,X(5))
          if (.not.l_ppa) call X_duplicate(Xbsk,X(2))
        endif
        !

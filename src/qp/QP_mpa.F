@@ -51,8 +51,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        PARALLEL_WF_distribute,QP_state_print
  use matrix_operate,ONLY:mat_transpose,mat_transpose_r
  use timing_m,      ONLY:timing
- !
- use mod_exact_3p   ! Dario: module with exact solution up to 3 poles in the MPA
+ use mpa_m,         ONLY:mpa_RQ_1p_solver_I,mpa_RQ_2p_solver_I,mpa_RQ_3p_solver_I
  !
 #include<memory.h>
  !
@@ -241,7 +240,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          select case(npoles)
          case(1)
-           call RQ_1p_solver_I(MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,1), MPA_Q(1))
+           call mpa_RQ_1p_solver_I(MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,1), MPA_Q(1))
          case default
            ! ...
          end select

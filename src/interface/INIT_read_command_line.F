@@ -25,7 +25,7 @@ subroutine INIT_read_command_line(rstr,init_)
  !
  use pars,           ONLY:schlen
  use drivers,        ONLY:infile_editing,l_bse,l_alda_fxc,l_chi,l_elel_corr,&
-&                         l_elel_scatt,l_elph_corr,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1s,l_em1d,l_ppa
+&                         l_elel_scatt,l_elph_corr,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1s,l_em1d,l_ppa,l_mpa
  use BS,             ONLY:BSK_mode
  use BS_solvers,     ONLY:BSS_mode
  use X_m,            ONLY:Chi_mode
@@ -163,9 +163,11 @@ subroutine INIT_read_command_line(rstr,init_)
        l_em1s= (trim(rstr_piece(i1+1))=='s' )
        l_em1d= (trim(rstr_piece(i1+1))=='f' )
        l_ppa = (trim(rstr_piece(i1+1))=='p' )
+       l_mpa = (trim(rstr_piece(i1+1))=='m' )
        if (l_em1s) call initactivate(1,'em1s')
        if (l_em1d) call initactivate(1,'em1d')
        if (l_ppa)  call initactivate(1,'ppa')
+       if (l_mpa)  call initactivate(1,'mpa')
      endif
      !
      ! BSE/LLR
@@ -199,7 +201,7 @@ subroutine INIT_read_command_line(rstr,init_)
          if( trim(rstr_piece(i1+1)) == 'alda')     BSK_mode='ALDA'
          if(trim(rstr_piece(i1+1))  == 'sex')      BSK_mode='SEX'
          if( trim(rstr_piece(i1+1)) == 'bsfxc')    BSK_mode='BSfxc'
-       else if(l_chi.or.l_em1s.or.l_em1d.or.l_ppa) then
+       else if(l_chi.or.l_em1s.or.l_em1d.or.l_ppa.or.l_mpa) then
          if(trim(rstr_piece(i1+1))  == 'hartree')  Chi_mode='HARTREE'
          if( trim(rstr_piece(i1+1)) == 'alda')     Chi_mode='ALDA'
          if( trim(rstr_piece(i1+1)) == 'lrc')      Chi_mode='LRC'
@@ -273,6 +275,11 @@ subroutine INIT_read_command_line(rstr,init_)
          l_ppa=.TRUE.
          QP_solver="n"
          call initactivate(1,'ppa')
+       else if (trim(rstr_piece(i1+1))=='m') then
+         infile_editing=.true.
+         l_mpa=.TRUE.
+         QP_solver="n"
+         call initactivate(1,'mpa')
        else if (trim(rstr_piece(i1+1))=='c') then
          infile_editing=.true.
          QP_solver="n"

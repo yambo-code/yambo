@@ -841,7 +841,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call it(defs,nms(12),des(12),X%iq,verb_level=V_iq)
      call it(defs,nms(13),des(13),X%ib,verb_level=0)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)
-     call it(defs,nms(15),des(15),X%mpa_npoles,verb_level=V_resp)
+     if (X%whoami==5) then
+       call it(defs,nms(15),des(15),X%mpa_npoles,verb_level=V_resp)
+     endif
      !
    end subroutine
    !

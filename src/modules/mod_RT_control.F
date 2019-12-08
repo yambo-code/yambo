@@ -25,7 +25,7 @@ module RT_control
  !
  use pars,       ONLY:SP,lchlen,schlen,rZERO
  use units,      ONLY:AUT2FS
- use real_time,  ONLY:l_NE_dynamics,l_elph_scatt
+ use real_time,  ONLY:l_NE_dynamics,l_NE_with_fields,l_elph_scatt
  !
 #include<memory.h>
  !
@@ -62,6 +62,7 @@ module RT_control
  complex(SP), allocatable    :: P_cache(:,:)
  complex(SP), allocatable    :: Ms_cache(:,:,:)
  complex(SP), allocatable    :: Ml_cache(:,:,:)
+ complex(SP), allocatable    :: A_cache(:,:,:)
  !
  ! TD-ABS and RT-BSE [yambo]
  !
@@ -131,6 +132,10 @@ module RT_control
          YAMBO_ALLOC(Ml_cache,(3,2,IO_OBS_cache_steps))
          Ml_cache=cZERO
        endif
+       if(l_NE_with_fields) then
+         YAMBO_ALLOC(A_cache,(3,3,IO_OBS_cache_steps))
+         A_cache=cZERO
+       endif
        !
      endif
      !
@@ -152,6 +157,7 @@ module RT_control
      YAMBO_FREE(P_cache)
      YAMBO_FREE(Ms_cache)
      YAMBO_FREE(Ml_cache)
+     YAMBO_FREE(A_cache)
      YAMBO_FREE(OBS_RT_IO_t%Time)
      YAMBO_FREE(GF_RT_IO_t%Time)
      !

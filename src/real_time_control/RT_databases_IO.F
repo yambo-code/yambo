@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM CA
+! Authors (see AUTHORS file for details): AM CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -25,15 +25,16 @@ subroutine RT_databases_IO(E)
  !
  use drivers,        ONLY:l_elph_scatt
  use electrons,      ONLY:n_spin,levels
- use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,&
+ use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
 &                         GF_RT_IO_t,IO_OBS_cache_steps
- use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn
+ use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,l_NE_with_fields
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
 &                         OP_IF_START_APP_CL_IF_END
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,HEAD_k_cpu,ncpu,myid
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,RT_all2ibz
  use timing_m,       ONLY:timing
+ use fields,         ONLY:A_tot
 #if defined  _PAR_IO
  use com,            ONLY:error
 #endif
@@ -61,6 +62,11 @@ subroutine RT_databases_IO(E)
      Ms_cache(1:3,1:3,i_time)= RT_spin_magn
      Ml_cache(1:3,1:2,i_time)= RT_orbt_magn
    endif
+   if(l_NE_with_fields) then
+     A_cache(1:3,1,i_time)=A_tot%vecpot
+     A_cache(1:3,2,i_time)=A_tot%vecpot_vel
+     A_cache(1:3,3,i_time)=A_tot%vecpot_acc
+   endif
    !
  endif
  !
@@ -75,7 +81,7 @@ subroutine RT_databases_IO(E)
    if (io_OBSERVABLES) then
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4))
+     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/2/),ID=ID(4))
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
    endif
    !
@@ -87,7 +93,7 @@ subroutine RT_databases_IO(E)
      !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
      io_carr=io_RT_components('carriers',ID(6))
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(6))
+     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/2/),ID=ID(6))
      io_carr=io_RT_components('carriers',ID(6))
    endif
    !

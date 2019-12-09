@@ -232,9 +232,6 @@ contains
    complex(dp)                     :: A(np,np), B(np)
    integer                         :: i, k, info, ind(np)    
    ! 
-   complex(dp)                     :: rwork(2*np), work(2*np), VR(np), VL(np)
-   ! 
-   ! 
    do k = 1, np
      B(k) = xq(k)
      do i = 1, np
@@ -242,8 +239,7 @@ contains
      enddo
    enddo 
    ! 
-!   call cgauss(np,R,B,A)
-    call zgesv(np, 1, R, np, ind, A, np, info )
+   call zgesv(np, 1, A, np, ind, R, np,info) 
 
  end subroutine mpa_R_solver
 
@@ -329,6 +325,28 @@ contains
    end select
    !
  end subroutine mpa_RE_solver
+!------------------------------------------------------------------------------- 
+
+ function err_func_np(np, R, Q, w, x)
+   implicit none
+   !
+   integer ,    intent(in)  :: np
+   complex(dp), intent(in)  :: x(2*np), w(2*np)
+   complex(dp), intent(in)  :: R(np), Q(np)
+   complex(dp)              :: aux
+   real(dp)                 :: err_func_np
+   integer   ::i,j
+   !
+   aux = (0._SP,0._SP)      
+   err_func_np = 0._SP                                                    
+   do j=1, 2*np
+     do i=1, np
+     aux = aux + R(i)/(w(j)**2-Q(i))             
+     enddo 
+     err_func_np = err_func_np + abs( aux - x(i) )**2
+   enddo  
+   err_func_np = sqrt(err_func_np)
+ endfunction err_func_np
 !------------------------------------------------------------------------------- 
 
 end module mpa_m

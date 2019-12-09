@@ -50,7 +50,7 @@
    complex(SP),   intent(out)   :: w(2*np)
    integer       :: i, a1, a2
    complex(SP)   :: ws
-   real          :: w_aux1, w_aux2, log2=log(2._SP)
+   real          :: w_aux1, w_aux2, log2=0.693147180560
    !
    ws = w1+w2
    select case(np)
@@ -83,7 +83,7 @@
          case ('q') !QPPS
            w = (/w1, 0.0625_SP*ws, 0.140625_SP*ws, 0.25_SP*ws, 0.390625_SP*ws, 0.5625_SP*ws/)
          case ('c') !CPPS
-           w = (/w1, 0.0625_SP*ws, 0.140625_SP*ws, 0.25_SP*ws, 0.390625_SP*ws, 0.5625_SP*ws/)
+           w = (/w1, 0.015625_SP*ws, 0.0527344_SP*ws, 0.125_SP*ws, 0.244141_SP*ws, 0.421875_SP*ws/)
          case default
            ! error 
        end select

@@ -108,31 +108,31 @@ module matrix_operate
 #endif
    end subroutine
    !
-   subroutine mat_transpose_r(M) !Dario: provisionally needed for mpa
-     real(SP)    :: M(:,:)
-     integer     :: D,i1
-     real,       allocatable :: V(:)
-     D=size(M,1)
-#if defined _OPENMP
-!$omp parallel default(shared), private(V,i1)
-#endif
-     allocate(V(D))
-#if defined _OPENMP
-!$omp do 
-#endif
-     do i1=1,D
-       V(i1:D)=M(i1,i1:D)
-       M(i1,i1:D)=M(i1:D,i1)
-       M(i1:D,i1)=V(i1:D)
-     enddo
-#if defined _OPENMP
-!$omp end do
-#endif
-     deallocate(V)
-#if defined _OPENMP
-!$omp end parallel
-#endif
-   end subroutine
+!   subroutine mat_transpose_r(M) !Dario: provisionally needed for mpa
+!     real(SP)    :: M(:,:)
+!     integer     :: D,i1
+!     real,       allocatable :: V(:)
+!     D=size(M,1)
+!#if defined _OPENMP
+!!$omp parallel default(shared), private(V,i1)
+!#endif
+!     allocate(V(D))
+!#if defined _OPENMP
+!!$omp do 
+!#endif
+!     do i1=1,D
+!       V(i1:D)=M(i1,i1:D)
+!       M(i1,i1:D)=M(i1:D,i1)
+!       M(i1:D,i1)=V(i1:D)
+!     enddo
+!#if defined _OPENMP
+!!$omp end do
+!#endif
+!     deallocate(V)
+!#if defined _OPENMP
+!!$omp end parallel
+!#endif
+!   end subroutine
    !
    subroutine mat_r2c_ordered(mr,mc,m_order) 
      !

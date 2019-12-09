@@ -36,7 +36,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_cohsex,&
 &                        l_HF_and_locXC
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
- use interfaces,    ONLY:QP_state_extract_print
+ use interfaces,    ONLY:QP_state_print
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:BZ_DbGd_tot_nk_levels
  use IO_m,          ONLY:ver_is_gt_or_eq
@@ -58,9 +58,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  ! 
  ! Work Space
  !
- integer           :: i4(4)
  integer, save     :: n_descs_save
- integer, external :: QP_state_extract
  !
  if (.not.Update) n_descs_save=qp%n_descs
  if (     Update) qp%n_descs  =n_descs_save
@@ -299,6 +297,6 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  !
  ! QP states
  !
- call QP_state_extract_print( qp )
+ call QP_state_print( qp )
  !
 end subroutine

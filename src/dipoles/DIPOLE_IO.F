@@ -24,12 +24,13 @@
 subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  use pars,       ONLY:SP,cI,cZERO
- use com,        ONLY:msg,error
+ use com,        ONLY:msg,error,warning
  use IO_m,       ONLY:io_DIP
  use R_lattice,  ONLY:bz_samp
  use electrons,  ONLY:levels,n_sp_pol
  use DIPOLES,    ONLY:DIPOLE_t,DIP_v,use_covariant_approach
- use IO_m,       ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_CL,OP_RD
+ use IO_m,       ONLY:io_control,VERIFY,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
+&                     OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use parallel_m, ONLY:master_cpu,PP_redux_wait,PAR_K_scheme
  !
  implicit none
@@ -43,7 +44,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  ! Work space
  !
- logical           :: write_header,read_header,check,reading,writing
+ logical           :: write_header,     read_header,     check,reading,writing,&
+&                     write_header_ovlp,read_header_ovlp
  integer           :: ID,ID_S,IO_ACTION,ik_mem,ik,i_sp_pol,iv,ic
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps
@@ -56,21 +58,29 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  if(.not.any((/check,reading,writing/))) call error("Wrong call to DIPOLES_IO")
  !
+ call SETUP_PAR_K_scheme()
+ !
  ID=0
  ID_S=0
- write_header  =(     master_cpu.and.writing)
- read_header   =(.not.master_cpu.and.writing).or.reading.or.check
- !
- call SETUP_PAR_K_scheme()
+#if defined _PAR_IO
+ write_header  =       PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing
+ read_header   =(.not.(PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing)).or.reading.or.check
+#else
+ write_header  =(      master_cpu.and.writing )
+ read_header   =(.not.(master_cpu.and.writing)).or.reading.or.check
+#endif
+ write_header_ovlp  =write_header.and.use_covariant_approach
+ read_header_ovlp   = read_header.and.use_covariant_approach
  !
  if(write_header) then
    call msg('s','[DIP] Writing dipoles header ')
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    io_err=io_DIPOLES(Dip,ID)
-   if(use_covariant_approach) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
-     io_err=io_Overlaps(Dip,ID_S)
-   endif
+ endif
+ if(write_header_ovlp) then
+   call msg('s','[DIP] Writing overlaps header ')
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
+   io_err=io_err+io_Overlaps(Dip,ID_S)
  endif
  !
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
@@ -79,19 +89,30 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    call msg('s','[DIP] Checking dipoles header ')
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    io_err=io_DIPOLES(Dip,ID)
-   if(use_covariant_approach) then
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
-     io_err=io_err+io_Overlaps(Dip,ID_S)
-   endif
+ endif
+ if(read_header_ovlp) then
+   call msg('s','[DIP] Checking overlaps header ')
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
+   io_err=io_err+io_Overlaps(Dip,ID_S)
  endif
  !
- if (check.or.io_err/=0) return
+ if (check.or.io_err/=0) then
+   if (io_err/=0.and.     check) call warning(" DIPOLES database not correct or not present")
+   if (io_err/=0.and..not.check) call   error(" DIPOLES database not correct or not present")
+   return
+ endif
+ !
+ if(writing) call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  !
  if(writing) call fix_velocity(Dip,-1)
  !
- if(reading) IO_ACTION=OP_RD_CL
- if(writing) IO_ACTION=OP_APP_CL
+ if(reading) IO_ACTION=OP_IF_START_RD_CL_IF_END
+ if(writing) IO_ACTION=OP_IF_START_APP_CL_IF_END
  !
+#if defined _PAR_IO
+ call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/0/),ID=ID)
+ io_err=io_DIPOLES(Dip,ID)
+#endif
  do i_sp_pol=1,n_sp_pol
    do ik=1,Xk%nibz
      if ( .not.PAR_K_scheme%IND_ibz%element_1D(ik)             ) cycle
@@ -100,8 +121,16 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      io_err=io_DIPOLES(Dip,ID)
    enddo
  enddo
- !    
+#if defined _PAR_IO
+ call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/2+n_sp_pol*Xk%nibz/),ID=ID)
+ io_err=io_DIPOLES(Dip,ID)
+#endif
+ !
  if(use_covariant_approach) then
+#if defined _PAR_IO
+   call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/0/),ID=ID)
+   io_err=io_Overlaps(Dip,ID_S)
+#endif
    do i_sp_pol=1,n_sp_pol
      do ik=1,Xk%nbz
        if ((.not.PAR_K_scheme%IND_bz%element_1D(ik)).and.writing) cycle
@@ -110,6 +139,10 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
        io_err=io_err+io_Overlaps(Dip,ID_S)
      enddo
    enddo
+#if defined _PAR_IO
+   call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/2+n_sp_pol*Xk%nbz/),ID=ID)
+   io_err=io_Overlaps(Dip,ID_S)
+#endif
  endif
  !
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
@@ -123,14 +156,15 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    ! Now I need to correct DIP_v in case
    ! (a) I'll use it    (dir=+1), since I'll need v_eff
    ! (b) before writing (dir=-1), since I always write v and never v_eff
-   !     however some of the dipoles approaches directly compute v_eff    
+   !     (at present this is not used since all approaces compute v.
+   !      However it maybe needed in the future when avoiding dipoles IO)
    !
    ! For a definition of v_eff see PRB 48, 11789 (1993)
    !
    integer,       intent(in)    :: dir
    type(DIPOLE_t),intent(inout) :: Dip
    !
-   real(SP)    :: Ev_m_Ec,W_
+   real(SP)    :: Ev_m_Ec_KS,W_
    complex(SP) :: Ev_m_Ec_QP,den,num
    !
    if(.not.(allocated(Xen%W).or.allocated(Xen%Eo))) return
@@ -150,18 +184,21 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
            !
            if (allocated(Xen%W )) W_=abs(Xen%W(iv,ik,i_sp_pol))+abs(Xen%W(ic,ik,i_sp_pol))
            !
-           Ev_m_Ec   =Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
+           Ev_m_Ec_KS=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
            Ev_m_Ec_QP=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)+cI*W_
            !
-           if (allocated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
+           if (allocated(Xen%Eo)) Ev_m_Ec_KS=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
            !
            if (dir== 1) then
+             ! Define v_eff, see
+             ! - Eq. (14-16) PRB 48, 11789 (1993)
+             ! - Eqs. (55)-(58) PRB 95, 155203 (2017)
              num=Ev_m_Ec_QP
-             den=Ev_m_Ec
+             den=Ev_m_Ec_KS
            endif
            !
            if (dir==-1) then
-             num=Ev_m_Ec
+             num=Ev_m_Ec_KS
              den=Ev_m_Ec_QP
            endif
            !

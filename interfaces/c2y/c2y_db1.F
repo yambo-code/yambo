@@ -23,8 +23,8 @@
 !
 subroutine c2y_db1(en,k,file_name_)
  !
- use pars,                  ONLY: SP, DP,pi
- use com,                   ONLY: msg,warning,error
+ use pars,                  ONLY: DP,pi
+ use com,                   ONLY: msg,warning
  use electrons,             ONLY: levels, default_nel,n_bands,n_spin,n_sp_pol,&
 &                                 n_spinor 
  use vec_operate,           ONLY: define_b_and_DL_vol
@@ -52,7 +52,6 @@ subroutine c2y_db1(en,k,file_name_)
  integer                        :: i1, ik, i2, i3, inel,i_spin,ig
  logical                        :: ldum
  integer                        :: int_sop(3,3,1) ! Symmetries in RLU
- !
  !
  integer,  allocatable          :: rel_gvec(:,:)
  real(DP), allocatable          :: rstr(:)
@@ -349,7 +348,7 @@ end subroutine
 subroutine fskip(nrec)
  !
  implicit none
- integer nrec,i1
+ integer :: nrec,i1
  !
  if (nrec.lt.0) then
    write(*,*) ' FSKIP! NREC=',nrec
@@ -369,8 +368,8 @@ end subroutine
 subroutine assign_z_spec(what,Z)
  !
  implicit none
- character*2  what 
- integer Z 
+ character*2 :: what 
+ integer :: Z
  !
  select case(trim(what))
       case(' H')

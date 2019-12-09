@@ -26,6 +26,7 @@ module D_lattice
  use pars,        ONLY:SP,lchlen,cONE,cZERO,cI,schlen
  use com,         ONLY:error
  !
+#include<dev_defs.h>
 #include<memory.h>
  !
  ! Non periodic directions
@@ -55,6 +56,9 @@ module D_lattice
  integer, allocatable    :: sop_inv(:)
  integer, allocatable    :: irt(:,:,:)     ! (nsym,nat,n_at_species) gives the index of a rotated atomic position
  integer, allocatable    :: icell(:,:,:,:) ! (3,nsym,nat,n_at_species) gives the referene cell after a symm is operated
+ ! device memory
+ complex(SP),allocatable DEV_ATTRIBUTE :: spin_sop_d(:,:,:)
+ integer,    allocatable DEV_ATTRIBUTE :: sop_inv_d(:)
  !
  ! Pauli matrices
  !
@@ -65,6 +69,7 @@ module D_lattice
  !
  ! Cell & atoms
  !
+ logical  :: l_0D,l_1D,l_2D,l_3D
  integer  :: n_atoms
  integer  :: n_atoms_species_max
  integer  :: n_atomic_species
@@ -128,6 +133,11 @@ module D_lattice
      enddo
      if (any(sop_inv==0)) call error('[SYMs] check the input symmetries!')
      call msg(msg_where,'[SYMs] Group table built correctly')
+     !
+#ifdef _CUDA
+     if(allocated(sop_inv_d)) deallocate(sop_inv_d)
+     allocate(sop_inv_d,source=sop_inv)
+#endif
      !
    end subroutine symmetry_group_table
    !

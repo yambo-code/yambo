@@ -28,7 +28,7 @@
 subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  !
  use pars,          ONLY:SP,cZERO
- use wrapper,       ONLY:Vstar_dot_V,V_dot_V,V_by_V_plus_V
+ use wrapper,       ONLY:V_dot_V
  use wave_func,     ONLY:WF,wf_ng
  use electrons,     ONLY:n_spinor
  use pseudo,        ONLY:pp_kbv_dim_yambo
@@ -68,5 +68,5 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  !$omp end parallel do
  !
  forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(:,i1,:))
- !
+   !
 end subroutine

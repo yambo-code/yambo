@@ -48,6 +48,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 &                        PARALLEL_WF_index,WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset
+ use timing_m,      ONLY:timing
  !
 #include<memory.h>
  !
@@ -203,6 +204,13 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
  endif
  !
+ if (i_err/=0) then
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
+   i_err=io_X(X,Xw,Xdb)
+ endif
+ !
+ call PP_redux_wait()
+ !
  do iq=X%iq(1),X%iq(2)
    !
    if (     io_X_done(iq) > 0       ) cycle
@@ -224,11 +232,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      call TDDFT_ALDA_G_space(Xen,Xk)
      !
-   endif
-   !
-   if(iq==1) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
-     i_err=io_X(X,Xw,Xdb)
    endif
    !
    ! Allocation
@@ -315,10 +318,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  if (allocated(FXC)) then
    YAMBO_FREE(FXC)
  endif
- call DIP_alloc('DIP_projected')
-#if defined _PL
- if (l_photolum) call DIP_alloc('DIP_P')
-#endif
+ call DIP_alloc('DIP_iR')
+ call DIP_alloc('DIP_P')
+ call DIP_alloc('DIP_v')
  if (.not.SILENT_MODE.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
 end function

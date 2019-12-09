@@ -51,7 +51,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  !
  integer                      :: ik,ik_mem,i_sp_pol,i_spinor,ic,iv,ic_min,&
 &                                ic_wf,iv_wf,idir,n_LT_steps
- real(SP)                     :: Ev_m_Ec
+ real(SP)                     :: Ev_m_Ec_KS
  complex(SP)                  :: DIP_tmp(3,Dip%ib_lim(2):Dip%ib(2),Dip%ib(1):Dip%ib_lim(1))
  ! 
  call fft_setup(0,1,.true.)      ! FFT size
@@ -132,13 +132,11 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
          if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
          do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
            if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
-           ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
-           Dip%v_eff=.true.
-           Ev_m_Ec=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
-           if (allocated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
+           Ev_m_Ec_KS=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
+           if (allocated(Xen%Eo)) Ev_m_Ec_KS=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
            do idir=1,3
              if(.not.idir_todo(idir)) cycle
-             DIP_v(idir,ic,iv,ik_mem,i_sp_pol)=DIP_v(idir,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec
+             DIP_v(idir,ic,iv,ik_mem,i_sp_pol)=DIP_v(idir,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec_KS
            enddo
          enddo
        enddo

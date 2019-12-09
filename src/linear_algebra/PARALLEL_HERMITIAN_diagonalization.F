@@ -35,7 +35,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait
  use SLK_m,          ONLY:SLK_POOL,SLK_ORTHO
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
 #include<memory.h>
@@ -85,7 +85,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  call PP_redux_wait(E,COMM=SLK_POOL%INTRA_comm)
  !
- call LINEAR_ALGEBRA_WS_clean_up(WS) 
+ call LINEAR_ALGEBRA_WS_reset(WS) 
  !
  call timing('PARALLEL_HERMITIAN_diagonalization',OPR='stop')
  !

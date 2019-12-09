@@ -27,7 +27,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  use drivers,       ONLY:l_sc_magnetic
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use X_m,           ONLY:X_t
- use wave_func,     ONLY:WF,wf_ng
+ use wave_func,     ONLY:wf_ng
  use FFT_m,         ONLY:fft_size
  use pseudo,        ONLY:pp_kbv_dim_yambo
  use R_lattice,     ONLY:bz_samp

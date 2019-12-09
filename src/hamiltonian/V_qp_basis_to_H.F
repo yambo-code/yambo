@@ -25,7 +25,7 @@ subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
  !
  use electrons,      ONLY:spin
  use pars,           ONLY:SP
- use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
+ use QP_m,           ONLY:QP_table,QP_n_states
  use hamiltonian,    ONLY:H_ref_bands
  use matrix_operate, ONLY:UP_matrix_index
  use timing_m,       ONLY:timing

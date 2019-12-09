@@ -24,6 +24,9 @@
 module wave_func
  !
  use pars,           ONLY:SP
+#if defined _CUDA
+ use cudafor
+#endif
 #include <memory.h>
  !
  type WAVEs 
@@ -36,6 +39,9 @@ module wave_func
    integer    , allocatable :: index(:,:,:)
    logical    , allocatable :: state(:,:,:)
    logical                  :: to_load = .TRUE.
+#if defined _CUDA
+   complex(SP), allocatable, device :: c_d(:,:,:)
+#endif
  end type WAVEs
  !
  ! Buffered WFs
@@ -45,7 +51,7 @@ module wave_func
  !
  ! Actual WFs
  !
- type (WAVEs), save :: WF
+ type (WAVEs), save, target :: WF
  !
  ! Real components ?
  !
@@ -84,6 +90,9 @@ module wave_func
  ! Table correspondance G-vec <-> Components: G_ic = wf_igk(ic,ik)
  !
  integer    ,allocatable:: wf_igk(:,:)
+#ifdef _CUDA
+ integer    ,allocatable, device :: wf_igk_d(:,:)
+#endif
  logical                :: wf_norm_test
  !
  ! Allocation/deallocation messaging verbosity
@@ -99,10 +108,14 @@ module wave_func
      real(SP), optional :: wf_old(:,:,:,:)
    end function
    !
-   integer function io_WF(ID,wf)
+   integer function io_WF(ID,wf,wf_d)
      use pars,       ONLY: SP
      integer            :: ID
      complex(SP), optional :: wf(:,:,:)
+     complex(SP), optional :: wf_d(:,:,:)
+#ifdef _CUDA
+     attributes(device) :: wf_d
+#endif
    end function
    !
    function WF_symm(ifft,isc)
@@ -111,6 +124,15 @@ module wave_func
      integer             :: ifft,isc(4)
      complex(SP),dimension(n_spinor) :: WF_symm
    end function
+   !
+#if defined _CUDA
+   function WF_symm_gpu(ifft,isc)
+     use pars,        ONLY: SP
+     use electrons,   ONLY: n_spinor
+     integer             :: ifft,isc(4)
+     complex(SP),dimension(n_spinor), device :: WF_symm_gpu
+   end function
+#endif
    !
  end interface 
  !
@@ -130,6 +152,9 @@ module wave_func
      WF_out%to_load= WF_in%to_load
      WF_out%c      = WF_in%c
      WF_out%index  = WF_in%index
+#if defined _CUDA
+     if (allocated(WF_in%c_d)) allocate(WF_out%c_d,source=WF_in%c)
+#endif
    end subroutine
    !
    subroutine WF_derivative_alloc(cart_direction)

@@ -62,6 +62,7 @@ subroutine MEM_report( REPORT )
  endif
  !
  if (ORPHAN_TOT>0) then
+   if (where=="r") call msg(where,"")
    WRITE(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),"TOTAL not deallocated",trim(mem_string(ORPHAN_TOT))
    call msg(where,msg_(1:len_trim(msg_)))
  endif
@@ -95,7 +96,7 @@ subroutine MEM_report( REPORT )
        i_title=1
        !
        if (REPORT=="check") then
-         WRITE(msg_,'(a,1x,a," : ",a)') trim(PREFIX),trim(mem_string(MEM))
+         WRITE(msg_,'(a,1x,a," : ",a)') trim(PREFIX),trim(mem_string(MEM_now_kb))
          if (M%N>1.or.(M%N==1.and.trim(M%shelf)/=trim(M%name(1)))) then
            WRITE(msg_,'(2a)') trim(msg_),trim(M%name(i_el))//" "//trim(M%shelf)
          else
@@ -110,7 +111,7 @@ subroutine MEM_report( REPORT )
          else
            WRITE(msg_,'(a8,a27)') trim(PREFIX),trim(M%name(i_el))
          endif
-         WRITE(msg_,'(a," : ",a)') trim(msg_),trim(mem_string(MEM))
+         WRITE(msg_,'(a," : ",a)') trim(msg_),trim(mem_string(MEM_now_kb))
          if (len_trim(M%desc(i_el))>0) then
            WRITE(msg_,'(a,a)')  trim(msg_)," ("//trim(M%desc(i_el))//")"
          endif

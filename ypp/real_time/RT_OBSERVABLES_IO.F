@@ -105,12 +105,11 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
    IO_error=.FALSE.
  endif
  !
- call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID)
+ NE_i_time=1
+ call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1,2/),ID=ID)
  io_OBS=io_RT_components(what,ID)
  if( io_OBS/=0 ) then
-   if (present(IO_error)) then
-     IO_error=.TRUE.
-   endif
+   if (present(IO_error)) IO_error=.TRUE.
    return
  endif
  !

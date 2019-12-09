@@ -141,7 +141,7 @@ integer function io_RT_components(what,ID)
      !
      call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="def_io_variables")
      !
-     if (db_type==2.or..not.l_real_time) call TIME_points_IO(ID,(/13,14/),(NE_i_time==1),OBS_RT_IO_t)
+     if (db_type==2.or..not.l_real_time) call TIME_points_IO(ID,(/13,14,15/),(NE_i_time==1),OBS_RT_IO_t)
      !
    endif
    !
@@ -292,11 +292,12 @@ subroutine TIME_points_IO(ID,VAR_ID,def_var,TYP)
  use pars,           ONLY:IP,SP,schlen
  use RT_control,     ONLY:RT_IO_t
  use real_time,      ONLY:NE_steps
- use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,NF90_unlimited
+ use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,NF90_unlimited,&
+&                         write_is_on,read_is_on
  !
 #include<memory.h>
  !
- integer,       intent(in)    :: ID,VAR_ID(2)
+ integer,       intent(in)    :: ID,VAR_ID(3)
  logical,       intent(in)    :: def_var
  type(RT_IO_t), intent(inout) :: TYP
  !
@@ -306,6 +307,9 @@ subroutine TIME_points_IO(ID,VAR_ID,def_var,TYP)
  if(def_var) call def_variable_bulk(ID,"IO_TIME_LAST_POINT",VAR_ID(1),(/1/),IP+100) 
  call io_variable_bulk(ID,VAR_ID(1),I0=TYP%last_point)
  !
+ if(def_var) call def_variable_bulk(ID,"IO_TIME_N_points",VAR_ID(2),(/1/),IP+100) 
+ call io_variable_bulk(ID,VAR_ID(2),I0=TYP%N)
+ !
  if (.not.allocated(TYP%Time)) then
    YAMBO_ALLOC(TYP%Time,(NE_steps))
  endif
@@ -313,10 +317,12 @@ subroutine TIME_points_IO(ID,VAR_ID,def_var,TYP)
  IPOS=TYP%N
  if(def_var) then
    dim_name="IO_TIME_n_points"
-   call def_variable_bulk(ID,"IO_TIME_points",VAR_ID(2),(/NF90_unlimited/),SP,dim_name)
+   call def_variable_bulk(ID,"IO_TIME_points",VAR_ID(3),(/NF90_unlimited/),SP,dim_name)
    IPOS=IPOS-TYP%N+1
  endif
- call io_variable_bulk(ID,VAR_ID(2),R1=TYP%Time(TYP%N:TYP%N),IPOS=IPOS)
+ !
+ if(write_is_on(ID)) call io_variable_bulk(ID,VAR_ID(3),R1=TYP%Time(TYP%N:TYP%N),IPOS=IPOS)
+ if( read_is_on(ID)) call io_variable_bulk(ID,VAR_ID(3),R1=TYP%Time(:TYP%N))
  !
 end subroutine TIME_points_IO
 !
@@ -370,7 +376,7 @@ subroutine G_lesser_IO(ID)
  call io_variable_bulk(ID,1,C4=dG_lesser(:,:,k_range(1):k_range(2),:),IPOS=IPOS)
  if(l_H_rot) io_variable_bulk(ID,2,C3=H_rotation(:,:,k_range(1):k_range(2),i_spin),IPOS=IPOS(1:4)/))
  !
- call TIME_points_IO(ID,(/3,4/),(NE_i_time==1),GF_RT_IO_t)
+ call TIME_points_IO(ID,(/3,4,5/),(NE_i_time==1),GF_RT_IO_t)
  !
 #else
  !
@@ -396,7 +402,7 @@ subroutine G_lesser_IO(ID)
    call  io_variable_bulk(ID,G_MEM_steps+1,C2=H_rotation(:,:,ik,i_spin))
  endif
  !
- call TIME_points_IO(ID,(/G_MEM_steps+2,G_MEM_steps+3/),.true.,GF_RT_IO_t)
+ call TIME_points_IO(ID,(/G_MEM_steps+2,G_MEM_steps+3,G_MEM_steps+4/),.true.,GF_RT_IO_t)
  !
 #endif
  !
@@ -466,7 +472,7 @@ subroutine RT_OBS_IO(ID,l_JP,l_M,what)
      call io_variable_bulk(ID,5,C3=A_cache,IPOS=(/1,1,1,NE_i_time/))
    endif
    !
-   call TIME_points_IO(ID,(/6,7/),(NE_i_time==1),OBS_RT_IO_t)
+   call TIME_points_IO(ID,(/6,7,8/),(NE_i_time==1),OBS_RT_IO_t)
    !
  end select
  !

@@ -79,9 +79,11 @@ subroutine RT_databases_IO(E)
    OBS_RT_IO_t%last_point=NE_i_time
    !
    if (io_OBSERVABLES) then
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
-     io_OBS=io_RT_components('OBSERVABLES',ID(4))
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/2/),ID=ID(4))
+     if(NE_i_time==1) then
+       call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(4)) 
+       io_OBS=io_RT_components('OBSERVABLES',ID(4))
+     endif
+     call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/2/),ID=ID(4))
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
    endif
    !
@@ -91,10 +93,13 @@ subroutine RT_databases_IO(E)
      !
      call RT_carriers_object(RT_carriers,E,WHAT='fill')
      !
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
+     if(NE_i_time==1) then
+       call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(6)) 
+       io_carr=io_RT_components('carriers',ID(6))
+     endif
+     call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/2/),ID=ID(6))
      io_carr=io_RT_components('carriers',ID(6))
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/2/),ID=ID(6))
-     io_carr=io_RT_components('carriers',ID(6))
+     !
    endif
    !
    ! GPL_EXCLUDE_END
@@ -110,9 +115,11 @@ subroutine RT_databases_IO(E)
    GF_RT_IO_t%N=GF_RT_IO_t%N+1
    GF_RT_IO_t%Time(GF_RT_IO_t%N)=NE_time
    GF_RT_IO_t%last_point=NE_i_time
-   !
-   call io_control(ACTION=OP_WR_CL,COM=NONE, SEC=(/1/),ID=ID(5))
-   io_G=io_RT_components('G',ID(5))
+   !     
+   if(NE_i_time==1) then
+     call io_control(ACTION=OP_WR_CL,COM=NONE, SEC=(/1/),ID=ID(5))
+     io_G=io_RT_components('G',ID(5))
+   endif
    !
    call IO_and_Messaging_switch("SAVE")
    call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_k_cpu)
@@ -131,7 +138,7 @@ subroutine RT_databases_IO(E)
    enddo
    !
    if(n_sec>0) then
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=secs,ID=ID(5))
+     call io_control(ACTION=OP_IF_START_APP_CL_IF_END,COM=NONE,SEC=secs,ID=ID(5))
      io_G=io_RT_components('G',ID(5))
    endif
    !
@@ -159,8 +166,10 @@ subroutine RT_databases_IO(E)
 #if defined _ELPH
    if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
      !
-     call io_control(ACTION=OP_WR,COM=NONE, SEC=(/1/),ID=ID(7))
-     io_THETA=io_RT_components('THETA',ID(7))
+     if(NE_i_time==1) then
+       call io_control(ACTION=OP_WR,COM=NONE, SEC=(/1/),ID=ID(7))
+       io_THETA=io_RT_components('THETA',ID(7))
+     endif
      !
      do ik = 1, RT_nk
        !

@@ -607,8 +607,8 @@ module IO_m
      character(schlen)          :: dim_strng
      character(schlen),optional :: dim_name
      netcdf_dim=0
-     write (dim_strng,'(a,i10.10)') 'D_',dim
-     if (present(dim_name)) dim_strng = dim_name
+     if (.not.present(dim_name)) write (dim_strng,'(a,i10.10)') 'D_',dim
+     if (     present(dim_name)) dim_strng = dim_name
      dim_found=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
      if (dim_found/=NF90_NOERR) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
    end function

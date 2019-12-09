@@ -64,6 +64,7 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  nf_error=0
  dims =0
  !
+ if (present(CH0).or.present(L0).or.present(I0).or.present(R0).or.present(D0)                              ) dims=0
  if (present(CH1).or.present(L1).or.present(I1).or.present(R1).or.present(D1)                              ) dims=1
  if (present(CH2).or.present(L2).or.present(I2).or.present(R2).or.present(D2).or.present(C1).or.present(Z1)) dims=2
  if (present(CH3).or.present(L3).or.present(I3).or.present(R3).or.present(D3).or.present(C2).or.present(Z2)) dims=3

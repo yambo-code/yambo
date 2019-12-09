@@ -46,39 +46,11 @@ module mpa_m
  implicit none
  private
 
- interface mpa_RQ_1p_solver
-    module procedure mpa_RQ_1p_solver_R, mpa_RQ_1p_solver_C
- end interface
- interface mpa_RQ_2p_solver
-    module procedure mpa_RQ_2p_solver_R, mpa_RQ_2p_solver_C
- end interface
- interface mpa_RQ_3p_solver
-    module procedure mpa_RQ_3p_solver_R, mpa_RQ_3p_solver_C
- end interface
-
- public :: mpa_RQ_1p_solver
- public :: mpa_RQ_2p_solver
- public :: mpa_RQ_3p_solver
- public :: mpa_RQ_1p_solver_I
- public :: mpa_RQ_2p_solver_I
- public :: mpa_RQ_3p_solver_I
+ public :: mpa_RE_solver
 
 contains
 
- subroutine mpa_RQ_1p_solver_R(w, x, R, Q) 
-   ! analytical form of the 1 pole solution
-   implicit none
-   !
-   real(SP),     intent(in)     :: w(2)
-   complex(SP),  intent(in)     :: x(2)
-   complex(SP),  intent(out)    :: R, Q
-   ! 
-   R =  x(1)*x(2)* (w(1)**2- w(2)**2 )/  (x(1) - x(2))
-   Q = (x(1)*w(1)**2  -  x(2)*w(2)**2 )/ (x(1) - x(2))
-   !
- end subroutine mpa_RQ_1p_solver_R
- !
- subroutine mpa_RQ_1p_solver_C(w, x, R, Q) 
+ subroutine mpa_RQ_1p_solver(w, x, R, Q) 
    ! analytical form of the 1 pole solution
    implicit none
    !
@@ -89,61 +61,10 @@ contains
    R =  x(1)*x(2)* (w(1)**2- w(2)**2 )/  (x(1) - x(2))
    Q = (x(1)*w(1)**2  -  x(2)*w(2)**2 )/ (x(1) - x(2))
    !
- end subroutine mpa_RQ_1p_solver_C
+ end subroutine mpa_RQ_1p_solver
+!-------------------------------------------------------------------------------
 
- subroutine mpa_RQ_1p_solver_I(w, x, R, Q)
-   ! To be used in the imaginary axis
-   implicit none
-   !
-   real(SP),     intent(in)     :: w(2)
-   complex(SP),  intent(in)     :: x(2)
-   complex(SP),  intent(out)    :: R, Q
-   ! 
-   R =  -x(1)*x(2)* (w(1)**2- w(2)**2 )/  (x(1) - x(2))   ! RQ_1p_solverI(w, x, R, Q)  =   
-   Q = -(x(1)*w(1)**2  -  x(2)*w(2)**2 )/ (x(1) - x(2))   ! RQ_1p_solver(w, x, -R, -Q)
-   !
- end subroutine mpa_RQ_1p_solver_I
-
- subroutine mpa_RQ_2p_solver_R(w, x, r, q) 
-   implicit none
-   !
-   real(SP),     intent(in)     :: w(4)
-   complex(SP),  intent(in)     :: x(4)
-   complex(SP),  intent(out)    :: r(2), q(2)
-   !
-   integer     :: i, j, ii=0
-   complex(SP) :: a, b, c !coefficients of the q polynom
-   complex(SP) :: den, det
-   !
-   a =  -(x(1)-x(2))*(x(3)-x(4))*( w(1)**2*w(2)**2 + w(3)**2*w(4)**2 ) &
-        +(x(1)-x(3))*(x(2)-x(4))*( w(1)**2*w(3)**2 + w(2)**2*w(4)**2 ) &
-        -(x(1)-x(4))*(x(2)-x(3))*( w(1)**2*w(4)**2 + w(2)**2*w(3)**2 ) 
-   ! 
-   b =   (x(1)-x(2))*w(3)**2*w(4)**2*( x(3)*w(3)**2 - x(4)*w(4)**2 ) - &
-         (x(1)-x(3))*w(2)**2*w(4)**2*( x(2)*w(2)**2 - x(4)*w(4)**2 ) + &
-         (x(1)-x(4))*w(2)**2*w(3)**2*( x(2)*w(2)**2 - x(3)*w(3)**2 ) + &
-         (x(2)-x(3))*w(1)**2*w(4)**2*( x(1)*w(1)**2 - x(4)*w(4)**2 ) - &
-         (x(2)-x(4))*w(1)**2*w(3)**2*( x(1)*w(1)**2 - x(3)*w(3)**2 ) + &
-         (x(3)-x(4))*w(1)**2*w(2)**2*( x(1)*w(1)**2 - x(2)*w(2)**2 )   
-   !
-   c =   (x(1)-x(2))*w(1)**2*w(2)**2*( x(3)*w(3)**4 - x(4)*w(4)**4 ) - &
-         (x(1)-x(3))*w(1)**2*w(3)**2*( x(2)*w(2)**4 - x(4)*w(4)**4 ) + &
-         (x(1)-x(4))*w(1)**2*w(4)**2*( x(2)*w(2)**4 - x(3)*w(3)**4 ) + &
-         (x(2)-x(3))*w(2)**2*w(3)**2*( x(1)*w(1)**4 - x(4)*w(4)**4 ) - &
-         (x(2)-x(4))*w(2)**2*w(4)**2*( x(1)*w(1)**4 - x(3)*w(3)**4 ) + &
-         (x(3)-x(4))*w(3)**2*w(4)**2*( x(1)*w(1)**4 - x(2)*w(2)**4 ) 
-   !
-   det  = b**2. - 4.*a*c
-   q(1) = -(b + sqrt(det))/(2.*a)
-   q(2) = -(b - sqrt(det))/(2.*a)
-   ! 
-   den  =  (q(1)-q(2))*(w(2)-w(3))*(w(2)+w(3))
-   r(1) = -(q(1) - w(2)**2)*(q(1) - w(3)**2)*( x(3)*w(3)**2 - x(2)*w(2)**2  + q(2)*(x(2) - x(3)) ) /den
-   r(2) =  (q(2) - w(2)**2)*(q(2) - w(3)**2)*( x(3)*w(3)**2 - x(2)*w(2)**2  + q(1)*(x(2) - x(3)) ) /den
-   !
- end subroutine mpa_RQ_2p_solver_R
-
- subroutine mpa_RQ_2p_solver_C(w, x, r, q) 
+ subroutine mpa_RQ_2p_solver(w, x, r, q) 
    implicit none
    !
    complex(SP),  intent(in)     :: w(4)
@@ -180,50 +101,12 @@ contains
    r(1) = -(q(1) - w(2)**2)*(q(1) - w(3)**2)*( x(3)*w(3)**2 - x(2)*w(2)**2  + q(2)*(x(2) - x(3)) ) /den
    r(2) =  (q(2) - w(2)**2)*(q(2) - w(3)**2)*( x(3)*w(3)**2 - x(2)*w(2)**2  + q(1)*(x(2) - x(3)) ) /den
    !
- end subroutine mpa_RQ_2p_solver_C
-
- subroutine mpa_RQ_2p_solver_I(w, x, r, q) 
-   implicit none
-   !
-   real(SP),     intent(in)     :: w(4)
-   complex(SP),  intent(in)     :: x(4)
-   complex(SP),  intent(out)    :: r(2), q(2)
-   !
-   integer     :: i, j, ii=0
-   complex(SP) :: a, b, c !coefficients of the q polynom
-   complex(SP) :: den, det
-   !
-   a =  -(x(1)-x(2))*(x(3)-x(4))*( w(1)**2*w(2)**2 + w(3)**2*w(4)**2 ) &
-        +(x(1)-x(3))*(x(2)-x(4))*( w(1)**2*w(3)**2 + w(2)**2*w(4)**2 ) &
-        -(x(1)-x(4))*(x(2)-x(3))*( w(1)**2*w(4)**2 + w(2)**2*w(3)**2 ) 
-   ! 
-   b =   (x(1)-x(2))*w(3)**2*w(4)**2*( x(3)*w(3)**2 - x(4)*w(4)**2 ) - &
-         (x(1)-x(3))*w(2)**2*w(4)**2*( x(2)*w(2)**2 - x(4)*w(4)**2 ) + &
-         (x(1)-x(4))*w(2)**2*w(3)**2*( x(2)*w(2)**2 - x(3)*w(3)**2 ) + &
-         (x(2)-x(3))*w(1)**2*w(4)**2*( x(1)*w(1)**2 - x(4)*w(4)**2 ) - &
-         (x(2)-x(4))*w(1)**2*w(3)**2*( x(1)*w(1)**2 - x(3)*w(3)**2 ) + &
-         (x(3)-x(4))*w(1)**2*w(2)**2*( x(1)*w(1)**2 - x(2)*w(2)**2 )   
-   !
-   c =   (x(1)-x(2))*w(1)**2*w(2)**2*( x(3)*w(3)**4 - x(4)*w(4)**4 ) - &
-         (x(1)-x(3))*w(1)**2*w(3)**2*( x(2)*w(2)**4 - x(4)*w(4)**4 ) + &
-         (x(1)-x(4))*w(1)**2*w(4)**2*( x(2)*w(2)**4 - x(3)*w(3)**4 ) + &
-         (x(2)-x(3))*w(2)**2*w(3)**2*( x(1)*w(1)**4 - x(4)*w(4)**4 ) - &
-         (x(2)-x(4))*w(2)**2*w(4)**2*( x(1)*w(1)**4 - x(3)*w(3)**4 ) + &
-         (x(3)-x(4))*w(3)**2*w(4)**2*( x(1)*w(1)**4 - x(2)*w(2)**4 ) 
-   !
-   det  = b**2 -4._SP*a*c
-   q(1) = (b + sqrt(det))/(2._SP*a)  ! q(1) = - q(1)_Real, r(1) = - r(1)_Real
-   q(2) = (b - sqrt(det))/(2._SP*a)  ! q(2) = - q(2)_Real, r(2) = - r(2)_Real
-   ! 
-   den  =  (q(1)-q(2))*(w(2)-w(3))*(w(2)+w(3))
-   r(1) =  (q(1) - w(2)**2)*(q(1) - w(3)**2)*( x(3)*w(3)**2 - x(2)*w(2)**2  + q(2)*(x(2) - x(3)) ) /den
-   r(2) = -(q(2) - w(2)**2)*(q(2) - w(3)**2)*( x(3)*w(3)**2 - x(2)*w(2)**2  + q(1)*(x(2) - x(3)) ) /den
-   !
- end subroutine mpa_RQ_2p_solver_I
+ end subroutine mpa_RQ_2p_solver
+!-------------------------------------------------------------------------------
 
  function f1(t, w, x) 
    implicit none
-   real(SP),     intent(in)     :: w(6)
+   complex(SP),  intent(in)     :: w(6)
    complex(SP),  intent(in)     :: x(6)
    integer,      intent(in)     :: t != 4,5,6
    complex(SP) :: f1
@@ -236,24 +119,9 @@ contains
         (x(3)-x(t)) *w(1)**2 *w(2)**2 *(w(1)**2 - w(2)**2)    
  end function
 
- function f1_C(t, w, x) 
-   implicit none
-   complex(SP),  intent(in)     :: w(6)
-   complex(SP),  intent(in)     :: x(6)
-   integer,      intent(in)     :: t != 4,5,6
-   complex(SP) :: f1_C
-   !
-   f1_C = (x(1)-x(2)) *w(3)**2 *w(t)**2 *(w(3)**2 - w(t)**2) -  &
-          (x(1)-x(3)) *w(2)**2 *w(t)**2 *(w(2)**2 - w(t)**2) +  &
-          (x(1)-x(t)) *w(2)**2 *w(3)**2 *(w(2)**2 - w(3)**2) +  &
-          (x(2)-x(3)) *w(1)**2 *w(t)**2 *(w(1)**2 - w(t)**2) -  &
-          (x(2)-x(t)) *w(1)**2 *w(3)**2 *(w(1)**2 - w(3)**2) +  &
-          (x(3)-x(t)) *w(1)**2 *w(2)**2 *(w(1)**2 - w(2)**2)    
- end function
-
  function f2(t, w, x) 
    implicit none
-   real(SP),     intent(in)     :: w(6)
+   complex(SP),  intent(in)     :: w(6)
    complex(SP),  intent(in)     :: x(6)
    integer,      intent(in)     :: t != 4,5,6
    complex(SP) :: f2
@@ -266,24 +134,9 @@ contains
         (x(3)-x(t)) *w(3)**2 *w(t)**2 *(w(1)**4 - w(2)**4)    
  end function
 
- function f2_C(t, w, x) 
-   implicit none
-   complex(SP),  intent(in)     :: w(6)
-   complex(SP),  intent(in)     :: x(6)
-   integer,      intent(in)     :: t != 4,5,6
-   complex(SP) :: f2_C
-   !
-   f2_C = (x(1)-x(2)) *w(1)**2 *w(2)**2 *(w(3)**4 - w(t)**4) -  &
-          (x(1)-x(3)) *w(1)**2 *w(3)**2 *(w(2)**4 - w(t)**4) +  &
-          (x(1)-x(t)) *w(1)**2 *w(t)**2 *(w(2)**4 - w(3)**4) +  &
-          (x(2)-x(3)) *w(2)**2 *w(3)**2 *(w(1)**4 - w(t)**4) -  &
-          (x(2)-x(t)) *w(2)**2 *w(t)**2 *(w(1)**4 - w(3)**4) +  &
-          (x(3)-x(t)) *w(3)**2 *w(t)**2 *(w(1)**4 - w(2)**4)    
- end function
-
  function f3(t, w, x) 
    implicit none
-   real(SP),     intent(in)     :: w(6)
+   complex(SP),  intent(in)     :: w(6)
    complex(SP),  intent(in)     :: x(6)
    integer,      intent(in)     :: t != 4,5,6
    complex(SP) :: f3
@@ -296,24 +149,9 @@ contains
         (x(3)-x(t)) *w(3)**4 *w(t)**4 *(w(1)**2 - w(2)**2)    
  end function
 
- function f3_C(t, w, x) 
-   implicit none
-   complex(SP),  intent(in)     :: w(6)
-   complex(SP),  intent(in)     :: x(6)
-   integer,      intent(in)     :: t != 4,5,6
-   complex(SP) :: f3_C
-   !
-   f3_C = (x(1)-x(2)) *w(1)**4 *w(2)**4 *(w(3)**2 - w(t)**2) -  &
-          (x(1)-x(3)) *w(1)**4 *w(3)**4 *(w(2)**2 - w(t)**2) +  &
-          (x(1)-x(t)) *w(1)**4 *w(t)**4 *(w(2)**2 - w(3)**2) +  &
-          (x(2)-x(3)) *w(2)**4 *w(3)**4 *(w(1)**2 - w(t)**2) -  &
-          (x(2)-x(t)) *w(2)**4 *w(t)**4 *(w(1)**2 - w(3)**2) +  &
-          (x(3)-x(t)) *w(3)**4 *w(t)**4 *(w(1)**2 - w(2)**2)    
- end function
-
  function f4(t, w, x) 
    implicit none
-   real(SP),     intent(in)     :: w(6)
+   complex(SP),  intent(in)     :: w(6)
    complex(SP),  intent(in)     :: x(6)
    integer,      intent(in)     :: t != 4,5,6
    complex(SP)                  :: f4
@@ -324,28 +162,16 @@ contains
         x(t) *w(t)**6 * (w(1)**2 - w(2)**2) * (w(1)**2 - w(3)**2) * (w(2)**2 - w(3)**2)   
  end function
 
- function f4_C(t, w, x) 
+ subroutine mpa_RQ_3p_solver(w, x, r, q) 
    implicit none
    complex(SP),  intent(in)     :: w(6)
-   complex(SP),  intent(in)     :: x(6)
-   integer,      intent(in)     :: t != 4,5,6
-   complex(SP) :: f4_C
-   !
-   f4_C = x(1) *w(1)**6 * (w(2)**2 - w(3)**2) * (w(2)**2 - w(t)**2) * (w(3)**2 - w(t)**2) - &
-          x(2) *w(2)**6 * (w(1)**2 - w(3)**2) * (w(1)**2 - w(t)**2) * (w(3)**2 - w(t)**2) + &
-          x(3) *w(3)**6 * (w(1)**2 - w(2)**2) * (w(1)**2 - w(t)**2) * (w(2)**2 - w(t)**2) - &
-          x(t) *w(t)**6 * (w(1)**2 - w(2)**2) * (w(1)**2 - w(3)**2) * (w(2)**2 - w(3)**2)   
- end function
-
- subroutine mpa_RQ_3p_solver_R(w, x, r, q) 
-   implicit none
-   real(SP),     intent(in)     :: w(6)
    complex(SP),  intent(in)     :: x(6)
    complex(SP),  intent(out)    :: r(3), q(3)
    !
    integer     :: i, j, ii=0
    complex(SP) :: a, b, c, d !coefficients of the q polynom
-   complex(SP) :: D1, D2, den, s=complex(1._SP, sqrt(3._SP)), deR
+   complex(SP) :: D1, D2, den, deR 
+   complex(SP) :: s=(1._SP, 1.73205080757) ! = (1._SP, sqrt(3._SP))
    !
    a =  f1(4, w, x)* ( f2(5, w, x)*f3(6, w, x) - f2(6, w, x)*f3(5, w, x) ) - &
         f1(5, w, x)* ( f2(4, w, x)*f3(6, w, x) - f2(6, w, x)*f3(4, w, x) ) + &
@@ -393,126 +219,135 @@ contains
          +(w(2)**2-q(1))*(w(2)**2-q(2))*( (w(1)**2-q(1))*(w(3)**2-q(2)) - (w(1)**2-q(2))*(w(3)**2-q(1)) )*x(2)  & 
          -(w(3)**2-q(1))*(w(3)**2-q(2))*( (w(1)**2-q(1))*(w(2)**2-q(2)) - (w(1)**2-q(2))*(w(2)**2-q(1)) )*x(3) ) /deR
    !                                                                
- end subroutine mpa_RQ_3p_solver_R
+ end subroutine mpa_RQ_3p_solver
+!-------------------------------------------------------------------------------
 
- subroutine mpa_RQ_3p_solver_C(w, x, r, q) 
+ subroutine mpa_R_solver(np, w, xq, R, Q)
    implicit none
-   complex(SP),  intent(in)     :: w(6)
-   complex(SP),  intent(in)     :: x(6)
-   complex(SP),  intent(out)    :: r(3), q(3)
-   !
-   integer     :: i, j, ii=0
-   complex(SP) :: a, b, c, d !coefficients of the q polynom
-   complex(SP) :: D1, D2, den, s = complex(1._SP, sqrt(3._SP)), deR
-   !
-   a =  f1_C(4, w, x)* ( f2_C(5, w, x)*f3_C(6, w, x) - f2_C(6, w, x)*f3_C(5, w, x) ) - &
-        f1_C(5, w, x)* ( f2_C(4, w, x)*f3_C(6, w, x) - f2_C(6, w, x)*f3_C(4, w, x) ) + &
-        f1_C(6, w, x)* ( f2_C(4, w, x)*f3_C(5, w, x) - f2_C(5, w, x)*f3_C(4, w, x) ) 
-   !
-   b = -f1_C(4, w, x)* ( f2_C(5, w, x)*f4_C(6, w, x) - f2_C(6, w, x)*f4_C(5, w, x) ) + &
-        f1_C(5, w, x)* ( f2_C(4, w, x)*f4_C(6, w, x) - f2_C(6, w, x)*f4_C(4, w, x) ) - &
-        f1_C(6, w, x)* ( f2_C(4, w, x)*f4_C(5, w, x) - f2_C(5, w, x)*f4_C(4, w, x) ) 
+   integer,      intent(in)        :: np
+   complex(dp),  intent(in)        :: w(:)
+   complex(dp),  intent(in)        :: xq(:), Q(np)
+   complex(dp),  intent(out)       :: R(np)
    ! 
-   c = -f4_C(4, w, x)* ( f1_C(5, w, x)*f3_C(6, w, x) - f1_C(6, w, x)*f3_C(5, w, x) ) + &
-        f4_C(5, w, x)* ( f1_C(4, w, x)*f3_C(6, w, x) - f1_C(6, w, x)*f3_C(4, w, x) ) - &
-        f4_C(6, w, x)* ( f1_C(4, w, x)*f3_C(5, w, x) - f1_C(5, w, x)*f3_C(4, w, x) ) 
-   !
-   d = -f4_C(4, w, x)* ( f2_C(5, w, x)*f3_C(6, w, x) - f2_C(6, w, x)*f3_C(5, w, x) ) + &
-        f4_C(5, w, x)* ( f2_C(4, w, x)*f3_C(6, w, x) - f2_C(6, w, x)*f3_C(4, w, x) ) - &
-        f4_C(6, w, x)* ( f2_C(4, w, x)*f3_C(5, w, x) - f2_C(5, w, x)*f3_C(4, w, x) ) 
-   !
-   D1   = 3._SP*a*c - b**2
-   D2   = 2._SP*b*D1 + 3._SP*a*(b*c - 9._SP*a*d)
-   den  = ( D2 + sqrt(4._SP*D1**3 + D2**2) )**(1._SP/3.0_SP)
-   !
-   q(1) = -( b + 2._SP**(1._SP/3._SP)*D1/den -den/2._SP**(1._SP/3._SP) )/(3._SP*a)              
-   q(2) = -( b - s* D1/2._SP**(2._SP/3._SP)/den + conjg(s)* den/2._SP**(4._SP/3._SP) )/(3._SP*a)  
-   q(3) = -( b - conjg(s)* D1/2._SP**(2._SP/3._SP)/den + s* den/2._SP**(4._SP/3._SP) )/(3._SP*a) 
-   !
-   deR  =  (w(1)**2-q(1)) * (w(1)**2-q(2)) * (w(2)**2-q(3)) * (w(3)**2-q(3))*   &
-          ((w(2)**2-q(1)) * (w(3)**2-q(2)) - (w(2)**2-q(2)) * (w(3)**2-q(1)))   &
-          +(w(1)**2-q(1)) * (w(1)**2-q(3)) * (w(2)**2-q(2)) * (w(3)**2-q(2))*   &
-          ((w(2)**2-q(3)) * (w(3)**2-q(1)) - (w(2)**2-q(1)) * (w(3)**2-q(3)))   &
-          +(w(1)**2-q(2)) * (w(1)**2-q(3)) * (w(2)**2-q(1)) * (w(3)**2-q(1))*   &
-          ((w(2)**2-q(2)) * (w(3)**2-q(3)) - (w(2)**2-q(3)) * (w(3)**2-q(2))) 
-   !
-   r(1) = (w(1)**2-q(1))*(w(2)**2-q(1))*(w(3)**2-q(1))*(                                                         &
-         -(w(1)**2-q(2))*(w(1)**2-q(3))*( (w(2)**2-q(2))*(w(3)**2-q(3)) - (w(2)**2-q(3))*(w(3)**2-q(2)) )*x(1)   &
-         +(w(2)**2-q(2))*(w(2)**2-q(3))*( (w(1)**2-q(2))*(w(3)**2-q(3)) - (w(1)**2-q(3))*(w(3)**2-q(2)) )*x(2)   &
-         -(w(3)**2-q(2))*(w(3)**2-q(3))*( (w(1)**2-q(2))*(w(2)**2-q(3)) - (w(1)**2-q(3))*(w(2)**2-q(2)) )*x(3) ) /deR 
-   !
-   r(2) = (w(1)**2-q(2))*(w(2)**2-q(2))*(w(3)**2-q(2))*(                                                         &
-         +(w(1)**2-q(1))*(w(1)**2-q(3))*( (w(2)**2-q(1))*(w(3)**2-q(3)) - (w(2)**2-q(3))*(w(3)**2-q(1)) )*x(1)   &
-         -(w(2)**2-q(1))*(w(2)**2-q(3))*( (w(1)**2-q(1))*(w(3)**2-q(3)) - (w(1)**2-q(3))*(w(3)**2-q(1)) )*x(2)   &
-         +(w(3)**2-q(1))*(w(3)**2-q(3))*( (w(1)**2-q(1))*(w(2)**2-q(3)) - (w(1)**2-q(3))*(w(2)**2-q(1)) )*x(3) ) /deR 
-   !
-   r(3) = (w(1)**2-q(3))*(w(2)**2-q(3))*(w(3)**2-q(3))*(                                                        &
-         -(w(1)**2-q(1))*(w(1)**2-q(2))*( (w(2)**2-q(1))*(w(3)**2-q(2)) - (w(2)**2-q(2))*(w(3)**2-q(1)) )*x(1)  & 
-         +(w(2)**2-q(1))*(w(2)**2-q(2))*( (w(1)**2-q(1))*(w(3)**2-q(2)) - (w(1)**2-q(2))*(w(3)**2-q(1)) )*x(2)  & 
-         -(w(3)**2-q(1))*(w(3)**2-q(2))*( (w(1)**2-q(1))*(w(2)**2-q(2)) - (w(1)**2-q(2))*(w(2)**2-q(1)) )*x(3) ) /deR
-   !
- end subroutine mpa_RQ_3p_solver_C
+   complex(dp)                     :: A(np,np), B(np)
+   integer                         :: i, k, info, ind(np)    
+   ! 
+   do k = 1, np
+     B(k) = xq(k)
+     do i = 1, np
+       A(k,i) = -1./( w(k)**2 - Q(i) )
+     enddo
+   enddo 
+   ! 
+   call zgesv(np, 1, A, np, ind, R, np,info) 
 
- subroutine mpa_RQ_3p_solver_I(w, x, r, q) 
+ end subroutine mpa_R_solver
+
+ subroutine mpa_Q_solver(np, z, xq, Q)
    implicit none
-   real(SP),     intent(in)     :: w(6)
-   complex(SP),  intent(in)     :: x(6)
-   complex(SP),  intent(out)    :: r(3), q(3)
-   !
-   integer     :: i, j, ii=0
-   complex(SP) :: a, b, c, d !coefficients of the q polynom
-   complex(SP) :: D1, D2, den, s = complex(1._SP, sqrt(3._SP)), deR
-   !
-   a =  f1(4, w, x)* ( f2(5, w, x)*f3(6, w, x) - f2(6, w, x)*f3(5, w, x) ) - &
-        f1(5, w, x)* ( f2(4, w, x)*f3(6, w, x) - f2(6, w, x)*f3(4, w, x) ) + &
-        f1(6, w, x)* ( f2(4, w, x)*f3(5, w, x) - f2(5, w, x)*f3(4, w, x) ) 
-   !
-   b = -f1(4, w, x)* ( f2(5, w, x)*f4(6, w, x) - f2(6, w, x)*f4(5, w, x) ) + &
-        f1(5, w, x)* ( f2(4, w, x)*f4(6, w, x) - f2(6, w, x)*f4(4, w, x) ) - &
-        f1(6, w, x)* ( f2(4, w, x)*f4(5, w, x) - f2(5, w, x)*f4(4, w, x) ) 
+   integer,      intent(in)        :: np
+   complex(dp),  intent(in)        :: z(2*np)
+   complex(dp),  intent(in)        :: xq(2*np)
+   complex(dp),  intent(out)       :: Q(np)
    ! 
-   c = -f4(4, w, x)* ( f1(5, w, x)*f3(6, w, x) - f1(6, w, x)*f3(5, w, x) ) + &
-        f4(5, w, x)* ( f1(4, w, x)*f3(6, w, x) - f1(6, w, x)*f3(4, w, x) ) - &
-        f4(6, w, x)* ( f1(4, w, x)*f3(5, w, x) - f1(5, w, x)*f3(4, w, x) ) 
+   complex(dp)                     :: Z1(np,np), Z2(np,np), M1(np,np), M2(np,np), v1(np)
+   complex(dp)                     :: M(np,np),Mp(np,np), b(np), Companion(np,np)
+   complex(dp)                     :: rwork(2*np), work(2*np), VR(np), VL(np)
+   integer                         :: i, j, info, ind(np)    
+   ! 
+   do j = 1, np
+     ind(j) = j
+!     v1(j)  = xq(2*j-1)*z(2*j-1)**np
+!     b (j)  = xq(2*j  )*z(2*j  )**np
+     v1(j)  = xq(j   )*z(j   )**np
+     b (j)  = xq(j+np)*z(j+np)**np
+     Z1(j,1) = 1.
+     Z2(j,1) = 1.  
+!     M1(j,1) = -xq(2*j-1)
+!     M2(j,1) = -xq(2*j) 
+     M1(j,1) = -xq(j)
+     M2(j,1) = -xq(j+np) 
+     M (j,j) = 1.
+     M (j,1) = 0.
+     do i = 2, np
+!       Z1(j,i) =  z(2*j-1)**(i-1)
+!       Z2(j,i) =  z(2*j  )**(i-1)
+!       M1(j,i) = -xq(2*j-1)*Z1(j,i)
+!       M2(j,i) = -xq(2*j  )*Z2(j,i)
+       Z1(j,i) =  z(j   )**(i-1)
+       Z2(j,i) =  z(j+np)**(i-1)
+       M1(j,i) = -xq(j   )*Z1(j,i)
+       M2(j,i) = -xq(j+np)*Z2(j,i)
+       if(i/=j) M(j,i) = 0._SP 
+     enddo
+   enddo
+   M (1,1) = 1._SP
+   call zgesv(np, np, Z1, np, ind, M, np,info) 
+   M  = matmul(Z2,M)
+   M2 = matmul(M,M1) - M2
+   b  = matmul(M,v1) - b
+   ! 
+   M = 0.
+   do i =1,np
+     M(i,i) = 1.
+   enddo	
+   call zgesv(np, np, M2, np, ind, M, np,info) 
+   b = matmul(M,b) 
+   Companion=0.
+   Companion(1,np) = -b(1)
+   do i = 2, np
+     Companion(i,np)  = -b(i)
+     Companion(i,i-1) = 1.
+   enddo
+   call  zgeev( 'N', 'N', np, Companion, np, Q, VL, 1, VR, 1, work, 2*np, rwork, info )
+ end subroutine mpa_Q_solver
+!-------------------------------------------------------------------------------
+
+ subroutine mpa_RE_solver(np, w, x, R, E) 
+   implicit none
    !
-   d = -f4(4, w, x)* ( f2(5, w, x)*f3(6, w, x) - f2(6, w, x)*f3(5, w, x) ) + &
-        f4(5, w, x)* ( f2(4, w, x)*f3(6, w, x) - f2(6, w, x)*f3(4, w, x) ) - &
-        f4(6, w, x)* ( f2(4, w, x)*f3(5, w, x) - f2(5, w, x)*f3(4, w, x) ) 
+   integer,     intent(in)      :: np
+   complex(SP),  intent(in)     :: w(2*np), x(2*np)
+   complex(SP),  intent(out)    :: R(np), E(np)
+   ! 
+   select case(np)
+     case(1)
+       call mpa_RQ_1p_solver(w, x, R(1), E(1))
+     case(2)
+       call mpa_RQ_2p_solver(w, x, R, E)
+     case(3)
+       call mpa_RQ_3p_solver(w, x, R, E)
+     case default
+       call mpa_Q_solver(np, w, x, E)
+       call mpa_R_solver(np, w, x, R, E)
+       E = sqrt(E)
+       R = -R/(2._SP*E)
+   end select
    !
-   D1   = 3._SP*a*c - b**2
-   D2   = 2._SP*b*D1 + 3._SP*a*(b*c - 9._SP*a*d)
-   den  = ( D2 + sqrt(4._SP*D1**3 + D2**2) )**(1.0_SP/3.0_SP)
+ end subroutine mpa_RE_solver
+!------------------------------------------------------------------------------- 
+
+ function err_func_np(np, R, Q, w, x)
+   implicit none
    !
-   !q(1) = -q(1)_Real, r(1) = -r(1)_Real
-   !q(2) = -q(2)_Real, r(2) = -r(2)_Real
-   !q(3) = -q(3)_Real, r(3) = -r(3)_Real
-   q(1) = ( b + 2._SP**(1._SP/3._SP)*D1/den - den/2.0_SP**(1._SP/3._SP) )/(3._SP*a)  
-   q(2) = ( b - s* D1/2._SP**(2._SP/3._SP)/den + conjg(s)* den/2._SP**(4._SP/3._SP) )/(3._SP*a)  
-   q(3) = ( b - conjg(s)* D1/2._SP**(2._SP/3._SP)/den + s* den/2._SP**(4._SP/3._SP) )/(3._SP*a)  
+   integer ,    intent(in)  :: np
+   complex(dp), intent(in)  :: x(2*np), w(2*np)
+   complex(dp), intent(in)  :: R(np), Q(np)
+   complex(dp)              :: aux
+   real(dp)                 :: err_func_np
+   integer   ::i,j
    !
-   deR  =  (w(1)**2-q(1)) * (w(1)**2-q(2)) * (w(2)**2-q(3)) * (w(3)**2-q(3))*   &
-          ((w(2)**2-q(1)) * (w(3)**2-q(2)) - (w(2)**2-q(2)) * (w(3)**2-q(1)))   &
-          +(w(1)**2-q(1)) * (w(1)**2-q(3)) * (w(2)**2-q(2)) * (w(3)**2-q(2))*   &
-          ((w(2)**2-q(3)) * (w(3)**2-q(1)) - (w(2)**2-q(1)) * (w(3)**2-q(3)))   &
-          +(w(1)**2-q(2)) * (w(1)**2-q(3)) * (w(2)**2-q(1)) * (w(3)**2-q(1))*   &
-          ((w(2)**2-q(2)) * (w(3)**2-q(3)) - (w(2)**2-q(3)) * (w(3)**2-q(2))) 
-   !
-   r(1) =-(w(1)**2-q(1))*(w(2)**2-q(1))*(w(3)**2-q(1))*(                                                         &
-         -(w(1)**2-q(2))*(w(1)**2-q(3))*( (w(2)**2-q(2))*(w(3)**2-q(3)) - (w(2)**2-q(3))*(w(3)**2-q(2)) )*x(1)   &
-         +(w(2)**2-q(2))*(w(2)**2-q(3))*( (w(1)**2-q(2))*(w(3)**2-q(3)) - (w(1)**2-q(3))*(w(3)**2-q(2)) )*x(2)   &
-         -(w(3)**2-q(2))*(w(3)**2-q(3))*( (w(1)**2-q(2))*(w(2)**2-q(3)) - (w(1)**2-q(3))*(w(2)**2-q(2)) )*x(3) ) /deR 
-   !
-   r(2) =-(w(1)**2-q(2))*(w(2)**2-q(2))*(w(3)**2-q(2))*(                                                         &
-         +(w(1)**2-q(1))*(w(1)**2-q(3))*( (w(2)**2-q(1))*(w(3)**2-q(3)) - (w(2)**2-q(3))*(w(3)**2-q(1)) )*x(1)   &
-         -(w(2)**2-q(1))*(w(2)**2-q(3))*( (w(1)**2-q(1))*(w(3)**2-q(3)) - (w(1)**2-q(3))*(w(3)**2-q(1)) )*x(2)   &
-         +(w(3)**2-q(1))*(w(3)**2-q(3))*( (w(1)**2-q(1))*(w(2)**2-q(3)) - (w(1)**2-q(3))*(w(2)**2-q(1)) )*x(3) ) /deR 
-   !
-   r(3) =-(w(1)**2-q(3))*(w(2)**2-q(3))*(w(3)**2-q(3))*(                                                        &
-         -(w(1)**2-q(1))*(w(1)**2-q(2))*( (w(2)**2-q(1))*(w(3)**2-q(2)) - (w(2)**2-q(2))*(w(3)**2-q(1)) )*x(1)  & 
-         +(w(2)**2-q(1))*(w(2)**2-q(2))*( (w(1)**2-q(1))*(w(3)**2-q(2)) - (w(1)**2-q(2))*(w(3)**2-q(1)) )*x(2)  & 
-         -(w(3)**2-q(1))*(w(3)**2-q(2))*( (w(1)**2-q(1))*(w(2)**2-q(2)) - (w(1)**2-q(2))*(w(2)**2-q(1)) )*x(3) ) /deR
-   !                                                                
- end subroutine mpa_RQ_3p_solver_I
+   aux = (0._SP,0._SP)      
+   err_func_np = 0._SP                                                    
+   do j=1, 2*np
+     do i=1, np
+     aux = aux + R(i)/(w(j)**2-Q(i))             
+     enddo 
+     err_func_np = err_func_np + abs( aux - x(i) )**2
+   enddo  
+   err_func_np = sqrt(err_func_np)
+ endfunction err_func_np
+!------------------------------------------------------------------------------- 
 
 end module mpa_m
 

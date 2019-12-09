@@ -128,7 +128,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    ! generate the grid
    YAMBO_ALLOC(MPA_freq,(2*X%mpa_npoles))
-   call X_mpa_sampling_HPPS_all(X%mpa_npoles,2.0_SP*(X%ppaE),MPA_freq)
+   call X_mpa_sampling_all(X%mpa_npoles,(0._SP,0._SP),(0._SP,1._SP)*2.0_SP*(X%ppaE),'h',MPA_freq)
    !
    Xw%p=MPA_freq
    YAMBO_FREE(MPA_freq)

@@ -49,9 +49,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
 &                        PARALLEL_WF_distribute,QP_state_print
- use matrix_operate,ONLY:mat_transpose,mat_transpose_r
+ use matrix_operate,ONLY:mat_transpose!,mat_transpose_r
  use timing_m,      ONLY:timing
- use mpa_m,         ONLY:mpa_RQ_1p_solver_I,mpa_RQ_2p_solver_I,mpa_RQ_3p_solver_I
+ use mpa_m,         ONLY:mpa_RE_solver
  !
 #include<memory.h>
  !
@@ -78,15 +78,15 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! MPA variables (Dario)
  !
  integer                  :: i_np,npoles
- !complex(SP), allocatable :: MPA_E_mat(:,:,:)
+ complex(SP), allocatable :: MPA_E_mat(:,:,:)
  complex(SP), allocatable :: MPA_R_mat(:,:,:)
- real(SP),    allocatable :: MPA_E_mat(:,:,:)
- real(SP),    allocatable :: MPA_freqs(:)
- complex(SP), allocatable :: MPA_Xo(:),MPA_Q(:)
+! real(SP),    allocatable :: MPA_E_mat(:,:,:)
+! real(SP),    allocatable :: MPA_freqs(:)
+ complex(SP), allocatable :: MPA_freqs(:),MPA_Xo(:)!,MPA_Q(:)
  !
  integer, external::io_X,QP_state_extract
  !
- npoles=1;
+! npoles=1;
  ! Reset & checks
  !
  call elemental_collision_free(isc)
@@ -227,10 +227,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Poles and Residuals
      !
-     !$omp parallel default(shared), private(ig1,ig2,i_np,MPA_Xo,MPA_Q)
+     !$omp parallel default(shared), private(ig1,ig2,i_np,MPA_freqs,MPA_Xo)
      !
      YAMBO_ALLOC(MPA_Xo,(2*npoles))
-     YAMBO_ALLOC(MPA_Q,(npoles))
      !
      !$omp do collapse(2)
      do ig2=1,X%ng
@@ -238,17 +237,13 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          MPA_Xo(1:2*npoles)=X_mat(ig1,ig2,1:2*npoles) 
          !
-         select case(npoles)
-         case(1)
-           call mpa_RQ_1p_solver_I(MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,1), MPA_Q(1))
-         case default
-           ! ...
-         end select
+         call mpa_RE_solver(npoles, MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,:), MPA_E_mat(ig1,ig2,:))
          !
          do i_np=1,npoles
            !
-           MPA_E_mat(ig1,ig2,i_np)=real(sqrt(MPA_Q(i_np)),SP)  
-           MPA_R_mat(ig1,ig2,i_np)=-MPA_R_mat(ig1,ig2,i_np)/(2._DP*MPA_E_mat(ig1,ig2,i_np))*isc%gamp(ig1,ig2)
+!           MPA_E_mat(ig1,ig2,i_np)=real(sqrt(MPA_Q(i_np)),SP)  
+!           MPA_R_mat(ig1,ig2,i_np)=-MPA_R_mat(ig1,ig2,i_np)/(2._DP*MPA_E_mat(ig1,ig2,i_np))*isc%gamp(ig1,ig2)
+           MPA_R_mat(ig1,ig2,i_np)=MPA_R_mat(ig1,ig2,i_np)*isc%gamp(ig1,ig2)
            !
          enddo
          !
@@ -257,7 +252,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !$omp end do
      !
      YAMBO_FREE(MPA_Xo)
-     YAMBO_FREE(MPA_Q)
      !
      !$omp end parallel
      !
@@ -282,7 +276,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !call mat_transpose(X_mat(:,:,X_range(2)))
      !
      do i_np=1,npoles
-       call mat_transpose_r(MPA_E_mat(:,:,i_np))
+       call mat_transpose(MPA_E_mat(:,:,i_np))
        call mat_transpose(MPA_R_mat(:,:,i_np))
      enddo
      !
@@ -340,8 +334,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
              do ig1=1,X%ng
                !
                ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-MPA_R_mat(ig1,ig2,i_np))*&
-&                     ( (spin_occ-f_kmq+bose_f(MPA_E_mat(ig1,ig2,i_np)))/(W_(i_w)-E_kmq-MPA_E_mat(ig1,ig2,i_np))+&
-&                       (f_kmq+bose_f(MPA_E_mat(ig1,ig2,i_np)))/(conjg(W_(i_w))-E_kmq+MPA_E_mat(ig1,ig2,i_np)))
+&                     ( (spin_occ-f_kmq+bose_f(real(MPA_E_mat(ig1,ig2,i_np))))/(W_(i_w)-E_kmq-MPA_E_mat(ig1,ig2,i_np))+&
+&                       (f_kmq+bose_f(real(MPA_E_mat(ig1,ig2,i_np))))/(conjg(W_(i_w))-E_kmq+MPA_E_mat(ig1,ig2,i_np)))
                !
                dp_dummy=dp_dummy+ctmp
                !

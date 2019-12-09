@@ -311,13 +311,13 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_em1s=runlevel_is_on('em1s')
        l_ppa=runlevel_is_on('ppa')
        l_mpa=runlevel_is_on('mpa')
+       l_cohsex=runlevel_is_on('cohsex')
        l_dipoles=runlevel_is_on('dipoles')
        l_HF_and_locXC=runlevel_is_on('HF_and_locXC')
        l_gw0=runlevel_is_on('gw0')
        l_life=runlevel_is_on('life')
        l_rim=runlevel_is_on('rim_cut')
        l_col_cut=runlevel_is_on('rim_cut')
-       l_cohsex=runlevel_is_on('cohsex')
        !
        ! GPL_EXCLUDE_START
        ! 
@@ -548,7 +548,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        if (io_BS_err==0) then
          if (l_ppa)      call X_duplicate(Xbsk,X(4))
          if (l_mpa)      call X_duplicate(Xbsk,X(5))
-         if (.not.l_ppa) call X_duplicate(Xbsk,X(2))
+         if (.not.l_ppa.and..not.l_mpa) call X_duplicate(Xbsk,X(2))
        endif
        !
      endif

@@ -168,7 +168,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if ( l_sta_X .and..not.l_ppa .and..not.l_mpa) i_X_kind=2
  if ( l_dyn_X .and..not.l_ppa .and..not.l_mpa) i_X_kind=3
  if (                   l_ppa .and..not.l_mpa) i_X_kind=4
- if (                   l_mpa )                i_X_kind=4
+ if (                   l_mpa )                i_X_kind=5
  !
  ! DIPOLES
  !=========

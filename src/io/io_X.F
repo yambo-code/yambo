@@ -78,6 +78,7 @@ integer function io_X(X,Xw,ID)
  if (X%whoami==2) db_desc='em1s'
  if (X%whoami==3) db_desc='em1d'
  if (X%whoami==4) db_desc='pp'
+ if (X%whoami==5) db_desc='mp'
  !
 #if defined _PAR_IO
  perform_IO=PAR_COM_X_WORLD%CPU_id==0.or.read_is_on(ID)
@@ -98,6 +99,7 @@ integer function io_X(X,Xw,ID)
    if (X%whoami==2) local_XC_KIND="Xs"
    if (X%whoami==3) local_XC_KIND="Xd"
    if (X%whoami==4) local_XC_KIND="Xp"
+   if (X%whoami==5) local_XC_KIND="Xm"
    io_X=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND=local_XC_KIND,&
 &                    CUTOFF=.true.,GAUGE=.TRUE.,FRAG=frag_RESPONSE)
    if (io_X/=0) goto 1
@@ -159,7 +161,7 @@ integer function io_X(X,Xw,ID)
  call io_fragment(ID,i_fragment=iq,ierr=io_err)
 #endif
  !
- !  type(X_t)    ::X(4)  x s d p
+ !  type(X_t)    ::X(5)  x s d p m
  !
  if (any((/io_sec(ID,:)==2*iq/)) ) then
    !
@@ -183,8 +185,10 @@ integer function io_X(X,Xw,ID)
      if (X%whoami==4) then
        call io_variable_elemental(ID,UNIT=HA2EV,VAR=" PPA Im  energy     [ev]:",   R0=X%ppaE,    CHECK=.true.,OP=(/"=="/))
      endif
-     if (X%whoami/=4) then
+     if (X%whoami/=4.and.X%whoami/=5) then
        call io_variable_elemental(ID,           VAR=" :: Current Q-pt index     :",I0=iq)
+     endif
+     if (X%whoami/=4) then
        call io_variable_elemental(ID,UNIT=HA2EV,VAR=" :: X energy range     [ev]:",R1=Xw%er,     WARN =.true.,OP=(/"==","=="/))
        call io_variable_elemental(ID,UNIT=HA2EV,VAR=" :: X damping range    [ev]:",R1=Xw%dr,     CHECK=.true.,OP=(/"==","=="/))
        call io_variable_elemental(ID,           VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))

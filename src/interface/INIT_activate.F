@@ -328,7 +328,7 @@ subroutine INIT_activate()
    call initactivate(1,'XTermEn')
  endif
  !
- ! GW (PPA & COHSEX) 
+ ! GW (PPA, MPA, & COHSEX) 
  !
  if ( (l_em1d.and.l_ppa) .or. (l_em1d.and.l_mpa) .or. (l_em1s.and.l_cohsex)) then
    call INIT_QP_ctl_switch('X')
@@ -347,8 +347,8 @@ subroutine INIT_activate()
 &                           'EhEngy','LongDr','PPAPnt'/))
    endif
    if (l_mpa) then
-     call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
-&                           'EhEngy','LongDr','PPAPnt'/))
+     call X_activate('Xm',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
+&                           'EhEngy','LongDr','EnRnge','DmRnge','ETStps'/))
    endif
    if (l_cohsex) then
      call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','EhEngy','LongDr'/))

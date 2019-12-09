@@ -788,14 +788,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      ! Work Space
      ! 
      integer           ::i1,V_iq
-     integer,parameter ::n_des=15
+     integer,parameter ::n_des=14
      character(8)      ::nms(n_des),sfx
      character(100)    ::des(n_des)
      character(schlen) ::lch1,lch2
      !
      nms=(/'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &          'DrudeW','LongDr','EhEngy','PPAPnt',&
-&          'NGsBlk','QpntsR','BndsRn','DmERef','MPANpl'/)
+&          'NGsBlk','QpntsR','BndsRn','DmERef'/)
      des(1) ='Green`s function (T)ordered,(R)etarded,(r)senant,(a)ntiresonant [T, R, r, Ta, Ra]'
      des(2) ='Energy range'
      des(3) ='Damping range'
@@ -810,7 +810,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      des(12)='Transferred momenta'
      des(13)='Polarization function bands'
      des(14)='Damping reference energy'
-     des(15)='Number of poles for MPA'
      !
      do i1=1,n_des
        lch1=des(i1);lch2=nms(i1)
@@ -818,7 +817,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        if (X%whoami==2) sfx='Xs'
        if (X%whoami==3) sfx='Xd'
        if (X%whoami==4) sfx='Xp'
-       if (X%whoami==5) sfx='Xp'
+       if (X%whoami==5) sfx='Xm'
        write (des(i1),'(4a)')  '[',trim(sfx),'] ',trim(lch1)
        write (nms(i1),'(2a)')  lch2(1:6),trim(sfx)
      enddo
@@ -841,9 +840,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call it(defs,nms(12),des(12),X%iq,verb_level=V_iq)
      call it(defs,nms(13),des(13),X%ib,verb_level=0)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)
-     if (X%whoami==5) then
-       call it(defs,nms(15),des(15),X%mpa_npoles,verb_level=0)
-     endif
      !
    end subroutine
    !

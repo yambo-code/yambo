@@ -46,9 +46,9 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
 #include<memory.h>
  !
- type(X_t)        :: X(4),Xbsk
+ type(X_t)        :: X(5),Xbsk
  type(QP_t)       :: qp
- type(w_samp)     :: Xxcw,Xw(4)
+ type(w_samp)     :: Xxcw,Xw(5)
  type(levels)     :: en,en_sc
  type(bz_samp)    :: q,k
  type(DIPOLE_t)   :: Dip
@@ -56,7 +56,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  integer          :: lnstr
  character(lnstr) :: instr
  integer          :: INIT
- integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err
+ integer          :: io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err
  !
  ! Workspace
  !
@@ -230,7 +230,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
    !
    if (trim(code_branch)=="devel-cumulant") BS_q=(/1,nqibz/)
    !
-   do i1=1,4 ! Xx Xs Xd Xp
+   do i1=1,5 ! Xx Xs Xd Xp Xm
      !
      X(i1)%iq=(/1,nqibz/)
      !
@@ -248,7 +248,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  ! response functions DBs were made in presence of KB_PP and later this
  ! DB is deleted the X dbs will be recalculated
  !
- forall(i1=1:4) X(i1)%Vnl_included=OSTNTS_Vnl_included
+ forall(i1=1:5) X(i1)%Vnl_included=OSTNTS_Vnl_included
  !
  ! bs
  !
@@ -328,9 +328,11 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
      call X_duplicate(X(3),X(2))
      call X_duplicate(X(3),X(1))
      call X_duplicate(X(3),X(4))
+     call X_duplicate(X(3),X(5))
      call W_duplicate(Xw(3),Xw(2))
      call W_duplicate(Xw(3),Xw(1))
      call W_duplicate(Xw(3),Xw(4))
+     call W_duplicate(Xw(3),Xw(5))
      !
    end subroutine X_var_setup
    !

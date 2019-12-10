@@ -37,8 +37,8 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
  integer,      intent(in)  :: VAR_ID
  integer,      intent(in)  :: VAR_SZ(:)
  integer,      intent(in)  :: VAR_KIND
- character(schlen), optional :: dim_names(:)
- character(*),      optional :: par_io_kind
+ character(schlen), optional, intent(in) :: dim_names(:)
+ character(*),      optional, intent(in) :: par_io_kind
  !
  ! Work Space
  !
@@ -64,6 +64,7 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
    if(trim(par_io_kind)=="independent") netcdf_par_io_kind=nf90_independent
    if(trim(par_io_kind)=="collective")  netcdf_par_io_kind=nf90_collective
  endif
+ !
 #endif
  !
  if (write_is_on(ID)) then

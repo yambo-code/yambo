@@ -64,8 +64,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles,iw_X_mat
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X,X_eh_setup
+ complex(SP)          :: Z_ene(2)
  character(1)         :: sec_mode
- real(SP),allocatable :: MPA_freq(:)
  !
  ! logicals and control
  !
@@ -121,17 +121,18 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  else if (X%whoami==5) then
    !
    if (.not.SILENT_MODE) call section(sec_mode,'Dynamic Dielectric Matrix (MPA)')
-   Xw%n_freqs    =2*X%mpa_npoles
+   !
+   if (mod(Xw%n_freqs,2)>0) Xw%n_freqs=Xw%n_freqs+1
+   X%mpa_npoles  = Xw%n_freqs/2
+   !
    X_MEM_n_freqs =2*X%mpa_npoles
-   YAMBO_ALLOC(Xw%p,(2*X%mpa_npoles))
+   YAMBO_ALLOC(Xw%p,(Xw%n_freqs))
    X%ordering='T'
    !
    ! generate the grid
-   YAMBO_ALLOC(MPA_freq,(2*X%mpa_npoles))
-   call X_mpa_sampling_all(X%mpa_npoles,(0._SP,0._SP),(0._SP,1._SP)*2.0_SP*(X%ppaE),'h',MPA_freq)
    !
-   Xw%p=MPA_freq
-   YAMBO_FREE(MPA_freq)
+   Z_ene(1:2)=cmplx(Xw%er(1:2),Xw%dr(1:2))
+   call X_mpa_sampling_all(X%mpa_npoles,Z_ene(1),Z_ene(2),'h',Xw%p)
    !
  endif
  !

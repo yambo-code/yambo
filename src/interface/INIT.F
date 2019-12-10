@@ -451,6 +451,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_bss)    call initactivate(1,'optics dipoles bse')
      if (l_bs_fxc) BSS_mode="t"
      !
+     if (l_mpa) then
+       Xw(5)%n_freqs=6
+     endif
+     !
      if (l_bse) then
        !
        if (l_alda_fxc) BS_res_mode='x'     

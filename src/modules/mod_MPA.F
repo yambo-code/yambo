@@ -225,11 +225,11 @@ contains
  subroutine mpa_R_solver(np, w, xq, R, Q)
    implicit none
    integer,      intent(in)        :: np
-   complex(dp),  intent(in)        :: w(:)
-   complex(dp),  intent(in)        :: xq(:), Q(np)
-   complex(dp),  intent(out)       :: R(np)
+   complex(SP),  intent(in)        :: w(:)
+   complex(SP),  intent(in)        :: xq(:), Q(np)
+   complex(SP),  intent(out)       :: R(np)
    ! 
-   complex(dp)                     :: A(np,np), B(np)
+   complex(SP)                     :: A(np,np), B(np)
    integer                         :: i, k, info, ind(np)    
    ! 
    do k = 1, np
@@ -239,20 +239,24 @@ contains
      enddo
    enddo 
    ! 
+#ifdef _DOUBLE
    call zgesv(np, 1, A, np, ind, R, np,info) 
+#else
+   call cgesv(np, 1, A, np, ind, R, np,info) 
+#endif
 
  end subroutine mpa_R_solver
 
  subroutine mpa_Q_solver(np, z, xq, Q)
    implicit none
    integer,      intent(in)        :: np
-   complex(dp),  intent(in)        :: z(2*np)
-   complex(dp),  intent(in)        :: xq(2*np)
-   complex(dp),  intent(out)       :: Q(np)
+   complex(SP),  intent(in)        :: z(2*np)
+   complex(SP),  intent(in)        :: xq(2*np)
+   complex(SP),  intent(out)       :: Q(np)
    ! 
-   complex(dp)                     :: Z1(np,np), Z2(np,np), M1(np,np), M2(np,np), v1(np)
-   complex(dp)                     :: M(np,np),Mp(np,np), b(np), Companion(np,np)
-   complex(dp)                     :: rwork(2*np), work(2*np), VR(np), VL(np)
+   complex(SP)                     :: Z1(np,np), Z2(np,np), M1(np,np), M2(np,np), v1(np)
+   complex(SP)                     :: M(np,np),Mp(np,np), b(np), Companion(np,np)
+   complex(SP)                     :: rwork(2*np), work(2*np), VR(np), VL(np)
    integer                         :: i, j, info, ind(np)    
    ! 
    do j = 1, np
@@ -282,16 +286,24 @@ contains
      enddo
    enddo
    M (1,1) = 1._SP
+#ifdef _DOUBLE
    call zgesv(np, np, Z1, np, ind, M, np,info) 
+#else
+   call cgesv(np, np, Z1, np, ind, M, np,info) 
+#endif
    M  = matmul(Z2,M)
    M2 = matmul(M,M1) - M2
    b  = matmul(M,v1) - b
    ! 
-   M = 0.
+   M = 0.0_SP
    do i =1,np
-     M(i,i) = 1.
-   enddo	
+     M(i,i) = 1.0_SP
+   enddo
+#ifdef _DOUBLE
    call zgesv(np, np, M2, np, ind, M, np,info) 
+#else
+   call cgesv(np, np, M2, np, ind, M, np,info) 
+#endif
    b = matmul(M,b) 
    Companion=0.
    Companion(1,np) = -b(1)
@@ -299,7 +311,11 @@ contains
      Companion(i,np)  = -b(i)
      Companion(i,i-1) = 1.
    enddo
+#ifdef _DOUBLE
    call  zgeev( 'N', 'N', np, Companion, np, Q, VL, 1, VR, 1, work, 2*np, rwork, info )
+#else
+   call  cgeev( 'N', 'N', np, Companion, np, Q, VL, 1, VR, 1, work, 2*np, rwork, info )
+#endif
  end subroutine mpa_Q_solver
 !-------------------------------------------------------------------------------
 

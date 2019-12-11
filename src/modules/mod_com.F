@@ -35,6 +35,9 @@ module com
  character(lchlen)  :: com_path
  character(lchlen)  :: repfile
  !
+ integer            :: repfile_unit
+ integer            :: inpfile_unit
+ !
  ! Path for the shifted grids
  !
  character(lchlen) :: grid_paths
@@ -61,15 +64,12 @@ module com
  character(lchlen)  :: opened_of(max_open_ofs)
  integer            :: of_unit(max_open_ofs)
 #if defined _NC_OUTPUT
- integer, parameter :: of_nc_max_size=10000
  integer            :: of_nc_IDs(max_open_ofs)
  integer            :: of_nc_pos(4,max_open_ofs)
  character(schlen)  :: of_nc_var_names(max_open_ofs)
 #endif
 #if defined _YAML_OUTPUT
- integer            :: of_yaml_IDs(max_open_ofs)
- integer            :: of_yaml_pos(4,max_open_ofs)
- character(schlen)  :: of_yaml_var_names(max_open_ofs)
+ integer            :: of_yaml_IDs(max_open_ofs+2)
 #endif
  logical            :: write_to_of
  logical            :: write_to_report

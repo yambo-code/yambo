@@ -44,7 +44,6 @@ subroutine of_netcdf_shadow_real(i1,imsg,nval,val)
  real(SP)              :: nc_var(nval,1)
  character(schlen)     :: dim_names(2),VAR_NAME
  !
- !
  if(imsg==0) then
    VAR_ID  =4
    def_var=(of_nc_pos(VAR_ID,i1)==0)
@@ -127,6 +126,7 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
    VAR_SZ  =(/schlen,max_headers_lines/)
    VAR_POS =(/1,of_nc_pos(VAR_ID,i1)-i_var*max_headers_lines/)
  endif
+ !
  if (nval> 1) then
    VAR_ID  =1
    def_var=.true.

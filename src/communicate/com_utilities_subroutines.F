@@ -32,7 +32,7 @@ subroutine of_open_close(of_name,mode)
 #endif
 #if defined _YAML_OUTPUT
  use f_utils,         ONLY:f_get_free_unit
- use com,             ONLY:of_yaml_pos,of_yaml_var_names,of_yaml_IDs
+ use com,             ONLY:of_yaml_IDs
  use yaml_output,     ONLY:yaml_set_stream,yaml_close_stream,yaml_stream_connected
 #endif
  !
@@ -61,7 +61,7 @@ subroutine of_open_close(of_name,mode)
    !
    if (index(mode,'f')/=0) then
      file_index=-1
-     do i2=1,max_open_ofs
+     do i2=1,max_open_ofs-1
         if (trim(opened_of(i2))==local_file_name) file_index=i2
      enddo
      if(file_index==-1) return
@@ -76,24 +76,22 @@ subroutine of_open_close(of_name,mode)
    !
    ! Check first if already open
    !
-   do i2=1,max_open_ofs
+   do i2=1,max_open_ofs-1
      if (trim(opened_of(i2))==local_file_name) return
    enddo
    !
    ! Find the first free unit
    !
+   do i2=1,max_open_ofs-1
+     if (of_unit(i2)<0) cycle
+     file_index=i2
 #if defined _YAML_OUTPUT
-   file_index=f_get_free_unit()
-   of_unit(file_index)=20+file_index
+     of_unit(file_index)=f_get_free_unit()
 #else
-   do i2=1,max_open_ofs
-     if (of_unit(i2)==0) then
-       file_index=i2
-       of_unit(file_index)=20+i2
-       exit
-     endif
-   enddo
+     of_unit(file_index)=20+i2
 #endif
+     exit
+   enddo
    opened_of(file_index)=local_file_name
    !
    if (index(mode,'a')==0) open(of_unit(file_index),file=trim(opened_of(file_index)))
@@ -117,7 +115,7 @@ subroutine of_open_close(of_name,mode)
    !
    ! Close file
    !  
-   do i2=1,max_open_ofs
+   do i2=1,max_open_ofs-1
      if (index(opened_of(i2),trim(of_name))/=0) then
        close(iabs(of_unit(i2)))
        of_unit(i2)=0
@@ -151,7 +149,6 @@ subroutine write_the_logo(unit_,comment_)
  use LIVE_t,       ONLY:LIVE_message
  use LOGO,         ONLY:pickup_a_logo,logo_line,n_logo_lines
  use pars,         ONLY:schlen
- use com,          ONLY:repfile
  !
  implicit none
  !
@@ -173,8 +170,6 @@ subroutine write_the_logo(unit_,comment_)
    enddo
  endif
  !
- if (unit_==11) open(unit=11,file=trim(repfile),position='append')
- !
  do i1=1,n_logo_lines
    if (unit_/=6) write (unit_,trim(space_)) logo_line(i1)
    if (unit_==6.and.i1>=n_logo_lines-3) cycle
@@ -182,8 +177,6 @@ subroutine write_the_logo(unit_,comment_)
  enddo
  if (unit_/=6.and.trim(comment_)=='')  write (unit_,'(a)') ' '
  if (unit_/=6.and.trim(comment_)=='#') write (unit_,'(a)') '#'
- !
- if (unit_==11) close(11)
  !
 end subroutine write_the_logo
 !
@@ -264,7 +257,7 @@ end subroutine error
 subroutine msg_deliver(of_name,formatted_msg)
  !
  use pars,      ONLY:max_open_ofs
- use com,       ONLY:opened_of,repfile,of_unit
+ use com,       ONLY:opened_of,repfile_unit,of_unit
  !
  implicit none
  !
@@ -274,16 +267,14 @@ subroutine msg_deliver(of_name,formatted_msg)
  do i_unit=1,max_open_ofs
    if (index(opened_of(i_unit),trim(of_name))==0) cycle
    if (of_unit(i_unit)<=0) cycle
-   if (of_unit(i_unit)==11) open(unit=11,file=trim(repfile),position='append')
    write (of_unit(i_unit),'(a)') trim(formatted_msg)
-   if (of_unit(i_unit)==11) close(11)
-   of_unit(i_unit)=-of_unit(i_unit)
+   if (of_unit(i_unit)/=repfile_unit) of_unit(i_unit)=-of_unit(i_unit)
  enddo
  !
 end subroutine msg_deliver
 !
 !
-subroutine msg_manager(how)
+subroutine msg_manager(how,irep)
  !
  ! how = '(n)s(n)' '(n)r(n)' '(n)l(n)' 'o PATTERN'
  !
@@ -297,7 +288,8 @@ subroutine msg_manager(how)
  !
  implicit none
  !
- character(*) how
+ character(*), intent(in)  :: how
+ integer,      intent(out) :: irep
  ! 
  ! Work Space
  !
@@ -305,12 +297,14 @@ subroutine msg_manager(how)
  character(schlen)::ch_piece(10)
  character(lchlen)::stripped_file_name
  !
+ irep=0
  terminator(1)='('
  terminator(2)=')'
  !
  ! o. files
  !
  if (how(:1)=="o") then
+   irep=1
    call STRING_split(how,ch_piece)
    do i2=2,10
      if (len_trim(ch_piece(i2))==0) cycle
@@ -328,7 +322,7 @@ subroutine msg_manager(how)
  ! Report
  !
  if (index(how,'r' )/=0.and.write_to_report) then
-   of_unit(max_open_ofs) =-of_unit(max_open_ofs)
+   irep=0
    if (index(how,'nr')/=0) terminator(1)='(/'
    if (index(how,'rn')/=0) terminator(2)='/)'
  endif
@@ -336,6 +330,7 @@ subroutine msg_manager(how)
  ! Log 
  !
  if (index(how,'l' )/=0) then
+   irep=1
    terminator(3:4)=' '
    if (index(how,'nl')/=0) terminator(3)='n'
    if (index(how,'ln')/=0) terminator(4)='n'

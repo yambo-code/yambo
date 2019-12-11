@@ -228,7 +228,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  of=' '
  opened_of=' '
  of_unit=0
- of_unit(max_open_ofs)=-11
+ of_unit(max_open_ofs)=-1
  !
  !LOGO
  !

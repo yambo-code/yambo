@@ -19,7 +19,7 @@
 ! You should have received a copy of the GNU General Public 
 ! License along with this program; if not, write to the Free 
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! MA 02repfile_unit1-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INIT_ypp(E,instr,FINALIZE)
  !
@@ -33,12 +33,12 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,l_angular_momentum,l_position
  use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev
- use it_tools,       ONLY:ofiles_append,initinfio,initactivate,infile_dump,runlevel_is_on,&
+ use it_tools,       ONLY:ofiles_append,infile_dump,runlevel_is_on,&
 &                         PARSER_force_command_line_value
  use it_m,           ONLY:initdefs,initmode,infile,nrnlvls,rnlvls,infile_verbosity,&
                           V_general,V_qp,V_all,V_real_time,V_nl_optics
  use drivers,        ONLY:infile_editing
- use com,            ONLY:write_to_report,repfile
+ use com,            ONLY:write_to_report,repfile,repfile_unit,inpfile_unit
  use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile,STRING_match,STRING_same
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
@@ -66,6 +66,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH
+#endif
+#if defined _YAML_OUTPUT
+ use f_utils,        ONLY:f_get_free_unit
+ use yaml_output,    ONLY:yaml_set_stream,yaml_close_stream,yaml_stream_connected
 #endif
  !
 #include<memory.h>
@@ -100,8 +104,11 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
-   if (master_cpu.and.write_to_report) call initinfio(defs,11)
+   if (master_cpu.and.write_to_report) call initinfio(defs,repfile_unit)
    if (master_cpu) call ofiles_append(defs=defs)
+#if defined _YAML_OUTPUT
+   call f_lib_finalize()
+#endif
    return
  endif
  !
@@ -674,9 +681,14 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  call QP_state_table_setup(E)
  !
  if (infile_editing) then
-   open(unit=12,file=trim(infile))
-   call initinfio(defs,12)
-   close(12)
+#if defined _YAML_OUTPUT
+   inpfile_unit=f_get_free_unit()
+#else
+   inpfile_unit=12
+#endif
+   open(unit=inpfile_unit,file=trim(infile))
+   call initinfio(defs,inpfile_unit)
+   close(inpfile_unit)
    call PP_redux_wait
  endif
  !
@@ -753,17 +765,23 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  ! Input file
  !
  if (infile_editing) then
-   open(unit=12,file=trim(infile))
-   call initinfio(defs,12)
-   close(12)
+   open(unit=inpfile_unit,file=trim(infile))
+   call initinfio(defs,inpfile_unit)
+   close(inpfile_unit)
    call PP_redux_wait
  endif
  !
  if (master_cpu) then
    call rm_file(trim(repfile))
-   open(unit=11,file=trim(repfile))
-   call write_the_logo(11,' ')
-   close(11)
+#if defined _YAML_OUTPUT
+   call f_lib_initialize()
+   repfile_unit=f_get_free_unit()
+#else
+   repfile_unit=11
+#endif
+   open(unit=repfile_unit,file=trim(repfile))
+   call write_the_logo(repfile_unit,' ')
+   close(repfile_unit)
  endif
  !
  contains

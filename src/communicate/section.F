@@ -37,8 +37,9 @@ subroutine section(mode,name)
 &                     date_and_time_string
  use parallel_m, ONLY:PP_redux_wait,ncpu
  use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&
-&                     write_to_report,repfile
+&                     write_to_report,repfile_unit
  use timing_m,   ONLY:timing_upto_now
+ !
  implicit none
  !
  character(1)::mode
@@ -66,11 +67,7 @@ subroutine section(mode,name)
  !
  if (depth==-1) then
    ch=date_and_time_string(dt_out=date_time_at_start)
-   if (write_to_report) then
-     open(unit=11,file=trim(repfile),position='append')
-     write (11,'(1x,a)') trim(ch)
-     close(11)
-   endif
+   if (write_to_report) write (repfile_unit,'(1x,a)') trim(ch)
    call write_the_logo(6,' ')
    previous_secmode=' '
  endif
@@ -141,21 +138,13 @@ subroutine section(mode,name)
    ch=date_and_time_string(dt_in=date_time_at_start)
    chp= STRING_pack(trim(ch),' [start]')
    !
-   if (write_to_report) then
-     open(unit=11,file=trim(repfile),position='append')
-     write (11,'(1x,a)') chp(:len_trim(chp))
-     close(11)
-   endif
+   if (write_to_report) write (repfile_unit,'(1x,a)') chp(:len_trim(chp))
    call ofiles_append(line='')
    call ofiles_append(line=chp(:len_trim(chp)))
    !
    ch = date_and_time_string(skip_host=.TRUE.)
    chp= STRING_pack(trim(ch),repeat(' ',len_trim(chp)-len_trim(ch)-7)//'[end]')
-   if (write_to_report) then
-     open(unit=11,file=trim(repfile),position='append')
-     write (11,'(1x,a)') chp(:len_trim(chp))
-     close(11)
-   endif
+   if (write_to_report) write (repfile_unit,'(1x,a)') chp(:len_trim(chp))
    call ofiles_append(line=chp(:len_trim(chp)))
    !
    min_time=time_string(minval(cput_here))

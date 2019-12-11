@@ -43,18 +43,19 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
- use it_tools,       ONLY:it,initactivate,initinfio,infile_dump,ofiles_append,&
+ use it_tools,       ONLY:it,infile_dump,ofiles_append,&
 &                         switch_off_runlevel,check_verbosity,runlevel_is_on
  use it_m,           ONLY:initdefs,rstatus,initmode,infile,nrnlvls,rnlvls
  use parallel_m,     ONLY:PP_redux_wait,master_cpu
- use com,            ONLY:msg,repfile,com_path,write_to_report
+ use com,            ONLY:msg,repfile,repfile_unit,inpfile_unit,com_path,&
+&                         write_to_report,of_unit,max_open_ofs
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on
  use QP_m,           ONLY:QP_t,QP_state,QP_reset,&
 &                         QP_table,COHSEX_use_empties
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset
- use stderr,         ONLY:write_to_log,log_as_a_file,logfile,STRING_add,STRING_remove,STRING_same
+ use stderr,         ONLY:write_to_log,log_as_a_file,logfile,logfile_unit,STRING_add,STRING_remove,STRING_same
  use R_lattice,      ONLY:q0_def_norm,bz_samp,bz_samp_reset 
  use BS,             ONLY:BS_bands,BS_n_g_W,&
 &                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode,BSK_mode
@@ -68,6 +69,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _OPENMP
  use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K,n_threads_NL
+#endif
+#if defined _YAML_OUTPUT
+ use f_utils,        ONLY:f_get_free_unit
+ use com,            ONLY:of_yaml_IDs
+ use yaml_output,    ONLY:yaml_set_stream,yaml_close_stream,yaml_stream_connected
 #endif
  !
 #include<memory.h>
@@ -131,9 +137,13 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
-   call initinfio(defs,11)
+   call initinfio(defs,repfile_unit)
    call ofiles_append(defs=defs)
+   close(unit=repfile_unit)
+   if(log_as_a_file) close(unit=logfile_unit)
 #if defined _YAML_OUTPUT
+   call yaml_close_stream(unit=of_yaml_IDs(max_open_ofs))
+   if(log_as_a_file) call yaml_close_stream(unit=of_yaml_IDs(max_open_ofs+1))
    call f_lib_finalize()
 #endif
    return
@@ -254,9 +264,14 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Are we editing the input file ?
  !
  if (infile_editing) then
-   open(unit=12,file=trim(infile))
-   call initinfio(defs,12)
-   close(12)
+!#if defined _YAML_OUTPUT
+!   inpfile_unit=f_get_free_unit()
+!#else
+   inpfile_unit=12
+!#endif
+   open(unit=inpfile_unit,file=trim(infile))
+   call initinfio(defs,inpfile_unit)
+   close(inpfile_unit)
    call PP_redux_wait
    return
  endif
@@ -279,11 +294,41 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  call PP_redux_wait
  !
  if (master_cpu) then
-   open(unit=11,file=trim(repfile))
-   call write_the_logo(11,' ')
+   !
 #if defined _YAML_OUTPUT
    call f_lib_initialize()
 #endif
+   !
+   ! Report file
+   !
+#if defined _YAML_OUTPUT
+   repfile_unit=f_get_free_unit()
+#else
+   repfile_unit=11
+#endif
+   of_unit(max_open_ofs) = repfile_unit
+   open(unit=repfile_unit,file=trim(repfile))
+#if defined _YAML_OUTPUT
+   call yaml_set_stream(filename=trim(repfile)//".yaml")
+   call yaml_stream_connected(trim(repfile)//".yaml",of_yaml_IDs(max_open_ofs))
+#endif
+   call write_the_logo(repfile_unit,' ')
+   !
+   ! Log file
+   !
+#if defined _YAML_OUTPUT
+   logfile_unit=f_get_free_unit()
+#else
+   logfile_unit=13
+#endif
+   if(log_as_a_file) then
+     open(unit=logfile_unit,file=trim(logfile))
+#if defined _YAML_OUTPUT
+     call yaml_set_stream(filename=trim(logfile)//".yaml")
+     call yaml_stream_connected(trim(logfile)//".yaml",of_yaml_IDs(max_open_ofs+1))
+#endif
+   endif
+   !
  endif
  !
  contains

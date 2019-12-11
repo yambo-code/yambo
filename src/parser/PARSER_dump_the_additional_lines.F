@@ -23,6 +23,7 @@
 !
 subroutine PARSER_dump_the_additional_lines(ou)
  !
+ use com,        ONLY:repfile_unit,inpfile_unit
  use it_m,       ONLY:infile,nADDITIONAL_flines,ADDITIONAL_flines
  use drivers,    ONLY:infile_editing
  use parallel_m, ONLY:master_cpu
@@ -35,13 +36,13 @@ subroutine PARSER_dump_the_additional_lines(ou)
  !
  integer :: i1
  !
- if (infile_editing.and.ou==12) open(unit=ou,file=trim(infile),position='append')
+ if (infile_editing.and.ou==inpfile_unit) open(unit=ou,file=trim(infile),position='append')
  do i1=1,nADDITIONAL_flines
    if (master_cpu) then
-      if (ou==12) write (ou,'(a)') trim(ADDITIONAL_flines(i1))
-      if (ou==11) write (ou,'(2a)') ' | ',trim(ADDITIONAL_flines(i1))
+      if (ou==inpfile_unit) write (ou,'(a)') trim(ADDITIONAL_flines(i1))
+      if (ou==repfile_unit) write (ou,'(2a)') ' | ',trim(ADDITIONAL_flines(i1))
     endif
-    if (ou/=11.and.ou/=12) write (ou,'(2a)') '# | ',trim(ADDITIONAL_flines(i1))
+    if (ou/=repfile_unit.and.ou/=inpfile_unit) write (ou,'(2a)') '# | ',trim(ADDITIONAL_flines(i1))
  enddo 
  if (infile_editing) close(ou)
  !

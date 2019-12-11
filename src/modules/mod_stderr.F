@@ -34,6 +34,8 @@ module stderr
  logical          :: log_as_a_file
  character(lchlen):: logfile
  !
+ integer :: logfile_unit
+ !
  integer :: f_format_length
  integer :: g_format_length
  integer :: of_tabs(30)

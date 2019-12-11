@@ -35,7 +35,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_ng_Vxc
  use wave_func,      ONLY:io_WF
  use TDDFT,          ONLY:io_BS_Fxc
- use it_tools,       ONLY:switch_off_runlevel,initactivate
+ use it_tools,       ONLY:switch_off_runlevel
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
  use com,            ONLY:com_path,more_io_path,core_io_path
  use parallel_m,     ONLY:ncpu

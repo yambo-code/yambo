@@ -77,23 +77,23 @@ case $target in
    lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ifutile) \$(iyaml)"
     ;;
   a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
-   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
+   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
+   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(iyaml)"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(liotk) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
-   lf90libinclude="\$(iiotk) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
+   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(liotk) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
+   lf90libinclude="\$(iiotk) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(iyaml)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(letsf) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
-   lf90libinclude="\$(ietsf) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
+   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(letsf) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
+   lf90libinclude="\$(ietsf) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(iyaml)"
     ;;
   ypp*)
-   llibs="$llibs -lqe_pseudo -llocal -lmath77 -lslatec \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) -lm"
-   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)  \$(ifutile)"
+   llibs="$llibs -lqe_pseudo -llocal -lmath77 -lslatec \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
+   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)  \$(ifutile) \$(iyaml)"
     ;;
   lib*)
-   lf90libinclude="\$(iiotk) \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ilibxc)"
+   lf90libinclude="\$(iiotk) \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ilibxc) \$(iyaml)"
     ;;
 esac
 

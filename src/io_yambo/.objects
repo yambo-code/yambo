@@ -24,17 +24,22 @@ ELPH_objects =
 #if defined _ELPH 
 ELPH_objects = io_ELPH.o io_ELPH_old.o
 #endif
+PARIO_objects =
+SERIO_objects = io_BS.o
 #if defined _PAR_IO
-PARIO_objects = io_BS_PAR.o
+PARIO_objects = io_BS_PAR.o io_DIPOLES_PAR.o io_Overlaps_PAR.o
+#else
+SERIO_objects = io_BS.o     io_DIPOLES.o     io_Overlaps.o
 #endif
 objs = ver_is_gt_or_eq.o \
        io_Vnl.o       io_E_SOC_map.o \
        io_RIM.o       io_GROT.o     $(ELPH_objects) \
-       io_DIPOLES.o   io_QINDX.o    io_QP_and_GF.o   io_X.o \
+       io_QINDX.o    io_QP_and_GF.o   io_X.o \
        io_DB1.o       io_WF.o       io_KB_abinit.o   io_KB_pwscf.o   io_HF_and_locXC.o \
-       io_BS.o        io_WF_old.o   io_KB_abinit_old.o   io_BS_Fxc.o  io_NLCC_pwscf.o \
+       io_WF_old.o   io_KB_abinit_old.o   io_BS_Fxc.o  io_NLCC_pwscf.o \
        io_ATMPROJ_pwscf.o \
        io_BSS_diago.o  io_BSS_Haydock.o io_BSS_invert.o io_USPP_pwscf.o \
-       io_header.o io_Double_Grid.o io_Overlaps.o \
+       io_header.o io_Double_Grid.o \
        io_COL_CUT.o    io_DB1_selective_scan.o variables_BS.o variables_X.o variables_DIPOLES.o \
-       io_out_of_date.o $(PARIO_objects) $(COMMON_objects) $(SC_objects) $(RT_objects) $(NL_objects) $(ELECTRIC_objects)
+       io_out_of_date.o $(SERIO_objects) $(PARIO_objects) $(COMMON_objects) \
+       $(SC_objects) $(RT_objects) $(NL_objects) $(ELECTRIC_objects)

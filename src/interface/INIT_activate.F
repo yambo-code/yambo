@@ -267,7 +267,12 @@ subroutine INIT_activate()
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
+   !GPL_EXCLUDE_START
    call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')
+   !GPL_EXCLUDE_END
+   !GPL_INCLUDE_START
+   !call initactivate(1,'BSEBands BSEEhEny BSehWind')
+   !GPL_INCLUDE_END
    !
 #if defined _RT
    call initactivate(1,'ForceEqTrans')
@@ -554,7 +559,7 @@ subroutine INIT_activate()
  if (l_nl_optics) then
    call initactivate(1,'FFTGvecs NLBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
    call initactivate(1,'NLEnRange NLEnSteps NLDamping UseDipoles FrSndOrd EvalCurrent InducedField HARRLvcs EXXRLvcs') 
-   call initactivate(1,'ExtF_Dir ExtF_FrStep ExtF_Int ExtF_Width ExtF_kind ExtF_Tstart')
+   call initactivate(1,'Gauge ExtF_Dir ExtF_FrStep ExtF_Int ExtF_Width ExtF_kind ExtF_Tstart')
    call init_QP_ctl_switch('G')
  endif
 #endif

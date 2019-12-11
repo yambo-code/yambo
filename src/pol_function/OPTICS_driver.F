@@ -112,7 +112,12 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      !
    endif
    !
+   ! workaround for possible compiler bug
+#ifdef _PGI
+   if (iq>1.and.size(PAR_IND_Q%n_of_elements)>1) then
+#else
    if (iq>1) then
+#endif
      if (.not.PAR_IND_Q%element_1D(iq)) cycle
    endif
    !
@@ -369,7 +374,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  call MATRIX_reset(X_par(1))
  call MATRIX_reset(X_par_lower_triangle)
  deallocate(X_par)
- call DIP_alloc('DIP_projected')
  call WF_free(WF)
  call PP_redux_wait
  call set_real_printed_length()

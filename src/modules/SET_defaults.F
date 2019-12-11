@@ -140,7 +140,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! Printed reals format lengths 
  !
+ ! GPL_EXCLUDE_START
  include 'branch.inc'
+ ! GPL_EXCLUDE_END
  !
  call set_real_printed_length()
  !
@@ -150,12 +152,12 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! OpenMP
  !
- omp_is_off    = .FALSE.
  !
 #if defined _OPENMP
- !
+ omp_is_off    = .FALSE.
  if (index(INSTR,'noopenmp')>0) omp_is_off=.TRUE.
- !
+#else
+ omp_is_off    = .TRUE.
 #endif
  !
  call OPENMP_initialize( )

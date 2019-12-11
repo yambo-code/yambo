@@ -249,6 +249,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
 #endif
  !
+ ! GPL_EXCLUDE_END
+ !
 #if defined _RT
  !
  ! RT
@@ -273,9 +275,9 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
 #endif
  !
-#if defined _ELPH
- !
  ! GPL_EXCLUDE_START
+ !
+#if defined _ELPH
  !
  ! Electron-Phonon Hamiltonian
  !=============================
@@ -286,6 +288,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (driver_now) call mem_manager_report
  !
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
 #if defined _SCALAPACK 
  !
@@ -298,8 +302,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (driver_now) call mem_manager_report
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  ! 
  ! CLOSING
  !=========

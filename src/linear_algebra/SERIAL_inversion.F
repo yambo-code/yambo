@@ -25,7 +25,7 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  !
  use pars,          ONLY:SP,cONE
  use linear_algebra,ONLY:LINEAR_ALGEBRA_error,LU_factorization,LU_inversion,&
-&                        LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
+&                        LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
 #include<memory.h>
  !
@@ -65,7 +65,7 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  !
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('GETRI (SI)','failed')
  !
- call LINEAR_ALGEBRA_WS_clean_up(WS)
+ call LINEAR_ALGEBRA_WS_reset(WS)
  !
  call timing('SERIAL_inversion',OPR='stop')
  !

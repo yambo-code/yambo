@@ -217,7 +217,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  ! Clean up
  !
- if (.not.io_DIP) return 
+ if (.not.io_DIP) return
  !
  call DIP_alloc('DIP_iR')
  call DIP_alloc('DIP_P')

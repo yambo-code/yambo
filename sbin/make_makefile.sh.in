@@ -73,27 +73,27 @@ lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ipetsc
 case $target in
   yambo*)
    llibs="$llibs -lqe_pseudo -lmath77 -lslatec -llocal \$(lscalapack) \$(lslepc) \$(lpetsc) \$(llapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(liotk) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
-   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ihdf5) \$(ilibxc) \$(ifft)"
+   llibs="$llibs \$(liotk) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
+   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ifutile) \$(iyaml)"
     ;;
   a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
-   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
+   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
+   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(iyaml)"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(liotk) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
-   lf90libinclude="\$(iiotk) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
+   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(liotk) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
+   lf90libinclude="\$(iiotk) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(iyaml)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(letsf) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
-   lf90libinclude="\$(ietsf) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
+   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(letsf) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
+   lf90libinclude="\$(ietsf) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(iyaml)"
     ;;
   ypp*)
-   llibs="$llibs -lqe_pseudo -llocal -lmath77 -lslatec \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
-   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)"
+   llibs="$llibs -lqe_pseudo -llocal -lmath77 -lslatec \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
+   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)  \$(ifutile) \$(iyaml)"
     ;;
   lib*)
-   lf90libinclude="\$(iiotk) \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc)"
+   lf90libinclude="\$(iiotk) \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ilibxc) \$(iyaml)"
     ;;
 esac
 
@@ -167,15 +167,28 @@ F77_NOOPT_SRC= xerbla.o slamch.o
 #
 \$(F77_NOOPT_SRC):
 	${PREFIX}(eval \$(f77) -c \$(fuflags) \$(srcdir)/$cdir/\$*.f) > /dev/null
+EOF
+rm_command="@rm -f \$*\$(f90suffix)"
+if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
+FC_NOOPT_SRC="mod_parser_m.o mod_logo.o"
+for arg in $@; do
+ case $arg in
+  -D_PGI)
+   FC_NOOPT_SRC="$FC_NOOPT_SRC bz_samp_indexes.o" ;;
+ esac
+done
+cat << EOF >> $cdir/Makefile
 #
-FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
+FC_NOOPT_SRC= ${FC_NOOPT_SRC}
 #
 \$(FC_NOOPT_SRC):
-	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(fpp) \$(dopts) \$(srcdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
+	${rm_command}
+	${PREFIX}(eval \$(fpp) \$(dopts) \$(linclude) \$(srcdir)/$cdir/\$*.F > \$*.tmp_source)
+	@\$(srcdir)/sbin/replacer.sh \$*.tmp_source
+	@mv \$*.tmp_source_space \$*\$(f90suffix)
 	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(lf90include) \$(lf90libinclude) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$* " "
-	@rm -f \$*\$(f90suffix)
+	${rm_command}
 #
 # Special sources
 #
@@ -198,8 +211,6 @@ FC_LOCAL_SRC= sgfft.o
 # Rules
 #
 EOF
-rm_command="@rm -f \$*\$(f90suffix)"
-if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 cat << EOF >> $cdir/Makefile
 .F.o:
 	${rm_command}

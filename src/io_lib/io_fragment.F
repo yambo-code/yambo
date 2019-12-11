@@ -58,7 +58,9 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  if (present(ierr)) ierr=0
  !
  disconnect=.true.
+#if defined _PAR_IO
  if (present(cpu_id)) disconnect=(cpu_id==0).or.read_is_on(ID)
+#endif
  !
  par_IO=.false.
 #if defined _PAR_IO

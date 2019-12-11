@@ -43,6 +43,7 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  use wrapper_omp,    ONLY:V_dot_V_omp
  use electrons,      ONLY:n_spinor,n_sp_pol,n_spin
  use timing_m,       ONLY:timing
+ use interfaces,     ONLY:WF_apply_symm
  !
  implicit none
  !

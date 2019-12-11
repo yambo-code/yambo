@@ -21,30 +21,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-!
-! SUBROUTINES
-!=============
-!
 subroutine of_open_close(of_name,mode)
  !
  use pars,            ONLY:lchlen,max_open_ofs
  use com,             ONLY:of,nofs,opened_of,of_unit,write_to_of
  use IO_m,            ONLY:get_name
 #if defined _NC_OUTPUT
- use com,             ONLY:of_nc_IDs,of_nc_pos
+ use com,             ONLY:of_nc_pos,of_nc_var_names,of_nc_IDs
  use IO_m,            ONLY:io_control,io_connect,io_disconnect,OP_WR,WR_CL,NONE
+#endif
+#if defined _YAML_OUTPUT
+ use f_utils,         ONLY:f_get_free_unit
+ use com,             ONLY:of_yaml_pos,of_yaml_var_names,of_yaml_IDs
+ use yaml_output,     ONLY:yaml_set_stream,yaml_close_stream,yaml_stream_connected
 #endif
  !
  implicit none
  !
- character(*)           :: of_name
- character(*),optional  :: mode
+ character(*), intent(in)            :: of_name
+ character(*), intent(in), optional  :: mode
  ! 
  ! Work Space
  !
 #if defined _NC_OUTPUT
  integer          :: io_out
- character(lchlen):: of_nc_name
 #endif
  integer          :: i2,i3,file_index
  character(lchlen):: local_file_name
@@ -55,10 +55,7 @@ subroutine of_open_close(of_name,mode)
    !
    ! Open file
    !  
-   local_file_name=of_name
-#if defined _NC_OUTPUT
-   of_nc_name=of_name
-#endif
+   local_file_name=get_name(desc=trim(of_name),type=3,CORE_IO=.false.,MORE_IO=.false.,COM_IO=.true.)
    !
    ! Flush output
    !
@@ -75,10 +72,7 @@ subroutine of_open_close(of_name,mode)
    !
    ! Here I open the unit using file_name to define the name
    !
-   if (index(mode,'a')==0.and.index(mode,'O')==0) then
-     local_file_name=get_name(desc=trim(of_name),type=3,CORE_IO=.false.,MORE_IO=.false.,COM_IO=.true.)
-     call rename_file(local_file_name)
-   endif
+   if (index(mode,'a')==0.and.index(mode,'O')==0) call rename_file(local_file_name)
    !
    ! Check first if already open
    !
@@ -88,6 +82,10 @@ subroutine of_open_close(of_name,mode)
    !
    ! Find the first free unit
    !
+#if defined _YAML_OUTPUT
+   file_index=f_get_free_unit()
+   of_unit(file_index)=20+file_index
+#else
    do i2=1,max_open_ofs
      if (of_unit(i2)==0) then
        file_index=i2
@@ -95,19 +93,24 @@ subroutine of_open_close(of_name,mode)
        exit
      endif
    enddo
-   of_name=local_file_name
+#endif
    opened_of(file_index)=local_file_name
    !
    if (index(mode,'a')==0) open(of_unit(file_index),file=trim(opened_of(file_index)))
    if (index(mode,'a')/=0) open(of_unit(file_index),file=trim(opened_of(file_index)),position='append')
    if (index(mode,"t")>0) call write_the_logo(of_unit(file_index),'#')
-
+   !
    of_unit(file_index)=-of_unit(file_index)
    !
 #if defined _NC_OUTPUT
    call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(file_index))
-   io_out=io_connect(desc=trim(of_nc_name),type=2,   ID=of_nc_IDs(file_index))
-   of_nc_pos(file_index)=0
+   io_out=io_connect(desc="output_"//trim(of_name),type=2, ID=of_nc_IDs(file_index))
+   of_nc_var_names(file_index)=trim(of_name)
+   of_nc_pos(:,file_index)=0
+#endif
+#if defined _YAML_OUTPUT
+   call yaml_set_stream(filename=trim(local_file_name)//".yaml")
+   call yaml_stream_connected(trim(local_file_name)//".yaml",of_yaml_IDs(file_index))
 #endif
    !
  else
@@ -121,6 +124,9 @@ subroutine of_open_close(of_name,mode)
 #if defined _NC_OUTPUT
        call io_control(ACTION=WR_CL,COM=NONE,SEC=(/1/),ID=of_nc_IDs(i2))
        call io_disconnect(ID=of_nc_IDs(i2)) 
+#endif
+#if defined _YAML_OUTPUT
+       call yaml_close_stream(unit=of_yaml_IDs(i2))
 #endif
        if (.not.any(of==of_name)) then
          do i3=1,nofs
@@ -348,128 +354,3 @@ subroutine msg_manager(how)
  endif
  !
 end subroutine msg_manager
-!
-!
-subroutine of_netcdf_shadow(i1,val)
- !
- use pars,     ONLY:SP
-#if defined _NC_OUTPUT
- use com,      ONLY:of_nc_pos,of_nc_IDs
- use netcdf,   ONLY:nf90_unlimited
- use IO_m,     ONLY:WR,NONE,io_control,def_variable_bulk,io_variable_bulk
-#endif
- !
- implicit none
- !
- integer,  intent(in)   :: i1
- real(SP), intent(in)   :: val(:)
- !
-#if defined _NC_OUTPUT
- !
- real(SP), allocatable :: nc_var(:,:)
- !
- allocate(nc_var(size(val),1))
- !
- if(of_nc_pos(i1)==0) call def_variable_bulk(of_nc_IDs(i1),"output",1,(/size(val),nf90_unlimited/),SP)
- !
- of_nc_pos(i1)=of_nc_pos(i1)+1
- nc_var(:,1)=val
- !
- call io_control(ACTION=WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(i1))
- call io_variable_bulk(of_nc_IDs(i1),1,R2=nc_var,IPOS=(/1,of_nc_pos(i1)/))
- !
- deallocate(nc_var)
- !
-#endif
- !
- return
- !
-end subroutine of_netcdf_shadow
-!
-!
-! FUNCTIONS
-!===========
-!
-logical function OF_exists(name)
- !
- use pars,      ONLY:max_open_ofs
- use com,       ONLY:opened_of
- !
- implicit none
- !
- character(*) ::name
- integer      ::i_f
- OF_exists=.false. 
- do i_f=1,max_open_ofs
-   if (index(opened_of(i_f),name)/=0) OF_exists=.TRUE.
- enddo
- !
-end function OF_exists
-!
-!
-logical function file_exists(name)
- !
- implicit none
- !
- character(*) name
- !
- file_exists=.false.
- if (len_trim(name)==0) return
- inquire(file=name,exist=file_exists)
- !
-end function file_exists
-!
-!
-function composed_fmt(basic_fmt,n,USE_TABS,INDENT)
- !
- use pars,   ONLY:lchlen
- use com,    ONLY:terminator,depth
- use stderr, ONLY:STRING_pack,of_tabs
- !
- implicit none
- !
- character(lchlen) :: composed_fmt
- !
- character(*)     :: basic_fmt
- integer          :: n,INDENT
- logical          :: USE_TABS
- ! 
- ! Work Space
- !
- integer           :: i1
- character(lchlen) :: lch
- !
- if (USE_TABS) then
-   composed_fmt=STRING_pack(terminator(1),'a,')
-   lch=composed_fmt
-   do i1=1,n-1
-     write (lch,'(2a,i3.3,3a)') trim(composed_fmt),'t',of_tabs(i1)+2+INDENT,',',basic_fmt,','
-     composed_fmt=lch
-   enddo
-   write (composed_fmt,'(2a,i3.3,3a)') trim(lch),'t',of_tabs(n)+2+INDENT,',',basic_fmt,trim(terminator(2))
- else
-   write (composed_fmt,'(a,i2.2,a,i5.4,4a)') trim(terminator(1)),depth+1,'x,a,',n,'(',basic_fmt,',1x)',trim(terminator(2))
-   if (INDENT==0) write (composed_fmt,'(2a,i5.4,4a)')  trim(terminator(1)),'a,',n,'(',basic_fmt,',1x)',trim(terminator(2))
- endif
- if (n<0) write (composed_fmt,'(a,i5.4,3a)') '(a,',iabs(n),'(',basic_fmt,',1x))'
-end function composed_fmt
-!
-!
-function filename(name)
- !
- use stderr,     ONLY:STRING_split,STRING_remove
- use pars,       ONLY:schlen,lchlen
- !
- implicit none
- !
- character(lchlen) :: filename
- character(*)      :: name
- integer           :: N
- character(schlen) :: names(20)
- character(lchlen) :: name_
- name_=name
- name_=STRING_remove(name_,"/",replace=" ")
- call STRING_split(name_,names,n_non_empty_strings=N)
- filename=trim(names(N))
- !
-end function filename

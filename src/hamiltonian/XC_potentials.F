@@ -32,7 +32,6 @@ subroutine XC_potentials(POTENTIALS_string,mode)
 &                         GS_xc_KIND,GS_xc_FUNCTIONAL
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE,COLLISIONS_HXC_local,COLLISIONS_HXC_MB,COLLISIONS_HXC_use_TDDFT
  use electrons,      ONLY:n_full_bands,n_met_bands
- use com,            ONLY:error,warning
  use stderr,         ONLY:STRING_split,STRING_same
  !
  implicit none

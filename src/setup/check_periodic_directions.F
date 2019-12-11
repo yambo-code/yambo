@@ -24,7 +24,7 @@
 subroutine check_periodic_directions(is_cut)
  !
  use pars,           ONLY:SP
- use com,            ONLY:msg,warning
+ use com,            ONLY:msg
  use X_m,            ONLY:eps_2_alpha,alpha_dim,eval_alpha
  use D_lattice,      ONLY:DL_vol,a,non_periodic_directions,&
 &                         l_0D,l_1D,l_2D,l_3D

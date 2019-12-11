@@ -28,7 +28,7 @@ subroutine RT_initialize(E,k,q)
  use pars,           ONLY:SP,pi
  use units,          ONLY:HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,AUT2FS
  use stderr,         ONLY:intc
- use com,            ONLY:msg,warning,error
+ use com,            ONLY:msg
  use QP_CTL_m,       ONLY:QP_ctl_user
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas

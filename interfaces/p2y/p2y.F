@@ -26,7 +26,7 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use P2Ym,                ONLY:pw_init, pw_close, dftdata_fmt
  use LOGO,                ONLY:pickup_a_random
  use pars,                ONLY:SP,lchlen,schlen
- use com,                 ONLY:msg,core_io_path,write_the_logo,com_path,file_exists
+ use com,                 ONLY:msg,core_io_path,com_path
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:ncpu,myid,PARALLEL_wait,PP_indexes,PP_indexes_reset
  use electrons,           ONLY:levels,E_reset,n_bands,n_sp_pol,n_spinor
@@ -52,6 +52,8 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  character(iod),   intent(in) :: od
  character(ijs),   intent(in) :: js
  character(icd),   intent(in) :: com_dir   
+ !
+ logical, external     :: file_exists
  !
  character(lchlen)     :: lch
  character(schlen)     :: atm_file

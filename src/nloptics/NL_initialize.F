@@ -29,7 +29,7 @@ subroutine NL_initialize(E,k,q)
  use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
- use com,            ONLY:msg,warning,error
+ use com,            ONLY:msg
  use zeros,          ONLY:zero_dfl
  use R_lattice,      ONLY:bz_samp,bare_qpg,k_map
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT

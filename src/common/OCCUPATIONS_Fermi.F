@@ -42,7 +42,6 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
 &                        n_spinor,n_spin
  use R_lattice,     ONLY:bz_samp
- use com,           ONLY:error,warning
  use stderr,        ONLY:real2ch
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc

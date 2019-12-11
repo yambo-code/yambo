@@ -37,7 +37,6 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  use pars,       ONLY:SP
  use units,      ONLY:HA2EV
  use electrons,  ONLY:levels,n_sp_pol,spin_occ
- use com,        ONLY:warning
  use D_lattice,  ONLY:Tel
  use functions,  ONLY:Fermi_fnc
  use interfaces, ONLY:OCCUPATIONS_Gaps

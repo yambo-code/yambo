@@ -27,13 +27,12 @@ subroutine electrons_WFs(Xen)
  Use stderr,         ONLY:intc
  use wave_func,      ONLY:WF,wf_ng
  use FFT_m,          ONLY:fft_size,fft_dim
- use com,            ONLY:error
  use electrons,      ONLY:levels,n_spinor,spin,n_sp_pol
  use QP_m,           ONLY:QP_table,QP_n_states
  use YPPm,           ONLY:v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,l_norm_to_one,&
 &                         plot_title
- use com,            ONLY:msg,of_open_close,warning
+ use com,            ONLY:msg,of_open_close
 #if defined _YPP_SC
  use YPPm,           ONLY:V_value,l_mean_potential
  use QP_m,           ONLY:QP_nk
@@ -47,7 +46,7 @@ subroutine electrons_WFs(Xen)
  use YPP_ELPH,       ONLY:elph_residual_treshold
  use pars,           ONLY:cZERO
  use ELPH,           ONLY:elph_Ham_bands
- use com,            ONLY:jobstr,file_exists
+ use com,            ONLY:jobstr
  use R_lattice,      ONLY:nkibz
 #endif
  !
@@ -62,6 +61,7 @@ subroutine electrons_WFs(Xen)
 #if defined _YPP_ELPH
  integer               :: iq_s,iq_ibz
  logical               :: l_polaronic_wf
+ logical, external     :: file_exists
 #endif
 #if defined _YPP_SC
  integer               :: ID,io_V

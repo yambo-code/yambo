@@ -26,7 +26,6 @@ subroutine p2y_atmproj(filename,k)
  use pars,                  ONLY:SP,DP,schlen
  use R_lattice,             ONLY:bz_samp
  use electrons,             ONLY:n_sp_pol
- use com,                   ONLY:error
  use atom_proj,             ONLY:atomic_projections,atomic_table,n_atom_wfc,n_proj_bands
  use IO_m,                  ONLY:OP_WR_CL,OP_APP_CL,REP,io_control
  !

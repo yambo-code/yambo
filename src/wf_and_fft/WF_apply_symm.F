@@ -26,7 +26,6 @@ subroutine WF_apply_symm_cpu(isc,WF_symm)
  use pars,          ONLY:SP
  use wave_func,     ONLY:WF
  use FFT_m,         ONLY:fft_rot_r,fft_size
- use com,           ONLY:error
  use stderr,        ONLY:intc
  use parallel_m,    ONLY:myid
  use electrons,     ONLY:n_spinor

@@ -235,6 +235,7 @@ m4_include([config/lapack.m4])
 m4_include([config/netcdf_f90.m4])
 m4_include([config/libxc.m4])
 m4_include([config/fft.m4])
+m4_include([config/futile.m4])
 m4_include([config/iotk.m4])
 m4_include([config/etsf_io.m4])
 m4_include([config/scalapack.m4])
@@ -260,6 +261,9 @@ AC_SLK_SETUP
 # ============================================================================
 # NETCDF 
 AC_HAVE_NETCDF_F90
+# ============================================================================
+# FUTILE library 
+AC_HAVE_FUTILE
 # ============================================================================
 # IOTK library 
 AC_HAVE_IOTK

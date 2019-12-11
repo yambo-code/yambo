@@ -25,7 +25,6 @@ subroutine INTERPOLATION_BZ(K,NK,ID,R1D,R2D,C1D,C2D,E)
  use pars,        ONLY:SP
  use R_lattice,   ONLY:bz_samp
  use electrons,   ONLY:levels
- use com,         ONLY:error
  use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D
  implicit none
  type(bz_samp), intent(in)              :: K

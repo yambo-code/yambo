@@ -33,7 +33,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bare_qpg,bz_samp
- use com,            ONLY:isec,msg,warning
+ use com,            ONLY:isec,msg
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
 &                         PAR_COM_SLK_INDEX_local

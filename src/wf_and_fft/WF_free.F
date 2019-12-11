@@ -25,7 +25,6 @@ subroutine WF_free(WF,keep_fft)
  !
  use wave_func,  ONLY:WAVEs
  use pseudo,     ONLY:pp_is_uspp,PP_uspp_free
- use com,        ONLY:error
  !
 #include<memory.h>
  !

@@ -23,7 +23,6 @@
 subroutine K_Haydock(iq,W)
  !
  use pars,           ONLY:SP,schlen,cI,cZERO,cONE,pi
- use com,            ONLY:error
  use functions,      ONLY:NAN
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use X_m,            ONLY:Epsilon_ii,Epsilon_ij,X_drude_term,global_gauge,skip_cond_sum_rule

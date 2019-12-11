@@ -33,7 +33,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  use units,          ONLY:FS2AUT,AUT2FS,PS2AUT
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free
  use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,OBS_RT_IO_t,RT_ctl_db,RT_ctl_interp_neigh
- use com,            ONLY:warning,msg,jobstr,alt_jobstr,n_alt_jobstr,file_exists,depth,alt_jobdir,jobdir
+ use com,            ONLY:msg,jobstr,alt_jobstr,n_alt_jobstr,depth,alt_jobdir,jobdir
  !
  implicit none
  !
@@ -55,6 +55,8 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  character(schlen)     :: db_piece(n_pieces),db_name,T_unit,ch
  character(3)          :: what_
  logical               :: l_E,l_f,l_W,l_elel_corr_save,is_def,l_verbose,l_keep_carriers,l_BOLTZ
+ !
+ logical, external     :: file_exists
  !
  local_Time=0._SP
  if (present(Time)) local_Time=Time

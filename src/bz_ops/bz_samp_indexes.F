@@ -45,7 +45,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  use pars,           ONLY:SP,lchlen,zero_dfl
  use drivers,        ONLY:l_bse,l_elel_scatt
  use stderr,         ONLY:gen_fmt
- use com,            ONLY:msg,error,warning
+ use com,            ONLY:msg
  use parallel_m,     ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det

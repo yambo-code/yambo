@@ -24,11 +24,16 @@
 subroutine INIT_report_and_log_files()
  !
  use pars,           ONLY:lchlen
- use stderr,         ONLY:logfile,log_as_a_file,intc,write_to_log,write_to_log_default
+ use stderr,         ONLY:logfile,logfile_unit,log_as_a_file,intc,write_to_log,write_to_log_default
  use it_m,           ONLY:rstatus,nrnlvls,rnlvls
- use com,            ONLY:repfile,com_path,jobstr
- use parallel_m,     ONLY:myid,ncpu
+ use com,            ONLY:repfile,repfile_unit,com_path,jobstr,max_open_ofs,of_unit
+ use parallel_m,     ONLY:myid,ncpu,master_cpu
  use LIVE_t,         ONLY:live_timing_is_on
+#if defined _YAML_OUTPUT
+ use f_utils,        ONLY:f_get_free_unit
+ use com,            ONLY:of_yaml_IDs
+ use yaml_output,    ONLY:yaml_set_stream,yaml_stream_connected
+#endif
  !
  implicit none
  !
@@ -63,6 +68,54 @@ subroutine INIT_report_and_log_files()
  if (ncpu>1.and.log_as_a_file) then
    jch=logfile
    logfile=trim(jch)//"_CPU_"//trim(intc(myid+1))
+ endif
+ !
+ if (master_cpu)    call rename_file(repfile)
+ !
+ if (log_as_a_file) call rename_file(logfile)
+ !
+ if (master_cpu) then
+   !
+   ! Init flib
+   !
+#if defined _YAML_OUTPUT
+   call f_lib_initialize()
+#endif
+   !
+   ! Report file
+   !
+#if defined _YAML_OUTPUT
+   repfile_unit=f_get_free_unit()
+#else
+   repfile_unit=11
+#endif
+   of_unit(max_open_ofs) = repfile_unit
+   open(unit=repfile_unit,file=trim(repfile))
+#if defined _YAML_OUTPUT
+   call yaml_set_stream(filename=trim(repfile)//".yaml")
+   call yaml_stream_connected(trim(repfile)//".yaml",of_yaml_IDs(max_open_ofs))
+#endif
+   call write_the_logo(repfile_unit,' ')
+   !
+ endif
+ !
+ if (log_as_a_file) then
+   !
+   ! Log file
+   !
+#if defined _YAML_OUTPUT
+   logfile_unit=f_get_free_unit()
+#else
+   logfile_unit=13
+#endif
+   if(log_as_a_file) then
+     open(unit=logfile_unit,file=trim(logfile))
+#if defined _YAML_OUTPUT
+     call yaml_set_stream(filename=trim(logfile)//".yaml")
+     call yaml_stream_connected(trim(logfile)//".yaml",of_yaml_IDs(max_open_ofs+1))
+#endif
+   endif
+   !
  endif
  !
 end subroutine

@@ -46,9 +46,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use it_tools,       ONLY:it,infile_dump,ofiles_append,&
 &                         switch_off_runlevel,check_verbosity,runlevel_is_on
  use it_m,           ONLY:initdefs,rstatus,initmode,infile,nrnlvls,rnlvls
- use parallel_m,     ONLY:PP_redux_wait,master_cpu
- use com,            ONLY:msg,repfile,repfile_unit,inpfile_unit,com_path,&
-&                         write_to_report,of_unit,max_open_ofs
+ use parallel_m,     ONLY:PP_redux_wait
+ use com,            ONLY:msg,repfile_unit,inpfile_unit,com_path,&
+&                         write_to_report,max_open_ofs
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on
  use QP_m,           ONLY:QP_t,QP_state,QP_reset,&
@@ -71,9 +71,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K,n_threads_NL
 #endif
 #if defined _YAML_OUTPUT
- use f_utils,        ONLY:f_get_free_unit
  use com,            ONLY:of_yaml_IDs
- use yaml_output,    ONLY:yaml_set_stream,yaml_close_stream,yaml_stream_connected
+ use yaml_output,    ONLY:yaml_close_stream
 #endif
  !
 #include<memory.h>
@@ -264,11 +263,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Are we editing the input file ?
  !
  if (infile_editing) then
-!#if defined _YAML_OUTPUT
-!   inpfile_unit=f_get_free_unit()
-!#else
    inpfile_unit=12
-!#endif
    open(unit=inpfile_unit,file=trim(infile))
    call initinfio(defs,inpfile_unit)
    close(inpfile_unit)
@@ -286,50 +281,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call INIT_report_and_log_files()
  !
- if (log_as_a_file) call rename_file(logfile)
- !
- call rename_file(repfile)
- !
  ! Finalize
- call PP_redux_wait
  !
- if (master_cpu) then
-   !
-#if defined _YAML_OUTPUT
-   call f_lib_initialize()
-#endif
-   !
-   ! Report file
-   !
-#if defined _YAML_OUTPUT
-   repfile_unit=f_get_free_unit()
-#else
-   repfile_unit=11
-#endif
-   of_unit(max_open_ofs) = repfile_unit
-   open(unit=repfile_unit,file=trim(repfile))
-#if defined _YAML_OUTPUT
-   call yaml_set_stream(filename=trim(repfile)//".yaml")
-   call yaml_stream_connected(trim(repfile)//".yaml",of_yaml_IDs(max_open_ofs))
-#endif
-   call write_the_logo(repfile_unit,' ')
-   !
-   ! Log file
-   !
-#if defined _YAML_OUTPUT
-   logfile_unit=f_get_free_unit()
-#else
-   logfile_unit=13
-#endif
-   if(log_as_a_file) then
-     open(unit=logfile_unit,file=trim(logfile))
-#if defined _YAML_OUTPUT
-     call yaml_set_stream(filename=trim(logfile)//".yaml")
-     call yaml_stream_connected(trim(logfile)//".yaml",of_yaml_IDs(max_open_ofs+1))
-#endif
-   endif
-   !
- endif
+ call PP_redux_wait
  !
  contains
    !

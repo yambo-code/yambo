@@ -29,7 +29,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_WR,OP_RD,VERIFY,&
 &                              OP_RD_CL,DUMP,RD_CL_IF_END,WR_CL_IF_END
  use SC,                  ONLY:SC_bands
- use hamiltonian,         ONLY:H_rotation,H_nl_sc,l_sc_V_is_local
+ use hamiltonian,         ONLY:H_rotation,H_nl_sc,l_sc_V_is_local,H_potential
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp,nkibz
  !
@@ -135,7 +135,9 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  !
  ! Copy the potential
  !
- call XC_switch()
+ call XC_potentials(H_potential,"SC")
+ call XC_additional_SC_potentials()
+ !
  if(.not.l_sc_V_is_local) then
    !
    YAMBO_ALLOC(H_nl_sc,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)))

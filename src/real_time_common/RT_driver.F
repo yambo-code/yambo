@@ -70,7 +70,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  ! Work Space
  !
  integer           :: io_REF,io_err
- logical           :: l_Dynamics_is_over
+ logical           :: l_Dynamics_is_over,LT_pump
  character(schlen) :: sec_title(3)
  real(SP)          :: OBSERVABLES(25)
  !
@@ -91,8 +91,8 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  ! Potential 
  !===========
- !
- call XC_switch()
+ call XC_potentials(H_potential,"SC")
+ call XC_additional_SC_potentials()
  !
  RT_potential    =H_potential
  RT_kind         =H_kind
@@ -371,7 +371,6 @@ subroutine RT_driver(E,X,k,q,Dip)
      ! Timing windows
      !
      integer           :: LT_pump_steps
-     logical           :: LT_pump
      real(SP)          :: LT_pump_duration
      !
      if (steps==0) then

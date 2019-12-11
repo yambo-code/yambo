@@ -114,7 +114,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (l_GW_terminator.and.trim(GW_terminator_Kind)/='BG'.and.&
 &    trim(GW_terminator_Kind)/='BRS') &
 &    call error(' [GW/PPA] unknown GW_terminator_Kind = '//trim(GW_terminator_Kind))
- 
  !
  ! COHSEX: bands setup
  !
@@ -620,7 +619,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! AM, Sept 2019. The COH potential seems to break (in some case of a large amount) the
  ! energy degenerations. Short cut here is to symmetrize the QP_Sc if COH is included
  !
- if (((l_sc_srpa.or.l_sc_coh.or.l_cohsex).and..not.COHSEX_use_empties).or.l_GW_terminator) then
+#if !defined _SC
+ if (l_GW_terminator) then
    !
    call degeneration_finder(qp%E_bare,qp%n_states,first_el,n_of_el,n_deg_grp,1.E-10_SP)
    !
@@ -637,6 +637,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    enddo
    !
  endif
+#endif
  !
  ! CLEAN
  !

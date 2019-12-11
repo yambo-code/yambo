@@ -480,9 +480,12 @@ subroutine INIT_activate()
  !
  if (l_eval_collisions.or.l_real_time.or.l_sc_run) then
    !
-   call initactivate( 1,'HXC_Potential FFTGvecs')
+   if ( .not. STRING_match(trim(H_potential),"NONE") ) call initactivate(1,'HXC_Potential')
+   !
+   call initactivate( 1,'FFTGvecs')
    !
    call initactivate(-1,'QpntsRXs')
+   !
    if( STRING_match(trim(H_potential),"HARTREE") ) call initactivate(1,'EXXCut HARRLvcs ALLGHAR')
    if( STRING_match(trim(H_potential),"default") ) call initactivate(1,'VXCRLvcs HARRLvcs')
    !

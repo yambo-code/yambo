@@ -90,7 +90,7 @@ subroutine XC_potentials(POTENTIALS_string,mode)
        COLLISIONS_HXC_local=.TRUE.
        l_use_Hxc_collisions=.TRUE.
      endif
-     H_kind=GS_xc_KIND
+     H_kind=GS_xc_KIND+H_SE_HARTREE
      H_xc_functional=GS_xc_FUNCTIONAL
      POTENTIALS_string="HARTREE+GS_xc"
    else if (STRING_same(trim(potentials(i_c)),'HARTREE')) then

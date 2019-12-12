@@ -42,7 +42,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 &                        PAR_COM_X_WORLD_RL_resolved
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
- use com,           ONLY:depth,error
+ use com,           ONLY:depth
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                        PARALLEL_WF_index,WF_load,WF_free
@@ -204,6 +204,13 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
  endif
  !
+ if (i_err/=0) then
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
+   i_err=io_X(X,Xw,Xdb)
+ endif
+ !
+ call PP_redux_wait()
+ !
  do iq=X%iq(1),X%iq(2)
    !
    if (     io_X_done(iq) > 0       ) cycle
@@ -225,11 +232,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      call TDDFT_ALDA_G_space(Xen,Xk)
      !
-   endif
-   !
-   if(iq==1) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
-     i_err=io_X(X,Xw,Xdb)
    endif
    !
    ! Allocation

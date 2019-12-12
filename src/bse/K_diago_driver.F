@@ -43,7 +43,6 @@ subroutine K_diago_driver(iq,W,X_static)
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
 #if defined _SLEPC
- use com,            ONLY:warning
  use interfaces,     ONLY:MATRIX_slepc
  use BS_solvers,     ONLY:BSS_slepc_extraction,Slepc_shell,BSS_slepc_ncv,&
 &                         BSS_slepc_tol,BSS_target_E,Slepc_v,BS_HAYVEC_free

@@ -39,7 +39,6 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  use LIVE_t,            ONLY:live_timing
  use interfaces,        ONLY:PARALLEL_index
  use parallel_m,        ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid
- use com,               ONLY:error
  !
 #include<memory.h>
  !
@@ -202,7 +201,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
    use units,          ONLY:HA2EV
    use pars,           ONLY:SP,lchlen
    use R_lattice,      ONLY:bz_samp
-   use com,            ONLY:warning,msg
+   use com,            ONLY:msg
    !
    type(bz_samp), intent(in) :: Xk
    integer,       intent(in) :: nvalues,nshells,Nk

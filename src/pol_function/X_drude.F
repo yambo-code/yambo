@@ -31,7 +31,6 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  use R_lattice,     ONLY:bz_samp,q_norm
  use D_lattice,     ONLY:DL_vol
  use X_m,           ONLY:use_X_DbGd,l_drude
- use com,           ONLY:warning
  !
  implicit none
  !

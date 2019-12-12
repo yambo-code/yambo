@@ -25,7 +25,7 @@ subroutine RT_Dephasing_Matrix(E)
  !
  use pars,          ONLY:SP,pi
  use units,         ONLY:FS2AUT
- use com,           ONLY:warning,msg
+ use com,           ONLY:msg
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:nXkibz
  use real_time,     ONLY:RT_Deph_Matrix,RT_is_statically_dephased,Phase_LifeTime,&

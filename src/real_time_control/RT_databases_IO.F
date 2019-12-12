@@ -35,9 +35,6 @@ subroutine RT_databases_IO(E)
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,RT_all2ibz
  use timing_m,       ONLY:timing
  use fields,         ONLY:A_tot
-#if defined  _PAR_IO
- use com,            ONLY:error
-#endif
  !
  implicit none
  !

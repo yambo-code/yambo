@@ -27,7 +27,6 @@ subroutine PP_vloc_augment(QP_Vloc,Vloc,ik,ib,ibp)
  ! All quantities given in real space.
  !
  use pars,          ONLY:SP,DP
- use com,           ONLY:error
  use electrons,     ONLY:n_sp_pol
  use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table

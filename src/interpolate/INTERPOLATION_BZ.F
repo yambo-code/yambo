@@ -25,7 +25,6 @@ subroutine INTERPOLATION_BZ(R1D,R2D,C1D,C2D,E,K,ID)
  use pars,        ONLY:SP
  use R_lattice,   ONLY:bz_samp
  use electrons,   ONLY:levels
- use com,         ONLY:error
  use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D
  !
 #include<memory.h>

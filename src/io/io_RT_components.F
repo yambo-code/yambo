@@ -334,7 +334,6 @@ subroutine G_lesser_IO(ID)
  !
  use pars,           ONLY:SP,schlen
  use stderr,         ONLY:intc
- use com,            ONLY:error
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,&
 &                         variable_exist,write_is_on,io_fragment,io_sec
  use hamiltonian,    ONLY:H_rotation

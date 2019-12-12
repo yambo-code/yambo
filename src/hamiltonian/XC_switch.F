@@ -34,7 +34,6 @@ subroutine XC_switch()
  use magnetic,       ONLY:MAG_landau,MAG_pauli
 #endif
  use global_XC,      ONLY:EXT_NONE
- use com,            ONLY:error
  use stderr,         ONLY:STRING_same
  !
  implicit none

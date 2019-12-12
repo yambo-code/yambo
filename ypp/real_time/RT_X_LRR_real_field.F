@@ -37,7 +37,6 @@ subroutine RT_X_LRR_real_field(en)
  use fields,         ONLY:Efield,small_a_frequency,small_a
  use functions,      ONLY:theta_function
  use parser_m,       ONLY:parser
- use com,            ONLY:error
  !
 #include<memory.h>
  !

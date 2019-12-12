@@ -27,7 +27,7 @@ subroutine REPORT_Occupations(what,E)
  use units,         ONLY:HA2EV,BO2ANG,HA2EV,HA2KEL
  use D_lattice,     ONLY:Tel,T_holes,T_elecs,Bose_Temp,DL_vol
  use drivers,       ONLY:Finite_Tel
- use com,           ONLY:msg,warning
+ use com,           ONLY:msg
  use electrons,     ONLY:levels,n_sp_pol,nel,spin_occ
  use interfaces,    ONLY:OCCUPATIONS_Gaps
  !

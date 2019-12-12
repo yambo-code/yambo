@@ -25,7 +25,6 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
  !
  use netcdf
  use pars,       ONLY:SP,DP,IP,LP,schlen,nf90_SP
- use com,        ONLY:warning,error
  use parallel_m, ONLY:ncpu
  use IO_m,       ONLY:write_is_on,read_is_on,io_unit,netcdf_call,io_netcdf_var,&
 &                     netcdf_dim,io_file

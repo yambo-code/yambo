@@ -25,7 +25,7 @@ subroutine ELPH_atomic_amplitude(q)
  !
  use pars,                ONLY:SP
  use units,               ONLY:BO2ANG,pi
- use com,                 ONLY:msg,warning
+ use com,                 ONLY:msg
  use R_lattice,           ONLY:bz_samp,RL_vol,RIM_n_rand_pts
  use D_lattice,           ONLY:n_atoms
  use ELPH,                ONLY:ph_modes,ph_freqs_sq,&

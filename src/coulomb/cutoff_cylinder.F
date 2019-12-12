@@ -31,7 +31,7 @@ subroutine cutoff_cylinder(q,is_cut)
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg,error
+ use com,           ONLY:msg
  !
 #include<memory.h>
  type(bz_samp) ::q

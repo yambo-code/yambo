@@ -43,7 +43,6 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
 &                        BZ_DbGd_nbands,BZ_DbGd_nkpt,n_spinor,n_spin,&
 &                        BZ_DbGd_table
  use R_lattice,     ONLY:bz_samp
- use com,           ONLY:error,warning
  use stderr,        ONLY:real2ch
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc

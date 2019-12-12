@@ -25,7 +25,6 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  !
  use pars,          ONLY:SP,pi,schlen
  use R_lattice,     ONLY:bz_samp
- use com,           ONLY:error
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_reset
  use QP_CTL_m,      ONLY:QP_apply

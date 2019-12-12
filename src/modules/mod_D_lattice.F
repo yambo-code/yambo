@@ -24,7 +24,6 @@
 module D_lattice
  !
  use pars,        ONLY:SP,lchlen,cONE,cZERO,cI,schlen
- use com,         ONLY:error
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -104,7 +103,7 @@ module D_lattice
    subroutine symmetry_group_table(msg_where)
      !
      use pars,           ONLY:SP,IP
-     use com,            ONLY:error,msg
+     use com,            ONLY:msg
      implicit none
      !
      character(*) :: msg_where

@@ -501,7 +501,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      dumb_ch2='            '//trim(intc(it_now))//' '
      if (l_sc_V_is_local) then
        if(it==1) dumb_ch= trim(dumb_ch) //'  E_tot(Ha) '
-       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(E_total))//' : '
+       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(E_total))//'  '
      endif
      if (n_spin==2) then
        if(n_sp_pol==2) dumb_ch=trim(dumb_ch)//'  Mz  [muB] '

@@ -23,7 +23,7 @@
 !
 integer function variables_BS(ID,iq,local_desc_str,local_desc_var,CLOSE_the_menu,X)
  !
- use pars,          ONLY:lchlen,SP,IP,LP
+ use pars,          ONLY:lchlen,SP,IP,LP,VAR_EMPTY
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_td_hf
  use electrons,     ONLY:E_SOC_nbands
@@ -59,7 +59,7 @@ integer function variables_BS(ID,iq,local_desc_str,local_desc_var,CLOSE_the_menu
  !
  i_desc=1
  local_desc_str=' '
- local_desc_var=0._SP
+ local_desc_var=VAR_EMPTY
  !
  call def_variable_elemental(ID,"PARS1",var_size,IP+100,0)
  call io_variable_elemental(ID,&

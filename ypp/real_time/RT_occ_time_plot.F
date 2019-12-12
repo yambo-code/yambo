@@ -197,7 +197,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      call c2a(v_in=kpt%pt(ik,:),v_out=k_cc,mode='ki2c')
      call c2a(v_in=kpt%pt(ik,:),v_out=k_al,mode='ki2a')
      ! 
-     dumb_ch(1)='K ['//trim(intc(ik))//'] : '//trim(real2ch(k_cc(1)))//' '//&
+     dumb_ch(1)='K ['//trim(intc(ik))//']  '//trim(real2ch(k_cc(1)))//' '//&
 &                                              trim(real2ch(k_cc(2)))//' '//&
 &                                              trim(real2ch(k_cc(3)))//' ( cc) '
      dumb_ch(2)='        '//trim(real2ch(k_al(1)))//' '//&
@@ -217,7 +217,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      call c2a(v_in=RT_carriers%kpt(ik_RT,:),v_out=k_cc,mode='ki2c')
      call c2a(v_in=RT_carriers%kpt(ik_RT,:),v_out=k_al,mode='ki2a')
      !
-     dumb_ch(1)='K_FGd ['//trim(intc(ik_RT))//'] : '//trim(real2ch(k_cc(1)))//' '//&
+     dumb_ch(1)='K_FGd ['//trim(intc(ik_RT))//']  '//trim(real2ch(k_cc(1)))//' '//&
 &                                                     trim(real2ch(k_cc(2)))//' '//&
 &                                                     trim(real2ch(k_cc(3)))//' ( cc) '
      !

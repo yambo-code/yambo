@@ -182,7 +182,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  call PP_redux_wait(freqs_done,imode=3)
  !
  n_freqs_todo=n_frequencies-count(freqs_done)
- if(n_freqs_todo/=n_frequencies) call msg('s','RESTART, remaining frequencies: ',n_freqs_todo)
+ if(n_freqs_todo/=n_frequencies) call msg('s','RESTART, remaining frequencies ',n_freqs_todo)
  !
 end subroutine NL_start_and_restart
 

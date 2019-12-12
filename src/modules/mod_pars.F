@@ -110,6 +110,8 @@ module pars
  real(SP),    parameter :: rZERO=0._SP
  real(SP),    parameter :: rONE =1._SP
  !
+ real(SP),    parameter :: VAR_EMPTY=-9.9999999_SP
+ !
  complex(SP), parameter :: cI   =(0._SP,1._SP)
  complex(SP), parameter :: cONE =(1._SP,0._SP)
  complex(SP), parameter :: cZERO=(0._SP,0._SP)

@@ -47,7 +47,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! Work Space
  !
  integer           :: ID,i_err,i_s,n_max_threads,i_cpu
- character(lchlen) :: dumb_ch
+ character(lchlen) :: dumb_ch,jobs_ch(10)
  integer, external :: io_DB1
  !
  !
@@ -123,15 +123,15 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', '* NODES(computing)',n_nodes(1))
  call msg('r', '*            (I/O)',n_IO_nodes)
 #ifdef _CUDA
- call msg('r', '* CUDA support    : ',"yes")
- call msg('r', '* CUDA devices    : ',have_cuda_devices)
- call msg('r', '* CUDA visible dev: ',trim(cuda_visible_devices))
+ call msg('r', '* CUDA support     ',"yes")
+ call msg('r', '* CUDA devices     ',have_cuda_devices)
+ call msg('r', '* CUDA visible dev ',trim(cuda_visible_devices))
 #endif
  !
  ! I/O and more
  !===============
  !
- call msg('rn','* Fragmented WFs  : ',frag_WF)
+ call msg('rn','* Fragmented WFs   ',frag_WF)
  call msg('r', 'CORE databases in   ',trim(core_io_path))
  call msg('r', 'Additional I/O in   ',trim(more_io_path))
  call msg('r', 'Communications in   ',trim(com_path))
@@ -149,19 +149,24 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! Strings & Dirs
  !-----------------
  !
- dumb_ch=" "
- if (len_trim(jobstr) >0) dumb_ch='Job string(s)-dir(s) (main): '//trim(jobstr)
- if (len_trim(jobdir) >0) dumb_ch=trim(dumb_ch)//" - "//trim(jobdir)
- if (len_trim(dumb_ch)>0) call msg('nr',trim(dumb_ch))
+ dumb_ch='Job dir(s)'
+ jobs_ch=''
+ if ( len_trim(jobdir)>0 ) jobs_ch(1)=trim(jobdir)
  do i_s=1,n_alt_jobstr
-   if (len_trim(alt_jobstr(i_s))>0) then
-     dumb_ch='                    (alt#'//trim(intc(i_s))//'): '//trim(alt_jobstr(i_s))
-   else
-     dumb_ch='                    (alt#'//trim(intc(i_s))//'): none'
-   endif
-   if (len_trim(alt_jobdir(i_s))>0) dumb_ch=trim(dumb_ch)//" - "//trim(alt_jobdir(i_s))
-   call msg('r',trim(dumb_ch))
+   if (len_trim(alt_jobdir(i_s))<=0) exit
+   jobs_ch(i_s+1)=trim(alt_jobdir(i_s))
  enddo
+ if (len_trim(jobs_ch(1))>0) call msg('nr',trim(dumb_ch),jobs_ch(:i_s))
+ !
+ dumb_ch='Job string(s)'
+ jobs_ch=''
+ if (len_trim(jobstr) >0) jobs_ch(1)=trim(jobstr)
+ do i_s=1,n_alt_jobstr
+   if (len_trim(alt_jobstr(i_s))<=0) exit
+   jobs_ch(i_s+1)=trim(alt_jobstr(i_s))
+ enddo
+ if (len_trim(jobs_ch(1))>0) call msg('nr',trim(dumb_ch),jobs_ch(:i_s))
+ !
  call msg('r','')
  !
  ! DB1 I/O

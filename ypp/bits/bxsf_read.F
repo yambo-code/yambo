@@ -180,9 +180,9 @@ subroutine bxsf_read(Xk,Xen)
     end do
  end do 
  !                 
- call msg('s',' Wannier-interpolated K-points (BZ) : ',nkpoints)
- call msg('s',' Internal (coarse) K-point grid (BZ): ',k_grid)
- call msg('s',' Range of Wannier-interpolated bands: ',wannier_bands)
+ call msg('s',' Wannier-interpolated K-points (BZ)  ',nkpoints)
+ call msg('s',' Internal (coarse) K-point grid (BZ) ',k_grid)
+ call msg('s',' Range of Wannier-interpolated bands ',wannier_bands)
  call msg('s',' Wannier-interpolated bands:          ',nbands)
 
  !call io_disconnect(readunit)

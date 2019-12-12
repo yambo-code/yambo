@@ -313,7 +313,7 @@ subroutine k_special(LIST)
  if (CIRCUIT_k%nbz>0) then
    !
    call msg('s','Found '//trim(intc(n_lines-1))//' segments and  '//&
-&                trim(intc(CIRCUIT_k%nbz+1))//' points along the path: '//trim(PtsPath))
+&                trim(intc(CIRCUIT_k%nbz+1))//' points along the path '//trim(PtsPath))
    !
    YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz+1,3))
    allocate(CIRCUIT_k_norm(CIRCUIT_k%nbz+1))

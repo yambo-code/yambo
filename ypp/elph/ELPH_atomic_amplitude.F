@@ -128,12 +128,12 @@ subroutine ELPH_atomic_amplitude(q)
    call LINEAR_ALGEBRA_driver(DIAGO,M=mean_ui_uj(is,:,:),lib_in=USE_LK,E_real=U_eigenvalues)
    !
    call msg('s','Atom '//trim(atom_name(is)))
-   call msg('s','Displacement  [a.u.]/A #1: ',sqrt(U_eigenvalues(1))*(/1._SP,BO2ANG/) )
-   call msg('s','Normalized direction   #1: ',real(mean_ui_uj(is,:,1)))
-   call msg('s','                       #2: ', sqrt(U_eigenvalues(2))*(/1._SP,BO2ANG/) )
-   call msg('s','                       #2: ',real(mean_ui_uj(is,:,2)))
-   call msg('s','                       #3: ', sqrt(U_eigenvalues(3))*(/1._SP,BO2ANG/) )
-   call msg('s','                       #3: ',real(mean_ui_uj(is,:,3)))
+   call msg('s','Displacement  [a.u.]/A #1 ',sqrt(U_eigenvalues(1))*(/1._SP,BO2ANG/) )
+   call msg('s','Normalized direction   #1 ',real(mean_ui_uj(is,:,1)))
+   call msg('s','                       #2 ', sqrt(U_eigenvalues(2))*(/1._SP,BO2ANG/) )
+   call msg('s','                       #2 ',real(mean_ui_uj(is,:,2)))
+   call msg('s','                       #3 ', sqrt(U_eigenvalues(3))*(/1._SP,BO2ANG/) )
+   call msg('s','                       #3 ',real(mean_ui_uj(is,:,3)))
    !
  enddo
  !

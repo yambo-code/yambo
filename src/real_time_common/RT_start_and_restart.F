@@ -306,14 +306,14 @@ subroutine RT_start_and_restart(E,k,q)
    !
    N_Gr_descs=5
    !
-   Gr_description(1)=' [Gr] Retarded Green`s function  : '//trim(Gr_kind)
-   Gr_description(2)=' [Gr] Damping (c) Energy ref [eV]: '//trim(real2ch(QP_ctl_user(3,1)%Wc_E_ref*HA2EV))
-   Gr_description(3)=' [Gr] Damping (c) [eV,adim,eV^-1]: '//&
+   Gr_description(1)=' [Gr] Retarded Green`s function   '//trim(Gr_kind)
+   Gr_description(2)=' [Gr] Damping (c) Energy ref [eV] '//trim(real2ch(QP_ctl_user(3,1)%Wc_E_ref*HA2EV))
+   Gr_description(3)=' [Gr] Damping (c) [eV,adim,eV^-1] '//&
 &                    trim(real2ch(QP_ctl_user(3,1)%Wc(1)))//' '//&
 &                    trim(real2ch(QP_ctl_user(3,1)%Wc(2)))//' '//&
 &                    trim(real2ch(QP_ctl_user(3,1)%Wc(3)))
-   Gr_description(4)=' [Gr] Damping (v) Energy ref [eV]: '//trim(real2ch(QP_ctl_user(3,1)%Wv_E_ref*HA2EV))
-   Gr_description(5)=' [Gr] Damping (v) [eV,adim,eV^-1]: '//&
+   Gr_description(4)=' [Gr] Damping (v) Energy ref [eV] '//trim(real2ch(QP_ctl_user(3,1)%Wv_E_ref*HA2EV))
+   Gr_description(5)=' [Gr] Damping (v) [eV,adim,eV^-1] '//&
 &                    trim(real2ch(QP_ctl_user(3,1)%Wv(1)))//' '//&
 &                    trim(real2ch(QP_ctl_user(3,1)%Wv(2)))//' '//&
 &                    trim(real2ch(QP_ctl_user(3,1)%Wv(3)))

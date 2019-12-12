@@ -296,7 +296,7 @@ end function qe_erfc
 !
 !     call msg('nr','See if it works, next some info has to be dumped to the database')     
 !      write(*,*) "this should be put in the report using msg interface"
-!      WRITE(*, "(  2x,'Cutoff: ',f6.2,4x,'  n grid: ',3i4,/)") vcut%cutoff, n(:)
+!      WRITE(*, "(  2x,'Cutoff ',f6.2,4x,'  n grid ',3i4,/)") vcut%cutoff, n(:)
      !
   ENDIF
   !

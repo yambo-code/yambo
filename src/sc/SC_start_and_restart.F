@@ -193,7 +193,7 @@ subroutine SC_start_and_restart(X,E,Xk)
      if (l_oep_ceda) ch = 'CEDA'
      ch1 = trim(ch)
      if (l_oep_EWeight) write(ch,'(a,a)') 'W-',trim(ch1)
-     call msg('rn' ,'[SC] Approximate solution of OEP      : ',ch)
+     call msg('rn' ,'[SC] Approximate solution of OEP       ',ch)
    end if
  end if 
  !

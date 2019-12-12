@@ -107,7 +107,7 @@ subroutine k_define_circuit(Xk)
 &                                CIRCUIT_E_db,CIRCUIT_k,db1_a=db_a,db1_alat=db_alat)
    CIRCUIT_k%nbz=CIRCUIT_k%nibz
    if (any(alat/=db_alat).or.any(a/=db_a)) call warning("Lattice constants mismatch")
-   call msg("s",'GS databases         : '//trim(CIRCUIT_E_DB_path))
+   call msg("s",'GS databases          '//trim(CIRCUIT_E_DB_path))
    call msg("s",'bands/k-points       ',(/CIRCUIT_E_db%nb, CIRCUIT_k%nbz/))
    YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz,3))
    YAMBO_ALLOC(CIRCUIT_E_db%E,(CIRCUIT_E_db%nb,CIRCUIT_k%nbz,n_sp_pol))

@@ -176,7 +176,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
    if(Rm_inv.and..not.(inv_index>spatial_nsym)) then
      nsym=nsym/2
      spatial_nsym=spatial_nsym/2
-     call msg('s','Removed inversion. Symmetries are now: '//trim(intc(spatial_nsym)))
+     call msg('s','Removed inversion. Symmetries are now '//trim(intc(spatial_nsym)))
    endif
    !
    ! Then remove other symmetries according to input

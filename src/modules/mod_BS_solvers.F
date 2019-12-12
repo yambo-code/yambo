@@ -64,7 +64,7 @@ module BS_solvers
  !
  ! Solvers (General)
  !=========
- real(SP) :: BSS_desc_var(10,100)=0._SP
+ real(SP) :: BSS_desc_var(10,100)
  character(lchlen):: BSS_desc_str(100)
  character(schlen):: BSS_mode
  complex(SP) :: BSS_Wd

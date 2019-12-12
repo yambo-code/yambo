@@ -40,21 +40,21 @@ integer function variables_DIPOLES(Dip,ID)
  call def_variable_elemental(ID,"PARS",11,SP,0,par_io_kind="independent")
  !
  call io_variable_elemental(ID,DB_I1=Dip%db_ib,&
-&     VAR=" X band range           :",I1=Dip%ib    ,CHECK=.true.,OP=(/">=","<="/))
+&     VAR=" X band range           ",I1=Dip%ib    ,CHECK=.true.,OP=(/">=","<="/))
  call io_variable_elemental(ID,DB_I1=Dip%db_ib_lim,&
-&     VAR=" X band range limits    :",I1=Dip%ib_lim,CHECK=.true.,OP=(/"<=",">="/))
+&     VAR=" X band range limits    ",I1=Dip%ib_lim,CHECK=.true.,OP=(/"<=",">="/))
  call io_variable_elemental(ID,UNIT=HA2EV,&
-&     VAR=" X e/h energy range [ev]:",R1=Dip%ehe,CHECK=.true.,OP=(/">=","<="/))
+&     VAR=" X e/h energy range [ev]",R1=Dip%ehe,CHECK=.true.,OP=(/">=","<="/))
  call io_variable_elemental(ID,&
-&     VAR=" RL vectors in the sum  :",I0=Dip%ng,WARN=.true.,OP=(/"<="/))
+&     VAR=" RL vectors in the sum  ",I0=Dip%ng,WARN=.true.,OP=(/"<="/))
  call io_variable_elemental(ID,&
-&     VAR=" [r,Vnl] included       :",L0=Dip%Vnl_included,CHECK=.true.,OP=(/"=="/))
+&     VAR=" [r,Vnl] included       ",L0=Dip%Vnl_included,CHECK=.true.,OP=(/"=="/))
  call io_variable_elemental(ID,&
-&     VAR=" Bands ordered          :",L0=Dip%bands_ordered,CHECK=.true.,OP=(/">="/))
+&     VAR=" Bands ordered          ",L0=Dip%bands_ordered,CHECK=.true.,OP=(/">="/))
  call io_variable_elemental(ID,&
-&     VAR=" Direct v evaluation    :",L0=Dip%force_v_g_space,CHECK=.true.,OP=(/"=="/))
+&     VAR=" Direct v evaluation    ",L0=Dip%force_v_g_space,CHECK=.true.,OP=(/"=="/))
  call io_variable_elemental(ID,&
-&     VAR=" Field momentum norm    :",R0=q0_def_norm,CHECK=.true.,OP=(/"=="/))
+&     VAR=" Field momentum norm    ",R0=q0_def_norm,CHECK=.true.,OP=(/"=="/))
  !
  !call def_variable_elemental(ID,"",0,0)
  !

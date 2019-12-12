@@ -95,8 +95,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  ! This is the upper triangular mode
  !
- dim_names =      [character(schlen) :: 'complex', 'BS_K_flat_dim']
- dim_names_done = [character(schlen) :: 'BS_K_flat_dim']
+ dim_names =      [character(schlen) : 'complex', 'BS_K_flat_dim']
+ dim_names_done = [character(schlen) : 'BS_K_flat_dim']
  flattened_block_size_dim = BS_K_dim*(BS_K_dim+1)/2
  !
  ch=trim(ch)//"_FLAT"
@@ -112,8 +112,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  ! Here is the 2D mode
  !
- dim_names =      [character(schlen) :: 'complex', 'BS_K_dim', 'BS_K_dim']
- dim_names_done = [character(schlen) :: 'BS_K_dim', 'BS_K_dim']
+ dim_names =      [character(schlen) : 'complex', 'BS_K_dim', 'BS_K_dim']
+ dim_names_done = [character(schlen) : 'BS_K_dim', 'BS_K_dim']
  !
  do i1=1,n_vars
    call def_variable_bulk(ID,trim(ch(i1)),       VAR_IDs(2*i1-1),&

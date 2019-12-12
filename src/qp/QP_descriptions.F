@@ -117,7 +117,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    !
    if (ver_is_gt_or_eq(-1,(/3,0,5/))) then
      qp%n_descs=qp%n_descs+1
-     write (qp%description(qp%n_descs),'(2a)') ' X xc-Kernel            : ',trim(X%f_xc)
+     write (qp%description(qp%n_descs),'(2a)') ' X xc-Kernel             ',trim(X%f_xc)
    endif
    !
    if (.not.l_ppa.and..not.l_cohsex) then
@@ -173,7 +173,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      qp%n_descs=qp%n_descs+1
      qp%description(qp%n_descs)=' Sc bands terminator    : yes'
      qp%n_descs=qp%n_descs+1
-     qp%description(qp%n_descs)=' Sc terminator kind     : '//trim(GW_terminator_Kind)    
+     qp%description(qp%n_descs)=' Sc terminator kind      '//trim(GW_terminator_Kind)    
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
 &           STRING_pack('(a,',gen_fmt( r_v=(/GW_terminator_E*HA2EV /) ),')'))) &

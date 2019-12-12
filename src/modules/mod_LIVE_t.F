@@ -235,7 +235,7 @@ module LIVE_t
      endif
      message_composed=trim(message)
      if (ncpu/=1.and.add_CPU_id.and.(index(lfmt_,"n")>0.or.index(lfmt_,"r")>0.)) then
-       write (message_composed,'(a,i4.4,2a)') 'P',myid+1,': ',trim(message)
+       write (message_composed,'(a,i4.4,2a)') 'P',myid+1,' ',trim(message)
        if (n_nodes(1)>1) then
          message_composed='P'//trim(intc(myid+1))//"-"//trim(host_name)//": "//trim(message)
        else

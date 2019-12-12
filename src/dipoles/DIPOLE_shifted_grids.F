@@ -129,7 +129,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
    !
  enddo
  !
- call msg('r','Shifted grids found: '//trim(intc(num_shifted_grids)))
+ call msg('r','Shifted grids found '//trim(intc(num_shifted_grids)))
  !
  if(num_shifted_grids<3) call warning(' Shifted grids are '//trim(intc(num_shifted_grids))//'. Assuming non periodic system.')
  !

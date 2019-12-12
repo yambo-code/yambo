@@ -57,7 +57,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Work Space
  !
- real(SP)          :: rv(3),Tel_SAVE
+ real(SP)          :: rv(3),Tel_SAVE,tmp_V(6)
  integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2)
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch1,dumb_ch2
@@ -70,57 +70,60 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !=============================
  call crystal_lattice()
  !
- call msg('rn','Unit cell is '//trim(lattice))
+ call msg('rn','Unit cell is ',trim(lattice))
  !
  call load_PT_elements()
  !
  atoms_string=' '
  !
  if (allocated(Z_species)) then
+   call msg('rn','Atoms in the cell ',PT_elements(Z_species(:)))
    do is=1,n_atomic_species
-     dumb_ch1=trim(intc(n_atoms_species(is)))//PT_elements(Z_species(is))
-     atoms_string=trim(atoms_string)//trim(dumb_ch1)
+     call msg('rn','numebr of '//PT_elements(Z_species(is))//' atoms',n_atoms_species(is))
    enddo
-   call msg('rn','... containing '//trim(atoms_string)//' atoms')
  endif
  !
- call msg('r','... with scaling factors [a.u.]',alat)
- call msg('nr','Direct Lattice(DL) unit cell [iru  /  cc(a.u.)]')
- dumb_ch1='A1 ='//trim(real2ch(a(1,1)/alat(1)))//' '//trim(real2ch(a(1,2)/alat(2)))//' '//&
-&                 trim(real2ch(a(1,3)/alat(3)))//'     '//&
-&                 trim(real2ch(a(1,1)))//' '//trim(real2ch(a(1,2)))//' '//trim(real2ch(a(1,3)))
- call msg('r',dumb_ch1)
- dumb_ch1='A2 ='//trim(real2ch(a(2,1)/alat(1)))//' '//trim(real2ch(a(2,2)/alat(2)))//' '//&
-&                 trim(real2ch(a(2,3)/alat(3)))//'     '//&
-&                 trim(real2ch(a(2,1)))//' '//trim(real2ch(a(2,2)))//' '//trim(real2ch(a(2,3)))
- call msg('r',dumb_ch1)
- dumb_ch1='A3 ='//trim(real2ch(a(3,1)/alat(1)))//' '//trim(real2ch(a(3,2)/alat(2)))//' '//&
-&                 trim(real2ch(a(3,3)/alat(3)))//'     '//&
-&                 trim(real2ch(a(3,1)))//' '//trim(real2ch(a(3,2)))//' '//trim(real2ch(a(3,3)))
- call msg('rn',dumb_ch1)
+ call msg('r','Alat factors [a.u.]',alat)
+ call msg('nr','Direct Lattice(DL) units',(/' iru  ','  cc  '/))
+ !
+ dumb_ch1='  A1  '
+ tmp_V(1:3)=(/a(1,1)/alat(1),a(1,2)/alat(2),a(1,3)/alat(3)/)
+ tmp_V(4:6)=(/a(1,1)        ,a(1,2)        ,a(1,3)        /)
+ call msg('r',dumb_ch1,tmp_V)
+ dumb_ch1='  A2  '
+ tmp_V(1:3)=(/a(2,1)/alat(1),a(2,2)/alat(2),a(2,3)/alat(3)/)
+ tmp_V(4:6)=(/a(2,1)        ,a(2,2)        ,a(2,3)        /)
+ call msg('r',dumb_ch1,tmp_V)
+ dumb_ch1='  A3  '
+ tmp_V(1:3)=(/a(3,1)/alat(1),a(3,2)/alat(2),a(3,3)/alat(3)/)
+ tmp_V(4:6)=(/a(3,1)        ,a(3,2)        ,a(3,3)        /)
+ call msg('r',dumb_ch1,tmp_V)
  !
  ! DL vol
  !
  call define_b_and_DL_vol()
- call msg('r','DL volume [au]',DL_vol)
+ call msg('r','DL volume [a.u.]',DL_vol)
  RL_vol=(2._SP*pi)**3/DL_vol
  !
- call msg('nr','Reciprocal Lattice(RL) unit cell [iku  /  cc]')
+ call msg('nr','Reciprocal Lattice(RL) units',(/' iru  ','  cc  '/))
  rv=b(1,:)
  call c2a(b_in=b,v_in=rv,mode='kc2i')
- dumb_ch1='B1 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
-&                 trim(real2ch(b(1,1)))//' '//trim(real2ch(b(1,2)))//' '//trim(real2ch(b(1,3)))
- call msg('r',dumb_ch1)
+ dumb_ch1='  B1  '
+ tmp_V(1:3)=(/rv(1) ,rv(2) ,rv(3) /)
+ tmp_V(4:6)=(/b(1,1),b(1,2),b(1,3)/)
+ call msg('r',dumb_ch1,tmp_V)
  rv=b(2,:)
  call c2a(b_in=b,v_in=rv,mode='kc2i')
- dumb_ch1='B2 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
-&                 trim(real2ch(b(2,1)))//' '//trim(real2ch(b(2,2)))//' '//trim(real2ch(b(2,3)))
- call msg('r',dumb_ch1)
+ dumb_ch1='  B2  '
+ tmp_V(1:3)=(/rv(1) ,rv(2) ,rv(3) /)
+ tmp_V(4:6)=(/b(2,1),b(2,2),b(2,3)/)
+ call msg('r',dumb_ch1,tmp_V)
  rv=b(3,:)
  call c2a(b_in=b,v_in=rv,mode='kc2i')
- dumb_ch1='B3 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
-&                 trim(real2ch(b(3,1)))//' '//trim(real2ch(b(3,2)))//' '//trim(real2ch(b(3,3)))
- call msg('rn',dumb_ch1)
+ dumb_ch1='  B3  '
+ tmp_V(1:3)=(/rv(1) ,rv(2) ,rv(3) /)
+ tmp_V(4:6)=(/b(3,1),b(3,2),b(3,3)/)
+ call msg('r',dumb_ch1,tmp_V)
  !
  ! ZERO's SETUP
  !

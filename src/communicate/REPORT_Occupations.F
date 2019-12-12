@@ -60,14 +60,14 @@ subroutine REPORT_Occupations(what,E)
  !
  ! Initial Report
  !
- call msg('r',trim(title)//'Fermi Level        [ev]: ',E%E_Fermi*HA2EV)
+ call msg('r',trim(title)//'Fermi Level        [ev] ',E%E_Fermi*HA2EV)
  do i_sp_pol=1,n_sp_pol
-   call msg('r',trim(title)//'VBM / CBm          [ev]: ',(/E%E_VBM(i_sp_pol),E%E_CBm(i_sp_pol)/)*HA2EV)
+   call msg('r',trim(title)//'VBM / CBm          [ev] ',(/E%E_VBM(i_sp_pol),E%E_CBm(i_sp_pol)/)*HA2EV)
  enddo
- call msg('r',trim(title)//'Electronic Temp. [ev K]: ',(/Tel*HA2EV,Tel*HA2KEL/))
- call msg('r',trim(title)//'Bosonic    Temp. [ev K]: ',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
- call msg('r',trim(title)//'Finite Temperature mode: ',Finite_Tel)
- call msg('r',trim(title)//'El. density      [cm-3]: ',(/nel/(DL_vol*BO2ANG**3*1.E-24)/))
+ call msg('r',trim(title)//'Electronic Temp. [ev K] ',(/Tel*HA2EV,Tel*HA2KEL/))
+ call msg('r',trim(title)//'Bosonic    Temp. [ev K] ',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
+ call msg('r',trim(title)//'Finite Temperature mode ',Finite_Tel)
+ call msg('r',trim(title)//'El. density      [cm-3] ',(/nel/(DL_vol*BO2ANG**3*1.E-24)/))
  call msg('r',trim(title)//'States summary         : Full        Metallic    Empty')
  !
  ! [1] States occupations
@@ -136,7 +136,7 @@ subroutine REPORT_Occupations(what,E)
      N_met=N_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk)
    enddo
    !
-   call msg('r',trim(title)//'N of el / N of met el  : ',       (/nel,N_met/))
+   call msg('r',trim(title)//'N of el / N of met el   ',       (/nel,N_met/))
    call msg('r',trim(title)//'Average metallic occ.  :            ',(/f_met/))
    !
    if (n_sp_pol==1) call warning(trim(title)//' Metallic system')

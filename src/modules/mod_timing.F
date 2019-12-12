@@ -457,7 +457,7 @@ MODULE timing_m
      !
      total_time = real(internal_list%clock(1)%total_time,SP)
      !
-     ch='            [Time-Profile]: '//trim(time_string(total_time))
+     ch='            [Time-Profile] '//trim(time_string(total_time))
      call msg('rn',ch(:100))
      if (log_as_a_file) call LIVE_message(message="[TIMING]"//ch(:100),lfmt="n")
      !
@@ -477,7 +477,7 @@ MODULE timing_m
 #endif
      IF ( .NOT. list%alloc ) CALL error('timing_overview:  list not allocated')
      !
-     call msg('r','Routines: '//TRIM(list%name)//' (Only MASTER cpu here)')
+     call msg('r','Routines '//TRIM(list%name)//' (Only MASTER cpu here)')
      !
      IF ( list%nclock == 0 ) THEN
        if (log_as_a_file) call LIVE_message(message="[TIMING]"//'No clock to display',lfmt="n")

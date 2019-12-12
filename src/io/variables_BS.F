@@ -63,82 +63,82 @@ integer function variables_BS(ID,iq,local_desc_str,local_desc_var,CLOSE_the_menu
  !
  call def_variable_elemental(ID,"PARS1",var_size,IP+100,0)
  call io_variable_elemental(ID,&
-&     VAR=" BSK|Identifier              :",I0=BS_identifier,&
+&     VAR=" BSK|Identifier               ",I0=BS_identifier,&
 &     DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
  i_desc=i_desc+1
  if(iq>1) then
    call io_variable_elemental(ID,VAR=&
-&     "    |Q-point                 :",R1=BSqpts(:,iq),CHECK=.true.,OP=(/"==","==","=="/),&
+&     "    |Q-point                  ",R1=BSqpts(:,iq),CHECK=.true.,OP=(/"==","==","=="/),&
 &     DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
  endif
  i_desc=i_desc+1
  call io_variable_elemental(ID,&
-&     VAR="    |Dimension               :",I0=BS_K_dim,CHECK=.true.,OP=(/"=="/),&
+&     VAR="    |Dimension                ",I0=BS_K_dim,CHECK=.true.,OP=(/"=="/),&
 &     DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
  i_desc=i_desc+1
  call io_variable_elemental(ID,&
-&     VAR="    |Bands                   :",I1=BS_bands,CHECK=.true.,OP=(/"==","=="/),&
+&     VAR="    |Bands                    ",I1=BS_bands,CHECK=.true.,OP=(/"==","=="/),&
 &     DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
  i_desc=i_desc+1
  call io_variable_elemental(ID,DB_L0=res_exch_disk,&
-&     VAR="    |Exchange           [res]:",L0=BS_res_K_exchange,CHECK=.true.,OP=(/"=="/),&
+&     VAR="    |Exchange           [res] ",L0=BS_res_K_exchange,CHECK=.true.,OP=(/"=="/),&
 &     DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
  i_desc=i_desc+1
  call io_variable_elemental(ID,DB_L0=res_corr_disk,&
-&     VAR="    |Correlation        [res]:",L0=BS_res_K_corr,CHECK=.true.,OP=(/"=="/),&
+&     VAR="    |Correlation        [res] ",L0=BS_res_K_corr,CHECK=.true.,OP=(/"=="/),&
 &     DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
  i_desc=i_desc+1
  call io_variable_elemental(ID,DB_L0=cpl_disk,&
-&     VAR="    |Kernel`s coupling       :",L0=BS_K_coupling,CHECK=.true.,OP=(/"=="/),&
+&     VAR="    |Kernel`s coupling        ",L0=BS_K_coupling,CHECK=.true.,OP=(/"=="/),&
 &     DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
  i_desc=i_desc+1
  call io_variable_elemental(ID,DB_L0=cpl_exch_disk,&
-&     VAR="    |Exchange           [cpl]:",L0=BS_cpl_K_exchange,CHECK=.true.,OP=(/"=="/),&
+&     VAR="    |Exchange           [cpl] ",L0=BS_cpl_K_exchange,CHECK=.true.,OP=(/"=="/),&
 &     DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
  i_desc=i_desc+1
  !
  if (ver_is_gt_or_eq(ID,revision=4888)) then
    call io_variable_elemental(ID,DB_L0=cpl_corr_disk,&
-&       VAR="    |Correlation        [cpl]:",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),&
+&       VAR="    |Correlation        [cpl] ",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),&
 &       DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
    i_desc=i_desc+1
    call io_variable_elemental(ID,DB_L0=td_hf_disk,&
-&       VAR="    |W interaction is bare   :",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),&
+&       VAR="    |W interaction is bare    ",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),&
 &       DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
  else
    call io_variable_elemental(ID,DB_L0=td_hf_disk,&
-&       VAR="    |W interaction is bare   :",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),&
+&       VAR="    |W interaction is bare    ",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),&
 &       DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
    i_desc=i_desc+1
    call io_variable_elemental(ID,DB_L0=cpl_corr_disk,&
-&       VAR="    |Correlation        [cpl]:",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),&
+&       VAR="    |Correlation        [cpl] ",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),&
 &       DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
  endif
  !
  i_desc=i_desc+1
  call io_variable_elemental(ID,&
-&     VAR="    |ALDA kernel in R-space  :",L0=BS_K_is_ALDA,CHECK=.true.,OP=(/"=="/),&
+&     VAR="    |ALDA kernel in R-space   ",L0=BS_K_is_ALDA,CHECK=.true.,OP=(/"=="/),&
 &     DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
  !
  if (res_exch_disk.or.cpl_exch_disk) then
    i_desc=i_desc+1
    call io_variable_elemental(ID,&
-&      VAR="    |RL vectors    [exchange]:",I0=BS_n_g_exch,CHECK=.true.,OP=(/"=="/),&
+&      VAR="    |RL vectors    [exchange] ",I0=BS_n_g_exch,CHECK=.true.,OP=(/"=="/),&
 &      DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
  endif
  if (res_corr_disk.or.cpl_corr_disk) then
    i_desc=i_desc+1
    call io_variable_elemental(ID,&
-&     VAR="    |RL vectors [correlation]:",I0=BS_n_g_W,CHECK=.true.,OP=(/"=="/),&
+&     VAR="    |RL vectors [correlation] ",I0=BS_n_g_W,CHECK=.true.,OP=(/"=="/),&
 &     DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
  endif
  i_desc=i_desc+1
  call io_variable_elemental(ID,UNIT=HA2EV,&
-&     VAR="    |E/h energy range    [ev]:",R1=BS_eh_en,CHECK=.true.,OP=(/"==","=="/),&
+&     VAR="    |E/h energy range    [ev] ",R1=BS_eh_en,CHECK=.true.,OP=(/"==","=="/),&
 &     DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
  i_desc=i_desc+1
  call io_variable_elemental(ID,&
-&     VAR="    |Coupling range     [o/o]:",R1=BS_eh_win,CHECK=.true.,OP=(/"==","=="/),&
+&     VAR="    |Coupling range     [o/o] ",R1=BS_eh_win,CHECK=.true.,OP=(/"==","=="/),&
 &     DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
  !
  ! Interaction
@@ -146,11 +146,11 @@ integer function variables_BS(ID,iq,local_desc_str,local_desc_var,CLOSE_the_menu
  if (res_corr_disk.or.cpl_corr_disk) then
    i_desc=i_desc+1
    call io_variable_elemental(ID,&
-&       VAR="  W |Interaction is diagonal :",L0=BS_W_is_diagonal,CHECK=.true.,OP=(/"=="/),&
+&       VAR="  W |Interaction is diagonal  ",L0=BS_W_is_diagonal,CHECK=.true.,OP=(/"=="/),&
 &       DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
    i_desc=i_desc+1
    call io_variable_elemental(ID,&
-&       VAR="    |Matrix size             :",I0=X%ng,WARN=.true.,OP=(/"=="/),&
+&       VAR="    |Matrix size              ",I0=X%ng,WARN=.true.,OP=(/"=="/),&
 &       DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
    i_desc=i_desc+1
    !
@@ -159,23 +159,23 @@ integer function variables_BS(ID,iq,local_desc_str,local_desc_var,CLOSE_the_menu
    if (.not.td_hf_disk) then
      !
      call io_variable_elemental(ID,&
-&         VAR="    |Bands                   :",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),&
+&         VAR="    |Bands                    ",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),&
 &         DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
      i_desc=i_desc+1
      call io_variable_elemental(ID,UNIT=HA2EV,&
-&         VAR="    |e/h energy range    [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),&
+&         VAR="    |e/h energy range    [ev] ",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),&
 &         DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
      i_desc=i_desc+1
      call io_variable_elemental(ID,&
-&         VAR="    |Poles              [o/o]:",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),&
+&         VAR="    |Poles              [o/o] ",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),&
 &         DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
      i_desc=i_desc+1
      call io_variable_elemental(ID,&
-&         VAR="    |RL vectors in the sum   :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),&
+&         VAR="    |RL vectors in the sum    ",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),&
 &         DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
      i_desc=i_desc+1
      call io_variable_elemental(ID,&
-&         VAR="    |[r,Vnl] included        :",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),&
+&         VAR="    |[r,Vnl] included         ",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),&
 &         DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
      !
      if (ver_is_gt_or_eq(ID,(/3,0,9/)).and..not.ver_is_gt_or_eq(ID,revision=626)) then
@@ -184,14 +184,14 @@ integer function variables_BS(ID,iq,local_desc_str,local_desc_var,CLOSE_the_menu
        !
        i_desc=i_desc+1
        call io_variable_elemental(ID,&
-&           VAR="    |Longitudinal Gauge      :",L0=local_long_gauge,&
+&           VAR="    |Longitudinal Gauge       ",L0=local_long_gauge,&
 &           DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
        !
      endif
      !
      i_desc=i_desc+1
      call io_variable_elemental(ID,&
-&         VAR="    |Field direction         :",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/),&
+&         VAR="    |Field direction          ",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/),&
 &         DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))
      call def_variable_elemental(ID,"",0,0,0)
      !
@@ -202,7 +202,7 @@ integer function variables_BS(ID,iq,local_desc_str,local_desc_var,CLOSE_the_menu
        call def_variable_elemental(ID,"W_Cutoff",1,0,0)
        i_desc=i_desc+1
        call io_variable_elemental(ID,&
-&           VAR="    |Coulomb Cutoff          :",CH0=cut_geometry,CHECK=.true.,OP=(/"=="/),&
+&           VAR="    |Coulomb Cutoff           ",CH0=cut_geometry,CHECK=.true.,OP=(/"=="/),&
 &           DESC_STR=local_desc_str(i_desc))
        i_desc=i_desc+1
      endif

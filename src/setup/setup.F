@@ -89,15 +89,15 @@ subroutine setup(en,Xen,Ken,k,Xk)
  dumb_ch1='  A1  '
  tmp_V(1:3)=(/a(1,1)/alat(1),a(1,2)/alat(2),a(1,3)/alat(3)/)
  tmp_V(4:6)=(/a(1,1)        ,a(1,2)        ,a(1,3)        /)
- call msg('r',dumb_ch1,tmp_V)
+ call msg('r',trim(dumb_ch1),tmp_V)
  dumb_ch1='  A2  '
  tmp_V(1:3)=(/a(2,1)/alat(1),a(2,2)/alat(2),a(2,3)/alat(3)/)
  tmp_V(4:6)=(/a(2,1)        ,a(2,2)        ,a(2,3)        /)
- call msg('r',dumb_ch1,tmp_V)
+ call msg('r',trim(dumb_ch1),tmp_V)
  dumb_ch1='  A3  '
  tmp_V(1:3)=(/a(3,1)/alat(1),a(3,2)/alat(2),a(3,3)/alat(3)/)
  tmp_V(4:6)=(/a(3,1)        ,a(3,2)        ,a(3,3)        /)
- call msg('r',dumb_ch1,tmp_V)
+ call msg('r',trim(dumb_ch1),tmp_V)
  !
  ! DL vol
  !
@@ -111,19 +111,19 @@ subroutine setup(en,Xen,Ken,k,Xk)
  dumb_ch1='  B1  '
  tmp_V(1:3)=(/rv(1) ,rv(2) ,rv(3) /)
  tmp_V(4:6)=(/b(1,1),b(1,2),b(1,3)/)
- call msg('r',dumb_ch1,tmp_V)
+ call msg('r',trim(dumb_ch1),tmp_V)
  rv=b(2,:)
  call c2a(b_in=b,v_in=rv,mode='kc2i')
  dumb_ch1='  B2  '
  tmp_V(1:3)=(/rv(1) ,rv(2) ,rv(3) /)
  tmp_V(4:6)=(/b(2,1),b(2,2),b(2,3)/)
- call msg('r',dumb_ch1,tmp_V)
+ call msg('r',trim(dumb_ch1),tmp_V)
  rv=b(3,:)
  call c2a(b_in=b,v_in=rv,mode='kc2i')
  dumb_ch1='  B3  '
  tmp_V(1:3)=(/rv(1) ,rv(2) ,rv(3) /)
  tmp_V(4:6)=(/b(3,1),b(3,2),b(3,3)/)
- call msg('r',dumb_ch1,tmp_V)
+ call msg('r',trim(dumb_ch1),tmp_V)
  !
  ! ZERO's SETUP
  !

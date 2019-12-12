@@ -61,11 +61,11 @@ integer function variables_DIPOLES(Dip,ID)
  ! Character variables
  !
  call def_variable_elemental(ID,"APPROACH",1,0,0,par_io_kind="independent")
- call  io_variable_elemental(ID,VAR=" Approach used          :",CH0=Dip%approach,CHECK=.true.,OP=(/"=="/))
+ call  io_variable_elemental(ID,VAR=" Approach used          ",CH0=Dip%approach,CHECK=.true.,OP=(/"=="/))
  !call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  call def_variable_elemental(ID,"KINDS",1,0,0,par_io_kind="independent")
- call  io_variable_elemental(ID,VAR=" Dipoles computed       :",CH0=Dip%computed,CHECK=.true.,OP=(/"<="/))
+ call  io_variable_elemental(ID,VAR=" Dipoles computed       ",CH0=Dip%computed,CHECK=.true.,OP=(/"<="/))
  !call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  ! Wavefunctions xc 

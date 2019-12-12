@@ -49,15 +49,15 @@ integer function variables_X(ID,local_description,X)
  call io_elemental(ID,VAR=trim(X_label)//"PARS_1",VAR_SZ=5,MENU=0)
  i_local_desc=i_local_desc+1
  call io_elemental(ID,DB_I0=X%ng_db,&
-&     VAR=" X matrix size          :",I0=X%ng,CHECK=.true.,OP=(/"<="/),&
+&     VAR=" X matrix size           ",I0=X%ng,CHECK=.true.,OP=(/"<="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  i_local_desc=i_local_desc+1
  call io_elemental(ID,&
-&     VAR=" X band range           :",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),&
+&     VAR=" X band range            ",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  i_local_desc=i_local_desc+1
  call io_elemental(ID,UNIT=HA2EV,&
-&     VAR=" X e/h energy range [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),&
+&     VAR=" X e/h energy range [ev] ",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
@@ -66,7 +66,7 @@ integer function variables_X(ID,local_description,X)
  call io_elemental(ID,VAR=trim(X_label)//"PARS_2",VAR_SZ=1,CH0="",MENU=0)
  i_local_desc=i_local_desc+1
  call io_elemental(ID,&
-&     VAR=" X Time ordering        :",CH0=X%ordering,WARN=.true.,&
+&     VAR=" X Time ordering         ",CH0=X%ordering,WARN=.true.,&
 &     DESCRIPTION=local_description(i_local_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  if (ver_is_gt_or_eq(ID,(/3,0,5/))) then
@@ -76,7 +76,7 @@ integer function variables_X(ID,local_description,X)
    call io_elemental(ID,VAR=trim(X_label)//"TDDFT_KERNEL",VAR_SZ=1,CH0="",MENU=0)
    i_local_desc=i_local_desc+1
    call io_elemental(ID,&
-&     VAR=" X xc-Kernel            :",CH0=X%f_xc,CHECK=.true.,&
+&     VAR=" X xc-Kernel             ",CH0=X%f_xc,CHECK=.true.,&
 &     DESCRIPTION=local_description(i_local_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
@@ -85,7 +85,7 @@ integer function variables_X(ID,local_description,X)
    call io_elemental(ID,VAR=trim(X_label)//"DRUDE",VAR_SZ=2,MENU=0)
    i_local_desc=i_local_desc+1
    call io_elemental(ID,UNIT=HA2EV,&
-&     VAR=" X Drude frequency      :",C0=X%Wd,CHECK=.true.,OP=(/"=="/),&
+&     VAR=" X Drude frequency       ",C0=X%Wd,CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
@@ -100,41 +100,41 @@ integer function variables_X(ID,local_description,X)
  call io_elemental(ID,VAR=trim(X_label)//"PARS_3",VAR_SZ=sec_size,MENU=0)
  i_local_desc=i_local_desc+1
  call io_elemental(ID,&
-&     VAR=" X poles           [o/o]:",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),&
+&     VAR=" X poles           [o/o] ",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  i_local_desc=i_local_desc+1
  call io_elemental(ID,&
-&     VAR=" RL vectors in the sum  :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),&
+&     VAR=" RL vectors in the sum   ",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  i_local_desc=i_local_desc+1
  call io_elemental(ID,&
-&     VAR=" [r,Vnl] included       :",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),&
+&     VAR=" [r,Vnl] included        ",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  !
  if (.not.ver_is_gt_or_eq(ID,(/3,0,9/)).and.read_is_on(ID)) then
    i_local_desc=i_local_desc+1
-   call io_elemental(ID,VAR=" Longitudinal Gauge     :",L0=local_long_gauge,&
+   call io_elemental(ID,VAR=" Longitudinal Gauge      ",L0=local_long_gauge,&
 &     DESCRIPTION=local_description(i_local_desc))
  endif
  !
  i_local_desc=i_local_desc+1
  call io_elemental(ID,&
-&     VAR=" Field direction        :",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/),&
+&     VAR=" Field direction         ",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  !
  if (ver_is_gt_or_eq(ID,(/3,0,1/))) then
    i_local_desc=i_local_desc+1
    call io_elemental(ID,&
-&       VAR=" BZ energy Double Grid  :",L0=use_X_DbGd,WARN=.true.,OP=(/"=="/),&
+&       VAR=" BZ energy Double Grid   ",L0=use_X_DbGd,WARN=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
    i_local_desc=i_local_desc+1
    call io_elemental(ID,&
-&       VAR=" BZ energy DbGd points  :",I0=X_DbGd_nkpts,WARN=.true.,OP=(/"=="/),&
+&       VAR=" BZ energy DbGd points   ",I0=X_DbGd_nkpts,WARN=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
    if (ver_is_gt_or_eq(ID,revision=15206)) then
      i_local_desc=i_local_desc+1
      call io_elemental(ID,&
-&         VAR=" BZ Q point size factor :",R0=X_DbGd_percentual,WARN=.true.,OP=(/"=="/),&
+&         VAR=" BZ Q point size factor  ",R0=X_DbGd_percentual,WARN=.true.,OP=(/"=="/),&
 &         DESCRIPTION=local_description(i_local_desc))
    endif
  endif

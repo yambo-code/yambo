@@ -139,9 +139,9 @@ integer function io_RT_components(what,ID)
    !
    if ( l_carriers) then
      !
-     call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="def_io_variables")
+     call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_io")
      !
-     if (db_type==2.or..not.l_real_time) call TIME_points_IO(ID,(/13,14,15/),(NE_i_time==1),OBS_RT_IO_t)
+     call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="def_io_variables")
      !
    endif
    !
@@ -185,6 +185,7 @@ integer function io_RT_components(what,ID)
  if ( l_carriers) then
    call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="do_io_variables")
    if (read_is_on(ID)) call RT_carriers_object(RT_carriers,WHAT="dump")
+   call TIME_points_IO(ID,(/13,14,15/),(NE_i_time==1),OBS_RT_IO_t)
  endif
  !
  ! GPL_EXCLUDE_END
@@ -486,7 +487,6 @@ subroutine Reference_IO(ID)
  use drivers,        ONLY:l_elph_scatt
  use R_lattice,      ONLY:nqbz
  use IO_m,           ONLY:io_bulk,read_is_on
- use RT_control,     ONLY:RT_carriers_object
  use real_time,      ONLY:RT_init_occupation_reference,q_weight_RT,REF_lifetime,&
 &                         G_lesser_reference,RT_nk,RT_nbands,RT_carriers
 #if defined _ELPH
@@ -497,8 +497,6 @@ subroutine Reference_IO(ID)
 #include<memory.h>
  !
  integer, intent(in)  :: ID
- !
- call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_io")
  !
 #if defined _ELPH
  !

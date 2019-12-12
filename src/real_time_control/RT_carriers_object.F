@@ -27,6 +27,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  ! In the future the RT code can be based on those, at least partially
  !
  use pars,           ONLY:SP,schlen
+ use iso_c_binding,  ONLY:C_LOC,C_F_POINTER
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
  use electrons,      ONLY:n_sp_pol,spin_occ,levels,BZ_DbGd_kpts
  use R_lattice,      ONLY:bz_samp
@@ -44,7 +45,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  !
  ! WHAT=1 allocate and define, 2 deallocate
  !
- type(RT_t),    intent(inout):: RT
+ type(RT_t), target, intent(inout):: RT
  type(levels),  intent(inout),optional :: E
  type(bz_samp), intent(in)   ,optional :: K
  integer,       intent(in)   ,optional :: DB_id
@@ -53,8 +54,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  integer  :: i_RT,i_b,i_k,i_k_DbGd,i_k_RT,i_spin
  real(SP) :: Hole_lifetime,Elec_lifetime,df_occ,f_occ
  !
- integer           :: VAR_SZ(2),IPOS(2)
- real(SP)          :: TMP_VAR(RT%nstates,1)
+ integer           :: VAR_SZ(2),IPOS(2),TMP_SIZE(2)
+ real(SP), pointer :: TMP_VAR(:,:)
  character(schlen) :: dim_names(2)
  !
  select case(WHAT)
@@ -264,46 +265,64 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
    case('do_io_variables')
      !
      IPOS=(/1,(NE_i_time-1)/OBS_RT_IO_t%INTERVAL_steps+1/)
+     TMP_SIZE=(/RT%nstates,1/)
      !
      ! Energies
      !
-     TMP_VAR(:,1)=RT%delta_E
+     call C_F_POINTER(C_LOC(RT%delta_E), TMP_VAR, TMP_SIZE)
      call io_variable_bulk(DB_id,1,R2=TMP_VAR,IPOS=IPOS)
      !
      ! Occupations
      !
-     TMP_VAR(:,1)=RT%delta_f
+     call C_F_POINTER(C_LOC(RT%delta_f), TMP_VAR, TMP_SIZE)
      call io_variable_bulk(DB_id,2,R2=TMP_VAR,IPOS=IPOS)
      !
      ! Lifetimes
      !
      if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
-       TMP_VAR(:,1)=RT%delta_GAMMA
+       !
+       call C_F_POINTER(C_LOC(RT%delta_GAMMA), TMP_VAR, TMP_SIZE)
        call io_variable_bulk(DB_id,3,R2=TMP_VAR,IPOS=IPOS)
-       TMP_VAR(:,1)=RT%NEQ_Lifetime
+       !
+       call C_F_POINTER(C_LOC(RT%NEQ_Lifetime), TMP_VAR, TMP_SIZE)
        call io_variable_bulk(DB_id,4,R2=TMP_VAR,IPOS=IPOS)
+       !
      endif
+     !
      if (l_elel_scatt) then
-       TMP_VAR(:,1)=RT%dGAMMA_E_E_Hole
+       !
+       call C_F_POINTER(C_LOC(RT%dGAMMA_E_E_Hole), TMP_VAR, TMP_SIZE)
        call io_variable_bulk(DB_id,5,R2=TMP_VAR,IPOS=IPOS)
-       TMP_VAR(:,1)=RT%dGAMMA_E_E_Electron
+       !
+       call C_F_POINTER(C_LOC(RT%dGAMMA_E_E_Electron), TMP_VAR, TMP_SIZE)
        call io_variable_bulk(DB_id,6,R2=TMP_VAR,IPOS=IPOS)
+       !
      endif
+     !
      if (l_elphoton_scatt) then
-       TMP_VAR(:,1)=RT%dGAMMA_E_PHOT_Hole
+       !
+       call C_F_POINTER(C_LOC(RT%dGAMMA_E_PHOT_Hole), TMP_VAR, TMP_SIZE)
        call io_variable_bulk(DB_id,7,R2=TMP_VAR,IPOS=IPOS)
-       TMP_VAR(:,1)=RT%dGAMMA_E_PHOT_Electron
+       !
+       call C_F_POINTER(C_LOC(RT%dGAMMA_E_PHOT_Electron), TMP_VAR, TMP_SIZE)
        call io_variable_bulk(DB_id,8,R2=TMP_VAR,IPOS=IPOS)
+       !
      endif
+     !
      if (l_elph_scatt) then
-       TMP_VAR(:,1)=RT%dGAMMA_E_P_Hole
+       !
+       call C_F_POINTER(C_LOC(RT%dGAMMA_E_P_Hole), TMP_VAR, TMP_SIZE)
        call io_variable_bulk(DB_id, 9,R2=TMP_VAR,IPOS=IPOS)
-       TMP_VAR(:,1)=RT%dGAMMA_E_P_Electron
+       !
+       call C_F_POINTER(C_LOC(RT%dGAMMA_E_P_Electron), TMP_VAR, TMP_SIZE)
        call io_variable_bulk(DB_id,10,R2=TMP_VAR,IPOS=IPOS)
-       TMP_VAR(:,1)=RT%dGAMMA_E_P_Ho_abs
+       !
+       call C_F_POINTER(C_LOC(RT%dGAMMA_E_P_Ho_abs), TMP_VAR, TMP_SIZE)
        call io_variable_bulk(DB_id,11,R2=TMP_VAR,IPOS=IPOS)
-       TMP_VAR(:,1)=RT%dGAMMA_E_P_El_abs
+       !
+       call C_F_POINTER(C_LOC(RT%dGAMMA_E_P_El_abs), TMP_VAR, TMP_SIZE)
        call io_variable_bulk(DB_id,12,R2=TMP_VAR,IPOS=IPOS)
+       !
      endif
      !
    case('free')

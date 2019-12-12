@@ -44,7 +44,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,WF_free, &
 &                         PARALLEL_WF_distribute,PARALLEL_WF_index,LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
  use H_interfaces,   ONLY:V_real_space_to_H
- use com,            ONLY:msg,warning,error
+ use com,            ONLY:msg
  use X_m,            ONLY:X_t,current_iq,X_alloc
  use DIPOLES,        ONLY:DIPOLE_t
  use LIVE_t,         ONLY:LIVE_message

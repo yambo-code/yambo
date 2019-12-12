@@ -25,7 +25,7 @@
 !
 subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
  !
- use pars,          ONLY:SP,cZERO
+ use pars,          ONLY:SP
  use electrons,     ONLY:n_spinor,n_sp_pol
  use R_lattice,     ONLY:G_m_G,k_map,bz_samp
 #ifdef _CUDA

@@ -27,7 +27,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,CIRCUIT_k,BANDS_from_db,&
 &                         CIRCUIT_E_db
  use electrons,      ONLY:levels,n_sp_pol
- use R_lattice,      ONLY:bz_samp,bz_samp_reset,k_the_nearest
+ use R_lattice,      ONLY:bz_samp
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k
  !
  implicit none

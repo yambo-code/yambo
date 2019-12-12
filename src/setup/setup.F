@@ -84,7 +84,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call msg('rn','... containing '//trim(atoms_string)//' atoms')
  endif
  !
- call msg('r','... with scaling factors [a.u.]:',alat)
+ call msg('r','... with scaling factors [a.u.]',alat)
  call msg('nr','Direct Lattice(DL) unit cell [iru  /  cc(a.u.)]')
  dumb_ch1='A1 ='//trim(real2ch(a(1,1)/alat(1)))//' '//trim(real2ch(a(1,2)/alat(2)))//' '//&
 &                 trim(real2ch(a(1,3)/alat(3)))//'     '//&
@@ -102,7 +102,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! DL vol
  !
  call define_b_and_DL_vol()
- call msg('r','DL volume [au]:',DL_vol)
+ call msg('r','DL volume [au]',DL_vol)
  RL_vol=(2._SP*pi)**3/DL_vol
  !
  call msg('nr','Reciprocal Lattice(RL) unit cell [iku  /  cc]')
@@ -157,7 +157,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  inv_index=-1
  select case(i_time_rev)
    case(1)
-     call msg('nr','[SYMs] Time-reversal derived K-space symmetries:',(/nsym/2+1,nsym/))
+     call msg('nr','[SYMs] Time-reversal derived K-space symmetries',(/nsym/2+1,nsym/))
      if(.not.mag_syms) inv_index=nsym/2+1
      if(mag_syms) then
        do is=1,nsym
@@ -210,7 +210,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  do i1=n_g_shells,max(n_g_shells-27,1),-4
    dumb_ch1=' '
    do i2=i1,max(i1-3,1),-1
-     dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']:'//trim(intc(ng_in_shell(i2)))//&
+     dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']'//trim(intc(ng_in_shell(i2)))//&
 &             '('//trim(real2ch(E_of_shell(i2)*1000._SP))//')'
      dumb_ch1=dumb_ch2
    enddo
@@ -220,7 +220,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  do i1=min(12,n_g_shells),1,-4
    dumb_ch1=' '
    do i2=i1,max(i1-3,1),-1
-     dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']:'//trim(intc(ng_in_shell(i2)))//&
+     dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']'//trim(intc(ng_in_shell(i2)))//&
 &             '('//trim(real2ch(E_of_shell(i2)*1000._SP))//')'
      dumb_ch1=dumb_ch2
    enddo
@@ -254,9 +254,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call section('=','Double K-grid')
    !=======================================
    !
-   call msg('r', 'K-points             :',BZ_DbGd_tot_nk_levels)
-   call msg('r', 'Bands                :',BZ_DbGd_nbands)
-   call msg('rn','Is the grid expanded :',DbGd_is_symmetry_expanded)
+   call msg('r', 'K-points             ',BZ_DbGd_tot_nk_levels)
+   call msg('r', 'Bands                ',BZ_DbGd_nbands)
+   call msg('rn','Is the grid expanded ',DbGd_is_symmetry_expanded)
    !
  endif
  !
@@ -329,7 +329,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! K points / Energies report
  !
- call msg('rn','X BZ K-points :',Xk%nbz)
+ call msg('rn','X BZ K-points ',Xk%nbz)
  !
  call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.TRUE.)
  !

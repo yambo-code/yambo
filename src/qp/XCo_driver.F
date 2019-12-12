@@ -231,7 +231,7 @@ subroutine XCo_driver(E,k,Xk,q)
      YAMBO_ALLOC(qp%E_bare,(qp%n_states))
      !
      ik=QP_table(1,3)
-     call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
+     call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku)',k%pt(ik,:))
      !
      do i_qp=1,QP_n_states
        !
@@ -248,7 +248,7 @@ subroutine XCo_driver(E,k,Xk,q)
        !
        if (ikp/=ik) then
          ik=ikp
-         call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
+         call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku)',k%pt(ik,:))
        endif
        !
        ch_spin=' '

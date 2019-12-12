@@ -228,7 +228,7 @@ module IO_m
         &                       D0, DB_D0, C0, DB_C0, &
         &                       L0, DB_L0,            &
         &                       CH0,DB_CH0,           &
-        &                       UNIT,DESCRIPTION,DO_NOT_DUMP)
+        &                       UNIT,DESC_STR,DESC_VAR,DO_NOT_DUMP)
      !
      use pars,   ONLY:SP,DP,LP,lchlen
      integer               :: ID
@@ -241,7 +241,8 @@ module IO_m
      complex(SP), optional :: DB_C0
      logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
      character(*),optional :: CH0,DB_CH0
-     character(lchlen),optional :: DESCRIPTION
+     character(lchlen),optional :: DESC_STR
+     real(SP),         optional :: DESC_VAR(:)
      !
    end subroutine io_variable_elemental
    !

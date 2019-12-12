@@ -44,7 +44,8 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
  ! Work Space
  !
  character(schlen):: db_name
- character(lchlen):: local_description(100)
+ character(lchlen):: local_desc_str(100)
+ real(SP)         :: local_desc_var(10,100)
  !
  call timing('io_BSS_diago',OPR='start')
  !
@@ -60,7 +61,7 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
    !
    io_BSS_diago=io_header(ID,XC_KIND="K_E force")
    !
-   io_BSS_diago=variables_BS(ID,iq,local_description,.FALSE.,X=X_static)
+   io_BSS_diago=variables_BS(ID,iq,local_desc_str,local_desc_var,.FALSE.,X=X_static)
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
    !

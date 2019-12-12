@@ -168,7 +168,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      q%nibz=nqibz
      YAMBO_ALLOC(q%pt,(q%nibz,3))
      q%pt=q_pt(:q%nibz,:)
-     call msg('rsn','[RL indx] Q-grid:'//trim(q_source))
+     call msg('rsn','[RL indx] Q-grid'//trim(q_source))
      user_defined_qpts=.true.
    endif
    !
@@ -227,7 +227,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    goto 1
  endif
  !
- string=':: Indices: polarization function'
+ string=' Indices: polarization function'
  if ( bse_scattering) string=trim(string)//' + BSE'
  if (coll_scattering) string=trim(string)//' + COLL'
  call msg('nr',trim(string))
@@ -306,11 +306,11 @@ subroutine bz_samp_indexes(k,Xk,q)
  if (any(qindx_X==0)) call error('Error in Q-grid search [qindx_X]')
  !
  if(coll_scattering) then
-   call msg('rn',':: Indices: Scattering and Self-Energy')
+   call msg('rn',' Indices: Scattering and Self-Energy')
    if (n_threads> k%nbz) call live_timing('SSE indexes',1)
    if (n_threads<=k%nbz) call live_timing('SSE indexes',Xk%nbz/n_threads)
  else
-   call msg('rn',':: Indices: Self-Energy')
+   call msg('rn',' Indices: Self-Energy')
    i1=QP_states_k(2)-QP_states_k(1)+1
    if (n_threads> i1) call live_timing('SE indexes',1)
    if (n_threads<=i1) call live_timing('SE indexes',i1/n_threads)
@@ -430,8 +430,8 @@ subroutine bz_samp_indexes(k,Xk,q)
      character(lchlen)::ch(4)
      real(SP)         ::q_cc(3)
      if(trim(kind)=='iku') then
-       call msg('nr','IBZ Q-points :',q%nibz)
-       call msg('rn','BZ  Q-points :',q%nbz)
+       call msg('nr','IBZ Q-points ',q%nibz)
+       call msg('rn','BZ  Q-points ',q%nbz)
      endif
      if(trim(kind)=='cc') call msg('r',' ')
      d3q_factor=RL_vol/real(q%nbz)
@@ -440,8 +440,8 @@ subroutine bz_samp_indexes(k,Xk,q)
        ch(2)=gen_fmt(r_v=q%pt(i1,:))
        ch(3)=gen_fmt(r_v=(/q%weights(i1)/))
        write (ch(1),'(7a)') '(a,i5.5,a,3(',trim(ch(2)),',1x),a,',trim(ch(3)),',1x)'
-       if(trim(kind)=='cc')  write (ch(2),trim(ch(1)))   'Q [',i1,'] :',q_cc(:),'(cc ) * weight ',q%weights(i1)
-       if(trim(kind)=='iku') write (ch(2),trim(ch(1)))   'Q [',i1,'] :',q%pt(i1,:),'(iku) * weight ',q%weights(i1)
+       if(trim(kind)=='cc')  write (ch(2),trim(ch(1)))   'Q [',i1,'] ',q_cc(:),'(cc ) * weight ',q%weights(i1)
+       if(trim(kind)=='iku') write (ch(2),trim(ch(1)))   'Q [',i1,'] ',q%pt(i1,:),'(iku) * weight ',q%weights(i1)
        call msg('r',trim(ch(2)))
      enddo
    end subroutine

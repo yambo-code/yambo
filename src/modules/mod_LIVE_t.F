@@ -102,10 +102,10 @@ module LIVE_t
      !
      if (present(skip_host)) then
        write (date_and_time_string,'(2(i2.2,a),i4.4,a,2(i2.2,a),3a)') &
-&             dz(2),'/',dz(3),'/',dz(1),' at ',dz(5),':',dz(6)
+&             dz(2),'/',dz(3),'/',dz(1),' at ',dz(5),'',dz(6)
      else
        write (date_and_time_string,'(2(i2.2,a),i4.4,a,2(i2.2,a),3a)') &
-&             dz(2),'/',dz(3),'/',dz(1),' at ',dz(5),':',dz(6),' ',&
+&             dz(2),'/',dz(3),'/',dz(1),' at ',dz(5),'',dz(6),' ',&
 &             trim(code_bin),' @ ',host_name(:host_name_length)
      endif
      if (present(dt_out)) dt_out=dz(:6)

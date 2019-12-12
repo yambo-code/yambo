@@ -111,9 +111,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  if (QP_PH_n_G_bands<=0.or.QP_PH_n_G_bands>elph_nb) QP_PH_n_G_bands=elph_nb
  !
- call msg('r', '[GW/El-Ph] Bands range       :',(/1,QP_PH_n_G_bands/))
+ call msg('r', '[GW/El-Ph] Bands range       ',(/1,QP_PH_n_G_bands/))
  if (trim(QP_solver)=='n') &
-&  call msg('r', '[GW/El-Ph] G damping     [ev]:',QP_G_damp*HA2EV)
+&  call msg('r', '[GW/El-Ph] G damping     [ev]',QP_G_damp*HA2EV)
  !
  ! QP_table -> report
  !
@@ -142,7 +142,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    if (.not.l_elel_corr) QP_Sc=cZERO
    !
-   call msg('nr', '[GW/El-Ph] gsqF E range  [ev]:',Sc_W(1)%er*HA2EV)
+   call msg('nr', '[GW/El-Ph] gsqF E range  [ev]',Sc_W(1)%er*HA2EV)
    !
  else if (trim(QP_solver)=='n') then
    !
@@ -416,7 +416,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! Debye energy
  !
- call msg('nr','[Ph] Debye energy [ev/ThZ]:',(/W_debye*HA2EV,W_debye*HA2THZ/))
+ call msg('nr','[Ph] Debye energy [ev/ThZ]',(/W_debye*HA2EV,W_debye*HA2THZ/))
  !
  ! Here I use the Cardona-Allen g^2 F functions to evaluate their integrated value.
  ! I also calculate the full frequency dependent self-energy

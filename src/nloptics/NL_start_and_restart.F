@@ -116,7 +116,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  if(Correlation==JGM) then
    NL_P=cZERO
    call EXC_macroscopic_JGM(E,NL_P(1:3),rho_n,E_xc_0,V_xc_0)
-   call msg('sr',' JGM initial alpha :',NL_LRC_alpha)
+   call msg('sr',' JGM initial alpha ',NL_LRC_alpha)
  endif
  !
  ! Apply QP Corrections
@@ -153,11 +153,11 @@ subroutine NL_start_and_restart(E,k,Dip)
  call msg('r','')
  call msg('r',' * * * Non-linear dynamics parameters * * * ')
  call msg('r','============================================')
- call msg('r ',' Initial Polarization      :',real(NL_initial_P(1:3)))
- call msg('r ',' Initial <Dip_x/y/z>       :',real(NL_initial_P(4:6)))
+ call msg('r ',' Initial Polarization      ',real(NL_initial_P(1:3)))
+ call msg('r ',' Initial <Dip_x/y/z>       ',real(NL_initial_P(4:6)))
  if(l_eval_CURRENT) then
-   call msg('r ',' Initial Current         :',real(NL_initial_J(1:3)))
-   call msg('r ',' Initial <v>=<[Hloc,r]>  :',real(NL_initial_J(4:6)))
+   call msg('r ',' Initial Current         ',real(NL_initial_J(1:3)))
+   call msg('r ',' Initial <v>=<[Hloc,r]>  ',real(NL_initial_J(4:6)))
  endif
  !
  ! Restart

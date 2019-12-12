@@ -40,7 +40,7 @@ subroutine excitons_find_degeneracies(BS_E,BS_E_degs)
  integer :: S_indx(BSS_n_eig)
  real(SP):: v2sort(BSS_n_eig)
  !
- call msg('s',':: Sorting energies')
+ call msg('s',' Sorting energies')
  !==================================
  !
  v2sort=real(BS_E)

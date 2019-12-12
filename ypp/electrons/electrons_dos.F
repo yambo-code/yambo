@@ -172,8 +172,8 @@ subroutine electrons_dos(Xk,Xen)
    !
    call section('=','Fermi Levels')
    !
-   call msg("s",'Fermi Level  (BUILT-in bands) [eV]:',Xen%E_Fermi*HA2EV)
-   if (all(INTERP_grid>0)) call msg("s",'Correction             (GRID) [eV]:',GRID_E%E_Fermi*HA2EV)
+   call msg("s",'Fermi Level  (BUILT-in bands) [eV]',Xen%E_Fermi*HA2EV)
+   if (all(INTERP_grid>0)) call msg("s",'Correction             (GRID) [eV]',GRID_E%E_Fermi*HA2EV)
    !
  endif
  !
@@ -186,9 +186,9 @@ subroutine electrons_dos(Xk,Xen)
    dos_integral(1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)+RIntegrate(el_dos(:,2,1),dos_E,DOS_E_steps)
    if (N_files==2) dos_integral(2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps) + RIntegrate(el_dos(:,2,2),dos_E,DOS_E_steps)
  endif
- call msg("s",'Integrated DOS                    :',dos_integral(1)*DL_vol)
+ call msg("s",'Integrated DOS                    ',dos_integral(1)*DL_vol)
  if (N_files==2) then
-   call msg("s",'                    [interpolated]:',dos_integral(2)*DL_vol)
+   call msg("s",'                    [interpolated]',dos_integral(2)*DL_vol)
  endif
  !
  ! Output file(s)

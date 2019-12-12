@@ -76,7 +76,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BS_K_is_ALDA,BSE_mode,L_kind
- use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
+ use TDDFT,      ONLY:FXC_desc_str,FXC_desc_var,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -464,7 +464,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! TDDFT
  !
- FXC_description=""
+ FXC_desc_var=0._SP
+ FXC_desc_str=""
  FXC_type='rpa'
  FXC_n_descs=0
  FXC_n_g_corr=1

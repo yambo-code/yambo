@@ -70,7 +70,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
    !
    n_lambda_deg=count(BS_E_degs==BS_E_degs(i_l_grp))
    !
-   if (n_lambda_deg>1) call msg('s',':: State '//trim(intc(i_l_grp))//' Merged with states '//&
+   if (n_lambda_deg>1) call msg('s',' State '//trim(intc(i_l_grp))//' Merged with states '//&
 &                                     trim(intc(BS_E_degs(i_l_grp)))//' -> '//&
 &                                     trim(intc(BS_E_degs(i_l_grp)+n_lambda_deg-1)))
    !

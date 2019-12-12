@@ -256,7 +256,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      enddo
      if (allocated(QP_G_amplitude_integral)) then
        call msg('o G_Sc','#')
-       call msg('o G_Sc','# Spectral function at this point integrates to:',QP_G_amplitude_integral(i1),&
+       call msg('o G_Sc','# Spectral function at this point integrates to',QP_G_amplitude_integral(i1),&
 &               INDENT=0)
        call msg('o G_Sc','#')
      endif

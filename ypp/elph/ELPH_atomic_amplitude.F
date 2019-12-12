@@ -61,7 +61,7 @@ subroutine ELPH_atomic_amplitude(q)
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
  io_err=io_ELPH(ID,'no_matrix_elements')
  !
- call msg('s',':: Checking database ...')
+ call msg('s',' Checking database ...')
  if (io_err<0) then
    call msg('s','not found')
    return

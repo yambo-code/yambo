@@ -119,7 +119,7 @@ integer function io_NL(ID)
  ! Efield 
  !
  call io_elemental(ID,VAR="FIELD_NAME",CH0="",VAR_SZ=1,MENU=0)
- call io_elemental(ID,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           :',CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           ',CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  call io_elemental(ID,VAR="EXTERNAL_FIELD",VAR_SZ=10,MENU=0)
@@ -129,7 +129,7 @@ integer function io_NL(ID)
  call io_elemental(ID,VAR="[FIELDs] Frequency range   [eV]:",R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV)
  call io_elemental(ID,VAR="[FIELDs] Frequency steps       :",I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,VAR="[FIELDs] Frequency step    [eV]:",R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV)
- call io_elemental(ID,VAR='[FIELDs] Initial time      [fs]:',R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS)
+ call io_elemental(ID,VAR='[FIELDs] Initial time      [fs]',R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  call io_elemental(ID,VAR="FIELD_POL",CH0="",VAR_SZ=1,MENU=0)

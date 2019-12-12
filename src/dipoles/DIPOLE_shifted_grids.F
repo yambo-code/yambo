@@ -137,7 +137,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)*num_shifted_grids
  !
- call live_timing('Dipoles shifted grids   :',n_LT_steps)
+ call live_timing('Dipoles shifted grids   ',n_LT_steps)
  !
  do i_sp_pol = 1,n_sp_pol
    !

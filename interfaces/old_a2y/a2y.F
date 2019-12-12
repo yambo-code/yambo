@@ -116,7 +116,7 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  endif
  call msg('l',trim(KSS_file_name))
  !
- call msg('s','DBs path set to :',trim(core_io_path))
+ call msg('s','DBs path set to ',trim(core_io_path))
  !
  call a2y_db1(en,k,trim(KSS_file_name))
  !

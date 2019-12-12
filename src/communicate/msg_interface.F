@@ -180,10 +180,7 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatte
      write (of_unit(i1),trim(msgfmt)) mesg,val
      if (of_unit(i1)/=repfile_unit) of_unit(i1)=-of_unit(i1)
    endif
-   if (of_unit(i1)/=repfile_unit) then
-     imsg=index(mesg,"#")
-     call of_netcdf_shadow_real(i1,imsg,size(val),val)
-   endif
+   if (of_unit(i1)/=repfile_unit) call of_netcdf_shadow_real(i1,mesg,val,size(val))
 #if defined _YAML_OUTPUT
    call yaml_map(mesg,val,unit=of_yaml_IDs(i1))
    !write(*,*) 'msg_real',trim(mesg),val 

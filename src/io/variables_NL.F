@@ -102,7 +102,7 @@ integer function variables_NL(ID,local_description)
  ! INTEGRATOR
  !
  call io_elemental(ID,VAR="INTEGRATOR",CH0="",VAR_SZ=1,MENU=0)
- call io_elemental(ID,CH0=Integrator_name,VAR=' [RT] Integrator           :',CHECK=.true.,OP=(/"=="/), &
+ call io_elemental(ID,CH0=Integrator_name,VAR=' [RT] Integrator           ',CHECK=.true.,OP=(/"=="/), &
 &        DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
@@ -110,7 +110,7 @@ integer function variables_NL(ID,local_description)
  !
  call io_elemental(ID,VAR="CORRELATION",CH0="",VAR_SZ=1,MENU=0)
  i_desc=i_desc+1
- call io_elemental(ID,CH0=NL_correlation,VAR=' [NL] Correlation           :',CHECK=.true.,OP=(/"=="/), &
+ call io_elemental(ID,CH0=NL_correlation,VAR=' [NL] Correlation           ',CHECK=.true.,OP=(/"=="/), &
 &        DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  !
@@ -118,7 +118,7 @@ integer function variables_NL(ID,local_description)
  !
  call io_elemental(ID,VAR="FIELD_NAME",CH0="",VAR_SZ=1,MENU=0)
  i_desc=i_desc+1
- call io_elemental(ID,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           :',CHECK=.true.,OP=(/"=="/), &
+ call io_elemental(ID,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           ',CHECK=.true.,OP=(/"=="/), &
 &        DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
@@ -142,7 +142,7 @@ integer function variables_NL(ID,local_description)
  call io_elemental(ID,VAR=" [FIELDs] Frequency step    [eV]:",R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV,& 
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR=' [FIELDs] Initial time      [fs]:',R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+ call io_elemental(ID,VAR=' [FIELDs] Initial time      [fs]',R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &         DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !

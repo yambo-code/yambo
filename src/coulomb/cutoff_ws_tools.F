@@ -272,8 +272,8 @@ end function qe_erfc
         n(i) = ( size( vcut%corrected, i) -1 ) / 2
      enddo
      dummy=real(vcut%cutoff,SP)
-     call msg('r','Cutoff:',dummy)
-     call msg('r','n grid:',n)
+     call msg('r','Cutoff',dummy)
+     call msg('r','n grid',n)
      call msg('nr','WS Direct Lattice(DL) unit cell [iru  /  cc(a.u.)]')
      dumb_ch1='A1 ='//trim(real2ch(real(vcut%a(1,1),SP)/alat(1)))//' '//&
 &                 trim(real2ch(real(vcut%a(2,1),SP)/alat(2)))//' '//&

@@ -27,7 +27,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
 &                       D0, DB_D0, C0, DB_C0, &
 &                       L0, DB_L0,            &
 &                       CH0,DB_CH0,           &
-&                       UNIT,DESCRIPTION,DO_NOT_DUMP)
+&                       UNIT,DESC_STR,DESC_VAR,DO_NOT_DUMP)
  !
  use pars,          ONLY:SP,DP,schlen,lchlen
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
@@ -51,7 +51,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  complex(SP), optional :: DB_C0
  logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
  character(*),optional :: CH0,DB_CH0
- character(lchlen),optional :: DESCRIPTION
+ character(lchlen),optional :: DESC_STR
+ real(SP),         optional :: DESC_VAR(:)
  !
  ! Work Space
  !
@@ -109,7 +110,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESCRIPTION)) DESCRIPTION=VAR//intc(I0)
+   if (present(DESC_STR)) DESC_STR=VAR
+   if (present(DESC_VAR)) DESC_VAR(1)=real(I0,SP)
    !
    io_rec_pos(ID)=io_rec_pos(ID)+1
    !
@@ -145,10 +147,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//trim(intc(I1(1)))
-     if (size(I1)==2) DESCRIPTION=VAR//trim(intc(I1(1)))//' - '//trim(intc(I1(2)))
-   endif
+   if (present(DESC_STR)) DESC_STR=VAR
+   if (present(DESC_VAR)) DESC_VAR(:size(I1))=real(I1,SP)
    !
    io_rec_pos(ID)=io_rec_pos(ID)+size(I1)
  endif
@@ -183,9 +183,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//trim(real2ch(R0*local_unit))
-   endif
+   if (present(DESC_STR)) DESC_STR=VAR
+   if (present(DESC_VAR)) DESC_VAR(1)=R0*local_unit
    !
    io_rec_pos(ID)=io_rec_pos(ID)+1
    !
@@ -221,14 +220,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//trim(real2ch(R1(1)*local_unit))
-     if (size(R1)==2) DESCRIPTION=VAR//trim(real2ch(R1(1)*local_unit))//&
-&                                 ' - '//trim(real2ch(R1(2)*local_unit))
-     if (size(R1)==3) DESCRIPTION=VAR//trim(real2ch(R1(1)*local_unit))//&
-&                                 ' '//trim(real2ch(R1(2)*local_unit))//&
-&                                 ' '//trim(real2ch(R1(3)*local_unit))
-   endif
+   if (present(DESC_STR)) DESC_STR=VAR
+   if (present(DESC_VAR)) DESC_VAR(:size(R1))=R1*local_unit
    !
    io_rec_pos(ID)=io_rec_pos(ID)+size(R1)
  endif
@@ -263,9 +256,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//trim(real2ch(real(D0,SP)*local_unit))
-   endif
+   if (present(DESC_STR)) DESC_STR=VAR
+   if (present(DESC_VAR)) DESC_VAR(1)=real(D0,SP)*local_unit
    !
    io_rec_pos(ID)=io_rec_pos(ID)+1
    !
@@ -307,9 +299,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//trim(complex2ch(C0*local_unit))
-   endif
+   if (present(DESC_STR)) DESC_STR=VAR
+   if (present(DESC_VAR)) DESC_VAR(1:2)=(/real(C0,SP),aimag(C0)/)*local_unit
    !
    io_rec_pos(ID)=io_rec_pos(ID)+2
    !
@@ -348,9 +339,10 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//' no'
-     if (L0) DESCRIPTION=VAR//' yes'
+   if (present(DESC_STR)) DESC_STR=VAR
+   if (present(DESC_VAR)) then
+     if (     L0) DESC_VAR(1)=1._SP
+     if (.not.L0) DESC_VAR(1)=0._SP
    endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+1
@@ -387,9 +379,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//trim(db_ch(1))
-   endif
+   if (present(DESC_STR)) DESC_STR=VAR//trim(db_ch(1))
    !
    io_rec_pos(ID)=io_rec_pos(ID)+len(db_ch(1))
  endif

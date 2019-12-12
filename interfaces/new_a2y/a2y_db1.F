@@ -289,7 +289,7 @@ contains
       call msg('s','Closing shells against inversion...')
       call G_rot_grid(-1,'extend_grid')
       call msg('l','done')
-      if(ng_vec/=wf_ncx) call msg('s',':: ng_vec was increased to close the G-shells')
+      if(ng_vec/=wf_ncx) call msg('s',' ng_vec was increased to close the G-shells')
     endif
     !
     wf_igk=-1

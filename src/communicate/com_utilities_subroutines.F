@@ -238,8 +238,8 @@ subroutine error(mesg)
  live_timing_is_on=.FALSE.
  !
  if (len_trim(secnm)>0) then
-   call msg('nr',STRING_pack('[ERROR] STOP signal received while in :',trim(secnm)))
-   call LIVE_message(STRING_pack('[ERROR] STOP signal received while in :',trim(secnm)),"nn","","%s")
+   call msg('nr',STRING_pack('[ERROR] STOP signal received while in ',trim(secnm)))
+   call LIVE_message(STRING_pack('[ERROR] STOP signal received while in ',trim(secnm)),"nn","","%s")
  endif
  call msg('nr',STRING_pack('[ERROR] ',trim(mesg)))
  call LIVE_message(STRING_pack('[ERROR] ',trim(mesg)),"n","","%s")

@@ -98,7 +98,7 @@ integer function io_ELPH_old(ID,what)
      call io_elemental(ID,VAR="QP_nb_nk_n_states",VAR_SZ=3,MENU=0)
      call io_elemental(ID,I0=QP_nb)
      call io_elemental(ID,I0=QP_nk)
-     call io_elemental(ID,I0=QP_n_states,VAR=' QP tot states          :')
+     call io_elemental(ID,I0=QP_n_states,VAR=' QP tot states          ')
    endif
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)

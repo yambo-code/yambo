@@ -43,9 +43,9 @@ subroutine WF_apply_symm_cpu(isc,WF_symm)
  !
  i_wf=WF%index(isc(1),isc(2),isc(4))
 #if defined _MPI
- if (i_wf==0) call error('EMPTY WF index @ b:'//trim(intc(isc(1)))//' k:'//&
-&                          trim(intc(isc(2)))//' spin:'//trim(intc(isc(4)))//&
-&                          ' ID:'//trim(intc(myid)))
+ if (i_wf==0) call error('EMPTY WF index @ b'//trim(intc(isc(1)))//' k'//&
+&                          trim(intc(isc(2)))//' spin'//trim(intc(isc(4)))//&
+&                          ' ID'//trim(intc(myid)))
 #endif
  !
 #if defined _OPENMP
@@ -146,9 +146,9 @@ subroutine WF_apply_symm_gpu(isc,WF_symm_d)
  i_wf=WF%index(isc(1),isc(2),isc(4))
  !
 #if defined _MPI
- if (i_wf==0) call error('EMPTY WF index @ b:'//trim(intc(isc(1)))//' k:'//&
-&                         trim(intc(isc(2)))//' spin:'//trim(intc(isc(4)))//&
-&                         ' ID:'//trim(intc(myid)))
+ if (i_wf==0) call error('EMPTY WF index @ b'//trim(intc(isc(1)))//' k'//&
+&                         trim(intc(isc(2)))//' spin'//trim(intc(isc(4)))//&
+&                         ' ID'//trim(intc(myid)))
 #endif
  !
  WF_p => WF%c_d

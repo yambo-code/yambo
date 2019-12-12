@@ -249,7 +249,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  !
  if (gFsq_is_excitonic) then
    !
-   call msg('s',':: Building the correspondance map')
+   call msg('s',' Building the correspondance map')
    !
    YAMBO_FREE(QP_table_map)
    YAMBO_ALLOC(QP_table_map,(BS_K_dim,2))
@@ -268,7 +268,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
      !
    enddo
    !
-   call msg('s',':: Processing '//trim(intc(EXCITONS_n_user_states))//' state(s)')
+   call msg('s',' Processing '//trim(intc(EXCITONS_n_user_states))//' state(s)')
    !
    call PARALLEL_index(px,(/BS_K_dim/))
    call PP_redux_wait
@@ -281,7 +281,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
      !
      n_lambda_deg=count(BS_E_degs==BS_E_degs(lambda))
      !
-     if (n_lambda_deg>1) call msg('s',':: State '//trim(intc(lambda))//' Merged with states '//&
+     if (n_lambda_deg>1) call msg('s',' State '//trim(intc(lambda))//' Merged with states '//&
 &                                     trim(intc(BS_E_degs(lambda)))//' -> '//&
 &                                     trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
      !

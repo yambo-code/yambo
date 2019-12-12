@@ -142,9 +142,9 @@ subroutine SC_start_and_restart(X,E,Xk)
  !
  if (l_SC_RESTART) then
    !
-   call msg('nr','[SC] Found   accuracy on density      :',rho_convergence)
-   call msg('nr','[SC] Found   accuracy on magnetization:',magn_convergence)
-   call msg('rn','[SC]                  on energies [ev]:',E_convergence*HA2EV)
+   call msg('nr','[SC] Found   accuracy on density      ',rho_convergence)
+   call msg('nr','[SC] Found   accuracy on magnetization',magn_convergence)
+   call msg('rn','[SC]                  on energies [ev]',E_convergence*HA2EV)
    l_SC_cycle=.not.(E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold.and.magn_convergence<SC_rho_threshold)
    !
    ! Even if the accuracy on DB is not small enough with 0 iterations
@@ -169,24 +169,24 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! Reporting
  !===========
  !
- call msg('nr','[SC] Self-Consistency (SC)            :',l_SC_cycle)
- call msg('r' ,'[SC] Restart (quick rebuild)          :',l_SC_RESTART.and..not.l_SC_cycle)
- call msg('r' ,'[SC] Restart + SC                     :',l_SC_RESTART.and.l_SC_cycle)
- call msg('r' ,'[SC] Non SC single shot               :',l_NSC_shot)
- call msg('r' ,'[SC] Bands                            :',SC_bands)
- call msg('r' ,'[SC] Bands mixing                     :',SC_band_mixing)
- call msg('r' ,'[SC] Use non-local mixing             :',l_SC_nl_mix)
- call msg('r' ,'[SC] Preconditioning                  :',SC_preconditioning) 
- call msg('r' ,'[SC] Diagonal approximation           :',l_SC_diagonal)
+ call msg('nr','[SC] Self-Consistency (SC)            ',l_SC_cycle)
+ call msg('r' ,'[SC] Restart (quick rebuild)          ',l_SC_RESTART.and..not.l_SC_cycle)
+ call msg('r' ,'[SC] Restart + SC                     ',l_SC_RESTART.and.l_SC_cycle)
+ call msg('r' ,'[SC] Non SC single shot               ',l_NSC_shot)
+ call msg('r' ,'[SC] Bands                            ',SC_bands)
+ call msg('r' ,'[SC] Bands mixing                     ',SC_band_mixing)
+ call msg('r' ,'[SC] Use non-local mixing             ',l_SC_nl_mix)
+ call msg('r' ,'[SC] Preconditioning                  ',SC_preconditioning) 
+ call msg('r' ,'[SC] Diagonal approximation           ',l_SC_diagonal)
  if (l_SC_cycle) then
-   call msg('r' ,'[SC] N (N-1) order mixing             :',SC_cycle_mixing)
-   call msg('r' ,'[SC] Imposed accuracy on density      :',SC_rho_threshold)
-   if(n_spin>1) call msg('r' ,'[SC]                  on magnetization:',SC_rho_threshold)
-   call msg('rn','[SC]                  on energies [ev]:',SC_E_threshold*HA2EV)
+   call msg('r' ,'[SC] N (N-1) order mixing             ',SC_cycle_mixing)
+   call msg('r' ,'[SC] Imposed accuracy on density      ',SC_rho_threshold)
+   if(n_spin>1) call msg('r' ,'[SC]                  on magnetization',SC_rho_threshold)
+   call msg('rn','[SC]                  on energies [ev]',SC_E_threshold*HA2EV)
  endif
  if (l_sc_exx) then
    if (.not.l_oep_slater) &
-&     call msg('r' ,'[SC] Iterative solution of OEP        :',l_oep_iterative)
+&     call msg('r' ,'[SC] Iterative solution of OEP        ',l_oep_iterative)
    if (.not.l_oep_exact) then
      if (l_oep_kli) ch = 'KLI'
      if (l_oep_slater) ch = 'SLATER'
@@ -227,7 +227,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  !
  if (l_use_Hxc_collisions) then
    call msg('s' ,'[SC] Extented collisions Used')
-   call msg('r' ,'[SC] Extented collisions              :',l_use_Hxc_collisions)
+   call msg('r' ,'[SC] Extented collisions              ',l_use_Hxc_collisions)
    COHSEX_use_empties=.TRUE.
    if (COLLISIONS_have_HARTREE.and.SC_preconditioning=="thomas-fermi") then
      call warning(" [COLLISIONS] Found Hartree collisions. Switched to simple preconditioning")

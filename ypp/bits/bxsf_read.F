@@ -76,7 +76,7 @@ subroutine bxsf_read(Xk,Xen)
  call parser('w90_fname',filename)
  !
  if(.not. file_exists(trim(filename))) then
-    call msg("s",':: Do not find wannier90 file')
+    call msg("s",' Do not find wannier90 file')
     return
  endif
  !
@@ -180,10 +180,10 @@ subroutine bxsf_read(Xk,Xen)
     end do
  end do 
  !                 
- call msg('s',':: Wannier-interpolated K-points (BZ) : ',nkpoints)
- call msg('s',':: Internal (coarse) K-point grid (BZ): ',k_grid)
- call msg('s',':: Range of Wannier-interpolated bands: ',wannier_bands)
- call msg('s',':: Wannier-interpolated bands:          ',nbands)
+ call msg('s',' Wannier-interpolated K-points (BZ) : ',nkpoints)
+ call msg('s',' Internal (coarse) K-point grid (BZ): ',k_grid)
+ call msg('s',' Range of Wannier-interpolated bands: ',wannier_bands)
+ call msg('s',' Wannier-interpolated bands:          ',nbands)
 
  !call io_disconnect(readunit)
  !
@@ -253,22 +253,22 @@ subroutine bxsf_read(Xk,Xen)
    BZ_DbGd_weight = 1.0_SP
  else
    call section('*','Employ double grid method' )
-   call msg('s',':: Perform polynomial interpolation of order :',ord_dgrid_ipol)
+   call msg('s',' Perform polynomial interpolation of order ',ord_dgrid_ipol)
    ! fill DbGd_k according to double grid technique
    err_dgrid=double_k_grid(Xk,nkpoints,ord_dgrid_ipol)
    if(err_dgrid.ne.0) then
-     call msg("s",':: ERROR while preparing double grid. Error:',err_dgrid) 
+     call msg("s",' ERROR while preparing double grid. Error',err_dgrid) 
      return
    endif
    BZ_DbGd_max_filling=maxval(BZ_DbGd_nkpt)
  endif
  !
  !     
- call msg('s',':: Blocks filling range :',(/minval(BZ_DbGd_nkpt),BZ_DbGd_max_filling/))
+ call msg('s',' Blocks filling range ',(/minval(BZ_DbGd_nkpt),BZ_DbGd_max_filling/))
  if(minval(BZ_DbGd_nkpt) .ne. BZ_DbGd_max_filling) then
-   call msg('s',':: DbGd_k blocks are not filled uniformly.')
+   call msg('s',' DbGd_k blocks are not filled uniformly.')
    if(ord_dgrid_ipol.gt.0)then
-     call msg('s',':: Error: For double grid must be filled uniformely.')
+     call msg('s',' Error: For double grid must be filled uniformely.')
      return
    endif
  endif
@@ -280,14 +280,14 @@ subroutine bxsf_read(Xk,Xen)
  ! align last (partly) filled band at gamma.
  nearest_to_g=k_the_nearest(DbGd_k%ptbz(1,:),Xk%ptbz(:,:),Xk%nbz) 
  if(sum((DbGd_k%ptbz(1,:)-Xk%ptbz(nearest_to_g,:))**2).gt. epsilon(1._SP)) then
-    call msg('s',':: Gamma is not part of your kgrid.')
-    call msg('s',':: Probably you use a shifted grid. You should not!')
-    call msg('s',':: Gamma :',DbGd_k%ptbz(1,:))
-    call msg('s',':: Nearest to Gamma :',Xk%ptbz(nearest_to_g,:))
+    call msg('s',' Gamma is not part of your kgrid.')
+    call msg('s',' Probably you use a shifted grid. You should not!')
+    call msg('s',' Gamma ',DbGd_k%ptbz(1,:))
+    call msg('s',' Nearest to Gamma ',Xk%ptbz(nearest_to_g,:))
  end if 
  !
  vband=minloc(Xen%f(:,nearest_to_g,1),1)-1
- call msg('s',':: Internal and wannier bands to align (at Gamma):',(/vband,vband+wannier_bands(1)-1/))
+ call msg('s',' Internal and wannier bands to align (at Gamma)',(/vband,vband+wannier_bands(1)-1/))
  deltaE=ene(vband,1)/HA2EV-Xen%E(vband,nearest_to_g,1)
  Xen%E_DbGd(:,:DbGd_k%nbz,1)=Xen%E_DbGd(:,:DbGd_k%nbz,1)-deltaE
  !

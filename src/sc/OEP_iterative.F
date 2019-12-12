@@ -125,7 +125,7 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
      V_io = V_io/rho
      !
      reached_treshold=maxval(abs(V_io(1:)-V_nm1(1:)))
-     dumb_ch=trim(timing_str)//' '//trim(intc(ii))//' Accuracy :'//&
+     dumb_ch=trim(timing_str)//' '//trim(intc(ii))//' Accuracy '//&
 &            trim(real2ch(reached_treshold))//'|'//trim(real2ch(OEP_threshold))
      if (     log_as_a_file) call LIVE_message("r",dumb_ch,"","%s")
      if (.not.log_as_a_file) call LIVE_message("n",dumb_ch,"","%s")

@@ -138,9 +138,9 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
      enddo
    enddo
    !
-   call msg("n"//trim(QP_ctl_msg_fmt),'[QP_ctl (Nearest Level)] Levels Mapped exactly :',N_exact)
-   call msg(trim(QP_ctl_msg_fmt),     '[QP_ctl (Nearest Level)]               closely :',N_close)
-   call msg(trim(QP_ctl_msg_fmt),     '[QP_ctl (Nearest Level)] Levels too far        :',N_far)
+   call msg("n"//trim(QP_ctl_msg_fmt),'[QP_ctl (Nearest Level)] Levels Mapped exactly ',N_exact)
+   call msg(trim(QP_ctl_msg_fmt),     '[QP_ctl (Nearest Level)]               closely ',N_close)
+   call msg(trim(QP_ctl_msg_fmt),     '[QP_ctl (Nearest Level)] Levels too far        ',N_far)
    !
  endif
  !

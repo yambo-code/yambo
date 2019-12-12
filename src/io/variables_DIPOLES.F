@@ -72,7 +72,7 @@ integer function variables_DIPOLES(Dip,ID)
  !
  call def_variable_elemental(ID,'WAVE_FUNC_XC',1,0,0)
  call  io_variable_elemental(ID,DB_CH0=Dipole_WF_xc_string,CH0=loaded_WF_xc_string,&
-&     VAR=' Wavefunctions          :',CHECK=.true.,OP=(/"=="/))
+&     VAR=' Wavefunctions          ',CHECK=.true.,OP=(/"=="/))
  !call io_elemental(ID,VAR="",VAR_SZ=0)
  !
  variables_DIPOLES=io_status(ID)

@@ -105,23 +105,23 @@ subroutine PARALLEL_and_IO_Setup(en,k)
    !
    do i_s=0,n_CPU_str_max
      if (len_trim(PARALLEL_message(i_s))==0) cycle
-     call msg( 's','CPU-Threads:',trim(PARALLEL_message(i_s)))
-     call msg( 'r','* CPU-Threads     :',trim(PARALLEL_message(i_s)))
+     call msg( 's','CPU-Threads',trim(PARALLEL_message(i_s)))
+     call msg( 'r','* CPU-Threads     ',trim(PARALLEL_message(i_s)))
    enddo
    !
-   call msg( 'r','* MPI CPU         :',ncpu)
+   call msg( 'r','* MPI CPU         ',ncpu)
    !
  else
    !
-   call msg ('r','* CPU             :',ncpu)
+   call msg ('r','* CPU             ',ncpu)
    !
  endif
  !
- call msg('r', '* THREADS    (max):',n_max_threads)
- call msg('r', '* THREADS TOT(max):',n_max_threads*ncpu)
- call msg('r', '* I/O NODES       :',n_nodes)
- call msg('r', '* NODES(computing):',n_nodes(1))
- call msg('r', '*            (I/O):',n_IO_nodes)
+ call msg('r', '* THREADS    (max)',n_max_threads)
+ call msg('r', '* THREADS TOT(max)',n_max_threads*ncpu)
+ call msg('r', '* I/O NODES       ',n_nodes)
+ call msg('r', '* NODES(computing)',n_nodes(1))
+ call msg('r', '*            (I/O)',n_IO_nodes)
 #ifdef _CUDA
  call msg('r', '* CUDA support    : ',"yes")
  call msg('r', '* CUDA devices    : ',have_cuda_devices)

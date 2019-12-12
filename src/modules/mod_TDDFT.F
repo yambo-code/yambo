@@ -27,7 +27,8 @@ module TDDFT
  implicit none
  !
  character(schlen):: TDDFT_mode
- character(lchlen):: FXC_description(100)
+ character(lchlen):: FXC_desc_str(100)
+ real(SP)         :: FXC_desc_var(10,100)
  character(10)    :: FXC_type
  integer          :: FXC_n_descs
  integer          :: FXC_n_g_corr

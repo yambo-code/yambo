@@ -356,12 +356,12 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  !
  call set_real_printed_length(f_length=7,g_length=8)
  !
- call msg('s','[Symm] Spatial simmetries now are:')  
+ call msg('s','[Symm] Spatial simmetries now are')  
  do is=1,spatial_nsym
    call msg('s','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))
  enddo
  if (i_time_rev==1) then
-   call msg('s','[Symm] T-rev derived simmetries now are:')  
+   call msg('s','[Symm] T-rev derived simmetries now are')  
    do is=spatial_nsym+1,nsym
      call msg('s','[S*'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
    enddo

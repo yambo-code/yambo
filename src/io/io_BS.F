@@ -34,7 +34,7 @@ integer function io_BS(iq,X,ID)
  use parallel_m,    ONLY:myid
  use pointers,      ONLY:linkM2V
  use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded,BS_K_coupling
- use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
+ use BS_solvers,    ONLY:BSS_desc_str,BSS_desc_var,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,&
 &                        def_variable_bulk,io_variable_bulk,frag_BS_K,&
 &                        write_is_on,io_header,io_mode,VERIFY, &
@@ -51,7 +51,8 @@ integer function io_BS(iq,X,ID)
  complex(SP),pointer ::tmp_link(:)
  integer             ::i_block,i1,n1,n2,block_pos,VAR_ID,n_blocks
  character(schlen)   ::ch,db_name,PARALLEL_STRUCTURE
- character(lchlen)   ::local_description(100)
+ character(lchlen)   ::local_desc_str(100)
+ real(SP)            ::local_desc_var(10,100)
  !
  if (.not.io_BS_K.and.maxval(io_sec(ID,:))>1) then
    io_BS=IO_NOT_ALLOWED
@@ -79,7 +80,7 @@ integer function io_BS(iq,X,ID)
      goto 1
    endif
    !
-   io_BS=variables_BS(ID,iq,local_description,.TRUE.,X=X)
+   io_BS=variables_BS(ID,iq,local_desc_str,local_desc_var,.TRUE.,X=X)
    !
    if (io_BS/=0) then
      !
@@ -95,9 +96,10 @@ integer function io_BS(iq,X,ID)
    !
    if (BSS_n_descs==0) then
      do i1=1,100
-       if (len_trim(local_description(i1))>0) then
+       if (len_trim(local_desc_str(i1))>0) then
          BSS_n_descs=BSS_n_descs+1
-         BSS_description(BSS_n_descs)=local_description(i1)
+         BSS_desc_str(BSS_n_descs)=local_desc_str(i1)
+         BSS_desc_var(:,BSS_n_descs)=local_desc_var(:,i1)
        endif
      enddo
    endif

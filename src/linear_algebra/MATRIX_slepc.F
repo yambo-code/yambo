@@ -103,7 +103,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  call EPSSetProblemType(eps,EPS_HEP,ierr)
  !
  if (target_energy .ne. 0) then
-   call msg( 'nr', '[SLEPC] Criterion is target energy       :', real(target_energy,SP) )
+   call msg( 'nr', '[SLEPC] Criterion is target energy       ', real(target_energy,SP) )
    call EPSSetTarget(eps,target_energy,ierr)
    call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
  else
@@ -126,7 +126,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  else if (extraction == 'refined_harmonic')  then
    extr = EPS_REFINED_HARMONIC
  endif
- call msg( 'r', '[SLEPC] Extraction method                :', extraction)
+ call msg( 'r', '[SLEPC] Extraction method                ', extraction)
  !
  call EPSSetExtraction(eps, extr, ierr)
  !
@@ -167,11 +167,11 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  call EPSSolve(eps,ierr)
  call EPSGetIterationNumber(eps,its,ierr)
- call msg( 'r', '[SLEPC] Number of iterations              :', int(its) )
+ call msg( 'r', '[SLEPC] Number of iterations              ', int(its) )
  call EPSGetDimensions(eps,nev,ncv,mpd,ierr)
- call msg( 'r', '[SLEPC] Number of eigenvalues        [NEV]:', int(nev) )
- call msg( 'r', '[SLEPC]                              [NCV]:', int(ncv) )
- call msg( 'r', '[SLEPC]                              [MPD]:', int(mpd) )
+ call msg( 'r', '[SLEPC] Number of eigenvalues        [NEV]', int(nev) )
+ call msg( 'r', '[SLEPC]                              [NCV]', int(ncv) )
+ call msg( 'r', '[SLEPC]                              [MPD]', int(mpd) )
 
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Display solution and clean up

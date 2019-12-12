@@ -253,22 +253,22 @@ module mod_com2y
      type(levels),     intent(in)   :: en     ! Energies
      type(bz_samp),    intent(in)   :: k      ! K/Q points
      ! 
-     call msg('s',' :: Electrons             :',default_nel)
-     call msg('s',' :: Temperature       [ev]:',input_GS_Tel)
-     call msg('s',' :: Lattice factors [a.u.]:',alat)
-     call msg('s',' :: K-points              :',k%nibz)
-     call msg('s',' :: Bands                 :',en%nb)
-     call msg('s',' :: Spinor components     :',n_spinor)
-     call msg('s',' :: Spin polarizations    :',n_sp_pol)
-     call msg('s',' :: Spin orbit coupling   : ',l_spin_orbit)
-     call msg('s',' :: Symmetries   [spatial]:',nsym/(i_time_rev+1))
-     call msg('s',' ::                [T-rev]: ',i_time_rev==1)
-     call msg('s',' :: Max WF components     :',wf_ncx)
-     call msg('s',' :: RL vectors        (WF):',wf_ng)
-     call msg('s',' :: RL vectors    (CHARGE):',ng_vec)
-     call msg('s',' :: XC potential          : ',xc_string(GS_xc_FUNCTIONAL))
-     call msg('s',' :: Atomic species        :',n_atomic_species)
-     call msg('s',' :: Max atoms/species     :',n_atoms_species_max)
+     call msg('s',' Electrons             ',default_nel)
+     call msg('s',' Temperature       [ev]',input_GS_Tel)
+     call msg('s',' Lattice factors [a.u.]',alat)
+     call msg('s',' K-points              ',k%nibz)
+     call msg('s',' Bands                 ',en%nb)
+     call msg('s',' Spinor components     ',n_spinor)
+     call msg('s',' Spin polarizations    ',n_sp_pol)
+     call msg('s',' Spin orbit coupling   : ',l_spin_orbit)
+     call msg('s',' Symmetries   [spatial]',nsym/(i_time_rev+1))
+     call msg('s','                [T-rev]: ',i_time_rev==1)
+     call msg('s',' Max WF components     ',wf_ncx)
+     call msg('s',' RL vectors        (WF)',wf_ng)
+     call msg('s',' RL vectors    (CHARGE)',ng_vec)
+     call msg('s',' XC potential          : ',xc_string(GS_xc_FUNCTIONAL))
+     call msg('s',' Atomic species        ',n_atomic_species)
+     call msg('s',' Max atoms/species     ',n_atoms_species_max)
      !
      ! Check if real wavefunction are possible (gamma point only).
      !

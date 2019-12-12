@@ -195,7 +195,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Start-Up & Timing
  !===================
- call live_timing('[NL] Frequencies :',PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1)*NE_steps)
+ call live_timing('[NL] Frequencies ',PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1)*NE_steps)
  !
  do i_f=1,n_frequencies
    !

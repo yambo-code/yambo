@@ -176,14 +176,14 @@ module it_tools
    !
    ! Modes
    !
-   ! initmode 0:'load'      : defs% <- Default from def+stdefs routines
+   ! initmode 0'load'      : defs% <- Default from def+stdefs routines
    !                          initdefs is initialized
-   ! initmode 1:'todef'     : Like 'load' but as DBs have been read
+   ! initmode 1'todef'     : Like 'load' but as DBs have been read
    !                          defs% are redefined
-   ! initmode 2:'Gclose'    : like  'todef' + Close the G-vectors to the G-shells
-   ! initmode 3:'GameOver'  : Like 'todef' but verbosity defaults are not updated.
+   ! initmode 2'Gclose'    : like  'todef' + Close the G-vectors to the G-shells
+   ! initmode 3'GameOver'  : Like 'todef' but verbosity defaults are not updated.
    !                          To be used at the run end
-   ! initmode 4:'parserload': defs% (and associated variables of the mods) 
+   ! initmode 4'parserload': defs% (and associated variables of the mods) 
    !                          are overwritten with the input file values
    !
    subroutine loadrnlvlflag(what,defs,name,description,verb_level)

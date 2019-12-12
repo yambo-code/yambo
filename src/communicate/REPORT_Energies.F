@@ -55,7 +55,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,header)
    call c2a(v_in=k%pt(ik,:),v_out=k_al,mode='ki2a')
    call c2a(v_in=k%pt(ik,:),v_out=k_cc,mode='ki2c')
    ! 
-   dumb_ch1='K ['//trim(intc(ik))//'] :'//trim(real2ch(k_cc(1)))//' '//&
+   dumb_ch1='K ['//trim(intc(ik))//'] '//trim(real2ch(k_cc(1)))//' '//&
 &          trim(real2ch(k_cc(2)))//' '//trim(real2ch(k_cc(3)))//&
 &          ' ( cc) * Comp.s '//trim(intc(wf_nc_k(ik)))
    dumb_ch2='       '//trim(real2ch(k_al(1)))//' '//&

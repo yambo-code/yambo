@@ -234,20 +234,20 @@ subroutine RT_start_and_restart(E,k,q)
    !
    call msg( 'nr','---RESTART report---')
    !
-   call msg('s','[RESTART] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
-   call msg('r',  'Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
-   call msg('r',  'Time step                     [fs]:',RT_dyn_step*AUT2FS)
+   call msg('s','[RESTART] Number of steps done    [o/o]',real(NE_i_time)/real(NE_steps)*100._SP)
+   call msg('r',  'Number of steps done    [o/o]',real(NE_i_time)/real(NE_steps)*100._SP)
+   call msg('r',  'Time step                     [fs]',RT_dyn_step*AUT2FS)
    !
-   call msg('r',  'dT Update Interval            [fs]:',NE_time_step_update_jump*AUT2FS)
-   call msg('r',  'Lifetimes inter/intr times    [fs]:',RT_life_extrap_times*AUT2FS)
-   call msg('r',  'T between I/O of J,P,f        [fs]:',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
-   call msg('r',  '          I/O of   GFs        [fs]:',GF_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  'dT Update Interval            [fs]',NE_time_step_update_jump*AUT2FS)
+   call msg('r',  'Lifetimes inter/intr times    [fs]',RT_life_extrap_times*AUT2FS)
+   call msg('r',  'T between I/O of J,P,f        [fs]',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  '          I/O of   GFs        [fs]',GF_RT_IO_t%INTERVAL_time*AUT2FS)
    !
    OUTPUT_RT_IO_t%INTERVAL_time  = max(TIME_adjust(OUTPUT_RT_IO_t%INTERVAL_time,RT_dyn_step),RT_dyn_step)
    OUTPUT_RT_IO_t%INTERVAL_steps = nint(OUTPUT_RT_IO_t%INTERVAL_time/RT_step)
    OUTPUT_RT_IO_t%last_point     = NE_i_time - OUTPUT_RT_IO_t%INTERVAL_steps
    !
-   call msg('r',  '               outputs        [fs]:',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  '               outputs        [fs]',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
    !
  endif
  !

@@ -330,8 +330,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  enddo
  k_grid_uc_vol=abs(k_grid_uc_vol)
  !
- if (k_grid_dim>0) call msg('rs','Grid dimensions               :',k_grid(:k_grid_dim))
- call msg('r',                  'K lattice UC volume       [au]:',k_grid_uc_vol)
+ if (k_grid_dim>0) call msg('rs','Grid dimensions               ',k_grid(:k_grid_dim))
+ call msg('r',                  'K lattice UC volume       [au]',k_grid_uc_vol)
  !
  ! CLEAN
  !

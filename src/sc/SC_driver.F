@@ -497,16 +497,16 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        enddo
      endif
      !
-     if(it_now==it_to_start) dumb_ch ='[SC] Iteration:'
-     dumb_ch2='            '//trim(intc(it_now))//' :'
+     if(it_now==it_to_start) dumb_ch ='[SC] Iteration'
+     dumb_ch2='            '//trim(intc(it_now))//' '
      if (l_sc_V_is_local) then
-       if(it==1) dumb_ch= trim(dumb_ch) //'  E_tot(Ha) :'
+       if(it==1) dumb_ch= trim(dumb_ch) //'  E_tot(Ha) '
        dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(E_total))//' : '
      endif
      if (n_spin==2) then
-       if(n_sp_pol==2) dumb_ch=trim(dumb_ch)//'  Mz  [muB] :'
-       if(n_spinor==2) dumb_ch=trim(dumb_ch)//'  |M| [muB] :'
-       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(v_norm(Spin_magn(:))))//' :'
+       if(n_sp_pol==2) dumb_ch=trim(dumb_ch)//'  Mz  [muB] '
+       if(n_spinor==2) dumb_ch=trim(dumb_ch)//'  |M| [muB] '
+       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(v_norm(Spin_magn(:))))//' '
      endif
      if(it_now==it_to_start) dumb_ch =trim(dumb_ch)//' Acc.  E(ev)  -  rho(%)'
      dumb_ch2=trim(dumb_ch2)//'    '//trim(real2ch(E_convergence*HA2EV)) &
@@ -598,14 +598,14 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
    ! exit SCF cycle and report
    !
-   call msg('nr','[SC] Iterations               :',it_now)
-   call msg('r' ,'[SC] Accuracy on density      :',rho_convergence)
-   if(n_spin>1) call msg('r' ,'[SC] Accuracy on magnetization:',magn_convergence)
-   call msg('r' ,'[SC]          on energies [ev]:',E_convergence*HA2EV)
-   if (     l_sc_V_is_local)  call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]:',E_total*(/1._SP,2._SP/))
+   call msg('nr','[SC] Iterations               ',it_now)
+   call msg('r' ,'[SC] Accuracy on density      ',rho_convergence)
+   if(n_spin>1) call msg('r' ,'[SC] Accuracy on magnetization',magn_convergence)
+   call msg('r' ,'[SC]          on energies [ev]',E_convergence*HA2EV)
+   if (     l_sc_V_is_local)  call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]',E_total*(/1._SP,2._SP/))
    if (.not.l_sc_V_is_local)  call msg('r','')
-   if (l_sc_hartree)   call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1._SP,2._SP/))
-   if (l_sc_is_libDFT) call msg('rn','[SC] xc Energy               [Ha/Ry]:',E_tot_xc*(/1._SP,2._SP/))
+   if (l_sc_hartree)   call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]',E_tot_Hartree*(/1._SP,2._SP/))
+   if (l_sc_is_libDFT) call msg('rn','[SC] xc Energy               [Ha/Ry]',E_tot_xc*(/1._SP,2._SP/))
    !
  else
    call msg('r','')

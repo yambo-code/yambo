@@ -263,8 +263,8 @@ integer function ELPH_databases(k,E,q)
  if (use_ext_ph_freqs) close(99)
  if (use_ext_ph_modes) close(98)
  !
- call msg("s",':: Modes           :',ph_modes)
- call msg("s",':: Bands range     :',elph_nb)
+ call msg("s",' Modes           ',ph_modes)
+ call msg("s",' Bands range     ',elph_nb)
  !
  ! Print the list of PW q-points (to be used with matdyn, for example)
  !

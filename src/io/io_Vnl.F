@@ -74,7 +74,7 @@ integer function io_Vnl(Dip,Xen,ID)
    !
    call io_elemental(ID,VAR='WAVE_FUNC_XC',CH0="",VAR_SZ=1,MENU=0)
    call io_elemental(ID,DB_CH0=Dipole_WF_xc_string,CH0=loaded_WF_xc_string,&
-&       VAR=' Wavefunctions          :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' Wavefunctions          ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0)
    !
    io_Vnl=io_status(ID)

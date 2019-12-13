@@ -48,14 +48,11 @@ subroutine QP_states_simmetrize(en,what,V_real,V_complex,state_is_2do,warn_me)
  character(schlen)   :: title=" ",states_ch=" "
  logical             :: check_the_diffs=.FALSE.
  real(SP), parameter :: E_deg_treshold=0.0001_SP/HA2EV,V_deg_percentual_treshold=0.01
- return
  !
  if (present(what))    title=what
  if (present(warn_me)) check_the_diffs=warn_me
  !
  ! Degenerate bands average.
- write (*,*) QP_n_states
- stop
  !
  forall(i1=1:QP_n_states) Eo_sorted(i1)=en%E(QP_table(i1,1),QP_table(i1,3),1)
  !

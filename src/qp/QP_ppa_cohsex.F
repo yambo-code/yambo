@@ -617,7 +617,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! AM, Sept 2019. The COH potential seems to break (in some case of a large amount) the
  ! energy degenerations. 
  !
- if (.not.l_sc_run.and..not.l_rt_carriers_in_use.and.l_GW_terminator) then
+ if (.not.l_sc_run.and..not.l_rt_carriers_in_use) then
    call QP_states_simmetrize(E,what="COHSEX Sc",V_complex=QP_Sc(:,1),warn_me=.TRUE.)
  endif
  !

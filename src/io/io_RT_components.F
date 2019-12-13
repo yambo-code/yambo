@@ -139,7 +139,7 @@ integer function io_RT_components(what,ID)
    !
    if ( l_carriers) then
      !
-     call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_io")
+     if ( db_type==2 .or. (db_type==-3.and..not.l_real_time) ) call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_io")
      !
      call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="def_io_variables")
      !
@@ -185,7 +185,7 @@ integer function io_RT_components(what,ID)
  if ( l_carriers) then
    call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="do_io_variables")
    if (read_is_on(ID)) call RT_carriers_object(RT_carriers,WHAT="dump")
-   call TIME_points_IO(ID,(/13,14,15/),(NE_i_time==1),OBS_RT_IO_t)
+   if ( db_type==2 .or. (db_type==-3.and..not.l_real_time) ) call TIME_points_IO(ID,(/13,14,15/),(NE_i_time==1),OBS_RT_IO_t)
  endif
  !
  ! GPL_EXCLUDE_END

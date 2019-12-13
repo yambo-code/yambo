@@ -249,7 +249,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! Symmetrize
  !
- call QP_states_simmetrize(E,V_complex=QP_Sc(:,1))
+ call QP_states_simmetrize(E,what="QED Sigma_c",V_complex=QP_Sc(:,1),warn_me=.TRUE.)
  call QP_states_simmetrize(E,V_complex=QP_dSc(:,1))
  !
  ! Clean-UP

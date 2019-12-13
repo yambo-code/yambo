@@ -740,7 +740,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      do i_sp_pol=1,n_sp_pol
        do ik=1,k%nibz
          !
-         ! Check for degenrate bands in the bare energies
+         ! Check for degenerate bands in the bare energies
          !
          call degeneration_finder(E_reference%E(:SC_bands(2),ik,i_sp_pol),SC_bands(2),first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
          !

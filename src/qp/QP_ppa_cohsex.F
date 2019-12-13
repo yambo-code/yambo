@@ -618,7 +618,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! energy degenerations. 
  !
  if (.not.l_sc_run.and..not.l_rt_carriers_in_use) then
-   call QP_states_simmetrize(E,what="COHSEX Sc",V_complex=QP_Sc(:,1),warn_me=.TRUE.)
+   do i_w=1,QP_dSc_steps
+     if (i_w==1) call QP_states_simmetrize(E,what="COHSEX Sc",V_complex=QP_Sc(:,1),warn_me=.TRUE.)
+     if (i_w> 1) call QP_states_simmetrize(E,V_complex=QP_Sc(:,i_w))
+   enddo
  endif
  !
  ! CLEAN

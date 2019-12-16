@@ -56,6 +56,7 @@ module POL_FIT_m
    subroutine POL_LK_fit(N,X,Y,order,Tt,EPS,t_zero)
     !
     use pars, ONLY:SP
+    use com,  ONLY:error
     !
     implicit none
     !
@@ -90,11 +91,25 @@ module POL_FIT_m
     EPS=-1._SP
 #if defined _DOUBLE
     call DPOLFT (N,X,Y,W,order,NDEG,EPS,R,IERR,wk)
-    order=NDEG 
-    call DPCOEF (order,t_zero,Tt(:order+1),wk)
 #else
     call POLFIT (N,X,Y,W,order,NDEG,EPS,R,IERR,wk)
+#endif
+    if (IERR==4) then
+      order=max(order-1,0)
+    endif
+#if defined _DOUBLE
+    call DPOLFT (N,X,Y,W,order,NDEG,EPS,R,IERR,wk)
+#else
+    call POLFIT (N,X,Y,W,order,NDEG,EPS,R,IERR,wk)
+#endif
+    if (IERR==4) then
+      call error("Could not FIT the data")
+    endif
     order=NDEG 
+    !
+#if defined _DOUBLE
+    call DPCOEF (order,t_zero,Tt(:order+1),wk)
+#else
     call PCOEF (order,t_zero,Tt(:order+1),wk)
 #endif
     !

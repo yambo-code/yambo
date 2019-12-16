@@ -27,7 +27,7 @@ subroutine RT_update_TIME_CONF_descriptions( )
  use real_time,      ONLY:NE_time,RT_life_extrap_times,RT_dyn_step,RT_is_dynamically_dephased,&
 &                         NE_time_step_update_jump
  use RT_control,     ONLY:n_TIME_STEP_CONF_descriptions,TIME_STEP_CONF_description,&
-&                         OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
+&                         CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
  use stderr,         ONLY:real2ch
  implicit none
  !
@@ -48,8 +48,12 @@ subroutine RT_update_TIME_CONF_descriptions( )
 &                                                          trim(real2ch(NE_time_step_update_jump*AUT2FS))
  !
  n_TIME_STEP_CONF_descriptions=n_TIME_STEP_CONF_descriptions+1
- TIME_STEP_CONF_description(n_TIME_STEP_CONF_descriptions)=ch//"] I/O steps(J-P-C)[fs]:"//&
+ TIME_STEP_CONF_description(n_TIME_STEP_CONF_descriptions)=ch//"] I/O steps(J-P-M)[fs]:"//&
 &                                                          trim(real2ch(OBS_RT_IO_t%INTERVAL_time*AUT2FS))
+ !
+ n_TIME_STEP_CONF_descriptions=n_TIME_STEP_CONF_descriptions+1
+ TIME_STEP_CONF_description(n_TIME_STEP_CONF_descriptions)=ch//"] I/O steps (CARR)[fs]:"//&
+&                                                          trim(real2ch(CARR_RT_IO_t%INTERVAL_time*AUT2FS))
  !
  n_TIME_STEP_CONF_descriptions=n_TIME_STEP_CONF_descriptions+1
  TIME_STEP_CONF_description(n_TIME_STEP_CONF_descriptions)=ch//"] I/O steps  (OUT)[fs]:"//&

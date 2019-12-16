@@ -29,7 +29,7 @@ integer function variables_RT(ID,local_description,what)
  use stderr,         ONLY:intc
  use hamiltonian,    ONLY:H_ref_bands
  use RT_control,     ONLY:RT_description,n_RT_descriptions,TIME_STEP_CONF_description,&
-&                         n_TIME_STEP_CONF_descriptions,OBS_RT_IO_t,GF_RT_IO_t,RT_IO_t
+&                         n_TIME_STEP_CONF_descriptions,CARR_RT_IO_t,OBS_RT_IO_t,GF_RT_IO_t,RT_IO_t
  use IO_m,           ONLY:variable_exist,write_is_on
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,RT_dyn_step, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_extrapolation, &
@@ -181,8 +181,9 @@ integer function variables_RT(ID,local_description,what)
    !
    ! GPL_EXCLUDE_END
    !
-   if (l_OBS.or.l_carriers) call LOCAL_IO_variables(OBS_RT_IO_t)
-   if (l_G)                 call LOCAL_IO_variables(GF_RT_IO_t)
+   if (l_OBS)      call LOCAL_IO_variables(OBS_RT_IO_t)
+   if (l_carriers) call LOCAL_IO_variables(CARR_RT_IO_t)
+   if (l_G)        call LOCAL_IO_variables(GF_RT_IO_t)
    !
    i_desc=i_desc+1
    call io_elemental(ID,&

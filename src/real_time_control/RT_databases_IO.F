@@ -26,7 +26,7 @@ subroutine RT_databases_IO(E)
  use drivers,        ONLY:l_elph_scatt
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
-&                         GF_RT_IO_t,IO_OBS_cache_steps
+&                         GF_RT_IO_t,CARR_RT_IO_t,IO_OBS_cache_steps
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,l_NE_with_fields
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
@@ -49,9 +49,11 @@ subroutine RT_databases_IO(E)
  !
  ! Store the current and the polarization in the cache for future writing
  !
- if(l_NE_dynamics) then
+ if(io_OBSERVABLES) then
    !
    i_time=mod(NE_i_time-1,IO_OBS_cache_steps)+1
+   OBS_RT_IO_t%N=OBS_RT_IO_t%N+1
+   OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=NE_time
    !
    J_cache(1:3,i_time)=RT_ind_J
    P_cache(1:3,i_time)=RT_P
@@ -69,41 +71,39 @@ subroutine RT_databases_IO(E)
  !
  ! Observables (J, P, M ...)
  !===========================
- if (RT_do_it('OBS')) then
+ if (io_OBSERVABLES.and.RT_do_it('OBS')) then
    !
-   OBS_RT_IO_t%N=OBS_RT_IO_t%N+1
-   OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=NE_time
    OBS_RT_IO_t%last_point=NE_i_time
    !
-   if (io_OBSERVABLES) then
-     if(NE_i_time==1) then
-       call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(4)) 
-       io_OBS=io_RT_components('OBSERVABLES',ID(4))
-     endif
-     call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/2/),ID=ID(4))
+   if(NE_i_time==1) then
+     call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(4)) 
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
    endif
-   !
-   ! GPL_EXCLUDE_START
-   !
-   if (io_CARRIERs) then
-     !
-     call RT_carriers_object(RT_carriers,E,WHAT='fill')
-     !
-     if(NE_i_time==1) then
-       call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(6)) 
-       io_carr=io_RT_components('carriers',ID(6))
-     endif
-     call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/2/),ID=ID(6))
-     io_carr=io_RT_components('carriers',ID(6))
-     !
-   endif
-   !
-   ! GPL_EXCLUDE_END
+   call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/2/),ID=ID(4))
+   io_OBS=io_RT_components('OBSERVABLES',ID(4))
    !
  endif
  !
  ! GPL_EXCLUDE_START
+ !
+ ! Carriers 
+ !=========
+ if (io_CARRIERs.and.RT_do_it('CARR')) then
+   !
+   CARR_RT_IO_t%last_point=NE_i_time
+   CARR_RT_IO_t%N=CARR_RT_IO_t%N+1
+   CARR_RT_IO_t%Time(CARR_RT_IO_t%N)=NE_time
+   !
+   call RT_carriers_object(RT_carriers,E,WHAT='fill')
+   !
+   if(NE_i_time==1) then
+     call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(6)) 
+     io_carr=io_RT_components('carriers',ID(6))
+   endif
+   call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/2/),ID=ID(6))
+   io_carr=io_RT_components('carriers',ID(6))
+   !
+ endif
  !
  ! G_lesser and THETA
  !====================

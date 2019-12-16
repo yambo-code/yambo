@@ -31,7 +31,7 @@ subroutine RT_time_step_update( )
 &                         RT_life_extrap_times,Life_MEM_steps,NE_time,NE_time_step_update_jump,&
 &                         NE_step_update_treshold,NE_i_time,NE_time_step_update_last_point,RT_MAX_step,&
 &                         NE_initial_time_step_update,RT_all2ibz
- use RT_control,     ONLY:OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,n_TIME_STEP_CONF_descriptions,&
+ use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,n_TIME_STEP_CONF_descriptions,&
 &                         TIME_STEP_CONF_description,RT_do_it,SETUP_RT_IO_type,TIME_adjust
  use com,            ONLY:msg
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
@@ -89,10 +89,12 @@ subroutine RT_time_step_update( )
    RT_dyn_step=dT_next
    !
    call SETUP_RT_IO_type(OBS_RT_IO_t,.FALSE.)
+   call SETUP_RT_IO_type(CARR_RT_IO_t,.FALSE.)
    call SETUP_RT_IO_type(OUTPUT_RT_IO_t,.FALSE.)
    call SETUP_RT_IO_type(GF_RT_IO_t,.FALSE.)
    !
    OBS_RT_IO_t%last_point    = NE_i_time
+   CARR_RT_IO_t%last_point    = NE_i_time
    OUTPUT_RT_IO_t%last_point = NE_i_time
    GF_RT_IO_t%last_point     = NE_i_time
    !

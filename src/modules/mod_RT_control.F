@@ -53,6 +53,7 @@ module RT_control
  logical                  :: SAVE_G_history
  !
  type(RT_IO_t),save  :: OBS_RT_IO_t
+ type(RT_IO_t),save  :: CARR_RT_IO_t
  type(RT_IO_t),save  :: OUTPUT_RT_IO_t
  type(RT_IO_t),save  :: GF_RT_IO_t
  !
@@ -144,6 +145,11 @@ module RT_control
      YAMBO_ALLOC(OBS_RT_IO_t%Time,(NE_steps))
      OBS_RT_IO_t%Time=rZERO
      !
+     YAMBO_FREE(CARR_RT_IO_t%Time)
+     !
+     YAMBO_ALLOC(CARR_RT_IO_t%Time,(NE_steps))
+     CARR_RT_IO_t%Time=rZERO
+     !
      YAMBO_FREE(GF_RT_IO_t%Time)
      !
      YAMBO_ALLOC(GF_RT_IO_t%Time,(NE_steps))
@@ -159,6 +165,7 @@ module RT_control
      YAMBO_FREE(Ml_cache)
      YAMBO_FREE(A_cache)
      YAMBO_FREE(OBS_RT_IO_t%Time)
+     YAMBO_FREE(CARR_RT_IO_t%Time)
      YAMBO_FREE(GF_RT_IO_t%Time)
      !
    end subroutine RT_control_free
@@ -166,6 +173,7 @@ module RT_control
    logical function RT_do_it(what)
      !
      use real_time, ONLY:NE_i_time,RT_step,NE_time_step_update_jump,NE_time_step_update_last_point
+     !
      character(*) :: what
      !
      ! Work Space
@@ -178,6 +186,10 @@ module RT_control
      if (what=="OBS") then
        DO_IT_steps=OBS_RT_IO_t%INTERVAL_steps
        IT_last    =OBS_RT_IO_t%last_point
+     endif
+     if (what=="CARR") then
+       DO_IT_steps=CARR_RT_IO_t%INTERVAL_steps
+       IT_last    =CARR_RT_IO_t%last_point
      endif
      if (what=="OUT") then
        DO_IT_steps=OUTPUT_RT_IO_t%INTERVAL_steps

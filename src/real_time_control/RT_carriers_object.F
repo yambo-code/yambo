@@ -31,7 +31,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
  use electrons,      ONLY:n_sp_pol,spin_occ,levels,BZ_DbGd_kpts
  use R_lattice,      ONLY:bz_samp
- use RT_control,     ONLY:OBS_RT_IO_t
+ use RT_control,     ONLY:CARR_RT_IO_t
  use real_time,      ONLY:RT_t,REF_lifetime,E_E_Hole_lifetime,E_E_Electron_lifetime,   &
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Ho_abs_lifetime, &
 &                         E_P_El_abs_lifetime,l_RT_uses_E_DbGd,RT_ibz_coo,DbGd_ibz_coo,  &
@@ -264,7 +264,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
    case('do_io_variables')
      !
-     IPOS=(/1,(NE_i_time-1)/OBS_RT_IO_t%INTERVAL_steps+1/)
+     IPOS=(/1,(NE_i_time-1)/CARR_RT_IO_t%INTERVAL_steps+1/)
      TMP_SIZE=(/RT%nstates,1/)
      !
      ! Energies

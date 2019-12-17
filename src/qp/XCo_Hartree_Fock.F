@@ -68,7 +68,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  !QP list
  !
- integer              :: ig
  integer              :: ikibz,i_sp_pol
 
  !
@@ -153,7 +152,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
 #if !defined _CUDA
    !  !!! num_threads(n_outthr)
    !$omp parallel default(shared), &
-   !$omp          private(isc,iscp,local_rhotw,iq,iq_ibz,is_ibz,ikibz,i_sp_pol,jb,ig), reduction(+:DP_sx)
+   !$omp          private(isc,iscp,local_rhotw,iq,iq_ibz,is_ibz,ikibz,i_sp_pol,jb), reduction(+:DP_sx)
 #endif
    !
    call OPENMP_update(master_thread)

@@ -44,7 +44,6 @@ subroutine of_netcdf_shadow_real(i1,imsg,nval,val)
  real(SP)              :: nc_var(nval,1)
  character(schlen)     :: dim_names(2),VAR_NAME
  !
- !
  if(imsg==0) then
    VAR_ID  =4
    def_var=(of_nc_pos(VAR_ID,i1)==0)
@@ -82,11 +81,10 @@ end subroutine of_netcdf_shadow_real
 !
 subroutine of_netcdf_shadow_char(i1,nval,val)
  !
- use pars,     ONLY:SP,schlen
+ use pars,     ONLY:schlen
 #if defined _NC_OUTPUT
  use stderr,   ONLY:intc
  use com,      ONLY:of_nc_pos,of_nc_IDs,of_nc_var_names
- use netcdf,   ONLY:nf90_unlimited
  use IO_m,     ONLY:WR,NONE,io_control,io_variable_bulk,def_variable_bulk
 #endif
  !

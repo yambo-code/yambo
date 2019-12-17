@@ -217,7 +217,7 @@ subroutine warning(mesg)
  implicit none
  !
  character(*) :: mesg
- call msg('nr',STRING_pack('[WARNING] ',trim(mesg)))
+ call msg('r',STRING_pack('[WARNING] ',trim(mesg)))
  call LIVE_message(STRING_pack('[WARNING] ',trim(mesg)),"n","","%s")
  !
 end subroutine warning

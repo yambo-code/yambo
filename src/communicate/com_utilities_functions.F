@@ -50,7 +50,6 @@ logical function file_exists(name)
  !
 end function file_exists
 !
-!
 function composed_fmt(basic_fmt,n,USE_TABS,INDENT)
  !
  use pars,   ONLY:lchlen
@@ -84,7 +83,6 @@ function composed_fmt(basic_fmt,n,USE_TABS,INDENT)
  endif
  if (n<0) write (composed_fmt,'(a,i5.4,3a)') '(a,',iabs(n),'(',basic_fmt,',1x))'
 end function composed_fmt
-!
 !
 function filename(name)
  !

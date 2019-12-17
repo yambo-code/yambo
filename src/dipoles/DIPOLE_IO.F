@@ -97,8 +97,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  endif
  !
  if (check.or.io_err/=0) then
-   if (io_err/=0.and.     check) call warning(" DIPOLES database not correct or not present")
-   if (io_err/=0.and..not.check) call   error(" DIPOLES database not correct or not present")
+   if (io_err/=0.and.     check) call warning(" DIPOLES database not correct or missing")
+   if (io_err/=0.and..not.check) call   error(" DIPOLES database not correct or missing")
    return
  endif
  !

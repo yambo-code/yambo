@@ -27,7 +27,7 @@ integer function variables_DIPOLES(Dip,ID)
  use units,         ONLY:HA2EV
  use DIPOLES,       ONLY:DIPOLE_t
  use R_lattice,     ONLY:q0_def_norm
- use IO_m,          ONLY:io_variable_elemental,def_variable_elemental,io_status
+ use IO_m,          ONLY:io_variable_elemental,def_variable_elemental,io_status,io_elemental
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  !
  implicit none
@@ -56,24 +56,20 @@ integer function variables_DIPOLES(Dip,ID)
  call io_variable_elemental(ID,&
 &     VAR=" Field momentum norm    :",R0=q0_def_norm,CHECK=.true.,OP=(/"=="/))
  !
- !call def_variable_elemental(ID,"",0,0)
- !
  ! Character variables
  !
  call def_variable_elemental(ID,"APPROACH",1,0,0,par_io_kind="independent")
  call  io_variable_elemental(ID,VAR=" Approach used          :",CH0=Dip%approach,CHECK=.true.,OP=(/"=="/))
- !call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  call def_variable_elemental(ID,"KINDS",1,0,0,par_io_kind="independent")
  call  io_variable_elemental(ID,VAR=" Dipoles computed       :",CH0=Dip%computed,CHECK=.true.,OP=(/"<="/))
- !call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  ! Wavefunctions xc 
  !
  call def_variable_elemental(ID,'WAVE_FUNC_XC',1,0,0)
  call  io_variable_elemental(ID,DB_CH0=Dipole_WF_xc_string,CH0=loaded_WF_xc_string,&
 &     VAR=' Wavefunctions          :',CHECK=.true.,OP=(/"=="/))
- !call io_elemental(ID,VAR="",VAR_SZ=0)
+ call io_elemental(ID,VAR="",VAR_SZ=0)
  !
  variables_DIPOLES=io_status(ID)
  !

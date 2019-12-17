@@ -42,7 +42,7 @@ subroutine RT_start_and_restart(E,k,q)
  use QP_CTL_m,       ONLY:QP_ctl_user
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
- use RT_control,     ONLY:ID,NE_i_start_time,OBS_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,TIME_adjust
+ use RT_control,     ONLY:ID,NE_i_start_time,CARR_RT_IO_t,OBS_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,TIME_adjust
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,l_RT_is_WFfree, &
@@ -55,7 +55,7 @@ subroutine RT_start_and_restart(E,k,q)
 &                         l_velocity_gauge_corr
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
- use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE,DUMP
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
  use H_interfaces,   ONLY:V_real_space_to_H
@@ -133,7 +133,8 @@ subroutine RT_start_and_restart(E,k,q)
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
  io_OBS=io_RT_components('OBSERVABLES',ID(4))
- if (io_OBS==0) COM_=NONE
+ !if (io_OBS==0) COM_=NONE
+ !
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
  io_G=io_RT_components('G',ID(5))
  !
@@ -158,39 +159,36 @@ subroutine RT_start_and_restart(E,k,q)
  !
  if (RESTART) then
    !
-   ! I use G_lesser(:,:,:) to reconstruct everything
-   ! and I read NE_i_time from the databases. 
+   ! I read NE_i_time, NE_time and all infos on time status from section 2 of the databases. 
+   ! The important DB is the one of the Green function and it must be the only one with MODE=DUMP.
+   ! From it I reconstruct everything.
    !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=VERIFY,ID=ID(8))
-   io_REF=io_RT_components('REF',ID(8))
+   !call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID(8))
+   !io_REF=io_RT_components('REF',ID(8))
    !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5))
+   !call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID_OCCUPATIONS)
+   !io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
+   !
+   call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
-   io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
+   NE_i_start_time=NE_i_time
    !
-   if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
-     call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(7))
-     io_THETA=io_RT_components('THETA',ID(7))
-   endif
-   !
+   ! I use G_lesser(:,:,:) to reconstruct everything
    ! Note that the databases must be loaded at the RESTART time (NE_time)
    !
-   NE_i_time=nint(NE_time/RT_step)+1
-   !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
-   io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
+   !call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=VERIFY,ID=ID_OCCUPATIONS)
+   !io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
    !
 #if defined _PAR_IO
    !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2,RT_nk+1/),ID=ID(5))
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3,RT_nk+2/),MODE=VERIFY,ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
 #else
    !
    do ik=1,RT_nk
-     call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
+     call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+2/),MODE=VERIFY,ID=ID(5))
      io_G=io_RT_components('G',ID(5))
    enddo
    !
@@ -221,8 +219,6 @@ subroutine RT_start_and_restart(E,k,q)
    !
    if(.not.l_RT_CCA_Kernel) call RT_ELPH_zeroing()
    !
-   NE_i_start_time=NE_i_time
-   !
    ! Last thing to do is to update the planned time sampling time (if needed)
    !
    nt=RT_Lifetimes_evaluation_plan( )
@@ -235,12 +231,13 @@ subroutine RT_start_and_restart(E,k,q)
    call msg( 'nr','---RESTART report---')
    !
    call msg('s','[RESTART] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
-   call msg('r',  'Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
+   call msg('r',  'Number of steps done         [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
    call msg('r',  'Time step                     [fs]:',RT_dyn_step*AUT2FS)
    !
    call msg('r',  'dT Update Interval            [fs]:',NE_time_step_update_jump*AUT2FS)
    call msg('r',  'Lifetimes inter/intr times    [fs]:',RT_life_extrap_times*AUT2FS)
-   call msg('r',  'T between I/O of J,P,f        [fs]:',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  'T between I/O of J,P,M        [fs]:',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  '          I/O of carriers     [fs]:',CARR_RT_IO_t%INTERVAL_time*AUT2FS)
    call msg('r',  '          I/O of   GFs        [fs]:',GF_RT_IO_t%INTERVAL_time*AUT2FS)
    !
    OUTPUT_RT_IO_t%INTERVAL_time  = max(TIME_adjust(OUTPUT_RT_IO_t%INTERVAL_time,RT_dyn_step),RT_dyn_step)

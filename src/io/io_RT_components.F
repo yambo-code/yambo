@@ -35,7 +35,8 @@ integer function io_RT_components(what,ID)
 &                         manage_OP_IF_START_and_CL_IF_END,io_bulk,write_is_on
  use real_time,      ONLY:NE_i_time,RT_step,NE_steps,RT_nk, &
 &                         RT_carriers,RT_nbands,RT_all2ibz
- use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,IO_OBS_cache_steps
+ use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,IO_OBS_cache_steps,&
+&                         NE_i_start_time,SAVE_G_history
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
 #endif
@@ -82,6 +83,9 @@ integer function io_RT_components(what,ID)
  db_name="RT_"//trim(what)
  if (l_OBS)    db_name="RT_OBSERVABLES"
  if (l_REF)    db_name="RT_reference_components"
+ !
+ if (NE_i_start_time>1 .and. (l_OBS.or.l_carriers.or.(l_G.and.SAVE_G_history)).and.write_is_on(ID)) &
+&  db_name=trim(db_name)//"_restart"
  !
  db_type=2
  if (.not.any((/l_OBS,l_carriers,l_THETA,l_G,l_REF/))) then
@@ -144,33 +148,34 @@ integer function io_RT_components(what,ID)
      !
      if ( db_type==2 .or. (db_type==-3.and..not.l_real_time) ) call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_io")
      !
-     call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="def_io_variables")
-     !
    endif
    !
  endif
  !
  if (.not.any((/io_sec(ID,:)>1/))) goto 1
  !
+ if (l_G .or. l_THETA)  call io_fragment(ID,i_fragment=max(1,ik))
+ !
  ! 2nd SECTION
  !=============
- !
- if (l_G .or. l_THETA)  call io_fragment(ID,i_fragment=ik)
- !
- if(any((/l_OBS,l_G,l_carriers/))) then
-   io_RT_components=variables_dynamic_RT(ID,local_description)
-   if (io_RT_components/=0) goto 1
- endif
- !
+ if (any((/io_sec(ID,:)==2/))) then
+   !
+   if(any((/l_OBS,l_G,l_carriers/))) then
+     io_RT_components=variables_dynamic_RT(ID,local_description)
+     if (io_RT_components/=0) goto 1
+   endif
+   !
 #if defined _PAR_IO
- if(l_G)   call TIME_points_IO(ID,1,(NE_i_time==1),GF_RT_IO_t)
+   if(l_G)   call TIME_points_IO(ID,1,(NE_i_time==NE_i_start_time),GF_RT_IO_t)
 #else
- if(l_G)   call TIME_points_IO(ID,1,.true.,GF_RT_IO_t)
+   if(l_G)   call TIME_points_IO(ID,1,.true.,GF_RT_IO_t)
 #endif
- if(l_carriers .and. db_type==2 .or. (db_type==-3.and..not.l_real_time) ) &
- &         call TIME_points_IO(ID,1,(NE_i_time==1),CARR_RT_IO_t)
- !
- if(l_OBS) call TIME_points_IO(ID,max(1,mod(NE_i_time-2,IO_OBS_cache_steps)+1),(NE_i_time==1).or.read_is_on(ID),OBS_RT_IO_t)
+   if(l_carriers .and. db_type==2 .or. (db_type==-3.and..not.l_real_time) ) &
+   &         call TIME_points_IO(ID,1,(NE_i_time==NE_i_start_time),CARR_RT_IO_t)
+   !
+   if(l_OBS) call TIME_points_IO(ID,max(1,mod(NE_i_time-2,IO_OBS_cache_steps)+1),(NE_i_time==NE_i_start_time),OBS_RT_IO_t)
+   !
+ endif
  !
  if (.not.any((/io_sec(ID,:)>2/))) goto 1
  !
@@ -207,6 +212,8 @@ integer function io_RT_components(what,ID)
  ! Carrier components
  !====================
  if ( l_carriers) then
+   if (NE_i_time==NE_i_start_time.or.read_is_on(ID)) &
+   &  call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="def_io_variables")
    call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="do_io_variables")
    if (read_is_on(ID)) call RT_carriers_object(RT_carriers,WHAT="dump")
  endif
@@ -350,7 +357,7 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,TYP)
  !
  IPOS=TYP%N-VAR_SZ+1
  IO_LIM=(/TYP%N-VAR_SZ+1,TYP%N/)
- if(def_var) then
+ if(def_var.or.read_is_on(ID)) then
    dim_name="IO_TIME_n_points"
    call def_variable_bulk(ID,"IO_TIME_points",3,(/NF90_unlimited/),SP,dim_name)
    IPOS=1

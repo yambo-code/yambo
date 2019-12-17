@@ -26,7 +26,7 @@ subroutine RT_databases_IO(E)
  use drivers,        ONLY:l_elph_scatt
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
-&                         GF_RT_IO_t,CARR_RT_IO_t,IO_OBS_cache_steps
+&                         GF_RT_IO_t,CARR_RT_IO_t,IO_OBS_cache_steps,SAVE_G_history,NE_i_start_time
  use real_time,      ONLY:NE_i_time,NE_steps,l_NE_dynamics,RT_nk,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,l_NE_with_fields
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
@@ -55,7 +55,7 @@ subroutine RT_databases_IO(E)
    ! Cache the current and the polarization for future writing
    !
    i_time=max(1,mod(NE_i_time-2,IO_OBS_cache_steps)+1)
-   OBS_RT_IO_t%N=OBS_RT_IO_t%N+1
+   OBS_RT_IO_t%N=NE_i_time
    OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=NE_time
    !
    J_cache(1:3,i_time)=RT_ind_J
@@ -74,7 +74,7 @@ subroutine RT_databases_IO(E)
      !
      OBS_RT_IO_t%last_point=NE_i_time
      !
-     if(NE_i_time==1) then
+     if(NE_i_time==NE_i_start_time) then
        call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(4)) 
        io_OBS=io_RT_components('OBSERVABLES',ID(4))
      endif
@@ -92,12 +92,12 @@ subroutine RT_databases_IO(E)
  if (io_CARRIERs.and.RT_do_it('CARR')) then
    !
    CARR_RT_IO_t%last_point=NE_i_time
-   CARR_RT_IO_t%N=CARR_RT_IO_t%N+1
+   CARR_RT_IO_t%N=(NE_i_time-1)/CARR_RT_IO_t%INTERVAL_steps+1
    CARR_RT_IO_t%Time(CARR_RT_IO_t%N)=NE_time
    !
    call RT_carriers_object(RT_carriers,E,WHAT='fill')
    !
-   if(NE_i_time==1) then
+   if(NE_i_time==NE_i_start_time) then
      call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(6)) 
      io_carr=io_RT_components('carriers',ID(6))
    endif
@@ -110,11 +110,12 @@ subroutine RT_databases_IO(E)
  !====================
  if (io_GF.and.RT_do_it('G')) then
    !
-   GF_RT_IO_t%N=GF_RT_IO_t%N+1
+   if(.not.SAVE_G_history) GF_RT_IO_t%N=1
+   if(     SAVE_G_history) GF_RT_IO_t%N=(NE_i_time-1)/GF_RT_IO_t%INTERVAL_steps+1
    GF_RT_IO_t%Time(GF_RT_IO_t%N)=NE_time
    GF_RT_IO_t%last_point=NE_i_time
    !     
-   if(NE_i_time==1) then
+   if(NE_i_time==NE_i_start_time) then
      call io_control(ACTION=OP_WR_CL,COM=NONE, SEC=(/1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
    endif
@@ -181,7 +182,7 @@ subroutine RT_databases_IO(E)
        !
        call PP_redux_wait(THETA_matrix(:,:,:,ik))
        !
-       call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+2/),ID=ID(7))
+       call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(7))
        io_THETA=io_RT_components('THETA',ID(7))
        !
        call RT_ELPH_zeroing()

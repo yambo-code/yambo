@@ -29,7 +29,6 @@ subroutine p2y_pseudo(k)
  use pw_wfc_module
  !
  use pars,                  ONLY:SP,DP
- use com,                   ONLY:error
  use R_lattice,             ONLY:bz_samp,ng_vec
  use D_lattice,             ONLY:n_atomic_species
  use wave_func,             ONLY:wf_nc_k, wf_ncx, wf_igk, wf_ng

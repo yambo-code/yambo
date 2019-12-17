@@ -31,7 +31,6 @@ subroutine PARALLEL_global_Response_IO( )
  use IO_m,          ONLY:io_RESPONSE
  use parallel_m,    ONLY:n_CPU_str_max,CPU_structure,PARALLEL_CPU_role,PARALLEL_CPU_used,&
 &                       PARALLEL_n_structures_active
- use com,           ONLY:warning
  !
  implicit none
  !

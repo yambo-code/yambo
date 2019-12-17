@@ -29,7 +29,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! (21/11/13: for HYB_GGA the GGA part calculated => TO TEST) 
  !
  use pars,           ONLY:SP,DP,pi,RZERO
- use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol,alat
 #if defined _RT

@@ -28,7 +28,6 @@ subroutine XC_nlcc_setup()
  ! all the quantities needed to evaluate E_xc and V_xc 
  !
  use pars,          ONLY:DP
- use com,           ONLY:error
  use D_lattice,     ONLY:DL_vol
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
 #if defined _FFTW

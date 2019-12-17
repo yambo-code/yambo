@@ -1869,7 +1869,6 @@ subroutine dp_memcpy_h2d_r3d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3
 #if defined(__CUDA)
     attributes(device) :: array_out
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld
@@ -1935,7 +1934,6 @@ subroutine dp_memcpy_h2d_r4d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
 #if defined(__CUDA)
     attributes(device) :: array_out
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld
@@ -2101,7 +2099,6 @@ subroutine dp_memcpy_h2d_c3d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3
 #if defined(__CUDA)
     attributes(device) :: array_out
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld
@@ -2167,7 +2164,6 @@ subroutine dp_memcpy_h2d_c4d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
 #if defined(__CUDA)
     attributes(device) :: array_out
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld
@@ -2333,7 +2329,6 @@ subroutine sp_memcpy_h2d_r3d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3
 #if defined(__CUDA)
     attributes(device) :: array_out
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld
@@ -2399,7 +2394,6 @@ subroutine sp_memcpy_h2d_r4d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
 #if defined(__CUDA)
     attributes(device) :: array_out
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld
@@ -2565,7 +2559,6 @@ subroutine sp_memcpy_h2d_c3d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3
 #if defined(__CUDA)
     attributes(device) :: array_out
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld
@@ -2631,7 +2624,6 @@ subroutine sp_memcpy_h2d_c4d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
 #if defined(__CUDA)
     attributes(device) :: array_out
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld
@@ -2800,7 +2792,6 @@ subroutine dp_memcpy_d2h_r3d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3
 #if defined(__CUDA)
     attributes(device) :: array_in
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld
@@ -2865,7 +2856,6 @@ subroutine dp_memcpy_d2h_r4d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
 #if defined(__CUDA)
     attributes(device) :: array_in
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld
@@ -3030,7 +3020,6 @@ subroutine dp_memcpy_d2h_c3d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3
 #if defined(__CUDA)
     attributes(device) :: array_in
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld
@@ -3095,7 +3084,6 @@ subroutine dp_memcpy_d2h_c4d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
 #if defined(__CUDA)
     attributes(device) :: array_in
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld
@@ -3260,7 +3248,6 @@ subroutine sp_memcpy_d2h_r3d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3
 #if defined(__CUDA)
     attributes(device) :: array_in
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld
@@ -3325,7 +3312,6 @@ subroutine sp_memcpy_d2h_r4d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
 #if defined(__CUDA)
     attributes(device) :: array_in
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld
@@ -3490,7 +3476,6 @@ subroutine sp_memcpy_d2h_c3d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3
 #if defined(__CUDA)
     attributes(device) :: array_in
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld
@@ -3555,7 +3540,6 @@ subroutine sp_memcpy_d2h_c4d(array_out, array_in, &
     integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
 #if defined(__CUDA)
     attributes(device) :: array_in
-    integer :: ierr
 #endif
     !
     integer :: d1_start, d1_end, d1_size, d1_ld

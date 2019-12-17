@@ -4,10 +4,14 @@
 include ./package.list
 WGETFLAGS=--no-check-certificate
 #
-all: $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) $(tarball_lapack) \
-     $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe)
+all: $(tarball_futile) $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) \
+     $(tarball_lapack) $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe) $(tarball_yaml)
 
 #
+$(tarball_yaml):
+	@+TARBALL="$(tarball_yaml)"     ; URL="$(url_yaml)"     ; LIB="YAML"; $(getsrc)
+$(tarball_futile):
+	@+TARBALL="$(tarball_futile)"   ; URL="$(url_futile)"   ; LIB="FUTILE"; $(getsrc)
 $(tarball_iotk): 
 	@+TARBALL="$(tarball_iotk)"     ; URL="$(url_iotk)"     ; LIB="IOTK"; $(getsrc)
 $(tarball_hdf5):

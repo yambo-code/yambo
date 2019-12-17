@@ -24,7 +24,7 @@
 subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !
  use pars,                ONLY:SP
- use com,                 ONLY:msg,warning
+ use com,                 ONLY:msg
  use parser_m,            ONLY:parser
  use matrix_operate,      ONLY:m3det
  use stderr,              ONLY:intc,set_real_printed_length

@@ -25,7 +25,6 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  !
  use parallel_m, ONLY:PP_redux_wait,PP_indexes,ncpu,myid,p_prod,mpi_comm_world,&
 &                     MPI_comm,comm_default_value
- use com,        ONLY:error,warning
  use stderr,     ONLY:intc
 #include<memory.h>
  !

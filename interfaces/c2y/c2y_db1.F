@@ -24,7 +24,7 @@
 subroutine c2y_db1(en,k,file_name_)
  !
  use pars,                  ONLY: DP,pi
- use com,                   ONLY: msg,warning
+ use com,                   ONLY: msg
  use electrons,             ONLY: levels, default_nel,n_bands,n_spin,n_sp_pol,&
 &                                 n_spinor 
  use vec_operate,           ONLY: define_b_and_DL_vol

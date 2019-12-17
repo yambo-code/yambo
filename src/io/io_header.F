@@ -29,7 +29,6 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  use X_m,           ONLY:global_gauge 
  use drivers,       ONLY:list_dbs
  use C_driver,      ONLY:code_version,code_revision,code_GPL_revision
- use com,           ONLY:warning
  use stderr,        ONLY:STRING_split
  use D_lattice,     ONLY:Tel,alat,input_Tel_is_negative,Bose_Temp
  use electrons,     ONLY:n_sp_pol,n_spinor

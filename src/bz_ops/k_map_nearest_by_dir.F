@@ -27,7 +27,7 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  !  
  use pars,           ONLY:SP,zero_dfl,schlen
  use R_lattice,      ONLY:bz_samp,bz_map,WF_shifts
- use com,            ONLY:msg,error
+ use com,            ONLY:msg
  use pars,           ONLY:zero_dfl
  !
 #include<memory.h>

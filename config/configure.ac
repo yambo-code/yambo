@@ -1,8 +1,8 @@
 #
-#        Copyright (C) 2000-2018 the YAMBO team
+#        Copyright (C) 2000-2019 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM
+# Authors (see AUTHORS file for details): AM, DS
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -235,6 +235,7 @@ m4_include([config/lapack.m4])
 m4_include([config/netcdf_f90.m4])
 m4_include([config/libxc.m4])
 m4_include([config/fft.m4])
+m4_include([config/futile.m4])
 m4_include([config/iotk.m4])
 m4_include([config/etsf_io.m4])
 m4_include([config/scalapack.m4])
@@ -260,6 +261,9 @@ AC_SLK_SETUP
 # ============================================================================
 # NETCDF 
 AC_HAVE_NETCDF_F90
+# ============================================================================
+# FUTILE library 
+AC_HAVE_FUTILE
 # ============================================================================
 # IOTK library 
 AC_HAVE_IOTK

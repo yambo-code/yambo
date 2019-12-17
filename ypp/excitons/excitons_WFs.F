@@ -23,13 +23,13 @@
 !
 subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
- use pars,          ONLY:SP,cZERO,cI,pi
+ use pars,          ONLY:SP,cZERO,pi
  use R_lattice,     ONLY:bz_samp,qindx_X
  use units,         ONLY:BO2ANG
  use stderr,        ONLY:intc
  use D_lattice,     ONLY:a,alat
  use FFT_m,         ONLY:fft_dim
- use com,           ONLY:msg,warning,of_open_close,error
+ use com,           ONLY:msg,of_open_close
  use electrons,     ONLY:spin,n_spinor
  use YPPm,          ONLY:v2plot,ncell,r_hole,l_free_hole,&
 &                        nr,nr_tot,output_fname,&

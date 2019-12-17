@@ -40,7 +40,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  use drivers,       ONLY:l_elel_scatt,l_use_collisions,l_use_Hxc_collisions,&
 &                        l_use_COH_collisions,l_elphoton_scatt,l_real_time,l_sc_run
- use com,           ONLY:error
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev

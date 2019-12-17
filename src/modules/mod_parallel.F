@@ -470,8 +470,10 @@ module parallel_m
    !
    subroutine PAR_build_index(PAR_ind,N_elements,V_ind,n_V_ind)
      !
-     integer           ::N_elements,n_V_ind,V_ind(N_elements),i_p
-     type(PP_indexes)  ::PAR_ind
+     type(PP_indexes), intent(in)   :: PAR_ind
+     integer,          intent(in)   :: N_elements
+     integer,          intent(out)  :: n_V_ind,V_ind(N_elements)
+     integer                        :: i_p
      !
      V_ind  =0
      n_V_ind=0

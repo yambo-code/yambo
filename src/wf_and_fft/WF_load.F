@@ -26,7 +26,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  ! Load and (eventually) FFTs the wavefunctions
  !
  use pars,          ONLY:SP,DP,schlen
- use com,           ONLY:msg,error,core_io_path
+ use com,           ONLY:msg,core_io_path
  use vec_operate,   ONLY:c2a
  use stderr,        ONLY:intc
  use electrons,     ONLY:nel,n_spinor,n_sp_pol
@@ -48,7 +48,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 &                        DUMP,IO_and_Messaging_switch
  use wrapper,       ONLY:Vstar_dot_V
 #if defined _SC
- use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB,SC_bands
  use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_perturbation,global_XC_string,G_WF_xc_string,&
 &                        X_WF_xc_string,K_WF_xc_string,Dipole_WF_xc_string,loaded_WF_xc_string
@@ -235,12 +234,23 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  call load_SC_components('check_WF_DB',n_bands=bands_to_load(2))
  !
- if (found_SC_DB.and.compatible_SC_DB.and..not.force_WFo_) then
+ if (found_SC_DB.and.compatible_SC_DB) then
    !
-   if(allocated(states_to_load).and..not.all(states_to_load)) then
+   if(allocated(states_to_load).and..not.force_WFo_) then
      YAMBO_FREE(states_to_load)
      call warning(' [WF'//trim(wf_title)//'] WF-distribution turned off, not compatible with SC wave functions')
    endif
+   !
+   if (any ( WF%b/=(/1,SC_bands(2)/) )) then 
+     call warning(' [WF'//trim(wf_title)//'] Forced '//trim(intc(SC_bands(2)))//' bands to be loaded')
+     if(allocated(states_to_load)) states_to_load(WF%b(2)+1:SC_bands(2),:,:)=.TRUE.
+   endif
+   WF%b=(/1,SC_bands(2)/)
+   !
+ else if (found_SC_DB.and..not.compatible_SC_DB) then
+   !
+   call error(' [WF'//trim(wf_title)//'] Too many bands required ('//&
+&             trim(intc(bands_to_load(2)))//'). Only '//trim(intc(SC_bands(2)))//' available.')
    !
  endif
  !
@@ -281,6 +291,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  endif
  !
  if (WF%space=='R'.and..not.(QUIET_alloc.or.QUIET_free)) call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
+
  !
  ! actual IO
  !
@@ -527,20 +538,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    call load_SC_components('WF',COM_=NONE,MODE_=DUMP,kind=WF_kind,xc_functional=WF_xc_functional,&
 &                          perturbation=WF_perturbation)
    !
-   call msg('rns','[WF'//trim(wf_title)//' loader] '//&
-&                             trim(global_XC_string(WF_kind,WF_xc_functional,WF_perturbation))//&
-&                             ' WFs loaded. Bands range',SC_bands)
-   !
-   ! Kind trasnfer
-   !
-   G_WF_xc_string     =loaded_WF_xc_string
-   X_WF_xc_string     =loaded_WF_xc_string
-   K_WF_xc_string     =loaded_WF_xc_string
-   Dipole_WF_xc_string=loaded_WF_xc_string
+   call msg('rns','[WF'//trim(wf_title)//' loader] '//trim(global_XC_string(WF_kind,WF_xc_functional,WF_perturbation))//&
+&                             ' wavefunctions loaded')
    !
    if (WF%space=='R') wf_grid_size=fft_size
    if (WF%space=='G') wf_grid_size=wf_ng
-   !
    do i_sp_pol=WF%sp_pol(1),WF%sp_pol(2)
      do ikibz=WF%k(1),WF%k(2)
        call WF_rotate(ikibz,i_sp_pol,wf,wf_grid_size)

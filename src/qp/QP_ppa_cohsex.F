@@ -31,7 +31,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg,error
+ use com,           ONLY:msg
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,l_rt_carriers_in_use
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_IND_Q_ID,PAR_IND_QP_ID,&
@@ -97,9 +97,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #endif
  integer,     external ::io_X
  complex(SP), external ::QP_ppa_EET_terminator
- !
- ! ... degeneration finder
- !
  !
  ! Reset & checks
  !
@@ -615,13 +612,24 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call live_timing()
  !
  ! AM, Sept 2019. The COH potential seems to break (in some case of a large amount) the
- ! energy degenerations. 
+ ! energy degenerations. Short cut here is to symmetrize the QP_Sc if COH is included
  !
- if (.not.l_sc_run.and..not.l_rt_carriers_in_use) then
-   do i_w=1,QP_dSc_steps
-     if (i_w==1) call QP_states_simmetrize(E,what="COHSEX Sc",V_complex=QP_Sc(:,1),warn_me=.TRUE.)
-     if (i_w> 1) call QP_states_simmetrize(E,V_complex=QP_Sc(:,i_w))
+ if (((l_sc_srpa.or.l_sc_coh.or.l_cohsex).and..not.COHSEX_use_empties).or.l_GW_terminator) then
+   !
+   call degeneration_finder(qp%E_bare,qp%n_states,first_el,n_of_el,n_deg_grp,1.E-10_SP)
+   !
+   do ig1=1,n_deg_grp
+     !
+     dc(1)=0._SP
+     do i_c=1,2
+       do i_qp=first_el(ig1),first_el(ig1)+n_of_el(ig1)-1
+         if (i_c==1) dc(1)=dc(1)+QP_Sc(i_qp,1)/real(n_of_el(ig1), kind=SP)
+         if (i_c==2) QP_Sc(i_qp,1)=dc(1)
+       enddo
+     enddo
+     !
    enddo
+   !
  endif
  !
  ! CLEAN

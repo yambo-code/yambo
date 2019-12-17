@@ -27,7 +27,6 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use stderr,       ONLY:intc
  use frequency,    ONLY:w_samp
  use drivers,      ONLY:l_td_hf
- use com,          ONLY:warning
  use collision_el, ONLY:elemental_collision,elemental_collision_free
  use R_lattice,    ONLY:bz_samp,RIM_qpg,RIM_anisotropy
  use D_lattice,    ONLY:i_time_rev,i_space_inv

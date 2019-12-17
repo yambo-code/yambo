@@ -24,7 +24,6 @@
 subroutine G_rot_grid(is,call_kind)
  !
  use pars,         ONLY:SP
- use com,          ONLY:error
  use R_lattice,    ONLY:ng_vec,ng_closed,g_vec,minus_G
  use D_lattice,    ONLY:dl_sop,alat
  use zeros,        ONLY:G_iku_zero

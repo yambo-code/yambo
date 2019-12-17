@@ -56,7 +56,6 @@ module POL_FIT_m
    subroutine POL_LK_fit(N,X,Y,order,Tt,EPS,t_zero)
     !
     use pars,       ONLY:SP
-    use com,        ONLY:error
     use functions,  ONLY:NAN
     !
     implicit none

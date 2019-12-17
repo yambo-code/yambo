@@ -49,8 +49,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use wrapper,       ONLY:Vstar_dot_V
 #if defined _SC
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB,SC_bands
- use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_perturbation,global_XC_string,G_WF_xc_string,&
-&                        X_WF_xc_string,K_WF_xc_string,Dipole_WF_xc_string,loaded_WF_xc_string
+ use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_perturbation,global_XC_string,&
+&                        loaded_WF_xc_string
 #endif
  use pseudo,        ONLY:pp_is_uspp,becp
  use qe_pseudo_m,   ONLY:vkb,tpiba

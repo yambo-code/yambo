@@ -29,7 +29,6 @@ subroutine QP_states_simmetrize(en,what,V_real,V_complex,state_is_2do,warn_me)
  use vec_operate,   ONLY:sort,degeneration_finder
  use electrons,     ONLY:levels
  use stderr,        ONLY:real2ch,intc
- use com,           ONLY:warning
  !
  implicit none
  !

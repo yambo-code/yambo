@@ -47,15 +47,10 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Work Space
  !
- logical          :: l_flag
- !
+ logical              :: l_flag
  integer ,allocatable :: BS_E_degs(:)
- !
  !... I/0
- !
- integer, external ::io_BS
- !
- integer                  ::iq
+ integer              :: iq
  !
  call section('*','Excitonic Properties @ Q-index #'//trim(intc(BSiq)))
  !

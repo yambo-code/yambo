@@ -46,11 +46,6 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  ! Workspace
  !
  real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),E_IP
- logical  :: l_current_needed
- !
- l_current_needed = RT_do_it('OUT') .or. RT_do_it('OBS') .or. l_P_integrating_J .or. l_RT_induced_field
- !
- if (.not. l_current_needed ) return
  !
  call timing('RT observables',OPR='start')
  !

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM CA
+! Authors (see AUTHORS file for details): AM CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -29,7 +29,7 @@ subroutine RT_X_LRR_real_field(en)
  !
  use YPP_real_time,  ONLY:RT_conf,Use_FFT,l_force_min_damp,RT_time,Pol,ElField,FT_free
  use pars,           ONLY:SP,pi,cI,cZERO
- use units,          ONLY:HA2EV
+ use units,          ONLY:HA2EV,FS2AUT
  use electrons,      ONLY:levels
  use vec_operate,    ONLY:v_norm
  use RT_control,     ONLY:RT_output
@@ -103,7 +103,6 @@ subroutine RT_X_LRR_real_field(en)
  !
  iE_err=-1
  if (n_fields==1) then
-   iE_err=0
    do i_w = 1, RT_conf%W_n_steps
      !
      if(trim(RT_conf%damping) /= "NONE")                      Field_freq=ElField%W(i_w)-cI*RT_conf%damp_factor

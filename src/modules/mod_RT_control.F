@@ -29,7 +29,8 @@ module RT_control
  !
 #include<memory.h>
  !
- integer                  :: n_RT_descriptions = 0
+ integer                  :: n_RT_descriptions        = 0
+ integer                  :: n_RT_descriptions_static = 0
  character(lchlen)        :: RT_description(100)
  !
  integer                  :: n_TIME_STEP_CONF_descriptions = 0
@@ -112,16 +113,15 @@ module RT_control
  !
  contains
    !
-   subroutine RT_control_alloc(FORCE)
+   subroutine RT_control_alloc(what)
      !
      use pars,           ONLY:cZERO,rZERO
      use real_time,      ONLY:NE_steps
      use electrons,      ONLY:n_spin
-     use ELPH,           ONLY:ph_modes
      !
-     logical :: FORCE
+     character(*), intent(in) :: what
      !
-     if(l_NE_dynamics.or.FORCE) then
+     if(trim(what)=="cache" .or. trim(what)=="both") then
        !
        YAMBO_ALLOC(J_cache,(3,IO_OBS_cache_steps))
        J_cache=cZERO
@@ -140,33 +140,37 @@ module RT_control
        !
      endif
      !
-     YAMBO_FREE(OBS_RT_IO_t%Time)
-     !
-     YAMBO_ALLOC(OBS_RT_IO_t%Time,(NE_steps))
-     OBS_RT_IO_t%Time=rZERO
-     !
-     YAMBO_FREE(CARR_RT_IO_t%Time)
-     !
-     YAMBO_ALLOC(CARR_RT_IO_t%Time,(NE_steps))
-     CARR_RT_IO_t%Time=rZERO
-     !
-     YAMBO_FREE(GF_RT_IO_t%Time)
-     !
-     YAMBO_ALLOC(GF_RT_IO_t%Time,(NE_steps))
-     GF_RT_IO_t%Time=rZERO
+     if(trim(what)=="times" .or. trim(what)=="both") then
+       !
+       YAMBO_ALLOC(OBS_RT_IO_t%Time,(NE_steps))
+       OBS_RT_IO_t%Time=rZERO
+       !
+       YAMBO_ALLOC(CARR_RT_IO_t%Time,(NE_steps))
+       CARR_RT_IO_t%Time=rZERO
+       !
+       YAMBO_ALLOC(GF_RT_IO_t%Time,(NE_steps))
+       GF_RT_IO_t%Time=rZERO
+       !
+     endif
      !
    end subroutine RT_control_alloc
    !
-   subroutine RT_control_free
+   subroutine RT_control_free(what)
      !
-     YAMBO_FREE(J_cache)
-     YAMBO_FREE(P_cache)
-     YAMBO_FREE(Ms_cache)
-     YAMBO_FREE(Ml_cache)
-     YAMBO_FREE(A_cache)
-     YAMBO_FREE(OBS_RT_IO_t%Time)
-     YAMBO_FREE(CARR_RT_IO_t%Time)
-     YAMBO_FREE(GF_RT_IO_t%Time)
+     character(*), intent(in) :: what
+     !
+     if(trim(what)=="cache" .or. trim(what)=="both") then
+       YAMBO_FREE(J_cache)
+       YAMBO_FREE(P_cache)
+       YAMBO_FREE(Ms_cache)
+       YAMBO_FREE(Ml_cache)
+       YAMBO_FREE(A_cache)
+     endif
+     if(trim(what)=="times" .or. trim(what)=="both") then
+       YAMBO_FREE(OBS_RT_IO_t%Time)
+       YAMBO_FREE(CARR_RT_IO_t%Time)
+       YAMBO_FREE(GF_RT_IO_t%Time)
+     endif
      !
    end subroutine RT_control_free
    !

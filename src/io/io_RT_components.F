@@ -35,7 +35,7 @@ integer function io_RT_components(what,ID)
 &                         manage_OP_IF_START_and_CL_IF_END,io_bulk,write_is_on
  use real_time,      ONLY:NE_i_time,RT_step,NE_steps,RT_nk, &
 &                         RT_carriers,RT_nbands,RT_all2ibz
- use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t
+ use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,IO_OBS_cache_steps
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
 #endif
@@ -49,9 +49,12 @@ integer function io_RT_components(what,ID)
  integer,      intent(in) :: ID
  character(*), intent(in) :: what
  !
+ integer, external     :: variables_dynamic_RT
+ !
  ! Work Space
  !
  character(lchlen)     :: db_name
+ character(lchlen)     :: local_description(100)
  !
 #if defined _PAR_IO
  integer               :: k_range(2),local_COMM
@@ -88,7 +91,7 @@ integer function io_RT_components(what,ID)
  endif
  !
  par_IO=.false.
- if (l_THETA.or.l_G) ik = maxval(io_sec(ID,:))-1
+ if (l_THETA.or.l_G) ik = maxval(io_sec(ID,:))-2
 #if defined _PAR_IO
  if (l_G) then
    if (write_is_on(ID)) local_COMM=PAR_COM_Xk_ibz_INDEX%COMM
@@ -149,8 +152,32 @@ integer function io_RT_components(what,ID)
  !
  if (.not.any((/io_sec(ID,:)>1/))) goto 1
  !
+ ! 2nd SECTION
+ !=============
+ !
+ if (l_G .or. l_THETA)  call io_fragment(ID,i_fragment=ik)
+ !
+ if(any((/l_OBS,l_G,l_carriers/))) then
+   io_RT_components=variables_dynamic_RT(ID,local_description)
+   if (io_RT_components/=0) goto 1
+ endif
+ !
+#if defined _PAR_IO
+ if(l_G)   call TIME_points_IO(ID,1,(NE_i_time==1),GF_RT_IO_t)
+#else
+ if(l_G)   call TIME_points_IO(ID,1,.true.,GF_RT_IO_t)
+#endif
+ if(l_carriers .and. db_type==2 .or. (db_type==-3.and..not.l_real_time) ) &
+ &         call TIME_points_IO(ID,1,(NE_i_time==1),CARR_RT_IO_t)
+ !
+ if(l_OBS) call TIME_points_IO(ID,max(1,mod(NE_i_time-2,IO_OBS_cache_steps)+1),(NE_i_time==1).or.read_is_on(ID),OBS_RT_IO_t)
+ !
+ if (.not.any((/io_sec(ID,:)>2/))) goto 1
+ !
+ ! 3rd SECTION
+ !=============
+ !
  ! === no K no Time ===
- !#####################
  !
  ! GPL_EXCLUDE_START
  !
@@ -159,14 +186,12 @@ integer function io_RT_components(what,ID)
  if ( l_REF ) call Reference_IO(ID)
  !
  ! === K-dependent ===
- !####################
  !
 #if defined _ELPH
  !
  ! ELPH Kernel THETA Matrix 
  !==========================
  if ( l_THETA ) then
-   call io_fragment(ID,i_fragment=ik)
    call io_bulk(ID,VAR="RT_THETA_K"//trim(intc(ik)),VAR_SZ=(/2,2*nqbz*ph_modes,RT_nbands,RT_nbands/))
    call io_bulk(ID,C3=THETA_matrix(:,:,:,ik))
  endif
@@ -178,15 +203,12 @@ integer function io_RT_components(what,ID)
  if ( l_G ) call G_lesser_IO(ID)
  !
  ! === Time-dependent ===
- !#######################
  !
  ! Carrier components
  !====================
  if ( l_carriers) then
    call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="do_io_variables")
    if (read_is_on(ID)) call RT_carriers_object(RT_carriers,WHAT="dump")
-   if ( db_type==2 .or. (db_type==-3.and..not.l_real_time) ) &
-   &  call TIME_points_IO(ID,(/13,14,15/),1,(NE_i_time==1),CARR_RT_IO_t)
  endif
  !
  ! GPL_EXCLUDE_END
@@ -221,7 +243,7 @@ subroutine RT_header(ID,what,db_type,l_carriers,l_OBS,l_G,l_THETA,l_REF,io_RT_co
  logical, intent(in)      :: l_carriers,l_OBS,l_G,l_THETA,l_REF
  integer, intent(out)     :: io_RT_components
  !
- integer, external     :: variables_RT
+ integer, external     :: variables_static_RT
  !
  character(lchlen)     :: local_description(100)
  character(schlen)     :: what_
@@ -238,7 +260,7 @@ subroutine RT_header(ID,what,db_type,l_carriers,l_OBS,l_G,l_THETA,l_REF,io_RT_co
    io_RT_components=io_header(ID,IMPOSE_SN=(.not.l_carriers),CUTOFF=.true.,T_EL=.true.,FRAG=frag_RT)
    if (io_RT_components/=0) return
    !
-   io_RT_components=variables_RT(ID,local_description,trim(what_))
+   io_RT_components=variables_static_RT(ID,local_description,trim(what_))
    if (io_RT_components/=0) return
    !
  endif
@@ -289,48 +311,54 @@ end subroutine RT_header
 ! Time Points
 !=============
 !
-subroutine TIME_points_IO(ID,VAR_ID,VAR_SZ,def_var,TYP)
+subroutine TIME_points_IO(ID,VAR_SZ,def_var,TYP)
  !
  use pars,           ONLY:IP,SP,schlen
- use RT_control,     ONLY:RT_IO_t
+ use units,          ONLY:AUT2FS
+ use RT_control,     ONLY:RT_IO_t,RT_description,n_RT_descriptions
  use real_time,      ONLY:NE_steps
- use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,NF90_unlimited,&
+ use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental,&
+&                         NF90_unlimited,&
 &                         write_is_on,read_is_on
  !
 #include<memory.h>
  !
- integer,       intent(in)    :: ID,VAR_ID(3),VAR_SZ
+ integer,       intent(in)    :: ID,VAR_SZ
  logical,       intent(in)    :: def_var
  type(RT_IO_t), intent(inout) :: TYP
  !
- integer                      :: IPOS(1),IO_LIM(2),TIME_PARAMS(3)
+ integer                      :: IPOS(1),IO_LIM(2)
  character(schlen)            :: dim_name(1)
  !
- if(def_var) call def_variable_bulk(ID,"IO_TIME_steps_last_nsteps",VAR_ID(1),(/3/),IP+100) 
- TIME_PARAMS=(/TYP%INTERVAL_steps,TYP%last_point,TYP%N/)
- call io_variable_bulk(ID,VAR_ID(1),I1=TIME_PARAMS)
- TYP%INTERVAL_steps=TIME_PARAMS(1)
- TYP%last_point    =TIME_PARAMS(2)
- TYP%N             =TIME_PARAMS(3)
+ ! ... for RESTART purposes...
+ call def_variable_elemental(ID,"IO_TIMEs",2,SP,0) 
+ call io_variable_elemental(ID,VAR=" [RT] I/O time          (input) [fs]:",&
+                      R0=TYP%INTERVAL_time_SAVE,CHECK=.TRUE.,OP=(/"=="/),  &
+&                     DESCRIPTION=RT_description(n_RT_descriptions),UNIT=AUT2FS)
+ call io_variable_elemental(ID,VAR=" [RT] I/O time            (now) [fs]:",&
+                      R0=TYP%INTERVAL_time     ,CHECK=.FALSE.,             &
+&                     DESCRIPTION=RT_description(n_RT_descriptions),UNIT=AUT2FS)
  !
- if(def_var) call def_variable_bulk(ID,"IO_TIME_NOW",VAR_ID(2),(/1/),SP) 
- call io_variable_bulk(ID,VAR_ID(2),R0=TYP%INTERVAL_time)
+ call def_variable_elemental(ID,"IO_TIME_steps_last_nsteps",3,IP+100,0) 
+ call io_variable_elemental(ID,I0=TYP%INTERVAL_steps)
+ call io_variable_elemental(ID,I0=TYP%last_point)
+ call io_variable_elemental(ID,I0=TYP%N)
  !
  if (.not.allocated(TYP%Time)) then
    YAMBO_ALLOC(TYP%Time,(NE_steps))
  endif
  !
- IPOS=TYP%N
+ IPOS=TYP%N-VAR_SZ+1
  IO_LIM=(/TYP%N-VAR_SZ+1,TYP%N/)
  if(def_var) then
    dim_name="IO_TIME_n_points"
-   call def_variable_bulk(ID,"IO_TIME_points",VAR_ID(3),(/NF90_unlimited/),SP,dim_name)
-   IPOS=IPOS-TYP%N+1
+   call def_variable_bulk(ID,"IO_TIME_points",3,(/NF90_unlimited/),SP,dim_name)
+   IPOS=1
    IO_LIM=(/1,1/)
  endif
  !
- if(write_is_on(ID)) call io_variable_bulk(ID,VAR_ID(3),R1=TYP%Time(IO_LIM(1):IO_LIM(2)),IPOS=IPOS)
- if( read_is_on(ID)) call io_variable_bulk(ID,VAR_ID(3),R1=TYP%Time(:TYP%N))
+ if(write_is_on(ID)) call io_variable_bulk(ID,3,R1=TYP%Time(IO_LIM(1):IO_LIM(2)),IPOS=IPOS)
+ if( read_is_on(ID)) call io_variable_bulk(ID,3,R1=TYP%Time(:TYP%N))
  !
 end subroutine TIME_points_IO
 !
@@ -343,7 +371,7 @@ subroutine G_lesser_IO(ID)
  use pars,           ONLY:SP,schlen
  use stderr,         ONLY:intc
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,&
-&                         variable_exist,write_is_on,io_fragment,io_sec
+&                         variable_exist,write_is_on,io_sec
  use hamiltonian,    ONLY:H_rotation
  use RT_control,     ONLY:GF_RT_IO_t,SAVE_G_history,TIME_string
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_nbands,RT_nk,l_RT_rotate_DM,&
@@ -354,10 +382,10 @@ subroutine G_lesser_IO(ID)
  integer, intent(in)  :: ID
  !
  integer           :: ik,i_spin,i_memory,i_time
- integer           :: VAR_SZ(5),IPOS(5)
+ integer           :: VAR_SZ(5)
  character(schlen) :: dim_names(5),var_name
 #if defined _PAR_IO
- integer           :: k_range(2)
+ integer           :: k_range(2),IPOS(5)
 #endif
  !
  i_spin=1
@@ -371,45 +399,41 @@ subroutine G_lesser_IO(ID)
  l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,"H_rotation").or.write_is_on(ID)) )
  !
  if(NE_i_time==1) then
-   call def_variable_bulk(ID,"dG_lesser", 1,VAR_sz,SP,dim_names=dim_names,par_io_kind='independent')
-   if(l_H_rot) call def_variable_bulk(ID,"H_rotation",2,VAR_sz(1:4),SP,dim_names=dim_names(1:4),par_io_kind='independent')
+   call def_variable_bulk(ID,"dG_lesser", 4,VAR_sz,SP,dim_names=dim_names,par_io_kind='independent')
+   if(l_H_rot) call def_variable_bulk(ID,"H_rotation",5,VAR_sz(1:4),SP,dim_names=dim_names(1:4),par_io_kind='independent')
  endif
  !
- k_range(1)=io_sec(ID,1)-1
- k_range(2)=io_sec(ID,2)-1
+ k_range(1)=io_sec(ID,1)-2
+ k_range(2)=io_sec(ID,2)-2
  IPOS(1:4)=(/1,1,1,k_range(1)/)
  if(.not.SAVE_G_history) IPOS(5)=1
  if(     SAVE_G_history) IPOS(5)=((NE_i_time-1)/GF_RT_IO_t%N*G_MEM_steps+1)
- call io_variable_bulk(ID,1,C4=dG_lesser(:,:,k_range(1):k_range(2),:),IPOS=IPOS)
- if(l_H_rot) io_variable_bulk(ID,2,C3=H_rotation(:,:,k_range(1):k_range(2),i_spin),IPOS=IPOS(1:4)/))
- !
- call TIME_points_IO(ID,(/3,4,5/),1,(NE_i_time==1),GF_RT_IO_t)
+ call io_variable_bulk(ID,4,C4=dG_lesser(:,:,k_range(1):k_range(2),:),IPOS=IPOS)
+ if(l_H_rot) io_variable_bulk(ID,5,C3=H_rotation(:,:,k_range(1):k_range(2),i_spin),IPOS=IPOS(1:4)/))
  !
 #else
  !
  if(SAVE_G_history) call error(" G history can be saved only with parallel IO")
  !
  ik = maxval(io_sec(ID,:))-1
- call io_fragment(ID,i_fragment=ik)
  !
+ i_time=NE_i_time-G_MEM_steps
  do i_memory=1,G_MEM_steps
    !
    i_time=NE_i_time-G_MEM_steps+i_memory
    if(i_time<=0) cycle
    !
    var_name="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_TIME"//trim(TIME_string( (i_time-1)*RT_step ))
-   call def_variable_bulk(ID,trim(var_name),i_memory,(/2,RT_nbands,RT_nbands/),SP)
-   call  io_variable_bulk(ID,i_memory,C2=dG_lesser(:,:,ik,i_memory))
+   call def_variable_bulk(ID,trim(var_name),i_memory+3,(/2,RT_nbands,RT_nbands/),SP)
+   call  io_variable_bulk(ID,i_memory+3,C2=dG_lesser(:,:,ik,i_memory))
    !
  enddo
  !
  var_name="H_rotation_TIME"//trim(TIME_string( (i_time-1)*RT_step ))
  if ( l_RT_rotate_DM .and. (variable_exist(ID,trim(var_name)).or.write_is_on(ID)) ) then
-   call def_variable_bulk(ID,trim(var_name),G_MEM_steps+1,(/2,RT_nbands,RT_nbands/),SP)
-   call  io_variable_bulk(ID,G_MEM_steps+1,C2=H_rotation(:,:,ik,i_spin))
+   call def_variable_bulk(ID,trim(var_name),G_MEM_steps+4,(/2,RT_nbands,RT_nbands/),SP)
+   call  io_variable_bulk(ID,G_MEM_steps+4,C2=H_rotation(:,:,ik,i_spin))
  endif
- !
- call TIME_points_IO(ID,(/G_MEM_steps+2,G_MEM_steps+3,G_MEM_steps+4/),1,.true.,GF_RT_IO_t)
  !
 #endif
  !
@@ -422,10 +446,11 @@ end subroutine G_lesser_IO
 subroutine RT_OBS_IO(ID,l_JP,l_M,what)
  !
  use pars,        ONLY:SP,schlen
- use IO_m,        ONLY:io_variable_bulk,def_variable_bulk,NF90_unlimited
+ use IO_m,        ONLY:io_variable_bulk,def_variable_bulk,NF90_unlimited,&
+&                      read_is_on,write_is_on
  use electrons,   ONLY:n_spin
  use real_time,   ONLY:l_NE_with_fields,NE_i_time
- use RT_control,  ONLY:J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,IO_OBS_cache_steps
+ use RT_control,  ONLY:J_cache,P_cache,Ms_cache,Ml_cache,A_cache,IO_OBS_cache_steps
  !
 #include<memory.h>
  !
@@ -433,7 +458,7 @@ subroutine RT_OBS_IO(ID,l_JP,l_M,what)
  logical,      intent(in) :: l_JP,l_M
  character(*), intent(in) :: what
  !
- integer           :: VAR_SZ(4)
+ integer           :: VAR_SZ(4),CACHE_SZ,IPOS
  character(schlen) :: dim_names(4)
  !
  select case(WHAT)
@@ -443,43 +468,49 @@ subroutine RT_OBS_IO(ID,l_JP,l_M,what)
    if (l_JP) then
      VAR_SZ(1:3)    = (/2,3,NF90_UNLIMITED/)
      dim_names(1:3) = [character(schlen) :: 'complex', 'xyz','time']
-     call def_variable_bulk(ID,"Current",     1,VAR_SZ(1:3),SP,dim_names=dim_names)
-     call def_variable_bulk(ID,"Polarization",2,VAR_SZ(1:3),SP,dim_names=dim_names)
+     call def_variable_bulk(ID,"Current",     4,VAR_SZ(1:3),SP,dim_names=dim_names)
+     call def_variable_bulk(ID,"Polarization",5,VAR_SZ(1:3),SP,dim_names=dim_names)
    endif
    !
    if(n_spin>1.and.l_M) then
      VAR_SZ    = (/2,3,3,NF90_UNLIMITED/)
      dim_names = [character(schlen) :: 'complex', 'xyz','tot_c_v','time']
-     call def_variable_bulk(ID,"Spin_Magnetization",3,VAR_SZ,SP,dim_names=dim_names)
+     call def_variable_bulk(ID,"Spin_Magnetization",6,VAR_SZ,SP,dim_names=dim_names)
      !
      VAR_SZ    = (/2,3,2,NF90_UNLIMITED/)
      dim_names = [character(schlen) :: 'complex', 'xyz','orb_itin','time']
-     call def_variable_bulk(ID,"Orbital_Magnetization",4,VAR_SZ,SP,dim_names=dim_names)
+     call def_variable_bulk(ID,"Orbital_Magnetization",7,VAR_SZ,SP,dim_names=dim_names)
    endif
    !
    if(l_NE_with_fields) then
      VAR_SZ    = (/2,3,3,NF90_UNLIMITED/)
      dim_names = [character(schlen) :: 'complex', 'xyz','A_kind','time']
-     call def_variable_bulk(ID,"A_tot",5,VAR_SZ,SP,dim_names=dim_names)
+     call def_variable_bulk(ID,"A_tot",8,VAR_SZ,SP,dim_names=dim_names)
    endif
    !
  case('FILL')
    !
+   if(write_is_on(ID)) then
+     CACHE_SZ=max(1,mod(NE_i_time-2,IO_OBS_cache_steps)+1)
+     IPOS    =NE_i_time-CACHE_SZ+1
+   else if(read_is_on(ID)) then
+     CACHE_SZ=IO_OBS_cache_steps
+     IPOS=1
+   endif
+   !
    if (l_JP) then
-     call io_variable_bulk(ID,1,C2=J_cache,IPOS=(/1,1,NE_i_time/))
-     call io_variable_bulk(ID,2,C2=P_cache,IPOS=(/1,1,NE_i_time/))
+     call io_variable_bulk(ID,4,C2=J_cache(:,1:CACHE_SZ),IPOS=(/1,1,IPOS/))
+     call io_variable_bulk(ID,5,C2=P_cache(:,1:CACHE_SZ),IPOS=(/1,1,IPOS/))
    endif
    !
    if(n_spin>1.and.l_M) then
-     call io_variable_bulk(ID,3,C3=Ms_cache,IPOS=(/1,1,1,NE_i_time/))
-     call io_variable_bulk(ID,4,C3=Ml_cache,IPOS=(/1,1,1,NE_i_time/))
+     call io_variable_bulk(ID,6,C3=Ms_cache(:,:,1:CACHE_SZ),IPOS=(/1,1,1,IPOS/))
+     call io_variable_bulk(ID,7,C3=Ml_cache(:,:,1:CACHE_SZ),IPOS=(/1,1,1,IPOS/))
    endif
    !
    if(l_NE_with_fields) then
-     call io_variable_bulk(ID,5,C3=A_cache,IPOS=(/1,1,1,NE_i_time/))
+     call io_variable_bulk(ID,8,C3=A_cache(:,:,1:CACHE_SZ),IPOS=(/1,1,1,IPOS/))
    endif
-   !
-   call TIME_points_IO(ID,(/6,7,8/),IO_OBS_cache_steps,(NE_i_time==1),OBS_RT_IO_t)
    !
  end select
  !
@@ -495,7 +526,7 @@ subroutine Reference_IO(ID)
  use R_lattice,      ONLY:nqbz
  use IO_m,           ONLY:io_bulk,read_is_on
  use real_time,      ONLY:RT_init_occupation_reference,q_weight_RT,REF_lifetime,&
-&                         G_lesser_reference,RT_nk,RT_nbands,RT_carriers
+&                         G_lesser_reference,RT_nk,RT_nbands
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
 #endif

@@ -258,19 +258,6 @@ subroutine RT_initialize(E,k,q)
      !
      Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
      !
-     ! DS: 2019/12/16
-     ! With the new implementation the next two if are useless
-     ! However for now I keep them here for back compatibility of the tests of the test-suite
-     !
-     if ( mod(Efield(i1)%t_initial_indx-1,OBS_RT_IO_t%INTERVAL_steps)/=0 ) then
-       call warning('Field starting time corrected to be a mutiple of the I/O step.')
-       Efield(i1)%t_initial_indx=Efield(i1)%t_initial_indx-mod(Efield(i1)%t_initial_indx-1,OBS_RT_IO_t%INTERVAL_steps)
-     endif
-     if (Efield(i1)%t_initial_indx< OBS_RT_IO_t%INTERVAL_steps+1 ) then
-       call warning('Field starting time corrected to respect the I/O times.')
-       Efield(i1)%t_initial_indx=OBS_RT_IO_t%INTERVAL_steps+1
-     endif
-     !
      Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step
      !
      call Check_symmetries(Efield(i1)%versor)

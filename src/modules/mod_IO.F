@@ -127,6 +127,7 @@ module IO_m
  integer :: io_code_revision(max_io_units,2) ! devel,GPL
  integer :: io_serial_number(max_io_units)
  integer :: io_netcdf_var(max_io_units,max_io_vars_open)
+ integer :: io_netcdf_elem_varid(max_io_units)
  logical :: io_resetable(max_io_units)
  character(lchlen)          :: io_file(max_io_units)
  character(lchlen)          :: io_folder(max_io_units)

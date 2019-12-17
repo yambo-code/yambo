@@ -66,10 +66,10 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  allocate(CARR_RT_IO_t%Time(1))
  CARR_RT_IO_t%Time(CARR_RT_IO_t%N)=0._SP
  !
- call io_control(ACTION=OP_WR,SEC=(/1/),COM=REP,ID=ID)
+ call io_control(ACTION=OP_WR,SEC=(/1,2/),COM=REP,ID=ID)
  io_RT_err=io_RT_components("carriers",ID)
  !
- call io_control(ACTION=WR_CL,SEC=(/2/),COM=REP,ID=ID)
+ call io_control(ACTION=WR_CL,SEC=(/3/),COM=REP,ID=ID)
  io_RT_err=io_RT_components("carriers",ID)
  !
  call RT_carriers_object(RT_carriers,en,kpt,ID,"free")

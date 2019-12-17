@@ -21,24 +21,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function variables_RT(ID,local_description,what)
+integer function variables_static_RT(ID,local_description,what)
  !
  use pars,           ONLY:lchlen,SP
  use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr,l_elphoton_scatt
  use stderr,         ONLY:intc
  use hamiltonian,    ONLY:H_ref_bands
- use RT_control,     ONLY:RT_description,n_RT_descriptions,TIME_STEP_CONF_description,&
-&                         n_TIME_STEP_CONF_descriptions,CARR_RT_IO_t,OBS_RT_IO_t,GF_RT_IO_t,RT_IO_t
+ use RT_control,     ONLY:RT_description,n_RT_descriptions_static,n_RT_descriptions,TIME_STEP_CONF_description,&
+&                         n_TIME_STEP_CONF_descriptions
  use IO_m,           ONLY:variable_exist,write_is_on
- use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,RT_dyn_step, &
+ use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_extrapolation, &
-&                         RAD_LifeTime,Phase_LifeTime,NE_initial_time_step_update,NE_time_step_update_jump,&
-&                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_time,NE_steps,&
-&                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN,NE_time_step_update_jump_SAVE, &
+&                         RAD_LifeTime,Phase_LifeTime,&
+&                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_steps,&
+&                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN, &
 &                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_extrap_times_SAVE,&
-&                         DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step,RT_DbGd_nk,&
-&                         NE_step_update_treshold,RT_life_extrap_times,RT_MAX_step,RT_potential
+&                         DbGd_EE_percent,l_RT_impose_E,RT_DbGd_nk,&
+&                         RT_potential
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
 #endif
@@ -56,7 +56,7 @@ integer function variables_RT(ID,local_description,what)
  character(*)       ::what
  !
  integer               :: i1,i_desc
- logical               :: l_OBS,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic,l_disk_flag
+ logical               :: l_OBS,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic
  real(SP)              :: RT_life_extrap_decay_time
  character(lchlen)     :: ch
  !
@@ -72,7 +72,8 @@ integer function variables_RT(ID,local_description,what)
  !
  ! RT_vars
  !
- call io_elemental(ID,VAR="RT_vars",VAR_SZ=3,MENU=0) 
+ call io_elemental(ID,VAR="RT_bands_kpts",VAR_SZ=3,MENU=0) 
+ !
  i_desc=i_desc+1
  call io_elemental(ID,I1=RT_bands,&
 &     VAR=' [RT] Bands                      :',CHECK=.true.,OP=(/"==","=="/),&
@@ -80,18 +81,17 @@ integer function variables_RT(ID,local_description,what)
  if (read_is_on(ID)) H_ref_bands=RT_bands
  i_desc=i_desc+1
  call io_elemental(ID,I0=RT_nk,&
-&     VAR=' [RT] K-points                   :',CHECK=.true.,OP=(/"==","=="/),&
+&     VAR=' [RT] K-points                   :',CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
- if (variable_exist(ID,"POTENTIAL").or.write_is_on(ID)) then
-   call io_elemental(ID,VAR="POTENTIAL",CH0="",VAR_SZ=1,MENU=0)
-   i_desc=i_desc+1
-   call io_elemental(ID,CH0=RT_potential,&
+ call io_elemental(ID,VAR="POTENTIAL",CH0="",VAR_SZ=1,MENU=0)
+ i_desc=i_desc+1
+ call io_elemental(ID,CH0=RT_potential,&
 &       VAR=' [RT] Potential                  :',WARN=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
- endif
+ !
+ call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  ! GPL_EXCLUDE_START
  !
@@ -99,6 +99,7 @@ integer function variables_RT(ID,local_description,what)
  !
 #if defined _ELPH
  call io_elemental(ID,VAR="ELPH_vars",VAR_SZ=5,MENU=0) 
+ !
  i_desc=i_desc+1
  call io_elemental(ID,L0=l_elph_scatt,&
 &   VAR=" [E-P] Electron-phonon           :", CHECK=.true.,OP=(/"=="/),&
@@ -115,12 +116,14 @@ integer function variables_RT(ID,local_description,what)
  call io_elemental(ID, &
 &   VAR=" [E-P] GF`s Memory steps         :",I0=G_MEM_steps,CHECK=.true.,OP=(/"=="/),&
 &   DESCRIPTION=local_description(i_desc))
+ !
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
 #endif
  !
  ! E-E_vars
  !
  call io_elemental(ID,VAR="E-E_vars",VAR_SZ=2,MENU=0) 
+ !
  i_desc=i_desc+1
  call io_elemental(ID,L0=l_elel_scatt,&
 &   VAR=" [E-E] Coulomb scattering        :", CHECK=.true.,OP=(/"=="/),&
@@ -133,14 +136,14 @@ integer function variables_RT(ID,local_description,what)
  !
  ! E-PHOTON_vars
  !
- if (ver_is_gt_or_eq(ID,revision=14112)) then
-   call io_elemental(ID,VAR="E-PHOTON_vars",VAR_SZ=1,MENU=0) 
-   i_desc=i_desc+1
-   call io_elemental(ID,L0=l_elphoton_scatt,&
+ call io_elemental(ID,VAR="E-PHOTON_vars",VAR_SZ=1,MENU=0) 
+ !
+ i_desc=i_desc+1
+ call io_elemental(ID,L0=l_elphoton_scatt,&
 &     VAR=" [E-PHOTON] Scattering           :", CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
- endif
+ !
+ call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  ! GPL_EXCLUDE_END
  !
@@ -150,14 +153,11 @@ integer function variables_RT(ID,local_description,what)
    !
    ! RT_DYNAMICS
    !
-   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=14,MENU=0) 
+   call io_elemental(ID,VAR="RT_TIMEs_INP",VAR_SZ=5,MENU=0) 
+   !
    i_desc=i_desc+1
    call io_elemental(ID,&
 &    VAR=" [RT] Time step     (initial)[fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
-&    DESCRIPTION=local_description(i_desc))
-   i_desc=i_desc+1
-   call io_elemental(ID,&
-&    VAR=" [RT]                   (now)[fs]:",R0=RT_dyn_step,DB_R0=RT_dyn_step,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
@@ -165,30 +165,18 @@ integer function variables_RT(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT]                  (done)[fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+&    VAR=" [RT] NE steps      (planned)[fs]:",I0=NE_steps,WARN=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
-   i_desc=i_desc+1
    !
    ! GPL_EXCLUDE_START
    !
-   call io_elemental(ID,&
-&    VAR=" [RT] Lifetimes Inter/Intra  [fs]:",R1=RT_life_extrap_times_SAVE,CHECK=.true.,OP=(/"==","==","=="/),&
-&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT]                   (now)[fs]:",R1=RT_life_extrap_times,DB_R1=RT_life_extrap_times,&
+&    VAR=" [RT] Lif Extr Inte/Intr(sav)[fs]:",R1=RT_life_extrap_times_SAVE,CHECK=.true.,OP=(/"==","=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    !
    ! GPL_EXCLUDE_END
    !
-   if (l_OBS)      call LOCAL_IO_variables(OBS_RT_IO_t)
-   if (l_carriers) call LOCAL_IO_variables(CARR_RT_IO_t)
-   if (l_G)        call LOCAL_IO_variables(GF_RT_IO_t)
-   !
-   i_desc=i_desc+1
-   call io_elemental(ID,&
-&    VAR=" [RT] NE steps         (done)[fs]:",I0=NE_steps,WARN=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
@@ -198,52 +186,31 @@ integer function variables_RT(ID,local_description,what)
    ! Lifetimes Extrapolation
    !
    call io_elemental(ID,VAR='RT_life_extrapolation',VAR_SZ=1,MENU=0)
+   !
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_lifetimes_extrapolation, &
 &        VAR=" [RT] Lifetimes extrapolation    :",WARN=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   ! Delta T Update
-   !   
-   call io_elemental(ID,VAR="DELTA_T_UPDATE",VAR_SZ=6,MENU=0) 
-   i_desc=i_desc+1
-   call io_elemental(ID,L0=l_Update_Time_Step,DB_L0=l_disk_flag,VAR=' [dT] Time-Dependent Time step   :',CHECK=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
-   if (l_disk_flag) then
-     i_desc=i_desc+1
-     call io_elemental(ID,R0=NE_initial_time_step_update,VAR=' [dT] Starting Time          [fs]:',CHECK=.true.,OP=(/"=="/),&
-&      DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
-     i_desc=i_desc+1
-     call io_elemental(ID,R0=NE_time_step_update_jump_SAVE, VAR=' [dT] Update interval        [fs]:',CHECK=.true.,OP=(/"=="/),&
-&      DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
-     i_desc=i_desc+1
-     call io_elemental(ID,R0=NE_step_update_treshold,    VAR=' [dT] Update interval tresh [o/o]:',CHECK=.true.,OP=(/"=="/),&
-&      DESCRIPTION=local_description(i_desc))
-     if (ver_is_gt_or_eq(ID,revision=14112)) then
-       i_desc=i_desc+1
-       call io_elemental(ID,R0=RT_MAX_step,              VAR=' [dT] Max step in dynamics   [fs]:',CHECK=.true.,OP=(/"=="/),&
-&        DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
-     endif
-   endif
-   ! ... for RESTART purposes...
-   call io_elemental(ID,R0=NE_time_step_update_jump, DB_R0=NE_time_step_update_jump,CHECK=.FALSE.)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    ! GPL_EXCLUDE_END
    !
    ! INTEGRATOR
    !   
-   call io_elemental(ID,VAR="INTEGRATOR",CH0="",VAR_SZ=1,MENU=0) 
+   call io_elemental(ID,VAR="INTEGRATOR",CH0="",VAR_SZ=1,MENU=0)
+   !
    i_desc=i_desc+1
    call io_elemental(ID,CH0=Integrator_name, &
 &    VAR=' [RT] Integrator                 :',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
+   !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    ! RT_OTHERS
    !
    call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=6,MENU=0) 
+   !
    i_desc=i_desc+1
    call io_elemental(ID,R0=RAD_LifeTime,&
 &    VAR=' [RT] Radiative life time    [fs]:', CHECK=.true.,OP=(/"=="/),&
@@ -268,11 +235,12 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,L0=l_RT_induced_field,&
 &    VAR=' [RT] Induced field              :',  CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
+   !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    ! Time-Steps configurations
    !===========================
-   call io_elemental(ID,VAR="N_TIME_STEP_CONFS",VAR_SZ=1,MENU=0) 
+   call io_elemental(ID,VAR="N_TIME_STEP_CONFS",VAR_SZ=1,MENU=0)
    call io_elemental(ID,I0=n_TIME_STEP_CONF_descriptions)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    do i1=1,n_TIME_STEP_CONF_descriptions
@@ -401,26 +369,9 @@ integer function variables_RT(ID,local_description,what)
    endif
  endif
  !
- variables_RT           =io_status(ID)
- n_RT_descriptions      =i_desc
+ variables_static_RT     =io_status(ID)
+ n_RT_descriptions_static=i_desc
+ n_RT_descriptions       =i_desc
  RT_description(:i_desc)=local_description(:i_desc)
  !
- contains
-   !
-   subroutine LOCAL_IO_variables(TYP)
-     !
-     type(RT_IO_t) :: TYP
-     !
-     i_desc=i_desc+1
-     call io_elemental(ID,&
-&      VAR=" [RT] I/O time               [fs]:",R0=TYP%INTERVAL_time_SAVE,CHECK=.true.,OP=(/"=="/),&
-&      DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
-     ! ... for RESTART purposes...
-     call io_elemental(ID,R0=TYP%INTERVAL_time,  DB_r0=TYP%INTERVAL_time,CHECK=.FALSE.)
-     call io_elemental(ID,I0=TYP%INTERVAL_steps, DB_I0=TYP%INTERVAL_steps,CHECK=.FALSE.)
-     !
-     call io_elemental(ID,I0=TYP%last_point,CHECK=.true.,OP=(/"=="/))
-     !
-   end subroutine
-   !
-end function
+end function variables_static_RT

@@ -27,7 +27,7 @@ subroutine RT_databases_IO(E)
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
 &                         GF_RT_IO_t,CARR_RT_IO_t,IO_OBS_cache_steps
- use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,l_NE_with_fields
+ use real_time,      ONLY:NE_i_time,NE_steps,l_NE_dynamics,RT_nk,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,l_NE_with_fields
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
 &                         OP_IF_START_APP_CL_IF_END
@@ -42,16 +42,19 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- integer           :: ik,io_G,io_OBS,io_carr,io_THETA,i_time,i_cpu,n_sec,secs(2)
+ integer           :: ik,io_G,io_OBS,io_carr,io_THETA,i_time,i_cpu,n_sec,secs(3)
  integer, external :: io_RT_components
+ logical, external :: stop_NOW
  !
  call timing('RT databases IO',OPR='start')
  !
- ! Store the current and the polarization in the cache for future writing
- !
- if(io_OBSERVABLES) then
+ ! Observables (J, P, M ...)
+ !===========================
+ if (io_OBSERVABLES) then
    !
-   i_time=mod(NE_i_time-1,IO_OBS_cache_steps)+1
+   ! Cache the current and the polarization for future writing
+   !
+   i_time=max(1,mod(NE_i_time-2,IO_OBS_cache_steps)+1)
    OBS_RT_IO_t%N=OBS_RT_IO_t%N+1
    OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=NE_time
    !
@@ -67,20 +70,18 @@ subroutine RT_databases_IO(E)
      A_cache(1:3,3,i_time)=A_tot%vecpot_acc
    endif
    !
- endif
- !
- ! Observables (J, P, M ...)
- !===========================
- if (io_OBSERVABLES.and.RT_do_it('OBS')) then
-   !
-   OBS_RT_IO_t%last_point=NE_i_time
-   !
-   if(NE_i_time==1) then
-     call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(4)) 
+   if (RT_do_it('OBS').or.NE_i_time==NE_steps.or.STOP_now(.FALSE.)) then
+     !
+     OBS_RT_IO_t%last_point=NE_i_time
+     !
+     if(NE_i_time==1) then
+       call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(4)) 
+       io_OBS=io_RT_components('OBSERVABLES',ID(4))
+     endif
+     call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/2,3/),ID=ID(4))
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
+     !
    endif
-   call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/2/),ID=ID(4))
-   io_OBS=io_RT_components('OBSERVABLES',ID(4))
    !
  endif
  !
@@ -100,7 +101,7 @@ subroutine RT_databases_IO(E)
      call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(6)) 
      io_carr=io_RT_components('carriers',ID(6))
    endif
-   call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/2/),ID=ID(6))
+   call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/2,3/),ID=ID(6))
    io_carr=io_RT_components('carriers',ID(6))
    !
  endif
@@ -124,14 +125,16 @@ subroutine RT_databases_IO(E)
 #if defined _PAR_IO
    !
    n_sec=0
+   secs(1)=0
+   if(myid==0) secs(1)=2
    do ik = 1, RT_nk
      if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
-     if (n_sec==0) secs=ik+1
+     if (n_sec==0) secs(2:3)=ik+2
      if (n_sec >0) then
-       if (ik/=secs(2)) call error(" Non contiguous G distr does not work with PAR-IO")
-       secs(2)=ik+1
+       if (ik/=secs(3)-1) call error(" Non contiguous G distr does not work with PAR-IO")
+       secs(3)=ik+2
      endif
-     n_sec=n_sec+1
+     n_sec=n_sec+2
    enddo
    !
    if(n_sec>0) then
@@ -148,7 +151,7 @@ subroutine RT_databases_IO(E)
        !
        if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
        !
-       call io_control(ACTION=OP_IF_START_APP_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
+       call io_control(ACTION=OP_IF_START_APP_CL_IF_END,COM=NONE,SEC=(/2,ik+2/),ID=ID(5))
        io_G=io_RT_components('G',ID(5))
        !
      enddo 
@@ -178,7 +181,7 @@ subroutine RT_databases_IO(E)
        !
        call PP_redux_wait(THETA_matrix(:,:,:,ik))
        !
-       call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(7))
+       call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+2/),ID=ID(7))
        io_THETA=io_RT_components('THETA',ID(7))
        !
        call RT_ELPH_zeroing()

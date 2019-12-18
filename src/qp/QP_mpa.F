@@ -28,7 +28,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use pars,          ONLY:SP,DP,pi,schlen,cZERO,cI
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
- use frequency,     ONLY:w_samp ! Dario: I have to import the file from my repository 
+ use frequency,     ONLY:w_samp 
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error
@@ -167,15 +167,15 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! ALLOCATION
  !------------
  !
- if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,2/))
+ if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,X%mpa_npoles/))
  allocate(W_(QP_dSc_steps))
  allocate(dc(QP_dSc_steps),stat=alloc_err)
  !
  ! MPA workspace
  !
- YAMBO_ALLOC(MPA_E_mat,(X%ng,X%ng,npoles))
- YAMBO_ALLOC(MPA_R_mat,(X%ng,X%ng,npoles))
- YAMBO_ALLOC(MPA_freqs,(2*npoles))
+ YAMBO_ALLOC(MPA_E_mat,(X%ng,X%ng,X%mpa_npoles))
+ YAMBO_ALLOC(MPA_R_mat,(X%ng,X%ng,X%mpa_npoles))
+ YAMBO_ALLOC(MPA_freqs,(2*X%mpa_npoles))
  !
  ! Sampling the frequency domain  (Dario)
  !
@@ -229,17 +229,17 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      !$omp parallel default(shared), private(ig1,ig2,i_np,MPA_freqs,MPA_Xo)
      !
-     YAMBO_ALLOC(MPA_Xo,(2*npoles))
+     YAMBO_ALLOC(MPA_Xo,(2*X%mpa_npoles))
      !
      !$omp do collapse(2)
      do ig2=1,X%ng
        do ig1=1,X%ng
          !
-         MPA_Xo(1:2*npoles)=X_mat(ig1,ig2,1:2*npoles) 
+         MPA_Xo(1:2*X%mpa_npoles)=X_mat(ig1,ig2,1:2*X%mpa_npoles) 
          !
-         call mpa_RE_solver(npoles, MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,:), MPA_E_mat(ig1,ig2,:))
+         call mpa_RE_solver(X%mpa_npoles, MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,:), MPA_E_mat(ig1,ig2,:))
          !
-         do i_np=1,npoles
+         do i_np=1,X%mpa_npoles
            !
 !           MPA_E_mat(ig1,ig2,i_np)=real(sqrt(MPA_Q(i_np)),SP)  
 !           MPA_R_mat(ig1,ig2,i_np)=-MPA_R_mat(ig1,ig2,i_np)/(2._DP*MPA_E_mat(ig1,ig2,i_np))*isc%gamp(ig1,ig2)
@@ -275,7 +275,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !call mat_transpose(X_mat(:,:,X_range(1)))
      !call mat_transpose(X_mat(:,:,X_range(2)))
      !
-     do i_np=1,npoles
+     do i_np=1,X%mpa_npoles
        call mat_transpose(MPA_E_mat(:,:,i_np))
        call mat_transpose(MPA_R_mat(:,:,i_np))
      enddo
@@ -329,7 +329,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          dp_dummy = 0.0_DP
          !
          !$omp parallel do default(shared), private(ig1,ig2,ctmp), reduction(+:dp_dummy), collapse(2)
-         do i_np=1,npoles
+         do i_np=1,X%mpa_npoles
            do ig2=1,X%ng
              do ig1=1,X%ng
                !

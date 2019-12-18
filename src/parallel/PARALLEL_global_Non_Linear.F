@@ -31,18 +31,15 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use parallel_m,    ONLY:ncpu,COMM_copy,PAR_build_index,PAR_INDEX_copy
  ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_freqs_INDEX,PAR_COM_freqs_A2A,PAR_COM_freqs,PAR_COM_DIPk_ibz_INDEX,&
-&                        PAR_COM_Xk_ibz_INDEX,PAR_COM_WF_k_INDEX,&
-&                        PAR_COM_Xk_ibz_A2A
+ use parallel_m,    ONLY:PAR_COM_freqs_INDEX,PAR_COM_freqs_A2A,PAR_COM_freqs,&
+&                        PAR_COM_Xk_ibz_INDEX,PAR_COM_WF_k_INDEX,PAR_COM_Xk_ibz_A2A
  ! IND
  use parallel_m,    ONLY:PAR_IND_freqs,PAR_IND_OVLPk_ibz,PAR_IND_Xk_ibz, &
-&                        PAR_IND_QP, &
-&                        PAR_IND_DIPk_ibz,PAR_IND_Q,PAR_IND_WF_k,PAR_IND_Xk_bz,PAR_IND_DIPk_bz
+&                        PAR_IND_QP,PAR_IND_Q,PAR_IND_WF_k,PAR_IND_Xk_bz
  ! INDEX
- use parallel_m,    ONLY:PAR_freqs_index,PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_DIPk_ibz_index, &
-&                        PAR_QP_index
+ use parallel_m,    ONLY:PAR_freqs_index,PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_QP_index
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_n_freqs,PAR_DIPk_nibz,PAR_nQP,PAR_Xk_nbz,PAR_Xk_nibz
+ use parallel_m,    ONLY:PAR_n_freqs,PAR_nQP,PAR_Xk_nbz,PAR_Xk_nibz
  ! ID's
  use parallel_m,    ONLY:PAR_IND_freqs_ID,PAR_IND_Q_ID,PAR_IND_WF_k_ID,&
 &                        PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz_ID
@@ -97,8 +94,6 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    ! 
    allocate(PAR_Xk_ibz_index(Xk%nibz))
    call PAR_build_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
-   call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
-   call COMM_copy(PAR_COM_Xk_ibz_INDEX,PAR_COM_DIPk_ibz_INDEX)
    !
    ! Define the Xk_bz indeces for BZ parallelization
    ! 
@@ -107,14 +102,8 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
 &                                                         PAR_IND_Xk_bz, PAR_IND_Xk_bz_ID,&
 &                                                         PAR_Xk_bz_index,PAR_Xk_nbz)
 
-   call PAR_INDEX_copy(PAR_IND_Xk_bz,PAR_IND_DIPk_bz)
-   !
-   allocate(PAR_DIPk_ibz_index(Xk%nibz))
-   call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    !
    ! Overlap indeces for WF distribution
-   !
-   call PAR_INDEX_copy(PAR_IND_DIPk_ibz,PAR_IND_OVLPk_ibz)
    !
    call PARALLEL_live_message("H(ibz)",ENVIRONMENT=ENVIRONMENT,&
 &           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz,&

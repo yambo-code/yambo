@@ -53,6 +53,7 @@ integer function variables_BS(ID,iq,local_description,CLOSE_the_menu,X)
  var_size=29
  if (ver_is_gt_or_eq(ID,(/3,0,9/)))      var_size=30
  if (ver_is_gt_or_eq(ID,revision=16339)) var_size=33
+ if (iq>1)                               var_size=35
  !
  i_local_desc=1
  local_description=' '

@@ -91,7 +91,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  ! Potential 
  !===========
- call XC_potentials(H_potential,"SC")
+ call XC_potentials(H_potential)
  call XC_additional_SC_potentials()
  !
  RT_potential    =H_potential

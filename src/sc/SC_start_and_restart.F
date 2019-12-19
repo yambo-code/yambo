@@ -95,7 +95,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  !
  ! Switch to the user defined potential (if appropriate)
  !========
- call XC_potentials(H_potential,"SC")
+ call XC_potentials(H_potential)
  call XC_additional_SC_potentials()
  !
  SC_potential    =H_potential

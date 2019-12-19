@@ -135,7 +135,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  !
  ! Copy the potential
  !
- call XC_potentials(H_potential,"SC")
+ call XC_potentials(H_potential)
  call XC_additional_SC_potentials()
  !
  if(.not.l_sc_V_is_local) then

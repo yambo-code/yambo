@@ -81,7 +81,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! XC Potentials 
  !===============
  !
- call XC_potentials(H_potential,"COLLISIONS")
+ call XC_potentials(H_potential)
  !
  ! Check for the Time Reversal Symmetry
  !

@@ -236,7 +236,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    if (CUTOFF) then
      call io_elemental(ID,VAR="CUTOFF",CH0='',VAR_SZ=1,MENU=MENU)
      MENU=0
-     call io_elemental(ID,CH0=cut_description,VAR=" Coulomb cutoff potential         :",WARN=WARN,OP=(/"=="/))
+     call io_elemental(ID,CH0=cut_description,VAR=" Coulomb cutoff potential          ",WARN=WARN,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      io_header=io_status(ID)
      if (io_header/=0) goto 1

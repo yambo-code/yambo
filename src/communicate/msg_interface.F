@@ -50,7 +50,7 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  !
  if (len_trim(how)==0) return
  dots_string=""
- if(len_trim(val(1))>0) dots_string=": "
+ if(len_trim(val(1))>0 .and. len_trim(mesg)>1) dots_string=": "
  call msg_manager(how,irep)
  l_tabs=.false.
  l_indent=-1
@@ -105,8 +105,11 @@ subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
  integer :: i1,l_indent,irep
  logical :: l_tabs
  character(lchlen)::lch,msgfmt
+ character(2)     :: dots_string
  !
  if (len_trim(how)==0) return
+ dots_string=""
+ if(len_trim(mesg)>1) dots_string=": "
  call msg_manager(how,irep)
  l_tabs    = .false.
  l_indent  = -1
@@ -115,7 +118,7 @@ subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
  msgfmt=composed_fmt(trim(gen_fmt(val)),size(val),l_tabs,l_indent)
  do i1=1,max_open_ofs-irep
    if (of_unit(i1)<=0) cycle
-   write (of_unit(i1),trim(msgfmt)) mesg//": ",val
+   write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
    if (abs(of_unit(i1))/=repfile_unit) of_unit(i1)=-of_unit(i1)
 #if defined _YAML_OUTPUT
    call yaml_map(mesg,val,unit=of_yaml_IDs(i1))
@@ -160,9 +163,12 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatte
  integer  :: i1,l_indent,imsg,irep
  character(schlen):: gen_fmt_local
  character(lchlen):: lch,msgfmt
+ character(2)     :: dots_string
  logical          :: l_tabs,l_ext_fmt
  !
  if (len_trim(how)==0) return
+ dots_string=""
+ if(len_trim(mesg)>1) dots_string=": "
  call msg_manager(how,irep)
  l_ext_fmt = .false.
  l_tabs    = .false.
@@ -178,9 +184,9 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatte
  do i1=1,max_open_ofs-irep
    if (of_unit(i1)<=0) cycle
    if (present(formatted_msg)) then
-     write (formatted_msg,trim(msgfmt)) mesg//": ",val
+     write (formatted_msg,trim(msgfmt)) mesg//trim(dots_string),val
    else
-     write (of_unit(i1),trim(msgfmt)) mesg//": ",val
+     write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
      if (of_unit(i1)/=repfile_unit) of_unit(i1)=-of_unit(i1)
    endif
    if (of_unit(i1)/=repfile_unit) call of_netcdf_shadow_real(i1,mesg,val,size(val))

@@ -141,7 +141,7 @@ integer function variables_SC(ID,local_description,what)
 &       DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,L0=COHSEX_use_empties,&
-&     VAR=" [SC] COHSEX use empty bands     :", CHECK=.true.,OP=(/"=="/),&
+&     VAR=" [SC] COHSEX use empty bands      ", CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,I0=SC_up_W_iters,&
@@ -223,7 +223,7 @@ integer function variables_SC(ID,local_description,what)
 &     VAR=' [ELECTRIC] E intensity           [v/m]',CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,VAR="[ELECTRIC] E Versor            :",R1=Efield(1)%versor, &
+   call io_elemental(ID,VAR="[ELECTRIC] E Versor             ",R1=Efield(1)%versor, &
 &     WARN=.true.,OP=(/"==","==","=="/),DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  endif

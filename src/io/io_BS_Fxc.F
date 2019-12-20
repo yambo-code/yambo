@@ -75,25 +75,25 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
    call def_variable_elemental(ID,"FXC_parameters",11,IP+100,0)
    !
    call io_variable_elemental(ID,DB_I0=FXC_n_g_db,&
-&       VAR=" FXC|Matrix size             :",I0=FXC_n_g_corr,CHECK=.true.,OP=(/"<="/),&
+&       VAR=" FXC|Matrix size              ",I0=FXC_n_g_corr,CHECK=.true.,OP=(/"<="/),&
 &       DESC_STR=FXC_desc_str(1),DESC_VAR=FXC_desc_var(:,1))
    call io_variable_elemental(ID,&
-&       VAR="    |Kernel is causal        :",L0=FXC_is_retarded,CHECK=.true.,OP=(/"=="/),&
+&       VAR="    |Kernel is causal         ",L0=FXC_is_retarded,CHECK=.true.,OP=(/"=="/),&
 &       DESC_STR=FXC_desc_str(2),DESC_VAR=FXC_desc_var(:,2))
    call io_variable_elemental(ID,UNIT=HA2EV,&
-&       VAR="    |Energy range        [ev]:",R1=FXC_W%er,CHECK=.true.,OP=(/"==","=="/),&
+&       VAR="    |Energy range        [ev] ",R1=FXC_W%er,CHECK=.true.,OP=(/"==","=="/),&
 &       DESC_STR=FXC_desc_str(3),DESC_VAR=FXC_desc_var(:,3))
    call io_variable_elemental(ID,UNIT=HA2EV,&
-&       VAR="    |Damping range       [ev]:",R1=FXC_W%dr,CHECK=.true.,OP=(/"==","=="/),&
+&       VAR="    |Damping range       [ev] ",R1=FXC_W%dr,CHECK=.true.,OP=(/"==","=="/),&
 &       DESC_STR=FXC_desc_str(4),DESC_VAR=FXC_desc_var(:,4))
    call io_variable_elemental(ID,&
-&       VAR="    |Total Energy steps      :",I0=FXC_W%n_freqs,CHECK=.true.,OP=(/"=="/),&
+&       VAR="    |Total Energy steps       ",I0=FXC_W%n_freqs,CHECK=.true.,OP=(/"=="/),&
 &       DESC_STR=FXC_desc_str(5),DESC_VAR=FXC_desc_var(:,5))
    call io_variable_elemental(ID,&
-&       VAR="    |Memory Energy steps     :",I0=FXC_n_mem_freqs,CHECK=.true.,OP=(/"=="/),&
+&       VAR="    |Memory Energy steps      ",I0=FXC_n_mem_freqs,CHECK=.true.,OP=(/"=="/),&
 &       DESC_STR=FXC_desc_str(6),DESC_VAR=FXC_desc_var(:,6))
    call io_variable_elemental(ID,&
-&       VAR="    |Field direction         :",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/),&
+&       VAR="    |Field direction          ",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/),&
 &       DESC_STR=FXC_desc_str(7),DESC_VAR=FXC_desc_var(:,7))
    !
    FXC_n_descs=7

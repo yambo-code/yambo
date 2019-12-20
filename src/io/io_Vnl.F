@@ -60,13 +60,13 @@ integer function io_Vnl(Dip,Xen,ID)
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=sec_size,MENU=0)
    call io_elemental(ID,DB_I1=db_nb,&
-&       VAR=" Dip band range         :",I1=Dip%ib,CHECK=.true.,OP=(/">=","<="/))
+&       VAR=" Dip band range          ",I1=Dip%ib,CHECK=.true.,OP=(/">=","<="/))
    call io_elemental(ID,DB_I0=db_nbm,&
-&       VAR=" Metallic bands         :",I0=Xen%nbm,CHECK=.true.,OP=(/"<="/))
+&       VAR=" Metallic bands          ",I0=Xen%nbm,CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,DB_I0=db_nbf,&
-&       VAR=" Filled bands           :",I0=Xen%nbf,CHECK=.true.,OP=(/">="/))
+&       VAR=" Filled bands            ",I0=Xen%nbf,CHECK=.true.,OP=(/">="/))
    call io_elemental(ID,&
-&       VAR=" RL vectors in the sum  :",I0=Dip%ng,WARN=.true.,OP=(/"<="/))
+&       VAR=" RL vectors in the sum   ",I0=Dip%ng,WARN=.true.,OP=(/"<="/))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !

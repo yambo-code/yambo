@@ -23,10 +23,10 @@
 !
 subroutine excitons_read(k,Xk,en,Xen,iq,what)
  !
- use pars,          ONLY:SP,pi,schlen
+ use pars,          ONLY:pi
  use R_lattice,     ONLY:bz_samp
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_reset
+ use X_m,           ONLY:X_reset
  use QP_CTL_m,      ONLY:QP_apply
  use electrons,     ONLY:levels,n_spin,n_sp_pol,spin,E_SOC_nbands
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY,io_disconnect
@@ -44,7 +44,6 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  !
  ! Work Space
  !
- integer ,allocatable :: BS_E_degs(:)
  !
  !... I/0
  !

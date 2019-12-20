@@ -28,7 +28,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use pars,          ONLY:SP,cZERO
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
 #if defined _PL
- use drivers,       ONLY:l_photolum
 #endif
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,&
@@ -48,7 +47,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 &                        PARALLEL_WF_index,WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset
- use timing_m,      ONLY:timing
  !
 #include<memory.h>
  !

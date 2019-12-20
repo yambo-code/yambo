@@ -143,7 +143,6 @@ subroutine of_open_close(of_name,mode)
  !
 end subroutine of_open_close
 !
-!
 subroutine write_the_logo(unit_,comment_)
  !
  use LIVE_t,       ONLY:LIVE_message
@@ -180,10 +179,9 @@ subroutine write_the_logo(unit_,comment_)
  !
 end subroutine write_the_logo
 !
-!
 subroutine rename_file(name)
  !
- use pars,       ONLY:schlen,lchlen
+ use pars,       ONLY:lchlen
  !
  implicit none
  !
@@ -203,7 +201,6 @@ subroutine rename_file(name)
  !
 end subroutine rename_file
 !
-!
 subroutine warning(mesg)
  !
  use LIVE_t,     ONLY:LIVE_message
@@ -217,7 +214,6 @@ subroutine warning(mesg)
  call LIVE_message(STRING_pack('[WARNING] ',trim(mesg)),"n","","%s")
  !
 end subroutine warning
-!
 !
 subroutine error(mesg)
  !

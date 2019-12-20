@@ -35,6 +35,7 @@ subroutine rim()
 &                        RIM_n_rand_pts,RIM_ng,RIM_qpg,&
 &                        RIM_id_epsm1_reference,RIM_anisotropy
  use timing_m,      ONLY:timing
+ !
 #include<memory.h>
  !
  ! Work Space
@@ -49,7 +50,6 @@ subroutine rim()
  integer   :: N_out,N_in,N_out_G,rep_factor,inn1,inn2,inn3,ic
  real(SP)  :: v1(3),v2(3),v1_norm(2)
  real(SP), allocatable  :: qr(:,:)
- character(12)      :: ch(3)
  integer            :: iseed(8)
  real(DP), external :: dlaran
  ! 

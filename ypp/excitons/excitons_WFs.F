@@ -23,7 +23,7 @@
 !
 subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
- use pars,          ONLY:SP,cZERO,cI,pi
+ use pars,          ONLY:SP,cZERO,pi
  use R_lattice,     ONLY:bz_samp,qindx_X
  use units,         ONLY:BO2ANG
  use stderr,        ONLY:intc

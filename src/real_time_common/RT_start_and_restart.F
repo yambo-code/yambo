@@ -69,7 +69,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Work Space
  !
- integer :: i_sp_pol,ik,COM_,io_G,io_OBS,io_THETA,io_REF,&
+ integer :: i_sp_pol,ik,ib,COM_,io_G,io_OBS,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  integer, external :: io_RT_components
  !
@@ -163,11 +163,11 @@ subroutine RT_start_and_restart(E,k,q)
    ! The important DB is the one of the Green function and it must be the only one with MODE=DUMP.
    ! From it I reconstruct everything.
    !
-   !call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID(8))
-   !io_REF=io_RT_components('REF',ID(8))
+   call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID(8))
+   io_REF=io_RT_components('REF',ID(8))
    !
-   !call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID_OCCUPATIONS)
-   !io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
+   call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID_OCCUPATIONS)
+   io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
    !
    call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID(5))
    io_G=io_RT_components('G',ID(5))
@@ -177,8 +177,8 @@ subroutine RT_start_and_restart(E,k,q)
    ! I use G_lesser(:,:,:) to reconstruct everything
    ! Note that the databases must be loaded at the RESTART time (NE_time)
    !
-   !call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=VERIFY,ID=ID_OCCUPATIONS)
-   !io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=VERIFY,ID=ID_OCCUPATIONS)
+   io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
    !
 #if defined _PAR_IO
    !
@@ -196,7 +196,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
    ! The G_lesser must be now rebuild from the reference (T=0) and latest dG components
    !
-   do i_memory=1,G_MEM_steps
+   do i_memory=1,G_MEM_steps 
      G_lesser(:,:,:,i_memory)=G_lesser_reference(:,:,:)+dG_lesser(:,:,:,i_memory)
      if (MEM_pointer(i_memory)==NE_i_time  ) i_MEM_now=i_memory
      if (MEM_pointer(i_memory)==NE_i_time-1) i_MEM_previous=i_memory

@@ -235,31 +235,31 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
      ! Energies
      !
-     call def_variable_bulk(DB_id,"RT_carriers_delta_E",4,VAR_SZ,SP,dim_names=dim_names)
+     call def_variable_bulk(DB_id,"RT_carriers_delta_E",4,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
      !
      ! Occupations
      !
-     call def_variable_bulk(DB_id,"RT_carriers_delta_f",5,VAR_SZ,SP,dim_names=dim_names)
+     call def_variable_bulk(DB_id,"RT_carriers_delta_f",5,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
      !
      ! Lifetimes
      !
      if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
-       call def_variable_bulk(DB_id,"RT_carriers_delta_GAMMA",6,VAR_SZ,SP,dim_names=dim_names)
-       call def_variable_bulk(DB_id,"RT_NEQ_Lifetime",        7,VAR_SZ,SP,dim_names=dim_names)
+       call def_variable_bulk(DB_id,"RT_carriers_delta_GAMMA",6,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
+       call def_variable_bulk(DB_id,"RT_NEQ_Lifetime",        7,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
      endif
      if (l_elel_scatt) then
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_E_Hole",    8,VAR_SZ,SP,dim_names=dim_names)
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_E_Electron",9,VAR_SZ,SP,dim_names=dim_names)
+       call def_variable_bulk(DB_id,"RT_dGAMMA_E_E_Hole",    8,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
+       call def_variable_bulk(DB_id,"RT_dGAMMA_E_E_Electron",9,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
      endif
      if (l_elphoton_scatt) then
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_PHOT_Hole",    10,VAR_SZ,SP,dim_names=dim_names)
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_PHOT_Electron",11,VAR_SZ,SP,dim_names=dim_names)
+       call def_variable_bulk(DB_id,"RT_dGAMMA_E_PHOT_Hole",    10,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
+       call def_variable_bulk(DB_id,"RT_dGAMMA_E_PHOT_Electron",11,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
      endif
      if (l_elph_scatt) then
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_P_Hole",    12,VAR_SZ,SP,dim_names=dim_names)
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_P_Electron",13,VAR_SZ,SP,dim_names=dim_names)
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_P_Ho_abs",  14,VAR_SZ,SP,dim_names=dim_names)
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_P_El_abs",  15,VAR_SZ,SP,dim_names=dim_names)
+       call def_variable_bulk(DB_id,"RT_dGAMMA_E_P_Hole",    12,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
+       call def_variable_bulk(DB_id,"RT_dGAMMA_E_P_Electron",13,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
+       call def_variable_bulk(DB_id,"RT_dGAMMA_E_P_Ho_abs",  14,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
+       call def_variable_bulk(DB_id,"RT_dGAMMA_E_P_El_abs",  15,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
      endif
      !
    case('do_io_variables')

@@ -78,9 +78,9 @@ integer function io_RT_components(what,ID)
  l_D          =what=="D".or.what=="OBSERVABLES"
  l_OBS        =l_JP.or.l_M.or.l_D
  !
- if(l_G       ) first_IO=(NE_i_time==  GF_RT_IO_t%last_point)
- if(l_carriers) first_IO=(NE_i_time==CARR_RT_IO_t%last_point)
- if(l_OBS     ) first_IO=(NE_i_time== OBS_RT_IO_t%last_point)
+ if(l_G       ) first_IO=(NE_i_time==  GF_RT_IO_t%last_point).or.NE_i_time==1
+ if(l_carriers) first_IO=(NE_i_time==CARR_RT_IO_t%last_point).or.NE_i_time==1.or.CARR_RT_IO_t%last_point<0
+ if(l_OBS     ) first_IO=(NE_i_time== OBS_RT_IO_t%last_point).or.NE_i_time==1.or. OBS_RT_IO_t%last_point<0
  !
  call timing('io_RT_components',OPR='start')
  !
@@ -341,6 +341,8 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,unlim,l_G,TYP)
  integer                      :: IPOS(1),IO_LIM(2)
  character(schlen)            :: dim_name(1)
  !
+ if(write_is_on(ID)) TYP%last_point=NE_i_time
+ !
  ! ... for RESTART purposes...
  call def_variable_elemental(ID,"IO_TIMEs",2,SP,0) 
  call io_variable_elemental(ID,VAR=" [RT] I/O time          (input) [fs]:",&
@@ -372,7 +374,7 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,unlim,l_G,TYP)
  if(def_var.or.read_is_on(ID)) then
    dim_name="IO_TIME_n_points"
    if(     unlim) call def_variable_bulk(ID,"IO_TIME_points",3,(/NF90_unlimited/),SP,dim_name,silent=.true.)
-   if(.not.unlim) call def_variable_bulk(ID,"IO_TIME_points",3,(/VAR_SZ/),        SP,dim_name,silent=.true.)
+   if(.not.unlim) call def_variable_bulk(ID,"IO_TIME_points",3,(/G_MEM_steps/),   SP,dim_name,silent=.true.)
    IPOS=1
    IO_LIM=(/1,VAR_SZ/)
  endif

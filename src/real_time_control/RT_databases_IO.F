@@ -78,8 +78,6 @@ subroutine RT_databases_IO(E)
    !
    if (RT_do_it('OBS').or.NE_i_time==NE_steps.or.STOP_now(.FALSE.)) then
      !
-     OBS_RT_IO_t%last_point=NE_i_time
-     !
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/2,3/),ID=ID(4))
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
      !
@@ -100,7 +98,6 @@ subroutine RT_databases_IO(E)
    !
    if(RT_do_it('CARR')) then
      !
-     CARR_RT_IO_t%last_point=NE_i_time
      CARR_RT_IO_t%N=(NE_i_time-1)/CARR_RT_IO_t%INTERVAL_steps+1
      CARR_RT_IO_t%Time(CARR_RT_IO_t%N)=NE_time
      !
@@ -143,7 +140,6 @@ subroutine RT_databases_IO(E)
        if(     SAVE_G_history) GF_RT_IO_t%N=2*(NE_i_time-1)/GF_RT_IO_t%INTERVAL_steps+1
        GF_RT_IO_t%Time(GF_RT_IO_t%N-1:GF_RT_IO_t%N)=(/NE_time-RT_dyn_step,NE_time/)
      endif
-     GF_RT_IO_t%last_point=NE_i_time
      !
      call IO_and_Messaging_switch("SAVE")
      call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_k_cpu)

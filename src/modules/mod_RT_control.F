@@ -182,44 +182,44 @@ module RT_control
      !
      ! Work Space
      !
-     integer :: DO_IT_steps,i_grp,IT_last
+     integer :: INTERVAL_steps,i_grp,last_point
      !
      RT_do_it= .FALSE.
-     IT_last = 1
+     last_point = 1
      !
      if (what=="OBS") then
-       DO_IT_steps=OBS_RT_IO_t%INTERVAL_steps
-       IT_last    =OBS_RT_IO_t%last_point
+       INTERVAL_steps=OBS_RT_IO_t%INTERVAL_steps
+       last_point    =OBS_RT_IO_t%last_point
      endif
      if (what=="CARR") then
-       DO_IT_steps=CARR_RT_IO_t%INTERVAL_steps
-       IT_last    =CARR_RT_IO_t%last_point
+       INTERVAL_steps=CARR_RT_IO_t%INTERVAL_steps
+       last_point    =CARR_RT_IO_t%last_point
      endif
      if (what=="OUT") then
-       DO_IT_steps=OUTPUT_RT_IO_t%INTERVAL_steps
-       IT_last    =OUTPUT_RT_IO_t%last_point
+       INTERVAL_steps=OUTPUT_RT_IO_t%INTERVAL_steps
+       last_point    =OUTPUT_RT_IO_t%last_point
      endif
      if (what=="G") then
-       DO_IT_steps=GF_RT_IO_t%INTERVAL_steps
-       IT_last    =GF_RT_IO_t%last_point
+       INTERVAL_steps=GF_RT_IO_t%INTERVAL_steps
+       last_point    =GF_RT_IO_t%last_point
      endif
      if (what=="deltaT") then
-       DO_IT_steps=nint(NE_time_step_update_jump/RT_step)
-       IT_last    =NE_time_step_update_last_point
+       INTERVAL_steps=nint(NE_time_step_update_jump/RT_step)
+       last_point    =NE_time_step_update_last_point
      endif
      !
      ! In RESTART mode the GF and J/P/C databases could be not time aligned
      !
-     if (IT_last>=NE_i_time) return
+     if (last_point>NE_i_time) return
      !
-     if (DO_IT_steps<0) then
+     if (INTERVAL_steps<0) then
        RT_do_it=.TRUE. 
        return
      endif
      !
-     i_grp=nint(real(NE_i_time-IT_last)/real(DO_IT_steps))
+     i_grp=nint(real(NE_i_time-last_point)/real(INTERVAL_steps))
      !
-     RT_do_it= (NE_i_time-IT_last)==(i_grp*DO_IT_steps)
+     RT_do_it= (NE_i_time-last_point)==(i_grp*INTERVAL_steps)
      !
    end function
    !

@@ -77,16 +77,13 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! MPA variables (Dario)
  !
- integer                  :: i_np,npoles
+ integer                  :: i_np
  complex(SP), allocatable :: MPA_E_mat(:,:,:)
  complex(SP), allocatable :: MPA_R_mat(:,:,:)
-! real(SP),    allocatable :: MPA_E_mat(:,:,:)
-! real(SP),    allocatable :: MPA_freqs(:)
- complex(SP), allocatable :: MPA_freqs(:),MPA_Xo(:)!,MPA_Q(:)
+ complex(SP), allocatable :: MPA_freqs(:),MPA_Xo(:)
  !
  integer, external::io_X,QP_state_extract
  !
-! npoles=1;
  ! Reset & checks
  !
  call elemental_collision_free(isc)
@@ -154,7 +151,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call timing('GW(mpa)',OPR='start')
  !
- ! Plasmon-Pole/Static interaction DB I/O
+ ! MPA dynamic X DB I/O
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=io_X(X,Xw,ID)
@@ -167,7 +164,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! ALLOCATION
  !------------
  !
- if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,X%mpa_npoles/))
+ if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,2*X%mpa_npoles/))
  allocate(W_(QP_dSc_steps))
  allocate(dc(QP_dSc_steps),stat=alloc_err)
  !
@@ -177,11 +174,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  YAMBO_ALLOC(MPA_R_mat,(X%ng,X%ng,X%mpa_npoles))
  YAMBO_ALLOC(MPA_freqs,(2*X%mpa_npoles))
  !
- ! Sampling the frequency domain  (Dario)
- !
- MPA_freqs=Xw%p
- 
-
  call PP_redux_wait
  !
  timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
@@ -222,6 +214,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        io_err=io_X(X,Xw,ID)
        !
        call deliver_IO_error_message(io_err,'PP/Em1s',STOP_it=.TRUE.)
+       !
+       ! Sampling the frequency domain
+       !
+       MPA_freqs=Xw%p
        !
      endif
      !
@@ -344,7 +340,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          enddo
          !$omp end parallel do
          !
-         dc(i_w) = dp_dummy
+         dc(i_w) = cmplx(dp_dummy,KIND=SP)
          !
        enddo
        !

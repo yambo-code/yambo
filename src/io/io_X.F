@@ -185,10 +185,8 @@ integer function io_X(X,Xw,ID)
      if (X%whoami==4) then
        call io_variable_elemental(ID,UNIT=HA2EV,VAR=" PPA Im  energy     [ev]:",   R0=X%ppaE,    CHECK=.true.,OP=(/"=="/))
      endif
-     if (X%whoami/=4.and.X%whoami/=5) then
-       call io_variable_elemental(ID,           VAR=" :: Current Q-pt index     :",I0=iq)
-     endif
      if (X%whoami/=4) then
+       call io_variable_elemental(ID,           VAR=" :: Current Q-pt index     :",I0=iq)
        call io_variable_elemental(ID,UNIT=HA2EV,VAR=" :: X energy range     [ev]:",R1=Xw%er,     WARN =.true.,OP=(/"==","=="/))
        call io_variable_elemental(ID,UNIT=HA2EV,VAR=" :: X damping range    [ev]:",R1=Xw%dr,     CHECK=.true.,OP=(/"==","=="/))
        call io_variable_elemental(ID,           VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))

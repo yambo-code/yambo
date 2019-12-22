@@ -93,7 +93,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(w_samp)     ::Xxcw
  type(levels)     ::en_sc
  !
- integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err,i_r
+ integer          :: io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err,i_r
  !
  ! Presets
  !

@@ -848,7 +848,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      !
      type(levels), intent(in) :: E_in
      !
-     logical :: is_def(10)
+     logical :: is_def(11)
      integer :: i1,bands(2),tmp_bands(2)
      !
      if(initmode/=4) return
@@ -859,30 +859,31 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call parser('BndsRnXs', is_def(2))
      call parser('BndsRnXd', is_def(3))
      call parser('BndsRnXp', is_def(4))
-     call parser('DipBands', is_def(5))
-     call parser('BSEBands', is_def(6))
-     call parser('RTBands',  is_def(7))
-     call parser('SCBands',  is_def(8))
-     call parser('NLBands',  is_def(9))
-     call parser('COLLBands',is_def(10))
+     call parser('BndsRnXm', is_def(5))
+     call parser('DipBands', is_def(6))
+     call parser('BSEBands', is_def(7))
+     call parser('RTBands',  is_def(8))
+     call parser('SCBands',  is_def(9))
+     call parser('NLBands',  is_def(10))
+     call parser('COLLBands',is_def(11))
      !
      bands=-1
-     do i1=1,10
+     do i1=1,11
        if(.not.(is_def(i1))) cycle
-       if(i1< 5) tmp_bands=X(i1)%ib
-       if(i1==5) tmp_bands=Dip%ib
-       if(i1==6) tmp_bands=BS_bands
+       if(i1< 6) tmp_bands=X(i1)%ib
+       if(i1==6) tmp_bands=Dip%ib
+       if(i1==7) tmp_bands=BS_bands
 #if defined _RT || defined _NL
-       if(i1==7) tmp_bands=RT_bands
+       if(i1==8) tmp_bands=RT_bands
 #endif
 #if defined _SC
-       if(i1==8) tmp_bands=SC_bands
+       if(i1==9) tmp_bands=SC_bands
 #endif
 #if defined _NL
-       if(i1==9) tmp_bands=NL_bands
+       if(i1==10) tmp_bands=NL_bands
 #endif
 #if defined _RT || defined _SC || defined _NL
-       if(i1==10) tmp_bands=COLL_bands
+       if(i1==11) tmp_bands=COLL_bands
 #endif
        if(any((/bands==-1/))) then
          bands(1)=max(tmp_bands(1),   1   )

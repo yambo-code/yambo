@@ -119,7 +119,8 @@ integer function get_file_index(of_name_complete)
  get_file_index=-1
  !
  do i2=1,n_ofs_defined
-   if (trim(of_name(i2))/=trim(of_name_complete)) cycle
+   ! the two can differ only by the _0n appendend in case it is not the first run
+   if (index(trim(of_name(i2)),trim(of_name_complete))==0) cycle
    get_file_index=i2
    exit
  enddo

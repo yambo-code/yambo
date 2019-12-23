@@ -237,7 +237,12 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      !
      if (qp_isp==1) values(14)= 1._SP
      if (qp_isp==2) values(14)=-1._SP
+     !
+     if (l_elph_corr) call set_real_printed_length(f_length=10,g_length=10)
+     !
      call msg('o '//what,'',values(titles_order(:ntitles)),INDENT=-2,USE_TABS=.TRUE.)
+     !
+     if (l_elph_corr) call set_real_printed_length( )
      !
    enddo
    !

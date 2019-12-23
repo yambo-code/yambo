@@ -59,9 +59,18 @@ subroutine of_open_close(of_name_extension,mode)
    !  
    of_name_complete=get_name(desc=trim(of_name_extension),type=3,CORE_IO=.false.,MORE_IO=.false.,COM_IO=.true.)
    !
-   ! Get file index from exension
+   ! Get file index from file name
    !
    file_index=get_file_index(of_name_complete)
+   !
+   if (index(mode,'a')==0.and.index(mode,'O')==0) then
+     ! Check if filename exists from previous run.
+     ! In case _0n needs to be appended when file is first created
+     call rename_file(of_name_complete)
+   else if(len_trim(of_name(file_index))>0) then
+     ! In case _0n needs to be appendend, it is done checking the filename saved
+     of_name_complete=of_name(file_index)
+   endif
    !
    ! Flush output if file is opened
    !
@@ -70,8 +79,6 @@ subroutine of_open_close(of_name_extension,mode)
    if ( (index(mode,'o')==0.and.index(mode,'O')==0) .or. .not.write_to_of) return
    !
    ! Here I open the unit using file_name to define the name
-   !
-   if (index(mode,'a')==0.and.index(mode,'O')==0) call rename_file(of_name_complete)
    !
    ! Check first if already open
    !
@@ -183,9 +190,10 @@ subroutine rename_file(name)
  implicit none
  !
  character(lchlen):: name
- character(lchlen):: ch 
+ character(lchlen):: ch
  integer          :: i1
  logical, external:: file_exists
+ !
  if (.not.file_exists(name)) return
  i1=0
  ch=name

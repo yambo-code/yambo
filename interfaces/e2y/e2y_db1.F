@@ -44,7 +44,7 @@ subroutine e2y_db1(en,k,ncid)
  use etsf_io_low_level
  use etsf_data
  use pars,                 only : SP,   schlen
- use com,                  only : msg, error, warning
+ use com,                  only : msg
  use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, l_spin_orbit
  use wave_func,            only : wf_ncx
  use R_lattice,            only : bz_samp, nkibz

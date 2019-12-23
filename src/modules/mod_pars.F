@@ -58,7 +58,7 @@ module pars
  integer, parameter :: n_debugs_max=100
  ! 
  !...Output Files/Report File
- integer,parameter  :: nofs=1000
+ integer,parameter  :: max_n_ofs=1000
  integer,parameter  :: max_open_ofs=1000
  !
  !...I/O

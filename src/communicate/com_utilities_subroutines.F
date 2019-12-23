@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine of_open_close(of_name,mode)
+subroutine of_open_close(of_name_extension,mode)
  !
  use pars,            ONLY:lchlen,max_open_ofs
- use com,             ONLY:of,nofs,opened_of,of_unit,write_to_of
+ use com,             ONLY:of_name,opened_of,of_unit,write_to_of
  use IO_m,            ONLY:get_name
 #if defined _NC_OUTPUT
  use com,             ONLY:of_nc_pos,of_nc_var_names,of_nc_IDs
@@ -38,61 +38,60 @@ subroutine of_open_close(of_name,mode)
  !
  implicit none
  !
- character(*), intent(in)            :: of_name
+ character(*), intent(in)            :: of_name_extension
  character(*), intent(in), optional  :: mode
+ !
+ integer, external  :: get_file_index
  ! 
  ! Work Space
  !
 #if defined _NC_OUTPUT
  integer          :: io_out
 #endif
- integer          :: i2,i3,file_index
- character(lchlen):: local_file_name
+ integer          :: i2,file_index
+ character(lchlen):: of_name_complete
  !
- if (len_trim(of_name)==0) return
+ if (len_trim(of_name_extension)==0) return
  !
  if (present(mode)) then
    !
-   ! Open file
+   ! Get full filename, including path and jobname, from extension
    !  
-   local_file_name=get_name(desc=trim(of_name),type=3,CORE_IO=.false.,MORE_IO=.false.,COM_IO=.true.)
+   of_name_complete=get_name(desc=trim(of_name_extension),type=3,CORE_IO=.false.,MORE_IO=.false.,COM_IO=.true.)
    !
-   ! Flush output
+   ! Get file index from exension
    !
-   if (index(mode,'f')/=0) then
-     file_index=-1
-     do i2=1,max_open_ofs-1
-        if (trim(opened_of(i2))==local_file_name) file_index=i2
-     enddo
-     if(file_index==-1) return
-     flush(abs(of_unit(file_index)))
-   endif
+   file_index=get_file_index(of_name_complete)
+   !
+   ! Flush output if file is opened
+   !
+   if (index(mode,'f')/=0.and.(len_trim(opened_of(file_index))>0)) flush(abs(of_unit(file_index)))
    !
    if ( (index(mode,'o')==0.and.index(mode,'O')==0) .or. .not.write_to_of) return
    !
    ! Here I open the unit using file_name to define the name
    !
-   if (index(mode,'a')==0.and.index(mode,'O')==0) call rename_file(local_file_name)
+   if (index(mode,'a')==0.and.index(mode,'O')==0) call rename_file(of_name_complete)
    !
    ! Check first if already open
    !
    do i2=1,max_open_ofs-1
-     if (trim(opened_of(i2))==local_file_name) return
+     if (trim(opened_of(i2))==of_name_complete) return
    enddo
    !
    ! Find the first free unit
    !
-   do i2=1,max_open_ofs-1
-     if (of_unit(i2)<0) cycle
-     file_index=i2
 #if defined _YAML_OUTPUT
      of_unit(file_index)=f_get_free_unit()
 #else
+   do i2=1,max_open_ofs-1
+     if (of_unit(i2)<0) cycle
      of_unit(file_index)=20+i2
-#endif
      exit
    enddo
-   opened_of(file_index)=local_file_name
+#endif
+   opened_of(file_index)=of_name_complete
+   of_name(file_index)=of_name_complete
    !
    if (index(mode,'a')==0) open(of_unit(file_index),file=trim(opened_of(file_index)))
    if (index(mode,'a')/=0) open(of_unit(file_index),file=trim(opened_of(file_index)),position='append')
@@ -102,13 +101,13 @@ subroutine of_open_close(of_name,mode)
    !
 #if defined _NC_OUTPUT
    call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(file_index))
-   io_out=io_connect(desc="output_"//trim(of_name),type=2, ID=of_nc_IDs(file_index))
-   of_nc_var_names(file_index)=trim(of_name)
+   io_out=io_connect(desc="output_"//trim(of_name_extension),type=2, ID=of_nc_IDs(file_index))
+   of_nc_var_names(file_index)=trim(of_name_extension)
    of_nc_pos(:,file_index)=0
 #endif
 #if defined _YAML_OUTPUT
-   call yaml_set_stream(filename=trim(local_file_name)//".yaml")
-   call yaml_stream_connected(trim(local_file_name)//".yaml",of_yaml_IDs(file_index))
+   call yaml_set_stream(filename=trim(of_name_complete)//".yaml")
+   call yaml_stream_connected(trim(of_name_complete)//".yaml",of_yaml_IDs(file_index))
 #endif
    !
  else
@@ -116,7 +115,7 @@ subroutine of_open_close(of_name,mode)
    ! Close file
    !  
    do i2=1,max_open_ofs-1
-     if (index(opened_of(i2),trim(of_name))/=0) then
+     if (index(opened_of(i2),trim(of_name_extension))/=0) then
        close(iabs(of_unit(i2)))
        of_unit(i2)=0
 #if defined _NC_OUTPUT
@@ -126,14 +125,6 @@ subroutine of_open_close(of_name,mode)
 #if defined _YAML_OUTPUT
        call yaml_close_stream(unit=of_yaml_IDs(i2))
 #endif
-       if (.not.any(of==of_name)) then
-         do i3=1,nofs
-           if (len_trim(of(i3))==0) then
-             of(i3)=opened_of(i2)
-             exit
-           endif
-         enddo
-       endif
        opened_of(i2)=' '
        exit
      endif
@@ -250,18 +241,18 @@ subroutine error(mesg)
 end subroutine error
 !
 !
-subroutine msg_deliver(of_name,formatted_msg)
+subroutine msg_deliver(of_name_extension,formatted_msg)
  !
  use pars,      ONLY:max_open_ofs
  use com,       ONLY:opened_of,repfile_unit,of_unit
  !
  implicit none
  !
- character(*) :: of_name,formatted_msg
+ character(*) :: of_name_extension,formatted_msg
  integer      :: i_unit
  !
  do i_unit=1,max_open_ofs
-   if (index(opened_of(i_unit),trim(of_name))==0) cycle
+   if (index(opened_of(i_unit),trim(of_name_extension))==0) cycle
    if (of_unit(i_unit)<=0) cycle
    write (of_unit(i_unit),'(a)') trim(formatted_msg)
    if (of_unit(i_unit)/=repfile_unit) of_unit(i_unit)=-of_unit(i_unit)

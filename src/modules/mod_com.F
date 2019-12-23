@@ -23,7 +23,7 @@
 !
 module com
  !
- use pars,          ONLY:SP,lchlen,schlen,nofs,max_open_ofs,n_max_jobstr
+ use pars,          ONLY:SP,lchlen,schlen,max_n_ofs,max_open_ofs,n_max_jobstr
  use com_interfcs,  ONLY:msg_characters_vector_int,msg_integers_vector_int,msg_reals_vector_int
  !
  implicit none
@@ -57,9 +57,10 @@ module com
  ! 
  ! Output Files/Report File
  !
- character(lchlen)  :: of(nofs)
+ character(lchlen)  :: of_name(max_n_ofs)
  character(lchlen)  :: opened_of(max_open_ofs)
  integer            :: of_unit(max_open_ofs)
+ integer            :: n_ofs_defined
 #if defined _NC_OUTPUT
  integer, parameter :: of_nc_max_size=10000
  integer            :: of_nc_IDs(max_open_ofs)

@@ -128,13 +128,13 @@ module it_tools
    end subroutine
    !
    subroutine ofiles_append(line,defs)
-     use com,           ONLY: nofs,of
+     use com,           ONLY: n_ofs_defined,of_name
      character(*),optional  :: line
      type(initdefs),optional::defs
      integer :: i2
-     do i2=1,nofs
-       if (len_trim(of(i2))==0) cycle
-       open(20,file=trim(of(i2)),position='append')
+     do i2=1,n_ofs_defined
+       if (len_trim(of_name(i2))==0) cycle
+       open(20,file=trim(of_name(i2)),position='append')
        if (present(defs)) call initinfio(defs,20)
        if (present(line)) write (20,'(2a)') '# ',line
        close(20)

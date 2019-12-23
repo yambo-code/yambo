@@ -61,6 +61,9 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
 &                        PAR_IND_QP_ID,PAR_IND_G_b_ID,PAR_IND_PLASMA_ID,&
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID,&
 &                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,PAR_IND_freqs_ID
+#if defined _RT || defined _SC || defined _QED || defined _NL
+ use collision_ext, ONLY:COH_collisions,HXC_collisions,GW_NEQ_collisions,P_collisions
+#endif
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_INDEX,SLK_COM_A2A
 #endif
@@ -196,6 +199,12 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
 #if defined _NL
  call COMM_reset(PAR_COM_freqs_INDEX)
  call COMM_reset(PAR_COM_freqs)
+#endif
+#if defined _RT || defined _SC || defined _QED || defined _NL
+ call PARALLEL_collisions_reset(HXC_collisions)
+ call PARALLEL_collisions_reset(COH_collisions)
+ call PARALLEL_collisions_reset(GW_NEQ_collisions)
+ call PARALLEL_collisions_reset(P_collisions)
 #endif
  !
  call OPENMP_set_threads( )

@@ -40,17 +40,19 @@
 ! *The samplings do not depend on the sampled function 
 !---------------------------------------------------------------
 
- subroutine X_mpa_sampling_all(np, w1, w2, ps, w) 
+ subroutine FREQUENCIES_mpa_sampling(np, w1, w2, ps, w) 
    use pars,     ONLY:SP
    implicit none
    !
-   integer,       intent(in)    :: np       ! number of desired pairs
-   complex(SP),   intent(in)    :: w1,w2    ! segment [w1,w2)
-   character,     intent(in)    :: ps       ! flavour of sampling: hPPS, qPPS, chPPS, ...
-   complex(SP),   intent(out)   :: w(2*np)
-   integer       :: i, a1, a2
-   complex(SP)   :: ws
-   real          :: w_aux1, w_aux2, log2=0.693147180560
+   integer,     intent(in)    :: np       ! number of desired pairs
+   complex(SP), intent(in)    :: w1,w2    ! segment [w1,w2)
+   character,   intent(in)    :: ps       ! flavour of sampling: hPPS, qPPS, cPPS, ...
+   complex(SP), intent(out)   :: w(2*np)
+   !
+   integer     :: i, a1, a2
+   complex(SP) :: ws
+   real(SP)    :: w_aux1, w_aux2
+   real(SP), parameter :: log2=0.693147180560_SP
    !
    ws = w1+w2
    select case(np)
@@ -120,6 +122,5 @@
       enddo
    end select 
    !
- end subroutine X_mpa_sampling_all
+end subroutine FREQUENCIES_mpa_sampling
 
- 

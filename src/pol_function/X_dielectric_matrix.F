@@ -124,15 +124,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    if (mod(Xw%n_freqs,2)>0) Xw%n_freqs=Xw%n_freqs+1
    X%mpa_npoles  = Xw%n_freqs/2
-   !
    X_MEM_n_freqs =2*X%mpa_npoles
-   YAMBO_ALLOC(Xw%p,(Xw%n_freqs))
    X%ordering='T'
-   !
-   ! generate the grid
-   !
-   Z_ene(1:2)=cmplx(Xw%er(1:2),Xw%dr(1:2))
-   call X_mpa_sampling_all(X%mpa_npoles,Z_ene(1),Z_ene(2),'h',Xw%p)
+   Xw%grid_type="mpa-h"
    !
  endif
  !

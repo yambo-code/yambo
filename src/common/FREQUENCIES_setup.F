@@ -26,6 +26,7 @@ subroutine FREQUENCIES_setup(W)
  ! %er %dr %n_freqs -> %p
  !
  use pars,          ONLY:SP,cI
+ use com,           ONLY:error
  use frequency,     ONLY:w_samp
  use parser_m,      ONLY:parser
 #include<memory.h>
@@ -37,7 +38,7 @@ subroutine FREQUENCIES_setup(W)
  integer          :: i1
  logical          :: metallic_damping
  real(SP)         :: delta_w,w_n
- complex(SP)      :: w_tmp
+ complex(SP)      :: w_tmp,w_tmp2(2)
  real(SP),external:: FREQUENCIES_damping
  !
  !If %p is associated and consitent with %er/%dr return
@@ -51,7 +52,23 @@ subroutine FREQUENCIES_setup(W)
  endif
  !
  YAMBO_FREE(W%p)
+
  !
+ ! Build mpa-type grids
+ !
+ if (trim(W%grid_type)=="mpa-h") then
+   !
+   if (mod(W%n_freqs,2)/=0) call error("[MPA] Invalid number of frequencies")
+   YAMBO_ALLOC(W%p,(W%n_freqs))
+   !
+   w_tmp2(1:2)=cmplx(W%er(1:2),W%dr(1:2),kind=SP)
+   call FREQUENCIES_mpa_sampling(W%n_freqs/2,w_tmp2(1),w_tmp2(2),'h',W%p)
+   !
+   return
+ endif
+
+ !
+ ! Regular grids
  ! First the total/mem steps
  !
  if (W%er(2)==W%er(1)) W%n_freqs=1

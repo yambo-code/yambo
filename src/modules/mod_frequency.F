@@ -53,6 +53,7 @@ module frequency
    real(SP)     :: dr(2)
    real(SP)     :: per_memstps
    complex(SP),allocatable :: p(:)
+   character(16):: grid_type
  end type w_samp
  !
  contains
@@ -68,6 +69,7 @@ module frequency
        YAMBO_ALLOC(Wo%p,(Wo%n_freqs))
        Wo%p=Wi%p
      endif
+     Wo%grid_type=Wi%grid_type
    end subroutine W_duplicate
    !
    subroutine W_reset(W)
@@ -78,6 +80,7 @@ module frequency
      W%dr=(/0.1_SP,0.1_SP/)/HA2EV
      W%damp_reference=0._SP
      YAMBO_FREE(W%p)
+     W%grid_type=""
    end subroutine W_reset
    !
 end module frequency

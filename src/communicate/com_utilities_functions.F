@@ -119,7 +119,7 @@ integer function get_file_index(of_name_complete)
    ! the two can differ only by the _0n appendend in case it is not the first run
    if (index(trim(of_name(i2)),trim(of_name_complete))==0) cycle
    get_file_index=i2
-   exit
+   return
  enddo
  !
  if(i2==n_ofs_defined+1) then

@@ -39,7 +39,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
                           V_general,V_qp,V_all,V_real_time,V_nl_optics
  use drivers,        ONLY:infile_editing
  use com,            ONLY:write_to_report,repfile,repfile_unit,inpfile_unit
- use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile,STRING_match,STRING_same
+ use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile,logfile_unit,STRING_match,STRING_same
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:live_timing_is_on
@@ -68,8 +68,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use YPP_ELPH
 #endif
 #if defined _YAML_OUTPUT
- use f_utils,        ONLY:f_get_free_unit
- use yaml_output,    ONLY:yaml_set_stream,yaml_close_stream,yaml_stream_connected
+ use pars,           ONLY:max_open_ofs
+ use com,            ONLY:of_yaml_IDs
+ use yaml_output,    ONLY:yaml_close_stream
 #endif
  !
 #include<memory.h>
@@ -104,9 +105,15 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
-   if (master_cpu.and.write_to_report) call initinfio(defs,repfile_unit)
-   if (master_cpu) call ofiles_append(defs=defs)
+   if (master_cpu) then
+     if(write_to_report) call initinfio(defs,repfile_unit)
+     call ofiles_append(defs=defs)
+     close(unit=repfile_unit)
+   endif
+   if(log_as_a_file) close(unit=logfile_unit)
 #if defined _YAML_OUTPUT
+   call yaml_close_stream(unit=of_yaml_IDs(max_open_ofs))
+   if(log_as_a_file) call yaml_close_stream(unit=of_yaml_IDs(max_open_ofs+1))
    call f_lib_finalize()
 #endif
    return
@@ -681,11 +688,11 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  call QP_state_table_setup(E)
  !
  if (infile_editing) then
-#if defined _YAML_OUTPUT
-   inpfile_unit=f_get_free_unit()
-#else
+!#if defined _YAML_OUTPUT
+!   inpfile_unit=f_get_free_unit()
+!#else
    inpfile_unit=12
-#endif
+!#endif
    open(unit=inpfile_unit,file=trim(infile))
    call initinfio(defs,inpfile_unit)
    close(inpfile_unit)
@@ -754,10 +761,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  call INIT_report_and_log_files()
  !
- if (log_as_a_file) call rename_file(logfile)
- !
- call rename_file(repfile)
- !
  live_timing_is_on =master_cpu
  write_to_report   =master_cpu
  write_to_log      =master_cpu
@@ -769,19 +772,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    call initinfio(defs,inpfile_unit)
    close(inpfile_unit)
    call PP_redux_wait
- endif
- !
- if (master_cpu) then
-   call rm_file(trim(repfile))
-#if defined _YAML_OUTPUT
-   call f_lib_initialize()
-   repfile_unit=f_get_free_unit()
-#else
-   repfile_unit=11
-#endif
-   open(unit=repfile_unit,file=trim(repfile))
-   call write_the_logo(repfile_unit,' ')
-   close(repfile_unit)
  endif
  !
  contains

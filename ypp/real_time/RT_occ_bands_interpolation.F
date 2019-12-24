@@ -51,8 +51,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  type(bz_samp)         :: RT_k
  type(levels)          :: CIRCUIT_E,CIRCUIT_dE,RT_E
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
- character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation
- character(lchlen)     :: of_string
+ character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation,k_label
  logical               :: l_normalize_Nel
  integer               :: ib,ik,i_RT,i_T,n_values,ID_df_or_G,ID_spin,ID_magn,ID_bands(3)
  !
@@ -218,11 +217,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
          values(5)=values(3)*INTERP_obj(ID_spin)%INTERP(ib,ik,2)
        endif
        !
-       call msg('o bands',' ',values(:n_values),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
-       if (len_trim(CIRCUIT_k_label(ik))>0) then
-         of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik))//"]"
-       endif
-       call msg_deliver('bands',of_string)  
+       k_label=""
+       if (len_trim(CIRCUIT_k_label(ik))>0) k_label="  ["//trim(CIRCUIT_k_label(ik))//"]"
+       call msg('o bands',' ',values(:n_values),INDENT=0,USE_TABS=.true.,after_msg=k_label)
        !
      enddo
      !

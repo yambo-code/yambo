@@ -23,8 +23,8 @@
 !
 subroutine of_open_close(of_name_extension,mode)
  !
- use pars,            ONLY:lchlen,max_open_ofs
- use com,             ONLY:of_name,opened_of,of_unit,write_to_of
+ use pars,            ONLY:lchlen
+ use com,             ONLY:of_name,opened_of,of_unit,write_to_of,n_ofs_defined
  use IO_m,            ONLY:get_name
 #if defined _NC_OUTPUT
  use com,             ONLY:of_nc_pos,of_nc_var_names,of_nc_IDs
@@ -82,7 +82,7 @@ subroutine of_open_close(of_name_extension,mode)
    !
    ! Check first if already open
    !
-   do i2=1,max_open_ofs-1
+   do i2=1,n_ofs_defined
      if (trim(opened_of(i2))==of_name_complete) return
    enddo
    !
@@ -91,7 +91,7 @@ subroutine of_open_close(of_name_extension,mode)
 #if defined _YAML_OUTPUT
      of_unit(file_index)=f_get_free_unit()
 #else
-   do i2=1,max_open_ofs-1
+   do i2=1,n_ofs_defined
      if (of_unit(i2)<0) cycle
      of_unit(file_index)=20+i2
      exit
@@ -103,8 +103,6 @@ subroutine of_open_close(of_name_extension,mode)
    if (index(mode,'a')==0) open(of_unit(file_index),file=trim(opened_of(file_index)))
    if (index(mode,'a')/=0) open(of_unit(file_index),file=trim(opened_of(file_index)),position='append')
    if (index(mode,"t")>0) call write_the_logo(of_unit(file_index),'#')
-   !
-   of_unit(file_index)=-of_unit(file_index)
    !
 #if defined _NC_OUTPUT
    call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(file_index))
@@ -121,7 +119,7 @@ subroutine of_open_close(of_name_extension,mode)
    !
    ! Close file
    !  
-   do i2=1,max_open_ofs-1
+   do i2=1,n_ofs_defined
      if (index(opened_of(i2),trim(of_name_extension))/=0) then
        close(iabs(of_unit(i2)))
        of_unit(i2)=0
@@ -251,19 +249,17 @@ end subroutine error
 !
 subroutine msg_deliver(of_name_extension,formatted_msg)
  !
- use pars,      ONLY:max_open_ofs
- use com,       ONLY:opened_of,repfile_unit,of_unit
+ use com,       ONLY:opened_of,repfile_unit,of_unit,n_ofs_defined
  !
  implicit none
  !
  character(*) :: of_name_extension,formatted_msg
  integer      :: i_unit
  !
- do i_unit=1,max_open_ofs
+ do i_unit=1,n_ofs_defined
    if (index(opened_of(i_unit),trim(of_name_extension))==0) cycle
    if (of_unit(i_unit)<=0) cycle
    write (of_unit(i_unit),'(a)') trim(formatted_msg)
-   if (of_unit(i_unit)/=repfile_unit) of_unit(i_unit)=-of_unit(i_unit)
  enddo
  !
 end subroutine msg_deliver
@@ -279,7 +275,7 @@ subroutine msg_manager(how,irep)
  !
  use pars,    ONLY:schlen,lchlen
  use stderr,  ONLY:STRING_split,STRING_remove
- use com,     ONLY:terminator,opened_of,of_unit,max_open_ofs,write_to_report,jobstr
+ use com,     ONLY:terminator,opened_of,of_unit,n_ofs_defined,write_to_report,jobstr
  !
  implicit none
  !
@@ -300,17 +296,6 @@ subroutine msg_manager(how,irep)
  !
  if (how(:1)=="o") then
    irep=1
-   call STRING_split(how,ch_piece)
-   do i2=2,10
-     if (len_trim(ch_piece(i2))==0) cycle
-     do i1=1,max_open_ofs-1
-       if (len_trim(opened_of(i1))==0) cycle
-       stripped_file_name=STRING_remove(opened_of(i1),trim(jobstr))
-       if (index( stripped_file_name,trim(ch_piece(i2)) )/=0) then
-         of_unit(i1) =-of_unit(i1)
-       endif
-     enddo
-   enddo
    return
  endif
  !

@@ -61,7 +61,6 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  do i1=1,max_open_ofs-irep
    if (of_unit(i1)<=0) cycle
    write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),(trim(val(i2)),i2=1,size(val))
-   if (of_unit(i1)/=repfile_unit) of_unit(i1)=-of_unit(i1)
    if (of_unit(i1)/=repfile_unit) call of_netcdf_shadow_char(i1,size(val),val)
 #if defined _YAML_OUTPUT
    if(len_trim(val(1))> 0) call yaml_map(mesg,val,unit=of_yaml_IDs(i1))
@@ -119,7 +118,6 @@ subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
  do i1=1,max_open_ofs-irep
    if (of_unit(i1)<=0) cycle
    write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
-   if (abs(of_unit(i1))/=repfile_unit) of_unit(i1)=-of_unit(i1)
 #if defined _YAML_OUTPUT
    call yaml_map(mesg,val,unit=of_yaml_IDs(i1))
    !write(*,*) 'msg_int',trim(mesg),val 
@@ -136,7 +134,7 @@ subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
 end subroutine
 !
 !
-subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatted_msg)
+subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,after_msg)
  !
  use pars,         ONLY:SP,schlen,lchlen,max_open_ofs
  use stderr,       ONLY:c_print,write_to_log,log_as_a_file,gen_fmt
@@ -156,12 +154,12 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatte
  integer,optional :: INDENT
  logical,optional :: USE_TABS
  logical,optional :: EXT_FORMAT
- character(lchlen), optional :: formatted_msg
+ character(schlen), optional :: after_msg
  ! 
  ! Work Space
  !
  integer  :: i1,l_indent,imsg,irep
- character(schlen):: gen_fmt_local
+ character(schlen):: gen_fmt_local,after_msg_
  character(lchlen):: lch,msgfmt
  character(2)     :: dots_string
  logical          :: l_tabs,l_ext_fmt
@@ -169,6 +167,8 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatte
  if (len_trim(how)==0) return
  dots_string=""
  if(len_trim(mesg)>1) dots_string=": "
+ after_msg_=""
+ if(present(after_msg)) after_msg_=after_msg
  call msg_manager(how,irep)
  l_ext_fmt = .false.
  l_tabs    = .false.
@@ -183,12 +183,8 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatte
  endif
  do i1=1,max_open_ofs-irep
    if (of_unit(i1)<=0) cycle
-   if (present(formatted_msg)) then
-     write (formatted_msg,trim(msgfmt)) mesg//trim(dots_string),val
-   else
-     write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
-     if (of_unit(i1)/=repfile_unit) of_unit(i1)=-of_unit(i1)
-   endif
+   if (len_trim(after_msg_)==0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
+   if (len_trim(after_msg_)> 0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val,trim(after_msg_)
    if (of_unit(i1)/=repfile_unit) call of_netcdf_shadow_real(i1,mesg,val,size(val))
 #if defined _YAML_OUTPUT
    call yaml_map(mesg,val,unit=of_yaml_IDs(i1))

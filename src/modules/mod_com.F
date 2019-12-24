@@ -57,7 +57,7 @@ module com
  integer           :: depth,isec(5)
  character(1)      :: previous_secmode
  character(schlen) :: secnm
- ! 
+ !
  ! Output Files/Report File
  !
  character(lchlen)  :: of_name(max_n_ofs)
@@ -173,15 +173,15 @@ module com
      call msg_integers_vector_int(how,mesg,val,USE_TABS=USE_TABS,INDENT=INDENT)
    end subroutine
    !
-   subroutine msg_reals_vector(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatted_msg)
+   subroutine msg_reals_vector(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,after_msg)
      character(*)     :: mesg
      character(*)     :: how
      real(SP)         :: val(:)
      integer,optional :: INDENT
      logical,optional :: USE_TABS
      logical,optional :: EXT_FORMAT
-     character(lchlen), optional :: formatted_msg
-     call msg_reals_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT,EXT_FORMAT=EXT_FORMAT,formatted_msg=formatted_msg)
+     character(schlen), optional :: after_msg
+     call msg_reals_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT,EXT_FORMAT=EXT_FORMAT,after_msg=after_msg)
    end subroutine
    !
 end module com

@@ -41,15 +41,15 @@ module com_interfcs
      logical,optional :: USE_TABS
    end subroutine
    !
-   subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatted_msg)
-     use pars,     ONLY:SP,lchlen
+   subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,after_msg)
+     use pars,     ONLY:SP,schlen
      character(*)     :: mesg
      character(*)     :: how
      real(SP)         :: val(:)
      integer,optional :: INDENT
      logical,optional :: USE_TABS
      logical,optional :: EXT_FORMAT
-     character(lchlen), optional :: formatted_msg
+     character(schlen), optional :: after_msg
    end subroutine
    !
    function composed_fmt(basic_fmt,n,USE_TABS,INDENT)

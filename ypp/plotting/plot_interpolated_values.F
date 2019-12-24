@@ -46,7 +46,6 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  integer               :: ik_local,ik_ibz_grid,ik_bz_grid,iqnt,i_dim,ifile,i_point,i_sp_pol,ivalue,&
 &                         ndims,nval,n_points,n_points_max
  logical               :: PLOT_BANDS,PLOT_from_DB,PLOT_interpolated,PLOT_built_in,l_print_k_name
- character(lchlen)     :: of_string
  character(schlen)     :: headings_k(4),headings(dims(2)-dims(1)+1+4), &
 &                         file_name(sum(nfiles)),k_name
  real(SP)              :: value_k,        values(dims(2)-dims(1)+1+4), &
@@ -188,6 +187,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  do ik_local=1,LOCAL_k%nbz
    !
    l_print_k_name=.false.
+   k_name=""
    !
    if (PLOT_built_in) then
      !
@@ -260,14 +260,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
          if(i_point==1) values(2:ndims+1)=      tmp_var(:,ifile,iqnt)
          if(i_point> 1) values(2:ndims+1)=auxiliary_var(:,ifile,iqnt,i_point-1)
          if(PLOT_BANDS .and. ivalue==1) values(2:ndims+1)=values(2:ndims+1)*HA2EV
-         !
-         if (l_print_k_name) then
-           call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
-           of_string=trim(of_string)//trim(k_name)
-           call msg_deliver(trim(file_name(ivalue)),of_string)
-         else
-           call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.true.)
-         endif
+         call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.true.,after_msg=k_name)
        enddo
        !
      enddo

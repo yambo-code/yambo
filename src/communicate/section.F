@@ -37,8 +37,12 @@ subroutine section(mode,name)
 &                     date_and_time_string
  use parallel_m, ONLY:PP_redux_wait,ncpu
  use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&
-&                     write_to_report,repfile_unit
+&                     write_to_report,repfile_unit,max_open_ofs
  use timing_m,   ONLY:timing_upto_now
+#if defined _YAML_OUTPUT
+ use com,             ONLY:of_yaml_IDs
+ use yaml_output,     ONLY:yaml_new_document,yaml_release_document
+#endif
  !
  implicit none
  !
@@ -125,6 +129,10 @@ subroutine section(mode,name)
  enddo
  write (chs,'(3a)') trim(secnm),'] ',trim(name)
  secnm=chs
+#if defined _YAML_OUTPUT
+ call yaml_release_document(of_yaml_IDs(max_open_ofs))
+ call yaml_new_document(of_yaml_IDs(max_open_ofs))
+#endif
  call msg('nrs',trim(secnm))
  call msg('rn',repeat('=',len_trim(secnm)))
  !

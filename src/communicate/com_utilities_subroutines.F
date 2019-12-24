@@ -91,11 +91,7 @@ subroutine of_open_close(of_name_extension,mode)
 #if defined _YAML_OUTPUT
      of_unit(file_index)=f_get_free_unit()
 #else
-   do i2=1,n_ofs_defined
-     if (of_unit(i2)<0) cycle
-     of_unit(file_index)=20+i2
-     exit
-   enddo
+   of_unit(file_index)=file_index+20
 #endif
    opened_of(file_index)=of_name_complete
    of_name(file_index)=of_name_complete

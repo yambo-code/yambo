@@ -93,6 +93,7 @@ subroutine of_open_close(of_name_extension,mode)
 #else
    do i2=1,max_open_ofs
      if (of_unit(i2)==0) then
+       file_index=i2
        of_unit(file_index)=20+i2
        exit
      endif

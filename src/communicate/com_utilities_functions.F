@@ -37,7 +37,6 @@ logical function OF_exists(name)
  !
 end function OF_exists
 !
-!
 logical function file_exists(name)
  !
  implicit none

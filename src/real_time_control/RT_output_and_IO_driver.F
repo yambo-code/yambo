@@ -48,30 +48,30 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  !
  select case(trim(what))
    !
- case('open')
+ case('open','close')
    !
-   OBSERVABLES=0._SP
+   if(trim(what)=="open") OBSERVABLES=0._SP
    !
-   call RT_output(what="open curr pol")
+   call RT_output(what=trim(what)//" curr pol")
    !
    ! GPL_EXCLUDE_START
    !
-   call RT_output(what="open carr magn")
-   if(eval_energy)  call RT_output(what="open energy")
-   if(eval_entropy) call RT_output(what="open therm")
-   if(l_RT_update_Energies)  call RT_output(what="open BGR")
-   if (l_elph_scatt)         call RT_output('open mean_EPlife')
-   if (l_elel_scatt)         call RT_output('open mean_EElife')
-   if (l_elphoton_scatt)     call RT_output('open mean_RADlife')
-   if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open N_dN_E')
+   call RT_output(what=trim(what)//" carr magn")
+   if(eval_energy)  call RT_output(what=trim(what)//" energy")
+   if(eval_entropy) call RT_output(what=trim(what)//" therm")
+   if(l_RT_update_Energies)  call RT_output(what=trim(what)//" BGR")
+   if (l_elph_scatt)         call RT_output(trim(what)//' mean_EPlife')
+   if (l_elel_scatt)         call RT_output(trim(what)//' mean_EElife')
+   if (l_elphoton_scatt)     call RT_output(trim(what)//' mean_RADlife')
+   if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output(trim(what)//' N_dN_E')
    !
    ! GPL_EXCLUDE_END
    !
    ! Field(s)
    !==========
    if (l_NE_with_fields) then
-     call RT_output(what="open ext")
-     if(l_RT_induced_field)  call RT_output(what="open tot ind")
+     call RT_output(what=trim(what)//" ext")
+     if(l_RT_induced_field)  call RT_output(what=trim(what)//" tot ind")
    endif
    !
  case('write')

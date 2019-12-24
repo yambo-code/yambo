@@ -93,6 +93,7 @@ subroutine of_open_close(of_name_extension,mode)
 #else
    do i2=1,max_open_ofs
      if (of_unit(i2)==0) then
+       file_index=i2
        of_unit(file_index)=20+i2
        exit
      endif
@@ -254,7 +255,6 @@ subroutine error(mesg)
  !
 end subroutine error
 !
-!
 subroutine msg_deliver(of_name_extension,formatted_msg)
  !
  use pars,      ONLY:max_open_ofs
@@ -290,7 +290,7 @@ subroutine msg_manager(how)
  !
  implicit none
  !
- character(*) how
+ character(*):: how
  ! 
  ! Work Space
  !

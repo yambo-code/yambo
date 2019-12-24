@@ -104,7 +104,6 @@ function filename(name)
  !
 end function filename
 !
-!
 integer function get_file_index(of_name_complete)
  !
  use pars,      ONLY:max_n_ofs,lchlen

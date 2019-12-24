@@ -63,6 +63,13 @@ subroutine of_open_close(of_name_extension,mode)
    !
    file_index=get_file_index(of_name_complete)
    !
+   ! Flush output if file is opened
+   !
+   if (index(mode,'f')/=0.and.(len_trim(opened_of(file_index))>0)) then
+     flush(abs(of_unit(file_index)))
+     if (trim(mode)=='f') return
+   endif
+   !
    if (index(mode,'a')==0.and.index(mode,'O')==0) then
      ! Check if filename exists from previous run.
      ! In case _0n needs to be appended when file is first created
@@ -72,10 +79,6 @@ subroutine of_open_close(of_name_extension,mode)
      ! In case _0n needs to be appendend, it is done checking the filename saved
      of_name_complete=of_name(file_index)
    endif
-   !
-   ! Flush output if file is opened
-   !
-   if (index(mode,'f')/=0.and.(len_trim(opened_of(file_index))>0)) flush(abs(of_unit(file_index)))
    !
    if ( (index(mode,'o')==0.and.index(mode,'O')==0) .or. .not.write_to_of) return
    !

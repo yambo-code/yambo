@@ -63,7 +63,9 @@ subroutine of_open_close(of_name_extension,mode)
    !
    file_index=get_file_index(of_name_complete)
    !
-   if (index(mode,'a')==0.and.index(mode,'O')==0) then
+   ! Define new of_name or connect to previously defined one
+   !
+   if (index(mode,'a')==0.and.index(mode,'f')==0.and.index(mode,'O')==0) then
      ! Check if filename exists from previous run.
      ! In case _0n needs to be appended when file is first created
      call rename_file(of_name_complete)

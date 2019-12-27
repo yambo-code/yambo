@@ -213,7 +213,7 @@ subroutine initinfio(defs,ou)
    enddo
  enddo
  !
- if (.not.infile_editing.and.ou==12) return
+ if (.not.infile_editing.and.ou==inpfile_unit) return
  if (master_cpu) then
    if (ou==inpfile_unit) call write_the_logo(ou,'#')
    if (ou==repfile_unit) write (ou,'(2a)') ' .-Input file  ',trim(infile)

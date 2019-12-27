@@ -23,10 +23,10 @@
 !
 subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  !
- use pars,         ONLY:lchlen,max_open_ofs
+ use pars,         ONLY:lchlen,max_open_ofs,repfile_index
  use stderr,       ONLY:c_print,write_to_log,log_as_a_file
  use LIVE_t,       ONLY:LIVE_message
- use com,          ONLY:repfile,repfile_unit,terminator,of_unit
+ use com,          ONLY:repfile,terminator,of_unit
  use com_interfcs, ONLY:composed_fmt
 #if defined _YAML_OUTPUT
  use com,          ONLY:of_yaml_IDs
@@ -43,36 +43,45 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  ! 
  ! Work Space
  !
- integer          :: i1,i2,l_indent,irep
+ integer          :: i1,i2,l_indent,i1_limits(2)
  character(lchlen):: msgfmt,lch
  character(2)     :: dots_string
- logical          :: l_tabs
+ logical          :: l_tabs,msg_for_out,msg_for_rep,msg_for_log
  !
  if (len_trim(how)==0) return
  dots_string=""
  if(len_trim(val(1))>0 .and. len_trim(mesg)>1) dots_string=": "
- call msg_manager(how,irep)
+ call msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
  l_tabs=.false.
  l_indent=-1
  if (present(USE_TABS)) l_tabs   = USE_TABS
  if (present(INDENT))   l_indent = INDENT
  msgfmt=composed_fmt('a',size(val),l_tabs,l_indent)
  if(trim(msgfmt)=="(/00x,a, 01(a,1x))") msgfmt="(/99x,a, 01(a,1x))"
- do i1=1,max_open_ofs-irep
+ !
+ ! Write to o-file or to report
+ !
+ i1_limits=(/1,-1/)
+ if(msg_for_out) i1_limits=(/1,max_open_ofs/)
+ if(msg_for_rep) i1_limits=(/repfile_index,repfile_index/)
+ do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
    write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),(trim(val(i2)),i2=1,size(val))
-   if (of_unit(i1)/=repfile_unit) call of_netcdf_shadow_char(i1,size(val),val)
+   of_unit(i1)=-of_unit(i1)
+   if (.not.msg_for_rep) call of_netcdf_shadow_char(i1,size(val),val)
 #if defined _YAML_OUTPUT
    if(len_trim(val(1))> 0) call yaml_map(mesg,val,unit=of_yaml_IDs(i1))
    if(len_trim(val(1))<=0) call yaml_comment(mesg,unit=of_yaml_IDs(i1))
 #endif
  enddo
- if (index(how,'o')>0.or.index(how,'O')>0) return
+ if (msg_for_out) return
+ !
+ ! Write to logfile or to report
+ !
  if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
  msgfmt=composed_fmt('a',-size(val),.false.,-1)
  write (lch,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
- if (index(how,'l')/=0.and..not.log_as_a_file) &
- &     call c_print(terminator(3),lch,terminator(4),"%s")
+ if (index(how,'l')/=0.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
  if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
  !
 end subroutine
@@ -80,11 +89,11 @@ end subroutine
 !
 subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
  !
- use pars,         ONLY:lchlen,max_open_ofs
+ use pars,         ONLY:lchlen,max_open_ofs,repfile_index
  use stderr,       ONLY:gen_fmt
  use stderr,       ONLY:c_print,write_to_log,log_as_a_file
  use LIVE_t,       ONLY:LIVE_message
- use com,          ONLY:repfile,repfile_unit,of_unit,terminator
+ use com,          ONLY:repfile,of_unit,terminator
  use com_interfcs, ONLY:composed_fmt
 #if defined _YAML_OUTPUT
  use com,          ONLY:of_yaml_IDs
@@ -101,34 +110,45 @@ subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
  ! 
  ! Work Space
  !
- integer :: i1,l_indent,irep
- logical :: l_tabs
- character(lchlen)::lch,msgfmt
+ integer :: i1,l_indent,i1_limits(2)
+ character(lchlen):: msgfmt,lch
  character(2)     :: dots_string
+ logical          :: l_tabs,msg_for_out,msg_for_rep,msg_for_log
  !
  if (len_trim(how)==0) return
+ !
+ ! General setup
+ !
  dots_string=""
  if(len_trim(mesg)>1) dots_string=": "
- call msg_manager(how,irep)
+ call msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
  l_tabs    = .false.
  l_indent  = -1
  if (present(USE_TABS))   l_tabs   = USE_TABS
  if (present(INDENT))     l_indent = INDENT
  msgfmt=composed_fmt(trim(gen_fmt(val)),size(val),l_tabs,l_indent)
- do i1=1,max_open_ofs-irep
+ !
+ ! Write to o-file or to report
+ !
+ i1_limits=(/1,-1/)
+ if(msg_for_out) i1_limits=(/1,max_open_ofs/)
+ if(msg_for_rep) i1_limits=(/repfile_index,repfile_index/)
+ do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
    write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
+   of_unit(i1)=-of_unit(i1)
 #if defined _YAML_OUTPUT
    call yaml_map(mesg,val,unit=of_yaml_IDs(i1))
-   !write(*,*) 'msg_int',trim(mesg),val 
 #endif
  enddo
- if (index(how,'o')>0.or.index(how,'O')>0) return
+ if (msg_for_out) return
+ !
+ ! Write to logfile or to report
+ !
  if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
  msgfmt=composed_fmt(trim(gen_fmt(val)),-size(val),.false.,-1)
  write (lch,trim(msgfmt)) mesg,val 
- if (index(how,'l')/=0.and..not.log_as_a_file) &
- &    call c_print(terminator(3),lch,terminator(4),"%s")
+ if (index(how,'l')/=0.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
  if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
  !
 end subroutine
@@ -136,10 +156,10 @@ end subroutine
 !
 subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,after_msg)
  !
- use pars,         ONLY:SP,schlen,lchlen,max_open_ofs
+ use pars,         ONLY:SP,schlen,lchlen,max_open_ofs,repfile_index
  use stderr,       ONLY:c_print,write_to_log,log_as_a_file,gen_fmt
  use LIVE_t,       ONLY:LIVE_message
- use com,          ONLY:repfile,repfile_unit,of_unit,terminator
+ use com,          ONLY:repfile,of_unit,terminator
  use com_interfcs, ONLY:composed_fmt
 #if defined _YAML_OUTPUT
  use com,          ONLY:of_yaml_IDs
@@ -158,18 +178,21 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,after_ms
  ! 
  ! Work Space
  !
- integer  :: i1,l_indent,imsg,irep
+ integer  :: i1,l_indent,imsg,i1_limits(2)
  character(schlen):: gen_fmt_local,after_msg_
  character(lchlen):: lch,msgfmt
  character(2)     :: dots_string
- logical          :: l_tabs,l_ext_fmt
+ logical          :: l_tabs,l_ext_fmt,msg_for_out,msg_for_rep,msg_for_log
  !
  if (len_trim(how)==0) return
+ !
+ ! General setup
+ !
  dots_string=""
  if(len_trim(mesg)>1) dots_string=": "
  after_msg_=""
  if(present(after_msg)) after_msg_=after_msg
- call msg_manager(how,irep)
+ call msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
  l_ext_fmt = .false.
  l_tabs    = .false.
  l_indent  = -1
@@ -181,17 +204,26 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,after_ms
    write(gen_fmt_local,'(a)') 'F11.06'
    msgfmt=composed_fmt(trim(gen_fmt_local),size(val),l_tabs,l_indent)
  endif
- do i1=1,max_open_ofs-irep
+ !
+ ! Write to o-file or to report
+ !
+ i1_limits=(/1,-1/)
+ if(msg_for_out) i1_limits=(/1,max_open_ofs/)
+ if(msg_for_rep) i1_limits=(/repfile_index,repfile_index/)
+ do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
    if (len_trim(after_msg_)==0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
    if (len_trim(after_msg_)> 0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val,trim(after_msg_)
-   if (of_unit(i1)/=repfile_unit) call of_netcdf_shadow_real(i1,mesg,val,size(val))
+   of_unit(i1)=-of_unit(i1)
+   if (.not.msg_for_rep) call of_netcdf_shadow_real(i1,mesg,val,size(val))
 #if defined _YAML_OUTPUT
    call yaml_map(mesg,val,unit=of_yaml_IDs(i1))
-   !write(*,*) 'msg_real',trim(mesg),val 
 #endif
  enddo
- if (index(how,'o')>0.or.index(how,'O')>0) return
+ if (msg_for_out) return
+ !
+ ! Write to logfile or to report
+ !
  if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
  if (.not.l_ext_fmt) msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),-size(val),.false.,-1)
  if (     l_ext_fmt) then
@@ -199,8 +231,7 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,after_ms
    msgfmt=composed_fmt(trim(gen_fmt_local),-size(val),.false.,-1)
  endif
  write (lch,trim(msgfmt)) mesg//": ",val 
- if (index(how,'l')/=0.and..not.log_as_a_file) call &
-&       c_print(terminator(3),lch,terminator(4),"%s")
+ if (index(how,'l')/=0.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
  if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
  !
 end subroutine

@@ -24,7 +24,7 @@
 subroutine of_open_close(of_name_extension,mode)
  !
  use pars,            ONLY:lchlen
- use com,             ONLY:of_name,opened_of,of_unit,write_to_of,n_ofs_defined
+ use com,             ONLY:of_name,of_opened,of_unit,write_to_of,n_ofs_defined
  use IO_m,            ONLY:get_name
 #if defined _NC_OUTPUT
  use com,             ONLY:of_nc_pos,of_nc_var_names,of_nc_IDs
@@ -77,7 +77,7 @@ subroutine of_open_close(of_name_extension,mode)
    !
    ! Flush output if file is opened
    !
-   if (index(mode,'f')/=0.and.(len_trim(opened_of(file_index))>0)) flush(abs(of_unit(file_index)))
+   if (index(mode,'f')/=0.and.(len_trim(of_opened(file_index))>0)) flush(abs(of_unit(file_index)))
    !
    if ( (index(mode,'o')==0.and.index(mode,'O')==0) .or. .not.write_to_of) return
    !
@@ -86,7 +86,7 @@ subroutine of_open_close(of_name_extension,mode)
    ! Check first if already open
    !
    do i2=1,n_ofs_defined
-     if (trim(opened_of(i2))==of_name_complete) return
+     if (trim(of_opened(i2))==of_name_complete) return
    enddo
    !
    ! Find the first free unit
@@ -96,11 +96,13 @@ subroutine of_open_close(of_name_extension,mode)
 #else
    of_unit(file_index)=file_index+20
 #endif
-   opened_of(file_index)=of_name_complete
+   of_opened(file_index)=of_name_complete
    !
-   if (index(mode,'a')==0) open(of_unit(file_index),file=trim(opened_of(file_index)))
-   if (index(mode,'a')/=0) open(of_unit(file_index),file=trim(opened_of(file_index)),position='append')
+   if (index(mode,'a')==0) open(of_unit(file_index),file=trim(of_opened(file_index)))
+   if (index(mode,'a')/=0) open(of_unit(file_index),file=trim(of_opened(file_index)),position='append')
    if (index(mode,"t")>0) call write_the_logo(of_unit(file_index),'#')
+   !
+   of_unit(file_index)=-of_unit(file_index)
    !
 #if defined _NC_OUTPUT
    call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(file_index))
@@ -118,7 +120,7 @@ subroutine of_open_close(of_name_extension,mode)
    ! Close file
    !  
    do i2=1,n_ofs_defined
-     if (index(opened_of(i2),trim(of_name_extension))/=0) then
+     if (index(of_opened(i2),trim(of_name_extension))/=0) then
        close(iabs(of_unit(i2)))
        of_unit(i2)=0
 #if defined _NC_OUTPUT
@@ -128,7 +130,7 @@ subroutine of_open_close(of_name_extension,mode)
 #if defined _YAML_OUTPUT
        call yaml_close_stream(unit=of_yaml_IDs(i2))
 #endif
-       opened_of(i2)=' '
+       of_opened(i2)=' '
        exit
      endif
    enddo
@@ -245,25 +247,7 @@ subroutine error(mesg)
 end subroutine error
 !
 !
-subroutine msg_deliver(of_name_extension,formatted_msg)
- !
- use com,       ONLY:opened_of,repfile_unit,of_unit,n_ofs_defined
- !
- implicit none
- !
- character(*) :: of_name_extension,formatted_msg
- integer      :: i_unit
- !
- do i_unit=1,n_ofs_defined
-   if (index(opened_of(i_unit),trim(of_name_extension))==0) cycle
-   if (of_unit(i_unit)<=0) cycle
-   write (of_unit(i_unit),'(a)') trim(formatted_msg)
- enddo
- !
-end subroutine msg_deliver
-!
-!
-subroutine msg_manager(how,irep)
+subroutine msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
  !
  ! how = '(n)s(n)' '(n)r(n)' '(n)l(n)' 'o PATTERN'
  !
@@ -271,15 +255,15 @@ subroutine msg_manager(how,irep)
  ! s(tderr)
  ! oN=msgunits(N) 
  !
- use pars,    ONLY:schlen,lchlen
+ use pars,    ONLY:schlen,lchlen,repfile_index,max_open_ofs
  use stderr,  ONLY:STRING_split,STRING_remove
- use com,     ONLY:terminator,opened_of,of_unit,n_ofs_defined,jobstr,&
+ use com,     ONLY:terminator,of_opened,of_unit,n_ofs_defined,jobstr,&
 &                  write_to_report,write_to_of
  !
  implicit none
  !
  character(*), intent(in)  :: how
- integer,      intent(out) :: irep
+ logical,      intent(out) :: msg_for_out,msg_for_rep,msg_for_log
  ! 
  ! Work Space
  !
@@ -287,21 +271,36 @@ subroutine msg_manager(how,irep)
  character(schlen)::ch_piece(10)
  character(lchlen)::stripped_file_name
  !
- irep=0
  terminator(1)='('
  terminator(2)=')'
+ !
+ msg_for_out=.false.
+ msg_for_rep=.false.
+ msg_for_log=.false.
  !
  ! o. files
  !
  if (how(:1)=="o".and.write_to_of) then
-   irep=1
+   call STRING_split(how,ch_piece)
+   do i2=2,10
+     if (len_trim(ch_piece(i2))==0) cycle
+     do i1=1,max_open_ofs
+       if (len_trim(of_opened(i1))==0) cycle
+       stripped_file_name=STRING_remove(of_opened(i1),trim(jobstr))
+       if (index( stripped_file_name,trim(ch_piece(i2)) )/=0) then
+         of_unit(i1) =-of_unit(i1)
+       endif
+     enddo
+   enddo
+   msg_for_out=.true.
    return
  endif
  !
  ! Report
  !
  if (index(how,'r' )/=0.and.write_to_report) then
-   irep=0
+   of_unit(repfile_index) =-of_unit(repfile_index)
+   msg_for_rep=.true.
    if (index(how,'nr')/=0) terminator(1)='(/'
    if (index(how,'rn')/=0) terminator(2)='/)'
  endif
@@ -309,7 +308,7 @@ subroutine msg_manager(how,irep)
  ! Log 
  !
  if (index(how,'l' )/=0) then
-   irep=1
+   msg_for_log=.true.
    terminator(3:4)=' '
    if (index(how,'nl')/=0) terminator(3)='n'
    if (index(how,'ln')/=0) terminator(4)='n'

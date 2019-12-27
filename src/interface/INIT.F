@@ -47,8 +47,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         switch_off_runlevel,check_verbosity,runlevel_is_on
  use it_m,           ONLY:initdefs,rstatus,initmode,infile,nrnlvls,rnlvls
  use parallel_m,     ONLY:PP_redux_wait
- use com,            ONLY:msg,repfile_unit,inpfile_unit,com_path,&
-&                         write_to_report,max_open_ofs
+ use com,            ONLY:msg,repfile_unit,inpfile_unit,com_path,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on
  use QP_m,           ONLY:QP_t,QP_state,QP_reset,&
@@ -71,6 +70,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K,n_threads_NL
 #endif
 #if defined _YAML_OUTPUT
+ use pars,           ONLY:logfile_index,repfile_index
  use com,            ONLY:of_yaml_IDs
  use yaml_output,    ONLY:yaml_close_stream
 #endif
@@ -141,8 +141,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    close(unit=repfile_unit)
    if(log_as_a_file) close(unit=logfile_unit)
 #if defined _YAML_OUTPUT
-   call yaml_close_stream(unit=of_yaml_IDs(max_open_ofs))
-   if(log_as_a_file) call yaml_close_stream(unit=of_yaml_IDs(max_open_ofs+1))
+   call yaml_close_stream(unit=of_yaml_IDs(repfile_index))
+   if(log_as_a_file) call yaml_close_stream(unit=of_yaml_IDs(logfile_index))
    call f_lib_finalize()
 #endif
    return

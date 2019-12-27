@@ -33,6 +33,7 @@ module com
  character(lchlen)  :: core_io_path
  character(lchlen)  :: more_io_path
  character(lchlen)  :: com_path
+ !
  character(lchlen)  :: repfile
  !
  integer            :: repfile_unit
@@ -61,8 +62,8 @@ module com
  ! Output Files/Report File
  !
  character(lchlen)  :: of_name(max_n_ofs)
- character(lchlen)  :: opened_of(max_open_ofs)
- integer            :: of_unit(max_open_ofs)
+ character(lchlen)  :: of_opened(max_open_ofs)
+ integer            :: of_unit(max_open_ofs+2)
  integer            :: n_ofs_defined
 #if defined _NC_OUTPUT
  integer            :: of_nc_IDs(max_open_ofs)
@@ -72,6 +73,7 @@ module com
 #if defined _YAML_OUTPUT
  integer            :: of_yaml_IDs(max_open_ofs+2)
 #endif
+ !
  logical            :: write_to_of
  logical            :: write_to_report
  !

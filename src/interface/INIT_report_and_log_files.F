@@ -23,7 +23,7 @@
 !
 subroutine INIT_report_and_log_files()
  !
- use pars,           ONLY:lchlen
+ use pars,           ONLY:lchlen,repfile_index,logfile_index
  use stderr,         ONLY:logfile,logfile_unit,log_as_a_file,intc,write_to_log,write_to_log_default
  use it_m,           ONLY:rstatus,nrnlvls,rnlvls
  use com,            ONLY:repfile,repfile_unit,com_path,jobstr,max_open_ofs,of_unit
@@ -74,13 +74,13 @@ subroutine INIT_report_and_log_files()
  !
  if (log_as_a_file) call rename_file(logfile)
  !
- if (master_cpu) then
-   !
-   ! Init flib
-   !
+ ! Init flib
+ !
 #if defined _YAML_OUTPUT
-   call f_lib_initialize()
+ call f_lib_initialize()
 #endif
+ !
+ if (master_cpu) then
    !
    ! Report file
    !
@@ -89,11 +89,11 @@ subroutine INIT_report_and_log_files()
 #else
    repfile_unit=11
 #endif
-   of_unit(max_open_ofs) = repfile_unit
+   of_unit(repfile_index) = repfile_unit
    open(unit=repfile_unit,file=trim(repfile))
 #if defined _YAML_OUTPUT
    call yaml_set_stream(filename=trim(repfile)//".yaml")
-   call yaml_stream_connected(trim(repfile)//".yaml",of_yaml_IDs(max_open_ofs))
+   call yaml_stream_connected(trim(repfile)//".yaml",of_yaml_IDs(repfile_index))
 #endif
    call write_the_logo(repfile_unit,' ')
    !
@@ -108,13 +108,12 @@ subroutine INIT_report_and_log_files()
 #else
    logfile_unit=13
 #endif
-   if(log_as_a_file) then
-     open(unit=logfile_unit,file=trim(logfile))
+   of_unit(repfile_index) = repfile_unit
+   open(unit=logfile_unit,file=trim(logfile))
 #if defined _YAML_OUTPUT
-     call yaml_set_stream(filename=trim(logfile)//".yaml")
-     call yaml_stream_connected(trim(logfile)//".yaml",of_yaml_IDs(max_open_ofs+1))
+   call yaml_set_stream(filename=trim(logfile)//".yaml")
+   call yaml_stream_connected(trim(logfile)//".yaml",of_yaml_IDs(logfile_index))
 #endif
-   endif
    !
  endif
  !

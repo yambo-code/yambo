@@ -59,7 +59,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
 &                     eval_magn,E_SOC_nbands
  use parallel_m, ONLY:ncpu,CPU_str_reset,PARALLEL_host_name
- use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,opened_of,of_unit,max_open_ofs,&
+ use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,com_path,repfile,grid_paths
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
@@ -227,7 +227,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  previous_secmode=' '
  of_name=' '
  n_ofs_defined=0
- opened_of=' '
+ of_opened=' '
  of_unit=0
  of_unit(max_open_ofs)=-1
  !

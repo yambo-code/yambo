@@ -60,6 +60,8 @@ module pars
  !...Output Files/Report File
  integer,parameter  :: max_n_ofs=1000
  integer,parameter  :: max_open_ofs=1000
+ integer,parameter  :: repfile_index=1001
+ integer,parameter  :: logfile_index=1002
  !
  !...I/O
  integer, parameter :: max_io_units=10

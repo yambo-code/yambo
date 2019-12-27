@@ -68,7 +68,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use YPP_ELPH
 #endif
 #if defined _YAML_OUTPUT
- use pars,           ONLY:max_open_ofs
+ use pars,           ONLY:logfile_index,repfile_index
  use com,            ONLY:of_yaml_IDs
  use yaml_output,    ONLY:yaml_close_stream
 #endif
@@ -112,8 +112,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    endif
    if(log_as_a_file) close(unit=logfile_unit)
 #if defined _YAML_OUTPUT
-   call yaml_close_stream(unit=of_yaml_IDs(max_open_ofs))
-   if(log_as_a_file) call yaml_close_stream(unit=of_yaml_IDs(max_open_ofs+1))
+   call yaml_close_stream(unit=of_yaml_IDs(repfile_index))
+   if(log_as_a_file) call yaml_close_stream(unit=of_yaml_IDs(logfile_index))
    call f_lib_finalize()
 #endif
    return
@@ -688,11 +688,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  call QP_state_table_setup(E)
  !
  if (infile_editing) then
-!#if defined _YAML_OUTPUT
-!   inpfile_unit=f_get_free_unit()
-!#else
    inpfile_unit=12
-!#endif
    open(unit=inpfile_unit,file=trim(infile))
    call initinfio(defs,inpfile_unit)
    close(inpfile_unit)

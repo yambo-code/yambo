@@ -67,6 +67,7 @@ subroutine of_open_close(of_name_extension,mode)
      ! Check if filename exists from previous run.
      ! In case _0n needs to be appended when file is first created
      call rename_file(of_name_complete)
+     of_name(file_index)=of_name_complete
    else if(len_trim(of_name(file_index))>0) then
      ! In case _0n needs to be appendend, it is done checking the filename saved
      of_name_complete=of_name(file_index)
@@ -94,7 +95,6 @@ subroutine of_open_close(of_name_extension,mode)
    of_unit(file_index)=file_index+20
 #endif
    opened_of(file_index)=of_name_complete
-   of_name(file_index)=of_name_complete
    !
    if (index(mode,'a')==0) open(of_unit(file_index),file=trim(opened_of(file_index)))
    if (index(mode,'a')/=0) open(of_unit(file_index),file=trim(opened_of(file_index)),position='append')
@@ -271,7 +271,8 @@ subroutine msg_manager(how,irep)
  !
  use pars,    ONLY:schlen,lchlen
  use stderr,  ONLY:STRING_split,STRING_remove
- use com,     ONLY:terminator,opened_of,of_unit,n_ofs_defined,write_to_report,jobstr
+ use com,     ONLY:terminator,opened_of,of_unit,n_ofs_defined,jobstr,&
+&                  write_to_report,write_to_of
  !
  implicit none
  !
@@ -290,7 +291,7 @@ subroutine msg_manager(how,irep)
  !
  ! o. files
  !
- if (how(:1)=="o") then
+ if (how(:1)=="o".and.write_to_of) then
    irep=1
    return
  endif

@@ -122,6 +122,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! Prepare the IO (and check if q has been already done)
  !
  io_X_done=-1
+ i_err=-1
  !
  if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
  !

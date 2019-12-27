@@ -46,10 +46,12 @@ subroutine PARALLEL_global_Response_IO( )
    endif
  enddo
  !
+ N_q_SE=1
  do i=1,CPU_structure(i_s_se)%N_chains
    if (trim(CPU_structure(i_s_se)%ROLE(i))=="q") N_q_SE=CPU_structure(i_s_se)%CPU(i)
  enddo
  !
+ N_q_current=1
  do i=1,PARALLEL_n_structures_active
    if (trim(PARALLEL_CPU_role(i))=="q") N_q_current=PARALLEL_CPU_used(i)
  enddo

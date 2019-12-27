@@ -341,6 +341,8 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  call RT_timing(-1)
  !
+ call RT_output_and_IO_driver('close',E,k,OBSERVABLES)
+ !
  ! Finalize & Free
  !-----------------
  call CLOSE_and_clean()

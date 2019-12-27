@@ -103,6 +103,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  integer               :: first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp,i_c
  !
+ integer               :: cond_g,cond_f 
+ !
  ! Reset & checks
  !
  call elemental_collision_free(isc)
@@ -276,21 +278,26 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif
        !
-       !$omp parallel do default(shared), private(ig1,ig2)
+       !$omp parallel do default(shared), private(ig1,ig2), reduction(+:cond_b,cond_g), collapse(2)
        do ig2=1,X%ng
          do ig1=1,X%ng
            if (l_ppa) then
              if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
                X_mat(ig1,ig2,X_range(2))=X%ppaE
+               cond_f=cond_f+1
              else
                X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
              endif
+               cond_g=cond_g+1
            else
              X_mat(ig1,ig2,X_range(1))=X_mat(ig1,ig2,X_range(1))*isc%gamp(ig1,ig2)
            endif
          enddo
        enddo
        !$omp end parallel do
+       !
+       call msg('r',' PPA condition good [iqibz,count]: ', (/iqibz,cond_g/) )
+       call msg('r',' PPA condition fail [iqibz,count]: ', (/iqibz,cond_f/) )
        !
 #if defined _SC
      endif

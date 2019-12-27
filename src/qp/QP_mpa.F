@@ -77,7 +77,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! MPA variables (Dario)
  !
- integer                  :: i_np
+ integer                  :: i_np,pole_p,poles_f
  complex(SP), allocatable :: MPA_E_mat(:,:,:)
  complex(SP), allocatable :: MPA_R_mat(:,:,:)
  complex(SP), allocatable :: MPA_freqs(:),MPA_Xo(:)
@@ -223,29 +223,40 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Poles and Residuals
      !
-     !$omp parallel default(shared), private(ig1,ig2,i_np,MPA_freqs,MPA_Xo)
+     !$omp parallel default(shared), private(ig1,ig2,i_np,MPA_freqs,MPA_Xo), reduction(+:poles_f, pole_p)
      !
-     YAMBO_ALLOC(MPA_Xo,(2*X%mpa_npoles))
+     YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
      !
      !$omp do collapse(2)
+     poles_f = 0
      do ig2=1,X%ng
        do ig1=1,X%ng
          !
-         MPA_Xo(1:2*X%mpa_npoles)=X_mat(ig1,ig2,1:2*X%mpa_npoles) 
+         MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs) 
          !
          call mpa_RE_solver(X%mpa_npoles, MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,:), MPA_E_mat(ig1,ig2,:))
          !
+         pole_p = 0
          do i_np=1,X%mpa_npoles
            !
 !           MPA_E_mat(ig1,ig2,i_np)=real(sqrt(MPA_Q(i_np)),SP)  
 !           MPA_R_mat(ig1,ig2,i_np)=-MPA_R_mat(ig1,ig2,i_np)/(2._DP*MPA_E_mat(ig1,ig2,i_np))*isc%gamp(ig1,ig2)
            MPA_R_mat(ig1,ig2,i_np)=MPA_R_mat(ig1,ig2,i_np)*isc%gamp(ig1,ig2)
+           if( real(MPA_E_mat(ig1,ig2,i_np))*aimag(MPA_E_mat(ig1,ig2,i_np)) > 0._SP ) then
+             pole_p = pole_p + 1
+             !MPA_R_mat(ig1,ig2,i_np)=0._SP
+           endif
            !
          enddo
+         if(pole_p > 0) then
+           poles_f = poles_f + 1
+         endif
          !
        enddo
      enddo
      !$omp end do
+     !
+     call msg('r',' MPA time ordering fail [iqibz,count]: ', (/iqibz,poles_f/) )
      !
      YAMBO_FREE(MPA_Xo)
      !
@@ -254,6 +265,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      X_is_TR_rotated=.false.
      !
    endif
+         write(*,*) "G1, G'1: "
+         write(*,*) "mpaE= ", MPA_E_mat(2,2,:)
+         write(*,*) "mpaR= ", MPA_R_mat(2,2,:)
+         write(*,*) 
    !
    ! This additional rotation of the PP residuals arised from the particular
    ! case when TR is present but not the spatial inversion.

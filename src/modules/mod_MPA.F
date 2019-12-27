@@ -336,9 +336,9 @@ contains
      case default
        call mpa_Q_solver(np, w, x, E)
        call mpa_R_solver(np, w, x, R, E)
-       E = sqrt(E)
-       R = -R/(2._SP*E)
    end select
+   E = sqrt(E)
+   R = -R/(2._SP*E)
    !
  end subroutine mpa_RE_solver
 !------------------------------------------------------------------------------- 

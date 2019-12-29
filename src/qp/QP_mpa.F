@@ -49,9 +49,12 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
 &                        PARALLEL_WF_distribute,QP_state_print
- use matrix_operate,ONLY:mat_transpose!,mat_transpose_r
+ use matrix_operate,ONLY:mat_transpose
  use timing_m,      ONLY:timing
  use mpa_m,         ONLY:mpa_RE_solver
+ use drivers,       ONLY:Finite_Tel
+ use D_lattice,     ONLY:Bose_Temp
+ use functions,     ONLY:bose_E_cut
  !
 #include<memory.h>
  !
@@ -78,6 +81,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! MPA variables (Dario)
  !
  integer                  :: i_np,pole_p,poles_f
+ real(SP)                 :: bose_PPA_E 
  complex(SP), allocatable :: MPA_E_mat(:,:,:)
  complex(SP), allocatable :: MPA_R_mat(:,:,:)
  complex(SP), allocatable :: MPA_freqs(:),MPA_Xo(:)
@@ -265,10 +269,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      X_is_TR_rotated=.false.
      !
    endif
-         write(*,*) "G1, G'1: "
-         write(*,*) "mpaE= ", MPA_E_mat(2,2,:)
-         write(*,*) "mpaR= ", MPA_R_mat(2,2,:)
-         write(*,*) 
+!         write(*,*) "G1, G'1: "
+!         write(*,*) "mpaE= ", MPA_E_mat(2,2,:)
+!         write(*,*) "mpaR= ", MPA_R_mat(2,2,:)
+!         write(*,*) 
    !
    ! This additional rotation of the PP residuals arised from the particular
    ! case when TR is present but not the spatial inversion.
@@ -344,9 +348,28 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
            do ig2=1,X%ng
              do ig1=1,X%ng
                !
-               ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-MPA_R_mat(ig1,ig2,i_np))*&
-&                     ( (spin_occ-f_kmq+bose_f(real(MPA_E_mat(ig1,ig2,i_np))))/(W_(i_w)-E_kmq-MPA_E_mat(ig1,ig2,i_np))+&
-&                       (f_kmq+bose_f(real(MPA_E_mat(ig1,ig2,i_np))))/(conjg(W_(i_w))-E_kmq+MPA_E_mat(ig1,ig2,i_np)))
+               ! inline bose_f function Dario:
+               bose_PPA_E=0.
+               !if (real(MPA_E_mat(ig1,ig2,i_np))<0.) bose_PPA_E=-spin_occ
+               if (Finite_Tel) then
+                 if (real(MPA_E_mat(ig1,ig2,i_np),SP)>epsilon(1.)) then
+                   if (real(MPA_E_mat(ig1,ig2,i_np),SP)<=bose_E_cut*Bose_Temp) then
+                     bose_PPA_E=spin_occ*Bose_Temp/MPA_E_mat(ig1,ig2,i_np)
+                   endif 
+                   if (real(MPA_E_mat(ig1,ig2,i_np),SP)> bose_E_cut*Bose_Temp) then
+                     bose_PPA_E=spin_occ/(exp(MPA_E_mat(ig1,ig2,i_np)/Bose_Temp)-1.)
+                   endif
+                 else
+                   bose_PPA_E=spin_occ*Bose_Temp/epsilon(1.)
+                 endif
+               endif
+               !
+               ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*&
+&                                 (-sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_R_mat(ig1,ig2,i_np))*&
+&                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_(i_w)-E_kmq-&
+&                                                  sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np))+&
+&                       (f_kmq+bose_PPA_E)/(conjg(W_(i_w))-E_kmq+&
+&                                                sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np)))
                !
                dp_dummy=dp_dummy+ctmp
                !

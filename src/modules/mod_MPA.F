@@ -326,6 +326,8 @@ contains
    complex(SP),  intent(in)     :: w(2*np), x(2*np)
    complex(SP),  intent(out)    :: R(np), E(np)
    ! 
+   integer      :: i
+   !  
    select case(np)
      case(1)
        call mpa_RQ_1p_solver(w, x, R(1), E(1))
@@ -337,8 +339,15 @@ contains
        call mpa_Q_solver(np, w, x, E)
        call mpa_R_solver(np, w, x, R, E)
    end select
-   E = sqrt(E)
-   R = -R/(2._SP*E)
+   !
+   do i=1,np
+     E(i) = sqrt(E(i))
+     if(real(E(i))<0._SP) then 
+       E(i) = -E(i)
+     endif
+!     E(i) = real(E(i),SP)
+     R(i) = -R(i)/(2._DP*E(i))
+   enddo
    !
  end subroutine mpa_RE_solver
 !------------------------------------------------------------------------------- 

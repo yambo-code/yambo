@@ -223,12 +223,13 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Poles and Residuals
      !
+     poles_f=0;
+     !
      !$omp parallel default(shared), private(ig1,ig2,i_np,MPA_freqs,MPA_Xo), reduction(+:poles_f, pole_p)
      !
      YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
      !
      !$omp do collapse(2)
-     poles_f = 0
      do ig2=1,X%ng
        do ig1=1,X%ng
          !
@@ -236,15 +237,14 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          call mpa_RE_solver(X%mpa_npoles, MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,:), MPA_E_mat(ig1,ig2,:))
          !
-         pole_p = 0
+         pole_p=0
          do i_np=1,X%mpa_npoles
            !
 !           MPA_E_mat(ig1,ig2,i_np)=real(sqrt(MPA_Q(i_np)),SP)  
 !           MPA_R_mat(ig1,ig2,i_np)=-MPA_R_mat(ig1,ig2,i_np)/(2._DP*MPA_E_mat(ig1,ig2,i_np))*isc%gamp(ig1,ig2)
            MPA_R_mat(ig1,ig2,i_np)=MPA_R_mat(ig1,ig2,i_np)*isc%gamp(ig1,ig2)
-           if( real(MPA_E_mat(ig1,ig2,i_np))*aimag(MPA_E_mat(ig1,ig2,i_np)) > 0._SP ) then
+           if( imagpart(MPA_E_mat(ig1,ig2,i_np)) > 0._SP ) then
              pole_p = pole_p + 1
-             !MPA_R_mat(ig1,ig2,i_np)=0._SP
            endif
            !
          enddo

@@ -103,7 +103,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  integer               :: first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp,i_c
  !
- integer               :: cond_g,cond_f 
+ integer               :: cond_g,cond_f,poles_f  !Dario: counts 
  !
  ! Reset & checks
  !
@@ -278,6 +278,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif
        !
+       cond_f=0;cond_g=0;poles_f=0;
+       !
        !$omp parallel do default(shared), private(ig1,ig2), reduction(+:cond_b,cond_g), collapse(2)
        do ig2=1,X%ng
          do ig1=1,X%ng
@@ -287,8 +289,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                cond_f=cond_f+1
              else
                X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
-             endif
                cond_g=cond_g+1
+               if(realpart(1._SP/X_mat(ig1,ig2,X_range(2)))*imagpart(1._SP/X_mat(ig1,ig2,X_range(2)))>0._SP) then
+                 poles_f = poles_f + 1
+               endif
+             endif
            else
              X_mat(ig1,ig2,X_range(1))=X_mat(ig1,ig2,X_range(1))*isc%gamp(ig1,ig2)
            endif
@@ -296,8 +301,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        enddo
        !$omp end parallel do
        !
-       call msg('r',' PPA condition good [iqibz,count]: ', (/iqibz,cond_g/) )
-       call msg('r',' PPA condition fail [iqibz,count]: ', (/iqibz,cond_f/) )
+       call msg('r','     PPA condition good [iqibz,count]: ', (/iqibz,cond_g/) )
+       call msg('r','     PPA condition fail [iqibz,count]: ', (/iqibz,cond_f/) )
+       call msg('r',' PPA time ordering fail [iqibz,count]: ', (/iqibz,poles_f/) )
        !
 #if defined _SC
      endif

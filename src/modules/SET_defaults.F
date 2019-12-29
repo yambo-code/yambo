@@ -127,6 +127,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
 #endif
+#if defined _YAML_OUTPUT
+ use com,         ONLY:depth_yaml
+#endif
  use timing_m,    ONLY:timing_allocate,nclockx
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
  !
@@ -230,6 +233,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  of_opened=' '
  of_unit=0
  of_unit(max_open_ofs)=-1
+#if defined _YAML_OUTPUT
+ depth_yaml=0
+#endif
  !
  !LOGO
  !

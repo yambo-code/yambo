@@ -109,7 +109,7 @@ subroutine check_periodic_directions(is_cut)
  endif
  !
  call msg('r', 'Non-periodic chartesian directions ',trim(non_periodic_directions))
- call msg('r', 'Optical renormalization        [au]',eps_2_alpha)
+ call msg('r', 'Optical renormalization            ',eps_2_alpha,"[au]")
  call msg('rn','Polarizability dimension           ',trim(alpha_dim))
  !
 end subroutine

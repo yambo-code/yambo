@@ -51,7 +51,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  integer, external :: io_DB1
  !
  !
- call section('*','CPU structure, Files & I/O Directories') 
+ call section('*','MPI/OPENMP structure, Files & I/O Directories') 
  !
  ! Buffered I/O ?
  !===============
@@ -105,46 +105,46 @@ subroutine PARALLEL_and_IO_Setup(en,k)
    !
    do i_s=0,n_CPU_str_max
      if (len_trim(PARALLEL_message(i_s))==0) cycle
-     call msg( 's','CPU-Threads',trim(PARALLEL_message(i_s)))
-     call msg( 'r','* CPU-Threads     ',trim(PARALLEL_message(i_s)))
+     call msg( 's','MPI Cores-Threads   ',trim(PARALLEL_message(i_s)))
+     call msg( 'r','Cores-Threads       ',trim(PARALLEL_message(i_s)))
    enddo
    !
-   call msg( 'r','* MPI CPU         ',ncpu)
+   call msg( 'r','MPI Cores           ',ncpu)
    !
  else
    !
-   call msg ('r','* CPU             ',ncpu)
+   call msg ('r','Cores               ',ncpu)
    !
  endif
  !
- call msg('r', '* THREADS    (max)',n_max_threads)
- call msg('r', '* THREADS TOT(max)',n_max_threads*ncpu)
- call msg('r', '* I/O NODES       ',n_nodes)
- call msg('r', '* NODES(computing)',n_nodes(1))
- call msg('r', '*            (I/O)',n_IO_nodes)
+ call msg('r', 'Threads per core    ',n_max_threads)
+ call msg('r', 'Threads total       ',n_max_threads*ncpu)
+ call msg('r', 'Nodes Computing     ',n_nodes(1))
+ call msg('r', 'Nodes IO            ',n_IO_nodes)
 #ifdef _CUDA
- call msg('r', '* CUDA support     ',"yes")
- call msg('r', '* CUDA devices     ',have_cuda_devices)
- call msg('r', '* CUDA visible dev ',trim(cuda_visible_devices))
+ call msg('r', 'CUDA support        ',"yes")
+ call msg('r', 'CUDA devices        ',have_cuda_devices)
+ call msg('r', 'CUDA visible dev    ',trim(cuda_visible_devices))
 #endif
  !
  ! I/O and more
  !===============
  !
- call msg('rn','* Fragmented WFs   ',frag_WF)
- call msg('r', 'CORE databases in   ',trim(core_io_path))
- call msg('r', 'Additional I/O in   ',trim(more_io_path))
- call msg('r', 'Communications in   ',trim(com_path))
- call msg('r', 'Input file     is   ',trim(infile))
- call msg('r', 'Report file    is   ',trim(repfile))
+ call msg('nr','Fragmented WFs      ',frag_WF)
+ call msg('r', 'CORE databases      ',trim(core_io_path))
+ call msg('r', 'Additional I/O      ',trim(more_io_path))
+ call msg('r', 'Communications      ',trim(com_path))
+ call msg('r', 'Input file          ',trim(infile))
+ call msg('r', 'Report file         ',trim(repfile))
 #if defined _DOUBLE
- call msg('r', 'Precision      is   ','DOUBLE')
+ call msg('r', 'Precision           ','DOUBLE')
 #else
- call msg('r', 'Precision      is   ','SINGLE')
+ call msg('r', 'Precision           ','SINGLE')
 #endif
- if (log_as_a_file      ) call msg('r','Log files      in   ',trim(trim(com_path)//"/LOG"))
+ if (log_as_a_file) &
+& call msg('r','Log files           ',trim(trim(com_path)//"/LOG"))
  !
- if (len_trim(USER_wall_time_string)>0)  call msg('r','User WALL time is   ',trim(USER_wall_time_string))
+ if (len_trim(USER_wall_time_string)>0)  call msg('r','User WALL time      ',trim(USER_wall_time_string))
  !
  ! Strings & Dirs
  !-----------------

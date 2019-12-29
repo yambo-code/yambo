@@ -37,11 +37,12 @@ subroutine section(mode,name)
 &                     date_and_time_string
  use parallel_m, ONLY:PP_redux_wait,ncpu
  use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&
-&                     write_to_report,repfile_unit,max_open_ofs
+&                     write_to_report,repfile_unit
  use timing_m,   ONLY:timing_upto_now
 #if defined _YAML_OUTPUT
- use com,             ONLY:of_yaml_IDs
- use yaml_output,     ONLY:yaml_new_document,yaml_release_document
+ use pars,            ONLY:repfile_index
+ use com,             ONLY:of_yaml_IDs,depth_yaml
+ use yaml_output,     ONLY:yaml_sequence_open,yaml_sequence_close,yaml_new_document,yaml_release_document
 #endif
  !
  implicit none
@@ -117,6 +118,15 @@ subroutine section(mode,name)
    isec(depth+2:)=0
  end select
  !
+#if defined _YAML_OUTPUT
+ do while(depth_yaml>depth)
+   call yaml_sequence_close(unit=of_yaml_IDs(repfile_index))
+   depth_yaml=depth_yaml-1
+   if(depth_yaml==0) call yaml_release_document(of_yaml_IDs(repfile_index))
+ end do
+ if(depth_yaml==0) call yaml_new_document(of_yaml_IDs(repfile_index))
+#endif 
+ !
  ! Write out the Section header (in secnm)
  !
  isec(depth+1)=isec(depth+1)+1
@@ -129,12 +139,13 @@ subroutine section(mode,name)
  enddo
  write (chs,'(3a)') trim(secnm),'] ',trim(name)
  secnm=chs
-#if defined _YAML_OUTPUT
- call yaml_release_document(of_yaml_IDs(max_open_ofs))
- call yaml_new_document(of_yaml_IDs(max_open_ofs))
-#endif
  call msg('nrs',trim(secnm))
  call msg('rn',repeat('=',len_trim(secnm)))
+ !
+#if defined _YAML_OUTPUT
+ call yaml_sequence_open(mapname=trim(name),unit=of_yaml_IDs(repfile_index))
+ depth_yaml=depth_yaml+1
+#endif
  !
  ! Finalize
  !

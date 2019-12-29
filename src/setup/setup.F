@@ -57,7 +57,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Work Space
  !
- real(SP)          :: rv(3),Tel_SAVE,tmp_V(6)
+ real(SP)          :: rv(3),Tel_SAVE,tmp_V(8)
  integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2)
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch1,dumb_ch2
@@ -70,60 +70,60 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !=============================
  call crystal_lattice()
  !
- call msg('rn','Unit cell is ',trim(lattice))
+ call msg('r','Cell kind             ',' '//trim(lattice))
  !
  call load_PT_elements()
  !
  atoms_string=' '
  !
  if (allocated(Z_species)) then
-   call msg('rn','Atoms in the cell ',PT_elements(Z_species(:)))
+   call msg('r','Atoms in the cell     ',' '//PT_elements(Z_species(:)))
    do is=1,n_atomic_species
-     call msg('rn','numebr of '//PT_elements(Z_species(is))//' atoms',n_atoms_species(is))
+     call msg('r','number of '//PT_elements(Z_species(is))//' atoms    ',n_atoms_species(is))
    enddo
  endif
  !
- call msg('r','Alat factors [a.u.]',alat)
- call msg('nr','Direct Lattice(DL) units',(/' iru  ','  cc  '/))
+ ! DL vol / RL
  !
- dumb_ch1='  A1  '
+ call define_b_and_DL_vol()
+ call msg('r','Direct lattice volume ',DL_vol,'[a.u.]')
+ RL_vol=(2._SP*pi)**3/DL_vol
+ call msg('r','Recip. lattice volume ',RL_vol,'[a.u.]')
+ call msg('r','Alat factors          ',alat,'[a.u.]')
+ !
+ call msg('nr','Alat vectors units',(/' [ iru  ','  cc  ] '/))
+ dumb_ch1='A1  '
  tmp_V(1:3)=(/a(1,1)/alat(1),a(1,2)/alat(2),a(1,3)/alat(3)/)
  tmp_V(4:6)=(/a(1,1)        ,a(1,2)        ,a(1,3)        /)
  call msg('r',trim(dumb_ch1),tmp_V)
- dumb_ch1='  A2  '
+ dumb_ch1='A2  '
  tmp_V(1:3)=(/a(2,1)/alat(1),a(2,2)/alat(2),a(2,3)/alat(3)/)
  tmp_V(4:6)=(/a(2,1)        ,a(2,2)        ,a(2,3)        /)
  call msg('r',trim(dumb_ch1),tmp_V)
- dumb_ch1='  A3  '
+ dumb_ch1='A3  '
  tmp_V(1:3)=(/a(3,1)/alat(1),a(3,2)/alat(2),a(3,3)/alat(3)/)
  tmp_V(4:6)=(/a(3,1)        ,a(3,2)        ,a(3,3)        /)
  call msg('r',trim(dumb_ch1),tmp_V)
  !
- ! DL vol
- !
- call define_b_and_DL_vol()
- call msg('r','DL volume [a.u.]',DL_vol)
- RL_vol=(2._SP*pi)**3/DL_vol
- !
- call msg('nr','Reciprocal Lattice(RL) units',(/' iru  ','  cc  '/))
+ call msg('nr','Blat vectors units',(/' [ iku  ','  cc  ] '/))
  rv=b(1,:)
  call c2a(b_in=b,v_in=rv,mode='kc2i')
- dumb_ch1='  B1  '
+ dumb_ch1='B1  '
  tmp_V(1:3)=(/rv(1) ,rv(2) ,rv(3) /)
  tmp_V(4:6)=(/b(1,1),b(1,2),b(1,3)/)
- call msg('r',trim(dumb_ch1),tmp_V)
+ call msg('r',trim(dumb_ch1),tmp_V(1:6))
  rv=b(2,:)
  call c2a(b_in=b,v_in=rv,mode='kc2i')
- dumb_ch1='  B2  '
+ dumb_ch1='B2  '
  tmp_V(1:3)=(/rv(1) ,rv(2) ,rv(3) /)
  tmp_V(4:6)=(/b(2,1),b(2,2),b(2,3)/)
- call msg('r',trim(dumb_ch1),tmp_V)
+ call msg('r',trim(dumb_ch1),tmp_V(1:6))
  rv=b(3,:)
  call c2a(b_in=b,v_in=rv,mode='kc2i')
- dumb_ch1='  B3  '
+ dumb_ch1='B3  '
  tmp_V(1:3)=(/rv(1) ,rv(2) ,rv(3) /)
  tmp_V(4:6)=(/b(3,1),b(3,2),b(3,3)/)
- call msg('r',trim(dumb_ch1),tmp_V)
+ call msg('r',trim(dumb_ch1),tmp_V(1:6))
  !
  ! ZERO's SETUP
  !
@@ -137,7 +137,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call section('=','Symmetries') 
  !=============================
- call msg('r','DL (S)ymmetries [cc]')
  !
  ! Spin symmetries & xc spin for libxc
  !
@@ -149,30 +148,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  do is=1,nsym
    forall (i2=1:3,i3=1:3) rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
-   if (is<=nsym/(1+i_time_rev))&
-&    call msg('r','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
-   if (is>nsym/(1+i_time_rev).and.mag_syms)&
-&    call msg('r','[S*'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))
  enddo
- !
- ! Time Reversal
- !
- inv_index=-1
- select case(i_time_rev)
-   case(1)
-     call msg('nr','[SYMs] Time-reversal derived K-space symmetries',(/nsym/2+1,nsym/))
-     if(.not.mag_syms) inv_index=nsym/2+1
-     if(mag_syms) then
-       do is=1,nsym
-         if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1,0,0,0,-1,0,0,0,-1/)) ) inv_index=is
-       enddo
-     endif
-   case(0)
-     call msg('nr','[SYMs] K-space Time-reversal not included')
-     do is=1,nsym
-       if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1,0,0,0,-1,0,0,0,-1/)) ) inv_index=is
-     enddo
- end select
  !
  ! Indentity index
  !
@@ -181,53 +157,72 @@ subroutine setup(en,Xen,Ken,k,Xk)
    if (all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/1,0,0,0,1,0,0,0,1/)) ) idt_index=is
  enddo
  !
- !
- ! Space inversion
- !
- call atoms_spatial_inversion()
- if (inv_index>0) then
-   if (i_space_inv==1) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is a symmetry')
-   if (i_space_inv==0) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is NOT a symmetry')
- else
-#if !defined _RT
-   call warning('Spatial Inversion not found among the given symmetry list')
-#endif
+ if (idt_index==-1) then
+   call warning('Identity not found among the given symmetry list')
  endif
+ !
+ ! Inversion index
+ !
+ inv_index=-1
+ do is=1,nsym
+   if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1,0,0,0,-1,0,0,0,-1/)) ) inv_index=is
+ enddo
+ !
+ ! Defines i_space_inv value
+ call atoms_spatial_inversion()
+ !
+ call msg('r','Inversion symmetry    ',inv_index>0)
+ call msg('r','Spatial inversion     ',i_space_inv==1)
+ if (inv_index>0) call msg('r','Inversion index       ',inv_index)
+ !
+ ! Time reversal
+ !
+ call msg('r','K-space Time-reversal ',(i_time_rev==1))
+ call msg('r','Magnetic symmetries   ',mag_syms)
+ if (i_time_rev==1) call msg('r','Time-reversal derived K-space symmetries',(/nsym/2+1,nsym/))
  !
  ! Symmetries Multiplication Table
  !
  call symmetry_group_table('r')
  call symmetry_equiv_atoms()
  !
+ ! Symmetries list
+ !
+ call msg('r','Symmetries units      ',' [cc]')
+ do is=1,nsym
+   if (is<=nsym/(1+i_time_rev))&
+&    call msg('r',' [S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
+   if (is>nsym/(1+i_time_rev).and.mag_syms)&
+&    call msg('r',' [S*'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))
+ enddo
+ !
  call section('=','RL shells')
  !============================
  !
  call G_shells_finder()
- call msg('rn','Shells, format: [S#] G_RL(mHa)')
  !
  ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G. When there is no Spatial inversion
  ! the map is built in G_shells_finder
  !
  if (inv_index>0) call eval_minus_G()
  !
- do i1=n_g_shells,max(n_g_shells-27,1),-4
-   dumb_ch1=' '
-   do i2=i1,max(i1-3,1),-1
-     dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']'//trim(intc(ng_in_shell(i2)))//&
-&             '('//trim(real2ch(E_of_shell(i2)*1000._SP))//')'
-     dumb_ch1=dumb_ch2
-   enddo
-   call msg('r',trim(dumb_ch2))
+ call msg('nr','Shells units      ',' [ Number of G-vectors ]')
+ !call msg('r' ,'Shells NG         ',' [ list ]')
+ do i1=1,n_g_shells,9
+   !dumb_ch1=' [SNG_'//trim(intc(i1))//'-'//trim(intc(min(i1+8,n_g_shells)))//']'
+   if (i1==800 .and. i1<n_g_shells-800) call msg('r',"...")
+   if (i1> 800 .and. i1<n_g_shells-800) cycle
+   !call msg('r',trim(dumb_ch1),ng_in_shell(i1:min(i1+8,n_g_shells)) )
+   call msg('r',' ',ng_in_shell(i1:min(i1+8,n_g_shells)) )
  enddo
- call msg('r',' ...')
- do i1=min(12,n_g_shells),1,-4
-   dumb_ch1=' '
-   do i2=i1,max(i1-3,1),-1
-     dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']'//trim(intc(ng_in_shell(i2)))//&
-&             '('//trim(real2ch(E_of_shell(i2)*1000._SP))//')'
-     dumb_ch1=dumb_ch2
-   enddo
-   call msg('r',trim(dumb_ch2))
+ !
+ call msg('nr','Shells units      ',' [ mHa ] ')
+ !call msg('r' ,'Shells E          ',' [ list ]')
+ do i1=1,n_g_shells,9
+   !dumb_ch1=' [SE_'//trim(intc(i1))//'-'//trim(intc(min(i1+8,n_g_shells)))//']'
+   if (i1==800 .and. i1<n_g_shells-800) call msg('r',"...")
+   if (i1> 800 .and. i1<n_g_shells-800) cycle
+   call msg('r',' ',E_of_shell(i1:min(i1+8,n_g_shells))*1000._SP)
  enddo
  !
  call section('=','K-grid lattice')
@@ -272,8 +267,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
    !
  endif
  !
- call section('=','Energies [ev] & Occupations')
+ call section('=','Energies & Occupations')
  !==============================================
+ !
+ call msg('rn','Energy unit   ',' [eV]')
  !
  Xen%nk=Xk%nibz
  ! 
@@ -332,7 +329,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! K points / Energies report
  !
- call msg('rn','X BZ K-points ',Xk%nbz)
+ call msg('rn','X BZ K-points             ',Xk%nbz)
  !
  call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.TRUE.)
  !

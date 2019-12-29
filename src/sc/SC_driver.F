@@ -791,7 +791,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      dE(:,:,:)=E%E(:SC_bands(2),:,:)-E_reference%E(:SC_bands(2),:,:)
      !
-     call msg('r',' ')
+     call msg('r','Energy unit   ',' [eV]')
      !
      do ik=1,k%nibz
        call REPORT_Energies(E%E(:SC_bands(2),:,:),k,Xk,SC_bands(2),(/ik,ik/),'E  ',.TRUE.)

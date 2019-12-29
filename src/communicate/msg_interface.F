@@ -24,7 +24,7 @@
 subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  !
  use pars,         ONLY:lchlen,max_open_ofs,repfile_index
- use stderr,       ONLY:c_print,write_to_log,log_as_a_file
+ use stderr,       ONLY:c_print,write_to_log,log_as_a_file,STRING_remove
  use LIVE_t,       ONLY:LIVE_message
  use com,          ONLY:repfile,terminator,of_unit
  use com_interfcs, ONLY:composed_fmt
@@ -44,9 +44,12 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  ! Work Space
  !
  integer          :: i1,i2,l_indent,i1_limits(2)
- character(lchlen):: msgfmt,lch
+ character(lchlen):: msgfmt,lch,yaml_mesg,yaml_val(size(val))
  character(2)     :: dots_string
  logical          :: l_tabs,msg_for_out,msg_for_rep,msg_for_log
+#if defined _YAML_OUTPUT
+ logical          :: l_yaml_map,l_yaml_com
+#endif
  !
  if (len_trim(how)==0) return
  dots_string=""
@@ -58,6 +61,15 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  if (present(INDENT))   l_indent = INDENT
  msgfmt=composed_fmt('a',size(val),l_tabs,l_indent)
  if(trim(msgfmt)=="(/00x,a, 01(a,1x))") msgfmt="(/99x,a, 01(a,1x))"
+#if defined _YAML_OUTPUT
+ l_yaml_map= len_trim(val(1))> 0
+ l_yaml_com= len_trim(val(1))<=0 .and. len_trim(mesg)>1 .and.              &
+ &           index(trim(mesg),'[0')==0 .and. index(trim(mesg),'[1')==0 .and. &
+ &           index(trim(mesg),'==')==0
+ do i1=1,size(val)
+   yaml_val(i1)=STRING_remove(STRING_remove(trim(adjustl(val(i1))),'['),']')
+ enddo
+#endif
  !
  ! Write to o-file or to report
  !
@@ -70,8 +82,9 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
    of_unit(i1)=-of_unit(i1)
    if (.not.msg_for_rep) call of_netcdf_shadow_char(i1,size(val),val)
 #if defined _YAML_OUTPUT
-   if(len_trim(val(1))> 0) call yaml_map(mesg,val,unit=of_yaml_IDs(i1))
-   if(len_trim(val(1))<=0) call yaml_comment(mesg,unit=of_yaml_IDs(i1))
+   yaml_mesg=STRING_remove(STRING_remove(trim(adjustl(mesg)),'[',replace='('),']',replace=')')
+   if(l_yaml_map) call yaml_map(trim(yaml_mesg),yaml_val,unit=of_yaml_IDs(i1))
+   if(l_yaml_com) call yaml_comment(trim(mesg),unit=of_yaml_IDs(i1))
 #endif
  enddo
  if (msg_for_out) return
@@ -90,7 +103,7 @@ end subroutine
 subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
  !
  use pars,         ONLY:lchlen,max_open_ofs,repfile_index
- use stderr,       ONLY:gen_fmt
+ use stderr,       ONLY:gen_fmt,STRING_remove
  use stderr,       ONLY:c_print,write_to_log,log_as_a_file
  use LIVE_t,       ONLY:LIVE_message
  use com,          ONLY:repfile,of_unit,terminator
@@ -111,7 +124,7 @@ subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
  ! Work Space
  !
  integer :: i1,l_indent,i1_limits(2)
- character(lchlen):: msgfmt,lch
+ character(lchlen):: msgfmt,lch,yaml_mesg
  character(2)     :: dots_string
  logical          :: l_tabs,msg_for_out,msg_for_rep,msg_for_log
  !
@@ -138,7 +151,8 @@ subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
    write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
    of_unit(i1)=-of_unit(i1)
 #if defined _YAML_OUTPUT
-   call yaml_map(mesg,val,unit=of_yaml_IDs(i1))
+   yaml_mesg=STRING_remove(STRING_remove(trim(adjustl(mesg)),'[',replace='('),']',replace=')')
+   call yaml_map(trim(yaml_mesg),val,unit=of_yaml_IDs(i1))
 #endif
  enddo
  if (msg_for_out) return
@@ -154,10 +168,10 @@ subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
 end subroutine
 !
 !
-subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,after_msg)
+subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT)
  !
  use pars,         ONLY:SP,schlen,lchlen,max_open_ofs,repfile_index
- use stderr,       ONLY:c_print,write_to_log,log_as_a_file,gen_fmt
+ use stderr,       ONLY:c_print,write_to_log,log_as_a_file,gen_fmt,STRING_remove
  use LIVE_t,       ONLY:LIVE_message
  use com,          ONLY:repfile,of_unit,terminator
  use com_interfcs, ONLY:composed_fmt
@@ -171,16 +185,16 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,after_ms
  character(*)     :: mesg
  character(*)     :: how
  real(SP)         :: val(:)
+ character(*), optional :: after_msg
  integer,optional :: INDENT
  logical,optional :: USE_TABS
  logical,optional :: EXT_FORMAT
- character(schlen), optional :: after_msg
  ! 
  ! Work Space
  !
  integer  :: i1,l_indent,imsg,i1_limits(2)
  character(schlen):: gen_fmt_local,after_msg_
- character(lchlen):: lch,msgfmt
+ character(lchlen):: lch,msgfmt,yaml_mesg
  character(2)     :: dots_string
  logical          :: l_tabs,l_ext_fmt,msg_for_out,msg_for_rep,msg_for_log
  !
@@ -199,10 +213,17 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,after_ms
  if (present(EXT_FORMAT)) l_ext_fmt = EXT_FORMAT
  if (present(USE_TABS))   l_tabs    = USE_TABS
  if (present(INDENT))     l_indent  = INDENT
+ !
+ ! Define Format
+ !
  if (.not.l_ext_fmt) msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),size(val),l_tabs,l_indent)
  if (     l_ext_fmt) then
    write(gen_fmt_local,'(a)') 'F11.06'
    msgfmt=composed_fmt(trim(gen_fmt_local),size(val),l_tabs,l_indent)
+ endif
+ if (len_trim(after_msg_)>0) then
+   i1=len_trim(msgfmt)
+   msgfmt=trim(msgfmt(:i1-1))//',a'//trim(msgfmt(i1:i1))
  endif
  !
  ! Write to o-file or to report
@@ -217,7 +238,8 @@ subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,after_ms
    of_unit(i1)=-of_unit(i1)
    if (.not.msg_for_rep) call of_netcdf_shadow_real(i1,mesg,val,size(val))
 #if defined _YAML_OUTPUT
-   call yaml_map(mesg,val,unit=of_yaml_IDs(i1))
+   yaml_mesg=STRING_remove(STRING_remove(trim(adjustl(mesg)),'[',replace='('),']',replace=')')
+   call yaml_map(trim(yaml_mesg),val,unit=of_yaml_IDs(i1))
 #endif
  enddo
  if (msg_for_out) return

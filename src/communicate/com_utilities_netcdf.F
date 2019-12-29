@@ -149,7 +149,7 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
    def_var=.true.
    of_nc_pos(VAR_ID,i1)=of_nc_pos(VAR_ID,i1)+1
    do i_var=1,nval
-     strlen(i_var)=len(trim(val(i_var))) 
+     strlen(i_var)=len(trim(val(i_var)))
    enddo
    allocate(nc_var(maxval(strlen),nval))
    dim_names(1)='maxval_strin_len_'//trim(intc(of_nc_pos(VAR_ID,i1)))

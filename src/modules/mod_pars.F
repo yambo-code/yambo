@@ -58,10 +58,10 @@ module pars
  integer, parameter :: n_debugs_max=100
  ! 
  !...Output Files/Report File
- integer,parameter  :: max_n_ofs=1000
- integer,parameter  :: max_open_ofs=1000
- integer,parameter  :: repfile_index=1001
- integer,parameter  :: logfile_index=1002
+ integer,parameter  :: max_n_ofs=100
+ integer,parameter  :: max_open_ofs=100
+ integer,parameter  :: repfile_index=101
+ integer,parameter  :: logfile_index=102
  !
  !...I/O
  integer, parameter :: max_io_units=10

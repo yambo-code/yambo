@@ -27,6 +27,7 @@ subroutine of_open_close(of_name_extension,mode)
  use com,             ONLY:of_name,of_opened,of_unit,write_to_of,n_ofs_defined
  use IO_m,            ONLY:get_name
 #if defined _NC_OUTPUT
+ use stderr,          ONLY:STRING_remove
  use com,             ONLY:of_nc_pos,of_nc_var_names,of_nc_IDs
  use IO_m,            ONLY:io_control,io_connect,io_disconnect,OP_WR,WR_CL,NONE
 #endif
@@ -107,11 +108,11 @@ subroutine of_open_close(of_name_extension,mode)
 #if defined _NC_OUTPUT
    call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(file_index))
    io_out=io_connect(desc="output_"//trim(of_name_extension),type=2, ID=of_nc_IDs(file_index))
-   of_nc_var_names(file_index)=trim(of_name_extension)
+   of_nc_var_names(file_index)=trim(STRING_remove(trim(of_name_extension),"-",replace="_"))
    of_nc_pos(:,file_index)=0
 #endif
 #if defined _YAML_OUTPUT
-   call yaml_set_stream(filename=trim(of_name_complete)//".yaml")
+   call yaml_set_stream(filename=trim(of_name_complete)//".yaml",record_length=200)
    call yaml_stream_connected(trim(of_name_complete)//".yaml",of_yaml_IDs(file_index))
 #endif
    !
@@ -255,7 +256,7 @@ subroutine msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
  ! s(tderr)
  ! oN=msgunits(N) 
  !
- use pars,    ONLY:schlen,lchlen,repfile_index,max_open_ofs
+ use pars,    ONLY:schlen,lchlen,repfile_index
  use stderr,  ONLY:STRING_split,STRING_remove
  use com,     ONLY:terminator,of_opened,of_unit,n_ofs_defined,jobstr,&
 &                  write_to_report,write_to_of
@@ -284,7 +285,7 @@ subroutine msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
    call STRING_split(how,ch_piece)
    do i2=2,10
      if (len_trim(ch_piece(i2))==0) cycle
-     do i1=1,max_open_ofs
+     do i1=1,n_ofs_defined
        if (len_trim(of_opened(i1))==0) cycle
        stripped_file_name=STRING_remove(of_opened(i1),trim(jobstr))
        if (index( stripped_file_name,trim(ch_piece(i2)) )/=0) then

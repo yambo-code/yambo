@@ -225,15 +225,15 @@ contains
  subroutine mpa_R_solver(np, w, xq, R, Q)
    implicit none
    integer,      intent(in)        :: np
-   complex(SP),  intent(in)        :: w(:)
-   complex(SP),  intent(in)        :: xq(:), Q(np)
+   complex(SP),  intent(in)        :: w(2*np)
+   complex(SP),  intent(in)        :: xq(2*np), Q(np)
    complex(SP),  intent(out)       :: R(np)
    ! 
-   complex(SP)                     :: A(np,np), B(np)
+   complex(SP)                     :: A(np,np)
    integer                         :: i, k, info, ind(np)    
    ! 
    do k = 1, np
-     B(k) = xq(k)
+     R(k) = xq(k)
      do i = 1, np
        A(k,i) = -1./( w(k)**2 - Q(i) )
      enddo

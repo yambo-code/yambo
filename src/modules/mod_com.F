@@ -139,10 +139,11 @@ module com
      call msg_characters_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT)
    end subroutine
    !
-   subroutine msg_integer(how,mesg,val,USE_TABS,INDENT)
+   subroutine msg_integer(how,mesg,val,after_msg,USE_TABS,INDENT)
      character(*)     :: mesg
      character(*)     :: how
      integer          :: val
+     character(*), optional :: after_msg
      integer,optional :: INDENT
      logical,optional :: USE_TABS
      call msg_integers_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT)
@@ -168,13 +169,14 @@ module com
      call msg_characters_vector_int(how,mesg,val,USE_TABS=USE_TABS,INDENT=INDENT)
    end subroutine
    !
-   subroutine msg_integers_vector(how,mesg,val,USE_TABS,INDENT)
+   subroutine msg_integers_vector(how,mesg,val,after_msg,USE_TABS,INDENT)
      character(*)     :: mesg
      character(*)     :: how
      integer          :: val(:)
+     character(*), optional :: after_msg
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     call msg_integers_vector_int(how,mesg,val,USE_TABS=USE_TABS,INDENT=INDENT)
+     call msg_integers_vector_int(how,mesg,val,after_msg=after_msg,USE_TABS=USE_TABS,INDENT=INDENT)
    end subroutine
    !
    subroutine msg_reals_vector(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT)

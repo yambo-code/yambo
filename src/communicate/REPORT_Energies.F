@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,header)
+subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  !
  use pars,           ONLY:schlen,SP
  use units,          ONLY:HA2EV
@@ -34,58 +34,61 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,header)
  !
  implicit none
  !
- type(bz_samp) :: k,Xk
- integer       :: n_bands_,k_range(2)
- real(SP)      :: E(n_bands_,k%nibz,n_sp_pol)
- real(SP)      :: k_cc(3),k_al(3)
- logical       :: header
- character(*)  :: what
+ type(bz_samp),intent(in) :: k,Xk
+ integer,      intent(in) :: n_bands_,k_range(2)
+ real(SP),     intent(in) :: E(n_bands_,k%nibz,n_sp_pol)
+ character(*), intent(in) :: what
+ logical,      intent(in) :: l_kpoints,l_what
  !
  ! Work Space
  !
+ real(SP)          :: k_cc(3),k_al(3)
  integer           :: ik,is_pol,ib,i1
  character(schlen) :: dumb_ch1,dumb_ch2
  real(SP)          :: E_(n_bands_,n_sp_pol)
  !
  do ik=k_range(1),k_range(2)
    !
+   !call msg('r','')
+   !
    call c2a(v_in=k%pt(ik,:),v_out=k_al,mode='ki2a')
    call c2a(v_in=k%pt(ik,:),v_out=k_cc,mode='ki2c')
-   ! 
-   dumb_ch1='K ['
-   if(ik>   9) dumb_ch1=trim(dumb_ch1)//' '
-   if(ik>  99) dumb_ch1=trim(dumb_ch1)//' '
-   if(ik> 999) dumb_ch1=trim(dumb_ch1)//' '
-   if(ik>9999) dumb_ch1=trim(dumb_ch1)//' '
-   dumb_ch1=trim(dumb_ch1)//trim(intc(ik))//'] '
    !
-   if (header) then
-     call msg('r',trim(dumb_ch1)//' weight      ',Xk%weights(ik) )
-     call msg('r',trim(dumb_ch1)//' components  ',wf_nc_k(ik) )
-     if (ik> 1    ) call msg('r','')
-     if (ik<=nXkibz) then
-       call msg('r',trim(dumb_ch1)//' point (cc)    ',k_cc)
-       call msg('r',trim(dumb_ch1)//' point (alat)  ',k_al)
-     else
-       call msg('r',trim(dumb_ch1))
-       call msg('r',trim(dumb_ch2))
+   dumb_ch1=trim(intc(ik))//'] '
+   i1=9
+   do while (i1<k%nibz)
+     if(ik<=i1) dumb_ch1=' '//trim(dumb_ch1)
+     i1=i1*10+9
+   enddo
+   if(trim(what)=="Q") dumb_ch1='Q ['//trim(dumb_ch1)
+   if(trim(what)/="Q") dumb_ch1='K ['//trim(dumb_ch1)
+   !
+   if (l_kpoints) then
+     call msg('r',trim(dumb_ch1)//' weight        ',Xk%weights(ik) )
+     if(trim(what)=="K") call msg('r','       wf components ',wf_nc_k(ik) )
+     if (ik<=nXkibz .or. (trim(what)=="Q")) then
+       call msg('r','       point         ',k_cc,' [cc] ')
+       call msg('r','                      ',k_al,' [alat] ')
      endif
    endif
    !
-   E_(:,:)=E(:,ik,:)*HA2EV
-   !
-   do is_pol=1,n_sp_pol
-     dumb_ch1=trim(what)
-     if (n_sp_pol==1) then
-       if (is_pol==1) dumb_ch1=trim(what)//' [up]'
-       if (is_pol==2) dumb_ch1=trim(what)//' [dn]'
-     endif
-     call msg('r','list ',trim(dumb_ch1))
-     !
-     do i1=1,min(n_bands_,n_full_bands+4*int(nel)),8
-       call msg('r',' ',(/(E_(ib,1),ib=i1,min(i1+7,n_bands_))/))
+   if (l_what) then
+     E_(:,:)=E(:,ik,:)*HA2EV
+     do is_pol=1,n_sp_pol
+       dumb_ch2=trim(what)
+       if (n_sp_pol==2) then
+         if (is_pol==1) dumb_ch2=trim(what)//' [up]'
+         if (is_pol==2) dumb_ch2=trim(what)//' [dn]'
+       endif
+       dumb_ch2=trim(dumb_ch2)//' @ '//trim(dumb_ch1)
+       dumb_ch1=" "
+       if (trim(what)=="E") dumb_ch1=" [eV] "
+       call msg('r',trim(dumb_ch2),(/dumb_ch1/))
+       do i1=1,min(n_bands_,n_full_bands+4*int(nel)),8
+         call msg('r',' ',(/(E_(ib,1),ib=i1,min(i1+7,n_bands_))/))
+       enddo
      enddo
-   enddo
+   endif
    !
  enddo
  !

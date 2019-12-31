@@ -102,10 +102,10 @@ module LIVE_t
      !
      if (present(skip_host)) then
        write (date_and_time_string,'(2(i2.2,a),i4.4,a,2(i2.2,a),3a)') &
-&             dz(2),'/',dz(3),'/',dz(1),' at ',dz(5),'',dz(6)
+&             dz(2),'/',dz(3),'/',dz(1),' at ',dz(5),':',dz(6)
      else
        write (date_and_time_string,'(2(i2.2,a),i4.4,a,2(i2.2,a),3a)') &
-&             dz(2),'/',dz(3),'/',dz(1),' at ',dz(5),'',dz(6),' ',&
+&             dz(2),'/',dz(3),'/',dz(1),' at ',dz(5),':',dz(6),' ',&
 &             trim(code_bin),' @ ',host_name(:host_name_length)
      endif
      if (present(dt_out)) dt_out=dz(:6)
@@ -235,7 +235,7 @@ module LIVE_t
      endif
      message_composed=trim(message)
      if (ncpu/=1.and.add_CPU_id.and.(index(lfmt_,"n")>0.or.index(lfmt_,"r")>0.)) then
-       write (message_composed,'(a,i4.4,2a)') 'P',myid+1,' ',trim(message)
+       write (message_composed,'(a,i4.4,2a)') 'P',myid+1,': ',trim(message)
        if (n_nodes(1)>1) then
          message_composed='P'//trim(intc(myid+1))//"-"//trim(host_name)//": "//trim(message)
        else

@@ -42,7 +42,8 @@ subroutine section(mode,name)
 #if defined _YAML_OUTPUT
  use pars,            ONLY:repfile_index
  use com,             ONLY:of_yaml_IDs,depth_yaml
- use yaml_output,     ONLY:yaml_sequence_open,yaml_sequence_close,yaml_new_document,yaml_release_document
+ use yaml_output,     ONLY:yaml_sequence_open,yaml_sequence_close,yaml_new_document,&
+&                          yaml_comment,yaml_release_document
 #endif
  !
  implicit none
@@ -143,6 +144,7 @@ subroutine section(mode,name)
  call msg('rn',repeat('=',len_trim(secnm)))
  !
 #if defined _YAML_OUTPUT
+ if(depth_yaml>0) call yaml_comment(" ",unit=of_yaml_IDs(repfile_index))
  call yaml_sequence_open(mapname=trim(name),unit=of_yaml_IDs(repfile_index))
  depth_yaml=depth_yaml+1
 #endif

@@ -23,7 +23,7 @@
 !
 subroutine PARALLEL_and_IO_Setup(en,k)
  !
- use pars,           ONLY:lchlen
+ use pars,           ONLY:lchlen,SP,DP
  use stderr,         ONLY:log_as_a_file,intc
  use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,&
 &                         alt_jobstr,n_alt_jobstr,jobdir,alt_jobdir
@@ -136,11 +136,6 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', 'Communications      ',trim(com_path))
  call msg('r', 'Input file          ',trim(infile))
  call msg('r', 'Report file         ',trim(repfile))
-#if defined _DOUBLE
- call msg('r', 'Precision           ','DOUBLE')
-#else
- call msg('r', 'Precision           ','SINGLE')
-#endif
  if (log_as_a_file) &
 & call msg('r','Log files           ',trim(trim(com_path)//"/LOG"))
  !
@@ -165,7 +160,10 @@ subroutine PARALLEL_and_IO_Setup(en,k)
    if (len_trim(alt_jobstr(i_s))<=0) exit
    jobs_ch(i_s+1)=trim(alt_jobstr(i_s))
  enddo
- if (len_trim(jobs_ch(1))>0) call msg('nr',trim(dumb_ch),jobs_ch(:i_s))
+ if (len_trim(jobs_ch(1))>0) call msg('r',trim(dumb_ch)//"       ",jobs_ch(:i_s))
+ !
+ if(SP/=DP) call msg('nr', 'Precision           ','SINGLE')
+ if(SP==DP) call msg('nr', 'Precision           ','DOUBLE')
  !
  call msg('r','')
  !

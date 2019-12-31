@@ -112,7 +112,7 @@ subroutine of_open_close(of_name_extension,mode)
    of_nc_pos(:,file_index)=0
 #endif
 #if defined _YAML_OUTPUT
-   call yaml_set_stream(filename=trim(of_name_complete)//".yaml",record_length=200)
+   call yaml_set_stream(filename=trim(of_name_complete)//".yaml",record_length=2000)
    call yaml_stream_connected(trim(of_name_complete)//".yaml",of_yaml_IDs(file_index))
 #endif
    !

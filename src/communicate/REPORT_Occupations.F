@@ -38,16 +38,16 @@ subroutine REPORT_Occupations(what,E)
  ! 
  ! Work Space
  ! 
- integer           ::i_sp_pol
+ integer           ::i_sp_pol,ival
  integer           ::first_occ_state
  integer           ::Nbf(n_sp_pol)
  integer           ::Nbm(n_sp_pol)
  character(lchlen) ::ch_,prefix_
  character(schlen) ::title
  real(SP)          ::N_met
- real(SP)          ::f_met
- real(SP)          ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min - max
- real(SP)          ::E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
+ real(SP)          ::f_met,val(1+(n_sp_pol-1)*2)
+ real(SP)          ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min gap - max gap
+ real(SP)          ::E_g_ind(1+(n_sp_pol-1)*2,3) ! min - val. band width - cond. band width
  !
  ! Title
  !
@@ -60,14 +60,16 @@ subroutine REPORT_Occupations(what,E)
  !
  ! Initial Report
  !
- call msg('r',trim(title)//'Fermi Level               ',E%E_Fermi*HA2EV,'[eV]')
- do i_sp_pol=1,n_sp_pol
-   call msg('r',trim(title)//'VBM / CBm                 ',(/E%E_VBM(i_sp_pol),E%E_CBm(i_sp_pol)/)*HA2EV,'[eV]')
- enddo
  call msg('r',trim(title)//'Electronic Temp.          ',(/Tel*HA2EV,Tel*HA2KEL/),'[eV K]')
  call msg('r',trim(title)//'Bosonic    Temp.          ',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/),'[eV K]')
  call msg('r',trim(title)//'Finite Temperature mode   ',Finite_Tel)
  call msg('r',trim(title)//'El. density               ',(/nel/(DL_vol*BO2ANG**3*1.E-24)/),'[cm-3]')
+ !
+ call msg('nr',trim(title)//'Fermi Level               ',E%E_Fermi*HA2EV,'[eV]')
+ do i_sp_pol=1,n_sp_pol
+   call msg('r',trim(title)//'Valence Band Max          ',E%E_VBM(i_sp_pol)*HA2EV,'[eV]')
+   call msg('r',trim(title)//'Conduc. Band Min          ',E%E_CBm(i_sp_pol)*HA2EV,'[eV]')
+ enddo
  !call msg('r',trim(title)//'States summary')
  !
  ! [1] States occupations
@@ -79,40 +81,56 @@ subroutine REPORT_Occupations(what,E)
    if (E%nb         >Nbm(i_sp_pol)) call msg('r','Empty      States         ',(/Nbm(i_sp_pol)+1/))
  enddo
  !
- ! [2] Indirect Gaps (min/max)
- !
- if(all(Nbf==Nbm)) then
-   prefix_= trim(title)//'Indirect Gaps'
-   call msg('r',prefix_(1:25+len_trim(what))//'',E_g_ind(1,:)*HA2EV,'[eV]')
- endif
- !
- if(n_sp_pol==2.and.any(Nbf==Nbm)) then 
-   do i_sp_pol=1,n_sp_pol
-     if (Nbf(i_sp_pol)/=Nbm(i_sp_pol)) cycle
-     if (Nbf(i_sp_pol)==0) cycle
-     if (i_sp_pol==1) prefix_=trim(title)//'              [spin up]'
-     if (i_sp_pol==2) prefix_=trim(title)//'              [spin dn]'
-     call msg('r',prefix_(1:25+len_trim(what))//'',E_g_ind(i_sp_pol+1,1)*HA2EV)
-   enddo
- endif
- !
- ! [3] Direct Gaps (min/max)
- !
- if(all(Nbf==Nbm)) then
-   prefix_=trim(title)//'Direct Gaps'
-   call msg('r',prefix_(1:25+len_trim(what))//'',E_g_dir(1,1)*HA2EV,'[eV]')
- endif
- !
- if(n_sp_pol==2.and.any(Nbf==Nbm)) then 
-   do i_sp_pol=1,n_sp_pol
-     if (Nbf(i_sp_pol)/=Nbm(i_sp_pol)) cycle
-     if (Nbf(i_sp_pol)==0) cycle
-     if (i_sp_pol==1) prefix_=trim(title)//'              [spin up]'
-     if (i_sp_pol==2) prefix_=trim(title)//'              [spin dn]'
-     call msg('r',prefix_(1:25+len_trim(what))//'',E_g_dir(i_sp_pol+1,1)*HA2EV)
-   enddo
- endif
- !
+ do ival=1,5
+   !
+   ! [2] Indirect Gap
+   !
+   if(ival==1) then
+     prefix_= trim(title)//'Indirect Gap    '
+     val    =E_g_ind(:,1)*HA2EV
+   endif
+   !
+   ! [3] Valence Band Width
+   !
+   if(ival==2) then
+     prefix_= trim(title)//'Valence Width   '
+     val    =E_g_ind(:,2)*HA2EV
+   endif
+   !
+   ! [4] Indirect Gap
+   !
+   if(ival==3) then
+     prefix_= trim(title)//'Conduc. Width   '
+     val    =E_g_ind(:,3)*HA2EV
+   endif
+   !
+   ! [5] Indirect Gap
+   !
+   if(ival==4) then
+     prefix_= trim(title)//'Direct Gap Min  '
+     val    =E_g_dir(:,1)*HA2EV
+   endif
+   !
+   ! [6] Indirect Gap
+   !
+   if(ival==5) then
+     prefix_= trim(title)//'Direct Gap Max  '
+     val    =E_g_dir(:,2)*HA2EV
+   endif
+   !
+   if(all(Nbf==Nbm)) call msg('r',prefix_(1:25+len_trim(what))//'',val(1),' [eV] ')
+   !
+   if(n_sp_pol==2.and.any(Nbf==Nbm)) then 
+     do i_sp_pol=1,n_sp_pol
+       if (Nbf(i_sp_pol)/=Nbm(i_sp_pol)) cycle
+       if (Nbf(i_sp_pol)==0) cycle
+       if (i_sp_pol==1) prefix_=trim(title)//'              [spin up]'
+       if (i_sp_pol==2) prefix_=trim(title)//'              [spin dn]'
+       call msg('r',prefix_(1:25+len_trim(what))//'',val(i_sp_pol+1),' [eV] ')
+     enddo
+   endif
+   !
+ enddo
  !
  ! [3] Report if the system is treated as a metal
  !

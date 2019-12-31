@@ -33,10 +33,11 @@ module com_interfcs
      logical,optional :: USE_TABS
    end subroutine
    !
-   subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
+   subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
      character(*)     :: mesg
      character(*)     :: how
      integer          :: val(:)
+     character(*), optional :: after_msg
      integer,optional :: INDENT
      logical,optional :: USE_TABS
    end subroutine

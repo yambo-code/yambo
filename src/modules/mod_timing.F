@@ -381,6 +381,11 @@ MODULE timing_m
          nhour = INT( (total_time -86400*nday)/3600 )
          nmin =  INT( (total_time -86400*nday -3600*nhour)/60 )
          nsec =  INT(  total_time -86400*nday -3600*nhour -60*nmin )
+         WRITE (local_ch,'(a40)') TRIM(obj%name)
+         call msg('r',local_ch(:40),(/nday,nhour,nmin,int(nsec),call_number(1)/),' [d h m s n] ')
+         WRITE (local_ch,'(a40)') " "
+         call msg('r',local_ch(:40),(/real(total_time,SP),real(call_number(1),SP),&
+         &                       real(total_time,SP)/real(call_number(1),SP)/),' [s n s/n] ')
          IF ( call_number(1) == 1 )  THEN
            IF (nday > 0) THEN
              WRITE (local_ch, '(a40," : ",3x,i2,"d",i2,"h CPU ")') &
@@ -396,7 +401,6 @@ MODULE timing_m
                    TRIM(obj%name), nsec
            ENDIF
            if (log_as_a_file) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
-           call msg('r',local_ch(:100))
          ELSE
            IF (nday > 0) THEN
              WRITE(local_ch,'(a40," : ",3x,i2,"d",i2,"h CPU (",i10," calls,",f8.3,a)') TRIM(obj%name), nday, nhour, &
@@ -415,12 +419,14 @@ MODULE timing_m
                         call_number(1) , effective_total_time / REAL( call_number(1), DP ),sec_str
            ENDIF
            if (log_as_a_file) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
-           call msg('r',local_ch(:100))
          ENDIF
        CASE ( "sec " )
          !
          ! time in seconds
          !
+         WRITE (local_ch,'(a40)') TRIM(obj%name)//"  "
+         call msg('r',local_ch(:40),(/real(total_time,SP),real(call_number(1),SP),&
+         &                             real(total_time,SP)/real(call_number(1),SP)/),' [s n s/n] ')
          IF ( call_number(1) == 1) THEN
            WRITE (local_ch, '(a40," :",f10.4," s CPU")') TRIM(obj%name), total_time
          ELSE
@@ -429,7 +435,6 @@ MODULE timing_m
                         total_time / REAL( call_number(1), DP )
          ENDIF
          if (log_as_a_file) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
-         call msg('r',local_ch(:100))
        CASE DEFAULT
          CALL error('clock_write:  Invalid FORM '//TRIM(form_) )
      END SELECT

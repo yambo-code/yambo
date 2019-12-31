@@ -92,7 +92,7 @@ subroutine INIT_report_and_log_files()
    of_unit(repfile_index) = repfile_unit
    open(unit=repfile_unit,file=trim(repfile))
 #if defined _YAML_OUTPUT
-   call yaml_set_stream(filename=trim(repfile)//".yaml")
+   call yaml_set_stream(filename=trim(repfile)//".yaml",record_length=200)
    call yaml_stream_connected(trim(repfile)//".yaml",of_yaml_IDs(repfile_index))
 #endif
    call write_the_logo(repfile_unit,' ')
@@ -111,7 +111,7 @@ subroutine INIT_report_and_log_files()
    of_unit(repfile_index) = repfile_unit
    open(unit=logfile_unit,file=trim(logfile))
 #if defined _YAML_OUTPUT
-   call yaml_set_stream(filename=trim(logfile)//".yaml")
+   call yaml_set_stream(filename=trim(logfile)//".yaml",record_length=200)
    call yaml_stream_connected(trim(logfile)//".yaml",of_yaml_IDs(logfile_index))
 #endif
    !

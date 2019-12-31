@@ -37,13 +37,13 @@ subroutine section(mode,name)
 &                     date_and_time_string
  use parallel_m, ONLY:PP_redux_wait,ncpu
  use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&
-&                     write_to_report,repfile_unit
+&                     write_to_report,repfile_unit,repfile
  use timing_m,   ONLY:timing_upto_now
 #if defined _YAML_OUTPUT
  use pars,            ONLY:repfile_index
  use com,             ONLY:of_yaml_IDs,depth_yaml
  use yaml_output,     ONLY:yaml_sequence_open,yaml_sequence_close,yaml_new_document,&
-&                          yaml_comment,yaml_release_document
+&                          yaml_comment,yaml_release_document!,yaml_newline
 #endif
  !
  implicit none
@@ -144,6 +144,7 @@ subroutine section(mode,name)
  call msg('rn',repeat('=',len_trim(secnm)))
  !
 #if defined _YAML_OUTPUT
+ !if(depth_yaml>0) call yaml_newline(unit=of_yaml_IDs(repfile_index))
  if(depth_yaml>0) call yaml_comment(" ",unit=of_yaml_IDs(repfile_index))
  call yaml_sequence_open(mapname=trim(name),unit=of_yaml_IDs(repfile_index))
  depth_yaml=depth_yaml+1

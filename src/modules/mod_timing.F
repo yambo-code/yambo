@@ -424,7 +424,7 @@ MODULE timing_m
          !
          ! time in seconds
          !
-         WRITE (local_ch,'(a40)') TRIM(obj%name)//"  "
+         WRITE (local_ch,'(a40)') TRIM(obj%name)
          call msg('r',local_ch(:40),(/real(total_time,SP),real(call_number(1),SP),&
          &                             real(total_time,SP)/real(call_number(1),SP)/),' [s n s/n] ')
          IF ( call_number(1) == 1) THEN

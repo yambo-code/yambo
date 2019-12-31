@@ -78,7 +78,7 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  if(msg_for_rep) i1_limits=(/repfile_index,repfile_index/)
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
-   write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),(trim(val(i2)),i2=1,size(val))
+   write (of_unit(i1),trim(msgfmt)) mesg//dots_string,(trim(val(i2)),i2=1,size(val))
    of_unit(i1)=-of_unit(i1)
    if (.not.msg_for_rep) call of_netcdf_shadow_char(i1,size(val),val)
 #if defined _YAML_OUTPUT

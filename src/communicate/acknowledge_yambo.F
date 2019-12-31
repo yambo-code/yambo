@@ -38,7 +38,7 @@ subroutine acknowledge_yambo()
  call msg('r','|')
  call msg('r','| Many-body perturbation theory calculations using the yambo code')
  call msg('r','| D. Sangalli, A. Ferretti, H. Miranda, C. Attaccalite, I. Marri, E. Cannuccia, P. Melo,')
- call msg('r','| M Marsili, F Palear9, A Marrazzo, G Prandini, P Bonfà, M O Atambo, F Affinito,')
+ call msg('r','| M Marsili, F Paleari, A Marrazzo, G Prandini, P Bonfà, M O Atambo, F Affinito,')
  call msg('r','| M Palummo, A Molina-Sánchez, C Hogan, M Grüning, D Varsano and A Marini.')
  call msg('r','| J. Phys.: Condens. Matter 31, 325902 (2019).')
  call msg('r','|')
@@ -47,8 +47,6 @@ subroutine acknowledge_yambo()
  call msg('r','| Computer Physics Communications 180, 1392 (2009).')
  call msg('r','|')
  call msg('r',' ')
-
-
  !
  call LIVE_message("","","n","%s",CPU_TIME=.false.)
  !

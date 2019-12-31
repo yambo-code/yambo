@@ -313,10 +313,12 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  ! Reporting
  !
  write (ch,'(i1,a)') k_grid_dim,'D'
- call msg('r','Compatible Grid is ',trim(ch))
- if (k_grid_dim>0) call msg('r','B1 ',k_grid_b(1,:),"[rlu]")
- if (k_grid_dim>1) call msg('r','B2 ',k_grid_b(2,:),"[rlu]")
- if (k_grid_dim>2) call msg('r','B3 ',k_grid_b(3,:),"[rlu]")
+ call msg('r','Compatible Grid is   ',trim(ch))
+ !
+ call msg('r','Base K vectors       ',(/' K_min[ 1 ]  ',' K_min[ 2 ]  ',' K_min[ 3 ]  '/))
+ if (k_grid_dim>0) call msg('r','K_min[ 1 ] ',k_grid_b(1,:),"[rlu]")
+ if (k_grid_dim>1) call msg('r','K_min[ 2 ] ',k_grid_b(2,:),"[rlu]")
+ if (k_grid_dim>2) call msg('r','K_min[ 3 ] ',k_grid_b(3,:),"[rlu]")
  !
  ! Note that k_grid_b are Cartesian.
  !
@@ -330,8 +332,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  enddo
  k_grid_uc_vol=abs(k_grid_uc_vol)
  !
- if (k_grid_dim>0) call msg('rs','Grid dimensions               ',k_grid(:k_grid_dim))
- call msg('r',                   'K lattice UC volume           ',k_grid_uc_vol,"[a.u.]")
+ if (k_grid_dim>0) call msg('rs','Grid dimensions      ',k_grid(:k_grid_dim))
+ call msg('r',                   'K lattice UC volume  ',k_grid_uc_vol,"[a.u.]")
  !
  ! CLEAN
  !

@@ -260,7 +260,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    !
  endif
  !
- call msg('rn','X BZ K-points             ',Xk%nbz)
+ call msg('rn','X BZ K-points        ',Xk%nbz)
  !
  call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'K',.TRUE.,.FALSE.)
  !

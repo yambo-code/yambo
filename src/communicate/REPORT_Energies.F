@@ -64,11 +64,12 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
    if(trim(what)/="Q") dumb_ch1='K ['//trim(dumb_ch1)
    !
    if (l_kpoints) then
-     call msg('r',trim(dumb_ch1)//' weight        ',Xk%weights(ik) )
-     if(trim(what)=="K") call msg('r','       wf components ',wf_nc_k(ik) )
+     call msg('r',trim(dumb_ch1)//': weight       ',Xk%weights(ik) )
+     if(trim(what)=="K") call msg('r','      : wf components',wf_nc_k(ik) )
      if (ik<=nXkibz .or. (trim(what)=="Q")) then
-       call msg('r','       point         ',k_cc,' [cc] ')
-       call msg('r','                      ',k_al,' [alat] ')
+       call msg('r','      : point-cc     ',k_cc,' [cc] ')
+       call msg('r','      : point-alat   ',k_al,' [alat] ')
+       call msg('r','      : point-iku    ',k%pt(ik,:),' [iku] ')
      endif
    endif
    !

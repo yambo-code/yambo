@@ -192,7 +192,7 @@ integer function io_DIPOLES(Dip,ID)
    VAR_ID=5
    VAR_name='DIP_spin'
    if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
-   if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_spin(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
+   if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_spin(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,1),IPOS=DIP_ipos)
    !
    if (n_spinor==2) then
      !

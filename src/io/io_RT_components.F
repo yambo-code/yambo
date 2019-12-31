@@ -157,7 +157,9 @@ integer function io_RT_components(what,ID)
  !
  if (.not.any((/io_sec(ID,:)>1/))) goto 1
  !
+#if !defined _PAR_IO
  if (l_G .or. l_THETA)  call io_fragment(ID,i_fragment=max(1,ik))
+#endif
  !
  ! 2nd SECTION
  !=============
@@ -395,9 +397,12 @@ subroutine G_lesser_IO(ID)
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,&
 &                         variable_exist,write_is_on,io_sec
  use hamiltonian,    ONLY:H_rotation
- use RT_control,     ONLY:GF_RT_IO_t,SAVE_G_history,TIME_string
+ use RT_control,     ONLY:GF_RT_IO_t,SAVE_G_history,TIME_string,NE_i_start_time
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_bands,RT_nbands,RT_nk,l_RT_rotate_DM,&
 &                         NE_i_time,RT_step
+#if defined _PAR_IO
+ use netcdf,         ONLY:NF90_UNLIMITED
+#endif
  !
  implicit none
  !
@@ -408,6 +413,7 @@ subroutine G_lesser_IO(ID)
  character(schlen) :: dim_names(5),var_name
 #if defined _PAR_IO
  integer           :: k_range(2),IPOS(5)
+ logical           :: l_H_rot
 #endif
  !
  i_spin=1
@@ -419,19 +425,20 @@ subroutine G_lesser_IO(ID)
  if(     SAVE_G_history) VAR_SZ(5)=NF90_UNLIMITED
  l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,"H_rotation").or.write_is_on(ID)) )
  !
- if(NE_i_time==1) then
+ if(NE_i_time==NE_i_start_time) then
    dim_names  =[character(schlen) :: 'complex', 'RT_nbands','RT_nbands','RT_nk','G_IO_time_step']
    call def_variable_bulk(ID,"dG_lesser", 4,VAR_sz,SP,dim_names=dim_names,par_io_kind='independent',silent=.true.)
-   if(l_H_rot) call def_variable_bulk(ID,"H_rotation",5,VAR_sz(1:4),SP,dim_names=dim_names(1:4),par_io_kind='independent',silent=.true.)
+   if(l_H_rot) call def_variable_bulk(ID,"H_rotation",5,VAR_sz(1:4),SP,&
+   &                                             dim_names=dim_names(1:4),par_io_kind='independent',silent=.true.)
  endif
  !
- k_range(1)=io_sec(ID,1)-2
- k_range(2)=io_sec(ID,2)-2
+ k_range(1)=io_sec(ID,2)-2
+ k_range(2)=io_sec(ID,3)-2
  IPOS(1:4)=(/1,1,1,k_range(1)/)
  if(.not.SAVE_G_history) IPOS(5)=1
  if(     SAVE_G_history) IPOS(5)=((NE_i_time-1)/GF_RT_IO_t%N*G_MEM_steps+1)
  call io_variable_bulk(ID,4,C4=dG_lesser(:,:,k_range(1):k_range(2),:),IPOS=IPOS)
- if(l_H_rot) io_variable_bulk(ID,5,C3=H_rotation(:,:,k_range(1):k_range(2),i_spin),IPOS=IPOS(1:4)/))
+ if(l_H_rot) call io_variable_bulk(ID,5,C3=H_rotation(:,:,k_range(1):k_range(2),i_spin),IPOS=IPOS(1:4))
  !
 #else
  !

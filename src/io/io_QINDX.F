@@ -108,7 +108,7 @@ integer function io_QINDX(Xk,q,io_db)
  ! (coll_scattering) -> qindx_C(nXkbz,nXkbz,2)
  !
  if (any((/io_sec(io_db,:)==3/))) then
-   if (read_is_on(io_db)) call qindx_alloc()
+   if (read_is_on(io_db)) call qindx_alloc('ALL')
    !
    ! Fragmentation (1): eXchange indx
    !

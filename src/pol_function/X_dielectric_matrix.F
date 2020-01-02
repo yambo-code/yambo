@@ -166,7 +166,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !=======================
  if (.not.(l_life.and.X%iq(1)>1)) then
    call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
-   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
+   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_and_IO",X=X) 
  endif
  call X_half_mat_check(Xen,Xk,Xw)
  !

@@ -75,15 +75,18 @@ subroutine INIT_activate()
  !
  ! CPU structure
  !
- if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa) then
-   call CPU_activate("X")
-   if (l_optics.and..not.l_bse) call CPU_activate("X_finite_q")
+ if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa.or.l_life) then
+   if (l_em1s.or.l_em1d.or.l_ppa.or.l_life) then
+     call CPU_activate("X_and_IO")
+   else
+     call CPU_activate("X")
+   endif
    call CPU_activate("DIP")
    call initactivate(1,'X_Threads DIP_Threads')
  endif
  !
  if(l_sc_run) then
-   call CPU_activate("X_q")  ! Required for finite E-field, l_sc_exx, SC_up_W_iter
+   call CPU_activate("X_and_IO")  ! Required for finite E-field, l_sc_exx, SC_up_W_iter
  endif
  !
  if ( (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions) ) then
@@ -606,9 +609,9 @@ subroutine INIT_activate()
      call initactivate(1,"PAR_def_mode")
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
-     if (what=="X_finite_q".or.what=="X".or.what=="BS") call initactivate(1,what//"_nCPU_LinAlg_INV")
-     if (what=="BS")                                    call initactivate(1,what//"_nCPU_LinAlg_DIAGO")
-     if (what=="SE".and.l_sc_run)                       call initactivate(1,what//"_nCPU_LinAlg_DIAGO")
+     if (what=="X_and_IO".or.what=="X".or.what=="BS") call initactivate(1,what//"_nCPU_LinAlg_INV")
+     if (what=="BS")                                  call initactivate(1,what//"_nCPU_LinAlg_DIAGO")
+     if (what=="SE".and.l_sc_run)                     call initactivate(1,what//"_nCPU_LinAlg_DIAGO")
 #endif
 #if defined _SCALAPACK &&  defined _MPI
      if (what=="SLK")             call initactivate(1,what//"_nCPU_LinAlg_INV")

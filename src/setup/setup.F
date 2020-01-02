@@ -180,7 +180,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Symmetries list
  !
- call msg('r','Symmetries units      ',' [cc]')
+ call msg('rn','Symmetries units      ',' [cc]')
  do is=1,nsym
    dumb_ch=trim(intc(is))//'] '
    i1=9
@@ -249,6 +249,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
    if (i_err/=0) call error('Impossible to determine the K-grid lattice')
  endif
  !
+ call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'K',.TRUE.,.FALSE.)
+ !
  if (BZ_DbGd_nbands>0.and.allocated(en%E_DbGd)) then
    !
    call section('=','Double K-grid')
@@ -259,10 +261,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call msg('rn','Is the grid expanded ',DbGd_is_symmetry_expanded)
    !
  endif
- !
- call msg('rn','X BZ K-points        ',Xk%nbz)
- !
- call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'K',.TRUE.,.FALSE.)
  !
  if (trim(non_periodic_directions)/="none") then
    !

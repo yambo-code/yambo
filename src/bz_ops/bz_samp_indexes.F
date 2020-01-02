@@ -104,6 +104,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  io_err=io_QINDX(Xk,q,io_db)
  if (io_err==0) then
    call k_expand(q)
+   d3q_factor=RL_vol/real(q%nbz)
    call REPORT_Energies(E_empty,q,q,1,(/1,q%nibz/),'Q',.TRUE.,.FALSE.)
    call q_shadows(.false.)
    return
@@ -214,6 +215,8 @@ subroutine bz_samp_indexes(k,Xk,q)
    bse_scattering=.false.
    !
  endif
+ !
+ d3q_factor=RL_vol/real(q%nbz)
  !
  ! Allocate
  !
@@ -430,11 +433,8 @@ subroutine bz_samp_indexes(k,Xk,q)
      character(lchlen)::ch(4)
      real(SP)         ::q_cc(3)
      if(trim(kind)=='iku') then
-       call msg('nr','IBZ Q-points ',q%nibz)
-       call msg('rn','BZ  Q-points ',q%nbz)
      endif
      if(trim(kind)=='cc') call msg('r',' ')
-     d3q_factor=RL_vol/real(q%nbz)
      do i1=1,q%nibz
        if(trim(kind)=='cc') call c2a(v_in=q%pt(i1,:),v_out=q_cc,mode='ki2c')
        ch(2)=gen_fmt(r_v=q%pt(i1,:))

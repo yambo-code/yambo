@@ -78,7 +78,7 @@ subroutine REPORT_Occupations(what,E)
    if (n_sp_pol>1)                  call msg('r','spin channel              ',i_sp_pol)
    if (Nbf(i_sp_pol)> 0)            call msg('r','Fully Occ. States         ',(/              1,Nbf(i_sp_pol)/))
    if (Nbm(i_sp_pol)>Nbf(i_sp_pol)) call msg('r','Part. Occ. States         ',(/Nbf(i_sp_pol)+1,Nbm(i_sp_pol)/))
-   if (E%nb         >Nbm(i_sp_pol)) call msg('r','Empty      States         ',(/Nbm(i_sp_pol)+1/))
+   if (E%nb         >Nbm(i_sp_pol)) call msg('r','Empty      States         ',(/Nbm(i_sp_pol)+1,E%nb         /))
  enddo
  !
  do ival=1,5
@@ -90,32 +90,32 @@ subroutine REPORT_Occupations(what,E)
      val    =E_g_ind(:,1)*HA2EV
    endif
    !
-   ! [3] Valence Band Width
+   ! [3] Indirect Gap Min
    !
    if(ival==2) then
-     prefix_= trim(title)//'Valence Width   '
-     val    =E_g_ind(:,2)*HA2EV
-   endif
-   !
-   ! [4] Indirect Gap
-   !
-   if(ival==3) then
-     prefix_= trim(title)//'Conduc. Width   '
-     val    =E_g_ind(:,3)*HA2EV
-   endif
-   !
-   ! [5] Indirect Gap
-   !
-   if(ival==4) then
      prefix_= trim(title)//'Direct Gap Min  '
      val    =E_g_dir(:,1)*HA2EV
+   endif
+   !
+   ! [4] Indirect Gap Max
+   !
+   if(ival==3) then
+     prefix_= trim(title)//'Direct Gap Max  '
+     val    =E_g_dir(:,2)*HA2EV
+   endif
+   !
+   ! [5] Valence Band Width
+   !
+   if(ival==4) then
+     prefix_= trim(title)//'Val. Band Width '
+     val    =E_g_ind(:,2)*HA2EV
    endif
    !
    ! [6] Indirect Gap
    !
    if(ival==5) then
-     prefix_= trim(title)//'Direct Gap Max  '
-     val    =E_g_dir(:,2)*HA2EV
+     prefix_= trim(title)//'Con. Band Width '
+     val    =E_g_ind(:,3)*HA2EV
    endif
    !
    if(all(Nbf==Nbm)) call msg('r',prefix_(1:25+len_trim(what))//'',val(1),' [eV] ')

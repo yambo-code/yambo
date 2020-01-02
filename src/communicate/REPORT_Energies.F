@@ -47,6 +47,11 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  character(schlen) :: dumb_ch1,dumb_ch2
  real(SP)          :: E_(n_bands_,n_sp_pol)
  !
+ if(l_kpoints) then
+   call msg('nr','IBZ '//trim(what)//'-points ',k%nibz)
+   call msg('rn','BZ  '//trim(what)//'-points ',k%nbz)
+ endif
+ !
  do ik=k_range(1),k_range(2)
    !
    !call msg('r','')
@@ -64,7 +69,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
    if(trim(what)/="Q") dumb_ch1='K ['//trim(dumb_ch1)
    !
    if (l_kpoints) then
-     call msg('r',trim(dumb_ch1)//': weight       ',Xk%weights(ik) )
+     call msg('r',trim(dumb_ch1)//' : weight       ',Xk%weights(ik) )
      if(trim(what)=="K") call msg('r','      : wf components',wf_nc_k(ik) )
      if (ik<=nXkibz .or. (trim(what)=="Q")) then
        call msg('r','      : point-cc     ',k_cc,' [cc] ')

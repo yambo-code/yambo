@@ -114,7 +114,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Free memory: qindx_* and unused DIPOLES
  ! =====================================================
- call qindx_free()
+ call qindx_free('ALL')
  !
  call DIP_alloc('P_square')
  if(l_use_DIPOLES) then

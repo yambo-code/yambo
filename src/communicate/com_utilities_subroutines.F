@@ -252,6 +252,7 @@ subroutine error(mesg)
  !
 end subroutine error
 !
+!
 subroutine msg_deliver(of_name_extension,formatted_msg)
  !
  use pars,      ONLY:max_open_ofs

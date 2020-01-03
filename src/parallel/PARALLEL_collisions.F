@@ -224,4 +224,18 @@ subroutine PARALLEL_collisions( k, COLL )
  !
  call PARALLEL_check_phase_space(COLL%PAR_N,MSG=trim(COLL%name)//" COLLISIONS")
  !
-end subroutine
+end subroutine PARALLEL_collisions
+!
+!
+subroutine PARALLEL_collisions_reset(COLL)
+ !
+ use collision_ext, ONLY:COLLISIONS_group
+ !
+#include<memory.h>
+ !
+ type(COLLISIONS_group), intent(inout) :: COLL
+ !
+ YAMBO_FREE(COLL%PAR_map)
+ YAMBO_FREE(COLL%PAR_IND%element_1D)
+ !
+end subroutine PARALLEL_collisions_reset

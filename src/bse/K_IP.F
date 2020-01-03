@@ -43,7 +43,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind,BS_bands
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
-&                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
+&                        PAR_COM_Xk_ibz_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use parser_m,      ONLY:parser
  use timing_m,      ONLY:timing
@@ -132,12 +132,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (trim(global_gauge)=='length'  ) then
    conjg_fac=-1._SP
-   dip_kind ="DIP_iR"
+   DIP_kind ="DIP_iR"
    field_dir=Dip%q0/v_norm(Dip%q0)*q0_def_norm
  endif
  if (trim(global_gauge)=='velocity') then
    conjg_fac=+1._SP
-   dip_kind ="DIP_v"
+   DIP_kind ="DIP_v"
    field_dir=Dip%q0/v_norm(Dip%q0)
  endif
  !
@@ -168,7 +168,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      if(iq==1) then
        !
-       DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ik_bz,i_sp_pol,dip_kind,Xk))
+       DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ik_bz,i_sp_pol,DIP_kind,Xk))
        !
      else
        !

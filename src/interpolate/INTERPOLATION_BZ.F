@@ -26,7 +26,9 @@ subroutine INTERPOLATION_BZ(K,NK,ID,R1D,R2D,C1D,C2D,E)
  use R_lattice,   ONLY:bz_samp
  use electrons,   ONLY:levels
  use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D
- implicit none
+ !
+#include<memory.h>
+ !
  type(bz_samp), intent(in)              :: K
  integer,       intent(in)              :: ID,NK
  real(SP),      intent(out), optional   :: R1D(:,:),R2D(:,:,:)
@@ -45,7 +47,7 @@ subroutine INTERPOLATION_BZ(K,NK,ID,R1D,R2D,C1D,C2D,E)
    return
  endif
  !
- allocate(RDATA(interpls(ID)%ndim,NK))
+ YAMBO_ALLOC(RDATA,(interpls(ID)%ndim,NK))
  !
  call INTERPOLATION_fourier(K,RDATA,interpls(ID)%engre,interpls(ID)%ndim,NK)
  !
@@ -85,6 +87,6 @@ subroutine INTERPOLATION_BZ(K,NK,ID,R1D,R2D,C1D,C2D,E)
    !
  endif
  !
- deallocate(RDATA)
+ YAMBO_FREE(RDATA)
  !
 end subroutine INTERPOLATION_BZ

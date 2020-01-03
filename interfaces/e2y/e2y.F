@@ -27,7 +27,7 @@ integer function e2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use etsf_data
  use pars,                ONLY: SP,lchlen
  use LOGO,                ONLY: pickup_a_random
- use com,                 ONLY: msg,write_to_report,core_io_path, file_exists,write_the_logo
+ use com,                 ONLY: msg,write_to_report,core_io_path
  use parallel_m,          ONLY: ncpu,myid
  use electrons,           ONLY: levels,E_reset,n_spinor,n_sp_pol
  use D_lattice,           ONLY: n_atoms_species_max
@@ -61,6 +61,8 @@ integer function e2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  logical                     :: lstat      ! to get informed on error
  type(etsf_io_low_error)     :: error_data ! to store informations about errors
  integer                     :: ncid
+ !
+ logical, external           :: file_exists
  !
  ! Presets
  !=========
@@ -217,7 +219,6 @@ end function
 
  subroutine etsf_long_error(error_data)
    use etsf_io_low_level, only : etsf_io_low_error, etsf_io_low_error_handle
-   use com, only : error
    type(etsf_io_low_error), intent(in)     :: error_data
    call etsf_io_low_error_handle(error_data)
    call error('YAMBO dies')

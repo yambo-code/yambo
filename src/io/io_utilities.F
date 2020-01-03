@@ -24,7 +24,7 @@
 function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING,ALT_JOB_DIR)
  !
  use pars,     ONLY:lchlen
- use com,      ONLY:com_path,more_io_path,core_io_path,jobdir,jobstr,alt_jobstr
+ use com,      ONLY:com_path,more_io_path,core_io_path,jobdir,jobstr
  !
  ! -4 ----------------  -> JOBSTR/JOBFOLDER/desc (no NETCDF support)
  ! -3 ----------------  -> desc 

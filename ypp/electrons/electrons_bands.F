@@ -31,7 +31,7 @@ subroutine electrons_bands(Xk,Xen)
  ! GRID_E       = interpolated @ GRID_k (if INTERP_grid>0)
  ! CIRCUIT_E_db = eventually read from GS SAVE
  !
- use pars,           ONLY:SP,schlen,lchlen,rZERO
+ use pars,           ONLY:SP,rZERO
  use units,          ONLY:HA2EV
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&

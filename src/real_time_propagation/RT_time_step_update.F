@@ -42,7 +42,7 @@ subroutine RT_time_step_update( )
  ! 
  integer           :: ib,ibp,ik,nT_updated,i1,n_mesgs
  complex(SP)       :: dG_dT_max(2),dG_dT(2),ERROR,dG(3)
- real(SP)          :: dT_now,dT_previous,dT_next
+ real(SP)          :: dT_now,dT_previous,dT_next,T_tmp(4)
  integer, external :: RT_Lifetimes_evaluation_plan
  !
  l_Update_Time_Step=NE_time>=NE_initial_time_step_update.and.NE_initial_time_step_update>0._SP
@@ -94,13 +94,18 @@ subroutine RT_time_step_update( )
    call SETUP_RT_IO_type(GF_RT_IO_t,.FALSE.)
    !
    OBS_RT_IO_t%last_point    = NE_i_time
-   CARR_RT_IO_t%last_point    = NE_i_time
+   CARR_RT_IO_t%last_point   = NE_i_time
    OUTPUT_RT_IO_t%last_point = NE_i_time
    GF_RT_IO_t%last_point     = NE_i_time
    !
    ! ... and the dT update steps
    !
-   NE_time_step_update_jump = max(TIME_adjust(NE_time_step_update_jump,OBS_RT_IO_t%INTERVAL_time),OBS_RT_IO_t%INTERVAL_time)
+   !NE_time_step_update_jump = max(TIME_adjust(NE_time_step_update_jump, OBS_RT_IO_t%INTERVAL_time), OBS_RT_IO_t%INTERVAL_time)
+   T_tmp(1)=TIME_adjust(NE_time_step_update_jump, OBS_RT_IO_t%INTERVAL_time)
+   T_tmp(2)=TIME_adjust(NE_time_step_update_jump,CARR_RT_IO_t%INTERVAL_time)
+   T_tmp(3)= OBS_RT_IO_t%INTERVAL_time
+   T_tmp(4)=CARR_RT_IO_t%INTERVAL_time
+   NE_time_step_update_jump = maxval(T_tmp)
    !
    ! I need to re-calculate the lifetimes evaluation plan in order to be consistent with the new Time Step
    !

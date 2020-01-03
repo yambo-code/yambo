@@ -33,7 +33,7 @@ subroutine RT_databases_IO(E)
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
 &                         OP_IF_START_APP_CL_IF_END,OP_APP,OP_APP_CL
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,HEAD_k_cpu,ncpu,myid
- use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,RT_all2ibz
+ use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,RT_all2ibz,G_MEM_steps
  use timing_m,       ONLY:timing
  use fields,         ONLY:A_tot
  !
@@ -43,7 +43,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- integer           :: ik,io_G,io_OBS,io_carr,io_THETA,i_time,i_cpu,n_sec,secs(3),MODE
+ integer           :: i_mem,ik,io_G,io_OBS,io_carr,io_THETA,i_time,i_cpu,n_sec,secs(3),MODE
  integer, external :: io_RT_components
  logical, external :: stop_NOW
  !
@@ -136,9 +136,12 @@ subroutine RT_databases_IO(E)
        GF_RT_IO_t%N=1
        GF_RT_IO_t%Time(GF_RT_IO_t%N)=NE_time
      else
-       if(.not.SAVE_G_history) GF_RT_IO_t%N=2
-       if(     SAVE_G_history) GF_RT_IO_t%N=2*(NE_i_time-1)/GF_RT_IO_t%INTERVAL_steps+1
-       GF_RT_IO_t%Time(GF_RT_IO_t%N-1:GF_RT_IO_t%N)=(/NE_time-RT_dyn_step,NE_time/)
+       if(.not.SAVE_G_history) GF_RT_IO_t%N=G_MEM_steps
+       if(     SAVE_G_history) GF_RT_IO_t%N=G_MEM_steps*(NE_i_time-1)/GF_RT_IO_t%INTERVAL_steps+1
+       do i_mem=1-G_MEM_steps,0
+         i_time=GF_RT_IO_t%N+i_mem
+         GF_RT_IO_t%Time(i_time)=NE_time+i_mem*RT_dyn_step
+       enddo
      endif
      !
      call IO_and_Messaging_switch("SAVE")

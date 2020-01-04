@@ -194,7 +194,7 @@ contains
    den  = ( D2 + sqrt(4.0_SP*D1**3 + D2**2) )**(1.0_SP/3.0_SP)
    !
    q(1) = -( b + 2.0_SP**(1._SP/3._SP)*D1/den - den/2._SP**(1._SP/3._SP) )/(3.0_SP*a)
-   q(2) = -( b - s* D1/2.**(2._SP/3._SP)/den + conjg(s)* den/2._SP**(4._SP/3._SP) )/(3._SP*a)
+   q(2) = -( b - s* D1/2._SP**(2._SP/3._SP)/den + conjg(s)* den/2._SP**(4._SP/3._SP) )/(3._SP*a)
    q(3) = -( b - conjg(s)* D1/2._SP**(2._SP/3._SP)/den + s* den/2._SP**(4._SP/3._SP) )/(3._SP*a)
    !
    deR  =  (w(1)**2-q(1)) * (w(1)**2-q(2)) * (w(2)**2-q(3)) * (w(3)**2-q(3))*   &
@@ -235,7 +235,7 @@ contains
    do k = 1, np
      R(k) = xq(k)
      do i = 1, np
-       A(k,i) = -1./( w(k)**2 - Q(i) )
+       A(k,i) = -1._SP/( w(k)**2 - Q(i) )
      enddo
    enddo 
    ! 
@@ -265,14 +265,14 @@ contains
 !     b (j)  = xq(2*j  )*z(2*j  )**np
      v1(j)  = xq(j   )*z(j   )**np
      b (j)  = xq(j+np)*z(j+np)**np
-     Z1(j,1) = 1.
-     Z2(j,1) = 1.  
+     Z1(j,1) = 1._SP
+     Z2(j,1) = 1._SP  
 !     M1(j,1) = -xq(2*j-1)
 !     M2(j,1) = -xq(2*j) 
      M1(j,1) = -xq(j)
      M2(j,1) = -xq(j+np) 
-     M (j,j) = 1.
-     M (j,1) = 0.
+     M (j,j) = 1._SP
+     M (j,1) = 0._SP
      do i = 2, np
 !       Z1(j,i) =  z(2*j-1)**(i-1)
 !       Z2(j,i) =  z(2*j  )**(i-1)
@@ -305,11 +305,11 @@ contains
    call cgesv(np, np, M2, np, ind, M, np,info) 
 #endif
    b = matmul(M,b) 
-   Companion=0.
+   Companion=0._SP
    Companion(1,np) = -b(1)
    do i = 2, np
      Companion(i,np)  = -b(i)
-     Companion(i,i-1) = 1.
+     Companion(i,i-1) = 1._SP
    enddo
 #ifdef _DOUBLE
    call  zgeev( 'N', 'N', np, Companion, np, Q, VL, 1, VR, 1, work, 2*np, rwork, info )
@@ -346,7 +346,7 @@ contains
        E(i) = -E(i)
      endif
 !     E(i) = real(E(i),SP)
-     R(i) = -R(i)/(2._DP*E(i))
+     R(i) = -R(i)/(2._SP*E(i))
    enddo
    !
  end subroutine mpa_RE_solver

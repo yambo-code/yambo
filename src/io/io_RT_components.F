@@ -35,7 +35,7 @@ integer function io_RT_components(what,ID)
 &                         manage_OP_IF_START_and_CL_IF_END,io_bulk,write_is_on
  use real_time,      ONLY:NE_i_time,RT_step,NE_steps,RT_nk, &
 &                         RT_carriers,RT_nbands,RT_all2ibz,G_MEM_steps
- use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,IO_OBS_cache_steps,&
+ use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,TMP_OBS_cache_steps,&
 &                         NE_i_start_time,SAVE_G_history
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
@@ -78,9 +78,9 @@ integer function io_RT_components(what,ID)
  l_D          =what=="D".or.what=="OBSERVABLES"
  l_OBS        =l_JP.or.l_M.or.l_D
  !
- if(l_G       ) first_IO=(NE_i_time==  GF_RT_IO_t%last_point).or.NE_i_time==1
- if(l_carriers) first_IO=(NE_i_time==CARR_RT_IO_t%last_point).or.NE_i_time==1.or.CARR_RT_IO_t%last_point<0
- if(l_OBS     ) first_IO=(NE_i_time== OBS_RT_IO_t%last_point).or.NE_i_time==1.or. OBS_RT_IO_t%last_point<0
+ if(l_G       ) first_IO=(NE_i_time==  GF_RT_IO_t%last_point).or.(NE_i_time==1).or.  GF_RT_IO_t%last_point< 0
+ if(l_carriers) first_IO=(NE_i_time==CARR_RT_IO_t%last_point).or.(NE_i_time==1).or.CARR_RT_IO_t%last_point< 0
+ if(l_OBS     ) first_IO=(NE_i_time== OBS_RT_IO_t%last_point).or.(NE_i_time==1).or. OBS_RT_IO_t%last_point< 0
  !
  call timing('io_RT_components',OPR='start')
  !
@@ -180,7 +180,8 @@ integer function io_RT_components(what,ID)
    if(l_carriers .and. db_type==2 .or. (db_type==-3.and..not.l_real_time) ) &
    &         call TIME_points_IO(ID,1,     first_IO,.true.,      l_G,CARR_RT_IO_t)
    !
-   T_size=max(1,mod(NE_i_time-2,IO_OBS_cache_steps)+1)
+   if(NE_i_time==1) T_size=1
+   if(NE_i_time> 1) T_size=TMP_OBS_cache_steps !max(1,mod(NE_i_time-2,IO_OBS_cache_steps)+1)
    if(l_OBS) call TIME_points_IO(ID,T_size,first_IO,.true.,       l_G,OBS_RT_IO_t)
    !
  endif
@@ -354,6 +355,7 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,unlim,l_G,TYP)
                       R0=TYP%INTERVAL_time     ,CHECK=.FALSE.,             &
 &                     DESCRIPTION=RT_description(n_RT_descriptions),UNIT=AUT2FS)
  !
+ !
  call def_variable_elemental(ID,"IO_TIME_steps_last_nsteps",3,IP+100,0) 
  call io_variable_elemental(ID,I0=TYP%INTERVAL_steps)
  call io_variable_elemental(ID,I0=TYP%last_point)
@@ -371,14 +373,14 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,unlim,l_G,TYP)
    YAMBO_ALLOC(TYP%Time,(NE_steps))
  endif
  !
- IPOS=TYP%N-VAR_SZ+1
+ IPOS=max(1,TYP%N-VAR_SZ+1)
  IO_LIM=(/TYP%N-VAR_SZ+1,TYP%N/)
  if(def_var.or.read_is_on(ID)) then
    dim_name="IO_TIME_n_points"
    if(     unlim) call def_variable_bulk(ID,"IO_TIME_points",3,(/NF90_unlimited/),SP,dim_name,silent=.true.)
    if(.not.unlim) call def_variable_bulk(ID,"IO_TIME_points",3,(/G_MEM_steps/),   SP,dim_name,silent=.true.)
-   IPOS=1
-   IO_LIM=(/1,VAR_SZ/)
+   !IPOS=1
+   !IO_LIM=(/1,VAR_SZ/)
  endif
  !
  if(write_is_on(ID)) call io_variable_bulk(ID,3,R1=TYP%Time(IO_LIM(1):IO_LIM(2)),IPOS=IPOS)
@@ -436,7 +438,7 @@ subroutine G_lesser_IO(ID)
  k_range(2)=io_sec(ID,3)-2
  IPOS(1:4)=(/1,1,1,k_range(1)/)
  if(.not.SAVE_G_history) IPOS(5)=1
- if(     SAVE_G_history) IPOS(5)=((NE_i_time-1)/GF_RT_IO_t%N*G_MEM_steps+1)
+ if(     SAVE_G_history) IPOS(5)=max(1,GF_RT_IO_t%N-G_MEM_steps+1)
  call io_variable_bulk(ID,4,C4=dG_lesser(:,:,k_range(1):k_range(2),:),IPOS=IPOS)
  if(l_H_rot) call io_variable_bulk(ID,5,C3=H_rotation(:,:,k_range(1):k_range(2),i_spin),IPOS=IPOS(1:4))
  !
@@ -475,7 +477,8 @@ subroutine RT_OBS_IO(ID,l_JP,l_M,what)
 &                      read_is_on,write_is_on
  use electrons,   ONLY:n_spin
  use real_time,   ONLY:l_NE_with_fields,NE_i_time
- use RT_control,  ONLY:J_cache,P_cache,Ms_cache,Ml_cache,A_cache,IO_OBS_cache_steps
+ use RT_control,  ONLY:J_cache,P_cache,Ms_cache,Ml_cache,A_cache,&
+&                      TMP_OBS_cache_steps,OBS_RT_IO_t
  !
 #include<memory.h>
  !
@@ -516,11 +519,12 @@ subroutine RT_OBS_IO(ID,l_JP,l_M,what)
  case('FILL')
    !
    if(write_is_on(ID)) then
-     CACHE_SZ=max(1,mod(NE_i_time-2,IO_OBS_cache_steps)+1)
-     IPOS    =NE_i_time-CACHE_SZ+1
+     if(NE_i_time==1) CACHE_SZ=1
+     if(NE_i_time> 1) CACHE_SZ=TMP_OBS_cache_steps !max(1,mod(NE_i_time-2,IO_OBS_cache_steps)+1)
+     IPOS    =max(1,OBS_RT_IO_t%N-TMP_OBS_cache_steps+1)
    else if(read_is_on(ID)) then
-     CACHE_SZ=IO_OBS_cache_steps
-     IPOS=1
+     CACHE_SZ=TMP_OBS_cache_steps
+     IPOS    =1
    endif
    !
    if (l_JP) then

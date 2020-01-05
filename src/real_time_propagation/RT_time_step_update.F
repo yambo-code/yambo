@@ -32,7 +32,8 @@ subroutine RT_time_step_update( )
 &                         NE_step_update_treshold,NE_i_time,NE_time_step_update_last_point,RT_MAX_step,&
 &                         NE_initial_time_step_update,RT_all2ibz
  use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,n_TIME_STEP_CONF_descriptions,&
-&                         TIME_STEP_CONF_description,RT_do_it,SETUP_RT_IO_type,TIME_adjust
+&                         TIME_STEP_CONF_description,RT_do_it,SETUP_RT_IO_type,TIME_adjust,&
+&                         IO_OBS_cache_steps,RT_control_alloc,RT_control_free,J_cache
  use com,            ONLY:msg
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
  !
@@ -88,24 +89,29 @@ subroutine RT_time_step_update( )
    !
    RT_dyn_step=dT_next
    !
-   call SETUP_RT_IO_type(OBS_RT_IO_t,.FALSE.)
+   !call SETUP_RT_IO_type(OBS_RT_IO_t,.FALSE.)
    call SETUP_RT_IO_type(CARR_RT_IO_t,.FALSE.)
    call SETUP_RT_IO_type(OUTPUT_RT_IO_t,.FALSE.)
    call SETUP_RT_IO_type(GF_RT_IO_t,.FALSE.)
    !
-   OBS_RT_IO_t%last_point    = NE_i_time
    CARR_RT_IO_t%last_point   = NE_i_time
    OUTPUT_RT_IO_t%last_point = NE_i_time
    GF_RT_IO_t%last_point     = NE_i_time
    !
    ! ... and the dT update steps
    !
-   !NE_time_step_update_jump = max(TIME_adjust(NE_time_step_update_jump, OBS_RT_IO_t%INTERVAL_time), OBS_RT_IO_t%INTERVAL_time)
-   T_tmp(1)=TIME_adjust(NE_time_step_update_jump, OBS_RT_IO_t%INTERVAL_time)
-   T_tmp(2)=TIME_adjust(NE_time_step_update_jump,CARR_RT_IO_t%INTERVAL_time)
-   T_tmp(3)= OBS_RT_IO_t%INTERVAL_time
-   T_tmp(4)=CARR_RT_IO_t%INTERVAL_time
-   NE_time_step_update_jump = maxval(T_tmp)
+   NE_time_step_update_jump = max(TIME_adjust(NE_time_step_update_jump,CARR_RT_IO_t%INTERVAL_time),CARR_RT_IO_t%INTERVAL_time)
+   !
+   ! J, P and M (spin) cache Time size
+   !=========================
+   !
+   OBS_RT_IO_t%INTERVAL_time=TIME_adjust(OBS_RT_IO_t%INTERVAL_time,NE_time_step_update_jump)
+   call SETUP_RT_IO_type(OBS_RT_IO_t,.FALSE.)
+   !
+   call RT_control_free("cache") 
+   IO_OBS_cache_steps=OBS_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
+   call RT_control_alloc("cache") 
+   !
    !
    ! I need to re-calculate the lifetimes evaluation plan in order to be consistent with the new Time Step
    !

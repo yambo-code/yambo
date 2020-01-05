@@ -264,7 +264,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
    case('do_io_variables')
      !
-     IPOS=(/1,(NE_i_time-1)/CARR_RT_IO_t%INTERVAL_steps+1/)
+     IPOS=(/1,CARR_RT_IO_t%N/)
      TMP_SIZE=(/RT%nstates,1/)
      !
      ! Energies

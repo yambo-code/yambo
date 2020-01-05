@@ -23,12 +23,13 @@
 !                  
 subroutine RT_databases_IO(E)
  !
+ use pars,           ONLY:SP
  use drivers,        ONLY:l_elph_scatt
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
-&                         GF_RT_IO_t,CARR_RT_IO_t,IO_OBS_cache_steps,SAVE_G_history,NE_i_start_time
+&                         GF_RT_IO_t,CARR_RT_IO_t,TMP_OBS_cache_steps,IO_OBS_cache_steps,SAVE_G_history,NE_i_start_time
  use real_time,      ONLY:NE_i_time,NE_steps,l_NE_dynamics,RT_nk,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,&
-&                         l_NE_with_fields,RT_dyn_step
+&                         l_NE_with_fields,RT_step,RT_dyn_step
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
 &                         OP_IF_START_APP_CL_IF_END,OP_APP,OP_APP_CL
@@ -53,11 +54,25 @@ subroutine RT_databases_IO(E)
  !===========================
  if (io_OBSERVABLES) then
    !
+   if(NE_i_time==NE_i_start_time) then
+     call io_control(ACTION=OP_APP,COM=NONE,SEC=(/1/),ID=ID(4)) 
+     io_OBS=io_RT_components('OBSERVABLES',ID(4))
+   endif
+   !
+   if (NE_i_time>=OBS_RT_IO_t%last_point) then
+   !
    ! Cache the current and the polarization for future writing
    !
-   i_time=max(1,mod(NE_i_time-2,IO_OBS_cache_steps)+1)
-   OBS_RT_IO_t%N=NE_i_time
-   OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=NE_time
+   i_time=NE_i_time
+   if(OBS_RT_IO_t%last_point>0) i_time=i_time-OBS_RT_IO_t%last_point
+   i_time=i_time/int(RT_dyn_step/RT_step)
+   !
+   if(i_time>0) then
+     OBS_RT_IO_t%N=OBS_RT_IO_t%N+1
+     OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=NE_time
+   else
+     i_time=1
+   endif
    !
    J_cache(1:3,i_time)=RT_ind_J
    P_cache(1:3,i_time)=RT_P
@@ -71,16 +86,18 @@ subroutine RT_databases_IO(E)
      A_cache(1:3,3,i_time)=A_tot%vecpot_acc
    endif
    !
-   if(NE_i_time==NE_i_start_time) then
-     call io_control(ACTION=OP_APP,COM=NONE,SEC=(/1/),ID=ID(4)) 
-     io_OBS=io_RT_components('OBSERVABLES',ID(4))
-   endif
-   !
-   if (RT_do_it('OBS').or.NE_i_time==NE_steps.or.STOP_now(.FALSE.)) then
+   if (RT_do_it('OBS').or.(NE_i_time>=NE_steps-int(RT_dyn_step/RT_step)+1)&
+   &   .or.STOP_now(.FALSE.).or.NE_i_time==OBS_RT_IO_t%last_point) then
+     !
+     TMP_OBS_cache_steps=i_time
      !
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/2,3/),ID=ID(4))
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
      !
+     J_cache=0._SP
+     !
+   endif
+   !
    endif
    !
  endif
@@ -98,7 +115,7 @@ subroutine RT_databases_IO(E)
    !
    if(RT_do_it('CARR')) then
      !
-     CARR_RT_IO_t%N=(NE_i_time-1)/CARR_RT_IO_t%INTERVAL_steps+1
+     CARR_RT_IO_t%N=CARR_RT_IO_t%N+1
      CARR_RT_IO_t%Time(CARR_RT_IO_t%N)=NE_time
      !
      call RT_carriers_object(RT_carriers,E,WHAT='fill')
@@ -119,16 +136,14 @@ subroutine RT_databases_IO(E)
      if(     SAVE_G_history) MODE=OP_APP_CL
      call io_control(ACTION=MODE,COM=NONE, SEC=(/1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
-   endif
-   !
-   if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
      !
-     if(NE_i_time==NE_i_start_time) then
+     if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
        call io_control(ACTION=OP_APP,COM=NONE, SEC=(/1/),ID=ID(7))
        io_THETA=io_RT_components('THETA',ID(7))
      endif
      !
    endif
+   !
    !
    if(RT_do_it('G')) then
      !
@@ -137,7 +152,7 @@ subroutine RT_databases_IO(E)
        GF_RT_IO_t%Time(GF_RT_IO_t%N)=NE_time
      else
        if(.not.SAVE_G_history) GF_RT_IO_t%N=G_MEM_steps
-       if(     SAVE_G_history) GF_RT_IO_t%N=G_MEM_steps*(NE_i_time-1)/GF_RT_IO_t%INTERVAL_steps+1
+       if(     SAVE_G_history) GF_RT_IO_t%N=GF_RT_IO_t%N+G_MEM_steps
        do i_mem=1-G_MEM_steps,0
          i_time=GF_RT_IO_t%N+i_mem
          GF_RT_IO_t%Time(i_time)=NE_time+i_mem*RT_dyn_step

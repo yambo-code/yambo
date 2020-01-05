@@ -166,6 +166,9 @@ subroutine RT_start_and_restart(E,k,q)
    call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
    !
+   call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID(4))
+   io_OBS=io_RT_components('OBSERVABLES',ID(4))
+   !
    call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID_OCCUPATIONS)
    io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
    !
@@ -182,7 +185,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
 #if defined _PAR_IO
    !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3,RT_nk+2/),MODE=VERIFY,ID=ID(5))
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/0,3,RT_nk+2/),MODE=VERIFY,ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
 #else
@@ -196,7 +199,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
    ! The G_lesser must be now rebuild from the reference (T=0) and latest dG components
    !
-   do i_memory=1,G_MEM_steps 
+   do i_memory=1,G_MEM_steps
      G_lesser(:,:,:,i_memory)=G_lesser_reference(:,:,:)+dG_lesser(:,:,:,i_memory)
      if (MEM_pointer(i_memory)==NE_i_time  ) i_MEM_now=i_memory
      if (MEM_pointer(i_memory)==NE_i_time-1) i_MEM_previous=i_memory
@@ -232,6 +235,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
    call msg('s','[RESTART] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
    call msg('r',  'Number of steps done         [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
+   call msg('r',  'Time reached                  [fs]:',real(NE_i_time)*RT_step*AUT2FS)
    call msg('r',  'Time step                     [fs]:',RT_dyn_step*AUT2FS)
    !
    call msg('r',  'dT Update Interval            [fs]:',NE_time_step_update_jump*AUT2FS)

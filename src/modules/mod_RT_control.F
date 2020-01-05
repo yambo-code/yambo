@@ -36,7 +36,8 @@ module RT_control
  integer                  :: n_TIME_STEP_CONF_descriptions = 0
  character(lchlen)        :: TIME_STEP_CONF_description(100)
  !
- integer                  :: IO_OBS_cache_steps=1
+ integer                  ::  IO_OBS_cache_steps=1
+ integer                  :: TMP_OBS_cache_steps=1
  !
  integer                  :: ID(8)
  integer                  :: NE_i_start_time    = 1   ! restart point
@@ -290,13 +291,16 @@ module RT_control
      !
      if (TYP%INTERVAL_time<=RT_dyn_step) TYP%INTERVAL_time = RT_dyn_step
      !
-     TYP%INTERVAL_time  =            nint(TYP%INTERVAL_time/RT_dyn_step)*RT_dyn_step
+     TYP%INTERVAL_time  = nint(TYP%INTERVAL_time/RT_dyn_step)*RT_dyn_step
+     !
      !
      ! The steps are always relative to RT_step
      !
-     TYP%INTERVAL_steps             =nint(TYP%INTERVAL_time/RT_step)
+     TYP%INTERVAL_steps = nint(TYP%INTERVAL_time/RT_step)
      !
      if (INIT) TYP%INTERVAL_time_SAVE=TYP%INTERVAL_time
+     !
+     if (INIT) TYP%last_point=0
      !
      if (INIT.and.TYP%last_point==0) TYP%last_point=-TYP%INTERVAL_steps+1
      !

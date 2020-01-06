@@ -37,6 +37,9 @@ subroutine RT_databases_IO(E)
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,RT_all2ibz,G_MEM_steps
  use timing_m,       ONLY:timing
  use fields,         ONLY:A_tot
+#if defined _PAR_IO
+ use parallel_m,     ONLY:PAR_IO_G_kpts
+#endif
  !
  implicit none
  !
@@ -44,7 +47,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- integer           :: i_mem,ik,io_G,io_OBS,io_carr,io_THETA,i_time,i_cpu,n_sec,secs(3),MODE
+ integer           :: i_mem,ik,io_G,io_OBS,io_carr,io_THETA,i_time,i_cpu,secs(2),MODE
  integer, external :: io_RT_components
  logical, external :: stop_NOW
  !
@@ -60,44 +63,44 @@ subroutine RT_databases_IO(E)
    endif
    !
    if (NE_i_time>=OBS_RT_IO_t%last_point) then
-   !
-   ! Cache the current and the polarization for future writing
-   !
-   i_time=NE_i_time
-   if(OBS_RT_IO_t%last_point>0) i_time=i_time-OBS_RT_IO_t%last_point
-   i_time=i_time/int(RT_dyn_step/RT_step)
-   !
-   if(i_time>0) then
-     OBS_RT_IO_t%N=OBS_RT_IO_t%N+1
-     OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=NE_time
-   else
-     i_time=1
-   endif
-   !
-   J_cache(1:3,i_time)=RT_ind_J
-   P_cache(1:3,i_time)=RT_P
-   if(n_spin>1) then
-     Ms_cache(1:3,1:3,i_time)= RT_spin_magn
-     Ml_cache(1:3,1:2,i_time)= RT_orbt_magn
-   endif
-   if(l_NE_with_fields) then
-     A_cache(1:3,1,i_time)=A_tot%vecpot
-     A_cache(1:3,2,i_time)=A_tot%vecpot_vel
-     A_cache(1:3,3,i_time)=A_tot%vecpot_acc
-   endif
-   !
-   if (RT_do_it('OBS').or.(NE_i_time>=NE_steps-int(RT_dyn_step/RT_step)+1)&
-   &   .or.STOP_now(.FALSE.).or.NE_i_time==OBS_RT_IO_t%last_point) then
      !
-     TMP_OBS_cache_steps=i_time
+     ! Cache the current and the polarization for future writing
      !
-     call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/2,3/),ID=ID(4))
-     io_OBS=io_RT_components('OBSERVABLES',ID(4))
+     i_time=NE_i_time
+     if(OBS_RT_IO_t%last_point>0) i_time=i_time-OBS_RT_IO_t%last_point
+     i_time=i_time/int(RT_dyn_step/RT_step)
      !
-     J_cache=0._SP
+     if(i_time>0) then
+       OBS_RT_IO_t%N=OBS_RT_IO_t%N+1
+       OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=NE_time
+     else
+       i_time=1
+     endif
      !
-   endif
-   !
+     J_cache(1:3,i_time)=RT_ind_J
+     P_cache(1:3,i_time)=RT_P
+     if(n_spin>1) then
+       Ms_cache(1:3,1:3,i_time)= RT_spin_magn
+       Ml_cache(1:3,1:2,i_time)= RT_orbt_magn
+     endif
+     if(l_NE_with_fields) then
+       A_cache(1:3,1,i_time)=A_tot%vecpot
+       A_cache(1:3,2,i_time)=A_tot%vecpot_vel
+       A_cache(1:3,3,i_time)=A_tot%vecpot_acc
+     endif
+     !
+     if (RT_do_it('OBS').or.(NE_i_time>=NE_steps-int(RT_dyn_step/RT_step)+1)&
+     &   .or.STOP_now(.FALSE.).or.NE_i_time==OBS_RT_IO_t%last_point) then
+       !
+       TMP_OBS_cache_steps=i_time
+       !
+       call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/2,3/),ID=ID(4))
+       io_OBS=io_RT_components('OBSERVABLES',ID(4))
+       !
+       J_cache=0._SP
+       !
+     endif
+     !
    endif
    !
  endif
@@ -113,10 +116,12 @@ subroutine RT_databases_IO(E)
      io_carr=io_RT_components('carriers',ID(6))
    endif
    !
-   if(RT_do_it('CARR')) then
+   if(RT_do_it('CARR').and.NE_i_time>=CARR_RT_IO_t%last_point) then
      !
-     CARR_RT_IO_t%N=CARR_RT_IO_t%N+1
-     CARR_RT_IO_t%Time(CARR_RT_IO_t%N)=NE_time
+     if (NE_i_time>CARR_RT_IO_t%last_point) then
+       CARR_RT_IO_t%N=CARR_RT_IO_t%N+1
+       CARR_RT_IO_t%Time(CARR_RT_IO_t%N)=NE_time
+     endif
      !
      call RT_carriers_object(RT_carriers,E,WHAT='fill')
      !
@@ -164,20 +169,10 @@ subroutine RT_databases_IO(E)
      !
 #if defined _PAR_IO
      !
-     n_sec=0
-     secs(1)=0
+     secs=0
      if(myid==0) secs(1)=2
-     do ik = 1, RT_nk
-       if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
-       if (n_sec==0) secs(2:3)=ik+2
-       if (n_sec >0) then
-         if (ik/=secs(3)-1) call error(" Non contiguous G distr does not work with PAR-IO")
-         secs(3)=ik+2
-       endif
-       n_sec=n_sec+2
-     enddo
-     !
-     if(n_sec>0) then
+     if(PAR_IO_G_kpts(1)>0) secs(2)=3
+     if(any(secs>0)) then
        call io_control(ACTION=OP_IF_START_APP_CL_IF_END,COM=NONE,SEC=secs,ID=ID(5))
        io_G=io_RT_components('G',ID(5))
      endif

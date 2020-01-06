@@ -58,7 +58,7 @@ integer function io_RT_components(what,ID)
  character(lchlen)     :: local_description(100)
  !
 #if defined _PAR_IO
- integer               :: k_range(2),local_COMM
+ integer               :: local_COMM
 #endif
  real(SP)              :: time_now
  integer               :: ik,db_type,T_size,i_start
@@ -403,6 +403,7 @@ subroutine G_lesser_IO(ID)
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_bands,RT_nbands,RT_nk,l_RT_rotate_DM,&
 &                         NE_i_time,RT_step
 #if defined _PAR_IO
+ use parallel_m,     ONLY:PAR_IO_G_kpts
  use netcdf,         ONLY:NF90_UNLIMITED
 #endif
  !
@@ -414,7 +415,7 @@ subroutine G_lesser_IO(ID)
  integer           :: VAR_SZ(5)
  character(schlen) :: dim_names(5),var_name
 #if defined _PAR_IO
- integer           :: k_range(2),IPOS(5)
+ integer           :: IPOS(5)
  logical           :: l_H_rot
 #endif
  !
@@ -434,13 +435,11 @@ subroutine G_lesser_IO(ID)
    &                                             dim_names=dim_names(1:4),par_io_kind='independent',silent=.true.)
  endif
  !
- k_range(1)=io_sec(ID,2)-2
- k_range(2)=io_sec(ID,3)-2
- IPOS(1:4)=(/1,1,1,k_range(1)/)
+ IPOS(1:4)=(/1,1,1,PAR_IO_G_kpts(1)/)
  if(.not.SAVE_G_history) IPOS(5)=1
  if(     SAVE_G_history) IPOS(5)=max(1,GF_RT_IO_t%N-G_MEM_steps+1)
- call io_variable_bulk(ID,4,C4=dG_lesser(:,:,k_range(1):k_range(2),:),IPOS=IPOS)
- if(l_H_rot) call io_variable_bulk(ID,5,C3=H_rotation(:,:,k_range(1):k_range(2),i_spin),IPOS=IPOS(1:4))
+ call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),:),IPOS=IPOS)
+ if(l_H_rot) call io_variable_bulk(ID,5,C3=H_rotation(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_spin),IPOS=IPOS(1:4))
  !
 #else
  !

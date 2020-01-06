@@ -185,7 +185,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
 #if defined _PAR_IO
    !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/0,3,RT_nk+2/),MODE=VERIFY,ID=ID(5))
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=VERIFY,ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
 #else

@@ -35,7 +35,7 @@ subroutine RT_initialize(E,k,q)
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:levels
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
- use RT_control,     ONLY:OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,                      &
+ use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,                      &
 &                         SETUP_RT_IO_type,IO_OBS_cache_steps,TIME_adjust,SAVE_G_history
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
@@ -144,6 +144,7 @@ subroutine RT_initialize(E,k,q)
  ! Set the I/O steps: (J,P,CARRIERs) (GF) (output)
  !=================================================
  call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
+ call SETUP_RT_IO_type(CARR_RT_IO_t,.TRUE.)
  call SETUP_RT_IO_type(OUTPUT_RT_IO_t,.TRUE.)
  call SETUP_RT_IO_type(GF_RT_IO_t,.TRUE.)
  !
@@ -205,27 +206,22 @@ subroutine RT_initialize(E,k,q)
      if(NE_time_step_update_jump_SAVE<2._SP*RT_life_extrap_times(1)) NE_time_step_update_jump_SAVE=2._SP*RT_life_extrap_times(1) 
    endif
    !
-   NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,OBS_RT_IO_t%INTERVAL_time)
-   if(NE_time_step_update_jump_SAVE<OBS_RT_IO_t%INTERVAL_time) NE_time_step_update_jump_SAVE=OBS_RT_IO_t%INTERVAL_time
+   NE_time_step_update_jump=NE_time_step_update_jump_SAVE
    !
-   NE_time_step_update_jump = NE_time_step_update_jump_SAVE
+   if(OBS_RT_IO_t%INTERVAL_time_SAVE>NE_time_step_update_jump_SAVE) then
+     OBS_RT_IO_t%INTERVAL_time_SAVE=NE_time_step_update_jump_SAVE
+     call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
+   endif
    !
-   if (RT_MAX_step<1.E-5) RT_MAX_step=10.*RT_step
+   if (RT_MAX_step<1.E-5) RT_MAX_step=10._SP*RT_step
    !
- else
- !
- ! GPL_EXCLUDE_END
- !
-   ! J, P and M (spin) cache Time size (is switched off when an adaptative time step is used)
-   !=========================
-   IO_OBS_cache_steps=OBS_RT_IO_t%INTERVAL_steps
-   !
- !
- ! GPL_EXCLUDE_START
- !
  endif
  !
  ! GPL_EXCLUDE_END
+ !
+ ! J, P and M (spin) cache Time size
+ !=========================
+ IO_OBS_cache_steps=OBS_RT_IO_t%INTERVAL_steps
  !
  ! External fields checks
  !========================
@@ -255,17 +251,7 @@ subroutine RT_initialize(E,k,q)
      Efield(i1)%versor   =normalize_v(Efield(i1)%versor)
      Efield(i1)%amplitude=Efield_strength(Efield(i1)%intensity,'AU')
      !
-     Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
-     !
-     if ( mod(Efield(i1)%t_initial_indx-1,OBS_RT_IO_t%INTERVAL_steps)/=0 ) then
-       call warning('Field starting time corrected to be a mutiple of the I/O step.')
-       Efield(i1)%t_initial_indx=Efield(i1)%t_initial_indx-mod(Efield(i1)%t_initial_indx-1,OBS_RT_IO_t%INTERVAL_steps)
-     endif
-     if (Efield(i1)%t_initial_indx< OBS_RT_IO_t%INTERVAL_steps+1 ) then
-       call warning('Field starting time corrected to respect the I/O times.')
-       Efield(i1)%t_initial_indx=OBS_RT_IO_t%INTERVAL_steps+1
-     endif
-     !
+     Efield(i1)%t_initial_indx=max(nint(Efield(i1)%t_initial/RT_step)+1,2)
      Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step
      !
      call Check_symmetries(Efield(i1)%versor)
@@ -426,6 +412,7 @@ subroutine RT_initialize(E,k,q)
  !
  call msg( 'nr','---I/O---')
  call                          msg('r', 'T between I/O of   OBS [fs]:',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
+ call                          msg('r', 'T between I/O of   CAR [fs]:',CARR_RT_IO_t%INTERVAL_time*AUT2FS)
  call                          msg('r', '          I/O of   GFs [fs]:',GF_RT_IO_t%INTERVAL_time*AUT2FS)
  call                          msg('r', '               outputs [fs]:',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
  if (l_use_collisions)    call msg( 'r','Extended collisions   [I/O]:',io_COLLs)

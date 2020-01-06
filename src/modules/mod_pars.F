@@ -62,8 +62,8 @@ module pars
  integer,parameter  :: max_open_ofs=1000
  !
  !...I/O
- integer, parameter :: max_io_units=10
- integer, parameter :: max_io_vars_open=10
+ integer, parameter :: max_io_units=20
+ integer, parameter :: max_io_vars_open=20
  integer, parameter :: max_active_sections=10
  !
  !...QP

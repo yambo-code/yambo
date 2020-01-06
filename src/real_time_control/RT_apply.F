@@ -32,7 +32,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control,DB_path
  use units,          ONLY:FS2AUT,AUT2FS,PS2AUT
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free
- use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,OBS_RT_IO_t,RT_ctl_db,RT_ctl_interp_neigh
+ use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,CARR_RT_IO_t,RT_ctl_db,RT_ctl_interp_neigh
  use com,            ONLY:msg,jobstr,alt_jobstr,n_alt_jobstr,depth,alt_jobdir,jobdir
  !
  implicit none
@@ -204,15 +204,15 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
    return
  endif
  !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID)
  io_err=io_RT_components(trim(db_name),ID)
  !
  ! Adjust NE_i_time in case needed.
- ! Cannot do that in case l_real_time because OBS_RT_IO_t is not loaded to not break the restart
+ ! Cannot do that in case l_real_time because CARR_RT_IO_t is not loaded to not break the restart
  !
  if (io_err< 0 .and. .not. l_real_time) then 
-   NE_i_time= NE_i_time-mod(NE_i_time-1,OBS_RT_IO_t%INTERVAL_steps)
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID)
+   NE_i_time= NE_i_time-mod(NE_i_time-1,CARR_RT_IO_t%INTERVAL_steps)
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID)
    io_err=io_RT_components(trim(db_name),ID)
  endif
  !
@@ -233,6 +233,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
    if (depth==0) call section('+',trim(ch))
  endif
  !
+ l_verbose=.true.
  if (l_verbose) call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(local_Time*AUT2FS))//' fs')
  !
  ! Interpolatle the RT_carriers object inside the En levels object (energy, occupations and lifetimes)

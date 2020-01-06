@@ -105,7 +105,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
 #if defined _RT || defined _YPP_RT
  use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_headings,YPP_append
- use RT_control, ONLY:OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db
+ use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
@@ -603,10 +603,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! RT_ctl
  !
- OBS_RT_IO_t%INTERVAL_time=2._SP*FS2AUT
- OUTPUT_RT_IO_t%INTERVAL_time=5._SP*FS2AUT
+ OBS_RT_IO_t%INTERVAL_time_SAVE   =2._SP*FS2AUT
+ CARR_RT_IO_t%INTERVAL_time_SAVE  =2._SP*FS2AUT
+ OUTPUT_RT_IO_t%INTERVAL_time_SAVE=5._SP*FS2AUT
+ GF_RT_IO_t%INTERVAL_time_SAVE    =1._SP*FS2AUT
  SAVE_G_history=.FALSE.
- GF_RT_IO_t%INTERVAL_time=1._SP*FS2AUT
  !
  ! RT_output
  !

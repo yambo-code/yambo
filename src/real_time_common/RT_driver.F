@@ -170,7 +170,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  ! Core allocations
  !
  call RT_alloc(E)
- call RT_control_alloc(.FALSE.)
+ call RT_control_alloc("both")
  !
  ! GPL_EXCLUDE_START
  !
@@ -351,7 +351,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    subroutine CLOSE_and_clean( )
      call RT_free()
-     call RT_control_free()
+     call RT_control_free("both")
      call WF_free(WF)
      !
      ! GPL_EXCLUDE_START

@@ -127,6 +127,7 @@ module IO_m
  integer :: io_code_revision(max_io_units,2) ! devel,GPL
  integer :: io_serial_number(max_io_units)
  integer :: io_netcdf_var(max_io_units,max_io_vars_open)
+ integer :: io_netcdf_elem_varid(max_io_units)
  logical :: io_resetable(max_io_units)
  character(lchlen)          :: io_file(max_io_units)
  character(lchlen)          :: io_folder(max_io_units)
@@ -211,7 +212,7 @@ module IO_m
      character(*),optional :: par_io_kind
    end subroutine def_variable_elemental
    !
-   subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
+   subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind,silent)
      use pars,              ONLY:schlen
      integer,      intent(in)  :: ID
      character(*), intent(in)  :: VAR
@@ -220,6 +221,7 @@ module IO_m
      integer,      intent(in)  :: VAR_KIND
      character(schlen), optional, intent(in) :: dim_names(:)
      character(*),      optional, intent(in) :: par_io_kind
+     logical,           optional, intent(in) :: silent
    end subroutine def_variable_bulk
    !
    subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
@@ -260,8 +262,10 @@ module IO_m
      integer,     optional, intent(inout) ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
      real(SP),    optional, intent(inout) ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
      real(DP),    optional, intent(inout) ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
-     complex(SP), optional, target, intent(inout) ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
-     complex(DP), optional, target, intent(inout) ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
+     complex(SP), optional, target, intent(inout) ::  C0, C1(:)
+     complex(DP), optional, target, intent(inout) ::  Z0, Z1(:)
+     complex(SP), optional, target, contiguous, intent(inout) ::  C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
+     complex(DP), optional, target, contiguous, intent(inout) ::  Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
      integer(LP), optional, intent(inout) ::  L0, L1(:), L2(:,:), L3(:,:,:), L4(:,:,:,:)
      character,   optional, intent(inout) :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
      !
@@ -624,8 +628,8 @@ module IO_m
      character(schlen)          :: dim_strng
      character(schlen),optional :: dim_name
      netcdf_dim=0
-     write (dim_strng,'(a,i10.10)') 'D_',dim
-     if (present(dim_name)) dim_strng = dim_name
+     if (.not.present(dim_name)) write (dim_strng,'(a,i10.10)') 'D_',dim
+     if (     present(dim_name)) dim_strng = dim_name
      dim_found=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
      if (dim_found/=NF90_NOERR) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
    end function

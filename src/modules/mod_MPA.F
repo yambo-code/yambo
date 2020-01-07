@@ -46,7 +46,7 @@ module mpa_m
  implicit none
  private
 
- public :: mpa_RE_solver, mpa_RQ_1p_solver
+ public :: mpa_RE_solver
 
 contains
 

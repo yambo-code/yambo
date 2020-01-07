@@ -51,7 +51,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        PARALLEL_WF_distribute,QP_state_print
  use matrix_operate,ONLY:mat_transpose
  use timing_m,      ONLY:timing
- use mpa_m,         ONLY:mpa_RE_solver
+ use mpa_m,         ONLY:mpa_RE_solver, mpa_RQ_1p_solver
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
@@ -237,29 +237,38 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      do ig2=1,X%ng
        do ig1=1,X%ng
          !
-         MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs) 
+         MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)*isc%gamp(ig1,ig2) 
          !
          call mpa_RE_solver(X%mpa_npoles, MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,:), MPA_E_mat(ig1,ig2,:))
+         !
+         !if (real(X_mat(ig1,ig2,1)/X_mat(ig1,ig2,2))<=1._SP) then
+         !  MPA_E_mat(ig1,ig2,:)= 1.0_SP-(0._SP,1._SP)*epsilon(1._SP)
+         !  MPA_R_mat(ig1,ig2,:)=0._SP
+         !  MPA_R_mat(ig1,ig2,1)=X_mat(ig1,ig2,1)/2._SP
+         !else
+         !  call mpa_RE_solver(X%mpa_npoles, MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,:), MPA_E_mat(ig1,ig2,:))
+         !endif
          !
          pole_p=0
          do i_np=1,X%mpa_npoles
            !
-!           MPA_E_mat(ig1,ig2,i_np)=real(sqrt(MPA_Q(i_np)),SP)  
-!           MPA_R_mat(ig1,ig2,i_np)=-MPA_R_mat(ig1,ig2,i_np)/(2._DP*MPA_E_mat(ig1,ig2,i_np))*isc%gamp(ig1,ig2)
-           MPA_R_mat(ig1,ig2,i_np)=MPA_R_mat(ig1,ig2,i_np)*isc%gamp(ig1,ig2)
+           !MPA_R_mat(ig1,ig2,i_np)=MPA_R_mat(ig1,ig2,i_np)*isc%gamp(ig1,ig2)
            if( imagpart(MPA_E_mat(ig1,ig2,i_np)) > 0._SP ) then
              pole_p = pole_p + 1
            endif
+           !if( isnan(realpart(MPA_E_mat(ig1,ig2,i_np))) .or. isnan(imagpart(MPA_E_mat(ig1,ig2,i_np))) .or. &
+&          !    isnan(realpart(MPA_R_mat(ig1,ig2,i_np))) .or. isnan(imagpart(MPA_R_mat(ig1,ig2,i_np))) ) then
+           !  write(*,*) "G=",ig1,"G'=",ig2, "i_p=",i_np
+           !  write(*,*) "mpaE= ", MPA_E_mat(ig1,ig2,i_np)
+           !  write(*,*) "mpaR= ", MPA_R_mat(ig1,ig2,i_np)
+           !  write(*,*)
+           !endif
            !
          enddo
          if(pole_p > 0) then
            poles_f = poles_f + 1
          endif
          !
-         write(*,*) "G=",ig1,"G'=",ig2
-         write(*,*) "mpaE= ", MPA_E_mat(ig1,ig2,:)
-         write(*,*) "mpaR= ", MPA_R_mat(ig1,ig2,:)
-         write(*,*)
        enddo
      enddo
      !$omp end do
@@ -350,6 +359,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
                !
                ! inline bose_f function Dario:
                bose_PPA_E=0._SP
+               if (real(MPA_E_mat(ig1,ig2,i_np))<0._SP) bose_PPA_E=-spin_occ
                !if (real(MPA_E_mat(ig1,ig2,i_np))<0.) bose_PPA_E=-spin_occ
                if (Finite_Tel) then
                  if (real(MPA_E_mat(ig1,ig2,i_np),SP)>epsilon(1.)) then
@@ -365,11 +375,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
                endif
                !
                ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*&
-&                                 (-sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_R_mat(ig1,ig2,i_np))*&
+&                                 (sign(1._SP,imagpart(MPA_E_mat(ig1,ig2,i_np))) *MPA_R_mat(ig1,ig2,i_np))*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_(i_w)-E_kmq &
-&                                             -sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np))+&
+&                                             +sign(1._SP,imagpart(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np))+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_(i_w))-E_kmq   &
-&                                             +sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np)) )
+&                                             -sign(1._SP,imagpart(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np)) )
                !
                dp_dummy=dp_dummy+ctmp
                !

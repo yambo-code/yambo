@@ -46,7 +46,7 @@ module mpa_m
  implicit none
  private
 
- public :: mpa_RE_solver
+ public :: mpa_RE_solver, mpa_RQ_1p_solver
 
 contains
 
@@ -244,7 +244,7 @@ contains
 #else
    call cgesv(np, 1, A, np, ind, R, np,info) 
 #endif
-
+   ! 
  end subroutine mpa_R_solver
 
  subroutine mpa_Q_solver(np, z, xq, Q)
@@ -342,11 +342,14 @@ contains
    !
    do i=1,np
      E(i) = sqrt(E(i))
-     if(real(E(i))<0._SP) then 
+     if(realpart(E(i))<0._SP) then 
        E(i) = -E(i)
      endif
-!     E(i) = real(E(i),SP)
      R(i) = -R(i)/(2._SP*E(i))
+     if(isnan(realpart(R(i))) .or. isnan(imagpart(R(i))) ) then
+       E= (1._SP,0._SP)-(0._SP,1._SP)*epsilon(1._SP)
+       R= x(1)/(2._SP*np)
+     endif
    enddo
    !
  end subroutine mpa_RE_solver
@@ -356,10 +359,10 @@ contains
    implicit none
    !
    integer ,    intent(in)  :: np
-   complex(dp), intent(in)  :: x(2*np), w(2*np)
-   complex(dp), intent(in)  :: R(np), Q(np)
-   complex(dp)              :: aux
-   real(dp)                 :: err_func_np
+   complex(SP), intent(in)  :: x(2*np), w(2*np)
+   complex(SP), intent(in)  :: R(np), Q(np)
+   complex(SP)              :: aux
+   real(SP)                 :: err_func_np
    integer   ::i,j
    !
    aux = (0._SP,0._SP)      

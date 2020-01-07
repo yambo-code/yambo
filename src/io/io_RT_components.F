@@ -492,8 +492,8 @@ subroutine RT_OBS_IO(ID,l_JP,l_M,what)
    if (l_JP) then
      VAR_SZ(1:3)    = (/2,3,NF90_UNLIMITED/)
      dim_names(1:3) = [character(schlen) :: 'complex', 'xyz','time']
-     call def_variable_bulk(ID,"Current",     4,VAR_SZ(1:3),SP,dim_names=dim_names,silent=.true.)
-     call def_variable_bulk(ID,"Polarization",5,VAR_SZ(1:3),SP,dim_names=dim_names,silent=.true.)
+     call def_variable_bulk(ID,"Current",     4,VAR_SZ(1:3),SP,dim_names=dim_names(1:3),silent=.true.)
+     call def_variable_bulk(ID,"Polarization",5,VAR_SZ(1:3),SP,dim_names=dim_names(1:3),silent=.true.)
    endif
    !
    if(n_spin>1.and.l_M) then

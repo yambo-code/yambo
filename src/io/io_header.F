@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,&
-&                          CUTOFF,GAUGE,IMPOSE_GAUGE,PARALLEL_STRUCTURE,FRAG)
+&                          CUTOFF,GAUGE,IMPOSE_GAUGE,PARALLEL_STRUCTURE,FRAG,IMPOSE)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use units,         ONLY:HA2KEL
@@ -48,7 +48,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  implicit none
  !
  integer               :: ID
- logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,FRAG
+ logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,FRAG,IMPOSE
  character(*),optional :: XC_KIND,PARALLEL_STRUCTURE
  !
  ! Work Space
@@ -59,7 +59,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  real(SP),allocatable:: l_pt(:,:)
  real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3),&
 &                       save_Tel(2)
- logical             :: WARN,xc_kind_force
+ logical             :: WARN,xc_kind_force,l_IMPOSE
  character(schlen)   :: xc_string_kinds(10),PARALLEL_STRUCTURE_
  !
  io_header=0
@@ -68,6 +68,8 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  WARN=.true.
  if (list_dbs) WARN=.false.
+ l_IMPOSE=.false.
+ if (present(IMPOSE)) l_IMPOSE=IMPOSE
  !
  MENU=1
  MODE=io_mode(ID)
@@ -140,7 +142,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_elemental(ID,VAR="HEAD_D_LATT",VAR_SZ=3,MENU=MENU)
    MENU=0
    call io_elemental(ID,DB_R1=D_LATT_vec_disk,R1=D_LATT_vec,&
-&       VAR=' Lattice constants                :',WARN=WARN,&
+&       VAR=' Lattice constants                :',WARN=WARN,CHECK=l_IMPOSE,&
 &       OP=(/"==","==","=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    db_alat=D_LATT_vec_disk
@@ -153,7 +155,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_elemental(ID,VAR="HEAD_R_LATT",VAR_SZ=4,MENU=MENU)
    MENU=0
    call io_elemental(ID,DB_I1=R_LATT_vec_disk,I1=R_LATT_vec,&
-&       VAR=' Brillouin Zone Q/K grids (IBZ/BZ):',WARN=WARN,&
+&       VAR=' Brillouin Zone Q/K grids (IBZ/BZ):',WARN=WARN,CHECK=l_IMPOSE,&
 &       OP=(/"==","==","==","=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    nqibz_disk=R_LATT_vec_disk(1)
@@ -168,7 +170,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_elemental(ID,VAR="HEAD_WF",VAR_SZ=1,MENU=MENU)
    MENU=0
    call io_elemental(ID,I0=wf_ng,&
-&       VAR=' RL vectors                   (WF):',WARN=WARN,OP=(/"=="/))
+&       VAR=' RL vectors                   (WF):',WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    io_header=io_status(ID)
    if (io_header/=0) goto 1
@@ -193,7 +195,8 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
        if (.not.v_is_zero(q_pt(i1,:)-l_pt(i1,:),zero_=local_zero)) io_header=-1
      enddo
      if (io_header/=0) then
-       if (WARN) call warning('Wrong Q-points coordinates/order')
+       if (WARN    ) call warning('Wrong Q-points coordinates/order')
+       if (l_IMPOSE) call   error('Wrong Q-points coordinates/order')
        goto 1
      endif
    endif
@@ -220,7 +223,8 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
        if (.not.v_is_zero(k_pt(i1,:)-l_pt(i1,:),zero_=local_zero)) io_header=-1
      enddo
      if (io_header/=0) then
-       if (WARN) call warning('Wrong K-points coordinates/order')
+       if (WARN    ) call warning('Wrong K-points coordinates/order')
+       if (l_IMPOSE) call warning('Wrong K-points coordinates/order')
        goto 1
      endif
      !
@@ -236,7 +240,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    if (CUTOFF) then
      call io_elemental(ID,VAR="CUTOFF",CH0='',VAR_SZ=1,MENU=MENU)
      MENU=0
-     call io_elemental(ID,CH0=cut_description,VAR=" Coulomb cutoff potential         :",WARN=WARN,OP=(/"=="/))
+     call io_elemental(ID,CH0=cut_description,VAR=" Coulomb cutoff potential         :",WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      io_header=io_status(ID)
      if (io_header/=0) goto 1
@@ -296,9 +300,9 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_elemental(ID,VAR="TEMPERATURES",VAR_SZ=2,MENU=MENU)
    MENU=0
    call io_elemental(ID,R0=Tel,&
-&       VAR=' Electronic Temperature        [K]:',UNIT=HA2KEL,WARN=WARN,OP=(/"=="/))
+&       VAR=' Electronic Temperature        [K]:',UNIT=HA2KEL,WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
    call io_elemental(ID,R0=Bose_Temp,&
-&       VAR=' Bosonic    Temperature        [K]:',UNIT=HA2KEL,WARN=WARN,OP=(/"=="/))
+&       VAR=' Bosonic    Temperature        [K]:',UNIT=HA2KEL,WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    if (input_Tel_is_negative) then

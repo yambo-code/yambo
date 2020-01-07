@@ -66,7 +66,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
- use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,frag_WF
+ use IO_m,       ONLY:io_reset,max_io_units,serial_number,frag_WF
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_threshold,Haydock_iterIO,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
@@ -197,10 +197,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  core_io_path=IND
  more_io_path=OD
  com_path=COM_DIR
- !
- ! ... created (core only)
- !
- call mk_dir(core_io_path)
  !
  ! WFs fragmentation, this is for the interfaces
  !

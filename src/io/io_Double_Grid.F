@@ -40,7 +40,7 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Work Space
  !
- integer :: DG_format
+ integer :: DG_format,VAR_SZ
  !
  call timing('io_Double_Grid',OPR='start')
  !
@@ -61,17 +61,19 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  if (io_Double_Grid/=0) goto 1
  !
- io_Double_Grid=io_header(ID)
+ if (ver_is_gt_or_eq(ID,revision=17711)) then
+   io_Double_Grid=io_header(ID,R_LATT=.TRUE.,IMPOSE=.TRUE.)
+ else
+   io_Double_Grid=io_header(ID)
+ endif
  !
  if (.not.ver_is_gt_or_eq(ID,revision=3560)) io_Double_Grid=IO_OUTDATED_DB
  !
  if (io_Double_Grid/=0) goto 1
  !
- if (DG_format==1) then
-   call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=1)
- else
-   call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=1)
- endif
+ VAR_SZ=6
+ if (DG_format==1) VAR_SZ=4
+ call io_elemental(ID,VAR="PARS",VAR_SZ=VAR_SZ,MENU=0)
  !
  call io_elemental(ID,I0=BZ_DbGd_nbands,        VAR=' Bands                           :')
  call io_elemental(ID,I0=BZ_DbGd_tot_nk)

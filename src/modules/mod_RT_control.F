@@ -39,7 +39,7 @@ module RT_control
  integer                  ::  IO_OBS_cache_steps=1
  integer                  :: TMP_OBS_cache_steps=1
  !
- integer                  :: ID(8)
+ integer                  :: ID(8)                    ! (/3 GFPAR,4 OBS,5 GFSER,6 OCC,7 THETA,8 REF)
  integer                  :: NE_i_start_time    = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point

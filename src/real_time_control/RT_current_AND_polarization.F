@@ -106,8 +106,6 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
  !
  ! GPL_EXCLUDE_START
  !
- if (.not.(RT_do_it('OUT').or.RT_do_it('OBS'))) return
- !
  if(n_spin>1) then
    !
    ! C : Spin magnetization
@@ -133,6 +131,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
 &                             G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
      Spin_magn=real(RT_M_tmp,SP)
    endif
+   !
+   if (.not.(RT_do_it('OUT').or.RT_do_it('OBS'))) return
    !
    ! D : Orbital magentization (local and itinerant contributions)
    !

@@ -32,13 +32,13 @@ subroutine RT_databases_IO(E)
 &                         l_NE_with_fields,RT_step,RT_dyn_step
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
-&                         OP_IF_START_APP_CL_IF_END,OP_APP,OP_APP_CL
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,HEAD_k_cpu,ncpu,myid
+&                         OP_IF_START_APP_CL_IF_END,OP_IF_START_WR_CL_IF_END,OP_APP,OP_APP_CL,WR_CL_IF_END
+ use parallel_m,     ONLY:PP_redux_wait,PP_bcast,PAR_IND_Xk_ibz,HEAD_k_cpu,ncpu,myid
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,RT_all2ibz,G_MEM_steps
  use timing_m,       ONLY:timing
  use fields,         ONLY:A_tot
 #if defined _PAR_IO
- use parallel_m,     ONLY:PAR_IO_G_kpts
+ use parallel_m,     ONLY:PAR_IO_G_kpts,PAR_COM_Xk_ibz_INDEX
 #endif
  !
  implicit none
@@ -164,37 +164,33 @@ subroutine RT_databases_IO(E)
        enddo
      endif
      !
+#if defined _PAR_IO
+     call io_control(ACTION=OP_IF_START_APP_CL_IF_END,COM=NONE,SEC=(/2/),ID=ID(5))
+     io_G=io_RT_components('G',ID(5))
+#endif
+     !
      call IO_and_Messaging_switch("SAVE")
      call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_k_cpu)
      !
 #if defined _PAR_IO
      !
-     secs=0
-     if(myid==0) secs(1)=2
-     if(PAR_IO_G_kpts(1)>0) secs(2)=3
-     if(any(secs>0)) then
-       call io_control(ACTION=OP_IF_START_APP_CL_IF_END,COM=NONE,SEC=secs,ID=ID(5))
-       io_G=io_RT_components('G',ID(5))
+     if(PAR_IO_G_kpts(1)>0.and.HEAD_k_CPU) then
+       ! Here for the I/O action I cannot rely on OP_IF_START etc because io_control needs to assing an ID
+       if(NE_i_time==NE_i_start_time) MODE=OP_APP
+       if(NE_i_time> NE_i_start_time) MODE=    WR_CL_IF_END
+       call io_control(ACTION=MODE,COM=NONE,SEC=(/3/),ID=ID(3),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+       io_G=io_RT_components('G',ID(3))
      endif
      !
 #else
      !
-     do i_cpu=1,ncpu
-       !
-       if (myid+1/=i_cpu) cycle
-       !
-       do ik = 1, RT_nk
-         !
-         if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
-         !
-         call io_control(ACTION=OP_IF_START_APP_CL_IF_END,COM=NONE,SEC=(/2,ik+2/),ID=ID(5))
-         io_G=io_RT_components('G',ID(5))
-         !
-       enddo
-       !
-       call PP_redux_wait( )
-       !
-     enddo 
+     do ik = 1, RT_nk
+       if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+       call io_control(ACTION=OP_IF_START_APP_CL_IF_END,COM=NONE,SEC=(/2,ik+2/),ID=ID(5))
+       io_G=io_RT_components('G',ID(5))
+     enddo
+     call PP_redux_wait( )
+     !
 #endif
      !
      call IO_and_Messaging_switch("RESTORE")
@@ -227,6 +223,10 @@ subroutine RT_databases_IO(E)
    endif
    !
  endif
+ !
+ if(RT_do_it('OBS') ) call PP_bcast( OBS_RT_IO_t%last_point,0)
+ if(RT_do_it('CARR')) call PP_bcast(CARR_RT_IO_t%last_point,0)
+ if(RT_do_it('G')   ) call PP_bcast(  GF_RT_IO_t%last_point,0)
  !
  ! GPL_EXCLUDE_END
  !

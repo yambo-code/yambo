@@ -49,8 +49,8 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  call timing('RT observables',OPR='start')
  !
- ! Current, Polarization and Magnetization, Carriers
- !===================================================
+ ! Current, Polarization and Magnetization
+ !=========================================
  ! (evaluated also in RT_integrator when an induced field is included, l_RT_induced_field=.true.)
  !
  call RT_carriers_number(en,k,NCarr)

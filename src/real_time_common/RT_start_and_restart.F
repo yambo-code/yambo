@@ -70,7 +70,7 @@ subroutine RT_start_and_restart(E,k,q)
  ! Work Space
  !
  integer :: i_sp_pol,ik,ib,COM_,io_G,io_OBS,io_THETA,io_REF,&
-&           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
+&           io_OCCUPATIONS,nt,i_memory
  integer, external :: io_RT_components
  !
  ! GPL_EXCLUDE_START
@@ -169,8 +169,8 @@ subroutine RT_start_and_restart(E,k,q)
    call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID(4))
    io_OBS=io_RT_components('OBSERVABLES',ID(4))
    !
-   call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID_OCCUPATIONS)
-   io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
+   call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID(6))
+   io_OCCUPATIONS=io_RT_components('carriers',ID(6))
    !
    call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID(5))
    io_G=io_RT_components('G',ID(5))
@@ -180,8 +180,8 @@ subroutine RT_start_and_restart(E,k,q)
    ! I use G_lesser(:,:,:) to reconstruct everything
    ! Note that the databases must be loaded at the RESTART time (NE_time)
    !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=VERIFY,ID=ID_OCCUPATIONS)
-   io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=VERIFY,ID=ID(6))
+   io_OCCUPATIONS=io_RT_components('carriers',ID(6))
    !
 #if defined _PAR_IO
    !

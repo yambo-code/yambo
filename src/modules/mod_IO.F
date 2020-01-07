@@ -386,21 +386,27 @@ module IO_m
      !
    end subroutine
    !
-   subroutine io_control(ACTION,MODE,COM,SEC,ID)
+   subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM)
+     !
+     use parallel_m,    ONLY:master_cpu,PP_bcast,myid
      !
      integer,intent(in)    :: ACTION
      integer,intent(inout) :: ID
      integer,optional,intent(in) :: MODE,COM,SEC(:)
+     integer,optional,intent(in) :: COMM
      !
      ! Work Space
      !
      integer :: i1
+     logical :: define_ID
      !
      ! Assign a new unit if the unit is not already open
      !
-     if ( any((/ACTION==OP_RD_CL,ACTION==OP_WR_CL,&
-&               ACTION==OP_APP_CL,ACTION==OP_RD,&
-&               ACTION==OP_APP,ACTION==OP_WR/)) ) then
+     define_ID=any((/ACTION==OP_RD_CL, ACTION==OP_WR_CL,    &
+&                     ACTION==OP_APP_CL,ACTION==OP_RD,      &
+&                     ACTION==OP_APP,   ACTION==OP_WR/))
+     !
+     if (  define_ID .and. (master_cpu .or. (.not.present(COMM))) ) then
        ID=-1
        do i1=1,max_io_units
          if (io_unit(i1)==0) then
@@ -411,6 +417,11 @@ module IO_m
          endif
        enddo
        if(ID==-1) call error(" Recompile Yambo with a larger: max_io_units")
+     endif
+     !
+     if (present(COMM) .and. define_ID) then
+       call PP_bcast(ID,         0,COMM)
+       call PP_bcast(io_unit(ID),0,COMM)
      endif
      !
      io_action(ID)=ACTION

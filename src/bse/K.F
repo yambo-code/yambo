@@ -64,6 +64,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #if defined _PL
  use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
+#if defined _PAR_IO
+ use parallel_m,     ONLY:MPI_COMM_WORLD
+#endif
  !
 #include<memory.h>
 #include<yambo_bse.h>
@@ -281,10 +284,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !===============================
  !
 #if defined _PAR_IO
- call io_control(ACTION=OP_RD_CL,ID=ID)
+ call io_control(ACTION=OP_RD_CL,ID=ID,comm=MPI_COMM_WORLD)
  call io_BS_PAR_check(iq,ID)
  !
- call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID)
+ call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID,comm=MPI_COMM_WORLD)
  call io_BS_PAR_init(iq,X,ID)
 #else
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)

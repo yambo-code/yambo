@@ -38,7 +38,7 @@ integer function io_RT_components(what,ID)
  use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,TMP_OBS_cache_steps,&
 &                         NE_i_start_time,SAVE_G_history
 #if defined _PAR_IO
- use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
+ use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world,myid
 #endif
 #if defined _ELPH
  use real_time,      ONLY:THETA_matrix
@@ -60,7 +60,6 @@ integer function io_RT_components(what,ID)
 #if defined _PAR_IO
  integer               :: local_COMM
 #endif
- real(SP)              :: time_now
  integer               :: ik,db_type,T_size,i_start
  logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_JP,l_M,l_D,par_IO,first_IO
  !
@@ -122,11 +121,9 @@ integer function io_RT_components(what,ID)
    endif
  endif
  !
- time_now=real(NE_i_time-1,SP)*RT_step
- !
 #if defined _PAR_IO
- if(l_G.and.io_sec(ID,1)> 1) then
-   io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID,COMM=local_COMM)
+ if(l_G.and.any((/io_sec(ID,:)==3/))) then
+   io_RT_components=io_connect(desc=trim(db_name)//"_PAR",type=db_type,ID=ID,COMM=local_COMM)
    if (io_RT_components/=0) goto 1
  else
 #endif

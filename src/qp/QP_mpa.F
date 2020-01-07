@@ -51,7 +51,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        PARALLEL_WF_distribute,QP_state_print
  use matrix_operate,ONLY:mat_transpose
  use timing_m,      ONLY:timing
- use mpa_m,         ONLY:mpa_RE_solver, mpa_RQ_1p_solver
+ use mpa_m,         ONLY:mpa_RE_solver
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
@@ -252,7 +252,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          pole_p=0
          do i_np=1,X%mpa_npoles
            !
-           !MPA_R_mat(ig1,ig2,i_np)=MPA_R_mat(ig1,ig2,i_np)*isc%gamp(ig1,ig2)
            if( imagpart(MPA_E_mat(ig1,ig2,i_np)) > 0._SP ) then
              pole_p = pole_p + 1
            endif

@@ -30,7 +30,7 @@ integer function io_Double_Grid(E,Xk,ID)
  use R_lattice,      ONLY:nXkbz,bz_samp
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,ver_is_gt_or_eq,file_is_present,write_is_on,&
-&                         IO_OUTDATED_DB
+&                         IO_OUTDATED_DB,variable_exist
  use timing_m,       ONLY:timing
 #include<memory.h>
  !
@@ -61,7 +61,7 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  if (io_Double_Grid/=0) goto 1
  !
- if (ver_is_gt_or_eq(ID,revision=17711)) then
+ if (write_is_on(ID).or.variable_exist(ID,"HEAD_R_LATT")) then
    io_Double_Grid=io_header(ID,R_LATT=.TRUE.,IMPOSE=.TRUE.)
  else
    io_Double_Grid=io_header(ID)

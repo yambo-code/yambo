@@ -101,7 +101,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
   Plots
  */
  *i_opt=*i_opt+1;
- options[*i_opt].short_desc="Exctionic State Momentum";
+ options[*i_opt].short_desc="Excitonic State Momentum";
  options[*i_opt].long_opt= "BSiq";
  options[*i_opt].short_opt='b';
  options[*i_opt].bin="ypp";

@@ -104,3 +104,33 @@ function filename(name)
  filename=trim(names(N))
  !
 end function filename
+!
+!
+integer function get_file_index(of_name_complete)
+ !
+ use pars,      ONLY:max_n_ofs,lchlen
+ use com,       ONLY:n_ofs_defined,of_name
+ !
+ implicit none
+ !
+ character(lchlen), intent(in) :: of_name_complete
+ integer :: i2
+ !
+ get_file_index=-1
+ !
+ do i2=1,n_ofs_defined
+   ! the two can differ only by the _0n appendend in case it is not the first run
+   if (index(trim(of_name(i2)),trim(of_name_complete))==0) cycle
+   get_file_index=i2
+   return
+ enddo
+ !
+ if(i2==n_ofs_defined+1) then
+   n_ofs_defined=n_ofs_defined+1
+   get_file_index=n_ofs_defined
+ endif
+ !
+ if(n_ofs_defined>max_n_ofs) call error(" Maximum number of file names exceeded")
+ if(get_file_index==-1)      call error(" Negative file index, something went wrong")
+ !
+end function get_file_index

@@ -29,7 +29,6 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   use etsf_data,             only : dims,ETSF_kind
   use pars,                  only : SP
   use vec_operate,           only : sort
-  use com,                   only :  error
   use electrons,             only : n_bands,  n_spinor
   use wave_func,             only : wf_ncx,wf_nc_k, wf_igk,wf_nb_io
   !

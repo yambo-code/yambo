@@ -43,7 +43,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                              PAR_IND_Q,PAR_nQ,PAR_nQP
  use functions,           ONLY:theta_function
- use com,                 ONLY:warning
  use timing_m,            ONLY:timing
  !
 #include<memory.h>

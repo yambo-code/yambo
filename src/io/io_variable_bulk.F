@@ -42,8 +42,10 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  integer,     optional, intent(inout) ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
  real(SP),    optional, intent(inout) ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
  real(DP),    optional, intent(inout) ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
- complex(SP), optional, target, intent(inout) ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
- complex(DP), optional, target, intent(inout) ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
+ complex(SP), optional, target, intent(inout) ::  C0, C1(:)
+ complex(DP), optional, target, intent(inout) ::  Z0, Z1(:)
+ complex(SP), optional, target, contiguous, intent(inout) ::  C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
+ complex(DP), optional, target, contiguous, intent(inout) ::  Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
  !
  ! These types can be used instead of logical that are not supported by NetCdf
  !
@@ -52,18 +54,17 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  ! Characters (nf90_char) in netcdf occupy the same space as L0 (nf90_byte)
  !
  character,   optional, intent(inout) :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
- ! 
- ! Work Space
  !
- real(SP), pointer    :: RC0(:),RC1(:,:),RC2(:,:,:),RC3(:,:,:,:),RC4(:,:,:,:,:),RC5(:,:,:,:,:,:),RC6(:,:,:,:,:,:,:)
- real(DP), pointer    :: RZ0(:),RZ1(:,:),RZ2(:,:,:),RZ3(:,:,:,:),RZ4(:,:,:,:,:),RZ5(:,:,:,:,:,:)
+ real(SP), pointer, contiguous :: RC0(:),RC1(:,:),RC2(:,:,:),RC3(:,:,:,:),RC4(:,:,:,:,:),RC5(:,:,:,:,:,:),RC6(:,:,:,:,:,:,:)
+ real(DP), pointer, contiguous :: RZ0(:),RZ1(:,:),RZ2(:,:,:),RZ3(:,:,:,:),RZ4(:,:,:,:,:),RZ5(:,:,:,:,:,:)
  !
  integer, allocatable :: ipos_loc(:),isize_loc(:)
- integer              :: nf_error,dims,link_err
+ integer              :: nf_error,dims
  !
  nf_error=0
  dims =0
  !
+ if (present(CH0).or.present(L0).or.present(I0).or.present(R0).or.present(D0)                              ) dims=0
  if (present(CH1).or.present(L1).or.present(I1).or.present(R1).or.present(D1)                              ) dims=1
  if (present(CH2).or.present(L2).or.present(I2).or.present(R2).or.present(D2).or.present(C1).or.present(Z1)) dims=2
  if (present(CH3).or.present(L3).or.present(I3).or.present(R3).or.present(D3).or.present(C2).or.present(Z2)) dims=3

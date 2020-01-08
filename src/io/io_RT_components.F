@@ -33,7 +33,7 @@ integer function io_RT_components(what,ID)
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,read_is_on,io_fragment, &
 &                         manage_OP_IF_START_and_CL_IF_END,io_bulk,write_is_on
- use real_time,      ONLY:NE_i_time,RT_step,NE_steps,RT_nk, &
+ use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step,NE_steps,RT_nk, &
 &                         RT_carriers,RT_nbands,RT_all2ibz,G_MEM_steps
  use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,TMP_OBS_cache_steps,&
 &                         NE_i_start_time,SAVE_G_history
@@ -60,7 +60,7 @@ integer function io_RT_components(what,ID)
 #if defined _PAR_IO
  integer               :: local_COMM
 #endif
- integer               :: ik,db_type,T_size,i_start
+ integer               :: ik,db_type,T_size,i_start,G_IO_steps
  logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_JP,l_M,l_D,par_IO,first_IO
  !
  ! DB kind and name...
@@ -95,7 +95,6 @@ integer function io_RT_components(what,ID)
  endif
  !
  par_IO=.false.
- if (l_THETA.or.l_G) ik = maxval(io_sec(ID,:))-2
 #if defined _PAR_IO
  if (l_G) then
    if (write_is_on(ID)) local_COMM=PAR_COM_Xk_ibz_INDEX%COMM
@@ -106,20 +105,6 @@ integer function io_RT_components(what,ID)
  !
  ! ACTION
  !========
- !
- if (l_OBS.or.l_carriers.or.( (l_G.or.l_THETA) .and. par_IO ) ) then
-   i_start=NE_i_start_time
-   if(first_IO) i_start=NE_i_time
-   call manage_OP_IF_START_and_CL_IF_END(ID,FIRST=i_start,NOW=NE_i_time,LAST=NE_steps)
- endif
- !
- if ( (l_G.or.l_THETA) .and. (.not.par_IO) ) then
-   if (ik>0.and.allocated(PAR_IND_Xk_ibz%element_1D)) then
-     call manage_OP_IF_START_and_CL_IF_END(ID,NOW=RT_all2ibz(ik),PAR_index=PAR_IND_Xk_ibz)
-   else
-     call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,LAST=RT_nk)
-   endif
- endif
  !
 #if defined _PAR_IO
  if(l_G.and.any((/io_sec(ID,:)==3/))) then
@@ -154,24 +139,47 @@ integer function io_RT_components(what,ID)
  !
  if (.not.any((/io_sec(ID,:)>1/))) goto 1
  !
-#if !defined _PAR_IO
- if (l_G .or. l_THETA)  call io_fragment(ID,i_fragment=max(1,ik))
-#endif
+ ! REFERENCE Lifetimes and Green function
+ !========================================
+ if ( l_REF ) call Reference_IO(ID)
  !
  ! 2nd SECTION
  !=============
  !
+#if !defined _PAR_IO
+ !
+ ! === deal with K-fragments ===
+ !
+ ! Notice that section 2 is written inside the fragments
+ ! Thus, I need to read it from fragment 1 when I do the restart
+ !
+ if (l_THETA.or.l_G) ik = max(1,maxval(io_sec(ID,:))-2)
+ !
+ if ( (l_G.or.l_THETA) .and. (.not.par_IO) ) then
+   if (ik>0.and.allocated(PAR_IND_Xk_ibz%element_1D)) then
+     call manage_OP_IF_START_and_CL_IF_END(ID,NOW=RT_all2ibz(ik),PAR_index=PAR_IND_Xk_ibz)
+   else
+     call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,LAST=RT_nk)
+   endif
+ endif
+ !
+ if (l_G .or. l_THETA)  call io_fragment(ID,i_fragment=ik)
+ !
+#endif
+ !
  ! Time size
  !
- if(l_G) then
-   if(NE_i_time==1) T_size=1
-   if(NE_i_time> 1) T_size=G_MEM_steps
+ if (l_OBS.or.l_carriers.or.( (l_G.or.l_THETA) .and. par_IO ) ) then
+   i_start=NE_i_start_time
+   if(first_IO) i_start=NE_i_time
+   call manage_OP_IF_START_and_CL_IF_END(ID,FIRST=i_start,NOW=NE_i_time,LAST=NE_steps)
  endif
- if(l_carriers)     T_size=1
- if(l_OBS) then
-   if(NE_i_time==1) T_size=1
-   if(NE_i_time> 1) T_size=TMP_OBS_cache_steps
- endif
+ !
+ T_size=1
+ G_IO_steps=GF_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
+ if(l_G   .and. NE_i_time> 1 .and. .not.SAVE_G_history) T_size=    G_MEM_steps
+ if(l_G   .and. NE_i_time> 1 .and.      SAVE_G_history) T_size=min(G_MEM_steps,G_IO_steps-1)
+ if(l_OBS .and. NE_i_time> 1)                           T_size=TMP_OBS_cache_steps
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
@@ -201,12 +209,6 @@ integer function io_RT_components(what,ID)
  ! === no K no Time ===
  !
  ! GPL_EXCLUDE_START
- !
- ! REFERENCE Lifetimes and Green function
- !========================================
- if ( l_REF ) call Reference_IO(ID)
- !
- ! === K-dependent ===
  !
 #if defined _ELPH
  !
@@ -406,7 +408,7 @@ subroutine G_lesser_IO(ID,T_size)
  use hamiltonian,    ONLY:H_rotation
  use RT_control,     ONLY:GF_RT_IO_t,SAVE_G_history,TIME_string,NE_i_start_time
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_bands,RT_nbands,RT_nk,l_RT_rotate_DM,&
-&                         NE_i_time,RT_step
+&                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_IO_G_kpts
  use netcdf,         ONLY:NF90_UNLIMITED
@@ -417,20 +419,19 @@ subroutine G_lesser_IO(ID,T_size)
  integer, intent(in)  :: ID,T_size
  !
  logical           :: l_H_rot
- integer           :: ib,ik,i_spin,i_time
- integer           :: VAR_SZ(5)
+ integer           :: ib,ik,i_spin,i_time,i_mem,i_mem_sorted
+ integer           :: VAR_SZ(5),IPOS(5)
+ real(SP)          :: time(2)
  character(schlen) :: dim_names(5),var_name
-#if defined _PAR_IO
- integer           :: IPOS(5)
-#endif
  !
  i_spin=1
  l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,"H_rotation").or.write_is_on(ID)) )
  !
  VAR_SZ(1:3)=(/2,RT_nbands,RT_nbands/)
  !
- dim_names  =[character(schlen) :: 'complex', 'RT_nbands','RT_nbands','RT_nk','G_IO_time_step']
+ dim_names(1:3)  =[character(schlen) :: 'complex', 'RT_nbands','RT_nbands']
  !
+ IPOS(1:3)=(/1,1,1/)
  !
 #if defined _PAR_IO
  !
@@ -447,15 +448,18 @@ subroutine G_lesser_IO(ID,T_size)
  !
  if(NE_i_time==NE_i_start_time) then
    call def_variable_bulk(ID,"dG_lesser", 4,VAR_sz,SP,dim_names=dim_names,par_io_kind='independent',silent=.true.)
-   if(l_H_rot) call def_variable_bulk(ID,"H_rotation",5,VAR_sz(1:4),SP,&
+   if(l_H_rot) call def_variable_bulk(ID,"H_rotation",6,VAR_sz(1:4),SP,&
    &                                             dim_names=dim_names(1:4),par_io_kind='independent',silent=.true.)
  endif
  !
- IPOS(1:4)=(/1,1,1,PAR_IO_G_kpts(1)/)
- if(.not.SAVE_G_history) IPOS(5)=1
- if(     SAVE_G_history) IPOS(5)=GF_RT_IO_t%N-G_MEM_steps+1
- call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),1:T_size),IPOS=IPOS)
- if(l_H_rot) call io_variable_bulk(ID,5,C3=H_rotation(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_spin),IPOS=IPOS(1:4))
+ IPOS(4)=PAR_IO_G_kpts(1)
+ do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
+   if(     SAVE_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
+   if(.not.SAVE_G_history) IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
+   i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
+   call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_mem:i_mem),IPOS=IPOS)
+ enddo
+ if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_spin),IPOS=IPOS(1:4))
  !
 #else
  !
@@ -465,19 +469,28 @@ subroutine G_lesser_IO(ID,T_size)
  !
  VAR_SZ(4)    = 1
  dim_names(4) ='k_fragment'
+ IPOS(4)      = 1
  !
  VAR_SZ(5)    = T_size
  dim_names(5) ='G_MEM_steps'
  !
+ time(1)=(NE_i_time-(T_size-1)*nint(RT_dyn_step/RT_step))*RT_step
+ time(2)=(NE_i_time-1)*RT_step
+ !
  var_name="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//&
- &        "_TIME"//trim(TIME_string( (NE_i_time-T_size)*RT_step ))//trim(TIME_string( (NE_i_time-1)*RT_step ))
+ &        "_TIME"//trim(TIME_string(time(1)))//trim(TIME_string(time(2)))
  call def_variable_bulk(ID,trim(var_name),4,VAR_SZ,SP,dim_names=dim_names)
- call  io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,1:T_size))
+ !
+ do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
+   IPOS(5) = T_size+(i_mem_sorted-G_MEM_steps)
+   i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
+   call  io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,i_mem:i_mem),IPOS=IPOS)
+ enddo
  !
  if ( l_H_rot ) then
    var_name="H_rotation_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step ))
-   call def_variable_bulk(ID,trim(var_name),5,VAR_SZ(1:3),SP,dim_names=dim_names(1:3))
-   call  io_variable_bulk(ID,5,C2=H_rotation(:,:,ik,i_spin))
+   call def_variable_bulk(ID,trim(var_name),6,VAR_SZ(1:3),SP,dim_names=dim_names(1:3))
+   call  io_variable_bulk(ID,6,C2=H_rotation(:,:,ik,i_spin))
  endif
  !
 #endif

@@ -165,7 +165,9 @@ subroutine RT_databases_IO(E)
      endif
      !
 #if defined _PAR_IO
-     call io_control(ACTION=OP_IF_START_APP_CL_IF_END,COM=NONE,SEC=(/2/),ID=ID(5))
+     if(NE_i_time==NE_i_start_time) MODE=OP_APP
+     if(NE_i_time> NE_i_start_time) MODE=    WR_CL_IF_END
+     call io_control(ACTION=MODE,COM=NONE,SEC=(/2/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
 #endif
      !

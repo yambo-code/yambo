@@ -112,10 +112,10 @@ module real_time
  !
  real(SP) :: NE_MEM_treshold
  integer  :: Life_MEM_steps
- integer  :: G_MEM_steps     = 2        ! By default only G_lesser@t and @t+1
- integer  :: i_MEM_now       = 1        ! Updated in RT_driver
- integer  :: i_MEM_next      = 1        ! Updated in RT_driver
- integer  :: i_MEM_previous  = 0        ! Defined in RT_driver
+ integer  :: G_MEM_steps                ! By default only G_lesser@t and @t+1
+ integer  :: i_MEM_prev                 ! Updated in RT_driver
+ integer  :: i_MEM_now                  ! Updated in RT_driver
+ integer  :: i_MEM_old                  ! Updated in RT_driver
  integer, allocatable :: MEM_pointer(:) ! Time memory pointers
  !
  ! ... Window on the k-points/bands allowed to follow the dynamics ...
@@ -569,10 +569,9 @@ module real_time
      YAMBO_ALLOC(RT_E_occupations,(RT_bands(1):RT_bands(2),RT_nk))
      !
      YAMBO_ALLOC(MEM_pointer,(G_MEM_steps))
-     do i_mem=2,G_MEM_steps
-       MEM_pointer(i_mem) = i_mem-G_mem_steps
-     enddo
-     MEM_pointer(1) = 1
+     MEM_pointer(1)=1
+     MEM_pointer(2)=0
+     if(G_MEM_steps==3) MEM_pointer(3)=-1
      !
      if (fft_size==0) return
      !

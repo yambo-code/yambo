@@ -339,7 +339,8 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,unlim,l_G,TYP)
  use pars,           ONLY:IP,SP,schlen
  use units,          ONLY:AUT2FS
  use RT_control,     ONLY:RT_IO_t,RT_description,n_RT_descriptions
- use real_time,      ONLY:NE_steps,MEM_pointer,G_MEM_steps,NE_i_time
+ use real_time,      ONLY:NE_steps,MEM_pointer,G_MEM_steps,NE_i_time,i_MEM_now,i_MEM_prev,i_MEM_old,&
+&                         RT_dyn_step,RT_step
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental,&
 &                         NF90_unlimited,&
 &                         write_is_on,read_is_on
@@ -350,7 +351,7 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,unlim,l_G,TYP)
  logical,       intent(in)    :: def_var,unlim,l_G
  type(RT_IO_t), intent(inout) :: TYP
  !
- integer                      :: IPOS(1),IO_LIM(2)
+ integer                      :: IPOS(1),IO_LIM(2),i_min_index,i_mem
  character(schlen)            :: dim_name(1)
  !
  if(write_is_on(ID)) TYP%last_point=NE_i_time
@@ -376,6 +377,15 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,unlim,l_G,TYP)
      call def_variable_bulk(ID,"MEMORY_TIME_POINTS",2,(/G_MEM_steps/),IP+100,dim_name,silent=.true.)
    endif
    call io_variable_bulk(ID,2,I1=MEM_pointer)
+   if (read_is_on(ID)) then
+     i_min_index=minval(MEM_pointer)
+     do i_mem=1,G_MEM_steps
+       if (MEM_pointer(i_mem)==NE_i_time  )                         i_MEM_now =i_mem
+       if (MEM_pointer(i_mem)==NE_i_time-nint(RT_dyn_step/RT_step)) i_MEM_prev=i_mem
+       if (G_MEM_steps==2) cycle
+       if (MEM_pointer(i_mem)==i_min_index)                         i_MEM_old =i_mem
+     enddo
+   endif
  endif
  !
  if (.not.allocated(TYP%Time)) then
@@ -408,7 +418,7 @@ subroutine G_lesser_IO(ID,T_size)
  use hamiltonian,    ONLY:H_rotation
  use RT_control,     ONLY:GF_RT_IO_t,SAVE_G_history,TIME_string,NE_i_start_time
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_bands,RT_nbands,RT_nk,l_RT_rotate_DM,&
-&                         NE_i_time,RT_dyn_step,RT_step,i_MEM_next
+&                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now,i_MEM_prev,i_MEM_old
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_IO_G_kpts
  use netcdf,         ONLY:NF90_UNLIMITED
@@ -456,7 +466,10 @@ subroutine G_lesser_IO(ID,T_size)
  do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
    if(     SAVE_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
    if(.not.SAVE_G_history) IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
-   i_mem=mod(i_MEM_next+i_mem_sorted-2,G_MEM_steps)+1
+   !i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
+   if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
+   if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
+   if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
    call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_mem:i_mem),IPOS=IPOS)
  enddo
  if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_sp_pol),IPOS=IPOS(1:4))
@@ -483,7 +496,10 @@ subroutine G_lesser_IO(ID,T_size)
  !
  do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
    IPOS(5) = T_size+(i_mem_sorted-G_MEM_steps)
-   i_mem=mod(i_MEM_next+i_mem_sorted-2,G_MEM_steps)+1
+   !i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
+   if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
+   if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
+   if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
    call  io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,i_mem:i_mem),IPOS=IPOS)
  enddo
  !

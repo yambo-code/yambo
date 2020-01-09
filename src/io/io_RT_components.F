@@ -408,7 +408,7 @@ subroutine G_lesser_IO(ID,T_size)
  use hamiltonian,    ONLY:H_rotation
  use RT_control,     ONLY:GF_RT_IO_t,SAVE_G_history,TIME_string,NE_i_start_time
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_bands,RT_nbands,RT_nk,l_RT_rotate_DM,&
-&                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now
+&                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now,Ho_plus_sigma
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_IO_G_kpts
  use netcdf,         ONLY:NF90_UNLIMITED
@@ -418,7 +418,7 @@ subroutine G_lesser_IO(ID,T_size)
  !
  integer, intent(in)  :: ID,T_size
  !
- logical           :: l_H_rot
+ logical           :: l_H_rot,l_H_sig
  integer           :: ib,ik,i_spin,i_time,i_mem,i_mem_sorted
  integer           :: VAR_SZ(5),IPOS(5)
  real(SP)          :: time(2)
@@ -426,6 +426,7 @@ subroutine G_lesser_IO(ID,T_size)
  !
  i_spin=1
  l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,"H_rotation").or.write_is_on(ID)) )
+ l_H_sig=( SAVE_G_History .and. (allocated(Ho_plus_sigma) .and. (variable_exist(ID,trim(ch))).or.write_is_on(ID)) )
  !
  VAR_SZ(1:3)=(/2,RT_nbands,RT_nbands/)
  !
@@ -448,6 +449,8 @@ subroutine G_lesser_IO(ID,T_size)
  !
  if(NE_i_time==NE_i_start_time) then
    call def_variable_bulk(ID,"dG_lesser", 4,VAR_sz,SP,dim_names=dim_names,par_io_kind='independent',silent=.true.)
+   if(l_H_sig) call def_variable_bulk(ID,"Ho_plus_Sigma",6,VAR_sz(1:4),SP,&
+   &                                             dim_names=dim_names(1:4),par_io_kind='independent',silent=.true.)
    if(l_H_rot) call def_variable_bulk(ID,"H_rotation",6,VAR_sz(1:4),SP,&
    &                                             dim_names=dim_names(1:4),par_io_kind='independent',silent=.true.)
  endif
@@ -459,6 +462,7 @@ subroutine G_lesser_IO(ID,T_size)
    i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
    call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_mem:i_mem),IPOS=IPOS)
  enddo
+ if(l_H_sig) call io_variable_bulk(ID,6,C3=Ho_plus_sigma(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_spin),IPOS=IPOS(1:4))
  if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_spin),IPOS=IPOS(1:4))
  !
 #else
@@ -487,8 +491,16 @@ subroutine G_lesser_IO(ID,T_size)
    call  io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,i_mem:i_mem),IPOS=IPOS)
  enddo
  !
+ if ( l_H_sig ) then
+   var_name="Ho_plus_Sigma_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//&
+   &        "TIME"//trim(TIME_string( (i_time-1)*RT_step ))
+   call def_variable_bulk(ID,trim(var_name),5,VAR_SZ(1:3),SP,dim_names=dim_names(1:3))
+   call  io_variable_bulk(ID,VAR_ID,C3=Ho_plus_sigma(:,:,ik,i_spin),IPOS=(/1,1,1,k_range(1)/))
+ endif
+ !
  if ( l_H_rot ) then
-   var_name="H_rotation_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step ))
+   var_name="H_rotation_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//&
+   &        "TIME"//trim(TIME_string( (NE_i_time-1)*RT_step ))
    call def_variable_bulk(ID,trim(var_name),6,VAR_SZ(1:3),SP,dim_names=dim_names(1:3))
    call  io_variable_bulk(ID,6,C2=H_rotation(:,:,ik,i_spin))
  endif

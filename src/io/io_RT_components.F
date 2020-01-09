@@ -178,7 +178,7 @@ integer function io_RT_components(what,ID)
  T_size=1
  G_IO_steps=GF_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
  if(l_G   .and. NE_i_time> 1 .and. .not.SAVE_G_history) T_size=    G_MEM_steps
- if(l_G   .and. NE_i_time> 1 .and.      SAVE_G_history) T_size=min(G_MEM_steps,G_IO_steps-1)
+ if(l_G   .and. NE_i_time> 1 .and.      SAVE_G_history) T_size=min(G_MEM_steps,G_IO_steps)
  if(l_OBS .and. NE_i_time> 1)                           T_size=TMP_OBS_cache_steps
  !
  if (any((/io_sec(ID,:)==2/))) then
@@ -408,7 +408,7 @@ subroutine G_lesser_IO(ID,T_size)
  use hamiltonian,    ONLY:H_rotation
  use RT_control,     ONLY:GF_RT_IO_t,SAVE_G_history,TIME_string,NE_i_start_time
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_bands,RT_nbands,RT_nk,l_RT_rotate_DM,&
-&                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now
+&                         NE_i_time,RT_dyn_step,RT_step,i_MEM_next
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_IO_G_kpts
  use netcdf,         ONLY:NF90_UNLIMITED
@@ -419,12 +419,12 @@ subroutine G_lesser_IO(ID,T_size)
  integer, intent(in)  :: ID,T_size
  !
  logical           :: l_H_rot
- integer           :: ib,ik,i_spin,i_time,i_mem,i_mem_sorted
+ integer           :: ib,ik,i_sp_pol,i_time,i_mem,i_mem_sorted
  integer           :: VAR_SZ(5),IPOS(5)
  real(SP)          :: time(2)
  character(schlen) :: dim_names(5),var_name
  !
- i_spin=1
+ i_sp_pol=1
  l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,"H_rotation").or.write_is_on(ID)) )
  !
  VAR_SZ(1:3)=(/2,RT_nbands,RT_nbands/)
@@ -456,10 +456,10 @@ subroutine G_lesser_IO(ID,T_size)
  do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
    if(     SAVE_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
    if(.not.SAVE_G_history) IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
-   i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
+   i_mem=mod(i_MEM_next+i_mem_sorted-2,G_MEM_steps)+1
    call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_mem:i_mem),IPOS=IPOS)
  enddo
- if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_spin),IPOS=IPOS(1:4))
+ if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_sp_pol),IPOS=IPOS(1:4))
  !
 #else
  !
@@ -477,20 +477,21 @@ subroutine G_lesser_IO(ID,T_size)
  time(1)=(NE_i_time-(T_size-1)*nint(RT_dyn_step/RT_step))*RT_step
  time(2)=(NE_i_time-1)*RT_step
  !
- var_name="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//&
+ var_name="dG_lesser_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol))//&
  &        "_TIME"//trim(TIME_string(time(1)))//trim(TIME_string(time(2)))
  call def_variable_bulk(ID,trim(var_name),4,VAR_SZ,SP,dim_names=dim_names)
  !
  do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
    IPOS(5) = T_size+(i_mem_sorted-G_MEM_steps)
-   i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
+   i_mem=mod(i_MEM_next+i_mem_sorted-2,G_MEM_steps)+1
    call  io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,i_mem:i_mem),IPOS=IPOS)
  enddo
  !
  if ( l_H_rot ) then
-   var_name="H_rotation_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step ))
+   var_name="H_rotation_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_spin))//&
+   &        "TIME"//trim(TIME_string( time(2) ))
    call def_variable_bulk(ID,trim(var_name),6,VAR_SZ(1:3),SP,dim_names=dim_names(1:3))
-   call  io_variable_bulk(ID,6,C2=H_rotation(:,:,ik,i_spin))
+   call  io_variable_bulk(ID,6,C2=H_rotation(:,:,ik,i_sp_pol))
  endif
  !
 #endif

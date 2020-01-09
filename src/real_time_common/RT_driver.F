@@ -45,7 +45,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                         rho_reference,magn_reference, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_RT_is_WFfree,&
 &                         dG_lesser,l_initial_equilibrium,NE_tot_time,&
-&                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
+&                         i_MEM_now,i_MEM_next,RT_is_dynamically_dephased,&
 &                         l_RT_update_Energies,l_NE_with_fields,l_update_SOC,l_velocity_gauge_corr
  use plasma,          ONLY:PLASMA_free,EH_gas
  use com,             ONLY:msg
@@ -287,7 +287,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    ! Calculate the RT Hamiltonian Ho_plus_Sigma
    !============================================
-   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_tot,E,k)
+   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_next),A_tot,E,k)
    !
    ! GPL_EXCLUDE_START
    !
@@ -299,7 +299,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
-   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),OBSERVABLES)
+   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_next),OBSERVABLES)
    !
    ! GPL_EXCLUDE_START
    !
@@ -322,6 +322,9 @@ subroutine RT_driver(E,X,k,q,Dip)
    ! GPL_EXCLUDE_END
    !
    ! Memory maps for the step (to be done before the NE_time/NE_i_time update)
+   ! During the dynamics (after the call to RT_integrator) i_MEM_next will refer to the present value of NE_i_time
+   ! since i_MEM_prev / i_MEM_now / i_MEM_next are defined just before the update of NE_i_time
+   ! This could be overcome updating i_MEM indexes together with NE_i_time ...
    !=========================
    call RT_MEMORY_index( )
    !	

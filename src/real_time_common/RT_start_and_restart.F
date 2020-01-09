@@ -50,7 +50,7 @@ subroutine RT_start_and_restart(E,k,q)
 &                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,RT_E_and_k,&
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
-&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
+&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_now,i_MEM_next,&
 &                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times,&
 &                         l_velocity_gauge_corr
  use fields,         ONLY:A_tot
@@ -70,7 +70,7 @@ subroutine RT_start_and_restart(E,k,q)
  ! Work Space
  !
  integer :: i_sp_pol,ik,ib,COM_,io_G,io_OBS,io_THETA,io_REF,&
-&           io_OCCUPATIONS,nt,i_memory
+&           io_OCCUPATIONS,nt,i_mem,i_min_index
  integer, external :: io_RT_components
  !
  ! GPL_EXCLUDE_START
@@ -177,6 +177,19 @@ subroutine RT_start_and_restart(E,k,q)
    !
    NE_i_start_time=NE_i_time
    !
+   ! During the dynamics what is called i_MEM_next refers to the present value of NE_i_time
+   ! since i_MEM_prev / i_MEM_now / i_MEM_next are defined just before the update of NE_i_time
+   ! This is why here I do the same.
+   !
+   i_min_index=minval(MEM_pointer)
+   !
+   do i_mem=1,G_MEM_steps
+     if (MEM_pointer(i_mem)==NE_i_time  )                         i_MEM_next=i_mem
+     if (MEM_pointer(i_mem)==NE_i_time-nint(RT_dyn_step/RT_step)) i_MEM_now =i_mem
+     if (NE_i_time<G_MEM_steps.or.G_MEM_steps==2) cycle
+     if (MEM_pointer(i_mem)==i_min_index)                         i_MEM_previous=i_mem
+   enddo
+   !
    ! I use G_lesser(:,:,:) to reconstruct everything
    ! Note that the databases must be loaded at the RESTART time (NE_time)
    !
@@ -199,10 +212,8 @@ subroutine RT_start_and_restart(E,k,q)
    !
    ! The G_lesser must be now rebuild from the reference (T=0) and latest dG components
    !
-   do i_memory=1,G_MEM_steps
-     G_lesser(:,:,:,i_memory)=G_lesser_reference(:,:,:)+dG_lesser(:,:,:,i_memory)
-     if (MEM_pointer(i_memory)==NE_i_time  ) i_MEM_now=i_memory
-     if (MEM_pointer(i_memory)==NE_i_time-1) i_MEM_previous=i_memory
+   do i_mem=1,G_MEM_steps
+     G_lesser(:,:,:,i_mem)=G_lesser_reference(:,:,:)+dG_lesser(:,:,:,i_mem)
    enddo
    !
    if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
@@ -215,10 +226,6 @@ subroutine RT_start_and_restart(E,k,q)
    ! Define RT_E/H_occupations_reference
    !
    call RT_init_occupation_reference( )
-   !
-   ! To be used in the first part of the RT_driver main loop
-   !
-   i_MEM_collision = i_MEM_now
    !
    if(.not.l_RT_CCA_Kernel) call RT_ELPH_zeroing()
    !

@@ -64,7 +64,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
  use RT_control,     ONLY:TIME_adjust
  use real_time,      ONLY:Integrator_step,RT_nk,RT_bands,a_tableau,b_tableau,&
 &                         c_tableau,RWA_table,Integrator_nsteps,G_lesser_reference,&
-&                         NE_time,NE_i_time,RT_step,RT_dyn_step,i_MEM_collision,i_MEM_next
+&                         NE_time,NE_i_time,RT_step,RT_dyn_step
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:levels
  use timing_m,       ONLY:timing
@@ -170,7 +170,6 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
  !
  NE_i_time       = NE_i_time+nint(RT_dyn_step/RT_step)
  NE_time         = TIME_adjust((NE_i_time-1)*RT_step)
- i_MEM_collision = i_MEM_next
  !
  call timing('RT integrator',OPR='stop')
  !

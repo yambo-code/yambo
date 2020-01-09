@@ -530,6 +530,7 @@ subroutine INIT_activate()
 #if defined _RT
  !
  if (l_real_time) then
+   !
    call INIT_QP_ctl_switch('G')
    !
    ! GPL_EXCLUDE_START

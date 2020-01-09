@@ -147,7 +147,6 @@ void options_ypp(struct options_struct options[],int *i_opt)
 #else
  options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave";
 #endif
- options[*i_opt].long_desc[1]="<string>=excitonic index (sort mode)";
  /* GPL_EXCLUDE_END */
  /* GPL_INCLUDE_START 
  options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave";

@@ -232,6 +232,11 @@ subroutine RT_start_and_restart(E,k,q)
    !
    call RT_set_occupations()
    !
+   ! Update time step 
+   !==========================================
+   !
+   RT_dyn_step=RT_step
+   !
    call msg( 'nr','---RESTART report---')
    !
    call msg('s','[RESTART] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)

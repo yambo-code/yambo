@@ -26,8 +26,8 @@ subroutine RT_time_step_update( )
  use pars,           ONLY:SP,cZERO
  use stderr,         ONLY:real2ch
  use units,          ONLY:AUT2FS
- use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,MEM_pointer,i_MEM_previous,l_Update_Time_Step,&
-&                         i_MEM_now,i_MEM_next,RT_step,RT_dyn_step,&
+ use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,MEM_pointer,i_MEM_old,l_Update_Time_Step,&
+&                         i_MEM_prev,i_MEM_now,RT_step,RT_dyn_step,&
 &                         RT_life_extrap_times,Life_MEM_steps,NE_time,NE_time_step_update_jump,&
 &                         NE_step_update_treshold,NE_i_time,NE_time_step_update_last_point,RT_MAX_step,&
 &                         NE_initial_time_step_update,RT_all2ibz
@@ -57,8 +57,8 @@ subroutine RT_time_step_update( )
  dG_dT_max   =cZERO
  dG          =cZERO
  !
- dT_now      =(MEM_pointer(i_MEM_next)-MEM_pointer(i_MEM_now))*RT_step
- dT_previous =(MEM_pointer(i_MEM_now)-MEM_pointer(i_MEM_previous))*RT_step
+ dT_now      =(MEM_pointer(i_MEM_now)-MEM_pointer(i_MEM_prev))*RT_step
+ dT_previous =(MEM_pointer(i_MEM_prev)-MEM_pointer(i_MEM_old))*RT_step
  !
  do ik=1,RT_nk
    !
@@ -66,12 +66,12 @@ subroutine RT_time_step_update( )
    !
    do ib=RT_bands(1),RT_bands(2)
      do ibp=RT_bands(1),RT_bands(2)
-       dG_dT(1)=(dG_lesser(ib,ibp,ik,i_MEM_now)-dG_lesser(ib,ibp,ik,i_MEM_previous))/dT_previous
-       dG_dT(2)=(dG_lesser(ib,ibp,ik,i_MEM_next)-dG_lesser(ib,ibp,ik,i_MEM_now))/dT_now
+       dG_dT(1)=(dG_lesser(ib,ibp,ik,i_MEM_prev)-dG_lesser(ib,ibp,ik,i_MEM_old))/dT_previous
+       dG_dT(2)=(dG_lesser(ib,ibp,ik,i_MEM_now)-dG_lesser(ib,ibp,ik,i_MEM_prev))/dT_now
        if ( abs(dG_dT(2)) >  abs(dG_dT_max(2)) ) then
-         dG(1)=dG_lesser(ib,ibp,ik,i_MEM_previous)
-         dG(2)=dG_lesser(ib,ibp,ik,i_MEM_now)
-         dG(3)=dG_lesser(ib,ibp,ik,i_MEM_next)
+         dG(1)=dG_lesser(ib,ibp,ik,i_MEM_old)
+         dG(2)=dG_lesser(ib,ibp,ik,i_MEM_prev)
+         dG(3)=dG_lesser(ib,ibp,ik,i_MEM_now)
          dG_dT_max=dG_dT
        endif
      enddo

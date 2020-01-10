@@ -209,10 +209,9 @@ subroutine RT_initialize(E,k,q)
    !
    NE_time_step_update_jump=NE_time_step_update_jump_SAVE
    !
-   if(OBS_RT_IO_t%INTERVAL_time_SAVE>NE_time_step_update_jump_SAVE) then
-     OBS_RT_IO_t%INTERVAL_time_SAVE=NE_time_step_update_jump_SAVE
-     call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
-   endif
+   OBS_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,NE_time_step_update_jump)
+   if(OBS_RT_IO_t%INTERVAL_time_SAVE>NE_time_step_update_jump_SAVE) OBS_RT_IO_t%INTERVAL_time_SAVE=NE_time_step_update_jump_SAVE
+   call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
    !
    if (RT_MAX_step<1.E-5) RT_MAX_step=10._SP*RT_step
    !

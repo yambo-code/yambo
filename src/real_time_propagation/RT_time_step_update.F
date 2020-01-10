@@ -108,9 +108,9 @@ subroutine RT_time_step_update( )
    OBS_RT_IO_t%INTERVAL_time=TIME_adjust(OBS_RT_IO_t%INTERVAL_time,NE_time_step_update_jump)
    call SETUP_RT_IO_type(OBS_RT_IO_t,.FALSE.)
    !
-   call RT_control_free("cache") 
+   call RT_control_free("cache")
    IO_OBS_cache_steps=OBS_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
-   call RT_control_alloc("cache") 
+   call RT_control_alloc("cache")
    !
    !
    ! I need to re-calculate the lifetimes evaluation plan in order to be consistent with the new Time Step

@@ -84,19 +84,20 @@ module RT_control
      real(SP), optional, intent(in) :: E
    end subroutine
    !
-   subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
+   subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ONLY)
     use pars,           ONLY:SP
     use electrons,      ONLY:levels
     use R_lattice,      ONLY:bz_samp
     implicit none
-    integer      :: bands(2)
-    type(levels) :: E
-    type(bz_samp):: K
-    character(*),optional :: what ! X,K,G
-    logical ,    optional :: VERBOSE
-    integer ,    optional :: IO_COM
-    real(SP),    optional :: Time
-    logical ,    optional :: keep_RT_carriers
+    integer     , intent(in)    :: bands(2)
+    type(levels), intent(inout) :: E
+    type(bz_samp), intent(in)   :: K
+    character(*),optional, intent(in) :: what ! X,K,G
+    logical ,    optional, intent(in) :: VERBOSE
+    integer ,    optional, intent(in) :: IO_COM
+    real(SP),    optional, intent(in) :: Time
+    logical ,    optional, intent(in) :: keep_RT_carriers
+    logical ,    optional, intent(in) :: TIMES_ONLY
    end subroutine
    !
    subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)

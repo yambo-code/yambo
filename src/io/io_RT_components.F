@@ -388,7 +388,7 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,load_rest_info,unlim,l_G,TYP)
  endif
  !
  if (.not.allocated(TYP%Time)) then
-   YAMBO_ALLOC(TYP%Time,(NE_steps))
+   YAMBO_ALLOC(TYP%Time,(TYP%N))
  endif
  !
  IPOS=TYP%N-VAR_SZ+1

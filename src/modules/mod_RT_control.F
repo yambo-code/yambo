@@ -44,9 +44,9 @@ module RT_control
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point
  type RT_IO_t
-   integer               :: N              = 0
-   integer               :: INTERVAL_steps =-1
-   integer               :: last_point     = 0
+   integer               :: N
+   integer               :: INTERVAL_steps
+   integer               :: last_point
    real(SP)              :: INTERVAL_time
    real(SP)              :: INTERVAL_time_SAVE
    real(SP), allocatable :: Time(:)
@@ -283,7 +283,12 @@ module RT_control
      type(RT_IO_t) :: TYP
      logical       :: INIT
      !
-     if (INIT) TYP%INTERVAL_time=TYP%INTERVAL_time_SAVE
+     if (INIT) then
+       if (allocated(TYP%Time)) then
+         YAMBO_FREE(TYP%Time)
+       endif
+       TYP%INTERVAL_time=TYP%INTERVAL_time_SAVE
+     endif
      !
      ! Initialization always using RT_step
      !
@@ -293,16 +298,15 @@ module RT_control
      !
      TYP%INTERVAL_time  = nint(TYP%INTERVAL_time/RT_dyn_step)*RT_dyn_step
      !
-     !
      ! The steps are always relative to RT_step
      !
      TYP%INTERVAL_steps = nint(TYP%INTERVAL_time/RT_step)
      !
-     if (INIT) TYP%INTERVAL_time_SAVE=TYP%INTERVAL_time
-     !
-     if (INIT) TYP%last_point=0
-     !
-     if (INIT.and.TYP%last_point==0) TYP%last_point=-TYP%INTERVAL_steps+1
+     if (INIT) then
+       TYP%INTERVAL_time_SAVE=TYP%INTERVAL_time
+       TYP%N                 = 0
+       TYP%last_point        =-TYP%INTERVAL_steps+1
+     endif
      !
    end subroutine
    !

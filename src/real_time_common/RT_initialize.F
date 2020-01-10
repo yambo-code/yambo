@@ -44,7 +44,7 @@ subroutine RT_initialize(E,k,q)
 &                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,Gr_kind,     &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
 &                         l_RT_update_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
-&                         NE_time_step_update_jump,NE_initial_time_step_update,               &
+&                         NE_time_step_update_jump,NE_initial_time_step_update,NE_i_time,     &
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
@@ -135,6 +135,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Use NE_tot_time if provided
  !==============================
+ NE_i_time=1
  if (NE_tot_time>0._SP) NE_steps=max(NE_steps,nint(NE_tot_time/RT_step)+1)
  !
  ! Initialize RT_dyn_step

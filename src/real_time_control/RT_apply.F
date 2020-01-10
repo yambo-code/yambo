@@ -204,7 +204,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
    return
  endif
  !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2,3/),MODE=DUMP,ID=ID)
  io_err=io_RT_components(trim(db_name),ID)
  !
  ! Adjust NE_i_time in case needed.
@@ -212,7 +212,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  !
  if (io_err< 0 .and. .not. l_real_time) then 
    NE_i_time= NE_i_time-mod(NE_i_time-1,CARR_RT_IO_t%INTERVAL_steps)
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID)
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2,3/),MODE=DUMP,ID=ID)
    io_err=io_RT_components(trim(db_name),ID)
  endif
  !
@@ -222,10 +222,6 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
    NE_i_time=1
    return
  endif
- !
- ! Reset NE_i_time for the simulation
- !
- if (l_real_time) NE_i_time=1
  !
  if (present(what)) then
    ch='External RT corrections ('//what//')'

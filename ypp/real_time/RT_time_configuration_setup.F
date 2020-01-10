@@ -56,7 +56,10 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  STEP  = RT_step
  if (GENERAL_RT_IO_t%N> 1) then
    STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
-   if (l_rho_G) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-G_MEM_steps))
+   if (l_rho_G) then
+    TIME_diff = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-G_MEM_steps))
+    if( .not. (TIME_diff-STEP*(G_MEM_steps-1))<1.E-5) STEP=TIME_diff
+   endif
  endif
  !
  ! Time range ...
@@ -94,6 +97,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    !
  endif
  !
+ RT_conf%T_range=(/GENERAL_RT_IO_t%Time(i_ref(1)),GENERAL_RT_IO_t%Time(i_ref(2))/)
  !
  ! Uniform time sampling?
  !========================
@@ -105,17 +109,12 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  enddo
  !
  ! Time step ...
+ !==============
  !
- ! N.B.: This is needed for the carriers post-processing only
- !============================================================
+ if (RT_conf%delta_T==0._SP ) RT_conf%delta_T   = STEP
+ if (RT_conf%delta_T> 0._SP ) RT_conf%delta_T=max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
  !
- !if ( (RT_conf%delta_T>0._SP .or. .not.UNIFORM) .and. (l_carriers.or.l_current) ) then
- if ( (RT_conf%delta_T>0._SP .or. .not.UNIFORM) .and. l_carriers ) then
-   !
-   if (.not.UNIFORM) STEP = GENERAL_RT_IO_t%Time(i_ref(2))-GENERAL_RT_IO_t%Time(i_ref(2)-1)
-   !
-   RT_conf%delta_T=max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
-   !
+ if(GENERAL_RT_IO_t%N>1) then
    REF_diff(1)= STEP
    YAMBO_ALLOC(i_table,(GENERAL_RT_IO_t%N))
    i_table=0
@@ -149,29 +148,11 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    YAMBO_FREE(i_table)
    !
  else
-   !
-   if(RT_conf%delta_T==0._SP) RT_conf%delta_T   = STEP
-   if(RT_conf%delta_T> 0._SP) RT_conf%delta_T   = max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
-   !
-   step_ratio=nint(RT_conf%delta_T/STEP)
-   if(l_rho_G) step_ratio=step_ratio*G_MEM_steps
-   do i_c=1,step_ratio
-     if(mod(i_ref(2)-i_ref(1),step_ratio)==0) exit
-     i_ref(2)=i_ref(2)-i_c
-   enddo
-   RT_conf%T_n_steps = (i_ref(2)-i_ref(1))/step_ratio+1
-   !
-   YAMBO_ALLOC(RT_time,(RT_conf%T_n_steps))
-   j_ref=0
-   do i_t=i_ref(1),i_ref(2)
-     if(mod(i_t-1,step_ratio)/=0) cycle
-     j_ref=j_ref+1
-     RT_time(j_ref) = GENERAL_RT_IO_t%Time(i_t)
-   enddo
-   !
+   YAMBO_ALLOC(RT_time,(1))
+   RT_time=0._SP
+   RT_conf%delta_T=0._SP
+   RT_conf%T_n_steps=1
  endif
- !
- RT_conf%T_range=(/GENERAL_RT_IO_t%Time(i_ref(1)),GENERAL_RT_IO_t%Time(i_ref(2))/)
  !
  ! Messaging
  !===========

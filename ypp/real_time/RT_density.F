@@ -49,7 +49,7 @@ subroutine RT_density(en,kpt,qpt)
  !
  ! Workspace
  !
- integer               :: ID,ik,io_err,i_t,i_t_tmp,i_dir
+ integer               :: ID,ik,io_err,i_t,i_t_tmp,i_dir,Nt
  real(SP)              :: TIME_diff,REF_DIFF
  character(schlen)     :: ch_ws(3)
  logical               :: load_G_history,include_eq_occ
@@ -126,23 +126,25 @@ subroutine RT_density(en,kpt,qpt)
  !
  call plot_check_and_launch(.true.)
  !
+ Nt=GF_RT_IO_t%N
+ !
  do i_T=1,RT_conf%T_n_steps
    !
    call msg('s','RT density at time '//trim(real2ch(real(RT_time(i_T)/FS2AUT,SP)))//' fs')
    !
    if (load_G_history) then
      !
-     REF_diff=GF_RT_IO_t%INTERVAL_steps
-     do i_t_tmp=1,GF_RT_IO_t%N
+     REF_diff=GF_RT_IO_t%Time(Nt)-GF_RT_IO_t%Time(Nt-G_MEM_steps)
+     do i_t_tmp=1,Nt
        TIME_diff= abs ( GF_RT_IO_t%Time(i_t_tmp) - RT_time(i_T) )
-       if (abs(TIME_diff)<REF_DIFF ) then 
+       if (abs(TIME_diff)<REF_diff ) then 
          REF_diff=TIME_diff
          GF_RT_IO_t%N=i_t_tmp
        endif
      enddo
      !
 #if defined _PAR_IO
-     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/0,3/),ID=ID)
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),ID=ID)
      io_err=io_RT_components('G',ID)
 #else
      do ik = 1, RT_nk 

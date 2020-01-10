@@ -37,7 +37,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !
  ! Work Space
  !
- integer  :: i_t,i_ref(2),i_range(2),i_c,j_ref,step_ratio
+ integer  :: i_t,i_ref(2),i_c,j_ref,step_ratio
  logical  :: UNIFORM,l_carriers,l_current,l_G_lesser
  real(SP) :: STEP,TIME,TIME_diff,REF_diff(2)
  integer, allocatable :: i_table(:)
@@ -61,21 +61,20 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    RT_conf%T_range(1)=TIME_adjust( RT_conf%T_range(1), STEP )
    RT_conf%T_range(2)=TIME_adjust( RT_conf%T_range(2), STEP )
    !
-   i_range(:) = nint( RT_conf%T_range(:)/STEP )+1
    i_ref      = 0
-   REF_diff   = STEP/2._SP
+   REF_diff   = STEP
    !
    do i_t=1,GENERAL_RT_IO_t%N-1
      !
      TIME_diff=abs(GENERAL_RT_IO_t%Time(i_t)-RT_conf%T_range(1))
      if ( TIME_diff<REF_diff(1) ) then
        REF_diff(1)=TIME_diff
-       i_ref(1) = i_t !nint( GENERAL_RT_IO_t%Time(i_t)/STEP )+1
+       i_ref(1) = i_t
      endif
      TIME_diff=abs(GENERAL_RT_IO_t%Time(i_t+1)-RT_conf%T_range(2))
      if ( TIME_diff<REF_diff(2) ) then
        REF_diff(2)=TIME_diff
-       i_ref(2) = i_t+1 !nint( GENERAL_RT_IO_t%Time(i_t+1)/STEP )+1
+       i_ref(2) = i_t+1
      endif
      !
    enddo
@@ -111,7 +110,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    !
    RT_conf%delta_T=max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
    !
-   REF_diff(1)= STEP/2._SP
+   REF_diff(1)= STEP
    YAMBO_ALLOC(i_table,(GENERAL_RT_IO_t%N))
    i_table=0
    i_table(1)=i_ref(1)
@@ -125,10 +124,11 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
        REF_diff(1)=TIME_diff
        i_table(RT_conf%T_n_steps+1)=i_t
      endif
+     TIME_diff= abs ( (GENERAL_RT_IO_t%Time(j_ref)+RT_conf%delta_T) -GENERAL_RT_IO_t%Time(i_t+1) )
      if ( abs(TIME_diff)>REF_diff(1) .and. i_table(RT_conf%T_n_steps+1)>0 ) then
-       REF_diff(1)= STEP/2._SP
+       REF_diff(1)= GENERAL_RT_IO_t%Time(i_t+1)-GENERAL_RT_IO_t%Time(i_t-1)
        RT_conf%T_n_steps=RT_conf%T_n_steps+1
-       j_ref= i_t-1
+       j_ref= i_t
      endif
    enddo
    i_table(RT_conf%T_n_steps+1)=i_ref(2)

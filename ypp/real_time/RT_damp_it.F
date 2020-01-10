@@ -46,7 +46,7 @@ subroutine RT_damp_it(damp_type,damp_factor,ft,lda)
    case("NONE") 
      forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = 1._SP
    case default
-     call warning(" Unknown damping! ")
+     call error(" Unknown damping! ")
      return
  end select
  !

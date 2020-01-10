@@ -278,9 +278,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif
        !
-       cond_f=0;cond_g=0;poles_f=0;
+       cond_f=0
+       cond_g=0
+       poles_f=0
        !
-       !$omp parallel do default(shared), private(ig1,ig2), reduction(+:cond_b,cond_g), collapse(2)
+       !$omp parallel do default(shared), private(ig1,ig2), reduction(+:cond_f,cond_g,poles_f), collapse(2)
        do ig2=1,X%ng
          do ig1=1,X%ng
            if (l_ppa) then

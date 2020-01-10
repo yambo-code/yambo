@@ -227,9 +227,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Poles and Residuals
      !
-     poles_f=0;
+     poles_f=0
      !
-     !$omp parallel default(shared), private(ig1,ig2,i_np,MPA_freqs,MPA_Xo), reduction(+:poles_f, pole_p)
+     !$omp parallel default(shared), private(ig1,ig2,pole_p,i_np,MPA_freqs,MPA_Xo), reduction(+:poles_f)
      !
      YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
      !
@@ -252,11 +252,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          pole_p=0
          do i_np=1,X%mpa_npoles
            !
-           if( imagpart(MPA_E_mat(ig1,ig2,i_np)) > 0._SP ) then
-             pole_p = pole_p + 1
-           endif
-           !if( isnan(realpart(MPA_E_mat(ig1,ig2,i_np))) .or. isnan(imagpart(MPA_E_mat(ig1,ig2,i_np))) .or. &
-&          !    isnan(realpart(MPA_R_mat(ig1,ig2,i_np))) .or. isnan(imagpart(MPA_R_mat(ig1,ig2,i_np))) ) then
+           if(aimag(MPA_E_mat(ig1,ig2,i_np)) > 0._SP ) pole_p=pole_p+1
+           !
+           !if( isnan(realpart(MPA_E_mat(ig1,ig2,i_np))) .or. isnan(aimag(MPA_E_mat(ig1,ig2,i_np))) .or. &
+&          !    isnan(realpart(MPA_R_mat(ig1,ig2,i_np))) .or. isnan(aimag(MPA_R_mat(ig1,ig2,i_np))) ) then
            !  write(*,*) "G=",ig1,"G'=",ig2, "i_p=",i_np
            !  write(*,*) "mpaE= ", MPA_E_mat(ig1,ig2,i_np)
            !  write(*,*) "mpaR= ", MPA_R_mat(ig1,ig2,i_np)
@@ -264,9 +263,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
            !endif
            !
          enddo
-         if(pole_p > 0) then
-           poles_f = poles_f + 1
-         endif
+         !
+         if(pole_p>0) poles_f=poles_f+1
          !
        enddo
      enddo
@@ -374,11 +372,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
                endif
                !
                ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*&
-&                                 (sign(1._SP,imagpart(MPA_E_mat(ig1,ig2,i_np))) *MPA_R_mat(ig1,ig2,i_np))*&
+&                                 (sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np))) *MPA_R_mat(ig1,ig2,i_np))*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_(i_w)-E_kmq &
-&                                             +sign(1._SP,imagpart(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np))+&
+&                                             +sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np))+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_(i_w))-E_kmq   &
-&                                             -sign(1._SP,imagpart(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np)) )
+&                                             -sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np)) )
                !
                dp_dummy=dp_dummy+ctmp
                !

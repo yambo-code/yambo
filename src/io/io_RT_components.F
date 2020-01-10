@@ -175,10 +175,12 @@ integer function io_RT_components(what,ID)
  endif
  !
  T_size=1
- G_IO_steps=GF_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
- if(l_G   .and. NE_i_time> 1 .and. .not.SAVE_G_history) T_size=    G_MEM_steps
- if(l_G   .and. NE_i_time> 1 .and.      SAVE_G_history) T_size=min(G_MEM_steps,G_IO_steps)
- if(l_OBS .and. NE_i_time> 1)                           T_size=TMP_OBS_cache_steps
+ if ( (write_is_on(ID) .or. l_real_time) .and. l_G ) then
+   G_IO_steps=GF_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
+   if(NE_i_time> 1 .and. .not.SAVE_G_history) T_size=    G_MEM_steps
+   if(NE_i_time> 1 .and.      SAVE_G_history) T_size=min(G_MEM_steps,G_IO_steps)
+ endif
+ if(l_OBS .and. NE_i_time> 1) T_size=TMP_OBS_cache_steps
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
@@ -334,6 +336,7 @@ end subroutine RT_header
 subroutine TIME_points_IO(ID,VAR_SZ,def_var,load_rest_info,unlim,l_G,TYP)
  !
  use pars,           ONLY:IP,SP,schlen
+ use drivers,        ONLY:l_real_time
  use units,          ONLY:AUT2FS
  use RT_control,     ONLY:RT_IO_t,RT_description,n_RT_descriptions
  use real_time,      ONLY:NE_steps,MEM_pointer,G_MEM_steps,NE_i_time,i_MEM_now,i_MEM_prev,i_MEM_old,&
@@ -370,7 +373,7 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,load_rest_info,unlim,l_G,TYP)
  call io_variable_elemental(ID,I0=TYP%last_point)
  call io_variable_elemental(ID,I0=TYP%N)
  !
- if (l_G) then
+ if (l_G .and. l_real_time) then
    if(def_var.or.read_is_on(ID)) then
      dim_name="G_MEM_steps"
      call def_variable_bulk(ID,"MEMORY_TIME_POINTS",2,(/G_MEM_steps/),IP+100,dim_name,silent=.true.)
@@ -411,6 +414,7 @@ end subroutine TIME_points_IO
 subroutine G_lesser_IO(ID,T_size)
  !
  use pars,           ONLY:SP,schlen
+ use drivers,        ONLY:l_real_time
  use stderr,         ONLY:intc
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,&
 &                         variable_exist,write_is_on,io_sec
@@ -435,6 +439,7 @@ subroutine G_lesser_IO(ID,T_size)
  !
  i_sp_pol=1
  l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,"H_rotation").or.write_is_on(ID)) )
+ if(.not.l_real_time) PAR_IO_G_kpts=(/1,RT_nk/)
  !
  VAR_SZ(1:3)=(/2,RT_nbands,RT_nbands/)
  !
@@ -455,22 +460,27 @@ subroutine G_lesser_IO(ID,T_size)
    dim_names(5) ='G_IO_time_step'
  endif
  !
- if(NE_i_time==NE_i_start_time) then
+ if(NE_i_time==NE_i_start_time.or..not.l_real_time) then
    call def_variable_bulk(ID,"dG_lesser", 4,VAR_sz,SP,dim_names=dim_names,par_io_kind='independent',silent=.true.)
    if(l_H_rot) call def_variable_bulk(ID,"H_rotation",6,VAR_sz(1:4),SP,&
    &                                             dim_names=dim_names(1:4),par_io_kind='independent',silent=.true.)
  endif
  !
  IPOS(4)=PAR_IO_G_kpts(1)
- do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
-   if(     SAVE_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
-   if(.not.SAVE_G_history) IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
-   !i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
-   if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
-   if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
-   if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
-   call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_mem:i_mem),IPOS=IPOS)
- enddo
+ if(l_real_time) then
+   do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
+     if(     SAVE_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
+     if(.not.SAVE_G_history) IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
+     !i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
+     if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
+     if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
+     if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
+     call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_mem:i_mem),IPOS=IPOS)
+   enddo
+ else
+   IPOS(5)=GF_RT_IO_t%N
+   call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),1:1),IPOS=IPOS)
+ endif
  if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_sp_pol),IPOS=IPOS(1:4))
  !
 #else

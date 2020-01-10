@@ -25,6 +25,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !
  use units,          ONLY:AUT2FS,pi,HA2EV
  use YPP_real_time,  ONLY:RT_conf,RT_time
+ use real_time,      ONLY:G_mem_steps
  use pars,           ONLY:SP
  use com,            ONLY:msg
  use real_time,      ONLY:RT_step
@@ -38,20 +39,25 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  ! Work Space
  !
  integer  :: i_t,i_ref(2),i_c,j_ref,step_ratio
- logical  :: UNIFORM,l_carriers,l_current,l_G_lesser
+ logical  :: UNIFORM,l_carriers,l_current,l_G_lesser,l_rho_f,l_rho_G
  real(SP) :: STEP,TIME,TIME_diff,REF_diff(2)
  integer, allocatable :: i_table(:)
  !
  ! Definitions
  !==============
  !
- TIME  = GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)
- STEP  = RT_step
- if (GENERAL_RT_IO_t%N> 1) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
- !
  l_carriers=(what=="CARRIERS")
  l_current =(what=="CURRENT")
  l_G_lesser=(what=="Glesser")
+ l_rho_G   =(what=="G-DENSITY")
+ l_rho_f   =(what=="f-DENSITY")
+ !
+ TIME  = GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)
+ STEP  = RT_step
+ if (GENERAL_RT_IO_t%N> 1) then
+   STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
+   if (l_rho_G) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-G_MEM_steps))
+ endif
  !
  ! Time range ...
  !===============
@@ -148,6 +154,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    if(RT_conf%delta_T> 0._SP) RT_conf%delta_T   = max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
    !
    step_ratio=nint(RT_conf%delta_T/STEP)
+   if(l_rho_G) step_ratio=step_ratio*G_MEM_steps
    do i_c=1,step_ratio
      if(mod(i_ref(2)-i_ref(1),step_ratio)==0) exit
      i_ref(2)=i_ref(2)-i_c

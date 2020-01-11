@@ -102,7 +102,7 @@ integer function variables_dynamic_RT(ID,local_description)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  variables_dynamic_RT      =io_status(ID)
- RT_description(n_RT_descriptions+1:n_RT_descriptions+i_desc)=local_description(n_RT_descriptions+1:n_RT_descriptions+i_desc)
- n_RT_descriptions      =n_RT_descriptions_static+i_desc+1
+ RT_description(n_RT_descriptions_static+1:n_RT_descriptions_static+i_desc)=local_description(1:i_desc)
+ n_RT_descriptions      =n_RT_descriptions_static+i_desc
  !
 end function variables_dynamic_RT

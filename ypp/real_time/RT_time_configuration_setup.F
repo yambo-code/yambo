@@ -58,7 +58,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
    if (l_rho_G) then
     TIME_diff = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-G_MEM_steps))
-    if( .not. (TIME_diff-STEP*(G_MEM_steps-1))<1.E-5) STEP=TIME_diff
+    if( .not. (TIME_diff-STEP*G_MEM_steps)<1.E-5) STEP=TIME_diff
    endif
  endif
  !
@@ -109,49 +109,54 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  enddo
  !
  ! Time step ...
- !==============
+ !============== 
  !
- if (RT_conf%delta_T==0._SP ) RT_conf%delta_T   = STEP
- if (RT_conf%delta_T> 0._SP ) RT_conf%delta_T=max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
- !
- if(GENERAL_RT_IO_t%N>1) then
-   REF_diff(1)= STEP
-   YAMBO_ALLOC(i_table,(GENERAL_RT_IO_t%N))
-   i_table=0
-   i_table(1)=i_ref(1)
-   !
-   j_ref=i_ref(1)
-   !
-   RT_conf%T_n_steps=1
-   do i_t=i_ref(1)+1,i_ref(2)-1
-     TIME_diff= abs ( (GENERAL_RT_IO_t%Time(j_ref)+RT_conf%delta_T) -GENERAL_RT_IO_t%Time(i_t) )
-     if (abs(TIME_diff)<REF_DIFF(1) ) then
-       REF_diff(1)=TIME_diff
-       i_table(RT_conf%T_n_steps+1)=i_t
-     endif
-     TIME_diff= abs ( (GENERAL_RT_IO_t%Time(j_ref)+RT_conf%delta_T) -GENERAL_RT_IO_t%Time(i_t+1) )
-     if ( abs(TIME_diff)>REF_diff(1) .and. i_table(RT_conf%T_n_steps+1)>0 ) then
-       REF_diff(1)= GENERAL_RT_IO_t%Time(i_t+1)-GENERAL_RT_IO_t%Time(i_t-1)
-       RT_conf%T_n_steps=RT_conf%T_n_steps+1
-       j_ref= i_t
-     endif
-   enddo
-   i_table(RT_conf%T_n_steps+1)=i_ref(2)
-   RT_conf%T_n_steps=RT_conf%T_n_steps+1
-   !
-   YAMBO_ALLOC(RT_time,(RT_conf%T_n_steps))
-   !
-   do i_t=1,RT_conf%T_n_steps
-     RT_time(i_t)=GENERAL_RT_IO_t%Time(i_table(i_t))
-   enddo
-   !
-   YAMBO_FREE(i_table)
-   !
+ if (RT_conf%delta_T> 0._SP) then
+   if (GENERAL_RT_IO_t%N>1) then
+     RT_conf%delta_T=max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
+     REF_diff(1)= STEP
+     YAMBO_ALLOC(i_table,(GENERAL_RT_IO_t%N))
+     i_table=0
+     i_table(1)=i_ref(1)
+     !
+     j_ref=i_ref(1)
+     !
+     RT_conf%T_n_steps=1
+     do i_t=i_ref(1)+1,i_ref(2)-1
+       TIME_diff= abs ( (GENERAL_RT_IO_t%Time(j_ref)+RT_conf%delta_T) -GENERAL_RT_IO_t%Time(i_t) )
+       if (abs(TIME_diff)<REF_DIFF(1) ) then
+         REF_diff(1)=TIME_diff
+         i_table(RT_conf%T_n_steps+1)=i_t
+       endif
+       TIME_diff= abs ( (GENERAL_RT_IO_t%Time(j_ref)+RT_conf%delta_T) -GENERAL_RT_IO_t%Time(i_t+1) )
+       if ( abs(TIME_diff)>REF_diff(1) .and. i_table(RT_conf%T_n_steps+1)>0 ) then
+         REF_diff(1)= GENERAL_RT_IO_t%Time(i_t+1)-GENERAL_RT_IO_t%Time(i_t-1)
+         RT_conf%T_n_steps=RT_conf%T_n_steps+1
+         j_ref= i_t
+       endif
+     enddo
+     i_table(RT_conf%T_n_steps+1)=i_ref(2)
+     RT_conf%T_n_steps=RT_conf%T_n_steps+1
+     !
+     YAMBO_ALLOC(RT_time,(RT_conf%T_n_steps))
+     !
+     do i_t=1,RT_conf%T_n_steps
+       RT_time(i_t)=GENERAL_RT_IO_t%Time(i_table(i_t))
+     enddo
+     !
+     YAMBO_FREE(i_table)
+     !
+   else
+     RT_conf%T_n_steps=1
+     YAMBO_ALLOC(RT_time,(RT_conf%T_n_steps))
+     RT_time=0._SP
+     RT_conf%delta_T=0._SP
+   endif
  else
-   YAMBO_ALLOC(RT_time,(1))
-   RT_time=0._SP
-   RT_conf%delta_T=0._SP
-   RT_conf%T_n_steps=1
+   RT_conf%T_n_steps = GENERAL_RT_IO_t%N
+   YAMBO_ALLOC(RT_time,(RT_conf%T_n_steps))
+   RT_time=GENERAL_RT_IO_t%Time
+   RT_conf%delta_T   = STEP
  endif
  !
  ! Messaging

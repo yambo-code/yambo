@@ -208,7 +208,7 @@ subroutine NL_driver(en,k)
     !
     YAMBO_ALLOC(Pol%F_t,(RT_conf%T_n_steps,3))
     Pol%F_t(:,:) =RT_P_probe(:,i_Probe,:)
-    if(trim(RT_conf%damping) /= "NONE") call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,Pol%F_t,3)
+    call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,Pol%F_t,3)
     call RT_X_LRR_real_field(en)
     YAMBO_FREE(Pol%F_t)
      !

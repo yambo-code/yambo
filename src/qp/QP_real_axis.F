@@ -45,7 +45,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use wave_func,     ONLY:WF
  use DIPOLES,       ONLY:DIPOLE_t
  use IO_m,          ONLY:io_control,manage_action,REP,VERIFY,DUMP,NONE,io_RESPONSE,io_SCREEN,&
-&                        OP_WR_CL,OP_APP_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,OP_RD,OP_RD_CL
+&                        OP_WR_CL,OP_APP_CL,RD_CL_IF_END,OP_RD,OP_RD_CL
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,QP_Sc_steps,&
 &                        QP_n_W_freqs_redux,e2et,h2ht
@@ -301,6 +301,11 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  if (.not.l_life) call live_timing(trim(Sc_name)//'W0',timing_steps)
  if (l_life)      call live_timing('Lifetimes',timing_steps)
  !
+ if (io_RESPONSE) then
+   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=X_id)
+   io_err=io_X(X,Xw,X_id)
+ endif
+ !
  do iqbz=i_q_to_start,q%nbz
    !
    if (.not.l_life.and.io_SCREEN) QP_W=cZERO
@@ -326,8 +331,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
      !
      if (io_RESPONSE) then
        !
-       IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,iqbz,i_q_to_start,nqibz)
-       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1,2*iqibz,2*iqibz+1/),ID=X_id)
+       IO_ACT=manage_action(RD_CL_IF_END,iqbz,i_q_to_start,nqibz)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=X_id)
        !
        if (l_life) then
          !

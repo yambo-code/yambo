@@ -39,7 +39,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_IF_START_RD_CL_IF_END,&
+ use IO_m,          ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD_CL_IF_END,&
 &                        io_RESPONSE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
@@ -230,6 +230,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #endif
  call live_timing(trim(ch),timing_steps)
  !
+ if (io_RESPONSE) then
+   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
+   io_err=io_X(X,Xw,ID)
+ endif
+ !
  Q_loop: do iqbz=iq_to_start,q%nbz 
    !
    if (.not.PAR_IND_Q%element_1D(q%sstar(iqbz,1))) cycle
@@ -251,8 +256,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if (io_RESPONSE) then
        !
-       IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,iqbz,iq_to_start,nqibz)
-       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1,2*iqibz,2*iqibz+1/),ID=ID)
+       IO_ACT=manage_action(RD_CL_IF_END,iqbz,iq_to_start,nqibz)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
        io_err=io_X(X,Xw,ID)
        !
        call deliver_IO_error_message(io_err,'PP/Em1s',STOP_it=.TRUE.)

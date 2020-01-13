@@ -412,7 +412,7 @@ module IO_m
          if (io_unit(i1)==0) then
            ID=i1
            call io_reset(ID)
-           io_unit(ID)=40+i1
+           io_unit(ID)=40+i1  ! This is not used with netcdf since nf90_create assigns the unit
            exit
          endif
        enddo

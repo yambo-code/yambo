@@ -50,7 +50,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use collision_el, ONLY:elemental_collision_free
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_WR,OP_APP_CL,DUMP,&
-&                       deliver_IO_error_message
+&                       deliver_IO_error_message,manage_action
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind
@@ -81,7 +81,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! ... Kernel loop
  !
  DEFINE_BSK_COMMON_INDEXES
- integer    :: i_block,O_ng_shift,&
+ integer    :: i_block,O_ng_shift,IO_ACT,&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
 &              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4)
  complex(SP):: Co,H_x,H_c
@@ -190,7 +190,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call io_control(ACTION=OP_RD,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
      io_BS_err=io_BS(iq,X,ID)
      do i_block=1,n_BS_blks
-       call io_control(ACTION=RD_CL_IF_END,COM=NONE,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
+       IO_ACT=manage_action(RD_CL_IF_END,i_block,FIRST=1,LAST=n_BS_blks)       
+       call io_control(ACTION=IO_ACT,COM=NONE,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
        io_BS_err=io_BS(iq,X,ID)
      enddo
    endif

@@ -129,7 +129,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  ! Perform the occupations interpolation
  !======================================
  !
- call live_timing('Interpolation',n_T_steps)
+ call live_timing('Interpolation(s)',n_T_steps)
  !
  do i_T=1,n_T_steps
    !
@@ -152,8 +152,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    if (l_RT_occupations) operation="df_on_RT_grid"
    if (l_RT_lifetimes)   operation="G_on_RT_grid"
    !
-   call INTERPOLATION_driver_seed(trim(operation),ID_df_or_G,RT_bands,RT_k,SEED_RT=RT_carriers)
-   call INTERPOLATION_driver_do(trim(operation),ID_df_or_G,CIRCUIT_k,QUIET=(i_T>1.and..not.n_T_steps==1))
+   call INTERPOLATION_driver_seed(trim(operation),ID_df_or_G,RT_bands,RT_k,SEED_RT=RT_carriers,QUIET=.TRUE.)
+   call INTERPOLATION_driver_do(trim(operation),ID_df_or_G,CIRCUIT_k)
    !
    ! Normalize the occupations
    !

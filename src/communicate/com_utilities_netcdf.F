@@ -146,6 +146,7 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
  nc_var=""
  do i_var=1,nval
    do i_char=1,strlen(i_var)
+     if(nval==1.and.i_char>schlen) cycle
      nc_var(i_char,i_var)=val(i_var)(i_char:i_char)
    enddo
  enddo

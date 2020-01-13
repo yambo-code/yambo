@@ -130,6 +130,7 @@ subroutine RT_X_LRR_real_field(en)
    if (l_rm_asympt_limit) Pol%F_t(:,i_p_dir)= Pol%F_t(:,i_p_dir)-Pol%F_t(RT_conf%T_n_steps,i_p_dir)
  enddo
  !
+ !
  ! Pol FT
  !--------
  !

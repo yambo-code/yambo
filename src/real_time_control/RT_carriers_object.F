@@ -140,10 +140,6 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
          !RT_E_and_k%E(i_b,i_k_RT,i_spin)=RT%E(i_RT)
        endif
        !
-       ! Lifetimes
-       !
-       if (what=="fill".and.(l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt)) RT%GAMMA_bare(i_RT,:)=REF_lifetime(i_b,i_k_RT,:)
-       !
        if(l_elphoton_scatt) then
          if (what=="fill") then
            RT%dGAMMA_E_PHOT_Hole(i_RT)=E_PHOT_Hole_lifetime(i_b,i_k_RT)
@@ -213,6 +209,26 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
          endif
          !
        endif
+       !
+     enddo
+     !
+   case('fill_ref')
+     !
+     ! Reference Lifetimes
+     !
+     if(.not.allocated(REF_lifetime)) return
+     !
+     do i_RT=1,RT%nstates
+       !
+       Hole_lifetime=0._SP
+       Elec_lifetime=0._SP
+       !
+       i_b    =RT%table(i_RT,1)
+       i_k    =RT%table(i_RT,2)
+       i_k_RT =RT%table(i_RT,3)
+       i_spin =RT%table(i_RT,4)
+       !
+       RT%GAMMA_bare(i_RT,:)=REF_lifetime(i_b,i_k_RT,:)
        !
      enddo
      !

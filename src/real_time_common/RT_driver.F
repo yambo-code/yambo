@@ -232,6 +232,8 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    call RT_relaxation(E,k,q,0._SP)
    !
+   call RT_carriers_object(RT_carriers,WHAT='fill_ref')
+   !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
    !

@@ -38,7 +38,7 @@ integer function io_BS(iq,X,ID)
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,&
 &                        def_variable_bulk,io_variable_bulk,frag_BS_K,&
 &                        write_is_on,io_header,io_mode,VERIFY, &
-&                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
+&                        io_fragment,IO_NOT_ALLOWED,io_BS_K
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
@@ -109,8 +109,6 @@ integer function io_BS(iq,X,ID)
  i_block=maxval(io_sec(ID,:))-1
  !
  if (i_block==0) goto 1
- !
- call manage_OP_IF_START_and_CL_IF_END(ID,NOW=i_block,LAST=n_BS_blks)
  !
  call io_fragment(ID,i_fragment=i_block)
  !

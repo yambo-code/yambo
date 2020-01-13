@@ -26,7 +26,7 @@ integer function io_ELPH_old(ID,what)
  use pars,           ONLY:SP,schlen
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,io_header,&
-&                         read_is_on,write_is_on,RD_CL,RD_CL_IF_END,io_action,&
+&                         read_is_on,write_is_on,&
 &                         io_mode,DUMP,io_fragment,frag_ELPH,IO_INCOMPATIBLE_VAR
  use ELPH,           ONLY:ph_modes,elph_nb,elph_global_alloc,ph_freqs_sq,&
 &                         QP_PH_n_G_bands,W_debye,elph_nDBs,&
@@ -203,10 +203,6 @@ integer function io_ELPH_old(ID,what)
    if (what/='no_matrix_elements') call elph_global_alloc('gkkp')
    if (what=='no_matrix_elements') call elph_global_alloc('no_matrix_elements')
  endif
- !
- ! Manage RD_CL_IF_END
- !
- if (io_action(ID)==RD_CL_IF_END.and.iq==nqibz) io_action(ID)=RD_CL
  !
  ! PH frequencies
  !

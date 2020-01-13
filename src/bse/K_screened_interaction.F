@@ -35,7 +35,8 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use X_m,          ONLY:X_mat_d
 #endif
  use BS,           ONLY:BS_n_g_W,BS_W_is_diagonal,BS_W
- use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD,RD_CL,RD_CL_IF_END
+ use IO_m,         ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,&
+&                       OP_RD,RD,RD_CL,RD_CL_IF_END
  use deviceXlib_m, ONLY:dev_memcpy
  !
 #include<dev_defs.h>
@@ -59,7 +60,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  !
  ! I/O
  !
- integer           :: XID
+ integer           :: XID,IO_ACT
  integer, external :: io_X
  ! 
  if (l_td_hf) then
@@ -135,7 +136,8 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
    !
    if (.not.l_td_hf) then
      !
-     call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
+     IO_ACT=manage_action(RD_CL_IF_END,iq_W,1,q%nibz)
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
      io_X_err=io_X(X,Xw,XID)
      if (io_X_err<0) then
        call warning('Reading of io_X for iq='//trim(intc(iq_W))//' failed despite previous check.')

@@ -31,7 +31,6 @@ integer function io_X(X,Xw,ID)
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
 &                        io_elemental,io_status,io_bulk,&
 &                        read_is_on,write_is_on,io_header,&
-&                        manage_OP_IF_START_and_CL_IF_END,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED,&
 &                        io_fragment,IO_OUTDATED_DB,frag_RESPONSE,&
@@ -149,9 +148,6 @@ integer function io_X(X,Xw,ID)
  !
  if (iq==0) goto 1
  !
- ! Manage OP_IF_START_and_RD_CL_IF_END
- !
- call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
  call io_fragment(ID,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
  !
  !  type(X_t)    ::X(4)  x s d p

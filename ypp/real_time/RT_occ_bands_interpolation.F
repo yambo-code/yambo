@@ -29,6 +29,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
  use com,            ONLY:msg,of_open_close
+ use IO_m,           ONLY:IO_and_Messaging_switch
  use YPPm,           ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,&
 &                         CIRCUIT_E_db,CIRCUIT_k_label
@@ -39,6 +40,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use real_time,      ONLY:RT_carriers,RT_bands
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,electrons_bands_interpolate,INTERP_obj,INTERP_mode
  use LIVE_t,         ONLY:live_timing
+ use interfaces,     ONLY:PARALLEL_index
+ use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  !
 #include<memory.h>
  !
@@ -48,6 +51,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  ! Work space
  !
+ type(PP_indexes)      :: px
  type(bz_samp)         :: RT_k
  type(levels)          :: CIRCUIT_E,CIRCUIT_dE,RT_E
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
@@ -55,7 +59,6 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  character(lchlen)     :: of_string
  logical               :: l_normalize_Nel
  integer               :: ib,ik,i_RT,i_T,n_values,ID_df_or_G,ID_spin,ID_magn,ID_bands(3)
- !
  logical, external     :: file_exists
  !
  call section('*','Interpolation tool')
@@ -129,9 +132,17 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  ! Perform the occupations interpolation
  !======================================
  !
- call live_timing('Interpolation(s)',n_T_steps)
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/n_T_steps/))
+ call PP_redux_wait
+ !
+ call IO_and_Messaging_switch("SAVE +output",CONDITION=.TRUE.)
+ !
+ call live_timing('Interpolation(s) and Plot(s)',px%n_of_elements(myid+1))
  !
  do i_T=1,n_T_steps
+   !
+   if (.not.px%element_1D(i_T)) cycle
    !
    call RT_apply(RT_bands,en,k,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
    !
@@ -152,7 +163,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    if (l_RT_occupations) operation="df_on_RT_grid"
    if (l_RT_lifetimes)   operation="G_on_RT_grid"
    !
-   call INTERPOLATION_driver_seed(trim(operation),ID_df_or_G,RT_bands,RT_k,SEED_RT=RT_carriers,QUIET=.TRUE.)
+   call INTERPOLATION_driver_seed(trim(operation),ID_df_or_G,RT_bands,RT_k,SEED_RT=RT_carriers,&
+&                                 SERIAL=.TRUE.,QUIET=.TRUE.)
    call INTERPOLATION_driver_do(trim(operation),ID_df_or_G,CIRCUIT_k)
    !
    ! Normalize the occupations
@@ -201,14 +213,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      !
      do ik=1,CIRCUIT_k%nbz
        !
-       if (ik==1) values(1)=0._SP
-       if (ik> 1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:3)-CIRCUIT_k%pt(ik-1,:3))
-       !
-       values(2)=CIRCUIT_E%E(ib,ik,1)*HA2EV
-       if (allocated(CIRCUIT_E_db%E)) values(2)=CIRCUIT_E_db%E(ib,ik,1)*HA2EV
-       if (allocated(RT_E%Eo).and.allocated(CIRCUIT_E_db%E)) then
-         values(2)=(CIRCUIT_E_db%E(ib,ik,1)+CIRCUIT_dE%E(ib,ik,1))*HA2EV
-       endif
+       ! Transfer of the INTERPOLATED_values...
        !
        values(3)=INTERP_obj(ID_df_or_G)%INTERP(ib,ik,1)
        if (l_RT_lifetimes   ) values(3)=values(3)*HA2EV*1000._SP
@@ -216,6 +221,15 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
        if (l_RT_occupations .and. n_spinor==2) then
          values(4)=values(3)*INTERP_obj(ID_spin)%INTERP(ib,ik,1)
          values(5)=values(3)*INTERP_obj(ID_spin)%INTERP(ib,ik,2)
+       endif
+       !
+       if (ik==1) values(1)=0._SP
+       if (ik> 1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:3)-CIRCUIT_k%pt(ik-1,:3))
+       !
+       values(2)=CIRCUIT_E%E(ib,ik,1)*HA2EV
+       if (allocated(CIRCUIT_E_db%E)) values(2)=CIRCUIT_E_db%E(ib,ik,1)*HA2EV
+       if (allocated(RT_E%Eo).and.allocated(CIRCUIT_E_db%E)) then
+         values(2)=(CIRCUIT_E_db%E(ib,ik,1)+CIRCUIT_dE%E(ib,ik,1))*HA2EV
        endif
        !
        call msg('o bands',' ',values(:n_values),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
@@ -228,9 +242,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      !
    enddo
    !
-   call INTERPOLATION_driver_end(ID_df_or_G)
-   !
    call of_open_close(file_name_rt)
+   !
+   call INTERPOLATION_driver_end(ID_df_or_G)
    !
    call live_timing(steps=1)
    !
@@ -241,8 +255,10 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  ! Clean
  !
  call INTERPOLATION_driver_end(0)
+ call IO_and_Messaging_switch("RESTORE")
  call RT_carriers_object(RT_carriers,WHAT='free')
  call E_reset(CIRCUIT_E)
  call E_reset(RT_E)
+ call PP_indexes_reset(px)
  !
 end subroutine RT_occ_bands_interpolation

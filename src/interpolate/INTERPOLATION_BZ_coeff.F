@@ -31,7 +31,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  ! https://www.imc.tuwien.ac.at//forschungsbereich_theoretische_chemie/forschungsgruppen/prof_dr_gkh_madsen_theoretical_materials_chemistry/boltztrap/
  !
  use pars,              ONLY:SP,DP,pi,cI,cZERO
- use interpolate,       ONLY:nshells,lattice_vectors,metric,int_sop,INTERP_obj,INTERPOLATE_is_quiet
+ use interpolate,       ONLY:nshells,lattice_vectors,metric,int_sop,INTERP_obj,INTERPOLATE_is_quiet,INTERPOLATE_is_serial
  use interpolate_tools, ONLY:make_star
  use D_lattice,         ONLY:nsym
  use R_lattice,         ONLY:bz_samp
@@ -124,15 +124,20 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  ! Par Proc
  !
  Npx=(Nkm1*(Nkm1+1))/2
- call PP_indexes_reset(px)
- call PARALLEL_index(px,Npx)
- !
- if (.not.INTERPOLATE_is_quiet) call live_timing("Computing h_mat",px%n_of_elements(myid+1))
+ if (INTERPOLATE_is_serial) then
+   if (.not.INTERPOLATE_is_quiet) call live_timing("Computing h_mat",Npx(1))
+ else
+   call PP_indexes_reset(px)
+   call PARALLEL_index(px,Npx)
+   if (.not.INTERPOLATE_is_quiet) call live_timing("Computing h_mat",px%n_of_elements(myid+1))
+ endif
  !
  do ik=1,Nkm1
    do ik2=ik,Nkm1
      ik_prod=ik2-ik+1+(ik-1)*(Nkm1-ik+2)
-     if (.not.px%element_1D(ik_prod)) cycle
+     if (.not.INTERPOLATE_is_serial) then
+       if (.not.px%element_1D(ik_prod)) cycle
+     endif
      if(ik2==ik) h_mat(ik,ik)=real(ZDOTC(nshells-1,star_1(2:nshells,ik),1,star_1(2:nshells,ik),1),DP)
      if(ik2/=ik) then
        h_mat(ik,ik2)=ZDOTC(nshells-1,star_1(2:nshells,ik2),1,star_1(2:nshells,ik),1)
@@ -143,7 +148,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  enddo
  if (.not.INTERPOLATE_is_quiet) call live_timing()
  !
- call PP_redux_wait(h_mat)
+ if (.not.INTERPOLATE_is_serial) call PP_redux_wait(h_mat)
  !
  do ik=1,Nkm1
    star_1(2:nshells,ik) = star_1(2:nshells,ik) * sqrt(rho(2:nshells))

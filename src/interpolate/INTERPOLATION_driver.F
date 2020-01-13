@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
-&                                    NEAREST,QUIET)
+&                                    NEAREST,QUIET,SERIAL)
  !
  use pars,                 ONLY:SP
  use real_time,            ONLY:RT_t
@@ -31,7 +31,7 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  use electrons,            ONLY:levels,n_sp_pol
  use interpolate_tools,    ONLY:init_ID,FILL_SEED_E,FILL_SEED_RT,FILL_SEED_QP
  use interpolate,          ONLY:INTERP_obj,INTERPOLATION_coefficients,max_interpls,&
-&                               l_INTERP_f,l_INTERP_E,l_INTERP_dE,l_INTERP_W,&
+&                               l_INTERP_f,l_INTERP_E,l_INTERP_dE,l_INTERP_W,INTERPOLATE_is_serial,&
 &                               INTERPOLATE_initialized,l_INTERP_Z,INTERP_mode,INTERPOLATE_is_quiet
  use IO_m,                 ONLY:IO_and_Messaging_switch
  !
@@ -47,6 +47,7 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  real(SP),      intent(in), optional :: SEED_R3(:,:,:)
  logical,       intent(in), optional :: NEAREST
  logical,       intent(in), optional :: QUIET
+ logical,       intent(in), optional :: SERIAL
  !
  ! Work Space
  !
@@ -54,10 +55,12 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  !
  ! Quiet?
  !========
- !
  if (present(QUIET)) INTERPOLATE_is_quiet=QUIET
- !
  if (INTERPOLATE_is_quiet) call IO_and_Messaging_switch("-log")
+ !
+ ! Serial?
+ !=========
+ if (present(SERIAL)) INTERPOLATE_is_serial=SERIAL
  !
  ! Actions
  !=========

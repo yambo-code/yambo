@@ -41,6 +41,7 @@ module interpolate
  character(schlen) :: INTERPOLATION_name = " "
  logical           :: INTERPOLATE_initialized=.FALSE.
  logical           :: INTERPOLATE_is_quiet=.FALSE.
+ logical           :: INTERPOLATE_is_serial=.FALSE.
  character(schlen) :: INTERPOLATE_msg_fmt="rs"
  !
  ! NN method
@@ -151,7 +152,8 @@ module interpolate
      type(levels),  intent(out), optional  :: CIRCUIT_dE
    end subroutine electrons_bands_interpolate
    !
-   subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,NEAREST,QUIET)
+   subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
+&                                       NEAREST,QUIET,SERIAL)
      use pars,        ONLY:SP
      use real_time,   ONLY:RT_t
      use R_lattice,   ONLY:bz_samp
@@ -168,6 +170,7 @@ module interpolate
      type(levels),  intent(in),    optional :: SEED_E
      logical,       intent(in),    optional :: NEAREST
      logical,       intent(in),    optional :: QUIET
+     logical,       intent(in),    optional :: SERIAL
    end subroutine INTERPOLATION_driver_seed
    !
    subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)

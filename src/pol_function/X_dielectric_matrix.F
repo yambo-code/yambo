@@ -28,7 +28,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use pars,          ONLY:SP,cZERO
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
 #if defined _PL
- use drivers,       ONLY:l_photolum
 #endif
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,&
@@ -42,13 +41,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 &                        PAR_COM_X_WORLD_RL_resolved
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
- use com,           ONLY:depth,error
+ use com,           ONLY:depth
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                        PARALLEL_WF_index,WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset
- use timing_m,      ONLY:timing
  !
 #include<memory.h>
  !
@@ -124,6 +122,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! Prepare the IO (and check if q has been already done)
  !
  io_X_done=-1
+ i_err=-1
  !
  if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
  !

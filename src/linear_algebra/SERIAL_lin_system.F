@@ -80,7 +80,6 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  character(64)     :: subname="SERIAL_lin_system_gpu"
  type(LALGEBRA_WS) :: WS
  integer :: lwork
- integer, device:: i_fail_d
  !
  call timing(trim(subname),OPR='start')
  !

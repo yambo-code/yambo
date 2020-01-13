@@ -48,7 +48,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
 &                         l_RT_update_Energies,l_NE_with_fields,l_update_SOC,l_velocity_gauge_corr
  use plasma,          ONLY:PLASMA_free,EH_gas
- use com,             ONLY:warning,msg,error
+ use com,             ONLY:msg
  use fields,          ONLY:A_tot,Efield
  use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element,COLLISIONS_have_HARTREE
  use QP_CTL_m,        ONLY:QP_apply
@@ -245,7 +245,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  ! Qindx_X and Qindx_S not needed in real-time they are used only in dipoles and collisions calculations
  !
- if (.not.l_elph_scatt.and..not.l_elel_scatt) call qindx_free()
+ if (.not.l_elph_scatt.and..not.l_elel_scatt) call qindx_free('ALL')
  !
  ! Initialize output files
  !==========================
@@ -340,6 +340,8 @@ subroutine RT_driver(E,X,k,q,Dip)
  enddo
  !
  call RT_timing(-1)
+ !
+ call RT_output_and_IO_driver('close',E,k,OBSERVABLES)
  !
  ! Finalize & Free
  !-----------------

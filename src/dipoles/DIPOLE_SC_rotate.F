@@ -29,7 +29,6 @@ subroutine Dipole_SC_rotate(H_rotation,Xen,X,rot_direction)
  ! considered zero
  !
  use pars,           ONLY:SP
- use com,            ONLY:warning
  use drivers,        ONLY:l_sc_run
  use electrons,      ONLY:levels,n_sp_pol
  use SC,             ONLY:SC_bands

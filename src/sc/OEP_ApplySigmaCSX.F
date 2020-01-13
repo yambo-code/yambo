@@ -54,7 +54,6 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use SC,              ONLY:it_now
  use IO_m,            ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END
  use X_m,             ONLY:X_alloc,X_mat,X_t
- use com,             ONLY:error
  !
  ! I/O
  !

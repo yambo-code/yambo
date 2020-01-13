@@ -25,7 +25,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  use pars,           ONLY:IP
  use parser_m,       ONLY:parser
- use com,            ONLY:msg,warning,error
+ use com,            ONLY:msg
  use stderr,         ONLY:STRING_remove,intc
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin,E_SOC_table
  use frequency,      ONLY:w_samp,W_reset
@@ -157,9 +157,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
  BSS_add_antiresonant=index(BSE_mode,'retarded')/=0
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
- BS_K_is_ALDA=l_alda_fxc.and.n_spin==1
+ BS_K_is_ALDA=l_alda_fxc
  BS_perturbative_SOC=allocated(E_SOC_table)
- if (n_spin>1.and.l_alda_fxc) call warning('TDDFT/ALDA not implemented for n_spin>1. Switched off')
 #if defined _KERR
  call parser('EvalKerr',l_kerr)
  if(l_kerr) call parser('AnHall',l_anomalous_Hall)

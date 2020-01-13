@@ -35,7 +35,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use electrons,     ONLY:levels,BZ_DbGd_tot_nk_levels
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use DIPOLES,       ONLY:DIP_alloc,DIPOLE_t
+ use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
@@ -282,8 +282,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    enddo
    !
    call of_open_close(eps_file_name)
-   call of_open_close(eel_file_name)
-   call of_open_close(alpha_file_name)
    !
    ! EEL
    !

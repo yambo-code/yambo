@@ -63,12 +63,12 @@ subroutine K_kerr_IP(iq,w,Dip,Xk)
  !
  if (trim(global_gauge)=='length'  ) then
    conjg_fac=-1._SP
-   dip_kind ="DIP_iR"
+   DIP_kind ="DIP_iR"
    field_dir=Dip%q0/v_norm(Dip%q0)*q0_def_norm
  endif
  if (trim(global_gauge)=='velocity') then
    conjg_fac=+1._SP
-   dip_kind ="DIP_v"
+   DIP_kind ="DIP_v"
    field_dir=Dip%q0/v_norm(Dip%q0)
  endif
  !
@@ -94,7 +94,7 @@ subroutine K_kerr_IP(iq,w,Dip,Xk)
      !
      if (E_SOC_nbands/=0) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
-     DIP_projected=dot_product(kerr_dir,DIP_rotated(ic,iv,ik_bz,i_sp_pol,dip_kind,Xk))
+     DIP_projected=dot_product(kerr_dir,DIP_rotated(ic,iv,ik_bz,i_sp_pol,DIP_kind,Xk))
      !
      BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)=conjg_fac*conjg(DIP_projected)
      if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_kerr(i_T)=DIP_projected

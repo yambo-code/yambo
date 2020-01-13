@@ -33,7 +33,6 @@ integer function Fermi_fnc_fit(RT_occ_in,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit
  use real_time,      ONLY:RT_carriers
  use electrons,      ONLY:spin,spin_occ,n_sp_pol
  use functions,      ONLY:Fermi_fnc,Fermi_fnc_derivative,Fermi_fnc_T_derivative,NAN
- use com,            ONLY:error
  !
  implicit none
  !

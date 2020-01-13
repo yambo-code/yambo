@@ -1,1 +1,1 @@
-objs = plot_and_project_1D.o plot_check_and_launch.o plot_gnuplot.o plot_xcrysden.o plot_cube.o
+objs = plot_and_project_1D.o plot_check_and_launch.o plot_gnuplot.o plot_xcrysden.o plot_cube.o plot_interpolated_values.o

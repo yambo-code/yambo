@@ -438,7 +438,7 @@ subroutine G_lesser_IO(ID,T_size)
  character(schlen) :: dim_names(5),var_name
  !
  i_sp_pol=1
- l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,"H_rotation").or.write_is_on(ID)) )
+ !
  if(.not.l_real_time) PAR_IO_G_kpts=(/1,RT_nk/)
  !
  VAR_SZ(1:3)=(/2,RT_nbands,RT_nbands/)
@@ -459,6 +459,8 @@ subroutine G_lesser_IO(ID,T_size)
    VAR_SZ(5)    = NF90_UNLIMITED
    dim_names(5) ='G_IO_time_step'
  endif
+ !
+ l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,"H_rotation").or.write_is_on(ID)) )
  !
  if(NE_i_time==NE_i_start_time.or..not.l_real_time) then
    call def_variable_bulk(ID,"dG_lesser", 4,VAR_sz,SP,dim_names=dim_names,par_io_kind='independent',silent=.true.)
@@ -512,9 +514,11 @@ subroutine G_lesser_IO(ID,T_size)
    call  io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,i_mem:i_mem),IPOS=IPOS)
  enddo
  !
+ var_name="H_rotation_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_spin))//&
+ &        "TIME"//trim(TIME_string( time(2) ))
+ l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,trim(var_name)).or.write_is_on(ID)) )
+ !
  if ( l_H_rot ) then
-   var_name="H_rotation_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_spin))//&
-   &        "TIME"//trim(TIME_string( time(2) ))
    call def_variable_bulk(ID,trim(var_name),6,VAR_SZ(1:3),SP,dim_names=dim_names(1:3))
    call  io_variable_bulk(ID,6,C2=H_rotation(:,:,ik,i_sp_pol))
  endif

@@ -113,7 +113,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
 &                     RT_Efit_lifetimes,l_update_SOC,                                     &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
-&                     RAD_prefactor
+&                     RAD_prefactor,i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_tot,A_ind,A_ext
  use plasma,     ONLY:PLASMA_redux_percent
@@ -571,11 +571,18 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NE_steps=1
  NE_time=0._SP
  NE_tot_time= 1000._SP*FS2AUT
+ !
+ G_MEM_steps = 2
+ i_MEM_old   = 0
+ i_MEM_prev  = 0
+ i_MEM_now   = 1
+ !
  integrator_step=1
  Integrator_name='RK2'
+ !
  RAD_LifeTime = 0._SP
  Phase_LifeTime = 0._SP
- NE_MEM_treshold=0.
+ NE_MEM_treshold=0._SP
  RT_nk=0
  RT_eh_en=0._SP
  RT_scatt_tresh=-1._SP/HA2EV

@@ -178,7 +178,7 @@ integer function io_RT_components(what,ID)
  T_size=1
  G_IO_steps=GF_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
  if(l_G   .and. NE_i_time> 1 .and. .not.SAVE_G_history) T_size=    G_MEM_steps
- if(l_G   .and. NE_i_time> 1 .and.      SAVE_G_history) T_size=min(G_MEM_steps,G_IO_steps-1)
+ if(l_G   .and. NE_i_time> 1 .and.      SAVE_G_history) T_size=min(G_MEM_steps,G_IO_steps)
  if(l_OBS .and. NE_i_time> 1)                           T_size=TMP_OBS_cache_steps
  !
  if (any((/io_sec(ID,:)==2/))) then
@@ -339,7 +339,8 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,unlim,l_G,TYP)
  use pars,           ONLY:IP,SP,schlen
  use units,          ONLY:AUT2FS
  use RT_control,     ONLY:RT_IO_t,RT_description,n_RT_descriptions
- use real_time,      ONLY:NE_steps,MEM_pointer,G_MEM_steps,NE_i_time
+ use real_time,      ONLY:NE_steps,MEM_pointer,G_MEM_steps,NE_i_time,i_MEM_now,i_MEM_prev,i_MEM_old,&
+&                         RT_dyn_step,RT_step
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental,&
 &                         NF90_unlimited,&
 &                         write_is_on,read_is_on
@@ -350,7 +351,7 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,unlim,l_G,TYP)
  logical,       intent(in)    :: def_var,unlim,l_G
  type(RT_IO_t), intent(inout) :: TYP
  !
- integer                      :: IPOS(1),IO_LIM(2)
+ integer                      :: IPOS(1),IO_LIM(2),i_min_index,i_mem
  character(schlen)            :: dim_name(1)
  !
  if(write_is_on(ID)) TYP%last_point=NE_i_time
@@ -376,6 +377,15 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,unlim,l_G,TYP)
      call def_variable_bulk(ID,"MEMORY_TIME_POINTS",2,(/G_MEM_steps/),IP+100,dim_name,silent=.true.)
    endif
    call io_variable_bulk(ID,2,I1=MEM_pointer)
+   if (read_is_on(ID)) then
+     i_min_index=minval(MEM_pointer)
+     do i_mem=1,G_MEM_steps
+       if (MEM_pointer(i_mem)==NE_i_time  )                         i_MEM_now =i_mem
+       if (MEM_pointer(i_mem)==NE_i_time-nint(RT_dyn_step/RT_step)) i_MEM_prev=i_mem
+       if (G_MEM_steps==2) cycle
+       if (MEM_pointer(i_mem)==i_min_index)                         i_MEM_old =i_mem
+     enddo
+   endif
  endif
  !
  if (.not.allocated(TYP%Time)) then
@@ -408,7 +418,7 @@ subroutine G_lesser_IO(ID,T_size)
  use hamiltonian,    ONLY:H_rotation
  use RT_control,     ONLY:GF_RT_IO_t,SAVE_G_history,TIME_string,NE_i_start_time
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_bands,RT_nbands,RT_nk,l_RT_rotate_DM,&
-&                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now,Ho_plus_sigma
+&                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now,i_MEM_prev,i_MEM_old,Ho_plus_Sigma
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_IO_G_kpts
  use netcdf,         ONLY:NF90_UNLIMITED
@@ -419,14 +429,12 @@ subroutine G_lesser_IO(ID,T_size)
  integer, intent(in)  :: ID,T_size
  !
  logical           :: l_H_rot,l_H_sig
- integer           :: ib,ik,i_spin,i_time,i_mem,i_mem_sorted
+ integer           :: ib,ik,i_sp_pol,i_time,i_mem,i_mem_sorted
  integer           :: VAR_SZ(5),IPOS(5)
  real(SP)          :: time(2)
  character(schlen) :: dim_names(5),var_name
  !
- i_spin=1
- l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,"H_rotation").or.write_is_on(ID)) )
- l_H_sig=( SAVE_G_History .and. (allocated(Ho_plus_sigma) .and. (variable_exist(ID,trim(ch))).or.write_is_on(ID)) )
+ i_sp_pol=1
  !
  VAR_SZ(1:3)=(/2,RT_nbands,RT_nbands/)
  !
@@ -447,9 +455,12 @@ subroutine G_lesser_IO(ID,T_size)
    dim_names(5) ='G_IO_time_step'
  endif
  !
+ l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,"H_rotation").or.write_is_on(ID)) )
+ l_H_sig=( l_RT_rotate_DM .and. (variable_exist(ID,"Ho_plus_Sigma").or.write_is_on(ID)) )
+ !
  if(NE_i_time==NE_i_start_time) then
    call def_variable_bulk(ID,"dG_lesser", 4,VAR_sz,SP,dim_names=dim_names,par_io_kind='independent',silent=.true.)
-   if(l_H_sig) call def_variable_bulk(ID,"Ho_plus_Sigma",6,VAR_sz(1:4),SP,&
+   if(l_H_sig) call def_variable_bulk(ID,"Ho_plus_Sigma",5,VAR_sz(1:4),SP,&
    &                                             dim_names=dim_names(1:4),par_io_kind='independent',silent=.true.)
    if(l_H_rot) call def_variable_bulk(ID,"H_rotation",6,VAR_sz(1:4),SP,&
    &                                             dim_names=dim_names(1:4),par_io_kind='independent',silent=.true.)
@@ -459,11 +470,14 @@ subroutine G_lesser_IO(ID,T_size)
  do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
    if(     SAVE_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
    if(.not.SAVE_G_history) IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
-   i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
+   !i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
+   if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
+   if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
+   if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
    call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_mem:i_mem),IPOS=IPOS)
  enddo
- if(l_H_sig) call io_variable_bulk(ID,6,C3=Ho_plus_sigma(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_spin),IPOS=IPOS(1:4))
- if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_spin),IPOS=IPOS(1:4))
+ if(l_H_sig) call io_variable_bulk(ID,5,C3=Ho_plus_sigma(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_sp_pol),IPOS=IPOS(1:4))
+ if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_sp_pol),IPOS=IPOS(1:4))
  !
 #else
  !
@@ -481,28 +495,35 @@ subroutine G_lesser_IO(ID,T_size)
  time(1)=(NE_i_time-(T_size-1)*nint(RT_dyn_step/RT_step))*RT_step
  time(2)=(NE_i_time-1)*RT_step
  !
- var_name="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//&
+ var_name="dG_lesser_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol))//&
  &        "_TIME"//trim(TIME_string(time(1)))//trim(TIME_string(time(2)))
  call def_variable_bulk(ID,trim(var_name),4,VAR_SZ,SP,dim_names=dim_names)
  !
  do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
    IPOS(5) = T_size+(i_mem_sorted-G_MEM_steps)
-   i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
+   !i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
+   if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
+   if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
+   if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
    call  io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,i_mem:i_mem),IPOS=IPOS)
  enddo
  !
+ var_name="Ho_plus_Sigma_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_spin))//&
+ &        "TIME"//trim(TIME_string( time(2) ))
+ l_H_sig=( l_RT_rotate_DM .and. (variable_exist(ID,trim(var_name)).or.write_is_on(ID)) )
+ !
  if ( l_H_sig ) then
-   var_name="Ho_plus_Sigma_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//&
-   &        "TIME"//trim(TIME_string( (i_time-1)*RT_step ))
    call def_variable_bulk(ID,trim(var_name),5,VAR_SZ(1:3),SP,dim_names=dim_names(1:3))
-   call  io_variable_bulk(ID,VAR_ID,C3=Ho_plus_sigma(:,:,ik,i_spin),IPOS=(/1,1,1,k_range(1)/))
+   call  io_variable_bulk(ID,5,C3=Ho_plus_sigma(:,:,ik,i_sp_pol),IPOS=(/1,1,1,k_range(1)/))
  endif
  !
+ var_name="H_rotation_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_spin))//&
+ &        "TIME"//trim(TIME_string( time(2) ))
+ l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,trim(var_name)).or.write_is_on(ID)) )
+ !
  if ( l_H_rot ) then
-   var_name="H_rotation_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//&
-   &        "TIME"//trim(TIME_string( (NE_i_time-1)*RT_step ))
    call def_variable_bulk(ID,trim(var_name),6,VAR_SZ(1:3),SP,dim_names=dim_names(1:3))
-   call  io_variable_bulk(ID,6,C2=H_rotation(:,:,ik,i_spin))
+   call  io_variable_bulk(ID,6,C2=H_rotation(:,:,ik,i_sp_pol))
  endif
  !
 #endif

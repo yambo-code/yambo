@@ -109,7 +109,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    !
  endif
  !
- if (.not.RT_do_it('OUT')) return
+ if (.not.(RT_do_it('OUT').or.index(code_bin,'ypp')>0)) return
  !
  ! Check for NAN's in the VALUES and eventually stop
  !

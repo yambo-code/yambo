@@ -44,9 +44,9 @@ module RT_control
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point
  type RT_IO_t
-   integer               :: N              = 0
-   integer               :: INTERVAL_steps =-1
-   integer               :: last_point     = 0
+   integer               :: N
+   integer               :: INTERVAL_steps
+   integer               :: last_point
    real(SP)              :: INTERVAL_time
    real(SP)              :: INTERVAL_time_SAVE
    real(SP), allocatable :: Time(:)
@@ -84,19 +84,20 @@ module RT_control
      real(SP), optional, intent(in) :: E
    end subroutine
    !
-   subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
+   subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ONLY)
     use pars,           ONLY:SP
     use electrons,      ONLY:levels
     use R_lattice,      ONLY:bz_samp
     implicit none
-    integer      :: bands(2)
-    type(levels) :: E
-    type(bz_samp):: K
-    character(*),optional :: what ! X,K,G
-    logical ,    optional :: VERBOSE
-    integer ,    optional :: IO_COM
-    real(SP),    optional :: Time
-    logical ,    optional :: keep_RT_carriers
+    integer     , intent(in)    :: bands(2)
+    type(levels), intent(inout) :: E
+    type(bz_samp), intent(in)   :: K
+    character(*),optional, intent(in) :: what ! X,K,G
+    logical ,    optional, intent(in) :: VERBOSE
+    integer ,    optional, intent(in) :: IO_COM
+    real(SP),    optional, intent(in) :: Time
+    logical ,    optional, intent(in) :: keep_RT_carriers
+    logical ,    optional, intent(in) :: TIMES_ONLY
    end subroutine
    !
    subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
@@ -283,7 +284,12 @@ module RT_control
      type(RT_IO_t) :: TYP
      logical       :: INIT
      !
-     if (INIT) TYP%INTERVAL_time=TYP%INTERVAL_time_SAVE
+     if (INIT) then
+       if (allocated(TYP%Time)) then
+         YAMBO_FREE(TYP%Time)
+       endif
+       TYP%INTERVAL_time=TYP%INTERVAL_time_SAVE
+     endif
      !
      ! Initialization always using RT_step
      !
@@ -293,16 +299,15 @@ module RT_control
      !
      TYP%INTERVAL_time  = nint(TYP%INTERVAL_time/RT_dyn_step)*RT_dyn_step
      !
-     !
      ! The steps are always relative to RT_step
      !
      TYP%INTERVAL_steps = nint(TYP%INTERVAL_time/RT_step)
      !
-     if (INIT) TYP%INTERVAL_time_SAVE=TYP%INTERVAL_time
-     !
-     if (INIT) TYP%last_point=0
-     !
-     if (INIT.and.TYP%last_point==0) TYP%last_point=-TYP%INTERVAL_steps+1
+     if (INIT) then
+       TYP%INTERVAL_time_SAVE=TYP%INTERVAL_time
+       TYP%N                 = 0
+       TYP%last_point        =-TYP%INTERVAL_steps+1
+     endif
      !
    end subroutine
    !

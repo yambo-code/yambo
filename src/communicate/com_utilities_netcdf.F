@@ -119,7 +119,7 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
    i_var=(of_nc_pos(VAR_ID,i1)-1)/max_headers_lines
    allocate(nc_var(schlen,nval))
    strlen(1)=len(trim(val(1)))
-   dim_names(1)='schlen'
+   dim_names(1)='strin_len'
    dim_names(2)='max_headers_lines'
    VAR_NAME=trim(of_nc_var_names(i1))//"_headers_"//trim(intc(i_var))
    VAR_SZ  =(/schlen,max_headers_lines/)
@@ -146,6 +146,7 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
  nc_var=""
  do i_var=1,nval
    do i_char=1,strlen(i_var)
+     if(nval==1.and.i_char>schlen) cycle
      nc_var(i_char,i_var)=val(i_var)(i_char:i_char)
    enddo
  enddo

@@ -61,7 +61,8 @@ integer function io_RT_components(what,ID)
  integer               :: local_COMM
 #endif
  integer               :: ik,db_type,T_size,i_start,G_IO_steps
- logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_JP,l_M,l_D,par_IO,first_IO
+ logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_JP,l_M,l_D,&
+&                         loading_carr_before_neq,par_IO,first_IO
  !
  ! DB kind and name...
  !=====================
@@ -94,6 +95,8 @@ integer function io_RT_components(what,ID)
    db_type=-3
  endif
  !
+ loading_carr_before_neq = (db_type==-3.and.l_real_time) 
+ !
  par_IO=.false.
 #if defined _PAR_IO
  if (l_G) then
@@ -124,16 +127,12 @@ integer function io_RT_components(what,ID)
  !=============
  if (any((/io_sec(ID,:)==1/))) then
    !
-   call RT_header(ID,what,db_type,l_carriers,l_OBS,l_G,l_THETA,l_REF,io_RT_components)
+   call RT_header(ID,what,loading_carr_before_neq,l_carriers,l_OBS,l_G,l_THETA,l_REF,io_RT_components)
    if (io_RT_components/=0) goto 1
    !
-   if (l_OBS)       call RT_OBS_IO(ID,l_JP,l_M,"DEF")
+   if (l_OBS)  call RT_OBS_IO(ID,l_JP,l_M,"DEF")
    !
-   if ( l_carriers) then
-     !
-     if ( db_type==2 .or. (db_type==-3.and..not.l_real_time) ) call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_io")
-     !
-   endif
+   if ( l_carriers .and. .not.loading_carr_before_neq) call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_io")
    !
  endif
  !
@@ -176,28 +175,28 @@ integer function io_RT_components(what,ID)
  endif
  !
  T_size=1
- G_IO_steps=GF_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
- if(l_G   .and. NE_i_time> 1 .and. .not.SAVE_G_history) T_size=    G_MEM_steps
- if(l_G   .and. NE_i_time> 1 .and.      SAVE_G_history) T_size=min(G_MEM_steps,G_IO_steps)
- if(l_OBS .and. NE_i_time> 1)                           T_size=TMP_OBS_cache_steps
+ if ( (write_is_on(ID) .or. l_real_time) .and. l_G ) then
+   G_IO_steps=GF_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
+   if(NE_i_time> 1 .and. .not.SAVE_G_history) T_size=    G_MEM_steps
+   if(NE_i_time> 1 .and.      SAVE_G_history) T_size=min(G_MEM_steps,G_IO_steps)
+ endif
+ if(l_OBS .and. NE_i_time> 1) T_size=TMP_OBS_cache_steps
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   if(any((/l_OBS,l_G,l_carriers/))) then
+   if(any((/l_OBS,l_G,l_carriers/)) .and. .not.loading_carr_before_neq ) then
      io_RT_components=variables_dynamic_RT(ID,local_description)
      if (io_RT_components/=0) goto 1
    endif
    !
 #if defined _PAR_IO
-   if(l_G)   call TIME_points_IO(ID,T_size,first_IO,SAVE_G_history,l_G,GF_RT_IO_t)
+   if(l_G)        call TIME_points_IO(ID,T_size,first_IO,.false.,SAVE_G_history,l_G,GF_RT_IO_t)
 #else
-   if(l_G)   call TIME_points_IO(ID,T_size,.true.,  .false.,       l_G,GF_RT_IO_t)
+   if(l_G)        call TIME_points_IO(ID,T_size,.true.,.false.,.false.,l_G,GF_RT_IO_t)
 #endif
+   if(l_carriers) call TIME_points_IO(ID,1,first_IO,.not.loading_carr_before_neq,.true.,l_G,CARR_RT_IO_t)
    !
-   if(l_carriers .and. db_type==2 .or. (db_type==-3.and..not.l_real_time) ) &
-   &         call TIME_points_IO(ID,1,     first_IO,.true.,      l_G,CARR_RT_IO_t)
-   !
-   if(l_OBS) call TIME_points_IO(ID,T_size,first_IO,.true.,       l_G,OBS_RT_IO_t)
+   if(l_OBS)      call TIME_points_IO(ID,T_size,first_IO,.false.,.true.,l_G,OBS_RT_IO_t)
    !
  endif
  !
@@ -251,7 +250,7 @@ end function
 ! RT header
 !=============
 !
-subroutine RT_header(ID,what,db_type,l_carriers,l_OBS,l_G,l_THETA,l_REF,io_RT_components)
+subroutine RT_header(ID,what,loading_carr_before_neq,l_carriers,l_OBS,l_G,l_THETA,l_REF,io_RT_components)
  !
  use pars,           ONLY:lchlen,schlen
  use drivers,        ONLY:l_real_time
@@ -264,8 +263,8 @@ subroutine RT_header(ID,what,db_type,l_carriers,l_OBS,l_G,l_THETA,l_REF,io_RT_co
  implicit none
  !
  character(*), intent(in) :: what
- integer, intent(in)      :: ID,db_type
- logical, intent(in)      :: l_carriers,l_OBS,l_G,l_THETA,l_REF
+ integer, intent(in)      :: ID
+ logical, intent(in)      :: loading_carr_before_neq,l_carriers,l_OBS,l_G,l_THETA,l_REF
  integer, intent(out)     :: io_RT_components
  !
  integer, external     :: variables_static_RT
@@ -273,7 +272,7 @@ subroutine RT_header(ID,what,db_type,l_carriers,l_OBS,l_G,l_THETA,l_REF,io_RT_co
  character(lchlen)     :: local_description(100)
  character(schlen)     :: what_
  !
- if ( db_type==2 .or. (db_type==-3.and..not.l_real_time) ) then
+ if ( .not. loading_carr_before_neq ) then
    !
    what_=what
    if (l_OBS) then
@@ -334,9 +333,10 @@ end subroutine RT_header
 ! Time Points
 !=============
 !
-subroutine TIME_points_IO(ID,VAR_SZ,def_var,unlim,l_G,TYP)
+subroutine TIME_points_IO(ID,VAR_SZ,def_var,load_rest_info,unlim,l_G,TYP)
  !
  use pars,           ONLY:IP,SP,schlen
+ use drivers,        ONLY:l_real_time
  use units,          ONLY:AUT2FS
  use RT_control,     ONLY:RT_IO_t,RT_description,n_RT_descriptions
  use real_time,      ONLY:NE_steps,MEM_pointer,G_MEM_steps,NE_i_time,i_MEM_now,i_MEM_prev,i_MEM_old,&
@@ -348,7 +348,7 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,unlim,l_G,TYP)
 #include<memory.h>
  !
  integer,       intent(in)    :: ID,VAR_SZ
- logical,       intent(in)    :: def_var,unlim,l_G
+ logical,       intent(in)    :: def_var,load_rest_info,unlim,l_G
  type(RT_IO_t), intent(inout) :: TYP
  !
  integer                      :: IPOS(1),IO_LIM(2),i_min_index,i_mem
@@ -357,13 +357,15 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,unlim,l_G,TYP)
  if(write_is_on(ID)) TYP%last_point=NE_i_time
  !
  ! ... for RESTART purposes...
- call def_variable_elemental(ID,"IO_TIMEs",2,SP,0) 
- call io_variable_elemental(ID,VAR=" [RT] I/O time          (input) [fs]:",&
-                      R0=TYP%INTERVAL_time_SAVE,CHECK=.TRUE.,OP=(/"=="/),  &
-&                     DESCRIPTION=RT_description(n_RT_descriptions),UNIT=AUT2FS)
- call io_variable_elemental(ID,VAR=" [RT] I/O time            (now) [fs]:",&
-                      R0=TYP%INTERVAL_time     ,CHECK=.FALSE.,             &
-&                     DESCRIPTION=RT_description(n_RT_descriptions),UNIT=AUT2FS)
+ if(load_rest_info) then
+   call def_variable_elemental(ID,"IO_TIMEs",2,SP,0) 
+   call io_variable_elemental(ID,VAR=" [RT] I/O time          (input) [fs]:",&
+                        R0=TYP%INTERVAL_time_SAVE,CHECK=.TRUE.,OP=(/"=="/),  &
+&                       DESCRIPTION=RT_description(n_RT_descriptions),UNIT=AUT2FS)
+   call io_variable_elemental(ID,VAR=" [RT] I/O time            (now) [fs]:",&
+                        R0=TYP%INTERVAL_time     ,CHECK=.FALSE.,             &
+&                       DESCRIPTION=RT_description(n_RT_descriptions),UNIT=AUT2FS)
+ endif
  !
  !
  call def_variable_elemental(ID,"IO_TIME_steps_last_nsteps",3,IP+100,0) 
@@ -371,7 +373,7 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,unlim,l_G,TYP)
  call io_variable_elemental(ID,I0=TYP%last_point)
  call io_variable_elemental(ID,I0=TYP%N)
  !
- if (l_G) then
+ if (l_G .and. l_real_time) then
    if(def_var.or.read_is_on(ID)) then
      dim_name="G_MEM_steps"
      call def_variable_bulk(ID,"MEMORY_TIME_POINTS",2,(/G_MEM_steps/),IP+100,dim_name,silent=.true.)
@@ -389,7 +391,7 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,unlim,l_G,TYP)
  endif
  !
  if (.not.allocated(TYP%Time)) then
-   YAMBO_ALLOC(TYP%Time,(NE_steps))
+   YAMBO_ALLOC(TYP%Time,(TYP%N))
  endif
  !
  IPOS=TYP%N-VAR_SZ+1
@@ -412,6 +414,7 @@ end subroutine TIME_points_IO
 subroutine G_lesser_IO(ID,T_size)
  !
  use pars,           ONLY:SP,schlen
+ use drivers,        ONLY:l_real_time
  use stderr,         ONLY:intc
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,&
 &                         variable_exist,write_is_on,io_sec
@@ -436,6 +439,7 @@ subroutine G_lesser_IO(ID,T_size)
  !
  i_sp_pol=1
  l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,"H_rotation").or.write_is_on(ID)) )
+ if(.not.l_real_time) PAR_IO_G_kpts=(/1,RT_nk/)
  !
  VAR_SZ(1:3)=(/2,RT_nbands,RT_nbands/)
  !
@@ -456,22 +460,27 @@ subroutine G_lesser_IO(ID,T_size)
    dim_names(5) ='G_IO_time_step'
  endif
  !
- if(NE_i_time==NE_i_start_time) then
+ if(NE_i_time==NE_i_start_time.or..not.l_real_time) then
    call def_variable_bulk(ID,"dG_lesser", 4,VAR_sz,SP,dim_names=dim_names,par_io_kind='independent',silent=.true.)
    if(l_H_rot) call def_variable_bulk(ID,"H_rotation",6,VAR_sz(1:4),SP,&
    &                                             dim_names=dim_names(1:4),par_io_kind='independent',silent=.true.)
  endif
  !
  IPOS(4)=PAR_IO_G_kpts(1)
- do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
-   if(     SAVE_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
-   if(.not.SAVE_G_history) IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
-   !i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
-   if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
-   if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
-   if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
-   call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_mem:i_mem),IPOS=IPOS)
- enddo
+ if(l_real_time) then
+   do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
+     if(     SAVE_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
+     if(.not.SAVE_G_history) IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
+     !i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
+     if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
+     if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
+     if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
+     call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_mem:i_mem),IPOS=IPOS)
+   enddo
+ else
+   IPOS(5)=GF_RT_IO_t%N
+   call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),1:1),IPOS=IPOS)
+ endif
  if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_sp_pol),IPOS=IPOS(1:4))
  !
 #else

@@ -43,7 +43,7 @@ subroutine RT_occupations_driver(k,en)
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !===============================================================
- call RT_apply(RT_bands,en,k,IO_COM=LOG,keep_RT_carriers=.TRUE.)
+ call RT_apply(RT_bands,en,k,IO_COM=LOG,TIMES_ONLY=.TRUE.)
  !
  if (.not.l_rt_carriers_in_use) return
  !

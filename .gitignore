@@ -58,11 +58,12 @@ lib/*/lapack-*
 lib/*/fftw-*
 lib/*/blacs*
 lib/*/scalapack-*
+lib/*/futile*
+lib/*/yaml*
 lib/hdf5/hdf5*
 lib/external/*
 compile.sh
-gfortran_internal*
-gfortran_ubuntu*
+gfortran_*
 sbin/make_makefile.sh
 sbin/objects_store.sh
 sbin/generate_gpl.sh

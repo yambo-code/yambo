@@ -52,12 +52,13 @@ module pars
  !...Input file analyze
  integer, parameter :: n_max_DB_IO_off_fields=20
  integer, parameter :: n_max_jobstr=10
+ integer, parameter :: num_of_alternative_locations=4+2*n_max_jobstr
  !
  !...Debug
  integer, parameter :: n_debugs_max=100
  ! 
  !...Output Files/Report File
- integer,parameter  :: nofs=1000
+ integer,parameter  :: max_n_ofs=1000
  integer,parameter  :: max_open_ofs=1000
  !
  !...I/O

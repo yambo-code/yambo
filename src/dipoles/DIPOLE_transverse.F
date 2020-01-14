@@ -42,11 +42,15 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  use X_m,                 ONLY:l_X_terminator
  use IO_m,                ONLY:io_control,RD_CL,RD
  use wave_func,           ONLY:wf_ng,WF
- use com,                 ONLY:error,msg
+ use com,                 ONLY:msg
  use timing_m,            ONLY:timing
 #if defined _RT
  use drivers,             ONLY:l_real_time
 #endif
+#ifdef _CUDA
+ use R_lattice,           ONLY:g_vec_d,g_vec
+#endif
+#include<dev_defs.h>
 #include<memory.h>
  !
  type(bz_samp), intent(in)    :: Xk
@@ -61,6 +65,9 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  integer                      :: ik,ic_wf,iv_wf,ic,iv,ifrag,&
 &                                i_sp_pol,n_LT_steps,ik_mem,ic_min
  complex(SP), allocatable     :: kbv(:,:,:,:)
+#ifdef _CUDA
+ complex(SP), allocatable, device :: kbv_d(:,:,:,:)
+#endif
  complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),P2
  real(SP)                     :: Ev_m_Ev_KS,Dipole_Energy_treshold
  !
@@ -80,7 +87,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  !
 #if defined _PL
  l_eval_DIP_V =l_eval_DIP_V.or.l_photolum
-#elif defined _NL
+#endif
+#if defined _NL && !defined _PL
  l_eval_DIP_V =l_eval_DIP_V.or.l_nl_optics
 #endif
  !
@@ -95,6 +103,10 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  !
  ! GPL_EXCLUDE_END
  !
+#ifdef _CUDA
+ allocate(g_vec_d,source=g_vec)
+#endif
+ !
  l_use_comm=l_eval_dip_V.or.l_eval_dip_iR
  !
  if(l_use_comm) then
@@ -107,6 +119,11 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
    !
    if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
      YAMBO_ALLOC(kbv,(wf_ng,pp_kbv_dim,4,n_spinor))
+     !
+#ifdef _CUDA
+     ! allocations with zero dims seem to be a problem
+     YAMBO_ALLOC(kbv_d,(wf_ng,max(pp_kbv_dim,1),4,n_spinor))
+#endif
    endif
    !
    ! Eo    are always the eigenvalues consistent with the WFs
@@ -162,9 +179,12 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
      !
      call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',title='-Oscillators/G space',&
 &               force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
-     ! 
+     !
      if (io_KB_abinit_err==0.and.l_use_comm) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
      if (io_KB_pwscf_err ==0.and.l_use_comm) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
+#ifdef _CUDA
+     if ((io_KB_abinit_err==0.or.io_KB_pwscf_err ==0).and.l_use_comm.and.size(kbv)>0) kbv_d=kbv
+#endif
      !
      do iv=Dip%ib(1),Dip%ib_lim(1) 
        !
@@ -220,8 +240,9 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
          ! Evaluate <iv_wf|[x,Vnl]|ic_wf>
          !================================
          if (io_Vnl_err==0) rho(:) = rho(:) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
-         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
-         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
+         !
+         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,DEV_VARNAME(kbv))
+         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,DEV_VARNAME(kbv))
          !
          ! define a different thr for val-val transitions
          ! used for XTerm (here Ev_m_Ev_KS may become very large)
@@ -287,7 +308,11 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
    call PP_free()
  else if (io_Vnl_err==0) then
    YAMBO_FREE(Vnl)
- endif 
+ endif
+#ifdef _CUDA
+ YAMBO_FREE(kbv_d)
+ YAMBO_FREE(g_vec_d)
+#endif
  !
  call timing('DIPOLE_transverse',OPR='stop')
  !

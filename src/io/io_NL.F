@@ -32,7 +32,7 @@ integer function io_NL(ID)
  use fields,        ONLY:Efield
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
-&                        RD_CL_IF_END,RD_CL,io_action,io_fragment,io_elemental
+&                        io_fragment,io_elemental
  !
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -93,8 +93,8 @@ integer function io_NL(ID)
  !
  if (i_fragment==0) goto 1
  !
- if(read_is_on(ID)) then
-   !  
+ if(read_is_on(ID).and..not.allocated(NL_P_t)) then
+   !
    YAMBO_ALLOC(NL_P_t,(NE_steps,3))
    !
    YAMBO_ALLOC(E_tot_t,(NE_steps,3))
@@ -111,10 +111,6 @@ integer function io_NL(ID)
    io_NL=io_err
    goto 1
  endif
- !
- ! Manage RD_CL_IF_END
- !
- if (io_action(ID)==RD_CL_IF_END.and.i_fragment==n_frequencies) io_action(ID)=RD_CL
  !
  ! Efield 
  !

@@ -58,7 +58,6 @@ module netcdf_data
   subroutine netcdf_check(ncid,netcdf_error,varid,var_name)
     use netcdf
     use pars, only:lchlen
-    use com,  only:error
     implicit none
     integer,     intent (in) :: ncid,varid,netcdf_error
     character (len = *), optional, intent(in) :: var_name

@@ -26,7 +26,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  ! Load and (eventually) FFTs the wavefunctions
  !
  use pars,          ONLY:SP,DP,schlen
- use com,           ONLY:msg,error,core_io_path
+ use com,           ONLY:msg,core_io_path
  use vec_operate,   ONLY:c2a
  use stderr,        ONLY:intc
  use electrons,     ONLY:nel,n_spinor,n_sp_pol
@@ -36,6 +36,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
 #endif
+#ifdef _CUDA
+ use FFT_m,         ONLY:cufft_plan,fft_g_table_d
+ use wave_func,     ONLY:wf_igk_d
+#endif
  use wave_func,     ONLY:wf_nc_k,wf_igk,WF_buffer,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,&
 &                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,QUIET_alloc,&
@@ -44,7 +48,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 &                        DUMP,IO_and_Messaging_switch
  use wrapper,       ONLY:Vstar_dot_V
 #if defined _SC
- use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
  use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_perturbation,global_XC_string
 #endif
@@ -55,7 +58,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 #include<memory.h>
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
- type(WAVEs)           :: WF
+ type(WAVEs), target   :: WF
  integer     ,optional :: sp_pol_to_load(2)
  character(*),optional :: space
  character(*),optional :: title
@@ -75,6 +78,12 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
  complex(SP), allocatable :: wf_disk(:,:,:)
  complex(DP), allocatable :: wf_DP(:)
+#ifdef _CUDA
+ complex(DP), allocatable, device :: wf_DP_d(:)
+ complex(SP), allocatable, device :: wf_disk_d(:,:,:)
+ complex(SP), pointer, device :: wfcd(:,:,:)
+ integer :: WFN, IWFspace
+#endif
  !
  ! I/O
  !
@@ -261,6 +270,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  if (WF%space=='B')  wf_grid_size=wf_ncx
  !
  YAMBO_ALLOC(wf_DP,(wf_grid_size))
+#ifdef _CUDA
+ allocate(wf_DP_d, mold=wf_DP)
+ wfcd => WF%c_d
+ WFN = WF%N
+ IWFspace = 0
+ if (WF%space=='R') IWFspace = 1
+ if (WF%space=='C'.or.WF%space=='B') IWFspace = 2
+#endif
  !
  ! LOG the states loaded
  !
@@ -338,9 +355,16 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
        if (.not.buffer_is_ok) then
          !
          YAMBO_ALLOC(wf_disk,(wf_ncx,n_spinor,wf_nb_to_load))
+#ifdef _CUDA
+         allocate(wf_disk_d, mold=wf_disk)
+#endif
          !
          call io_control(ACTION=RD,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+#ifdef _CUDA
+         io_err=io_WF(ID,wf_disk,wf_disk_d)
+#else
          io_err=io_WF(ID,wf_disk)
+#endif
          !
          if (pp_is_uspp) then
             call PP_compute_becp( becp(ikibz,i_sp_pol), wf_nc_k(ikibz), wf_nb_to_load, wf_disk, wf_b_indx)
@@ -360,47 +384,99 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
          WF%N=WF%N+1
          WF%index(ib,ikibz,i_sp_pol)=WF%N
          !
-         do i_spinor=1,n_spinor
-           !
-           wf_DP=(0._DP,0._DP)
-           do ic=1,wf_nc_k(ikibz)
-             ig=wf_igk(ic,ikibz)
-             if (ig>wf_ng) cycle
-             igfft=ig
-             if (WF%space=='R') igfft=fft_g_table(ig,1)
-             if (WF%space=='C'.or.WF%space=='B') igfft=ic
-             if (buffer_is_ok) then
-               wf_DP(igfft)=WF_buffer%c(ic,i_spinor,WF_buffer%index(ib,ikibz,i_sp_pol))
-             else
-               wf_DP(igfft)=cmplx(wf_disk(ic,i_spinor,ib_to_load),kind=DP)
-             endif
-           enddo
-           !
-           if (WF%space=='G'.or.WF%space=='C'.or.WF%space=='B') then
-             WF%c(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)
-             cycle
-           endif
-           !
-#if defined _FFTW
-           call fft_3d(wf_DP,fft_dim,+1,fftw_plan)
-#else
-           !
-           ! Here we explot (+2 instead of +1) the wfc cutoff when using FFTQE
-           !
-           call fft_3d(wf_DP,fft_dim,+2)
+#ifdef _CUDA
+         ! This is a specialized CUDA version performing FFT on the device
+         !
+         if(buffer_is_ok) call error(" [CUDA WF_LOAD] buffering not yet implemented")
+         !
+         if(WF%space=='R') then
+            !
+            do i_spinor=1,n_spinor
+              !
+              wf_DP_d=(0._DP,0._DP)
+              npwk=wf_nc_k(ikibz)
+              !
+              !$cuf kernel do(1) <<<*,*>>>
+              do ic=1,npwk
+                !
+                ig=wf_igk_d(ic,ikibz)
+                if (ig>wf_ng) cycle
+                igfft=fft_g_table_d(ig,1)
+                !
+                wf_DP_d(igfft)=cmplx(wf_disk_d(ic,i_spinor,ib_to_load),kind=DP)
+                !
+              enddo
+              !
+              call fft_3d_cuda(wf_DP_d,fft_dim,+1,cufft_plan)
+              !
+              WFN = WF%N
+              !$cuf kernel do(1)
+              do ic=1,wf_grid_size
+                wfcd(ic,i_spinor,WFN)=cmplx(wf_DP_d(ic),kind=SP)*fft_norm
+              enddo
+              !
+            enddo  ! i_spinor
+            !
+         else
 #endif
-           WF%c(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
-           !
-         enddo  ! i_spinor
+            !
+            do i_spinor=1,n_spinor
+              !
+              wf_DP=(0._DP,0._DP)
+              do ic=1,wf_nc_k(ikibz)
+                ig=wf_igk(ic,ikibz)
+                if (ig>wf_ng) cycle
+                igfft=ig
+                if (WF%space=='R') igfft=fft_g_table(ig,1)
+                if (WF%space=='C'.or.WF%space=='B') igfft=ic
+                if (buffer_is_ok) then
+                  wf_DP(igfft)=WF_buffer%c(ic,i_spinor,WF_buffer%index(ib,ikibz,i_sp_pol))
+                else
+                  wf_DP(igfft)=cmplx(wf_disk(ic,i_spinor,ib_to_load),kind=DP)
+                endif
+              enddo
+              !
+              if (WF%space=='G'.or.WF%space=='C'.or.WF%space=='B') then
+                WF%c(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)
+                cycle
+              endif
+              !
+#if defined _FFTW
+              call fft_3d(wf_DP,fft_dim,+1,fftw_plan)
+#else
+              !
+              ! Here we explot (+2 instead of +1) the wfc cutoff when using FFTQE
+              !
+              call fft_3d(wf_DP,fft_dim,+2)
+#endif
+              WF%c(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
+              !
+            enddo  ! i_spinor
+#ifdef _CUDA
+         endif
+#endif
+         !
        enddo    ! i_b
        !
        if (.not.buffer_is_ok) then
          YAMBO_FREE(wf_disk)
+#ifdef _CUDA
+         YAMBO_FREE(wf_disk_d)
+#endif
        endif
        !
      enddo      ! i_b_grp
    enddo        ! i_k
  enddo          ! i_sp_pol
+
+#ifdef _CUDA
+ call msg('rns', '[WF] Copying WF data from GPU device')
+ if(WF%space=='R') then
+   WF%c = WF%c_d
+ else
+   WF%c_d = WF%c
+ endif
+#endif
  call timing('WF_load_FFT',"stop")
  !
  ! CLEAN
@@ -415,6 +491,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  endif
  !
  YAMBO_FREE(wf_DP)
+#ifdef _CUDA
+ deallocate(wf_DP_d)
+#endif
+
  !
  ! The states_to_load is a temporary array that points to the states to be loaded
  ! here. It is defined in PARALLEL_WF_distribute and, therefore, only by calling 

@@ -31,7 +31,6 @@ integer function io_X(X,Xw,ID)
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
 &                        io_elemental,io_status,io_bulk,&
 &                        read_is_on,write_is_on,io_header,&
-&                        manage_OP_IF_START_and_CL_IF_END,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED,&
 &                        io_fragment,IO_OUTDATED_DB,frag_RESPONSE,&
@@ -39,14 +38,13 @@ integer function io_X(X,Xw,ID)
 &                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
+ use parallel_m,    ONLY:PAR_COM_X_WORLD
 #if defined _PAR_IO
  use X_m,           ONLY:X_par
- use IO_m,          ONLY:io_unit,netcdf_call,io_file,close_is_on,io_resetable,io_RESPONSE,&
-&                        io_netcdf_var,io_action,OP_WR_CL
- use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_Q_index
 #endif
  !
 #include<memory.h>
+ !
  type(X_t)   :: X
  type(w_samp):: Xw
  integer     :: ID
@@ -124,6 +122,7 @@ integer function io_X(X,Xw,ID)
    call io_bulk(ID,R2=RL_vecs_disk)
    !
    if (io_serial_number(ID)/=serial_number.and.read_is_on(ID).and.allocated(g_vec)) then
+     YAMBO_FREE(X_RLcomp_ig)
      YAMBO_ALLOC(X_RLcomp_ig,(X%ng))
      i_err = X_RLcomp_table() 
      if ( i_err < 0 ) io_status(ID) = IO_INCOMPATIBLE_VAR
@@ -149,14 +148,7 @@ integer function io_X(X,Xw,ID)
  !
  if (iq==0) goto 1
  !
- ! Manage OP_IF_START_and_RD_CL_IF_END
- !
- call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
-#if defined _PAR_IO
  call io_fragment(ID,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
-#else
- call io_fragment(ID,i_fragment=iq,ierr=io_err)
-#endif
  !
  !  type(X_t)    ::X(4)  x s d p
  !
@@ -172,11 +164,7 @@ integer function io_X(X,Xw,ID)
    !
    io_com_save=io_com(ID)
    if (iq>2 .and. trim(db_desc)/="em1d") io_com(ID)=NONE
-#if defined _PAR_IO
    call def_variable_elemental(ID,trim(ch),sec_size,SP,1,par_io_kind='independent')
-#else
-   call def_variable_elemental(ID,trim(ch),sec_size,SP,1)
-#endif
    !
    if (perform_IO) then
      if (X%whoami==4) then
@@ -210,11 +198,7 @@ integer function io_X(X,Xw,ID)
    endif
    !
    ch="FREQ_sec_iq"//trim(intc(iq))
-#if defined _PAR_IO
    call def_variable_bulk(ID,trim(ch),1,(/2,Xw%n_freqs/),SP,par_io_kind='independent')
-#else
-   call def_variable_bulk(ID,trim(ch),1,(/2,Xw%n_freqs/),SP)
-#endif
    if(perform_IO) call io_variable_bulk(ID,1,C1=Xw%p)
    !
    ! X_mat @iq

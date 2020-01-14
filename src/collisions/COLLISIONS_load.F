@@ -29,7 +29,6 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use drivers,         ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_use_collisions,l_sc_srpa,&
 &                          l_elel_scatt,l_elphoton_scatt,l_elphoton_corr,l_sc_hartree,&
 &                          l_use_Hxc_collisions,l_real_time,l_use_COH_collisions
- use com,             ONLY:error,warning
  use LIVE_t,          ONLY:live_timing
  use QP_m,            ONLY:QP_QED_ng
  use R_lattice,       ONLY:nqbz

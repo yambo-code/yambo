@@ -27,26 +27,26 @@ subroutine electrons_WFs(Xen)
  Use stderr,         ONLY:intc
  use wave_func,      ONLY:WF,wf_ng
  use FFT_m,          ONLY:fft_size,fft_dim
- use com,            ONLY:error
  use electrons,      ONLY:levels,n_spinor,spin,n_sp_pol
  use QP_m,           ONLY:QP_table,QP_n_states
  use YPPm,           ONLY:v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,l_norm_to_one,&
 &                         plot_title
- use com,            ONLY:msg,of_open_close,warning
+ use com,            ONLY:msg,of_open_close
 #if defined _YPP_SC
  use YPPm,           ONLY:V_value,l_mean_potential
  use QP_m,           ONLY:QP_nk
  use wave_func,      ONLY:wf_ng
- use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,io_control,DUMP
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,io_control,manage_action,DUMP
  use SC,             ONLY:V_mean,SC_bands,SC_fft_size
  use R_lattice,      ONLY:qindx_S
 #endif
 #if defined _YPP_ELPH
+ use interfaces,     ONLY:WF_apply_symm
  use YPP_ELPH,       ONLY:elph_residual_treshold
  use pars,           ONLY:cZERO
  use ELPH,           ONLY:elph_Ham_bands
- use com,            ONLY:jobstr,file_exists
+ use com,            ONLY:jobstr
  use R_lattice,      ONLY:nkibz
 #endif
  !
@@ -56,14 +56,15 @@ subroutine electrons_WFs(Xen)
  !
  ! Work Space
  !
- integer               :: i_qp,ik,i_sp_pol,ib,ibp,ir,i_wf,nb_to_load(2),nkpt_to_load(2),ik_ref
+ integer               :: i_qp,ik,i_sp_pol,i_frag,ib,ibp,ir,i_wf,nb_to_load(2),nkpt_to_load(2),ik_ref
  character(lchlen)     :: ch_ws(2)
 #if defined _YPP_ELPH
  integer               :: iq_s,iq_ibz
  logical               :: l_polaronic_wf
+ logical, external     :: file_exists
 #endif
 #if defined _YPP_SC
- integer               :: ID,io_V
+ integer               :: ID,IO_ACT,io_V
  integer, external     :: io_SC_components
 #endif
  !
@@ -260,7 +261,9 @@ subroutine electrons_WFs(Xen)
      !
 #if defined _YPP_SC
      if (l_mean_potential.and.ik/=ik_ref) then
-       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1+(i_sp_pol-1)*QP_nk/),ID=ID)
+       i_frag=ik+(i_sp_pol-1)*QP_nk
+       IO_ACT=manage_action(RD_CL_IF_END,i_frag,1,QP_nk*n_sp_pol)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID)
        io_V=io_SC_components('MP',Xen,ID)
        ik_ref=ik
      endif

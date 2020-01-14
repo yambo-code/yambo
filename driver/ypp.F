@@ -37,7 +37,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use wave_func,           ONLY:io_WF
  use interfaces,          ONLY:PARALLEL_global_indexes
  use YPPm,                ONLY:l_bxsf,l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
-&                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,l_fix_save
+&                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,&
+&                              l_fix_save,alat_used_for_output
 #if defined _YPP_RT
  use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs,l_NL_X,l_NL_exc
 #endif
@@ -103,7 +104,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
  iinf=io_DB1(en,k,ID)
  if (iinf/=0) then
-   call ypp_finalize("Where is the SAVE?")
+   call ypp_finalize("Where is the SAVE?",instr)
    return
  else
    call mk_dir(more_io_path)
@@ -120,7 +121,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=ID)
  iinf=io_WF(ID) 
  if (iinf/=0) then
-   call ypp_finalize("Where is the SAVE?")
+   call ypp_finalize("Where is the SAVE?",instr)
    return
  endif
  !  
@@ -130,16 +131,16 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  i_err=io_GROT(ID) 
  if (i_err/=0) then
    write_to_log=.TRUE.
-   call ypp_finalize("Missing post-setup databases. Please run yambo as it is first.")
+   call ypp_finalize("Missing post-setup databases. Please run yambo as it is first.",instr)
    return
  endif
  !
  ! INPUT FILE parsing
  !
- call INIT_ypp(en,instr,lnstr,.false.)
+ call INIT_ypp(en,instr,.false.)
  if (infile_editing) then
    iinf=1
-   call ypp_finalize(" ")
+   call ypp_finalize(" ",instr)
    return
  endif
  !
@@ -158,6 +159,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmetries            :',nsym)
  call msg('s',':: RL vectors            :',ng_vec)
+ !
+ alat_used_for_output=alat(1)
  !
  ! BZ sampling index 
  !
@@ -179,7 +182,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  q_pt=q%pt
  !
  if (i_err/=0) then
-   call ypp_finalize(" ")
+   call ypp_finalize(" ",instr)
    return
  endif
  !
@@ -197,7 +200,6 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !===================
  !
  if (l_bz_grids) call k_grids(en,k,Xk,q)
- !   =========
  !
  if (l_map_kpts) call k_map_fine_to_coarse(Xk,Xen)
  !
@@ -267,20 +269,21 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  call CLOSE_the_run(.TRUE.,.FALSE.,.FALSE.)
  !
- call INIT_ypp(en,instr,lnstr,.TRUE.)
+ call INIT_ypp(en,instr,.TRUE.)
  !
  return
  !
 contains
   !
-  subroutine ypp_finalize(STRING)
+  subroutine ypp_finalize(STRING,instr)
     character(*) :: STRING
+    character(*) :: instr
     if (.not.infile_editing) then
       if (len_trim(STRING)> 0) call msg("nl",trim(STRING))
       if (len_trim(STRING)==0) call section('X','Game Over')
       call msg("nln"," ")
     endif
-    if (.not.infile_editing) call INIT_ypp(en,instr,lnstr,.TRUE.)
+    if (.not.infile_editing) call INIT_ypp(en,instr,.TRUE.)
   end subroutine
   !
 end function ypp

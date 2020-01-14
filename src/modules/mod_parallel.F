@@ -65,6 +65,7 @@ module parallel_m
 #endif
  !
  integer            :: myid
+ integer            :: mycuda_dev = 0
  integer            :: ncpu
  integer            :: n_nodes(1)  = 1
  integer            :: n_IO_nodes  = 1
@@ -124,8 +125,8 @@ module parallel_m
    character(schlen)    :: ROLE_string = " "
    character(schlen)    :: Long_Description  = " "
    character(schlen)    :: Short_Description = " "
-   integer              :: nCPU_lin_algebra_INV   =1
-   integer              :: nCPU_lin_algebra_DIAGO =1
+   integer              :: nCPU_lin_algebra_INV   =-1
+   integer              :: nCPU_lin_algebra_DIAGO =-1
  end type CPU_stru
  !
  character(schlen)   :: CPU_string_save(n_CPU_str_max)
@@ -167,6 +168,7 @@ module parallel_m
    integer, allocatable :: n_of_elements(:)
    integer, allocatable :: weight_1D(:)
    integer, allocatable :: first_of_1D(:)
+   integer, allocatable :: last_of_1D(:)
  end type PP_indexes
  !
  type PARk_str
@@ -468,8 +470,10 @@ module parallel_m
    !
    subroutine PAR_build_index(PAR_ind,N_elements,V_ind,n_V_ind)
      !
-     integer           ::N_elements,n_V_ind,V_ind(N_elements),i_p
-     type(PP_indexes)  ::PAR_ind
+     type(PP_indexes), intent(in)   :: PAR_ind
+     integer,          intent(in)   :: N_elements
+     integer,          intent(out)  :: n_V_ind,V_ind(N_elements)
+     integer                        :: i_p
      !
      V_ind  =0
      n_V_ind=0
@@ -616,6 +620,11 @@ module parallel_m
        YAMBO_ALLOC(IND_out%first_of_1D,(dim_))
        IND_out%first_of_1D=IND_in%first_of_1D
      endif
+     if (allocated(IND_in%last_of_1D)) then
+       dim_=size(IND_in%last_of_1D)
+       YAMBO_ALLOC(IND_out%last_of_1D,(dim_))
+       IND_out%last_of_1D=IND_in%last_of_1D
+     endif
    end subroutine
    !
    subroutine PP_indexes_reset(IND_out)
@@ -625,6 +634,7 @@ module parallel_m
      YAMBO_FREE(IND_out%weight_1D)
      YAMBO_FREE(IND_out%n_of_elements)
      YAMBO_FREE(IND_out%first_of_1D)
+     YAMBO_FREE(IND_out%last_of_1D)
    end subroutine
    !
    subroutine PARALLEL_wait(COMM)

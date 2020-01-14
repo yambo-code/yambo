@@ -30,7 +30,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  use pars,           ONLY:SP,schlen,zero_dfl
  use vec_operate,    ONLY:v_norm,v_is_zero,cross_product,&
 &                         c2a,sort,rlu_v_norm
- use com,            ONLY:msg,warning
+ use com,            ONLY:msg
  use matrix_operate, ONLY:m3det,m3inv
  use R_lattice,      ONLY:b,k_grid_b,k_grid_dim,k_grid,RL_vol,&
 &                         k_grid_uc_vol,nkibz,nkbz,nXkibz,nXkbz,d3k_factor,&

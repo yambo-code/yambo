@@ -33,7 +33,6 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  use xc_functionals,ONLY:GS_xc_kind
  use global_XC,     ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED,&
 &                        H_SE_FOCK,H_SE_COH,H_SE_SEX,H_SE_HARTREE
- use com,           ONLY:error
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH,SC_band_mixing,QP_QED_ng
  use X_m,           ONLY:n_X_descs,X_description

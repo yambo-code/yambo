@@ -34,6 +34,9 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  use vec_operate,  ONLY:iku_v_norm
  use parallel_m,   ONLY:MPI_comm,PP_redux_wait,PP_indexes,PP_indexes_reset,myid
  use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,E_of_shell
+#ifdef _CUDA
+ use R_lattice,    ONLY:G_m_G_d
+#endif
  use interfaces,   ONLY:PARALLEL_index,PARALLEL_live_message
  use timing_m,     ONLY:timing
 #include<memory.h>
@@ -85,7 +88,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
    !
  endif
  !
-!$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
+ !$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
  do i2=1,iGo_
    !
    if(present(COMM)) then
@@ -98,7 +101,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
      E_G_m_G(i1,i2)=0.5_SP*iku_v_norm(v1)**2
    enddo
  enddo
-!$omp end parallel do
+ !$omp end parallel do
  !
  if (present(COMM)) call PP_redux_wait(E_G_m_G,COMM=COMM%COMM)
  !
@@ -160,7 +163,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  YAMBO_ALLOC(G_m_G,(iG_,iGo_))
  G_m_G=0
  !
-!$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
+ !$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
  do i2=1,iGo_
    !
    if(present(COMM)) then
@@ -171,16 +174,21 @@ integer function eval_G_minus_G(iG,iGo,COMM)
    do i1=1,iG_
      !
      v1(:)=g_vec(i1,:)-g_vec(i2,:)
-     G_m_G(i1,i2)=G_index(v1)
+     G_m_G(i1,i2)=G_index(v1,.false.)
      !
    enddo
  enddo
-!$omp end parallel do
+ !$omp end parallel do
  ! 
  if (present(COMM)) call PP_redux_wait(G_m_G,COMM=COMM%COMM)
  !
  call PP_indexes_reset(PAR_IND_G)
  YAMBO_FREE(E_G_m_G)
+ !
+#ifdef _CUDA
+ YAMBO_FREE(G_m_G_d)
+ allocate(G_m_G_d,source=G_m_G)
+#endif
  !
  call timing("eval_G_minus_G",opr="stop")
  !

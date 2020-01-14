@@ -44,7 +44,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,WF_free, &
 &                         PARALLEL_WF_distribute,PARALLEL_WF_index,LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
  use H_interfaces,   ONLY:V_real_space_to_H
- use com,            ONLY:msg,warning,error
+ use com,            ONLY:msg
  use X_m,            ONLY:X_t,current_iq,X_alloc
  use DIPOLES,        ONLY:DIPOLE_t
  use LIVE_t,         ONLY:LIVE_message
@@ -52,7 +52,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use xc_functionals, ONLY:E_xc
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait,CPU_structure
- use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,io_COLLs,io_RESPONSE,&
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,manage_action,REP,VERIFY,io_COLLs,io_RESPONSE,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder,v_norm
  use LIVE_t,         ONLY:live_timing
@@ -87,7 +87,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_sp_pol,i_io,io_X_err,io_DIP_err
+ integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),IO_ACT,io_E,io_V,io_WF,i_sp_pol,i_frag,i_io,io_X_err,io_DIP_err
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
  character(schlen)        :: dumb_ch,dumb_ch2
  integer, external        :: io_SC_components,X_dielectric_matrix
@@ -170,7 +170,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    io_WF=io_SC_components('WF',E,ID(2))
    do i_sp_pol=1,n_sp_pol
      do ik=1,QP_nk
-       call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*QP_nk/),ID=ID(2))
+       i_frag=ik+(i_sp_pol-1)*QP_nk
+       IO_ACT=manage_action(RD_CL_IF_END,i_frag,1,QP_nk*n_sp_pol)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID(2))
        io_WF=io_SC_components('WF',E,ID(2))
      enddo
    enddo
@@ -212,7 +214,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
    do i_sp_pol=1,n_sp_pol
      do ik=1,QP_nk
-       call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*QP_nk/),ID=ID(2))
+       i_frag=ik+(i_sp_pol-1)*QP_nk
+       IO_ACT=manage_action(RD_CL_IF_END,i_frag,1,QP_nk*n_sp_pol)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID(2))
        io_WF=io_SC_components('WF',E,ID(2))
        call WF_rotate(ik,i_sp_pol,WFo,fft_size)
      enddo
@@ -347,7 +351,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        ! 
        ! I/O [H_nl_sc]
        !
-       call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(3))
+       i_frag=ik+(i_sp_pol-1)*QP_nk
+       IO_ACT=manage_action(WR_CL_IF_END,i_frag,1,QP_nk*n_sp_pol)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID(3))
        io_V=io_SC_components('V',E,ID(3))
        !
        ! Mixing for non-local self-energies
@@ -446,9 +452,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        ! Update dipoles
        !
        ! Davide: this should be replaced by the use of covariant dipoles ...
-       call DIPOLE_rotate(H_rotation,E,Dip, 1)
-       call DIPOLE_expand_and_project(Xk,Dip)
-       call DIPOLE_rotate(H_rotation,E,Dip,-1)
+       call DIPOLE_SC_rotate(H_rotation,E,Dip, 1)
+       call DIPOLE_SC_rotate(H_rotation,E,Dip,-1)
        !
        ! Recalcolate Xo and X  
        !
@@ -576,7 +581,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      io_WF=io_SC_components(trim(dumb_ch),E,ID(2))
      do i_sp_pol = 1, n_sp_pol 
      do ik = 1, QP_nk 
-       call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(2))
+       i_frag=ik+(i_sp_pol-1)*QP_nk
+       IO_ACT=manage_action(WR_CL_IF_END,i_frag,1,QP_nk*n_sp_pol)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID(2))
        io_WF=io_SC_components(trim(dumb_ch),E,ID(2))
      enddo
      enddo

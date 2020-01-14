@@ -23,7 +23,6 @@
 !
 subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
- use com,            ONLY:warning
  use stderr,         ONLY:intc
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels

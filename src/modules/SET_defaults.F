@@ -59,7 +59,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
 &                     eval_magn,E_SOC_nbands
  use parallel_m, ONLY:ncpu,CPU_str_reset,PARALLEL_host_name
- use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
+ use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,opened_of,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,com_path,repfile,grid_paths
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
@@ -140,7 +140,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! Printed reals format lengths 
  !
+ ! GPL_EXCLUDE_START
  include 'branch.inc'
+ ! GPL_EXCLUDE_END
  !
  call set_real_printed_length()
  !
@@ -150,12 +152,12 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! OpenMP
  !
- omp_is_off    = .FALSE.
  !
 #if defined _OPENMP
- !
+ omp_is_off    = .FALSE.
  if (index(INSTR,'noopenmp')>0) omp_is_off=.TRUE.
- !
+#else
+ omp_is_off    = .TRUE.
 #endif
  !
  call OPENMP_initialize( )
@@ -223,7 +225,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  depth=-1
  secnm=' '
  previous_secmode=' '
- of=' '
+ of_name=' '
+ n_ofs_defined=0
  opened_of=' '
  of_unit=0
  of_unit(max_open_ofs)=-11
@@ -416,7 +419,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! BS/BSS
  !
- BS_n_g_W=1
+ BS_n_g_W=-1
  BS_eh_en=(/-1._SP,-1._SP/)/HA2EV
  BS_identifier=0
  BS_q=1

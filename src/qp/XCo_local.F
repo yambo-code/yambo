@@ -26,7 +26,6 @@ subroutine XCo_local(E,Xk)
  ! Local V_xc
  !
  use pars,          ONLY:SP,pi
- use com,           ONLY:error
  use electrons,     ONLY:levels,n_spin,n_spinor,spin
  use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table
  use R_lattice,     ONLY:bz_samp
@@ -48,7 +47,6 @@ subroutine XCo_local(E,Xk)
 #endif
 #if defined _SC
  use hamiltonian,   ONLY:V_xc_sc,V_hartree_sc
- use com,           ONLY:error
  use IO_m,          ONLY:REP,VERIFY
  use SC,            ONLY:load_SC_components,SC_fft_size,compatible_SC_DB
 #endif

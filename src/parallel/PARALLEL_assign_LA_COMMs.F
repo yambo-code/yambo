@@ -29,7 +29,7 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_A2A,SLK_COM_INDEX,SLK_ORTHO,SLK_POOL
 #endif
- use com,           ONLY:warning,msg
+ use com,           ONLY:msg
  use stderr,        ONLY:intc
  !
  implicit none

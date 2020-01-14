@@ -42,7 +42,6 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
  ! ------------------------------------------------------------
  !
  use pars,           ONLY:SP,cZERO
- use com,            ONLY:error
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:RK2,EULEREXP,RK2EXP,INVINT,RK4,RK4EXP,HEUN,CRANK_NICOLSON,I_relax,&
 &                         NL_bands 

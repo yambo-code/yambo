@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_rotate(H_rotation,Xen,X,rot_direction)
+subroutine Dipole_SC_rotate(H_rotation,Xen,X,rot_direction)
  !
  ! This routine update dipoles according to eq. 13
  ! of ref. PRB 59, 7486 (1999)
@@ -29,7 +29,6 @@ subroutine Dipole_rotate(H_rotation,Xen,X,rot_direction)
  ! considered zero
  !
  use pars,           ONLY:SP
- use com,            ONLY:warning
  use drivers,        ONLY:l_sc_run
  use electrons,      ONLY:levels,n_sp_pol
  use SC,             ONLY:SC_bands
@@ -69,4 +68,4 @@ subroutine Dipole_rotate(H_rotation,Xen,X,rot_direction)
    !
  enddo
  !
-end subroutine Dipole_rotate
+end subroutine DIPOLE_SC_rotate

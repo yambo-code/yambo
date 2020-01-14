@@ -28,6 +28,7 @@ module YPPm
  use units,     ONLY:HA2EV
  use QP_m,      ONLY:QP_t
  use electrons, ONLY:levels
+ use X_m,       ONLY:X_t
  !
  implicit none
  !
@@ -59,6 +60,7 @@ module YPPm
  ! DOS/BANDS/SPECIAL-K/INTERP grids
  !
  integer, parameter        :: n_SPECIAL_k_MAX=20
+ real(SP),     allocatable :: CIRCUIT_k_norm(:)
  character(2), allocatable :: CIRCUIT_k_label(:)
  character(2) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
  type(bz_samp):: SPECIAL_k
@@ -95,7 +97,7 @@ module YPPm
  integer               ::INTERP_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac
  logical               ::BANDS_print_internal_energies
- logical               ::BANDS_E_and_k_db
+ logical               ::BANDS_from_db
  !
  ! SPIN and SOC
  !
@@ -108,6 +110,7 @@ module YPPm
  logical      ::l_density
  logical      ::l_bands
  logical      ::l_mag
+ logical      ::l_interp
  logical      ::l_current
  logical      ::l_sp_wf
  logical      ::l_exc_wf
@@ -249,6 +252,16 @@ module YPPm
  ! Convert wave--functions
  !
  logical     :: l_fix_save
+ !
+ ! BSE data
+ !
+ complex(SP), allocatable ::BS_R_left(:)
+ complex(SP), allocatable ::BS_R_right(:)
+ complex(SP), allocatable ::BS_E(:)
+ real(SP),    pointer     ::BS_E_SOC_corr(:,:) => null()
+ real(SP),    pointer     ::BS_R_PL(:,:)       => null()
+ complex(SP), pointer     ::BS_R_kerr(:)       => null()
+ type(X_t)         ::Xbsk 
  !
  interface
    !

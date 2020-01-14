@@ -619,23 +619,27 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! AM, Sept 2019. The COH potential seems to break (in some case of a large amount) the
  ! energy degenerations. Short cut here is to symmetrize the QP_Sc if COH is included
  !
- if (((l_sc_srpa.or.l_sc_coh.or.l_cohsex).and..not.COHSEX_use_empties).or.l_GW_terminator) then
-   !
-   call degeneration_finder(qp%E_bare,qp%n_states,first_el,n_of_el,n_deg_grp,1.E-10_SP)
-   !
-   do ig1=1,n_deg_grp
-     !
-     dc(1)=0._SP
-     do i_c=1,2
-       do i_qp=first_el(ig1),first_el(ig1)+n_of_el(ig1)-1
-         if (i_c==1) dc(1)=dc(1)+QP_Sc(i_qp,1)/real(n_of_el(ig1), kind=SP)
-         if (i_c==2) QP_Sc(i_qp,1)=dc(1)
-       enddo
-     enddo
-     !
-   enddo
-   !
- endif
+ ! DS, Jan 2020. Removed this part. If there is a symmetry breaking it maybe a bug.
+ ! Hiding it in this way is not a nice solution.
+ ! Moreover this part is buggy and is makind all SC tests fail
+ !
+ !if (((l_sc_srpa.or.l_sc_coh.or.l_cohsex).and..not.COHSEX_use_empties).or.l_GW_terminator) then
+ !  !
+ !  call degeneration_finder(qp%E_bare,qp%n_states,first_el,n_of_el,n_deg_grp,1.E-10_SP)
+ !  !
+ !  do ig1=1,n_deg_grp
+ !    !
+ !    dc(1)=0._SP
+ !    do i_c=1,2
+ !      do i_qp=first_el(ig1),first_el(ig1)+n_of_el(ig1)-1
+ !        if (i_c==1) dc(1)=dc(1)+QP_Sc(i_qp,1)/real(n_of_el(ig1), kind=SP)
+ !        if (i_c==2) QP_Sc(i_qp,1)=dc(1)
+ !      enddo
+ !    enddo
+ !    !
+ !  enddo
+ !  !
+ !endif
  !
  ! CLEAN
  !

@@ -434,24 +434,19 @@ module IO_m
      !
    end subroutine
    !
-   subroutine manage_OP_IF_START_and_CL_IF_END(ID,NOW,FIRST,LAST,PAR_index)
+   integer function manage_action(IO_ACTION,NOW,FIRST,LAST,PAR_index)
      !
      use parallel_m, ONLY:PP_indexes
      !
-     integer           :: ID,NOW
-     integer, optional :: FIRST,LAST
-     type(PP_indexes), optional :: PAR_index
+     integer, intent(in) :: IO_ACTION,NOW
+     integer, intent(in) :: FIRST,LAST
+     type(PP_indexes), intent(in), optional :: PAR_index
      !
      integer :: start_,end_,ii
      !
-     start_=1
-     end_  =1
-     if (present(LAST)) then
-       end_  =LAST
-     endif
-     if (present(FIRST)) then
-       start_=FIRST
-     endif
+     end_  =LAST
+     start_=FIRST
+     !
      if (present(PAR_index)) then
        start_=0
        end_  =0
@@ -463,28 +458,23 @@ module IO_m
        enddo
      endif
      !
-     if (read_is_on(ID)) then
-       !
-       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_RD_CL
-       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.NOW==start_              ) io_action(ID)=OP_RD
-       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.                NOW==end_) io_action(ID)=   RD_CL
-       if (io_action(ID)==            RD_CL_IF_END.and.                NOW==end_) io_action(ID)=   RD_CL
-       !
-     else  if (write_is_on(ID)) then
-       !
-       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_WR_CL
-       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.NOW==start_              ) io_action(ID)=OP_WR
-       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
-       if (io_action(ID)==            WR_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
-       !
-       if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_APP_CL
-       if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.NOW==start_              ) io_action(ID)=OP_APP
-       if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
-       !if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
-       !
-     endif
+     manage_action=IO_ACTION
      !
-   end subroutine
+     if (IO_ACTION== OP_IF_START_RD_CL_IF_END.and.NOW==start_.and.NOW==end_) manage_action= OP_RD_CL
+     if (IO_ACTION== OP_IF_START_RD_CL_IF_END.and.NOW==start_              ) manage_action= OP_RD
+     if (IO_ACTION== OP_IF_START_RD_CL_IF_END.and.                NOW==end_) manage_action=    RD_CL
+     if (IO_ACTION==             RD_CL_IF_END.and.                NOW==end_) manage_action=    RD_CL
+     !
+     if (IO_ACTION== OP_IF_START_WR_CL_IF_END.and.NOW==start_.and.NOW==end_) manage_action= OP_WR_CL
+     if (IO_ACTION== OP_IF_START_WR_CL_IF_END.and.NOW==start_              ) manage_action= OP_WR
+     if (IO_ACTION== OP_IF_START_WR_CL_IF_END.and.                NOW==end_) manage_action=    WR_CL
+     if (IO_ACTION==             WR_CL_IF_END.and.                NOW==end_) manage_action=    WR_CL
+     !
+     if (IO_ACTION==OP_IF_START_APP_CL_IF_END.and.NOW==start_.and.NOW==end_) manage_action=OP_APP_CL
+     if (IO_ACTION==OP_IF_START_APP_CL_IF_END.and.NOW==start_              ) manage_action=OP_APP
+     if (IO_ACTION==OP_IF_START_APP_CL_IF_END.and.                NOW==end_) manage_action=    WR_CL
+     !
+   end function manage_action
    !
    subroutine io_reset(ID)
      integer :: ID

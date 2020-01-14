@@ -1,7 +1,7 @@
 #if defined _KERR
 KERR_objects = K_kerr_IP.o K_diago_kerr_residual.o
 #endif
-#if defined _SLEPC
+#if defined _SLEPC && !defined _NL
 SLEPC_objects = K_stored_in_a_slepc_matrix.o K_shell_matrix.o \
                 K_multiply_by_V_slepc.o
 #endif

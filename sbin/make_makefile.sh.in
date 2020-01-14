@@ -45,6 +45,7 @@ if [ -f $cdir/Makefile ] ; then rm -f $cdir/Makefile ;  fi
 llibs=""
 lock_file="__lock"
 dep_file="make.dep"
+modlist_file="modfiles.list"
 for arg in $@; do
  case $arg in
   -D_MPI)
@@ -102,12 +103,13 @@ echo "llibs=$llibs" >> $cdir/Makefile
 echo "linclude=$linclude" >> $cdir/Makefile
 echo "lf90libinclude=$lf90libinclude" >> $cdir/Makefile
 echo "lf90include=$lf90include" >> $cdir/Makefile
-echo "mfiles=find . -name '*.mod'" >> $cdir/Makefile
+echo "mfiles=find . -maxdepth 1 -name '*.mod'" >> $cdir/Makefile
 echo "target=$target" >> $cdir/Makefile
 echo "dmpi=$dmpi" >> $cdir/Makefile
 echo "dopts=$dopts -D_\$(os)" >> $cdir/Makefile
 echo "lock_file=$lock_file" >> $cdir/Makefile
 echo "dep_file=$dep_file" >> $cdir/Makefile
+echo "modlist_file=$modlist_file" >> $cdir/Makefile
 cp $cdir/$ofile $cdir/$ofile.c
 $cpp $cppflags $dopts -D_$os -D_$target $cdir/$ofile.c >> $cdir/Makefile
 rm -f $cdir/$ofile.c
@@ -133,10 +135,10 @@ cat << EOF >> $cdir/Makefile
 \$(lock_file):
 	${PREFIX}if test ! -f \$(lock_file) && test "\$(keep_objs)" = "no" ; then \
 	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
-	touch \$(lock_file); rm -f \$(dep_file); fi
+	touch \$(lock_file); rm -f \$(dep_file); rm -f \$(modlist_file); fi
 	${PREFIX}if test "\$(keep_objs)" = "yes"; \
-	then \$(prefix)/sbin/objects_store.sh \$(lock_file); rm -f \$(dep_file); fi
-	${PREFIX}if test "\$(keep_objs)" = "no"; then rm -f \$(dep_file); fi
+	then \$(prefix)/sbin/objects_store.sh \$(lock_file); rm -f \$(dep_file); rm -f \$(modlist_file); fi
+	${PREFIX}if test "\$(keep_objs)" = "no"; then rm -f \$(dep_file); rm -f \$(modlist_file); fi
 
 \$(dep_file): \$(lock_file)
 	cd \$(srcdir)/$cdir; \$(srcdir)/sbin/moduledep.sh \$(objs) > \$(prefix)/$cdir/\$(dep_file)
@@ -155,6 +157,7 @@ define link
  ${PREFIX}(eval \$(fc) \$(fcflags) \$(lf90include) \$(lf90libinclude) -o \$@ driver.o \$(objs) \$(llibs) ) > /dev/null
 endef
 define modmove
+ ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 || \$(mfiles) > \$(modlist_file)
  ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 || mv *.mod \$(includedir)
 endef
 define dircheck

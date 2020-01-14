@@ -70,7 +70,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     BSS_q0,Haydock_threshold,Haydock_iterIO,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
-#if defined _SLEPC
+#if defined _SLEPC && !defined _NL
  use BS_solvers, ONLY:BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol, BSS_target_E, Slepc_shell
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
@@ -452,7 +452,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  K_INV_EPS%treshold=0.01_SP
  BSS_n_freqs=100
  !
-#if defined _SLEPC
+#if defined _SLEPC && !defined _NL
  BSS_slepc_extraction='ritz'
  BSS_slepc_ncv=0
  BSS_slepc_tol=1E-6_SP

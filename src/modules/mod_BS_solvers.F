@@ -41,7 +41,7 @@ module BS_solvers
    !
  end type Haydock_vector
  !
-#if defined _SLEPC
+#if defined _SLEPC && !defined _NL
  !
  ! Slepc
  !==========
@@ -86,7 +86,7 @@ module BS_solvers
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.
  logical  :: run_Diago=.FALSE.
-#if defined _SLEPC
+#if defined _SLEPC && !defined _NL
  logical  :: run_Slepc=.FALSE.
 #endif
  !
@@ -100,7 +100,7 @@ module BS_solvers
  integer  :: Haydock_iterIO
  real(SP) :: Haydock_threshold
  real(SP) :: Haydock_v0_mod
-#if defined _SLEPC
+#if defined _SLEPC && !defined _NL
  !
  ! Solvers (Slepc)
  !=========

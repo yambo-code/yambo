@@ -120,7 +120,7 @@ module interfaces
      real(SP), optional, pointer, intent(in) :: PDOS_fac(:,:,:)
    end subroutine el_density_of_states
    !
-#if defined _SLEPC
+#if defined _SLEPC && !defined _NL
    subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
      !
      use pars,           ONLY:SP,schlen

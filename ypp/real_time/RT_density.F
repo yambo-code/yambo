@@ -84,7 +84,7 @@ subroutine RT_density(en,kpt,qpt)
    ch_ws(1)="Computing the density from the G lesser"
    YAMBO_ALLOC(G_loc,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
    G_loc=cZERO
-   YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
+   YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,1))
    dG_lesser=cZERO
    if(include_eq_occ) then
      YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
@@ -150,7 +150,7 @@ subroutine RT_density(en,kpt,qpt)
 #else
      do ik = 1, RT_nk 
        IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,1,RT_nk)
-       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/0,ik+2/),ID=ID)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID)
        io_err=io_RT_components('G',ID)
      enddo
 #endif

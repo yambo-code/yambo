@@ -31,7 +31,7 @@ subroutine ELPH_atomic_amplitude(q)
  use ELPH,                ONLY:ph_modes,ph_freqs_sq,&
 &                              elph_nDBs,elph_use_q_grid,&
 &                              elph_global_free,pol_vector,ph_qpt
- use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
+ use IO_m,                ONLY:io_control,manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use stderr,              ONLY:intc
  use functions,           ONLY:bose_f
  use interfaces,          ONLY:LINEAR_ALGEBRA_driver
@@ -52,7 +52,7 @@ subroutine ELPH_atomic_amplitude(q)
  !
  !I/O
  !
- integer           ::io_err,ID
+ integer           ::io_err,ID,IO_ACT
  integer, external ::io_ELPH
  !
  call section("*","== Electron-Phonon Interface: mean atomic amplitudes ==")
@@ -93,7 +93,8 @@ subroutine ELPH_atomic_amplitude(q)
    !
    ! I/O
    !
-   call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
+   IO_ACT=manage_action(RD_CL_IF_END,iq,1,nq_to_sum)
+   call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID)
    io_err=io_ELPH(ID,'no_matrix_elements')  
    !
    if (.not.allocated(pol_vector)) then

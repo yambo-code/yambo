@@ -38,7 +38,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
                       frag_SC,frag_RT,frag_ELPH,frag_BS_K,frag_SCREEN
  use stderr,     ONLY:intc,write_fragments_IO_log,logfile
  use interfaces, ONLY:PARALLEL_live_message
- use parallel_m, ONLY:ncpu,PP_bcast
+ use parallel_m, ONLY:ncpu,PP_bcast,PP_redux_wait
  use timing_m,   ONLY:timing
  !
  implicit none
@@ -131,8 +131,10 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  endif
  !
  ! io_action must be saved otherwise any io_disconnect call would call io_reset (like in ioWF)
- !
  if (close_is_on_save) io_resetable(ID)=.true.
+ !
+ ! Ensures that every MPI task has opened the fragment before writing
+ if (par_IO) call PP_redux_wait(COMM=COMM)
  !
  call timing('io_fragment',OPR='stop')
  !

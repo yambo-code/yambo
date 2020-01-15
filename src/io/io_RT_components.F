@@ -31,8 +31,7 @@ integer function io_RT_components(what,ID)
  use stderr,         ONLY:intc
  use timing_m,       ONLY:timing
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,read_is_on,io_fragment, &
-&                         manage_OP_IF_START_and_CL_IF_END,io_bulk,write_is_on
+ use IO_m,           ONLY:io_connect,io_disconnect,io_sec,read_is_on,io_fragment,io_bulk,write_is_on
  use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step,NE_steps,RT_nk, &
 &                         RT_carriers,RT_nbands,RT_all2ibz,G_MEM_steps
  use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,TMP_OBS_cache_steps,&
@@ -152,27 +151,14 @@ integer function io_RT_components(what,ID)
  ! Notice that section 2 is written inside the fragments
  ! Thus, I need to read it from fragment 1 when I do the restart
  !
- if (l_THETA.or.l_G) ik = max(1,maxval(io_sec(ID,:))-2)
- !
- if ( (l_G.or.l_THETA) .and. (.not.par_IO) ) then
-   if (ik>0.and.allocated(PAR_IND_Xk_ibz%element_1D)) then
-     call manage_OP_IF_START_and_CL_IF_END(ID,NOW=RT_all2ibz(ik),PAR_index=PAR_IND_Xk_ibz)
-   else
-     call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,LAST=RT_nk)
-   endif
+ if (l_THETA.or.l_G) then
+   ik = max(1,maxval(io_sec(ID,:))-2)
+   call io_fragment(ID,i_fragment=ik)
  endif
- !
- if (l_G .or. l_THETA)  call io_fragment(ID,i_fragment=ik)
  !
 #endif
  !
  ! Time size
- !
- if (l_OBS.or.l_carriers.or.( (l_G.or.l_THETA) .and. par_IO ) ) then
-   i_start=NE_i_start_time
-   if(first_IO) i_start=NE_i_time
-   call manage_OP_IF_START_and_CL_IF_END(ID,FIRST=i_start,NOW=NE_i_time,LAST=NE_steps)
- endif
  !
  T_size=1
  if ( (write_is_on(ID) .or. l_real_time) .and. l_G ) then

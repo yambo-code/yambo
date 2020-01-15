@@ -34,12 +34,6 @@ if test `find . -maxdepth 1 -name '__*' | wc -l` -ge 1 ; then
   if test `find . -maxdepth 1 -name '*.o' | wc -l` -ge 1 ; then
    if test ! -d .objects$file; then mkdir .objects$file; fi
    mv *.o .objects"$file"/
-   #if test -f modfiles.list; then
-   #  echo "Saving modules in .objects$file";
-   #  while read modfile; do
-   #    mv ../../include/"$modfile" .objects"$file"/
-   #  done < modfiles.list
-   #fi
   fi
   rm -f $file
  done
@@ -56,8 +50,4 @@ if test -d .objects$target; then
   echo "Loading objects from $target";
   mv .objects$target/*.o .
  fi
- #if test `find .objects$target/ -name '*.mod' | wc -l` -ge 1 ; then
- # echo "Loading modules from $target";
- # mv .objects$target/*.mod ../../include/
- #fi
 fi

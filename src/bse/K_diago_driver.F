@@ -42,7 +42,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC && !defined _SLEPC_OFF
  use interfaces,     ONLY:MATRIX_slepc
  use BS_solvers,     ONLY:BSS_slepc_extraction,Slepc_shell,BSS_slepc_ncv,&
 &                         BSS_slepc_tol,BSS_target_E,Slepc_v,BS_HAYVEC_free
@@ -58,7 +58,7 @@ subroutine K_diago_driver(iq,W,X_static)
  !
 #include<memory.h>
  ! 
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC && !defined _SLEPC_OFF
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
@@ -78,7 +78,7 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  ! Slepc specific
  !
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC && !defined _SLEPC_OFF
  Mat                   :: slepc_mat
  PetscErrorCode        :: ierr
  PetscFortranInt       :: slepc_ncv
@@ -114,14 +114,14 @@ subroutine K_diago_driver(iq,W,X_static)
  type(X_t),intent(in)    :: X_static
  !
  l_diago     = index(BSS_mode,'d')/=0
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC && !defined _SLEPC_OFF
  l_slepc     = index(BSS_mode,'s')/=0
 #endif
  !
  if(l_diago) BSS_n_eig = BS_H_dim
  !
  if(l_diago) Solver="Diago"
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC && !defined _SLEPC_OFF
  if(l_slepc) Solver="Slepc"
 #endif
  !
@@ -133,7 +133,7 @@ subroutine K_diago_driver(iq,W,X_static)
  if (isec(4)==0) sec="+"
  call section(sec,trim(Solver)//' Solver @q'//trim(intc(iq)))
  !  
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC && !defined _SLEPC_OFF
  if(l_slepc) call K_slepc_local_init()
 #endif
  !
@@ -181,7 +181,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
    endif
    !
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC && !defined _SLEPC_OFF
    if(l_slepc) then
      ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
      ! using the K_multiply_by_V function used in the Haydock method
@@ -210,7 +210,7 @@ subroutine K_diago_driver(iq,W,X_static)
    if (K_is_not_hermitian) then
      !
      if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC && !defined _SLEPC_OFF
      if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
 &                                  BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
 #endif
@@ -220,7 +220,7 @@ subroutine K_diago_driver(iq,W,X_static)
    else
      !
      if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC && !defined _SLEPC_OFF
      if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
 &                                  BS_mat,E_real=BS_E_real)
 #endif
@@ -229,7 +229,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
    endif
    !
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC && !defined _SLEPC_OFF
    !
    ! Destroy the matrix
    !============================
@@ -308,7 +308,7 @@ subroutine K_diago_driver(iq,W,X_static)
  !=======
  call local_free( )
  !
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC && !defined _SLEPC_OFF
  if(l_slepc) call K_slepc_local_free()
 #endif
  !
@@ -355,7 +355,7 @@ subroutine K_diago_driver(iq,W,X_static)
          YAMBO_ALLOC_P(BS_overlap,(BS_H_dim,BSS_n_eig))
        else
          YAMBO_ALLOC(BS_E_real,(BSS_n_eig))
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC && !defined _SLEPC_OFF
          if(l_slepc) then
            YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
          endif
@@ -393,7 +393,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
    end subroutine local_free
    !
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC && !defined _SLEPC_OFF
    subroutine K_slepc_local_init()
      !
      ! Number of states for partial diagonalization

@@ -263,10 +263,10 @@ yambo_rt: ext-libs
 	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH"; $(mksrc)
 	@+X2DO="yambo_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)"; ADF="-D_RT -D_ELPH"; $(mkx)
 yambo_nl: ext-libs
-	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_NL -D_RT -D_ELPH -D_yambo"; $(mk_driver_src)
-	@+LIBS2DO="$(PJ_NLLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_NL -D_RT -D_ELPH"; $(mksrc)
-	@+X2DO="yambo_nl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_NLLIBS_LD)"; ADF="-D_NL -D_RT -D_ELPH"; $(mkx)
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; ADF="-D_DOUBLE -D_SLEPC_OFF" ; $(mklib_internal)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_NL -D_RT -D_ELPH -D_yambo"; $(mk_driver_src)
+	@+LIBS2DO="$(PJ_NLLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_NL -D_RT -D_ELPH"; $(mksrc)
+	@+X2DO="yambo_nl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_NLLIBS_LD)"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_NL -D_RT -D_ELPH"; $(mkx)
 yambo_ph: ext-libs
 	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ELPH -D_yambo"; $(mk_driver_src)
@@ -335,12 +335,12 @@ ypp_rt: ext-libs
 	@+X2DO="ypp_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPRT_MAIN_LIBS_LD)"; \
 	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; ADF="-D_YPP_RT"; $(mk_ypp_x)
 ypp_nl: ext-libs
-	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ELPH -D_YPP_RT -D_YPP_NL -D_YPP_ELPH -D_ypp"; $(mk_driver_src)
-	@+LIBS2DO="$(YPPNL_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_NL -D_ELPH -D_YPP_NL"; $(mksrc)
-	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_ELPH -D_YPP_RT -D_YPP_NL -D_YPP_ELPH"; $(mk_ypp_src)
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; ADF="-D_DOUBLE -D_SLEPC_OFF" ; $(mklib_internal)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_ELPH -D_YPP_RT -D_YPP_NL -D_YPP_ELPH -D_ypp"; $(mk_driver_src)
+	@+LIBS2DO="$(YPPNL_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_RT -D_NL -D_ELPH -D_YPP_NL"; $(mksrc)
+	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_ELPH -D_YPP_RT -D_YPP_NL -D_YPP_ELPH"; $(mk_ypp_src)
 	@+X2DO="ypp_nl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPRT_MAIN_LIBS_LD)"; \
-	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; ADF="-D_YPP_NL -D_YPP_RT -D_YPP_ELPH"; $(mk_ypp_x)
+	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_YPP_NL -D_YPP_RT -D_YPP_ELPH"; $(mk_ypp_x)
 ypp_sc: ext-libs
 	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_SC -D_ypp"; $(mk_driver_src)
@@ -603,6 +603,9 @@ define lib_mod_clean
  @if test -d $(libbindir); then \
   cd $(libbindir) ; rm -f * ; cd .. ; rmdir $(libbindir); \
  fi
+ for folder in $(includedir)/modules__*; do \
+  cd $$folder ; rm -f * ; cd .. ; rmdir $$folder; \
+ done
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 
 endef

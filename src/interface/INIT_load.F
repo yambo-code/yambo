@@ -51,7 +51,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers,    ONLY:BSS_target_E,BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol
 #endif
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
@@ -315,7 +315,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs')
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC && !defined _SLEPC_OFF
  call it(defs,'BSSNEig',    '[SLEPC] Number of eigenvalues to compute',BSS_n_eig)
  call it(defs,'BSSEnTarget','[SLEPC] Target energy to find eigenvalues',BSS_target_E,E_unit,verb_level=V_resp)
  call it(defs,'BSSSlepcExtraction' , '[SLEPC] Extraction technique (ritz|harmonic)',BSS_slepc_extraction,verb_level=V_resp)

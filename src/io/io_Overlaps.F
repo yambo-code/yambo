@@ -90,10 +90,6 @@ integer function io_Overlaps(Dip,ID)
    goto 1
  endif
  !
- ! Manage RD_CL_IF_END
- !
- if (io_action(ID)==RD_CL_IF_END.and.ik==nXkbz) io_action(ID)=RD_CL
- !
  ! DIP_S
  !
  write (VAR_name,'(3(a,i4.4))') 'DIP_S_k_',ik,'_sp_pol_',i_sp_pol

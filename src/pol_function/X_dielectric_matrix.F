@@ -201,15 +201,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
  endif
  !
- if (i_err/=0) then
-#if defined _PAR_IO
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb,COMM=PAR_COM_X_WORLD%COMM)
-#else
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb)
-#endif
-   i_err=io_X(X,Xw,Xdb)
- endif
- !
  call PP_redux_wait()
  !
  do iq=X%iq(1),X%iq(2)
@@ -233,6 +224,15 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      call TDDFT_ALDA_G_space(Xen,Xk)
      !
+   endif
+   !
+   if (iq==1) then
+#if defined _PAR_IO
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb,COMM=PAR_COM_X_WORLD%COMM)
+#else
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb)
+#endif
+     i_err=io_X(X,Xw,Xdb)
    endif
    !
    ! Allocation

@@ -56,9 +56,9 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  STEP  = RT_step
  if (GENERAL_RT_IO_t%N> 1) then
    STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
-   if (l_rho_G) then
+   if (l_rho_G .or. l_G_lesser) then
     TIME_diff = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-G_MEM_steps))
-    if( .not. (TIME_diff-STEP*G_MEM_steps)<1.E-5) STEP=TIME_diff
+    if( .not. abs(TIME_diff-STEP*G_MEM_steps)<1.E-5) STEP=TIME_diff
    endif
  endif
  !

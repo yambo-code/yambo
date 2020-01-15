@@ -46,8 +46,8 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
  ! Workspace
  !
- real(SP)              :: T_c
- integer               :: ID,ik,ib1,ib2,io_err,i_T(2),i_w,i_T1,i_T2,i_Tc,i_dT,i_kind
+ real(SP)              :: T_c,REF_diff,TIME_diff
+ integer               :: ID,ik,ib1,ib2,io_err,i_T(2),i_w,i_T1,i_T2,i_Tc,i_dT,i_kind,i_t_tmp,Nt
  character(2)          :: function_name
  logical               :: include_eq_occ,keep_cc,keep_vv,keep_cv,keep_vc,&
 &                         build_G_ret,build_G_adv,build_G_les,build_G_grt,build_Spect
@@ -59,7 +59,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
  integer, external     :: io_RT_components
  !
- call section('*','Time dependent density plot')
+ call section('*','Two times Green function reconstruction')
  !
  call parser('IncludeEQocc',include_eq_occ)
  call parser('BuildSpec',   build_Spect)
@@ -76,7 +76,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
  ! I/O
  !=====
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) 
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID) 
  io_err=io_RT_components('G',ID)
  if(.not.SAVE_G_history) &
    &  call error(" History of rho not found. Two times function cannot be computed")
@@ -106,12 +106,12 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
  YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,1))
  Ho_plus_Sigma=cZERO
- YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
+ YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,1))
  dG_lesser=cZERO
  !
  if(include_eq_occ) then
    YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),ID=ID) 
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID) 
    io_err=io_RT_components('REF',ID)
  endif
  !
@@ -138,13 +138,21 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
  call msg('s',function_name//"(k,w) at time "//trim(real2ch(real(T_c/FS2AUT,SP)))//" fs")
  !
- NE_time=RT_time(i_Tc)
- NE_i_time=nint(NE_time/RT_step)+1
+ Nt=GF_RT_IO_t%N
+ !
+ REF_diff=GF_RT_IO_t%Time(Nt)-GF_RT_IO_t%Time(Nt-G_MEM_steps)
+ do i_t_tmp=1,Nt
+   TIME_diff= abs ( GF_RT_IO_t%Time(i_t_tmp) - RT_time(i_Tc) )
+   if (abs(TIME_diff)<REF_diff ) then 
+     REF_diff=TIME_diff
+     GF_RT_IO_t%N=i_t_tmp
+   endif
+ enddo
  !
  ! Load rho and H[rho]
  !
 #if defined _PAR_IO
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2,RT_nk+1/),ID=ID)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),ID=ID)
  io_err=io_RT_components('G',ID)
 #else
  do ik = 1, RT_nk 
@@ -225,17 +233,23 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
    !
    do i_kind=1,2
      !
-     NE_time=RT_time(i_T(i_kind))
-     NE_i_time=nint(NE_time/RT_step)+1
+     REF_diff=GF_RT_IO_t%Time(Nt)-GF_RT_IO_t%Time(Nt-G_MEM_steps)
+     do i_t_tmp=1,Nt
+       TIME_diff= abs ( GF_RT_IO_t%Time(i_t_tmp) - RT_time(i_T(i_kind)) )
+       if (abs(TIME_diff)<REF_diff ) then 
+         REF_diff=TIME_diff
+         GF_RT_IO_t%N=i_t_tmp
+       endif
+     enddo
      !
      ! Load rho and H[rho]
      !
 #if defined _PAR_IO
-     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2,RT_nk+1/),ID=ID)
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),ID=ID)
      io_err=io_RT_components('G',ID)
 #else
      do ik = 1, RT_nk 
-       call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
+       call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+2/),ID=ID)
        io_err=io_RT_components('G',ID)
      enddo
 #endif
@@ -244,7 +258,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
      !
      if(i_kind==2) then
        !
-       rho_T(:,:,:)=-cI* dG_lesser(:,:,:,G_MEM_steps)
+       rho_T(:,:,:)=-cI* dG_lesser(:,:,:,1)
        !
        ! rho and 1-rho
        !

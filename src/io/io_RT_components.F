@@ -423,8 +423,6 @@ subroutine G_lesser_IO(ID,T_size)
  real(SP)          :: time(2)
  character(schlen) :: dim_names(5),var_name
  !
- !complex(SP), allocatable :: TMP_VAR(:,:,:,:)
- !
  i_sp_pol=1
  !
  if(.not.l_real_time) PAR_IO_G_kpts=(/1,RT_nk/)
@@ -476,15 +474,7 @@ subroutine G_lesser_IO(ID,T_size)
    IPOS(5)=GF_RT_IO_t%N
    call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),1:1),IPOS=IPOS)
  endif
- if(l_H_sig) then
-   !allocate(TMP_VAR(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_sp_pol:i_sp_pol,1))
-   !if(write_is_on(ID)) TMP_VAR(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_sp_pol,1)=&
-   !&                     Ho_plus_sigma(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_sp_pol)
-   call io_variable_bulk(ID,5,C4=Ho_plus_sigma(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),1:1),IPOS=IPOS)
-   !if(read_is_on(ID)) Ho_plus_sigma(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_sp_pol)=&
-   !&                    TMP_VAR(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_sp_pol,1)
-   !deallocate(TMP_VAR)
- endif
+ if(l_H_sig) call io_variable_bulk(ID,5,C4=Ho_plus_sigma(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),1:1),IPOS=IPOS)
  if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_sp_pol),IPOS=IPOS(1:4))
  !
 #else

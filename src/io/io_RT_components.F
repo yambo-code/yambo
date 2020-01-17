@@ -409,7 +409,7 @@ subroutine G_lesser_IO(ID,T_size)
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_bands,RT_nbands,RT_nk,l_RT_rotate_DM,&
 &                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now,i_MEM_prev,i_MEM_old
 #if defined _PAR_IO
- use parallel_m,     ONLY:PAR_IO_G_kpts
+ use parallel_m,     ONLY:PAR_G_kpts
  use netcdf,         ONLY:NF90_UNLIMITED
 #endif
  !
@@ -425,7 +425,7 @@ subroutine G_lesser_IO(ID,T_size)
  !
  i_sp_pol=1
  !
- if(.not.l_real_time) PAR_IO_G_kpts=(/1,RT_nk/)
+ if(.not.l_real_time) PAR_G_kpts=(/1,RT_nk/)
  !
  VAR_SZ(1:3)=(/2,RT_nbands,RT_nbands/)
  !
@@ -454,7 +454,7 @@ subroutine G_lesser_IO(ID,T_size)
    &                                             dim_names=dim_names(1:4),par_io_kind='collective',silent=.true.)
  endif
  !
- IPOS(4)=PAR_IO_G_kpts(1)
+ IPOS(4)=PAR_G_kpts(1)
  if(l_real_time) then
    do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
      if(     SAVE_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
@@ -463,13 +463,13 @@ subroutine G_lesser_IO(ID,T_size)
      if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
      if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
      if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
-     call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_mem:i_mem),IPOS=IPOS)
+     call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_G_kpts(1):PAR_G_kpts(2),i_mem:i_mem),IPOS=IPOS)
    enddo
  else
    IPOS(5)=GF_RT_IO_t%N
-   call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),1:1),IPOS=IPOS)
+   call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1),IPOS=IPOS)
  endif
- if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_IO_G_kpts(1):PAR_IO_G_kpts(2),i_sp_pol),IPOS=IPOS(1:4))
+ if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_G_kpts(1):PAR_G_kpts(2),i_sp_pol),IPOS=IPOS(1:4))
  !
 #else
  !

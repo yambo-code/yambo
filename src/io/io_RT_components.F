@@ -449,9 +449,9 @@ subroutine G_lesser_IO(ID,T_size)
  l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,"H_rotation").or.write_is_on(ID)) )
  !
  if(NE_i_time==NE_i_start_time.or..not.l_real_time) then
-   call def_variable_bulk(ID,"dG_lesser", 4,VAR_sz,SP,dim_names=dim_names,par_io_kind='independent',silent=.true.)
+   call def_variable_bulk(ID,"dG_lesser", 4,VAR_sz,SP,dim_names=dim_names,par_io_kind='collctive',silent=.true.)
    if(l_H_rot) call def_variable_bulk(ID,"H_rotation",6,VAR_sz(1:4),SP,&
-   &                                             dim_names=dim_names(1:4),par_io_kind='independent',silent=.true.)
+   &                                             dim_names=dim_names(1:4),par_io_kind='collective',silent=.true.)
  endif
  !
  IPOS(4)=PAR_IO_G_kpts(1)

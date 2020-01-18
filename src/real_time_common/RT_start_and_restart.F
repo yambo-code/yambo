@@ -60,7 +60,7 @@ subroutine RT_start_and_restart(E,k,q)
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
  use H_interfaces,   ONLY:V_real_space_to_H
- use parallel_m,     ONLY:PP_redux_wait
+ use parallel_m,     ONLY:PP_redux_wait,PAR_G_kpts
  use stderr,         ONLY:real2ch
  !
 #include<memory.h>
@@ -85,22 +85,20 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Initialize the Gf and potentials
  !====================================
- call RT_initialize_local()
- ! 
- ! G_lesser occupations and reference
- !====================================
+ call RT_initialize_local_more()
  call RT_set_G_lesser()
  !
  ! GPL_EXCLUDE_START
  !
+ call RT_initialize_local_occupations()
  call RT_set_occupations()
  !
  ! GPL_EXCLUDE_END
  !
  if(.not.l_RT_is_WFfree) then
    !
-   call el_density_matrix(G_lesser_reference,E,k,rho_reference,1)
-   if(n_spin>1) call el_magnetization_matrix(G_lesser_reference,E,k,magn_reference,1)
+   call el_density_matrix(G_lesser_reference(:,:,PAR_G_kpts(1):PAR_G_kpts(2)),E,k,rho_reference,1)
+   if(n_spin>1) call el_magnetization_matrix(G_lesser_reference(:,:,PAR_G_kpts(1):PAR_G_kpts(2)),E,k,magn_reference,1)
    !
    call Bare_Hamiltonian(E,k,k)
    !
@@ -203,7 +201,7 @@ subroutine RT_start_and_restart(E,k,q)
    ! The G_lesser must be now rebuild from the reference (T=0) and latest dG components
    !
    do i_mem=1,G_MEM_steps
-     G_lesser(:,:,:,i_mem)=G_lesser_reference(:,:,:)+dG_lesser(:,:,:,i_mem)
+     G_lesser(:,:,:,i_mem)=G_lesser_reference(:,:,PAR_G_kpts(1):PAR_G_kpts(2))+dG_lesser(:,:,:,i_mem)
    enddo
    !
    if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
@@ -227,6 +225,7 @@ subroutine RT_start_and_restart(E,k,q)
    ! Update occupations after loading from DB 
    !==========================================
    !
+   call RT_initialize_local_occupations()
    call RT_set_occupations()
    !
    call msg( 'nr','---RESTART report---')
@@ -325,7 +324,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  contains
    !
-   subroutine RT_initialize_local()
+   subroutine RT_initialize_local_more()
      !
      G_lesser          =cZERO
      G_lesser_reference=cZERO
@@ -345,7 +344,17 @@ subroutine RT_start_and_restart(E,k,q)
        !
      endif
      !
-     ! GPL_EXCLUDE_START
+     ! Set to zero current and fields
+     !
+     RT_P              =cZERO
+     RT_ind_J          =cZERO
+     !
+   end subroutine
+   !
+   ! GPL_EXCLUDE_START
+   !
+   !
+   subroutine RT_initialize_local_occupations()
      !
      ! Set to zero occupations
      !
@@ -358,12 +367,9 @@ subroutine RT_start_and_restart(E,k,q)
      !
      ! GPL_EXCLUDE_END
      !
-     ! Set to zero current and fields
-     !
-     RT_P              =cZERO
-     RT_ind_J          =cZERO
-     !
    end subroutine
+   !
+   ! GPL_EXCLUDE_END
    !
    subroutine RT_set_G_lesser()
      !
@@ -404,10 +410,13 @@ subroutine RT_start_and_restart(E,k,q)
            endif
            !
            RT_E_and_k%E(ib,ik_RT_DbGd,1) = Energy
-           RT_E_and_k%W(ib,ik_RT_DbGd,1) = Width 
+           RT_E_and_k%W(ib,ik_RT_DbGd,1) = Width
+           !
+           G_lesser_reference(ib,ib,ik_RT_DbGd) = cmplx(0.,f_occ_ref,SP)
+           !
+           if( ik_RT_DbGd<PAR_G_kpts(1) .or. ik_RT_DbGd>PAR_G_kpts(2) ) cycle
            !
            G_lesser(ib,ib,ik_RT_DbGd,1)         = cmplx(0.,f_occ    ,SP)
-           G_lesser_reference(ib,ib,ik_RT_DbGd) = cmplx(0.,f_occ_ref,SP)
            dG_lesser(ib,ib,ik_RT_DbGd,1)        = G_lesser(ib,ib,ik_RT_DbGd,1)-G_lesser_reference(ib,ib,ik_RT_DbGd)
            !
          enddo
@@ -420,22 +429,25 @@ subroutine RT_start_and_restart(E,k,q)
    !
    subroutine RT_set_occupations()
      !
+     use parallel_m, ONLY:PAR_COM_Xk_ibz_INDEX
      use functions,  ONLY:Fermi_fnc
      use real_time,  ONLY:l_RT_relax_time_approx,RT_RTA_chem,RT_RTA_temp, &
 &                         RT_RTA_E_occ_infty,RT_RTA_H_occ_infty
      !
      real(SP):: En
-     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib
+     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib,Nk(2)
      !
      ! Occupations are defined from G_lesser and G_lesser_reference
      !
+     Nk=PAR_G_kpts
+     !
      do ib=RT_bands(1),RT_bands(2)
-       RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
-       RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
-       RT_delta_occupations(ib,:)      =         aimag(dG_lesser(ib,ib,:,1))
-       RT_life_delta_occupations(ib,:) =         aimag(dG_lesser(ib,ib,:,1))
-       RT_E_occupations(ib,:) = RT_E_occupations_reference(ib,:)+RT_delta_occupations(ib,:)
-       RT_H_occupations(ib,:) = RT_H_occupations_reference(ib,:)-RT_delta_occupations(ib,:)
+       RT_E_occupations_reference(ib,:) =          aimag(G_lesser_reference(ib,ib,:))
+       RT_H_occupations_reference(ib,:) = spin_occ-aimag(G_lesser_reference(ib,ib,:))
+       RT_delta_occupations(ib,Nk(1):Nk(2))      = aimag(dG_lesser(ib,ib,Nk(1):Nk(2),1))
+       RT_life_delta_occupations(ib,Nk(1):Nk(2)) = aimag(dG_lesser(ib,ib,Nk(1):Nk(2),1))
+       RT_E_occupations(ib,Nk(1):Nk(2)) = RT_E_occupations_reference(ib,Nk(1):Nk(2))+RT_delta_occupations(ib,Nk(1):Nk(2))
+       RT_H_occupations(ib,Nk(1):Nk(2)) = RT_H_occupations_reference(ib,Nk(1):Nk(2))-RT_delta_occupations(ib,Nk(1):Nk(2))
      enddo
      !
      ! RTA infinity ditributions
@@ -453,6 +465,11 @@ subroutine RT_start_and_restart(E,k,q)
          enddo
        enddo
      endif
+     !
+     call PP_redux_wait(RT_E_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     call PP_redux_wait(RT_H_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     call PP_redux_wait(RT_delta_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     call PP_redux_wait(RT_life_delta_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
      !
    end subroutine RT_set_occupations
    !

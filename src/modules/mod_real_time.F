@@ -463,9 +463,10 @@ module real_time
      YAMBO_FREE(RT%table)
    end subroutine
    !
-   subroutine RT_alloc(en)
+   subroutine RT_alloc(en,what)
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
+     use parallel_m,     ONLY:PAR_G_kpts
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
      use FFT_m,          ONLY:fft_size
@@ -477,8 +478,14 @@ module real_time
      implicit none
      !
      type(levels), intent(in) :: en
+     character(*), intent(in) :: what
      !
      integer :: i_mem
+     logical :: l_carriers,l_all,l_G_lesser
+     !
+     l_carriers = trim(what)=="carriers"
+     l_G_lesser = trim(what)=="Glesser"
+     l_all      = trim(what)=="all"
      !
      call H_alloc(en,.not.l_RT_is_WFfree,l_RT_rotate_DM)
      !
@@ -531,47 +538,55 @@ module real_time
        endif
      endif
      !
-     YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
-     !
-     if (l_velocity_gauge_corr) then
-       YAMBO_ALLOC(H_pseudo_eq,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+     if(l_all.or.l_carriers) then
+       !
+       ! Occ's ...
+       YAMBO_ALLOC(RT_H_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+       YAMBO_ALLOC(RT_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+       YAMBO_ALLOC(RT_life_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+       YAMBO_ALLOC(RT_E_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
+       RT_E_occupations_reference=0._SP
+       YAMBO_ALLOC(RT_H_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
+       RT_H_occupations_reference=0._SP
+       YAMBO_ALLOC(RT_occupations_locked,(RT_bands(1):RT_bands(2),RT_nk))
+       RT_occupations_locked=.false.
+       YAMBO_ALLOC(RT_E_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+       !
      endif
      !
-     if(l_use_Hxc_collisions) then
-       YAMBO_ALLOC(RT_Vnl_xc,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-       RT_Vnl_xc=(0._SP,0._SP)
+     if(l_all .or. l_G_lesser) then
+       !
+       YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+       !
+       if (l_velocity_gauge_corr) then
+         YAMBO_ALLOC(H_pseudo_eq,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+       endif
+       !
+       if(l_use_Hxc_collisions) then
+         YAMBO_ALLOC(RT_Vnl_xc,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+         RT_Vnl_xc=(0._SP,0._SP)
+       endif
+       !
+       YAMBO_ALLOC(HARTREE0,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+       HARTREE0=cZERO
+       !
+       YAMBO_ALLOC(XC0,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+       XC0=cZERO
+       !
+       ! G's ...
+       YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
+       YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),G_MEM_steps))
+       YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),G_MEM_steps))
+       G_lesser_reference=cZERO
+       dG_lesser         =cZERO
+       G_lesser          =cZERO
+       !
+       YAMBO_ALLOC(MEM_pointer,(G_MEM_steps))
+       MEM_pointer(1)=1
+       MEM_pointer(2)=0
+       if(G_MEM_steps==3) MEM_pointer(3)=-1
+       !
      endif
-     !
-     YAMBO_ALLOC(HARTREE0,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     HARTREE0=cZERO
-     !
-     YAMBO_ALLOC(XC0,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     XC0=cZERO
-     !
-     ! G's ...
-     YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
-     YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
-     YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
-     G_lesser_reference=cZERO
-     dG_lesser         =cZERO
-     G_lesser          =cZERO
-     !
-     ! Occ's ...
-     YAMBO_ALLOC(RT_H_occupations,(RT_bands(1):RT_bands(2),RT_nk))
-     YAMBO_ALLOC(RT_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
-     YAMBO_ALLOC(RT_life_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
-     YAMBO_ALLOC(RT_E_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
-     RT_E_occupations_reference=0._SP
-     YAMBO_ALLOC(RT_H_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
-     RT_H_occupations_reference=0._SP
-     YAMBO_ALLOC(RT_occupations_locked,(RT_bands(1):RT_bands(2),RT_nk))
-     RT_occupations_locked=.false.
-     YAMBO_ALLOC(RT_E_occupations,(RT_bands(1):RT_bands(2),RT_nk))
-     !
-     YAMBO_ALLOC(MEM_pointer,(G_MEM_steps))
-     MEM_pointer(1)=1
-     MEM_pointer(2)=0
-     if(G_MEM_steps==3) MEM_pointer(3)=-1
      !
      if (fft_size==0) return
      !
@@ -592,11 +607,21 @@ module real_time
      !
    end subroutine RT_alloc
    !   
-   subroutine RT_free
+   subroutine RT_free(what)
      !
      use DIPOLES,        ONLY:DIP_alloc
      use hamiltonian,    ONLY:H_free
      use xc_functionals, ONLY:E_xc
+     !
+     implicit none
+     !
+     character(*), intent(in) :: what
+     !
+     logical :: l_carriers,l_all,l_G_lesser
+     !
+     l_carriers = trim(what)=="carriers"
+     l_G_lesser = trim(what)=="Glesser"
+     l_all      = trim(what)=="all"
      !
      call H_free()
      !
@@ -615,9 +640,6 @@ module real_time
      YAMBO_FREE(RT_Nk_ibz)
      YAMBO_FREE(DbGd_EE_scatt_table)
      YAMBO_FREE(E_xc)
-     YAMBO_FREE(RT_Vnl_xc)
-     YAMBO_FREE(Ho_plus_Sigma)
-     YAMBO_FREE(H_pseudo_eq)
      YAMBO_FREE(RT_TIME_status)
      YAMBO_FREE(HARTREE0)
      YAMBO_FREE(XC0)
@@ -633,25 +655,41 @@ module real_time
      YAMBO_FREE(SAVED_lifetime)
      YAMBO_FREE(SAVED_times)
      YAMBO_FREE(REF_V_xc_sc)
-     YAMBO_FREE(RT_E_occupations)
-     YAMBO_FREE(RT_H_occupations)
-     YAMBO_FREE(RT_delta_occupations)
-     YAMBO_FREE(RT_life_delta_occupations)
-     YAMBO_FREE(RT_E_occupations_reference)
-     YAMBO_FREE(RT_H_occupations_reference)
-     YAMBO_FREE(RT_occupations_locked)
+     !
+     if(l_all.or.l_carriers) then
+       !
+       YAMBO_FREE(RT_E_occupations)
+       YAMBO_FREE(RT_H_occupations)
+       YAMBO_FREE(RT_delta_occupations)
+       YAMBO_FREE(RT_life_delta_occupations)
+       YAMBO_FREE(RT_E_occupations_reference)
+       YAMBO_FREE(RT_H_occupations_reference)
+       YAMBO_FREE(RT_occupations_locked)
+       !
+       YAMBO_FREE(Ho_plus_Sigma)
+       YAMBO_FREE(H_pseudo_eq)
+       YAMBO_FREE(RT_Vnl_xc)
+       !
+     endif
+     !
      YAMBO_FREE(REF_V_hartree_sc)
      YAMBO_FREE(RT_E_and_k%E)
      YAMBO_FREE(RT_E_and_k%W)
      YAMBO_FREE(RT_E_and_k%k)
-     YAMBO_FREE(G_lesser)
-     YAMBO_FREE(MEM_pointer)
+     !
+     if(l_all .or. l_G_lesser) then
+       !
+       YAMBO_FREE(G_lesser)
+       YAMBO_FREE(G_lesser_reference)
+       YAMBO_FREE(dG_lesser)
+       YAMBO_FREE(MEM_pointer)
+       !
+     endif
+     !
      YAMBO_FREE(q_weight_RT)
      YAMBO_FREE(THETA_matrix)
      YAMBO_FREE(THETA_matrix_index)
      YAMBO_FREE(elph_gkkp_expanded_sq)
-     YAMBO_FREE(G_lesser_reference)
-     YAMBO_FREE(dG_lesser)
      YAMBO_FREE(I1_matrix)
      YAMBO_FREE(rho_reference)
      YAMBO_FREE(magn_reference)

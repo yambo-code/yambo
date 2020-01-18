@@ -123,7 +123,7 @@ module RT_control
      !
      character(*), intent(in) :: what
      !
-     if(trim(what)=="cache" .or. trim(what)=="both") then
+     if(trim(what)=="cache" .or. trim(what)=="all") then
        !
        YAMBO_ALLOC(J_cache,(3,IO_OBS_cache_steps))
        J_cache=cZERO
@@ -142,7 +142,7 @@ module RT_control
        !
      endif
      !
-     if(trim(what)=="times" .or. trim(what)=="both") then
+     if(trim(what)=="times" .or. trim(what)=="all") then
        !
        YAMBO_ALLOC(OBS_RT_IO_t%Time,(NE_steps))
        OBS_RT_IO_t%Time=rZERO
@@ -161,14 +161,14 @@ module RT_control
      !
      character(*), intent(in) :: what
      !
-     if(trim(what)=="cache" .or. trim(what)=="both") then
+     if(trim(what)=="cache" .or. trim(what)=="all") then
        YAMBO_FREE(J_cache)
        YAMBO_FREE(P_cache)
        YAMBO_FREE(Ms_cache)
        YAMBO_FREE(Ml_cache)
        YAMBO_FREE(A_cache)
      endif
-     if(trim(what)=="times" .or. trim(what)=="both") then
+     if(trim(what)=="times" .or. trim(what)=="all") then
        YAMBO_FREE(OBS_RT_IO_t%Time)
        YAMBO_FREE(CARR_RT_IO_t%Time)
        YAMBO_FREE(GF_RT_IO_t%Time)

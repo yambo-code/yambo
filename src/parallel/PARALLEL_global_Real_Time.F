@@ -59,9 +59,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! Work space
  !
  integer              :: ib1,ib2
-#if defined _PAR_IO
  integer              :: ik,nk_G_IO
-#endif
  !
  CALL PARALLEL_structure(4,(/"k ","b ","q ","qp"/))
  !
@@ -167,19 +165,17 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
    enddo
  enddo
  !
-#if defined _PAR_IO
  nk_G_IO=0
  PAR_G_kpts=0
  do ik = 1, Xk%nibz
    if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
    if (nk_G_IO==0) PAR_G_kpts=ik
    if (nk_G_IO >0) then
-     if (ik/=PAR_G_kpts(2)+1) call error(" Non contiguous G distr does not work with PAR-IO")
+     if (ik/=PAR_G_kpts(2)+1) call error(" Non contiguous G distr is not allowed")
      PAR_G_kpts(2)=ik
    endif
    nk_G_IO=nk_G_IO+1
  enddo
-#endif
  !
  !.........................................................................
  ! WFs & QPs

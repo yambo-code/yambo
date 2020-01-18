@@ -31,6 +31,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !  Sigma_Pauli=the 3 Pauli matrices
  !
  use pars,           ONLY:SP,cI,cZERO
+ use parallel_m,     ONLY:PAR_G_kpts
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
  use D_lattice,      ONLY:nsym,dl_sop,i_time_rev
@@ -47,7 +48,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  implicit none
  !
  type(bz_samp), intent(in)  :: Xk
- complex(SP),   intent(in)  :: G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol)
+ complex(SP),   intent(in)  :: G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),n_sp_pol)
  integer,       intent(in)  :: lowest_band
  type(levels),  intent(in)  :: en       
  real(SP),      intent(out) :: magn(fft_size,3)

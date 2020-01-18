@@ -54,7 +54,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  call RT_k_grid(en,kpt,qpt)
  !
- call RT_alloc(en)
+ call RT_alloc(en,"carriers")
  !
  call RT_carriers_object(RT_carriers,en,kpt,ID,"allocate")
  !
@@ -74,6 +74,6 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  call RT_carriers_object(RT_carriers,en,kpt,ID,"free")
  !
- call RT_free()
+ call RT_free("carriers")
  !
 end subroutine

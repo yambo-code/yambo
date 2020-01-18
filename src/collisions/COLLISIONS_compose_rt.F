@@ -31,14 +31,14 @@ subroutine COLLISIONS_compose_rt(dG_in)
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
  use parallel_m,       ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_COM_Q_INDEX,&
-&                           PAR_IND_Xk_ibz,PAR_IND_Bp_mat
+&                           PAR_IND_Xk_ibz,PAR_IND_Bp_mat,PAR_G_kpts
  use hamiltonian,      ONLY:B_mat_index
  use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,RT_bands
  use timing_m,         ONLY:timing
  !
  implicit none
  !
- complex(SP), intent(in)   :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP), intent(in)   :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2))
  !
  ! Work Space
  !

@@ -466,6 +466,7 @@ module real_time
    subroutine RT_alloc(en,what)
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
+     use parallel_m,     ONLY:PAR_G_kpts
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
      use FFT_m,          ONLY:fft_size
@@ -574,8 +575,8 @@ module real_time
        !
        ! G's ...
        YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
-       YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
-       YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
+       YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),G_MEM_steps))
+       YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),G_MEM_steps))
        G_lesser_reference=cZERO
        dG_lesser         =cZERO
        G_lesser          =cZERO

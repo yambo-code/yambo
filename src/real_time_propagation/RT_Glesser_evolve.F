@@ -31,7 +31,7 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  !
  use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:levels,spin_occ
- use parallel_m,     ONLY:PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_G_kpts
  use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV, &
 &                         l_RT_RWA,l_RT_DIAG,l_RT_ACC,  &
 &                         G_lesser_reference,RT_bands,RT_nk,RT_all2ibz
@@ -41,9 +41,9 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  type(levels),   intent(in) :: En
  !
  real(SP),       intent(in) :: dT,dTp
- complex(SP),    intent(in) :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- complex(SP),    intent(in) :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- complex(SP),   intent(out) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP),    intent(in) :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2))
+ complex(SP),    intent(in) :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2))
+ complex(SP),   intent(out) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2))
  !
  ! Work space
  !

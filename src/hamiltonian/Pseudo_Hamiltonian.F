@@ -37,6 +37,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  use hamiltonian,   ONLY:H_ref_bands,Hzero
 #if defined _RT
  use real_time,     ONLY:Ho_plus_sigma,H_pseudo_eq
+ use parallel_m,    ONLY:PAR_G_kpts
 #endif
  use interfaces,    ONLY:WF_load,WF_free
  use io_m,          ONLY:OP_RD_CL,OP_RD,RD,RD_CL,io_control
@@ -178,7 +179,8 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  !
 #if defined _RT
  if(l_real_time) then
-   if(.not.l_equilibrium) Ho_plus_sigma=Ho_plus_sigma+(H_pseudo-H_pseudo_eq)
+   if(.not.l_equilibrium) Ho_plus_sigma=Ho_plus_sigma+&
+   & (H_pseudo(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1)-H_pseudo_eq(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1))
    if(     l_equilibrium) H_pseudo_eq  =H_pseudo
  endif
 #endif

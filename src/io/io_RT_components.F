@@ -428,8 +428,6 @@ subroutine G_lesser_IO(ID,T_size)
  !
  i_sp_pol=1
  !
- if(.not.l_real_time) PAR_G_kpts=(/1,RT_nk/)
- !
  VAR_SZ(1:3)=(/2,RT_nbands,RT_nbands/)
  !
  dim_names(1:3)  =[character(schlen) :: 'complex', 'RT_nbands','RT_nbands']
@@ -437,6 +435,8 @@ subroutine G_lesser_IO(ID,T_size)
  IPOS(1:3)=(/1,1,1/)
  !
 #if defined _PAR_IO
+ !
+ if(.not.l_real_time) PAR_G_kpts=(/1,RT_nk/)
  !
  VAR_SZ(4)    = RT_nk
  dim_names(4) ='RT_nk'
@@ -522,7 +522,7 @@ subroutine G_lesser_IO(ID,T_size)
    call  io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,i_mem:i_mem),IPOS=IPOS)
  enddo
  !
- var_name="Ho_plus_Sigma_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_spin))//&
+ var_name="Ho_plus_Sigma_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol))//&
  &        "TIME"//trim(TIME_string( time(2) ))
  if ( NE_i_time==NE_i_start_time .and. write_is_on(ID)) then
    l_H_sig= G_IO_steps==1 .and. SAVE_G_history
@@ -542,7 +542,7 @@ subroutine G_lesser_IO(ID,T_size)
    endif
  endif
  !
- var_name="H_rotation_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_spin))//&
+ var_name="H_rotation_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol))//&
  &        "TIME"//trim(TIME_string( time(2) ))
  l_H_rot=((variable_exist(ID,trim(var_name)).or.write_is_on(ID)).and.l_RT_rotate_DM)
  !

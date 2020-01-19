@@ -407,13 +407,14 @@ subroutine G_lesser_IO(ID,T_size)
  use hamiltonian,    ONLY:H_rotation
  use RT_control,     ONLY:GF_RT_IO_t,SAVE_G_history,TIME_string,NE_i_start_time
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_bands,RT_nbands,RT_nk,l_RT_rotate_DM,&
-&                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now,i_MEM_prev,i_MEM_old,Ho_plus_Sigma
+&                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now,i_MEM_prev,i_MEM_old, &
+&                         Ho_plus_Sigma,H_KS,l_RT_RWA
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_G_kpts
  use netcdf,         ONLY:NF90_UNLIMITED
 #endif
  !
- implicit none
+#include <memory.h>
  !
  integer, intent(in)  :: ID,T_size
  !
@@ -422,6 +423,8 @@ subroutine G_lesser_IO(ID,T_size)
  integer           :: VAR_SZ(5),IPOS(5)
  real(SP)          :: time(2)
  character(schlen) :: dim_names(5),var_name
+ !
+ complex(SP), allocatable :: H_IO(:,:,:,:)
  !
  i_sp_pol=1
  !
@@ -449,7 +452,11 @@ subroutine G_lesser_IO(ID,T_size)
  G_IO_steps=GF_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
  !
  l_H_rot=((variable_exist(ID,"H_rotation").or.write_is_on(ID)) .and. l_RT_rotate_DM)
- l_H_sig= (variable_exist(ID,"Ho_plus_Sigma").or.write_is_on(ID)).and.G_IO_steps==1
+ if ( NE_i_time==NE_i_start_time .and. write_is_on(ID)) then
+   l_H_sig= G_IO_steps==1 .and. SAVE_G_history
+ else
+   l_H_sig= variable_exist(ID,"Ho_plus_Sigma")
+ endif
  !
  if(NE_i_time==NE_i_start_time.or..not.l_real_time) then
    call def_variable_bulk(ID,"dG_lesser", 4,VAR_sz,SP,dim_names=dim_names,par_io_kind='collective',silent=.true.)
@@ -474,7 +481,16 @@ subroutine G_lesser_IO(ID,T_size)
    IPOS(5)=GF_RT_IO_t%N
    call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1),IPOS=IPOS)
  endif
- if(l_H_sig) call io_variable_bulk(ID,5,C4=Ho_plus_sigma(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1),IPOS=IPOS)
+ if(l_H_sig) then
+   if(write_is_on(ID) .and. l_RT_RWA) then
+     YAMBO_ALLOC(H_IO,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),1))
+     H_IO=Ho_plus_sigma(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1)+H_KS(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1)
+     call io_variable_bulk(ID,5,C4=H_IO,IPOS=IPOS)
+     YAMBO_FREE(H_IO)
+   else
+     call io_variable_bulk(ID,5,C4=Ho_plus_sigma(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1),IPOS=IPOS)
+   endif
+ endif
  if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_G_kpts(1):PAR_G_kpts(2),i_sp_pol),IPOS=IPOS(1:4))
  !
 #else
@@ -508,11 +524,22 @@ subroutine G_lesser_IO(ID,T_size)
  !
  var_name="Ho_plus_Sigma_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_spin))//&
  &        "TIME"//trim(TIME_string( time(2) ))
- l_H_sig=(variable_exist(ID,trim(var_name)).or.write_is_on(ID))
+ if ( NE_i_time==NE_i_start_time .and. write_is_on(ID)) then
+   l_H_sig= G_IO_steps==1 .and. SAVE_G_history
+ else
+   l_H_sig= variable_exist(ID,trim(var_name))
+ endif
  !
  if ( l_H_sig ) then
    call def_variable_bulk(ID,trim(var_name),5,VAR_SZ(1:3),SP,dim_names=dim_names(1:3))
-   call  io_variable_bulk(ID,5,C3=Ho_plus_sigma(:,:,ik,i_sp_pol),IPOS=(/1,1,1,k_range(1)/))
+   if(write_is_on(ID).and.l_RT_RWA) then
+     YAMBO_ALLOC(H_IO,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1,1))
+     H_IO(:,:,1,1)=Ho_plus_sigma(:,:,ik,i_sp_pol)+H_KS(:,:,ik,i_sp_pol)
+     call io_variable_bulk(ID,5,C2=H_IO(:,:,1,1))
+     YAMBO_FREE(H_IO)
+   else
+     call io_variable_bulk(ID,5,C2=Ho_plus_sigma(:,:,ik,i_sp_pol))
+   endif
  endif
  !
  var_name="H_rotation_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_spin))//&

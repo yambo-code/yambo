@@ -556,7 +556,7 @@ module real_time
      !
      if(l_all .or. l_G_lesser) then
        !
-       YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+       YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),n_sp_pol))
        !
        if (l_velocity_gauge_corr) then
          YAMBO_ALLOC(H_pseudo_eq,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))

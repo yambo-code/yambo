@@ -28,7 +28,7 @@ integer function io_Overlaps(Dip,ID)
  use R_lattice,     ONLY:nXkbz
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,&
 &                        io_bulk,read_is_on,io_header,io_extension,&
-&                        RD_CL_IF_END,RD_CL,io_action,&
+&                        &
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment
  use timing_m,      ONLY:timing
  !
@@ -89,10 +89,6 @@ integer function io_Overlaps(Dip,ID)
    io_Overlaps=io_err
    goto 1
  endif
- !
- ! Manage RD_CL_IF_END
- !
- if (io_action(ID)==RD_CL_IF_END.and.ik==nXkbz) io_action(ID)=RD_CL
  !
  ! DIP_S
  !

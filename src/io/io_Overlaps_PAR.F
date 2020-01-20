@@ -29,7 +29,6 @@ integer function io_Overlaps(Dip,ID)
  use electrons,     ONLY:n_sp_pol
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,def_variable_bulk,&
 &                        io_variable_bulk,read_is_on,io_header,io_extension,&
-&                        manage_OP_IF_START_and_CL_IF_END,&
 &                        IO_NOT_ALLOWED,io_DIP
  use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
@@ -60,10 +59,6 @@ integer function io_Overlaps(Dip,ID)
    i_sp_pol=2
    ik_bz=i_fragment-nXkbz
  endif
- !
- ! Manage OP_IF_START_and_RD_CL_IF_END
- !
- call manage_OP_IF_START_and_CL_IF_END(ID,NOW=i_fragment,FIRST=-1,LAST=(nXkbz*n_sp_pol+1))
  !
  call timing('io_Overlaps',OPR='start')
  !

@@ -215,7 +215,8 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
 &                             LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
 &                             TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
    !
-   call PARALLEL_index(PAR_IND_G_k,(/QP_nk/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+   if (.not.allocated( PAR_IND_G_k%element_1D)) &
+&    call PARALLEL_index(PAR_IND_G_k,(/QP_nk/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
    !
    call PARALLEL_live_message("k-q",ENVIRONMENT="Self_Energy",&
 &                             LOADED=count( PAR_IND_G_k%element_1D ),&

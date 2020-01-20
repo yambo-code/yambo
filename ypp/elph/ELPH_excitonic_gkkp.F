@@ -28,7 +28,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
  use BS_solvers,          ONLY:BS_mat,BSS_eh_table
  use BS,                  ONLY:BS_K_dim,BS_nT_at_k
  use R_lattice,           ONLY:bz_samp
- use IO_m,                ONLY:io_control,OP_RD,DUMP,RD_CL_IF_END
+ use IO_m,                ONLY:io_control,manage_action,OP_RD,DUMP,RD_CL_IF_END
  use ELPH,                ONLY:elph_nDBS_used,ph_modes,elph_global_free,&
 &                              elph_use_q_grid,ph_freqs_sq,elph_gkkp
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid
@@ -44,7 +44,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
  !
  ! Work Space
  !
- integer                   ::neh1,ic1,iv1,ik_bz1,ik_ibz,ID,io_err,iq,ikk,&
+ integer                   ::neh1,ic1,iv1,ik_bz1,ik_ibz,ID,IO_ACT,io_err,iq,ikk,&
 &                            neh2,ic2,iv2,ik_bz2,i_lambda,lambda,i_l
  complex(SP), allocatable  ::diagonal_xhi(:,:,:)
  real(SP),    allocatable  ::ph_freqs(:)
@@ -78,7 +78,8 @@ subroutine ELPH_excitonic_gkkp(Xk)
  !
  do iq=1,elph_nDBS_used
    !
-   call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
+   IO_ACT=manage_action(RD_CL_IF_END,iq,1,elph_nDBS_used)
+   call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID)
    io_err=io_ELPH(ID,'gkkp')
    !
    if (iq==1) call live_timing('GKKP factors',px%n_of_elements(myid+1))

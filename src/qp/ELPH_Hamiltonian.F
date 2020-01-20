@@ -27,9 +27,9 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use units,         ONLY:HA2EV
  use ELPH,          ONLY:elph_global_alloc,elph_global_free,elph_Ham_bands,elph_Ham_ik,&
 &                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector,RES_tresh
- use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,mk_dir
+ use IO_m,          ONLY:io_control,manage_action,OP_RD,REP,RD_CL_IF_END,mk_dir
  use com,           ONLY:msg,of_open_close,jobstr,jobdir,core_io_path
- use R_lattice,     ONLY:nqbz,bz_samp,qindx_S
+ use R_lattice,     ONLY:nqbz,nqibz,bz_samp,qindx_S
  use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev,n_atoms
  use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing
@@ -46,7 +46,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  ! Work Space
  !
- integer              :: H_size,ib,iq_bz,iq_ibz,iq_s,ID,io_err,iH,il,ok_bz,ok_ibz,ok_s,No_PH_basis_size,&
+ integer              :: H_size,ib,iq_bz,iq_ibz,iq_s,ID,io_err,IO_ACT,iH,il,ok_bz,ok_ibz,ok_s,No_PH_basis_size,&
 &                        iHp,ibp,iq_ibz_db,ik_bz_gkkp,ib_gkkp,ibp_gkkp,iw
  real(SP)             :: ph_E,residual,q_weight
  logical              :: l_eval_Displacements
@@ -165,7 +165,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
      ok_s   =k%sstar(ok_bz,2)
      !
      if (iq_ibz/=iq_ibz_db) then
-       call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_ibz+1/),ID=ID)
+       IO_ACT=manage_action(RD_CL_IF_END,iq_ibz,1,nqibz)
+       call io_control(ACTION=IO_ACT,SEC=(/iq_ibz+1/),ID=ID)
        io_err=io_ELPH(ID,'gkkp')
        iq_ibz_db=iq_ibz
        if (iq_ibz==1) pol_vector_gamma=pol_vector
@@ -427,7 +428,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
        do iq_bz=1,nqbz
          !
          iq_ibz =q%sstar(iq_bz,1)
-         call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_ibz+1/),ID=ID)
+         IO_ACT=manage_action(RD_CL_IF_END,iq_bz,1,nqbz)
+         call io_control(ACTION=IO_ACT,SEC=(/iq_ibz+1/),ID=ID)
          io_err=io_ELPH(ID,'gkkp')
          !
          do il=elph_branches(1),elph_branches(2)

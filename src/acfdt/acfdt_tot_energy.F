@@ -41,7 +41,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
  use X_m,            ONLY:X_t,X_alloc,X_mat
  use QP_m,           ONLY:QP_nb,QP_nk,QP_n_states,QP_table,QP_state,QP_Vnl_xc,QP_Vxc
  use collision_el,   ONLY:elemental_collision,elemental_collision_free
- use IO_m,           ONLY:io_control,RD_CL_IF_END,OP_RD
+ use IO_m,           ONLY:io_control,RD_CL_IF_END,OP_RD,manage_action
  use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
 &                         XC_LDA_X,XC_CORRELATION,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional
@@ -70,7 +70,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
  !
  ! ACFDT
  !
- integer       ::iw,il,FUNCTIONAL_,KIND_
+ integer       ::iw,il,FUNCTIONAL_,KIND_,IO_ACT
  real(SP)      ::Ex_LDA,Ec_LDA,dEc_LDA,ACFDT_EXX,ACFDT_Ec,sug_E_rng
  type(elemental_collision)::isc
  type(PP_indexes)         ::plw
@@ -216,7 +216,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
      !
      ! X I/O
      !
-     call io_control(ACTION=RD_CL_IF_END,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
+     IO_ACT=manage_action(RD_CL_IF_END,iqibz,1,q%nibz)
+     call io_control(ACTION=IO_ACT,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
      io_err=io_X(X,Xw,ID)
      !
      isc%qs(2)=iqibz

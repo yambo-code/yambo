@@ -25,7 +25,7 @@ subroutine XC_potentials(POTENTIALS_string,mode)
  !
  use pars,           ONLY:schlen
  use drivers,        ONLY:l_sc_ip,l_sc_hartree,l_sc_exx,l_sc_fock,l_sc_coh,l_sc_sex,l_sc_is_libDFT,&
-&                         l_sc_srpa,l_use_Hxc_collisions,l_use_COH_collisions
+&                         l_sc_srpa,l_use_Hxc_collisions,l_use_COH_collisions,l_sc_run
  use global_XC,      ONLY:H_SE_EXX,H_SE_FOCK,H_SE_COH,H_SE_SEX,H_SE_EXXC,H_SE_SRPA,H_SE_HARTREE
  use hamiltonian,    ONLY:H_kind,H_xc_functional,l_sc_XC_is_local,l_sc_V_is_local
  use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&
@@ -185,7 +185,7 @@ subroutine XC_potentials(POTENTIALS_string,mode)
        H_kind=H_kind+H_SE_SEX+H_SE_COH
      endif
    else if (STRING_same(trim(potentials(i_c)),'NONE')) then
-     call warning("NULL SC potential! ")
+     if(l_sc_run) call warning("NULL SC potential! ")
    else
      call error("Unknown SC potential! ")
    endif

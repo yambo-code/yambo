@@ -356,18 +356,17 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
                !
                ! inline bose_f function Dario:
                bose_PPA_E=0._SP
-               if (real(MPA_E_mat(ig1,ig2,i_np))<0._SP) bose_PPA_E=-spin_occ
-               !if (real(MPA_E_mat(ig1,ig2,i_np))<0.) bose_PPA_E=-spin_occ
+               if (real(MPA_E_mat(ig1,ig2,i_np),SP)<0._SP) bose_PPA_E=-spin_occ
                if (Finite_Tel) then
-                 if (real(MPA_E_mat(ig1,ig2,i_np),SP)>epsilon(1.)) then
+                 if (real(MPA_E_mat(ig1,ig2,i_np),SP)>epsilon(1._SP)) then
                    if (real(MPA_E_mat(ig1,ig2,i_np),SP)<=bose_E_cut*Bose_Temp) then
-                     bose_PPA_E=spin_occ*Bose_Temp/MPA_E_mat(ig1,ig2,i_np)
+                     bose_PPA_E=spin_occ*Bose_Temp/real(MPA_E_mat(ig1,ig2,i_np),SP)
                    endif 
                    if (real(MPA_E_mat(ig1,ig2,i_np),SP)> bose_E_cut*Bose_Temp) then
-                     bose_PPA_E=spin_occ/(exp(MPA_E_mat(ig1,ig2,i_np)/Bose_Temp)-1._SP)
+                     bose_PPA_E=spin_occ/(exp(real(MPA_E_mat(ig1,ig2,i_np),SP)/Bose_Temp)-1._SP)
                    endif
                  else
-                   bose_PPA_E=spin_occ*Bose_Temp/epsilon(1.)
+                   bose_PPA_E=spin_occ*Bose_Temp/epsilon(1._SP)
                  endif
                endif
                !
@@ -379,6 +378,15 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                                             -sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np)) )
                !
                dp_dummy=dp_dummy+ctmp
+               !
+               if (i_w==1 .and. i_qp==1 .and. ib==1 .and. iqbz==1 .and. i_np==1 .and. ig2==1 .and.(ig1==1 .or. ig1==2 ) ) then
+                 write(*,*)
+                 write(*,*) "G=",ig1
+                 write(*,*) "mpaE=",MPA_E_mat(ig1,ig2,:) 
+                 write(*,*) "mpaR=",MPA_R_mat(ig1,ig2,:)/isc%gamp(ig1,ig2)
+                 write(*,*) "x1,2=", X_mat(ig1,ig2,1), X_mat(ig1,ig2,2)
+                 write(*,*) 
+               endif
                !
              enddo
            enddo

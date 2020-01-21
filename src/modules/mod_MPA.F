@@ -345,11 +345,12 @@ contains
      if(realpart(E(i))<0._SP) then 
        E(i) = -E(i)
      endif
-     R(i) = -R(i)/(2._SP*E(i))
-     if(isnan(realpart(R(i))) .or. isnan(imagpart(R(i))) ) then
-       E= (1._SP,0._SP)-(0._SP,1._SP)*epsilon(1._SP)
-       R= x(1)/(2._SP*np)
-     endif
+     !R(i) = -R(i)/(2._SP*E(i))
+     if(abs(E(i))>epsilon(1._SP)) R(i) = -R(i)/(2._SP*E(i))
+     !if(isnan(realpart(R(i))) .or. isnan(imagpart(R(i))) ) then
+     !  E= (1._SP,0._SP)-(0._SP,1._SP)*epsilon(1._SP)
+     !  R= x(1)/(2._SP*np)
+     !endif
    enddo
    !
  end subroutine mpa_RE_solver

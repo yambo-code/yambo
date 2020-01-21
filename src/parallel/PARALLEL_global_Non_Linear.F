@@ -39,7 +39,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  ! IND
  use parallel_m,    ONLY:PAR_IND_freqs,PAR_IND_OVLPk_ibz,PAR_IND_Xk_ibz, &
 &                        PAR_IND_G_b,PAR_IND_WF_b,PAR_IND_B_mat_ordered,PAR_IND_QP,PAR_IND_B_mat, &
-&                        PAR_IND_DIPk_ibz,PAR_IND_Q,PAR_IND_WF_k,PAR_IND_Xk_bz,PAR_IND_DIPk_bz
+&                        PAR_IND_Q,PAR_IND_WF_k,PAR_IND_Xk_bz
  ! INDEX
  use parallel_m,    ONLY:PAR_freqs_index,PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_DIPk_ibz_index, &
 &                        PAR_G_bands_index,PAR_QP_index,PAR_G_bands_index
@@ -99,7 +99,6 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    ! 
    allocate(PAR_Xk_ibz_index(Xk%nibz))
    call PAR_build_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
-   call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
    call COMM_copy(PAR_COM_Xk_ibz_INDEX,PAR_COM_DIPk_ibz_INDEX)
    !
    ! Define the Xk_bz indeces for BZ parallelization
@@ -108,15 +107,9 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    call distribute_BZk_using_IBZk(PAR_COM_Xk_ibz_INDEX,Xk,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
 &                                                         PAR_IND_Xk_bz, PAR_IND_Xk_bz_ID,&
 &                                                         PAR_Xk_bz_index,PAR_Xk_nbz)
-
-   call PAR_INDEX_copy(PAR_IND_Xk_bz,PAR_IND_DIPk_bz)
    !
-   allocate(PAR_DIPk_ibz_index(Xk%nibz))
-   call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    !
    ! Overlap indeces for WF distribution
-   !
-   call PAR_INDEX_copy(PAR_IND_DIPk_ibz,PAR_IND_OVLPk_ibz)
    !
    call PARALLEL_live_message("H(ibz)",ENVIRONMENT=ENVIRONMENT,&
 &           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz,&

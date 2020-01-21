@@ -433,8 +433,6 @@ subroutine G_lesser_IO(ID,T_size)
  !
 #if defined _PAR_IO
  !
- if(.not.l_real_time) PAR_G_kpts=(/1,RT_nk/)
- !
  VAR_SZ(4)    = RT_nk
  dim_names(4) ='RT_nk'
  !

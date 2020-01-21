@@ -33,7 +33,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  use pars,       ONLY:schlen
  use IO_m,       ONLY:close_is_on,io_connect,io_resetable,io_file,&
 &                     io_sec,io_extension,io_action,read_is_on,write_is_on,&
-&                     OP_RD_CL,OP_WR_CL,io_type,io_disconnect,io_folder,io_raw_extension
+&                     OP_RD_CL,OP_APP_CL,io_type,io_disconnect,io_folder,io_raw_extension
  use IO_m,       ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,&
                       frag_SC,frag_RT,frag_ELPH,frag_BS_K,frag_SCREEN
  use stderr,     ONLY:intc,write_fragments_IO_log,logfile
@@ -98,7 +98,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  close_is_on_save=close_is_on(ID)
  !
  if (read_is_on(ID))  io_action(ID)=OP_RD_CL
- if (write_is_on(ID)) io_action(ID)=OP_WR_CL
+ if (write_is_on(ID)) io_action(ID)=OP_APP_CL
  !
  if (     present(i_fragment)) i_frag=i_fragment
  if (.not.present(i_fragment)) i_frag=maxval(io_sec(ID,:))

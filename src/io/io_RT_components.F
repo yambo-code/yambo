@@ -144,20 +144,6 @@ integer function io_RT_components(what,ID)
  ! 2nd SECTION
  !=============
  !
-#if !defined _PAR_IO
- !
- ! === deal with K-fragments ===
- !
- ! Notice that section 2 is written inside the fragments
- ! Thus, I need to read it from fragment 1 when I do the restart
- !
- if (l_THETA.or.l_G) then
-   ik = max(1,maxval(io_sec(ID,:))-2)
-   call io_fragment(ID,i_fragment=ik)
- endif
- !
-#endif
- !
  ! Time size
  !
  T_size=1
@@ -178,7 +164,7 @@ integer function io_RT_components(what,ID)
 #if defined _PAR_IO
    if(l_G)        call TIME_points_IO(ID,T_size,first_IO,.false.,SAVE_G_history,l_G,GF_RT_IO_t)
 #else
-   if(l_G)        call TIME_points_IO(ID,T_size,.true.,.false.,.false.,l_G,GF_RT_IO_t)
+   if(l_G)        call TIME_points_IO(ID,T_size,.true.,.false.,SAVE_G_history,l_G,GF_RT_IO_t)
 #endif
    if(l_carriers) call TIME_points_IO(ID,1,first_IO,.not.loading_carr_before_neq,.true.,l_G,CARR_RT_IO_t)
    !
@@ -191,9 +177,18 @@ integer function io_RT_components(what,ID)
  ! 3rd SECTION
  !=============
  !
- ! === no K no Time ===
- !
  ! GPL_EXCLUDE_START
+ !
+#if !defined _PAR_IO
+ !
+ ! === deal with K-fragments ===
+ !
+ if (l_THETA.or.l_G) then
+   ik = max(1,maxval(io_sec(ID,:))-2)
+   call io_fragment(ID,i_fragment=ik)
+ endif
+ !
+#endif
  !
 #if defined _ELPH
  !
@@ -209,8 +204,6 @@ integer function io_RT_components(what,ID)
  ! lesser Green Function
  !=======================
  if ( l_G ) call G_lesser_IO(ID,T_size)
- !
- ! === Time-dependent ===
  !
  ! Carrier components
  !====================
@@ -405,12 +398,12 @@ subroutine G_lesser_IO(ID,T_size)
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,&
 &                         variable_exist,write_is_on,io_sec
  use hamiltonian,    ONLY:H_rotation
- use RT_control,     ONLY:GF_RT_IO_t,SAVE_G_history,TIME_string,NE_i_start_time
+ use RT_control,     ONLY:GF_RT_IO_t,SAVE_G_history,NE_i_start_time
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_bands,RT_nbands,RT_nk,l_RT_rotate_DM,&
 &                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now,i_MEM_prev,i_MEM_old
+ use netcdf,         ONLY:NF90_UNLIMITED
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_G_kpts
- use netcdf,         ONLY:NF90_UNLIMITED
 #endif
  !
  implicit none
@@ -426,15 +419,8 @@ subroutine G_lesser_IO(ID,T_size)
  i_sp_pol=1
  !
  VAR_SZ(1:3)=(/2,RT_nbands,RT_nbands/)
- !
  dim_names(1:3)  =[character(schlen) :: 'complex', 'RT_nbands','RT_nbands']
- !
  IPOS(1:3)=(/1,1,1/)
- !
-#if defined _PAR_IO
- !
- VAR_SZ(4)    = RT_nk
- dim_names(4) ='RT_nk'
  !
  if(.not.SAVE_G_history) then
    VAR_SZ(5)    = G_MEM_steps
@@ -443,6 +429,11 @@ subroutine G_lesser_IO(ID,T_size)
    VAR_SZ(5)    = NF90_UNLIMITED
    dim_names(5) ='G_IO_time_step'
  endif
+ !
+#if defined _PAR_IO
+ !
+ VAR_SZ(4)    = RT_nk
+ dim_names(4) ='RT_nk'
  !
  l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,"H_rotation").or.write_is_on(ID)) )
  !
@@ -471,35 +462,34 @@ subroutine G_lesser_IO(ID,T_size)
  !
 #else
  !
- if(SAVE_G_history) call error(" G history can be saved only with parallel IO")
- !
  ik = maxval(io_sec(ID,:))-2
  !
  VAR_SZ(4)    = 1
  dim_names(4) ='k_fragment'
  IPOS(4)      = 1
  !
- VAR_SZ(5)    = T_size
- dim_names(5) ='G_MEM_steps'
- !
  time(1)=(NE_i_time-(T_size-1)*nint(RT_dyn_step/RT_step))*RT_step
  time(2)=(NE_i_time-1)*RT_step
  !
- var_name="dG_lesser_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol))//&
- &        "_TIME"//trim(TIME_string(time(1)))//trim(TIME_string(time(2)))
- call def_variable_bulk(ID,trim(var_name),4,VAR_SZ,SP,dim_names=dim_names)
+ var_name="dG_lesser_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol))
+ call def_variable_bulk(ID,trim(var_name),4,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
  !
- do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
-   IPOS(5) = T_size+(i_mem_sorted-G_MEM_steps)
-   !i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
-   if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
-   if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
-   if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
-   call  io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,i_mem:i_mem),IPOS=IPOS)
- enddo
+ if(l_real_time) then
+   do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
+     if(     SAVE_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
+     if(.not.SAVE_G_history) IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
+     !i_mem=mod(i_MEM_now+i_mem_sorted-1,G_MEM_steps)+1
+     if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
+     if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
+     if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
+     call io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,i_mem:i_mem),IPOS=IPOS)
+   enddo
+ else
+   IPOS(5)=GF_RT_IO_t%N
+   call io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,1:1),IPOS=IPOS)
+ endif
  !
- var_name="H_rotation_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol))//&
- &        "TIME"//trim(TIME_string( time(2) ))
+ var_name="H_rotation_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol))
  l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,trim(var_name)).or.write_is_on(ID)) )
  !
  if ( l_H_rot ) then

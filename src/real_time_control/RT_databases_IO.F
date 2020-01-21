@@ -170,8 +170,10 @@ subroutine RT_databases_IO(E)
 #if defined _PAR_IO
      IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
      call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2/),ID=ID(5))
-     io_G=io_RT_components('G',ID(5))
+#else
+     call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/2/),ID=ID(5))
 #endif
+     io_G=io_RT_components('G',ID(5))
      !
      call IO_and_Messaging_switch("SAVE")
      call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_k_cpu)
@@ -187,8 +189,7 @@ subroutine RT_databases_IO(E)
 #else
      !
      do ik = PAR_G_kpts(1),PAR_G_kpts(2)
-       IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,ik,PAR_G_kpts(1),PAR_G_kpts(2))
-       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2,ik+2/),ID=ID(5))
+       call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ik+2/),ID=ID(5))
        io_G=io_RT_components('G',ID(5))
      enddo
      call PP_redux_wait( )

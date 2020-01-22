@@ -40,7 +40,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  ! Work Space
  !
  integer :: nindxs,i1,i2,i3,d2,ic,average_steps,tot_steps,myid_loop,ncpu_loop,local_comm,&
-&           i_range(2),missing_cpus,par_kind_2D,ncpu_allocated
+&           i_range(2),missing_cpus,par_kind_2D
  logical :: NO_EMPTIES_,SERIAL,local_ORDERED,local_CONSECUTIVE
  integer,allocatable :: i_done(:),lowlim(:)
  !

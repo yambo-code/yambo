@@ -489,8 +489,8 @@ subroutine INIT_activate()
    !
    call initactivate(-1,'QpntsRXs')
    !
-   if( STRING_match(trim(H_potential),"HARTREE") ) call initactivate(1,'EXXCut HARRLvcs ALLGHAR')
-   if( STRING_match(trim(H_potential),"default") ) call initactivate(1,'VXCRLvcs HARRLvcs')
+   if( index(H_potential,"HARTREE")>0 .or. index(H_potential,"DEFAULT")>0)  call initactivate(1,'HARRLvcs ALLGHAR')
+   if( index(H_potential,"GS_XC")>0   .or. index(H_potential,"DEFAULT")>0 ) call initactivate(1,'VXCRLvcs')
    !
    if (l_eval_collisions) then
      if( STRING_match(trim(H_potential),"SEX").or.&

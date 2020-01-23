@@ -31,14 +31,13 @@ integer function io_RT_components(what,ID)
  use stderr,         ONLY:intc
  use electrons,      ONLY:n_spin
  use timing_m,       ONLY:timing
- use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,io_fragment,frag_RT, &
 &                         def_variable_bulk,io_variable_bulk,write_is_on,variable_exist
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
 &                         dG_lesser,RT_carriers,RT_obj_alloc,l_RT_rotate_DM,&
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
-&                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference,RT_all2ibz
+&                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference
  use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,RT_carriers_object,RT_IO_t,&
 &                         GF_RT_IO_t,TIME_string,IO_OBS_cache_steps,SAVE_G_history
  use fields,         ONLY:A_tot

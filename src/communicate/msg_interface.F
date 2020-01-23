@@ -79,7 +79,6 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  !
 end subroutine
 !
-!
 subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
  !
  use pars,         ONLY:lchlen,max_open_ofs
@@ -133,7 +132,6 @@ subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
  if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
  !
 end subroutine
-!
 !
 subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatted_msg)
  !

@@ -70,7 +70,7 @@ module real_time
  !
  real(SP)              :: RT_step             ! Elemental step used to define dimensions and time-points
  real(SP)              :: RT_dyn_step = 0._SP ! On-the-fly time-step
- real(SP)              :: RT_MAX_step =-1._SP ! MAX value of the dynamical RT step value
+ real(SP)              :: RT_MAX_step =-1._SP*FS2AUT ! MAX value of the dynamical RT step value
  ! 
  ! ... NE dynamics ...
  !

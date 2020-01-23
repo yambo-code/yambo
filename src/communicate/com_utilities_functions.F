@@ -37,7 +37,6 @@ logical function OF_exists(name)
  !
 end function OF_exists
 !
-!
 logical function file_exists(name)
  !
  implicit none
@@ -49,7 +48,6 @@ logical function file_exists(name)
  inquire(file=name,exist=file_exists)
  !
 end function file_exists
-!
 !
 function composed_fmt(basic_fmt,n,USE_TABS,INDENT)
  !
@@ -83,8 +81,8 @@ function composed_fmt(basic_fmt,n,USE_TABS,INDENT)
    if (INDENT==0) write (composed_fmt,'(2a,i5.4,4a)')  trim(terminator(1)),'a,',n,'(',basic_fmt,',1x)',trim(terminator(2))
  endif
  if (n<0) write (composed_fmt,'(a,i5.4,3a)') '(a,',iabs(n),'(',basic_fmt,',1x))'
+ !
 end function composed_fmt
-!
 !
 function filename(name)
  !
@@ -104,7 +102,6 @@ function filename(name)
  filename=trim(names(N))
  !
 end function filename
-!
 !
 integer function get_file_index(of_name_complete)
  !

@@ -137,7 +137,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
          !
          Eqp(i2)=qp%E_bare(i1)+Z(i2)*QP_Sc(i1,1)
          !
-         if (l_elel_corr) Eqp(i2)=Eqp(i2)+Z(i2)*(QP_Vnl_xc(i1)-QP_Vxc(i1))
+         if (l_elel_corr.and.allocated(QP_Vnl_xc)) Eqp(i2)=Eqp(i2)+Z(i2)*QP_Vnl_xc(i1)
+         if (l_elel_corr.and.allocated(QP_Vxc)   ) Eqp(i2)=Eqp(i2)-Z(i2)*QP_Vxc(i1)
          !
        enddo
        !
@@ -148,7 +149,9 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
        !
        ! COHSEX: no energy dependence
        !
-       qp%E(i1)=qp%E_bare(i1)+(QP_Sc(i1,1)+QP_Vnl_xc(i1)-QP_Vxc(i1))
+       qp%E(i1)=qp%E_bare(i1)+QP_Sc(i1,1)
+       if (allocated(QP_Vnl_xc)) qp%E(i1)=qp%E(i1)+QP_Vnl_xc(i1)
+       if (allocated(QP_Vxc)   ) qp%E(i1)=qp%E(i1)-QP_Vxc(i1)
        qp%Z(i1)=1._SP
        !
      endif

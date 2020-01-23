@@ -27,8 +27,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  use pars,          ONLY:SP,cZERO
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
-#if defined _PL
-#endif
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
@@ -38,7 +36,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use electrons,     ONLY:levels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index, PAR_nq, &
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD,&
-&                        PAR_COM_X_WORLD_RL_resolved
+&                        PAR_COM_X_WORLD_RL_resolved,master_cpu
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
  use com,           ONLY:depth
@@ -168,7 +166,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !=======================
  if (.not.(l_life.and.X%iq(1)>1)) then
    call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
-   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
+   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_and_IO",X=X) 
  endif
  call X_half_mat_check(Xen,Xk,Xw)
  !
@@ -203,6 +201,14 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
  endif
  !
+ ! AM. Dec 2019. master_cpu below is needed because when the RL vectors are parallelized
+ ! more than 1 cpu (beside the master) has WRITING rights. But only 1 CPU must write the DB header.
+ !
+ if (i_err/=0.and.master_cpu) then
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
+   i_err=io_X(X,Xw,Xdb)
+ endif
+ !
  call PP_redux_wait()
  !
  do iq=X%iq(1),X%iq(2)
@@ -226,11 +232,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      call TDDFT_ALDA_G_space(Xen,Xk)
      !
-   endif
-   !
-   if (iq==1) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
-     i_err=io_X(X,Xw,Xdb)
    endif
    !
    ! Allocation

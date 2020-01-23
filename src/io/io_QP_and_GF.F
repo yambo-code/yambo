@@ -32,7 +32,8 @@ integer function io_QP_and_GF(what,qp,ID)
 &                         write_is_on,io_mode,DUMP,VERIFY,DB_is_OK,&
 &                         db_alat,variable_exist,IO_INCOMPATIBLE_VAR,IO_NO_BINDING_ERROR
  use global_XC,      ONLY:QP_DB_kind,QP_SE_GoWo,QP_SE_GWo,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_COHSEX,QP_SE_NONE,&
-&                         QP_SE_POLARON,QP_SE_GW_QED
+&                         QP_SE_POLARON,QP_SE_GW_QED,G_E_xc_string,X_E_xc_string,&
+&                         G_WF_xc_string,X_WF_xc_string
  use timing_m,       ONLY:timing
 #include<memory.h>
  type(QP_t)  ::qp
@@ -43,7 +44,7 @@ integer function io_QP_and_GF(what,qp,ID)
  !
  integer              ::i1,i2,i_found,&
 &                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,&
-&                       QP_DB_kind_disk 
+&                       QP_DB_kind_disk ,i_X
  character(schlen)    ::ch
  integer ,    allocatable ::qp_table_disk(:,:)
  real(SP),    allocatable ::qp_DATA_disk(:,:,:)
@@ -93,13 +94,32 @@ integer function io_QP_and_GF(what,qp,ID)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,CUTOFF=.true.)
    case(QP_SE_COHSEX)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs",CUTOFF=.true.)
+     i_X=2
    case(QP_SE_GoWo_PPA,QP_SE_GWo_PPA)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp",CUTOFF=.true.)
+     i_X=3
    case(QP_SE_GoWo,QP_SE_GWo)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xd",CUTOFF=.true.)
+     i_X=4
    case(QP_SE_POLARON,QP_SE_GW_QED)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=.true.)
  end select
+ if (.not.QP_DB_kind==QP_SE_NONE) then
+   qp%n_descs=qp%n_descs+1
+   qp%description(qp%n_descs)=' '
+   if (.not.QP_DB_kind==QP_SE_COHSEX) then
+     qp%n_descs=qp%n_descs+1
+     qp%description(qp%n_descs)=' GF energies kind       :'//trim(G_E_xc_string)
+   endif
+   qp%n_descs=qp%n_descs+1
+   qp%description(qp%n_descs)=' GF WF`s     kind       :'//trim(G_WF_xc_string)
+   if (any(QP_DB_kind==(/QP_SE_COHSEX,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_GoWo,QP_SE_GWo/))) then
+     qp%n_descs=qp%n_descs+1
+     qp%description(qp%n_descs)=' Xs energies kind       :'//trim(X_E_xc_string(i_X))
+     qp%n_descs=qp%n_descs+1
+     qp%description(qp%n_descs)=' Xs WF`s     kind       :'//trim(X_WF_xc_string(i_X))
+   endif
+ endif
  !
  if (io_QP_and_GF/=0) then
    call CLOSE_and_menu(.TRUE.)

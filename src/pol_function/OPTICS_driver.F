@@ -82,7 +82,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! PARALLEL indexes
    !==================
    !
-   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
+   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X)
    !
    ! WF distribution 
    !=================
@@ -195,12 +195,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      call msg('o fxc','#')
    endif
    !
-   ! BZ Double Grid
-   !
-   if (use_X_DbGd) then
-     call msg('o eps_q eel_q fxc alpha','# BZ Energy DbGd points',BZ_DbGd_tot_nk_levels,INDENT=0)
-   endif
-   !
    if (iq==1) call PP_redux_wait
    if (iq> 1) call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
@@ -257,6 +251,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
    !
    call X_write_messages_before_headers(iq,allocated(Xen%GreenF),X%Vnl_included,X%ordering)
+   !
+   ! BZ Double Grid
+   !
+   if (use_X_DbGd) call msg('o eps_q eel_q fxc alpha','# DbGd| Energy Points   ',BZ_DbGd_tot_nk_levels,INDENT=0)
    !
    ! Titles 
    !

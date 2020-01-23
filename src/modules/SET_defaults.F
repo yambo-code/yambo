@@ -26,10 +26,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ! GPL_EXCLUDE_START
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
- use C_driver,   ONLY:code_branch
  use pars,       ONLY:SP,cZERO,VAR_EMPTY
+ use C_driver,   ONLY:code_branch
  use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
+ use global_XC,  ONLY:EXT_NONE
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                     eval_alpha,&
@@ -65,12 +66,12 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
- use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,frag_WF
+ use IO_m,       ONLY:io_reset,max_io_units,serial_number,frag_WF
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_desc_str,BSS_desc_var,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_threshold,Haydock_iterIO,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
-#if defined _SLEPC
+#if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers, ONLY:BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol, BSS_target_E, Slepc_shell
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
@@ -97,7 +98,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
-&                     l_SC_nl_mix
+&                     l_SC_nl_mix,SC_kind,SC_perturbation
 #endif
 #if defined _SC || defined _RT || defined _QED || defined _NL
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
@@ -199,10 +200,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  core_io_path=IND
  more_io_path=OD
  com_path=COM_DIR
- !
- ! ... created (core only)
- !
- call mk_dir(core_io_path)
  !
  ! WFs fragmentation, this is for the interfaces
  !
@@ -392,8 +389,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  On_Mass_Shell_approx=.FALSE.
  SC_E_threshold=0.01/HA2EV
  SC_band_mixing=100._SP
- Vnlxc_kind='HF'
- Vxc_kind='LDA'
+ Vnlxc_kind='Fock'
+ Vxc_kind='DFT'
  l_extended_output=.FALSE.
  l_GW_terminator=.FALSE.
  GW_terminator_E=1.5_SP
@@ -463,7 +460,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  K_INV_EPS%treshold=0.01_SP
  BSS_n_freqs=100
  !
-#if defined _SLEPC
+#if defined _SLEPC && !defined _SLEPC_OFF
  BSS_slepc_extraction='ritz'
  BSS_slepc_ncv=0
  BSS_slepc_tol=1E-6_SP
@@ -543,6 +540,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  SC_rho_threshold=1.E-5_SP
  SC_up_W_iters=0
  SC_potential='NONE'
+ SC_kind=0
+ SC_perturbation=EXT_NONE
  OEP_approx='n'
  compatible_SC_DB=.FALSE.
  found_SC_DB=.FALSE.

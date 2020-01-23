@@ -26,8 +26,8 @@ subroutine INIT_report_and_log_files()
  use pars,           ONLY:lchlen,repfile_index,logfile_index
  use stderr,         ONLY:logfile,logfile_unit,log_as_a_file,intc,write_to_log,write_to_log_default
  use it_m,           ONLY:rstatus,nrnlvls,rnlvls
- use com,            ONLY:repfile,repfile_unit,com_path,jobstr,max_open_ofs,of_unit
- use parallel_m,     ONLY:myid,ncpu,master_cpu
+ use com,            ONLY:repfile,repfile_unit,write_to_report,com_path,jobstr,max_open_ofs,of_unit
+ use parallel_m,     ONLY:myid,ncpu
  use LIVE_t,         ONLY:live_timing_is_on
 #if defined _YAML_OUTPUT
  use f_utils,        ONLY:f_get_free_unit
@@ -70,9 +70,9 @@ subroutine INIT_report_and_log_files()
    logfile=trim(jch)//"_CPU_"//trim(intc(myid+1))
  endif
  !
- if (master_cpu)    call rename_file(repfile)
+ if (write_to_report) call rename_file(repfile)
  !
- if (log_as_a_file) call rename_file(logfile)
+ if (log_as_a_file)   call rename_file(logfile)
  !
  ! Init flib
  !
@@ -80,7 +80,7 @@ subroutine INIT_report_and_log_files()
  call f_lib_initialize()
 #endif
  !
- if (master_cpu) then
+ if (write_to_report) then
    !
    ! Report file
    !

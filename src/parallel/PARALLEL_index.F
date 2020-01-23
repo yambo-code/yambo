@@ -24,7 +24,7 @@
 subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)
  !
  use parallel_m, ONLY:PP_redux_wait,PP_indexes,ncpu,myid,p_prod,mpi_comm_world,&
-&                     MPI_comm,comm_default_value
+&                     MPI_comm,comm_default_value,PP_indexes_reset
  use stderr,     ONLY:intc
 #include<memory.h>
  !
@@ -71,6 +71,10 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  allocate(lowlim(nindxs))
  lowlim=1
  if (present(low_range))  lowlim=low_range
+ !
+ if (allocated(px%n_of_elements) .or. allocated(px%element_1D) .or. allocated(px%element_2D) ) then 
+   call PP_indexes_reset(px)
+ endif
  !
  YAMBO_ALLOC(px%n_of_elements,(ncpu_loop))
  px%n_of_elements=0

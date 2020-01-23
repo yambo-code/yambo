@@ -135,7 +135,6 @@ subroutine k_define_circuit(Xk)
  !
 end subroutine k_define_circuit
 !
-!
 subroutine k_generate_circuit(USER_k,CIRCUIT_k,n_steps)
  !
  use pars,           ONLY:SP

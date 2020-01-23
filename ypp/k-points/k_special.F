@@ -309,74 +309,73 @@ subroutine k_special(LIST)
  !
  CIRCUIT_k%nbz =n_path_pts* ( n_lines -1 )
  !
- if (CIRCUIT_k%nbz>0) then
-   !
-   call msg('s','Found '//trim(intc(n_lines-1))//' segments and  '//&
-&                trim(intc(CIRCUIT_k%nbz+1))//' points along the path '//trim(PtsPath))
-   !
-   YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz+1,3))
-   allocate(CIRCUIT_k_norm(CIRCUIT_k%nbz+1))
-   allocate(CIRCUIT_k_label(CIRCUIT_k%nbz+1))
-   CIRCUIT_k%nbz=0
-   K_norm=0.
-   CIRCUIT_k_label=" "
-   do il=1,n_lines-1
-     k_l  =SPECIAL_k%pt( K_position(il)  ,:)*K_sign(il)
-     k_lp1=SPECIAL_k%pt( K_position(il+1),:)*K_sign(il+1)
-     do ip=1,n_path_pts
-       CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
-       if (ip==1.and.K_sign(il)>0.) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(il) )
-       if (ip==1.and.K_sign(il)<0.) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(il) )
-       CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=k_l+(k_lp1-k_l)/n_path_pts*(ip-1)
-       if (CIRCUIT_k%nbz>1) K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
-       CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
-     enddo
+ if (CIRCUIT_k%nbz==0) return
+ !
+ call msg('s','Found '//trim(intc(n_lines-1))//' segments and  '//&
+&              trim(intc(CIRCUIT_k%nbz+1))//' points along the path ',trim(PtsPath))
+ !
+ YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz+1,3))
+ allocate(CIRCUIT_k_norm(CIRCUIT_k%nbz+1))
+ allocate(CIRCUIT_k_label(CIRCUIT_k%nbz+1))
+ CIRCUIT_k%nbz=0
+ K_norm=0.
+ CIRCUIT_k_label=" "
+ do il=1,n_lines-1
+   k_l  =SPECIAL_k%pt( K_position(il)  ,:)*K_sign(il)
+   k_lp1=SPECIAL_k%pt( K_position(il+1),:)*K_sign(il+1)
+   do ip=1,n_path_pts
+     CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
+     if (ip==1.and.K_sign(il)>0.) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(il) )
+     if (ip==1.and.K_sign(il)<0.) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(il) )
+     CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=k_l+(k_lp1-k_l)/n_path_pts*(ip-1)
+     if (CIRCUIT_k%nbz>1) K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
+     CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
    enddo
+ enddo
+ !
+ CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
+ CIRCUIT_k%nibz=CIRCUIT_k%nbz
+ CIRCUIT_k%pt(CIRCUIT_k%nbz,:)=SPECIAL_k%pt(K_position(n_lines),:)*K_sign(n_lines)
+ if (k_sign(n_lines)>0._SP) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(n_lines) )
+ if (k_sign(n_lines)<0._SP) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(n_lines) )
+ K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
+ CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
+ !
+ do ik=1,CIRCUIT_k%nbz
+   call c2a(v_in=CIRCUIT_k%pt(ik,:),mode='kc2i')
+ enddo
+ do ik=1,SPECIAL_k%nbz
+   call c2a(v_in=SPECIAL_k%pt(ik,:),mode='kc2i')
+ enddo
+ !
+ YAMBO_ALLOC(CIRCUIT_k%weights,(CIRCUIT_k%nbz))
+ CIRCUIT_k%weights=1._SP/real(CIRCUIT_k%nbz,SP)
+ !
+ if (l_high_sym_pts) then
    !
-   CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
-   CIRCUIT_k%nibz=CIRCUIT_k%nbz
-   CIRCUIT_k%pt(CIRCUIT_k%nbz,:)=SPECIAL_k%pt(K_position(n_lines),:)*K_sign(n_lines)
-   if (k_sign(n_lines)>0._SP) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(n_lines) )
-   if (k_sign(n_lines)<0._SP) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(n_lines) )
-   K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
-   CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
+   k_f_name(1)="path_points"
+   k_f_name(2)="PWSCF_points"
+   call of_open_close(k_f_name(1),'ot')
+   call of_open_close(k_f_name(2),'ot')
+   call msg('o  path',"#",(/"c1    ","c2    ","c3    ","Norm  "/),INDENT=0,USE_TABS=.true.)
+   call msg('o PWSCF',"#",(/"c1    ","c2    ","c3    ","Weight"/),INDENT=0,USE_TABS=.true.)
+   call msg('o path PWSCF',"#"," ",INDENT=0)
    !
    do ik=1,CIRCUIT_k%nbz
-     call c2a(v_in=CIRCUIT_k%pt(ik,:),mode='kc2i')
-   enddo
-   do ik=1,SPECIAL_k%nbz
-     call c2a(v_in=SPECIAL_k%pt(ik,:),mode='kc2i')
+     !
+     call K_transform(CIRCUIT_k%pt(ik,:),'iku')
+     !
+     after_msg=""
+     if (len_trim(CIRCUIT_k_label(ik))>0) after_msg= ' ['// CIRCUIT_k_label(ik)//']'
+     call msg('o  path',"",(/CIRCUIT_k%pt(ik,:),CIRCUIT_k_norm(ik)/),INDENT=0,USE_TABS=.true.,after_msg=after_msg)
+     call msg('o PWSCF',"",(/CIRCUIT_k%pt(ik,:),1._SP/),             INDENT=0,USE_TABS=.true.,after_msg=after_msg)
    enddo
    !
-   
+   YAMBO_FREE(SPECIAL_k%pt)
+   YAMBO_FREE(CIRCUIT_k%pt)
    !
-   if (l_high_sym_pts) then
-     !
-     k_f_name(1)="path_points"
-     k_f_name(2)="PWSCF_points"
-     call of_open_close(k_f_name(1),'ot')
-     call of_open_close(k_f_name(2),'ot')
-     call msg('o  path',"#",(/"c1    ","c2    ","c3    ","Norm  "/),INDENT=0,USE_TABS=.true.)
-     call msg('o PWSCF',"#",(/"c1    ","c2    ","c3    ","Weight"/),INDENT=0,USE_TABS=.true.)
-     call msg('o path PWSCF',"#"," ",INDENT=0)
-     !
-     do ik=1,CIRCUIT_k%nbz
-       !
-       call K_transform(CIRCUIT_k%pt(ik,:),'iku')
-       !
-       after_msg=""
-       if (len_trim(CIRCUIT_k_label(ik))>0) after_msg= ' ['// CIRCUIT_k_label(ik)//']'
-       call msg('o  path',"",(/CIRCUIT_k%pt(ik,:),CIRCUIT_k_norm(ik)/),INDENT=0,USE_TABS=.true.,after_msg=after_msg)
-       call msg('o PWSCF',"",(/CIRCUIT_k%pt(ik,:),1._SP/),             INDENT=0,USE_TABS=.true.,after_msg=after_msg)
-     enddo
-     !
-     YAMBO_FREE(SPECIAL_k%pt)
-     YAMBO_FREE(CIRCUIT_k%pt)
-     !
-     call of_open_close(k_f_name(1))
-     call of_open_close(k_f_name(2))
-     !
-   endif
+   call of_open_close(k_f_name(1))
+   call of_open_close(k_f_name(2))
    !
  endif
  !

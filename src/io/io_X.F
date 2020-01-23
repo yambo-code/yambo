@@ -25,7 +25,7 @@ integer function io_X(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
- use R_lattice,     ONLY:nqibz,g_vec
+ use R_lattice,     ONLY:g_vec
  use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_description,X_alloc
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&

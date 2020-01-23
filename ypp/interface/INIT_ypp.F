@@ -755,11 +755,12 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  ! LOG/REP files
  !
+ live_timing_is_on =master_cpu.and..not.infile_editing
+ write_to_report   =master_cpu.and..not.infile_editing
+ write_to_log      =master_cpu.and..not.infile_editing
+ !
  call INIT_report_and_log_files()
  !
- live_timing_is_on =master_cpu
- write_to_report   =master_cpu
- write_to_log      =master_cpu
  !
  ! Input file
  !

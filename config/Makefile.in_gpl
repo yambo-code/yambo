@@ -294,7 +294,7 @@ define make_message
  for target in $(CORE);      do echo " [core] $$target"         ; done;echo;\
  for target in $(PH_PROJ);   do echo " [ph-project] $$target"   ; done;echo;\
  for target in $(RT_PROJ);   do echo " [rt-project] $$target"   ; done;echo;\
- for target in $(NL_PROJ);   do echo " [nl-project] $$target"   ; done;echo;\
+ for target in $(NL_PROJ);   do echo " [nl-project] $$target (double-precision compilation)"   ; done;echo;\
  for target in $(KERR_PROJ); do echo " [kerr-project] $$target" ; done;echo;\
  for target in $(UTILS);     do echo " [utils] $$target"        ; done;echo;\
  for target in $(CLEANS);    do echo " [clean] $$target"        ; done;echo

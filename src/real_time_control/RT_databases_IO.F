@@ -41,7 +41,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- integer           :: ik,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,i_cpu,n_sec,secs(2)
+ integer           :: ik,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,n_sec,secs(2),i_cpu
  integer, external :: io_RT_components
  !
  call timing('RT databases IO',OPR='start')
@@ -127,19 +127,23 @@ subroutine RT_databases_IO(E)
    endif
    !
 #else
-   !
-   do ik = 1, RT_nk
+   do i_cpu=1,ncpu
      !
-     if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+     do ik = 1, RT_nk
+       !
+       if (myid+1/=i_cpu) cycle
+       !
+       if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+       !
+       IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,ik,FIRST=1,LAST=RT_nk,PAR_index=PAR_IND_Xk_ibz)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+1/),ID=ID(5))
+       io_G=io_RT_components('G',ID(5))
+       !
+     enddo 
      !
-     IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,ik,FIRST=1,LAST=RT_nk,PAR_index=PAR_IND_Xk_ibz)
-     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+1/),ID=ID(5))
-     io_G=io_RT_components('G',ID(5))
+     call PP_redux_wait( )
      !
-   enddo 
-   !
-   call PP_redux_wait( )
-   !
+   enddo
 #endif
    !
    call IO_and_Messaging_switch("RESTORE")

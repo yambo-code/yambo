@@ -153,15 +153,19 @@ integer function io_HF_and_locXC(ID)
    !
    allocate(QP_disk(QP_n_states_disk))
    !
-   if(write_is_on(ID)) QP_disk=QP_Vnl_xc
-   call io_bulk(ID,VAR="Sx",VAR_SZ=(/2,QP_n_states_disk/))
-   call io_bulk(ID,C1=QP_disk)
-   if(read_is_on(ID)) QP_Vnl_xc(:)=QP_disk(MAP(:))
+   if (allocated(QP_Vnl_xc)) then
+     if(write_is_on(ID)) QP_disk=QP_Vnl_xc
+     call io_bulk(ID,VAR="Sx",VAR_SZ=(/2,QP_n_states_disk/))
+     call io_bulk(ID,C1=QP_disk)
+     if(read_is_on(ID)) QP_Vnl_xc(:)=QP_disk(MAP(:))
+   endif
    !
-   if(write_is_on(ID)) QP_disk=QP_Vxc
-   call io_bulk(ID,VAR="Vxc",VAR_SZ=(/2,QP_n_states_disk/))
-   call io_bulk(ID,C1=QP_disk)
-   if(read_is_on(ID)) QP_Vxc(:)=QP_disk(MAP(:))
+   if (allocated(QP_Vxc)) then
+     if(write_is_on(ID)) QP_disk=QP_Vxc
+     call io_bulk(ID,VAR="Vxc",VAR_SZ=(/2,QP_n_states_disk/))
+     call io_bulk(ID,C1=QP_disk)
+     if(read_is_on(ID)) QP_Vxc(:)=QP_disk(MAP(:))
+   endif
    !
    deallocate(QP_disk)
    !

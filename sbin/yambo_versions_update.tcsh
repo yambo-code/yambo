@@ -36,7 +36,7 @@ endif
 #
 # Get current version & revision
 #
-set repo=`git remote -v | grep push | head -c -7`
+set repo=`git remote -v | grep push`
 set gpl="yes"
 if ( "$repo" =~ *yambo-devel* ) set gpl="no"
 #

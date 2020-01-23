@@ -231,7 +231,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    if (iq_db/=iabs(iq_db_ref)) then
      !
-     IO_ACT=manage_action(RD_CL_IF_END,iq_db,1,nqibz)
+     if (elph_use_q_grid)      IO_ACT=manage_action(RD_CL_IF_END,iq_ibz,1,nqibz)
+     if (.not.elph_use_q_grid) IO_ACT=manage_action(RD_CL_IF_END,iq_db,1,nq_to_sum)
      call io_control(ACTION=IO_ACT,SEC=(/iq_db+1/),ID=ID)
      io_err=io_ELPH(ID,'gkkp')
      if (io_err<0) call error('Missing Q-database')

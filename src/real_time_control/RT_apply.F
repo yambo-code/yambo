@@ -217,7 +217,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  endif
  !
  if (io_err< 0) then 
-   call warning('Carriers database '//trim(db_name)//' section'//trim(intc(NE_i_time))//'not found')
+   call warning('Carriers database '//trim(db_name)//' section #'//trim(intc(NE_i_time))//' not found')
    l_rt_carriers_in_use=.FALSE.
    NE_i_time=1
    return

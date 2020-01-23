@@ -23,10 +23,10 @@
 !
 module X_output
  !
- use pars,    ONLY:schlen,SP
- use stderr,  ONLY:intc
- use com,     ONLY:msg
- use X_m,     ONLY:alpha_dim,global_gauge
+ use pars,      ONLY:schlen,SP
+ use stderr,    ONLY:intc
+ use com,       ONLY:msg
+ use X_m,       ONLY:alpha_dim,global_gauge
  use drivers,   ONLY:l_kerr
  !
  implicit none
@@ -42,39 +42,34 @@ module X_output
      use global_XC, ONLY:X_E_xc_string,X_WF_xc_string,K_E_xc_string,K_WF_xc_string
      integer      :: iq
      logical      :: Vnl_included,GreenF
-     character(2) :: ordering
+     character(2)      :: ordering
      ! WS
-     character(schlen) :: message
+     character(schlen) :: files,message
      !
      ! T-ordering
      !
-     call msg('o eps refl eel alpha off beta moke jdos','#')
+     files='o eps refl eel alpha off beta moke jdos'
+     if (l_chi) files= 'o eps refl eel alpha'
      if (GreenF) then
-       if (l_chi) call msg('o eps refl eel alpha','# ','- G. Functions  are '//trim(X_E_xc_string(4)),INDENT=0)
-       if (l_bss) call msg('o eps refl eel alpha off beta moke jdos','# ','- G. Functions  are '//trim(K_E_xc_string),INDENT=0)
+       call msg(trim(files),'# ',' GEN| GF poles        : '//trim(X_E_xc_string(4)),INDENT=0)
      else
-       if (l_chi) call msg('o eps refl eel alpha','# ','- Energies      are '//trim(X_E_xc_string(4)),INDENT=0)
-       if (l_bss) call msg('o eps refl eel alpha off beta moke jdos','# ','- Energies      are '//trim(K_E_xc_string),INDENT=0)
+       call msg(trim(files),'# ',' GEN| Energies        : '//trim(X_E_xc_string(4)),INDENT=0)
      endif
-     if (l_chi) call msg('o eps refl eel alpha','# ','- Wavefunctions are '//trim(X_WF_xc_string(4)),INDENT=0)
-     if (l_bss) call msg('o eps refl eel alpha off beta moke','# ','- Wavefunctions are '//trim(K_WF_xc_string),INDENT=0)
-     call msg('o eps refl eel alpha off beta moke','# ')
-     message='- The Green`s function is T-ordered -'
-     if (trim(ordering)=='Ra') message='- The Green`s function is Retarded-antiresonant -'
-     if (trim(ordering)=='Ta') message='- The Green`s function is T-ordered-antiresonant -'
-     if (trim(ordering)=='r')  message='- The Green`s function is Resonant -'
-     if (trim(ordering)=='R')  message='- The Green`s function is Retarded -'
-     call msg('o eps refl eel alpha off beta moke jdos','# ',trim(message),INDENT=0)
+     call msg(trim(files),'# ','    | Wavefunctions   : '//trim(X_WF_xc_string(4)),INDENT=0)
+     message='T-ordered'
+     if (trim(ordering)=='Ra') message='Retarded-antiresonant'
+     if (trim(ordering)=='Ta') message='T-ordered-antiresonant'
+     if (trim(ordering)=='r')  message='Resonant'
+     if (trim(ordering)=='R')  message='Retarded'
+     call msg(trim(files),'# ','    | Green`s Function:'//trim(message),INDENT=0)
      !
      ! Gauges
      !
      if (iq==1) then
-       if (trim(global_gauge)=='length')         message='- Using the Length Gauge -'
-       if (trim(global_gauge)=='velocity')       message='- Using the Velocity Gauge -'
-       call msg('o eps refl eel alpha off beta moke','# ',trim(message),INDENT=0)
-       message='- [r,Vnl] is *NOT* included -'
-       if (Vnl_included) message='- [r,Vnl] *is* included -'
-       call msg('o eps refl eel alpha off beta moke','# ',trim(message),INDENT=0)
+       if (trim(global_gauge)=='length')         message='Length'
+       if (trim(global_gauge)=='velocity')       message='Velocity'
+       call msg(trim(files),'# ','    | Gauge           :'//trim(message),INDENT=0)
+       call msg(trim(files),'#     | [r,Vnl] included:',Vnl_included,INDENT=0)
      endif
      !
    end subroutine

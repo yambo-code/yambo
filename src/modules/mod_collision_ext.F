@@ -105,6 +105,10 @@ module collision_ext
    !
    subroutine COLLISIONS_naming( H_SE_kind , what )
      !
+     ! In this routine I define the %name/%kind of the COLLISIONS.
+     ! If no H_SE_kind is given I set defaults, otherwise I define the proper
+     ! componentes of the HXC *ONLY* part.
+     !
      use global_XC,      ONLY:H_SE_COH,H_SE_HARTREE,H_SE_SEX,QP_SE_GW_QED,QP_SE_GW_NEQ,H_SE_FOCK
      use xc_functionals, ONLY:GS_xc_KIND
      !

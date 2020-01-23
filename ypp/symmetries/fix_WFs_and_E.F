@@ -101,7 +101,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  call msg('s',' I/O...')
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
  io_err=io_DB1(E_new,k,ID)
- call msg('s','done')
  !
  ng_closed=ng_closed_save
  wf_nb_io=wf_nb_io_save

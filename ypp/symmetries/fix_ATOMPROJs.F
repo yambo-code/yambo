@@ -125,9 +125,6 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
      enddo
    enddo
    !
-   call msg('s','done')
-   !
-   !
    if(n_steps>0) call live_timing('Atomic projections rotation',n_steps*n_sp_pol)
    !
    call warning(' After rotation m projections will be meaningless')
@@ -177,8 +174,6 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
    enddo
    !
    YAMBO_FREE(atom_proj_store)
-   !
-   call msg('s','done')
    !
  end select
  core_io_path=core_io_path_save

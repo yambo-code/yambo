@@ -29,7 +29,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! (21/11/13: for HYB_GGA the GGA part calculated => TO TEST) 
  !
  use pars,           ONLY:SP,DP,pi,RZERO
- use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol,alat
 #if defined _RT
@@ -38,7 +37,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
 #endif
  use electrons,      ONLY:levels,n_spin,n_spinor
  use FFT_m,          ONLY:fft_size
- use wrapper,        ONLY:real_V_dot_V
+ use wrapper,        ONLY:V_dot_V
  use xc_functionals, ONLY:E_xc,E_xc_val,F_xc,magn,V_xc,xc_setup_hyb,&
 &                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl,    &
 &                         xc_spin,xc_spin_map1, &
@@ -196,7 +195,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      do is1 = 1,n_spin
        do is2 = is1,n_spin
          is_xc = xc_spin_map1(is1,is2)
-         sigma(is_xc,i1) = real(real_V_dot_V(3,drho(i1,is1,:),drho(i1,is2,:)),DP)
+         sigma(is_xc,i1) = real(V_dot_V(3,drho(i1,is1,:),drho(i1,is2,:)),DP)
        end do
      end do
    end do
@@ -223,7 +222,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
        forall (i1=1:fft_size) rspts(i1)=(3._DP/4._DP/pi/spin_rho_SP(i1,1)/DL_vol)**(1._DP/3._DP)
        call xc_rpa_kp(rspts,tmp_exc)
        E_xc = real(tmp_exc,SP) 
-       E_xc_val = real_V_dot_V(fft_size,rho,E_xc(:))
+       E_xc_val = V_dot_V(fft_size,rho,E_xc(:))
      case(1)
        call error(' Vxc not coded for LDA C KP')
      case(2)
@@ -243,8 +242,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          E_xc = E_xc + real(tmp_exc,SP)    
        case(1)
          call xc_f90_lda_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_vxc(1,1))
-         forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(tmp_vxc(i2,i1),SP)         
-       case(2) 
+         forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(tmp_vxc(i2,i1),SP)
+       case(2)
          call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_fxc(1,1))
          do is1 = 1,n_spin
            do is2 = 1,n_spin
@@ -280,7 +279,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  enddo
  !
  if (order==0) then 
-   E_xc_val = real_V_dot_V(fft_size,rho,E_xc(:))
+   E_xc_val = V_dot_V(fft_size,rho,E_xc(:))
    if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)  E_xc_val= E_xc_val-EXX_FRACTION*exsr
  endif
  !
@@ -298,7 +297,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    YAMBO_FREE(v2sigma2)
  endif
  if (EvaluateDGradient.and.(FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)) then
-
    YAMBO_FREE(vx1)
    YAMBO_FREE(vx2)
  endif

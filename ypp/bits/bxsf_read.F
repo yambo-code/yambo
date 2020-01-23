@@ -32,7 +32,7 @@ subroutine bxsf_read(Xk,Xen)
                                BZ_DbGd_max_filling,BZ_DbGd_nbands, &
                                BZ_DbGd_tot_nk_levels,BZ_DbGd_weight,n_spin
  use LIVE_t,              ONLY:live_timing
- use com,                 ONLY:file_exists,msg,error
+ use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a,rlu_k2bz,k2bz,v_is_zero
  use IO_m,                ONLY:io_control,NONE,OP_WR_CL
  !
@@ -62,6 +62,8 @@ subroutine bxsf_read(Xk,Xen)
  character(lchlen) :: dummyline
 
  real(SP) :: efermitest
+ !
+ logical, external :: file_exists
 
  YAMBO_ALLOC(nkpoints_gengrid,(3))
  YAMBO_ALLOC(nkpoints,(3))

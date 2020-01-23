@@ -29,7 +29,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  !
  use pars,                ONLY: SP,cZERO,lchlen,schlen
  use drivers,             ONLY: l_sc_run
- use com,                 ONLY: warning,msg,core_io_path,error,grid_paths
+ use com,                 ONLY: msg,core_io_path,grid_paths
  use stderr,              ONLY: intc,STRING_split
  use LIVE_t,              ONLY: live_timing
  use electrons,           ONLY: levels,n_spinor,n_sp_pol
@@ -48,6 +48,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
 #if defined _RT
  use real_time,           ONLY: RT_bands
 #endif
+#include<dev_defs.h>
  !
  implicit none
  !
@@ -193,8 +194,8 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
            !
            do i_spinor=1,n_spinor
              !
-             rho = rho + Vstar_dot_V(wf_ng_eff,WF_shifted%c(1:wf_ng_eff,i_spinor,iv_wf), &
-&                                                  WF%c(1:wf_ng_eff,i_spinor,ic_wf))
+             rho = rho + Vstar_dot_V(wf_ng_eff,DEV_VARNAME(WF_shifted%c)(1:wf_ng_eff,i_spinor,iv_wf), &
+&                                              DEV_VARNAME(WF%c)(1:wf_ng_eff,i_spinor,ic_wf))
              !
            enddo
            !

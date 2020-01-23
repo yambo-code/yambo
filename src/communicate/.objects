@@ -1,1 +1,3 @@
-objs = acknowledge_yambo.o REPORT_Occupations.o section.o REPORT_Energies.o
+objs = acknowledge_yambo.o REPORT_Occupations.o section.o REPORT_Energies.o \
+       com_utilities_subroutines.o com_utilities_functions.o com_utilities_netcdf.o \
+       msg_interface.o

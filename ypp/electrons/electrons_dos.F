@@ -29,12 +29,11 @@ subroutine electrons_dos(Xk,Xen)
  use R_lattice,      ONLY:bz_samp
  use pointers,       ONLY:linkM2M
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol
- use YPPm,           ONLY:output_fname,DOS_bands,DOS_E_step,K_transform,&
-&                         DOS_E_steps,INTERP_grid,electrons_dos_elemental,&
-&                         l_pdos
- use com,            ONLY:msg,of_open_close,warning
+ use YPPm,           ONLY:output_fname,DOS_bands,DOS_E_steps,K_transform,&
+&                         INTERP_grid,electrons_dos_elemental,l_pdos
+ use com,            ONLY:msg,of_open_close
  use QP_CTL_m,       ONLY:QP_apply
- use interpolate,    ONLY:INTERPOLATION_driver,GRID_k,INTERP_obj
+ use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k,INTERP_obj
  use stderr,         ONLY:intc
  use parser_m,       ONLY:parser
  !
@@ -105,39 +104,29 @@ subroutine electrons_dos(Xk,Xen)
    !
    N_files=2
    !
-   IDe=0
-   IDf=0
-   IDp=0
-   IDs=0
+   call INTERPOLATION_driver_create_grid(INTERP_grid)
    !
-   call INTERPOLATION_driver(operation="GRID",GRID=INTERP_grid)
+   call INTERPOLATION_driver_seed("E_on_built_in",IDe,DOS_bands,Xk,SEED_E=Xen,NEAREST=.FALSE.)
+   call INTERPOLATION_driver_do("E_on_built_in",IDe,GRID_k,OUT_E=GRID_E)
    !
-   call INTERPOLATION_driver(bands=DOS_bands,SEED_E=Xen,SEED_k=Xk,operation="E_on_built_in",ID_op=IDe)
-   call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="E_on_built_in")
-   !
-   call INTERPOLATION_driver(bands=DOS_bands,SEED_E=Xen,SEED_k=Xk,operation="f_on_built_in",ID_op=IDf)
-   call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="f_on_built_in",QUIET=.TRUE.)
+   call INTERPOLATION_driver_seed("f_on_built_in",IDf,DOS_bands,Xk,SEED_E=Xen,QUIET=.TRUE.)
+   call INTERPOLATION_driver_do("f_on_built_in",IDf,GRID_k,OUT_E=GRID_E)
    !
    if (l_pdos) then
-     call INTERPOLATION_driver(bands=DOS_bands,SEED_R3=PDOS_fac_v,SEED_k=Xk,&
-&                                operation="SPIN_factors_on_built_in",ID_op=IDp)
-     call INTERPOLATION_driver(OUT_k=GRID_k,operation="PDOS_factors_on_built_in")
+     call INTERPOLATION_driver_seed("SPIN_factors_on_built_in",IDp,DOS_bands,Xk,SEED_R3=PDOS_fac_v)
+     call INTERPOLATION_driver_do("PDOS_factors_on_built_in",IDp,GRID_k)
      PDOS_fac_p => linkM2M(INTERP_obj(IDp)%INTERP,shape(INTERP_obj(IDp)%INTERP),&
-     &                     lbound(INTERP_obj(IDp)%INTERP),ubound(INTERP_obj(IDp)%INTERP))
+ &                         lbound(INTERP_obj(IDp)%INTERP),ubound(INTERP_obj(IDp)%INTERP))
    endif
    !
    if (n_spinor==2) then
-     call INTERPOLATION_driver(bands=DOS_bands,SEED_R3=SPIN_fac_v,SEED_k=Xk,&
-&                                operation="SPIN_factors_on_built_in",ID_op=IDs)
-     call INTERPOLATION_driver(OUT_k=GRID_k,operation="SPIN_factors_on_built_in")
+     call INTERPOLATION_driver_seed("SPIN_factors_on_built_in",IDs,DOS_bands,Xk,SEED_R3=SPIN_fac_v)
+     call INTERPOLATION_driver_do("SPIN_factors_on_built_in",IDs,GRID_k)
      SPIN_fac_p   => linkM2M(INTERP_obj(IDs)%INTERP,shape(INTERP_obj(IDs)%INTERP),&
 &                            lbound(INTERP_obj(IDs)%INTERP),ubound(INTERP_obj(IDs)%INTERP))
    endif
    !
-   call INTERPOLATION_driver(operation="END",ID_op=IDe)
-   call INTERPOLATION_driver(operation="END",ID_op=IDf)
-   call INTERPOLATION_driver(operation="END",ID_op=IDs)
-   call INTERPOLATION_driver(operation="END",ID_op=IDp)
+   call INTERPOLATION_driver_end(0)
    !
    do is=1,n_sp_pol
      !

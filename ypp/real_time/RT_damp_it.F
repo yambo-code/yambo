@@ -25,7 +25,7 @@ subroutine RT_damp_it(damp_type,damp_factor,ft,lda)
  !
  use YPP_real_time,  ONLY:RT_time,RT_conf
  use pars,           ONLY:SP,DP
- use com,            ONLY:warning
+ !
  implicit none
  !
  integer,      intent(in)      :: lda
@@ -46,7 +46,7 @@ subroutine RT_damp_it(damp_type,damp_factor,ft,lda)
    case("NONE") 
      forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = 1._SP
    case default
-     call warning(" Unknown damping! ")
+     call error(" Unknown damping! ")
      return
  end select
  !

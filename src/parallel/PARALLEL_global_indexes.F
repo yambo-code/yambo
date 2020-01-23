@@ -94,7 +94,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !
  l_par_DIP          =ENVIRONMENT=="DIPOLES"
  l_par_X_T          =ENVIRONMENT=="Response_T_space"
- l_par_X_G_finite_q =ENVIRONMENT=="Response_G_space_Finite_Momentum"
+ l_par_X_G_finite_q =ENVIRONMENT=="Response_G_space_and_IO"
  l_par_X_G          =ENVIRONMENT=="Response_G_space"
  l_par_SE           =ENVIRONMENT=="Self_Energy"
  l_par_RT           =ENVIRONMENT=="Real_Time"
@@ -169,7 +169,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !
  !
  !==========================================================================================================
- if ( ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_G_space_Finite_Momentum".or.&
+ if ( ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_G_space_and_IO".or.&
 &    (ENVIRONMENT=="Self_Energy".and.l_life.and.l_elphoton_corr) ) then
    !========================================================================================================
    !

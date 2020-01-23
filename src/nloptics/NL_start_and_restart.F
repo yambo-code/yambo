@@ -34,7 +34,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  ! [5] Initialize the fields
  !
  use pars,           ONLY:cZERO,rZERO,cONE
- use com,            ONLY:msg,error
+ use com,            ONLY:msg
  use electrons,      ONLY:levels,n_sp_pol
  use real_time,      ONLY:rho_reference
  use R_lattice,      ONLY:bz_samp

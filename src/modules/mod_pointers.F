@@ -37,7 +37,7 @@ module pointers
  end interface
  !
  interface linkC2R
-   module procedure linkC2R_0D,linkC2R_1D,linkC2R_2D,linkC2R_3D,linkC2R_4D,linkC2R_5D
+   module procedure linkC2R_0D,linkC2R_1D,linkC2R_2D,linkC2R_3D,linkC2R_4D,linkC2R_5D,linkC2R_6D
  end interface
  !
  interface linkZ2D
@@ -115,13 +115,20 @@ module pointers
      real(SP), pointer :: REAL_pointer(:,:,:,:,:)
      call C_F_POINTER(C_LOC(M), REAL_pointer, N )
    end function linkC2R_4D
-   ! 
+   !
    function linkC2R_5D(M,N) result(REAL_pointer)
      complex(SP), target  :: M(1,1,1,1,1)
      integer, intent(in)  :: N(:)
      real(SP), pointer :: REAL_pointer(:,:,:,:,:,:)
      call C_F_POINTER(C_LOC(M), REAL_pointer, N )
    end function linkC2R_5D
+   !
+   function linkC2R_6D(M,N) result(REAL_pointer)
+     complex(SP), target  :: M(1,1,1,1,1,1)
+     integer, intent(in)  :: N(:)
+     real(SP), pointer :: REAL_pointer(:,:,:,:,:,:,:)
+     call C_F_POINTER(C_LOC(M), REAL_pointer, N )
+   end function linkC2R_6D
    !
    ! Interface which links Z-Complex to Double Prec
    !

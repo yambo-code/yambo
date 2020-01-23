@@ -31,7 +31,7 @@ subroutine electrons_current(Xk,Xen)
  use electrons,      ONLY:levels
  use YPPm,           ONLY:plot_title,l_norm_to_one,current_dir,plot_dim,output_fname,use_gnuplot,&
 &                         use_cube,use_xcrysden,plot_is_1D,v2plot
- use com,            ONLY:msg,of_open_close,error
+ use com,            ONLY:msg,of_open_close
  use interfaces,     ONLY:el_density_and_current
  !
  implicit none

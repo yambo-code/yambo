@@ -48,7 +48,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
 &                         l_RT_update_Energies,l_NE_with_fields,l_update_SOC,l_velocity_gauge_corr
  use plasma,          ONLY:PLASMA_free,EH_gas
- use com,             ONLY:warning,msg,error
+ use com,             ONLY:msg
  use fields,          ONLY:A_tot,Efield
  use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element,COLLISIONS_have_HARTREE
  use QP_CTL_m,        ONLY:QP_apply
@@ -70,13 +70,18 @@ subroutine RT_driver(E,X,k,q,Dip)
  ! Work Space
  !
  integer           :: io_REF,io_err
- logical           :: l_Dynamics_is_over
+ logical           :: l_Dynamics_is_over,LT_pump
  character(schlen) :: sec_title(3)
  real(SP)          :: OBSERVABLES(25)
  !
  ! I/O
  !
  integer, external :: io_RT_components
+ !
+ ! Timing windows
+ !
+ integer           :: LT_pump_steps
+ real(SP)          :: LT_pump_duration
  !
  sec_title   =' '
  sec_title(1)='none'
@@ -91,8 +96,8 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  ! Potential 
  !===========
- !
- call XC_switch()
+ call XC_potentials(H_potential)
+ call XC_additional_SC_potentials()
  !
  RT_potential    =H_potential
  RT_kind         =H_kind
@@ -245,7 +250,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  ! Qindx_X and Qindx_S not needed in real-time they are used only in dipoles and collisions calculations
  !
- if (.not.l_elph_scatt.and..not.l_elel_scatt) call qindx_free()
+ if (.not.l_elph_scatt.and..not.l_elel_scatt) call qindx_free('ALL')
  !
  ! Initialize output files
  !==========================
@@ -341,6 +346,8 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  call RT_timing(-1)
  !
+ call RT_output_and_IO_driver('close',E,k,OBSERVABLES)
+ !
  ! Finalize & Free
  !-----------------
  call CLOSE_and_clean()
@@ -368,12 +375,6 @@ subroutine RT_driver(E,X,k,q,Dip)
      !
      integer :: steps
      !
-     ! Timing windows
-     !
-     integer           :: LT_pump_steps
-     logical           :: LT_pump
-     real(SP)          :: LT_pump_duration
-     !
      if (steps==0) then
        !
        LT_pump=l_NE_with_fields
@@ -383,7 +384,7 @@ subroutine RT_driver(E,X,k,q,Dip)
        endif
        if (NE_i_start_time<LT_pump_steps.and.l_NE_with_fields) then
          call live_timing("[RT] Dynamics (T<"//trim(real2ch(real(LT_pump_duration/FS2AUT,SP)))//" fs) :",&
-      &                   LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP)
+&                         LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP)
        else
          LT_pump=.FALSE.
          call live_timing('[RT] Dynamics :',NE_steps-NE_i_start_time+1,DEPTH=0.01_SP)

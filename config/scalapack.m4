@@ -46,23 +46,17 @@ mpi_routine=MPI_Init
 #
 # Parse configure options
 #
-if test x"$enable_par_linalg" = "xyes"; then
-  enable_blacs="internal";
-  enable_scalapack="internal"; 
-else
-  #
-  case $with_blacs_libs in
-    yes) enable_blacs="internal" ;;
-    no) enable_blacs="no" ;;
-    *) enable_blacs="check"; BLACS_LIBS="$with_blacs_libs" ;;
-  esac
-  #
-  case $with_scalapack_libs in
-    yes) enable_scalapack="internal" ;;
-    no) enable_scalapack="no" ;;
-    *) enable_scalapack="check"; SCALAPACK_LIBS="$with_scalapack_libs" ;;
-  esac
-fi
+case $with_blacs_libs in
+  yes) enable_blacs="internal" ;;
+  no) enable_blacs="no" ; enable_par_linalg="no" ;;
+  *) enable_blacs="check"; BLACS_LIBS="$with_blacs_libs" ;;
+esac
+#
+case $with_scalapack_libs in
+  yes) enable_scalapack="internal" ;;
+  no) enable_scalapack="no" ; enable_par_linalg="no" ;;
+  *) enable_scalapack="check"; SCALAPACK_LIBS="$with_scalapack_libs" ;;
+esac
 #
 if test "$mpibuild"  = "yes"; then
   #
@@ -78,6 +72,8 @@ if test "$mpibuild"  = "yes"; then
       AC_MSG_RESULT($enable_blacs)
       BLACS_LIBS="$acx_blacs_save_LIBS"
       LIBS="$save_LIBS"
+    else
+      enable_blacs="no";
     fi
     #
   fi
@@ -93,6 +89,18 @@ if test "$mpibuild"  = "yes"; then
       AC_MSG_RESULT($enable_scalapack)
       SCALAPACK_LIBS="$acx_scalapack_save_LIBS"
       LIBS="$save_LIBS"
+    else
+      enable_scalapack="no";
+    fi
+  fi
+  #
+  if test x"$enable_par_linalg" = "xyes"; then
+    if test x"$enable_int_linalg" = "xyes"; then
+      enable_blacs="internal";
+      enable_scalapack="internal";
+    else
+      if test "$enable_blacs"     = "no"; then enable_blacs="internal"    ; fi
+      if test "$enable_scalapack" = "no"; then enable_scalapack="internal"; fi
     fi
   fi
   #

@@ -12,7 +12,6 @@
 MODULE timing_m
  !
  USE pars,          ONLY:SP,DP
- USE com,           ONLY:error
  USE parallel_m,    ONLY:ncpu,PP_redux_wait,mpi_comm_world
  USE openmp,        ONLY:master_thread
  USE stderr,        ONLY:log_as_a_file
@@ -46,6 +45,7 @@ MODULE timing_m
    REAL(DP)                    :: stop              ! last stop 
    REAL(DP)                    :: total_time        ! total time up to now
    LOGICAL                     :: running           ! true if clock is counting
+   INTEGER                     :: indx              ! global clock index, if any
    LOGICAL                     :: alloc 
  END TYPE clock
  !     
@@ -233,6 +233,7 @@ MODULE timing_m
      IF ( LEN( TRIM(name)) == 0 )  CALL error('clock_allocate:  Invalid name')
      !
      nclock = nclock + 1
+     obj%indx=nclock
      obj%name=TRIM(name)
      obj%call_number=0
      obj%start=0.0
@@ -253,6 +254,7 @@ MODULE timing_m
      obj1%stop = obj2%stop
      obj1%total_time = obj2%total_time
      obj1%running = obj2%running
+     obj1%indx = obj2%indx
      obj1%alloc = .TRUE.
    END SUBROUTINE clock_assignment
    !
@@ -284,24 +286,38 @@ MODULE timing_m
    !
    SUBROUTINE clock_start(obj)
      use LIVE_t, ONLY:cti
+#ifdef _NVTX
+     use nvtx
+#endif
      IMPLICIT NONE
-     TYPE(clock),            INTENT(inout) :: obj    
+     TYPE(clock), INTENT(inout) :: obj    
+     !
      IF ( .NOT. obj%alloc  ) CALL error('clock_start:  clock not yet allocated')
      call cti(obj%start)
      obj%running = .TRUE.
      obj%call_number = obj%call_number + 1
+#ifdef _NVTX
+     call nvtxStartRange(obj%name,obj%indx)
+#endif
    END SUBROUTINE clock_start
    !
    SUBROUTINE clock_stop(obj)
      use LIVE_t, ONLY:cti
+#ifdef _NVTX
+     use nvtx
+#endif
      IMPLICIT NONE
-     TYPE(clock),           INTENT(inout) :: obj    
+     TYPE(clock), INTENT(inout) :: obj    
+     !
      IF ( .NOT. obj%alloc  )   CALL error('clock_stop:  Clock NOT allocated')
      IF ( .NOT. obj%running  ) & 
            CALL error('clock_stop:  Clock '//TRIM(obj%name)//'NOT running')
      call cti(obj%stop)
      obj%total_time = obj%total_time + real(obj%stop-obj%start,DP)
      obj%running = .FALSE.
+#ifdef _NVTX
+     call nvtxEndRange()
+#endif
    END SUBROUTINE clock_stop
    !
    SUBROUTINE clock_update(obj)
@@ -332,7 +348,6 @@ MODULE timing_m
      !
      form_="sec "
      IF ( PRESENT(form) ) form_ = TRIM(form)
-     CALL clock_update(obj)
      !
      ! define an average over the pools
      !
@@ -384,19 +399,19 @@ MODULE timing_m
            call msg('r',local_ch(:100))
          ELSE
            IF (nday > 0) THEN
-             WRITE(local_ch,'(a40," : ",3x,i2,"d",i2,"h CPU (",i10," calls,",f8.3,a)') TRIM(obj%name), nday, nhour, &
+             WRITE(local_ch,'(a40," : ",3x,i2,"d",i2,"h CPU (",i12," calls,",f8.3,a)') TRIM(obj%name), nday, nhour, &
                    call_number(1) , effective_total_time / REAL( call_number(1), DP ),sec_str
            ELSEIF (nhour > 0) THEN
              WRITE(local_ch,'(a40," : ",3x,i2,"h",i2,"m CPU (", &
-                   & i10," calls,",f8.3,a)') TRIM(obj%name), nhour, nmin, &
+                   & i12," calls,",f8.3,a)') TRIM(obj%name), nhour, nmin, &
                    call_number(1) , effective_total_time / REAL( call_number(1), DP ),sec_str
            ELSEIF (nmin > 0) THEN
              WRITE (local_ch, '(a40," : ",i2,"m",f5.2,"s CPU (", &
-                   &   i10," calls,",f8.3,a)') TRIM(obj%name), nmin, nsec, &
+                   &   i12," calls,",f8.3,a)') TRIM(obj%name), nmin, nsec, &
                         call_number(1) , effective_total_time / REAL( call_number(1), DP ),sec_str
            ELSE
              WRITE (local_ch, '(a40," : ",3x,f5.2,"s CPU (", &
-                   &   i10," calls,",f8.3,a)') TRIM(obj%name), nsec, &
+                   &   i12," calls,",f8.3,a)') TRIM(obj%name), nsec, &
                         call_number(1) , effective_total_time / REAL( call_number(1), DP ),sec_str
            ENDIF
            if (log_as_a_file) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
@@ -407,9 +422,9 @@ MODULE timing_m
          ! time in seconds
          !
          IF ( call_number(1) == 1) THEN
-           WRITE (local_ch, '(a40," :",f9.2,"s CPU")') TRIM(obj%name), total_time
+           WRITE (local_ch, '(a40," :",f10.4," s CPU")') TRIM(obj%name), total_time
          ELSE
-           WRITE (local_ch, '(a40," :",f9.2,"s CPU (", i8," calls,",f8.3," s avg)")')  &
+           WRITE (local_ch, '(a40," :",f10.4," s CPU (", i12," calls,",f10.4," s avg)")')  &
                         TRIM(obj%name) , total_time , call_number(1) ,   &
                         total_time / REAL( call_number(1), DP )
          ENDIF
@@ -473,7 +488,13 @@ MODULE timing_m
      DO i=1,list%nclock 
        !
        tmp_clock = list%clock(i)
-       CALL clock_write(tmp_clock,FORM="dhms")
+       CALL clock_update(tmp_clock)
+       !
+       IF ( tmp_clock%total_time < 600.0 ) THEN
+          CALL clock_write(tmp_clock,FORM="sec")
+       ELSE
+          CALL clock_write(tmp_clock,FORM="dhms")
+       ENDIF
        !
      ENDDO
      !

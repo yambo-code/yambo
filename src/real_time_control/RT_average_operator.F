@@ -27,7 +27,6 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  use pars,           ONLY:SP,cI,cZERO
  use real_time,      ONLY:DbGd_ibz_coo,RT_Nk_ibz,RT_nk,RT_ibz_coo,l_RT_uses_E_DbGd,&
 &                         RT_bands,RT_nbands
- use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_n_states
  use electrons,      ONLY:n_sp_pol,n_spin,levels

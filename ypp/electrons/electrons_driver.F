@@ -98,17 +98,14 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  ! BANDS interpolation
  !======================
- !
  if (l_bands) call electrons_bands(Xk,Xen)
  !
  ! WAVEFUNCTIONS 
  !===============
- !
  if (l_sp_wf.or.l_mean_potential) call electrons_WFs(Xen)
  !
  ! MAGNETIZATION 
  !===============
- !
  if (l_mag) call electrons_magnetization(Xk,Xen)
  !
  ! GPL_EXCLUDE_START

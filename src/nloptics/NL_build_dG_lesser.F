@@ -56,10 +56,12 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  do ik=1,QP_nk
    if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
    do i1=NL_bands(1),NL_bands(2)             
+!$omp parallel do default(shared), private(i2)
      do i2=i1,NL_bands(2)
        dG(i1,i2,ik)=Vstar_dot_V_omp(en%nbf,V_bands(i2,:,ik,1),V_bands(i1,:,ik,1))
        dG(i2,i1,ik)=conjg(dG(i1,i2,ik))
      enddo
+!$omp end parallel do
    enddo
  enddo
  !

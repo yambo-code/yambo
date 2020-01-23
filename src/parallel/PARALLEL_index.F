@@ -24,8 +24,7 @@
 subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)
  !
  use parallel_m, ONLY:PP_redux_wait,PP_indexes,ncpu,myid,p_prod,mpi_comm_world,&
-&                     MPI_comm,comm_default_value
- use com,        ONLY:error,warning
+&                     MPI_comm,comm_default_value,PP_indexes_reset
  use stderr,     ONLY:intc
 #include<memory.h>
  !
@@ -73,6 +72,10 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  lowlim=1
  if (present(low_range))  lowlim=low_range
  !
+ if (allocated(px%n_of_elements) .or. allocated(px%element_1D) .or. allocated(px%element_2D) ) then 
+   call PP_indexes_reset(px)
+ endif
+ !
  YAMBO_ALLOC(px%n_of_elements,(ncpu_loop))
  px%n_of_elements=0
  !
@@ -81,8 +84,12 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  if (nindxs==1.and.local_CONSECUTIVE) then
    !
    YAMBO_ALLOC(px%element_1D,(uplim(1)))
+   YAMBO_ALLOC(px%first_of_1D,(ncpu_loop))
+   YAMBO_ALLOC(px%last_of_1D,(ncpu_loop))
    allocate(i_done(uplim(1)))
    px%element_1D=.false.
+   px%first_of_1D=0
+   px%last_of_1D=0
    i_done=1
    i_done(:lowlim(1))=0
    average_steps=(uplim(1)-lowlim(1)+1)/ncpu_loop
@@ -99,6 +106,8 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
          i_range(1)=i_range(1)+missing_cpus
          i_range(2)=i_range(2)+missing_cpus
        endif
+       px%first_of_1D(myid_loop+1)=i_range(1)
+       px%last_of_1D(myid_loop+1)=i_range(2)
        px%element_1D(i_range(1):i_range(2))=.TRUE.
        i_done(i_range(1):i_range(2))=i_done(i_range(1):i_range(2))-1
      endif

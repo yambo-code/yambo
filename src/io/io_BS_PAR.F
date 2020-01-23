@@ -27,7 +27,6 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  use netcdf
  use parallel_m
- use com,           ONLY:error
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
@@ -145,7 +144,7 @@ subroutine io_BS_par_check(iq,ID)
  use stderr,        ONLY:intc
  use BS,            ONLY:l_restart_bse
  use IO_m,          ONLY:io_connect,io_disconnect,io_file
- use com,           ONLY:msg,file_exists
+ use com,           ONLY:msg
  !
  implicit none
  !
@@ -153,6 +152,8 @@ subroutine io_BS_par_check(iq,ID)
  character(schlen) :: db_name
  !
  integer :: io_BS
+ !
+ logical, external :: file_exists
  !
  ! Hack to find if the name exists
  ! DS warning. Here if file is found in alternative -J folder code will not work ...

@@ -28,7 +28,6 @@ subroutine X_GreenF_convoluted(iq,transitions,Xw,Xen,Xk,GreenF,ordering)
  use R_lattice,  ONLY:qindx_X,bz_samp
  use frequency,  ONLY:w_samp
  use units,      ONLY:pi
- use com,        ONLY:error
  !
  implicit none
  integer      :: iq,transitions(4)

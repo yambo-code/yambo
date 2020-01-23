@@ -114,8 +114,8 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
    Input file edit ?
  ===========================================================================
  */
- if ( y.in_file_N ==1 && *use_editor==0 ) {*use_editor=1;};
- if ( y.in_file_N ==0                   ) {*use_editor=0;};
+ if ( y.in_file_N ==1 && *use_editor ==0 ) {*use_editor=1;};
+ if ( y.in_file_N ==0 || y.in_file_N ==2 ) {*use_editor=0;};
  /* 
    Error message
  ===========================================================================

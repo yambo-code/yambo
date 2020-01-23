@@ -49,7 +49,6 @@ module electrons
  integer  :: n_sp_pol
  integer  :: n_spinor
  integer  :: n_spin_den
- !
  logical  :: l_spin_orbit
  !
  ! Average magnetization density
@@ -60,6 +59,7 @@ module electrons
  real(SP)                 :: Itinerant_magn(3)
  !
  type levels
+   !
    integer         :: nb
    integer         :: nk
    integer         :: nbf

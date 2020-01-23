@@ -30,10 +30,9 @@ integer function io_RT_components(what,ID)
  use R_lattice,      ONLY:nqbz
  use stderr,         ONLY:intc
  use timing_m,       ONLY:timing
- use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,read_is_on,io_fragment,io_bulk,write_is_on
  use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step,NE_steps,RT_nk, &
-&                         RT_carriers,RT_nbands,RT_all2ibz,G_MEM_steps
+&                         RT_carriers,RT_nbands,G_MEM_steps
  use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,TMP_OBS_cache_steps,&
 &                         NE_i_start_time,SAVE_G_history
 #if defined _PAR_IO

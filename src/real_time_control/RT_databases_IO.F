@@ -47,7 +47,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,i_cpu
+ integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time
  integer, external :: io_RT_components
  logical, external :: stop_NOW
  !
@@ -150,7 +150,6 @@ subroutine RT_databases_IO(E)
      endif
      !
    endif
-   !
    !
    if(RT_do_it('G')) then
      !

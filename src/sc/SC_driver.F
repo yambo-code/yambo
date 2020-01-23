@@ -328,87 +328,90 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    io_V=io_SC_components('V' ,E,ID(3))
    !
    do i_sp_pol=1,n_sp_pol
-   !
-   do ik = 1, QP_nk 
      !
-     H_nl_sc=cZERO
-     !
-     ! Build H_nl_sc
-     !===============
-     !
-     if (l_use_collisions .or. (.not.l_sc_V_is_local) ) then
+     do ik = 1, QP_nk 
        !
-       ! Without collisions FOCK goes in QP_Vnl_xc and CORR in QP_Sc.
-       ! With    collisions FOCK and CORR (with also Hartree) go in QP_Vnl_xc
+       H_nl_sc=cZERO
        !
-       if (l_sc_fock.or.l_sc_sex.or.l_use_collisions) call V_qp_basis_to_H(ik,i_sp_pol,QP_Vnl_xc,H_nl_sc)
+       ! Build H_nl_sc
+       !===============
        !
-       if (l_sc_coh.or.l_sc_sex)                      call V_qp_basis_to_H(ik,i_sp_pol,QP_Sc,    H_nl_sc)
+       if (l_use_collisions .or. (.not.l_sc_V_is_local) ) then
+         !
+         ! Without collisions FOCK goes in QP_Vnl_xc and CORR in QP_Sc.
+         ! With    collisions FOCK and CORR (with also Hartree) go in QP_Vnl_xc
+         !
+         if (l_sc_fock.or.l_sc_sex.or.l_use_collisions) call V_qp_basis_to_H(ik,i_sp_pol,QP_Vnl_xc,H_nl_sc)
+         !
+         if (l_sc_coh.or.l_sc_sex)                      call V_qp_basis_to_H(ik,i_sp_pol,QP_Sc,    H_nl_sc)
+         !
+         ! Rotate H_nl_sc in the WFo basis.
+         !
+         if (.not.l_use_collisions.and.it_now>1) call OBS_rotate(H_rotation(:,:,ik,i_sp_pol),H_nl_sc,SC_bands(2)-SC_bands(1)+1,-1)
+         ! 
+         ! I/O [H_nl_sc]
+         !
+         call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(3))
+         io_V=io_SC_components('V',E,ID(3))
+         !
+         ! Mixing for non-local self-energies
+         !====================================
+         !
+         if (l_SC_nl_mix) then
+            !
+            if(it>1) H_nl_sc = SC_cycle_mixing*H_nl_sc + (1._SP-SC_cycle_mixing)*H_nl_nm1(:,:,ik,i_sp_pol)
+            !
+            H_nl_nm1(:,:,ik,i_sp_pol)= H_nl_sc
+            !
+         endif
+         !
+       endif
        !
-       ! Rotate H_nl_sc in the WFo basis.
+#if defined _ELECTRIC
+       if(l_sc_electric) H_nl_sc=H_nl_sc+W_electric(:,:,ik,i_sp_pol)
+#endif
+       ! Add local V_xc
        !
-       if (.not.l_use_collisions.and.it_now>1) call OBS_rotate(H_rotation(:,:,ik,i_sp_pol),H_nl_sc,SC_bands(2)-SC_bands(1)+1,-1)
-       ! 
-       ! I/O [H_nl_sc]
+       if (l_sc_XC_is_local.and..not.l_use_collisions)     call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'xc ',Vxc=V_xc_sc)
        !
        i_frag=ik+(i_sp_pol-1)*QP_nk
        IO_ACT=manage_action(WR_CL_IF_END,i_frag,1,QP_nk*n_sp_pol)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID(3))
        io_V=io_SC_components('V',E,ID(3))
        !
-       ! Mixing for non-local self-energies
-       !====================================
+       ! Add V_Hartree
        !
-       if (l_SC_nl_mix) then
-          !
-          if(it>1) H_nl_sc = SC_cycle_mixing*H_nl_sc + (1._SP-SC_cycle_mixing)*H_nl_nm1(:,:,ik,i_sp_pol)
-          !
-          H_nl_nm1(:,:,ik,i_sp_pol)= H_nl_sc
-          !
-       endif
+       if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'def',V=V_hartree_sc)
        !
-     endif
+       call PP_redux_wait(H_nl_sc)
+       !
+       ! Add Hzero
+       !
+       H_nl_sc = H_nl_sc + Hzero(:,:,ik,i_sp_pol)
+       !
+       ! Diagonalize H_nl_sc 
+       !=====================
+       !
+       call LINEAR_ALGEBRA_driver(DIAGO,M=H_nl_sc,E_real=E%E(:SC_bands(2),ik,i_sp_pol))
+       !
+       ! Rotation (WFo->WF) matrix
+       !
+       H_rotation(:,:,ik,i_sp_pol)=H_nl_sc(:,:) 
+       !
+       ! New wave functions 
+       !====================
+       !
+       call WF_rotate(ik,i_sp_pol,WFo,fft_size)
+       !
+       if (l_NSC_shot) call live_timing(steps=1)
+       ! 
+       ! Mean Potential 
+       !================
+       !
+       if (l_Mean_Potential) call V_Mean_Potential(ik,i_sp_pol,WFo)
+       !
+     enddo ! ik
      !
-#if defined _ELECTRIC
-     if(l_sc_electric) H_nl_sc=H_nl_sc+W_electric(:,:,ik,i_sp_pol)
-#endif
-     ! Add local V_xc
-     !
-     if (l_sc_XC_is_local.and..not.l_use_collisions)     call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'xc ',Vxc=V_xc_sc)
-     !
-     ! Add V_Hartree
-     !
-     if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'def',V=V_hartree_sc)
-     !
-     call PP_redux_wait(H_nl_sc)
-     !
-     ! Add Hzero
-     !
-     H_nl_sc = H_nl_sc + Hzero(:,:,ik,i_sp_pol)
-     !
-     ! Diagonalize H_nl_sc 
-     !=====================
-     !
-     call LINEAR_ALGEBRA_driver(DIAGO,M=H_nl_sc,E_real=E%E(:SC_bands(2),ik,i_sp_pol))
-     !
-     ! Rotation (WFo->WF) matrix
-     !
-     H_rotation(:,:,ik,i_sp_pol)=H_nl_sc(:,:) 
-     !
-     ! New wave functions 
-     !====================
-     !
-     call WF_rotate(ik,i_sp_pol,WFo,fft_size)
-     !
-     if (l_NSC_shot) call live_timing(steps=1)
-     ! 
-     ! Mean Potential 
-     !================
-     !
-     if (l_Mean_Potential) call V_Mean_Potential(ik,i_sp_pol,WFo)
-     !
-   enddo ! ik
-   !
    enddo ! i_sp_pol
    !
    if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
@@ -748,7 +751,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      do i_sp_pol=1,n_sp_pol
        do ik=1,k%nibz
          !
-         ! Check for degenrate bands in the bare energies
+         ! Check for degenerate bands in the bare energies
          !
          call degeneration_finder(E_reference%E(:SC_bands(2),ik,i_sp_pol),SC_bands(2),first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
          !

@@ -166,7 +166,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !=======================
  if (.not.(l_life.and.X%iq(1)>1)) then
    call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
-   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
+   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_and_IO",X=X) 
  endif
  call X_half_mat_check(Xen,Xk,Xw)
  !
@@ -227,11 +227,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    endif
    !
    if (iq==1) then
-#if defined _PAR_IO
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb,COMM=PAR_COM_X_WORLD%COMM)
-#else
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb)
-#endif
      i_err=io_X(X,Xw,Xdb)
    endif
    !
@@ -280,11 +276,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    X%ng_db=X%ng
    !
-#if defined _PAR_IO
-   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb,COMM=PAR_COM_X_WORLD%COMM)
-#else
    call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
-#endif
    i_err=io_X(X,Xw,Xdb)
    !
    ! CLEAN (1)

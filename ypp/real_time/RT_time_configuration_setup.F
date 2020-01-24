@@ -120,7 +120,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
        !
        do i_t=i_ref(2)-1,i_ref(1),-1
          TIME_diff=  GENERAL_RT_IO_t%Time(j_ref)-GENERAL_RT_IO_t%Time(i_t) - RT_conf%delta_T 
-         if (TIME_diff>0._SP) then
+         if (abs(TIME_diff)<RT_step) then
            RT_conf%T_n_steps=RT_conf%T_n_steps+1
            j_ref            = i_t
          endif
@@ -137,10 +137,10 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
        !
        do i_t=i_ref(1)+1,i_ref(2)
          TIME_diff=  GENERAL_RT_IO_t%Time(i_t)-GENERAL_RT_IO_t%Time(j_ref) - RT_conf%delta_T 
-         if (TIME_diff>0._SP) then
+         if (abs(TIME_diff)<RT_step) then
            RT_conf%T_n_steps=RT_conf%T_n_steps+1
-           j_ref            = i_t
            RT_time(RT_conf%T_n_steps)=GENERAL_RT_IO_t%Time(i_t)
+           j_ref            = i_t
          endif
        enddo
        !

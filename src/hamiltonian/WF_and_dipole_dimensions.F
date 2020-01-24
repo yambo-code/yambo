@@ -23,7 +23,6 @@
 !
 subroutine WF_and_dipole_dimensions(X)
  !
- use drivers,      ONLY:l_real_time,l_sc_fock,l_sc_exx,l_sc_coh,l_sc_sex,l_sc_srpa,l_use_Hxc_collisions
  use drivers,      ONLY:l_real_time,l_sc_fock,l_sc_exx,l_sc_coh,l_sc_sex,l_sc_srpa,&
 &                       l_sc_hartree,l_use_Hxc_collisions
  use com,          ONLY:warning,msg
@@ -34,7 +33,7 @@ subroutine WF_and_dipole_dimensions(X)
  use interfaces,   ONLY:eval_G_minus_G
  use hamiltonian,  ONLY:H_ref_bands,WF_Go_indx,WF_G_max,l_sc_XC_is_local
 #if defined _RT || defined _NL
- use real_time,    ONLY:eval_HARTREE,eval_DFT
+ use real_time,    ONLY:eval_HARTREE,eval_DFT,eval_energy,l_velocity_gauge_corr
 #endif
 #if defined _SC
  use SC,           ONLY:SC_X_bands,SC_ng_Sx,SC_X_size,SC_up_W_iters
@@ -90,8 +89,8 @@ subroutine WF_and_dipole_dimensions(X)
  endif
  !
 #if defined _RT || defined _NL
- if (eval_HARTREE) WF_G_max=maxval((/QP_ng_SH, WF_G_max/))
- if (eval_DFT    ) WF_G_max=maxval((/QP_ng_Vxc,WF_G_max/))
+ if (eval_HARTREE.or.eval_energy.or.l_velocity_gauge_corr) WF_G_max=maxval((/QP_ng_SH, WF_G_max/))
+ if (eval_DFT    .or.eval_energy.or.l_velocity_gauge_corr) WF_G_max=maxval((/QP_ng_Vxc,WF_G_max/))
 #endif
  !
 #if defined _SC

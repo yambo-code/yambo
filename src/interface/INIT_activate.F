@@ -483,8 +483,9 @@ subroutine INIT_activate()
    call initactivate( 1,'HXC_Potential FFTGvecs')
    !
    call initactivate(-1,'QpntsRXs')
-   if( index(H_potential,"HARTREE")>0 )                           call initactivate(1,'HARRLvcs ALLGHAR')
-   if( index(H_potential,"default")>0 )                           call initactivate(1,'VXCRLvcs')
+   !
+   if( index(H_potential,"HARTREE")>0 .or. index(H_potential,"DEFAULT")>0)  call initactivate(1,'HARRLvcs ALLGHAR')
+   if( index(H_potential,"GS_XC")>0   .or. index(H_potential,"DEFAULT")>0 ) call initactivate(1,'VXCRLvcs')
    !
    if (l_eval_collisions) then
      if( index(H_potential,"SEX")>0.or.index(H_potential,"FOCK")>0) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')

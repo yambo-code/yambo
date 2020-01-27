@@ -673,6 +673,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  call QP_state_table_setup(E)
  !
+ if (infile_editing) then
+   open(unit=12,file=trim(infile))
+   call initinfio(defs,12)
+   close(12)
+   call PP_redux_wait
+ endif
+ !
  if (l_QP_DBs_create_and_modify.or.l_QP_DBs_manipulate) call QP_DBs_initialize()
  !
  l_init_QP=l_plot.and.l_sp_wf
@@ -731,17 +738,11 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                    N=n_FineGd_DBs,M=1,CH_v=FineGd_DB1_paths(:n_FineGd_DBs,:))
  endif
  !
- ! Input file
- !
- if (infile_editing) then
-   open(unit=12,file=trim(infile))
-   call initinfio(defs,12)
-   close(12)
-   call PP_redux_wait
-   return
- endif
- !
  ! LOG/REP files
+ !
+ live_timing_is_on =master_cpu.and..not.infile_editing
+ write_to_report   =master_cpu.and..not.infile_editing
+ write_to_log      =master_cpu.and..not.infile_editing
  !
  call INIT_report_and_log_files()
  !
@@ -749,11 +750,16 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  call rename_file(repfile)
  !
- live_timing_is_on =master_cpu
- write_to_report   =master_cpu
- write_to_log      =master_cpu
+ ! Input file
  !
- if (master_cpu) then
+ if (infile_editing) then
+   open(unit=12,file=trim(infile))
+   call initinfio(defs,12)
+   close(12)
+   call PP_redux_wait
+ endif
+ !
+ if (write_to_report) then
    call rm_file(trim(repfile))
    open(unit=11,file=trim(repfile))
    call write_the_logo(11,' ')

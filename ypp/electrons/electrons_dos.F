@@ -106,11 +106,11 @@ subroutine electrons_dos(Xk,Xen)
    !
    call INTERPOLATION_driver_create_grid(INTERP_grid)
    !
-   call INTERPOLATION_driver_seed("E_on_built_in",IDe,DOS_bands,Xk,SEED_E=Xen)
+   call INTERPOLATION_driver_seed("E_on_built_in",IDe,DOS_bands,Xk,SEED_E=Xen,NEAREST=.FALSE.)
    call INTERPOLATION_driver_do("E_on_built_in",IDe,GRID_k,OUT_E=GRID_E)
    !
-   call INTERPOLATION_driver_seed("f_on_built_in",IDf,DOS_bands,Xk,SEED_E=Xen)
-   call INTERPOLATION_driver_do("f_on_built_in",IDf,GRID_k,OUT_E=GRID_E,QUIET=.TRUE.)
+   call INTERPOLATION_driver_seed("f_on_built_in",IDf,DOS_bands,Xk,SEED_E=Xen,QUIET=.TRUE.)
+   call INTERPOLATION_driver_do("f_on_built_in",IDf,GRID_k,OUT_E=GRID_E)
    !
    if (l_pdos) then
      call INTERPOLATION_driver_seed("SPIN_factors_on_built_in",IDp,DOS_bands,Xk,SEED_R3=PDOS_fac_v)

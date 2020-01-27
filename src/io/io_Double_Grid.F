@@ -38,7 +38,7 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Work Space
  !
- integer :: DG_format
+ integer :: DG_format,VAR_SZ
  !
  call timing('io_Double_Grid',OPR='start')
  !
@@ -48,7 +48,11 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  if (io_Double_Grid/=0) goto 1
  !
- io_Double_Grid=io_header(ID)
+ if (write_is_on(ID).or.variable_exist(ID,"HEAD_R_LATT")) then
+   io_Double_Grid=io_header(ID,R_LATT=.TRUE.,IMPOSE=.TRUE.)
+ else
+   io_Double_Grid=io_header(ID)
+ endif
  !
  if (.not.ver_is_gt_or_eq(ID,revision=3560)) io_Double_Grid=IO_OUTDATED_DB
  !
@@ -56,7 +60,7 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  if (io_Double_Grid/=0) goto 1
  !
- call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=1)
+ call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
  !
  call io_elemental(ID,I0=E%nb_FineGd,        VAR=' Bands                           :')
  call io_elemental(ID,I0=E%nk_FineGd,        VAR=' Number of points  in the IBZ (E):')

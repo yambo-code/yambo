@@ -27,8 +27,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  use pars,          ONLY:SP,cZERO
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
-#if defined _PL
-#endif
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
@@ -168,7 +166,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !=======================
  if (.not.(l_life.and.X%iq(1)>1)) then
    call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
-   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
+   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_and_IO",X=X) 
  endif
  call X_half_mat_check(Xen,Xk,Xw)
  !
@@ -229,7 +227,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    endif
    !
    if (iq==1) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb)
      i_err=io_X(X,Xw,Xdb)
    endif
    !

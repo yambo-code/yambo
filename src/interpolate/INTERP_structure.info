@@ -1,0 +1,30 @@
+
+
+1) INTERPOTALION_driver_seed  
+ 
+   Defines the coefficients to be used for the interpolation starting from SEED_k
+   INTERPOLATION_BZ_coeff is the core of the interpolation
+
+   INPUT:  SEED_k,Data_initial
+   OUTPUT: ID,INTERP_obj(ID)%D,INTERP_obj(ID)%SEED
+   - calls INTERPOLATION_coefficients
+     INPUT: ID,SEED_k,INTERP_obj(ID)%SEED
+     - transfer SEED or energies to DATA
+     - calls INTERPOLATION_BZ_coeff
+     INPUT:  ID,DATA(nval,nk)
+     OUTPUT: coeff(nshells,nval)
+
+2) INTERPOLATION_driver_do
+
+   Starting from the coefficients defined previously
+   interpolates to OUT_k
+
+   INPUT: OUT_k,ID
+   - calls INTERPOLATION_BZ
+     - calls INTERPOLATION_Fourier
+       From the values on the shells defines the values on the given k-grid
+
+
+Note.
+- INTERPOLATION_driver_seed at present interpolates only from a single grid, not from both
+- INTREPOLATION_driver_do at present interpolates both to the Coarse grid and to the Fine grid

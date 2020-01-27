@@ -63,7 +63,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
 &                        self_detect_E_range,X_FILL_UP_matrix_only,use_X_DbGd,&
 &                        l_X_terminator,X_terminator_E,X_term_E,X_par_lower_triangle
 #ifdef _CUDA
- use X_m,           ONLY:rhotw_save_d,rhotw_save2_d
+ use X_m,           ONLY:rhotw_save_d
 #endif
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
@@ -235,7 +235,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  YAMBO_ALLOC(Xo_res,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
 #ifdef _CUDA
  allocate(Xo_res_d,mold=Xo_res)
- allocate(rhotw_save_d(ngrho),rhotw_save2_d(ngrho))
+ allocate(rhotw_save_d(ngrho))
 #endif
  call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
@@ -439,7 +439,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
 #ifdef _CUDA
  YAMBO_FREE(Xo_res_d)
  YAMBO_FREE(rhotw_save_d)
- YAMBO_FREE(rhotw_save2_d)
 #endif
  call elemental_collision_free(Xo_scatt)
  !

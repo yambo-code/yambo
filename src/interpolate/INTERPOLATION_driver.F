@@ -21,7 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,NEAREST)
+subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
+&                                    NEAREST,QUIET,SERIAL)
  !
  use pars,                 ONLY:SP
  use real_time,            ONLY:RT_t
@@ -30,8 +31,9 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  use electrons,            ONLY:levels,n_sp_pol
  use interpolate_tools,    ONLY:init_ID,FILL_SEED_E,FILL_SEED_RT,FILL_SEED_QP
  use interpolate,          ONLY:INTERP_obj,INTERPOLATION_coefficients,max_interpls,&
-&                               l_INTERP_f,l_INTERP_E,l_INTERP_dE,l_INTERP_W,&
-&                               INTERPOLATE_initialized,l_INTERP_Z
+&                               l_INTERP_f,l_INTERP_E,l_INTERP_dE,l_INTERP_W,INTERPOLATE_is_serial,&
+&                               INTERPOLATE_initialized,l_INTERP_Z,INTERP_mode,INTERPOLATE_is_quiet
+ use IO_m,                 ONLY:IO_and_Messaging_switch
  !
  implicit none
  !
@@ -44,10 +46,21 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  type(QP_t),    intent(in), optional :: SEED_QP
  real(SP),      intent(in), optional :: SEED_R3(:,:,:)
  logical,       intent(in), optional :: NEAREST
+ logical,       intent(in), optional :: QUIET
+ logical,       intent(in), optional :: SERIAL
  !
  ! Work Space
  !
  integer               :: i_dim,i_obj
+ !
+ ! Quiet?
+ !========
+ if (present(QUIET)) INTERPOLATE_is_quiet=QUIET
+ if (INTERPOLATE_is_quiet) call IO_and_Messaging_switch("-log")
+ !
+ ! Serial?
+ !=========
+ if (present(SERIAL)) INTERPOLATE_is_serial=SERIAL
  !
  ! Actions
  !=========
@@ -89,7 +102,10 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  !
  call init_ID(ID,dims,SEED_k,operation)
  !
- if (present(NEAREST)) INTERP_obj(ID)%use_NN=NEAREST 
+ if (present(NEAREST)) then
+   INTERP_obj(ID)%use_NN=NEAREST 
+   if (NEAREST) INTERP_mode="NN"
+ endif
  !
  if (.not.INTERPOLATE_initialized.and..not.INTERP_obj(ID)%use_NN) then
    !
@@ -117,13 +133,12 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  !
 end subroutine INTERPOLATION_driver_seed
 !
-!
-subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,QUIET)
+subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  !
  use R_lattice,            ONLY:bz_samp
  use electrons,            ONLY:levels
  use interpolate_tools,    ONLY:INTERPOLATION_nearest_k_report
- use interpolate,          ONLY:INTERP_obj,&
+ use interpolate,          ONLY:INTERP_obj,INTERPOLATE_is_quiet,&
 &                               INTERPOLATION_BZ,INTERPOLATION_nearest_k,&
 &                               l_INTERP_f,l_INTERP_E,l_INTERP_dE,&
 &                               l_integral_respect
@@ -135,17 +150,10 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,QUIET)
  integer,       intent(in)              :: ID
  type(bz_samp), intent(inout)           :: OUT_k
  type(levels),  intent(inout), optional :: OUT_E
- logical,       intent(in),    optional :: QUIET
  !
  ! Work Space
  !
  integer               :: n(2),nk1,nk2,dimI
- logical               :: QUIET_
- !
- QUIET_=.false.
- if (present(QUIET)) QUIET_=QUIET
- !
- if (QUIET_) call IO_and_Messaging_switch("-log")
  !
  if (operation/=trim(INTERP_obj(ID)%what)) call error(' Interopolation ID did not match operation name')
  !
@@ -160,7 +168,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,QUIET)
    YAMBO_ALLOC(INTERP_obj(ID)%INTERP,(n(1):n(2),nk1,dimI))
  endif
  if(nk2>0) then
-   YAMBO_ALLOC(INTERP_obj(ID)%INTERP,(n(1):n(2),nk2,dimI))
+   YAMBO_ALLOC(INTERP_obj(ID)%INTERP_FineGd,(n(1):n(2),nk2,dimI))
  endif
  !
  ! ... Interpolation...
@@ -169,7 +177,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,QUIET)
    ! ... Using the Nearest point method
    if(nk1>0) call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%pt       ,INTERP_obj(ID)%INTERP)
    if(nk2>0) call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%pt_FineGd,INTERP_obj(ID)%INTERP_FineGd)
-   if (.not.QUIET_) call INTERPOLATION_nearest_k_report(ID)
+   if (.not.INTERPOLATE_is_quiet) call INTERPOLATION_nearest_k_report(ID)
    !
  else
    !
@@ -209,10 +217,9 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,QUIET)
    if ((l_INTERP_f               ).and.nk2>0) OUT_E%f_FineGd=INTERP_obj(ID)%INTERP_FineGd
  endif
  !
- call IO_and_Messaging_switch("+log")
+ if (INTERPOLATE_is_quiet) call IO_and_Messaging_switch("+log")
  !
 end subroutine INTERPOLATION_driver_do
-!
 !
 subroutine INTERPOLATION_driver_create_grid(GRID)
  !
@@ -228,7 +235,6 @@ subroutine INTERPOLATION_driver_create_grid(GRID)
  call INTERPOLATION_create_the_grid(GRID_k,'i',GRID)
  !
 end subroutine INTERPOLATION_driver_create_grid
-!
 !
 subroutine INTERPOLATION_driver_end(ID)
  !

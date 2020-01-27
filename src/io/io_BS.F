@@ -33,7 +33,7 @@ integer function io_BS(iq,X,ID)
  use stderr,        ONLY:intc
  use parallel_m,    ONLY:myid
  use pointers,      ONLY:linkM2V
- use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded,BS_K_coupling
+ use BS,            ONLY:BS_blk,BS_K_has_been_calculated_loaded,BS_K_coupling
  use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,&
 &                        def_variable_bulk,io_variable_bulk,frag_BS_K,&

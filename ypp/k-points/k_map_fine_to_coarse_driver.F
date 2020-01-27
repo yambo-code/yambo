@@ -25,7 +25,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  use pars,                ONLY:SP
  use stderr,              ONLY:intc
- use R_lattice,           ONLY:bz_samp
+ use R_lattice,           ONLY:bz_samp,nkibz
  use com,                 ONLY:msg
  use YPPm,                ONLY:n_FineGd_DBs
  use electrons,           ONLY:levels
@@ -93,6 +93,9 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  ! Final I/O
  !============
+ ! .. restoring of built-in value of nkibz to be used in io_header 
+ nkibz=Xk%nibz
+ !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=LOG,ID=ID)
  i_err=io_Double_Grid(Xen,Xk,ID)
  !

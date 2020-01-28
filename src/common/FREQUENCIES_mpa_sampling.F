@@ -41,51 +41,51 @@
 !---------------------------------------------------------------
 
  subroutine FREQUENCIES_mpa_sampling(np, w1, w2, ps, w) 
-   use pars,     ONLY:SP
+   use pars,     ONLY:SP, DP
    implicit none
    !
    integer,     intent(in)    :: np       ! number of desired pairs
-   complex(SP), intent(in)    :: w1,w2    ! segment [w1,w2)
+   complex(DP), intent(in)    :: w1,w2    ! segment [w1,w2)
    character,   intent(in)    :: ps       ! flavour of sampling: hPPS, qPPS, cPPS, ...
-   complex(SP), intent(out)   :: w(2*np)
+   complex(DP), intent(out)   :: w(2*np)
    !
    integer     :: i, a1, a2
-   complex(SP) :: ws
-   real(SP)    :: w_aux1, w_aux2
-   real(SP), parameter :: log2=0.693147180560_SP
+   complex(DP) :: ws
+   real(DP)    :: w_aux1, w_aux2
+   real(DP), parameter :: log2=0.693147180560_DP
    !
    ws = w1+w2
    select case(np)
      case (1)
        select case(ps)
          case ('h') !HPPS
-           w = (/w1, 0.5_SP*ws/)
+           w = (/w1, 0.5_DP*ws/)
          case ('q') !QPPS
-           w = (/w1, 0.25_SP*ws/)
+           w = (/w1, 0.25_DP*ws/)
          case ('c') !CPPS
-           w = (/w1, 0.125_SP*ws/)
+           w = (/w1, 0.125_DP*ws/)
          case default
            ! error 
        end select
      case (2)
        select case(ps)
          case ('h') !HPPS
-           w = (/w1, 0.25_SP*ws, 0.5_SP*ws, 0.75_SP*ws/)
+           w = (/w1, 0.25_DP*ws, 0.5_DP*ws, 0.75_DP*ws/)
          case ('q') !QPPS
-           w = (/w1, 0.0625_SP*ws, 0.25_SP*ws, 0.5625_SP*ws/)
+           w = (/w1, 0.0625_DP*ws, 0.25_DP*ws, 0.5625_DP*ws/)
          case ('c') !CPPS
-           w = (/w1, 0.015625_SP*ws, 0.125_SP*ws, 0.421875_SP*ws/)
+           w = (/w1, 0.015625_DP*ws, 0.125_DP*ws, 0.421875_DP*ws/)
          case default
            ! error 
        end select
      case (3)
        select case(ps)
          case ('h') !HPPS
-           w = (/w1, 0.25_SP*ws, 0.375_SP*ws, 0.5_SP*ws, 0.625_SP*ws, 0.75_SP*ws/)
+           w = (/w1, 0.25_DP*ws, 0.375_DP*ws, 0.5_DP*ws, 0.625_DP*ws, 0.75_DP*ws/)
          case ('q') !QPPS
-           w = (/w1, 0.0625_SP*ws, 0.140625_SP*ws, 0.25_SP*ws, 0.390625_SP*ws, 0.5625_SP*ws/)
+           w = (/w1, 0.0625_DP*ws, 0.140625_DP*ws, 0.25_DP*ws, 0.390625_DP*ws, 0.5625_DP*ws/)
          case ('c') !CPPS
-           w = (/w1, 0.015625_SP*ws, 0.0527344_SP*ws, 0.125_SP*ws, 0.244141_SP*ws, 0.421875_SP*ws/)
+           w = (/w1, 0.015625_DP*ws, 0.0527344_DP*ws, 0.125_DP*ws, 0.244141_DP*ws, 0.421875_DP*ws/)
          case default
            ! error 
        end select
@@ -93,19 +93,19 @@
       w(1) = w1 
       select case(ps)
         case ('h') !HPPS
-          w(np+1) = 0.5_SP*ws 
+          w(np+1) = 0.5_DP*ws 
         case ('q') !QPPS
-          w(np+1) = 0.25_SP*ws 
+          w(np+1) = 0.25_DP*ws 
         case ('c') !CPPS
-          w(np+1) = 0.15_SP*ws 
+          w(np+1) = 0.15_DP*ws 
         case default
           ! error 
       end select  
       do i=2, np 
-        a1 = 2**(floor(log(i+0._SP)/log2)+1) -i
-        a2 = 2**(floor(log(i-1._SP)/log2))
-        w_aux1 = ( 2._SP*mod(a1,a2) +1._SP)/(4._SP*a2)
-        w_aux2 = 1._SP - w_aux1        
+        a1 = 2**(floor(log(i+0._DP)/log2)+1) -i
+        a2 = 2**(floor(log(i-1._DP)/log2))
+        w_aux1 = ( 2._DP*mod(a1,a2) +1._DP)/(4._DP*a2)
+        w_aux2 = 1._DP - w_aux1        
         select case(ps)
           case ('h') !HPPS
             w(i)        = w_aux1*ws

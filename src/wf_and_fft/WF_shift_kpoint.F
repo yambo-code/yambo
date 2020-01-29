@@ -25,7 +25,7 @@
 !
 subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,cZERO
  use electrons,     ONLY:n_spinor,n_sp_pol
  use R_lattice,     ONLY:G_m_G,k_map,bz_samp
 #ifdef _CUDA
@@ -61,6 +61,8 @@ subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,
  is = Xk%sstar(ikbz,2)
  !
  call dev_memcpy(WF_tmp,WF_k_in)
+ !
+ WF_k_out=cZERO
  !
  if(all(k_map%g0_idx==-1)) then
    call k_find_smallest_g0(g0_idx,g0_length)

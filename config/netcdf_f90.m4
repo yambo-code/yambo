@@ -119,7 +119,7 @@ if test x"$enable_hdf5_par_io" = "xyes" ; then
   enable_hdf5=yes ;
 fi
 #    
-if test x"$enable_hdf5_par_io" = "xyes" || test x"$enable_hdf5_p2y_support" = "xyes" ; then HDF5_VER="parallel"; fi
+if test x"$enable_hdf5_par_io" = "xyes" ; then HDF5_VER="parallel"; fi
 #
 #
 #

@@ -603,11 +603,11 @@ define lib_mod_clean
  @if test -d $(libbindir); then \
   cd $(libbindir) ; rm -f * ; cd .. ; rmdir $(libbindir); \
  fi
- @if test -d $(includedir)/modules__*; then \
-  for folder in $(includedir)/modules__*; do \
+ for folder in $(includedir)/modules__*; do \
+  if test -d $$folder ; then \
    cd $$folder ; rm -f * ; cd .. ; rmdir $$folder; \
-  done \
- fi
+  fi \
+ done
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 
 endef

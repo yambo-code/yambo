@@ -171,9 +171,10 @@ contains
    integer     :: i, j
    complex(DP) :: a, b, c, d !coefficients of the q polynom
    complex(DP) :: D1, D2, den, deR 
-   real(DP)    :: t=0.333333333333334_DP 
-   complex(DP) :: s=(1._DP, 1.73205080757_DP) ! = (1._DP, sqrt(3._DP))
+   real(DP)    :: t=0.33333333333333334_DP 
+   complex(DP) :: s=(1._DP, 1.7320508075688772_DP) ! = (1._DP, sqrt(3._DP))
    !
+
    a =  f1(4, w, x)* ( f2(5, w, x)*f3(6, w, x) - f2(6, w, x)*f3(5, w, x) ) - &
         f1(5, w, x)* ( f2(4, w, x)*f3(6, w, x) - f2(6, w, x)*f3(4, w, x) ) + &
         f1(6, w, x)* ( f2(4, w, x)*f3(5, w, x) - f2(5, w, x)*f3(4, w, x) ) 
@@ -337,7 +338,7 @@ contains
      case(3)
        call mpa_RQ_3p_solver(w, x, R, E)
      case default
-       call mpa_Q_solver(np, w, x, E)
+       call mpa_Q_solver(np, w**2, x, E)
        call mpa_R_solver(np, w, x, R, E)
    end select
    !

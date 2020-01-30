@@ -52,40 +52,40 @@
    integer     :: i, a1, a2
    complex(DP) :: ws
    real(DP)    :: w_aux1, w_aux2
-   real(DP), parameter :: log2=0.693147180560_DP
+   real(SP), parameter :: log2=0.693147180560_SP
    !
-   ws = w1+w2
+   ws = w2-w1
    select case(np)
      case (1)
        select case(ps)
          case ('h') !HPPS
-           w = (/w1, 0.5_DP*ws/)
+           w = (/w1, w1+0.5_SP*ws/)
          case ('q') !QPPS
-           w = (/w1, 0.25_DP*ws/)
+           w = (/w1, w1+0.25_SP*ws/)
          case ('c') !CPPS
-           w = (/w1, 0.125_DP*ws/)
+           w = (/w1, w1+0.125_SP*ws/)
          case default
            ! error 
        end select
      case (2)
        select case(ps)
          case ('h') !HPPS
-           w = (/w1, 0.25_DP*ws, 0.5_DP*ws, 0.75_DP*ws/)
+           w = (/w1, w1+0.25_SP*ws, w1+0.5_SP*ws, w1+0.75_SP*ws/)
          case ('q') !QPPS
-           w = (/w1, 0.0625_DP*ws, 0.25_DP*ws, 0.5625_DP*ws/)
+           w = (/w1, w1+0.0625_SP*ws, w1+0.25_SP*ws, w1+0.5625_SP*ws/)
          case ('c') !CPPS
-           w = (/w1, 0.015625_DP*ws, 0.125_DP*ws, 0.421875_DP*ws/)
+           w = (/w1, w1+0.015625_SP*ws, w1+0.125_SP*ws, w1+0.421875_SP*ws/)
          case default
            ! error 
        end select
      case (3)
        select case(ps)
          case ('h') !HPPS
-           w = (/w1, 0.25_DP*ws, 0.375_DP*ws, 0.5_DP*ws, 0.625_DP*ws, 0.75_DP*ws/)
+           w = (/w1, w1+0.25_SP*ws, w1+0.375_SP*ws, w1+0.5_SP*ws, w1+0.625_SP*ws, w1+0.75_SP*ws/)
          case ('q') !QPPS
-           w = (/w1, 0.0625_DP*ws, 0.140625_DP*ws, 0.25_DP*ws, 0.390625_DP*ws, 0.5625_DP*ws/)
+           w = (/w1, w1+0.0625_SP*ws, w1+0.140625_SP*ws, w1+0.25_SP*ws, w1+0.390625_SP*ws, w1+0.5625_SP*ws/)
          case ('c') !CPPS
-           w = (/w1, 0.015625_DP*ws, 0.0527344_DP*ws, 0.125_DP*ws, 0.244141_DP*ws, 0.421875_DP*ws/)
+           w = (/w1, w1+0.015625_SP*ws, w1+0.0527344_SP*ws, w1+0.125_SP*ws, w1+0.244141_SP*ws, w1+0.421875_SP*ws/)
          case default
            ! error 
        end select
@@ -93,32 +93,16 @@
       w(1) = w1 
       select case(ps)
         case ('h') !HPPS
-          w(np+1) = 0.5_DP*ws 
+          w(np+1) = w1+0.5_SP*ws 
         case ('q') !QPPS
-          w(np+1) = 0.25_DP*ws 
+          w(np+1) = w1+0.25_SP*ws 
         case ('c') !CPPS
-          w(np+1) = 0.15_DP*ws 
+          w(np+1) = w1+0.15_SP*ws 
         case default
           ! error 
       end select  
-      do i=2, np 
-        a1 = 2**(floor(log(i+0._DP)/log2)+1) -i
-        a2 = 2**(floor(log(i-1._DP)/log2))
-        w_aux1 = ( 2._DP*mod(a1,a2) +1._DP)/(4._DP*a2)
-        w_aux2 = 1._DP - w_aux1        
-        select case(ps)
-          case ('h') !HPPS
-            w(i)        = w_aux1*ws
-            w(2*np-i+2) = w_aux2*ws
-          case ('q') !QPPS
-            w(i)        = w_aux1**2*ws
-            w(2*np-i+2) = w_aux2**2*ws
-          case ('c') !CPPS
-            w(i)        = w_aux1**3*ws
-            w(2*np-i+2) = w_aux2**3*ws
-          case default
-            ! error 
-        end select
+      do i=2, 2*np 
+        w(i)=w1+ws*(i-1)/(2*np) 
       enddo
    end select 
    !

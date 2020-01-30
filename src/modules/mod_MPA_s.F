@@ -337,7 +337,7 @@ contains
      case(3)
        call mpa_RQ_3p_solver(w, x, R, E)
      case default
-       call mpa_Q_solver(np, w, x, E)
+       call mpa_Q_solver(np, w**2, x, E)
        call mpa_R_solver(np, w, x, R, E)
    end select
    !

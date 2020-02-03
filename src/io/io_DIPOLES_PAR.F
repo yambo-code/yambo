@@ -29,7 +29,7 @@ integer function io_DIPOLES(Dip,ID)
  use R_lattice,     ONLY:nXkibz
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,io_DIP,&
 &                        io_variable_bulk,def_variable_bulk,read_is_on,io_header,io_extension,&
-&                        IO_NOT_ALLOWED,close_is_on
+&                        IO_NOT_ALLOWED
 #if defined _RT
  use DIPOLES,       ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
  use electrons,     ONLY:n_spinor

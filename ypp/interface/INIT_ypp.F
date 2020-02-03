@@ -740,15 +740,15 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  ! LOG/REP files
  !
+ live_timing_is_on =master_cpu.and..not.infile_editing
+ write_to_report   =master_cpu.and..not.infile_editing
+ write_to_log      =master_cpu.and..not.infile_editing
+ !
  call INIT_report_and_log_files()
  !
  if (log_as_a_file) call rename_file(logfile)
  !
  call rename_file(repfile)
- !
- live_timing_is_on =master_cpu
- write_to_report   =master_cpu
- write_to_log      =master_cpu
  !
  ! Input file
  !
@@ -759,7 +759,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    call PP_redux_wait
  endif
  !
- if (master_cpu) then
+ if (write_to_report) then
    call rm_file(trim(repfile))
    open(unit=11,file=trim(repfile))
    call write_the_logo(11,' ')

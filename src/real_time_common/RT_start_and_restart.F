@@ -190,8 +190,8 @@ subroutine RT_start_and_restart(E,k,q)
    !
 #else
    !
-   do ik=1,RT_nk
-     IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,FIRST=1,LAST=RT_nk)
+   do ik=PAR_G_kpts(1),PAR_G_kpts(2)
+     IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,PAR_G_kpts(1),PAR_G_kpts(2))
      call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),MODE=VERIFY,ID=ID(5))
      io_G=io_RT_components('G',ID(5))
    enddo

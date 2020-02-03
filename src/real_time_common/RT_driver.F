@@ -70,13 +70,18 @@ subroutine RT_driver(E,X,k,q,Dip)
  ! Work Space
  !
  integer           :: io_REF,io_err
- logical           :: l_Dynamics_is_over
+ logical           :: l_Dynamics_is_over,LT_pump
  character(schlen) :: sec_title(3)
  real(SP)          :: OBSERVABLES(25)
  !
  ! I/O
  !
  integer, external :: io_RT_components
+ !
+ ! Timing windows
+ !
+ integer           :: LT_pump_steps
+ real(SP)          :: LT_pump_duration
  !
  sec_title   =' '
  sec_title(1)='none'
@@ -91,8 +96,8 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  ! Potential 
  !===========
- !
- call XC_switch()
+ call XC_potentials(H_potential)
+ call XC_additional_SC_potentials()
  !
  RT_potential    =H_potential
  RT_kind         =H_kind
@@ -372,12 +377,6 @@ subroutine RT_driver(E,X,k,q,Dip)
      !
      integer :: steps
      !
-     ! Timing windows
-     !
-     integer           :: LT_pump_steps
-     logical           :: LT_pump
-     real(SP)          :: LT_pump_duration
-     !
      if (steps==0) then
        !
        LT_pump=l_NE_with_fields
@@ -387,7 +386,7 @@ subroutine RT_driver(E,X,k,q,Dip)
        endif
        if (NE_i_start_time<LT_pump_steps.and.l_NE_with_fields) then
          call live_timing("[RT] Dynamics (T<"//trim(real2ch(real(LT_pump_duration/FS2AUT,SP)))//" fs) :",&
-      &                   LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP)
+&                         LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP)
        else
          LT_pump=.FALSE.
          call live_timing('[RT] Dynamics :',NE_steps-NE_i_start_time+1,DEPTH=0.01_SP)

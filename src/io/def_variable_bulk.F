@@ -96,6 +96,7 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
    endif
    !
    if (nf_error/=NF90_NOERR) then
+     if(.not.silent_) call warning(' Re-defining variable '//trim(VAR)//' in file '//trim(io_file(ID)))
      nf_error=nf90_def_var(io_unit(ID),VAR,netcdf_var_kind,var_dim,io_netcdf_var(ID,VAR_ID)) 
      call netcdf_call(nf_error,ID,VAR=VAR)
 #if defined _PAR_IO

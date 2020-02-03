@@ -293,7 +293,7 @@ subroutine INIT_read_command_line(rstr,init_)
        V_string=trim(rstr_piece(i1+1))
        P_loop: do i3=i1+2,n_pieces
          do i2=1,nrnlvls
-           if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i3))) cycle P_loop
+           if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i3))) exit P_loop
          enddo
          V_string=trim(V_string)//" "//trim(rstr_piece(i3))  
        enddo P_loop

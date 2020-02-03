@@ -66,7 +66,7 @@ subroutine of_netcdf_shadow_real(i1,imsg,nval,val)
    VAR_POS =(/1,of_nc_pos(VAR_ID,i1)-i_var*max_head_values_lines/)
  endif
  !
- if(def_var) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME),VAR_ID,VAR_SIZE,SP,dim_names)
+ if(def_var) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME),VAR_ID,VAR_SIZE,SP,dim_names,silent=.true.)
  nc_var(:,1)=val
  !
  call io_control(ACTION=WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(i1))
@@ -140,7 +140,7 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
    VAR_POS =(/1,1/)
  endif
  !
- if(def_var) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME),VAR_ID,VAR_SZ,0,dim_names)
+ if(def_var) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME),VAR_ID,VAR_SZ,0,dim_names,silent=.true.)
  !
  end_string=" # "
  nc_var=""

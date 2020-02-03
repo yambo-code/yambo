@@ -164,6 +164,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  l_dyn_X = l_em1d .or. (l_optics.and.l_chi) .or. l_life .or. l_ppa
  l_sta_X = l_em1s .or. (l_optics.and.l_bse)
  !
+ i_X_kind=1
  if ( l_real_time .or. l_sc_run) i_X_kind=1
  if ( l_sta_X .and. .not.l_ppa ) i_X_kind=2
  if ( l_dyn_X .and. .not.l_ppa ) i_X_kind=3

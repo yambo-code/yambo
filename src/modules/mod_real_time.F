@@ -70,7 +70,7 @@ module real_time
  !
  real(SP)              :: RT_step             ! Elemental step used to define dimensions and time-points
  real(SP)              :: RT_dyn_step = 0._SP ! On-the-fly time-step
- real(SP)              :: RT_MAX_step =-1._SP ! MAX value of the dynamical RT step value
+ real(SP)              :: RT_MAX_step =-1._SP*FS2AUT ! MAX value of the dynamical RT step value
  ! 
  ! ... NE dynamics ...
  !
@@ -556,7 +556,7 @@ module real_time
      !
      if(l_all .or. l_G_lesser) then
        !
-       YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+       YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),n_sp_pol))
        !
        if (l_velocity_gauge_corr) then
          YAMBO_ALLOC(H_pseudo_eq,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
@@ -641,8 +641,6 @@ module real_time
      YAMBO_FREE(DbGd_EE_scatt_table)
      YAMBO_FREE(E_xc)
      YAMBO_FREE(RT_TIME_status)
-     YAMBO_FREE(HARTREE0)
-     YAMBO_FREE(XC0)
      YAMBO_FREE(E_PHOT_Hole_lifetime)
      YAMBO_FREE(E_PHOT_Electron_lifetime)
      YAMBO_FREE(E_E_Hole_lifetime)
@@ -666,10 +664,6 @@ module real_time
        YAMBO_FREE(RT_H_occupations_reference)
        YAMBO_FREE(RT_occupations_locked)
        !
-       YAMBO_FREE(Ho_plus_Sigma)
-       YAMBO_FREE(H_pseudo_eq)
-       YAMBO_FREE(RT_Vnl_xc)
-       !
      endif
      !
      YAMBO_FREE(REF_V_hartree_sc)
@@ -678,6 +672,13 @@ module real_time
      YAMBO_FREE(RT_E_and_k%k)
      !
      if(l_all .or. l_G_lesser) then
+       !
+       YAMBO_FREE(Ho_plus_Sigma)
+       YAMBO_FREE(H_pseudo_eq)
+       YAMBO_FREE(RT_Vnl_xc)
+       !
+       YAMBO_FREE(HARTREE0)
+       YAMBO_FREE(XC0)
        !
        YAMBO_FREE(G_lesser)
        YAMBO_FREE(G_lesser_reference)

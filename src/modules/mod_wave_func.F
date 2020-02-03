@@ -69,9 +69,11 @@ module wave_func
  !
  integer                :: wf_ncx
  !
- ! Max Num. of G-VECTORS (>= wf_ncx)
+ ! Max Num. of G-VECTORS for the WFs maxval(wf_igk) > wf_ncx
  !
- integer                :: wf_ng
+ integer                :: wf_ng          ! For WFs in the    IBZ
+ integer                :: wf_ng_1st_BZ   ! For WFs in the 1st BZ
+ integer                :: wf_ng_overlaps ! For WFs shifted used by the overlaps
  !
  ! Wave function derivatives
  !

@@ -604,7 +604,9 @@ define lib_mod_clean
   cd $(libbindir) ; rm -f * ; cd .. ; rmdir $(libbindir); \
  fi
  for folder in $(includedir)/modules__*; do \
-  cd $$folder ; rm -f * ; cd .. ; rmdir $$folder; \
+  if test -d $$folder ; then \
+   cd $$folder ; rm -f * ; cd .. ; rmdir $$folder; \
+  fi \
  done
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 

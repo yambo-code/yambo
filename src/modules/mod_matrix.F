@@ -26,7 +26,8 @@ module matrix
  use pars,       ONLY:schlen,SP
  use parallel_m, ONLY:MPI_comm
  !
- implicit none
+#include<dev_defs.h>
+#include<memory.h>
  !
  ! Distributed Matrix structure
  !
@@ -45,28 +46,27 @@ module matrix
  !
  type PAR_matrix
    !
-   character(3) :: kind = "NAN" ! "PAR" "SLK" "XUP" "XDN" "SER"
+   character(3) :: kind   ! "PAR" "SLK" "XUP" "XDN" "SER"
    !
-   ! Dimensions
-   !
-   integer :: I          = 1  ! Block element
-   integer :: N          = -1 ! Global dimension (Parent Matrix)
-   integer :: rows(2)    = 0  ! Real
-   integer :: cols(2)    = 0  !
-   integer :: nrows      = -1 ! 
-   integer :: ncols      = -1 ! 
+   ! Dimensions !
+   integer :: I           ! Block element
+   integer :: N           ! Global dimension (Parent Matrix)
+   integer :: rows(2)     ! Real
+   integer :: cols(2)     !
+   integer :: nrows       ! 
+   integer :: ncols       ! 
    !
    ! BLACS
    !
-   integer :: BLCnrows      = -1 ! Dimension of the BLACS matrix (in general larger then the Real's)
-   integer :: BLCncols      = -1 !
-   integer :: BLCrows(2)    = 0  ! Dimension of the BLACS matrix (in general larger then the Real's)
-   integer :: BLCcols(2)    = 0  !
+   integer :: BLCnrows    ! Dimension of the BLACS matrix (in general larger then the Real's)
+   integer :: BLCncols    !
+   integer :: BLCrows(2)  ! Dimension of the BLACS matrix (in general larger then the Real's)
+   integer :: BLCcols(2)  !
    integer :: desc(desc_len)
-   integer :: lwork      = -1
-   integer :: lrwork     = -1
-   integer :: liwork     = -1
-   integer :: info       = -1  
+   integer :: lwork
+   integer :: lrwork
+   integer :: liwork
+   integer :: info
    !
    ! COMMs
    !
@@ -75,9 +75,10 @@ module matrix
    !
    ! DATA
    !
-   integer :: Nb         = 1  ! # of Blocks
+   integer :: Nb          ! # of Blocks
    !
-   complex(SP), allocatable :: blc(:,:,:)
+   complex(SP), allocatable DEV_PINNED    :: blc(:,:,:)         ! pinned host var if CUDA
+   complex(SP), allocatable DEV_ATTRIBUTE :: blc_d(:,:,:)       ! device var if CUDA
    !
  end type PAR_matrix 
  !
@@ -91,13 +92,13 @@ module matrix
      !
      M_par%I          = 1
      M_par%N          = -1
-     M_par%rows       = 0
-     M_par%cols       = 0
+     M_par%rows       = (/0,-1/)
+     M_par%cols       = (/0,-1/)
      M_par%nrows      = -1
      M_par%ncols      = -1
      !
-     M_par%BLCrows    = 0
-     M_par%BLCcols    = 0
+     M_par%BLCrows    = (/0,-1/)
+     M_par%BLCcols    = (/0,-1/)
      M_par%BLCnrows   = -1
      M_par%BLCncols   = -1
      M_par%desc       = 0
@@ -110,6 +111,11 @@ module matrix
      !
      call COMM_reset(M_par%INTER_comm)
      call COMM_reset(M_par%INTRA_comm)
+     !
+     YAMBO_FREE(M_par%blc)
+#ifdef _CUDA
+     YAMBO_FREE(M_par%blc_d)
+#endif
      !
    end subroutine
  !

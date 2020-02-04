@@ -24,6 +24,7 @@
 module pars
  !
  use netcdf
+ use iso_fortran_env, ONLY:int32,int64
  !
  implicit none
  !
@@ -51,12 +52,13 @@ module pars
  !...Input file analyze
  integer, parameter :: n_max_DB_IO_off_fields=20
  integer, parameter :: n_max_jobstr=10
+ integer, parameter :: num_of_alternative_locations=4+2*n_max_jobstr
  !
  !...Debug
  integer, parameter :: n_debugs_max=100
  ! 
  !...Output Files/Report File
- integer,parameter  :: nofs=1000
+ integer,parameter  :: max_n_ofs=1000
  integer,parameter  :: max_open_ofs=1000
  !
  !...I/O
@@ -78,11 +80,9 @@ module pars
 #else
  integer, parameter  :: SP = selected_real_kind(6,30)
 #endif
- integer, parameter  :: IP16= selected_int_kind(16)
- integer, parameter  :: IP  = selected_int_kind(8)
- integer, parameter  :: IP4 = selected_int_kind(4)
- integer, parameter  :: IP2 = selected_int_kind(2)
- integer, parameter  :: IP1 = selected_int_kind(1)
+ !
+ integer, parameter  :: IP  = int32      ! 4 bytes integer, == selected_int_kind(8)
+ integer, parameter  :: IPL = int64      ! 8 bytes integer, == selected_int_kind(16)
  !
  ! NetCDF types
  !==============

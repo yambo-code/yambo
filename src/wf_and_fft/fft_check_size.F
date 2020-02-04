@@ -26,7 +26,6 @@ subroutine fft_check_size(iGo_max,NG_C,NG_HF,mode)
  use fft_m,             ONLY:fft_size
  use parser_m,          ONLY:parser
  use R_lattice,         ONLY:ng_in_shell,n_g_shells
- use com,               ONLY:warning
  use stderr,            ONLY:intc
  !
  implicit none

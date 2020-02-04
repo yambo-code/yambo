@@ -31,7 +31,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  use R_lattice,     ONLY:bz_samp
  use DIPOLES,       ONLY:DIPOLE_t
  use frequency,     ONLY:w_samp
- use com,           ONLY:msg,warning
+ use com,           ONLY:msg
  use X_m,           ONLY:X_t
  use parser_m,      ONLY:parser
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
@@ -80,10 +80,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  l_GW_terminator=GW_terminator_Kind/='none'
  !
- ! S_x/Vxc are always need if not l_life or el. correlations is
- ! skipped
- !==============================================================
+ ! The non-local (Vnl) and local (Vxc) part of the xc potentials are not always needed
+ ! 
+ ! They can be not necessary in lifetimes calculations or for SC calculations.
+ !
+ !======================================================================================
+#if !defined _SC
  if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_elel_corr.and..not.l_life) return
+#endif
  !
  if (.not.l_elel_corr.and..not.l_elph_corr.and..not.l_elphoton_corr) then
    call warning('e-p, e-e and e-photon correlation switched off')
@@ -287,7 +291,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !=====================================================
  !
  call QP_descriptions(qp,X,Xw,.TRUE.)
- !
  !
  ! Solvers 
  !=========

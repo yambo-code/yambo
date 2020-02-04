@@ -34,7 +34,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  ! [5] Initialize the fields
  !
  use pars,           ONLY:cZERO,rZERO,cONE
- use com,            ONLY:msg,error
+ use com,            ONLY:msg
  use electrons,      ONLY:levels,n_sp_pol
  use real_time,      ONLY:rho_reference
  use R_lattice,      ONLY:bz_samp
@@ -53,7 +53,6 @@ subroutine NL_start_and_restart(E,k,Dip)
  use IO_m,           ONLY:OP_RD_CL,io_control,NONE,file_is_present,VERIFY
  use parallel_m,     ONLY:PP_redux_wait
  use stderr,         ONLY:intc
- use IO_m,           ONLY:IO_and_Messaging_switch
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
 #include<memory.h>
@@ -106,9 +105,7 @@ subroutine NL_start_and_restart(E,k,Dip)
    !
    ! Calculate V_xc
    !
-   call IO_and_Messaging_switch("-report -log -io_in -io_out",CONDITION=master_cpu)
    call XC_potential_driver(E,k,WF_kind,WF_xc_functional,1)
-   call IO_and_Messaging_switch("+report +log +io_in +io_out")
    V_xc_0=V_xc
    !       
  endif

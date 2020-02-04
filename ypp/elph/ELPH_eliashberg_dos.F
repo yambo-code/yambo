@@ -34,7 +34,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,ph_freqs_sq,&
 &                              W_debye,elph_nDBs,elph_use_q_grid,&
 &                              E_k_plus_q,setup_k_plus_q_levels,elph_global_free
- use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
+ use IO_m,                ONLY:io_control,manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid
  use interfaces,          ONLY:PARALLEL_index
@@ -56,7 +56,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !
  !I/O
  !
- integer           ::io_err,ID
+ integer           ::io_err,ID,IO_ACT
  integer, external ::io_ELPH
  !
  if (l_eliashberg) l_eliashberg=elph_gamma_broad>1.E-8.and.n_met_bands/=n_full_bands
@@ -135,7 +135,8 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    !
    ! I/O
    !
-   call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
+   IO_ACT=manage_action(RD_CL_IF_END,iq,1,nq_todo)
+   call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID)
    if (l_dos)        io_err=io_ELPH(ID,'no_matrix_elements')
    if (l_eliashberg) io_err=io_ELPH(ID,'gkkp')
    !

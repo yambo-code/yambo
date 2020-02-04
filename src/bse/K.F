@@ -25,7 +25,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! K = <2V-W> for n_spin=1
  !
- use pars,         ONLY:IP,SP,schlen,pi,cZERO,cI
+ use pars,         ONLY:SP,schlen,pi,cZERO,cI
  use stderr,       ONLY:intc
  use LOGO,         ONLY:pickup_a_random
  use drivers,      ONLY:l_bs_fxc,l_bss
@@ -33,14 +33,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use electrons,    ONLY:levels,spin_occ,spin,n_spin,E_SOC_nbands
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free
- use functions,    ONLY:K_scatter
- use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,minus_G,bare_qpg,qindx_X
- use com,          ONLY:warning,error,msg
+ use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
+ use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X
+ use com,          ONLY:msg
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_t
- use BS_solvers,   ONLY:BSS_q0
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,BS_Block_size,&
 &                       O_ng,BS_n_g_exch,BS_identifier,BS_LiveTiming_steps,&
@@ -48,15 +46,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,&
-&                       l_BSE_minimize_memory, l_restart_bse
+&                       l_BSE_minimize_memory,l_restart_bse
  use collision_el, ONLY:elemental_collision_free
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_WR,OP_APP_CL,DUMP,&
-&                       deliver_IO_error_message
+&                       deliver_IO_error_message,manage_action
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
- use wrapper_omp,   ONLY:V_dot_V_omp,Vstar_dot_V_omp
- use global_XC,     ONLY:WF_kind,WF_xc_functional
+ use global_XC,     ONLY:WF_xc_functional,WF_kind
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
@@ -84,7 +81,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! ... Kernel loop
  !
  DEFINE_BSK_COMMON_INDEXES
- integer    :: i_block,O_ng_shift,&
+ integer    :: i_block,O_ng_shift,IO_ACT,&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
 &              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4)
  complex(SP):: Co,H_x,H_c
@@ -92,6 +89,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  complex(SP),   external ::TDDFT_ALDA_R_space
  complex(SP),   external ::K_correlation_kernel
+ complex(SP),   external ::K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
  ! Oscillators
  !
@@ -192,7 +190,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call io_control(ACTION=OP_RD,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
      io_BS_err=io_BS(iq,X,ID)
      do i_block=1,n_BS_blks
-       call io_control(ACTION=RD_CL_IF_END,COM=NONE,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
+       IO_ACT=manage_action(RD_CL_IF_END,i_block,FIRST=1,LAST=n_BS_blks)       
+       call io_control(ACTION=IO_ACT,COM=NONE,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
        io_BS_err=io_BS(iq,X,ID)
      enddo
    endif
@@ -338,6 +337,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Transition Loops
    !------------------
    !
+#if defined _OPENMP && ! defined _CUDA
    !$omp parallel default(shared), &
    !$omp private(i_Tk,i_Tp, &
    !$omp &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
@@ -345,10 +345,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
    !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t, &
    !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c)
+#endif
    !
    call OPENMP_update(master_thread)   
    !
+#if defined _OPENMP && ! defined _CUDA
    !$omp do collapse(2), schedule(dynamic)
+#endif
    do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
      do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
        !
@@ -378,8 +381,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !=============================
          !
          ! Exchange
-         if (BS_res_K_exchange) H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp),&
-&                                           BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+         if (BS_res_K_exchange) H_x=K_exchange_kernel_resonant(iq, BS_n_g_exch,               &
+                                   &    BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          !
          ! ALDA
          if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'RES')
@@ -398,16 +401,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          ! STILL TO FIX AT FINITE Q
          !
          ! Exchange
-         if (BS_cpl_K_exchange) H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
-&                                       BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+         if (BS_cpl_K_exchange) H_x=K_exchange_kernel_coupling(iq, BS_n_g_exch,              &
+                                   &    BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk) 
          !
          ! ALDA
          if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'CPL')
          !
          ! Correlations
          if (BS_cpl_K_corr)     H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
-&                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,     &
-&                                 i_kmq_t,i_pmq_t,i_k_sp_pol,i_p_sp_pol,                      &
+&                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,    &
+&                                 i_kmq_t,i_pmq_t,i_k_sp_pol,i_p_sp_pol,                     &
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
          !
        case ("A")
@@ -459,8 +462,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
      enddo   ! i_Tk
    enddo     ! i_Tp
+#if defined _OPENMP && ! defined _CUDA
    !$omp end do
    !$omp end parallel
+#endif
    !
    call BS_oscillators_free(0,i_block)
    if(l_BSE_minimize_memory) then
@@ -517,4 +522,4 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call timing('X T_space Kernel',OPR='stop')
  !
-end subroutine
+end subroutine K

@@ -33,7 +33,7 @@ integer function io_Vnl(Dip,Xen,ID)
 &                        read_is_on,write_is_on,io_header,io_extension,&
 &                        io_fragment,frag_WF
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
- use com,           ONLY:warning
+ !
 #include<memory.h>
  !
  type(DIPOLE_t)::Dip

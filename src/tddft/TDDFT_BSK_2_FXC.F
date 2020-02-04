@@ -25,16 +25,16 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  use pars,          ONLY:SP
  use electrons,     ONLY:spin_occ,spin
- use DIPOLES,       ONLY:DIP_projected
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_nT_at_k
  use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_eh_E,BSS_eh_W
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_K_diagonal,FXC,&
 &                        FXC_is_retarded,io_BS_Fxc
+ use DIPOLES,       ONLY:DIP_rotated
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
  use D_lattice,     ONLY:DL_vol
- use R_lattice,     ONLY:bare_qpg,nXkbz
+ use R_lattice,     ONLY:bare_qpg,nXkbz,bz_samp
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_RD,RD_CL,&
 &                        NONE,OP_WR_CL,REP,VERIFY
  use frequency,     ONLY:w_samp
@@ -60,6 +60,11 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  complex(SP),   allocatable :: blk_Eo(:,:)
  real(SP),      parameter :: E_same_treshold=1.E-5
  !
+ ! Dipoles for non analytical term
+ !
+ type(bz_samp)         :: kpt
+ complex(SP)           :: DIP_projected,field_dir(3)
+ !
  ! Fxc procedure
  !
  type(PP_indexes) :: p1,p2
@@ -81,13 +86,18 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! Exchange Oscillators Renormalization
  !
+ stop
+ !
+ ! DS: field dir to be defined
+ !
  if (iq==1) then
    do i1=blk_pos(1)+1,blk_pos(1)+BS_nT_at_k(ik1)
      ik=BSS_eh_table(i1,1)
      iv=BSS_eh_table(i1,2)
      ic=BSS_eh_table(i1,3)
      i_sp=spin(BSS_eh_table(i1,:))
-     O1x(1,i1-blk_pos(1))=-conjg(DIP_projected(ic,iv,ik,i_sp))/bare_qpg(iq,1)
+     DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ik,i_sp,"Dip_iR",kpt))
+     O1x(1,i1-blk_pos(1))=-conjg(DIP_projected)/bare_qpg(iq,1)
    enddo
    if (ik1/=ik2) then
      do i1=blk_pos(2)+1,blk_pos(2)+BS_nT_at_k(ik2)
@@ -95,7 +105,8 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
        iv=BSS_eh_table(i1,2)
        ic=BSS_eh_table(i1,3)
        i_sp=spin(BSS_eh_table(i1,:))
-       O2x(1,i1-blk_pos(2))=-conjg(DIP_projected(ic,iv,ik,i_sp))/bare_qpg(iq,1)
+       DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ik,i_sp,"Dip_iR",kpt))
+       O2x(1,i1-blk_pos(2))=-conjg(DIP_projected)/bare_qpg(iq,1)
      enddo
    else
      O2x=O1x

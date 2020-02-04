@@ -76,6 +76,11 @@ module vec_operate
      v_norm=sqrt(dot_product(v,v))
    end function v_norm
    !
+   pure real(SP) function v_norm2(v)
+     real(SP), intent(in) :: v(3)
+     v_norm2=v(1)*v(1)+v(2)*v(2)+v(3)*v(3)
+   end function v_norm2
+   !
    real(SP) function iku_v_norm(v,inside_bz)
      !
      ! shifted in the BZ if inside_bz is set to true, ak2bz=|k|
@@ -566,10 +571,8 @@ module vec_operate
      logical :: l_flag,l_singles
      !
      deg_grps=0
-     first_deg_el(2:n)=0
-     deg_elmnts(2:n)=0
-     first_deg_el(1)=0
-     deg_elmnts(1)=0
+     first_deg_el=0
+     deg_elmnts=0
      !
      l_singles=.FALSE.
      if (present(Include_single_values)) l_singles=Include_single_values

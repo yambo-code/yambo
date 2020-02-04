@@ -32,7 +32,6 @@ subroutine PP_rotate_becp(isc,ibec,obec)
  ! obec    becp corresponding to (isym*ikpt, ispin)
  !
  use pars,          ONLY:SP,pi,cONE,cZERO
- use com,           ONLY:error
  use vec_operate,   ONLY:c2a
  use wrapper,       ONLY:M_by_M
  use stderr,        ONLY:intc

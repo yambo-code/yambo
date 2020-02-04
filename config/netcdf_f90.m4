@@ -63,17 +63,20 @@ AC_ARG_ENABLE(netcdf-classic, AC_HELP_STRING([--enable-netcdf-classic],
 AC_ARG_ENABLE(netcdf_hdf5,AC_HELP_STRING([--enable-netcdf-hdf5],
              [Activate the HDF5 support. Default is no.]))
 #
-#
 # HDF5 data compression
 #
 AC_ARG_ENABLE(hdf5_compression,AC_HELP_STRING([--enable-hdf5-compression],
              [Activate the HDF5 data compression. Default is no.]))
 #
-#
 # HDF5 PAR IO
 #
 AC_ARG_ENABLE(hdf5_par_io,AC_HELP_STRING([--enable-hdf5-par-io],
              [Activate the HDF5 parallel io. Default is no.]))
+#
+# NETCDF SHODOW FOR OUTPUT FILES
+#
+AC_ARG_ENABLE(netcdf_output,AC_HELP_STRING([--enable-netcdf-output],
+             [Activate the netcdf copy for some output files. Default is no.]))
 #
 # HDF5 FOR P2Y (also requires parallel HDF5)
 #
@@ -116,7 +119,7 @@ if test x"$enable_hdf5_par_io" = "xyes" ; then
   enable_hdf5=yes ;
 fi
 #    
-if test x"$enable_hdf5_par_io" = "xyes" || test x"$enable_hdf5_p2y_support" = "xyes" ; then HDF5_VER="parallel"; fi
+if test x"$enable_hdf5_par_io" = "xyes" ; then HDF5_VER="parallel"; fi
 #
 #
 #
@@ -397,7 +400,6 @@ if test x"$enable_hdf5" = "xyes"; then
   fi
 fi
 #
-#
 # NETCDF-HDF5 LIBS
 #
 if test x"$hdf5" = "xyes"; then
@@ -409,14 +411,21 @@ if test x"$hdf5" = "xyes"; then
   #fi
 fi
 #
-# Disable large File Support
+# Enable netcdf for output files support
+#
+if test x"$enable_netcdf_output" = "xyes"; then
+  def_netcdf="${def_netcdf} -D_NC_OUTPUT";
+fi
 #
 if test x"$enable_netcdf_classic" = "xyes"; then
+  #
+  # Disable large File Support
+  #
   def_netcdf="${def_netcdf} -D_NC_CLASSIC";
-#
-# NETCDF-HDF5 IO
-#
 elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
+  #
+  # NETCDF-HDF5 IO
+  #
   def_netcdf="${def_netcdf} -D_HDF5_IO";
 fi
 #

@@ -55,7 +55,8 @@ subroutine RT_start_and_restart(E,k,q)
 &                         l_velocity_gauge_corr
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
- use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,&
+&                         manage_action,REP,VERIFY,NONE
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
  use H_interfaces,   ONLY:V_real_space_to_H
@@ -69,7 +70,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Work Space
  !
- integer :: i_sp_pol,ik,COM_,io_G,io_OBS,io_THETA,io_REF,&
+ integer :: i_sp_pol,ik,COM_,IO_ACT,io_G,io_OBS,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  integer, external :: io_RT_components
  !
@@ -190,7 +191,8 @@ subroutine RT_start_and_restart(E,k,q)
 #else
    !
    do ik=1,RT_nk
-     call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
+     IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,FIRST=1,LAST=RT_nk)
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
      io_G=io_RT_components('G',ID(5))
    enddo
    !
@@ -206,7 +208,8 @@ subroutine RT_start_and_restart(E,k,q)
    !
    if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
      do ik=1,RT_nk
-       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(7))
+       IO_ACT=manage_action(RD_CL_IF_END,ik,FIRST=1,LAST=RT_nk)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(7))
        io_THETA=io_RT_components('THETA',ID(7))
        enddo
    endif
@@ -265,11 +268,12 @@ subroutine RT_start_and_restart(E,k,q)
  ! Pseudo potential terms needed for velocity gauge
  !==================================================
  !
+ ! GPL_EXCLUDE_START
  if (l_velocity_gauge_corr) then
    call Pseudo_KB_G_to_R_space(k,E)
    call Pseudo_Hamiltonian(k,E,.true.)
  endif
- !
+ ! GPL_EXCLUDE_END
  !
  call msg('r','')
  !

@@ -25,7 +25,7 @@ subroutine Dipole_check_shifted_grids( Xk_shift, Xk, iq, num_shifted_grid,q_mod,
  !
  use pars,            ONLY:SP
  use stderr,          ONLY:intc
- use com,             ONLY:msg,error
+ use com,             ONLY:msg
  use vec_operate,     ONLY:v_is_zero, iku_v_norm, c2a
  use R_lattice,       ONLY:bz_samp,q0_shift_norm
  !

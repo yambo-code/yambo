@@ -35,7 +35,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use electrons,     ONLY:levels,BZ_DbGd_tot_nk_levels
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use DIPOLES,       ONLY:DIP_alloc,DIPOLE_t
+ use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
@@ -82,7 +82,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! PARALLEL indexes
    !==================
    !
-   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
+   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
    !
    ! WF distribution 
    !=================
@@ -112,7 +112,12 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      !
    endif
    !
+   ! workaround for possible compiler bug
+#ifdef _PGI
+   if (iq>1.and.size(PAR_IND_Q%n_of_elements)>1) then
+#else
    if (iq>1) then
+#endif
      if (.not.PAR_IND_Q%element_1D(iq)) cycle
    endif
    !
@@ -190,12 +195,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      call msg('o fxc','#')
    endif
    !
-   ! BZ Double Grid
-   !
-   if (use_X_DbGd) then
-     call msg('o eps_q eel_q fxc alpha','# BZ Energy DbGd points:',BZ_DbGd_tot_nk_levels,INDENT=0)
-   endif
-   !
    if (iq==1) call PP_redux_wait
    if (iq> 1) call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
@@ -253,6 +252,12 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    call X_write_messages_before_headers(iq,allocated(Xen%GreenF),X%Vnl_included,X%ordering)
    !
+   ! BZ Double Grid
+   !
+   if (use_X_DbGd) then
+     call msg('o eps_q eel_q fxc alpha','#',' DbGd| Energy Points   :'//trim(intc(BZ_DbGd_tot_nk_levels)),INDENT=0)    
+   endif
+   !
    ! Titles 
    !
    n_output=5
@@ -277,8 +282,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    enddo
    !
    call of_open_close(eps_file_name)
-   call of_open_close(eel_file_name)
-   call of_open_close(alpha_file_name)
    !
    ! EEL
    !
@@ -369,7 +372,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  call MATRIX_reset(X_par(1))
  call MATRIX_reset(X_par_lower_triangle)
  deallocate(X_par)
- call DIP_alloc('DIP_projected')
  call WF_free(WF)
  call PP_redux_wait
  call set_real_printed_length()

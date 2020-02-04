@@ -28,7 +28,7 @@ subroutine RT_initialize(E,k,q)
  use pars,           ONLY:SP,pi
  use units,          ONLY:HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,AUT2FS
  use stderr,         ONLY:intc
- use com,            ONLY:msg,warning,error
+ use com,            ONLY:msg
  use QP_CTL_m,       ONLY:QP_ctl_user
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
@@ -74,15 +74,15 @@ subroutine RT_initialize(E,k,q)
  !==========
  !
  call parser('InducedField' ,        l_RT_induced_field)
+ call parser('VelGaugeNoDiam',       l_velocity_gauge_tmp)
+ l_velocity_gauge_diam=.not.l_velocity_gauge_tmp
  !
  ! GPL_EXCLUDE_START
  !
  call parser('RAD_prefactor',        RAD_magnification)
  call parser('VelGaugeCorr',         l_velocity_gauge_corr)
- call parser('VelGaugeNoDiam',       l_velocity_gauge_tmp)
  call parser('PfromJ',               l_P_integrating_J)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
- l_velocity_gauge_diam=.not.l_velocity_gauge_tmp
  !
  !...updates
  call parser('RTUpdateE',            l_RT_update_Energies)

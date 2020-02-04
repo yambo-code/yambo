@@ -518,7 +518,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    !
    if (l_bands) call initactivate(1,"BANDS_bands")
    !
-   call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
+   call initactivate(1,"INTERP_Grid INTERP_Shell_Fac INTERP_NofNN")
    call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_built_in")
    !
  endif

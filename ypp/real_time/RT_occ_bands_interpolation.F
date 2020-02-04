@@ -57,7 +57,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
  character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation
  character(lchlen)     :: of_string
- logical               :: l_normalize_Nel
+ logical               :: l_normalize_Nel,WARN_negative_electrons_df,WARN_positive_holes_df
  integer               :: ib,ik,i_RT,i_T,n_values,ID_df_or_G,ID_spin,ID_magn,ID_bands(3)
  logical, external     :: file_exists
  !
@@ -135,6 +135,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/n_T_steps/))
  call PP_redux_wait
+ !
+ WARN_negative_electrons_df=.FALSE.
+ WARN_positive_holes_df=.FALSE.
  !
  call IO_and_Messaging_switch("SAVE +output",CONDITION=.TRUE.)
  !
@@ -217,10 +220,23 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
        !
        values(3)=INTERP_obj(ID_df_or_G)%INTERP(ib,ik,1)
        if (l_RT_lifetimes   ) values(3)=values(3)*HA2EV*1000._SP
-       if (l_RT_occupations .and. Max_occ>0. .and. abs(Nel_fac-1.)>zero_dfl ) values(3)=values(3)/Max_occ*Nel_fac
-       if (l_RT_occupations .and. n_spinor==2) then
-         values(4)=values(3)*INTERP_obj(ID_spin)%INTERP(ib,ik,1)
-         values(5)=values(3)*INTERP_obj(ID_spin)%INTERP(ib,ik,2)
+       !
+       if (l_RT_occupations) then
+         if (Max_occ>0. .and. abs(Nel_fac-1.)>zero_dfl ) values(3)=values(3)/Max_occ*Nel_fac
+         !
+         if (ib>=RT_E%nbf+1.and.values(3)<0.) then
+           WARN_negative_electrons_df=.TRUE.
+           values(3)=0.
+         endif
+         if (ib<=RT_E%nbf  .and.values(3)>0.) then
+           WARN_positive_holes_df=.TRUE.
+           values(3)=0.
+         endif
+         !
+         if (n_spinor==2) then
+           values(4)=values(3)*INTERP_obj(ID_spin)%INTERP(ib,ik,1)
+           values(5)=values(3)*INTERP_obj(ID_spin)%INTERP(ib,ik,2)
+         endif
        endif
        !
        if (ik==1) values(1)=0._SP
@@ -251,6 +267,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  enddo
  !
  call live_timing( )
+ !
+ if (WARN_negative_electrons_df) call warning("[INTERPOLATION] Found negative electron occupations")
+ if (WARN_positive_holes_df)     call warning("[INTERPOLATION] Found positive hole occupations")
  !
  ! Clean
  !

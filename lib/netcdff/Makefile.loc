@@ -35,12 +35,9 @@ configure-stamp: uncompress-stamp
 	      ./configure $(AUXFLAGS) \
 	      CC="$(cc)" \
 	      CPP="$(cpp)" \
-	      CFLAGS="$(cflags)" \
 	      CXX="$(cc)" \
 	      CXXCPP="$(cpp)" \
 	      FC="$(fc)" \
-	      FCFLAGS="$(fcflags)" \
-	      FFLAGS="$(fflags)" \
 	      CPPFLAGS="$(netcdf_flag) $(ihdf5) $(inetcdf)" \
 	      LIBS="$(lnetcdf) $(lhdf5)" \
 	      F77="$(f77)" ); \

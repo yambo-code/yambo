@@ -307,7 +307,7 @@ subroutine msg_manager(how)
      if (len_trim(ch_piece(i2))==0) cycle
      do i1=1,max_open_ofs-1
        if (len_trim(opened_of(i1))==0) cycle
-       stripped_file_name=STRING_remove(opened_of(i1),trim(jobstr))
+       stripped_file_name=STRING_remove(opened_of(i1),"-"//trim(jobstr))
        if (index( stripped_file_name,trim(ch_piece(i2)) )/=0) then
          of_unit(i1) =-of_unit(i1)
        endif

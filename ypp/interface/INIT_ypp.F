@@ -76,7 +76,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  ! Work Space
  !
- logical          ::l_init_QP,l_flag
+ logical          ::l_init_QP,l_flag,l_rtplot,l_rtmode
  type(initdefs)   ::defs
  integer          ::i1,i2,ID,io_err,i_cycle
  character(schlen)::rstr_piece(60) 
@@ -186,6 +186,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  call before_infile_write_setup( )
  !
  call call_INIT_load('load_defaults')
+ !
+ l_rtplot=.FALSE.
+ l_rtmode=.FALSE.
  !
  ! RunLevels on
  !
@@ -330,6 +333,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_RT_abs         =STRING_match(rstr_piece(i1+1),'a')
        ! GPL_EXCLUDE_END
        !
+       l_rtplot=.TRUE.
+       !
      endif
      !
      ! GPL_EXCLUDE_START
@@ -341,7 +346,12 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_RT_energy      =STRING_match(rstr_piece(i1+1),'e')
        l_RT_dos         =STRING_match(rstr_piece(i1+1),'d')
        !
+       l_rtmode=.TRUE.
+       !
      endif
+     !
+     if (l_rtplot.and..not.l_rtmode) l_RT_time=.TRUE.
+     if (.not.l_rtplot.and.l_rtmode) l_RT_occupations=.TRUE.
      !
      ! GPL_EXCLUDE_END
      !

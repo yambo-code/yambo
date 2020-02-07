@@ -25,7 +25,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use units,          ONLY:FS2AUT,SP,HA2EV
- use pars,           ONLY:schlen,lchlen
+ use pars,           ONLY:schlen,lchlen,rZERO
+ use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,real2ch,set_real_printed_length
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,n_sp_pol,n_spinor
@@ -44,16 +45,22 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  ! Work Space
  !
- integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2)
- real(SP)              :: io_Time,tmp_lifetimes(6),data_to_plot(9),k_al(3),k_cc(3)
+ integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2),nk_cumulative(kpt%nibz)
+ real(SP)              :: io_Time,tmp_lifetimes(6),data_to_plot(9),k_al(3),k_cc(3),&
+&                         data_to_plot_cumulative(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,9)
  character(schlen)     :: titles(9),specs(9,2),dumb_ch(2)
- character(lchlen)     :: output_fname_short,output_fname(RT_carriers%nstates)
+ character(lchlen)     :: output_fname_short(2),output_fname(2,RT_carriers%nstates)
  character(3)          :: ch3_dummy
- logical               :: l_elph_lifetimes,do_state(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol)
+ logical               :: l_elph_lifetimes,do_state(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol),l_OCCgroup
  !
  real(SP),allocatable  :: spin_factors(:,:,:),magn_factors(:,:,:)
  !
  if(all(QP_table==0)) return
+ !
+ call parser('OCCgroup', l_OCCgroup)
+ !
+ data_to_plot_cumulative=rZERO
+ nk_cumulative=0
  !
  if (n_spinor==2) then
    k_range    =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)
@@ -127,9 +134,15 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    !
    call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
    !
+   l_OCCgroup=l_OCCgroup.and.RT_carriers%nk>kpt%nibz
+   !
    if (l_elel_scatt    .and.i_T==1) n_gamma=n_gamma+2
    !
    if (l_elph_lifetimes.and.i_T==1) n_gamma=n_gamma+4
+   !
+   data_to_plot(1)               =io_TIME/FS2AUT
+   data_to_plot_cumulative(:,:,1)=io_TIME/FS2AUT
+   nk_cumulative                 =0
    !
    do i_RT=1,RT_carriers%nstates
      !
@@ -142,13 +155,12 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      if (ib>RT_bands(2)) cycle
      !
      if (.not.do_state(ib,ik,i_spin)) cycle
+     !  
+     output_fname_short(1)='YPP-RT_occupations_k'//trim(intc(ik))//'_kRT'//trim(intc(ik_RT))//'_b'//trim(intc(ib))
+     if (i_T==1) output_fname(1,i_RT)=output_fname_short(1)
      !
-     output_fname_short='YPP-RT_occupations_k'//trim(intc(ik))//'_kRT'//trim(intc(ik_RT))//'_b'//trim(intc(ib))
-     if (i_T==1) output_fname(i_RT)=output_fname_short
+     call open_file( output_fname(1,i_RT),output_fname_short(1))
      !
-     call open_file()
-     !
-     data_to_plot(1)=io_TIME/FS2AUT
      data_to_plot(2)=RT_carriers%delta_f(i_RT)
      !
      if (n_gamma>0) then
@@ -166,11 +178,32 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        data_to_plot(  n_gamma+3)=RT_carriers%NEQ_Lifetime(i_RT)*HA2EV*1000._SP
      endif
      !
-     call msg('o '//trim(output_fname_short),'',data_to_plot(:n_gamma+3),INDENT=-2,USE_TABS=.true.)
+     if (l_OCCgroup) then
+       nk_cumulative(ik)=nk_cumulative(ik)+1
+       data_to_plot_cumulative(ik,ib,2:)=data_to_plot_cumulative(ik,ib,2:)+data_to_plot(2:)
+     endif
      !
-     call of_open_close(output_fname(i_RT))
+     call msg('o '//trim(output_fname_short(1)),'',data_to_plot(:n_gamma+3),INDENT=-2,USE_TABS=.true.)
+     !
+     call of_open_close(output_fname(1,i_RT))
      !
    enddo
+   !
+   if (l_OCCgroup) then
+     do ik=1,kpt%nibz
+       do ib=RT_carriers%nb(1),RT_carriers%nb(2)
+         do i_spin=1,n_sp_pol
+           if (.not.do_state(ib,ik,i_spin)) cycle
+           output_fname_short(2)='YPP-RT_cumulative_occupations_k'//trim(intc(ik))//'_b'//trim(intc(ib))
+           if (i_T==1) output_fname(2,i_RT)=output_fname_short(2)
+           call open_file( output_fname(2,i_RT),output_fname_short(2))
+           data_to_plot_cumulative(ik,ib,2:)=data_to_plot_cumulative(ik,ib,2:)/nk_cumulative(ik)
+           call msg('o '//trim(output_fname_short(2)),'',data_to_plot_cumulative(ik,ib,:n_gamma+3),INDENT=-2,USE_TABS=.true.)
+           call of_open_close(output_fname(2,i_RT))
+         enddo
+       enddo
+     enddo
+   endif
    !
  enddo
  !
@@ -181,16 +214,18 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  contains
    !
-   subroutine open_file()
+   subroutine open_file(fname,fname_short)
+     !
+     character(lchlen)  :: fname_short,fname
      !
      if (i_T> 1) then
-       call of_open_close(output_fname(i_RT),'oa')
+       call of_open_close(fname,'oa')
        return
      endif
      !
-     call of_open_close(output_fname(i_RT),'ot')
+     call of_open_close(fname,'ot')
      !
-     call msg('o '//trim(output_fname_short),'#')
+     call msg('o '//trim(fname_short),'#')
      !
      ! Kpt on the Coarse Grid
      !========================
@@ -208,9 +243,9 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      if(ik> 99) dumb_ch(2)=' '//trim(dumb_ch(2))
      if(ik>999) dumb_ch(2)=' '//trim(dumb_ch(2))
      ! 
-     call msg('o '//trim(output_fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(output_fname_short),"#",trim(dumb_ch(2)),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(output_fname_short),"#")
+     call msg('o '//trim(fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o '//trim(fname_short),"#",trim(dumb_ch(2)),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o '//trim(fname_short),"#")
      !
      ! Kpt on the Fine Grid
      !======================
@@ -230,29 +265,29 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      if(ik_RT> 999) dumb_ch(2)=' '//trim(dumb_ch(2))
      if(ik_RT>9999) dumb_ch(2)=' '//trim(dumb_ch(2))
      !
-     call msg('o '//trim(output_fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(output_fname_short),"#",trim(dumb_ch(2)),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(output_fname_short),"#")
+     call msg('o '//trim(fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o '//trim(fname_short),"#",trim(dumb_ch(2)),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o '//trim(fname_short),"#")
      !
      if(n_spinor==2) then
        dumb_ch(1)=" Spin factors  [up,dw]   :     "//trim(real2ch(spin_factors(ib,ik,1)))//&
 &                                           "     "//trim(real2ch(spin_factors(ib,ik,2)))
-       call msg('o '//trim(output_fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
-       call msg('o '//trim(output_fname_short),"#")
+       call msg('o '//trim(fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(fname_short),"#")
        dumb_ch(1)=" Magn factor [Mx, My, Mz]: "//trim(real2ch(magn_factors(ib,ik,1)))//&
 &                                           " "//trim(real2ch(magn_factors(ib,ik,2)))//&
 &                                           " "//trim(real2ch(magn_factors(ib,ik,3)))
-       call msg('o '//trim(output_fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
-       call msg('o '//trim(output_fname_short),"#")
+       call msg('o '//trim(fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(fname_short),"#")
      endif
      !
      if (l_elel_scatt.or.l_elph_lifetimes) then
-       call msg('o '//trim(output_fname_short),'#',specs(:n_output,1),INDENT=0,USE_TABS=.TRUE.)
-       call msg('o '//trim(output_fname_short),'#',specs(:n_output,2),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(fname_short),'#',specs(:n_output,1),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(fname_short),'#',specs(:n_output,2),INDENT=0,USE_TABS=.TRUE.)
      endif
      !
-     call msg('o '//trim(output_fname_short),'#',titles(:n_output),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(output_fname_short),'#')
+     call msg('o '//trim(fname_short),'#',titles(:n_output),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o '//trim(fname_short),'#')
      !
    end subroutine open_file
    !

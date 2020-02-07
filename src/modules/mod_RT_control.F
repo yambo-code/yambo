@@ -307,8 +307,6 @@ module RT_control
        call E_reset(E)
        E%nk=RT_carriers%nk
        E%nb=RT_carriers%nb(2)
-       E%nb=RT_carriers%nb(2)
-       E%nk=RT_carriers%nk
        E%nbf=E_eq%nbf
        E%nbm=E_eq%nbm
        E%E_Fermi  =E_eq%E_Fermi

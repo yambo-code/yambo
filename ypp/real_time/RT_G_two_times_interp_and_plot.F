@@ -77,7 +77,7 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  !============================================================================= 
  !
  call plot_interpolated_values(kpt,en,0._SP,CIRCUIT_k,(/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"interpolated","G_k_w")
- !call plot_interpolated_values(kpt,en,0._SP,USER_k,   (/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"built_in",    "G_k_w")
+ call plot_interpolated_values(kpt,en,0._SP,USER_k,   (/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"built_in",    "G_k_w")
  !
  call INTERPOLATION_driver_end(0)
  !

@@ -244,6 +244,8 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    !
    if (PLOT_built_in) then
      !
+     if( all((/Grid_to_path_map(ik_local,:)==-1/)) ) cycle
+     !
      n_points=0
      do ik_bz_grid=1,Xk%nbz
        if( Grid_to_path_map(ik_local,ik_bz_grid)==-1 ) cycle
@@ -316,7 +318,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
          if(i_point> 1) values(2:ndims+1)=auxiliary_var(:,ifile,iqnt,i_point-1)
          if(PLOT_BANDS .and. ivalue==1) values(2:ndims+1)=values(2:ndims+1)*HA2EV
          !
-         if (l_print_k_name) then
+         if (l_print_k_name.and..not.PLOT_G2) then
            call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.not.plot_G2,formatted_msg=of_string)
            of_string=trim(of_string)//trim(k_name)
            call msg_deliver(trim(file_name(ivalue)),of_string)

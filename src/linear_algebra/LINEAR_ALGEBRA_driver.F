@@ -47,6 +47,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use interfaces,    ONLY:MATRIX_transfer
  use BS,            ONLY:BS_block,BS_H_dim
  use timing_m,      ONLY:timing
+ !
 #include<memory.h>
  !
  integer                    :: idriver

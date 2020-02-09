@@ -87,7 +87,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
        if (ik==1.and.i_sp_pol==1) then
          YAMBO_ALLOC(H_nl_sc,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)))
        endif
-       call io_control(ACTION=RD_CL,SEC=(/ip+1+(ip_sp_pol-1)*nkibz/),ID=ID)
+       call io_control(ACTION=RD_CL,SEC=(/ik+1+(i_sp_pol-1)*nkibz/),ID=ID)
        io_err=io_SC_components('V',E_dummy,ID)
      endif
      !
@@ -128,8 +128,6 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
  !
  found_SC_DB      = .not.(io_err==IO_NO_DATABASE)
  compatible_SC_DB = io_err == 0
- !
- if (what=="check_WF_DB")  compatible_SC_DB = n_bands<= SC_bands(2)
  !
  if (io_err==0.and.present(kind)) then
    kind=SC_kind

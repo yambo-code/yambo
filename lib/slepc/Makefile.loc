@@ -16,7 +16,7 @@ TARBALL=$(tarball_slepc)
 #
 # redefinitions
 #
-AUXFLAGS=--prefix=$(LIBPATH)
+AUXFLAGS=--prefix="$(LIBPATH)"
 
 
 #
@@ -37,7 +37,7 @@ configure-stamp: uncompress-stamp
 	  cd $(PACKAGE); \
 	  PETSC_DIR=$(LIBPATH) \
 	  SLEPC_DIR=$(PWD)/$(PACKAGE) \
-	  ./configure $(AUXFLAGS) ; \
+	  python2 ./configure $(AUXFLAGS) ; \
 	fi
 	touch configure-stamp
 	

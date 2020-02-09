@@ -30,7 +30,7 @@ subroutine PARALLEL_global_Response_IO( )
  !  
  use IO_m,          ONLY:io_RESPONSE
  use parallel_m,    ONLY:n_CPU_str_max,CPU_structure,PARALLEL_CPU_role,PARALLEL_CPU_used,&
-&                       PARALLEL_n_structures_active
+&                        PARALLEL_n_structures_active,i_PAR_structure
  !
  implicit none
  !
@@ -39,6 +39,12 @@ subroutine PARALLEL_global_Response_IO( )
  if (io_RESPONSE) return
  !
  call PARALLEL_get_user_structure("Self_Energy",.FALSE.)
+ !
+ if (len_trim( CPU_structure(i_PAR_structure)%ROLE(1) ) ==0) then
+   call warning('Response function I/O forced in the default mode for the Self-Energy PARALLEL environment')
+   io_RESPONSE=.TRUE.
+   return
+ endif
  !
  do i=1,n_CPU_str_max
    if (trim(CPU_structure(i)%Long_Description)=="Self_Energy") then

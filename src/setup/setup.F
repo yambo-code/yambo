@@ -36,7 +36,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         rl_sop,bz_samp,g_vec,E_of_shell
  use com,            ONLY:msg
  use stderr,         ONLY:intc,real2ch
- use IO_m,           ONLY:REP,DUMP,NONE
+ use IO_m,           ONLY:REP,DUMP,NONE,io_control,OP_RD_CL
  use vec_operate,    ONLY:c2a,define_b_and_DL_vol
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
  use interfaces,     ONLY:OCCUPATIONS_Fermi
@@ -58,10 +58,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Work Space
  !
  real(SP)          :: rv(3),Tel_SAVE
- integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2)
+ integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2),ID
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch1,dumb_ch2
- integer, external :: k_lattice
+ integer, external :: k_lattice,io_Double_Grid
  !
  call section('*','CORE Variables Setup') 
  !########################################
@@ -249,6 +249,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
    if (i_err/=0) call error('Impossible to determine the K-grid lattice')
  endif
  !
+ ! E_dbgd
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID)
+ i_err=io_Double_Grid(en,k,ID)
+ !
  if (BZ_DbGd_nbands>0.and.allocated(en%E_DbGd)) then
    !
    call section('=','Double K-grid')
@@ -347,14 +352,14 @@ subroutine setup(en,Xen,Ken,k,Xk)
    !
    ! SC wavefunctions
    !
-   ! Here I only check for the existence of the SC WF DB. Band checking will be done later
+   ! Here I only check for the existence of the SC WF DB.
    !
    call load_SC_components('check_WF_DB',n_bands=0,&
 &                          kind=WF_kind,xc_functional=WF_xc_functional,perturbation=WF_perturbation)
    !
    if (found_SC_DB) then
      call setup_global_XC('WF',WF_kind,WF_xc_functional,WF_perturbation)
-     call warning(trim(loaded_WF_xc_string)//' wavefunctions found. Bands check at loading time.')
+     call warning(trim(loaded_WF_xc_string)//' wavefunctions found')
    endif
    !
  endif

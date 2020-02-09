@@ -134,8 +134,6 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
        call G_rot_grid(is,'extend_grid')
      enddo
      !
-     call msg('s','done')
-     !
    endif
    !
  end select

@@ -17,7 +17,7 @@ TARBALL=$(tarball_petsc)
 # redefinitions
 #
 PETSC_ARCH=yambo_${yprecision}_complex
-AUXFLAGS=--prefix=$(LIBPATH) \
+AUXFLAGS=--prefix="$(LIBPATH)" \
          --PETSC_ARCH=${PETSC_ARCH} \
          --with-ssl=0 \
          --with-x=0 \
@@ -43,9 +43,7 @@ configure-stamp: uncompress-stamp
 	  cd $(PACKAGE);  \
 	  unset PETSC_DIR; \
 	  unset PETSC_ARCH; \
-	  ./configure $(AUXFLAGS) \
-	  --with-cc=$(cc) \
-	  --with-fc=$(fc) ; \
+	  python2 ./configure $(AUXFLAGS) --with-cc=$(cc) --with-fc=$(fc) ; \
 	fi
 	touch configure-stamp
 	

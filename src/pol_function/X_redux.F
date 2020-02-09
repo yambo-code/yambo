@@ -207,7 +207,6 @@ subroutine X_redux(iq,X_par,Xw,X)
    endif
    !
    call X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
-
    !
    ! X(g,gp)=Sum_gpp[KERNEL]^-1_(g,gpp)*Xo(gpp,gp)
    !

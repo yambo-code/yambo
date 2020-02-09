@@ -29,6 +29,7 @@ subroutine RT_driver(en,k,q)
 &                         l_RT_G_two_times,l_skip_OBS_IO,l_force_min_damp
  use interpolate,    ONLY:l_integral_respect
  use parser_m,       ONLY:parser
+ use parallel_m,     ONLY:PAR_G_kpts
  !
  implicit none
  !
@@ -42,6 +43,8 @@ subroutine RT_driver(en,k,q)
  call parser('NormN',l_integral_respect)
  !
  call section("*",'== Real-Time Post-Processing ==')
+ !
+ PAR_G_kpts=(/1,k%nibz/)
  !
  ! Output files
  !==============

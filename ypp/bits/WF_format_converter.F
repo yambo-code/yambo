@@ -44,7 +44,7 @@ subroutine WF_format_converter(E,Xk,q)
  ! Work Space
  !
  character(lchlen)  :: core_io_path_save,section_name
- integer  :: ik,i_sp_pol,i_spinor,i_spin,ib_io,ib_grp,ifrag
+ integer  :: ik,i_sp_pol,i_spinor,i_spin,ib_io,ib_grp,ifrag,ic
  real(SP),    allocatable :: wf_disk_old(:,:,:,:)
  complex(SP), allocatable :: wf_disk_new(:,:,:)
  !
@@ -139,8 +139,10 @@ subroutine WF_format_converter(E,Xk,q)
            pp_kbs=pp_kbs_old
          endif
          !
-         pp_kb(:,:,:,i_sp_pol) =pp_kb_old(wf_igk(:wf_nc_k(ik),ik),:,:,i_sp_pol)
-         pp_kbd(:,:,:,i_sp_pol)=pp_kbd_old(wf_igk(:wf_nc_k(ik),ik),:,:,i_sp_pol)
+         do ic=1,wf_nc_k(ik)
+           pp_kb(ic,:,:,i_sp_pol) =pp_kb_old(wf_igk(ic,ik),:,:,i_sp_pol)
+           pp_kbd(ic,:,:,i_sp_pol)=pp_kbd_old(wf_igk(ic,ik),:,:,i_sp_pol)
+         enddo
          !
        endif
        !

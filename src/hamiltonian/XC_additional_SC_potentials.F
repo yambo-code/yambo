@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine XC_switch()
+subroutine XC_additional_SC_potentials()
  !
  use drivers,        ONLY:l_oep_kli,l_oep_exact,l_oep_ceda,l_oep_slater,l_sc_exx
- use hamiltonian,    ONLY:H_kind,H_potential,H_perturbation
+ use hamiltonian,    ONLY:H_kind,H_perturbation
 #if defined _SC
  use SC,             ONLY:OEP_approx,l_oep_EWeight,l_oep_iterative
 #endif
@@ -42,15 +42,11 @@ subroutine XC_switch()
  !
  integer, parameter :: KLI_APPRX = 10, SLT_APPRX = 20, CED_APPRX = 30, LEVY_APPRX = 40
  !
- ! POTENTIAL selector
- !===================
- !
- call XC_potentials(H_potential,"SC")
+#if defined _SC
  !
  ! OEP approximation
  !===================
  !
-#if defined _SC
  if (l_sc_exx) then
    if (STRING_same(trim(OEP_approx),'n')) then
      l_oep_exact=.true.
@@ -91,7 +87,6 @@ subroutine XC_switch()
  H_perturbation=EXT_NONE
  !
 #if defined _MAGNETIC
- !
  if (l_sc_magnetic) then
    if (MAG_pauli)  H_perturbation=EXT_B_PAULI
    if (MAG_landau) H_perturbation=EXT_B_LANDAU
@@ -99,4 +94,4 @@ subroutine XC_switch()
  endif
 #endif
  !
-end subroutine XC_switch
+end subroutine XC_additional_SC_potentials

@@ -49,7 +49,9 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  ! What
  !
  l_COH     =index(what,"COH")     >0
- l_HXC     =index(what,"HXC")     >0.or.index(what,"SEX")>0.or.index(what,"FOCK")>0.or.index(what,"HARTREE")>0
+ l_HXC     =index(what,"HXC")     >0.or.index(what,"SEX")>0.or.&
+&           index(what,"FOCK")>0.or.index(what,"HARTREE")>0.or.&
+&           index(what,"GS_xc")>0
  l_GW_NEQ  =index(what,"GW_NEQ")  >0
  l_Momentum=index(what,"Momentum")>0
  !

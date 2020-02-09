@@ -215,8 +215,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        enddo
        enddo
        !
-       call msg('s','done')
-       !
      endif
      !
    endif
@@ -235,8 +233,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
          fragment_name='s.kb_pp_pwscf_fragment_'//trim(intc(ik))
          call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE/",ierr)
        enddo
-       !
-       call msg('s','done')
        !
      endif
      !
@@ -513,8 +509,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      YAMBO_FREE(Vnl)
      !
    endif
-   !
-   call msg('s','done')
    !
  end select
  !

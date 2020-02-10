@@ -50,6 +50,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         X_xc_functional,setup_global_XC,K_kind,K_xc_functional,loaded_WF_xc_string,&
 &                         X_perturbation,G_perturbation,K_perturbation,WF_kind,WF_xc_functional,WF_perturbation
 #endif
+#if defined _HDF5_IO
+ ! For I/O debug, see below
+ !use IO_m,           ONLY:netcdf_call,nf90_set_log_level
+#endif
  !
 #include <memory.h>
  !
@@ -63,6 +67,12 @@ subroutine setup(en,Xen,Ken,k,Xk)
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch1,dumb_ch2
  integer, external :: k_lattice,io_Double_Grid
+ !
+#if defined _HDF5_IO
+ ! This is very useful for I/O debug
+ ! NETCDF library need to be compiled with --enable-loggning flag
+ ! call netcdf_call(nf90_set_log_level(3),1)
+#endif
  !
  call section('*','CORE Variables Setup') 
  !########################################

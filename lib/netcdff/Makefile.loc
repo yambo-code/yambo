@@ -19,6 +19,8 @@ TARBALL=$(tarball_netcdff)
 AUXFLAGS=--prefix=$(LIBPATH) \
          --without-pic --enable-static --disable-shared
 
+# --enable-logging
+
 #
 # MAIN target
 #

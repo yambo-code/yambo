@@ -33,6 +33,7 @@ configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	  ./configure $(AUXFLAGS) \
 	  LIBS="$(lblas) $(llapack) $(lyaml)" \
+	  CPPFLAGS="$(iyaml)" \
 	  CC="$(cc)" \
 	  FC="$(fc)" \
 	  F77="$(fc)" \

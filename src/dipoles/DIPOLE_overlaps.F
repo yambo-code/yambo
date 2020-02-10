@@ -30,7 +30,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use DIPOLES,           ONLY:DIPOLE_t,DIP_S
  use electrons,         ONLY:n_spinor,n_sp_pol
  use wrapper,           ONLY:Vstar_dot_V
- use wave_func,         ONLY:wf_ng_1st_BZ,wf_ng_overlaps
+ use wave_func,         ONLY:wf_ng_1st_BZ,wf_ng_overlaps,wf_ng
  use IO_m,              ONLY:IO_write
  use parallel_m,        ONLY:PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_COM_DIPk_ibz_A2A, &
 &                            PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,PAR_COM_DIPk_ibz_INDEX,PP_redux_wait
@@ -47,8 +47,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  integer           :: ikbz,ikbzp,is,isp,ib,ibp,i_sp_pol,ik,ikp,istep,max_step,iG0,ng_tmp
  integer           :: id,idx_kp(3),idx_k(3),shift(3),g0_idx(3,2),g0_length(3)
- complex(SP)       :: WF_symm(wf_ng_1st_BZ,n_spinor,Dip%ib(2),n_sp_pol)
- complex(SP), allocatable :: WF_shifted(:,:,:,:),WF_ik(:,:,:,:),WF_ikp(:,:,:,:)
+ complex(SP), allocatable :: WF_symm(:,:,:,:),WF_shifted(:,:,:,:),WF_ik(:,:,:,:),WF_ikp(:,:,:,:)
 #ifdef _CUDA
  attributes(device):: WF_symm,WF_shifted,WF_ik,WF_ikp
 #endif
@@ -61,8 +60,14 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  YAMBO_FREE(G_m_G)
  ng_tmp=eval_G_minus_G(wf_ng_1st_BZ,iG0)
+ !
+ if (maxval(G_m_G(:,1)) < wf_ng_1st_BZ) call warning(" Forced lowering on cutoff on WFs")
+ !
+ wf_ng_1st_BZ  =maxval(G_m_G(:,1))
+ wf_ng         =maxval(G_m_G(:,1))
  wf_ng_overlaps=maxval(G_m_G)
  !
+ YAMBO_ALLOC(WF_symm,(wf_ng_1st_BZ,n_spinor,Dip%ib(2),n_sp_pol))
  YAMBO_ALLOC(WF_shifted,(wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
  YAMBO_ALLOC(WF_ik,     (wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
  YAMBO_ALLOC(WF_ikp,    (wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
@@ -145,6 +150,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  call live_timing()
  !
+ YAMBO_FREE(WF_symm)
  YAMBO_FREE(WF_shifted)
  YAMBO_FREE(WF_ik)
  YAMBO_FREE(WF_ikp)

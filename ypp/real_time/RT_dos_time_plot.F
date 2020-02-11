@@ -30,7 +30,8 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
  use pointers,       ONLY:linkM2M
  use YPPm,           ONLY:DOS_broadening,DOS_E_steps,electrons_dos_elemental,&
-&                         INTERP_grid,DOS_E_step,l_pdos
+&                         INTERP_grid,DOS_E_step,l_PROJECT_atom,&
+&                         l_add_EQ_occ,l_separate_eh,l_skip_occ
  use QP_CTL_m,       ONLY:QP_apply
  use YPP_real_time,  ONLY:RT_time
  use IO_m,           ONLY:IO_and_Messaging_switch
@@ -38,7 +39,6 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  use LIVE_t,         ONLY:live_timing
  use RT_control,     ONLY:RT_output,RT_apply,RT_carriers_to_RT_k,RT_carriers_to_RT_E
  use real_time,      ONLY:RT_carriers,RT_bands
- use parser_m,       ONLY:parser
  use interpolate,    ONLY:GRID_k,INTERPOLATION_driver_seed,INTERPOLATION_driver_do,INTERP_obj
  !
 #include<memory.h>
@@ -60,7 +60,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  real(SP),   external  :: RIntegrate
  !
  integer               :: i_E,i_T,ib,N_files,i_f,i_RT,ID_E,ID_f,ID_spin,ID_pdos,lb(3),ub(3)
- logical               :: l_sum_equilibrium,l_separate_eh,space_printed,l_interp,l_skip_occ
+ logical               :: space_printed,l_interp
  type(levels)          :: RT_E,GRID_E
  type(bz_samp)         :: RT_k
  character(schlen)     :: file_n(2)
@@ -70,11 +70,6 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  ! Setup
  !
  call electrons_dos_setup( En, dos_E, RT_bands )  
- !
- call parser('SeparateEH',l_separate_eh)
- call parser('IncludeEQocc',l_sum_equilibrium)
- call parser('NoOcc',l_skip_occ)
- call parser('Proj_DOS',l_pdos)
  !
  N_files=1
  l_interp=all(INTERP_grid>0)
@@ -102,7 +97,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  !
  ! Load the PDOS coefficient
  !-----------------------------
- if (l_pdos) then
+ if (l_PROJECT_atom) then
    YAMBO_ALLOC(PDOS_fac_v,(RT_carriers%nb(1):RT_carriers%nb(2),k%nibz,n_sp_pol))
    YAMBO_ALLOC(RT_PDOS_fac,(RT_carriers%nb(1):RT_carriers%nb(2),RT_carriers%nk,n_sp_pol))
    call electrons_pdos_factors((/1,k%nibz/),RT_carriers%nb,PDOS_fac_v)
@@ -155,8 +150,8 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    call QP_apply(RT_bands,RT_E,RT_k,'G',msg_fmt='s')
    !
    if(.not.l_skip_occ) then
-     if(.not.l_sum_equilibrium) call RT_carriers_to_RT_E(En,RT_E,"df")
-     if(     l_sum_equilibrium) call RT_carriers_to_RT_E(En,RT_E,"f")
+     if(.not.l_add_EQ_occ) call RT_carriers_to_RT_E(En,RT_E,"df")
+     if(     l_add_EQ_occ) call RT_carriers_to_RT_E(En,RT_E,"f")
    endif
    !
    !... DOS
@@ -174,7 +169,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
      call INTERPOLATION_driver_seed("f_on_RT_grid",ID_f,RT_bands,RT_k,SEED_E=RT_E,QUIET=.TRUE.)
      call INTERPOLATION_driver_do("f_on_RT_grid",ID_f,GRID_k,OUT_E=GRID_E)
      !
-     if (l_pdos) then
+     if (l_PROJECT_atom) then
        call INTERPOLATION_driver_seed("PDOS_factors_on_RT_grid",ID_pdos,RT_bands,RT_k,SEED_R3=RT_PDOS_fac)
        call INTERPOLATION_driver_do("PDOS_factors_on_RT_grid",ID_pdos,GRID_k)
        PDOS_fac_p => linkM2M(INTERP_obj(ID_pdos)%INTERP,shape(INTERP_obj(ID_pdos)%INTERP),&

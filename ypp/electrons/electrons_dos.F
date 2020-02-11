@@ -30,12 +30,12 @@ subroutine electrons_dos(Xk,Xen)
  use pointers,       ONLY:linkM2M
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol
  use YPPm,           ONLY:output_fname,DOS_bands,DOS_E_steps,K_transform,&
-&                         INTERP_grid,electrons_dos_elemental,l_pdos
+&                         INTERP_grid,electrons_dos_elemental,&
+&                         l_PROJECT_atom,l_PROJECT_line,l_PROJECT_plane
  use com,            ONLY:msg,of_open_close
  use QP_CTL_m,       ONLY:QP_apply
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k,INTERP_obj
  use stderr,         ONLY:intc
- use parser_m,       ONLY:parser
  !
 #include<memory.h>
  !
@@ -53,7 +53,7 @@ subroutine electrons_dos(Xk,Xen)
  !
  integer               :: i_E,i_f,N_files,is,ib,ik,ikbz,IDe,IDf,IDs,IDp
  character(schlen)     :: titles(DOS_bands(2)+4)
- logical               :: l_DbGd
+ logical               :: l_DbGd,DOS_is_projected
  type(levels)          :: GRID_E
  !
  call section('*','Electronic DOS')
@@ -65,8 +65,6 @@ subroutine electrons_dos(Xk,Xen)
  !
  if (l_DbGd) DOS_bands(2)=min(DOS_bands(2),BZ_DbGd_nbands)
  !
- call parser('Proj_DOS',l_pdos)
- !
  call QP_state_table_setup(Xen)
  call QP_apply(DOS_bands,Xen,Xk,'G',msg_fmt='s')
  !
@@ -74,12 +72,16 @@ subroutine electrons_dos(Xk,Xen)
  !=======
  call electrons_dos_setup( Xen, dos_E, DOS_bands )  
  !
+ DOS_is_projected=l_PROJECT_line.or.l_PROJECT_plane
+ !
+ if (DOS_is_projected) call electrons_dos_project_setup(Xk,Xen)
+ !
  ! DOS on the built-in grid
  !===================================================================
  !
  ! Load the PDOS coefficient
  !-----------------------------
- if (l_pdos) then
+ if (l_PROJECT_atom) then
    YAMBO_ALLOC(PDOS_fac_v,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_sp_pol))
    call electrons_pdos_factors((/1,Xk%nibz/),DOS_bands,PDOS_fac_v)
    PDOS_fac_p(DOS_bands(1):DOS_bands(2),1:Xk%nibz,1:n_spinor) => PDOS_fac_v
@@ -91,20 +93,25 @@ subroutine electrons_dos(Xk,Xen)
    SPIN_fac_p(DOS_bands(1):DOS_bands(2),1:Xk%nibz,1:n_spinor) => SPIN_fac_v
  endif
  !
- call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,&
-&                             SPIN_fac_p,PDOS_fac_p,USE_the_DbGd=l_DbGD)
+ if (.not.DOS_is_projected) then
+   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,&
+&                               SPIN_fac_p,PDOS_fac_p,USE_the_DbGd=l_DbGD)
+ endif
  !
- ! Define the regural grid for interpolation if (all(interp_grid>0))
+ !
+ ! Define the regular grid for interpolation if (all(interp_grid>0))
  !===================================================================
  N_files=1
  !
  if (all(INTERP_grid>0)) then
    !
-   if (l_pdos) call warning(" PDOS and interpolation not yet implemented")
+   if (l_PROJECT_atom) call warning(" PDOS and interpolation not yet implemented")
    !
    N_files=2
    !
-   call INTERPOLATION_driver_create_grid(INTERP_grid)
+   if (.not.DOS_is_projected) then
+     call INTERPOLATION_driver_create_grid(INTERP_grid)
+   endif
    !
    call INTERPOLATION_driver_seed("E_on_built_in",IDe,DOS_bands,Xk,SEED_E=Xen,NEAREST=.FALSE.)
    call INTERPOLATION_driver_do("E_on_built_in",IDe,GRID_k,OUT_E=GRID_E)
@@ -112,7 +119,7 @@ subroutine electrons_dos(Xk,Xen)
    call INTERPOLATION_driver_seed("f_on_built_in",IDf,DOS_bands,Xk,SEED_E=Xen,QUIET=.TRUE.)
    call INTERPOLATION_driver_do("f_on_built_in",IDf,GRID_k,OUT_E=GRID_E)
    !
-   if (l_pdos) then
+   if (l_PROJECT_atom) then
      call INTERPOLATION_driver_seed("SPIN_factors_on_built_in",IDp,DOS_bands,Xk,SEED_R3=PDOS_fac_v)
      call INTERPOLATION_driver_do("PDOS_factors_on_built_in",IDp,GRID_k)
      PDOS_fac_p => linkM2M(INTERP_obj(IDp)%INTERP,shape(INTERP_obj(IDp)%INTERP),&
@@ -149,7 +156,8 @@ subroutine electrons_dos(Xk,Xen)
      do ikbz=1,GRID_k%nbz
        values(2:4)=GRID_k%ptbz(ikbz,:)
        call K_transform(values(2:4),"iku")
-       ik=GRID_k%sstar(ikbz,1)
+       if (.not.DOS_is_projected) ik=GRID_k%sstar(ikbz,1)
+       if (     DOS_is_projected) ik=ikbz
        values(1)=real(ik,SP)
        values(1+4:DOS_bands(2)-DOS_bands(1)+5)=GRID_E%E(DOS_bands(1):DOS_bands(2),ik,is)*HA2EV
        call msg('o grid',' ',values(:DOS_bands(2)-DOS_bands(1)+5),INDENT=0,USE_TABS=.true.)
@@ -159,11 +167,20 @@ subroutine electrons_dos(Xk,Xen)
      !
    enddo
    !
-   ! DOS
-   !
-   call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,&
-&                               SPIN_fac_p,PDOS_fac_p,USE_the_DbGd=.FALSE.)
-   !
+   if (DOS_is_projected) then
+     !
+     call electrons_dos_project( GRID_E, dos_E, el_dos ) 
+     !
+     return
+     !
+   else
+     !
+     ! DOS
+     !
+     call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,&
+&                                 SPIN_fac_p,PDOS_fac_p,USE_the_DbGd=.FALSE.)
+     !
+   endif
  endif
  !
  ! Fermi Level

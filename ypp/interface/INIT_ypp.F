@@ -528,7 +528,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    !
    if (l_bands) call initactivate(1,"BANDS_bands")
    !
-   call initactivate(1,"INTERP_Grid INTERP_Shell_Fac INTERP_NofNN")
+   call initactivate(1,"INTERP_Shell_Fac INTERP_NofNN")
    call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_built_in")
    !
  endif
@@ -582,7 +582,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    if (l_dos) then
      call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands DOSUsesOcc")
      call initactivate(1,"INTERP_mode INTERP_Grid INTERP_Shell_Fac INTERP_NofNN")
-     call initactivate(1,"Proj_DOS PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
+     call initactivate(1,"PROJECT_mode PROJECT_path PROJECT_grid PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
    endif
  endif
 #if defined _YPP_RT
@@ -623,7 +623,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
    if (l_RT_dos)  then
      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc NoOcc")
-     call initactivate(1,"Proj_DOS PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
+     call initactivate(1,"PROJECT_mode PROJECT_path PROJECT_grid PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
      call initactivate(1,"INTERP_mode INTERP_Grid INTERP_Shell_Fac INTERP_NofNN")
      call INIT_QP_ctl_switch('G')
    endif

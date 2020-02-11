@@ -67,6 +67,15 @@ module YPPm
  type(bz_samp):: USER_k
  type(bz_samp):: CIRCUIT_k
  logical      :: CIRCUIT_made_of_SPECIAL_k
+ !
+ ! Projection mode
+ !
+ character(schlen) :: PROJECT_mode="none" ! ATOM,LINE,PLANE
+ character(schlen) :: PROJECT_path="none" 
+ integer           :: PROJECT_grid(2)=(/-1,-1/)
+ logical           :: l_PROJECT_atom
+ logical           :: l_PROJECT_line
+ logical           :: l_PROJECT_plane
  ! 
  ! DOS
  !
@@ -79,7 +88,6 @@ module YPPm
  !
  ! PDOS
  !
- logical      ::l_pdos
  integer      ::PDOS_atoms(2)
  integer      ::PDOS_kinds(2)
  integer      ::PDOS_wfcs(2)
@@ -115,6 +123,7 @@ module YPPm
  logical      ::l_sp_wf
  logical      ::l_exc_wf
  logical      ::l_norm_to_one
+ logical      ::l_add_EQ_occ,l_separate_eh,l_skip_occ
  logical      ::use_gnuplot
  logical      ::use_xcrysden
  logical      ::use_cube

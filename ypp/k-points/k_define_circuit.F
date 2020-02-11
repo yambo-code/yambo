@@ -92,7 +92,7 @@ subroutine k_define_circuit(Xk)
    call error(' Neither KPT path nor KPT grid are defined in input')
  endif
  !
- if(CIRCUIT_made_of_SPECIAL_k )     return
+ if (CIRCUIT_made_of_SPECIAL_k ) return
  !
  ! Define the path (CIRCUIT_K) from the user kpts if BANDS_steps>0
  !================================================================= 

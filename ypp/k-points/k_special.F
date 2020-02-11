@@ -58,7 +58,6 @@ subroutine k_special(LIST)
  !  http://cst-www.nrl.navy.mil/bind/kpts/index.html
  !  http://lamp.tu-graz.ac.at/
  !
- !
  ! 2019/02/01:
  ! If yambo "b" is different
  ! i.e. in case for example the FCC has
@@ -69,7 +68,6 @@ subroutine k_special(LIST)
  ! set the following logical to .true.
  !
  l_use_yambo_b=.false.
- !
  !
  select case (trim(lattice))
    !

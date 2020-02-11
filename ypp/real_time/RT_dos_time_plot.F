@@ -65,7 +65,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  type(bz_samp)         :: RT_k
  character(schlen)     :: file_n(2)
  !
- call section('*','Electr. Time-dependent DOS')
+ call section('*','Electronic Time-dependent DOS')
  !
  ! Setup
  !
@@ -162,34 +162,35 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    !... DOS
    !
    call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),dos_E,SPIN_fac_p,PDOS_fac_p,&
-           &                    USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.not.l_skip_occ)
+&                               USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.not.l_skip_occ)
    !
    if (n_spin==1) el_dos_integral(i_T,1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)*DL_vol
    if (n_spin==2) el_dos_integral(i_T,1)=RIntegrate(el_dos(:,1,1)+el_dos(:,2,1),dos_E,DOS_E_steps)*DL_vol
    !
    if (l_interp) then
-     call INTERPOLATION_driver_seed("E_on_RT_grid",ID_E,RT_bands,RT_k,SEED_E=RT_E,QUIET=.TRUE.,NEAREST=.FALSE.)
-     call INTERPOLATION_driver_seed("f_on_RT_grid",ID_f,RT_bands,RT_k,SEED_E=RT_E,QUIET=.TRUE.)
+     !
+     call INTERPOLATION_driver_seed("E_on_RT_grid",ID_E,RT_bands,RT_k,SEED_E=RT_E,QUIET=.TRUE.)
      call INTERPOLATION_driver_do("E_on_RT_grid",ID_E,GRID_k,OUT_E=GRID_E)
+     call INTERPOLATION_driver_seed("f_on_RT_grid",ID_f,RT_bands,RT_k,SEED_E=RT_E,QUIET=.TRUE.)
      call INTERPOLATION_driver_do("f_on_RT_grid",ID_f,GRID_k,OUT_E=GRID_E)
      !
      if (l_pdos) then
        call INTERPOLATION_driver_seed("PDOS_factors_on_RT_grid",ID_pdos,RT_bands,RT_k,SEED_R3=RT_PDOS_fac)
        call INTERPOLATION_driver_do("PDOS_factors_on_RT_grid",ID_pdos,GRID_k)
        PDOS_fac_p => linkM2M(INTERP_obj(ID_pdos)%INTERP,shape(INTERP_obj(ID_pdos)%INTERP),&
-       &                     lbound(INTERP_obj(ID_pdos)%INTERP),ubound(INTERP_obj(ID_pdos)%INTERP))
+&                            lbound(INTERP_obj(ID_pdos)%INTERP),ubound(INTERP_obj(ID_pdos)%INTERP))
      endif
      !
      if (n_spinor==2) then
        call INTERPOLATION_driver_seed("SPIN_fac_on_RT_grid",ID_spin,RT_bands,RT_k,SEED_R3=RT_SPIN_fac)
        call INTERPOLATION_driver_do("SPIN_fac_on_RT_grid",ID_spin,GRID_k)
        SPIN_fac_p => linkM2M(INTERP_obj(ID_spin)%INTERP,shape(INTERP_obj(ID_spin)%INTERP),&
-       &                     lbound(INTERP_obj(ID_spin)%INTERP),ubound(INTERP_obj(ID_spin)%INTERP))
+&                            lbound(INTERP_obj(ID_spin)%INTERP),ubound(INTERP_obj(ID_spin)%INTERP))
      endif
      !
      !... DOS
      call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),dos_E,SPIN_fac_p,PDOS_fac_p,&
-             &                    USE_the_DbGd=.FALSE.,QUIET=.TRUE.,FORCE_occ=.TRUE.)
+&                                 USE_the_DbGd=.FALSE.,QUIET=.TRUE.,FORCE_occ=.TRUE.)
      !
      if (n_spin==1) el_dos_integral(i_T,2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps)*DL_vol
      if (n_spin==2) el_dos_integral(i_T,2)=RIntegrate(el_dos(:,1,2)+el_dos(:,2,2),dos_E,DOS_E_steps)*DL_vol

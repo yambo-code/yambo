@@ -124,6 +124,8 @@ subroutine RT_Dephasing_Matrix(E)
          cycle
        endif
        if ( abs(E%E(ib_1,ik,1)-E%E(ib_2,ik,1))<deg_tresh ) cycle
+       !if ( ib_1> E%nbf )  cycle
+       !if ( ib_2<=E%nbf )  cycle
        RT_Deph_Matrix(ib_1,ib_2,ik)  =RT_Deph_Matrix(ib_1,ib_2,ik)+2._SP*pi/RT_INPUT_Deph_limits(i1,4)
        RT_Deph_Matrix(ib_2,ib_1,ik)  =RT_Deph_Matrix(ib_2,ib_1,ik)+2._SP*pi/RT_INPUT_Deph_limits(i1,4)
      enddo
@@ -141,10 +143,10 @@ subroutine RT_Dephasing_Matrix(E)
    !
    call msg('rs','[RT] Quasiparticle Dephasing applied')
    !
-   do ib_1=RT_bands(1),RT_bands(2)
-     do ib_2=ib_1+1,RT_bands(2)
-       !
-       do ik=1,nXkibz
+   do ik=1,nXkibz
+     do ib_1=RT_bands(1),RT_bands(2)
+       do ib_2=ib_1+1,RT_bands(2)
+         if ( abs(E%E(ib_1,ik,1)-E%E(ib_2,ik,1))<deg_tresh ) cycle
          !if ( ib_1> E%nbf )  cycle
          !if ( ib_2<=E%nbf )  cycle
          RT_Deph_Matrix(ib_1,ib_2,ik)=RT_Deph_Matrix(ib_1,ib_2,ik)+(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))

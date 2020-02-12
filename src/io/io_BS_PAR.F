@@ -55,6 +55,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  db_name='BS_PAR_Q'//trim(intc(iq))
  full_db_name=get_name(trim(db_name)," ",2,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
  !
+ l_BSE_kernel_complete=.false.
+ !
  if (write_is_on(ID)) then
    if (.not.file_exists(trim(full_db_name))) then
      call msg("s","BSE file not found. Creating an empty one.")
@@ -68,7 +70,6 @@ subroutine io_BS_PAR_init(iq,X,ID)
  io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
  if(io_BS/=0) return
  !
- !
  ! Check if the file already contains data and it its consistent
  PARALLEL_STRUCTURE="NONE"
  if (io_mode(ID)==VERIFY.or.write_is_on(ID)) PARALLEL_STRUCTURE="Response_T_space"
@@ -77,9 +78,14 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  io_BS=variables_BS(ID,iq,local_description,.TRUE.,X=X)
  !
+ if (io_BS/=0) then
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+   call error('Invalid dimensions found in BSE restart file '//trim(io_file(ID))//&
+ &            ' Remove the file or change the input file')
+ endif
+ !
  ! Check if BSE kernel is complete in reading mode, set the variable to false in writing mode
  !
- l_BSE_kernel_complete=.false.
  if(write_is_on(ID).or.variable_exist(ID,"BSE_KERNEL_COMPLETE")) then
    call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,IP+100,0,par_io_kind="independent")
    call  io_variable_elemental(ID,VAR=" Kernel complete          :",DB_L0=l_BSE_kernel_complete,L0=l_BSE_kernel_complete)
@@ -93,22 +99,15 @@ subroutine io_BS_PAR_init(iq,X,ID)
    endif
  endif
  !
- if (io_BS/=0) then
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
-   call error('Invalid dimensions found in BSE restart file '//trim(io_file(ID))//&
- &            ' Remove the file or change the input file')
- else
-   !
-   ! Descriptions transfer
-   !   
-   if (BSS_n_descs==0) then
-     do i1=1,100
-       if (len_trim(local_description(i1))>0) then
-         BSS_n_descs=BSS_n_descs+1
-         BSS_description(BSS_n_descs)=local_description(i1)
-       endif
-     enddo
-   endif
+ ! Descriptions transfer
+ !   
+ if (BSS_n_descs==0) then
+   do i1=1,100
+     if (len_trim(local_description(i1))>0) then
+       BSS_n_descs=BSS_n_descs+1
+       BSS_description(BSS_n_descs)=local_description(i1)
+     endif
+   enddo
  endif
  ! 
  ! Define vars

@@ -33,7 +33,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
 &                        QP_n_states,QP_dSc,QP_dSc_delta,QP_n_G_bands,&
 &                        GWo_SC_done,GWo_iterations,SC_E_threshold,On_Mass_Shell_approx
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,n_bands
  use R_lattice,     ONLY:bz_samp
  use QP_CTL_m,      ONLY:QP_apply
 #if defined _ELPH
@@ -169,7 +169,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
      ! Now I need to transfer the calculated QP corrections to the "en" type
      ! and to the qp%Eo array
      !
-     call QP_apply(QP_n_G_bands,en,k,'G',msg_fmt='rs',qp_impose=qp)
+!     call QP_apply(QP_n_G_bands,en,k,'G',msg_fmt='rs',qp_impose=qp)
+     call QP_apply((/1,n_bands/),en,k,'G',msg_fmt='rs',qp_impose=qp)
      !
    endif
    !

@@ -49,7 +49,7 @@ subroutine WF_symm_kpoint_cpu(b_to_load,ikbz,Xk,WF_k_out)
    do i_sp_pol=1,n_sp_pol
      do ib=b_to_load(1),b_to_load(2)
        iwf=WF%index(ib,ik,i_sp_pol)
-       WF_k_out(:,:,ib,i_sp_pol)=WF%c(:,:,iwf)
+       WF_k_out(:wf_ng,:,ib,i_sp_pol)=WF%c(:wf_ng,:,iwf)
      enddo
    enddo
    !

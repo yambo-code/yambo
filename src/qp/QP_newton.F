@@ -30,7 +30,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,&
-&                        QP_n_states,QP_dSc,QP_dSc_delta,QP_n_G_bands,&
+&                        QP_n_states,QP_dSc,QP_dSc_delta,QP_n_G_bands,GW_iterations,&
 &                        GWo_SC_done,GWo_iterations,SC_E_threshold,On_Mass_Shell_approx
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,n_bands
@@ -52,9 +52,10 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  ! Work Space
  !
- integer     :: i1,i2,iter
+ integer     :: i1,i2,iter,SC_iter,SC_iterations
  real(SP)    :: SC_corr_prev,SC_corr_now
  complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
+ logical     :: l_update_W
  !
  ! Dyson equation: Newton solver 
  !
@@ -70,9 +71,18 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  iter=0
  SC_corr_prev=1._SP
  !
+ SC_iterations=0
+ if(GWo_iterations/=0) then
+   SC_iterations=GWo_iterations
+   l_update_W=.false.
+ elseif(GWo_iterations/=0) then
+   SC_iterations=GW_iterations
+   l_update_W=.true.
+ endif
+ !
  ! GPL_EXCLUDE_START
  !
- do while((iter<=GWo_iterations.or.GWo_iterations<0).and..not.GWo_SC_done) 
+ do while((iter<=SC_iterations.or.SC_iterations<0).and..not.GWo_SC_done) 
    !
    ! GPL_EXCLUDE_END
    !
@@ -159,7 +169,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    enddo
    !
    SC_corr_now= maxval(real(qp%E(:)-qp%E_bare(:)))
-   GWo_SC_done=abs( SC_corr_prev-SC_corr_now )<SC_E_threshold.or.iter==GWo_iterations
+   GWo_SC_done=abs( SC_corr_prev-SC_corr_now )<SC_E_threshold.or.iter==SC_iterations
    !
    ! GPL_EXCLUDE_START
    !
@@ -167,13 +177,16 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
 &                      (/SC_corr_prev,SC_corr_now/)*HA2EV)
    SC_corr_prev=SC_corr_now
    !
-   if (.not.GWo_SC_done.and.GWo_iterations/=0) then
+   if (.not.GWo_SC_done.and.SC_iterations/=0) then
      !
      ! Now I need to transfer the calculated QP corrections to the "en" type
      ! and to the qp%Eo array
      !
-!     call QP_apply(QP_n_G_bands,en,k,'G',msg_fmt='rs',qp_impose=qp)
      call QP_apply((/1,n_bands/),en,k,'G',msg_fmt='rs',qp_impose=qp)
+     !
+     if(l_update_W) then
+       call msg('rs','Updating W')
+     endif
      !
    endif
    !
@@ -188,5 +201,6 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  ! Update GWo_iterations
  !
  if (GWo_iterations<0) GWo_iterations=iter
+ if (GW_iterations<0)  GW_iterations =iter
  !
 end subroutine

@@ -40,7 +40,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_SET_temperature_pre_factor,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
 &                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,&
-&                        l_GW_terminator,GW_terminator_Kind,l_QP_Expand,QP_G_info
+&                        l_GW_terminator,GW_terminator_Kind,l_QP_Expand,QP_G_info,GW_iterations
 #if defined _ELPH
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
@@ -98,6 +98,12 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !==============
  call QP_reset(qp)
  !
+ ! Check self-consistent GW
+ ! ==========================
+ if (GW_iterations/=0.and.GWo_iterations/=0) then
+   call error("Only one type of Self-Consistency at a time is possible, evGW or evGWo not both")
+ endif
+ !
  ! Setup Temperature pre-factor
  !==============================
  call QP_SET_temperature_pre_factor( )
@@ -110,7 +116,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    ! When using secant no SC available
    !
-   GWo_iterations=0
+   if(GW_iterations/=0.or.GWo_iterations/=0) then
+     GWo_iterations=0
+     GW_iterations =0
+     call warning("Self-consistent GW not compatible with 'secant solver' turned off")
+   endif
    !
    write (qp%description(1),'(a)') ' GW solver              : Secant'
    call section('*','Dyson equation: non perturbative QP_secant method')
@@ -151,7 +161,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    ! in COHSEX no SC possible
    !
-   GWo_iterations=0
+   if(GWo_iterations/=0) then
+     call warning("Self-consistent GWo not compatible with 'secant solver' turned off")
+     GWo_iterations=0
+   endif
    !
    qp%description(2)=' == COHSEX GW =='
    qp%description(3)=' '

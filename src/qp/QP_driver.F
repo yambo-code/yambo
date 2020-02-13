@@ -39,7 +39,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_SET_temperature_pre_factor,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
-&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,&
+&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,l_update_W,&
 &                        l_GW_terminator,GW_terminator_Kind,l_QP_Expand,QP_G_info,GW_iterations
 #if defined _ELPH
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
@@ -103,6 +103,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  if (GW_iterations/=0.and.GWo_iterations/=0) then
    call error("Only one type of Self-Consistency at a time is possible, evGW or evGWo not both")
  endif
+ if (GW_iterations/=0) l_update_W=.TRUE.
  !
  ! Setup Temperature pre-factor
  !==============================
@@ -165,6 +166,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
      call warning("Self-consistent GWo not compatible with 'secant solver' turned off")
      GWo_iterations=0
    endif
+   if(GW_iterations/=0) call error('Self-consistent COHSEX not implemented yet')
    !
    qp%description(2)=' == COHSEX GW =='
    qp%description(3)=' '

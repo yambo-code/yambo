@@ -51,6 +51,7 @@ module QP_m
  logical           :: GWo_SC_done
  logical           :: COHSEX_use_empties
  logical           :: l_GW_terminator=.FALSE.
+ logical           :: l_update_W=.FALSE.
  logical           :: On_Mass_Shell_approx
  logical           :: l_QP_Expand
  logical           :: use_GreenF_to_eval_QP

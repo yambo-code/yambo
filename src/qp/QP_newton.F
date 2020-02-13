@@ -28,8 +28,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use drivers,       ONLY:l_ppa,l_elel_corr,l_cohsex
  use com,           ONLY:msg
  use DIPOLES,       ONLY:DIPOLE_t
- use X_m,           ONLY:X_t
- use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,&
+ use X_m,           ONLY:X_t,current_iq
+ use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,l_update_W,&
 &                        QP_n_states,QP_dSc,QP_dSc_delta,QP_n_G_bands,GW_iterations,&
 &                        GWo_SC_done,GWo_iterations,SC_E_threshold,On_Mass_Shell_approx
  use frequency,     ONLY:w_samp
@@ -52,10 +52,10 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  ! Work Space
  !
- integer     :: i1,i2,iter,SC_iter,SC_iterations
+ integer     :: i1,i2,iter,SC_iter,SC_iterations,io_X_err
  real(SP)    :: SC_corr_prev,SC_corr_now
  complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
- logical     :: l_update_W
+ integer, external ::  X_dielectric_matrix
  !
  ! Dyson equation: Newton solver 
  !
@@ -72,13 +72,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  SC_corr_prev=1._SP
  !
  SC_iterations=0
- if(GWo_iterations/=0) then
-   SC_iterations=GWo_iterations
-   l_update_W=.false.
- elseif(GWo_iterations/=0) then
-   SC_iterations=GW_iterations
-   l_update_W=.true.
- endif
+ if(GWo_iterations/=0) SC_iterations=GWo_iterations
+ if(GW_iterations/=0 ) SC_iterations=GW_iterations
  !
  ! GPL_EXCLUDE_START
  !
@@ -185,7 +180,21 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
      call QP_apply((/1,n_bands/),en,k,'G',msg_fmt='rs',qp_impose=qp)
      !
      if(l_update_W) then
-       call msg('rs','Updating W')
+        !
+        ! Apply QP corrections to X
+        !     
+        call QP_apply((/1,n_bands/),Xen,k,'X',msg_fmt='rs',qp_impose=qp)
+        !
+        call msg('rs','Updating W...')
+        !
+        ! Recalculate W
+        !
+        current_iq=0
+!        call IO_and_Messaging_switch("SAVE -report")
+        io_X_err=X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,.true.)
+!        call IO_and_Messaging_switch("RESTORE")
+        if( io_X_err/=0) call error("Error in the dielectric constant calculation")
+        !
      endif
      !
    endif

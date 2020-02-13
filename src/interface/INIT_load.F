@@ -82,7 +82,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        NE_MEM_treshold,NE_time_step_update_jump_SAVE,          &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
-&                        RT_MAX_step,RT_RTA_temp,RT_RTA_chem,RAD_magnification
+&                        RT_MAX_step,RT_RTA_temp,RT_RTA_chem,RAD_magnification,  &
+&                        RT_deph_deg_thresh
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
@@ -417,6 +418,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
  call it(defs,'RAD_prefactor','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
  call it(defs,'PhLifeTime', '[RT] Constant Dephasing Time',Phase_LifeTime,unit=Time_unit(1))
+ call it(defs,'DephETrhesh', '[RT] Threshold on the energy difference between two states to dephase them',&
+         &   RT_deph_deg_thresh,unit=E_unit,Verb_level=V_real_time)
  !
  ! Dynamics
  !
@@ -443,6 +446,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'RTehEny',     '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
  !
  ! ... flags ...
+ call it('f',defs,'DephCVonly',    '[RT] Dephase only in the CV channel',Verb_level=V_real_time)
  call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly',Verb_level=V_real_time)
  call it('f',defs,'RTEvalEnergy',  '[RT] Energy variation computed on the fly',Verb_level=V_real_time)
  call it('f',defs,'RTEvalEntropy', '[RT] Entropy variation computed on the fly',Verb_level=V_real_time)

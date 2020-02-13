@@ -51,7 +51,7 @@ subroutine RT_initialize(E,k,q)
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
 &                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,l_RT_impose_for_metals, &
-&                         l_P_integrating_J,l_RT_rotate_DM
+&                         l_P_integrating_J,l_RT_rotate_DM,RT_deph_cv_only
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -79,6 +79,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! GPL_EXCLUDE_START
  !
+ call parser('DephCVonly',           RT_deph_cv_only)
  call parser('RAD_prefactor',        RAD_magnification)
  call parser('VelGaugeCorr',         l_velocity_gauge_corr)
  call parser('PfromJ',               l_P_integrating_J)

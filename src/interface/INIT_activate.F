@@ -547,7 +547,8 @@ subroutine INIT_activate()
    !
    ! GPL_EXCLUDE_END
    !
-   call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime RAD_prefactor PhLifeTime RTehEny ScattTresh') 
+   call initactivate(1,'RTBands Integrator GrKind TwoAlph RTehEny ScattTresh')
+   call initactivate(1,'RADLifeTime RAD_prefactor PhLifeTime DephCVonly DephEThresh')
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
    call initactivate(1,'IOtime IOCachetime')
    !

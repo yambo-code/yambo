@@ -144,8 +144,11 @@ module real_time
  real(SP)    :: Phase_LifeTime
  real(SP)    :: RAD_LifeTime
  real(SP)    :: RAD_magnification=1._SP
+ real(SP)    :: RT_deph_deg_thresh
+ logical     :: RT_deph_cv_only
  logical     :: RT_is_statically_dephased=.FALSE.
  logical     :: RT_is_dynamically_dephased=.FALSE.
+
  !
  ! Table pointing to the position of the uniform grid points in the
  ! G_lesser structure

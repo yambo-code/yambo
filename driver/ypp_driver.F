@@ -124,7 +124,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  ! INPUT FILE parsing
  !
- call INIT_ypp(en,instr,lnstr,.false.)
+ call INIT_ypp(en,instr,.false.)
  if (infile_editing) then
    iinf=1
    call ypp_finalize(en,instr,lnstr," ")
@@ -255,7 +255,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  call CLOSE_the_run(.TRUE.,.FALSE.,.FALSE.)
  !
- call INIT_ypp(en,instr,lnstr,.TRUE.)
+ call INIT_ypp(en,instr,.TRUE.)
  !
  return
  !

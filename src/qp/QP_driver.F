@@ -46,7 +46,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
  use global_XC,     ONLY:QP_DB_kind,QP_SE_COHSEX,QP_SE_GoWo_PPA,QP_SE_GoWo,QP_SE_GWo_PPA,&
-&                        QP_SE_GWo,QP_SE_POLARON,QP_SE_GW_QED
+&                        QP_SE_GWo,QP_SE_POLARON,QP_SE_GW_QED,QP_SE_GW_PPA
  use interfaces,    ONLY:eval_G_minus_G
  use parallel_m,    ONLY:PAR_COM_WORLD,PAR_IND_WF_linear
 #include<memory.h>
@@ -61,6 +61,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  type(QP_t)        ::qp
  integer           ::i1,io_QP_and_GF_err,io_G_err,ID_QP,ID_G,i_spin
+ integer           :: lw_bnd,hg_bnd
  integer, external ::io_QP_and_GF
  !
  ! Driver Logicals
@@ -98,11 +99,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !==============
  call QP_reset(qp)
  !
- ! Check self-consistent GW
- ! ==========================
- if (GW_iterations/=0.and.GWo_iterations/=0) then
-   call error("Only one type of Self-Consistency at a time is possible, evGW or evGWo not both")
- endif
+ ! Some checks for the self-consistent GW
+ ! =======================================
+ if (GW_iterations/=0.and.GWo_iterations/=0)  &
+ &   call error("Only one type of Self-Consistency at a time is possible, evGW or evGWo not both")
  if (GW_iterations/=0) l_update_W=.TRUE.
  !
  ! Setup Temperature pre-factor
@@ -192,6 +192,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    ! GPL_EXCLUDE_START
    !
    if ( GWo_iterations > 0 ) QP_DB_kind=QP_SE_GWo_PPA
+   !
+   if ( GW_iterations > 0 )  QP_DB_kind=QP_SE_GW_PPA
    !
    ! GPL_EXCLUDE_END
    !

@@ -155,6 +155,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    ! GPL_EXCLUDE_START
    !
    if ( GWo_iterations > 0 ) QP_DB_kind=QP_SE_GWo_PPA
+   if ( GW_iterations > 0  ) QP_DB_kind=QP_SE_GW_PPA
    !
    ! GPL_EXCLUDE_END
    !
@@ -191,9 +192,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    ! GPL_EXCLUDE_START
    !
-   if ( GWo_iterations > 0 ) QP_DB_kind=QP_SE_GWo_PPA
-   !
-   if ( GW_iterations > 0 )  QP_DB_kind=QP_SE_GW_PPA
+   if ( GWo_iterations > 0 ) QP_DB_kind=QP_SE_GWo
+   if ( GW_iterations > 0  ) call error("GW self-consistent not implemented with real-axis ")
    !
    ! GPL_EXCLUDE_END
    !

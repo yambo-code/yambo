@@ -76,7 +76,8 @@ module IO_m
  integer, parameter:: RD_CL=1,OP_RD_CL=2,OP_WR_CL=3,OP_APP_CL=4,OP_RD=5,OP_APP=6,&
 &                     OP_WR=7,RD=8,WR=9,RD_CL_IF_END=10,WR_CL=11,WR_CL_IF_END=12,   &
 &                     OP_IF_START_RD_CL_IF_END=13,OP_IF_START_WR_CL_IF_END=14,&
-&                     OP_IF_START_APP_CL_IF_END=15
+&                     OP_IF_START_APP_CL_IF_END=15,OP_APP_CL_IF_END=16,OP_WR_CL_IF_END=17,&
+&                     OP_RD_CL_IF_END=18
  !
  ! Modes
  !
@@ -110,6 +111,7 @@ module IO_m
  !
 #if defined _PAR_IO && defined _HDF5_IO
  integer, parameter:: PAR_IO_CREATE_MODE=ior(nf90_mpiio,nf90_netcdf4)
+ integer, parameter:: PAR_IO_WRITE_MODE =ior(nf90_mpiio,nf90_write)
 #endif
  !
  ! Units
@@ -207,7 +209,7 @@ module IO_m
      integer               :: VAR_SZ
      integer               :: VAR_KIND
      integer               :: MENU
-     character(*),optional      :: par_io_kind
+     character(*),optional :: par_io_kind
    end subroutine def_variable_elemental
    !
    subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
@@ -243,13 +245,13 @@ module IO_m
      !
    end subroutine io_variable_elemental
    !
-   subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,&
-                                        &  R0, R1, R2, R3, R4, R5,&
-                                        &  D0, D1, D2, D3, D4, D5,&
-                                        &  C0, C1, C2, C3, C4, C5,&
-                                        &  Z0, Z1, Z2, Z3, Z4, Z5,&
-                                        &  L0, L1, L2, L3, L4,    &
-                                        & CH0,CH1,CH2,CH3,CH4,    &
+   subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
+                                        &  R0, R1, R2, R3, R4, R5,    &
+                                        &  D0, D1, D2, D3, D4, D5,    &
+                                        &  C0, C1, C2, C3, C4, C5, C6,&
+                                        &  Z0, Z1, Z2, Z3, Z4, Z5,    &
+                                        &  L0, L1, L2, L3, L4,        &
+                                        & CH0,CH1,CH2,CH3,CH4,        &
                                         &                     IPOS)
      !
      use pars,   ONLY:SP,DP,LP
@@ -258,8 +260,8 @@ module IO_m
      integer,     optional ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
      real(SP),    optional ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
      real(DP),    optional ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
-     complex(SP), optional ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:)
-     complex(DP), optional ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
+     complex(SP), optional, target ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
+     complex(DP), optional, target ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
      integer(LP), optional ::  L0, L1(:), L2(:,:), L3(:,:,:), L4(:,:,:,:)
      character,   optional :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
      !
@@ -314,6 +316,7 @@ module IO_m
      integer :: ID
      read_is_on=any((/io_action(ID)==OP_RD_CL,       io_action(ID)==OP_RD,&
 &                     io_action(ID)==   RD_CL,       io_action(ID)==   RD,&
+&                     io_action(ID)==OP_RD_CL_IF_END,                     &
 &                     io_action(ID)==   RD_CL_IF_END,io_action(ID)==OP_IF_START_RD_CL_IF_END/))
    end function
    !
@@ -323,6 +326,7 @@ module IO_m
      write_is_on=any((/io_action(ID)==OP_WR_CL       ,io_action(ID)==OP_APP_CL,&
 &                      io_action(ID)==   WR          ,io_action(ID)==OP_APP      ,&
 &                      io_action(ID)==OP_WR          ,io_action(ID)==       WR_CL,&
+&                      io_action(ID)==OP_WR_CL_IF_END,io_action(ID)==         OP_APP_CL_IF_END,&
 &                                                     io_action(ID)==OP_IF_START_APP_CL_IF_END,&
 &                      io_action(ID)==   WR_CL_IF_END,io_action(ID)==OP_IF_START_WR_CL_IF_END/))
    end function
@@ -432,6 +436,7 @@ module IO_m
      if (read_is_on(ID)) then
        !
        if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_RD_CL
+       if (io_action(ID)==         OP_RD_CL_IF_END.and.                NOW==end_) io_action(ID)=OP_RD_CL
        if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.NOW==start_              ) io_action(ID)=OP_RD
        if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.                NOW==end_) io_action(ID)=   RD_CL
        if (io_action(ID)==            RD_CL_IF_END.and.                NOW==end_) io_action(ID)=   RD_CL
@@ -439,14 +444,16 @@ module IO_m
      else  if (write_is_on(ID)) then
        !
        if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_WR_CL
+       if (io_action(ID)==         OP_WR_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_WR_CL
        if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.NOW==start_              ) io_action(ID)=OP_WR
        if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
        if (io_action(ID)==            WR_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
        !
        if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_APP_CL
+       if (io_action(ID)==         OP_APP_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_APP_CL
        if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.NOW==start_              ) io_action(ID)=OP_APP
        if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
-       if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
+       !if (io_action(ID)==            APP_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
        !
      endif
      !

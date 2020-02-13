@@ -28,8 +28,10 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  !  where A is a n-x-n matrix and B is n-x-nrhs
  !
  use pars,           ONLY:SP
+ use drivers,        ONLY:l_nl_optics,l_real_time
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
  use timing_m,       ONLY:timing
+ !
 #include<memory.h>
  !
  integer     :: n,nrhs
@@ -39,7 +41,7 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  character(64)     :: subname="SERIAL_lin_system"
  type(LALGEBRA_WS) :: WS
  !
- call timing('SERIAL_lin_system',OPR='start')
+ if(.not.(l_nl_optics.or.l_real_time)) call timing(trim(subname),OPR='start')
  !
  WS%dim=n
  YAMBO_FREE(WS%v_int)
@@ -55,6 +57,6 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
  !
- call timing('SERIAL_lin_system',OPR='stop')
+ if(.not.(l_nl_optics.or.l_real_time)) call timing(trim(subname),OPR='stop')
  !
-end subroutine
+end subroutine SERIAL_lin_system

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): HM
+! Authors (see AUTHORS file for details): HM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -25,8 +25,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  ! Intialize variables on BSE netcdf parallel file
  !
- use netcdf
- use parallel_m,    ONLY:MPI_COMM_WORLD
+ use parallel_m,    ONLY:master_cpu,MPI_COMM_WORLD,PP_redux_wait
  use com,           ONLY:msg
  use pars,          ONLY:IP,SP,schlen,lchlen
  use stderr,        ONLY:intc
@@ -44,6 +43,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  logical, external :: file_exists
  !
+ logical :: def_var, io_var
  integer :: io_BS,    VAR_IDs(8), n_vars, i1
  integer :: flattened_block_size_dim,block_size_dim
  character(schlen) :: db_name, PARALLEL_STRUCTURE
@@ -67,12 +67,20 @@ subroutine io_BS_PAR_init(iq,X,ID)
    endif
  endif
  !
+ call PP_redux_wait()
+ !
  io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
  if(io_BS/=0) return
  !
  ! Check if the file already contains data and it its consistent
+ ! DS: warning. This is potentially dangerous since all MPI tasts are all writing
+ !              both the header and the variables
+ !              I cannot put here if(master_cpu) because I need all MPI_tasks to
+ !              go through the definition of the variables (see similar issue in io_X.F)
+ !
  PARALLEL_STRUCTURE="NONE"
  if (io_mode(ID)==VERIFY.or.write_is_on(ID)) PARALLEL_STRUCTURE="Response_T_space"
+ !
  io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
  &                    PARALLEL_STRUCTURE=trim(PARALLEL_STRUCTURE),CUTOFF=.true.,FRAG=frag_BS_K)
  !
@@ -86,10 +94,11 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  ! Check if BSE kernel is complete in reading mode, set the variable to false in writing mode
  !
- if(write_is_on(ID).or.variable_exist(ID,"BSE_KERNEL_COMPLETE")) then
-   call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,IP+100,0,par_io_kind="independent")
-   call  io_variable_elemental(ID,VAR=" Kernel complete          :",DB_L0=l_BSE_kernel_complete,L0=l_BSE_kernel_complete)
- endif
+ def_var=                write_is_on(ID) .or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
+ io_var =(master_cpu.and.write_is_on(id)).or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
+ if(def_var) call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,IP+100,0,par_io_kind="independent")
+ if(io_var)  call io_variable_elemental(ID,VAR=" Kernel complete          :",&
+              &                          DB_L0=l_BSE_kernel_complete,L0=l_BSE_kernel_complete)
  !
  if(read_is_on(ID)) then
    if(l_BSE_kernel_complete) then
@@ -98,6 +107,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
      call msg("s","Partial BSE file found in "//trim(io_file(ID))//". Not accepted in reading mode.")
    endif
  endif
+ !
+ call PP_redux_wait()
  !
  ! Descriptions transfer
  !   
@@ -174,13 +185,11 @@ subroutine io_BS_PAR_free(ID,l_kernel_complete)
  call PP_redux_wait()
  !
  BS_K_has_been_calculated_loaded=l_kernel_complete
+ l_BSE_kernel_complete          =l_kernel_complete
  !
  if(l_kernel_complete.and.write_is_on(ID)) then
-   l_BSE_kernel_complete=.true.
-   if(master_cpu) then
-     call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0,par_io_kind="independent")
-     call  io_variable_elemental(ID,VAR=" Kernel complete          :",L0=l_BSE_kernel_complete)
-   endif
+   call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0,par_io_kind="independent")
+   if(master_cpu) call io_variable_elemental(ID,VAR=" Kernel complete          :",L0=l_BSE_kernel_complete)
  endif
  !
  call io_disconnect(ID)

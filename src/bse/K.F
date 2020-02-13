@@ -501,6 +501,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  enddo block_loop
  !
 #if defined _PAR_IO
+ call io_control(ACTION=WR_CL,COM=REP,ID=ID)
  call io_BS_PAR_free(ID,.true.)
 #endif
  !

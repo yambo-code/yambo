@@ -94,8 +94,8 @@ integer function io_NL(ID)
  !
  if (i_fragment==0) goto 1
  !
- if(read_is_on(ID)) then
-   !  
+ if(read_is_on(ID).and..not.allocated(NL_P_t)) then
+   !
    YAMBO_ALLOC(NL_P_t,(NE_steps,3))
    !
    YAMBO_ALLOC(E_tot_t,(NE_steps,3))

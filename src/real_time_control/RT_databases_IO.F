@@ -30,7 +30,7 @@ subroutine RT_databases_IO(E)
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
-&                         OP_IF_START_APP_CL_IF_END
+&                         OP_APP_CL_IF_END,WR_CL_IF_END
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,HEAD_k_cpu,ncpu,myid
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,RT_all2ibz
  use timing_m,       ONLY:timing
@@ -45,6 +45,7 @@ subroutine RT_databases_IO(E)
  ! Work Space
  !
  integer           :: ik,io_G,io_OBS,io_carr,io_THETA,i_time,i_cpu,n_sec,secs(2)
+ logical           :: l_start
  integer, external :: io_RT_components
  !
  call timing('RT databases IO',OPR='start')

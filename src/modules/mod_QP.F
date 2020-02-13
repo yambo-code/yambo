@@ -46,6 +46,7 @@ module QP_m
  integer           :: QP_ng_Vxc
  integer           :: QP_n_G_bands(2)
  integer           :: GWo_iterations
+ integer           :: GW_iterations
  logical           :: QP_dSc_test
  logical           :: GWo_SC_done
  logical           :: COHSEX_use_empties

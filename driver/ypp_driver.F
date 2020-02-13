@@ -275,5 +275,5 @@ subroutine ypp_finalize(en,instr,lnstr,STRING)
     if (len_trim(STRING)==0) call section('X','Game Over')
     call msg("nln"," ")
   endif
-  call INIT_ypp(en,instr,lnstr,.TRUE.)
+  call INIT_ypp(en,instr,.TRUE.)
 end subroutine ypp_finalize

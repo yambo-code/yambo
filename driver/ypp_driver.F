@@ -92,7 +92,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
  iinf=io_DB1(en,k,ID)
  if (iinf/=0) then
-   call ypp_finalize("Where is the SAVE?",instr)
+   call ypp_finalize(en,instr,lnstr,"Where is the SAVE?")
    return
  else
    call mk_dir(more_io_path)
@@ -109,7 +109,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=ID)
  iinf=io_WF(ID) 
  if (iinf/=0) then
-   call ypp_finalize("Where is the SAVE?",instr)
+   call ypp_finalize(en,instr,lnstr,"Where is the SAVE?")
    return
  endif
  !  
@@ -118,16 +118,16 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
  i_err=io_GROT(ID) 
  if (i_err/=0) then
-   call ypp_finalize("Missing post-setup databases. Please run yambo as it is first.",instr)
+   call ypp_finalize(en,instr,lnstr,"Missing post-setup databases. Please run yambo as it is first.")
    return
  endif
  !
  ! INPUT FILE parsing
  !
- call INIT_ypp(en,instr,.false.)
+ call INIT_ypp(en,instr,lnstr,.false.)
  if (infile_editing) then
    iinf=1
-   call ypp_finalize(" ",instr)
+   call ypp_finalize(en,instr,lnstr," ")
    return
  endif
  !
@@ -167,7 +167,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  q_pt=q%pt
  !
  if (i_err/=0) then
-   call ypp_finalize(" ",instr)
+   call ypp_finalize(en,instr,lnstr," ")
    return
  endif
  !
@@ -255,21 +255,25 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  call CLOSE_the_run(.TRUE.,.FALSE.,.FALSE.)
  !
- call INIT_ypp(en,instr,.TRUE.)
+ call INIT_ypp(en,instr,lnstr,.TRUE.)
  !
  return
  !
-contains
-  !
-  subroutine ypp_finalize(STRING,instr)
-    character(*) :: STRING
-    character(*) :: instr
-    if (.not.infile_editing) then
-      if (len_trim(STRING)> 0) call msg("nl",trim(STRING))
-      if (len_trim(STRING)==0) call section('X','Game Over')
-      call msg("nln"," ")
-    endif
-    if (.not.infile_editing) call INIT_ypp(en,instr,.TRUE.)
-  end subroutine
-  !
 end function ypp_driver
+!
+subroutine ypp_finalize(en,instr,lnstr,STRING)
+  use drivers,             ONLY:infile_editing
+  use com,                 ONLY:msg
+  use electrons,           ONLY:levels
+  implicit none
+  type(levels) :: en
+  integer,          intent(in) :: lnstr
+  character(lnstr), intent(in) :: instr
+  character(*) :: STRING
+  if (.not.infile_editing) then
+    if (len_trim(STRING)> 0) call msg("nl",trim(STRING))
+    if (len_trim(STRING)==0) call section('X','Game Over')
+    call msg("nln"," ")
+  endif
+  call INIT_ypp(en,instr,lnstr,.TRUE.)
+end subroutine ypp_finalize

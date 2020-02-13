@@ -425,7 +425,7 @@ subroutine INIT_activate()
          if (trim(QP_solver)=="g") then
            call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
          else
-           call initactivate(1,'GWoIter')
+           call initactivate(1,'GWoIter GWIter')
            if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
          endif
        endif

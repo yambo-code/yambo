@@ -395,8 +395,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! S_xc
  !
- call it(defs,'GWIter',     '[GW] GW  self-consistent iterations (eigenvalues only)',GW_iterations,verb_level=V_qp)
- call it(defs,'GWoIter',    '[GW] GWo self-consistent iterations (eigenvalues only)',GWo_iterations,verb_level=V_qp)
+ call it(defs,'GWIter',     '[GW] GW  self-consistent (evGW)  iterations on eigenvalues',GW_iterations,verb_level=V_qp)
+ call it(defs,'GWoIter',    '[GW] GWo self-consistent (evGWo) iterations on eigenvalues',GWo_iterations,verb_level=V_qp)
  call it(defs,'GreenFTresh','[GW] [o/o] Treshold to define the new zoomed energy range',QP_G_Zoom_treshold,verb_level=V_qp)
  call it('f',defs,'QPExpand',   '[F GW] The QP corrections are expanded all over the BZ',verb_level=V_qp)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)

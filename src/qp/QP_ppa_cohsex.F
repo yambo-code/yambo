@@ -40,7 +40,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD_CL_IF_END,&
 &                        io_RESPONSE,deliver_IO_error_message
- use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
+ use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_table,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind,QP_states_simmetrize
  use X_m,           ONLY:X_alloc,X_mat,X_mat_d,X_t
@@ -463,6 +463,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          endif
          !
          forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+!         write(*,*) ' W_ ',i_qp,W_(1:QP_dSc_steps)*HA2EV
+!         write(*,*) QP_table(i_qp,:)
          !
          E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))

@@ -234,8 +234,12 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    ! stored in the %E array, or in %Eo array if an initial QP correction
    ! has been added already
    !
-   qp%E_bare(i1)=en%E(QP_table(i1,1),QP_table(i1,3),i_spin)
-   if (allocated(en%Eo)) qp%E_bare(i1)=en%Eo(QP_table(i1,1),QP_table(i1,3),i_spin)
+   qp%E(i1)=en%E(QP_table(i1,1),QP_table(i1,3),i_spin)
+   if (allocated(en%Eo)) then
+      qp%E_bare(i1)=en%Eo(QP_table(i1,1),QP_table(i1,3),i_spin)
+   else
+      qp%E_bare(i1)=qp%E(i1)
+   endif
    !
    qp%k(QP_table(i1,3),:)=k%pt(QP_table(i1,3),:)
    !

@@ -33,19 +33,19 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,spin_occ
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg,error
+ use com,           ONLY:msg
  use drivers,       ONLY:l_elel_corr
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index,PAR_IND_QP,&
 &                        PAR_IND_Q_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
                          PAR_COM_Q_A2A,PAR_COM_Q_INDEX,myid
- use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch,&
+ use IO_m,          ONLY:io_control,manage_action,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch,&
 &                        deliver_IO_error_message,OP_WR_CL,OP_APP_CL
  use QP_ctl_m,      ONLY:QP_apply
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
 &                        On_Mass_Shell_approx,QP_time_order_sign
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
- use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol
+ use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol,nqibz
  use ELPH,          ONLY:elph_nb,ph_freqs_sq,elph_gkkp,&
 &                        elph_global_free,QP_PH_n_G_bands,W_debye,elph_DW,&
 &                        elph_nDBs,E_k_p_q,elph_use_q_grid,&
@@ -67,7 +67,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  integer          ::iq_db,iq_bz,iq_loop,iq_db_ref,iq_s,iq_ibz,ik,ok,ik_bz,okbz,ib,ob,is,il,i_qp,i2,&
 &                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,live_timing_steps,iq_range(2)
  type(w_samp)     ::Sc_W(qp%n_states)
- integer          ::io_err,ID
+ integer          ::io_err,ID,IO_ACT
  integer, external::io_ELPH
  character(schlen)::ch
  real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,factor,&
@@ -231,7 +231,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    if (iq_db/=iabs(iq_db_ref)) then
      !
-     call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_db+1/),ID=ID)
+     if (elph_use_q_grid)      IO_ACT=manage_action(RD_CL_IF_END,iq_ibz,1,nqibz)
+     if (.not.elph_use_q_grid) IO_ACT=manage_action(RD_CL_IF_END,iq_db,1,nq_to_sum)
+     call io_control(ACTION=IO_ACT,SEC=(/iq_db+1/),ID=ID)
      io_err=io_ELPH(ID,'gkkp')
      if (io_err<0) call error('Missing Q-database')
      !

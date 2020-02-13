@@ -33,7 +33,7 @@ subroutine NL_driver(en,k)
  use nl_optics,      ONLY:n_frequencies,NL_P_t
  use fields,         ONLY:Efield,EtoT,Divide_by_Field,ext_field,Efield_duplicate,Efield_strength
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
- use com,            ONLY:msg,error,warning
+ use com,            ONLY:msg
  use real_time,      ONLY:NE_steps,RT_step,NE_steps
  use stderr,         ONLY:intc,real2ch
  use RT_control,     ONLY:OBS_RT_IO_t
@@ -208,7 +208,7 @@ subroutine NL_driver(en,k)
     !
     YAMBO_ALLOC(Pol%F_t,(RT_conf%T_n_steps,3))
     Pol%F_t(:,:) =RT_P_probe(:,i_Probe,:)
-    if(trim(RT_conf%damping) /= "NONE") call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,Pol%F_t,3)
+    call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,Pol%F_t,3)
     call RT_X_LRR_real_field(en)
     YAMBO_FREE(Pol%F_t)
      !

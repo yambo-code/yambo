@@ -26,7 +26,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  use pars,           ONLY:schlen
  use electrons,      ONLY:levels,n_spin
  use parser_m,       ONLY:parser 
- use com,            ONLY:msg,warning
+ use com,            ONLY:msg
  use electrons,      ONLY:E_reset,E_duplicate
  use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_use_Hxc_collisions,&
 &                         l_oep_exact,l_oep_kli,l_oep_slater, l_oep_ceda
@@ -95,8 +95,8 @@ subroutine SC_start_and_restart(X,E,Xk)
  !
  ! Switch to the user defined potential (if appropriate)
  !========
- !
- call XC_switch()
+ call XC_potentials(H_potential)
+ call XC_additional_SC_potentials()
  !
  SC_potential    =H_potential
  SC_kind         =H_kind

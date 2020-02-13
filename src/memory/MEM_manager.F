@@ -24,7 +24,7 @@
 subroutine MEM_manager_alloc(what,Sz,Kn)
  !
  use pars,         ONLY:schlen,DP,IPL
- use com,          ONLY:warning,secnm,error
+ use com,          ONLY:secnm
  use units,        ONLY:Kilobyte
  use openmp,       ONLY:master_thread
  use memory,       ONLY:TOT_MEM_Kb,MEM_element_copy,&
@@ -137,7 +137,6 @@ subroutine MEM_manager_free(what,Sz)
  !
  use pars,         ONLY:schlen,DP,IPL
  use units,        ONLY:Kilobyte
- use com,          ONLY:warning
  use openmp,       ONLY:master_thread
  use memory,       ONLY:TOT_MEM_Kb,MEM_element_copy,N_MEM_elements,MEMs
  !
@@ -209,7 +208,6 @@ end subroutine MEM_manager_free
 !
 subroutine MEM_manager_error(what)
  !
- use com,          ONLY:error
  use memory,       ONLY:MEM_err
  !
  implicit none

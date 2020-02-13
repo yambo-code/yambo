@@ -34,8 +34,7 @@ uncompress-stamp:
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	        ./configure $(AUXFLAGS) \
-	        FC="$(fc)" \
-	        FCFLAGS="$(fcflags)" ); \
+	        FC="$(fc)" ); \
 	fi
 	touch configure-stamp
 	

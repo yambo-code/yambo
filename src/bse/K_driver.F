@@ -25,7 +25,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  use pars,           ONLY:IP
  use parser_m,       ONLY:parser
- use com,            ONLY:msg,warning,error
+ use com,            ONLY:msg
  use stderr,         ONLY:STRING_remove,intc
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin,E_SOC_table
  use frequency,      ONLY:w_samp,W_reset
@@ -71,8 +71,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
 #endif
  !
- ! GPL_EXCLUDE_END
- !
  call parser('BSEQptR',l_bs_q)
  !
  if (.not.l_bs_q) BS_q=(/1,1/)
@@ -80,6 +78,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  if ( (.not.(BS_q(1)==1.and.BS_q(2)==1)) .and. (trim(BSE_mode)=='coupling') ) then
    call error(' Finite q and coupling not implemented')
  endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! GPL_INCLUDE_START
+ !BS_q=(/1,1/)
+ ! GPL_INCLUDE_END
  !
  ! Joint DOS
  !===========
@@ -153,9 +157,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
  BSS_add_antiresonant=index(BSE_mode,'retarded')/=0
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
- BS_K_is_ALDA=l_alda_fxc.and.n_spin==1
+ BS_K_is_ALDA=l_alda_fxc
  BS_perturbative_SOC=allocated(E_SOC_table)
- if (n_spin>1.and.l_alda_fxc) call warning('TDDFT/ALDA not implemented for n_spin>1. Switched off')
 #if defined _KERR
  call parser('EvalKerr',l_kerr)
  if(l_kerr) call parser('AnHall',l_anomalous_Hall)
@@ -273,14 +276,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !... Blocks build-up
    if (.not.l_rpa_IP) call K_blocks(iq)
    !
-   ! 1. The IP Part
-   ! ===============
-   call K_IP(iq,Ken,Xk,Dip,W_bss)
-   !
    ! Wave Functions distribution 
    !=============================
    call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.FALSE.)
    call PARALLEL_WF_index( )
+   !
+   ! 1. The IP Part
+   ! ===============
+   call K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    ! 2. The KERNEL
    ! ================

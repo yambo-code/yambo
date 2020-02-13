@@ -258,7 +258,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
 &                           LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
 &                           TOTAL=(RT_bands(2)-RT_bands(1)+1)**2,NCPU=PAR_COM_Plasma_INDEX%n_CPU)
  !
- ! When the collisons are note evaluated the I/O is dictated by Response_G_space_Zero_Momentum
+ ! When the collisons are note evaluated the I/O is dictated by Response_G_space
  ! and then resetted in RT_driver
  !
  if (l_eval_collisions) then

@@ -25,7 +25,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! K = <2V-W> for n_spin=1
  !
- use pars,         ONLY:IP,SP,schlen,pi,cZERO,cI
+ use pars,         ONLY:SP,schlen,pi,cZERO,cI
  use stderr,       ONLY:intc
  use LOGO,         ONLY:pickup_a_random
  use drivers,      ONLY:l_bs_fxc,l_bss
@@ -33,14 +33,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use electrons,    ONLY:levels,spin_occ,spin,n_spin,E_SOC_nbands
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free
- use functions,    ONLY:K_scatter
- use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
+ use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
  use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X
- use com,          ONLY:warning,error,msg
+ use com,          ONLY:msg
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_t
- use BS_solvers,   ONLY:BSS_q0
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,BS_Block_size,&
 &                       O_ng,BS_n_g_exch,BS_identifier,BS_LiveTiming_steps,&
@@ -48,14 +46,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,&
-&                       l_BSE_minimize_memory, l_restart_bse
+&                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete
  use collision_el, ONLY:elemental_collision_free
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_WR,OP_APP_CL,DUMP,&
-&                       deliver_IO_error_message
+&                       deliver_IO_error_message,manage_action
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
- use global_XC,     ONLY:WF_kind,WF_xc_functional
+ use global_XC,     ONLY:WF_xc_functional,WF_kind
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
@@ -83,7 +81,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! ... Kernel loop
  !
  DEFINE_BSK_COMMON_INDEXES
- integer    :: i_block,O_ng_shift,&
+ integer    :: i_block,O_ng_shift,IO_ACT,&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
 &              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4)
  complex(SP):: Co,H_x,H_c
@@ -116,8 +114,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! K/S Table
  !
  call k_build_up_BZ_tables(Xk)
- !
- call timing('X T_space Kernel',OPR='start')
  !
  ! Titles
  !========
@@ -182,9 +178,22 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
 #if defined _PAR_IO
    !
-   ! TO DO
+   call io_control(ACTION=OP_RD,COM=REP,ID=ID)
+   call io_BS_PAR_init(iq,X,ID)
+   !
+   if(l_BSE_kernel_complete) then
+     do i_block=1,n_BS_blks
+       call io_control(ACTION=RD,ID=ID)
+       call io_BS_PAR_block(iq,i_block,ID)
+     enddo
+   endif
+   !
+   call io_control(ACTION=RD_CL,COM=REP,ID=ID)
+   call io_BS_PAR_free(ID,l_BSE_kernel_complete)
+   if(l_BSE_kernel_complete) return
    !
 #else
+   !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
    !
@@ -192,13 +201,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call io_control(ACTION=OP_RD,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
      io_BS_err=io_BS(iq,X,ID)
      do i_block=1,n_BS_blks
-       call io_control(ACTION=RD_CL_IF_END,COM=NONE,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
+       IO_ACT=manage_action(RD_CL_IF_END,i_block,FIRST=1,LAST=n_BS_blks)       
+       call io_control(ACTION=IO_ACT,COM=NONE,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
        io_BS_err=io_BS(iq,X,ID)
      enddo
    endif
+   !
 #endif
    !
-   if (io_BS_err==0) goto 1
+   if (io_BS_err==0) return
    !
    ! GPL_EXCLUDE_START
    !
@@ -224,9 +235,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call BSS_KERR_free( )
 #endif
    !
-   goto  1
+   YAMBO_FREE(BS_W)
+   !
+   return
    !
  endif
+ !
+ call timing('X T_space Kernel',OPR='start')
  !
  ! GPL_EXCLUDE_START
  !
@@ -282,10 +297,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! BS DB description section I/O
  !===============================
  !
-#if defined _PAR_IO
- call io_control(ACTION=OP_RD_CL,ID=ID)
- call io_BS_PAR_check(iq,ID)
+ call section('=','Main kernel loop')
  !
+#if defined _PAR_IO
  call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID)
  call io_BS_PAR_init(iq,X,ID)
 #else
@@ -311,8 +325,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Read BS_blk to check if the transition was already computed
    !
 #ifdef _PAR_IO
-   if (l_restart_bse) then
-     call io_control(ACTION=RD_CL,ID=ID)
+   if (l_BSE_restart) then
+     call io_control(ACTION=RD,ID=ID)
      call io_BS_PAR_block(iq,i_block,ID)
      if (all(BS_blk(i_block)%done=="t")) cycle
    endif
@@ -475,7 +489,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
    !
 #if defined _PAR_IO
-   call io_control(ACTION=WR_CL,ID=ID)
+   call io_control(ACTION=WR,ID=ID)
    call io_BS_PAR_block(iq,i_block,ID)
 #else
    call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/i_block+1/),ID=ID)
@@ -487,12 +501,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  enddo block_loop
  !
 #if defined _PAR_IO
- call  io_BS_PAR_free(ID)
+ call io_control(ACTION=WR_CL,COM=REP,ID=ID)
+ call io_BS_PAR_free(ID,.true.)
 #endif
  !
  if (BS_LiveTiming_steps>0) call live_timing( )
- !
- BS_K_has_been_calculated_loaded=.TRUE.
  !
  ! GLOBAL CLEANING 
  !=================
@@ -515,8 +528,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  else if (BS_K_is_ALDA) then
    YAMBO_FREE(F_xc)
  endif
- !
-1 continue
  !
  YAMBO_FREE(BS_W)
  call WF_free(WF)

@@ -26,7 +26,6 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  use pars,          ONLY:SP
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_n_states,QP_table,&
 &                        QP_cg_percent,h2ht,e2et
- use com,           ONLY:error
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt,ordered_grid_index
  use electrons,     ONLY:levels,spin
  use R_lattice,     ONLY:qindx_S,bz_samp

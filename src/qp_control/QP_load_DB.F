@@ -27,7 +27,6 @@ subroutine QP_load_DB(i_ACTION,bands,en,k)
  use QP_m,          ONLY:QP_t,QP_reset
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
- use com,           ONLY:warning
  use QP_CTL_m,      ONLY:QP_action
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,REP
  !

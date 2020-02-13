@@ -27,10 +27,10 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  use units,               ONLY:HA2EV
  use zeros,               ONLY:k_iku_zero,k_rlu_zero,define_zeros
  use stderr,              ONLY:intc
- use R_lattice,           ONLY:bz_samp,k_the_nearest,bz_samp_reset,rl_sop
+ use R_lattice,           ONLY:bz_samp,k_the_nearest,bz_samp_reset,rl_sop,nkibz
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
- use com,                 ONLY:msg,error,warning
+ use com,                 ONLY:msg
  use YPPm,                ONLY:BZ_DbGd_nkpts_to_use,DbGd_DB1_paths,MAX_DbGd_DBs,n_DbGd_DBs
  use electrons,           ONLY:levels,default_nel,n_bands,BZ_ASSOCIATED_nkpts,&
 &                              BZ_DbGd_nbands,BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_kpts,&
@@ -489,6 +489,9 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  endif
  !
  ! Final I/O
+ !
+ ! .. restoring of built-in value of nkibz to be used in io_header 
+ nkibz=Xk%nibz
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=LOG,ID=ID)
  i_err=io_Double_Grid(Xen,Xk,ID)

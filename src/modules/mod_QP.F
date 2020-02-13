@@ -86,12 +86,13 @@ module QP_m
  !
  ! Logicals used for reporting
  !
+ logical           :: report_Vxc
  logical           :: report_Vnlxc
  logical           :: report_Sc
  logical           :: report_dSc
  logical           :: l_extended_output
- character(12)     :: Vnlxc_kind
- character(10)     :: Vxc_kind
+ character(schlen) :: Vnlxc_kind
+ character(schlen) :: Vxc_kind
  !
  type QP_t
    !
@@ -129,6 +130,16 @@ module QP_m
      type(bz_samp)::k,Xk,q
      character(*),optional ::mode
    end subroutine XCo_Hartree_Fock
+   !
+   subroutine QP_states_simmetrize(en,what,V_real,V_complex,state_is_2do,warn_me)
+     use pars,          ONLY:SP
+     use electrons,     ONLY:levels
+     type(levels)          ::en
+     character(*),optional ::what
+     real(SP),    optional ::V_real(:)
+     complex(SP), optional ::V_complex(:)
+     logical,     optional ::state_is_2do(:),warn_me
+   end subroutine
    !
  end interface
  !
@@ -255,77 +266,6 @@ module QP_m
      YAMBO_FREE(qp%S_total)
      YAMBO_FREE(qp%GreenF)
      YAMBO_FREE(qp%GreenF_W)
-   end subroutine
-   !
-   subroutine QP_states_simmetrize(en,V_real,V_complex,state_is_2do)
-     !
-     use pars,          ONLY:SP
-     use units,         ONLY:HA2EV
-     use vec_operate,   ONLY:sort,degeneration_finder
-     use electrons,     ONLY:levels
-     !
-     real(SP),   optional ::V_real(QP_n_states)
-     complex(SP),optional ::V_complex(QP_n_states)
-     logical,    optional ::state_is_2do(QP_n_states)
-     type(levels) ::en
-     !
-     ! Work Space
-     !
-     real(SP)    ::Eo_sorted(QP_n_states),r_sum
-     complex(SP) ::c_sum
-     integer     ::Eo_sorted_index(QP_n_states),i1,inx,i2,&
-&                  first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp
-     !
-     ! Degenerate bands average.
-     ! The PW gkkp m.e. are not symmetrized and, consequently,
-     ! degnerate bands can be splitted.
-     !
-     forall(i1=1:QP_n_states) Eo_sorted(i1)=en%E(QP_table(i1,1),QP_table(i1,3),1)
-     !
-     call sort(Eo_sorted,indx=Eo_sorted_index)
-     call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001_SP/HA2EV)
-     !
-     if (present(state_is_2do)) then
-       state_is_2do=.TRUE.
-     endif
-     !
-     do i1=1,n_deg_grp
-       !
-       r_sum=0._SP
-       c_sum=(0._SP,0._SP)
-       !
-       do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
-         !
-         inx   =Eo_sorted_index(i2)
-         !
-         if (present(state_is_2do)) then
-           if (i2>first_el(i1)) state_is_2do(inx)=.FALSE.
-         endif
-         !
-         if (present(V_real)) then
-           r_sum=r_sum+V_real(inx)/real( n_of_el(i1) )
-         endif
-         if (present(V_complex)) then
-           c_sum=c_sum+V_complex(inx)/real( n_of_el(i1) )
-         endif
-         !
-       enddo
-       !
-       do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
-         !
-         inx   =Eo_sorted_index(i2)
-         !
-         if (present(V_real)) then
-           V_real(inx)=r_sum
-         endif
-         if (present(V_complex)) then
-           V_complex(inx)=c_sum
-         endif
-         !
-       enddo
-       !
-     enddo
-     !
    end subroutine
    !
    ! Lifetime functions e2et/h2ht

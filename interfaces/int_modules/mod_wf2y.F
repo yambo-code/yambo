@@ -78,7 +78,6 @@ module mod_wf2y
      !
      use pars,      ONLY:SP
      use stderr,    ONLY:intc
-     use com,       ONLY:warning
      integer     :: ib,ik,nc
      real (SP)   :: wf_(2,nc)
      !

@@ -25,7 +25,7 @@ subroutine RT_Dephasing_Matrix(E)
  !
  use pars,          ONLY:SP,pi
  use units,         ONLY:FS2AUT
- use com,           ONLY:error,msg
+ use com,           ONLY:msg
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:nXkibz
  use real_time,     ONLY:RT_Deph_Matrix,RT_is_statically_dephased,Phase_LifeTime,&
@@ -43,19 +43,14 @@ subroutine RT_Dephasing_Matrix(E)
  !
  ! %DephMatrix fields
  !
- if ( allocated(RT_INPUT_Deph_limits) .or. (RAD_LifeTime>tresh) .or. (Phase_LifeTime>tresh) .or. allocated(E%W) ) then
-   !
-   YAMBO_ALLOC(RT_Deph_Matrix,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz))
-   !
-   RT_Deph_Matrix=(0._SP,0._SP)
-   !
-   RT_is_statically_dephased=.TRUE.
-   !
- else
-   !
-   return
-   !
- endif
+ if ( .not. (allocated(RT_INPUT_Deph_limits) .or. (RAD_LifeTime>tresh) .or. (Phase_LifeTime>tresh) .or. allocated(E%W) ) ) return
+ !
+ !
+ YAMBO_ALLOC(RT_Deph_Matrix,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz))
+ !
+ RT_Deph_Matrix=(0._SP,0._SP)
+ !
+ RT_is_statically_dephased=.TRUE.
  !
  ! DIAGONAL 
  !==========
@@ -82,8 +77,8 @@ subroutine RT_Dephasing_Matrix(E)
    !
    do ib_1=RT_bands(1),RT_bands(2)
      do ib_2=ib_1+1,RT_bands(2)
-       RT_Deph_Matrix(ib_1,ib_2,:)=RT_Deph_Matrix(ib_1,ib_2,:)+2._SP*pi/Phase_LifeTime
-       RT_Deph_Matrix(ib_2,ib_1,:)=RT_Deph_Matrix(ib_2,ib_1,:)+2._SP*pi/Phase_LifeTime
+       RT_Deph_Matrix(ib_1,ib_2,:)=2._SP*pi/Phase_LifeTime
+       RT_Deph_Matrix(ib_2,ib_1,:)=2._SP*pi/Phase_LifeTime
      enddo
    enddo
    !

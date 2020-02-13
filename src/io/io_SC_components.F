@@ -34,7 +34,7 @@ integer function io_SC_components(what,E_sc,ID)
  use hamiltonian,    ONLY:V_xc_sc,V_hartree_sc,H_nl_sc,l_sc_V_is_local,H_rotation
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,frag_SC,&
-&                         manage_OP_IF_START_and_CL_IF_END,variable_exist,io_SC,IO_NOT_ALLOWED,&
+&                         variable_exist,io_SC,IO_NOT_ALLOWED,&
 &                         io_fragment,ver_is_gt_or_eq
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:levels,n_sp_pol,n_spin
@@ -129,8 +129,6 @@ integer function io_SC_components(what,E_sc,ID)
    if (io_SC_components/=0) goto 1
    !
  endif
- ! 
- call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,LAST=nkibz)
  !
  ! Potential
  !===========

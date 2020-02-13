@@ -29,7 +29,7 @@ subroutine cutoff_ws(q)
  use D_lattice,     ONLY:a,alat
  use cutoff_ws_m,   ONLY:vcut_type,e2
  use LIVE_t,        ONLY:live_timing
- use openmp,        ONLY:OPENMP_update,n_threads,master_thread,n_threads_now
+ use openmp,        ONLY:OPENMP_update,n_threads,master_thread
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
  implicit none
@@ -78,11 +78,11 @@ subroutine cutoff_ws(q)
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/q%nibz,wf_ng/))
  !
+ call live_timing('WS-cutoff',max(px%n_of_elements(myid+1)/n_threads,1))
+ !
 !$omp parallel default(shared), private(ig,iq,v1,dummy)
  !
  call OPENMP_update(master_thread)
- !
- if (master_thread) call live_timing('WS-cutoff',px%n_of_elements(myid+1)/n_threads_now)
  !
 !$omp do collapse(2), schedule(dynamic)
  do ig=1,wf_ng
@@ -101,11 +101,11 @@ subroutine cutoff_ws(q)
  enddo
 !$omp end do
  !
- if(master_thread) call live_timing()
- !
 !$omp end parallel
  !
  call OPENMP_update(master_thread)
+ !
+ call live_timing()
  !
  ! MPI 2 all
  !
@@ -115,6 +115,7 @@ subroutine cutoff_ws(q)
  !
  ! cleanup
  !
+ call PP_indexes_reset(px)
  deallocate(V_cut)
-!
+ !
 end subroutine

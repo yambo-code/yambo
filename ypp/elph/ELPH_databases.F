@@ -29,7 +29,7 @@ integer function ELPH_databases(k,E,q)
  use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,elph_use_q_grid,&
 &                              elph_global_free,W_debye,elph_global_alloc,&
 &                              elph_nDBs,ph_qpt,ph_kpt_bz,elph_nk_bz
- use com,                 ONLY:msg,warning,file_exists,error
+ use com,                 ONLY:msg
  use R_lattice,           ONLY:bz_samp,qindx_B
  use D_lattice,           ONLY:nsym,n_atoms
  use parser_m,            ONLY:parser
@@ -63,6 +63,8 @@ integer function ELPH_databases(k,E,q)
  integer,allocatable::ikbz_is_table(:,:)
  integer            ::iq,elph_nk,iq_db(q%nbz),iq_bz,iq_s,i1
  complex(DP), allocatable :: grad_at_gamma(:,:,:,:,:)
+ !
+ logical, external  ::file_exists
  !
  call section("*","== Electron-Phonon Interface: PW->Yambo Databases ==")
  !

@@ -26,7 +26,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  use pars,           ONLY:SP,cZERO,cONE
  use drivers,        ONLY:l_use_Hxc_collisions
  use stderr,         ONLY:set_real_printed_length
- use com,            ONLY:error,warning
  use QP_m,           ONLY: QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels
@@ -34,7 +33,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:WF_load,WF_free
- use hamiltonian,    ONLY:WF_Go_indx,H_QP_table_setup
+ use hamiltonian,    ONLY:WF_Go_indx,H_QP_table_setup,H_potential
  use R_lattice,      ONLY:bz_samp,qindx_free
  use fields,         ONLY:Efield
  use QP_CTL_m,       ONLY:QP_apply
@@ -85,11 +84,12 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Switch 
  !========
- call XC_switch()
+ call XC_potentials(H_potential)
+ call XC_additional_SC_potentials()
  !
  ! Dipoles & WF dimensions
  !=========================
- call WF_and_dipole_dimensions(X)
+ call WF_and_dipole_dimensions(X,k)
  !
  ! Deallocate qindx_S (used only in previous subroutine)
  ! ========================
@@ -114,7 +114,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Free memory: qindx_* and unused DIPOLES
  ! =====================================================
- call qindx_free()
+ call qindx_free('ALL')
  !
  call DIP_alloc('P_square')
  if(l_use_DIPOLES) then

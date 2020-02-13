@@ -29,7 +29,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  !
  use pars,                ONLY: SP,cZERO,lchlen,schlen
  use drivers,             ONLY: l_sc_run
- use com,                 ONLY: warning,msg,core_io_path,error,grid_paths
+ use com,                 ONLY: msg,core_io_path,grid_paths
  use stderr,              ONLY: intc,STRING_split
  use LIVE_t,              ONLY: live_timing
  use electrons,           ONLY: levels,n_spinor,n_sp_pol

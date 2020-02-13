@@ -28,7 +28,7 @@ subroutine RT_initialize(E,k,q)
  use pars,           ONLY:SP,pi
  use units,          ONLY:HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,AUT2FS
  use stderr,         ONLY:intc
- use com,            ONLY:msg,warning,error
+ use com,            ONLY:msg
  use QP_CTL_m,       ONLY:QP_ctl_user
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
@@ -68,21 +68,22 @@ subroutine RT_initialize(E,k,q)
  character(6)             :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_skip_it,l_velocity_gauge_tmp
+ real(SP), parameter      :: thresh=1.E-5_SP
  integer,         external:: RT_Lifetimes_evaluation_plan
  !
  ! Logicals
  !==========
  !
  call parser('InducedField' ,        l_RT_induced_field)
+ call parser('VelGaugeNoDiam',       l_velocity_gauge_tmp)
+ l_velocity_gauge_diam=.not.l_velocity_gauge_tmp
  !
  ! GPL_EXCLUDE_START
  !
  call parser('RAD_prefactor',        RAD_magnification)
  call parser('VelGaugeCorr',         l_velocity_gauge_corr)
- call parser('VelGaugeNoDiam',       l_velocity_gauge_tmp)
  call parser('PfromJ',               l_P_integrating_J)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
- l_velocity_gauge_diam=.not.l_velocity_gauge_tmp
  !
  !...updates
  call parser('RTUpdateE',            l_RT_update_Energies)
@@ -432,9 +433,14 @@ subroutine RT_initialize(E,k,q)
  !
  ! GPL_EXCLUDE_START
  !
- call msg( 'nr','---Damping---')
- call msg( 'r', 'Damping (Phase)    [fs/meV]:',(/Phase_LifeTime*AUT2FS,HBAR_eVfs/Phase_LifeTime*AUT2FS*1000._SP/))
- call msg( 'r', '        (Radiative)[fs/meV]:',(/RAD_LifeTime*AUT2FS,   HBAR_eVfs/RAD_LifeTime*AUT2FS*1000._SP/))
+ if(Phase_LifeTime>thresh.or.RAD_LifeTime>thresh) then
+   call msg( 'nr','---Damping---')
+   if(Phase_LifeTime>thresh) &
+   & call msg( 'r', 'Damping (Phase)    [fs/meV]:',(/Phase_LifeTime*AUT2FS,HBAR_eVfs/Phase_LifeTime*AUT2FS*1000._SP/))
+   if(RAD_LifeTime>thresh) &
+   & call msg( 'r', '        (Radiative)[fs/meV]:',(/RAD_LifeTime  *AUT2FS,HBAR_eVfs/RAD_LifeTime  *AUT2FS*1000._SP/))
+ endif
+ !
  call msg( 'nr','---Retarded GF---')
  call msg( 'r', 'Retarded Green`s function  :',Gr_kind)
  call msg( 'r', '        Energy ref  (c)[eV]:',QP_ctl_user(3,1)%Wc_E_ref*HA2EV)

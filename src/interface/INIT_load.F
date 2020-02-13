@@ -51,7 +51,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig
-#if defined _SLEPC
+#if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers,    ONLY:BSS_target_E,BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol
 #endif
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
@@ -191,7 +191,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
- call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_RL) 
+ call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit) 
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt)
@@ -250,9 +250,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
  call it('f',defs,'UseEbands', '[GW] Force COHSEX to use empty bands',verb_level=V_qp)
 #endif
- call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
+ call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit,verb_level=V_qp)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
- call it(defs,'dScStep',  '[GW] Energy step to evaluate Z factors',QP_dSc_delta,E_unit)
+ call it(defs,'dScStep',  '[GW] Energy step to evaluate Z factors',QP_dSc_delta,E_unit,verb_level=V_qp)
  call it(defs,'DysSolver','[GW] Dyson Equation solver ("n","s","g")',QP_solver,protect=.FALSE.,case="a")
  call it(defs,'GEnSteps', '[GW] Green`s Function (GF) energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',  '[GW] GF energy range',QP_G_er,E_unit)
@@ -314,8 +314,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',BSS_Wd,E_unit,verb_level=V_resp)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
- call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs',verb_level=V_resp)
-#if defined _SLEPC
+ call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs')
+#if defined _SLEPC && !defined _SLEPC_OFF
  call it(defs,'BSSNEig',    '[SLEPC] Number of eigenvalues to compute',BSS_n_eig)
  call it(defs,'BSSEnTarget','[SLEPC] Target energy to find eigenvalues',BSS_target_E,E_unit,verb_level=V_resp)
  call it(defs,'BSSSlepcExtraction' , '[SLEPC] Extraction technique (ritz|harmonic)',BSS_slepc_extraction,verb_level=V_resp)
@@ -414,7 +414,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
- call it(defs,'RADLifeTime',  '[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
+ call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
  call it(defs,'RAD_prefactor','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
  call it(defs,'PhLifeTime', '[RT] Constant Dephasing Time',Phase_LifeTime,unit=Time_unit(1))
  !
@@ -586,7 +586,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! BSE
  !
  call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',BS_eh_win,verb_level=V_resp)
+ !GPL_EXCLUDE_START
  call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=0)
+ !GPL_EXCLUDE_END
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,E_unit,verb_level=V_resp)
  !
  ! Xx
@@ -717,7 +719,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
 &            Efield(i_field)%t_initial,unit=Time_unit(1))
      !
-     if (initmode==4) then
+     if (initmode==4.and.n_ext_fields==0) then
        call parser(trim(name)//'_FWHM',is_def)
        if (is_def) then
          Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
@@ -783,7 +785,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      ! 
      ! Work Space
      ! 
-     integer           ::i1,V_iq
+     integer           ::i1,V_iq,V_DmRnge
      integer,parameter ::n_des=14
      character(8)      ::nms(n_des),sfx
      character(100)    ::des(n_des)
@@ -817,13 +819,17 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        write (nms(i1),'(2a)')  lch2(1:6),trim(sfx)
      enddo
      !
-     V_iq  =0
+     V_iq     =0
+     V_DmRnge = 0
      !
-     if (.not.X%whoami==3) V_iq  =V_resp 
+     if (.not.X%whoami==3) then
+       V_iq     = V_resp 
+       V_DmRnge = V_resp
+     endif
      !
      call it(defs,nms( 1),des( 1),X%ordering,verb_level=V_resp)
      call it(defs,nms( 2),des( 2),wv%er,E_unit,verb_level=0) 
-     call it(defs,nms( 3),des( 3),wv%dr,E_unit,verb_level=0)
+     call it(defs,nms( 3),des( 3),wv%dr,E_unit,verb_level=V_DmRnge)
      call it(defs,nms( 4),des( 4),X%cg_percentual,verb_level=V_resp)
      call it(defs,nms( 5),des( 5),wv%n_freqs,verb_level=0)
      call it(defs,nms( 6),des( 6),wv%per_memstps,verb_level=V_resp)

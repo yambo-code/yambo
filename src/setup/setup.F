@@ -34,12 +34,13 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
- use com,            ONLY:msg,error,warning
+ use com,            ONLY:msg
  use stderr,         ONLY:intc,real2ch
- use IO_m,           ONLY:REP,DUMP,NONE
+ use IO_m,           ONLY:REP,DUMP,NONE,io_control,OP_RD_CL
  use vec_operate,    ONLY:c2a,define_b_and_DL_vol
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
  use interfaces,     ONLY:OCCUPATIONS_Fermi
+ use wave_func,      ONLY:wf_ng,wf_ng_1st_BZ
 #if defined _SC
  use wave_func,      ONLY:WF_buffered_IO 
  use drivers,        ONLY:l_sc_run
@@ -48,6 +49,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use global_XC,      ONLY:G_kind,G_xc_functional,X_kind,&
 &                         X_xc_functional,setup_global_XC,K_kind,K_xc_functional,loaded_WF_xc_string,&
 &                         X_perturbation,G_perturbation,K_perturbation,WF_kind,WF_xc_functional,WF_perturbation
+#endif
+#if defined _HDF5_IO
+ ! For I/O debug, see below
+ !use IO_m,           ONLY:netcdf_call,nf90_set_log_level
 #endif
  !
 #include <memory.h>
@@ -58,10 +63,16 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Work Space
  !
  real(SP)          :: rv(3),Tel_SAVE
- integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2)
+ integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2),ID
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch1,dumb_ch2
- integer, external :: k_lattice
+ integer, external :: k_lattice,io_Double_Grid
+ !
+#if defined _HDF5_IO
+ ! This is very useful for I/O debug
+ ! NETCDF library need to be compiled with --enable-loggning flag
+ ! call netcdf_call(nf90_set_log_level(3),1)
+#endif
  !
  call section('*','CORE Variables Setup') 
  !########################################
@@ -227,6 +238,13 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call msg('r',trim(dumb_ch2))
  enddo
  !
+ ! First simplified implementation of wf_ng_1st_BZ & wf_ng_2st_BZ
+ ! A more correct implementation would involve a rotation of the shells
+ ! and the evaluation of the resulting wf_ng
+ !
+ wf_ng_1st_BZ=wf_ng
+ call PARSER_close_G(wf_ng_1st_BZ,'tRL')
+ !
  call section('=','K-grid lattice')
  !=================================
  !
@@ -248,6 +266,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
    enddo
    if (i_err/=0) call error('Impossible to determine the K-grid lattice')
  endif
+ !
+ ! E_dbgd
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID)
+ i_err=io_Double_Grid(en,k,ID)
  !
  if (BZ_DbGd_nbands>0.and.allocated(en%E_DbGd)) then
    !
@@ -347,14 +370,14 @@ subroutine setup(en,Xen,Ken,k,Xk)
    !
    ! SC wavefunctions
    !
-   ! Here I only check for the existence of the SC WF DB. Band checking will be done later
+   ! Here I only check for the existence of the SC WF DB.
    !
    call load_SC_components('check_WF_DB',n_bands=0,&
 &                          kind=WF_kind,xc_functional=WF_xc_functional,perturbation=WF_perturbation)
    !
    if (found_SC_DB) then
      call setup_global_XC('WF',WF_kind,WF_xc_functional,WF_perturbation)
-     call warning(trim(loaded_WF_xc_string)//' wavefunctions found. Bands check at loading time.')
+     call warning(trim(loaded_WF_xc_string)//' wavefunctions found')
    endif
    !
  endif

@@ -26,7 +26,7 @@ subroutine QP_DBs_manipulate( E )
  use pars,          ONLY:schlen
  use YPPm,          ONLY:QP_db_operation,QP_db_prefactor,n_QP_dbs,QP_db,QP_db_what,QP_db_name,QP_db_input_control
  use stderr,        ONLY:intc,real2ch
- use com,           ONLY:msg,warning
+ use com,           ONLY:msg
  use IO_m,          ONLY:io_control,OP_WR_CL,REP,DUMP,NONE,OP_RD_CL
  use QP_m,          ONLY:QP_t,QP_reset,QP_solver,QP_table,QP_n_states
  use interfaces,    ONLY:QP_DBs_merge

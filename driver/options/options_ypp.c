@@ -101,7 +101,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
   Plots
  */
  *i_opt=*i_opt+1;
- options[*i_opt].short_desc="Exctionic State Momentum";
+ options[*i_opt].short_desc="Excitonic State Momentum";
  options[*i_opt].long_opt= "BSiq";
  options[*i_opt].short_opt='b';
  options[*i_opt].bin="ypp";
@@ -147,7 +147,6 @@ void options_ypp(struct options_struct options[],int *i_opt)
 #else
  options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave";
 #endif
- options[*i_opt].long_desc[1]="<string>=excitonic index (sort mode)";
  /* GPL_EXCLUDE_END */
  /* GPL_INCLUDE_START 
  options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave";

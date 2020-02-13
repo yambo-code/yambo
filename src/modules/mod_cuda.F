@@ -96,7 +96,6 @@ contains
   end subroutine cuda_setup
   !
   subroutine cuda_linalg_setup()
-    use com,  ONLY:error
     implicit none
 #ifdef _CUDA
     integer :: istat 

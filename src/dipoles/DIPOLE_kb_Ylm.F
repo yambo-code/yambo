@@ -39,7 +39,6 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  ! Ygrad(2,i) = \partial(phi)/\partial(k_i) i=1,3
  !
  use pars, ONLY:SP,DP,pi,cI,cZERO
- use com,  ONLY:warning
  !
  implicit none
  integer     :: lang

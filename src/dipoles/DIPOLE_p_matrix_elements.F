@@ -50,7 +50,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  ! 
  ! Work Space
  !
- integer      :: ig,ierr
+ integer      :: ig
  logical      :: eval_spinor_matrix
  integer      :: i_spinor,j_spinor,i1
  complex(SP)  :: wf_grad(wf_ng,n_spinor),wf_der_sq(wf_ng,n_spinor)

@@ -26,7 +26,7 @@ subroutine a2y_db1(en,k,ncid)
  use netcdf
  use netcdf_data
  use pars,                 only : SP,pi
- use com,                  only : msg, error
+ use com,                  only : msg
  use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, l_spin_orbit
  use wave_func,            only : wf_ncx
  use R_lattice,            only : ng_vec, bz_samp, nkibz
@@ -308,7 +308,6 @@ contains
 
   subroutine import_basisdata_group_wfk
     !
-    use com,                  only : error
     use vec_operate,          only : sort, iku_v_norm
     use R_lattice,            only : g_vec, b, ng_vec
     use D_lattice,            only : alat, i_space_inv, i_time_rev
@@ -386,9 +385,9 @@ contains
         do i3=-n3,n3
           igv = [i1,i2,i3]
           g_vec_tmp1 = matmul(b_transpose,igv)/2.0_SP/pi
-          norm_2 = g_vec_tmp1(1)**2.0_SP + &
-                   g_vec_tmp1(2)**2.0_SP + &
-                   g_vec_tmp1(3)**2.0_SP
+          norm_2 = g_vec_tmp1(1)**2 + &
+                   g_vec_tmp1(2)**2 + &
+                   g_vec_tmp1(3)**2
           if (ecut .gt. 0.25_SP*norm_2) then
               npw = npw+1
               igk_tmp(:,npw) = igv

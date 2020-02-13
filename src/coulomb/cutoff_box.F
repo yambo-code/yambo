@@ -32,16 +32,15 @@ subroutine cutoff_box(q,is_cut)
  use pars,          ONLY:SP,pi,rZERO,cI
  use wave_func,     ONLY:wf_ng
  use vec_operate,   ONLY:iku_v_norm,v_norm
- use D_lattice,     ONLY:DL_vol,alat,sop_inv,a,sop_inv_d
+ use D_lattice,     ONLY:DL_vol,alat,sop_inv,a
  use R_lattice,     ONLY:bare_qpg,RL_vol,RIM_ng,RIM_qpg,bz_samp,&
 &                        box_length,g_vec,g_rot,ng_closed,RIM_anisotropy,&
-&                        CUTOFF_plus_RIM,g_rot_d
+&                        CUTOFF_plus_RIM
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
  use LIVE_t,        ONLY:live_timing
  use zeros,         ONLY:k_iku_zero,G_iku_zero
  use openmp,        ONLY:OPENMP_update,n_threads,master_thread,OPENMP_set_threads
- use cuda_m,        ONLY:have_cuda
  !
 #include<memory.h>
  !
@@ -62,7 +61,7 @@ subroutine cutoff_box(q,is_cut)
  !
  YAMBO_ALLOC(V_bare,(ng_closed,q%nibz))
  YAMBO_ALLOC(V_cut,(wf_ng,q%nibz))
-
+ !
  ! Bare interaction
  !
  ! AF: iku_v_norm is thread safe
@@ -91,12 +90,10 @@ subroutine cutoff_box(q,is_cut)
    !$omp end parallel do
    !
  endif
-
  !
  ! BOX
  !
  call k_ibz2bz(q,'i',.true.)
- 
  !
  ! memory handling
  !
@@ -115,8 +112,6 @@ subroutine cutoff_box(q,is_cut)
  enddo
  k_zero(:)=k_iku_zero(:)*2._SP*pi/alat(:)
  G_zero(:)=G_iku_zero(:)*2._SP*pi/alat(:)
- 
-
  !
  ! main loop
  !
@@ -242,6 +237,7 @@ subroutine cutoff_box(q,is_cut)
 !$omp end parallel do
  !
  call k_ibz2bz(q,'d',.true.)
+ call PP_indexes_reset(px)
  !
  YAMBO_FREE(V_bare)
  YAMBO_FREE(V_cut)

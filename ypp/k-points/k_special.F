@@ -27,11 +27,11 @@ subroutine k_special(LIST)
  use units,               ONLY:pi
  use R_lattice,           ONLY:bz_samp_reset,b
  use D_lattice,           ONLY:alat,lattice,a
- use com,                 ONLY:msg,of_open_close,msg_deliver,warning
+ use com,                 ONLY:msg,of_open_close
  use vec_operate,         ONLY:c2a,v_norm
  use YPPm,                ONLY:n_path_pts,PtsPath,K_transform,l_high_sym_pts,&
 &                              SPECIAL_k,n_SPECIAL_k_MAX,CIRCUIT_k,SPECIAL_k_label,&
-&                              n_SPECIAL_k_MAX,CIRCUIT_k_label,coo_out
+&                              n_SPECIAL_k_MAX,CIRCUIT_k_label,CIRCUIT_k_norm,coo_out
  use stderr,              ONLY:STRING_split,STRING_same
  use LIVE_t,              ONLY:live_timing_is_on
  use stderr,              ONLY:intc
@@ -41,7 +41,8 @@ subroutine k_special(LIST)
  logical :: LIST
  !
  ! Work Space
- ! 
+ !
+ logical          :: l_use_yambo_b
  integer          :: ik,il,n_lines,ip,i_str,K_position(n_SPECIAL_k_MAX)
  real(SP)         :: trial_b(3,3),K_norm,ap,bp,cp,fp,ep,K_sign(n_SPECIAL_k_MAX),k_l(3),k_lp1(3)
  character(schlen):: Path_strings(50),dumb_ch,k_f_name(2)
@@ -57,24 +58,30 @@ subroutine k_special(LIST)
  !  http://cst-www.nrl.navy.mil/bind/kpts/index.html
  !  http://lamp.tu-graz.ac.at/
  !
+ !
+ ! 2019/02/01:
+ ! If yambo "b" is different
+ ! i.e. in case for example the FCC has
+ ! b(1,:)=(/-0.5, 0.5, 0.5/)*2.*pi/alat(1)
+ ! b(2,:)=(/ 0.5,-0.5.,0.5/)*2.*pi/alat(1)
+ ! b(3,:)=(/ 0.5, 0.5,-0.5/)*2.*pi/alat(1)
+ ! to properly detect special k-points
+ ! set the following logical to .true.
+ !
+ l_use_yambo_b=.false.
+ !
+ !
  select case (trim(lattice))
    !
    case('FCC')
      !
-     trial_b(1,:)=(/-1., 1., 1./)*2.*pi/alat(1)
-     trial_b(2,:)=(/ 1.,-1., 1./)*2.*pi/alat(1)
-     trial_b(3,:)=(/ 1., 1.,-1./)*2.*pi/alat(1)
-     !
-     ! 2019/02/01:
-     ! If yambo "b" is different
-     ! i.e. in case for example
-     ! b(1,:)=(/-0.5, 0.5, 0.5/)*2.*pi/alat(1)
-     ! b(2,:)=(/ 0.5,-0.5.,0.5/)*2.*pi/alat(1)
-     ! b(3,:)=(/ 0.5, 0.5,-0.5/)*2.*pi/alat(1)
-     ! to properly detect special k-points
-     ! uncomment the following line
-     !
-     !trial_b=b
+     if(l_use_yambo_b) then
+       trial_b=b
+     else
+       trial_b(1,:)=(/-1., 1., 1./)*2.*pi/alat(1)
+       trial_b(2,:)=(/ 1.,-1., 1./)*2.*pi/alat(1)
+       trial_b(3,:)=(/ 1., 1.,-1./)*2.*pi/alat(1)
+     endif
      !
      SPECIAL_k%nbz=6
      !
@@ -97,9 +104,13 @@ subroutine k_special(LIST)
      !
    case('BCC')
      !
-     trial_b(1,:)=(/ 0._SP, 1._SP, 1._SP/)*2._SP*pi/alat(1)
-     trial_b(2,:)=(/ 1._SP, 0._SP, 1._SP/)*2._SP*pi/alat(1)
-     trial_b(3,:)=(/ 1._SP, 0._SP,-1._SP/)*2._SP*pi/alat(1)
+     if(l_use_yambo_b) then
+       trial_b=b
+     else
+       trial_b(1,:)=(/ 0._SP, 1._SP, 1._SP/)*2._SP*pi/alat(1)
+       trial_b(2,:)=(/ 1._SP, 0._SP, 1._SP/)*2._SP*pi/alat(1)
+       trial_b(3,:)=(/ 1._SP, 0._SP,-1._SP/)*2._SP*pi/alat(1)
+     endif
      !
      SPECIAL_k%nbz=4
      !
@@ -184,9 +195,13 @@ subroutine k_special(LIST)
      !
    case('CUB')
      !
-     trial_b(1,:)=(/ 1., 0., 0./)*2.*pi/alat(1)
-     trial_b(2,:)=(/ 0., 1., 0./)*2.*pi/alat(1)
-     trial_b(3,:)=(/ 0., 0., 1./)*2.*pi/alat(1)
+     if(l_use_yambo_b) then
+       trial_b=b
+     else
+       trial_b(1,:)=(/ 1., 0., 0./)*2.*pi/alat(1)
+       trial_b(2,:)=(/ 0., 1., 0./)*2.*pi/alat(1)
+       trial_b(3,:)=(/ 0., 0., 1./)*2.*pi/alat(1)
+     endif
      !
      SPECIAL_k%nbz=4
      !
@@ -205,9 +220,13 @@ subroutine k_special(LIST)
      !
    case('HCP')
      !
-     trial_b(1,:)=(/ 1.,-1./sqrt(3.), 0./)*2.*pi/alat(1)
-     trial_b(2,:)=(/ 1., 1./sqrt(3.), 0./)*2.*pi/alat(1)
-     trial_b(3,:)=(/ 0., 0.,          1./)*2.*pi/alat(3)
+     if(l_use_yambo_b) then
+       trial_b=b
+     else
+       trial_b(1,:)=(/ 1.,-1./sqrt(3.), 0./)*2.*pi/alat(1)
+       trial_b(2,:)=(/ 1., 1./sqrt(3.), 0./)*2.*pi/alat(1)
+       trial_b(3,:)=(/ 0., 0.,          1./)*2.*pi/alat(3)
+     endif
      !
      SPECIAL_k%nbz=7
      !
@@ -289,73 +308,77 @@ subroutine k_special(LIST)
    !
  endif
  !
- CIRCUIT_k%nbz=n_path_pts* ( n_lines -1 )
+ CIRCUIT_k%nbz =n_path_pts* ( n_lines -1 )
  !
- if (CIRCUIT_k%nbz>0) then
-   !
-   call msg('s','Found '//trim(intc(n_lines-1))//' segments and  '//&
-&                trim(intc(CIRCUIT_k%nbz+1))//' points along the path: '//trim(PtsPath))
-   !
-   YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz+1,4))
-   allocate(CIRCUIT_k_label(CIRCUIT_k%nbz+1))
-   CIRCUIT_k%nbz=0
-   K_norm=0.
-   CIRCUIT_k_label=" "
-   do il=1,n_lines-1
-     k_l  =SPECIAL_k%pt( K_position(il)  ,:)*K_sign(il)
-     k_lp1=SPECIAL_k%pt( K_position(il+1),:)*K_sign(il+1)
-     do ip=1,n_path_pts
-       CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
-       if (ip==1.and.K_sign(il)>0.) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(il) )
-       if (ip==1.and.K_sign(il)<0.) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(il) )
-       CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=k_l+(k_lp1-k_l)/n_path_pts*(ip-1)
-       if (CIRCUIT_k%nbz>1) K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
-       CIRCUIT_k%pt(CIRCUIT_k%nbz,4)= K_norm
-     enddo
+ if (CIRCUIT_k%nbz==0) return
+ !
+ call msg('s','Found '//trim(intc(n_lines-1))//' segments and  '//&
+&              trim(intc(CIRCUIT_k%nbz+1))//' points along the path: '//trim(PtsPath))
+ !
+ YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz+1,3))
+ allocate(CIRCUIT_k_norm(CIRCUIT_k%nbz+1))
+ allocate(CIRCUIT_k_label(CIRCUIT_k%nbz+1))
+ CIRCUIT_k%nbz=0
+ K_norm=0.
+ CIRCUIT_k_label=" "
+ do il=1,n_lines-1
+   k_l  =SPECIAL_k%pt( K_position(il)  ,:)*K_sign(il)
+   k_lp1=SPECIAL_k%pt( K_position(il+1),:)*K_sign(il+1)
+   do ip=1,n_path_pts
+     CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
+     if (ip==1.and.K_sign(il)>0.) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(il) )
+     if (ip==1.and.K_sign(il)<0.) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(il) )
+     CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=k_l+(k_lp1-k_l)/n_path_pts*(ip-1)
+     if (CIRCUIT_k%nbz>1) K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
+     CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
    enddo
-   CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
-   CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=SPECIAL_k%pt(K_position(n_lines),:)*K_sign(n_lines)
-   if (k_sign(n_lines)>0.) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(n_lines) )
-   if (k_sign(n_lines)<0.) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(n_lines) )
-   K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
-   CIRCUIT_k%pt(CIRCUIT_k%nbz,4)= K_norm
+ enddo
+ !
+ CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
+ CIRCUIT_k%nibz=CIRCUIT_k%nbz
+ CIRCUIT_k%pt(CIRCUIT_k%nbz,:)=SPECIAL_k%pt(K_position(n_lines),:)*K_sign(n_lines)
+ if (k_sign(n_lines)>0._SP) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(n_lines) )
+ if (k_sign(n_lines)<0._SP) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(n_lines) )
+ K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
+ CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
+ !
+ do ik=1,CIRCUIT_k%nbz
+   call c2a(v_in=CIRCUIT_k%pt(ik,:),mode='kc2i')
+ enddo
+ do ik=1,SPECIAL_k%nbz
+   call c2a(v_in=SPECIAL_k%pt(ik,:),mode='kc2i')
+ enddo
+ !
+ YAMBO_ALLOC(CIRCUIT_k%weights,(CIRCUIT_k%nbz))
+ CIRCUIT_k%weights=1._SP/real(CIRCUIT_k%nbz,SP)
+ !
+ if (l_high_sym_pts) then
+   !
+   k_f_name(1)="path_points"
+   k_f_name(2)="PWSCF_points"
+   call of_open_close(k_f_name(1),'ot')
+   call of_open_close(k_f_name(2),'ot')
+   call msg('o  path',"#",(/"c1    ","c2    ","c3    ","Norm  "/),INDENT=0,USE_TABS=.true.)
+   call msg('o PWSCF',"#",(/"c1    ","c2    ","c3    ","Weight"/),INDENT=0,USE_TABS=.true.)
+   call msg('o path PWSCF',"#"," ",INDENT=0)
    !
    do ik=1,CIRCUIT_k%nbz
-     call c2a(v_in=CIRCUIT_k%pt(ik,:),mode='kc2i')
-   enddo
-   do ik=1,SPECIAL_k%nbz
-     call c2a(v_in=SPECIAL_k%pt(ik,:),mode='kc2i')
+     !
+     call K_transform(CIRCUIT_k%pt(ik,:),'iku')
+     !
+     call msg('o  path',"",(/CIRCUIT_k%pt(ik,:),CIRCUIT_k_norm(ik)/),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
+     if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// CIRCUIT_k_label(ik)//']'
+     call msg_deliver('path',trim(of_string))
+     call msg('o PWSCF',"",(/CIRCUIT_k%pt(ik,:),1._SP/),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
+     if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// CIRCUIT_k_label(ik)//']'
+     call msg_deliver('PWSCF',trim(of_string))
    enddo
    !
-   if (l_high_sym_pts) then
-     !
-     k_f_name(1)="path_points"
-     k_f_name(2)="PWSCF_points"
-     call of_open_close(k_f_name(1),'ot')
-     call of_open_close(k_f_name(2),'ot')
-     call msg('o  path',"#",(/"c1    ","c2    ","c3    ","Norm  "/),INDENT=0,USE_TABS=.true.)
-     call msg('o PWSCF',"#",(/"c1    ","c2    ","c3    ","Weight"/),INDENT=0,USE_TABS=.true.)
-     call msg('o path PWSCF',"#"," ",INDENT=0)
-     !
-     do ik=1,CIRCUIT_k%nbz
-       !
-       call K_transform(CIRCUIT_k%pt(ik,:3),'iku')
-       !
-       call msg('o  path',"",CIRCUIT_k%pt(ik,:),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
-       if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// CIRCUIT_k_label(ik)//']'
-       call msg_deliver('path',trim(of_string))
-       call msg('o PWSCF',"",(/CIRCUIT_k%pt(ik,:3),1._SP/),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
-       if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// CIRCUIT_k_label(ik)//']'
-       call msg_deliver('PWSCF',trim(of_string))
-     enddo
-     !
-     YAMBO_FREE(SPECIAL_k%pt)
-     YAMBO_FREE(CIRCUIT_k%pt)
-     !
-     call of_open_close(k_f_name(1))
-     call of_open_close(k_f_name(2))
-     !
-   endif
+   YAMBO_FREE(SPECIAL_k%pt)
+   YAMBO_FREE(CIRCUIT_k%pt)
+   !
+   call of_open_close(k_f_name(1))
+   call of_open_close(k_f_name(2))
    !
  endif
  !
@@ -371,4 +394,4 @@ subroutine k_special(LIST)
     !
    end subroutine
    !
-end subroutine
+end subroutine k_special

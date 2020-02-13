@@ -28,8 +28,7 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use vec_operate,         ONLY: sort
  use pars,                ONLY: SP,cZERO
  use LOGO,                ONLY: pickup_a_random
- use com,                 ONLY: msg,write_to_report,core_io_path, file_exists,write_the_logo,&
-&                               com_path
+ use com,                 ONLY: msg,core_io_path,com_path,write_to_report
  use stderr,              ONLY: log_as_a_file,write_to_log,logfile,intc
  use LIVE_t,              ONLY: live_timing_is_on
  use parallel_m,          ONLY: ncpu,myid
@@ -58,6 +57,8 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  integer                      :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp
  integer,     external        :: io_DB1, io_KB_abinit
  complex(SP), allocatable     :: wf_disk(:,:,:)
+ !
+ logical, external            :: file_exists
  ! 
  ! Work Space
  !

@@ -26,7 +26,7 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
  use pars,           ONLY:lchlen
  use YPP_real_time,  ONLY:Probe_Keyword,Pump_Keyword,max_n_of_paths,Pump_path,Probe_path,RT_OBSERVABLES_IO,&
 &                         N_pumps,N_probes,N_probe_frequencies
- use com,            ONLY:core_io_path,jobstr,file_exists,msg,error,warning
+ use com,            ONLY:core_io_path,jobstr,msg
  use IO_m,           ONLY:NONE
  use fields,         ONLY:Efield
  use stderr,         ONLY:STRING_split,cstr,intc
@@ -44,6 +44,8 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
  integer           :: i_f,i_fp,nf,N_pump_frequencies,i_Probe,i_Pump
  logical           :: IO_error,l_many_paths=.false.
  character(10*max_n_of_paths) :: folder_list
+ !
+ logical, external :: file_exists
  !
  call parser('CheckPaths',l_many_paths)
  !

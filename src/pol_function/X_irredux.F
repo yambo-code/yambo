@@ -42,7 +42,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  use pars,          ONLY:SP,cZERO,schlen
  use wrapper,       ONLY:V_by_V_plus_V
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg,warning,error
+ use com,           ONLY:msg
  use matrix,        ONLY:PAR_matrix
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
@@ -63,7 +63,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
 &                        self_detect_E_range,X_FILL_UP_matrix_only,use_X_DbGd,&
 &                        l_X_terminator,X_terminator_E,X_term_E,X_par_lower_triangle
 #ifdef _CUDA
- use X_m,           ONLY:rhotw_save_d,rhotw_save2_d
+ use X_m,           ONLY:rhotw_save_d
 #endif
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
@@ -121,7 +121,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  if (iq==1) then
    call DIPOLE_dimensions(Xen,Dip,X%ib,X%q0)
    call DIPOLE_IO(Xk,Xen,Dip,'read ',io_err,'X')
-   call DIPOLE_expand_and_project(Xk,Dip)   
  endif
  !
  ! WF load
@@ -236,7 +235,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  YAMBO_ALLOC(Xo_res,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
 #ifdef _CUDA
  allocate(Xo_res_d,mold=Xo_res)
- allocate(rhotw_save_d(ngrho),rhotw_save2_d(ngrho))
+ allocate(rhotw_save_d(ngrho))
 #endif
  call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
@@ -440,7 +439,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
 #ifdef _CUDA
  YAMBO_FREE(Xo_res_d)
  YAMBO_FREE(rhotw_save_d)
- YAMBO_FREE(rhotw_save2_d)
 #endif
  call elemental_collision_free(Xo_scatt)
  !
@@ -455,7 +453,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    call DIP_alloc('DIP_spin')
    call DIP_alloc('DIP_orbital')
    call DIP_alloc('P_square') 
-   call DIP_alloc('DIP_projected')
    call DIP_alloc('DIP_P_spinor')
  endif
  !
@@ -521,27 +518,38 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  ! "o" = calculated
  ! "x" = to be filled now
  !
- !$omp parallel default(shared), private(ig_col,ig_row,ig_row_transp,ig_col_transp)
- !$omp do
- do ig_col=X_par%cols(1),X_par%cols(2)
-   ig_row_transp=ig_col
-   if (X_FILL_UP_matrix_only) then
+ if (X_FILL_UP_matrix_only) then
+   !
+   !$omp parallel do default(shared), private(iw,ig_col,ig_row,ig_row_transp,ig_col_transp), collapse(2)
+   do iw=1,Xw%n_freqs
+   do ig_col=X_par%cols(1),X_par%cols(2)
+     ig_row_transp=ig_col
      do ig_row=max(ig_col+1,X_par%rows(1)),X_par%rows(2)
        ig_col_transp=ig_row
-       if (i_space_inv==1) X_par%blc(ig_row,ig_col,:)=      X_par%blc(ig_row_transp,ig_col_transp,:)
-       if (i_space_inv==0) X_par%blc(ig_row,ig_col,:)=conjg(X_par%blc(ig_row_transp,ig_col_transp,:))
+       if (i_space_inv==1) X_par%blc(ig_row,ig_col,iw)=      X_par%blc(ig_row_transp,ig_col_transp,iw)
+       if (i_space_inv==0) X_par%blc(ig_row,ig_col,iw)=conjg(X_par%blc(ig_row_transp,ig_col_transp,iw))
      enddo
-   else if (PAR_COM_RL_INDEX%n_CPU>1) then
+   enddo
+   enddo
+   !$omp end parallel do
+   !
+ else if (PAR_COM_RL_INDEX%n_CPU>1) then
+   !
+   !$omp parallel do default(shared), private(iw,ig_col,ig_row,ig_row_transp,ig_col_transp), collapse(2)
+   do iw=1,Xw%n_freqs
+   do ig_col=X_par%cols(1),X_par%cols(2)
+     ig_row_transp=ig_col
      do ig_row=max(ig_col,X_par%rows(1)),X_par%rows(2)
        ig_col_transp=ig_row
        ! FILL THE UPPER PART OF X_par_lower
-       X_par_lower_triangle%blc(ig_row_transp,ig_col_transp,:)=X_par%blc(ig_row_transp,ig_col_transp,:)
+       X_par_lower_triangle%blc(ig_row_transp,ig_col_transp,iw)=X_par%blc(ig_row_transp,ig_col_transp,iw)
        ! FILL THE LOWER PART OF X_par
-       X_par%blc(ig_row,ig_col,:)                             =X_par_lower_triangle%blc(ig_row,ig_col,:)
+       X_par%blc(ig_row,ig_col,iw)                             =X_par_lower_triangle%blc(ig_row,ig_col,iw)
      enddo
-   endif
- enddo
- !$omp end do
- !$omp end parallel
+   enddo
+   enddo
+   !$omp end parallel do
+   !
+ endif
  !
 end subroutine

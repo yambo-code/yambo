@@ -42,7 +42,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  use parallel_m,    ONLY:PAR_n_freqs,PAR_nQP,PAR_Xk_nbz,PAR_Xk_nibz
  ! ID's
  use parallel_m,    ONLY:PAR_IND_freqs_ID,PAR_IND_Q_ID,PAR_IND_WF_k_ID,&
-&                        PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz_ID
+&                        PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz_ID,myid
  use nl_optics,     ONLY:n_frequencies
  use openmp,        ONLY:n_threads_NL,OPENMP_set_threads
  use QP_m,          ONLY:QP_n_states,QP_table

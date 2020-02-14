@@ -115,11 +115,6 @@ subroutine RT_driver(E,X,k,q,Dip)
  call section('+','Initialization')
  !#################################
  !
- ! Dipoles & WF dimensions
- !=========================
- !
- call WF_and_dipole_dimensions(X)
- !
  ! Parallel Setups
  !=================
  !
@@ -150,6 +145,11 @@ subroutine RT_driver(E,X,k,q,Dip)
  ! Core initialization
  !
  call RT_initialize(E,k,q)
+ !
+ ! Dipoles & WF dimensions
+ !=========================
+ !
+ call WF_and_dipole_dimensions(X)
  !
  ! WFs loading
  !=============

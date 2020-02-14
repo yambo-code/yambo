@@ -25,7 +25,7 @@ subroutine WF_symm_kpoint_cpu(b_to_load,ikbz,Xk,WF_k_out)
  !
  use pars,          ONLY:SP,cZERO
  use electrons,     ONLY:n_sp_pol,n_spinor
- use wave_func,     ONLY:WF,wf_ng
+ use wave_func,     ONLY:WF,wf_ng,wf_ng_1st_bz
  use R_lattice,     ONLY:bz_samp,g_rot
  use D_lattice,     ONLY:idt_index,spin_sop,i_time_rev,nsym
  !
@@ -33,7 +33,7 @@ subroutine WF_symm_kpoint_cpu(b_to_load,ikbz,Xk,WF_k_out)
  !
  integer,       intent(in)  :: ikbz,b_to_load(2)
  type(bz_samp), intent(in)  :: Xk
- complex(SP),   intent(out) :: WF_k_out(wf_ng,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
+ complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_bz,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
  !
  ! Work space
  !
@@ -49,13 +49,11 @@ subroutine WF_symm_kpoint_cpu(b_to_load,ikbz,Xk,WF_k_out)
    do i_sp_pol=1,n_sp_pol
      do ib=b_to_load(1),b_to_load(2)
        iwf=WF%index(ib,ik,i_sp_pol)
-       WF_k_out(:,:,ib,i_sp_pol)=WF%c(:,:,iwf)
+       WF_k_out(:wf_ng,:,ib,i_sp_pol)=WF%c(:wf_ng,:,iwf)
      enddo
    enddo
    !
  else
-   !
-   WF_k_out=cZERO
    !
    do i_sp_pol=1,n_sp_pol
      do ib=b_to_load(1),b_to_load(2)
@@ -78,7 +76,7 @@ subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,Xk,WF_k_out_d)
  !
  use pars,          ONLY:SP,cZERO
  use electrons,     ONLY:n_sp_pol,n_spinor
- use wave_func,     ONLY:WF,wf_ng
+ use wave_func,     ONLY:WF,wf_ng,wf_ng_1st_bz
  use R_lattice,     ONLY:bz_samp,g_rot_d
  use D_lattice,     ONLY:idt_index,spin_sop_d,i_time_rev,nsym
  use deviceXlib_m,  ONLY:dev_conjg
@@ -87,7 +85,7 @@ subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,Xk,WF_k_out_d)
  !
  integer,       intent(in)  :: ikbz,b_to_load(2)
  type(bz_samp), intent(in)  :: Xk
- complex(SP), device, intent(out) :: WF_k_out_d(wf_ng,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
+ complex(SP), device, intent(out) :: WF_k_out_d(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
  !
  ! Work space
  !

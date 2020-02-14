@@ -84,6 +84,8 @@ for arg in $@; do
    ;;
  esac
 done
+comp_modules=`echo $comp_modules | sed "s/_DOUBLE//2"`;
+lock_file=`echo $lock_file  | sed "s/_DOUBLE//2"`;
 #
 llibs="-L\$(libdir) $llibs"
 lf90include="@IFLAG@\$(includedir) @IFLAG@\$(modinclude) @IFLAG@\$(sysinclude) @IFLAG@\$(includedir)/headers/common @IFLAG@\$(includedir)/headers/parser @IFLAG@\$(srcdir)/driver/include"

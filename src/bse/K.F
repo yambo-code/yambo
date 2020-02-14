@@ -46,7 +46,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,&
-&                       l_BSE_minimize_memory,l_restart_bse
+&                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete
  use collision_el, ONLY:elemental_collision_free
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_WR,OP_APP_CL,DUMP,&
@@ -118,8 +118,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call k_build_up_BZ_tables(Xk)
  !
- call timing('X T_space Kernel',OPR='start')
- !
  ! Titles
  !========
  !
@@ -183,9 +181,22 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
 #if defined _PAR_IO
    !
-   ! TO DO
+   call io_control(ACTION=OP_RD,COM=REP,ID=ID)
+   call io_BS_PAR_init(iq,X,ID)
+   !
+   if(l_BSE_kernel_complete) then
+     do i_block=1,n_BS_blks
+       call io_control(ACTION=RD,ID=ID)
+       call io_BS_PAR_block(iq,i_block,ID)
+     enddo
+   endif
+   !
+   call io_control(ACTION=RD_CL,COM=REP,ID=ID)
+   call io_BS_PAR_free(ID,l_BSE_kernel_complete)
+   if(l_BSE_kernel_complete) return
    !
 #else
+   !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
    !
@@ -198,9 +209,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        io_BS_err=io_BS(iq,X,ID)
      enddo
    endif
+   !
 #endif
    !
-   if (io_BS_err==0) goto 1
+   if (io_BS_err==0) return
    !
    ! GPL_EXCLUDE_START
    !
@@ -226,9 +238,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call BSS_KERR_free( )
 #endif
    !
-   goto  1
+   YAMBO_FREE(BS_W)
+   !
+   return
    !
  endif
+ !
+ call timing('X T_space Kernel',OPR='start')
  !
  ! GPL_EXCLUDE_START
  !
@@ -284,11 +300,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! BS DB description section I/O
  !===============================
  !
-#if defined _PAR_IO
- call io_control(ACTION=OP_RD_CL,ID=ID,comm=MPI_COMM_WORLD)
- call io_BS_PAR_check(iq,ID)
+ call section('=','Main kernel loop')
  !
- call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID,comm=MPI_COMM_WORLD)
+#if defined _PAR_IO
+ call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID)
  call io_BS_PAR_init(iq,X,ID)
 #else
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
@@ -313,8 +328,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Read BS_blk to check if the transition was already computed
    !
 #ifdef _PAR_IO
-   if (l_restart_bse) then
-     call io_control(ACTION=RD_CL,ID=ID)
+   if (l_BSE_restart) then
+     call io_control(ACTION=RD,ID=ID)
      call io_BS_PAR_block(iq,i_block,ID)
      if (all(BS_blk(i_block)%done=="t")) cycle
    endif
@@ -477,7 +492,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
    !
 #if defined _PAR_IO
-   call io_control(ACTION=WR_CL,ID=ID)
+   call io_control(ACTION=WR,ID=ID)
    call io_BS_PAR_block(iq,i_block,ID)
 #else
    call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/i_block+1/),ID=ID)
@@ -489,12 +504,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  enddo block_loop
  !
 #if defined _PAR_IO
- call  io_BS_PAR_free(ID)
+ call io_control(ACTION=WR_CL,COM=REP,ID=ID)
+ call io_BS_PAR_free(ID,.true.)
 #endif
  !
  if (BS_LiveTiming_steps>0) call live_timing( )
- !
- BS_K_has_been_calculated_loaded=.TRUE.
  !
  ! GLOBAL CLEANING 
  !=================
@@ -517,8 +531,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  else if (BS_K_is_ALDA) then
    YAMBO_FREE(F_xc)
  endif
- !
-1 continue
  !
  YAMBO_FREE(BS_W)
  call WF_free(WF)

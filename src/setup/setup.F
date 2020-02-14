@@ -40,6 +40,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use vec_operate,    ONLY:c2a,define_b_and_DL_vol
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
  use interfaces,     ONLY:OCCUPATIONS_Fermi
+ use wave_func,      ONLY:wf_ng,wf_ng_1st_BZ
 #if defined _SC
  use wave_func,      ONLY:WF_buffered_IO 
  use drivers,        ONLY:l_sc_run
@@ -48,6 +49,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use global_XC,      ONLY:G_kind,G_xc_functional,X_kind,&
 &                         X_xc_functional,setup_global_XC,K_kind,K_xc_functional,loaded_WF_xc_string,&
 &                         X_perturbation,G_perturbation,K_perturbation,WF_kind,WF_xc_functional,WF_perturbation
+#endif
+#if defined _HDF5_IO
+ ! For I/O debug, see below
+ !use IO_m,           ONLY:netcdf_call,nf90_set_log_level
 #endif
  !
 #include <memory.h>
@@ -62,6 +67,12 @@ subroutine setup(en,Xen,Ken,k,Xk)
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch1,dumb_ch2
  integer, external :: k_lattice,io_Double_Grid
+ !
+#if defined _HDF5_IO
+ ! This is very useful for I/O debug
+ ! NETCDF library need to be compiled with --enable-loggning flag
+ ! call netcdf_call(nf90_set_log_level(3),1)
+#endif
  !
  call section('*','CORE Variables Setup') 
  !########################################
@@ -226,6 +237,13 @@ subroutine setup(en,Xen,Ken,k,Xk)
    enddo
    call msg('r',trim(dumb_ch2))
  enddo
+ !
+ ! First simplified implementation of wf_ng_1st_BZ & wf_ng_2st_BZ
+ ! A more correct implementation would involve a rotation of the shells
+ ! and the evaluation of the resulting wf_ng
+ !
+ wf_ng_1st_BZ=wf_ng
+ call PARSER_close_G(wf_ng_1st_BZ,'tRL')
  !
  call section('=','K-grid lattice')
  !=================================

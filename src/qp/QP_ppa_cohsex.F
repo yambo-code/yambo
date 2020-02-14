@@ -463,8 +463,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          endif
          !
          forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
-!         write(*,*) ' W_ ',i_qp,W_(1:QP_dSc_steps)*HA2EV
-!         write(*,*) QP_table(i_qp,:)
          !
          E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))

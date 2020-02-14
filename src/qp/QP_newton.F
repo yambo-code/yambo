@@ -75,7 +75,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  SC_iterations=0
  if(GWo_iterations/=0) SC_iterations=GWo_iterations
- if(GW_iterations/=0 ) SC_iterations=GW_iterations
+ if(GW_iterations /=0) SC_iterations=GW_iterations
  !
  ! GPL_EXCLUDE_START
  !

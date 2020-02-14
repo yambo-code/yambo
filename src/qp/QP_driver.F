@@ -212,7 +212,16 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  qp%nb=QP_nb
  qp%n_states=QP_n_states
  !
- if (GW_iterations+GWo_iterations/=0) call check_qp_states(QP_table,QP_state,qp,en)
+ ! Check qp-indexes for SC-GW and allocate en%Eo 
+ ! =============================================
+ !
+ if (GW_iterations+GWo_iterations/=0) then
+    call check_qp_states(QP_table,QP_state,qp,en)
+    if(.not.allocated(en%Eo)) then
+      YAMBO_ALLOC(en%Eo,(en%nb,en%nk,n_sp_pol))
+      en%Eo=en%E            
+    endif
+ endif
  !
  ! In lifetimes calculations  the X db may be not
  ! present. So I need to define some variables that 

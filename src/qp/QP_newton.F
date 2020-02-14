@@ -142,14 +142,14 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
          !
          Z(i2)=1._SP/(1._SP-QP_dSc(i1,i2))
          !
-         Eqp(i2)=qp%E_bare(i1)+Z(i2)*QP_Sc(i1,1)
+         Eqp(i2)=qp%E(i1)+Z(i2)*QP_Sc(i1,1)
          !
          if (l_elel_corr.and.allocated(QP_Vnl_xc)) Eqp(i2)=Eqp(i2)+Z(i2)*QP_Vnl_xc(i1)
          if (l_elel_corr.and.allocated(QP_Vxc)   ) Eqp(i2)=Eqp(i2)-Z(i2)*QP_Vxc(i1)
          !
        enddo
        !
-       qp%E(i1)=Eqp(1)
+       qp%E(i1)=Eqp(1)+Z(1)*(qp%E_bare(i1)-qp%E(i1))  ! See Eq.3 of PRB 75, 235102(2007)
        qp%Z(i1)=Z(1)
        !
      else

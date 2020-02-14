@@ -53,13 +53,13 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !=========================================
  ! (evaluated also in RT_integrator when an induced field is included, l_RT_induced_field=.true.)
  !
- call RT_carriers_number(en,k,NCarr)
- call RT_current_AND_polarization(k,en,dG_lesser,A_tot,Ncarr)
- !
  if (.not. RT_do_it('OUT') ) then
    call timing('RT observables',OPR='stop')
    return
  endif
+ !
+ call RT_carriers_number(en,k,NCarr)
+ call RT_current_AND_polarization(k,en,dG_lesser,A_tot,Ncarr)
  !
  ! GPL_EXCLUDE_START
  !

@@ -98,7 +98,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  h_mat =cZERO
  star_1=cZERO
  !
- if (.not.INTERPOLATE_is_quiet) call live_timing("Definition of star_1",nshells-1)
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation star",nshells-1)
  !
  do i1=2,nshells
    call make_star(lattice_vectors(:,i1),nsym,int_sop,nstar,star_vec) 
@@ -125,11 +125,11 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  !
  Npx=(Nkm1*(Nkm1+1))/2
  if (INTERPOLATE_is_serial) then
-   if (.not.INTERPOLATE_is_quiet) call live_timing("Computing h_mat",Npx(1))
+   if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation H",Npx(1))
  else
    call PP_indexes_reset(px)
    call PARALLEL_index(px,Npx)
-   if (.not.INTERPOLATE_is_quiet) call live_timing("Computing h_mat",px%n_of_elements(myid+1))
+   if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation H",px%n_of_elements(myid+1))
  endif
  !
  do ik=1,Nkm1

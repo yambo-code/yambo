@@ -267,7 +267,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! CLOSING
  !=========
  !
- call CLOSE_the_run(.TRUE.,.FALSE.,.FALSE.)
+ call CLOSE_the_run(.TRUE.,.TRUE.,.FALSE.)
  !
  call INIT_ypp(en,instr,.TRUE.)
  !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_define_circuit(Xk)
+subroutine k_define_circuit()
  !
  use pars,           ONLY:SP,schlen
  use R_lattice,      ONLY:bz_samp,bz_samp_reset,k_the_nearest
@@ -37,8 +37,6 @@ subroutine k_define_circuit(Xk)
 &                         BANDS_path,CIRCUIT_k_label,SPECIAL_k_label
  !
 #include<memory.h>
- !
- type(bz_samp), intent(in)  :: Xk
  !
  ! Work space
  !

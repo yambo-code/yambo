@@ -29,9 +29,9 @@ subroutine electrons_dos(Xk,Xen)
  use R_lattice,      ONLY:bz_samp
  use pointers,       ONLY:linkM2M
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol
+ use YPP_interfaces, ONLY:electrons_dos_elemental
  use YPPm,           ONLY:output_fname,DOS_bands,DOS_E_steps,K_transform,&
-&                         INTERP_grid,electrons_dos_elemental,&
-&                         l_PROJECT_atom,l_PROJECT_line,l_PROJECT_plane
+&                         INTERP_grid,l_PROJECT_atom,l_PROJECT_line,l_PROJECT_plane
  use com,            ONLY:msg,of_open_close
  use QP_CTL_m,       ONLY:QP_apply
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k,INTERP_obj
@@ -74,7 +74,7 @@ subroutine electrons_dos(Xk,Xen)
  !
  DOS_is_projected=l_PROJECT_line.or.l_PROJECT_plane
  !
- if (DOS_is_projected) call electrons_dos_project_setup(Xk,Xen)
+ if (DOS_is_projected) call electrons_dos_project_setup( )
  !
  ! DOS on the built-in grid
  !===================================================================
@@ -103,7 +103,7 @@ subroutine electrons_dos(Xk,Xen)
  !===================================================================
  N_files=1
  !
- if (all(INTERP_grid>0)) then
+ if (all(INTERP_grid>0).or.DOS_is_projected) then
    !
    if (l_PROJECT_atom) call warning(" PDOS and interpolation not yet implemented")
    !
@@ -154,7 +154,8 @@ subroutine electrons_dos(Xk,Xen)
      call msg('o grid',"#")
      !
      do ikbz=1,GRID_k%nbz
-       values(2:4)=GRID_k%ptbz(ikbz,:)
+       if (allocated(GRID_k%ptbz)) values(2:4)=GRID_k%ptbz(ikbz,:)
+       if (allocated(GRID_k%pt))   values(2:4)=GRID_k%pt(ikbz,:)
        call K_transform(values(2:4),"iku")
        if (.not.DOS_is_projected) ik=GRID_k%sstar(ikbz,1)
        if (     DOS_is_projected) ik=ikbz
@@ -169,7 +170,7 @@ subroutine electrons_dos(Xk,Xen)
    !
    if (DOS_is_projected) then
      !
-     call electrons_dos_project( GRID_E, dos_E, el_dos ) 
+     call electrons_dos_project( GRID_E, dos_E ) 
      !
      return
      !

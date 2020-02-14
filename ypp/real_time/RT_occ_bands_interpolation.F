@@ -93,7 +93,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
  !
- call k_define_circuit(k)
+ call k_define_circuit( )
  !
  call section('=',"Interpolation")
  !================================

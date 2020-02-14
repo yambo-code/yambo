@@ -252,6 +252,42 @@ subroutine error(mesg)
  !
 end subroutine error
 !
+integer function find_the_unit(of_name_extension)
+ !
+ use pars,      ONLY:max_open_ofs
+ use com,       ONLY:opened_of
+ !
+ implicit none
+ !
+ character(*) :: of_name_extension
+ integer      :: i_unit
+ !
+ find_the_unit=0
+ !
+ do i_unit=1,max_open_ofs
+   if (index(opened_of(i_unit),trim(of_name_extension))==0) cycle
+   find_the_unit=i_unit
+   return 
+ enddo
+ !
+end function find_the_unit
+!
+subroutine msg_deliver_fast(f_unit,formatted_msg)
+ !
+ use com,       ONLY:of_unit
+ !
+ implicit none
+ !
+ character(*) :: formatted_msg
+ integer      :: f_unit
+ !
+ if (f_unit<=0) return
+ if (of_unit(f_unit)<=0) return
+ write (of_unit(f_unit),'(a)') trim(formatted_msg)
+ of_unit(f_unit)=-of_unit(f_unit)
+ !
+end subroutine msg_deliver_fast
+!
 subroutine msg_deliver(of_name_extension,formatted_msg)
  !
  use pars,      ONLY:max_open_ofs

@@ -54,7 +54,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  ! Work Space
  !
  integer     :: i1,i2,iter,SC_iter,SC_iterations,io_X_err
- integer     :: ik,lowest_bnd,highest_bnd,is,ib
+ integer     :: ik,lowest_bnd,highest_bnd,is,ib,i_spin
  real(SP)    :: SC_corr_prev,SC_corr_now
  complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
  integer, external ::  X_dielectric_matrix
@@ -198,16 +198,23 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
        en%E(ib,:,:)=en%Eo(ib,:,:)+en%E(highest_bnd,:,:)-en%Eo(highest_bnd,:,:)
      enddo
      !
-     call OCCUPATIONS_Fermi(en,k,mode="OCCUPATIONS")
+     ! Find new Fermy energy and occupations
+     !
+     call OCCUPATIONS_Fermi(en,k)
+     !
+     ! Copy the new quasi-particles in qp
+     !
+     do i1=1,QP_n_states
+       i_spin=spin(QP_table(i1,:))
+       qp%E(i1)=en%E(QP_table(i1,1),QP_table(i1,3),i_spin)
+     enddo
      !
      if(l_update_W) then
         !
+        ! Copy quasi-particle in Xen
+        !
         Xen%E=en%E
         Xen%f=en%f
-        !
-        ! Apply QP corrections to X
-        !     
-        call QP_apply((/1,n_bands/),Xen,k,'X',msg_fmt='rs',qp_impose=qp)
         !
         call msg('rs','Updating W...')
         !

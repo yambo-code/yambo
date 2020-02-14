@@ -216,11 +216,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  ! =============================================
  !
  if (GW_iterations+GWo_iterations/=0) then
-    call check_qp_states(QP_table,QP_state,qp,en)
-    if(.not.allocated(en%Eo)) then
-      YAMBO_ALLOC(en%Eo,(en%nb,en%nk,n_sp_pol))
-      en%Eo=en%E            
-    endif
+    call check_qp_states(QP_table,QP_state,qp,en,Xen)
  endif
  !
  ! In lifetimes calculations  the X db may be not
@@ -467,19 +463,19 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
 end subroutine
 
-subroutine check_qp_states(QP_table,QP_state,qp,en)
+subroutine check_qp_states(QP_table,QP_state,qp,en,Xen)
   !
   ! Check if qp-indexes are continous for SC-GW
   !  
-  use QP_m,          ONLY:QP_t
+  use QP_m,          ONLY:QP_t,l_update_W
   use electrons,     ONLY:n_sp_pol,levels
 #include<memory.h>
   !
   !
-  type(QP_t), intent(in)  :: qp
-  type(levels),intent(in) :: en
-  logical,    intent(in)  :: QP_state(qp%nb,qp%nk)
-  integer,    intent(in)  :: QP_table(qp%n_states,3+n_sp_pol-1)
+  type(QP_t), intent(in)      :: qp
+  type(levels),intent(inout)  :: en,Xen
+  logical,    intent(in)      :: QP_state(qp%nb,qp%nk)
+  integer,    intent(in)      :: QP_table(qp%n_states,3+n_sp_pol-1)
   !
   ! Work space
   !
@@ -489,5 +485,18 @@ subroutine check_qp_states(QP_table,QP_state,qp,en)
   !
   if(any(QP_state(lw_bnd:qp%nb,:).eqv..FALSE.).or.qp%nk/=en%nk) &
       & call error("Not continous QP-indexes not suppoerted in self-consistent GW")
+  !
+  if(l_update_W.and.(Xen%nb/=en%nb.or.Xen%nk/=en%nk)) then
+    call error("Different number of k-points/bands in G and X not supported in SC-GW")
+  endif
+  !
+  if(.not.allocated(en%Eo)) then
+    YAMBO_ALLOC(en%Eo,(en%nb,en%nk,n_sp_pol))
+    en%Eo=en%E            
+  endif
+  if(.not.allocated(Xen%Eo).and.l_update_W) then
+    YAMBO_ALLOC(Xen%Eo,(Xen%nb,Xen%nk,n_sp_pol))
+    Xen%Eo=Xen%E            
+  endif
   !
 end subroutine check_qp_states

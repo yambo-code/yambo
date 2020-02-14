@@ -33,7 +33,7 @@ subroutine WF_and_dipole_dimensions(X)
  use interfaces,   ONLY:eval_G_minus_G
  use hamiltonian,  ONLY:H_ref_bands,WF_Go_indx,WF_G_max,l_sc_XC_is_local
 #if defined _RT || defined _NL
- use real_time,    ONLY:eval_HARTREE,eval_DFT,eval_energy,l_velocity_gauge_corr
+ use real_time,    ONLY:eval_HARTREE,eval_DFT,eval_energy
 #endif
  !
  implicit none
@@ -86,8 +86,8 @@ subroutine WF_and_dipole_dimensions(X)
  endif
  !
 #if defined _RT || defined _NL
- if (eval_HARTREE.or.eval_energy.or.l_velocity_gauge_corr) WF_G_max=maxval((/QP_ng_SH, WF_G_max/))
- if (eval_DFT    .or.eval_energy.or.l_velocity_gauge_corr) WF_G_max=maxval((/QP_ng_Vxc,WF_G_max/))
+ if (eval_HARTREE.or.eval_energy) WF_G_max=maxval((/QP_ng_SH, WF_G_max/))
+ if (eval_DFT    .or.eval_energy) WF_G_max=maxval((/QP_ng_Vxc,WF_G_max/))
 #endif
  !
  !

@@ -101,7 +101,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  ! Some checks for the self-consistent GW
  ! =======================================
- if (GW_iterations/=0.and.GWo_iterations/=0)  &
+ if (GW_iterations/=0.and.GWo_iterations/=0) &
  &   call error("Only one type of Self-Consistency at a time is possible, evGW or evGWo not both")
  if (GW_iterations/=0) l_update_W=.TRUE.
  !
@@ -216,6 +216,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  ! =============================================
  !
  if (GW_iterations+GWo_iterations/=0) then
+    !
+    ! As possible reference for GWo and GW calculations
+    ! one can consider the manuscript PRB 75, 235102(2007)
+    !
     call check_qp_states(QP_table,QP_state,qp,en,Xen)
  endif
  !

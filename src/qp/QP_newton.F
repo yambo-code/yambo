@@ -23,7 +23,7 @@
 !
 subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
- use pars,          ONLY:SP,cZERO
+ use pars,          ONLY:SP,cZERO,schlen
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_ppa,l_elel_corr,l_cohsex
  use com,           ONLY:msg
@@ -37,6 +37,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use R_lattice,     ONLY:bz_samp
  use QP_CTL_m,      ONLY:QP_apply
  use interfaces,    ONLY:OCCUPATIONS_Fermi
+ use stderr,        ONLY:intc
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
 #endif
@@ -58,6 +59,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  real(SP)    :: SC_corr_prev,SC_corr_now
  complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
  integer, external ::  X_dielectric_matrix
+ character(schlen) :: FILE_name
  !
  ! Dyson equation: Newton solver 
  !
@@ -197,6 +199,15 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
      do ib=highest_bnd+1,n_bands
        en%E(ib,:,:)=en%Eo(ib,:,:)+en%E(highest_bnd,:,:)-en%Eo(highest_bnd,:,:)
      enddo
+     !
+     ! Write QP on file
+     !
+     if(l_update_W) then
+        FILE_name='qp_G'//trim(intc(iter))//'W0'
+     else
+        FILE_name='qp_G'//trim(intc(iter))//'W'//trim(intc(iter))
+     endif
+     call QP_of(qp,en,-1,FILE_name)
      !
      call OCCUPATIONS_Fermi(en,k,mode="OCCUPATIONS")
      !

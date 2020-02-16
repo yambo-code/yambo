@@ -212,6 +212,17 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  qp%nb=QP_nb
  qp%n_states=QP_n_states
  !
+ ! Check qp-indexes for SC-GW and allocate en%Eo 
+ ! =============================================
+ !
+ if (GW_iterations+GWo_iterations/=0) then
+    call check_qp_states(QP_table,QP_state,qp,en)
+    if(.not.allocated(en%Eo)) then
+      YAMBO_ALLOC(en%Eo,(en%nb,en%nk,n_sp_pol))
+      en%Eo=en%E            
+    endif
+ endif
+ !
  ! In lifetimes calculations  the X db may be not
  ! present. So I need to define some variables that 
  ! must be correctly written in the QP_description(s)
@@ -455,3 +466,28 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    end subroutine
    !
 end subroutine
+
+subroutine check_qp_states(QP_table,QP_state,qp,en)
+  !
+  ! Check if qp-indexes are continous for SC-GW
+  !  
+  use QP_m,          ONLY:QP_t
+  use electrons,     ONLY:n_sp_pol,levels
+#include<memory.h>
+  !
+  !
+  type(QP_t), intent(in)  :: qp
+  type(levels),intent(in) :: en
+  logical,    intent(in)  :: QP_state(qp%nb,qp%nk)
+  integer,    intent(in)  :: QP_table(qp%n_states,3+n_sp_pol-1)
+  !
+  ! Work space
+  !
+  integer :: lw_bnd
+  !
+  lw_bnd=minval(QP_table(:,1))
+  !
+  if(any(QP_state(lw_bnd:qp%nb,:).eqv..FALSE.).or.qp%nk/=en%nk) &
+      & call error("Not continous QP-indexes not suppoerted in self-consistent GW")
+  !
+end subroutine check_qp_states

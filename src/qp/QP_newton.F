@@ -38,6 +38,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use QP_CTL_m,      ONLY:QP_apply
  use interfaces,    ONLY:OCCUPATIONS_Fermi
  use stderr,        ONLY:intc
+ use IO_m,          ONLY:IO_and_Messaging_switch
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
 #endif

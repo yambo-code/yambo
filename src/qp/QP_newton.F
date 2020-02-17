@@ -30,7 +30,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,current_iq,l_recalculate_X
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,l_update_W,QP_table,&
-&                        QP_n_states,QP_dSc,QP_dSc_delta,QP_n_G_bands,GW_iterations,&
+&                        QP_n_states,QP_dSc,QP_dSc_delta,QP_n_G_bands,GW_iterations,report_Sc,&
 &                        GWo_SC_done,GWo_iterations,SC_E_threshold,On_Mass_Shell_approx
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,n_bands,spin
@@ -213,6 +213,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
      else
         FILE_name='qp_G'//trim(intc(iter))//'W0'
      endif
+     report_Sc=.true.
      call QP_of(qp,en,-1,FILE_name)
      !
      if(l_update_W) then

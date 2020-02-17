@@ -232,7 +232,6 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
         io_X_err=X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,.true.)
         l_recalculate_X=.false.
         call IO_and_Messaging_switch("+report")
-        if( io_X_err/=0) call error("Error in the dielectric constant calculation")
         !
      endif
      !

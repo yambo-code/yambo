@@ -23,7 +23,7 @@
 !
 subroutine RT_G_two_times_build(en,kpt,qpt)
  !
- use pars,           ONLY:SP,DP,cZERO,cI,cONE,cZERO
+ use pars,           ONLY:SP,DP,cZERO,cI,cONE,cZERO,schlen
  use units,          ONLY:FS2AUT,HA2EV
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
@@ -31,11 +31,11 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  use matrix_operate, ONLY:hermitian
  use stderr,         ONLY:intc,real2ch
  use wrapper,        ONLY:M_by_M
- use com,            ONLY:msg
+ use com,            ONLY:msg,of_open_close
  use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,RT_nbands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
-&                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,I1_matrix
+&                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,I1_matrix,RT_all2ibz
  use YPP_real_time,  ONLY:RT_time,RT_conf,GreenF_T_and_W
  use LIVE_t,         ONLY:live_timing
  !
@@ -47,15 +47,18 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  ! Workspace
  !
  real(SP)              :: T_c,REF_diff,TIME_diff
- integer               :: ID,ik,ib1,ib2,io_err,i_T(2),i_w,i_T1,i_T2,i_Tc,i_dT,i_kind,i_t_tmp,Nt
+ integer               :: ID,ik,ik_RT,ib1,ib2,io_err,i_T(2),i_w,i_T1,i_T2,i_Tc,i_dT,i_kind,i_t_tmp,Nt
  character(2)          :: function_name
  logical               :: include_eq_occ,keep_cc,keep_vv,keep_cv,keep_vc,&
 &                         build_G_ret,build_G_adv,build_G_les,build_G_grt,build_Spect
+ character(schlen)     :: headings(3),file_name
+ real(SP)              :: odata(3)
  !
  ! Allocs
  !
  complex(SP), allocatable :: rho_T(:,:,:),b_rho_T(:,:,:),H_rho_T(:,:,:,:),&
-&                            F_k_tmtp(:,:),G_ret(:,:,:),G_tmp(:,:),TMP_M(:,:,:)
+&                            F_k_tmtp(:,:),G_ret(:,:,:),G_tmp(:,:),TMP_M(:,:,:),&
+&                            G_w(:)
  !
  integer, external     :: io_RT_components
  !
@@ -348,36 +351,6 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
  call live_timing()
  !
- ! 1D FFT setup
- !--------------
- !
- GreenF_T_and_W%title=function_name//"(t,t')"
- RT_time=(RT_time-T_c)*2._SP
- !
- call RT_1D_Fourier_setup(GreenF_T_and_W,RT_conf,RT_nk) 
- !
- do ik=1,RT_nk
-   GreenF_T_and_W%F_T(:,ik)=cmplx(F_k_tmtp(ik,:),kind=DP)
- enddo
- !
- call RT_1D_Fourier_Transform('T2W',GreenF_T_and_W,RT_conf,1)
- !
- ! DEBUG <
- do ik=1,RT_nk
-   !
-   do i_dT=1,RT_conf%T_n_steps
-     write(100+ik,*) RT_time(i_dT)/FS2AUT,&
-     &  real(GreenF_T_and_W%F_T(i_dT,ik),SP),real(aimag(GreenF_T_and_W%F_T(i_dT,ik)),SP)
-   enddo
-   !
-   do i_w=1,RT_conf%W_n_steps
-     write(200+ik,*) real(GreenF_T_and_W%W(i_w))*HA2EV,&
-     & real(-cI*GreenF_T_and_W%F_W(i_w,ik),SP),real(aimag(-cI*GreenF_T_and_W%F_W(i_w,ik)),SP)
-   enddo
-   !
- enddo
- ! DEBUG >
- !
  YAMBO_FREE(TMP_M)
  YAMBO_FREE(I1_matrix)
  !
@@ -390,6 +363,78 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  YAMBO_FREE(dG_lesser)
  YAMBO_FREE(G_lesser_reference)
  !
+ ! 1D FFT setup
+ !--------------
+ !
+ GreenF_T_and_W%title=function_name//"(t,t')"
+ RT_time=(RT_time-T_c)*2._SP
+ !
+ call RT_1D_Fourier_setup(GreenF_T_and_W,RT_conf,RT_nk) 
+ !
+ do ik=1,RT_nk
+   GreenF_T_and_W%F_T(:,ik)=cmplx(F_k_tmtp(ik,:),kind=DP)
+ enddo
+ !
  YAMBO_FREE(F_k_tmtp)
+ !
+ call RT_1D_Fourier_Transform('T2W',GreenF_T_and_W,RT_conf,1)
+ !
+ ! Print G(w) integrated over k
+ !
+ file_name="G_w_integrated"
+ call of_open_close(trim(file_name),'ot')
+ headings=(/" E[eV]  ","Im[G(w)]","Re[G(w)]"/)
+ call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
+ !
+ YAMBO_ALLOC(G_w,(RT_conf%W_n_steps))
+ !
+ G_w=cZERO
+ do ik_RT=1,RT_nk
+   ik=RT_all2ibz(ik_RT)
+   G_w(:)=G_w(:)+GreenF_T_and_W%F_W(:,ik_RT)*kpt%weights(ik)
+ enddo
+ !
+ do i_w=1,RT_conf%W_n_steps
+   odata=(/real(GreenF_T_and_W%W(i_w),SP)*HA2EV,real(-cI*G_w(i_w),SP),real(G_w(i_w),SP)/)
+   call msg('o '//trim(file_name),'',odata,INDENT=-2,USE_TABS=.true.)
+ enddo
+ !
+ call of_open_close(trim(file_name))
+ !
+ YAMBO_FREE(G_w)
+ !
+ ! Print G(w,k) for specific k  (only gamma for now)
+ !
+ file_name="G_k1_w"
+ call of_open_close(trim(file_name),'ot')
+ headings=(/" E[eV]  ","Im[G(w)]","Re[G(w)]"/)
+ call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
+ !
+ do i_w=1,RT_conf%W_n_steps
+   odata=(/real(GreenF_T_and_W%W(i_w),SP)*HA2EV,    &
+   &      -real(cI*GreenF_T_and_W%F_W(i_w,1),SP),   &
+   &       real(   GreenF_T_and_W%F_W(i_w,1),SP)     /)
+   call msg('o '//trim(file_name),'',odata,INDENT=-2,USE_TABS=.true.)
+ enddo
+ !
+ call of_open_close(trim(file_name))
+ !
+ ! DEBUG <
+ do ik=1,RT_nk
+   !
+   if(ik>99) cycle
+   !
+   do i_dT=1,RT_conf%T_n_steps
+     write(100+ik,*) RT_time(i_dT)/FS2AUT,&
+     &  real(GreenF_T_and_W%F_T(i_dT,ik),SP),real(-cI*GreenF_T_and_W%F_T(i_dT,ik),SP)
+   enddo
+   !
+   do i_w=1,RT_conf%W_n_steps
+     write(200+ik,*) real(GreenF_T_and_W%W(i_w))*HA2EV,&
+     & real(-cI*GreenF_T_and_W%F_W(i_w,ik),SP),real(GreenF_T_and_W%F_W(i_w,ik),SP)
+   enddo
+   !
+ enddo
+ ! DEBUG >
  !
 end subroutine RT_G_two_times_build

@@ -23,6 +23,8 @@
 !
 module YPP_interfaces
  !
+ implicit none
+ !
  interface
    !
    subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,WF_fac,PDOS_fac,USE_the_DbGd,QUIET,FORCE_occ)
@@ -55,4 +57,16 @@ module YPP_interfaces
    !
  end interface
  !
+ contains
+   !
+   integer function PROJECTION_k_on_the_path(ik)
+     use YPPm,          ONLY:PROJECT_grid
+     integer :: ik
+     if (mod(ik,PROJECT_grid(2))/=1) then
+       PROJECTION_k_on_the_path=0
+       return
+     endif
+     PROJECTION_k_on_the_path=ik/PROJECT_grid(2)+1
+   end function
+   !
 end module YPP_interfaces

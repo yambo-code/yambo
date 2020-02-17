@@ -21,26 +21,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_dos_project_setup( )
+subroutine PROJECTION_setup( what ,bands )
  !
  use zeros,          ONLY:k_iku_zero
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
+ use electrons,      ONLY:n_sp_pol,E_reset
  use vec_operate,    ONLY:cross_product,c2a,normalize_v,v_is_zero,k2bz
  use com,            ONLY:msg
  use YPPm,           ONLY:PROJECT_mode,PtsPath,PROJECT_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,CIRCUIT_k,PROJECT_grid,n_path_pts,&
-&                         l_PROJECT_line,CIRCUIT_k_label,l_PROJECT_plane
+&                         l_PROJECT_line,CIRCUIT_k_label,l_PROJECT_plane,SLICE_k,SLICE_E
  use interpolate,    ONLY:GRID_k
  !
  implicit none
+ !
+ character(*) :: what
+ integer      :: bands(2)
  !
  ! Work Space
  !
  integer  :: i_k,n_lines,i_l,i_k_line,i_k_versor,Nk_versor_direction,n_versor_ticks
  real(SP) :: line_vector(10,3),perp_vector(10,3),versor(3),k_trial(3),k_trial_bz(3)
  !
- call section('+','DOS projection:'//trim(PROJECT_mode))
+ call section('+',what//' projection:'//trim(PROJECT_mode))
  !
  PtsPath=PROJECT_path
  n_path_pts=PROJECT_grid(1)
@@ -126,5 +130,20 @@ subroutine electrons_dos_project_setup( )
    GRID_k%nbz=PROJECT_grid(1)**2*PROJECT_grid(2)
    !
  endif
+ !
+ ! Allocation
+ !============
+ call E_reset(SLICE_E)
+ call bz_samp_reset(SLICE_k)
+ allocate(SLICE_k%weights(PROJECT_grid(2)))
+ allocate(SLICE_k%sstar(PROJECT_grid(2),2))
+ allocate(SLICE_E%E(bands(1):bands(2),PROJECT_grid(2),n_sp_pol))
+ allocate(SLICE_E%f(bands(1):bands(2),PROJECT_grid(2),n_sp_pol))
+ SLICE_k%nibz=PROJECT_grid(2)
+ SLICE_k%nbz =PROJECT_grid(2)
+ SLICE_k%weights=1./float(PROJECT_grid(2))
+ do i_k=1,PROJECT_grid(2)
+   SLICE_k%sstar(i_k,1)=i_k
+ enddo
  !
 end subroutine

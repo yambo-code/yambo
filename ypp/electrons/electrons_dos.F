@@ -24,14 +24,16 @@
 subroutine electrons_dos(Xk,Xen)
  !
  use units,          ONLY:HA2EV
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,rZERO
  use D_lattice,      ONLY:DL_vol
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use pointers,       ONLY:linkM2M
- use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol
- use YPP_interfaces, ONLY:electrons_dos_elemental
+ use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol,E_reset
+ use LIVE_t,         ONLY:live_timing
+ use YPP_interfaces, ONLY:electrons_dos_elemental,PROJECTION_k_on_the_path
  use YPPm,           ONLY:output_fname,DOS_bands,DOS_E_steps,K_transform,&
-&                         INTERP_grid,l_PROJECT_atom,l_PROJECT_line,l_PROJECT_plane
+&                         INTERP_grid,l_PROJECT_atom,l_PROJECT_line,l_PROJECT_plane,&
+&                         PROJECT_grid,SLICE_E,SLICE_k
  use com,            ONLY:msg,of_open_close
  use QP_CTL_m,       ONLY:QP_apply
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k,INTERP_obj
@@ -44,14 +46,15 @@ subroutine electrons_dos(Xk,Xen)
  !
  ! Work Space
  ! 
- real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E(DOS_E_steps),values(DOS_bands(2)+4),dos_integral(2)
+ real(SP)              :: dos_E(DOS_E_steps),values(DOS_bands(2)+4),dos_integral(2)
  real(SP), external    :: RIntegrate
  real(SP),allocatable,target  :: SPIN_fac_v(:,:,:)
  real(SP),allocatable,target  :: PDOS_fac_v(:,:,:)
  real(SP),pointer, contiguous :: SPIN_fac_p(:,:,:) => null()
  real(SP),pointer, contiguous :: PDOS_fac_p(:,:,:) => null()
+ real(SP),        allocatable :: el_dos(:,:,:)
  !
- integer               :: i_E,i_f,N_files,is,ib,ik,ikbz,IDe,IDf,IDs,IDp
+ integer               :: i_E,i_f,N_files,is,ib,ik,ikbz,IDe,IDf,IDs,IDp,ik_path,n_t
  character(schlen)     :: titles(DOS_bands(2)+4)
  logical               :: l_DbGd,DOS_is_projected
  type(levels)          :: GRID_E
@@ -74,7 +77,13 @@ subroutine electrons_dos(Xk,Xen)
  !
  DOS_is_projected=l_PROJECT_line.or.l_PROJECT_plane
  !
- if (DOS_is_projected) call electrons_dos_project_setup( )
+ if (DOS_is_projected) then
+   call PROJECTION_setup( "DOS", DOS_bands )
+   YAMBO_ALLOC(el_dos,(GRID_k%nbz/PROJECT_grid(2),DOS_E_steps,n_spin))
+ else
+   YAMBO_ALLOC(el_dos,(DOS_E_steps,n_spin,2))
+ endif
+ el_dos=rZERO
  !
  ! DOS on the built-in grid
  !===================================================================
@@ -107,10 +116,9 @@ subroutine electrons_dos(Xk,Xen)
    !
    if (l_PROJECT_atom) call warning(" PDOS and interpolation not yet implemented")
    !
-   N_files=2
-   !
    if (.not.DOS_is_projected) then
      call INTERPOLATION_driver_create_grid(INTERP_grid)
+     N_files=2
    endif
    !
    call INTERPOLATION_driver_seed("E_on_built_in",IDe,DOS_bands,Xk,SEED_E=Xen,NEAREST=.FALSE.)
@@ -169,10 +177,17 @@ subroutine electrons_dos(Xk,Xen)
    enddo
    !
    if (DOS_is_projected) then
-     !
-     call electrons_dos_project( GRID_E, dos_E ) 
-     !
-     return
+     call live_timing('Projecting the DOS',GRID_k%nbz/PROJECT_grid(2))
+     do ik=1,GRID_k%nbz
+       ik_path=PROJECTION_k_on_the_path(ik)
+       if (ik_path==0) cycle
+       SLICE_E%E=GRID_E%E(DOS_bands(1):DOS_bands(2),PROJECT_grid(2)*(ik_path-1)+1:PROJECT_grid(2)*ik_path,:)
+       SLICE_E%f=GRID_E%f(DOS_bands(1):DOS_bands(2),PROJECT_grid(2)*(ik_path-1)+1:PROJECT_grid(2)*ik_path,:)
+       call electrons_dos_elemental(SLICE_k,SLICE_E,DOS_bands,el_dos(ik_path,:,:),dos_E,&
+ &                                  SPIN_fac_p,PDOS_fac_p,USE_the_DbGd=.FALSE.,QUIET=.TRUE.)
+       call live_timing(steps=1)
+     enddo
+     call live_timing( )
      !
    else
      !
@@ -195,18 +210,22 @@ subroutine electrons_dos(Xk,Xen)
    !
  endif
  !
- ! Integrated DOS
- !
- if (n_spin==1) then
-   dos_integral(1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)
-   if (N_files==2) dos_integral(2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps) 
- else
-   dos_integral(1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)+RIntegrate(el_dos(:,2,1),dos_E,DOS_E_steps)
-   if (N_files==2) dos_integral(2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps) + RIntegrate(el_dos(:,2,2),dos_E,DOS_E_steps)
- endif
- call msg("s",'Integrated DOS                    :',dos_integral(1)*DL_vol)
- if (N_files==2) then
-   call msg("s",'                    [interpolated]:',dos_integral(2)*DL_vol)
+ if (.not.DOS_is_projected) then
+   !
+   ! Integrated DOS
+   !
+   if (n_spin==1) then
+     dos_integral(1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)
+     if (N_files==2) dos_integral(2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps) 
+   else
+     dos_integral(1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)+RIntegrate(el_dos(:,2,1),dos_E,DOS_E_steps)
+     if (N_files==2) dos_integral(2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps) + RIntegrate(el_dos(:,2,2),dos_E,DOS_E_steps)
+   endif
+   call msg("s",'Integrated DOS                    :',dos_integral(1)*DL_vol)
+   if (N_files==2) then
+     call msg("s",'                    [interpolated]:',dos_integral(2)*DL_vol)
+   endif
+   !
  endif
  !
  ! Output file(s)
@@ -218,40 +237,55 @@ subroutine electrons_dos(Xk,Xen)
    !
    if (i_f==1) output_fname='el_dos'
    if (i_f==2) output_fname='el_dos_INTERPOLATED'
+   if (DOS_is_projected) output_fname='el_dos_projected_LINE'
    !
    call of_open_close(trim(output_fname),'ot')
-   if (n_spin==1) then
-     titles(1)='E[eV]'
-     titles(2)='DOS'
-     call msg('o dos','#',titles(:2),INDENT=0,USE_TABS=.true.)    
-   else
-     titles(1)='E[eV]'
-     titles(2)='DOS [up]'
-     titles(3)='DOS [dn]'
-     titles(4)='DOS [up+dn]'
-     call msg('o dos','#',titles(:4),INDENT=0,USE_TABS=.true.)    
+   n_t=0
+   if (DOS_is_projected) then
+     n_t=n_t+1
+     titles(n_t)='|k| (a.u.)'
    endif
+   n_t=n_t+1
+   titles(n_t)='E[eV]'
+   if (n_spin==1) then
+     n_t=n_t+1
+     titles(n_t)='DOS'
+   else
+     n_t=n_t+1
+     titles(n_t)='DOS [up]'
+     n_t=n_t+1
+     titles(n_t)='DOS [dn]'
+     n_t=n_t+1
+     titles(n_t)='DOS [up+dn]'
+   endif
+   call msg('o dos','#',titles(:n_t),INDENT=0,USE_TABS=.true.)    
    call msg('o dos',"#")
    !
    ! ...data
    !
-   do i_E=1,DOS_E_steps
-     !
-     if (n_spin==1) call msg('o dos','',(/dos_E(i_E)*HA2EV,el_dos(i_E,1,i_f)/),INDENT=-2,USE_TABS=.true.)
-     if (n_spin==2) call msg('o dos','',(/dos_E(i_E)*HA2EV,el_dos(i_E,:,i_f),  &
-&                                         el_dos(i_E,1,i_f)+el_dos(i_E,2,i_f)/),INDENT=-2,USE_TABS=.true.)
-     !
-   enddo
+   if (DOS_is_projected) then
+     call PROJECTION_plot( "DOS", DOS_E_steps, dos_E, el_dos ) 
+   else
+     do i_E=1,DOS_E_steps
+       if (n_spin==1) call msg('o dos','',(/dos_E(i_E)*HA2EV,el_dos(i_E,1,i_f)/),INDENT=-2,USE_TABS=.true.)
+       if (n_spin==2) call msg('o dos','',(/dos_E(i_E)*HA2EV,el_dos(i_E,:,i_f),  &
+&                                           el_dos(i_E,1,i_f)+el_dos(i_E,2,i_f)/),INDENT=-2,USE_TABS=.true.)
+     enddo
+   endif
    !
    call of_open_close(trim(output_fname))
    !
  enddo
  !
+ !
  ! CLEAN...
  !
  nullify(SPIN_fac_p)
  nullify(PDOS_fac_p)
+ YAMBO_FREE(el_dos)
  YAMBO_FREE(SPIN_fac_v)
  YAMBO_FREE(PDOS_fac_v)
+ call bz_samp_reset(SLICE_k)
+ call E_reset(SLICE_E)
  !
 end subroutine

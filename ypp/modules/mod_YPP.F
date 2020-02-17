@@ -70,6 +70,8 @@ module YPPm
  !
  ! Projection mode
  !
+ type(bz_samp)     :: SLICE_k
+ type(levels)      :: SLICE_E
  character(schlen) :: PROJECT_mode="none" ! ATOM,LINE,PLANE
  character(schlen) :: PROJECT_path="none" 
  integer           :: PROJECT_grid(2)=(/-1,-1/)

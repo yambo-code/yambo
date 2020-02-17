@@ -23,7 +23,7 @@
 !
 subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
- use pars,          ONLY:SP,cZERO
+ use pars,          ONLY:SP,cZERO,schlen
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_ppa,l_elel_corr,l_cohsex
  use com,           ONLY:msg
@@ -37,6 +37,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use R_lattice,     ONLY:bz_samp
  use QP_CTL_m,      ONLY:QP_apply
  use interfaces,    ONLY:OCCUPATIONS_Fermi
+ use stderr,        ONLY:intc
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
 #endif
@@ -58,6 +59,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  real(SP)    :: SC_corr_prev,SC_corr_now
  complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
  integer, external ::  X_dielectric_matrix
+ character(schlen) :: FILE_name
  !
  ! Dyson equation: Newton solver 
  !
@@ -185,7 +187,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
         en%E(ib,ik,is)=qp%E(i1)
      enddo
      !
-     ! Shift the missing bands there is a control in QP_driver to avoid strange QP ranges
+     ! Shift the missing bands 
+     ! Notice that there is a control in QP_driver to avoid strange QP ranges
      !
      lowest_bnd =minval(QP_table(:,1))
      highest_bnd=maxval(QP_table(:,1))
@@ -198,16 +201,18 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
        en%E(ib,:,:)=en%Eo(ib,:,:)+en%E(highest_bnd,:,:)-en%Eo(highest_bnd,:,:)
      enddo
      !
-     ! Find new Fermy energy and occupations
+     ! Find new Fermi Energy
      !
-     call OCCUPATIONS_Fermi(en,k)
+     call OCCUPATIONS_Fermi(en,k,mode="OCCUPATIONS")
      !
-     ! Copy the new quasi-particles in qp
+     ! Write QP on file
      !
-     do i1=1,QP_n_states
-       i_spin=spin(QP_table(i1,:))
-       qp%E(i1)=en%E(QP_table(i1,1),QP_table(i1,3),i_spin)
-     enddo
+     if(l_update_W) then
+        FILE_name='qp_G'//trim(intc(iter))//'W'//trim(intc(iter))
+     else
+        FILE_name='qp_G'//trim(intc(iter))//'W0'
+     endif
+     call QP_of(qp,en,-1,FILE_name)
      !
      if(l_update_W) then
         !
@@ -221,9 +226,9 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
         ! Recalculate W
         !
         current_iq=0
-!        call IO_and_Messaging_switch("SAVE -report")
+        call IO_and_Messaging_switch("-report")
         io_X_err=X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,.true.)
-!        call IO_and_Messaging_switch("RESTORE")
+        call IO_and_Messaging_switch("+report")
         if( io_X_err/=0) call error("Error in the dielectric constant calculation")
         !
      endif

@@ -203,9 +203,9 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
      ! Write QP on file
      !
      if(l_update_W) then
-        FILE_name='qp_G'//trim(intc(iter))//'W0'
-     else
         FILE_name='qp_G'//trim(intc(iter))//'W'//trim(intc(iter))
+     else
+        FILE_name='qp_G'//trim(intc(iter))//'W0'
      endif
      call QP_of(qp,en,-1,FILE_name)
      !

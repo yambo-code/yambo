@@ -31,16 +31,19 @@ subroutine electrons_bands(Xk,Xen)
  ! GRID_E       = interpolated @ GRID_k (if INTERP_grid>0)
  ! CIRCUIT_E_db = eventually read from GS SAVE
  !
- use pars,           ONLY:SP,rZERO
+ use pars,           ONLY:SP,rZERO,schlen
  use units,          ONLY:HA2EV
+ use YPP_interfaces, ONLY:PROJECTION_plot
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
 &                         PtsPath,BANDS_path,n_path_pts,CIRCUIT_made_of_SPECIAL_k,&
-&                         BANDS_from_db
+&                         BANDS_from_db,l_PROJECT_line,l_PROJECT_plane,output_fname,&
+&                         PROJECT_plane_X,PROJECT_plane_Y
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
- use com,            ONLY:msg
+ use stderr,         ONLY:intc
+ use com,            ONLY:msg,of_open_close 
  use parser_m,       ONLY:parser
  use interpolate,    ONLY:electrons_bands_interpolate,GRID_k
  use QP_CTL_m,       ONLY:QP_apply
@@ -54,10 +57,10 @@ subroutine electrons_bands(Xk,Xen)
  ! Work Space
  !
  type(levels)          :: GRID_E,CIRCUIT_E,CIRCUIT_dE
- integer               :: ID_spin,ID_magn,ID_bands(3),IDs(5),nfiles(5),nqnt
+ character(schlen)     :: titles(BANDS_bands(2)+2)
+ integer               :: ID_spin,ID_magn,ID_bands(3),IDs(5),nfiles(5),nqnt,ib
  real(SP)              :: dEf
- logical               :: BANDS_built_in,BANDS_interpolated,GRID_interpolate
- !
+ logical               :: BANDS_built_in,BANDS_interpolated,GRID_interpolate,BANDS_are_projected
  logical, external     :: file_exists
  !
  ! Apply QP corrections
@@ -77,8 +80,13 @@ subroutine electrons_bands(Xk,Xen)
  BANDS_from_db       = trim(CIRCUIT_E_DB_path)/="none"
  BANDS_interpolated  = BANDS_steps>0.or.trim(CIRCUIT_E_DB_path)/="none"
  BANDS_built_in      = BANDS_built_in .and. (.not. BANDS_from_db)
- !
  GRID_interpolate    = all(INTERP_grid>0)
+ if (l_PROJECT_line) then
+   call warning("Line Projection not possible in BANDS mode. Switched off")
+   l_PROJECT_line=.FALSE.
+ endif
+ BANDS_are_projected = l_PROJECT_line.or.l_PROJECT_plane
+ if (BANDS_are_projected) GRID_interpolate=.FALSE.
  !
  call section('+',"Loading special Points for the "//trim(lattice)//" lattice")
  !============================================================================= 
@@ -91,14 +99,18 @@ subroutine electrons_bands(Xk,Xen)
  !
  CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
  !
- if (BANDS_interpolated) then
+ if (BANDS_interpolated.or.BANDS_are_projected) then
    !
    ! Perform the energies interpolation
    !====================================
-   if (.not.GRID_interpolate) call section('=','Interpolation@work: Circuit')
-   if (     GRID_interpolate) call section('=','Interpolation@work: Circuit and Grid')
-   !
-   call k_define_circuit( )
+   if (BANDS_are_projected) then
+     call section('=','Interpolation@work: Projection')
+     call PROJECTION_setup( "BANDS", BANDS_bands )
+  else
+     if (.not.GRID_interpolate) call section('=','Interpolation@work: Circuit')
+     if (     GRID_interpolate) call section('=','Interpolation@work: Circuit and Grid')
+     call k_define_circuit( )
+   endif
    !
    call electrons_bands_interpolate(Xen,Xk,BANDS_bands,ID_bands,CIRCUIT_E,GRID_E=GRID_E,CIRCUIT_dE=CIRCUIT_dE)
    !
@@ -132,6 +144,7 @@ subroutine electrons_bands(Xk,Xen)
  endif
  !
  call section('=','Bands output')
+ !===============================
  !
  IDs=0
  nqnt=1
@@ -145,13 +158,36 @@ subroutine electrons_bands(Xk,Xen)
  endif
  !
  if (BANDS_built_in.and.USER_k%nbz>0     )  call plot_interpolated_values &
- &  (Xk,Xen,dEf,USER_k,   IDs(1:nqnt),Bands_bands,nqnt,nfiles(1:nqnt),"built_in",    "bands")
+&   (Xk,Xen,dEf,USER_k,   IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"built_in",    "bands")
  !
  if (BANDS_interpolated.and.BANDS_from_db)  call plot_interpolated_values &
- &  (Xk,Xen,dEf,CIRCUIT_k,IDs(1:1),   Bands_bands,1,   nfiles(1:1),   "from_DB",     "bands")
+&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:1),   BANDS_bands,1,   nfiles(1:1),   "from_DB",     "bands")
  !
- if(BANDS_interpolated                   ) call plot_interpolated_values &
- &  (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),Bands_bands,nqnt,nfiles(1:nqnt),"interpolated","bands")
+ if(BANDS_interpolated                   )  call plot_interpolated_values &
+&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands")
+ !
+ if (BANDS_are_projected) then 
+   !
+   output_fname='bands_projected_PLANE'
+   call of_open_close(trim(output_fname),'ot')
+   titles(1:2)=(/"K_proj_X","K_proj_Y"/)
+   do ib=BANDS_bands(1),BANDS_bands(2)
+     titles(3+ib-BANDS_bands(1))="b"//trim(intc(ib))//" [eV]"
+   enddo
+   call msg('o bands','#')
+   call msg('o bands','# Plane X versor [cc]:',PROJECT_plane_X,INDENT=0)
+   call msg('o bands','# Plane Y versor [cc]:',PROJECT_plane_Y,INDENT=0)
+   call msg('o bands','#')
+   call msg('o bands','#',titles(:3+BANDS_bands(2)-BANDS_bands(1)),INDENT=0,USE_TABS=.true.)    
+   call msg('o bands','#')
+   !
+   call PROJECTION_plot( "BANDS", 1, BANDS_bands, OBS_B=GRID_E%E ) 
+   !
+   call of_open_close(trim(output_fname))
+   !
+ endif
+ !
+ ! Close & Clean
  !
  call E_reset(GRID_E)
  call E_reset(CIRCUIT_E)

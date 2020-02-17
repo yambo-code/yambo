@@ -23,7 +23,7 @@
 !
 subroutine electrons_driver(Xk,Xen,Xq)
  !
- Use stderr,         ONLY:intc
+ Use stderr,         ONLY:intc,STRING_same
  use wave_func,      ONLY:WF,wf_ng
  use FFT_m,          ONLY:fft_size,fft_dim
  use R_lattice,      ONLY:bz_samp
@@ -53,9 +53,9 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  ! Logicals
  !==========
- l_PROJECT_atom =trim(PROJECT_mode)=="ATOM"
- l_PROJECT_line =trim(PROJECT_mode)=="LINE"
- l_PROJECT_plane=trim(PROJECT_mode)=="PLANE"
+ l_PROJECT_atom =STRING_same(trim(PROJECT_mode),"atom")
+ l_PROJECT_line =STRING_same(trim(PROJECT_mode),"line")
+ l_PROJECT_plane=STRING_same(trim(PROJECT_mode),"plane")
  !
  ! Plotting setup
  !================

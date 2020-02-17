@@ -27,11 +27,12 @@ subroutine PROJECTION_setup( what ,bands )
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use electrons,      ONLY:n_sp_pol,E_reset
- use vec_operate,    ONLY:cross_product,c2a,normalize_v,v_is_zero,k2bz
+ use vec_operate,    ONLY:cross_product,c2a,normalize_v,v_is_zero,k2bz,iku_v_norm
  use com,            ONLY:msg
  use YPPm,           ONLY:PROJECT_mode,PtsPath,PROJECT_path,&
-&                         CIRCUIT_made_of_SPECIAL_k,CIRCUIT_k,PROJECT_grid,n_path_pts,&
-&                         l_PROJECT_line,CIRCUIT_k_label,l_PROJECT_plane,SLICE_k,SLICE_E
+&                         CIRCUIT_made_of_SPECIAL_k,CIRCUIT_k,PROJECT_steps,PROJECT_depth,n_path_pts,&
+&                         l_PROJECT_line,CIRCUIT_k_label,l_PROJECT_plane,SLICE_k,SLICE_E,BANDS_steps,&
+&                         PROJECT_plane_X,PROJECT_plane_Y
  use interpolate,    ONLY:GRID_k
  !
  implicit none
@@ -41,22 +42,30 @@ subroutine PROJECTION_setup( what ,bands )
  !
  ! Work Space
  !
- integer  :: i_k,n_lines,i_l,i_k_line,i_k_versor,Nk_versor_direction,n_versor_ticks
+ integer  :: i_k,n_lines,i_l,i_k_line,i_k_versor,Nk_found,n_versor_ticks,i_p1,i_p2
  real(SP) :: line_vector(10,3),perp_vector(10,3),versor(3),k_trial(3),k_trial_bz(3)
  !
  call section('+',what//' projection:'//trim(PROJECT_mode))
  !
- PtsPath=PROJECT_path
- n_path_pts=PROJECT_grid(1)
- !
- call k_special(.FALSE.)
- !
- CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
- !
- call k_define_circuit( )
+ if (what=="DOS") then
+   !
+   PtsPath=PROJECT_path
+   n_path_pts=PROJECT_steps
+   !
+   call k_special(.FALSE.)
+   !
+   CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
+   !
+   call k_define_circuit( )
+   !
+ else
+   PROJECT_steps=BANDS_steps
+ endif
  !
  call bz_samp_reset(GRID_k)
  GRID_k%description="PROJECT@"//trim(PROJECT_mode)
+ !
+ if (PROJECT_depth<0) PROJECT_depth=1
  !
  ! Find the versor perpendicular to the circuit...
  !================================================
@@ -67,15 +76,17 @@ subroutine PROJECTION_setup( what ,bands )
  K_LOOP: do i_k=1,CIRCUIT_k%nbz-1
    if (len_trim(CIRCUIT_k_label(i_k))>0) then
      i_l=i_l+1
-     line_vector(i_l,:)=normalize_v(CIRCUIT_k%pt(i_k+1,:)-CIRCUIT_k%pt(i_k,:))
-     call c2a(v_in= line_vector(i_l,:),mode='ki2c')
+     line_vector(i_l,:)=CIRCUIT_k%pt(i_k+1,:)-CIRCUIT_k%pt(i_k,:)
+     line_vector(i_l,:)=line_vector(i_l,:)/iku_v_norm( line_vector(i_l,:) )
      if (i_l==n_lines-1) exit K_LOOP
    endif
  enddo K_LOOP
  !
  ! ...perp versors...
  do i_l=1,n_lines-2
+   call c2a(v_in= line_vector(i_l,:),mode='ki2c')
    perp_vector(i_l,:)=normalize_v( cross_product(line_vector(i_l+1,:),line_vector(i_l,:)))
+   call c2a(v_in= line_vector(i_l,:),mode='kc2i')
    if (i_l==1) then
      versor=perp_vector(1,:)
    else
@@ -87,7 +98,6 @@ subroutine PROJECTION_setup( what ,bands )
  !
  !...
  call msg("sr","[PROJECT] Direction [cc]",versor)
- call c2a(v_in= line_vector(i_l,:),mode='kc2i')
  call msg("r", "                   [iku]",versor)
  !
  ! GRID creation
@@ -95,28 +105,24 @@ subroutine PROJECTION_setup( what ,bands )
  !
  if (l_PROJECT_line) then
    !
-   GRID_k%nbz=CIRCUIT_k%nbz*PROJECT_grid(2)
-   GRID_k%nibz=GRID_k%nbz
+   GRID_k%nbz=CIRCUIT_k%nbz*PROJECT_depth
    allocate(GRID_k%pt(GRID_k%nbz,3))
-   allocate(GRID_k%weights(GRID_k%nbz))
    !
    LINE_LOOP: do i_k_line=1,CIRCUIT_k%nbz
-     Nk_versor_direction=1
-     i_k=(i_k_line-1)*PROJECT_grid(2)+1
+     Nk_found=1
+     i_k=(i_k_line-1)*PROJECT_depth+1
      GRID_k%pt(i_k,:)=CIRCUIT_k%pt(i_k_line,:)
-     GRID_k%weights(i_k)=1./float(GRID_k%nbz)
      n_versor_ticks=7
-     do while(Nk_versor_direction<PROJECT_grid(2)) 
+     do while(Nk_found<PROJECT_depth) 
        n_versor_ticks=n_versor_ticks*2
        do i_k_versor=1,n_versor_ticks   
          k_trial=CIRCUIT_k%pt(i_k_line,:)+versor*(2.*float(i_k_versor+1)/float(n_versor_ticks)-1.)
          call k2bz(v_in=k_trial,v_out=k_trial_bz)
          if (.not.v_is_zero(k_trial-k_trial_bz,zero_=k_iku_zero)) cycle
-         Nk_versor_direction=Nk_versor_direction+1
-         i_k=(i_k_line-1)*PROJECT_grid(2)+Nk_versor_direction
+         Nk_found=Nk_found+1
+         i_k=(i_k_line-1)*PROJECT_depth+Nk_found
          GRID_k%pt(i_k,:)=k_trial
-         GRID_k%weights(i_k)=1./float(GRID_k%nbz)
-         if (Nk_versor_direction==PROJECT_grid(2)) then
+         if (Nk_found==PROJECT_depth) then
            cycle LINE_LOOP
          endif
        enddo
@@ -127,22 +133,53 @@ subroutine PROJECTION_setup( what ,bands )
  !
  if (l_PROJECT_plane) then
    !
-   GRID_k%nbz=PROJECT_grid(1)**2*PROJECT_grid(2)
+   GRID_k%nbz=PROJECT_steps**2*PROJECT_depth
+   allocate(GRID_k%pt(GRID_k%nbz,3))
+   !
+   PROJECT_plane_X=line_vector(1,:)
+   PROJECT_plane_Y=line_vector(2,:)
+   call c2a(v_in= PROJECT_plane_X,mode='ki2c')
+   call c2a(v_in= PROJECT_plane_Y,mode='ki2c')
+   !
+   Nk_found=0
+   n_versor_ticks=3
+   PLANE_LOOP: do while(Nk_found<GRID_k%nbz) 
+     n_versor_ticks=n_versor_ticks*2
+     do i_p1=1,n_versor_ticks
+       do i_p2=1,n_versor_ticks
+         !
+         k_trial=line_vector(1,:)*(2.*float(i_p1+1)/float(n_versor_ticks)-1.)+&
+&                line_vector(2,:)*(2.*float(i_p2+1)/float(n_versor_ticks)-1.)
+         !
+         call k2bz(v_in=k_trial,v_out=k_trial_bz)
+         if (.not.v_is_zero(k_trial-k_trial_bz,zero_=k_iku_zero)) cycle
+         Nk_found=Nk_found+1
+         GRID_k%pt(Nk_found,:)=k_trial
+         if (Nk_found==GRID_k%nbz) then
+           exit PLANE_LOOP
+         endif
+       enddo
+     enddo
+   enddo PLANE_LOOP
    !
  endif
+ !
+ allocate(GRID_k%weights(GRID_k%nbz))
+ GRID_k%weights=1./float(GRID_k%nbz)
+ GRID_k%nibz=GRID_k%nbz
  !
  ! Allocation
  !============
  call E_reset(SLICE_E)
  call bz_samp_reset(SLICE_k)
- allocate(SLICE_k%weights(PROJECT_grid(2)))
- allocate(SLICE_k%sstar(PROJECT_grid(2),2))
- allocate(SLICE_E%E(bands(1):bands(2),PROJECT_grid(2),n_sp_pol))
- allocate(SLICE_E%f(bands(1):bands(2),PROJECT_grid(2),n_sp_pol))
- SLICE_k%nibz=PROJECT_grid(2)
- SLICE_k%nbz =PROJECT_grid(2)
- SLICE_k%weights=1./float(PROJECT_grid(2))
- do i_k=1,PROJECT_grid(2)
+ allocate(SLICE_k%weights(PROJECT_depth))
+ allocate(SLICE_k%sstar(PROJECT_depth,2))
+ allocate(SLICE_E%E(bands(1):bands(2),PROJECT_depth,n_sp_pol))
+ allocate(SLICE_E%f(bands(1):bands(2),PROJECT_depth,n_sp_pol))
+ SLICE_k%nibz=PROJECT_depth
+ SLICE_k%nbz =PROJECT_depth
+ SLICE_k%weights=1./float(PROJECT_depth)
+ do i_k=1,PROJECT_depth
    SLICE_k%sstar(i_k,1)=i_k
  enddo
  !

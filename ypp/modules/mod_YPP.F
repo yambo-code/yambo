@@ -74,8 +74,11 @@ module YPPm
  type(levels)      :: SLICE_E
  character(schlen) :: PROJECT_mode="none" ! ATOM,LINE,PLANE
  character(schlen) :: PROJECT_path="none" 
- integer           :: PROJECT_grid(2)=(/-1,-1/)
+ integer           :: PROJECT_steps=-1
+ integer           :: PROJECT_depth=-1
  real(SP)          :: PROJECT_threshold=5.
+ real(SP)          :: PROJECT_plane_X(3)
+ real(SP)          :: PROJECT_plane_Y(3)
  logical           :: l_PROJECT_atom
  logical           :: l_PROJECT_line
  logical           :: l_PROJECT_plane

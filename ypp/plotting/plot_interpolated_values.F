@@ -140,15 +140,6 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    file_name(ifile+3)="magnetization_x_"//trim(basename)
    file_name(ifile+4)="magnetization_y_"//trim(basename)
    file_name(ifile+5)="magnetization_z_"//trim(basename)
-   ! TMP coding for back compatibility <
-   if(PLOT_interpolated.and.PLOT_BANDS) then
-     file_name(ifile+1)="spin_factors_UP"
-     file_name(ifile+2)="spin_factors_DN"
-     file_name(ifile+3)="magnetization_x"
-     file_name(ifile+4)="magnetization_y"
-     file_name(ifile+5)="magnetization_z"
-   endif
-   ! TMP coding for back compatibility >
    ifile=ifile+5
  endif
  !

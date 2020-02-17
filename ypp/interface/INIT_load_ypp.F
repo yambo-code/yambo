@@ -37,7 +37,7 @@ subroutine INIT_ypp_load(defs)
 &                        gamma_radius,INTERP_grid,mag_dir,N_path_pts,ncell,ord_dgrid_ipol,p_dir,p_format,PDOS_atoms,&
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
 &                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,w90_fname,wannier_bands,&
-&                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_grid,PROJECT_threshold
+&                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_depth,PROJECT_steps,PROJECT_threshold
 #if defined _YPP_RT
  use YPPm,          ONLY:Nel_fac
  use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
@@ -209,7 +209,8 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'BANDS_path',      'Path points labels (G,M,K,L...). BANDS path and DOS-project plane/projection.',BANDS_path)
  call it(defs,'PROJECT_mode',    'Instruct ypp how to project the DOS. ATOM, LINE, PLANE.',PROJECT_mode)
  call it(defs,'PROJECT_path',    'Project path. PLANE mode: 3 points in the plane. LINE mode: any series of points.',PROJECT_path)
- call it(defs,'PROJECT_grid',    'Project grid. LINE segments/PLANE axis | perpendicular direction divisions.',PROJECT_grid)
+ call it(defs,'PROJECT_steps',    'Project LINE/PLANE-axis steps.',PROJECT_steps)
+ call it(defs,'PROJECT_depth',    'Project perpendicular direction divisions.',PROJECT_depth)
  call it(defs,'PROJECT_threshold','[o/o] Project threshold above which the project DOS is printed.',&
 &        PROJECT_threshold,verb_level=V_general)
  call it('f',defs,'BANDS_built_in', 'Print the bands of the generating points of the circuit using the nearest internal point')

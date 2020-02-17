@@ -25,7 +25,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  !
  use pars,           ONLY:SP
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,CIRCUIT_k,BANDS_from_db,&
-&                         CIRCUIT_E_db
+&                         CIRCUIT_E_db,l_PROJECT_plane
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k
@@ -57,9 +57,9 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  ! 1: interpolate on the circuit      if (BANDS_steps>0)
  ! 2: interpolate on the regular grid if (interp_grid>0)
  !
- if(all(INTERP_grid>0)) then
+ if(all(INTERP_grid>0).or.l_PROJECT_plane) then
    !
-   call INTERPOLATION_driver_create_grid(INTERP_grid)
+   if (.not.l_PROJECT_plane) call INTERPOLATION_driver_create_grid(INTERP_grid)
    call INTERPOLATION_driver_seed("E_INTERP_grid",ID_bands(1),BANDS_range,Xk,SEED_E=Xen,NEAREST=.FALSE.)
    call INTERPOLATION_driver_do("E_INTERP_grid",ID_bands(1),GRID_k,OUT_E=GRID_E)
    !

@@ -55,18 +55,30 @@ module YPP_interfaces
      type(EXCITON_spin),optional  :: EXC_spin
    end subroutine
    !
+subroutine PROJECTION_plot( what, N , bands, W, TIME, OBS_W, OBS_B)
+ use pars,           ONLY:SP
+ use YPPm,           ONLY:PROJECT_depth
+ use interpolate,    ONLY:GRID_k
+ use electrons,      ONLY:n_spin
+ character(*)       :: what
+ integer            :: N,bands(2)
+ real(SP)  ,optional:: W(N),TIME(N)
+ real(SP)  ,optional:: OBS_W(GRID_k%nbz/PROJECT_depth,N,n_spin)
+ real(SP)  ,optional:: OBS_B(bands(1):bands(2),GRID_k%nbz/PROJECT_depth,n_spin)
+   end subroutine
+   !
  end interface
  !
  contains
    !
    integer function PROJECTION_k_on_the_path(ik)
-     use YPPm,          ONLY:PROJECT_grid
+     use YPPm,          ONLY:PROJECT_depth
      integer :: ik
-     if (mod(ik,PROJECT_grid(2))/=1) then
+     if (mod(ik,PROJECT_depth)/=1) then
        PROJECTION_k_on_the_path=0
        return
      endif
-     PROJECTION_k_on_the_path=ik/PROJECT_grid(2)+1
+     PROJECTION_k_on_the_path=ik/PROJECT_depth+1
    end function
    !
 end module YPP_interfaces

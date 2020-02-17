@@ -28,7 +28,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use drivers,       ONLY:l_ppa,l_elel_corr,l_cohsex
  use com,           ONLY:msg
  use DIPOLES,       ONLY:DIPOLE_t
- use X_m,           ONLY:X_t,current_iq
+ use X_m,           ONLY:X_t,current_iq,l_recalculate_X
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,l_update_W,QP_table,&
 &                        QP_n_states,QP_dSc,QP_dSc_delta,QP_n_G_bands,GW_iterations,&
 &                        GWo_SC_done,GWo_iterations,SC_E_threshold,On_Mass_Shell_approx
@@ -228,7 +228,9 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
         !
         current_iq=0
         call IO_and_Messaging_switch("-report")
+        l_recalculate_X=.true.
         io_X_err=X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,.true.)
+        l_recalculate_X=.false.
         call IO_and_Messaging_switch("+report")
         if( io_X_err/=0) call error("Error in the dielectric constant calculation")
         !

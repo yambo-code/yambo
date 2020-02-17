@@ -612,16 +612,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call live_timing()
  !
- ! AM, Sept 2019. The COH potential seems to break (in some case of a large amount) the
- ! energy degenerations. 
- !
- if (.not.l_sc_run.and..not.l_rt_carriers_in_use) then
-   do i_w=1,QP_dSc_steps
-     if (i_w==1) call QP_states_simmetrize(E,what="COHSEX Sc",V_complex=QP_Sc(:,1),warn_me=.TRUE.)
-     if (i_w> 1) call QP_states_simmetrize(E,V_complex=QP_Sc(:,i_w))
-   enddo
- endif
- !
  ! CLEAN
  !
  deallocate(dc)
@@ -649,5 +639,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call timing('GW(REDUX)',OPR='start')
  call PP_redux_wait(QP_Sc)
  call timing('GW(REDUX)',OPR='stop')
+ !
+ ! AM, Sept 2019. The COH potential seems to break (in some case of a large amount) the
+ ! energy degenerations. 
+ !
+ if (.not.l_sc_run.and..not.l_rt_carriers_in_use) then
+   do i_w=1,QP_dSc_steps
+     if (i_w==1) call QP_states_simmetrize(E,what="COHSEX Sc",V_complex=QP_Sc(:,1),warn_me=.TRUE.)
+     if (i_w> 1) call QP_states_simmetrize(E,V_complex=QP_Sc(:,i_w))
+   enddo
+ endif
  !
 end subroutine

@@ -223,7 +223,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
         Xen%E=en%E
         Xen%f=en%f
         !
-        call msg('rs','Updating W...')
+        call msg('s','Updating W...')
         !
         ! Recalculate W
         !

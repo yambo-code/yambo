@@ -386,6 +386,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 ! call it(defs,'CUTwsGvec','[CUT] WS cutoff: number of G to be modified',ws_cutoff,unit=G_unit)
  call it(defs,'CUTwsGvec','[CUT] WS cutoff: number of G to be modified',ws_cutoff)
  call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_RL)
+ call it(defs,'GWIter',     '[GW] GW  self-consistent (evGW)  iterations on eigenvalues',GW_iterations)
+ call it(defs,'GWoIter',    '[GW] GWo self-consistent (evGWo) iterations on eigenvalues',GWo_iterations)
  !
  ! GPL_EXCLUDE_START
  !
@@ -395,8 +397,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! S_xc
  !
- call it(defs,'GWIter',     '[GW] GW  self-consistent (evGW)  iterations on eigenvalues',GW_iterations)
- call it(defs,'GWoIter',    '[GW] GWo self-consistent (evGWo) iterations on eigenvalues',GWo_iterations)
  call it(defs,'GreenFTresh','[GW] [o/o] Treshold to define the new zoomed energy range',QP_G_Zoom_treshold,verb_level=V_qp)
  call it('f',defs,'QPExpand',   '[F GW] The QP corrections are expanded all over the BZ',verb_level=V_qp)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)

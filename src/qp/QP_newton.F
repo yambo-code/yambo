@@ -80,11 +80,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  if(GWo_iterations/=0) SC_iterations=GWo_iterations
  if(GW_iterations /=0) SC_iterations=GW_iterations
  !
- ! GPL_EXCLUDE_START
- !
  do while((iter<=SC_iterations.or.SC_iterations<0).and..not.GWo_SC_done) 
-   !
-   ! GPL_EXCLUDE_END
    !
    if (l_elel_corr) then
      if (l_ppa.or.l_cohsex) then
@@ -171,8 +167,6 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    SC_corr_now= maxval(real(qp%E(:)-qp%E_bare(:)))
    GWo_SC_done=abs( SC_corr_prev-SC_corr_now )<SC_E_threshold.or.iter==SC_iterations
    !
-   ! GPL_EXCLUDE_START
-   !
    if (iter>0) call msg('rs','[SC] Max corrections at prev/current cycle [ev]',&
 &                      (/SC_corr_prev,SC_corr_now/)*HA2EV)
    SC_corr_prev=SC_corr_now
@@ -243,8 +237,6 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    iter=iter+1
    !
  enddo
- !
- ! GPL_EXCLUDE_END
  !
  ! Update GWo_iterations
  !

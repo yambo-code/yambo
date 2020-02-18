@@ -23,11 +23,10 @@
 !
 subroutine PROJECTION_setup( what ,bands )
  !
- use zeros,          ONLY:k_iku_zero
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use electrons,      ONLY:n_sp_pol,E_reset
- use vec_operate,    ONLY:cross_product,c2a,normalize_v,v_is_zero,k2bz,iku_v_norm
+ use vec_operate,    ONLY:cross_product,c2a,normalize_v,v_is_zero,iku_v_norm
  use com,            ONLY:msg
  use YPPm,           ONLY:PROJECT_mode,PtsPath,PROJECT_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,CIRCUIT_k,PROJECT_steps,PROJECT_depth,n_path_pts,&
@@ -42,8 +41,9 @@ subroutine PROJECTION_setup( what ,bands )
  !
  ! Work Space
  !
- integer  :: i_k,n_lines,i_l,i_k_line,i_k_versor,Nk_found,n_versor_ticks,i_p1,i_p2
- real(SP) :: line_vector(10,3),perp_vector(10,3),versor(3),k_trial(3),k_trial_bz(3)
+ integer  :: i_k,n_lines,i_l,i_p1,i_p2
+ real(SP) :: line_vector(10,3),perp_vector(10,3),versor(3),k_trial(3),k_trial_bz(3),O(3)
+ type(bz_samp) :: PLANE_k
  !
  call section('+',what//' projection:'//trim(PROJECT_mode))
  !
@@ -103,64 +103,28 @@ subroutine PROJECTION_setup( what ,bands )
  ! GRID creation
  !===============
  !
- if (l_PROJECT_line) then
-   !
-   GRID_k%nbz=CIRCUIT_k%nbz*PROJECT_depth
-   allocate(GRID_k%pt(GRID_k%nbz,3))
-   !
-   LINE_LOOP: do i_k_line=1,CIRCUIT_k%nbz
-     Nk_found=1
-     i_k=(i_k_line-1)*PROJECT_depth+1
-     GRID_k%pt(i_k,:)=CIRCUIT_k%pt(i_k_line,:)
-     n_versor_ticks=7
-     do while(Nk_found<PROJECT_depth) 
-       n_versor_ticks=n_versor_ticks*2
-       do i_k_versor=1,n_versor_ticks   
-         k_trial=CIRCUIT_k%pt(i_k_line,:)+versor*(2.*float(i_k_versor+1)/float(n_versor_ticks)-1.)
-         call k2bz(v_in=k_trial,v_out=k_trial_bz)
-         if (.not.v_is_zero(k_trial-k_trial_bz,zero_=k_iku_zero)) cycle
-         Nk_found=Nk_found+1
-         i_k=(i_k_line-1)*PROJECT_depth+Nk_found
-         GRID_k%pt(i_k,:)=k_trial
-         if (Nk_found==PROJECT_depth) then
-           cycle LINE_LOOP
-         endif
-       enddo
-     enddo
-   enddo LINE_LOOP
-   !
- endif
+ if (l_PROJECT_line) call PROJECTION_perpendicular_sampling(CIRCUIT_k,versor)
  !
  if (l_PROJECT_plane) then
    !
-   GRID_k%nbz=PROJECT_steps**2*PROJECT_depth
-   allocate(GRID_k%pt(GRID_k%nbz,3))
-   !
+   O=CIRCUIT_k%pt(PROJECT_steps+1,:)
    PROJECT_plane_X=line_vector(1,:)
    PROJECT_plane_Y=line_vector(2,:)
    call c2a(v_in= PROJECT_plane_X,mode='ki2c')
    call c2a(v_in= PROJECT_plane_Y,mode='ki2c')
    !
-   Nk_found=0
-   n_versor_ticks=3
-   PLANE_LOOP: do while(Nk_found<GRID_k%nbz) 
-     n_versor_ticks=n_versor_ticks*2
-     do i_p1=1,n_versor_ticks
-       do i_p2=1,n_versor_ticks
-         !
-         k_trial=line_vector(1,:)*(2.*float(i_p1+1)/float(n_versor_ticks)-1.)+&
-&                line_vector(2,:)*(2.*float(i_p2+1)/float(n_versor_ticks)-1.)
-         !
-         call k2bz(v_in=k_trial,v_out=k_trial_bz)
-         if (.not.v_is_zero(k_trial-k_trial_bz,zero_=k_iku_zero)) cycle
-         Nk_found=Nk_found+1
-         GRID_k%pt(Nk_found,:)=k_trial
-         if (Nk_found==GRID_k%nbz) then
-           exit PLANE_LOOP
-         endif
-       enddo
+   allocate(PLANE_k%pt((PROJECT_steps+1)**2,3))
+   PLANE_k%nbz=0
+   !
+   do i_p1=1,PROJECT_steps+1
+     do i_p2=PROJECT_steps+1,2*PROJECT_steps+1
+       k_trial=CIRCUIT_k%pt(i_p1,:)+CIRCUIT_k%pt(i_p2,:)-O
+       PLANE_k%nbz=PLANE_k%nbz+1
+       PLANE_k%pt(PLANE_k%nbz,:)=k_trial
      enddo
-   enddo PLANE_LOOP
+   enddo
+   !
+   call PROJECTION_perpendicular_sampling(PLANE_k,versor)
    !
  endif
  !

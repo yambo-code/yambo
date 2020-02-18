@@ -30,7 +30,7 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_W, OBS_B)
  use LIVE_t,         ONLY:live_timing
  use YPP_interfaces, ONLY:PROJECTION_k_on_the_path
  use YPPm,           ONLY:PROJECT_depth,l_PROJECT_line,CIRCUIT_k_label,PROJECT_threshold,&
-&                         l_PROJECT_plane,PROJECT_plane_X,PROJECT_plane_Y
+&                         l_PROJECT_plane,PROJECT_plane_X,PROJECT_plane_Y,PROJECT_steps
  use interpolate,    ONLY:GRID_k
  use electrons,      ONLY:n_spin
  use stderr,         ONLY:set_real_printed_length
@@ -47,7 +47,7 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_W, OBS_B)
  !
  character(lchlen)  :: of_string
  character(schlen)  :: of_name
- integer       :: ik,i_W,is,ik_path,of_unit
+ integer       :: ik,i_W,is,ik_path,of_unit,i_p1,i_p2
  real(SP)      :: O(3),k(3),kdist(GRID_k%nbz),max_OBS,projection(2)
  integer         ,external   :: find_the_unit
  !
@@ -122,16 +122,28 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_W, OBS_B)
    !
    of_unit=find_the_unit(trim(of_name))
    !
-   do ik=1,GRID_k%nbz/PROJECT_depth
+   ik=0
+   do i_p1=1,PROJECT_steps+1
+     do i_p2=1,PROJECT_steps+1
+       ik=ik+1
+       !
+       k=GRID_k%pt(ik,:)
+       call c2a(v_in=k,mode='ki2c')
+       projection(1)=dot_product(k,PROJECT_plane_X)
+       projection(2)=dot_product(k,PROJECT_plane_Y)
+       !
+       call msg('o '//trim(of_name),'',(/projection,OBS_B(bands(1):bands(2),ik,1)*HA2EV/),INDENT=-2,USE_TABS=.true.,&
+&               formatted_msg=of_string)
+       ik_path=0
+       if (i_p1==1              .and.i_p2==1              ) ik_path=1
+       if (i_p1==PROJECT_steps+1.and.i_p2==1              ) ik_path=PROJECT_steps+1
+       if (i_p1==PROJECT_steps+1.and.i_p2==PROJECT_steps+1) ik_path=2*PROJECT_steps+1
+       if (ik_path>0) of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik_path))//"]"
+       call msg_deliver_fast(of_unit,of_string)
+       !
+     enddo
      !
-     k=GRID_k%pt(ik,:)
-     call c2a(v_in=k,mode='ki2c')
-     projection(1)=dot_product(k,PROJECT_plane_X)
-     projection(2)=dot_product(k,PROJECT_plane_Y)
-     !
-     call msg('o '//trim(of_name),'',(/projection,OBS_B(bands(1):bands(2),ik,1)*HA2EV/),INDENT=-2,USE_TABS=.true.,&
-&             formatted_msg=of_string)
-     call msg_deliver_fast(of_unit,trim(of_string))
+     call msg('o '//trim(of_name)," ")
      !
    enddo
    !

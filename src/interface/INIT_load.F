@@ -67,8 +67,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use hamiltonian,   ONLY:H_ref_bands,H_potential
  use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands
 #endif
+ use QP_m,          ONLY:SC_E_threshold
 #if defined _SC
- use QP_m,          ONLY:SC_band_mixing,SC_E_threshold
+ use QP_m,          ONLY:SC_band_mixing
  use SC,            ONLY:SC_iterations,SC_up_W_iters,&
 &                        SC_rho_threshold,SC_cycle_mixing,&
 &                        SC_bands,SC_preconditioning,OEP_approx
@@ -646,7 +647,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call TMP_mirror_bands( )
  !
  call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
- call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
  call it(defs,'SC_precondition','[SC] Kind of preconditionin: thomas-fermi, simple, none',SC_preconditioning,verb_level=V_sc)
  call it(defs,'SCUpWIter', "[SC] Update W(q,G,G') every SCUpWIter iteractions",SC_up_W_iters,verb_level=V_qp) 
@@ -662,6 +662,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
 #endif
  ! 
+ call it(defs,'SCEtresh',  '[SC] Energy convergence threshold for SC-GW',SC_E_threshold,unit=E_unit,verb_level=V_qp)
+ !
 #if defined _SC || defined _RT || defined _QED
  !
  ! SC and RT common

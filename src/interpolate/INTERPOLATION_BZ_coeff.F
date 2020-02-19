@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
+subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  ! Interpolation scheme (PRB 38 p2721)
  ! Aug2002 Georg Madsen : First version based on subroutine from D.Singh
@@ -43,7 +43,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
 #include<memory.h>
  !
  integer,       intent(in)  :: nvalues
- integer,       intent(in)  :: Nk,ID_obj
+ integer,       intent(in)  :: Nk,ID
  type(bz_samp), intent(in)  :: Xk
  real(SP),      intent(in)  :: VALUEs(nvalues,Nk)
  complex(DP),   intent(out) :: engre(nshells,nvalues)
@@ -98,7 +98,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  h_mat =cZERO
  star_1=cZERO
  !
- if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation star",nshells-1)
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation@"//trim(INTERP_obj(ID)%what)//" star",nshells-1)
  !
  do i1=2,nshells
    call make_star(lattice_vectors(:,i1),nsym,int_sop,nstar,star_vec) 
@@ -125,11 +125,11 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  !
  Npx=(Nkm1*(Nkm1+1))/2
  if (INTERPOLATE_is_serial) then
-   if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation H",Npx(1))
+   if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation@"//trim(INTERP_obj(ID)%what)//" H",Npx(1))
  else
    call PP_indexes_reset(px)
    call PARALLEL_index(px,Npx)
-   if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation H",px%n_of_elements(myid+1))
+   if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation@"//trim(INTERP_obj(ID)%what)//" H",px%n_of_elements(myid+1))
  endif
  !
  do ik=1,Nkm1
@@ -222,7 +222,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
    !
    YAMBO_ALLOC(new_VALUEs,(nvalues,Nk))
    !
-   call INTERPOLATION_fourier(Xk,new_VALUEs,engre,nvalues,Nk)
+   call INTERPOLATION_fourier(Xk,new_VALUEs,engre,nvalues,Nk,ID)
    !
    max_err=0._SP
    ave_err=0._SP
@@ -239,7 +239,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
    ave_err=ave_err/real(nvalues*Nk)
    rel_ave_err=rel_ave_err/real(nvalues*Nk)
    !
-   write(dump_ch,'(a,3es16.8)') '[INTERPOLATION@'//trim(INTERP_obj(ID_obj)%what)//&
+   write(dump_ch,'(a,3es16.8)') '[INTERPOLATION@'//trim(INTERP_obj(ID)%what)//&
 &                               '] Errors: Max, Avg, Avg_rel = ',max_err,ave_err,rel_ave_err
    call msg('s',dump_ch)
    !

@@ -30,7 +30,7 @@ subroutine electrons_dos(Xk,Xen)
  use pointers,       ONLY:linkM2M
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol,E_reset
  use LIVE_t,         ONLY:live_timing
- use YPP_interfaces, ONLY:electrons_dos_elemental,PROJECTION_k_on_the_path,PROJECTION_plot
+ use YPP_interfaces, ONLY:electrons_dos_elemental,PROJECTION_k_on_the_path,PROJECTION_plot,PROJECTION_setup
  use YPPm,           ONLY:output_fname,DOS_bands,DOS_E_steps,K_transform,&
 &                         INTERP_grid,l_PROJECT_atom,l_PROJECT_line,l_PROJECT_plane,&
 &                         PROJECT_depth,SLICE_E,SLICE_k
@@ -56,7 +56,7 @@ subroutine electrons_dos(Xk,Xen)
  !
  integer               :: i_E,i_f,N_files,is,ib,ik,ikbz,IDe,IDf,IDs,IDp,ik_path,n_t
  character(schlen)     :: titles(DOS_bands(2)+4)
- logical               :: l_DbGd,DOS_is_projected
+ logical               :: l_DbGd
  type(levels)          :: GRID_E
  !
  call section('*','Electronic DOS')
@@ -80,9 +80,7 @@ subroutine electrons_dos(Xk,Xen)
    l_PROJECT_plane=.FALSE.
  endif
  !
- DOS_is_projected=l_PROJECT_line.or.l_PROJECT_plane
- !
- if (DOS_is_projected) then
+ if (l_PROJECT_line) then
    call PROJECTION_setup( "DOS", DOS_bands )
    YAMBO_ALLOC(el_dos,(GRID_k%nbz/PROJECT_depth,DOS_E_steps,n_spin))
  else
@@ -107,7 +105,7 @@ subroutine electrons_dos(Xk,Xen)
    SPIN_fac_p(DOS_bands(1):DOS_bands(2),1:Xk%nibz,1:n_spinor) => SPIN_fac_v
  endif
  !
- if (.not.DOS_is_projected) then
+ if (.not.l_PROJECT_line) then
    call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,&
 &                               SPIN_fac_p,PDOS_fac_p,USE_the_DbGd=l_DbGD)
  endif
@@ -117,11 +115,11 @@ subroutine electrons_dos(Xk,Xen)
  !===================================================================
  N_files=1
  !
- if (all(INTERP_grid>0).or.DOS_is_projected) then
+ if (all(INTERP_grid>0).or.l_PROJECT_line) then
    !
    if (l_PROJECT_atom) call warning(" PDOS and interpolation not yet implemented")
    !
-   if (.not.DOS_is_projected) then
+   if (.not.l_PROJECT_line) then
      call INTERPOLATION_driver_create_grid(INTERP_grid)
      N_files=2
    endif
@@ -170,8 +168,8 @@ subroutine electrons_dos(Xk,Xen)
        if (allocated(GRID_k%ptbz)) values(2:4)=GRID_k%ptbz(ikbz,:)
        if (allocated(GRID_k%pt))   values(2:4)=GRID_k%pt(ikbz,:)
        call K_transform(values(2:4),"iku")
-       if (.not.DOS_is_projected) ik=GRID_k%sstar(ikbz,1)
-       if (     DOS_is_projected) ik=ikbz
+       if (.not.l_PROJECT_line) ik=GRID_k%sstar(ikbz,1)
+       if (     l_PROJECT_line) ik=ikbz
        values(1)=real(ik,SP)
        values(1+4:DOS_bands(2)-DOS_bands(1)+5)=GRID_E%E(DOS_bands(1):DOS_bands(2),ik,is)*HA2EV
        call msg('o grid',' ',values(:DOS_bands(2)-DOS_bands(1)+5),INDENT=0,USE_TABS=.true.)
@@ -181,7 +179,7 @@ subroutine electrons_dos(Xk,Xen)
      !
    enddo
    !
-   if (DOS_is_projected) then
+   if (l_PROJECT_line) then
      call live_timing('Projecting the DOS',GRID_k%nbz/PROJECT_depth)
      do ik=1,GRID_k%nbz
        ik_path=PROJECTION_k_on_the_path(ik)
@@ -215,7 +213,7 @@ subroutine electrons_dos(Xk,Xen)
    !
  endif
  !
- if (.not.DOS_is_projected) then
+ if (.not.l_PROJECT_line) then
    !
    ! Integrated DOS
    !
@@ -242,11 +240,11 @@ subroutine electrons_dos(Xk,Xen)
    !
    if (i_f==1) output_fname='el_dos'
    if (i_f==2) output_fname='el_dos_INTERPOLATED'
-   if (DOS_is_projected) output_fname='el_dos_projected_LINE'
+   if (l_PROJECT_line) output_fname='el_dos_projected_LINE'
    !
    call of_open_close(trim(output_fname),'ot')
    n_t=0
-   if (DOS_is_projected) then
+   if (l_PROJECT_line) then
      n_t=n_t+1
      titles(n_t)='|k| (a.u.)'
    endif
@@ -268,7 +266,7 @@ subroutine electrons_dos(Xk,Xen)
    !
    ! ...data
    !
-   if (DOS_is_projected) then
+   if (l_PROJECT_line) then
      call PROJECTION_plot( "DOS", DOS_E_steps, DOS_bands, W=dos_E, OBS_W=el_dos ) 
    else
      do i_E=1,DOS_E_steps

@@ -151,7 +151,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
 #endif
  !
- ! ATOMIC PROJETIONS pwscf
+ ! ATOMIC PROJECTIONS pwscf
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_err=io_ATMPROJ_pwscf(ID)
@@ -622,10 +622,12 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    l_flag=l_RT_time.and.l_RT_occupations
    if (l_flag)           call initactivate(1,"OCCgroup")
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
+   if (l_RT_occupations.or.l_RT_lifetimes) then
+     call initactivate(1,"PROJECT_mode PROJECT_depth PROJECT_threshold")
+   endif
    if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
    if (l_RT_dos)  then
      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc NoOcc")
-     call initactivate(1,"PROJECT_mode PROJECT_steps PROJECT_depth PROJECT_threshold")
      call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
      call initactivate(1,"INTERP_mode INTERP_Grid INTERP_Shell_Fac INTERP_NofNN")
      call INIT_QP_ctl_switch('G')

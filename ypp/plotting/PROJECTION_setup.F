@@ -24,6 +24,7 @@
 subroutine PROJECTION_setup( what ,bands )
  !
  use pars,           ONLY:SP
+ use stderr,         ONLY:STRING_same
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use electrons,      ONLY:n_sp_pol,E_reset
  use vec_operate,    ONLY:cross_product,c2a,normalize_v,v_is_zero,iku_v_norm
@@ -31,13 +32,13 @@ subroutine PROJECTION_setup( what ,bands )
  use YPPm,           ONLY:PROJECT_mode,PtsPath,PROJECT_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,CIRCUIT_k,PROJECT_steps,PROJECT_depth,n_path_pts,&
 &                         l_PROJECT_line,CIRCUIT_k_label,l_PROJECT_plane,SLICE_k,SLICE_E,BANDS_steps,&
-&                         PROJECT_plane_X,PROJECT_plane_Y
+&                         PROJECT_plane_X,PROJECT_plane_Y,l_PROJECT_atom
  use interpolate,    ONLY:GRID_k
  !
  implicit none
  !
- character(*) :: what
- integer      :: bands(2)
+ character(*)      :: what
+ integer, optional :: bands(2)
  !
  ! Work Space
  !
@@ -45,7 +46,14 @@ subroutine PROJECTION_setup( what ,bands )
  real(SP) :: line_vector(10,3),perp_vector(10,3),versor(3),k_trial(3),k_trial_bz(3),O(3)
  type(bz_samp) :: PLANE_k
  !
- call section('+',what//' projection:'//trim(PROJECT_mode))
+ if (what=="setup") then
+   l_PROJECT_atom =STRING_same(trim(PROJECT_mode),"atom")
+   l_PROJECT_line =STRING_same(trim(PROJECT_mode),"line")
+   l_PROJECT_plane=STRING_same(trim(PROJECT_mode),"plane")
+   return
+ endif
+ !
+ call section('p',what//' projection:'//trim(PROJECT_mode))
  !
  if (what=="DOS") then
    !

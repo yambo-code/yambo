@@ -44,13 +44,13 @@ subroutine INTERPOLATION_BZ(R1D,R2D,C1D,C2D,E,K,ID)
  if(interpls(ID)%ndim==0) call error("Interpolation coefficients not present!")
  !
  if(interpls(ID)%interp_type==REAL1D.and.present(R1D)) then
-   call INTERPOLATION_fourier(K,R1D,interpls(ID)%engre,interpls(ID)%ndim,K%nibz)
+   call INTERPOLATION_fourier(K,R1D,interpls(ID)%engre,interpls(ID)%ndim,K%nibz,ID)
    return
  endif
  !
  YAMBO_ALLOC(RDATA,(interpls(ID)%ndim,K%nibz))
  !
- call INTERPOLATION_fourier(K,RDATA,interpls(ID)%engre,interpls(ID)%ndim,K%nibz)
+ call INTERPOLATION_fourier(K,RDATA,interpls(ID)%engre,interpls(ID)%ndim,K%nibz,ID)
  !
  call timing('INTERPOLATE bz',OPR='start')
  !

@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,Nk)
+subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,Nk,ID)
  !
  use pars,              ONLY:SP,pi,cI,cZERO,DP,rZERO
- use interpolate,       ONLY:nshells,lattice_vectors,int_sop,INTERPOLATE_is_serial,INTERPOLATE_is_quiet
+ use interpolate,       ONLY:nshells,lattice_vectors,int_sop,INTERPOLATE_is_serial,INTERPOLATE_is_quiet,INTERP_obj
  use interpolate_tools, ONLY:make_star
  use interfaces,        ONLY:PARALLEL_index
  use R_lattice,         ONLY:bz_samp
@@ -37,7 +37,7 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,Nk)
 #include<memory.h>
  !
  integer,intent(in)        :: nvalues
- integer,intent(in)        :: Nk
+ integer,intent(in)        :: Nk,ID
  type(bz_samp), intent(in) :: K
  real(SP), intent(out)     :: VALUES(nvalues,Nk)
  real(SP), parameter       :: twopi=2._SP*pi
@@ -61,7 +61,7 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,Nk)
    call PP_indexes_reset(px)
    call PARALLEL_index(px,(/Nk/))
  endif
- if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation Fourier",nshells)
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolate@"//trim(INTERP_obj(ID)%what)//" Fourier",nshells)
  star=cZERO
  do i1=1,nshells
    call make_star(lattice_vectors(:,i1),nsym,int_sop,nstar,star_vec)  

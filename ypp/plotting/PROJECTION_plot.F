@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_W, OBS_B)
+subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
  !
  use pars,           ONLY:SP,lchlen,schlen
  use vec_operate,    ONLY:c2a,v_norm
- use units,          ONLY:HA2EV
+ use units,          ONLY:HA2EV,AUT2FS
  use com,            ONLY:msg
  use LIVE_t,         ONLY:live_timing
  use YPP_interfaces, ONLY:PROJECTION_k_on_the_path
@@ -40,24 +40,30 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_W, OBS_B)
  character(*)       :: what
  integer            :: N,bands(2)
  real(SP)  ,optional:: W(N),TIME(N)
- real(SP)  ,optional:: OBS_W(GRID_k%nbz/PROJECT_depth,N,n_spin)
+ real(SP)  ,optional:: OBS_K(GRID_k%nbz/PROJECT_depth,N,n_spin)
  real(SP)  ,optional:: OBS_B(bands(1):bands(2),GRID_k%nbz/PROJECT_depth,n_spin)
  !
  ! Work Space
  !
  character(lchlen)  :: of_string
  character(schlen)  :: of_name
- integer       :: ik,i_W,is,ik_path,of_unit,i_p1,i_p2
- real(SP)      :: O(3),k(3),kdist(GRID_k%nbz),max_OBS,projection(2)
- integer         ,external   :: find_the_unit
+ integer            :: ik,i_N,is,ik_path,of_unit,i_p1,i_p2
+ real(SP)           :: O(3),k(3),kdist(GRID_k%nbz),max_OBS,projection(2),W_or_T
+ logical            :: label_printed
+ integer ,external  :: find_the_unit
  !
  ! Allocation
  !============
  !
  call set_real_printed_length(f_length=10,g_length=10)
  !
- if (what=="DOS"  ) of_name="dos"
- if (what=="BANDS") of_name="bands_projected"
+ if (what=="DOS"  ) then
+   of_name="dos"
+ else if (what=="BANDS") then
+   of_name="bands_projected"
+ else
+   of_name=what
+ endif
  !
  if (l_PROJECT_line) then
    !================
@@ -82,25 +88,37 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_W, OBS_B)
    !
    of_unit=find_the_unit(trim(of_name))
    !
-   max_OBS=maxval(OBS_W)
+   max_OBS=maxval(OBS_K)
    !
    do ik=1,GRID_k%nbz
      !
      ik_path=PROJECTION_k_on_the_path(ik)
      if (ik_path==0) cycle
      !
-     do i_W=1,N
+     label_printed=.FALSE.
+     !
+     do i_N=1,N
        !
-       if (.not.any((/OBS_W(ik_path,i_W,:)> max_OBS*PROJECT_threshold/100./))) cycle
+       if (present(W)) then
+         W_or_T=W(i_N)*HA2EV
+         if (.not.any((/OBS_K(ik_path,i_N,:)> max_OBS*PROJECT_threshold/100./))) cycle
+       else
+         W_or_T=TIME(i_N)*AUT2FS
+       endif
        !
        if (n_spin==1) then
-         call msg('o '//trim(of_name),'',(/kdist(ik_path),W(i_W)*HA2EV,OBS_W(ik_path,i_W,1)/),INDENT=-2,USE_TABS=.true.,&
+         call msg('o '//trim(of_name),'',(/kdist(ik_path),W_or_T,OBS_K(ik_path,i_N,1)/),INDENT=-2,USE_TABS=.true.,&
 &                 formatted_msg=of_string)
        else if (n_spin==2) then
-         call msg('o '//trim(of_name),'',(/kdist(ik_path),W(i_W)*HA2EV,OBS_W(ik_path,i_W,:),  &
-&                             OBS_W(ik_path,i_W,1)+OBS_W(ik_path,i_W,2)/),INDENT=-2,USE_TABS=.true.,formatted_msg=of_string)
+         call msg('o '//trim(of_name),'',(/kdist(ik_path),W_or_T,OBS_K(ik_path,i_N,:),  &
+&                             OBS_K(ik_path,i_N,1)+OBS_K(ik_path,i_N,2)/),INDENT=-2,USE_TABS=.true.,formatted_msg=of_string)
        endif
-       if (len_trim(CIRCUIT_k_label(ik_path))>0) of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik_path))//"]"
+       !
+       if (len_trim(CIRCUIT_k_label(ik_path))>0) then
+         if (.not.label_printed) of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik_path))//"]"
+         label_printed=.TRUE.
+       endif
+       !
        call msg_deliver_fast(of_unit,of_string)
        !
      enddo

@@ -31,19 +31,17 @@ subroutine electrons_bands(Xk,Xen)
  ! GRID_E       = interpolated @ GRID_k (if INTERP_grid>0)
  ! CIRCUIT_E_db = eventually read from GS SAVE
  !
- use pars,           ONLY:SP,rZERO,schlen
+ use pars,           ONLY:SP,rZERO
  use units,          ONLY:HA2EV
  use YPP_interfaces, ONLY:PROJECTION_plot,PROJECTION_setup
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
 &                         PtsPath,BANDS_path,n_path_pts,CIRCUIT_made_of_SPECIAL_k,&
-&                         BANDS_from_db,l_PROJECT_line,l_PROJECT_plane,output_fname,&
-&                         PROJECT_plane_X,PROJECT_plane_Y
+&                         BANDS_from_db,l_PROJECT_line,l_PROJECT_plane
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
- use stderr,         ONLY:intc
- use com,            ONLY:msg,of_open_close 
+ use com,            ONLY:msg 
  use parser_m,       ONLY:parser
  use interpolate,    ONLY:electrons_bands_interpolate,GRID_k
  use QP_CTL_m,       ONLY:QP_apply
@@ -57,7 +55,6 @@ subroutine electrons_bands(Xk,Xen)
  ! Work Space
  !
  type(levels)          :: GRID_E,CIRCUIT_E,CIRCUIT_dE
- character(schlen)     :: titles(BANDS_bands(2)+2)
  integer               :: ID_spin,ID_magn,ID_bands(3),IDs(5),nfiles(5),nqnt,ib
  real(SP)              :: dEf
  logical               :: BANDS_built_in,BANDS_interpolated,GRID_interpolate
@@ -165,26 +162,7 @@ subroutine electrons_bands(Xk,Xen)
  if(BANDS_interpolated                   )  call plot_interpolated_values &
 &   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands")
  !
- if (l_PROJECT_plane) then 
-   !
-   output_fname='bands_projected_PLANE'
-   call of_open_close(trim(output_fname),'ot')
-   titles(1:2)=(/"K_proj_X","K_proj_Y"/)
-   do ib=BANDS_bands(1),BANDS_bands(2)
-     titles(3+ib-BANDS_bands(1))="b"//trim(intc(ib))//" [eV]"
-   enddo
-   call msg('o bands','#')
-   call msg('o bands','# Plane X versor [cc]:',PROJECT_plane_X,INDENT=0)
-   call msg('o bands','# Plane Y versor [cc]:',PROJECT_plane_Y,INDENT=0)
-   call msg('o bands','#')
-   call msg('o bands','#',titles(:3+BANDS_bands(2)-BANDS_bands(1)),INDENT=0,USE_TABS=.true.)    
-   call msg('o bands','#')
-   !
-   call PROJECTION_plot( "BANDS", 1, BANDS_bands, OBS_B=GRID_E%E ) 
-   !
-   call of_open_close(trim(output_fname))
-   !
- endif
+ if (l_PROJECT_plane) call PROJECTION_plot( "BANDS", 1, BANDS_bands, OBS_B=GRID_E%E ) 
  !
  ! Close & Clean
  !

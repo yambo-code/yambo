@@ -34,7 +34,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
 &                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,&
 &                         CIRCUIT_E_db,CIRCUIT_k_label,l_PROJECT_line,l_PROJECT_plane,PROJECT_depth
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
- use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_k_on_the_path,PROJECTION_plot
+ use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_k_on_the_path_or_plane,PROJECTION_plot
  use stderr,         ONLY:real2ch,intc
  use vec_operate,    ONLY:iku_v_norm
  use RT_control,     ONLY:RT_apply,RT_carriers_object,RT_carriers_to_RT_k,RT_carriers_to_RT_E
@@ -61,7 +61,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation
  character(lchlen)     :: of_string
  logical               :: l_normalize_Nel,WARN_negative_electrons_df,WARN_positive_holes_df,is_PROJECTED
- integer               :: ib,ik,i_RT,i_T,n_values,ID_circuit,ID_spin,ID_magn,ID_bands(3),ID_grid,ik_path,i_file
+ integer               :: ib,ik,i_RT,i_T,n_values,ID_circuit,ID_spin,ID_magn,ID_bands(3),ID_grid,ik_path
  logical, external     :: file_exists
  !
  call section('*','Interpolation tool')
@@ -154,14 +154,19 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  ! ... parallel setup
  !
  call IO_and_Messaging_switch("SAVE +output",CONDITION=.TRUE.)
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/n_T_steps/))
- call PP_redux_wait
- call live_timing('Interpolation(s) and Plot(s)',px%n_of_elements(myid+1))
+ !
+ if (n_T_steps>1) then
+   call PP_indexes_reset(px)
+   call PARALLEL_index(px,(/n_T_steps/))
+   call PP_redux_wait
+   call live_timing('Interpolation(s) and Plot(s)',px%n_of_elements(myid+1))
+ endif
  !
  do i_T=1,n_T_steps
    !
-   if (.not.px%element_1D(i_T)) cycle
+   if (n_T_steps>1) then
+     if (.not.px%element_1D(i_T)) cycle
+   endif
    !
    call RT_apply(RT_bands,en,k,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
    !
@@ -183,17 +188,17 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    if (l_RT_lifetimes)   operation="W_on_circuit_using_RT_grid"
    !
    call INTERPOLATION_driver_seed(trim(operation),ID_circuit,RT_bands,RT_k,SEED_RT=RT_carriers,&
-&                                 SERIAL=.TRUE.,QUIET=.TRUE.)
+&                                 SERIAL=n_T_steps>1,QUIET=n_T_steps>1)
    call INTERPOLATION_driver_do(trim(operation),ID_circuit,CIRCUIT_k)
    !
    if (is_PROJECTED) then
      if (l_RT_occupations) operation="df_on_grid_using_RT_grid"
      if (l_RT_lifetimes)   operation="W_on_grid_using_RT_grid"
      call INTERPOLATION_driver_seed(trim(operation),ID_grid,RT_bands,RT_k,SEED_RT=RT_carriers,&
-&                                   SERIAL=.TRUE.,QUIET=.TRUE.)
+&                                   SERIAL=n_T_steps>1,QUIET=n_T_steps>1)
      call INTERPOLATION_driver_do(trim(operation),ID_grid,GRID_k)
      do ik=1,GRID_k%nbz
-       ik_path=PROJECTION_k_on_the_path(ik)
+       ik_path=PROJECTION_k_on_the_path_or_plane(ik)
        if (ik_path==0) cycle
        do ib=BANDS_bands(1),BANDS_bands(2)
          if (ib<=RT_E%nbf) then
@@ -300,11 +305,11 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    call INTERPOLATION_driver_end(ID_circuit)
    call INTERPOLATION_driver_end(ID_grid)
    !
-   call live_timing(steps=1)
+   if (n_T_steps>1) call live_timing(steps=1)
    !
  enddo
  !
- call live_timing( )
+ if (n_T_steps>1) call live_timing()
  !
  if (WARN_negative_electrons_df) call warning("[INTERPOLATION] Found negative electron occupations")
  if (WARN_positive_holes_df)     call warning("[INTERPOLATION] Found positive hole occupations")
@@ -312,40 +317,14 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  ! Projection Output
  !===================
  !
- if (l_PROJECT_line) then 
+ if (l_PROJECT_line.or.l_PROJECT_plane) then 
    !
-   do i_file=1,2
-     headings(1)="|k|"
-     headings(2)="Time [fs]"
-     if (l_RT_lifetimes) then
-       headings(3)='life'
-       operation="lifetimes"
-     else
-       headings(3)='occ'
-       operation="occupations"
-     endif
-     if (i_file==1) then
-       headings(3)=trim(headings(3))//"(e)"
-       operation=trim(operation)//"_electrons"
-     else
-       headings(3)=trim(headings(3))//"(h)"
-       operation=trim(operation)//"_holes"
-     endif
-     file_name_rt=trim(operation)//"_projected_LINE"
-     call of_open_close(trim(file_name_rt),'ot')
-     call msg('o '//trim(operation),'#')
-     call msg('o '//trim(operation),"#",headings(:3),INDENT=0,USE_TABS=.true.)
-     call msg('o '//trim(operation),'#')
-     !
-     if (i_file==1) then
-       call PROJECTION_plot(trim(operation), n_T_steps, (/1,1/), OBS_K=integrated_dF_elecs, TIME=RT_time ) 
-     else
-       call PROJECTION_plot(trim(operation), n_T_steps, (/1,1/), OBS_K=integrated_dF_holes, TIME=RT_time ) 
-     endif
-     !
-     call of_open_close(trim(file_name_rt))
-     !
-   enddo
+   if (l_RT_lifetimes  ) operation="lifetimes"
+   if (l_RT_occupations) operation="occupations"
+   ! 
+   call PROJECTION_plot(trim(operation)//"_electrons", n_T_steps, (/1,1/), OBS_K=integrated_dF_elecs, TIME=RT_time ) 
+   call PROJECTION_plot(trim(operation)//"_holes", n_T_steps, (/1,1/), OBS_K=integrated_dF_holes, TIME=RT_time ) 
+   !
  endif
  !
  ! Clean

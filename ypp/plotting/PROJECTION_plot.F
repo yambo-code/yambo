@@ -26,14 +26,14 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
  use pars,           ONLY:SP,lchlen,schlen
  use vec_operate,    ONLY:c2a,v_norm
  use units,          ONLY:HA2EV,AUT2FS
- use com,            ONLY:msg
+ use com,            ONLY:msg,of_open_close
  use LIVE_t,         ONLY:live_timing
- use YPP_interfaces, ONLY:PROJECTION_k_on_the_path
+ use YPP_interfaces, ONLY:PROJECTION_k_on_the_path_or_plane
  use YPPm,           ONLY:PROJECT_depth,l_PROJECT_line,CIRCUIT_k_label,PROJECT_threshold,&
 &                         l_PROJECT_plane,PROJECT_plane_X,PROJECT_plane_Y,PROJECT_steps
  use interpolate,    ONLY:GRID_k
  use electrons,      ONLY:n_spin
- use stderr,         ONLY:set_real_printed_length
+ use stderr,         ONLY:set_real_printed_length,intc
  !
 #include<memory.h>
  !
@@ -46,10 +46,10 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
  ! Work Space
  !
  character(lchlen)  :: of_string
- character(schlen)  :: of_name
- integer            :: ik,i_N,is,ik_path,of_unit,i_p1,i_p2
+ character(schlen)  :: of_name,titles(max(3,bands(2)+2))
+ integer            :: ik,i_N,is,ik_plane,of_unit,i_p1,i_p2,ib,ik_path
  real(SP)           :: O(3),k(3),kdist(GRID_k%nbz),max_OBS,projection(2),W_or_T
- logical            :: label_printed
+ logical            :: label_printed,l_DOS,l_BANDS,l_OCC,l_GAMMA
  integer ,external  :: find_the_unit
  !
  ! Allocation
@@ -57,13 +57,10 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
  !
  call set_real_printed_length(f_length=10,g_length=10)
  !
- if (what=="DOS"  ) then
-   of_name="dos"
- else if (what=="BANDS") then
-   of_name="bands_projected"
- else
-   of_name=what
- endif
+ l_DOS    = what=="DOS"
+ l_BANDS  = what=="BANDS"
+ l_OCC    = index(what,"occupations")>0
+ l_GAMMA  = index(what,"lifetimes")>0
  !
  if (l_PROJECT_line) then
    !================
@@ -73,7 +70,7 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
    kdist=0._SP
    O=GRID_k%pt(1,:)
    do ik=2,GRID_k%nbz
-     ik_path=PROJECTION_k_on_the_path(ik)
+     ik_path=PROJECTION_k_on_the_path_or_plane(ik)
      if (ik_path==0) cycle
      k=GRID_k%pt(ik,:)-O
      call c2a(v_in=k,mode='ki2c')
@@ -83,6 +80,24 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
        O=GRID_k%pt(ik,:)
      endif
    enddo
+   !  
+   ! Open + add titles
+   !-------------------
+   if (l_OCC.or.l_GAMMA) then
+     titles(1)="|k| (a.u.)"
+     titles(2)="Time [fs]"
+     if (l_GAMMA) titles(3)='Width [meV]'
+     if (l_OCC) titles(3)='Occ'
+     if ( index(what,"_electrons")>0 ) titles(3)=trim(titles(3))//"(e)"
+     if ( index(what,"_holes")>0     ) titles(3)=trim(titles(3))//"(h)"
+     of_name=trim(what)//"_projected_LINE"
+     call of_open_close(trim(of_name),'ot')
+     call msg('o '//trim(what),'#')
+     call msg('o '//trim(what),"#",titles(:3),INDENT=0,USE_TABS=.true.)
+     call msg('o '//trim(what),'#')
+   else
+     of_name="dos"
+   endif
    !
    call live_timing('Printing the projected '//what,GRID_k%nbz/PROJECT_depth)
    !
@@ -92,7 +107,7 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
    !
    do ik=1,GRID_k%nbz
      !
-     ik_path=PROJECTION_k_on_the_path(ik)
+     ik_path=PROJECTION_k_on_the_path_or_plane(ik)
      if (ik_path==0) cycle
      !
      label_printed=.FALSE.
@@ -107,11 +122,12 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
        endif
        !
        if (n_spin==1) then
-         call msg('o '//trim(of_name),'',(/kdist(ik_path),W_or_T,OBS_K(ik_path,i_N,1)/),INDENT=-2,USE_TABS=.true.,&
-&                 formatted_msg=of_string)
+         call msg('o '//trim(of_name),'',(/kdist(ik_path),W_or_T,OBS_K(ik_path,i_N,1)/),&
+&                 INDENT=-2,USE_TABS=.true.,formatted_msg=of_string)
        else if (n_spin==2) then
          call msg('o '//trim(of_name),'',(/kdist(ik_path),W_or_T,OBS_K(ik_path,i_N,:),  &
-&                             OBS_K(ik_path,i_N,1)+OBS_K(ik_path,i_N,2)/),INDENT=-2,USE_TABS=.true.,formatted_msg=of_string)
+&                            OBS_K(ik_path,i_N,1)+OBS_K(ik_path,i_N,2)/),&
+&                            INDENT=-2,USE_TABS=.true.,formatted_msg=of_string)
        endif
        !
        if (len_trim(CIRCUIT_k_label(ik_path))>0) then
@@ -129,6 +145,8 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
      !
    enddo
    !
+   if (l_OCC.or.l_GAMMA) call of_open_close(trim(of_name))
+   !
    call live_timing()
    !
  endif
@@ -138,36 +156,68 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
    !
    call live_timing('Printing the projected '//what,GRID_k%nbz/PROJECT_depth)
    !
+   if (l_BANDS) of_name="bands_projected" 
+   if (l_OCC.or.l_GAMMA) of_name=what//"_projected" 
+   !
+   of_name=trim(of_name)//'_PLANE'
+   call of_open_close(trim(of_name),'ot')
+   call msg('o '//trim(of_name),'#')
+   call msg('o '//trim(of_name),'# Plane X versor [cc]:',PROJECT_plane_X,INDENT=0)
+   call msg('o '//trim(of_name),'# Plane Y versor [cc]:',PROJECT_plane_Y,INDENT=0)
+   call msg('o '//trim(of_name),'#')
+   titles(1:2)=(/"K_proj_X","K_proj_Y"/)
+   if (l_BANDS) then
+     do ib=bands(1),bands(2)
+       titles(3+ib-bands(1))="b"//trim(intc(ib))//" [eV]"
+     enddo
+     call msg('o '//trim(of_name),'#',titles(:3+bands(2)-bands(1)),INDENT=0,USE_TABS=.true.)    
+   else if (l_GAMMA) then
+     titles(3)="Int. Gamma"
+     call msg('o '//trim(of_name),'#',titles(:3),INDENT=0,USE_TABS=.true.)    
+   else if (l_OCC) then
+     titles(3)="Int. Occ"
+     if (index(what,"_electrons")>0) titles(3)=trim(titles(3))//" (e)"
+     if (index(what,"_holes")>0    ) titles(3)=trim(titles(3))//" (h)"
+     call msg('o '//trim(of_name),'#',titles(:3),INDENT=0,USE_TABS=.true.)    
+   endif
+   call msg('o '//trim(of_name),'#')
+   !
    of_unit=find_the_unit(trim(of_name))
    !
-   ik=0
-   do i_p1=1,PROJECT_steps+1
-     do i_p2=1,PROJECT_steps+1
-       ik=ik+1
-       !
-       k=GRID_k%pt(ik,:)
-       call c2a(v_in=k,mode='ki2c')
-       projection(1)=dot_product(k,PROJECT_plane_X)
-       projection(2)=dot_product(k,PROJECT_plane_Y)
-       !
-       call msg('o '//trim(of_name),'',(/projection,OBS_B(bands(1):bands(2),ik,1)*HA2EV/),INDENT=-2,USE_TABS=.true.,&
-&               formatted_msg=of_string)
-       ik_path=0
-       if (i_p1==1              .and.i_p2==1              ) ik_path=1
-       if (i_p1==PROJECT_steps+1.and.i_p2==1              ) ik_path=PROJECT_steps+1
-       if (i_p1==PROJECT_steps+1.and.i_p2==PROJECT_steps+1) ik_path=2*PROJECT_steps+1
-       if (ik_path>0) of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik_path))//"]"
-       call msg_deliver_fast(of_unit,of_string)
-       !
-     enddo
+   do ik=1,GRID_k%nbz
      !
-     call msg('o '//trim(of_name)," ")
+     ik_plane=PROJECTION_k_on_the_path_or_plane(ik)
+     if (ik_plane==0) cycle
+     !
+     k=GRID_k%pt(ik,:)
+     call c2a(v_in=k,mode='ki2c')
+     projection(1)=dot_product(k,PROJECT_plane_X)
+     projection(2)=dot_product(k,PROJECT_plane_Y)
+     !
+     if (l_BANDS) then
+       call msg('o '//trim(of_name),'',(/projection,OBS_B(bands(1):bands(2),ik_plane,1)*HA2EV/),INDENT=-2,USE_TABS=.true.,&
+&               formatted_msg=of_string)
+     else if (l_OCC.or.l_GAMMA) then
+       call msg('o '//trim(of_name),'',(/projection,OBS_K(ik_plane,1,1)/),INDENT=-2,USE_TABS=.true.,&
+&               formatted_msg=of_string)
+     endif
+     !
+     ik_path=0
+     if (ik_plane==1                                ) ik_path=1
+     if (ik_plane==PROJECT_steps*(PROJECT_steps+1)+1) ik_path=PROJECT_steps+1
+     if (ik_plane==(PROJECT_steps+1)**2             ) ik_path=2*PROJECT_steps+1
+     if (ik_path/=0) of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik_path))//"]"
+     call msg_deliver_fast(of_unit,of_string)
+     !
+     call live_timing(steps=1)
+     !
+     if (mod(ik_plane,PROJECT_steps+1)==0) call msg('o '//trim(of_name)," ")
      !
    enddo
    !
-   call live_timing(steps=1)
-   !
    call live_timing()
+   !
+   call of_open_close(trim(of_name))
    !
  endif
  !

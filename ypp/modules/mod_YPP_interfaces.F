@@ -76,14 +76,18 @@ module YPP_interfaces
  !
  contains
    !
-   integer function PROJECTION_k_on_the_path(ik)
+   integer function PROJECTION_k_on_the_path_or_plane(ik)
      use YPPm,          ONLY:PROJECT_depth
      integer :: ik
-     if (mod(ik,PROJECT_depth)/=1) then
-       PROJECTION_k_on_the_path=0
+     if (PROJECT_depth==1) then
+       PROJECTION_k_on_the_path_or_plane=ik
        return
      endif
-     PROJECTION_k_on_the_path=ik/PROJECT_depth+1
+     if (mod(ik,PROJECT_depth)/=1) then
+       PROJECTION_k_on_the_path_or_plane=0
+       return
+     endif
+     PROJECTION_k_on_the_path_or_plane=ik/PROJECT_depth+1
    end function
    !
 end module YPP_interfaces

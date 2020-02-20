@@ -30,7 +30,7 @@ subroutine electrons_dos(Xk,Xen)
  use pointers,       ONLY:linkM2M
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol,E_reset
  use LIVE_t,         ONLY:live_timing
- use YPP_interfaces, ONLY:electrons_dos_elemental,PROJECTION_k_on_the_path,PROJECTION_plot,PROJECTION_setup
+ use YPP_interfaces, ONLY:electrons_dos_elemental,PROJECTION_k_on_the_path_or_plane,PROJECTION_plot,PROJECTION_setup
  use YPPm,           ONLY:output_fname,DOS_bands,DOS_E_steps,K_transform,&
 &                         INTERP_grid,l_PROJECT_atom,l_PROJECT_line,l_PROJECT_plane,&
 &                         PROJECT_depth,SLICE_E,SLICE_k
@@ -182,7 +182,7 @@ subroutine electrons_dos(Xk,Xen)
    if (l_PROJECT_line) then
      call live_timing('Projecting the DOS',GRID_k%nbz/PROJECT_depth)
      do ik=1,GRID_k%nbz
-       ik_path=PROJECTION_k_on_the_path(ik)
+       ik_path=PROJECTION_k_on_the_path_or_plane(ik)
        if (ik_path==0) cycle
        SLICE_E%E=GRID_E%E(DOS_bands(1):DOS_bands(2),PROJECT_depth*(ik_path-1)+1:PROJECT_depth*ik_path,:)
        SLICE_E%f=GRID_E%f(DOS_bands(1):DOS_bands(2),PROJECT_depth*(ik_path-1)+1:PROJECT_depth*ik_path,:)
@@ -267,7 +267,7 @@ subroutine electrons_dos(Xk,Xen)
    ! ...data
    !
    if (l_PROJECT_line) then
-     call PROJECTION_plot( "DOS", DOS_E_steps, DOS_bands, W=dos_E, OBS_W=el_dos ) 
+     call PROJECTION_plot( "DOS", DOS_E_steps, DOS_bands, W=dos_E, OBS_K=el_dos ) 
    else
      do i_E=1,DOS_E_steps
        if (n_spin==1) call msg('o dos','',(/dos_E(i_E)*HA2EV,el_dos(i_E,1,i_f)/),INDENT=-2,USE_TABS=.true.)

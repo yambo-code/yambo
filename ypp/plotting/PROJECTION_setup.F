@@ -140,6 +140,8 @@ subroutine PROJECTION_setup( what ,bands )
  GRID_k%weights=1./float(GRID_k%nbz)
  GRID_k%nibz=GRID_k%nbz
  !
+ call msg("sr","          Total Points  ",GRID_k%nbz)
+ !
  ! Allocation
  !============
  call E_reset(SLICE_E)

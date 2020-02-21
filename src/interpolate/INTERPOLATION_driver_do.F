@@ -71,11 +71,11 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
    ! ... Using BOLTZ method
    call INTERPOLATION_BZ(K=OUT_k,R2D=INTERP_obj(ID)%INTERP,ID=INTERP_obj(ID)%ID)
    !
+   ! f/dF normalization
+   !====================
+   if (l_INTERP_f.and.l_integral_respect) call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP)
+   !
  endif
- !
- ! f/dF normalization
- !====================
- if (l_INTERP_f) call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP,l_integral_respect)
  !
  ! store f/E/dE in OUT_E
  !=======================

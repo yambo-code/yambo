@@ -29,6 +29,9 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
  use com,            ONLY:msg,of_open_close
  use LIVE_t,         ONLY:live_timing
  use YPP_interfaces, ONLY:PROJECTION_k_on_the_path_or_plane
+#if defined _YPP_RT
+ use YPP_real_time,  ONLY:integrated_Nel,integrated_Nhole
+#endif
  use YPPm,           ONLY:PROJECT_depth,l_PROJECT_line,CIRCUIT_k_label,PROJECT_threshold,&
 &                         l_PROJECT_plane,PROJECT_plane_X,PROJECT_plane_Y,PROJECT_steps
  use interpolate,    ONLY:GRID_k
@@ -162,12 +165,24 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
      if (l_OCC.or.l_GAMMA) of_name=what//"_projected" 
      !
      of_name=trim(of_name)//'_PLANE'
-     if (l_OCC.or.l_GAMMA) of_name=what//"_iT"//intc(i_N)
+     if (l_OCC.or.l_GAMMA) of_name=trim(of_name)//"_iT"//intc(i_N)
      !
      call of_open_close(trim(of_name),'ot')
      if (l_OCC.or.l_GAMMA) then
        call msg('o '//trim(of_name),"#"," ",INDENT=0)
        call msg('o '//trim(of_name),"#",' TIME= '//trim(real2ch( TIME(i_N)*AUT2FS ))//' fs',INDENT=0)
+#if defined _YPP_RT
+       if (l_OCC) then
+         call msg('o '//trim(of_name),"#",' Integrated E>E_Fermi Carriers (built-in)= '//&
+&                 trim(real2ch(integrated_Nel(i_N,1))),INDENT=0)
+         call msg('o '//trim(of_name),"#",'                           (interpolated)= '//&
+&                 trim(real2ch(integrated_Nel(i_N,2))),INDENT=0)
+         call msg('o '//trim(of_name),"#",' Integrated E<E_Fermi Carriers (built-in)= '//&
+&                 trim(real2ch(integrated_Nhole(i_N,1))),INDENT=0)
+         call msg('o '//trim(of_name),"#",'                           (interpolated)= '//&
+&                 trim(real2ch(integrated_Nhole(i_N,2))),INDENT=0)
+       endif
+#endif
      endif
      call msg('o '//trim(of_name),'#')
      call msg('o '//trim(of_name),'# Plane X versor [cc]:',PROJECT_plane_X,INDENT=0)

@@ -42,6 +42,7 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
  integer :: ik,Nk_in,Nk_out,i_err,Nk_to_average,ik_n,D1,D3,i1,i2,i3
  integer,  allocatable :: k_near(:)
  real(SP), allocatable :: k_dist(:)
+ real(SP)              :: total_dist
  type(PP_indexes)      :: px
  !
  ! Dimensions & Allocations
@@ -71,21 +72,28 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
    !
    k_near(1)=k_the_nearest(K_out(ik,:),K_in,Nk_in,k_dist=k_dist,ROTATE_k_ref=.TRUE.,i_err=i_err)
    !
-   if (i_err==0) NN_nk_exact=NN_nk_exact+1
-   !
-   if (NN_n_of_nearest>1) then
-     !
+   if (i_err==0) then
+     NN_nk_exact=NN_nk_exact+1
+     total_dist=1.
+     k_dist(1)=1.
+   else if (NN_n_of_nearest>1) then
      call sort(k_dist,indx=k_near)
-     !
+     total_dist=0._SP
      do ik_n=2,Nk_in
        if ( abs(k_dist(ik_n)-k_dist(1))>abs(k_dist(1)) .or. Nk_to_average==NN_n_of_nearest ) exit
        Nk_to_average=Nk_to_average+1
+       total_dist=total_dist+k_dist(ik_n)
      enddo
+     if (Nk_to_average==1) then
+       total_dist=1.
+       k_dist(1)=1.
+     endif
+   else
+     total_dist=1.
+     k_dist(1)=1.
    endif
    !
    NN_MAX_real_nearest=max(NN_MAX_real_nearest,Nk_to_average)
-   !
-   ! Transfer & interpolate
    !
    do i2=1,Nk_to_average
      !
@@ -94,7 +102,7 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
      do i1=1,D1
        do i3=1,D3
          !
-         V_out(i1,ik,i3)=V_out(i1,ik,i3)+V_in(i1,ik_n,i3)/real(Nk_to_average)
+         V_out(i1,ik,i3)=V_out(i1,ik,i3)+V_in(i1,ik_n,i3)*k_dist(i2)/total_dist
          !
        enddo
      enddo

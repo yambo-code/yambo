@@ -96,10 +96,11 @@ module YPP_real_time
  character(schlen) :: Probe_path(max_n_of_paths)
  character(3) :: RT_p_format   
  !
- !
  ! (RT) carriers
  !
- real(SP),allocatable     :: delta_f(:,:,:)
+ real(SP), allocatable     :: delta_f(:,:,:)
+ real(SP), allocatable     :: integrated_Nel(:,:)
+ real(SP), allocatable     :: integrated_Nhole(:,:)
  !
  ! (RT) common
  !

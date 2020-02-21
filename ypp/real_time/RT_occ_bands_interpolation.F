@@ -32,7 +32,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use YPPm,           ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,&
 &                         CIRCUIT_E_db,CIRCUIT_k_label,l_PROJECT_line,l_PROJECT_plane,PROJECT_depth
- use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
+ use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time,integrated_Nel,integrated_Nhole
  use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_k_on_the_path_or_plane,PROJECTION_plot
  use stderr,         ONLY:real2ch,intc
  use vec_operate,    ONLY:iku_v_norm
@@ -52,11 +52,11 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  type(bz_samp)         :: RT_k
  type(levels)          :: CIRCUIT_E,CIRCUIT_dE,RT_E
- real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
+ real(SP)              :: Max_occ,values(3+2*(n_spinor-1))
  real(SP), allocatable :: integrated_dF_elecs(:,:,:),integrated_dF_holes(:,:,:)
  character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation
  character(lchlen)     :: of_string
- logical               :: l_normalize_Nel,WARN_negative_electrons_df,WARN_positive_holes_df,is_PROJECTED
+ logical               :: WARN_negative_electrons_df,WARN_positive_holes_df,is_PROJECTED
  integer               :: ib,ik,i_RT,i_T,n_values,ID_circuit,ID_spin,ID_magn,ID_bands(3),ID_grid,ik_path
  logical, external     :: file_exists
  !
@@ -144,6 +144,11 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  ! Perform the occupations interpolation
  !======================================
  !
+ YAMBO_ALLOC(integrated_Nel,(n_T_steps,2))
+ YAMBO_ALLOC(integrated_Nhole,(n_T_steps,2))
+ integrated_Nel  =rZERO
+ integrated_Nhole=rZERO
+ !
  WARN_negative_electrons_df=.FALSE.
  WARN_positive_holes_df=.FALSE.
  !
@@ -157,13 +162,11 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    !
    call RT_carriers_to_RT_E(en,RT_E,"E")
    !
-   Real_Nhole=0._SP
-   Real_Nel=0._SP
    do i_RT=1,RT_carriers%nstates
      ib      =RT_carriers%table(i_RT,1)
      ik      =RT_carriers%table(i_RT,3)
-     if(ib<=RT_E%nbf) Real_Nhole=Real_Nhole-RT_carriers%delta_f(i_RT)*RT_k%weights(ik)
-     if(ib> RT_E%nbf) Real_Nel  =Real_Nel  +RT_carriers%delta_f(i_RT)*RT_k%weights(ik)
+     if (ib<=RT_E%nbf) integrated_Nhole(i_T,1)=integrated_Nhole(i_T,1)-RT_carriers%delta_f(i_RT)*RT_k%weights(ik)
+     if (ib> RT_E%nbf) integrated_Nel(i_T,1)  =integrated_Nel(i_T,1)+RT_carriers%delta_f(i_RT)*RT_k%weights(ik)
    enddo
    Max_occ=maxval(abs(RT_carriers%delta_f))
    !
@@ -191,10 +194,12 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
          endif
        enddo
      enddo
+     if (l_RT_occupations) call EVAL_integrated_occupations(ID_grid)
    else
      call INTERPOLATION_driver_seed(trim(operation),ID_circuit,RT_bands,RT_k,SEED_RT=RT_carriers,&
 &                                   QUIET=trim(INTERP_mode)=="NN")
      call INTERPOLATION_driver_do(trim(operation),ID_circuit,CIRCUIT_k)
+     if (l_RT_occupations) call EVAL_integrated_occupations(ID_circuit)
    endif
    !
    if (is_PROJECTED) then
@@ -203,26 +208,6 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      !
      if (trim(INTERP_mode)=="NN") call live_timing(steps=1)
      cycle
-   endif
-   !
-   ! Normalize the occupations
-   !
-   if(l_RT_occupations) then
-     !
-     Nhole=-sum(INTERP_obj(ID_circuit)%INTERP(RT_bands(1):RT_E%nbf,:,:))/real(CIRCUIT_k%nbz)
-     Nel=   sum(INTERP_obj(ID_circuit)%INTERP(RT_E%nbf+1:RT_bands(2),:,:))/real(CIRCUIT_k%nbz)
-     !
-     if(.not.trim(INTERP_mode)=="NN".and.l_normalize_Nel) then
-       if (Nhole>0) then
-         INTERP_obj(ID_circuit)%INTERP(RT_bands(1):RT_E%nbf,:,:)=&
-&          INTERP_obj(ID_circuit)%INTERP(RT_bands(1):RT_E%nbf,:,:)/Nhole*Real_Nhole
-       endif
-       if (Nel>0) then
-         INTERP_obj(ID_circuit)%INTERP(RT_E%nbf+1:RT_bands(2),:,:)=&
-&          INTERP_obj(ID_circuit)%INTERP(RT_E%nbf+1:RT_bands(2),:,:)/Nel*Real_Nel
-       endif
-     endif
-     !
    endif
    !
    ! OUTPUT
@@ -239,6 +224,12 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    !
    call msg('o bands',"#"," ",INDENT=0)
    call msg('o bands',"#",' TIME= '//trim(real2ch( RT_time(i_T)*AUT2FS ))//' fs',INDENT=0)
+   if (l_RT_occupations) then
+     call msg('o bands',"#",' Integrated E>E_Fermi Carriers (built-in)= '//trim(real2ch(integrated_Nel(i_T,1))),INDENT=0)
+     call msg('o bands',"#",'                           (interpolated)= '//trim(real2ch(integrated_Nel(i_T,2))),INDENT=0)
+     call msg('o bands',"#",' Integrated E<E_Fermi Carriers (built-in)= '//trim(real2ch(integrated_Nhole(i_T,1))),INDENT=0)
+     call msg('o bands',"#",'                           (interpolated)= '//trim(real2ch(integrated_Nhole(i_T,2))),INDENT=0)
+   endif
    !
    do ib=BANDS_bands(1),BANDS_bands(2)
      !
@@ -330,4 +321,18 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  call E_reset(CIRCUIT_E)
  call E_reset(RT_E)
  !
+ contains
+   !
+   subroutine EVAL_integrated_occupations(ID)
+     integer  :: ID
+     real(SP) :: NK
+     !
+     if (ID==ID_circuit) NK=real(CIRCUIT_k%nbz)
+     if (ID==ID_grid)    NK=real(GRID_k%nbz)
+     !
+     integrated_Nhole(i_T,2)=-sum(INTERP_obj(ID)%INTERP(RT_bands(1):RT_E%nbf,:,:))/NK
+     integrated_Nel(i_T,2)  = sum(INTERP_obj(ID)%INTERP(RT_E%nbf+1:RT_bands(2),:,:))/NK
+     !
+   end subroutine
+   !
 end subroutine RT_occ_bands_interpolation

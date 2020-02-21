@@ -46,6 +46,8 @@ subroutine PROJECTION_setup( what ,bands )
  real(SP) :: line_vector(10,3),perp_vector(10,3),versor(3),k_trial(3),k_trial_bz(3),O(3)
  type(bz_samp) :: PLANE_k
  !
+ if (trim(PROJECT_mode)=="none") return
+ !
  if (what=="setup") then
    l_PROJECT_atom =STRING_same(trim(PROJECT_mode),"atom")
    l_PROJECT_line =STRING_same(trim(PROJECT_mode),"line")

@@ -34,7 +34,6 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  use interpolate,       ONLY:nshells,lattice_vectors,metric,int_sop,INTERP_obj,INTERPOLATE_is_quiet,INTERPOLATE_is_serial
  use interpolate_tools, ONLY:make_star
  use D_lattice,         ONLY:nsym
- use wrapper,           ONLY:Vstar_dot_V,V_dot_V
  use R_lattice,         ONLY:bz_samp
  use vec_operate,       ONLY:c2a
  use LIVE_t,            ONLY:live_timing
@@ -52,17 +51,24 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  ! Work Space
  !
  type(PP_indexes)  :: px
- real(SP)          :: v(3),star_vec(3,nsym),R2,R2_min
- integer           :: ik,ik2,ik_prod,iv,i_shell,i_star,nstar,Nkm1,info,ikn,Nk_sq_par,nshells_par
+ real(DP)          :: R2_min,R2
+ real(SP)          :: v(3),star_vec(3,nsym)
+ integer           :: ik,ik2,ik_prod,iv,i_shell,i_star,nstar,Nkm1,info,ikn,Nk_sq_par
  !
  ! Parameters
  !
- real(SP), parameter :: twopi=2._SP*pi
+ real(DP), parameter :: twopi=2._SP*pi
  !
  ! Allocatable
  !
- complex(SP), allocatable :: h_mat(:,:),delta(:,:),BZ_star(:,:),rho(:)
+ real(DP),    allocatable :: rho(:)
+ complex(SP), allocatable :: h_mat(:,:),delta(:,:)
+ complex(DP), allocatable :: BZ_star(:,:)
  integer,     allocatable :: ipiv(:)
+ !
+ ! External
+ !
+ complex(DP) :: ZDOTC,ZDOTU
  !
  Nkm1=Nk-1           ! number of k-points minus 1 in the BZ
  ikn =Nk             ! last k-point index
@@ -81,7 +87,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
    delta(ik,:)=VALUEs(:,ik)-VALUEs(:,ikn)
  enddo
  !
- rho(1)=0._SP
+ rho(1)=0._DP
  R2_min=dot_product(lattice_vectors(:,2),matmul(metric,lattice_vectors(:,2)))
  !
  do i_shell=2,nshells
@@ -92,27 +98,15 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  h_mat  =cZERO
  BZ_star=cZERO
  !
- ! Parallel Setup
- !----------------
- nshells_par=nshells-1
- if (.not.INTERPOLATE_is_serial) then
-   call PP_indexes_reset(px)
-   call PARALLEL_index(px,uplim=(/nshells/),low_range=(/2/))
-   nshells_par=px%n_of_elements(myid+1)
- endif
- !
- if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation@"//trim(INTERP_obj(ID)%what)//" star",nshells_par)
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation@"//trim(INTERP_obj(ID)%what)//" star",nshells-1)
  !
  do i_shell=2,nshells
-   if (.not.INTERPOLATE_is_serial) then
-     if (.not.px%element_1D(i_shell)) cycle
-   endif
    call make_star(lattice_vectors(:,i_shell),nsym,int_sop,nstar,star_vec) 
    do ik=1,Nk
-     if(Nk==Xk%nibz) call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki_star')
+     if(Nk==Xk%nibz) call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki2a')
      ! Implementation to be finished. Here I canno use BZ_DbGd_kpts
      ! bacuse also extra points in the BZ are included ...
-     ! if(Nk> Xk%nibz) call c2a(v_in=Xk%pt_DbGd(ik,:),v_out=v,mode='ki_star')
+     ! if(Nk> Xk%nibz) call c2a(v_in=Xk%pt_DbGd(ik,:),v_out=v,mode='ki2a')
      do i_star=1,nstar
        BZ_star(i_shell,ik)=BZ_star(i_shell,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,i_star)))
      enddo
@@ -121,7 +115,6 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
    BZ_star(i_shell,:)=BZ_star(i_shell,:)/real(nstar)
  enddo
  if (.not.INTERPOLATE_is_quiet)  call live_timing()
- if (.not.INTERPOLATE_is_serial) call PP_redux_wait(BZ_star)
  !
  do ik=1,Nkm1
    BZ_star(2:nshells,ik) = BZ_star(2:nshells,ik) - BZ_star(2:nshells,Nk)
@@ -145,9 +138,9 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
      if (.not.INTERPOLATE_is_serial) then
        if (.not.px%element_1D(ik_prod)) cycle
      endif
-     if(ik2==ik) h_mat(ik,ik)=Vstar_dot_V(nshells-1,BZ_star(2:nshells,ik),BZ_star(2:nshells,ik))
+     if(ik2==ik) h_mat(ik,ik)=real(ZDOTC(nshells-1,BZ_star(2:nshells,ik),1,BZ_star(2:nshells,ik),1),DP)
      if(ik2/=ik) then
-       h_mat(ik,ik2)=Vstar_dot_V(nshells-1,BZ_star(2:nshells,ik2),BZ_star(2:nshells,ik))
+       h_mat(ik,ik2)=ZDOTC(nshells-1,BZ_star(2:nshells,ik2),1,BZ_star(2:nshells,ik),1)
        h_mat(ik2,ik)=conjg(h_mat(ik,ik2))
      endif
      if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
@@ -180,12 +173,12 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  do i_shell=2,nshells
    do iv=1,nvalues
-     engre(i_shell,iv)= real(Vstar_dot_V(Nkm1,BZ_star(i_shell,1:Nkm1)/rho(i_shell),delta(1:Nkm1,iv)),kind=DP)
+     engre(i_shell,iv)= ZDOTC(Nkm1,BZ_star(i_shell,1:Nkm1)/rho(i_shell),1,cmplx(delta(1:Nkm1,iv),kind=DP),1)
    enddo
  enddo
  !
  do iv=1,nvalues
-   engre(1,iv)=VALUEs(iv,ikn) - V_dot_V(nshells-1,cmplx(engre(2:nshells,iv),kind=SP),BZ_star(2:nshells,Nk))
+   engre(1,iv)=VALUEs(iv,ikn) - ZDOTU(nshells-1,engre(2:nshells,iv),1,BZ_star(2:nshells,Nk),1)
  enddo
  !
  ! Deallocation
@@ -200,11 +193,11 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  contains
   !
-  pure real(SP) function roughness_func(R2,R2_min)
-   real(SP),  intent(in) :: R2,R2_min
-   real(SP),  parameter  :: C1=0.75_SP,C2=0.75_SP
+  pure real(DP) function roughness_func(R2,R2_min)
+   real(DP),  intent(in) :: R2,R2_min
+   real(DP),  parameter  :: C1=0.75_DP,C2=0.75_DP
    !
-   roughness_func=(1._SP-C1*R2/R2_min)**2 + C2*(R2/R2_min)**3
+   roughness_func=(1._DP-C1*R2/R2_min)**2 + C2*(R2/R2_min)**3
    !
   end function roughness_func
   !
@@ -249,7 +242,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
 &                               '] Errors: Max, Avg, Avg_rel = ',max_err,ave_err,rel_ave_err
    call msg('s',dump_ch)
    !
-   deallocate (new_VALUEs)
+   YAMBO_FREE(new_VALUES)
    !
   end subroutine k_compare 
   !

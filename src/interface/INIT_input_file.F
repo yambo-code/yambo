@@ -42,7 +42,9 @@ subroutine INIT_input_file()
  !
  call mk_dir(com_path)
  infile_copy=trim(com_path)//"/"//trim(filename(infile))
- if (trim(jobstr)/='') infile_copy=trim(com_path)//"/"//trim(filename(infile))//"_"//trim(jobstr)
+ if (trim(jobstr)/=''.and.index(infile,trim(jobstr))==0) then
+   infile_copy=trim(com_path)//"/"//trim(filename(infile))//"_"//trim(jobstr)
+ endif
  call cp_file(trim(infile),trim(infile_copy),io_err)
  infile=infile_copy 
  !

@@ -33,7 +33,7 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
 &                         l_PROJECT_plane,PROJECT_plane_X,PROJECT_plane_Y,PROJECT_steps
  use interpolate,    ONLY:GRID_k
  use electrons,      ONLY:n_spin
- use stderr,         ONLY:set_real_printed_length,intc
+ use stderr,         ONLY:set_real_printed_length,intc,real2ch
  !
 #include<memory.h>
  !
@@ -47,7 +47,7 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
  !
  character(lchlen)  :: of_string
  character(schlen)  :: of_name,titles(max(3,bands(2)+2))
- integer            :: ik,i_N,is,ik_plane,of_unit,i_p1,i_p2,ib,ik_path
+ integer            :: ik,i_N,is,ik_plane,of_unit,ib,ik_path
  real(SP)           :: O(3),k(3),kdist(GRID_k%nbz),max_OBS,projection(2),W_or_T
  logical            :: label_printed,l_DOS,l_BANDS,l_OCC,l_GAMMA
  integer ,external  :: find_the_unit
@@ -154,70 +154,80 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
  if (l_PROJECT_plane) then
    !================
    !
-   call live_timing('Printing the projected '//what,GRID_k%nbz/PROJECT_depth)
+   call live_timing('Printing the projected '//what,GRID_k%nbz/PROJECT_depth*N)
    !
-   if (l_BANDS) of_name="bands_projected" 
-   if (l_OCC.or.l_GAMMA) of_name=what//"_projected" 
-   !
-   of_name=trim(of_name)//'_PLANE'
-   call of_open_close(trim(of_name),'ot')
-   call msg('o '//trim(of_name),'#')
-   call msg('o '//trim(of_name),'# Plane X versor [cc]:',PROJECT_plane_X,INDENT=0)
-   call msg('o '//trim(of_name),'# Plane Y versor [cc]:',PROJECT_plane_Y,INDENT=0)
-   call msg('o '//trim(of_name),'#')
-   titles(1:2)=(/"K_proj_X","K_proj_Y"/)
-   if (l_BANDS) then
-     do ib=bands(1),bands(2)
-       titles(3+ib-bands(1))="b"//trim(intc(ib))//" [eV]"
-     enddo
-     call msg('o '//trim(of_name),'#',titles(:3+bands(2)-bands(1)),INDENT=0,USE_TABS=.true.)    
-   else if (l_GAMMA) then
-     titles(3)="Int. Gamma"
-     call msg('o '//trim(of_name),'#',titles(:3),INDENT=0,USE_TABS=.true.)    
-   else if (l_OCC) then
-     titles(3)="Int. Occ"
-     if (index(what,"_electrons")>0) titles(3)=trim(titles(3))//" (e)"
-     if (index(what,"_holes")>0    ) titles(3)=trim(titles(3))//" (h)"
-     call msg('o '//trim(of_name),'#',titles(:3),INDENT=0,USE_TABS=.true.)    
-   endif
-   call msg('o '//trim(of_name),'#')
-   !
-   of_unit=find_the_unit(trim(of_name))
-   !
-   do ik=1,GRID_k%nbz
+   do i_N=1,N
      !
-     ik_plane=PROJECTION_k_on_the_path_or_plane(ik)
-     if (ik_plane==0) cycle
+     if (l_BANDS) of_name="bands_projected" 
+     if (l_OCC.or.l_GAMMA) of_name=what//"_projected" 
      !
-     k=GRID_k%pt(ik,:)
-     call c2a(v_in=k,mode='ki2c')
-     projection(1)=dot_product(k,PROJECT_plane_X)
-     projection(2)=dot_product(k,PROJECT_plane_Y)
+     of_name=trim(of_name)//'_PLANE'
+     if (l_OCC.or.l_GAMMA) of_name=what//"_iT"//intc(i_N)
      !
-     if (l_BANDS) then
-       call msg('o '//trim(of_name),'',(/projection,OBS_B(bands(1):bands(2),ik_plane,1)*HA2EV/),INDENT=-2,USE_TABS=.true.,&
-&               formatted_msg=of_string)
-     else if (l_OCC.or.l_GAMMA) then
-       call msg('o '//trim(of_name),'',(/projection,OBS_K(ik_plane,1,1)/),INDENT=-2,USE_TABS=.true.,&
-&               formatted_msg=of_string)
+     call of_open_close(trim(of_name),'ot')
+     if (l_OCC.or.l_GAMMA) then
+       call msg('o '//trim(of_name),"#"," ",INDENT=0)
+       call msg('o '//trim(of_name),"#",' TIME= '//trim(real2ch( TIME(i_N)*AUT2FS ))//' fs',INDENT=0)
      endif
+     call msg('o '//trim(of_name),'#')
+     call msg('o '//trim(of_name),'# Plane X versor [cc]:',PROJECT_plane_X,INDENT=0)
+     call msg('o '//trim(of_name),'# Plane Y versor [cc]:',PROJECT_plane_Y,INDENT=0)
+     call msg('o '//trim(of_name),'#')
+     titles(1:2)=(/"K_proj_X","K_proj_Y"/)
+     if (l_BANDS) then
+       do ib=bands(1),bands(2)
+         titles(3+ib-bands(1))="b"//trim(intc(ib))//" [eV]"
+       enddo
+       call msg('o '//trim(of_name),'#',titles(:3+bands(2)-bands(1)),INDENT=0,USE_TABS=.true.)    
+     else if (l_GAMMA) then
+       titles(3)="Int. Gamma"
+       call msg('o '//trim(of_name),'#',titles(:3),INDENT=0,USE_TABS=.true.)    
+     else if (l_OCC) then
+       titles(3)="Int. Occ"
+       if (index(what,"_electrons")>0) titles(3)=trim(titles(3))//" (e)"
+       if (index(what,"_holes")>0    ) titles(3)=trim(titles(3))//" (h)"
+       call msg('o '//trim(of_name),'#',titles(:3),INDENT=0,USE_TABS=.true.)    
+     endif
+     call msg('o '//trim(of_name),'#')
      !
-     ik_path=0
-     if (ik_plane==1                                ) ik_path=1
-     if (ik_plane==PROJECT_steps*(PROJECT_steps+1)+1) ik_path=PROJECT_steps+1
-     if (ik_plane==(PROJECT_steps+1)**2             ) ik_path=2*PROJECT_steps+1
-     if (ik_path/=0) of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik_path))//"]"
-     call msg_deliver_fast(of_unit,of_string)
+     of_unit=find_the_unit(trim(of_name))
      !
-     call live_timing(steps=1)
+     do ik=1,GRID_k%nbz
+       !
+       ik_plane=PROJECTION_k_on_the_path_or_plane(ik)
+       if (ik_plane==0) cycle
+       !
+       k=GRID_k%pt(ik,:)
+       call c2a(v_in=k,mode='ki2c')
+       projection(1)=dot_product(k,PROJECT_plane_X)
+       projection(2)=dot_product(k,PROJECT_plane_Y)
+       !
+       if (l_BANDS) then
+         call msg('o '//trim(of_name),'',(/projection,OBS_B(bands(1):bands(2),ik_plane,1)*HA2EV/),INDENT=-2,USE_TABS=.true.,&
+  &               formatted_msg=of_string)
+       else if (l_OCC.or.l_GAMMA) then
+         call msg('o '//trim(of_name),'',(/projection,OBS_K(ik_plane,i_N,1)/),INDENT=-2,USE_TABS=.true.,&
+  &               formatted_msg=of_string)
+       endif
+       !
+       ik_path=0
+       if (ik_plane==1                                ) ik_path=1
+       if (ik_plane==PROJECT_steps*(PROJECT_steps+1)+1) ik_path=PROJECT_steps+1
+       if (ik_plane==(PROJECT_steps+1)**2             ) ik_path=2*PROJECT_steps+1
+       if (ik_path/=0) of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik_path))//"]"
+       call msg_deliver_fast(of_unit,of_string)
+       !
+       call live_timing(steps=1)
+       !
+       if (mod(ik_plane,PROJECT_steps+1)==0) call msg('o '//trim(of_name)," ")
+       !
+     enddo
      !
-     if (mod(ik_plane,PROJECT_steps+1)==0) call msg('o '//trim(of_name)," ")
+     call live_timing()
      !
-   enddo
-   !
-   call live_timing()
-   !
-   call of_open_close(trim(of_name))
+     call of_open_close(trim(of_name))
+     !
+   enddo 
    !
  endif
  !

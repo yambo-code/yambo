@@ -25,7 +25,8 @@ subroutine INIT_ypp_load(defs)
  !
  use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,&
-&                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics
+&                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics,V_io
+ use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
@@ -135,6 +136,7 @@ subroutine INIT_ypp_load(defs)
  !
  ! Variables...
  !==============
+ call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
  !
 #if defined _YPP_NL
  call it('f',defs,'PrtPwrSpec','Print power spectrum',verb_level=V_nl_optics)

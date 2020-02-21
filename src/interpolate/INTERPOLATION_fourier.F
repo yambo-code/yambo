@@ -32,7 +32,7 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,Nk,ID)
  use vec_operate,       ONLY:c2a
  use timing_m,          ONLY:timing
  use LIVE_t,            ONLY:live_timing
- use parallel_m,        ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
+ use parallel_m,        ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_build_index,myid
  !
 #include<memory.h>
  !
@@ -45,53 +45,64 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,Nk,ID)
  !
  ! Work Space
  !
- integer  :: i1,iv,ik,is,nstar
+ integer  :: i1,iv,ik,is,nstar,ik_par
  real(SP) :: star_vec(3,nsym),v(3)
- complex(SP), allocatable :: star(:,:)
- type(PP_indexes)  :: px
- !
- YAMBO_ALLOC(star,(nshells,Nk))
- star=cZERO
- !
- ! Make stars
+ integer    , allocatable :: K_index(:)
+ complex(SP), allocatable :: F_star(:,:)
+ type(PP_indexes)         :: px
  !
  call timing('INTERPOLATE Fourier',OPR='start')
  !
+ ! Parallel setup and distribution
+ !---------------------------------
  if (.not.INTERPOLATE_is_serial) then
    call PP_indexes_reset(px)
    call PARALLEL_index(px,(/Nk/))
+   YAMBO_ALLOC(K_index,(Nk))
+   YAMBO_ALLOC(F_star,(nshells,px%n_of_elements(myid+1)))
+   call PAR_build_index(px,Nk,K_index,px%n_of_elements(myid+1))
+ else
+   YAMBO_ALLOC(F_star,(nshells,Nk))
  endif
+ !
+ F_star=cZERO
+ !
+ ! Make stars
+ !
  if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolate@"//trim(INTERP_obj(ID)%what)//" Fourier",nshells)
- star=cZERO
+ F_star=cZERO
  do i1=1,nshells
    call make_star(lattice_vectors(:,i1),nsym,int_sop,nstar,star_vec)  
    do ik=1,Nk
+     ik_par=ik
      if (.not.INTERPOLATE_is_serial) then
        if (.not.px%element_1D(ik)) cycle
+       ik_par=K_index(ik)
      endif
      if(Nk==K%nibz) call c2a(v_in=K%pt(ik,:),v_out=v,mode='ki2a')
      do is=1,nstar
-       star(i1,ik)=star(i1,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,is)))
+       F_star(i1,ik_par)=F_star(i1,ik_par) + exp(cI*twopi*dot_product(v(:),star_vec(:,is)))
      enddo
-     star(i1,ik)=star(i1,ik)/real(nstar)
+     F_star(i1,ik_par)=F_star(i1,ik_par)/real(nstar)
    enddo
    if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
  enddo
- if (.not.INTERPOLATE_is_serial) call PP_redux_wait(star)
  if (.not.INTERPOLATE_is_quiet) call live_timing()
  !
  VALUES=rZERO
  do ik=1,Nk
+   ik_par=ik
    if (.not.INTERPOLATE_is_serial) then
      if (.not.px%element_1D(ik)) cycle
+     ik_par=K_index(ik)
    endif
    do iv=1,nvalues
-     VALUES(iv,ik) = sum(engre(1:nshells,iv)*star(1:nshells,ik))
+     VALUES(iv,ik) = sum(engre(1:nshells,iv)*F_star(1:nshells,ik_par))
    enddo
  enddo
  if (.not.INTERPOLATE_is_serial) call PP_redux_wait(VALUES)
  !
- YAMBO_FREE(star)
+ YAMBO_FREE(F_star)
  !
  call timing('INTERPOLATE Fourier',OPR='stop')
  !

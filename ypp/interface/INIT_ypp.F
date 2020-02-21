@@ -209,7 +209,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      if( trim(rstr_piece(i1)) == 'infver' .and. STRING_same(rstr_piece(i1+1),'all') ) infile_verbosity=V_all
    endif
    !
-   call initactivate(1,'ElecTemp BoseTemp')
+   call initactivate(1,'ElecTemp BoseTemp StdoHash')
    !
    do i_cycle=1,2
      !

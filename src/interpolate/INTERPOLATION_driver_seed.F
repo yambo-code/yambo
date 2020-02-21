@@ -24,6 +24,11 @@
 subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
 &                                    NEAREST,QUIET,SERIAL)
  !
+ ! BOLTZ structure:
+ !
+ ! INTERPOLATION_BZ_setup
+ ! INTERPOLATION_coefficients
+ !
  use pars,                 ONLY:SP
  use real_time,            ONLY:RT_t
  use QP_m,                 ONLY:QP_t

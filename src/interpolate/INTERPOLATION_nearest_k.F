@@ -23,10 +23,12 @@
 !                  
 subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
  !
- use pars,           ONLY:SP
- use R_lattice,      ONLY:k_the_nearest
- use interpolate,    ONLY:NN_nk_exact,NN_n_of_nearest,NN_MAX_real_nearest
- use vec_operate,    ONLY:sort
+ use pars,              ONLY:SP
+ use R_lattice,         ONLY:k_the_nearest
+ use interpolate,       ONLY:NN_nk_exact,NN_n_of_nearest,NN_MAX_real_nearest,INTERPOLATE_is_serial
+ use interfaces,        ONLY:PARALLEL_index
+ use vec_operate,       ONLY:sort
+ use parallel_m,        ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
  !
 #include<memory.h>
  !
@@ -40,6 +42,7 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
  integer :: ik,Nk_in,Nk_out,i_err,Nk_to_average,ik_n,D1,D3,i1,i2,i3
  integer,  allocatable :: k_near(:)
  real(SP), allocatable :: k_dist(:)
+ type(PP_indexes)      :: px
  !
  ! Dimensions & Allocations
  !
@@ -53,7 +56,16 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
  NN_MAX_real_nearest=0
  V_out=0._SP
  !
+ if (.not.INTERPOLATE_is_serial) then
+   call PP_indexes_reset(px)
+   call PARALLEL_index(px,(/Nk_out/))
+ endif
+ !
  do ik=1,Nk_out
+   !
+   if (.not.INTERPOLATE_is_serial) then
+     if (.not.px%element_1D(ik)) cycle
+   endif
    !
    Nk_to_average=1
    !
@@ -90,6 +102,8 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
    enddo
    !
  enddo
+ !
+ if (.not.INTERPOLATE_is_serial) call PP_redux_wait(V_out)
  !
  deallocate(k_near)
  deallocate(k_dist)

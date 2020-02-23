@@ -150,7 +150,7 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  wf_ng_new  =wf_ng
  ng_vec_new =ng_vec
  !
- if(wf_ncx_save/=wf_ncx_new) call msg('s',':: wf_ncx was reduced from'//trim(intc(wf_ncx_save))//' to '//trim(intc(wf_ncx_new)))
+ if(wf_ncx_save/=wf_ncx_new) call msg('s',':: wf_ncx was reduced from '//trim(intc(wf_ncx_save))//' to '//trim(intc(wf_ncx_new)))
  if(wf_ng_save /=wf_ng_new ) call msg('s',':: wf_ng changed from '//trim(intc(wf_ng_save))//' to '//trim(intc(wf_ng_new)))
  if(ng_vec_save/=ng_vec_new) call msg('s',':: ng_vec was increased to close the G-shell')
  !

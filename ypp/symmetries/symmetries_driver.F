@@ -34,6 +34,7 @@ subroutine symmetries_driver(E,Xk)
  use wave_func,           ONLY:wf_ng,WF
  use stderr,              ONLY:intc
  use interfaces,          ONLY:WF_load,WF_free
+ use YPPm,                ONLY:ng_cut
  !
 #include<memory.h>
  !
@@ -62,10 +63,15 @@ subroutine symmetries_driver(E,Xk)
  call rm_file((trim(more_io_path))//"/SAVE/ndb.kindx")
  !
  ! This is needed to construct grot for all wf_ngs.
- if (wf_ng>ng_closed) then
-   ng_closed=ng_vec
-   call G_shells_finder()
+ !
+ if (ng_cut<wf_ng) then
+    wf_ng    =ng_cut
+    ng_closed=ng_cut
+ else
+    ng_closed=ng_vec
  endif
+ !
+ call G_shells_finder()
  !
  ! Check if the system is magnetic
  ! Magnetization must be considered to derive syms if n_spinor==2

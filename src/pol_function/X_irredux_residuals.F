@@ -33,7 +33,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_by_V_plus_V
 #ifdef _CUDA
- use X_m,           ONLY:rhotw_save_d
+ use X_m,           ONLY:rhotw_save_d,rhotw_save2_d
 #endif
  use DIPOLES,       ONLY:DIPOLE_t,DIP_rotated
  use X_m,           ONLY:X_t,X_poles_tab,l_X_terminator,X_cols,X_rows

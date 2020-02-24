@@ -308,6 +308,17 @@ module IO_m
    !
  end interface
  !
+#if defined _HDF5_IO
+ interface c_interface
+   function nf90_set_log_level(level) bind (C, name = "nc_set_log_level")
+     use iso_c_binding
+     implicit none
+     integer(c_int) :: nf90_set_log_level
+     integer(c_int), intent (in) :: level
+   end function nf90_set_log_level
+ end interface c_interface
+#endif
+ !
  contains
    ! 
    logical function open_is_on(ID)

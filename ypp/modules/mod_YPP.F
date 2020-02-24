@@ -60,9 +60,9 @@ module YPPm
  ! DOS/BANDS/SPECIAL-K/INTERP grids
  !
  integer, parameter        :: n_SPECIAL_k_MAX=20
- real(SP),     allocatable :: CIRCUIT_k_norm(:)
- character(2), allocatable :: CIRCUIT_k_label(:)
- character(2) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
+ real(SP),          allocatable :: CIRCUIT_k_norm(:)
+ character(schlen), allocatable :: CIRCUIT_k_label(:)
+ character(schlen) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
  type(bz_samp):: SPECIAL_k
  type(bz_samp):: USER_k
  type(bz_samp):: CIRCUIT_k

@@ -32,9 +32,8 @@ subroutine k_special(LIST)
  use YPPm,                ONLY:n_path_pts,PtsPath,K_transform,l_high_sym_pts,&
 &                              SPECIAL_k,n_SPECIAL_k_MAX,CIRCUIT_k,SPECIAL_k_label,&
 &                              n_SPECIAL_k_MAX,CIRCUIT_k_label,CIRCUIT_k_norm,coo_out
- use stderr,              ONLY:STRING_split,STRING_same
+ use stderr,              ONLY:STRING_split,STRING_same,intc
  use LIVE_t,              ONLY:live_timing_is_on
- use stderr,              ONLY:intc
  !
 #include<memory.h>
  !
@@ -43,9 +42,11 @@ subroutine k_special(LIST)
  ! Work Space
  !
  logical          :: l_use_yambo_b
- integer          :: ik,il,n_lines,ip,i_str,K_position(n_SPECIAL_k_MAX)
- real(SP)         :: trial_b(3,3),K_norm,ap,bp,cp,fp,ep,K_sign(n_SPECIAL_k_MAX),k_l(3),k_lp1(3)
- character(schlen):: Path_strings(50),dumb_ch,k_f_name(2)
+ integer          :: ik,il,n_lines,ip,i_str,K_position(n_SPECIAL_k_MAX),K_end(n_SPECIAL_k_MAX),&
+&                    n_K_space_strings,n_K_x_strings,n_K_minus_strings,k_found(2)
+ real(SP)         :: trial_b(3,3),K_norm,ap,bp,cp,fp,ep,K_prefactor(n_SPECIAL_k_MAX),k_l(3),k_lp1(3)
+ character(schlen):: K_space_strings(n_SPECIAL_k_MAX),dumb_ch,k_f_name(2),K_x_strings(5),&
+&                    K_label(n_SPECIAL_k_MAX),K_minus_strings(5)
  character(lchlen):: of_string
  !
  call bz_samp_reset(SPECIAL_k)
@@ -263,7 +264,7 @@ subroutine k_special(LIST)
    do ik=1,SPECIAL_k%nbz
      k_l=SPECIAL_k%pt(ik,:)
      call K_transform(k_l,'cc')
-     write (dumb_ch,'(3f12.7,2x,a)') k_l,SPECIAL_k_label(ik)
+     write (dumb_ch,'(3f12.7,2x,a)') k_l,trim(SPECIAL_k_label(ik))
      call msg("s",trim(dumb_ch))
    enddo
    live_timing_is_on=.true.
@@ -276,24 +277,47 @@ subroutine k_special(LIST)
  !
  ! Path builder
  !
- call STRING_split(PtsPath,Path_strings)
+ call STRING_split(PtsPath,K_space_strings,n_non_empty_strings=n_K_space_strings)
  !
  K_position=0
- K_sign    =1._SP
+ K_prefactor=1._SP
  n_lines=0
- do i_str=1,50
-   do ik=1,SPECIAL_k%nbz
-     if ( STRING_same(trim(Path_strings(i_str)),trim(SPECIAL_k_label(ik))) ) then
-       n_lines=n_lines+1
-       K_position(n_lines)=ik
+ do i_str=1,n_K_space_strings
+   !
+   call STRING_split(K_space_strings(i_str),K_x_strings,space="x",n_non_empty_strings=n_K_x_strings)
+   !
+   k_found=0
+   !
+   if (n_K_x_strings==1) k_found(1)=which_K(K_space_strings(i_str))
+   if (n_K_x_strings==2) then
+     call STRING_split(K_x_strings(2),K_minus_strings,space="-",n_non_empty_strings=n_K_minus_strings)
+     if (n_K_minus_strings==1) k_found(1)=which_K(K_x_strings(2))
+     if (n_K_minus_strings==2) then 
+       k_found(1)=which_K(K_minus_strings(1))
+       k_found(2)=which_K(K_minus_strings(2))
      endif
-     if ( STRING_same(trim(Path_strings(i_str)),trim("-"//SPECIAL_k_label(ik))) ) then
-       n_lines=n_lines+1
-       K_sign(n_lines)=-1.
-       K_position(n_lines)=ik
+   endif
+   !
+   if (k_found(1)>0) then
+     n_lines=n_lines+1
+     K_position(n_lines)=k_found(1)
+     K_end(n_lines)=k_found(1)
+     K_prefactor(n_lines)=1.
+     K_label(n_lines)=SPECIAL_k_label(k_found(1))
+     !
+     if (n_K_x_strings==2) then
+       read(K_x_strings(1),*) K_prefactor(n_lines)
+       write (K_label(n_lines),'(f5.2,2a)') K_prefactor(n_lines),'x',trim(SPECIAL_k_label(k_found(1)))
      endif
-   enddo
+     if (n_K_minus_strings==2) then
+       K_end(n_lines)=k_found(2)
+       K_label(n_lines)=trim(K_label(n_lines))//"-"//trim(SPECIAL_k_label(k_found(2)))
+     endif
+     !
+   endif
+   !
  enddo
+ !
  if (n_lines==0) n_lines=1
  !
  if (n_lines==1.and..not.l_high_sym_pts) then
@@ -310,8 +334,12 @@ subroutine k_special(LIST)
  !
  if (CIRCUIT_k%nbz==0) return
  !
- call msg('s','Found '//trim(intc(n_lines-1))//' segments and  '//&
-&              trim(intc(CIRCUIT_k%nbz+1))//' points along the path: '//trim(PtsPath))
+ call msg('s','Found '//trim(intc(n_lines-1))//' segments with  '//trim(intc(CIRCUIT_k%nbz+1))//' points each')
+ !
+ do il=1,n_lines-1
+   dumb_ch='Segment #'//trim(intc(il))//': '//trim(K_label(il))//" to "//trim(K_label(il+1))
+   call msg('s',trim(dumb_ch))
+ enddo
  !
  YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz+1,3))
  allocate(CIRCUIT_k_norm(CIRCUIT_k%nbz+1))
@@ -320,12 +348,13 @@ subroutine k_special(LIST)
  K_norm=0.
  CIRCUIT_k_label=" "
  do il=1,n_lines-1
-   k_l  =SPECIAL_k%pt( K_position(il)  ,:)*K_sign(il)
-   k_lp1=SPECIAL_k%pt( K_position(il+1),:)*K_sign(il+1)
+   !
+   k_l  =K_path(il)
+   k_lp1=K_path(il+1)
+   !
    do ip=1,n_path_pts
      CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
-     if (ip==1.and.K_sign(il)>0.) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(il) )
-     if (ip==1.and.K_sign(il)<0.) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(il) )
+     if (ip==1) CIRCUIT_k_label(CIRCUIT_k%nbz)=K_label(il)
      CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=k_l+(k_lp1-k_l)/n_path_pts*(ip-1)
      if (CIRCUIT_k%nbz>1) K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
      CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
@@ -334,9 +363,9 @@ subroutine k_special(LIST)
  !
  CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
  CIRCUIT_k%nibz=CIRCUIT_k%nbz
- CIRCUIT_k%pt(CIRCUIT_k%nbz,:)=SPECIAL_k%pt(K_position(n_lines),:)*K_sign(n_lines)
- if (k_sign(n_lines)>0._SP) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(n_lines) )
- if (k_sign(n_lines)<0._SP) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(n_lines) )
+ CIRCUIT_k%pt(CIRCUIT_k%nbz,:)=K_path(n_lines)
+ if (K_prefactor(n_lines)>0._SP) CIRCUIT_k_label(CIRCUIT_k%nbz)=K_label(n_lines)
+ if (K_prefactor(n_lines)<0._SP) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//K_label(n_lines)
  K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
  CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
  !
@@ -381,6 +410,21 @@ subroutine k_special(LIST)
  endif
  !
  contains
+   !
+   function K_path(i_line)
+     integer  :: i_line
+     real(SP) :: K_path(3)
+     K_path=SPECIAL_k%pt( K_position(i_line),:)+ &
+&           (SPECIAL_k%pt( K_end(i_line),:)  -SPECIAL_k%pt(K_position(i_line),:)  )*K_prefactor(i_line)
+   end function
+   !
+   integer function which_K(label)
+     character(*) :: label
+     which_K=0
+     do ik=1,SPECIAL_k%nbz
+       if ( STRING_same(trim(label),trim(SPECIAL_k_label(ik))) ) which_K=ik
+     enddo
+   end function
    !
    subroutine orthorombic_lengths(xp,yp)
     !

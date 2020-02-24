@@ -64,14 +64,17 @@ subroutine symmetries_driver(E,Xk)
  !
  ! This is needed to construct grot for all wf_ngs.
  !
- if (ng_cut<wf_ng) then
+ if (wf_ng>ng_cut) then
     wf_ng    =ng_cut
     ng_closed=ng_cut
- else
-    ng_closed=ng_vec
+    call G_shells_finder()
+ endif
+ !    
+ if(wf_ng>ng_closed) then
+   ng_closed=ng_vec
+   call G_shells_finder()
  endif
  !
- call G_shells_finder()
  !
  ! Check if the system is magnetic
  ! Magnetization must be considered to derive syms if n_spinor==2

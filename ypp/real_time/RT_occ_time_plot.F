@@ -32,8 +32,11 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use electrons,      ONLY:levels,spin,n_sp_pol,n_spinor
  use QP_m,           ONLY:QP_table,QP_n_states
  use YPP_real_time,  ONLY:RT_time
+ use YPP_interfaces, ONLY:k_special
+ use YPPm,           ONLY:BANDS_path,CIRCUIT_k
+ use LIVE_t,         ONLY:live_timing
  use com,            ONLY:msg,of_open_close
- use vec_operate,    ONLY:c2a
+ use vec_operate,    ONLY:c2a,v_norm
  use RT_control,     ONLY:RT_apply
  use real_time,      ONLY:l_RT_CCA_Kernel,RT_carriers,RT_bands
  !
@@ -45,13 +48,14 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  ! Work Space
  !
- integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2),nk_cumulative(kpt%nibz)
- real(SP)              :: io_Time,tmp_lifetimes(6),data_to_plot(9),k_al(3),k_cc(3),&
-&                         data_to_plot_cumulative(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,9)
+ integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2),i_a
+ real(SP)              :: io_Time,tmp_lifetimes(6),data_to_plot(9),k_al(3),k_cc(3),axis(3,3),&
+&                         data_to_plot_cumulative(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,9),O(3)
  character(schlen)     :: titles(9),specs(9,2),dumb_ch(2)
  character(lchlen)     :: output_fname_short(2),output_fname(2,RT_carriers%nstates)
  character(3)          :: ch3_dummy
- logical               :: l_elph_lifetimes,do_state(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol),l_OCCgroup
+ logical               :: l_elph_lifetimes,do_state(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol),&
+&                         l_OCCgroup_k_and_b,l_OCCgroup_path,l_OCCgroup
  !
  real(SP),allocatable  :: spin_factors(:,:,:),magn_factors(:,:,:)
  !
@@ -60,7 +64,6 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  call parser('OCCgroup', l_OCCgroup)
  !
  data_to_plot_cumulative=rZERO
- nk_cumulative=0
  !
  if (n_spinor==2) then
    k_range    =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)
@@ -72,6 +75,18 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  endif
  !
  l_elph_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel
+ !
+ ! Select the states by using a circuit
+ !======================================
+ call k_special( )
+ call k_circuit_made_of_special_points( BANDS_path, 1 )
+ call PROJECTION_axis(3,axis,O)
+ if ( CIRCUIT_k%nbz>0 ) then
+   call c2a(v_in=O,mode='ki2c')
+   do i_a=1,3
+     call c2a(v_in=axis(1,:),mode='ki2c')
+   enddo
+ endif
  !
  call set_real_printed_length(f_length=10,g_length=10)
  !
@@ -127,6 +142,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    do_state(ib,ik,i_spin)=.true.
    !
  enddo
+ !
+ call live_timing('Time Plot(s)',n_T_steps)
  ! 
  do i_T=1,n_T_steps
    !
@@ -134,7 +151,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    !
    call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
    !
-   l_OCCgroup=l_OCCgroup.and.RT_carriers%nk>kpt%nibz
+   l_OCCgroup_k_and_b=l_OCCgroup.and.RT_carriers%nk>kpt%nibz.and.CIRCUIT_k%nbz==0
+   l_OCCgroup_path   =l_OCCgroup.and.CIRCUIT_k%nbz>0
    !
    if (l_elel_scatt    .and.i_T==1) n_gamma=n_gamma+2
    !
@@ -142,7 +160,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    !
    data_to_plot(1)               =io_TIME/FS2AUT
    data_to_plot_cumulative(:,:,1)=io_TIME/FS2AUT
-   nk_cumulative                 =0
+   if (l_OCCgroup_path) data_to_plot(2)=rZERO
    !
    do i_RT=1,RT_carriers%nstates
      !
@@ -153,15 +171,29 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      !
      if (ib<RT_bands(1)) cycle
      if (ib>RT_bands(2)) cycle
+     !  
+     if ( CIRCUIT_k%nbz>0 ) then
+       !
+       n_output=2
+       call c2a(v_in=RT_carriers%kpt(ik_RT,:),v_out=k_cc,mode='ki2c')
+       !
+       do i_a=1,3
+         k_al(i_a)= dot_product(k_cc-O,axis(i_a,:))/v_norm(axis(i_a,:))
+       enddo
+       !
+       if (k_al(1)<0..or.k_al(1)>1.) do_state(:,ik,:)=.FALSE.
+       if (k_al(2)<0..or.k_al(2)>1.) do_state(:,ik,:)=.FALSE.
+       !
+     endif  
      !
      if (.not.do_state(ib,ik,i_spin)) cycle
      !  
-     output_fname_short(1)='YPP-RT_occupations_k'//trim(intc(ik))//'_kRT'//trim(intc(ik_RT))//'_b'//trim(intc(ib))
-     if (i_T==1) output_fname(1,i_RT)=output_fname_short(1)
-     !
-     call open_file( output_fname(1,i_RT),output_fname_short(1))
-     !
-     data_to_plot(2)=RT_carriers%delta_f(i_RT)
+     if (.not.l_OCCgroup_path) then
+       output_fname_short(1)='YPP-RT_occupations_k'//trim(intc(ik))//'_kRT'//trim(intc(ik_RT))//'_b'//trim(intc(ib))
+       if (i_T==1) output_fname(1,i_RT)=output_fname_short(1)
+       !
+       call open_file( output_fname(1,i_RT),output_fname_short(1))
+     endif
      !
      if (n_gamma>0) then
        if (l_elph_lifetimes) then
@@ -178,18 +210,21 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        data_to_plot(  n_gamma+3)=RT_carriers%NEQ_Lifetime(i_RT)*HA2EV*1000._SP
      endif
      !
-     if (l_OCCgroup) then
-       nk_cumulative(ik)=nk_cumulative(ik)+1
-       data_to_plot_cumulative(ik,ib,2:)=data_to_plot_cumulative(ik,ib,2:)+data_to_plot(2:)
+     if (l_OCCgroup_k_and_b) then
+       data_to_plot_cumulative(ik,ib,2:)=data_to_plot_cumulative(ik,ib,2:)+data_to_plot(2:)*RT_carriers%k_weight(ik_RT)
      endif
      !
-     call msg('o '//trim(output_fname_short(1)),'',data_to_plot(:n_gamma+3),INDENT=-2,USE_TABS=.true.)
-     !
-     call of_open_close(output_fname(1,i_RT))
+     if (l_OCCgroup_path) then
+       data_to_plot(2)=data_to_plot(2)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
+     else
+       data_to_plot(2)=RT_carriers%delta_f(i_RT)
+       call msg('o '//trim(output_fname_short(1)),'',data_to_plot(:n_gamma+3),INDENT=-2,USE_TABS=.true.)
+       call of_open_close(output_fname(1,i_RT))
+     endif
      !
    enddo
    !
-   if (l_OCCgroup) then
+   if (l_OCCgroup_k_and_b) then
      do ik=1,kpt%nibz
        do ib=RT_carriers%nb(1),RT_carriers%nb(2)
          do i_spin=1,n_sp_pol
@@ -197,7 +232,6 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
            output_fname_short(2)='YPP-RT_cumulative_occupations_k'//trim(intc(ik))//'_b'//trim(intc(ib))
            if (i_T==1) output_fname(2,i_RT)=output_fname_short(2)
            call open_file( output_fname(2,i_RT),output_fname_short(2))
-           data_to_plot_cumulative(ik,ib,2:)=data_to_plot_cumulative(ik,ib,2:)/nk_cumulative(ik)
            call msg('o '//trim(output_fname_short(2)),'',data_to_plot_cumulative(ik,ib,:n_gamma+3),INDENT=-2,USE_TABS=.true.)
            call of_open_close(output_fname(2,i_RT))
          enddo
@@ -205,7 +239,19 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      enddo
    endif
    !
+   if (l_OCCgroup_path) then
+     output_fname_short(2)='YPP-RT_cumulative_occupations'
+     if (i_T==1) output_fname(2,i_RT)=output_fname_short(2)
+     call open_file( output_fname(2,i_RT),output_fname_short(2))
+     call msg('o '//trim(output_fname_short(2)),'',(/data_to_plot(:2)/),INDENT=-2,USE_TABS=.true.)
+     call of_open_close(output_fname(2,i_RT))
+   endif
+   !
+   call live_timing(steps=1)
+   !
  enddo
+ !
+ call live_timing()
  !
  YAMBO_FREE(spin_factors)
  YAMBO_FREE(magn_factors)

@@ -48,7 +48,7 @@ subroutine k_special(LIST_only)
  real(SP)           :: trial_b(3,3),ap,bp,cp,fp,ep,k_l(3)
  character(schlen)  :: dumb_ch
  !
- call section('p',"Special Points for the "//trim(lattice)//" lattice")
+ call section('+',"Special Points for the "//trim(lattice)//" lattice")
  !======================================================================  
  !
  call bz_samp_reset(SPECIAL_k)

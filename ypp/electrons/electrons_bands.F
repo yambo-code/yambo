@@ -36,8 +36,7 @@ subroutine electrons_bands(Xk,Xen)
  use YPP_interfaces, ONLY:PROJECTION_plot,PROJECTION_setup,k_special
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
-&                         BANDS_path,CIRCUIT_made_of_SPECIAL_k,&
-&                         BANDS_from_db,l_PROJECT_line,l_PROJECT_plane
+&                         BANDS_path,BANDS_from_db,l_PROJECT_line,l_PROJECT_plane
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
@@ -88,8 +87,6 @@ subroutine electrons_bands(Xk,Xen)
  !====================
  call k_special( )
  call k_circuit_driver( BANDS_path, BANDS_steps )
- !
- CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
  !
  if (BANDS_interpolated.or.l_PROJECT_plane) then
    !

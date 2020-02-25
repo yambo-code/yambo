@@ -47,7 +47,7 @@ subroutine k_circuit_driver(PATH,n_points)
  !
  if (BANDS_steps==0) return
  !
- call section('p',"Circuit analyzer/generator") 
+ call section('=',"Circuit analyzer/generator") 
  !
  ! Circuit made of specials?
  !===========================

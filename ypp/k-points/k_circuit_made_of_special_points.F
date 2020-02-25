@@ -104,11 +104,9 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
    enddo
  enddo
  !
- CIRCUIT_k%nbz =n_points* ( n_Uk -1 )
+ CIRCUIT_made_of_SPECIAL_k=n_Uk>0
  !
- CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
- !
- if (CIRCUIT_k%nbz==0) return
+ if (n_Uk==0) return
  !
  call msg('s','Found '//trim(intc(n_Uk-1))//' segments with  '//trim(intc(n_points))//' points each')
  !
@@ -121,9 +119,10 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
    call c2a(v_in=SPECIAL_k%pt(ik,:),mode='ki2c')
  enddo
  !
- YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz+1,3))
- allocate(CIRCUIT_k_norm(CIRCUIT_k%nbz+1))
- allocate(CIRCUIT_k_label(CIRCUIT_k%nbz+1))
+ CIRCUIT_k%nbz =n_points* ( n_Uk -1 )+1
+ YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz,3))
+ allocate(CIRCUIT_k_norm(CIRCUIT_k%nbz))
+ allocate(CIRCUIT_k_label(CIRCUIT_k%nbz))
  CIRCUIT_k%nbz=0
  K_norm=0.
  CIRCUIT_k_label=" "

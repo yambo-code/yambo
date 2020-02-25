@@ -27,10 +27,9 @@ subroutine PROJECTION_setup( what ,bands )
  use stderr,         ONLY:STRING_same
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use electrons,      ONLY:n_sp_pol,E_reset
- use vec_operate,    ONLY:cross_product,c2a,normalize_v,v_is_zero,iku_v_norm
+ use vec_operate,    ONLY:c2a
  use com,            ONLY:msg
- use YPPm,           ONLY:PROJECT_mode,PROJECT_path,&
-&                         CIRCUIT_made_of_SPECIAL_k,CIRCUIT_k,PROJECT_steps,PROJECT_depth,&
+ use YPPm,           ONLY:PROJECT_mode,PROJECT_path,CIRCUIT_k,PROJECT_steps,PROJECT_depth,&
 &                         l_PROJECT_line,CIRCUIT_k_label,l_PROJECT_plane,SLICE_k,SLICE_E,BANDS_steps,&
 &                         PROJECT_plane_X,PROJECT_plane_Y,l_PROJECT_atom
  use YPP_interfaces, ONLY:k_special
@@ -43,8 +42,8 @@ subroutine PROJECTION_setup( what ,bands )
  !
  ! Work Space
  !
- integer  :: i_k,n_lines,i_l,i_p1,i_p2
- real(SP) :: line_vector(10,3),perp_vector(10,3),versor(3),k_trial(3),k_trial_bz(3),O(3)
+ integer  :: i_k,n_lines,i_p1,i_p2
+ real(SP) :: axis(10,3),O(3),k_trial(3)
  type(bz_samp) :: PLANE_k
  !
  if (trim(PROJECT_mode)=="none") return
@@ -64,8 +63,6 @@ subroutine PROJECTION_setup( what ,bands )
    !
    call k_circuit_driver(PROJECT_path,PROJECT_steps)
    !
-   CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
-   !
  else
    PROJECT_steps=BANDS_steps
  endif
@@ -75,49 +72,25 @@ subroutine PROJECTION_setup( what ,bands )
  !
  if (PROJECT_depth<0) PROJECT_depth=1
  !
- ! Find the versor perpendicular to the circuit...
- !================================================
+ ! Find the axis
+ !===============
  n_lines=count(len_trim(CIRCUIT_k_label(:))>0)
  !
- ! ...line versors...
- i_l=0
- K_LOOP: do i_k=1,CIRCUIT_k%nbz-1
-   if (len_trim(CIRCUIT_k_label(i_k))>0) then
-     i_l=i_l+1
-     line_vector(i_l,:)=CIRCUIT_k%pt(i_k+1,:)-CIRCUIT_k%pt(i_k,:)
-     line_vector(i_l,:)=line_vector(i_l,:)/iku_v_norm( line_vector(i_l,:) )
-     if (i_l==n_lines-1) exit K_LOOP
-   endif
- enddo K_LOOP
- !
- ! ...perp versors...
- do i_l=1,n_lines-2
-   call c2a(v_in= line_vector(i_l,:),mode='ki2c')
-   perp_vector(i_l,:)=normalize_v( cross_product(line_vector(i_l+1,:),line_vector(i_l,:)))
-   call c2a(v_in= line_vector(i_l,:),mode='kc2i')
-   if (i_l==1) then
-     versor=perp_vector(1,:)
-   else
-     if (.not.v_is_zero( cross_product(versor,perp_vector(i_l,:)) )) then
-       call error("More than one perpendicular direction found")
-     endif
-   endif
- enddo
+ call PROJECTION_axis( n_lines, axis, O )
  !
  !...
- call msg("sr","[PROJECT] Direction [cc]",versor)
- call msg("r", "                   [iku]",versor)
+ call msg("sr","[PROJECT] Direction [cc]",axis(n_lines,:))
+ call msg("r", "                   [iku]",axis(n_lines,:))
  !
  ! GRID creation
  !===============
  !
- if (l_PROJECT_line) call PROJECTION_perpendicular_sampling(CIRCUIT_k,versor)
+ if (l_PROJECT_line) call PROJECTION_perpendicular_sampling(CIRCUIT_k,axis(n_lines,:))
  !
  if (l_PROJECT_plane) then
    !
-   O=CIRCUIT_k%pt(PROJECT_steps+1,:)
-   PROJECT_plane_X=line_vector(1,:)
-   PROJECT_plane_Y=line_vector(2,:)
+   PROJECT_plane_X=axis(1,:)
+   PROJECT_plane_Y=axis(2,:)
    call c2a(v_in= PROJECT_plane_X,mode='ki2c')
    call c2a(v_in= PROJECT_plane_Y,mode='ki2c')
    !
@@ -132,7 +105,7 @@ subroutine PROJECTION_setup( what ,bands )
      enddo
    enddo
    !
-   call PROJECTION_perpendicular_sampling(PLANE_k,versor)
+   call PROJECTION_perpendicular_sampling(PLANE_k,axis(n_lines,:))
    !
  endif
  !

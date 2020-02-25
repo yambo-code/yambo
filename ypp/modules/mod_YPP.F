@@ -263,6 +263,7 @@ module YPPm
  logical     :: l_fix_syms
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
+ integer     :: ng_cut
  !
  ! Convert wave--functions
  !

@@ -24,7 +24,7 @@
 subroutine YPP_SET_defaults()
  !
  use YPPm,           ONLY:DOS_broadening,DOS_E_range,r_hole,deg_energy ,EXCITON_weight_treshold,&
-                          WF_multiplier,gamma_radius,SOC_split,BANDS_bands,BANDS_steps,&
+                          WF_multiplier,gamma_radius,SOC_split,BANDS_bands,BANDS_steps,ng_cut,&
 &                         coo_in,coo_out,DOS_E_steps,INTERP_grid ,l_amplitude,l_bands,l_current,l_density  ,&
 &                         l_dos,l_exc_wf   ,l_mag,l_norm_to_one,l_sort,l_sp_wf,l_spin,l_wannier,mag_dir    ,&
 &                         N_path_pts,ncell ,ord_dgrid_ipol ,output_fname,p_dir,p_format   ,perturbative_SOC_path,&
@@ -37,6 +37,7 @@ subroutine YPP_SET_defaults()
  use electrons,      ONLY:n_bands
  use com,            ONLY:write_to_report
  use stderr,         ONLY:write_to_log  
+ use wave_func,      ONLY:wf_ng
  use LIVE_t,         ONLY:live_timing_is_on
 #if defined _YPP_SC
  use YPPm,           ONLY:l_mean_potential
@@ -57,6 +58,7 @@ subroutine YPP_SET_defaults()
 &                         l_gkkp, l_phonons, ph_broad, ph_freqs_file, ph_modes_file
  use ELPH,           ONLY:gsqF_energy_steps
 #endif
+ use R_lattice,      ONLY:ng_closed
  !
  implicit none
  !
@@ -262,6 +264,7 @@ subroutine YPP_SET_defaults()
  B_field=0._SP
  B_theta=0._SP
  B_psi=0._SP
+ ng_cut=0
  !
 #endif
  !

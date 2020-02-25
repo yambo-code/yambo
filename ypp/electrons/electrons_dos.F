@@ -165,8 +165,7 @@ subroutine electrons_dos(Xk,Xen)
      call msg('o grid',"#")
      !
      do ikbz=1,GRID_k%nbz
-       if (allocated(GRID_k%ptbz)) values(2:4)=GRID_k%ptbz(ikbz,:)
-       if (allocated(GRID_k%pt))   values(2:4)=GRID_k%pt(ikbz,:)
+       values(2:4)=GRID_k%ptbz(ikbz,:)
        call K_transform(values(2:4),"iku")
        if (.not.l_PROJECT_line) ik=GRID_k%sstar(ikbz,1)
        if (     l_PROJECT_line) ik=ikbz

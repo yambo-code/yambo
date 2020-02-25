@@ -32,7 +32,7 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  use stderr,              ONLY:intc
  use YPP_symm,            ONLY:wf_nc_k_save,wf_igk_save,wf_nc_k_reduced,wf_igk_reduced,&
 &                              wf_nc_k_new,l_wf_nc_k_red,ng_vec_new,ng_vec_save,wf_igk_new,&
-&                              wf_nc_k_new,wf_ncx_new,wf_ncx_save,wf_ng_new,wf_ng_save
+&                              wf_nc_k_new,wf_ncx_new,wf_ncx_save,wf_ng_new,wf_ng_save,wf_ng_cut
  !
 #include<memory.h>
  !
@@ -59,13 +59,13 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  ng_vec_save =ng_vec
  !
  ! Check which of the wfc components can be rotated
- ! and discard the ones above ng_closed
- ! This could be removed by increasing the total number of g_vectors
+ ! and discard the ones above ng_closed, or above wf_ng_cut if a cutoff is provided in input 
  !
  l_wf_nc_k_red=.false.
+ if(wf_ng_cut==0) wf_ng_cut=ng_closed 
  do ik=1,k_save%nibz
    do ic=1,wf_nc_k(ik)
-     if( wf_igk(ic,ik)<=ng_closed ) cycle
+     if( wf_igk(ic,ik)<=wf_ng_cut ) cycle
      l_wf_nc_k_red=.true.
      wf_igk(ic:wf_nc_k(ik),ik)=-1
      wf_nc_k(ik)=ic-1

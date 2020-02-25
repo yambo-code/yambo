@@ -33,10 +33,10 @@ subroutine electrons_bands(Xk,Xen)
  !
  use pars,           ONLY:SP,rZERO
  use units,          ONLY:HA2EV
- use YPP_interfaces, ONLY:PROJECTION_plot,PROJECTION_setup
+ use YPP_interfaces, ONLY:PROJECTION_plot,PROJECTION_setup,k_special
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
-&                         PtsPath,BANDS_path,n_path_pts,CIRCUIT_made_of_SPECIAL_k,&
+&                         BANDS_path,CIRCUIT_made_of_SPECIAL_k,&
 &                         BANDS_from_db,l_PROJECT_line,l_PROJECT_plane
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
@@ -84,14 +84,10 @@ subroutine electrons_bands(Xk,Xen)
  endif
  if (l_PROJECT_plane) GRID_interpolate=.FALSE.
  !
- call section('+',"Loading special Points for the "//trim(lattice)//" lattice")
- !============================================================================= 
- if (BANDS_from_db) BANDS_path= " " 
- !
- PtsPath=BANDS_path
- n_path_pts=BANDS_steps
- !
- call k_special(.FALSE.)
+ ! Define the circuit
+ !====================
+ call k_special( )
+ call k_circuit_driver( BANDS_path, BANDS_steps )
  !
  CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
  !
@@ -105,7 +101,6 @@ subroutine electrons_bands(Xk,Xen)
    else
      if (.not.GRID_interpolate) call section('=','Interpolation@work: Circuit')
      if (     GRID_interpolate) call section('=','Interpolation@work: Circuit and Grid')
-     call k_define_circuit( )
    endif
    !
    call electrons_bands_interpolate(Xen,Xk,BANDS_bands,ID_bands,CIRCUIT_E,GRID_E=GRID_E,CIRCUIT_dE=CIRCUIT_dE)

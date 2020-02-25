@@ -21,36 +21,37 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_special(LIST)
+subroutine k_special(LIST_only)
  !
- use pars,                ONLY:SP,schlen,lchlen
+ ! Special k-points. Output in IKU
+ !
+ use pars,                ONLY:SP,schlen
  use units,               ONLY:pi
  use R_lattice,           ONLY:bz_samp_reset,b
  use D_lattice,           ONLY:alat,lattice,a
- use com,                 ONLY:msg,of_open_close
- use vec_operate,         ONLY:c2a,v_norm
- use YPPm,                ONLY:n_path_pts,PtsPath,K_transform,l_high_sym_pts,&
-&                              SPECIAL_k,n_SPECIAL_k_MAX,CIRCUIT_k,SPECIAL_k_label,&
-&                              n_SPECIAL_k_MAX,CIRCUIT_k_label,CIRCUIT_k_norm,coo_out
- use stderr,              ONLY:STRING_split,STRING_same,intc
+ use com,                 ONLY:msg
+ use vec_operate,         ONLY:c2a
+ use YPPm,                ONLY:K_transform,SPECIAL_k,n_SPECIAL_k_MAX,&
+&                              SPECIAL_k_label,n_SPECIAL_k_MAX
  use LIVE_t,              ONLY:live_timing_is_on
  !
 #include<memory.h>
  !
- logical :: LIST
+ ! Input 
+ !
+ logical, optional :: LIST_only
  !
  ! Work Space
  !
- logical          :: l_use_yambo_b
- integer          :: ik,il,n_lines,ip,i_str,K_position(n_SPECIAL_k_MAX),K_end(n_SPECIAL_k_MAX),&
-&                    n_K_space_strings,n_K_x_strings,n_K_minus_strings,k_found(2)
- real(SP)         :: trial_b(3,3),K_norm,ap,bp,cp,fp,ep,K_prefactor(n_SPECIAL_k_MAX),k_l(3),k_lp1(3)
- character(schlen):: K_space_strings(n_SPECIAL_k_MAX),dumb_ch,k_f_name(2),K_x_strings(5),&
-&                    K_label(n_SPECIAL_k_MAX),K_minus_strings(5)
- character(lchlen):: of_string
+ logical            :: l_use_yambo_b
+ integer            :: ik
+ real(SP)           :: trial_b(3,3),ap,bp,cp,fp,ep,k_l(3)
+ character(schlen)  :: dumb_ch
+ !
+ call section('p',"== Special Points for the "//trim(lattice)//" lattice ==")
+ !===========================================================================  
  !
  call bz_samp_reset(SPECIAL_k)
- call bz_samp_reset(CIRCUIT_k)
  !
  YAMBO_ALLOC(SPECIAL_k%pt,(n_SPECIAL_k_MAX,3))
  !
@@ -257,174 +258,27 @@ subroutine k_special(LIST)
  endif
  !
  ! Report 
- !
- if (l_high_sym_pts.or.LIST) then
-   call section("p","Special K-points list ["//trim(coo_out)//"]")
-   live_timing_is_on=.false.
-   do ik=1,SPECIAL_k%nbz
-     k_l=SPECIAL_k%pt(ik,:)
-     call K_transform(k_l,'cc')
-     write (dumb_ch,'(3f12.7,2x,a)') k_l,trim(SPECIAL_k_label(ik))
-     call msg("s",trim(dumb_ch))
-   enddo
-   live_timing_is_on=.true.
- endif
- !
- if (LIST) then
+ !--------
+ if (present(LIST_only)) then
+   if (LIST_only) then
+     live_timing_is_on=.false.
+     do ik=1,SPECIAL_k%nbz
+       k_l=SPECIAL_k%pt(ik,:)
+       call K_transform(k_l,'cc')
+       write (dumb_ch,'(3f12.7,2x,a)') k_l,trim(SPECIAL_k_label(ik))
+       call msg("s",trim(dumb_ch))
+     enddo
+     live_timing_is_on=.true.
+   endif
    YAMBO_FREE(SPECIAL_k%pt)
    return
  endif
  !
- ! Path builder
- !
- call STRING_split(PtsPath,K_space_strings,n_non_empty_strings=n_K_space_strings)
- !
- K_position=0
- K_prefactor=1._SP
- n_lines=0
- do i_str=1,n_K_space_strings
-   !
-   call STRING_split(K_space_strings(i_str),K_x_strings,space="x",n_non_empty_strings=n_K_x_strings)
-   !
-   k_found=0
-   !
-   if (n_K_x_strings==1) k_found(1)=which_K(K_space_strings(i_str))
-   if (n_K_x_strings==2) then
-     call STRING_split(K_x_strings(2),K_minus_strings,space="-",n_non_empty_strings=n_K_minus_strings)
-     if (n_K_minus_strings==1) k_found(1)=which_K(K_x_strings(2))
-     if (n_K_minus_strings==2) then 
-       k_found(1)=which_K(K_minus_strings(1))
-       k_found(2)=which_K(K_minus_strings(2))
-     endif
-   endif
-   !
-   if (k_found(1)>0) then
-     n_lines=n_lines+1
-     K_position(n_lines)=k_found(1)
-     K_end(n_lines)=k_found(1)
-     K_prefactor(n_lines)=1.
-     K_label(n_lines)=SPECIAL_k_label(k_found(1))
-     !
-     if (n_K_x_strings==2) then
-       read(K_x_strings(1),*) K_prefactor(n_lines)
-       write (K_label(n_lines),'(f5.2,2a)') K_prefactor(n_lines),'x',trim(SPECIAL_k_label(k_found(1)))
-     endif
-     if (n_K_minus_strings==2) then
-       K_end(n_lines)=k_found(2)
-       K_label(n_lines)=trim(K_label(n_lines))//"-"//trim(SPECIAL_k_label(k_found(2)))
-     endif
-     !
-   endif
-   !
- enddo
- !
- if (n_lines==0) n_lines=1
- !
- if (n_lines==1.and..not.l_high_sym_pts) then
-   !
-   do ik=1,SPECIAL_k%nbz
-     call c2a(v_in=SPECIAL_k%pt(ik,:),mode='kc2i')
-   enddo
-   !
-   return
-   !
- endif
- !
- CIRCUIT_k%nbz =n_path_pts* ( n_lines -1 )
- !
- if (CIRCUIT_k%nbz==0) return
- !
- call msg('s','Found '//trim(intc(n_lines-1))//' segments with  '//trim(intc(CIRCUIT_k%nbz+1))//' points each')
- !
- do il=1,n_lines-1
-   dumb_ch='Segment #'//trim(intc(il))//': '//trim(K_label(il))//" to "//trim(K_label(il+1))
-   call msg('s',trim(dumb_ch))
- enddo
- !
- YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz+1,3))
- allocate(CIRCUIT_k_norm(CIRCUIT_k%nbz+1))
- allocate(CIRCUIT_k_label(CIRCUIT_k%nbz+1))
- CIRCUIT_k%nbz=0
- K_norm=0.
- CIRCUIT_k_label=" "
- do il=1,n_lines-1
-   !
-   k_l  =K_path(il)
-   k_lp1=K_path(il+1)
-   !
-   do ip=1,n_path_pts
-     CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
-     if (ip==1) CIRCUIT_k_label(CIRCUIT_k%nbz)=K_label(il)
-     CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=k_l+(k_lp1-k_l)/n_path_pts*(ip-1)
-     if (CIRCUIT_k%nbz>1) K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
-     CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
-   enddo
- enddo
- !
- CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
- CIRCUIT_k%nibz=CIRCUIT_k%nbz
- CIRCUIT_k%pt(CIRCUIT_k%nbz,:)=K_path(n_lines)
- if (K_prefactor(n_lines)>0._SP) CIRCUIT_k_label(CIRCUIT_k%nbz)=K_label(n_lines)
- if (K_prefactor(n_lines)<0._SP) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//K_label(n_lines)
- K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
- CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
- !
- do ik=1,CIRCUIT_k%nbz
-   call c2a(v_in=CIRCUIT_k%pt(ik,:),mode='kc2i')
- enddo
  do ik=1,SPECIAL_k%nbz
    call c2a(v_in=SPECIAL_k%pt(ik,:),mode='kc2i')
  enddo
  !
- YAMBO_ALLOC(CIRCUIT_k%weights,(CIRCUIT_k%nbz))
- CIRCUIT_k%weights=1._SP/real(CIRCUIT_k%nbz,SP)
- !
- if (l_high_sym_pts) then
-   !
-   k_f_name(1)="path_points"
-   k_f_name(2)="PWSCF_points"
-   call of_open_close(k_f_name(1),'ot')
-   call of_open_close(k_f_name(2),'ot')
-   call msg('o  path',"#",(/"c1    ","c2    ","c3    ","Norm  "/),INDENT=0,USE_TABS=.true.)
-   call msg('o PWSCF',"#",(/"c1    ","c2    ","c3    ","Weight"/),INDENT=0,USE_TABS=.true.)
-   call msg('o path PWSCF',"#"," ",INDENT=0)
-   !
-   do ik=1,CIRCUIT_k%nbz
-     !
-     call K_transform(CIRCUIT_k%pt(ik,:),'iku')
-     !
-     call msg('o  path',"",(/CIRCUIT_k%pt(ik,:),CIRCUIT_k_norm(ik)/),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
-     if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// CIRCUIT_k_label(ik)//']'
-     call msg_deliver('path',trim(of_string))
-     call msg('o PWSCF',"",(/CIRCUIT_k%pt(ik,:),1._SP/),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
-     if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// CIRCUIT_k_label(ik)//']'
-     call msg_deliver('PWSCF',trim(of_string))
-   enddo
-   !
-   YAMBO_FREE(SPECIAL_k%pt)
-   YAMBO_FREE(CIRCUIT_k%pt)
-   !
-   call of_open_close(k_f_name(1))
-   call of_open_close(k_f_name(2))
-   !
- endif
- !
  contains
-   !
-   function K_path(i_line)
-     integer  :: i_line
-     real(SP) :: K_path(3)
-     K_path=SPECIAL_k%pt( K_position(i_line),:)+ &
-&           (SPECIAL_k%pt( K_end(i_line),:)  -SPECIAL_k%pt(K_position(i_line),:)  )*K_prefactor(i_line)
-   end function
-   !
-   integer function which_K(label)
-     character(*) :: label
-     which_K=0
-     do ik=1,SPECIAL_k%nbz
-       if ( STRING_same(trim(label),trim(SPECIAL_k_label(ik))) ) which_K=ik
-     enddo
-   end function
    !
    subroutine orthorombic_lengths(xp,yp)
     !

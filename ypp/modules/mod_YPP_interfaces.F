@@ -60,6 +60,10 @@ module YPP_interfaces
      integer   ,optional:: bands(2)
    end subroutine
    !
+   subroutine k_special( LIST_only )
+     logical   ,optional:: LIST_only
+   end subroutine
+   !
    subroutine PROJECTION_plot( what, N , bands, W, TIME, OBS_K, OBS_B)
      use pars,           ONLY:SP
      use YPPm,           ONLY:PROJECT_depth

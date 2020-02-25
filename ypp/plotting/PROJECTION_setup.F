@@ -29,10 +29,11 @@ subroutine PROJECTION_setup( what ,bands )
  use electrons,      ONLY:n_sp_pol,E_reset
  use vec_operate,    ONLY:cross_product,c2a,normalize_v,v_is_zero,iku_v_norm
  use com,            ONLY:msg
- use YPPm,           ONLY:PROJECT_mode,PtsPath,PROJECT_path,&
-&                         CIRCUIT_made_of_SPECIAL_k,CIRCUIT_k,PROJECT_steps,PROJECT_depth,n_path_pts,&
+ use YPPm,           ONLY:PROJECT_mode,PROJECT_path,&
+&                         CIRCUIT_made_of_SPECIAL_k,CIRCUIT_k,PROJECT_steps,PROJECT_depth,&
 &                         l_PROJECT_line,CIRCUIT_k_label,l_PROJECT_plane,SLICE_k,SLICE_E,BANDS_steps,&
 &                         PROJECT_plane_X,PROJECT_plane_Y,l_PROJECT_atom
+ use YPP_interfaces, ONLY:k_special
  use interpolate,    ONLY:GRID_k
  !
  implicit none
@@ -59,14 +60,11 @@ subroutine PROJECTION_setup( what ,bands )
  !
  if (what=="DOS") then
    !
-   PtsPath=PROJECT_path
-   n_path_pts=PROJECT_steps
+   call k_special( )
    !
-   call k_special(.FALSE.)
+   call k_circuit_driver(PROJECT_path,PROJECT_steps)
    !
    CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
-   !
-   call k_define_circuit( )
    !
  else
    PROJECT_steps=BANDS_steps

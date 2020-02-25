@@ -30,10 +30,10 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use D_lattice,      ONLY:lattice
  use com,            ONLY:msg,of_open_close
  use YPPm,           ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
-&                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,&
+&                         CIRCUIT_made_of_SPECIAL_k,BANDS_bands,&
 &                         CIRCUIT_E_db,CIRCUIT_k_label,l_PROJECT_line,l_PROJECT_plane,PROJECT_depth
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time,integrated_Nel,integrated_Nhole
- use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_k_on_the_path_or_plane,PROJECTION_plot
+ use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_k_on_the_path_or_plane,PROJECTION_plot,k_special
  use stderr,         ONLY:real2ch,intc
  use vec_operate,    ONLY:iku_v_norm
  use RT_control,     ONLY:RT_apply,RT_carriers_object,RT_carriers_to_RT_k,RT_carriers_to_RT_E
@@ -81,18 +81,14 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    call warning("User bands restricted to "//trim(intc(BANDS_bands(1)))//" - "//trim(intc(BANDS_bands(2))))
  endif
  !
- call section('+',"Loading special Points for the "//trim(lattice)//" lattice")
- !============================================================================= 
  if (file_exists(trim(CIRCUIT_E_DB_path)//"/SAVE/ns.db1")) BANDS_path= " "
  !
- PtsPath=BANDS_path
- n_path_pts=BANDS_steps
- !
- call k_special(.FALSE.)
+ ! Define the circuit
+ !====================
+ call k_special( )
+ call k_circuit_driver( BANDS_path, BANDS_steps )
  !
  CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
- !
- call k_define_circuit( )
  !
  ! Projection
  !============

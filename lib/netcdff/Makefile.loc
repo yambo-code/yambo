@@ -19,7 +19,12 @@ TARBALL=$(tarball_netcdff)
 AUXFLAGS=--prefix=$(LIBPATH) \
          --without-pic --enable-static --disable-shared
 
+# DEBUG <
+# This option is useful for debugging netcdf4 problems
 # --enable-logging
+# See also the connected call in src/setup/setup.F
+# call netcdf_call(nf90_set_log_level(3),1)
+# DEBUG >
 
 #
 # MAIN target

@@ -38,6 +38,8 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
  character(*) :: PATH
  integer      :: n_points
  !
+ ! Work Space
+ !
  type :: USER_k
    character(schlen) :: string
    character(schlen) :: label
@@ -48,14 +50,9 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
  !
  integer, parameter :: MAX_n_lines=10
  type(USER_k)       :: Uk(MAX_n_lines)
- !
- integer            :: i_Uk,i_sp,ik,i_plus,i_minus
- ! 
  real(SP)           :: k_l(3),k_lp1(3),K_norm
- !
- integer            :: n_Uk
- integer            :: n_SPACE_strings,n_P_strings,n_M_strings,n_X_strings
- !
+ integer            :: i_Uk,i_sp,ik,i_plus,i_minus,n_Uk,&
+&                      n_SPACE_strings,n_P_strings,n_M_strings,n_X_strings
  character(schlen)  :: SPACE_string(MAX_n_lines),dumb_ch,k_f_name(2)
  character(schlen)  :: P_string(MAX_n_lines),M_string(MAX_n_lines),X_string(MAX_n_lines)
  character(lchlen)  :: of_string
@@ -97,6 +94,8 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
            Uk(n_Uk)%iK_prefactor(Uk(n_Uk)%n_operations)=1.
          else
            read(X_string(1),*) Uk(n_Uk)%iK_prefactor(Uk(n_Uk)%n_operations)
+           if (i_minus>1) Uk(n_Uk)%iK_prefactor(Uk(n_Uk)%n_operations)=&
+&                        -Uk(n_Uk)%iK_prefactor(Uk(n_Uk)%n_operations)
          endif
        endif
        !

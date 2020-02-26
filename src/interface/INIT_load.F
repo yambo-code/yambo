@@ -483,7 +483,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! External fields
  !
- n_ext_fields=0
+ if (initmode==4) n_ext_fields=0
  do i_field=1,n_ext_fields_max
    call Afield(i_field)
  enddo

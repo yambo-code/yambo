@@ -253,7 +253,7 @@ subroutine RT_initialize(E,k,q)
      if( all( abs(Efield(i1)%versor(:))<epsilon(1.) ) ) &
 &      call error("External "//trim(Efield(i1)%ef_name)//" field has undefined direction.")
      !
-     if ( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='PULSE') &
+     if ( ((Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='PULSE')) &
 &        .and. Efield(i1)%width<epsilon(1.)  ) &
 &      call error("External "//trim(Efield(i1)%ef_name)//" field has undefined duration.")
      !

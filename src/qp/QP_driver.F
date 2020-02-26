@@ -299,7 +299,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    ! NEWTON
    !--------
-   call QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
+   call QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    !
  endif
  !

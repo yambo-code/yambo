@@ -258,7 +258,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'GEnRnge',  '[GW] GF energy range',QP_G_er,E_unit)
  call it(defs,'GEnMode',  '[GW] GF energy mode ("centered","absolute"). "Centered" around the bare energy',&
 &        GF_energy_range_mode,verb_level=V_qp)
- call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze)', GW_terminator_Kind,verb_level=V_qp)
+ call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze)', GW_terminator_Kind)
  call it(defs,'GTermEn',  '[GW] GW terminator energy (only for kind="BG")', GW_terminator_E,E_unit,verb_level=V_qp)
  call it('f',defs,'NewtDchk',  '[GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut', '[GW] Print all variables in the output file',verb_level=V_qp)
@@ -270,7 +270,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
- call it(defs,'XTermKind','[X] X terminator ("none","BG" Bruneval-Gonze)',X_terminator_Kind,verb_level=V_resp)
+ call it(defs,'XTermKind','[X] X terminator ("none","BG" Bruneval-Gonze)',X_terminator_Kind)
  call it(defs,'XTermEn',  '[X] X terminator energy (only for kind="BG")',X_terminator_E,E_unit,verb_level=V_resp)
  call it('f',defs,'DrClassic', '[X] Use a classical model for the drude term',verb_level=V_resp)
  !
@@ -483,6 +483,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! External fields
  !
+ n_ext_fields=0
  do i_field=1,n_ext_fields_max
    call Afield(i_field)
  enddo
@@ -709,7 +710,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &            Efield(i_field)%intensity,unit=I_unit)
      call it(defs,trim(name)//'_Width',           '[RT '//trim(name)//'] Width',&
 &            Efield(i_field)%width,unit=Time_unit(1))
-     call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (alternative to Width)',&
+     call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (overwrite width if set)',&
 &            Efield(i_field)%FWHM,unit=Time_unit(1),verb_level=V_real_time)
      call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
 &            Efield(i_field)%ef_name,verb_level=0)
@@ -722,16 +723,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
 &            Efield(i_field)%t_initial,unit=Time_unit(1))
      !
-     if (initmode==4.and.n_ext_fields==0) then
+     if (initmode==4) then
+       !
        call parser(trim(name)//'_FWHM',is_def)
-       if (is_def) then
-         Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
-       else
-         Efield(i_field)%FWHM=Efield(i_field)%width*(2._SP*sqrt(2._SP*log(2._SP)))
-       endif
-       call parser(trim(name)//'_Int',is_def)
-       if (i_field==1) n_ext_fields=0
-       if (is_def.and.Efield(i_field)%intensity*AU2KWCMm2>0.) n_ext_fields=n_ext_fields+1
+       if (     is_def) Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
+       if (.not.is_def) Efield(i_field)%FWHM=Efield(i_field)%width*(2._SP*sqrt(2._SP*log(2._SP)))
+       !
+       if (trim(Efield(i_field)%ef_name)/='none') n_ext_fields=n_ext_fields+1
+       !
      endif
      !
    end subroutine

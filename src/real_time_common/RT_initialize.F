@@ -251,6 +251,9 @@ subroutine RT_initialize(E,k,q)
      if( all( abs(Efield(i1)%versor(:))<epsilon(1.) ) ) &
 &      call error("External "//trim(Efield(i1)%ef_name)//" field has undefined direction.")
      !
+     if ( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='PULSE') .and. abs(Efield(i1)%width<epsilon(1.) ) &
+&      call error("External "//trim(Efield(i1)%ef_name)//" field has undefined duration.")
+     !
      Efield(i1)%versor   =normalize_v(Efield(i1)%versor)
      Efield(i1)%amplitude=Efield_strength(Efield(i1)%intensity,'AU')
      !
@@ -262,7 +265,7 @@ subroutine RT_initialize(E,k,q)
      if ( Efield(i1)%ef_name=='DELTA' ) then
        Efield(i1)%t_final_indx=Efield(i1)%t_initial_indx+2
        Efield(i1)%t_final=RT_step*(Efield(i1)%t_final_indx-1)       
-     else if ( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') ) then
+     else if ( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='PULSE') ) then
        call RT_Fluence(i1)
      else
        Efield(i1)%t_final_indx=    NE_steps

@@ -487,6 +487,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! External fields
  !
+ n_ext_fields=0
  do i_field=1,n_ext_fields_max
    call Afield(i_field)
  enddo
@@ -713,7 +714,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &            Efield(i_field)%intensity,unit=I_unit)
      call it(defs,trim(name)//'_Width',           '[RT '//trim(name)//'] Width',&
 &            Efield(i_field)%width,unit=Time_unit(1))
-     call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (alternative to Width)',&
+     call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (overwrite width if set)',&
 &            Efield(i_field)%FWHM,unit=Time_unit(1),verb_level=V_real_time)
      call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
 &            Efield(i_field)%ef_name,verb_level=0)
@@ -726,16 +727,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
 &            Efield(i_field)%t_initial,unit=Time_unit(1))
      !
-     if (initmode==4.and.n_ext_fields==0) then
+     if (initmode==4) then
+       !
        call parser(trim(name)//'_FWHM',is_def)
-       if (is_def) then
-         Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
-       else
-         Efield(i_field)%FWHM=Efield(i_field)%width*(2._SP*sqrt(2._SP*log(2._SP)))
-       endif
-       call parser(trim(name)//'_Int',is_def)
-       if (i_field==1) n_ext_fields=0
-       if (is_def.and.Efield(i_field)%intensity*AU2KWCMm2>0.) n_ext_fields=n_ext_fields+1
+       if (     is_def) Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
+       if (.not.is_def) Efield(i_field)%FWHM=Efield(i_field)%width*(2._SP*sqrt(2._SP*log(2._SP)))
+       !
+       if (trim(Efield(i_field)%ef_name)/='none') n_ext_fields=n_ext_fields+1
+       !
      endif
      !
    end subroutine

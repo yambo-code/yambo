@@ -79,8 +79,8 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
        !
        call STRING_split(M_string(i_minus),X_string,space="x",n_non_empty_strings=n_X_strings)
        !
-       if  (n_X_strings==1) ik=Which_K(X_string(1))
-       if  (n_X_strings==2) ik=Which_K(X_string(2))
+       if  (n_X_strings==1) ik=which_K(X_string(1))
+       if  (n_X_strings==2) ik=which_K(X_string(2))
        !
        if (ik/=0) then
          if (i_plus==1.and.i_minus==1) then

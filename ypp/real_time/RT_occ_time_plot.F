@@ -48,7 +48,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  ! Work Space
  !
- integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2),i_a
+ integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2),i_a,n_axis,Nk_path
  real(SP)              :: io_Time,tmp_lifetimes(6),data_to_plot(9),k_al(3),k_cc(3),axis(3,3),&
 &                         data_to_plot_cumulative(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,9),O(3)
  character(schlen)     :: titles(9),specs(9,2),dumb_ch(2)
@@ -80,12 +80,14 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !======================================
  call k_special( )
  call k_circuit_made_of_special_points( BANDS_path, 1 )
- call PROJECTION_axis(3,axis,O)
+ n_axis=3
+ call PROJECTION_axis(n_axis,axis,O)
  if ( CIRCUIT_k%nbz>0 ) then
    call c2a(v_in=O,mode='ki2c')
    do i_a=1,3
-     call c2a(v_in=axis(1,:),mode='ki2c')
+     call c2a(v_in=axis(i_a,:),mode='ki2c')
    enddo
+   Nk_path=0
  endif
  !
  l_OCCgroup_path   =l_OCCgroup.and.CIRCUIT_k%nbz>0
@@ -128,8 +130,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  if (l_OCCgroup_path) then
    n_output=3
-   titles(2:3) =(/'Delta Occ[Ho]','Delta Occ[El]'/)
-   specs=' '
+   titles(2:3) =(/'Delta_Occ[Ho]','Delta_Occ[El]'/)
  endif
  !
  n_gamma=0
@@ -169,7 +170,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    data_to_plot_cumulative(:,:,1)=io_TIME/FS2AUT
    if (l_OCCgroup_path) data_to_plot(2:3)=rZERO
    !
-   do i_RT=1,RT_carriers%nstates
+   RT_loop: do i_RT=1,RT_carriers%nstates
      !
      ib     =RT_carriers%table(i_RT,1)
      ik     =RT_carriers%table(i_RT,2)
@@ -183,12 +184,12 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        !
        call c2a(v_in=RT_carriers%kpt(ik_RT,:),v_out=k_cc,mode='ki2c')
        !
-       do i_a=1,3
+       do i_a=1,2
          k_al(i_a)= dot_product(k_cc-O,axis(i_a,:))/v_norm(axis(i_a,:))
        enddo
        !
-       if (k_al(1)<0..or.k_al(1)>1.) do_state(:,ik,:)=.FALSE.
-       if (k_al(2)<0..or.k_al(2)>1.) do_state(:,ik,:)=.FALSE.
+       if (k_al(1)<0..or.k_al(1)>v_norm(axis(1,:))) cycle RT_loop
+       if (k_al(2)<0..or.k_al(2)>v_norm(axis(2,:))) cycle RT_loop
        !
      endif  
      !
@@ -223,6 +224,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      endif
      !
      if (l_OCCgroup_path) then
+       if (ib==RT_bands(1)) Nk_path=Nk_path+1
        if (ib<=En%nbf  ) data_to_plot(2)=data_to_plot(2)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
        if (ib>=En%nbf+1) data_to_plot(3)=data_to_plot(3)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
      else
@@ -231,7 +233,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        call of_open_close(output_fname(1,i_RT))
      endif
      !
-   enddo
+   enddo RT_loop
    !
    if (l_OCCgroup_k_and_b) then
      do ik=1,kpt%nibz
@@ -282,47 +284,58 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      !
      call msg('o '//trim(fname_short),'#')
      !
-     ! Kpt on the Coarse Grid
-     !========================
-     call c2a(v_in=kpt%pt(ik,:),v_out=k_cc,mode='ki2c')
-     call c2a(v_in=kpt%pt(ik,:),v_out=k_al,mode='ki2a')
-     ! 
-     dumb_ch(1)='K ['//trim(intc(ik))//'] : '//trim(real2ch(k_cc(1)))//' '//&
-&                                              trim(real2ch(k_cc(2)))//' '//&
-&                                              trim(real2ch(k_cc(3)))//' ( cc) '
-     dumb_ch(2)='        '//trim(real2ch(k_al(1)))//' '//&
-&                           trim(real2ch(k_al(2)))//' '//&
-&                           trim(real2ch(k_al(3)))//' (rlu) '
+     if (l_OCCgroup_path) then
+       call msg('o '//trim(fname_short),"#",trim(intc(Nk_path))//" K-points included",INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(fname_short),'#')
+     else
+       !
+       ! Kpt on the Coarse Grid
+       !========================
+       call c2a(v_in=kpt%pt(ik,:),v_out=k_cc,mode='ki2c')
+       call c2a(v_in=kpt%pt(ik,:),v_out=k_al,mode='ki2a')
+       ! 
+       dumb_ch(1)='K ['//trim(intc(ik))//'] : '//trim(real2ch(k_cc(1)))//' '//&
+&                                                trim(real2ch(k_cc(2)))//' '//&
+&                                                trim(real2ch(k_cc(3)))//' ( cc) '
+       dumb_ch(2)='        '//trim(real2ch(k_al(1)))//' '//&
+&                             trim(real2ch(k_al(2)))//' '//&
+&                             trim(real2ch(k_al(3)))//' (rlu) '
+       !
+       if(ik>  9) dumb_ch(2)=' '//trim(dumb_ch(2))
+       if(ik> 99) dumb_ch(2)=' '//trim(dumb_ch(2))
+       if(ik>999) dumb_ch(2)=' '//trim(dumb_ch(2))
+       ! 
+       call msg('o '//trim(fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(fname_short),"#",trim(dumb_ch(2)),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(fname_short),"#")
+       !
+     endif
      !
-     if(ik>  9) dumb_ch(2)=' '//trim(dumb_ch(2))
-     if(ik> 99) dumb_ch(2)=' '//trim(dumb_ch(2))
-     if(ik>999) dumb_ch(2)=' '//trim(dumb_ch(2))
-     ! 
-     call msg('o '//trim(fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(fname_short),"#",trim(dumb_ch(2)),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(fname_short),"#")
-     !
-     ! Kpt on the Fine Grid
-     !======================
-     call c2a(v_in=RT_carriers%kpt(ik_RT,:),v_out=k_cc,mode='ki2c')
-     call c2a(v_in=RT_carriers%kpt(ik_RT,:),v_out=k_al,mode='ki2a')
-     !
-     dumb_ch(1)='K_FGd ['//trim(intc(ik_RT))//'] : '//trim(real2ch(k_cc(1)))//' '//&
-&                                                     trim(real2ch(k_cc(2)))//' '//&
-&                                                     trim(real2ch(k_cc(3)))//' ( cc) '
-     !
-     dumb_ch(2)='            '//trim(real2ch(k_al(1)))//' '//&
-&                               trim(real2ch(k_al(2)))//' '//&
-&                               trim(real2ch(k_al(3)))//' (rlu) '
-     !
-     if(ik_RT>   9) dumb_ch(2)=' '//trim(dumb_ch(2))
-     if(ik_RT>  99) dumb_ch(2)=' '//trim(dumb_ch(2))
-     if(ik_RT> 999) dumb_ch(2)=' '//trim(dumb_ch(2))
-     if(ik_RT>9999) dumb_ch(2)=' '//trim(dumb_ch(2))
-     !
-     call msg('o '//trim(fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(fname_short),"#",trim(dumb_ch(2)),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(fname_short),"#")
+     if (.not.l_OCCgroup_k_and_b.and..not.l_OCCgroup_path) then
+       !
+       ! Kpt on the Fine Grid
+       !======================
+       call c2a(v_in=RT_carriers%kpt(ik_RT,:),v_out=k_cc,mode='ki2c')
+       call c2a(v_in=RT_carriers%kpt(ik_RT,:),v_out=k_al,mode='ki2a')
+       !
+       dumb_ch(1)='K_FGd ['//trim(intc(ik_RT))//'] : '//trim(real2ch(k_cc(1)))//' '//&
+&                                                       trim(real2ch(k_cc(2)))//' '//&
+&                                                       trim(real2ch(k_cc(3)))//' ( cc) '
+       !
+       dumb_ch(2)='            '//trim(real2ch(k_al(1)))//' '//&
+&                                 trim(real2ch(k_al(2)))//' '//&
+&                                 trim(real2ch(k_al(3)))//' (rlu) '
+       !
+       if(ik_RT>   9) dumb_ch(2)=' '//trim(dumb_ch(2))
+       if(ik_RT>  99) dumb_ch(2)=' '//trim(dumb_ch(2))
+       if(ik_RT> 999) dumb_ch(2)=' '//trim(dumb_ch(2))
+       if(ik_RT>9999) dumb_ch(2)=' '//trim(dumb_ch(2))
+       !
+       call msg('o '//trim(fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(fname_short),"#",trim(dumb_ch(2)),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(fname_short),"#")
+       !
+     endif
      !
      if(n_spinor==2) then
        dumb_ch(1)=" Spin factors  [up,dw]   :     "//trim(real2ch(spin_factors(ib,ik,1)))//&
@@ -336,7 +349,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        call msg('o '//trim(fname_short),"#")
      endif
      !
-     if (l_elel_scatt.or.l_elph_lifetimes) then
+     if ((l_elel_scatt.or.l_elph_lifetimes).and..not.l_OCCgroup_path) then
        call msg('o '//trim(fname_short),'#',specs(:n_output,1),INDENT=0,USE_TABS=.TRUE.)
        call msg('o '//trim(fname_short),'#',specs(:n_output,2),INDENT=0,USE_TABS=.TRUE.)
      endif

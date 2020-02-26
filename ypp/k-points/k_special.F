@@ -276,6 +276,7 @@ subroutine k_special(LIST_only)
  !
  do ik=1,SPECIAL_k%nbz
    call c2a(v_in=SPECIAL_k%pt(ik,:),mode='kc2i')
+   write (*,*) trim(SPECIAL_k_label(ik)),SPECIAL_k%pt(ik,:)
  enddo
  !
  contains

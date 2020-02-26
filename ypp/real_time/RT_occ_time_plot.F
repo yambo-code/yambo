@@ -88,6 +88,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    enddo
  endif
  !
+ l_OCCgroup_path   =l_OCCgroup.and.CIRCUIT_k%nbz>0
+ !
  call set_real_printed_length(f_length=10,g_length=10)
  !
  ch3_dummy=" "
@@ -124,6 +126,12 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    specs(3:7,2)=(/'   (emis ','sion)    ','   (absor','ption)   ','         '/)
  endif
  !
+ if (l_OCCgroup_path) then
+   n_output=3
+   titles(2:3) =(/'Delta Occ[Ho]','Delta Occ[El]'/)
+   specs=' '
+ endif
+ !
  n_gamma=0
  !
  ch3_dummy="YPP"
@@ -152,7 +160,6 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
    !
    l_OCCgroup_k_and_b=l_OCCgroup.and.RT_carriers%nk>kpt%nibz.and.CIRCUIT_k%nbz==0
-   l_OCCgroup_path   =l_OCCgroup.and.CIRCUIT_k%nbz>0
    !
    if (l_elel_scatt    .and.i_T==1) n_gamma=n_gamma+2
    !
@@ -160,7 +167,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    !
    data_to_plot(1)               =io_TIME/FS2AUT
    data_to_plot_cumulative(:,:,1)=io_TIME/FS2AUT
-   if (l_OCCgroup_path) data_to_plot(2)=rZERO
+   if (l_OCCgroup_path) data_to_plot(2:3)=rZERO
    !
    do i_RT=1,RT_carriers%nstates
      !
@@ -172,9 +179,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      if (ib<RT_bands(1)) cycle
      if (ib>RT_bands(2)) cycle
      !  
-     if ( CIRCUIT_k%nbz>0 ) then
+     if ( l_OCCgroup_path ) then
        !
-       n_output=2
        call c2a(v_in=RT_carriers%kpt(ik_RT,:),v_out=k_cc,mode='ki2c')
        !
        do i_a=1,3
@@ -206,8 +212,10 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
          tmp_lifetimes(n_gamma-1)=RT_carriers%dGAMMA_E_E_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,1)
          tmp_lifetimes(n_gamma  )=RT_carriers%dGAMMA_E_E_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,2)
        endif
-       data_to_plot(3:n_gamma+2)=  tmp_lifetimes(1:n_gamma)    *HA2EV*1000._SP
-       data_to_plot(  n_gamma+3)=RT_carriers%NEQ_Lifetime(i_RT)*HA2EV*1000._SP
+       if (.not.l_OCCgroup_path) then
+         data_to_plot(3:n_gamma+2)=  tmp_lifetimes(1:n_gamma)    *HA2EV*1000._SP
+         data_to_plot(  n_gamma+3)=RT_carriers%NEQ_Lifetime(i_RT)*HA2EV*1000._SP
+       endif
      endif
      !
      if (l_OCCgroup_k_and_b) then
@@ -215,7 +223,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      endif
      !
      if (l_OCCgroup_path) then
-       data_to_plot(2)=data_to_plot(2)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
+       if (ib<=En%nbf  ) data_to_plot(2)=data_to_plot(2)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
+       if (ib>=En%nbf+1) data_to_plot(3)=data_to_plot(3)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
      else
        data_to_plot(2)=RT_carriers%delta_f(i_RT)
        call msg('o '//trim(output_fname_short(1)),'',data_to_plot(:n_gamma+3),INDENT=-2,USE_TABS=.true.)
@@ -243,7 +252,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      output_fname_short(2)='YPP-RT_cumulative_occupations'
      if (i_T==1) output_fname(2,i_RT)=output_fname_short(2)
      call open_file( output_fname(2,i_RT),output_fname_short(2))
-     call msg('o '//trim(output_fname_short(2)),'',(/data_to_plot(:2)/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(output_fname_short(2)),'',(/data_to_plot(:3)/),INDENT=-2,USE_TABS=.true.)
      call of_open_close(output_fname(2,i_RT))
    endif
    !

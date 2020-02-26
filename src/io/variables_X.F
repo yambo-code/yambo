@@ -93,10 +93,12 @@ integer function variables_X(ID,local_description,X)
  !
  ! PARS_3
  !
- sec_size=7
- if (ver_is_gt_or_eq(ID,(/3,0,1/)))      sec_size=9
- if (ver_is_gt_or_eq(ID,(/3,0,9/)))      sec_size=10
- if (ver_is_gt_or_eq(ID,revision=15206)) sec_size=11
+ sec_size=6
+ if (ver_is_gt_or_eq(ID,(/3,0,1/)))      sec_size=8
+ if (ver_is_gt_or_eq(ID,(/3,0,9/)))      sec_size=9
+ if (ver_is_gt_or_eq(ID,revision=15206)) sec_size=10
+ if (ver_is_gt_or_eq(ID,(/4.5.0/)))      sec_size=11
+ !
  call io_elemental(ID,VAR=trim(X_label)//"PARS_3",VAR_SZ=sec_size,MENU=0)
  i_local_desc=i_local_desc+1
  call io_elemental(ID,&
@@ -110,11 +112,15 @@ integer function variables_X(ID,local_description,X)
  call io_elemental(ID,&
 &     VAR=" [r,Vnl] included       :",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
- ! XXX AF compatibility with older versions needed to be handled
- i_local_desc=i_local_desc+1
- call io_elemental(ID,&
+ !
+ ! ENVIRON
+ !
+ if (ver_is_gt_or_eq(ID,(/4,5,0/))) then
+   i_local_desc=i_local_desc+1
+   call io_elemental(ID,&
 &     VAR=" X*v is symmetrized     :",L0=X%is_symm,CHECK=.false.,WARN=.false.,&
 &     DESCRIPTION=local_description(i_local_desc))
+ endif
  !
  if (.not.ver_is_gt_or_eq(ID,(/3,0,9/)).and.read_is_on(ID)) then
    i_local_desc=i_local_desc+1

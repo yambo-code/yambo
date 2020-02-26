@@ -115,7 +115,7 @@ subroutine p2y_environ(filename)
  if (any(r0/=0.0)) call error(' [ENVIRON] invalid r0 /= 0')
 
  !
- ! (c) compute eps^-1 in reciprocal space
+ ! (c) compute eps in reciprocal space
  !
  do ir = 1, fft_size
    eps_fft(ir)=cmplx(eps(ir),0.0_SP,kind=DP)

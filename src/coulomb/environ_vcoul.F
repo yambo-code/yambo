@@ -26,7 +26,11 @@ subroutine environ_vcoul(q,v_environ)
  ! Here the effective Coulomb potential in the presence of 
  ! a polarizable continuum is initialized, according to:
  !
- ! v_env^-1(q+G,q+G') = 1/4pi [ (q+G).(q+G') * eps^-1(G-G') ]
+ ! v_env(q+G,q+G') = 4 pi * K^-1(q+G,q+G')
+ ! K(q+G,q+G')     = (q+G).(q+G') * eps(G-G')
+ !
+ ! i.e.
+ ! v_env^-1(q+G,q+G') = 1/4pi [ (q+G).(q+G') * eps(G-G') ]
  ! 
  ! A (parallel) matrix inversion is then performed
  ! 

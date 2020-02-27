@@ -25,7 +25,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  use units,          ONLY:FS2AUT
  use YPPm,           ONLY:l_plot,l_map_WFs,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,BSiq,&
-&                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,l_fix_save,&
+&                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,l_fix_save,ng_cut,&
 &                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,BANDS_bands,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
@@ -33,6 +33,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,l_angular_momentum,l_position
  use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev
+ use wave_func,      ONLY:wf_ng
  use it_tools,       ONLY:ofiles_append,initinfio,initactivate,infile_dump,runlevel_is_on,&
 &                         PARSER_force_command_line_value
  use it_m,           ONLY:initdefs,initmode,infile,nrnlvls,rnlvls,infile_verbosity,&
@@ -165,6 +166,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_err=io_COL_CUT(ID) 
+ !
+ ! Symmetries
+ !
+ if(ng_cut==0) ng_cut=wf_ng
  !
  ! Defaults->Defs + Initialization
  !
@@ -544,7 +549,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_fix_save) infile_editing=.false.
  !
- if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv")
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv GvecsCut")
  !
 #if defined _YPP_RT
  !

@@ -132,8 +132,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
+   call set_real_printed_length(f_length=9,g_length=9)
    call initinfio(defs,11)
    call ofiles_append(defs=defs)
+   call set_real_printed_length()
 #if defined _YAML_OUTPUT
    call f_lib_finalize()
 #endif

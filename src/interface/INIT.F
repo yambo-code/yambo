@@ -41,6 +41,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use drivers,        ONLY:l_slk_test
 #endif
  use parser_m,       ONLY:parser
+ use stderr,         ONLY:set_real_printed_length
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_tools,       ONLY:it,initactivate,initinfio,infile_dump,ofiles_append,&
@@ -255,7 +256,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (infile_editing) then
    open(unit=12,file=trim(infile))
+   call set_real_printed_length(f_length=9,g_length=9)
    call initinfio(defs,12)
+   call set_real_printed_length()
    close(12)
    call PP_redux_wait
    return

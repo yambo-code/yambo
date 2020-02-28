@@ -34,7 +34,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
 &                         CIRCUIT_E_db,CIRCUIT_k_label,l_PROJECT_line,l_PROJECT_plane,PROJECT_depth
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time,integrated_Nel,integrated_Nhole
  use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_k_on_the_path_or_plane,PROJECTION_plot,k_special
- use stderr,         ONLY:real2ch,intc
+ use stderr,         ONLY:real2ch,intc,STRING_remove
  use vec_operate,    ONLY:iku_v_norm
  use RT_control,     ONLY:RT_apply,RT_carriers_object,RT_carriers_to_RT_k,RT_carriers_to_RT_E
  use real_time,      ONLY:RT_carriers,RT_bands
@@ -54,7 +54,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  type(levels)          :: CIRCUIT_E,CIRCUIT_dE,RT_E
  real(SP)              :: Max_occ,values(3+2*(n_spinor-1))
  real(SP), allocatable :: integrated_dF_elecs(:,:,:),integrated_dF_holes(:,:,:)
- character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation
+ character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation,extension
  character(lchlen)     :: of_string
  logical               :: WARN_negative_electrons_df,WARN_positive_holes_df,is_PROJECTED
  integer               :: ib,ik,i_RT,i_T,n_values,ID_circuit,ID_spin,ID_magn,ID_bands(3),ID_grid,ik_path
@@ -208,9 +208,10 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    !
    ! OUTPUT
    !=======
-   !
-   if (l_RT_lifetimes  ) file_name_rt="YPP-RT_NEQ_LIFE_bands_iT"//intc(i_T)
-   if (l_RT_occupations) file_name_rt="YPP-RT_occ_bands_iT"//intc(i_T)
+   ! 
+   extension=STRING_remove(real2ch( RT_time(i_T)*AUT2FS )," ","")
+   if (l_RT_lifetimes  ) file_name_rt="YPP-RT_NEQ_LIFE_bands_T_"//trim(extension)
+   if (l_RT_occupations) file_name_rt="YPP-RT_occ_bands_T_"//trim(extension)
    !
    file_name_rt_save=file_name_rt
    !
@@ -220,6 +221,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    !
    call msg('o bands',"#"," ",INDENT=0)
    call msg('o bands',"#",' TIME= '//trim(real2ch( RT_time(i_T)*AUT2FS ))//' fs',INDENT=0)
+   call msg('o bands',"#"," ",INDENT=0)
    if (l_RT_occupations) then
      call msg('o bands',"#",' Integrated E>E_Fermi Carriers (built-in)= '//trim(real2ch(integrated_Nel(i_T,1))),INDENT=0)
      call msg('o bands',"#",'                           (interpolated)= '//trim(real2ch(integrated_Nel(i_T,2))),INDENT=0)

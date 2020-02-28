@@ -45,6 +45,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use LIVE_t,         ONLY:live_timing_is_on
  use parser_m,       ONLY:PARSER_array
  use IO_m,           ONLY:rm_file,OP_RD_CL,DUMP,io_control,NONE
+ use stderr,         ONLY:set_real_printed_length
 #if defined _YPP_SC
  use YPPm,           ONLY:l_mean_potential
  use SC,             ONLY:SC_bands
@@ -675,7 +676,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (infile_editing) then
    open(unit=12,file=trim(infile))
+   call set_real_printed_length(f_length=9,g_length=9)
    call initinfio(defs,12)
+   call set_real_printed_length()
    close(12)
    call PP_redux_wait
  endif
@@ -754,7 +757,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (infile_editing) then
    open(unit=12,file=trim(infile))
+   call set_real_printed_length(f_length=9,g_length=9)
    call initinfio(defs,12)
+   call set_real_printed_length()
    close(12)
    call PP_redux_wait
  endif

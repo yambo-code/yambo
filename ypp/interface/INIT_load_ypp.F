@@ -32,7 +32,7 @@ subroutine INIT_ypp_load(defs)
  use interpolate,   ONLY:INTERP_shell_factor,INTERP_mode,NN_n_of_nearest
  use YPPm,          ONLY:E_field,alat_used_for_output,B_field,B_psi,B_theta,BANDS_bands,BANDS_path,&
 &                        BZ_DbGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
-&                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,&
+&                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,ng_cut,&
                          DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
                          gamma_radius,INTERP_grid,mag_dir,N_path_pts,ncell,ord_dgrid_ipol,p_dir,p_format,PDOS_atoms,&
                          PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
@@ -331,6 +331,7 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'RmTimeRev' , 'Remove Time Reversal')
  !
  call it(defs,'Efield1','First external Electric Field',E_field(1,:))
+ call it(defs,'GvecsCut','Max number of G-vectors in the new wave-function',ng_cut,unit=G_unit)
  !
  ! GPL_EXCLUDE_START
  !

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): HM
+! Authors (see AUTHORS file for details): HM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -25,58 +25,102 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  ! Intialize variables on BSE netcdf parallel file
  !
- use netcdf
- use parallel_m
- use pars,          ONLY:SP,schlen,lchlen
+ use parallel_m,    ONLY:master_cpu,MPI_COMM_WORLD,PP_redux_wait
+ use com,           ONLY:msg
+ use pars,          ONLY:IP,SP,schlen,lchlen
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
- use BS,            ONLY:BS_K_dim,BS_K_coupling
+ use BS,            ONLY:BS_K_dim,BS_K_coupling,l_BSE_restart,l_BSE_kernel_complete
  use BS_solvers,    ONLY:variables_BS,BSS_n_descs,BSS_desc_str,BSS_desc_var
- use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,&
-&                        io_connect,io_elemental,def_variable_bulk,&
-&                        io_header,io_mode,io_file
+ use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,VERIFY,&
+&                        io_connect,io_elemental,def_variable_bulk,variable_exist,&
+&                        io_header,io_mode,io_file,def_variable_elemental,io_variable_elemental
  !
  implicit none
  !
  type(X_t) :: X 
  integer :: iq, ID
  !
+ logical, external :: file_exists
+ !
+ logical :: def_var, io_var
  integer :: io_BS,    VAR_IDs(8), n_vars, i1
  integer :: flattened_block_size_dim,block_size_dim
  real(SP)          :: local_stc_var(10,100)
  character(schlen) :: db_name, PARALLEL_STRUCTURE
- character(lchlen) :: local_desc_str(100),ch(4)
+ character(lchlen) :: full_db_name,local_desc_str(100),ch(4)
  character(schlen) :: dim_names(3), dim_names_done(2)
  !
  ! Connect to parallel netCDF file.
  !
  db_name='BS_PAR_Q'//trim(intc(iq))
+ full_db_name=get_name(trim(db_name)," ",2,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
+ !
+ l_BSE_kernel_complete=.false.
+ !
+ if (write_is_on(ID)) then
+   if (.not.file_exists(trim(full_db_name))) then
+     call msg("s","BSE file not found. Creating an empty one.")
+     l_BSE_restart=.false.
+   else
+     call msg("s","Partial BSE file found in "//trim(full_db_name)//". Using for restart.")
+     l_BSE_restart = .true.
+   endif
+ endif
+ !
+ call PP_redux_wait()
+ !
  io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
+ if(io_BS/=0) return
  !
  ! Check if the file already contains data and it its consistent
+ ! DS: warning. This is potentially dangerous since all MPI tasts are all writing
+ !              both the header and the variables
+ !              I cannot put here if(master_cpu) because I need all MPI_tasks to
+ !              go through the definition of the variables (see similar issue in io_X.F)
+ !
  PARALLEL_STRUCTURE="NONE"
  if (io_mode(ID)==VERIFY.or.write_is_on(ID)) PARALLEL_STRUCTURE="Response_T_space"
+ !
  io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
  &                    PARALLEL_STRUCTURE=trim(PARALLEL_STRUCTURE),CUTOFF=.true.,FRAG=frag_BS_K)
  !
  io_BS=variables_BS(ID,iq,local_desc_str,local_desc_var,.TRUE.,X=X)
+ !
  if (io_BS/=0) then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    call error('Invalid dimensions found in BSE restart file '//trim(io_file(ID))//&
  &            ' Remove the file or change the input file')
- else
-   !
-   ! Descriptions transfer
-   !   
-   if (BSS_n_descs==0) then
-     do i1=1,100
-       if (len_trim(local_descr_str(i1))>0) then
-         BSS_n_descs=BSS_n_descs+1
-         BSS_desc_str(BSS_n_descs)  =local_desc_str(i1)
-         BSS_desc_var(:,BSS_n_descs)=local_desc_var(:,i1)
-       endif
-     enddo
+ endif
+ !
+ ! Check if BSE kernel is complete in reading mode, set the variable to false in writing mode
+ !
+ def_var=                write_is_on(ID) .or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
+ io_var =(master_cpu.and.write_is_on(id)).or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
+ if(def_var) call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,IP+100,0,par_io_kind="independent")
+ if(io_var)  call io_variable_elemental(ID,VAR=" Kernel complete          :",&
+              &                          DB_L0=l_BSE_kernel_complete,L0=l_BSE_kernel_complete)
+ !
+ if(read_is_on(ID)) then
+   if(l_BSE_kernel_complete) then
+     call msg("s","Complete BSE file found in "//trim(io_file(ID))//". Loading kernel.")
+   else
+     call msg("s","Partial BSE file found in "//trim(io_file(ID))//". Not accepted in reading mode.")
    endif
+ endif
+ !
+ call PP_redux_wait()
+ !
+ ! Descriptions transfer
+ !   
+ if (BSS_n_descs==0) then
+   do i1=1,100
+     if (len_trim(local_descr_str(i1))>0) then
+       BSS_n_descs=BSS_n_descs+1
+       BSS_desc_str(BSS_n_descs)  =local_desc_str(i1)
+       BSS_desc_var(:,BSS_n_descs)=local_desc_var(:,i1)
+     endif
+   enddo
  endif
  ! 
  ! Define vars
@@ -95,8 +139,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  ! This is the upper triangular mode
  !
- dim_names =      [character(schlen) : 'complex', 'BS_K_flat_dim']
- dim_names_done = [character(schlen) : 'BS_K_flat_dim']
+ dim_names =      [character(schlen) :: 'complex', 'BS_K_flat_dim']
+ dim_names_done = [character(schlen) :: 'BS_K_flat_dim']
  flattened_block_size_dim = BS_K_dim*(BS_K_dim+1)/2
  !
  ch=trim(ch)//"_FLAT"
@@ -112,8 +156,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  ! Here is the 2D mode
  !
- dim_names =      [character(schlen) : 'complex', 'BS_K_dim', 'BS_K_dim']
- dim_names_done = [character(schlen) : 'BS_K_dim', 'BS_K_dim']
+ dim_names =      [character(schlen) :: 'complex', 'BS_K_dim', 'BS_K_dim']
+ dim_names_done = [character(schlen) :: 'BS_K_dim', 'BS_K_dim']
  !
  do i1=1,n_vars
    call def_variable_bulk(ID,trim(ch(i1)),       VAR_IDs(2*i1-1),&
@@ -126,54 +170,33 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
 end subroutine
 
-subroutine io_BS_PAR_free(ID)
+subroutine io_BS_PAR_free(ID,l_kernel_complete)
  !
  ! close BSE netcdf parallel file
  !
- use IO_m,          ONLY:io_disconnect
- !
- integer, intent(in)  :: ID
- !
- call io_disconnect(ID)
- !
-end subroutine
-
-
-subroutine io_BS_par_check(iq,ID)
- !
- use pars,          ONLY:schlen
- use parallel_m,    ONLY:MPI_COMM_WORLD
- use stderr,        ONLY:intc
- use BS,            ONLY:l_restart_bse
- use IO_m,          ONLY:io_connect,io_disconnect,io_file
- use com,           ONLY:msg
+ use pars,          ONLY:LP
+ use parallel_m,    ONLY:PP_redux_wait,master_cpu
+ use BS,            ONLY:l_BSE_kernel_complete,BS_K_has_been_calculated_loaded
+ use IO_m,          ONLY:io_disconnect,write_is_on,def_variable_elemental,io_variable_elemental
  !
  implicit none
  !
- integer  :: iq,ID
- character(schlen) :: db_name
+ integer, intent(in)  :: ID
+ logical, intent(in)  :: l_kernel_complete
  !
- integer :: io_BS
+ call PP_redux_wait()
  !
- logical, external :: file_exists
+ BS_K_has_been_calculated_loaded=l_kernel_complete
+ l_BSE_kernel_complete          =l_kernel_complete
  !
- ! Hack to find if the name exists
- ! DS warning. Here if file is found in alternative -J folder code will not work ...
- !
- db_name='BS_PAR_Q'//trim(intc(iq))
- io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
- !
- if (file_exists(io_file(ID))) then
-   call msg("s","BSE file found in "//trim(io_file(ID)))
-   l_restart_bse = .true.
- else
-   call msg("s","BSE file not found. Creating an empty one." )
-   l_restart_bse = .false.
+ if(l_kernel_complete.and.write_is_on(ID)) then
+   call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0,par_io_kind="independent")
+   if(master_cpu) call io_variable_elemental(ID,VAR=" Kernel complete          :",L0=l_BSE_kernel_complete)
  endif
  !
  call io_disconnect(ID)
  !
-end subroutine io_BS_par_check
+end subroutine
 
 
 subroutine io_BS_PAR_block(iq,i_block,ID)

@@ -68,6 +68,7 @@ subroutine RT_initialize(E,k,q)
  character(6)             :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_skip_it,l_velocity_gauge_tmp
+ real(SP), parameter      :: thresh=1.E-5_SP
  integer,         external:: RT_Lifetimes_evaluation_plan
  !
  ! Logicals
@@ -425,16 +426,21 @@ subroutine RT_initialize(E,k,q)
  ! GPL_EXCLUDE_END
  !
  call msg( 'nr','---I/O---')
- call                          msg('r', 'T between I/O of   OBS [fs]',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
- call                          msg('r', '          I/O of   GFs [fs]',GF_RT_IO_t%INTERVAL_time*AUT2FS)
- call                          msg('r', '               outputs [fs]',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
+ call                          msg('r', 'T between I/O of   OBS     ',OBS_RT_IO_t%INTERVAL_time*AUT2FS,'[fs]')
+ call                          msg('r', '          I/O of   GFs     ',GF_RT_IO_t%INTERVAL_time*AUT2FS,'[fs]')
+ call                          msg('r', '               outputs     ',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS,'[fs]')
  if (l_use_collisions)    call msg( 'r','Extended collisions   [I/O]',io_COLLs)
  !
  ! GPL_EXCLUDE_START
  !
- call msg( 'nr','---Damping---')
- call msg( 'r', 'Damping (Phase)    [fs/meV]',(/Phase_LifeTime*AUT2FS,HBAR_eVfs/Phase_LifeTime*AUT2FS*1000._SP/))
- call msg( 'r', '        (Radiative)[fs/meV]',(/RAD_LifeTime*AUT2FS,   HBAR_eVfs/RAD_LifeTime*AUT2FS*1000._SP/))
+ if(Phase_LifeTime>thresh.or.RAD_LifeTime>thresh) then
+   call msg( 'nr','---Damping---')
+   if(Phase_LifeTime>thresh) &
+   & call msg( 'r', 'Damping (Phase)            ',(/Phase_LifeTime*AUT2FS,HBAR_eVfs/Phase_LifeTime*AUT2FS*1000._SP/),'[fs/meV]')
+   if(RAD_LifeTime>thresh) &
+   & call msg( 'r', '        (Radiative)        ',(/RAD_LifeTime  *AUT2FS,HBAR_eVfs/RAD_LifeTime  *AUT2FS*1000._SP/),'[fs/meV]')
+ endif
+ !
  call msg( 'nr','---Retarded GF---')
  call msg( 'r', 'Retarded Green`s function  ',Gr_kind)
  call msg( 'r', '        Energy ref  (c)[eV]',QP_ctl_user(3,1)%Wc_E_ref*HA2EV)

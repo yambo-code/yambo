@@ -93,6 +93,7 @@ module X_m
  real(SP):: X_terminator_E
  real(SP):: X_term_E
  logical :: l_X_terminator=.false.
+ logical :: l_recalculate_X=.false.
  character(schlen) :: X_terminator_Kind="none"
  !
  ! I/O parameters

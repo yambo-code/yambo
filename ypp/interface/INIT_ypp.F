@@ -25,7 +25,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  use units,          ONLY:FS2AUT
  use YPPm,           ONLY:l_plot,l_map_WFs,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,BSiq,&
-&                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,l_fix_save,ng_cut,&
+&                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,l_fix_save,&
 &                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,BANDS_bands,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
@@ -180,10 +180,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_err=io_COL_CUT(ID) 
- !
- ! Symmetries
- !
- if(ng_cut==0) ng_cut=wf_ng
  !
  ! Defaults->Defs + Initialization
  !

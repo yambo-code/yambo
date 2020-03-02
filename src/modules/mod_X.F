@@ -105,7 +105,8 @@ module X_m
  ! I/O descriptions
  !
  integer          :: n_X_descs
- character(lchlen):: X_description(100)
+ real(SP)         :: X_desc_var(10,100)
+ character(lchlen):: X_desc_str(100)
  !
  ! PARALLEL distribution
  !

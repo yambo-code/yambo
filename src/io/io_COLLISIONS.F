@@ -26,7 +26,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  use pars,          ONLY:schlen,lchlen,IP,SP
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collision_ext, ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
- use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
+ use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,&
+&                        io_elemental,def_variable_elemental,io_variable_elemental, &
 &                        io_variable_bulk,def_variable_bulk,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
@@ -35,7 +36,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
 &                        H_SE_FOCK,H_SE_COH,H_SE_SEX,H_SE_HARTREE
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH,SC_band_mixing,QP_QED_ng
- use X_m,           ONLY:n_X_descs,X_description
+ use X_m,           ONLY:n_X_descs,X_desc_var,X_desc_str
  use stderr,        ONLY:intc
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
  use timing_m,      ONLY:timing
@@ -50,7 +51,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
  character(schlen)     :: db_name
  integer               :: V_kind_disk,i_desc,i_coll_loop,io_err,i_coll,SIZE_
- character(lchlen)     :: X_string
+ real(SP)              :: X_tmp_var(10)
  !
  ! Collision element...
  !
@@ -168,9 +169,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      !
      do i_desc=1,iabs(n_X_descs)
        !
-       call io_elemental(ID,VAR='X_descriptions_'//trim(intc(i_desc)),CH0="",VAR_SZ=1,MENU=0)
-       call io_elemental(ID,DB_CH0=X_string,CH0=X_description(i_desc),VAR='',CHECK=n_X_descs>0,OP=(/"=="/))
-       call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+       call def_variable_elemental(ID,X_desc_str(i_desc),10,SP,0)
+       call io_variable_elemental(ID,DB_R1=X_tmp_var,R1=X_desc_var(:,i_desc),VAR='',CHECK=n_X_descs>0,OP=(/"=="/))
        !
      enddo
      !

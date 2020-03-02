@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -62,7 +62,7 @@ integer function variables_BS(ID,iq,local_desc_str,local_desc_var,CLOSE_the_menu
  local_desc_str=' '
  local_desc_var=VAR_EMPTY
  !
- call def_variable_elemental(ID,"PARS1",var_size,IP+100,0)
+ call def_variable_elemental(ID,"PARS1",var_size,SP,0)
  call io_variable_elemental(ID,&
 &     VAR=" BSK|Identifier               ",I0=BS_identifier,&
 &     DESC_STR=local_desc_str(i_desc),DESC_VAR=local_desc_var(:,i_desc))

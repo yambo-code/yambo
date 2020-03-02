@@ -32,12 +32,13 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  use RT_control,     ONLY:RT_apply
  use D_lattice,      ONLY:Bose_Temp
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels,spin,spin_occ,filled_tresh,n_spinor
+ use electrons,      ONLY:levels,spin,spin_occ,filled_tresh,n_spinor,n_sp_pol
  use vec_operate,    ONLY:sort
  use functions,      ONLY:Fermi_fnc
  use com,            ONLY:msg,of_open_close
  use stderr,         ONLY:intc,real2ch
  use real_time,      ONLY:RT_carriers,l_RT_CCA_Kernel,RT_bands
+ use QP_m,           ONLY:QP_table,QP_n_states
  !
 #include <memory.h>
  !
@@ -48,9 +49,10 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  ! Work Space
  !
  integer, parameter    :: fit_dim=1000,N_max_files=16
- integer               :: n_groups,i_g,i_g_ep,i_g_ee,i_T,i_RT,ib,ik,ik_ibz,i_f,i_fit
+ integer               :: n_groups,i_g,i_g_ep,i_g_ee,i_T,i_RT,ib,ik,ik_ibz,i_f,i_fit,i_qp,i_spin,i_RT_s
  integer               :: E_sort_index(RT_carriers%nstates)
- logical               :: l_ep_lifetimes,l_sum_equilibrium,l_skip_fit
+ logical               :: l_ep_lifetimes,l_sum_equilibrium,l_skip_fit,&
+&                         do_state(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol)
  real(SP)              :: RT_E_sorted(RT_carriers%nstates)
  real(SP),allocatable  :: spin_factors(:,:,:)
  !
@@ -89,6 +91,18 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  !
  call parser('IncludeEQocc',l_sum_equilibrium)
  call parser('SkipFermiFIT',l_skip_fit)
+ !
+ ! States selection
+ !==================
+ do_state=.false.
+ do i_qp=1,QP_n_states
+   ib    =QP_table(i_qp,1)
+   ik    =QP_table(i_qp,3)
+   i_spin=spin(QP_table(i_qp,:))
+   if (ib<RT_bands(1)) cycle
+   if (ib>RT_bands(2)) cycle
+   do_state(ib,ik,i_spin)=.true.
+ enddo
  !
  ! Allocate GROUPs!
  !==================
@@ -150,7 +164,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      !============
      DATA_grp(1)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)
      !
-     if(l_sum_equilibrium) DATA_grp(1)%data(i_RT,1,i_T)=DATA_grp(1)%data(i_RT,1,i_T)+RT_carriers%f_bare(i_RT)
+     if (l_sum_equilibrium) DATA_grp(1)%data(i_RT,1,i_T)=DATA_grp(1)%data(i_RT,1,i_T)+RT_carriers%f_bare(i_RT)
      !
      ! Spin occupations
      !==================
@@ -329,6 +343,8 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    endif
  enddo
  !
+ call live_timing('Data plotting',n_groups)
+ !
  ! ... PLOTs
  do i_g=1,n_groups
    !
@@ -342,7 +358,11 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      !
    endif
    !
+   call live_timing(steps=1)
+   !
  enddo
+ !
+ call live_timing()
  !
  if (n_spinor==2) then
    YAMBO_FREE(spin_factors)
@@ -425,6 +445,9 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
              do i_RT=1,RT_carriers%nstates
                !
                ! RT_carriers%table(i_RT,:) = (/ ib, ik, ik_RT, i_spin/)
+               !
+               i_RT_s=E_sort_index(i_RT)
+               if (.not.do_state(  RT_carriers%table(i_RT_s,1), RT_carriers%table(i_RT_s,2), RT_carriers%table(i_RT_s,4) )) cycle
                !
                do i_data=range_(1),range_(2)
                  if (trim(TYP%kind)=="e-photon") local_data(i_data)=Time_of(TYP%data(i_RT,i_f,i_data),"ps")

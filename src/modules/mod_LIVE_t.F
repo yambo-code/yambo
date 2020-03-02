@@ -203,7 +203,7 @@ module LIVE_t
      ! rfmt    =right formatting (n nn r)
      ! sfmt    =Message formatting
      !
-     use stderr,     ONLY : c_print,logfile,logfile_unit,write_to_log,intc
+     use stderr,     ONLY : c_print,logfile,logfile_unit,write_to_log,intc,logfile_unit
      use parallel_m, ONLY : myid,ncpu,n_nodes,host_name
      implicit none
      character(*)          :: message
@@ -296,6 +296,7 @@ module LIVE_t
        if (trim(rfmt_)=="nn") write (logfile_unit,'(a/)') ""
        log_line=""
      endif
+     flush(logfile_unit)
      !
    end subroutine
    !

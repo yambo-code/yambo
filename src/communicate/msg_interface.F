@@ -54,6 +54,7 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  if (len_trim(how)==0) return
  dots_string=""
  if(len_trim(val(1))>0 .and. len_trim(mesg)>1) dots_string=": "
+ ! switches to positive the value of of_unit which matches the given filename
  call msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
  l_tabs=.false.
  l_indent=-1
@@ -79,6 +80,7 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
    write (of_unit(i1),trim(msgfmt)) mesg//dots_string,(trim(val(i2)),i2=1,size(val))
+   ! after writing the value of of_unit is switched back to negative
    of_unit(i1)=-of_unit(i1)
    if (.not.msg_for_rep) call of_netcdf_shadow_char(i1,size(val),val)
 #if defined _YAML_OUTPUT
@@ -137,6 +139,7 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  if(len_trim(mesg)>1) dots_string=": "
  after_msg_=""
  if(present(after_msg)) after_msg_=after_msg
+ ! switches to positive the value of of_unit which matches the given filename
  call msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
  l_tabs    = .false.
  l_indent  = -1
@@ -159,6 +162,7 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
    write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
+   ! after writing the value of of_unit is switched back to negative
    of_unit(i1)=-of_unit(i1)
 #if defined _YAML_OUTPUT
    yaml_mesg=STRING_remove(STRING_remove(trim(adjustl(mesg)),'[',replace='('),']',replace=')')
@@ -226,6 +230,7 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  if(len_trim(mesg)>1) dots_string=": "
  after_msg_=""
  if(present(after_msg)) after_msg_=after_msg
+ ! switches to positive the value of of_unit which matches the given filename
  call msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
  l_ext_fmt = .false.
  l_tabs    = .false.
@@ -255,6 +260,7 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
    if (of_unit(i1)<=0) cycle
    if (len_trim(after_msg_)==0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
    if (len_trim(after_msg_)> 0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val,trim(after_msg_)
+   ! after writing the value of of_unit is switched back to negative
    of_unit(i1)=-of_unit(i1)
    if (.not.msg_for_rep) call of_netcdf_shadow_real(i1,mesg,val,size(val))
 #if defined _YAML_OUTPUT

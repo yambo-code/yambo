@@ -94,7 +94,7 @@ subroutine of_open_close(of_name_extension,mode)
    ! Find the first free unit
    !
 #if defined _YAML_OUTPUT
-     of_unit(file_index)=f_get_free_unit()
+   of_unit(file_index)=f_get_free_unit()
 #else
    of_unit(file_index)=file_index+20
 #endif
@@ -103,6 +103,11 @@ subroutine of_open_close(of_name_extension,mode)
    if (index(mode,'a')==0) open(of_unit(file_index),file=trim(of_opened(file_index)))
    if (index(mode,'a')/=0) open(of_unit(file_index),file=trim(of_opened(file_index)),position='append')
    if (index(mode,"t")>0) call write_the_logo(of_unit(file_index),'#')
+   !
+   ! A opened file has a unit assigned
+   ! However the unit is kept negative
+   ! Only msg_manager switchis it to positive just before writing to file
+   ! Immediately after writing the msg_interfaces will switch it back to negative
    !
    of_unit(file_index)=-of_unit(file_index)
    !
@@ -255,6 +260,9 @@ subroutine msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
  ! r(eport)
  ! s(tderr)
  ! oN=msgunits(N) 
+ !
+ ! This subroutine switches to positive the value of of_unit just before writing
+ ! plus extra operations
  !
  use pars,    ONLY:schlen,lchlen,repfile_index
  use stderr,  ONLY:STRING_split,STRING_remove

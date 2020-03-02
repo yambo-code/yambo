@@ -211,7 +211,7 @@ module stderr
      !
      STRING_remove=string_in
      !
-     i_pos=index(string_in,what)
+     i_pos=index(trim(string_in),what)
      !
      if (i_pos==0) return
      !
@@ -224,7 +224,7 @@ module stderr
          STRING_remove=string_tmp(:i_pos-1)//string_tmp(i_pos+len(what):)
        endif
        string_tmp=STRING_remove
-       i_pos=index(string_tmp,what)
+       i_pos=index(trim(string_tmp),what)
        if (i_pos==0) return
      enddo
      !

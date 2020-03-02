@@ -222,7 +222,7 @@ end subroutine warning
 subroutine error(mesg)
  !
  use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
- use stderr,     ONLY:STRING_pack,logfile_unit
+ use stderr,     ONLY:STRING_pack,logfile_unit,log_as_a_file
  use com,        ONLY:secnm,msg
 #if defined _MPI
  use parallel_m, ONLY:mpi_comm_world,ncpu
@@ -244,7 +244,7 @@ subroutine error(mesg)
  call msg('nr',STRING_pack('[ERROR] ',trim(mesg)))
  call LIVE_message(STRING_pack('[ERROR] ',trim(mesg)),"n","","%s")
  call LIVE_message("","n","","%s")
- flush(logfile_unit)
+ if(log_as_a_file) flush(logfile_unit)
  !
 #if defined _MPI
  if (ncpu>1) call MPI_Abort(mpi_comm_world,1,ierr)

@@ -37,7 +37,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH,SC_band_mixing,QP_QED_ng
  use X_m,           ONLY:n_X_descs,X_desc_var,X_desc_str
- use stderr,        ONLY:intc
+ use stderr,        ONLY:intc,STRING_remove
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
  use timing_m,      ONLY:timing
 #include<memory.h>
@@ -50,6 +50,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  ! Work Space
  !
  character(schlen)     :: db_name
+ character(lchlen)     :: VARNAME
  integer               :: V_kind_disk,i_desc,i_coll_loop,io_err,i_coll,SIZE_
  real(SP)              :: X_tmp_var(10)
  !
@@ -169,7 +170,9 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      !
      do i_desc=1,iabs(n_X_descs)
        !
-       call def_variable_elemental(ID,X_desc_str(i_desc),10,SP,0)
+       VARNAME=STRING_REMOVE(STRING_REMOVE(STRING_remove(adjustl(X_desc_str(i_desc))," ","_"),"/","_"),",")
+       VARNAME=STRING_REMOVE(STRING_REMOVE(VARNAME,"[","_"),"]","_")
+       call def_variable_elemental(ID,trim(VARNAME),10,SP,0)
        call io_variable_elemental(ID,DB_R1=X_tmp_var,R1=X_desc_var(:,i_desc),VAR='',CHECK=n_X_descs>0,OP=(/"=="/))
        !
      enddo

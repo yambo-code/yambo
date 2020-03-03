@@ -101,8 +101,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
+   call set_real_printed_length(f_length=9,g_length=9)
    if (master_cpu.and.write_to_report) call initinfio(defs,11)
    if (master_cpu) call ofiles_append(defs=defs)
+   call set_real_printed_length( )
    return
  endif
  !

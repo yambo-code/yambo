@@ -54,7 +54,7 @@ subroutine electrons_dos(Xk,Xen)
  real(SP),pointer, contiguous :: PDOS_fac_p(:,:,:) => null()
  real(SP),        allocatable :: el_dos(:,:,:)
  !
- integer               :: i_E,i_f,N_files,is,ib,ik,IDe,IDf,IDs,IDp,ik_path,n_t
+ integer               :: i_E,i_f,N_files,is,ib,ik,ikbz,IDe,IDf,IDs,IDp,ik_path,n_t
  character(schlen)     :: titles(DOS_bands(2)+4)
  logical               :: l_DbGd
  type(levels)          :: GRID_E
@@ -164,9 +164,10 @@ subroutine electrons_dos(Xk,Xen)
      call msg('o grid','#',titles(:DOS_bands(2)-DOS_bands(1)+5),INDENT=0,USE_TABS=.true.)    
      call msg('o grid',"#")
      !
-     do ik=1,GRID_k%nbz
-       values(2:4)=GRID_k%pt(ik,:)
+     do ikbz=1,GRID_k%nbz
+       values(2:4)=GRID_k%ptbz(ikbz,:)
        call K_transform(values(2:4),"iku")
+       ik=GRID_k%sstar(ikbz,1)
        values(1)=real(ik,SP)
        values(1+4:DOS_bands(2)-DOS_bands(1)+5)=GRID_E%E(DOS_bands(1):DOS_bands(2),ik,is)*HA2EV
        call msg('o grid',' ',values(:DOS_bands(2)-DOS_bands(1)+5),INDENT=0,USE_TABS=.true.)

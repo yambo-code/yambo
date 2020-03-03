@@ -31,7 +31,7 @@ subroutine RT_density(en,kpt,qpt)
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,real2ch
  use com,            ONLY:msg,of_open_close,warning
- use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG
+ use IO_m,           ONLY:DUMP,OP_RD_CL,OP_RD_CL_IF_END,RD_CL_IF_END,NONE,io_control,LOG
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,RT_delta_occupations
@@ -139,7 +139,8 @@ subroutine RT_density(en,kpt,qpt)
      io_err=io_RT_components('G',ID)
 #else
      do ik = 1, RT_nk 
-       call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
+       if(ik==1) call io_control(ACTION=OP_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
+       if(ik> 1) call io_control(ACTION=   RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
        io_err=io_RT_components('G',ID)
      enddo
 #endif

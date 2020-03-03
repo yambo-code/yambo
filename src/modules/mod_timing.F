@@ -466,6 +466,7 @@ MODULE timing_m
    END SUBROUTINE timing_upto_now    
    !
    SUBROUTINE timing_overview(list,main_name)
+     use pars,       ONLY:SP
      use LIVE_t,     ONLY:LIVE_message
      use com,        ONLY:msg
      use vec_operate,ONLY:sort
@@ -474,7 +475,7 @@ MODULE timing_m
      CHARACTER(*),           INTENT(in) :: main_name
      TYPE(clock)                        :: tmp_clock
      INTEGER                            :: i,sort_indx(list%nclock)
-     REAL                               :: tmp_times(list%nclock)
+     REAL(SP)                           :: tmp_times(list%nclock)
      !
 #ifndef _TIMING
      return
@@ -490,7 +491,7 @@ MODULE timing_m
      ENDIF
      !
      DO i=1,list%nclock 
-       tmp_times(i)= list%clock(i)%total_time
+       tmp_times(i)=real(list%clock(i)%total_time,SP)
      ENDDO
      !
      call sort(tmp_times,indx=sort_indx)

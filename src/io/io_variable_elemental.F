@@ -37,7 +37,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  use stderr,  ONLY:STRING_pack,intc,real2ch,complex2ch
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
-&                  io_status,DUMP,REP,LOG,io_com,io_file,&
+&                  io_status,DUMP,REP,LOG,NO_VAR,io_com,io_file,&
 &                  io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR
  implicit none
  !
@@ -379,7 +379,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR//trim(db_ch(1))
+   if (present(DESC_STR)) DESC_STR=VAR//" : "//trim(db_ch(1))
+   if (present(DESC_VAR)) DESC_VAR(1)=NO_VAR
    !
    io_rec_pos(ID)=io_rec_pos(ID)+len(db_ch(1))
  endif

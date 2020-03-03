@@ -84,6 +84,7 @@ module IO_m
  ! COM
  !
  integer, parameter:: REP=41,LOG=42,NONE=43
+ real(SP),parameter:: NO_VAR=-246824._SP
  !
  ! I/O
  !

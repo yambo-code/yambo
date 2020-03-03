@@ -196,6 +196,7 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  use pars,         ONLY:SP,schlen,lchlen,max_open_ofs,repfile_index
  use stderr,       ONLY:c_print,write_to_log,log_as_a_file,gen_fmt,STRING_remove
  use LIVE_t,       ONLY:LIVE_message
+ use IO_m,         ONLY:NO_VAR
  use com,          ONLY:repfile,of_unit,terminator
  use com_interfcs, ONLY:composed_fmt
 #if defined _YAML_OUTPUT
@@ -250,6 +251,7 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
    i1=len_trim(msgfmt)
    msgfmt=trim(msgfmt(:i1-1))//',a'//trim(msgfmt(i1:i1))
  endif
+ if (size(val)==1 .and. val(1)==NO_VAR) msgfmt='(02x,a)'
  !
  ! Write to o-file or to report
  !
@@ -258,8 +260,12 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  if(msg_for_rep) i1_limits=(/repfile_index,repfile_index/)
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
-   if (len_trim(after_msg_)==0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
-   if (len_trim(after_msg_)> 0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val,trim(after_msg_)
+   if (size(val)==1 .and. val(1)==NO_VAR) then
+     write (of_unit(i1),trim(msgfmt)) mesg
+   else        
+     if (len_trim(after_msg_)==0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
+     if (len_trim(after_msg_)> 0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val,trim(after_msg_)
+   endif
    ! after writing the value of of_unit is switched back to negative
    of_unit(i1)=-of_unit(i1)
    if (.not.msg_for_rep) call of_netcdf_shadow_real(i1,mesg,val,size(val))

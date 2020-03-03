@@ -161,7 +161,8 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  if(msg_for_rep) i1_limits=(/repfile_index,repfile_index/)
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
-   write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
+   if (len_trim(after_msg_)==0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
+   if (len_trim(after_msg_)> 0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val,trim(after_msg_)
    ! after writing the value of of_unit is switched back to negative
    of_unit(i1)=-of_unit(i1)
 #if defined _YAML_OUTPUT

@@ -25,7 +25,7 @@ integer function io_QP_and_GF(what,qp,ID)
  use pars,           ONLY:SP,schlen
  use D_lattice,      ONLY:alat
  use electrons,      ONLY:n_sp_pol
- use QP_m,           ONLY:QP_t,QP_G_dr,QP_G_er,&
+ use QP_m,           ONLY:QP_t,QP_G_dr,QP_G_er,GW_iterations,&
 &                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
@@ -126,13 +126,15 @@ integer function io_QP_and_GF(what,qp,ID)
    return
  endif
  !
- call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
+ call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
  call io_elemental(ID,I0=qp%nb,DB_I0=QP_nb_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,I0=qp%nk,DB_I0=QP_nk_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,I0=qp%n_states,DB_I0=QP_n_states_disk,&
 &                  VAR=' QP tot states          :',CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,I0=GWo_iterations,&
-&                  VAR=' GW SC iterations       :',CHECK=.true.,OP=(/"=="/))
+&                  VAR=' GWo SC iterations       :',CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID,I0=GW_iterations,&
+&                  VAR=' GW  SC iterations       :',CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,I0=qp%n_descs,DB_I0=n_descs_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !

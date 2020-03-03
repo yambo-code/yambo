@@ -38,7 +38,8 @@ subroutine INIT_ypp_load(defs)
 &                        gamma_radius,INTERP_grid,mag_dir,N_path_pts,ncell,ord_dgrid_ipol,p_dir,p_format,PDOS_atoms,&
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
 &                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,w90_fname,wannier_bands,&
-&                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_depth,PROJECT_steps,PROJECT_threshold,ng_cut
+&                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_depth,PROJECT_steps,PROJECT_threshold
+ use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
  use YPPm,          ONLY:Nel_fac
  use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
@@ -338,7 +339,7 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'RmTimeRev' , 'Remove Time Reversal')
  !
  call it(defs,'Efield1','First external Electric Field',E_field(1,:))
- call it(defs,'GvecsCut','Max number of G-vectors in the new wave-function',ng_cut,unit=G_unit)
+ call it(defs,'GvecsCut','Max number of G-vectors in the new wave-function',wf_ng_cut,unit=G_unit)
  !
  ! GPL_EXCLUDE_START
  !

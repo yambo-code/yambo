@@ -24,7 +24,7 @@
 subroutine YPP_SET_defaults()
  !
  use YPPm,           ONLY:DOS_broadening,DOS_E_range,r_hole,deg_energy ,EXCITON_weight_treshold,&
-                          WF_multiplier,gamma_radius,SOC_split,BANDS_bands,BANDS_steps,ng_cut,&
+                          WF_multiplier,gamma_radius,SOC_split,BANDS_bands,BANDS_steps,&
 &                         coo_in,coo_out,DOS_E_steps,INTERP_grid ,l_amplitude,l_bands,l_current,l_density  ,&
 &                         l_dos,l_exc_wf   ,l_mag,l_norm_to_one,l_sort,l_sp_wf,l_spin,l_wannier,mag_dir    ,&
 &                         N_path_pts,ncell ,ord_dgrid_ipol ,output_fname,p_dir,p_format   ,perturbative_SOC_path,&
@@ -32,6 +32,7 @@ subroutine YPP_SET_defaults()
 &                         w90_fname,wannier_bands,WF_ref,what_to_write,SP,HA2EV,E_field,Nel_fac,DOS_bands,  &
 &                         BSiq,l_PROJECT_atom,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,&
 &                         EXCITON_Res_treshold,EXCITON_E_treshold,l_PROJECT_line,l_PROJECT_plane
+ use YPP_symm,       ONLY:wf_ng_cut
  use units,          ONLY:FS2AUT
  use interpolate,    ONLY:INTERP_shell_factor,interpls,max_interpls
  use electrons,      ONLY:n_bands
@@ -58,7 +59,6 @@ subroutine YPP_SET_defaults()
 &                         l_gkkp, l_phonons, ph_broad, ph_freqs_file, ph_modes_file
  use ELPH,           ONLY:gsqF_energy_steps
 #endif
- use R_lattice,      ONLY:ng_closed
  !
  implicit none
  !
@@ -89,6 +89,10 @@ subroutine YPP_SET_defaults()
  PDOS_l=-1
  PDOS_j=-1._SP
  PDOS_m=-10
+ !
+ ! SYMMETRIES
+ !
+ wf_ng_cut=0
  !
  ! RT OCCUPATIONS
  !
@@ -264,7 +268,6 @@ subroutine YPP_SET_defaults()
  B_field=0._SP
  B_theta=0._SP
  B_psi=0._SP
- ng_cut=0
  !
 #endif
  !

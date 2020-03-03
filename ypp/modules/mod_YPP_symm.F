@@ -28,7 +28,7 @@ module YPP_symm
  logical               :: l_wf_nc_k_red
  !
  integer               :: ng_vec_save,ng_vec_new
- integer               :: wf_ng_save,wf_ng_new
+ integer               :: wf_ng_save,wf_ng_new,wf_ng_cut
  integer               :: wf_ncx_save,wf_ncx_new
  !
  integer,allocatable   :: wf_nc_k_save(:),wf_nc_k_reduced(:),wf_nc_k_new(:)

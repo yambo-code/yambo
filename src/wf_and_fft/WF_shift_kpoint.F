@@ -33,7 +33,6 @@ subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,
 #endif
  use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
  use deviceXlib_m,  ONLY:dev_memcpy
- use interfaces,    ONLY:eval_G_minus_G
  !
  implicit none
  !
@@ -49,7 +48,7 @@ subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,
  !
  integer :: id,ik,is
  complex(SP) DEV_ATTRIBUTE :: WF_tmp(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
- integer           :: ig,igp
+ integer           :: ig,igp,i_b_ref
  integer           :: g0_idx(3,2),g0_idx_val
 #ifdef _CUDA
  integer :: i_spinor,i_b,i_sp_pol
@@ -57,6 +56,8 @@ subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,
  !
  ik = Xk%sstar(ikbz,1)
  is = Xk%sstar(ikbz,2)
+ !
+ i_b_ref=b_to_shift(1)
  !
  WF_tmp=cZERO
  call dev_memcpy(WF_tmp(:wf_ng_1st_BZ,:,:,:),WF_k_in)
@@ -77,7 +78,7 @@ subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,
      do i_spinor=1,n_spinor
      do ig=1,wf_ng_1st_BZ
        !
-       if(WF_tmp(ig,1,b_to_shift(1),1)==cZERO) cycle
+       if(WF_tmp(ig,1,i_b_ref,1)==cZERO) cycle
        igp=G_m_G_d(ig,g0_idx_val)
        WF_k_out(igp,i_spinor,i_b,i_sp_pol)=WF_tmp(ig,i_spinor,i_b,i_sp_pol)
        !
@@ -88,7 +89,7 @@ subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,
      !
 #else
      do ig=1,wf_ng_1st_BZ
-       if(WF_tmp(ig,1,b_to_shift(1),1)==cZERO) cycle
+       if(WF_tmp(ig,1,i_b_ref,1)==cZERO) cycle
        igp=G_m_G(ig,g0_idx_val)
        WF_k_out(igp,:,:,:)=WF_tmp(ig,:,:,:)
      enddo

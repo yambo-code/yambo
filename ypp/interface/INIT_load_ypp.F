@@ -24,7 +24,7 @@
 subroutine INIT_ypp_load(defs)
  !
  use it_tools,      ONLY:it
- use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,&
+ use it_m,          ONLY:initdefs,E_unit,G_unit,V_RL,V_general,&
 &                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
@@ -332,7 +332,7 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'RmTimeRev' , 'Remove Time Reversal')
  !
  call it(defs,'Efield1','First external Electric Field',E_field(1,:))
- call it(defs,'GvecsCut','Max number of G-vectors in the new wave-function',wf_ng_cut,unit=G_unit)
+ call it(defs,'GvecsCut','Max number of G-vectors in the new wave-function',wf_ng_cut,unit=G_unit,verb_level=V_RL)
  !
  ! GPL_EXCLUDE_START
  !

@@ -64,145 +64,186 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  if (     Update) qp%n_descs  =n_descs_save
  !
  if (allocated(RIM_qpg)) then
+   !
    qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&        STRING_pack('(a,',gen_fmt( (/RIM_ng /) ),')'))) &
-&        ' RIM G`s                ',RIM_ng
+   qp%desc_string(qp%n_descs)=' RIM G`s                '
+   qp%desc_n_values(qp%n_descs)=1
+   qp%desc_values(1,qp%n_descs)=RIM_ng
+   !
    qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&        STRING_pack('(a,',gen_fmt( (/RIM_n_rand_pts /) ),')'))) &
-&        ' RIM random pts         ',RIM_n_rand_pts
+   qp%desc_string(qp%n_descs)=' RIM random pts         '
+   qp%desc_n_values(qp%n_descs)=1
+   qp%desc_values(1,qp%n_descs)=RIM_n_rand_pts
+   !
  endif
  !
  if (.not.l_life) then
+   !
    qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&        STRING_pack('(a,',gen_fmt( i_v=(/GWo_iterations /) ),')'))) &
-&        ' GW SC iterations       ',GWo_iterations
+   qp%desc_string(qp%n_descs)=' GW SC iterations       '
+   qp%desc_n_values(qp%n_descs)=1
+   qp%desc_values(1,qp%n_descs)=GWo_iterations
    !
    if (.not.l_cohsex.and.trim(QP_solver)/='g'.and..not.use_GreenF_to_eval_QP) then
+     !
      qp%n_descs=qp%n_descs+1
-     write (qp%description(qp%n_descs),trim(&
-&          STRING_pack('(a,',gen_fmt( i_v=(/QP_dSc_steps /) ),')'))) &
-&          ' dS/dw steps            ',QP_dSc_steps
+     qp%desc_string(qp%n_descs)=' dS/dw steps            '
+     qp%desc_n_values(qp%n_descs)=1
+     qp%desc_values(1,qp%n_descs)=QP_dSc_steps
+     !
      qp%n_descs=qp%n_descs+1
-     write (qp%description(qp%n_descs),trim(&
-&          STRING_pack('(a,',gen_fmt( r_v=(/QP_dSc_delta*HA2EV /) ),')'))) &
-&          ' dS/dw step         [ev]',QP_dSc_delta*HA2EV
+     qp%desc_string(qp%n_descs)=' dS/dw step         [ev]'
+     qp%desc_n_values(qp%n_descs)=1
+     qp%desc_values(1,qp%n_descs)=QP_dSc_delta*HA2EV
+     !
    endif
+   !
  endif 
  !
  if (l_elel_corr) then
    !
    qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&        STRING_pack('(a,',gen_fmt( (/X%ng /) ),')'))) &
-&        ' X G`s            [used]',X%ng
+   qp%desc_string(qp%n_descs)=' X G`s            [used]'
+   qp%desc_n_values(qp%n_descs)=1
+   qp%desc_values(1,qp%n_descs)=X%ng
+   !
    qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&        STRING_pack('(a,',gen_fmt( (/X%ng_db /) ),')'))) &
-&        ' X G`s            [disk]',X%ng_db
+   qp%desc_string(qp%n_descs)=' X G`s            [disk]'
+   qp%desc_n_values(qp%n_descs)=1
+   qp%desc_values(1,qp%n_descs)=X%ng_db
+   !
    qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&        STRING_pack('(a,2(',gen_fmt( X%ib  ),',1x))'))) &
-&        ' X bands                ',X%ib
+   qp%desc_string(qp%n_descs)=' X bands                '
+   qp%desc_n_values(qp%n_descs)=2
+   qp%desc_values(:,qp%n_descs)=X%ib
+   !
    qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&        STRING_pack('(a,',gen_fmt( r_v=(/X%cg_percentual /) ),')'))) &
-&        ' X poles           [o/o]',X%cg_percentual
+   qp%desc_string(qp%n_descs)=' X poles           [o/o]'
+   qp%desc_n_values(qp%n_descs)=1
+   qp%desc_values(1,qp%n_descs)=X%cg_percentual
+   !
    qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&       STRING_pack('(a,2(',gen_fmt( r_v=X%ehe*HA2EV ),',1x))'))) &
-&       ' X e/h E range      [ev]',X%ehe*HA2EV
+   qp%desc_string(qp%n_descs)=' X e/h E range      [ev]'
+   qp%desc_n_values(qp%n_descs)=2
+   qp%desc_values(:,qp%n_descs)=X%ehe*HA2EV
    !
    if (ver_is_gt_or_eq(-1,(/3,0,5/))) then
      qp%n_descs=qp%n_descs+1
-     write (qp%description(qp%n_descs),'(2a)') ' X xc-Kernel             ',trim(X%f_xc)
+     qp%desc_string(qp%n_descs)=' X xc-Kernel             '//trim(X%f_xc)
+     qp%desc_n_values(qp%n_descs)=0
    endif
    !
    if (.not.l_ppa.and..not.l_cohsex) then
+     !
      qp%n_descs=qp%n_descs+1
-     write (qp%description(qp%n_descs),trim(&
-&          STRING_pack('(a,2(',gen_fmt( r_v = Xw%dr*HA2EV ),',1x))')))&
-&          ' X damping range    [ev]',Xw%dr*HA2EV
+     qp%desc_string(qp%n_descs)=' X damping range    [ev]'
+     qp%desc_n_values(qp%n_descs)=2
+     qp%desc_values(:,qp%n_descs)=Xw%dr*HA2EV
+     !  
      if (.not.l_life) then
        qp%n_descs=qp%n_descs+1
-       write (qp%description(qp%n_descs),trim(&
-&            STRING_pack('(a,(',gen_fmt( i_v=(/Xw%n_freqs/) ),',1x))'))) &
-&            ' X Steps                ',Xw%n_freqs
+       qp%desc_string(qp%n_descs)=' X Steps                '
+       qp%desc_n_values(qp%n_descs)=1
+       qp%desc_values(1,qp%n_descs)=Xw%n_freqs
      endif
+     !
    endif
+   !
    if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
+     !
      qp%n_descs=qp%n_descs+1
-                    qp%description(qp%n_descs)=' X BZ energy Double Grid: no'
-     if (use_X_DbGd) qp%description(qp%n_descs)=' X BZ energy Double Grid: yes'
+     if (.not.use_X_DbGd) qp%desc_string(qp%n_descs)=' X BZ energy Double Grid: no '
+     if (     use_X_DbGd) qp%desc_string(qp%n_descs)=' X BZ energy Double Grid: yes'
+     qp%desc_n_values(qp%n_descs)=0
+     !
      qp%n_descs=qp%n_descs+1
-     write (qp%description(qp%n_descs),trim(&
-&          STRING_pack('(a,',gen_fmt( (/BZ_DbGd_tot_nk_levels/) ),')'))) &
-&          ' X BZ Double Grid points',BZ_DbGd_tot_nk_levels
+     qp%desc_string(qp%n_descs)=' X BZ Double Grid points'
+     qp%desc_n_values(qp%n_descs)=1
+     qp%desc_values(1,qp%n_descs)=BZ_DbGd_tot_nk_levels
+     !
    endif
+   !
  endif
  !
  if (l_life.and.l_elel_corr) then
+   !
    qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&        STRING_pack('(a,',gen_fmt( r_v=(/QP_cg_percent /) ),')'))) &
-&        ' Transitions       [o/o]',QP_cg_percent
+   qp%desc_string(qp%n_descs)=' Transitions       [o/o]'
+   qp%desc_n_values(qp%n_descs)=1
+   qp%desc_values(1,qp%n_descs)=QP_cg_percent
+   !
  endif
+ !
  if (.not.l_life) then 
    if ( (.not.l_cohsex) .or. (l_cohsex.and.COHSEX_use_empties) ) then
      qp%n_descs=qp%n_descs+1
-     write (qp%description(qp%n_descs),trim(&
-&         STRING_pack('(a,2(',gen_fmt( QP_n_G_bands ),',1x))')))&
-&         ' Sc/G bands             ',QP_n_G_bands
+     qp%desc_string(qp%n_descs)=' Sc/G bands             '
+     qp%desc_n_values(qp%n_descs)=2
+     qp%desc_values(:,qp%n_descs)=QP_n_G_bands
    endif
    if (l_cohsex) then
      if (ver_is_gt_or_eq(-1,(/4,3,1/))) then
        qp%n_descs=qp%n_descs+1
-       if (     COHSEX_use_empties) qp%description(qp%n_descs)=' Sc Empty Bands         : yes'
-       if (.not.COHSEX_use_empties) qp%description(qp%n_descs)=' Sc Empty Bands         : no'   
+       if (     COHSEX_use_empties) qp%desc_string(qp%n_descs)=' Sc Empty Bands         : yes'
+       if (.not.COHSEX_use_empties) qp%desc_string(qp%n_descs)=' Sc Empty Bands         : no'
+       qp%desc_n_values(qp%n_descs)=0
      endif
    else
      qp%n_descs=qp%n_descs+1
-     write (qp%description(qp%n_descs),trim(&
-&         STRING_pack('(a,',gen_fmt( r_v=(/QP_G_damp*HA2EV /) ),')')))&
-&         ' Sc/G damping       [ev]',QP_G_damp*HA2EV
+     qp%desc_string(qp%n_descs)=' Sc/G damping       [ev]'
+     qp%desc_n_values(qp%n_descs)=1
+     qp%desc_values(1,qp%n_descs)=QP_G_damp*HA2EV
    endif
    !
    if (l_GW_terminator) then
+     !
      qp%n_descs=qp%n_descs+1
-     qp%description(qp%n_descs)=' Sc bands terminator    : yes'
+     qp%desc_string(qp%n_descs)=' Sc bands terminator    : yes'
+     qp%desc_n_values(qp%n_descs)=0
+     !
      qp%n_descs=qp%n_descs+1
-     qp%description(qp%n_descs)=' Sc terminator kind      '//trim(GW_terminator_Kind)    
+     qp%desc_string(qp%n_descs)=' Sc terminator kind      '//trim(GW_terminator_Kind)
+     qp%desc_n_values(qp%n_descs)=0
+     !
      qp%n_descs=qp%n_descs+1
-     write (qp%description(qp%n_descs),trim(&
-&           STRING_pack('(a,',gen_fmt( r_v=(/GW_terminator_E*HA2EV /) ),')'))) &
-&           ' Sc Terminator pole     ',GW_terminator_E*HA2EV
+     qp%desc_string(qp%n_descs)=' Sc Terminator pole     '
+     qp%desc_n_values(qp%n_descs)=1
+     qp%desc_values(1,qp%n_descs)=GW_terminator_E*HA2EV
+     !
    else
+     !
      qp%n_descs=qp%n_descs+1
-     qp%description(qp%n_descs)=' Sc bands terminator    : no'
+     qp%desc_string(qp%n_descs)=' Sc bands terminator    : no'
+     qp%desc_n_values(qp%n_descs)=0
+     !
    endif
    !
    if (l_HF_and_locXC) then
      qp%n_descs=qp%n_descs+1
-     write (qp%description(qp%n_descs),trim(&
-&         STRING_pack('(a,',gen_fmt( (/QP_ng_Sx /) ),')'))) &
-&         ' Sx RL components       ',QP_ng_Sx
+     qp%desc_string(qp%n_descs)=' Sx RL components       '
+     qp%desc_n_values(qp%n_descs)=1
+     qp%desc_values(1,qp%n_descs)=QP_ng_Sx
    endif
    !
  endif
  !
-#if defined _QED 
+#if defined _QED
+ !
  if (l_elphoton_corr) then
+   !
    qp%n_descs=qp%n_descs+1
-   qp%description(qp%n_descs)=' El-Photon correlation  : yes'
+   qp%desc_string(qp%n_descs)=' El-Photon correlation  : yes'
+   qp%desc_n_values(qp%n_descs)=0
+   !
    if (.not.l_life) then
      qp%n_descs=qp%n_descs+1
-     write (qp%description(qp%n_descs),trim(&
-&         STRING_pack('(a,',gen_fmt( (/QP_QED_ng /) ),')'))) &
-&         ' QED RL components      ',QP_QED_ng
+     qp%desc_string(qp%n_descs)=' QED RL components      '
+     qp%desc_n_values(qp%n_descs)=1
+     qp%desc_values(1,qp%n_descs)=QP_QED_ng
    endif
+   !
  endif
+ !
 #endif
  !
 #if defined _ELPH 
@@ -217,50 +258,55 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      if (.not.l_elel_corr) qp%n_descs=n_descs_save+1
      !
      if (trim(QP_solver)/='g') then
-       write (qp%description(qp%n_descs),trim(&
-&            STRING_pack('(a,',gen_fmt( i_v=(/QP_dSc_steps /) ),')'))) &
-&            ' [ph] dS/dw steps        ',QP_dSc_steps
+       qp%desc_string(qp%n_descs)=' [ph] dS/dw steps        '
+       qp%desc_n_values(qp%n_descs)=1
+       qp%desc_values(1,qp%n_descs)=QP_dSc_steps
+       !
        qp%n_descs=qp%n_descs+1
-       write (qp%description(qp%n_descs),trim(&
-&            STRING_pack('(a,',gen_fmt( r_v=(/QP_dSc_delta*HA2EV /) ),')'))) &
-&            ' [ph] dS/dw step     [ev]',QP_dSc_delta*HA2EV
+       qp%desc_string(qp%n_descs)=' [ph] dS/dw step     [ev]'
+       qp%desc_n_values(qp%n_descs)=1
+       qp%desc_values(1,qp%n_descs)=QP_dSc_delta*HA2EV
+       !
        qp%n_descs=qp%n_descs+1
-       write (qp%description(qp%n_descs),trim(&
-&           STRING_pack('(a,',gen_fmt( r_v=(/QP_G_damp*HA2EV /) ),')')))&
-&           ' [ph] Sc/G damping   [ev]',QP_G_damp*HA2EV
+       qp%desc_string(qp%n_descs)=' [ph] Sc/G damping   [ev]'
+       qp%desc_n_values(qp%n_descs)=1
+       qp%desc_values(1,qp%n_descs)=QP_G_damp*HA2EV
+       !
      endif
      !
      qp%n_descs=qp%n_descs+1
-     qp%description(qp%n_descs)=' El-Ph correlation      : yes'
+     qp%desc_string(qp%n_descs)=' El-Ph correlation      : yes'
+     qp%desc_n_values(qp%n_descs)=0
      !
      qp%n_descs=qp%n_descs+1
-     write (qp%description(qp%n_descs),trim(&
-&          STRING_pack('(a,2',gen_fmt( (/QP_PH_n_G_bands/) ),')'))) &
-&          ' El-Ph Sc. G bands      ',(/1,QP_PH_n_G_bands/)
+     qp%desc_string(qp%n_descs)=' El-Ph Sc. G bands      '
+     qp%desc_n_values(qp%n_descs)=2
+     qp%desc_values(:,qp%n_descs)=(/1,QP_PH_n_G_bands/)
      !
      if (ver_is_gt_or_eq(-1,(/3,2,2/))) then
        qp%n_descs=qp%n_descs+1
-       write (qp%description(qp%n_descs),trim(&
-&            STRING_pack('(a,2',gen_fmt( elph_branches ),')'))) &
-&            ' El-Ph phonon branches  ',(/elph_branches/)
+       qp%desc_string(qp%n_descs)=' El-Ph phonon branches  '
+       qp%desc_n_values(qp%n_descs)=2
+       qp%desc_values(:,qp%n_descs)=elph_branches
      endif
      !
      if (ver_is_gt_or_eq(-1,(/4,0,0/))) then
        qp%n_descs=qp%n_descs+1
-       write (qp%description(qp%n_descs),trim(&
-&            STRING_pack('(a,',gen_fmt( i_v=(/elph_nDBs_used/) ),')'))) &
-&            ' El-Ph momenta used     ',elph_nDBs_used
+       qp%desc_string(qp%n_descs)=' El-Ph momenta used     '
+       qp%desc_n_values(qp%n_descs)=1
+       qp%desc_values(1,qp%n_descs)=elph_nDBs_used
      endif
      !
      if (ver_is_gt_or_eq(-1,revision=4400)) then
        qp%n_descs=qp%n_descs+1
-       write (qp%description(qp%n_descs),trim(&
-&            STRING_pack('(a,',gen_fmt( r_v=(/FAN_deltaE_treshold*HA2EV /) ),')')))&
-&            ' Energy treshold   [FAN]',FAN_deltaE_treshold*HA2EV
+       qp%desc_string(qp%n_descs)=' Energy treshold   [FAN]'
+       qp%desc_n_values(qp%n_descs)=1
+       qp%desc_values(1,qp%n_descs)=FAN_deltaE_treshold*HA2EV
+       !
        qp%n_descs=qp%n_descs+1
-       write (qp%description(qp%n_descs),trim(&
-&            STRING_pack('(a,',gen_fmt( r_v=(/DW_deltaE_treshold*HA2EV /) ),')')))&
-&            ' Energy treshold    [DW]',DW_deltaE_treshold*HA2EV
+       qp%desc_string(qp%n_descs)=' Energy treshold    [DW]'
+       qp%desc_n_values(qp%n_descs)=1
+       qp%desc_values(1,qp%n_descs)=DW_deltaE_treshold*HA2EV
      endif
      !
    endif
@@ -272,27 +318,34 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  ! Green's Functions
  !
  if (ver_is_gt_or_eq(-1,revision=452).and.trim(QP_solver)=='g') then
+   !
    qp%n_descs=qp%n_descs+1
-   qp%description(qp%n_descs)=' [GF] GF is causal       : no'
-   if (GF_is_causal) qp%description(qp%n_descs)=' [GF] GF is causal       : yes'
+   if (.not.GF_is_causal) qp%desc_string(qp%n_descs)=' [GF] GF is causal       : no'
+   if (     GF_is_causal) qp%desc_string(qp%n_descs)=' [GF] GF is causal       : yes'
+   qp%desc_n_values(qp%n_descs)=0
+   !
    qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&        STRING_pack('(a,',gen_fmt( i_v=(/QP_Sc_steps /) ),')'))) &
-&        ' [GF] Real-axis steps    ',QP_Sc_steps
+   qp%desc_string(qp%n_descs)=' [GF] Real-axis steps    '
+   qp%desc_n_values(qp%n_descs)=1
+   qp%desc_values(1,qp%n_descs)=QP_Sc_steps
+   !
    qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&     STRING_pack('(a,2(',gen_fmt( r_v=QP_G_er*HA2EV ),',1x))'))) &
-&      ' [GF] Initial E range  [eV]',QP_G_er*HA2EV
+   qp%desc_string(qp%n_descs)=' [GF] Initial E range  [eV]'
+   qp%desc_n_values(qp%n_descs)=2
+   qp%desc_values(:,qp%n_descs)=QP_G_er*HA2EV
+   !
    if (ver_is_gt_or_eq(-1,revision=530)) then
      qp%n_descs=qp%n_descs+1
-     write (qp%description(qp%n_descs),trim(&
-&         STRING_pack('(a,1(',gen_fmt( r_v=(/QP_G_Zoom_treshold/)),',1x))'))) &
-&          ' [GF] Zoom treshold   [o/o]',QP_G_Zoom_treshold
+     qp%desc_string(qp%n_descs)=' [GF] Zoom treshold   [o/o]'
+     qp%desc_n_values(qp%n_descs)=1
+     qp%desc_values(1,qp%n_descs)=QP_G_Zoom_treshold
    endif
+   !
    qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&       STRING_pack('(a,2(',gen_fmt( r_v=QP_G_dr*HA2EV ),',1x))'))) &
-&        ' [GF] Damping          [eV]',QP_G_dr*HA2EV
+   qp%desc_string(qp%n_descs)=' [GF] Damping          [eV]'
+   qp%desc_n_values(qp%n_descs)=2
+   qp%desc_values(:,qp%n_descs)=QP_G_dr*HA2EV
+   !
  endif
  !
  ! QP states

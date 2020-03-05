@@ -38,7 +38,9 @@ subroutine QP_expand(k,qp,qp_expanded)
  !
  ! Components of QP_t
  !
- !  character(schlen)  :: description(max_qp_descs)
+ !  character(schlen)  :: desc_string(max_qp_descs)
+ !  integer            :: desc_n_values(max_qp_descs)
+ !  real(SP)           :: desc_values(2,max_qp_descs)
  !  integer,    pointer:: table(:,:) => null()
  !  real(SP)   ,pointer:: k(:,:)     => null()
  !  real(SP)   ,pointer:: wk(:)      => null()
@@ -52,7 +54,9 @@ subroutine QP_expand(k,qp,qp_expanded)
  !
  qp_expanded%n_descs=qp%n_descs
  qp_expanded%nb=qp%nb
- qp_expanded%description=qp%description
+ qp_expanded%desc_string  =qp%desc_string
+ qp_expanded%desc_n_values=qp%desc_n_values
+ qp_expanded%desc_values  =qp%desc_values
  !
  call k_ibz2bz(k,'i',.false.)
  !

@@ -44,7 +44,7 @@ subroutine QP_state_print(qp)
  !
  if (present(qp)) then
    qp%n_descs=qp%n_descs+1
-   qp%description(qp%n_descs)=""
+   qp%desc_string(qp%n_descs)=""
  endif
  !
  n_states=-1
@@ -54,14 +54,23 @@ subroutine QP_state_print(qp)
  !
  do i_s=1,n_states
    !
-   ch='QP @ K '//trim(intc(states(i_s,1)))//' - '//trim(intc(states(i_s,2)))//' : b '//&
-&                trim(intc(states(i_s,3)))//' - '//trim(intc(states(i_s,4)))
+   ch='QP @ state [ '//trim(intc(i_s))//' ]'
    !
    if (present(qp)) then
+     !
      qp%n_descs=qp%n_descs+1
-     qp%description(qp%n_descs)=" "//trim(ch)
+     qp%desc_string(qp%n_descs)=trim(ch)//" K range"
+     qp%desc_n_values(qp%n_descs)=2
+     qp%desc_values(:,qp%n_descs)=states(i_s,1:2)
+     !
+     qp%n_descs=qp%n_descs+1
+     qp%desc_string(qp%n_descs)=trim(ch)//" b range"
+     qp%desc_n_values(qp%n_descs)=2
+     qp%desc_values(:,qp%n_descs)=states(i_s,3:4)
+     !
    else
-     call msg('r',trim(ch))
+     call msg('r',trim(ch)//" K range",states(i_s,1:2))
+     call msg('r',trim(ch)//" b range",states(i_s,3:4))
    endif
    !
  enddo  

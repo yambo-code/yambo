@@ -189,3 +189,23 @@ function all_locations(desc,subfolder)
  enddo
  !
 end function all_locations
+!
+!
+function desc_to_varname(desc)
+ !
+ use pars,          ONLY:schlen
+ use stderr,        ONLY:STRING_REMOVE
+ !
+ implicit none
+ !
+ character(schlen), intent(in)  :: desc
+ !
+ character(schlen)  :: desc_to_varname
+ character(schlen)  :: VARNAME
+ !
+ VARNAME=STRING_REMOVE(STRING_REMOVE(STRING_remove(adjustl(desc)," ","_"),"/","_"),",")
+ VARNAME=STRING_REMOVE(STRING_REMOVE(VARNAME,"[","_"),"]","_")
+ !
+ desc_to_varname=VARNAME
+ !
+end function desc_to_varname

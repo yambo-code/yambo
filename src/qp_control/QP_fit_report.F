@@ -42,7 +42,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
  !
  ! Work Space
  !
- integer          ::i_spin,i_d,i_s
+ integer          ::i_spin,i_d,i_s,n_val
  real(SP)         ::db_scissor,fit_scissor,E(4),E_err(2),E_ref(2),W(6),W_err(2),W_dos(2),W_dos_err(2)
  character(lchlen)::ch
  complex(SP)      ::Z
@@ -152,7 +152,9 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    call of_open_close(fname(2),'ot')
    call msg('o .fit .data','#')
    do i_d=1,qp%n_descs
-     call msg('o .fit .data','#'//trim(qp%description(i_d)))
+     n_val=qp%desc_n_values(i_d)
+     if (n_val==0) call msg('o .fit .data','#'//trim(qp%desc_string(i_d)) )
+     if (n_val> 0) call msg('o .fit .data','#'//trim(qp%desc_string(i_d)),qp%desc_values(1:n_val,i_d))
    enddo
    !
    n_titles=1

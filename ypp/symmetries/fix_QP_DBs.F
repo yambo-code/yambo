@@ -82,7 +82,9 @@ subroutine fix_QP_DBs(k,k_save,kpoints_map,action_kind)
  !
  call QP_reset(qp_expanded)
  !
- qp_expanded%description=qp%description
+ qp_expanded%desc_string=qp%desc_string
+ qp_expanded%desc_n_values=qp%desc_n_values
+ qp_expanded%desc_values=qp%desc_values
  qp_expanded%n_descs    =qp%n_descs
  !
  qp_expanded%nk      =k%nibz

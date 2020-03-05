@@ -169,11 +169,13 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERA
      logical    :: STATES
      type(QP_t) :: qp_in
      do i_d=1,qp_in%n_descs
-       if (     STATES.and.index(qp_in%description(i_d),"QP @ K") == 0) cycle
-       if (.not.STATES.and.index(qp_in%description(i_d),"QP @ K") >  0) cycle
-       if (len_trim(qp_in%description(i_d)) == 0) cycle
+       if (     STATES.and.index(qp_in%desc_string(i_d),"QP @ state") == 0) cycle
+       if (.not.STATES.and.index(qp_in%desc_string(i_d),"QP @ state") >  0) cycle
+       if (len_trim(qp_in%desc_string(i_d)) == 0) cycle
        qp%n_descs=qp%n_descs+1
-       qp%description(qp%n_descs)=qp_in%description(i_d)
+       qp%desc_string(qp%n_descs)=qp_in%desc_string(i_d)
+       qp%desc_n_values(qp%n_descs)=qp_in%desc_n_values(i_d)
+       qp%desc_values(:,qp%n_descs)=qp_in%desc_values(:,i_d)
      enddo
    end subroutine
 end subroutine

@@ -42,8 +42,9 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  ! Work Space
  !
- integer           ::i1,i2,qp_b,qp_k,qp_isp,i_desc_min
+ integer           ::i1,i2,qp_b,qp_k,qp_isp,i_desc_min,n_val
  character(lchlen) ::file_name,G_Sc_name
+ character(schlen) ::mesg
  logical           ::state_is_2do(QP_n_states)
  !
  !o.qp titles
@@ -169,7 +170,10 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    if (index(what,"qp")>0) call msg('o '//what,'#')
    !
    do i1=i_desc_min,qp%n_descs
-     call msg('o '//what,'#',trim(qp%description(i1)),INDENT=0)
+     mesg=trim(qp%desc_string(i1))
+     n_val=qp%desc_n_values(i1)
+     if (n_val==0) call msg('o '//what,'#',mesg,INDENT=0)
+     if (n_val> 0) call msg('o '//what,'#'//mesg,qp%desc_values(1:n_val,i1),INDENT=0)
    enddo
    !
    call msg('o '//what,'#')
@@ -263,7 +267,10 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      call msg('o G_Sc','# GW [Green`s function & Self-Energy]')
      call msg('o G_Sc','#')
      do i2=2,qp%n_descs
-       call msg('o G_Sc','#',trim(qp%description(i2)),INDENT=0)
+       mesg=trim(qp%desc_string(i2))
+       n_val=qp%desc_n_values(i2)
+       if (n_val==0) call msg('o G_sc','#',mesg,INDENT=0)
+       if (n_val> 0) call msg('o G_sc','#'//mesg,qp%desc_values(1:n_val,i2),INDENT=0)
      enddo
      if (allocated(QP_G_amplitude_integral)) then
        call msg('o G_Sc','#')

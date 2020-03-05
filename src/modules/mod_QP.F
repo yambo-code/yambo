@@ -98,7 +98,9 @@ module QP_m
  !
  type QP_t
    !
-   character(schlen)  :: description(max_qp_descs)
+   character(schlen)  :: desc_string(max_qp_descs)
+   integer            :: desc_n_values(max_qp_descs)
+   real(SP)           :: desc_values(2,max_qp_descs)
    integer,    allocatable:: table(:,:)
    real(SP)   ,allocatable:: k(:,:)
    real(SP)   ,allocatable:: wk(:)
@@ -201,7 +203,9 @@ module QP_m
      qp%n_descs=qp_in%n_descs
      qp%n_states=qp_in%n_states
      qp%GreenF_n_steps=qp_in%GreenF_n_steps
-     qp%description=qp_in%description
+     qp%desc_string  =qp_in%desc_string
+     qp%desc_n_values=qp_in%desc_n_values
+     qp%desc_values  =qp_in%desc_values
      YAMBO_ALLOC(qp%k,(qp%nk,3))
      YAMBO_ALLOC(qp%table,(qp%n_states,3+n_sp_pol-1))
      YAMBO_ALLOC(qp%wk,(qp%nk))
@@ -258,7 +262,8 @@ module QP_m
      qp%n_descs=0
      qp%n_states=0
      qp%GreenF_n_steps=0
-     qp%description=' '
+     qp%desc_n_values=0
+     qp%desc_string=' '
      YAMBO_FREE(qp%table)
      YAMBO_FREE(qp%k)
      YAMBO_FREE(qp%wk)

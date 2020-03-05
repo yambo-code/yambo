@@ -160,7 +160,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
    if (len_trim(alt_jobstr(i_s))<=0) exit
    jobs_ch(i_s+1)=trim(alt_jobstr(i_s))
  enddo
- if (len_trim(jobs_ch(1))>0) call msg('r',trim(dumb_ch)//"       ",jobs_ch(:i_s))
+ if (len_trim(jobs_ch(1))>0) call msg('r',trim(dumb_ch)//"       ",jobs_ch(:n_alt_jobstr+1))
  !
  if(SP/=DP) call msg('nr', 'Precision           ','SINGLE')
  if(SP==DP) call msg('nr', 'Precision           ','DOUBLE')

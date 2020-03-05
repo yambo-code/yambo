@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -105,7 +105,9 @@ module X_m
  ! I/O descriptions
  !
  integer          :: n_X_descs
- character(lchlen):: X_description(100)
+ integer          :: X_desc_size(100)
+ real(SP)         :: X_desc_var(10,100)
+ character(lchlen):: X_desc_str(100)
  !
  ! PARALLEL distribution
  !

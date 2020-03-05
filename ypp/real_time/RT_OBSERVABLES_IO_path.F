@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -166,9 +166,9 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
    !
  endif
  !
- call msg('s',':: Pumps  found      :',N_pumps)
- call msg('s',':: Probes found      :',N_probes)
- call msg('s',':: Probe  frequencies:',N_probe_frequencies)
+ call msg('s',' Pumps  found      ',N_pumps)
+ call msg('s',' Probes found      ',N_probes)
+ call msg('s',' Probe  frequencies',N_probe_frequencies)
  !
  if (N_pumps>1  ) call error('Multiple Pumps still not supported')
  if (N_probes==0) call error('No probes found')

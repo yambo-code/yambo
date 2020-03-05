@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -102,7 +102,7 @@ subroutine fft_check_size(iGo_max,NG_C,NG_HF,mode)
    else
      NG_HF=ng_in_shell(i_shell-1)
      call warning(' '//trim(Kindname)//' '//trim(SKname)//' FFT size is too big. '// &
-                 &   NGname//' reduced: '//trim(intc(NG_HF_save))//' --> '//trim(intc(NG_HF)))
+                 &   NGname//' reduced '//trim(intc(NG_HF_save))//' --> '//trim(intc(NG_HF)))
      call warning(' Bigger FFT discarded to avoid slow computation for corr part of '//trim(SKname))
    endif
    !

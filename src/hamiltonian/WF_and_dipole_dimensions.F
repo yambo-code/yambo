@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -110,7 +110,7 @@ subroutine WF_and_dipole_dimensions(X)
  SC_X_size =X(2)%ng
  !
  if(SC_up_W_iters/=0) then
-   call msg('nr','[SC] Updating W each                   :',SC_up_W_iters)
+   call msg('nr','[SC] Updating W each                   ',SC_up_W_iters)
    !
    if(l_use_Hxc_collisions) then
      SC_up_W_iters=0

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,7 +26,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ! GPL_EXCLUDE_START
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
- use pars,       ONLY:SP,cZERO
+ use pars,       ONLY:SP,cZERO,VAR_EMPTY
  use C_driver,   ONLY:code_branch
  use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
@@ -60,14 +60,14 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
 &                     eval_magn,E_SOC_nbands
  use parallel_m, ONLY:ncpu,CPU_str_reset,PARALLEL_host_name
- use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,opened_of,of_unit,max_open_ofs,&
+ use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,com_path,repfile,grid_paths
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,frag_WF
- use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
+ use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_desc_str,BSS_desc_var,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_threshold,Haydock_iterIO,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
@@ -77,7 +77,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BS_K_is_ALDA,BSE_mode,L_kind
- use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
+ use TDDFT,      ONLY:FXC_desc_str,FXC_desc_var,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -127,6 +127,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
+#endif
+#if defined _YAML_OUTPUT
+ use com,         ONLY:depth_yaml
 #endif
  use timing_m,    ONLY:timing_allocate,nclockx
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
@@ -224,9 +227,12 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  previous_secmode=' '
  of_name=' '
  n_ofs_defined=0
- opened_of=' '
+ of_opened=' '
  of_unit=0
- of_unit(max_open_ofs)=-11
+ of_unit(max_open_ofs)=-1
+#if defined _YAML_OUTPUT
+ depth_yaml=0
+#endif
  !
  !LOGO
  !
@@ -435,6 +441,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_mode=' '
  BSS_inversion_mode='pf'
  BSS_n_descs=0
+ BSS_desc_var=VAR_EMPTY
+ BSS_desc_str=''
  BSS_er=(/0._SP,10._SP/)/HA2EV
  BSS_dr=0.1_SP/HA2EV
  BSS_q0=(/1._SP,0._SP,0._SP/)
@@ -463,7 +471,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! TDDFT
  !
- FXC_description=""
+ FXC_desc_var=VAR_EMPTY
+ FXC_desc_str=""
  FXC_type='rpa'
  FXC_n_descs=0
  FXC_n_g_corr=1

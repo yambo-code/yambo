@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -129,9 +129,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  else if (trim(QP_solver)=='g') then
    write (qp%description(1),'(a)') ' GW solver              : Full Green`s function'
    call section('*','Dyson equation: full Green`s function')
-   call msg('r', '[Green] Sc steps                                         :',QP_Sc_steps)
-   call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]:',QP_G_er*HA2EV)
-   call msg('rn','[Green] Sc damping range                             [ev]:',QP_G_dr*HA2EV)
+   call msg('r', '[Green] Sc steps                                         ',QP_Sc_steps)
+   call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]',QP_G_er*HA2EV)
+   call msg('rn','[Green] Sc damping range                             [ev]',QP_G_dr*HA2EV)
    !
    GF_is_causal=Finite_Tel.or.l_elph_corr 
    !
@@ -147,7 +147,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    qp%description(2)=' == PPA-GN GW =='
    qp%description(3)=' '
-   qp%description(4)=' PPA imaginary pt   [ev]:'//trim(real2ch(X%ppaE*HA2EV))
+   qp%description(4)=' PPA imaginary pt   [ev]'//trim(real2ch(X%ppaE*HA2EV))
    qp%n_descs=4
    !
    QP_DB_kind=QP_SE_GoWo_PPA

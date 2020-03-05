@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -52,9 +52,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  type(bz_samp)         :: RT_k
  type(levels)          :: CIRCUIT_E,CIRCUIT_dE,RT_E
- real(SP)              :: Max_occ,values(3+2*(n_spinor-1))
- real(SP), allocatable :: integrated_dF_elecs(:,:,:),integrated_dF_holes(:,:,:)
- character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation,extension
+ real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
+ character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation
  character(lchlen)     :: of_string
  logical               :: WARN_negative_electrons_df,WARN_positive_holes_df,is_PROJECTED
  integer               :: ib,ik,i_RT,i_T,n_values,ID_circuit,ID_spin,ID_magn,ID_bands(3),ID_grid,ik_path

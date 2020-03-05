@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, AC
@@ -49,37 +49,37 @@ integer function variables_NL(ID,local_description)
  !
  call io_elemental(ID,VAR="NLPARS",VAR_SZ=13,MENU=0)
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [RT] Time steps       :",I0=NE_steps,     CHECK=.true.,OP=(/"=="/), &
+ call io_elemental(ID,VAR=" [RT] Time steps        ",I0=NE_steps,     CHECK=.true.,OP=(/"=="/), &
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [RT] Time step    [fs]:",R0=RT_step,      CHECK=.true.,OP=(/"=="/), &
+ call io_elemental(ID,VAR=" [RT] Time step    [fs] ",R0=RT_step,      CHECK=.true.,OP=(/"=="/), &
 &         DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [NL] Damping      [fs]:",R0=NL_damping,   CHECK=.true.,OP=(/"=="/), &
+ call io_elemental(ID,VAR=" [NL] Damping      [fs] ",R0=NL_damping,   CHECK=.true.,OP=(/"=="/), &
 &         DESCRIPTION=local_description(i_desc),UNIT=HA2EV)
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [NL] Bands  range     :",I1=RT_bands,     CHECK=.true.,OP=(/"==","=="/), &
+ call io_elemental(ID,VAR=" [NL] Bands  range      ",I1=RT_bands,     CHECK=.true.,OP=(/"==","=="/), &
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [NL] Energy range     :",R1=NL_er,        CHECK=.true.,OP=(/"==","=="/), &
+ call io_elemental(ID,VAR=" [NL] Energy range      ",R1=NL_er,        CHECK=.true.,OP=(/"==","=="/), &
 &         DESCRIPTION=local_description(i_desc),UNIT=HA2EV)
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [NL] Number of freqs  :",I0=n_frequencies,CHECK=.true.,OP=(/"=="/), & 
+ call io_elemental(ID,VAR=" [NL] Number of freqs   ",I0=n_frequencies,CHECK=.true.,OP=(/"=="/), & 
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [NL] Force 2nd approx :",L0=l_force_SndOrd,CHECK=.true.,OP=(/"=="/), & 
+ call io_elemental(ID,VAR=" [NL] Force 2nd approx  ",L0=l_force_SndOrd,CHECK=.true.,OP=(/"=="/), & 
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [NL] Use DIPOLES      :",L0=l_use_DIPOLES,CHECK=.true.,OP=(/"=="/), & 
+ call io_elemental(ID,VAR=" [NL] Use DIPOLES       ",L0=l_use_DIPOLES,CHECK=.true.,OP=(/"=="/), & 
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [NL] Induced Field    :",L0=l_RT_induced_field,CHECK=.true.,OP=(/"=="/), & 
+ call io_elemental(ID,VAR=" [NL] Induced Field     ",L0=l_RT_induced_field,CHECK=.true.,OP=(/"=="/), & 
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR="[NL] Number of G in HARTREE :",I0=QP_ng_SH,CHECK=.true.,OP=(/"=="/), &
+ call io_elemental(ID,VAR="[NL] Number of G in HARTREE  ",I0=QP_ng_SH,CHECK=.true.,OP=(/"=="/), &
      &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR="[NL] Number of G in EXCHANGE(DFT) :",I0=QP_ng_Sx,CHECK=.true.,OP=(/"=="/), &
+ call io_elemental(ID,VAR="[NL] Number of G in EXCHANGE(DFT)  ",I0=QP_ng_Sx,CHECK=.true.,OP=(/"=="/), &
      &         DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
@@ -88,13 +88,13 @@ integer function variables_NL(ID,local_description)
  if (ver_is_gt_or_eq(ID,revision=15726)) then !THIS NEEDS TO BE UPDATED IN CASE ENTERS INTO A DISTRO
    call io_elemental(ID,VAR="WF_SAMPLE",VAR_SZ=3,MENU=0)
    i_desc=i_desc+1
-   call io_elemental(ID,VAR=" [NL] WF sample order  :",I0=n_order,CHECK=.true.,OP=(/"=="/), & 
+   call io_elemental(ID,VAR=" [NL] WF sample order   ",I0=n_order,CHECK=.true.,OP=(/"=="/), & 
         &         DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,VAR=" [NL] WF sample valence:",I0=WF_sample_ondisk%n_val,CHECK=.true.,OP=(/"=="/), & 
+   call io_elemental(ID,VAR=" [NL] WF sample valence ",I0=WF_sample_ondisk%n_val,CHECK=.true.,OP=(/"=="/), & 
         &         DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,VAR=" [NL] WF sample kpoints:",I0=WF_sample_ondisk%n_k,CHECK=.true.,OP=(/"=="/), & 
+   call io_elemental(ID,VAR=" [NL] WF sample kpoints ",I0=WF_sample_ondisk%n_k,CHECK=.true.,OP=(/"=="/), & 
         &         DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  end if
@@ -102,7 +102,7 @@ integer function variables_NL(ID,local_description)
  ! INTEGRATOR
  !
  call io_elemental(ID,VAR="INTEGRATOR",CH0="",VAR_SZ=1,MENU=0)
- call io_elemental(ID,CH0=Integrator_name,VAR=' [RT] Integrator           :',CHECK=.true.,OP=(/"=="/), &
+ call io_elemental(ID,CH0=Integrator_name,VAR=' [RT] Integrator           ',CHECK=.true.,OP=(/"=="/), &
 &        DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
@@ -110,7 +110,7 @@ integer function variables_NL(ID,local_description)
  !
  call io_elemental(ID,VAR="CORRELATION",CH0="",VAR_SZ=1,MENU=0)
  i_desc=i_desc+1
- call io_elemental(ID,CH0=NL_correlation,VAR=' [NL] Correlation           :',CHECK=.true.,OP=(/"=="/), &
+ call io_elemental(ID,CH0=NL_correlation,VAR=' [NL] Correlation           ',CHECK=.true.,OP=(/"=="/), &
 &        DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  !
@@ -118,31 +118,31 @@ integer function variables_NL(ID,local_description)
  !
  call io_elemental(ID,VAR="FIELD_NAME",CH0="",VAR_SZ=1,MENU=0)
  i_desc=i_desc+1
- call io_elemental(ID,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           :',CHECK=.true.,OP=(/"=="/), &
+ call io_elemental(ID,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           ',CHECK=.true.,OP=(/"=="/), &
 &        DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  call io_elemental(ID,VAR="EXTERNAL_FIELD",VAR_SZ=10,MENU=0)
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [FIELDs] Versor                :",R1=Efield(i_Prb)%versor,WARN=.true.,OP=(/"==","==","=="/), &
+ call io_elemental(ID,VAR=" [FIELDs] Versor                 ",R1=Efield(i_Prb)%versor,WARN=.true.,OP=(/"==","==","=="/), &
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [FIELDs] Intensity     [kWCMm2]:",R0=Efield(i_Prb)%intensity,CHECK=.true.,OP=(/"=="/),UNIT=AU2KWCMm2, &
+ call io_elemental(ID,VAR=" [FIELDs] Intensity     [kWCMm2] ",R0=Efield(i_Prb)%intensity,CHECK=.true.,OP=(/"=="/),UNIT=AU2KWCMm2, &
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [FIELDs] Damping           [fs]:",R0=Efield(i_Prb)%FWHM,CHECK=.true.,OP=(/"=="/),& 
+ call io_elemental(ID,VAR=" [FIELDs] Damping           [fs] ",R0=Efield(i_Prb)%FWHM,CHECK=.true.,OP=(/"=="/),& 
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [FIELDs] Frequency range   [eV]:",R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV,& 
+ call io_elemental(ID,VAR=" [FIELDs] Frequency range   [eV] ",R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV,& 
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [FIELDs] Frequency steps       :",I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/),& 
+ call io_elemental(ID,VAR=" [FIELDs] Frequency steps        ",I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/),& 
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR=" [FIELDs] Frequency step    [eV]:",R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV,& 
+ call io_elemental(ID,VAR=" [FIELDs] Frequency step    [eV] ",R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV,& 
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR=' [FIELDs] Initial time      [fs]:',R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+ call io_elemental(ID,VAR=' [FIELDs] Initial time      [fs]',R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &         DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !

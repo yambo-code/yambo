@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -65,12 +65,12 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  if (l_cohsex) then
    !
-   call msg('r', '[Newton] Sc step   [ev]:',QP_dSc_delta*HA2EV)
-   call msg('r', '[Newton] Sc steps      :',QP_dSc_steps)
+   call msg('r', '[Newton] Sc step   [ev]',QP_dSc_delta*HA2EV)
+   call msg('r', '[Newton] Sc steps      ',QP_dSc_steps)
    !
  endif
  !
- call msg('rn','[Newton] SC iterations :',GWo_iterations)
+ call msg('rn','[Newton] SC iterations ',GWo_iterations)
  !
  iter=0
  SC_corr_prev=1._SP

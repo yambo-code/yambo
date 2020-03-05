@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -103,7 +103,7 @@ module linear_algebra
    subroutine LINEAR_ALGEBRA_error(calling_subr,message_)
      use stderr,  ONLY:STRING_pack
      character(*) calling_subr,message_
-     call error( trim( STRING_pack('LINEAR ALGEBRA driver [',trim(calling_subr),']:',trim(message_)) ))
+     call error( trim( STRING_pack('LINEAR ALGEBRA driver [',trim(calling_subr),']',trim(message_)) ))
    end subroutine
    !
    !============================

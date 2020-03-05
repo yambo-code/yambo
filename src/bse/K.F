@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS AF
@@ -148,7 +148,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  load_O_X=BS_res_K_exchange.or.l_bs_fxc
  !
- if (load_O_X) call msg('r','[BSE] Exchange components :',BS_n_g_exch)
+ if (load_O_X) call msg('r','[BSE] Exchange components ',BS_n_g_exch)
  !
  ! Oscillators Setup
  !===================

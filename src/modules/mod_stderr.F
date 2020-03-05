@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,6 +33,8 @@ module stderr
  logical          :: write_fragments_IO_log
  logical          :: log_as_a_file
  character(lchlen):: logfile
+ !
+ integer :: logfile_unit
  !
  integer :: f_format_length
  integer :: g_format_length
@@ -209,7 +211,7 @@ module stderr
      !
      STRING_remove=string_in
      !
-     i_pos=index(string_in,what)
+     i_pos=index(trim(string_in),what)
      !
      if (i_pos==0) return
      !
@@ -222,7 +224,7 @@ module stderr
          STRING_remove=string_tmp(:i_pos-1)//string_tmp(i_pos+len(what):)
        endif
        string_tmp=STRING_remove
-       i_pos=index(string_tmp,what)
+       i_pos=index(trim(string_tmp),what)
        if (i_pos==0) return
      enddo
      !

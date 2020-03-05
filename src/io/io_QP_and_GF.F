@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -135,15 +135,15 @@ integer function io_QP_and_GF(what,qp,ID)
  call io_elemental(ID,I0=qp%nb,DB_I0=QP_nb_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,I0=qp%nk,DB_I0=QP_nk_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,I0=qp%n_states,DB_I0=QP_n_states_disk,&
-&                  VAR=' QP tot states          :',CHECK=.true.,OP=(/"<="/))
+&                  VAR=' QP tot states          ',CHECK=.true.,OP=(/"<="/))
  if (ver_is_gt_or_eq(ID,revision=15200)) then 
    call io_elemental(ID,I0=GWo_iterations,&
-&                    VAR=' GWo SC iterations       :',CHECK=.true.,OP=(/"=="/))
+&                    VAR=' GWo SC iterations       ',CHECK=.true.,OP=(/"=="/))
  else
    GWo_iterations=0
  endif
  call io_elemental(ID,I0=GW_iterations,&
-&                  VAR=' GW  SC iterations       :',CHECK=.true.,OP=(/"=="/))
+&                  VAR=' GW  SC iterations       ',CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,I0=qp%n_descs,DB_I0=n_descs_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !

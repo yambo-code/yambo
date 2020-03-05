@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -203,7 +203,7 @@ module LIVE_t
      ! rfmt    =right formatting (n nn r)
      ! sfmt    =Message formatting
      !
-     use stderr,     ONLY : c_print,logfile,write_to_log,intc
+     use stderr,     ONLY : c_print,logfile,logfile_unit,write_to_log,intc,logfile_unit
      use parallel_m, ONLY : myid,ncpu,n_nodes,host_name
      implicit none
      character(*)          :: message
@@ -218,20 +218,14 @@ module LIVE_t
      !
      if (.not.write_to_log.and.index(message,"[ERROR]")==0) return
      !
-     if (.not.log_as_a_file) lfmt_="r"
-     if (log_as_a_file) lfmt_="n"
-     !
-     if (present(lfmt)) then
-       lfmt_=trim(lfmt)
-     endif
      rfmt_=" "
-     if (present(rfmt)) then
-       rfmt_=trim(rfmt)
-     endif
      sfmt_="%s"
-     if (present(sfmt)) then
-       sfmt_=trim(sfmt)
-     endif
+     if (.not.log_as_a_file) lfmt_="r"
+     if (     log_as_a_file) lfmt_="n"
+     !
+     if (present(lfmt)) lfmt_=trim(lfmt)
+     if (present(rfmt)) rfmt_=trim(rfmt)
+     if (present(sfmt)) sfmt_=trim(sfmt)
      !
      ! Update the reference CPUT
      !
@@ -284,13 +278,11 @@ module LIVE_t
      !                ""   "B"              ""        "A"           ""         "AB"
      !
      if (index(trim(lfmt_),"n")>0) then
-       open(unit=13,file=trim(logfile),position='append')
-       if (trim(lfmt_)=="nn") write (13,'(a/)') ""
-       write (13,'(a)') trim(log_line)
+       if (trim(lfmt_)=="nn") write (logfile_unit,'(a/)') ""
+       write (logfile_unit,'(a)') trim(log_line)
        log_line=trim(message_composed) 
        if (trim(rfmt_)=="n".or.trim(rfmt_)=="nn") log_line=""
-       if (trim(rfmt_)=="nn") write (13,'(a/)') ""
-       close(13)
+       if (trim(rfmt_)=="nn") write (logfile_unit,'(a/)') ""
        return
      endif
      fmt_here='(2a)'
@@ -300,12 +292,11 @@ module LIVE_t
      write (lch,trim(fmt_here)) trim(log_line),trim(message_composed)
      log_line=lch
      if (index(trim(rfmt_),"n")>0) then
-       open(unit=13,file=trim(logfile),position='append')
-       write (13,'(a)') trim(log_line)
-       if (trim(rfmt_)=="nn") write (13,'(a/)') ""
-       close(13)
+       write (logfile_unit,'(a)') trim(log_line)
+       if (trim(rfmt_)=="nn") write (logfile_unit,'(a/)') ""
        log_line=""
      endif
+     flush(logfile_unit)
      !
    end subroutine
    !

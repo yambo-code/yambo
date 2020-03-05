@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -32,7 +32,7 @@ subroutine INIT_read_command_line(rstr,init_)
  use QP_m,           ONLY:QP_solver
  use LIVE_t,         ONLY:USER_wall_time_string,GET_user_WALL_time
  use stderr,         ONLY:STRING_split,STRING_match
- use it_tools,       ONLY:runlevel_is_on,switch_off_runlevel,initactivate
+ use it_tools,       ONLY:runlevel_is_on,switch_off_runlevel
  use it_m,           ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,      &
 &                         V_real_time,V_nl_optics,V_all,V_parallel,        &
 &                         infile_verbosity,nrnlvls,rnlvls

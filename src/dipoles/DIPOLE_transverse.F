@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -134,11 +134,11 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
    !
  endif
  !
-                                      live_t_string='Dipoles: P (T):'
- if (l_eval_DIP_V)                    live_t_string='Dipoles: P and v (T):'
- if (l_eval_DIP_V .and.l_eval_DIP_iR) live_t_string='Dipoles: P, V and iR (T):'
- if (l_eval_DIP_P2.and.l_eval_DIP_V ) live_t_string='Dipoles: P, V and P2 (T):'
- if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR, P, V and P2 (T):'
+                                      live_t_string='Dipoles: P (T)'
+ if (l_eval_DIP_V)                    live_t_string='Dipoles: P and v (T)'
+ if (l_eval_DIP_V .and.l_eval_DIP_iR) live_t_string='Dipoles: P, V and iR (T)'
+ if (l_eval_DIP_P2.and.l_eval_DIP_V ) live_t_string='Dipoles: P, V and P2 (T)'
+ if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR, P, V and P2 (T)'
  !
  n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&

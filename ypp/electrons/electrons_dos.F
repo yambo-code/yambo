@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -211,22 +211,18 @@ subroutine electrons_dos(Xk,Xen)
    !
  endif
  !
- if (.not.l_PROJECT_line) then
-   !
-   ! Integrated DOS
-   !
-   if (n_spin==1) then
-     dos_integral(1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)
-     if (N_files==2) dos_integral(2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps) 
-   else
-     dos_integral(1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)+RIntegrate(el_dos(:,2,1),dos_E,DOS_E_steps)
-     if (N_files==2) dos_integral(2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps) + RIntegrate(el_dos(:,2,2),dos_E,DOS_E_steps)
-   endif
-   call msg("s",'Integrated DOS                    :',dos_integral(1)*DL_vol)
-   if (N_files==2) then
-     call msg("s",'                    [interpolated]:',dos_integral(2)*DL_vol)
-   endif
-   !
+ ! Integrated DOS
+ !
+ if (n_spin==1) then
+   dos_integral(1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)
+   if (N_files==2) dos_integral(2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps) 
+ else
+   dos_integral(1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)+RIntegrate(el_dos(:,2,1),dos_E,DOS_E_steps)
+   if (N_files==2) dos_integral(2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps) + RIntegrate(el_dos(:,2,2),dos_E,DOS_E_steps)
+ endif
+ call msg("s",'Integrated DOS                    :',dos_integral(1)*DL_vol)
+ if (N_files==2) then
+   call msg("s",'                    [interpolated]:',dos_integral(2)*DL_vol)
  endif
  !
  ! Output file(s)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -136,9 +136,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (GW_iter> 0) call section('=',trim(SECTION_name))
  !
  if (GW_iter==0) then
-   call msg('r', '[  GW  ] Bands range     :',QP_n_G_bands)
+   call msg('r', '[  GW  ] Bands range     ',QP_n_G_bands)
    if (l_ppa) then
-     call msg('r', '[GW/PPA] G damping   [ev]:',QP_G_damp*HA2EV)
+     call msg('r', '[GW/PPA] G damping   [ev]',QP_G_damp*HA2EV)
      call msg('r','')
    endif
    ch=trim(SECTION_name)

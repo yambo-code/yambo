@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DV
@@ -81,7 +81,7 @@ subroutine cutoff_cylinder(q,is_cut)
  cyl_cut=cyl_length
  if (infcyl) then
   cyl_cut=abs(1/(q%pt(2,ipar))*alat(ipar))-1.
-  call msg('r','Infinite cylinder: Length set to 1/dq [au]:',cyl_cut)
+  call msg('r','Infinite cylinder: Length set to 1/dq [au]',cyl_cut)
  endif
  !
  cyl_cut2 = cyl_cut**2

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA, DS
@@ -81,7 +81,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  if(any(k_map%max_kdir(:)>=6.and..not.l_force_SndOrd)) &
  &   call msg('rs','Using forth order approximation for covariant dipoles')
  !
- call live_timing('Covariant Dipoles:',PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*n_sp_pol)
+ call live_timing('Covariant Dipoles',PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*n_sp_pol)
  !
  ! Notice that DIP_iR/DIP_v are defined only in the IBZ
  ! while the overlaps are in the BZ 

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -151,7 +151,7 @@ subroutine INTERPOLATION_BZ_setup(Xk)
    !
  enddo
  !
- call msg('sr','[INTERPOLATION] Number of shells: ',nshells)
+ call msg('sr','[INTERPOLATION] Number of shells ',nshells)
  !
  all_vec(1:3,1:nshells)=lattice_vectors(1:3,1:nshells)
  !

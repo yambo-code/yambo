@@ -254,7 +254,7 @@ module IO_m
                                         &  Z0, Z1, Z2, Z3, Z4, Z5,    &
                                         &  L0, L1, L2, L3, L4,        &
                                         & CH0,CH1,CH2,CH3,CH4,        &
-                                        &                     IPOS)
+                                        & STR0,STR1,              IPOS)
      !
      use pars,   ONLY:SP,DP,LP
      integer, intent(in)   :: ID, VAR_ID
@@ -266,6 +266,7 @@ module IO_m
      complex(DP), optional, target, intent(inout) ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
      integer(LP), optional, intent(inout) ::  L0, L1(:), L2(:,:), L3(:,:,:), L4(:,:,:,:)
      character,   optional, intent(inout) :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
+     character(*),optional, intent(inout) :: STR0,STR1(:)
      !
    end subroutine io_variable_bulk
    !

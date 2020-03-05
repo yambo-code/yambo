@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function io_QP_and_GF(what,qp,ID)
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:IP,SP,schlen
  use D_lattice,      ONLY:alat
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_t,QP_G_dr,QP_G_er,GW_iterations,&
@@ -31,7 +31,7 @@ integer function io_QP_and_GF(what,qp,ID)
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,DB_is_OK,ver_is_gt_or_eq,&
 &                         db_alat,variable_exist,IO_INCOMPATIBLE_VAR,IO_NO_BINDING_ERROR,&
-&                         io_variable_elemental,def_variable_elemental
+&                         io_variable_elemental,def_variable_elemental,io_variable_bulk,def_variable_bulk
  use global_XC,      ONLY:QP_DB_kind,QP_SE_GoWo,QP_SE_GWo,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_COHSEX,QP_SE_NONE,&
 &                         QP_SE_POLARON,QP_SE_GW_QED,G_E_xc_string,X_E_xc_string,&
 &                         G_WF_xc_string,X_WF_xc_string
@@ -176,6 +176,12 @@ integer function io_QP_and_GF(what,qp,ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
+   call def_variable_elemental(ID,"VALUES_PER_DESCRIPTOR",n_descs_disk,IP+100,0)
+   call io_variable_elemental(ID,I1=qp%desc_n_values(:n_descs_disk),CHECK=.true.,OP=(/"=="/))
+   !
+   call def_variable_bulk(ID,"DESCRIPTORS_NAMES",1,(/schlen,n_descs_disk/),0)
+   call io_variable_bulk(ID,1,STR1=qp%desc_string(:n_descs_disk))
+   !
    do i1=1,n_descs_disk
      !
      ! The QP lines are skipped. The QP_state check is
@@ -188,12 +194,10 @@ integer function io_QP_and_GF(what,qp,ID)
      DESC_SZ=qp%desc_n_values(i1)
      if (DESC_SZ>0) then
        call def_variable_elemental(ID,trim(desc_to_varname(qp%desc_string(i1))),DESC_SZ,SP,0)
-       if (DESC_SZ==1.and.CHECK_VAL) call io_variable_elemental(ID,R1=qp%desc_values(1:DESC_SZ,i1),&
+       if (DESC_SZ==1) call io_variable_elemental(ID,R1=qp%desc_values(1:DESC_SZ,i1),&
        &                                                           VAR=trim(qp%desc_string(i1)),CHECK=.true.,OP=(/"=="/))
-       if (DESC_SZ==2.and.CHECK_VAL) call io_variable_elemental(ID,R1=qp%desc_values(1:DESC_SZ,i1),&
+       if (DESC_SZ==2) call io_variable_elemental(ID,R1=qp%desc_values(1:DESC_SZ,i1),&
        &                                                           VAR=trim(qp%desc_string(i1)),CHECK=.true.,OP=(/"==","=="/))
-       if (          .not.CHECK_VAL) call io_variable_elemental(ID,R1=qp%desc_values(1:DESC_SZ,i1),&
-       &                                                           VAR=trim(qp%desc_string(i1)))
      else
        write (ch,'(a,i5.5)') 'DESC_strings_',i1
        call def_variable_elemental(ID,trim(ch),1,0,0)

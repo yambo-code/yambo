@@ -273,7 +273,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
        !
        k_label=" "
        if (len_trim(CIRCUIT_k_label(ik))>0) then
-         k_label="["//trim(CIRCUIT_k_label(ik))//"]"
+         k_label=" ["//trim(CIRCUIT_k_label(ik))//"]"
        endif
        call msg('o bands',' ',values(:n_values),INDENT=0,USE_TABS=.true.,after_msg=k_label)
        !

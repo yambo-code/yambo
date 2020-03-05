@@ -36,7 +36,7 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
 &                         l_PROJECT_plane,PROJECT_plane_X,PROJECT_plane_Y,PROJECT_steps
  use interpolate,    ONLY:GRID_k
  use electrons,      ONLY:n_spin
- use stderr,         ONLY:set_real_printed_length,intc,real2ch
+ use stderr,         ONLY:set_real_printed_length,intc,real2ch,STRING_remove
  !
 #include<memory.h>
  !
@@ -48,7 +48,7 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
  !
  ! Work Space
  !
- character(schlen)  :: of_name,titles(max(3,bands(2)+2)),k_label
+ character(schlen)  :: of_name,titles(max(3,bands(2)+2)),k_label,extension
  integer            :: ik,i_N,is,ik_plane,ib,ik_path
  real(SP)           :: O(3),k(3),kdist(GRID_k%nbz),max_OBS,projection(2),W_or_T
  logical            :: label_printed,l_DOS,l_BANDS,l_OCC,l_GAMMA
@@ -121,8 +121,8 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
        endif
        !
        k_label=" "
-       if (len_trim(CIRCUIT_k_label(ik_path))>0) then
-         if (.not.label_printed) k_label="["//trim(CIRCUIT_k_label(ik_path))//"]"
+       if (len_trim(CIRCUIT_k_label(ik_path))>0.and..not.label_printed) then
+         k_label=" ["//trim(CIRCUIT_k_label(ik_path))//"]"
          label_printed=.TRUE.
        endif
        !
@@ -160,7 +160,10 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
      if (l_OCC.or.l_GAMMA) of_name=what//"_projected" 
      !
      of_name=trim(of_name)//'_PLANE'
-     if (l_OCC.or.l_GAMMA) of_name=trim(of_name)//"_iT"//intc(i_N)
+     if (l_OCC.or.l_GAMMA) then
+       extension=STRING_remove(real2ch( TIME(i_N)*AUT2FS )," ","")
+       of_name=trim(of_name)//"_T_"//trim(extension)
+     endif
      !
      call of_open_close(trim(of_name),'ot')
      if (l_OCC.or.l_GAMMA) then
@@ -215,7 +218,7 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
        if (ik_plane==1                                ) ik_path=1
        if (ik_plane==PROJECT_steps*(PROJECT_steps+1)+1) ik_path=PROJECT_steps+1
        if (ik_plane==(PROJECT_steps+1)**2             ) ik_path=2*PROJECT_steps+1
-       if (ik_path/=0) k_label="["//trim(CIRCUIT_k_label(ik_path))//"]"
+       if (ik_path/=0) k_label=" ["//trim(CIRCUIT_k_label(ik_path))//"]"
        !
        if (l_BANDS) then
          call msg('o '//trim(of_name),'',(/projection,OBS_B(bands(1):bands(2),ik_plane,1)*HA2EV/),INDENT=-2,USE_TABS=.true.,&

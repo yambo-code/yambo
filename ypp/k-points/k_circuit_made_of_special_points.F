@@ -173,7 +173,7 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
      call K_transform(CIRCUIT_k%pt(ik,:),'iku')
      !
      k_label=" "
-     if (len_trim(CIRCUIT_k_label(ik))>0) k_label= '['// trim(CIRCUIT_k_label(ik))//']'
+     if (len_trim(CIRCUIT_k_label(ik))>0) k_label= ' ['// trim(CIRCUIT_k_label(ik))//']'
      !
      call msg('o  path',"",(/CIRCUIT_k%pt(ik,:),CIRCUIT_k_norm(ik)/),INDENT=0,USE_TABS=.true.,after_msg=k_label)
      call msg('o PWSCF',"",(/CIRCUIT_k%pt(ik,:),1._SP/),INDENT=0,USE_TABS=.true.,after_msg=k_label)

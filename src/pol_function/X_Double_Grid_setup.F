@@ -122,6 +122,6 @@ subroutine X_Double_Grid_setup(iq,k)
    !
  enddo 
  !
- call msg('nrsn','DbGd@q['//trim(intc(iq))//'] k->k-q (trans %, q-rad %)]:',(/PREC,q_radius/smallest_q_norm*100._SP/))
+ call msg('nrsn','DbGd@q['//trim(intc(iq))//'] k->k-q (trans %, q-rad %)]',(/PREC,q_radius/smallest_q_norm*100._SP/))
  !
 end subroutine

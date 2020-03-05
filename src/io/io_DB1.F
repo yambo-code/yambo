@@ -130,36 +130,36 @@ integer function io_DB1(E,k,ID)
    call io_elemental(ID,DB_I0=io_code_revision(ID,1),I0=code_revision_local)
    !
    call io_elemental(ID,I0=E%nb,CHECK=.true.,OP=(/"=="/),&
-&                    VAR=' Bands                           :')
+&                    VAR=' Bands                           ')
    call io_elemental(ID,I0=k%nibz,CHECK=.true.,OP=(/"=="/),&
-&                    VAR=' K-points                        :')
+&                    VAR=' K-points                        ')
    call io_elemental(ID,I0=ng_vec,CHECK=.true.,OP=(/"=="/),&
-&                    VAR=' G-vectors             [RL space]:')
+&                    VAR=' G-vectors             [RL space]')
    call io_elemental(ID,I0=wf_ncx,CHECK=.true.,OP=(/"=="/),&
-&                    VAR=' Components       [wavefunctions]:')
+&                    VAR=' Components       [wavefunctions]')
    call io_elemental(ID,I0=i_time_rev,CHECK=.true.,OP=(/"=="/))
    !
    if (i_time_rev==1) then
      call io_elemental(ID,I0=nsym,CHECK=.true.,OP=(/"=="/),&
-&                      VAR=' Symmetries       [spatial+T-rev]:')
+&                      VAR=' Symmetries       [spatial+T-rev]')
    else
      call io_elemental(ID,I0=nsym,CHECK=.true.,OP=(/"=="/),&
-&                      VAR=' Symmetries             [spatial]:')
+&                      VAR=' Symmetries             [spatial]')
    endif
    !
    call io_elemental(ID,I0=n_spinor,CHECK=.true.,OP=(/"=="/),&
-&                    VAR=' Spinor components               :')
+&                    VAR=' Spinor components               ')
    call io_elemental(ID,I0=n_sp_pol,CHECK=.true.,OP=(/"=="/),&
-&                    VAR=' Spin polarizations              :')
+&                    VAR=' Spin polarizations              ')
    !
    ! Spin Components
    !
    n_spin=max(n_sp_pol,n_spinor,1)
    !
    call io_elemental(ID, UNIT=HA2EV,R0=input_GS_Tel,CHECK=.true.,OP=(/"=="/),&
-&                    VAR=' Temperature                 [ev]:')
+&                    VAR=' Temperature                 [ev]')
    call io_elemental(ID, R0=default_nel,CHECK=.true.,OP=(/"=="/),&
-&                    VAR=' Electrons                       :')
+&                    VAR=' Electrons                       ')
    call io_elemental(ID, I0=GS_xc_KIND)
    call io_elemental(ID, I0=GS_xc_FUNCTIONAL)
    call io_elemental(ID, VAR="",VAR_SZ=0,MENU=0) 
@@ -182,7 +182,7 @@ integer function io_DB1(E,k,ID)
      !
      call io_elemental(ID, VAR="WF_G_COMPONENTS",VAR_SZ=1,MENU=0)
      call io_elemental(ID,I0=wf_ng,CHECK=.true.,OP=(/"=="/),&
-&                      VAR=' WF G-vectors                    :')
+&                      VAR=' WF G-vectors                    ')
    endif
    !
    ! Atomic data
@@ -190,11 +190,11 @@ integer function io_DB1(E,k,ID)
    if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
      call io_elemental(ID, VAR="MAX_ATOMS",VAR_SZ=1,MENU=0)
      call io_elemental(ID,I0=n_atoms_species_max,   CHECK=.true.,OP=(/"=="/),&
-&                      VAR=' Max atoms/species               :')
+&                      VAR=' Max atoms/species               ')
      !
      call io_elemental(ID, VAR="number_of_atom_species",VAR_SZ=1,MENU=0)
      call io_elemental(ID,I0=n_atomic_species,CHECK=.true.,OP=(/"=="/),&
-&                      VAR=' No. of atom species             :')
+&                      VAR=' No. of atom species             ')
    endif
    !
    ! Hybrids stuff
@@ -203,18 +203,18 @@ integer function io_DB1(E,k,ID)
      if (variable_exist(ID,"EXX_FRACTION").or.write_is_on(ID)) then
        call io_elemental(ID, VAR="EXX_FRACTION",VAR_SZ=1,MENU=0)
        call io_elemental(ID,R0=GS_exx_FRACTION,   CHECK=.true.,OP=(/"=="/),&
-&                           VAR=' Exact exchange fraction in XC   :')
+&                           VAR=' Exact exchange fraction in XC   ')
      endif 
      if (variable_exist(ID,"EXX_SCREENING").or.write_is_on(ID)) then
        call io_elemental(ID, VAR="EXX_SCREENING",VAR_SZ=1,MENU=0)
        call io_elemental(ID,R0=GS_exx_SCREENING,   CHECK=.true.,OP=(/"=="/),&
-&                              VAR=' Exact exchange screening in XC  :')
+&                              VAR=' Exact exchange screening in XC  ')
      endif
    endif
    !
    if (ver_is_gt_or_eq(ID,revision=1240).and.ver_is_gt_or_eq(ID,(/3,2,5/))) then
      call io_elemental(ID, VAR="mag_syms",VAR_SZ=1,MENU=0)
-     call io_elemental(ID, L0=mag_syms,VAR=' Magnetic symmetries             : ')
+     call io_elemental(ID, L0=mag_syms,VAR=' Magnetic symmetries             ')
    endif
    !
    if (ver_is_gt_or_eq(ID,revision=4351)) then

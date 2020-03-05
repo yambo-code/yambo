@@ -31,11 +31,13 @@ subroutine YPP_SET_defaults()
 &                         plot_title,PtsPath,seed_name,SOC_bands_buffer,SOC_bands_to_map,state_ctl ,V_value,&
 &                         w90_fname,wannier_bands,WF_ref,what_to_write,SP,HA2EV,E_field,Nel_fac,DOS_bands,  &
 &                         BSiq,l_pdos,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,EXCITON_Res_treshold,EXCITON_E_treshold
+ use YPP_symm,       ONLY:wf_ng_cut
  use units,          ONLY:FS2AUT
  use interpolate,    ONLY:INTERP_shell_factor,interpls,max_interpls
  use electrons,      ONLY:n_bands
  use com,            ONLY:write_to_report
  use stderr,         ONLY:write_to_log  
+ use wave_func,      ONLY:wf_ng
  use LIVE_t,         ONLY:live_timing_is_on
 #if defined _YPP_SC
  use YPPm,           ONLY:l_mean_potential
@@ -81,6 +83,10 @@ subroutine YPP_SET_defaults()
  PDOS_l=-1
  PDOS_j=-1._SP
  PDOS_m=-10
+ !
+ ! SYMMETRIES
+ !
+ wf_ng_cut=0
  !
  ! RT OCCUPATIONS
  !

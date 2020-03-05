@@ -93,6 +93,7 @@ module X_m
  real(SP):: X_terminator_E
  real(SP):: X_term_E
  logical :: l_X_terminator=.false.
+ logical :: l_recalculate_X=.false.
  character(schlen) :: X_terminator_Kind="none"
  !
  ! I/O parameters
@@ -104,7 +105,9 @@ module X_m
  ! I/O descriptions
  !
  integer          :: n_X_descs
- character(lchlen):: X_description(100)
+ integer          :: X_desc_size(100)
+ real(SP)         :: X_desc_var(10,100)
+ character(lchlen):: X_desc_str(100)
  !
  ! PARALLEL distribution
  !

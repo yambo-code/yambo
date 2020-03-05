@@ -108,7 +108,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  ! GPL_EXCLUDE_START
  !
- call msg('s','Scattering(s):'//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
+ call msg('s','Scattering(s)'//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
  !
  ! GPL_EXCLUDE_END
  !
@@ -387,7 +387,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                         LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP)
        else
          LT_pump=.FALSE.
-         call live_timing('[RT] Dynamics :',NE_steps-NE_i_start_time+1,DEPTH=0.01_SP)
+         call live_timing('[RT] Dynamics ',NE_steps-NE_i_start_time+1,DEPTH=0.01_SP)
        endif
        !
      else if(steps>0) then
@@ -399,7 +399,7 @@ subroutine RT_driver(E,X,k,q,Dip)
        if (NE_i_time>=LT_pump_steps.and.LT_pump) then
          LT_pump=.FALSE.
          call live_timing( )
-         call live_timing('[RT] Dynamics (pump-free region) :',NE_steps-LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP) 
+         call live_timing('[RT] Dynamics (pump-free region) ',NE_steps-LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP) 
        endif
        call live_timing(steps=steps)
        !

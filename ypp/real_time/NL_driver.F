@@ -133,7 +133,7 @@ subroutine NL_driver(en,k)
  if((RT_conf%T_range(2) - RT_conf%T_range(1))<T_period) &
 &   call warning('Simulation time not long enough. Period is'//trim(real2ch(T_period*AUT2FS))//' fs')
  !
- call msg('s',':: Field type    :', trim(Efield_probe%ef_name))
+ call msg('s',' Field type    ', trim(Efield_probe%ef_name))
  !
  select case (trim(Efield_probe%ef_name))
    !
@@ -149,13 +149,13 @@ subroutine NL_driver(en,k)
        Harmonic_Frequency(i_order,:)=real(i_order,SP)*Probe_Frequency(:)
      enddo
      !
-     call msg('s',':: Harmonic frequencies    [eV]:',(/minval(Harmonic_Frequency),maxval(Harmonic_Frequency)/)*HA2EV)
+     call msg('s',' Harmonic frequencies    [eV]',(/minval(Harmonic_Frequency),maxval(Harmonic_Frequency)/)*HA2EV)
      !
      ! Find the Fourier coefficients by inversion
      !
-     call msg('s','[RT] Effective max time period [fs]:',T_period*AUT2FS)
+     call msg('s','[RT] Effective max time period [fs]',T_period*AUT2FS)
      !
-     call live_timing('X effective :', n_frequencies)
+     call live_timing('X effective ', n_frequencies)
      !
      time_range_save=RT_conf%T_range
      !

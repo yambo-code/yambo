@@ -23,7 +23,6 @@
 !
 subroutine INIT_activate()
  !
- use it_tools,       ONLY:initactivate
  use BS_solvers,     ONLY:BSS_mode
  use QP_m,           ONLY:QP_solver,COHSEX_use_empties
  use stderr,         ONLY:intc,STRING_match
@@ -385,7 +384,7 @@ subroutine INIT_activate()
        if (trim(QP_solver)=="g") then
          call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
        else
-         call initactivate(1,'GWoIter')
+         call initactivate(1,'GWoIter GWIter SCEtresh')
          if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
        endif
      else if (l_life) then
@@ -425,7 +424,7 @@ subroutine INIT_activate()
          if (trim(QP_solver)=="g") then
            call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
          else
-           call initactivate(1,'GWoIter')
+           call initactivate(1,'GWoIter GWIter SCEtresh')
            if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
          endif
        endif
@@ -487,6 +486,11 @@ subroutine INIT_activate()
    !
    call initactivate( 1,'FFTGvecs')
    !
+   ! The following variable is called EXXCut, but it should be renamed COLLCut
+   ! since it affects all collisions
+   !
+   call initactivate( 1,'EXXCut')
+   !
    call initactivate(-1,'QpntsRXs')
    !
    if( index(H_potential,"HARTREE")>0 .or. index(H_potential,"DEFAULT")>0)  call initactivate(1,'HARRLvcs ALLGHAR')
@@ -494,7 +498,7 @@ subroutine INIT_activate()
    !
    if (l_eval_collisions) then
      if( STRING_match(trim(H_potential),"SEX").or.&
-&        STRING_match(trim(H_potential),"FOCK")) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
+&        STRING_match(trim(H_potential),"FOCK") ) call initactivate(1,'EXXRLvcs ALLGexx')
      if( STRING_match(trim(H_potential),"SEX").or.&
 &        STRING_match(trim(H_potential),"COH") ) call initactivate(1,'CORRLvcs ALLGexx')
    endif

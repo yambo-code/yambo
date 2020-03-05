@@ -234,7 +234,7 @@ contains
      call msg('ms','Error reading data: most likely you are using an incompatible')
      call msg('s','version of p2y with your data.')
      call msg('s','Action: Compile a compatible version of p2y.')
-     call errore('qexml_read_bands.','IOTK error:',ABS(ierr)) 
+     call errore('qexml_read_bands.','IOTK error',ABS(ierr)) 
    endif
 
 #if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50

@@ -168,8 +168,8 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
  enddo
  !
  if ( use_GreenF_Zoom .and. GFdb_read_err==0) then
-   call msg('nr','[Green zoom] Frequency step              (current)   [ev]:',old_min_max_step*HA2EV)
-   call msg('r', '[Green zoom]                                (zoom)   [ev]:',new_min_max_step*HA2EV)
+   call msg('nr','[Green zoom] Frequency step              (current)   [ev]',old_min_max_step*HA2EV)
+   call msg('r', '[Green zoom]                                (zoom)   [ev]',new_min_max_step*HA2EV)
  endif
  !
 end subroutine

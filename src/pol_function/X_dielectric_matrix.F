@@ -28,7 +28,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use pars,          ONLY:SP,cZERO
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
- use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,&
+ use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,l_recalculate_X,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table
  use frequency,     ONLY:w_samp
@@ -124,7 +124,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
  !
- if (io_RESPONSE) then
+ if (io_RESPONSE.and..not.l_recalculate_X) then
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=Xdb)
    i_err=io_X(X,Xw,Xdb)

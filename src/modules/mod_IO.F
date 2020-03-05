@@ -84,6 +84,7 @@ module IO_m
  ! COM
  !
  integer, parameter:: REP=41,LOG=42,NONE=43
+ real(SP),parameter:: NO_VAR=-246824._SP
  !
  ! I/O
  !
@@ -228,7 +229,7 @@ module IO_m
         &                       D0, DB_D0, C0, DB_C0, &
         &                       L0, DB_L0,            &
         &                       CH0,DB_CH0,           &
-        &                       UNIT,DESCRIPTION,DO_NOT_DUMP)
+        &                       UNIT,DESC_STR,DESC_VAR,DO_NOT_DUMP)
      !
      use pars,   ONLY:SP,DP,LP,lchlen
      integer               :: ID
@@ -241,7 +242,8 @@ module IO_m
      complex(SP), optional :: DB_C0
      logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
      character(*),optional :: CH0,DB_CH0
-     character(lchlen),optional :: DESCRIPTION
+     character(lchlen),optional :: DESC_STR
+     real(SP),         optional :: DESC_VAR(:)
      !
    end subroutine io_variable_elemental
    !
@@ -307,6 +309,17 @@ module IO_m
    end function all_locations
    !
  end interface
+ !
+#if defined _HDF5_IO
+ interface c_interface
+   function nf90_set_log_level(level) bind (C, name = "nc_set_log_level")
+     use iso_c_binding
+     implicit none
+     integer(c_int) :: nf90_set_log_level
+     integer(c_int), intent (in) :: level
+   end function nf90_set_log_level
+ end interface c_interface
+#endif
  !
  contains
    ! 

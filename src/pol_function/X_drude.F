@@ -107,9 +107,11 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  !
  call parser('DrClassic',l_Classical)
  l_Jellium=.not.l_Classical
+ if(.not.all(Drude_term)) return
  !
- call msg('nrs','[X/K] Drude: '//trim(intc(n_states))//' states, ' &
-&                //trim(real2ch(f_eh))//' f_occ, @eV ',(/real(Wd),aimag(Wd)/)*HA2EV)
+ call msg(' rs','[X/K] Drude nstates            ',n_states)
+ call msg(' rs','[X/K] Drude average occ        ',f_eh)
+ call msg('nrs','[X/K] Drude energies           ',(/real(Wd),aimag(Wd)/)*HA2EV,'[eV]')
  !
  do iw=1,Xw%n_freqs
    if(l_Jellium)   drude_GreenF(iw)=  Jellium_drude(real(Xw%p(iw)),Wd,q_norm(1))

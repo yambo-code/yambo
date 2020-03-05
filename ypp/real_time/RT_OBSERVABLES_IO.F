@@ -142,7 +142,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  !
  NE_steps=NE_steps_save
  !
- call live_timing('I/O'//trim(mesg_)//':',RT_conf%T_n_steps)
+ call live_timing('I/O'//trim(mesg_)//'',RT_conf%T_n_steps)
  !
  do i_time=1,RT_conf%T_n_steps
    !

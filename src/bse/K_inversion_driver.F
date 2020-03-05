@@ -26,7 +26,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use pars,           ONLY:SP,pi
  use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
- use BS_solvers,     ONLY:BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
+ use BS_solvers,     ONLY:BSS_inversion_mode,BSS_n_descs,BSS_desc_str,BSS_desc_var,Co_factor,&
 &                         K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
 &                         K_slk,K_inv_slk,BSS_eels_to_eps
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
@@ -232,12 +232,12 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #if defined _PL
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,3,4/),ID=ID)
    i_err=io_BSS_invert(iq,W,ID)
-   call msg('rs','[PERTURBATIVE INV@PL ] Converged frequencies :',count(K_INV_PL%err==0))
+   call msg('rs','[PERTURBATIVE INV@PL ] Converged frequencies ',count(K_INV_PL%err==0))
 #else
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
    i_err=io_BSS_invert(iq,W,ID)
 #endif
-   call msg('rs','[PERTURBATIVE INV@EPS] Converged frequencies :',count(K_INV_EPS%err==0))
+   call msg('rs','[PERTURBATIVE INV@EPS] Converged frequencies ',count(K_INV_EPS%err==0))
    !
  endif
  !
@@ -304,7 +304,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  BSS_n_descs=BSS_n_descs+1
  ratio=real(count(K_INV_EPS%err==0))/real(W%n_freqs)*100._SP
- BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//trim(real2ch(ratio))
+ BSS_desc_str(BSS_n_descs)='    |Converged frequencies [o/o]'
+ BSS_desc_var(1,BSS_n_descs)=ratio
  !
  call K_output_file(iq,"Inversion")
  !
@@ -350,8 +351,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
      !
      nw_conv=count(TYP%err==0)
-     call msg('rs','[FULL INV@'//TYP%what//'] Frequencies DONE      :',nw_conv)
-     call msg('rs','[FULL INV@'//TYP%what//']                  [o/o]:',real(nw_conv)/real(W%n_freqs)*100._SP)
+     call msg('rs','[FULL INV@'//TYP%what//'] Frequencies DONE      ',nw_conv)
+     call msg('rs','[FULL INV@'//TYP%what//']                  [o/o]',real(nw_conv)/real(W%n_freqs)*100._SP)
      !
    end subroutine
    !
@@ -412,7 +413,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
      endif
      !
-     call msg('rs','[FULL INV@'//TYP%what//'] Frequencies TODO :',TYP%n_full_inv_freqs)
+     call msg('rs','[FULL INV@'//TYP%what//'] Frequencies TODO ',TYP%n_full_inv_freqs)
      !
    end subroutine
    !

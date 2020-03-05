@@ -107,7 +107,7 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
  select case(action_kind)
  case(1)
    !
-   call msg('s',':: Copying existing database ...')
+   call msg('s',' Copying existing database ...')
    !
    call cp_file(trim(core_io_path_save)//"/SAVE/ns.atom_proj_pwscf",trim(more_io_path)//"/SAVE",ierr)
    do i_sp_pol=1,n_sp_pol
@@ -155,7 +155,7 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
    !
  case(2)
    !
-   if(io_err==0) call msg('s',':: Atomic projections reduction...')
+   if(io_err==0) call msg('s',' Atomic projections reduction...')
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
    io_err=io_ATMPROJ_pwscf(ID) 

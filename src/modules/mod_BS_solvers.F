@@ -64,7 +64,8 @@ module BS_solvers
  !
  ! Solvers (General)
  !=========
- character(lchlen):: BSS_description(100)
+ real(SP) :: BSS_desc_var(10,100)
+ character(lchlen):: BSS_desc_str(100)
  character(schlen):: BSS_mode
  complex(SP) :: BSS_Wd
  integer  :: BSS_n_descs
@@ -146,12 +147,13 @@ module BS_solvers
  !
  interface 
    !
-   integer function variables_BS(ID,iq,local_description,CLOSE_the_menu,X)
-     use pars,       ONLY:lchlen
+   integer function variables_BS(ID,iq,local_desc_str,local_desc_var,CLOSE_the_menu,X)
+     use pars,       ONLY:lchlen,SP
      use X_m,        ONLY:X_t
      implicit none
      integer            ::ID,iq
-     character(lchlen)  ::local_description(100)
+     character(lchlen)  ::local_desc_str(100)
+     real(SP)           ::local_desc_var(10,100)
      logical            ::CLOSE_the_menu
      type(X_t), optional::X
    end function

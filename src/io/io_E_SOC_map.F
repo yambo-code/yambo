@@ -47,9 +47,9 @@ integer function io_E_SOC_map(En,kpt,ID)
  if (io_E_SOC_map/=0) goto 1
  !
  call io_elemental(ID,VAR="PARS",VAR_SZ=3,MENU=1)
- call io_elemental(ID,I0=En%nb_SOC,    VAR=' Number of SOC bands       :')
- call io_elemental(ID,I0=En%nb,        VAR=' Number of bands           :')
- call io_elemental(ID,I0=En%nk,        VAR=' Number of k-points        :')
+ call io_elemental(ID,I0=En%nb_SOC,    VAR=' Number of SOC bands       ')
+ call io_elemental(ID,I0=En%nb,        VAR=' Number of bands           ')
+ call io_elemental(ID,I0=En%nk,        VAR=' Number of k-points        ')
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  if (read_is_on(ID)) then

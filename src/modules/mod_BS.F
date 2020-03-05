@@ -30,7 +30,8 @@ module BS
  ! Modes and logicals
  !====================
  logical :: l_BSE_minimize_memory
- logical :: l_restart_bse
+ logical :: l_BSE_kernel_complete
+ logical :: l_BSE_restart
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
  logical :: BS_res_K_exchange

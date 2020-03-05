@@ -52,7 +52,7 @@ subroutine TDDFT_ALDA_G_space(E,k)
  !
  if (FXC_n_g_corr/= eval_G_minus_G(FXC_n_g_corr,0) ) then
    FXC_n_g_corr   = eval_G_minus_G(FXC_n_g_corr,0)
-   call msg('s','[TDDFT] ALDA Fxc size forced by symmetry to be :',FXC_n_g_corr)
+   call msg('s','[TDDFT] ALDA Fxc size forced by symmetry to be ',FXC_n_g_corr)
  endif
  !
  ! WF distributed & load

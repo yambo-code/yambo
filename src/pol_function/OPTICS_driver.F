@@ -42,7 +42,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
- use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
+ use TDDFT,         ONLY:FXC_n_descs,FXC_desc_str,FXC_desc_var,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
  use X_output,      ONLY:X_setup_file_names,eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,&
 &                        X_write_q_plus_G,X_write_descriptions,X_write_messages_before_headers,headers,&
@@ -82,7 +82,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! PARALLEL indexes
    !==================
    !
-   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
+   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X)
    !
    ! WF distribution 
    !=================
@@ -183,10 +183,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Fxc descriptions
    !
    if (l_bs_fxc) then
-     call X_write_descriptions(FXC_n_descs,FXC_description)
-     call msg('o eps_q eel_q alpha','#',' TDDFT|Fxc size             :'//trim(intc(FXC_n_g_corr)),INDENT=0)    
-     call msg('o eps_q eel_q alpha','#','      |Hartree size         :'//trim(intc(X%ng)),INDENT=0)    
-     call msg('o eps_q eel_q alpha','#','      |Ordering             :'//trim(X%ordering),INDENT=0)    
+     call X_write_descriptions(FXC_n_descs,FXC_desc_str,FXC_desc_var)
+     call msg('o eps_q eel_q alpha','# TDDFT|Fxc size             ',FXC_n_g_corr,INDENT=0)    
+     call msg('o eps_q eel_q alpha','#      |Hartree size         ',X%ng        ,INDENT=0)    
+     call msg('o eps_q eel_q alpha','#      |Ordering             ',X%ordering  ,INDENT=0)    
      !
      ! Fxc file titles
      !
@@ -255,8 +255,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! BZ Double Grid
    !
    if (use_X_DbGd) then
-     call msg('o eps_q eel_q fxc alpha','# DbGd| IBZ Energy points:',Xk%nibz+Xk%nibz_FineGd,INDENT=0)
-     call msg('o eps_q eel_q fxc alpha','#        BZ Energy points:',Xk%nbz+Xk%nbz_FineGd,INDENT=0)
+     call msg('o eps_q eel_q fxc alpha','# DbGd| IBZ Energy points',Xk%nibz+Xk%nibz_FineGd,INDENT=0)
+     call msg('o eps_q eel_q fxc alpha','#        BZ Energy points',Xk%nbz+Xk%nbz_FineGd,INDENT=0)
    endif
    !
    ! Titles 

@@ -32,7 +32,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &                        COHSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver,&
 &                        use_GreenF_to_eval_QP,GF_is_causal,QP_G_Zoom_treshold,&
 &                        GW_terminator_E,l_GW_terminator,GW_terminator_Kind
- use stderr,        ONLY:STRING_pack,gen_fmt
+ use stderr,        ONLY:STRING_pack
  use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_cohsex,&
 &                        l_HF_and_locXC
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng

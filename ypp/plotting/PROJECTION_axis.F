@@ -34,7 +34,7 @@ subroutine PROJECTION_axis( n_axis, axis, O )
  !
  ! Work Space
  !
- integer  :: i_k,i_a,corners(n_axis),n_corners
+ integer  :: i_k,i_a,corners(n_axis),n_corners,n_axis_here
  real(SP) :: perp_vector(n_axis,3)
  !
  ! Find the circuit segments...
@@ -48,7 +48,9 @@ subroutine PROJECTION_axis( n_axis, axis, O )
    endif
  enddo
  !
- n_axis=n_corners
+ if (n_corners==0) return
+ !
+ n_axis_here=n_corners
  !
  ! ...plane segments...
  do i_a=1,n_corners-1
@@ -63,15 +65,15 @@ subroutine PROJECTION_axis( n_axis, axis, O )
    perp_vector(i_a,:)=normalize_v( cross_product(axis(i_a+1,:),axis(i_a,:)))
    call c2a(v_in= axis(i_a,:),mode='kc2i')
    if (i_a==1) then
-     axis(n_axis,:)=perp_vector(1,:)
+     axis(n_axis_here,:)=perp_vector(1,:)
    else
-     if (.not.v_is_zero( cross_product(axis(n_axis,:),perp_vector(i_a,:)) )) then
+     if (.not.v_is_zero( cross_product(axis(n_axis_here,:),perp_vector(i_a,:)) )) then
        call error("More than one perpendicular direction found")
      endif
    endif
  enddo
  !
- call c2a(v_in= axis(n_axis,:),mode='kc2i')
- axis(n_axis,:)=axis(n_axis,:)/iku_v_norm( axis(n_axis,:) )
+ call c2a(v_in= axis(n_axis_here,:),mode='kc2i')
+ axis(n_axis_here,:)=axis(n_axis_here,:)/iku_v_norm( axis(n_axis_here,:) )
  !
 end subroutine

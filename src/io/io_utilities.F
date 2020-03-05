@@ -204,7 +204,17 @@ function desc_to_varname(desc)
  character(schlen)  :: VARNAME
  !
  VARNAME=STRING_REMOVE(STRING_REMOVE(STRING_remove(adjustl(desc)," ","_"),"/","_"),",")
- VARNAME=STRING_REMOVE(STRING_REMOVE(VARNAME,"[","_"),"]","_")
+ VARNAME=STRING_REMOVE(STRING_REMOVE(STRING_REMOVE(VARNAME,"[","_"),"]","_"),"`")
+ !
+ VARNAME=STRING_REMOVE(VARNAME,"__________","_")    ! 10
+ VARNAME=STRING_REMOVE(VARNAME,"_________","_")     ! 9
+ VARNAME=STRING_REMOVE(VARNAME,"________","_")      ! 8
+ VARNAME=STRING_REMOVE(VARNAME,"_______","_")       ! 7
+ VARNAME=STRING_REMOVE(VARNAME,"______","_")        ! 6
+ VARNAME=STRING_REMOVE(VARNAME,"_____","_")         ! 5
+ VARNAME=STRING_REMOVE(VARNAME,"____","_")          ! 4
+ VARNAME=STRING_REMOVE(VARNAME,"___","_")           ! 3
+ VARNAME=STRING_REMOVE(VARNAME,"__","_")            ! 2
  !
  desc_to_varname=VARNAME
  !

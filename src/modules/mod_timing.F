@@ -340,7 +340,7 @@ MODULE timing_m
      CHARACTER(4)                       :: form_
      CHARACTER(256)                     :: str
      CHARACTER(15)                      :: sec_str
-     CHARACTER(lchlen)                  :: local_ch
+     CHARACTER(lchlen)                  :: local_ch,local_space
      INTEGER                            :: nday,nhour,nmin
      INTEGER                            :: call_number(1)
      REAL(DP)                           :: total_time,effective_total_time
@@ -381,22 +381,21 @@ MODULE timing_m
          nhour = INT( (total_time -86400*nday)/3600 )
          nmin =  INT( (total_time -86400*nday -3600*nhour)/60 )
          nsec =  INT(  total_time -86400*nday -3600*nhour -60*nmin )
+         WRITE (local_ch   ,'(a40)') TRIM(obj%name)
+         WRITE (local_space,'(a40)') " "
+         call msg('r',local_ch(:40),(/nday,nhour,nmin,int(nsec),call_number(1)/),' [d h m s ncalls] ')
+         call msg('r',local_space(:40),(/real(total_time,SP),real(total_time,SP)/real(call_number(1),SP)/),' [s s/call] ')
          IF ( call_number(1) == 1 )  THEN
            IF (nday > 0) THEN
-             WRITE (local_ch, '(a40," : ",3x,i2,"d",i2,"h CPU ")') &
-                         TRIM(obj%name), nday, nhour
+             WRITE (local_ch, '(a40," : ",3x,i2,"d",i2,"h CPU ")') TRIM(obj%name), nday, nhour
            ELSEIF (nhour > 0) THEN
-             WRITE (local_ch, '(a40," : ",3x,i2,"h",i2,"m CPU ")') &
-                         TRIM(obj%name), nhour, nmin
+             WRITE (local_ch, '(a40," : ",3x,i2,"h",i2,"m CPU ")') TRIM(obj%name), nhour, nmin
            ELSEIF (nmin > 0) THEN
-             WRITE (local_ch, '(a40," : ",i2,"m",f5.2,"s CPU ")') &
-                   TRIM(obj%name), nmin, nsec
+             WRITE (local_ch, '(a40," : ",i2,"m",f5.2,"s CPU ")')  TRIM(obj%name), nmin, nsec
            ELSE
-             WRITE (local_ch, '(a40," : ",3x,f5.2,"s CPU ")') &
-                   TRIM(obj%name), nsec
+             WRITE (local_ch, '(a40," : ",3x,f5.2,"s CPU ")')      TRIM(obj%name), nsec
            ENDIF
            if (log_as_a_file) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
-           call msg('r',local_ch(:100))
          ELSE
            IF (nday > 0) THEN
              WRITE(local_ch,'(a40," : ",3x,i2,"d",i2,"h CPU (",i12," calls,",f8.3,a)') TRIM(obj%name), nday, nhour, &
@@ -415,12 +414,15 @@ MODULE timing_m
                         call_number(1) , effective_total_time / REAL( call_number(1), DP ),sec_str
            ENDIF
            if (log_as_a_file) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
-           call msg('r',local_ch(:100))
          ENDIF
        CASE ( "sec " )
          !
          ! time in seconds
          !
+         WRITE (local_ch   ,'(a40)') TRIM(obj%name)//" : calls "
+         WRITE (local_space,'(a40)') " :  time "
+         call msg('r',local_ch(:40),(/call_number(1)/))
+         call msg('r',local_space(:40),(/real(total_time,SP),real(total_time,SP)/real(call_number(1),SP)/),' [s s/call] ')
          IF ( call_number(1) == 1) THEN
            WRITE (local_ch, '(a40," :",f10.4," s CPU")') TRIM(obj%name), total_time
          ELSE
@@ -429,7 +431,6 @@ MODULE timing_m
                         total_time / REAL( call_number(1), DP )
          ENDIF
          if (log_as_a_file) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
-         call msg('r',local_ch(:100))
        CASE DEFAULT
          CALL error('clock_write:  Invalid FORM '//TRIM(form_) )
      END SELECT
@@ -443,7 +444,7 @@ MODULE timing_m
      use LIVE_t,  ONLY:LIVE_message,time_string
      IMPLICIT NONE
      REAL(DP) :: total_time
-     character(lchlen)::ch
+     character(lchlen)::ch(2)
      !
 #ifndef _TIMING
      call msg('rn'," ")
@@ -457,27 +458,31 @@ MODULE timing_m
      !
      total_time = real(internal_list%clock(1)%total_time,SP)
      !
-     ch='            [Time-Profile]: '//trim(time_string(total_time))
-     call msg('rn',ch(:100))
-     if (log_as_a_file) call LIVE_message(message="[TIMING]"//ch(:100),lfmt="n")
+     ch(1)='            [Time-Profile] '
+     ch(2)=trim(time_string(total_time))
+     call msg('rn',ch(1)(1:27),trim(ch(2)))
+     if (log_as_a_file) call LIVE_message(message="[TIMING]"//ch(1)(:27)//ch(2)(:73),lfmt="n")
      !
    END SUBROUTINE timing_upto_now    
    !
    SUBROUTINE timing_overview(list,main_name)
+     use pars,       ONLY:SP
      use LIVE_t,     ONLY:LIVE_message
      use com,        ONLY:msg
+     use vec_operate,ONLY:sort
      IMPLICIT NONE
      TYPE(clock_list),       INTENT(in) :: list
      CHARACTER(*),           INTENT(in) :: main_name
      TYPE(clock)                        :: tmp_clock
-     INTEGER                            :: i
+     INTEGER                            :: i,sort_indx(list%nclock)
+     REAL(SP)                           :: tmp_times(list%nclock)
      !
 #ifndef _TIMING
      return
 #endif
      IF ( .NOT. list%alloc ) CALL error('timing_overview:  list not allocated')
      !
-     call msg('r','Routines: '//TRIM(list%name)//' (Only MASTER cpu here)')
+     call msg('r','Routines ',TRIM(list%name)//' (Only MASTER cpu here)')
      !
      IF ( list%nclock == 0 ) THEN
        if (log_as_a_file) call LIVE_message(message="[TIMING]"//'No clock to display',lfmt="n")
@@ -486,8 +491,14 @@ MODULE timing_m
      ENDIF
      !
      DO i=1,list%nclock 
+       tmp_times(i)=real(list%clock(i)%total_time,SP)
+     ENDDO
+     !
+     call sort(tmp_times,indx=sort_indx)
+     !
+     DO i=list%nclock,1,-1
        !
-       tmp_clock = list%clock(i)
+       tmp_clock = list%clock(sort_indx(i))
        CALL clock_update(tmp_clock)
        !
        IF ( tmp_clock%total_time < 600.0 ) THEN

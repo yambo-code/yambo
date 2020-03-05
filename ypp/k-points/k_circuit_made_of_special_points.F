@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 subroutine k_circuit_made_of_special_points( PATH, n_points )
  !
- use pars,                ONLY:SP,schlen,lchlen
+ use pars,                ONLY:SP,schlen
  use R_lattice,           ONLY:bz_samp_reset,b
  use D_lattice,           ONLY:lattice,a
  use com,                 ONLY:msg,of_open_close
@@ -54,8 +54,7 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
  integer            :: i_Uk,i_sp,ik,i_plus,i_minus,n_Uk,&
 &                      n_SPACE_strings,n_P_strings,n_M_strings,n_X_strings
  character(schlen)  :: SPACE_string(MAX_n_lines),dumb_ch,k_f_name(2)
- character(schlen)  :: P_string(MAX_n_lines),M_string(MAX_n_lines),X_string(MAX_n_lines)
- character(lchlen)  :: of_string
+ character(schlen)  :: P_string(MAX_n_lines),M_string(MAX_n_lines),X_string(MAX_n_lines),k_label
  !
  if (len_trim(PATH)==0) return
  !
@@ -173,12 +172,12 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
      !
      call K_transform(CIRCUIT_k%pt(ik,:),'iku')
      !
-     call msg('o  path',"",(/CIRCUIT_k%pt(ik,:),CIRCUIT_k_norm(ik)/),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
-     if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// trim(CIRCUIT_k_label(ik))//']'
-     call msg_deliver('path',trim(of_string))
-     call msg('o PWSCF',"",(/CIRCUIT_k%pt(ik,:),1._SP/),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
-     if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// trim(CIRCUIT_k_label(ik))//']'
-     call msg_deliver('PWSCF',trim(of_string))
+     k_label=" "
+     if (len_trim(CIRCUIT_k_label(ik))>0) k_label= '['// trim(CIRCUIT_k_label(ik))//']'
+     !
+     call msg('o  path',"",(/CIRCUIT_k%pt(ik,:),CIRCUIT_k_norm(ik)/),INDENT=0,USE_TABS=.true.,after_msg=k_label)
+     call msg('o PWSCF',"",(/CIRCUIT_k%pt(ik,:),1._SP/),INDENT=0,USE_TABS=.true.,after_msg=k_label)
+     !
    enddo
    !
    YAMBO_FREE(SPECIAL_k%pt)

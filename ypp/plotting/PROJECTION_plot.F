@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
  !
- use pars,           ONLY:SP,lchlen,schlen
+ use pars,           ONLY:SP,schlen
  use vec_operate,    ONLY:c2a,v_norm
  use units,          ONLY:HA2EV,AUT2FS
  use com,            ONLY:msg,of_open_close
@@ -48,12 +48,10 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
  !
  ! Work Space
  !
- character(lchlen)  :: of_string
- character(schlen)  :: of_name,titles(max(3,bands(2)+2))
- integer            :: ik,i_N,is,ik_plane,of_unit,ib,ik_path
+ character(schlen)  :: of_name,titles(max(3,bands(2)+2)),k_label
+ integer            :: ik,i_N,is,ik_plane,ib,ik_path
  real(SP)           :: O(3),k(3),kdist(GRID_k%nbz),max_OBS,projection(2),W_or_T
  logical            :: label_printed,l_DOS,l_BANDS,l_OCC,l_GAMMA
- integer ,external  :: find_the_unit
  !
  ! Allocation
  !============
@@ -104,8 +102,6 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
    !
    call live_timing('Printing the projected '//what,GRID_k%nbz/PROJECT_depth)
    !
-   of_unit=find_the_unit(trim(of_name))
-   !
    max_OBS=maxval(OBS_K)
    !
    do ik=1,GRID_k%nbz
@@ -124,21 +120,20 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
          W_or_T=TIME(i_N)*AUT2FS
        endif
        !
-       if (n_spin==1) then
-         call msg('o '//trim(of_name),'',(/kdist(ik_path),W_or_T,OBS_K(ik_path,i_N,1)/),&
-&                 INDENT=-2,USE_TABS=.true.,formatted_msg=of_string)
-       else if (n_spin==2) then
-         call msg('o '//trim(of_name),'',(/kdist(ik_path),W_or_T,OBS_K(ik_path,i_N,:),  &
-&                            OBS_K(ik_path,i_N,1)+OBS_K(ik_path,i_N,2)/),&
-&                            INDENT=-2,USE_TABS=.true.,formatted_msg=of_string)
-       endif
-       !
+       k_label=" "
        if (len_trim(CIRCUIT_k_label(ik_path))>0) then
-         if (.not.label_printed) of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik_path))//"]"
+         if (.not.label_printed) k_label="["//trim(CIRCUIT_k_label(ik_path))//"]"
          label_printed=.TRUE.
        endif
        !
-       call msg_deliver_fast(of_unit,of_string)
+       if (n_spin==1) then
+         call msg('o '//trim(of_name),'',(/kdist(ik_path),W_or_T,OBS_K(ik_path,i_N,1)/),&
+&                 INDENT=-2,USE_TABS=.true.,after_msg=k_label)
+       else if (n_spin==2) then
+         call msg('o '//trim(of_name),'',(/kdist(ik_path),W_or_T,OBS_K(ik_path,i_N,:),  &
+&                            OBS_K(ik_path,i_N,1)+OBS_K(ik_path,i_N,2)/),&
+&                            INDENT=-2,USE_TABS=.true.,after_msg=k_label)
+       endif
        !
      enddo
      !
@@ -205,8 +200,6 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
      endif
      call msg('o '//trim(of_name),'#')
      !
-     of_unit=find_the_unit(trim(of_name))
-     !
      do ik=1,GRID_k%nbz
        !
        ik_plane=PROJECTION_k_on_the_path_or_plane(ik)
@@ -217,20 +210,20 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
        projection(1)=dot_product(k,PROJECT_plane_X)
        projection(2)=dot_product(k,PROJECT_plane_Y)
        !
-       if (l_BANDS) then
-         call msg('o '//trim(of_name),'',(/projection,OBS_B(bands(1):bands(2),ik_plane,1)*HA2EV/),INDENT=-2,USE_TABS=.true.,&
-  &               formatted_msg=of_string)
-       else if (l_OCC.or.l_GAMMA) then
-         call msg('o '//trim(of_name),'',(/projection,OBS_K(ik_plane,i_N,1)/),INDENT=-2,USE_TABS=.true.,&
-  &               formatted_msg=of_string)
-       endif
-       !
        ik_path=0
+       k_label=" "
        if (ik_plane==1                                ) ik_path=1
        if (ik_plane==PROJECT_steps*(PROJECT_steps+1)+1) ik_path=PROJECT_steps+1
        if (ik_plane==(PROJECT_steps+1)**2             ) ik_path=2*PROJECT_steps+1
-       if (ik_path/=0) of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik_path))//"]"
-       call msg_deliver_fast(of_unit,of_string)
+       if (ik_path/=0) k_label="["//trim(CIRCUIT_k_label(ik_path))//"]"
+       !
+       if (l_BANDS) then
+         call msg('o '//trim(of_name),'',(/projection,OBS_B(bands(1):bands(2),ik_plane,1)*HA2EV/),INDENT=-2,USE_TABS=.true.,&
+  &               after_msg=k_label)
+       else if (l_OCC.or.l_GAMMA) then
+         call msg('o '//trim(of_name),'',(/projection,OBS_K(ik_plane,i_N,1)/),INDENT=-2,USE_TABS=.true.,&
+  &               after_msg=k_label)
+       endif
        !
        call live_timing(steps=1)
        !

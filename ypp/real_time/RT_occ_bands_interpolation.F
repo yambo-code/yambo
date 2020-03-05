@@ -23,7 +23,7 @@
 !
 subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
- use pars,           ONLY:SP,schlen,lchlen,zero_dfl,rZERO
+ use pars,           ONLY:SP,schlen,zero_dfl,rZERO
  use units,          ONLY:HA2EV,AUT2FS
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset,n_spin
  use R_lattice,      ONLY:bz_samp
@@ -52,9 +52,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  type(bz_samp)         :: RT_k
  type(levels)          :: CIRCUIT_E,CIRCUIT_dE,RT_E
- real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
- character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation
- character(lchlen)     :: of_string
+ real(SP)              :: Max_occ,values(3+2*(n_spinor-1))
+ real(SP), allocatable :: integrated_dF_elecs(:,:,:),integrated_dF_holes(:,:,:)
+ character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation,extension,k_label
  logical               :: WARN_negative_electrons_df,WARN_positive_holes_df,is_PROJECTED
  integer               :: ib,ik,i_RT,i_T,n_values,ID_circuit,ID_spin,ID_magn,ID_bands(3),ID_grid,ik_path
  logical, external     :: file_exists
@@ -271,11 +271,11 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
          values(2)=(CIRCUIT_E_db%E(ib,ik,1)+CIRCUIT_dE%E(ib,ik,1))*HA2EV
        endif
        !
-       call msg('o bands',' ',values(:n_values),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
+       k_label=" "
        if (len_trim(CIRCUIT_k_label(ik))>0) then
-         of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik))//"]"
+         k_label="["//trim(CIRCUIT_k_label(ik))//"]"
        endif
-       call msg_deliver('bands',of_string)  
+       call msg('o bands',' ',values(:n_values),INDENT=0,USE_TABS=.true.,after_msg=k_label)
        !
      enddo
      !

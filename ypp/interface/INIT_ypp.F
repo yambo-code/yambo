@@ -33,18 +33,18 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,l_angular_momentum,l_position
  use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev
- use it_tools,       ONLY:ofiles_append,initinfio,initactivate,infile_dump,runlevel_is_on,&
+ use it_tools,       ONLY:ofiles_append,infile_dump,runlevel_is_on,&
 &                         PARSER_force_command_line_value
  use it_m,           ONLY:initdefs,initmode,infile,nrnlvls,rnlvls,infile_verbosity,&
                           V_general,V_qp,V_all,V_real_time,V_nl_optics
  use drivers,        ONLY:infile_editing
- use com,            ONLY:write_to_report,repfile
- use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile,STRING_match,STRING_same
+ use com,            ONLY:write_to_report,repfile,inpfile_unit,repfile_unit
+ use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile,STRING_match,STRING_same,logfile_unit 
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:live_timing_is_on
  use parser_m,       ONLY:PARSER_array
- use IO_m,           ONLY:rm_file,OP_RD_CL,DUMP,io_control,NONE
+ use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
  use stderr,         ONLY:set_real_printed_length
 #if defined _YPP_SC
  use YPPm,           ONLY:l_mean_potential

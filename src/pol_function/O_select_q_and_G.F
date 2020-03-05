@@ -86,7 +86,7 @@ integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
    Q_plus_G_pt=0._SP
  endif
  !
- RL_msg(1)='Compatible RL shift of @ Q('//trim(intc(iq))//'):'
+ RL_msg(1)='Compatible RL shift of @ Q('//trim(intc(iq))//')'
  !
  O_select_q_and_G=-1 
  i_found=1
@@ -107,8 +107,8 @@ integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
    Q_plus_G_pt=Q_plus_G_pt+g_vec(O_select_q_and_G,:)
    Q_plus_G_sq_modulus=iku_v_norm(Q_plus_G_pt)**2
    call msg('rs',trim(RL_msg(2)))
-   call msg('r','Momentum shift [cc]:',g_vec(O_select_q_and_G,:))
-   call msg('r','Total Momentum [cc]:',Q_plus_G_pt(:))
+   call msg('r','Momentum shift [cc]',g_vec(O_select_q_and_G,:))
+   call msg('r','Total Momentum [cc]',Q_plus_G_pt(:))
  endif
  !
 end function

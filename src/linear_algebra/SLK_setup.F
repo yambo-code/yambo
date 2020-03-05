@@ -65,7 +65,7 @@ subroutine SLK_setup( idriver, ncpu_in_use, ORTHO, POOL, COMM, INDEX_comm, slk_e
  if (idriver==LIN_SYS) ch="LinearSystem"
  if (idriver==MAT_MUL) ch="MatrixMult."
  !
- call msg("lr" ,'[SLK-'//trim(ch)//']  Pools        :',n_pools)
- call msg("lrn",'[SLK-'//trim(ch)//']  BLACS grid   :',ORTHO%grid)
+ call msg("lr" ,'[SLK-'//trim(ch)//']  Pools        ',n_pools)
+ call msg("lrn",'[SLK-'//trim(ch)//']  BLACS grid   ',ORTHO%grid)
  !
 end subroutine SLK_setup

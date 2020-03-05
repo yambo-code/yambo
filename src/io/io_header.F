@@ -142,7 +142,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_elemental(ID,VAR="HEAD_D_LATT",VAR_SZ=3,MENU=MENU)
    MENU=0
    call io_elemental(ID,DB_R1=D_LATT_vec_disk,R1=D_LATT_vec,&
-&       VAR=' Lattice constants                :',WARN=WARN,CHECK=l_IMPOSE,&
+&       VAR=' Lattice constants                ',WARN=WARN,CHECK=l_IMPOSE,&
 &       OP=(/"==","==","=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    db_alat=D_LATT_vec_disk
@@ -155,7 +155,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_elemental(ID,VAR="HEAD_R_LATT",VAR_SZ=4,MENU=MENU)
    MENU=0
    call io_elemental(ID,DB_I1=R_LATT_vec_disk,I1=R_LATT_vec,&
-&       VAR=' Brillouin Zone Q/K grids (IBZ/BZ):',WARN=WARN,CHECK=l_IMPOSE,&
+&       VAR=' Brillouin Zone Q/K grids (IBZ/BZ)',WARN=WARN,CHECK=l_IMPOSE,&
 &       OP=(/"==","==","==","=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    nqibz_disk=R_LATT_vec_disk(1)
@@ -170,7 +170,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_elemental(ID,VAR="HEAD_WF",VAR_SZ=1,MENU=MENU)
    MENU=0
    call io_elemental(ID,I0=wf_ng,&
-&       VAR=' RL vectors                   (WF):',WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
+&       VAR=' RL vectors                   (WF)',WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    io_header=io_status(ID)
    if (io_header/=0) goto 1
@@ -240,7 +240,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    if (CUTOFF) then
      call io_elemental(ID,VAR="CUTOFF",CH0='',VAR_SZ=1,MENU=MENU)
      MENU=0
-     call io_elemental(ID,CH0=cut_description,VAR=" Coulomb cutoff potential         :",WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
+     call io_elemental(ID,CH0=cut_description,VAR=" Coulomb cutoff potential          ",WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      io_header=io_status(ID)
      if (io_header/=0) goto 1
@@ -263,12 +263,12 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    !
    call io_elemental(ID,VAR="PARALLEL_CPUs",CH0='',VAR_SZ=1,MENU=MENU)
    call io_elemental(ID,CH0=CPU_structure(p_structure)%CPU_string,&
-&                    VAR=' Parallel CPUs                    :',CHECK=.true.,OP=(/"=="/))
+&                    VAR=' Parallel CPUs                    ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    io_header=io_status(ID)
    call io_elemental(ID,VAR="PARALLEL_ROLES",CH0='',VAR_SZ=1,MENU=MENU)
    call io_elemental(ID,CH0=CPU_structure(p_structure)%ROLE_string,&
-&                    VAR=' Parallel Roles                   :',CHECK=.true.,OP=(/"=="/))
+&                    VAR=' Parallel Roles                   ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    io_header=io_status(ID)
    if (io_header/=0) goto 1
@@ -286,7 +286,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_elemental(ID,VAR="FRAGMENTED",VAR_SZ=1,MENU=MENU)
    MENU=0
    call io_elemental(ID,L0=FRAG,&
-&                    VAR=' Fragmentation                    :',CHECK=.true.,OP=(/"=="/))
+&                    VAR=' Fragmentation                    ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
  !
@@ -300,9 +300,9 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_elemental(ID,VAR="TEMPERATURES",VAR_SZ=2,MENU=MENU)
    MENU=0
    call io_elemental(ID,R0=Tel,&
-&       VAR=' Electronic Temperature        [K]:',UNIT=HA2KEL,WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
+&       VAR=' Electronic Temperature        [K]',UNIT=HA2KEL,WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
    call io_elemental(ID,R0=Bose_Temp,&
-&       VAR=' Bosonic    Temperature        [K]:',UNIT=HA2KEL,WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
+&       VAR=' Bosonic    Temperature        [K]',UNIT=HA2KEL,WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    if (input_Tel_is_negative) then
@@ -325,29 +325,29 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
      xc_kind_force=trim(xc_string_kinds(i1+1))=='force'
      select case (trim(xc_string_kinds(i1)))
        case('G')
-         call XC_KIND_io('E','G',G_E_xc_string,  ' Green`s function   energies      :')
-         call XC_KIND_io('WF','G',G_WF_xc_string, '                    wavefunctions :')
+         call XC_KIND_io('E','G',G_E_xc_string,  ' Green`s function   energies      ')
+         call XC_KIND_io('WF','G',G_WF_xc_string, '                    wavefunctions ')
        case('G_WF')
-         call XC_KIND_io('WF','G',G_WF_xc_string,' Green`s function   wavefunctions :')
+         call XC_KIND_io('WF','G',G_WF_xc_string,' Green`s function   wavefunctions ')
        case('Xx')
-         call XC_KIND_io('E','Xx',X_E_xc_string(1),  ' Polariz. function  energies      :')
-         call XC_KIND_io('WF','Xx',X_WF_xc_string(1), '                    wavefunctions :')
+         call XC_KIND_io('E','Xx',X_E_xc_string(1),  ' Polariz. function  energies      ')
+         call XC_KIND_io('WF','Xx',X_WF_xc_string(1), '                    wavefunctions ')
        case('Xs')
-         call XC_KIND_io('E','Xs',X_E_xc_string(2),  ' Static diel. fun.  energies      :')
-         call XC_KIND_io('WF','Xs',X_WF_xc_string(2), '                    wavefunctions :')
+         call XC_KIND_io('E','Xs',X_E_xc_string(2),  ' Static diel. fun.  energies      ')
+         call XC_KIND_io('WF','Xs',X_WF_xc_string(2), '                    wavefunctions ')
        case('Xp')
-         call XC_KIND_io('E','Xp',X_E_xc_string(3),  ' PPA    diel. fun.  energies      :')
-         call XC_KIND_io('WF','Xp',X_WF_xc_string(3), '                    wavefunctions :')
+         call XC_KIND_io('E','Xp',X_E_xc_string(3),  ' PPA    diel. fun.  energies      ')
+         call XC_KIND_io('WF','Xp',X_WF_xc_string(3), '                    wavefunctions ')
        case('Xd')
-         call XC_KIND_io('E','Xd',X_E_xc_string(4),  ' Dyn. dielectric f. energies      :')
-         call XC_KIND_io('WF','Xd',X_WF_xc_string(4), '                    wavefunctions :')
+         call XC_KIND_io('E','Xd',X_E_xc_string(4),  ' Dyn. dielectric f. energies      ')
+         call XC_KIND_io('WF','Xd',X_WF_xc_string(4), '                    wavefunctions ')
        case('K')
-         call XC_KIND_io('E','K',K_E_xc_string,  ' BS kernel          energies      :')
-         call XC_KIND_io('WF','K',K_WF_xc_string, '                    wavefunctions :')
+         call XC_KIND_io('E','K',K_E_xc_string,  ' BS kernel          energies      ')
+         call XC_KIND_io('WF','K',K_WF_xc_string, '                    wavefunctions ')
        case('K_E')
-         call XC_KIND_io('E','K',K_E_xc_string,  ' BS kernel          energies      :')
+         call XC_KIND_io('E','K',K_E_xc_string,  ' BS kernel          energies      ')
        case('K_WF')
-         call XC_KIND_io('WF','K',K_WF_xc_string, ' BS kernel          wavefunctions :')
+         call XC_KIND_io('WF','K',K_WF_xc_string, ' BS kernel          wavefunctions ')
      end select
    enddo
    !
@@ -363,14 +363,14 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    if (present(IMPOSE_GAUGE)) then
      if (IMPOSE_GAUGE) then
        call io_elemental(ID,CH0=global_gauge,&
-&           VAR=' Global Gauge                     :',CHECK=.true.,OP=(/"=="/))
+&           VAR=' Global Gauge                     ',CHECK=.true.,OP=(/"=="/))
      else
        call io_elemental(ID,CH0=global_gauge,&
-&           VAR=' Global Gauge                     :',WARN=.true.,OP=(/"=="/))
+&           VAR=' Global Gauge                     ',WARN=.true.,OP=(/"=="/))
      endif
    else
      call io_elemental(ID,CH0=global_gauge,&
-&         VAR=' Global Gauge                     :',WARN=.true.,OP=(/"=="/))
+&         VAR=' Global Gauge                     ',WARN=.true.,OP=(/"=="/))
    endif
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !

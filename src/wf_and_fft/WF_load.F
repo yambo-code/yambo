@@ -290,7 +290,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    endif
  endif
  !
- if (WF%space=='R'.and..not.(QUIET_alloc.or.QUIET_free)) call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
+ if (WF%space=='R'.and..not.(QUIET_alloc.or.QUIET_free)) call msg('rns','[FFT'//trim(wf_title)//'] Mesh size',fft_dim)
 
  !
  ! actual IO
@@ -578,7 +578,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  enddo
  !
  wf_norm_test=.false.
- call msg('rn','[WF'//trim(wf_title)//' loader] Normalization (few states)  min/max  :',(/mndp,mxdp/))
+ call msg('rn','[WF'//trim(wf_title)//' loader] Normalization (few states)  min/max  ',(/mndp,mxdp/))
  !
  if (QUIET_alloc) call IO_and_Messaging_switch("+report +log ")
  !

@@ -155,7 +155,7 @@ subroutine RT_X_effective(en)
    !
    call RT_output("open P_minus")
    !
-   call live_timing('P(t)-P_pump(t):',RT_conf%T_n_steps)
+   call live_timing('P(t)-P_pump(t)',RT_conf%T_n_steps)
    !
    do i_t=1,RT_conf%T_n_steps
      RT_P=RT_P_probe(i_t,1,1:3)
@@ -176,9 +176,9 @@ subroutine RT_X_effective(en)
  !
  if (trim(Efield_probe%ef_name)=='ANTIRES'.and.one_P_many_W) then
    if (N_pumps==1) then
-     call msg('s',':: Pump  frequency range   [eV]:',(/minval(Pump_Frequency), maxval(Pump_Frequency)/)*HA2EV)
+     call msg('s',' Pump  frequency range   [eV]',(/minval(Pump_Frequency), maxval(Pump_Frequency)/)*HA2EV)
    else
-     call msg('s',':: Probe                   [eV]:',(/minval(Probe_Frequency),maxval(Probe_Frequency)/)*HA2EV)
+     call msg('s',' Probe                   [eV]',(/minval(Probe_Frequency),maxval(Probe_Frequency)/)*HA2EV)
    endif
  endif
  !
@@ -219,9 +219,9 @@ subroutine RT_X_effective(en)
  if (N_pumps==1.or.N_pumps==0) then
    !
    if (one_P_one_W) then
-     call msg('s',':: Harmonic frequencies    [eV]:',(/Harmonic_Frequency(0:,1)/)*HA2EV)
+     call msg('s',' Harmonic frequencies    [eV]',(/Harmonic_Frequency(0:,1)/)*HA2EV)
    else
-     call msg('s',':: Harmonic frequencies    [eV]:',(/minval(Harmonic_Frequency),maxval(Harmonic_Frequency)/)*HA2EV)
+     call msg('s',' Harmonic frequencies    [eV]',(/minval(Harmonic_Frequency),maxval(Harmonic_Frequency)/)*HA2EV)
    endif
    !
  endif
@@ -298,11 +298,11 @@ subroutine RT_X_effective(en)
  !call RT_initialize()
  !DEBUG<
  !
- if (one_P_many_W) call msg('s','[RT] Energy step[eV]:',Efield_Probe%W_step*HA2EV)
+ if (one_P_many_W) call msg('s','[RT] Energy step[eV]',Efield_Probe%W_step*HA2EV)
  !
  do i_order=min_X_order,X_order,1
    !
-   call live_timing('X effective@order '//trim(intc(i_order))//':',N_probe_frequencies)
+   call live_timing('X effective@order '//trim(intc(i_order))//'',N_probe_frequencies)
    !
    do i_f=1,N_probe_frequencies
      !

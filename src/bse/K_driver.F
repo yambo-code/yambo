@@ -187,14 +187,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    if(BS_n_g_W<0) then
      BS_n_g_W=X_static_pp%ng
-     call msg('s','[BSE-W] Use all G-vectors of W :',BS_n_g_W)
+     call msg('s','[BSE-W] Use all G-vectors of W ',BS_n_g_W)
    endif
    !
    Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
    if (BS_n_g_W> Max_G_m_G ) then
      call warning (' W size reduced from '//trim(intc(BS_n_g_W))//' to '//trim(intc(Max_G_m_G))//' due to symmetry constraints')
      BS_n_g_W= Max_G_m_G
-     call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
+     call msg('s','[BSE-W] W size forced by symmetry to be ',BS_n_g_W)
    endif
    !
  endif
@@ -250,14 +250,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
        if (BS_n_g_exch> Max_G_m_G ) then
          BS_n_g_exch= Max_G_m_G
          call warning (' Exch size reduced due to symmetry constraints')
-         call msg('s','[BSE-exch] Exch size forced by symmetry to be :',BS_n_g_exch)
+         call msg('s','[BSE-exch] Exch size forced by symmetry to be ',BS_n_g_exch)
        endif
      endif
      !
      if (BS_n_g_W> Max_G_m_G ) then
        BS_n_g_W= Max_G_m_G
        call warning (' W size reduced due to symmetry constraints')
-       call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
+       call msg('s','[BSE-W] W size forced by symmetry to be ',BS_n_g_W)
      endif
      !
    endif

@@ -82,8 +82,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  mode_=""
  if (present(mode)) mode_=trim(mode)
  !
- call msg('r', '[VXC] Plane waves :',QP_ng_Vxc)
- call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
+ call msg('r', '[VXC] Plane waves ',QP_ng_Vxc)
+ call msg('r', '[EXS] Plane waves ',QP_ng_Sx)
  !
  ! QP_table -> report
  !

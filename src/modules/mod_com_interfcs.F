@@ -33,23 +33,24 @@ module com_interfcs
      logical,optional :: USE_TABS
    end subroutine
    !
-   subroutine msg_integers_vector_int(how,mesg,val,USE_TABS,INDENT)
+   subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
      character(*)     :: mesg
      character(*)     :: how
      integer          :: val(:)
+     character(*), optional :: after_msg
      integer,optional :: INDENT
      logical,optional :: USE_TABS
    end subroutine
    !
-   subroutine msg_reals_vector_int(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatted_msg)
-     use pars,     ONLY:SP,lchlen
+   subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT)
+     use pars,     ONLY:SP,schlen
      character(*)     :: mesg
      character(*)     :: how
      real(SP)         :: val(:)
+     character(*), optional :: after_msg
      integer,optional :: INDENT
      logical,optional :: USE_TABS
      logical,optional :: EXT_FORMAT
-     character(lchlen), optional :: formatted_msg
    end subroutine
    !
    function composed_fmt(basic_fmt,n,USE_TABS,INDENT)

@@ -133,7 +133,7 @@ integer function e2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  if(trim(ETSF_kind)=='WFK') call etsf_io_low_open_read(ncid, trim(WFK_filename), lstat, error_data = error_data)
  !
  if (.not. lstat) call etsf_long_error(error_data)
- call msg('s','DBs path set to :',trim(core_io_path))
+ call msg('s','DBs path set to ',trim(core_io_path))
  !
  ! DB1
  !==========================================

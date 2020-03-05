@@ -97,7 +97,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  Ph_branches=elph_branches(2)-elph_branches(1)+1
  No_PH_basis_size=elph_Ham_bands(2)-elph_Ham_bands(1)+1
  H_size=No_PH_basis_size*(nqbz*(elph_branches(2)-elph_branches(1)+1)+1)
- call msg('rsn','[ElPh Ham] Hamiltonian size is:',H_size)
+ call msg('rsn','[ElPh Ham] Hamiltonian size is',H_size)
  !
  YAMBO_ALLOC(elph_Ham_Table,(H_size,3))
  YAMBO_ALLOC(elph_Mat,(H_size,H_size))
@@ -364,7 +364,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call live_timing('MD evaluation',H_size)
  !
- call msg('r','Displacements:')
+ call msg('r','Displacements')
  !
  do iH=1,H_size
    call live_timing(steps=1)
@@ -404,7 +404,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call live_timing('MD square evaluation',H_size)
  !
- call msg('nr','sqrt(MD square):')
+ call msg('nr','sqrt(MD square)')
  !
  do iH=1,H_size
    call live_timing(steps=1)

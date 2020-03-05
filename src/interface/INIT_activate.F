@@ -486,6 +486,11 @@ subroutine INIT_activate()
    !
    call initactivate( 1,'FFTGvecs')
    !
+   ! The following variable is called EXXCut, but it should be renamed COLLCut
+   ! since it affects all collisions
+   !
+   call initactivate( 1,'EXXCut')
+   !
    call initactivate(-1,'QpntsRXs')
    !
    if( index(H_potential,"HARTREE")>0 .or. index(H_potential,"DEFAULT")>0)  call initactivate(1,'HARRLvcs ALLGHAR')
@@ -493,7 +498,7 @@ subroutine INIT_activate()
    !
    if (l_eval_collisions) then
      if( STRING_match(trim(H_potential),"SEX").or.&
-&        STRING_match(trim(H_potential),"FOCK")) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
+&        STRING_match(trim(H_potential),"FOCK") ) call initactivate(1,'EXXRLvcs ALLGexx')
      if( STRING_match(trim(H_potential),"SEX").or.&
 &        STRING_match(trim(H_potential),"COH") ) call initactivate(1,'CORRLvcs ALLGexx')
    endif

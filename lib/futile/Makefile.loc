@@ -17,9 +17,6 @@ TARBALL=$(tarball_futile)
 # redefinitions
 #
 AUXFLAGS=--prefix=$(LIBPATH)
-#
-# workaround for PGI compiler
-fcflags_aux=`echo $(fcflags) | sed 's/-Mnomain//'`
 
 #
 # MAIN target
@@ -36,11 +33,10 @@ configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	  ./configure $(AUXFLAGS) \
 	  LIBS="$(lblas) $(llapack) $(lyaml)" \
+	  CPPFLAGS="$(iyaml)" \
 	  CC="$(cc)" \
-	  CFLAGS="$(cflags)" \
 	  FC="$(fc)" \
 	  F77="$(fc)" \
-	  FCFLAGS="$(fcflags_aux)" \
 	  CPP="$(cpp)" \
 	  FCCPP="$(fpp)" ); \
 	fi

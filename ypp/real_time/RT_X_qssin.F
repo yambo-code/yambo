@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA MG
@@ -103,7 +103,7 @@ subroutine RT_X_qssin
  !
  E_2plus = (0._DP,0._DP)
  E_2minus = (0._DP,0._DP)
- call live_timing('Fields Convolution:',RT_conf%W_n_steps)
+ call live_timing('Fields Convolution',RT_conf%W_n_steps)
  do i_w = 1, RT_conf%W_n_steps
    E_2plus = E_2plus + E_p(i_w)*conjg(E_p(i_w))*W_step
    E_2minus = E_2minus + E_m(i_w)*E_p(i_w)*W_step

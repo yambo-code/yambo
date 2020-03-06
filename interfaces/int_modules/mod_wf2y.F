@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -70,7 +70,7 @@ module mod_wf2y
      !
      array_sz = real(2*wf_nb_io*wf_ncx*n_spin*SP,SP)/Megabyte
      !
-     call msg('s',':: WF splitter Blocks/bands/block size(Mb):',(/real(wf_nb_io_groups,SP),real(wf_nb_io,SP),array_sz/))
+     call msg('s',' WF splitter Blocks/bands/block size(Mb)',(/real(wf_nb_io_groups,SP),real(wf_nb_io,SP),array_sz/))
      !
    end subroutine
    !

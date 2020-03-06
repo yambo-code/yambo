@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -78,27 +78,27 @@ integer function io_ELPH_old(ID,what)
    call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
    !
    call io_elemental(ID,&
-&       VAR=" Phonon modes           :",I0=ph_modes,CHECK=.true.,OP=(/"=="/))
+&       VAR=" Phonon modes            ",I0=ph_modes,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,&
-&       VAR=" Q points        [avail]:",I0=elph_nDBs,CHECK=.true.,OP=(/"=="/))
+&       VAR=" Q points        [avail] ",I0=elph_nDBs,CHECK=.true.,OP=(/"=="/))
    !
    if (what=='gFsq') then
      call io_elemental(ID,&
-&       VAR="                  [used]:",I0=elph_nDBs_used,CHECK=.true.,OP=(/"=="/))
+&       VAR="                  [used] ",I0=elph_nDBs_used,CHECK=.true.,OP=(/"=="/))
    endif
    call io_elemental(ID,&
-&       VAR=" K points (BZ)          :",I0=elph_nk_bz,CHECK=.true.,OP=(/"=="/))
+&       VAR=" K points (BZ)           ",I0=elph_nk_bz,CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(ID,&
-&       VAR=" El-PH bands            :",I0=elph_nb,CHECK=.true.,OP=(/"=="/))
+&       VAR=" El-PH bands             ",I0=elph_nb,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,&
-&       VAR=" Using the Q-grid       :",L0=elph_use_q_grid,CHECK=.true.,OP=(/"=="/))
+&       VAR=" Using the Q-grid        ",L0=elph_use_q_grid,CHECK=.true.,OP=(/"=="/))
    !
    if (what=='gFsq') then
      call io_elemental(ID,VAR="QP_nb_nk_n_states",VAR_SZ=3,MENU=0)
      call io_elemental(ID,I0=QP_nb)
      call io_elemental(ID,I0=QP_nk)
-     call io_elemental(ID,I0=QP_n_states,VAR=' QP tot states          :')
+     call io_elemental(ID,I0=QP_n_states,VAR=' QP tot states          ')
    endif
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)

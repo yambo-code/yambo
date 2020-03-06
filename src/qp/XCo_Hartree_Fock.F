@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -82,8 +82,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  mode_=""
  if (present(mode)) mode_=trim(mode)
  !
- call msg('r', '[VXC] Plane waves :',QP_ng_Vxc)
- call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
+ call msg('r', '[VXC] Plane waves ',QP_ng_Vxc)
+ call msg('r', '[EXS] Plane waves ',QP_ng_Sx)
  !
  ! QP_table -> report
  !

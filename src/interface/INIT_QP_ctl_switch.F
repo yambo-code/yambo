@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,8 +23,8 @@
 !
 subroutine INIT_QP_ctl_switch(what)
  !
- use it_tools,   ONLY:initactivate
  use electrons,  ONLY:n_sp_pol
+ !
  implicit none
  !
  character(1)::what

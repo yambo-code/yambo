@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH DS HM
@@ -134,7 +134,7 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
    return
  endif
  !
- call msg('s','DBs path set to :',trim(core_io_path))
+ call msg('s','DBs path set to ',trim(core_io_path))
  !
  ! Open ETSF file for reading
  !

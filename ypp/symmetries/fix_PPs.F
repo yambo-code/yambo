@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -196,7 +196,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
      if (wf_ncx_save==wf_ncx_new) then
        !
-       call msg('s',':: Copying existing database ...')
+       call msg('s',' Copying existing database ...')
        !
        call cp_file(trim(core_io_path_save)//"/SAVE/s.kb_pp",trim(more_io_path)//"/SAVE",ierr)
        call cp_file(trim(core_io_path_save)//"/SAVE/ns.kb_pp",trim(more_io_path)//"/SAVE",ierr)
@@ -223,7 +223,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
      if (wf_ncx_save==wf_ncx_new) then
        !
-       call msg('s',':: Copying existing database ...')
+       call msg('s',' Copying existing database ...')
        !
        call cp_file(trim(core_io_path_save)//"/SAVE/s.kb_pp_pwscf",trim(more_io_path)//"/SAVE",ierr)
        call cp_file(trim(core_io_path_save)//"/SAVE/ns.kb_pp_pwscf",trim(more_io_path)//"/SAVE",ierr)
@@ -436,7 +436,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    !
  case(2)
    !
-   if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0.or.io_Vnl_err==0) call msg('s',':: PPs reduction...')
+   if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0.or.io_Vnl_err==0) call msg('s',' PPs reduction...')
    !
    if(io_KB_abinit_err==0) then
      !

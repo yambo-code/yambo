@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -50,27 +50,27 @@ integer function io_COL_CUT(ID)
    !
    call io_elemental(ID,VAR='GEOMETRY',CH0="",VAR_SZ=1,MENU=0)
    call io_elemental(ID,CH0=cut_geometry,&
-&       VAR=' CutOff Geometry                 :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' CutOff Geometry                 ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    call io_elemental(ID,VAR='DESCRIPTION',CH0="",VAR_SZ=1,MENU=0)
    call io_elemental(ID,CH0=cut_description,&
-&       VAR=' Coulomb cutoff potential        :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' Coulomb cutoff potential        ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=10,MENU=0)
    call io_elemental(ID,R1=box_length,&
-&       VAR=' Box sides length            [au]:',CHECK=.true.,OP=(/"==","==","=="/))
+&       VAR=' Box sides length            [au]',CHECK=.true.,OP=(/"==","==","=="/))
    call io_elemental(ID,R0=cyl_ph_radius,&
-&       VAR=' Sphere/Cylinder radius      [au]:',CHECK=.true.,OP=(/"=="/))
+&       VAR=' Sphere/Cylinder radius      [au]',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,R0=cyl_length,&
-&       VAR=' Cylinder length             [au]:',CHECK=.true.,OP=(/"=="/))
+&       VAR=' Cylinder length             [au]',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=wf_ng,DB_I0=wf_ng_db,&
-&       VAR=' RL components                   :',CHECK=.true.,OP=(/"<="/))
+&       VAR=' RL components                   ',CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,I0=ng_closed,&
-&       VAR=' RL components used in the sum   :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' RL components used in the sum   ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,L0=CUTOFF_plus_RIM,&
-&       VAR=' RIM corrections included        :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' RIM corrections included        ',CHECK=.true.,OP=(/"=="/))
    CUT_RIM_ng=0
    CUT_RIM_npts=0
    if (CUTOFF_plus_RIM) then
@@ -78,9 +78,9 @@ integer function io_COL_CUT(ID)
      CUT_RIM_npts=RIM_n_rand_pts
    endif
    call io_elemental(ID,I0=CUT_RIM_ng,&
-&       VAR=' RIM RL components               :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' RIM RL components               ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=CUT_RIM_npts,&
-&       VAR=' RIM random points               :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' RIM random points               ',CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0)
    io_COL_CUT=io_status(ID)

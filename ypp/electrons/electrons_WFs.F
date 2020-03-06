@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -154,8 +154,8 @@ subroutine electrons_WFs(Xen)
        if (i_st==1) max_residual=maxval(polaronic_residual(:n_top_residuals))
      enddo 
      ! 
-     call msg('s',':: Found '//trim(intc(n_top_residuals))//' residuals@k'//trim(intc(ik))//&
-&                 '_b'//trim(intc(ib))//':', top_residual(:n_top_residuals))
+     call msg('s',' Found '//trim(intc(n_top_residuals))//' residuals@k'//trim(intc(ik))//&
+&                 '_b'//trim(intc(ib))//'', top_residual(:n_top_residuals))
      !
      do i_st=1,n_top_residuals
        !

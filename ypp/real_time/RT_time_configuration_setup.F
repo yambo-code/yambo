@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -175,20 +175,20 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  ! Messaging
  !===========
  !
- call msg('s','['//what//'] Uniform grid       :',UNIFORM)
- call msg('s','['//what//'] Time range     [fs]:',RT_conf%T_range*AUT2FS)
- call msg('s','['//what//'] Time step      [fs]:',RT_conf%delta_T*AUT2FS)
- call msg('s','['//what//'] Time steps         :',RT_conf%T_n_steps)
+ call msg('s','['//what//'] Uniform grid       ',UNIFORM)
+ call msg('s','['//what//'] Time range     [fs]',RT_conf%T_range*AUT2FS)
+ call msg('s','['//what//'] Time step      [fs]',RT_conf%delta_T*AUT2FS)
+ call msg('s','['//what//'] Time steps         ',RT_conf%T_n_steps)
  !
  if (.not.(l_current.or.l_G_lesser)) return
  !
- call msg('s','['//what//'] Damping       [meV]:',RT_conf%damp_factor*1000._SP*HA2EV)
+ call msg('s','['//what//'] Damping       [meV]',RT_conf%damp_factor*1000._SP*HA2EV)
  !
  if (.not.l_current) return
  !
  ! Field deduced dumping
  !=======================
  RT_conf%Field_damp_factor= 2._SP*pi/(real(RT_conf%T_n_steps-1,SP)*RT_conf%delta_T)
- call msg('s','['//what//'] Field damping [meV]:',RT_conf%Field_damp_factor*1000._SP*HA2EV)
+ call msg('s','['//what//'] Field damping [meV]',RT_conf%Field_damp_factor*1000._SP*HA2EV)
  !
 end subroutine RT_time_configuration_setup

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -46,10 +46,12 @@ module QP_m
  integer           :: QP_ng_Vxc
  integer           :: QP_n_G_bands(2)
  integer           :: GWo_iterations
+ integer           :: GW_iterations
  logical           :: QP_dSc_test
  logical           :: GWo_SC_done
  logical           :: COHSEX_use_empties
  logical           :: l_GW_terminator=.FALSE.
+ logical           :: l_update_W=.FALSE.
  logical           :: On_Mass_Shell_approx
  logical           :: l_QP_Expand
  logical           :: use_GreenF_to_eval_QP

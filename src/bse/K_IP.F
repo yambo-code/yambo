@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -89,8 +89,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Polarizability ?
  !==================
  if (trim(alpha_dim)/='adim') then
-   call msg('r', 'Optical renormalization   [au]:',eps_2_alpha)
-   call msg('rn','Polarizability dimension      :',trim(alpha_dim))
+   call msg('r', 'Optical renormalization   [au]',eps_2_alpha)
+   call msg('rn','Polarizability dimension      ',trim(alpha_dim))
  endif
  !
  if(trim(global_gauge)=="velocity") call parser('NoCondSumRule',skip_cond_sum_rule)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -98,7 +98,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  ng_closed_save=ng_closed
  wf_nb_io_save=wf_nb_io
  !
- call msg('s',':: I/O...')
+ call msg('s',' I/O...')
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
  io_err=io_DB1(E_new,k,ID)
  !
@@ -264,7 +264,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    !
  case(2)
    !
-   call msg('s',':: WFs reduction...')
+   call msg('s',' WFs reduction...')
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
    io_err=io_WF(ID)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -19,7 +19,7 @@
 ! You should have received a copy of the GNU General Public 
 ! License along with this program; if not, write to the Free 
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! MA 02repfile_unit1-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INIT_ypp(E,instr,FINALIZE)
  !
@@ -33,18 +33,20 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,l_angular_momentum,l_position
  use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev
- use it_tools,       ONLY:ofiles_append,initinfio,initactivate,infile_dump,runlevel_is_on,&
+ use wave_func,      ONLY:wf_ng
+ use it_tools,       ONLY:ofiles_append,infile_dump,runlevel_is_on,&
 &                         PARSER_force_command_line_value
  use it_m,           ONLY:initdefs,initmode,infile,nrnlvls,rnlvls,infile_verbosity,&
                           V_general,V_qp,V_all,V_real_time,V_nl_optics
  use drivers,        ONLY:infile_editing
- use com,            ONLY:write_to_report,repfile
- use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile,STRING_match,STRING_same
+ use com,            ONLY:write_to_report,repfile,repfile_unit,inpfile_unit
+ use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile,logfile_unit,STRING_match,STRING_same
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:live_timing_is_on
  use parser_m,       ONLY:PARSER_array
  use IO_m,           ONLY:rm_file,OP_RD_CL,DUMP,io_control,NONE
+ use stderr,         ONLY:set_real_printed_length
 #if defined _YPP_SC
  use YPPm,           ONLY:l_mean_potential
  use SC,             ONLY:SC_bands
@@ -66,6 +68,11 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH
+#endif
+#if defined _YAML_OUTPUT
+ use pars,           ONLY:logfile_index,repfile_index
+ use com,            ONLY:of_yaml_IDs
+ use yaml_output,    ONLY:yaml_close_stream
 #endif
  !
 #include<memory.h>
@@ -100,8 +107,17 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
-   if (master_cpu.and.write_to_report) call initinfio(defs,11)
-   if (master_cpu) call ofiles_append(defs=defs)
+   if (master_cpu) then
+     if(write_to_report) call initinfio(defs,repfile_unit)
+     call ofiles_append(defs=defs)
+     close(unit=repfile_unit)
+   endif
+   if(log_as_a_file) close(unit=logfile_unit)
+#if defined _YAML_OUTPUT
+   call yaml_close_stream(unit=of_yaml_IDs(repfile_index))
+   if(log_as_a_file) call yaml_close_stream(unit=of_yaml_IDs(logfile_index))
+   call f_lib_finalize()
+#endif
    return
  endif
  !
@@ -544,7 +560,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_fix_save) infile_editing=.false.
  !
- if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv")
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv GvecsCut")
  !
 #if defined _YPP_RT
  !
@@ -674,9 +690,12 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  call QP_state_table_setup(E)
  !
  if (infile_editing) then
-   open(unit=12,file=trim(infile))
-   call initinfio(defs,12)
-   close(12)
+   inpfile_unit=12
+   open(unit=inpfile_unit,file=trim(infile))
+   call set_real_printed_length(f_length=9,g_length=9)
+   call initinfio(defs,inpfile_unit)
+   call set_real_printed_length()
+   close(inpfile_unit)
    call PP_redux_wait
  endif
  !
@@ -746,24 +765,16 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  call INIT_report_and_log_files()
  !
- if (log_as_a_file) call rename_file(logfile)
- !
- call rename_file(repfile)
  !
  ! Input file
  !
  if (infile_editing) then
-   open(unit=12,file=trim(infile))
-   call initinfio(defs,12)
-   close(12)
+   open(unit=inpfile_unit,file=trim(infile))
+   call set_real_printed_length(f_length=9,g_length=9)
+   call initinfio(defs,inpfile_unit)
+   call set_real_printed_length()
+   close(inpfile_unit)
    call PP_redux_wait
- endif
- !
- if (write_to_report) then
-   call rm_file(trim(repfile))
-   open(unit=11,file=trim(repfile))
-   call write_the_logo(11,' ')
-   close(11)
  endif
  !
  contains

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -94,7 +94,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  if (l_dos)        io_err=io_ELPH(ID,'no_matrix_elements')
  if (l_eliashberg) io_err=io_ELPH(ID,'gkkp')
  !
- call msg('s',':: Checking database ...')
+ call msg('s',' Checking database ...')
  if (io_err<0) then
    call msg('s','not found')
    return
@@ -198,10 +198,10 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    call of_open_close(o_file_name,'ot')
    call msg('o eli','#',' Eliashberg Function & Gamma factors',INDENT=0)
    call msg('o eli','#','',INDENT=0)
-   call msg('o eli',         '#  Bands              :',elph_nb,INDENT=0)
+   call msg('o eli',         '#  Bands              ',elph_nb,INDENT=0)
    call msg('o eli','#','',INDENT=0)
    do iq=1,nq_todo
-     write (ch,'(a,i6.6,a)') '# Gamma (',iq,') [GHz]:'
+     write (ch,'(a,i6.6,a)') '# Gamma (',iq,') [GHz]'
      call msg('o eli',trim(ch),(/gamma(iq,:)*HA2GHZ/) ,INDENT=0)
    enddo
    call msg('o eli','#','',INDENT=0)

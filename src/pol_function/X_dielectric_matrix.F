@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,7 +28,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use pars,          ONLY:SP,cZERO
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
- use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,&
+ use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,l_recalculate_X,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table
  use frequency,     ONLY:w_samp
@@ -36,7 +36,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use electrons,     ONLY:levels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index, PAR_nq, &
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD,&
-&                        PAR_COM_X_WORLD_RL_resolved,master_cpu
+&                        PAR_COM_X_WORLD_RL_resolved
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
  use com,           ONLY:depth
@@ -124,7 +124,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
  !
- if (io_RESPONSE) then
+ if (io_RESPONSE.and..not.l_recalculate_X) then
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
@@ -201,14 +201,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
  endif
  !
- ! AM. Dec 2019. master_cpu below is needed because when the RL vectors are parallelized
- ! more than 1 cpu (beside the master) has WRITING rights. But only 1 CPU must write the DB header.
- !
- if (i_err/=0.and.master_cpu) then
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
-   i_err=io_X(X,Xw,Xdb)
- endif
- !
  call PP_redux_wait()
  !
  do iq=X%iq(1),X%iq(2)
@@ -232,6 +224,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      call TDDFT_ALDA_G_space(Xen,Xk)
      !
+   endif
+   !
+   if (iq==1) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb)
+     i_err=io_X(X,Xw,Xdb)
    endif
    !
    ! Allocation

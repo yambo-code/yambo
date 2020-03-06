@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM DS
@@ -31,7 +31,7 @@ subroutine COLLISIONS_compose_nl(G_in)
 &                           HXC_collisions
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
- use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu,PAR_COM_freqs_A2A
+ use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu,PAR_COM_Xk_ibz_INDEX
  use real_time,        ONLY:RT_Vnl_xc,RT_bands
 #if defined _TIMING
  use timing_m,         ONLY:timing
@@ -99,7 +99,7 @@ subroutine COLLISIONS_compose_nl(G_in)
    ! 
  enddo
  !
- call PP_redux_wait(RT_Vnl_xc,COMM=PAR_COM_freqs_A2A%COMM)
+ call PP_redux_wait(RT_Vnl_xc,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
 #if defined _TIMING
  call timing('NL COLL_compose',OPR='stop')

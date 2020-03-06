@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -60,7 +60,7 @@ subroutine RT_1D_Fourier_Transform(mode,FT,RT,I_sign)
  !===================
  if (mode=="T2W") then
    !
-   if (l_live_timing) call live_timing('FT@'//trim(FT%title)//':',RT%W_n_steps*FT%N)
+   if (l_live_timing) call live_timing('FT@'//trim(FT%title)//'',RT%W_n_steps*FT%N)
    !
    FT%F_w=cZERO_DP
    !
@@ -106,7 +106,7 @@ subroutine RT_1D_Fourier_Transform(mode,FT,RT,I_sign)
    !
    FT%F_t=cZERO_DP
    !
-   if (l_live_timing) call live_timing('FT'//trim(FT%title)//':',RT%T_n_steps*FT%N)
+   if (l_live_timing) call live_timing('FT'//trim(FT%title)//'',RT%T_n_steps*FT%N)
    do i_c=1,FT%N
      do i_t = 1, RT%T_n_steps
        do i_w = 1, RT%W_n_steps

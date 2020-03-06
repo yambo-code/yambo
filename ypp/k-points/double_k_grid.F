@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DK CA
@@ -57,7 +57,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  nkpoint_c = k_grid
  if(product(nkpoint_c) .ne. size(Xk%ptbz,1) .or. &
    product(nkpoint_c) .ne. Xk%nbz) then
-   call msg("s",':: ERROR kgrid') 
+   call msg("s",' ERROR kgrid') 
    err=2
    return
  endif

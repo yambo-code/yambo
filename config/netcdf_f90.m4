@@ -2,7 +2,7 @@
 
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF, DS
@@ -119,7 +119,7 @@ if test x"$enable_hdf5_par_io" = "xyes" ; then
   enable_hdf5=yes ;
 fi
 #    
-if test x"$enable_hdf5_par_io" = "xyes" || test x"$enable_hdf5_p2y_support" = "xyes" ; then HDF5_VER="parallel"; fi
+if test x"$enable_hdf5_par_io" = "xyes" ; then HDF5_VER="parallel"; fi
 #
 #
 #

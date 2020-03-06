@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -84,6 +84,7 @@ BROKEN   = yambo_electric
 TESTS    = 
 SCRIPTS  = ydb.pl
 EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS) $(SCRIPTS)
+EXT_LIBS = libxc lapack fftw fftqe yaml futile iotk hdf5 netcdf etsf_io blacs scalapack petsc slepc
 #
 # Libraries (ordered for compiling & linking)
 #
@@ -157,59 +158,80 @@ nothing:
 	@$(make_message)
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
-interfaces:
+interfaces: ext-libs
 	for target in $(INTERFCS) ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-core:      
+core: ext-libs
 	for target in $(CORE)     ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-ph-project:
+ph-project: ext-libs
 	for target in $(PH_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-sc-project:
+sc-project: ext-libs
 	for target in $(SC_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-magn-project:
+magn-project: ext-libs
 	for target in $(MAG_PROJ) ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-rt-project:
+rt-project: ext-libs
 	for target in $(RT_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-nl-project:
+nl-project: ext-libs
 	for target in $(NL_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-rtext-project:
+rtext-project: ext-libs
 	for target in $(RTE_PROJ) ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-kerr-project:
+kerr-project: ext-libs
 	for target in $(KERR_PROJ); do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-all: 
+all: ext-libs 
 	for target in $(ALL)      ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 #
 # External libs #
 #
 ext-libs: 
+	@for target in $(EXT_LIBS) ; do $(MAKE) $$target; if test -f "$(topdir)/lib/$$target/Makefile" && test ! -f "$(topdir)/lib/$$target/package-installed"; then echo "$$target build failed"; break;fi ; done
+
+
+#
+# BLACS& SLK ) Parallel compilation of blacs and scalapack fails
+# SLEPC&PETSC) The internal build system of petsc and slepc already compiles the two libraries in parallel.
+#
+# Thus for these libraries the instruction to build in parallel (@+if) is not used
+#
+libxc:
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-	@+if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+lapack:
 	@+if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+fftw:
 	@+if test "$(do_fftw)" = yes ; then LIBS2DO="fftw" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+fftqe:
 	@+if test "$(do_fftqe)" = yes ; then LIBS2DO="fftqe" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); $(mklib_internal); fi
+yaml:
 	@+if test "$(do_yaml)" = yes ; then LIBS2DO="yaml" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+futile:
 	@+if test "$(do_futile)" = yes ; then LIBS2DO="futile" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+iotk:
 	@+if test "$(do_iotk)" = yes ; then LIBS2DO="iotk" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+hdf5:
 	@+if test "$(do_hdf5)" = yes ; then LIBS2DO="hdf5" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+netcdf:
 	@+if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf netcdff" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+etsf_io:
 	@+if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-	@+if test "$(do_blacs)" = yes ; then LIBS2DO="blacs" ; \
+blacs:
+	@if test "$(do_blacs)" = yes ; then LIBS2DO="blacs" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-	@+if test "$(do_slk)" = yes ; then LIBS2DO="scalapack" ; \
+scalapack:
+	@if test "$(do_slk)" = yes ; then LIBS2DO="scalapack" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-	@+if test "$(do_petsc)" = yes ; then LIBS2DO="petsc" ; \
+petsc:
+	@if test "$(do_petsc)" = yes ; then LIBS2DO="petsc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-	@+if test "$(do_slepc)" = yes ; then LIBS2DO="slepc" ; \
+slepc:
+	@if test "$(do_slepc)" = yes ; then LIBS2DO="slepc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 #
 # Download external libs #
@@ -604,7 +626,9 @@ define lib_mod_clean
   cd $(libbindir) ; rm -f * ; cd .. ; rmdir $(libbindir); \
  fi
  for folder in $(includedir)/modules__*; do \
-  cd $$folder ; rm -f * ; cd .. ; rmdir $$folder; \
+  if test -d $$folder ; then \
+   cd $$folder ; rm -f * ; cd .. ; rmdir $$folder; \
+  fi \
  done
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 

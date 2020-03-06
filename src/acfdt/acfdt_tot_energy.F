@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -167,13 +167,13 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
    ! Report
    !
    sug_E_rng=(nel/DL_vol)**(2./3.)*HA2EV
-   call msg('r','[E] Energy borders [ev][suggested]:',(/25.*sug_E_rng,250*sug_E_rng/))
-   call msg('r','                            [used]:',(/ACFDT_E_range*HA2EV/))
-   call msg('r','    Energy points                 :',(/(ACFDT_n_freqs-1)/2+1,ACFDT_n_freqs/))
-   call msg('r','    First point               [ev]:',(/freq(1)*HA2EV/))
-   call msg('nr','[L] Pts(1-5):',(/lambda(1:min(5,ACFDT_n_lambda))/))
-   call msg(' r','    Wgs(1-5):',(/lambda_weight(1:min(5,ACFDT_n_lambda))/))
-   call msg(' r','    Points  :',(/ACFDT_n_lambda/))
+   call msg('r','[E] Energy borders [ev][suggested]',(/25.*sug_E_rng,250*sug_E_rng/))
+   call msg('r','                            [used]',(/ACFDT_E_range*HA2EV/))
+   call msg('r','    Energy points                 ',(/(ACFDT_n_freqs-1)/2+1,ACFDT_n_freqs/))
+   call msg('r','    First point               [ev]',(/freq(1)*HA2EV/))
+   call msg('nr','[L] Pts(1-5)',(/lambda(1:min(5,ACFDT_n_lambda))/))
+   call msg(' r','    Wgs(1-5)',(/lambda_weight(1:min(5,ACFDT_n_lambda))/))
+   call msg(' r','    Points  ',(/ACFDT_n_lambda/))
    !
    call section('=','Non-interacting Response Function [Xo]')
    !
@@ -194,7 +194,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
    !
    call section('=','Correlation Energy Loop')
    !
-   call msg('r','[Ec] RL components :',X%ng)
+   call msg('r','[Ec] RL components ',X%ng)
    !
    YAMBO_ALLOC(X_s,(X%ng,X%ng))
    YAMBO_ALLOC(isc%gamp,(X%ng,1))
@@ -287,12 +287,12 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
  rfac=(/HA2EV*1000.d0/DL_vol,HA2EV/dble(nel),&
 &       1000.d0/dble(DL_vol),1000.d0/dble(nel)/)
  do i1=1,4
-   write (ch,'(2a)') ttl(i1),' Ex         LDA-EXX    :'
+   write (ch,'(2a)') ttl(i1),' Ex         LDA-EXX    '
    call msg('r',trim(ch),Er(1:2)*rfac(i1))
-   call msg('r','          Ec         LDA-Rpa    :',Er(3:4)*rfac(i1))
-   call msg('r','          Exc        LDA-EXX/Rpa:',Er(5:6)*rfac(i1))
-   call msg('r','          HEGc(orrection)       :',(/Er(7)*rfac(i1)/))
-   call msg('rn','          Exc+HEGc   LDA-EXX/Rpa:',Er(8:9)*rfac(i1))
+   call msg('r','          Ec         LDA-Rpa    ',Er(3:4)*rfac(i1))
+   call msg('r','          Exc        LDA-EXX/Rpa',Er(5:6)*rfac(i1))
+   call msg('r','          HEGc(orrection)       ',(/Er(7)*rfac(i1)/))
+   call msg('rn','          Exc+HEGc   LDA-EXX/Rpa',Er(8:9)*rfac(i1))
  enddo
  !
  ! CLEAN

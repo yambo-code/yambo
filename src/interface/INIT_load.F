@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -38,7 +38,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_ng_Vxc,GW_terminator_E,GW_terminator_Kind,&
-&                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,&
+&                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,GW_iterations,&
 &                        QP_dSc_delta,QP_G_Zoom_treshold,GF_energy_range_mode
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
@@ -67,8 +67,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use hamiltonian,   ONLY:H_ref_bands,H_potential
  use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands
 #endif
+ use QP_m,          ONLY:SC_E_threshold
 #if defined _SC
- use QP_m,          ONLY:SC_band_mixing,SC_E_threshold
+ use QP_m,          ONLY:SC_band_mixing
  use SC,            ONLY:SC_iterations,SC_up_W_iters,&
 &                        SC_rho_threshold,SC_cycle_mixing,&
 &                        SC_bands,SC_preconditioning,OEP_approx
@@ -191,7 +192,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
- call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit) 
+ call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_RL) 
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt)
@@ -258,7 +259,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'GEnRnge',  '[GW] GF energy range',QP_G_er,E_unit)
  call it(defs,'GEnMode',  '[GW] GF energy mode ("centered","absolute"). "Centered" around the bare energy',&
 &        GF_energy_range_mode,verb_level=V_qp)
- call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze)', GW_terminator_Kind,verb_level=V_qp)
+ call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze)', GW_terminator_Kind)
  call it(defs,'GTermEn',  '[GW] GW terminator energy (only for kind="BG")', GW_terminator_E,E_unit,verb_level=V_qp)
  call it('f',defs,'NewtDchk',  '[GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut', '[GW] Print all variables in the output file',verb_level=V_qp)
@@ -270,7 +271,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
- call it(defs,'XTermKind','[X] X terminator ("none","BG" Bruneval-Gonze)',X_terminator_Kind,verb_level=V_resp)
+ call it(defs,'XTermKind','[X] X terminator ("none","BG" Bruneval-Gonze)',X_terminator_Kind)
  call it(defs,'XTermEn',  '[X] X terminator energy (only for kind="BG")',X_terminator_E,E_unit,verb_level=V_resp)
  call it('f',defs,'DrClassic', '[X] Use a classical model for the drude term',verb_level=V_resp)
  !
@@ -386,6 +387,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 ! call it(defs,'CUTwsGvec','[CUT] WS cutoff: number of G to be modified',ws_cutoff,unit=G_unit)
  call it(defs,'CUTwsGvec','[CUT] WS cutoff: number of G to be modified',ws_cutoff)
  call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_RL)
+ call it(defs,'GWIter',     '[GW] GW  self-consistent (evGW)  iterations on eigenvalues',GW_iterations)
+ call it(defs,'GWoIter',    '[GW] GWo self-consistent (evGWo) iterations on eigenvalues',GWo_iterations)
  !
  ! GPL_EXCLUDE_START
  !
@@ -395,7 +398,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! S_xc
  !
- call it(defs,'GWoIter',    '[GW] GWo SC iterations',GWo_iterations,verb_level=V_qp)
  call it(defs,'GreenFTresh','[GW] [o/o] Treshold to define the new zoomed energy range',QP_G_Zoom_treshold,verb_level=V_qp)
  call it('f',defs,'QPExpand',   '[F GW] The QP corrections are expanded all over the BZ',verb_level=V_qp)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
@@ -480,6 +482,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! External fields
  !
+ if (initmode==4) n_ext_fields=0
  do i_field=1,n_ext_fields_max
    call Afield(i_field)
  enddo
@@ -645,7 +648,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call TMP_mirror_bands( )
  !
  call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
- call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
  call it(defs,'SC_precondition','[SC] Kind of preconditionin: thomas-fermi, simple, none',SC_preconditioning,verb_level=V_sc)
  call it(defs,'SCUpWIter', "[SC] Update W(q,G,G') every SCUpWIter iteractions",SC_up_W_iters,verb_level=V_qp) 
@@ -661,6 +663,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
 #endif
  ! 
+ call it(defs,'SCEtresh',  '[SC] Energy convergence threshold for SC-GW',SC_E_threshold,unit=E_unit,verb_level=V_qp)
+ !
 #if defined _SC || defined _RT || defined _QED
  !
  ! SC and RT common
@@ -706,7 +710,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &            Efield(i_field)%intensity,unit=I_unit)
      call it(defs,trim(name)//'_Width',           '[RT '//trim(name)//'] Width',&
 &            Efield(i_field)%width,unit=Time_unit(1))
-     call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (alternative to Width)',&
+     call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (overwrite width if set)',&
 &            Efield(i_field)%FWHM,unit=Time_unit(1),verb_level=V_real_time)
      call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
 &            Efield(i_field)%ef_name,verb_level=0)
@@ -719,16 +723,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
 &            Efield(i_field)%t_initial,unit=Time_unit(1))
      !
-     if (initmode==4.and.n_ext_fields==0) then
+     if (initmode==4) then
+       !
        call parser(trim(name)//'_FWHM',is_def)
-       if (is_def) then
-         Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
-       else
-         Efield(i_field)%FWHM=Efield(i_field)%width*(2._SP*sqrt(2._SP*log(2._SP)))
-       endif
-       call parser(trim(name)//'_Int',is_def)
-       if (i_field==1) n_ext_fields=0
-       if (is_def.and.Efield(i_field)%intensity*AU2KWCMm2>0.) n_ext_fields=n_ext_fields+1
+       if (     is_def) Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
+       if (.not.is_def) Efield(i_field)%FWHM=Efield(i_field)%width*(2._SP*sqrt(2._SP*log(2._SP)))
+       !
+       if (trim(Efield(i_field)%ef_name)/='none') n_ext_fields=n_ext_fields+1
+       !
      endif
      !
    end subroutine

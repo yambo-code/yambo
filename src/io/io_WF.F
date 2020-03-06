@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -83,8 +83,8 @@ integer function io_WF(ID,wf,wf_d)
    io_WF=io_header(ID,IMPOSE_SN=.true.,FRAG=frag_WF)
    !
    call io_elemental(ID, VAR="BAND_GROUPS",VAR_SZ=2,MENU=0)
-   call io_elemental(ID, VAR=" Bands in each block             :",I0=wf_nb_io)
-   call io_elemental(ID, VAR=" Blocks                          :",I0=wf_nb_io_groups)
+   call io_elemental(ID, VAR=" Bands in each block              ",I0=wf_nb_io)
+   call io_elemental(ID, VAR=" Blocks                           ",I0=wf_nb_io_groups)
    call io_elemental(ID, VAR="",VAR_SZ=0)
    !
    if (io_WF/=0) goto 1

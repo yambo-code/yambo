@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -47,7 +47,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2)
  real(SP)              :: io_Time,tmp_lifetimes(6),data_to_plot(9),k_al(3),k_cc(3)
  character(schlen)     :: titles(9),specs(9,2),dumb_ch(2)
- character(lchlen)     :: output_fname_short,output_fname(RT_carriers%nstates)
+ character(lchlen)     :: output_fname(RT_carriers%nstates)
  character(3)          :: ch3_dummy
  logical               :: l_elph_lifetimes,do_state(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol)
  !
@@ -143,10 +143,10 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      !
      if (.not.do_state(ib,ik,i_spin)) cycle
      !
-     output_fname_short='YPP-RT_occupations_k'//trim(intc(ik))//'_kRT'//trim(intc(ik_RT))//'_b'//trim(intc(ib))
-     if (i_T==1) output_fname(i_RT)=output_fname_short
-     !
-     call open_file()
+     if (i_T==1) then
+       output_fname(i_RT)='YPP-RT_occupations_k'//trim(intc(ik))//'_kRT'//trim(intc(ik_RT))//'_b'//trim(intc(ib))
+       call open_file()
+     endif
      !
      data_to_plot(1)=io_TIME/FS2AUT
      data_to_plot(2)=RT_carriers%delta_f(i_RT)
@@ -166,9 +166,9 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        data_to_plot(  n_gamma+3)=RT_carriers%NEQ_Lifetime(i_RT)*HA2EV*1000._SP
      endif
      !
-     call msg('o '//trim(output_fname_short),'',data_to_plot(:n_gamma+3),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(output_fname(i_RT)),'',data_to_plot(:n_gamma+3),INDENT=-2,USE_TABS=.true.)
      !
-     call of_open_close(output_fname(i_RT))
+     if(i_T==n_T_steps) call of_open_close(output_fname(i_RT))
      !
    enddo
    !
@@ -183,21 +183,16 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    !
    subroutine open_file()
      !
-     if (i_T> 1) then
-       call of_open_close(output_fname(i_RT),'oa')
-       return
-     endif
-     !
      call of_open_close(output_fname(i_RT),'ot')
      !
-     call msg('o '//trim(output_fname_short),'#')
+     call msg('o '//trim(output_fname(i_RT)),'#')
      !
      ! Kpt on the Coarse Grid
      !========================
      call c2a(v_in=kpt%pt(ik,:),v_out=k_cc,mode='ki2c')
      call c2a(v_in=kpt%pt(ik,:),v_out=k_al,mode='ki2a')
      ! 
-     dumb_ch(1)='K ['//trim(intc(ik))//'] : '//trim(real2ch(k_cc(1)))//' '//&
+     dumb_ch(1)='K ['//trim(intc(ik))//']  '//trim(real2ch(k_cc(1)))//' '//&
 &                                              trim(real2ch(k_cc(2)))//' '//&
 &                                              trim(real2ch(k_cc(3)))//' ( cc) '
      dumb_ch(2)='        '//trim(real2ch(k_al(1)))//' '//&
@@ -208,16 +203,16 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      if(ik> 99) dumb_ch(2)=' '//trim(dumb_ch(2))
      if(ik>999) dumb_ch(2)=' '//trim(dumb_ch(2))
      ! 
-     call msg('o '//trim(output_fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(output_fname_short),"#",trim(dumb_ch(2)),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(output_fname_short),"#")
+     call msg('o '//trim(output_fname(i_RT)),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o '//trim(output_fname(i_RT)),"#",trim(dumb_ch(2)),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o '//trim(output_fname(i_RT)),"#")
      !
      ! Kpt on the Fine Grid
      !======================
      call c2a(v_in=RT_carriers%kpt(ik_RT,:),v_out=k_cc,mode='ki2c')
      call c2a(v_in=RT_carriers%kpt(ik_RT,:),v_out=k_al,mode='ki2a')
      !
-     dumb_ch(1)='K_FGd ['//trim(intc(ik_RT))//'] : '//trim(real2ch(k_cc(1)))//' '//&
+     dumb_ch(1)='K_FGd ['//trim(intc(ik_RT))//']  '//trim(real2ch(k_cc(1)))//' '//&
 &                                                     trim(real2ch(k_cc(2)))//' '//&
 &                                                     trim(real2ch(k_cc(3)))//' ( cc) '
      !
@@ -230,29 +225,29 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      if(ik_RT> 999) dumb_ch(2)=' '//trim(dumb_ch(2))
      if(ik_RT>9999) dumb_ch(2)=' '//trim(dumb_ch(2))
      !
-     call msg('o '//trim(output_fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(output_fname_short),"#",trim(dumb_ch(2)),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(output_fname_short),"#")
+     call msg('o '//trim(output_fname(i_RT)),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o '//trim(output_fname(i_RT)),"#",trim(dumb_ch(2)),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o '//trim(output_fname(i_RT)),"#")
      !
      if(n_spinor==2) then
        dumb_ch(1)=" Spin factors  [up,dw]   :     "//trim(real2ch(spin_factors(ib,ik,1)))//&
 &                                           "     "//trim(real2ch(spin_factors(ib,ik,2)))
-       call msg('o '//trim(output_fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
-       call msg('o '//trim(output_fname_short),"#")
+       call msg('o '//trim(output_fname(i_RT)),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(output_fname(i_RT)),"#")
        dumb_ch(1)=" Magn factor [Mx, My, Mz]: "//trim(real2ch(magn_factors(ib,ik,1)))//&
 &                                           " "//trim(real2ch(magn_factors(ib,ik,2)))//&
 &                                           " "//trim(real2ch(magn_factors(ib,ik,3)))
-       call msg('o '//trim(output_fname_short),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
-       call msg('o '//trim(output_fname_short),"#")
+       call msg('o '//trim(output_fname(i_RT)),"#",trim(dumb_ch(1)),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(output_fname(i_RT)),"#")
      endif
      !
      if (l_elel_scatt.or.l_elph_lifetimes) then
-       call msg('o '//trim(output_fname_short),'#',specs(:n_output,1),INDENT=0,USE_TABS=.TRUE.)
-       call msg('o '//trim(output_fname_short),'#',specs(:n_output,2),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(output_fname(i_RT)),'#',specs(:n_output,1),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(output_fname(i_RT)),'#',specs(:n_output,2),INDENT=0,USE_TABS=.TRUE.)
      endif
      !
-     call msg('o '//trim(output_fname_short),'#',titles(:n_output),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(output_fname_short),'#')
+     call msg('o '//trim(output_fname(i_RT)),'#',titles(:n_output),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o '//trim(output_fname(i_RT)),'#')
      !
    end subroutine open_file
    !

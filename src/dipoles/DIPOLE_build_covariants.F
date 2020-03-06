@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA, DS
@@ -28,16 +28,13 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  use pars,           ONLY:SP,cI,cZERO,pi
  use LIVE_t,         ONLY:live_timing
- use interfaces,     ONLY:WF_load,PARALLEL_WF_distribute,WF_free,PARALLEL_WF_index
- use wave_func,      ONLY:WF
  use electrons,      ONLY:levels,n_sp_pol
  use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S,DIP_iR,DIP_v
  use R_lattice,      ONLY:bz_samp,k_map
  use vec_operate,    ONLY:k_periodic_idx
  use matrix_operate, ONLY:hermitian
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
-&                         PAR_DIPk_nbz,PAR_IND_OVLPk_ibz,&
-&                         PAR_IND_CON_BANDS_DIP, PAR_IND_VAL_BANDS_DIP
+&                         PAR_DIPk_nbz,PAR_IND_CON_BANDS_DIP, PAR_IND_VAL_BANDS_DIP
  use com,            ONLY:msg
  use D_lattice,      ONLY:a
  use parser_m,       ONLY:parser
@@ -62,8 +59,6 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  complex(SP) :: Wop(Dip%ib(2),Dip%ib(2),2),DIP_tmp(6,Dip%ib(2),Dip%ib(2))
  complex(SP) :: S_tmp(Dip%ib(2),Dip%ib(2),2)
  !
- integer           :: ID
- !
  if (Xen%nbf/=Xen%nbm) call error(' Covariant dipoles not implemented for metals')
  !
  call parser('EvPolarization'  ,l_eval_polarization)
@@ -71,12 +66,6 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  if(.not.allocated(k_map%k_map_dir)) call k_map_nearest_by_dir(Xk,k_map)
  if(.not.allocated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
- !
- call PARALLEL_WF_distribute(K_index=PAR_IND_OVLPk_ibz,CLEAN_UP=.TRUE.)
- !
- call PARALLEL_WF_index( )
- !
- call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
  !
  ! Notice that DIP_S is defined in the BZ       
  !
@@ -92,7 +81,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  if(any(k_map%max_kdir(:)>=6.and..not.l_force_SndOrd)) &
  &   call msg('rs','Using forth order approximation for covariant dipoles')
  !
- call live_timing('Covariant Dipoles:',PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*n_sp_pol)
+ call live_timing('Covariant Dipoles',PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*n_sp_pol)
  !
  ! Notice that DIP_iR/DIP_v are defined only in the IBZ
  ! while the overlaps are in the BZ 
@@ -214,8 +203,6 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
 #if defined _NL
  if(l_eval_polarization) call POLARIZATION_output(Xen,Xk,Dip)
 #endif
- !
- call WF_free(WF)
  !
  if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
  !

@@ -112,7 +112,6 @@ subroutine k_grids(en,k,Xk,q)
      endif
      !
      ik_near=k_the_nearest(v,Xk%ptbz,Xk%nbz,k_dist=K_dist,i_err=i_err)
-     write (*,*) ik,ik_near,Xk%ptbz(28,:)
      !
      call msg('s','User point    [iku]',v)
      if (i_err==0) then
@@ -130,7 +129,6 @@ subroutine k_grids(en,k,Xk,q)
      endif
      !
    enddo
-stop
    !
    call msg("s",'User K-points ',USER_k%nbz)
    !

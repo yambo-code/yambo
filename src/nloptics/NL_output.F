@@ -30,7 +30,6 @@ subroutine NL_output(i_time,i_freq)
  use stderr,       ONLY:intc
  use real_time,    ONLY:NE_steps,RT_step
  use nl_optics,    ONLY:NL_er,NL_estep,VERB_LOW,NL_verbosity,NL_J,l_eval_CURRENT,NL_P
- use stderr,       ONLY:set_real_printed_length
  !
  implicit none
  !
@@ -44,8 +43,6 @@ subroutine NL_output(i_time,i_freq)
  integer            :: n_files,n_headings(4),i_f
  !
  if(NL_verbosity==VERB_LOW) return
- !
- call set_real_printed_length(f_length=18,g_length=18)
  !
  file_name(1)='external_potential_F'//intc(i_freq)
  file_name(2)='polarization_F'//intc(i_freq)
@@ -129,7 +126,5 @@ subroutine NL_output(i_time,i_freq)
      call of_open_close(trim(short_file_name(i_f)))
    enddo
  endif
- !
- call set_real_printed_length()
  !
 end subroutine NL_output

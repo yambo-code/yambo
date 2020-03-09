@@ -232,7 +232,6 @@ contains
      use RT_control,     ONLY:RT_output
      use com,            ONLY:msg,of_open_close
      use vec_operate,    ONLY:sort
-     use stderr,         ONLY:set_real_printed_length
      use nl_optics,      ONLY:n_NL_descriptions,NL_description
      !
      ! Working Space
@@ -258,8 +257,6 @@ contains
      do i_order=0,X_order,1
        !
        X_file_name="YPP-X_probe_order_"//trim(intc(i_order))
-       !
-       call set_real_printed_length(f_length=15,g_length=15)
        !
        call of_open_close(trim(X_file_name),'ot')
        !
@@ -295,8 +292,6 @@ contains
        enddo 
        !
        call of_open_close(trim(X_file_name))
-       !
-       call set_real_printed_length()
        !
      enddo
      !

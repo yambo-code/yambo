@@ -54,7 +54,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  real(SP)              :: X_tmp_var(10)
  integer               :: V_kind_disk,i_desc,i_var,i_coll_loop,io_err,i_coll,SIZE_
  !
- character(schlen), external :: desc_to_varname
+ integer, external     :: io_descriptors
  !
  ! Collision element...
  !

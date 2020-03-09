@@ -25,7 +25,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use drivers,        ONLY:l_use_Hxc_collisions
- use stderr,         ONLY:set_real_printed_length
  use QP_m,           ONLY: QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels
@@ -75,8 +74,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  call section('+','Initialization')
  !#################################
- !
- call set_real_printed_length(f_length=10,g_length=10)  
  !
  ! Initialize
  !=========
@@ -273,7 +270,5 @@ subroutine NL_driver(E,X,k,q,Dip)
  call DIP_alloc('DIP_S')
  call DIP_alloc('DIP_R')
  call DIP_alloc('DIP_v')
- !
- call set_real_printed_length()
  !
 end subroutine NL_driver

@@ -33,8 +33,9 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
 &                    use_GreenF_to_eval_QP,Vnlxc_kind,report_Vxc,&
 &                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral,&
 &                    QP_states_simmetrize,QP_G_info,Time_of
- use stderr,    ONLY:set_real_printed_length
+ !
  implicit none
+ !
  type(QP_t)   ::qp
  type(levels) ::en
  integer      ::QPdb_read_err
@@ -222,11 +223,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      if (qp_isp==1) values(14)= 1._SP
      if (qp_isp==2) values(14)=-1._SP
      !
-     if (l_elph_corr) call set_real_printed_length(f_length=10,g_length=10)
-     !
      call msg('o '//what,'',values(titles_order(:ntitles)),INDENT=-2,USE_TABS=.TRUE.)
-     !
-     if (l_elph_corr) call set_real_printed_length( )
      !
    enddo
    !
@@ -235,8 +232,6 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  else if (trim(QP_solver)=='g') then
    !
    call QP_states_simmetrize(en,state_is_2do=state_is_2do)
-   !
-   call set_real_printed_length(f_length=12,g_length=12)
    !
    do  i1=1,QP_n_states
      !
@@ -277,8 +272,6 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      enddo
      call of_open_close(G_Sc_name)
    enddo
-   !
-   call set_real_printed_length()
    !
  endif
  !

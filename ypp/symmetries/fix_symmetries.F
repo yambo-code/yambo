@@ -27,7 +27,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  use com,                 ONLY:msg
  use parser_m,            ONLY:parser
  use matrix_operate,      ONLY:m3det
- use stderr,              ONLY:intc,set_real_printed_length
+ use stderr,              ONLY:intc
  use YPPm,                ONLY:E_field,B_theta,B_psi,B_field
  use electrons,           ONLY:n_spinor,Spin_magn
  use R_lattice,           ONLY:rl_sop
@@ -354,8 +354,6 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  if(i_time_rev==1)&
 & call msg('s',trim(intc(old_trev_nsym))//' T-rev symmetries reduced/increased to ...'//trim(intc(nsym-spatial_nsym)))
  !
- call set_real_printed_length(f_length=7,g_length=8)
- !
  call msg('s','[Symm] Spatial simmetries now are')  
  do is=1,spatial_nsym
    call msg('s','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))
@@ -366,8 +364,6 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
      call msg('s','[S*'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
    enddo
  endif
- !
- call set_real_printed_length()
  !
  ! Remap Inversion symmetry index
  !

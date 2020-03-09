@@ -26,7 +26,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use units,          ONLY:FS2AUT,SP,HA2EV
  use pars,           ONLY:schlen,lchlen
- use stderr,         ONLY:intc,real2ch,set_real_printed_length
+ use stderr,         ONLY:intc,real2ch
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,n_sp_pol,n_spinor
  use QP_m,           ONLY:QP_table,QP_n_states
@@ -65,8 +65,6 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  endif
  !
  l_elph_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel
- !
- call set_real_printed_length(f_length=10,g_length=10)
  !
  ch3_dummy=" "
  !
@@ -176,8 +174,6 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  YAMBO_FREE(spin_factors)
  YAMBO_FREE(magn_factors)
- !
- call set_real_printed_length()
  !
  contains
    !

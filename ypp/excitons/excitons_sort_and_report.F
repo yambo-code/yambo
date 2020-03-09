@@ -26,7 +26,7 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  use pars,          ONLY:SP,schlen,pi
  use units,         ONLY:HA2EV
  use electrons,     ONLY:spin_occ,spin,E_SOC_nbands,n_sp_pol,n_spinor
- use stderr,        ONLY:intc,set_real_printed_length
+ use stderr,        ONLY:intc
  use BS_solvers,    ONLY:BSS_desc,BSS_n_eig
  use com,           ONLY:msg,of_open_close
  use R_lattice,     ONLY:d3k_factor,q0_def_norm
@@ -51,8 +51,6 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  ! Excitonc amplitude
  !
  character(3), parameter:: R_normalize="yes"
- !
- call set_real_printed_length(f_length=15,g_length=15)
  !
  write_spin    = present(EXC_spin)
  write_widths  = any(abs(aimag(BS_E))>1.E-5)
@@ -199,7 +197,5 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
    call of_open_close(ch_dummy)
    !
  enddo
- !
- call set_real_printed_length( )
  !
 end subroutine

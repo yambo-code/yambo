@@ -420,21 +420,21 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  call of_open_close(trim(file_name))
  !
  ! DEBUG <
- do ik=1,RT_nk
-   !
-   if(ik>99) cycle
-   !
-   do i_dT=1,RT_conf%T_n_steps
-     write(100+ik,*) RT_time(i_dT)/FS2AUT,&
-     &  real(GreenF_T_and_W%F_T(i_dT,ik),SP),real(-cI*GreenF_T_and_W%F_T(i_dT,ik),SP)
-   enddo
-   !
-   do i_w=1,RT_conf%W_n_steps
-     write(200+ik,*) real(GreenF_T_and_W%W(i_w))*HA2EV,&
-     & real(-cI*GreenF_T_and_W%F_W(i_w,ik),SP),real(GreenF_T_and_W%F_W(i_w,ik),SP)
-   enddo
-   !
- enddo
+ !do ik=1,RT_nk
+ !  !
+ !  if(ik>99) cycle
+ !  !
+ !  do i_dT=1,RT_conf%T_n_steps
+ !    write(100+ik,*) RT_time(i_dT)/FS2AUT,&
+ !    &  real(GreenF_T_and_W%F_T(i_dT,ik),SP),real(-cI*GreenF_T_and_W%F_T(i_dT,ik),SP)
+ !  enddo
+ !  !
+ !  do i_w=1,RT_conf%W_n_steps
+ !    write(200+ik,*) real(GreenF_T_and_W%W(i_w))*HA2EV,&
+ !    & real(-cI*GreenF_T_and_W%F_W(i_w,ik),SP),real(GreenF_T_and_W%F_W(i_w,ik),SP)
+ !  enddo
+ !  !
+ !enddo
  ! DEBUG >
  !
 end subroutine RT_G_two_times_build

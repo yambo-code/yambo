@@ -96,7 +96,7 @@ module com
    complex(SP)       :: cval(n_MAX_descs)
    !
    character(schlen) :: sval(n_MAX_descs)
-   logical(SP)       :: lval(n_MAX_descs)
+   logical           :: lval(n_MAX_descs)
    !
  end type
  !

@@ -109,9 +109,12 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !==============================
  call QP_SET_temperature_pre_factor( )
  !
- qp%n_descs=1
+ qp%desc%n=1
+ qp%desc%kind(1)='s'
+ qp%desc%size(1)=1
+ qp%desc%str(1)=' GW solver              '
  if (trim(QP_solver)=='n') then
-   qp%desc_string(1)=' GW solver              : Newton'
+   qp%desc%sval(1)='Newton'
    call section('*','Dyson equation: Newton solver')
  else if (trim(QP_solver)=='s') then
    !
@@ -123,11 +126,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
      call warning("Self-consistent GW not compatible with 'secant solver' turned off")
    endif
    !
-   qp%desc_string(1)=' GW solver              : Secant'
+   qp%desc%sval(1)='Secant'
    call section('*','Dyson equation: non perturbative QP_secant method')
    !
  else if (trim(QP_solver)=='g') then
-   qp%desc_string(1)=' GW solver              : Full Green`s function'
+   qp%desc%sval(1)='Full Green`s function'
    call section('*','Dyson equation: full Green`s function')
    call msg('r', '[Green] Sc steps                                         ',QP_Sc_steps)
    call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]',QP_G_er*HA2EV)
@@ -142,15 +145,16 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    return
    !
  endif
- qp%n_descs=3
+ qp%desc%n=3
  if (l_ppa) then
    !
-   qp%desc_string(2)=' == PPA-GN GW =='
-   qp%desc_string(3)=' '
-   qp%desc_string(4)=' PPA imaginary pt   [ev]'
-   qp%desc_values(1,4)=X%ppaE*HA2EV
-   qp%desc_n_values(4)=1
-   qp%n_descs=4
+   qp%desc%str(2)=' == PPA-GN GW =='
+   qp%desc%str(3)=' '
+   qp%desc%str(4)=' PPA imaginary pt   [ev]'
+   qp%desc%rval(1,4)=X%ppaE*HA2EV
+   qp%desc%size(4)=1
+   qp%desc%kind(4)='r'
+   qp%desc%n=4
    !
    QP_DB_kind=QP_SE_GoWo_PPA
    !
@@ -167,17 +171,17 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    endif
    if(GW_iterations/=0) call error('Self-consistent COHSEX not implemented yet')
    !
-   qp%desc_string(2)=' == COHSEX GW =='
-   qp%desc_string(3)=' '
+   qp%desc%str(2)=' == COHSEX GW =='
+   qp%desc%str(3)=' '
    !
    QP_DB_kind=QP_SE_COHSEX
    !
  else
    !
-   if (l_elel_corr)     qp%desc_string(2)=' == Real Axis GW =='
-   if (l_elph_corr)     qp%desc_string(2)=' == El-Ph Self-Energy =='
-   if (l_elphoton_corr) qp%desc_string(2)=' == Lamb Shift =='
-   qp%desc_string(3)=' '
+   if (l_elel_corr)     qp%desc%str(2)=' == Real Axis GW =='
+   if (l_elph_corr)     qp%desc%str(2)=' == El-Ph Self-Energy =='
+   if (l_elphoton_corr) qp%desc%str(2)=' == Lamb Shift =='
+   qp%desc%str(3)=' '
    !
    ! Here I am not considering the case where ELPH + GW is used.
    ! For this case I need to create a new global KIND.
@@ -219,7 +223,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  ! In lifetimes calculations  the X db may be not
  ! present. So I need to define some variables that 
- ! must be correctly written in the QP_desc_string(s) / QP_desc_values(s)
+ ! must be correctly written in the QP%desc(s)
  !
  if (l_life) then
    call X_pre_setup(Xen,X)

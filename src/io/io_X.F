@@ -26,7 +26,7 @@ integer function io_X(X,Xw,ID)
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:g_vec
- use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_desc_var,X_desc_str,X_desc_size,X_alloc
+ use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_desc,X_alloc
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
 &                        io_elemental,io_status,io_bulk,&
@@ -108,7 +108,7 @@ integer function io_X(X,Xw,ID)
    ! Global Descriptions
    !=====================
    !
-   io_X=variables_X(ID,X_desc_var,X_desc_str,X_desc_size,X)
+   io_X=variables_X(ID,X_desc,X)
    if (io_X/=0) goto 1
    !
    ! When the SN is different and I am importing this DB 

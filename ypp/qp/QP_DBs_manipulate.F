@@ -99,12 +99,7 @@ subroutine QP_DBs_manipulate( E )
    if (index(QP_db_what(i_db),"Z")>0) plan_EWZG(i_db,3)=.TRUE.
    if (index(QP_db_what(i_db),"G")>0) plan_EWZG(i_db,4)=.TRUE.
    !
-   do i_d=1,QP_db(i_db)%n_descs
-     mesg='[DB #'//trim(intc(i_db))//']'//trim(QP_db(i_db)%desc_string(i_d))
-     n_val=QP_db(i_db)%desc_n_values(i_d)
-     if (n_val==0) call msg('s',mesg)
-     if (n_val> 0) call msg('s',mesg,QP_db(i_db)%desc_values(1:n_val,i_d))
-   enddo
+   call COM_write_desc('s','[DB #'//trim(intc(i_db))//']',QP_db(i_db)%desc)
    !
    if (i_db==n_QP_dbs) call msg('s',repeat("-",len_trim(QP_db_name(i_db))+13))
    !
@@ -129,18 +124,13 @@ subroutine QP_DBs_manipulate( E )
    !
    QP_db_kind=" "
    call msg('s',repeat("-",60))
-   do i_d=1,qp(i_qp)%n_descs
-     if (index(qp(i_qp)%desc_string(i_d),"Real Axis GW")>0)  QP_db_kind=trim(QP_db_kind)//"_gw_real_axis"
-     if (index(qp(i_qp)%desc_string(i_d),"El-Ph Self-Energy")>0)  QP_db_kind=trim(QP_db_kind)//"_el_ph"
-     if (index(qp(i_qp)%desc_string(i_d),"PPA imaginary")>0)  QP_db_kind=trim(QP_db_kind)//"_gw_ppa"
+   do i_d=1,qp(i_qp)%desc%n
+     if (index(qp(i_qp)%desc%str(i_d),"Real Axis GW")>0)       QP_db_kind=trim(QP_db_kind)//"_gw_real_axis"
+     if (index(qp(i_qp)%desc%str(i_d),"El-Ph Self-Energy")>0)  QP_db_kind=trim(QP_db_kind)//"_el_ph"
+     if (index(qp(i_qp)%desc%str(i_d),"PPA imaginary")>0)      QP_db_kind=trim(QP_db_kind)//"_gw_ppa"
    enddo
    QP_merged_name='QP_merged_'//trim(intc(i_qp))//trim(QP_db_kind)
-   do i_d=1,qp(i_qp)%n_descs
-     mesg='['//trim(QP_merged_name)//']'//trim(qp(i_qp)%desc_string(i_d))
-     n_val=qp(i_qp)%desc_n_values(i_d)
-     if (n_val==0) call msg('s',mesg)
-     if (n_val> 0) call msg('s',mesg,qp(i_qp)%desc_values(1:n_val,i_d))
-   enddo
+   call COM_write_desc('s','['//trim(QP_merged_name)//']',qp(i_qp)%desc)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
    i_err=io_QP_and_GF(trim(QP_merged_name),qp(i_qp),ID)
    !

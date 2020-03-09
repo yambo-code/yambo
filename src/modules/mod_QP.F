@@ -23,7 +23,8 @@
 !
 module QP_m
  !
- use pars,      ONLY:SP,schlen,max_qp_descs
+ use IO_m,           ONLY:IO_desc,IO_desc_duplicate,IO_desc_reset
+ use pars,           ONLY:SP,schlen
  !
 #include<memory.h>
  !
@@ -98,19 +99,17 @@ module QP_m
  !
  type QP_t
    !
-   character(schlen)  :: desc_string(max_qp_descs)
-   integer            :: desc_n_values(max_qp_descs)
-   real(SP)           :: desc_values(2,max_qp_descs)
    integer,    allocatable:: table(:,:)
    real(SP)   ,allocatable:: k(:,:)
    real(SP)   ,allocatable:: wk(:)
    real(SP)   ,allocatable:: E_bare(:)
    complex(SP),allocatable:: E(:)
    complex(SP),allocatable:: Z(:)
-   integer  :: n_descs
    integer  :: nk
    integer  :: nb
    integer  :: n_states
+   !
+   type(IO_desc) :: desc
    !
    ! Green Function and Self-Energy
    !
@@ -193,6 +192,7 @@ module QP_m
    subroutine QP_copy(qp_in,qp,what,OP,pre_factor)
      use pars,      ONLY:SP,cI,rONE,rZERO
      use electrons, ONLY:n_sp_pol
+     use IO_m,      ONLY:IO_desc_duplicate
      type(QP_t)   ::qp_in,qp
      character(*) ::what,OP
      real(SP)     ::pre_factor,operation
@@ -200,12 +200,9 @@ module QP_m
      if (OP=="-") operation =-1.
      qp%nk=qp_in%nk
      qp%nb=qp%nb
-     qp%n_descs=qp_in%n_descs
      qp%n_states=qp_in%n_states
      qp%GreenF_n_steps=qp_in%GreenF_n_steps
-     qp%desc_string  =qp_in%desc_string
-     qp%desc_n_values=qp_in%desc_n_values
-     qp%desc_values  =qp_in%desc_values
+     call IO_desc_duplicate(qp_in%desc,qp%desc)
      YAMBO_ALLOC(qp%k,(qp%nk,3))
      YAMBO_ALLOC(qp%table,(qp%n_states,3+n_sp_pol-1))
      YAMBO_ALLOC(qp%wk,(qp%nk))
@@ -259,11 +256,9 @@ module QP_m
      type(QP_t)::qp
      qp%nk=0
      qp%nb=0
-     qp%n_descs=0
      qp%n_states=0
      qp%GreenF_n_steps=0
-     qp%desc_n_values=0
-     qp%desc_string=' '
+     call IO_desc_reset(qp%desc)
      YAMBO_FREE(qp%table)
      YAMBO_FREE(qp%k)
      YAMBO_FREE(qp%wk)

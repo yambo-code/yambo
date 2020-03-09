@@ -27,7 +27,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
 &                       D0, DB_D0, C0, DB_C0, &
 &                       L0, DB_L0,            &
 &                       CH0,DB_CH0,           &
-&                       UNIT,DESC_STR,DESC_VAR,DO_NOT_DUMP)
+&                       UNIT,DESCRIPTOR,DO_NOT_DUMP)
  !
  use pars,          ONLY:SP,DP,schlen,lchlen
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
@@ -38,7 +38,9 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                  io_status,DUMP,REP,LOG,NO_VAR,io_com,io_file,&
-&                  io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR
+&                  io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR,&
+&                  IO_desc
+ !
  implicit none
  !
  integer               :: ID
@@ -51,8 +53,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  complex(SP), optional :: DB_C0
  logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
  character(*),optional :: CH0,DB_CH0
- character(lchlen),optional :: DESC_STR
- real(SP),         optional :: DESC_VAR(:)
+ type(IO_desc),optional:: DESCRIPTOR
  !
  ! Work Space
  !
@@ -110,8 +111,15 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR
-   if (present(DESC_VAR)) DESC_VAR(1)=real(I0,SP)
+   if (present(DESCRIPTOR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n)   = 1
+     DESCRIPTOR%kind(DESCRIPTOR%n)   = 'i'
+     DESCRIPTOR%str(DESCRIPTOR%n)    = VAR
+     DESCRIPTOR%ival(1,DESCRIPTOR%n) = I0
+     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(1:1,DESCRIPTOR%n) = OP
+   endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+1
    !
@@ -147,8 +155,15 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR
-   if (present(DESC_VAR)) DESC_VAR(:size(I1))=real(I1,SP)
+   if (present(DESCRIPTOR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n)   = size(I1)
+     DESCRIPTOR%kind(DESCRIPTOR%n)   = 'i'
+     DESCRIPTOR%str(DESCRIPTOR%n)    = VAR
+     DESCRIPTOR%ival(1:size(I1),DESCRIPTOR%n) = I1
+     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(1:size(I1),DESCRIPTOR%n) = OP
+   endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+size(I1)
  endif
@@ -183,8 +198,15 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR
-   if (present(DESC_VAR)) DESC_VAR(1)=R0*local_unit
+   if (present(DESCRIPTOR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n)   = 1
+     DESCRIPTOR%kind(DESCRIPTOR%n)   = 'r'
+     DESCRIPTOR%str(DESCRIPTOR%n)    = VAR
+     DESCRIPTOR%rval(1,DESCRIPTOR%n) = R0*local_unit
+     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(1:1,DESCRIPTOR%n) = OP
+   endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+1
    !
@@ -220,8 +242,15 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR
-   if (present(DESC_VAR)) DESC_VAR(:size(R1))=R1*local_unit
+   if (present(DESCRIPTOR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n)   = size(R1)
+     DESCRIPTOR%kind(DESCRIPTOR%n)   = 'r'
+     DESCRIPTOR%str(DESCRIPTOR%n)    = VAR
+     DESCRIPTOR%rval(1:size(R1),DESCRIPTOR%n) = R1*local_unit
+     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(:size(R1),DESCRIPTOR%n) = OP
+   endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+size(R1)
  endif
@@ -256,8 +285,15 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR
-   if (present(DESC_VAR)) DESC_VAR(1)=real(D0,SP)*local_unit
+   if (present(DESCRIPTOR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n) = 1
+     DESCRIPTOR%kind(DESCRIPTOR%n) = 'd'
+     DESCRIPTOR%str(DESCRIPTOR%n)  = VAR
+     DESCRIPTOR%dval(DESCRIPTOR%n) = D0
+     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(1:1,DESCRIPTOR%n) = OP
+   endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+1
    !
@@ -299,8 +335,15 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR
-   if (present(DESC_VAR)) DESC_VAR(1:2)=(/real(C0,SP),aimag(C0)/)*local_unit
+   if (present(DESCRIPTOR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n) = 1
+     DESCRIPTOR%kind(DESCRIPTOR%n) = 'c'
+     DESCRIPTOR%str(DESCRIPTOR%n)  = VAR
+     DESCRIPTOR%cval(DESCRIPTOR%n) = C0*local_unit
+     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(1:1,DESCRIPTOR%n) = OP
+   endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+2
    !
@@ -339,10 +382,14 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR
-   if (present(DESC_VAR)) then
-     if (     L0) DESC_VAR(1)=1._SP
-     if (.not.L0) DESC_VAR(1)=0._SP
+   if (present(DESCRIPTOR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n) = 1
+     DESCRIPTOR%kind(DESCRIPTOR%n) = 'l'
+     DESCRIPTOR%str(DESCRIPTOR%n)  = VAR
+     DESCRIPTOR%lval(DESCRIPTOR%n) = L0
+     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(1:1,DESCRIPTOR%n) = OP
    endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+1
@@ -379,8 +426,15 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR//" : "//trim(db_ch(1))
-   if (present(DESC_VAR)) DESC_VAR(1)=NO_VAR
+   if (present(DESCRIPTOR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n) = 1
+     DESCRIPTOR%kind(DESCRIPTOR%n) = 's'
+     DESCRIPTOR%str(DESCRIPTOR%n)  = VAR
+     DESCRIPTOR%sval(DESCRIPTOR%n) = CH0
+     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(1:1,DESCRIPTOR%n) = OP
+   endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+len(db_ch(1))
  endif

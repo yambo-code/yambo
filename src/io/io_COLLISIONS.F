@@ -36,7 +36,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
 &                        H_SE_FOCK,H_SE_COH,H_SE_SEX,H_SE_HARTREE
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH,SC_band_mixing,QP_QED_ng
- use X_m,           ONLY:n_X_descs,X_desc_var,X_desc_str,X_desc_size
+ use X_m,           ONLY:X_desc
  use stderr,        ONLY:intc
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
  use timing_m,      ONLY:timing
@@ -160,28 +160,17 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      ! Global Response Descriptions
      !==============================
      call io_elemental(ID,VAR="N_X_descriptions",VAR_SZ=1,MENU=0)
-     if (n_X_descs> 0) call io_elemental(ID,I0=n_X_descs,CHECK=.true.,OP=(/"=="/))
-     if (n_X_descs==0) then
-       call io_elemental(ID,DB_I0=n_X_descs,I0=n_X_descs)
-       n_X_descs=-n_X_descs
+     if (X_desc%n> 0) call io_elemental(ID,I0=X_desc%n,CHECK=.true.,OP=(/"=="/))
+     if (X_desc%n==0) then
+       call io_elemental(ID,DB_I0=X_desc%n,I0=X_desc%n)
+       X_desc%n=-X_desc%n
      endif
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
      ! In this case I have loaded the em1s DB and I know the parameters.
      ! I can, therefore, write/read and/or VERIFIY the values
      !
-     do i_var=1,10
-       X_OPS(i_var)="=="
-     enddo
-     !
-     do i_desc=1,iabs(n_X_descs)
-       !
-       call def_variable_elemental(ID,trim(desc_to_varname(X_desc_str(i_desc))),X_desc_size(i_desc),SP,0)
-       !call io_variable_elemental(ID,DB_R1=X_desc_var(:X_desc_size(i_desc)),R1=X_desc_var(:X_desc_size(i_desc),i_desc),&
-       call io_variable_elemental(ID,R1=X_desc_var(:X_desc_size(i_desc),i_desc),&
-       &                             VAR=X_desc_str(i_desc)(1:35),CHECK=(n_X_descs>0),OP=X_OPS(:X_desc_size(i_desc)) )
-       !
-     enddo
+     io_COLLISIONS=io_descriptors(X_desc,ID)
      !
      call io_elemental(ID,VAR="RIM_PARAMETERS",VAR_SZ=2,MENU=0)
      call io_elemental(ID,I0=RIM_ng,VAR=        ' RIM RL components      ',WARN=.true.)

@@ -74,12 +74,17 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
      !
      call QP_copy(qp2merge(i_db), qp( n_GROUNDS ), WHAT, trim(OP(i_db)),PRE_FAC(i_db) )
      !
-     qp( n_GROUNDS )%n_descs=qp2merge(i_db)%n_descs+1
-     qp( n_GROUNDS )%desc_string( 1 )="--- DB#"//trim(intc(i_db))//" descriptions ---"
-     do i_d=1,qp2merge(i_db)%n_descs
-       qp( n_GROUNDS )%desc_string( i_d+1 )= qp2merge(i_db)%desc_string(i_d)
-       qp( n_GROUNDS )%desc_n_values( i_d+1 )= qp2merge(i_db)%desc_n_values(i_d)
-       qp( n_GROUNDS )%desc_values(:, i_d+1 )= qp2merge(i_db)%desc_values(:,i_d)
+     qp( n_GROUNDS )%desc%n=qp2merge(i_db)%desc%n+1
+     qp( n_GROUNDS )%desc%str( 1 )="--- DB#"//trim(intc(i_db))//" descriptions ---"
+     do i_d=1,qp2merge(i_db)%desc%n
+       qp( n_GROUNDS )%desc%str( i_d+1 )= qp2merge(i_db)%desc%str(i_d)
+       qp( n_GROUNDS )%desc%size( i_d+1 )= qp2merge(i_db)%desc%size(i_d)
+       qp( n_GROUNDS )%desc%ival(:, i_d+1 )= qp2merge(i_db)%desc%ival(:,i_d)
+       qp( n_GROUNDS )%desc%rval(:, i_d+1 )= qp2merge(i_db)%desc%ival(:,i_d)
+       qp( n_GROUNDS )%desc%dval(i_d+1 )   = qp2merge(i_db)%desc%dval(i_d)
+       qp( n_GROUNDS )%desc%cval(i_d+1 )   = qp2merge(i_db)%desc%cval(i_d)
+       qp( n_GROUNDS )%desc%sval(i_d+1 )   = qp2merge(i_db)%desc%sval(i_d)
+       qp( n_GROUNDS )%desc%lval(i_d+1 )   = qp2merge(i_db)%desc%lval(i_d)
      enddo
      !
    endif
@@ -121,8 +126,8 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
        if (.not.just_COUNT) then
          !
          if (.not.SAME_desc) then
-           qp( GROUND(i_db_p) )%n_descs=qp( GROUND(i_db_p) )%n_descs+1
-           qp( GROUND(i_db_p) )%desc_string( qp( GROUND(i_db_p) )%n_descs )="--- DB#"//trim(intc(i_db_p))//" descriptions ---"
+           qp( GROUND(i_db_p) )%desc%n=qp( GROUND(i_db_p) )%desc%n+1
+           qp( GROUND(i_db_p) )%desc%str( qp( GROUND(i_db_p) )%desc%n )="--- DB#"//trim(intc(i_db_p))//" descriptions ---"
          endif
          !
          call QP_DBs_add_me(qp( GROUND(i_db_p) ),qp2merge(i_db_p) ,plan_EWZG(i_db_p,:), &
@@ -179,10 +184,10 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
      type(QP_t)::qp1,qp2
      integer i_d
      have_same_desc=.TRUE.
-     if (qp1%n_descs/=qp2%n_descs) have_same_desc=.FALSE.
-     do i_d=1,qp1%n_descs
-       if (index(qp2%desc_string(i_d),"QP @ state")==0) then
-         if ( trim(qp2%desc_string(i_d)) /= trim(qp1%desc_string(i_d)) )  have_same_desc=.FALSE.
+     if (qp1%desc%n/=qp2%desc%n) have_same_desc=.FALSE.
+     do i_d=1,qp1%desc%n
+       if (index(qp2%desc%str(i_d),"QP @ state")==0) then
+         if ( trim(qp2%desc%str(i_d)) /= trim(qp1%desc%str(i_d)) )  have_same_desc=.FALSE.
        endif
      enddo
    end function

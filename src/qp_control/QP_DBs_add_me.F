@@ -168,14 +168,15 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERA
    subroutine ADD_descs(STATES,qp_in)
      logical    :: STATES
      type(QP_t) :: qp_in
-     do i_d=1,qp_in%n_descs
-       if (     STATES.and.index(qp_in%desc_string(i_d),"QP @ state") == 0) cycle
-       if (.not.STATES.and.index(qp_in%desc_string(i_d),"QP @ state") >  0) cycle
-       if (len_trim(qp_in%desc_string(i_d)) == 0) cycle
-       qp%n_descs=qp%n_descs+1
-       qp%desc_string(qp%n_descs)=qp_in%desc_string(i_d)
-       qp%desc_n_values(qp%n_descs)=qp_in%desc_n_values(i_d)
-       qp%desc_values(:,qp%n_descs)=qp_in%desc_values(:,i_d)
+     do i_d=1,qp_in%desc%n
+       if (     STATES.and.index(qp_in%desc%str(i_d),"QP @ state") == 0) cycle
+       if (.not.STATES.and.index(qp_in%desc%str(i_d),"QP @ state") >  0) cycle
+       if (len_trim(qp_in%desc%str(i_d)) == 0) cycle
+       qp%desc%n=qp%desc%n+1
+       qp%desc%str(qp%desc%n)=qp_in%desc%str(i_d)
+       qp%desc%size(qp%desc%n)=qp_in%desc%size(i_d)
+       qp%desc%ival(:,qp%desc%n)=qp_in%desc%ival(:,i_d)
+       !qp%desc%rval(:,qp%desc%n)=qp_in%desc%rval(:,i_d)
      enddo
    end subroutine
 end subroutine

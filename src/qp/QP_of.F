@@ -152,29 +152,9 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    file_name=what
    call of_open_close(file_name,'ot')
    !
-   i_desc_min=1
-   select case ( trim(QP_solver) )
-     case ("n")
-       call msg('o '//what,'# GW [Newton Solver]')
-       i_desc_min=2
-     case ("s")
-       call msg('o '//what,'# GW [Secant method Solver]')
-       i_desc_min=2
-     case ("g")
-       call msg('o '//what,'# GW [Green`s Function Solver]')
-       i_desc_min=2
-   end select
+   if (what== 'hf') call msg('o '//what,'# Hartree-Fock Components and Corrections')
    !
-   if (what==        'hf') call msg('o '//what,'# Hartree-Fock Components and Corrections')
-   !
-   if (index(what,"qp")>0) call msg('o '//what,'#')
-   !
-   do i1=i_desc_min,qp%n_descs
-     mesg=trim(qp%desc_string(i1))
-     n_val=qp%desc_n_values(i1)
-     if (n_val==0) call msg('o '//what,'#',mesg,INDENT=0)
-     if (n_val> 0) call msg('o '//what,'#'//mesg,qp%desc_values(1:n_val,i1),INDENT=0)
-   enddo
+   call COM_write_desc('o '//what,'#',qp%desc)
    !
    call msg('o '//what,'#')
    call msg('o '//what,'#',titles(titles_order(:ntitles)),INDENT=0,USE_TABS=.TRUE.)
@@ -264,14 +244,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      if (spin(QP_table(i1,:))==2) write (G_Sc_name,'(2(a,i3.3),a)') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3),'_s2'
      if (n_sp_pol==1) write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3)
      call of_open_close(G_Sc_name,'ot')
-     call msg('o G_Sc','# GW [Green`s function & Self-Energy]')
-     call msg('o G_Sc','#')
-     do i2=2,qp%n_descs
-       mesg=trim(qp%desc_string(i2))
-       n_val=qp%desc_n_values(i2)
-       if (n_val==0) call msg('o G_sc','#',mesg,INDENT=0)
-       if (n_val> 0) call msg('o G_sc','#'//mesg,qp%desc_values(1:n_val,i2),INDENT=0)
-     enddo
+     !call msg('o G_Sc','# GW [Green`s function & Self-Energy]')
+     call COM_write_desc('o G_Sc','#',qp%desc)
      if (allocated(QP_G_amplitude_integral)) then
        call msg('o G_Sc','#')
        call msg('o G_Sc','# Spectral function at this point integrates to',QP_G_amplitude_integral(i1),&

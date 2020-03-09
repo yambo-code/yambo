@@ -24,7 +24,7 @@
 subroutine QP_DB_message( i_ACTION, qp )
  !
  use pars,     ONLY:lchlen
- use stderr,   ONLY:real2ch
+ use stderr,   ONLY:real2ch,intc
  use QP_m,     ONLY:QP_t
  use com,      ONLY:msg
  use QP_CTL_m, ONLY:QP_action,QP_ctl_msg_fmt
@@ -75,12 +75,18 @@ subroutine QP_DB_message( i_ACTION, qp )
  QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//'<'//trim(QP_action(i_ACTION)%CTL(1)%db)//'['
  i_msg=i_msg+2+len_trim(QP_action(i_ACTION)%CTL(1)%db)
  !
- do i1=1,qp%n_descs
+ do i1=1,qp%desc%n
    do if=1,n_fields
-     if (index(qp%desc_string(i1),trim(field(if,1)))/=0) then
+     if (index(qp%desc%str(i1),trim(field(if,1)))/=0) then
        QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//' '//trim(field(if,2))
-       if(qp%desc_n_values(i1)> 0) QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//' '//trim(real2ch(qp%desc_values(1,i1)))
-       if(qp%desc_n_values(i1)> 1) QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//'-'//trim(real2ch(qp%desc_values(1,i1)))
+       if(qp%desc%kind(i1)=='r') then
+         if(qp%desc%size(i1)> 0) QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//' '//trim(real2ch(qp%desc%rval(1,i1)))
+         if(qp%desc%size(i1)> 1) QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//'-'//trim(real2ch(qp%desc%rval(2,i1)))
+       endif
+       if(qp%desc%kind(i1)=='i') then
+         if(qp%desc%size(i1)> 0) QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//' '//trim(intc(qp%desc%ival(1,i1)))
+         if(qp%desc%size(i1)> 1) QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//'-'//trim(intc(qp%desc%ival(2,i1)))
+       endif
      endif
    enddo
  enddo

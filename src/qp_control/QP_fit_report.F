@@ -151,11 +151,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    call of_open_close(fname(1),'ot')
    call of_open_close(fname(2),'ot')
    call msg('o .fit .data','#')
-   do i_d=1,qp%n_descs
-     n_val=qp%desc_n_values(i_d)
-     if (n_val==0) call msg('o .fit .data','#'//trim(qp%desc_string(i_d)) )
-     if (n_val> 0) call msg('o .fit .data','#'//trim(qp%desc_string(i_d)),qp%desc_values(1:n_val,i_d))
-   enddo
+   call COM_write_desc('o .fit .data','#',qp%desc)
    !
    n_titles=1
    titles(1)="Eo [eV]"

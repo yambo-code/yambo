@@ -27,7 +27,7 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  use units,         ONLY:HA2EV
  use electrons,     ONLY:spin_occ,spin,E_SOC_nbands,n_sp_pol,n_spinor
  use stderr,        ONLY:intc,set_real_printed_length
- use BS_solvers,    ONLY:BSS_desc_var,BSS_desc_str,BSS_n_descs,BSS_n_eig
+ use BS_solvers,    ONLY:BSS_desc,BSS_n_eig
  use com,           ONLY:msg,of_open_close
  use R_lattice,     ONLY:d3k_factor,q0_def_norm
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,atom_pos,Z_species
@@ -81,9 +81,8 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
    !
    call of_open_close(ch_dummy,'ot')
    !
-   do j1=1,BSS_n_descs
-     call msg('o sort',"#"//trim(BSS_desc_str(j1)),BSS_desc_var(:,j1),INDENT=0)
-   enddo
+   call COM_write_desc('o sort','#',BSS_desc)
+   !
    call msg('o sort',"#")
    do is=1,n_atomic_species
      do ia=1,n_atoms_species(is)

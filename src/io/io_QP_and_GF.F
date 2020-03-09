@@ -51,7 +51,7 @@ integer function io_QP_and_GF(what,qp,ID)
  integer ,    allocatable ::qp_table_disk(:,:)
  real(SP),    allocatable ::qp_DATA_disk(:,:,:)
  !
- character(schlen), external :: desc_to_varname
+ integer, external :: io_descriptors
  !
  if (what=="QP".or.what=="G".or.(index(what,"QP_merged")>0.and.write_is_on(ID))) then
    io_QP_and_GF=io_connect(desc=what,type=2,ID=ID)
@@ -108,20 +108,24 @@ integer function io_QP_and_GF(what,qp,ID)
    case(QP_SE_POLARON,QP_SE_GW_QED)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=.true.)
  end select
+ !
  if (.not.QP_DB_kind==QP_SE_NONE) then
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=' '
+   qp%desc%n=qp%desc%n+1
    if (.not.QP_DB_kind==QP_SE_COHSEX) then
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' GF energies kind       :'//trim(G_E_xc_string)
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' GF energies kind       '
+     qp%desc%sval(qp%desc%n)=trim(G_E_xc_string)
    endif
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=' GF WF`s     kind       :'//trim(G_WF_xc_string)
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' GF WF`s     kind       '
+   qp%desc%sval(qp%desc%n)=trim(G_WF_xc_string)
    if (any(QP_DB_kind==(/QP_SE_COHSEX,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_GoWo,QP_SE_GWo/))) then
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' Xs energies kind       :'//trim(X_E_xc_string(i_X))
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' Xs WF`s     kind       :'//trim(X_WF_xc_string(i_X))
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' Xs energies kind       '
+     qp%desc%sval(qp%desc%n)=trim(X_E_xc_string(i_X))
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' Xs WF`s     kind       '
+     qp%desc%sval(qp%desc%n)=trim(X_WF_xc_string(i_X))
    endif
  endif
  !
@@ -148,7 +152,7 @@ integer function io_QP_and_GF(what,qp,ID)
  endif
  call io_elemental(ID,I0=GW_iterations,&
 &                  VAR=' GW  SC iterations       ',CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,I0=qp%n_descs,DB_I0=n_descs_disk,CHECK=.true.,OP=(/"<="/))
+ call io_elemental(ID,I0=qp%desc%n,DB_I0=n_descs_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  if (index(what,".G")/=0.or.what=="G") then
@@ -176,42 +180,7 @@ integer function io_QP_and_GF(what,qp,ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   call def_variable_elemental(ID,"VALUES_PER_DESCRIPTOR",n_descs_disk,IP+100,0)
-   call io_variable_elemental(ID,I1=qp%desc_n_values(:n_descs_disk),CHECK=.true.,OP=(/"=="/))
-   !
-   call def_variable_bulk(ID,"DESCRIPTORS_NAMES",1,(/schlen,n_descs_disk/),0)
-   call io_variable_bulk(ID,1,STR1=qp%desc_string(:n_descs_disk))
-   !
-   do i1=1,n_descs_disk
-     !
-     ! The QP lines are skipped. The QP_state check is
-     ! used instead. Also the GW SC iterations are skipped, as
-     ! they are written before.
-     !
-     if (what=="G" .or. .not.index(qp%desc_string(i1),'QP')>0 ) CHECK_VAL=.true.
-     if (index(qp%desc_string(i1),'GW SC')>0                  ) CHECK_VAL=.false.
-     !
-     DESC_SZ=qp%desc_n_values(i1)
-     if (DESC_SZ>0) then
-       call def_variable_elemental(ID,trim(desc_to_varname(qp%desc_string(i1))),DESC_SZ,SP,0)
-       if (DESC_SZ==1) call io_variable_elemental(ID,R1=qp%desc_values(1:DESC_SZ,i1),&
-       &                                                           VAR=trim(qp%desc_string(i1)),CHECK=.true.,OP=(/"=="/))
-       if (DESC_SZ==2) call io_variable_elemental(ID,R1=qp%desc_values(1:DESC_SZ,i1),&
-       &                                                           VAR=trim(qp%desc_string(i1)),CHECK=.true.,OP=(/"==","=="/))
-     else
-       write (ch,'(a,i5.5)') 'DESC_strings_',i1
-       call def_variable_elemental(ID,trim(ch),1,0,0)
-       if (     CHECK_VAL) call  io_variable_elemental(ID,CH0=trim(qp%desc_string(i1)),VAR="",CHECK=.true.,OP=(/"=="/))
-       if (.not.CHECK_VAL) call  io_variable_elemental(ID,CH0=trim(qp%desc_string(i1)),VAR="")
-     endif
-     !
-     if (what=="G".and.index(qp%desc_string(i1),'Zoom')>0.and.io_status(ID)<0)  io_status(ID)=IO_NO_BINDING_ERROR
-     !
-   enddo
-   !
-   call def_variable_elemental(ID,"",0,0,1)
-   !
-   io_QP_and_GF=io_status(ID)
+   io_QP_and_GF=io_descriptors(qp%desc,ID)
    !
    if (.not.DB_is_OK(ID)) then
      call CLOSE_and_menu(.TRUE.)

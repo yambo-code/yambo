@@ -28,7 +28,7 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
  use BS,            ONLY:BS_K_dim,BS_H_dim,BSqpts
  use BS_solvers,    ONLY:BSS_q0,BSS_write_eig_2_db,BSS_eh_table,BS_mat,variables_BS,BSS_n_eig
  use X_m,           ONLY:X_t
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
+ use IO_m,          ONLY:io_connect,io_disconnect,io_sec,IO_desc,&
 &                        io_elemental,io_status,io_bulk,io_header
  use electrons,     ONLY:n_sp_pol,E_SOC_nbands
  use timing_m,      ONLY:timing
@@ -44,8 +44,7 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
  ! Work Space
  !
  character(schlen):: db_name
- character(lchlen):: local_desc_str(100)
- real(SP)         :: local_desc_var(10,100)
+ type(IO_desc)    :: local_desc
  !
  call timing('io_BSS_diago',OPR='start')
  !
@@ -61,7 +60,7 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
    !
    io_BSS_diago=io_header(ID,XC_KIND="K_E force")
    !
-   io_BSS_diago=variables_BS(ID,iq,local_desc_str,local_desc_var,.FALSE.,X=X_static)
+   io_BSS_diago=variables_BS(ID,iq,local_desc,.FALSE.,X=X_static)
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
    !

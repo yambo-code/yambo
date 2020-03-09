@@ -43,8 +43,8 @@ subroutine QP_state_print(qp)
  if (.not.present(qp)) call msg('r','')
  !
  if (present(qp)) then
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=""
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=""
  endif
  !
  n_states=-1
@@ -58,19 +58,23 @@ subroutine QP_state_print(qp)
    !
    if (present(qp)) then
      !
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=trim(ch)//" K range"
-     qp%desc_n_values(qp%n_descs)=2
-     qp%desc_values(:,qp%n_descs)=states(i_s,1:2)
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=trim(ch)//" K range"
+     qp%desc%size(qp%desc%n)=2
+     qp%desc%kind(qp%desc%n)='i'
+     qp%desc%ival(:2,qp%desc%n)=states(i_s,1:2)
      !
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=trim(ch)//" b range"
-     qp%desc_n_values(qp%n_descs)=2
-     qp%desc_values(:,qp%n_descs)=states(i_s,3:4)
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=trim(ch)//" b range"
+     qp%desc%size(qp%desc%n)=2
+     qp%desc%kind(qp%desc%n)='i'
+     qp%desc%ival(:2,qp%desc%n)=states(i_s,3:4)
      !
    else
+     !
      call msg('r',trim(ch)//" K range",states(i_s,1:2))
      call msg('r',trim(ch)//" b range",states(i_s,3:4))
+     !
    endif
    !
  enddo  

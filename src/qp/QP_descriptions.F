@@ -60,41 +60,46 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  !
  integer, save     :: n_descs_save
  !
- if (.not.Update) n_descs_save=qp%n_descs
- if (     Update) qp%n_descs  =n_descs_save
+ if (.not.Update) n_descs_save=qp%desc%n
+ if (     Update) qp%desc%n  =n_descs_save
  !
  if (allocated(RIM_qpg)) then
    !
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=' RIM G`s                '
-   qp%desc_n_values(qp%n_descs)=1
-   qp%desc_values(1,qp%n_descs)=RIM_ng
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' RIM G`s                '
+   qp%desc%size(qp%desc%n)=1
+   qp%desc%kind(qp%desc%n)='i'
+   qp%desc%ival(1,qp%desc%n)=RIM_ng
    !
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=' RIM random pts         '
-   qp%desc_n_values(qp%n_descs)=1
-   qp%desc_values(1,qp%n_descs)=RIM_n_rand_pts
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' RIM random pts         '
+   qp%desc%size(qp%desc%n)=1
+   qp%desc%kind(qp%desc%n)='i'
+   qp%desc%ival(1,qp%desc%n)=RIM_n_rand_pts
    !
  endif
  !
  if (.not.l_life) then
    !
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=' GW SC iterations       '
-   qp%desc_n_values(qp%n_descs)=1
-   qp%desc_values(1,qp%n_descs)=GWo_iterations
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' GW SC iterations       '
+   qp%desc%size(qp%desc%n)=1
+   qp%desc%kind(qp%desc%n)='i'
+   qp%desc%ival(1,qp%desc%n)=GWo_iterations
    !
    if (.not.l_cohsex.and.trim(QP_solver)/='g'.and..not.use_GreenF_to_eval_QP) then
      !
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' dS/dw steps            '
-     qp%desc_n_values(qp%n_descs)=1
-     qp%desc_values(1,qp%n_descs)=QP_dSc_steps
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' dS/dw steps            '
+     qp%desc%size(qp%desc%n)=1
+     qp%desc%kind(qp%desc%n)='i'
+     qp%desc%ival(1,qp%desc%n)=QP_dSc_steps
      !
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' dS/dw step         [ev]'
-     qp%desc_n_values(qp%n_descs)=1
-     qp%desc_values(1,qp%n_descs)=QP_dSc_delta*HA2EV
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' dS/dw step         [ev]'
+     qp%desc%size(qp%desc%n)=1
+     qp%desc%kind(qp%desc%n)='r'
+     qp%desc%rval(1,qp%desc%n)=QP_dSc_delta*HA2EV
      !
    endif
    !
@@ -102,64 +107,75 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  !
  if (l_elel_corr) then
    !
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=' X G`s            [used]'
-   qp%desc_n_values(qp%n_descs)=1
-   qp%desc_values(1,qp%n_descs)=X%ng
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' X G`s            [used]'
+   qp%desc%size(qp%desc%n)=1
+   qp%desc%kind(qp%desc%n)='i'
+   qp%desc%ival(1,qp%desc%n)=X%ng
    !
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=' X G`s            [disk]'
-   qp%desc_n_values(qp%n_descs)=1
-   qp%desc_values(1,qp%n_descs)=X%ng_db
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' X G`s            [disk]'
+   qp%desc%size(qp%desc%n)=1
+   qp%desc%kind(qp%desc%n)='i'
+   qp%desc%ival(1,qp%desc%n)=X%ng_db
    !
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=' X bands                '
-   qp%desc_n_values(qp%n_descs)=2
-   qp%desc_values(:,qp%n_descs)=X%ib
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' X bands                '
+   qp%desc%size(qp%desc%n)=2
+   qp%desc%kind(qp%desc%n)='i'
+   qp%desc%ival(1:2,qp%desc%n)=X%ib
    !
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=' X poles           [o/o]'
-   qp%desc_n_values(qp%n_descs)=1
-   qp%desc_values(1,qp%n_descs)=X%cg_percentual
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' X poles           [o/o]'
+   qp%desc%size(qp%desc%n)=1
+   qp%desc%kind(qp%desc%n)='r'
+   qp%desc%rval(1,qp%desc%n)=X%cg_percentual
    !
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=' X e/h E range      [ev]'
-   qp%desc_n_values(qp%n_descs)=2
-   qp%desc_values(:,qp%n_descs)=X%ehe*HA2EV
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' X e/h E range      [ev]'
+   qp%desc%size(qp%desc%n)=2
+   qp%desc%kind(qp%desc%n)='r'
+   qp%desc%rval(1:2,qp%desc%n)=X%ehe*HA2EV
    !
    if (ver_is_gt_or_eq(-1,(/3,0,5/))) then
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' X xc-Kernel             '//trim(X%f_xc)
-     qp%desc_n_values(qp%n_descs)=0
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' X xc-Kernel             '
+     qp%desc%size(qp%desc%n)=1
+     qp%desc%kind(qp%desc%n)='s'
+     qp%desc%sval(qp%desc%n)=trim(X%f_xc)
    endif
    !
    if (.not.l_ppa.and..not.l_cohsex) then
      !
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' X damping range    [ev]'
-     qp%desc_n_values(qp%n_descs)=2
-     qp%desc_values(:,qp%n_descs)=Xw%dr*HA2EV
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' X damping range    [ev]'
+     qp%desc%size(qp%desc%n)=2
+     qp%desc%kind(qp%desc%n)='r'
+     qp%desc%rval(1:2,qp%desc%n)=Xw%dr*HA2EV
      !  
      if (.not.l_life) then
-       qp%n_descs=qp%n_descs+1
-       qp%desc_string(qp%n_descs)=' X Steps                '
-       qp%desc_n_values(qp%n_descs)=1
-       qp%desc_values(1,qp%n_descs)=Xw%n_freqs
+       qp%desc%n=qp%desc%n+1
+       qp%desc%str(qp%desc%n)=' X Steps                '
+       qp%desc%size(qp%desc%n)=1
+       qp%desc%kind(qp%desc%n)='i'
+       qp%desc%ival(1,qp%desc%n)=Xw%n_freqs
      endif
      !
    endif
    !
    if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
      !
-     qp%n_descs=qp%n_descs+1
-     if (.not.use_X_DbGd) qp%desc_string(qp%n_descs)=' X BZ energy Double Grid: no '
-     if (     use_X_DbGd) qp%desc_string(qp%n_descs)=' X BZ energy Double Grid: yes'
-     qp%desc_n_values(qp%n_descs)=0
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' X BZ energy Double Grid'
+     qp%desc%size(qp%desc%n)=1
+     qp%desc%kind(qp%desc%n)='l'
+     qp%desc%lval(qp%desc%n)=use_X_DbGd
      !
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' X BZ Double Grid points'
-     qp%desc_n_values(qp%n_descs)=1
-     qp%desc_values(1,qp%n_descs)=BZ_DbGd_tot_nk_levels
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' X BZ Double Grid points'
+     qp%desc%size(qp%desc%n)=1
+     qp%desc%kind(qp%desc%n)='i'
+     qp%desc%ival(1,qp%desc%n)=BZ_DbGd_tot_nk_levels
      !
    endif
    !
@@ -167,62 +183,66 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  !
  if (l_life.and.l_elel_corr) then
    !
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=' Transitions       [o/o]'
-   qp%desc_n_values(qp%n_descs)=1
-   qp%desc_values(1,qp%n_descs)=QP_cg_percent
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' Transitions       [o/o]'
+   qp%desc%size(qp%desc%n)=1
+   qp%desc%kind(qp%desc%n)='r'
+   qp%desc%rval(1,qp%desc%n)=QP_cg_percent
    !
  endif
  !
  if (.not.l_life) then 
    if ( (.not.l_cohsex) .or. (l_cohsex.and.COHSEX_use_empties) ) then
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' Sc/G bands             '
-     qp%desc_n_values(qp%n_descs)=2
-     qp%desc_values(:,qp%n_descs)=QP_n_G_bands
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' Sc/G bands             '
+     qp%desc%size(qp%desc%n)=2
+     qp%desc%kind(qp%desc%n)='i'
+     qp%desc%ival(1:2,qp%desc%n)=QP_n_G_bands
    endif
    if (l_cohsex) then
      if (ver_is_gt_or_eq(-1,(/4,3,1/))) then
-       qp%n_descs=qp%n_descs+1
-       if (     COHSEX_use_empties) qp%desc_string(qp%n_descs)=' Sc Empty Bands         : yes'
-       if (.not.COHSEX_use_empties) qp%desc_string(qp%n_descs)=' Sc Empty Bands         : no'
-       qp%desc_n_values(qp%n_descs)=0
+       qp%desc%n=qp%desc%n+1
+       qp%desc%str(qp%desc%n)=' Sc Empty Bands         '
+       qp%desc%size(qp%desc%n)=1
+       qp%desc%kind(qp%desc%n)='l'
+       qp%desc%lval(qp%desc%n)=COHSEX_use_empties
      endif
    else
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' Sc/G damping       [ev]'
-     qp%desc_n_values(qp%n_descs)=1
-     qp%desc_values(1,qp%n_descs)=QP_G_damp*HA2EV
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' Sc/G damping       [ev]'
+     qp%desc%size(qp%desc%n)=1
+     qp%desc%kind(qp%desc%n)='r'
+     qp%desc%rval(1,qp%desc%n)=QP_G_damp*HA2EV
    endif
+   !
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' Sc bands terminator    '
+   qp%desc%size(qp%desc%n)=1
+   qp%desc%kind(qp%desc%n)='l'
+   qp%desc%lval(qp%desc%n)=l_GW_terminator
    !
    if (l_GW_terminator) then
      !
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' Sc bands terminator    : yes'
-     qp%desc_n_values(qp%n_descs)=0
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' Sc terminator kind      '
+     qp%desc%size(qp%desc%n)=1
+     qp%desc%kind(qp%desc%n)='s'
+     qp%desc%sval(qp%desc%n)=trim(GW_terminator_Kind)
      !
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' Sc terminator kind      '//trim(GW_terminator_Kind)
-     qp%desc_n_values(qp%n_descs)=0
-     !
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' Sc Terminator pole     '
-     qp%desc_n_values(qp%n_descs)=1
-     qp%desc_values(1,qp%n_descs)=GW_terminator_E*HA2EV
-     !
-   else
-     !
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' Sc bands terminator    : no'
-     qp%desc_n_values(qp%n_descs)=0
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' Sc Terminator pole     '
+     qp%desc%size(qp%desc%n)=1
+     qp%desc%kind(qp%desc%n)='r'
+     qp%desc%rval(1,qp%desc%n)=GW_terminator_E*HA2EV
      !
    endif
    !
    if (l_HF_and_locXC) then
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' Sx RL components       '
-     qp%desc_n_values(qp%n_descs)=1
-     qp%desc_values(1,qp%n_descs)=QP_ng_Sx
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' Sx RL components       '
+     qp%desc%size(qp%desc%n)=1
+     qp%desc%kind(qp%desc%n)='i'
+     qp%desc%ival(1,qp%desc%n)=QP_ng_Sx
    endif
    !
  endif
@@ -231,15 +251,18 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  !
  if (l_elphoton_corr) then
    !
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=' El-Photon correlation  : yes'
-   qp%desc_n_values(qp%n_descs)=0
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' El-Photon correlation  '
+   qp%desc%size(qp%desc%n)=1
+   qp%desc%kind(qp%desc%n)='l'
+   qp%desc%lval(qp%desc%n)=l_elphoton_corr
    !
    if (.not.l_life) then
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' QED RL components      '
-     qp%desc_n_values(qp%n_descs)=1
-     qp%desc_values(1,qp%n_descs)=QP_QED_ng
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' QED RL components      '
+     qp%desc%size(qp%desc%n)=1
+     qp%desc%kind(qp%desc%n)='i'
+     qp%desc%ival(1,qp%desc%n)=QP_QED_ng
    endif
    !
  endif
@@ -254,59 +277,69 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    !
    if (l_elph_corr) then
      !
-     qp%n_descs=qp%n_descs+1
-     if (.not.l_elel_corr) qp%n_descs=n_descs_save+1
+     qp%desc%n=qp%desc%n+1
+     if (.not.l_elel_corr) qp%desc%n=n_descs_save+1
      !
      if (trim(QP_solver)/='g') then
-       qp%desc_string(qp%n_descs)=' [ph] dS/dw steps        '
-       qp%desc_n_values(qp%n_descs)=1
-       qp%desc_values(1,qp%n_descs)=QP_dSc_steps
+       qp%desc%str(qp%desc%n)=' [ph] dS/dw steps        '
+       qp%desc%size(qp%desc%n)=1
+       qp%desc%kind(qp%desc%n)='r'
+       qp%desc%rval(1,qp%desc%n)=QP_dSc_steps
        !
-       qp%n_descs=qp%n_descs+1
-       qp%desc_string(qp%n_descs)=' [ph] dS/dw step     [ev]'
-       qp%desc_n_values(qp%n_descs)=1
-       qp%desc_values(1,qp%n_descs)=QP_dSc_delta*HA2EV
+       qp%desc%n=qp%desc%n+1
+       qp%desc%str(qp%desc%n)=' [ph] dS/dw step     [ev]'
+       qp%desc%size(qp%desc%n)=1
+       qp%desc%kind(qp%desc%n)='r'
+       qp%desc%rval(1,qp%desc%n)=QP_dSc_delta*HA2EV
        !
-       qp%n_descs=qp%n_descs+1
-       qp%desc_string(qp%n_descs)=' [ph] Sc/G damping   [ev]'
-       qp%desc_n_values(qp%n_descs)=1
-       qp%desc_values(1,qp%n_descs)=QP_G_damp*HA2EV
+       qp%desc%n=qp%desc%n+1
+       qp%desc%str(qp%desc%n)=' [ph] Sc/G damping   [ev]'
+       qp%desc%size(qp%desc%n)=1
+       qp%desc%kind(qp%desc%n)='r'
+       qp%desc%rval(1,qp%desc%n)=QP_G_damp*HA2EV
        !
      endif
      !
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' El-Ph correlation      : yes'
-     qp%desc_n_values(qp%n_descs)=0
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' El-Ph correlation      '
+     qp%desc%size(qp%desc%n)=1
+     qp%desc%kind(qp%desc%n)='l'
+     qp%desc%lval(qp%desc%n)=l_elph_corr
      !
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' El-Ph Sc. G bands      '
-     qp%desc_n_values(qp%n_descs)=2
-     qp%desc_values(:,qp%n_descs)=(/1,QP_PH_n_G_bands/)
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' El-Ph Sc. G bands      '
+     qp%desc%size(qp%desc%n)=2
+     qp%desc%kind(qp%desc%n)='i'
+     qp%desc%ival(1:2,qp%desc%n)=(/1,QP_PH_n_G_bands/)
      !
      if (ver_is_gt_or_eq(-1,(/3,2,2/))) then
-       qp%n_descs=qp%n_descs+1
-       qp%desc_string(qp%n_descs)=' El-Ph phonon branches  '
-       qp%desc_n_values(qp%n_descs)=2
-       qp%desc_values(:,qp%n_descs)=elph_branches
+       qp%desc%n=qp%desc%n+1
+       qp%desc%str(qp%desc%n)=' El-Ph phonon branches  '
+       qp%desc%size(qp%desc%n)=2
+       qp%desc%kind(qp%desc%n)='i'
+       qp%desc%ival(1:2,qp%desc%n)=elph_branches
      endif
      !
      if (ver_is_gt_or_eq(-1,(/4,0,0/))) then
-       qp%n_descs=qp%n_descs+1
-       qp%desc_string(qp%n_descs)=' El-Ph momenta used     '
-       qp%desc_n_values(qp%n_descs)=1
-       qp%desc_values(1,qp%n_descs)=elph_nDBs_used
+       qp%desc%n=qp%desc%n+1
+       qp%desc%str(qp%desc%n)=' El-Ph momenta used     '
+       qp%desc%size(qp%desc%n)=1
+       qp%desc%kind(qp%desc%n)='i'
+       qp%desc%ival(1,qp%desc%n)=elph_nDBs_used
      endif
      !
      if (ver_is_gt_or_eq(-1,revision=4400)) then
-       qp%n_descs=qp%n_descs+1
-       qp%desc_string(qp%n_descs)=' Energy treshold   [FAN]'
-       qp%desc_n_values(qp%n_descs)=1
-       qp%desc_values(1,qp%n_descs)=FAN_deltaE_treshold*HA2EV
+       qp%desc%n=qp%desc%n+1
+       qp%desc%str(qp%desc%n)=' Energy treshold   [FAN]'
+       qp%desc%size(qp%desc%n)=1
+       qp%desc%kind(qp%desc%n)='r'
+       qp%desc%rval(1,qp%desc%n)=FAN_deltaE_treshold*HA2EV
        !
-       qp%n_descs=qp%n_descs+1
-       qp%desc_string(qp%n_descs)=' Energy treshold    [DW]'
-       qp%desc_n_values(qp%n_descs)=1
-       qp%desc_values(1,qp%n_descs)=DW_deltaE_treshold*HA2EV
+       qp%desc%n=qp%desc%n+1
+       qp%desc%str(qp%desc%n)=' Energy treshold    [DW]'
+       qp%desc%size(qp%desc%n)=1
+       qp%desc%kind(qp%desc%n)='r'
+       qp%desc%rval(1,qp%desc%n)=DW_deltaE_treshold*HA2EV
      endif
      !
    endif
@@ -319,32 +352,37 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  !
  if (ver_is_gt_or_eq(-1,revision=452).and.trim(QP_solver)=='g') then
    !
-   qp%n_descs=qp%n_descs+1
-   if (.not.GF_is_causal) qp%desc_string(qp%n_descs)=' [GF] GF is causal       : no'
-   if (     GF_is_causal) qp%desc_string(qp%n_descs)=' [GF] GF is causal       : yes'
-   qp%desc_n_values(qp%n_descs)=0
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' [GF] GF is causal       '
+   qp%desc%size(qp%desc%n)=1
+   qp%desc%kind(qp%desc%n)='l'
+   qp%desc%lval(qp%desc%n)=GF_is_causal
    !
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=' [GF] Real-axis steps    '
-   qp%desc_n_values(qp%n_descs)=1
-   qp%desc_values(1,qp%n_descs)=QP_Sc_steps
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' [GF] Real-axis steps    '
+   qp%desc%size(qp%desc%n)=1
+   qp%desc%kind(qp%desc%n)='i'
+   qp%desc%ival(1,qp%desc%n)=QP_Sc_steps
    !
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=' [GF] Initial E range  [eV]'
-   qp%desc_n_values(qp%n_descs)=2
-   qp%desc_values(:,qp%n_descs)=QP_G_er*HA2EV
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' [GF] Initial E range  [eV]'
+   qp%desc%size(qp%desc%n)=2
+   qp%desc%kind(qp%desc%n)='i'
+   qp%desc%rval(1:2,qp%desc%n)=QP_G_er*HA2EV
    !
    if (ver_is_gt_or_eq(-1,revision=530)) then
-     qp%n_descs=qp%n_descs+1
-     qp%desc_string(qp%n_descs)=' [GF] Zoom treshold   [o/o]'
-     qp%desc_n_values(qp%n_descs)=1
-     qp%desc_values(1,qp%n_descs)=QP_G_Zoom_treshold
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' [GF] Zoom treshold   [o/o]'
+     qp%desc%size(qp%desc%n)=1
+     qp%desc%kind(qp%desc%n)='r'
+     qp%desc%rval(1,qp%desc%n)=QP_G_Zoom_treshold
    endif
    !
-   qp%n_descs=qp%n_descs+1
-   qp%desc_string(qp%n_descs)=' [GF] Damping          [eV]'
-   qp%desc_n_values(qp%n_descs)=2
-   qp%desc_values(:,qp%n_descs)=QP_G_dr*HA2EV
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' [GF] Damping          [eV]'
+   qp%desc%size(qp%desc%n)=2
+   qp%desc%kind(qp%desc%n)='r'
+   qp%desc%rval(1:2,qp%desc%n)=QP_G_dr*HA2EV
    !
  endif
  !

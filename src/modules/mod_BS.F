@@ -32,6 +32,7 @@ module BS
  logical :: l_BSE_minimize_memory
  logical :: l_BSE_kernel_complete
  logical :: l_BSE_restart
+ logical :: l_BSK_IO_triangular
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
  logical :: BS_res_K_exchange

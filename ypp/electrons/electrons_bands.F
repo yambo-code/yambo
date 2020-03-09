@@ -142,13 +142,13 @@ subroutine electrons_bands(Xk,Xen)
  !
  if (GRID_interpolate.and.BANDS_bands(1)==1) call OCCUPATIONS_Fermi(GRID_E,GRID_k,mode="FERMI")
  !
- call msg("s",'Fermi Level  (BUILT-in bands) [eV]:',Xen%E_Fermi*HA2EV)
+ call msg("s",'Fermi Level  (BUILT-in bands) [eV]',Xen%E_Fermi*HA2EV)
  !
  dEf=rZERO
  !
  if (BANDS_bands(1)==1) then
    dEf=-GRID_E%E_Fermi
-   call msg("s",'Correction             (GRID) [eV]:',GRID_E%E_Fermi*HA2EV)
+   call msg("s",'Correction             (GRID) [eV]',GRID_E%E_Fermi*HA2EV)
  endif
  !
  call section('=','Bands output')

@@ -35,8 +35,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
 &                        nr,nr_tot,output_fname,&
 &                        use_xcrysden,use_gnuplot,use_cube,plot_dim,&
 &                        EXCITONS_user_indexes,EXCITONS_n_user_states
- use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_n_descs,BSS_description,&
-&                        BSS_n_eig
+ use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_n_descs,&
+&                        BSS_desc_var,BSS_desc_str,BSS_n_eig
  use BS,            ONLY:BS_bands,BS_H_dim
  use interfaces,    ONLY:PARALLEL_index,WF_load,WF_free
  use wave_func,     ONLY:WF,WF_symm,wf_ng
@@ -93,7 +93,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      r_hole_rlu(j1)=r_hole_rlu(j1)-int(r_hole_rlu(j1))
    enddo
    call c2a(b_in=a,v_in=r_hole_rlu,v_out=r_hole,mode='ka2c')
-   call msg('s',':: Hole position in the DL cell  [cc]:',r_hole)
+   call msg('s',' Hole position in the DL cell  [cc]',r_hole)
    !
    ! [2] Bare position in the FFT grid
    !
@@ -101,7 +101,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    r_hole_rlu(:)=nint(r_hole_rlu(:)*fft_dim(:))
    ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
    if (ir_hole.lt.0) call error(' Hole coordinates in input must be positive') 
-   call msg('s','::      position in the FFT grid [cc]:',r_cell_cc(:,ir_hole))
+   call msg('s','      position in the FFT grid [cc]',r_cell_cc(:,ir_hole))
    !
    ! [3] Translation in the center of the Big grid
    !
@@ -119,8 +119,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
    r_hole=r_cell_cc(:,ir_hole)
    !
-   call msg('s','::      translated position      [cc]:',r_hole)
-   call msg('s','::                                [A]:',r_hole*BO2ANG)
+   call msg('s','      translated position      [cc]',r_hole)
+   call msg('s','                                [A]',r_hole*BO2ANG)
    !
  endif
  !
@@ -145,7 +145,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    !
    n_lambda_deg=count(BS_E_degs==BS_E_degs(j_lambda))
    !
-   if (n_lambda_deg>1) call msg('s',':: State '//trim(intc(j_lambda))//' Merged with states '//&
+   if (n_lambda_deg>1) call msg('s',' State '//trim(intc(j_lambda))//' Merged with states '//&
 &                                   trim(intc(BS_E_degs(j_lambda)))//' -> '//&
 &                                   trim(intc(BS_E_degs(j_lambda)+n_lambda_deg-1)))
    !
@@ -228,7 +228,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    else
     call of_open_close(trim(output_fname),'ot')
     do i1=1,BSS_n_descs
-      call msg('o exc',"#",trim(BSS_description(i1)),INDENT=0)
+      call msg('o exc',"#"//trim(BSS_desc_str(j1)),BSS_desc_var(:,j1),INDENT=0)
     enddo
       call msg('o exc',"#")
    endif
@@ -279,7 +279,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      YAMBO_ALLOC(rindex,(nr_tot))
      !
      nr=(/ncell(1)*fft_dim(1),ncell(2)*fft_dim(2),ncell(3)*fft_dim(3)/)
-     call msg('s',':: Extended grid :',nr)
+     call msg('s',' Extended grid ',nr)
      !
      ir = 0
      do ir1 = 0, nr(1)-1

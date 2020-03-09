@@ -49,6 +49,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  use parallel_m,     ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
+ use electrons,      ONLY:n_sp_pol
  use vec_operate,    ONLY:v_is_zero,c2a
  use BS,             ONLY:BS_res_mode,BS_cpl_mode
  use R_lattice,      ONLY:d3q_factor,RL_vol,nqibz,nqbz,QP_states_k,&
@@ -75,6 +76,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  integer :: io_db,io_err
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,iqs,iks,id
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3),q_step(3)
+ real(SP):: E_empty(1,q%nibz,n_sp_pol)
  logical :: connected_grids,user_defined_qpts
 #if defined _ELPH
  logical :: bse_setup_scatt
@@ -101,8 +103,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  io_err=io_QINDX(Xk,q,io_db)
  if (io_err==0) then
    call k_expand(q)
-   call Q_report('iku')
-   call Q_report('cc ')
+   d3q_factor=RL_vol/real(q%nbz)
+   call REPORT_Energies(E_empty,q,q,1,(/1,q%nibz/),'Q',.TRUE.,.FALSE.)
    call q_shadows(.false.)
    return
  endif
@@ -167,7 +169,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      q%nibz=nqibz
      YAMBO_ALLOC(q%pt,(q%nibz,3))
      q%pt=q_pt(:q%nibz,:)
-     call msg('rsn','[RL indx] Q-grid:'//trim(q_source))
+     call msg('rsn','[RL indx] Q-grid'//trim(q_source))
      user_defined_qpts=.true.
    endif
    !
@@ -181,8 +183,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    call k_ibz2bz(q,'a',.false.)
    nqbz =q%nbz
    nqibz=q%nibz
-   call Q_report('iku')
-   call Q_report('cc ')
+   call REPORT_Energies(E_empty,q,q,1,(/1,q%nibz/),'Q',.TRUE.,.FALSE.)
    !
    ! When using USER defined Q-points q%nbz may be different from Xk%nbz
    ! if the given list is not correct.
@@ -203,6 +204,8 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
  endif
  !
+ d3q_factor=RL_vol/real(q%nbz)
+ !
  ! Allocate
  !
  call qindx_alloc('XB')
@@ -218,7 +221,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_B(ikbz,okbz,1)=iqbz
  ! qindx_B(ikbz,okbz,2)=iGo
  !
- string=':: Indices: polarization function'
+ string=' Indices for polarization function'
  if ( bse_scattering) string=trim(string)//' + BSE'
  if (coll_scattering) string=trim(string)//' + COLL'
  call msg('nr',trim(string))
@@ -289,11 +292,11 @@ subroutine bz_samp_indexes(k,Xk,q)
  endif
  !
  if(coll_scattering) then
-   call msg('rn',':: Indices: Scattering and Self-Energy')
+   call msg('rn',' Indices: Scattering and Self-Energy')
    if (n_threads> k%nbz) call live_timing('SSE indexes',1)
    if (n_threads<=k%nbz) call live_timing('SSE indexes',Xk%nbz/n_threads)
  else
-   call msg('rn',':: Indices: Self-Energy')
+   call msg('rn',' Indices: Self-Energy')
    i1=QP_states_k(2)-QP_states_k(1)+1
    if (n_threads> i1) call live_timing('SE indexes',1)
    if (n_threads<=i1) call live_timing('SE indexes',i1/n_threads)
@@ -408,27 +411,6 @@ subroutine bz_samp_indexes(k,Xk,q)
  call timing('bz_samp_indexes',OPR='stop')
  !
  contains 
-   !
-   subroutine Q_report(kind)
-     character(3)     ::kind
-     character(lchlen)::ch(4)
-     real(SP)         ::q_cc(3)
-     if(trim(kind)=='iku') then
-       call msg('nr','IBZ Q-points :',q%nibz)
-       call msg('rn','BZ  Q-points :',q%nbz)
-     endif
-     if(trim(kind)=='cc') call msg('r',' ')
-     d3q_factor=RL_vol/real(q%nbz)
-     do i1=1,q%nibz
-       if(trim(kind)=='cc') call c2a(v_in=q%pt(i1,:),v_out=q_cc,mode='ki2c')
-       ch(2)=gen_fmt(r_v=q%pt(i1,:))
-       ch(3)=gen_fmt(r_v=(/q%weights(i1)/))
-       write (ch(1),'(7a)') '(a,i5.5,a,3(',trim(ch(2)),',1x),a,',trim(ch(3)),',1x)'
-       if(trim(kind)=='cc')  write (ch(2),trim(ch(1)))   'Q [',i1,'] :',q_cc(:),'(cc ) * weight ',q%weights(i1)
-       if(trim(kind)=='iku') write (ch(2),trim(ch(1)))   'Q [',i1,'] :',q%pt(i1,:),'(iku) * weight ',q%weights(i1)
-       call msg('r',trim(ch(2)))
-     enddo
-   end subroutine
    !
    subroutine k_grid_shift(v)
      implicit none

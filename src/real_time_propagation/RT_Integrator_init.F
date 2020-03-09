@@ -97,7 +97,7 @@ subroutine RT_Integrator_init()
  if (l_RT_DIAG  ) Integrator_name = trim(Integrator_name)//" + DIAG"
  if (l_RT_PERT  ) Integrator_name = trim(Integrator_name)//" + PERT"
  !
- call msg('s','Integrator: '//trim(Integrator_name))
+ call msg('s','Integrator '//trim(Integrator_name))
  !
  ! e) Define integrators tables
  !

@@ -57,7 +57,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  !
  nh_min=1
  if (what=="subtract") nh_min=nh
- if (what=="dump".and..not.l_RT_X_inversion) call live_timing('Partial P(t):',nt*nh)
+ if (what=="dump".and..not.l_RT_X_inversion) call live_timing('Partial P(t)',nt*nh)
  !
  do i_n=nh_min,nh
    !

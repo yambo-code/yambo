@@ -134,7 +134,7 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
    return
  endif
  !
- call msg('s','DBs path set to :',trim(core_io_path))
+ call msg('s','DBs path set to ',trim(core_io_path))
  !
  ! Open ETSF file for reading
  !

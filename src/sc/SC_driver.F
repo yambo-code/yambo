@@ -569,16 +569,16 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        enddo
      endif
      !
-     if(it_now==it_to_start) dumb_ch ='[SC] Iteration:'
-     dumb_ch2='            '//trim(intc(it_now))//' :'
+     if(it_now==it_to_start) dumb_ch ='[SC] Iteration'
+     dumb_ch2='            '//trim(intc(it_now))//' '
      if (l_sc_V_is_local) then
-       if(it==1) dumb_ch= trim(dumb_ch) //'  E_tot(Ha) :'
-       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(E_total))//' : '
+       if(it==1) dumb_ch= trim(dumb_ch) //'  E_tot(Ha) '
+       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(E_total))//'  '
      endif
      if (n_spin==2) then
-       if(n_sp_pol==2) dumb_ch=trim(dumb_ch)//'  Mz  [muB] :'
-       if(n_spinor==2) dumb_ch=trim(dumb_ch)//'  |M| [muB] :'
-       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(v_norm(Spin_magn(:))))//' :'
+       if(n_sp_pol==2) dumb_ch=trim(dumb_ch)//'  Mz  [muB] '
+       if(n_spinor==2) dumb_ch=trim(dumb_ch)//'  |M| [muB] '
+       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(v_norm(Spin_magn(:))))//' '
      endif
      if(it_now==it_to_start) dumb_ch =trim(dumb_ch)//' Acc.  E(ev)  -  rho(%)'
      dumb_ch2=trim(dumb_ch2)//'    '//trim(real2ch(E_convergence*HA2EV)) &
@@ -678,27 +678,27 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
    ! exit SCF cycle and report
    !
-   call msg('nr','[SC] Iterations               :',it_now)
-   call msg('r' ,'[SC] Accuracy on density      :',rho_convergence)
-   if(n_spin>1) call msg('r' ,'[SC] Accuracy on magnetization:',magn_convergence)
-   call msg('r' ,'[SC]          on energies [ev]:',E_convergence*HA2EV)
-   if (     l_sc_V_is_local)  call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]:',E_total*(/1._SP,2._SP/))
+   call msg('nr','[SC] Iterations               ',it_now)
+   call msg('r' ,'[SC] Accuracy on density      ',rho_convergence)
+   if(n_spin>1) call msg('r' ,'[SC] Accuracy on magnetization',magn_convergence)
+   call msg('r' ,'[SC]          on energies [ev]',E_convergence*HA2EV)
+   if (     l_sc_V_is_local)  call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]',E_total*(/1._SP,2._SP/))
    if (.not.l_sc_V_is_local)  call msg('r','')
    if(trim(SC_neq_kind)=="matsubara") then
-                       call msg('r' ,'[SC] Electrons and Holes            :',(/ELEC,HOLE/))
-                       call msg('r' ,'[SC] Trace over rho_ij              :',DELTA)
-                       call msg('r' ,'[SC] Order Parameter           [eV] :',DELTA_NEW)
+                       call msg('r' ,'[SC] Electrons and Holes            ',(/ELEC,HOLE/))
+                       call msg('r' ,'[SC] Trace over rho_ij              ',DELTA)
+                       call msg('r' ,'[SC] Order Parameter           [eV] ',DELTA_NEW)
    endif
 #if defined _ELECTRIC
    if(l_sc_electric) then
-      call msg('r' ,'[SC] Polarization [Re]              :', real(Polarization,SP))
-      call msg('r' ,'[SC] Polarization [Im]              :',aimag(Polarization)   )
+      call msg('r' ,'[SC] Polarization [Re]              ', real(Polarization,SP))
+      call msg('r' ,'[SC] Polarization [Im]              ',aimag(Polarization)   )
    endif
 #endif
-   if (l_sc_hartree)   call msg('r' ,'[SC] Bands Energy            [Ha/Ry]:',E_tot_bands*(/1._SP,2._SP/))
-   if (l_sc_hartree)   call msg('r' ,'[SC] T+V Energy              [Ha/Ry]:',E_tot_zero*(/1._SP,2._SP/))
-   if (l_sc_hartree)   call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1._SP,2._SP/))
-   if (l_sc_is_libDFT) call msg('rn','[SC] xc Energy               [Ha/Ry]:',E_tot_xc*(/1._SP,2._SP/))
+   if (l_sc_hartree)   call msg('r' ,'[SC] Bands Energy            [Ha/Ry]',E_tot_bands*(/1._SP,2._SP/))
+   if (l_sc_hartree)   call msg('r' ,'[SC] T+V Energy              [Ha/Ry]',E_tot_zero*(/1._SP,2._SP/))
+   if (l_sc_hartree)   call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]',E_tot_Hartree*(/1._SP,2._SP/))
+   if (l_sc_is_libDFT) call msg('rn','[SC] xc Energy               [Ha/Ry]',E_tot_xc*(/1._SP,2._SP/))
    !
  else
    call msg('r','')
@@ -882,16 +882,16 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      dE(:,:,:)=E%E(SC_bands(1):SC_bands(2),:,:)-E_reference%E(SC_bands(1):SC_bands(2),:,:)
      !
-     call msg('r',' ')
+     call msg('r','Energy unit   ',' [eV]')
      !
      do ik=1,k%nibz
-       call REPORT_Energies(E%E(SC_bands(1):SC_bands(2),:,:),k,Xk,SC_nbands,(/ik,ik/),'E  ',.TRUE.)
-       call REPORT_Energies(E%f(SC_bands(1):SC_bands(2),:,:)/HA2EV,k,Xk,SC_nbands,(/ik,ik/),'occ',.FALSE.)
-       call REPORT_Energies(E_reference%E(SC_bands(1):SC_bands(2),:,:),k,Xk,SC_nbands,(/ik,ik/),'E_o',.FALSE.)
-       call REPORT_Energies(dE,k,Xk,SC_nbands,(/ik,ik/),'d_E',.FALSE.)
-       call REPORT_Energies(spread,k,Xk,SC_nbands,(/ik,ik/),'Spr',.FALSE.)
-       call REPORT_Energies(max_overlap/HA2EV,k,Xk,SC_nbands,(/ik,ik/),'MxO',.FALSE.)
-       call REPORT_Energies(real(b_of_max_proj)/HA2EV,k,Xk,SC_nbands,(/ik,ik/),'Bnd',.FALSE.)
+       call REPORT_Energies(E%E(SC_bands(1):SC_bands(2),:,:),k,Xk,SC_nbands,(/ik,ik/),'E  ',.FALSE.,.TRUE.)
+       call REPORT_Energies(E%f(SC_bands(1):SC_bands(2),:,:)/HA2EV,k,Xk,SC_nbands,(/ik,ik/),'occ',.FALSE.,.TRUE.)
+       call REPORT_Energies(E_reference%E(SC_bands(1):SC_bands(2),:,:),k,Xk,SC_nbands,(/ik,ik/),'E_o',.FALSE.,.TRUE.)
+       call REPORT_Energies(dE,k,Xk,SC_nbands,(/ik,ik/),'d_E',.FALSE.,.TRUE.)
+       call REPORT_Energies(spread,k,Xk,SC_nbands,(/ik,ik/),'Spr',.FALSE.,.TRUE.)
+       call REPORT_Energies(max_overlap/HA2EV,k,Xk,SC_nbands,(/ik,ik/),'MxO',.FALSE.,.TRUE.)
+       call REPORT_Energies(real(b_of_max_proj)/HA2EV,k,Xk,SC_nbands,(/ik,ik/),'Bnd',.FALSE.,.TRUE.)
      enddo
      !
    end subroutine SC_report

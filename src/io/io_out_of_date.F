@@ -65,10 +65,14 @@ integer function io_out_of_date(ID)
  ! DB specific
  !=============
  !
+ REF_rev=17876   ! X descriptors changed
+ if (index(io_file(ID),'em1')/=0.and..not.ver_is_gt_or_eq(ID,revision=REF_rev)) return
+ !
  REF_rev=16788   ! tables are now defined as integers
  if (index(io_file(ID),'QINDX')/=0.and..not.ver_is_gt_or_eq(ID,revision=REF_rev)) return
  !
  REF_rev=16664   ! tables are defined as character
+ REF_rev=17876   ! X descriptors changed
  if (index(io_file(ID),'COLLISIONS')/=0.and..not.ver_is_gt_or_eq(ID,revision=REF_rev)) return
  !
  REF_rev=5380

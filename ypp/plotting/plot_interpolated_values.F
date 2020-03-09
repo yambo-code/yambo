@@ -52,7 +52,6 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  integer               :: ik_local,ik_ibz_grid,ik_bz_grid,iqnt,i_dim,ifile,i_point,i_sp_pol,ivalue,&
 &                         ndims,nval,n_points,n_points_max
  logical               :: PLOT_BANDS,PLOT_G2,PLOT_from_DB,PLOT_interpolated,PLOT_built_in,l_print_k_name
- character(lchlen)     :: of_string
  character(schlen)     :: headings_k(4),headings(dims(2)-dims(1)+1+4), &
 &                         file_name(sum(nfiles)),k_file_name,k_name
  real(SP)              :: value_k(4),     values(dims(2)-dims(1)+1+4), &
@@ -177,7 +176,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  endif
  !
 #if defined _YPP_SC
- if(PLOT_INTERPOLATE.and.PLOT_BANDS.and.proj_wfc) then
+ if(PLOT_interpolated.and.PLOT_BANDS.and.proj_wfc) then
    ifile=ifile+5
    file_name(ifile+1)="proj_val_"//trim(basename)
    file_name(ifile+2)="proj_con_"//trim(basename)
@@ -241,6 +240,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  do ik_local=1,LOCAL_k%nbz
    !
    l_print_k_name=.false.
+   k_name=""
    !
    if (PLOT_built_in) then
      !
@@ -268,9 +268,9 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
      !
      tmp_k(:,1)=LOCAL_k%pt(ik_local,:)
      !
-     if (len_trim(CIRCUIT_k_label(ik_local))>0) then
+     if (len_trim(CIRCUIT_k_label(ik_local))>0 .and. .not.PLOT_G2) then
        k_name="  ["//trim(CIRCUIT_k_label(ik_local))//"]"
-       l_print_k_name=.not.PLOT_G2
+       l_print_k_name=.true.
      endif
      !
    endif
@@ -317,14 +317,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
          if(i_point==1) values(2:ndims+1)=      tmp_var(:,ifile,iqnt)
          if(i_point> 1) values(2:ndims+1)=auxiliary_var(:,ifile,iqnt,i_point-1)
          if(PLOT_BANDS .and. ivalue==1) values(2:ndims+1)=values(2:ndims+1)*HA2EV
-         !
-         if (l_print_k_name.and..not.PLOT_G2) then
-           call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.not.plot_G2,formatted_msg=of_string)
-           of_string=trim(of_string)//trim(k_name)
-           call msg_deliver(trim(file_name(ivalue)),of_string)
-         else
-           call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.not.plot_G2)
-         endif
+         call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.not.plot_G2,after_msg=k_name)
        enddo
        !
      enddo

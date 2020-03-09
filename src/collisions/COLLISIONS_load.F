@@ -170,7 +170,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      integer :: iqbz,i_J,ic,i_coll,&
 &               i_coll_mem,i_q_mem,i_J_mem,i_b,i_g
      !
-     call live_timing(trim(COLL%name)//' collisions I/O:',COLL%PAR_N)
+     call live_timing(trim(COLL%name)//' collisions I/O',COLL%PAR_N)
      !
      if (COLL%kind==H_SE_FOCK.or.COLL%kind==H_SE_COH.or.COLL%kind==H_SE_SEX.or.COLL%kind>=H_SE_HARTREE) then
        call COLLISIONS_alloc_and_free(trim(COLL%name),"collision","alloc",0)

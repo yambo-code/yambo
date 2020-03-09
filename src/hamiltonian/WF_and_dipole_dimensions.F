@@ -117,7 +117,7 @@ subroutine WF_and_dipole_dimensions(X,Xk)
  SC_X_size =X(2)%ng
  !
  if(SC_up_W_iters/=0) then
-   call msg('nr','[SC] Updating W each                   :',SC_up_W_iters)
+   call msg('nr','[SC] Updating W each                   ',SC_up_W_iters)
    !
    if(l_use_Hxc_collisions) then
      SC_up_W_iters=0

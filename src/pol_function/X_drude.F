@@ -83,7 +83,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  !
  if(.not.all(Drude_term)) return
  !
- call msg('nrs','[X/K] Drude contribution @[ev]:',(/real(Wd),aimag(Wd)/)*HA2EV)
+ call msg('nrs','[X/K] Drude contribution @[ev]',(/real(Wd),aimag(Wd)/)*HA2EV)
  !
  ! drude_factor is the eh_occ factor calculated in the Xo loop
  ! evaluated at the fermi state

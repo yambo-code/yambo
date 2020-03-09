@@ -151,7 +151,7 @@ subroutine INTERPOLATION_BZ_setup(Xk)
    !
  enddo
  !
- call msg('sr','[INTERPOLATION] Number of shells: ',nshells)
+ call msg('sr','[INTERPOLATION] Number of shells ',nshells)
  !
  all_vec(1:3,1:nshells)=lattice_vectors(1:3,1:nshells)
  !

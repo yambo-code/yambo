@@ -122,6 +122,6 @@ subroutine X_Double_Grid_setup(iq,k)
    !
  enddo 
  !
- call msg('nrsn','DbGd@q['//trim(intc(iq))//'] k->k-q transitions included [%]:',PREC)
+ call msg('nrsn','DbGd@q['//trim(intc(iq))//'] k->k-q transitions included [%]',PREC)
  !
 end subroutine

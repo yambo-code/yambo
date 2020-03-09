@@ -7,7 +7,7 @@ fi
 #
 cat << EOF > check.awk
 {
-  if ( index(\$0,"Copyright (C)") != 0 && index(\$0,"YAMBO") && index(\$0,"$2") == 0)
+  if ( index(\$0,"Copyright (C)") != 0 && index(\$0,"YAMBO") && index(\$0,"$2") != 0)
   {
    print \$0 >> "temporary"
   }
@@ -17,7 +17,7 @@ cat << EOF > normal.awk
 {
   if ( index(\$0,"Copyright (C)") != 0 && index(\$0,"YAMBO"))
   {
-   gsub ("-$2","-2019")
+   gsub ("-$2","-2020")
   }
   print \$0 >> "temporary"
 }
@@ -26,7 +26,7 @@ cat << EOF > php.awk
 {
   if ( index(\$0,"-$2 Andrea Marini") != 0)
   {
-    gsub ("-$2","-2019")
+    gsub ("-$2","-2020")
   }
   print \$0 >> "temporary"
 }

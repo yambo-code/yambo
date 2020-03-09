@@ -1,6 +1,6 @@
 ! 
 ! Copyright (C) 2004 WanT Group
-! Copyright (C) 2000-2019 the YAMBO team
+! Copyright (C) 2000-2020 the YAMBO team
 ! 
 ! This file is distributed under the terms of the 
 ! GNU General Public License. See the file `License' 

@@ -36,7 +36,7 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
 &                         l_PROJECT_plane,PROJECT_plane_X,PROJECT_plane_Y,PROJECT_steps
  use interpolate,    ONLY:GRID_k
  use electrons,      ONLY:n_spin
- use stderr,         ONLY:set_real_printed_length,intc,real2ch,STRING_remove
+ use stderr,         ONLY:intc,real2ch,STRING_remove
  !
 #include<memory.h>
  !
@@ -55,8 +55,6 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
  !
  ! Allocation
  !============
- !
- call set_real_printed_length(f_length=10,g_length=10)
  !
  l_DOS    = what=="DOS"
  l_BANDS  = what=="BANDS"
@@ -241,7 +239,5 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
    enddo 
    !
  endif
- !
- call set_real_printed_length()
  !
 end subroutine

@@ -29,7 +29,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
  use pars,          ONLY:pi,SP,cZERO
  use units,         ONLY:HA2EV
- use stderr,        ONLY:intc,set_real_printed_length
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,BZ_DbGd_tot_nk_levels
@@ -72,8 +71,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! Basical Checks
  !
  call X_pre_setup(Xen,X)
- !
- call set_real_printed_length(f_length=10,g_length=10)
  !
  allocate(X_par(1))
  !
@@ -372,7 +369,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  deallocate(X_par)
  call WF_free(WF)
  call PP_redux_wait
- call set_real_printed_length()
  if (allocated(FXC)) then
    YAMBO_FREE(FXC)
  endif

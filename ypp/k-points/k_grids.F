@@ -36,7 +36,6 @@ subroutine k_grids(en,k,Xk,q)
 &                              U_k_pts,U_q_pts,U_q_shifts,USER_k,k_grid_printer,n_path_pts,PtsPath
  use LIVE_t,              ONLY:live_timing_is_on
  use zeros,               ONLY:k_iku_zero
- use stderr,              ONLY:set_real_printed_length
  use YPP_interfaces,      ONLY:k_special
  !
 #include<memory.h>
@@ -323,11 +322,7 @@ subroutine k_grids(en,k,Xk,q)
        ! Print the shifted mesh
        ! Ensure 7 *significant figures*, otherwise round off errors may occur later
        !
-       call set_real_printed_length(f_length=10,g_length=10)
-       !
        call k_grid_printer(Xk%nibz,k_plus_q,trim(coo_out),"none")
-       !
-       call set_real_printed_length( )
        !
      enddo
       !

@@ -72,13 +72,8 @@ module stderr
        g_format_length=g_length
      endif
      if (.not.present(f_length).and..not.present(g_length)) then
-#if defined _DP
-         f_format_length=10
-         g_format_length=13
-#else
-         f_format_length=17
-         g_format_length=20
-#endif
+       f_format_length=9
+       g_format_length=9
      endif
      !
      of_tabs(1)=4

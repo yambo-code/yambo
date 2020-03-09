@@ -41,7 +41,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use drivers,        ONLY:l_slk_test
 #endif
  use parser_m,       ONLY:parser
- use stderr,         ONLY:set_real_printed_length
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_tools,       ONLY:it,infile_dump,ofiles_append,&
@@ -137,12 +136,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
-   call set_real_printed_length(f_length=9,g_length=9)
    call initinfio(defs,repfile_unit)
    call ofiles_append(defs=defs)
    close(unit=repfile_unit)
    if(log_as_a_file) close(unit=logfile_unit)
-   call set_real_printed_length()
 #if defined _YAML_OUTPUT
    call yaml_close_stream(unit=of_yaml_IDs(repfile_index))
    if(log_as_a_file) call yaml_close_stream(unit=of_yaml_IDs(logfile_index))
@@ -267,11 +264,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (infile_editing) then
    inpfile_unit=12
-   call set_real_printed_length(f_length=9,g_length=9)
    open(unit=inpfile_unit,file=trim(infile))
    call initinfio(defs,inpfile_unit)
    close(inpfile_unit)
-   call set_real_printed_length()
    call PP_redux_wait
    return
  endif

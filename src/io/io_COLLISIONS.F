@@ -158,16 +158,6 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      !
      ! Global Response Descriptions
      !==============================
-     !call io_elemental(ID,VAR="N_X_descriptions",VAR_SZ=1,MENU=0)
-     !if (X_desc%n> 0) call io_elemental(ID,I0=X_desc%n,CHECK=.true.,OP=(/"=="/))
-     !if (X_desc%n==0) then
-     !  call io_elemental(ID,DB_I0=X_desc%n,I0=X_desc%n)
-     !  X_desc%n=-X_desc%n
-     !endif
-     !call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     !!
-     !! In this case I have loaded the em1s DB and I know the parameters.
-     !! I can, therefore, write/read and/or VERIFIY the values
      !
      io_COLLISIONS=io_descriptors(X_desc,ID)
      !

@@ -47,17 +47,9 @@ function io_descriptors(desc,ID)
  call def_variable_bulk(ID,"DESCRIPTORS_NAMES",1,(/schlen,n_descs_disk/),0)
  call  io_variable_bulk(ID,1,STR1=desc%str(:n_descs_disk))
  !
- ! Here I reset the value.
- ! It will be incremented back doing io_variable_elemental
- !
- desc%n=0
- !
  do i1=1,n_descs_disk
    !
-   if (desc%kind(i1)=='') then
-     desc%n=desc%n+1
-     cycle
-   endif
+   if (desc%kind(i1)=='') cycle
    !
    if(desc%kind(i1)=='i')   VAR_KIND=IP+100
    if(desc%kind(i1)=='d')   VAR_KIND=DP

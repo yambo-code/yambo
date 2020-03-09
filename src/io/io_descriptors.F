@@ -25,7 +25,8 @@ function io_descriptors(desc,ID)
  !
  use pars,       ONLY:schlen,SP,DP,IP,LP
  use IO_m,       ONLY:IO_desc,def_variable_elemental,io_variable_elemental,&
-&                     def_variable_bulk,io_variable_bulk,io_status
+&                     def_variable_bulk,io_variable_bulk,io_status,        &
+&                     variable_exist,read_is_on
  !
  implicit none
  !
@@ -38,8 +39,15 @@ function io_descriptors(desc,ID)
  !
  integer :: n_descs_disk,i1,N,VAR_KIND
  !
+ if(read_is_on(ID) .and. .not.variable_exist(ID,"N_DESCRIPTORS")) return
+ !
  call def_variable_elemental(ID,"N_DESCRIPTORS",1,IP+100,0)
  call  io_variable_elemental(ID,I0=desc%n,DB_I0=n_descs_disk,CHECK=.true.,OP=(/"<="/))
+ !
+ if(n_descs_disk==0) then
+   io_descriptors=io_status(ID)
+   return
+ endif
  !
  call def_variable_elemental(ID,"VALUES_PER_DESCRIPTOR",n_descs_disk,IP+100,0)
  call  io_variable_elemental(ID,I1=desc%size(:n_descs_disk)) !,CHECK=.true.,OP=(/"=="/))

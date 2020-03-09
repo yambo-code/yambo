@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -270,10 +270,10 @@ subroutine INIT_activate()
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
    !GPL_EXCLUDE_START
-   call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')
+   call initactivate(1,'BSEQptR BSEBands BSKCut BSEEhEny BSehWind')
    !GPL_EXCLUDE_END
    !GPL_INCLUDE_START
-   !call initactivate(1,'BSEBands BSEEhEny BSehWind')
+   !call initactivate(1,'BSEBands BSKCut BSEEhEny BSehWind')
    !GPL_INCLUDE_END
    !
 #if defined _RT

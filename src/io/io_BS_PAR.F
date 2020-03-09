@@ -46,7 +46,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  logical :: def_var, io_var
  integer :: io_BS,    VAR_IDs(8), n_vars, i1
  integer :: flattened_block_size_dim,block_size_dim
- real(SP)          :: local_stc_var(10,100)
+ real(SP)          :: local_desc_var(10,100)
  character(schlen) :: db_name, PARALLEL_STRUCTURE
  character(lchlen) :: full_db_name,local_desc_str(100),ch(4)
  character(schlen) :: dim_names(3), dim_names_done(2)
@@ -115,7 +115,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !   
  if (BSS_n_descs==0) then
    do i1=1,100
-     if (len_trim(local_descr_str(i1))>0) then
+     if (len_trim(local_desc_str(i1))>0) then
        BSS_n_descs=BSS_n_descs+1
        BSS_desc_str(BSS_n_descs)  =local_desc_str(i1)
        BSS_desc_var(:,BSS_n_descs)=local_desc_var(:,i1)

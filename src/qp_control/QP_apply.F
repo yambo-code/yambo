@@ -232,21 +232,23 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    if (n_sp_pol==1) then
      !
-     call msg('r','[QP apply] Ind. Gap Correction   [ev]',&
+     call msg('r','[QP apply] Final Min. Gap Correction   [ev]',&
 &                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
 &                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
      !
    else
      !
-     call msg('r','[QP apply] Ind. Gap Correction  (up) [ev]',&
+     call msg('r','[QP apply] Final Min. Gap Correction  (up) [ev]',&
 &                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
 &                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
      !
-     call msg('r','                              (down) [ev]',&
+     call msg('r','                                    (down) [ev]',&
 &                  (minval(en%E(en%nbf+1,:,2))-maxval(en%E(en%nbf,:,2)) &
 &                  -minval(en%Eo(en%nbf+1,:,2))+maxval(en%Eo(en%nbf,:,2)) )*HA2EV)
      !
    endif
+   !
+   call msg('r','')
    !
  endif
  !

@@ -132,6 +132,8 @@ subroutine QP_apply_dump_user_CTLs( E, object )
    subroutine USER_action_active()
      n_QP_actions=n_QP_actions+1
      QP_action(n_QP_actions)%active=.TRUE.
+     QP_action(n_QP_actions)%what="Input file"
+     QP_action(n_QP_actions)%desc="USER defined scissor"
    end subroutine
    !
 end subroutine

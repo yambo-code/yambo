@@ -41,6 +41,9 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  logical  :: UNIFORM,l_carriers,l_current,l_G_lesser
  real(SP) :: STEP,TIME,TIME_diff
  !
+ !call RT_time_configuration_setup_NEW(what,GENERAL_RT_IO_t)
+ !return
+ !
  ! Definitions
  !==============
  !

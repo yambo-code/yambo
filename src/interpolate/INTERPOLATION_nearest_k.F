@@ -28,7 +28,7 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
  use interpolate,       ONLY:NN_nk_exact,NN_n_of_nearest,NN_MAX_real_nearest,INTERPOLATE_is_serial
  use interfaces,        ONLY:PARALLEL_index
  use vec_operate,       ONLY:sort
- use parallel_m,        ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
+ use parallel_m,        ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,ncpu,myid
  !
 #include<memory.h>
  !
@@ -39,7 +39,7 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
  !
  ! Work Space
  ! 
- integer :: ik,Nk_in,Nk_out,i_err,Nk_to_average,ik_n,D1,D3,i1,i2,i3
+ integer :: ik,Nk_in,Nk_out,i_err,Nk_to_average,ik_n,D1,D3,i1,i2,i3,NN_MAX(ncpu),NN_exact(ncpu)
  integer,  allocatable :: k_near(:)
  real(SP), allocatable :: k_dist(:)
  real(SP)              :: total_dist
@@ -53,8 +53,8 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
  D3    =size(V_out(1,1,:))
  allocate(k_near(Nk_in))
  allocate(k_dist(Nk_in))
- NN_nk_exact=0
- NN_MAX_real_nearest=0
+ NN_exact=0
+ NN_MAX=0
  V_out=0._SP
  !
  if (.not.INTERPOLATE_is_serial) then
@@ -73,7 +73,7 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
    k_near(1)=k_the_nearest(K_out(ik,:),K_in,Nk_in,k_dist=k_dist,ROTATE_k_ref=.TRUE.,i_err=i_err)
    !
    if (i_err==0) then
-     NN_nk_exact=NN_nk_exact+1
+     NN_exact(myid+1)=NN_exact(myid+1)+1
      total_dist=1.
      k_dist(1)=1.
    else if (NN_n_of_nearest>1) then
@@ -93,7 +93,7 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
      k_dist(1)=1.
    endif
    !
-   NN_MAX_real_nearest=max(NN_MAX_real_nearest,Nk_to_average)
+   NN_MAX(myid+1)=max(NN_MAX(myid+1),Nk_to_average)
    !
    do i2=1,Nk_to_average
      !
@@ -111,7 +111,16 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
    !
  enddo
  !
- if (.not.INTERPOLATE_is_serial) call PP_redux_wait(V_out)
+ if (.not.INTERPOLATE_is_serial) then
+   call PP_redux_wait(V_out)
+   call PP_redux_wait(NN_MAX)
+   call PP_redux_wait(NN_exact)
+   NN_MAX_real_nearest=sum(NN_max)
+   NN_nk_exact=sum(NN_exact)
+ else
+   NN_MAX_real_nearest=NN_max(myid+1)
+   NN_nk_exact=NN_exact(myid+1)
+ endif
  !
  deallocate(k_near)
  deallocate(k_dist)

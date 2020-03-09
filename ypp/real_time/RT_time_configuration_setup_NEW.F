@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
+subroutine RT_time_configuration_setup_NEW(what,GENERAL_RT_IO_t)
  !
  use units,          ONLY:AUT2FS,pi,HA2EV
  use YPP_real_time,  ONLY:RT_conf,RT_time
@@ -123,6 +123,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
        add_me=.FALSE.
        if (TIME_diff(1)<0. .and. TIME_diff(2)>0.) add_me=.TRUE.
        if (i_t==i_ref(2)-1.and.abs(TIME_diff(2))< STEP) add_me=.TRUE.
+       if (abs(TIME_diff(1))< STEP) add_me=.TRUE.
        !
        if (add_me) then
          RT_conf%T_n_steps=RT_conf%T_n_steps+1
@@ -182,4 +183,4 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  RT_conf%Field_damp_factor= 2._SP*pi/(real(RT_conf%T_n_steps-1,SP)*RT_conf%delta_T)
  call msg('s','['//what//'] Field damping [meV]:',RT_conf%Field_damp_factor*1000._SP*HA2EV)
  !
-end subroutine RT_time_configuration_setup
+end subroutine RT_time_configuration_setup_NEW

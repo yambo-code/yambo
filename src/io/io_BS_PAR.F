@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): HM, DS
@@ -46,7 +46,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  logical :: def_var, io_var
  integer :: io_BS,    VAR_IDs(8), n_vars, i1
  integer :: flattened_block_size_dim,block_size_dim
- real(SP)          :: local_stc_var(10,100)
+ real(SP)          :: local_desc_var(10,100)
  character(schlen) :: db_name, PARALLEL_STRUCTURE
  character(lchlen) :: full_db_name,local_desc_str(100),ch(4)
  character(schlen) :: dim_names(3), dim_names_done(2)
@@ -73,7 +73,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
  if(io_BS/=0) return
  !
- ! Check if the file already contains data and it its consistent
+ ! Check if the file already contains data and it is consistent
  ! DS: warning. This is potentially dangerous since all MPI tasts are all writing
  !              both the header and the variables
  !              I cannot put here if(master_cpu) because I need all MPI_tasks to
@@ -89,8 +89,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  if (io_BS/=0) then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
-   call error('Invalid dimensions found in BSE restart file '//trim(io_file(ID))//&
- &            ' Remove the file or change the input file')
+   call warning('Invalid dimensions found. BSE restart file '//trim(io_file(ID))//' not accepted')
+   return
  endif
  !
  ! Check if BSE kernel is complete in reading mode, set the variable to false in writing mode
@@ -115,7 +115,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !   
  if (BSS_n_descs==0) then
    do i1=1,100
-     if (len_trim(local_descr_str(i1))>0) then
+     if (len_trim(local_desc_str(i1))>0) then
        BSS_n_descs=BSS_n_descs+1
        BSS_desc_str(BSS_n_descs)  =local_desc_str(i1)
        BSS_desc_var(:,BSS_n_descs)=local_desc_var(:,i1)

@@ -522,7 +522,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_bz_grids) then
    call initactivate(1,"OutputAlat")
-   if (l_k_grid)        call initactivate(1,"NoWeights cooIn cooOut ListPts ExpandPts")
+   if (l_k_grid)        call initactivate(1,"NoWeights cooIn cooOut ListPts ExpandPts PtsPath")
    if (l_q_grid)        call initactivate(1,"NoWeights cooIn cooOut ListPts ExpandPts ForceUserPts")
    if (l_high_sym_pts)  call initactivate(1,"cooOut PtsPath NPtsPath")
    if (l_shifted_grid)  call initactivate(1,"NoWeights cooIn cooOut")

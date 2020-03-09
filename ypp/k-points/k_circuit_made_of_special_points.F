@@ -107,6 +107,18 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
  !
  if (n_Uk==0) return
  !
+ if (n_points==0) then
+   call msg('s','Found '//trim(intc(n_Uk))//' user special points')
+   CIRCUIT_k%nbz = n_Uk
+   YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz,3))
+   allocate(CIRCUIT_k_label(CIRCUIT_k%nbz))
+   do i_Uk=1,n_Uk
+     CIRCUIT_k_label(i_Uk)=Uk(i_Uk)%string
+     CIRCUIT_k%pt(i_Uk,:)=GIMME_K_path(i_Uk)
+   enddo
+   return
+ endif
+ !
  call msg('s','Found '//trim(intc(n_Uk-1))//' segments with  '//trim(intc(n_points))//' points each')
  !
  do i_Uk=1,n_Uk-1

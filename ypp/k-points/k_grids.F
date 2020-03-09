@@ -113,13 +113,13 @@ subroutine k_grids(en,k,Xk,q)
      !
      ik_near=k_the_nearest(v,Xk%ptbz,Xk%nbz,k_dist=K_dist,i_err=i_err)
      !
-     call msg('s','User point    [iku]',v)
+     call msg('sr','User point    [iku]',v)
      if (i_err==0) then
-       call msg('s','Grid correspondance',Xk%sstar(ik_near,1))
+       call msg('sr','Grid correspondance',Xk%sstar(ik_near,1))
        l_new_gw_point=.FALSE.
      else
-       call msg('s','Grid nearest       ',Xk%sstar(ik_near,1))
-       call msg('s','Distance      [iku]',K_dist(ik_near))
+       call msg('sr','Grid nearest       ',Xk%sstar(ik_near,1))
+       call msg('sr','Distance      [iku]',K_dist(ik_near))
        l_new_gw_point=.TRUE.
      endif
      !
@@ -130,7 +130,7 @@ subroutine k_grids(en,k,Xk,q)
      !
    enddo
    !
-   call msg("s",'User K-points ',USER_k%nbz)
+   call msg("sr",'User K-points ',USER_k%nbz)
    !
    ! Extended grid
    !

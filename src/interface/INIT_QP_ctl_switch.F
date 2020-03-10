@@ -39,7 +39,7 @@ subroutine INIT_QP_ctl_switch(what)
  !
  ! DbGd extension
  !
- call initactivate(1,what//'fnQP_DbGd_mode')
+ call initactivate(1,what//'fnQP_DbGd_INTERP_mode')
  !
  ! Stretching
  !

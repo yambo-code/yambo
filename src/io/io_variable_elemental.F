@@ -27,9 +27,9 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
 &                       D0, DB_D0, C0, DB_C0, &
 &                       L0, DB_L0,            &
 &                       CH0,DB_CH0,           &
-&                       UNIT,DESC_STR,DESC_VAR,DO_NOT_DUMP)
+&                       UNIT,DESCRIPTOR,DO_NOT_DUMP)
  !
- use pars,          ONLY:SP,DP,schlen,lchlen
+ use pars,          ONLY:LP,SP,DP,schlen,lchlen,iomsg_len
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use netcdf
  use drivers, ONLY:list_dbs
@@ -38,7 +38,9 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_elem_varid,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                  io_status,DUMP,REP,LOG,NO_VAR,io_com,io_file,&
-&                  io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR
+&                  io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR,&
+&                  IO_desc
+ !
  implicit none
  !
  integer               :: ID
@@ -51,27 +53,37 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  complex(SP), optional :: DB_C0
  logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
  character(*),optional :: CH0,DB_CH0
- character(lchlen),optional :: DESC_STR
- real(SP),         optional :: DESC_VAR(:)
+ type(IO_desc),optional:: DESCRIPTOR
  !
  ! Work Space
  !
- integer,parameter     :: MAX_DB_ELEMENTS=100
- character(lchlen) :: ch
- character(1)      :: msg_where
- integer :: i_db(MAX_DB_ELEMENTS),i_err,nf_error
- real(SP):: r_db(MAX_DB_ELEMENTS),r_from_c(2,MAX_DB_ELEMENTS),local_unit
- real(DP):: d_db(MAX_DB_ELEMENTS)
- complex(SP), target :: c_db
- real(SP), pointer  :: RC0(:)
- character(schlen) :: db_ch(MAX_DB_ELEMENTS)
- logical :: CHECK_,DUMP_
+ integer,parameter      :: MAX_DB_ELEMENTS=100
+ character(iomsg_len)   :: ch
+ character(1)           :: msg_where
+ integer                :: SZ,i_err,nf_error
+ logical                :: CHECK_,WARN_,DUMP_,VERIFY_
  !
- DUMP_= (io_mode(ID)==DUMP)
+ ! DB variables
+ !
+ integer(LP)            :: l_db(1)
+ integer                :: i_db(MAX_DB_ELEMENTS)
+ real(SP)               :: r_db(MAX_DB_ELEMENTS),local_unit
+ real(DP)               :: d_db(1)
+ character(schlen)      :: ch_db(1)
+ complex(SP), target    :: c_db(1)
+ real(SP), pointer      :: rc_db(:)
+ !
+ DUMP_= (read_is_on(ID) .and. (io_mode(ID)==DUMP))
  if (present(DO_NOT_DUMP)) DUMP_=.not.DO_NOT_DUMP
+ !
+ i_err=0
+ VERIFY_= (read_is_on(ID) .and. (io_mode(ID)==VERIFY .and. present(OP)))
  !
  CHECK_=.false.
  if (present(CHECK)) CHECK_=CHECK
+ !
+ WARN_ =.false.
+ if (present(WARN )) WARN_ =WARN
  !
  local_unit=1._SP
  if (present(UNIT)) local_unit=UNIT
@@ -80,310 +92,294 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  if (io_com(ID)==REP            ) msg_where="r"
  if (io_com(ID)==LOG.or.list_dbs) msg_where="s"
  !
+ ! I0
+ !
  if (present(I0)) then
-   if (write_is_on(ID)) then
-     nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),I0,(/io_rec_pos(ID)/))
-     call netcdf_call(nf_error,ID)
-     if (present(DB_I0)) DB_I0=I0
-     if (present(VAR)) call msg(msg_where,VAR,I0)
-   else if (read_is_on(ID)) then
-     nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),i_db(1),(/io_rec_pos(ID)/))
-     call netcdf_call(nf_error,ID)
-     if (DUMP_)          I0=i_db(1)
-     if (present(DB_I0)) DB_I0=i_db(1)
-     ch=""
-     if (io_mode(ID)==VERIFY.and.present(OP)) then
-       i_err=i_verify((/I0/),(/i_db(1)/))
-       if (CHECK_) then
-         if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
-       else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
-       endif
-     endif
-     if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),i_db(1))
-     else if (present(VAR)) then
-       call msg(msg_where,VAR,i_db(1))
-     endif
+   !
+   ! I/O
+   !
+   SZ=1
+   i_db(1)=I0
+   !
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),i_db(1),(/io_rec_pos(ID)/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),i_db(1),(/io_rec_pos(ID)/))
+   !
+   io_rec_pos(ID)=io_rec_pos(ID)+SZ
+   call netcdf_call(nf_error,ID)
+   !
+   if ( DUMP_        ) I0   =i_db(1)
+   if (present(DB_I0)) DB_I0=i_db(1)
+   if ( VERIFY_ ) i_err=i_verify((/I0/),i_db(1:SZ))
+   !
+   ! DESCRIPTOR
+   !
+   if (present(DESCRIPTOR).and.present(VAR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n)   = SZ
+     DESCRIPTOR%kind(DESCRIPTOR%n)   = 'i'
+     DESCRIPTOR%str(DESCRIPTOR%n)    = VAR
+     DESCRIPTOR%ival(1,DESCRIPTOR%n) = I0
+     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(1:SZ,DESCRIPTOR%n) = OP
    endif
    !
-   ! DESCRIPTION
-   !
-   if (present(DESC_STR)) DESC_STR=VAR
-   if (present(DESC_VAR)) DESC_VAR(1)=real(I0,SP)
-   !
-   io_rec_pos(ID)=io_rec_pos(ID)+1
-   !
  endif
+ !
+ ! I1
  !
  if (present(I1)) then
-   if (write_is_on(ID)) then
-     nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),I1,(/io_rec_pos(ID)/))
-     call netcdf_call(nf_error,ID)
-     if (present(DB_I1)) DB_I1=I1
-     if (present(VAR)) call msg(msg_where,VAR,I1)
-   else if (read_is_on(ID)) then
-     nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),i_db(:size(I1)),(/io_rec_pos(ID)/))
-     call netcdf_call(nf_error,ID)
-     if (DUMP_)          I1=i_db(:size(I1))
-     if (present(DB_I1)) DB_I1=i_db(:size(I1))
-     ch=""
-     if (io_mode(ID)==VERIFY.and.present(OP)) then
-       i_err=i_verify(I1,i_db(:size(I1)))
-       if (CHECK_) then
-         if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
-       else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
-       endif
-     endif
-     if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),i_db(:size(I1)))
-     else if (present(VAR)) then
-       call msg(msg_where,VAR,i_db(:size(I1)))
-     endif
-   endif
+   !
+   ! I/O
+   !
+   SZ=size(I1)
+   i_db(1:SZ)=I1
+   !
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),i_db(1:SZ),(/io_rec_pos(ID)/),(/SZ/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),i_db(1:SZ),(/io_rec_pos(ID)/),(/Sz/))
+   !
+   io_rec_pos(ID)=io_rec_pos(ID)+SZ
+   call netcdf_call(nf_error,ID)
+   !
+   if ( DUMP_        ) I1   =i_db(1:SZ)
+   if (present(DB_I1)) DB_I1=i_db(1:SZ)
+   if ( VERIFY_      ) i_err=i_verify(I1,i_db(1:SZ))
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR
-   if (present(DESC_VAR)) DESC_VAR(:size(I1))=real(I1,SP)
+   if (present(DESCRIPTOR).and.present(VAR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n)      = SZ
+     DESCRIPTOR%kind(DESCRIPTOR%n)      = 'i'
+     DESCRIPTOR%str(DESCRIPTOR%n)       = VAR
+     DESCRIPTOR%ival(1:SZ,DESCRIPTOR%n) = I1
+     DESCRIPTOR%check(DESCRIPTOR%n)     = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(1:SZ,DESCRIPTOR%n) = OP
+   endif
    !
-   io_rec_pos(ID)=io_rec_pos(ID)+size(I1)
  endif
+ !
+ ! R0
  !
  if (present(R0)) then
-   if (write_is_on(ID)) then
-     nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),R0,(/io_rec_pos(ID)/))
-     call netcdf_call(nf_error,ID)
-     if (present(DB_R0)) DB_R0=R0
-     if (present(VAR)) call msg(msg_where,VAR,R0*local_unit)
-   else if (read_is_on(ID)) then
-     nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),r_db(1),(/io_rec_pos(ID)/))
-     call netcdf_call(nf_error,ID)
-     if (DUMP_)          R0=r_db(1)
-     if (present(DB_R0)) DB_R0=r_db(1)
-     ch=""
-     if (io_mode(ID)==VERIFY.and.present(OP)) then
-       i_err=r_verify((/R0/),(/r_db(1)/))
-       if (CHECK_) then
-         if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
-       else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
-       endif
-     endif
-     if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),r_db(1)*local_unit)
-     else if (present(VAR)) then
-       call msg(msg_where,VAR,r_db(1)*local_unit)
-     endif
-   endif
+   !
+   ! I/O
+   !
+   SZ=1
+   r_db(1)=R0
+   !
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),r_db(1),(/io_rec_pos(ID)/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),r_db(1),(/io_rec_pos(ID)/))
+   !
+   io_rec_pos(ID)=io_rec_pos(ID)+SZ
+   call netcdf_call(nf_error,ID)
+   !
+   if ( DUMP_        ) R0   =r_db(1)
+   if (present(DB_R0)) DB_R0=r_db(1)
+   if ( VERIFY_      ) i_err=r_verify((/R0/),r_db(1:SZ))
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR
-   if (present(DESC_VAR)) DESC_VAR(1)=R0*local_unit
-   !
-   io_rec_pos(ID)=io_rec_pos(ID)+1
+   if (present(DESCRIPTOR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n)   = SZ
+     DESCRIPTOR%kind(DESCRIPTOR%n)   = 'r'
+     DESCRIPTOR%str(DESCRIPTOR%n)    = VAR
+     DESCRIPTOR%rval(1,DESCRIPTOR%n) = R0*local_unit
+     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(1:SZ,DESCRIPTOR%n) = OP
+   endif
    !
  endif
  !
+ ! R1
+ !
  if (present(R1)) then
-   if (write_is_on(ID)) then
-     nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),R1,(/io_rec_pos(ID)/))
-     call netcdf_call(nf_error,ID)
-     if (present(DB_R1)) DB_R1=R1
-     if (present(VAR)) call msg(msg_where,VAR,R1*local_unit)
-   else if (read_is_on(ID)) then
-     nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),r_db(:size(R1)),(/io_rec_pos(ID)/))
-     call netcdf_call(nf_error,ID)
-     if (DUMP_)          R1=r_db(:size(R1))
-     if (present(DB_R1)) DB_R1=r_db(:size(R1))
-     ch=""
-     if (io_mode(ID)==VERIFY.and.present(OP)) then
-       i_err=r_verify(R1,r_db(:size(R1)))
-       if (CHECK_) then
-         if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
-       else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
-       endif
-     endif
-     if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),r_db(:size(R1))*local_unit)
-     else if (present(VAR)) then
-       call msg(msg_where,VAR,r_db(:size(R1))*local_unit)
-     endif
-   endif
+   !
+   ! I/O
+   !
+   SZ=size(R1)
+   r_db(1:SZ)=R1
+   !
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),r_db(1:SZ),(/io_rec_pos(ID)/),(/SZ/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),r_db(1:SZ),(/io_rec_pos(ID)/),(/SZ/))
+   !
+   io_rec_pos(ID)=io_rec_pos(ID)+SZ
+   call netcdf_call(nf_error,ID)
+   !
+   if ( DUMP_        ) R1   =r_db(1:SZ)
+   if (present(DB_R1)) DB_R1=r_db(1:SZ)
+   if ( VERIFY_ ) i_err=r_verify(R1,r_db(1:SZ))
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR
-   if (present(DESC_VAR)) DESC_VAR(:size(R1))=R1*local_unit
+   if (present(DESCRIPTOR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n)   = size(R1)
+     DESCRIPTOR%kind(DESCRIPTOR%n)   = 'r'
+     DESCRIPTOR%str(DESCRIPTOR%n)    = VAR
+     DESCRIPTOR%rval(1:size(R1),DESCRIPTOR%n) = R1*local_unit
+     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(:size(R1),DESCRIPTOR%n) = OP
+   endif
    !
-   io_rec_pos(ID)=io_rec_pos(ID)+size(R1)
  endif
  !
  if (present(D0)) then
-   if (write_is_on(ID)) then
-     nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),D0,(/io_rec_pos(ID)/))
-     call netcdf_call(nf_error,ID)
-     if (present(DB_D0)) DB_D0=D0
-     if (present(VAR)) call msg(msg_where,VAR,real(D0)*local_unit)
-   else if (read_is_on(ID)) then
-     nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),r_db(1),(/io_rec_pos(ID)/))
-     call netcdf_call(nf_error,ID)
-     if (DUMP_)          D0=r_db(1)
-     if (present(DB_D0)) DB_D0=r_db(1)
-     ch=""
-     if (io_mode(ID)==VERIFY.and.present(OP)) then
-       i_err=r_verify((/real(D0,SP)/),(/r_db(1)/))
-       if (CHECK_) then
-         if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
-       else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
-       endif
-     endif
-     if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),r_db(1)*local_unit)
-     else if (present(VAR)) then
-       call msg(msg_where,VAR,r_db(1)*local_unit)
-     endif
-   endif
+   !
+   ! I/O
+   !
+   SZ=1
+   d_db(1)=D0
+   !
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),d_db(1),(/io_rec_pos(ID)/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),d_db(1),(/io_rec_pos(ID)/))
+   !
+   io_rec_pos(ID)=io_rec_pos(ID)+SZ
+   call netcdf_call(nf_error,ID)
+   !
+   if ( DUMP_        ) D0   =d_db(1)
+   if (present(DB_D0)) DB_D0=d_db(1)
+   if ( VERIFY_      ) i_err=r_verify((/real(D0,SP)/),real(d_db(1:SZ),SP))
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR
-   if (present(DESC_VAR)) DESC_VAR(1)=real(D0,SP)*local_unit
-   !
-   io_rec_pos(ID)=io_rec_pos(ID)+1
+   if (present(DESCRIPTOR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n) = 1
+     DESCRIPTOR%kind(DESCRIPTOR%n) = 'd'
+     DESCRIPTOR%str(DESCRIPTOR%n)  = VAR
+     DESCRIPTOR%dval(DESCRIPTOR%n) = D0
+     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(1:1,DESCRIPTOR%n) = OP
+   endif
    !
  endif
+ !
+ ! C0
  !
  if (present(C0)) then
-   if (write_is_on(ID)) then
-     call C_F_POINTER(C_LOC(C0), RC0, (/2/) )
-     nf_error=nf90_put_var(io_unit(ID), io_netcdf_elem_varid(ID), RC0, (/1/), (/2/))
-     call netcdf_call(nf_error,ID)
-     r_from_c(1,1)=real(C0)
-     r_from_c(2,1)=aimag(C0)
-     if (present(DB_C0)) DB_C0=C0
-     if (present(VAR)) call msg(msg_where,VAR,r_from_c(:,1)*local_unit)
-   else if (read_is_on(ID)) then
-     call C_F_POINTER(C_LOC(c_db), RC0, (/2/) )
-     nf_error=nf90_get_var(io_unit(ID), io_netcdf_elem_varid(ID), RC0, (/1/), (/2/))
-     call netcdf_call(nf_error,ID)
-     r_from_c(1,1)=real(C0)
-     r_from_c(2,1)=aimag(C0)
-     if (DUMP_)          C0=c_db
-     if (present(DB_C0)) DB_C0=c_db
-     ch=""
-     if (io_mode(ID)==VERIFY.and.present(OP)) then
-       i_err=c_verify((/C0/),(/c_db/))
-       if (CHECK_) then
-         if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
-       else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
-       endif
-     endif
-     if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),r_from_c(:,1)*local_unit)
-     else if (present(VAR)) then
-       call msg(msg_where,VAR,r_from_c(:,1)*local_unit)
-     endif
-   endif
+   !
+   ! I/O
+   !
+   SZ=1
+   c_db(1)=C0
+   call C_F_POINTER(C_LOC(c_db(1)), rc_db, (/2*SZ/) )
+   !
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),rc_db(1:2*SZ),(/io_rec_pos(ID)/),(/2*SZ/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),rc_db(1:2*SZ),(/io_rec_pos(ID)/),(/2*SZ/))
+   !
+   io_rec_pos(ID)=io_rec_pos(ID)+2*SZ
+   call netcdf_call(nf_error,ID)
+   !
+   if ( DUMP_        ) C0   =cmplx(rc_db(1),rc_db(2))
+   if (present(DB_C0)) DB_C0=cmplx(rc_db(1),rc_db(2))
+   if ( VERIFY_      ) i_err=c_verify((/C0/),c_db(1:SZ))
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR
-   if (present(DESC_VAR)) DESC_VAR(1:2)=(/real(C0,SP),aimag(C0)/)*local_unit
-   !
-   io_rec_pos(ID)=io_rec_pos(ID)+2
+   if (present(DESCRIPTOR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n) = SZ
+     DESCRIPTOR%kind(DESCRIPTOR%n) = 'c'
+     DESCRIPTOR%str(DESCRIPTOR%n)  = VAR
+     DESCRIPTOR%cval(DESCRIPTOR%n) = C0*local_unit
+     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(1:1,DESCRIPTOR%n) = OP
+   endif
    !
  endif
  !
+ ! L0
  !
  if (present(L0)) then
-   i_db(1)=0
-   if (L0) i_db(1)=1
-   if (write_is_on(ID)) then
-     nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),i_db(1),(/io_rec_pos(ID)/))
-     call netcdf_call(nf_error,ID)
-     if (present(VAR)) call msg(msg_where,VAR,i_db(1)==1)
-     if (present(DB_L0)) DB_L0=i_db(1)==1
-   else if (read_is_on(ID)) then
-     nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),i_db(2),(/io_rec_pos(ID)/))
-     call netcdf_call(nf_error,ID)
-     ch=""
-     if (present(DB_L0)) DB_L0=i_db(2)==1
-     if (DUMP_)          L0=i_db(2)==1
-     if (io_mode(ID)==VERIFY.and.present(OP)) then
-       i_err=i_verify((/i_db(1)/),(/i_db(2)/))
-       if (CHECK_) then
-         if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
-       else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
-       endif
-     endif
-     if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),i_db(2)==1)
-     else if (present(VAR)) then
-       call msg(msg_where,VAR,i_db(2)==1)
-     endif
+   !
+   ! I/O
+   !
+   SZ=1
+   l_db(1)=L0
+   !
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),l_db(1),(/io_rec_pos(ID)/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),l_db(1),(/io_rec_pos(ID)/))
+   !
+   io_rec_pos(ID)=io_rec_pos(ID)+SZ
+   call netcdf_call(nf_error,ID)
+   !
+   if ( DUMP_        ) L0   =(l_db(1)==1)
+   if (present(DB_L0)) DB_L0=(l_db(1)==1)
+   !
+   if ( VERIFY_ ) then
+     i_db(1)=0; if(L0) i_db(1)=1
+     i_db(2)=int(l_db(1),4)
+     i_err=i_verify(i_db(1:1),i_db(2:2))
    endif
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR
-   if (present(DESC_VAR)) then
-     if (     L0) DESC_VAR(1)=1._SP
-     if (.not.L0) DESC_VAR(1)=0._SP
+   if (present(DESCRIPTOR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n) = 1
+     DESCRIPTOR%kind(DESCRIPTOR%n) = 'l'
+     DESCRIPTOR%str(DESCRIPTOR%n)  = VAR
+     DESCRIPTOR%lval(DESCRIPTOR%n) = L0
+     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(1:1,DESCRIPTOR%n) = OP
    endif
    !
-   io_rec_pos(ID)=io_rec_pos(ID)+1
  endif
  !
+ ! CH0
+ !
  if (present(CH0)) then
-   if (write_is_on(ID)) then
-     db_ch(1)=CH0
-     nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),db_ch(:1),(/io_rec_pos(ID)/))
-     call netcdf_call(nf_error,ID)
-     if (present(DB_CH0))   DB_CH0=CH0
-     if (present(VAR)) call msg(msg_where,VAR,trim(db_ch(1)))
-   else if (read_is_on(ID)) then
-     nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),db_ch(:1),(/io_rec_pos(ID)/))
-     call netcdf_call(nf_error,ID)
-     ch=""
-     if (DUMP_)             CH0=db_ch(1)
-     if (present(DB_CH0))   DB_CH0=db_ch(1)
-     if (io_mode(ID)==VERIFY) then
-       i_err=ch_verify(CH0,db_ch(1))
-       if (CHECK_) then
-         if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
-       else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
-       endif
-     endif
-     if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),trim(db_ch(1)))
-     else if (present(VAR)) then
-       call msg(msg_where,VAR,trim(db_ch(1)))
-     endif
-   endif
+   !
+   ! I/O
+   !
+   SZ=1
+   ch_db(1)=CH0
+   !
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),ch_db(1),(/io_rec_pos(ID)/),(/SZ*schlen/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),ch_db(1),(/io_rec_pos(ID)/),(/SZ*schlen/))
+   !
+   io_rec_pos(ID)=io_rec_pos(ID)+SZ*schlen
+   call netcdf_call(nf_error,ID)
+   !
+   if ( DUMP_         ) CH0   =ch_db(1)
+   if (present(DB_CH0)) DB_CH0=ch_db(1)
+   if ( VERIFY_       ) i_err=ch_verify(CH0,ch_db(1))
    !
    ! DESCRIPTION
    !
-   if (present(DESC_STR)) DESC_STR=VAR//" : "//trim(db_ch(1))
-   if (present(DESC_VAR)) DESC_VAR(1)=NO_VAR
+   if (present(DESCRIPTOR)) then
+     DESCRIPTOR%n = DESCRIPTOR%n+1
+     DESCRIPTOR%size(DESCRIPTOR%n) = 1
+     DESCRIPTOR%kind(DESCRIPTOR%n) = 's'
+     DESCRIPTOR%str(DESCRIPTOR%n)  = VAR
+     DESCRIPTOR%sval(DESCRIPTOR%n) = CH0
+     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
+     if(present(OP)) DESCRIPTOR%ops(1:1,DESCRIPTOR%n) = OP
+   endif
    !
-   io_rec_pos(ID)=io_rec_pos(ID)+len(db_ch(1))
  endif
+ !
+ ! STATUS
+ !
+ if ( VERIFY_ .and. CHECK_ .and. io_status(ID)==0) io_status(ID)=i_err
+ !
+ ! MSG
+ !
+ if (present(VAR)) then
+   ch=VAR
+   if (read_is_on(ID).and.i_err/=0) then
+     if (CHECK_) ch=STRING_pack("*ERR* ",VAR)
+     if (WARN_ ) ch=STRING_pack("*WRN* ",VAR)
+   endif
+   if(present(I0) .or.present(I1)) call msg(msg_where,ch,i_db(1:SZ))
+   if(present(R0) .or.present(R1)) call msg(msg_where,ch,r_db(1:SZ)*local_unit)
+   if(present(D0)                ) call msg(msg_where,ch,r_db(1:SZ)*local_unit)
+   if(present(C0)                ) call msg(msg_where,ch,rc_db(1:2*SZ)*local_unit)
+   if(present(L0)                ) call msg(msg_where,ch,(i_db(1)==1))
+   if(present(CH0)               ) call msg(msg_where,ch,trim(ch_db(1)))
+ endif
+ !
  !
  contains
    !

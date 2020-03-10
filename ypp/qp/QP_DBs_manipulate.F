@@ -38,9 +38,9 @@ subroutine QP_DBs_manipulate( E )
  !
  ! Work Space
  !
- integer                 :: i_qp,i_db,i_d,i_err,ID,n_GROUNDS,i_c
+ integer                 :: i_qp,i_db,i_d,i_err,ID,n_GROUNDS,i_c,n_val
  integer,    external    :: io_QP_and_GF
- character(schlen)       :: QP_merged_name,QP_db_kind,ACTION
+ character(schlen)       :: QP_merged_name,QP_db_kind,ACTION,mesg
  logical,           allocatable :: plan_EWZG(:,:)
  type(QP_t),        allocatable :: qp(:)
  !
@@ -99,9 +99,7 @@ subroutine QP_DBs_manipulate( E )
    if (index(QP_db_what(i_db),"Z")>0) plan_EWZG(i_db,3)=.TRUE.
    if (index(QP_db_what(i_db),"G")>0) plan_EWZG(i_db,4)=.TRUE.
    !
-   do i_d=1,QP_db(i_db)%n_descs
-     call msg('s','[DB #'//trim(intc(i_db))//']'//trim(QP_db(i_db)%description(i_d)))
-   enddo
+   call COM_write_desc('s','[DB #'//trim(intc(i_db))//']',QP_db(i_db)%desc)
    !
    if (i_db==n_QP_dbs) call msg('s',repeat("-",len_trim(QP_db_name(i_db))+13))
    !
@@ -126,15 +124,13 @@ subroutine QP_DBs_manipulate( E )
    !
    QP_db_kind=" "
    call msg('s',repeat("-",60))
-   do i_d=1,qp(i_qp)%n_descs
-     if (index(qp(i_qp)%description(i_d),"Real Axis GW")>0)  QP_db_kind=trim(QP_db_kind)//"_gw_real_axis"
-     if (index(qp(i_qp)%description(i_d),"El-Ph Self-Energy")>0)  QP_db_kind=trim(QP_db_kind)//"_el_ph"
-     if (index(qp(i_qp)%description(i_d),"PPA imaginary")>0)  QP_db_kind=trim(QP_db_kind)//"_gw_ppa"
+   do i_d=1,qp(i_qp)%desc%n
+     if (index(qp(i_qp)%desc%str(i_d),"Real Axis GW")>0)       QP_db_kind=trim(QP_db_kind)//"_gw_real_axis"
+     if (index(qp(i_qp)%desc%str(i_d),"El-Ph Self-Energy")>0)  QP_db_kind=trim(QP_db_kind)//"_el_ph"
+     if (index(qp(i_qp)%desc%str(i_d),"PPA imaginary")>0)      QP_db_kind=trim(QP_db_kind)//"_gw_ppa"
    enddo
    QP_merged_name='QP_merged_'//trim(intc(i_qp))//trim(QP_db_kind)
-   do i_d=1,qp(i_qp)%n_descs
-     call msg('s','['//trim(QP_merged_name)//']'//trim(qp(i_qp)%description(i_d)))
-   enddo
+   call COM_write_desc('s','['//trim(QP_merged_name)//']',qp(i_qp)%desc)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
    i_err=io_QP_and_GF(trim(QP_merged_name),qp(i_qp),ID)
    !

@@ -23,7 +23,7 @@
 !
 module com
  !
- use pars,          ONLY:SP,lchlen,schlen,max_n_ofs,max_open_ofs,n_max_jobstr
+ use pars,          ONLY:DP,SP,lchlen,schlen,max_n_ofs,max_open_ofs,n_max_jobstr
  use com_interfcs,  ONLY:msg_characters_vector_int,msg_integers_vector_int,msg_reals_vector_int
  !
  implicit none
@@ -77,6 +77,28 @@ module com
  !
  logical            :: write_to_of
  logical            :: write_to_report
+ !
+ integer, parameter :: n_MAX_descs=100
+ !
+ type IO_desc
+   !
+   integer           :: n
+   integer           :: size(n_MAX_descs)
+   logical           :: check(n_MAX_descs)
+   character(2)      :: ops(10,n_MAX_descs)
+   character(schlen) :: str(n_MAX_descs)
+   character(1)      :: kind(n_MAX_descs)     !  "i"=integer, "r"=real, "d"=double, "c"=complex, "s"=string, "l"=logical
+   !
+   integer           :: ival(10,n_MAX_descs)
+   real(SP)          :: rval(10,n_MAX_descs)
+   !
+   real(DP)          :: dval(n_MAX_descs)
+   complex(SP)       :: cval(n_MAX_descs)
+   !
+   character(schlen) :: sval(n_MAX_descs)
+   logical           :: lval(n_MAX_descs)
+   !
+ end type
  !
  interface
    !

@@ -24,7 +24,6 @@
 subroutine k_random(No_Weight)
  !
  use pars,                ONLY:SP,DP,lchlen,schlen
- use stderr,              ONLY:set_real_printed_length
  use com,                 ONLY:msg,of_open_close
  use vec_operate,         ONLY:v_norm,c2a,k2bz
  use YPPm,                ONLY:BZ_random_nkpts,gamma_radius,K_transform
@@ -57,8 +56,6 @@ subroutine k_random(No_Weight)
  call section('*',"== Random k-points generator ==")
  !
  call live_timing('Random k-points',BZ_random_nkpts)
- !
- call set_real_printed_length(f_length=20,g_length=20)
  !
  k_rand_fname="random_k_pts"
  call of_open_close(k_rand_fname,'ot')
@@ -101,7 +98,6 @@ subroutine k_random(No_Weight)
  !
  call of_open_close(k_rand_fname)
  call live_timing()
- call set_real_printed_length()
  !
  return
  !

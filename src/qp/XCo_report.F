@@ -65,7 +65,7 @@ subroutine XCo_report(qp,E,k)
  qp%nk=QP_nk
  qp%nb=QP_nb
  qp%n_states=QP_n_states
- qp%n_descs=0
+ qp%desc%n=0
  !
  report_Sc   =.FALSE.
  report_Vnlxc=allocated(QP_Vnl_xc)

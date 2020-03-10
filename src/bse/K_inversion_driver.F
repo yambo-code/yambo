@@ -26,7 +26,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use pars,           ONLY:SP
  use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
- use BS_solvers,     ONLY:BSS_inversion_mode,BSS_n_descs,BSS_desc_str,BSS_desc_var,Co_factor,&
+ use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,Co_factor,&
 &                         K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
 &                         K_slk,K_inv_slk,BSS_eels_to_eps
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
@@ -302,10 +302,13 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  if (BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
  if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/bare_qpg(iq,1)**2
  !
- BSS_n_descs=BSS_n_descs+1
  ratio=real(count(K_INV_EPS%err==0))/real(W%n_freqs)*100._SP
- BSS_desc_str(BSS_n_descs)='    |Converged frequencies [o/o]'
- BSS_desc_var(1,BSS_n_descs)=ratio
+ !
+ BSS_desc%n=BSS_desc%n+1
+ BSS_desc%str(BSS_desc%n)   ='    |Converged frequencies [o/o]'
+ BSS_desc%kind(BSS_desc%n)  ='r'
+ BSS_desc%size(BSS_desc%n)  =1
+ BSS_desc%rval(1,BSS_desc%n)=ratio
  !
  call K_output_file(iq,"Inversion")
  !

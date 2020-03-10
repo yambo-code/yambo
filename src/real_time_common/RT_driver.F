@@ -25,7 +25,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_use_collisions,l_use_Hxc_collisions,l_elph_scatt,l_elel_scatt,l_elphoton_scatt
- use stderr,         ONLY:set_real_printed_length,real2ch
+ use stderr,         ONLY:real2ch
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_spin,n_spinor
  use X_m,            ONLY:X_t
@@ -91,8 +91,6 @@ subroutine RT_driver(E,X,k,q,Dip)
  if (l_elphoton_scatt)              sec_title(3)='el-photon'
  if (l_elphoton_scatt.and.&
 &   (l_elel_scatt.or.l_elph_scatt)) sec_title(3)='+el-photon'
- !
- call set_real_printed_length(f_length=10,g_length=10)  
  !
  ! Potential 
  !===========
@@ -370,7 +368,6 @@ subroutine RT_driver(E,X,k,q,Dip)
      ! GPL_EXCLUDE_END
      !
      if (allocated(HXC_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
-     call set_real_printed_length()
    end subroutine
    !
    subroutine RT_timing(steps)

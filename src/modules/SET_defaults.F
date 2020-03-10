@@ -26,7 +26,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ! GPL_EXCLUDE_START
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
- use pars,       ONLY:SP,cZERO,VAR_EMPTY
+ use pars,       ONLY:SP,cZERO
  use C_driver,   ONLY:code_branch
  use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
@@ -34,7 +34,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                     eval_alpha,&
-&                     q_plus_G_direction,Q_Shift_Order,n_X_descs,&
+&                     q_plus_G_direction,Q_Shift_Order,&
 &                     l_X_terminator,X_terminator_E,global_gauge,&
 &                     Chi_linalg_mode,X_use_lin_sys,X_DbGd_percentual
  use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
@@ -67,7 +67,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,frag_WF
- use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_desc_str,BSS_desc_var,BSS_er,BSS_dr,&
+ use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_threshold,Haydock_iterIO,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
@@ -77,7 +77,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BS_K_is_ALDA,BSE_mode,L_kind
- use TDDFT,      ONLY:FXC_desc_str,FXC_desc_var,FXC_type,FXC_n_descs,FXC_n_g_corr,&
+ use TDDFT,      ONLY:FXC_type,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -365,7 +365,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Vnl_commutator_warning=.FALSE.
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
- n_X_descs=0
  l_X_terminator=.FALSE.
  X_terminator_E=40._SP/HA2EV
  !
@@ -440,9 +439,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BS_K_dim=0
  BSS_mode=' '
  BSS_inversion_mode='pf'
- BSS_n_descs=0
- BSS_desc_var=VAR_EMPTY
- BSS_desc_str=''
  BSS_er=(/0._SP,10._SP/)/HA2EV
  BSS_dr=0.1_SP/HA2EV
  BSS_q0=(/1._SP,0._SP,0._SP/)
@@ -471,10 +467,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! TDDFT
  !
- FXC_desc_var=VAR_EMPTY
- FXC_desc_str=""
  FXC_type='rpa'
- FXC_n_descs=0
  FXC_n_g_corr=1
  FXC_per_memstps=100._SP
  FXC_LRC_alpha=0._SP

@@ -181,7 +181,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
 #if defined _PAR_IO
    !
-   call io_control(ACTION=OP_RD,COM=REP,ID=ID)
+   call io_control(ACTION=OP_RD,COM=REP,MODE=VERIFY,ID=ID)
    call io_BS_PAR_init(iq,X,ID)
    !
    if(l_BSE_kernel_complete) then
@@ -193,6 +193,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    call io_control(ACTION=RD_CL,COM=REP,ID=ID)
    call io_BS_PAR_free(ID,l_BSE_kernel_complete)
+   !
    if(l_BSE_kernel_complete) return
    !
 #else

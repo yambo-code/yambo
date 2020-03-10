@@ -46,8 +46,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  use QP_m,          ONLY:QP_t
  use interfaces,    ONLY:OCCUPATIONS_Fermi
  use com,           ONLY:msg,depth
- use electrons,     ONLY:levels,n_sp_pol,E_duplicate,E_reset,&
-&                        BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels
+ use electrons,     ONLY:levels,n_sp_pol,E_duplicate,E_reset
  use D_lattice,     ONLY:input_Tel_is_negative
  use R_lattice,     ONLY:bz_samp
  use QP_CTL_m,      ONLY:QP_actions_reset,n_QP_actions,QP_action,QP_CTL_copy,&
@@ -67,9 +66,8 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! Work Space
  !
  type(levels)     ::Fermi_en
- integer          ::ik_bz,ik_ibz,ib,i1,ik_r,i_spin,nbf_m_SAVE(2),i_a
+ integer          ::i_spin,nbf_m_SAVE(2),i_a
  logical          ::l_E_done
- integer, allocatable :: DbGd_k_done(:)
  !
  ! Resets
  !========
@@ -124,10 +122,24 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    if (.not.QP_action(i_a)%active) cycle
    !
+   ! QP_load_DB
+   ! |
+   ! .- loads the QP db
+   ! .- calls QP_apply_QP
+   !    |
+   !    . INTERPOLATES
+   !    . Fit
+   !
    if (len_trim(QP_action(i_a)%CTL(1)%db)>0.and.&
 &          trim(QP_action(i_a)%CTL(1)%db)/="none") call QP_load_DB(i_a,bands,en,k)
    !
    if (.not.QP_action(i_a)%active) cycle
+   !
+   call msg("sr","[QP_apply] Action to be applied",trim(QP_action(i_a)%desc))
+   !
+   ! QP_apply_the_ACTION
+   ! |
+   ! .- applies just the fit
    !
    call QP_apply_the_ACTION(i_a,bands,en,k,l_E_done)
    !
@@ -142,7 +154,6 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  if (.not.l_E_done) then
    !
    call E_reset(Fermi_en)
-   YAMBO_FREE(DbGd_k_done)
    call QP_actions_reset( )
    !
    return
@@ -151,32 +162,11 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  ! Extend the QP corrections to the RIM energies
  !========
- if (allocated(en%E_DbGd).and.allocated(en%Eo)) then
+ if (allocated(en%E_DbGd)) then
    !
-   YAMBO_ALLOC(DbGd_k_done,(BZ_DbGd_tot_nk_levels))
-   DbGd_k_done=0
+   call section('+'," Extending the correction to the DbGd")
    !
-   do ik_bz=1,k%nbz
-     !
-     ik_ibz=k%sstar(ik_bz,1)
-     !
-     do i1=1,BZ_DbGd_nkpt(ik_bz)
-       !
-       ik_r=BZ_DbGd_table(ik_bz,i1,1)
-       !
-       if (DbGd_k_done(ik_r)==1) cycle
-       !
-       do ib=1,BZ_DbGd_nbands
-         do i_spin=1,n_sp_pol
-           en%E_DbGd(ib,ik_r,1)=en%E_DbGd(ib,ik_r,1)+ (en%E(ib,ik_ibz,i_spin)-en%Eo(ib,ik_ibz,i_spin))
-         enddo
-       enddo
-       DbGd_k_done(ik_r)=1
-     enddo
-     !
-   enddo
-   !
-   YAMBO_FREE(DbGd_k_done)
+   call QP_apply_to_the_DbGd(bands,en,k)
    !
  endif
  !
@@ -225,10 +215,15 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! CLEAN
  !
  call E_reset(Fermi_en)
- YAMBO_FREE(DbGd_k_done)
  call QP_actions_reset( )
  !
  if (en%nbf==en%nbm) then
+   !
+   if (allocated(en%E_DbGd)) then
+     call section('='," QP corrections report")
+   else
+     call section('+'," QP corrections report")
+   endif
    !
    if (n_sp_pol==1) then
      !

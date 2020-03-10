@@ -30,7 +30,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
-&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,l_angular_momentum,l_position
+&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,l_angular_momentum,l_position,&
+&                         l_QP_DB_expand
  use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev
  use it_tools,       ONLY:ofiles_append,infile_dump,runlevel_is_on,&
@@ -264,8 +265,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        call initactivate(1,'QPDBs')
        l_QP_DBs_create_and_modify=STRING_match(rstr_piece(i1+1),'g')
        l_QP_DBs_manipulate            =STRING_match(rstr_piece(i1+1),'m')
+       l_QP_DB_expand                 =STRING_match(rstr_piece(i1+1),'e')
        if (l_QP_DBs_create_and_modify) call initactivate(1,'QPDB_edit')
        if (l_QP_DBs_manipulate)        call initactivate(1,'QPDB_merge')
+       if (l_QP_DB_expand)             call initactivate(1,'QPDB_expand')
      endif
      !
 #if defined _YPP_ELPH
@@ -555,6 +558,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  l_QP_DBs_create_and_modify = runlevel_is_on('QPDB_edit')
  l_QP_DBs_manipulate = runlevel_is_on('QPDB_merge')
+ l_QP_DB_expand = runlevel_is_on('QPDB_expand')
  !
  ! GPL_EXCLUDE_START
  !
@@ -712,6 +716,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  endif
  !
  if (l_QP_DBs_create_and_modify.or.l_QP_DBs_manipulate) call QP_DBs_initialize()
+ !
+ if (l_QP_DB_expand) call initactivate(1,"QPDB_file") 
  !
  l_init_QP=l_plot.and.l_sp_wf
 #if defined _YPP_ELPH

@@ -46,10 +46,23 @@ integer function io_QP_and_GF(what,qp,ID)
 &                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,&
 &                       QP_DB_kind_disk ,i_X
  character(schlen)    ::ch
+ logical              ::type_two_DB,QP_type_DB
  integer ,    allocatable ::qp_table_disk(:,:)
  real(SP),    allocatable ::qp_DATA_disk(:,:,:)
  !
- if (what=="QP".or.what=="G".or.(index(what,"QP_merged")>0.and.write_is_on(ID))) then
+ type_two_DB=.FALSE.
+ if (what=="QP") type_two_DB=.TRUE.
+ if (what=="G" ) type_two_DB=.TRUE.
+ if (index(what,"QP_merged")>0.and.write_is_on(ID)) type_two_DB=.TRUE.
+ if (index(what,"QP_expanded")>0.and.write_is_on(ID)) type_two_DB=.TRUE.
+ !
+ QP_type_DB=.FALSE.
+ if (what=="QP") QP_type_DB=.TRUE.
+ if (index(what,".QP")/=0) QP_type_DB=.TRUE.
+ if (index(what,"QP_merged")>0.and.write_is_on(ID)) QP_type_DB=.TRUE.
+ if (index(what,"QP_expanded")>0.and.write_is_on(ID)) QP_type_DB=.TRUE.
+ !
+ if (type_two_DB) then
    io_QP_and_GF=io_connect(desc=what,type=2,ID=ID)
  else
    io_QP_and_GF=io_connect(desc=what,type=-3,ID=ID)
@@ -277,7 +290,7 @@ integer function io_QP_and_GF(what,qp,ID)
      enddo
    endif
    !
-   if (index(what,".QP")/=0.or.what=="QP".or.index(what,"QP_merged")/=0) then
+   if (QP_type_DB) then
      !
      ! QP corrections ...
      !

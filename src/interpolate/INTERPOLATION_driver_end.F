@@ -25,7 +25,7 @@ subroutine INTERPOLATION_driver_end(ID)
  !
  use interpolate_tools,    ONLY:INTERPOLATION_reset
  use interpolate,          ONLY:INTERPOLATE_msg_fmt,INTERPOLATE_initialized,&
-&                               lattice_vectors,INTERP_obj,max_interpls,int_sop
+&                               lattice_vectors,INTERP_obj,max_interpls,int_sop,NN_nk_exact
  !
 #include<memory.h>
  !
@@ -57,5 +57,7 @@ subroutine INTERPOLATION_driver_end(ID)
    INTERPOLATE_msg_fmt="rs"
    !
  endif
+ !
+ NN_nk_exact=0
  !
 end subroutine INTERPOLATION_driver_end

@@ -215,7 +215,9 @@ module YPPm
  !
  logical     :: l_QP_DBs_create_and_modify
  logical     :: l_QP_DBs_manipulate
+ logical     :: l_QP_DB_expand
  integer     :: n_QP_dbs 
+ character(lchlen)    ::QP_DB_to_expand  = "none"
  character(lchlen),  allocatable :: QP_db_input_control(:,:)
  character(lchlen),  allocatable :: QP_db_name(:)
  character(schlen),  allocatable :: QP_db_what(:)

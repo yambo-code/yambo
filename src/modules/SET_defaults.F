@@ -47,7 +47,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     COHSEX_use_empties,On_Mass_Shell_approx,&
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,l_GW_terminator,&
 &                     GW_terminator_E
- use QP_CTL_m,   ONLY:QP_ctl_user,QP_ctl_db,QP_ctl_interp_neigh
+ use QP_CTL_m,   ONLY:QP_ctl_user,QP_ctl_DB_user
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp
@@ -398,9 +398,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! QP_ctl control
  !
- QP_ctl_db="none"
- QP_ctl_interp_neigh=1
  do i1=1,3
+   QP_ctl_DB_user(i1)%INTERP_shell_factor=20._SP
+   QP_ctl_DB_user(i1)%INTERP_N_neigh=1
+   QP_ctl_DB_user(i1)%INTERP_DbGd_mode="NN"
+   QP_ctl_DB_user(i1)%action="none"
    do i2=1,3
      QP_ctl_user(i1,i2)%E=(/0.,1.,1./)
      QP_ctl_user(i1,i2)%Wc=0._SP

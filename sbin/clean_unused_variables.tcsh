@@ -274,10 +274,10 @@ foreach file ($FILES)
    set CHECK = `grep $var "${file}"_VARIABLES| wc -l`
    set FOUND = `grep $var "${file}"_BODY| wc -l`
    set HEAD  = `grep $var "${file}"_HEADER| wc -l`
-   if ($FOUND == 0 && $CHECK == 1 && $HEAD == 0) then
+   if ($FOUND == 0 && $CHECK == 1 && $HEAD == 0 && "$var" != "code_branch" ) then
     @ N_unused ++
     set UNUSED = ($UNUSED $var)
-    #echo -n $var $source  $N_unused 
+    echo -n $var $source  $N_unused 
     #echo -n "..."$var"(removed) "
 
 cat << EOF > AWK_replace

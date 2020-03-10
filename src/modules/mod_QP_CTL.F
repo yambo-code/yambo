@@ -57,6 +57,7 @@ module QP_CTL_m
  character(lchlen)       :: QP_ctl_xc_STRING
  !
  type QP_ctl_input_file
+   !
    real(SP)    :: E(3)
    real(SP)    :: Wc_E_ref
    real(SP)    :: Wv_E_ref
@@ -65,17 +66,25 @@ module QP_CTL_m
    real(SP)    :: Wv(3)
    real(SP)    :: Wv_dos
    complex(SP) :: Z
+   !
  end type
  !
- type(QP_ctl_input_file) :: QP_ctl_user(3,3) ! 3 types x ( spin-unpolarized/non-collinear + 2 spin components (up/dn))
- integer                 :: QP_ctl_interp_neigh(3)
- character(schlen)       :: QP_ctl_db(3)
+ type QP_ctl_DB_input_file
+   !
+   integer            :: INTERP_shell_factor
+   integer            :: INTERP_N_neigh
+   character(schlen)  :: INTERP_DbGd_mode
+   character(schlen)  :: action
+   !
+ end type
+ !
+ type(QP_ctl_input_file)    :: QP_ctl_user(3,3)  ! 3 types x ( spin-unpolarized/non-collinear + 2 spin components (up/dn))
+ type(QP_ctl_DB_input_file) :: QP_ctl_DB_user(3) ! 3 types 
  !
  ! Internal QP_ctl's (derived from a QP type and/or dumped from the input)
  !===================
  type QP_ctl_t
    !
-   integer    :: interp_neigh
    real(SP)   :: db_scissor
    real(SP)   :: fit_scissor
    !
@@ -101,6 +110,11 @@ module QP_CTL_m
    !
    ! ...DB (only the name)
    character(schlen):: db
+   !
+   ! ... Interpolation
+   !
+   integer    :: interp_neigh
+   integer    :: interp_shell_factor
    !
  end type
  !

@@ -36,23 +36,15 @@ subroutine QP_expand(k,qp,qp_expanded)
  !
  integer :: i_qp,ik,ib(2),is,ik_bz,n_qp_expanded,i1,max_ik
  !
- ! Components of QP_t
- !
- !  character(schlen)  :: description(max_qp_descs)
- !  integer,    pointer:: table(:,:) => null()
- !  real(SP)   ,pointer:: k(:,:)     => null()
- !  real(SP)   ,pointer:: wk(:)      => null()
- !  real(SP)   ,pointer:: E_bare(:)  => null()
- !  complex(SP),pointer:: E(:)       => null()
- !  complex(SP),pointer:: Z(:)       => null()
- !  integer  :: n_descs
- !  integer  :: nk
- !  integer  :: nb
- !  integer  :: n_states
- !
  qp_expanded%n_descs=qp%n_descs
  qp_expanded%nb=qp%nb
  qp_expanded%description=qp%description
+ !
+ do i_qp=1,qp_expanded%n_descs
+   if (index(qp_expanded%description(i_qp),"QP @ K")>0) then
+     qp_expanded%description(i_qp)=trim(qp_expanded%description(i_qp))//" [BZ expanded]"
+   endif
+ enddo
  !
  call k_ibz2bz(k,'i',.false.)
  !
@@ -89,6 +81,7 @@ subroutine QP_expand(k,qp,qp_expanded)
      qp_expanded%nk=max_ik
      qp_expanded%n_states=n_qp_expanded
      !
+     YAMBO_ALLOC(qp_expanded%wk,(max_ik))
      YAMBO_ALLOC(qp_expanded%k,(max_ik,3))
      YAMBO_ALLOC(qp_expanded%table,(qp_expanded%n_states,3+n_sp_pol-1))
      YAMBO_ALLOC(qp_expanded%E_bare,(qp_expanded%n_states))

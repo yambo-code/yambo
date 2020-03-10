@@ -46,6 +46,7 @@ module interpolate
  !
  ! NN method
  !
+ integer :: OUT_k_nk=0
  integer :: NN_nk_exact=0
  integer :: NN_n_of_nearest=1
  integer :: NN_MAX_real_nearest=0

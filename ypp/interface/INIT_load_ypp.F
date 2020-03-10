@@ -33,7 +33,7 @@ subroutine INIT_ypp_load(defs)
  use interpolate,   ONLY:INTERP_shell_factor,INTERP_mode,NN_n_of_nearest
  use YPPm,          ONLY:E_field,alat_used_for_output,B_field,B_psi,B_theta,BANDS_bands,BANDS_path,&
 &                        BZ_DbGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
-&                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,PROJECT_path,&
+&                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,PROJECT_path,QP_DB_to_expand,&
 &                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
 &                        gamma_radius,INTERP_grid,mag_dir,N_path_pts,ncell,ord_dgrid_ipol,p_dir,p_format,PDOS_atoms,&
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
@@ -99,8 +99,9 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'spin',         '[R] Spin')
  call it('r',defs,'magnetization','[R] Magnetization')
  call it('r',defs,'WFs_map',      '[R] Creat a SOC/WFs <-> noSOC/WFs map')
- call it('r',defs,'QPDB_edit', '[R] Generation/editing')
- call it('r',defs,'QPDB_merge','[R] Mergering')
+ call it('r',defs,'QPDB_edit',    '[R] Generation/editing')
+ call it('r',defs,'QPDB_merge',   '[R] Mergering')
+ call it('r',defs,'QPDB_expand',  '[R] Symmetry expand')
  call it('r',defs,'fixsave', '[R] Convert WFs to new format')
  !
 #if defined _YPP_RT
@@ -331,6 +332,10 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'OutputAlat','[a.u.] Lattice constant used for "alat" ouput format',alat_used_for_output)
  !
  ! GPL_EXCLUDE_END
+ !
+ ! QP DB rotation and expanstion
+ !
+ call it(defs,'QPDB_file','QP database to rotate',QP_DB_to_expand) 
  !
  ! Remove Simmetries
  !

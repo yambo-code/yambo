@@ -36,7 +36,7 @@ subroutine QP_DB_message( i_ACTION, qp )
  ! Work Space
  !
  integer, parameter :: n_fields=7
- integer            :: if,c_pos,i_msg,i1
+ integer            :: i_f,c_pos,i_msg,i1
  character(lchlen)  :: field(n_fields,2)
  !
  field(1,1)="X G`s            [used]"
@@ -47,7 +47,7 @@ subroutine QP_DB_message( i_ACTION, qp )
  field(3,2)="Scb"
  field(4,1)="Sc. G bands"
  field(4,2)="Sphb"
- field(5,1)="PPA"
+ field(5,1)="PPA imaginary pt   [ev]"
  field(5,2)="E-E PPA"
  field(6,1)="El-Ph Self"
  field(6,2)="E-P"
@@ -75,10 +75,11 @@ subroutine QP_DB_message( i_ACTION, qp )
  i_msg=i_msg+2+len_trim(QP_action(i_ACTION)%CTL(1)%db)
  !
  do i1=1,qp%n_descs
-   do if=1,n_fields
-     if (index(qp%description(i1),trim(field(if,1)))/=0) then
-       c_pos=index(qp%description(i1),":")+1
-       QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//' '//trim(field(if,2))
+   do i_f=1,n_fields
+     c_pos=index(qp%description(i1),trim(field(i_f,1)))
+     if (c_pos/=0) then
+       c_pos=c_pos+24
+       QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//' '//trim(field(i_f,2))
        if (c_pos>1) call CHappend(":"//qp%description(i1)(c_pos:))
      endif
    enddo
@@ -86,7 +87,7 @@ subroutine QP_DB_message( i_ACTION, qp )
  !
  QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//']'
  !
- call msg("n"//trim(QP_ctl_msg_fmt),trim(QP_action(i_ACTION)%desc))
+ call msg("n"//trim(QP_ctl_msg_fmt),"QP DB description",trim(QP_action(i_ACTION)%desc))
  ! 
  contains
   !

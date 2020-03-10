@@ -76,7 +76,7 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  if(msg_for_rep) i1_limits=(/repfile_index,repfile_index/)
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
-   if (len_trim(mesg)>0) then
+   if (len_trim(mesg)>0.and.len_trim(val(1))>0) then
      write (of_unit(i1),trim(msgfmt)) mesg//": ",(trim(val(i2)),i2=1,size(val))
    else
      write (of_unit(i1),trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
@@ -96,7 +96,11 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  !
  if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
  msgfmt=composed_fmt('a',-size(val),.false.,-1)
- write (lch,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
+  if (len_trim(mesg)>0.and.len_trim(val(1))>0) then
+   write (lch,trim(msgfmt)) mesg//": ",(trim(val(i2)),i2=1,size(val))
+ else
+   write (lch,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
+ endif
  if (index(how,'l')/=0.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
  if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
  !
@@ -185,7 +189,11 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  !
  if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
  msgfmt=composed_fmt(trim(gen_fmt(val)),-size(val),.false.,-1)
- write (lch,trim(msgfmt)) mesg,val 
+ if (len_trim(mesg)>0) then
+   write (lch,trim(msgfmt)) mesg//": ",val 
+ else
+   write (lch,trim(msgfmt)) mesg,val 
+ endif
  if (index(how,'l')/=0.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
  if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
  !
@@ -291,7 +299,11 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
    write(gen_fmt_local,'(a)') 'F11.06'
    msgfmt=composed_fmt(trim(gen_fmt_local),-size(val),.false.,-1)
  endif
- write (lch,trim(msgfmt)) mesg//": ",val 
+ if (len_trim(mesg)>0) then
+   write (lch,trim(msgfmt)) mesg//": ",val 
+ else
+   write (lch,trim(msgfmt)) mesg,val 
+ endif
  if (index(how,'l')/=0.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
  if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
  !

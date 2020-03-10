@@ -26,7 +26,7 @@ module interpolate_tools
  use pars,         ONLY:SP,schlen,rZERO
  use interpolate,  ONLY:interpls,INTERP_obj,l_INTERP_dE,l_INTERP_E,l_INTERP_f,max_interpls,INTERP_mode,&
 &                       l_INTERP_W,NN_nk_exact,NN_MAX_real_nearest,NN_n_of_nearest,l_INTERP_Z,&
-&                       INTERPOLATE_msg_fmt
+&                       INTERPOLATE_msg_fmt,OUT_k_nk
  use electrons,    ONLY:n_sp_pol
  !
 #include<memory.h>
@@ -46,12 +46,12 @@ module interpolate_tools
      !
      title=trim(INTERP_obj(ID)%what)//"-Nearest K"
      !
-     dummy=real(NN_nk_exact)/real(INTERP_obj(ID)%nk)*100._SP
+     dummy=real(NN_nk_exact)/real(OUT_k_nk)*100._SP
      call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Exact matches  [o/o]',dummy)
-     if (NN_nk_exact<INTERP_obj(ID)%nk) then
+     if (NN_nk_exact<OUT_k_nk) then
        call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Neighbours    [user]',NN_n_of_nearest)
        call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//']               [real]',NN_MAX_real_nearest)
-       dummy=real(INTERP_obj(ID)%nk-NN_nk_exact)/real(INTERP_obj(ID)%nk)*100._SP
+       dummy=real(OUT_k_nk-NN_nk_exact)/real(OUT_k_nk)*100._SP
        call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Interpolations [o/o]',dummy)
      endif
      !

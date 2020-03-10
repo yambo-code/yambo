@@ -74,7 +74,7 @@ subroutine QP_DBs_initialize()
 &                    DESC="[QPDB] Correction( kp1| kp2| bnd1| bnd2| E-Eo[eV]| Img(E)[eV]| Re[Z] |)",&
 &                    N=n_user_qp_corrections,M=7,R_v=QP_user_corrections,Kn=(/"i","i","i","i","r","r","r"/))
    !
- else
+ else if (l_QP_DBs_create_and_modify) then
    !
    call PARSER_array(mode="CH dimensions",VAR="Actions_and_names",N=n_QP_dbs,M=4)
    if (n_QP_dbs>0) then

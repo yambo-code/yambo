@@ -41,8 +41,8 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  use stderr,        ONLY:real2ch
  use QP_m,          ONLY:QP_t
  use QP_CTL_m,      ONLY:QP_action,QP_ctl_msg_fmt,QP_ctl_xc_STRING
- use interpolate,   ONLY:NN_MAX_real_nearest,INTERP_obj,INTERPOLATE_msg_fmt,&
-&                        INTERPOLATION_driver_seed,INTERPOLATION_driver_do
+ use interpolate,   ONLY:NN_n_of_nearest,INTERP_obj,INTERPOLATE_msg_fmt,&
+&                        INTERPOLATION_driver_seed,INTERPOLATION_driver_do,INTERP_shell_factor
  !
 #include<memory.h>
  !
@@ -71,7 +71,8 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  ! 
  ! Setup
  !
- NN_MAX_real_nearest=QP_action(i_ACTION)%CTL(1)%interp_neigh
+ NN_n_of_nearest=QP_action(i_ACTION)%CTL(1)%interp_neigh
+ INTERP_shell_factor=QP_action(i_ACTION)%CTL(1)%interp_shell_factor
  INTERPOLATE_msg_fmt=QP_ctl_msg_fmt
  !
  if (QP_action(i_ACTION)%plan(4).or.QP_action(i_ACTION)%plan(6)) then
@@ -80,6 +81,8 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
    !===============================
    !
    call QP_transfer('init')
+   !
+   call k_expand(QP_k)
    !
    call INTERPOLATION_driver_seed(trim(what)//"_from_DB",ID,bands,QP_k,SEED_QP=qp,NEAREST=QP_action(i_ACTION)%plan(4))
    call INTERPOLATION_driver_do(trim(what)//"_from_DB",ID,k)

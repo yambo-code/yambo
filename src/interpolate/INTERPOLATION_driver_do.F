@@ -36,7 +36,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  use interpolate,          ONLY:INTERP_obj,INTERPOLATE_is_quiet,&
 &                               INTERPOLATION_BZ,INTERPOLATION_nearest_k,&
 &                               l_INTERP_f,l_INTERP_E,l_INTERP_dE,&
-&                               l_integral_respect
+&                               l_integral_respect,OUT_k_nk
  use IO_m,                 ONLY:IO_and_Messaging_switch
  !
 #include<memory.h>
@@ -56,6 +56,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  !
  n =INTERP_obj(ID)%nb
  nk=INTERP_obj(ID)%nk
+ OUT_k_nk=OUT_k%nibz
  !
  YAMBO_ALLOC(INTERP_obj(ID)%INTERP,(n(1):n(2),OUT_k%nibz,INTERP_obj(ID)%D))
  !
@@ -71,8 +72,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
    ! ... Using BOLTZ method
    call INTERPOLATION_BZ(K=OUT_k,R2D=INTERP_obj(ID)%INTERP,ID=INTERP_obj(ID)%ID)
    !
-   ! f/dF normalization
-   !====================
+   ! ... f/dF normalization
    if (l_INTERP_f.and.l_integral_respect) call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP)
    !
  endif

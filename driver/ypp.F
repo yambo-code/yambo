@@ -38,7 +38,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use interfaces,          ONLY:PARALLEL_global_indexes
  use YPPm,                ONLY:l_bxsf,l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,&
-&                              l_fix_save,alat_used_for_output
+&                              l_fix_save,alat_used_for_output,l_QP_DB_expand
 #if defined _YPP_RT
  use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs,l_NL_X,l_NL_exc
 #endif
@@ -208,6 +208,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  if (l_bxsf)  call bxsf_read(Xk,Xen)
  !
  if (l_QP_DBs_create_and_modify)  call QP_DBs_create_and_modify(en,k)
+ !
+ if (l_QP_DB_expand)  call QP_DB_expand( k )
  !
  if (l_QP_DBs_manipulate)  call QP_DBs_manipulate( en )
  !

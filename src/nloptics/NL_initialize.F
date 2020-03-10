@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -176,15 +176,15 @@ subroutine NL_initialize(E,k,q)
      !
      NE_tot_time=NE_tot_time+EtoT(E=NL_er(1))+5._SP*RT_step
      !
-     call msg('sr','Dephasing Time          [fs]:',5._SP*Phase_LifeTime*AUT2FS)
-     call msg('sr','Sampling  Time          [fs]:',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS)
+     call msg('sr','Dephasing Time          [fs]',5._SP*Phase_LifeTime*AUT2FS)
+     call msg('sr','Sampling  Time          [fs]',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS)
      !
    elseif(Efield(1)%ef_name=='PULSE'.or.Efield(1)%ef_name=='QSSIN' &
 &     .or.Efield(1)%ef_name=='QSFIELD'.or.Efield(1)%ef_name=='SPULSE') then
      !
      NE_tot_time=3*T_0
-     call msg('sr','Time T_0                [fs]:',T_0*AUT2FS)
-     call msg('sr','Dephasing               [fs]:',Phase_LifeTime*AUT2FS)
+     call msg('sr','Time T_0                [fs]',T_0*AUT2FS)
+     call msg('sr','Dephasing               [fs]',Phase_LifeTime*AUT2FS)
      !
    else
      call error("Negative total simulation time! ")
@@ -194,7 +194,7 @@ subroutine NL_initialize(E,k,q)
    call msg('s',' Total simulation time read from input') 
  endif
  !
- call msg('sr','Total simulation time   [fs]:',NE_tot_time*AUT2FS)
+ call msg('sr','Total simulation time   [fs]',NE_tot_time*AUT2FS)
  !
  NE_steps=int(NE_tot_time/RT_step)+1
  !
@@ -308,24 +308,24 @@ subroutine NL_initialize(E,k,q)
  call section('=','Messaging')
  !
  call msg( 'r','---General---')
- call msg( 'r', 'Integrator                 :',trim(Integrator_name))
- call msg( 'r', 'Simulation time        [fs]:',real(NE_steps-1)*RT_step*AUT2FS)
- call msg( 'r', 'Step length            [fs]:',RT_step*AUT2FS)
- call msg( 'r', 'NE Steps                   :',NE_steps)
- call msg( 'r', 'Correlation                :'//trim(NL_correlation))
- call msg( 'r', 'Damping                [eV]:',NL_damping*HA2EV)
- call msg( 'r', 'Dephasing              [fs]:',Phase_LifeTime*AUT2FS)
- call msg( 'r', 'Efield                     :'//trim(Efield(1)%ef_name))
- call msg( 'r', 'Efield width           [fs]:',Efield(1)%width*AUT2FS)
- call msg( 'r', 'Efield T_0             [fs]:',T_0)
- call msg( 'r', 'Efield Amplitude      [V/m]:',Efield(1)%amplitude*AU2VMm1)
- call msg( 'r', 'Frequencies range          :',NL_er*HA2EV)
- call msg( 'sr','Frequencies steps          :',n_frequencies)
- call msg( 'r', 'Frequency   step           :',NL_estep*HA2EV)
- call msg( 'r', 'Use Dipoles                :',l_use_DIPOLES)
- call msg( 'r', 'Induced Field              :',l_RT_induced_field)
- call msg( 'r', 'Force Snd Order Dipoles    :',l_force_SndOrd)
- call msg( 'r', 'Evaluate Current           :',l_eval_CURRENT)
- call msg( 'r', 'WF sampling                :',WF_sample%ison) 
+ call msg( 'r', 'Integrator                 ',trim(Integrator_name))
+ call msg( 'r', 'Simulation time        [fs]',real(NE_steps-1)*RT_step*AUT2FS)
+ call msg( 'r', 'Step length            [fs]',RT_step*AUT2FS)
+ call msg( 'r', 'NE Steps                   ',NE_steps)
+ call msg( 'r', 'Correlation                '//trim(NL_correlation))
+ call msg( 'r', 'Damping                [eV]',NL_damping*HA2EV)
+ call msg( 'r', 'Dephasing              [fs]',Phase_LifeTime*AUT2FS)
+ call msg( 'r', 'Efield                     '//trim(Efield(1)%ef_name))
+ call msg( 'r', 'Efield width           [fs]',Efield(1)%width*AUT2FS)
+ call msg( 'r', 'Efield T_0             [fs]',T_0)
+ call msg( 'r', 'Efield Amplitude      [V/m]',Efield(1)%amplitude*AU2VMm1)
+ call msg( 'r', 'Frequencies range          ',NL_er*HA2EV)
+ call msg( 'sr','Frequencies steps          ',n_frequencies)
+ call msg( 'r', 'Frequency   step           ',NL_estep*HA2EV)
+ call msg( 'r', 'Use Dipoles                ',l_use_DIPOLES)
+ call msg( 'r', 'Induced Field              ',l_RT_induced_field)
+ call msg( 'r', 'Force Snd Order Dipoles    ',l_force_SndOrd)
+ call msg( 'r', 'Evaluate Current           ',l_eval_CURRENT)
+ call msg( 'r', 'WF sampling                ',WF_sample%ison) 
  !
 end subroutine NL_initialize

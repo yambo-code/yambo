@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,6 +33,8 @@ module stderr
  logical          :: write_fragments_IO_log
  logical          :: log_as_a_file
  character(lchlen):: logfile
+ !
+ integer :: logfile_unit
  !
  integer :: f_format_length
  integer :: g_format_length
@@ -70,8 +72,13 @@ module stderr
        g_format_length=g_length
      endif
      if (.not.present(f_length).and..not.present(g_length)) then
-       f_format_length=9
-       g_format_length=9
+#if defined _DP
+         f_format_length=10
+         g_format_length=13
+#else
+         f_format_length=17
+         g_format_length=20
+#endif
      endif
      !
      of_tabs(1)=4
@@ -204,7 +211,7 @@ module stderr
      !
      STRING_remove=string_in
      !
-     i_pos=index(string_in,what)
+     i_pos=index(trim(string_in),what)
      !
      if (i_pos==0) return
      !
@@ -217,7 +224,7 @@ module stderr
          STRING_remove=string_tmp(:i_pos-1)//string_tmp(i_pos+len(what):)
        endif
        string_tmp=STRING_remove
-       i_pos=index(string_tmp,what)
+       i_pos=index(trim(string_tmp),what)
        if (i_pos==0) return
      enddo
      !
@@ -328,7 +335,6 @@ module stderr
        MNexp=int(log10(MN))
        iexp=max(iabs(MXexp),iabs(MNexp))
        MDexp=int(log10(MX/MN))
-       if (any((/r_v<0./))) iexp=iexp+1
        if (size(r_v)==1.and.r_v(1)==0.) then
          iexp=0
          MDexp=0
@@ -342,16 +348,9 @@ module stderr
          !
        else
          !
-         ! 23/9/2011. Field intensities formats are wrong when iexp=9. This is beacause
-         ! depending on the compiler 1.E9 is written  as 0.1E10. Therefore I need to uses
-         ! a reference iexp=8 to distinguish the two possible formats.
-         !
-         if (iexp< 9)  G_shift=5   !G9.4E1  g_format_length-5: 5 because of '-1.','E0'
-         if (iexp>=9)  G_shift=6   !G9.3E2  g_format_length-6: 6 because of '-1.','E00'
-         if (iexp>=99) G_shift=7   !G9.2E3  g_format_length-7: 7 because of '-1.','E000'
-         !
-         ! Jan 2020. AM. In the case of -9.9999 Intel puts a too large decimal amount. Tentative fix follows:
-         if (any((/r_v<0./))) G_shift=G_shift+1
+         if (iexp< 9)  G_shift=5   !Gx.x-5E1  g_format_length-5: 5 because of '-.','E-0'
+         if (iexp>=9)  G_shift=6   !Gx.x-6E2  g_format_length-6: 6 because of '-.','E-00'
+         if (iexp>=99) G_shift=7   !Gx.x-7E3  g_format_length-7: 7 because of '-.','E-000'
          !
          if (iexp< 9)  write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-G_shift,'E1'
          if (iexp>=9)  write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-G_shift,'E2'

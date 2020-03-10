@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -337,12 +337,12 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,load_rest_info,unlim,l_G,TYP)
  ! ... for RESTART purposes...
  if(load_rest_info) then
    call def_variable_elemental(ID,"IO_TIMEs",2,SP,0) 
-   call io_variable_elemental(ID,VAR=" [RT] I/O time          (input) [fs]:",&
+   call io_variable_elemental(ID,VAR=" [RT] I/O time          (input) [fs]",&
                         R0=TYP%INTERVAL_time_SAVE,CHECK=.TRUE.,OP=(/"=="/),  &
-&                       DESCRIPTION=RT_description(n_RT_descriptions),UNIT=AUT2FS)
-   call io_variable_elemental(ID,VAR=" [RT] I/O time            (now) [fs]:",&
+&                       DESC_STR=RT_description(n_RT_descriptions),UNIT=AUT2FS)
+   call io_variable_elemental(ID,VAR=" [RT] I/O time            (now) [fs]",&
                         R0=TYP%INTERVAL_time     ,CHECK=.FALSE.,             &
-&                       DESCRIPTION=RT_description(n_RT_descriptions),UNIT=AUT2FS)
+&                       DESC_STR=RT_description(n_RT_descriptions),UNIT=AUT2FS)
  endif
  !
  !

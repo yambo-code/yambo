@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 subroutine k_special(LIST)
  !
- use pars,                ONLY:SP,schlen,lchlen
+ use pars,                ONLY:SP,schlen
  use units,               ONLY:pi
  use R_lattice,           ONLY:bz_samp_reset,b
  use D_lattice,           ONLY:alat,lattice,a
@@ -45,8 +45,7 @@ subroutine k_special(LIST)
  logical          :: l_use_yambo_b
  integer          :: ik,il,n_lines,ip,i_str,K_position(n_SPECIAL_k_MAX)
  real(SP)         :: trial_b(3,3),K_norm,ap,bp,cp,fp,ep,K_sign(n_SPECIAL_k_MAX),k_l(3),k_lp1(3)
- character(schlen):: Path_strings(50),dumb_ch,k_f_name(2)
- character(lchlen):: of_string
+ character(schlen):: Path_strings(50),dumb_ch,k_f_name(2),after_msg
  !
  call bz_samp_reset(SPECIAL_k)
  call bz_samp_reset(CIRCUIT_k)
@@ -313,7 +312,7 @@ subroutine k_special(LIST)
  if (CIRCUIT_k%nbz==0) return
  !
  call msg('s','Found '//trim(intc(n_lines-1))//' segments and  '//&
-&              trim(intc(CIRCUIT_k%nbz+1))//' points along the path: '//trim(PtsPath))
+&              trim(intc(CIRCUIT_k%nbz+1))//' points along the path ',trim(PtsPath))
  !
  YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz+1,3))
  allocate(CIRCUIT_k_norm(CIRCUIT_k%nbz+1))
@@ -366,12 +365,10 @@ subroutine k_special(LIST)
      !
      call K_transform(CIRCUIT_k%pt(ik,:),'iku')
      !
-     call msg('o  path',"",(/CIRCUIT_k%pt(ik,:),CIRCUIT_k_norm(ik)/),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
-     if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// CIRCUIT_k_label(ik)//']'
-     call msg_deliver('path',trim(of_string))
-     call msg('o PWSCF',"",(/CIRCUIT_k%pt(ik,:),1._SP/),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
-     if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// CIRCUIT_k_label(ik)//']'
-     call msg_deliver('PWSCF',trim(of_string))
+     after_msg=""
+     if (len_trim(CIRCUIT_k_label(ik))>0) after_msg= ' ['// CIRCUIT_k_label(ik)//']'
+     call msg('o  path',"",(/CIRCUIT_k%pt(ik,:),CIRCUIT_k_norm(ik)/),INDENT=0,USE_TABS=.true.,after_msg=after_msg)
+     call msg('o PWSCF',"",(/CIRCUIT_k%pt(ik,:),1._SP/),             INDENT=0,USE_TABS=.true.,after_msg=after_msg)
    enddo
    !
    YAMBO_FREE(SPECIAL_k%pt)

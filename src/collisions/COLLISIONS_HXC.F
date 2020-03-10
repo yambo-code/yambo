@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -132,7 +132,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  NG_max=maxval((/N_g_vecs_H,N_g_vecs_X,N_g_vecs_C/))
  NG_XC =max(N_g_vecs_X,N_g_vecs_C)
  !
- call msg('s', '['//trim(H_potential)//'] Plane waves (H,X,C) :',(/N_g_vecs_H,N_g_vecs_X,N_g_vecs_C/))
+ call msg('s', '['//trim(H_potential)//'] Plane waves (H,X,C) ',(/N_g_vecs_H,N_g_vecs_X,N_g_vecs_C/))
  !
  ! WFs
  !

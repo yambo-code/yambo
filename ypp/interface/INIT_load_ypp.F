@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,7 @@
 subroutine INIT_ypp_load(defs)
  !
  use it_tools,      ONLY:it
- use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,&
+ use it_m,          ONLY:initdefs,E_unit,G_unit,V_RL,V_general,&
 &                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics,V_sc
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
@@ -38,6 +38,7 @@ subroutine INIT_ypp_load(defs)
                          PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
                          SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,w90_fname,wannier_bands,&
 &                        WF_multiplier,WF_ref,what_to_write,BSiq
+ use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
  use YPPm,          ONLY:Nel_fac
  use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
@@ -336,6 +337,7 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'RmTimeRev' , 'Remove Time Reversal')
  !
  call it(defs,'Efield1','First external Electric Field',E_field(1,:))
+ call it(defs,'GvecsCut','Max number of G-vectors in the new wave-function',wf_ng_cut,unit=G_unit,verb_level=V_RL)
  !
  ! GPL_EXCLUDE_START
  !

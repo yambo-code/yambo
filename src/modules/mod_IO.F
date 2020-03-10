@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -84,6 +84,7 @@ module IO_m
  ! COM
  !
  integer, parameter:: REP=41,LOG=42,NONE=43
+ real(SP),parameter:: NO_VAR=-246824._SP
  !
  ! I/O
  !
@@ -230,7 +231,7 @@ module IO_m
         &                       D0, DB_D0, C0, DB_C0, &
         &                       L0, DB_L0,            &
         &                       CH0,DB_CH0,           &
-        &                       UNIT,DESCRIPTION,DO_NOT_DUMP)
+        &                       UNIT,DESC_STR,DESC_VAR,DO_NOT_DUMP)
      !
      use pars,   ONLY:SP,DP,LP,lchlen
      integer               :: ID
@@ -243,7 +244,8 @@ module IO_m
      complex(SP), optional :: DB_C0
      logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
      character(*),optional :: CH0,DB_CH0
-     character(lchlen),optional :: DESCRIPTION
+     character(lchlen),optional :: DESC_STR
+     real(SP),         optional :: DESC_VAR(:)
      !
    end subroutine io_variable_elemental
    !

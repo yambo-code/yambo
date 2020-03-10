@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -60,15 +60,15 @@ integer function io_QINDX(Xk,q,io_db)
    call io_elemental(io_db,VAR="PARS",VAR_SZ=9,MENU=0)
    !
    call io_elemental(io_db,I0=nXkbz)
-   call io_elemental(io_db,VAR=" Polarization last K   :",I0=nXkibz)
-   call io_elemental(io_db,VAR=" QP states             :",I1=QP_states_k,CHECK=.true.,OP=(/">=","<="/))
+   call io_elemental(io_db,VAR=" Polarization last K    ",I0=nXkibz)
+   call io_elemental(io_db,VAR=" QP states              ",I1=QP_states_k,CHECK=.true.,OP=(/">=","<="/))
    call io_elemental(io_db,I0=q%nibz)
    call io_elemental(io_db,I0=q%nbz)
-   call io_elemental(io_db,VAR=" X grid is uniform     :",L0=Xk_grid_is_uniform)
+   call io_elemental(io_db,VAR=" X grid is uniform      ",L0=Xk_grid_is_uniform)
    io_QINDX=io_status(io_db)
    !
-   call io_elemental(io_db,VAR=" BS scattering         :",L0=bse_scattering,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(io_db,VAR=" COLL scattering       :",L0=coll_scattering,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(io_db,VAR=" BS scattering          ",L0=bse_scattering,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(io_db,VAR=" COLL scattering        ",L0=coll_scattering,CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(io_db,VAR="",VAR_SZ=0)
    ioScatt=io_status(io_db)

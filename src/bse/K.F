@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS AF
@@ -151,7 +151,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  load_O_X=BS_res_K_exchange.or.l_bs_fxc
  !
- if (load_O_X) call msg('r','[BSE] Exchange components :',BS_n_g_exch)
+ if (load_O_X) call msg('r','[BSE] Exchange components ',BS_n_g_exch)
  !
  ! Oscillators Setup
  !===================
@@ -181,7 +181,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
 #if defined _PAR_IO
    !
-   call io_control(ACTION=OP_RD,COM=REP,ID=ID)
+   call io_control(ACTION=OP_RD,COM=REP,MODE=VERIFY,ID=ID)
    call io_BS_PAR_init(iq,X,ID)
    !
    if(l_BSE_kernel_complete) then
@@ -193,6 +193,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    call io_control(ACTION=RD_CL,COM=REP,ID=ID)
    call io_BS_PAR_free(ID,l_BSE_kernel_complete)
+   !
    if(l_BSE_kernel_complete) return
    !
 #else

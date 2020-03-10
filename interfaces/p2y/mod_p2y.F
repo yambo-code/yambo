@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, AF, DV
@@ -73,10 +73,10 @@ contains
    select case(trim(dftdata_fmt))
    case("pw_export","qexml","qexsd","qexsd-hdf5")
       !
-      call msg('s','detected QE data format: ',trim(dftdata_fmt))
+      call msg('s','detected QE data format ',trim(dftdata_fmt))
       !
    case default
-      call msg('s','detected QE data format: ',trim(dftdata_fmt))
+      call msg('s','detected QE data format ',trim(dftdata_fmt))
       call errore("p2y_init","QE format not recognised/compatible (was wf_collect set to true?)",1)
    end select
       

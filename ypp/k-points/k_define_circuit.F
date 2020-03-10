@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS, CA, AM
@@ -107,8 +107,8 @@ subroutine k_define_circuit(Xk)
 &                                CIRCUIT_E_db,CIRCUIT_k,db1_a=db_a,db1_alat=db_alat)
    CIRCUIT_k%nbz=CIRCUIT_k%nibz
    if (any(alat/=db_alat).or.any(a/=db_a)) call warning("Lattice constants mismatch")
-   call msg("s",'GS databases         : '//trim(CIRCUIT_E_DB_path))
-   call msg("s",'bands/k-points       :',(/CIRCUIT_E_db%nb, CIRCUIT_k%nbz/))
+   call msg("s",'GS databases          '//trim(CIRCUIT_E_DB_path))
+   call msg("s",'bands/k-points       ',(/CIRCUIT_E_db%nb, CIRCUIT_k%nbz/))
    YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz,3))
    YAMBO_ALLOC(CIRCUIT_E_db%E,(CIRCUIT_E_db%nb,CIRCUIT_k%nbz,n_sp_pol))
    i_err=io_DB1_selective_scan('E K',trim(CIRCUIT_E_DB_path),CIRCUIT_E_db,CIRCUIT_k)
@@ -130,7 +130,7 @@ subroutine k_define_circuit(Xk)
        BANDS_path=trim(BANDS_path)//" "//trim(SPECIAL_k_label(ik_special))
      endif
    enddo
-   if (len_trim(BANDS_path)>0) call msg("s",'Circuit path         :',trim(BANDS_path))
+   if (len_trim(BANDS_path)>0) call msg("s",'Circuit path         ',trim(BANDS_path))
  endif
  !
 end subroutine k_define_circuit
@@ -175,7 +175,7 @@ subroutine k_generate_circuit(USER_k,CIRCUIT_k,n_steps)
  CIRCUIT_k%nbz =sum(int_distances)+1
  CIRCUIT_k%nibz=CIRCUIT_k%nbz
  !
- call msg("s",'Number of Q/K-points in the circuit :',CIRCUIT_k%nbz)
+ call msg("s",'Number of Q/K-points in the circuit ',CIRCUIT_k%nbz)
  !
  YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz,3))
  YAMBO_ALLOC(CIRCUIT_k%weights,(CIRCUIT_k%nbz))

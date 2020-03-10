@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -75,20 +75,20 @@ integer function io_Double_Grid(E,Xk,ID)
  if (DG_format==1) VAR_SZ=4
  call io_elemental(ID,VAR="PARS",VAR_SZ=VAR_SZ,MENU=0)
  !
- call io_elemental(ID,I0=BZ_DbGd_nbands,        VAR=' Bands                           :')
+ call io_elemental(ID,I0=BZ_DbGd_nbands,        VAR=' Bands                           ')
  call io_elemental(ID,I0=BZ_DbGd_tot_nk)
- call io_elemental(ID,I0=BZ_DbGd_tot_nk_levels, VAR=' Fine grid number of points      :')
+ call io_elemental(ID,I0=BZ_DbGd_tot_nk_levels, VAR=' Fine grid number of points      ')
  ! 
  if (DG_format==3) then
-   call io_elemental(ID,I0=BZ_ASSOCIATED_nkpts, VAR=' BZ ASSOCIATED k-points          :')
+   call io_elemental(ID,I0=BZ_ASSOCIATED_nkpts, VAR=' BZ ASSOCIATED k-points          ')
  else
    BZ_ASSOCIATED_nkpts=nXkbz
  endif
  !
- call io_elemental(ID,I0=BZ_DbGd_max_filling,VAR=' BZ Blocks max filling           :')
+ call io_elemental(ID,I0=BZ_DbGd_max_filling,VAR=' BZ Blocks max filling           ')
  !
  if (DG_format==3) then
-   call io_elemental(ID,L0=DbGd_is_symmetry_expanded,VAR=' Points expanded in the BZ       :')
+   call io_elemental(ID,L0=DbGd_is_symmetry_expanded,VAR=' Points expanded in the BZ       ')
  else
    DbGd_is_symmetry_expanded=.TRUE.
  endif

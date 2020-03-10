@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): HM
@@ -103,7 +103,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  call EPSSetProblemType(eps,EPS_HEP,ierr)
  !
  if (target_energy .ne. 0) then
-   call msg( 'nr', '[SLEPC] Criterion is target energy       :', real(target_energy,SP) )
+   call msg( 'nr', '[SLEPC] Criterion is target energy       ', real(target_energy,SP) )
    call EPSSetTarget(eps,target_energy,ierr)
    call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
  else
@@ -126,7 +126,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  else if (extraction == 'refined_harmonic')  then
    extr = EPS_REFINED_HARMONIC
  endif
- call msg( 'r', '[SLEPC] Extraction method                :', extraction)
+ call msg( 'r', '[SLEPC] Extraction method                ', extraction)
  !
  call EPSSetExtraction(eps, extr, ierr)
  !
@@ -154,9 +154,9 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  !call EPSGetType(eps,tname,ierr)
  call EPSGetTolerances(eps,tol,maxit,ierr)
  !
- call msg( 'r', '[SLEPC] Number of requested eigenvalues  : ', int(nev) )
- call msg( 'r', '[SLEPC] Stopping condition tolerance     : ', real(tol,SP) )
- call msg( 'r', '[SLEPC] Stopping condition max iterations: ', int(maxit) )
+ call msg( 'r', '[SLEPC] Number of requested eigenvalues   ', int(nev) )
+ call msg( 'r', '[SLEPC] Stopping condition tolerance      ', real(tol,SP) )
+ call msg( 'r', '[SLEPC] Stopping condition max iterations ', int(maxit) )
 
  !Set monitor
  call EPSMonitorSet(eps,MyEPSMonitor,PETSC_NULL_OBJECT, PETSC_NULL_FUNCTION,ierr)
@@ -167,18 +167,18 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  call EPSSolve(eps,ierr)
  call EPSGetIterationNumber(eps,its,ierr)
- call msg( 'r', '[SLEPC] Number of iterations              :', int(its) )
+ call msg( 'r', '[SLEPC] Number of iterations              ', int(its) )
  call EPSGetDimensions(eps,nev,ncv,mpd,ierr)
- call msg( 'r', '[SLEPC] Number of eigenvalues        [NEV]:', int(nev) )
- call msg( 'r', '[SLEPC]                              [NCV]:', int(ncv) )
- call msg( 'r', '[SLEPC]                              [MPD]:', int(mpd) )
+ call msg( 'r', '[SLEPC] Number of eigenvalues        [NEV]', int(nev) )
+ call msg( 'r', '[SLEPC]                              [NCV]', int(ncv) )
+ call msg( 'r', '[SLEPC]                              [MPD]', int(mpd) )
 
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Display solution and clean up
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !
  call EPSGetConverged(eps,nconv,ierr)
- call msg( 'rn', '[SLEPC] Number of converged states       : ', int(nconv))
+ call msg( 'rn', '[SLEPC] Number of converged states        ', int(nconv))
  if ( nconv < n_eig ) then
    n_eig = nconv
  endif
@@ -253,8 +253,8 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
  PetscMPIInt    :: rank
  !
  ! write the number of converged eigenvalues
- call msg('s', '[SLEPC] Iteration #'// trim(intc(its))// ' - converged States: '&
-&           // trim(intc(nconv)) //' - error: ', errest(nconv+1))
+ call msg('s', '[SLEPC] Iteration #'// trim(intc(its))// ' - converged States '&
+&           // trim(intc(nconv)) //' - error ', errest(nconv+1))
 
  ierr = 0
  !

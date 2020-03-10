@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AC MG
@@ -76,7 +76,7 @@ subroutine ELECTR_initial_check(k,Dip)
  ! ===
  !
  call msg( 'sr', 'Static Electric Field ')
- call msg( 'sr', 'Efield                     :'//trim(Efield(1)%ef_name))
- call msg( 'sr', 'Efield Amplitude    [kV/cm]:',Efield(1)%amplitude*AU2VMm1/100._SP/1000._SP)
+ call msg( 'sr', 'Efield                     '//trim(Efield(1)%ef_name))
+ call msg( 'sr', 'Efield Amplitude    [kV/cm]',Efield(1)%amplitude*AU2VMm1/100._SP/1000._SP)
  !
 end subroutine

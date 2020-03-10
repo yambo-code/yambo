@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -245,22 +245,22 @@ subroutine RT_start_and_restart(E,k,q)
    !
    call msg( 'nr','---RESTART report---')
    !
-   call msg('s','[RESTART] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
-   call msg('r',  'Number of steps done         [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
-   call msg('r',  'Time reached                  [fs]:',real(NE_i_time)*RT_step*AUT2FS)
-   call msg('r',  'Time step                     [fs]:',RT_dyn_step*AUT2FS)
+   call msg('s','[RESTART] Number of steps done    [o/o]',real(NE_i_time)/real(NE_steps)*100._SP)
+   call msg('r',  'Number of steps done         [o/o]',real(NE_i_time)/real(NE_steps)*100._SP)
+   call msg('r',  'Time reached                  [fs]',real(NE_i_time)*RT_step*AUT2FS)
+   call msg('r',  'Time step                     [fs]',RT_dyn_step*AUT2FS)
    !
-   call msg('r',  'dT Update Interval            [fs]:',NE_time_step_update_jump*AUT2FS)
-   call msg('r',  'Lifetimes inter/intr times    [fs]:',RT_life_extrap_times*AUT2FS)
-   call msg('r',  'T between I/O of J,P,M        [fs]:',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
-   call msg('r',  '          I/O of carriers     [fs]:',CARR_RT_IO_t%INTERVAL_time*AUT2FS)
-   call msg('r',  '          I/O of   GFs        [fs]:',GF_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  'dT Update Interval            [fs]',NE_time_step_update_jump*AUT2FS)
+   call msg('r',  'Lifetimes inter/intr times    [fs]',RT_life_extrap_times*AUT2FS)
+   call msg('r',  'T between I/O of J,P,M        [fs]',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  '          I/O of carriers     [fs]',CARR_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  '          I/O of   GFs        [fs]',GF_RT_IO_t%INTERVAL_time*AUT2FS)
    !
    OUTPUT_RT_IO_t%INTERVAL_time  = max(TIME_adjust(OUTPUT_RT_IO_t%INTERVAL_time,RT_dyn_step),RT_dyn_step)
    OUTPUT_RT_IO_t%INTERVAL_steps = nint(OUTPUT_RT_IO_t%INTERVAL_time/RT_step)
    OUTPUT_RT_IO_t%last_point     = NE_i_time - OUTPUT_RT_IO_t%INTERVAL_steps
    !
-   call msg('r',  '               outputs        [fs]:',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  '               outputs        [fs]',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
    !
  endif
  !
@@ -319,14 +319,14 @@ subroutine RT_start_and_restart(E,k,q)
    !
    N_Gr_descs=5
    !
-   Gr_description(1)=' [Gr] Retarded Green`s function  : '//trim(Gr_kind)
-   Gr_description(2)=' [Gr] Damping (c) Energy ref [eV]: '//trim(real2ch(QP_ctl_user(3,1)%Wc_E_ref*HA2EV))
-   Gr_description(3)=' [Gr] Damping (c) [eV,adim,eV^-1]: '//&
+   Gr_description(1)=' [Gr] Retarded Green`s function   '//trim(Gr_kind)
+   Gr_description(2)=' [Gr] Damping (c) Energy ref [eV] '//trim(real2ch(QP_ctl_user(3,1)%Wc_E_ref*HA2EV))
+   Gr_description(3)=' [Gr] Damping (c) [eV,adim,eV^-1] '//&
 &                    trim(real2ch(QP_ctl_user(3,1)%Wc(1)))//' '//&
 &                    trim(real2ch(QP_ctl_user(3,1)%Wc(2)))//' '//&
 &                    trim(real2ch(QP_ctl_user(3,1)%Wc(3)))
-   Gr_description(4)=' [Gr] Damping (v) Energy ref [eV]: '//trim(real2ch(QP_ctl_user(3,1)%Wv_E_ref*HA2EV))
-   Gr_description(5)=' [Gr] Damping (v) [eV,adim,eV^-1]: '//&
+   Gr_description(4)=' [Gr] Damping (v) Energy ref [eV] '//trim(real2ch(QP_ctl_user(3,1)%Wv_E_ref*HA2EV))
+   Gr_description(5)=' [Gr] Damping (v) [eV,adim,eV^-1] '//&
 &                    trim(real2ch(QP_ctl_user(3,1)%Wv(1)))//' '//&
 &                    trim(real2ch(QP_ctl_user(3,1)%Wv(2)))//' '//&
 &                    trim(real2ch(QP_ctl_user(3,1)%Wv(3)))

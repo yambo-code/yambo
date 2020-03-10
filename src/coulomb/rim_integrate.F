@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -78,7 +78,6 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
  N_out_G=0
  i2max=RIM_ng 
  if (RIM_is_diagonal) i2max=1
- RIM_acc_anis=0._DP
  do i1=1,RIM_n_rand_pts
    r1=iku_v_norm(qr(:,i1))
    v1=4._DP*pi**2*(/qr(1,i1)**2,qr(2,i1)**2,qr(3,i1)**2/)

@@ -229,7 +229,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      poles_f=0
      !
-     !$omp parallel default(shared), private(ig1,ig2,pole_p,i_np,MPA_freqs,MPA_Xo), reduction(+:poles_f)
+     !$omp parallel default(shared), private(ig1,ig2,pole_p,i_np,MPA_freqs,MPA_Xo), &
+     !$omp &        reduction(+:poles_f)
      !
      YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
      !
@@ -358,7 +359,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          dp_dummy = 0.0_SP
          !
-         !$omp parallel do default(shared), private(i_np,ig1,ig2,ctmp), reduction(+:dp_dummy), collapse(2)
+         !$omp parallel do default(shared), private(i_np,ig1,ig2,bose_PPA_E,ctmp), &
+         !$omp &           reduction(+:dp_dummy), collapse(3)
+         !
          do i_np=1,X%mpa_npoles
            do ig2=1,X%ng
              do ig1=1,X%ng

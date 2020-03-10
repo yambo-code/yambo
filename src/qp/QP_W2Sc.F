@@ -23,7 +23,7 @@
 !
 subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  !
- ! Performs the complex Hilber transofrmation corresponding to
+ ! Performs the complex Hilbert transform corresponding to
  !
  ! \int dw' G(w-w')W(w')
  !

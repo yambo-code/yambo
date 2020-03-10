@@ -47,7 +47,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! Work Space
  !
  integer           :: ID,i_err,i_s,n_max_threads,i_cpu
- character(lchlen) :: dumb_ch,jobs_ch(10)
+ character(lchlen) :: dumb_ch
  integer, external :: io_DB1
  !
  !
@@ -144,23 +144,20 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! Strings & Dirs
  !-----------------
  !
- dumb_ch='Job dir(s)'
- jobs_ch=''
- if ( len_trim(jobdir)>0 ) jobs_ch(1)=trim(jobdir)
+ if (len_trim(jobstr) >0) then
+   if ( len_trim(jobdir)>0 ) then
+     call msg('nr',"Job   dir + string  ",(/jobdir,jobstr/))
+   else
+     call msg('nr',"Job   string        ",jobstr)
+   endif
+ endif
  do i_s=1,n_alt_jobstr
-   if (len_trim(alt_jobdir(i_s))<=0) exit
-   jobs_ch(i_s+1)=trim(alt_jobdir(i_s))
+   if (len_trim(alt_jobdir(i_s)) >0) then
+     call msg('r',"Alt#"//trim(intc(i_s))//" dir + string  ",(/alt_jobdir(i_s),alt_jobstr(i_s)/))
+   else
+     call msg('r',"Alt#"//trim(intc(i_s))//" string        ",alt_jobstr(i_s))
+   endif
  enddo
- if (len_trim(jobs_ch(1))>0) call msg('nr',trim(dumb_ch),jobs_ch(:i_s))
- !
- dumb_ch='Job string(s)'
- jobs_ch=''
- if (len_trim(jobstr) >0) jobs_ch(1)=trim(jobstr)
- do i_s=1,n_alt_jobstr
-   if (len_trim(alt_jobstr(i_s))<=0) exit
-   jobs_ch(i_s+1)=trim(alt_jobstr(i_s))
- enddo
- if (len_trim(jobs_ch(1))>0) call msg('r',trim(dumb_ch)//"       ",jobs_ch(:n_alt_jobstr+1))
  !
  if(SP/=DP) call msg('nr', 'Precision           ','SINGLE')
  if(SP==DP) call msg('nr', 'Precision           ','DOUBLE')

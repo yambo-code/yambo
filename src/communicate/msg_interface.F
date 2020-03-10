@@ -45,15 +45,12 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  !
  integer          :: i1,i2,l_indent,i1_limits(2)
  character(lchlen):: msgfmt,lch,yaml_mesg,yaml_val(size(val))
- character(2)     :: dots_string
  logical          :: l_tabs,msg_for_out,msg_for_rep,msg_for_log
 #if defined _YAML_OUTPUT
  logical          :: l_yaml_map,l_yaml_com
 #endif
  !
  if (len_trim(how)==0) return
- dots_string=""
- if(len_trim(val(1))>0 .and. len_trim(mesg)>1) dots_string=": "
  ! switches to positive the value of of_unit which matches the given filename
  call msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
  l_tabs=.false.
@@ -79,7 +76,11 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  if(msg_for_rep) i1_limits=(/repfile_index,repfile_index/)
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
-   write (of_unit(i1),trim(msgfmt)) mesg//dots_string,(trim(val(i2)),i2=1,size(val))
+   if (len_trim(mesg)>0) then
+     write (of_unit(i1),trim(msgfmt)) mesg//": ",(trim(val(i2)),i2=1,size(val))
+   else
+     write (of_unit(i1),trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
+   endif
    ! after writing the value of of_unit is switched back to negative
    of_unit(i1)=-of_unit(i1)
    if (.not.msg_for_rep) call of_netcdf_shadow_char(i1,size(val),val)
@@ -111,7 +112,7 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  use com_interfcs, ONLY:composed_fmt
 #if defined _YAML_OUTPUT
  use com,          ONLY:of_yaml_IDs
- use yaml_output,  ONLY:yaml_map,yaml_sequence_open,yaml_sequence_close
+ use yaml_output,  ONLY:yaml_map
 #endif
  !
  implicit none
@@ -128,15 +129,12 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  integer :: i1,l_indent,i1_limits(2)
  character(schlen):: after_msg_,yaml_after_msg
  character(lchlen):: msgfmt,lch,yaml_mesg
- character(2)     :: dots_string
  logical          :: l_tabs,msg_for_out,msg_for_rep,msg_for_log
  !
  if (len_trim(how)==0) return
  !
  ! General setup
  !
- dots_string=""
- if(len_trim(mesg)>1) dots_string=": "
  after_msg_=""
  if(present(after_msg)) after_msg_=after_msg
  ! switches to positive the value of of_unit which matches the given filename
@@ -161,8 +159,13 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  if(msg_for_rep) i1_limits=(/repfile_index,repfile_index/)
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
-   if (len_trim(after_msg_)==0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
-   if (len_trim(after_msg_)> 0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val,trim(after_msg_)
+   if (len_trim(mesg)>0) then
+     if (len_trim(after_msg_)==0) write (of_unit(i1),trim(msgfmt)) mesg//": ",val
+     if (len_trim(after_msg_)> 0) write (of_unit(i1),trim(msgfmt)) mesg//": ",val,trim(after_msg_)
+   else
+     if (len_trim(after_msg_)==0) write (of_unit(i1),trim(msgfmt)) mesg,val
+     if (len_trim(after_msg_)> 0) write (of_unit(i1),trim(msgfmt)) mesg,val,trim(after_msg_)
+   endif
    ! after writing the value of of_unit is switched back to negative
    of_unit(i1)=-of_unit(i1)
 #if defined _YAML_OUTPUT
@@ -173,10 +176,6 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
      yaml_after_msg=STRING_remove(STRING_remove(trim(adjustl(after_msg_)),'[',replace='('),']',replace=')')
      call yaml_map(trim(yaml_mesg),val,unit=of_yaml_IDs(i1),advance="no")
      call yaml_map("",(/trim(yaml_after_msg)/),unit=of_yaml_IDs(i1))
-     !call yaml_sequence_open(mapname=trim(yaml_mesg),unit=of_yaml_IDs(repfile_index))
-     !call yaml_map("value",val,unit=of_yaml_IDs(i1))
-     !call yaml_map("units",(/trim(yaml_after_msg)/),unit=of_yaml_IDs(i1))
-     !call yaml_sequence_close(unit=of_yaml_IDs(repfile_index))
    endif
 #endif
  enddo
@@ -202,7 +201,7 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  use com_interfcs, ONLY:composed_fmt
 #if defined _YAML_OUTPUT
  use com,          ONLY:of_yaml_IDs
- use yaml_output,  ONLY:yaml_map,yaml_sequence_open,yaml_sequence_close
+ use yaml_output,  ONLY:yaml_map
 #endif
  !
  implicit none
@@ -217,19 +216,15 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  ! 
  ! Work Space
  !
- integer  :: i1,l_indent,imsg,i1_limits(2)
+ integer  :: i1,l_indent,i1_limits(2)
  character(schlen):: gen_fmt_local,after_msg_,yaml_after_msg
  character(lchlen):: lch,msgfmt,yaml_mesg
- character(2)     :: dots_string
- character(3)     :: advance_
  logical          :: l_tabs,l_ext_fmt,msg_for_out,msg_for_rep,msg_for_log
  !
  if (len_trim(how)==0) return
  !
  ! General setup
  !
- dots_string=""
- if(len_trim(mesg)>1) dots_string=": "
  after_msg_=""
  if(present(after_msg)) after_msg_=after_msg
  ! switches to positive the value of of_unit which matches the given filename
@@ -264,8 +259,13 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
    if (size(val)==1 .and. val(1)==NO_VAR) then
      write (of_unit(i1),trim(msgfmt)) mesg
    else        
-     if (len_trim(after_msg_)==0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val
-     if (len_trim(after_msg_)> 0) write (of_unit(i1),trim(msgfmt)) mesg//trim(dots_string),val,trim(after_msg_)
+     if (len_trim(mesg)>0) then
+       if (len_trim(after_msg_)==0) write (of_unit(i1),trim(msgfmt)) mesg//": ",val
+       if (len_trim(after_msg_)> 0) write (of_unit(i1),trim(msgfmt)) mesg//": ",val,trim(after_msg_)
+     else
+       if (len_trim(after_msg_)==0) write (of_unit(i1),trim(msgfmt)) mesg,val
+       if (len_trim(after_msg_)> 0) write (of_unit(i1),trim(msgfmt)) mesg,val,trim(after_msg_)
+     endif
    endif
    ! after writing the value of of_unit is switched back to negative
    of_unit(i1)=-of_unit(i1)
@@ -278,10 +278,6 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
      yaml_after_msg=STRING_remove(STRING_remove(trim(adjustl(after_msg_)),'[',replace='('),']',replace=')')
      call yaml_map(trim(yaml_mesg),val,unit=of_yaml_IDs(i1),advance="no")
      call yaml_map("",(/trim(yaml_after_msg)/),unit=of_yaml_IDs(i1))
-     !call yaml_sequence_open(mapname=trim(yaml_mesg),unit=of_yaml_IDs(repfile_index))
-     !call yaml_map("value",val,unit=of_yaml_IDs(i1))
-     !call yaml_map("units",(/trim(yaml_after_msg)/),unit=of_yaml_IDs(i1))
-     !call yaml_sequence_close(unit=of_yaml_IDs(repfile_index))
    endif
 #endif
  enddo

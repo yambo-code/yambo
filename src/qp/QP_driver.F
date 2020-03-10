@@ -113,6 +113,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  qp%desc%kind(1)='s'
  qp%desc%size(1)=1
  qp%desc%str(1)=' GW solver              '
+ qp%desc%check(1)=.true.
+ qp%desc%ops(1,1)="=="
  if (trim(QP_solver)=='n') then
    qp%desc%sval(1)='Newton'
    call section('*','Dyson equation: Newton solver')

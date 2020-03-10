@@ -98,6 +98,7 @@ module pars
  !=========
  integer, parameter  :: schlen=100
  integer, parameter  :: lchlen=300
+ integer, parameter  :: iomsg_len=34
  !
  ! CONSTANTs
  !===========

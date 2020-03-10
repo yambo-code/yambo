@@ -198,7 +198,7 @@ function desc_to_varname(desc)
  !
  implicit none
  !
- character(schlen), intent(in)  :: desc
+ character(*), intent(in)  :: desc
  !
  character(schlen)  :: desc_to_varname
  character(schlen)  :: VARNAME

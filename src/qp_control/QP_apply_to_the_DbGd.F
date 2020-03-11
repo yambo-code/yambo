@@ -29,6 +29,7 @@ subroutine QP_apply_to_the_DbGd(bands,en,k)
 &                        BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,BZ_DbGd_tot_nk
  use QP_CTL_m,      ONLY:QP_ctl_ID,QP_ctl_DB_user
  use interpolate,   ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do
+ use units
  !
 #include<memory.h>
  !
@@ -76,7 +77,7 @@ subroutine QP_apply_to_the_DbGd(bands,en,k)
      if (.not.DbGd_is_symmetry_expanded) ik_r_bz =ik_r_ibz
      if (     DbGd_is_symmetry_expanded) ik_r_bz =BZ_DbGd_table(ik_bz,ik_r,2)
      if ( DbGd_k_done(ik_r_ibz) == 1) cycle
-     do ib=bands(2),min(BZ_DbGd_nbands,bands(2))
+     do ib=bands(1),min(BZ_DbGd_nbands,bands(2))
        do i_spin=1,n_sp_pol
          en%E_DbGd(ib,ik_r_ibz,i_spin)=en%E_DbGd(ib,ik_r_ibz,i_spin)+ dE_dbgd%E(ib, ik_r_bz,i_spin)
        enddo

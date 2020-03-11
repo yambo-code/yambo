@@ -71,7 +71,7 @@ module QP_CTL_m
  !
  type QP_ctl_DB_input_file
    !
-   integer            :: INTERP_shell_factor
+   real(SP)           :: INTERP_shell_factor
    integer            :: INTERP_N_neigh
    character(schlen)  :: INTERP_DbGd_mode
    character(schlen)  :: action

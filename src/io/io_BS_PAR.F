@@ -32,10 +32,11 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_K_dim,BS_K_coupling,l_BSE_restart,l_BSE_kernel_complete,&
 &                        l_BSK_IO_triangular
- use BS_solvers,    ONLY:variables_BS,BSS_n_descs,BSS_desc_str,BSS_desc_var
+ use BS_solvers,    ONLY:variables_BS,BSS_desc
  use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,VERIFY,&
 &                        io_connect,io_elemental,def_variable_bulk,variable_exist,&
-&                        io_header,io_mode,io_file,def_variable_elemental,io_variable_elemental
+&                        io_header,io_mode,io_file,def_variable_elemental,io_variable_elemental,&
+&                        IO_desc,IO_desc_duplicate
  !
  implicit none
  !
@@ -47,10 +48,10 @@ subroutine io_BS_PAR_init(iq,X,ID)
  logical :: def_var, io_var
  integer :: io_BS,    VAR_IDs(8), n_vars, i1
  integer :: flattened_block_size
- real(SP)          :: local_desc_var(10,100)
+ type(IO_desc)     :: local_desc
  character(schlen) :: db_name, PARALLEL_STRUCTURE
- character(lchlen) :: full_db_name,local_desc_str(100),ch(4)
- character(schlen) :: dim_names(3), dim_names_done(2)
+ character(lchlen) :: full_db_name,ch(4)
+ character(schlen) :: dim_names(3),dim_names_done(2)
  !
  ! Connect to parallel netCDF file.
  !
@@ -86,7 +87,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
  &                    PARALLEL_STRUCTURE=trim(PARALLEL_STRUCTURE),CUTOFF=.true.,FRAG=frag_BS_K)
  !
- io_BS=variables_BS(ID,iq,local_desc_str,local_desc_var,.TRUE.,X=X)
+ io_BS=variables_BS(ID,iq,local_desc,.TRUE.,X=X)
  !
  if (io_BS/=0) then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
@@ -114,15 +115,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  ! Descriptions transfer
  !   
- if (BSS_n_descs==0) then
-   do i1=1,100
-     if (len_trim(local_desc_str(i1))>0) then
-       BSS_n_descs=BSS_n_descs+1
-       BSS_desc_str(BSS_n_descs)  =local_desc_str(i1)
-       BSS_desc_var(:,BSS_n_descs)=local_desc_var(:,i1)
-     endif
-   enddo
- endif
+ call IO_desc_duplicate(local_desc,BSS_desc)
  ! 
  ! Define vars
  !

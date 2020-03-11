@@ -35,7 +35,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use LIVE_t,        ONLY:live_timing
  use interfaces,    ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,ONLY:DIAGO,USE_LK
- use stderr,        ONLY:intc,set_real_printed_length
+ use stderr,        ONLY:intc
  use QP_m,          ONLY:QP_G_damp
  use parser_m,      ONLY:parser
  !
@@ -232,8 +232,6 @@ subroutine ELPH_Hamiltonian(en,k,q)
  do iw=1,N_w
    W(iw)= (minval(elph_E)-.1/HA2EV)+ ( maxval(elph_E) -  minval(elph_E) + .2/HA2EV )/real(N_w)*iw+cmplx(0.,QP_G_damp)
  enddo
- !
- call set_real_printed_length(f_length=12,g_length=12)
  !
  call live_timing('Green`s Functions',elph_Ham_bands(2)-elph_Ham_bands(1)+1)
  !
@@ -448,9 +446,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
    enddo 
    !
  enddo
- call live_timing()
  !
- call set_real_printed_length()
+ call live_timing()
  !
  ! CLEAN
  !

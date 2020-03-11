@@ -68,9 +68,6 @@ module pars
  integer, parameter :: max_io_vars_open=10
  integer, parameter :: max_active_sections=10
  !
- !...QP
- integer, parameter :: max_qp_descs=100
- !
  !...QP_apply
  integer, parameter :: n_QP_actions_MAX=10
  !
@@ -101,6 +98,7 @@ module pars
  !=========
  integer, parameter  :: schlen=100
  integer, parameter  :: lchlen=300
+ integer, parameter  :: iomsg_len=34
  !
  ! CONSTANTs
  !===========

@@ -27,8 +27,8 @@ integer function variables_X(ID,local_desc,X)
  use com,           ONLY:IO_desc
  use pars,          ONLY:SP,IP,schlen,lchlen
  use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,X_DbGd_percentual
- use IO_m,          ONLY:def_variable_elemental,io_variable_elemental,io_status,ver_is_gt_or_eq,read_is_on,&
-&                        IO_desc_reset
+ use IO_m,          ONLY:def_variable_elemental,io_variable_elemental,io_status,
+                         ver_is_gt_or_eq,read_is_on,variable_exist,IO_desc_reset
  !
  implicit none
  !
@@ -40,7 +40,7 @@ integer function variables_X(ID,local_desc,X)
  !
  integer             ::sec_size
  logical             ::local_long_gauge
- character(schlen)   ::X_label
+ character(schlen)   ::X_label,VAR_NAME
  !
  call IO_desc_reset(local_desc)
  X_label=' '
@@ -60,7 +60,9 @@ integer function variables_X(ID,local_desc,X)
  !
  ! PARS_2
  !
- call def_variable_elemental(ID,trim(X_label)//"Time_ordering",1,0,0)
+ VAR_NAME=trim(X_label)//"Time_ordering"
+ if (read_is_on(ID) .and. .not. variable_exist(ID,trim(VAR_NAME))) VAR_NAME=trim(X_label)//"PARS_2"
+ call def_variable_elemental(ID,trim(VAR_NAME),1,0,0)
  call io_variable_elemental(ID,&
 &     VAR=" X Time ordering         ",CH0=X%ordering,WARN=.true.,DESCRIPTOR=local_desc)
  !call def_variable_elemental(ID,"",0,0,0)

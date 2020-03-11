@@ -437,7 +437,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_Wd=cZERO
  l_drude=.false.
  BS_K_dim=0
- BS_K_cutoff=0.0005_SP
+ BS_K_cutoff=0.0000_SP
  BSS_mode=' '
  BSS_inversion_mode='pf'
  BSS_er=(/0._SP,10._SP/)/HA2EV

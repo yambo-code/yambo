@@ -27,8 +27,8 @@ integer function variables_X(ID,local_desc,X)
  use com,           ONLY:IO_desc
  use pars,          ONLY:SP,IP,schlen,lchlen
  use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,X_DbGd_percentual
- use IO_m,          ONLY:def_variable_elemental,io_variable_elemental,io_status,
-                         ver_is_gt_or_eq,read_is_on,variable_exist,IO_desc_reset
+ use IO_m,          ONLY:def_variable_elemental,io_variable_elemental,io_status,&
+&                        ver_is_gt_or_eq,read_is_on,variable_exist,IO_desc_reset
  !
  implicit none
  !

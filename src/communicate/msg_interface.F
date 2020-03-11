@@ -76,7 +76,7 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  if(msg_for_rep) i1_limits=(/repfile_index,repfile_index/)
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
-   if (len_trim(mesg)>0.and.len_trim(val(1))>0) then
+   if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then
      write (of_unit(i1),trim(msgfmt)) mesg//": ",(trim(val(i2)),i2=1,size(val))
    else
      write (of_unit(i1),trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
@@ -96,7 +96,7 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  !
  if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
  msgfmt=composed_fmt('a',-size(val),.false.,-1)
-  if (len_trim(mesg)>0.and.len_trim(val(1))>0) then
+  if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then
    write (lch,trim(msgfmt)) mesg//": ",(trim(val(i2)),i2=1,size(val))
  else
    write (lch,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))

@@ -77,6 +77,8 @@ subroutine QP_apply_QP(i_ACTION,bands,en,k,qp)
  enddo
  if (.not.FIT_me) return
  !
+ call section('p',"FIT on"//trim(QP_action(i_ACTION)%what) )
+ !
  ! YES!
  !
  if (QP_action(i_ACTION)%plan(1)) call QP_fit_energies(i_ACTION,bands,en,qp)

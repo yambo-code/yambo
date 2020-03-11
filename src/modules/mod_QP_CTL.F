@@ -132,6 +132,7 @@ module QP_CTL_m
  ! QP DBs load and apply 
  !
  integer                :: n_QP_actions
+ logical                :: At_least_one_band_corrected=.FALSE.
  type(QP_action_t)      :: QP_action(n_QP_actions_MAX)
  !
  interface

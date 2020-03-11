@@ -81,7 +81,10 @@ subroutine section(mode,name)
  ! To handle menu's like sections I need to reset 
  ! the depth when the previous section is 'p'-like
  !
- if (previous_secmode=='p') depth=depth-1
+ if (previous_secmode=='p') then
+   isec(depth+1)=isec(depth+1)+1
+   depth=depth-1
+ endif
  !
  isec_save=isec
  !

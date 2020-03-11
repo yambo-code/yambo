@@ -40,7 +40,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use stderr,        ONLY:real2ch
  use QP_m,          ONLY:QP_t
- use QP_CTL_m,      ONLY:QP_action,QP_ctl_msg_fmt,QP_ctl_xc_STRING
+ use QP_CTL_m,      ONLY:QP_action,QP_ctl_msg_fmt,QP_ctl_xc_STRING,At_least_one_band_corrected
  use interpolate,   ONLY:NN_n_of_nearest,INTERP_obj,INTERPOLATE_msg_fmt,&
 &                        INTERPOLATION_driver_seed,INTERPOLATION_driver_do,INTERP_shell_factor
  !
@@ -118,6 +118,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
          !
          if (QP_action(i_ACTION)%plan(1)) then
            en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+real(qp%E(i_qp_ref),SP)-qp%E_bare(i_qp_ref)
+           At_least_one_band_corrected=.TRUE.
            QP_action(i_ACTION)%STATES_done(iband,ik,i_spin)=1
          endif
          !
@@ -202,6 +203,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
                if(QP_action(i_ACTION)%plan(1)) then
                  i_c=i_c+1
                  en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+INTERP_obj(ID)%INTERP(iband,ik,i_c)
+                 At_least_one_band_corrected=.TRUE.
                  QP_action(i_ACTION)%STATES_done(iband,ik,i_spin)=1
                endif
                if(QP_action(i_ACTION)%plan(2)) then

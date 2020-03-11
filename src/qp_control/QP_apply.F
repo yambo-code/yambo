@@ -50,7 +50,8 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  use D_lattice,     ONLY:input_Tel_is_negative
  use R_lattice,     ONLY:bz_samp
  use QP_CTL_m,      ONLY:QP_actions_reset,n_QP_actions,QP_action,QP_CTL_copy,&
-&                        QP_ctl_ID,QP_ctl_t,QP_ctl_msg_fmt,QP_ctl_xc_STRING,QP_ctl_what
+&                        QP_ctl_ID,QP_ctl_t,QP_ctl_msg_fmt,QP_ctl_xc_STRING,QP_ctl_what,&
+&                        At_least_one_band_corrected
  use global_XC,     ONLY:QP_SE_NONE,setup_global_XC
  !
 #include<memory.h>
@@ -67,7 +68,6 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  type(levels)     ::Fermi_en
  integer          ::i_spin,nbf_m_SAVE(2),i_a
- logical          ::l_E_done
  !
  ! Resets
  !========
@@ -116,8 +116,6 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! Actions
  !=========
  !
- l_E_done=.FALSE.
- !
  do i_a=1,n_QP_actions
    !
    if (.not.QP_action(i_a)%active) cycle
@@ -141,7 +139,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    ! |
    ! .- applies just the fit
    !
-   call QP_apply_the_ACTION(i_a,bands,en,k,l_E_done)
+   call QP_apply_the_ACTION(i_a,bands,en,k)
    !
  enddo
  !
@@ -151,7 +149,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  ! Energy corrected?
  !
- if (.not.l_E_done) then
+ if (.not.At_least_one_band_corrected) then
    !
    call E_reset(Fermi_en)
    call QP_actions_reset( )
@@ -164,11 +162,14 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !========
  if (allocated(en%E_DbGd)) then
    !
-   call section('+'," Extending the correction to the DbGd")
+   call section('p'," Extending the correction to the DbGd")
    !
    call QP_apply_to_the_DbGd(bands,en,k)
    !
  endif
+ !
+ call section('p'," QP corrections report")
+ !==========================================
  !
  ! Fermi Level Updates
  !=====================
@@ -219,16 +220,10 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  if (en%nbf==en%nbm) then
    !
-   if (allocated(en%E_DbGd)) then
-     call section('='," QP corrections report")
-   else
-     call section('+'," QP corrections report")
-   endif
-   !
    if (n_sp_pol==1) then
      !
-     call msg('r','[QP apply] Final Min. Gap Correction   [ev]',&
-&                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
+     call msg('nr','[QP apply] Final Min. Gap Correction   [ev]',&
+&                   (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
 &                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
      !
    else

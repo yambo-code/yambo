@@ -277,7 +277,7 @@ foreach file ($FILES)
    if ($FOUND == 0 && $CHECK == 1 && $HEAD == 0 && "$var" != "code_branch" ) then
     @ N_unused ++
     set UNUSED = ($UNUSED $var)
-    echo -n $var $source  $N_unused 
+    #echo -n $var $source  $N_unused 
     #echo -n "..."$var"(removed) "
 
 cat << EOF > AWK_replace

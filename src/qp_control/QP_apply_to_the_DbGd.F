@@ -25,8 +25,8 @@ subroutine QP_apply_to_the_DbGd(bands,en,k)
  !
  use stderr,        ONLY:STRING_same
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
- use electrons,     ONLY:levels,n_sp_pol,E_reset,BZ_DbGd_kpts,DbGd_is_symmetry_expanded,&
-&                        BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels
+ use electrons,     ONLY:levels,n_sp_pol,E_reset,BZ_DbGd_kpts,&
+&                        BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,BZ_DbGd_tot_nk
  use QP_CTL_m,      ONLY:QP_ctl_ID,QP_ctl_DB_user
  use interpolate,   ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do
  !
@@ -38,10 +38,11 @@ subroutine QP_apply_to_the_DbGd(bands,en,k)
  !
  ! Work Space
  !
- integer         ::ik_bz,ik_r,i1,i_spin,ib,ik_ibz,ID
+ integer         ::ik_bz,ik_r,i_spin,ib,ID,ik_r_bz,ik_r_ibz
  type(levels)    ::dE_dbgd
  type(bz_samp)   ::k_dbgd
  logical         ::NEAREST
+ integer, allocatable ::DbGd_k_done(:)
  !
  call E_reset(dE_dbgd)
  call bz_samp_reset(k_dbgd)
@@ -51,33 +52,40 @@ subroutine QP_apply_to_the_DbGd(bands,en,k)
  !
  ! k_dbgd filling
  !
- k_dbgd%nibz=0
- YAMBO_ALLOC(k_dbgd%pt,(BZ_DbGd_tot_nk_levels,3))
- !
- do ik_bz=1,k%nbz
-   do i1=1,BZ_DbGd_nkpt(ik_bz)
-     k_dbgd%nibz=k_dbgd%nibz+1
-     if (     DbGd_is_symmetry_expanded) ik_r=BZ_DbGd_table(ik_bz,i1,2)
-     if (.not.DbGd_is_symmetry_expanded) ik_r=BZ_DbGd_table(ik_bz,i1,1)
-     k_dbgd%pt( k_dbgd%nibz, :) = BZ_DbGd_kpts(ik_r,:)
-   enddo
+ k_dbgd%nibz=BZ_DbGd_tot_nk
+ YAMBO_ALLOC(k_dbgd%pt,(BZ_DbGd_tot_nk,3))
+ do ik_r_bz=1,BZ_DbGd_tot_nk
+   k_dbgd%pt( ik_r_bz, :) = BZ_DbGd_kpts(ik_r_bz,:)
  enddo
+ !
+ ! Interpolation
  !
  call INTERPOLATION_driver_seed("dE_DbGd",ID,bands,k,SEED_E=en,NEAREST=NEAREST)
  call INTERPOLATION_driver_do("dE_DbGd",ID,k_dbgd,OUT_E=dE_dbgd)
  !
  YAMBO_FREE(k_dbgd%pt)
  !
+ ! Interpolation 
+ !
+ YAMBO_ALLOC(DbGd_k_done,(BZ_DbGd_tot_nk_levels))
+ DbGd_k_done=0
+ !
  do ik_bz=1,k%nbz
-   ik_ibz=k%sstar(ik_bz,1)
-   do i1=1,BZ_DbGd_nkpt(ik_bz)
-     ik_r=BZ_DbGd_table(ik_bz,i1,1)
+   do ik_r=1,BZ_DbGd_nkpt(ik_bz)
+     ik_r_ibz=BZ_DbGd_table(ik_bz,ik_r,1)
+     ik_r_bz =BZ_DbGd_table(ik_bz,ik_r,2)
+     if ( DbGd_k_done(ik_r_ibz) == 1) cycle
      do ib=1,BZ_DbGd_nbands
        do i_spin=1,n_sp_pol
-         en%E_DbGd(ib,ik_r,1)=en%E_DbGd(ib,ik_r,1)+ (en%E(ib,ik_ibz,i_spin)-en%Eo(ib,ik_ibz,i_spin))
+         en%E_DbGd(ib,ik_r_ibz,i_spin)=en%E_DbGd(ib,ik_r_ibz,i_spin)+ dE_dbgd%E(ib, ik_r_bz,i_spin)
        enddo
+       DbGd_k_done(ik_r_ibz)=1
      enddo
    enddo
  enddo
+ !
+ YAMBO_FREE(DbGd_k_done)
+ call E_reset(dE_dbgd)
+ call bz_samp_reset(k_dbgd)
  !
 end subroutine

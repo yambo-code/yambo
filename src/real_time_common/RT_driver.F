@@ -187,7 +187,6 @@ subroutine RT_driver(E,X,k,q,Dip)
  ! 
  call section('=','Start and Restart')
  !######################################
- !
  call RT_start_and_restart(E,k,q)
  !
  ! If I loaded the WFs just to compute HARTREE0 and XC0 I can now free the WFs 

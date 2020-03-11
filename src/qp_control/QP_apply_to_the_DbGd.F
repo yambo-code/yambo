@@ -25,7 +25,7 @@ subroutine QP_apply_to_the_DbGd(bands,en,k)
  !
  use stderr,        ONLY:STRING_same
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
- use electrons,     ONLY:levels,n_sp_pol,E_reset,BZ_DbGd_kpts,&
+ use electrons,     ONLY:levels,n_sp_pol,E_reset,BZ_DbGd_kpts,DbGd_is_symmetry_expanded,&
 &                        BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,BZ_DbGd_tot_nk
  use QP_CTL_m,      ONLY:QP_ctl_ID,QP_ctl_DB_user
  use interpolate,   ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do
@@ -73,9 +73,10 @@ subroutine QP_apply_to_the_DbGd(bands,en,k)
  do ik_bz=1,k%nbz
    do ik_r=1,BZ_DbGd_nkpt(ik_bz)
      ik_r_ibz=BZ_DbGd_table(ik_bz,ik_r,1)
-     ik_r_bz =BZ_DbGd_table(ik_bz,ik_r,2)
+     if (.not.DbGd_is_symmetry_expanded) ik_r_bz =ik_r_ibz
+     if (     DbGd_is_symmetry_expanded) ik_r_bz =BZ_DbGd_table(ik_bz,ik_r,2)
      if ( DbGd_k_done(ik_r_ibz) == 1) cycle
-     do ib=1,BZ_DbGd_nbands
+     do ib=bands(2),min(BZ_DbGd_nbands,bands(2))
        do i_spin=1,n_sp_pol
          en%E_DbGd(ib,ik_r_ibz,i_spin)=en%E_DbGd(ib,ik_r_ibz,i_spin)+ dE_dbgd%E(ib, ik_r_bz,i_spin)
        enddo

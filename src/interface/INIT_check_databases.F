@@ -120,11 +120,10 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  ! Updates RL variables
  !
- QP_ng_Sx=ng_closed
- QP_ng_Sc=ng_closed
- QP_ng_SH=ng_closed
- QP_ng_Vxc=ng_closed
- !
+ QP_ng_Sx   =ng_closed
+ QP_ng_Sc   =ng_closed
+ QP_ng_SH   =ng_closed
+ QP_ng_Vxc  =ng_closed
  BS_n_g_exch=ng_closed
  !
  ! kindx

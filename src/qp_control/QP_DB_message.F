@@ -24,6 +24,7 @@
 subroutine QP_DB_message( i_ACTION, qp )
  !
  use pars,     ONLY:lchlen
+ use stderr,   ONLY:real2ch,intc
  use QP_m,     ONLY:QP_t
  use com,      ONLY:msg
  use QP_CTL_m, ONLY:QP_action,QP_ctl_msg_fmt
@@ -54,7 +55,7 @@ subroutine QP_DB_message( i_ACTION, qp )
  field(7,1)="Real Axis GW"
  field(7,2)="E-E"
  !
- ! Here I build the %desc char on the basis of the qp%description lines.
+ ! Here I build the %desc char on the basis of the qp%desc lines.
  ! This to give a compact description of the QP details.
  !
  i_msg=1
@@ -74,12 +75,18 @@ subroutine QP_DB_message( i_ACTION, qp )
  QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//'<'//trim(QP_action(i_ACTION)%CTL(1)%db)//'['
  i_msg=i_msg+2+len_trim(QP_action(i_ACTION)%CTL(1)%db)
  !
- do i1=1,qp%n_descs
+ do i1=1,qp%desc%n
    do if=1,n_fields
-     if (index(qp%description(i1),trim(field(if,1)))/=0) then
-       c_pos=index(qp%description(i1),":")+1
+     if (index(qp%desc%str(i1),trim(field(if,1)))/=0) then
        QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//' '//trim(field(if,2))
-       if (c_pos>1) call CHappend(":"//qp%description(i1)(c_pos:))
+       if(qp%desc%kind(i1)=='r') then
+         if(qp%desc%size(i1)> 0) QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//' '//trim(real2ch(qp%desc%rval(1,i1)))
+         if(qp%desc%size(i1)> 1) QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//'-'//trim(real2ch(qp%desc%rval(2,i1)))
+       endif
+       if(qp%desc%kind(i1)=='i') then
+         if(qp%desc%size(i1)> 0) QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//' '//trim(intc(qp%desc%ival(1,i1)))
+         if(qp%desc%size(i1)> 1) QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//'-'//trim(intc(qp%desc%ival(2,i1)))
+       endif
      endif
    enddo
  enddo
@@ -88,21 +95,4 @@ subroutine QP_DB_message( i_ACTION, qp )
  !
  call msg("n"//trim(QP_ctl_msg_fmt),trim(QP_action(i_ACTION)%desc))
  ! 
- contains
-  !
-  subroutine CHappend(c)
-    character(*)::c
-    integer     ::ic,ic_start,ic_end
-    !
-    ic_start=-1    
-    ic_end=-1    
-    do ic=1,len(c)
-      if (c(ic:ic)/=' '.and.ic_start<0) ic_start=ic
-      if (c(ic:ic)==' '.and.ic_start>0) ic_end=ic
-    enddo
-    !
-    QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//c(ic_start:ic_end)
-  end subroutine
-  !
 end subroutine
-     !

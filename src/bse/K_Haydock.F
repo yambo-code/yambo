@@ -29,7 +29,7 @@ subroutine K_Haydock(iq,W)
  use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
- use BS_solvers,     ONLY:BSS_n_descs,Haydock_threshold,BSS_desc_str,BSS_desc_var,io_BSS_Haydock,Co_factor,diam_term_exact,&
+ use BS_solvers,     ONLY:BSS_desc,Haydock_threshold,io_BSS_Haydock,Co_factor,diam_term_exact,&
 &                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod,Haydock_iterIO,&
 &                         BSS_eels_to_eps
  use BS,             ONLY:BS_K_Coupling,BSE_mode,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,BS_K_dim
@@ -204,18 +204,26 @@ subroutine K_Haydock(iq,W)
  !
  ! Update Descriptions
  !=====================
- BSS_n_descs=BSS_n_descs+2
- BSS_desc_str(BSS_n_descs-1)=' '
- BSS_desc_str(BSS_n_descs)=' Haydock|Accuracy (requested) [o/o]'
- BSS_desc_var(1,BSS_n_descs)=Haydock_threshold
+ BSS_desc%n=BSS_desc%n+1
+ BSS_desc%str(BSS_desc%n-1)   =' '
  !
- BSS_n_descs=BSS_n_descs+1
- BSS_desc_str(BSS_n_descs)='        |Accuracy (reached)   [o/o]'
- BSS_desc_var(1,BSS_n_descs)=0._SP
+ BSS_desc%n=BSS_desc%n+1
+ BSS_desc%str(BSS_desc%n)     =' Haydock|Accuracy (requested) [o/o]'
+ BSS_desc%kind(BSS_desc%n)    ="r"
+ BSS_desc%size(BSS_desc%n)    =1
+ BSS_desc%rval(1,BSS_desc%n)  =Haydock_threshold
  !
- BSS_n_descs=BSS_n_descs+1
- BSS_desc_str(BSS_n_descs)='        |Iteration            [o/o]'
- BSS_desc_var(1,BSS_n_descs)=0._SP
+ BSS_desc%n=BSS_desc%n+1
+ BSS_desc%str(BSS_desc%n-1)   ='        |Accuracy (reached)   [o/o]'
+ BSS_desc%kind(BSS_desc%n-1)  ="r"
+ BSS_desc%size(BSS_desc%n-1)  =1
+ BSS_desc%rval(1,BSS_desc%n-1)=0._SP
+ !
+ BSS_desc%n=BSS_desc%n+1
+ BSS_desc%str(BSS_desc%n)     ='        |Iteration                 '
+ BSS_desc%kind(BSS_desc%n)    ="i"
+ BSS_desc%size(BSS_desc%n)    =1
+ BSS_desc%ival(1,BSS_desc%n)  =0
  !
  call msg('r','Accuracy (requested) [o/o]',Haydock_threshold)
  !
@@ -467,10 +475,11 @@ subroutine K_Haydock(iq,W)
      if(l_kerr) call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,2,Cf_kerr(:it))
 #endif
      !
-     BSS_desc_str(BSS_n_descs-1)  ='        |Accuracy (reached)   [o/o]'
-     BSS_desc_var(1,BSS_n_descs-1)=reached_threshold
-     BSS_desc_str(BSS_n_descs)    ='        |Iteration                 '
-     BSS_desc_var(1,BSS_n_descs)  =real(it,SP)
+     BSS_desc%str(BSS_desc%n-1)   ='        |Accuracy (reached)   [o/o]'
+     BSS_desc%rval(1,BSS_desc%n-1)=reached_threshold
+     !
+     BSS_desc%str(BSS_desc%n)     ='        |Iteration                 '
+     BSS_desc%ival(1,BSS_desc%n)  =it
      !
      call K_output_file(iq,"Haydock")
      dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy '//&

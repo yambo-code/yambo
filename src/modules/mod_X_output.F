@@ -74,23 +74,6 @@ module X_output
      !
    end subroutine
    !
-   subroutine X_write_descriptions(n_descs,desc,vars)
-     use pars,     ONLY:VAR_EMPTY
-     integer,     intent(in) :: n_descs
-     character(*),intent(in) :: desc(n_descs)
-     real(SP),    intent(in) :: vars(10,n_descs)
-     integer      :: i_d,ivar
-     call msg('o eps refl eel fxc alpha off beta moke jdos','#')    
-     do i_d=1,n_descs
-       do ivar=1,10
-         if( vars(ivar,i_d)==VAR_EMPTY ) exit
-       enddo
-       if(ivar> 1) call msg('o eps refl eel fxc alpha off beta moke jdos','#  '//trim(desc(i_d)),vars(:ivar-1,i_d),INDENT=0)    
-       if(ivar==1) call msg('o eps refl eel fxc alpha off beta moke jdos','#  '//trim(desc(i_d)),0,INDENT=0)    
-     enddo
-     call msg('o eps refl eel fxc alpha off beta moke jdos','#')    
-   end subroutine
-   !
    subroutine X_write_q_plus_G(iq,Q_plus_G_pt,ig)
      !
      integer           :: iq

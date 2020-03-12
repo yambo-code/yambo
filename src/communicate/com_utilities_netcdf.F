@@ -117,7 +117,6 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
  integer, parameter    :: max_headers_lines=50
  integer               :: i_var,i_char,strlen(nval),VAR_ID,VAR_POS(2),VAR_SZ(2)
  character(schlen)     :: VAR_NAME
- character(3)          :: end_string
  character(schlen)     :: dim_names(2)
  character(1), allocatable  :: nc_var(:,:)
  !
@@ -161,7 +160,6 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
  !
  if(def_var) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME),VAR_ID,VAR_SZ,0,dim_names,silent=.true.)
  !
- end_string=" # "
  nc_var=""
  do i_var=1,nval
    do i_char=1,strlen(i_var)

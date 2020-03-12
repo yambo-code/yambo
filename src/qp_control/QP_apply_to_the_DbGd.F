@@ -28,7 +28,7 @@ subroutine QP_apply_to_the_DbGd(bands,en,k)
  use electrons,     ONLY:levels,n_sp_pol,E_reset,BZ_DbGd_kpts,DbGd_is_symmetry_expanded,&
 &                        BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,BZ_DbGd_tot_nk
  use QP_CTL_m,      ONLY:QP_ctl_ID,QP_ctl_DB_user
- use interpolate,   ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do
+ use interpolate,   ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,NN_n_of_nearest,INTERP_shell_factor
  use units
  !
 #include<memory.h>
@@ -50,6 +50,8 @@ subroutine QP_apply_to_the_DbGd(bands,en,k)
  !
  NEAREST=.TRUE.
  if (STRING_same(trim(QP_ctl_DB_user(QP_ctl_ID)%INTERP_DbGd_mode),"BOLTZ")) NEAREST=.FALSE.
+ NN_n_of_nearest=QP_ctl_DB_user(QP_ctl_ID)%INTERP_N_neigh
+ INTERP_shell_factor=QP_ctl_DB_user(QP_ctl_ID)%INTERP_shell_factor
  !
  ! k_dbgd filling
  !

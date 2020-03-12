@@ -57,6 +57,7 @@ module BS
  integer :: BS_q(2)
  integer :: BS_identifier
  real(SP):: BS_K_cutoff
+ real(SP):: BS_max_val
  real(SP),allocatable :: BSqpts(:,:)
  !
  ! Live Timing

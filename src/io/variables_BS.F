@@ -188,7 +188,7 @@ integer function variables_BS(ID,iq,local_desc,CLOSE_the_menu,X)
  !
 #if defined _PAR_IO
  if (write_is_on(ID).or.variable_exist(ID,"BSE_KERNEL_TRIANGULAR")) then
-   call def_variable_elemental(ID,"BSE_KERNEL_TRIANGULAR",1,LP+100,0,par_io_kind="independent")
+   call def_variable_elemental(ID,"BSE_KERNEL_TRIANGULAR",1,LP+100,0)
    call  io_variable_elemental(ID,VAR=" Kernel triangular          :",L0=l_BSK_IO_triangular)
  else
    l_BSK_IO_triangular=.false.

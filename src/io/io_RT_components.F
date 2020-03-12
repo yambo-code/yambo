@@ -53,7 +53,6 @@ integer function io_RT_components(what,ID)
  ! Work Space
  !
  character(lchlen)     :: db_name
- character(lchlen)     :: local_description(100)
  !
 #if defined _PAR_IO
  integer               :: local_COMM
@@ -156,7 +155,7 @@ integer function io_RT_components(what,ID)
  if (any((/io_sec(ID,:)==2/))) then
    !
    if(any((/l_OBS,l_G,l_carriers/)) .and. .not.loading_carr_before_neq ) then
-     io_RT_components=variables_dynamic_RT(ID,local_description)
+     io_RT_components=variables_dynamic_RT(ID)
      if (io_RT_components/=0) goto 1
    endif
    !
@@ -247,7 +246,6 @@ subroutine RT_header(ID,what,loading_carr_before_neq,l_carriers,l_OBS,l_G,l_THET
  !
  integer, external     :: variables_static_RT
  !
- character(lchlen)     :: local_description(100)
  character(schlen)     :: what_
  !
  if ( .not. loading_carr_before_neq ) then
@@ -262,7 +260,7 @@ subroutine RT_header(ID,what,loading_carr_before_neq,l_carriers,l_OBS,l_G,l_THET
    io_RT_components=io_header(ID,IMPOSE_SN=(.not.l_carriers),CUTOFF=.true.,T_EL=.true.,FRAG=frag_RT)
    if (io_RT_components/=0) return
    !
-   io_RT_components=variables_static_RT(ID,local_description,trim(what_))
+   io_RT_components=variables_static_RT(ID,trim(what_))
    if (io_RT_components/=0) return
    !
  endif
@@ -316,7 +314,7 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,load_rest_info,unlim,l_G,TYP)
  use pars,           ONLY:IP,SP,schlen
  use drivers,        ONLY:l_real_time
  use units,          ONLY:AUT2FS
- use RT_control,     ONLY:RT_IO_t,RT_description,n_RT_descriptions
+ use RT_control,     ONLY:RT_IO_t,RT_desc
  use real_time,      ONLY:NE_steps,MEM_pointer,G_MEM_steps,NE_i_time,i_MEM_now,i_MEM_prev,i_MEM_old,&
 &                         RT_dyn_step,RT_step
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental,&
@@ -339,10 +337,10 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,load_rest_info,unlim,l_G,TYP)
    call def_variable_elemental(ID,"IO_TIMEs",2,SP,0) 
    call io_variable_elemental(ID,VAR=" [RT] I/O time          (input) [fs]",&
                         R0=TYP%INTERVAL_time_SAVE,CHECK=.TRUE.,OP=(/"=="/),  &
-&                       DESC_STR=RT_description(n_RT_descriptions),UNIT=AUT2FS)
+&                       DESCRIPTOR=RT_desc,UNIT=AUT2FS)
    call io_variable_elemental(ID,VAR=" [RT] I/O time            (now) [fs]",&
                         R0=TYP%INTERVAL_time     ,CHECK=.FALSE.,             &
-&                       DESC_STR=RT_description(n_RT_descriptions),UNIT=AUT2FS)
+&                       DESCRIPTOR=RT_desc,UNIT=AUT2FS)
  endif
  !
  !

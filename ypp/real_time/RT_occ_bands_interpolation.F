@@ -36,7 +36,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
  use stderr,         ONLY:real2ch,intc
  use vec_operate,    ONLY:iku_v_norm
- use RT_control,     ONLY:RT_apply,RT_carriers_object,RT_carriers_to_RT_k,RT_carriers_to_RT_E
+ use RT_control,     ONLY:RT_apply,RT_carriers_object,RT_carriers_to_RT_k,RT_carriers_to_RT_E,RT_desc
  use real_time,      ONLY:RT_carriers,RT_bands
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,electrons_bands_interpolate,INTERP_obj,INTERP_mode
  use LIVE_t,         ONLY:live_timing
@@ -196,7 +196,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    !
    call of_open_close(file_name_rt,'ot')
    !
-   call RT_write_descriptions(trim(file_name_rt_save))
+   call COM_write_desc('o '//trim(file_name_rt_save),'#',RT_desc)
    !
    call msg('o bands',"#"," ",INDENT=0)
    call msg('o bands',"#",' TIME= '//trim(real2ch( RT_time(i_T)*AUT2FS ))//' fs',INDENT=0)

@@ -6,7 +6,7 @@ RT_objects = RT_driver.o \
              RT_occupations_driver.o RT_components_energy_plot.o RT_occ_time_plot.o RT_density.o \
              RT_apply_Texp.o RT_G_two_times_driver.o RT_G_two_times_build.o RT_G_two_times_interp_and_plot.o \
              RT_dos_time_plot.o RT_occ_bands_interpolation.o \
-             RT_write_descriptions.o RT_time_configuration_setup.o RT_damp_it.o RT_Fermi_excitation.o
+             RT_time_configuration_setup.o RT_damp_it.o RT_Fermi_excitation.o
 #endif
 #if defined _YPP_NL
 NL_objects = NL_driver.o RT_coefficients_Inversion.o NL_exc_driver.o

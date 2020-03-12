@@ -23,15 +23,15 @@
 !
 module RT_control
  !
+ use IO_m,       ONLY:IO_desc
  use pars,       ONLY:SP,lchlen,schlen,rZERO
  use units,      ONLY:AUT2FS
  use real_time,  ONLY:l_NE_dynamics,l_NE_with_fields,l_elph_scatt
  !
 #include<memory.h>
  !
- integer                  :: n_RT_descriptions        = 0
- integer                  :: n_RT_descriptions_static = 0
- character(lchlen)        :: RT_description(100)
+ type(IO_desc)            :: RT_desc
+ integer                  :: n_RT_desc_static
  !
  integer                  :: n_TIME_STEP_CONF_descriptions = 0
  character(lchlen)        :: TIME_STEP_CONF_description(100)

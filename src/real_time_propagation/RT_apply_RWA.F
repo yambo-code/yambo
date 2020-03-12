@@ -23,7 +23,7 @@
 !
 subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cONE
  use electrons,      ONLY:levels
  use real_time,      ONLY:RT_ibz_coo,DbGd_ibz_coo,l_RT_uses_E_DbGd, &
 &                         RT_Deph_Matrix,RT_all2ibz,l_RT_EXP,RT_is_statically_dephased,RT_bands
@@ -45,6 +45,9 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
  !
  ik_ibz=RT_all2ibz(ik)
  ik_DbGd=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
+ !
+ phase  =cONE
+ dec_exp=1._SP
  !
  do i_n=RT_bands(1),RT_bands(2)
    do i_np=i_n+1,RT_bands(2)

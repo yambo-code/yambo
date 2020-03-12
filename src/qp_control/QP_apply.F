@@ -75,6 +75,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  call E_reset(Fermi_en)
  QP_ctl_msg_fmt=msg_fmt
  QP_ctl_xc_STRING=" "
+ At_least_one_band_corrected=.FALSE.
  !
  ! CTLs
  !======
@@ -104,8 +105,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  ! Sectioning
  !=============
- if (depth>0 ) call section('=',"External/Internal QP corrections")
- if (depth==0) call section('+',"External/Internal QP corrections")
+ call section('+',"External/Internal QP corrections")
  !
  !==============
  ! QP's section
@@ -143,7 +143,13 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
  enddo
  !
- if ( .not.any( QP_action(:)%active ) ) return
+ if ( .not.any( QP_action(:)%active ) ) then 
+   !
+   depth=depth-1
+   !
+   return
+   !
+ endif
  !
  call setup_global_XC(trim(QP_ctl_what),QP_SE_NONE,STRING=QP_ctl_xc_STRING)
  !
@@ -153,6 +159,8 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    call E_reset(Fermi_en)
    call QP_actions_reset( )
+   !
+   depth=depth-1
    !
    return
    !
@@ -220,26 +228,49 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  if (en%nbf==en%nbm) then
    !
-   if (n_sp_pol==1) then
-     !
-     call msg('nr','[QP apply] Final Min. Gap Correction   [ev]',&
-&                   (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
-&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
-     !
-   else
-     !
-     call msg('r','[QP apply] Final Min. Gap Correction  (up) [ev]',&
-&                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
-&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
-     !
-     call msg('r','                                    (down) [ev]',&
-&                  (minval(en%E(en%nbf+1,:,2))-maxval(en%E(en%nbf,:,2)) &
-&                  -minval(en%Eo(en%nbf+1,:,2))+maxval(en%Eo(en%nbf,:,2)) )*HA2EV)
-     !
-   endif
-   !
-   call msg('r','')
+   call QP_apply_gap_report(en,"built-in")
+   if (allocated(en%E_DbGd)) call QP_apply_gap_report(en,"DbGd")
    !
  endif
  !
+ call msg('r','')
+ !
+ depth=depth-1
+ !
+ contains
+   !
+   subroutine QP_apply_gap_report(E,title)
+    use pars, ONLY:SP
+    character(*)  ::title
+    type(levels)  ::E
+    ! Work space
+    real(SP)      ::Ego(2),Eg(2)
+    integer       ::i_spin
+    character(100)::space,msg_ch
+    space(1:100)=" "
+    do i_spin=1,n_sp_pol
+      Ego(i_spin)=minval(E%Eo(E%nbf+1,:,i_spin))-maxval(E%Eo(E%nbf,:,i_spin))
+      if (title=="DbGd") then
+        Eg(i_spin)=minval(E%E_DbGd(E%nbf+1,:,i_spin))-maxval(E%E_DbGd(E%nbf,:,i_spin))
+      else
+        Eg(i_spin)=minval(E%E(E%nbf+1,:,i_spin))-maxval(E%E(E%nbf,:,i_spin))
+      endif
+      !
+      msg_ch='['//title//'] Minimum Indirect Gap        [ev]'
+      if (n_sp_pol==2) then
+        if (i_spin==1) msg_ch='['//title//'] Minimum Indirect Gap         (up)[ev]'
+        if (i_spin==2) msg_ch='['//title//']                            (down)[ev]'
+      endif
+      call msg('r',trim(msg_ch),Ego(i_spin)*HA2EV)
+      !
+      msg_ch='['//title//'] Minimum Ind Gap Correction  [ev]'
+      if (n_sp_pol==2) then
+        if (i_spin==1) msg_ch='['//title//'] Minimum Ind Gap Correction   (up)[ev]'
+        if (i_spin==2) msg_ch='['//title//']                            (down)[ev]'
+      endif
+      call msg('r',trim(msg_ch),(Eg(i_spin)-Ego(i_spin))*HA2EV)
+      !
+    enddo
+   end subroutine
+   !
  end subroutine

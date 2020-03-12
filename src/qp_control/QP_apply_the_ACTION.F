@@ -88,7 +88,7 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
           if (QP_action(i_ACTION)%STATES_done(ib,ik,i_spin)==1) cycle
        endif
        !
-       At_least_one_band_corrected=do_E(i_spin)
+       if (.not.At_least_one_band_corrected) At_least_one_band_corrected=do_E(i_spin)
        !
        if (do_E(i_spin)) E%E(ib,ik,i_spin)=E%E(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),E_ref,bands,E,k,"E")
        if (do_W(i_spin)) E%W(ib,ik,i_spin)=E%W(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),E_ref,bands,E,k,"W")

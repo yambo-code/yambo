@@ -31,7 +31,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,n_sp_pol,n_spinor
  use QP_m,           ONLY:QP_table,QP_n_states
- use YPP_real_time,  ONLY:RT_time
+ use YPP_real_time,  ONLY:RT_time,RT_conf
  use YPP_interfaces, ONLY:k_special
  use YPPm,           ONLY:BANDS_path,CIRCUIT_k
  use LIVE_t,         ONLY:live_timing
@@ -48,7 +48,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  ! Work Space
  !
- integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2),i_a,n_axis,Nk_path
+ integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2),i_a,n_axis,Nk_path,last_ik
  real(SP)              :: io_Time,tmp_lifetimes(6),data_to_plot(9),k_al(3),k_cc(3),axis(3,3),&
 &                         data_to_plot_cumulative(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,9),O(3)
  character(schlen)     :: titles(9),specs(9,2),dumb_ch(2)
@@ -87,6 +87,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    do i_a=1,3
      call c2a(v_in=axis(i_a,:),mode='ki2c')
    enddo
+   last_ik=0
    Nk_path=0
  endif
  !
@@ -192,6 +193,9 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      endif  
      !
      if (.not.do_state(ib,ik,i_spin)) cycle
+     !
+     if (RT_carriers%E_bare(i_RT)<RT_conf%W_range(1).or.RT_carriers%E_bare(i_RT)>RT_conf%W_range(2)) cycle
+     write (*,*) i_RT,RT_carriers%E_bare(i_RT)*HA2EV
      !  
      if (.not.l_OCCgroup_path) then
        output_fname_short(1)='YPP-RT_occupations_k'//trim(intc(ik))//'_kRT'//trim(intc(ik_RT))//'_b'//trim(intc(ib))
@@ -222,7 +226,10 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      endif
      !
      if (l_OCCgroup_path) then
-       if (ib==RT_bands(1)) Nk_path=Nk_path+1
+       if (ik_RT/=last_ik) then
+         last_ik=ik_RT
+         Nk_path=Nk_path+1
+       endif
        if (ib<=En%nbf  ) data_to_plot(2)=data_to_plot(2)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
        if (ib>=En%nbf+1) data_to_plot(3)=data_to_plot(3)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
      else

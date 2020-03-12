@@ -642,7 +642,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
    if (l_RT_occupations.or.l_RT_lifetimes) then
      if (l_RT_bands) call initactivate(1,"PROJECT_mode PROJECT_depth PROJECT_threshold")
-     if (l_RT_time)  call initactivate(1,"BANDS_path")
+     if (l_RT_time)  call initactivate(1,"BANDS_path EnRngeRt")
    endif
    if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
    if (l_RT_dos)  then

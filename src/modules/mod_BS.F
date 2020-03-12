@@ -32,6 +32,7 @@ module BS
  logical :: l_BSE_minimize_memory
  logical :: l_BSE_kernel_complete
  logical :: l_BSE_restart
+ logical :: l_BSK_IO_triangular
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
  logical :: BS_res_K_exchange
@@ -55,6 +56,8 @@ module BS
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier
+ real(SP):: BS_K_cutoff
+ real(SP):: BS_max_val
  real(SP),allocatable :: BSqpts(:,:)
  !
  ! Live Timing

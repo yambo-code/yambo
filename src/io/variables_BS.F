@@ -37,6 +37,9 @@ integer function variables_BS(ID,iq,local_desc,CLOSE_the_menu,X)
  use IO_m,          ONLY:io_status,ver_is_gt_or_eq,variable_exist,write_is_on,&
 &                        def_variable_elemental,io_variable_elemental,&
 &                        IO_desc,IO_desc_reset
+#if defined _PAR_IO
+ use BS,            ONLY:l_BSK_IO_triangular
+#endif
  !
  implicit none
  !
@@ -182,6 +185,15 @@ integer function variables_BS(ID,iq,local_desc,CLOSE_the_menu,X)
    endif
    !
  endif
+ !
+#if defined _PAR_IO
+ if (write_is_on(ID).or.variable_exist(ID,"BSE_KERNEL_TRIANGULAR")) then
+   call def_variable_elemental(ID,"BSE_KERNEL_TRIANGULAR",1,LP+100,0)
+   call  io_variable_elemental(ID,VAR=" Kernel triangular          :",L0=l_BSK_IO_triangular)
+ else
+   l_BSK_IO_triangular=.false.
+ endif
+#endif
  !
  !if (     CLOSE_the_menu) call def_variable_elemental(ID,"",0,0,1)
  !if (.not.CLOSE_the_menu) call def_variable_elemental(ID,"",0,0,0)

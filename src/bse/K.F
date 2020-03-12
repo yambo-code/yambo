@@ -46,7 +46,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,&
-&                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete
+&                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
+&                       BS_K_cutoff,BS_max_val
  use collision_el, ONLY:elemental_collision_free
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_WR,OP_APP_CL,DUMP,&
@@ -57,6 +58,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
+ use parallel_m,    ONLY:myid,ncpu,PP_redux_wait
  !
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free
@@ -89,6 +91,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4)
  complex(SP):: Co,H_x,H_c
  real(SP)   :: sqrt_f_itk,sqrt_f_itp
+ real(SP), allocatable :: BS_max_val_CPU(:)
  !
  complex(SP),   external ::TDDFT_ALDA_R_space
  complex(SP),   external ::K_correlation_kernel
@@ -303,6 +306,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call section('=','Main kernel loop')
  !
+ if(BS_K_cutoff>0._SP) then
+   YAMBO_ALLOC(BS_max_val_CPU,(ncpu))
+   BS_max_val_CPU=0._SP
+ endif
+ !
 #if defined _PAR_IO
  call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID)
  call io_BS_PAR_init(iq,X,ID)
@@ -486,6 +494,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp end parallel
 #endif
    !
+   if(BS_K_cutoff>0._SP) BS_max_val_CPU(myid+1)=maxval( (/BS_max_val_CPU(myid+1),abs(BS_blk(i_block)%mat(:,:))/) )
+   !
    call BS_oscillators_free(0,i_block)
    if(l_BSE_minimize_memory) then
      call BS_oscillators_free(i_Tgrp_p,0)
@@ -508,6 +518,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call io_control(ACTION=WR_CL,COM=REP,ID=ID)
  call io_BS_PAR_free(ID,.true.)
 #endif
+ !
+ if(BS_K_cutoff>0._SP) then
+   call PP_redux_wait(BS_max_val_CPU)
+   BS_max_val=maxval(BS_max_val_CPU)
+ endif
  !
  if (BS_LiveTiming_steps>0) call live_timing( )
  !

@@ -55,13 +55,16 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  character(lchlen)     :: output_fname_short(2),output_fname(2,RT_carriers%nstates)
  character(3)          :: ch3_dummy
  logical               :: l_elph_lifetimes,do_state(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol),&
-&                         l_OCCgroup_k_and_b,l_OCCgroup_path,l_OCCgroup
+&                         l_OCCgroup_k_and_b,l_OCCgroup_path,l_OCCgroup,l_E_select
  !
  real(SP),allocatable  :: spin_factors(:,:,:),magn_factors(:,:,:)
  !
  if(all(QP_table==0)) return
  !
+ ! Setup
+ !-------
  call parser('OCCgroup', l_OCCgroup)
+ call parser('EnRngeRt', l_E_select)
  !
  data_to_plot_cumulative=rZERO
  !
@@ -194,8 +197,9 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      !
      if (.not.do_state(ib,ik,i_spin)) cycle
      !
-     if (RT_carriers%E_bare(i_RT)<RT_conf%W_range(1).or.RT_carriers%E_bare(i_RT)>RT_conf%W_range(2)) cycle
-     write (*,*) i_RT,RT_carriers%E_bare(i_RT)*HA2EV
+     if (l_E_select) then
+       if (RT_carriers%E_bare(i_RT)<RT_conf%W_range(1).or.RT_carriers%E_bare(i_RT)>RT_conf%W_range(2)) cycle
+     endif
      !  
      if (.not.l_OCCgroup_path) then
        output_fname_short(1)='YPP-RT_occupations_k'//trim(intc(ik))//'_kRT'//trim(intc(ik_RT))//'_b'//trim(intc(ib))

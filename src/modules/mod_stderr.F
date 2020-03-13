@@ -304,6 +304,24 @@ module stderr
      !
    end function real2ch
    !
+   logical function int2log(i)
+     !
+     integer(LP) :: i
+     !
+     if(i==1) int2log=.true.
+     if(i==0) int2log=.false.
+     !
+   end function int2log
+   !
+   integer(LP) function log2int(l)
+     !
+     logical :: l
+     !
+     if(     l) log2int=1
+     if(.not.l) log2int=0
+     !
+   end function log2int
+   !
    character(schlen) function complex2ch(c)
      !
      complex(SP), intent(in) :: c

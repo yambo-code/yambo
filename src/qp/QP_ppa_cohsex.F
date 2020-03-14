@@ -561,8 +561,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                if (i_w==1 .and. i_qp==1 .and. iqbz==1 .and. ib==1 .and. ig2==1 .and.(ig1==1 .or. ig1==2 ) ) then
                  write(*,*)
                  write(*,*) "G=",ig1
-                 write(*,*) "mpaE=",PPA_E
-                 write(*,*) "mpaR=",PPA_R/isc%gamp(ig1,ig2)
+                 write(*,*) "ppaE=",PPA_E
+                 write(*,*) "ppaR=",PPA_R/isc%gamp(ig1,ig2)
                  write(*,*) 
                endif
              enddo

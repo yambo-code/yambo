@@ -125,7 +125,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    if (mod(Xw%n_freqs,2)>0) Xw%n_freqs=Xw%n_freqs+1
    X%mpa_npoles  = Xw%n_freqs/2
    X_MEM_n_freqs =2*X%mpa_npoles
-   X%ordering='T'
+   X%ordering='R'
    Xw%grid_type="mpa-h"
    !
  endif

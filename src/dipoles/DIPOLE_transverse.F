@@ -40,7 +40,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  use R_lattice,           ONLY:bz_samp
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach
  use X_m,                 ONLY:l_X_terminator
- use IO_m,                ONLY:io_control,RD_CL,RD
+ use IO_m,                ONLY:io_control,manage_action,OP_IF_START_RD_CL_IF_END
  use wave_func,           ONLY:wf_ng,WF
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing
@@ -73,7 +73,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  !
  !I/O and external functions
  !
- integer                      :: ID,io_err(3),io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
+ integer                      :: ID,IO_ACT_NOW,io_err(3),io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
  integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
  !
  call timing('DIPOLE_transverse',OPR='start')
@@ -158,17 +158,19 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
      ! [Vnl,r]
      !
      if(l_use_comm) then
+       !
        if (io_KB_pwscf_err==0) then
-         if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
-         if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
+         IO_ACT_NOW=manage_action(OP_IF_START_RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
+         call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
          io_KB_pwscf_err=io_KB_pwscf(ID)
        endif
        !
        if (io_KB_abinit_err==0) then
-         if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
-         if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
+         IO_ACT_NOW=manage_action(OP_IF_START_RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
+         call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
          io_KB_abinit_err=io_KB_abinit(ID)
        endif
+       !
      endif
      ! 
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 

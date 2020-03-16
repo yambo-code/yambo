@@ -20,7 +20,7 @@
 ! License along with this program; if not, write to the Free 
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
+! 
 subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Multi-pole approximation to the Correlation Self-Energy
@@ -85,6 +85,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(DP), allocatable :: MPA_E_mat(:,:,:)
  complex(DP), allocatable :: MPA_R_mat(:,:,:)
  complex(DP), allocatable :: MPA_freqs(:),MPA_Xo(:)
+ character(len=99) :: str
  !
  integer, external::io_X,QP_state_extract
  !
@@ -227,6 +228,22 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Poles and Residuals
      !
+     write(str,*) iqibz
+     str = adjustl(str)
+     open(10,file = 'mpa.ER_fragment_'//trim(str))
+     write(10,*) 'Parameters of the MPA'
+     write(10,*)
+     write(10,*) 'matrix_size = ', X%ng
+     write(10,*) 'number_of_poles = ', X%mpa_npoles
+     write(10,*)
+     write(10,*) 'rE_iE_rR_iR(size,size,npoles,4) ='
+     open(11,file = 'mpa.err_fragment_'//trim(str))
+     write(11,*) 'Errors of the MPA'
+     write(11,*)
+     write(11,*) 'matrix_size = ', X%ng
+     write(11,*)
+     write(11,*) 'err(size,size) ='
+     !
      poles_f=0
      !
      !$omp parallel default(shared), private(ig1,ig2,pole_p,i_np,MPA_freqs,MPA_Xo), &
@@ -258,6 +275,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
            !write(*,*) "error=",  err_func_np(X%mpa_npoles, MPA_R_mat(ig1,ig2,:), &
 !&                                            MPA_E_mat(ig1,ig2,:), MPA_freqs, MPA_Xo)
 !         endif
+         ! 
+         write(11,*) err_func_np(X%mpa_npoles, MPA_R_mat(ig1,ig2,:), &
+&                                              MPA_E_mat(ig1,ig2,:), MPA_freqs, X_mat(ig1,ig2,1:Xw%n_freqs)*isc%gamp(ig1,ig2))
+         !  
          pole_p=0
          do i_np=1,X%mpa_npoles
            !
@@ -271,6 +292,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
            !  write(*,*) "mpaR= ", MPA_R_mat(ig1,ig2,i_np)
            !  write(*,*)
            !endif
+           ! 
+           write(10,*) real(MPA_E_mat(ig1,ig2,i_np),DP),aimag(MPA_E_mat(ig1,ig2,i_np)), &
+&                      real(MPA_R_mat(ig1,ig2,i_np),DP),aimag(MPA_R_mat(ig1,ig2,i_np)), ','  
            !
          enddo
          !
@@ -279,7 +303,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        enddo
      enddo
      !$omp end do
-     !
+     !     
      call msg('r',' MPA time ordering fail [iqibz,count]: ', (/iqibz,poles_f/) )
      !
      YAMBO_FREE(MPA_Xo)

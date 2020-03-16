@@ -35,7 +35,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use BS_solvers,    ONLY:variables_BS,BSS_desc
  use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,VERIFY,&
 &                        io_connect,io_elemental,def_variable_bulk,variable_exist,&
-&                        io_header,io_mode,io_file,def_variable_elemental,io_variable_elemental,&
+&                        io_header,io_file,def_variable_elemental,io_variable_elemental,&
 &                        IO_desc,IO_desc_duplicate
  !
  implicit none
@@ -49,7 +49,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  integer :: io_BS,    VAR_IDs(8), n_vars, i1
  integer :: flattened_block_size
  type(IO_desc)     :: local_desc
- character(schlen) :: db_name, PARALLEL_STRUCTURE
+ character(schlen) :: db_name
  character(lchlen) :: full_db_name,ch(4)
  character(schlen) :: dim_names(3),dim_names_done(2)
  !
@@ -81,11 +81,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !              I cannot put here if(master_cpu) because I need all MPI_tasks to
  !              go through the definition of the variables (see similar issue in io_X.F)
  !
- PARALLEL_STRUCTURE="NONE"
- if (io_mode(ID)==VERIFY.or.write_is_on(ID)) PARALLEL_STRUCTURE="Response_T_space"
- !
- io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
- &                    PARALLEL_STRUCTURE=trim(PARALLEL_STRUCTURE),CUTOFF=.true.,FRAG=frag_BS_K)
+ io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",CUTOFF=.true.,FRAG=frag_BS_K)
  !
  io_BS=variables_BS(ID,iq,local_desc,.TRUE.,X=X)
  !

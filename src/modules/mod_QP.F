@@ -24,7 +24,7 @@
 module QP_m
  !
  use IO_m,           ONLY:IO_desc,IO_desc_duplicate,IO_desc_reset
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,cZERO
  !
 #include<memory.h>
  !
@@ -77,6 +77,7 @@ module QP_m
  complex(SP),allocatable:: QP_dSc(:,:)
  complex(SP),allocatable:: QP_W(:,:,:,:)
  complex(SP),allocatable:: QP_Vnl_xc(:)
+ complex(SP),allocatable:: QP_Vnl_sex(:)
  complex(SP),allocatable:: QP_Sc(:,:)
  complex(SP),allocatable:: QP_Vxc(:)
  integer,    allocatable:: QP_solver_state(:)
@@ -147,6 +148,56 @@ module QP_m
  end interface
  !
  contains
+   !
+   subroutine QP_XCo_alloc(l_Vxc,l_Vnl_xc,l_screen_hyb)
+   implicit none
+     logical, optional, intent(in) :: l_Vxc,l_Vnl_xc,l_screen_hyb
+     logical :: l_Vxc_,l_Vnl_xc_,l_screen_hyb_
+     !
+     l_Vxc_=.false.
+     l_Vnl_xc_=.false.
+     l_screen_hyb_=.false.
+     if (present(l_Vxc)) l_Vxc_=l_Vxc
+     if (present(l_Vnl_xc)) l_Vnl_xc_=l_Vnl_xc
+     if (present(l_screen_hyb)) l_screen_hyb_=l_screen_hyb
+     !
+     if (.not.allocated(QP_Vxc).and.l_Vxc_) then
+       YAMBO_ALLOC(QP_Vxc,(QP_n_states))
+     endif
+     if (.not.allocated(QP_Vnl_xc).and.l_Vnl_xc_) then
+       YAMBO_ALLOC(QP_Vnl_xc,(QP_n_states))
+     endif
+     if (.not.allocated(QP_Vnl_sex).and.l_screen_hyb_) then
+       YAMBO_ALLOC(QP_Vnl_sex,(QP_n_states))
+     endif
+     if (l_Vnl_xc_)     QP_Vnl_xc=cZERO
+     if (l_Vxc_)        QP_Vxc=cZERO
+     if (l_screen_hyb_) QP_Vnl_sex=cZERO
+   end subroutine 
+   !
+   subroutine QP_XCo_free(l_Vxc,l_Vnl_xc,l_screen_hyb)
+   implicit none
+     logical, optional, intent(in) :: l_Vxc,l_Vnl_xc,l_screen_hyb
+     logical :: l_Vxc_,l_Vnl_xc_,l_screen_hyb_
+     !
+     l_Vxc_=.false.
+     l_Vnl_xc_=.false.
+     l_screen_hyb_=.false.
+     if (present(l_Vxc)) l_Vxc_=l_Vxc
+     if (present(l_Vnl_xc)) l_Vnl_xc_=l_Vnl_xc
+     if (present(l_screen_hyb)) l_screen_hyb_=l_screen_hyb
+     !
+     if (l_Vxc_) then
+       YAMBO_FREE(QP_Vxc)
+     endif
+     if (l_Vnl_xc_) then
+       YAMBO_FREE(QP_Vnl_xc)
+     endif
+     if (l_screen_hyb_) then
+       YAMBO_FREE(QP_Vnl_sex)
+     endif
+     !
+   end subroutine QP_XCo_free
    !
    ! Lifetimes definition
    !----------------------

@@ -108,8 +108,6 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
    return
  else
    call mk_dir(more_io_path)
-   call mk_dir(com_path)
-   if (ncpu>1) call mk_dir(trim(com_path)//"/LOG")
  endif
  !
 #if defined _MEM_CHECK

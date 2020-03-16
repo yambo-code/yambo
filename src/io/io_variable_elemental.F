@@ -376,7 +376,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    if(present(R0) .or.present(R1)) call msg(msg_where,ch,r_db(1:SZ)*local_unit)
    if(present(D0)                ) call msg(msg_where,ch,r_db(1:SZ)*local_unit)
    if(present(C0)                ) call msg(msg_where,ch,rc_db(1:2*SZ)*local_unit)
-   if(present(L0)                ) call msg(msg_where,ch,(i_db(1)==1))
+   if(present(L0)                ) call msg(msg_where,ch,(l_db(1)==1))
    if(present(CH0)               ) call msg(msg_where,ch,trim(ch_db(1)))
  endif
  !

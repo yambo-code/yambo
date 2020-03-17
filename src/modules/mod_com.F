@@ -86,8 +86,9 @@ module com
    integer           :: size(n_MAX_descs)
    logical           :: check(n_MAX_descs)
    character(2)      :: ops(10,n_MAX_descs)
-   character(schlen) :: str(n_MAX_descs)
-   character(1)      :: kind(n_MAX_descs)     !  "i"=integer, "r"=real, "d"=double, "c"=complex, "s"=string, "l"=logical
+   character(schlen) :: str(n_MAX_descs)      ! Main variable body
+   character(schlen) :: term(n_MAX_descs)     ! Terminator string. E.G. o/o, eV, fs....
+   character(1)      :: kind(n_MAX_descs)     ! "i"=integer, "r"=real, "d"=double, "c"=complex, "s"=string, "l"=logical
    !
    integer           :: ival(10,n_MAX_descs)
    real(SP)          :: rval(10,n_MAX_descs)

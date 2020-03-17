@@ -59,7 +59,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  !
  integer,parameter      :: MAX_DB_ELEMENTS=100
  character(iomsg_len)   :: ch
- character(1)           :: msg_where
+ character(1)           :: msg_where,space
  integer                :: SZ,i_err,nf_error
  logical                :: CHECK_,WARN_,DUMP_,VERIFY_
  !
@@ -89,6 +89,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  if (present(UNIT)) local_unit=UNIT
  !
  msg_where=""
+ space=" "
  if (io_com(ID)==REP            ) msg_where="r"
  if (io_com(ID)==LOG.or.list_dbs) msg_where="s"
  !
@@ -372,12 +373,12 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
      if (CHECK_) ch=STRING_pack("*ERR* ",VAR)
      if (WARN_ ) ch=STRING_pack("*WRN* ",VAR)
    endif
-   if(present(I0) .or.present(I1)) call msg(msg_where,ch,i_db(1:SZ))
-   if(present(R0) .or.present(R1)) call msg(msg_where,ch,r_db(1:SZ)*local_unit)
-   if(present(D0)                ) call msg(msg_where,ch,r_db(1:SZ)*local_unit)
-   if(present(C0)                ) call msg(msg_where,ch,rc_db(1:2*SZ)*local_unit)
-   if(present(L0)                ) call msg(msg_where,ch,(l_db(1)==1))
-   if(present(CH0)               ) call msg(msg_where,ch,trim(ch_db(1)))
+   if(present(I0) .or.present(I1)) call msg(msg_where,space//ch,i_db(1:SZ))
+   if(present(R0) .or.present(R1)) call msg(msg_where,space//ch,r_db(1:SZ)*local_unit)
+   if(present(D0)                ) call msg(msg_where,space//ch,r_db(1:SZ)*local_unit)
+   if(present(C0)                ) call msg(msg_where,space//ch,rc_db(1:2*SZ)*local_unit)
+   if(present(L0)                ) call msg(msg_where,space//ch,(l_db(1)==1))
+   if(present(CH0)               ) call msg(msg_where,space//ch,trim(ch_db(1)))
  endif
  !
  !

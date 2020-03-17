@@ -54,7 +54,7 @@ subroutine QP_state_print(qp)
  !
  do i_s=1,n_states
    !
-   ch='QP @ state [ '//trim(intc(i_s))//' ]'
+   ch='QP @ state[ '//trim(intc(i_s))//' ]'
    !
    if (present(qp)) then
      !

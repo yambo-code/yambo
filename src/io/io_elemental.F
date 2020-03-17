@@ -25,7 +25,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                       R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
 &                       DESCRIPTION,DO_NOT_DUMP)
  !
- use pars,          ONLY:SP,DP,schlen,lchlen,nf90_SP
+ use pars,          ONLY:SP,DP,schlen,lchlen,nf90_SP,DB_menu_length
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use netcdf
  use drivers, ONLY:list_dbs
@@ -86,7 +86,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  if (present(VAR).and.present(VAR_SZ)) then
    io_rec_pos(ID)=1
    if (VAR_SZ>0) then
-     ch=STRING_pack(MODE_,trim(io_file(ID)),"]",repeat('-',max( 60-len_trim(io_file(ID))-4,1) ))
+     ch=STRING_pack(MODE_,trim(io_file(ID)),"]",repeat('-',max( DB_menu_length-len_trim(io_file(ID))-4,1) ))
      if (write_is_on(ID)) then
        call netcdf_call(nf90_redef(io_unit(ID)),ID,VAR=VAR)
        nf_error=nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID,1))
@@ -107,14 +107,14 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      ! GPL_EXCLUDE_START
      !
      write (ch,'(a,i6.6,2a,3(a,i2.2),a,i5.5,a)')  '- S/N ',io_serial_number(ID),' ',&
-&          repeat('-',25),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
+&          repeat('-',DB_menu_length-35),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
 &          '.',io_code_version(ID,3),' r.',io_code_revision(ID,1),' -'
      !
      ! GPL_EXCLUDE_END
      !
      ! GPL_INCLUDE_START
 !     write (ch,'(a,i6.6,2a,3(a,i2.2),a,i5.5,a)')  '- S/N ',io_serial_number(ID),' ',&
-!&          repeat('-',25),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
+!&          repeat('-',DB_menu_length-35),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
 !&          '.',io_code_version(ID,3),' r.',io_code_revision(ID,2),' -'
      ! GPL_INCLUDE_END
      !

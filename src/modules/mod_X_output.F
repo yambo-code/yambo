@@ -69,7 +69,7 @@ module X_output
        if (trim(global_gauge)=='length')         message='Length'
        if (trim(global_gauge)=='velocity')       message='Velocity'
        call msg(trim(files),'# ','    | Gauge           :'//trim(message),INDENT=0)
-       call msg(trim(files),'#     | [r,Vnl] included:',Vnl_included,INDENT=0)
+       call msg(trim(files),'#     | [r,Vnl] included',Vnl_included,INDENT=0)
      endif
      !
    end subroutine

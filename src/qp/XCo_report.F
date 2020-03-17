@@ -95,8 +95,8 @@ subroutine XCo_report(qp,E,k)
      ik=ikp
      loc_fmt =' '
      nloc_fmt=' '
-     if (l_Vxc)    loc_fmt ='+  Local '//trim(Vxc_kind)
-     if (l_Vnl_xc) nloc_fmt='Non-Local '//trim(Vnlxc_kind)
+     if (l_Vxc)    loc_fmt ='+  Local '//trim(Vxc_kind)//' (lXC)'
+     if (l_Vnl_xc) nloc_fmt='Non-Local '//trim(Vnlxc_kind)//' (nlXC)'
      call msg('nr',trim(nloc_fmt)//trim(loc_fmt)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
    endif
    !
@@ -105,9 +105,9 @@ subroutine XCo_report(qp,E,k)
    if (n_sp_pol==2.and.i_s==1) ch_spin='(up)'
    if (n_sp_pol==2.and.i_s==2) ch_spin='(dn)'
    ! 
-   nloc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|'//trim(Vnlxc_kind)//'|'//trim(intc(ibp))&
+   nloc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|nlXC|'//trim(intc(ibp))&
       //trim(ch_spin)//'> ='
-   loc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|'//trim(Vxc_kind)//'|'//trim(intc(ibp))&
+   loc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|lXC|'//trim(intc(ibp))&
       //trim(ch_spin)//'> ='
    !
    if (l_Vnl_xc) then

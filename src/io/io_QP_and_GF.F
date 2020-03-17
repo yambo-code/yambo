@@ -335,7 +335,7 @@ integer function io_QP_and_GF(what,qp,ID)
    !
  endif
  !
- call CLOSE_and_menu(.FALSE.)
+ call CLOSE_and_menu(.TRUE.)
  !
  contains 
    !

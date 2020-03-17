@@ -263,7 +263,6 @@ subroutine error(mesg)
  !
 end subroutine error
 !
-!
 subroutine msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
  !
  ! how = '(n)s(n)' '(n)r(n)' '(n)l(n)' 'o PATTERN'
@@ -337,10 +336,9 @@ subroutine msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
  !
 end subroutine msg_manager
 !
-!
 subroutine COM_write_desc(dest,prefix,desc)
  !
- use pars,    ONLY:SP
+ use pars,    ONLY:SP,iomsg_len,lchlen
  use com,     ONLY:msg
  use IO_m,    ONLY:IO_desc
  !
@@ -350,7 +348,10 @@ subroutine COM_write_desc(dest,prefix,desc)
  character(*), intent(in) :: prefix
  type(IO_desc),intent(in) :: desc
  !
- integer :: i_d,n_val
+ ! Work Space
+ !
+ integer           :: i_d,n_val,i_pos
+ character(lchlen) :: local_var
  !
  call msg(dest,prefix)
  !
@@ -358,15 +359,22 @@ subroutine COM_write_desc(dest,prefix,desc)
    n_val=desc%size(i_d)
    if (n_val==0) call msg(dest,prefix//trim(desc%str(i_d)) )
    if (n_val> 0) then
-     if(desc%kind(i_d)=='i') call msg(dest,prefix//trim(desc%str(i_d)),desc%ival(1:n_val,i_d),INDENT=0)
-     if(desc%kind(i_d)=='r') call msg(dest,prefix//trim(desc%str(i_d)),desc%rval(1:n_val,i_d),INDENT=0)
-     if(desc%kind(i_d)=='d') call msg(dest,prefix//trim(desc%str(i_d)),real(desc%dval(i_d),SP),INDENT=0)
-     if(desc%kind(i_d)=='c') call msg(dest,prefix//trim(desc%str(i_d)),&
+     local_var=desc%str(i_d)
+     if (len_trim(desc%term(i_d))>0) then
+       i_pos=iomsg_len-len_trim(desc%term(i_d))-1
+       local_var(i_pos:i_pos)="["
+       local_var(i_pos+1:iomsg_len-1)=trim(desc%term(i_d))
+       local_var(iomsg_len:iomsg_len)="]"
+     endif
+     if(desc%kind(i_d)=='i') call msg(dest,prefix//local_var(:iomsg_len),desc%ival(1:n_val,i_d),INDENT=0)
+     if(desc%kind(i_d)=='r') call msg(dest,prefix//local_var(:iomsg_len),desc%rval(1:n_val,i_d),INDENT=0)
+     if(desc%kind(i_d)=='d') call msg(dest,prefix//local_var(:iomsg_len),real(desc%dval(i_d),SP),INDENT=0)
+     if(desc%kind(i_d)=='c') call msg(dest,prefix//local_var(:iomsg_len),&
      &                                          (/real(desc%cval(i_d)),aimag(desc%cval(i_d))/),INDENT=0)
-     if(desc%kind(i_d)=='s') call msg(dest,prefix//trim(desc%str(i_d)),desc%sval(i_d),INDENT=0)
+     if(desc%kind(i_d)=='s') call msg(dest,prefix//local_var(:iomsg_len),desc%sval(i_d),INDENT=0)
      if(desc%kind(i_d)=='l') then
-       if(     desc%lval(i_d)) call msg(dest,prefix//trim(desc%str(i_d)),'yes',INDENT=0)
-       if(.not.desc%lval(i_d)) call msg(dest,prefix//trim(desc%str(i_d)),'no',INDENT=0)
+       if(     desc%lval(i_d)) call msg(dest,prefix//local_var(:iomsg_len),'yes',INDENT=0)
+       if(.not.desc%lval(i_d)) call msg(dest,prefix//local_var(:iomsg_len),'no',INDENT=0)
      endif
    endif
  enddo

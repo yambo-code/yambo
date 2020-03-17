@@ -65,13 +65,13 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  if (allocated(RIM_qpg)) then
    !
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' RIM G`s                '
+   qp%desc%str(qp%desc%n)='RIM G`s'
    qp%desc%size(qp%desc%n)=1
    qp%desc%kind(qp%desc%n)='i'
    qp%desc%ival(1,qp%desc%n)=RIM_ng
    !
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' RIM random pts         '
+   qp%desc%str(qp%desc%n)='RIM random pts'
    qp%desc%size(qp%desc%n)=1
    qp%desc%kind(qp%desc%n)='i'
    qp%desc%ival(1,qp%desc%n)=RIM_n_rand_pts
@@ -81,7 +81,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  if (.not.l_life) then
    !
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' GW SC iterations       '
+   qp%desc%str(qp%desc%n)='GW SC iterations'
    qp%desc%size(qp%desc%n)=1
    qp%desc%kind(qp%desc%n)='i'
    qp%desc%ival(1,qp%desc%n)=GWo_iterations
@@ -89,13 +89,14 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    if (.not.l_cohsex.and.trim(QP_solver)/='g'.and..not.use_GreenF_to_eval_QP) then
      !
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' dS/dw steps            '
+     qp%desc%str(qp%desc%n)='dS/dw steps'
      qp%desc%size(qp%desc%n)=1
      qp%desc%kind(qp%desc%n)='i'
      qp%desc%ival(1,qp%desc%n)=QP_dSc_steps
      !
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' dS/dw step         [ev]'
+     qp%desc%str(qp%desc%n)='dS/dw step'
+     qp%desc%term(qp%desc%n)='ev'
      qp%desc%size(qp%desc%n)=1
      qp%desc%kind(qp%desc%n)='r'
      qp%desc%rval(1,qp%desc%n)=QP_dSc_delta*HA2EV
@@ -107,38 +108,42 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  if (l_elel_corr) then
    !
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' X G`s            [used]'
+   qp%desc%str(qp%desc%n)='X G`s'
+   qp%desc%term(qp%desc%n)='used'
    qp%desc%size(qp%desc%n)=1
    qp%desc%kind(qp%desc%n)='i'
    qp%desc%ival(1,qp%desc%n)=X%ng
    !
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' X G`s            [disk]'
+   qp%desc%str(qp%desc%n)='X G`s'
+   qp%desc%term(qp%desc%n)='disk'
    qp%desc%size(qp%desc%n)=1
    qp%desc%kind(qp%desc%n)='i'
    qp%desc%ival(1,qp%desc%n)=X%ng_db
    !
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' X bands                '
+   qp%desc%str(qp%desc%n)='X bands'
    qp%desc%size(qp%desc%n)=2
    qp%desc%kind(qp%desc%n)='i'
    qp%desc%ival(1:2,qp%desc%n)=X%ib
    !
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' X poles           [o/o]'
+   qp%desc%str(qp%desc%n)='X poles'
+   qp%desc%term(qp%desc%n)='o/o'
    qp%desc%size(qp%desc%n)=1
    qp%desc%kind(qp%desc%n)='r'
    qp%desc%rval(1,qp%desc%n)=X%cg_percentual
    !
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' X e/h E range      [ev]'
+   qp%desc%str(qp%desc%n)='X e/h E range'
+   qp%desc%term(qp%desc%n)='ev'
    qp%desc%size(qp%desc%n)=2
    qp%desc%kind(qp%desc%n)='r'
    qp%desc%rval(1:2,qp%desc%n)=X%ehe*HA2EV
    !
    if (ver_is_gt_or_eq(-1,(/3,0,5/))) then
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' X xc-Kernel             '
+     qp%desc%str(qp%desc%n)='X xc-Kernel'
      qp%desc%size(qp%desc%n)=1
      qp%desc%kind(qp%desc%n)='s'
      qp%desc%sval(qp%desc%n)=trim(X%f_xc)
@@ -147,14 +152,15 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    if (.not.l_ppa.and..not.l_cohsex) then
      !
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' X damping range    [ev]'
+     qp%desc%str(qp%desc%n)='X damping range'
+     qp%desc%term(qp%desc%n)='ev'
      qp%desc%size(qp%desc%n)=2
      qp%desc%kind(qp%desc%n)='r'
      qp%desc%rval(1:2,qp%desc%n)=Xw%dr*HA2EV
      !  
      if (.not.l_life) then
        qp%desc%n=qp%desc%n+1
-       qp%desc%str(qp%desc%n)=' X Steps                '
+       qp%desc%str(qp%desc%n)='X Steps'
        qp%desc%size(qp%desc%n)=1
        qp%desc%kind(qp%desc%n)='i'
        qp%desc%ival(1,qp%desc%n)=Xw%n_freqs
@@ -165,13 +171,13 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
      !
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' X BZ energy Double Grid'
+     qp%desc%str(qp%desc%n)='X BZ energy Double Grid'
      qp%desc%size(qp%desc%n)=1
      qp%desc%kind(qp%desc%n)='l'
      qp%desc%lval(qp%desc%n)=use_X_DbGd
      !
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' X BZ Double Grid points'
+     qp%desc%str(qp%desc%n)='X BZ Double Grid points'
      qp%desc%size(qp%desc%n)=1
      qp%desc%kind(qp%desc%n)='i'
      qp%desc%ival(1,qp%desc%n)=BZ_DbGd_tot_nk_levels
@@ -183,7 +189,8 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  if (l_life.and.l_elel_corr) then
    !
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' Transitions       [o/o]'
+   qp%desc%str(qp%desc%n)='Transitions'
+   qp%desc%term(qp%desc%n)='o/o'
    qp%desc%size(qp%desc%n)=1
    qp%desc%kind(qp%desc%n)='r'
    qp%desc%rval(1,qp%desc%n)=QP_cg_percent
@@ -193,7 +200,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  if (.not.l_life) then 
    if ( (.not.l_cohsex) .or. (l_cohsex.and.COHSEX_use_empties) ) then
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' Sc/G bands             '
+     qp%desc%str(qp%desc%n)='Sc/G bands'
      qp%desc%size(qp%desc%n)=2
      qp%desc%kind(qp%desc%n)='i'
      qp%desc%ival(1:2,qp%desc%n)=QP_n_G_bands
@@ -201,21 +208,22 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    if (l_cohsex) then
      if (ver_is_gt_or_eq(-1,(/4,3,1/))) then
        qp%desc%n=qp%desc%n+1
-       qp%desc%str(qp%desc%n)=' Sc Empty Bands         '
+       qp%desc%str(qp%desc%n)='Sc Empty Bands'
        qp%desc%size(qp%desc%n)=1
        qp%desc%kind(qp%desc%n)='l'
        qp%desc%lval(qp%desc%n)=COHSEX_use_empties
      endif
    else
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' Sc/G damping       [ev]'
+     qp%desc%str(qp%desc%n)='Sc/G damping'
+     qp%desc%term(qp%desc%n)='ev'
      qp%desc%size(qp%desc%n)=1
      qp%desc%kind(qp%desc%n)='r'
      qp%desc%rval(1,qp%desc%n)=QP_G_damp*HA2EV
    endif
    !
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' Sc bands terminator    '
+   qp%desc%str(qp%desc%n)='Sc bands terminator'
    qp%desc%size(qp%desc%n)=1
    qp%desc%kind(qp%desc%n)='l'
    qp%desc%lval(qp%desc%n)=l_GW_terminator
@@ -223,13 +231,13 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    if (l_GW_terminator) then
      !
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' Sc terminator kind      '
+     qp%desc%str(qp%desc%n)='Sc terminator kind'
      qp%desc%size(qp%desc%n)=1
      qp%desc%kind(qp%desc%n)='s'
      qp%desc%sval(qp%desc%n)=trim(GW_terminator_Kind)
      !
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' Sc Terminator pole     '
+     qp%desc%str(qp%desc%n)='Sc Terminator pole'
      qp%desc%size(qp%desc%n)=1
      qp%desc%kind(qp%desc%n)='r'
      qp%desc%rval(1,qp%desc%n)=GW_terminator_E*HA2EV
@@ -238,7 +246,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    !
    if (l_HF_and_locXC) then
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' Sx RL components       '
+     qp%desc%str(qp%desc%n)='Sx RL components'
      qp%desc%size(qp%desc%n)=1
      qp%desc%kind(qp%desc%n)='i'
      qp%desc%ival(1,qp%desc%n)=QP_ng_Sx
@@ -251,14 +259,14 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  if (l_elphoton_corr) then
    !
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' El-Photon correlation  '
+   qp%desc%str(qp%desc%n)='El-Photon correlation'
    qp%desc%size(qp%desc%n)=1
    qp%desc%kind(qp%desc%n)='l'
    qp%desc%lval(qp%desc%n)=l_elphoton_corr
    !
    if (.not.l_life) then
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' QED RL components      '
+     qp%desc%str(qp%desc%n)='QED RL components'
      qp%desc%size(qp%desc%n)=1
      qp%desc%kind(qp%desc%n)='i'
      qp%desc%ival(1,qp%desc%n)=QP_QED_ng
@@ -280,19 +288,21 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      if (.not.l_elel_corr) qp%desc%n=n_descs_save+1
      !
      if (trim(QP_solver)/='g') then
-       qp%desc%str(qp%desc%n)=' [ph] dS/dw steps        '
+       qp%desc%str(qp%desc%n)='[ph] dS/dw steps'
        qp%desc%size(qp%desc%n)=1
        qp%desc%kind(qp%desc%n)='r'
        qp%desc%rval(1,qp%desc%n)=QP_dSc_steps
        !
        qp%desc%n=qp%desc%n+1
-       qp%desc%str(qp%desc%n)=' [ph] dS/dw step     [ev]'
+       qp%desc%str(qp%desc%n)='[ph] dS/dw step'
+       qp%desc%term(qp%desc%n)='ev'
        qp%desc%size(qp%desc%n)=1
        qp%desc%kind(qp%desc%n)='r'
        qp%desc%rval(1,qp%desc%n)=QP_dSc_delta*HA2EV
        !
        qp%desc%n=qp%desc%n+1
-       qp%desc%str(qp%desc%n)=' [ph] Sc/G damping   [ev]'
+       qp%desc%str(qp%desc%n)='[ph] Sc/G damping'
+       qp%desc%term(qp%desc%n)='ev'
        qp%desc%size(qp%desc%n)=1
        qp%desc%kind(qp%desc%n)='r'
        qp%desc%rval(1,qp%desc%n)=QP_G_damp*HA2EV
@@ -300,20 +310,20 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      endif
      !
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' El-Ph correlation      '
+     qp%desc%str(qp%desc%n)='El-Ph correlation'
      qp%desc%size(qp%desc%n)=1
      qp%desc%kind(qp%desc%n)='l'
      qp%desc%lval(qp%desc%n)=l_elph_corr
      !
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' El-Ph Sc. G bands      '
+     qp%desc%str(qp%desc%n)='El-Ph Sc. G bands'
      qp%desc%size(qp%desc%n)=2
      qp%desc%kind(qp%desc%n)='i'
      qp%desc%ival(1:2,qp%desc%n)=(/1,QP_PH_n_G_bands/)
      !
      if (ver_is_gt_or_eq(-1,(/3,2,2/))) then
        qp%desc%n=qp%desc%n+1
-       qp%desc%str(qp%desc%n)=' El-Ph phonon branches  '
+       qp%desc%str(qp%desc%n)='El-Ph phonon branches'
        qp%desc%size(qp%desc%n)=2
        qp%desc%kind(qp%desc%n)='i'
        qp%desc%ival(1:2,qp%desc%n)=elph_branches
@@ -321,7 +331,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      !
      if (ver_is_gt_or_eq(-1,(/4,0,0/))) then
        qp%desc%n=qp%desc%n+1
-       qp%desc%str(qp%desc%n)=' El-Ph momenta used     '
+       qp%desc%str(qp%desc%n)='El-Ph momenta used'
        qp%desc%size(qp%desc%n)=1
        qp%desc%kind(qp%desc%n)='i'
        qp%desc%ival(1,qp%desc%n)=elph_nDBs_used
@@ -329,13 +339,15 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      !
      if (ver_is_gt_or_eq(-1,revision=4400)) then
        qp%desc%n=qp%desc%n+1
-       qp%desc%str(qp%desc%n)=' Energy treshold   [FAN]'
+       qp%desc%str(qp%desc%n)='Energy treshold'
+       qp%desc%term(qp%desc%n)='FAN'
        qp%desc%size(qp%desc%n)=1
        qp%desc%kind(qp%desc%n)='r'
        qp%desc%rval(1,qp%desc%n)=FAN_deltaE_treshold*HA2EV
        !
        qp%desc%n=qp%desc%n+1
-       qp%desc%str(qp%desc%n)=' Energy treshold    [DW]'
+       qp%desc%str(qp%desc%n)='Energy treshold'
+       qp%desc%term(qp%desc%n)='DW'
        qp%desc%size(qp%desc%n)=1
        qp%desc%kind(qp%desc%n)='r'
        qp%desc%rval(1,qp%desc%n)=DW_deltaE_treshold*HA2EV
@@ -352,33 +364,36 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  if (ver_is_gt_or_eq(-1,revision=452).and.trim(QP_solver)=='g') then
    !
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' [GF] GF is causal       '
+   qp%desc%str(qp%desc%n)='[GF] GF is causal'
    qp%desc%size(qp%desc%n)=1
    qp%desc%kind(qp%desc%n)='l'
    qp%desc%lval(qp%desc%n)=GF_is_causal
    !
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' [GF] Real-axis steps    '
+   qp%desc%str(qp%desc%n)='[GF] Real-axis steps'
    qp%desc%size(qp%desc%n)=1
    qp%desc%kind(qp%desc%n)='i'
    qp%desc%ival(1,qp%desc%n)=QP_Sc_steps
    !
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' [GF] Initial E range  [eV]'
+   qp%desc%str(qp%desc%n)='[GF] Initial E range'
+   qp%desc%term(qp%desc%n)='ev'
    qp%desc%size(qp%desc%n)=2
    qp%desc%kind(qp%desc%n)='i'
    qp%desc%rval(1:2,qp%desc%n)=QP_G_er*HA2EV
    !
    if (ver_is_gt_or_eq(-1,revision=530)) then
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' [GF] Zoom treshold   [o/o]'
+     qp%desc%str(qp%desc%n)=' [GF] Zoom treshold'
+     qp%desc%term(qp%desc%n)='o/o'
      qp%desc%size(qp%desc%n)=1
      qp%desc%kind(qp%desc%n)='r'
      qp%desc%rval(1,qp%desc%n)=QP_G_Zoom_treshold
    endif
    !
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' [GF] Damping          [eV]'
+   qp%desc%str(qp%desc%n)='[GF] Damping'
+   qp%desc%term(qp%desc%n)='ev'
    qp%desc%size(qp%desc%n)=2
    qp%desc%kind(qp%desc%n)='r'
    qp%desc%rval(1:2,qp%desc%n)=QP_G_dr*HA2EV

@@ -28,7 +28,7 @@ module IO_m
 #if defined _MPI
  use parallel_m, ONLY:myid,MPI_INFO_NULL
 #endif
- use com,        ONLY:IO_DESC
+ use com,        ONLY:IO_desc
  use netcdf
  !
  implicit none
@@ -503,6 +503,7 @@ module IO_m
      type(IO_desc), intent(out) :: desc_out
      desc_out%n    = desc_in%n
      desc_out%size = desc_in%size
+     desc_out%term = desc_in%term
      desc_out%str  = desc_in%str
      desc_out%kind = desc_in%kind
      desc_out%check= desc_in%check
@@ -519,6 +520,7 @@ module IO_m
      type(IO_desc), intent(out) :: desc
      desc%n    = 0
      desc%size = 0
+     desc%term = ""
      desc%str  = ""
      desc%kind = ""
      desc%check= .false.

@@ -79,7 +79,7 @@ subroutine X_pre_setup(Xen,X)
  if ((l_cohsex.and..not.COHSEX_use_empties).or.l_X_terminator) then
      X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
      call warning(' Response block size reduced to '//intc(X%ng) &
-&     //'RL ('//intc(int(1000.*G2E(X%ng)))//'mHa), increase the total number of G-vectors')
+&     //'RL ('//intc(int(1000.*G2E(X%ng)))//'mHa)')
  endif
  !
  ! Fxc Checks

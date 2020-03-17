@@ -237,7 +237,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  if (l_ppa.and.l_GW_terminator) then
      X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
      call warning(' Response block size in GW reduced to '//intc(X%ng) &
-&     //'RL ('//intc(int(1000.*G2E(X%ng)))//'mHa), increase the total number of G-vectors')
+&     //'RL ('//intc(int(1000.*G2E(X%ng)))//'mHa)')
  endif
  !
  ! Local Allocations

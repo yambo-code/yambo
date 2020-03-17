@@ -25,6 +25,7 @@ subroutine k_grids(en,k,Xk,q)
  !
  use pars,                ONLY:SP,schlen
  use electrons,           ONLY:levels
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,nXkibz
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nXkibz,k_the_nearest
  use D_lattice,           ONLY:nsym,lattice
  use stderr,              ONLY:intc
@@ -255,9 +256,6 @@ subroutine k_grids(en,k,Xk,q)
          if (v_norm(k_plus_q(ik,:)).lt.1.E-7) k_plus_q(ik,:) = 0.0_SP ! remove SP error k points
          !
        enddo
-       !
-       ! Print the shifted mesh
-       ! Ensure 7 *significant figures*, otherwise round off errors may occur later
        !
        call k_grid_printer(Xk%nibz,k_plus_q,trim(coo_out),"none")
        !

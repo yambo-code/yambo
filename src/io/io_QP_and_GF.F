@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function io_QP_and_GF(what,qp,ID)
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:IP,SP,schlen
  use D_lattice,      ONLY:alat
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_t,QP_G_dr,QP_G_er,GW_iterations,&
@@ -30,7 +30,8 @@ integer function io_QP_and_GF(what,qp,ID)
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,DB_is_OK,ver_is_gt_or_eq,&
-&                         db_alat,variable_exist,IO_INCOMPATIBLE_VAR,IO_NO_BINDING_ERROR
+&                         db_alat,variable_exist,IO_INCOMPATIBLE_VAR,IO_NO_BINDING_ERROR,&
+&                         io_variable_elemental,def_variable_elemental,io_variable_bulk,def_variable_bulk
  use global_XC,      ONLY:QP_DB_kind,QP_SE_GoWo,QP_SE_GWo,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_COHSEX,QP_SE_NONE,&
 &                         QP_SE_POLARON,QP_SE_GW_QED,G_E_xc_string,X_E_xc_string,&
 &                         G_WF_xc_string,X_WF_xc_string
@@ -42,13 +43,16 @@ integer function io_QP_and_GF(what,qp,ID)
  !
  ! Work Space
  !
- integer              ::i1,i2,i_found,&
+ logical              ::CHECK_VAL
+ integer              ::i1,i2,i_found,DESC_SZ,&
 &                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,&
 &                       QP_DB_kind_disk ,i_X
  character(schlen)    ::ch
  logical              ::type_two_DB,QP_type_DB
  integer ,    allocatable ::qp_table_disk(:,:)
  real(SP),    allocatable ::qp_DATA_disk(:,:,:)
+ !
+ integer, external :: io_descriptors
  !
  type_two_DB=.FALSE.
  if (what=="QP") type_two_DB=.TRUE.
@@ -117,20 +121,24 @@ integer function io_QP_and_GF(what,qp,ID)
    case(QP_SE_POLARON,QP_SE_GW_QED)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=.true.)
  end select
+ !
  if (.not.QP_DB_kind==QP_SE_NONE) then
-   qp%n_descs=qp%n_descs+1
-   qp%description(qp%n_descs)=' '
+   qp%desc%n=qp%desc%n+1
    if (.not.QP_DB_kind==QP_SE_COHSEX) then
-     qp%n_descs=qp%n_descs+1
-     qp%description(qp%n_descs)=' GF energies kind       :'//trim(G_E_xc_string)
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)= GF energies kind       :'
+     qp%desc%sval(qp%desc%n)=trim(G_E_xc_string)
    endif
-   qp%n_descs=qp%n_descs+1
-   qp%description(qp%n_descs)=' GF WF`s     kind       :'//trim(G_WF_xc_string)
+   qp%desc%n=qp%desc%n+1
+   qp%desc%str(qp%desc%n)=' GF WF`s     kind       :'
+   qp%desc%sval(qp%desc%n)=trim(G_WF_xc_string)
    if (any(QP_DB_kind==(/QP_SE_COHSEX,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_GoWo,QP_SE_GWo/))) then
-     qp%n_descs=qp%n_descs+1
-     qp%description(qp%n_descs)=' Xs energies kind       :'//trim(X_E_xc_string(i_X))
-     qp%n_descs=qp%n_descs+1
-     qp%description(qp%n_descs)=' Xs WF`s     kind       :'//trim(X_WF_xc_string(i_X))
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' Xs energies kind       :'
+     qp%desc%sval(qp%desc%n)=trim(X_E_xc_string(i_X))
+     qp%desc%n=qp%desc%n+1
+     qp%desc%str(qp%desc%n)=' Xs WF`s     kind       :'
+     qp%desc%sval(qp%desc%n)=trim(X_WF_xc_string(i_X))
    endif
  endif
  !
@@ -157,7 +165,7 @@ integer function io_QP_and_GF(what,qp,ID)
  endif
  call io_elemental(ID,I0=GW_iterations,&
 &                  VAR=' GW  SC iterations       ',CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,I0=qp%n_descs,DB_I0=n_descs_disk,CHECK=.true.,OP=(/"<="/))
+ call io_elemental(ID,I0=qp%desc%n,DB_I0=n_descs_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  if (index(what,".G")/=0.or.what=="G") then
@@ -185,36 +193,7 @@ integer function io_QP_and_GF(what,qp,ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   do i1=1,n_descs_disk
-     write (ch,'(a,i5.5)') 'DESC_strings_',i1
-     call io_elemental(ID,VAR=trim(ch),CH0="",VAR_SZ=1,MENU=0)
-     !
-     ! The QP lines are skipped. The QP_state check is
-     ! used instead. Also the GW SC iterations are skipped, as
-     ! they are written before.
-     !
-     if (index(qp%description(i1),'GW SC')>0) then
-       call io_elemental(ID,CH0=qp%description(i1))
-       cycle
-     endif
-     !
-     if (what=="G") then
-       call io_elemental(ID,CH0=qp%description(i1),VAR='',CHECK=.true.,OP=(/"=="/)) 
-       if (index(qp%description(i1),'Zoom')>0.and.io_status(ID)<0)  io_status(ID)=IO_NO_BINDING_ERROR
-     else
-       if (index(qp%description(i1),'QP')>0) then
-         call io_elemental(ID,CH0=qp%description(i1),VAR='')
-       else
-         call io_elemental(ID,CH0=qp%description(i1),VAR='',CHECK=.true.,OP=(/"=="/)) 
-       endif
-     endif
-     !
-     if (i1<n_descs_disk) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     if (i1==n_descs_disk) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
-     !
-   enddo
-   !
-   io_QP_and_GF=io_status(ID)
+   io_QP_and_GF=io_descriptors(qp%desc,ID)
    !
    if (.not.DB_is_OK(ID)) then
      call CLOSE_and_menu(.TRUE.)

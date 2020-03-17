@@ -28,7 +28,7 @@ subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
  use DIPOLES,             ONLY:DIPOLE_t
  use electrons,           ONLY:levels,n_spinor
  use com,                 ONLY:msg
- use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD_CL,OP_RD
+ use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD_CL
  use D_lattice,           ONLY:n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table, &
 &                              pp_factor,pp_n_l_max
@@ -63,13 +63,13 @@ subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
  !
  ! Check for the KB pwscf DB 
  if(.not.io_KB_abinit_err==0) then
-   call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    io_KB_pwscf_err=io_KB_pwscf(ID)
  endif
  !
  ! Check for the KB abinit DB 
  if(.not.io_KB_pwscf_err==0) then
-   call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    io_KB_abinit_err=io_KB_abinit(ID)
  endif
  !

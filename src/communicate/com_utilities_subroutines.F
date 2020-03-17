@@ -214,6 +214,7 @@ subroutine rename_file(name)
  !
 end subroutine rename_file
 !
+!
 subroutine warning(mesg)
  !
  use LIVE_t,     ONLY:LIVE_message
@@ -261,6 +262,7 @@ subroutine error(mesg)
  stop
  !
 end subroutine error
+!
 !
 subroutine msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
  !
@@ -334,3 +336,41 @@ subroutine msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
  endif
  !
 end subroutine msg_manager
+!
+!
+subroutine COM_write_desc(dest,prefix,desc)
+ !
+ use pars,    ONLY:SP
+ use com,     ONLY:msg
+ use IO_m,    ONLY:IO_desc
+ !
+ implicit none
+ !
+ character(*), intent(in) :: dest
+ character(*), intent(in) :: prefix
+ type(IO_desc),intent(in) :: desc
+ !
+ integer :: i_d,n_val
+ !
+ call msg(dest,prefix)
+ !
+ do i_d=1,desc%n
+   n_val=desc%size(i_d)
+   if (n_val==0) call msg(dest,prefix//trim(desc%str(i_d)) )
+   if (n_val> 0) then
+     if(desc%kind(i_d)=='i') call msg(dest,prefix//trim(desc%str(i_d)),desc%ival(1:n_val,i_d),INDENT=0)
+     if(desc%kind(i_d)=='r') call msg(dest,prefix//trim(desc%str(i_d)),desc%rval(1:n_val,i_d),INDENT=0)
+     if(desc%kind(i_d)=='d') call msg(dest,prefix//trim(desc%str(i_d)),real(desc%dval(i_d),SP),INDENT=0)
+     if(desc%kind(i_d)=='c') call msg(dest,prefix//trim(desc%str(i_d)),&
+     &                                          (/real(desc%cval(i_d)),aimag(desc%cval(i_d))/),INDENT=0)
+     if(desc%kind(i_d)=='s') call msg(dest,prefix//trim(desc%str(i_d)),desc%sval(i_d),INDENT=0)
+     if(desc%kind(i_d)=='l') then
+       if(     desc%lval(i_d)) call msg(dest,prefix//trim(desc%str(i_d)),'yes',INDENT=0)
+       if(.not.desc%lval(i_d)) call msg(dest,prefix//trim(desc%str(i_d)),'no',INDENT=0)
+     endif
+   endif
+ enddo
+ !
+ call msg(dest,prefix)
+ !
+end subroutine COM_write_desc

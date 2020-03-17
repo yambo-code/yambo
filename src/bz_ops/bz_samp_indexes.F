@@ -390,13 +390,13 @@ subroutine bz_samp_indexes(k,Xk,q)
    endif
  enddo
  !
-1 call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=io_db)
+ ! Before writing the new DB I need to wait that all cores are done
+ ! with checking DB which was present before
+ !
+1 call PP_redux_wait()
+ !
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=io_db)
  io_err=io_QINDX(Xk,q,io_db)
- !
- ! For some reason I have seen CPU's loading the DB while/before it is actually written.
- ! This is avoided here by using the PP_redux_wait call.
- !
- call PP_redux_wait()
  !
  !CLEAN
  !

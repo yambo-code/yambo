@@ -42,7 +42,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
  !
  ! Work Space
  !
- integer          ::i_spin,i_d,i_s
+ integer          ::i_spin,i_d,i_s,n_val
  real(SP)         ::db_scissor,fit_scissor,E(4),E_err(2),E_ref(2),W(6),W_err(2),W_dos(2),W_dos_err(2)
  character(lchlen)::ch
  complex(SP)      ::Z
@@ -140,10 +140,10 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    fname(1)=STRING_remove(fname(1),"/",replace="-")
    !
    if (n_sp_pol>1) then 
-     if (i_spin==1) fname(2)=trim(fname(1))//"-spin-dn.fit"
-     if (i_spin==2) fname(2)=trim(fname(1))//"-spin-up.fit"
-     if (i_spin==1) fname(1)=trim(fname(1))//"-spin-dn.data"
-     if (i_spin==2) fname(1)=trim(fname(1))//"-spin-up.data"
+     if (i_spin==1) fname(2)=trim(fname(1))//"-spin-up.fit"
+     if (i_spin==2) fname(2)=trim(fname(1))//"-spin-dn.fit"
+     if (i_spin==1) fname(1)=trim(fname(1))//"-spin-up.data"
+     if (i_spin==2) fname(1)=trim(fname(1))//"-spin-dn.data"
    else
      fname(2)=trim(fname(1))//".fit"
      fname(1)=trim(fname(1))//".data"
@@ -151,9 +151,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    call of_open_close(fname(1),'ot')
    call of_open_close(fname(2),'ot')
    call msg('o .fit .data','#')
-   do i_d=1,qp%n_descs
-     call msg('o .fit .data','#'//trim(qp%description(i_d)))
-   enddo
+   call COM_write_desc('o .fit .data','#',qp%desc)
    !
    n_titles=1
    titles(1)="Eo [eV]"

@@ -246,7 +246,7 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  !
  ! Define Format
  !
- if (.not.l_ext_fmt) msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),size(val),l_tabs,l_indent)
+ if (.not.l_ext_fmt) msgfmt=composed_fmt(trim(gen_fmt(r_v=val,l_omode=msg_for_out)),size(val),l_tabs,l_indent)
  if (     l_ext_fmt) then
    write(gen_fmt_local,'(a)') 'F11.06'
    msgfmt=composed_fmt(trim(gen_fmt_local),size(val),l_tabs,l_indent)
@@ -262,6 +262,7 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  i1_limits=(/1,-1/)
  if(msg_for_out) i1_limits=(/1,max_open_ofs/)
  if(msg_for_rep) i1_limits=(/repfile_index,repfile_index/)
+ !
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
    if (size(val)==1 .and. val(1)==NO_VAR) then

@@ -37,7 +37,7 @@ subroutine QP_DB_message( i_ACTION, qp )
  ! Work Space
  !
  integer, parameter :: n_fields=7
- integer            :: if,c_pos,i_msg,i1
+ integer            :: if,i_msg,i1
  character(lchlen)  :: field(n_fields,2)
  !
  field(1,1)="X G`s            [used]"

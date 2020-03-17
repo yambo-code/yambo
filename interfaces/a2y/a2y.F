@@ -30,7 +30,6 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use LOGO,                ONLY: pickup_a_random
  use com,                 ONLY: msg,core_io_path
  use it_m,                ONLY: nrnlvls,rnlvls,rstatus
- use stderr,              ONLY: intc
  use parallel_m,          ONLY: ncpu,myid
  use electrons,           ONLY: levels,E_reset,n_spinor,n_sp_pol
  use D_lattice,           ONLY: n_atoms_species_max

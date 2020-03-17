@@ -42,7 +42,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
  !
  ! Work Space
  !
- integer          ::i_spin,i_d,i_s,n_val
+ integer          ::i_spin,i_s
  real(SP)         ::db_scissor,fit_scissor,E(4),E_err(2),E_ref(2),W(6),W_err(2),W_dos(2),W_dos_err(2)
  character(lchlen)::ch
  complex(SP)      ::Z

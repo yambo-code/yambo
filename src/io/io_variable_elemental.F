@@ -29,12 +29,12 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
 &                       CH0,DB_CH0,           &
 &                       UNIT,DESCRIPTOR,DO_NOT_DUMP)
  !
- use pars,          ONLY:LP,SP,DP,schlen,lchlen,iomsg_len
+ use pars,          ONLY:LP,SP,DP,schlen,iomsg_len
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use netcdf
  use drivers, ONLY:list_dbs
  use com,     ONLY:msg
- use stderr,  ONLY:STRING_pack,intc,real2ch,complex2ch,int2log,log2int
+ use stderr,  ONLY:STRING_pack,int2log,log2int
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                  io_status,DUMP,REP,LOG,NO_VAR,io_com,io_file,&

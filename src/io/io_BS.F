@@ -28,7 +28,7 @@
 !
 integer function io_BS(iq,X,ID)
  !
- use pars,          ONLY:SP,schlen,lchlen
+ use pars,          ONLY:SP,schlen
  use X_m,           ONLY:X_t
  use stderr,        ONLY:intc
  use parallel_m,    ONLY:myid
@@ -50,7 +50,7 @@ integer function io_BS(iq,X,ID)
  ! Work Space
  !
  complex(SP),pointer ::tmp_link(:)
- integer             ::i_block,i1,n1,n2,block_pos,VAR_ID,n_blocks
+ integer             ::i_block,n1,n2,block_pos,VAR_ID,n_blocks
  character(schlen)   ::ch,db_name,PARALLEL_STRUCTURE
  type(IO_desc)       ::local_desc
  !

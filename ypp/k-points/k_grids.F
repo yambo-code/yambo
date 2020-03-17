@@ -25,7 +25,6 @@ subroutine k_grids(en,k,Xk,q)
  !
  use pars,                ONLY:SP,schlen
  use electrons,           ONLY:levels
- use R_lattice,           ONLY:bz_samp,bz_samp_reset,nXkibz
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nXkibz,k_the_nearest
  use D_lattice,           ONLY:nsym,lattice
  use stderr,              ONLY:intc

@@ -23,11 +23,11 @@
 !
 integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
- use pars,          ONLY:schlen,lchlen,IP,SP
+ use pars,          ONLY:schlen,IP,SP
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collision_ext, ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,&
-&                        io_elemental,def_variable_elemental,io_variable_elemental, &
+&                        io_elemental, &
 &                        io_variable_bulk,def_variable_bulk,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
@@ -37,7 +37,6 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH,SC_band_mixing,QP_QED_ng
  use X_m,           ONLY:X_desc
- use stderr,        ONLY:intc
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
  use timing_m,      ONLY:timing
 #include<memory.h>
@@ -50,9 +49,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  ! Work Space
  !
  character(schlen)     :: db_name
- character(2)          :: X_OPS(10)
- real(SP)              :: X_tmp_var(10)
- integer               :: V_kind_disk,i_desc,i_var,i_coll_loop,io_err,i_coll,SIZE_
+ integer               :: V_kind_disk,i_coll_loop,io_err,i_coll,SIZE_
  !
  integer, external     :: io_descriptors
  !

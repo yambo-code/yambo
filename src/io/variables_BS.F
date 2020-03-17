@@ -23,7 +23,7 @@
 !
 integer function variables_BS(ID,iq,local_desc,CLOSE_the_menu,X)
  !
- use pars,          ONLY:lchlen,SP,IP,LP,VAR_EMPTY
+ use pars,          ONLY:SP,IP,LP
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_td_hf
  use electrons,     ONLY:E_SOC_nbands
@@ -50,7 +50,7 @@ integer function variables_BS(ID,iq,local_desc,CLOSE_the_menu,X)
  !
  ! Work Space
  !
- integer             ::var_size,i_desc
+ integer             ::var_size
  logical             ::res_corr_disk,res_exch_disk,cpl_disk,&
 &                      cpl_corr_disk,cpl_exch_disk,td_hf_disk,local_long_gauge
  !

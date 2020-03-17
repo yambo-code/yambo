@@ -23,7 +23,7 @@
 !
 integer function io_BS_Fxc(iq,FXC_W,ID,X)
  !
- use pars,           ONLY:schlen,lchlen,IP,SP
+ use pars,           ONLY:schlen,IP
  use units,          ONLY:HA2EV
  use stderr,         ONLY:intc
  use BS,             ONLY:BS_K_dim

@@ -33,7 +33,6 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
 &                    use_GreenF_to_eval_QP,Vnlxc_kind,report_Vxc,&
 &                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral,&
 &                    QP_states_simmetrize,QP_G_info,Time_of
- use stderr,    ONLY:set_real_printed_length
  !
  implicit none
  !
@@ -44,9 +43,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  ! Work Space
  !
- integer           ::i1,i2,qp_b,qp_k,qp_isp,i_desc_min,n_val
+ integer           ::i1,i2,qp_b,qp_k,qp_isp
  character(lchlen) ::file_name,G_Sc_name
- character(schlen) ::mesg
  logical           ::state_is_2do(QP_n_states)
  !
  !o.qp titles

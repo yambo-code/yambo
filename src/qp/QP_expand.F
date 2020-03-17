@@ -36,13 +36,9 @@ subroutine QP_expand(k,qp,qp_expanded)
  !
  integer :: i_qp,ik,ib(2),is,ik_bz,n_qp_expanded,i1,max_ik
  !
- qp_expanded%n_descs=qp%n_descs
- qp_expanded%nb=qp%nb
- qp_expanded%description=qp%description
- !
- do i_qp=1,qp_expanded%n_descs
-   if (index(qp_expanded%description(i_qp),"QP @ K")>0) then
-     qp_expanded%description(i_qp)=trim(qp_expanded%description(i_qp))//" [BZ expanded]"
+ do i_qp=1,qp_expanded%desc%n
+   if (index(qp_expanded%desc%str(i_qp),"QP @ K")>0) then
+     qp_expanded%desc%str(i_qp)=trim(qp_expanded%desc%str(i_qp))//" [BZ expanded]"
    endif
  enddo
  !

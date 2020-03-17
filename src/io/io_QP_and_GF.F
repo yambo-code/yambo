@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function io_QP_and_GF(what,qp,ID)
- use pars,           ONLY:IP,SP,schlen
+ use pars,           ONLY:SP,schlen
  use D_lattice,      ONLY:alat
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_t,QP_G_dr,QP_G_er,GW_iterations,&
@@ -30,8 +30,8 @@ integer function io_QP_and_GF(what,qp,ID)
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,DB_is_OK,ver_is_gt_or_eq,&
-&                         db_alat,variable_exist,IO_INCOMPATIBLE_VAR,IO_NO_BINDING_ERROR,&
-&                         io_variable_elemental,def_variable_elemental,io_variable_bulk,def_variable_bulk
+&                         db_alat,variable_exist,IO_INCOMPATIBLE_VAR,&
+&                         def_variable_bulk
  use global_XC,      ONLY:QP_DB_kind,QP_SE_GoWo,QP_SE_GWo,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_COHSEX,QP_SE_NONE,&
 &                         QP_SE_POLARON,QP_SE_GW_QED,G_E_xc_string,X_E_xc_string,&
 &                         G_WF_xc_string,X_WF_xc_string
@@ -43,8 +43,7 @@ integer function io_QP_and_GF(what,qp,ID)
  !
  ! Work Space
  !
- logical              ::CHECK_VAL
- integer              ::i1,i2,i_found,DESC_SZ,&
+ integer              ::i1,i2,i_found,&
 &                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,&
 &                       QP_DB_kind_disk ,i_X
  character(schlen)    ::ch
@@ -126,7 +125,7 @@ integer function io_QP_and_GF(what,qp,ID)
    qp%desc%n=qp%desc%n+1
    if (.not.QP_DB_kind==QP_SE_COHSEX) then
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)= GF energies kind       :'
+     qp%desc%str(qp%desc%n)=' GF energies kind       :'
      qp%desc%sval(qp%desc%n)=trim(G_E_xc_string)
    endif
    qp%desc%n=qp%desc%n+1

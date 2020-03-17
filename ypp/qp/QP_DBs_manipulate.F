@@ -38,9 +38,9 @@ subroutine QP_DBs_manipulate( E )
  !
  ! Work Space
  !
- integer                 :: i_qp,i_db,i_d,i_err,ID,n_GROUNDS,i_c,n_val
+ integer                 :: i_qp,i_db,i_d,i_err,ID,n_GROUNDS,i_c
  integer,    external    :: io_QP_and_GF
- character(schlen)       :: QP_merged_name,QP_db_kind,ACTION,mesg
+ character(schlen)       :: QP_merged_name,QP_db_kind,ACTION
  logical,           allocatable :: plan_EWZG(:,:)
  type(QP_t),        allocatable :: qp(:)
  !

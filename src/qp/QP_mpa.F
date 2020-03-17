@@ -285,8 +285,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
            if(aimag(MPA_E_mat(ig1,ig2,i_np)) > 0._SP ) pole_p=pole_p+1
            !MPA_R_mat(ig1,ig2,i_np)=MPA_R_mat(ig1,ig2,i_np)*isc%gamp(ig1,ig2) 
            !
-           !if( isnan(realpart(MPA_E_mat(ig1,ig2,i_np))) .or. isnan(aimag(MPA_E_mat(ig1,ig2,i_np))) .or. &
-&          !    isnan(realpart(MPA_R_mat(ig1,ig2,i_np))) .or. isnan(aimag(MPA_R_mat(ig1,ig2,i_np))) ) then
+           !if( isnan(real(MPA_E_mat(ig1,ig2,i_np),SP)) .or. isnan(aimag(MPA_E_mat(ig1,ig2,i_np))) .or. &
+&          !    isnan(real(MPA_R_mat(ig1,ig2,i_np),SP)) .or. isnan(aimag(MPA_R_mat(ig1,ig2,i_np))) ) then
            !  write(*,*) "G=",ig1,"G'=",ig2, "i_p=",i_np
            !  write(*,*) "mpaE= ", MPA_E_mat(ig1,ig2,i_np)
            !  write(*,*) "mpaR= ", MPA_R_mat(ig1,ig2,i_np)

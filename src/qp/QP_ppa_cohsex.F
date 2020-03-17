@@ -292,7 +292,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              else
                X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
                cond_g=cond_g+1
-               if(realpart(1._SP/X_mat(ig1,ig2,X_range(2)))*imagpart(1._SP/X_mat(ig1,ig2,X_range(2)))>0._SP) then
+               if(real(1._SP/X_mat(ig1,ig2,X_range(2)),SP)*aimag(1._SP/X_mat(ig1,ig2,X_range(2)))>0._SP) then
                  poles_f = poles_f + 1
                endif
              endif

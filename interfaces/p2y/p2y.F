@@ -26,7 +26,8 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use P2Ym,                ONLY:pw_init, pw_close, dftdata_fmt
  use LOGO,                ONLY:pickup_a_random
  use pars,                ONLY:SP,lchlen,schlen
- use com,                 ONLY:msg,core_io_path,com_path
+ use com,                 ONLY:msg,core_io_path
+ use it_m,                ONLY:nrnlvls,rnlvls,rstatus
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:ncpu,myid,PARALLEL_wait,PP_indexes,PP_indexes_reset
  use electrons,           ONLY:levels,E_reset,n_bands,n_sp_pol,n_spinor
@@ -34,9 +35,9 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use wave_func,           ONLY:wf_ncx,io_WF, wf_nb_io_groups,wf_nb_io
  use mod_wf2y,            ONLY:WF_splitter
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number,OP_RD_CL,DUMP,&
-&                              IO_and_Messaging_switch,mk_dir,IO_write,IO_read
+&                              IO_and_Messaging_switch,IO_write,IO_read
  use mod_com2y,           ONLY:interface_presets,force_noWFs,verboseIO
- use stderr,              ONLY:intc,logfile,log_as_a_file
+ use stderr,              ONLY:intc
  use interfaces,          ONLY:PARALLEL_index,PARALLEL_live_message
  use qexml_module
  !
@@ -57,7 +58,7 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  character(lchlen)     :: lch
  character(schlen)     :: atm_file
- integer               :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp
+ integer               :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp,n_live
  complex(SP), allocatable :: wf_disk(:,:,:)
  type(PP_indexes)      :: PAR_IND_wfc_io
  integer, external     :: io_DB1
@@ -68,6 +69,10 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  p2y   =0
  ncpu  =np
  myid  =pid
+ !
+ nrnlvls    =1
+ rnlvls(1,1)="p2y"
+ rstatus(1) =1
  !
  ! ... Internal Defaults
  !
@@ -85,21 +90,13 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call MEM_defaults( )
 #endif
  !
- if (log_as_a_file) then
-   if (len_trim(com_path)==0) com_path="./"
-   write (logfile,'(2a)') trim(com_path),'/l-p2y'
-   !
-   if (ncpu>1) then
-     call mk_dir(trim(com_path)//"/LOG")
-     write (logfile,'(2a)') trim(com_path)//'/LOG/l-p2y'
-     logfile=trim(logfile)//"_CPU_"//trim(intc(myid+1))
-   endif
-   !
- endif
- !
  ! Switch off report file support & Handle logs
  !
- call IO_and_Messaging_switch("-report +log +fragments_IO_log " )
+ call IO_and_Messaging_switch("-report +log +fragments_IO_log +timing")
+ !
+ ! Report/Log Files
+ !
+ call INIT_report_and_log_files()
  !
  ! LOGO
  !
@@ -166,8 +163,9 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! 
  call PARALLEL_index(PAR_IND_wfc_io,(/wf_nb_io_groups,nkibz/))
  call PARALLEL_live_message("[p2y] wfc_io",LOADED=PAR_IND_wfc_Io%n_of_elements(myid+1),TOTAL=wf_nb_io_groups*nkibz)
- ! 
- call live_timing("[p2y] wfc_io",PAR_IND_wfc_Io%n_of_elements(myid+1))
+ !
+ n_live=PAR_IND_wfc_Io%n_of_elements(myid+1) 
+ if (n_live>0) call live_timing("[p2y] wfc_io",n_live)
  !
  IO_write_save=IO_write
  IO_read_save =IO_read
@@ -221,8 +219,8 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  IO_write=IO_write_save
  IO_read=IO_read_save
  !
- if (ncpu>1) call PARALLEL_wait()
- call live_timing()
+ if (ncpu>1)   call PARALLEL_wait()
+ if (n_live>0) call live_timing()
  !
  YAMBO_FREE(wf_disk)
  !

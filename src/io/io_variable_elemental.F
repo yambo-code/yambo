@@ -34,7 +34,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  use netcdf
  use drivers, ONLY:list_dbs
  use com,     ONLY:msg
- use stderr,  ONLY:STRING_pack,intc,real2ch,complex2ch
+ use stderr,  ONLY:STRING_pack,intc,real2ch,complex2ch,int2log,log2int
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_elem_varid,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                  io_status,DUMP,REP,LOG,NO_VAR,io_com,io_file,&
@@ -296,7 +296,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    ! I/O
    !
    SZ=1
-   l_db(1)=L0
+   l_db(1)=log2int(L0)
    !
    if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),l_db(1),(/io_rec_pos(ID)/))
    if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),l_db(1),(/io_rec_pos(ID)/))
@@ -304,12 +304,12 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    io_rec_pos(ID)=io_rec_pos(ID)+SZ
    call netcdf_call(nf_error,ID)
    !
-   if ( DUMP_        ) L0   =(l_db(1)==1)
-   if (present(DB_L0)) DB_L0=(l_db(1)==1)
+   if ( DUMP_        ) L0   =int2log(l_db(1))
+   if (present(DB_L0)) DB_L0=int2log(l_db(1))
    !
    if ( VERIFY_ ) then
-     i_db(1)=0; if(L0) i_db(1)=1
-     i_db(2)=int(l_db(1),4)
+     i_db(1)=int(log2int(L0),LP)
+     i_db(2)=int(l_db(1),LP)
      i_err=i_verify(i_db(1:1),i_db(2:2))
    endif
    !
@@ -376,7 +376,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    if(present(R0) .or.present(R1)) call msg(msg_where,ch,r_db(1:SZ)*local_unit)
    if(present(D0)                ) call msg(msg_where,ch,r_db(1:SZ)*local_unit)
    if(present(C0)                ) call msg(msg_where,ch,rc_db(1:2*SZ)*local_unit)
-   if(present(L0)                ) call msg(msg_where,ch,(i_db(1)==1))
+   if(present(L0)                ) call msg(msg_where,ch,(l_db(1)==1))
    if(present(CH0)               ) call msg(msg_where,ch,trim(ch_db(1)))
  endif
  !

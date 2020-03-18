@@ -29,7 +29,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
 &                       CH0,DB_CH0,           &
 &                       UNIT,DESCRIPTOR,DO_NOT_DUMP)
  !
- use pars,          ONLY:LP,SP,DP,schlen,iomsg_len
+ use pars,          ONLY:LP,SP,DP,schlen,msg_len
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use netcdf
  use drivers, ONLY:list_dbs
@@ -58,7 +58,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  ! Work Space
  !
  integer,parameter      :: MAX_DB_ELEMENTS=100
- character(iomsg_len)   :: ch
+ character(msg_len)   :: ch
  character(1)           :: msg_where,space
  integer                :: SZ,i_err,nf_error
  logical                :: CHECK_,WARN_,DUMP_,VERIFY_

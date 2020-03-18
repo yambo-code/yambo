@@ -153,7 +153,11 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  msgfmt=composed_fmt(trim(gen_fmt(val)),size(val),l_tabs,l_indent)
  if (len_trim(after_msg_)>0) then
    i1=len_trim(msgfmt)
-   msgfmt=trim(msgfmt(:i1-1))//',a'//trim(msgfmt(i1:i1))
+   if (index(how,"n")>0) then
+     msgfmt=trim(msgfmt(:i1-2))//',a'//trim(msgfmt(i1-1:i1))
+   else
+     msgfmt=trim(msgfmt(:i1-1))//',a'//trim(msgfmt(i1:i1))
+   endif
  endif
  !
  ! Write to o-file or to report
@@ -253,7 +257,11 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  endif
  if (len_trim(after_msg_)>0) then
    i1=len_trim(msgfmt)
-   msgfmt=trim(msgfmt(:i1-1))//',a'//trim(msgfmt(i1:i1))
+   if (index(how,"n")>0) then
+     msgfmt=trim(msgfmt(:i1-2))//',a'//trim(msgfmt(i1-1:i1))
+   else
+     msgfmt=trim(msgfmt(:i1-1))//',a'//trim(msgfmt(i1:i1))
+   endif
  endif
  if (size(val)==1 .and. val(1)==NO_VAR) msgfmt='(02x,a)'
  !

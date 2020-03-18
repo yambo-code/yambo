@@ -214,7 +214,6 @@ subroutine rename_file(name)
  !
 end subroutine rename_file
 !
-!
 subroutine warning(mesg)
  !
  use LIVE_t,     ONLY:LIVE_message
@@ -338,7 +337,7 @@ end subroutine msg_manager
 !
 subroutine COM_write_desc(dest,prefix,desc)
  !
- use pars,    ONLY:SP,iomsg_len,lchlen
+ use pars,    ONLY:SP,msg_len,lchlen
  use com,     ONLY:msg
  use IO_m,    ONLY:IO_desc
  !
@@ -361,20 +360,20 @@ subroutine COM_write_desc(dest,prefix,desc)
    if (n_val> 0) then
      local_var=desc%str(i_d)
      if (len_trim(desc%term(i_d))>0) then
-       i_pos=iomsg_len-len_trim(desc%term(i_d))-1
+       i_pos=msg_len-len_trim(desc%term(i_d))-1
        local_var(i_pos:i_pos)="["
-       local_var(i_pos+1:iomsg_len-1)=trim(desc%term(i_d))
-       local_var(iomsg_len:iomsg_len)="]"
+       local_var(i_pos+1:msg_len-1)=trim(desc%term(i_d))
+       local_var(msg_len:msg_len)="]"
      endif
-     if(desc%kind(i_d)=='i') call msg(dest,prefix//local_var(:iomsg_len),desc%ival(1:n_val,i_d),INDENT=0)
-     if(desc%kind(i_d)=='r') call msg(dest,prefix//local_var(:iomsg_len),desc%rval(1:n_val,i_d),INDENT=0)
-     if(desc%kind(i_d)=='d') call msg(dest,prefix//local_var(:iomsg_len),real(desc%dval(i_d),SP),INDENT=0)
-     if(desc%kind(i_d)=='c') call msg(dest,prefix//local_var(:iomsg_len),&
+     if(desc%kind(i_d)=='i') call msg(dest,prefix//local_var(:msg_len),desc%ival(1:n_val,i_d),INDENT=0)
+     if(desc%kind(i_d)=='r') call msg(dest,prefix//local_var(:msg_len),desc%rval(1:n_val,i_d),INDENT=0)
+     if(desc%kind(i_d)=='d') call msg(dest,prefix//local_var(:msg_len),real(desc%dval(i_d),SP),INDENT=0)
+     if(desc%kind(i_d)=='c') call msg(dest,prefix//local_var(:msg_len),&
      &                                          (/real(desc%cval(i_d)),aimag(desc%cval(i_d))/),INDENT=0)
-     if(desc%kind(i_d)=='s') call msg(dest,prefix//local_var(:iomsg_len),desc%sval(i_d),INDENT=0)
+     if(desc%kind(i_d)=='s') call msg(dest,prefix//local_var(:msg_len),desc%sval(i_d),INDENT=0)
      if(desc%kind(i_d)=='l') then
-       if(     desc%lval(i_d)) call msg(dest,prefix//local_var(:iomsg_len),'yes',INDENT=0)
-       if(.not.desc%lval(i_d)) call msg(dest,prefix//local_var(:iomsg_len),'no',INDENT=0)
+       if(     desc%lval(i_d)) call msg(dest,prefix//local_var(:msg_len),'yes',INDENT=0)
+       if(.not.desc%lval(i_d)) call msg(dest,prefix//local_var(:msg_len),'no',INDENT=0)
      endif
    endif
  enddo

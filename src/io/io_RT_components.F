@@ -393,7 +393,7 @@ subroutine G_lesser_IO(ID,T_size)
  use drivers,        ONLY:l_real_time
  use stderr,         ONLY:intc
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,&
-&                         variable_exist,write_is_on,io_sec
+&                         variable_exist,write_is_on,io_sec,io_unit,netcdf_call,nf90_sync
  use hamiltonian,    ONLY:H_rotation
  use RT_control,     ONLY:GF_RT_IO_t,SAVE_G_history,NE_i_start_time
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_bands,RT_nbands,RT_nk,l_RT_rotate_DM,&
@@ -408,7 +408,7 @@ subroutine G_lesser_IO(ID,T_size)
  !
  integer, intent(in)  :: ID,T_size
  !
- logical           :: l_H_rot,l_H_sig
+ logical           :: l_H_rot,l_H_sig,l_H_EQ
  integer           :: ib,ik,i_sp_pol,i_time,i_mem,i_mem_sorted,G_IO_steps
  integer           :: VAR_SZ(5),IPOS(5)
  real(SP)          :: time(2)
@@ -440,20 +440,33 @@ subroutine G_lesser_IO(ID,T_size)
  if ( NE_i_time==NE_i_start_time .and. write_is_on(ID)) then
    l_H_sig= G_IO_steps==1 .and. SAVE_G_history
  else
-   l_H_sig= variable_exist(ID,"Ho_plus_Sigma")
+   l_H_sig= variable_exist(ID,"Delta_Sigma")
  endif
  !
  l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,"H_rotation").or.write_is_on(ID)) )
  !
  if(NE_i_time==NE_i_start_time.or..not.l_real_time) then
    call def_variable_bulk(ID,"dG_lesser", 4,VAR_sz,SP,dim_names=dim_names,par_io_kind='collective',silent=.true.)
-   if(l_H_sig) call def_variable_bulk(ID,"Ho_plus_Sigma",5,VAR_sz,SP,&
+   if(l_H_sig) call def_variable_bulk(ID,"Delta_Sigma",5,VAR_sz,SP,&
    &                                                  dim_names=dim_names,par_io_kind='collective',silent=.true.)
    if(l_H_rot) call def_variable_bulk(ID,"H_rotation",6,VAR_sz(1:4),SP,&
    &                                             dim_names=dim_names(1:4),par_io_kind='collective',silent=.true.)
  endif
  !
  IPOS(4)=PAR_G_kpts(1)
+ !
+ if ( NE_i_time==1 .and. write_is_on(ID)) then
+   l_H_EQ= G_IO_steps==1 .and. SAVE_G_history
+ else
+   l_H_EQ= variable_exist(ID,"H_equilibrium")
+ endif
+ !
+ if((NE_i_time==1.or..not.l_real_time) .and. l_H_EQ) then
+   call def_variable_bulk(ID,"H_equilibrium",7,VAR_sz(1:4),SP,&
+   &                              dim_names=dim_names(1:4),par_io_kind='collective',silent=.true.)
+   call io_variable_bulk(ID,7,C3=H_EQ(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1),IPOS=IPOS(1:4))
+ endif
+ !
  if(l_real_time) then
    do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
      if(     SAVE_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
@@ -469,16 +482,16 @@ subroutine G_lesser_IO(ID,T_size)
    call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1),IPOS=IPOS)
  endif
  if(l_H_sig) then
-   if(write_is_on(ID) .and. l_RT_RWA) then
+   if(write_is_on(ID) .and. .not.l_RT_RWA) then
      allocate(H_IO(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),1))
-     H_IO=Ho_plus_sigma(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1)+H_EQ(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1)
+     H_IO=Ho_plus_sigma(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1)-H_EQ(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1)
      call io_variable_bulk(ID,5,C4=H_IO,IPOS=IPOS)
      deallocate(H_IO)
    else
      call io_variable_bulk(ID,5,C4=Ho_plus_sigma(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1),IPOS=IPOS)
    endif
  endif
- if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_G_kpts(1):PAR_G_kpts(2),i_sp_pol),IPOS=IPOS(1:4))
+ if(l_H_rot) call io_variable_bulk(ID,6,C4=H_rotation(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1),IPOS=IPOS(1:4))
  !
 #else
  !
@@ -509,7 +522,7 @@ subroutine G_lesser_IO(ID,T_size)
    call io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,1:1),IPOS=IPOS)
  endif
  !
- var_name="Ho_plus_Sigma_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol))
+ var_name="Delta_Sigma_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol))
  if ( NE_i_time==NE_i_start_time .and. write_is_on(ID)) then
    l_H_sig= G_IO_steps==1 .and. SAVE_G_history
  else
@@ -518,9 +531,9 @@ subroutine G_lesser_IO(ID,T_size)
  !
  if ( l_H_sig ) then
    call def_variable_bulk(ID,trim(var_name),5,VAR_SZ(1:3),SP,dim_names=dim_names(1:3))
-   if(write_is_on(ID).and.l_RT_RWA) then
+   if(write_is_on(ID).and..not.l_RT_RWA) then
      allocate(H_IO(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1,1))
-     H_IO(:,:,1,1)=Ho_plus_sigma(:,:,ik,i_sp_pol)+H_EQ(:,:,ik,i_sp_pol)
+     H_IO(:,:,1,1)=Ho_plus_sigma(:,:,ik,i_sp_pol)-H_EQ(:,:,ik,i_sp_pol)
      call io_variable_bulk(ID,5,C2=H_IO(:,:,1,1))
      deallocate(H_IO)
    else
@@ -532,11 +545,25 @@ subroutine G_lesser_IO(ID,T_size)
  l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,trim(var_name)).or.write_is_on(ID)) )
  !
  if ( l_H_rot ) then
-   call def_variable_bulk(ID,trim(var_name),6,VAR_SZ(1:3),SP,dim_names=dim_names(1:3))
+   call def_variable_bulk(ID,trim(var_name),6,VAR_SZ(1:2),SP,dim_names=dim_names(1:2))
    call  io_variable_bulk(ID,6,C2=H_rotation(:,:,ik,i_sp_pol))
  endif
  !
+ var_name="H_rotation_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol))
+ if ( NE_i_time==1 .and. write_is_on(ID)) then
+   l_H_EQ = l_H_sig
+ else
+   l_H_EQ= variable_exist(ID,trim(var_name))
+ endif
+ !
+ if(l_H_EQ) then
+   call def_variable_bulk(ID,"H_equilibrium",7,VAR_sz(1:2),SP,dim_names=dim_names(1:2))
+   call io_variable_bulk(ID,7,C2=H_EQ(:,:,ik,i_sp_pol))
+ endif
+ !
 #endif
+ !
+ call netcdf_call(nf90_sync(io_unit(ID)),ID)
  !
 end subroutine G_lesser_IO
 !

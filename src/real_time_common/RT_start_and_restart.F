@@ -96,7 +96,7 @@ subroutine RT_start_and_restart(E,k,q)
  ! GPL_EXCLUDE_END
  !
  !
- ! The KS Hamiltonian
+ ! The Equilibrium Hamiltonian
  !=========================
  H_EQ=cZERO
  do ik=1,nXkibz

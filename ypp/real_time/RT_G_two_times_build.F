@@ -35,7 +35,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,RT_nbands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
-&                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,I1_matrix,RT_all2ibz
+&                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,H_EQ,I1_matrix,RT_all2ibz
  use YPP_real_time,  ONLY:RT_time,RT_conf,GreenF_T_and_W
  use LIVE_t,         ONLY:live_timing
  !
@@ -46,11 +46,12 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
  ! Workspace
  !
- real(SP)              :: T_c,REF_diff,TIME_diff
+ real(SP)              :: T_c,REF_diff,TIME_diff,deph_factor
  integer               :: ID,ik,ik_RT,ib1,ib2,io_err,i_T(2),i_w,i_T1,i_T2,i_Tc,i_dT,i_kind,i_t_tmp,Nt
  character(2)          :: function_name
  logical               :: include_eq_occ,keep_cc,keep_vv,keep_cv,keep_vc,&
-&                         build_G_ret,build_G_adv,build_G_les,build_G_grt,build_Spect
+&                         build_G_ret,build_G_adv,build_G_les,build_G_grt,build_Spect,&
+&                         l_dephase_rho
  character(schlen)     :: headings(3),file_name
  real(SP)              :: odata(3)
  !
@@ -65,15 +66,18 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  call section('*','Two times Green function reconstruction')
  !
  call parser('IncludeEQocc',include_eq_occ)
- call parser('BuildSpec',   build_Spect)
- call parser('BuildGret',   build_G_ret)
- call parser('BuildGadv',   build_G_adv)
- call parser('BuildGles',   build_G_les)
- call parser('BuildGgrt',   build_G_grt)
- call parser('KeepCC' ,     keep_cc)
- call parser('KeepVV',      keep_vv)
- call parser('KeepCV' ,     keep_cv)
- call parser('KeepVC',      keep_vc)
+ call parser('DephaseRho',   l_dephase_rho)
+ !
+ call parser('BuildSpec', build_Spect)
+ call parser('BuildGret', build_G_ret)
+ call parser('BuildGadv', build_G_adv)
+ call parser('BuildGles', build_G_les)
+ call parser('BuildGgrt', build_G_grt)
+ !
+ call parser('KeepCC', keep_cc)
+ call parser('KeepVV', keep_vv)
+ call parser('KeepCV', keep_cv)
+ call parser('KeepVC', keep_vc)
  !
  call RT_k_grid(en,kpt,qpt)
  !
@@ -109,6 +113,8 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
  YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,1))
  Ho_plus_Sigma=cZERO
+ YAMBO_ALLOC(H_EQ,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,1))
+ H_EQ=cZERO
  YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,1))
  dG_lesser=cZERO
  !
@@ -185,8 +191,8 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
    G_ret(:,:,ik)=-cI*I1_matrix(:,:)
  enddo 
  !
- H_rho_T(:,:,:,3)=Ho_plus_sigma(:,:,:,1)
- H_rho_T(:,:,:,4)=Ho_plus_sigma(:,:,:,1)
+ H_rho_T(:,:,:,3)=H_EQ(:,:,:,1)+Ho_plus_sigma(:,:,:,1)
+ H_rho_T(:,:,:,4)=H_EQ(:,:,:,1)+Ho_plus_sigma(:,:,:,1)
  !
  !
  ! Build G_lesser / G_ret / Spectr
@@ -221,6 +227,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
    !
  enddo
  !
+ deph_factor=1._SP
  !
  call live_timing("Build "//function_name//"(t,t'):",(RT_conf%T_n_steps-i_Tc))
  !
@@ -256,12 +263,14 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
        io_err=io_RT_components('G',ID)
      enddo
 #endif
+     ! exp(-abs(RT_time(i_t)*damp_factor))
+     if(l_dephase_rho) deph_factor=exp(-RT_conf%damp_factor*RT_time(i_T(i_kind)))
      !
-     H_rho_T(:,:,:,i_kind)=Ho_plus_sigma(:,:,:,1)
+     H_rho_T(:,:,:,i_kind)=H_EQ(:,:,:,1)+Ho_plus_sigma(:,:,:,1)*deph_factor
      !
      if(i_kind==2) then
        !
-       rho_T(:,:,:)=-cI*dG_lesser(:,:,:,1)
+       rho_T(:,:,:)=-cI*dG_lesser(:,:,:,1)*deph_factor
        !
        ! rho and 1-rho
        !
@@ -353,6 +362,9 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
  YAMBO_FREE(TMP_M)
  YAMBO_FREE(I1_matrix)
+ !
+ YAMBO_FREE(Ho_plus_Sigma)
+ YAMBO_FREE(H_EQ)
  !
  YAMBO_FREE(  rho_T)
  YAMBO_FREE(b_rho_T)

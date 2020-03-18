@@ -92,10 +92,12 @@ subroutine REPORT_Occupations(what,E)
    endif
    !
    if (Nbf(i_sp_pol)==Nbm(i_sp_pol).and.Nbf(i_sp_pol)>0) then
-     call msg('r',COMPOSE_msg('Indirect Gap',i_sp_pol),E_g_ind(i_sp_pol,1)*HA2EV,'[eV]')
      call msg('r',COMPOSE_msg('Direct Gap',i_sp_pol),E_g_ind(i_sp_pol,1)*HA2EV,'[eV]')
-     call msg('r',COMPOSE_msg('Last valence band width',i_sp_pol),E_g_ind(i_sp_pol,2)*HA2EV,'[eV]')
-     call msg('r',COMPOSE_msg('1st conduction band width',i_sp_pol),E_g_ind(i_sp_pol,3)*HA2EV,'[eV]')
+     if (E%nk>1) then
+       call msg('r',COMPOSE_msg('Indirect Gap',i_sp_pol),E_g_ind(i_sp_pol,1)*HA2EV,'[eV]')
+       call msg('r',COMPOSE_msg('Last valence band width',i_sp_pol),E_g_ind(i_sp_pol,2)*HA2EV,'[eV]')
+       call msg('r',COMPOSE_msg('1st conduction band width',i_sp_pol),E_g_ind(i_sp_pol,3)*HA2EV,'[eV]')
+     endif
    endif
    !
    call msg('r',' ')
@@ -119,20 +121,19 @@ subroutine REPORT_Occupations(what,E)
  endif
  !
  call msg('r','')
- stop
  !
  contains
    !
    character(msg_len) function COMPOSE_msg(msg_,i_spin)
+     use com,  ONLY:com_compose_msg
      character(*) :: msg_
      integer      :: i_spin
      !ws
      character(schlen) :: spin_ch
      spin_ch=" "
-     if (n_sp_pol==2.and.i_spin==1) spin_ch="[spin UP]"
-     if (n_sp_pol==2.and.i_spin==2) spin_ch="[spin DN]"
-     COMPOSE_msg=title(1:title_len)//trim(msg_)//&
-&                repeat(" ",msg_len-title_len-len_trim(msg_)-len_trim(spin_ch))//trim(spin_ch)
+     if (n_sp_pol==2.and.i_spin==1) spin_ch="  [spin UP]"
+     if (n_sp_pol==2.and.i_spin==2) spin_ch=" [spin DN]"
+     COMPOSE_msg=com_compose_msg(title(1:title_len),msg_,spin_ch)
    end function
    !
 end subroutine

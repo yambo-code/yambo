@@ -112,6 +112,13 @@ module com
      character(*), intent(in), optional  :: mode
    end subroutine of_open_close
    !
+   function com_compose_msg(pre,body,post)
+     use pars,          ONLY:msg_len
+     character(msg_len)                  :: com_compose_msg
+     character(*), intent(in)            :: body
+     character(*), intent(in), optional  :: pre,post
+   end function com_compose_msg
+   !
  end interface
  !
  interface msg
@@ -169,7 +176,7 @@ module com
      character(*), optional :: after_msg
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     call msg_integers_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT)
+     call msg_integers_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT,after_msg=after_msg)
    end subroutine
    !
    subroutine msg_real(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT)

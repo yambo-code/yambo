@@ -125,18 +125,26 @@ integer function io_QP_and_GF(what,qp,ID)
    qp%desc%n=qp%desc%n+1
    if (.not.QP_DB_kind==QP_SE_COHSEX) then
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' GF energies kind       :'
+     qp%desc%size(qp%desc%n)=1
+     qp%desc%kind(qp%desc%n)='s'
+     qp%desc%str(qp%desc%n)='GF energies kind'
      qp%desc%sval(qp%desc%n)=trim(G_E_xc_string)
    endif
    qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' GF WF`s     kind       :'
+   qp%desc%str(qp%desc%n)=' GF WF`s kind'
+   qp%desc%size(qp%desc%n)=1
+   qp%desc%kind(qp%desc%n)='s'
    qp%desc%sval(qp%desc%n)=trim(G_WF_xc_string)
    if (any(QP_DB_kind==(/QP_SE_COHSEX,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_GoWo,QP_SE_GWo/))) then
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' Xs energies kind       :'
+     qp%desc%size(qp%desc%n)=1
+     qp%desc%kind(qp%desc%n)='s'
+     qp%desc%str(qp%desc%n)=' Xs energies kind'
      qp%desc%sval(qp%desc%n)=trim(X_E_xc_string(i_X))
      qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' Xs WF`s     kind       :'
+     qp%desc%size(qp%desc%n)=1
+     qp%desc%kind(qp%desc%n)='s'
+     qp%desc%str(qp%desc%n)=' Xs WF`s kind'
      qp%desc%sval(qp%desc%n)=trim(X_WF_xc_string(i_X))
    endif
  endif
@@ -155,15 +163,15 @@ integer function io_QP_and_GF(what,qp,ID)
  call io_elemental(ID,I0=qp%nb,DB_I0=QP_nb_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,I0=qp%nk,DB_I0=QP_nk_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,I0=qp%n_states,DB_I0=QP_n_states_disk,&
-&                  VAR=' QP tot states          ',CHECK=.true.,OP=(/"<="/))
+&                  VAR='QP tot states          ',CHECK=.true.,OP=(/"<="/))
  if (ver_is_gt_or_eq(ID,revision=15200)) then 
    call io_elemental(ID,I0=GWo_iterations,&
-&                    VAR=' GWo SC iterations       ',CHECK=.true.,OP=(/"=="/))
+&                    VAR='GWo SC iterations       ',CHECK=.true.,OP=(/"=="/))
  else
    GWo_iterations=0
  endif
  call io_elemental(ID,I0=GW_iterations,&
-&                  VAR=' GW  SC iterations       ',CHECK=.true.,OP=(/"=="/))
+&                  VAR='GW  SC iterations       ',CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,I0=qp%desc%n,DB_I0=n_descs_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !

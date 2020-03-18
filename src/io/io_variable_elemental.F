@@ -27,13 +27,13 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
 &                       D0, DB_D0, C0, DB_C0, &
 &                       L0, DB_L0,            &
 &                       CH0,DB_CH0,           &
-&                       UNIT,DESCRIPTOR,DO_NOT_DUMP)
+&                       UNIT,DESCRIPTOR,DO_NOT_DUMP,TERMINATOR)
  !
  use pars,          ONLY:LP,SP,DP,schlen,msg_len
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use netcdf
  use drivers, ONLY:list_dbs
- use com,     ONLY:msg
+ use com,     ONLY:msg,com_compose_msg
  use stderr,  ONLY:STRING_pack,int2log,log2int
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
@@ -52,14 +52,15 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  complex(SP), optional, target :: C0
  complex(SP), optional :: DB_C0
  logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
- character(*),optional :: CH0,DB_CH0
+ character(*),optional :: CH0,DB_CH0,TERMINATOR
  type(IO_desc),optional:: DESCRIPTOR
  !
  ! Work Space
  !
  integer,parameter      :: MAX_DB_ELEMENTS=100
- character(msg_len)   :: ch
- character(1)           :: msg_where,space
+ character(schlen)      :: TERM_
+ character(msg_len-1)   :: ch
+ character(1)           :: msg_where
  integer                :: SZ,i_err,nf_error
  logical                :: CHECK_,WARN_,DUMP_,VERIFY_
  !
@@ -79,6 +80,11 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  i_err=0
  VERIFY_= (read_is_on(ID) .and. (io_mode(ID)==VERIFY .and. present(OP)))
  !
+ TERM_=""
+ if (present(TERMINATOR)) then
+   if (len_trim(TERMINATOR)>0) TERM_="["//trim(TERMINATOR)//"]"
+ endif
+ !
  CHECK_=.false.
  if (present(CHECK)) CHECK_=CHECK
  !
@@ -89,7 +95,6 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  if (present(UNIT)) local_unit=UNIT
  !
  msg_where=""
- space=" "
  if (io_com(ID)==REP            ) msg_where="r"
  if (io_com(ID)==LOG.or.list_dbs) msg_where="s"
  !
@@ -373,14 +378,13 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
      if (CHECK_) ch=STRING_pack("*ERR* ",VAR)
      if (WARN_ ) ch=STRING_pack("*WRN* ",VAR)
    endif
-   if(present(I0) .or.present(I1)) call msg(msg_where,space//ch,i_db(1:SZ))
-   if(present(R0) .or.present(R1)) call msg(msg_where,space//ch,r_db(1:SZ)*local_unit)
-   if(present(D0)                ) call msg(msg_where,space//ch,r_db(1:SZ)*local_unit)
-   if(present(C0)                ) call msg(msg_where,space//ch,rc_db(1:2*SZ)*local_unit)
-   if(present(L0)                ) call msg(msg_where,space//ch,(l_db(1)==1))
-   if(present(CH0)               ) call msg(msg_where,space//ch,trim(ch_db(1)))
+   if(present(I0) .or.present(I1)) call msg(msg_where,com_compose_msg(" ",ch),i_db(1:SZ),after_msg=TERM_)
+   if(present(R0) .or.present(R1)) call msg(msg_where,com_compose_msg(" ",ch),r_db(1:SZ)*local_unit,after_msg=TERM_)
+   if(present(D0)                ) call msg(msg_where,com_compose_msg(" ",ch),r_db(1:SZ)*local_unit,after_msg=TERM_)
+   if(present(C0)                ) call msg(msg_where,com_compose_msg(" ",ch),rc_db(1:2*SZ)*local_unit,after_msg=TERM_)
+   if(present(L0)                ) call msg(msg_where,com_compose_msg(" ",ch),(l_db(1)==1))
+   if(present(CH0)               ) call msg(msg_where,com_compose_msg(" ",ch),trim(ch_db(1)))
  endif
- !
  !
  contains
    !

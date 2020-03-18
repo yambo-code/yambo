@@ -337,8 +337,8 @@ end subroutine msg_manager
 !
 subroutine COM_write_desc(dest,prefix,desc)
  !
- use pars,    ONLY:SP,msg_len,lchlen
- use com,     ONLY:msg
+ use pars,    ONLY:SP,msg_len
+ use com,     ONLY:msg,com_compose_msg
  use IO_m,    ONLY:IO_desc
  !
  implicit none
@@ -349,31 +349,35 @@ subroutine COM_write_desc(dest,prefix,desc)
  !
  ! Work Space
  !
- integer           :: i_d,n_val,i_pos
- character(lchlen) :: local_var
+ integer           :: i_d,n_val,i_space,var_len
+ character(msg_len):: local_var,local_term
+ character(1)      :: space=" "
  !
  call msg(dest,prefix)
  !
+ i_space=0
+ if (index(dest,"o ")>0) i_space=1
+ !
+ var_len=msg_len-i_space-len(prefix)-1
+ !
  do i_d=1,desc%n
    n_val=desc%size(i_d)
-   if (n_val==0) call msg(dest,prefix//trim(desc%str(i_d)) )
+   local_var=com_compose_msg(pre=prefix//space(1:i_space),body=desc%str(i_d))
+   local_term=" "
+   if (len_trim(desc%term(i_d))>0) then
+     local_term="["//trim(desc%term(i_d))//"]"
+   endif
+   if (n_val==0) call msg(dest,local_var)
    if (n_val> 0) then
-     local_var=desc%str(i_d)
-     if (len_trim(desc%term(i_d))>0) then
-       i_pos=msg_len-len_trim(desc%term(i_d))-1
-       local_var(i_pos:i_pos)="["
-       local_var(i_pos+1:msg_len-1)=trim(desc%term(i_d))
-       local_var(msg_len:msg_len)="]"
-     endif
-     if(desc%kind(i_d)=='i') call msg(dest,prefix//local_var(:msg_len),desc%ival(1:n_val,i_d),INDENT=0)
-     if(desc%kind(i_d)=='r') call msg(dest,prefix//local_var(:msg_len),desc%rval(1:n_val,i_d),INDENT=0)
-     if(desc%kind(i_d)=='d') call msg(dest,prefix//local_var(:msg_len),real(desc%dval(i_d),SP),INDENT=0)
-     if(desc%kind(i_d)=='c') call msg(dest,prefix//local_var(:msg_len),&
-     &                                          (/real(desc%cval(i_d)),aimag(desc%cval(i_d))/),INDENT=0)
-     if(desc%kind(i_d)=='s') call msg(dest,prefix//local_var(:msg_len),desc%sval(i_d),INDENT=0)
+     if(desc%kind(i_d)=='i') call msg(dest,local_var,desc%ival(1:n_val,i_d),INDENT=0,after_msg=local_term)
+     if(desc%kind(i_d)=='r') call msg(dest,local_var,desc%rval(1:n_val,i_d),INDENT=0,after_msg=local_term)
+     if(desc%kind(i_d)=='d') call msg(dest,local_var,real(desc%dval(i_d),SP),INDENT=0,after_msg=local_term)
+     if(desc%kind(i_d)=='c') call msg(dest,local_var,&
+&                                     (/real(desc%cval(i_d)),aimag(desc%cval(i_d))/),INDENT=0,after_msg=local_term)
+     if(desc%kind(i_d)=='s') call msg(dest,local_var,desc%sval(i_d),INDENT=0)
      if(desc%kind(i_d)=='l') then
-       if(     desc%lval(i_d)) call msg(dest,prefix//local_var(:msg_len),'yes',INDENT=0)
-       if(.not.desc%lval(i_d)) call msg(dest,prefix//local_var(:msg_len),'no',INDENT=0)
+       if(     desc%lval(i_d)) call msg(dest,local_var,'yes',INDENT=0)
+       if(.not.desc%lval(i_d)) call msg(dest,local_var,'no',INDENT=0)
      endif
    endif
  enddo

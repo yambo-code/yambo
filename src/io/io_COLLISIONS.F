@@ -96,33 +96,33 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=SIZE_,MENU=0)
    !
    call io_elemental(ID,I0=COLL%N,&
-&       VAR=' Total number of COLLISIONS      ',CHECK=.true.,OP=(/"=="/))
+&       VAR='Total number of COLLISIONS      ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=COLL%kind,&
-&       VAR=' COLLISIONS kind                 ',CHECK=.true.,OP=(/"=="/))
+&       VAR='COLLISIONS kind                 ',CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(ID,I1=COLL_bands,&
-&       VAR=' Bands                           ',CHECK=.true.,OP=(/"==","=="/))
+&       VAR='Bands                           ',CHECK=.true.,OP=(/"==","=="/))
    !
    if (COLL%kind==QP_SE_GW_NEQ) then
      call io_elemental(ID,L0=l_elel_scatt,&
-&         VAR=' Electron-Electron scattering    ',WARN=.true.,OP=(/"=="/))
+&         VAR='Electron-Electron scattering    ',WARN=.true.,OP=(/"=="/))
      if(l_elel_scatt) then
       call io_elemental(ID,I0=N_plasma_poles_global,&
-&          VAR=' Max N plasma poles (q-resolved) ',CHECK=.true.,OP=(/"=="/))
+&          VAR='Max N plasma poles (q-resolved) ',CHECK=.true.,OP=(/"=="/))
       call io_elemental(ID,R0=PLASMA_redux_percent,&
-&          VAR=' Plasma redux percent            ',CHECK=.true.,OP=(/"=="/))
+&          VAR='Plasma redux percent            ',CHECK=.true.,OP=(/"=="/))
      endif
    endif
    !
    if (COLL%kind==QP_SE_GW_QED) then
      call io_elemental(ID,L0=l_elphoton_scatt,&
-&         VAR=' Electron-Photon   scattering    ',WARN=.true.,OP=(/"=="/))
+&         VAR='Electron-Photon   scattering    ',WARN=.true.,OP=(/"=="/))
      call io_elemental(ID,I0=QP_QED_ng,&
-&         VAR=' Electron-Photon   RL vectors    ',CHECK=.true.,OP=(/"=="/))
+&         VAR='Electron-Photon   RL vectors    ',CHECK=.true.,OP=(/"=="/))
    endif
    !
    call io_elemental(ID,R0=SC_band_mixing,&
-&       VAR=' Bands mixing                    ',CHECK=.true.,OP=(/"=="/))
+&       VAR='Bands mixing                    ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=COLL%kind,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
@@ -136,16 +136,16 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
 &        V_kind_disk==H_SE_HARTREE+H_SE_FOCK.or.V_kind_disk==H_SE_HARTREE+H_SE_SEX     ) SIZE_=SIZE_+1
      call io_elemental(ID,VAR="HXC_PARAMETERS",VAR_SZ=SIZE_,MENU=0)
      call io_elemental(ID,R0=COLLISIONS_cutoff,&
-&         VAR=' Exchange Cutoff                 ',CHECK=.true.,OP=(/"=="/))
+&         VAR='Exchange Cutoff                 ',CHECK=.true.,OP=(/"=="/))
      !
      if (V_kind_disk>=H_SE_HARTREE) then
        call io_elemental(ID,I0=QP_ng_SH,&
-&         VAR=' Hartree  RL vectors             ',CHECK=.true.,OP=(/"=="/))
+&         VAR='Hartree  RL vectors             ',CHECK=.true.,OP=(/"=="/))
      endif
      if (V_kind_disk==             H_SE_FOCK.or.V_kind_disk==             H_SE_SEX.or.&
 &        V_kind_disk==H_SE_HARTREE+H_SE_FOCK.or.V_kind_disk==H_SE_HARTREE+H_SE_SEX) then
        call io_elemental(ID,I0=QP_ng_Sx,&
-&         VAR=' Exchange RL vectors             ',CHECK=.true.,OP=(/"=="/))
+&         VAR='Exchange RL vectors             ',CHECK=.true.,OP=(/"=="/))
      endif
    endif
    !

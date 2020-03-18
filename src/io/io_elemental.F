@@ -23,13 +23,13 @@
 !
 subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                       R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
-&                       DESCRIPTION,DO_NOT_DUMP)
+&                       DESCRIPTION,DO_NOT_DUMP,TERMINATOR)
  !
  use pars,          ONLY:SP,DP,schlen,lchlen,nf90_SP,DB_menu_length
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use netcdf
  use drivers, ONLY:list_dbs
- use com,     ONLY:msg
+ use com,     ONLY:msg,com_compose_msg
  use stderr,  ONLY:STRING_pack,intc,real2ch,complex2ch
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
@@ -40,20 +40,19 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  integer               :: ID
  integer,parameter     :: MAX_DB_ELEMENTS=100
  character(*),optional :: VAR,OP(:)
- integer,     optional :: VAR_SZ,MENU
-                               ! MENU = 1 (on) 0 (off)
+ integer,     optional :: VAR_SZ,MENU ! MENU = 1 (on) 0 (off)
  integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
  real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
  real(DP),    optional :: D0,DB_D0
  complex(SP), optional, target :: C0
  complex(SP), optional :: DB_C0
  logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
- character(*),optional :: CH0,DB_CH0,CH1(:)
+ character(*),optional :: CH0,DB_CH0,CH1(:),TERMINATOR
  character(lchlen),optional :: DESCRIPTION
  !
  ! Work Space
  !
- character(lchlen) :: ch
+ character(lchlen) :: ch,TERM_
  character(1)      :: msg_where
  character(3)      :: MODE_
  integer :: i_db(MAX_DB_ELEMENTS),i_err,nf_error,MENU_
@@ -66,6 +65,11 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  !
  DUMP_= (io_mode(ID)==DUMP)
  if (present(DO_NOT_DUMP)) DUMP_=.not.DO_NOT_DUMP
+ !
+ TERM_=""
+ if (present(TERMINATOR)) then
+   if (len_trim(TERMINATOR)>0) TERM_="["//trim(TERMINATOR)//"]"
+ endif
  !
  CHECK_=.false.
  if (present(CHECK)) CHECK_=CHECK
@@ -128,7 +132,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID,1),I0,(/io_rec_pos(ID)/))
      call netcdf_call(nf_error,ID)
      if (present(DB_I0)) DB_I0=I0
-     if (present(VAR)) call msg(msg_where,VAR,I0)
+     if (present(VAR)) call msg(msg_where,com_compose_msg(" ",VAR),I0,after_msg=TERM_)
    else if (read_is_on(ID)) then
      nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID,1),i_db(1),(/io_rec_pos(ID)/))
      call netcdf_call(nf_error,ID)
@@ -145,9 +149,9 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
        endif
      endif
      if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),i_db(1))
+       call msg(msg_where,com_compose_msg(" ",ch),i_db(1),after_msg=TERM_)
      else if (present(VAR)) then
-       call msg(msg_where,VAR,i_db(1))
+       call msg(msg_where,com_compose_msg(" ",VAR),i_db(1),after_msg=TERM_)
      endif
    endif
    !
@@ -164,7 +168,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID,1),I1,(/io_rec_pos(ID)/))
      call netcdf_call(nf_error,ID)
      if (present(DB_I1)) DB_I1=I1
-     if (present(VAR)) call msg(msg_where,VAR,I1)
+     if (present(VAR)) call msg(msg_where,com_compose_msg(" ",VAR),I1,after_msg=TERM_)
    else if (read_is_on(ID)) then
      nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID,1),i_db(:size(I1)),(/io_rec_pos(ID)/))
      call netcdf_call(nf_error,ID)
@@ -181,9 +185,9 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
        endif
      endif
      if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),i_db(:size(I1)))
+       call msg(msg_where,com_compose_msg(" ",ch),i_db(:size(I1)),after_msg=TERM_)
      else if (present(VAR)) then
-       call msg(msg_where,VAR,i_db(:size(I1)))
+       call msg(msg_where,com_compose_msg(" ",VAR),i_db(:size(I1)),after_msg=TERM_)
      endif
    endif
    !
@@ -202,7 +206,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID,1),R0,(/io_rec_pos(ID)/))
      call netcdf_call(nf_error,ID)
      if (present(DB_R0)) DB_R0=R0
-     if (present(VAR)) call msg(msg_where,VAR,R0*local_unit)
+     if (present(VAR)) call msg(msg_where,com_compose_msg(" ",VAR),R0*local_unit,after_msg=TERM_)
    else if (read_is_on(ID)) then
      nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID,1),r_db(1),(/io_rec_pos(ID)/))
      call netcdf_call(nf_error,ID)
@@ -219,9 +223,9 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
        endif
      endif
      if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),r_db(1)*local_unit)
+       call msg(msg_where,com_compose_msg(" ",ch),r_db(1)*local_unit,after_msg=TERM_)
      else if (present(VAR)) then
-       call msg(msg_where,VAR,r_db(1)*local_unit)
+       call msg(msg_where,com_compose_msg(" ",VAR),r_db(1)*local_unit,after_msg=TERM_)
      endif
    endif
    !
@@ -240,7 +244,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID,1),R1,(/io_rec_pos(ID)/))
      call netcdf_call(nf_error,ID)
      if (present(DB_R1)) DB_R1=R1
-     if (present(VAR)) call msg(msg_where,VAR,R1*local_unit)
+     if (present(VAR)) call msg(msg_where,com_compose_msg(" ",VAR),R1*local_unit,after_msg=TERM_)
    else if (read_is_on(ID)) then
      nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID,1),r_db(:size(R1)),(/io_rec_pos(ID)/))
      call netcdf_call(nf_error,ID)
@@ -257,9 +261,9 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
        endif
      endif
      if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),r_db(:size(R1))*local_unit)
+       call msg(msg_where,com_compose_msg(" ",ch),r_db(:size(R1))*local_unit,after_msg=TERM_)
      else if (present(VAR)) then
-       call msg(msg_where,VAR,r_db(:size(R1))*local_unit)
+       call msg(msg_where,com_compose_msg(" ",VAR),r_db(:size(R1))*local_unit,after_msg=TERM_)
      endif
    endif
    !
@@ -282,7 +286,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID,1),D0,(/io_rec_pos(ID)/))
      call netcdf_call(nf_error,ID)
      if (present(DB_D0)) DB_D0=D0
-     if (present(VAR)) call msg(msg_where,VAR,real(D0)*local_unit)
+     if (present(VAR)) call msg(msg_where,com_compose_msg(" ",VAR),real(D0)*local_unit,after_msg=TERM_)
    else if (read_is_on(ID)) then
      nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID,1),r_db(1),(/io_rec_pos(ID)/))
      call netcdf_call(nf_error,ID)
@@ -299,9 +303,9 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
        endif
      endif
      if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),r_db(1)*local_unit)
+       call msg(msg_where,com_compose_msg(" ",ch),r_db(1)*local_unit,after_msg=TERM_)
      else if (present(VAR)) then
-       call msg(msg_where,VAR,r_db(1)*local_unit)
+       call msg(msg_where,com_compose_msg(" ",VAR),r_db(1)*local_unit,after_msg=TERM_)
      endif
    endif
    !
@@ -323,7 +327,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      r_from_c(1,1)=real(C0)
      r_from_c(2,1)=aimag(C0)
      if (present(DB_C0)) DB_C0=C0
-     if (present(VAR)) call msg(msg_where,VAR,r_from_c(:,1)*local_unit)
+     if (present(VAR)) call msg(msg_where,com_compose_msg(" ",VAR),r_from_c(:,1)*local_unit,after_msg=TERM_)
    else if (read_is_on(ID)) then
      call C_F_POINTER(C_LOC(c_db), RC0, (/2/) )
      nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,1), RC0, (/1/), (/2/))
@@ -343,9 +347,9 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
        endif
      endif
      if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),r_from_c(:,1)*local_unit)
+       call msg(msg_where,com_compose_msg(" ",ch),r_from_c(:,1)*local_unit,after_msg=TERM_)
      else if (present(VAR)) then
-       call msg(msg_where,VAR,r_from_c(:,1)*local_unit)
+       call msg(msg_where,com_compose_msg(" ",VAR),r_from_c(:,1)*local_unit,after_msg=TERM_)
      endif
    endif
    !
@@ -365,7 +369,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
    if (write_is_on(ID)) then
      nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID,1),i_db(1),(/io_rec_pos(ID)/))
      call netcdf_call(nf_error,ID)
-     if (present(VAR)) call msg(msg_where,VAR,i_db(1)==1)
+     if (present(VAR)) call msg(msg_where,com_compose_msg(" ",VAR),i_db(1)==1)
      if (present(DB_L0)) DB_L0=i_db(1)==1
    else if (read_is_on(ID)) then
      nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID,1),i_db(2),(/io_rec_pos(ID)/))
@@ -383,9 +387,9 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
        endif
      endif
      if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),i_db(2)==1)
+       call msg(msg_where,com_compose_msg(" ",ch),i_db(2)==1)
      else if (present(VAR)) then
-       call msg(msg_where,VAR,i_db(2)==1)
+       call msg(msg_where,com_compose_msg(" ",VAR),i_db(2)==1)
      endif
    endif
    !
@@ -405,7 +409,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID,1),db_ch(:1),(/io_rec_pos(ID)/))
      call netcdf_call(nf_error,ID)
      if (present(DB_CH0))   DB_CH0=CH0
-     if (present(VAR)) call msg(msg_where,VAR,trim(db_ch(1)))
+     if (present(VAR)) call msg(msg_where,com_compose_msg(" ",VAR),trim(db_ch(1)))
    else if (read_is_on(ID)) then
      nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID,1),db_ch(:1),(/io_rec_pos(ID)/))
      call netcdf_call(nf_error,ID)
@@ -422,9 +426,9 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
        endif
      endif
      if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),trim(db_ch(1)))
+       call msg(msg_where,com_compose_msg(" ",ch),trim(db_ch(1)))
      else if (present(VAR)) then
-       call msg(msg_where,VAR,trim(db_ch(1)))
+       call msg(msg_where,com_compose_msg(" ",VAR),trim(db_ch(1)))
      endif
    endif
    !

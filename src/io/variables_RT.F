@@ -101,19 +101,19 @@ integer function variables_RT(ID,local_description,what)
  call io_elemental(ID,VAR="ELPH_vars",VAR_SZ=5,MENU=0) 
  i_desc=i_desc+1
  call io_elemental(ID,L0=l_elph_scatt,&
-&   VAR=" [E-P] Electron-phonon            ", CHECK=.true.,OP=(/"=="/),&
+&   VAR="[E-P] Electron-phonon            ", CHECK=.true.,OP=(/"=="/),&
 &   DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,L0=l_RT_CCA_Kernel,&
-&   VAR=" [E-P] Completed Collision(CCA)   ", CHECK=.true.,OP=(/"=="/),&
+&   VAR="[E-P] Completed Collision(CCA)   ", CHECK=.true.,OP=(/"=="/),&
 &   DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID, &
-&   VAR=" [E-P] Branches                   ",I1=elph_branches,CHECK=.true.,OP=(/"==","=="/),&
+&   VAR="[E-P] Branches                   ",I1=elph_branches,CHECK=.true.,OP=(/"==","=="/),&
 &   DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID, &
-&   VAR=" [E-P] GF`s Memory steps          ",I0=G_MEM_steps,CHECK=.true.,OP=(/"=="/),&
+&   VAR="[E-P] GF`s Memory steps          ",I0=G_MEM_steps,CHECK=.true.,OP=(/"=="/),&
 &   DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
 #endif
@@ -123,11 +123,11 @@ integer function variables_RT(ID,local_description,what)
  call io_elemental(ID,VAR="E-E_vars",VAR_SZ=2,MENU=0) 
  i_desc=i_desc+1
  call io_elemental(ID,L0=l_elel_scatt,&
-&   VAR=" [E-E] Coulomb scattering         ", CHECK=.true.,OP=(/"=="/),&
+&   VAR="[E-E] Coulomb scattering         ", CHECK=.true.,OP=(/"=="/),&
 &   DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,L0=l_elel_corr,&
-&  VAR=" [E-E] Coulomb correlation        ", CHECK=.true.,OP=(/"=="/),&
+&  VAR="[E-E] Coulomb correlation        ", CHECK=.true.,OP=(/"=="/),&
 &  DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
@@ -137,7 +137,7 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,VAR="E-PHOTON_vars",VAR_SZ=1,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_elphoton_scatt,&
-&     VAR=" [E-PHOTON] Scattering            ", CHECK=.true.,OP=(/"=="/),&
+&     VAR="[E-PHOTON] Scattering            ", CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
@@ -153,30 +153,30 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=14,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] Time step     (initial)[fs] ",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+&    VAR="[RT] Time step     (initial)[fs] ",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT]                   (now)[fs] ",R0=RT_dyn_step,DB_R0=RT_dyn_step,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+&    VAR="[RT]                   (now)[fs] ",R0=RT_dyn_step,DB_R0=RT_dyn_step,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] NE time       (planned)[fs] ",R0=NE_tot_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+&    VAR="[RT] NE time       (planned)[fs] ",R0=NE_tot_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT]                  (done)[fs] ",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+&    VAR="[RT]                  (done)[fs] ",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    !
    ! GPL_EXCLUDE_START
    !
    call io_elemental(ID,&
-&    VAR=" [RT] Lifetimes Inter/Intra  [fs] ",R1=RT_life_extrap_times_SAVE,CHECK=.true.,OP=(/"==","==","=="/),&
+&    VAR="[RT] Lifetimes Inter/Intra  [fs] ",R1=RT_life_extrap_times_SAVE,CHECK=.true.,OP=(/"==","==","=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT]                   (now)[fs] ",R1=RT_life_extrap_times,DB_R1=RT_life_extrap_times,&
+&    VAR="[RT]                   (now)[fs] ",R1=RT_life_extrap_times,DB_R1=RT_life_extrap_times,&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
    !
    ! GPL_EXCLUDE_END
@@ -186,7 +186,7 @@ integer function variables_RT(ID,local_description,what)
    !
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] NE steps         (done)[fs] ",I0=NE_steps,WARN=.true.,OP=(/"=="/),&
+&    VAR="[RT] NE steps         (done)[fs] ",I0=NE_steps,WARN=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -199,7 +199,7 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,VAR='RT_life_extrapolation',VAR_SZ=1,MENU=0)
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_lifetimes_extrapolation, &
-&        VAR=" [RT] Lifetimes extrapolation     ",WARN=.true.,OP=(/"=="/),&
+&        VAR="[RT] Lifetimes extrapolation     ",WARN=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
@@ -360,31 +360,31 @@ integer function variables_RT(ID,local_description,what)
        call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=13,MENU=0)
        i_desc=i_desc+1
        call io_elemental(ID,R1=Efield(i1)%versor,WARN=.true., &
-&        VAR=" [FIELDs] Versor                  ",OP=(/"==","==","=="/),&
+&        VAR="[FIELDs] Versor                  ",OP=(/"==","==","=="/),&
 &        DESCRIPTION=local_description(i_desc))
        i_desc=i_desc+1
        call io_elemental(ID,R1=Efield(i1)%versor_circ,WARN=.true., &
-&        VAR=" [FIELDs] Versor_circ             ",OP=(/"==","==","=="/),&
+&        VAR="[FIELDs] Versor_circ             ",OP=(/"==","==","=="/),&
 &        DESCRIPTION=local_description(i_desc))
        i_desc=i_desc+1
        call io_elemental(ID,&
-&        VAR=" [FIELDs] Intensity      [kWCMm2] ",R0=Efield(i1)%intensity,CHECK=.true.,OP=(/"=="/),&
+&        VAR="[FIELDs] Intensity      [kWCMm2] ",R0=Efield(i1)%intensity,CHECK=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc),UNIT=AU2KWCMm2)
        i_desc=i_desc+1
        call io_elemental(ID,&
-&        VAR=" [FIELDs] Damping            [fs] ",R0=Efield(i1)%width,CHECK=.true.,OP=(/"=="/),&
+&        VAR="[FIELDs] Damping            [fs] ",R0=Efield(i1)%width,CHECK=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
        i_desc=i_desc+1
        call io_elemental(ID,&
-&        VAR=" [FIELDs] Frequency range    [eV] ",R1=Efield(i1)%frequency,CHECK=.true.,OP=(/"==","=="/),&
+&        VAR="[FIELDs] Frequency range    [eV] ",R1=Efield(i1)%frequency,CHECK=.true.,OP=(/"==","=="/),&
 &        DESCRIPTION=local_description(i_desc),UNIT=HA2EV)
        i_desc=i_desc+1
        call io_elemental(ID,&
-&        VAR=" [FIELDs] Frequency steps         ",I0=Efield(i1)%n_frequencies,CHECK=.true.,OP=(/"=="/),&
+&        VAR="[FIELDs] Frequency steps         ",I0=Efield(i1)%n_frequencies,CHECK=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc))
        i_desc=i_desc+1
        call io_elemental(ID,&
-&        VAR=" [FIELDs] Frequency step     [eV] ",R0=Efield(i1)%W_step,CHECK=.true.,OP=(/"=="/),&
+&        VAR="[FIELDs] Frequency step     [eV] ",R0=Efield(i1)%W_step,CHECK=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc),UNIT=HA2EV)
        i_desc=i_desc+1
        call io_elemental(ID,R0=Efield(i1)%t_initial,&

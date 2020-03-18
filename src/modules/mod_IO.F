@@ -156,7 +156,7 @@ module IO_m
    !
    subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                          R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
-&                          DESCRIPTION,DO_NOT_DUMP)
+&                          DESCRIPTION,DO_NOT_DUMP,TERMINATOR)
      !
      use pars,    ONLY:SP,DP,lchlen
      integer      :: ID
@@ -168,7 +168,7 @@ module IO_m
      complex(SP), optional, target :: C0
      complex(SP), optional :: DB_C0
      logical     ,optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
-     character(*),optional :: CH0,DB_CH0,CH1(:)
+     character(*),optional :: CH0,DB_CH0,CH1(:),TERMINATOR
      character(lchlen),optional :: DESCRIPTION
      !
    end subroutine
@@ -230,7 +230,7 @@ module IO_m
         &                       D0, DB_D0, C0, DB_C0, &
         &                       L0, DB_L0,            &
         &                       CH0,DB_CH0,           &
-        &                       UNIT,DESCRIPTOR,DO_NOT_DUMP)
+        &                       UNIT,DESCRIPTOR,DO_NOT_DUMP,TERMINATOR)
      !
      use pars,   ONLY:SP,DP,LP,lchlen
      use com,    ONLY:IO_DESC
@@ -243,7 +243,7 @@ module IO_m
      complex(SP), optional, target :: C0
      complex(SP), optional :: DB_C0
      logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
-     character(*),optional :: CH0,DB_CH0
+     character(*),optional :: CH0,DB_CH0,TERMINATOR
      type(IO_desc),optional:: DESCRIPTOR
      !
    end subroutine io_variable_elemental

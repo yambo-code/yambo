@@ -111,7 +111,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  qp%desc%n=1
  qp%desc%kind(1)='s'
  qp%desc%size(1)=1
- qp%desc%str(1)=' GW solver              '
+ qp%desc%str(1)='GW solver'
  qp%desc%check(1)=.true.
  qp%desc%ops(1,1)="=="
  if (trim(QP_solver)=='n') then
@@ -146,16 +146,21 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    return
    !
  endif
- qp%desc%n=3
+ !
+ qp%desc%str(2)='GW approximation'
+ qp%desc%size(2)=1
+ qp%desc%kind(2)='s'
+ qp%desc%n=2
  if (l_ppa) then
    !
-   qp%desc%str(2)=' == PPA-GN GW =='
-   qp%desc%str(3)=' '
-   qp%desc%str(4)=' PPA imaginary pt   [ev]'
-   qp%desc%rval(1,4)=X%ppaE*HA2EV
-   qp%desc%size(4)=1
-   qp%desc%kind(4)='r'
-   qp%desc%n=4
+   qp%desc%sval(2)='PPA'
+   !
+   qp%desc%str(3)='PPA imaginary Energy'
+   qp%desc%term(3)='ev'
+   qp%desc%rval(1,3)=X%ppaE*HA2EV
+   qp%desc%size(3)=1
+   qp%desc%kind(3)='r'
+   qp%desc%n=3
    !
    QP_DB_kind=QP_SE_GoWo_PPA
    !
@@ -172,17 +177,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    endif
    if(GW_iterations/=0) call error('Self-consistent COHSEX not implemented yet')
    !
-   qp%desc%str(2)=' == COHSEX GW =='
-   qp%desc%str(3)=' '
-   !
+   qp%desc%str(2)='COHSEX'
    QP_DB_kind=QP_SE_COHSEX
    !
  else
    !
-   if (l_elel_corr)     qp%desc%str(2)=' == Real Axis GW =='
-   if (l_elph_corr)     qp%desc%str(2)=' == El-Ph Self-Energy =='
-   if (l_elphoton_corr) qp%desc%str(2)=' == Lamb Shift =='
-   qp%desc%str(3)=' '
+   if (l_elel_corr)     qp%desc%str(2)='Real Axis'
+   if (l_elph_corr)     qp%desc%str(2)='Fan + DW'
+   if (l_elphoton_corr) qp%desc%str(2)='Lamb'
    !
    ! Here I am not considering the case where ELPH + GW is used.
    ! For this case I need to create a new global KIND.

@@ -140,10 +140,10 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    fname(1)=STRING_remove(fname(1),"/",replace="-")
    !
    if (n_sp_pol>1) then 
-     if (i_spin==1) fname(2)=trim(fname(1))//"-spin-dn.fit"
-     if (i_spin==2) fname(2)=trim(fname(1))//"-spin-up.fit"
-     if (i_spin==1) fname(1)=trim(fname(1))//"-spin-dn.data"
-     if (i_spin==2) fname(1)=trim(fname(1))//"-spin-up.data"
+     if (i_spin==1) fname(2)=trim(fname(1))//"-spin-up.fit"
+     if (i_spin==2) fname(2)=trim(fname(1))//"-spin-dn.fit"
+     if (i_spin==1) fname(1)=trim(fname(1))//"-spin-up.data"
+     if (i_spin==2) fname(1)=trim(fname(1))//"-spin-dn.data"
    else
      fname(2)=trim(fname(1))//".fit"
      fname(1)=trim(fname(1))//".data"

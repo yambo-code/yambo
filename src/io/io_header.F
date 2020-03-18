@@ -263,12 +263,12 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    !
    call io_elemental(ID,VAR="PARALLEL_CPUs",CH0='',VAR_SZ=1,MENU=MENU)
    call io_elemental(ID,CH0=CPU_structure(p_structure)%CPU_string,&
-&                    VAR=' Parallel CPUs                    ',WARN=.true.,OP=(/"=="/))
+&                    VAR=' Parallel CPUs                    ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    io_header=io_status(ID)
    call io_elemental(ID,VAR="PARALLEL_ROLES",CH0='',VAR_SZ=1,MENU=MENU)
    call io_elemental(ID,CH0=CPU_structure(p_structure)%ROLE_string,&
-&                    VAR=' Parallel Roles                   ',WARN=.true.,OP=(/"=="/))
+&                    VAR=' Parallel Roles                   ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    io_header=io_status(ID)
    if (io_header/=0) goto 1

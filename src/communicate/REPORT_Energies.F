@@ -91,7 +91,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
        if (trim(what)=="E") dumb_ch1=" [eV] "
        call msg('r',trim(dumb_ch2),(/dumb_ch1/))
        do i1=1,min(n_bands_,n_full_bands+4*int(nel)),8
-         call msg('r',' ',(/(E_(ib,1),ib=i1,min(i1+7,n_bands_))/))
+         call msg('r',' ',(/(E_(ib,is_pol),ib=i1,min(i1+7,n_bands_))/))
        enddo
      enddo
    endif

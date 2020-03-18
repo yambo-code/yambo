@@ -54,6 +54,8 @@ integer function variables_static_RT(ID,what)
  integer            ::ID
  character(*)       ::what
  !
+ integer, external  ::io_descriptors
+ !
  integer               :: i1
  logical               :: l_OBS,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic
  real(SP)              :: RT_life_extrap_decay_time
@@ -176,7 +178,7 @@ integer function variables_static_RT(ID,what)
    !
    ! G retarded variables
    !======================
-   call io_descriptors(Gr_desc)
+   variables_static_RT=io_descriptors(Gr_desc,ID)
    !
    ! GPL_EXCLUDE_END
    !

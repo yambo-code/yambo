@@ -302,7 +302,7 @@ module real_time
  !----------------
  !
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
- complex(SP), allocatable :: H_KS(:,:,:,:)
+ complex(SP), allocatable :: H_EQ(:,:,:,:)
  complex(SP), allocatable :: H_pseudo_eq(:,:,:,:)
  complex(SP), allocatable :: RT_Vnl_xc(:,:,:,:)
  !
@@ -560,7 +560,7 @@ module real_time
        !
        YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),n_sp_pol))
        !
-       YAMBO_ALLOC(H_KS,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),n_sp_pol))
+       YAMBO_ALLOC(H_EQ,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),n_sp_pol))
        !
        if (l_velocity_gauge_corr) then
          YAMBO_ALLOC(H_pseudo_eq,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
@@ -678,7 +678,7 @@ module real_time
      if(l_all .or. l_G_lesser) then
        !
        YAMBO_FREE(Ho_plus_Sigma)
-       YAMBO_FREE(H_KS)
+       YAMBO_FREE(H_EQ)
        YAMBO_FREE(H_pseudo_eq)
        YAMBO_FREE(RT_Vnl_xc)
        !

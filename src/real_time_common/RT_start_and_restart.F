@@ -48,7 +48,7 @@ subroutine RT_start_and_restart(E,k,q)
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,l_RT_is_WFfree, &
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
 &                         Gr_kind,Gr_desc,l_RT_uses_E_DbGd,RT_E_and_k, &
-&                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser,H_KS,l_RT_uses_E_DbGd,&
+&                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser,H_EQ,l_RT_uses_E_DbGd,&
 &                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_prev,i_MEM_now,&
 &                         i_MEM_old,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times,&
@@ -98,14 +98,14 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! The KS Hamiltonian
  !=========================
- H_KS=cZERO
+ H_EQ=cZERO
  do ik=1,nXkibz
    do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
      if( ik_RT<PAR_G_kpts(1) .or. ik_RT>PAR_G_kpts(2) ) cycle
      do ib=RT_bands(1),RT_bands(2)
-       if(     l_RT_uses_E_DbGd) H_KS(ib,ib,ik_RT,1)=E_reference%E_DbGd(ib,ik_DbGd,1)
-       if(.not.l_RT_uses_E_DbGd) H_KS(ib,ib,ik_RT,1)=E_reference%E(ib,ik,1)
+       if(     l_RT_uses_E_DbGd) H_EQ(ib,ib,ik_RT,1)=E_reference%E_DbGd(ib,ik_DbGd,1)
+       if(.not.l_RT_uses_E_DbGd) H_EQ(ib,ib,ik_RT,1)=E_reference%E(ib,ik,1)
      enddo
    enddo
  enddo

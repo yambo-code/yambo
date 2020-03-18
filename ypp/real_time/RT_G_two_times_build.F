@@ -261,7 +261,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
      !
      if(i_kind==2) then
        !
-       rho_T(:,:,:)=-cI* dG_lesser(:,:,:,1)
+       rho_T(:,:,:)=-cI*dG_lesser(:,:,:,1)
        !
        ! rho and 1-rho
        !
@@ -299,7 +299,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
      !
      if( build_G_les ) then
        !
-       ! Build G<
+       ! Build G<(t,t') = -G(r)(t,t') rho(t') for t>t'
        ! PRA 92, 033419 (2015), Eq.(19a)
        !
        call M_by_M('n','n',RT_nbands,-G_ret(:,:,ik),rho_T(:,:,ik),G_tmp)
@@ -308,7 +308,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
      !
      if( build_G_grt ) then
        !
-       ! Build G>
+       ! Build G>(t,t') = +G(r)(t,t') (1-rho(t')) for t>t'
        ! PRA 92, 033419 (2015), Eq.(19b)
        !
        call M_by_M('n','n',RT_nbands,+G_ret(:,:,ik),b_rho_T(:,:,ik),G_tmp)

@@ -58,7 +58,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use R_lattice,      ONLY:bz_samp,nXkibz
  use hamiltonian,    ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,REF_V_xc_sc,                  &
-&                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,H_KS,    &
+&                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,H_EQ,    &
 &                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_potential,      &
 &                         RT_bands,RT_nbands,RT_nk,l_update_SOC,l_velocity_gauge_corr!,&
 !&                        NE_time
@@ -225,7 +225,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! The KS Hamiltonian
  !====================
- if (.not.l_RT_RWA) Ho_plus_Sigma=Ho_plus_Sigma+H_KS
+ if (.not.l_RT_RWA) Ho_plus_Sigma=Ho_plus_Sigma+H_EQ
  !
  !GPL_EXCLUDE_START
  !

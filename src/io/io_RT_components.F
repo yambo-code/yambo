@@ -398,7 +398,7 @@ subroutine G_lesser_IO(ID,T_size)
  use RT_control,     ONLY:GF_RT_IO_t,SAVE_G_history,NE_i_start_time
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_bands,RT_nbands,RT_nk,l_RT_rotate_DM,&
 &                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now,i_MEM_prev,i_MEM_old, &
-&                         Ho_plus_Sigma,H_KS,l_RT_RWA
+&                         Ho_plus_Sigma,H_EQ,l_RT_RWA
  use netcdf,         ONLY:NF90_UNLIMITED
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_G_kpts
@@ -471,7 +471,7 @@ subroutine G_lesser_IO(ID,T_size)
  if(l_H_sig) then
    if(write_is_on(ID) .and. l_RT_RWA) then
      allocate(H_IO(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),1))
-     H_IO=Ho_plus_sigma(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1)+H_KS(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1)
+     H_IO=Ho_plus_sigma(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1)+H_EQ(:,:,PAR_G_kpts(1):PAR_G_kpts(2),1:1)
      call io_variable_bulk(ID,5,C4=H_IO,IPOS=IPOS)
      deallocate(H_IO)
    else
@@ -520,7 +520,7 @@ subroutine G_lesser_IO(ID,T_size)
    call def_variable_bulk(ID,trim(var_name),5,VAR_SZ(1:3),SP,dim_names=dim_names(1:3))
    if(write_is_on(ID).and.l_RT_RWA) then
      allocate(H_IO(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1,1))
-     H_IO(:,:,1,1)=Ho_plus_sigma(:,:,ik,i_sp_pol)+H_KS(:,:,ik,i_sp_pol)
+     H_IO(:,:,1,1)=Ho_plus_sigma(:,:,ik,i_sp_pol)+H_EQ(:,:,ik,i_sp_pol)
      call io_variable_bulk(ID,5,C2=H_IO(:,:,1,1))
      deallocate(H_IO)
    else

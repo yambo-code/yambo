@@ -25,6 +25,7 @@ subroutine QP_apply_dump_user_CTLs( E, object )
  !
  use pars,          ONLY:schlen
  use electrons,     ONLY:levels,n_sp_pol
+ use R_lattice,     ONLY:nkibz
  use parser_m,      ONLY:parser
  use QP_CTL_m,      ONLY:QP_action,n_QP_actions,QP_ctl_what,QP_ctl_DB_user,&
 &                        QP_ctl_ID,QP_CTL_is_active,QP_CTL_fill
@@ -72,7 +73,7 @@ subroutine QP_apply_dump_user_CTLs( E, object )
          if (STRING_same(trim(db_piece(i2)),"ui" )) QP_action(n_QP_actions)%plan(4)=.TRUE.
          if (STRING_same(trim(db_piece(i2)),"uki")) QP_action(n_QP_actions)%plan(4)=.TRUE.
          if (STRING_same(trim(db_piece(i2)),"uei")) QP_action(n_QP_actions)%plan(5)=.TRUE.
-         if (STRING_same(trim(db_piece(i2)),"ubi")) QP_action(n_QP_actions)%plan(6)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"ubi").and.nkibz>1) QP_action(n_QP_actions)%plan(6)=.TRUE.
        enddo
        if (.not.any((/QP_action(n_QP_actions)%plan(4:6)/))) QP_action(n_QP_actions)%plan(4)=.TRUE.
        !

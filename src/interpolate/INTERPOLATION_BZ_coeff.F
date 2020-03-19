@@ -170,13 +170,18 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  !
  if(info/=0) call error("[INTERPOLATION] Error in -getrs")
  !
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Computing engre",nshells)
+ !
  engre=cZERO
  !
  do i1=2,nshells
    do iv=1,nvalues
      engre(i1,iv)= ZDOTC(Nkm1,star_1(i1,1:Nkm1)/rho(i1),1,cmplx(delta(1:Nkm1,iv),kind=DP),1)
    enddo
+   if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
  enddo
+ !
+ if (.not.INTERPOLATE_is_quiet) call live_timing()
  !
  do iv=1,nvalues
    engre(1,iv)=VALUEs(iv,ikn) - ZDOTU(nshells-1,engre(2:nshells,iv),1,star_1(2:nshells,Nk),1)

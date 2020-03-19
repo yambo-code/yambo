@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
+subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_section)
  !
  ! This routine manages the external qp corrections.
  ! The task is tricky, as YAMBO has three different energy
@@ -45,7 +45,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  use units,         ONLY:HA2EV
  use QP_m,          ONLY:QP_t
  use interfaces,    ONLY:OCCUPATIONS_Fermi
- use com,           ONLY:msg,depth
+ use com,           ONLY:msg
  use electrons,     ONLY:levels,n_sp_pol,E_duplicate,E_reset
  use D_lattice,     ONLY:input_Tel_is_negative
  use R_lattice,     ONLY:bz_samp
@@ -61,6 +61,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  type(bz_samp) ::k
  character(*)  ::msg_fmt
  character(1)  ::object
+ logical,        optional::main_section
  type(QP_t),     optional::qp_impose
  type(QP_ctl_t), optional::QP_ctl_impose(n_sp_pol)
  !
@@ -68,6 +69,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  type(levels)     ::Fermi_en
  integer          ::i_spin,nbf_m_SAVE(2),i_a
+ character(2)     ::sec_mode
  !
  ! Resets
  !========
@@ -105,7 +107,11 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  ! Sectioning
  !=============
- call section('+',"External/Internal QP corrections")
+ sec_mode="+P"
+ if (present(main_section)) then
+   if (main_section) sec_mode="*"
+ endif
+ call section(trim(sec_mode),"External/Internal QP corrections")
  !
  !==============
  ! QP's section
@@ -145,7 +151,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  if ( .not.any( QP_action(:)%active ) ) then 
    !
-   depth=depth-1
+   call section('-P'," ")
    !
    return
    !
@@ -160,7 +166,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    call E_reset(Fermi_en)
    call QP_actions_reset( )
    !
-   depth=depth-1
+   call section('-P'," ")
    !
    return
    !
@@ -189,8 +195,8 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
    !
    if (.not.allocated(en%fo) .and. .not. l_sc_run) then
-     if (QP_ctl_ID==1) call OCCUPATIONS_Fermi(en,k,OBJ="X")
-     if (QP_ctl_ID==2) call OCCUPATIONS_Fermi(en,k,OBJ="K")
+     if (QP_ctl_ID==1) call OCCUPATIONS_Fermi(en,k,OBJ="X+QP")
+     if (QP_ctl_ID==2) call OCCUPATIONS_Fermi(en,k,OBJ="K+QP")
    endif
    !
    if (input_Tel_is_negative) then
@@ -221,6 +227,10 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
  endif
  !
+ ! Energies report
+ !
+ call REPORT_Energies(en%E,k,k,en%nb,(/1,k%nibz/),'Eqp',.FALSE.,.TRUE.)
+ !
  ! CLEAN
  !
  call E_reset(Fermi_en)
@@ -235,7 +245,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  call msg('r','')
  !
- depth=depth-1
+ call section('-P'," ")
  !
  contains
    !

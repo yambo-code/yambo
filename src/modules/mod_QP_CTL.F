@@ -137,7 +137,7 @@ module QP_CTL_m
  !
  interface
    !
-   subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
+   subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_section)
      !
      use electrons,     ONLY:levels,n_sp_pol
      use R_lattice,     ONLY:bz_samp
@@ -150,8 +150,9 @@ module QP_CTL_m
      type(bz_samp) ::k
      character(*)  ::msg_fmt
      character(1)  ::object
-     type(QP_t),       optional::qp_impose
-     type(QP_ctl_t),   optional::QP_ctl_impose(n_sp_pol)
+     logical,        optional::main_section
+     type(QP_t),     optional::qp_impose
+     type(QP_ctl_t), optional::QP_ctl_impose(n_sp_pol)
      !
    end subroutine QP_apply
    !

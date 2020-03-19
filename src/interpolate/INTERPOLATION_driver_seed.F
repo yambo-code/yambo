@@ -105,7 +105,9 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  endif
  if (present(SEED_R3)) INTERP_obj(ID)%D=size(SEED_R3(1,1,:))
  !
- call init_ID(ID,dims,SEED_k,operation)
+ if (present(SEED_E))  call init_ID(ID,dims,SEED_k,operation,"E")
+ if (present(SEED_RT)) call init_ID(ID,dims,SEED_k,operation,"RT")
+ if (present(SEED_QP)) call init_ID(ID,dims,SEED_k,operation,"QP")
  !
  if (present(NEAREST)) then
    INTERP_obj(ID)%use_NN=NEAREST 

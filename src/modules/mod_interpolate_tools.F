@@ -70,6 +70,7 @@ module interpolate_tools
      INTERP_obj(ID)%ID=0
      INTERP_obj(ID)%use_NN=.FALSE.
      INTERP_obj(ID)%in_use=.FALSE.
+     INTERP_obj(ID)%seed_kind=" "
      INTERP_obj(ID)%what=" "
      YAMBO_FREE(INTERP_obj(ID)%k)
      YAMBO_FREE(INTERP_obj(ID)%weights)
@@ -78,18 +79,19 @@ module interpolate_tools
      !
    end subroutine
    !
-   subroutine init_ID(ID,bands,k,operation)
+   subroutine init_ID(ID,bands,k,operation,seed_kind)
      !
      use R_lattice,   ONLY:bz_samp
      !
      integer      , intent(in) :: ID,bands(2)
      type(bz_samp), intent(in) :: k
-     character(*) , intent(in) :: operation
+     character(*) , intent(in) :: operation,seed_kind
      !
      INTERP_obj(ID)%nb=bands
      INTERP_obj(ID)%nk=k%nibz
      INTERP_obj(ID)%in_use=.TRUE.
      INTERP_obj(ID)%use_NN=trim(INTERP_mode)=="NN"
+     INTERP_obj(ID)%seed_kind=seed_kind
      INTERP_obj(ID)%what=operation
      !
      YAMBO_FREE(INTERP_obj(ID)%k)
@@ -167,7 +169,7 @@ module interpolate_tools
     !
     integer,      intent(in) :: ID
     type(levels), intent(in) :: SEED_E
-    !
+    ! 
     integer :: i_s,ib,ik !WS
     !
     do i_s=1,n_sp_pol
@@ -215,7 +217,9 @@ module interpolate_tools
     integer,    intent(in) :: ID
     type(QP_t), intent(in) :: SEED_QP
     !
-    integer :: i_qp,ib,ik,i_s,i_c !WS
+    ! Work Space
+    !
+    integer :: i_qp,ib,ik,i_s,i_ref(4)
     !
     do i_qp=1,SEED_QP%n_states
       !
@@ -225,24 +229,23 @@ module interpolate_tools
       !
       ik   =SEED_QP%table(i_qp,3)
       i_s  =spin(SEED_QP%table(i_qp,:))
-      i_c  =0
-      if (l_INTERP_E ) then
-        i_c=i_c+1
-        INTERP_obj(ID)%SEED(ib,ik,i_c)=real(SEED_QP%E(i_qp))
+      !
+      i_ref=0
+      if (l_INTERP_E  ) i_ref(2)=n_sp_pol
+      if (l_INTERP_dE ) i_ref(3)=i_ref(2)+n_sp_pol
+      if (l_INTERP_W  ) i_ref(4)=i_ref(3)+n_sp_pol
+      if (l_INTERP_E  ) then
+        INTERP_obj(ID)%SEED(ib,ik,i_ref(1)+i_s)=real(SEED_QP%E(i_qp))
       endif
       if (l_INTERP_dE) then
-        i_c=i_c+1
-        INTERP_obj(ID)%SEED(ib,ik,i_c)=real(SEED_QP%E(i_qp))-SEED_QP%E_bare(i_qp)
+        INTERP_obj(ID)%SEED(ib,ik,i_ref(2)+i_s)=real(SEED_QP%E(i_qp))-SEED_QP%E_bare(i_qp)
       endif
       if (l_INTERP_W ) then
-        i_c=i_c+1
-        INTERP_obj(ID)%SEED(ib,ik,i_c)=aimag(SEED_QP%E(i_qp))
+        INTERP_obj(ID)%SEED(ib,ik,i_ref(3)+i_s)=aimag(SEED_QP%E(i_qp))
       endif
       if (l_INTERP_Z ) then
-        i_c=i_c+1
-        INTERP_obj(ID)%SEED(ib,ik,i_c)=real(SEED_QP%Z(i_qp))
-        i_c=i_c+1
-        INTERP_obj(ID)%SEED(ib,ik,i_c)=aimag(SEED_QP%Z(i_qp))
+        INTERP_obj(ID)%SEED(ib,ik,i_ref(4)+i_s)=real(SEED_QP%Z(i_qp))
+        INTERP_obj(ID)%SEED(ib,ik,i_ref(4)+n_sp_pol+i_s)=aimag(SEED_QP%Z(i_qp))
       endif
     enddo
     !

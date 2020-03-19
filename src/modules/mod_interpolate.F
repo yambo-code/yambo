@@ -91,6 +91,7 @@ module interpolate
    integer                  :: ID=0
    logical                  :: in_use=.FALSE.
    logical                  :: use_NN=.FALSE.
+   character(schlen)        :: seed_kind=" "
    character(schlen)        :: what=" "
    real(SP),    allocatable :: weights(:)
    real(SP),    allocatable :: k(:,:)

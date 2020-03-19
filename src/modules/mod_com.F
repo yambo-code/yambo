@@ -56,7 +56,8 @@ module com
  ! Sectioning
  !
  integer           :: depth,isec(5)
- character(1)      :: previous_secmode
+ integer           :: depth_SAVE,isec_SAVE(5)
+ character(2)      :: previous_secmode
  character(schlen) :: secnm
  !
  ! Output Files/Report File

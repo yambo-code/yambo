@@ -549,7 +549,7 @@ subroutine G_lesser_IO(ID,T_size)
    call  io_variable_bulk(ID,6,C2=H_rotation(:,:,ik,i_sp_pol))
  endif
  !
- var_name="H_rotation_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol))
+ var_name="H_equilibrium_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol))
  if ( NE_i_time==1 .and. write_is_on(ID)) then
    l_H_EQ = l_H_sig
  else
@@ -557,7 +557,7 @@ subroutine G_lesser_IO(ID,T_size)
  endif
  !
  if(l_H_EQ) then
-   call def_variable_bulk(ID,"H_equilibrium",7,VAR_sz(1:2),SP,dim_names=dim_names(1:2))
+   call def_variable_bulk(ID,"H_equilibrium",7,VAR_sz(1:3),SP,dim_names=dim_names(1:3))
    call io_variable_bulk(ID,7,C2=H_EQ(:,:,ik,i_sp_pol))
  endif
  !

@@ -264,13 +264,38 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
      enddo
 #endif
      ! exp(-abs(RT_time(i_t)*damp_factor))
-     if(l_dephase_rho) deph_factor=exp(-RT_conf%damp_factor*RT_time(i_T(i_kind)))
      !
-     H_rho_T(:,:,:,i_kind)=H_EQ(:,:,:,1)+Ho_plus_sigma(:,:,:,1)*deph_factor
+     if(.not.l_dephase_rho) H_rho_T(:,:,:,i_kind)=H_EQ(:,:,:,1)+Ho_plus_sigma(:,:,:,1)
+     !
+     if(l_dephase_rho) then
+       !
+       do ib1=RT_bands(1),RT_bands(2)
+         do ib2=RT_bands(1),RT_bands(2)
+           deph_factor=1._SP
+           if((ib1> en%nbf.and.ib2<=en%nbf)) deph_factor=exp(-RT_conf%damp_factor*RT_time(i_T(i_kind)))
+           if((ib1<=en%nbf.and.ib2> en%nbf)) deph_factor=exp(-RT_conf%damp_factor*RT_time(i_T(i_kind)))
+           H_rho_T(ib1,ib2,:,i_kind)=H_EQ(ib1,ib2,:,1)+Ho_plus_sigma(ib1,ib2,:,1)*deph_factor
+         enddo
+       enddo
+       !
+     endif
      !
      if(i_kind==2) then
        !
-       rho_T(:,:,:)=-cI*dG_lesser(:,:,:,1)*deph_factor
+       if(.not.l_dephase_rho) rho_T(:,:,:)=-cI*dG_lesser(:,:,:,1)
+       !
+       if(l_dephase_rho) then
+         !
+         do ib1=RT_bands(1),RT_bands(2)
+           do ib2=RT_bands(1),RT_bands(2)
+             deph_factor=1._SP
+             if((ib1> en%nbf.and.ib2<=en%nbf)) deph_factor=exp(-RT_conf%damp_factor*RT_time(i_T(i_kind)))
+             if((ib1<=en%nbf.and.ib2> en%nbf)) deph_factor=exp(-RT_conf%damp_factor*RT_time(i_T(i_kind)))
+             rho_T(ib1,ib2,:)=-cI*dG_lesser(ib1,ib2,:,1)*deph_factor
+           enddo
+         enddo
+         !
+       endif
        !
        ! rho and 1-rho
        !

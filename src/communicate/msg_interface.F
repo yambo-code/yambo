@@ -257,7 +257,7 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  endif
  if (len_trim(after_msg_)>0) then
    i1=len_trim(msgfmt)
-   if (index(how,"n")>0) then
+   if (msgfmt(i1-1:i1-1)=="/") then
      msgfmt=trim(msgfmt(:i1-2))//',a'//trim(msgfmt(i1-1:i1))
    else
      msgfmt=trim(msgfmt(:i1-1))//',a'//trim(msgfmt(i1:i1))

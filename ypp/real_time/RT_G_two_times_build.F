@@ -36,7 +36,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,RT_nbands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,H_EQ,I1_matrix,RT_all2ibz
- use YPP_real_time,  ONLY:RT_time,RT_conf,GreenF_T_and_W
+ use YPP_real_time,  ONLY:RT_time,RT_conf,GreenF_T_and_W,Rho_deph
  use LIVE_t,         ONLY:live_timing
  !
 #include<memory.h>
@@ -66,7 +66,6 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  call section('*','Two times Green function reconstruction')
  !
  call parser('IncludeEQocc',include_eq_occ)
- call parser('DephaseRho',   l_dephase_rho)
  !
  call parser('BuildSpec', build_Spect)
  call parser('BuildGret', build_G_ret)
@@ -78,6 +77,8 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  call parser('KeepVV', keep_vv)
  call parser('KeepCV', keep_cv)
  call parser('KeepVC', keep_vc)
+ !
+ l_dephase_rho=(Rho_deph>0._SP)
  !
  call RT_k_grid(en,kpt,qpt)
  !
@@ -272,8 +273,8 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
        do ib1=RT_bands(1),RT_bands(2)
          do ib2=RT_bands(1),RT_bands(2)
            deph_factor=1._SP
-           if((ib1> en%nbf.and.ib2<=en%nbf)) deph_factor=exp(-RT_conf%damp_factor*RT_time(i_T(i_kind)))
-           if((ib1<=en%nbf.and.ib2> en%nbf)) deph_factor=exp(-RT_conf%damp_factor*RT_time(i_T(i_kind)))
+           if((ib1> en%nbf.and.ib2<=en%nbf)) deph_factor=exp(-Rho_deph*RT_time(i_T(i_kind)))
+           if((ib1<=en%nbf.and.ib2> en%nbf)) deph_factor=exp(-Rho_deph*RT_time(i_T(i_kind)))
            H_rho_T(ib1,ib2,:,i_kind)=H_EQ(ib1,ib2,:,1)+Ho_plus_sigma(ib1,ib2,:,1)*deph_factor
          enddo
        enddo
@@ -289,8 +290,8 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
          do ib1=RT_bands(1),RT_bands(2)
            do ib2=RT_bands(1),RT_bands(2)
              deph_factor=1._SP
-             if((ib1> en%nbf.and.ib2<=en%nbf)) deph_factor=exp(-RT_conf%damp_factor*RT_time(i_T(i_kind)))
-             if((ib1<=en%nbf.and.ib2> en%nbf)) deph_factor=exp(-RT_conf%damp_factor*RT_time(i_T(i_kind)))
+             if((ib1> en%nbf.and.ib2<=en%nbf)) deph_factor=exp(-Rho_deph*RT_time(i_T(i_kind)))
+             if((ib1<=en%nbf.and.ib2> en%nbf)) deph_factor=exp(-Rho_deph*RT_time(i_T(i_kind)))
              rho_T(ib1,ib2,:)=-cI*dG_lesser(ib1,ib2,:,1)*deph_factor
            enddo
          enddo

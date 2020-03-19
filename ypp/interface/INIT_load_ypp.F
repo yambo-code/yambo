@@ -41,7 +41,7 @@ subroutine INIT_ypp_load(defs)
  use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
  use YPPm,          ONLY:Nel_fac
- use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
+ use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,Rho_deph,&
 &                        Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
 &                        Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr
  use real_time,     ONLY:RT_bands
@@ -360,6 +360,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'TimeStep','Time step',RT_conf%delta_T,unit=Time_unit(1))
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',RT_conf%damping)
  call it(defs,'DampFactor','Damping parameter',RT_conf%damp_factor,unit=E_unit) 
+ call it(defs,'RhoDeph','Dephasing parameter for G_GKBA',Rho_deph,unit=E_unit) 
 ! call it(defs,'MaxContr','Maximum cotribution (%) to excitation',NL_ExcMaxContribution,verb_level=V_real_time) 
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
  call it('f',defs,'PrintExc','Print excited states functions')

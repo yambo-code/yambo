@@ -630,7 +630,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    if (l_flag)           call initactivate(1,"OCCgroup")
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
    if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
-   if (l_RT_G_two_times) call initactivate(1,"LoadGhistory IncludeEQocc EnRngeRt ETStpsRt DampFactor")
+   if (l_RT_G_two_times) call initactivate(1,"LoadGhistory IncludeEQocc EnRngeRt ETStpsRt DampFactor RhoDeph")
    if (l_RT_dos)  then
      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc NoOcc")
      call initactivate(1,"Proj_DOS PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")

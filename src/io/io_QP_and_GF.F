@@ -177,7 +177,7 @@ integer function io_QP_and_GF(what,qp,ID)
  !
  if (index(what,".G")/=0.or.what=="G") then
    !
-   ! Though the GF's parameters are already stored in the QP_descriptions
+   ! Though the GF's parameters are already stored in the qp%desc
    ! I need them on-the-fly to, eventually, rebuild the Green's function
    !
    call io_elemental(ID,VAR="QP_SE_OPERATOR_PARAMETERS",VAR_SZ=7,MENU=0)

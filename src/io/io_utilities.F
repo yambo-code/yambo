@@ -194,7 +194,7 @@ end function all_locations
 function desc_to_varname(desc)
  !
  use pars,          ONLY:schlen
- use stderr,        ONLY:STRING_REMOVE
+ use stderr,        ONLY:STRING_remove
  !
  implicit none
  !
@@ -203,18 +203,18 @@ function desc_to_varname(desc)
  character(schlen)  :: desc_to_varname
  character(schlen)  :: VARNAME
  !
- VARNAME=STRING_REMOVE(STRING_REMOVE(STRING_remove(adjustl(desc)," ","_"),"/","_"),",")
- VARNAME=STRING_REMOVE(STRING_REMOVE(STRING_REMOVE(VARNAME,"[","_"),"]","_"),"`")
+ VARNAME=STRING_remove(STRING_remove(STRING_remove(adjustl(desc)," ","_"),"/","_"),",")
+ VARNAME=STRING_remove(STRING_remove(STRING_remove(VARNAME,"[","_"),"]","_"),"`")
  !
- VARNAME=STRING_REMOVE(VARNAME,"__________","_")    ! 10
- VARNAME=STRING_REMOVE(VARNAME,"_________","_")     ! 9
- VARNAME=STRING_REMOVE(VARNAME,"________","_")      ! 8
- VARNAME=STRING_REMOVE(VARNAME,"_______","_")       ! 7
- VARNAME=STRING_REMOVE(VARNAME,"______","_")        ! 6
- VARNAME=STRING_REMOVE(VARNAME,"_____","_")         ! 5
- VARNAME=STRING_REMOVE(VARNAME,"____","_")          ! 4
- VARNAME=STRING_REMOVE(VARNAME,"___","_")           ! 3
- VARNAME=STRING_REMOVE(VARNAME,"__","_")            ! 2
+ VARNAME=STRING_remove(VARNAME,"__________","_")    ! 10
+ VARNAME=STRING_remove(VARNAME,"_________","_")     ! 9
+ VARNAME=STRING_remove(VARNAME,"________","_")      ! 8
+ VARNAME=STRING_remove(VARNAME,"_______","_")       ! 7
+ VARNAME=STRING_remove(VARNAME,"______","_")        ! 6
+ VARNAME=STRING_remove(VARNAME,"_____","_")         ! 5
+ VARNAME=STRING_remove(VARNAME,"____","_")          ! 4
+ VARNAME=STRING_remove(VARNAME,"___","_")           ! 3
+ VARNAME=STRING_remove(VARNAME,"__","_")            ! 2
  !
  desc_to_varname=VARNAME
  !

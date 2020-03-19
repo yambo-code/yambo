@@ -49,11 +49,17 @@ function io_descriptors(desc,ID)
    return
  endif
  !
- call def_variable_elemental(ID,"VALUES_PER_DESCRIPTOR",n_descs_disk,IP+100,0)
+ call def_variable_elemental(ID,"DESCRIPTORS_SIZES",n_descs_disk,IP+100,0)
  call  io_variable_elemental(ID,I1=desc%size(:n_descs_disk)) !,CHECK=.true.,OP=(/"=="/))
  !
  call def_variable_bulk(ID,"DESCRIPTORS_NAMES",1,(/schlen,n_descs_disk/),0)
  call  io_variable_bulk(ID,1,STR1=desc%str(:n_descs_disk))
+ !
+ call def_variable_bulk(ID,"DESCRIPTORS_KINDS",1,(/schlen,n_descs_disk/),0)
+ call  io_variable_bulk(ID,1,STR1=desc%kind(:n_descs_disk))
+ !
+ call def_variable_bulk(ID,"DESCRIPTORS_TERMS",1,(/schlen,n_descs_disk/),0)
+ call  io_variable_bulk(ID,1,STR1=desc%term(:n_descs_disk))
  !
  do i1=1,n_descs_disk
    !

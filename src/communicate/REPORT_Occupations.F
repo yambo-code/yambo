@@ -28,7 +28,7 @@ subroutine REPORT_Occupations(what,E)
  use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
  use drivers,       ONLY:Finite_Tel
  use com,           ONLY:msg
- use electrons,     ONLY:levels,n_sp_pol,nel
+ use electrons,     ONLY:levels,n_sp_pol,nel,spin_string
  use interfaces,    ONLY:OCCUPATIONS_Gaps
  !
  implicit none
@@ -70,8 +70,7 @@ subroutine REPORT_Occupations(what,E)
  do i_sp_pol=1,n_sp_pol
    !
    if (n_sp_pol==2) then
-     if (i_sp_pol==1) call msg('r',title(1:title_len)//"=== Spin UP channel ===")
-     if (i_sp_pol==2) call msg('r',title(1:title_len)//"=== Spin DOWN channel ===")
+     call msg('r',title(1:title_len)//"=== Spin "//spin_string(i_sp_pol)//" channel ===")
    else
      call msg('r',title(1:title_len)//"=== Gaps and Widths ===")
    endif

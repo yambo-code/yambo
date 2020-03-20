@@ -193,10 +193,20 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  !
  if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
  msgfmt=composed_fmt(trim(gen_fmt(val)),-size(val),.false.,-1)
+ if (len_trim(after_msg_)>0) then
+   i1=len_trim(msgfmt)
+   if (index(how,"n")>0) then
+     msgfmt=trim(msgfmt(:i1-2))//',a'//trim(msgfmt(i1-1:i1))
+   else
+     msgfmt=trim(msgfmt(:i1-1))//',a'//trim(msgfmt(i1:i1))
+   endif
+ endif
  if (len_trim(mesg)>0) then
-   write (lch,trim(msgfmt)) mesg//": ",val 
+   if (len_trim(after_msg_)==0) write (lch,trim(msgfmt)) mesg//": ",val
+   if (len_trim(after_msg_)> 0) write (lch,trim(msgfmt)) mesg//": ",val,trim(after_msg_)
  else
-   write (lch,trim(msgfmt)) mesg,val 
+   if (len_trim(after_msg_)==0) write (lch,trim(msgfmt)) mesg,val
+   if (len_trim(after_msg_)> 0) write (lch,trim(msgfmt)) mesg,val,trim(after_msg_)
  endif
  if (index(how,'l')/=0.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
  if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
@@ -308,10 +318,20 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
    write(gen_fmt_local,'(a)') 'F11.06'
    msgfmt=composed_fmt(trim(gen_fmt_local),-size(val),.false.,-1)
  endif
+ if (len_trim(after_msg_)>0) then
+   i1=len_trim(msgfmt)
+   if (msgfmt(i1-1:i1-1)=="/") then
+     msgfmt=trim(msgfmt(:i1-2))//',a'//trim(msgfmt(i1-1:i1))
+   else
+     msgfmt=trim(msgfmt(:i1-1))//',a'//trim(msgfmt(i1:i1))
+   endif
+ endif
  if (len_trim(mesg)>0) then
-   write (lch,trim(msgfmt)) mesg//": ",val 
+   if (len_trim(after_msg_)==0) write (lch,trim(msgfmt)) mesg//": ",val
+   if (len_trim(after_msg_)> 0) write (lch,trim(msgfmt)) mesg//": ",val,trim(after_msg_)
  else
-   write (lch,trim(msgfmt)) mesg,val 
+   if (len_trim(after_msg_)==0) write (lch,trim(msgfmt)) mesg,val
+   if (len_trim(after_msg_)> 0) write (lch,trim(msgfmt)) mesg,val,trim(after_msg_)
  endif
  if (index(how,'l')/=0.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
  if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")

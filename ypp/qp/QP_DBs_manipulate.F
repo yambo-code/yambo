@@ -23,7 +23,7 @@
 !
 subroutine QP_DBs_manipulate( E )
  !
- use pars,          ONLY:schlen
+ use pars,          ONLY:schlen,msg_len
  use YPPm,          ONLY:QP_db_operation,QP_db_prefactor,n_QP_dbs,QP_db,QP_db_what,QP_db_name,QP_db_input_control
  use stderr,        ONLY:intc,real2ch
  use com,           ONLY:msg
@@ -90,9 +90,9 @@ subroutine QP_DBs_manipulate( E )
    !
    ACTION=trim(QP_db_operation(i_db))//trim(real2ch(QP_db_prefactor(i_db)))//" x "//trim(QP_db_what(i_db))
    !
-   call msg('s',repeat("-",len_trim(QP_db_name(i_db))+13))
+   call msg('s',repeat("-",msg_len))
    call msg('s','[DB #'//trim(intc(i_db))//']'//trim(ACTION)//" < "//trim(QP_db_name(i_db)))
-   call msg('s',repeat("-",len_trim(QP_db_name(i_db))+13))
+   call msg('s',repeat("-",msg_len))
    !
    if (index(QP_db_what(i_db),"E")>0) plan_EWZG(i_db,1)=.TRUE.
    if (index(QP_db_what(i_db),"W")>0) plan_EWZG(i_db,2)=.TRUE.
@@ -123,14 +123,17 @@ subroutine QP_DBs_manipulate( E )
  do i_qp=1,n_GROUNDS
    !
    QP_db_kind=" "
-   call msg('s',repeat("-",60))
+   call msg('s',repeat("-",msg_len))
    do i_d=1,qp(i_qp)%desc%n
-     if (index(qp(i_qp)%desc%str(i_d),"Real Axis GW")>0)       QP_db_kind=trim(QP_db_kind)//"_gw_real_axis"
-     if (index(qp(i_qp)%desc%str(i_d),"El-Ph Self-Energy")>0)  QP_db_kind=trim(QP_db_kind)//"_el_ph"
-     if (index(qp(i_qp)%desc%str(i_d),"PPA imaginary")>0)      QP_db_kind=trim(QP_db_kind)//"_gw_ppa"
+     if (index(qp(i_qp)%desc%sval(i_d),"Real")>0) QP_db_kind=trim(QP_db_kind)//"_gw_real_axis"
+     if (index(qp(i_qp)%desc%sval(i_d),"Fan")>0)  QP_db_kind=trim(QP_db_kind)//"_el_ph"
+     if (index(qp(i_qp)%desc%sval(i_d),"Lamb")>0) QP_db_kind=trim(QP_db_kind)//"_el_photon"
+     if (index(qp(i_qp)%desc%sval(i_d),"PPA")>0)  QP_db_kind=trim(QP_db_kind)//"_gw_ppa"
    enddo
+   !
    QP_merged_name='QP_merged_'//trim(intc(i_qp))//trim(QP_db_kind)
    call COM_write_desc('s','['//trim(QP_merged_name)//']',qp(i_qp)%desc)
+   !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
    i_err=io_QP_and_GF(trim(QP_merged_name),qp(i_qp),ID)
    !

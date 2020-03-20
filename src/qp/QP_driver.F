@@ -177,14 +177,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    endif
    if(GW_iterations/=0) call error('Self-consistent COHSEX not implemented yet')
    !
-   qp%desc%str(2)='COHSEX'
+   qp%desc%sval(2)='COHSEX'
    QP_DB_kind=QP_SE_COHSEX
    !
  else
    !
-   if (l_elel_corr)     qp%desc%str(2)='Real Axis'
-   if (l_elph_corr)     qp%desc%str(2)='Fan + DW'
-   if (l_elphoton_corr) qp%desc%str(2)='Lamb'
+   if (l_elel_corr)     qp%desc%sval(2)='Real Axis'
+   if (l_elph_corr)     qp%desc%sval(2)='Fan + DW'
+   if (l_elphoton_corr) qp%desc%sval(2)='Lamb'
    !
    ! Here I am not considering the case where ELPH + GW is used.
    ! For this case I need to create a new global KIND.

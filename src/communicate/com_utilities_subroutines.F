@@ -353,7 +353,7 @@ subroutine COM_write_desc(dest,prefix,desc)
  character(msg_len):: local_var,local_term
  character(1)      :: space=" "
  !
- call msg(dest,prefix)
+ if (dest(1:1)/="s") call msg(dest,prefix)
  !
  i_space=0
  if (index(dest,"o ")>0) i_space=1
@@ -382,6 +382,6 @@ subroutine COM_write_desc(dest,prefix,desc)
    endif
  enddo
  !
- call msg(dest,prefix)
+ if (dest(1:1)/="s") call msg(dest,prefix)
  !
 end subroutine COM_write_desc

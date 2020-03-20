@@ -498,22 +498,37 @@ module IO_m
      io_resetable(ID)=.true.
    end subroutine
    !
-   subroutine IO_desc_duplicate(desc_in,desc_out)
-     type(IO_desc), intent(in)  :: desc_in
-     type(IO_desc), intent(out) :: desc_out
-     desc_out%n    = desc_in%n
-     desc_out%size = desc_in%size
-     desc_out%term = desc_in%term
-     desc_out%str  = desc_in%str
-     desc_out%kind = desc_in%kind
-     desc_out%check= desc_in%check
-     desc_out%ops  = desc_in%ops
-     desc_out%ival = desc_in%ival
-     desc_out%rval = desc_in%rval
-     desc_out%dval = desc_in%dval
-     desc_out%cval = desc_in%cval
-     desc_out%sval = desc_in%sval
-     desc_out%lval = desc_in%lval
+   subroutine IO_desc_element_duplicate(desc_in,desc_out,i_d_in,i_d_out)
+     type(IO_desc),    intent(in)  :: desc_in
+     type(IO_desc),    intent(out) :: desc_out
+     integer,          intent(in)  :: i_d_in,i_d_out
+     desc_out%size(i_d_out)   = desc_in%size(i_d_in)
+     desc_out%term(i_d_out)   = desc_in%term(i_d_in)
+     desc_out%str (i_d_out)   = desc_in%str(i_d_in)
+     desc_out%kind(i_d_out)   = desc_in%kind(i_d_in)
+     desc_out%check(i_d_out)  = desc_in%check(i_d_in)
+     desc_out%ops (:,i_d_out) = desc_in%ops(:,i_d_in)
+     desc_out%ival(:,i_d_out) = desc_in%ival(:,i_d_in)
+     desc_out%rval(:,i_d_out) = desc_in%rval(:,i_d_in)
+     desc_out%dval(i_d_out)   = desc_in%dval(i_d_in)
+     desc_out%cval(i_d_out)   = desc_in%cval(i_d_in)
+     desc_out%sval(i_d_out)   = desc_in%sval(i_d_in)
+     desc_out%lval(i_d_out)   = desc_in%lval(i_d_in)
+   end subroutine
+   !
+   subroutine IO_desc_duplicate(desc_in,desc_out,offset)
+     type(IO_desc),    intent(in)  :: desc_in
+     type(IO_desc),    intent(out) :: desc_out
+     integer,optional, intent(in)  :: offset
+     integer  :: i_d,off_
+     off_=0
+     if (present(offset)) then
+       off_=offset
+     endif
+     desc_out%n    = desc_in%n + off_
+     do i_d=1,desc_in%n
+       call IO_desc_element_duplicate(desc_in,desc_out,i_d+off_,i_d)
+     enddo
    end subroutine
    !
    subroutine IO_desc_reset(desc)

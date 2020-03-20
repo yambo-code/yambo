@@ -107,15 +107,16 @@ module YPP_real_time
  real(SP),allocatable     :: RT_time(:)
  !
  type RT_ctl
-   real(SP) :: delta_W           =0._SP   ! delta W
-   real(SP) :: W_range(2)        =0._SP   ! energy range 
-   integer  :: W_n_steps         =0       ! number of steps in energy mesh
-   real(SP) :: delta_T           =0._SP   ! delta T
-   real(SP) :: T_range(2)        =0._SP   ! time windows for the transform
-   integer  :: T_n_steps         =0       ! number of steps in Time mesh
-   real(SP) :: damp_factor       =0._SP   ! factor used in damping
-   real(SP) :: Field_damp_factor =0._SP   ! factor used deduced from the Field 
-   character(schlen) :: damping  ="NONE"  ! Damp type (none, lorentian or gaussian)
+   real(SP) :: delta_W             =0._SP   ! delta W
+   real(SP) :: X_W_range(2)        =0._SP   ! Response energy range 
+   real(SP) :: Carriers_W_range(2) =0._SP   ! Carriers energy range 
+   integer  :: W_n_steps           =0       ! number of steps in energy mesh
+   real(SP) :: delta_T             =0._SP   ! delta T
+   real(SP) :: T_range(2)          =0._SP   ! time windows for the transform
+   integer  :: T_n_steps           =0       ! number of steps in Time mesh
+   real(SP) :: damp_factor         =0._SP   ! factor used in damping
+   real(SP) :: Field_damp_factor   =0._SP   ! factor used deduced from the Field 
+   character(schlen) :: damping    ="NONE"  ! Damp type (none, lorentian or gaussian)
  end type RT_ctl
  !
  type(RT_ctl), save :: RT_conf 

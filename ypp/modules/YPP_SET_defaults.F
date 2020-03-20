@@ -227,7 +227,8 @@ subroutine YPP_SET_defaults()
  !
  RT_conf%T_range(:)  =real((/-FS2AUT,-FS2AUT/),SP)
  RT_conf%W_n_steps   =200
- RT_conf%W_range(:)  =(/0._SP,20./HA2EV/)
+ RT_conf%Carriers_W_range(:)  =(/0._SP,20./HA2EV/)
+ RT_conf%X_W_range(:)  =(/0._SP,20./HA2EV/)
  Probe_Keyword ="none"
  Pump_Keyword  ="none"
  X_order       =1

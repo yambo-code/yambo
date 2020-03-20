@@ -56,7 +56,7 @@ subroutine INIT_QP(comment)
    YAMBO_ALLOC(I_states,(n_states,4)) 
    call PARSER_array(mode="read",VAR="QPkrange",N=n_states,M=4,I_v=I_states)
  endif
- call PARSER_array(mode="write",VAR="QPkrange",DESC='# '//trim(comment)//' generalized Kpoint/Band indices',&
+ call PARSER_array(mode="write",VAR="QPkrange",DESC=trim(comment)//' generalized Kpoint/Band indices',&
 &                  N=n_states,M=4,I_v=I_states)
  !
  YAMBO_FREE(I_states)
@@ -71,7 +71,7 @@ subroutine INIT_QP(comment)
      YAMBO_ALLOC(R_states,(n_states,4)) 
      call PARSER_array(mode="read",VAR="QPerange",N=N_states,M=4,R_v=R_states)
    endif
-   call PARSER_array(mode="write",VAR="QPerange",DESC='# '//trim(comment)//' generalized Kpoint/Energy indices',&
+   call PARSER_array(mode="write",VAR="QPerange",DESC=trim(comment)//' generalized Kpoint/Energy indices',&
 &                    N=n_states,M=4,R_v=R_states,Kn=(/"i","i","r","r"/))
  endif
  !

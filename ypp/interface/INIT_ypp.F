@@ -642,7 +642,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
    if (l_RT_occupations.or.l_RT_lifetimes) then
      if (l_RT_bands) call initactivate(1,"PROJECT_mode PROJECT_depth PROJECT_threshold")
-     if (l_RT_time)  call initactivate(1,"BANDS_path EnRngeRt")
+     if (l_RT_time)  call initactivate(1,"BANDS_path CarrEnRnge")
    endif
    if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
    if (l_RT_dos)  then
@@ -662,7 +662,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
 #if defined _YPP_NL
  if(l_NL_X) call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor PrtPwrSpec")
- if(l_NL_exc) call initactivate(1,"Xorder PrintExc")!  MaxContr")
+ if(l_NL_exc) call initactivate(1,"Xorder PrintExc")
 #endif
  !
 #if defined _YPP_MAGNETIC

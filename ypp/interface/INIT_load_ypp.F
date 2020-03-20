@@ -23,6 +23,7 @@
 !
 subroutine INIT_ypp_load(defs)
  !
+ use units
  use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,V_RL,&
 &                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics,V_io
@@ -361,7 +362,8 @@ subroutine INIT_ypp_load(defs)
  ! RT Post-Processing
  !
  call it(defs,'Xorder','Max order of the response/exc functions',X_order)
- call it(defs,'EnRngeRt','Energy range',RT_conf%W_range,unit=E_unit)
+ call it(defs,'EnRngeRt','Energy range',RT_conf%X_W_range,unit=E_unit)
+ call it(defs,'CarrEnRnge','Carriers Energy range',RT_conf%Carriers_W_range,unit=E_unit,verb_level=V_real_time)
  call it(defs,'ETStpsRt','Total Energy steps',RT_conf%W_n_steps)
  call it(defs,'TimeRange','Time-window where processing is done',RT_conf%T_range,unit=Time_unit(1))
  call it(defs,'TimeStep','Time step',RT_conf%delta_T,unit=Time_unit(1))

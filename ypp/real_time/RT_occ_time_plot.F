@@ -63,8 +63,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  ! Setup
  !-------
- call parser('OCCgroup', l_OCCgroup)
- call parser('EnRngeRt', l_E_select)
+ call parser('OCCgroup',   l_OCCgroup)
+ call parser('CarrEnRnge', l_E_select)
  !
  data_to_plot_cumulative=rZERO
  !
@@ -198,7 +198,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      if (.not.do_state(ib,ik,i_spin)) cycle
      !
      if (l_E_select) then
-       if (RT_carriers%E_bare(i_RT)<RT_conf%W_range(1).or.RT_carriers%E_bare(i_RT)>RT_conf%W_range(2)) cycle
+       if (RT_carriers%E_bare(i_RT)<RT_conf%Carriers_W_range(1).or.RT_carriers%E_bare(i_RT)>RT_conf%Carriers_W_range(2)) cycle
      endif
      !  
      if (.not.l_OCCgroup_path) then

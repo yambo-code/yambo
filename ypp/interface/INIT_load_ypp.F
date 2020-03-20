@@ -330,6 +330,7 @@ subroutine INIT_ypp_load(defs)
  if(n_spinor==2) call it('f',defs,'ExpandSymm' , 'Add inv and magnetic symms if possible')
  call it('f',defs,'RmAllSymm' , 'Remove all symmetries')
  call it('f',defs,'RmTimeRev' , 'Remove Time Reversal')
+ call it('f',defs,'KeepKGrid' , 'Do not expand the k-grid')
  !
  call it(defs,'Efield1','First external Electric Field',E_field(1,:))
  call it(defs,'GvecsCut','Max number of G-vectors in the new wave-function',wf_ng_cut,unit=G_unit,verb_level=V_RL)

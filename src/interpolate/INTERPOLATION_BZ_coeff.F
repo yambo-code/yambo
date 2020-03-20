@@ -53,7 +53,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  type(PP_indexes)  :: px
  real(DP)          :: R2_min,R2
  real(SP)          :: v(3),star_vec(3,nsym)
- integer           :: ik,ik2,ik_prod,iv,i1,i2,nstar,Nkm1,info,ikn,Npx(1)
+ integer           :: ik,ik2,ik_prod,iv,i1,i2,nstar,Nkm1,info,ikn,Npx(1),Nlive
  !
  ! Parameters
  !
@@ -124,13 +124,14 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  ! Par Proc
  !
  Npx=(Nkm1*(Nkm1+1))/2
- if (INTERPOLATE_is_serial) then
-   if (.not.INTERPOLATE_is_quiet) call live_timing("Computing h_mat",Npx(1))
- else
+ Nlive=Npx(1)
+ if (.not.INTERPOLATE_is_serial) then
    call PP_indexes_reset(px)
    call PARALLEL_index(px,Npx)
-   if (.not.INTERPOLATE_is_quiet) call live_timing("Computing h_mat",px%n_of_elements(myid+1))
+   Nlive=px%n_of_elements(myid+1)
  endif
+ !
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Computing h_mat",Nlive)
  !
  do ik=1,Nkm1
    do ik2=ik,Nkm1
@@ -138,17 +139,18 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
      if (.not.INTERPOLATE_is_serial) then
        if (.not.px%element_1D(ik_prod)) cycle
      endif
-     if(ik2==ik) h_mat(ik,ik)=real(ZDOTC(nshells-1,star_1(2:nshells,ik),1,star_1(2:nshells,ik),1),DP)
+     if(ik2==ik) h_mat(ik,ik)=real(ZDOTC(nshells-1,star_1(2:nshells,ik),1,star_1(2:nshells,ik),1),SP)
      if(ik2/=ik) then
-       h_mat(ik,ik2)=ZDOTC(nshells-1,star_1(2:nshells,ik2),1,star_1(2:nshells,ik),1)
+       h_mat(ik,ik2)=cmplx(ZDOTC(nshells-1,star_1(2:nshells,ik2),1,star_1(2:nshells,ik),1),kind=SP)
        h_mat(ik2,ik)=conjg(h_mat(ik,ik2))
      endif
      if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
    enddo
  enddo
- if (.not.INTERPOLATE_is_quiet) call live_timing()
  !
  if (.not.INTERPOLATE_is_serial) call PP_redux_wait(h_mat)
+ !
+ if (.not.INTERPOLATE_is_quiet) call live_timing()
  !
  do ik=1,Nkm1
    star_1(2:nshells,ik) = star_1(2:nshells,ik) * sqrt(rho(2:nshells))
@@ -170,16 +172,30 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  !
  if(info/=0) call error("[INTERPOLATION] Error in -getrs")
  !
- if (.not.INTERPOLATE_is_quiet) call live_timing("Computing engre",nshells)
+ ! Par Proc
+ !
+ Nlive=nshells
+ if (.not.INTERPOLATE_is_serial) then
+   call PP_indexes_reset(px)
+   call PARALLEL_index(px,(/nshells/))
+   Nlive=px%n_of_elements(myid+1)
+ endif
+ !
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Computing engre",Nlive)
  !
  engre=cZERO
  !
  do i1=2,nshells
+   if (.not.INTERPOLATE_is_serial) then
+     if (.not.px%element_1D(i1)) cycle
+   endif
    do iv=1,nvalues
      engre(i1,iv)= ZDOTC(Nkm1,star_1(i1,1:Nkm1)/rho(i1),1,cmplx(delta(1:Nkm1,iv),kind=DP),1)
    enddo
    if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
  enddo
+ !
+ if (.not.INTERPOLATE_is_serial) call PP_redux_wait(engre)
  !
  if (.not.INTERPOLATE_is_quiet) call live_timing()
  !

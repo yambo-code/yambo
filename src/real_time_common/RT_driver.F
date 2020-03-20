@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -25,7 +25,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_use_collisions,l_use_Hxc_collisions,l_elph_scatt,l_elel_scatt,l_elphoton_scatt
- use stderr,         ONLY:set_real_printed_length,real2ch
+ use stderr,         ONLY:real2ch
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_spin,n_spinor
  use X_m,            ONLY:X_t
@@ -92,8 +92,6 @@ subroutine RT_driver(E,X,k,q,Dip)
  if (l_elphoton_scatt.and.&
 &   (l_elel_scatt.or.l_elph_scatt)) sec_title(3)='+el-photon'
  !
- call set_real_printed_length(f_length=10,g_length=10)  
- !
  ! Potential 
  !===========
  call XC_potentials(H_potential)
@@ -108,7 +106,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  ! GPL_EXCLUDE_START
  !
- call msg('s','Scattering(s):'//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
+ call msg('s','Scattering(s)'//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
  !
  ! GPL_EXCLUDE_END
  !
@@ -370,7 +368,6 @@ subroutine RT_driver(E,X,k,q,Dip)
      ! GPL_EXCLUDE_END
      !
      if (allocated(HXC_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
-     call set_real_printed_length()
    end subroutine
    !
    subroutine RT_timing(steps)
@@ -389,7 +386,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                         LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP)
        else
          LT_pump=.FALSE.
-         call live_timing('[RT] Dynamics :',NE_steps-NE_i_start_time+1,DEPTH=0.01_SP)
+         call live_timing('[RT] Dynamics ',NE_steps-NE_i_start_time+1,DEPTH=0.01_SP)
        endif
        !
      else if(steps>0) then
@@ -401,7 +398,7 @@ subroutine RT_driver(E,X,k,q,Dip)
        if (NE_i_time>=LT_pump_steps.and.LT_pump) then
          LT_pump=.FALSE.
          call live_timing( )
-         call live_timing('[RT] Dynamics (pump-free region) :',NE_steps-LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP) 
+         call live_timing('[RT] Dynamics (pump-free region) ',NE_steps-LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP) 
        endif
        call live_timing(steps=steps)
        !

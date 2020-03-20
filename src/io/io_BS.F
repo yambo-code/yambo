@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,11 +34,12 @@ integer function io_BS(iq,X,ID)
  use parallel_m,    ONLY:myid
  use pointers,      ONLY:linkM2V
  use BS,            ONLY:BS_blk,BS_K_has_been_calculated_loaded,BS_K_coupling
- use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
+ use BS_solvers,    ONLY:BSS_desc,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,&
 &                        def_variable_bulk,io_variable_bulk,frag_BS_K,&
 &                        write_is_on,io_header,io_mode,VERIFY, &
-&                        io_fragment,IO_NOT_ALLOWED,io_BS_K
+&                        io_fragment,IO_NOT_ALLOWED,io_BS_K,&
+&                        IO_desc,IO_desc_reset,IO_desc_duplicate
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
@@ -51,7 +52,7 @@ integer function io_BS(iq,X,ID)
  complex(SP),pointer ::tmp_link(:)
  integer             ::i_block,i1,n1,n2,block_pos,VAR_ID,n_blocks
  character(schlen)   ::ch,db_name,PARALLEL_STRUCTURE
- character(lchlen)   ::local_description(100)
+ type(IO_desc)       ::local_desc
  !
  if (.not.io_BS_K.and.maxval(io_sec(ID,:))>1) then
    io_BS=IO_NOT_ALLOWED
@@ -79,13 +80,13 @@ integer function io_BS(iq,X,ID)
      goto 1
    endif
    !
-   io_BS=variables_BS(ID,iq,local_description,.TRUE.,X=X)
+   io_BS=variables_BS(ID,iq,local_desc,.TRUE.,X=X)
    !
    if (io_BS/=0) then
      !
      ! reset the descriptions...
      !
-     BSS_n_descs=0
+     call IO_desc_reset(BSS_desc)
      !
      goto 1
      !
@@ -93,14 +94,7 @@ integer function io_BS(iq,X,ID)
    !
    ! Descriptions transfer
    !
-   if (BSS_n_descs==0) then
-     do i1=1,100
-       if (len_trim(local_description(i1))>0) then
-         BSS_n_descs=BSS_n_descs+1
-         BSS_description(BSS_n_descs)=local_description(i1)
-       endif
-     enddo
-   endif
+   call IO_desc_duplicate(local_desc,BSS_desc)
    !
  endif
  !

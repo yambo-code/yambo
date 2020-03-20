@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM
@@ -31,11 +31,11 @@ subroutine RT_output(what,VALUES,TIME,E)
  use fields,         ONLY:A_tot,A_ind,A_ext
  use electrons,      ONLY:n_spin,Spin_magn
  use D_lattice,      ONLY:Bose_Temp
- use stderr,         ONLY:set_real_printed_length,STRING_split,real2ch
+ use stderr,         ONLY:STRING_split,real2ch
  use RT_output_m,    ONLY:N_MAX_RT_o_files,RT_descriptions_dumped,RT_o_file_is_open,&
 &                         N_RT_o_files,RT_o_file_is_open,RT_o_file_short,RT_o_file_long,&
 &                         n_RT_headings,RT_headings,N_MAX_RT_headings
- use RT_control,     ONLY:RT_do_it,RT_description,n_RT_descriptions
+ use RT_control,     ONLY:RT_do_it,RT_desc
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_spin_magn,RT_orbt_magn,l_lftm_fit_temperatures, &
 &                         EE_prefactor,EP_prefactor,EP_abs_prefactor,RAD_prefactor,    &
 &                         RT_Tfit_lifetimes
@@ -124,8 +124,6 @@ subroutine RT_output(what,VALUES,TIME,E)
  !
  call timing('RT output',OPR='start')
  !
- call set_real_printed_length(f_length=15,g_length=15)
- !
  do i_f=1,N_RT_o_files
    !
    if (.not.file_is_todo(i_f)) cycle
@@ -140,9 +138,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    !---------------------------
    !
    if (.not.RT_descriptions_dumped(i_f)) then
-     do i_desc=1,n_RT_descriptions
-       call msg('o '//trim(RT_o_file_short(i_f)),'#',trim(RT_description(i_desc)),INDENT=0)
-     enddo
+     call COM_write_desc('o '//trim(RT_o_file_short(i_f)),'#',RT_desc)
      if (n_spin>1.and.trim(RT_o_file_short(i_f))=="spin_magnetization") then
        call msg('o '//trim(RT_o_file_short(i_f)),'#')
        dumb_ch="Equilibrium spin      magnetization is "//&
@@ -283,8 +279,6 @@ subroutine RT_output(what,VALUES,TIME,E)
    call msg('o '//trim(RT_o_file_short(i_f)),'',data_to_dump(1:n_RT_headings(i_f)),USE_TABS=.TRUE.)
    !
  enddo
- !
- call set_real_printed_length( )
  !
  call timing('RT output',OPR='stop')
  !

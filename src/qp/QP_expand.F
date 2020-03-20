@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,6 +23,7 @@
 !
 subroutine QP_expand(k,qp,qp_expanded)
  !
+ use IO_m,          ONLY:IO_desc_duplicate
  use pars,          ONLY:SP
  use QP_m,          ONLY:QP_t
  use R_lattice,     ONLY:bz_samp
@@ -38,7 +39,7 @@ subroutine QP_expand(k,qp,qp_expanded)
  !
  ! Components of QP_t
  !
- !  character(schlen)  :: description(max_qp_descs)
+ !  type(IO_desc)      :: desc   [see mod_IO.F]
  !  integer,    pointer:: table(:,:) => null()
  !  real(SP)   ,pointer:: k(:,:)     => null()
  !  real(SP)   ,pointer:: wk(:)      => null()
@@ -50,9 +51,7 @@ subroutine QP_expand(k,qp,qp_expanded)
  !  integer  :: nb
  !  integer  :: n_states
  !
- qp_expanded%n_descs=qp%n_descs
- qp_expanded%nb=qp%nb
- qp_expanded%description=qp%description
+ call IO_desc_duplicate(qp%desc,qp_expanded%desc)
  !
  call k_ibz2bz(k,'i',.false.)
  !

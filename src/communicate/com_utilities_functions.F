@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -24,7 +24,7 @@
 logical function OF_exists(name)
  !
  use pars,      ONLY:max_open_ofs
- use com,       ONLY:opened_of
+ use com,       ONLY:of_opened
  !
  implicit none
  !
@@ -32,7 +32,7 @@ logical function OF_exists(name)
  integer      ::i_f
  OF_exists=.false. 
  do i_f=1,max_open_ofs
-   if (index(opened_of(i_f),name)/=0) OF_exists=.TRUE.
+   if (index(of_opened(i_f),name)/=0) OF_exists=.TRUE.
  enddo
  !
 end function OF_exists

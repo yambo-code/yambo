@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -36,7 +36,6 @@ subroutine k_grids(en,k,Xk,q)
 &                              U_k_pts,U_q_pts,U_q_shifts,USER_k,k_grid_printer
  use LIVE_t,              ONLY:live_timing_is_on
  use zeros,               ONLY:k_iku_zero
- use stderr,              ONLY:set_real_printed_length
  !
 #include<memory.h>
  !
@@ -68,8 +67,8 @@ subroutine k_grids(en,k,Xk,q)
  call k_ibz2bz( q,'i',.false.)
  call k_ibz2bz(Xk,'i',.false.)
  !
- call msg("s",'Q-points  (BZ):', q%nbz)
- call msg("s",'K-points  (BZ):',Xk%nbz)
+ call msg("s",'Q-points  (BZ)', q%nbz)
+ call msg("s",'K-points  (BZ)',Xk%nbz)
  !
  call parser('NoWeights'   ,No_Weight)
  call parser('ForceUserPts',Force_User_points)
@@ -193,7 +192,7 @@ subroutine k_grids(en,k,Xk,q)
      !
    enddo
    !
-   call msg("s",'User K-points :',USER_k%nbz)
+   call msg("s",'User K-points ',USER_k%nbz)
    !
    ! Extended grid
    !
@@ -243,7 +242,7 @@ subroutine k_grids(en,k,Xk,q)
    enddo q_main_loop
    Q_user%nibz=Q_user%nibz-1
    !
-   if (Q_user%nibz>=1) call msg("s",'User Q-points :',Q_user%nibz)
+   if (Q_user%nibz>=1) call msg("s",'User Q-points ',Q_user%nibz)
    !
    if (Force_User_points) then
      call k_grid_printer(Q_user%nibz,Q_user%pt,trim(coo_in),"Y")
@@ -319,14 +318,7 @@ subroutine k_grids(en,k,Xk,q)
          !
        enddo
        !
-       ! Print the shifted mesh
-       ! Ensure 7 *significant figures*, otherwise round off errors may occur later
-       !
-       call set_real_printed_length(f_length=10,g_length=10)
-       !
        call k_grid_printer(Xk%nibz,k_plus_q,trim(coo_out),"none")
-       !
-       call set_real_printed_length( )
        !
      enddo
       !

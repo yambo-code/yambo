@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -36,7 +36,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
  use stderr,         ONLY:real2ch,intc
  use vec_operate,    ONLY:iku_v_norm
- use RT_control,     ONLY:RT_apply,RT_carriers_object,RT_carriers_to_RT_k,RT_carriers_to_RT_E
+ use RT_control,     ONLY:RT_apply,RT_carriers_object,RT_carriers_to_RT_k,RT_carriers_to_RT_E,RT_desc
  use real_time,      ONLY:RT_carriers,RT_bands
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,electrons_bands_interpolate,INTERP_obj,INTERP_mode
  use LIVE_t,         ONLY:live_timing
@@ -55,8 +55,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  type(bz_samp)         :: RT_k
  type(levels)          :: CIRCUIT_E,CIRCUIT_dE,RT_E
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
- character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation
- character(lchlen)     :: of_string
+ character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation,k_label
  logical               :: l_normalize_Nel
  integer               :: ib,ik,i_RT,i_T,n_values,ID_df_or_G,ID_spin,ID_magn,ID_bands(3)
  logical, external     :: file_exists
@@ -197,7 +196,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    !
    call of_open_close(file_name_rt,'ot')
    !
-   call RT_write_descriptions(trim(file_name_rt_save))
+   call COM_write_desc('o '//trim(file_name_rt_save),'#',RT_desc)
    !
    call msg('o bands',"#"," ",INDENT=0)
    call msg('o bands',"#",' TIME= '//trim(real2ch( RT_time(i_T)*AUT2FS ))//' fs',INDENT=0)
@@ -232,11 +231,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
          values(2)=(CIRCUIT_E_db%E(ib,ik,1)+CIRCUIT_dE%E(ib,ik,1))*HA2EV
        endif
        !
-       call msg('o bands',' ',values(:n_values),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
-       if (len_trim(CIRCUIT_k_label(ik))>0) then
-         of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik))//"]"
-       endif
-       call msg_deliver('bands',of_string)  
+       k_label=""
+       if (len_trim(CIRCUIT_k_label(ik))>0) k_label="  ["//trim(CIRCUIT_k_label(ik))//"]"
+       call msg('o bands',' ',values(:n_values),INDENT=0,USE_TABS=.true.,after_msg=k_label)
        !
      enddo
      !

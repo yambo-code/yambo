@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -108,8 +108,8 @@ subroutine check_periodic_directions(is_cut)
    return
  endif
  !
- call msg('r', 'Non-periodic chartesian directions :',trim(non_periodic_directions))
- call msg('r', 'Optical renormalization        [au]:',eps_2_alpha)
- call msg('rn','Polarizability dimension           :',trim(alpha_dim))
+ call msg('r', 'Non-periodic chartesian directions ',trim(non_periodic_directions))
+ call msg('r', 'Optical renormalization            ',eps_2_alpha,"[au]")
+ call msg('rn','Polarizability dimension           ',trim(alpha_dim))
  !
 end subroutine

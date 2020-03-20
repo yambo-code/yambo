@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -74,16 +74,6 @@ module X_output
      !
    end subroutine
    !
-   subroutine X_write_descriptions(n_descs,desc)
-     integer      :: n_descs,i_d
-     character(*) :: desc(n_descs)
-     call msg('o eps refl eel fxc alpha off beta moke jdos','#')    
-     do i_d=1,n_descs
-       call msg('o eps refl eel fxc alpha off beta moke jdos','#  ',trim(desc(i_d)),INDENT=0)    
-     enddo
-     call msg('o eps refl eel fxc alpha off beta moke jdos','#')    
-   end subroutine
-   !
    subroutine X_write_q_plus_G(iq,Q_plus_G_pt,ig)
      !
      integer           :: iq
@@ -92,26 +82,26 @@ module X_output
      character(schlen) :: message(9)
      !
      if (iq==1.and.ig==1) then
-       message(1) = '# Absorption @ Q('//trim(intc(iq))//') [q->0 direction] :'
-       message(2) = '# EELS @ Q('//trim(intc(iq))//')  [q->0 direction]:'
+       message(1) = '# Absorption @ Q('//trim(intc(iq))//') [q->0 direction] '
+       message(2) = '# EELS @ Q('//trim(intc(iq))//')  [q->0 direction]'
        message(3) = '# Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//') [q->0 direction]'
-       message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [q->0 direction]:'
-       message(5) = '# Off-diagonal Absorption @ Q('//trim(intc(iq))//') [q->0 direction] :'
-       message(6) = '# Off-diagonal Polarizability @ Q('//trim(intc(iq))//') [q->0 direction] :'
-       message(7) = '# moke parameters @ Q('//trim(intc(iq))//') [q->0 direction] :'
-       message(8) = '# Reflectivity @ Q('//trim(intc(iq))//') [q->0 direction] :'
-       message(9) = '# Joint density of states @ Q('//trim(intc(iq))//') [q->0 direction] :'
+       message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [q->0 direction]'
+       message(5) = '# Off-diagonal Absorption @ Q('//trim(intc(iq))//') [q->0 direction] '
+       message(6) = '# Off-diagonal Polarizability @ Q('//trim(intc(iq))//') [q->0 direction] '
+       message(7) = '# moke parameters @ Q('//trim(intc(iq))//') [q->0 direction] '
+       message(8) = '# Reflectivity @ Q('//trim(intc(iq))//') [q->0 direction] '
+       message(9) = '# Joint density of states @ Q('//trim(intc(iq))//') [q->0 direction] '
      else  if (iq/=1.and.ig==1) then
-       message(1) = '# Absorption @ Q('//trim(intc(iq))//') [iku] :'
-       message(2) = '# EELS @ Q('//trim(intc(iq))//')  [iku]:'
+       message(1) = '# Absorption @ Q('//trim(intc(iq))//') [iku] '
+       message(2) = '# EELS @ Q('//trim(intc(iq))//')  [iku]'
        message(3) = '# Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//') [iku]'
-       message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [iku]:'
-       message(9) = '# Joint density of states @ Q('//trim(intc(iq))//') [iku] :'
+       message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [iku]'
+       message(9) = '# Joint density of states @ Q('//trim(intc(iq))//') [iku] '
      else  if (ig/=1) then
-       message(1) = '# Absorption @ Q('//trim(intc(iq))//') + G('//trim(intc(ig))//') [iku] :'
-       message(2) = '# EELS @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//') [iku]:'
+       message(1) = '# Absorption @ Q('//trim(intc(iq))//') + G('//trim(intc(ig))//') [iku] '
+       message(2) = '# EELS @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//') [iku]'
        message(3) = '# Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//') [iku]'
-       message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [iku]:'
+       message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [iku]'
      endif
      call msg("o eps_q",trim(message(1)),Q_plus_G_pt,INDENT=0)
      call msg("o eel_q",trim(message(2)),Q_plus_G_pt,INDENT=0)

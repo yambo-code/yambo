@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,6 +23,7 @@
 !
 module X_m
  !
+ use IO_m,           ONLY:IO_desc
  use pars,           ONLY:SP,lchlen,schlen
  use units,          ONLY:HA2EV
  use matrix,         ONLY:PAR_matrix
@@ -93,6 +94,7 @@ module X_m
  real(SP):: X_terminator_E
  real(SP):: X_term_E
  logical :: l_X_terminator=.false.
+ logical :: l_recalculate_X=.false.
  character(schlen) :: X_terminator_Kind="none"
  !
  ! I/O parameters
@@ -103,8 +105,7 @@ module X_m
  !
  ! I/O descriptions
  !
- integer          :: n_X_descs
- character(lchlen):: X_description(100)
+ type(IO_desc)    :: X_desc
  !
  ! PARALLEL distribution
  !

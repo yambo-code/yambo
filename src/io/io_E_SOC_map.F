@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -46,9 +46,9 @@ integer function io_E_SOC_map(En,kpt,ID)
  if (io_E_SOC_map/=0) goto 1
  !
  call io_elemental(ID,VAR="PARS",VAR_SZ=3,MENU=1)
- call io_elemental(ID,I0=E_SOC_nbands, VAR=' Number of SOC bands       :')
- call io_elemental(ID,I0=En%nb,        VAR=' Number of bands           :')
- call io_elemental(ID,I0=kpt%nibz,     VAR=' Number of points          :')
+ call io_elemental(ID,I0=E_SOC_nbands, VAR=' Number of SOC bands       ')
+ call io_elemental(ID,I0=En%nb,        VAR=' Number of bands           ')
+ call io_elemental(ID,I0=kpt%nibz,     VAR=' Number of points          ')
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  if (read_is_on(ID)) then

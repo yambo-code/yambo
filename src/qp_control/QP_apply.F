@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -41,6 +41,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! This convention about sign is imposed (when reading DB's made at finite Temperature)
  ! in QP_apply_global_stretch and  QP_apply_DB_interpolation
  !
+ use pars,          ONLY:schlen
  use drivers,       ONLY:l_sc_run
  use units,         ONLY:HA2EV
  use QP_m,          ONLY:QP_t
@@ -61,13 +62,14 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  type(bz_samp) ::k
  character(*)  ::msg_fmt
  character(1)  ::object
+ character(schlen)  ::mesg
  type(QP_t),     optional::qp_impose
  type(QP_ctl_t), optional::QP_ctl_impose(n_sp_pol)
  !
  ! Work Space
  !
  type(levels)     ::Fermi_en
- integer          ::ik_bz,ik_ibz,ib,i1,ik_r,i_spin,nbf_m_SAVE(2),i_a
+ integer          ::ik_bz,ik_ibz,ib,i1,ik_r,i_sp_pol,nbf_m_SAVE(2),i_a
  logical          ::l_E_done
  integer, allocatable :: DbGd_k_done(:)
  !
@@ -87,8 +89,8 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  if (present(QP_ctl_impose)) then
    n_QP_actions=n_QP_actions+1
    QP_action(n_QP_actions)%active=.TRUE.
-   do i_spin=1,n_sp_pol
-     call QP_CTL_copy(QP_ctl_impose(i_spin),QP_action(n_QP_actions)%CTL(i_spin))
+   do i_sp_pol=1,n_sp_pol
+     call QP_CTL_copy(QP_ctl_impose(i_sp_pol),QP_action(n_QP_actions)%CTL(i_sp_pol))
    enddo
  endif
  !
@@ -167,8 +169,8 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
        if (DbGd_k_done(ik_r)==1) cycle
        !
        do ib=1,BZ_DbGd_nbands
-         do i_spin=1,n_sp_pol
-           en%E_DbGd(ib,ik_r,1)=en%E_DbGd(ib,ik_r,1)+ (en%E(ib,ik_ibz,i_spin)-en%Eo(ib,ik_ibz,i_spin))
+         do i_sp_pol=1,n_sp_pol
+           en%E_DbGd(ib,ik_r,1)=en%E_DbGd(ib,ik_r,1)+ (en%E(ib,ik_ibz,i_sp_pol)-en%Eo(ib,ik_ibz,i_sp_pol))
          enddo
        enddo
        DbGd_k_done(ik_r)=1
@@ -230,24 +232,23 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  if (en%nbf==en%nbm) then
    !
-   if (n_sp_pol==1) then
+   mesg='[QP apply] Ind. Gap Correction'
+   !
+   do i_sp_pol=1,n_sp_pol
      !
-     call msg('r','[QP apply] Ind. Gap Correction   [ev]:',&
-&                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
-&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
+     if(n_sp_pol==2.and.i_sp_pol==1) mesg=trim(mesg)//' [up]'
+     if(n_sp_pol==2.and.i_sp_pol==1) mesg=trim(mesg)//' [dn]'
      !
-   else
+     call msg('r',trim(mesg),&
+&                  (minval(en%E(en%nbf+1,:,i_sp_pol))-maxval(en%E(en%nbf,:,i_sp_pol)) &
+&                  -minval(en%Eo(en%nbf+1,:,i_sp_pol))+maxval(en%Eo(en%nbf,:,i_sp_pol)) )*HA2EV,'[eV]')
      !
-     call msg('r','[QP apply] Ind. Gap Correction  (up) [ev]:',&
-&                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
-&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
-     !
-     call msg('r','                              (down) [ev]:',&
-&                  (minval(en%E(en%nbf+1,:,2))-maxval(en%E(en%nbf,:,2)) &
-&                  -minval(en%Eo(en%nbf+1,:,2))+maxval(en%Eo(en%nbf,:,2)) )*HA2EV)
-     !
-   endif
+   enddo
    !
  endif
  !
- end subroutine
+ ! Energies report
+ !
+ call REPORT_Energies(en%E,k,k,en%nb,(/1,k%nibz/),'Eqp',.FALSE.,.TRUE.)
+ !
+end subroutine

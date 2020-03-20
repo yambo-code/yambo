@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -85,8 +85,8 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  !
  ! Msgs
  !
- call msg('s','Energy steps   :',DOS_E_steps)
- call msg('s','Bands          :',RT_carriers%nb)
+ call msg('s','Energy steps   ',DOS_E_steps)
+ call msg('s','Bands          ',RT_carriers%nb)
  !
  ! Output files headers
  !
@@ -257,10 +257,10 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    call RT_output(trim(file_n(i_f)))
  enddo
  !
- call               msg('s','DOS max value            [RT grid]:',el_dos_max(1))
- if (l_interp) call msg('s','                     [INTERP grid]:',el_dos_max(2))
- call               msg('s','Integrated dos (min/max) [RT grid]:',(/minval(el_dos_integral(:,1)),maxval(el_dos_integral(:,1))/))
- if (l_interp) call msg('s','                     [INTERP grid]:',(/minval(el_dos_integral(:,2)),maxval(el_dos_integral(:,2))/))
+ call               msg('s','DOS max value            [RT grid]',el_dos_max(1))
+ if (l_interp) call msg('s','                     [INTERP grid]',el_dos_max(2))
+ call               msg('s','Integrated dos (min/max) [RT grid]',(/minval(el_dos_integral(:,1)),maxval(el_dos_integral(:,1))/))
+ if (l_interp) call msg('s','                     [INTERP grid]',(/minval(el_dos_integral(:,2)),maxval(el_dos_integral(:,2))/))
  !
  call live_timing()
  !

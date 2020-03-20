@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -47,12 +47,12 @@ module interpolate_tools
      title=trim(INTERP_obj(ID)%what)//"-Nearest K"
      !
      dummy=real(NN_nk_exact)/real(INTERP_obj(ID)%nk)*100._SP
-     call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Exact matches  [o/o]:',dummy)
+     call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Exact matches  [o/o]',dummy)
      if (NN_nk_exact<INTERP_obj(ID)%nk) then
-       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Neighbours    [user]:',NN_n_of_nearest)
-       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//']               [real]:',NN_MAX_real_nearest)
+       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Neighbours    [user]',NN_n_of_nearest)
+       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//']               [real]',NN_MAX_real_nearest)
        dummy=real(INTERP_obj(ID)%nk-NN_nk_exact)/real(INTERP_obj(ID)%nk)*100._SP
-       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Interpolations [o/o]:',dummy)
+       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Interpolations [o/o]',dummy)
      endif
      !
    end subroutine

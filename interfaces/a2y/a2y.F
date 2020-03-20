@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH DS HM
@@ -28,16 +28,17 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use vec_operate,         ONLY: sort
  use pars,                ONLY: SP,cZERO
  use LOGO,                ONLY: pickup_a_random
- use com,                 ONLY: msg,core_io_path,com_path,write_to_report
- use stderr,              ONLY: log_as_a_file,write_to_log,logfile,intc
- use LIVE_t,              ONLY: live_timing_is_on
+ use com,                 ONLY: msg,core_io_path
+ use it_m,                ONLY: nrnlvls,rnlvls,rstatus
+ use stderr,              ONLY: intc
  use parallel_m,          ONLY: ncpu,myid
  use electrons,           ONLY: levels,E_reset,n_spinor,n_sp_pol
  use D_lattice,           ONLY: n_atoms_species_max
  use pseudo,              ONLY: PP_free
  use R_lattice,           ONLY: bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY: wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io,wf_igk,wf_nc_k
- use IO_m,                ONLY: io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number,mk_dir
+ use IO_m,                ONLY: io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number,&
+&                               IO_and_Messaging_switch
  use mod_com2y,           ONLY: interface_presets, force_noWFs
  use mod_wf2y,            ONLY: WF_splitter
  !
@@ -70,6 +71,10 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ncpu  = np
  myid  = pid
  !
+ nrnlvls    =1
+ rnlvls(1,1)="a2y"
+ rstatus(1) =1
+ !
  ! ... Internal Defaults
  !
  call SET_defaults(instr,ind,od,com_dir)
@@ -86,34 +91,25 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call MEM_defaults( )
 #endif
  !
- write_to_log      = .true.
- live_timing_is_on = .true.
+ ! Switch off report file support & Handle logs
  !
- if (log_as_a_file) then
-   if (len_trim(com_path)==0) com_path="./"
-   write (logfile,'(2a)') trim(com_path),'/l-a2y'
-   !
-   if (ncpu>1) then
-     call mk_dir(trim(com_path)//"/LOG")
-     write (logfile,'(2a)') trim(com_path)//'/LOG/l-a2y'
-     logfile=trim(logfile)//"_CPU_"//trim(intc(myid+1))
-   endif
-   !
- endif
+ call IO_and_Messaging_switch("-report +log +fragments_IO_log +timing" )
  !
+ ! Report/Log Files
+ !
+ call INIT_report_and_log_files()
+ !
+ ! LOGO
+ !
+ call write_the_logo(6,' ')
  !
  ! S/N
  !======
  serial_number=pickup_a_random(10000._SP)
  !
- ! Switch off report file support
- !================================
- write_to_report=.FALSE.
- !
  ! LOGO
  !
- call write_the_logo(6,' ')
- call msg('s','E(TSF) 2 Y(ambo)')
+ call msg('s','A(binit) 2 Y(ambo) [NETCDF format]')
  !
  ! Check input filenames 
  !
@@ -127,14 +123,14 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
    call msg('ln','File kind not supported! Use either KSS or WFK filename.')
  end if
  !
- call msg('s','ETSF file ',trim(inf))
+ call msg('s','NETCDF file ',trim(inf))
  !
  if(.not.file_exists(trim(inf))) then
    call msg('ln','File not found! Specify -F filename.')
    return
  endif
  !
- call msg('s','DBs path set to :',trim(core_io_path))
+ call msg('s','DBs path set to ',trim(core_io_path))
  !
  ! Open ETSF file for reading
  !

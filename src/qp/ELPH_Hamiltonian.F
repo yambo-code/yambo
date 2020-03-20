@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -35,7 +35,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use LIVE_t,        ONLY:live_timing
  use interfaces,    ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,ONLY:DIAGO,USE_LK
- use stderr,        ONLY:intc,set_real_printed_length
+ use stderr,        ONLY:intc
  use QP_m,          ONLY:QP_G_damp
  use parser_m,      ONLY:parser
  !
@@ -97,7 +97,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  Ph_branches=elph_branches(2)-elph_branches(1)+1
  No_PH_basis_size=elph_Ham_bands(2)-elph_Ham_bands(1)+1
  H_size=No_PH_basis_size*(nqbz*(elph_branches(2)-elph_branches(1)+1)+1)
- call msg('rsn','[ElPh Ham] Hamiltonian size is:',H_size)
+ call msg('rsn','[ElPh Ham] Hamiltonian size is',H_size)
  !
  YAMBO_ALLOC(elph_Ham_Table,(H_size,3))
  YAMBO_ALLOC(elph_Mat,(H_size,H_size))
@@ -233,8 +233,6 @@ subroutine ELPH_Hamiltonian(en,k,q)
    W(iw)= (minval(elph_E)-.1/HA2EV)+ ( maxval(elph_E) -  minval(elph_E) + .2/HA2EV )/real(N_w)*iw+cmplx(0.,QP_G_damp)
  enddo
  !
- call set_real_printed_length(f_length=12,g_length=12)
- !
  call live_timing('Green`s Functions',elph_Ham_bands(2)-elph_Ham_bands(1)+1)
  !
  do ib=elph_Ham_bands(1),elph_Ham_bands(2)
@@ -364,7 +362,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call live_timing('MD evaluation',H_size)
  !
- call msg('r','Displacements:')
+ call msg('r','Displacements')
  !
  do iH=1,H_size
    call live_timing(steps=1)
@@ -404,7 +402,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call live_timing('MD square evaluation',H_size)
  !
- call msg('nr','sqrt(MD square):')
+ call msg('nr','sqrt(MD square)')
  !
  do iH=1,H_size
    call live_timing(steps=1)
@@ -448,9 +446,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
    enddo 
    !
  enddo
- call live_timing()
  !
- call set_real_printed_length()
+ call live_timing()
  !
  ! CLEAN
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,7 +28,6 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  use units,          ONLY:AUT2FS
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use stderr,         ONLY:set_real_printed_length
  use IO_m,           ONLY:IO_and_Messaging_switch
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use real_time,      ONLY:eval_energy,eval_entropy,l_RT_update_Energies,l_NE_with_fields,NE_time, &
@@ -89,11 +88,9 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    ! GPL_EXCLUDE_END
    !
-   call set_real_printed_length()
    call IO_and_Messaging_switch("-fragments_IO_log")
    call RT_databases_IO(E)
    call IO_and_Messaging_switch("+fragments_IO_log")
-   call set_real_printed_length(f_length=10,g_length=10)
    !
    ! OUTPUT(s)
    !###########

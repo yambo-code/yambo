@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -122,6 +122,6 @@ subroutine X_Double_Grid_setup(iq,k)
    !
  enddo 
  !
- call msg('nrsn','DbGd@q['//trim(intc(iq))//'] k->k-q transitions included [%]:',PREC)
+ call msg('nrsn','DbGd@q['//trim(intc(iq))//'] k->k-q transitions included [%]',PREC)
  !
 end subroutine

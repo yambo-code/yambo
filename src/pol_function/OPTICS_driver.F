@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,7 +29,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
  use pars,          ONLY:pi,SP,cZERO
  use units,         ONLY:HA2EV
- use stderr,        ONLY:intc,set_real_printed_length
+ use stderr,        ONLY:intc
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,BZ_DbGd_tot_nk_levels
@@ -42,10 +42,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
- use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
+ use TDDFT,         ONLY:FXC_n_descs,FXC_desc,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
  use X_output,      ONLY:X_setup_file_names,eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,&
-&                        X_write_q_plus_G,X_write_descriptions,X_write_messages_before_headers,headers,&
+&                        X_write_q_plus_G,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load,WF_free
  use matrix,        ONLY:MATRIX_reset
@@ -73,8 +73,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  call X_pre_setup(Xen,X)
  !
- call set_real_printed_length(f_length=10,g_length=10)
- !
  allocate(X_par(1))
  !
  do iq=X%iq(1),X%iq(2)
@@ -82,7 +80,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! PARALLEL indexes
    !==================
    !
-   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
+   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X)
    !
    ! WF distribution 
    !=================
@@ -183,10 +181,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Fxc descriptions
    !
    if (l_bs_fxc) then
-     call X_write_descriptions(FXC_n_descs,FXC_description)
-     call msg('o eps_q eel_q alpha','#',' TDDFT|Fxc size             :'//trim(intc(FXC_n_g_corr)),INDENT=0)    
-     call msg('o eps_q eel_q alpha','#','      |Hartree size         :'//trim(intc(X%ng)),INDENT=0)    
-     call msg('o eps_q eel_q alpha','#','      |Ordering             :'//trim(X%ordering),INDENT=0)    
+     call COM_write_desc('o eps_q refl eel_q fxc alpha off beta moke jdos','#',FXC_desc)
+     call msg('o eps_q eel_q alpha','# TDDFT|Fxc size             ',FXC_n_g_corr,INDENT=0)    
+     call msg('o eps_q eel_q alpha','#      |Hartree size         ',X%ng        ,INDENT=0)    
+     call msg('o eps_q eel_q alpha','#      |Ordering             ',X%ordering  ,INDENT=0)    
      !
      ! Fxc file titles
      !
@@ -254,9 +252,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! BZ Double Grid
    !
-   if (use_X_DbGd) then
-     call msg('o eps_q eel_q fxc alpha','#',' DbGd| Energy Points   :'//trim(intc(BZ_DbGd_tot_nk_levels)),INDENT=0)    
-   endif
+   if (use_X_DbGd) call msg('o eps_q eel_q fxc alpha','# DbGd| Energy Points   ',BZ_DbGd_tot_nk_levels,INDENT=0)
    !
    ! Titles 
    !
@@ -374,7 +370,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  deallocate(X_par)
  call WF_free(WF)
  call PP_redux_wait
- call set_real_printed_length()
  if (allocated(FXC)) then
    YAMBO_FREE(FXC)
  endif

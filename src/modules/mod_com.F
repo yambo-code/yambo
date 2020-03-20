@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -23,7 +23,7 @@
 !
 module com
  !
- use pars,          ONLY:SP,lchlen,schlen,max_n_ofs,max_open_ofs,n_max_jobstr
+ use pars,          ONLY:DP,SP,lchlen,schlen,max_n_ofs,max_open_ofs,n_max_jobstr
  use com_interfcs,  ONLY:msg_characters_vector_int,msg_integers_vector_int,msg_reals_vector_int
  !
  implicit none
@@ -33,7 +33,11 @@ module com
  character(lchlen)  :: core_io_path
  character(lchlen)  :: more_io_path
  character(lchlen)  :: com_path
+ !
  character(lchlen)  :: repfile
+ !
+ integer            :: repfile_unit
+ integer            :: inpfile_unit
  !
  ! Path for the shifted grids
  !
@@ -54,26 +58,47 @@ module com
  integer           :: depth,isec(5)
  character(1)      :: previous_secmode
  character(schlen) :: secnm
- ! 
+ !
  ! Output Files/Report File
  !
  character(lchlen)  :: of_name(max_n_ofs)
- character(lchlen)  :: opened_of(max_open_ofs)
- integer            :: of_unit(max_open_ofs)
+ character(lchlen)  :: of_opened(max_open_ofs)
+ integer            :: of_unit(max_open_ofs+2)
  integer            :: n_ofs_defined
 #if defined _NC_OUTPUT
- integer, parameter :: of_nc_max_size=10000
  integer            :: of_nc_IDs(max_open_ofs)
  integer            :: of_nc_pos(4,max_open_ofs)
  character(schlen)  :: of_nc_var_names(max_open_ofs)
 #endif
 #if defined _YAML_OUTPUT
- integer            :: of_yaml_IDs(max_open_ofs)
- integer            :: of_yaml_pos(4,max_open_ofs)
- character(schlen)  :: of_yaml_var_names(max_open_ofs)
+ integer            :: depth_yaml
+ integer            :: of_yaml_IDs(max_open_ofs+2)
 #endif
+ !
  logical            :: write_to_of
  logical            :: write_to_report
+ !
+ integer, parameter :: n_MAX_descs=100
+ !
+ type IO_desc
+   !
+   integer           :: n
+   integer           :: size(n_MAX_descs)
+   logical           :: check(n_MAX_descs)
+   character(2)      :: ops(10,n_MAX_descs)
+   character(schlen) :: str(n_MAX_descs)
+   character(1)      :: kind(n_MAX_descs)     !  "i"=integer, "r"=real, "d"=double, "c"=complex, "s"=string, "l"=logical
+   !
+   integer           :: ival(10,n_MAX_descs)
+   real(SP)          :: rval(10,n_MAX_descs)
+   !
+   real(DP)          :: dval(n_MAX_descs)
+   complex(SP)       :: cval(n_MAX_descs)
+   !
+   character(schlen) :: sval(n_MAX_descs)
+   logical           :: lval(n_MAX_descs)
+   !
+ end type
  !
  interface
    !
@@ -136,23 +161,25 @@ module com
      call msg_characters_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT)
    end subroutine
    !
-   subroutine msg_integer(how,mesg,val,USE_TABS,INDENT)
+   subroutine msg_integer(how,mesg,val,after_msg,USE_TABS,INDENT)
      character(*)     :: mesg
      character(*)     :: how
      integer          :: val
+     character(*), optional :: after_msg
      integer,optional :: INDENT
      logical,optional :: USE_TABS
      call msg_integers_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT)
    end subroutine
    !
-   subroutine msg_real(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT)
+   subroutine msg_real(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT)
      character(*)     :: mesg
      character(*)     :: how
      real(SP)         :: val
+     character(*), optional :: after_msg
      integer,optional :: INDENT
      logical,optional :: USE_TABS
      logical,optional :: EXT_FORMAT
-     call msg_reals_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT,EXT_FORMAT=EXT_FORMAT)
+     call msg_reals_vector_int(how,mesg,(/val/),after_msg=after_msg,USE_TABS=USE_TABS,INDENT=INDENT,EXT_FORMAT=EXT_FORMAT)
    end subroutine
    !
    subroutine msg_characters_vector(how,mesg,val,USE_TABS,INDENT)
@@ -164,24 +191,25 @@ module com
      call msg_characters_vector_int(how,mesg,val,USE_TABS=USE_TABS,INDENT=INDENT)
    end subroutine
    !
-   subroutine msg_integers_vector(how,mesg,val,USE_TABS,INDENT)
+   subroutine msg_integers_vector(how,mesg,val,after_msg,USE_TABS,INDENT)
      character(*)     :: mesg
      character(*)     :: how
      integer          :: val(:)
+     character(*), optional :: after_msg
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     call msg_integers_vector_int(how,mesg,val,USE_TABS=USE_TABS,INDENT=INDENT)
+     call msg_integers_vector_int(how,mesg,val,after_msg=after_msg,USE_TABS=USE_TABS,INDENT=INDENT)
    end subroutine
    !
-   subroutine msg_reals_vector(how,mesg,val,USE_TABS,INDENT,EXT_FORMAT,formatted_msg)
+   subroutine msg_reals_vector(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT)
      character(*)     :: mesg
      character(*)     :: how
      real(SP)         :: val(:)
+     character(*), optional :: after_msg
      integer,optional :: INDENT
      logical,optional :: USE_TABS
      logical,optional :: EXT_FORMAT
-     character(lchlen), optional :: formatted_msg
-     call msg_reals_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT,EXT_FORMAT=EXT_FORMAT,formatted_msg=formatted_msg)
+     call msg_reals_vector_int(how,mesg,(/val/),after_msg=after_msg,USE_TABS=USE_TABS,INDENT=INDENT,EXT_FORMAT=EXT_FORMAT)
    end subroutine
    !
 end module com

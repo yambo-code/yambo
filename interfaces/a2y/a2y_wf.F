@@ -27,7 +27,7 @@ subroutine a2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   !
   use netcdf
   use netcdf_data,           only : NETCDF_kind
-  use pars,                  only : SP
+  use pars,                  only : DP,SP,cZERO
   use vec_operate,           only : sort
   use electrons,             only : n_bands,  n_spinor
   use wave_func,             only : wf_ncx,wf_nc_k, wf_igk,wf_nb_io
@@ -38,7 +38,7 @@ subroutine a2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   integer,     intent(in)  :: i_sp_pol,ikibz, ib_grp, ncid
   complex(SP), intent(out) :: wf_disk(wf_ncx,n_spinor,wf_nb_io)
   !
-  real(SP), allocatable    :: wavefunction_section_(:,:,:,:)
+  real(DP), allocatable    :: wavefunction_section_(:,:,:,:)
   ! 
   ! Work Space
   !
@@ -49,6 +49,7 @@ subroutine a2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   integer        :: varid, netcdf_error
   !
   allocate(wavefunction_section_(2, wf_ncx, n_spinor, n_bands) )
+  wavefunction_section_=cZERO
   !
   i_sp_pol_abinit=i_sp_pol
   if(artificial_spin_pol) i_sp_pol_abinit=1
@@ -70,8 +71,8 @@ subroutine a2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
     do i_spinor=1,n_spinor
       do ic=1,wf_nc_k(ikibz)
         ig=wf_igk_indx(ic)
-        wf_disk(ic,i_spinor,ib) = cmplx(wavefunction_section_(1,ig,i_spinor,ib),&
-&                                       wavefunction_section_(2,ig,i_spinor,ib))
+        wf_disk(ic,i_spinor,ib) = cmplx(real(wavefunction_section_(1,ig,i_spinor,ib),SP), &
+&                                       real(wavefunction_section_(2,ig,i_spinor,ib),SP))
       enddo
     enddo
   enddo

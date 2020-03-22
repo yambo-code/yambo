@@ -50,7 +50,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 &                         Vnl_commutator_warning,use_g_space_approach,&
 &                         use_shifted_grids_approach,DIP_P,DIP_v,DIP_S,eval_OVERLAPS
  use IO_m,           ONLY:IO_and_Messaging_switch
- use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&
+ use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_A2A,&
 &                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
  use parser_m,       ONLY:parser
 #if defined _RT || defined _SC || defined _NL
@@ -171,7 +171,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 &                              Bp_index=PAR_IND_VAL_BANDS_DIP,&
 &                              CLEAN_UP=.TRUE.)
    !
-   call PARALLEL_WF_index(COMM=PAR_COM_DIPk_ibz_INDEX)
+   call PARALLEL_WF_index(COMM=PAR_COM_DIPk_ibz_A2A)
    !
    ! Allocation
    !
@@ -218,7 +218,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  ! Clean up
  !
- if (.not.io_DIP) return 
+ if (.not.io_DIP) return
  !
  call DIP_alloc('DIP_iR')
  call DIP_alloc('DIP_P')

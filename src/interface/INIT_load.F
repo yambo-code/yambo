@@ -733,7 +733,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        if (     is_def) Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
        if (.not.is_def) Efield(i_field)%FWHM=Efield(i_field)%width*(2._SP*sqrt(2._SP*log(2._SP)))
        !
-       if (trim(Efield(i_field)%ef_name)/='none') n_ext_fields=n_ext_fields+1
+       if (trim(Efield(i_field)%ef_name)/='none'.and.n_ext_fields<i_field) n_ext_fields=n_ext_fields+1
        !
      endif
      !

@@ -28,8 +28,8 @@ subroutine PARSER_close_G(ng,what)
  use R_lattice,   ONLY:n_g_shells,E_of_shell,ng_in_shell
  implicit none
  integer :: ng
- integer   :: G2G,E2G
- real(SP)  :: G2E
+ integer,  external  :: G2G,E2G
+ real(SP), external  :: G2E
  ! 
  ! Work Space
  !
@@ -103,10 +103,12 @@ integer function E2G(Energy)
   enddo
 end function
 !
-real function G2E(ng2close)
+function G2E(ng2close)
+  use pars,        ONLY:SP
   use R_lattice,   ONLY:n_g_shells,E_of_shell,ng_in_shell
   implicit none
   integer, intent(in) :: ng2close
+  real(SP) :: G2E
   integer :: i1
   do i1=1,n_g_shells
     if (ng2close==ng_in_shell(i1)) G2E=E_of_shell(i1)

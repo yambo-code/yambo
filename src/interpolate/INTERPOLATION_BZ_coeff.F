@@ -95,12 +95,24 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
    rho(i1)=roughness_func(R2,R2_min)
  enddo
  !
+ ! Par Proc
+ !
+ Nlive=nshells-1
+ if (.not.INTERPOLATE_is_serial) then
+   call PP_indexes_reset(px)
+   call PARALLEL_index(px,(/nshells-1/))
+   Nlive=px%n_of_elements(myid+1)
+ endif
+ !
  h_mat =cZERO
  star_1=cZERO
  !
- if (.not.INTERPOLATE_is_quiet) call live_timing("Definition of star_1",nshells-1)
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Definition of star_1",Nlive)
  !
  do i1=2,nshells
+   if (.not.INTERPOLATE_is_serial) then
+     if (.not.px%element_1D(i1-1)) cycle
+   endif
    call make_star(lattice_vectors(:,i1),nsym,int_sop,nstar,star_vec) 
    do ik=1,Nk
      if(Nk==Xk%nibz) call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki2a')
@@ -113,13 +125,14 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
    enddo
    if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
    star_1(i1,:)=star_1(i1,:)/real(nstar)
+   do ik=1,Nkm1
+     star_1(i1,ik) = star_1(i1,ik) - star_1(i1,Nk)
+     star_1(i1,ik) = star_1(i1,ik) / sqrt(rho(i1))
+   enddo
  enddo
- if (.not.INTERPOLATE_is_quiet) call live_timing()
  !
- do ik=1,Nkm1
-   star_1(2:nshells,ik) = star_1(2:nshells,ik) - star_1(2:nshells,Nk)
-   star_1(2:nshells,ik) = star_1(2:nshells,ik) / sqrt(rho(2:nshells))
- enddo
+ if (.not.INTERPOLATE_is_serial) call PP_redux_wait(star_1)
+ if (.not.INTERPOLATE_is_quiet)  call live_timing()
  !
  ! Par Proc
  !
@@ -149,8 +162,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  enddo
  !
  if (.not.INTERPOLATE_is_serial) call PP_redux_wait(h_mat)
- !
- if (.not.INTERPOLATE_is_quiet) call live_timing()
+ if (.not.INTERPOLATE_is_quiet)  call live_timing()
  !
  do ik=1,Nkm1
    star_1(2:nshells,ik) = star_1(2:nshells,ik) * sqrt(rho(2:nshells))
@@ -174,10 +186,10 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  !
  ! Par Proc
  !
- Nlive=nshells
+ Nlive=nshells-1
  if (.not.INTERPOLATE_is_serial) then
    call PP_indexes_reset(px)
-   call PARALLEL_index(px,(/nshells/))
+   call PARALLEL_index(px,(/nshells-1/))
    Nlive=px%n_of_elements(myid+1)
  endif
  !
@@ -187,7 +199,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  !
  do i1=2,nshells
    if (.not.INTERPOLATE_is_serial) then
-     if (.not.px%element_1D(i1)) cycle
+     if (.not.px%element_1D(i1-1)) cycle
    endif
    do iv=1,nvalues
      engre(i1,iv)= ZDOTC(Nkm1,star_1(i1,1:Nkm1)/rho(i1),1,cmplx(delta(1:Nkm1,iv),kind=DP),1)
@@ -196,8 +208,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  enddo
  !
  if (.not.INTERPOLATE_is_serial) call PP_redux_wait(engre)
- !
- if (.not.INTERPOLATE_is_quiet) call live_timing()
+ if (.not.INTERPOLATE_is_quiet)  call live_timing()
  !
  do iv=1,nvalues
    engre(1,iv)=VALUEs(iv,ikn) - ZDOTU(nshells-1,engre(2:nshells,iv),1,star_1(2:nshells,Nk),1)

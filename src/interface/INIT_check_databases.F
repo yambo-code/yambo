@@ -36,9 +36,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  use wave_func,      ONLY:io_WF
  use TDDFT,          ONLY:io_BS_Fxc
  use it_tools,       ONLY:switch_off_runlevel
- use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
- use com,            ONLY:com_path
- use parallel_m,     ONLY:ncpu
+ use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
 #if defined _SC || defined _RT
  use collision_ext,  ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
  use COLL_interfaces,ONLY:io_COLLISIONS
@@ -103,8 +101,8 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
    INIT =-1
    return
  else
-   call mk_dir(com_path)
-   if (INIT==0.and.ncpu>1) call mk_dir(trim(com_path)//"/LOG")
+   call IO_make_directories("COM")
+   if (INIT==0) call IO_make_directories("LOG")
  endif
  !
  ! Exporting DB1 informations to variables to be

@@ -27,7 +27,7 @@ subroutine INIT_input_file()
  use drivers,        ONLY:infile_editing
  use it_m,           ONLY:infile
  use com,            ONLY:com_path,jobstr
- use IO_m,           ONLY:mk_dir,cp_file
+ use IO_m,           ONLY:cp_file
  !
  implicit none
  !
@@ -40,7 +40,7 @@ subroutine INIT_input_file()
  if (infile_editing) return
  if (trim(com_path)==".") return
  !
- call mk_dir(com_path)
+ call IO_make_directories("COM")
  infile_copy=trim(com_path)//"/"//trim(filename(infile))
  if (trim(jobstr)/=''.and.index(infile,trim(jobstr))==0) then
    infile_copy=trim(com_path)//"/"//trim(filename(infile))//"_"//trim(jobstr)

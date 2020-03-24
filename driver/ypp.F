@@ -30,8 +30,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,&
 &                              nXkibz,nqibz,k_pt,q_pt
  use D_lattice,           ONLY:input_GS_Tel,alat,nsym
- use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP,mk_dir
- use com,                 ONLY:msg,more_io_path,com_path
+ use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
+ use com,                 ONLY:msg
  use it_tools,            ONLY:it_reset
  use it_m,                ONLY:infile
  use wave_func,           ONLY:io_WF
@@ -107,9 +107,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
    call ypp_finalize("Where is the SAVE?",instr)
    return
  else
-   call mk_dir(more_io_path)
-   call mk_dir(com_path)
-   if (ncpu>1) call mk_dir(trim(com_path)//"/LOG")
+   call IO_make_directories("MORE LOG")
  endif
  !
 #if defined _MEM_CHECK

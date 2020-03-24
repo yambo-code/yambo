@@ -29,7 +29,7 @@ subroutine WF_format_converter(E,Xk,q)
 &                              pp_kbs,pp_kbs_old,pp_kb,pp_kb_old,pp_kbd,pp_kbd_old
  use LIVE_t,              ONLY:live_timing
  use D_lattice,           ONLY:n_atoms_species_max
- use IO_m,                ONLY:mk_dir,rm_file,cp_file
+ use IO_m,                ONLY:rm_file,cp_file
  use com,                 ONLY:msg,core_io_path,more_io_path
  use electrons,           ONLY:levels,n_spin,n_sp_pol,n_spinor
  use wave_func,           ONLY:wf_ncx,io_WF,io_WF_old,wf_nb_io_groups,wf_nb_io,wf_igk,wf_nc_k
@@ -58,8 +58,7 @@ subroutine WF_format_converter(E,Xk,q)
  !
  core_io_path_save=core_io_path
  !
- call mk_dir(more_io_path)
- call mk_dir(trim(more_io_path)//"/SAVE")
+ call IO_make_directories("SAVE")
  call cp_file(trim(core_io_path_save)//"/SAVE/ns.db1",trim(more_io_path)//"/SAVE",i_err)
  call rm_file((trim(more_io_path))//"/SAVE/ndb.gops")
  call rm_file((trim(more_io_path))//"/SAVE/ndb.kindx")

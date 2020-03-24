@@ -59,6 +59,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  !
  integer,parameter      :: MAX_DB_ELEMENTS=100
  character(schlen)      :: TERM_
+ character(msg_len)     :: msg_
  character(msg_len-1)   :: ch
  character(1)           :: msg_where
  integer                :: SZ,i_err,nf_error
@@ -378,12 +379,13 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
      if (CHECK_) ch=STRING_pack("*ERR* ",VAR)
      if (WARN_ ) ch=STRING_pack("*WRN* ",VAR)
    endif
-   if(present(I0) .or.present(I1)) call msg(msg_where,com_compose_msg(" ",ch),i_db(1:SZ),after_msg=TERM_)
-   if(present(R0) .or.present(R1)) call msg(msg_where,com_compose_msg(" ",ch),r_db(1:SZ)*local_unit,after_msg=TERM_)
-   if(present(D0)                ) call msg(msg_where,com_compose_msg(" ",ch),r_db(1:SZ)*local_unit,after_msg=TERM_)
-   if(present(C0)                ) call msg(msg_where,com_compose_msg(" ",ch),rc_db(1:2*SZ)*local_unit,after_msg=TERM_)
-   if(present(L0)                ) call msg(msg_where,com_compose_msg(" ",ch),(l_db(1)==1))
-   if(present(CH0)               ) call msg(msg_where,com_compose_msg(" ",ch),trim(ch_db(1)))
+   msg_=com_compose_msg(pre=" ",body=trim(ch))
+   if(present(I0) .or.present(I1)) call msg(msg_where,msg_,i_db(1:SZ),after_msg=TERM_)
+   if(present(R0) .or.present(R1)) call msg(msg_where,msg_,r_db(1:SZ)*local_unit,after_msg=TERM_)
+   if(present(D0)                ) call msg(msg_where,msg_,r_db(1:SZ)*local_unit,after_msg=TERM_)
+   if(present(C0)                ) call msg(msg_where,msg_,rc_db(1:2*SZ)*local_unit,after_msg=TERM_)
+   if(present(L0)                ) call msg(msg_where,msg_,(l_db(1)==1))
+   if(present(CH0)               ) call msg(msg_where,msg_,trim(ch_db(1)))
  endif
  !
  contains

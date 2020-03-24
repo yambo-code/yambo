@@ -53,9 +53,9 @@ subroutine QP_DB_message( i_ACTION, qp )
  field(4,2)="Sphb"
  field(5,1)="PPA imaginary"
  field(5,2)="PPA@E"
- field(6,1)="El-Ph Self"
+ field(6,1)="Fan"
  field(6,2)="E-P"
- field(7,1)="Real Axis GW"
+ field(7,1)="Real Axis"
  field(7,2)="E-E"
  !
  am_i_first=.TRUE.
@@ -82,7 +82,7 @@ subroutine QP_DB_message( i_ACTION, qp )
  !
  do i1=1,qp%desc%n
    do if=1,n_fields
-     if (index(qp%desc%str(i1),trim(field(if,1)))/=0) then
+     if (index(qp%desc%str(i1),trim(field(if,1)))/=0.or.index(qp%desc%sval(i1),trim(field(if,1)))/=0) then
        if (len_trim(field(if,3))>0 .and. index(qp%desc%term(i1),trim(field(if,3)))==0) cycle
        if (.not.am_i_first) then
          QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//' = '//trim(field(if,2))

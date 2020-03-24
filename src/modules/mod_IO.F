@@ -535,16 +535,16 @@ module IO_m
      type(IO_desc), intent(out) :: desc
      desc%n    = 0
      desc%size = 0
-     desc%term = ""
-     desc%str  = ""
-     desc%kind = ""
+     desc%term = " "
+     desc%str  = " "
+     desc%kind = " "
      desc%check= .false.
-     desc%ops  = ""
+     desc%ops  = " "
      desc%ival = 0
      desc%rval = 0._SP
      desc%dval = 0._DP
      desc%cval = (0._SP,0._SP)
-     desc%sval = ""
+     desc%sval = " "
      desc%lval = .false.
    end subroutine
    !

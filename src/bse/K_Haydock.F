@@ -52,7 +52,7 @@ subroutine K_Haydock(iq,W)
  !
  ! Work Space
  !
- integer            ::it,it_on_disk,i_g,ID,io_err
+ integer            ::it,it_on_disk,i_g,ID,io_err,i_desc_acc,i_desc_iter
  integer, parameter ::Max_iterations=1000
  type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:),V0(:),V_tmp(:)
  complex(SP),allocatable :: Cf(:)
@@ -205,22 +205,27 @@ subroutine K_Haydock(iq,W)
  ! Update Descriptions
  !=====================
  BSS_desc%n=BSS_desc%n+1
- BSS_desc%str(BSS_desc%n-1)   =' '
+ BSS_desc%str(BSS_desc%n)     =' '
+ BSS_desc%kind(BSS_desc%n)    ="s"
  !
  BSS_desc%n=BSS_desc%n+1
- BSS_desc%str(BSS_desc%n)     =' Haydock|Accuracy (requested) [o/o]'
+ BSS_desc%str(BSS_desc%n)     =' Haydock|Accuracy (requested)'
+ BSS_desc%term(BSS_desc%n)    ='o/o'
  BSS_desc%kind(BSS_desc%n)    ="r"
  BSS_desc%size(BSS_desc%n)    =1
  BSS_desc%rval(1,BSS_desc%n)  =Haydock_threshold
  !
  BSS_desc%n=BSS_desc%n+1
- BSS_desc%str(BSS_desc%n-1)   ='        |Accuracy (reached)   [o/o]'
- BSS_desc%kind(BSS_desc%n-1)  ="r"
- BSS_desc%size(BSS_desc%n-1)  =1
- BSS_desc%rval(1,BSS_desc%n-1)=0._SP
+ i_desc_acc=BSS_desc%n
+ BSS_desc%str(BSS_desc%n)   ='        |Accuracy (reached)'
+ BSS_desc%term(BSS_desc%n)  ='o/o'
+ BSS_desc%kind(BSS_desc%n)  ="r"
+ BSS_desc%size(BSS_desc%n)  =1
+ BSS_desc%rval(1,BSS_desc%n)=0._SP
  !
  BSS_desc%n=BSS_desc%n+1
- BSS_desc%str(BSS_desc%n)     ='        |Iteration                 '
+ i_desc_iter=BSS_desc%n
+ BSS_desc%str(BSS_desc%n)     ='        |Iteration'
  BSS_desc%kind(BSS_desc%n)    ="i"
  BSS_desc%size(BSS_desc%n)    =1
  BSS_desc%ival(1,BSS_desc%n)  =0
@@ -475,11 +480,8 @@ subroutine K_Haydock(iq,W)
      if(l_kerr) call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,2,Cf_kerr(:it))
 #endif
      !
-     BSS_desc%str(BSS_desc%n-1)   ='        |Accuracy (reached)   [o/o]'
-     BSS_desc%rval(1,BSS_desc%n-1)=reached_threshold
-     !
-     BSS_desc%str(BSS_desc%n)     ='        |Iteration                 '
-     BSS_desc%ival(1,BSS_desc%n)  =it
+     BSS_desc%rval(1,i_desc_acc) =reached_threshold
+     BSS_desc%ival(1,i_desc_iter)=it
      !
      call K_output_file(iq,"Haydock")
      dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy '//&

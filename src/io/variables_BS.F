@@ -75,24 +75,24 @@ integer function variables_BS(ID,iq,local_desc,CLOSE_the_menu,X)
  call io_variable_elemental(ID,&
 &     VAR="   |Bands                    ",I1=BS_bands,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=local_desc)
  call io_variable_elemental(ID,DB_L0=res_exch_disk,&
-&     VAR="   |Exchange           [res] ",L0=BS_res_K_exchange,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
+&     VAR="   |Exchange",TERMINATOR="res",L0=BS_res_K_exchange,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
  call io_variable_elemental(ID,DB_L0=res_corr_disk,&
-&     VAR="   |Correlation        [res] ",L0=BS_res_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
+&     VAR="   |Correlation",TERMINATOR="res",L0=BS_res_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
  call io_variable_elemental(ID,DB_L0=cpl_disk,&
 &     VAR="   |Kernel`s coupling        ",L0=BS_K_coupling,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
  call io_variable_elemental(ID,DB_L0=cpl_exch_disk,&
-&     VAR="   |Exchange           [cpl] ",L0=BS_cpl_K_exchange,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
+&     VAR="   |Exchange",TERMINATOR="cpl",L0=BS_cpl_K_exchange,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
  !
  if (ver_is_gt_or_eq(ID,revision=4888)) then
    call io_variable_elemental(ID,DB_L0=cpl_corr_disk,&
-&       VAR="   |Correlation        [cpl] ",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
+&       VAR="   |Correlation",TERMINATOR="cpl",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
      call io_variable_elemental(ID,DB_L0=td_hf_disk,&
 &       VAR="   |W interaction is bare    ",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
  else
    call io_variable_elemental(ID,DB_L0=td_hf_disk,&
 &       VAR="   |W interaction is bare    ",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
      call io_variable_elemental(ID,DB_L0=cpl_corr_disk,&
-&       VAR="   |Correlation        [cpl] ",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
+&       VAR="   |Correlation",TERMINATOR="cpl",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
  endif
  !
  call io_variable_elemental(ID,&
@@ -100,16 +100,16 @@ integer function variables_BS(ID,iq,local_desc,CLOSE_the_menu,X)
  !
  if (res_exch_disk.or.cpl_exch_disk) then
      call io_variable_elemental(ID,&
-&      VAR="   |RL vectors    [exchange] ",I0=BS_n_g_exch,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
+&      VAR="   |RL vectors",TERMINATOR="exchange",I0=BS_n_g_exch,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
  endif
  if (res_corr_disk.or.cpl_corr_disk) then
      call io_variable_elemental(ID,&
-&     VAR="   |RL vectors [correlation] ",I0=BS_n_g_W,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
+&     VAR="   |RL vectors",TERMINATOR="correlation",I0=BS_n_g_W,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
  endif
  call io_variable_elemental(ID,UNIT=HA2EV,&
-&     VAR="   |E/h energy range    [ev] ",R1=BS_eh_en,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=local_desc)
+&     VAR="   |E/h energy range",TERMINATOR="ev",R1=BS_eh_en,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=local_desc)
  call io_variable_elemental(ID,&
-&     VAR="   |Coupling range     [o/o] ",R1=BS_eh_win,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=local_desc)
+&     VAR="   |Coupling range",TERMINATOR="o/o",R1=BS_eh_win,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=local_desc)
  !
  ! Interaction
  !
@@ -126,9 +126,9 @@ integer function variables_BS(ID,iq,local_desc,CLOSE_the_menu,X)
      call io_variable_elemental(ID,&
 &         VAR="   |Bands                    ",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=local_desc)
          call io_variable_elemental(ID,UNIT=HA2EV,&
-&         VAR="   |e/h energy range    [ev] ",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),DESCRIPTOR=local_desc)
+&         VAR="   |e/h energy range",TERMINATOR="ev",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),DESCRIPTOR=local_desc)
          call io_variable_elemental(ID,&
-&         VAR="   |Poles              [o/o] ",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
+&         VAR="   |Poles",TERMINATOR="o/o",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
          call io_variable_elemental(ID,&
 &         VAR="   |RL vectors in the sum    ",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),DESCRIPTOR=local_desc)
          call io_variable_elemental(ID,&
@@ -169,9 +169,9 @@ integer function variables_BS(ID,iq,local_desc,CLOSE_the_menu,X)
    !
    call def_variable_elemental(ID,"W_DbGd",2,IP+100,0)
      call io_variable_elemental(ID,I0=RIM_ng,&
-&     VAR=' RIM|RL components      [col]',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc,DO_NOT_DUMP=.TRUE.)
+&     VAR=' RIM|RL components',TERMINATOR='col',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc,DO_NOT_DUMP=.TRUE.)
      call io_variable_elemental(ID,I0=RIM_n_rand_pts,&
-&     VAR='    |Random points      [col]',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc,DO_NOT_DUMP=.TRUE.)
+&     VAR='    |Random points',TERMINATOR='col',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc,DO_NOT_DUMP=.TRUE.)
    !
    if (write_is_on(ID).or.variable_exist(ID,"PERT_SOC")) then
      !

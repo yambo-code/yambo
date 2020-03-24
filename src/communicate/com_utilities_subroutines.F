@@ -353,7 +353,7 @@ subroutine COM_write_desc(dest,prefix,desc)
  !
  do i_d=1,desc%n
    n_val=desc%size(i_d)
-   local_var=com_compose_msg(pre=prefix//space(1:i_space),body=desc%str(i_d))
+   local_var=com_compose_msg(pre=prefix//space(1:i_space),body=trim(desc%str(i_d)))
    local_term=" "
    if (len_trim(desc%term(i_d))>0) then
      local_term="["//trim(desc%term(i_d))//"]"

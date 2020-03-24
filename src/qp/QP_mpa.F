@@ -39,7 +39,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
-&                        io_RESPONSE,deliver_IO_error_message
+&                        io_RESPONSE,io_MULTIPOLE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
  use X_m,           ONLY:X_alloc,X_mat,X_t
@@ -62,7 +62,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  type(bz_samp)::Xk,k,q
  type(X_t)    ::X
  type(QP_t)   ::qp
- type(w_samp) ::Xw
+ type(w_samp) ::Xw,ER
  integer      ::GW_iter
  !
  ! Work Space
@@ -80,14 +80,14 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! MPA variables (Dario)
  !
- integer                  :: i_np,pole_p,poles_f
+ integer                  :: i_np,pole_p,poles_f,ID2
  real(DP)                 :: bose_PPA_E 
  complex(DP), allocatable :: MPA_E_mat(:,:,:)
  complex(DP), allocatable :: MPA_R_mat(:,:,:)
  complex(DP), allocatable :: MPA_freqs(:),MPA_Xo(:)
  character(len=99) :: str
  !
- integer, external::io_X,QP_state_extract
+ integer, external::io_X,io_MPA,QP_state_extract
  !
  ! Reset & checks
  !
@@ -173,11 +173,19 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  allocate(W_(QP_dSc_steps))
  allocate(dc(QP_dSc_steps),stat=alloc_err)
  !
+ ! MPA DB I/O
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID2)
+ io_err=io_MPA(X,ER,ID2)
+ if (io_err<0.and.io_MULTIPOLE) call error('Incomplete and/or broken MPA/Poles and Residues database')
+ !
  ! MPA workspace
  !
- YAMBO_ALLOC(MPA_E_mat,(X%ng,X%ng,X%mpa_npoles))
- YAMBO_ALLOC(MPA_R_mat,(X%ng,X%ng,X%mpa_npoles))
- YAMBO_ALLOC(MPA_freqs,(2*X%mpa_npoles))
+ if (io_MULTIPOLE) then
+   YAMBO_ALLOC(MPA_E_mat,(X%ng,X%ng,X%mpa_npoles))
+   YAMBO_ALLOC(MPA_R_mat,(X%ng,X%ng,X%mpa_npoles))
+   YAMBO_ALLOC(MPA_freqs,(2*X%mpa_npoles))
+ endif 
  !
  call PP_redux_wait
  !
@@ -218,7 +226,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        io_err=io_X(X,Xw,ID)
        !
-       call deliver_IO_error_message(io_err,'PP/Em1s',STOP_it=.TRUE.)
+       call deliver_IO_error_message(io_err,'MPA/Xm',STOP_it=.TRUE.)
        !
        ! Sampling the frequency domain
        !
@@ -226,23 +234,41 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
      endif
      !
-     ! Poles and Residuals
+     ! Poles and Residues
      !
-     write(str,*) iqibz
-     str = adjustl(str)
-     open(10,file = 'mpa.ER_fragment_'//trim(str))
-     write(10,*) 'Parameters of the MPA'
-     write(10,*)
-     write(10,*) 'matrix_size = ', X%ng
-     write(10,*) 'number_of_poles = ', X%mpa_npoles
-     write(10,*)
-     write(10,*) 'rE_iE_rR_iR(size,size,npoles,4) ='
-     open(11,file = 'mpa.err_fragment_'//trim(str))
-     write(11,*) 'Errors of the MPA'
-     write(11,*)
-     write(11,*) 'matrix_size = ', X%ng
-     write(11,*)
-     write(11,*) 'err(size,size) ='
+     ! I/O MPA
+     !
+     if (io_MULTIPOLE) then
+       !
+       if (iqbz==iq_to_start) then
+         call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID2)
+       else if (q%nbz==1) then
+         call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID2)
+       else if (iqbz> iq_to_start) then
+         call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2)
+       endif
+       !
+       io_err=io_MPA(X,ER,ID)
+       !
+       call deliver_IO_error_message(io_err,'MPA/PolRes',STOP_it=.TRUE.)
+       !
+     endif
+     !
+!     write(str,*) iqibz
+!     str = adjustl(str)
+!     open(10,file = 'mpa.ER_fragment_'//trim(str))
+!     write(10,*) 'Parameters of the MPA'
+!     write(10,*)
+!     write(10,*) 'matrix_size = ', X%ng
+!     write(10,*) 'number_of_poles = ', X%mpa_npoles
+!     write(10,*)
+!     write(10,*) 'rE_iE_rR_iR(size,size,npoles,4) ='
+!     open(11,file = 'mpa.err_fragment_'//trim(str))
+!     write(11,*) 'Errors of the MPA'
+!     write(11,*)
+!     write(11,*) 'matrix_size = ', X%ng
+!     write(11,*)
+!     write(11,*) 'err(size,size) ='
      !
      poles_f=0
      !
@@ -294,7 +320,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
            !endif
            ! 
            write(10,*) real(MPA_E_mat(ig1,ig2,i_np),DP),aimag(MPA_E_mat(ig1,ig2,i_np)), &
-&                      real(MPA_R_mat(ig1,ig2,i_np),DP),aimag(MPA_R_mat(ig1,ig2,i_np)), ','  
+&          real(MPA_R_mat(ig1,ig2,i_np)/isc%gamp(ig1,ig2),DP),aimag(MPA_R_mat(ig1,ig2,i_np)/isc%gamp(ig1,ig2)), ','  
            !
          enddo
          !

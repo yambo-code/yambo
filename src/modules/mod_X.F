@@ -103,8 +103,8 @@ module X_m
  !
  ! I/O descriptions
  !
- integer          :: n_X_descs
- character(lchlen):: X_description(100)
+ integer          :: n_X_descs,n_MPA_descs
+ character(lchlen):: X_description(100),MPA_description(100)
  !
  ! PARALLEL distribution
  !

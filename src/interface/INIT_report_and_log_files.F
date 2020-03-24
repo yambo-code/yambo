@@ -108,7 +108,7 @@ subroutine INIT_report_and_log_files()
 #else
    logfile_unit=13
 #endif
-   of_unit(repfile_index) = repfile_unit
+   of_unit(logfile_index) = logfile_unit
    open(unit=logfile_unit,file=trim(logfile))
 #if defined _YAML_OUTPUT
    call yaml_set_stream(filename=trim(logfile)//".yaml",record_length=200)

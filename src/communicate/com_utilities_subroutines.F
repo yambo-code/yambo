@@ -26,7 +26,6 @@ subroutine of_open_close(of_name_extension,mode)
  use pars,            ONLY:lchlen
  use com,             ONLY:of_name,of_opened,of_unit,write_to_of,n_ofs_defined
  use IO_m,            ONLY:get_name
- use stderr,          ONLY:set_real_printed_length
 #if defined _NC_OUTPUT
  use stderr,          ONLY:STRING_remove
  use com,             ONLY:of_nc_pos,of_nc_var_names,of_nc_IDs
@@ -84,12 +83,6 @@ subroutine of_open_close(of_name_extension,mode)
    !
    if ( (index(mode,'o')==0.and.index(mode,'O')==0) .or. .not.write_to_of) return
    !
-#if defined _DP
-   call set_real_printed_length(f_length=17,g_length=20)
-#else
-   call set_real_printed_length(f_length=13,g_length=16)
-#endif
-   !
    ! Here I open the unit using file_name to define the name
    !
    ! Check first if already open
@@ -130,8 +123,6 @@ subroutine of_open_close(of_name_extension,mode)
 #endif
    !
  else
-   !
-   call set_real_printed_length( )
    !
    ! Close file
    !  

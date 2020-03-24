@@ -48,6 +48,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
 &                        QP_SE_GWo,QP_SE_POLARON,QP_SE_GW_QED,QP_SE_GW_PPA
  use interfaces,    ONLY:eval_G_minus_G
  use parallel_m,    ONLY:PAR_COM_WORLD,PAR_IND_WF_linear
+ use stderr,        ONLY:intc
 #include<memory.h>
  !
  type(levels) ::en,Xen
@@ -62,6 +63,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  integer           ::i1,io_QP_and_GF_err,io_G_err,ID_QP,ID_G,i_spin
  integer           :: lw_bnd
  integer, external ::io_QP_and_GF
+ real(SP),external ::G2E
  !
  ! Driver Logicals
  !=================
@@ -233,7 +235,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    if (X%ng_db==0) X%ng_db=X%ng
  endif
  !
- if (l_ppa.and.l_GW_terminator) X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
+ if (l_ppa.and.l_GW_terminator) then
+     X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
+     call warning(' Response block size in GW reduced to '//intc(X%ng) &
+&     //'RL ('//intc(int(1000.*G2E(X%ng)))//'mHa)')
+ endif
  !
  ! Local Allocations
  !===================

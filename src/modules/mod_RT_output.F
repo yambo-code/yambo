@@ -27,6 +27,7 @@ module RT_output_m
  use pars,       ONLY:DP,SP,schlen,lchlen,LP
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:QP_SE_NONE
+ use descriptors,ONLY:IO_desc
  !
 #include<memory.h>
  !
@@ -43,6 +44,9 @@ module RT_output_m
  !
  logical                  :: RT_descriptions_dumped(N_MAX_RT_o_files)
  logical                  :: RT_o_file_is_open(N_MAX_RT_o_files)
+ !
+ type(IO_desc)            :: RT_desc
+ type(IO_desc)            :: TIME_STEP_desc
  !
  contains
    !

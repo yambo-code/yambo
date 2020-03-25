@@ -160,7 +160,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    call IO_desc_add(qp%desc,str='El-Photon correlation',kind='l',L=l_elphoton_corr)
    !
    if (.not.l_life) then
-     call IO_desc_add(qp%desc,str='QED RL components',kind='i',I=QP_QED_ng)
+     call IO_desc_add(qp%desc,str='QED RL components',kind='i',I=(/QP_QED_ng/))
    endif
    !
  endif
@@ -178,7 +178,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      if (.not.l_elel_corr) qp%desc%n=n_descs_save
      !
      if (trim(QP_solver)/='g') then
-       call IO_desc_add(qp%desc,str='[ph] dS/dw steps',kind='r',R=(/QP_dSc_steps/))
+       call IO_desc_add(qp%desc,str='[ph] dS/dw steps',kind='i',I=(/QP_dSc_steps/))
        !
        call IO_desc_add(qp%desc,str='[ph] dS/dw step',term='ev',kind='r',R=(/QP_dSc_delta*HA2EV/))
        !

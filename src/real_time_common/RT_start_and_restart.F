@@ -42,7 +42,7 @@ subroutine RT_start_and_restart(E,k,q)
  use QP_CTL_m,       ONLY:QP_ctl_user
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
- use RT_control,     ONLY:ID,NE_i_start_time,OBS_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,TIME_adjust,RT_desc,TIME_STEP_desc
+ use RT_control,     ONLY:ID,NE_i_start_time,OBS_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,TIME_adjust
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,l_RT_is_WFfree, &
@@ -63,6 +63,7 @@ subroutine RT_start_and_restart(E,k,q)
  use H_interfaces,   ONLY:V_real_space_to_H
  use parallel_m,     ONLY:PP_redux_wait
  use stderr,         ONLY:real2ch
+ use RT_output_m,    ONLY:RT_desc,TIME_STEP_desc
  !
 #include<memory.h>
  !

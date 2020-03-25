@@ -25,7 +25,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  ! 
  use units,          ONLY:HA2EV,HA2KEL,SPEED_OF_LIGHT,AU2KWCMm2,PS2AUT,AU2VMm1
  use pars,           ONLY:SP,schlen
- use com,            ONLY:msg,of_open_close
+ use com,            ONLY:msg,of_open_close,com_compose_msg
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,l_use_Hxc_collisions
  use QP_m,           ONLY:Time_of
  use fields,         ONLY:A_tot,A_ind,A_ext
@@ -139,13 +139,14 @@ subroutine RT_output(what,VALUES,TIME,E)
    !
    if (.not.RT_descriptions_dumped(i_f)) then
      do i_desc=1,n_RT_descriptions
-       call msg('o '//trim(RT_o_file_short(i_f)),'#',trim(RT_description(i_desc)),INDENT=0)
+       call msg('o '//trim(RT_o_file_short(i_f)),&
+&               com_compose_msg(pre='# ',body=trim(RT_description(i_desc)))," ",INDENT=0)
      enddo
      if (n_spin>1.and.trim(RT_o_file_short(i_f))=="magnetization") then
        call msg('o '//trim(RT_o_file_short(i_f)),'#')
        dumb_ch="Equilibrium spin      magnetization is "//&
 &             trim(real2ch(Spin_magn(1)))//", "//trim(real2ch(Spin_magn(2)))//", "//trim(real2ch(Spin_magn(3)))//". "
-       call msg('o '//trim(RT_o_file_short(i_f)),'#',dumb_ch,INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(RT_o_file_short(i_f)),com_compose_msg(pre='# ',body=dumb_ch)," ",INDENT=0,USE_TABS=.TRUE.)
      endif
      !
      call msg('o '//trim(RT_o_file_short(i_f)),'#')

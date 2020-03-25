@@ -26,8 +26,9 @@ function io_descriptors(desc,ID)
  use pars,          ONLY:schlen,SP,DP,IP,LP
  use descriptors,   ONLY:IO_desc
  use IO_m,          ONLY:def_variable_elemental,io_variable_elemental,&
-&                        def_variable_bulk,io_variable_bulk,io_status,        &
+&                        def_variable_bulk,io_variable_bulk,io_status,&
 &                        variable_exist,read_is_on
+ use stderr,        ONLY:intc
  !
  implicit none
  !
@@ -75,8 +76,13 @@ function io_descriptors(desc,ID)
    !
    N=desc%size(i1)
    !
-   if(desc%kind(i1)/='c') call def_variable_elemental(ID,trim(desc_to_varname(desc%str(i1))),N,VAR_KIND,0)
-   if(desc%kind(i1)=='c') call def_variable_elemental(ID,trim(desc_to_varname(desc%str(i1))),2,VAR_KIND,0)
+   if (len_trim(desc%str(i1))>0) then
+     if(desc%kind(i1)/='c') call def_variable_elemental(ID,trim(desc_to_varname(desc%str(i1))),N,VAR_KIND,0)
+     if(desc%kind(i1)=='c') call def_variable_elemental(ID,trim(desc_to_varname(desc%str(i1))),2,VAR_KIND,0)
+   else
+     if(desc%kind(i1)/='c') call def_variable_elemental(ID,"EMPTY_STR_Nr"//trim(intc(i1)),N,VAR_KIND,0)
+     if(desc%kind(i1)=='c') call def_variable_elemental(ID,"EMPTY_STR_Nr"//trim(intc(i1)),2,VAR_KIND,0)
+   endif
    !
    if(N==1) then
      if(desc%kind(i1)=='i') call io_variable_elemental(ID,I0=desc%ival(1,i1),VAR=desc%str(i1),TERMINATOR=desc%term(i1),&

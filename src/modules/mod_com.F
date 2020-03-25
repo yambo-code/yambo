@@ -79,29 +79,6 @@ module com
  logical            :: write_to_of
  logical            :: write_to_report
  !
- integer, parameter :: n_MAX_descs=100
- !
- type IO_desc
-   !
-   integer           :: n
-   integer           :: size(n_MAX_descs)
-   logical           :: check(n_MAX_descs)
-   character(2)      :: ops(10,n_MAX_descs)
-   character(schlen) :: str(n_MAX_descs)      ! Main variable body
-   character(schlen) :: term(n_MAX_descs)     ! Terminator string. E.G. o/o, eV, fs....
-   character(1)      :: kind(n_MAX_descs)     ! "i"=integer, "r"=real, "d"=double, "c"=complex, "s"=string, "l"=logical
-   !
-   integer           :: ival(10,n_MAX_descs)
-   real(SP)          :: rval(10,n_MAX_descs)
-   !
-   real(DP)          :: dval(n_MAX_descs)
-   complex(SP)       :: cval(n_MAX_descs)
-   !
-   character(schlen) :: sval(n_MAX_descs)
-   logical           :: lval(n_MAX_descs)
-   !
- end type
- !
  interface
    !
    ! This interfaces is not really needed and could be easely

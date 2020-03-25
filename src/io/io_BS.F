@@ -38,8 +38,8 @@ integer function io_BS(iq,X,ID)
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,&
 &                        def_variable_bulk,io_variable_bulk,frag_BS_K,&
 &                        write_is_on,io_header,io_mode,VERIFY, &
-&                        io_fragment,IO_NOT_ALLOWED,io_BS_K,&
-&                        IO_desc,IO_desc_reset,IO_desc_duplicate
+&                        io_fragment,IO_NOT_ALLOWED,io_BS_K
+ use descriptors,   ONLY:IO_desc,IO_desc_reset,IO_desc_duplicate
  use timing_m,      ONLY:timing
  !
 #include<memory.h>

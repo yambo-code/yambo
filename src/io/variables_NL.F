@@ -52,10 +52,10 @@ integer function variables_NL(ID,local_description)
  call io_elemental(ID,VAR="[RT] Time steps        ",I0=NE_steps,     CHECK=.true.,OP=(/"=="/), &
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR="[RT] Time step    [fs] ",R0=RT_step,      CHECK=.true.,OP=(/"=="/), &
+ call io_elemental(ID,VAR="[RT] Time step    ",TERMINATOR="fs",R0=RT_step,      CHECK=.true.,OP=(/"=="/), &
 &         DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
  i_desc=i_desc+1
- call io_elemental(ID,VAR="[NL] Damping      [fs] ",R0=NL_damping,   CHECK=.true.,OP=(/"=="/), &
+ call io_elemental(ID,VAR="[NL] Damping      ",TERMINATOR="fs",R0=NL_damping,   CHECK=.true.,OP=(/"=="/), &
 &         DESCRIPTION=local_description(i_desc),UNIT=HA2EV)
  i_desc=i_desc+1
  call io_elemental(ID,VAR="[NL] Bands  range      ",I1=RT_bands,     CHECK=.true.,OP=(/"==","=="/), &
@@ -127,22 +127,27 @@ integer function variables_NL(ID,local_description)
  call io_elemental(ID,VAR="[FIELDs] Versor                 ",R1=Efield(i_Prb)%versor,WARN=.true.,OP=(/"==","==","=="/), &
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR="[FIELDs] Intensity     [kWCMm2] ",R0=Efield(i_Prb)%intensity,CHECK=.true.,OP=(/"=="/),UNIT=AU2KWCMm2, &
+ call io_elemental(ID,VAR="[FIELDs] Intensity     ",TERMINATOR="kWCMm2",&
+&         R0=Efield(i_Prb)%intensity,CHECK=.true.,OP=(/"=="/),UNIT=AU2KWCMm2, &
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR="[FIELDs] Damping           [fs] ",R0=Efield(i_Prb)%FWHM,CHECK=.true.,OP=(/"=="/),& 
+ call io_elemental(ID,VAR="[FIELDs] Damping           ",TERMINATOR="fs",&
+&         R0=Efield(i_Prb)%FWHM,CHECK=.true.,OP=(/"=="/),& 
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR="[FIELDs] Frequency range   [eV] ",R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV,& 
+ call io_elemental(ID,VAR="[FIELDs] Frequency range   ",TERMINATOR="eV",&
+&         R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV,& 
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR="[FIELDs] Frequency steps        ",I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/),& 
+ call io_elemental(ID,VAR="[FIELDs] Frequency steps",I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/),& 
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR="[FIELDs] Frequency step    [eV] ",R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV,& 
+ call io_elemental(ID,VAR="[FIELDs] Frequency step    ",TERMINATOR="eV",&
+&         R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV,& 
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR=' [FIELDs] Initial time      [fs]',R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+ call io_elemental(ID,VAR=" [FIELDs] Initial time      ",TERMINATOR="fs",&
+&         R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &         DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !

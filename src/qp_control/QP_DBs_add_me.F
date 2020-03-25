@@ -166,7 +166,7 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERA
  contains 
    !
    subroutine ADD_descs(STATES,qp_in)
-     use IO_m,  ONLY:IO_desc_element_duplicate
+     use descriptors,  ONLY:IO_desc_element_duplicate
      logical    :: STATES
      type(QP_t) :: qp_in
      do i_d=1,qp_in%desc%n

@@ -23,10 +23,11 @@
 !
 function io_descriptors(desc,ID)
  !
- use pars,       ONLY:schlen,SP,DP,IP,LP
- use IO_m,       ONLY:IO_desc,def_variable_elemental,io_variable_elemental,&
-&                     def_variable_bulk,io_variable_bulk,io_status,        &
-&                     variable_exist,read_is_on
+ use pars,          ONLY:schlen,SP,DP,IP,LP
+ use descriptors,   ONLY:IO_desc
+ use IO_m,          ONLY:def_variable_elemental,io_variable_elemental,&
+&                        def_variable_bulk,io_variable_bulk,io_status,        &
+&                        variable_exist,read_is_on
  !
  implicit none
  !

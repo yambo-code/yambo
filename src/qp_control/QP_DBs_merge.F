@@ -29,7 +29,7 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
  use stderr,         ONLY:intc
  use C_driver,       ONLY:code_bin
  use vec_operate,    ONLY:v_is_zero
- use IO_m,           ONLY:IO_desc_duplicate
+ use descriptors,    ONLY:IO_desc_duplicate
  !
 #include<memory.h>
  !

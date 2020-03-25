@@ -426,9 +426,15 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
        endif
      endif
      if (len_trim(ch)>0) then
-       call msg(msg_where,com_compose_msg(" ",ch),trim(db_ch(1)))
-     else if (present(VAR)) then
-       call msg(msg_where,com_compose_msg(" ",VAR),trim(db_ch(1)))
+       call msg(msg_where,com_compose_msg(pre=" ",body=ch),trim(db_ch(1)))
+     else if (present(VAR)) then 
+       if (len_trim(VAR)>0.and.len_trim(db_ch(1))>0) then
+         call msg(msg_where,com_compose_msg(pre=" ",body=VAR),trim(db_ch(1)))
+       else if (len_trim(VAR)==0.and.len_trim(db_ch(1))>0) then
+         call msg(msg_where,com_compose_msg(pre=" ",body=trim(db_ch(1))))
+       else if (len_trim(VAR)>0.and.len_trim(db_ch(1))==0) then
+         call msg(msg_where,com_compose_msg(pre=" ",body=trim(VAR)))
+       endif
      endif
    endif
    !

@@ -328,9 +328,9 @@ end subroutine msg_manager
 !
 subroutine COM_write_desc(dest,prefix,desc)
  !
- use pars,    ONLY:SP,msg_len
- use com,     ONLY:msg,com_compose_msg
- use IO_m,    ONLY:IO_desc
+ use pars,       ONLY:SP,msg_len
+ use com,        ONLY:msg,com_compose_msg
+ use descriptors,ONLY:IO_desc
  !
  implicit none
  !

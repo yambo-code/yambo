@@ -28,7 +28,6 @@ module IO_m
 #if defined _MPI
  use parallel_m, ONLY:myid,MPI_INFO_NULL
 #endif
- use com,        ONLY:IO_desc
  use netcdf
  !
  implicit none
@@ -232,8 +231,8 @@ module IO_m
         &                       CH0,DB_CH0,           &
         &                       UNIT,DESCRIPTOR,DO_NOT_DUMP,TERMINATOR)
      !
-     use pars,   ONLY:SP,DP,LP,lchlen
-     use com,    ONLY:IO_DESC
+     use pars,       ONLY:SP,DP,LP,lchlen
+     use descriptors,ONLY:IO_desc
      integer               :: ID
      character(*),optional :: VAR
      character(*),optional :: OP(:)
@@ -496,56 +495,6 @@ module IO_m
      io_code_revision(ID,:)=(/code_revision,code_GPL_revision/)
      io_serial_number(ID)=serial_number
      io_resetable(ID)=.true.
-   end subroutine
-   !
-   subroutine IO_desc_element_duplicate(desc_in,desc_out,i_d_in,i_d_out)
-     type(IO_desc),    intent(in)  :: desc_in
-     type(IO_desc),    intent(out) :: desc_out
-     integer,          intent(in)  :: i_d_in,i_d_out
-     desc_out%size(i_d_out)   = desc_in%size(i_d_in)
-     desc_out%term(i_d_out)   = desc_in%term(i_d_in)
-     desc_out%str (i_d_out)   = desc_in%str(i_d_in)
-     desc_out%kind(i_d_out)   = desc_in%kind(i_d_in)
-     desc_out%check(i_d_out)  = desc_in%check(i_d_in)
-     desc_out%ops (:,i_d_out) = desc_in%ops(:,i_d_in)
-     desc_out%ival(:,i_d_out) = desc_in%ival(:,i_d_in)
-     desc_out%rval(:,i_d_out) = desc_in%rval(:,i_d_in)
-     desc_out%dval(i_d_out)   = desc_in%dval(i_d_in)
-     desc_out%cval(i_d_out)   = desc_in%cval(i_d_in)
-     desc_out%sval(i_d_out)   = desc_in%sval(i_d_in)
-     desc_out%lval(i_d_out)   = desc_in%lval(i_d_in)
-   end subroutine
-   !
-   subroutine IO_desc_duplicate(desc_in,desc_out,offset)
-     type(IO_desc),    intent(in)  :: desc_in
-     type(IO_desc),    intent(out) :: desc_out
-     integer,optional, intent(in)  :: offset
-     integer  :: i_d,off_
-     off_=0
-     if (present(offset)) then
-       off_=offset
-     endif
-     desc_out%n    = desc_in%n + off_
-     do i_d=1,desc_in%n
-       call IO_desc_element_duplicate(desc_in,desc_out,i_d+off_,i_d)
-     enddo
-   end subroutine
-   !
-   subroutine IO_desc_reset(desc)
-     type(IO_desc), intent(out) :: desc
-     desc%n    = 0
-     desc%size = 0
-     desc%term = " "
-     desc%str  = " "
-     desc%kind = " "
-     desc%check= .false.
-     desc%ops  = " "
-     desc%ival = 0
-     desc%rval = 0._SP
-     desc%dval = 0._DP
-     desc%cval = (0._SP,0._SP)
-     desc%sval = " "
-     desc%lval = .false.
    end subroutine
    !
    subroutine mk_dir(dirname)

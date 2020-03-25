@@ -23,7 +23,7 @@
 !
 module BS_solvers
  !
- use IO_m,           ONLY:IO_desc
+ use descriptors,    ONLY:IO_desc
  use pars,           ONLY:SP,schlen,lchlen
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block,n_BS_blks,BS_blk
  use matrix,         ONLY:PAR_matrix
@@ -149,7 +149,7 @@ module BS_solvers
    integer function variables_BS(ID,iq,local_desc,CLOSE_the_menu,X)
      use pars,       ONLY:lchlen,SP
      use X_m,        ONLY:X_t
-     use IO_m,       ONLY:IO_desc
+     use descriptors,ONLY:IO_desc
      implicit none
      integer            ::ID,iq
      type(IO_desc)      ::local_desc

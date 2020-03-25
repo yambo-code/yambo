@@ -24,11 +24,11 @@
 integer function variables_X(ID,local_desc,X)
  !
  use units,         ONLY:HA2EV
- use com,           ONLY:IO_desc
+ use descriptors,   ONLY:IO_desc,IO_desc_reset
  use pars,          ONLY:SP,IP,schlen
  use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,X_DbGd_percentual
  use IO_m,          ONLY:def_variable_elemental,io_variable_elemental,io_status,&
-&                        ver_is_gt_or_eq,read_is_on,variable_exist,IO_desc_reset
+&                        ver_is_gt_or_eq,read_is_on,variable_exist
  !
  implicit none
  !
@@ -55,7 +55,7 @@ integer function variables_X(ID,local_desc,X)
  call io_variable_elemental(ID,&
 &     VAR="X band range            ",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=local_desc)
  call io_variable_elemental(ID,UNIT=HA2EV,&
-&     VAR="X e/h energy range [ev] ",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),DESCRIPTOR=local_desc)
+&     VAR="X e/h energy range ",TERMINATOR="ev",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),DESCRIPTOR=local_desc)
  !call def_variable_elemental(ID,"",0,0,0)
  !
  ! PARS_2
@@ -92,7 +92,7 @@ integer function variables_X(ID,local_desc,X)
  if (ver_is_gt_or_eq(ID,revision=15206)) sec_size=10
  call def_variable_elemental(ID,trim(X_label)//"PARS_3",sec_size,SP,0)
  call io_variable_elemental(ID,&
-&     VAR="X poles           [o/o] ",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
+&     VAR="X poles           ",TERMINATOR="o/o",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
  call io_variable_elemental(ID,&
 &     VAR="RL vectors in the sum   ",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),DESCRIPTOR=local_desc)
  call io_variable_elemental(ID,&

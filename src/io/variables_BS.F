@@ -35,8 +35,8 @@ integer function variables_BS(ID,iq,local_desc,CLOSE_the_menu,X)
 &                        BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                        BS_cpl_K_corr,BSqpts,BS_perturbative_SOC
  use IO_m,          ONLY:io_status,ver_is_gt_or_eq,variable_exist,write_is_on,&
-&                        def_variable_elemental,io_variable_elemental,&
-&                        IO_desc,IO_desc_reset
+&                        def_variable_elemental,io_variable_elemental
+ use descriptors,   ONLY:IO_desc,IO_desc_reset
 #if defined _PAR_IO
  use BS,            ONLY:l_BSK_IO_triangular
 #endif

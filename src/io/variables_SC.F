@@ -183,16 +183,16 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,VAR='B_FIELD_parameters',VAR_SZ=4,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,UNIT=AU2Tesla,R0=MAG_B,&
-&       VAR='[MAG] B modulus              [T]',CHECK=.true.,OP=(/"=="/),&
+&       VAR='[MAG] B modulus              ',TERMINATOR='T',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
    !
    i_desc=i_desc+1
    call io_elemental(ID,UNIT=(1./DEG2RAD),R0=MAG_theta,& 
-&       VAR='[MAG] B theta angle    [degrees]',CHECK=.true.,OP=(/"=="/),&
+&       VAR='[MAG] B theta angle    ',TERMINATOR='degrees',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,UNIT=(1./DEG2RAD),R0=MAG_psi,& 
-&       VAR='[MAG] B psi angle      [degrees]',CHECK=.true.,OP=(/"=="/),&
+&       VAR='[MAG] B psi angle      ',TERMINATOR='degrees',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
    !
    if (SC_perturbation_disk/=EXT_B_PAULI) then
@@ -220,7 +220,7 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,VAR='E_FIELD_parameters',VAR_SZ=4,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,UNIT=AU2VMm1,R0=Efield(1)%amplitude,&
-&     VAR='[ELECTRIC] E intensity           [v/m]',CHECK=.true.,OP=(/"=="/),&
+&     VAR='[ELECTRIC] E intensity           ',TERMINATOR='v/m',CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,VAR="[ELECTRIC] E Versor             ",R1=Efield(1)%versor, &

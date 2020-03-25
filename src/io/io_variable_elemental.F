@@ -38,8 +38,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                  io_status,DUMP,REP,LOG,NO_VAR,io_com,io_file,&
-&                  io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR,&
-&                  IO_desc
+&                  io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR
+ use descriptors,ONLY:IO_desc
  !
  implicit none
  !

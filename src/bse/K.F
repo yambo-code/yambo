@@ -45,7 +45,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,&
+&                       BS_nT_grps,BS_blks_free,&
 &                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
 &                       BS_K_cutoff,BS_max_val
  use collision_el, ONLY:elemental_collision_free
@@ -184,7 +184,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call io_control(ACTION=OP_RD,COM=REP,MODE=VERIFY,ID=ID)
    call io_BS_PAR_init(iq,X,ID)
    !
-   if(l_BSE_kernel_complete) then
+   if(l_BSE_kernel_complete.and.l_bss) then
      do i_block=1,n_BS_blks
        call io_control(ACTION=RD,ID=ID)
        call io_BS_PAR_block(iq,i_block,ID)
@@ -337,7 +337,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if (l_BSE_restart) then
      call io_control(ACTION=RD,ID=ID)
      call io_BS_PAR_block(iq,i_block,ID)
-     if (all(BS_blk(i_block)%done=="t")) cycle
+     if (all(BS_blk(i_block)%done=="t".or.BS_blk(i_block)%done=="n")) cycle
    endif
 #endif
    !
@@ -381,7 +381,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        ! skip this block if already done
        !
-       if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t") cycle
+       if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t".or.BS_blk(i_block)%done(i_Tk,i_Tp)=="n") cycle
        !
        FILL_BSK_COMMON_INDEXES
        FILL_BSK_KERNEL_INDEXES
@@ -511,15 +511,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  enddo block_loop
  !
+ if(BS_K_cutoff>0._SP) then
+   call PP_redux_wait(BS_max_val_CPU)
+   BS_max_val=maxval(BS_max_val_CPU)
+   call K_compress(iq,ID)
+ endif
+ !
 #if defined _PAR_IO
  call io_control(ACTION=WR_CL,COM=REP,ID=ID)
  call io_BS_PAR_free(ID,.true.)
 #endif
- !
- if(BS_K_cutoff>0._SP) then
-   call PP_redux_wait(BS_max_val_CPU)
-   BS_max_val=maxval(BS_max_val_CPU)
- endif
  !
  if (BS_LiveTiming_steps>0) call live_timing( )
  !

@@ -35,8 +35,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use BS_solvers,    ONLY:variables_BS,BSS_desc
  use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,VERIFY,&
 &                        io_connect,io_elemental,def_variable_bulk,variable_exist,&
-&                        io_header,io_file,def_variable_elemental,io_variable_elemental,&
-&                        IO_desc,IO_desc_duplicate
+&                        io_header,io_file,IO_desc,IO_desc_duplicate
  !
  implicit none
  !
@@ -44,6 +43,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  integer :: iq, ID
  !
  logical, external :: file_exists
+ integer, external :: variables_BS_more
  !
  logical :: def_var, io_var
  integer :: io_BS,    VAR_IDs(8), n_vars, i1
@@ -91,13 +91,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
    return
  endif
  !
- ! Check if BSE kernel is complete in reading mode, set the variable to false in writing mode
- !
- def_var=                write_is_on(ID) .or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
- io_var =(master_cpu.and.write_is_on(id)).or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
- if(def_var) call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,IP+100,0,par_io_kind="independent")
- if(io_var)  call io_variable_elemental(ID,VAR=" Kernel complete          :",&
-              &                          DB_L0=l_BSE_kernel_complete,L0=l_BSE_kernel_complete)
+ io_BS=variables_BS_more(ID,'start')
  !
  if(read_is_on(ID)) then
    if(l_BSE_kernel_complete) then
@@ -164,25 +158,24 @@ subroutine io_BS_PAR_free(ID,l_kernel_complete)
  !
  ! close BSE netcdf parallel file
  !
- use pars,          ONLY:LP
- use parallel_m,    ONLY:PP_redux_wait,master_cpu
+ use parallel_m,    ONLY:PP_redux_wait
  use BS,            ONLY:l_BSE_kernel_complete,BS_K_has_been_calculated_loaded
- use IO_m,          ONLY:io_disconnect,write_is_on,def_variable_elemental,io_variable_elemental
+ use IO_m,          ONLY:io_disconnect
  !
  implicit none
  !
  integer, intent(in)  :: ID
  logical, intent(in)  :: l_kernel_complete
  !
+ integer              :: io_BS
+ integer, external    :: variables_BS_more
+ !
  call PP_redux_wait()
  !
  BS_K_has_been_calculated_loaded=l_kernel_complete
  l_BSE_kernel_complete          =l_kernel_complete
  !
- if(l_kernel_complete.and.write_is_on(ID)) then
-   call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0,par_io_kind="independent")
-   if(master_cpu) call io_variable_elemental(ID,VAR=" Kernel complete          :",L0=l_BSE_kernel_complete)
- endif
+ io_BS=variables_BS_more(ID,'end')
  !
  call io_disconnect(ID)
  !

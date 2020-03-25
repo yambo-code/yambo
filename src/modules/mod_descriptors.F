@@ -73,6 +73,7 @@ module descriptors
      endif
      desc%kind(desc%n)=kind
      !
+     desc%term(desc%n)=" "
      if (present(term)) then
        desc%term(desc%n)=trim(term)
      endif
@@ -143,11 +144,11 @@ module descriptors
      type(IO_desc), intent(out) :: desc
      desc%n    = 0
      desc%size = 0
-     desc%term = " "
-     desc%str  = " "
-     desc%kind = " "
+     desc%term = ""
+     desc%str  = ""
+     desc%kind = ""
      desc%check= .false.
-     desc%ops  = " "
+     desc%ops  = ""
      desc%ival = 0
      desc%rval = 0._SP
      desc%dval = 0._DP

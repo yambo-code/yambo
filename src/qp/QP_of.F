@@ -154,7 +154,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    !
    if (what== 'hf') call msg('o '//what,'# Hartree-Fock Components and Corrections')
    !
-   call COM_write_desc('o '//what,'#',qp%desc)
+   call DESC_write('o '//what,'#',qp%desc)
    !
    call msg('o '//what,'#')
    call msg('o '//what,'#',titles(titles_order(:ntitles)),INDENT=0,USE_TABS=.TRUE.)
@@ -239,7 +239,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      if (n_sp_pol==1) write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3)
      call of_open_close(G_Sc_name,'ot')
      !call msg('o G_Sc','# GW [Green`s function & Self-Energy]')
-     call COM_write_desc('o G_Sc','#',qp%desc)
+     call DESC_write('o G_Sc','#',qp%desc)
      if (allocated(QP_G_amplitude_integral)) then
        call msg('o G_Sc','#')
        call msg('o G_Sc','# Spectral function at this point integrates to',QP_G_amplitude_integral(i1),&

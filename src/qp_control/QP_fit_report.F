@@ -151,7 +151,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    call of_open_close(fname(1),'ot')
    call of_open_close(fname(2),'ot')
    call msg('o .fit .data','#')
-   call COM_write_desc('o .fit .data','#',qp%desc)
+   call DESC_write('o .fit .data','#',qp%desc)
    !
    n_titles=1
    titles(1)="Eo [eV]"

@@ -44,6 +44,7 @@ subroutine K_Haydock(iq,W)
  use KERR,           ONLY:B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
+ use descriptors,    ONLY:IO_desc_add
  !
 #include<memory.h>
  !
@@ -80,8 +81,8 @@ subroutine K_Haydock(iq,W)
  !
  call timing('Haydock Solver',OPR='start')
  !
- if (isec(4)/=0) sec="="
- if (isec(4)==0) sec="+"
+ if (isec(2)/=0) sec="="
+ if (isec(2)==0) sec="+"
  call section(sec,'Haydock Solver @q'//trim(intc(iq)))
  !
  call BS_Blocks_symmetrize_K()
@@ -204,31 +205,13 @@ subroutine K_Haydock(iq,W)
  !
  ! Update Descriptions
  !=====================
- BSS_desc%n=BSS_desc%n+1
- BSS_desc%str(BSS_desc%n)     =' '
- BSS_desc%kind(BSS_desc%n)    ="s"
+ call IO_desc_add(BSS_desc,kind="s",str=" ",S=" ")
  !
- BSS_desc%n=BSS_desc%n+1
- BSS_desc%str(BSS_desc%n)     =' Haydock|Accuracy (requested)'
- BSS_desc%term(BSS_desc%n)    ='o/o'
- BSS_desc%kind(BSS_desc%n)    ="r"
- BSS_desc%size(BSS_desc%n)    =1
- BSS_desc%rval(1,BSS_desc%n)  =Haydock_threshold
- !
- BSS_desc%n=BSS_desc%n+1
+ call IO_desc_add(BSS_desc,kind="r",str='[Haydock] Accuracy (requested)',term='o/o',R=(/Haydock_threshold/))
+ call IO_desc_add(BSS_desc,kind="r",str='[Haydock] Accuracy (reached)',term='o/o',R=(/0._SP/))
  i_desc_acc=BSS_desc%n
- BSS_desc%str(BSS_desc%n)   ='        |Accuracy (reached)'
- BSS_desc%term(BSS_desc%n)  ='o/o'
- BSS_desc%kind(BSS_desc%n)  ="r"
- BSS_desc%size(BSS_desc%n)  =1
- BSS_desc%rval(1,BSS_desc%n)=0._SP
- !
- BSS_desc%n=BSS_desc%n+1
+ call IO_desc_add(BSS_desc,kind="i",str='[Haydock] Iterations',I=(/0/))
  i_desc_iter=BSS_desc%n
- BSS_desc%str(BSS_desc%n)     ='        |Iteration'
- BSS_desc%kind(BSS_desc%n)    ="i"
- BSS_desc%size(BSS_desc%n)    =1
- BSS_desc%ival(1,BSS_desc%n)  =0
  !
  call msg('r','Accuracy (requested) [o/o]',Haydock_threshold)
  !

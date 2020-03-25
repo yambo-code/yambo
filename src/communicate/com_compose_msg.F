@@ -62,8 +62,8 @@ function com_compose_msg(pre,body,post)
    com_compose_msg(1:pre_len)=pre
  endif
  if (body_start==0) return
- com_compose_msg(pre_len+1:pre_len+body_len-body_start+1)=trim(body(body_start:))
+ com_compose_msg(pre_len+1:pre_len+body_len-body_start+1)=trim(body(body_start:body_len))
  if (post_start==0) return
- com_compose_msg(msg_len-post_len+post_start:msg_len)=trim(post(post_start:))
+ com_compose_msg(msg_len-post_len+post_start:msg_len)=trim(post(post_start:post_len))
  !
 end function

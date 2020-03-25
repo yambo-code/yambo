@@ -132,7 +132,7 @@ subroutine K_output_file(iq,mode)
  !
  ! Description of the run and headers for output files:
  !
- call COM_write_desc('o eps_q refl eel_q fxc alpha off beta moke jdos','#',BSS_desc)
+ call DESC_write('o eps_q refl eel_q fxc alpha off beta moke jdos','#',BSS_desc)
  !
  if (l_INIT) then 
    call CLOSE_the_files( )

@@ -39,7 +39,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                  io_status,DUMP,REP,LOG,NO_VAR,io_com,io_file,&
 &                  io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR
- use descriptors,ONLY:IO_desc
+ use descriptors,ONLY:IO_desc,IO_desc_add
  !
  implicit none
  !
@@ -58,7 +58,6 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  ! Work Space
  !
  integer,parameter      :: MAX_DB_ELEMENTS=100
- character(schlen)      :: TERM_
  character(msg_len)     :: msg_
  character(msg_len-1)   :: ch
  character(1)           :: msg_where
@@ -80,11 +79,6 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  !
  i_err=0
  VERIFY_= (read_is_on(ID) .and. (io_mode(ID)==VERIFY .and. present(OP)))
- !
- TERM_=""
- if (present(TERMINATOR)) then
-   if (len_trim(TERMINATOR)>0) TERM_="["//trim(TERMINATOR)//"]"
- endif
  !
  CHECK_=.false.
  if (present(CHECK)) CHECK_=CHECK
@@ -121,13 +115,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    ! DESCRIPTOR
    !
    if (present(DESCRIPTOR).and.present(VAR)) then
-     DESCRIPTOR%n = DESCRIPTOR%n+1
-     DESCRIPTOR%size(DESCRIPTOR%n)   = SZ
-     DESCRIPTOR%kind(DESCRIPTOR%n)   = 'i'
-     DESCRIPTOR%str(DESCRIPTOR%n)    = VAR
-     DESCRIPTOR%ival(1,DESCRIPTOR%n) = I0
-     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
-     if(present(OP)) DESCRIPTOR%ops(1:SZ,DESCRIPTOR%n) = OP
+     call IO_desc_add(DESCRIPTOR,'i',VAR,I=(/I0/),ops=OP,check=CHECK_,term=TERMINATOR)
    endif
    !
  endif
@@ -154,13 +142,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    ! DESCRIPTION
    !
    if (present(DESCRIPTOR).and.present(VAR)) then
-     DESCRIPTOR%n = DESCRIPTOR%n+1
-     DESCRIPTOR%size(DESCRIPTOR%n)      = SZ
-     DESCRIPTOR%kind(DESCRIPTOR%n)      = 'i'
-     DESCRIPTOR%str(DESCRIPTOR%n)       = VAR
-     DESCRIPTOR%ival(1:SZ,DESCRIPTOR%n) = I1
-     DESCRIPTOR%check(DESCRIPTOR%n)     = CHECK_
-     if(present(OP)) DESCRIPTOR%ops(1:SZ,DESCRIPTOR%n) = OP
+     call IO_desc_add(DESCRIPTOR,'i',VAR,SZ=SZ,I=I1,ops=OP,check=CHECK_,term=TERMINATOR)
    endif
    !
  endif
@@ -187,13 +169,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    ! DESCRIPTION
    !
    if (present(DESCRIPTOR)) then
-     DESCRIPTOR%n = DESCRIPTOR%n+1
-     DESCRIPTOR%size(DESCRIPTOR%n)   = SZ
-     DESCRIPTOR%kind(DESCRIPTOR%n)   = 'r'
-     DESCRIPTOR%str(DESCRIPTOR%n)    = VAR
-     DESCRIPTOR%rval(1,DESCRIPTOR%n) = R0*local_unit
-     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
-     if(present(OP)) DESCRIPTOR%ops(1:SZ,DESCRIPTOR%n) = OP
+     call IO_desc_add(DESCRIPTOR,'r',VAR,R=(/R0*local_unit/),ops=OP,check=CHECK_,term=TERMINATOR)
    endif
    !
  endif
@@ -220,13 +196,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    ! DESCRIPTION
    !
    if (present(DESCRIPTOR)) then
-     DESCRIPTOR%n = DESCRIPTOR%n+1
-     DESCRIPTOR%size(DESCRIPTOR%n)   = size(R1)
-     DESCRIPTOR%kind(DESCRIPTOR%n)   = 'r'
-     DESCRIPTOR%str(DESCRIPTOR%n)    = VAR
-     DESCRIPTOR%rval(1:size(R1),DESCRIPTOR%n) = R1*local_unit
-     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
-     if(present(OP)) DESCRIPTOR%ops(:size(R1),DESCRIPTOR%n) = OP
+     call IO_desc_add(DESCRIPTOR,'r',VAR,SZ=size(R1),R=R1*local_unit,ops=OP,check=CHECK_,term=TERMINATOR)
    endif
    !
  endif
@@ -251,13 +221,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    ! DESCRIPTION
    !
    if (present(DESCRIPTOR)) then
-     DESCRIPTOR%n = DESCRIPTOR%n+1
-     DESCRIPTOR%size(DESCRIPTOR%n) = 1
-     DESCRIPTOR%kind(DESCRIPTOR%n) = 'd'
-     DESCRIPTOR%str(DESCRIPTOR%n)  = VAR
-     DESCRIPTOR%dval(DESCRIPTOR%n) = D0
-     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
-     if(present(OP)) DESCRIPTOR%ops(1:1,DESCRIPTOR%n) = OP
+     call IO_desc_add(DESCRIPTOR,'d',VAR,D=D0*local_unit,ops=OP,check=CHECK_,term=TERMINATOR)
    endif
    !
  endif
@@ -285,13 +249,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    ! DESCRIPTION
    !
    if (present(DESCRIPTOR)) then
-     DESCRIPTOR%n = DESCRIPTOR%n+1
-     DESCRIPTOR%size(DESCRIPTOR%n) = SZ
-     DESCRIPTOR%kind(DESCRIPTOR%n) = 'c'
-     DESCRIPTOR%str(DESCRIPTOR%n)  = VAR
-     DESCRIPTOR%cval(DESCRIPTOR%n) = C0*local_unit
-     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
-     if(present(OP)) DESCRIPTOR%ops(1:1,DESCRIPTOR%n) = OP
+     call IO_desc_add(DESCRIPTOR,'c',VAR,C=C0*local_unit,ops=OP,check=CHECK_,term=TERMINATOR)
    endif
    !
  endif
@@ -323,13 +281,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    ! DESCRIPTION
    !
    if (present(DESCRIPTOR)) then
-     DESCRIPTOR%n = DESCRIPTOR%n+1
-     DESCRIPTOR%size(DESCRIPTOR%n) = 1
-     DESCRIPTOR%kind(DESCRIPTOR%n) = 'l'
-     DESCRIPTOR%str(DESCRIPTOR%n)  = VAR
-     DESCRIPTOR%lval(DESCRIPTOR%n) = L0
-     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
-     if(present(OP)) DESCRIPTOR%ops(1:1,DESCRIPTOR%n) = OP
+     call IO_desc_add(DESCRIPTOR,'l',VAR,L=L0,ops=OP,check=CHECK_,term=TERMINATOR)
    endif
    !
  endif
@@ -356,13 +308,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    ! DESCRIPTION
    !
    if (present(DESCRIPTOR)) then
-     DESCRIPTOR%n = DESCRIPTOR%n+1
-     DESCRIPTOR%size(DESCRIPTOR%n) = 1
-     DESCRIPTOR%kind(DESCRIPTOR%n) = 's'
-     DESCRIPTOR%str(DESCRIPTOR%n)  = VAR
-     DESCRIPTOR%sval(DESCRIPTOR%n) = CH0
-     DESCRIPTOR%check(DESCRIPTOR%n)  = CHECK_
-     if(present(OP)) DESCRIPTOR%ops(1:1,DESCRIPTOR%n) = OP
+     call IO_desc_add(DESCRIPTOR,'s',VAR,S=CH0,ops=OP,check=CHECK_,term=TERMINATOR)
    endif
    !
  endif
@@ -380,10 +326,10 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
      if (WARN_ ) ch=STRING_pack("*WRN* ",VAR)
    endif
    msg_=com_compose_msg(pre=" ",body=trim(ch))
-   if(present(I0) .or.present(I1)) call msg(msg_where,msg_,i_db(1:SZ),after_msg=TERM_)
-   if(present(R0) .or.present(R1)) call msg(msg_where,msg_,r_db(1:SZ)*local_unit,after_msg=TERM_)
-   if(present(D0)                ) call msg(msg_where,msg_,r_db(1:SZ)*local_unit,after_msg=TERM_)
-   if(present(C0)                ) call msg(msg_where,msg_,rc_db(1:2*SZ)*local_unit,after_msg=TERM_)
+   if(present(I0) .or.present(I1)) call msg(msg_where,msg_,i_db(1:SZ),after_msg=TERMINATOR)
+   if(present(R0) .or.present(R1)) call msg(msg_where,msg_,r_db(1:SZ)*local_unit,after_msg=TERMINATOR)
+   if(present(D0)                ) call msg(msg_where,msg_,r_db(1:SZ)*local_unit,after_msg=TERMINATOR)
+   if(present(C0)                ) call msg(msg_where,msg_,rc_db(1:2*SZ)*local_unit,after_msg=TERMINATOR)
    if(present(L0)                ) call msg(msg_where,msg_,(l_db(1)==1))
    if(present(CH0)               ) call msg(msg_where,msg_,trim(ch_db(1)))
  endif

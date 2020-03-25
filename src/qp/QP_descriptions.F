@@ -49,6 +49,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  use drivers,       ONLY:l_elphoton_corr
 #endif
  use descriptors,   ONLY:IO_desc_add
+ !
  implicit none
  !
  type(QP_t)  ::qp

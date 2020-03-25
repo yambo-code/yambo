@@ -99,7 +99,7 @@ subroutine QP_DBs_manipulate( E )
    if (index(QP_db_what(i_db),"Z")>0) plan_EWZG(i_db,3)=.TRUE.
    if (index(QP_db_what(i_db),"G")>0) plan_EWZG(i_db,4)=.TRUE.
    !
-   call COM_write_desc('s','[DB #'//trim(intc(i_db))//']',QP_db(i_db)%desc)
+   call DESC_write('s','[DB #'//trim(intc(i_db))//']',QP_db(i_db)%desc)
    !
    if (i_db==n_QP_dbs) call msg('s',repeat("-",len_trim(QP_db_name(i_db))+13))
    !
@@ -132,7 +132,7 @@ subroutine QP_DBs_manipulate( E )
    enddo
    !
    QP_merged_name='QP_merged_'//trim(intc(i_qp))//trim(QP_db_kind)
-   call COM_write_desc('s','['//trim(QP_merged_name)//']',qp(i_qp)%desc)
+   call DESC_write('s','['//trim(QP_merged_name)//']',qp(i_qp)%desc)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
    i_err=io_QP_and_GF(trim(QP_merged_name),qp(i_qp),ID)

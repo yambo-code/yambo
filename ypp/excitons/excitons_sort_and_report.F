@@ -79,7 +79,7 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
    !
    call of_open_close(ch_dummy,'ot')
    !
-   call COM_write_desc('o sort','#',BSS_desc)
+   call DESC_write('o sort','#',BSS_desc)
    !
    call msg('o sort',"#")
    do is=1,n_atomic_species

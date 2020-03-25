@@ -226,7 +226,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      call of_open_close(trim(output_fname),'o')
    else
     call of_open_close(trim(output_fname),'ot')
-    call COM_write_desc('o exc','#',BSS_desc)
+    call DESC_write('o exc','#',BSS_desc)
    endif
    !
    call plot_check_and_launch(.false.)

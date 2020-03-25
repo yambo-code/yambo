@@ -180,7 +180,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Fxc descriptions
    !
    if (l_bs_fxc) then
-     call COM_write_desc('o eps_q refl eel_q fxc alpha off beta moke jdos','#',FXC_desc)
+     call DESC_write('o eps_q refl eel_q fxc alpha off beta moke jdos','#',FXC_desc)
      call msg('o eps_q eel_q alpha','# TDDFT|Fxc size             ',FXC_n_g_corr,INDENT=0)    
      call msg('o eps_q eel_q alpha','#      |Hartree size         ',X%ng        ,INDENT=0)    
      call msg('o eps_q eel_q alpha','#      |Ordering             ',X%ordering  ,INDENT=0)    

@@ -30,7 +30,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  use parser_m,       ONLY:parser
  use YPP_real_time,  ONLY:RT_time
  use RT_control,     ONLY:RT_apply
- use RT_output_m,    ONLY:RT_desc,Gr_desc
+ use RT_output_m,    ONLY:RT_desc,Gr_desc,TIME_STEP_desc
  use D_lattice,      ONLY:Bose_Temp
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,spin_occ,filled_tresh,n_spinor,n_sp_pol
@@ -283,6 +283,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      call of_open_close(trim(Ef_and_T_fname(i_f)),'ot')
      call DESC_write('o '//trim(Ef_and_T_fname(i_f)),'#',RT_desc)
      call DESC_write('o '//trim(Ef_and_T_fname(i_f)),'#',Gr_desc)
+     call DESC_write('o '//trim(Ef_and_T_fname(i_f)),'#',TIME_STEP_desc)
      n_titles =1
      titles(1)='Time [fs]'
      do i_g=1,n_groups
@@ -420,6 +421,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
            call of_open_close(trim(TYP%running_file),'ot')
            call DESC_write(trim(TYP%running_file),'#',RT_desc)
            call DESC_write(trim(TYP%running_file),'#',Gr_desc)
+           call DESC_write(trim(TYP%running_file),'#',TIME_STEP_desc)
            !
            if (FIT) then
              call msg('o '//trim(TYP%running_file),'#')

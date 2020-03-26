@@ -34,7 +34,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use stderr,         ONLY:STRING_split,real2ch
  use RT_output_m,    ONLY:N_MAX_RT_o_files,RT_descriptors_dumped,RT_o_file_is_open,&
 &                         N_RT_o_files,RT_o_file_is_open,RT_o_file_short,RT_o_file_long,&
-&                         n_RT_headings,RT_headings,N_MAX_RT_headings,RT_desc,Gr_desc
+&                         n_RT_headings,RT_headings,N_MAX_RT_headings,RT_desc,Gr_desc,TIME_STEP_desc
  use RT_control,     ONLY:RT_do_it
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_magn,l_lftm_fit_temperatures, &
 &                         EE_prefactor,EP_prefactor,EP_abs_prefactor,RAD_prefactor,    &
@@ -142,6 +142,7 @@ subroutine RT_output(what,VALUES,TIME,E)
      !
      call DESC_write('o '//trim(RT_o_file_short(i_f)),'#',RT_desc)
      call DESC_write('o '//trim(RT_o_file_short(i_f)),'#',Gr_desc)
+     call DESC_write('o '//trim(RT_o_file_short(i_f)),'#',TIME_STEP_desc)
      !
      if (n_spin>1.and.trim(RT_o_file_short(i_f))=="magnetization") then
        call msg('o '//trim(RT_o_file_short(i_f)),'#')

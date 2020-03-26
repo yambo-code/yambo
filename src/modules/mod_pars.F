@@ -98,7 +98,7 @@ module pars
  !=========
  integer, parameter  :: schlen=100
  integer, parameter  :: lchlen=300
- integer, parameter  :: msg_len=80
+ integer, parameter  :: msg_len=50
  integer, parameter  :: DB_menu_length=30+msg_len
  !
  ! CONSTANTs

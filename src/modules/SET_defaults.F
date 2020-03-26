@@ -123,7 +123,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
 #if defined _NL
  use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,         &
-&                     NL_verb_name,NL_bands,n_order
+&                     NL_verb_name,NL_bands,n_order,NL_desc
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _MAGNETIC
@@ -649,6 +649,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Efield(1)%FWHM=2._SP*FS2AUT
  Efield(1)%ef_name="SOFTSIN"
  NL_verb_name='low'
+ !
+ call IO_desc_reset(NL_desc)
  !
 #endif
  !

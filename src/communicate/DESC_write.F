@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DESC_write(dest,prefix,desc,range)
+subroutine DESC_write(dest,prefix,desc,range,skip_patt)
  !
  use pars,       ONLY:SP,msg_len
  use com,        ONLY:msg,com_compose_msg
@@ -29,10 +29,11 @@ subroutine DESC_write(dest,prefix,desc,range)
  !
  implicit none
  !
- character(*),      intent(in) :: dest
- character(*),      intent(in) :: prefix
- type(IO_desc),     intent(in) :: desc
- integer, optional, intent(in) :: range(2)
+ character(*),           intent(in) :: dest
+ character(*),           intent(in) :: prefix
+ type(IO_desc),          intent(in) :: desc
+ integer, optional,      intent(in) :: range(2)
+ character(*), optional, intent(in) :: skip_patt
  !
  ! Work Space
  !
@@ -53,6 +54,11 @@ subroutine DESC_write(dest,prefix,desc,range)
  var_len=msg_len-i_space-len(prefix)-1
  !
  do i_d=range_(1),range_(2)
+   !
+   if (present(skip_patt)) then
+     if (index(desc%str(i_d),skip_patt)>0) cycle
+   endif
+   !
    n_val=desc%size(i_d)
    local_var=com_compose_msg(pre=prefix//space(1:i_space),body=trim(desc%str(i_d)))
    local_term=""

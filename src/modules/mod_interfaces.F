@@ -29,12 +29,13 @@ module interfaces
  !
  interface
    !
-   subroutine DESC_write(dest,prefix,desc,range)
+   subroutine DESC_write(dest,prefix,desc,range,skip_patt)
      use descriptors,ONLY:IO_desc
-     character(*),      intent(in) :: dest
-     character(*),      intent(in) :: prefix
-     type(IO_desc),     intent(in) :: desc
-     integer, optional, intent(in) :: range(2)
+     character(*),           intent(in) :: dest
+     character(*),           intent(in) :: prefix
+     type(IO_desc),          intent(in) :: desc
+     integer, optional,      intent(in) :: range(2)
+     character(*), optional, intent(in) :: skip_patt
    end subroutine
    !
    subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)

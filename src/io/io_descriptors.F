@@ -44,12 +44,12 @@ function io_descriptors(desc,name,ID,QUIET)
  character(schlen), external :: desc_to_varname
  integer :: n_descs_disk,i1,N,VAR_KIND,io_com_save
  !
- if(read_is_on(ID) .and. .not.variable_exist(ID,name//"_N_DESCRIPTORS")) return
+ if (read_is_on(ID) .and. .not.variable_exist(ID,name//"_N_DESCRIPTORS")) return
  !
  call def_variable_elemental(ID,name//"_N_DESCRIPTORS",1,IP+100,0)
  call  io_variable_elemental(ID,I0=desc%n,DB_I0=n_descs_disk,CHECK=.true.,OP=(/"<="/))
  !
- if(n_descs_disk==0) then
+ if (n_descs_disk==0) then
    io_descriptors=io_status(ID)
    return
  endif

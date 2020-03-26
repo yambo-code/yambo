@@ -29,7 +29,7 @@ subroutine QP_DBs_manipulate( E )
  use com,           ONLY:msg
  use IO_m,          ONLY:io_control,OP_WR_CL,REP,DUMP,NONE,OP_RD_CL
  use QP_m,          ONLY:QP_t,QP_reset,QP_solver,QP_table,QP_n_states
- use interfaces,    ONLY:QP_DBs_merge
+ use interfaces,    ONLY:QP_DBs_merge,DESC_write
  use electrons,     ONLY:levels,n_sp_pol
  !
 #include<memory.h>

@@ -33,6 +33,7 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,atom_pos,Z_species
  use vec_operate,   ONLY:sort
  use YPPm,          ONLY:EXCITONS_user_indexes,EXCITON_spin
+ use interfaces,    ONLY:DESC_write
  !
  implicit none 
  !

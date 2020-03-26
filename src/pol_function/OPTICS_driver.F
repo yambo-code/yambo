@@ -46,7 +46,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use X_output,      ONLY:X_setup_file_names,eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,&
 &                        X_write_q_plus_G,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load,WF_free
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load,&
+&                        WF_free,DESC_write
  use matrix,        ONLY:MATRIX_reset
  !
 #include<memory.h>

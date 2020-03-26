@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DESC_write(dest,prefix,desc)
+subroutine DESC_write(dest,prefix,desc,range)
  !
  use pars,       ONLY:SP,msg_len
  use com,        ONLY:msg,com_compose_msg
@@ -29,24 +29,30 @@ subroutine DESC_write(dest,prefix,desc)
  !
  implicit none
  !
- character(*), intent(in) :: dest
- character(*), intent(in) :: prefix
- type(IO_desc),intent(in) :: desc
+ character(*),      intent(in) :: dest
+ character(*),      intent(in) :: prefix
+ type(IO_desc),     intent(in) :: desc
+ integer, optional, intent(in) :: range(2)
  !
  ! Work Space
  !
- integer           :: i_d,n_val,i_space,var_len
+ integer           :: i_d,n_val,i_space,var_len,range_(2)
  character(msg_len):: local_var,local_term
  character(1)      :: space=" "
  !
- if (dest(1:1)/="s") call msg(dest,prefix)
+ if (dest(1:1)/="s".and.dest(1:1)/="r") call msg(dest,prefix)
  !
  i_space=0
  if (index(dest,"o ")>0) i_space=1
  !
+ range_=(/1,desc%n/)
+ if (present(range)) then
+   range_=range
+ endif
+ !
  var_len=msg_len-i_space-len(prefix)-1
  !
- do i_d=1,desc%n
+ do i_d=range_(1),range_(2)
    n_val=desc%size(i_d)
    local_var=com_compose_msg(pre=prefix//space(1:i_space),body=trim(desc%str(i_d)))
    local_term=""
@@ -68,6 +74,6 @@ subroutine DESC_write(dest,prefix,desc)
    endif
  enddo
  !
- if (dest(1:1)/="s") call msg(dest,prefix)
+ if (dest(1:1)/="s".and.dest(1:1)/="r") call msg(dest,prefix)
  !
 end subroutine DESC_write

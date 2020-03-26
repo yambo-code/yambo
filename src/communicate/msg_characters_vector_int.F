@@ -124,8 +124,10 @@ subroutine fix_the_new_line(how,string)
  implicit none
  integer      :: n
  character(*) :: how,string
+ logical      :: l_new_line
  n=len_trim(string)
- if (index(how,"n")>0) then
+ l_new_line= index(how,'ln')/=0.or.index(how,'rn')/=0
+ if (l_new_line) then
    string=trim(string(:n-2))//',a'//trim(string(n-1:n))
  else
    string=trim(string(:n-1))//',a'//trim(string(n:n))

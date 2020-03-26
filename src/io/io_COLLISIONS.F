@@ -156,7 +156,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      ! Global Response Descriptions
      !==============================
      !
-     io_COLLISIONS=io_descriptors(X_desc,ID)
+     io_COLLISIONS=io_descriptors(X_desc,"X",ID,.FALSE.)
      !
      call io_elemental(ID,VAR="RIM_PARAMETERS",VAR_SZ=2,MENU=0)
      call io_elemental(ID,I0=RIM_ng,VAR=        ' RIM RL components      ',WARN=.true.)

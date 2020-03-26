@@ -216,6 +216,12 @@ function desc_to_varname(desc)
  VARNAME=STRING_remove(VARNAME,"___","_")           ! 3
  VARNAME=STRING_remove(VARNAME,"__","_")            ! 2
  !
+ VARNAME=STRING_remove(VARNAME,".","_") 
+ VARNAME=STRING_remove(VARNAME,"=","_") 
+ VARNAME=STRING_remove(VARNAME,"\","_") 
+ VARNAME=STRING_remove(VARNAME,"(","_") 
+ VARNAME=STRING_remove(VARNAME,")","_") 
+ !
  desc_to_varname=VARNAME
  !
 end function desc_to_varname

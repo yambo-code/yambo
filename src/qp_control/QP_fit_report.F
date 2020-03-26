@@ -32,6 +32,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
  use R_lattice,     ONLY:bz_samp
  use stderr,        ONLY:STRING_remove
  use vec_operate,   ONLY:sort
+ use interfaces,    ONLY:DESC_write
  !
  implicit none
  !

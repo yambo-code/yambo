@@ -30,8 +30,7 @@ integer function io_QP_and_GF(what,qp,ID)
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,DB_is_OK,ver_is_gt_or_eq,&
-&                         db_alat,variable_exist,IO_INCOMPATIBLE_VAR,&
-&                         def_variable_bulk
+&                         db_alat,variable_exist,IO_INCOMPATIBLE_VAR
  use global_XC,      ONLY:QP_DB_kind,QP_SE_GoWo,QP_SE_GWo,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_COHSEX,QP_SE_NONE,&
 &                         QP_SE_POLARON,QP_SE_GW_QED,G_E_xc_string,X_E_xc_string,&
 &                         G_WF_xc_string,X_WF_xc_string
@@ -185,7 +184,7 @@ integer function io_QP_and_GF(what,qp,ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   io_QP_and_GF=io_descriptors(qp%desc,ID)
+   io_QP_and_GF=io_descriptors(qp%desc,"QP",ID,.FALSE.)
    !
    if (.not.DB_is_OK(ID)) then
      call CLOSE_and_menu(.TRUE.)

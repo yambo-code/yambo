@@ -33,6 +33,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
  use BS,            ONLY:BS_H_dim
  use com,           ONLY:msg,of_open_close
  use vec_operate,   ONLY:sort
+ use interfaces,    ONLY:DESC_write
  !
  implicit none
  !

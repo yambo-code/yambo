@@ -139,7 +139,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    if (present(DB_I1)) DB_I1=i_db(1:SZ)
    if ( VERIFY_      ) i_err=i_verify(I1,i_db(1:SZ))
    !
-   ! DESCRIPTION
+   ! DESCRIPTOR
    !
    if (present(DESCRIPTOR).and.present(VAR)) then
      call IO_desc_add(DESCRIPTOR,'i',VAR,SZ=SZ,I=I1,ops=OP,check=CHECK_,term=TERMINATOR)
@@ -166,7 +166,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    if (present(DB_R0)) DB_R0=r_db(1)
    if ( VERIFY_      ) i_err=r_verify((/R0/),r_db(1:SZ))
    !
-   ! DESCRIPTION
+   ! DESCRIPTOR
    !
    if (present(DESCRIPTOR)) then
      call IO_desc_add(DESCRIPTOR,'r',VAR,R=(/R0*local_unit/),ops=OP,check=CHECK_,term=TERMINATOR)
@@ -193,7 +193,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    if (present(DB_R1)) DB_R1=r_db(1:SZ)
    if ( VERIFY_ ) i_err=r_verify(R1,r_db(1:SZ))
    !
-   ! DESCRIPTION
+   ! DESCRIPTOR
    !
    if (present(DESCRIPTOR)) then
      call IO_desc_add(DESCRIPTOR,'r',VAR,SZ=size(R1),R=R1*local_unit,ops=OP,check=CHECK_,term=TERMINATOR)
@@ -218,7 +218,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    if (present(DB_D0)) DB_D0=d_db(1)
    if ( VERIFY_      ) i_err=r_verify((/real(D0,SP)/),real(d_db(1:SZ),SP))
    !
-   ! DESCRIPTION
+   ! DESCRIPTOR
    !
    if (present(DESCRIPTOR)) then
      call IO_desc_add(DESCRIPTOR,'d',VAR,D=D0*local_unit,ops=OP,check=CHECK_,term=TERMINATOR)
@@ -246,7 +246,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    if (present(DB_C0)) DB_C0=cmplx(rc_db(1),rc_db(2))
    if ( VERIFY_      ) i_err=c_verify((/C0/),c_db(1:SZ))
    !
-   ! DESCRIPTION
+   ! DESCRIPTOR
    !
    if (present(DESCRIPTOR)) then
      call IO_desc_add(DESCRIPTOR,'c',VAR,C=C0*local_unit,ops=OP,check=CHECK_,term=TERMINATOR)
@@ -278,7 +278,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
      i_err=i_verify(i_db(1:1),i_db(2:2))
    endif
    !
-   ! DESCRIPTION
+   ! DESCRIPTOR
    !
    if (present(DESCRIPTOR)) then
      call IO_desc_add(DESCRIPTOR,'l',VAR,L=L0,ops=OP,check=CHECK_,term=TERMINATOR)
@@ -305,7 +305,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    if (present(DB_CH0)) DB_CH0=ch_db(1)
    if ( VERIFY_       ) i_err=ch_verify(CH0,ch_db(1))
    !
-   ! DESCRIPTION
+   ! DESCRIPTOR
    !
    if (present(DESCRIPTOR)) then
      call IO_desc_add(DESCRIPTOR,'s',VAR,S=CH0,ops=OP,check=CHECK_,term=TERMINATOR)

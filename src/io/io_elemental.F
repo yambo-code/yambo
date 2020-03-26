@@ -23,32 +23,33 @@
 !
 subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                       R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
-&                       DESCRIPTION,DO_NOT_DUMP,TERMINATOR)
+&                       DESCRIPTOR,DO_NOT_DUMP,TERMINATOR)
  !
  use pars,          ONLY:SP,DP,schlen,lchlen,nf90_SP,DB_menu_length
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use netcdf
- use drivers, ONLY:list_dbs
- use com,     ONLY:msg,com_compose_msg
- use stderr,  ONLY:STRING_pack,intc,real2ch,complex2ch
- use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
-&                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
-&                  io_status,DUMP,REP,LOG,io_com,io_file,&
-&                  io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR
+ use drivers,       ONLY:list_dbs
+ use com,           ONLY:msg,com_compose_msg
+ use stderr,        ONLY:STRING_pack
+ use IO_m,          ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
+&                        netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
+&                        io_status,DUMP,REP,LOG,io_com,io_file,&
+&                        io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR
+ use descriptors,   ONLY:IO_desc,IO_desc_add
  implicit none
  !
  integer               :: ID
  integer,parameter     :: MAX_DB_ELEMENTS=100
- character(*),optional :: VAR,OP(:)
- integer,     optional :: VAR_SZ,MENU ! MENU = 1 (on) 0 (off)
- integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
- real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
- real(DP),    optional :: D0,DB_D0
- complex(SP), optional, target :: C0
- complex(SP), optional :: DB_C0
- logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
- character(*),optional :: CH0,DB_CH0,CH1(:),TERMINATOR
- character(lchlen),optional :: DESCRIPTION
+ character(*), optional :: VAR,OP(:)
+ integer,      optional :: VAR_SZ,MENU ! MENU = 1 (on) 0 (off)
+ integer,      optional :: I0,DB_I0,I1(:),DB_I1(:)
+ real(SP),     optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
+ real(DP),     optional :: D0,DB_D0
+ complex(SP),  optional, target :: C0
+ complex(SP),  optional :: DB_C0
+ logical,      optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
+ character(*), optional :: CH0,DB_CH0,CH1(:),TERMINATOR
+ type(IO_desc),optional :: DESCRIPTOR
  !
  ! Work Space
  !
@@ -155,9 +156,11 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      endif
    endif
    !
-   ! DESCRIPTION
+   ! DESCRIPTOR
    !
-   if (present(DESCRIPTION)) DESCRIPTION=VAR//intc(I0)
+   if (present(DESCRIPTOR)) then 
+     call IO_desc_add(DESCRIPTOR,'i',VAR,I=(/I0/),ops=OP,check=CHECK_,term=TERMINATOR)
+   endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+1
    !
@@ -191,11 +194,10 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      endif
    endif
    !
-   ! DESCRIPTION
+   ! DESCRIPTOR
    !
-   if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//trim(intc(I1(1)))
-     if (size(I1)==2) DESCRIPTION=VAR//trim(intc(I1(1)))//' - '//trim(intc(I1(2)))
+   if (present(DESCRIPTOR)) then
+     call IO_desc_add(DESCRIPTOR,'i',VAR,SZ=size(I1),I=I1,ops=OP,check=CHECK_,term=TERMINATOR)
    endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+size(I1)
@@ -229,10 +231,10 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      endif
    endif
    !
-   ! DESCRIPTION
+   ! DESCRIPTOR
    !
-   if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//trim(real2ch(R0*local_unit))
+   if (present(DESCRIPTOR)) then
+     call IO_desc_add(DESCRIPTOR,'r',VAR,R=(/R0*local_unit/),ops=OP,check=CHECK_,term=TERMINATOR)
    endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+1
@@ -267,15 +269,10 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      endif
    endif
    !
-   ! DESCRIPTION
+   ! DESCRIPTOR
    !
-   if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//trim(real2ch(R1(1)*local_unit))
-     if (size(R1)==2) DESCRIPTION=VAR//trim(real2ch(R1(1)*local_unit))//&
-&                                 ' - '//trim(real2ch(R1(2)*local_unit))
-     if (size(R1)==3) DESCRIPTION=VAR//trim(real2ch(R1(1)*local_unit))//&
-&                                 ' '//trim(real2ch(R1(2)*local_unit))//&
-&                                 ' '//trim(real2ch(R1(3)*local_unit))
+   if (present(DESCRIPTOR)) then
+     call IO_desc_add(DESCRIPTOR,'r',VAR,SZ=size(R1),R=R1*local_unit,ops=OP,check=CHECK_,term=TERMINATOR)
    endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+size(R1)
@@ -309,10 +306,10 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      endif
    endif
    !
-   ! DESCRIPTION
+   ! DESCRIPTOR
    !
-   if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//trim(real2ch(real(D0,SP)*local_unit))
+   if (present(DESCRIPTOR)) then
+     call IO_desc_add(DESCRIPTOR,'d',VAR,D=D0*local_unit,ops=OP,check=CHECK_,term=TERMINATOR)
    endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+1
@@ -353,10 +350,10 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      endif
    endif
    !
-   ! DESCRIPTION
+   ! DESCRIPTOR
    !
-   if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//trim(complex2ch(C0*local_unit))
+   if (present(DESCRIPTOR)) then
+     call IO_desc_add(DESCRIPTOR,'c',VAR,C=C0*local_unit,ops=OP,check=CHECK_,term=TERMINATOR)
    endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+2
@@ -393,11 +390,10 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      endif
    endif
    !
-   ! DESCRIPTION
+   ! DESCRIPTOR
    !
-   if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//' no'
-     if (L0) DESCRIPTION=VAR//' yes'
+   if (present(DESCRIPTOR)) then
+     call IO_desc_add(DESCRIPTOR,'l',VAR,L=L0,ops=OP,check=CHECK_,term=TERMINATOR)
    endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+1
@@ -438,10 +434,10 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      endif
    endif
    !
-   ! DESCRIPTION
+   ! DESCRIPTOR
    !
-   if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//trim(db_ch(1))
+   if (present(DESCRIPTOR)) then
+     call IO_desc_add(DESCRIPTOR,'s',VAR,S=CH0,ops=OP,check=CHECK_,term=TERMINATOR)
    endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+len(db_ch(1))

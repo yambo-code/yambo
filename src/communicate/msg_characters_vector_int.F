@@ -45,14 +45,15 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  !
  integer          :: i1,i2,l_indent,i1_limits(2)
  character(lchlen):: msgfmt,lch,yaml_mesg,yaml_val(size(val))
- logical          :: l_tabs,msg_for_out,msg_for_rep,msg_for_log
+ logical          :: l_tabs,OUT_msg,REP_msg,LOG_msg,STD_msg,&
+&                    l_new_line(2) !left and right
 #if defined _YAML_OUTPUT
  logical          :: l_yaml_map,l_yaml_com
 #endif
  !
  if (len_trim(how)==0) return
  ! switches to positive the value of of_unit which matches the given filename
- call msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
+ call msg_manager(how,OUT_msg,REP_msg,LOG_msg,STD_msg,l_new_line)
  l_tabs=.false.
  l_indent=-1
  if (present(USE_TABS)) l_tabs   = USE_TABS
@@ -72,8 +73,8 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  ! Write to o-file or to report
  !
  i1_limits=(/1,-1/)
- if(msg_for_out) i1_limits=(/1,max_open_ofs/)
- if(msg_for_rep) i1_limits=(/repfile_index,repfile_index/)
+ if(OUT_msg) i1_limits=(/1,max_open_ofs/)
+ if(REP_msg) i1_limits=(/repfile_index,repfile_index/)
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
    if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then
@@ -83,26 +84,27 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
    endif
    ! after writing the value of of_unit is switched back to negative
    of_unit(i1)=-of_unit(i1)
-   if (.not.msg_for_rep) call of_netcdf_shadow_char(i1,size(val),val)
+   if (.not.REP_msg) call of_netcdf_shadow_char(i1,size(val),val)
 #if defined _YAML_OUTPUT
    yaml_mesg=STRING_remove(STRING_remove(trim(adjustl(mesg)),'[',replace='('),']',replace=')')
    if(l_yaml_map) call yaml_map(trim(yaml_mesg),yaml_val,unit=of_yaml_IDs(i1))
    if(l_yaml_com) call yaml_comment(trim(mesg),unit=of_yaml_IDs(i1))
 #endif
  enddo
- if (msg_for_out) return
+ if (OUT_msg) return
  !
  ! Write to logfile or to report
  !
- if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
+ if (.not.write_to_log.or.(.not.STD_msg.and..not.LOG_msg)) return
+ !
  msgfmt=composed_fmt('a',-size(val),.false.,-1)
   if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then
    write (lch,trim(msgfmt)) mesg//": ",(trim(val(i2)),i2=1,size(val))
  else
    write (lch,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
  endif
- if (index(how,'l')/=0.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
- if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
+ if (LOG_msg.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
+ if (STD_msg) call LIVE_message(trim(lch),"n","","%s")
  !
 end subroutine
 !
@@ -120,13 +122,12 @@ subroutine add_the_semi_column(string,n,string_plus)
  endif
 end subroutine
 !
-subroutine fix_the_new_line(how,string)
+subroutine fix_the_new_line(how,string,l_new_line)
  implicit none
  integer      :: n
  character(*) :: how,string
  logical      :: l_new_line
  n=len_trim(string)
- l_new_line= index(how,'ln')/=0.or.index(how,'rn')/=0
  if (l_new_line) then
    string=trim(string(:n-2))//',a'//trim(string(n-1:n))
  else

@@ -48,7 +48,8 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  integer :: i1,l_indent,i1_limits(2),nm
  character(schlen):: after_msg_,yaml_after_msg
  character(lchlen):: msgfmt,lch,yaml_mesg,mesg_plus
- logical          :: l_tabs,msg_for_out,msg_for_rep,msg_for_log
+ logical          :: l_tabs,OUT_msg,REP_msg,LOG_msg,STD_msg,&
+&                    l_new_line(2) !left and right
  !
  if (len_trim(how)==0) return
  !
@@ -57,7 +58,7 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  after_msg_=""
  if(present(after_msg)) after_msg_=after_msg
  ! switches to positive the value of of_unit which matches the given filename
- call msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
+ call msg_manager(how,OUT_msg,REP_msg,LOG_msg,STD_msg,l_new_line)
  l_tabs    = .false.
  l_indent  = -1
  if (present(USE_TABS))   l_tabs   = USE_TABS
@@ -67,13 +68,13 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  !
  msgfmt=composed_fmt(trim(gen_fmt(val)),size(val),l_tabs,l_indent)
  !
- if (len_trim(after_msg_)>0) call fix_the_new_line(how,msgfmt)
+ if (len_trim(after_msg_)>0) call fix_the_new_line(how,msgfmt,l_new_line(2))
  !
  ! Write to o-file or to report
  !
  i1_limits=(/1,-1/)
- if(msg_for_out) i1_limits=(/1,max_open_ofs/)
- if(msg_for_rep) i1_limits=(/repfile_index,repfile_index/)
+ if(OUT_msg) i1_limits=(/1,max_open_ofs/)
+ if(REP_msg) i1_limits=(/repfile_index,repfile_index/)
  !
  do i1=i1_limits(1),i1_limits(2)
    !
@@ -99,21 +100,22 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
 #endif
    !
  enddo
- if (msg_for_out) return
+ if (OUT_msg) return
  !
  ! Write to logfile or to report
  !
- if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
+ if (.not.write_to_log.or.(.not.STD_msg.and..not.LOG_msg)) return
+ !
  msgfmt=composed_fmt(trim(gen_fmt(val)),-size(val),.false.,-1)
  !
- if (len_trim(after_msg_)>0) call fix_the_new_line(how,msgfmt)
+ if (len_trim(after_msg_)>0) call fix_the_new_line(how,msgfmt,l_new_line(2))
  !
  call add_the_semi_column(mesg,nm,mesg_plus)
  !
  if (len_trim(after_msg_)==0) write (lch,trim(msgfmt)) mesg_plus(1:nm),val
  if (len_trim(after_msg_)> 0) write (lch,trim(msgfmt)) mesg_plus(1:nm),val,trim(after_msg_)
  !
- if (index(how,'l')/=0.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
- if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
+ if (LOG_msg.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
+ if (STD_msg) call LIVE_message(trim(lch),"n","","%s")
  !
 end subroutine

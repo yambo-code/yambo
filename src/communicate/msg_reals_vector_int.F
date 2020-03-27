@@ -49,7 +49,8 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  integer  :: i1,l_indent,i1_limits(2),nm
  character(schlen):: gen_fmt_local,after_msg_,yaml_after_msg
  character(lchlen):: lch,msgfmt,yaml_mesg,mesg_plus
- logical          :: l_tabs,l_ext_fmt,msg_for_out,msg_for_rep,msg_for_log
+ logical          :: l_tabs,l_ext_fmt,OUT_msg,REP_msg,LOG_msg,STD_msg,&
+&                    l_new_line(2) !left and right
  !
  if (len_trim(how)==0) return
  !
@@ -58,7 +59,7 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  after_msg_=""
  if(present(after_msg)) after_msg_=after_msg
  ! switches to positive the value of of_unit which matches the given filename
- call msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
+ call msg_manager(how,OUT_msg,REP_msg,LOG_msg,STD_msg,l_new_line)
  l_ext_fmt = .false.
  l_tabs    = .false.
  l_indent  = -1
@@ -68,21 +69,21 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  !
  ! Define Format
  !
- if (.not.l_ext_fmt) msgfmt=composed_fmt(trim(gen_fmt(r_v=val,l_omode=msg_for_out)),size(val),l_tabs,l_indent)
+ if (.not.l_ext_fmt) msgfmt=composed_fmt(trim(gen_fmt(r_v=val,l_omode=OUT_msg)),size(val),l_tabs,l_indent)
  if (     l_ext_fmt) then
    write(gen_fmt_local,'(a)') 'F11.06'
    msgfmt=composed_fmt(trim(gen_fmt_local),size(val),l_tabs,l_indent)
  endif
  !
- if (len_trim(after_msg_)>0) call fix_the_new_line(how,msgfmt)
+ if (len_trim(after_msg_)>0) call fix_the_new_line(how,msgfmt,l_new_line(2))
  !
  if (size(val)==1 .and. val(1)==NO_VAR) msgfmt='(02x,a)'
  !
  ! Write to o-file or to report
  !
  i1_limits=(/1,-1/)
- if(msg_for_out) i1_limits=(/1,max_open_ofs/)
- if(msg_for_rep) i1_limits=(/repfile_index,repfile_index/)
+ if(OUT_msg) i1_limits=(/1,max_open_ofs/)
+ if(REP_msg) i1_limits=(/repfile_index,repfile_index/)
  !
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
@@ -95,7 +96,7 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
    endif
    ! after writing the value of of_unit is switched back to negative
    of_unit(i1)=-of_unit(i1)
-   if (.not.msg_for_rep) call of_netcdf_shadow_real(i1,mesg,val,size(val))
+   if (.not.REP_msg) call of_netcdf_shadow_real(i1,mesg,val,size(val))
 #if defined _YAML_OUTPUT
    yaml_mesg=STRING_remove(STRING_remove(trim(adjustl(mesg)),'[',replace='('),']',replace=')')
    if (len_trim(after_msg_)==0) then
@@ -107,11 +108,12 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
    endif
 #endif
  enddo
- if (msg_for_out) return
+ if (OUT_msg) return
  !
  ! Write to logfile or to report
  !
- if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return
+ if (.not.write_to_log.or.(.not.STD_msg.and..not.LOG_msg)) return
+ !
  if (.not.l_ext_fmt) msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),-size(val),.false.,-1)
  if (     l_ext_fmt) then
    write(gen_fmt_local,'(a)') 'F11.06'
@@ -125,7 +127,7 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  if (len_trim(after_msg_)==0) write (lch,trim(msgfmt)) mesg_plus(1:nm),val
  if (len_trim(after_msg_)> 0) write (lch,trim(msgfmt)) mesg_plus(1:nm),val,trim(after_msg_)
  !
- if (index(how,'l')/=0.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
- if (index(how,'s')/=0) call LIVE_message(trim(lch),"n","","%s")
+ if (LOG_msg.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
+ if (STD_msg) call LIVE_message(trim(lch),"n","","%s")
  !
 end subroutine

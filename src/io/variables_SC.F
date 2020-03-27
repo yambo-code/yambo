@@ -23,7 +23,6 @@
 !
 integer function variables_SC(ID,what)
  !
- use pars,           ONLY:lchlen
  use units,          ONLY:AU2Tesla,DEG2RAD,AU2VMm1
  use D_lattice,      ONLY:atoms_string
  use R_lattice,      ONLY:nkibz
@@ -51,7 +50,6 @@ integer function variables_SC(ID,what)
  !
  ! Work Space
  !
- integer, external     :: io_descriptors
  integer               :: SC_kind_disk,SC_perturbation_disk,io_status_save,MENU_
  logical               :: CHECK_,l_MP
  !
@@ -215,7 +213,5 @@ integer function variables_SC(ID,what)
  variables_SC=io_status(ID)
  !
  if (variables_SC/=0) return
- !
- variables_SC=io_descriptors(SC_desc,"SC",ID,.TRUE.)
  !
 end function

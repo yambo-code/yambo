@@ -39,7 +39,6 @@ integer function variables_NL(ID)
  ! Work Space
  !
  integer, parameter   :: i_Prb=1
- integer, external    :: io_descriptors
  !
  call IO_desc_reset(NL_desc)
  !
@@ -126,9 +125,5 @@ integer function variables_NL(ID)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  variables_NL=io_status(ID)
- !
- if (variables_NL/=0) return
- !
- variables_NL=io_descriptors(NL_desc,"NL",ID,.TRUE.)
  !
 end function

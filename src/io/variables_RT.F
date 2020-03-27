@@ -339,10 +339,6 @@ integer function variables_RT(ID,what)
  !
  variables_RT=io_status(ID)
  !
- if (variables_RT/=0) return
- !
- variables_RT=io_descriptors(RT_desc,"RT",ID,.TRUE.)
- !
  contains
    !
    subroutine LOCAL_IO_variables(TYP)

@@ -120,7 +120,7 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
    msgfmt=composed_fmt(trim(gen_fmt_local),-size(val),.false.,-1)
  endif
  !
- if (len_trim(after_msg_)>0) call fix_the_new_line(how,msgfmt)
+ if (len_trim(after_msg_)>0) call fix_the_new_line(how,msgfmt,l_new_line(2))
  !
  call add_the_semi_column(mesg,nm,mesg_plus)
  !

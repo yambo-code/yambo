@@ -57,6 +57,9 @@ function com_compose_msg(pre,body,post)
    post_len=len_trim(post)
  endif
  !
+ if (body_len>msg_len) body_len=msg_len
+ if (post_len+pre_len+body_len>msg_len) body_len=msg_len-post_len-pre_len
+ !
  com_compose_msg=" "
  if (present(pre)) then
    com_compose_msg(1:pre_len)=pre

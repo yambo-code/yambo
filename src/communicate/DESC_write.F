@@ -41,6 +41,8 @@ subroutine DESC_write(dest,prefix,desc,range,skip_patt)
  character(msg_len):: local_var,local_term
  character(1)      :: space=" "
  !
+ if (desc%n==0) return
+ !
  if (dest(1:1)/="s".and.dest(1:1)/="r") call msg(dest,prefix)
  !
  i_space=0

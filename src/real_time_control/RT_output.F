@@ -31,7 +31,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use fields,         ONLY:A_tot,A_ind,A_ext
  use electrons,      ONLY:n_spin,Spin_magn
  use D_lattice,      ONLY:Bose_Temp
- use stderr,         ONLY:STRING_split,real2ch
+ use stderr,         ONLY:STRING_split
  use RT_output_m,    ONLY:N_MAX_RT_o_files,RT_descriptors_dumped,RT_o_file_is_open,&
 &                         N_RT_o_files,RT_o_file_is_open,RT_o_file_short,RT_o_file_long,&
 &                         n_RT_headings,RT_headings,N_MAX_RT_headings,RT_desc,Gr_desc,TIME_STEP_desc
@@ -146,9 +146,9 @@ subroutine RT_output(what,VALUES,TIME,E)
      !
      if (n_spin>1.and.trim(RT_o_file_short(i_f))=="magnetization") then
        call msg('o '//trim(RT_o_file_short(i_f)),'#')
-       dumb_ch="Equilibrium spin      magnetization is "//&
-&             trim(real2ch(Spin_magn(1)))//", "//trim(real2ch(Spin_magn(2)))//", "//trim(real2ch(Spin_magn(3)))//". "
-       call msg('o '//trim(RT_o_file_short(i_f)),com_compose_msg(pre='# ',body=dumb_ch)," ",INDENT=0,USE_TABS=.TRUE.)
+       dumb_ch="Equilibrium spin magnetization"
+       call msg('o '//trim(RT_o_file_short(i_f)),com_compose_msg(pre='# ',body=dumb_ch),&
+&               Spin_magn,INDENT=0)
      endif
      !
      call msg('o '//trim(RT_o_file_short(i_f)),'#')

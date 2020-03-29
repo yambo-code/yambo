@@ -24,6 +24,7 @@
 integer function io_MPA(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen
+ use com,           ONLY:error
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:nqibz,g_vec
  use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,MPA_description,X_alloc
@@ -39,6 +40,7 @@ integer function io_MPA(X,Xw,ID)
 &                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
+ use mpa_m,         ONLY:MPA_E_mat,MPA_R_mat,MPA_freqs,MPA_alloc
 #if defined _PAR_IO
  use X_m,           ONLY:X_par
  use IO_m,          ONLY:io_unit,netcdf_call,io_file,close_is_on,io_resetable,io_MULTIPOLE,&
@@ -59,8 +61,8 @@ integer function io_MPA(X,Xw,ID)
  character (2)       ::local_XC_KIND
  real(SP),   allocatable :: RL_vecs_disk(:,:)
  complex(SP),allocatable :: X_on_disk(:,:)
-! integer,    external    :: variables_X
- integer                 :: variables_MPA
+   !
+ integer,    external    :: variables_MPA
  !
  if (io_MULTIPOLE) call timing('io_MPA',OPR='start')
  !
@@ -182,28 +184,53 @@ integer function io_MPA(X,Xw,ID)
 #endif
    if(perform_IO) call io_variable_bulk(ID,1,C1=Xw%p)
    !
-   ! X_mat @iq
+   ! allocations
    !
-   ch="rE-iE-rR-iR_Q_"//trim(intc(iq))
+   if (read_is_on(ID)) call MPA_alloc((/X%ng,X%ng,Xw%n_freqs/2,Xw%n_freqs/))
+   !
+   ! poles @iq
+   !
+   ch="reE-imE_Q_"//trim(intc(iq))
    !
 #if defined _PAR_IO
    if(write_is_on(ID)) then
      !
-     call def_variable_bulk(ID,trim(ch),1,(/X%ng_db,X%ng_db,Xw%n_freqs/2,4/),SP,par_io_kind='collective')
-     call  io_variable_bulk(ID,1,C3=X_par(1)%blc(:,:Xw%n_freqs/2,4),IPOS=(/1,X_par(1)%rows(1),X_par(1)%cols(1),1/))
+     call def_variable_bulk(ID,trim(ch),1,shape(MPA_E_par(1)%blc(:,:,:)),SP,par_io_kind='collective')
+     call  io_variable_bulk(ID,1,C3=MPA_E_par(1)%blc(:,:,:),IPOS=(/1,MPA_E_par(1)%rows(1),MPA_E_par(1)%cols(1),1/))
      !
    else if(read_is_on(ID)) then
 #endif
      !
-     if (.not.allocated(ER_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/2,4/))
-     call def_variable_bulk(ID,trim(ch),1,(/X%ng_db,X%ng_db,Xw%n_freqs/2,4/),SP)
-     call  io_variable_bulk(ID,1,C3=ER_mat(:,:Xw%n_freqs/2,4),IPOS=(/1,1,1,1/))
+     call def_variable_bulk(ID,trim(ch),1,(/2,shape(MPA_E_mat)/),SP)
+     call  io_variable_bulk(ID,1,C3=MPA_E_mat,IPOS=(/1,1,1,1/))
+     !
+#if defined _PAR_IO
+   endif
+#endif
+   !
+   ! residues @iq
+   !
+   ch="reR-imR_Q_"//trim(intc(iq))
+   !
+#if defined _PAR_IO
+   if(write_is_on(ID)) then
+     !
+     call def_variable_bulk(ID,trim(ch),1,shape(MPA_R_par(1)%blc(:,:,:)),SP,par_io_kind='collective')
+     call  io_variable_bulk(ID,1,C3=MPA_R_par(1)%blc(:,:,:),IPOS=(/1,MPA_R_par(1)%rows(1),MPA_R_par(1)%cols(1),1/))
+     !
+   else if(read_is_on(ID)) then
+#endif
+     !
+     call def_variable_bulk(ID,trim(ch),1,(/2,shape(MPA_R_mat)/),SP)
+     call  io_variable_bulk(ID,1,C3=MPA_R_mat,IPOS=(/1,1,1,1/))
      !
 #if defined _PAR_IO
    endif
 #endif
    !
    if (read_is_on(ID) .and. different_db_RL_order) then 
+     call error('[io_MPA] different_db_RL_order    not implemented')
+     !
      YAMBO_ALLOC(X_on_disk,(X%ng,X%ng))
      do i1=1,Xw%n_freqs
        X_on_disk=X_mat(:,:,i1)
@@ -226,45 +253,43 @@ integer function io_MPA(X,Xw,ID)
  !
  if (io_MULTIPOLE) call timing('io_MPA',OPR='stop')
  !
- contains
-   !
- !Dario:
-   integer function variables_MPA(ID,local_description,X)
-   !
-   use pars,          ONLY:schlen,lchlen
-   use units,         ONLY:HA2EV
-   use X_m,           ONLY:X_t,n_MPA_descs
-   use IO_m,          ONLY:io_elemental,io_status,ver_is_gt_or_eq,read_is_on
-   implicit none
-   !
-   integer            ::ID
-   character(lchlen)  ::local_description(100)
-   type(X_t)          ::X
-   !
-   ! Work Space
-   !
-   integer             ::i_local_desc,sec_size
-   logical             ::local_long_gauge
-   character(schlen)   ::X_label,MPA_label
-   !
-   i_local_desc=0
-   local_description=' '
-   MPA_label=' '
-   if (ver_is_gt_or_eq(ID,revision=955)) MPA_label="MPA_"
-   !
-   call io_elemental(ID,DB_I0=X%ng_db,&
-&       VAR=" Matrix size          :",I0=X%ng,CHECK=.true.,OP=(/"<="/),&
-&       DESCRIPTION=local_description(i_local_desc))
-   i_local_desc=i_local_desc+1
-   call io_elemental(ID,VAR=trim(MPA_label)//"npoles",I0=X%mpa_npoles,MENU=0)
-   i_local_desc=i_local_desc+1
-   call io_elemental(ID,VAR=trim(MPA_label)//"reimER",I0=4)
-   i_local_desc=i_local_desc+1
-   !
-   n_MPA_descs=i_local_desc
-   !
-   variables_MPA=io_status(ID)
-   !
-   end function
-   !
+end function
+!
+!
+integer function variables_MPA(ID,local_description,X)
+ !
+ use pars,          ONLY:schlen,lchlen
+ use units,         ONLY:HA2EV
+ use X_m,           ONLY:X_t,n_MPA_descs
+ use IO_m,          ONLY:io_elemental,io_status,ver_is_gt_or_eq,read_is_on
+ implicit none
+ !
+ integer            ::ID
+ character(lchlen)  ::local_description(100)
+ type(X_t)          ::X
+ !
+ ! Work Space
+ !
+ integer             ::i_local_desc,sec_size
+ logical             ::local_long_gauge
+ character(schlen)   ::X_label,MPA_label
+ !
+ i_local_desc=0
+ local_description=' '
+ MPA_label=' '
+ if (ver_is_gt_or_eq(ID,revision=955)) MPA_label="MPA_"
+ !
+ call io_elemental(ID,DB_I0=X%ng_db,&
+&     VAR=" Matrix size          :",I0=X%ng,CHECK=.true.,OP=(/"<="/),&
+&     DESCRIPTION=local_description(i_local_desc))
+ i_local_desc=i_local_desc+1
+ call io_elemental(ID,VAR=trim(MPA_label)//"npoles",I0=X%mpa_npoles,MENU=0)
+ i_local_desc=i_local_desc+1
+ call io_elemental(ID,VAR=trim(MPA_label)//"reimER",I0=4)
+ i_local_desc=i_local_desc+1
+ !
+ n_MPA_descs=i_local_desc
+ !
+ variables_MPA=io_status(ID)
+ !
 end function

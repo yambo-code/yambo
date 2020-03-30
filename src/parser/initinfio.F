@@ -30,7 +30,7 @@ subroutine initinfio(defs,ou)
  use stderr,       ONLY: intc
  use drivers,      ONLY: infile_editing
  use stderr,       ONLY: gen_fmt
- use com,          ONLY: repfile,inpfile_unit,repfile_unit
+ use com,          ONLY: repfile,inpfile_unit,repfile_unit,write_to_report
  use parallel_m,   ONLY: master_cpu
  use it_tools
  use it_m
@@ -46,7 +46,10 @@ subroutine initinfio(defs,ou)
  real(SP):: unit_factor,v(2)
  character(lchlen)::ch(2)  
  !
- if (ou==repfile_unit) open(unit=repfile_unit,file=trim(repfile),position='append')
+ if (ou==repfile_unit) then
+   if(.not.write_to_report) return
+   open(unit=repfile_unit,file=trim(repfile),position='append')
+ endif
  !
  nflines=0
  flines=' '

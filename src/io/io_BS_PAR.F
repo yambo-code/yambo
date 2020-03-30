@@ -30,7 +30,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use pars,          ONLY:IP,SP,schlen,lchlen
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
- use BS,            ONLY:BS_K_dim,BS_K_coupling,l_BSE_restart,l_BSE_kernel_complete,&
+ use BS,            ONLY:BS_K_dim,BS_IO_dim,BS_K_coupling,l_BSE_restart,l_BSE_kernel_complete,&
 &                        l_BSK_IO_triangular
  use BS_solvers,    ONLY:variables_BS,BSS_desc
  use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,VERIFY,&
@@ -47,7 +47,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  logical :: def_var, io_var
  integer :: io_BS,    VAR_IDs(8), n_vars, i1
- integer :: flattened_block_size
+ integer :: riscaled_size(2)
  type(IO_desc)     :: local_desc
  character(schlen) :: db_name
  character(lchlen) :: full_db_name,ch(4)
@@ -123,16 +123,19 @@ subroutine io_BS_PAR_init(iq,X,ID)
    !
    ! This is the upper triangular mode
    !
-   dim_names(:2) =      [character(schlen) :: 'complex', 'BS_K_flat_dim']
-   dim_names_done(:1) = [character(schlen) :: 'BS_K_flat_dim']
-   flattened_block_size = BS_K_dim*(BS_K_dim+1)/2
+   dim_names  =     [character(schlen) :: 'complex', 'BS_IO_dim1','BS_IO_dim2']
+   dim_names_done = [character(schlen) :: 'BS_IO_dim1','BS_IO_dim2']
+   !
+   if(mod(BS_K_dim,2)==0) then
+     BS_IO_dim(1) = BS_K_dim+1
+     BS_IO_dim(2) = BS_K_dim/2
+   else
+     BS_IO_dim(1) = BS_K_dim
+     BS_IO_dim(2) = (BS_K_dim+1)/2
+   endif
    !
    do i1=1,n_vars
-     ch(i1)=trim(ch(i1))//"_FLAT"
-     call def_variable_bulk(ID,trim(ch(i1)),       VAR_IDs(2*i1-1),&
-             &               [2,flattened_block_size],SP,dim_names(:2),     par_io_kind='independent')
-     call def_variable_bulk(ID,trim(ch(i1))//"_DONE",VAR_IDs(2*i1),&
-             &                 [flattened_block_size], 0,dim_names_done(:1),par_io_kind='independent')
+     ch(i1)=trim(ch(i1))//"_RESCALED"
    enddo
    !
  else
@@ -142,14 +145,16 @@ subroutine io_BS_PAR_init(iq,X,ID)
    dim_names =      [character(schlen) :: 'complex', 'BS_K_dim', 'BS_K_dim']
    dim_names_done = [character(schlen) :: 'BS_K_dim', 'BS_K_dim']
    !
-   do i1=1,n_vars
-     call def_variable_bulk(ID,trim(ch(i1)),       VAR_IDs(2*i1-1),&
-             &                [2,BS_K_dim,BS_K_dim],SP,dim_names(:3),     par_io_kind='independent')
-     call def_variable_bulk(ID,trim(ch(i1))//"_DONE",VAR_IDs(2*i1),&
-             &                  [BS_K_dim,BS_K_dim],0 ,dim_names_done(:2),par_io_kind='independent')
-   enddo
+   BS_IO_dim = BS_K_dim
    !
  endif
+ !
+ do i1=1,n_vars
+   call def_variable_bulk(ID,trim(ch(i1)),       VAR_IDs(2*i1-1),&
+           &               [2,BS_IO_dim],SP,dim_names,     par_io_kind='independent')
+   call def_variable_bulk(ID,trim(ch(i1))//"_DONE",VAR_IDs(2*i1),&
+           &                  BS_IO_dim , 0,dim_names_done,par_io_kind='independent')
+ enddo
  !
 end subroutine
 !
@@ -190,7 +195,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  ! For each block only the upper triangular part is written
  ! Each block has a status variables indicating if the matrix element was already calculated
  !
- use BS,            ONLY:BS_blk,l_BSK_IO_triangular
+ use BS,            ONLY:BS_blk,l_BSK_IO_triangular,BS_IO_dim
  use timing_m,      ONLY:timing
  use IO_m,          ONLY:io_variable_bulk,io_unit,netcdf_call,nf90_sync
  !
@@ -201,7 +206,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  ! Work Space
  !
  integer             :: i_block,x1,x2,iq,VAR_IDs(2),stat
- integer             :: n2,i2,idx,imax
+ integer             :: n2,i1,i2,idx,idx1,idx2,imax
  !
  call timing('io_BS',OPR='start')
  !
@@ -222,17 +227,28 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  x1=BS_blk(i_block)%coordinate(1)
  x2=BS_blk(i_block)%coordinate(2)
  !
+ !
  if(l_BSK_IO_triangular) then
-   !
-   ! Write column by column in 1D
    !
    do i2=1,BS_blk(i_block)%size(2)
      n2  = (x2+i2-1)
      idx = n2*(n2-1)/2+x1
      imax=min(BS_blk(i_block)%size(1),n2-x1+1)
-     if(imax<1) cycle
-     call io_variable_bulk(ID, VAR_IDs(1),  C1=BS_blk(i_block)%mat(:imax,i2),  IPOS=[1,idx] )
-     call io_variable_bulk(ID, VAR_IDs(2), CH1=BS_blk(i_block)%done(:imax,i2), IPOS=[  idx] )
+     !
+     ! Write column by column in 1D
+     !
+     !if(imax<1) cycle
+     !call io_variable_bulk(ID, VAR_IDs(1),  C1=BS_blk(i_block)%mat(:imax,i2),  IPOS=[1,idx] )
+     !call io_variable_bulk(ID, VAR_IDs(2), CH1=BS_blk(i_block)%done(:imax,i2), IPOS=[  idx] )
+     !
+     ! Write element by element in a reduced 2D matrix
+     !
+     do i1=1,imax
+       idx1=mod(idx+i1-2,BS_IO_dim(1))+1
+       idx2=(idx+i1-2)/BS_IO_dim(1)+1
+       call io_variable_bulk(ID, VAR_IDs(1),  C2=BS_blk(i_block)%mat(i1:i1,i2:i2),  IPOS=[1,idx1,idx2] )
+       call io_variable_bulk(ID, VAR_IDs(2), CH2=BS_blk(i_block)%done(i1:i1,i2:i2), IPOS=[  idx1,idx2] )
+     enddo
    enddo
    !
  else

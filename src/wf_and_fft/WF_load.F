@@ -282,7 +282,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  ! LOG the states loaded
  !
- if (.not.(QUIET_alloc.or.QUIET_free).and..not.fat_log) then
+ if (.not.(QUIET_alloc.or.QUIET_free).and.fat_log) then
    if (buffer_is_ok.and.WF%space/="B") then
      call msg('rns','[WF'//trim(wf_title)//'] Loading Wave-Functions from buffer')
    else

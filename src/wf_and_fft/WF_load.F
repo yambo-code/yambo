@@ -26,7 +26,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  ! Load and (eventually) FFTs the wavefunctions
  !
  use pars,          ONLY:SP,DP,schlen
- use com,           ONLY:msg,core_io_path
+ use com,           ONLY:msg,core_io_path,fat_log
  use vec_operate,   ONLY:c2a
  use stderr,        ONLY:intc
  use electrons,     ONLY:nel,n_spinor,n_sp_pol
@@ -282,7 +282,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  ! LOG the states loaded
  !
- if (.not.(QUIET_alloc.or.QUIET_free)) then
+ if (.not.(QUIET_alloc.or.QUIET_free).and..not.fat_log) then
    if (buffer_is_ok.and.WF%space/="B") then
      call msg('rns','[WF'//trim(wf_title)//'] Loading Wave-Functions from buffer')
    else

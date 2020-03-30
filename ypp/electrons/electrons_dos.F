@@ -149,6 +149,7 @@ subroutine electrons_dos(Xk,Xen)
    do is=1,n_sp_pol
      !
      if (DOS_bands(2)-DOS_bands(1)>10) cycle
+     if (.not.allocated(GRID_k%ptbz)) cycle
      !
      output_fname="grid"
      if (n_sp_pol>1.and.is==1) output_fname="grid_spin-up"

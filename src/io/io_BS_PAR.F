@@ -195,6 +195,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  ! For each block only the upper triangular part is written
  ! Each block has a status variables indicating if the matrix element was already calculated
  !
+ use pars,          ONLY:IP,IPL
  use BS,            ONLY:BS_blk,l_BSK_IO_triangular,BS_IO_dim
  use timing_m,      ONLY:timing
  use IO_m,          ONLY:io_variable_bulk,io_unit,netcdf_call,nf90_sync
@@ -206,7 +207,8 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  ! Work Space
  !
  integer             :: i_block,x1,x2,iq,VAR_IDs(2),stat
- integer             :: n2,i1,i2,idx,idx1,idx2,imax
+ integer             :: n2,i1,i2,idx1,idx2,imax
+ integer(IPL)        :: idx
  !
  call timing('io_BS',OPR='start')
  !
@@ -232,7 +234,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
    !
    do i2=1,BS_blk(i_block)%size(2)
      n2  = (x2+i2-1)
-     idx = n2*(n2-1)/2+x1
+     idx = int(n2,kind=IPL)*int(n2-1,kind=IPL)/int(2,kind=IPL)+int(x1,kind=IPL)
      imax=min(BS_blk(i_block)%size(1),n2-x1+1)
      !
      ! Write column by column in 1D
@@ -244,8 +246,8 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
      ! Write element by element in a reduced 2D matrix
      !
      do i1=1,imax
-       idx1=mod(idx+i1-2,BS_IO_dim(1))+1
-       idx2=(idx+i1-2)/BS_IO_dim(1)+1
+       idx1=int(mod(idx+int(i1-2,kind=IPL),int(BS_IO_dim(1),kind=IPL)),kind=IP)+1
+       idx2=int((idx+int(i1-2,kind=IPL))/int(BS_IO_dim(1),kind=IPL),kind=IP)+1
        call io_variable_bulk(ID, VAR_IDs(1),  C2=BS_blk(i_block)%mat(i1:i1,i2:i2),  IPOS=[1,idx1,idx2] )
        call io_variable_bulk(ID, VAR_IDs(2), CH2=BS_blk(i_block)%done(i1:i1,i2:i2), IPOS=[  idx1,idx2] )
      enddo

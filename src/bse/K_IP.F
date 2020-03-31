@@ -69,7 +69,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2/n_sp_pol),&
 &                    para_term_w0,diam_term_used
 #if defined _PL
- complex(SP)       ::rotated_P(3),P_weighted(3)
+ complex(SP)       ::P_weighted(3)
  real(SP)          ::res_PL(2)
 #endif
  !
@@ -123,7 +123,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if (iq==1) then
    call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err,'K')
  else
-   call WF_load(WF,1,maxval(qindx_X(:,:,2)),BS_bands,(/1,Xk%nibz/),title='-Oscillators/R space')
+   call WF_load(WF,1,maxval(qindx_X(:,:,2)),BS_bands,(/1,Xk%nibz/),title='-Oscillators/R space/K_IP')
    call elemental_collision_free(BSE_scatt)
    call elemental_collision_alloc(BSE_scatt,NG=1,TITLE="BSE") 
  endif

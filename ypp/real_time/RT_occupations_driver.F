@@ -28,10 +28,10 @@ subroutine RT_occupations_driver(k,en)
  use electrons,      ONLY:levels
  use IO_m,           ONLY:LOG
  use QP_CTL_m,       ONLY:QP_apply
- use YPP_real_time,  ONLY:RT_conf
+ use YPP_interfaces, ONLY:PROJECTION_setup
  use RT_control,     ONLY:RT_apply,CARR_RT_IO_t
  use real_time,      ONLY:RT_bands
- use YPP_real_time,  ONLY:l_RT_time,l_RT_energy,l_RT_bands,l_RT_dos
+ use YPP_real_time,  ONLY:l_RT_time,l_RT_energy,l_RT_bands,l_RT_dos,RT_conf
  !
  implicit none
  !
@@ -46,6 +46,10 @@ subroutine RT_occupations_driver(k,en)
  call RT_apply(RT_bands,en,k,IO_COM=LOG,TIMES_ONLY=.TRUE.)
  !
  if (.not.l_rt_carriers_in_use) return
+ !
+ ! Setups
+ !========
+ call PROJECTION_setup("setup")
  !
  call RT_time_configuration_setup("CARRIERS",CARR_RT_IO_t)
  !

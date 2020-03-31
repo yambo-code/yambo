@@ -314,7 +314,8 @@ subroutine TIME_points_IO(ID,VAR_SZ,def_var,load_rest_info,unlim,l_G,TYP)
  use pars,           ONLY:IP,SP,schlen
  use drivers,        ONLY:l_real_time
  use units,          ONLY:AUT2FS
- use RT_control,     ONLY:RT_IO_t,RT_desc
+ use RT_output_m,    ONLY:RT_desc
+ use RT_control,     ONLY:RT_IO_t
  use real_time,      ONLY:NE_steps,MEM_pointer,G_MEM_steps,NE_i_time,i_MEM_now,i_MEM_prev,i_MEM_old,&
 &                         RT_dyn_step,RT_step
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental,&

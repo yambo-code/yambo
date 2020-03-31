@@ -67,6 +67,7 @@ integer function c2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call C_driver_transfer()
  !
  call SET_job_strings_and_dirs(js)
+ call IO_make_directories("MORE LOG")
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en) 

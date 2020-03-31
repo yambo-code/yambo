@@ -25,10 +25,11 @@ subroutine QP_state_print(qp)
  !
  ! Print the contents of the QP_state logical array
  !
- use pars,      ONLY:lchlen
- use QP_m,      ONLY:QP_state,QP_t
- use com,       ONLY:msg
- use stderr,    ONLY:intc
+ use pars,          ONLY:lchlen
+ use QP_m,          ONLY:QP_state,QP_t
+ use com,           ONLY:msg
+ use stderr,        ONLY:intc
+ use descriptors,   ONLY:IO_desc_add
  !
 #include<memory.h>
  !
@@ -43,8 +44,7 @@ subroutine QP_state_print(qp)
  if (.not.present(qp)) call msg('r','')
  !
  if (present(qp)) then
-   qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=""
+   call IO_desc_add(qp%desc,kind="s",str=" ",S=" ")
  endif
  !
  n_states=-1
@@ -54,21 +54,13 @@ subroutine QP_state_print(qp)
  !
  do i_s=1,n_states
    !
-   ch='QP @ state [ '//trim(intc(i_s))//' ]'
+   ch='QP @ state[ '//trim(intc(i_s))//' ]'
    !
    if (present(qp)) then
      !
-     qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=trim(ch)//" K range"
-     qp%desc%size(qp%desc%n)=2
-     qp%desc%kind(qp%desc%n)='i'
-     qp%desc%ival(:2,qp%desc%n)=states(i_s,1:2)
+     call IO_desc_add(qp%desc,kind="i",SZ=2,str=trim(ch)//" K range",I=states(i_s,1:2))
      !
-     qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=trim(ch)//" b range"
-     qp%desc%size(qp%desc%n)=2
-     qp%desc%kind(qp%desc%n)='i'
-     qp%desc%ival(:2,qp%desc%n)=states(i_s,3:4)
+     call IO_desc_add(qp%desc,kind="i",SZ=2,str=trim(ch)//" b range",I=states(i_s,3:4))
      !
    else
      !

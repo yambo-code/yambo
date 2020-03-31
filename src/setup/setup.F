@@ -87,10 +87,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call load_PT_elements()
  !
  atoms_string=' '
- !
  if (allocated(Z_species)) then
    call msg('r','Atoms in the cell     ',' '//PT_elements(Z_species(:)))
    do is=1,n_atomic_species
+     atoms_string=trim(atoms_string)//trim(intc(n_atoms_species(is)))//PT_elements(Z_species(is))
+     if (is<n_atomic_species) atoms_string=atoms_string//"+"
      call msg('r','number of '//PT_elements(Z_species(is))//' atoms    ',n_atoms_species(is))
    enddo
  endif

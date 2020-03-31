@@ -493,6 +493,7 @@ subroutine INIT_activate()
    !
    call initactivate(-1,'QpntsRXs')
    !
+   if( index(H_potential,"IP")>0 )  call initactivate(1,'HARRLvcs ALLGHAR')
    if( index(H_potential,"HARTREE")>0 .or. index(H_potential,"DEFAULT")>0)  call initactivate(1,'HARRLvcs ALLGHAR')
    if( index(H_potential,"GS_XC")>0   .or. index(H_potential,"DEFAULT")>0 ) call initactivate(1,'VXCRLvcs')
    !

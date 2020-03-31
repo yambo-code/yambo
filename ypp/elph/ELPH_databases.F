@@ -269,7 +269,7 @@ integer function ELPH_databases(k,E,q)
  ! Print the list of PW q-points (to be used with matdyn, for example)
  !
  call msg("s",'Databases Q-points PW-formatted')
- call k_grid_printer(elph_nDBs,ph_q_disk(:elph_nDBs,:),'iku',"PW",coo_out="alat")
+ call k_grid_printer(nDBs_disk,ph_q_disk(:nDBs_disk,:),'iku',"PW",coo_out="alat")
  !
  call elph_global_free()
  !

@@ -73,7 +73,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  if( l_em1s  )                      X_kind=2
  if( l_dynamical .and.      l_ppa ) X_kind=3
  if( l_dynamical .and. .not.l_ppa ) X_kind=4
- if (l_apply_QP_corrections) call QP_apply(X(X_kind)%ib,Xen,Xk,"X",msg_fmt='rs')
+ if (l_apply_QP_corrections) call QP_apply(X(X_kind)%ib,Xen,Xk,"X",msg_fmt='rs',main_section=.TRUE.)
  !
  ! GPL_EXCLUDE_START
  !
@@ -95,7 +95,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  if (l_alda_fxc) bands_to_correct=(/1,BS_bands(2)/)
  !
  l_apply_QP_corrections=(l_optics.and.l_bse.and..not.l_ppa).or.l_bss
- if (l_apply_QP_corrections) call QP_apply(BS_bands,Ken,Xk,"K",msg_fmt='rs')
+ if (l_apply_QP_corrections) call QP_apply(BS_bands,Ken,Xk,"K",msg_fmt='rs',main_section=.TRUE.)
  !
  ! GPL_EXCLUDE_START
  !
@@ -112,10 +112,10 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  ! 3) Green's Function used to compute QP corrections
  ! ====================================================
  bands_to_correct=(/1,n_bands/)
- if (l_gw0)                  call QP_apply(bands_to_correct,en,k,"G",msg_fmt='rs')
+ if (l_gw0)                  call QP_apply(bands_to_correct,en,k,"G",msg_fmt='rs',main_section=.TRUE.)
 #if defined _ELPH
  !    Green's Function (k+q levels loaded for the _ELPH)
- if (l_gw0.and.l_elph_corr) call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt='rs')
+ if (l_gw0.and.l_elph_corr) call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt='rs',main_section=.TRUE.)
 #endif
  !
  ! GPL_EXCLUDE_START

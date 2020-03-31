@@ -46,6 +46,7 @@ module interpolate
  !
  ! NN method
  !
+ integer :: OUT_k_nk=0
  integer :: NN_nk_exact=0
  integer :: NN_n_of_nearest=1
  integer :: NN_MAX_real_nearest=0
@@ -90,6 +91,7 @@ module interpolate
    integer                  :: ID=0
    logical                  :: in_use=.FALSE.
    logical                  :: use_NN=.FALSE.
+   character(schlen)        :: seed_kind=" "
    character(schlen)        :: what=" "
    real(SP),    allocatable :: weights(:)
    real(SP),    allocatable :: k(:,:)

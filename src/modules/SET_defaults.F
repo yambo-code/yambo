@@ -47,7 +47,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     COHSEX_use_empties,On_Mass_Shell_approx,&
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,l_GW_terminator,&
 &                     GW_terminator_E
- use QP_CTL_m,   ONLY:QP_ctl_user,QP_ctl_db,QP_ctl_interp_neigh
+ use QP_CTL_m,   ONLY:QP_ctl_user,QP_ctl_DB_user
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp
@@ -61,7 +61,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     eval_magn,E_SOC_nbands
  use parallel_m, ONLY:ncpu,CPU_str_reset,PARALLEL_host_name
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
-&                     more_io_path,core_io_path,com_path,repfile,grid_paths
+&                     more_io_path,core_io_path,com_path,repfile,grid_paths,fat_log
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
@@ -71,6 +71,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     BSS_q0,Haydock_threshold,Haydock_iterIO,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
+ use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers, ONLY:BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol, BSS_target_E, Slepc_shell
 #endif
@@ -98,14 +99,15 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
-&                     l_SC_nl_mix,SC_kind,SC_perturbation
+&                     l_SC_nl_mix,SC_kind,SC_perturbation,SC_desc
 #endif
 #if defined _SC || defined _RT || defined _QED || defined _NL
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
  use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
- use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_headings,YPP_append
+ use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_headings,YPP_append,&
+&                     Gr_desc,TIME_STEP_desc,RT_desc
  use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
@@ -121,7 +123,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
 #if defined _NL
  use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,         &
-&                     NL_verb_name,NL_bands,n_order
+&                     NL_verb_name,NL_bands,n_order,NL_desc
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _MAGNETIC
@@ -150,12 +152,16 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  call set_real_printed_length()
  !
+ ! Fat Log?
+ !
+ fat_log    = .FALSE.
+ if (index(INSTR,'fatlog')>0) fat_log=.TRUE.
+ !
  ! CPU structures
  !
  call CPU_str_reset()
  !
  ! OpenMP
- !
  !
 #if defined _OPENMP
  omp_is_off    = .FALSE.
@@ -397,9 +403,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! QP_ctl control
  !
- QP_ctl_db="none"
- QP_ctl_interp_neigh=1
  do i1=1,3
+   QP_ctl_DB_user(i1)%INTERP_shell_factor=20._SP
+   QP_ctl_DB_user(i1)%INTERP_N_neigh=1
+   QP_ctl_DB_user(i1)%INTERP_DbGd_mode="NN"
+   QP_ctl_DB_user(i1)%action="none"
    do i2=1,3
      QP_ctl_user(i1,i2)%E=(/0.,1.,1./)
      QP_ctl_user(i1,i2)%Wc=0._SP
@@ -545,6 +553,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  l_SC_nl_mix =.FALSE.
  l_NSC_shot  =.FALSE.
  !
+ call IO_desc_reset(SC_desc)
+ !
 #endif
  !
 #if defined _RT
@@ -628,6 +638,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  RT_headings= " "
  YPP_append=" "
  !
+ call IO_desc_reset(RT_desc)
+ call IO_desc_reset(Gr_desc)
+ call IO_desc_reset(TIME_STEP_desc)
+ !
 #endif
  !
 #if defined _NL
@@ -647,6 +661,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Efield(1)%FWHM=2._SP*FS2AUT
  Efield(1)%ef_name="SOFTSIN"
  NL_verb_name='low'
+ !
+ call IO_desc_reset(NL_desc)
  !
 #endif
  !

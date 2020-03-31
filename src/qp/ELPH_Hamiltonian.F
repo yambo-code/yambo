@@ -36,6 +36,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use interfaces,    ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,ONLY:DIAGO,USE_LK
  use stderr,        ONLY:intc
+ use stderr,        ONLY:intc
  use QP_m,          ONLY:QP_G_damp
  use parser_m,      ONLY:parser
  !

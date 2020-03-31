@@ -36,7 +36,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  use wave_func,      ONLY:io_WF
  use TDDFT,          ONLY:io_BS_Fxc
  use it_tools,       ONLY:switch_off_runlevel
- use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
+ use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
 #if defined _SC || defined _RT
  use collision_ext,  ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
  use COLL_interfaces,ONLY:io_COLLISIONS
@@ -100,6 +100,9 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  if (io_err/=0.or.io_WF_err/=0) then
    INIT =-1
    return
+ else
+   call IO_make_directories("COM")
+   if (INIT==0) call IO_make_directories("LOG")
  endif
  !
  ! Exporting DB1 informations to variables to be
@@ -115,11 +118,10 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  ! Updates RL variables
  !
- QP_ng_Sx=ng_closed
- QP_ng_Sc=ng_closed
- QP_ng_SH=ng_closed
- QP_ng_Vxc=ng_closed
- !
+ QP_ng_Sx   =ng_closed
+ QP_ng_Sc   =ng_closed
+ QP_ng_SH   =ng_closed
+ QP_ng_Vxc  =ng_closed
  BS_n_g_exch=ng_closed
  !
  ! kindx

@@ -21,22 +21,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_compress(iq,ID)
+subroutine K_compress(iq,i_steps,n_steps,ID)
  !
  use pars,         ONLY:cZERO
  use LIVE_t,       ONLY:live_timing
  use IO_m,         ONLY:io_control,RD,WR
- use BS,           ONLY:BS_max_val,BS_K_cutoff,BS_blk,BS_T_grp,n_BS_blks,&
-&                       BS_LiveTiming_steps,BS_Block_size
+ use BS,           ONLY:BS_max_val,BS_K_cutoff,BS_blk,BS_T_grp,n_BS_blks
  !
  implicit none
  !
- integer, intent(in)    :: iq
+ integer, intent(in)    :: iq,i_steps,n_steps
  integer, intent(inout) :: ID
  !
  integer :: i_block,i_tgrp_k,i_Tgrp_p,i_Tp,i_Tk
  !
- if (BS_LiveTiming_steps>0) call live_timing('Kernel compression',BS_LiveTiming_steps)
+ if (n_steps>0) call live_timing('Kernel compression',n_steps)
  !
  do i_block=1,n_BS_blks
    !
@@ -65,10 +64,10 @@ subroutine K_compress(iq,ID)
    call io_control(ACTION=WR,ID=ID)
    call io_BS_PAR_block(iq,i_block,ID)
    !
-   call live_timing(steps=BS_Block_size(i_block))
+   call live_timing(steps=i_steps)
    !
  enddo
  !
- if (BS_LiveTiming_steps>0) call live_timing( )
+ if (n_steps>0) call live_timing( )
  !
 end subroutine

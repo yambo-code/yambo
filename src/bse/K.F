@@ -103,6 +103,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,ID
  integer, external ::io_BS
  !
+ ! Timing
+ !
+ logical :: block_done
+ integer :: n_steps,i_steps
+ !
  ! Constants & Setup
  !==================
  !
@@ -319,10 +324,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Timing
  !========
  !
- if (BS_LiveTiming_steps>0) then
-   if (.not.l_bs_fxc) call live_timing('Kernel',     BS_LiveTiming_steps)
-   if (     l_bs_fxc) call live_timing('Kernel->Fxc',BS_LiveTiming_steps)
- endif
+ if (.not.l_bs_fxc) section_title='Kernel'
+ if (     l_bs_fxc) section_title='Kernel->Fxc'
+ !
+ if (BS_LiveTiming_steps>= 0) n_steps=BS_LiveTiming_steps
+ if (BS_LiveTiming_steps==-1) n_steps=n_BS_blks
+ !
+ if(n_steps>0) call live_timing(trim(section_title),n_steps)
  !
  !------------------
  ! LOOP over blocks
@@ -337,14 +345,37 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if (l_BSE_restart) then
      call io_control(ACTION=RD,ID=ID)
      call io_BS_PAR_block(iq,i_block,ID)
-     if (all(BS_blk(i_block)%done=="t".or.BS_blk(i_block)%done=="n")) cycle
    endif
 #endif
+   !
+   if (BS_LiveTiming_steps>= 0) i_steps=BS_Block_size(i_block)
+   if (BS_LiveTiming_steps==-1) i_steps=1
    !
    i_Tgrp_k=BS_blk(i_block)%iT_k
    i_Tgrp_p=BS_blk(i_block)%iT_p
    i_k     =BS_blk(i_block)%ik
    i_p     =BS_blk(i_block)%ip
+   !
+#ifdef _PAR_IO
+   if (l_BSE_restart) then
+     !
+     ! check if this block need to be done
+     ! skip this block if already done
+     !
+     block_done=.true.
+     skip_check: do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
+       do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
+         if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t".or.BS_blk(i_block)%done(i_Tk,i_Tp)=="n") cycle
+         block_done=.false.
+         exit skip_check
+       enddo
+     enddo skip_check
+     if (block_done) then
+       call live_timing(steps=i_steps)
+       cycle
+     endif
+   endif
+#endif
    !
    ! Exchange oscillators
    !----------------------
@@ -507,14 +538,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    io_BS_err=io_BS(iq,X,ID)
 #endif
    !
-   call live_timing(steps=BS_Block_size(i_block))
+   call live_timing(steps=i_steps)
    !
  enddo block_loop
  !
  if(BS_K_cutoff>0._SP) then
    call PP_redux_wait(BS_max_val_CPU)
    BS_max_val=maxval(BS_max_val_CPU)
-   call K_compress(iq,ID)
+   call K_compress(iq,i_steps,n_steps,ID)
  endif
  !
 #if defined _PAR_IO
@@ -522,7 +553,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call io_BS_PAR_free(ID,.true.)
 #endif
  !
- if (BS_LiveTiming_steps>0) call live_timing( )
+ if (n_steps>0) call live_timing( )
  !
  ! GLOBAL CLEANING 
  !=================

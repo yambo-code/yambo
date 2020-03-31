@@ -181,7 +181,7 @@ subroutine INIT_ypp_load(defs)
 &                            Eh_pumped_pair_energy,unit=E_unit)
  ! Method 2
  call it(defs,'RTpumpDE',   '[RT] Energy difference to be matched',Eh_pumped_pair_deltaE,unit=E_unit)
- call it(defs,'RTpumpBZWd', '[RT] Size if the K reagion width',Eh_pumped_pair_BZ_width)
+ call it(defs,'RTpumpBZWd', '[RT][iku] K region size',Eh_pumped_pair_BZ_width)
  !
  ! The idea for Fermi occupations is to start from the 'end' of a carrier relaxation run
  call it(defs,'RTmuEh', '[RT] Chemical potentials hole | electron',Eh_mu,unit=E_unit)
@@ -211,7 +211,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'BANDS_bands',     'Number of bands',BANDS_bands) 
  call it(defs,'BANDS_steps',     'Number of divisions',BANDS_steps) 
  call it(defs,'CIRCUIT_E_DB_path',   'SAVE obtained from the QE `bands` run (alternative to %BANDS_kpts)',CIRCUIT_E_DB_path) 
- call it(defs,'BANDS_path',      'Path points labels (G,M,K,L...). BANDS path and DOS-project plane/projection.',BANDS_path)
+ call it(defs,'BANDS_path',      'High-Symmetry points labels (G,M,K,L...) also using composed positions (.5*(G-X)+L).',BANDS_path)
  call it(defs,'PROJECT_mode',    'Instruct ypp how to project the DOS. ATOM, LINE, PLANE.',PROJECT_mode)
  call it(defs,'PROJECT_path',    'Project path. PLANE mode: 3 points in the plane. LINE mode: any series of points.',PROJECT_path)
  call it(defs,'PROJECT_steps',    'Project LINE/PLANE-axis steps.',PROJECT_steps)

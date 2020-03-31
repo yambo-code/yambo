@@ -119,12 +119,13 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
    return
  endif
  !
- call msg('s','Found '//trim(intc(n_Uk-1))//' segments with  '//trim(intc(n_points))//' points each')
- !
- do i_Uk=1,n_Uk-1
-   dumb_ch='Segment #'//trim(intc(i_Uk))//': '//trim(Uk(i_Uk)%string)//' to '//trim(Uk(i_Uk+1)%string)
-   call msg('s',trim(dumb_ch))
- enddo
+ if (n_Uk>1) then
+   call msg('s','Found '//trim(intc(n_Uk-1))//' segments with  '//trim(intc(n_points))//' points each')
+   do i_Uk=1,n_Uk-1
+     dumb_ch='Segment #'//trim(intc(i_Uk))//': '//trim(Uk(i_Uk)%string)//' to '//trim(Uk(i_Uk+1)%string)
+     call msg('s',trim(dumb_ch))
+   enddo
+ endif
  !
  do ik=1,SPECIAL_k%nbz
    call c2a(v_in=SPECIAL_k%pt(ik,:),mode='ki2c')
@@ -135,28 +136,34 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
  allocate(CIRCUIT_k_norm(CIRCUIT_k%nbz))
  allocate(CIRCUIT_k_label(CIRCUIT_k%nbz))
  CIRCUIT_k%nbz=0
+ CIRCUIT_k_norm=0._SP
  K_norm=0.
  CIRCUIT_k_label=" "
- do i_Uk=1,n_Uk-1
-   !
-   k_l  =GIMME_K_path(i_Uk)
-   k_lp1=GIMME_K_path(i_Uk+1)
-   !
-   do ik=1,n_points
-     CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
-     if (ik==1) CIRCUIT_k_label(CIRCUIT_k%nbz)=Uk(i_Uk)%string
-     CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=k_l+(k_lp1-k_l)/n_points*(ik-1)
-     if (CIRCUIT_k%nbz>1) K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
-     CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
+ !
+ if (n_Uk>1) then
+   do i_Uk=1,n_Uk-1
+     !
+     k_l  =GIMME_K_path(i_Uk)
+     k_lp1=GIMME_K_path(i_Uk+1)
+     !
+     do ik=1,n_points
+       CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
+       if (ik==1) CIRCUIT_k_label(CIRCUIT_k%nbz)=Uk(i_Uk)%string
+       CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=k_l+(k_lp1-k_l)/n_points*(ik-1)
+       if (CIRCUIT_k%nbz>1) K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
+       CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
+     enddo
    enddo
- enddo
+ endif
  !
  CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
  CIRCUIT_k%nibz=CIRCUIT_k%nbz
  CIRCUIT_k%pt(CIRCUIT_k%nbz,:)=GIMME_K_path(n_Uk)
  CIRCUIT_k_label(CIRCUIT_k%nbz)=Uk(n_Uk)%string
- K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
- CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
+ if (n_Uk>1) then
+   K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
+   CIRCUIT_k_norm(CIRCUIT_k%nbz)= K_norm
+ endif
  !
  do ik=1,CIRCUIT_k%nbz
    call c2a(v_in=CIRCUIT_k%pt(ik,:),mode='kc2i')

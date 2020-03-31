@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function variables_dynamic_RT(ID)
+integer function variables_RT_dynamic(ID)
  !
  use pars,           ONLY:lchlen,SP,IP
  use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
@@ -81,6 +81,6 @@ integer function variables_dynamic_RT(ID)
  call io_variable_elemental(ID,R0=NE_time_step_update_jump, DB_R0=NE_time_step_update_jump,CHECK=.FALSE.)
  !call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
- variables_dynamic_RT      =io_status(ID)
+ variables_RT_dynamic      =io_status(ID)
  !
-end function variables_dynamic_RT
+end function variables_RT_dynamic

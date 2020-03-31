@@ -48,7 +48,7 @@ integer function io_RT_components(what,ID)
  integer,      intent(in) :: ID
  character(*), intent(in) :: what
  !
- integer, external     :: variables_dynamic_RT
+ integer, external     :: variables_RT_dynamic
  !
  ! Work Space
  !
@@ -155,7 +155,7 @@ integer function io_RT_components(what,ID)
  if (any((/io_sec(ID,:)==2/))) then
    !
    if(any((/l_OBS,l_G,l_carriers/)) .and. .not.loading_carr_before_neq ) then
-     io_RT_components=variables_dynamic_RT(ID)
+     io_RT_components=variables_RT_dynamic(ID)
      if (io_RT_components/=0) goto 1
    endif
    !
@@ -244,7 +244,7 @@ subroutine RT_header(ID,what,loading_carr_before_neq,l_carriers,l_OBS,l_G,l_THET
  logical, intent(in)      :: loading_carr_before_neq,l_carriers,l_OBS,l_G,l_THETA,l_REF
  integer, intent(out)     :: io_RT_components
  !
- integer, external     :: variables_static_RT
+ integer, external     :: variables_RT_static
  !
  character(schlen)     :: what_
  !
@@ -260,7 +260,7 @@ subroutine RT_header(ID,what,loading_carr_before_neq,l_carriers,l_OBS,l_G,l_THET
    io_RT_components=io_header(ID,IMPOSE_SN=(.not.l_carriers),CUTOFF=.true.,T_EL=.true.,FRAG=frag_RT)
    if (io_RT_components/=0) return
    !
-   io_RT_components=variables_static_RT(ID,trim(what_))
+   io_RT_components=variables_RT_static(ID,trim(what_))
    if (io_RT_components/=0) return
    !
  endif

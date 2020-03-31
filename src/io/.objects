@@ -10,7 +10,7 @@ SC_objects = load_SC_components.o io_SC_components.o variables_SC.o
 SC_objects = load_SC_components.o io_SC_components.o variables_SC.o io_KB_real_space.o
 #endif
 #if defined _RT 
-RT_objects = io_RT_components.o variables_static_RT.o variables_dynamic_RT.o io_KB_real_space.o
+RT_objects = io_RT_components.o variables_RT_static.o variables_RT_dynamic.o io_KB_real_space.o
 #endif
 NL_objects =
 #if defined _NL 

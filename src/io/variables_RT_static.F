@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function variables_static_RT(ID,what)
+integer function variables_RT_static(ID,what)
  !
  use pars,           ONLY:lchlen,SP,LP,IP
  use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
@@ -166,13 +166,13 @@ integer function variables_static_RT(ID,what)
    !
    ! Time-Steps configurations
    !===========================
-   variables_static_RT=io_descriptors(TIME_STEP_desc,"TIME_STEP",ID,.FALSE.)
+   variables_RT_static=io_descriptors(TIME_STEP_desc,"TIME_STEP",ID,.FALSE.)
    !
    ! GPL_EXCLUDE_START
    !
    ! G retarded variables
    !======================
-   variables_static_RT=io_descriptors(Gr_desc,"Gr",ID,.FALSE.)
+   variables_RT_static=io_descriptors(Gr_desc,"Gr",ID,.FALSE.)
    !
    ! GPL_EXCLUDE_END
    !
@@ -246,6 +246,6 @@ integer function variables_static_RT(ID,what)
  !
  n_RT_desc_static=RT_desc%n
  !
- variables_static_RT     =io_status(ID)
+ variables_RT_static     =io_status(ID)
  !
-end function variables_static_RT
+end function variables_RT_static

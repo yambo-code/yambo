@@ -24,7 +24,7 @@
 integer function variables_RT(ID,what)
  !
  use pars,           ONLY:lchlen,SP
- use units,          ONLY:AUT2FS
+ use units,          ONLY:AUT2FS,HA2EV
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr,l_elphoton_scatt
  use stderr,         ONLY:intc
  use hamiltonian,    ONLY:H_ref_bands
@@ -158,10 +158,10 @@ integer function variables_RT(ID,what)
    !
    call io_elemental(ID,&
 &    VAR="[RT] Lifetimes Inter/Intra (user)  ",TERMINATOR="fs",R1=RT_life_extrap_times_SAVE,CHECK=.true.,OP=(/"==","==","=="/),&
-&    DESCRIPTOR=RT_desc)
+&    DESCRIPTOR=RT_desc,UNIT=AUT2FS)
    call io_elemental(ID,&
 &    VAR="[RT]                       (running)",TERMINATOR="fs ",R1=RT_life_extrap_times,DB_R1=RT_life_extrap_times,&
-&    DESCRIPTOR=RT_desc)
+&    DESCRIPTOR=RT_desc,UNIT=AUT2FS)
    !
    ! GPL_EXCLUDE_END
    !
@@ -192,14 +192,14 @@ integer function variables_RT(ID,what)
 &    DESCRIPTOR=RT_desc)
    if (l_disk_flag) then
      call io_elemental(ID,R0=NE_initial_time_step_update,VAR=" [dT] Starting Time",TERMINATOR="fs",CHECK=.true.,OP=(/"=="/),&
-&      DESCRIPTOR=RT_desc)
+&      DESCRIPTOR=RT_desc,UNIT=AUT2FS)
      call io_elemental(ID,R0=NE_time_step_update_jump_SAVE, VAR=" [dT] Update interval",TERMINATOR="fs",CHECK=.true.,OP=(/"=="/),&
-&      DESCRIPTOR=RT_desc)
+&      DESCRIPTOR=RT_desc,UNIT=AUT2FS)
      call io_elemental(ID,R0=NE_step_update_treshold,VAR=' [dT] Update interval tresh',TERMINATOR='o/o',CHECK=.true.,OP=(/"=="/),&
 &      DESCRIPTOR=RT_desc)
      if (ver_is_gt_or_eq(ID,revision=14112)) then
        call io_elemental(ID,R0=RT_MAX_step,VAR=' [dT] Max step in dynamics',TERMINATOR='fs',CHECK=.true.,OP=(/"=="/),&
-&        DESCRIPTOR=RT_desc)
+&        DESCRIPTOR=RT_desc,UNIT=AUT2FS)
      endif
    endif
    ! ... for RESTART purposes...
@@ -221,10 +221,10 @@ integer function variables_RT(ID,what)
    call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=6,MENU=0) 
    call io_elemental(ID,R0=RAD_LifeTime,&
 &    VAR=' [RT] Radiative life time ',TERMINATOR='fs', CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTOR=RT_desc)
+&     DESCRIPTOR=RT_desc,UNIT=AUT2FS)
    call io_elemental(ID,R0=Phase_LifeTime,&
 &    VAR=' [RT] Dephasing life time',TERMINATOR='fs', CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTOR=RT_desc)
+&     DESCRIPTOR=RT_desc,UNIT=AUT2FS)
    call io_elemental(ID,L0=l_NE_with_fields,DB_L0=l_NE_with_fields_disk,&
 &    VAR=' [RT] External Field(s)          ', CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTOR=RT_desc)
@@ -314,19 +314,19 @@ integer function variables_RT(ID,what)
 &        DESCRIPTOR=RT_desc)
        call io_elemental(ID,&
 &        VAR="[FIELDs] Damping            ",TERMINATOR="fs",R0=Efield(i1)%width,CHECK=.true.,OP=(/"=="/),&
-&        DESCRIPTOR=RT_desc)
+&        DESCRIPTOR=RT_desc,UNIT=AUT2FS)
        call io_elemental(ID,&
 &        VAR="[FIELDs] Frequency range    ",TERMINATOR="eV",R1=Efield(i1)%frequency,CHECK=.true.,OP=(/"==","=="/),&
-&        DESCRIPTOR=RT_desc)
+&        DESCRIPTOR=RT_desc,UNIT=HA2EV)
        call io_elemental(ID,&
 &        VAR="[FIELDs] Frequency steps         ",I0=Efield(i1)%n_frequencies,CHECK=.true.,OP=(/"=="/),&
 &        DESCRIPTOR=RT_desc)
        call io_elemental(ID,&
 &        VAR="[FIELDs] Frequency step     ",TERMINATOR="eV",R0=Efield(i1)%W_step,CHECK=.true.,OP=(/"=="/),&
-&        DESCRIPTOR=RT_desc)
+&        DESCRIPTOR=RT_desc,UNIT=HA2EV)
        call io_elemental(ID,R0=Efield(i1)%t_initial,&
 &        VAR=' [FIELDs] Initial time       ',TERMINATOR='fs',CHECK=.true.,OP=(/"=="/),&
-&        DESCRIPTOR=RT_desc)
+&        DESCRIPTOR=RT_desc,UNIT=AUT2FS)
        !                       
        if (i1/=n_ext_fields) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        if (i1==n_ext_fields) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
@@ -347,7 +347,7 @@ integer function variables_RT(ID,what)
      !
      call io_elemental(ID,&
 &      VAR=" [RT] I/O time               ",TERMINATOR="fs",R0=TYP%INTERVAL_time_SAVE,CHECK=.true.,OP=(/"=="/),&
-&      DESCRIPTOR=RT_desc)
+&      DESCRIPTOR=RT_desc,UNIT=AUT2FS)
      ! ... for RESTART purposes...
      call io_elemental(ID,R0=TYP%INTERVAL_time,  DB_r0=TYP%INTERVAL_time,CHECK=.FALSE.)
      call io_elemental(ID,I0=TYP%INTERVAL_steps, DB_I0=TYP%INTERVAL_steps,CHECK=.FALSE.)

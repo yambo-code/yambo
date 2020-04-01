@@ -23,15 +23,15 @@
 !
 subroutine electrons_driver(Xk,Xen,Xq)
  !
- Use stderr,         ONLY:intc
+ Use stderr,         ONLY:intc,STRING_same
  use wave_func,      ONLY:WF,wf_ng
  use FFT_m,          ONLY:fft_size,fft_dim
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_table,QP_state
+ use YPP_interfaces, ONLY:PROJECTION_setup
  use YPPm,           ONLY:l_density,l_mag,v2plot,&
-&                         nr,l_sp_wf,DOS_bands,&
-&                         plot_title,l_dos,l_bands,l_current,&
+&                         nr,l_sp_wf,DOS_bands,plot_title,l_dos,l_bands,l_current,&
 &                         l_angular_momentum,l_position,l_mean_potential
  use xc_functionals, ONLY:magn
  use interfaces,     ONLY:WF_load,WF_free,PARALLEL_WF_index,PARALLEL_global_indexes,PARALLEL_WF_distribute
@@ -50,6 +50,10 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  if ( .not. any((/l_density,l_mag,l_sp_wf,l_dos,l_bands,l_current,&
 &                 l_mean_potential,l_angular_momentum,l_position/)) ) return
+ !
+ ! Projection
+ !============
+ call PROJECTION_setup("setup")
  !
  ! Plotting setup
  !================

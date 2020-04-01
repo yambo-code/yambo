@@ -48,8 +48,6 @@ integer function io_SC_components(what,E_sc,ID)
  ! Work Space
  !
  integer, external     :: variables_SC
- character(lchlen)     :: local_description(100)
- !
  integer               :: ik,i_sp_pol,ib,i_sec,bands_to_load,VAR_SIZE
  logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_T_EL
  real(SP), allocatable :: E_tmp(:,:)
@@ -109,8 +107,8 @@ integer function io_SC_components(what,E_sc,ID)
    !
    if (io_SC_components/=0) goto 1
    !
-   io_SC_components=variables_SC(ID,local_description,what)
-   !=======================================================
+   io_SC_components=variables_SC(ID,what)
+   !======================================
    if (io_SC_components/=0) goto 1
    !
    if(any((/l_E,l_V,l_WF,l_MP/))) then

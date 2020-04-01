@@ -23,21 +23,23 @@
 !
 subroutine INIT_ypp_load(defs)
  !
+ use units
  use it_tools,      ONLY:it
- use it_m,          ONLY:initdefs,E_unit,G_unit,V_RL,V_general,&
-&                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics,V_sc
+ use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,V_RL,&
+&                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics,V_io,V_sc
  use wave_func,     ONLY:wf_ng
+ use LIVE_t,        ONLY:nhash
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
  use interpolate,   ONLY:INTERP_shell_factor,INTERP_mode,NN_n_of_nearest
  use YPPm,          ONLY:E_field,alat_used_for_output,B_field,B_psi,B_theta,BANDS_bands,BANDS_path,&
 &                        BZ_DbGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
-&                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,&
-                         DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
-                         gamma_radius,INTERP_grid,mag_dir,N_path_pts,ncell,ord_dgrid_ipol,p_dir,p_format,PDOS_atoms,&
-                         PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
-                         SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,w90_fname,wannier_bands,&
-&                        WF_multiplier,WF_ref,what_to_write,BSiq
+&                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,PROJECT_path,QP_DB_to_expand,&
+&                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
+&                        gamma_radius,INTERP_grid,mag_dir,N_path_pts,ncell,ord_dgrid_ipol,p_dir,p_format,PDOS_atoms,&
+&                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
+&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,w90_fname,wannier_bands,&
+&                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_depth,PROJECT_steps,PROJECT_threshold
  use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
  use YPPm,          ONLY:Nel_fac
@@ -99,8 +101,9 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'spin',         '[R] Spin')
  call it('r',defs,'magnetization','[R] Magnetization')
  call it('r',defs,'WFs_map',      '[R] Creat a SOC/WFs <-> noSOC/WFs map')
- call it('r',defs,'QPDB_edit', '[R] Generation/editing')
- call it('r',defs,'QPDB_merge','[R] Mergering')
+ call it('r',defs,'QPDB_edit',    '[R] Generation/editing')
+ call it('r',defs,'QPDB_merge',   '[R] Mergering')
+ call it('r',defs,'QPDB_expand',  '[R] Symmetry expand')
  call it('r',defs,'fixsave', '[R] Convert WFs to new format')
  !
 #if defined _YPP_RT
@@ -138,6 +141,7 @@ subroutine INIT_ypp_load(defs)
  !
  ! Variables...
  !==============
+ call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
  !
 #if defined _YPP_NL
  call it('f',defs,'PrtPwrSpec','Print power spectrum',verb_level=V_nl_optics)
@@ -156,7 +160,6 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'DOSESteps', 'Energy steps',DOS_E_steps) 
  call it('f',defs,'DOSUsesOcc', 'Weight the DOS with the occupation factors') 
  !
- call it('f',defs,'Proj_DOS', 'Print the projected DOS')
  call it(defs,'PDOS_atoms', 'Select atom number range',PDOS_atoms,verb_level=V_general)
  call it(defs,'PDOS_kinds', 'Select atom kind   range',PDOS_kinds,verb_level=V_general)
  call it(defs,'PDOS_wfcs',  'Select projector   range',PDOS_wfcs, verb_level=V_general)
@@ -210,7 +213,13 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'BANDS_bands',     'Number of bands',BANDS_bands) 
  call it(defs,'BANDS_steps',     'Number of divisions',BANDS_steps) 
  call it(defs,'CIRCUIT_E_DB_path',   'SAVE obtained from the QE `bands` run (alternative to %BANDS_kpts)',CIRCUIT_E_DB_path) 
- call it(defs,'BANDS_path',      'BANDS path points labels (G,M,K,L...)',BANDS_path)
+ call it(defs,'BANDS_path',      'Path points labels (G,M,K,L...). BANDS path and DOS-project plane/projection.',BANDS_path)
+ call it(defs,'PROJECT_mode',    'Instruct ypp how to project the DOS. ATOM, LINE, PLANE.',PROJECT_mode)
+ call it(defs,'PROJECT_path',    'Project path. PLANE mode: 3 points in the plane. LINE mode: any series of points.',PROJECT_path)
+ call it(defs,'PROJECT_steps',    'Project LINE/PLANE-axis steps.',PROJECT_steps)
+ call it(defs,'PROJECT_depth',    'Project perpendicular direction divisions.',PROJECT_depth)
+ call it(defs,'PROJECT_threshold','[o/o] Project threshold above which the project DOS is printed.',&
+&        PROJECT_threshold,verb_level=V_general)
  call it('f',defs,'BANDS_built_in', 'Print the bands of the generating points of the circuit using the nearest internal point')
  call it(defs,'INTERP_mode',     'Interpolation mode (NN=nearest point, BOLTZ=boltztrap aproach)',INTERP_mode)
  call it(defs,'INTERP_NofNN',    'Number of Nearest sites in the NN method',NN_n_of_nearest)
@@ -330,6 +339,10 @@ subroutine INIT_ypp_load(defs)
  !
  ! GPL_EXCLUDE_END
  !
+ ! QP DB rotation and expanstion
+ !
+ call it(defs,'QPDB_file','QP database to rotate',QP_DB_to_expand) 
+ !
  ! Remove Simmetries
  !
  if(n_spinor==2) call it('f',defs,'ExpandSymm' , 'Add inv and magnetic symms if possible')
@@ -354,7 +367,8 @@ subroutine INIT_ypp_load(defs)
  ! RT Post-Processing
  !
  call it(defs,'Xorder','Max order of the response/exc functions',X_order)
- call it(defs,'EnRngeRt','Energy range',RT_conf%W_range,unit=E_unit)
+ call it(defs,'EnRngeRt','Energy range',RT_conf%X_W_range,unit=E_unit)
+ call it(defs,'CarrEnRnge','Carriers Energy range',RT_conf%Carriers_W_range,unit=E_unit,verb_level=V_real_time)
  call it(defs,'ETStpsRt','Total Energy steps',RT_conf%W_n_steps)
  call it(defs,'TimeRange','Time-window where processing is done',RT_conf%T_range,unit=Time_unit(1))
  call it(defs,'TimeStep','Time step',RT_conf%delta_T,unit=Time_unit(1))

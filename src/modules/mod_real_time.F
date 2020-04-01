@@ -25,7 +25,6 @@ module real_time
  !
  use drivers,    ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
  use pars,       ONLY:DP,SP,schlen,lchlen,LP
- use IO_m,       ONLY:IO_desc
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:QP_SE_NONE
  !
@@ -288,7 +287,6 @@ module real_time
  integer           :: two_alpha
  real(SP)          :: Gr_QP_width
  character(schlen) :: Gr_kind
- type(IO_desc)     :: Gr_desc 
  !
  ! GFs
  !-----

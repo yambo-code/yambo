@@ -278,4 +278,13 @@ module electrons
      !
    end function
    !
+   character(2) function spin_string(i_spin)
+     integer :: i_spin
+     !
+     if (n_sp_pol==1) spin_string="  "
+     if (i_spin==1)   spin_string="up"
+     if (i_spin==2)   spin_string="dn"
+     !
+   end function
+   !
 end module electrons

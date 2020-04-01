@@ -26,10 +26,9 @@ subroutine INIT_report_and_log_files()
  use pars,           ONLY:lchlen,repfile_index,logfile_index
  use stderr,         ONLY:logfile,logfile_unit,log_as_a_file,intc,write_to_log,write_to_log_default
  use it_m,           ONLY:rstatus,nrnlvls,rnlvls
- use com,            ONLY:repfile,repfile_unit,write_to_report,com_path,jobstr,max_open_ofs,of_unit
+ use com,            ONLY:repfile,repfile_unit,write_to_report,com_path,jobstr,of_unit
  use parallel_m,     ONLY:myid,ncpu
  use LIVE_t,         ONLY:live_timing_is_on
- use IO_m,           ONLY:mk_dir
 #if defined _YAML_OUTPUT
  use f_utils,        ONLY:f_get_free_unit
  use com,            ONLY:of_yaml_IDs
@@ -43,13 +42,9 @@ subroutine INIT_report_and_log_files()
  !
  write_to_log      = write_to_log_default
  live_timing_is_on = write_to_log_default
- !
- call mk_dir(com_path)
- !
- if (write_to_report) then
-   if (trim(jobstr)=='') write (repfile,'(2a)') trim(com_path),'/r'
-   if (trim(jobstr)/='') write (repfile,'(4a)') trim(com_path),'/','r-',trim(jobstr)
- endif
+ ! 
+ if (trim(jobstr)=='') write (repfile,'(2a)') trim(com_path),'/r'
+ if (trim(jobstr)/='') write (repfile,'(4a)') trim(com_path),'/','r-',trim(jobstr)
  if (log_as_a_file) then
   if (trim(jobstr)=='') write (logfile,'(2a)') trim(com_path),'/l'
   if (trim(jobstr)/='') write (logfile,'(4a)') trim(com_path),'/','l-',trim(jobstr)
@@ -59,9 +54,9 @@ subroutine INIT_report_and_log_files()
   endif
  endif
  do i_r=1,nrnlvls
-   if(write_to_report) then
-     rch=repfile
-     if (rstatus(i_r)/=0) write (rch,'(3a)') trim(repfile),'_',trim(rnlvls(i_r,1))
+   rch=repfile
+   if (rstatus(i_r)/=0) then
+     write (rch,'(3a)') trim(repfile),'_',trim(rnlvls(i_r,1))
      repfile=rch
    endif
    if (log_as_a_file) then
@@ -73,7 +68,6 @@ subroutine INIT_report_and_log_files()
  if (ncpu>1.and.log_as_a_file) then
    jch=logfile
    logfile=trim(jch)//"_CPU_"//trim(intc(myid+1))
-   call mk_dir(trim(com_path)//"/LOG")
  endif
  !
  if (write_to_report) call rename_file(repfile)

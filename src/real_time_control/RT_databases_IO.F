@@ -27,7 +27,8 @@ subroutine RT_databases_IO(E)
  use drivers,        ONLY:l_elph_scatt
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
-&                         GF_RT_IO_t,CARR_RT_IO_t,TMP_OBS_cache_steps,IO_OBS_cache_steps,SAVE_G_history,NE_i_start_time
+&                         GF_RT_IO_t,CARR_RT_IO_t,TMP_OBS_cache_steps,IO_OBS_cache_steps,SAVE_G_history,NE_i_start_time,&
+&                         Dynamics_is_over
  use real_time,      ONLY:NE_i_time,NE_steps,l_NE_dynamics,RT_nk,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,&
 &                         l_NE_with_fields,RT_step,RT_dyn_step
  use IO_m,           ONLY:io_control,manage_action,NONE, &

@@ -56,7 +56,8 @@ module com
  ! Sectioning
  !
  integer           :: depth,isec(5)
- character(1)      :: previous_secmode
+ integer           :: depth_SAVE,isec_SAVE(5)
+ character(2)      :: previous_secmode
  character(schlen) :: secnm
  !
  ! Output Files/Report File
@@ -77,28 +78,7 @@ module com
  !
  logical            :: write_to_of
  logical            :: write_to_report
- !
- integer, parameter :: n_MAX_descs=100
- !
- type IO_desc
-   !
-   integer           :: n
-   integer           :: size(n_MAX_descs)
-   logical           :: check(n_MAX_descs)
-   character(2)      :: ops(10,n_MAX_descs)
-   character(schlen) :: str(n_MAX_descs)
-   character(1)      :: kind(n_MAX_descs)     !  "i"=integer, "r"=real, "d"=double, "c"=complex, "s"=string, "l"=logical
-   !
-   integer           :: ival(10,n_MAX_descs)
-   real(SP)          :: rval(10,n_MAX_descs)
-   !
-   real(DP)          :: dval(n_MAX_descs)
-   complex(SP)       :: cval(n_MAX_descs)
-   !
-   character(schlen) :: sval(n_MAX_descs)
-   logical           :: lval(n_MAX_descs)
-   !
- end type
+ logical            :: fat_log
  !
  interface
    !
@@ -110,6 +90,13 @@ module com
      character(*), intent(in)            :: of_name
      character(*), intent(in), optional  :: mode
    end subroutine of_open_close
+   !
+   function com_compose_msg(pre,body,post)
+     use pars,          ONLY:msg_len
+     character(msg_len)                  :: com_compose_msg
+     character(*), intent(in)            :: body
+     character(*), intent(in), optional  :: pre,post
+   end function com_compose_msg
    !
  end interface
  !
@@ -168,7 +155,7 @@ module com
      character(*), optional :: after_msg
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     call msg_integers_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT)
+     call msg_integers_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT,after_msg=after_msg)
    end subroutine
    !
    subroutine msg_real(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT)

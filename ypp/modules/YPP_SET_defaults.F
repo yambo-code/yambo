@@ -30,7 +30,8 @@ subroutine YPP_SET_defaults()
 &                         N_path_pts,ncell ,ord_dgrid_ipol ,output_fname,p_dir,p_format   ,perturbative_SOC_path,&
 &                         plot_title,PtsPath,seed_name,SOC_bands_buffer,SOC_bands_to_map,state_ctl ,V_value,&
 &                         w90_fname,wannier_bands,WF_ref,what_to_write,SP,HA2EV,E_field,Nel_fac,DOS_bands,  &
-&                         BSiq,l_pdos,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,EXCITON_Res_treshold,EXCITON_E_treshold
+&                         BSiq,l_PROJECT_atom,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,&
+&                         EXCITON_Res_treshold,EXCITON_E_treshold,l_PROJECT_line,l_PROJECT_plane
  use YPP_symm,       ONLY:wf_ng_cut
  use units,          ONLY:FS2AUT
  use interpolate,    ONLY:INTERP_shell_factor,interpls,max_interpls
@@ -67,6 +68,12 @@ subroutine YPP_SET_defaults()
  live_timing_is_on =.FALSE.   
  write_to_log      =.FALSE.   
  !
+ ! Projections
+ !
+ l_PROJECT_atom  =.false.
+ l_PROJECT_line  =.false.
+ l_PROJECT_plane =.false.
+ !
  ! DOS
  !
  l_dos=.false.
@@ -76,7 +83,6 @@ subroutine YPP_SET_defaults()
  DOS_bands=(/1,n_bands/)
  WF_ref=0
  !
- l_pdos=.false.
  PDOS_atoms=-1
  PDOS_kinds=-1
  PDOS_wfcs =-1
@@ -222,7 +228,8 @@ subroutine YPP_SET_defaults()
  !
  RT_conf%T_range(:)  =real((/-FS2AUT,-FS2AUT/),SP)
  RT_conf%W_n_steps   =200
- RT_conf%W_range(:)  =(/0._SP,20./HA2EV/)
+ RT_conf%Carriers_W_range(:)  =(/0._SP,20./HA2EV/)
+ RT_conf%X_W_range(:)  =(/0._SP,20./HA2EV/)
  Probe_Keyword ="none"
  Pump_Keyword  ="none"
  X_order       =1

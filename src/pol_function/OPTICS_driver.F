@@ -29,7 +29,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
  use pars,          ONLY:pi,SP,cZERO
  use units,         ONLY:HA2EV
- use stderr,        ONLY:intc
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,BZ_DbGd_tot_nk_levels
@@ -42,12 +41,13 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
- use TDDFT,         ONLY:FXC_n_descs,FXC_desc,FXC_type,&
+ use TDDFT,         ONLY:FXC_desc,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
  use X_output,      ONLY:X_setup_file_names,eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,&
 &                        X_write_q_plus_G,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load,WF_free
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load,&
+&                        WF_free,DESC_write
  use matrix,        ONLY:MATRIX_reset
  !
 #include<memory.h>
@@ -181,7 +181,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Fxc descriptions
    !
    if (l_bs_fxc) then
-     call COM_write_desc('o eps_q refl eel_q fxc alpha off beta moke jdos','#',FXC_desc)
+     call DESC_write('o eps_q refl eel_q fxc alpha off beta moke jdos','#',FXC_desc)
      call msg('o eps_q eel_q alpha','# TDDFT|Fxc size             ',FXC_n_g_corr,INDENT=0)    
      call msg('o eps_q eel_q alpha','#      |Hartree size         ',X%ng        ,INDENT=0)    
      call msg('o eps_q eel_q alpha','#      |Ordering             ',X%ordering  ,INDENT=0)    
@@ -214,21 +214,26 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! Without LF eps
    !
-   if (Macroscopic_CPU) Epsilon_ii(:,1)=1.0_SP-X_par(1)%blc(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
+   if (Macroscopic_CPU) Alpha(:,1)=-X_par(1)%blc(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
    !
    ! X Dyson equation solver
    !
-   if (l_rpa_IP) then
+   if (.not.l_rpa_IP) call X_redux(iq,X_par(1),wv,X)
+   !
+   if (Macroscopic_CPU) then
      !
-     if (Macroscopic_CPU) Epsilon_ii(:,2)=Epsilon_ii(:,1)
+     if (     l_rpa_IP) then
+       Alpha(:,2)=Alpha(:,1)
+     else
+       if(.not.l_col_cut) Alpha(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)-1._SP
+       ! Here I assume X_par is small and I use 1/(1+x)~1-x 
+       if(     l_col_cut) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
+     endif
      !
-   else
-     !
-     call X_redux(iq,X_par(1),wv,X)
-     !
-!     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
+!    Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
 !&                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
-     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)
+     !
+     Epsilon_ii(:,1:2)=1._SP+Alpha(:,1:2)
      !
    endif
    !
@@ -311,10 +316,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      call of_open_close(alpha_file_name,'oa')
      !
      if(l_col_cut) then
-       alpha_factor=eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
-       Alpha(:,1)=(Epsilon_ii(:,1)-1._SP)*alpha_factor
-       if(     l_rpa_IP) Alpha(:,2)= Alpha(:,1)
-       if(.not.l_rpa_IP) Alpha(:,2)=(Epsilon_ii(:,2)-1._SP)*alpha_factor
+       alpha_factor=eps_2_alpha/4._SP/pi
+       Alpha(:,1)=Alpha(:,1)*alpha_factor
+       if(     l_rpa_IP) Alpha(:,2)=Alpha(:,2)*alpha_factor
+       if(.not.l_rpa_IP) Alpha(:,2)=Alpha(:,2)*alpha_factor*bare_qpg(1,1)**2/q_norm(1)**2
      else
        alpha_factor=eps_2_alpha/4._SP/pi
        Alpha(:,1)=(1._SP+EEL(:,1))*alpha_factor

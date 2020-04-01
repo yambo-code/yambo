@@ -32,6 +32,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
  use R_lattice,     ONLY:bz_samp
  use stderr,        ONLY:STRING_remove
  use vec_operate,   ONLY:sort
+ use interfaces,    ONLY:DESC_write
  !
  implicit none
  !
@@ -42,7 +43,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
  !
  ! Work Space
  !
- integer          ::i_spin,i_d,i_s,n_val
+ integer          ::i_spin,i_s
  real(SP)         ::db_scissor,fit_scissor,E(4),E_err(2),E_ref(2),W(6),W_err(2),W_dos(2),W_dos_err(2)
  character(lchlen)::ch
  complex(SP)      ::Z
@@ -151,7 +152,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    call of_open_close(fname(1),'ot')
    call of_open_close(fname(2),'ot')
    call msg('o .fit .data','#')
-   call COM_write_desc('o .fit .data','#',qp%desc)
+   call DESC_write('o .fit .data','#',qp%desc)
    !
    n_titles=1
    titles(1)="Eo [eV]"

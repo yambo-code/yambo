@@ -38,7 +38,7 @@ subroutine QP_load_DB(i_ACTION,bands,en,k)
  !
  ! Work Space
  !
- type(QP_t)        :: qp
+ type(QP_t)        ::qp
  integer           ::io_err,ID
  integer, external ::io_QP_and_GF
  !

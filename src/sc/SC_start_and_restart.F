@@ -42,12 +42,13 @@ subroutine SC_start_and_restart(X,E,Xk,Dip)
 &                         SC_iterations,SC_preconditioning,                     &
 &                         l_oep_iterative,rho_convergence,E_convergence,        &
 &                         SC_rho_threshold,SC_iterations,l_SC_cycle,            &
-&                         SC_fft_size,l_oep_EWeight,SC_cycle_mixing,  &
+&                         SC_fft_size,l_oep_EWeight,SC_cycle_mixing,SC_desc,  &
 &                         l_Mean_Potential,l_SC_nl_mix,magn_convergence,l_froze_density
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
  use FFT_m,          ONLY:fft_size
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_have_HARTREE
+ use descriptors,    ONLY:IO_desc_reset
  !
 #include<memory.h>
  !
@@ -157,6 +158,8 @@ subroutine SC_start_and_restart(X,E,Xk,Dip)
  else
    !
    l_NSC_shot=SC_iterations==1.and.(io_V==0.or.io_V==-2).and.l_sc_V_is_local.and..not.l_SC_cycle
+   !
+   call IO_desc_reset(SC_desc)
    !
  endif
  !

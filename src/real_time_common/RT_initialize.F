@@ -25,7 +25,7 @@ subroutine RT_initialize(E,k,q)
  ! 
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_hartree,l_use_Hxc_collisions,&
 &                         l_sc_is_libDFT,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_rt_carriers_in_use
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:SP,pi,schlen
  use units,          ONLY:HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,AUT2FS
  use stderr,         ONLY:intc
  use com,            ONLY:msg
@@ -65,11 +65,11 @@ subroutine RT_initialize(E,k,q)
  ! Work space
  !
  integer                  :: i1,N_T_samplings
- character(6)             :: MSG_ch
+ character(schlen)        :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_skip_it,l_velocity_gauge_tmp
  real(SP), parameter      :: thresh=1.E-5_SP
- integer,         external:: RT_Lifetimes_evaluation_plan
+ integer,  external       :: RT_Lifetimes_evaluation_plan
  !
  ! Logicals
  !==========
@@ -234,30 +234,33 @@ subroutine RT_initialize(E,k,q)
    !      
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
    !
+   MSG_ch="Field#"//trim(intc(i1))//" "//trim(Efield(i1)%ef_name)
+   !
    if((Efield(i1)%ef_name/='none')) then
      !
      if (.not.field_is_ok( Efield(i1)) ) &
-&      call error('Field '//trim(Efield(i1)%ef_name)//' not supported or polarization is wrong')
+&      call error(trim(MSG_ch)//' not supported or polarization is wrong')
      !      
      l_NE_with_fields=.true.
      !
      if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%frequency(1)==0._SP) &
-&      call error("External "//trim(Efield(i1)%ef_name)//" field has zero frequency.")
+&      call error(trim(MSG_ch)//" field has zero frequency.")
      !
-!     if(Efield(i1)%intensity==0._SP) &
-!&      call error("External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
+     !if(Efield(i1)%intensity==0._SP) &
+&    !  call error(trim(MSG_ch)//" field has zero intensity.")
      !
      if( all( abs(Efield(i1)%versor(:))<epsilon(1.) ) ) &
-&      call error("External "//trim(Efield(i1)%ef_name)//" field has undefined direction.")
+&      call error(trim(MSG_ch)//" field has undefined direction.")
      !
      if ( ((Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='PULSE')) &
 &        .and. Efield(i1)%width<epsilon(1.)  ) &
-&      call error("External "//trim(Efield(i1)%ef_name)//" field has undefined duration.")
+&      call error(trim(MSG_ch)//" field has undefined duration.")
      !
      Efield(i1)%versor   =normalize_v(Efield(i1)%versor)
      Efield(i1)%amplitude=Efield_strength(Efield(i1)%intensity,'AU')
      !
      Efield(i1)%t_initial_indx=max(nint(Efield(i1)%t_initial/RT_step)+1,2)
+     !
      Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step
      !
      call Check_symmetries(Efield(i1)%versor)
@@ -469,21 +472,21 @@ subroutine RT_initialize(E,k,q)
    !call msg('r','Pump/Probe energy step  [eV]',maxval(Efield(:)%W_step)*HA2EV)
    !
    do i1=1,n_ext_fields
-     MSG_ch="Field"//trim(intc(i1))
-     call msg('r', MSG_ch//' field                       '//trim(Efield(i1)%ef_name))
-     call msg('r', MSG_ch//' polarization                '//trim(Efield(i1)%ef_pol))
-     call msg('r', MSG_ch//' energy window/period [eV/fs]',(/Efield(i1)%frequency*HA2EV,&
+     MSG_ch="Field#"//trim(intc(i1))
+     call msg('r', trim(MSG_ch)//' field                       '//trim(Efield(i1)%ef_name))
+     call msg('r', trim(MSG_ch)//' polarization                '//trim(Efield(i1)%ef_pol))
+     call msg('r', trim(MSG_ch)//' energy window/period [eV/fs]',(/Efield(i1)%frequency*HA2EV,&
 &                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/))
-     call msg('r', MSG_ch//' elemental oscillation   [fs]',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))*AUT2FS)
-     call msg('r', MSG_ch//' width                   [fs]',Efield(i1)%width*AUT2FS)
-     call msg('r', MSG_ch//' energy steps                ',Efield(i1)%n_frequencies)
-     call msg('r', MSG_ch//' electric field         [V/m]',Efield(i1)%amplitude*AU2VMm1)
-     call msg('r', MSG_ch//' max intensity      [kW/cm^2]',Efield(i1)%intensity*AU2KWCMm2)
+     call msg('r', trim(MSG_ch)//' elemental oscillation   [fs]',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))*AUT2FS)
+     call msg('r', trim(MSG_ch)//' width                   [fs]',Efield(i1)%width*AUT2FS)
+     call msg('r', trim(MSG_ch)//' energy steps                ',Efield(i1)%n_frequencies)
+     call msg('r', trim(MSG_ch)//' electric field         [V/m]',Efield(i1)%amplitude*AU2VMm1)
+     call msg('r', trim(MSG_ch)//' max intensity      [kW/cm^2]',Efield(i1)%intensity*AU2KWCMm2)
      !
      if( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='DELTA') ) then
-       call msg('r', MSG_ch//' max fluence        [nJ/cm^2]',Efield(i1)%fluence )
-       call msg('r', MSG_ch//' final time              [fs]',Efield(i1)%t_final*AUT2FS)
-       call msg('r', MSG_ch//' half maximum full width [fs]',Efield(i1)%width*2.*sqrt(2.*log(2.))*AUT2FS)
+       call msg('r', trim(MSG_ch)//' max fluence        [nJ/cm^2]',Efield(i1)%fluence )
+       call msg('r', trim(MSG_ch)//' final time              [fs]',Efield(i1)%t_final*AUT2FS)
+       call msg('r', trim(MSG_ch)//' half maximum full width [fs]',Efield(i1)%width*2.*sqrt(2.*log(2.))*AUT2FS)
      endif
      !
    enddo

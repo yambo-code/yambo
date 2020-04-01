@@ -47,8 +47,8 @@ subroutine RT_start_and_restart(E,k,q)
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,l_RT_is_WFfree, &
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
-&                         Gr_kind,Gr_desc,l_RT_uses_E_DbGd,RT_E_and_k, &
-&                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser,H_EQ,l_RT_uses_E_DbGd,&
+&                         Gr_kind,l_RT_uses_E_DbGd,RT_E_and_k, &
+&                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser,H_EQ,&
 &                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_prev,i_MEM_now,&
 &                         i_MEM_old,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times,&
@@ -57,11 +57,12 @@ subroutine RT_start_and_restart(E,k,q)
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,E_reference
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,&
 &                         manage_action,REP,VERIFY,NONE,DUMP
+ use descriptors,    ONLY:IO_desc_reset,IO_desc_add
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
  use H_interfaces,   ONLY:V_real_space_to_H
  use parallel_m,     ONLY:PP_redux_wait,PAR_G_kpts
- use stderr,         ONLY:real2ch
+ use RT_output_m,    ONLY:RT_desc,TIME_STEP_desc,Gr_desc
  !
 #include<memory.h>
  !
@@ -268,6 +269,12 @@ subroutine RT_start_and_restart(E,k,q)
  !
  if (.not.RESTART) NE_time=0._SP
  !
+ ! Zeroing DESCs
+ !===============
+ call IO_desc_reset(RT_desc)
+ call IO_desc_reset(Gr_desc)
+ call IO_desc_reset(TIME_STEP_desc)
+ !
  if (l_NE_dynamics) NE_i_time=NE_i_start_time
  !
  ! Initialize the Vector Potential
@@ -307,12 +314,6 @@ subroutine RT_start_and_restart(E,k,q)
  ! Retarded Green Functions matrix
  ! ===============================
  !
- Gr_desc%n=1
- Gr_desc%str(1)=' [Gr] Retarded Green`s function  '
- Gr_desc%sval(1)='none'
- Gr_desc%kind(1)='s'
- Gr_desc%size(1)=1
- !
  ! GPL_EXCLUDE_START
  !
  if (l_elph_scatt.or.l_elel_scatt) then
@@ -320,32 +321,15 @@ subroutine RT_start_and_restart(E,k,q)
    call k_build_up_BZ_tables(q)
    call k_build_up_BZ_tables(k)
    !
-   Gr_desc%n=Gr_desc%n+4
+   call IO_desc_add(Gr_desc,'s',"[Gr] Retarded Green`s function",S=trim(Gr_kind))
+   call IO_desc_add(Gr_desc,'r',"[Gr] Damping (c) Energy ref",R= (/QP_ctl_user(3,1)%Wc_E_ref*HA2EV/),term="ev")
+   call IO_desc_add(Gr_desc,'r',"[Gr] Damping (c)",SZ=3,R=QP_ctl_user(3,1)%Wc(1:3),term="ev,adim,ev^-1")
+   call IO_desc_add(Gr_desc,'r',"[Gr] Damping (v) Energy ref",R= (/QP_ctl_user(3,1)%Wv_E_ref*HA2EV/),term="ev")
+   call IO_desc_add(Gr_desc,'r',"[Gr] Damping (v)",SZ=3,R=QP_ctl_user(3,1)%Wv(1:3),term="ev,adim,ev^-1")
    !
-   Gr_desc%str(2) =' [Gr] Retarded Green`s function   '
-   Gr_desc%sval(2)=trim(Gr_kind)
-   Gr_desc%kind(2)='s'
-   Gr_desc%size(2)=1
+ else
    !
-   Gr_desc%str(3)   =' [Gr] Damping (c) Energy ref [eV] '
-   Gr_desc%rval(1,3)=QP_ctl_user(3,1)%Wc_E_ref*HA2EV
-   Gr_desc%kind(3)  ='r'
-   Gr_desc%size(3)  =1
-   !
-   Gr_desc%str(4)     =' [Gr] Damping (c) [eV,adim,eV^-1] '
-   Gr_desc%rval(1:3,4)=QP_ctl_user(3,1)%Wc(1:3)
-   Gr_desc%kind(4)    ='r'
-   Gr_desc%size(4)    =3
-   !
-   Gr_desc%str(5)     =' [Gr] Damping (v) Energy ref [eV] '
-   Gr_desc%rval(1:1,5)=QP_ctl_user(3,1)%Wv_E_ref*HA2EV
-   Gr_desc%kind(5)    ='r'
-   Gr_desc%size(5)    =1
-   !
-   Gr_desc%str(6)     =' [Gr] Damping (v) [eV,adim,eV^-1] '
-   Gr_desc%rval(1:3,6)=QP_ctl_user(3,1)%Wv(1:3)
-   Gr_desc%kind(6)    ='r'
-   Gr_desc%size(6)    =3
+   call IO_desc_add(Gr_desc,'s',"[Gr] Retarded Green`s function",S="none")
    !
  endif
  !

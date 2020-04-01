@@ -10,7 +10,7 @@ SC_objects = load_SC_components.o io_SC_components.o variables_SC.o
 SC_objects = load_SC_components.o io_SC_components.o variables_SC.o io_KB_real_space.o
 #endif
 #if defined _RT 
-RT_objects = io_RT_components.o variables_static_RT.o variables_dynamic_RT.o io_KB_real_space.o
+RT_objects = io_RT_components.o variables_RT_static.o variables_RT_dynamic.o io_KB_real_space.o
 #endif
 NL_objects =
 #if defined _NL 
@@ -31,7 +31,7 @@ PARIO_objects = io_BS_PAR.o io_DIPOLES_PAR.o io_Overlaps_PAR.o
 #else
 SERIO_objects = io_BS.o     io_DIPOLES.o     io_Overlaps.o
 #endif
-objs = io_utilities.o ver_is_gt_or_eq.o IO_and_Messaging_switch.o io_fragment.o \
+objs = IO_make_directories.o io_utilities.o ver_is_gt_or_eq.o IO_and_Messaging_switch.o io_fragment.o \
        io_Vnl.o       io_E_SOC_map.o \
        io_RIM.o       io_GROT.o     $(ELPH_objects) \
        io_QINDX.o    io_QP_and_GF.o   io_X.o \

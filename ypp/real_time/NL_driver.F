@@ -232,7 +232,8 @@ contains
      use RT_control,     ONLY:RT_output
      use com,            ONLY:msg,of_open_close
      use vec_operate,    ONLY:sort
-     use nl_optics,      ONLY:n_NL_descriptions,NL_description
+     use interfaces,     ONLY:DESC_write
+     use nl_optics,      ONLY:NL_desc
      !
      ! Working Space
      !
@@ -260,9 +261,7 @@ contains
        !
        call of_open_close(trim(X_file_name),'ot')
        !
-       do i_dsc=1,n_NL_descriptions
-         call msg('o '//trim(X_file_name),'#',trim(NL_description(i_dsc)),INDENT=0)
-       enddo
+       call DESC_write('o '//trim(X_file_name),'#',NL_desc)
        !
        call msg('o '//trim(X_file_name),'#')
        call msg('o '//trim(X_file_name),'#',headings(1:n_headings),INDENT=0,USE_TABS=.TRUE.)

@@ -21,21 +21,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function variables_static_RT(ID,what)
+integer function variables_RT_static(ID,what)
  !
  use pars,           ONLY:lchlen,SP,LP,IP
  use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr,l_elphoton_scatt
  use stderr,         ONLY:intc
  use hamiltonian,    ONLY:H_ref_bands
- use RT_control,     ONLY:RT_desc,n_RT_desc_static,TIME_STEP_CONF_description,&
-&                         n_TIME_STEP_CONF_descriptions
- use IO_m,           ONLY:variable_exist,write_is_on,IO_desc_reset
+ use descriptors,    ONLY:IO_desc_reset
+ use RT_output_m,    ONLY:RT_desc,Gr_desc,TIME_STEP_desc,n_RT_desc_static
+ use IO_m,           ONLY:variable_exist,write_is_on
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_extrapolation, &
 &                         RAD_LifeTime,Phase_LifeTime,&
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_steps,&
-&                         l_RT_CCA_Kernel,Gr_desc,l_RT_impose_N_dN, &
+&                         l_RT_CCA_Kernel,l_RT_impose_N_dN, &
 &                         l_RT_uses_E_DbGd,RT_life_extrap_times_SAVE,&
 &                         DbGd_EE_percent,l_RT_impose_E,RT_DbGd_nk,&
 &                         RT_potential
@@ -51,8 +51,10 @@ integer function variables_static_RT(ID,what)
  !
  implicit none
  !
- integer            ::ID
- character(*)       ::what
+ integer            :: ID
+ character(*)       :: what
+ !
+ integer, external :: io_descriptors
  !
  integer, external  ::io_descriptors
  !
@@ -166,19 +168,13 @@ integer function variables_static_RT(ID,what)
    !
    ! Time-Steps configurations
    !===========================
-   call def_variable_elemental(ID,VAR="N_TIME_STEP_CONFS",VAR_SZ=1,VAR_KIND=IP+100,MENU=0)
-   call io_variable_elemental(ID,I0=n_TIME_STEP_CONF_descriptions)
-   !
-   do i1=1,n_TIME_STEP_CONF_descriptions
-     call def_variable_elemental(ID,VAR="TIME_STEP_CONF_"//trim(intc(i1)),VAR_SZ=1,VAR_KIND=0,MENU=0)
-     call  io_variable_elemental(ID,CH0=TIME_STEP_CONF_description(i1),VAR='',DESCRIPTOR=RT_desc)
-   enddo
+   variables_RT_static=io_descriptors(TIME_STEP_desc,"TIME_STEP",ID,.FALSE.)
    !
    ! GPL_EXCLUDE_START
    !
    ! G retarded variables
    !======================
-   variables_static_RT=io_descriptors(Gr_desc,ID)
+   variables_RT_static=io_descriptors(Gr_desc,"Gr",ID,.FALSE.)
    !
    ! GPL_EXCLUDE_END
    !
@@ -252,6 +248,6 @@ integer function variables_static_RT(ID,what)
  !
  n_RT_desc_static=RT_desc%n
  !
- variables_static_RT     =io_status(ID)
+ variables_RT_static     =io_status(ID)
  !
-end function variables_static_RT
+end function variables_RT_static

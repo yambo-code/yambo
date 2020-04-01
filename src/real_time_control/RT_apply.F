@@ -24,7 +24,7 @@
 subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ONLY)
  !
  use drivers,        ONLY:l_elel_corr,l_rt_carriers_in_use,l_real_time
- use pars,           ONLY:schlen,SP
+ use pars,           ONLY:schlen,SP,lchlen
  use stderr,         ONLY:STRING_split,real2ch,intc,STRING_same
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,BZ_DbGd_tot_nk_levels
@@ -53,7 +53,8 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  real(SP)              :: local_Time,TIME_diff,REF_diff
  integer,parameter     :: n_pieces=10
  integer, external     :: io_RT_components
- character(schlen)     :: db_piece(n_pieces),db_name,T_unit,ch
+ character(schlen)     :: db_piece(n_pieces),T_unit,ch
+ character(lchlen)     :: db_name
  character(3)          :: what_
  logical               :: l_E,l_f,l_W,l_elel_corr_save,is_def,l_verbose,l_keep_carriers,l_BOLTZ,load_times_only
  !

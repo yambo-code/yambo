@@ -103,10 +103,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,ID
  integer, external ::io_BS
  !
- ! Timing
+ ! Timing and restart
  !
+ logical :: BS_blk_done(n_BS_blks)
  logical :: block_done
- integer :: n_steps,i_steps
+ integer :: n_steps,m_steps,i_steps
  !
  ! Constants & Setup
  !==================
@@ -324,13 +325,63 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Timing
  !========
  !
- if (.not.l_bs_fxc) section_title='Kernel'
- if (     l_bs_fxc) section_title='Kernel->Fxc'
- !
  if (BS_LiveTiming_steps>= 0) n_steps=BS_LiveTiming_steps
  if (BS_LiveTiming_steps==-1) n_steps=n_BS_blks
  !
- if(n_steps>0) call live_timing(trim(section_title),n_steps)
+ m_steps=n_steps
+ !
+ ! First load previously computed matrix elements.
+ !=================================================
+ !
+ BS_blk_done=.false.
+ !
+#ifdef _PAR_IO
+ if (l_BSE_restart) then
+   !
+   if(m_steps>0) call live_timing("Loading partial kernel",m_steps)
+   !
+   do i_block=1,n_BS_blks
+     !
+     ! Read BS_blk to check if the transition was already computed
+     !
+     call io_control(ACTION=RD,ID=ID)
+     call io_BS_PAR_block(iq,i_block,ID)
+     !
+     if (BS_LiveTiming_steps>= 0) i_steps=BS_Block_size(i_block)
+     if (BS_LiveTiming_steps==-1) i_steps=1
+     !
+     i_Tgrp_k=BS_blk(i_block)%iT_k
+     i_Tgrp_p=BS_blk(i_block)%iT_p
+     !
+     ! check if this block need to be done
+     ! skip this block if already done
+     !
+     BS_blk_done(i_block)=.true.
+     skip_check: do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
+       do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
+         if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t".or.BS_blk(i_block)%done(i_Tk,i_Tp)=="n") cycle
+         BS_blk_done(i_block)=.false.
+         exit skip_check
+       enddo
+     enddo skip_check
+     !
+     if (BS_blk_done(i_block)) m_steps=m_steps-i_steps
+     !
+     call live_timing(steps=i_steps)
+     !
+   enddo
+   !
+   call live_timing()
+   !
+   call msg("s","Kernel loaded percentual ",real(n_steps-m_steps,SP)/real(n_steps,SP)*100._SP,'[%]')
+   !
+ endif
+#endif
+ !
+ if (.not.l_bs_fxc) section_title='Kernel'
+ if (     l_bs_fxc) section_title='Kernel->Fxc'
+ !
+ if(m_steps>0) call live_timing(trim(section_title),m_steps)
  !
  !------------------
  ! LOOP over blocks
@@ -339,14 +390,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  block_loop:&
  do i_block=1,n_BS_blks
    !
-   ! Read BS_blk to check if the transition was already computed
+   if (BS_blk_done(i_block)) cycle
    !
-#ifdef _PAR_IO
-   if (l_BSE_restart) then
-     call io_control(ACTION=RD,ID=ID)
-     call io_BS_PAR_block(iq,i_block,ID)
-   endif
-#endif
+   ! Read BS_blk to check if the transition was already computed
    !
    if (BS_LiveTiming_steps>= 0) i_steps=BS_Block_size(i_block)
    if (BS_LiveTiming_steps==-1) i_steps=1
@@ -355,27 +401,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    i_Tgrp_p=BS_blk(i_block)%iT_p
    i_k     =BS_blk(i_block)%ik
    i_p     =BS_blk(i_block)%ip
-   !
-#ifdef _PAR_IO
-   if (l_BSE_restart) then
-     !
-     ! check if this block need to be done
-     ! skip this block if already done
-     !
-     block_done=.true.
-     skip_check: do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
-       do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
-         if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t".or.BS_blk(i_block)%done(i_Tk,i_Tp)=="n") cycle
-         block_done=.false.
-         exit skip_check
-       enddo
-     enddo skip_check
-     if (block_done) then
-       call live_timing(steps=i_steps)
-       cycle
-     endif
-   endif
-#endif
    !
    ! Exchange oscillators
    !----------------------
@@ -525,6 +550,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if(BS_K_cutoff>0._SP) BS_max_val_CPU(myid+1)=maxval( (/BS_max_val_CPU(myid+1),abs(BS_blk(i_block)%mat(:,:))/) )
    !
    call BS_oscillators_free(0,i_block)
+   !
    if(l_BSE_minimize_memory) then
      call BS_oscillators_free(i_Tgrp_p,0)
      call BS_oscillators_free(i_Tgrp_k,0)

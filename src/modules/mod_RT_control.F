@@ -44,6 +44,7 @@ module RT_control
    real(SP), allocatable :: Time(:)
  end type
  !
+ logical                  :: RT_NAN_found=.FALSE.
  logical                  :: SAVE_G_history
  !
  type(RT_IO_t),save  :: OBS_RT_IO_t
@@ -323,11 +324,5 @@ module RT_control
        if (what=="df") E%f(ib,ik,i_sp_pol)=RT_carriers%delta_f(i_RT)
      enddo
    end subroutine
-   !
-   logical function Dynamics_is_over()
-     use real_time,    ONLY:RT_step,NE_steps,NE_i_time,RT_dyn_step
-     logical,   external  ::STOP_now
-     Dynamics_is_over=NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now(.FALSE.)
-   end function
    !
 end module RT_control

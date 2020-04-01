@@ -26,7 +26,7 @@ subroutine RT_databases_IO(E)
  use drivers,        ONLY:l_elph_scatt
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,&
-&                         GF_RT_IO_t,IO_OBS_cache_steps,Dynamics_is_over
+&                         GF_RT_IO_t,IO_OBS_cache_steps
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
@@ -43,6 +43,7 @@ subroutine RT_databases_IO(E)
  !
  integer           :: ik,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,n_sec,secs(2),i_cpu
  integer, external :: io_RT_components
+ logical, external :: RT_Dynamics_is_over
  !
  call timing('RT databases IO',OPR='start')
  !
@@ -70,8 +71,8 @@ subroutine RT_databases_IO(E)
    OBS_RT_IO_t%last_point=NE_i_time
    !
    if (io_OBSERVABLES) then
-     if (     Dynamics_is_over()) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID(4))
-     if (.not.Dynamics_is_over()) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4))
+     if (     RT_Dynamics_is_over()) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID(4))
+     if (.not.RT_Dynamics_is_over()) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4))
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4))
      io_OBS=io_RT_components('OBSERVABLES',ID(4))

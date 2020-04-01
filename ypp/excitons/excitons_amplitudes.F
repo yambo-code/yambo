@@ -33,6 +33,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
  use BS,            ONLY:BS_H_dim
  use com,           ONLY:msg,of_open_close
  use vec_operate,   ONLY:sort
+ use interfaces,    ONLY:DESC_write
  !
  implicit none
  !
@@ -113,7 +114,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
 !Note that BSS_description is empty as io_BS it is not called anymore 
 !
    !
-   call COM_write_desc('o weight amp','#',BSS_desc)
+   call DESC_write('o weight amp','#',BSS_desc)
    
 
    call msg('o weight amp',"#")

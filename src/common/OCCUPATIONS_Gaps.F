@@ -23,6 +23,7 @@
 !
 subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  !
+ use units
  use pars,          ONLY:SP
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
  !
@@ -85,7 +86,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  E%nbf=minval(Nbf_)
  E%nbm=maxval(Nbm_)
  !
- if (E%Nbm+1 > E%nb) call error(' Too few states. Include more states in the DFT run.')
+ if (E%Nbm+1 > E%nb) call warning(' No completely empy band found. Include more states in the DFT run?')
  !
  ! VBM/CBM
  !
@@ -107,28 +108,24 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  !
  ! [1] Indirect Gaps (min/max)
  !
- if(all(Nbf_==Nbm_)) then
-   E_g_ind_(1,1)=minval(E_cb_min)-maxval(E_vb_max)
-   E_g_ind_(1,2)=minval(E_vb_max)-maxval(E_vb_min)
-   E_g_ind_(1,3)=minval(E_cb_max)-maxval(E_cb_min)
-   ! This should never happen
-   if(E_g_ind_(1,1)<0.and.n_sp_pol==2) call warning('Merged spin levels are metallic')
-   !
- endif
+ E_g_ind_(1,1)=minval(E_cb_min)-maxval(E_vb_max)
+ E_g_ind_(1,2)=minval(E_vb_max)-maxval(E_vb_min)
+ E_g_ind_(1,3)=minval(E_cb_max)-maxval(E_cb_min)
+ ! This should never happen
+ if(E_g_ind_(1,1)<0.and.n_sp_pol==2) call warning('Merged spin levels are metallic')
  !
  if(n_sp_pol==2.and.any(Nbf_==Nbm_)) then
    do i_sp_pol=1,n_sp_pol
      !
      if (Nbf_(i_sp_pol)/=Nbm_(i_sp_pol)) cycle
-     E_g_ind_(i_sp_pol+1,1)=E_cb_min(i_sp_pol)-E_vb_max(i_sp_pol) 
-     E_g_ind_(i_sp_pol+1,2)=E_vb_max(i_sp_pol)-E_vb_min(i_sp_pol)
-     E_g_ind_(i_sp_pol+1,3)=E_cb_max(i_sp_pol)-E_cb_min(i_sp_pol)
+     E_g_ind_(i_sp_pol,1)=E_cb_min(i_sp_pol)-E_vb_max(i_sp_pol) 
+     E_g_ind_(i_sp_pol,2)=E_vb_max(i_sp_pol)-E_vb_min(i_sp_pol)
+     E_g_ind_(i_sp_pol,3)=E_cb_max(i_sp_pol)-E_cb_min(i_sp_pol)
      !
    enddo
  endif
  !
- if(n_sp_pol==1) E%E_ind_gap(1)  =E_g_ind_(1,1)
- if(n_sp_pol==2) E%E_ind_gap(1:2)=E_g_ind_(2:3,1)
+ E%E_ind_gap(1:n_sp_pol) =E_g_ind_(1:n_sp_pol,1)
  ! 
  ! [2] Direct Gaps (min/max)
  !

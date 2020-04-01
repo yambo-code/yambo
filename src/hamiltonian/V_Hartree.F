@@ -22,17 +22,16 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine V_Hartree(rho,vhr)
-  !
-  !  Hartree potential (vhr)
-  !  sum_G 4pi*rho(G)/|G|**2.  with G!=0, for G=0 vhr(0)=0 
-  !
- use pars,          ONLY: pi,SP,DP
- use electrons,     ONLY: n_spin
- use R_lattice,     ONLY: bare_qpg
- use QP_m,          ONLY: QP_ng_SH  
- use D_lattice,     ONLY: DL_vol
- use fft_m,         ONLY: fft_size,fft_dim,fftw_plan,fft_g_table
-! use wave_func,     ONLY: wf_ng
+ !
+ !  Hartree potential (vhr)
+ !  sum_G 4pi*rho(G)/|G|**2.  with G!=0, for G=0 vhr(0)=0 
+ !
+ use pars,          ONLY:pi,SP,DP
+ use electrons,     ONLY:n_spin
+ use R_lattice,     ONLY:bare_qpg
+ use QP_m,          ONLY:QP_ng_SH  
+ use D_lattice,     ONLY:DL_vol
+ use fft_m,         ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
  use timing_m,      ONLY:timing
  ! 
  implicit none

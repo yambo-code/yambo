@@ -25,7 +25,7 @@ subroutine INIT_QP_ctl_load(defs,ID)
  !
  use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,V_qp,E_unit
- use QP_CTL_m,      ONLY:QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_user
+ use QP_CTL_m,      ONLY:QP_ctl_DB_user,QP_ctl_user
  !
  implicit none
  integer, intent(in) :: ID
@@ -102,11 +102,19 @@ subroutine INIT_QP_ctl_load(defs,ID)
  enddo
  !
  call it(defs,prefix(ID)//'fnQPdb',&
-&        '[EXTQP '//trim(description_ch(ID))//'] Database',&
-&        QP_ctl_db(ID),verb_level=V_qp)
+&        '[EXTQP '//trim(description_ch(ID))//'] Database action',&
+&        QP_ctl_DB_user(ID)%action,verb_level=V_qp)
  !
- call it(defs,prefix(ID)//'fnQP_N',&
-&        '[EXTQP '//trim(description_ch(ID))//'] Interpolation neighbours',&
-&        QP_ctl_interp_neigh(ID),verb_level=V_qp)
+ call it(defs,prefix(ID)//'fnQP_DbGd_INTERP_mode',&
+&        '[EXTQP '//trim(description_ch(ID))//'] Interpolation DbGd mode',&
+&        QP_ctl_DB_user(ID)%INTERP_DbGd_mode,verb_level=V_qp)
+ !
+ call it(defs,prefix(ID)//'fnQP_INTERP_NN',&
+&        '[EXTQP '//trim(description_ch(ID))//'] Interpolation neighbours (NN mode)',&
+&        QP_ctl_DB_user(ID)%INTERP_N_neigh,verb_level=V_qp)
+ !
+ call it(defs,prefix(ID)//'fnQP_INTERP_shells',&
+&        '[EXTQP '//trim(description_ch(ID))//'] Interpolation shells (BOLTZ mode)',&
+&        QP_ctl_DB_user(ID)%INTERP_shell_factor,verb_level=V_qp)
  !
 end subroutine

@@ -141,13 +141,16 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  if (run_Haydock) then
    !
+   ! Remove Inv specific descriptors
+   !
+   if (run_inversion) BSS_desc%n=BSS_desc%n-3
+   !
    stop_Haydock = (BS_not_const_eh_f.and.index(BSE_mode,'coupling')>0)
    if (stop_Haydock) call warning('Fractional occupations and coupling still unsupported (Haydock)')
    !
    if(.not.stop_Haydock) then
      call K_output_file(iq,"open Haydock")
      call K_Haydock(iq,W_bss)
-     BSS_desc%n=BSS_desc%n 
    endif
    !
  endif

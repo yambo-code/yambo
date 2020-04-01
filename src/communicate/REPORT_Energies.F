@@ -27,7 +27,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  use units,          ONLY:HA2EV
  use R_lattice,      ONLY:bz_samp,nXkibz
  use electrons,      ONLY:n_sp_pol,nel,n_full_bands
- use stderr,         ONLY:intc,real2ch
+ use stderr,         ONLY:intc
  use wave_func,      ONLY:wf_nc_k
  use com,            ONLY:msg
  use vec_operate,    ONLY:c2a

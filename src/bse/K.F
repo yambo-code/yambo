@@ -45,7 +45,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,&
+&                       BS_nT_grps,BS_blks_free,&
 &                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
 &                       BS_K_cutoff,BS_max_val
  use collision_el, ONLY:elemental_collision_free

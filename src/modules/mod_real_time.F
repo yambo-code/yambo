@@ -285,10 +285,8 @@ module real_time
  !----------------
  !
  integer           :: two_alpha
- integer           :: N_Gr_descs
  real(SP)          :: Gr_QP_width
  character(schlen) :: Gr_kind
- character(lchlen) :: Gr_description(5) 
  !
  ! GFs
  !-----

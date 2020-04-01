@@ -21,30 +21,35 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine INTERPOLATION_nearest_E(Energy,E_reference,N_qp,E_diff_tresh,i_qp_ref)
+subroutine INTERPOLATION_nearest_E(Energy,qp,E_diff_tresh,i_qp_ref,i_sp_pol)
  !
  use pars,           ONLY:SP
+ use QP_m,           ONLY:QP_t
  use vec_operate,    ONLY:sort
+ use electrons,      ONLY:spin
  !
  implicit none
  !
- real(SP),           intent(in) :: Energy,E_reference(N_qp)
- integer,            intent(in) :: N_qp
+ real(SP),           intent(in) :: Energy
+ type(QP_t),         intent(in) :: qp
+ integer,            intent(in) :: i_sp_pol
  real(SP),           intent(out):: E_diff_tresh
  integer,            intent(out):: i_qp_ref
  !
  ! Work Space
  !
- integer  :: E_indx(N_qp),i_qp
- real(SP) :: E_tmp(N_qp),E_diff
+ integer  :: E_indx(qp%n_states),i_qp
+ real(SP) :: E_tmp(qp%n_states),E_diff
  !
- E_tmp=E_reference
+ E_tmp=qp%E_bare
  !
  call sort(arrin=E_tmp,indx=E_indx)
  !
  E_diff_tresh=1000._SP
  !
- do i_qp=1,N_qp
+ do i_qp=1,qp%n_states
+   !
+   if (spin(qp%table(E_indx(i_qp),:))/=i_sp_pol) cycle
    !
    E_diff=abs( Energy-E_tmp(i_qp) )
    !

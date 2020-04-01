@@ -24,7 +24,6 @@
 subroutine K_inversion_driver(iq,W,E,k,q) 
  !
  use pars,           ONLY:SP
- use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,Co_factor,&
 &                         K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
@@ -49,6 +48,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel
 #endif
  use stderr,         ONLY:intc
+ use descriptors,    ONLY:IO_desc_add
  !
  ! GPL_EXCLUDE_START
  !
@@ -94,8 +94,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Sectioning
  !============
- if (isec(4)/=0) sec="="
- if (isec(4)==0) sec="+"
+ if (isec(2)/=0) sec="="
+ if (isec(2)==0) sec="+"
  call section(sec,'Inversion Solver @q'//trim(intc(iq)))
  !
 #if defined _SCALAPACK
@@ -304,11 +304,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ratio=real(count(K_INV_EPS%err==0))/real(W%n_freqs)*100._SP
  !
- BSS_desc%n=BSS_desc%n+1
- BSS_desc%str(BSS_desc%n)   ='    |Converged frequencies [o/o]'
- BSS_desc%kind(BSS_desc%n)  ='r'
- BSS_desc%size(BSS_desc%n)  =1
- BSS_desc%rval(1,BSS_desc%n)=ratio
+ call IO_desc_add(BSS_desc,kind="r",str="[INV] Converged frequencies",term="o/o",R=(/ratio/))
  !
  call K_output_file(iq,"Inversion")
  !

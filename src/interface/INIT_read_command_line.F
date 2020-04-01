@@ -393,6 +393,8 @@ subroutine INIT_read_command_line(rstr,init_)
        !
        if( n_ext_fields==0) n_ext_fields=1
        !
+       if ( i_cycle == 2 .and. .not. V_is_defined ) H_potential='IP'
+       !
      endif
      !
      if ( trim(rstr_piece(i1)) == 'scattp' ) then

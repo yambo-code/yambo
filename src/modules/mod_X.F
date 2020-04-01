@@ -23,7 +23,7 @@
 !
 module X_m
  !
- use IO_m,           ONLY:IO_desc
+ use descriptors,    ONLY:IO_desc
  use pars,           ONLY:SP,lchlen,schlen
  use units,          ONLY:HA2EV
  use matrix,         ONLY:PAR_matrix

@@ -29,6 +29,7 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
  use stderr,         ONLY:intc
  use C_driver,       ONLY:code_bin
  use vec_operate,    ONLY:v_is_zero
+ use descriptors,    ONLY:IO_desc_duplicate
  !
 #include<memory.h>
  !
@@ -74,18 +75,11 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
      !
      call QP_copy(qp2merge(i_db), qp( n_GROUNDS ), WHAT, trim(OP(i_db)),PRE_FAC(i_db) )
      !
-     qp( n_GROUNDS )%desc%n=qp2merge(i_db)%desc%n+1
-     qp( n_GROUNDS )%desc%str( 1 )="--- DB#"//trim(intc(i_db))//" descriptions ---"
-     do i_d=1,qp2merge(i_db)%desc%n
-       qp( n_GROUNDS )%desc%str( i_d+1 )= qp2merge(i_db)%desc%str(i_d)
-       qp( n_GROUNDS )%desc%size( i_d+1 )= qp2merge(i_db)%desc%size(i_d)
-       qp( n_GROUNDS )%desc%ival(:, i_d+1 )= qp2merge(i_db)%desc%ival(:,i_d)
-       qp( n_GROUNDS )%desc%rval(:, i_d+1 )= qp2merge(i_db)%desc%ival(:,i_d)
-       qp( n_GROUNDS )%desc%dval(i_d+1 )   = qp2merge(i_db)%desc%dval(i_d)
-       qp( n_GROUNDS )%desc%cval(i_d+1 )   = qp2merge(i_db)%desc%cval(i_d)
-       qp( n_GROUNDS )%desc%sval(i_d+1 )   = qp2merge(i_db)%desc%sval(i_d)
-       qp( n_GROUNDS )%desc%lval(i_d+1 )   = qp2merge(i_db)%desc%lval(i_d)
-     enddo
+     qp( n_GROUNDS )%desc%str( 1 )="Database Number"
+     qp( n_GROUNDS )%desc%ival( 1,1 )=i_db
+     qp( n_GROUNDS )%desc%size( 1)= 1
+     qp( n_GROUNDS )%desc%kind( 1)="i"
+     call IO_desc_duplicate(qp2merge(i_db)%desc,qp( n_GROUNDS )%desc,offset=1)
      !
    endif
    !
@@ -126,8 +120,11 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
        if (.not.just_COUNT) then
          !
          if (.not.SAME_desc) then
-           qp( GROUND(i_db_p) )%desc%n=qp( GROUND(i_db_p) )%desc%n+1
-           qp( GROUND(i_db_p) )%desc%str( qp( GROUND(i_db_p) )%desc%n )="--- DB#"//trim(intc(i_db_p))//" descriptions ---"
+           qp( GROUND(i_db_p) )%desc%n=qp2merge(i_db)%desc%n+1
+           qp( GROUND(i_db_p) )%desc%str( 1 )="Database"
+           qp( GROUND(i_db_p) )%desc%ival( 1,1 )=i_db_p
+           qp( GROUND(i_db_p) )%desc%size( 1)= 1
+           qp( GROUND(i_db_p) )%desc%kind( 1)= "i"
          endif
          !
          call QP_DBs_add_me(qp( GROUND(i_db_p) ),qp2merge(i_db_p) ,plan_EWZG(i_db_p,:), &
@@ -187,7 +184,16 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
      if (qp1%desc%n/=qp2%desc%n) have_same_desc=.FALSE.
      do i_d=1,qp1%desc%n
        if (index(qp2%desc%str(i_d),"QP @ state")==0) then
+         if ( trim(qp2%desc%sval(i_d)) /= trim(qp1%desc%sval(i_d)) )  have_same_desc=.FALSE.
          if ( trim(qp2%desc%str(i_d)) /= trim(qp1%desc%str(i_d)) )  have_same_desc=.FALSE.
+         if ( trim(qp2%desc%term(i_d)) /= trim(qp1%desc%term(i_d)) )  have_same_desc=.FALSE.
+         if ( qp2%desc%size(i_d)/= qp1%desc%size(i_d) )  have_same_desc=.FALSE.
+         if ( qp2%desc%dval(i_d)/= qp1%desc%dval(i_d) )  have_same_desc=.FALSE.
+         if ( qp2%desc%cval(i_d)/= qp1%desc%cval(i_d) )  have_same_desc=.FALSE.
+         if ( qp2%desc%lval(i_d) .and. .not. qp1%desc%lval(i_d) )  have_same_desc=.FALSE.
+         if ( qp2%desc%size(i_d)/= qp1%desc%size(i_d) )  have_same_desc=.FALSE.
+         if ( any(qp2%desc%ival(:,i_d) /= qp1%desc%ival(:,i_d)) )  have_same_desc=.FALSE.
+         if ( any(qp2%desc%rval(:,i_d) /= qp1%desc%rval(:,i_d)) )  have_same_desc=.FALSE.
        endif
      enddo
    end function

@@ -23,8 +23,8 @@
 !
 module TDDFT
  !
- use IO_m,     ONLY:IO_desc
- use pars,     ONLY:SP,lchlen,schlen
+ use descriptors,ONLY:IO_desc
+ use pars,       ONLY:SP,lchlen,schlen
  !
  implicit none
  !

@@ -351,8 +351,9 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
    mag_syms=.false.
  endif
  !
- if(i_time_rev==1)&
-& call msg('s',trim(intc(old_trev_nsym))//' T-rev symmetries reduced/increased to ...'//trim(intc(nsym-spatial_nsym)))
+ if(i_time_rev==1) then
+   call msg('s',trim(intc(old_trev_nsym))//' T-rev symmetries reduced/increased to ...'//trim(intc(nsym-spatial_nsym)))
+ endif
  !
  call msg('s','[Symm] Spatial simmetries now are')  
  do is=1,spatial_nsym
@@ -397,8 +398,8 @@ subroutine atoms_check_symm(symm_to_check,n_syms_to_check,found_symm)
  !
  implicit none
  !
- real(SP) :: symm_to_check(3,3,n_syms_to_check)
  integer  :: n_syms_to_check
+ real(SP) :: symm_to_check(3,3,n_syms_to_check)
  logical  :: found_symm
  !
  ! Work Space

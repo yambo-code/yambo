@@ -33,6 +33,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
 &                    use_GreenF_to_eval_QP,Vnlxc_kind,report_Vxc,&
 &                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral,&
 &                    QP_states_simmetrize,QP_G_info,Time_of
+ use interfaces,ONLY:DESC_write
  !
  implicit none
  !
@@ -43,9 +44,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  ! Work Space
  !
- integer           ::i1,i2,qp_b,qp_k,qp_isp,i_desc_min,n_val
+ integer           ::i1,i2,qp_b,qp_k,qp_isp
  character(lchlen) ::file_name,G_Sc_name
- character(schlen) ::mesg
  logical           ::state_is_2do(QP_n_states)
  !
  !o.qp titles
@@ -155,7 +155,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    !
    if (what== 'hf') call msg('o '//what,'# Hartree-Fock Components and Corrections')
    !
-   call COM_write_desc('o '//what,'#',qp%desc)
+   call DESC_write('o '//what,'#',qp%desc)
    !
    call msg('o '//what,'#')
    call msg('o '//what,'#',titles(titles_order(:ntitles)),INDENT=0,USE_TABS=.TRUE.)
@@ -240,7 +240,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      if (n_sp_pol==1) write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3)
      call of_open_close(G_Sc_name,'ot')
      !call msg('o G_Sc','# GW [Green`s function & Self-Energy]')
-     call COM_write_desc('o G_Sc','#',qp%desc)
+     call DESC_write('o G_Sc','#',qp%desc)
      if (allocated(QP_G_amplitude_integral)) then
        call msg('o G_Sc','#')
        call msg('o G_Sc','# Spectral function at this point integrates to',QP_G_amplitude_integral(i1),&

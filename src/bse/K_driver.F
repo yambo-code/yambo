@@ -27,7 +27,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use parser_m,       ONLY:parser
  use com,            ONLY:msg
  use stderr,         ONLY:STRING_remove,intc
- use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin,E_SOC_table
+ use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,E_SOC_table
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
  use DIPOLES,        ONLY:DIPOLE_t

@@ -23,7 +23,7 @@
 !
 integer function io_NL(ID)
  !
- use pars,          ONLY:schlen,lchlen
+ use pars,          ONLY:schlen
  use units,         ONLY:HA2EV, AU2KWCMm2, AUT2FS
  use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t, &
 &                        n_frequencies
@@ -47,7 +47,6 @@ integer function io_NL(ID)
  ! Work Space
  !
  integer              :: i_fragment,io_err
- character(lchlen)    :: local_description(100)
  character(schlen)    :: VAR_name
  integer, parameter   :: i_Prb=1
  !
@@ -65,7 +64,7 @@ integer function io_NL(ID)
    io_NL=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,GAUGE=.true.)
    if (io_NL/=0) goto 1
    !
-   io_NL=variables_NL(ID,local_description)
+   io_NL=variables_NL(ID)
    !
    if (io_NL/=0) goto 1
    !

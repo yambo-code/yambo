@@ -102,7 +102,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  YAMBO_ALLOC(freqs,(RT_conf%W_n_steps))
  !
  do i_w = 1, RT_conf%W_n_steps
-   freqs(i_w)=cmplx((i_w-1)*(RT_conf%W_range(2)-RT_conf%W_range(1))/RT_conf%W_n_steps+RT_conf%W_range(1),0._SP)
+   freqs(i_w)=cmplx((i_w-1)*(RT_conf%X_W_range(2)-RT_conf%X_W_range(1))/RT_conf%W_n_steps+RT_conf%X_W_range(1),0._SP)
  enddo
  !
  do i_n=0,nh,1

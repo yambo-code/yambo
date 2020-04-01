@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function io_QP_and_GF(what,qp,ID)
- use pars,           ONLY:IP,SP,schlen
+ use pars,           ONLY:SP,schlen
  use D_lattice,      ONLY:alat
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_t,QP_G_dr,QP_G_er,GW_iterations,&
@@ -30,12 +30,13 @@ integer function io_QP_and_GF(what,qp,ID)
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,DB_is_OK,ver_is_gt_or_eq,&
-&                         db_alat,variable_exist,IO_INCOMPATIBLE_VAR,IO_NO_BINDING_ERROR,&
-&                         io_variable_elemental,def_variable_elemental,io_variable_bulk,def_variable_bulk
+&                         db_alat,variable_exist,IO_INCOMPATIBLE_VAR
  use global_XC,      ONLY:QP_DB_kind,QP_SE_GoWo,QP_SE_GWo,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_COHSEX,QP_SE_NONE,&
 &                         QP_SE_POLARON,QP_SE_GW_QED,G_E_xc_string,X_E_xc_string,&
 &                         G_WF_xc_string,X_WF_xc_string
  use timing_m,       ONLY:timing
+ use descriptors,    ONLY:IO_desc_add
+ !
 #include<memory.h>
  type(QP_t)  ::qp
  character(*)::what ! 'QP'/'G'/filename
@@ -43,17 +44,29 @@ integer function io_QP_and_GF(what,qp,ID)
  !
  ! Work Space
  !
- logical              ::CHECK_VAL
- integer              ::i1,i2,i_found,DESC_SZ,&
+ integer              ::i1,i2,i_found,&
 &                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,&
 &                       QP_DB_kind_disk ,i_X
  character(schlen)    ::ch
+ logical              ::type_two_DB,QP_type_DB
  integer ,    allocatable ::qp_table_disk(:,:)
  real(SP),    allocatable ::qp_DATA_disk(:,:,:)
  !
  integer, external :: io_descriptors
  !
- if (what=="QP".or.what=="G".or.(index(what,"QP_merged")>0.and.write_is_on(ID))) then
+ type_two_DB=.FALSE.
+ if (what=="QP") type_two_DB=.TRUE.
+ if (what=="G" ) type_two_DB=.TRUE.
+ if (index(what,"QP_merged")>0.and.write_is_on(ID)) type_two_DB=.TRUE.
+ if (index(what,"QP_expanded")>0.and.write_is_on(ID)) type_two_DB=.TRUE.
+ !
+ QP_type_DB=.FALSE.
+ if (what=="QP") QP_type_DB=.TRUE.
+ if (index(what,".QP")/=0) QP_type_DB=.TRUE.
+ if (index(what,"QP_merged")>0.and.write_is_on(ID)) QP_type_DB=.TRUE.
+ if (index(what,"QP_expanded")>0.and.write_is_on(ID)) QP_type_DB=.TRUE.
+ !
+ if (type_two_DB) then
    io_QP_and_GF=io_connect(desc=what,type=2,ID=ID)
  else
    io_QP_and_GF=io_connect(desc=what,type=-3,ID=ID)
@@ -110,22 +123,13 @@ integer function io_QP_and_GF(what,qp,ID)
  end select
  !
  if (.not.QP_DB_kind==QP_SE_NONE) then
-   qp%desc%n=qp%desc%n+1
    if (.not.QP_DB_kind==QP_SE_COHSEX) then
-     qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' GF energies kind       '
-     qp%desc%sval(qp%desc%n)=trim(G_E_xc_string)
+     call IO_desc_add(qp%desc,kind="s",str='GF energies kind',S=trim(G_E_xc_string))
    endif
-   qp%desc%n=qp%desc%n+1
-   qp%desc%str(qp%desc%n)=' GF WF`s     kind       '
-   qp%desc%sval(qp%desc%n)=trim(G_WF_xc_string)
+   call IO_desc_add(qp%desc,kind="s",str='GF WF`s kind',S=trim(G_WF_xc_string))
    if (any(QP_DB_kind==(/QP_SE_COHSEX,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_GoWo,QP_SE_GWo/))) then
-     qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' Xs energies kind       '
-     qp%desc%sval(qp%desc%n)=trim(X_E_xc_string(i_X))
-     qp%desc%n=qp%desc%n+1
-     qp%desc%str(qp%desc%n)=' Xs WF`s     kind       '
-     qp%desc%sval(qp%desc%n)=trim(X_WF_xc_string(i_X))
+     call IO_desc_add(qp%desc,kind="s",str='Xs energies kind',S=trim(X_E_xc_string(i_X)))
+     call IO_desc_add(qp%desc,kind="s",str='Xs WF`s kind',S=trim(X_WF_xc_string(i_X)))
    endif
  endif
  !
@@ -143,21 +147,21 @@ integer function io_QP_and_GF(what,qp,ID)
  call io_elemental(ID,I0=qp%nb,DB_I0=QP_nb_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,I0=qp%nk,DB_I0=QP_nk_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,I0=qp%n_states,DB_I0=QP_n_states_disk,&
-&                  VAR=' QP tot states             ',CHECK=.true.,OP=(/"<="/))
+&                  VAR='QP tot states          ',CHECK=.true.,OP=(/"<="/))
  if (ver_is_gt_or_eq(ID,revision=15200)) then 
    call io_elemental(ID,I0=GWo_iterations,&
-&                  VAR=' GWo SC iterations         ',CHECK=.true.,OP=(/"=="/))
+&                    VAR='GWo SC iterations       ',CHECK=.true.,OP=(/"=="/))
  else
    GWo_iterations=0
  endif
- call io_elemental(ID,I0=GW_iterations,&
-&                  VAR=' GW  SC iterations         ',CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID,I0=GW_iterations,VAR='GW  SC iterations',CHECK=.true.,OP=(/"=="/))
+ !
  call io_elemental(ID,I0=qp%desc%n,DB_I0=n_descs_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  if (index(what,".G")/=0.or.what=="G") then
    !
-   ! Though the GF's parameters are already stored in the QP_descriptions
+   ! Though the GF's parameters are already stored in the qp%desc
    ! I need them on-the-fly to, eventually, rebuild the Green's function
    !
    call io_elemental(ID,VAR="QP_SE_OPERATOR_PARAMETERS",VAR_SZ=7,MENU=0)
@@ -180,7 +184,7 @@ integer function io_QP_and_GF(what,qp,ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   io_QP_and_GF=io_descriptors(qp%desc,ID)
+   io_QP_and_GF=io_descriptors(qp%desc,"QP",ID,.FALSE.)
    !
    if (.not.DB_is_OK(ID)) then
      call CLOSE_and_menu(.TRUE.)
@@ -256,7 +260,7 @@ integer function io_QP_and_GF(what,qp,ID)
      enddo
    endif
    !
-   if (index(what,".QP")/=0.or.what=="QP".or.index(what,"QP_merged")/=0) then
+   if (QP_type_DB) then
      !
      ! QP corrections ...
      !
@@ -323,7 +327,7 @@ integer function io_QP_and_GF(what,qp,ID)
    !
  endif
  !
- call CLOSE_and_menu(.FALSE.)
+ call CLOSE_and_menu(.TRUE.)
  !
  contains 
    !

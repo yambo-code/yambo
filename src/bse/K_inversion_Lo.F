@@ -24,7 +24,6 @@
 subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo) 
  !
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO,schlen
- use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,bare_qpg
  use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,l_drude,X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,skip_cond_sum_rule
  use electrons,      ONLY:levels,BZ_DbGd_tot_nk_levels,spin
@@ -36,6 +35,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use LIVE_t,         ONLY:live_timing
+ use descriptors,    ONLY:IO_desc_add
  !
 #if defined _ELPH
  use BS_solvers,     ONLY:BSS_uses_GreenF
@@ -260,12 +260,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  if (iq>BS_q(1)) return
  !
- BSS_desc%n=BSS_desc%n+2
- BSS_desc%str(BSS_desc%n-1)=' '
+ call IO_desc_add(BSS_desc,kind="s",str=" ",S=" ")
  !
- BSS_desc%str(BSS_desc%n)=' BSS|BZ Double Grid points      '
- BSS_desc%kind(BSS_desc%n)  ='i'
- BSS_desc%size(BSS_desc%n)  =1
- BSS_desc%ival(1,BSS_desc%n)=BZ_DbGd_tot_nk_levels
+ call IO_desc_add(BSS_desc,kind="i",str="[INV] BZ Double Grid points",I=(/BZ_DbGd_tot_nk_levels/))
  !
 end subroutine K_inversion_Lo

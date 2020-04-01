@@ -48,7 +48,7 @@ void options_control(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Input file variables verbosity";
- options[*i_opt].long_desc[0]="<string> can be RL,kpt,sc,qp,io,gen,resp,all,par";
+ options[*i_opt].long_desc[0]="<string> can be RL,kpt,sc,qp,io,gen,resp/X,rt,nl,all";
  options[*i_opt].short_opt='V';
  options[*i_opt].long_opt="Verbosity"; 
  options[*i_opt].char_var=1;

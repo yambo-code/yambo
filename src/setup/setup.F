@@ -35,8 +35,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed
- use com,            ONLY:msg
- use stderr,         ONLY:intc,real2ch
+ use com,            ONLY:msg,fat_log
+ use stderr,         ONLY:intc
  use IO_m,           ONLY:REP,DUMP,NONE,io_control,OP_RD_CL
  use vec_operate,    ONLY:c2a,define_b_and_DL_vol
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
@@ -64,7 +64,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Work Space
  !
  real(SP)          :: Tel_SAVE,tmp_V(3)
- integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2),ID
+ integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2),ID,n_to_print
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch
  integer, external :: k_lattice,io_Double_Grid
@@ -210,6 +210,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call G_shells_finder()
  !
+ call msg('r','nG shells         ',n_g_shells)
  call msg('r','nG charge         ',ng_closed)
  call msg('r','nG WFs            ',wf_ng)
  call msg('r','nC WFs            ',wf_ncx)
@@ -218,25 +219,21 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! the map is built in G_shells_finder
  !
  if (inv_index>0) call eval_minus_G()
- !             'Shells units      '
- call msg('r','G-vecs. in shell  ',' [ Number ] ')
- !call msg('r' ,'Shells NG         ',' [ list ]')
- do i1=1,n_g_shells,9
-   !dumb_ch=' [SNG_'//trim(intc(i1))//'-'//trim(intc(min(i1+8,n_g_shells)))//']'
-   if (i1==800 .and. i1<n_g_shells-800) call msg('r',"...")
-   if (i1> 800 .and. i1<n_g_shells-800) cycle
-   !call msg('r',trim(dumb_ch),ng_in_shell(i1:min(i1+8,n_g_shells)) )
-   call msg('r',' ',ng_in_shell(i1:min(i1+8,n_g_shells)) )
- enddo
  !
- call msg('nr','Shells energy     ',' [ mHa ] ')
- !call msg('r' ,'Shells E          ',' [ list ]')
- do i1=1,n_g_shells,9
-   !dumb_ch=' [SE_'//trim(intc(i1))//'-'//trim(intc(min(i1+8,n_g_shells)))//']'
-   if (i1==800 .and. i1<n_g_shells-800) call msg('r',"...")
-   if (i1> 800 .and. i1<n_g_shells-800) cycle
-   call msg('r',' ',E_of_shell(i1:min(i1+8,n_g_shells))*1000._SP)
+ n_to_print=min(800,n_g_shells)
+ if (.not.fat_log) n_to_print=n_to_print/10
+ !
+ call msg('r','G-vecs. in first '//trim(intc(n_to_print))//' shells',' [ Number ] ')
+ do i1=1,n_to_print,9
+   call msg('r',' ',ng_in_shell(i1:min(i1+8,n_to_print)) )
  enddo
+ if (n_to_print<n_g_shells) call msg('r',"...")
+ !
+ call msg('r','Shell energy in first '//trim(intc(n_to_print))//' shells',' [ mHa ] ')
+ do i1=1,n_to_print,9
+   call msg('r',' ',E_of_shell(i1:min(i1+8,n_to_print))*1000._SP)
+ enddo
+ if (n_to_print<n_g_shells) call msg('r',"...")
  !
  ! First simplified implementation of wf_ng_1st_BZ & wf_ng_2st_BZ
  ! A more correct implementation would involve a rotation of the shells

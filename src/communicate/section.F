@@ -37,8 +37,8 @@ subroutine section(mode,name)
  use stderr,     ONLY:STRING_pack
  use LIVE_t,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,date_and_time_string
  use parallel_m, ONLY:PP_redux_wait,ncpu
- use com,        ONLY:msg,depth,isec,secnm,depth_SAVE,isec_SAVE,write_to_report,repfile_unit,repfile,&
-&                     previous_secmode
+ use com,        ONLY:msg,depth,isec,secnm,depth_SAVE_pp,isec_SAVE_pp,depth_SAVE_p,isec_SAVE_p,&
+&                     write_to_report,repfile_unit,repfile,previous_secmode
  use timing_m,   ONLY:timing_upto_now
 #if defined _YAML_OUTPUT
  use pars,            ONLY:repfile_index
@@ -67,10 +67,28 @@ subroutine section(mode,name)
    depth=0
    return
  endif
+ !
+ ! To handle menu's like sections I need to reset 
+ ! the depth when the previous section is 'p'-like
+ !
  if (trim(mode)=='-P') then
-   isec=isec_SAVE
-   depth=depth_SAVE
+   isec=isec_SAVE_pp
+   depth=depth_SAVE_pp
+   previous_secmode=' '
    return
+ endif
+ if (trim(previous_secmode)=='p') then
+   isec=isec_SAVE_p
+   depth=depth_SAVE_p
+   isec(depth+1)=isec(depth+1)+1
+ endif
+ if (trim(mode)=="+P") then
+   isec_SAVE_pp=isec
+   depth_SAVE_pp=depth 
+ endif
+ if (trim(mode)=="p") then
+   isec_SAVE_p=isec
+   depth_SAVE_p=depth 
  endif
  !
  call PP_redux_wait()
@@ -82,14 +100,6 @@ subroutine section(mode,name)
    if (write_to_report) write (repfile_unit,'(1x,a)') trim(ch)
    call write_the_logo(6,' ')
    previous_secmode=' '
- endif
- !
- ! To handle menu's like sections I need to reset 
- ! the depth when the previous section is 'p'-like
- !
- if (trim(previous_secmode)=='p') then
-   depth=depth_SAVE
-   isec =isec_SAVE
  endif
  !
  ! Update Section Depth & Timing 
@@ -200,11 +210,6 @@ subroutine section(mode,name)
    !
    call ct(FIN=.TRUE.)
    !
- endif
- !
- if (trim(mode)=="+P".or.trim(previous_secmode)=="p") then
-   isec_SAVE=isec
-   depth_SAVE=depth 
  endif
  !
  call PP_redux_wait

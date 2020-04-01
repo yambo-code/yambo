@@ -541,6 +541,7 @@ subroutine INIT_activate()
    ! GPL_EXCLUDE_START
    !
    call INIT_RT_ctl_switch('G')
+   !
    call initactivate(1,'RTskipImposeN RTeeImposeE InducedField')
    call initactivate(1,'Gauge VelGaugeCorr VelGaugeDiam PfromJ RTUpdateSOC RTUpdateE SaveGhistory')
    call initactivate(1,'RTEqScatt RTImpForMet RTzeroTempRef RTEvalEnergy RTEvalEntropy')

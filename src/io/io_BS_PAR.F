@@ -35,7 +35,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use BS_solvers,    ONLY:variables_BS,BSS_desc
  use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,&
 &                        io_connect,io_elemental,def_variable_bulk,variable_exist,&
-&                        io_header,io_file,IO_desc,IO_desc_duplicate
+&                        io_header,io_file
+ use descriptors,   ONLY:IO_desc,IO_desc_duplicate
  !
  implicit none
  !

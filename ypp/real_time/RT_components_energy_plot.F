@@ -50,7 +50,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  !
  ! Work Space
  !
- integer, parameter    :: fit_dim=1000,N_max_files=16
+ integer, parameter    :: fit_dim=1000,N_max_files=10
  integer               :: n_groups,i_g,i_g_ep,i_g_ee,i_T,i_RT,ib,ik,ik_ibz,i_f,i_fit,i_qp,i_spin,i_RT_s
  integer               :: E_sort_index(RT_carriers%nstates)
  logical               :: l_ep_lifetimes,l_sum_equilibrium,l_skip_fit,&
@@ -419,9 +419,9 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
            if (n_T_steps>N_max_files) TYP%running_file=trim(TYP%running_file)//trim(GRP_string)
            !
            call of_open_close(trim(TYP%running_file),'ot')
-           call DESC_write(trim(TYP%running_file),'#',RT_desc)
-           call DESC_write(trim(TYP%running_file),'#',Gr_desc)
-           call DESC_write(trim(TYP%running_file),'#',TIME_STEP_desc)
+           call DESC_write("o "//trim(TYP%running_file),'#',RT_desc)
+           call DESC_write("o "//trim(TYP%running_file),'#',Gr_desc)
+           call DESC_write("o "//trim(TYP%running_file),'#',TIME_STEP_desc)
            !
            if (FIT) then
              call msg('o '//trim(TYP%running_file),'#')

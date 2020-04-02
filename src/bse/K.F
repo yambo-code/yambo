@@ -191,10 +191,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call io_BS_PAR_init(iq,X,ID)
    !
    if(l_BSE_kernel_complete.and.l_bss) then
+     if(n_BS_blks>0) call live_timing("Loading BSE kernel",n_BS_blks)
      do i_block=1,n_BS_blks
        call io_control(ACTION=RD,ID=ID)
        call io_BS_PAR_block(iq,i_block,ID)
+       if(n_BS_blks>0) call live_timing(steps=1)
      enddo
+     if(n_BS_blks>0) call live_timing()
    endif
    !
    call io_control(ACTION=RD_CL,COM=REP,ID=ID)
@@ -208,13 +211,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    io_BS_err=io_BS(iq,X,ID)
    !
    if (io_BS_err==0.and.l_bss) then
+     if(n_BS_blks>0) call live_timing("Loading BSE kernel",n_BS_blks)
      call io_control(ACTION=OP_RD,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
      io_BS_err=io_BS(iq,X,ID)
      do i_block=1,n_BS_blks
        IO_ACT=manage_action(RD_CL_IF_END,i_block,FIRST=1,LAST=n_BS_blks)       
        call io_control(ACTION=IO_ACT,COM=NONE,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
        io_BS_err=io_BS(iq,X,ID)
+       if(n_BS_blks>0) call live_timing(steps=1)
      enddo
+     if(n_BS_blks>0) call live_timing()
    endif
    !
 #endif

@@ -50,7 +50,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  !
  ! Work Space
  !
- integer, parameter    :: fit_dim=1000,N_max_files=10
+ integer, parameter    :: fit_dim=1000,N_max_files=8
  integer               :: n_groups,i_g,i_g_ep,i_g_ee,i_T,i_RT,ib,ik,ik_ibz,i_f,i_fit,i_qp,i_spin,i_RT_s
  integer               :: E_sort_index(RT_carriers%nstates)
  logical               :: l_ep_lifetimes,l_sum_equilibrium,l_skip_fit,&

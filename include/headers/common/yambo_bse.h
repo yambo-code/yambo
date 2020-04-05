@@ -23,8 +23,8 @@
  
 */
 #define DEFINE_BSK_COMMON_INDEXES \
-integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \
-&               i_kmq_s,i_kmq_s_m1,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,& NEWLINE \
+integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_p_bz_mem,i_k,i_p,i_kp_s,& NEWLINE \
+&               i_kmq_s,i_kmq_s_m1,i_pmq_s,i_kmq_bz,i_pmq_bz,i_pmq_bz_mem,i_kmq,i_pmq,i_kp_mq_s,& NEWLINE \
 &               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,H_pos(2),& NEWLINE \
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol,i_p_sp_pol,iq_W,iq_W_bz,iq_W_s,ig_W,& NEWLINE \
 &               i_kmq_t,i_pmq_t
@@ -63,8 +63,9 @@ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \
      i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) NEWLINE \
      NEWLINE \
      if (BS_res_K_corr.or.BS_cpl_K_corr) then NEWLINE \
-       iq_W_bz=qindx_B(i_k_bz,i_p_bz,1) NEWLINE \
-       ig_W   =qindx_B(i_k_bz,i_p_bz,2) NEWLINE \
+       i_p_bz_mem=PAR_K_scheme%bz_index(i_p_bz) NEWLINE \
+       iq_W_bz=qindx_B(i_k_bz,i_p_bz_mem,1) NEWLINE \
+       ig_W   =qindx_B(i_k_bz,i_p_bz_mem,2) NEWLINE \
        iq_W   =q%sstar( iq_W_bz ,1) NEWLINE \
        iq_W_s =q%sstar( iq_W_bz ,2) NEWLINE \
      endif NEWLINE \
@@ -84,8 +85,9 @@ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \
      ig_pmq    = qindx_X(iq,i_p_bz,2) NEWLINE \
      NEWLINE \
      if (BS_res_K_corr.or.BS_cpl_K_corr) then NEWLINE \
-       iq_W_bz_mq=qindx_B(i_kmq_bz,i_pmq_bz,1) NEWLINE \
-       ig_W_mq   =qindx_B(i_kmq_bz,i_pmq_bz,2) NEWLINE \
+       i_pmq_bz_mem=PAR_K_scheme%bz_index(i_pmq_bz) NEWLINE \
+       iq_W_bz_mq=qindx_B(i_kmq_bz,i_pmq_bz_mem,1) NEWLINE \
+       ig_W_mq   =qindx_B(i_kmq_bz,i_pmq_bz_mem,2) NEWLINE \
        iq_W_mq   =q%sstar( iq_W_bz_mq,1) NEWLINE \
        iq_W_s_mq =q%sstar( iq_W_bz_mq,2) NEWLINE \
      endif NEWLINE \

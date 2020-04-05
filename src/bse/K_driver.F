@@ -31,6 +31,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
  use DIPOLES,        ONLY:DIPOLE_t
+ use IO_m,           ONLY:io_control,OP_RD_CL,REP
  use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_add_antiresonant,BSS_damp_reference,&
 &                         BSS_uses_DbGd,BSS_q0,BSS_eval_JDOS,BSS_eels_to_eps
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
@@ -39,9 +40,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
 &                         BS_perturbative_SOC,l_BSK_IO_triangular
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss,l_col_cut
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k,PAR_K_scheme
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,eval_G_minus_G
- use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X
+ use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free
  use D_lattice,      ONLY:l_0D,l_1D,l_2D
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
@@ -64,6 +65,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  integer           :: iq,Max_G_m_G,iG_BSE,iGo_BSE
  type(w_samp)      :: W_bss 
  logical           :: l_bs_q
+ !
+ ! I/O
+ !
+ integer, allocatable :: qindx_B_max_CPU(:)
+ integer           :: io_err,ID
+ integer, external :: io_QINDX
  !
  ! GPL_EXCLUDE_START
  !
@@ -186,12 +193,30 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  ! ==================================================
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
    !
+   ! Here I need the distribution over k
+   ! The distribution over k is later recomputed for each k-point inside the iq loop
+   ! However this should be not needed. Only the distribution over eh and b should be redone
+   !
+   call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
+   call PARALLEL_SETUP_K_scheme("K")
+   !
+   ! here qindx_B is allocated
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
+   io_err=io_QINDX(Xk,q,ID)
+   !
+   YAMBO_ALLOC(qindx_B_max_CPU,(PAR_K_scheme%COM_ibz_INDEX%n_CPU))
+   qindx_B_max_CPU=0
+   qindx_B_max_CPU(PAR_K_scheme%COM_ibz_INDEX%CPU_id+1)=maxval(qindx_B(:,:,2))
+   call PP_redux_wait(qindx_B_max_CPU,COMM=PAR_K_scheme%COM_ibz_INDEX%COMM)
+   qindx_B_max=maxval(qindx_B_max_CPU)
+   YAMBO_FREE(qindx_B_max_CPU)
+   !
    if(BS_n_g_W<0) then
      BS_n_g_W=X_static_pp%ng
      call msg('s','[BSE-W] Use all G-vectors of W ',BS_n_g_W)
    endif
    !
-   Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
+   Max_G_m_G=eval_G_minus_G(BS_n_g_W,qindx_B_max)
    if (BS_n_g_W> Max_G_m_G ) then
      call warning (' W size reduced from '//trim(intc(BS_n_g_W))//' to '//trim(intc(Max_G_m_G))//' due to symmetry constraints')
      BS_n_g_W= Max_G_m_G
@@ -335,5 +360,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  enddo
  !
  YAMBO_FREE(BSqpts)
+ call qindx_free('B')
  !
 end subroutine

@@ -86,6 +86,8 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
       call GIMME_a_parallel_proposal(3,(/" b","qp"," q"/))
    case("Response_T_space") 
       call GIMME_a_parallel_proposal(2,(/"eh"," k"/))
+   case("BZ_Indexes")
+     call GIMME_a_parallel_proposal(1,(/"k"/))
  end select
  !
  ! Reset the active structures

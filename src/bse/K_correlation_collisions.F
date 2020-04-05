@@ -49,6 +49,7 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
  use deviceXlib_m,  ONLY:dev_memcpy
+ use parallel_m,    ONLY:PAR_K_scheme
  !
 #include<dev_defs.h>
 #include<memory.h>

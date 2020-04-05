@@ -64,6 +64,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  ! K-pts
  !-------
  PAR_K_range=Xk%nibz
+ if (ENVIRONMENT=="BZINDX"                   ) PAR_K_range=Xk%nibz
  if (ENVIRONMENT=="DIPOLES"                  ) PAR_K_range=Xk%nibz
  if (index(ENVIRONMENT, "Response_G_space")>0) PAR_K_range=Xk%nbz
  if (ENVIRONMENT=="Response_T_space"         ) PAR_K_range=Xk%nibz

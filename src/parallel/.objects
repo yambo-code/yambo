@@ -19,7 +19,7 @@ objs =  check_for_a_redundant_IO.o \
         PARALLEL_PAR_to_PAR_comms_init.o PARALLEL_assign_LA_COMMs.o PARALLEL_WF_index.o \
         PARALLEL_structure.o PARALLEL_build_up_child_INTER_chains.o \
         PARALLEL_Transitions_grouping.o \
-        PARALLEL_global_utilities.o \
+        PARALLEL_global_utilities.o PARALLEL_global_BZINDX.o \
         PARALLEL_global_defaults.o PARALLEL_global_reset.o PARALLEL_global_dimensions.o PARALLEL_global_ScaLapacK.o \
         PARALLEL_global_Response_G.o PARALLEL_global_Self_Energy.o PARALLEL_global_Response_T.o PARALLEL_global_Response_IO.o PARALLEL_global_DIPOLES.o \
         PARALLEL_global_indexes.o \

@@ -35,8 +35,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use BS_solvers,    ONLY:variables_BS,BSS_desc
  use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,&
 &                        io_connect,io_elemental,def_variable_bulk,variable_exist,&
-&                        io_header,io_file,def_variable_elemental,io_variable_elemental,&
-&                        IO_desc,IO_desc_duplicate
+&                        io_header,io_file,def_variable_elemental,io_variable_elemental,io_BS_K
+ use descriptors,   ONLY:IO_desc,IO_desc_duplicate
  !
  implicit none
  !
@@ -59,8 +59,9 @@ subroutine io_BS_PAR_init(iq,X,ID)
  full_db_name=get_name(trim(db_name)," ",2,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
  !
  l_BSE_kernel_complete=.false.
+ l_BSE_restart=.false.
  !
- if (write_is_on(ID)) then
+ if (write_is_on(ID).and..not.io_BS_K) then
    if (.not.file_exists(trim(full_db_name))) then
      call msg("s","BSE file not found. Creating an empty one.")
      l_BSE_restart=.false.
@@ -99,7 +100,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  if(io_var)  call io_variable_elemental(ID,VAR=" Kernel complete          :",&
               &                          DB_L0=l_BSE_kernel_complete,L0=l_BSE_kernel_complete)
  !
- if(read_is_on(ID)) then
+ if(read_is_on(ID).and..not.io_BS_K) then
    if(l_BSE_kernel_complete) then
      call msg("s","Complete BSE file found in "//trim(io_file(ID))//". Loading kernel.")
    else
@@ -112,6 +113,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  ! Descriptions transfer
  !   
  call IO_desc_duplicate(local_desc,BSS_desc)
+ !
+ if(.not.io_BS_K) return
  ! 
  ! Define vars
  !
@@ -167,7 +170,7 @@ subroutine io_BS_PAR_free(ID,l_kernel_complete)
  use pars,          ONLY:LP
  use parallel_m,    ONLY:PP_redux_wait,master_cpu
  use BS,            ONLY:l_BSE_kernel_complete,BS_K_has_been_calculated_loaded
- use IO_m,          ONLY:io_disconnect,write_is_on,def_variable_elemental,io_variable_elemental
+ use IO_m,          ONLY:io_disconnect,write_is_on,def_variable_elemental,io_variable_elemental,io_BS_K
  !
  implicit none
  !
@@ -179,7 +182,7 @@ subroutine io_BS_PAR_free(ID,l_kernel_complete)
  BS_K_has_been_calculated_loaded=l_kernel_complete
  l_BSE_kernel_complete          =l_kernel_complete
  !
- if(l_kernel_complete.and.write_is_on(ID)) then
+ if(l_kernel_complete.and.write_is_on(ID).and..not.io_BS_K) then
    call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0,par_io_kind="independent")
    if(master_cpu) call io_variable_elemental(ID,VAR=" Kernel complete          :",L0=l_BSE_kernel_complete)
  endif
@@ -199,7 +202,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  !
  use BS,            ONLY:BS_blk,l_BSK_IO_triangular
  use timing_m,      ONLY:timing
- use IO_m,          ONLY:io_variable_bulk,io_unit,netcdf_call,nf90_sync
+ use IO_m,          ONLY:io_variable_bulk,io_unit,netcdf_call,nf90_sync,io_BS_K
  !
  implicit none
  !
@@ -209,6 +212,8 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  !
  integer             :: i_block,x1,x2,iq,VAR_IDs(2),stat
  integer             :: n2,i2,idx,imax
+ !
+ if(.not.io_BS_K) return
  !
  call timing('io_BS',OPR='start')
  !

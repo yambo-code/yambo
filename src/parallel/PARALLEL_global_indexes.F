@@ -67,9 +67,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  ! Response function kind
  !========================
  X_type=1
- if (present(X)) then
-   X_type=X%whoami
- endif
+ if (present(X))                      X_type=X%whoami
  if (ENVIRONMENT=="Response_T_space") X_type=5
  !========
  ! Resets
@@ -93,7 +91,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  ! Logicals
  !==========
  !
- l_par_BZINDX       =ENVIRONMENT=="BZINDX"
+ l_par_BZINDX       =ENVIRONMENT=="BZ_Indexes"
  l_par_DIP          =ENVIRONMENT=="DIPOLES"
  l_par_X_T          =ENVIRONMENT=="Response_T_space"
  l_par_X_G_finite_q =ENVIRONMENT=="Response_G_space_and_IO"
@@ -151,7 +149,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !
  if (index(ENVIRONMENT, "Response_G_space")>0) call PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  !
- if (      ENVIRONMENT=="BZINDX")              call PARALLEL_global_BZINDX(E,Xk,q,ENVIRONMENT)
+ if (      ENVIRONMENT=="BZ_Indexes")          call PARALLEL_global_BZINDX(E,Xk,q,ENVIRONMENT)
  !
  if (      ENVIRONMENT=="DIPOLES")             call PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
  !

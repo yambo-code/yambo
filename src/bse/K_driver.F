@@ -189,6 +189,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n_freqs
  !
+ ! PARALLEL SETUP
+ !================
+ call X_duplicate(X_static_pp,X_oscillators) 
+ X_oscillators%whoami=X_static_pp%whoami
+ X_oscillators%ib(1:2)=BS_bands(1:2)
+ X_oscillators%q0=BSS_q0
+ !
  ! W RL size setup looking at the max index of G-G' 
  ! ==================================================
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
@@ -225,14 +232,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
  endif
  !
- !
- ! PARALLEL SETUP
- !================
- call X_duplicate(X_static_pp,X_oscillators) 
- X_oscillators%whoami=X_static_pp%whoami
- X_oscillators%ib(1:2)=BS_bands(1:2)
- X_oscillators%q0=BSS_q0
- !
  ! Tranferred momentum
  !======================
  !
@@ -263,10 +262,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
      ! W/X RL size setup looking at the max index of G-G' 
      ! =========
      !
-     iGo_BSE=maxval(qindx_B(:,:,2))
+     iGo_BSE=qindx_B_max
      iG_BSE =BS_n_g_W
      if (.not.iq==1) then
-       iGo_BSE=maxval((/4*qindx_B(:,:,2),qindx_X(iq,:,2)/))
+       iGo_BSE=maxval((/4*qindx_B_max,qindx_X(iq,:,2)/))
        iG_BSE =max(BS_n_g_exch,BS_n_g_W)
      endif
      !

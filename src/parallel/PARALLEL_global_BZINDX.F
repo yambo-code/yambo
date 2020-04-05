@@ -50,12 +50,12 @@ subroutine PARALLEL_global_BZINDX(E,Xk,q,ENVIRONMENT)
  !
  !
  !======================================================
- if (ENVIRONMENT=="BZINDX") then
+ if (ENVIRONMENT=="BZ_Indexes") then
    !====================================================
    !
    call PARALLEL_structure(1,(/"k"/))
    !
-   call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_BZINDXk_ibz_INDEX)
+   call PARALLEL_assign_chains_and_COMMs(1,COMM_index_1=PAR_COM_BZINDXk_ibz_INDEX)
    !
    ! K-points (IBZ)
    !
@@ -75,7 +75,7 @@ subroutine PARALLEL_global_BZINDX(E,Xk,q,ENVIRONMENT)
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_BZINDXk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_BZINDXk_ibz_INDEX%n_CPU)
    !
-   ! I/O privileges (for now just one structur exist
+   ! I/O privileges (for now just one structur exists)
    !
    call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    !if (PARALLEL_n_structures_active>1) then

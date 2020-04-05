@@ -56,7 +56,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
 &                         q_sstar,coll_scattering,q_source,Xk_grid_new_mapping
- use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
+ use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,OP_APP_CL,VERIFY,REP
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
  use interfaces,     ONLY:PARALLEL_global_indexes
@@ -78,7 +78,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,ikbz_p_mem,iqs,iks,id
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3),q_step(3)
  real(SP):: E_empty(1,q%nibz,n_sp_pol)
- logical :: connected_grids,user_defined_qpts
+ logical :: connected_grids,user_defined_qpts,do_qindx_B
 #if defined _ELPH
  logical :: bse_setup_scatt
 #endif
@@ -101,11 +101,14 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  ! Parallelization
  !==================
  !
- if(bse_scattering) call PARALLEL_global_indexes(en,Xk,q,"BZINDX")
+ if(bse_scattering) then
+   call PARALLEL_global_indexes(en,Xk,q,"BZ_Indexes")
+   call PARALLEL_SETUP_K_scheme("BZINDX")
+ endif
  !
  q%description='q'
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3,4,5,6/),MODE=VERIFY,ID=io_db)
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3,4,6/),MODE=VERIFY,ID=io_db)
  io_err=io_QINDX(Xk,q,io_db)
  if (io_err==0) then
    call k_expand(q)
@@ -211,6 +214,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  endif
  !
  d3q_factor=RL_vol/real(q%nbz)
+ do_qindx_B=.false.
  !
  ! Allocate
  !
@@ -266,13 +270,15 @@ subroutine bz_samp_indexes(en,k,Xk,q)
        call k_grid_shift(iv1)
        !
      endif
+     ! 
+     if(bse_scattering) do_qindx_B=PAR_K_scheme%IND_bz%element_1D(ikbz_p)
      !
      iqbz =q_map(iv1(1),iv1(2),iv1(3))
      iqibz=q%sstar(iqbz,1)
      iqs  =q%sstar(iqbz,2)
-     if (iqs/=1.and..not.(bse_scattering.and.PAR_K_scheme%IND_ibz%element_1D(ikbz_p))) cycle
+     if (iqs/=1.and..not.do_qindx_B) cycle
      if (iqs==1) qindx_X(iqibz,ikbz,1)=ikbz_p
-     if (bse_scattering.and.PAR_K_scheme%IND_bz%element_1D(ikbz_p)) then
+     if (do_qindx_B) then
        ikbz_p_mem=PAR_K_scheme%bz_index(ikbz_p)
        qindx_B(ikbz,ikbz_p_mem,1)=iqbz
      endif
@@ -280,7 +286,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
      call c2a(v_in=v1,mode='ka2i')
      !
      if (iqs==1)         qindx_X(iqibz,ikbz  ,2)=G_index(v1,.true.)
-     if (bse_scattering.and.PAR_K_scheme%IND_bz%element_1D(ikbz_p)) then
+     if (do_qindx_B) then
        ikbz_p_mem=PAR_K_scheme%bz_index(ikbz_p)
        qindx_B(ikbz ,ikbz_p,2)=G_index(v1,.false.)
      endif
@@ -409,7 +415,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
    io_err=io_QINDX(Xk,q,io_db)
  endif
  !
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/5/),ID=io_db)
+ call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/5/),ID=io_db)
  io_err=io_QINDX(Xk,q,io_db)
  !
  !CLEAN

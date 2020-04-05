@@ -35,7 +35,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use BS_solvers,    ONLY:variables_BS
  use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,&
 &                        io_connect,io_disconnect,io_elemental,def_variable_bulk,&
-&                        io_header,io_mode,io_file
+&                        io_header,io_mode,io_file,io_BS_K
  !
  implicit none
  !
@@ -66,6 +66,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
    call error('Invalid dimensions found in BSE restart file '//trim(io_file(ID))//&
  &            ' Remove the file or change the input file')
  endif
+ !
+ if(.not.io_BS_K) return
  ! 
  ! Define vars
  !
@@ -133,7 +135,7 @@ subroutine io_BS_par_check(iq,ID)
  use parallel_m,    ONLY:MPI_COMM_WORLD
  use stderr,        ONLY:intc
  use BS,            ONLY:l_restart_bse
- use IO_m,          ONLY:io_connect,io_disconnect,io_file
+ use IO_m,          ONLY:io_connect,io_disconnect,io_file,io_BS_K
  use com,           ONLY:msg,file_exists
  !
  implicit none
@@ -145,6 +147,11 @@ subroutine io_BS_par_check(iq,ID)
  !
  ! Hack to find if the name exists
  ! DS warning. Here if file is found in alternative -J folder code will not work ...
+ !
+ if(.not.io_BS_K) then
+   l_restart_bse=.false.
+   return
+ endif
  !
  db_name='BS_PAR_Q'//trim(intc(iq))
  io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
@@ -174,7 +181,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  use X_m,           ONLY:X_t
  use stderr,        ONLY:intc
  use BS,            ONLY:BS_blk
- use IO_m,          ONLY:io_bulk,io_fragment,IO_NOT_ALLOWED,manage_OP_IF_START_and_CL_IF_END
+ use IO_m,          ONLY:io_bulk,io_fragment,IO_NOT_ALLOWED,manage_OP_IF_START_and_CL_IF_END,io_BS_K
  use timing_m,      ONLY:timing
  !
  implicit none
@@ -185,6 +192,8 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  !
  integer             ::i_block,x1,x2,n1,n2,iq,VAR_IDs(2)
  character(schlen)   ::ch
+ !
+ if(.not.io_BS_K) return
  !
  call timing('io_BS',OPR='start')
  !

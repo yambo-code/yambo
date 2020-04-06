@@ -65,7 +65,7 @@ module pars
  !
  !...I/O
  integer, parameter :: max_io_units=20
- integer, parameter :: max_io_vars_open=20
+ integer, parameter :: max_io_vars_open=500
  integer, parameter :: max_active_sections=10
  !
  !...QP_apply

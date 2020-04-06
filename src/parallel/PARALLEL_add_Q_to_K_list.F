@@ -39,7 +39,7 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
  type(bz_samp)          ::k,q
  !
  integer :: iq,ikp,ikbz,ik,ikpbz,iqp,iqbz
- integer :: id,istep,idx(3),idx_kp(3),idx_k(3),max_step,ikbzp
+ integer :: id,istep,idx_kp(3),idx_k(3),max_step,ikbzp
  !
  IND_k_out_ID=IND_in_ID
  !
@@ -95,6 +95,8 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
      do iq=1,nqbz
        !
        if (.not.IND_q%element_1D(iq)) cycle
+       !
+       ! This is strange qindx_B is allocated nK,nK, why ranging over q ?
        !
        ikpbz=qindx_B(ikbz,iq,1)
        ikp  =k%sstar(ikpbz,1)

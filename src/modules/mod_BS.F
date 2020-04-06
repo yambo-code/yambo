@@ -32,7 +32,6 @@ module BS
  logical :: l_BSE_minimize_memory
  logical :: l_BSE_kernel_complete
  logical :: l_BSE_restart
- logical :: l_BSK_IO_triangular
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
  logical :: BS_res_K_exchange
@@ -46,6 +45,7 @@ module BS
  character(schlen) :: L_kind
  character(schlen) :: BSE_mode
  character(schlen) :: BSK_mode
+ character(schlen) :: BSK_IO_mode
  character(schlen) :: BS_res_mode
  character(schlen) :: BS_cpl_mode
  !
@@ -54,6 +54,7 @@ module BS
  integer :: BS_K_dim
  integer :: BS_H_dim
  integer :: BS_IO_dim(2)
+ integer :: MAX_BSK_LIN_size
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier

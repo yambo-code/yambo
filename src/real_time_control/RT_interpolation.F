@@ -89,7 +89,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
      YAMBO_ALLOC(DbGd_k%weights,(BZ_DbGd_tot_nk_levels))
      DbGd_k%pt=BZ_DbGd_kpts
      DbGd_k%weights=1._SP/real(BZ_DbGd_tot_nk_levels,SP)
-     YAMBO_ALLOC(E%df_DbGd,(E%nb,BZ_DbGd_tot_nk_levels,n_sp_pol))
+     YAMBO_ALLOC(E%df_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
      E%df_DbGd=0._SP
      call Interpolate_and_transfer("df",DbGd_k,.TRUE.)
      E%f_DbGd=E%f_DbGd+E%df_DbGd

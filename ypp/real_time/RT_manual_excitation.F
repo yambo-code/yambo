@@ -129,11 +129,11 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
            !
          else if (l_RTpump_kspace.and.do_kpt(ik)) then
            !
-           if (ibp>E%nbm) cycle
-           if (ib <E%nbf) cycle
-           !
            iv=ibp
            ic=ib
+           !
+           if (ic <=E%nbf) cycle
+           if (iv > E%nbm) cycle
            !
            if (Pumped_state(iv,ik)) cycle
            if (Pumped_state(ic,ik)) cycle

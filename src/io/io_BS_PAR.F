@@ -27,11 +27,11 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  use parallel_m,    ONLY:master_cpu,MPI_COMM_WORLD,PP_redux_wait
  use com,           ONLY:msg
- use pars,          ONLY:IP,SP,schlen,lchlen
+ use pars,          ONLY:IP,IPL,SP,schlen,lchlen,max_io_vars_open
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_K_dim,BS_IO_dim,BS_K_coupling,l_BSE_restart,l_BSE_kernel_complete,&
-&                        l_BSK_IO_triangular
+&                        BSK_IO_mode,MAX_BSK_LIN_SIZE
  use BS_solvers,    ONLY:variables_BS,BSS_desc
  use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,&
 &                        io_connect,io_elemental,def_variable_bulk,variable_exist,&
@@ -47,12 +47,12 @@ subroutine io_BS_PAR_init(iq,X,ID)
  integer, external :: variables_BS_more
  !
  logical :: def_var, io_var
- integer :: io_BS,    VAR_IDs(8), n_vars, i1
- integer :: riscaled_size(2)
+ integer(IPL) :: BS_lin_size
+ integer :: io_BS, VAR_IDs(max_io_vars_open), n_vars, i1, i_rep,i_var, BSK_n_dims,n_replica
  type(IO_desc)     :: local_desc
  character(schlen) :: db_name
- character(lchlen) :: full_db_name,ch(4)
- character(schlen) :: dim_names(3),dim_names_done(2)
+ character(lchlen) :: full_db_name,ch(8,max_io_vars_open)
+ character(schlen) :: dim_names(3)
  !
  ! Connect to parallel netCDF file.
  !
@@ -110,22 +110,52 @@ subroutine io_BS_PAR_init(iq,X,ID)
  ! 
  ! Define vars
  !
- ch(1)="BSE_RESONANT"
- ch(2)="BSE_COUPLING"
- ch(3)="BSE_ANTI-RESONANT"
- ch(4)="BSE_ANTI-COUPLING"
- VAR_IDs=(/1,2,3,4,5,6,7,8/)
+ ch(1,:)="BSE_RESONANT"
+ ch(2,:)="BSE_COUPLING"
+ ch(3,:)="BSE_ANTI-RESONANT"
+ ch(4,:)="BSE_ANTI-COUPLING"
+ !
+ dim_names(1)  =  'complex'
  !
  if (.not.BS_K_coupling)           n_vars=1
  if (     BS_K_coupling.and.iq==1) n_vars=2
  if (     BS_K_coupling.and.iq/=1) n_vars=4
  !
- if(l_BSK_IO_triangular) then
+ select case(trim(BSK_IO_mode))
+ case("1D_linear")
    !
-   ! This is the upper triangular mode
+   ! This is the upper triangular matrix rescared in (many) 1D arrays
    !
-   dim_names  =     [character(schlen) :: 'complex', 'BS_IO_dim1','BS_IO_dim2']
-   dim_names_done = [character(schlen) :: 'BS_IO_dim1','BS_IO_dim2']
+   BSK_n_dims=1
+   !
+   dim_names(2:3)=[ 'BS_K_linearized1', 'BS_K_linearized2' ]
+   !
+   !                46341 is the sqare root of the maximum integer 2147483647
+   MAX_BSK_LIN_size=45000*45000
+   !
+   BS_LIN_size=int(BS_K_dim,kind=IPL)*int(BS_K_dim+1,kind=IPL)/int(2,kind=IPL)
+   !
+   BS_IO_dim=int(min(int(MAX_BSK_LIN_size,IPL),BS_lin_size),IP)
+   !
+   n_replica=1+int(BS_LIN_size/int(MAX_BSK_LIN_size,IPL),IP)
+   do i_rep=1,n_replica
+     do i_var=1,n_vars
+       i1=i_var+n_vars*(i_rep-1)
+       ch(i_var,i_rep)=trim(ch(i_var,i_rep))//"_LINEARIZED"//trim(intc(i_rep))
+     enddo
+   enddo
+   BS_LIN_size=BS_LIN_size-int(MAX_BSK_LIN_size,IPL)*int(n_replica-1,IPL)
+   !
+   BS_IO_dim(2)=int(BS_LIN_size,IP)
+   !
+ case("2D_rescaled")
+   !
+   ! This is the upper triangular matrix rescaled in a 2D matrix
+   !
+   BSK_n_dims=2
+   n_replica=1
+   !
+   dim_names(2:3) =  ['BS_IO_dim1','BS_IO_dim2']
    !
    if(mod(BS_K_dim,2)==0) then
      BS_IO_dim(1) = BS_K_dim+1
@@ -136,25 +166,34 @@ subroutine io_BS_PAR_init(iq,X,ID)
    endif
    !
    do i1=1,n_vars
-     ch(i1)=trim(ch(i1))//"_RESCALED"
+     ch(i_var,1)=trim(ch(i_var,1))//"_RESCALED"
    enddo
    !
- else
+ case("2D_standard")
    !
    ! Here is the 2D mode
    !
-   dim_names =      [character(schlen) :: 'complex', 'BS_K_dim', 'BS_K_dim']
-   dim_names_done = [character(schlen) :: 'BS_K_dim', 'BS_K_dim']
+   BSK_n_dims=2
+   n_replica=1
+   !
+   dim_names(2:3) = ['BS_K_dim', 'BS_K_dim']
    !
    BS_IO_dim = BS_K_dim
    !
- endif
+ end select
  !
- do i1=1,n_vars
-   call def_variable_bulk(ID,trim(ch(i1)),       VAR_IDs(2*i1-1),&
-           &               [2,BS_IO_dim],SP,dim_names,     par_io_kind='independent')
-   call def_variable_bulk(ID,trim(ch(i1))//"_DONE",VAR_IDs(2*i1),&
-           &                  BS_IO_dim , 0,dim_names_done,par_io_kind='independent')
+ do i_rep=1,n_replica
+   do i_var=1,n_vars
+     i1=i_var+n_vars*(i_rep-1)
+     if(trim(BSK_IO_mode)=="1D_linear".and.i_rep==n_replica.and.i_rep>1) then
+       dim_names(2)=dim_names(3)
+       BS_IO_dim(1)=BS_IO_dim(2)
+     endif
+     call def_variable_bulk(ID,trim(ch(i_var,i_rep)),         1+(i_var-1)*2+(i_rep-1)*8,&
+             &               [2,BS_IO_dim(1:BSK_n_dims)],SP,dim_names(1:BSK_n_dims+1),     par_io_kind='independent')
+     call def_variable_bulk(ID,trim(ch(i_var,i_rep))//"_DONE",2+(i_var-1)*2+(i_rep-1)*8,&
+             &                  BS_IO_dim(1:BSK_n_dims) , 0,dim_names(2:BSK_n_dims+1),par_io_kind='independent')
+   enddo
  enddo
  !
 end subroutine
@@ -197,9 +236,10 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  ! Each block has a status variables indicating if the matrix element was already calculated
  !
  use pars,          ONLY:IP,IPL
- use BS,            ONLY:BS_blk,l_BSK_IO_triangular,BS_IO_dim
+ use BS,            ONLY:BS_blk,BSK_IO_mode,BS_IO_dim,MAX_BSK_LIN_size
  use timing_m,      ONLY:timing
- use IO_m,          ONLY:io_variable_bulk,io_unit,netcdf_call,nf90_sync
+ use IO_m,          ONLY:io_variable_bulk,io_unit,netcdf_call,nf90_sync,&
+&                        write_is_on
  !
  implicit none
  !
@@ -208,7 +248,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  ! Work Space
  !
  integer             :: i_block,x1,x2,iq,VAR_IDs(2),stat
- integer             :: n2,i1,i2,idx1,idx2,imax
+ integer             :: n2,i1,i2,idx1,idx2,imax,i_rep(2),ilast
  integer(IPL)        :: idx
  !
  call timing('io_BS',OPR='start')
@@ -231,18 +271,41 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  x2=BS_blk(i_block)%coordinate(2)
  !
  !
- if(l_BSK_IO_triangular) then
+ select case(trim(BSK_IO_mode))
+ case("1D_linear")
    !
    do i2=1,BS_blk(i_block)%size(2)
      n2  = (x2+i2-1)
      idx = int(n2,kind=IPL)*int(n2-1,kind=IPL)/int(2,kind=IPL)+int(x1,kind=IPL)
      imax=min(BS_blk(i_block)%size(1),n2-x1+1)
+     if(imax<1) cycle
+     !
+     i_rep(1)=1+int(idx/int(MAX_BSK_LIN_size,IPL),IP)
+     i_rep(2)=1+int((idx+int(imax,IPL))/int(MAX_BSK_LIN_size,IPL),IP)
+     !
+     idx1= int(idx-int(MAX_BSK_LIN_size,IPL)*int(i_rep(1)-1,IPL),IP)
      !
      ! Write column by column in 1D
      !
-     !if(imax<1) cycle
-     !call io_variable_bulk(ID, VAR_IDs(1),  C1=BS_blk(i_block)%mat(:imax,i2),  IPOS=[1,idx] )
-     !call io_variable_bulk(ID, VAR_IDs(2), CH1=BS_blk(i_block)%done(:imax,i2), IPOS=[  idx] )
+     if(idx1+imax-1<MAX_BSK_LIN_size) then
+       call io_variable_bulk(ID, VAR_IDs(1)+(i_rep(1)-1)*8,  C1=BS_blk(i_block)%mat(:imax,i2),  IPOS=[1,idx1] )
+       call io_variable_bulk(ID, VAR_IDs(2)+(i_rep(1)-1)*8, CH1=BS_blk(i_block)%done(:imax,i2), IPOS=[  idx1] )
+     else
+       ilast=MAX_BSK_LIN_size-idx+1
+       call io_variable_bulk(ID, VAR_IDs(1)+(i_rep(1)-1)*8,  C1=BS_blk(i_block)%mat(:ilast,i2),        IPOS=[1,idx1] )
+       call io_variable_bulk(ID, VAR_IDs(2)+(i_rep(1)-1)*8, CH1=BS_blk(i_block)%done(:ilast,i2),       IPOS=[  idx1] )
+       call io_variable_bulk(ID, VAR_IDs(1)+(i_rep(2)-1)*8,  C1=BS_blk(i_block)%mat(ilast+1:imax,i2),  IPOS=[1,   1] )
+       call io_variable_bulk(ID, VAR_IDs(2)+(i_rep(2)-1)*8, CH1=BS_blk(i_block)%done(ilast+1:imax,i2), IPOS=[     1] )
+     endif
+     !
+   enddo
+   !
+ case("2D_rescaled")
+   !
+   do i2=1,BS_blk(i_block)%size(2)
+     n2  = (x2+i2-1)
+     idx = int(n2,kind=IPL)*int(n2-1,kind=IPL)/int(2,kind=IPL)+int(x1,kind=IPL)
+     imax=min(BS_blk(i_block)%size(1),n2-x1+1)
      !
      ! Write element by element in a reduced 2D matrix
      !
@@ -254,17 +317,20 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
      enddo
    enddo
    !
- else
+ case("2D_standard")
    ! 
    ! Write one block at a time in 2D
    !
    call io_variable_bulk(ID, VAR_IDs(1),  C2=BS_blk(i_block)%mat , IPOS=(/1,x1,x2/) )
    call io_variable_bulk(ID, VAR_IDs(2), CH2=BS_blk(i_block)%done, IPOS=(/  x1,x2/) )
    !
+ end select
+ !
+ if(write_is_on(ID)) then
+   stat = nf90_sync(io_unit(ID))
+   call netcdf_call(stat,ID)
  endif
  !
- stat = nf90_sync(io_unit(ID)); call netcdf_call(stat,ID)
- !   
  call timing('io_BS',OPR='stop')
  !
 end subroutine

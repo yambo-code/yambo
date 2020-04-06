@@ -34,7 +34,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,qindx_B_max
+ use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,qindx_B_max,qindx_free
  use com,          ONLY:msg
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
@@ -58,7 +58,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:myid,ncpu,PP_redux_wait,PAR_K_scheme
+ use parallel_m,    ONLY:myid,ncpu,PP_redux_wait,PAR_K_scheme,l_BSE_PAR_incomplete
  !
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free
@@ -100,13 +100,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! I/O
  !
- integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,ID
+ integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,io_qindx_err,ID
  integer, external ::io_BS
+ integer, external ::io_QINDX
  !
  ! Timing and restart
  !
  logical :: BS_blk_done(n_BS_blks)
- logical :: block_done
  integer :: n_steps,m_steps,i_steps
  !
  ! Constants & Setup
@@ -232,6 +232,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
  ! GPL_EXCLUDE_END
+ !
+ if (l_BSE_PAR_incomplete) then
+   !
+   ! qindx_B is allocated and loaded again at each q-point
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
+   io_qindx_err=io_QINDX(Xk,q,ID)
+   !
+ endif
+ !
  !
  ! Screened interaction
  !======================
@@ -608,6 +617,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  else if (BS_K_is_ALDA) then
    YAMBO_FREE(F_xc)
  endif
+ !
+ if(l_BSE_PAR_incomplete) call qindx_free('B')
  !
  YAMBO_FREE(BS_W)
  call WF_free(WF)

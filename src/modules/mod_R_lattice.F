@@ -177,7 +177,7 @@ module R_lattice
    !
    subroutine qindx_alloc(what)
      !
-     use parallel_m,   ONLY:PAR_K_scheme
+     use parallel_m,   ONLY:PAR_KQ_scheme
      !
      character(*), intent(in) :: what
      !
@@ -190,7 +190,7 @@ module R_lattice
      endif
      !
      if( (index(what,"B")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform .and. bse_scattering) then
-       YAMBO_ALLOC(qindx_B,(nXkbz,PAR_K_scheme%nbz,2))
+       YAMBO_ALLOC(qindx_B,(nXkbz,PAR_KQ_scheme%nbz,2))
      endif
      !
      if( (index(what,"C")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform .and. coll_scattering) then

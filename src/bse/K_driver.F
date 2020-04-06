@@ -40,7 +40,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
 &                         BS_perturbative_SOC,l_BSK_IO_triangular
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss,l_col_cut
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k,PAR_K_scheme
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k,PAR_K_scheme,l_BSE_PAR_incomplete
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free
  use D_lattice,      ONLY:l_0D,l_1D,l_2D
@@ -196,16 +196,21 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  X_oscillators%ib(1:2)=BS_bands(1:2)
  X_oscillators%q0=BSS_q0
  !
- ! W RL size setup looking at the max index of G-G' 
- ! ==================================================
+ if (BS_res_K_corr.or.BS_cpl_K_corr.and.BS_n_g_W<0) then
+   BS_n_g_W=X_static_pp%ng
+   call msg('s','[BSE-W] Use all G-vectors of W ',BS_n_g_W)
+ endif
+ !
+ ! Compute qindx_B_max
+ ! =====================
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
    !
    ! Here I need the distribution over k
    ! The distribution over k is later recomputed for each k-point inside the iq loop
    ! However this should be not needed. Only the distribution over eh and b should be redone
    !
-   call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
-   call PARALLEL_SETUP_K_scheme("K")
+   call PARALLEL_global_indexes(en,Xk,q,"BZ_Indexes")
+   call PARALLEL_SETUP_K_scheme("BZINDX")
    !
    ! here qindx_B is allocated
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
@@ -218,17 +223,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    qindx_B_max=maxval(qindx_B_max_CPU)
    YAMBO_FREE(qindx_B_max_CPU)
    !
-   if(BS_n_g_W<0) then
-     BS_n_g_W=X_static_pp%ng
-     call msg('s','[BSE-W] Use all G-vectors of W ',BS_n_g_W)
-   endif
-   !
-   Max_G_m_G=eval_G_minus_G(BS_n_g_W,qindx_B_max)
-   if (BS_n_g_W> Max_G_m_G ) then
-     call warning (' W size reduced from '//trim(intc(BS_n_g_W))//' to '//trim(intc(Max_G_m_G))//' due to symmetry constraints')
-     BS_n_g_W= Max_G_m_G
-     call msg('s','[BSE-W] W size forced by symmetry to be ',BS_n_g_W)
-   endif
+   call qindx_free('B')
    !
  endif
  !
@@ -273,15 +268,17 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
      !
      if (.not.iq==1) then
        if (BS_n_g_exch> Max_G_m_G ) then
+         call warning (' Exch size reduced from '//trim(intc(BS_n_g_exch))//' to '&
+         &             //trim(intc(Max_G_m_G))//' due to symmetry constraints')
          BS_n_g_exch= Max_G_m_G
-         call warning (' Exch size reduced due to symmetry constraints')
          call msg('s','[BSE-exch] Exch size forced by symmetry to be ',BS_n_g_exch)
        endif
      endif
      !
      if (BS_n_g_W> Max_G_m_G ) then
+       call warning (' W size reduced from '//trim(intc(BS_n_g_W))//' to '&
+       &             //trim(intc(Max_G_m_G))//' due to symmetry constraints')
        BS_n_g_W= Max_G_m_G
-       call warning (' W size reduced due to symmetry constraints')
        call msg('s','[BSE-W] W size forced by symmetry to be ',BS_n_g_W)
      endif
      !
@@ -359,6 +356,5 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  enddo
  !
  YAMBO_FREE(BSqpts)
- call qindx_free('B')
  !
 end subroutine

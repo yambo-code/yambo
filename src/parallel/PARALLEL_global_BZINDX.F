@@ -48,44 +48,37 @@ subroutine PARALLEL_global_BZINDX(E,Xk,q,ENVIRONMENT)
  !
  ! Work space
  !
+ call PARALLEL_structure(1,(/"k"/))
  !
- !======================================================
- if (ENVIRONMENT=="BZ_Indexes") then
-   !====================================================
-   !
-   call PARALLEL_structure(1,(/"k"/))
-   !
-   call PARALLEL_assign_chains_and_COMMs(1,COMM_index_1=PAR_COM_BZINDXk_ibz_INDEX)
-   !
-   ! K-points (IBZ)
-   !
-   call PARALLEL_index(PAR_IND_BZINDXk_ibz,(/Xk%nibz/),COMM=PAR_COM_BZINDXk_ibz_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
-   PAR_IND_BZINDXk_ibz_ID=PAR_COM_BZINDXk_ibz_INDEX%CPU_id
-   !
-   ! ... indexes
-   !
-   allocate(PAR_BZINDXk_bz_index(Xk%nbz))
-   call distribute_BZk_using_IBZk(PAR_COM_BZINDXk_ibz_INDEX,Xk,PAR_IND_BZINDXk_ibz,PAR_IND_BZINDXk_ibz_ID,&
+ call PARALLEL_assign_chains_and_COMMs(1,COMM_index_1=PAR_COM_BZINDXk_ibz_INDEX)
+ !
+ ! K-points (IBZ)
+ !
+ call PARALLEL_index(PAR_IND_BZINDXk_ibz,(/Xk%nibz/),COMM=PAR_COM_BZINDXk_ibz_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+ PAR_IND_BZINDXk_ibz_ID=PAR_COM_BZINDXk_ibz_INDEX%CPU_id
+ !
+ ! ... indexes
+ !
+ allocate(PAR_BZINDXk_bz_index(Xk%nbz))
+ call distribute_BZk_using_IBZk(PAR_COM_BZINDXk_ibz_INDEX,Xk,PAR_IND_BZINDXk_ibz,PAR_IND_BZINDXk_ibz_ID,&
 &                                                         PAR_IND_BZINDXk_bz, PAR_IND_BZINDXk_bz_ID,&
 &                                                         PAR_BZINDXk_bz_index,PAR_BZINDXk_nbz)
-   !
-   allocate(PAR_BZINDXk_ibz_index(Xk%nibz))
-   call PAR_build_index(PAR_IND_BZINDXk_ibz,Xk%nibz,PAR_BZINDXk_ibz_index,PAR_BZINDXk_nibz)
-   !
-   call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_BZINDXk_nibz,TOTAL=Xk%nibz,&
+ !
+ allocate(PAR_BZINDXk_ibz_index(Xk%nibz))
+ call PAR_build_index(PAR_IND_BZINDXk_ibz,Xk%nibz,PAR_BZINDXk_ibz_index,PAR_BZINDXk_nibz)
+ !
+ call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_BZINDXk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_BZINDXk_ibz_INDEX%n_CPU)
-   !
-   ! I/O privileges (for now just one structur exists)
-   !
-   call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
-   !if (PARALLEL_n_structures_active>1) then
-   !  call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_BZINDXk_ibz_A2A%CPU_id==0)
-   !else
-   !  call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
-   !endif
-   !
-   call OPENMP_set_threads(n_threads_in=n_threads_BZINDX)
-   !
- endif
+ !
+ ! I/O privileges (for now just one structur exists)
+ !
+ call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+ !if (PARALLEL_n_structures_active>1) then
+ !  call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_BZINDXk_ibz_A2A%CPU_id==0)
+ !else
+ !  call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+ !endif
+ !
+ call OPENMP_set_threads(n_threads_in=n_threads_BZINDX)
  !
 end subroutine PARALLEL_global_BZINDX

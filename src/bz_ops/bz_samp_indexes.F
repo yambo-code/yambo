@@ -271,25 +271,24 @@ subroutine bz_samp_indexes(en,k,Xk,q)
        !
      endif
      ! 
-     if(bse_scattering) do_qindx_B=PAR_K_scheme%IND_bz%element_1D(ikbz_p)
+     if(bse_scattering) then
+       do_qindx_B=PAR_K_scheme%IND_bz%element_1D(ikbz_p)
+       ikbz_p_mem=PAR_K_scheme%bz_index(ikbz_p)
+     endif
      !
      iqbz =q_map(iv1(1),iv1(2),iv1(3))
      iqibz=q%sstar(iqbz,1)
      iqs  =q%sstar(iqbz,2)
      if (iqs/=1.and..not.do_qindx_B) cycle
-     if (iqs==1) qindx_X(iqibz,ikbz,1)=ikbz_p
-     if (do_qindx_B) then
-       ikbz_p_mem=PAR_K_scheme%bz_index(ikbz_p)
-       qindx_B(ikbz,ikbz_p_mem,1)=iqbz
-     endif
+     !
+     if (iqs==1)     qindx_X(iqibz,ikbz,1)=ikbz_p
+     if (do_qindx_B) qindx_B(ikbz,ikbz_p_mem,1)=iqbz
+     !
      v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)-q%ptbz(iqbz,:)
      call c2a(v_in=v1,mode='ka2i')
      !
-     if (iqs==1)         qindx_X(iqibz,ikbz  ,2)=G_index(v1,.true.)
-     if (do_qindx_B) then
-       ikbz_p_mem=PAR_K_scheme%bz_index(ikbz_p)
-       qindx_B(ikbz ,ikbz_p,2)=G_index(v1,.false.)
-     endif
+     if (iqs==1)     qindx_X(iqibz,ikbz      ,2)=G_index(v1,.true.)
+     if (do_qindx_B) qindx_B(ikbz ,ikbz_p_mem,2)=G_index(v1,.false.)
      !
      if ( iqs==1 .and. qindx_X(iqibz,ikbz,2)==0 ) exit
      !
@@ -414,6 +413,11 @@ subroutine bz_samp_indexes(en,k,Xk,q)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3,4,6/),ID=io_db)
    io_err=io_QINDX(Xk,q,io_db)
  endif
+ !
+ ! Before writing section 5 (qindx_B) I need to wait that the master is done
+ ! with writing all other sections
+ !
+ call PP_redux_wait()
  !
  call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/5/),ID=io_db)
  io_err=io_QINDX(Xk,q,io_db)

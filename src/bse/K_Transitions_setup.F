@@ -146,19 +146,19 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
    i_T_group_now=0
    i_T_group_last=0
    !
-   do ik=1,Xk%nibz
+   do i_sp=1,n_sp_pol
      !
-     do iv=BS_bands(1),nb(2)
-       do ic=nb(1),BS_bands(2)
+     do ik=1,Xk%nibz
+       !
+       do i_star=1,Xk%nstar(ik)
          !
-         do i_star=1,Xk%nstar(ik)
-           !
-           ikbz=Xk%k_table(ik,Xk%star(ik,i_star))
-           !
-           ikpbz=qindx_X(iq,ikbz,1)
-           ikp  =Xk%sstar(ikpbz,1)
-           !
-           do i_sp=1,n_sp_pol
+         ikbz=Xk%k_table(ik,Xk%star(ik,i_star))
+         !
+         ikpbz=qindx_X(iq,ikbz,1)
+         ikp  =Xk%sstar(ikpbz,1)
+         !
+         do iv=BS_bands(1),nb(2)
+           do ic=nb(1),BS_bands(2)
              !
              if (.not.T_is_ok()) cycle
              !

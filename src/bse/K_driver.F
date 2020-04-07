@@ -209,8 +209,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    ! The distribution over k is later recomputed for each k-point inside the iq loop
    ! However this should be not needed. Only the distribution over eh and b should be redone
    !
-   call PARALLEL_global_indexes(en,Xk,q,"BZ_Indexes")
-   call PARALLEL_SETUP_K_scheme("BZINDX")
+   call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
+   call PARALLEL_SETUP_K_scheme("K")
    !
    ! here qindx_B is allocated
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
@@ -223,7 +223,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    qindx_B_max=maxval(qindx_B_max_CPU)
    YAMBO_FREE(qindx_B_max_CPU)
    !
-   call qindx_free('B')
+   if(l_BSE_PAR_incomplete) call qindx_free('B')
    !
  endif
  !
@@ -356,5 +356,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  enddo
  !
  YAMBO_FREE(BSqpts)
+ if(.not.l_BSE_PAR_incomplete) call qindx_free('B')
  !
 end subroutine

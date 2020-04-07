@@ -34,7 +34,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,qindx_B_max,qindx_free
+ use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,qindx_B_max,qindx_free,&
+&                       qindx_B_init,qindx_B_close,qindx_B_load
  use com,          ONLY:msg
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
@@ -100,7 +101,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! I/O
  !
- integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,io_qindx_err,ID
+ integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,io_qindx_err,qindx_ID,ID
  integer, external ::io_BS
  integer, external ::io_QINDX
  !
@@ -234,13 +235,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! GPL_EXCLUDE_END
  !
  if (l_BSE_PAR_incomplete) then
-   !
    ! qindx_B is allocated and loaded again at each q-point
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
-   io_qindx_err=io_QINDX(Xk,q,ID)
-   !
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=qindx_ID)
+   io_qindx_err=io_QINDX(Xk,q,qindx_ID)
  endif
  !
+ qindx_tmp=qindx_B_init(qindx_ID)
+ i_pmq_bz_last=0;i_kmq_bz_last=0
  !
  ! Screened interaction
  !======================
@@ -427,7 +428,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Exchange oscillators
    !----------------------
    ! 
-   call K_correlation_collisions(iq,i_block,Xk,q)
+   call K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
    !
    ! Transition Loops
    !------------------
@@ -435,10 +436,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #if defined _OPENMP && ! defined _CUDA
    !$omp parallel default(shared), &
    !$omp private(i_Tk,i_Tp, &
-   !$omp &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
-   !$omp &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol,i_p_s,is_p,os_p,i_kp_s, &
-   !$omp &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
-   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t, &
+   !$omp &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol,i_k_s,is_k,os_k,i_k_s_m1,i_k_bz_last,i_k_bz_mem,H_pos, &
+   !$omp &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol,i_p_s,is_p,os_p,i_kp_s,i_p_bz_last, &
+   !$omp &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s,i_kmq_bz_last,i_kmq_bz_mem, &
+   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,i_pmq_bz_last,qindx_tmp, &
    !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c)
 #endif
    !
@@ -619,6 +620,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
  if(l_BSE_PAR_incomplete) call qindx_free('B')
+ !
+ qindx_tmp=qindx_B_close(qindx_ID)
  !
  YAMBO_FREE(BS_W)
  call WF_free(WF)

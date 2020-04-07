@@ -47,7 +47,7 @@ integer function io_QINDX(Xk,q,io_db)
  call timing('io_QINDX',OPR='start')
  !
  PAR_IO=any((/io_sec(io_db,:)==5/)).and.write_is_on(io_db)
- if (     PAR_IO) io_QINDX=io_connect(desc='kindx',type=1,ID=io_db,COMM=PAR_KQ_scheme%COM_ibz_index%COMM)
+ if (     PAR_IO) io_QINDX=io_connect(desc='kindx',type=1,ID=io_db,COMM=PAR_K_scheme%COM_ibz_index%COMM)
  if (.not.PAR_IO) io_QINDX=io_connect(desc='kindx',type=1,ID=io_db)
  if (io_QINDX/=0) goto 1
  !
@@ -144,7 +144,7 @@ integer function io_QINDX(Xk,q,io_db)
      ! Fragmentation (3): BSE indx
      !
      io_extension(io_db)='kindx'
-     call io_fragment(io_db,i_fragment=3,COMM=PAR_KQ_scheme%COM_ibz_index%COMM)
+     call io_fragment(io_db,i_fragment=3,COMM=PAR_K_scheme%COM_ibz_index%COMM)
      call def_variable_bulk(io_db,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100,par_io_kind='independent')
      ! 46341 is the sqare root of the maximum integer 2147483647
      ! qindx_B is size nXkbz*nXkbz
@@ -155,7 +155,7 @@ integer function io_QINDX(Xk,q,io_db)
        do i2_dn=1,IO_size,i2_step
          i2_up=min(i2_dn-1+i2_step,IO_size)
          ! the loop here make not needed the previous loop
-         ! however I keep also the previous here in case, for future changes
+         ! however I keep also the previous one in case, for future changes,
          ! the next loop is removed
          do i2=i2_dn,i2_up
            if (.not.PAR_K_scheme%IND_bz%element_1D(i2)) cycle
@@ -184,4 +184,4 @@ integer function io_QINDX(Xk,q,io_db)
  !
  call timing('io_QINDX',OPR='stop')
  !
-end function
+end function io_QINDX

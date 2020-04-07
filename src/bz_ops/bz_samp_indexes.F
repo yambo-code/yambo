@@ -33,8 +33,8 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  ! qindx_X(iq,ikbz,1)=okbz
  ! qindx_X(iq,ikbz,2)=iGo
  !
- ! qindx_B(ikbz,okbz,1)=iqbz
- ! qindx_B(ikbz,okbz,2)=iGo
+ ! qindx_B(okbz,ikbz,1)=iqbz
+ ! qindx_B(okbz,ikbz,2)=iGo
  !
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo
@@ -75,7 +75,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  character(lchlen) :: string
  integer :: io_db,io_err
- integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,ikbz_p_mem,iqs,iks,id
+ integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,ikbz_mem,iqs,iks,id
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3),q_step(3)
  real(SP):: E_empty(1,q%nibz,n_sp_pol)
  logical :: connected_grids,user_defined_qpts,do_qindx_B
@@ -228,8 +228,8 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  ! qindx_X(iq,ikbz,1)=okbz
  ! qindx_X(iq,ikbz,2)=iGo
  !
- ! qindx_B(ikbz,okbz,1)=iqbz
- ! qindx_B(ikbz,okbz,2)=iGo
+ ! qindx_B(okbz,ikbz,1)=iqbz
+ ! qindx_B(okbz,ikbz,2)=iGo
  !
  string=' Indices for polarization function'
  if ( bse_scattering) string=trim(string)//' + BSE'
@@ -245,6 +245,11 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  !$omp do
  do ikbz=1,Xk%nbz
+   !
+   if(bse_scattering) then
+     do_qindx_B=PAR_K_scheme%IND_bz%element_1D(ikbz)
+     ikbz_mem=PAR_K_scheme%bz_index(ikbz)
+   endif
    !
    do ikbz_p=1,Xk%nbz
      !
@@ -271,24 +276,19 @@ subroutine bz_samp_indexes(en,k,Xk,q)
        !
      endif
      ! 
-     if(bse_scattering) then
-       do_qindx_B=PAR_K_scheme%IND_bz%element_1D(ikbz_p)
-       ikbz_p_mem=PAR_K_scheme%bz_index(ikbz_p)
-     endif
-     !
      iqbz =q_map(iv1(1),iv1(2),iv1(3))
      iqibz=q%sstar(iqbz,1)
      iqs  =q%sstar(iqbz,2)
      if (iqs/=1.and..not.do_qindx_B) cycle
      !
      if (iqs==1)     qindx_X(iqibz,ikbz,1)=ikbz_p
-     if (do_qindx_B) qindx_B(ikbz,ikbz_p_mem,1)=iqbz
+     if (do_qindx_B) qindx_B(ikbz_p,ikbz_mem,1)=iqbz
      !
      v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)-q%ptbz(iqbz,:)
      call c2a(v_in=v1,mode='ka2i')
      !
-     if (iqs==1)     qindx_X(iqibz,ikbz      ,2)=G_index(v1,.true.)
-     if (do_qindx_B) qindx_B(ikbz ,ikbz_p_mem,2)=G_index(v1,.false.)
+     if (iqs==1)     qindx_X(iqibz, ikbz    ,2)=G_index(v1,.true.)
+     if (do_qindx_B) qindx_B(ikbz_p,ikbz_mem,2)=G_index(v1,.false.)
      !
      if ( iqs==1 .and. qindx_X(iqibz,ikbz,2)==0 ) exit
      !

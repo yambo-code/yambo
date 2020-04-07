@@ -52,7 +52,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  use DIPOLES,      ONLY:DIPOLE_t
  use X_m,          ONLY:global_gauge
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_ordered,PAR_IND_T_groups,&
-&                       PAR_IND_WF_k,PAR_IND_T_Haydock
+&                       PAR_IND_T_Haydock
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,E_SOC_nbands,E_SOC_table
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
@@ -117,9 +117,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
    YAMBO_ALLOC(PAR_IND_WF_b_and_k%element_2D,(BS_bands(2),Xk%nibz))
    PAR_IND_WF_b_and_k%element_2D=.FALSE.
    !
-   YAMBO_ALLOC(PAR_IND_WF_k%element_1D,(Xk%nibz))
-   PAR_IND_WF_k%element_1D=.FALSE.
-   !
    if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
      YAMBO_ALLOC(PAR_IND_T_Haydock%element_1D,(BS_nT_grps))
      PAR_IND_T_Haydock%element_1D=.FALSE.
@@ -149,19 +146,19 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
    i_T_group_now=0
    i_T_group_last=0
    !
-   do ik=1,Xk%nibz
+   do i_sp=1,n_sp_pol
      !
-     do iv=BS_bands(1),nb(2)
-       do ic=nb(1),BS_bands(2)
+     do ik=1,Xk%nibz
+       !
+       do i_star=1,Xk%nstar(ik)
          !
-         do i_star=1,Xk%nstar(ik)
-           !
-           ikbz=Xk%k_table(ik,Xk%star(ik,i_star))
-           !
-           ikpbz=qindx_X(iq,ikbz,1)
-           ikp  =Xk%sstar(ikpbz,1)
-           !
-           do i_sp=1,n_sp_pol
+         ikbz=Xk%k_table(ik,Xk%star(ik,i_star))
+         !
+         ikpbz=qindx_X(iq,ikbz,1)
+         ikp  =Xk%sstar(ikpbz,1)
+         !
+         do iv=BS_bands(1),nb(2)
+           do ic=nb(1),BS_bands(2)
              !
              if (.not.T_is_ok()) cycle
              !
@@ -208,9 +205,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
              !
              PAR_IND_WF_b_and_k%element_2D(ic,ik )=.TRUE.
              PAR_IND_WF_b_and_k%element_2D(iv,ikp)=.TRUE.
-             !
-             PAR_IND_WF_k%element_1D(ik )=.TRUE.
-             PAR_IND_WF_k%element_1D(ikp)=.TRUE.
              !
              if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
                 PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.

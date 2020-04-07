@@ -188,7 +188,6 @@ module parallel_m
  end type
  !
  type(PARk_str),SAVE   :: PAR_K_scheme
- type(PARk_str),SAVE   :: PAR_KQ_scheme
  !
  ! Number of Bands to load
  !=========================

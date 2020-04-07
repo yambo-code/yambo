@@ -90,6 +90,7 @@ module R_lattice
  integer, allocatable :: qindx_B(:,:,:)
  integer, allocatable :: qindx_S(:,:,:)
  integer, allocatable :: qindx_C(:,:,:)
+ integer  :: qindx_B_max
  !
  ! SYMs
  !
@@ -176,6 +177,8 @@ module R_lattice
    !
    subroutine qindx_alloc(what)
      !
+     use parallel_m,   ONLY:PAR_K_scheme
+     !
      character(*), intent(in) :: what
      !
      if(  index(what,"X")/=0 .or. index(what,"ALL")/=0) then
@@ -187,7 +190,7 @@ module R_lattice
      endif
      !
      if( (index(what,"B")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform .and. bse_scattering) then
-       YAMBO_ALLOC(qindx_B,(nXkbz,nXkbz,2))
+       YAMBO_ALLOC(qindx_B,(nXkbz,PAR_K_scheme%nbz,2))
      endif
      !
      if( (index(what,"C")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform .and. coll_scattering) then
@@ -204,15 +207,51 @@ module R_lattice
        YAMBO_FREE(qindx_X)
      endif
      if(  index(what,"B")/=0 .or. index(what,"ALL")/=0) then
-     YAMBO_FREE(qindx_B)
+       YAMBO_FREE(qindx_B)
      endif
      if(  index(what,"S")/=0 .or. index(what,"ALL")/=0) then
-     YAMBO_FREE(qindx_S)
+       YAMBO_FREE(qindx_S)
      endif
      if(  index(what,"C")/=0 .or. index(what,"ALL")/=0) then
-     YAMBO_FREE(qindx_C)
+       YAMBO_FREE(qindx_C)
      endif
    end subroutine qindx_free
+   !
+   integer function qindx_B_init(ID)
+    !
+    use pars,       ONLY:IP
+    use IO_m,       ONLY:io_control,io_connect,def_variable_bulk,OP_RD,RD
+    integer  :: ID
+    !
+    call io_control(ACTION=OP_RD,ID=ID)
+    qindx_B_init=io_connect(desc='kindx',type=1,ID=ID)
+    call def_variable_bulk(ID,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100,par_io_kind='independent')
+    call io_control(ACTION=RD,ID=ID)
+    !
+   end function qindx_B_init
+   !
+   integer function qindx_B_close(ID)
+    !
+    use IO_m,  ONLY:io_control,io_disconnect,RD_CL
+    integer :: ID
+    !
+    call io_control(ACTION=RD_CL,ID=ID)
+    call io_disconnect(ID=ID)
+    qindx_B_close=0
+    !
+   end function qindx_B_close
+   !
+   function qindx_B_load(ikbz,ikp_bz,ID)
+    !
+    use IO_m,  ONLY:io_variable_bulk
+    integer, dimension(2) :: qindx_B_load
+    integer, intent(in) :: ID,ikbz,ikp_bz
+    integer :: IO_var(1,1,2)
+    !
+    call io_variable_bulk(ID,3,I3=IO_var,IPOS=(/ikbz,ikp_bz,1/))
+    qindx_B_load=IO_var(1,1,:)
+    !
+   end function qindx_B_load
    !
    subroutine bz_samp_reset(k)
      type(bz_samp)::k

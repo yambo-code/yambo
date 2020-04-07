@@ -195,7 +195,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  X_oscillators%ib(1:2)=BS_bands(1:2)
  X_oscillators%q0=BSS_q0
  !
- if (BS_res_K_corr.or.BS_cpl_K_corr.and.BS_n_g_W<0) then
+ if ((BS_res_K_corr.or.BS_cpl_K_corr).and.BS_n_g_W<0) then
    BS_n_g_W=X_static_pp%ng
    call msg('s','[BSE-W] Use all G-vectors of W ',BS_n_g_W)
  endif

@@ -291,7 +291,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
        call io_variable_bulk(ID, VAR_IDs(1)+(i_rep(1)-1)*8,  C1=BS_blk(i_block)%mat(:imax,i2),  IPOS=[1,idx1] )
        call io_variable_bulk(ID, VAR_IDs(2)+(i_rep(1)-1)*8, CH1=BS_blk(i_block)%done(:imax,i2), IPOS=[  idx1] )
      else
-       ilast=MAX_BSK_LIN_size-idx+1
+       ilast=MAX_BSK_LIN_size-idx1+1
        call io_variable_bulk(ID, VAR_IDs(1)+(i_rep(1)-1)*8,  C1=BS_blk(i_block)%mat(:ilast,i2),        IPOS=[1,idx1] )
        call io_variable_bulk(ID, VAR_IDs(2)+(i_rep(1)-1)*8, CH1=BS_blk(i_block)%done(:ilast,i2),       IPOS=[  idx1] )
        call io_variable_bulk(ID, VAR_IDs(1)+(i_rep(2)-1)*8,  C1=BS_blk(i_block)%mat(ilast+1:imax,i2),  IPOS=[1,   1] )

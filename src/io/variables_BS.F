@@ -38,7 +38,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
 &                        def_variable_elemental,io_variable_elemental
  use descriptors,   ONLY:IO_desc,IO_desc_reset
 #if defined _PAR_IO
- use BS,            ONLY:l_BSK_IO_triangular
+ use BS,            ONLY:BSK_IO_mode
 #endif
  !
  implicit none
@@ -189,11 +189,11 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  !
  ! Check if BSE kernel is written in triangular form
  !
- if (write_is_on(ID).or.variable_exist(ID,"BSE_KERNEL_TRIANGULAR")) then
-   call def_variable_elemental(ID,"BSE_KERNEL_TRIANGULAR",1,LP+100,0)
-   call  io_variable_elemental(ID,VAR="[IO] Kernel triangular",L0=l_BSK_IO_triangular)
+ if (write_is_on(ID).or.variable_exist(ID,"BSE_KERNEL_IO_MODE")) then
+   call def_variable_elemental(ID,"BSE_KERNEL_IO_MODE",1,0,0)
+   call  io_variable_elemental(ID,VAR="[IO] Kernel IO mode",CH0=BSK_IO_mode)
  else
-   l_BSK_IO_triangular=.false.
+   BSK_IO_mode="2D_standard"
  endif
  !
 #endif

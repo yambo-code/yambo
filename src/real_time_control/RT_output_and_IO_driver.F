@@ -113,11 +113,14 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    ! Mean Carrier Lifetimes
    !========================
    if (RT_is_dynamically_dephased) then
+     !
      call RT_mean_carrier_lifetimes(E,k)
-     if(l_elph_scatt)                      call RT_output('mean_EPlife', TIME=NE_time*AUT2FS)
-     if(l_elel_scatt)                      call RT_output('mean_EElife', TIME=NE_time*AUT2FS)
-     if(l_elphoton_scatt)                  call RT_output('mean_RADlife',TIME=NE_time*AUT2FS)
-     if(l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('N_dN_E',TIME=NE_time*AUT2FS)
+     !
+     if (l_elph_scatt)                      call RT_output('mean_EPlife', TIME=NE_time*AUT2FS)
+     if (l_elel_scatt)                      call RT_output('mean_EElife', TIME=NE_time*AUT2FS)
+     if (l_elphoton_scatt)                  call RT_output('mean_RADlife',TIME=NE_time*AUT2FS)
+     if (l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('N_dN_E',TIME=NE_time*AUT2FS)
+     !
    endif
    !
    ! GPL_EXCLUDE_END

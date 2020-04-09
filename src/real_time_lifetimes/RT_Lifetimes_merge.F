@@ -21,43 +21,91 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
+subroutine RT_Lifetimes_merge(what,LIFE_h,LIFE_e)
  !
  use pars,           ONLY:SP
- use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp
  use parallel_m,     ONLY:PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,PP_redux_wait
- use real_time,      ONLY:REF_lifetime,l_initial_equilibrium,RT_nk,RT_bands
+ use R_lattice,      ONLY:nkibz
+ use real_time,      ONLY:RT_nk,RT_bands,RT_ibz_coo
  use timing_m,       ONLY:timing
+ use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_A2A,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,myid
  !
  implicit none
  !
- type(levels),  intent(in)    :: E
- type(bz_samp), intent(in)    :: k
- integer,       intent(in)    :: SAVE_index
- real(SP),      intent(inout) :: LIFE(RT_bands(1):RT_bands(2),RT_nk)
+ character(*)            :: what
+ real(SP), intent(inout) :: LIFE_h(RT_bands(1):RT_bands(2),RT_nk)
+ real(SP), intent(inout) :: LIFE_e(RT_bands(1):RT_bands(2),RT_nk)
  !
  ! Work Space
  !
- integer          :: ik
+ integer          :: NC,ik,do_I_snd(nkibz),do_I_rcv(nkibz)
  !
- call timing('RT life merge',OPR='start')
+ NC=1
+ if (what=="elph".or.what=="bose") NC=PAR_COM_PLASMA_INDEX%n_CPU
+ if (what=="elgm")                 NC=PAR_COM_Q_INDEX%n_CPU
  !
- do ik=1,RT_nk
+ if (NC>1) then
+   LIFE_e(:,:)=LIFE_e(:,:)/NC
+   LIFE_h(:,:)=LIFE_h(:,:)/NC
+ endif
+ !
+ call timing('RT life merge (intra-k)',OPR='start')
+ !
+ do_I_snd=0
+ do_I_rcv=0
+ !
+ K_loop_1: do ik=1,nkibz
    !
-   if (SAVE_index>2) LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_PLASMA_INDEX%n_CPU)
-   if (SAVE_index>6) LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_Q_INDEX%n_CPU)
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) then
+     do_I_rcv(ik)=myid+1
+     cycle K_loop_1
+   endif
    !
- enddo
- !
- call PP_redux_wait(LIFE)
- !
- do ik=1,RT_nk
+   do_I_snd(ik)=myid+1
    !
-   if (l_initial_equilibrium) REF_lifetime(:,ik,SAVE_index)=LIFE(:,ik)
+   if (PAR_COM_Xk_ibz_A2A%n_CPU>1) then
+     call PP_redux_wait(LIFE_e(:,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+     call PP_redux_wait(LIFE_h(:,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+   endif
    !
- enddo 
+ enddo K_loop_1
  !
- call timing('RT life merge',OPR='stop')
+ call PP_redux_wait(do_I_snd)
+ call PP_redux_wait(do_I_rcv)
+ !
+ call timing('RT life merge (intra-k)',OPR='stop')
+ !
+ call timing('RT life merge (extra-k)',OPR='start')
+ !
+ !write (*,*) "MYID:",myid," PAR:",PAR_IND_Xk_ibz%element_1D
+ !if (myid==0) then
+ !  write (*,*) "SND:",do_I_snd
+ !  write (*,*) "RCV:",do_I_rcv
+ !endif
+ !
+ !K_loop_2: do ik=1,nkibz
+ !  !
+ !  do i_c_snd=1,ncpu
+ !    if (do_I_snd(ik)/=i_c_snd) cycle
+ !    do i_c_rcv=1,ncpu
+ !      if (do_I_rcv(ik)/=i_c_rcv) cycle
+ !      write (*,*) ik,i_c_snd,"=>",i_c_rcv
+ !      call PP_send_and_receive("send",LIFE_e(:,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)),i_c_rcv-1)
+ !      call PP_send_and_receive("receive",LIFE_e(:,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)),i_c_snd-1)
+ !      call PP_send_and_receive("send",LIFE_h(:,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)),i_c_rcv-1)
+ !      call PP_send_and_receive("receive",LIFE_h(:,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)),i_c_snd-1)
+ !    enddo
+ !  enddo
+ !  !
+ !enddo K_loop_2
+ !
+ !write (*,*) do_I_send
+ !do while(.true.)
+ !enddo
+ !
+ call PP_redux_wait(LIFE_e,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ call PP_redux_wait(LIFE_h,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ !
+ call timing('RT life merge (extra-k)',OPR='stop')
  !
 end subroutine RT_Lifetimes_merge

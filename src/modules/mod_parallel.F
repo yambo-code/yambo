@@ -463,7 +463,7 @@ module parallel_m
  end interface PP_bcast
  !
  interface PP_send_and_receive
-   module procedure PP_snd_rcv_c2,PP_snd_rcv_c1
+   module procedure PP_snd_rcv_c2,PP_snd_rcv_c1,PP_snd_rcv_r2
  end interface PP_send_and_receive
  !
  contains
@@ -1452,6 +1452,32 @@ module parallel_m
    end subroutine z3bcast
    !
 #endif
+   !
+   subroutine PP_snd_rcv_r2(mode,array,node,COMM)
+     character(*):: mode
+     real(SP)    :: array(:,:)
+     integer, intent(in) :: node
+     integer, optional   :: COMM
+#if defined _MPI
+     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
+     integer::LOCAL_COMM,i_err! Work Space
+     if (ncpu==1) return
+     !
+     local_type=MPI_REAL
+     if (SP==DP) local_type=MPI_DOUBLE_PRECISION
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,1, LOCAL_COMM,i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,1, LOCAL_COMM, MPI_status, i_err)
+     !
+#endif
+   end subroutine
    !
    subroutine PP_snd_rcv_c2(mode,array,node,COMM)
      character(*):: mode

@@ -28,7 +28,7 @@ subroutine RT_Lifetimes_merge(what,LIFE_h,LIFE_e)
  use R_lattice,      ONLY:nkibz
  use real_time,      ONLY:RT_nk,RT_bands,RT_ibz_coo
  use timing_m,       ONLY:timing
- use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_A2A,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,myid
+ use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_A2A,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
  !
  implicit none
  !
@@ -38,7 +38,7 @@ subroutine RT_Lifetimes_merge(what,LIFE_h,LIFE_e)
  !
  ! Work Space
  !
- integer          :: NC,ik,do_I_snd(nkibz),do_I_rcv(nkibz)
+ integer          :: NC,ik
  !
  NC=1
  if (what=="elph".or.what=="bose") NC=PAR_COM_PLASMA_INDEX%n_CPU
@@ -51,27 +51,16 @@ subroutine RT_Lifetimes_merge(what,LIFE_h,LIFE_e)
  !
  call timing('RT life merge (intra-k)',OPR='start')
  !
- do_I_snd=0
- do_I_rcv=0
- !
- K_loop_1: do ik=1,nkibz
+ do ik=1,nkibz
    !
-   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) then
-     do_I_rcv(ik)=myid+1
-     cycle K_loop_1
-   endif
-   !
-   do_I_snd(ik)=myid+1
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
    !
    if (PAR_COM_Xk_ibz_A2A%n_CPU>1) then
      call PP_redux_wait(LIFE_e(:,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
      call PP_redux_wait(LIFE_h(:,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
    endif
    !
- enddo K_loop_1
- !
- call PP_redux_wait(do_I_snd)
- call PP_redux_wait(do_I_rcv)
+ enddo 
  !
  call timing('RT life merge (intra-k)',OPR='stop')
  !

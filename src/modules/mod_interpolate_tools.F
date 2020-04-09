@@ -215,7 +215,9 @@ module interpolate_tools
     integer,    intent(in) :: ID
     type(QP_t), intent(in) :: SEED_QP
     !
-    integer :: i_qp,ib,ik,i_s,i_c !WS
+    ! Work Space
+    !
+    integer :: i_qp,ib,ik,i_s,i_ref(4)
     !
     do i_qp=1,SEED_QP%n_states
       !
@@ -225,24 +227,23 @@ module interpolate_tools
       !
       ik   =SEED_QP%table(i_qp,3)
       i_s  =spin(SEED_QP%table(i_qp,:))
-      i_c  =0
-      if (l_INTERP_E ) then
-        i_c=i_c+1
-        INTERP_obj(ID)%SEED(ib,ik,i_c)=real(SEED_QP%E(i_qp))
+      !
+      i_ref=0
+      if (l_INTERP_E  ) i_ref(2)=n_sp_pol
+      if (l_INTERP_dE ) i_ref(3)=i_ref(2)+n_sp_pol
+      if (l_INTERP_W  ) i_ref(4)=i_ref(3)+n_sp_pol
+      if (l_INTERP_E  ) then
+        INTERP_obj(ID)%SEED(ib,ik,i_ref(1)+i_s)=real(SEED_QP%E(i_qp))
       endif
       if (l_INTERP_dE) then
-        i_c=i_c+1
-        INTERP_obj(ID)%SEED(ib,ik,i_c)=real(SEED_QP%E(i_qp))-SEED_QP%E_bare(i_qp)
+        INTERP_obj(ID)%SEED(ib,ik,i_ref(2)+i_s)=real(SEED_QP%E(i_qp))-SEED_QP%E_bare(i_qp)
       endif
       if (l_INTERP_W ) then
-        i_c=i_c+1
-        INTERP_obj(ID)%SEED(ib,ik,i_c)=aimag(SEED_QP%E(i_qp))
+        INTERP_obj(ID)%SEED(ib,ik,i_ref(3)+i_s)=aimag(SEED_QP%E(i_qp))
       endif
       if (l_INTERP_Z ) then
-        i_c=i_c+1
-        INTERP_obj(ID)%SEED(ib,ik,i_c)=real(SEED_QP%Z(i_qp))
-        i_c=i_c+1
-        INTERP_obj(ID)%SEED(ib,ik,i_c)=aimag(SEED_QP%Z(i_qp))
+        INTERP_obj(ID)%SEED(ib,ik,i_ref(4)+i_s)=real(SEED_QP%Z(i_qp))
+        INTERP_obj(ID)%SEED(ib,ik,i_ref(4)+n_sp_pol+i_s)=aimag(SEED_QP%Z(i_qp))
       endif
     enddo
     !

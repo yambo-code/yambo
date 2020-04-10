@@ -187,13 +187,22 @@ subroutine RT_relaxation(E,k,q,Time)
      endif
    endif
    !
+ endif
+ !
+ call timing('RT relaxation (impose)',OPR='start')
+ !
+ if (l_RT_eval_lifetimes) then
+   !
    ! Conservation Rules
    !====================
    call Impose_Conservations( )
    !
  endif
  !
- if (l_initial_equilibrium) return
+ if (l_initial_equilibrium) then
+   call timing('RT relaxation (impose)',OPR='stop')
+   return
+ endif
  !
  ! SAVE, extrapolate & N/dN conservation (of the extrapolated Lifetimes)
  !======================================================================
@@ -220,6 +229,8 @@ subroutine RT_relaxation(E,k,q,Time)
  endif
  !
  if (.not.l_RT_eval_lifetimes) call Impose_Conservations( )
+ !
+ call timing('RT relaxation (impose)',OPR='stop')
  !
  contains
    !

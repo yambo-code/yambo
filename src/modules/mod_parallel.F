@@ -185,6 +185,15 @@ module parallel_m
  !
  type(PARk_str),SAVE   :: PAR_K_scheme
  !
+ ! SND & RCV plan
+ !
+ type SND_RCV_geometry
+   integer,allocatable :: SND_to_id(:)
+   integer,allocatable :: RCV_from_id(:)
+ end type
+ integer               :: N_SND_RCV_operations
+ type(SND_RCV_geometry), allocatable :: SND_RCV_op(:)
+ !
  ! Number of Bands to load
  !=========================
  !

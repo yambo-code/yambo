@@ -31,7 +31,10 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  use IO_m,           ONLY:IO_and_Messaging_switch
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use real_time,      ONLY:eval_energy,eval_entropy,l_RT_update_Energies,l_NE_with_fields,NE_time, &
-&                         l_RT_induced_field,l_RT_impose_N_dN,l_RT_impose_E,RT_is_dynamically_dephased,NE_i_time
+&                         l_RT_induced_field,l_RT_impose_N_dN,l_RT_impose_E,RT_is_dynamically_dephased,NE_i_time,&
+&                         E_E_Electron_lifetime,E_E_Hole_lifetime,E_P_El_abs_lifetime,E_P_Electron_lifetime,&
+&                         E_P_Ho_abs_lifetime,E_P_Hole_lifetime,E_PHOT_Electron_lifetime,E_PHOT_Hole_lifetime
+ use D_lattice,      ONLY:Bose_Temp
  use RT_control,     ONLY:RT_do_it
  !
  implicit none
@@ -74,6 +77,27 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    endif
    !
  case('write')
+   !
+   if (RT_is_dynamically_dephased) then
+     !
+     if (l_elel_scatt) then
+       call RT_Lifetimes_merge_inter_k("elel",E_E_Hole_lifetime)
+       call RT_Lifetimes_merge_inter_k("elel",E_E_Electron_lifetime)
+     endif
+     if (l_elph_scatt) then
+       call RT_Lifetimes_merge_inter_k("elph",E_P_Hole_lifetime)
+       call RT_Lifetimes_merge_inter_k("elph",E_P_Electron_lifetime)
+       if (Bose_Temp>0._SP) then
+         call RT_Lifetimes_merge_inter_k("bose",E_P_Ho_abs_lifetime)
+         call RT_Lifetimes_merge_inter_k("bose",E_P_El_abs_lifetime)
+       endif
+     endif
+     if (l_elphoton_scatt) then
+       call RT_Lifetimes_merge_inter_k("elgm",E_PHOT_Hole_lifetime)
+       call RT_Lifetimes_merge_inter_k("elgm",E_PHOT_Electron_lifetime)
+     endif
+     !
+   endif
    !
    ! GPL_EXCLUDE_START
    !

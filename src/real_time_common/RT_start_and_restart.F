@@ -312,8 +312,6 @@ subroutine RT_start_and_restart(E,k,q)
  !
  if (l_elph_scatt.or.l_elel_scatt) then
    !
-   call RT_Lifetimes_merging_plan( )
-   !
    call k_build_up_BZ_tables(q)
    call k_build_up_BZ_tables(k)
    !

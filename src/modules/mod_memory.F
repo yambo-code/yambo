@@ -30,7 +30,8 @@ module memory
  !
  implicit none
  !
- integer :: MEM_err                  = 0
+ character(schlen)   :: MEM_msg
+ integer             :: MEM_err = 0
  integer(kind=c_int) :: TOT_MEM_Kb_MEMSTAT 
  integer(IP)         :: MAX_MEM_Kb      = 0
  integer(IP)         :: TOT_MEM_Kb
@@ -75,8 +76,8 @@ module memory
  character(schlen)     :: MEM_shelf(N_MEM_shelf_max)
  type(MEM_lib_element) :: MEM_LIBs(N_MEM_LIBs_max)
  !
- interface MEM_dri
-   module procedure MEM_clean,MEM_error,&
+ interface MEM_count
+   module procedure &
 #ifdef _CUDA
 &                             MEM_i1_d, MEM_i2_d, MEM_i3_d, MEM_i4_d, MEM_i5_d,             &
 &                             MEM_r1_d, MEM_r2_d, MEM_r3_d, MEM_r4_d, MEM_r5_d,             &
@@ -95,7 +96,7 @@ module memory
 &                             MEM_l1,  MEM_l2,  MEM_l3,  MEM_l4,  MEM_l5,  MEM_l6,          &
 &                             MEM_lp1,          MEM_lp3,                                    &
 &                             MEM_ch1,          MEM_ch3
- end interface MEM_dri
+ end interface MEM_count
  !
  contains
    !
@@ -137,17 +138,6 @@ module memory
      M2%kind       = M1%kind
      M2%size       = M1%size
      M2%composed   = M1%composed
-   end subroutine
-   !
-   subroutine MEM_error(name)
-     character(*)::name
-     call MEM_manager_error(name)
-   end subroutine
-   !
-   subroutine MEM_clean(name,N)
-     character(*)::name
-     integer(IPL)::N
-     call MEM_manager_free(name,N)
    end subroutine
    !
    subroutine MEM_i1(name,i)

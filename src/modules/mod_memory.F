@@ -76,6 +76,15 @@ module memory
  character(schlen)     :: MEM_shelf(N_MEM_shelf_max)
  type(MEM_lib_element) :: MEM_LIBs(N_MEM_LIBs_max)
  !
+ interface
+   !
+   subroutine MEM_global_mesg(what,HOST_SIZE)
+    character(*), intent(in) :: what
+    integer,      intent(in) :: HOST_SIZE(:)
+   end subroutine MEM_global_mesg
+   !
+ end interface
+ !
  interface MEM_count
    module procedure &
 #ifdef _CUDA

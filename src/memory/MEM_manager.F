@@ -211,18 +211,21 @@ subroutine MEM_free(what,Sz)
  !
 end subroutine MEM_free
 !
-subroutine MEM_global_mesg(what)
+subroutine MEM_global_mesg(what,HOST_SIZE)
  !
  use parallel_m,   ONLY:host_name
+ use stderr,       ONLY:intc
  use LIVE_t,       ONLY:LIVE_message
  !
  implicit none
  !
  character(*), intent(in) :: what
+ integer,      intent(in) :: HOST_SIZE(:)
  !
  ! Error Message
  !===============
- call LIVE_message("Parallel distribution of "//what//" on HOST "//trim(host_name))
+ call LIVE_message("Parallel distribution of "//what//" on HOST "//trim(host_name)//&
+&                  " with size "//trim(intc(product(HOST_SIZE))) )
  call MEM_error("GLOBAL_"//what)
  !
 end subroutine MEM_global_mesg

@@ -36,7 +36,7 @@ subroutine K_blocks(iq)
  !end type BS_block
  !
  use pars,         ONLY:cZERO,SP
- use parallel_m,   ONLY:PAR_IND_T_ordered,PP_redux_wait
+ use parallel_m,   ONLY:PAR_IND_T_ordered,PP_redux_wait,PAR_COM_HOST
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim
  use com,          ONLY:msg
@@ -45,6 +45,10 @@ subroutine K_blocks(iq)
 #include<memory.h>
  !
  integer, intent(in)  :: iq
+ !
+ ! YAMBO_PAR_ALLOC
+ !
+ integer :: HOST_SIZE(2),LOCAL_SIZE(2)
  !
  ! Work Space
  !
@@ -68,7 +72,8 @@ subroutine K_blocks(iq)
      !
      do i_block=1,n_new_blocks
         iB = n_BS_blks + i_block
-        YAMBO_ALLOC(BS_blk(iB)%mat,(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+        YAMBO_PAR_ALLOC2(BS_blk(iB)%mat,(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/))
+        !AMBO_PAR_ALLOC(BS_blk(iB)%mat,(/100000000,100000000/))
         BS_blk(iB)%mat=cZERO
         allocate(BS_blk(iB)%done(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
         bs_blk(ib)%done(:,:)="f"

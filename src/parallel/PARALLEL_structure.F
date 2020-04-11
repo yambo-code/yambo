@@ -47,8 +47,6 @@ subroutine PARALLEL_structure(n_elements,ROLE)
  integer, volatile :: i_chain_lim(2)
  logical     ::USER_structure_is_ok
  character(schlen) ::USER_structure_msg
- integer     :: my_dev
-
  !
  USER_structure_is_ok=.TRUE.
  !
@@ -151,6 +149,10 @@ subroutine PARALLEL_structure(n_elements,ROLE)
    tmp_comm_inter = INTER_CHAIN(i_chain)%COMM
    !
  enddo
+ !
+!#ifdef _CUDA
+! call assignDevice(mycuda_dev)
+!#endif
  !
 #endif
  !

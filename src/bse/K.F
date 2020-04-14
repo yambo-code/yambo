@@ -236,6 +236,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (l_BSE_PAR_incomplete) then
    ! qindx_B is allocated and loaded again at each q-point
+   if(iq/=1) call PARALLEL_SETUP_K_scheme("K") ! at q=1 distribution is done in DIPOLE_IO
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=qindx_ID)
    io_qindx_err=io_QINDX(Xk,q,qindx_ID)
  endif

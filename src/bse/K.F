@@ -242,7 +242,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
  qindx_tmp=qindx_B_init(qindx_ID)
- i_pmq_bz_last=0;i_kmq_bz_last=0
+ i_p_bz_last=0   ; i_k_bz_last=0
+ i_pmq_bz_last=0 ; i_kmq_bz_last=0
  !
  ! Screened interaction
  !======================

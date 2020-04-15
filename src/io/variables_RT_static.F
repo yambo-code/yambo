@@ -54,8 +54,6 @@ integer function variables_RT_static(ID,what)
  integer            :: ID
  character(*)       :: what
  !
- integer, external :: io_descriptors
- !
  integer, external  ::io_descriptors
  !
  integer               :: i1

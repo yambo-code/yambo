@@ -25,7 +25,7 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  !
  use pars,           ONLY:SP
  use com,            ONLY:of_open_close
- use YPPm,           ONLY:BANDS_steps,CIRCUIT_k,USER_k,n_path_pts,PtsPath
+ use YPPm,           ONLY:BANDS_path,BANDS_steps,CIRCUIT_k,USER_k
  use real_time,      ONLY:RT_nk
  use YPP_real_time,  ONLY:RT_conf,GreenF_T_and_W,l_RT_G_two_times
  use electrons,      ONLY:levels
@@ -58,14 +58,11 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  call section('=',"Loading special Points for the "//trim(lattice)//" lattice")
  !============================================================================= 
  !
- PtsPath="  "
- n_path_pts=BANDS_steps
- !
  call k_ibz2bz(kpt,'iku',.TRUE.)
  !
  call k_special(.FALSE.)
  !
- call k_define_circuit(kpt)
+ call k_circuit_driver( BANDS_path, BANDS_steps )
  !
  call section('=','Interpolation@work: Circuit')
  !============================================================================= 

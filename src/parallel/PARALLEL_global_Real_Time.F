@@ -277,6 +277,9 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  if (l_eval_collisions) then
    call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_QP_cpu)
  else
+   !
+   ! I think this should be CONDITION=PAR_COM_Xk_ibz_INDEX%CPU_id==0 , i.e. HEAD_k_CPU
+   !
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%my_CHAIN==1.or.&
 &                                                   PAR_COM_Xk_ibz_INDEX%n_CPU==ncpu)
  endif

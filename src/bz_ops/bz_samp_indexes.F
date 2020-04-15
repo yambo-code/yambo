@@ -220,9 +220,6 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  call qindx_alloc('XB')
  !
- qindx_X=0
- if ( bse_scattering) qindx_B=0
- !
  ! X indexes
  !
  ! qindx_X(iq,ikbz,1)=okbz
@@ -322,9 +319,6 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  local_zero=1.E-4_SP
  !
  call qindx_alloc('SC')
- !
- qindx_S=0
- if (coll_scattering) qindx_C=0
  !
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo

@@ -38,6 +38,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
 &                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BSS_alloc
  use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_T_grp,BS_K_coupling
  use timing_m,       ONLY:timing
+ use LIVE_t,         ONLY:live_timing
  !
 #if defined _KERR
  use drivers,        ONLY:l_kerr
@@ -77,6 +78,8 @@ subroutine K_components_folded_in_serial_arrays(iq)
 #if defined _PL
    call BSS_PL_alloc( )
 #endif
+   !
+   if(BS_nT_grps>0) call live_timing("Folding BSE Kernel",PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1))
    !
    ! FILLING BSS_eh_* and BSS_dipoles
    !==================================
@@ -123,7 +126,10 @@ subroutine K_components_folded_in_serial_arrays(iq)
 #endif
        !
      enddo
+     call live_timing(steps=1)
    enddo
+   !
+   if(BS_nT_grps>0) call live_timing()
    !
    ! ALL 2 ALL
    !===========

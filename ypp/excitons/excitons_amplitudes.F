@@ -122,7 +122,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
 
    call msg('o weight amp',"#")
    call msg('o weight amp',&
-&   '# Electron-Hole pairs that contributes to Excitonic State '//&
+&   '# Electron-Hole pairs that contribute to Excitonic State '//&
 &   trim(intc(i_l_grp))//' for iq='//trim(intc(iq))//' more than '// trim(real2ch(EXCITON_weight_treshold*100)) //'%')
    call msg('o weight amp','#')
    !

@@ -32,19 +32,15 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  !
  use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_by_V_plus_V
-#ifdef _CUDA
- use X_m,           ONLY:rhotw_save_d,rhotw_save2_d
-#endif
  use DIPOLES,       ONLY:DIPOLE_t,DIP_rotated
  use X_m,           ONLY:X_t,X_poles_tab,l_X_terminator,X_cols,X_rows
+ use X_m,           ONLY:rhotw_save_d,rhotw_save2_d
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N
  use collision_el,  ONLY:elemental_collision
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G,q0_def_norm
-#ifdef _CUDA
  use R_lattice,     ONLY:g_rot_d,G_m_G_d
-#endif
  use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
  use deviceXlib_m
@@ -59,10 +55,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  type(X_t),    intent(in) :: X
  type(DIPOLE_t),intent(in):: Dip
  integer,      intent(in) :: i_cg,iq
- complex(SP),  intent(out):: Xo_res(X_rows(1):X_rows(2),X_cols(1):X_cols(2))
-#ifdef _CUDA
-  attributes(device) :: Xo_res
-#endif
+ complex(SP),  intent(out) DEV_ATTRIBUTE :: Xo_res(X_rows(1):X_rows(2),X_cols(1):X_cols(2))
  !
  ! Work sapce
  !

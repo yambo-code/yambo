@@ -62,7 +62,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  l_BSE_kernel_complete=.false.
  l_BSE_restart=.false.
  !
- if (write_is_on(ID).and..not.io_BS_K) then
+ if (write_is_on(ID).and.io_BS_K) then
    if (.not.file_exists(trim(full_db_name))) then
      call msg("s","BSE file not found. Creating an empty one.")
      l_BSE_restart=.false.
@@ -95,7 +95,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  io_BS=variables_BS_more(ID,'start')
  !
- if(read_is_on(ID).and..not.io_BS_K) then
+ if(read_is_on(ID).and.io_BS_K) then
    if(l_BSE_kernel_complete) then
      call msg("s","Complete BSE file found in "//trim(io_file(ID))//". Loading kernel.")
    else

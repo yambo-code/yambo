@@ -364,9 +364,13 @@ contains
    !
    do i=1,np
      E(i) = sqrt(E(i))
-     if(real(E(i),SP)<0._SP) then 
-       E(i) = -E(i)
-     endif
+     !if(real(E(i),SP)<0._SP) then 
+     !  E(i) = -E(i)
+     !endif
+!    Dario: to be tested later
+    if(real(E(i),SP)*aimag(E(i))>0._SP) then 
+      E(i) = complex( abs(real(E(i),SP)), -abs(aimag(E(i)))  )
+    endif
      !
      if(abs(E(i))>epsilon(1._SP)) R(i) = -R(i)/(2._SP*E(i))
      !

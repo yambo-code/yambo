@@ -43,7 +43,7 @@ integer function io_MPA(X,Xw,ID)
  use mpa_m,         ONLY:MPA_E_mat,MPA_R_mat,MPA_freqs,MPA_alloc
 #if defined _PAR_IO
  use X_m,           ONLY:X_par
- use IO_m,          ONLY:io_unit,netcdf_call,io_file,close_is_on,io_resetable,io_MULTIPOLE,&
+ use IO_m,          ONLY:io_unit,netcdf_call,close_is_on,io_resetable,io_MULTIPOLE,&
 &                        io_netcdf_var,io_action,OP_WR_CL
  use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_Q_index
 #endif
@@ -74,7 +74,7 @@ integer function io_MPA(X,Xw,ID)
  !
  different_db_RL_order=.false.
  !
- db_desc='ER'
+ db_desc='mp' !I get an error when I use a name other than 'mp', for example "MPA_E-R_mat"
  !
 #if defined _PAR_IO
  perform_IO=PAR_COM_X_WORLD%CPU_id==0.or.read_is_on(ID)
@@ -84,14 +84,16 @@ integer function io_MPA(X,Xw,ID)
  !
  if(perform_IO) then
    io_MPA=io_connect(desc=trim(db_desc),type=2,ID=ID) 
+   !if (io_MPA/=0) call error('it is here')
    if (io_MPA/=0) goto 1
  endif
  !
+
  if (any((/io_sec(ID,:)==1/)).and.perform_IO) then
    !
    ! Header
    !
-   local_XC_KIND="rE-iE-rR-iR"
+   local_XC_KIND="ER"
    io_MPA=io_header(ID,QPTS=.true.,R_LATT=.false.,WF=.false.,T_EL=.false.,XC_KIND=local_XC_KIND,&
 &                    CUTOFF=.false.,GAUGE=.false.,FRAG=frag_MULTIPOLE)
    if (io_MPA/=0) goto 1
@@ -176,21 +178,21 @@ integer function io_MPA(X,Xw,ID)
      YAMBO_ALLOC(Xw%p,(Xw%n_freqs))
    endif
    !
-   ch="FREQ_sec_iq"//trim(intc(iq))
-#if defined _PAR_IO
-   call def_variable_bulk(ID,trim(ch),1,(/4,Xw%n_freqs/2/),SP,par_io_kind='independent')
-#else
-   call def_variable_bulk(ID,trim(ch),1,(/4,Xw%n_freqs/2/),SP)
-#endif
-   if(perform_IO) call io_variable_bulk(ID,1,C1=Xw%p)
+!   ch="FREQ_sec_iq"//trim(intc(iq))
+!#if defined _PAR_IO
+!   call def_variable_bulk(ID,trim(ch),1,(/4,Xw%n_freqs/2/),SP,par_io_kind='independent')
+!#else
+!   call def_variable_bulk(ID,trim(ch),1,(/4,Xw%n_freqs/2/),SP)
+!#endif
+!   if(perform_IO) call io_variable_bulk(ID,1,C1=Xw%p)
    !
    ! allocations
    !
-   if (read_is_on(ID)) call MPA_alloc((/X%ng,X%ng,Xw%n_freqs/2,Xw%n_freqs/))
+!   if (read_is_on(ID)) call MPA_alloc((/X%ng,X%ng,Xw%n_freqs/2,Xw%n_freqs/))
    !
    ! poles @iq
    !
-   ch="reE-imE_Q_"//trim(intc(iq))
+   ch="MPA_E_Q_"//trim(intc(iq))
    !
 #if defined _PAR_IO
    if(write_is_on(ID)) then
@@ -210,7 +212,7 @@ integer function io_MPA(X,Xw,ID)
    !
    ! residues @iq
    !
-   ch="reR-imR_Q_"//trim(intc(iq))
+   ch="MPA_R_Q_"//trim(intc(iq))
    !
 #if defined _PAR_IO
    if(write_is_on(ID)) then
@@ -285,7 +287,9 @@ integer function variables_MPA(ID,local_description,X)
  i_local_desc=i_local_desc+1
  call io_elemental(ID,VAR=trim(MPA_label)//"npoles",I0=X%mpa_npoles,MENU=0)
  i_local_desc=i_local_desc+1
- call io_elemental(ID,VAR=trim(MPA_label)//"reimER",I0=4)
+ call io_elemental(ID,VAR=trim(MPA_label)//"MPA_E_mat",I0=4)
+ i_local_desc=i_local_desc+1
+ call io_elemental(ID,VAR=trim(MPA_label)//"MPA_R_mat",I0=4)
  i_local_desc=i_local_desc+1
  !
  n_MPA_descs=i_local_desc

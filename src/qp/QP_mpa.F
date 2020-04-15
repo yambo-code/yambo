@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DAL, AF, AM
+! Authors (see AUTHORS file for details): DALV, AF, AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -63,7 +63,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  type(bz_samp)::Xk,k,q
  type(X_t)    ::X
  type(QP_t)   ::qp
- type(w_samp) ::Xw,Xw_MPA
+ type(w_samp) ::Xw!,Xw_MPA
  integer      ::GW_iter
  !
  ! Work Space
@@ -177,12 +177,12 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! MPA DB I/O
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID2)
- io_err=io_MPA(X,Xw_MPA,ID2)
+ io_err=io_MPA(X,Xw,ID2)
  if (io_err<0.and.io_MULTIPOLE) call error('Incomplete and/or broken MPA/Poles and Residues database')
  !
  ! MPA workspace
  !
- if (io_MULTIPOLE) call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/))
+ if (io_MULTIPOLE) call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/)) 
  !
  call PP_redux_wait
  !
@@ -245,7 +245,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2)
        endif
        !
-       io_err=io_MPA(X,Xw_MPA,ID2)
+       io_err=io_MPA(X,Xw,ID2)
        !
        call deliver_IO_error_message(io_err,'MPA/PolRes',STOP_it=.TRUE.)
        !

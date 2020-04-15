@@ -69,7 +69,7 @@ integer function io_X(X,Xw,ID)
    return
  endif
  !
- ! I assume that he RL ordering used to build X is not different
+ ! I assume that the RL ordering used to build X is not different
  ! from the one in DB1
  !
  different_db_RL_order=.false.

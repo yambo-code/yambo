@@ -47,7 +47,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  ! Work space
  !
  integer   :: i_sp_pol,ik_bz,ik,ik_rand,i1,ib
- real(SP)  :: el_dos_tmp(n_sp_pol),f_occ,dos_norm,E,proj_fac(n_spin)
+ real(SP)  :: el_dos_tmp(n_sp_pol),f_occ,dos_norm,E,proj_fac(n_spin),DOS_Broadening_
  logical   :: ik_ibz_done(Xk%nibz),USE_Eo_,USE_the_DbGd_,USE_occ,USE_WFs,USE_PDOS
  !
  dos_value=0._SP
@@ -66,6 +66,8 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  !
  USE_PDOS=.FALSE.
  if (present(PDOS_fac))        USE_PDOS=associated(PDOS_fac)
+ !
+ DOS_broadening_=DOS_broadening
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -90,8 +92,9 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
          do i1=1,BZ_DbGd_nkpt(ik_bz)
            ik_rand=BZ_DbGd_table(ik_bz,i1,1)
            if (USE_occ) f_occ=Xen%f_DbGd(ib,ik_rand,i_sp_pol)
+           if (allocated(Xen%W_DbGd)) DOS_broadening_=DOS_broadening+abs(Xen%W_DbGd(ib,ik_rand,i_sp_pol))
            el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*&
-&                      Fermi_fnc_derivative(Xen%E_DbGd(ib,ik_rand,i_sp_pol)-dos_E,DOS_broadening)
+&                      Fermi_fnc_derivative(Xen%E_DbGd(ib,ik_rand,i_sp_pol)-dos_E,DOS_broadening_)
          enddo
          ! 
        else
@@ -102,7 +105,8 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
          endif
          !
          if (USE_occ ) f_occ=Xen%f(ib,ik,i_sp_pol)
-         el_dos_tmp(i_sp_pol)=f_occ*Xk%weights(ik)*Fermi_fnc_derivative(E-dos_E,DOS_broadening)
+         if (allocated(Xen%W)) DOS_broadening_=DOS_broadening+abs(Xen%W(ib,ik,i_sp_pol))
+         el_dos_tmp(i_sp_pol)=f_occ*Xk%weights(ik)*Fermi_fnc_derivative(E-dos_E,DOS_broadening_)
          !
        endif
        !

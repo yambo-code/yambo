@@ -75,6 +75,9 @@ subroutine XCo_report(qp,E,k)
  YAMBO_ALLOC(qp%E,(qp%n_states))
  YAMBO_ALLOC(qp%E_bare,(qp%n_states))
  !
+ call msg('nr',' Local XC kind (lXC) ',trim(Vxc_kind))
+ call msg('r',' Non-Local XC kind (nlXC) ',trim(Vnlxc_kind))
+ !
  ik=-1
  do i_qp=1,QP_n_states
    !
@@ -95,9 +98,7 @@ subroutine XCo_report(qp,E,k)
      ik=ikp
      loc_fmt =' '
      nloc_fmt=' '
-     if (l_Vxc)    loc_fmt ='+  Local '//trim(Vxc_kind)//' (lXC)'
-     if (l_Vnl_xc) nloc_fmt='Non-Local '//trim(Vnlxc_kind)//' (nlXC)'
-     call msg('nr',trim(nloc_fmt)//trim(loc_fmt)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
+     call msg('nr',' Corrections @ K ['//trim(intc(ik))//'] ',' [eV] ')
    endif
    !
    ch_spin=' '

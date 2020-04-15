@@ -61,7 +61,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  l_BSE_kernel_complete=.false.
  l_BSE_restart=.false.
  !
- if (write_is_on(ID).and..not.io_BS_K) then
+ if (write_is_on(ID).and.io_BS_K) then
    if (.not.file_exists(trim(full_db_name))) then
      call msg("s","BSE file not found. Creating an empty one.")
      l_BSE_restart=.false.
@@ -100,7 +100,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  if(io_var)  call io_variable_elemental(ID,VAR=" Kernel complete          :",&
               &                          DB_L0=l_BSE_kernel_complete,L0=l_BSE_kernel_complete)
  !
- if(read_is_on(ID).and..not.io_BS_K) then
+ if(read_is_on(ID).and.io_BS_K) then
    if(l_BSE_kernel_complete) then
      call msg("s","Complete BSE file found in "//trim(io_file(ID))//". Loading kernel.")
    else
@@ -182,7 +182,7 @@ subroutine io_BS_PAR_free(ID,l_kernel_complete)
  BS_K_has_been_calculated_loaded=l_kernel_complete
  l_BSE_kernel_complete          =l_kernel_complete
  !
- if(l_kernel_complete.and.write_is_on(ID).and..not.io_BS_K) then
+ if(l_kernel_complete.and.write_is_on(ID).and.io_BS_K) then
    call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0,par_io_kind="independent")
    if(master_cpu) call io_variable_elemental(ID,VAR=" Kernel complete          :",L0=l_BSE_kernel_complete)
  endif

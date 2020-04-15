@@ -24,6 +24,7 @@
 subroutine setup(en,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,pi,schlen
+ use drivers,        ONLY:l_setup
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:wf_ng,wf_ncx
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,&
@@ -35,7 +36,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed
- use com,            ONLY:msg
+ use com,            ONLY:msg,verbose
  use stderr,         ONLY:intc,real2ch
  use IO_m,           ONLY:REP,DUMP,NONE,io_control,OP_RD_CL
  use vec_operate,    ONLY:c2a,define_b_and_DL_vol
@@ -105,13 +106,13 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call msg('r','Direct lattice vectors',(/' A[ 1 ]  ',' A[ 2 ]  ',' A[ 3 ]  '/))
  tmp_V=(/a(1,1)/alat(1),a(1,2)/alat(2),a(1,3)/alat(3)/)
  call msg('r',' A[ 1 ]',tmp_V, ' [iru] ')
- call msg('r','        ',a(1,:),' [cc] ')
+ if(verbose.or.l_setup) call msg('r','        ',a(1,:),' [cc] ')
  tmp_V=(/a(2,1)/alat(1),a(2,2)/alat(2),a(2,3)/alat(3)/)
  call msg('r',' A[ 2 ]',tmp_V, ' [iru] ')
- call msg('r','        ',a(2,:),' [cc] ')
+ if(verbose.or.l_setup) call msg('r','        ',a(2,:),' [cc] ')
  tmp_V=(/a(3,1)/alat(1),a(3,2)/alat(2),a(3,3)/alat(3)/)
  call msg('r',' A[ 3 ]',tmp_V, ' [iru] ')
- call msg('r','        ',a(3,:),' [cc] ')
+ if(verbose.or.l_setup) call msg('r','        ',a(3,:),' [cc] ')
  !
  RL_vol=(2._SP*pi)**3/DL_vol
  call msg('nr','Recip. lattice volume ',RL_vol,'[a.u.]')
@@ -119,15 +120,15 @@ subroutine setup(en,Xen,Ken,k,Xk)
  tmp_V=b(1,:)
  call c2a(b_in=b,v_in=tmp_V,mode='kc2i')
  call msg('r',' B[ 1 ]',tmp_V, ' [iku] ')
- call msg('r','        ',b(1,:),' [cc] ')
+ if(verbose.or.l_setup) call msg('r','        ',b(1,:),' [cc] ')
  tmp_V=b(2,:)
  call c2a(b_in=b,v_in=tmp_V,mode='kc2i')
  call msg('r',' B[ 2 ]',tmp_V, ' [iku] ')
- call msg('r','        ',b(2,:),' [cc] ')
+ if(verbose.or.l_setup) call msg('r','        ',b(2,:),' [cc] ')
  tmp_V=b(3,:)
  call c2a(b_in=b,v_in=tmp_V,mode='kc2i')
  call msg('r',' B[ 3 ]',tmp_V, ' [iku] ')
- call msg('r','        ',b(3,:),' [cc] ')
+ if(verbose.or.l_setup) call msg('r','        ',b(3,:),' [cc] ')
  !
  ! ZERO's SETUP
  !
@@ -218,23 +219,26 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! the map is built in G_shells_finder
  !
  if (inv_index>0) call eval_minus_G()
- !             'Shells units      '
+ !
  call msg('r','G-vecs. in shell  ',' [ Number ] ')
- !call msg('r' ,'Shells NG         ',' [ list ]')
+ !
  do i1=1,n_g_shells,9
    !dumb_ch=' [SNG_'//trim(intc(i1))//'-'//trim(intc(min(i1+8,n_g_shells)))//']'
-   if (i1==800 .and. i1<n_g_shells-800) call msg('r',"...")
-   if (i1> 800 .and. i1<n_g_shells-800) cycle
+   if (.not.(l_setup.or.verbose)) then
+     if (i1==46 .and. i1<n_g_shells-46) call msg('r',"...")
+     if (i1> 46 .and. i1<n_g_shells-46) cycle
+   endif
    !call msg('r',trim(dumb_ch),ng_in_shell(i1:min(i1+8,n_g_shells)) )
    call msg('r',' ',ng_in_shell(i1:min(i1+8,n_g_shells)) )
  enddo
  !
  call msg('nr','Shells energy     ',' [ mHa ] ')
- !call msg('r' ,'Shells E          ',' [ list ]')
  do i1=1,n_g_shells,9
    !dumb_ch=' [SE_'//trim(intc(i1))//'-'//trim(intc(min(i1+8,n_g_shells)))//']'
-   if (i1==800 .and. i1<n_g_shells-800) call msg('r',"...")
-   if (i1> 800 .and. i1<n_g_shells-800) cycle
+   if (.not.(l_setup.or.verbose)) then
+     if (i1==46 .and. i1<n_g_shells-46) call msg('r',"...")
+     if (i1> 46 .and. i1<n_g_shells-46) cycle
+   endif
    call msg('r',' ',E_of_shell(i1:min(i1+8,n_g_shells))*1000._SP)
  enddo
  !
@@ -267,7 +271,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    if (i_err/=0) call error('Impossible to determine the K-grid lattice')
  endif
  !
- call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'K',.TRUE.,.FALSE.)
+ if(l_setup.or.verbose) call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'K',.TRUE.,.FALSE.)
  ! 
  ! E_dbgd
  !
@@ -356,7 +360,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Energies report
  !
- call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.FALSE.,.TRUE.)
+ if(l_setup.or.verbose) call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.FALSE.,.TRUE.)
  !
  ! Once the occupations have been evaluated I dump Xen in Ken
  !

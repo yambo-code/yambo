@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH DS
@@ -27,12 +27,10 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   use etsf_io
   use etsf_io_low_level
   use etsf_data,             only : dims,ETSF_kind
-  use pars,                  only : SP,cZERO
+  use pars,                  only : SP
   use vec_operate,           only : sort
-  use com,                   only : msg, error
-  use electrons,             only : n_bands, n_sp_pol, n_spinor
-  use R_lattice,             only : nkibz
-  use wave_func,             only : wf_ncx,wf_nc_k, wf_igk,wf_nb_io,wf_nb_io_groups
+  use electrons,             only : n_bands,  n_spinor
+  use wave_func,             only : wf_ncx,wf_nc_k, wf_igk,wf_nb_io
   !
   implicit none
   !
@@ -45,11 +43,10 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   ! 
   ! Work Space
   !
-  integer        :: ib, ierr, npwk, ik, ig, ic, i_spinor, ireal, nb_to_read
-  integer        :: start(6), count(6), ncvarid
+  integer        :: ib,   ik, ig, ic, i_spinor,  nb_to_read
+  integer        :: start(6), count(6)
   integer        :: wf_igk_indx(wf_nc_k(ikibz))
   !
-  type(etsf_main)   :: main_group
 !
 !---------------------------------------------------------------------*
 !    Main data                                                        *

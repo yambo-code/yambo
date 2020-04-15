@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -27,7 +27,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  use pars,           ONLY:DP,SP,schlen,cZERO_DP
  use R_lattice,      ONLY:nkibz
  use LIVE_t,         ONLY:live_timing
- use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,manage_action,NONE,DUMP,LOG,RD_CL_IF_END
  use RT_control,     ONLY:RT_control_alloc,RT_control_free,J_cache,P_cache
  use real_time,      ONLY:NE_steps,NE_i_time,&
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
@@ -43,7 +43,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  ! Work Space
  !
  real(SP)           :: TIME
- integer            :: io_OBS,ID,i_f,io_G,COM_here,ik,NE_steps_save,i_time
+ integer            :: io_OBS,ID,IO_ACT,i_f,io_G,COM_here,ik,NE_steps_save,i_time
  integer, external  :: io_RT_components
  character(schlen)  :: mesg_
  !
@@ -77,7 +77,8 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
      if (io_G/=0) return
      !
      do ik=1,nkibz
-       call io_control(ACTION=RD_CL_IF_END,COM=COM_here,SEC=(/ik+1,1/),MODE=DUMP,ID=ID)
+       IO_ACT=manage_action(RD_CL_IF_END,ik,1,nkibz)
+       call io_control(ACTION=IO_ACT,COM=COM_here,SEC=(/ik+1,1/),MODE=DUMP,ID=ID)
        io_G=io_RT_components('G',ID)
      enddo
      !
@@ -141,7 +142,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  !
  NE_steps=NE_steps_save
  !
- call live_timing('I/O'//trim(mesg_)//':',RT_conf%T_n_steps)
+ call live_timing('I/O'//trim(mesg_)//'',RT_conf%T_n_steps)
  !
  do i_time=1,RT_conf%T_n_steps
    !

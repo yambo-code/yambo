@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -47,7 +47,7 @@ subroutine RT_start_and_restart(E,k,q)
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,l_RT_is_WFfree, &
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
-&                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,RT_E_and_k,&
+&                         Gr_kind,l_RT_uses_E_DbGd,RT_E_and_k,&
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
@@ -55,12 +55,14 @@ subroutine RT_start_and_restart(E,k,q)
 &                         l_velocity_gauge_corr
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
- use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,&
+&                         manage_action,REP,VERIFY,NONE
+ use descriptors,    ONLY:IO_desc_reset,IO_desc_add
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
  use H_interfaces,   ONLY:V_real_space_to_H
  use parallel_m,     ONLY:PP_redux_wait
- use stderr,         ONLY:real2ch
+ use RT_output_m,    ONLY:RT_desc,TIME_STEP_desc,Gr_desc
  !
 #include<memory.h>
  !
@@ -69,7 +71,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Work Space
  !
- integer :: i_sp_pol,ik,COM_,io_G,io_OBS,io_THETA,io_REF,&
+ integer :: i_sp_pol,ik,COM_,IO_ACT,io_G,io_OBS,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  integer, external :: io_RT_components
  !
@@ -190,7 +192,8 @@ subroutine RT_start_and_restart(E,k,q)
 #else
    !
    do ik=1,RT_nk
-     call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
+     IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,FIRST=1,LAST=RT_nk)
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
      io_G=io_RT_components('G',ID(5))
    enddo
    !
@@ -206,7 +209,8 @@ subroutine RT_start_and_restart(E,k,q)
    !
    if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
      do ik=1,RT_nk
-       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(7))
+       IO_ACT=manage_action(RD_CL_IF_END,ik,FIRST=1,LAST=RT_nk)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(7))
        io_THETA=io_RT_components('THETA',ID(7))
        enddo
    endif
@@ -234,26 +238,36 @@ subroutine RT_start_and_restart(E,k,q)
    !
    call msg( 'nr','---RESTART report---')
    !
-   call msg('s','[RESTART] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
-   call msg('r',  'Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
-   call msg('r',  'Time step                     [fs]:',RT_dyn_step*AUT2FS)
+   call msg('s','[RESTART] Number of steps done    [o/o]',real(NE_i_time)/real(NE_steps)*100._SP)
+   call msg('r',  'Number of steps done    [o/o]',real(NE_i_time)/real(NE_steps)*100._SP)
+   call msg('r',  'Time step                     [fs]',RT_dyn_step*AUT2FS)
    !
-   call msg('r',  'dT Update Interval            [fs]:',NE_time_step_update_jump*AUT2FS)
-   call msg('r',  'Lifetimes inter/intr times    [fs]:',RT_life_extrap_times*AUT2FS)
-   call msg('r',  'T between I/O of J,P,f        [fs]:',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
-   call msg('r',  '          I/O of   GFs        [fs]:',GF_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  'dT Update Interval            [fs]',NE_time_step_update_jump*AUT2FS)
+   call msg('r',  'Lifetimes inter/intr times    [fs]',RT_life_extrap_times*AUT2FS)
+   call msg('r',  'T between I/O of J,P,f        [fs]',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  '          I/O of   GFs        [fs]',GF_RT_IO_t%INTERVAL_time*AUT2FS)
    !
    OUTPUT_RT_IO_t%INTERVAL_time  = max(TIME_adjust(OUTPUT_RT_IO_t%INTERVAL_time,RT_dyn_step),RT_dyn_step)
    OUTPUT_RT_IO_t%INTERVAL_steps = nint(OUTPUT_RT_IO_t%INTERVAL_time/RT_step)
    OUTPUT_RT_IO_t%last_point     = NE_i_time - OUTPUT_RT_IO_t%INTERVAL_steps
    !
-   call msg('r',  '               outputs        [fs]:',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  '               outputs        [fs]',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
    !
  endif
  !
  ! GPL_EXCLUDE_END
  !
- if (.not.RESTART) NE_time=0._SP
+ if (.not.RESTART) then
+   !
+   NE_time=0._SP
+   !
+   ! Zeroing DESCs
+   !===============
+   call IO_desc_reset(RT_desc)
+   call IO_desc_reset(Gr_desc)
+   call IO_desc_reset(TIME_STEP_desc)
+   !
+ endif
  !
  if (l_NE_dynamics) NE_i_time=NE_i_start_time
  !
@@ -265,11 +279,12 @@ subroutine RT_start_and_restart(E,k,q)
  ! Pseudo potential terms needed for velocity gauge
  !==================================================
  !
+ ! GPL_EXCLUDE_START
  if (l_velocity_gauge_corr) then
    call Pseudo_KB_G_to_R_space(k,E)
    call Pseudo_Hamiltonian(k,E,.true.)
  endif
- !
+ ! GPL_EXCLUDE_END
  !
  call msg('r','')
  !
@@ -293,9 +308,6 @@ subroutine RT_start_and_restart(E,k,q)
  ! Retarded Green Functions matrix
  ! ===============================
  !
- N_Gr_descs=1
- Gr_description(1)=' [Gr] Retarded Green`s function  : none'
- !
  ! GPL_EXCLUDE_START
  !
  if (l_elph_scatt.or.l_elel_scatt) then
@@ -303,20 +315,14 @@ subroutine RT_start_and_restart(E,k,q)
    call k_build_up_BZ_tables(q)
    call k_build_up_BZ_tables(k)
    !
-   N_Gr_descs=5
+   call IO_desc_add(Gr_desc,'s',"[Gr] Retarded Green`s function",S=trim(Gr_kind))
+   call IO_desc_add(Gr_desc,'r',"[Gr] Damping (c) Energy ref",R= (/QP_ctl_user(3,1)%Wc_E_ref*HA2EV/),term="ev")
+   call IO_desc_add(Gr_desc,'r',"[Gr] Damping (c)",SZ=3,R=QP_ctl_user(3,1)%Wc(1:3),term="ev,adim,ev^-1")
+   call IO_desc_add(Gr_desc,'r',"[Gr] Damping (v) Energy ref",R= (/QP_ctl_user(3,1)%Wv_E_ref*HA2EV/),term="ev")
+   call IO_desc_add(Gr_desc,'r',"[Gr] Damping (v)",SZ=3,R=QP_ctl_user(3,1)%Wv(1:3),term="ev,adim,ev^-1")
    !
-   Gr_description(1)=' [Gr] Retarded Green`s function  : '//trim(Gr_kind)
-   Gr_description(2)=' [Gr] Damping (c) Energy ref [eV]: '//trim(real2ch(QP_ctl_user(3,1)%Wc_E_ref*HA2EV))
-   Gr_description(3)=' [Gr] Damping (c) [eV,adim,eV^-1]: '//&
-&                    trim(real2ch(QP_ctl_user(3,1)%Wc(1)))//' '//&
-&                    trim(real2ch(QP_ctl_user(3,1)%Wc(2)))//' '//&
-&                    trim(real2ch(QP_ctl_user(3,1)%Wc(3)))
-   Gr_description(4)=' [Gr] Damping (v) Energy ref [eV]: '//trim(real2ch(QP_ctl_user(3,1)%Wv_E_ref*HA2EV))
-   Gr_description(5)=' [Gr] Damping (v) [eV,adim,eV^-1]: '//&
-&                    trim(real2ch(QP_ctl_user(3,1)%Wv(1)))//' '//&
-&                    trim(real2ch(QP_ctl_user(3,1)%Wv(2)))//' '//&
-&                    trim(real2ch(QP_ctl_user(3,1)%Wv(3)))
-   !
+ else
+   call IO_desc_add(Gr_desc,'s',"[Gr] Retarded Green`s function",S="none")
  endif
  !
  ! GPL_EXCLUDE_END

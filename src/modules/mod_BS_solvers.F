@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,6 +23,7 @@
 !
 module BS_solvers
  !
+ use descriptors,    ONLY:IO_desc
  use pars,           ONLY:SP,schlen,lchlen
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block,n_BS_blks,BS_blk
  use matrix,         ONLY:PAR_matrix
@@ -40,7 +41,8 @@ module BS_solvers
    complex(SP), allocatable :: fragment(:)
    !
  end type Haydock_vector
-#if defined _SLEPC
+ !
+#if defined _SLEPC && !defined _SLEPC_OFF
  !
  ! Slepc
  !==========
@@ -63,10 +65,9 @@ module BS_solvers
  !
  ! Solvers (General)
  !=========
- character(lchlen):: BSS_description(100)
+ type(IO_desc)    :: BSS_desc
  character(schlen):: BSS_mode
  complex(SP) :: BSS_Wd
- integer  :: BSS_n_descs
  integer  :: BSS_n_freqs
  integer  :: BSS_n_eig            !number of eigenvalues to find
  real(SP) :: BSS_er(2)
@@ -79,11 +80,13 @@ module BS_solvers
  logical  :: BSS_perturbative_width
  logical  :: BSS_eval_JDOS
  logical  :: BSS_add_antiresonant
+ logical  :: BSS_eels_to_eps
+ logical  :: BSS_uses_pert_SOC=.FALSE.
  !
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.
  logical  :: run_Diago=.FALSE.
-#if defined _SLEPC
+#if defined _SLEPC && !defined _SLEPC_OFF
  logical  :: run_Slepc=.FALSE.
 #endif
  !
@@ -97,7 +100,7 @@ module BS_solvers
  integer  :: Haydock_iterIO
  real(SP) :: Haydock_threshold
  real(SP) :: Haydock_v0_mod
-#if defined _SLEPC
+#if defined _SLEPC && !defined _SLEPC_OFF
  !
  ! Solvers (Slepc)
  !=========
@@ -143,12 +146,14 @@ module BS_solvers
  !
  interface 
    !
-   integer function variables_BS(ID,local_description,X)
-     use pars,       ONLY:lchlen
+   integer function variables_BS(ID,iq,local_desc,CLOSE_the_menu,X)
+     use pars,       ONLY:lchlen,SP
      use X_m,        ONLY:X_t
+     use descriptors,ONLY:IO_desc
      implicit none
-     integer            ::ID
-     character(lchlen)  ::local_description(100)
+     integer            ::ID,iq
+     type(IO_desc)      ::local_desc
+     logical            ::CLOSE_the_menu
      type(X_t), optional::X
    end function
    !

@@ -82,14 +82,6 @@ SUBROUTINE read_upf_v2(u, upf, grid, ierr)             !
 
    ! Read radial grid mesh
    CALL read_upf_mesh(u, upf, grid)
-   ! Read non-linear core correction charge
-   ALLOCATE( upf%rho_atc(upf%mesh) )
-   IF(upf%nlcc) THEN
-      CALL iotk_scan_dat(u, 'PP_NLCC',  upf%rho_atc)
-   ELSE
-      ! A null core charge simplifies several functions, mostly in PAW
-      upf%rho_atc(1:upf%mesh) = 0._dp
-   ENDIF
 
    ! Read local potential
    IF(.not. upf%tcoulombp) THEN
@@ -112,6 +104,17 @@ SUBROUTINE read_upf_v2(u, upf, grid, ierr)             !
 !   CALL read_upf_paw(u, upf)
    ! Read data for gipaw reconstruction
 !   CALL read_upf_gipaw(u, upf)
+   !
+   ! Read non-linear core correction charge
+   ALLOCATE( upf%rho_atc(upf%mesh) )
+   IF(upf%nlcc) THEN
+      rewind(u)
+      read(u,*)
+      CALL iotk_scan_dat(u, 'PP_NLCC',  upf%rho_atc)
+   ELSE
+      ! A null core charge simplifies several functions, mostly in PAW
+      upf%rho_atc(1:upf%mesh) = 0._dp
+   ENDIF
    !
    ! Close the file (not the unit!)
    CALL iotk_close_read(u)

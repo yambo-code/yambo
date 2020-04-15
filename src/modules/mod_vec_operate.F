@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -75,6 +75,11 @@ module vec_operate
      real(SP), intent(in) :: v(3)
      v_norm=sqrt(dot_product(v,v))
    end function v_norm
+   !
+   pure real(SP) function v_norm2(v)
+     real(SP), intent(in) :: v(3)
+     v_norm2=v(1)*v(1)+v(2)*v(2)+v(3)*v(3)
+   end function v_norm2
    !
    real(SP) function iku_v_norm(v,inside_bz)
      !
@@ -566,10 +571,8 @@ module vec_operate
      logical :: l_flag,l_singles
      !
      deg_grps=0
-     first_deg_el(2:n)=0
-     deg_elmnts(2:n)=0
-     first_deg_el(1)=0
-     deg_elmnts(1)=0
+     first_deg_el=0
+     deg_elmnts=0
      !
      l_singles=.FALSE.
      if (present(Include_single_values)) l_singles=Include_single_values

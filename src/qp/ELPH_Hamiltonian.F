@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,15 +27,16 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use units,         ONLY:HA2EV
  use ELPH,          ONLY:elph_global_alloc,elph_global_free,elph_Ham_bands,elph_Ham_ik,&
 &                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector,RES_tresh
- use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,mk_dir
- use com,           ONLY:error,msg,of_open_close,file_exists,jobstr,jobdir,core_io_path
- use R_lattice,     ONLY:nqbz,bz_samp,qindx_S
+ use IO_m,          ONLY:io_control,manage_action,OP_RD,REP,RD_CL_IF_END,mk_dir
+ use com,           ONLY:msg,of_open_close,jobstr,jobdir,core_io_path
+ use R_lattice,     ONLY:nqbz,nqibz,bz_samp,qindx_S
  use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev,n_atoms
  use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing
  use interfaces,    ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,ONLY:DIAGO,USE_LK
- use stderr,        ONLY:intc,set_real_printed_length
+ use stderr,        ONLY:intc
+ use stderr,        ONLY:intc
  use QP_m,          ONLY:QP_G_damp
  use parser_m,      ONLY:parser
  !
@@ -46,7 +47,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  ! Work Space
  !
- integer              :: H_size,ib,iq_bz,iq_ibz,iq_s,ID,io_err,iH,il,ok_bz,ok_ibz,ok_s,No_PH_basis_size,&
+ integer              :: H_size,ib,iq_bz,iq_ibz,iq_s,ID,io_err,IO_ACT,iH,il,ok_bz,ok_ibz,ok_s,No_PH_basis_size,&
 &                        iHp,ibp,iq_ibz_db,ik_bz_gkkp,ib_gkkp,ibp_gkkp,iw
  real(SP)             :: ph_E,residual,q_weight
  logical              :: l_eval_Displacements
@@ -85,6 +86,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
  real               :: A_nk_sq,B_nkq_sq
  complex(SP), allocatable :: mean_u_sq(:,:,:)
  !
+ logical, external  :: file_exists
+ !
  call section('*','Correlation: Electron-Phonon Hamiltonian')
  !
  call k_build_up_BZ_tables(k)
@@ -95,7 +98,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  Ph_branches=elph_branches(2)-elph_branches(1)+1
  No_PH_basis_size=elph_Ham_bands(2)-elph_Ham_bands(1)+1
  H_size=No_PH_basis_size*(nqbz*(elph_branches(2)-elph_branches(1)+1)+1)
- call msg('rsn','[ElPh Ham] Hamiltonian size is:',H_size)
+ call msg('rsn','[ElPh Ham] Hamiltonian size is',H_size)
  !
  YAMBO_ALLOC(elph_Ham_Table,(H_size,3))
  YAMBO_ALLOC(elph_Mat,(H_size,H_size))
@@ -163,7 +166,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
      ok_s   =k%sstar(ok_bz,2)
      !
      if (iq_ibz/=iq_ibz_db) then
-       call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_ibz+1/),ID=ID)
+       IO_ACT=manage_action(RD_CL_IF_END,iq_ibz,1,nqibz)
+       call io_control(ACTION=IO_ACT,SEC=(/iq_ibz+1/),ID=ID)
        io_err=io_ELPH(ID,'gkkp')
        iq_ibz_db=iq_ibz
        if (iq_ibz==1) pol_vector_gamma=pol_vector
@@ -229,8 +233,6 @@ subroutine ELPH_Hamiltonian(en,k,q)
  do iw=1,N_w
    W(iw)= (minval(elph_E)-.1/HA2EV)+ ( maxval(elph_E) -  minval(elph_E) + .2/HA2EV )/real(N_w)*iw+cmplx(0.,QP_G_damp)
  enddo
- !
- call set_real_printed_length(f_length=12,g_length=12)
  !
  call live_timing('Green`s Functions',elph_Ham_bands(2)-elph_Ham_bands(1)+1)
  !
@@ -361,7 +363,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call live_timing('MD evaluation',H_size)
  !
- call msg('r','Displacements:')
+ call msg('r','Displacements')
  !
  do iH=1,H_size
    call live_timing(steps=1)
@@ -401,7 +403,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call live_timing('MD square evaluation',H_size)
  !
- call msg('nr','sqrt(MD square):')
+ call msg('nr','sqrt(MD square)')
  !
  do iH=1,H_size
    call live_timing(steps=1)
@@ -425,7 +427,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
        do iq_bz=1,nqbz
          !
          iq_ibz =q%sstar(iq_bz,1)
-         call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_ibz+1/),ID=ID)
+         IO_ACT=manage_action(RD_CL_IF_END,iq_bz,1,nqbz)
+         call io_control(ACTION=IO_ACT,SEC=(/iq_ibz+1/),ID=ID)
          io_err=io_ELPH(ID,'gkkp')
          !
          do il=elph_branches(1),elph_branches(2)
@@ -444,9 +447,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
    enddo 
    !
  enddo
- call live_timing()
  !
- call set_real_printed_length()
+ call live_timing()
  !
  ! CLEAN
  !

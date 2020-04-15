@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DV
@@ -23,11 +23,12 @@
 !
 integer function c2y_file_name(inf,file_name_)
  !
- use pars,             ONLY:lchlen,schlen
- use com,              ONLY:file_exists 
+ use pars,             ONLY:lchlen
  implicit none
  character(*)              :: inf
  character(lchlen)         :: file_name_
+ !
+ logical, external  :: file_exists
  !
  ! Work Space
  !

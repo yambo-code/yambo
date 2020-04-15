@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -37,7 +37,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  use SC,            ONLY:SC_bands
 #endif
 #if defined _NL
- use nl_optics,     ONLY:n_frequencies,NL_bands
+ use nl_optics,     ONLY:n_frequencies
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_bands
@@ -59,48 +59,44 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  integer              :: i_k
  logical :: computing_Fock
  !
- computing_Fock= ( l_HF_and_locXC .and. index(secnm,"Bare local and non-local Exchange-Correlation")/=0 )
- !
+ computing_Fock= ( l_HF_and_locXC .and. index(secnm,"Non-Local Fock")/=0 )
  !
  ! K-pts
  !-------
  PAR_K_range=Xk%nibz
- if (ENVIRONMENT=="DIPOLES")                          PAR_K_range=Xk%nibz
- if (ENVIRONMENT=="Response_G_space_Finite_Momentum") PAR_K_range=Xk%nbz
- if (ENVIRONMENT=="Response_G_space"                ) PAR_K_range=Xk%nbz
- if (ENVIRONMENT=="Response_T_space"                ) PAR_K_range=Xk%nibz
- if (ENVIRONMENT=="Real_Time"                       ) PAR_K_range=Xk%nibz
- if (ENVIRONMENT=="Non_Linear"                      ) PAR_K_range=Xk%nibz
+ if (ENVIRONMENT=="DIPOLES"                  ) PAR_K_range=Xk%nibz
+ if (index(ENVIRONMENT, "Response_G_space")>0) PAR_K_range=Xk%nbz
+ if (ENVIRONMENT=="Response_T_space"         ) PAR_K_range=Xk%nibz
+ if (ENVIRONMENT=="Real_Time"                ) PAR_K_range=Xk%nibz
+ if (ENVIRONMENT=="Non_Linear"               ) PAR_K_range=Xk%nibz
  !
  ! COND bands
  !------------
- if (ENVIRONMENT=="DIPOLES")                          PAR_n_c_bands= (/PAR_Dip_ib_lim(2),PAR_Dip_ib(2)/)
- if (ENVIRONMENT=="Response_G_space_Finite_Momentum") PAR_n_c_bands= (/E%nbf+1,PAR_X_ib(2)/)
- if (ENVIRONMENT=="Response_G_space")                 PAR_n_c_bands= (/E%nbf+1,PAR_X_ib(2)/)
- if (ENVIRONMENT=="Response_T_space")                 PAR_n_c_bands= (/E%nbf+1,BS_bands(2)/)
+ if (ENVIRONMENT=="DIPOLES"                  ) PAR_n_c_bands= (/PAR_Dip_ib_lim(2),PAR_Dip_ib(2)/)
+ if (index(ENVIRONMENT, "Response_G_space")>0) PAR_n_c_bands= (/E%nbf+1,PAR_X_ib(2)/)
+ if (ENVIRONMENT=="Response_G_space"         )                 PAR_n_c_bands= (/E%nbf+1,PAR_X_ib(2)/)
+ if (ENVIRONMENT=="Response_T_space"         )                 PAR_n_c_bands= (/E%nbf+1,BS_bands(2)/)
  !
  ! VAL bands
  !-----------
  if (ENVIRONMENT=="DIPOLES")                          PAR_n_v_bands= (/PAR_Dip_ib(1),PAR_Dip_ib_lim(1)/)
-#if defined _NL | defined _SC
- if (ENVIRONMENT=="Response_G_space"                ) PAR_n_v_bands= (/1,PAR_X_ib(2)/)
+ if (index(ENVIRONMENT, "Response_G_space")>0       ) PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
+#if defined _NL || defined _SC
+ if (index(ENVIRONMENT, "Response_G_space")>0       ) PAR_n_v_bands= (/1,PAR_X_ib(2)/)
 #else
- if (ENVIRONMENT=="Response_G_space"                ) PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
+ if (index(ENVIRONMENT, "Response_G_space")>0       ) PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
 #endif
- if (ENVIRONMENT=="Response_G_space_Finite_Momentum") PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
- if (ENVIRONMENT=="Response_G_space")                 PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
  if (ENVIRONMENT=="Response_T_space")                 PAR_n_v_bands= (/BS_bands(1),E%nbm/)
  !
  ! # G vectors 
  !-------------
- if (ENVIRONMENT=="Response_G_space"                ) PAR_n_G_vectors= X_ng
- if (ENVIRONMENT=="Response_G_space_Finite_Momentum") PAR_n_G_vectors= X_ng
+ if (index(ENVIRONMENT, "Response_G_space")>0) PAR_n_G_vectors= X_ng
  !
  ! Q-pts
  !-------
  PAR_Q_range=(/1,nqibz/)
- if (ENVIRONMENT=="Response_G_space_Finite_Momentum") PAR_Q_range=(/PAR_X_iq(1),PAR_X_iq(2)/)
- if (ENVIRONMENT=="Real_Time"       )                 PAR_Q_range=(/1,nqbz/)
+ if (ENVIRONMENT=="Response_G_space")          PAR_Q_range=(/PAR_X_iq(1),PAR_X_iq(2)/)
+ if (ENVIRONMENT=="Real_Time"       )          PAR_Q_range=(/1,nqbz/)
  if (ENVIRONMENT=="Self_Energy"     ) then
 #if defined _SC
    if (l_sc_run.and.&

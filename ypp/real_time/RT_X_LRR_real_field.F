@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -37,7 +37,6 @@ subroutine RT_X_LRR_real_field(en)
  use fields,         ONLY:Efield,small_a_frequency,small_a
  use functions,      ONLY:theta_function
  use parser_m,       ONLY:parser
- use com,            ONLY:error
  !
 #include<memory.h>
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 subroutine WF_free(WF,keep_fft)
  !
- use wave_func,  ONLY:WAVEs,QUIET_free
+ use wave_func,  ONLY:WAVEs
  use pseudo,     ONLY:pp_is_uspp,PP_uspp_free
  !
 #include<memory.h>
@@ -41,8 +41,16 @@ subroutine WF_free(WF,keep_fft)
  ! USPP
  if (pp_is_uspp) call PP_uspp_free()
  !
+#ifdef _CUDA
+ if (.not. ( allocated(WF%c) .eqv. allocated(WF%c_d) ) ) &
+&   call error("[WF] inconsistent alloc of GPU wfcs")
+#endif
+ !
  if (.not.allocated(WF%c)) return
  !
+#ifdef _CUDA
+ if( allocated(WF%c_d) ) deallocate( WF%c_d )
+#endif
  YAMBO_FREE(WF%c)
  YAMBO_FREE(WF%state)
  YAMBO_FREE(WF%index)

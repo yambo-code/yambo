@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA MG
@@ -56,7 +56,7 @@ subroutine RT_X_qssin
  i_Probe=1
  !
  RT_conf%W_range(1)=-4._SP*(Efield(i_Probe)%frequency(1)) ! Here I define the integration cutoff
- RT_conf%W_range(2)= 4._SP*(Efield(i_Probe)%frequency(1)) ! in Eqs 20-22 as 4 time the field freq. TEST?!?
+ RT_conf%X_W_range(2)= 4._SP*(Efield(i_Probe)%frequency(1)) ! in Eqs 20-22 as 4 time the field freq. TEST?!?
  W_step=RT_conf%Field_damp_factor
  RT_conf%W_n_steps=(RT_conf%W_range(2))/W_step    ! and I define the number of freq step
  RT_conf%W_n_steps= 2*RT_conf%W_n_steps           ! as a consequence
@@ -84,7 +84,7 @@ subroutine RT_X_qssin
  E_m=(0._DP,0._DP) ! E(Wo-W), where Wo is the field frequency   
  freqs=(0._SP,0._SP)
  do i_w = 1, RT_conf%W_n_steps
-   freqs(i_w)=cmplx(Efield(i_Probe)%frequency(1)-((i_w-1)*W_step+RT_conf%W_range(1)),0._SP)
+   freqs(i_w)=cmplx(Efield(i_Probe)%frequency(1)-((i_w-1)*W_step+RT_conf%X_W_range(1)),0._SP)
  enddo
  call RT_1D_Fourier_Transform('T2W',' (E_m field)',freqs,E_m(:),RT_conf%W_n_steps,&
 &                             E_t(i_t_start:i_t_end),RT_conf%T_n_steps,RT_conf%delta_T,&
@@ -93,7 +93,7 @@ subroutine RT_X_qssin
  E_p=(0._DP,0._DP) ! E(Wo+W), where Wo is the field frequency   
  freqs=(0._SP,0._SP)
  do i_w = 1, RT_conf%W_n_steps
-   freqs(i_w)=cmplx(Efield(i_Probe)%frequency(1)+(i_w-1)*W_step+RT_conf%W_range(1),0._SP)
+   freqs(i_w)=cmplx(Efield(i_Probe)%frequency(1)+(i_w-1)*W_step+RT_conf%X_W_range(1),0._SP)
  enddo
  call RT_1D_Fourier_Transform('T2W',' (E_p field)',freqs,E_p(:),RT_conf%W_n_steps,&
 &                             E_t(i_t_start:i_t_end),RT_conf%T_n_steps,RT_conf%delta_T,&
@@ -103,7 +103,7 @@ subroutine RT_X_qssin
  !
  E_2plus = (0._DP,0._DP)
  E_2minus = (0._DP,0._DP)
- call live_timing('Fields Convolution:',RT_conf%W_n_steps)
+ call live_timing('Fields Convolution',RT_conf%W_n_steps)
  do i_w = 1, RT_conf%W_n_steps
    E_2plus = E_2plus + E_p(i_w)*conjg(E_p(i_w))*W_step
    E_2minus = E_2minus + E_m(i_w)*E_p(i_w)*W_step

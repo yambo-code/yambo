@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG DS
@@ -70,7 +70,7 @@ module real_time
  !
  real(SP)              :: RT_step             ! Elemental step used to define dimensions and time-points
  real(SP)              :: RT_dyn_step = 0._SP ! On-the-fly time-step
- real(SP)              :: RT_MAX_step =-1._SP ! MAX value of the dynamical RT step value
+ real(SP)              :: RT_MAX_step =-1._SP*FS2AUT ! MAX value of the dynamical RT step value
  ! 
  ! ... NE dynamics ...
  !
@@ -285,10 +285,8 @@ module real_time
  !----------------
  !
  integer           :: two_alpha
- integer           :: N_Gr_descs
  real(SP)          :: Gr_QP_width
  character(schlen) :: Gr_kind
- character(lchlen) :: Gr_description(5) 
  !
  ! GFs
  !-----
@@ -550,6 +548,9 @@ module real_time
      YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
      YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
+     G_lesser_reference=cZERO
+     dG_lesser         =cZERO
+     G_lesser          =cZERO
      !
      ! Occ's ...
      YAMBO_ALLOC(RT_H_occupations,(RT_bands(1):RT_bands(2),RT_nk))
@@ -600,7 +601,6 @@ module real_time
      call DIP_alloc('DIP_spin')
      call DIP_alloc('DIP_orbital')
      call DIP_alloc('P_square') 
-     call DIP_alloc('DIP_projected')
      call DIP_alloc('DIP_P_spinor')
      !
      YAMBO_FREE(DbGd_ibz_coo)

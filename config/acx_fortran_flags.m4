@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -42,12 +42,13 @@ i?86*linux*)
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
     SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    #FUFLAGS="-O0 -g -Mbackslash"
     FUFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
     NETCDFFLAGS="-DpgiFortran"
     def_compiler="-D_PGI"
-    DEBUG_FLAGS=""
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
   *abf90*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
@@ -122,6 +123,7 @@ i?86*linux*)
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
     NETCDFFLAGS="-DpgiFortran"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
   *gfortran*)
     SYSFLAGS="-O3 -g -mtune=native"
@@ -170,6 +172,7 @@ ia64*linux* )
     OMPFLAGS="-mp"
     NETCDFFLAGS="-DpgiFortran"
     def_compiler="-D_PGI"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
   *gfortran*)
     SYSFLAGS="-O3 -g -mtune=native"
@@ -240,6 +243,7 @@ ia64*linux* )
     OMPFLAGS="-mp"
     def_compiler="-D_PGI"
     NETCDFFLAGS="-DpgiFortran"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
   *gfortran*)
     SYSFLAGS="-O3 -g -mtune=native"

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM
@@ -25,23 +25,24 @@ subroutine RT_output(what,VALUES,TIME,E)
  ! 
  use units,          ONLY:HA2EV,HA2KEL,SPEED_OF_LIGHT,AU2KWCMm2,PS2AUT,AU2VMm1
  use pars,           ONLY:SP,schlen
- use com,            ONLY:msg,of_open_close,warning
+ use com,            ONLY:msg,of_open_close,com_compose_msg
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,l_use_Hxc_collisions
  use QP_m,           ONLY:Time_of
  use fields,         ONLY:A_tot,A_ind,A_ext
  use electrons,      ONLY:n_spin,Spin_magn
  use D_lattice,      ONLY:Bose_Temp
- use stderr,         ONLY:set_real_printed_length,STRING_split,real2ch
- use RT_output_m,    ONLY:N_MAX_RT_o_files,RT_descriptions_dumped,RT_o_file_is_open,&
+ use stderr,         ONLY:STRING_split
+ use RT_output_m,    ONLY:N_MAX_RT_o_files,RT_descriptors_dumped,RT_o_file_is_open,&
 &                         N_RT_o_files,RT_o_file_is_open,RT_o_file_short,RT_o_file_long,&
-&                         n_RT_headings,RT_headings,N_MAX_RT_headings
- use RT_control,     ONLY:RT_do_it,RT_description,n_RT_descriptions
+&                         n_RT_headings,RT_headings,N_MAX_RT_headings,RT_desc,Gr_desc,TIME_STEP_desc
+ use RT_control,     ONLY:RT_do_it
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_magn,l_lftm_fit_temperatures, &
 &                         EE_prefactor,EP_prefactor,EP_abs_prefactor,RAD_prefactor,    &
 &                         RT_Tfit_lifetimes
  use timing_m,       ONLY:timing
- use LIVE_t,         ONLY:what_is_running
+ use C_driver,       ONLY:code_bin
  use functions,      ONLY:NAN
+ use interfaces,     ONLY:DESC_write
  !
  implicit none
  !
@@ -53,7 +54,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  ! Work space
  !
  character(schlen)        :: orders(20),dumb_ch
- integer                  :: i_f,n_orders,i_o,i_desc,il,N,i_v
+ integer                  :: i_f,n_orders,i_o,il,N,i_v
  logical                  :: file_is_todo(N_MAX_RT_o_files)
  real(SP)                 :: data_to_dump(N_MAX_RT_headings)
  logical, external        :: STOP_now
@@ -68,7 +69,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    if (file_is_todo(i_f)) cycle
    do i_o=1,n_orders
      if (file_is_todo(i_f)) cycle
-     if (index(what_is_running,'YPP')>0) then
+     if (index(code_bin,'ypp')>0) then
        file_is_todo(i_f) = index(RT_o_file_short(i_f),"YPP-"//trim(orders(i_o)))==1
      else
        file_is_todo(i_f) = index(RT_o_file_short(i_f),trim(orders(i_o)))==1
@@ -81,12 +82,11 @@ subroutine RT_output(what,VALUES,TIME,E)
  !
  if (index(what,'open')>0) then
    !
-   RT_descriptions_dumped=.FALSE.
+   RT_descriptors_dumped=.FALSE.
    !
    do i_f=1,N_RT_o_files
      if (.not.file_is_todo(i_f).or.RT_o_file_is_open(i_f)) cycle
      call of_open_close(RT_o_file_long(i_f),'ot')
-     call of_open_close(RT_o_file_long(i_f))
      RT_o_file_is_open(i_f)=.TRUE.
    enddo
    !
@@ -125,40 +125,36 @@ subroutine RT_output(what,VALUES,TIME,E)
  !
  call timing('RT output',OPR='start')
  !
- call set_real_printed_length(f_length=15,g_length=15)
- !
  do i_f=1,N_RT_o_files
    !
    if (.not.file_is_todo(i_f)) cycle
    if (.not.RT_o_file_is_open(i_f)) cycle
    !
    if (index(what,'space')>0) then
-     call of_open_close(RT_o_file_long(i_f),'oa')
      call msg('o '//trim(RT_o_file_short(i_f)),' ')
-     call of_open_close(RT_o_file_long(i_f))
      cycle
    endif
-   !
-   call of_open_close(RT_o_file_long(i_f),'oa')
    !
    ! Headers and Descriptions
    !---------------------------
    !
-   if (.not.RT_descriptions_dumped(i_f)) then
-     do i_desc=1,n_RT_descriptions
-       call msg('o '//trim(RT_o_file_short(i_f)),'#',trim(RT_description(i_desc)),INDENT=0)
-     enddo
+   if (.not.RT_descriptors_dumped(i_f)) then
+     !
+     call DESC_write('o '//trim(RT_o_file_short(i_f)),'#',RT_desc)
+     call DESC_write('o '//trim(RT_o_file_short(i_f)),'#',Gr_desc)
+     call DESC_write('o '//trim(RT_o_file_short(i_f)),'#',TIME_STEP_desc)
+     !
      if (n_spin>1.and.trim(RT_o_file_short(i_f))=="magnetization") then
        call msg('o '//trim(RT_o_file_short(i_f)),'#')
-       dumb_ch="Equilibrium spin      magnetization is "//&
-&             trim(real2ch(Spin_magn(1)))//", "//trim(real2ch(Spin_magn(2)))//", "//trim(real2ch(Spin_magn(3)))//". "
-       call msg('o '//trim(RT_o_file_short(i_f)),'#',dumb_ch,INDENT=0,USE_TABS=.TRUE.)
+       dumb_ch="Equilibrium spin magnetization"
+       call msg('o '//trim(RT_o_file_short(i_f)),com_compose_msg(pre='# ',body=dumb_ch),&
+&               Spin_magn,INDENT=0)
      endif
      !
      call msg('o '//trim(RT_o_file_short(i_f)),'#')
      call msg('o '//trim(RT_o_file_short(i_f)),'#',RT_headings(i_f,1:n_RT_headings(i_f)),INDENT=0,USE_TABS=.TRUE.)
      call msg('o '//trim(RT_o_file_short(i_f)),'#')
-     RT_descriptions_dumped(i_f)=.TRUE.
+     RT_descriptors_dumped(i_f)=.TRUE.
      !
    endif
    !
@@ -166,7 +162,6 @@ subroutine RT_output(what,VALUES,TIME,E)
    !--------
    if (.not.present(TIME).and..not.present(E)) then
      call msg('o '//trim(RT_o_file_short(i_f)),'')
-     call of_open_close(RT_o_file_long(i_f))
      cycle
    endif
    !
@@ -283,11 +278,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    !
    call msg('o '//trim(RT_o_file_short(i_f)),'',data_to_dump(1:n_RT_headings(i_f)),USE_TABS=.TRUE.)
    !
-   call of_open_close(RT_o_file_long(i_f))
-   !
  enddo
- !
- call set_real_printed_length( )
  !
  call timing('RT output',OPR='stop')
  !

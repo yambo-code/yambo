@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -71,10 +71,11 @@ end function
 !
 integer function MEM_component_finder( i_SHELF, name, Sz, desc, ADD )
  !
- use pars,   ONLY:schlen
+ use pars,   ONLY:schlen,IPL
  use memory, ONLY:MEMs
  implicit none
- integer      :: i_SHELF,Sz
+ integer      :: i_SHELF
+ integer(IPL) :: Sz
  character(*) :: name,desc
  logical      :: ADD
  !ws

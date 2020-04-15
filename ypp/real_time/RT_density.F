@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -30,12 +30,13 @@ subroutine RT_density(en,kpt,qpt)
  use electrons,      ONLY:levels,n_spin
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,real2ch
- use com,            ONLY:msg,of_open_close,warning
- use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG
+ use com,            ONLY:msg,of_open_close
+ use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG,&
+&                         manage_action
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,RT_delta_occupations
- use YPP,            ONLY:v2plot,output_fname,plot_dim,plot_title,&
+ use YPPm,           ONLY:v2plot,output_fname,plot_dim,plot_title,&
 &                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot,l_norm_to_one
  use YPP_real_time,  ONLY:RT_time,RT_conf
  use interfaces,     ONLY:WF_load,WF_free,el_density_and_current
@@ -49,7 +50,7 @@ subroutine RT_density(en,kpt,qpt)
  !
  ! Workspace
  !
- integer               :: ID,ik,io_err,i_t,i_dir
+ integer               :: ID,ik,io_err,i_t,i_dir,IO_ACT
  character(schlen)     :: ch_ws(3)
  logical               :: load_G_history,include_eq_occ
  !
@@ -138,8 +139,9 @@ subroutine RT_density(en,kpt,qpt)
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2,RT_nk+1/),ID=ID)
      io_err=io_RT_components('G',ID)
 #else
-     do ik = 1, RT_nk 
-       call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
+     do ik = 1, RT_nk
+       IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,FIRST=1,LAST=RT_nk)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+1/),ID=ID)
        io_err=io_RT_components('G',ID)
      enddo
 #endif

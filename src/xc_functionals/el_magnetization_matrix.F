@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details):
@@ -31,7 +31,6 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !  Sigma_Pauli=the 3 Pauli matrices
  !
  use pars,           ONLY:SP,cI,cZERO
- use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
  use D_lattice,      ONLY:nsym,dl_sop,i_time_rev

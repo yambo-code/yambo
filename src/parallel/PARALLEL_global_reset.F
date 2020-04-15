@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,7 +26,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  use R_lattice,     ONLY:bz_samp,nXkibz
  use openmp,        ONLY:OPENMP_set_threads
  use wave_func,     ONLY:states_to_load
- use parallel_m,    ONLY:PP_indexes_reset
+ use parallel_m,    ONLY:PP_indexes_reset,n_groups
  ! SLK
  use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved
  use matrix,        ONLY:TRANSFER_world
@@ -56,11 +56,14 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
 &                        PAR_freqs_index
  ! ID's
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
-&                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID,&
-&                        PAR_IND_CON_BANDS_OVLP_ID,PAR_IND_VAL_BANDS_OVLP_ID,&
+&                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,PAR_IND_CON_BANDS_DIP_ID,&
+&                        PAR_IND_VAL_BANDS_OVLP_ID,&
 &                        PAR_IND_QP_ID,PAR_IND_G_b_ID,PAR_IND_PLASMA_ID,&
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID,&
 &                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,PAR_IND_freqs_ID
+#if defined _RT || defined _SC || defined _QED || defined _NL
+ use collision_ext, ONLY:COH_collisions,HXC_collisions,GW_NEQ_collisions,P_collisions
+#endif
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_INDEX,SLK_COM_A2A
 #endif
@@ -105,12 +108,10 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
 #endif
  !
  if (ENVIRONMENT=="Response_T_space") then
-   if (.not.allocated(PAR_IND_eh)) then
-   allocate(PAR_IND_eh(nXkibz))
+   if (.not.allocated(PAR_IND_eh)) allocate(PAR_IND_eh(nXkibz))
    do i_k=1,nXkibz
-       call PP_indexes_reset(PAR_IND_eh(i_k))
-     enddo
-   endif
+     call PP_indexes_reset(PAR_IND_eh(i_k))
+   enddo
  endif
  !
  YAMBO_FREE(PAR_B_mat_index)
@@ -199,6 +200,14 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call COMM_reset(PAR_COM_freqs_INDEX)
  call COMM_reset(PAR_COM_freqs)
 #endif
+#if defined _RT || defined _SC || defined _QED || defined _NL
+ call PARALLEL_collisions_reset(HXC_collisions)
+ call PARALLEL_collisions_reset(COH_collisions)
+ call PARALLEL_collisions_reset(GW_NEQ_collisions)
+ call PARALLEL_collisions_reset(P_collisions)
+#endif
+ !
+ n_groups=0
  !
  call OPENMP_set_threads( )
  !

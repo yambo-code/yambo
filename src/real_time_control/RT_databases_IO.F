@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -26,17 +26,14 @@ subroutine RT_databases_IO(E)
  use drivers,        ONLY:l_elph_scatt
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,&
-&                         GF_RT_IO_t,IO_OBS_cache_steps
+&                         GF_RT_IO_t,IO_OBS_cache_steps,Dynamics_is_over
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
-&                         OP_IF_START_APP_CL_IF_END
+&                         OP_IF_START_APP_CL_IF_END,manage_action,REP
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,HEAD_k_cpu,ncpu,myid
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,RT_all2ibz
  use timing_m,       ONLY:timing
-#if defined  _PAR_IO
- use com,            ONLY:error
-#endif
  !
  implicit none
  !
@@ -44,7 +41,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- integer           :: ik,io_G,io_OBS,io_carr,io_THETA,i_time,i_cpu,n_sec,secs(2)
+ integer           :: ik,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,n_sec,secs(2),i_cpu
  integer, external :: io_RT_components
  !
  call timing('RT databases IO',OPR='start')
@@ -73,7 +70,8 @@ subroutine RT_databases_IO(E)
    OBS_RT_IO_t%last_point=NE_i_time
    !
    if (io_OBSERVABLES) then
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
+     if (     Dynamics_is_over()) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID(4))
+     if (.not.Dynamics_is_over()) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4))
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4))
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
@@ -138,14 +136,15 @@ subroutine RT_databases_IO(E)
        !
        if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
        !
-       call io_control(ACTION=OP_IF_START_APP_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
+       IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,ik,FIRST=1,LAST=RT_nk,PAR_index=PAR_IND_Xk_ibz)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+1/),ID=ID(5))
        io_G=io_RT_components('G',ID(5))
        !
      enddo 
      !
      call PP_redux_wait( )
      !
-   enddo 
+   enddo
 #endif
    !
    call IO_and_Messaging_switch("RESTORE")
@@ -166,7 +165,8 @@ subroutine RT_databases_IO(E)
        !
        call PP_redux_wait(THETA_matrix(:,:,:,ik))
        !
-       call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(7))
+       IO_ACT=manage_action(WR_CL_IF_END,ik,FIRST=1,LAST=RT_nk)       
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+1/),ID=ID(7))
        io_THETA=io_RT_components('THETA',ID(7))
        !
        call RT_ELPH_zeroing()
@@ -174,9 +174,9 @@ subroutine RT_databases_IO(E)
      enddo
      !
    endif
+#endif
    !
  endif
-#endif
  !
  ! GPL_EXCLUDE_END
  !

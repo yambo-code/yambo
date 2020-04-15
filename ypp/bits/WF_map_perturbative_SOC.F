@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -23,14 +23,14 @@
 !
 subroutine WF_map_perturbative_SOC(kpt,En)
  !
- use YPP,                 ONLY:perturbative_SOC_path,SOC_split,SOC_bands_to_map,&
+ use YPPm,                ONLY:perturbative_SOC_path,SOC_split,SOC_bands_to_map,&
 &                              SOC_bands_buffer
  use pars,                ONLY:lchlen,rZERO,cZERO,cI,SP
  use stderr,              ONLY:real2ch,intc
  use R_lattice,           ONLY:bz_samp
  use D_lattice,           ONLY:spin_sop,a,alat,x_cc
  use FFT_m,               ONLY:fft_size,fft_rot_r
- use com,                 ONLY:core_io_path,msg,warning,error
+ use com,                 ONLY:core_io_path,msg
  use vec_operate,         ONLY:degeneration_finder,sort,iku_v_norm,k2bz,c2a
  use zeros,               ONLY:k_iku_zero
  use wave_func,           ONLY:WAVEs

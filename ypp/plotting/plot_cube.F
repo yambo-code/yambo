@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -25,9 +25,9 @@ subroutine plot_cube()
  !
  use pars,        ONLY:SP,schlen
  use FFT_m,       ONLY:fft_dim 
- use LOGO,        ONLY:code_version
+ use C_driver,    ONLY:code_version
  use com,         ONLY:msg
- use YPP,         ONLY:nr,v2plot,ncell,r_hole,l_free_hole,&
+ use YPPm,        ONLY:nr,v2plot,ncell,r_hole,l_free_hole,&
 &                      l_norm_to_one,WF_multiplier,l_exc_wf,plot_title,output_string
  use D_lattice,   ONLY:n_atomic_species,n_atoms_species,a,atom_pos,Z_species,n_atoms
  use LIVE_t,      ONLY:live_timing

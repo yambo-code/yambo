@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -29,7 +29,6 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use drivers,         ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_use_collisions,l_sc_srpa,&
 &                          l_elel_scatt,l_elphoton_scatt,l_elphoton_corr,l_sc_hartree,&
 &                          l_use_Hxc_collisions,l_real_time,l_use_COH_collisions
- use com,             ONLY:error,warning
  use LIVE_t,          ONLY:live_timing
  use QP_m,            ONLY:QP_QED_ng
  use R_lattice,       ONLY:nqbz
@@ -123,6 +122,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    l_warning=.not.l_use_Hxc_collisions.and..not.l_use_COH_collisions.and..not.l_use_P_collisions
    l_error  =l_warning.and.l_real_time.and.(l_sc_sex.or.l_sc_fock)
    !
+   if (l_use_COH_collisions.and.l_sc_sex.and..not.l_use_Hxc_collisions) l_error=.TRUE.
+   !
    if (l_error)   call error(  ' HXC collisions not found / not compatible')
    if (l_warning) call warning(' HXC collisions not found. Potential is computed on the fly.')
    !
@@ -169,7 +170,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      integer :: iqbz,i_J,ic,i_coll,&
 &               i_coll_mem,i_q_mem,i_J_mem,i_b,i_g
      !
-     call live_timing(trim(COLL%name)//' collisions I/O:',COLL%PAR_N)
+     call live_timing(trim(COLL%name)//' collisions I/O',COLL%PAR_N)
      !
      if (COLL%kind==H_SE_FOCK.or.COLL%kind==H_SE_COH.or.COLL%kind==H_SE_SEX.or.COLL%kind>=H_SE_HARTREE) then
        call COLLISIONS_alloc_and_free(trim(COLL%name),"collision","alloc",0)

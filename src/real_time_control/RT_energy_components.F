@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM DS
@@ -34,7 +34,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  use real_time,      ONLY:RT_nk,RT_bands,XC0,HARTREE0, &
 &                         G_lesser_reference,RT_Vnl_xc,eval_energy
  use xc_functionals, ONLY:E_xc,XC_potential_driver
- use global_XC,      ONLY:WF_kind,WF_xc_functional
+ use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_DIPk_nibz
  use RT_interfaces,  ONLY:RT_average_operator
  !
@@ -123,7 +123,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
      !
      ! Exc Energy from dE_xc[rho_n] energy density ... to be fixed, E_xc_ref is wrong
      !
-     call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0)
+     call XC_potential_driver(en,k,WF_kind,WF_xc_functional,0)
      !
      allocate(E_xc_rt(fft_size,n_spin))
      E_xc_rt(:,1)=E_xc

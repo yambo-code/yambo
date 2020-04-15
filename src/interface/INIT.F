@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -40,22 +40,22 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
+ use pars,           ONLY:SP
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
- use it_m,           ONLY:it,initactivate,initdefs,rstatus,initmode,initinfio,&
-&                         infile,infile_dump,ofiles_append,runlevel_is_on,&
-&                         switch_off_runlevel,check_verbosity
- use parallel_m,     ONLY:PP_redux_wait,master_cpu
- use com,            ONLY:msg,repfile,com_path,&
-&                         write_the_logo,file_exists,rename_file,write_to_report
+ use it_tools,       ONLY:it,infile_dump,ofiles_append,&
+&                         switch_off_runlevel,check_verbosity,runlevel_is_on
+ use it_m,           ONLY:initdefs,rstatus,initmode,infile,nrnlvls,rnlvls
+ use parallel_m,     ONLY:PP_redux_wait
+ use com,            ONLY:msg,repfile_unit,inpfile_unit,com_path,write_to_report
  use vec_operate,    ONLY:v_norm
- use LIVE_t,         ONLY:live_timing_is_on,what_is_running
+ use LIVE_t,         ONLY:live_timing_is_on
  use QP_m,           ONLY:QP_t,QP_state,QP_reset,&
 &                         QP_table,COHSEX_use_empties
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset
- use stderr,         ONLY:write_to_log,log_as_a_file,logfile,STRING_add,STRING_remove,STRING_match
+ use stderr,         ONLY:write_to_log,log_as_a_file,logfile,logfile_unit,STRING_add,STRING_remove,STRING_same
  use R_lattice,      ONLY:q0_def_norm,bz_samp,bz_samp_reset 
  use BS,             ONLY:BS_bands,BS_n_g_W,&
 &                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode,BSK_mode
@@ -69,6 +69,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _OPENMP
  use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K,n_threads_NL
+#endif
+#if defined _YAML_OUTPUT
+ use pars,           ONLY:logfile_index,repfile_index
+ use com,            ONLY:of_yaml_IDs
+ use yaml_output,    ONLY:yaml_close_stream
 #endif
  !
 #include<memory.h>
@@ -93,35 +98,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(w_samp)     ::Xxcw
  type(levels)     ::en_sc
  !
- integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err
+ integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err,i_r
  !
- ! What is running ?
- !
- what_is_running='YAMBO'
-#if defined _ELPH 
- what_is_running='YAMBO_PH'
-#endif
-#if defined _SC
- what_is_running='YAMBO_SC'
-#endif
-#if defined _RT
- what_is_running='YAMBO_RT'
-#endif
-#if defined _NL
- what_is_running='YAMBO_NL'
-#endif
-#if defined _MAGNETIC
- what_is_running='YAMBO_MAGNETIC'
-#endif
-#if defined _ELECTRIC
- what_is_running='YAMBO_ELECTRIC'
-#endif
-#if defined _QED
- what_is_running='YAMBO_QED'
-#endif
-#if defined _PL
- what_is_running='YAMBO_PL'
-#endif
+ logical, external:: file_exists
  !
  ! Presets
  !
@@ -139,8 +118,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
    call bz_samp_reset(k)
    call bz_samp_reset(q)
-   call W_reset(Xw(1))
-   call W_reset(Xw(2))
+   call W_reset(Xw(1),damping=0.001_SP)
+   call W_reset(Xw(2),damping=0.001_SP)
    call W_reset(Xw(3))
    call W_reset(Xw(4))
    call X_reset(X(1),type=1)
@@ -158,8 +137,15 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
-   call initinfio(defs,11)
+   call initinfio(defs,repfile_unit)
    call ofiles_append(defs=defs)
+   close(unit=repfile_unit)
+   if(log_as_a_file) close(unit=logfile_unit)
+#if defined _YAML_OUTPUT
+   call yaml_close_stream(unit=of_yaml_IDs(repfile_index))
+   if(log_as_a_file) call yaml_close_stream(unit=of_yaml_IDs(logfile_index))
+   call f_lib_finalize()
+#endif
    return
  endif
  if (CLOSE_Gs) then
@@ -231,7 +217,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !RUNLEVELS VARIABLES ACTIVATION (LOGICALS FROM INPUT FILE)
  !
- if (.not.any(rstatus>0)) rstatus(1)=-1
+ if (.not.any(rstatus>0)) then
+   do i_r=1,nrnlvls
+     if (trim(rnlvls(i_r,1))=="setup") rstatus(i_r)=-1
+   enddo
+ endif
  call logicalson
  call varsetup2
  call logicalson
@@ -274,9 +264,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Are we editing the input file ?
  !
  if (infile_editing) then
-   open(unit=12,file=trim(infile))
-   call initinfio(defs,12)
-   close(12)
+   inpfile_unit=12
+   open(unit=inpfile_unit,file=trim(infile))
+   call initinfio(defs,inpfile_unit)
+   close(inpfile_unit)
    call PP_redux_wait
    return
  endif
@@ -291,17 +282,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call INIT_report_and_log_files()
  !
- if (log_as_a_file) call rename_file(logfile)
- !
- call rename_file(repfile)
- !
  ! Finalize
- call PP_redux_wait
  !
- if (master_cpu) then
-   open(unit=11,file=trim(repfile))
-   call write_the_logo(11,' ')
- endif
+ call PP_redux_wait
  !
  contains
    !
@@ -411,12 +394,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      ! Setup logicals which are not runlevels
      !
-     l_rpa_IP     = STRING_match(trim(Chi_mode),"IP").or.STRING_match(trim(BSK_mode),"IP")
-     l_td_hartree = STRING_match(trim(Chi_mode),"HARTREE").or.STRING_match(trim(BSK_mode),"HARTREE")
-     l_alda_fxc   = STRING_match(trim(Chi_mode),"ALDA").or.STRING_match(trim(BSK_mode),"ALDA")
-     l_lrc_fxc    = STRING_match(trim(Chi_mode),"LRC")
-     l_pf_fxc     = STRING_match(Chi_mode,'PF')      
-     l_bs_fxc     = STRING_match(trim(Chi_mode),"BSFXC").or.STRING_match(trim(BSK_mode),"BSFXC")
+     l_rpa_IP     = STRING_same(trim(Chi_mode),"IP").or.STRING_same(trim(BSK_mode),"IP")
+     l_td_hartree = STRING_same(trim(Chi_mode),"HARTREE").or.STRING_same(trim(BSK_mode),"HARTREE")
+     l_alda_fxc   = STRING_same(trim(Chi_mode),"ALDA").or.STRING_same(trim(BSK_mode),"ALDA")
+     l_lrc_fxc    = STRING_same(trim(Chi_mode),"LRC")
+     l_pf_fxc     = STRING_same(Chi_mode,'PF')      
+     l_bs_fxc     = STRING_same(trim(Chi_mode),"BSFXC").or.STRING_same(trim(BSK_mode),"BSFXC")
      l_tddft      = l_alda_fxc.or.l_lrc_fxc.or.l_bs_fxc
      l_td_hf      = trim(BSK_mode)=="HF"
      l_W_eh       = trim(BSK_mode)=="SEX"
@@ -534,7 +517,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
      !
      if (len_trim(BSE_mode)==0                ) BSE_mode="retarded"
-     if (STRING_match(trim(BSE_mode),"causal")) BSE_mode="retarded"
+     if (STRING_same(trim(BSE_mode),"causal")) BSE_mode="retarded"
      !
      if (l_bse) then
        if (l_rpa_IP)                   BS_res_mode='none'
@@ -564,7 +547,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
        !
        if (io_BS_err==0) then
-         if (l_ppa)      call X_duplicate(Xbsk,X(4))
+         if (     l_ppa) call X_duplicate(Xbsk,X(4))
          if (.not.l_ppa) call X_duplicate(Xbsk,X(2))
        endif
        !

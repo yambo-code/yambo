@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -39,7 +39,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,&
 &                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
- use R_lattice,     ONLY:bare_qpg
+ use R_lattice,     ONLY:bare_qpg, bare_qpg_d
  use frequency,     ONLY:w_samp
  use linear_algebra,ONLY:INV,SVD_INV,LIN_SYS,MAT_MUL
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
@@ -49,7 +49,10 @@ subroutine X_redux(iq,X_par,Xw,X)
  use X_m,           ONLY:X_t,X_use_lin_sys,X_par_lower_triangle
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
  use timing_m,      ONLY:timing
+ use cuda_m
+ use deviceXlib_m
  !
+#include<dev_defs.h>
 #include<memory.h>
  !
  type(PAR_matrix) :: X_par
@@ -59,10 +62,13 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  ! Work Space
  !
- type(PP_indexes) ::PAR_IND_freqs
- integer          ::ig1,ig2,iw_par,iw,iw_X(1),INV_MODE,i_LA_pool,&
-&                   PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%n_CPU)
- type(PAR_matrix) ::KERNEL,Xo,BUFFER,K_FXC
+ type(PP_indexes) :: PAR_IND_freqs
+ integer          :: ig1,ig2,iw_par,iw,iw_X(1),INV_MODE,i_LA_pool,&
+&                    PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%n_CPU)
+ integer          :: Xo_rows(2), Xo_cols(2)
+ type(PAR_matrix) :: K_FXC
+ type(PAR_matrix), target :: BUFFER,KERNEL,Xo
+ complex(SP), pointer DEV_ATTRIBUTE :: BUFFER_blc_d(:,:,:)
  !
  ! Setup 
  !
@@ -92,6 +98,13 @@ subroutine X_redux(iq,X_par,Xw,X)
  call MATRIX_init( "SLK", BUFFER , X%ng, max(PAR_n_freqs,1) )
  YAMBO_ALLOC(BUFFER%blc,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
  BUFFER%blc=cZERO
+ !
+#if defined _CUDA
+ YAMBO_ALLOC(KERNEL%blc_d,(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
+ YAMBO_ALLOC(BUFFER%blc_d,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
+ YAMBO_ALLOC(Xo%blc_d,(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
+#endif
+ !
  if (l_alda_fxc.and.Xo%kind=="SLK") then
    call MATRIX_init( "SLK", K_FXC , FXC_n_g_corr, 1 )
    YAMBO_ALLOC(K_FXC%blc,(K_FXC%BLCrows(1):K_FXC%BLCrows(2),K_FXC%BLCcols(1):K_FXC%BLCcols(2),1))
@@ -141,8 +154,12 @@ subroutine X_redux(iq,X_par,Xw,X)
    ! ==================
    !
    iw         = PAR_FREQS_index(iw_par)
-   KERNEL%blc = cZERO
    BUFFER%I   = iw_par
+   KERNEL%blc = cZERO
+   if (have_cuda) KERNEL%blc_d = cZERO
+   !
+   Xo_cols(:)=Xo%cols(:)
+   Xo_rows(:)=Xo%rows(:)
    !
    if (FXC_SVD_digits>0) INV_MODE=SVD_INV
    !
@@ -155,7 +172,7 @@ subroutine X_redux(iq,X_par,Xw,X)
    else if (l_lrc_fxc) then
      !
      ! LRC Fxc
-     ! DS : notive that here I've redefined the 1/q^2 kernel for the cases where the cutoff is used
+     ! DS : notice that here I've redefined the 1/q^2 kernel for the cases where the cutoff is used
      !
      if (Xo%cols(1)==1) then
        !$omp parallel do default(shared), private(ig1)
@@ -172,6 +189,8 @@ subroutine X_redux(iq,X_par,Xw,X)
      if (Xo%kind=="SLK") then
 #if defined _SCALAPACK
        call PARALLEL_M_by_M(Xo,K_FXC,KERNEL,"N","N",X%ng,FXC_n_g_corr,FXC_n_g_corr)
+#else
+       call error("[LA] SLK library required but not available")
 #endif
      else
        call M_by_M('N','N',X%ng,FXC_n_g_corr,FXC_n_g_corr,cONE,-Xo%blc(:,:FXC_n_g_corr,1),X%ng,&
@@ -182,14 +201,12 @@ subroutine X_redux(iq,X_par,Xw,X)
    !
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
-   !$omp parallel do default(shared), private(ig1,ig2)
-   do ig1=Xo%rows(1),Xo%rows(2)
-     do ig2=Xo%cols(1),Xo%cols(2)
-       KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
-       if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
-     enddo
-   enddo
-   !$omp end parallel do
+   if (have_cuda) then
+      if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) KERNEL%blc_d=KERNEL%blc
+      Xo%blc_d(:,:,1)=Xo%blc(:,:,1)
+   endif
+   !
+   call X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
    !
    ! X(g,gp)=Sum_gpp[KERNEL]^-1_(g,gpp)*Xo(gpp,gp)
    !
@@ -197,10 +214,10 @@ subroutine X_redux(iq,X_par,Xw,X)
      !
      ! Linear System
      !
-     BUFFER%blc(:,:,BUFFER%I)=Xo%blc(:,:,1)
+     call dev_memcpy(DEV_VARNAME(BUFFER%blc)(:,:,BUFFER%I),DEV_VARNAME(Xo%blc)(:,:,1))
      call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)
      !
-  else
+   else
      !
      ! Matrix Inversion + Matmul
      !
@@ -208,18 +225,44 @@ subroutine X_redux(iq,X_par,Xw,X)
      call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=KERNEL,B_slk=Xo,C_slk=BUFFER)
      !
    endif
+
    !
-   !$omp parallel do default(shared), private(ig1,ig2)
-   do ig1=Xo%rows(1),Xo%rows(2)
-     do ig2=Xo%cols(1),Xo%cols(2)
-       BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
-     enddo
-   enddo
-   !$omp end parallel do
+   ! update X by multiplying left and right for v_coul^1/2 (diagonal in reciprocal space)
+   !
+   if (have_cuda) then
+      !
+!      call dev_mat_upd_dMd(Xo_rows(2)-Xo_rows(1)+1,Xo_cols(2)-Xo_cols(1)+1,BUFFER%blc_d(:,:,iw_par),&
+!&                          bare_qpg_d(Xo_rows(1):,iq),"R",bare_qpg_d(Xo_cols(1):,iq),"R",scal=cmplx(4._SP*pi,kind=SP)) 
+      !
+      BUFFER_blc_d => BUFFER%blc_d
+      !
+      !$cuf kernel do(2)
+      do ig2=Xo_cols(1),Xo_cols(2)
+        do ig1=Xo_rows(1),Xo_rows(2)
+          BUFFER_blc_d(ig1,ig2,iw_par)=BUFFER_blc_d(ig1,ig2,iw_par)*4._SP*pi/bare_qpg_d(ig1,iq)/bare_qpg_d(ig2,iq)
+        enddo
+      enddo
+      !
+      call dev_stream_sync(stream_default)
+      call dev_memcpy_async(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
+      !
+   else
+      !
+      !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
+      do ig2=Xo%cols(1),Xo%cols(2)
+        do ig1=Xo%rows(1),Xo%rows(2)
+          BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+        enddo
+      enddo
+      !$omp end parallel do
+      !
+   endif
    !
    if (PAR_n_freqs>0) call live_timing(steps=1)
    !
  enddo
+ !
+ call dev_stream_sync(stream_d2h)
  !
  if (PAR_n_freqs>0) call live_timing()
  !
@@ -289,4 +332,44 @@ subroutine X_redux(iq,X_par,Xw,X)
  YAMBO_FREE(PAR_FREQS_index)
  call PP_indexes_reset(PAR_IND_freqs)
  !
+contains
+   !
+   subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
+     use R_lattice,     ONLY:bare_qpg, bare_qpg_d
+     use pars,          ONLY:pi,cONE
+     implicit none
+     type(PAR_matrix), target :: BUFFER,KERNEL,Xo
+     integer, intent(in)      :: Xo_rows(2),Xo_cols(2)
+     integer :: ig1,ig2
+     !
+#ifdef _CUDA
+     complex(SP), device, pointer :: KERNEL_blc_d(:,:,:)
+     complex(SP), device, pointer :: Xo_blc_d(:,:,:)
+     !
+     KERNEL_blc_d=>KERNEL%blc_d(:,:,:)
+     Xo_blc_d    => Xo%blc_d(:,:,:)
+     !
+     !$cuf kernel do(2) <<<*,*>>>
+     do ig2=Xo_cols(1),Xo_cols(2)
+       do ig1=Xo_rows(1),Xo_rows(2)
+         KERNEL_blc_d(ig1,ig2,1) =KERNEL_blc_d(ig1,ig2,1)-Xo_blc_d(ig1,ig2,1)*4._SP*pi/bare_qpg_d(ig2,iq)**2
+         if (ig1==ig2) KERNEL_blc_d(ig1,ig1,1)=KERNEL_blc_d(ig1,ig1,1)+cONE
+       enddo
+     enddo
+     !
+#else
+     !
+     !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
+     do ig2=Xo%cols(1),Xo%cols(2)
+       do ig1=Xo%rows(1),Xo%rows(2)
+         KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
+         if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
+       enddo
+     enddo
+     !$omp end parallel do
+     !
+#endif
+   !
+   end subroutine X_redux_build_kernel
+   !
 end subroutine

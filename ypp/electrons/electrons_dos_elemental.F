@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -25,9 +25,9 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,&
 &                                  WF_fac,PDOS_fac,USE_the_DbGd,QUIET,FORCE_occ)
  !
  use pars,           ONLY:SP,rZERO
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,n_spin
  use R_lattice,      ONLY:bz_samp 
- use YPP,            ONLY:DOS_broadening,DOS_E_step,DOS_E_steps
+ use YPPm,           ONLY:DOS_broadening,DOS_E_steps
  use interfaces,     ONLY:PARALLEL_index,el_density_of_states
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait,PP_indexes_reset
@@ -39,7 +39,8 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,&
  type(bz_samp),     intent(in)  :: k
  type(levels),      intent(in)  :: E
  integer,           intent(in)  :: bands(2)
- real(SP),        intent(inout) :: el_dos(:,:),dos_E(:)
+ real(SP),          intent(in)  :: dos_E(DOS_E_steps)
+ real(SP),          intent(out) :: el_dos(DOS_E_steps,n_spin)
  real(SP), pointer, intent(in)  :: WF_fac(:,:,:)
  real(SP), pointer, intent(in)  :: PDOS_fac(:,:,:)
  logical,  optional, intent(in) :: USE_the_DbGd,QUIET,FORCE_occ

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DS
@@ -28,7 +28,8 @@ subroutine K_diago_driver(iq,W,X_static)
  ! 10/06/2015 Added by HM: Generic slepc method to solve 
  !
  use pars,           ONLY:SP
- use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_Blocks_symmetrize_K
+ use stderr,         ONLY:intc
+ use BS,             ONLY:BS_K_coupling,BS_H_dim
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig
  use X_m,            ONLY:X_t
@@ -41,17 +42,15 @@ subroutine K_diago_driver(iq,W,X_static)
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
-#if defined _SLEPC
- use com,            ONLY:warning
+#if defined _SLEPC && !defined _SLEPC_OFF
  use interfaces,     ONLY:MATRIX_slepc
  use BS_solvers,     ONLY:BSS_slepc_extraction,Slepc_shell,BSS_slepc_ncv,&
-&                         BSS_slepc_tol,BSS_target_E
+&                         BSS_slepc_tol,BSS_target_E,Slepc_v,BS_HAYVEC_free
 #endif
 #if defined _KERR
  use drivers,        ONLY:l_kerr
  use KERR,           ONLY:BSS_KERR_free
 #endif
- !
 #if defined _PL
  use drivers,        ONLY:l_photolum
  use PHOTOLUM,       ONLY:BSS_PL_free
@@ -59,7 +58,7 @@ subroutine K_diago_driver(iq,W,X_static)
  !
 #include<memory.h>
  ! 
-#if defined _SLEPC
+#if defined _SLEPC && !defined _SLEPC_OFF
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
@@ -74,11 +73,12 @@ subroutine K_diago_driver(iq,W,X_static)
  ! Work Space
  !
  logical       :: K_is_not_hermitian,l_diago,l_slepc
+ character(1)  :: sec
  character(5)  :: Solver
  !
  ! Slepc specific
  !
-#if defined _SLEPC
+#if defined _SLEPC && !defined _SLEPC_OFF
  Mat                   :: slepc_mat
  PetscErrorCode        :: ierr
  PetscFortranInt       :: slepc_ncv
@@ -114,25 +114,26 @@ subroutine K_diago_driver(iq,W,X_static)
  type(X_t),intent(in)    :: X_static
  !
  l_diago     = index(BSS_mode,'d')/=0
-#if defined _SLEPC
+#if defined _SLEPC && !defined _SLEPC_OFF
  l_slepc     = index(BSS_mode,'s')/=0
 #endif
  !
  if(l_diago) BSS_n_eig = BS_H_dim
  !
  if(l_diago) Solver="Diago"
-#if defined _SLEPC
+#if defined _SLEPC && !defined _SLEPC_OFF
  if(l_slepc) Solver="Slepc"
 #endif
  !
  call timing(trim(Solver)//' Solver',OPR='start')
- !  
+ !
  ! Sectioning
  !============
- if (isec(2)/=0) call section('=',trim(Solver)//' solver')
- if (isec(2)==0) call section('+',trim(Solver)//' solver')
- !
-#if defined _SLEPC
+ if (isec(2)/=0) sec="="
+ if (isec(2)==0) sec="+"
+ call section("+P",trim(Solver)//' Solver @q'//trim(intc(iq)))
+ !  
+#if defined _SLEPC && !defined _SLEPC_OFF
  if(l_slepc) call K_slepc_local_init()
 #endif
  !
@@ -150,27 +151,47 @@ subroutine K_diago_driver(iq,W,X_static)
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=io_BSS_diago(iq,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
  !
+ K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
+ !
  ! Kernel and/or BSS components loading
  !======================================
  if (io_err<0) then
    !
    call K_components_folded_in_serial_arrays(iq)
    !
-   if (l_diago) call K_stored_in_a_big_matrix(iq,"DIAGO")
+   ! Below two operations:
+   ! - The blocks are sent  either to a big matrix or
+   !   to a distributed (SLEPC shells / or eventually BLACS) matrix
+   ! - The resulting matrix is symmetrized
    !
-#if defined _SLEPC
+   if (l_diago) then
+     !
+     call K_stored_in_a_big_matrix(iq,"DIAGO")
+     !
+     ! These line will be needed when the BS kernel will not be folded in BS_mat. But in order to do so
+     ! also linear_algebra_is_parallel must be swiched off when K is not hermitian.
+     !=========================
+     !
+     !if (.not.linear_algebra_is_parallel) call K_stored_in_a_big_matrix(iq,"DIAGO")
+     !
+#if defined _SCALAPACK
+     ! Here maybe the name "K_blacs_matrix(iq)" would probably be more appropiate
+     !if (     linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
+#endif
+     !
+   endif
+   !
+#if defined _SLEPC && !defined _SLEPC_OFF
    if(l_slepc) then
      ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
      ! using the K_multiply_by_V function used in the Haydock method
-     if (     Slepc_shell) call K_shell_matrix(iq,slepc_mat)
+     if (     Slepc_shell) call K_shell_matrix(slepc_mat)
      ! 2. Here we create a distributed PETSC matrix from the BS_blks
-     if (.not.Slepc_shell) call K_stored_in_a_slepc_matrix(iq,slepc_mat)
+     if (.not.Slepc_shell) call K_stored_in_a_slepc_matrix(slepc_mat)
    endif
 #endif
    !
  endif
- !
- K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
  !
  ! Allocation (BS_E_real or BS_V)
  !===============================
@@ -182,17 +203,6 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  if (io_err<0) then
    !
-#if defined _SCALAPACK
-   !
-   ! Symmetrize the K blocks (to be eventually sent to the BLACS)
-   !
-   ! This line will be needed when the BS kernel will not be folded in BS_mat. But in order to do so
-   ! also linear_algebra_is_parallel must be swiched off when K is not hermitian.
-   !=========================
-   !if (linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
-   !
-#endif
-   !
    ! Diagonalization of the excitonic hamiltonian
    !==============================================
    if(l_diago) call live_timing('BSK diagonalize',1)
@@ -200,7 +210,7 @@ subroutine K_diago_driver(iq,W,X_static)
    if (K_is_not_hermitian) then
      !
      if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
-#if defined _SLEPC
+#if defined _SLEPC && !defined _SLEPC_OFF
      if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
 &                                  BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
 #endif
@@ -210,7 +220,7 @@ subroutine K_diago_driver(iq,W,X_static)
    else
      !
      if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
-#if defined _SLEPC
+#if defined _SLEPC && !defined _SLEPC_OFF
      if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
 &                                  BS_mat,E_real=BS_E_real)
 #endif
@@ -219,7 +229,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
    endif
    !
-#if defined _SLEPC
+#if defined _SLEPC && !defined _SLEPC_OFF
    !
    ! Destroy the matrix
    !============================
@@ -298,6 +308,10 @@ subroutine K_diago_driver(iq,W,X_static)
  !=======
  call local_free( )
  !
+#if defined _SLEPC && !defined _SLEPC_OFF
+ if(l_slepc) call K_slepc_local_free()
+#endif
+ !
 #if defined _PL
  call BSS_PL_free( )
 #endif
@@ -341,7 +355,7 @@ subroutine K_diago_driver(iq,W,X_static)
          YAMBO_ALLOC_P(BS_overlap,(BS_H_dim,BSS_n_eig))
        else
          YAMBO_ALLOC(BS_E_real,(BSS_n_eig))
-#if defined _SLEPC
+#if defined _SLEPC && !defined _SLEPC_OFF
          if(l_slepc) then
            YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
          endif
@@ -379,7 +393,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
    end subroutine local_free
    !
-#if defined _SLEPC
+#if defined _SLEPC && !defined _SLEPC_OFF
    subroutine K_slepc_local_init()
      !
      ! Number of states for partial diagonalization
@@ -413,6 +427,23 @@ subroutine K_diago_driver(iq,W,X_static)
      call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
      !
    end subroutine K_slepc_local_init
+   !
+   subroutine K_slepc_local_free()
+     ! 
+     use parallel_m,  ONLY:PAR_IND_T_Haydock
+     !
+     if (Slepc_shell) then
+       call BS_HAYVEC_free(Slepc_v%Vi)
+       call BS_HAYVEC_free(Slepc_v%Vo) 
+       deallocate(Slepc_v%Vi)
+       deallocate(Slepc_v%Vo)
+       call PARALLEL_Haydock_VEC_COMMs('reset')
+     endif
+     !
+     ! This is allocated in K_Transitions setup
+     YAMBO_FREE(PAR_IND_T_Haydock%element_1D)
+     !
+   end subroutine K_slepc_local_free
 #endif
    !
 end subroutine

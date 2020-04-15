@@ -1,9 +1,5 @@
-
-
-
-
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,8 +28,7 @@ subroutine cutoff_slab(q,is_cut)
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:bz_samp,g_vec,bare_qpg,k_grid_uc_vol
- use com,           ONLY:error
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use parallel_m,    ONLY:PP_indexes,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
 
 ! use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,nqibz
@@ -48,7 +43,7 @@ subroutine cutoff_slab(q,is_cut)
  logical       :: is_cut(3)
  integer       :: ipar1,ipar2,iort
  integer       :: iq,ig
- real(SP)      :: slab_vz,slab_vplane,lcut,VBZgamma
+ real(SP)      :: slab_vz,slab_vplane,lcut
  complex(SP)   :: dummy
  type(PP_indexes) ::px
  character(schlen)  :: of_name
@@ -107,6 +102,7 @@ call of_open_close(of_name,'ot')
   
  bare_qpg(1,1)=1.0/dummy
 
-call of_open_close(of_name) 
+ call of_open_close(of_name) 
+ call PP_indexes_reset(px)
  !
 end subroutine

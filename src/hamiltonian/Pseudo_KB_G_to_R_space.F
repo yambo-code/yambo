@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -27,12 +27,12 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  use drivers,       ONLY:l_sc_magnetic
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use X_m,           ONLY:X_t
- use wave_func,     ONLY:WF,wf_ng
+ use wave_func,     ONLY:wf_ng
  use FFT_m,         ONLY:fft_size
  use pseudo,        ONLY:pp_kbv_dim
  use R_lattice,     ONLY:bz_samp
  use LIVE_t,        ONLY:live_timing
- use io_m,          ONLY:OP_WR,WR,WR_CL,RD,RD_CL,io_control
+ use IO_m,          ONLY:io_control,manage_action,OP_WR,WR_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
@@ -51,7 +51,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  !
  ! I / O
  !
- integer                 :: ID,ID_R,io_err(3),io_KB_pwscf_err,io_KB_abinit_err,io_Vnl_err,io_KB_real_space_err
+ integer                 :: IO_ACT_NOW,ID,ID_R,io_err(3),io_KB_pwscf_err,io_KB_abinit_err,io_Vnl_err,io_KB_real_space_err
  integer, external       :: io_KB_abinit,io_KB_pwscf,io_KB_real_space
  !
 #if defined _RT
@@ -87,14 +87,14 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
      ! [Vnl,r]
      !
      if (io_KB_pwscf_err==0) then
-       if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
-       if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
+       IO_ACT_NOW=manage_action(OP_IF_START_RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
+       call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
        io_KB_pwscf_err=io_KB_pwscf(ID)
      endif
      !
      if (io_KB_abinit_err==0) then
-       if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
-       if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
+       IO_ACT_NOW=manage_action(OP_IF_START_RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
+       call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
        io_KB_abinit_err=io_KB_abinit(ID)
      endif
      !  
@@ -105,8 +105,8 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
      !
      call Pseudo_KB_FFT(kbv,kbv_real_space,Xk%pt(ik,:))
      !
-     if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=WR,SEC=(/ifrag+1/),ID=ID_R)
-     if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=WR_CL,SEC=(/ifrag+1/),ID=ID_R)
+     IO_ACT_NOW=manage_action(WR_CL_IF_END,ifrag,0,Xk%nibz*n_sp_pol)
+     call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID_R)
      io_KB_real_space_err=io_KB_real_space(ID_R,kbv_real_space,kbv_real_space_table)
      !
      call live_timing(steps=1)

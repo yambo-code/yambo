@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, AF, DV
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module P2Y
+module P2Ym
  !
  use pw_export_module
  use qexml_module
@@ -73,10 +73,10 @@ contains
    select case(trim(dftdata_fmt))
    case("pw_export","qexml","qexsd","qexsd-hdf5")
       !
-      call msg('s','detected QE data format: ',trim(dftdata_fmt))
+      call msg('s','detected QE data format ',trim(dftdata_fmt))
       !
    case default
-      call msg('s','detected QE data format: ',trim(dftdata_fmt))
+      call msg('s','detected QE data format ',trim(dftdata_fmt))
       call errore("p2y_init","QE format not recognised/compatible (was wf_collect set to true?)",1)
    end select
       
@@ -188,7 +188,7 @@ contains
    use R_lattice,             ONLY : ng_vec
    use D_lattice,             ONLY : input_GS_Tel, n_atomic_species
    use wave_func,             ONLY : wf_ncx 
-   use com,                   ONLY : msg, error
+   use com,                   ONLY : msg
    use LIVE_t,                ONLY : live_timing_is_on
    use units,                 ONLY : HA2KEL
    type(levels),     intent(out)  :: en     ! Energies
@@ -462,7 +462,6 @@ contains
  subroutine get_symmetries
    use pars
    use mod_com2y,  ONLY : symmetries_check_and_load,force_noWFs
-   use com,        ONLY : warning,error
    use vec_operate,ONLY : v_is_zero
    use D_lattice,  ONLY : a
    use R_lattice,  ONLY : b
@@ -551,7 +550,6 @@ contains
    use R_lattice,   ONLY:bz_samp
    use D_lattice,   ONLY:alat
    use vec_operate, ONLY:v_is_zero
-   use com,         ONLY:warning
 #include<memory.h>
    type(bz_samp) :: k
    !
@@ -677,7 +675,7 @@ contains
    use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng
    use R_lattice,             ONLY : bz_samp, ng_vec
    use mod_com2y,             ONLY : force_noWFs
-   use com,                   ONLY : msg, error
+   use com,                   ONLY : msg
    character(lchlen) :: lch
    type(bz_samp) :: k
    integer i1,ik,nfft_tmp(3)
@@ -840,7 +838,6 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_xc
-   use com,            ONLY: warning,error
    use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION, GS_exx_SCREENING,&
 &                            XC_FACTOR,XC_HYB_GGA_XC_GAUPBE,XC_HYB_GGA_XC_PBEH,XC_HYB_GGA_XC_B3LYP      
    use mod_xc2y,       ONLY: XC_yamboID,  XC_yamboID2kind
@@ -869,14 +866,18 @@ contains
 &                         exx_is_active=pw_exx_is_active, exxdiv_treatment=pw_exxdiv_treatment,ierr=ierr)
       if (ierr==0) then
          if (pw_exx_is_active) then
-           if(GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.or.&
+           if (GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.or.&
            &  GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_PBEH*XC_FACTOR.or.& 
            &  GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_B3LYP*XC_FACTOR.or.GS_xc_FUNCTIONAL==0) then
-             if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') &
-                &  call error('Hybrids and HF allowed only with vcut_ws/spherical divergence treatment')
              GS_exx_FRACTION = pw_exx_fraction
              GS_exx_SCREENING= pw_screening_parameter
-             if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) GS_exx_SCREENING=0.15 
+             if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+                if (pw_exxdiv_treatment/='none')  call error('GAUPBE divergence treatment should be set to "none"')
+                GS_exx_SCREENING=0.15
+             else 
+                if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') &
+                &  call error('Hybrids and HF allowed only with vcut_ws/spherical divergence treatment')   
+             endif
            else
              call error('Hybrid functional: Only HF,PBE0, B3LYP and GAUPBE allowed')
            endif
@@ -905,10 +906,15 @@ contains
            call qexsd_read_exx(exx_fraction=pw_exx_fraction,screening_parameter=pw_screening_parameter,&
            &                   exxdiv_treatment=pw_exxdiv_treatment, ierr=ierr)
            if (ierr/=0) call errore('qexsd_read_exx','fmt error',abs(ierr))
-           if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') &
-             &  call error('Hybrids and HF allowed only with vcut_ws/spherical divergence treatment')
            GS_exx_FRACTION = pw_exx_fraction
            GS_exx_SCREENING= pw_screening_parameter
+           if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+             if (pw_exxdiv_treatment/='none')  call error('GAUPBE divergence treatment should be set to "none"')
+             GS_exx_SCREENING=0.15
+           else
+             if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') &
+              &  call error('Hybrids and HF allowed only with vcut_ws/spherical divergence treatment')
+             endif
            if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)  GS_exx_SCREENING=0.15
          !
          else
@@ -954,4 +960,4 @@ contains
     !
  end subroutine p2y_get_dftdata_fmt
  !
-end module p2y
+end module P2Ym

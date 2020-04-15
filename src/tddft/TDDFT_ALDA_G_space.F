@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,7 +31,7 @@ subroutine TDDFT_ALDA_G_space(E,k)
  use R_lattice,     ONLY:bz_samp,G_m_G
  use wave_func,     ONLY:WF
  use xc_functionals,ONLY:F_xc,magn,XC_potential_driver
- use global_XC,     ONLY:WF_kind,WF_xc_functional
+ use global_XC,     ONLY:WF_xc_functional,WF_kind
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G
  !
 #include<memory.h>
@@ -52,7 +52,7 @@ subroutine TDDFT_ALDA_G_space(E,k)
  !
  if (FXC_n_g_corr/= eval_G_minus_G(FXC_n_g_corr,0) ) then
    FXC_n_g_corr   = eval_G_minus_G(FXC_n_g_corr,0)
-   call msg('s','[TDDFT] ALDA Fxc size forced by symmetry to be :',FXC_n_g_corr)
+   call msg('s','[TDDFT] ALDA Fxc size forced by symmetry to be ',FXC_n_g_corr)
  endif
  !
  ! WF distributed & load
@@ -69,7 +69,7 @@ subroutine TDDFT_ALDA_G_space(E,k)
  if (n_spin>1) then
    YAMBO_ALLOC(magn,(fft_size,3))
  endif
- call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,2)
+ call XC_potential_driver(E,k,WF_kind,WF_xc_functional,2)
  do i1=1,fft_size
    F_xc_DP(i1)=sum(cmplx(F_xc(i1,:,:),kind=DP))
  enddo

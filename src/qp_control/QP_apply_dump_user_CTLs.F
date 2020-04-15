@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,10 +25,11 @@ subroutine QP_apply_dump_user_CTLs( E, object )
  !
  use pars,          ONLY:schlen
  use electrons,     ONLY:levels,n_sp_pol
+ use R_lattice,     ONLY:nkibz
  use parser_m,      ONLY:parser
- use QP_CTL_m,      ONLY:QP_action,n_QP_actions,QP_ctl_what,QP_ctl_interp_neigh,&
-&                        QP_ctl_db,QP_ctl_ID,QP_CTL_is_active,QP_CTL_fill
- use stderr,        ONLY:STRING_split,STRING_match
+ use QP_CTL_m,      ONLY:QP_action,n_QP_actions,QP_ctl_what,QP_ctl_DB_user,&
+&                        QP_ctl_ID,QP_CTL_is_active,QP_CTL_fill
+ use stderr,        ONLY:STRING_split,STRING_same
  !
 #include<memory.h>
  !
@@ -55,23 +56,24 @@ subroutine QP_apply_dump_user_CTLs( E, object )
  ! User defined QP database
  !
  if (HAVE_QP_dbs) then
-   call STRING_split(QP_ctl_db(QP_ctl_ID),db_piece)
+   call STRING_split(QP_ctl_DB_user(QP_ctl_ID)%action,db_piece)
    do i_p=1,n_pieces
      if (trim(db_piece(i_p))=="<") then
        n_QP_actions=n_QP_actions+1
        QP_action(n_QP_actions)%active=.TRUE.
        QP_action(n_QP_actions)%CTL%db=db_piece(i_p+1)
-       QP_action(n_QP_actions)%CTL%interp_neigh=QP_ctl_interp_neigh(QP_ctl_ID)
+       QP_action(n_QP_actions)%CTL%interp_neigh=QP_ctl_DB_user(QP_ctl_ID)%INTERP_N_neigh
+       QP_action(n_QP_actions)%CTL%interp_shell_factor=QP_ctl_DB_user(QP_ctl_ID)%INTERP_shell_factor
        do i2=max(i_p-3,1),i_p-1
-         if (STRING_match(trim(db_piece(i2)),"e")) QP_action(n_QP_actions)%plan(1)=.TRUE.
-         if (STRING_match(trim(db_piece(i2)),"w")) QP_action(n_QP_actions)%plan(2)=.TRUE.
-         if (STRING_match(trim(db_piece(i2)),"z")) QP_action(n_QP_actions)%plan(3)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"e")) QP_action(n_QP_actions)%plan(1)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"w")) QP_action(n_QP_actions)%plan(2)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"z")) QP_action(n_QP_actions)%plan(3)=.TRUE.
        enddo
        do i2=i_p,min(i_p+2,n_pieces)
-         if (STRING_match(trim(db_piece(i2)),"ui" )) QP_action(n_QP_actions)%plan(4)=.TRUE.
-         if (STRING_match(trim(db_piece(i2)),"uki")) QP_action(n_QP_actions)%plan(4)=.TRUE.
-         if (STRING_match(trim(db_piece(i2)),"uei")) QP_action(n_QP_actions)%plan(5)=.TRUE.
-         if (STRING_match(trim(db_piece(i2)),"ubi")) QP_action(n_QP_actions)%plan(6)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"ui" )) QP_action(n_QP_actions)%plan(4)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"uki")) QP_action(n_QP_actions)%plan(4)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"uei")) QP_action(n_QP_actions)%plan(5)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"ubi").and.nkibz>1) QP_action(n_QP_actions)%plan(6)=.TRUE.
        enddo
        if (.not.any((/QP_action(n_QP_actions)%plan(4:6)/))) QP_action(n_QP_actions)%plan(4)=.TRUE.
        !
@@ -132,6 +134,8 @@ subroutine QP_apply_dump_user_CTLs( E, object )
    subroutine USER_action_active()
      n_QP_actions=n_QP_actions+1
      QP_action(n_QP_actions)%active=.TRUE.
+     QP_action(n_QP_actions)%what="Input file"
+     QP_action(n_QP_actions)%desc="USER defined scissor"
    end subroutine
    !
 end subroutine

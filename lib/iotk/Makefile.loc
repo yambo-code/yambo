@@ -44,7 +44,6 @@ configure-stamp: uncompress-stamp
 	        if test -x ./configure ; then \
 	           ./configure $(AUXFLAGS) \
 	           FC="$(fc)"; \
-	           FCFLAGS="$(fcflags)"; \
 	        fi ) ; \
 	fi
 	touch configure-stamp

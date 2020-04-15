@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -168,9 +168,9 @@ subroutine K_inversion_restart(iq,W)
        endif
      enddo
      !
-     call msg('rs','[BSE INV@'//TYP%what//'] Frequencies read         :',count(inv_err_db==0))
-     call msg('rs','[BSE INV@'//TYP%what//']                     [o/o]:',real(count(inv_err_db==0))/real(W%n_freqs)*100._SP)
-     call msg('rs','[BSE INV@'//TYP%what//'] Frequencies used         :',W%n_freqs)
+     call msg('rs','[BSE INV@'//TYP%what//'] Frequencies read         ',count(inv_err_db==0))
+     call msg('rs','[BSE INV@'//TYP%what//']                     [o/o]',real(count(inv_err_db==0))/real(W%n_freqs)*100._SP)
+     call msg('rs','[BSE INV@'//TYP%what//'] Frequencies used         ',W%n_freqs)
      !
      ! De/Allocate Epsilon_ii/PL
      !

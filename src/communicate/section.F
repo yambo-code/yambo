@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,40 +23,53 @@
 !
 subroutine section(mode,name)
  !
- ! mode = * 	: new basic level
- !      = +     : increase level
- !      = -     : decrease level
- !      = p     : increase level only in this section
- !      = #     : increase level #
- !      = r     : reset to zero level end exit
+ ! mode =  * 	 : new basic level
+ !      =  +     : increase level
+ !      =  -     : decrease level
+ !      =  p     : increase the level ONLY in this section
+ !      = +P     : increase the level and save the current level
+ !      = -P     : restore the level saved with +P and exit
+ !      =  #     : increase level #
+ !      =  r     : reset to zero level end exit
  !
  use pars,       ONLY:lchlen,schlen,DP
- use it_m,       ONLY:ofiles_append
+ use it_tools,   ONLY:ofiles_append
  use stderr,     ONLY:STRING_pack
- use LIVE_t,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,&
-&                     date_and_time_string
+ use LIVE_t,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,date_and_time_string
  use parallel_m, ONLY:PP_redux_wait,ncpu
- use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&
-&                     write_to_report,write_the_logo,repfile
+ use com,        ONLY:msg,depth,isec,secnm,depth_SAVE,isec_SAVE,write_to_report,repfile_unit,repfile,&
+&                     previous_secmode
  use timing_m,   ONLY:timing_upto_now
+#if defined _YAML_OUTPUT
+ use pars,            ONLY:repfile_index
+ use com,             ONLY:of_yaml_IDs,depth_yaml
+ use yaml_output,     ONLY:yaml_sequence_open,yaml_sequence_close,yaml_new_document,&
+&                          yaml_comment,yaml_release_document!
+#endif
+ !
  implicit none
  !
- character(1)::mode
+ character(*)::mode
  character(*)::name
  ! 
  ! Work Space
  !
  character(schlen)::chs
  character(lchlen)::ch,chp
- integer      :: i1,isec_save(5)
+ integer      :: i1
  real(DP)     :: cput_here(ncpu)
  !
  ! Final Timing Strings
  !
  character(schlen):: average_time,min_time,max_time
  !
- if (mode=='r') then
+ if (trim(mode)=='r') then
    depth=0
+   return
+ endif
+ if (trim(mode)=='-P') then
+   isec=isec_SAVE
+   depth=depth_SAVE
    return
  endif
  !
@@ -66,11 +79,7 @@ subroutine section(mode,name)
  !
  if (depth==-1) then
    ch=date_and_time_string(dt_out=date_time_at_start)
-   if (write_to_report) then
-     open(unit=11,file=trim(repfile),position='append')
-     write (11,'(1x,a)') trim(ch)
-     close(11)
-   endif
+   if (write_to_report) write (repfile_unit,'(1x,a)') trim(ch)
    call write_the_logo(6,' ')
    previous_secmode=' '
  endif
@@ -78,9 +87,10 @@ subroutine section(mode,name)
  ! To handle menu's like sections I need to reset 
  ! the depth when the previous section is 'p'-like
  !
- if (previous_secmode=='p') depth=depth-1
- !
- isec_save=isec
+ if (trim(previous_secmode)=='p') then
+   depth=depth_SAVE
+   isec =isec_SAVE
+ endif
  !
  ! Update Section Depth & Timing 
  !
@@ -98,11 +108,11 @@ subroutine section(mode,name)
    max_time=time_string(maxval(cput_here))
    average_time =time_string(sum(cput_here)/real(ncpu,DP))
    if (all((/len_trim(min_time)>0,len_trim(max_time)>0,len_trim(average_time)>0/))) then
-     write (ch,'(6a)') 'Timing [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
+     write (ch,'(6a)') 'Timing [Min/Max/Average] ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
      call msg('nr',trim(ch))
    endif
    call ct(INIT_SEC=.true.)
- case ('+')
+ case ('+','+P')
    depth=depth+1
  case ('p')
    previous_secmode='p'
@@ -113,8 +123,17 @@ subroutine section(mode,name)
    depth=2
  case ('-')
    depth=depth-1
-   isec(depth+1:)=0
+   isec(depth+2:)=0
  end select
+ !
+#if defined _YAML_OUTPUT
+ do while(depth_yaml>depth)
+   call yaml_sequence_close(unit=of_yaml_IDs(repfile_index))
+   depth_yaml=depth_yaml-1
+   if(depth_yaml==0) call yaml_release_document(of_yaml_IDs(repfile_index))
+ end do
+ if(depth_yaml==0) call yaml_new_document(of_yaml_IDs(repfile_index))
+#endif 
  !
  ! Write out the Section header (in secnm)
  !
@@ -131,9 +150,16 @@ subroutine section(mode,name)
  call msg('nrs',trim(secnm))
  call msg('rn',repeat('=',len_trim(secnm)))
  !
+#if defined _YAML_OUTPUT
+ !if(depth_yaml>0) call yaml_newline(unit=of_yaml_IDs(repfile_index))
+ if(depth_yaml>0) call yaml_comment(" ",unit=of_yaml_IDs(repfile_index))
+ call yaml_sequence_open(mapname=trim(name),unit=of_yaml_IDs(repfile_index))
+ depth_yaml=depth_yaml+1
+#endif
+ !
  ! Finalize
  !
- if (mode=='X') then
+ if (trim(mode)=='X') then
    !
    cput_here=cput_tot(:,1)
    call PP_redux_wait(cput_here)
@@ -141,21 +167,13 @@ subroutine section(mode,name)
    ch=date_and_time_string(dt_in=date_time_at_start)
    chp= STRING_pack(trim(ch),' [start]')
    !
-   if (write_to_report) then
-     open(unit=11,file=trim(repfile),position='append')
-     write (11,'(1x,a)') chp(:len_trim(chp))
-     close(11)
-   endif
+   if (write_to_report) write (repfile_unit,'(1x,a)') chp(:len_trim(chp))
    call ofiles_append(line='')
    call ofiles_append(line=chp(:len_trim(chp)))
    !
    ch = date_and_time_string(skip_host=.TRUE.)
    chp= STRING_pack(trim(ch),repeat(' ',len_trim(chp)-len_trim(ch)-7)//'[end]')
-   if (write_to_report) then
-     open(unit=11,file=trim(repfile),position='append')
-     write (11,'(1x,a)') chp(:len_trim(chp))
-     close(11)
-   endif
+   if (write_to_report) write (repfile_unit,'(1x,a)') chp(:len_trim(chp))
    call ofiles_append(line=chp(:len_trim(chp)))
    !
    min_time=time_string(minval(cput_here))
@@ -164,7 +182,7 @@ subroutine section(mode,name)
    !
    if (all((/trim(min_time)/='',trim(max_time)/='',trim(average_time)/=''/))) then
      !
-     write (ch,'(6a)')     'Timing   [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
+     write (ch,'(6a)')     'Timing   [Min/Max/Average] ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
      !
      call msg('nr',trim(ch))
      call timing_upto_now()
@@ -184,9 +202,10 @@ subroutine section(mode,name)
    !
  endif
  !
- ! If mode is p
- !
- if (mode=='p') isec=isec_save
+ if (trim(mode)=="+P".or.trim(previous_secmode)=="p") then
+   isec_SAVE=isec
+   depth_SAVE=depth 
+ endif
  !
  call PP_redux_wait
  !

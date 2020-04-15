@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -53,7 +53,7 @@ subroutine MAG_Hamiltonian()
  ! Ax =  0              Ay=  MAG_B x        Az=0    
  ! *******************************************************************************************
  !
- use pars,           ONLY:SP,cZERO,cI,cONE
+ use pars,           ONLY:SP,cZERO
  use units,          ONLY:SPEED_OF_LIGHT
  use hamiltonian,    ONLY:Hzero
  use FFT_m,          ONLY:fft_size

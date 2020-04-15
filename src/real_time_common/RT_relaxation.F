@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -63,7 +63,7 @@ subroutine RT_relaxation(E,k,q,Time)
  !
  use pars,           ONLY:SP
  use D_lattice,      ONLY:Bose_Temp
- use electrons,      ONLY:levels,spin_occ
+ use electrons,      ONLY:levels
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz

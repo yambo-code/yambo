@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -26,19 +26,16 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  ! Build the Hermitian W operator eq. 62 and 63
  ! in PRB 69, 085106 (2004)
  !
- use pars,           ONLY:SP,cI,cZERO,cONE,pi
+ use pars,           ONLY:SP,cI,cZERO,pi
  use units,          ONLY:SPEED_OF_LIGHT
  use electrons,      ONLY:levels,n_sp_pol
  use electric,       ONLY:l_force_SndOrd
  use QP_m,           ONLY:QP_nk
- use nl_optics,      ONLY:NL_bands,NL_nbands
+ use nl_optics,      ONLY:NL_bands
  use R_lattice,      ONLY:bz_samp,k_map
  use D_lattice,      ONLY:a
- use vec_operate,    ONLY:k_periodic_idx
  use matrix_operate, ONLY:hermitian
  use fields,         ONLY:gauge_field
- use DIPOLES,        ONLY:DIP_S
- use wrapper_omp,    ONLY:M_by_M_omp
  !
  implicit none
  !
@@ -52,15 +49,13 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  !
  ! Work Space
  !
- integer :: i1,i2,iv1,im,idx(3),id,ikp,id_red,ikm
- integer :: ikm_ibz,ikp_ibz,ikbz,istep,max_step
+ integer :: i1,i2,im,id,id_red
+ integer :: ikbz,istep,max_step
  complex(SP) :: Wk(3,NL_bands(2),NL_bands(2))
  complex(SP) :: Wop(NL_bands(2),NL_bands(2),2)
  complex(SP) :: V_tilde(en%nbf,NL_bands(2),2)
  complex(SP) :: E_vec_pot(3)
  !
- complex(SP) :: tmp_Vp(NL_bands(2),en%nbf),tmp_Vm(NL_bands(2),en%nbf)
- complex(SP) :: delta_tV_bnd(en%nbf,NL_bands(2))
  !
  E_vec_pot=-A_input%vecpot_vel/SPEED_OF_LIGHT
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -24,16 +24,15 @@
 subroutine K_inversion_driver(iq,W,E,k,q) 
  !
  use pars,           ONLY:SP
- use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
- use BS_solvers,     ONLY:BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
+ use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,Co_factor,&
 &                         K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
-&                         K_slk,K_inv_slk
+&                         K_slk,K_inv_slk,BSS_eels_to_eps
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bare_qpg,bz_samp
- use com,            ONLY:isec,msg,warning
+ use com,            ONLY:isec,msg
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
 &                         PAR_COM_SLK_INDEX_local
@@ -48,6 +47,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #if defined _RT
  use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel
 #endif
+ use stderr,         ONLY:intc
+ use descriptors,    ONLY:IO_desc_add
  !
  ! GPL_EXCLUDE_START
  !
@@ -76,6 +77,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  integer           :: i1,i2,iw,PAR_IND_FREQ_ID
  logical, external :: STOP_now
  real(SP)          :: ratio
+ character(1)      :: sec
  complex(SP), allocatable :: Lo(:,:,:)
  !
  ! ... frequencies
@@ -92,11 +94,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Sectioning
  !============
- if (isec(2)/=0) then
-   call section('=','Inversion solver')
- else if (isec(2)==0) then
-   call section('+','Inversion solver')
- endif
+ if (isec(2)/=0) sec="="
+ if (isec(2)==0) sec="+"
+ call section(sec,'Inversion Solver @q'//trim(intc(iq)))
  !
 #if defined _SCALAPACK
  !
@@ -147,7 +147,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! Kernel and/or BSS components loading
  !======================================
  call K_components_folded_in_serial_arrays(iq)
- call K_stored_in_a_big_matrix(iq,"INV")
  !
  if (K_slk%kind=="SLK") then
    !
@@ -169,6 +168,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
    !
  else
+   !
+   call K_stored_in_a_big_matrix(iq,"INV")
    !
    ! Diagonal removal
    !==================
@@ -212,7 +213,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 &                              TOTAL=W%n_freqs,NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
    call live_timing('Perturbative inversion ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
    !
-   call K_inversion_engine("any",1,W%n_freqs,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
+   call K_inversion_engine("any",1,W%n_freqs,iq,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
    !
    call PP_redux_wait(K_INV_EPS%err,COMM=PAR_COM_SLK_INDEX_local%COMM)
    call PP_redux_wait(Epsilon_ii(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
@@ -231,12 +232,12 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #if defined _PL
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,3,4/),ID=ID)
    i_err=io_BSS_invert(iq,W,ID)
-   call msg('rs','[PERTURBATIVE INV@PL ] Converged frequencies :',count(K_INV_PL%err==0))
+   call msg('rs','[PERTURBATIVE INV@PL ] Converged frequencies ',count(K_INV_PL%err==0))
 #else
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
    i_err=io_BSS_invert(iq,W,ID)
 #endif
-   call msg('rs','[PERTURBATIVE INV@EPS] Converged frequencies :',count(K_INV_EPS%err==0))
+   call msg('rs','[PERTURBATIVE INV@EPS] Converged frequencies ',count(K_INV_EPS%err==0))
    !
  endif
  !
@@ -298,11 +299,12 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! Final Output
  !==============
  !
- if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/bare_qpg(1,1)**2
+ if (BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
+ if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/bare_qpg(iq,1)**2
  !
- BSS_n_descs=BSS_n_descs+1
  ratio=real(count(K_INV_EPS%err==0))/real(W%n_freqs)*100._SP
- BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//trim(real2ch(ratio))
+ !
+ call IO_desc_add(BSS_desc,kind="r",str="[INV] Converged frequencies",term="o/o",R=(/ratio/))
  !
  call K_output_file(iq,"Inversion")
  !
@@ -330,7 +332,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
        !
        iw=TYP%iw_full(i1)
        !
-       call K_inversion_engine(TYP%what,iw,1,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.TRUE.)
+       call K_inversion_engine(TYP%what,iw,1,iq,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.TRUE.)
        !
        call live_timing(steps=1)
        !
@@ -348,8 +350,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
      !
      nw_conv=count(TYP%err==0)
-     call msg('rs','[FULL INV@'//TYP%what//'] Frequencies DONE      :',nw_conv)
-     call msg('rs','[FULL INV@'//TYP%what//']                  [o/o]:',real(nw_conv)/real(W%n_freqs)*100._SP)
+     call msg('rs','[FULL INV@'//TYP%what//'] Frequencies DONE      ',nw_conv)
+     call msg('rs','[FULL INV@'//TYP%what//']                  [o/o]',real(nw_conv)/real(W%n_freqs)*100._SP)
      !
    end subroutine
    !
@@ -410,7 +412,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
      endif
      !
-     call msg('rs','[FULL INV@'//TYP%what//'] Frequencies TODO :',TYP%n_full_inv_freqs)
+     call msg('rs','[FULL INV@'//TYP%what//'] Frequencies TODO ',TYP%n_full_inv_freqs)
      !
    end subroutine
    !

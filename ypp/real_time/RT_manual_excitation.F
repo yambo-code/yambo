@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -32,7 +32,7 @@ subroutine RT_manual_excitation(E,k)
  use com,            ONLY:msg
  use vec_operate,    ONLY:v_is_zero
  use real_time,      ONLY:RT_carriers,RT_bands,RT_Nk_ibz
- use YPP,            ONLY:K_transform
+ use YPPm,           ONLY:K_transform
  use YPP_real_time,  ONLY:Eh_pumped_pair_energy,Eh_pumped_pair_width,        &
 &                         Eh_pumped_pair_BZ_regions,Eh_pumped_pair_deltaE,  &
 &                         Eh_pumped_pair_BZ_width,Eh_pumped_Nel,Eh_pumped_pair_n_BZ_regions,   &
@@ -170,7 +170,7 @@ subroutine RT_manual_excitation(E,k)
    !
  enddo
  !
- call msg('sr','[RT] Carrier number        :',delta_Nel)
- call msg('sr','[RT]         density [cm-3]:',delta_Nel/(DL_vol*BO2ANG**3*1.E-24_SP))
+ call msg('sr','[RT] Carrier number        ',delta_Nel)
+ call msg('sr','[RT]         density [cm-3]',delta_Nel/(DL_vol*BO2ANG**3*1.E-24_SP))
  !
 end subroutine RT_manual_excitation

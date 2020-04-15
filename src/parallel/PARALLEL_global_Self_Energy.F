@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -52,8 +52,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use collision_ext, ONLY:COLL_bands,COH_collisions,HXC_collisions,P_collisions
  use parallel_m,    ONLY:PAR_n_c_bands,PAR_n_v_bands,COMM_copy
  ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_G_b_INDEX,&
-&                        PAR_COM_CON_INDEX_X,PAR_COM_VAL_INDEX_X
+ use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_G_b_INDEX
  ! IND
  use parallel_m,    ONLY:PAR_IND_Bp_mat,PAR_IND_QP,PAR_IND_Q
  ! INDEX

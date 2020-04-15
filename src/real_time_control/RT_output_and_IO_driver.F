@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,7 +28,6 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  use units,          ONLY:AUT2FS
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use stderr,         ONLY:set_real_printed_length
  use IO_m,           ONLY:IO_and_Messaging_switch
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use real_time,      ONLY:eval_energy,eval_entropy,l_RT_update_Energies,l_NE_with_fields,NE_time, &
@@ -48,30 +47,30 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  !
  select case(trim(what))
    !
- case('open')
+ case('open','close')
    !
-   OBSERVABLES=0._SP
+   if(trim(what)=="open") OBSERVABLES=0._SP
    !
-   call RT_output(what="open curr pol")
+   call RT_output(what=trim(what)//" curr pol")
    !
    ! GPL_EXCLUDE_START
    !
-   call RT_output(what="open carr magn")
-   if(eval_energy)  call RT_output(what="open energy")
-   if(eval_entropy) call RT_output(what="open therm")
-   if(l_RT_update_Energies)  call RT_output(what="open BGR")
-   if (l_elph_scatt)         call RT_output('open mean_EPlife')
-   if (l_elel_scatt)         call RT_output('open mean_EElife')
-   if (l_elphoton_scatt)     call RT_output('open mean_RADlife')
-   if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open N_dN_E')
+   call RT_output(what=trim(what)//" carr magn")
+   if(eval_energy)  call RT_output(what=trim(what)//" energy")
+   if(eval_entropy) call RT_output(what=trim(what)//" therm")
+   if(l_RT_update_Energies)  call RT_output(what=trim(what)//" BGR")
+   if (l_elph_scatt)         call RT_output(trim(what)//' mean_EPlife')
+   if (l_elel_scatt)         call RT_output(trim(what)//' mean_EElife')
+   if (l_elphoton_scatt)     call RT_output(trim(what)//' mean_RADlife')
+   if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output(trim(what)//' N_dN_E')
    !
    ! GPL_EXCLUDE_END
    !
    ! Field(s)
    !==========
    if (l_NE_with_fields) then
-     call RT_output(what="open ext")
-     if(l_RT_induced_field)  call RT_output(what="open tot ind")
+     call RT_output(what=trim(what)//" ext")
+     if(l_RT_induced_field)  call RT_output(what=trim(what)//" tot ind")
    endif
    !
  case('write')
@@ -89,11 +88,9 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    ! GPL_EXCLUDE_END
    !
-   call set_real_printed_length()
    call IO_and_Messaging_switch("-fragments_IO_log")
    call RT_databases_IO(E)
    call IO_and_Messaging_switch("+fragments_IO_log")
-   call set_real_printed_length(f_length=10,g_length=10)
    !
    ! OUTPUT(s)
    !###########

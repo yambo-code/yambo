@@ -14,6 +14,8 @@ keep_petsc=no
 keep_slepc=no
 keep_fftw=no
 keep_fftqe=no
+keep_yaml=no
+keep_futile=no
 #
 # tarball names
 #
@@ -30,6 +32,8 @@ tarball_petsc=petsc-3.7.4.tar.gz
 tarball_slepc=slepc-3.7.3.tar.gz
 tarball_fftw=fftw-3.3.6-pl1.tar.gz
 tarball_fftqe=fftqe.tar.gz
+tarball_yaml=yaml-0.2.2.tar.gz
+tarball_futile=futile-yambo.tar.gz
 #
 # package names
 #
@@ -46,6 +50,8 @@ pkgname_petsc=petsc-3.7.4
 pkgname_slepc=slepc-3.7.3
 pkgname_fftw=fftw-3.3.6-pl1
 pkgname_fftqe=fftqe
+pkgname_yaml=yaml-0.2.2
+pkgname_futile=futile-yambo
 #
 # URL's
 #
@@ -53,7 +59,7 @@ url_netcdf=https://github.com/yambo-code/yambo/files/855476/$(tarball_netcdf)
 url_netcdff=https://github.com/yambo-code/yambo/files/855477/$(tarball_netcdff)
 url_hdf5=https://github.com/yambo-code/yambo/files/838459/$(tarball_hdf5)
 url_libxc=https://github.com/yambo-code/yambo/files/783150/$(tarball_libxc)
-url_iotk=https://github.com/yambo-code/yambo/files/783147/$(tarball_iotk)
+url_iotk=https://github.com/yambo-code/yambo/files/962173/$(tarball_iotk)
 url_etsf_io=https://github.com/yambo-code/yambo/files/845218/$(tarball_etsf)
 url_lapack=https://github.com/yambo-code/yambo/files/783151/$(tarball_lapack)
 url_blacs=https://github.com/yambo-code/yambo/files/783152/$(tarball_blacs)
@@ -62,3 +68,5 @@ url_petsc=https://github.com/yambo-code/yambo/files/783154/$(tarball_petsc)
 url_slepc=https://github.com/yambo-code/yambo/files/789647/$(tarball_slepc)
 url_fftw=https://github.com/yambo-code/yambo/files/838458/$(tarball_fftw)
 url_fftqe=https://github.com/yambo-code/yambo/files/844070/$(tarball_fftqe)
+url_yaml=https://github.com/yambo-code/yambo/files/3901837/$(tarball_yaml)
+url_futile=https://github.com/yambo-code/yambo/files/3900885/$(tarball_futile)

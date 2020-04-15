@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,10 +25,11 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  !
  use pars,           ONLY:schlen
  use IO_m,           ONLY:IO_write,IO_read
- use com,            ONLY:write_to_report,write_to_of
+ use com,            ONLY:write_to_report,write_to_of,fat_log
  use parallel_m,     ONLY:IO_write_default,myid,master_cpu
  use stderr,         ONLY:STRING_split,write_to_log
- use LIVE_t,         ONLY:live_timing_is_on,what_is_running
+ use LIVE_t,         ONLY:live_timing_is_on
+ use C_driver,       ONLY:code_bin
  use stderr,         ONLY:write_fragments_IO_log,write_to_log_default
  use timing_m,       ONLY:timing
  implicit none
@@ -131,7 +132,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
      if (trim(ch_piece(ich))=="+io_in" ) IO_read=local_TRUE
      if (trim(ch_piece(ich))=="+io_out") IO_write=local_master
      if (trim(ch_piece(ich))=="-fragments_IO_log") write_fragments_IO_log=local_FALSE
-     if (trim(ch_piece(ich))=="+fragments_IO_log") write_fragments_IO_log=(local_TRUE.and.write_to_log_default)
+     if (trim(ch_piece(ich))=="+fragments_IO_log") write_fragments_IO_log=(local_TRUE.and.write_to_log_default.and.fat_log)
      !
    enddo
    !
@@ -139,7 +140,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  !
  ! YPP cannot set to .TRUE. the write_to_report
  !
- if (index(what_is_running,'YPP')>0) write_to_report = local_write_to_report
+ if (index(code_bin,'ypp')>0) write_to_report = local_write_to_report
  !
  call timing('IO_and_Messaging_switch',OPR='stop')
  !

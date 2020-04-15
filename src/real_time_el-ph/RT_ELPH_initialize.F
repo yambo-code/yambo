@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,7 +31,6 @@ subroutine RT_ELPH_initialize(E,k,q)
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt
  use vec_operate,    ONLY:v_norm
- use com,            ONLY:warning
  use D_lattice,      ONLY:Bose_Temp
  use R_lattice,      ONLY:RL_vol,bz_samp,qindx_S,nXkibz
  use IO_m,           ONLY:io_control,REP,OP_RD_CL,VERIFY,NONE
@@ -41,7 +40,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  use parser_m,       ONLY:parser
  use R_lattice,      ONLY:RIM_n_rand_pts
  use parallel_m,     ONLY:PAR_Q_index,PAR_IND_Q,PAR_nQ,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
-&                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_index
+&                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX
  !
 #include<memory.h>
  !
@@ -254,7 +253,7 @@ subroutine RT_ELPH_initialize(E,k,q)
        !
        if (RIM_n_rand_pts>0.and.q_mod(iq)<=q0_mod .and. il<=3) then
          q_weight_RT(iq,il,1)=q_weight_tmp(iq,1)/ph_mean_speed(il)
-         q_weight_RT(iq,il,2)=Bose_temp*q_weight_tmp(iq,2)/ph_mean_speed(il)**2/spin_occ
+         q_weight_RT(iq,il,2)=Bose_Temp*q_weight_tmp(iq,2)/ph_mean_speed(il)**2/spin_occ
        endif
        !
      enddo

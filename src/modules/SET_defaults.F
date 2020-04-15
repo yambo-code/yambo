@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,12 +27,14 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
  use pars,       ONLY:SP,cZERO
+ use C_driver,   ONLY:code_branch
  use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
+ use global_XC,  ONLY:EXT_NONE
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                     eval_alpha,&
-&                     q_plus_G_direction,Q_Shift_Order,n_X_descs,&
+&                     q_plus_G_direction,Q_Shift_Order,&
 &                     l_X_terminator,X_terminator_E,global_gauge,&
 &                     Chi_linalg_mode,X_use_lin_sys,X_DbGd_percentual
  use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
@@ -41,11 +43,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
-&                     GWo_SC_done,GWo_iterations,&
+&                     GWo_SC_done,GWo_iterations,GW_iterations,&
 &                     COHSEX_use_empties,On_Mass_Shell_approx,&
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,l_GW_terminator,&
 &                     GW_terminator_E
- use QP_CTL_m,   ONLY:QP_ctl_user,QP_ctl_db,QP_ctl_interp_neigh
+ use QP_CTL_m,   ONLY:QP_ctl_user,QP_ctl_DB_user
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp
@@ -58,24 +60,25 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
 &                     eval_magn,E_SOC_nbands
  use parallel_m, ONLY:ncpu,CPU_str_reset,PARALLEL_host_name
- use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
-&                     more_io_path,core_io_path,com_path,repfile,grid_paths
+ use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
+&                     more_io_path,core_io_path,com_path,repfile,grid_paths,fat_log
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
- use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,frag_WF
- use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
+ use IO_m,       ONLY:io_reset,max_io_units,serial_number,frag_WF
+ use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_threshold,Haydock_iterIO,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
-#if defined _SLEPC
+ use descriptors,ONLY:IO_desc_reset
+#if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers, ONLY:BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol, BSS_target_E, Slepc_shell
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
-&                     BS_K_is_ALDA,BSE_mode
- use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
+&                     BS_K_is_ALDA,BSE_mode,L_kind,BS_K_cutoff
+ use TDDFT,      ONLY:FXC_type,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -96,14 +99,15 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
-&                     l_SC_nl_mix
+&                     l_SC_nl_mix,SC_kind,SC_perturbation,SC_desc
 #endif
 #if defined _SC || defined _RT || defined _QED || defined _NL
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
  use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
- use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_headings,YPP_append
+ use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_headings,YPP_append,&
+&                     Gr_desc,TIME_STEP_desc,RT_desc
  use RT_control, ONLY:OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
@@ -119,12 +123,15 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
 #if defined _NL
  use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,         &
-&                     NL_verb_name,NL_bands,n_order
+&                     NL_verb_name,NL_bands,n_order,NL_desc
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
+#endif
+#if defined _YAML_OUTPUT
+ use com,         ONLY:depth_yaml
 #endif
  use timing_m,    ONLY:timing_allocate,nclockx
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
@@ -139,7 +146,16 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! Printed reals format lengths 
  !
+ ! GPL_EXCLUDE_START
+ include 'branch.inc'
+ ! GPL_EXCLUDE_END
+ !
  call set_real_printed_length()
+ !
+ ! Fat Log?
+ !
+ fat_log    = .FALSE.
+ if (index(INSTR,'fatlog')>0) fat_log=.TRUE.
  !
  ! CPU structures
  !
@@ -147,12 +163,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! OpenMP
  !
- omp_is_off    = .FALSE.
- !
 #if defined _OPENMP
- !
+ omp_is_off    = .FALSE.
  if (index(INSTR,'noopenmp')>0) omp_is_off=.TRUE.
- !
+#else
+ omp_is_off    = .TRUE.
 #endif
  !
  call OPENMP_initialize( )
@@ -192,10 +207,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  more_io_path=OD
  com_path=COM_DIR
  !
- ! ... created (core only)
- !
- call mk_dir(core_io_path)
- !
  ! WFs fragmentation, this is for the interfaces
  !
  frag_WF = (.not.index(INSTR,'nodbfr')>0 .or. index(INSTR,'fragnb')>0)
@@ -220,10 +231,14 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  depth=-1
  secnm=' '
  previous_secmode=' '
- of=' '
- opened_of=' '
+ of_name=' '
+ n_ofs_defined=0
+ of_opened=' '
  of_unit=0
- of_unit(max_open_ofs)=-11
+ of_unit(max_open_ofs)=-1
+#if defined _YAML_OUTPUT
+ depth_yaml=0
+#endif
  !
  !LOGO
  !
@@ -356,7 +371,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Vnl_commutator_warning=.FALSE.
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
- n_X_descs=0
  l_X_terminator=.FALSE.
  X_terminator_E=40._SP/HA2EV
  !
@@ -375,22 +389,25 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  QP_G_dr=0.1/HA2EV
  QP_cg_percent=100._SP
  GWo_iterations=0
+ GW_iterations =0
  GWo_SC_done=.FALSE.
  COHSEX_use_empties=.FALSE.
  On_Mass_Shell_approx=.FALSE.
  SC_E_threshold=0.01/HA2EV
  SC_band_mixing=100._SP
- Vnlxc_kind='HF'
- Vxc_kind='LDA'
+ Vnlxc_kind='Fock'
+ Vxc_kind='DFT'
  l_extended_output=.FALSE.
  l_GW_terminator=.FALSE.
  GW_terminator_E=1.5_SP
  !
  ! QP_ctl control
  !
- QP_ctl_db="none"
- QP_ctl_interp_neigh=1
  do i1=1,3
+   QP_ctl_DB_user(i1)%INTERP_shell_factor=20._SP
+   QP_ctl_DB_user(i1)%INTERP_N_neigh=1
+   QP_ctl_DB_user(i1)%INTERP_DbGd_mode="NN"
+   QP_ctl_DB_user(i1)%action="none"
    do i2=1,3
      QP_ctl_user(i1,i2)%E=(/0.,1.,1./)
      QP_ctl_user(i1,i2)%Wc=0._SP
@@ -413,13 +430,14 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! BS/BSS
  !
- BS_n_g_W=1
+ BS_n_g_W=-1
  BS_eh_en=(/-1._SP,-1._SP/)/HA2EV
  BS_identifier=0
  BS_q=1
  BS_eh_win=100._SP
  BS_res_mode='xc'
  BS_cpl_mode='none'
+ L_kind='Lbar'
  BSE_mode='retarded'
  BSK_mode=' '
  TDDFT_mode=' '
@@ -427,9 +445,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_Wd=cZERO
  l_drude=.false.
  BS_K_dim=0
+ BS_K_cutoff=0.0000_SP
  BSS_mode=' '
  BSS_inversion_mode='pf'
- BSS_n_descs=0
  BSS_er=(/0._SP,10._SP/)/HA2EV
  BSS_dr=0.1_SP/HA2EV
  BSS_q0=(/1._SP,0._SP,0._SP/)
@@ -448,7 +466,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  K_INV_EPS%treshold=0.01_SP
  BSS_n_freqs=100
  !
-#if defined _SLEPC
+#if defined _SLEPC && !defined _SLEPC_OFF
  BSS_slepc_extraction='ritz'
  BSS_slepc_ncv=0
  BSS_slepc_tol=1E-6_SP
@@ -458,9 +476,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! TDDFT
  !
- FXC_description=""
  FXC_type='rpa'
- FXC_n_descs=0
  FXC_n_g_corr=1
  FXC_per_memstps=100._SP
  FXC_LRC_alpha=0._SP
@@ -527,6 +543,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  SC_rho_threshold=1.E-5_SP
  SC_up_W_iters=0
  SC_potential='NONE'
+ SC_kind=0
+ SC_perturbation=EXT_NONE
  OEP_approx='n'
  compatible_SC_DB=.FALSE.
  found_SC_DB=.FALSE.
@@ -534,6 +552,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  l_SC_diagonal=.FALSE.
  l_SC_nl_mix =.FALSE.
  l_NSC_shot  =.FALSE.
+ !
+ call IO_desc_reset(SC_desc)
  !
 #endif
  !
@@ -610,6 +630,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  RT_headings= " "
  YPP_append=" "
  !
+ call IO_desc_reset(RT_desc)
+ call IO_desc_reset(Gr_desc)
+ call IO_desc_reset(TIME_STEP_desc)
+ !
 #endif
  !
 #if defined _NL
@@ -629,6 +653,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Efield(1)%FWHM=2._SP*FS2AUT
  Efield(1)%ef_name="SOFTSIN"
  NL_verb_name='low'
+ !
+ call IO_desc_reset(NL_desc)
  !
 #endif
  !

@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): DS
@@ -34,13 +34,14 @@ AC_SUBST(extlibs_path)
 # DEBUG
 AC_ARG_ENABLE(keep-objects, AC_HELP_STRING([--enable-keep-objects],
               [Objects are not removed but saved in appropriate directories. Default is yes.]))
+if test x"$enable_keep_objects" = "xno"; then enable_keep_objects="no"; fi
 if test x"$enable_keep_objects" = "x"; then enable_keep_objects="yes"; fi
 AC_SUBST(enable_keep_objects)
 #
 # ============================================================================= 
 # KEEP SOURCE FILES 
-AC_ARG_ENABLE(keep-src, AC_HELP_STRING([--enable-keep-src], [Keep preprocessed.f90 file. Default is no.]))
-if test x"$enable_keep_src" = "x";    then enable_keep_src="no" ; fi
+AC_ARG_ENABLE(keep-src, AC_HELP_STRING([--enable-keep-src], [Keep preprocessed.f90 file. Default is yes.]))
+if test x"$enable_keep_src" = "x";    then enable_keep_src="yes" ; fi
 if test x"$enable_keep_src" = "xyes"; then enable_keep_src="yes"; fi
 AC_SUBST(enable_keep_src)
 #

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -31,8 +31,8 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  use R_lattice,      ONLY:k_map,bz_samp
  use vec_operate,    ONLY:k_periodic_idx
  use DIPOLES,        ONLY:DIP_S
- use wrapper_omp,    ONLY:M_by_M_omp
- use matrix_operate, ONLY:hermitian
+ use wrapper_omp,    ONLY:M_by_V_omp,mv_cgemv_omp
+ use wrapper,        ONLY:Vstar_dot_V
  use QP_m,           ONLY:QP_nk
  use electric,       ONLY:l_force_SndOrd
  !
@@ -49,13 +49,34 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  !
  ! Work Space
  !
- integer     :: i2,idx(3),id,ikp,ikm
+ integer     :: idx(3),id,ikp,ikm,i1,i2
  integer     :: ikm_ibz,ikp_ibz,ik_ibz,max_step,istep
- complex(SP) :: V_tmp(NL_bands(2),en%nbf),tmp_det
+ !complex(SP) :: V_tmp(NL_bands(2),en%nbf) ! used in full construction of overlaps
+ complex(SP) :: tmp_det,vtmp(NL_bands(2))
  !
  S_det    =cZERO
  Sm1_plus =cZERO
  Sm1_minus=cZERO
+ !
+ ! I split the construction of the Sm1_minus(Sm1_plus) matrix in four parts
+ !
+ !   1:NL_bands(1)-1   NL_bands(1):NL_bands(2)
+ !  _____________________________________
+ !  |                 |                  |
+ !  |     head        |      wing        |     1:NL_bands(1)-1
+ !  |                 |                  |
+ !  |                 |                  |
+ !  |------------------------------------|
+ !  |                 |                  | 
+ !  |    wing         |      core        |   NL_bands(1):NL_bands(2)
+ !  |                 |                  |
+ !  |                 |                  |
+ !  ------------------------------------- 
+ !
+ ! 
+ !  The haed part is time-independent, the wings depends only from
+ !  one of the time-dependent valence bands, while the core part depends from
+ !  both the wave-functions at k and k-delta
  !
  do id=1,3
    !
@@ -79,11 +100,43 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
        ikm_ibz=Xk%sstar(ikm,1)
        !
-       call M_by_M_omp('C','N',NL_bands(2),en%nbf,NL_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),&
-&                          NL_bands(2),V_bands(:,:,ikm_ibz,i_sp),NL_bands(2),cZERO,V_tmp,NL_bands(2))
+       ! Full construction of the Sm1_minus matrix
        !
-       call M_by_M_omp('C','N',en%nbf,en%nbf,NL_bands(2),cONE,V_bands(:,:,ik_ibz,i_sp),&
-&                      NL_bands(2),V_tmp,NL_bands(2),cZERO,Sm1_minus(:,:,id+(istep-1)*3),en%nbf)
+!       call M_by_M_omp('C','N',NL_bands(2),en%nbf,NL_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),&
+!&                          NL_bands(2),V_bands(:,:,ikm_ibz,i_sp),NL_bands(2),cZERO,V_tmp,NL_bands(2))
+       !
+!       call M_by_M_omp('C','N',en%nbf,en%nbf,NL_bands(2),cONE,V_bands(:,:,ik_ibz,i_sp),&
+!&                      NL_bands(2),V_tmp,NL_bands(2),cZERO,Sm1_minus(:,:,id+(istep-1)*3),en%nbf)
+       !
+       ! Matrix head
+       !
+!$omp parallel do default(shared), private(i1,i2)
+       do i2=1,NL_bands(1)-1
+         do i1=1,NL_bands(1)-1
+           Sm1_minus(i1,i2,id+(istep-1)*3)=conjg(DIP_S(i2,i1,id+(istep-1)*3,ikm,i_sp))
+         enddo
+       enddo
+!$omp end parallel do
+       !
+       ! Matrix wings
+       !
+!$omp parallel do default(shared), private(i1,i2)
+       do i2=1,NL_bands(1)-1
+         do i1=NL_bands(1),en%nbf
+           Sm1_minus(i1,i2,id+(istep-1)*3)=Vstar_dot_V(NL_bands(2),V_bands(:,i1,ik_ibz,i_sp), &
+&                conjg(DIP_S(i2,:,id+(istep-1)*3,ikm,i_sp)))
+          enddo
+       enddo
+!$omp end parallel do
+       !
+       ! Matrix core
+       !
+       do i2=NL_bands(1),en%nbf
+         call M_by_V_omp('C',NL_bands(2),DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),V_bands(:,i2,ikm_ibz,i_sp),vtmp)
+         !
+         call mv_cgemv_omp('C',NL_bands(2),en%nbf,cONE,V_bands(:,:,ik_ibz,i_sp),&
+&                      NL_bands(2),vtmp,1,cZERO,Sm1_minus(:,i2,id+(istep-1)*3),1)
+       enddo
        !
        call SERIAL_inversion(en%nbf,Sm1_minus(:,:,id+(istep-1)*3),tmp_det,.false.)
        !
@@ -96,11 +149,42 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
        ikp_ibz=Xk%sstar(ikp,1)
        !
-       call M_by_M_omp('N','N',NL_bands(2),en%nbf,NL_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),&
-&                  NL_bands(2),V_bands(:,:,ikp_ibz,i_sp),NL_bands(2),cZERO,V_tmp(:,:),NL_bands(2))
+       ! Full construction of the Sm1_plus matrix
        !
-       call M_by_M_omp('C','N',en%nbf,en%nbf,NL_bands(2),cONE,V_bands(:,:,ik_ibz,i_sp),&
-&                      NL_bands(2),V_tmp,NL_bands(2),cZERO,Sm1_plus(:,:,id+(istep-1)*3),en%nbf)
+!       call M_by_M_omp('N','N',NL_bands(2),en%nbf,NL_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),&
+!&                  NL_bands(2),V_bands(:,:,ikp_ibz,i_sp),NL_bands(2),cZERO,V_tmp(:,:),NL_bands(2))
+!       !
+!       call M_by_M_omp('C','N',en%nbf,en%nbf,NL_bands(2),cONE,V_bands(:,:,ik_ibz,i_sp),&
+!&                      NL_bands(2),V_tmp,NL_bands(2),cZERO,Sm1_plus(:,:,id+(istep-1)*3),en%nbf)
+       !
+       ! Matrix head
+       !
+!$omp parallel do default(shared), private(i1,i2)
+       do i2=1,NL_bands(1)-1
+         do i1=1,NL_bands(1)-1
+           Sm1_plus(i1,i2,id+(istep-1)*3)=DIP_S(i1,i2,id+(istep-1)*3,ikbz,i_sp)
+         enddo
+       enddo
+!$omp end parallel do
+       !
+       ! Matrix wings
+       !
+!$omp parallel do default(shared), private(i1,i2)
+       do i2=1,NL_bands(1)-1
+         do i1=NL_bands(1),en%nbf
+            Sm1_plus(i1,i2,id+(istep-1)*3)=Vstar_dot_V(NL_bands(2),V_bands(:,i1,ik_ibz,i_sp),DIP_S(:,i2,id+(istep-1)*3,ikbz,i_sp))
+         enddo
+       enddo
+!$omp end parallel do
+       !
+       ! Matrix Core
+       !
+       do i2=NL_bands(1),en%nbf
+         call M_by_V_omp('N',NL_bands(2),DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),V_bands(:,i2,ikp_ibz,i_sp),vtmp)
+         !
+         call mv_cgemv_omp('C',NL_bands(2),en%nbf,cONE,V_bands(:,:,ik_ibz,i_sp),&
+&                      NL_bands(2),vtmp,1,cZERO,Sm1_plus(:,i2,id+(istep-1)*3),1)
+       enddo
        !
        call SERIAL_inversion(en%nbf,Sm1_plus(:,:,id+(istep-1)*3),S_det(id+(istep-1)*3),.true.)
        !

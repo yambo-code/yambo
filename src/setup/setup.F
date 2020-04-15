@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,6 +25,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,pi,schlen
  use parser_m,       ONLY:parser
+ use wave_func,      ONLY:wf_ng,wf_ncx
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,&
 &                         BZ_DbGd_nbands,DbGd_is_symmetry_expanded,BZ_DbGd_tot_nk_levels
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
@@ -33,13 +34,14 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,&
-&                         rl_sop,bz_samp,g_vec,E_of_shell
- use com,            ONLY:msg,error,warning
+&                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed
+ use com,            ONLY:msg
  use stderr,         ONLY:intc,real2ch
- use IO_m,           ONLY:REP,DUMP,NONE
+ use IO_m,           ONLY:REP,DUMP,NONE,io_control,OP_RD_CL
  use vec_operate,    ONLY:c2a,define_b_and_DL_vol
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
  use interfaces,     ONLY:OCCUPATIONS_Fermi
+ use wave_func,      ONLY:wf_ng,wf_ng_1st_BZ
 #if defined _SC
  use wave_func,      ONLY:WF_buffered_IO 
  use drivers,        ONLY:l_sc_run
@@ -49,6 +51,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         X_xc_functional,setup_global_XC,K_kind,K_xc_functional,loaded_WF_xc_string,&
 &                         X_perturbation,G_perturbation,K_perturbation,WF_kind,WF_xc_functional,WF_perturbation
 #endif
+#if defined _HDF5_IO
+ ! For I/O debug, see below
+ !use IO_m,           ONLY:netcdf_call,nf90_set_log_level
+#endif
  !
 #include <memory.h>
  !
@@ -57,11 +63,17 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Work Space
  !
- real(SP)          :: rv(3),Tel_SAVE
- integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2)
+ real(SP)          :: Tel_SAVE,tmp_V(3)
+ integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2),ID
  type(levels)      :: Xen_COPY
- character(schlen) :: dumb_ch1,dumb_ch2
- integer, external :: k_lattice
+ character(schlen) :: dumb_ch
+ integer, external :: k_lattice,io_Double_Grid
+ !
+#if defined _HDF5_IO
+ ! This is very useful for I/O debug
+ ! NETCDF library need to be compiled with --enable-loggning flag
+ ! call netcdf_call(nf90_set_log_level(3),1)
+#endif
  !
  call section('*','CORE Variables Setup') 
  !########################################
@@ -70,57 +82,52 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !=============================
  call crystal_lattice()
  !
- call msg('rn','Unit cell is '//trim(lattice))
+ call msg('r','Cell kind             ',' '//trim(lattice))
  !
  call load_PT_elements()
  !
  atoms_string=' '
- !
  if (allocated(Z_species)) then
+   call msg('r','Atoms in the cell     ',' '//PT_elements(Z_species(:)))
    do is=1,n_atomic_species
-     dumb_ch1=trim(intc(n_atoms_species(is)))//PT_elements(Z_species(is))
-     atoms_string=trim(atoms_string)//trim(dumb_ch1)
+     atoms_string=trim(atoms_string)//trim(intc(n_atoms_species(is)))//PT_elements(Z_species(is))
+     if (is<n_atomic_species) atoms_string=atoms_string//"+"
+     call msg('r','number of '//PT_elements(Z_species(is))//' atoms    ',n_atoms_species(is))
    enddo
-   call msg('rn','... containing '//trim(atoms_string)//' atoms')
  endif
  !
- call msg('r','... with scaling factors [a.u.]:',alat)
- call msg('nr','Direct Lattice(DL) unit cell [iru  /  cc(a.u.)]')
- dumb_ch1='A1 ='//trim(real2ch(a(1,1)/alat(1)))//' '//trim(real2ch(a(1,2)/alat(2)))//' '//&
-&                 trim(real2ch(a(1,3)/alat(3)))//'     '//&
-&                 trim(real2ch(a(1,1)))//' '//trim(real2ch(a(1,2)))//' '//trim(real2ch(a(1,3)))
- call msg('r',dumb_ch1)
- dumb_ch1='A2 ='//trim(real2ch(a(2,1)/alat(1)))//' '//trim(real2ch(a(2,2)/alat(2)))//' '//&
-&                 trim(real2ch(a(2,3)/alat(3)))//'     '//&
-&                 trim(real2ch(a(2,1)))//' '//trim(real2ch(a(2,2)))//' '//trim(real2ch(a(2,3)))
- call msg('r',dumb_ch1)
- dumb_ch1='A3 ='//trim(real2ch(a(3,1)/alat(1)))//' '//trim(real2ch(a(3,2)/alat(2)))//' '//&
-&                 trim(real2ch(a(3,3)/alat(3)))//'     '//&
-&                 trim(real2ch(a(3,1)))//' '//trim(real2ch(a(3,2)))//' '//trim(real2ch(a(3,3)))
- call msg('rn',dumb_ch1)
- !
- ! DL vol
+ ! DL vol / RL
  !
  call define_b_and_DL_vol()
- call msg('r','DL volume [au]:',DL_vol)
- RL_vol=(2._SP*pi)**3/DL_vol
+ call msg('r','Alat factors          ',alat,'[a.u.]')
  !
- call msg('nr','Reciprocal Lattice(RL) unit cell [iku  /  cc]')
- rv=b(1,:)
- call c2a(b_in=b,v_in=rv,mode='kc2i')
- dumb_ch1='B1 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
-&                 trim(real2ch(b(1,1)))//' '//trim(real2ch(b(1,2)))//' '//trim(real2ch(b(1,3)))
- call msg('r',dumb_ch1)
- rv=b(2,:)
- call c2a(b_in=b,v_in=rv,mode='kc2i')
- dumb_ch1='B2 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
-&                 trim(real2ch(b(2,1)))//' '//trim(real2ch(b(2,2)))//' '//trim(real2ch(b(2,3)))
- call msg('r',dumb_ch1)
- rv=b(3,:)
- call c2a(b_in=b,v_in=rv,mode='kc2i')
- dumb_ch1='B3 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
-&                 trim(real2ch(b(3,1)))//' '//trim(real2ch(b(3,2)))//' '//trim(real2ch(b(3,3)))
- call msg('rn',dumb_ch1)
+ call msg('nr','Direct lattice volume ',DL_vol,'[a.u.]') !
+ call msg('r','Direct lattice vectors',(/' A[ 1 ]  ',' A[ 2 ]  ',' A[ 3 ]  '/))
+ tmp_V=(/a(1,1)/alat(1),a(1,2)/alat(2),a(1,3)/alat(3)/)
+ call msg('r',' A[ 1 ]',tmp_V, ' [iru] ')
+ call msg('r','        ',a(1,:),' [cc] ')
+ tmp_V=(/a(2,1)/alat(1),a(2,2)/alat(2),a(2,3)/alat(3)/)
+ call msg('r',' A[ 2 ]',tmp_V, ' [iru] ')
+ call msg('r','        ',a(2,:),' [cc] ')
+ tmp_V=(/a(3,1)/alat(1),a(3,2)/alat(2),a(3,3)/alat(3)/)
+ call msg('r',' A[ 3 ]',tmp_V, ' [iru] ')
+ call msg('r','        ',a(3,:),' [cc] ')
+ !
+ RL_vol=(2._SP*pi)**3/DL_vol
+ call msg('nr','Recip. lattice volume ',RL_vol,'[a.u.]')
+ call msg('r','Recip. lattice vectors',(/' B[ 1 ]  ',' B[ 2 ]  ',' B[ 3 ]  '/))
+ tmp_V=b(1,:)
+ call c2a(b_in=b,v_in=tmp_V,mode='kc2i')
+ call msg('r',' B[ 1 ]',tmp_V, ' [iku] ')
+ call msg('r','        ',b(1,:),' [cc] ')
+ tmp_V=b(2,:)
+ call c2a(b_in=b,v_in=tmp_V,mode='kc2i')
+ call msg('r',' B[ 2 ]',tmp_V, ' [iku] ')
+ call msg('r','        ',b(2,:),' [cc] ')
+ tmp_V=b(3,:)
+ call c2a(b_in=b,v_in=tmp_V,mode='kc2i')
+ call msg('r',' B[ 3 ]',tmp_V, ' [iku] ')
+ call msg('r','        ',b(3,:),' [cc] ')
  !
  ! ZERO's SETUP
  !
@@ -134,7 +141,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call section('=','Symmetries') 
  !=============================
- call msg('r','DL (S)ymmetries [cc]')
  !
  ! Spin symmetries & xc spin for libxc
  !
@@ -146,30 +152,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  do is=1,nsym
    forall (i2=1:3,i3=1:3) rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
-   if (is<=nsym/(1+i_time_rev))&
-&    call msg('r','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
-   if (is>nsym/(1+i_time_rev).and.mag_syms)&
-&    call msg('r','[S*'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))
  enddo
- !
- ! Time Reversal
- !
- inv_index=-1
- select case(i_time_rev)
-   case(1)
-     call msg('nr','[SYMs] Time-reversal derived K-space symmetries:',(/nsym/2+1,nsym/))
-     if(.not.mag_syms) inv_index=nsym/2+1
-     if(mag_syms) then
-       do is=1,nsym
-         if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1,0,0,0,-1,0,0,0,-1/)) ) inv_index=is
-       enddo
-     endif
-   case(0)
-     call msg('nr','[SYMs] K-space Time-reversal not included')
-     do is=1,nsym
-       if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1,0,0,0,-1,0,0,0,-1/)) ) inv_index=is
-     enddo
- end select
  !
  ! Indentity index
  !
@@ -178,54 +161,89 @@ subroutine setup(en,Xen,Ken,k,Xk)
    if (all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/1,0,0,0,1,0,0,0,1/)) ) idt_index=is
  enddo
  !
- !
- ! Space inversion
- !
- call atoms_spatial_inversion()
- if (inv_index>0) then
-   if (i_space_inv==1) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is a symmetry')
-   if (i_space_inv==0) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is NOT a symmetry')
- else
-#if !defined _RT
-   call warning('Spatial Inversion not found among the given symmetry list')
-#endif
+ if (idt_index==-1) then
+   call warning('Identity not found among the given symmetry list')
  endif
+ !
+ ! Inversion index
+ !
+ inv_index=-1
+ do is=1,nsym
+   if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1,0,0,0,-1,0,0,0,-1/)) ) inv_index=is
+ enddo
+ !
+ ! Defines i_space_inv value
+ call atoms_spatial_inversion()
+ !
+ call msg('r','Inversion symmetry    ',inv_index>0)
+ call msg('r','Spatial inversion     ',i_space_inv==1)
+ if (inv_index>0) call msg('r','Inversion index       ',inv_index)
+ !
+ ! Time reversal
+ !
+ call msg('r','K-space Time-reversal ',(i_time_rev==1))
+ call msg('r','Magnetic symmetries   ',mag_syms)
+ if (i_time_rev==1) call msg('r','Time-reversal derived K-space symmetries',(/nsym/2+1,nsym/))
  !
  ! Symmetries Multiplication Table
  !
  call symmetry_group_table('r')
  call symmetry_equiv_atoms()
  !
- call section('=','RL shells')
+ ! Symmetries list
+ !
+ call msg('rn','Symmetries units      ',' [cc]')
+ do is=1,nsym
+   dumb_ch=trim(intc(is))//'] '
+   i1=9
+   do while (i1<nsym)
+     if(is<=i1) dumb_ch=' '//trim(dumb_ch)
+     i1=i1*10+9
+   enddo
+   if (is<=nsym/(1+i_time_rev)) dumb_ch=' [S '//trim(dumb_ch)
+   if (is> nsym/(1+i_time_rev)) dumb_ch=' [S*'//trim(dumb_ch)
+   call msg('r',trim(dumb_ch),reshape(dl_sop(:,:,is),(/9/)))  
+ enddo
+ !
+ call section('=','Reciprocal space')
  !============================
  !
  call G_shells_finder()
- call msg('rn','Shells, format: [S#] G_RL(mHa)')
+ !
+ call msg('r','nG charge         ',ng_closed)
+ call msg('r','nG WFs            ',wf_ng)
+ call msg('r','nC WFs            ',wf_ncx)
  !
  ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G. When there is no Spatial inversion
  ! the map is built in G_shells_finder
  !
  if (inv_index>0) call eval_minus_G()
+ !             'Shells units      '
+ call msg('r','G-vecs. in shell  ',' [ Number ] ')
+ !call msg('r' ,'Shells NG         ',' [ list ]')
+ do i1=1,n_g_shells,9
+   !dumb_ch=' [SNG_'//trim(intc(i1))//'-'//trim(intc(min(i1+8,n_g_shells)))//']'
+   if (i1==800 .and. i1<n_g_shells-800) call msg('r',"...")
+   if (i1> 800 .and. i1<n_g_shells-800) cycle
+   !call msg('r',trim(dumb_ch),ng_in_shell(i1:min(i1+8,n_g_shells)) )
+   call msg('r',' ',ng_in_shell(i1:min(i1+8,n_g_shells)) )
+ enddo
  !
- do i1=n_g_shells,max(n_g_shells-27,1),-4
-   dumb_ch1=' '
-   do i2=i1,max(i1-3,1),-1
-     dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']:'//trim(intc(ng_in_shell(i2)))//&
-&             '('//trim(real2ch(E_of_shell(i2)*1000._SP))//')'
-     dumb_ch1=dumb_ch2
-   enddo
-   call msg('r',trim(dumb_ch2))
+ call msg('nr','Shells energy     ',' [ mHa ] ')
+ !call msg('r' ,'Shells E          ',' [ list ]')
+ do i1=1,n_g_shells,9
+   !dumb_ch=' [SE_'//trim(intc(i1))//'-'//trim(intc(min(i1+8,n_g_shells)))//']'
+   if (i1==800 .and. i1<n_g_shells-800) call msg('r',"...")
+   if (i1> 800 .and. i1<n_g_shells-800) cycle
+   call msg('r',' ',E_of_shell(i1:min(i1+8,n_g_shells))*1000._SP)
  enddo
- call msg('r',' ...')
- do i1=min(12,n_g_shells),1,-4
-   dumb_ch1=' '
-   do i2=i1,max(i1-3,1),-1
-     dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']:'//trim(intc(ng_in_shell(i2)))//&
-&             '('//trim(real2ch(E_of_shell(i2)*1000._SP))//')'
-     dumb_ch1=dumb_ch2
-   enddo
-   call msg('r',trim(dumb_ch2))
- enddo
+ !
+ ! First simplified implementation of wf_ng_1st_BZ & wf_ng_2st_BZ
+ ! A more correct implementation would involve a rotation of the shells
+ ! and the evaluation of the resulting wf_ng
+ !
+ wf_ng_1st_BZ=wf_ng
+ call PARSER_close_G(wf_ng_1st_BZ,'tRL')
  !
  call section('=','K-grid lattice')
  !=================================
@@ -249,14 +267,21 @@ subroutine setup(en,Xen,Ken,k,Xk)
    if (i_err/=0) call error('Impossible to determine the K-grid lattice')
  endif
  !
+ call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'K',.TRUE.,.FALSE.)
+ ! 
+ ! E_dbgd
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID)
+ i_err=io_Double_Grid(en,k,ID)
+ !
  if (BZ_DbGd_nbands>0.and.allocated(en%E_DbGd)) then
    !
    call section('=','Double K-grid')
    !=======================================
    !
-   call msg('r', 'K-points             :',BZ_DbGd_tot_nk_levels)
-   call msg('r', 'Bands                :',BZ_DbGd_nbands)
-   call msg('rn','Is the grid expanded :',DbGd_is_symmetry_expanded)
+   call msg('r', 'K-points             ',BZ_DbGd_tot_nk_levels)
+   call msg('r', 'Bands                ',BZ_DbGd_nbands)
+   call msg('rn','Is the grid expanded ',DbGd_is_symmetry_expanded)
    !
  endif
  !
@@ -269,8 +294,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
    !
  endif
  !
- call section('=','Energies [ev] & Occupations')
+ call section('=','Energies & Occupations')
  !==============================================
+ !
+ !call msg('rn','Energy unit   ',' [eV]')
  !
  Xen%nk=Xk%nibz
  ! 
@@ -327,11 +354,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  n_met_bands =en%nbm
  n_full_bands=en%nbf
  !
- ! K points / Energies report
+ ! Energies report
  !
- call msg('rn','X BZ K-points :',Xk%nbz)
- !
- call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.TRUE.)
+ call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.FALSE.,.TRUE.)
  !
  ! Once the occupations have been evaluated I dump Xen in Ken
  !
@@ -347,14 +372,14 @@ subroutine setup(en,Xen,Ken,k,Xk)
    !
    ! SC wavefunctions
    !
-   ! Here I only check for the existence of the SC WF DB. Band checking will be done later
+   ! Here I only check for the existence of the SC WF DB.
    !
    call load_SC_components('check_WF_DB',n_bands=0,&
 &                          kind=WF_kind,xc_functional=WF_xc_functional,perturbation=WF_perturbation)
    !
    if (found_SC_DB) then
      call setup_global_XC('WF',WF_kind,WF_xc_functional,WF_perturbation)
-     call warning(trim(loaded_WF_xc_string)//' wavefunctions found. Bands check at loading time.')
+     call warning(trim(loaded_WF_xc_string)//' wavefunctions found')
    endif
    !
  endif

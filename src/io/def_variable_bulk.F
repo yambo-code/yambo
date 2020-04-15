@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, HM, DS
@@ -25,7 +25,6 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
  !
  use netcdf
  use pars,       ONLY:SP,DP,IP,LP,schlen,nf90_SP
- use com,        ONLY:warning,error
  use parallel_m, ONLY:ncpu
  use IO_m,       ONLY:write_is_on,read_is_on,io_unit,netcdf_call,io_netcdf_var,&
 &                     netcdf_dim,io_file
@@ -37,8 +36,8 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
  integer,      intent(in)  :: VAR_ID
  integer,      intent(in)  :: VAR_SZ(:)
  integer,      intent(in)  :: VAR_KIND
- character(schlen), optional :: dim_names(:)
- character(*),      optional :: par_io_kind
+ character(schlen), optional, intent(in) :: dim_names(:)
+ character(*),      optional, intent(in) :: par_io_kind
  !
  ! Work Space
  !
@@ -64,6 +63,7 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
    if(trim(par_io_kind)=="independent") netcdf_par_io_kind=nf90_independent
    if(trim(par_io_kind)=="collective")  netcdf_par_io_kind=nf90_collective
  endif
+ !
 #endif
  !
  if (write_is_on(ID)) then

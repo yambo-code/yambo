@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,10 +23,10 @@
 !
 subroutine PARALLEL_and_IO_Setup(en,k)
  !
- use pars,           ONLY:lchlen
+ use pars,           ONLY:lchlen,SP,DP
  use stderr,         ONLY:log_as_a_file,intc
  use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,&
-&                         alt_jobstr,n_alt_jobstr,jobdir,alt_jobdir
+&                         alt_jobstr,n_alt_jobstr,jobdir,alt_jobdir,fat_log
  use it_m,           ONLY:infile
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,frag_WF
  use R_lattice,      ONLY:bz_samp
@@ -38,6 +38,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use wave_func,      ONLY:WF_buffered_IO
  use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads
  use LIVE_t,         ONLY:USER_wall_time_string
+ use cuda_m,         ONLY:cuda_setup,cuda_visible_devices,have_cuda_devices
  implicit none
  !
  type(levels)  :: en
@@ -50,7 +51,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  integer, external :: io_DB1
  !
  !
- call section('*','CPU structure, Files & I/O Directories') 
+ call section('*','MPI/OPENMP structure, Files & I/O Directories') 
  !
  ! Buffered I/O ?
  !===============
@@ -89,6 +90,12 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  !
 #endif
  !
+ ! GET CUDA ENVIROMENT defs 
+ !============================
+ !
+ call cuda_setup()
+ !
+ !
  ! CPU structure REPORT
  !======================
  !
@@ -98,57 +105,65 @@ subroutine PARALLEL_and_IO_Setup(en,k)
    !
    do i_s=0,n_CPU_str_max
      if (len_trim(PARALLEL_message(i_s))==0) cycle
-     call msg( 's','CPU-Threads:',trim(PARALLEL_message(i_s)))
-     call msg( 'r','* CPU-Threads     :',trim(PARALLEL_message(i_s)))
+     call msg( 's','MPI Cores-Threads   ',trim(PARALLEL_message(i_s)))
+     call msg( 'r','Cores-Threads       ',trim(PARALLEL_message(i_s)))
    enddo
    !
-   call msg( 'r','* MPI CPU         :',ncpu)
+   call msg( 'r','MPI Cores           ',ncpu)
    !
  else
    !
-   call msg ('r','* CPU             :',ncpu)
+   call msg ('r','Cores               ',ncpu)
    !
  endif
  !
- call msg('r', '* THREADS    (max):',n_max_threads)
- call msg('r', '* THREADS TOT(max):',n_max_threads*ncpu)
- call msg('r', '* NODES(computing):',n_nodes(1))
- call msg('r', '*            (I/O):',n_IO_nodes)
+ call msg('r', 'Threads per core    ',n_max_threads)
+ call msg('r', 'Threads total       ',n_max_threads*ncpu)
+ call msg('r', 'Nodes Computing     ',n_nodes(1))
+ call msg('r', 'Nodes IO            ',n_IO_nodes)
+#ifdef _CUDA
+ call msg('r', 'CUDA support        ',"yes")
+ call msg('r', 'CUDA devices        ',have_cuda_devices)
+ call msg('r', 'CUDA visible dev    ',trim(cuda_visible_devices))
+#endif
  !
  ! I/O and more
  !===============
  !
- call msg('rn','* Fragmented WFs  :',frag_WF)
- call msg('r', 'CORE databases in   ',trim(core_io_path))
- call msg('r', 'Additional I/O in   ',trim(more_io_path))
- call msg('r', 'Communications in   ',trim(com_path))
- call msg('r', 'Input file     is   ',trim(infile))
- call msg('r', 'Report file    is   ',trim(repfile))
-#if defined _DOUBLE
- call msg('r', 'Precision      is   ','DOUBLE')
-#else
- call msg('r', 'Precision      is   ','SINGLE')
-#endif
- if (log_as_a_file      ) call msg('r','Log files      in   ',trim(trim(com_path)//"/LOG"))
+ call msg('nr','Fragmented WFs      ',frag_WF)
+ call msg('r', 'CORE databases      ',trim(core_io_path))
+ call msg('r', 'Additional I/O      ',trim(more_io_path))
+ call msg('r', 'Communications      ',trim(com_path))
+ call msg('r', 'Input file          ',trim(infile))
+ call msg('r', 'Report file         ',trim(repfile))
+ call msg('r', 'Fat (verbose) log   ',fat_log)
+ if (log_as_a_file) then
+   call msg('r','Log files           ',trim(trim(com_path)//"/LOG"))
+ endif
  !
- if (len_trim(USER_wall_time_string)>0)  call msg('r','User WALL time is   ',trim(USER_wall_time_string))
+ if (len_trim(USER_wall_time_string)>0)  call msg('r','User WALL time      ',trim(USER_wall_time_string))
  !
  ! Strings & Dirs
  !-----------------
  !
- dumb_ch=" "
- if (len_trim(jobstr) >0) dumb_ch='Job string(s)-dir(s) (main): '//trim(jobstr)
- if (len_trim(jobdir) >0) dumb_ch=trim(dumb_ch)//" - "//trim(jobdir)
- if (len_trim(dumb_ch)>0) call msg('nr',trim(dumb_ch))
- do i_s=1,n_alt_jobstr
-   if (len_trim(alt_jobstr(i_s))>0) then
-     dumb_ch='                    (alt#'//trim(intc(i_s))//'): '//trim(alt_jobstr(i_s))
+ if (len_trim(jobstr) >0) then
+   if ( len_trim(jobdir)>0 ) then
+     call msg('nr',"Job   dir + string  ",(/jobdir,jobstr/))
    else
-     dumb_ch='                    (alt#'//trim(intc(i_s))//'): none'
+     call msg('nr',"Job   string        ",jobstr)
    endif
-   if (len_trim(alt_jobdir(i_s))>0) dumb_ch=trim(dumb_ch)//" - "//trim(alt_jobdir(i_s))
-   call msg('r',trim(dumb_ch))
+ endif
+ do i_s=1,n_alt_jobstr
+   if (len_trim(alt_jobdir(i_s)) >0) then
+     call msg('r',"Alt#"//trim(intc(i_s))//" dir + string  ",(/alt_jobdir(i_s),alt_jobstr(i_s)/))
+   else
+     call msg('r',"Alt#"//trim(intc(i_s))//" string        ",alt_jobstr(i_s))
+   endif
  enddo
+ !
+ if(SP/=DP) call msg('nr', 'Precision           ','SINGLE')
+ if(SP==DP) call msg('nr', 'Precision           ','DOUBLE')
+ !
  call msg('r','')
  !
  ! DB1 I/O

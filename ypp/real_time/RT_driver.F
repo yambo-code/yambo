@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -27,6 +27,8 @@ subroutine RT_driver(en,k,q)
  use electrons,      ONLY:levels
  use YPP_real_time,  ONLY:l_RT_X,l_RT_occupations,l_RT_lifetimes,l_RT_density,&
 &                         l_skip_OBS_IO,l_force_min_damp
+ use YPPm,           ONLY:PROJECT_mode,l_PROJECT_atom,l_PROJECT_line,l_PROJECT_plane,&
+&                          l_add_EQ_occ,l_separate_eh,l_skip_occ
  use interpolate,    ONLY:l_integral_respect
  use parser_m,       ONLY:parser
  implicit none
@@ -37,9 +39,16 @@ subroutine RT_driver(en,k,q)
  ! LOGICALS
  !----------
  call parser('SkipOBS_IO',l_skip_OBS_IO)
- if (.not.l_skip_OBS_IO)  call parser('SkipJP_IO',l_skip_OBS_IO)
  call parser('FrMinDamp',l_force_min_damp)
  call parser('NormN',l_integral_respect)
+ call parser('SeparateEH',l_separate_eh)
+ call parser('IncludeEQocc',l_add_EQ_occ)
+ call parser('NoOcc',l_skip_occ)
+ call parser('Proj_DOS',l_PROJECT_atom)
+ !
+ l_PROJECT_atom =trim(PROJECT_mode)=="ATOM"
+ l_PROJECT_line =trim(PROJECT_mode)=="LINE"
+ l_PROJECT_plane=trim(PROJECT_mode)=="PLANE"
  !
  call section("*",'== Real-Time Post-Processing ==')
  !

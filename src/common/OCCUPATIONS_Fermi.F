@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -43,7 +43,6 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
 &                        BZ_DbGd_nbands,BZ_DbGd_nkpt,n_spinor,n_spin,&
 &                        BZ_DbGd_table
  use R_lattice,     ONLY:bz_samp
- use com,           ONLY:error,warning
  use stderr,        ONLY:real2ch
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
@@ -101,7 +100,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  !
  n_b_full_guess= nint( real(nel)/2.0_SP*real(n_spinor)+.1)
  !
- if (n_b_full_guess+1 > nb_here ) call error(' Too few states. Include more states in the DFT run.')
+ if (n_b_full_guess+1 > nb_here ) call error(' Not enough states to accomodate all electrons. Include more states in the DFT run.')
  !
  Ef(1)=maxval(E%E(n_b_full_guess,:,:))
  Ef(2)=minval(E%E(n_b_full_guess+1,:,:))

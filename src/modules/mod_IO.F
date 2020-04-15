@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,11 +24,10 @@
 module IO_m
  !
  use pars,       ONLY:SP,DP,lchlen,schlen,max_io_units,max_io_vars_open,max_active_sections
- use LOGO,       ONLY:code_version,code_revision,code_GPL_revision
+ use C_driver,   ONLY:code_version,code_revision,code_GPL_revision
 #if defined _MPI
  use parallel_m, ONLY:myid,MPI_INFO_NULL
 #endif
- use com,        ONLY:error
  use netcdf
  !
  implicit none
@@ -85,6 +84,7 @@ module IO_m
  ! COM
  !
  integer, parameter:: REP=41,LOG=42,NONE=43
+ real(SP),parameter:: NO_VAR=-246824._SP
  !
  ! I/O
  !
@@ -155,20 +155,21 @@ module IO_m
    !
    subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                          R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
-&                          DESCRIPTION,DO_NOT_DUMP)
+&                          DESCRIPTOR,DO_NOT_DUMP,TERMINATOR)
      !
-     use pars
+     use pars,       ONLY:SP,DP,lchlen
+     use descriptors,ONLY:IO_desc
      integer      :: ID
-     character(*),optional :: VAR,OP(:)
-     integer,     optional :: VAR_SZ,MENU
-     integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
-     real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
-     real(DP),    optional :: D0,DB_D0
-     complex(SP), optional, target :: C0
-     complex(SP), optional :: DB_C0
-     logical     ,optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
-     character(*),optional :: CH0,DB_CH0,CH1(:)
-     character(lchlen),optional :: DESCRIPTION
+     character(*), optional :: VAR,OP(:)
+     integer,      optional :: VAR_SZ,MENU
+     integer,      optional :: I0,DB_I0,I1(:),DB_I1(:)
+     real(SP),     optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
+     real(DP),     optional :: D0,DB_D0
+     complex(SP),  optional, target :: C0
+     complex(SP),  optional :: DB_C0
+     logical     , optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
+     character(*), optional :: CH0,DB_CH0,CH1(:),TERMINATOR
+     type(IO_desc),optional :: DESCRIPTOR
      !
    end subroutine
    !
@@ -180,7 +181,7 @@ module IO_m
                       &             L0,L1,L2,L3,L4,   &
                       &                            IPOS)
      !
-     use pars
+     use pars,    ONLY:SP,DP,LP
      integer      :: ID
      character(*),optional :: VAR
      integer,     optional :: VAR_SZ(:),IPOS(:)
@@ -214,13 +215,13 @@ module IO_m
    !
    subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
      use pars,              ONLY:schlen
-     integer                :: ID
-     character(*)           :: VAR
-     integer                :: VAR_ID
-     integer                :: VAR_SZ(:)
-     integer                :: VAR_KIND
-     character(schlen),optional :: dim_names(:)
-     character(*),optional      :: par_io_kind
+     integer,      intent(in)  :: ID
+     character(*), intent(in)  :: VAR
+     integer,      intent(in)  :: VAR_ID
+     integer,      intent(in)  :: VAR_SZ(:)
+     integer,      intent(in)  :: VAR_KIND
+     character(schlen), optional, intent(in) :: dim_names(:)
+     character(*),      optional, intent(in) :: par_io_kind
    end subroutine def_variable_bulk
    !
    subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
@@ -229,9 +230,10 @@ module IO_m
         &                       D0, DB_D0, C0, DB_C0, &
         &                       L0, DB_L0,            &
         &                       CH0,DB_CH0,           &
-        &                       UNIT,DESCRIPTION,DO_NOT_DUMP)
+        &                       UNIT,DESCRIPTOR,DO_NOT_DUMP,TERMINATOR)
      !
-     use pars,   ONLY:SP,DP,LP,lchlen
+     use pars,       ONLY:SP,DP,LP,lchlen
+     use descriptors,ONLY:IO_desc
      integer               :: ID
      character(*),optional :: VAR
      character(*),optional :: OP(:)
@@ -241,8 +243,8 @@ module IO_m
      complex(SP), optional, target :: C0
      complex(SP), optional :: DB_C0
      logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
-     character(*),optional :: CH0,DB_CH0
-     character(lchlen),optional :: DESCRIPTION
+     character(*),optional :: CH0,DB_CH0,TERMINATOR
+     type(IO_desc),optional:: DESCRIPTOR
      !
    end subroutine io_variable_elemental
    !
@@ -253,25 +255,26 @@ module IO_m
                                         &  Z0, Z1, Z2, Z3, Z4, Z5,    &
                                         &  L0, L1, L2, L3, L4,        &
                                         & CH0,CH1,CH2,CH3,CH4,        &
-                                        &                     IPOS)
+                                        & STR0,STR1,              IPOS)
      !
      use pars,   ONLY:SP,DP,LP
      integer, intent(in)   :: ID, VAR_ID
-     integer,     optional :: IPOS(:)
-     integer,     optional ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
-     real(SP),    optional ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
-     real(DP),    optional ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
-     complex(SP), optional, target ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
-     complex(DP), optional, target ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
-     integer(LP), optional ::  L0, L1(:), L2(:,:), L3(:,:,:), L4(:,:,:,:)
-     character,   optional :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
+     integer,     optional, intent(in)    :: IPOS(:)
+     integer,     optional, intent(inout) ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
+     real(SP),    optional, intent(inout) ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
+     real(DP),    optional, intent(inout) ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
+     complex(SP), optional, target, intent(inout) ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
+     complex(DP), optional, target, intent(inout) ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
+     integer(LP), optional, intent(inout) ::  L0, L1(:), L2(:,:), L3(:,:,:), L4(:,:,:,:)
+     character,   optional, intent(inout) :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
+     character(*),optional, intent(inout) :: STR0,STR1(:)
      !
    end subroutine io_variable_bulk
    !
    integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,&
-&                             IMPOSE_GAUGE,PARALLEL_STRUCTURE,FRAG)
+&                             IMPOSE_GAUGE,PARALLEL_STRUCTURE,FRAG,IMPOSE)
      integer               :: ID
-     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,FRAG
+     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,FRAG,IMPOSE
      character(*),optional :: XC_KIND,PARALLEL_STRUCTURE
    end function
    !
@@ -290,7 +293,35 @@ module IO_m
      integer, optional :: i_fragment,j_fragment,ierr,COMM,cpu_id
    end subroutine
    !
+   character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING,ALT_JOB_DIR)
+     use pars,       ONLY:lchlen
+     character(*)           ::desc
+     integer                ::type
+     logical                ::CORE_IO,MORE_IO,COM_IO
+     character(*), optional ::subfolder
+     character(*), optional ::ALT_JOB_STRING
+     character(*), optional ::ALT_JOB_DIR
+   end function get_name
+   !
+   function all_locations(desc,subfolder)
+     use pars,       ONLY:lchlen,num_of_alternative_locations
+     character(*)           ::desc
+     character(*), optional ::subfolder
+     character(lchlen), dimension(num_of_alternative_locations) :: all_locations
+   end function all_locations
+   !
  end interface
+ !
+#if defined _HDF5_IO
+ interface c_interface
+   function nf90_set_log_level(level) bind (C, name = "nc_set_log_level")
+     use iso_c_binding
+     implicit none
+     integer(c_int) :: nf90_set_log_level
+     integer(c_int), intent (in) :: level
+   end function nf90_set_log_level
+ end interface c_interface
+#endif
  !
  contains
    ! 
@@ -403,24 +434,19 @@ module IO_m
      !
    end subroutine
    !
-   subroutine manage_OP_IF_START_and_CL_IF_END(ID,NOW,FIRST,LAST,PAR_index)
+   integer function manage_action(IO_ACTION,NOW,FIRST,LAST,PAR_index)
      !
      use parallel_m, ONLY:PP_indexes
      !
-     integer           :: ID,NOW
-     integer, optional :: FIRST,LAST
-     type(PP_indexes), optional :: PAR_index
+     integer, intent(in) :: IO_ACTION,NOW
+     integer, intent(in) :: FIRST,LAST
+     type(PP_indexes), intent(in), optional :: PAR_index
      !
      integer :: start_,end_,ii
      !
-     start_=1
-     end_  =1
-     if (present(LAST)) then
-       end_  =LAST
-     endif
-     if (present(FIRST)) then
-       start_=FIRST
-     endif
+     end_  =LAST
+     start_=FIRST
+     !
      if (present(PAR_index)) then
        start_=0
        end_  =0
@@ -432,32 +458,29 @@ module IO_m
        enddo
      endif
      !
-     if (read_is_on(ID)) then
-       !
-       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_RD_CL
-       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.NOW==start_              ) io_action(ID)=OP_RD
-       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.                NOW==end_) io_action(ID)=   RD_CL
-       if (io_action(ID)==            RD_CL_IF_END.and.                NOW==end_) io_action(ID)=   RD_CL
-       !
-     else  if (write_is_on(ID)) then
-       !
-       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_WR_CL
-       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.NOW==start_              ) io_action(ID)=OP_WR
-       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
-       if (io_action(ID)==            WR_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
-       !
-       if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_APP_CL
-       if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.NOW==start_              ) io_action(ID)=OP_APP
-       if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
-       !if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
-       !
-     endif
+     manage_action=IO_ACTION
      !
-   end subroutine
+     if (IO_ACTION== OP_IF_START_RD_CL_IF_END.and.NOW==start_              ) manage_action= OP_RD
+     if (IO_ACTION== OP_IF_START_RD_CL_IF_END.and.                NOW==end_) manage_action=    RD_CL
+     if (IO_ACTION==             RD_CL_IF_END.and.                NOW==end_) manage_action=    RD_CL
+     if (IO_ACTION== OP_IF_START_RD_CL_IF_END.and.NOW==start_.and.NOW==end_) manage_action= OP_RD_CL
+     !
+     if (IO_ACTION== OP_IF_START_WR_CL_IF_END.and.NOW==start_              ) manage_action= OP_WR
+     if (IO_ACTION== OP_IF_START_WR_CL_IF_END.and.                NOW==end_) manage_action=    WR_CL
+     if (IO_ACTION==             WR_CL_IF_END.and.                NOW==end_) manage_action=    WR_CL
+     if (IO_ACTION== OP_IF_START_WR_CL_IF_END.and.NOW==start_.and.NOW==end_) manage_action= OP_WR_CL
+     !
+     if (IO_ACTION==OP_IF_START_APP_CL_IF_END.and.NOW==start_              ) manage_action=OP_APP
+     if (IO_ACTION==OP_IF_START_APP_CL_IF_END.and.                NOW==end_) manage_action=    WR_CL
+     if (IO_ACTION==OP_IF_START_APP_CL_IF_END.and.NOW==start_.and.NOW==end_) manage_action=OP_APP_CL
+     !
+   end function manage_action
    !
    subroutine io_reset(ID)
      integer :: ID
      io_status(ID)=0
+     !
+     ! DEBUG. AM Jan2020. The IO_type cannot be zeroed oterwise several errors appear. To be fixed.
      !io_type(ID)=0
      io_unit(ID)=0
      io_mode(ID)=0
@@ -537,7 +560,7 @@ module IO_m
    !
    logical function file_is_present(desc,subfolder)
      !
-     use com,           ONLY:all_locations,file_exists,num_of_alternative_locations
+     use pars,         ONLY:num_of_alternative_locations
      !
      character(*)           :: desc
      character(*), optional :: subfolder
@@ -547,6 +570,8 @@ module IO_m
      integer            :: i_f
      character(lchlen)  :: possible_locations(num_of_alternative_locations)
      character(schlen)  :: subfolder_
+     !
+     logical, external :: file_exists
      !
      subfolder_=' '
      if (present(subfolder)) subfolder_=subfolder
@@ -578,7 +603,6 @@ module IO_m
    end function
    !
    subroutine netcdf_call(status,ID,VAR,ID_VAR)
-     use com,           ONLY:error
      integer,      intent (in)           :: status
      integer,      intent (in)           :: ID
      integer,      intent (in), optional :: ID_VAR
@@ -628,8 +652,6 @@ module IO_m
    end function
    !
    subroutine deliver_IO_error_message(i_err,DB,STOP_it)
-     !
-     use com,        ONLY:warning,error
      !
      integer          :: i_err
      logical,optional :: STOP_it

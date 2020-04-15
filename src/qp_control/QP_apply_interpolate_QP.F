@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -35,13 +35,14 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
  use electrons,     ONLY:n_sp_pol,spin
- use com,           ONLY:msg,warning
- use electrons,     ONLY:levels
+ use com,           ONLY:msg
+ use electrons,     ONLY:levels,spin
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use stderr,        ONLY:real2ch
  use QP_m,          ONLY:QP_t
- use QP_CTL_m,      ONLY:QP_action,QP_ctl_msg_fmt,QP_ctl_xc_STRING
- use interpolate,   ONLY:NN_MAX_real_nearest,INTERPOLATION_driver,INTERP_obj,INTERPOLATE_msg_fmt
+ use QP_CTL_m,      ONLY:QP_action,QP_ctl_msg_fmt,QP_ctl_xc_STRING,At_least_one_band_corrected
+ use interpolate,   ONLY:NN_n_of_nearest,INTERP_obj,INTERPOLATE_msg_fmt,&
+&                        INTERPOLATION_driver_seed,INTERPOLATION_driver_do,INTERP_shell_factor
  !
 #include<memory.h>
  !
@@ -52,8 +53,8 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  !
  ! Work Space
  !
- real(SP)         :: E_diff
- integer          :: ik,iband,i_spin,ID,i_qp_ref,N_exact,N_close,N_far,DB_bands(2)
+ real(SP)         :: E_diff(n_sp_pol),E_min(n_sp_pol)
+ integer          :: ik,iband,i_spin,ID,i_qp,N_exact,N_close,N_far,DB_bands(2)
  logical          :: wrong_width_sign_warn
  character(schlen):: what
  type(bz_samp)    :: QP_k
@@ -70,7 +71,8 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  ! 
  ! Setup
  !
- NN_MAX_real_nearest=QP_action(i_ACTION)%CTL(1)%interp_neigh
+ NN_n_of_nearest=QP_action(i_ACTION)%CTL(1)%interp_neigh
+ INTERP_shell_factor=QP_action(i_ACTION)%CTL(1)%interp_shell_factor
  INTERPOLATE_msg_fmt=QP_ctl_msg_fmt
  !
  if (QP_action(i_ACTION)%plan(4).or.QP_action(i_ACTION)%plan(6)) then
@@ -80,57 +82,66 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
    !
    call QP_transfer('init')
    !
-   call INTERPOLATION_driver(bands=bands,SEED_k=QP_k,SEED_QP=qp,&
-&                            operation=trim(what)//"_from_DB",ID_op=ID,NEAREST=QP_action(i_ACTION)%plan(4))
-   call INTERPOLATION_driver(OUT_k=k,operation=trim(what)//"_from_DB")
+   call k_expand(QP_k)
+   !
+   call INTERPOLATION_driver_seed(trim(what)//"_from_DB",ID,bands,QP_k,SEED_QP=qp,NEAREST=QP_action(i_ACTION)%plan(4))
+   call INTERPOLATION_driver_do(trim(what)//"_from_DB",ID,k)
    !
    call QP_transfer('appl')
    !
-   call INTERPOLATION_driver(operation="END",ID_op=ID)
+   call INTERPOLATION_driver_end(ID)
    !
  else if (QP_action(i_ACTION)%plan(5)) then
    !
    ! Nearest Level interpolation
    !===============================
    !
-   E_diff=minval(En%Eo(DB_bands(1),:,:))-minval(qp%E_bare)
+   E_diff=1.E5_SP
+   do i_spin=1,n_sp_pol
+     E_min(i_spin) =minval(En%Eo(DB_bands(1),:,i_spin))
+     do i_qp=1,qp%n_states
+       if (spin(qp%table(i_qp,:))/=i_spin) cycle
+       if (qp%E_bare(i_qp)<E_diff(i_spin)) E_diff(i_spin)=qp%E_bare(i_qp)
+     enddo
+     E_diff(i_spin)=E_diff(i_spin)-E_min(i_spin)
+     if (E_diff(i_spin)>1.E-5_SP) then
+       call warning(' Energy not aligned. Difference is '//trim(real2ch(E_diff(i_spin)*HA2EV))//' eV. QP interpolation maybe wrong')
+     endif
+   enddo
    !
    N_exact=0
    N_close=0
    N_far  =0
    !
-   if (E_diff>1.E-5_SP) then
-     call warning(' Energy not aligned. Difference is '//trim(real2ch(E_diff))//' Ha. QP interpolation maybe wrong')
-   endif
-   !
    do ik=1,k%nibz
      do iband=bands(1),bands(2)
        do i_spin=1,n_sp_pol
          !
-         call INTERPOLATION_nearest_E(En%Eo(iband,ik,i_spin),qp%E_bare(:),qp%n_states,E_diff,i_qp_ref)
+         call INTERPOLATION_nearest_E(En%Eo(iband,ik,i_spin),qp,E_diff(i_spin),i_qp,i_spin)
          !
-         if (                        E_diff<1.E-5_SP    ) N_exact=N_exact+1
-         if (E_diff>1.E-5_SP    .and.E_diff<0.1_SP/HA2EV) N_close=N_close+1
-         if (E_diff>0.1_SP/HA2EV                        ) N_far  =N_far  +1
+         if (                                E_diff(i_spin)<1.E-5_SP    ) N_exact=N_exact+1
+         if (E_diff(i_spin)>1.E-5_SP    .and.E_diff(i_spin)<0.1_SP/HA2EV) N_close=N_close+1
+         if (E_diff(i_spin)>0.1_SP/HA2EV                        ) N_far  =N_far  +1
          !
          if (QP_action(i_ACTION)%plan(1)) then
-           en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+real(qp%E(i_qp_ref),SP)-qp%E_bare(i_qp_ref)
+           en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+real(qp%E(i_qp),SP)-qp%E_bare(i_qp)
+           At_least_one_band_corrected=.TRUE.
            QP_action(i_ACTION)%STATES_done(iband,ik,i_spin)=1
          endif
          !
          if (QP_action(i_ACTION)%plan(2)) then
-           if (real(qp%E_bare(i_qp_ref))>0..and.aimag(qp%E(i_qp_ref))>0) then
+           if (real(qp%E_bare(i_qp))>0..and.aimag(qp%E(i_qp))>0) then
              if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
-             en%W(iband,ik,i_spin)=-aimag(qp%E(i_qp_ref))
+             en%W(iband,ik,i_spin)=-aimag(qp%E(i_qp))
              wrong_width_sign_warn=.true.
            else
-             en%W(iband,ik,i_spin)=aimag(qp%E(i_qp_ref))
+             en%W(iband,ik,i_spin)=aimag(qp%E(i_qp))
            endif
            QP_action(i_ACTION)%STATES_done(iband,ik,i_spin)=1
          endif
          !
          if (QP_action(i_ACTION)%plan(3)) then
-           en%Z(iband,ik,i_spin)=qp%Z(i_qp_ref)
+           en%Z(iband,ik,i_spin)=qp%Z(i_qp)
            QP_action(i_ACTION)%STATES_done(iband,ik,i_spin)=1
          endif
          !
@@ -138,9 +149,9 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
      enddo
    enddo
    !
-   call msg("n"//trim(QP_ctl_msg_fmt),'[QP_ctl (Nearest Level)] Levels Mapped exactly :',N_exact)
-   call msg(trim(QP_ctl_msg_fmt),     '[QP_ctl (Nearest Level)]               closely :',N_close)
-   call msg(trim(QP_ctl_msg_fmt),     '[QP_ctl (Nearest Level)] Levels too far        :',N_far)
+   call msg("n"//trim(QP_ctl_msg_fmt),'[QP_ctl (Nearest Level)] Levels Mapped exactly ',N_exact)
+   call msg(trim(QP_ctl_msg_fmt),     '[QP_ctl (Nearest Level)]               closely ',N_close)
+   call msg(trim(QP_ctl_msg_fmt),     '[QP_ctl (Nearest Level)] Levels too far        ',N_far)
    !
  endif
  !
@@ -166,7 +177,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
      !
      character(4) :: action_kind
      !
-     integer      :: i_c
+     integer      :: i_ref(3)
      !
      select case(action_kind)
        !
@@ -194,28 +205,28 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
              !
              do i_spin=1,n_sp_pol
                !
-               i_c=0
+               i_ref=0
+               if (QP_action(i_ACTION)%plan(1)) i_ref(2)=n_sp_pol
+               if (QP_action(i_ACTION)%plan(2)) i_ref(3)=i_ref(2)+n_sp_pol
                !
                if(QP_action(i_ACTION)%plan(1)) then
-                 i_c=i_c+1
-                 en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+INTERP_obj(ID)%INTERP(iband,ik,i_c)
+                 en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+INTERP_obj(ID)%INTERP(iband,ik,i_ref(1)+i_spin)
+                 At_least_one_band_corrected=.TRUE.
                  QP_action(i_ACTION)%STATES_done(iband,ik,i_spin)=1
                endif
                if(QP_action(i_ACTION)%plan(2)) then
-                 i_c=i_c+1
-                 if (en%Eo(iband,ik,i_spin)>0. .and. INTERP_obj(ID)%INTERP(iband,ik,i_c)>0) then
+                 if (en%Eo(iband,ik,i_spin)>0. .and. INTERP_obj(ID)%INTERP(iband,ik,i_ref(1)+i_spin)>0) then
                    if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
-                   en%W(iband,ik,i_spin)=-INTERP_obj(ID)%INTERP(iband,ik,i_c)
+                   en%W(iband,ik,i_spin)=-INTERP_obj(ID)%INTERP(iband,ik,i_ref(2)+i_spin)
                    wrong_width_sign_warn=.true.
                  else
-                   en%W(iband,ik,i_spin)=INTERP_obj(ID)%INTERP(iband,ik,i_c)
+                   en%W(iband,ik,i_spin)=INTERP_obj(ID)%INTERP(iband,ik,i_ref(2)+i_spin)
                  endif
                  QP_action(i_ACTION)%STATES_done(iband,ik,i_spin)=1
                endif
                if(QP_action(i_ACTION)%plan(3)) then
-                 i_c=i_c+1
-                 en%Z(iband,ik,i_spin)=cmplx(INTERP_obj(ID)%INTERP(iband,ik,i_c),&
-&                                            INTERP_obj(ID)%INTERP(iband,ik,i_c+1))
+                 en%Z(iband,ik,i_spin)=cmplx(INTERP_obj(ID)%INTERP(iband,ik,i_ref(3)+i_spin),&
+&                                            INTERP_obj(ID)%INTERP(iband,ik,i_ref(3)+n_sp_pol+i_spin),kind=SP)
                  QP_action(i_ACTION)%STATES_done(iband,ik,i_spin)=1
                endif
              enddo

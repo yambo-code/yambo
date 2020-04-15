@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -25,7 +25,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  use pars,           ONLY:SP
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,&
-&                         LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
+&                         LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
 #include<memory.h>
  !
@@ -61,7 +61,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing CHEEV')
 #endif
  !
- call LINEAR_ALGEBRA_WS_clean_up(WS)
+ call LINEAR_ALGEBRA_WS_reset(WS)
  !
  call timing('SERIAL_HERMITIAN_diagonalization',OPR='stop')
  !

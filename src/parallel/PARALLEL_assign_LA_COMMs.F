@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -29,7 +29,7 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_A2A,SLK_COM_INDEX,SLK_ORTHO,SLK_POOL
 #endif
- use com,           ONLY:warning,msg
+ use com,           ONLY:msg
  use stderr,        ONLY:intc
  !
  implicit none
@@ -76,7 +76,7 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
    !
    call SLK_communicators( SLK_COM_A2A(1), SLK_COM_INDEX(1), Ncpu_in )
    !
- else if (ENVIRONMENT=="Response_T_space".or.ENVIRONMENT=="Response_G_space_Zero_Momentum") then
+ else if (ENVIRONMENT=="Response_T_space") then
    !
    call SLK_communicators( PAR_COM_WORLD, PAR_COM_NULL, Ncpu_in )
    !
@@ -126,9 +126,9 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
    !
    subroutine SERIAL_fallback
      !
-     if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space") then
+     if (ENVIRONMENT=="Response_G_space_and_IO".or.ENVIRONMENT=="Response_G_space") then
        call SLK_communicators( PAR_COM_NULL, PAR_COM_Q_A2A, 1)
-     else if (ENVIRONMENT=="Response_T_space".or.ENVIRONMENT=="Response_G_space_Zero_Momentum") then
+     else if (ENVIRONMENT=="Response_T_space") then
        call SLK_communicators( PAR_COM_NULL, PAR_COM_WORLD, 1)
      endif
      !

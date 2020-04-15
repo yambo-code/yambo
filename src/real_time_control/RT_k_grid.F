@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -39,7 +39,7 @@ subroutine RT_k_grid(E,k,q)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:qindx_S
- use LIVE_t,         ONLY:what_is_running
+ use C_driver,       ONLY:code_bin
  use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,DbGd_is_symmetry_expanded
  use real_time,      ONLY:DbGd_bz_coo,DbGd_ibz_coo,DbGd_EE_scatt_table,&
 &                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
@@ -58,7 +58,11 @@ subroutine RT_k_grid(E,k,q)
  integer :: ik,ik_bz,ik_rim,iqbz,ik_m_q,ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
  ! 
  ! GPL_EXCLUDE_START
- l_RT_uses_E_DbGd=BZ_DbGd_tot_nk_levels>0.and.BZ_DbGd_nbands>=RT_bands(2).and..not.DbGd_is_symmetry_expanded
+ l_RT_uses_E_DbGd=BZ_DbGd_tot_nk_levels>0.and.BZ_DbGd_nbands>=RT_bands(2)
+ if (l_RT_uses_E_DbGd.and.DbGd_is_symmetry_expanded) then
+   call warning("Double Grid database found but BZ expanded. Ignored.") 
+   l_RT_uses_E_DbGd=.FALSE. 
+ endif
  ! GPL_EXCLUDE_END
  ! GPL_INCLUDE_START
  !l_RT_uses_E_DbGd=.FALSE.
@@ -126,7 +130,7 @@ subroutine RT_k_grid(E,k,q)
    enddo
  enddo
  !
- if( l_elel_scatt .and. (index(what_is_running,'YPP')==0) ) then
+ if( l_elel_scatt .and. (index(code_bin,'ypp')==0) ) then
    !
    if(.not.allocated(DbGd_EE_scatt_table)) then
      YAMBO_ALLOC(DbGd_EE_scatt_table,(RT_nk,RT_nk))

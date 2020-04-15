@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE MATRIX_BSE_to_PAR( M_bse , M_slk )
+subroutine MATRIX_BSE_to_PAR( M_bse , M_slk )
  !
  ! M_bse (WORLD) ->M_slk (SLK WORLD)
  !
@@ -61,7 +61,7 @@ SUBROUTINE MATRIX_BSE_to_PAR( M_bse , M_slk )
  do i_B=1,n_BS_blks
    !
    if (M_bse(i_B)%mode=="R") BSE_components(myid+1,i_B,7)=1
-   if (M_bse(i_B)%mode=="A") BSE_components(myid+1,i_B,7)=2
+   if (M_bse(i_B)%mode=="C") BSE_components(myid+1,i_B,7)=2
    !
    BSE_components(myid+1,i_B,5:6)=(/M_bse(i_B)%iT_k,M_bse(i_B)%iT_p/)
    !
@@ -308,4 +308,4 @@ SUBROUTINE MATRIX_BSE_to_PAR( M_bse , M_slk )
      !
    end subroutine
    ! 
-end SUBROUTINE
+end subroutine

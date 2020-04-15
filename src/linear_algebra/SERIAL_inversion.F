@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,8 +24,9 @@
 subroutine SERIAL_inversion(n,M,det,eval_det)
  !
  use pars,          ONLY:SP,cONE
+ use drivers,       ONLY:l_nl_optics,l_real_time
  use linear_algebra,ONLY:LINEAR_ALGEBRA_error,LU_factorization,LU_inversion,&
-&                        LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
+&                        LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
 #include<memory.h>
  !
@@ -37,7 +38,7 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  integer           :: i_loop 
  type(LALGEBRA_WS) :: WS
  !
- call timing('SERIAL_inversion',OPR='start')
+ if(.not.(l_nl_optics.or.l_real_time)) call timing('SERIAL_inversion',OPR='start')
  !
  YAMBO_ALLOC(WS%v_int,(n))
  !
@@ -65,8 +66,8 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  !
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('GETRI (SI)','failed')
  !
- call LINEAR_ALGEBRA_WS_clean_up(WS)
+ call LINEAR_ALGEBRA_WS_reset(WS)
  !
- call timing('SERIAL_inversion',OPR='stop')
+ if(.not.(l_nl_optics.or.l_real_time)) call timing('SERIAL_inversion',OPR='stop')
  !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -57,11 +57,9 @@ module openmp
  integer, external :: omp_get_max_threads
  logical, external :: omp_get_nested
  !
- logical     :: omp_is_off    = .FALSE.
- !
-#else
- logical     :: omp_is_off    = .TRUE.
 #endif
+ !
+ logical           :: omp_is_off
  !
  ! lock vars
  !
@@ -133,12 +131,13 @@ module openmp
      logical :: use_nested_=.false.
      !
      if (omp_is_off) then
-       if (present(n_threads_in)) then
-         n_threads_in=1
-       else
-         n_threads=1
-       endif
+       !      
+       if (     present(n_threads_in)) n_threads_in=1
+       if (.not.present(n_threads_in)) n_threads=1
+       !
+       n_threads=1
        n_threads_now=1
+       !
 #if defined _OPENMP
        call omp_set_num_threads( n_threads_now )
 #endif

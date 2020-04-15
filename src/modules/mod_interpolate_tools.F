@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,9 +26,8 @@ module interpolate_tools
  use pars,         ONLY:SP,schlen,rZERO
  use interpolate,  ONLY:interpls,INTERP_obj,l_INTERP_dE,l_INTERP_E,l_INTERP_f,max_interpls,INTERP_mode,&
 &                       l_INTERP_W,NN_nk_exact,NN_MAX_real_nearest,NN_n_of_nearest,l_INTERP_Z,&
-&                       INTERPOLATE_msg_fmt
+&                       INTERPOLATE_msg_fmt,OUT_k_nk
  use electrons,    ONLY:n_sp_pol
- use com,          ONLY:error
  !
 #include<memory.h>
  !  
@@ -47,13 +46,13 @@ module interpolate_tools
      !
      title=trim(INTERP_obj(ID)%what)//"-Nearest K"
      !
-     dummy=real(NN_nk_exact)/real(INTERP_obj(ID)%nk)*100._SP
-     call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Exact matches  [o/o]:',dummy)
-     if (NN_nk_exact<INTERP_obj(ID)%nk) then
-       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Neighbours    [user]:',NN_n_of_nearest)
-       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//']               [real]:',NN_MAX_real_nearest)
-       dummy=real(INTERP_obj(ID)%nk-NN_nk_exact)/real(INTERP_obj(ID)%nk)*100._SP
-       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Interpolations [o/o]:',dummy)
+     dummy=real(NN_nk_exact)/real(OUT_k_nk)*100._SP
+     call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Exact matches  [o/o]',dummy)
+     if (NN_nk_exact<OUT_k_nk) then
+       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Neighbours    [user]',NN_n_of_nearest)
+       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//']               [real]',NN_MAX_real_nearest)
+       dummy=real(OUT_k_nk-NN_nk_exact)/real(OUT_k_nk)*100._SP
+       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Interpolations [o/o]',dummy)
      endif
      !
    end subroutine
@@ -71,33 +70,39 @@ module interpolate_tools
      INTERP_obj(ID)%ID=0
      INTERP_obj(ID)%use_NN=.FALSE.
      INTERP_obj(ID)%in_use=.FALSE.
+     INTERP_obj(ID)%seed_kind=" "
      INTERP_obj(ID)%what=" "
      YAMBO_FREE(INTERP_obj(ID)%k)
+     YAMBO_FREE(INTERP_obj(ID)%weights)
      YAMBO_FREE(INTERP_obj(ID)%SEED)
      YAMBO_FREE(INTERP_obj(ID)%INTERP)
      !
    end subroutine
    !
-   subroutine init_ID(ID,bands,k,operation)
+   subroutine init_ID(ID,bands,k,operation,seed_kind)
      !
      use R_lattice,   ONLY:bz_samp
      !
      integer      , intent(in) :: ID,bands(2)
      type(bz_samp), intent(in) :: k
-     character(*) , intent(in) :: operation
+     character(*) , intent(in) :: operation,seed_kind
      !
      INTERP_obj(ID)%nb=bands
      INTERP_obj(ID)%nk=k%nibz
      INTERP_obj(ID)%in_use=.TRUE.
      INTERP_obj(ID)%use_NN=trim(INTERP_mode)=="NN"
+     INTERP_obj(ID)%seed_kind=seed_kind
      INTERP_obj(ID)%what=operation
      !
+     YAMBO_FREE(INTERP_obj(ID)%k)
      YAMBO_ALLOC(INTERP_obj(ID)%k,(k%nibz,3))
      INTERP_obj(ID)%k=k%pt
      !
+     YAMBO_FREE(INTERP_obj(ID)%weights)
      YAMBO_ALLOC(INTERP_obj(ID)%weights,(k%nibz))
      INTERP_obj(ID)%weights=k%weights
      !
+     YAMBO_FREE(INTERP_obj(ID)%SEED)
      YAMBO_ALLOC(INTERP_obj(ID)%SEED,(bands(1):bands(2),k%nibz,INTERP_obj(ID)%D))
      INTERP_obj(ID)%SEED=rZERO
      !
@@ -164,7 +169,7 @@ module interpolate_tools
     !
     integer,      intent(in) :: ID
     type(levels), intent(in) :: SEED_E
-    !
+    ! 
     integer :: i_s,ib,ik !WS
     !
     do i_s=1,n_sp_pol
@@ -212,7 +217,9 @@ module interpolate_tools
     integer,    intent(in) :: ID
     type(QP_t), intent(in) :: SEED_QP
     !
-    integer :: i_qp,ib,ik,i_s,i_c !WS
+    ! Work Space
+    !
+    integer :: i_qp,ib,ik,i_s,i_ref(4)
     !
     do i_qp=1,SEED_QP%n_states
       !
@@ -222,24 +229,23 @@ module interpolate_tools
       !
       ik   =SEED_QP%table(i_qp,3)
       i_s  =spin(SEED_QP%table(i_qp,:))
-      i_c  =0
-      if (l_INTERP_E ) then
-        i_c=i_c+1
-        INTERP_obj(ID)%SEED(ib,ik,i_c)=real(SEED_QP%E(i_qp))
+      !
+      i_ref=0
+      if (l_INTERP_E  ) i_ref(2)=n_sp_pol
+      if (l_INTERP_dE ) i_ref(3)=i_ref(2)+n_sp_pol
+      if (l_INTERP_W  ) i_ref(4)=i_ref(3)+n_sp_pol
+      if (l_INTERP_E  ) then
+        INTERP_obj(ID)%SEED(ib,ik,i_ref(1)+i_s)=real(SEED_QP%E(i_qp))
       endif
       if (l_INTERP_dE) then
-        i_c=i_c+1
-        INTERP_obj(ID)%SEED(ib,ik,i_c)=real(SEED_QP%E(i_qp))-SEED_QP%E_bare(i_qp)
+        INTERP_obj(ID)%SEED(ib,ik,i_ref(2)+i_s)=real(SEED_QP%E(i_qp))-SEED_QP%E_bare(i_qp)
       endif
       if (l_INTERP_W ) then
-        i_c=i_c+1
-        INTERP_obj(ID)%SEED(ib,ik,i_c)=aimag(SEED_QP%E(i_qp))
+        INTERP_obj(ID)%SEED(ib,ik,i_ref(3)+i_s)=aimag(SEED_QP%E(i_qp))
       endif
       if (l_INTERP_Z ) then
-        i_c=i_c+1
-        INTERP_obj(ID)%SEED(ib,ik,i_c)=real(SEED_QP%Z(i_qp))
-        i_c=i_c+1
-        INTERP_obj(ID)%SEED(ib,ik,i_c)=aimag(SEED_QP%Z(i_qp))
+        INTERP_obj(ID)%SEED(ib,ik,i_ref(4)+i_s)=real(SEED_QP%Z(i_qp))
+        INTERP_obj(ID)%SEED(ib,ik,i_ref(4)+n_sp_pol+i_s)=aimag(SEED_QP%Z(i_qp))
       endif
     enddo
     !

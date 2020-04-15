@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,7 +32,7 @@ subroutine RT_output_INIT( )
  use drivers,        ONLY:l_use_Hxc_collisions,l_elel_scatt,l_elph_scatt
  use stderr,         ONLY:intc
  use real_time,      ONLY:l_lftm_fit_temperatures
- use LIVE_t,         ONLY:what_is_running
+ use C_driver,       ONLY:code_bin
  use timing_m,       ONLY:timing
  use D_lattice,      ONLY:Bose_Temp
  !
@@ -48,7 +48,7 @@ subroutine RT_output_INIT( )
  !
  call timing('RT output (INIT)',OPR='start')
  !
- if (index(what_is_running,'YPP')>0) YPP_append='YPP-'
+ if (index(code_bin,'ypp')>0) YPP_append='YPP-'
  !
  ! Time Resolved...
  !=================

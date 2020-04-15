@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -24,8 +24,8 @@
 subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  !
  use drivers,        ONLY:l_elel_corr,l_rt_carriers_in_use,l_real_time
- use pars,           ONLY:schlen,SP
- use stderr,         ONLY:STRING_split,real2ch,intc,STRING_match
+ use pars,           ONLY:schlen,SP,lchlen
+ use stderr,         ONLY:STRING_split,real2ch,intc,STRING_same
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,BZ_DbGd_tot_nk_levels
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -33,7 +33,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  use units,          ONLY:FS2AUT,AUT2FS,PS2AUT
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free
  use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,OBS_RT_IO_t,RT_ctl_db,RT_ctl_interp_neigh
- use com,            ONLY:warning,msg,jobstr,alt_jobstr,n_alt_jobstr,file_exists,depth,alt_jobdir,jobdir
+ use com,            ONLY:msg,jobstr,alt_jobstr,n_alt_jobstr,depth,alt_jobdir,jobdir
  !
  implicit none
  !
@@ -52,9 +52,12 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  real(SP)              :: local_Time
  integer,parameter     :: n_pieces=10
  integer, external     :: io_RT_components
- character(schlen)     :: db_piece(n_pieces),db_name,T_unit,ch
+ character(schlen)     :: db_piece(n_pieces),T_unit,ch
+ character(lchlen)     :: db_name
  character(3)          :: what_
  logical               :: l_E,l_f,l_W,l_elel_corr_save,is_def,l_verbose,l_keep_carriers,l_BOLTZ
+ !
+ logical, external     :: file_exists
  !
  local_Time=0._SP
  if (present(Time)) local_Time=Time
@@ -114,12 +117,12 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
        db_name=db_piece(i1+1)
        if (len_trim(db_name)==0) return
        do i2=i1+1,n_pieces
-         if (STRING_match(trim(db_piece(i2)),"ubi" )) l_BOLTZ=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"ubi" )) l_BOLTZ=.TRUE.
        enddo
        do i2=1,i1-1
-         if (STRING_match(trim(db_piece(i2)),"e" )) l_E=.TRUE.
-         if (STRING_match(trim(db_piece(i2)),"f" )) l_f=.TRUE.
-         if (STRING_match(trim(db_piece(i2)),"w" )) l_W=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"e" )) l_E=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"f" )) l_f=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"w" )) l_W=.TRUE.
        enddo
      endif
      if (trim(db_piece(i1))=="@") then
@@ -215,7 +218,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  endif
  !
  if (io_err< 0) then 
-   call warning('Carriers database '//trim(db_name)//' section'//trim(intc(NE_i_time))//'not found')
+   call warning('Carriers database '//trim(db_name)//' section #'//trim(intc(NE_i_time))//' not found')
    l_rt_carriers_in_use=.FALSE.
    NE_i_time=1
    return

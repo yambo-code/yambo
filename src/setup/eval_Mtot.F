@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -23,14 +23,14 @@
 !
 subroutine eval_Mtot(en,k,q)
  !
- use pars,           ONLY:SP,pi,schlen
+ use pars,           ONLY:SP
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use com,            ONLY:msg
  use electrons,      ONLY:eval_magn
- use interfaces,     ONLY:WF_load,el_density_and_current,&
+ use interfaces,     ONLY:WF_load,&
 &                         PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                         PARALLEL_WF_index
  !

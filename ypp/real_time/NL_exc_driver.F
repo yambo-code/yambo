@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -23,13 +23,8 @@
 !
 subroutine NL_exc_driver(en,k)
  !
- use YPP_real_time,  ONLY:X_order
- use pars,           ONLY:SP,pi,cZERO,lchlen
- use units,          ONLY:HA2EV,AUT2FS
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use parser_m,       ONLY:parser
- use nl_optics,      ONLY:n_frequencies
  !
 #include<memory.h>
  !
@@ -38,8 +33,6 @@ subroutine NL_exc_driver(en,k)
  !
  ! Working Space
  !
- integer, external::io_NL
- integer  :: io_NonLinear,ID
  !
  call section("*",'NL Exc Post Processing')
  !

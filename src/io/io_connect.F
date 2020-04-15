@@ -85,7 +85,6 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
      ! NEW databases are always written respecting the "type" (see mod_com.F)
      !
      io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
-     write (*,*) io_file(ID)
      !
    else if (read_is_on(ID)) then
      !
@@ -109,6 +108,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
  !
  ! Create Directories 
  !
+ write (folder,'(2a)') trim(more_io_path),'/SAVE'
  if (len_trim(jobstr)>0) then
    if (len_trim(jobdir)> 0) write (folder,'(5a)') trim(more_io_path),'/',trim(jobdir),'/',trim(jobstr)
    if (len_trim(jobdir)==0) write (folder,'(3a)') trim(more_io_path),'/',trim(jobstr)

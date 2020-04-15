@@ -35,9 +35,10 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
 &                         E_P_El_abs_lifetime,l_RT_uses_E_DbGd,RT_ibz_coo,DbGd_ibz_coo,  &
 &                         RT_nk,RT_all2ibz,RT_delta_occupations,RT_Nk_ibz,RT_bands,&
 &                         RT_obj_alloc,RT_obj_free,RT_E_and_k,&
-&                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime
+&                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,NE_i_time
  use hamiltonian,    ONLY:E_reference
  use IO_m,           ONLY:io_bulk
+ use parallel_m
  !
  implicit none
  !
@@ -192,6 +193,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
 &                                      REF_lifetime(i_b,i_k_RT,6)+REF_lifetime(i_b,i_k_RT,8)
            !
            RT%NEQ_Lifetime(i_RT)=  (Hole_lifetime+Elec_lifetime)
+           !if (master_cpu) write (1000*ncpu+NE_i_time,'(f20.10)') REF_lifetime(i_b,i_k_RT,3)
            if(RT%E_bare(i_RT)> 0._SP) then
              if ((      f_occ)>0._SP) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Hole_lifetime/       f_occ
              if(  abs(df_occ)>0._SP)  RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Hole_lifetime/(     df_occ)

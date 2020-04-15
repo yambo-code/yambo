@@ -28,7 +28,6 @@ subroutine RT_Lifetimes_merge_inter_k(what,LIFE)
 &                         PAR_COM_Xk_ibz_INDEX,PP_send_and_receive
  use real_time,      ONLY:RT_nk,RT_bands,RT_ibz_coo
  use R_lattice,      ONLY:nkibz
- use timing_m,       ONLY:timing
  !
  implicit none
  !
@@ -43,9 +42,6 @@ subroutine RT_Lifetimes_merge_inter_k(what,LIFE)
  logical          :: do_I_rcv,do_I_snd
  !
  if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) return
- !
- call timing('RT life merge (inter-k)',OPR='start')
- !==================================================
  !
  myid=PAR_COM_Xk_ibz_INDEX%CPU_id+1
  COMM=PAR_COM_Xk_ibz_INDEX%COMM
@@ -97,7 +93,5 @@ subroutine RT_Lifetimes_merge_inter_k(what,LIFE)
    enddo
    call PP_redux_wait(COMM=COMM)
  enddo
- !
- call timing('RT life merge (inter-k)',OPR='stop')
  !
 end subroutine RT_Lifetimes_merge_inter_k

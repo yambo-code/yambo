@@ -28,7 +28,6 @@ subroutine RT_Lifetimes_merge_intra_k(what,LIFE)
 &                         PAR_COM_Xk_ibz_A2A,PAR_IND_Xk_ibz
  use real_time,      ONLY:RT_nk,RT_bands,RT_ibz_coo
  use R_lattice,      ONLY:nkibz
- use timing_m,       ONLY:timing
  !
  implicit none
  !
@@ -40,9 +39,6 @@ subroutine RT_Lifetimes_merge_intra_k(what,LIFE)
  integer          :: NC,ik,COMM
  !
  if (PAR_COM_Xk_ibz_A2A%n_CPU==1) return
- !
- call timing('RT life merge (intra-k)',OPR='start') 
- !==================================================
  !
  ! Prefactor
  !
@@ -59,7 +55,5 @@ subroutine RT_Lifetimes_merge_intra_k(what,LIFE)
    call PP_redux_wait(LIFE(:,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
    !
  enddo 
- !
- call timing('RT life merge (intra-k)',OPR='stop')
  !
 end subroutine RT_Lifetimes_merge_intra_k

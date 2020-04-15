@@ -152,40 +152,9 @@ subroutine RT_relaxation(E,k,q,Time)
  !
  if (l_RT_eval_lifetimes) then
    !
-   ! PARALLEL Mergering & REFERENCE
-   !================================
-   if (l_elel_scatt) then
-     call RT_Lifetimes_merge_intra_k("elel",E_E_Hole_lifetime)
-     call RT_Lifetimes_merge_intra_k("elel",E_E_Electron_lifetime)
-     if (l_initial_equilibrium) then
-       REF_lifetime(:,:,1)=E_E_Hole_lifetime
-       REF_lifetime(:,:,2)=E_E_Electron_lifetime
-     endif
-   endif
-   if (l_elph_scatt) then
-     call RT_Lifetimes_merge_intra_k("elph",E_P_Hole_lifetime)
-     call RT_Lifetimes_merge_intra_k("elph",E_P_Electron_lifetime)
-     if (Bose_Temp>0._SP) then
-       call RT_Lifetimes_merge_intra_k("bose",E_P_Ho_abs_lifetime)
-       call RT_Lifetimes_merge_intra_k("bose",E_P_El_abs_lifetime)
-     endif
-     if (l_initial_equilibrium) then
-       REF_lifetime(:,:,3)=E_P_Hole_lifetime
-       REF_lifetime(:,:,4)=E_P_Electron_lifetime
-       if(Bose_Temp>0._SP) then
-         REF_lifetime(:,:,5)=E_P_Ho_abs_lifetime
-         REF_lifetime(:,:,6)=E_P_El_abs_lifetime
-       endif
-     endif
-   endif
-   if (l_elphoton_scatt) then
-     call RT_Lifetimes_merge_intra_k("elgm",E_PHOT_Hole_lifetime)
-     call RT_Lifetimes_merge_intra_k("elgm",E_PHOT_Electron_lifetime)
-     if (l_initial_equilibrium) then
-       REF_lifetime(:,:,7)=E_PHOT_Hole_lifetime
-       REF_lifetime(:,:,8)=E_PHOT_Electron_lifetime
-     endif
-   endif
+   ! PARALLEL Mergering 
+   !====================
+   call RT_Lifetimes_merge_driver("INTRA_k")
    !
  endif
  !
@@ -200,6 +169,10 @@ subroutine RT_relaxation(E,k,q,Time)
  endif
  !
  if (l_initial_equilibrium) then
+   !
+   ! PARALLEL Mergering 
+   !====================
+   call RT_Lifetimes_merge_driver("REF")
    !
    call timing('RT relaxation (impose and idle)',OPR='stop')
    !

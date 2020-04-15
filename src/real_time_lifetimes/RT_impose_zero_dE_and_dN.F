@@ -271,9 +271,9 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  ! DS: This is commented to avoid problems with the test-suite
  !     It should be restored
-! do i1=1,2
-!   if ( abs(prefactor(i1))>cut_off ) prefactor(i1)=prefactor(i1)/abs(prefactor(i1))*cut_off
-! enddo
+ ! do i1=1,2
+ !   if ( abs(prefactor(i1))>cut_off ) prefactor(i1)=prefactor(i1)/abs(prefactor(i1))*cut_off
+ ! enddo
  !
  ! Pre-factors transfer to internal variables and application to the lifetimes
  !==============================================================================

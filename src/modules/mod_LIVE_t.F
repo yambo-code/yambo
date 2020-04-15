@@ -178,8 +178,8 @@ module LIVE_t
      ! Work Space
      !
      real(DP) ltcpu
-     integer:: d,h,m,s
-     integer, parameter :: st=1
+     integer :: d,h,m,s
+     character(4) :: cs,cm,ch,cd
      ltcpu=abs(tcpu)
      d=int(ltcpu/86400.d0)
      ltcpu=ltcpu-d*86400.d0
@@ -187,11 +187,20 @@ module LIVE_t
      ltcpu=ltcpu-h*3600.d0
      m=int(ltcpu/60.d0)
      s=int(ltcpu-m*60.d0)
-     time_string=' '
-     if (s>=st) write (time_string,'(i2.2,a)') s,'s'
-     if (m/=0)  write (time_string,'(2(i2.2,a))') m,'m-',s,'s'
-     if (h/=0)  write (time_string,'(3(i2.2,a))') h,'h-',m,'m-',s,'s'
-     if (d/=0)  write (time_string,'(4(i2.2,a))') d,'d-',h,'h-',m,'m-',s,'s'
+     cs=" "
+     cm=" "
+     ch=" "
+     cd=" "
+     if (d>0) write (cd,'(i2.2,a)') d,'d'
+     if (h>0.and.d==0)  write (ch,'(i2.2,a)') h,'h'
+     if (h>0.and.d> 0)  write (ch,'(a,i2.2,a)') '-',h,'h'
+     if (m>0.and.h==0)  write (cm,'(i2.2,a)') m,'m'
+     if (m>0.and.h> 0)  write (cm,'(a,i2.2,a)') '-',m,'m'
+     if (d==0.and.s>=1) then
+       if (m==0) write (cs,'(i2.2,a)') s,'s'
+       if (m> 0) write (cs,'(a,i2.2,a)') '-',s,'s'
+     endif
+     time_string=trim(cd)//trim(ch)//trim(cm)//trim(cs)
    end function
    !
    subroutine LIVE_message(message,lfmt,rfmt,sfmt,CPU_TIME,CPU_ID)

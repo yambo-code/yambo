@@ -344,11 +344,6 @@ module real_time
  complex(SP), allocatable :: XC0(:,:,:,:)
  complex(SP), allocatable :: HARTREE0(:,:,:,:)
  !
- type RT_merge_plan
-   !
-   !
- end type
- !
  type RT_t
    !
    ! Sizes and definitions

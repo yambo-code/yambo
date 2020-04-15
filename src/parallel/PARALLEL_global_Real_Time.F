@@ -32,7 +32,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use collision_ext, ONLY:COH_collisions,HXC_collisions,GW_NEQ_collisions
  use matrix_operate,ONLY:UP_matrix_index
  use hamiltonian,   ONLY:B_mat_index
- use real_time,     ONLY:RT_bands
+ use real_time,     ONLY:RT_bands,l_RT_uses_E_DbGd,RT_nk
  use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,HEAD_q_cpu,COMM_copy,PAR_INDEX_copy,&
 &                        PAR_build_index,PP_indexes_reset
  ! COMMUNICATORS
@@ -59,6 +59,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! Work space
  !
  integer              :: ib1,ib2
+ logical              :: CONSECUTIVE
  !
  CALL PARALLEL_structure(4,(/"k ","b ","q ","qp"/))
  !
@@ -88,11 +89,12 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  ! K-points (IBZ)
  !
- call PARALLEL_index(PAR_IND_Xk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+ CONSECUTIVE=.not.l_RT_uses_E_DbGd
+ call PARALLEL_index(PAR_IND_Xk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=CONSECUTIVE,NO_EMPTIES=.TRUE.)
  PAR_IND_Xk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
  !
  call PARALLEL_live_message("K(ibz)",ENVIRONMENT="Real_Time",&
-&         LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz,&
+&         LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=RT_nk,&
 &         NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
  !
  !.........................................................................

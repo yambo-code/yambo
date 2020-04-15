@@ -25,7 +25,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  !
  use pars,           ONLY:schlen
  use IO_m,           ONLY:IO_write,IO_read
- use com,            ONLY:write_to_report,write_to_of,fat_log
+ use com,            ONLY:write_to_report,write_to_of,verbose
  use parallel_m,     ONLY:IO_write_default,myid,master_cpu
  use stderr,         ONLY:STRING_split,write_to_log
  use LIVE_t,         ONLY:live_timing_is_on
@@ -132,7 +132,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
      if (trim(ch_piece(ich))=="+io_in" ) IO_read=local_TRUE
      if (trim(ch_piece(ich))=="+io_out") IO_write=local_master
      if (trim(ch_piece(ich))=="-fragments_IO_log") write_fragments_IO_log=local_FALSE
-     if (trim(ch_piece(ich))=="+fragments_IO_log") write_fragments_IO_log=(local_TRUE.and.write_to_log_default.and.fat_log)
+     if (trim(ch_piece(ich))=="+fragments_IO_log") write_fragments_IO_log=(local_TRUE.and.write_to_log_default.and.verbose)
      !
    enddo
    !

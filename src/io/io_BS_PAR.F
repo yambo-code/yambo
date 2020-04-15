@@ -35,7 +35,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use BS_solvers,    ONLY:variables_BS,BSS_desc
  use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,&
 &                        io_connect,io_elemental,def_variable_bulk,variable_exist,&
-&                        io_header,io_file
+&                        io_header,io_file,io_BS_K
  use descriptors,   ONLY:IO_desc,IO_desc_duplicate
  !
  implicit none
@@ -60,8 +60,9 @@ subroutine io_BS_PAR_init(iq,X,ID)
  full_db_name=get_name(trim(db_name)," ",2,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
  !
  l_BSE_kernel_complete=.false.
+ l_BSE_restart=.false.
  !
- if (write_is_on(ID)) then
+ if (write_is_on(ID).and..not.io_BS_K) then
    if (.not.file_exists(trim(full_db_name))) then
      call msg("s","BSE file not found. Creating an empty one.")
      l_BSE_restart=.false.
@@ -94,7 +95,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  io_BS=variables_BS_more(ID,'start')
  !
- if(read_is_on(ID)) then
+ if(read_is_on(ID).and..not.io_BS_K) then
    if(l_BSE_kernel_complete) then
      call msg("s","Complete BSE file found in "//trim(io_file(ID))//". Loading kernel.")
    else
@@ -107,6 +108,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  ! Descriptions transfer
  !   
  call IO_desc_duplicate(local_desc,BSS_desc)
+ !
+ if(.not.io_BS_K) return
  ! 
  ! Define vars
  !
@@ -199,7 +202,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  use pars,          ONLY:IP,IPL
  use BS,            ONLY:BS_blk,l_BSK_IO_triangular,BS_IO_dim
  use timing_m,      ONLY:timing
- use IO_m,          ONLY:io_variable_bulk,io_unit,netcdf_call,nf90_sync
+ use IO_m,          ONLY:io_variable_bulk,io_unit,netcdf_call,nf90_sync,io_BS_K
  !
  implicit none
  !
@@ -210,6 +213,8 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  integer             :: i_block,x1,x2,iq,VAR_IDs(2),stat
  integer             :: n2,i1,i2,idx1,idx2,imax
  integer(IPL)        :: idx
+ !
+ if(.not.io_BS_K) return
  !
  call timing('io_BS',OPR='start')
  !

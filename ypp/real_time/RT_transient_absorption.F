@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -105,7 +105,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  ! Frequency setup
  !
- W_bss%er=RT_conf%W_range
+ W_bss%er=RT_conf%X_W_range
  W_bss%n_freqs=RT_conf%W_n_steps
  W_bss%per_memstps=100._SP
  W_bss%dr=RT_conf%damp_factor
@@ -171,7 +171,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
      !
      BS_R_tmp=-real(BS_R_var+conjg(BS_R_var),SP)
      !
-     if( RT_conf%W_range(1)<real(BS_E(i_l)) .and. real(BS_E(i_l))<RT_conf%W_range(2) ) &
+     if( RT_conf%X_W_range(1)<real(BS_E(i_l)) .and. real(BS_E(i_l))<RT_conf%X_W_range(2) ) &
 &       call RT_output("trans_residual",VALUEs=(/BS_R_tmp/),E=real(BS_E(i_l))*HA2EV,TIME=RT_time(i_T)*AUT2FS)
      !
    enddo

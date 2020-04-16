@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -68,9 +68,6 @@ module pars
  integer, parameter :: max_io_vars_open=10
  integer, parameter :: max_active_sections=10
  !
- !...QP
- integer, parameter :: max_qp_descs=100
- !
  !...QP_apply
  integer, parameter :: n_QP_actions_MAX=10
  !
@@ -101,6 +98,8 @@ module pars
  !=========
  integer, parameter  :: schlen=100
  integer, parameter  :: lchlen=300
+ integer, parameter  :: msg_len=50
+ integer, parameter  :: DB_menu_length=30+msg_len
  !
  ! CONSTANTs
  !===========

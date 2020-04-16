@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,6 +23,7 @@
 !
 module X_m
  !
+ use descriptors,    ONLY:IO_desc
  use pars,           ONLY:SP,lchlen,schlen
  use units,          ONLY:HA2EV
  use matrix,         ONLY:PAR_matrix
@@ -104,10 +105,7 @@ module X_m
  !
  ! I/O descriptions
  !
- integer          :: n_X_descs
- integer          :: X_desc_size(100)
- real(SP)         :: X_desc_var(10,100)
- character(lchlen):: X_desc_str(100)
+ type(IO_desc)    :: X_desc
  !
  ! PARALLEL distribution
  !

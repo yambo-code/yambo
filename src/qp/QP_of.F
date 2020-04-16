@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,8 +33,10 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
 &                    use_GreenF_to_eval_QP,Vnlxc_kind,report_Vxc,&
 &                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral,&
 &                    QP_states_simmetrize,QP_G_info,Time_of
- use stderr,    ONLY:set_real_printed_length
+ use interfaces,ONLY:DESC_write
+ !
  implicit none
+ !
  type(QP_t)   ::qp
  type(levels) ::en
  integer      ::QPdb_read_err
@@ -42,7 +44,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  ! Work Space
  !
- integer           ::i1,i2,qp_b,qp_k,qp_isp,i_desc_min
+ integer           ::i1,i2,qp_b,qp_k,qp_isp
  character(lchlen) ::file_name,G_Sc_name
  logical           ::state_is_2do(QP_n_states)
  !
@@ -151,26 +153,9 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    file_name=what
    call of_open_close(file_name,'ot')
    !
-   i_desc_min=1
-   select case ( trim(QP_solver) )
-     case ("n")
-       call msg('o '//what,'# GW [Newton Solver]')
-       i_desc_min=2
-     case ("s")
-       call msg('o '//what,'# GW [Secant method Solver]')
-       i_desc_min=2
-     case ("g")
-       call msg('o '//what,'# GW [Green`s Function Solver]')
-       i_desc_min=2
-   end select
+   if (what== 'hf') call msg('o '//what,'# Hartree-Fock Components and Corrections')
    !
-   if (what==        'hf') call msg('o '//what,'# Hartree-Fock Components and Corrections')
-   !
-   if (index(what,"qp")>0) call msg('o '//what,'#')
-   !
-   do i1=i_desc_min,qp%n_descs
-     call msg('o '//what,'#',trim(qp%description(i1)),INDENT=0)
-   enddo
+   call DESC_write('o '//what,'#',qp%desc)
    !
    call msg('o '//what,'#')
    call msg('o '//what,'#',titles(titles_order(:ntitles)),INDENT=0,USE_TABS=.TRUE.)
@@ -238,11 +223,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      if (qp_isp==1) values(14)= 1._SP
      if (qp_isp==2) values(14)=-1._SP
      !
-     if (l_elph_corr) call set_real_printed_length(f_length=10,g_length=10)
-     !
      call msg('o '//what,'',values(titles_order(:ntitles)),INDENT=-2,USE_TABS=.TRUE.)
-     !
-     if (l_elph_corr) call set_real_printed_length( )
      !
    enddo
    !
@@ -252,19 +233,14 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    !
    call QP_states_simmetrize(en,state_is_2do=state_is_2do)
    !
-   call set_real_printed_length(f_length=12,g_length=12)
-   !
    do  i1=1,QP_n_states
      !
      if (spin(QP_table(i1,:))==1) write (G_Sc_name,'(2(a,i3.3),a)') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3),'_s1'
      if (spin(QP_table(i1,:))==2) write (G_Sc_name,'(2(a,i3.3),a)') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3),'_s2'
      if (n_sp_pol==1) write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3)
      call of_open_close(G_Sc_name,'ot')
-     call msg('o G_Sc','# GW [Green`s function & Self-Energy]')
-     call msg('o G_Sc','#')
-     do i2=2,qp%n_descs
-       call msg('o G_Sc','#',trim(qp%description(i2)),INDENT=0)
-     enddo
+     !call msg('o G_Sc','# GW [Green`s function & Self-Energy]')
+     call DESC_write('o G_Sc','#',qp%desc)
      if (allocated(QP_G_amplitude_integral)) then
        call msg('o G_Sc','#')
        call msg('o G_Sc','# Spectral function at this point integrates to',QP_G_amplitude_integral(i1),&
@@ -296,8 +272,6 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      enddo
      call of_open_close(G_Sc_name)
    enddo
-   !
-   call set_real_printed_length()
    !
  endif
  !

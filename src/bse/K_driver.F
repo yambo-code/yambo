@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use parser_m,       ONLY:parser
  use com,            ONLY:msg
  use stderr,         ONLY:STRING_remove,intc
- use electrons,      ONLY:levels,n_sp_pol,n_spin
+ use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
  use DIPOLES,        ONLY:DIPOLE_t
@@ -36,7 +36,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BS_n_g_W,BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSE_mode,BS_Blocks_and_Transitions_free,l_BSE_minimize_memory,BSqpts,L_kind,&
-&                         BS_perturbative_SOC
+&                         BS_perturbative_SOC,l_BSK_IO_triangular
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss,l_col_cut
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
@@ -72,6 +72,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
 #endif
  !
  call parser('BSEQptR',l_bs_q)
+ call parser('BSKTriangIO',l_BSK_IO_triangular)
  !
  if (.not.l_bs_q) BS_q=(/1,1/)
  !

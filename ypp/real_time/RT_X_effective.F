@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -236,7 +236,7 @@ subroutine RT_X_effective(en)
    ! 
    Use_FFT=.FALSE.
    !
-   RT_conf%W_range=RT_conf%W_range(2)*(/-1.,1./)
+   RT_conf%X_W_range=RT_conf%X_W_range(2)*(/-1.,1./)
    !
    RT_P_t(:,1:3)=RT_P_probe(:,1,:)
    !

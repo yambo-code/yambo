@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -116,7 +116,10 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! iinf=0 => No error message from driver.c 
  !
- if (iinf/=0) return
+ if (iinf/=0) then
+   yambo=iinf
+   return
+ endif
  !
  ! PARALLEL and I/O Setup 
  !=======================

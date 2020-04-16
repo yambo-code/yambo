@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -142,7 +142,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_elemental(ID,VAR="HEAD_D_LATT",VAR_SZ=3,MENU=MENU)
    MENU=0
    call io_elemental(ID,DB_R1=D_LATT_vec_disk,R1=D_LATT_vec,&
-&       VAR=' Lattice constants                ',WARN=WARN,CHECK=l_IMPOSE,&
+&       VAR='Lattice constants                ',WARN=WARN,CHECK=l_IMPOSE,&
 &       OP=(/"==","==","=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    db_alat=D_LATT_vec_disk
@@ -155,7 +155,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_elemental(ID,VAR="HEAD_R_LATT",VAR_SZ=4,MENU=MENU)
    MENU=0
    call io_elemental(ID,DB_I1=R_LATT_vec_disk,I1=R_LATT_vec,&
-&       VAR=' Brillouin Zone Q/K grids (IBZ/BZ)',WARN=WARN,CHECK=l_IMPOSE,&
+&       VAR='Brillouin Zone Q/K grids (IBZ/BZ)',WARN=WARN,CHECK=l_IMPOSE,&
 &       OP=(/"==","==","==","=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    nqibz_disk=R_LATT_vec_disk(1)
@@ -170,7 +170,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_elemental(ID,VAR="HEAD_WF",VAR_SZ=1,MENU=MENU)
    MENU=0
    call io_elemental(ID,I0=wf_ng,&
-&       VAR=' RL vectors                   (WF)',WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
+&       VAR='RL vectors',TERMINATOR='WF',WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    io_header=io_status(ID)
    if (io_header/=0) goto 1
@@ -263,12 +263,12 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    !
    call io_elemental(ID,VAR="PARALLEL_CPUs",CH0='',VAR_SZ=1,MENU=MENU)
    call io_elemental(ID,CH0=CPU_structure(p_structure)%CPU_string,&
-&                    VAR=' Parallel CPUs                    ',CHECK=.true.,OP=(/"=="/))
+&                    VAR='Parallel CPUs                    ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    io_header=io_status(ID)
    call io_elemental(ID,VAR="PARALLEL_ROLES",CH0='',VAR_SZ=1,MENU=MENU)
    call io_elemental(ID,CH0=CPU_structure(p_structure)%ROLE_string,&
-&                    VAR=' Parallel Roles                   ',CHECK=.true.,OP=(/"=="/))
+&                    VAR='Parallel Roles                   ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    io_header=io_status(ID)
    if (io_header/=0) goto 1
@@ -286,7 +286,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_elemental(ID,VAR="FRAGMENTED",VAR_SZ=1,MENU=MENU)
    MENU=0
    call io_elemental(ID,L0=FRAG,&
-&                    VAR=' Fragmentation                    ',CHECK=.true.,OP=(/"=="/))
+&                    VAR='Fragmentation                    ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
  !
@@ -300,9 +300,9 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_elemental(ID,VAR="TEMPERATURES",VAR_SZ=2,MENU=MENU)
    MENU=0
    call io_elemental(ID,R0=Tel,&
-&       VAR=' Electronic Temperature        [K]',UNIT=HA2KEL,WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
+&       VAR='Electronic Temperature',TERMINATOR='K',UNIT=HA2KEL,WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
    call io_elemental(ID,R0=Bose_Temp,&
-&       VAR=' Bosonic    Temperature        [K]',UNIT=HA2KEL,WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
+&       VAR='Bosonic    Temperature',TERMINATOR='K',UNIT=HA2KEL,WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    if (input_Tel_is_negative) then
@@ -363,14 +363,14 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    if (present(IMPOSE_GAUGE)) then
      if (IMPOSE_GAUGE) then
        call io_elemental(ID,CH0=global_gauge,&
-&           VAR=' Global Gauge                     ',CHECK=.true.,OP=(/"=="/))
+&           VAR='Global Gauge                     ',CHECK=.true.,OP=(/"=="/))
      else
        call io_elemental(ID,CH0=global_gauge,&
-&           VAR=' Global Gauge                     ',WARN=.true.,OP=(/"=="/))
+&           VAR='Global Gauge                     ',WARN=.true.,OP=(/"=="/))
      endif
    else
      call io_elemental(ID,CH0=global_gauge,&
-&         VAR=' Global Gauge                     ',WARN=.true.,OP=(/"=="/))
+&         VAR='Global Gauge                     ',WARN=.true.,OP=(/"=="/))
    endif
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !

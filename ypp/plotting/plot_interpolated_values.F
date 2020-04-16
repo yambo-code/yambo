@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, DS, AM
@@ -24,12 +24,12 @@
 subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfiles,basename,int_kind)
  !
  use units,          ONLY:HA2EV
- use pars,           ONLY:SP,schlen,lchlen
+ use pars,           ONLY:SP,schlen
  use com,            ONLY:msg,of_open_close
  use electrons,      ONLY:levels,n_sp_pol,n_spinor
  use vec_operate,    ONLY:v_norm,iku_v_norm
  use R_lattice,      ONLY:bz_samp
- use stderr,         ONLY:intc,set_real_printed_length
+ use stderr,         ONLY:intc
  use YPPm,           ONLY:coo_out,K_transform,CIRCUIT_E_db,CIRCUIT_k_label
  use interpolate,    ONLY:INTERP_obj
  !
@@ -56,8 +56,6 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  integer,  allocatable :: Grid_to_path_map(:,:)
  real(SP), allocatable :: circuit_versor(:,:),circuit_dist(:,:)
  real(SP), allocatable :: auxiliary_var(:,:,:,:),tmp_k(:,:),tmp_k_dist(:,:)
- !
- call set_real_printed_length(f_length=10,g_length=10)
  !
  PLOT_interpolated = trim(basename)=="interpolated"
  PLOT_built_in     = trim(basename)=="built_in"    
@@ -139,15 +137,6 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    file_name(ifile+3)="magnetization_x_"//trim(basename)
    file_name(ifile+4)="magnetization_y_"//trim(basename)
    file_name(ifile+5)="magnetization_z_"//trim(basename)
-   ! TMP coding for back compatibility <
-   if(PLOT_interpolated.and.PLOT_BANDS) then
-     file_name(ifile+1)="spin_factors_UP"
-     file_name(ifile+2)="spin_factors_DN"
-     file_name(ifile+3)="magnetization_x"
-     file_name(ifile+4)="magnetization_y"
-     file_name(ifile+5)="magnetization_z"
-   endif
-   ! TMP coding for back compatibility >
    ifile=ifile+5
  endif
  !
@@ -277,7 +266,5 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  if(n_points_max>1) then
    YAMBO_FREE(auxiliary_var)
  endif
- !
- call set_real_printed_length( )
  !
 end subroutine plot_interpolated_values

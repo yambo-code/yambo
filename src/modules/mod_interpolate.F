@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -46,6 +46,7 @@ module interpolate
  !
  ! NN method
  !
+ integer :: OUT_k_nk=0
  integer :: NN_nk_exact=0
  integer :: NN_n_of_nearest=1
  integer :: NN_MAX_real_nearest=0
@@ -91,6 +92,7 @@ module interpolate
    logical                  :: in_use=.FALSE.
    logical                  :: use_NN=.FALSE.
    logical                  :: has_fineGd=.FALSE.
+   character(schlen)        :: seed_kind=" "
    character(schlen)        :: what=" "
    !
    real(SP),    allocatable :: SEED(:,:,:)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -23,6 +23,7 @@
 !
 subroutine fft_check_size(iGo_max,NG_C,NG_HF,mode)
  !
+ use pars,              ONLY:SP
  use fft_m,             ONLY:fft_size
  use parser_m,          ONLY:parser
  use R_lattice,         ONLY:ng_in_shell,n_g_shells
@@ -41,6 +42,7 @@ subroutine fft_check_size(iGo_max,NG_C,NG_HF,mode)
  character(4) :: NGname
  character(6) :: SKname
  character(8) :: Kindname
+ real(SP),external ::G2E
  !
  if ( (NG_C>=NG_HF) .or. NG_C==0 .or. NG_HF==0  ) return
  !
@@ -102,7 +104,8 @@ subroutine fft_check_size(iGo_max,NG_C,NG_HF,mode)
    else
      NG_HF=ng_in_shell(i_shell-1)
      call warning(' '//trim(Kindname)//' '//trim(SKname)//' FFT size is too big. '// &
-                 &   NGname//' reduced '//trim(intc(NG_HF_save))//' --> '//trim(intc(NG_HF)))
+                 &   NGname//' reduced '//trim(intc(NG_HF_save))//' --> '//trim(intc(NG_HF)) &
+                 & //' (' //intc(int(1000.*G2E(NG_HF)))//'mHa)')
      call warning(' Bigger FFT discarded to avoid slow computation for corr part of '//trim(SKname))
    endif
    !

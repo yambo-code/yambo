@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -20,6 +20,21 @@
 ! License along with this program; if not, write to the Free 
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine INTERPOLATION_driver_create_grid(GRID)
+ !
+ use interpolate,          ONLY:GRID_k
+ use R_lattice,            ONLY:bz_samp_reset
+ !
+ implicit none
+ !
+ integer, intent(in) :: GRID(3)
+ !
+ call bz_samp_reset(GRID_k)
+ GRID_k%description="INTERP"
+ call INTERPOLATION_create_the_grid(GRID_k,'i',GRID)
+ !
+end subroutine INTERPOLATION_driver_create_grid
 !
 subroutine INTERPOLATION_create_the_grid(K,units,grid_dim)
  !

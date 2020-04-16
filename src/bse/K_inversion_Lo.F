@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -31,11 +31,12 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS_solvers,     ONLY:Co_factor,diam_term_exact,BSS_dipoles,BSS_uses_DbGd,&
 &                         BSS_eh_table,BSS_eh_E,BSS_eh_f,&
-&                         BSS_n_descs,BSS_desc_str,BSS_desc_var,BSS_eh_W,&
+&                         BSS_desc,BSS_eh_W,&
 &                         BSS_add_antiresonant,K_diago_in_BS_mat,BS_diagonal
  use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q,BS_perturbative_SOC
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use LIVE_t,         ONLY:live_timing
+ use descriptors,    ONLY:IO_desc_add
  !
 #if defined _ELPH
  use BS_solvers,     ONLY:BSS_uses_GreenF
@@ -261,9 +262,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  if (iq>BS_q(1)) return
  !
- BSS_n_descs=BSS_n_descs+2
- BSS_desc_str(BSS_n_descs-1)=' '
- BSS_desc_str(BSS_n_descs)=' BSS|BZ Double Grid points      '
- BSS_desc_var(1,BSS_n_descs)=real(k%nibz+k%nibz_FineGd,SP)
+ call IO_desc_add(BSS_desc,kind="s",str=" ",S=" ")
+ !
+ call IO_desc_add(BSS_desc,kind="i",str="[INV] BZ Double Grid points",I=(/k%nibz+k%nibz_FineGd/))
  !
 end subroutine K_inversion_Lo

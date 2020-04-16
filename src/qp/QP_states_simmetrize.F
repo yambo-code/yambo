@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,7 @@ subroutine QP_states_simmetrize(en,what,V_real,V_complex,state_is_2do,warn_me)
  use QP_m,          ONLY:QP_n_states,QP_table
  use units,         ONLY:HA2EV
  use vec_operate,   ONLY:sort,degeneration_finder
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,spin,n_sp_pol
  use stderr,        ONLY:real2ch,intc
  !
  implicit none
@@ -53,7 +53,9 @@ subroutine QP_states_simmetrize(en,what,V_real,V_complex,state_is_2do,warn_me)
  !
  ! Degenerate bands average.
  !
- forall(i1=1:QP_n_states) Eo_sorted(i1)=en%E(QP_table(i1,1),QP_table(i1,3),1)
+ do i1=1,QP_n_states
+   Eo_sorted(i1)=en%E(QP_table(i1,1),QP_table(i1,3),spin(QP_table(i1,:)))
+ enddo
  !
  call sort(Eo_sorted,indx=Eo_sorted_index)
  call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,E_deg_treshold)
@@ -70,10 +72,13 @@ subroutine QP_states_simmetrize(en,what,V_real,V_complex,state_is_2do,warn_me)
    inx_first =Eo_sorted_index( first_el(i1) )
    !
    states_ch="(n,k)="
+   if (n_sp_pol>1) states_ch="(n,k,s)="
    !
    do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
      !
      inx       =Eo_sorted_index(i2)
+     !
+     if (spin(QP_table(inx_first,:))/=spin(QP_table(inx,:))) cycle
      !
      if (present(state_is_2do)) then
        if (i2>first_el(i1)) state_is_2do(inx)=.FALSE.
@@ -81,7 +86,12 @@ subroutine QP_states_simmetrize(en,what,V_real,V_complex,state_is_2do,warn_me)
      !
      max_percentual_diff(i1)=0._SP
      !
-     states_ch=trim(states_ch)//"("//trim(intc(QP_table(inx,1)))//","//trim(intc(QP_table(inx,3)))//")"
+     states_ch=trim(states_ch)//"("//trim(intc(QP_table(inx,1)))//","//trim(intc(QP_table(inx,3)))
+     if (n_sp_pol>1) then
+       if (spin(QP_table(inx,:))==1) states_ch=trim(states_ch)//",up"
+       if (spin(QP_table(inx,:))==2) states_ch=trim(states_ch)//",dn"
+     endif
+     states_ch=trim(states_ch)//")"
      if (i2<first_el(i1)+n_of_el(i1)-1) states_ch=trim(states_ch)//"-"
      !
      if (present(V_real)) then

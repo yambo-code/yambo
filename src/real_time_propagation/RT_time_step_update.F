@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM 
@@ -31,16 +31,17 @@ subroutine RT_time_step_update( )
 &                         RT_life_extrap_times,Life_MEM_steps,NE_time,NE_time_step_update_jump,&
 &                         NE_step_update_treshold,NE_i_time,NE_time_step_update_last_point,RT_MAX_step,&
 &                         NE_initial_time_step_update,RT_all2ibz
- use RT_control,     ONLY:OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,n_TIME_STEP_CONF_descriptions,&
-&                         TIME_STEP_CONF_description,RT_do_it,SETUP_RT_IO_type,TIME_adjust
+ use RT_control,     ONLY:OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,RT_do_it,SETUP_RT_IO_type,TIME_adjust
+ use RT_output_m,    ONLY:TIME_STEP_desc
  use com,            ONLY:msg
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
+ use interfaces,     ONLY:DESC_write
  !
  implicit none
  ! 
  ! Work Space 
  ! 
- integer           :: ib,ibp,ik,nT_updated,i1,n_mesgs
+ integer           :: ib,ibp,ik,nT_updated,i_desc_ref
  complex(SP)       :: dG_dT_max(2),dG_dT(2),ERROR,dG(3)
  real(SP)          :: dT_now,dT_previous,dT_next
  integer, external :: RT_Lifetimes_evaluation_plan
@@ -111,14 +112,15 @@ subroutine RT_time_step_update( )
    !
    ! ... create the linked descriptions
    !
-   n_mesgs=n_TIME_STEP_CONF_descriptions
+   i_desc_ref=max(TIME_STEP_desc%n,1)
    !
    call RT_update_TIME_CONF_descriptions( )
    !
    call msg("nr","Dynamics steps update @ TIME "//trim(real2ch(NE_time*AUT2FS))//" fs")
-   do i1=n_mesgs+1,n_TIME_STEP_CONF_descriptions
-     call msg("r",trim(TIME_STEP_CONF_description(i1)))
-   enddo
+   !
+   call DESC_write("r","  ",TIME_STEP_desc,(/i_desc_ref+1,TIME_STEP_desc%n/))
+   !
+   call msg("r"," ")
    !
  endif
  !

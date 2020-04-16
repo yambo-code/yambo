@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -256,6 +256,15 @@ module electrons
      !
      spin=1
      if (n_sp_pol==2) spin=v(4)
+     !
+   end function
+   !
+   character(2) function spin_string(i_spin)
+     integer :: i_spin
+     !
+     if (n_sp_pol==1) spin_string="  "
+     if (i_spin==1)   spin_string="up"
+     if (i_spin==2)   spin_string="dn"
      !
    end function
    !

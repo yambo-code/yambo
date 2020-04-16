@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -39,7 +39,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid
  use interfaces,          ONLY:PARALLEL_index
  use functions,           ONLY:Fermi_fnc_derivative
- use stderr,              ONLY:set_real_printed_length
+ !
 #include<memory.h>
  type(levels) ::en
  type(bz_samp)::k,q
@@ -191,8 +191,6 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !
  ! Output file
  !
- call set_real_printed_length(f_length=20,g_length=20)
- !
  if (l_eliashberg) then
    o_file_name='eliashberg'
    call of_open_close(o_file_name,'ot')
@@ -226,8 +224,6 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    enddo
    call of_open_close(o_file_name)
  endif
- !
- call set_real_printed_length()
  !
  !CLEAN
  !

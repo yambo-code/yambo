@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CH DS
@@ -149,8 +149,8 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
      !
      ! Load WFs first at k and then at k+q_iq
      ! 
-     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',title='-Oscillators/G space',&
-&           force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',&
+&           title='-Oscillators/G space/Shifted',force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      !
      do iq = 1, num_shifted_grids
        !

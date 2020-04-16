@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -113,8 +113,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    if (l_elph_corr) call msg('r', '- F  : Fan [eV]  - DW  : DW [eV]')
    if (report_dSc) call msg('rn','- dSp: Sc derivative precision')
    if (report_Vnlxc) then
-     call msg('r','- lXC: Starting Local XC ('//trim(Vxc_kind)//')')
-     call msg('r','-nlXC: Starting non-Local XC ('//trim(Vnlxc_kind)//')')
+     call msg('r','- lXC: Local XC ('//trim(Vxc_kind)//')')
+     call msg('r','-nlXC: non-Local XC ('//trim(Vnlxc_kind)//')')
    endif
  endif 
  !

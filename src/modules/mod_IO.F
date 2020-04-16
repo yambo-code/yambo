@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -155,20 +155,21 @@ module IO_m
    !
    subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                          R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
-&                          DESCRIPTION,DO_NOT_DUMP)
+&                          DESCRIPTOR,DO_NOT_DUMP,TERMINATOR)
      !
-     use pars
+     use pars,       ONLY:SP,DP,lchlen
+     use descriptors,ONLY:IO_desc
      integer      :: ID
-     character(*),optional :: VAR,OP(:)
-     integer,     optional :: VAR_SZ,MENU
-     integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
-     real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
-     real(DP),    optional :: D0,DB_D0
-     complex(SP), optional, target :: C0
-     complex(SP), optional :: DB_C0
-     logical     ,optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
-     character(*),optional :: CH0,DB_CH0,CH1(:)
-     character(lchlen),optional :: DESCRIPTION
+     character(*), optional :: VAR,OP(:)
+     integer,      optional :: VAR_SZ,MENU
+     integer,      optional :: I0,DB_I0,I1(:),DB_I1(:)
+     real(SP),     optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
+     real(DP),     optional :: D0,DB_D0
+     complex(SP),  optional, target :: C0
+     complex(SP),  optional :: DB_C0
+     logical     , optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
+     character(*), optional :: CH0,DB_CH0,CH1(:),TERMINATOR
+     type(IO_desc),optional :: DESCRIPTOR
      !
    end subroutine
    !
@@ -180,7 +181,7 @@ module IO_m
                       &             L0,L1,L2,L3,L4,   &
                       &                            IPOS)
      !
-     use pars
+     use pars,    ONLY:SP,DP,LP
      integer      :: ID
      character(*),optional :: VAR
      integer,     optional :: VAR_SZ(:),IPOS(:)
@@ -229,9 +230,10 @@ module IO_m
         &                       D0, DB_D0, C0, DB_C0, &
         &                       L0, DB_L0,            &
         &                       CH0,DB_CH0,           &
-        &                       UNIT,DESC_STR,DESC_VAR,DO_NOT_DUMP)
+        &                       UNIT,DESCRIPTOR,DO_NOT_DUMP,TERMINATOR)
      !
-     use pars,   ONLY:SP,DP,LP,lchlen
+     use pars,       ONLY:SP,DP,LP,lchlen
+     use descriptors,ONLY:IO_desc
      integer               :: ID
      character(*),optional :: VAR
      character(*),optional :: OP(:)
@@ -241,9 +243,8 @@ module IO_m
      complex(SP), optional, target :: C0
      complex(SP), optional :: DB_C0
      logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
-     character(*),optional :: CH0,DB_CH0
-     character(lchlen),optional :: DESC_STR
-     real(SP),         optional :: DESC_VAR(:)
+     character(*),optional :: CH0,DB_CH0,TERMINATOR
+     type(IO_desc),optional:: DESCRIPTOR
      !
    end subroutine io_variable_elemental
    !
@@ -254,7 +255,7 @@ module IO_m
                                         &  Z0, Z1, Z2, Z3, Z4, Z5,    &
                                         &  L0, L1, L2, L3, L4,        &
                                         & CH0,CH1,CH2,CH3,CH4,        &
-                                        &                     IPOS)
+                                        & STR0,STR1,              IPOS)
      !
      use pars,   ONLY:SP,DP,LP
      integer, intent(in)   :: ID, VAR_ID
@@ -266,6 +267,7 @@ module IO_m
      complex(DP), optional, target, intent(inout) ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
      integer(LP), optional, intent(inout) ::  L0, L1(:), L2(:,:), L3(:,:,:), L4(:,:,:,:)
      character,   optional, intent(inout) :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
+     character(*),optional, intent(inout) :: STR0,STR1(:)
      !
    end subroutine io_variable_bulk
    !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,7 +26,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  use R_lattice,     ONLY:bz_samp,nXkibz
  use openmp,        ONLY:OPENMP_set_threads
  use wave_func,     ONLY:states_to_load
- use parallel_m,    ONLY:PP_indexes_reset
+ use parallel_m,    ONLY:PP_indexes_reset,n_groups
  ! SLK
  use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved
  use matrix,        ONLY:TRANSFER_world
@@ -206,6 +206,8 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call PARALLEL_collisions_reset(GW_NEQ_collisions)
  call PARALLEL_collisions_reset(P_collisions)
 #endif
+ !
+ n_groups=0
  !
  call OPENMP_set_threads( )
  !

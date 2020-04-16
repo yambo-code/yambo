@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -44,7 +44,6 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  use pars,           ONLY:SP,lchlen,zero_dfl
  use drivers,        ONLY:l_bse,l_elel_scatt
- use stderr,         ONLY:gen_fmt
  use com,            ONLY:msg
  use parallel_m,     ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
@@ -391,13 +390,13 @@ subroutine bz_samp_indexes(k,Xk,q)
    endif
  enddo
  !
-1 call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=io_db)
+ ! Before writing the new DB I need to wait that all cores are done
+ ! with checking DB which was present before
+ !
+1 call PP_redux_wait()
+ !
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=io_db)
  io_err=io_QINDX(Xk,q,io_db)
- !
- ! For some reason I have seen CPU's loading the DB while/before it is actually written.
- ! This is avoided here by using the PP_redux_wait call.
- !
- call PP_redux_wait()
  !
  !CLEAN
  !

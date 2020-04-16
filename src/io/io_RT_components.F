@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -56,7 +56,7 @@ integer function io_RT_components(what,ID)
  ! Work Space
  !
  integer, external     :: variables_RT
- character(lchlen)     :: local_description(100),db_name,ch
+ character(lchlen)     :: db_name,ch
  character(schlen)     :: what_
  !
 #if defined _PAR_IO
@@ -140,7 +140,7 @@ integer function io_RT_components(what,ID)
      io_RT_components=io_header(ID,IMPOSE_SN=(.not.l_carriers),CUTOFF=.true.,T_EL=.true.,FRAG=frag_RT)
      if (io_RT_components/=0) goto 1
      !
-     io_RT_components=variables_RT(ID,local_description,trim(what_))
+     io_RT_components=variables_RT(ID,trim(what_))
      if (io_RT_components/=0) goto 1
      !
    endif

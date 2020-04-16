@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -321,14 +321,15 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  !
  ! ################  END  NEW MAPPING ##################
  !
- !
  ! Reporting
  !
  write (ch,'(i1,a)') k_grid_dim,'D'
  call msg('r','Compatible Grid is   ',trim(ch))
  !
- call msg('r','Base K vectors       ',(/' K_min[ 1 ]  ',' K_min[ 2 ]  ',' K_min[ 3 ]  '/))
- if (k_grid_dim>0) call msg('r','K_min[ 1 ] ',k_grid_b(1,:),"[rlu]")
+ if (k_grid_dim>0) then
+   call msg('r','Base K vectors       ',(/' K_min[ 1 ]  ',' K_min[ 2 ]  ',' K_min[ 3 ]  '/))
+   call msg('r','K_min[ 1 ] ',k_grid_b(1,:),"[rlu]")
+ endif
  if (k_grid_dim>1) call msg('r','K_min[ 2 ] ',k_grid_b(2,:),"[rlu]")
  if (k_grid_dim>2) call msg('r','K_min[ 3 ] ',k_grid_b(3,:),"[rlu]")
  !

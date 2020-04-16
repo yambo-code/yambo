@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -55,12 +55,10 @@ module com_interfcs
    !
    function composed_fmt(basic_fmt,n,USE_TABS,INDENT)
      use pars,   ONLY:lchlen
-     !
      character(lchlen) :: composed_fmt 
-     !
-     character(*)     :: basic_fmt
-     integer          :: n,INDENT
-     logical          :: USE_TABS
+     character(*)      :: basic_fmt
+     integer           :: n,INDENT
+     logical           :: USE_TABS
    end function composed_fmt
    !
  end interface

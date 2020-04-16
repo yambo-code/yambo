@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2019 the YAMBO team
+         Copyright (C) 2000-2020 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -66,6 +66,11 @@ void options_control(struct options_struct options[],int *i_opt)
  options[*i_opt].long_opt="Quiet"; 
  options[*i_opt].serial_var=1;
  options[*i_opt].bin="yambo ypp";
+ options[*i_opt].section=desc;
+ *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="Verbose (fatter) log(s)";
+ options[*i_opt].long_opt="fatlog"; 
+ options[*i_opt].yambo_string="fatlog";
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Databases properties";

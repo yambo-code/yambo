@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -71,8 +71,8 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
      !
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
      !
-     call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='R',title='-Oscillators/R space',&
-&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+     call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='R',&
+&             title='-Oscillators/R space/Real Space',force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      !
      ik_mem=PAR_DIPk_ibz_index(ik)
      !

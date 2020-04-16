@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -392,6 +392,8 @@ subroutine INIT_read_command_line(rstr,init_)
        enddo
        !
        if( n_ext_fields==0) n_ext_fields=1
+       !
+       if ( i_cycle == 2 .and. .not. V_is_defined ) H_potential='IP'
        !
      endif
      !

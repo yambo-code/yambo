@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -26,6 +26,7 @@ subroutine INTERPOLATION_BZ(K,NK,ID,R1D,R2D,C1D,C2D,E)
  use R_lattice,   ONLY:bz_samp
  use electrons,   ONLY:levels
  use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D
+ use timing_m,    ONLY:timing
  !
 #include<memory.h>
  !
@@ -43,13 +44,15 @@ subroutine INTERPOLATION_BZ(K,NK,ID,R1D,R2D,C1D,C2D,E)
  if(interpls(ID)%ndim==0) call error("Interpolation coefficients not present!")
  !
  if(interpls(ID)%interp_type==REAL1D.and.present(R1D)) then
-   call INTERPOLATION_fourier(K,R1D,interpls(ID)%engre,interpls(ID)%ndim,NK)
+   call INTERPOLATION_fourier(K,R1D,interpls(ID)%engre,interpls(ID)%ndim,NK,ID)
    return
  endif
  !
  YAMBO_ALLOC(RDATA,(interpls(ID)%ndim,NK))
  !
- call INTERPOLATION_fourier(K,RDATA,interpls(ID)%engre,interpls(ID)%ndim,NK)
+ call INTERPOLATION_fourier(K,RDATA,interpls(ID)%engre,interpls(ID)%ndim,NK,ID)
+ !
+ call timing('INTERPOLATE bz',OPR='start')
  !
  if(interpls(ID)%interp_type==CMPLX1D.and.present(C1D)) then
    !   
@@ -88,5 +91,7 @@ subroutine INTERPOLATION_BZ(K,NK,ID,R1D,R2D,C1D,C2D,E)
  endif
  !
  YAMBO_FREE(RDATA)
+ !
+ call timing('INTERPOLATE bz',OPR='stop')
  !
 end subroutine INTERPOLATION_BZ

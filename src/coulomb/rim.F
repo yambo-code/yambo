@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -65,7 +65,7 @@ subroutine rim()
  YAMBO_ALLOC(qr,(3,RIM_n_rand_pts))
  !
  em1_anis=RIM_epsm1(:)-1.
-
+ !
  if (RIM_id_epsm1_reference<0.or.RIM_id_epsm1_reference>3) RIM_id_epsm1_reference=0
  if (RIM_id_epsm1_reference==0) em1_anis=0.
  if (RIM_id_epsm1_reference>0 ) em1_anis=em1_anis/em1_anis(RIM_id_epsm1_reference)

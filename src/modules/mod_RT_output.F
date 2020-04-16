@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,6 +27,7 @@ module RT_output_m
  use pars,       ONLY:DP,SP,schlen,lchlen,LP
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:QP_SE_NONE
+ use descriptors,ONLY:IO_desc
  !
 #include<memory.h>
  !
@@ -40,9 +41,14 @@ module RT_output_m
  character(schlen)        :: RT_o_file_short(N_MAX_RT_o_files)
  character(schlen)        :: RT_headings(N_MAX_RT_o_files,N_MAX_RT_headings)
  character(schlen)        :: YPP_append
- !
- logical                  :: RT_descriptions_dumped(N_MAX_RT_o_files)
  logical                  :: RT_o_file_is_open(N_MAX_RT_o_files)
+ !
+ ! Descriptors
+ !
+ type(IO_desc)            :: Gr_desc
+ type(IO_desc)            :: RT_desc
+ type(IO_desc)            :: TIME_STEP_desc
+ logical                  :: RT_descriptors_dumped(N_MAX_RT_o_files)
  !
  contains
    !

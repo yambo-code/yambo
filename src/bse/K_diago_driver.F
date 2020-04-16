@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DS
@@ -129,9 +129,9 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  ! Sectioning
  !============
- if (isec(4)/=0) sec="="
- if (isec(4)==0) sec="+"
- call section(sec,trim(Solver)//' Solver @q'//trim(intc(iq)))
+ if (isec(2)/=0) sec="="
+ if (isec(2)==0) sec="+"
+ call section("+P",trim(Solver)//' Solver @q'//trim(intc(iq)))
  !  
 #if defined _SLEPC && !defined _SLEPC_OFF
  if(l_slepc) call K_slepc_local_init()

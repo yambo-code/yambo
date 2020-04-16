@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA
@@ -33,7 +33,6 @@ subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,
 #endif
  use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
  use deviceXlib_m,  ONLY:dev_memcpy
- use interfaces,    ONLY:eval_G_minus_G
  !
  implicit none
  !

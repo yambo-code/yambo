@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,12 +28,6 @@ module RT_control
  use real_time,  ONLY:l_NE_dynamics,l_elph_scatt
  !
 #include<memory.h>
- !
- integer                  :: n_RT_descriptions = 0
- character(lchlen)        :: RT_description(100)
- !
- integer                  :: n_TIME_STEP_CONF_descriptions = 0
- character(lchlen)        :: TIME_STEP_CONF_description(100)
  !
  integer                  :: IO_OBS_cache_steps=1
  !
@@ -307,8 +301,6 @@ module RT_control
        call E_reset(E)
        E%nk=RT_carriers%nk
        E%nb=RT_carriers%nb(2)
-       E%nb=RT_carriers%nb(2)
-       E%nk=RT_carriers%nk
        E%nbf=E_eq%nbf
        E%nbm=E_eq%nbm
        E%E_Fermi  =E_eq%E_Fermi
@@ -331,5 +323,11 @@ module RT_control
        if (what=="df") E%f(ib,ik,i_sp_pol)=RT_carriers%delta_f(i_RT)
      enddo
    end subroutine
+   !
+   logical function Dynamics_is_over()
+     use real_time,    ONLY:RT_step,NE_steps,NE_i_time,RT_dyn_step
+     logical,   external  ::STOP_now
+     Dynamics_is_over=NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now(.FALSE.)
+   end function
    !
 end module RT_control

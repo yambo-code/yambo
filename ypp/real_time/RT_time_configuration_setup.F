@@ -140,8 +140,10 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
          j_ref= i_t
        endif
      enddo
-     i_table(RT_conf%T_n_steps+1)=i_ref(2)
-     RT_conf%T_n_steps=RT_conf%T_n_steps+1
+     if (i_ref(2)>i_ref(1)) then
+       i_table(RT_conf%T_n_steps+1)=i_ref(2)
+       RT_conf%T_n_steps=RT_conf%T_n_steps+1
+     endif
      !
      YAMBO_ALLOC(RT_time,(RT_conf%T_n_steps))
      !

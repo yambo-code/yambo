@@ -62,11 +62,9 @@ subroutine QP_fit_widths(i_ACTION,bands,en,k,qp)
  !
  if (l_EP) then
    do i_spin =1 , n_sp_pol
-     DOS(i_spin,i_s)=rZERO
      do i_s=1,qp%n_states
        if (spin(qp%table(i_s,:))/=i_spin) cycle
        call el_density_of_states(k,en,qp%E_bare(i_s),dos_broad,bands,DOS(i_spin,i_s),USE_the_DbGd=.FALSE.,USE_Eo=.TRUE.)
-       DOS(i_spin,i_s)=DOS(i_spin,i_s)
      enddo
    enddo
  endif

@@ -92,8 +92,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  complex(SP),allocatable  :: Xo_res(:,:)
  !
  complex(SP),allocatable DEV_ATTRIBUTE :: Xo_res_d(:,:)
- complex(SP),pointer     DEV_ATTRIBUTE :: X_par_blc_d(:,:)
- complex(SP),pointer     DEV_ATTRIBUTE :: X_par_lowtri_blc_d(:,:)
+ complex(SP),pointer     DEV_ATTRIBUTE :: X_par_blc_d(:,:,:)
+ complex(SP),pointer     DEV_ATTRIBUTE :: X_par_lowtri_blc_d(:,:,:)
  complex(SP)              :: GreenF_iw
  integer                  :: PAR_COM_RL_INDEX_n_CPU
  !
@@ -246,6 +246,11 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
  !
+ if (have_cuda) then
+   X_par_blc_d => X_par%blc_d
+   if (X_lower_triangle_matrix_in_use)  X_par_lowtri_blc_d => X_par_lower_triangle%blc_d
+ endif
+ !
  ! Drude term
  !
  if (iq==1.and.master_thread) then
@@ -325,13 +330,11 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
 #ifdef _CUDA
      !
      GreenF_iw=GreenF(iw)
-     X_par_blc_d => X_par%blc_d(:,:,iw)
-     if (X_lower_triangle_matrix_in_use)  X_par_lowtri_blc_d => X_par_lower_triangle%blc_d(:,:,iw)
      !
      !$cuf kernel do(2) <<<*,*>>>
      do ig_col=X_cols1,X_cols2
        do ig1=X_rows1,X_rows2
-         if (ig1 <= ig_col) X_par_blc_d(ig1,ig_col)=X_par_blc_d(ig1,ig_col)+GreenF_iw*Xo_res_d(ig1,ig_col)
+         if (ig1 <= ig_col) X_par_blc_d(ig1,ig_col,iw)=X_par_blc_d(ig1,ig_col,iw)+GreenF_iw*Xo_res_d(ig1,ig_col)
        enddo
      enddo
      !
@@ -376,10 +379,10 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
              ig_row_transp = ig_col
              !
              if (PAR_COM_RL_INDEX_n_CPU>1) then
-               X_par_lowtri_blc_d(ig_row_transp,ig1)=X_par_lowtri_blc_d(ig_row_transp,ig1) + &
-&                   GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+               X_par_lowtri_blc_d(ig_row_transp,ig1,iw)=X_par_lowtri_blc_d(ig_row_transp,ig1,iw) + &
+&                                                       GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
              else
-               X_par_blc_d(ig_row_transp,ig1)=X_par_blc_d(ig_row_transp,ig1)+GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+               X_par_blc_d(ig_row_transp,ig1,iw)=X_par_blc_d(ig_row_transp,ig1,iw)+GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
              endif
              !
            endif
@@ -422,11 +425,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
        enddo
 #endif
        !
-     endif
-     !
-     if (have_cuda) then
-       nullify(X_par_blc_d)
-       if (X_lower_triangle_matrix_in_use)  nullify(X_par_lowtri_blc_d)
      endif
      !
    enddo freq_loop

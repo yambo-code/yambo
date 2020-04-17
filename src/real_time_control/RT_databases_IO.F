@@ -188,6 +188,7 @@ subroutine RT_databases_IO(E)
      !
 #else
      !
+     call PP_redux_wait( )
      do ik = PAR_G_kpts(1),PAR_G_kpts(2)
        call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ik+2/),ID=ID(5))
        io_G=io_RT_components('G',ID(5))

@@ -29,6 +29,7 @@ subroutine PROJECTION_perpendicular_sampling( K, versor )
  use vec_operate,    ONLY:k2bz,v_is_zero
  use YPPm,           ONLY:PROJECT_depth
  use interpolate,    ONLY:GRID_k
+ use com,            ONLY:msg
  !
  implicit none
  !
@@ -37,8 +38,8 @@ subroutine PROJECTION_perpendicular_sampling( K, versor )
  !
  ! Work Space
  !
- integer :: i_k,i_k_line,i_k_versor,n_versor_ticks,Nk_found
- real(SP):: k_trial(3),k_trial_bz(3)
+ integer :: i_k,i_k_line,i_k_versor,nK_out_of_BZ
+ real(SP):: k_trial(3),k_trial_bz(3),min_max_component(2),component
  !
  GRID_k%nbz=K%nbz*PROJECT_depth
  allocate(GRID_k%pt(GRID_k%nbz,3))
@@ -48,25 +49,39 @@ subroutine PROJECTION_perpendicular_sampling( K, versor )
    return
  endif
  !
- LINE_LOOP: do i_k_line=1,K%nbz
-   Nk_found=1
+ ! Step#1: find the min/max distance between the plane and the BZ border
+ !
+ min_max_component=(/1000.,-1./)
+ do i_k_line=1,K%nbz
+   do i_k_versor=1,100   
+     component=2.*float(i_k_versor+1)/100.-1.
+     k_trial=K%pt(i_k_line,:)+versor*component
+     call k2bz(v_in=k_trial,v_out=k_trial_bz)
+     if (.not.v_is_zero(k_trial-k_trial_bz,zero_=k_iku_zero)) cycle
+     if (component<min_max_component(1)) min_max_component(1)=component
+     if (component>min_max_component(2)) min_max_component(2)=component
+   enddo
+ enddo
+ !
+ ! Step#2: Fill the projection
+ !
+ nK_out_of_BZ=0
+ do i_k_line=1,K%nbz
    i_k=(i_k_line-1)*PROJECT_depth+1
    GRID_k%pt(i_k,:)=K%pt(i_k_line,:)
-   n_versor_ticks=7
-   do while(Nk_found<PROJECT_depth) 
-     n_versor_ticks=n_versor_ticks*2
-     do i_k_versor=1,n_versor_ticks   
-       k_trial=K%pt(i_k_line,:)+versor*(2.*float(i_k_versor+1)/float(n_versor_ticks)-1.)
-       call k2bz(v_in=k_trial,v_out=k_trial_bz)
-       if (.not.v_is_zero(k_trial-k_trial_bz,zero_=k_iku_zero)) cycle
-       Nk_found=Nk_found+1
-       i_k=(i_k_line-1)*PROJECT_depth+Nk_found
-       GRID_k%pt(i_k,:)=k_trial
-       if (Nk_found==PROJECT_depth) then
-         cycle LINE_LOOP
-       endif
-     enddo
+   do i_k_versor=1,PROJECT_depth-1   
+     component=min_max_component(1)+(min_max_component(2)-min_max_component(1))*i_k_versor/float(PROJECT_depth-1)
+     k_trial=K%pt(i_k_line,:)+versor*component
+     call k2bz(v_in=k_trial,v_out=k_trial_bz)
+     if (.not.v_is_zero(k_trial-k_trial_bz,zero_=k_iku_zero)) nK_out_of_BZ=nK_out_of_BZ+1
+     i_k=(i_k_line-1)*PROJECT_depth+i_k_versor
+     GRID_k%pt(i_k,:)=k_trial
    enddo
- enddo LINE_LOOP
+ enddo 
+ !
+ call msg("sr","[PROJECT] Direction  _|_ circuit  [iku]:",versor)
+ call msg("sr","[PROJECT] Perpendicular extension [iku]:",min_max_component)
+ call msg("sr","[PROJECT] Total Points                 :",GRID_k%nbz)
+ if (nK_out_of_BZ>0) call msg("sr","[PROJECT] Points out of BZ        [o/o]:",real(nK_out_of_BZ)/real(GRID_k%nbz)*100.)
  !
 end subroutine

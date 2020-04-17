@@ -52,6 +52,7 @@ subroutine k_circuit_driver(PATH,n_points)
  ! Circuit made of specials?
  !===========================
  call k_circuit_made_of_special_points(PATH,n_points)
+ !
  if (CIRCUIT_made_of_SPECIAL_k) return
  !
  ! Circuit made of USER points?

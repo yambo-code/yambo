@@ -196,23 +196,23 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  ! omp settings and workspace
  !=================================
  !
-#if defined _CUDA
- n_threads_FFT=1
- n_threads_X=1
- call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
-#else
-#  if defined _OPENMP
-#    if defined _NESTING
- call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.true.)
- n_threads_FFT=n_inn_threads
- call msg('s','[X] NESTED openmp parallelism on: n_out_threads/n_inn_threads = ',(/n_out_threads,n_inn_threads/))
-#    else
- call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
- n_threads_FFT=1
-#    endif
- if(n_threads_X>1) call OPENMP_locks_reset(INIT=.true.,nlocks=16)
+ if (have_cuda) then
+   n_threads_FFT=1
+   n_threads_X=1
+   call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
+ else
+#if defined _OPENMP
+#  if defined _NESTING
+   call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.true.)
+   n_threads_FFT=n_inn_threads
+   call msg('s','[X] NESTED openmp parallelism on: n_out_threads/n_inn_threads = ',(/n_out_threads,n_inn_threads/))
+#  else
+   call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
+   n_threads_FFT=1
 #  endif
+   if(n_threads_X>1) call OPENMP_locks_reset(INIT=.true.,nlocks=16)
 #endif
+ endif
  !
  ! Timing
  !========
@@ -317,6 +317,11 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    freq_loop:&
    do iw=1,Xw%n_freqs
      !
+     ! ----    ----
+     ! -xxx    -xxx
+     ! ---- => ----
+     ! ----    ----
+     !
 #ifdef _CUDA
      !
      GreenF_iw=GreenF(iw)
@@ -341,12 +346,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
        endif
 #  endif
        !
-       ! ----    ----
-       ! -xxx    -xxx
-       ! ---- => ----
-       ! ----    ----
-       !
-       !
        X_rows1_l = X_rows1
        X_rows2_l = min(ig_col,X_rows2)
        X_nrows_l = X_rows2_l-X_rows1_l+1 
@@ -356,37 +355,48 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
 #  if defined _OPENMP
        if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
 #  endif
-     end do
+     enddo
      !
 #endif
      !
      if (.not.X_FILL_UP_matrix_only) then
        !
+       ! ----    ----
+       ! -xxx    ----
+       ! ---- => -x--
+       ! ----    -x--
+       !
+#ifdef _CUDA
+       !
        !$cuf kernel do(2)
        do ig_col=X_cols1,X_cols2
-         !
-#if defined _OPENMP && ! defined _CUDA
-         if(n_threads_X>1) then
-           call OPENMP_compute_mutex(ig_col,mutexid)
-           call omp_set_lock(omp_locks(mutexid))
-         endif
-#endif
-         !
-#ifdef _CUDA
-         !
          do ig1=X_rows1,X_rows2
+           !
            if (ig1 < ig_col) then
              ig_row_transp = ig_col
+             !
              if (PAR_COM_RL_INDEX_n_CPU>1) then
                X_par_lowtri_blc_d(ig_row_transp,ig1)=X_par_lowtri_blc_d(ig_row_transp,ig1) + &
 &                   GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
              else
                X_par_blc_d(ig_row_transp,ig1)=X_par_blc_d(ig_row_transp,ig1)+GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
-             end if
-           end if
+             endif
+             !
+           endif
+           !
          enddo
-         !
+       enddo
+       !
 #else
+       !
+       do ig_col=X_cols1,X_cols2
+         !
+#  if defined _OPENMP
+         if(n_threads_X>1) then
+           call OPENMP_compute_mutex(ig_col,mutexid)
+           call omp_set_lock(omp_locks(mutexid))
+         endif
+#  endif
          !
          X_rows1_l = X_rows1
          X_rows2_l = min(ig_col-1,X_rows2)
@@ -394,11 +404,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
          !
          ig_row_transp = ig_col
          X_cols_transp = (/X_rows1_l,X_rows2_l/)
-         !
-         ! ----    ----
-         ! -xxx    ----
-         ! ---- => -x--
-         ! ----    -x--
          !
          if (PAR_COM_RL_INDEX_n_CPU>1) then
            call V_by_V_plus_V(X_nrows_l,GreenF(iw),&
@@ -414,9 +419,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
          if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
 #  endif
          !
-#endif
-         !
        enddo
+#endif
        !
      endif
      !

@@ -62,9 +62,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,X_lower_triangle_matrix_in_use,&
 &                        self_detect_E_range,X_FILL_UP_matrix_only,use_X_DbGd,&
 &                        l_X_terminator,X_terminator_E,X_term_E,X_par_lower_triangle
-#ifdef _CUDA
  use X_m,           ONLY:rhotw_save_d
-#endif
+ use cuda_m,        ONLY:have_cuda
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -91,13 +90,13 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  real(SP)                 :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),ctmp
  complex(SP),allocatable  :: Xo_res(:,:)
-#ifdef _CUDA
- complex(SP),allocatable, device :: Xo_res_d(:,:)
- complex(SP),pointer,     device :: X_par_blc_d(:,:)
- complex(SP),pointer,     device :: X_par_lowtri_blc_d(:,:)
+ !
+ complex(SP),allocatable DEV_ATTRIBUTE :: Xo_res_d(:,:)
+ complex(SP),pointer     DEV_ATTRIBUTE :: X_par_blc_d(:,:)
+ complex(SP),pointer     DEV_ATTRIBUTE :: X_par_lowtri_blc_d(:,:)
  complex(SP)              :: GreenF_iw
  integer                  :: PAR_COM_X_WORLD_n_CPU
-#endif
+ !
  integer,    external     :: X_eh_setup
  type(elemental_collision), target :: Xo_scatt
  !
@@ -233,10 +232,10 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  ! memory estimate and local alloc
  !=================================
  YAMBO_ALLOC(Xo_res,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
-#ifdef _CUDA
- allocate(Xo_res_d,mold=Xo_res)
- allocate(rhotw_save_d(ngrho))
-#endif
+ if (have_cuda) then
+   YAMBO_ALLOC(Xo_res_d,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
+   YAMBO_ALLOC(rhotw_save_d,(ngrho))
+ endif
  call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
  !
@@ -247,15 +246,18 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
      Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
      if(.not.Drude_pole) cycle
      if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
+     !
      call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VARNAME(Xo_res),Xo_scatt)
      ctmp = DEV_VARNAME(Xo_res)(1,1)
      !
      X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)/real(bare_grid_N(i_cg),SP)
-#ifdef _CUDA
-     do iw=1,Xw%n_freqs
-       X_par%blc_d(1,1,iw)=X_par%blc(1,1,iw)
-     enddo
-#endif
+     !
+     if (have_cuda) then
+       do iw=1,Xw%n_freqs
+         X_par%blc_d(1,1,iw)=X_par%blc(1,1,iw)
+       enddo
+     endif
+     !
      exit
    enddo
  endif
@@ -418,10 +420,10 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
        !
      endif
      !
-#ifdef _CUDA
-     nullify(X_par_blc_d)
-     if (X_lower_triangle_matrix_in_use)  nullify(X_par_lowtri_blc_d)
-#endif
+     if (have_cuda) then
+       nullify(X_par_blc_d)
+       if (X_lower_triangle_matrix_in_use)  nullify(X_par_lowtri_blc_d)
+     endif
      !
    enddo freq_loop
    !
@@ -436,10 +438,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  ! CLEAN
  !=======
  YAMBO_FREE(Xo_res)
-#ifdef _CUDA
  YAMBO_FREE(Xo_res_d)
  YAMBO_FREE(rhotw_save_d)
-#endif
  call elemental_collision_free(Xo_scatt)
  !
 #if !defined _CUDA

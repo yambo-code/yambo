@@ -82,9 +82,9 @@ module R_lattice
    integer           :: nibz_duplicate
    integer           :: nbz_duplicate
    integer,  allocatable :: nibz_mapped(:)            ! For each IBZ kpt in the Cg, n° of IBZ kpt_FineGd assoc.
-   integer,  allocatable :: nbz_mapped(:)             ! For each IBZ kpt in the Cg, n° of IBZ kpt_FineGd assoc.
-   integer,  allocatable :: ibz_DbGd_map(:,:)         ! map kpt_FineGd in the IBZ --> kpts in the IBZ
-   integer,  allocatable :: bz_DbGd_map(:,:)          ! map kpt_FineGd in the  BZ --> kpts in the  BZ
+   integer,  allocatable :: nbz_mapped(:)             ! For each  BZ kpt in the Cg, n° of  BZ kpt_FineGd assoc.
+   integer,  allocatable :: ibz_DbGd_map(:,:)         ! For each IBZ kpt in the Cg, lower/upper range of kpts_FineGd in the IBZ Fg
+   integer,  allocatable :: bz_DbGd_map(:,:)          ! For each  BZ kpt in the Cg, lower/upper range of kpts_FineGd in the  BZ Fg
    real(SP), allocatable :: weights_DbGd(:) 
    real(SP), allocatable :: weights_ipol(:)           ! something used by mapping with wannier
    !                                               

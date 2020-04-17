@@ -39,7 +39,7 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  !
  integer                      :: iq
  complex(SP)                  :: BS_R(BSS_n_eig),BS_E(BSS_n_eig)
- real(SP),pointer             :: BS_E_SOC_corr(:,:)
+ real(SP), optional, pointer  :: BS_E_SOC_corr(:,:)
  type(EXCITON_spin),optional  :: EXC_spin
  !
  ! Work Space
@@ -55,7 +55,8 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  !
  write_spin    = present(EXC_spin)
  write_widths  = any(abs(aimag(BS_E))>1.E-5)
- write_soc_corr= associated(BS_E_SOC_corr)
+ write_soc_corr= .false.
+ if(present(BS_E_SOC_corr)) write_soc_corr=associated(BS_E_SOC_corr)
  !
  dump_ch=" "
  if (write_spin)     dump_ch=trim(dump_ch)//" Spin"

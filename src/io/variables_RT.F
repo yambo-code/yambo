@@ -254,7 +254,7 @@ integer function variables_RT(ID,what)
    ! Double Grid
    !======================
    call io_elemental(ID,VAR="Double_Grid_support",VAR_SZ=2,MENU=0) 
-   call io_elemental(ID,L0=l_RT_uses_E_DbGd,&
+   call io_elemental(ID,L0=l_RT_uses_E_FineGd,&
 &    VAR=' [DbGd] Double Grid support      ',  CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTOR=RT_desc)
    call io_elemental(ID,R0=DbGd_EE_percent,&

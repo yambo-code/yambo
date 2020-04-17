@@ -105,6 +105,13 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  GreenF                           = cZERO
  drude_GreenF                     = cZERO
  !
+ X_rows1=X_par%rows(1)
+ X_rows2=X_par%rows(2)
+ X_cols1=X_par%cols(1)
+ X_cols2=X_par%cols(2)
+ PAR_COM_X_WORLD_n_CPU=PAR_COM_RL_INDEX%n_CPU
+ !
+ !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
  !=======================================================
  force_bare_X_G=use_X_DbGd.or.allocated(Xen%W).or.allocated(Xen%GreenF)
@@ -310,11 +317,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    freq_loop:&
    do iw=1,Xw%n_freqs
      !
-     X_rows1=X_par%rows(1)
-     X_rows2=X_par%rows(2)
-     X_cols1=X_par%cols(1)
-     X_cols2=X_par%cols(2)
-     !
 #ifdef _CUDA
      !
      GreenF_iw=GreenF(iw)
@@ -359,9 +361,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
 #endif
      !
      if (.not.X_FILL_UP_matrix_only) then
-#ifdef _CUDA
-       PAR_COM_X_WORLD_n_CPU=PAR_COM_RL_INDEX%n_CPU
-#endif
+       !
        !$cuf kernel do(2)
        do ig_col=X_cols1,X_cols2
          !
@@ -467,12 +467,12 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  call timing('Xo (procedure)',OPR='stop')
  call timing('Xo (REDUX)',OPR='start')
  !
-#ifdef _CUDA
- X_par%blc=X_par%blc_d
- if (X_lower_triangle_matrix_in_use) X_par_lower_triangle%blc=X_par_lower_triangle%blc_d
- YAMBO_FREE(X_par%blc_d)
- YAMBO_FREE(X_par_lower_triangle%blc_d)
-#endif
+ if (have_cuda) then
+   X_par%blc=X_par%blc_d
+   if (X_lower_triangle_matrix_in_use) X_par_lower_triangle%blc=X_par_lower_triangle%blc_d
+   YAMBO_FREE(X_par%blc_d)
+   YAMBO_FREE(X_par_lower_triangle%blc_d)
+ endif
  !
  do iw=1,Xw%n_freqs
    call PP_redux_wait(X_par%blc(:,:,iw),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)

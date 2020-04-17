@@ -85,7 +85,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
  character(schlen)        :: live_t_string
  integer                  :: ig1,ig_row,ig_col,ig_row_transp,ig_col_transp,iw,n_poles,i_cg,i_bg,mutexid,ngrho,&
-&                            X_cols_transp(2),X_rows1,X_rows2,X_cols1,X_cols2,X_rows1_l,X_rows2_l,X_nrows,io_err
+&                            X_cols_transp(2),X_rows1,X_rows2,X_cols1,X_cols2,X_rows1_l,X_rows2_l,X_nrows_l,io_err
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                 :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),ctmp
@@ -95,7 +95,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  complex(SP),pointer     DEV_ATTRIBUTE :: X_par_blc_d(:,:)
  complex(SP),pointer     DEV_ATTRIBUTE :: X_par_lowtri_blc_d(:,:)
  complex(SP)              :: GreenF_iw
- integer                  :: PAR_COM_X_WORLD_n_CPU
+ integer                  :: PAR_COM_RL_INDEX_n_CPU
  !
  integer,    external     :: X_eh_setup
  type(elemental_collision), target :: Xo_scatt
@@ -109,7 +109,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  X_rows2=X_par%rows(2)
  X_cols1=X_par%cols(1)
  X_cols2=X_par%cols(2)
- PAR_COM_X_WORLD_n_CPU=PAR_COM_RL_INDEX%n_CPU
+ PAR_COM_RL_INDEX_n_CPU=PAR_COM_RL_INDEX%n_CPU
  !
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
@@ -230,8 +230,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
 #if !defined _CUDA
  !$omp parallel num_threads(n_out_threads) default(shared), &
  !$omp &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_col,&
- !$omp &        ig1,ig_row_transp,iw,mutexid,X_rows1,X_rows2,X_cols1,X_cols2,&
- !$omp &        X_rows1_l,X_rows2_l,X_cols_transp,X_nrows)
+ !$omp &        ig1,ig_row_transp,iw,mutexid,&
+ !$omp &        X_rows1_l,X_rows2_l,X_nrows_l,X_cols_transp)
 #endif
  !
  call OPENMP_update(master_thread)
@@ -349,9 +349,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
        !
        X_rows1_l = X_rows1
        X_rows2_l = min(ig_col,X_rows2)
-       X_nrows = X_rows2_l-X_rows1_l+1 
+       X_nrows_l = X_rows2_l-X_rows1_l+1 
        !
-       call V_by_V_plus_V(X_nrows,GreenF(iw),Xo_res(X_rows1_l:X_rows2_l,ig_col),X_par%blc(X_rows1_l:X_rows2_l,ig_col,iw))
+       call V_by_V_plus_V(X_nrows_l,GreenF(iw),Xo_res(X_rows1_l:X_rows2_l,ig_col),X_par%blc(X_rows1_l:X_rows2_l,ig_col,iw))
        !
 #  if defined _OPENMP
        if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
@@ -377,7 +377,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
          do ig1=X_rows1,X_rows2
            if (ig1 < ig_col) then
              ig_row_transp = ig_col
-             if (PAR_COM_X_WORLD_n_CPU>1) then
+             if (PAR_COM_RL_INDEX_n_CPU>1) then
                X_par_lowtri_blc_d(ig_row_transp,ig1)=X_par_lowtri_blc_d(ig_row_transp,ig1) + &
 &                   GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
              else
@@ -390,7 +390,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
          !
          X_rows1_l = X_rows1
          X_rows2_l = min(ig_col-1,X_rows2)
-         X_nrows = X_rows2_l-X_rows1_l+1
+         X_nrows_l = X_rows2_l-X_rows1_l+1
          !
          ig_row_transp = ig_col
          X_cols_transp = (/X_rows1_l,X_rows2_l/)
@@ -400,12 +400,12 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
          ! ---- => -x--
          ! ----    -x--
          !
-         if (PAR_COM_RL_INDEX%n_CPU>1) then
-           call V_by_V_plus_V(X_nrows,GreenF(iw),&
+         if (PAR_COM_RL_INDEX_n_CPU>1) then
+           call V_by_V_plus_V(X_nrows_l,GreenF(iw),&
 &                             conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),&
 &                             X_par_lower_triangle%blc(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
          else
-           call V_by_V_plus_V(X_nrows,GreenF(iw),&
+           call V_by_V_plus_V(X_nrows_l,GreenF(iw),&
 &                             conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),&
 &                             X_par%blc(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
          endif

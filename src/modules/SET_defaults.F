@@ -59,7 +59,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
  use parallel_m, ONLY:ncpu,CPU_str_reset,PARALLEL_host_name
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
-&                     more_io_path,core_io_path,com_path,repfile,grid_paths,fat_log
+&                     more_io_path,core_io_path,com_path,repfile,grid_paths,verbose
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
@@ -152,8 +152,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! Fat Log?
  !
- fat_log    = .FALSE.
- if (index(INSTR,'fatlog')>0) fat_log=.TRUE.
+ verbose    = .FALSE.
+ if (index(INSTR,'verbose')>0) verbose=.TRUE.
  !
  ! CPU structures
  !

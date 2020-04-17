@@ -26,7 +26,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use pars,           ONLY:lchlen,SP,DP
  use stderr,         ONLY:log_as_a_file,intc
  use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,&
-&                         alt_jobstr,n_alt_jobstr,jobdir,alt_jobdir,fat_log
+&                         alt_jobstr,n_alt_jobstr,jobdir,alt_jobdir,verbose
  use it_m,           ONLY:infile
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,frag_WF
  use R_lattice,      ONLY:bz_samp
@@ -136,7 +136,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', 'Communications      ',trim(com_path))
  call msg('r', 'Input file          ',trim(infile))
  call msg('r', 'Report file         ',trim(repfile))
- call msg('r', 'Fat (verbose) log   ',fat_log)
+ call msg('r', 'Verbose log/report  ',verbose)
  if (log_as_a_file) then
    call msg('r','Log files           ',trim(trim(com_path)//"/LOG"))
  endif

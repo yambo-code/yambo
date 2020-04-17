@@ -213,7 +213,7 @@ module IO_m
      character(*),optional :: par_io_kind
    end subroutine def_variable_elemental
    !
-   subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
+   subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind,silent)
      use pars,              ONLY:schlen
      integer,      intent(in)  :: ID
      character(*), intent(in)  :: VAR
@@ -222,6 +222,7 @@ module IO_m
      integer,      intent(in)  :: VAR_KIND
      character(schlen), optional, intent(in) :: dim_names(:)
      character(*),      optional, intent(in) :: par_io_kind
+     logical,           optional, intent(in) :: silent
    end subroutine def_variable_bulk
    !
    subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &

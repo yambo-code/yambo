@@ -371,25 +371,36 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
        !
 #ifdef _CUDA
        !
-       !$cuf kernel do(2)
-       do ig_col=X_cols1,X_cols2
+       if (PAR_COM_RL_INDEX_n_CPU>1) then
+         !
+         !$cuf kernel do(2)
+         do ig_col=X_cols1,X_cols2
          do ig1=X_rows1,X_rows2
            !
            if (ig1 < ig_col) then
              ig_row_transp = ig_col
-             !
-             if (PAR_COM_RL_INDEX_n_CPU>1) then
-               X_par_lowtri_blc_d(ig_row_transp,ig1,iw)=X_par_lowtri_blc_d(ig_row_transp,ig1,iw) + &
-&                                                       GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
-             else
-               X_par_blc_d(ig_row_transp,ig1,iw)=X_par_blc_d(ig_row_transp,ig1,iw)+GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
-             endif
-             !
+             X_par_lowtri_blc_d(ig_row_transp,ig1,iw)=X_par_lowtri_blc_d(ig_row_transp,ig1,iw) + &
+&                                                     GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
            endif
            !
          enddo
-       enddo
-       !
+         enddo
+         !
+       else
+         !
+         !$cuf kernel do(2)
+         do ig_col=X_cols1,X_cols2
+         do ig1=X_rows1,X_rows2
+           !
+           if (ig1 < ig_col) then
+             ig_row_transp = ig_col
+             X_par_blc_d(ig_row_transp,ig1,iw)=X_par_blc_d(ig_row_transp,ig1,iw)+GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+           endif
+           !
+         enddo
+         enddo
+         !
+       endif
 #else
        !
        do ig_col=X_cols1,X_cols2

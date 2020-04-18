@@ -132,7 +132,7 @@ subroutine RT_time_step_update( )
    !
    call msg("nr","Dynamics steps update @ TIME "//trim(real2ch(NE_time*AUT2FS))//" fs")
    !
-   call DESC_write("r","  ",TIME_STEP_desc,(/i_desc_ref+1,TIME_STEP_desc%n/))
+   call DESC_write("r","  ",TIME_STEP_desc,(/i_desc_ref,TIME_STEP_desc%n/))
    !
    call msg("r"," ")
    !

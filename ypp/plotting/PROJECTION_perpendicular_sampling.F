@@ -82,6 +82,6 @@ subroutine PROJECTION_perpendicular_sampling( K, versor )
  call msg("sr","[PROJECT] Direction  _|_ circuit  [iku]:",versor)
  call msg("sr","[PROJECT] Perpendicular extension [iku]:",min_max_component)
  call msg("sr","[PROJECT] Total Points                 :",GRID_k%nbz)
- if (nK_out_of_BZ>0) call msg("sr","[PROJECT] Points out of BZ        [o/o]:",real(nK_out_of_BZ)/real(GRID_k%nbz)*100.)
+ if (nK_out_of_BZ>0) call msg("sr","[PROJECT] Points out of BZ        [o/o]:",real(nK_out_of_BZ)/real(GRID_k%nbz)*100._SP)
  !
 end subroutine

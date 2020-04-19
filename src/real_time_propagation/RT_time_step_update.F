@@ -126,7 +126,7 @@ subroutine RT_time_step_update( )
    !
    ! ... create the linked descriptions
    !
-   i_desc_ref=max(TIME_STEP_desc%n,1)
+   i_desc_ref=TIME_STEP_desc%n+1
    !
    call RT_update_TIME_CONF_descriptions( )
    !

@@ -69,7 +69,7 @@ subroutine RT_databases_IO(E)
      !
      i_time=NE_i_time
      if(OBS_RT_IO_t%last_point>0) i_time=i_time-OBS_RT_IO_t%last_point
-     i_time=i_time/int(RT_dyn_step/RT_step)
+     i_time=i_time/nint(RT_dyn_step/RT_step)
      !
      if(i_time>0) then
        OBS_RT_IO_t%N=OBS_RT_IO_t%N+1
@@ -90,7 +90,7 @@ subroutine RT_databases_IO(E)
        A_cache(1:3,3,i_time)=A_tot%vecpot_acc
      endif
      !
-     if (RT_do_it('OBS').or.(NE_i_time>=NE_steps-nint(RT_dyn_step/RT_step)+1)&
+     if (RT_do_it('OBS').or.RT_do_it('deltaT').or.(NE_i_time>=NE_steps-nint(RT_dyn_step/RT_step)+1)&
      &   .or.STOP_now(.FALSE.).or.NE_i_time==OBS_RT_IO_t%last_point) then
        !
        TMP_OBS_cache_steps=i_time

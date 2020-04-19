@@ -107,7 +107,8 @@ integer function io_RT_components(what,ID)
  if(l_G       ) first_IO=(NE_i_time==  GF_RT_IO_t%last_point).or.(NE_i_time==1).or.  GF_RT_IO_t%last_point< 0
  if(l_OBS     ) first_IO=(NE_i_time== OBS_RT_IO_t%last_point).or.(NE_i_time==1).or. OBS_RT_IO_t%last_point< 0
  ! it is possible that the last time I wrote the carriers was before the restart time of the run
- if(l_carriers) first_IO=(NE_i_time-NE_i_start_time)<=CARR_RT_IO_t%INTERVAL_steps ! (NE_i_time==CARR_RT_IO_t%last_point).or.(NE_i_time==1).or.CARR_RT_IO_t%last_point< 0
+ if(l_carriers) first_IO=(NE_i_time== OBS_RT_IO_t%last_point).or.(NE_i_time==1).or. OBS_RT_IO_t%last_point< 0 .or. &
+ &                       (NE_i_time-NE_i_start_time)<=CARR_RT_IO_t%INTERVAL_steps ! (NE_i_time==CARR_RT_IO_t%last_point).or.(NE_i_time==1).or.CARR_RT_IO_t%last_point< 0
  !
  call timing('io_RT_components',OPR='start')
  !

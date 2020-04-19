@@ -127,8 +127,9 @@ module IO_m
  integer :: io_code_version(max_io_units,3)
  integer :: io_code_revision(max_io_units,2) ! devel,GPL
  integer :: io_serial_number(max_io_units)
- integer :: io_netcdf_var(max_io_units,max_io_vars_open)
- integer :: io_netcdf_elem_varid(max_io_units)
+ ! io_netcdf_var(ID,1)  is used for tmp vars by io_elemental, io_bulk,  def/io_variable_elemental
+ ! io_netcdf_var(ID,2:) is used for stored var-IDs by def/io_variable_bulk
+ integer :: io_netcdf_var(max_io_units,max_io_vars_open) 
  logical :: io_resetable(max_io_units)
  character(lchlen)          :: io_file(max_io_units)
  character(lchlen)          :: io_folder(max_io_units)
@@ -635,7 +636,10 @@ module IO_m
          if(local_error/=0) VARNAME=' NOT DEFINED '
        endif
        if(present(VAR)) VARNAME=VAR
-       write (msg,'(6a)') ' File ',trim(FILENAME),'; Variable ',trim(VARNAME),'; ',trim(nf90_strerror(status))
+       if( read_is_on(ID)) write (msg,'(6a)') ' Reading File ',trim(FILENAME),'; Variable ',&
+       &                                      trim(VARNAME),'; ',trim(nf90_strerror(status))
+       if(write_is_on(ID)) write (msg,'(6a)') ' Writing File ',trim(FILENAME),'; Variable ',&
+       &                                      trim(VARNAME),'; ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if
    end subroutine

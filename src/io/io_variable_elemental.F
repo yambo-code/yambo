@@ -35,7 +35,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  use drivers, ONLY:list_dbs
  use com,     ONLY:msg,com_compose_msg
  use stderr,  ONLY:STRING_pack,int2log,log2int
- use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_elem_varid,ver_is_gt_or_eq,&
+ use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                  io_status,DUMP,REP,LOG,NO_VAR,io_com,io_file,&
 &                  io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR
@@ -102,8 +102,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    SZ=1
    i_db(1)=I0
    !
-   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),i_db(1),(/io_rec_pos(ID)/))
-   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),i_db(1),(/io_rec_pos(ID)/))
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID,1),i_db(1),(/io_rec_pos(ID)/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID,1),i_db(1),(/io_rec_pos(ID)/))
    !
    io_rec_pos(ID)=io_rec_pos(ID)+SZ
    call netcdf_call(nf_error,ID)
@@ -129,8 +129,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    SZ=size(I1)
    i_db(1:SZ)=I1
    !
-   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),i_db(1:SZ),(/io_rec_pos(ID)/),(/SZ/))
-   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),i_db(1:SZ),(/io_rec_pos(ID)/),(/Sz/))
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID,1),i_db(1:SZ),(/io_rec_pos(ID)/),(/SZ/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID,1),i_db(1:SZ),(/io_rec_pos(ID)/),(/Sz/))
    !
    io_rec_pos(ID)=io_rec_pos(ID)+SZ
    call netcdf_call(nf_error,ID)
@@ -156,8 +156,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    SZ=1
    r_db(1)=R0
    !
-   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),r_db(1),(/io_rec_pos(ID)/))
-   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),r_db(1),(/io_rec_pos(ID)/))
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID,1),r_db(1),(/io_rec_pos(ID)/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID,1),r_db(1),(/io_rec_pos(ID)/))
    !
    io_rec_pos(ID)=io_rec_pos(ID)+SZ
    call netcdf_call(nf_error,ID)
@@ -183,8 +183,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    SZ=size(R1)
    r_db(1:SZ)=R1
    !
-   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),r_db(1:SZ),(/io_rec_pos(ID)/),(/SZ/))
-   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),r_db(1:SZ),(/io_rec_pos(ID)/),(/SZ/))
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID,1),r_db(1:SZ),(/io_rec_pos(ID)/),(/SZ/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID,1),r_db(1:SZ),(/io_rec_pos(ID)/),(/SZ/))
    !
    io_rec_pos(ID)=io_rec_pos(ID)+SZ
    call netcdf_call(nf_error,ID)
@@ -208,8 +208,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    SZ=1
    d_db(1)=D0
    !
-   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),d_db(1),(/io_rec_pos(ID)/))
-   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),d_db(1),(/io_rec_pos(ID)/))
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID,1),d_db(1),(/io_rec_pos(ID)/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID,1),d_db(1),(/io_rec_pos(ID)/))
    !
    io_rec_pos(ID)=io_rec_pos(ID)+SZ
    call netcdf_call(nf_error,ID)
@@ -236,8 +236,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    c_db(1)=C0
    call C_F_POINTER(C_LOC(c_db(1)), rc_db, (/2*SZ/) )
    !
-   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),rc_db(1:2*SZ),(/io_rec_pos(ID)/),(/2*SZ/))
-   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),rc_db(1:2*SZ),(/io_rec_pos(ID)/),(/2*SZ/))
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID,1),rc_db(1:2*SZ),(/io_rec_pos(ID)/),(/2*SZ/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID,1),rc_db(1:2*SZ),(/io_rec_pos(ID)/),(/2*SZ/))
    !
    io_rec_pos(ID)=io_rec_pos(ID)+2*SZ
    call netcdf_call(nf_error,ID)
@@ -263,8 +263,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    SZ=1
    l_db(1)=log2int(L0)
    !
-   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),l_db(1),(/io_rec_pos(ID)/))
-   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),l_db(1),(/io_rec_pos(ID)/))
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID,1),l_db(1),(/io_rec_pos(ID)/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID,1),l_db(1),(/io_rec_pos(ID)/))
    !
    io_rec_pos(ID)=io_rec_pos(ID)+SZ
    call netcdf_call(nf_error,ID)
@@ -295,8 +295,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    SZ=1
    ch_db(1)=CH0
    !
-   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_elem_varid(ID),ch_db(1),(/io_rec_pos(ID)/),(/SZ*schlen/))
-   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_elem_varid(ID),ch_db(1),(/io_rec_pos(ID)/),(/SZ*schlen/))
+   if(write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID,1),ch_db(1),(/io_rec_pos(ID)/),(/SZ*schlen/))
+   if( read_is_on(ID)) nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID,1),ch_db(1),(/io_rec_pos(ID)/),(/SZ*schlen/))
    !
    io_rec_pos(ID)=io_rec_pos(ID)+SZ*schlen
    call netcdf_call(nf_error,ID)

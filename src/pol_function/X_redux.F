@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM (AF)
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -99,11 +99,14 @@ subroutine X_redux(iq,X_par,Xw,X)
  YAMBO_ALLOC(BUFFER%blc,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
  BUFFER%blc=cZERO
  !
-#if defined _CUDA
- YAMBO_ALLOC(KERNEL%blc_d,(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
- YAMBO_ALLOC(BUFFER%blc_d,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
- YAMBO_ALLOC(Xo%blc_d,(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
-#endif
+ if (have_cuda) then
+   YAMBO_ALLOC(KERNEL%blc_d,(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
+   YAMBO_ALLOC(BUFFER%blc_d,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
+   YAMBO_ALLOC(Xo%blc_d,(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
+   call dev_memset(KERNEL%blc_d,cZERO)
+   call dev_memset(BUFFER%blc_d,cZERO)
+   call dev_memset(Xo%blc_d,cZERO)   
+ endif
  !
  if (l_alda_fxc.and.Xo%kind=="SLK") then
    call MATRIX_init( "SLK", K_FXC , FXC_n_g_corr, 1 )
@@ -156,7 +159,7 @@ subroutine X_redux(iq,X_par,Xw,X)
    iw         = PAR_FREQS_index(iw_par)
    BUFFER%I   = iw_par
    KERNEL%blc = cZERO
-   if (have_cuda) KERNEL%blc_d = cZERO
+   if (have_cuda) call dev_memset(KERNEL%blc_d,cZERO)
    !
    Xo_cols(:)=Xo%cols(:)
    Xo_rows(:)=Xo%rows(:)
@@ -202,8 +205,8 @@ subroutine X_redux(iq,X_par,Xw,X)
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
    if (have_cuda) then
-      if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) KERNEL%blc_d=KERNEL%blc
-      Xo%blc_d(:,:,1)=Xo%blc(:,:,1)
+      if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) call dev_memcpy(KERNEL%blc_d,KERNEL%blc)
+      call dev_memcpy(Xo%blc_d,Xo%blc)
    endif
    !
    call X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
@@ -282,7 +285,6 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  if (X_par%INTER_comm%n_CPU>1) then
    !
-   YAMBO_FREE(X_par%blc)
    call MATRIX_reset(X_par)
    call X_PARALLEL_alloc(X_par,X%ng,Xw%n_freqs,"X")
    !

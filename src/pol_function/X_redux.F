@@ -206,8 +206,7 @@ subroutine X_redux(iq,X_par,Xw,X)
       Xo%blc_d(:,:,1)=Xo%blc(:,:,1)
    endif
    !
-   call X_redux_build_kernel(iq,Xo_rows,Xo_cols,DEV_VARNAME(KERNEL%blc),DEV_VARNAME(Xo%blc))
-
+   call X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
    !
    ! X(g,gp)=Sum_gpp[KERNEL]^-1_(g,gpp)*Xo(gpp,gp)
    !
@@ -269,14 +268,9 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  ! Clean-up of local BLACS structures
  ! ========
- YAMBO_FREE(KERNEL%blc)
- YAMBO_FREE(Xo%blc)
  call MATRIX_reset(KERNEL)
  call MATRIX_reset(Xo)
- if (l_alda_fxc.and.Xo%kind=="SLK") then
-   YAMBO_FREE(K_FXC%blc)
-   call MATRIX_reset(K_FXC)
- endif
+ if (l_alda_fxc.and.Xo%kind=="SLK") call MATRIX_reset(K_FXC)
  !
  call timing('X (procedure)',OPR='stop')
  call timing('X (REDUX)',OPR='start')
@@ -324,6 +318,7 @@ subroutine X_redux(iq,X_par,Xw,X)
      !
    enddo
  enddo
+ !
  ! complete the transfer with a collective communication
  !
  call PP_bcast(X_par%blc,node=0,COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
@@ -332,53 +327,48 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  ! Clean-up of FREQ structure
  !==========
- YAMBO_FREE(BUFFER%blc)
  call MATRIX_reset(BUFFER)
  YAMBO_FREE(PAR_FREQS_index)
  call PP_indexes_reset(PAR_IND_freqs)
  !
-end subroutine
-!
-!
-subroutine X_redux_build_kernel(iq,Xo_rows,Xo_cols,KERNEL_blc,Xo_blc)
-   use pars,          ONLY:SP,pi,cONE
-   use R_lattice,     ONLY:bare_qpg, bare_qpg_d
-   implicit none
-   integer, intent(in) :: iq
-   integer, intent(in) :: Xo_rows(2),Xo_cols(2)
-   complex(SP) DEV_ATTRIBUTE :: KERNEL_blc(Xo_rows(1):Xo_rows(2),Xo_cols(1):Xo_cols(2),1)
-   complex(SP) DEV_ATTRIBUTE :: Xo_blc(Xo_rows(1):Xo_rows(2),Xo_cols(1):Xo_cols(2),1)
+contains
    !
-   integer :: ig1,ig2
-   !
+   subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
+     use R_lattice,     ONLY:bare_qpg, bare_qpg_d
+     use pars,          ONLY:pi,cONE
+     implicit none
+     type(PAR_matrix), target :: KERNEL,Xo
+     integer, intent(in)      :: Xo_rows(2),Xo_cols(2)
+     integer :: ig1,ig2
+     !
 #ifdef _CUDA
-   integer :: Xo_rows1,Xo_rows2
-   integer :: Xo_cols1,Xo_cols2
-   Xo_rows1=Xo_rows(1)
-   Xo_rows2=Xo_rows(2)
-   Xo_cols1=Xo_cols(1)
-   Xo_cols2=Xo_cols(2)
-   !
-   !$cuf kernel do(1) <<<*,*>>>
-   do ig2=Xo_cols1,Xo_cols2
-     do ig1=Xo_rows1,Xo_rows2
-       KERNEL_blc(ig1,ig2,1) =KERNEL_blc(ig1,ig2,1)-Xo_blc(ig1,ig2,1)*4._SP*pi/bare_qpg_d(ig2,iq)**2
-       if (ig1==ig2) KERNEL_blc(ig1,ig1,1)=KERNEL_blc(ig1,ig1,1)+cONE
+     complex(SP), device, pointer :: KERNEL_blc_d(:,:,:)
+     complex(SP), device, pointer :: Xo_blc_d(:,:,:)
+     !
+     KERNEL_blc_d=>KERNEL%blc_d(:,:,:)
+     Xo_blc_d    => Xo%blc_d(:,:,:)
+     !
+     !$cuf kernel do(1) <<<*,*>>>
+     do ig2=Xo_cols(1),Xo_cols(2)
+       do ig1=Xo_rows(1),Xo_rows(2)
+         KERNEL_blc_d(ig1,ig2,1) =KERNEL_blc_d(ig1,ig2,1)-Xo_blc_d(ig1,ig2,1)*4._SP*pi/bare_qpg_d(ig2,iq)**2
+         if (ig1==ig2) KERNEL_blc_d(ig1,ig1,1)=KERNEL_blc_d(ig1,ig1,1)+cONE
+       enddo
      enddo
-   enddo
-   !
+     !
 #else
-   !
-   !$omp parallel do default(shared), private(ig1,ig2), collapse(1)
-   do ig2=Xo_cols(1),Xo_cols(2)
-     do ig1=Xo_rows(1),Xo_rows(2)
-       KERNEL_blc(ig1,ig2,1) =KERNEL_blc(ig1,ig2,1)-Xo_blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
-       if (ig1==ig2) KERNEL_blc(ig1,ig1,1)=KERNEL_blc(ig1,ig1,1)+cONE
+     !
+     !$omp parallel do default(shared), private(ig1,ig2), collapse(1)
+     do ig2=Xo%cols(1),Xo%cols(2)
+       do ig1=Xo%rows(1),Xo%rows(2)
+         KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
+         if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
+       enddo
      enddo
-   enddo
-   !$omp end parallel do
-   !
+     !$omp end parallel do
+     !
 #endif
- !
-end subroutine X_redux_build_kernel
-
+   !
+   end subroutine X_redux_build_kernel
+   !
+end subroutine

@@ -121,9 +121,6 @@ subroutine PROJECTION_setup( what ,bands )
    !
    call PROJECTION_perpendicular_sampling(PLANE_k,axis(3,:))
    !
-   call msg("sr","[PROJECT] Direction  _|_ plane [iku]:",axis(3,:))
-   call msg("sr","[PROJECT] Total Points              :",GRID_k%nbz)
-   !
  endif
  !
  allocate(GRID_k%weights(GRID_k%nbz))

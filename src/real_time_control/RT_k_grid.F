@@ -26,6 +26,7 @@ subroutine RT_k_grid(E,k,q)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:qindx_S
+ use parallel_m,     ONLY:PAR_G_kpts
  use C_driver,       ONLY:code_bin
  use electrons,      ONLY:levels
  use real_time,      ONLY:DbGd_EE_scatt_table,&
@@ -100,6 +101,9 @@ subroutine RT_k_grid(E,k,q)
    RT_Nk_ibz(ik)=k%nibz_mapped(ik)+1
    !
  enddo
+ !
+ PAR_G_kpts(1)=RT_ibz_coo(PAR_G_kpts(1),1)
+ PAR_G_kpts(2)=RT_ibz_coo(PAR_G_kpts(2),2)
  !
  YAMBO_ALLOC(RT_all2ibz,(RT_nk))
  do ik=1,k%nibz

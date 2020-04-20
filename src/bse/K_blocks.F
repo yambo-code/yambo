@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, HM
+! Authors (see AUTHORS file for details): AM, HM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -35,7 +35,7 @@ subroutine K_blocks(iq)
  !  complex(SP), allocatable      :: mat(:,:)
  !end type BS_block
  !
- use pars,         ONLY:cZERO,SP
+ use pars,         ONLY:cZERO,SP,IP,IPL
  use parallel_m,   ONLY:PAR_IND_T_ordered,PP_redux_wait
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim
@@ -48,8 +48,9 @@ subroutine K_blocks(iq)
  !
  ! Work Space
  !
- integer    :: i_T,j_T,i_block,iB,n_new_blocks
- real(SP)   :: N_Ts_total,N_Ts_local
+ integer      :: i_T,j_T,i_block,iB,n_new_blocks
+ integer(IPL) :: local_steps
+ real(SP)     :: N_Ts_total,N_Ts_local
  !
  if (.not.BS_K_coupling           ) n_new_blocks=1
  if (     BS_K_coupling.and. iq==1) n_new_blocks=2
@@ -92,12 +93,15 @@ subroutine K_blocks(iq)
  ! Live Timing Blocks
  !====================
  !
+ local_steps=0
  do iB=1,n_BS_blks
-   BS_LiveTiming_steps=BS_LiveTiming_steps+BS_Block_size(iB)
+   local_steps=local_steps+int(BS_Block_size(iB),IPL)
  enddo
+ BS_LiveTiming_steps=int(local_steps,IP)
+ if( int(BS_LiveTiming_steps,IPL)/=local_steps) BS_LiveTiming_steps=-1
  !
- N_Ts_local=real(BS_LiveTiming_steps,SP)
- N_Ts_total=real(BS_LiveTiming_steps,SP)
+ N_Ts_local=real(local_steps,SP)
+ N_Ts_total=real(local_steps,SP)
  !
  call PP_redux_wait(N_Ts_total)
  !

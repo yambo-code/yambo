@@ -50,7 +50,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2),i_a,n_axis,Nk_path,last_ik
  real(SP)              :: io_Time,tmp_lifetimes(6),data_to_plot(9),k_al(3),k_cc(3),axis(3,3),&
-&                         data_to_plot_cumulative(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,9),O(3)
+&                         data_to_plot_cumulative(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,9),O(3),path_total_K_weight
  character(schlen)     :: titles(9),specs(9,2),dumb_ch(2)
  character(lchlen)     :: output_fname_short(2),output_fname(2,RT_carriers%nstates)
  character(3)          :: ch3_dummy
@@ -67,6 +67,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  call parser('CarrEnRnge', l_E_select)
  !
  data_to_plot_cumulative=rZERO
+ path_total_K_weight=rZERO
  !
  if (n_spinor==2) then
    k_range    =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)
@@ -204,8 +205,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      if (.not.l_OCCgroup_path) then
        output_fname_short(1)='YPP-RT_occupations_k'//trim(intc(ik))//'_kRT'//trim(intc(ik_RT))//'_b'//trim(intc(ib))
        if (i_T==1) output_fname(1,i_RT)=output_fname_short(1)
-       !
-       call open_file( output_fname(1,i_RT),output_fname_short(1))
+       call open_file(output_fname(1,i_RT),output_fname_short(1))
      endif
      !
      if (n_gamma>0) then
@@ -236,6 +236,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        endif
        if (ib<=En%nbf  ) data_to_plot(2)=data_to_plot(2)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
        if (ib>=En%nbf+1) data_to_plot(3)=data_to_plot(3)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
+       if (i_T==1) path_total_K_weight=path_total_K_weight+RT_carriers%k_weight(ik_RT)
      else
        data_to_plot(2)=RT_carriers%delta_f(i_RT)
        call msg('o '//trim(output_fname_short(1)),'',data_to_plot(:n_gamma+3),INDENT=-2,USE_TABS=.true.)
@@ -245,10 +246,12 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    enddo RT_loop
    !
    if (l_OCCgroup_k_and_b) then
+     i_RT=0
      do ik=1,kpt%nibz
        do ib=RT_carriers%nb(1),RT_carriers%nb(2)
          do i_spin=1,n_sp_pol
            if (.not.do_state(ib,ik,i_spin)) cycle
+           i_RT=i_RT+1
            output_fname_short(2)='YPP-RT_cumulative_occupations_k'//trim(intc(ik))//'_b'//trim(intc(ib))
            if (i_T==1) output_fname(2,i_RT)=output_fname_short(2)
            call open_file( output_fname(2,i_RT),output_fname_short(2))
@@ -260,11 +263,11 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    endif
    !
    if (l_OCCgroup_path) then
-     output_fname_short(2)='YPP-RT_cumulative_occupations'
-     if (i_T==1) output_fname(2,i_RT)=output_fname_short(2)
-     call open_file( output_fname(2,i_RT),output_fname_short(2))
-     call msg('o '//trim(output_fname_short(2)),'',(/data_to_plot(:3)/),INDENT=-2,USE_TABS=.true.)
-     call of_open_close(output_fname(2,i_RT))
+     output_fname_short(1)='YPP-RT_cumulative_occupations'
+     if (i_T==1) output_fname(1,1)=output_fname_short(1)
+     call open_file( output_fname(1,1),output_fname_short(1))
+     call msg('o '//trim(output_fname_short(1)),'',(/data_to_plot(:3)/path_total_K_weight/),INDENT=-2,USE_TABS=.true.)
+     call of_open_close(output_fname(1,1))
    endif
    !
    call live_timing(steps=1)

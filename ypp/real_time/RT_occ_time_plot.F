@@ -266,7 +266,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      output_fname_short(1)='YPP-RT_cumulative_occupations'
      if (i_T==1) output_fname(1,1)=output_fname_short(1)
      call open_file( output_fname(1,1),output_fname_short(1))
-     call msg('o '//trim(output_fname_short(1)),'',(/data_to_plot(:3)/path_total_K_weight/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(output_fname_short(1)),'',(/data_to_plot(1),data_to_plot(2:3)/path_total_K_weight/),&
+&             INDENT=-2,USE_TABS=.true.)
      call of_open_close(output_fname(1,1))
    endif
    !

@@ -348,7 +348,7 @@ contains
      KERNEL_blc_d=>KERNEL%blc_d(:,:,:)
      Xo_blc_d    => Xo%blc_d(:,:,:)
      !
-     !$cuf kernel do(1) <<<*,*>>>
+     !$cuf kernel do(2) <<<*,*>>>
      do ig2=Xo_cols(1),Xo_cols(2)
        do ig1=Xo_rows(1),Xo_rows(2)
          KERNEL_blc_d(ig1,ig2,1) =KERNEL_blc_d(ig1,ig2,1)-Xo_blc_d(ig1,ig2,1)*4._SP*pi/bare_qpg_d(ig2,iq)**2
@@ -358,7 +358,7 @@ contains
      !
 #else
      !
-     !$omp parallel do default(shared), private(ig1,ig2), collapse(1)
+     !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
      do ig2=Xo%cols(1),Xo%cols(2)
        do ig1=Xo%rows(1),Xo%rows(2)
          KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2

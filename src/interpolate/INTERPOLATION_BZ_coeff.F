@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
+subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
  !
  ! Interpolation scheme (PRB 38 p2721)
  ! Aug2002 Georg Madsen : First version based on subroutine from D.Singh
@@ -43,9 +43,9 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
 #include<memory.h>
  !
  integer,       intent(in)  :: nvalues
- integer,       intent(in)  :: Nk,ID
+ integer,       intent(in)  :: ID
  type(bz_samp), intent(in)  :: Xk
- real(SP),      intent(in)  :: VALUEs(nvalues,Nk)
+ real(SP),      intent(in)  :: VALUEs(nvalues,Xk%nibz)
  complex(DP),   intent(out) :: engre(nshells,nvalues)
  !
  ! Work Space
@@ -70,13 +70,13 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  complex(DP) :: ZDOTC,ZDOTU
  !
- Nkm1=Nk-1           ! number of k-points minus 1 in the BZ
- ikn =Nk             ! last k-point index
+ Nkm1=Xk%nibz-1           ! number of k-points minus 1 in the BZ
+ ikn =Xk%nibz             ! last k-point index
  !
  YAMBO_ALLOC(delta,(Nkm1,nvalues))
  YAMBO_ALLOC(rho,(nshells))
  YAMBO_ALLOC(h_mat,(Nkm1,Nkm1))
- YAMBO_ALLOC(BZ_star,(nshells,Nk))
+ YAMBO_ALLOC(BZ_star,(nshells,Xk%nibz))
  YAMBO_ALLOC(ipiv,(Nkm1))
  !
  ! Construct delta_epsilon eq. 10
@@ -102,11 +102,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  do i_shell=2,nshells
    call make_star(lattice_vectors(:,i_shell),nsym,int_sop,nstar,star_vec) 
-   do ik=1,Nk
-     if(Nk==Xk%nibz) call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki2a')
-     ! Implementation to be finished. Here I canno use BZ_DbGd_kpts
-     ! bacuse also extra points in the BZ are included ...
-     ! if(Nk> Xk%nibz) call c2a(v_in=Xk%pt_DbGd(ik,:),v_out=v,mode='ki2a')
+   do ik=1,Xk%nibz
+     call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki2a')
      do i_star=1,nstar
        BZ_star(i_shell,ik)=BZ_star(i_shell,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,i_star)))
      enddo
@@ -117,7 +114,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  if (.not.INTERPOLATE_is_quiet)  call live_timing()
  !
  do ik=1,Nkm1
-   BZ_star(2:nshells,ik) = BZ_star(2:nshells,ik) - BZ_star(2:nshells,Nk)
+   BZ_star(2:nshells,ik) = BZ_star(2:nshells,ik) - BZ_star(2:nshells,Xk%nibz)
    BZ_star(2:nshells,ik) = BZ_star(2:nshells,ik) / sqrt(rho(2:nshells))
  enddo
  !
@@ -178,7 +175,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  enddo
  !
  do iv=1,nvalues
-   engre(1,iv)=VALUEs(iv,ikn) - ZDOTU(nshells-1,engre(2:nshells,iv),1,BZ_star(2:nshells,Nk),1)
+   engre(1,iv)=VALUEs(iv,ikn) - ZDOTU(nshells-1,engre(2:nshells,iv),1,BZ_star(2:nshells,Xk%nibz),1)
  enddo
  !
  ! Deallocation
@@ -189,7 +186,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  YAMBO_FREE(delta)
  YAMBO_FREE(rho)
  !
- call k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
+ call k_compare(Xk,VALUEs,engre,nshells,nvalues)
  !
  contains
   !
@@ -201,15 +198,15 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
    !
   end function roughness_func
   !
-  subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
+  subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues)
    use units,          ONLY:HA2EV
    use pars,           ONLY:SP,lchlen
    use R_lattice,      ONLY:bz_samp
    use com,            ONLY:msg
    !
    type(bz_samp), intent(in) :: Xk
-   integer,       intent(in) :: nvalues,nshells,Nk
-   real(SP),      intent(in) :: VALUEs(nvalues,Nk)
+   integer,       intent(in) :: nvalues,nshells
+   real(SP),      intent(in) :: VALUEs(nvalues,Xk%nibz)
    complex(DP),   intent(in) :: engre(nshells,nvalues)
    !
    ! Work Space
@@ -219,15 +216,15 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
    real(SP), allocatable :: new_VALUEs(:,:)
    real(SP) :: ave_err,max_err,rel_ave_err
    !
-   YAMBO_ALLOC(new_VALUEs,(nvalues,Nk))
+   YAMBO_ALLOC(new_VALUEs,(nvalues,Xk%nibz))
    !
-   call INTERPOLATION_fourier(Xk,new_VALUEs,engre,nvalues,Nk,ID)
+   call INTERPOLATION_fourier(Xk,new_VALUEs,engre,nvalues,ID)
    !
    max_err=0._SP
    ave_err=0._SP
    rel_ave_err=0._SP
    !
-   do ik=1,Nk
+   do ik=1,Xk%nibz
      do iv=1,nvalues
        ave_err=ave_err+abs(new_VALUEs(iv,ik)-VALUEs(iv,ik))
        if(abs(new_VALUEs(iv,ik))>0._SP) rel_ave_err=rel_ave_err+abs(new_VALUEs(iv,ik)-VALUEs(iv,ik))/abs(new_VALUEs(iv,ik))
@@ -235,8 +232,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
      enddo
    enddo
    !
-   ave_err=ave_err/real(nvalues*Nk)
-   rel_ave_err=rel_ave_err/real(nvalues*Nk)
+   ave_err=ave_err/real(nvalues*Xk%nibz)
+   rel_ave_err=rel_ave_err/real(nvalues*Xk%nibz)
    !
    write(dump_ch,'(a,3es16.8)') '[INTERPOLATION@'//trim(INTERP_obj(ID)%what)//&
 &                               '] Errors: Max, Avg, Avg_rel = ',max_err,ave_err,rel_ave_err

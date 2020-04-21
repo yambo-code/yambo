@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,Nk,ID)
+subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,ID)
  !
  use pars,              ONLY:SP,pi,cI,cZERO,DP,rZERO
  use interpolate,       ONLY:nshells,lattice_vectors,int_sop,INTERPOLATE_is_serial,INTERPOLATE_is_quiet,INTERP_obj
@@ -37,9 +37,9 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,Nk,ID)
  implicit none
  !
  integer,intent(in)        :: nvalues
- integer,intent(in)        :: Nk,ID
+ integer,intent(in)        :: ID
  type(bz_samp), intent(in) :: K
- real(SP), intent(out)     :: VALUES(nvalues,Nk)
+ real(SP), intent(out)     :: VALUES(nvalues,K%nibz)
  real(SP), parameter       :: twopi=2._SP*pi
  complex(DP), intent(in)   :: engre(nshells,nvalues)
  !
@@ -52,19 +52,17 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,Nk,ID)
  !
  call timing('INTERPOLATE Fourier',OPR='start')
  !
- if (Nk/=K%nibz) call error("Nk /= K%nibz. Source need to be tested")
- !
  ! Parallel setup and distribution
  !---------------------------------
  if (.not.INTERPOLATE_is_serial) then
    call PP_indexes_reset(px)
-   call PARALLEL_index(px,(/Nk/))
+   call PARALLEL_index(px,(/K%nibz/))
  endif
  VALUES=rZERO
  !
  if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolate@"//trim(INTERP_obj(ID)%what)//" Fourier",nshells)
  !
- do ik=1,Nk
+ do ik=1,K%nibz
    F_star=cZERO
    if (.not.INTERPOLATE_is_serial) then
      if (.not.px%element_1D(ik)) cycle

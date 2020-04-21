@@ -67,6 +67,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #if defined _PL
  use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
+#if defined _PAR_IO
+ use parallel_m,     ONLY:MPI_COMM_WORLD
+#endif
  !
 #include<memory.h>
 #include<yambo_bse.h>

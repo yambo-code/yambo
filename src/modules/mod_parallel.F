@@ -453,13 +453,14 @@ module parallel_m
  integer, private   :: local_type
  !
  interface PP_redux_wait
-   module procedure l1share,                                         &
-&                   i1share,i2share,i3share,                         &
-&                   i81share,                                        &
-&                   r0share,r1share,r2share,r3share,                 &
-&                   c0share,c1share,c2share,c3share,c4share,c5share, &
+   module procedure l1share,                                           &
+&                   i1share, i2share, i3share,                         &
+&                   i81share,                                          &
+&                   r0share, r1share, r2share,r3share,                 &
+&                   c0share, c1share, c2share,c3share,c4share,c5share, &
 #if ! defined _DOUBLE
-                    d0share,d1share,d2share,d3share,                 &
+&                   d0share, d1share, d2share,d3share,                 &
+&                   dc0share,dc1share,dc2share,                        &
 #endif
 &                   PARALLEL_wait
  end interface PP_redux_wait
@@ -1246,6 +1247,97 @@ module parallel_m
      allocate(larray(dimension))
      larray=0.
      call mpi_allreduce(array(1,1,1,1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
+     array=reshape(larray,dimensions)
+     deallocate(larray)
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
+   subroutine dc0share(cval,imode,COMM)
+     complex(DP)       :: cval
+     integer, optional :: imode,COMM
+#if defined _MPI
+     integer :: omode,LOCAL_COMM  ! Work Space
+     complex(DP):: local_cval  ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     local_type=MPI_DOUBLE_COMPLEX
+     !
+     call mpi_barrier(LOCAL_COMM,i_err)
+     if (present(imode)) then
+       if (imode==1) omode=mpi_sum
+       if (imode==2) omode=mpi_prod
+     else
+       omode=mpi_sum
+     endif
+     local_cval=0.
+     call mpi_allreduce(cval,local_cval,1,local_type,omode,LOCAL_COMM,i_err)
+     cval=local_cval
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
+   subroutine dc1share(array,COMM)
+     complex(DP):: array(:)
+     integer, optional :: COMM
+#if defined _MPI
+     integer::dimensions(1),dimension,LOCAL_COMM  ! Work Space
+     complex(DP),allocatable::larray(:)  ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     local_type=MPI_DOUBLE_COMPLEX
+     !
+     call mpi_barrier(LOCAL_COMM,i_err)
+     dimensions=shape(array)
+     if( any(dimensions<1) ) return
+     dimension=product(dimensions)
+     allocate(larray(dimension))
+     larray=(0.,0.)
+     call mpi_allreduce(array(1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
+     array=larray
+     deallocate(larray)
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
+   subroutine dc2share(array,COMM)
+     complex(DP):: array(:,:)
+     integer, optional :: COMM
+#if defined _MPI
+     integer::dimensions(2),dimension,LOCAL_COMM  ! Work Space
+     complex(DP),allocatable::larray(:)  ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     local_type=MPI_DOUBLE_COMPLEX
+     !
+     call mpi_barrier(LOCAL_COMM,i_err)
+     dimensions=shape(array)
+     if( any(dimensions<1) ) return
+     dimension=product(dimensions)
+     allocate(larray(dimension))
+     larray=(0.,0.)
+     call mpi_allreduce(array(1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
      array=reshape(larray,dimensions)
      deallocate(larray)
      call mpi_barrier(LOCAL_COMM,i_err)

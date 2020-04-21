@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
+subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ONLY)
  !
  use drivers,        ONLY:l_elel_corr,l_rt_carriers_in_use,l_real_time
  use pars,           ONLY:schlen,SP,lchlen
@@ -32,7 +32,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control,DB_path
  use units,          ONLY:FS2AUT,AUT2FS,PS2AUT
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free
- use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,OBS_RT_IO_t,RT_ctl_db,RT_ctl_interp_neigh
+ use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,CARR_RT_IO_t,RT_ctl_db,RT_ctl_interp_neigh
  use com,            ONLY:msg,jobstr,alt_jobstr,n_alt_jobstr,depth,alt_jobdir,jobdir
  !
  implicit none
@@ -45,17 +45,18 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  logical ,    optional,intent(in) :: VERBOSE
  real(SP),    optional,intent(in) :: Time
  logical ,    optional,intent(in) :: keep_RT_carriers
+ logical ,    optional,intent(in) :: TIMES_ONLY
  !
  ! Work space
  !
- integer               :: I_id,i1,io_err,ID,COM_,i2,nkibz_save,i_j,BZ_DbGd_tot_nk_levels_save
- real(SP)              :: local_Time
+ integer               :: I_id,i1,i_t,io_err,ID,COM_,i2,nkibz_save,i_j,BZ_DbGd_tot_nk_levels_save
+ real(SP)              :: local_Time,TIME_diff,REF_diff
  integer,parameter     :: n_pieces=10
  integer, external     :: io_RT_components
  character(schlen)     :: db_piece(n_pieces),T_unit,ch
  character(lchlen)     :: db_name
  character(3)          :: what_
- logical               :: l_E,l_f,l_W,l_elel_corr_save,is_def,l_verbose,l_keep_carriers,l_BOLTZ
+ logical               :: l_E,l_f,l_W,l_elel_corr_save,is_def,l_verbose,l_keep_carriers,l_BOLTZ,load_times_only
  !
  logical, external     :: file_exists
  !
@@ -70,6 +71,9 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  !
  l_keep_carriers=.false.
  if (present(keep_RT_carriers)) l_keep_carriers=keep_RT_carriers
+ !
+ load_times_only=.false.
+ if (present(TIMES_ONLY)) load_times_only=TIMES_ONLY
  !
  if (present(what)) then
    !
@@ -198,24 +202,28 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  ! NE_time=(NE_i_time-1)*RT_step but I/O only when NE_i_time= N * RT_IO_steps
  !
  NE_i_time= nint(local_Time/RT_step)+1
- !
  if (NE_i_time<=0) then
    call warning(' Input time is negative. Carriers not loaded')
    NE_i_time=1
    return
  endif
  !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID)
  io_err=io_RT_components(trim(db_name),ID)
  !
- ! Adjust NE_i_time in case needed.
- ! Cannot do that in case l_real_time because OBS_RT_IO_t is not loaded to not break the restart
+ if (load_times_only) return
  !
- if (io_err< 0 .and. .not. l_real_time) then 
-   NE_i_time= NE_i_time-mod(NE_i_time-1,OBS_RT_IO_t%INTERVAL_steps)
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID)
-   io_err=io_RT_components(trim(db_name),ID)
- endif
+ REF_diff=CARR_RT_IO_t%INTERVAL_steps/2._SP
+ do i_t=1,CARR_RT_IO_t%N
+   TIME_diff= abs ( CARR_RT_IO_t%Time(i_t) - local_time )
+   if (abs(TIME_diff)<REF_DIFF ) then 
+     REF_diff=TIME_diff
+     CARR_RT_IO_t%N=i_t
+   endif
+ enddo
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=DUMP,ID=ID)
+ io_err=io_RT_components(trim(db_name),ID)
  !
  if (io_err< 0) then 
    call warning('Carriers database '//trim(db_name)//' section #'//trim(intc(NE_i_time))//' not found')
@@ -224,9 +232,6 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
    return
  endif
  !
- ! Reset NE_i_time for the simulation
- !
- if (l_real_time) NE_i_time=1
  !
  if (present(what)) then
    ch='External RT corrections ('//what//')'
@@ -234,6 +239,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
    if (depth==0) call section('+',trim(ch))
  endif
  !
+ l_verbose=.true.
  if (l_verbose) call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(local_Time*AUT2FS))//' fs')
  !
  ! Interpolatle the RT_carriers object inside the En levels object (energy, occupations and lifetimes)

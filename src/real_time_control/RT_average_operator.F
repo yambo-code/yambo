@@ -35,14 +35,15 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  use H_interfaces,   ONLY:V_real_space_to_H
  use wave_func,      ONLY:WF
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,&
+&                         PAR_COM_Xk_ibz_INDEX,PAR_G_kpts
  use timing_m,       ONLY:timing
  !
  implicit none
  !
  type(bz_samp), intent(in) :: k
  type(levels),  intent(in) :: en
- complex(SP),   intent(in) :: G(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP),   intent(in) :: G(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2))
  integer,       intent(in) :: nK_mem,N_V
  !
  ! Optionals

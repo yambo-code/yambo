@@ -76,7 +76,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        SC_bands,SC_preconditioning,OEP_approx
 #endif
 #if defined _RT
- use RT_control,    ONLY:OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
+ use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
  use stderr,        ONLY:intc
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
 &                        NE_tot_time,RT_life_extrap_times_SAVE,RT_bands,         &
@@ -436,11 +436,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/EXPn/INV" "SIMPLE/RK2/RK4/HEUN" "RWA") ',&
 &              Integrator_name)
  !
- IO_times=(/OBS_RT_IO_t%INTERVAL_time_SAVE,GF_RT_IO_t%INTERVAL_time_SAVE,OUTPUT_RT_IO_t%INTERVAL_time_SAVE/)
- call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (OBSERVABLEs,CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
- OBS_RT_IO_t%INTERVAL_time_SAVE   =IO_times(1)
+ IO_times=(/CARR_RT_IO_t%INTERVAL_time_SAVE,GF_RT_IO_t%INTERVAL_time_SAVE,OUTPUT_RT_IO_t%INTERVAL_time_SAVE/)
+ call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
+ CARR_RT_IO_t%INTERVAL_time_SAVE  =IO_times(1)
  GF_RT_IO_t%INTERVAL_time_SAVE    =IO_times(2)
  OUTPUT_RT_IO_t%INTERVAL_time_SAVE=IO_times(3)
+ !
+ call it(defs,'IOCachetime', '[RT] Time between to consecutive I/O of OBSERVABLES',&
+ &       OBS_RT_IO_t%INTERVAL_time_SAVE,unit=Time_unit(1),verb_level=V_real_time)
  !
  call it(defs,'RTehEny',     '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
  !

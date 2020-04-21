@@ -162,7 +162,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  !
  call fix_velocity(Dip,1)
- if(reading) call project_spin(Dip)
+ if(reading) call project_dipoles(Dip)
  !
  contains
  !
@@ -231,24 +231,32 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    !
  end subroutine
  !
- subroutine project_spin(Dip)
-   use DIPOLES,   ONLY:DIP_spin
+ subroutine project_dipoles(Dip)
+   use DIPOLES,   ONLY:DIP_spin,DIP_orbital
    type(DIPOLE_t),  intent(in) :: Dip
    !
    if(.not.allocated(DIP_spin)) return
    !
+   DIP_orbital=cZERO
+   !
    do iv=Dip%ib(1),Dip%ib_lim(1) 
      do ic=Dip%ib_lim(2),Dip%ib(2)
        !
-       if (ic<=Xen%nbf ) &
-       & DIP_spin(:,ic,iv,:,:,2)=DIP_spin(:,ic,iv,:,:,1)
-       if (ic> Xen%nbf ) &
-       & DIP_spin(:,ic,iv,:,:,3)=DIP_spin(:,ic,iv,:,:,1)
+       if (ic<=Xen%nbf .and. iv<=Xen%nbf) then
+         DIP_spin   (:,ic,iv,:,:,2)=DIP_spin(:,ic,iv,:,:,1)
+         DIP_orbital(:,ic,iv,:,:,1)=1._SP
+         DIP_orbital(:,ic,iv,:,:,2)=0._SP
+       endif
+       if (ic> Xen%nbf .and. iv> Xen%nbf ) then
+         DIP_spin(:,ic,iv,:,:,3)=DIP_spin(:,ic,iv,:,:,1)
+         DIP_orbital(:,ic,iv,:,:,2)=1._SP
+         DIP_orbital(:,ic,iv,:,:,1)=0._SP
+       endif
        !
      enddo
    enddo
    !
- end subroutine
+ end subroutine project_dipoles
  !
  subroutine SETUP_PAR_K_scheme()
    !

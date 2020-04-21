@@ -52,7 +52,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
  !
  type(PP_indexes)  :: px
  real(DP)          :: R2_min,R2
- real(SP)          :: v(3),star_vec(3,nsym)
+ real(SP)          :: v(3),star_vec(3,nsym),pre_factor
  integer           :: ik,ikp,iv,i_shell,i_star,nstar,Nkm1,info,&
 &                     PAR_nshells,i_par_shell
  !
@@ -149,9 +149,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
  !
  if (.not.INTERPOLATE_is_quiet)  call live_timing()
  !
- if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation@"//trim(INTERP_obj(ID)%what)//" (H fill)",Nkm1)
- !==================================================================================================================
- !
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation@"//trim(INTERP_obj(ID)%what)//" (H fill)",Nkm1**2/2+Nkm1)
+ !=======================================================================================================================
  YAMBO_ALLOC(h_mat,(Nkm1,Nkm1))
  h_mat  =cZERO
  !
@@ -162,8 +161,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
        h_mat(ik,ikp)=real(ZDOTC(PAR_nshells,BZ_star(:,ikp),1,BZ_star(:,ik),1),SP)
        h_mat(ikp,ik)=conjg(h_mat(ik,ikp))
      endif
+     if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
    enddo
-   if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
  enddo
  if (.not.INTERPOLATE_is_quiet)  call live_timing()
  if (.not.INTERPOLATE_is_serial) call PP_redux_wait(h_mat)
@@ -204,8 +203,10 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
    engre(i_shell,:)=PAR_engre(i_par_shell,:)
  enddo
  !
+ pre_factor=1._SP/real(ncpu,SP)
+ if (INTERPOLATE_is_serial) pre_factor=1.
  do iv=1,nvalues
-   engre(1,iv)=VALUEs(iv,Xk%nibz) - ZDOTU(PAR_nshells,PAR_engre(:,iv),1,BZ_star(:,Xk%nibz),1)
+   engre(1,iv)=VALUEs(iv,Xk%nibz)*pre_factor - ZDOTU(PAR_nshells,PAR_engre(:,iv),1,BZ_star(:,Xk%nibz),1)
  enddo
  !
  if (.not.INTERPOLATE_is_serial) call PP_redux_wait( engre )

@@ -27,9 +27,9 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  use units,          ONLY:HA2EV
  use R_lattice,      ONLY:bz_samp,nXkibz
  use electrons,      ONLY:n_sp_pol,nel,n_full_bands
- use stderr,         ONLY:intc,real2ch
+ use stderr,         ONLY:intc
  use wave_func,      ONLY:wf_nc_k
- use com,            ONLY:msg
+ use com,            ONLY:msg,verbose
  use vec_operate,    ONLY:c2a
  !
  implicit none
@@ -72,9 +72,9 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
      if (ik<=nXkibz .or. trim(what)=="Q") call msg('r',trim(dumb_ch1)//' : weight       ',Xk%weights(ik) )
      if(trim(what)=="K") call msg('r','      : wf components',wf_nc_k(ik) )
      if (ik<=nXkibz .or. (trim(what)=="Q")) then
-       call msg('r','      : point-cc     ',k_cc,' [cc] ')
-       call msg('r','      : point-alat   ',k_al,' [alat] ')
-       call msg('r','      : point-iku    ',k%pt(ik,:),' [iku] ')
+       if(verbose) call msg('r','      : point-cc     ',k_cc,' [cc] ')
+                   call msg('r','      : point-alat   ',k_al,' [alat] ')
+       if(verbose) call msg('r','      : point-iku    ',k%pt(ik,:),' [iku] ')
      endif
    endif
    !

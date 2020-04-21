@@ -23,6 +23,7 @@
 !
 subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
+ use drivers,       ONLY:infile_editing
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
@@ -491,6 +492,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! External fields
  !
+ if (initmode==4.and..not.infile_editing) n_ext_fields=0
  do i_field=1,n_ext_fields_max
    call Afield(i_field)
  enddo
@@ -731,13 +733,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
 &            Efield(i_field)%t_initial,unit=Time_unit(1))
      !
-     if (initmode==4) then
+     if (initmode==4.and..not.infile_editing) then
        !
        call parser(trim(name)//'_FWHM',is_def)
        if (     is_def) Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
        if (.not.is_def) Efield(i_field)%FWHM=Efield(i_field)%width*(2._SP*sqrt(2._SP*log(2._SP)))
        !
-       if (trim(Efield(i_field)%ef_name)/='none'.and.n_ext_fields<i_field) n_ext_fields=n_ext_fields+1
+       if (trim(Efield(i_field)%ef_name)/='none') n_ext_fields=n_ext_fields+1
        !
      endif
      !

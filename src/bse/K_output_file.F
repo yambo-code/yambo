@@ -36,6 +36,7 @@ subroutine K_output_file(iq,mode)
 &                    eel_file_name,alpha_file_name,refl_file_name,&
 &                    X_write_messages_before_headers,X_write_q_plus_g
  use R_lattice, ONLY:bare_qpg,q_norm
+ use interfaces,ONLY:DESC_write
 #if defined _KERR
  use pars,      ONLY:cI
  use electrons, ONLY:spin_occ
@@ -132,7 +133,7 @@ subroutine K_output_file(iq,mode)
  !
  ! Description of the run and headers for output files:
  !
- call COM_write_desc('o eps_q refl eel_q fxc alpha off beta moke jdos','#',BSS_desc)
+ call DESC_write('o eps_q refl eel_q fxc alpha off beta moke jdos','#',BSS_desc)
  !
  if (l_INIT) then 
    call CLOSE_the_files( )

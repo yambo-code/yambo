@@ -28,7 +28,6 @@ module IO_m
 #if defined _MPI
  use parallel_m, ONLY:myid,MPI_INFO_NULL
 #endif
- use com,        ONLY:IO_DESC
  use netcdf
  !
  implicit none
@@ -128,8 +127,9 @@ module IO_m
  integer :: io_code_version(max_io_units,3)
  integer :: io_code_revision(max_io_units,2) ! devel,GPL
  integer :: io_serial_number(max_io_units)
- integer :: io_netcdf_var(max_io_units,max_io_vars_open)
- integer :: io_netcdf_elem_varid(max_io_units)
+ ! io_netcdf_var(ID,1)  is used for tmp vars by io_elemental, io_bulk,  def/io_variable_elemental
+ ! io_netcdf_var(ID,2:) is used for stored var-IDs by def/io_variable_bulk
+ integer :: io_netcdf_var(max_io_units,max_io_vars_open) 
  logical :: io_resetable(max_io_units)
  character(lchlen)          :: io_file(max_io_units)
  character(lchlen)          :: io_folder(max_io_units)
@@ -157,20 +157,21 @@ module IO_m
    !
    subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                          R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
-&                          DESCRIPTION,DO_NOT_DUMP)
+&                          DESCRIPTOR,DO_NOT_DUMP,TERMINATOR)
      !
-     use pars,    ONLY:SP,DP,lchlen
+     use pars,       ONLY:SP,DP,lchlen
+     use descriptors,ONLY:IO_desc
      integer      :: ID
-     character(*),optional :: VAR,OP(:)
-     integer,     optional :: VAR_SZ,MENU
-     integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
-     real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
-     real(DP),    optional :: D0,DB_D0
-     complex(SP), optional, target :: C0
-     complex(SP), optional :: DB_C0
-     logical     ,optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
-     character(*),optional :: CH0,DB_CH0,CH1(:)
-     character(lchlen),optional :: DESCRIPTION
+     character(*), optional :: VAR,OP(:)
+     integer,      optional :: VAR_SZ,MENU
+     integer,      optional :: I0,DB_I0,I1(:),DB_I1(:)
+     real(SP),     optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
+     real(DP),     optional :: D0,DB_D0
+     complex(SP),  optional, target :: C0
+     complex(SP),  optional :: DB_C0
+     logical     , optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
+     character(*), optional :: CH0,DB_CH0,CH1(:),TERMINATOR
+     type(IO_desc),optional :: DESCRIPTOR
      !
    end subroutine
    !
@@ -232,10 +233,10 @@ module IO_m
         &                       D0, DB_D0, C0, DB_C0, &
         &                       L0, DB_L0,            &
         &                       CH0,DB_CH0,           &
-        &                       UNIT,DESCRIPTOR,DO_NOT_DUMP)
+        &                       UNIT,DESCRIPTOR,DO_NOT_DUMP,TERMINATOR)
      !
-     use pars,   ONLY:SP,DP,LP,lchlen
-     use com,    ONLY:IO_DESC
+     use pars,       ONLY:SP,DP,LP,lchlen
+     use descriptors,ONLY:IO_desc
      integer               :: ID
      character(*),optional :: VAR
      character(*),optional :: OP(:)
@@ -245,7 +246,7 @@ module IO_m
      complex(SP), optional, target :: C0
      complex(SP), optional :: DB_C0
      logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
-     character(*),optional :: CH0,DB_CH0
+     character(*),optional :: CH0,DB_CH0,TERMINATOR
      type(IO_desc),optional:: DESCRIPTOR
      !
    end subroutine io_variable_elemental
@@ -513,39 +514,6 @@ module IO_m
      io_resetable(ID)=.true.
    end subroutine
    !
-   subroutine IO_desc_duplicate(desc_in,desc_out)
-     type(IO_desc), intent(in)  :: desc_in
-     type(IO_desc), intent(out) :: desc_out
-     desc_out%n    = desc_in%n
-     desc_out%size = desc_in%size
-     desc_out%str  = desc_in%str
-     desc_out%kind = desc_in%kind
-     desc_out%check= desc_in%check
-     desc_out%ops  = desc_in%ops
-     desc_out%ival = desc_in%ival
-     desc_out%rval = desc_in%rval
-     desc_out%dval = desc_in%dval
-     desc_out%cval = desc_in%cval
-     desc_out%sval = desc_in%sval
-     desc_out%lval = desc_in%lval
-   end subroutine
-   !
-   subroutine IO_desc_reset(desc)
-     type(IO_desc), intent(out) :: desc
-     desc%n    = 0
-     desc%size = 0
-     desc%str  = ""
-     desc%kind = ""
-     desc%check= .false.
-     desc%ops  = ""
-     desc%ival = 0
-     desc%rval = 0._SP
-     desc%dval = 0._DP
-     desc%cval = (0._SP,0._SP)
-     desc%sval = ""
-     desc%lval = .false.
-   end subroutine
-   !
    subroutine mk_dir(dirname)
      use pars,           ONLY:schlen
      use stderr,         ONLY:cstr,STRING_split
@@ -668,7 +636,10 @@ module IO_m
          if(local_error/=0) VARNAME=' NOT DEFINED '
        endif
        if(present(VAR)) VARNAME=VAR
-       write (msg,'(6a)') ' File ',trim(FILENAME),'; Variable ',trim(VARNAME),'; ',trim(nf90_strerror(status))
+       if( read_is_on(ID)) write (msg,'(6a)') ' Reading File ',trim(FILENAME),'; Variable ',&
+       &                                      trim(VARNAME),'; ',trim(nf90_strerror(status))
+       if(write_is_on(ID)) write (msg,'(6a)') ' Writing File ',trim(FILENAME),'; Variable ',&
+       &                                      trim(VARNAME),'; ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if
    end subroutine

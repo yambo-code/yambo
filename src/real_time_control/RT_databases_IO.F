@@ -47,6 +47,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
+ logical           :: write_OBS
  integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time
  integer, external :: io_RT_components
  logical, external :: stop_NOW
@@ -55,6 +56,9 @@ subroutine RT_databases_IO(E)
  !
  ! Observables (J, P, M ...)
  !===========================
+ !
+ write_OBS=.false.
+ !
  if (io_OBSERVABLES) then
    !
    if(NE_i_time==NE_i_start_time) then
@@ -68,7 +72,7 @@ subroutine RT_databases_IO(E)
      !
      i_time=NE_i_time
      if(OBS_RT_IO_t%last_point>0) i_time=i_time-OBS_RT_IO_t%last_point
-     i_time=i_time/int(RT_dyn_step/RT_step)
+     i_time=i_time/nint(RT_dyn_step/RT_step)
      !
      if(i_time>0) then
        OBS_RT_IO_t%N=OBS_RT_IO_t%N+1
@@ -89,8 +93,10 @@ subroutine RT_databases_IO(E)
        A_cache(1:3,3,i_time)=A_tot%vecpot_acc
      endif
      !
-     if (RT_do_it('OBS').or.(NE_i_time>=NE_steps-int(RT_dyn_step/RT_step)+1)&
-     &   .or.STOP_now(.FALSE.).or.NE_i_time==OBS_RT_IO_t%last_point) then
+     write_OBS=RT_do_it('OBS').or.RT_do_it('deltaT').or.(NE_i_time>=NE_steps-nint(RT_dyn_step/RT_step)+1)&
+     &          .or.STOP_now(.FALSE.).or.NE_i_time==OBS_RT_IO_t%last_point
+     !
+     if(write_OBS) then
        !
        TMP_OBS_cache_steps=i_time
        !
@@ -187,6 +193,7 @@ subroutine RT_databases_IO(E)
      !
 #else
      !
+     call PP_redux_wait( )
      do ik = PAR_G_kpts(1),PAR_G_kpts(2)
        call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ik+2/),ID=ID(5))
        io_G=io_RT_components('G',ID(5))
@@ -227,7 +234,7 @@ subroutine RT_databases_IO(E)
    !
  endif
  !
- if(RT_do_it('OBS') ) call PP_bcast( OBS_RT_IO_t%last_point,0)
+ if(write_OBS       ) call PP_bcast( OBS_RT_IO_t%last_point,0)
  if(RT_do_it('CARR')) call PP_bcast(CARR_RT_IO_t%last_point,0)
  if(RT_do_it('G')   ) call PP_bcast(  GF_RT_IO_t%last_point,0)
  !

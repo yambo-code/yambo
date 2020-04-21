@@ -19,7 +19,7 @@
 ! You should have received a copy of the GNU General Public 
 ! License along with this program; if not, write to the Free 
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02repfile_unit1-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INIT_ypp(E,instr,FINALIZE)
  !
@@ -30,23 +30,22 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
-&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,l_angular_momentum,l_position
+&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,l_angular_momentum,l_position,&
+&                         l_QP_DB_expand
  use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev
- use wave_func,      ONLY:wf_ng
  use it_tools,       ONLY:ofiles_append,infile_dump,runlevel_is_on,&
 &                         PARSER_force_command_line_value
  use it_m,           ONLY:initdefs,initmode,infile,nrnlvls,rnlvls,infile_verbosity,&
                           V_general,V_qp,V_all,V_real_time,V_nl_optics
  use drivers,        ONLY:infile_editing
- use com,            ONLY:write_to_report,repfile,repfile_unit,inpfile_unit
- use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile,logfile_unit,STRING_match,STRING_same
+ use com,            ONLY:write_to_report,repfile,inpfile_unit,repfile_unit
+ use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile,STRING_match,STRING_same,logfile_unit 
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:live_timing_is_on
  use parser_m,       ONLY:PARSER_array
- use IO_m,           ONLY:rm_file,OP_RD_CL,DUMP,io_control,NONE
- use stderr,         ONLY:set_real_printed_length
+ use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
 #if defined _YPP_SC
  use YPPm,           ONLY:l_mean_potential
  use SC,             ONLY:SC_bands
@@ -83,7 +82,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  ! Work Space
  !
- logical          ::l_init_QP,l_flag
+ logical          ::l_init_QP,l_flag,l_rtplot,l_rtmode
  type(initdefs)   ::defs
  integer          ::i1,i2,ID,io_err,i_cycle
  character(schlen)::rstr_piece(60) 
@@ -167,7 +166,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
 #endif
  !
- ! ATOMIC PROJETIONS pwscf
+ ! ATOMIC PROJECTIONS pwscf
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_err=io_ATMPROJ_pwscf(ID)
@@ -203,6 +202,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  call call_INIT_load('load_defaults')
  !
+ l_rtplot=.FALSE.
+ l_rtmode=.FALSE.
+ !
  ! RunLevels on
  !
  call STRING_split(instr,rstr_piece)
@@ -222,7 +224,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      if( trim(rstr_piece(i1)) == 'infver' .and. STRING_same(rstr_piece(i1+1),'all') ) infile_verbosity=V_all
    endif
    !
-   call initactivate(1,'ElecTemp BoseTemp')
+   call initactivate(1,'ElecTemp BoseTemp StdoHash')
    !
    do i_cycle=1,2
      !
@@ -263,8 +265,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        call initactivate(1,'QPDBs')
        l_QP_DBs_create_and_modify=STRING_match(rstr_piece(i1+1),'g')
        l_QP_DBs_manipulate            =STRING_match(rstr_piece(i1+1),'m')
+       l_QP_DB_expand                 =STRING_match(rstr_piece(i1+1),'e')
        if (l_QP_DBs_create_and_modify) call initactivate(1,'QPDB_edit')
        if (l_QP_DBs_manipulate)        call initactivate(1,'QPDB_merge')
+       if (l_QP_DB_expand)             call initactivate(1,'QPDB_expand')
      endif
      !
 #if defined _YPP_ELPH
@@ -346,6 +350,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_RT_abs         =STRING_match(rstr_piece(i1+1),'a')
        ! GPL_EXCLUDE_END
        !
+       l_rtplot=.TRUE.
+       !
      endif
      !
      ! GPL_EXCLUDE_START
@@ -357,7 +363,12 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_RT_energy      =STRING_match(rstr_piece(i1+1),'e')
        l_RT_dos         =STRING_match(rstr_piece(i1+1),'d')
        !
+       l_rtmode=.TRUE.
+       !
      endif
+     !
+     if (l_rtplot.and..not.l_rtmode) l_RT_time=.TRUE.
+     if (.not.l_rtplot.and.l_rtmode) l_RT_occupations=.TRUE.
      !
      ! GPL_EXCLUDE_END
      !
@@ -514,7 +525,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_bz_grids) then
    call initactivate(1,"OutputAlat")
-   if (l_k_grid)        call initactivate(1,"NoWeights cooIn cooOut ListPts ExpandPts")
+   if (l_k_grid)        call initactivate(1,"NoWeights cooIn cooOut ListPts ExpandPts PtsPath")
    if (l_q_grid)        call initactivate(1,"NoWeights cooIn cooOut ListPts ExpandPts ForceUserPts")
    if (l_high_sym_pts)  call initactivate(1,"cooOut PtsPath NPtsPath")
    if (l_shifted_grid)  call initactivate(1,"NoWeights cooIn cooOut")
@@ -534,7 +545,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    !
    if (l_bands) call initactivate(1,"BANDS_bands")
    !
-   call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
+   call initactivate(1,"INTERP_Shell_Fac INTERP_NofNN")
    call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_built_in")
    !
  endif
@@ -547,6 +558,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  l_QP_DBs_create_and_modify = runlevel_is_on('QPDB_edit')
  l_QP_DBs_manipulate = runlevel_is_on('QPDB_merge')
+ l_QP_DB_expand = runlevel_is_on('QPDB_expand')
  !
  ! GPL_EXCLUDE_START
  !
@@ -585,10 +597,12 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call INIT_QP_ctl_switch('G')
+   if (l_dos           ) call initactivate(1,"PROJECT_mode PROJECT_path PROJECT_steps PROJECT_depth PROJECT_threshold")
+   if (         l_bands) call initactivate(1,"PROJECT_mode PROJECT_threshold")
    if (l_dos) then
      call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands DOSUsesOcc")
-     call initactivate(1,"INTERP_mode INTERP_Grid INTERP_Shell_Fac")
-     call initactivate(1,"Proj_DOS PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
+     call initactivate(1,"INTERP_mode INTERP_Grid INTERP_Shell_Fac INTERP_NofNN")
+     call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
    endif
  endif
 #if defined _YPP_RT
@@ -626,11 +640,15 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    l_flag=l_RT_time.and.l_RT_occupations
    if (l_flag)           call initactivate(1,"OCCgroup")
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
+   if (l_RT_occupations.or.l_RT_lifetimes) then
+     if (l_RT_bands) call initactivate(1,"PROJECT_mode PROJECT_depth PROJECT_threshold")
+     if (l_RT_time)  call initactivate(1,"BANDS_path CarrEnRnge")
+   endif
    if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
    if (l_RT_dos)  then
      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc NoOcc")
-     call initactivate(1,"Proj_DOS PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
-     call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
+     call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
+     call initactivate(1,"INTERP_mode INTERP_Grid INTERP_Shell_Fac INTERP_NofNN")
      call INIT_QP_ctl_switch('G')
    endif
    if ((l_RT_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
@@ -644,7 +662,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
 #if defined _YPP_NL
  if(l_NL_X) call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor PrtPwrSpec")
- if(l_NL_exc) call initactivate(1,"Xorder PrintExc")!  MaxContr")
+ if(l_NL_exc) call initactivate(1,"Xorder PrintExc")
 #endif
  !
 #if defined _YPP_MAGNETIC
@@ -692,14 +710,14 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (infile_editing) then
    inpfile_unit=12
    open(unit=inpfile_unit,file=trim(infile))
-   call set_real_printed_length(f_length=9,g_length=9)
    call initinfio(defs,inpfile_unit)
-   call set_real_printed_length()
    close(inpfile_unit)
    call PP_redux_wait
  endif
  !
  if (l_QP_DBs_create_and_modify.or.l_QP_DBs_manipulate) call QP_DBs_initialize()
+ !
+ if (l_QP_DB_expand) call initactivate(1,"QPDB_file") 
  !
  l_init_QP=l_plot.and.l_sp_wf
 #if defined _YPP_ELPH
@@ -770,9 +788,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (infile_editing) then
    open(unit=inpfile_unit,file=trim(infile))
-   call set_real_printed_length(f_length=9,g_length=9)
    call initinfio(defs,inpfile_unit)
-   call set_real_printed_length()
    close(inpfile_unit)
    call PP_redux_wait
  endif

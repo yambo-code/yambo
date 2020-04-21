@@ -81,14 +81,14 @@ case "${host}" in
    ;;
  powerpc64*linux* )
    build_os="linux"
-   TIMER="ct_etime.o"
-   if test -z "$F90SUFFIX"; then F90SUFFIX=".f"; fi
+   #TIMER="ct_etime.o"
+   if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
    ;;
  powerpc-ibm* )
    build_os="aix"  
    save=$AR_FLAGS
    AR_FLAGS="$save -X32_64"
-   if test -z "$F90SUFFIX"; then F90SUFFIX=".f"; fi
+   if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
    ;;
  mips-sgi-irix*)
    build_os="irix"  

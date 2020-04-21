@@ -35,7 +35,7 @@ integer function io_QINDX(Xk,q,io_db)
  !
 #include<memory.h>
  type(bz_samp)::q,Xk
- integer      ::io_db
+ integer      ::io_db,i3,i2,i2_up,i2_step
  !
  ! Work Space
  !
@@ -134,7 +134,16 @@ integer function io_QINDX(Xk,q,io_db)
      io_extension(io_db)='kindx'
      call io_fragment(io_db,i_fragment=3)
      call def_variable_bulk(io_db,"Bindx",3,shape(qindx_B),IP+100)
-     call  io_variable_bulk(io_db,3,I3=qindx_B)
+     ! 46341 is the sqare root of the maximum integer 2147483647
+     ! qindx_B is size nXkbz*nXkbz
+     ! NETCDF has problems in reading when this number overcomes 2147483647
+     i2_step=nXkbz/(nXkbz/46341+1)
+     do i3=1,2
+       do i2=1,nXkbz,i2_step
+         i2_up=min(i2-1+i2_step,nXkbz)
+         call  io_variable_bulk(io_db,3,I3=qindx_B(:,i2:i2_up,i3:i3),IPOS=(/1,i2,i3/))
+       enddo
+     enddo
    endif
    if (coll_scattering.and.ver_is_gt_or_eq(io_db,revision=3085)) then
      !

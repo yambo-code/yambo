@@ -100,7 +100,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  !
  n_b_full_guess= nint( real(nel)/2.0_SP*real(n_spinor)+.1)
  !
- if (n_b_full_guess+1 > nb_here ) call error(' Too few states. Include more states in the DFT run.')
+ if (n_b_full_guess+1 > nb_here ) call error(' Not enough states to accomodate all electrons. Include more states in the DFT run.')
  !
  Ef(1)=maxval(E%E(n_b_full_guess,:,:))
  Ef(2)=minval(E%E(n_b_full_guess+1,:,:))

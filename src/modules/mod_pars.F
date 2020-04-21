@@ -65,7 +65,7 @@ module pars
  !
  !...I/O
  integer, parameter :: max_io_units=20
- integer, parameter :: max_io_vars_open=20
+ integer, parameter :: max_io_vars_open=50
  integer, parameter :: max_active_sections=10
  !
  !...QP_apply
@@ -98,7 +98,8 @@ module pars
  !=========
  integer, parameter  :: schlen=100
  integer, parameter  :: lchlen=300
- integer, parameter  :: iomsg_len=34
+ integer, parameter  :: msg_len=50
+ integer, parameter  :: DB_menu_length=30+msg_len
  !
  ! CONSTANTs
  !===========

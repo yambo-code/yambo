@@ -37,7 +37,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,rho_n,magn_n,&
 &                         H_potential,H_kind,H_xc_functional,H_perturbation
- use RT_control,     ONLY:RT_control_alloc,RT_control_free,ID,&
+ use RT_control,     ONLY:RT_control_alloc,RT_control_free,ID,Dynamics_is_over,&
 &                         NE_i_start_time,RT_carriers_object,RT_apply
  use real_time,      ONLY:RT_potential,RT_kind,RT_xc_functional,RT_perturbation,&
 &                         NE_steps,RT_step,G_lesser,RT_bands,&
@@ -70,7 +70,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  ! Work Space
  !
  integer           :: io_REF,io_err
- logical           :: l_Dynamics_is_over,LT_pump
+ logical           :: LT_pump
  character(schlen) :: sec_title(3)
  real(SP)          :: OBSERVABLES(25)
  !
@@ -187,7 +187,6 @@ subroutine RT_driver(E,X,k,q,Dip)
  ! 
  call section('=','Start and Restart')
  !######################################
- !
  call RT_start_and_restart(E,k,q)
  !
  ! If I loaded the WFs just to compute HARTREE0 and XC0 I can now free the WFs 
@@ -261,8 +260,6 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  ! Loop on time
  !==============
- l_Dynamics_is_over=.FALSE.
- !
  ! See [23/9/2011] comments in RT_start_and_restart regarding the value of it_start
  !
  NE_i_time = NE_i_start_time
@@ -275,7 +272,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  call RT_timing(0)
  !
- do while (.not.l_Dynamics_is_over)
+ do while (.TRUE.)
    !
    ! Dynamics single step is composed by few sections:
    !
@@ -336,7 +333,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    ! I (eventually) stop 
    !=======================
-   if (l_Dynamics_is_over) cycle
+   if (Dynamics_is_over( )) exit
    !
    ! Integration
    !=============
@@ -389,11 +386,9 @@ subroutine RT_driver(E,X,k,q,Dip)
          call live_timing('[RT] Dynamics ',NE_steps-NE_i_start_time+1,DEPTH=0.01_SP)
        endif
        !
-     else if(steps>0) then
+     else if (steps>0) then
        !
        call PP_redux_wait()
-       !
-       l_Dynamics_is_over=NE_i_time==NE_steps.or.NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now(.FALSE.)
        !
        if (NE_i_time>=LT_pump_steps.and.LT_pump) then
          LT_pump=.FALSE.

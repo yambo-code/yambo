@@ -23,7 +23,7 @@
 !
 module QP_m
  !
- use IO_m,           ONLY:IO_desc,IO_desc_duplicate,IO_desc_reset
+ use descriptors,    ONLY:IO_desc,IO_desc_duplicate,IO_desc_reset
  use pars,           ONLY:SP,schlen,cZERO
  !
 #include<memory.h>
@@ -241,9 +241,9 @@ module QP_m
    end subroutine
    !
    subroutine QP_copy(qp_in,qp,what,OP,pre_factor)
-     use pars,      ONLY:SP,cI,rONE,rZERO
-     use electrons, ONLY:n_sp_pol
-     use IO_m,      ONLY:IO_desc_duplicate
+     use pars,          ONLY:SP,cI,rONE,rZERO
+     use electrons,     ONLY:n_sp_pol
+     use descriptors,   ONLY:IO_desc_duplicate
      type(QP_t)   ::qp_in,qp
      character(*) ::what,OP
      real(SP)     ::pre_factor,operation

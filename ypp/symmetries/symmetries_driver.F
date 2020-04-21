@@ -27,7 +27,7 @@ subroutine symmetries_driver(E,Xk)
  use xc_functionals,      ONLY:magn
  use electrons,           ONLY:levels,Spin_magn,n_spinor
  use FFT_m,               ONLY:fft_size
- use IO_m,                ONLY:mk_dir,rm_file
+ use IO_m,                ONLY:rm_file
  use com,                 ONLY:msg,core_io_path,more_io_path
  use R_lattice,           ONLY:bz_samp,ng_closed,ng_vec,bz_samp_reset,bz_samp_duplicate
  use D_lattice,           ONLY:nsym
@@ -59,8 +59,7 @@ subroutine symmetries_driver(E,Xk)
  !
  call msg('s','Symmetries-respecting SAVE written to'//trim(more_io_path))
  !
- call mk_dir(more_io_path)
- call mk_dir(trim(more_io_path)//"/SAVE")
+ call IO_make_directories("SAVE")
  call rm_file((trim(more_io_path))//"/SAVE/ndb.gops")
  call rm_file((trim(more_io_path))//"/SAVE/ndb.kindx")
  !

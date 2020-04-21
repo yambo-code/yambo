@@ -49,7 +49,8 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  integer           :: ikbz,ikbzp,is,isp,ib,ibp,i_sp_pol,ik,ikp,istep,max_step
  integer           :: iG0,ng_tmp,wf_ng_save,wf_ng_1st_BZ_save
- integer           :: id,idx_kp(3),idx_k(3),shift(3),g0_idx(3,2),g0_length(3)
+ integer           :: id,idx_kp(3),idx_k(3),shift(3),g0_idx(3,2)
+ real(SP)          :: g0_length(3)
  complex(SP), allocatable :: WF_symm(:,:,:,:),WF_shifted(:,:,:,:),WF_ik(:,:,:,:),WF_ikp(:,:,:,:)
 #ifdef _CUDA
  attributes(device):: WF_symm,WF_shifted,WF_ik,WF_ikp
@@ -81,7 +82,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  call PARALLEL_WF_index( )
  !
- call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
+ call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space/Overlaps')
  !
  YAMBO_ALLOC(WF_symm,(wf_ng_1st_BZ,n_spinor,Dip%ib(2),n_sp_pol))
  YAMBO_ALLOC(WF_shifted,(wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))

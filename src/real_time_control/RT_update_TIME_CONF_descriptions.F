@@ -41,7 +41,8 @@ subroutine RT_update_TIME_CONF_descriptions( )
  !
  call IO_desc_add(TIME_STEP_desc,kind='r',str=ch//"] Time step",R=(/RT_dyn_step*AUT2FS/),term="fs")
  call IO_desc_add(TIME_STEP_desc,kind='r',str=ch//"] Update time",R=(/NE_time_step_update_jump*AUT2FS/),term="fs")
- call IO_desc_add(TIME_STEP_desc,kind='r',str=ch//"] I/O steps(J-P-C)",R=(/OBS_RT_IO_t%INTERVAL_time*AUT2FS/),term="fs")
+ call IO_desc_add(TIME_STEP_desc,kind='r',str=ch//"] I/O cache(J-P-M)",R=(/OBS_RT_IO_t%INTERVAL_time*AUT2FS/),term="fs")
+ call IO_desc_add(TIME_STEP_desc,kind='r',str=ch//"] I/O steps(Carr)",R=(/CARR_RT_IO_t%INTERVAL_time*AUT2FS/),term="fs")
  call IO_desc_add(TIME_STEP_desc,kind='r',str=ch//"] I/O steps(OUT)",R=(/OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS/),term="fs")
  call IO_desc_add(TIME_STEP_desc,kind='r',str=ch//"] I/O steps(GF)",R=(/GF_RT_IO_t%INTERVAL_time*AUT2FS/),term="fs")
  !

@@ -589,13 +589,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  enddo block_loop
  !
+#if defined _PAR_IO
  if(BS_K_cutoff>0._SP) then
    call PP_redux_wait(BS_max_val_CPU)
    BS_max_val=maxval(BS_max_val_CPU)
    call K_compress(iq,i_steps,n_steps,ID)
  endif
  !
-#if defined _PAR_IO
  call io_control(ACTION=WR_CL,COM=REP,ID=ID)
  call io_BS_PAR_free(ID,.true.)
 #endif

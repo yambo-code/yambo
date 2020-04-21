@@ -8,11 +8,14 @@ PL_objects = PL_diago_residual.o PL_via_perturbative_inversion.o
 SLEPC_objects = K_stored_in_a_slepc_matrix.o K_shell_matrix.o \
                 K_multiply_by_V_slepc.o
 #endif
+#if defined _PAR_IO
+PARIO_objects = K_compress.o
+#endif
 #if defined _SCALAPACK
 SLK_objects = K_inversion_do_it_SLK.o
 #endif
 objs =	K_blocks.o K_driver.o K_IP.o K_Transitions_setup.o K_WF_phases.o \
-        K.o K_compress.o K_correlation_collisions.o K_exchange_collisions.o K_correlation_kernel.o K_exchange_kernel.o \
+        K.o $(PARIO_objects) K_correlation_collisions.o K_exchange_collisions.o K_correlation_kernel.o K_exchange_kernel.o \
         K_solvers.o K_Haydock.o K_screened_interaction.o \
         K_inversion_do_it_full.o EPS_via_perturbative_inversion.o \
         K_inversion_driver.o K_diagonal.o K_inversion_Lo.o  K_inversion_restart.o K_inversion_engine.o \

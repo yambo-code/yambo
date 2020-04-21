@@ -669,9 +669,7 @@ module parallel_m
      if (ncpu==1) return
      !
      local_COMM=mpi_comm_world
-     if (present(COMM)) then
-       local_COMM=COMM
-     endif
+     if (present(COMM)) local_COMM=COMM
      if (local_COMM==comm_default_value) return
      call mpi_barrier(local_COMM,i_err)
 #endif

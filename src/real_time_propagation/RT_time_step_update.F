@@ -36,7 +36,7 @@ subroutine RT_time_step_update( )
 &                         IO_OBS_cache_steps,RT_control_alloc,RT_control_free,J_cache
  use RT_output_m,    ONLY:TIME_STEP_desc
  use com,            ONLY:msg
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_G_kpts,myid
  use interfaces,     ONLY:DESC_write
  !
  implicit none
@@ -62,10 +62,7 @@ subroutine RT_time_step_update( )
  dT_now      =(MEM_pointer(i_MEM_now)-MEM_pointer(i_MEM_prev))*RT_step
  dT_previous =(MEM_pointer(i_MEM_prev)-MEM_pointer(i_MEM_old))*RT_step
  !
- do ik=1,RT_nk
-   !
-   if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
-   !
+ do ik=PAR_G_kpts(1),PAR_G_kpts(2)
    do ib=RT_bands(1),RT_bands(2)
      do ibp=RT_bands(1),RT_bands(2)
        dG_dT(1)=(dG_lesser(ib,ibp,ik,i_MEM_prev)-dG_lesser(ib,ibp,ik,i_MEM_old))/dT_previous

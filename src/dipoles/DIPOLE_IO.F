@@ -244,11 +244,13 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
        !
        if (ic<=Xen%nbf .and. iv<=Xen%nbf) then
          DIP_spin   (:,ic,iv,:,:,2)=DIP_spin(:,ic,iv,:,:,1)
+         if(iv==ic) cycle
          DIP_orbital(:,ic,iv,:,:,1)=1._SP
          DIP_orbital(:,ic,iv,:,:,2)=0._SP
        endif
        if (ic> Xen%nbf .and. iv> Xen%nbf ) then
          DIP_spin(:,ic,iv,:,:,3)=DIP_spin(:,ic,iv,:,:,1)
+         if(iv==ic) cycle
          DIP_orbital(:,ic,iv,:,:,2)=1._SP
          DIP_orbital(:,ic,iv,:,:,1)=0._SP
        endif

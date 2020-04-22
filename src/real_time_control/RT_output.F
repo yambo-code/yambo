@@ -187,8 +187,14 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(5: 7) = real(RT_spin_magn(:,2))
        data_to_dump(8:10) = real(RT_spin_magn(:,3))
      case('orbt_magnetization')
-       data_to_dump(2: 4) = real(RT_orbt_magn(:,1))
-       data_to_dump(5: 7) = real(RT_orbt_magn(:,2))
+       !data_to_dump(2: 4) = real(RT_orbt_magn(:,1))
+       !data_to_dump(5: 7) = real(RT_orbt_magn(:,2))
+       data_to_dump(2) =  real(RT_orbt_magn(1,1))
+       data_to_dump(3) = aimag(RT_orbt_magn(2,1))
+       data_to_dump(4) = 0._SP
+       data_to_dump(5) =  real(RT_orbt_magn(1,2))
+       data_to_dump(6) = aimag(RT_orbt_magn(2,2))
+       data_to_dump(7) = 0._SP
      case('total_field')
        data_to_dump(2:4) = -real(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1

@@ -31,6 +31,8 @@ subroutine RT_driver(en,k,q)
 &                          l_add_EQ_occ,l_separate_eh,l_skip_occ
  use interpolate,    ONLY:l_integral_respect
  use parser_m,       ONLY:parser
+ use parallel_m,     ONLY:PAR_G_kpts
+ !
  implicit none
  !
  type(levels)  :: en
@@ -51,6 +53,8 @@ subroutine RT_driver(en,k,q)
  l_PROJECT_plane=trim(PROJECT_mode)=="PLANE"
  !
  call section("*",'== Real-Time Post-Processing ==')
+ !
+ PAR_G_kpts=(/1,k%nibz/)
  !
  ! Output files
  !==============

@@ -27,7 +27,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
  use stderr,        ONLY:STRING_pack
  use parallel_m,    ONLY:ncpu
  use IO_m,          ONLY:read_is_on,write_is_on,open_is_on,io_reset,io_file,io_unit,io_type,&
-&                        io_raw_extension,mk_dir,io_extension,io_folder,io_type,netcdf_call,&
+&                        io_raw_extension,mk_dir,io_extension,io_folder,netcdf_call,&
 &                        IO_read,IO_write,IO_NO_DATABASE,IO_CREATE_MODE,IO_READ_MODE,IO_WRITE_MODE,&
 &                        IO_NOT_ALLOWED,OP_APP,OP_APP_CL,io_action,OP_WR,OP_WR_CL,          &
 &                        get_name,all_locations

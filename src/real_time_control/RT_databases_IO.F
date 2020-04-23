@@ -41,7 +41,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- integer           :: ik,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,n_sec,secs(2),i_cpu
+ integer           :: ik,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,n_sec,secs(2),i_cpu,ik_FIRST,ik_LAST
  integer, external :: io_RT_components
  logical, external :: RT_Dynamics_is_over
  !
@@ -129,6 +129,15 @@ subroutine RT_databases_IO(E)
    endif
    !
 #else
+   !
+   ik_FIRST=-1
+   ik_LAST =-1
+   do ik = 1, RT_nk
+     if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik))) cycle
+     if (ik_FIRST<0) ik_FIRST=ik
+     ik_LAST =ik
+   enddo
+   !
    do i_cpu=1,ncpu
      !
      do ik = 1, RT_nk
@@ -137,7 +146,7 @@ subroutine RT_databases_IO(E)
        !
        if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
        !
-       IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,ik,FIRST=1,LAST=RT_nk,PAR_index=PAR_IND_Xk_ibz)
+       IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,ik,FIRST=ik_FIRST,LAST=ik_LAST)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+1/),ID=ID(5))
        io_G=io_RT_components('G',ID(5))
        !

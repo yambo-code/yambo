@@ -192,7 +192,7 @@ subroutine section(mode,name)
    !
    if (all((/trim(min_time)/='',trim(max_time)/='',trim(average_time)/=''/))) then
      !
-     write (ch,'(6a)')     'Timing   [Min/Max/Average] ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
+     write (ch,'(6a)')     'Timing   [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
      !
      call msg('nr',trim(ch))
      call timing_upto_now()

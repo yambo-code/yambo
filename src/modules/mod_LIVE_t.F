@@ -191,14 +191,20 @@ module LIVE_t
      cm=" "
      ch=" "
      cd=" "
-     if (d>0) write (cd,'(i2.2,a)') d,'d'
-     if (h>0.and.d==0)  write (ch,'(i2.2,a)') h,'h'
-     if (h>0.and.d> 0)  write (ch,'(a,i2.2,a)') '-',h,'h'
-     if (m>0.and.h==0)  write (cm,'(i2.2,a)') m,'m'
-     if (m>0.and.h> 0)  write (cm,'(a,i2.2,a)') '-',m,'m'
-     if (d==0.and.s>=1) then
-       if (m==0) write (cs,'(i2.2,a)') s,'s'
-       if (m> 0) write (cs,'(a,i2.2,a)') '-',s,'s'
+     if (d>0) then
+       write (cd,'(i2.2,a)') d,'d'
+       if (h>0)  write (ch,'(a,i2.2,a)') '-',h,'h'
+       if (m>0)  write (ch,'(a,i2.2,a)') '-',m,'m'
+       if (s>0)  write (ch,'(a,i2.2,a)') '-',s,'s'
+     else if (h>0) then
+       write (cd,'(i2.2,a)') h,'h'
+       if (m>0)  write (ch,'(a,i2.2,a)') '-',m,'m'
+       if (s>0)  write (ch,'(a,i2.2,a)') '-',s,'s'
+     else if (m>0) then
+       write (cd,'(i2.2,a)') m,'m'
+       if (s>0)  write (ch,'(a,i2.2,a)') '-',s,'s'
+     else if (s>1) then
+       write (cd,'(i2.2,a)') s,'s'
      endif
      time_string=trim(cd)//trim(ch)//trim(cm)//trim(cs)
    end function

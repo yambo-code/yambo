@@ -31,7 +31,7 @@ subroutine Dipole_kb_pwscf_def_dim()
  use electrons,     ONLY:n_spinor
  use R_lattice,     ONLY:b,g_vec,bz_samp
  use vec_operate,   ONLY:v_norm,c2a
- use wave_func,     ONLY:wf_ng,wf_igk,wf_nc_k
+ use wave_func,     ONLY:wf_ncx,wf_nc_k
  use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
  use pseudo,        ONLY:pp_n_l_max,pp_n_l_times_proj_max,pp_table, &
 &                        pp_kbs,pp_kb,pp_kbd,pp_kbv_dim,pp_kbv_dim_yambo,   &
@@ -41,7 +41,7 @@ subroutine Dipole_kb_pwscf_def_dim()
  !
  ! Work Space
  !
- complex(SP) :: tmp_var(wf_ng,n_spinor,2),check(2)
+ complex(SP) :: tmp_var(wf_ncx,n_spinor,2),check(2)
  !
  integer     :: ic,ig,i2,i1,is,ia,i_spinor
  integer     :: im,il,i_pp,j2p1
@@ -67,10 +67,8 @@ subroutine Dipole_kb_pwscf_def_dim()
          !
          do i_spinor=1,n_spinor
            do ic=1,wf_nc_k(1)
-             ig=wf_igk(ic,1)
-             if(ig>wf_ng) cycle
-             tmp_var(ig,n_spinor,1)= pp_kb(ic,is,i_pp,1)*pp_kbs(is,i_pp)
-             tmp_var(ig,n_spinor,2)= pp_kbd(ic,is,i_pp,1)+pp_kb(ic,is,i_pp,1)
+             tmp_var(ic,n_spinor,1)= pp_kb(ic,is,i_pp,1)*pp_kbs(is,i_pp)
+             tmp_var(ic,n_spinor,2)= pp_kbd(ic,is,i_pp,1)+pp_kb(ic,is,i_pp,1)
            enddo
          enddo
          !

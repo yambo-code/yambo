@@ -40,7 +40,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  use R_lattice,           ONLY:bz_samp
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach
  use X_m,                 ONLY:l_X_terminator
- use IO_m,                ONLY:io_control,manage_action,OP_IF_START_RD_CL_IF_END,RD
+ use IO_m,                ONLY:io_control,manage_action,RD_CL_IF_END,OP_RD
  use wave_func,           ONLY:wf_ng,WF
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing
@@ -120,13 +120,13 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
    ! Define pp_kbv_dim_yambo and pp_kbv_table
    !
    if (io_KB_pwscf_err==0) then
-     call io_control(ACTION=RD,SEC=(/2/),ID=ID)
+     call io_control(ACTION=OP_RD,SEC=(/2/),ID=ID)
      io_KB_pwscf_err=io_KB_pwscf(ID)
      call DIPOLE_kb_pwscf_def_dim()
    endif
    !
    if (io_KB_abinit_err==0) then
-     call io_control(ACTION=RD,SEC=(/2/),ID=ID)
+     call io_control(ACTION=OP_RD,SEC=(/2/),ID=ID)
      io_KB_abinit_err=io_KB_abinit(ID)
      call DIPOLE_kb_abinit_def_dim()
    endif
@@ -172,13 +172,13 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
      !
      if(l_use_comm) then
        if (io_KB_pwscf_err==0.and.ifrag>1) then
-         IO_ACT_NOW=manage_action(OP_IF_START_RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
+         IO_ACT_NOW=manage_action(RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
          call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
          io_KB_pwscf_err=io_KB_pwscf(ID)
        endif
        !
        if (io_KB_abinit_err==0.and.ifrag>1) then
-         IO_ACT_NOW=manage_action(OP_IF_START_RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
+         IO_ACT_NOW=manage_action(RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
          call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
          io_KB_abinit_err=io_KB_abinit(ID)
        endif

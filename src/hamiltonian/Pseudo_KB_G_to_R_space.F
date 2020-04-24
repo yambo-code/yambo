@@ -32,7 +32,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  use pseudo,        ONLY:pp_kbv_dim_yambo
  use R_lattice,     ONLY:bz_samp
  use LIVE_t,        ONLY:live_timing
- use IO_m,          ONLY:io_control,manage_action,OP_WR,WR_CL_IF_END,OP_IF_START_RD_CL_IF_END
+ use IO_m,          ONLY:io_control,manage_action,OP_WR,OP_RD,WR_CL_IF_END,RD_CL_IF_END
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
@@ -69,13 +69,13 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  ! Define pp_kbv_dim_yambo and pp_kbv_table
  !
  if (io_KB_pwscf_err==0) then
-   call io_control(ACTION=RD,SEC=(/2/),ID=ID)
+   call io_control(ACTION=OP_RD,SEC=(/2/),ID=ID)
    io_KB_pwscf_err=io_KB_pwscf(ID)
    call DIPOLE_kb_pwscf_def_dim()
  endif
  !
  if (io_KB_abinit_err==0) then
-   call io_control(ACTION=RD,SEC=(/2/),ID=ID)
+   call io_control(ACTION=OP_RD,SEC=(/2/),ID=ID)
    io_KB_abinit_err=io_KB_abinit(ID)
    call DIPOLE_kb_abinit_def_dim()
  endif
@@ -101,13 +101,13 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
      ! [Vnl,r]
      !
      if (io_KB_pwscf_err==0.and.i_frag>1) then
-       IO_ACT_NOW=manage_action(OP_IF_START_RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
+       IO_ACT_NOW=manage_action(RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
        call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
        io_KB_pwscf_err=io_KB_pwscf(ID)
      endif
      !
      if (io_KB_abinit_err==0.and.i_frag>1) then
-       IO_ACT_NOW=manage_action(OP_IF_START_RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
+       IO_ACT_NOW=manage_action(RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
        call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
        io_KB_abinit_err=io_KB_abinit(ID)
      endif

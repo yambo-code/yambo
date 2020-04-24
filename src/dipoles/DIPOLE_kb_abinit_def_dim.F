@@ -35,7 +35,7 @@ subroutine Dipole_kb_abinit_def_dim()
  use electrons,     ONLY:n_spinor
  use R_lattice,     ONLY:b,g_vec,bz_samp
  use vec_operate,   ONLY:v_norm,c2a
- use wave_func,     ONLY:wf_ng
+ use wave_func,     ONLY:wf_ncx
  use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
  use pseudo,        ONLY:pp_kbv_dim,pp_kbv_dim_yambo,pp_n_l_times_proj_max,pp_kbs,&
 &                        pp_kb,pp_kbd,pp_table,pp_n_l_max,pp_kbv_table
@@ -44,7 +44,7 @@ subroutine Dipole_kb_abinit_def_dim()
  !
  ! Work Space
  !
- complex(SP) :: tmp_var(wf_ng,2),check(2)
+ complex(SP) :: tmp_var(wf_ncx,2),check(2)
  !
  integer     :: ig,i1,i2,is,ia,pp_spin
  integer     :: im,il,i_pp
@@ -70,8 +70,8 @@ subroutine Dipole_kb_abinit_def_dim()
          i1=i1+1
          i2=i2+1
          !
-         tmp_var(:,1)= pp_kbs(is,i_pp)*pp_kb(:wf_ng,is,i_pp,1)
-         tmp_var(:,2)= pp_kbd(:wf_ng,is,i_pp,1)+pp_kb(:wf_ng,is,i_pp,1)
+         tmp_var(:,1)= pp_kbs(is,i_pp)*pp_kb(:wf_ncx,is,i_pp,1)
+         tmp_var(:,2)= pp_kbd(:wf_ncx,is,i_pp,1)+pp_kb(:wf_ncx,is,i_pp,1)
          !
          check(1)=sum(tmp_var(:,1))
          check(2)=sum(tmp_var(:,2))

@@ -40,7 +40,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  use R_lattice,           ONLY:bz_samp
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach
  use X_m,                 ONLY:l_X_terminator
- use IO_m,                ONLY:io_control,manage_action,OP_IF_START_RD_CL_IF_END
+ use IO_m,                ONLY:io_control,manage_action,OP_IF_START_RD_CL_IF_END,RD
  use wave_func,           ONLY:wf_ng,WF
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing

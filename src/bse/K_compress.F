@@ -21,29 +21,31 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_compress(iq,i_steps,n_steps,ID_head)
+subroutine K_compress(iq,ID_head)
  !
- use pars,         ONLY:IPL,cZERO
+ use pars,         ONLY:cZERO
+ use com,          ONLY:msg
  use LIVE_t,       ONLY:live_timing
- use IO_m,         ONLY:io_control,OP_WR,RD,WR
- use BS,           ONLY:BS_max_val,BS_lin_size_compressed,BS_K_cutoff,BS_blk,&
-&                       BS_nT_grps,BS_T_grp,n_BS_blks
- use parallel_m,   ONLY:ncpu,myid,PP_redux_wait,PAR_IND_T_ordered
+ use IO_m,         ONLY:io_control,WR
+ use BS,           ONLY:BS_blk,BS_T_grp,BS_max_val,BS_K_cutoff,n_BS_blks
  !
  implicit none
  !
- integer, intent(in)    :: iq,i_steps,n_steps
+ integer, intent(in)    :: iq
  integer, intent(inout) :: ID_head
  !
  ! Work space
  !
- integer      :: ID,i_block,i_block_ref,i_tgrp_k,i_Tgrp_p,i_Tp,i_Tk,x1,x2
- integer(IPL) :: imx_ref(ncpu),idx,idx_tmp,idx_ref
+ integer      :: ID,i_block,i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk
  !
  ! STEP 1: Check which matrix elements can be neglected
  !======================================================
  !
- if (n_steps>0) call live_timing('Kernel checking elements to be neglected',n_steps)
+ call msg("s","Kernel compression with parameter",BS_K_cutoff)
+ !
+ if (n_BS_blks>0) call live_timing('Kernel compression',n_BS_blks)
+ !
+ ID=0   ! Not used here
  !
  do i_block=1,n_BS_blks
    !
@@ -73,17 +75,42 @@ subroutine K_compress(iq,i_steps,n_steps,ID_head)
    call io_control(ACTION=WR,ID=ID_head)
    call io_BS_PAR_block(iq,i_block,ID_head,ID,"head")
    !
-   call live_timing(steps=i_steps)
+   call live_timing(steps=1)
    !
  enddo
  !
- if (n_steps>0) call live_timing( )
+ if (n_BS_blks>0) call live_timing( )
+ !
+end subroutine K_compress
+!
+!
+subroutine K_compressed_IO(iq,io_BS_err,mode)
+ !
+ use pars,         ONLY:IPL
+ use LIVE_t,       ONLY:live_timing
+ use IO_m,         ONLY:io_control,OP_WR,OP_RD,RD,WR
+ use BS,           ONLY:BS_max_val,BS_lin_size_compressed,BS_K_cutoff,BS_blk,&
+&                       BS_nT_grps,BS_T_grp,n_BS_blks
+ use parallel_m,   ONLY:ncpu,myid,PP_redux_wait,PAR_IND_T_ordered
+ !
+ implicit none
+ !
+ integer,      intent(in) :: iq
+ integer,      intent(out):: io_BS_err
+ character(*), intent(in) :: mode
+ !
+ integer      :: ID_head,ID,IO_ACT
+ integer      :: i_block,i_block_ref,i_tgrp_k,i_Tgrp_p,i_Tp,i_Tk,x1,x2
+ integer(IPL) :: imx_ref(ncpu),idx,idx_tmp,idx_ref
+ !
+ integer, external :: io_BS_PAR_init
  !
  ! STEP 2: Compute compressed size
  !==================================
  !
- call live_timing('Kernel compute compressed size',BS_nT_grps)
+ call live_timing('Compressed size',BS_nT_grps)
  !
+ ID_head=0   ! Not used here
  imx_ref=0
  !
  do i_Tgrp_k=1,BS_nT_grps
@@ -144,21 +171,27 @@ subroutine K_compress(iq,i_steps,n_steps,ID_head)
  ! STEP 3: IO of compressed kernel
  !=================================
  !
- call io_control(ACTION=OP_WR,ID=ID)
- call io_BS_PAR_init(iq,ID_head,ID,"compressed")
+ if(mode=="read" ) IO_ACT=OP_RD
+ if(mode=="write") IO_ACT=OP_WR
  !
- if (n_steps>0) call live_timing('Kernel I/O compressed',n_steps)
+ call io_control(ACTION=IO_ACT,ID=ID)
+ io_BS_err=io_BS_PAR_init(iq,ID_head,ID,"compressed")
+ !
+ if (n_BS_blks>0) call live_timing('Kernel compressed I/O',n_BS_blks)
+ !
+ if(mode=="read" ) IO_ACT=RD
+ if(mode=="write") IO_ACT=WR
  !
  do i_block=1,n_BS_blks
    !
-   call io_control(ACTION=WR,ID=ID)
+   call io_control(ACTION=IO_ACT,ID=ID)
    call io_BS_PAR_block(iq,i_block,ID_head,ID,"compressed")
    !
-   call live_timing(steps=i_steps)
+   call live_timing(steps=1)
    !
  enddo
  !
- if (n_steps>0) call live_timing( )
+ if (n_BS_blks>0) call live_timing( )
  !
  call io_BS_PAR_free(ID_head,ID,"compressed",.true.)
  !

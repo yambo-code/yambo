@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_BS_header(iq,X,ID)
+subroutine io_BS_header(iq,X,ID,mode)
  !
  ! Intialize variables on BSE netcdf parallel file
  !
  use parallel_m,    ONLY:MPI_COMM_WORLD,PP_redux_wait
  use com,           ONLY:msg
  use pars,          ONLY:SP,schlen,lchlen
- use stderr,        ONLY:intc
+ use stderr,        ONLY:intc,real2ch
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_K_cutoff,l_BSE_restart,l_BSE_kernel_complete
  use BS_solvers,    ONLY:variables_BS,BSS_desc
@@ -40,28 +40,34 @@ subroutine io_BS_header(iq,X,ID)
  !
  type(X_t) :: X 
  integer   :: iq, ID
+ character(*), intent(in) :: mode
  !
  logical, external :: file_exists
  integer, external :: variables_BS_more
  !
  integer           :: io_BS
  type(IO_desc)     :: local_desc
- character(schlen) :: db_name
+ character(schlen) :: db_name,tmp_ch
  character(lchlen) :: full_db_name
  !
  ! Connect to parallel netCDF file.
  !
- db_name='BS_PAR_Q'//trim(intc(iq))
- full_db_name=get_name(trim(db_name)," ",2,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
+ if(.not.trim(mode)=="connect") then
+   !
+   db_name='BS_PAR_Q'//trim(intc(iq))
+   full_db_name=get_name(trim(db_name)," ",2,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
+   !
+   l_BSE_kernel_complete=.false.
+   !
+ endif
  !
- l_BSE_kernel_complete=.false.
- l_BSE_restart=.false.
+ ! If l_BSE_restart true at this point, I'm already re-starting from a compressed kernel
  !
- if (write_is_on(ID).and.io_BS_K) then
+ if (write_is_on(ID).and.io_BS_K.and..not.l_BSE_restart) then
    if (.not.file_exists(trim(full_db_name))) then
      call msg("s","BSE file not found. Creating an empty one.")
      l_BSE_restart=.false.
-   else
+   else if(trim(mode)=="full") then
      call msg("s","Partial BSE file found in "//trim(full_db_name)//". Using for restart.")
      l_BSE_restart = .true.
    endif
@@ -73,6 +79,7 @@ subroutine io_BS_header(iq,X,ID)
  !
  io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
  if(io_BS/=0) return
+ if(trim(mode)=="connect") return
  !
  ! Check if the file already contains data and it is consistent
  ! DS: warning. This is potentially dangerous since all MPI tasts are all writing
@@ -93,7 +100,7 @@ subroutine io_BS_header(iq,X,ID)
  io_BS=variables_BS_more(ID,'start')
  !
  if(read_is_on(ID).and.io_BS_K) then
-   if(l_BSE_kernel_complete.and.BS_K_cutoff==0._SP) then
+   if(l_BSE_kernel_complete) then
      call msg("s","Trying to load complete BSE file  ",trim(full_db_name))
    else
      call msg("s","Possible partial BSE file not accepted in reading mode ",trim(full_db_name))
@@ -101,9 +108,11 @@ subroutine io_BS_header(iq,X,ID)
  endif
  !
  if(read_is_on(ID).and.BS_K_cutoff>0._SP.and.l_BSE_kernel_complete) then
-   db_name='BS_COMPRESSED_Q'//trim(intc(iq))
+   db_name='BS_COMPRESS'//trim(adjustl(real2ch(BS_K_cutoff)))//'_Q'//trim(intc(iq))
    full_db_name=get_name(trim(db_name)," ",2,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
-   call msg("s","Trying to load compressed BSE file  ",trim(full_db_name))
+   if (     io_BS_K) tmp_ch="Backup option will be compressed BSE file"
+   if (.not.io_BS_K) tmp_ch="Trying to load compressed BSE file"
+   call msg("s",trim(tmp_ch),trim(full_db_name))
  endif
  !
  call PP_redux_wait()
@@ -115,14 +124,15 @@ subroutine io_BS_header(iq,X,ID)
 end subroutine io_BS_header
 !
 !
-subroutine io_BS_PAR_init(iq,ID_head,ID,mode)
+integer function io_BS_PAR_init(iq,ID_head,ID,mode)
  !
- use stderr,        ONLY:intc
+ use stderr,        ONLY:intc,real2ch
  use parallel_m,    ONLY:MPI_COMM_WORLD
+ use com,           ONLY:msg
  use pars,          ONLY:IP,IPL,SP,schlen,lchlen,max_io_vars_open
  use BS,            ONLY:BS_K_dim,BS_IO_dim,BS_K_coupling,l_BSE_restart,l_BSE_kernel_complete,&
 &                        BSK_IO_mode,MAX_BSK_LIN_SIZE,BS_lin_size_compressed,BS_K_cutoff
- use IO_m,          ONLY:io_connect,def_variable_bulk,io_BS_K
+ use IO_m,          ONLY:io_connect,def_variable_bulk,io_BS_K,io_file,write_is_on,read_is_on
  !
  implicit none
  !
@@ -135,19 +145,35 @@ subroutine io_BS_PAR_init(iq,ID_head,ID,mode)
  character(lchlen) :: ch(8,max_io_vars_open)
  logical           :: def_var, io_var
  integer(IPL)      :: BS_lin_size
- integer           :: io_BS, VAR_IDs(max_io_vars_open), n_vars, i1, i_rep,i_var, BSK_n_dims,n_replica
+ integer           :: VAR_IDs(max_io_vars_open), n_vars, i1, i_rep,i_var, BSK_n_dims,n_replica
+ !
+ io_BS_PAR_init=-1
  !
  if(.not.io_BS_K .and. (.not.BS_K_cutoff>0._SP)) return
  !
  if(.not.io_BS_K .and. trim(mode)=="full" ) mode="head"
  !
  if(trim(mode)=="full")       db_name='BS_PAR_Q'//trim(intc(iq))
- if(trim(mode)=="compressed") db_name='BS_COMPRESSED_Q'//trim(intc(iq))
+ if(trim(mode)=="compressed") db_name='BS_COMPRESS'//trim(adjustl(real2ch(BS_K_cutoff)))//'_Q'//trim(intc(iq))
  !
  if(trim(mode)=="full" .or. trim(mode)=="compressed") then
-   io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
-   if(io_BS/=0) return
+   io_BS_PAR_init=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
+   if(write_is_on(ID).and.io_BS_PAR_init/=0)  return ! here it should give error
+   if( read_is_on(ID).and.io_BS_PAR_init/=0.and.trim(mode)=="compressed") return
+   !if( read_is_on(ID).and.io_BS_PAR_init==0.and.trim(mode)=="compressed") no action
+   if( read_is_on(ID).and.                      trim(mode)=="full") then
+     if (.not.l_BSE_kernel_complete ) return
+     if (     l_BSE_kernel_complete ) then
+       if(io_BS_PAR_init/=0) then
+         call msg("s","Complete BSE file not found. Switching to head mode")
+         mode="head"
+       endif
+       call msg("s","Complete BSE file loading  ",trim(io_file(ID)))
+     endif
+   endif
  endif
+ !
+ io_BS_PAR_init=0
  !
  ! Define vars
  !
@@ -228,7 +254,7 @@ subroutine io_BS_PAR_init(iq,ID_head,ID,mode)
    enddo
  enddo
  !
-end subroutine
+end function io_BS_PAR_init
 !
 subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
  !
@@ -236,7 +262,7 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
  !
  use parallel_m,    ONLY:PP_redux_wait
  use BS,            ONLY:l_BSE_kernel_complete,BS_K_has_been_calculated_loaded
- use IO_m,          ONLY:io_disconnect
+ use IO_m,          ONLY:io_disconnect,read_is_on,write_is_on
  !
  implicit none
  !
@@ -249,17 +275,20 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
  !
  call PP_redux_wait()
  !
- call io_disconnect(ID)
+ if(trim(mode)=="head".or.trim(mode)=="full") then
+   if(write_is_on(ID)) then
+     BS_K_has_been_calculated_loaded=l_kernel_complete
+     l_BSE_kernel_complete          =l_kernel_complete
+   endif
+   io_BS=variables_BS_more(ID_head,'end')
+   call io_disconnect(ID_head)
+   if(read_is_on(ID)) then
+     BS_K_has_been_calculated_loaded=l_kernel_complete
+     l_BSE_kernel_complete          =l_kernel_complete
+   endif
+ endif
  !
- if(trim(mode)=="compressed") return
- !
- BS_K_has_been_calculated_loaded=l_kernel_complete
- !
- l_BSE_kernel_complete          =l_kernel_complete
- !
- io_BS=variables_BS_more(ID_head,'end')
- !
- call io_disconnect(ID_head)
+ if(trim(mode)=="compressed".or.trim(mode)=="full") call io_disconnect(ID)
  !
 end subroutine
 !
@@ -422,9 +451,11 @@ subroutine io_BS_PAR_block(iq,i_block,ID_head,ID,mode)
    !
  end select
  !
- if(write_is_on(ID_head)) then
-   stat = nf90_sync(io_unit(ID_head))
-   call netcdf_call(stat,ID_head)
+ if( trim(mode)=="head" .or. trim(mode)=="full" ) then
+   if(write_is_on(ID_head)) then
+     stat = nf90_sync(io_unit(ID_head))
+     call netcdf_call(stat,ID_head)
+   endif
  endif
  !
  if( trim(mode)=="compressed" .or. trim(mode)=="full" ) then

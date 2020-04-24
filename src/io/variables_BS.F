@@ -225,7 +225,7 @@ integer function variables_BS_more(ID,mode)
  !
  if (write_is_on(ID).or.variable_exist(ID,"BSE_KERNEL_CUTOFF")) then
    call def_variable_elemental(ID,"BSE_KERNEL_CUTOFF",1,SP,0)
-   call  io_variable_elemental(ID,VAR=" Kernel cutoff",R0=BS_K_cutoff)
+   call  io_variable_elemental(ID,VAR=" Kernel cutoff",R0=BS_K_cutoff,DB_R0=BS_K_cutoff)
  endif
  !
  if ((write_is_on(ID).and.trim(mode)=="end").or.variable_exist(ID,"BSE_KERNEL_MAXVAL")) then

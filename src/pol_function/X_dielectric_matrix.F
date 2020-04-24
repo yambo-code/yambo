@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -27,11 +27,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  use pars,          ONLY:SP,cZERO
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
-#if defined _PL
- use drivers,       ONLY:l_photolum
-#endif
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
- use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,&
+ use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,l_recalculate_X,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table
  use frequency,     ONLY:w_samp
@@ -42,13 +39,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 &                        PAR_COM_X_WORLD_RL_resolved
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
- use com,           ONLY:depth,error
+ use com,           ONLY:depth
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                        PARALLEL_WF_index,WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset
- use timing_m,      ONLY:timing
  !
 #include<memory.h>
  !
@@ -124,10 +120,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! Prepare the IO (and check if q has been already done)
  !
  io_X_done=-1
+ i_err=-1
  !
  if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
  !
- if (io_RESPONSE) then
+ if (io_RESPONSE.and..not.l_recalculate_X) then
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
@@ -169,7 +166,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !=======================
  if (.not.(l_life.and.X%iq(1)>1)) then
    call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
-   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
+   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_and_IO",X=X) 
  endif
  call X_half_mat_check(Xen,Xk,Xw)
  !
@@ -204,11 +201,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
  endif
  !
- if (i_err/=0) then
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
-   i_err=io_X(X,Xw,Xdb)
- endif
- !
  call PP_redux_wait()
  !
  do iq=X%iq(1),X%iq(2)
@@ -232,6 +224,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      call TDDFT_ALDA_G_space(Xen,Xk)
      !
+   endif
+   !
+   if (iq==1) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb)
+     i_err=io_X(X,Xw,Xdb)
    endif
    !
    ! Allocation
@@ -279,7 +276,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    X%ng_db=X%ng
    !
-   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),  ID=Xdb)
+   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
    !
    ! CLEAN (1)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -128,7 +128,7 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X,Dip)
  !
  ! Symmetrize
  !
- call QP_states_simmetrize(E,V_complex=QP_Sc(:,1))
+ call QP_states_simmetrize(E,what="QED Sc",V_complex=QP_Sc(:,1),warn_me=.TRUE.)
  !
  ! Transfer to qp% components (assuming OMS approximation)
  !

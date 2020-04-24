@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH DS
@@ -44,7 +44,7 @@ subroutine e2y_db1(en,k,ncid)
  use etsf_io_low_level
  use etsf_data
  use pars,                 only : SP,   schlen
- use com,                  only : msg, error, warning
+ use com,                  only : msg
  use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, l_spin_orbit
  use wave_func,            only : wf_ncx
  use R_lattice,            only : bz_samp, nkibz
@@ -87,11 +87,11 @@ subroutine e2y_db1(en,k,ncid)
  n_bands = en%nb
  call msg("l","done")
  !>>>DEBUG
- ! call msg('s',':: K-points              :',k%nibz)
- ! call msg('s',':: Bands                 :',en%nb)
- ! call msg('s',':: Spin  [components/pol]:',(/n_spinor,n_sp_pol/))
- ! call msg('s',':: Max WF components     :',wf_ncx) 
- ! call msg('s',':: Atomic species        :',n_atom_species)
+ ! call msg('s',' K-points              ',k%nibz)
+ ! call msg('s',' Bands                 ',en%nb)
+ ! call msg('s',' Spin  [components/pol]',(/n_spinor,n_sp_pol/))
+ ! call msg('s',' Max WF components     ',wf_ncx) 
+ ! call msg('s',' Atomic species        ',n_atom_species)
  !<<<DEBUG
  !
  ! Geometry (must appear first, in order to define alat)
@@ -188,7 +188,7 @@ contains
     alat(1) = alat_mult_factor*maxval( abs( a(1,:) ))
     alat(2) = alat_mult_factor*maxval( abs( a(2,:) ))
     alat(3) = alat_mult_factor*maxval( abs( a(3,:) ))
-!   call msg('s',':: Lattice factors [a.u.]:',alat)
+!   call msg('s',' Lattice factors [a.u.]',alat)
     call define_b_and_DL_vol()
     !
     ! Atomic position data
@@ -310,7 +310,7 @@ contains
         call msg('s','Closing shells against inversion...')
         call G_rot_grid(-1,'extend_grid')
         call msg('l','done')
-        if(ng_vec/=ng_vec_abinit) call msg('s',':: ng_vec was increased to close the G-shells')
+        if(ng_vec/=ng_vec_abinit) call msg('s',' ng_vec was increased to close the G-shells')
       endif
       !
       call e2y_wf_components(ncid)
@@ -371,7 +371,7 @@ contains
           call G_rot_grid(is,'extend_grid')
         enddo
         call msg('l','done')
-        if(ng_vec/=ng_vec_abinit) call msg('s',':: ng_vec was increased to close the G-shells')
+        if(ng_vec/=ng_vec_abinit) call msg('s',' ng_vec was increased to close the G-shells')
       endif
       !
       ! Re-ordering by increasing module

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG
@@ -30,7 +30,9 @@ module BS
  ! Modes and logicals
  !====================
  logical :: l_BSE_minimize_memory
- logical :: l_restart_bse = .true.
+ logical :: l_BSE_kernel_complete
+ logical :: l_BSE_restart
+ logical :: l_BSK_IO_triangular
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
  logical :: BS_res_K_exchange
@@ -51,9 +53,12 @@ module BS
  !=============
  integer :: BS_K_dim
  integer :: BS_H_dim
+ integer :: BS_IO_dim(2)
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier
+ real(SP):: BS_K_cutoff
+ real(SP):: BS_max_val
  real(SP),allocatable :: BSqpts(:,:)
  !
  ! Live Timing

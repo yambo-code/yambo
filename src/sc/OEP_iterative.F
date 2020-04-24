@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -38,7 +38,6 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  ! where   v_x^{NL} is the nonlocal(state-dependent) exchange potential
  !
  use pars,            ONLY:SP,lchlen
- use com,             ONLY:warning
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,nkibz
  use D_lattice,       ONLY:nsym
@@ -126,7 +125,7 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
      V_io = V_io/rho
      !
      reached_treshold=maxval(abs(V_io(1:)-V_nm1(1:)))
-     dumb_ch=trim(timing_str)//' '//trim(intc(ii))//' Accuracy :'//&
+     dumb_ch=trim(timing_str)//' '//trim(intc(ii))//' Accuracy '//&
 &            trim(real2ch(reached_treshold))//'|'//trim(real2ch(OEP_threshold))
      if (     log_as_a_file) call LIVE_message("r",dumb_ch,"","%s")
      if (.not.log_as_a_file) call LIVE_message("n",dumb_ch,"","%s")

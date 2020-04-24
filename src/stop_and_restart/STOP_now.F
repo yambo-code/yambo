@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,6 @@ logical function STOP_now(DO_IT_NOW)
  use parallel_m,     ONLY:myid,mpi_comm_world
  use LIVE_t,         ONLY:cput_tot,USER_wall_time,USER_wall_time_string
  use parser_m,       ONLY:parser
- use com,            ONLY:warning
  use it_tools,       ONLY:it_reset
  !
  implicit none

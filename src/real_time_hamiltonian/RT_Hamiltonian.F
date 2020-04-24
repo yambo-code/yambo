@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -64,7 +64,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
 !&                        NE_time
  use fields,         ONLY:gauge_field!,Efield,n_ext_fields
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A,PP_redux_wait
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A,PP_redux_wait,PAR_G_kpts
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
@@ -75,7 +75,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  type(levels),  intent(inout) :: E
  type(bz_samp), intent(in)    :: k
- complex(SP),   intent(in)    :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP),   intent(in)    :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2))
  type(gauge_field), intent(in):: A_input
  !
  ! Work Space

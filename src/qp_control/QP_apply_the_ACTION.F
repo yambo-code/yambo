@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,21 +21,20 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k,l_E_done)
+subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
  !
  ! Here I apply the strecth for both QP_action.
  !
  use pars,          ONLY:SP,rZERO,cONE,rONE
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:bz_samp
- use QP_CTL_m,      ONLY:QP_action,QP_ctl_xc_STRING
+ use QP_CTL_m,      ONLY:QP_action,QP_ctl_xc_STRING,At_least_one_band_corrected
  !
 #include<memory.h>
  !
  type(levels)    ::E
  type(bz_samp)   ::k
  integer         ::i_ACTION,bands(2)
- logical         ::l_E_done
  !
  ! Work Space
  !
@@ -52,10 +51,8 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k,l_E_done)
    !
    ! Is there anything to do ?
    !
-   do_E(i_spin)=.false.
    do_W(i_spin)=.false.
    do_Z(i_spin)=.false.
-   !
    do_E(i_spin)= any(QP_action(i_ACTION)%CTL(i_spin)%E/=(/rZERO,rONE,rZERO,rONE/))
    !
    E_ref=QP_action(i_ACTION)%CTL(i_spin)%E_new_ref
@@ -91,6 +88,8 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k,l_E_done)
           if (QP_action(i_ACTION)%STATES_done(ib,ik,i_spin)==1) cycle
        endif
        !
+       if (.not.At_least_one_band_corrected) At_least_one_band_corrected=do_E(i_spin)
+       !
        if (do_E(i_spin)) E%E(ib,ik,i_spin)=E%E(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),E_ref,bands,E,k,"E")
        if (do_W(i_spin)) E%W(ib,ik,i_spin)=E%W(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),E_ref,bands,E,k,"W")
        if (do_Z(i_spin)) E%Z(ib,ik,i_spin)=QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),E_ref,bands,E,k,"Z")
@@ -104,8 +103,6 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k,l_E_done)
  ! XC string update
  !
  if (.not.(any(do_E).or.any(do_W).or.any(do_Z))) return 
- !
- if (.not.l_E_done) l_E_done=any(do_E)
  !
  if (len_trim(QP_ctl_xc_STRING)>0) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" +" 
  !

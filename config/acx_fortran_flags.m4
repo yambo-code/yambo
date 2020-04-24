@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -317,11 +317,23 @@ alphaev*)
   FCMFLAG="-nofor_main"
   ;;
 powerpc64*linux* )
-  CFLAGS="-q64 -O2 -g"
-  SYSFLAGS="-q64 -O2 -g -qnoescape -qnostrict -qarch=ppc970 -qtune=ppc970"
-  FUFLAGS="-q64 -O0 -g"
-  OMPFLAGS=""
-  def_compiler="-D_XLF"
+  case "${FC}" in
+  *pgf9* | *ftn* | *pgfortran* )
+    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    FUFLAGS="-O0 -g -Mbackslash"
+    FCMFLAG="-Mnomain"
+    OMPFLAGS="-mp"
+    def_compiler="-D_PGI"
+    NETCDFFLAGS="-DpgiFortran"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
+    ;;
+  *)
+    CFLAGS="-q64 -O2 -g"
+    SYSFLAGS="-q64 -O2 -g -qnoescape -qnostrict -qarch=ppc970 -qtune=ppc970"
+    FUFLAGS="-q64 -O0 -g"
+    OMPFLAGS=""
+    def_compiler="-D_XLF"
+  esac
   ;;
 powerpc-ibm* )
   CFLAGS="-O -q64"

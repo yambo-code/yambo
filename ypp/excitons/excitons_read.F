@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV DS
@@ -23,11 +23,10 @@
 !
 subroutine excitons_read(k,Xk,en,Xen,iq,what)
  !
- use pars,          ONLY:SP,pi,schlen
+ use pars,          ONLY:pi
  use R_lattice,     ONLY:bz_samp
- use com,           ONLY:error
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_reset
+ use X_m,           ONLY:X_reset
  use QP_CTL_m,      ONLY:QP_apply
  use electrons,     ONLY:levels,n_spin,n_sp_pol,spin,E_SOC_nbands
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY,io_disconnect
@@ -45,7 +44,6 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  !
  ! Work Space
  !
- integer ,allocatable :: BS_E_degs(:)
  !
  !... I/0
  !

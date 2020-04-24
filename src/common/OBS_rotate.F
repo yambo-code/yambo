@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -43,8 +43,9 @@ subroutine OBS_rotate(R,O,N,direction)
  !
  implicit none
  !
- integer     :: direction,N
- complex(SP) :: O(N,N),R(N,N)
+ integer,     intent(in)    :: direction,N
+ complex(SP), intent(in)    :: R(N,N)
+ complex(SP), intent(inout) :: O(N,N)
  !
  ! Work Space
  !
@@ -55,15 +56,11 @@ subroutine OBS_rotate(R,O,N,direction)
  if (direction == -1) forall(i=1:N,j=1:N) R_(i,j)=conjg(R(j,i))
  !
  ! [1] O_rot = (R_^{\dagger}) O
- !     O     = O_rot
  !
  call M_by_M('c','n',N,R_,O,O_rot)
- O = O_rot
  !
- ! [2] O_rot = O R_
- !     O     = O_rot
+ ! [2] O     = O_rot R_
  !
- call M_by_M('n','n',N,O,R_,O_rot)
- O = O_rot
+ call M_by_M('n','n',N,O_rot,R_,O)
  !
 end subroutine 

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -32,7 +32,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
 #endif
  use interfaces,          ONLY:WF_load,WF_free
  use LIVE_t,              ONLY:live_timing
- use electrons,           ONLY:levels,n_spinor,n_sp_pol
+ use electrons,           ONLY:levels,n_spinor,n_sp_pol,spin_string
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
 &                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
@@ -40,9 +40,9 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  use R_lattice,           ONLY:bz_samp
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach
  use X_m,                 ONLY:l_X_terminator
- use IO_m,                ONLY:io_control,RD_CL,RD
+ use IO_m,                ONLY:io_control,manage_action,OP_IF_START_RD_CL_IF_END
  use wave_func,           ONLY:wf_ng,WF
- use com,                 ONLY:error,msg
+ use com,                 ONLY:msg
  use timing_m,            ONLY:timing
 #if defined _RT
  use drivers,             ONLY:l_real_time
@@ -53,7 +53,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
 #include<dev_defs.h>
 #include<memory.h>
  !
-integer :: ierr
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
  type(DIPOLE_t),intent(inout) :: Dip
@@ -74,7 +73,7 @@ integer :: ierr
  !
  !I/O and external functions
  !
- integer                      :: ID,io_err(3),io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
+ integer                      :: ID,IO_ACT_NOW,io_err(3),io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
  integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
  !
  call timing('DIPOLE_transverse',OPR='start')
@@ -148,11 +147,11 @@ integer :: ierr
    !
  endif
  !
-                                      live_t_string='Dipoles: P (T):'
- if (l_eval_DIP_V)                    live_t_string='Dipoles: P and v (T):'
- if (l_eval_DIP_V .and.l_eval_DIP_iR) live_t_string='Dipoles: P, V and iR (T):'
- if (l_eval_DIP_P2.and.l_eval_DIP_V ) live_t_string='Dipoles: P, V and P2 (T):'
- if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR, P, V and P2 (T):'
+                                      live_t_string='Dipoles: P (T)'
+ if (l_eval_DIP_V)                    live_t_string='Dipoles: P and v (T)'
+ if (l_eval_DIP_V .and.l_eval_DIP_iR) live_t_string='Dipoles: P, V and iR (T)'
+ if (l_eval_DIP_P2.and.l_eval_DIP_V ) live_t_string='Dipoles: P, V and P2 (T)'
+ if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR, P, V and P2 (T)'
  !
  n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
@@ -173,16 +172,17 @@ integer :: ierr
      !
      if(l_use_comm) then
        if (io_KB_pwscf_err==0.and.ifrag>1) then
-         if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
-         if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
+         IO_ACT_NOW=manage_action(OP_IF_START_RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
+         call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
          io_KB_pwscf_err=io_KB_pwscf(ID)
        endif
        !
        if (io_KB_abinit_err==0.and.ifrag>1) then
-         if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
-         if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
+         IO_ACT_NOW=manage_action(OP_IF_START_RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
+         call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
          io_KB_abinit_err=io_KB_abinit(ID)
        endif
+       !
      endif
      ! 
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
@@ -191,8 +191,8 @@ integer :: ierr
      !
      ! WF load
      !
-     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',title='-Oscillators/G space',&
-&               force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',&
+&                 title='-Oscillators/G space/Transverse '//spin_string(i_sp_pol),force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      !
      if (io_KB_abinit_err==0.and.l_use_comm) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
      if (io_KB_pwscf_err ==0.and.l_use_comm) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)

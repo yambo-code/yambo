@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,7 +31,7 @@ subroutine electrons_current(Xk,Xen)
  use electrons,      ONLY:levels
  use YPPm,           ONLY:plot_title,l_norm_to_one,current_dir,plot_dim,output_fname,use_gnuplot,&
 &                         use_cube,use_xcrysden,plot_is_1D,v2plot
- use com,            ONLY:msg,of_open_close,error
+ use com,            ONLY:msg,of_open_close
  use interfaces,     ONLY:el_density_and_current
  !
  implicit none
@@ -54,7 +54,7 @@ subroutine electrons_current(Xk,Xen)
  !
  v2plot=v2plot/abs(maxval( v2plot ))
  !
- call msg("s",'Current integrals (x,y,z) [nAmpere]:',&
+ call msg("s",'Current integrals (x,y,z) [nAmpere]',&
 &             (/Sum(el_cur(:,1)),Sum(el_cur(:,2)),Sum(el_cur(:,3))/)*AU2nAmpere)
  !
  l_norm_to_one=.true.

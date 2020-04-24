@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF, IM
@@ -29,7 +29,6 @@ subroutine PP_uspp_init()
  use drivers,       ONLY:l_HF_and_locXC,l_col_cut,&
 &                        list_dbs,l_setup,l_rim
  use pars,          ONLY:SP,DP
- use com,           ONLY:error
  use vec_operate,   ONLY:c2a
  use D_lattice,     ONLY:nsym,dl_sop,atom_mapper
  use R_lattice,     ONLY:b,g_vec,ng_vec

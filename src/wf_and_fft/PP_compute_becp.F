@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF, IM
@@ -27,7 +27,6 @@ subroutine PP_compute_becp(becp, npwk, wf_nb, wf_c, wf_b_indx)
  ! assuming init_us_2 has already been called for the given kpt.
  !
  use pars,          ONLY:SP
- use com,           ONLY:error
  use electrons,     ONLY:n_spinor
  use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc
  use wave_func,     ONLY:wf_ncx

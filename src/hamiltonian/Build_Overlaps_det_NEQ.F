@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -27,11 +27,11 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  !
  use pars,           ONLY:SP,cZERO,cONE
  use electrons,      ONLY:levels,n_sp_pol
- use nl_optics,      ONLY:NL_bands,NL_nbands
+ use nl_optics,      ONLY:NL_bands
  use R_lattice,      ONLY:k_map,bz_samp
  use vec_operate,    ONLY:k_periodic_idx
  use DIPOLES,        ONLY:DIP_S
- use wrapper_omp,    ONLY:M_by_M_omp,M_by_V_omp,mv_cgemv_omp
+ use wrapper_omp,    ONLY:M_by_V_omp,mv_cgemv_omp
  use wrapper,        ONLY:Vstar_dot_V
  use QP_m,           ONLY:QP_nk
  use electric,       ONLY:l_force_SndOrd

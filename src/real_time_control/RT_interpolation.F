@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -30,7 +30,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:RT_carriers,l_RT_abs_yambo
  use com,            ONLY:msg
- use interpolate,    ONLY:INTERP_obj,INTERPOLATION_driver,l_integral_respect,NN_n_of_nearest
+ use interpolate,    ONLY:INTERP_obj,INTERPOLATION_driver_seed,INTERPOLATION_driver_do,l_integral_respect,NN_n_of_nearest
  use RT_control,     ONLY:RT_carriers_to_RT_k
  !
 #include<memory.h>
@@ -130,24 +130,24 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  !
  call msg('nr',   'Updated Carrier components')
  call msg('rn',   '==========================')
- call msg('r',    '['//trim(title)//'] Reference Time           [fs]: ',Time*AUT2FS)
- call msg('r',    '['//trim(title)//'] Bands range                  : ', (/nb(1),nb(2)/)) 
+ call msg('r',    '['//trim(title)//'] Reference Time           [fs] ',Time*AUT2FS)
+ call msg('r',    '['//trim(title)//'] Bands range                   ', (/nb(1),nb(2)/)) 
  !
  if (l_f) then
-   call msg('r',  '['//trim(title)//'] Maximum occupations change   : ',df_Max)
-   call msg('r',  '['//trim(title)//'] N of carriers                : ',N_carriers(1))
-   if (l_DbGd) call msg('r',  '['//trim(title)//']                 (Double Grid): ',N_carriers(2))
+   call msg('r',  '['//trim(title)//'] Maximum occupations change    ',df_Max)
+   call msg('r',  '['//trim(title)//'] N of carriers                 ',N_carriers(1))
+   if (l_DbGd) call msg('r',  '['//trim(title)//']                 (Double Grid) ',N_carriers(2))
  endif
  !
  if (l_E) then
-   call msg('r',  '['//trim(title)//'] Max energy levels change [ev]: ',dE_Max*HA2EV)
+   call msg('r',  '['//trim(title)//'] Max energy levels change [ev] ',dE_Max*HA2EV)
  endif
  !
- call msg('rn',  '['//trim(title)//'] Full and metallic bands       : ', (/E%nbf,E%nbm/)) 
+ call msg('rn',  '['//trim(title)//'] Full and metallic bands        ', (/E%nbf,E%nbm/)) 
  !
  if (.not.l_real_time) call REPORT_Occupations(trim(title),E)
  !
- call INTERPOLATION_driver(operation="END",ID_op=ID)
+ call INTERPOLATION_driver_end(ID)
  !
  contains
   !
@@ -160,9 +160,8 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
     ! Work Space
     integer      :: ik,i_carr,nb_max
     ! 
-    call INTERPOLATION_driver(bands=nb,SEED_k=RT_k,SEED_RT=RT_carriers,&
-&                             operation=OBJ//"_from_DB",ID_op=ID,NEAREST=.not.l_B)
-    call INTERPOLATION_driver(OUT_k=K,operation=OBJ//"_from_DB")
+    call INTERPOLATION_driver_seed(OBJ//"_from_DB",ID,nb,RT_k,SEED_RT=RT_carriers,NEAREST=.not.l_B)
+    call INTERPOLATION_driver_do(OBJ//"_from_DB",ID,K)
     !
     nb_max=    nb(2)
     if (IS_DBGD) nb_max=min(nb(2),BZ_DbGd_nbands)

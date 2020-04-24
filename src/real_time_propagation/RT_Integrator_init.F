@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -97,7 +97,7 @@ subroutine RT_Integrator_init()
  if (l_RT_DIAG  ) Integrator_name = trim(Integrator_name)//" + DIAG"
  if (l_RT_PERT  ) Integrator_name = trim(Integrator_name)//" + PERT"
  !
- call msg('s','Integrator: '//trim(Integrator_name))
+ call msg('s','Integrator '//trim(Integrator_name))
  !
  ! e) Define integrators tables
  !

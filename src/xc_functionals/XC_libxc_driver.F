@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, DS, DV
@@ -29,7 +29,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! (21/11/13: for HYB_GGA the GGA part calculated => TO TEST) 
  !
  use pars,           ONLY:SP,DP,pi,RZERO
- use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol,alat
 #if defined _RT
@@ -243,8 +242,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          E_xc = E_xc + real(tmp_exc,SP)    
        case(1)
          call xc_f90_lda_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_vxc(1,1))
-         forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(tmp_vxc(i2,i1),SP)         
-       case(2) 
+         forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(tmp_vxc(i2,i1),SP)
+       case(2)
          call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_fxc(1,1))
          do is1 = 1,n_spin
            do is2 = 1,n_spin

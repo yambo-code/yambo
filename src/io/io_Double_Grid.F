@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,7 +30,7 @@ integer function io_Double_Grid(E,Xk,ID)
  use R_lattice,      ONLY:nXkbz,bz_samp
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,ver_is_gt_or_eq,file_is_present,write_is_on,&
-&                         IO_OUTDATED_DB
+&                         IO_OUTDATED_DB,variable_exist
  use timing_m,       ONLY:timing
 #include<memory.h>
  !
@@ -40,7 +40,7 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Work Space
  !
- integer :: DG_format
+ integer :: DG_format,VAR_SZ
  !
  call timing('io_Double_Grid',OPR='start')
  !
@@ -61,32 +61,34 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  if (io_Double_Grid/=0) goto 1
  !
- io_Double_Grid=io_header(ID)
+ if (write_is_on(ID).or.variable_exist(ID,"HEAD_R_LATT")) then
+   io_Double_Grid=io_header(ID,R_LATT=.TRUE.,IMPOSE=.TRUE.)
+ else
+   io_Double_Grid=io_header(ID)
+ endif
  !
  if (.not.ver_is_gt_or_eq(ID,revision=3560)) io_Double_Grid=IO_OUTDATED_DB
  !
  if (io_Double_Grid/=0) goto 1
  !
- if (DG_format==1) then
-   call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=1)
- else
-   call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=1)
- endif
+ VAR_SZ=6
+ if (DG_format==1) VAR_SZ=4
+ call io_elemental(ID,VAR="PARS",VAR_SZ=VAR_SZ,MENU=0)
  !
- call io_elemental(ID,I0=BZ_DbGd_nbands,        VAR=' Bands                           :')
+ call io_elemental(ID,I0=BZ_DbGd_nbands,        VAR=' Bands                           ')
  call io_elemental(ID,I0=BZ_DbGd_tot_nk)
- call io_elemental(ID,I0=BZ_DbGd_tot_nk_levels, VAR=' Fine grid number of points      :')
+ call io_elemental(ID,I0=BZ_DbGd_tot_nk_levels, VAR=' Fine grid number of points      ')
  ! 
  if (DG_format==3) then
-   call io_elemental(ID,I0=BZ_ASSOCIATED_nkpts, VAR=' BZ ASSOCIATED k-points          :')
+   call io_elemental(ID,I0=BZ_ASSOCIATED_nkpts, VAR=' BZ ASSOCIATED k-points          ')
  else
    BZ_ASSOCIATED_nkpts=nXkbz
  endif
  !
- call io_elemental(ID,I0=BZ_DbGd_max_filling,VAR=' BZ Blocks max filling           :')
+ call io_elemental(ID,I0=BZ_DbGd_max_filling,VAR=' BZ Blocks max filling           ')
  !
  if (DG_format==3) then
-   call io_elemental(ID,L0=DbGd_is_symmetry_expanded,VAR=' Points expanded in the BZ       :')
+   call io_elemental(ID,L0=DbGd_is_symmetry_expanded,VAR=' Points expanded in the BZ       ')
  else
    DbGd_is_symmetry_expanded=.TRUE.
  endif

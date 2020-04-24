@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -170,7 +170,7 @@ subroutine RT_manual_excitation(E,k)
    !
  enddo
  !
- call msg('sr','[RT] Carrier number        :',delta_Nel)
- call msg('sr','[RT]         density [cm-3]:',delta_Nel/(DL_vol*BO2ANG**3*1.E-24_SP))
+ call msg('sr','[RT] Carrier number        ',delta_Nel)
+ call msg('sr','[RT]         density [cm-3]',delta_Nel/(DL_vol*BO2ANG**3*1.E-24_SP))
  !
 end subroutine RT_manual_excitation

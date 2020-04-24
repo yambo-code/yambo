@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,DS
@@ -31,7 +31,6 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  use R_lattice,     ONLY:bz_samp,q_norm
  use D_lattice,     ONLY:DL_vol
  use X_m,           ONLY:use_X_DbGd,l_drude
- use com,           ONLY:warning
  !
  implicit none
  !
@@ -84,7 +83,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  !
  if(.not.all(Drude_term)) return
  !
- call msg('nrs','[X/K] Drude contribution @[ev]:',(/real(Wd),aimag(Wd)/)*HA2EV)
+ call msg('nrs','[X/K] Drude contribution @[ev]',(/real(Wd),aimag(Wd)/)*HA2EV)
  !
  ! drude_factor is the eh_occ factor calculated in the Xo loop
  ! evaluated at the fermi state

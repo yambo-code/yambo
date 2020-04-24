@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF,DS
@@ -174,7 +174,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
    do i1=1,iG_
      !
      v1(:)=g_vec(i1,:)-g_vec(i2,:)
-     G_m_G(i1,i2)=G_index(v1)
+     G_m_G(i1,i2)=G_index(v1,.false.)
      !
    enddo
  enddo

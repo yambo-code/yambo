@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,25 +29,25 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
  use pars,          ONLY:pi,SP,cZERO
  use units,         ONLY:HA2EV
- use stderr,        ONLY:intc,set_real_printed_length
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,BZ_DbGd_tot_nk_levels
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use DIPOLES,       ONLY:DIP_alloc,DIPOLE_t
+ use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
- use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
+ use TDDFT,         ONLY:FXC_desc,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
  use X_output,      ONLY:X_setup_file_names,eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,&
-&                        X_write_q_plus_G,X_write_descriptions,X_write_messages_before_headers,headers,&
+&                        X_write_q_plus_G,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load,WF_free
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load,&
+&                        WF_free,DESC_write
  use matrix,        ONLY:MATRIX_reset
  !
 #include<memory.h>
@@ -73,8 +73,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  call X_pre_setup(Xen,X)
  !
- call set_real_printed_length(f_length=10,g_length=10)
- !
  allocate(X_par(1))
  !
  do iq=X%iq(1),X%iq(2)
@@ -82,7 +80,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! PARALLEL indexes
    !==================
    !
-   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
+   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X)
    !
    ! WF distribution 
    !=================
@@ -183,22 +181,16 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Fxc descriptions
    !
    if (l_bs_fxc) then
-     call X_write_descriptions(FXC_n_descs,FXC_description)
-     call msg('o eps_q eel_q alpha','#',' TDDFT|Fxc size             :'//trim(intc(FXC_n_g_corr)),INDENT=0)    
-     call msg('o eps_q eel_q alpha','#','      |Hartree size         :'//trim(intc(X%ng)),INDENT=0)    
-     call msg('o eps_q eel_q alpha','#','      |Ordering             :'//trim(X%ordering),INDENT=0)    
+     call DESC_write('o eps_q refl eel_q fxc alpha off beta moke jdos','#',FXC_desc)
+     call msg('o eps_q eel_q alpha','# TDDFT|Fxc size             ',FXC_n_g_corr,INDENT=0)    
+     call msg('o eps_q eel_q alpha','#      |Hartree size         ',X%ng        ,INDENT=0)    
+     call msg('o eps_q eel_q alpha','#      |Ordering             ',X%ordering  ,INDENT=0)    
      !
      ! Fxc file titles
      !
      call X_setup_headers('q^2Fxc')
      call msg('o fxc','#',(/headers(1),headers(3),headers(2)/),INDENT=0,USE_TABS=.true.)    
      call msg('o fxc','#')
-   endif
-   !
-   ! BZ Double Grid
-   !
-   if (use_X_DbGd) then
-     call msg('o eps_q eel_q fxc alpha','# BZ Energy DbGd points:',BZ_DbGd_tot_nk_levels,INDENT=0)
    endif
    !
    if (iq==1) call PP_redux_wait
@@ -222,21 +214,26 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! Without LF eps
    !
-   if (Macroscopic_CPU) Epsilon_ii(:,1)=1.0_SP-X_par(1)%blc(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
+   if (Macroscopic_CPU) Alpha(:,1)=-X_par(1)%blc(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
    !
    ! X Dyson equation solver
    !
-   if (l_rpa_IP) then
+   if (.not.l_rpa_IP) call X_redux(iq,X_par(1),wv,X)
+   !
+   if (Macroscopic_CPU) then
      !
-     if (Macroscopic_CPU) Epsilon_ii(:,2)=Epsilon_ii(:,1)
+     if (     l_rpa_IP) then
+       Alpha(:,2)=Alpha(:,1)
+     else
+       if(.not.l_col_cut) Alpha(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)-1._SP
+       ! Here I assume X_par is small and I use 1/(1+x)~1-x 
+       if(     l_col_cut) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
+     endif
      !
-   else
-     !
-     call X_redux(iq,X_par(1),wv,X)
-     !
-!     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
+!    Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
 !&                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
-     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)
+     !
+     Epsilon_ii(:,1:2)=1._SP+Alpha(:,1:2)
      !
    endif
    !
@@ -257,6 +254,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
    !
    call X_write_messages_before_headers(iq,allocated(Xen%GreenF),X%Vnl_included,X%ordering)
+   !
+   ! BZ Double Grid
+   !
+   if (use_X_DbGd) call msg('o eps_q eel_q fxc alpha','# DbGd| Energy Points   ',BZ_DbGd_tot_nk_levels,INDENT=0)
    !
    ! Titles 
    !
@@ -282,8 +283,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    enddo
    !
    call of_open_close(eps_file_name)
-   call of_open_close(eel_file_name)
-   call of_open_close(alpha_file_name)
    !
    ! EEL
    !
@@ -317,10 +316,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      call of_open_close(alpha_file_name,'oa')
      !
      if(l_col_cut) then
-       alpha_factor=eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
-       Alpha(:,1)=(Epsilon_ii(:,1)-1._SP)*alpha_factor
-       if(     l_rpa_IP) Alpha(:,2)= Alpha(:,1)
-       if(.not.l_rpa_IP) Alpha(:,2)=(Epsilon_ii(:,2)-1._SP)*alpha_factor
+       alpha_factor=eps_2_alpha/4._SP/pi
+       Alpha(:,1)=Alpha(:,1)*alpha_factor
+       if(     l_rpa_IP) Alpha(:,2)=Alpha(:,2)*alpha_factor
+       if(.not.l_rpa_IP) Alpha(:,2)=Alpha(:,2)*alpha_factor*bare_qpg(1,1)**2/q_norm(1)**2
      else
        alpha_factor=eps_2_alpha/4._SP/pi
        Alpha(:,1)=(1._SP+EEL(:,1))*alpha_factor
@@ -376,7 +375,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  deallocate(X_par)
  call WF_free(WF)
  call PP_redux_wait
- call set_real_printed_length()
  if (allocated(FXC)) then
    YAMBO_FREE(FXC)
  endif

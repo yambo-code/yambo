@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -29,7 +29,7 @@ integer function io_DIPOLES(Dip,ID)
  use R_lattice,     ONLY:nXkibz
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,io_DIP,&
 &                        io_bulk,read_is_on,io_header,io_extension,&
-&                        IO_NOT_ALLOWED,io_fragment,manage_OP_IF_START_and_CL_IF_END
+&                        IO_NOT_ALLOWED,io_fragment
 #if defined _RT
  use DIPOLES,       ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
  use electrons,     ONLY:n_spinor
@@ -138,10 +138,6 @@ integer function io_DIPOLES(Dip,ID)
    ! GPL_EXCLUDE_END
    !
  endif
- !
- ! Manage OP_IF_START_and_RD_CL_IF_END
- !
- call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,LAST=nXkibz)
  !
  ! Fragmentation
  !

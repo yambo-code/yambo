@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -48,7 +48,7 @@ subroutine excitons_degeneracy_average(N,BS_E_degs,R,C,VERB)
    n_deg=count(BS_E_degs==i_l)
    !
    if (present(VERB)) then
-     if (n_deg>1.and.VERB) call msg('s',':: State '//trim(intc(i_l))//' Merged with states '//&
+     if (n_deg>1.and.VERB) call msg('s',' State '//trim(intc(i_l))//' Merged with states '//&
 &                                        trim(intc(BS_E_degs(i_l)))//' -> '//&
 &                                        trim(intc(BS_E_degs(i_l)+n_deg-1)))
    endif

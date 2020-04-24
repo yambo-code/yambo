@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -25,9 +25,10 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  use pars,          ONLY:SP
  use electrons,     ONLY:levels
- use IO_m,          ONLY:io_control,OP_WR_CL,REP
+ use IO_m,          ONLY:io_control,OP_WR,WR_CL,REP
  use R_lattice,     ONLY:bz_samp
- use RT_control,    ONLY:OBS_RT_IO_t
+ use RT_control,    ONLY:CARR_RT_IO_t
+ use parallel_m,    ONLY:PAR_G_kpts
  use real_time,     ONLY:RT_carriers,NE_i_time,l_elel_scatt,l_elph_scatt,&
 &                        l_elphoton_scatt,l_RT_CCA_Kernel,RT_alloc,RT_free,RT_potential
  use YPP_real_time, ONLY:l_RTpump_energy,l_RTpump_kspace,l_RTpump_Fermi
@@ -45,6 +46,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  call section('*','Manual carriers excitation')
  !
  NE_i_time   =1
+ PAR_G_kpts=(/1,kpt%nibz/)
  !
  l_elel_scatt    =.true.
  l_elph_scatt    =.true.
@@ -54,7 +56,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  call RT_k_grid(en,kpt,qpt)
  !
- call RT_alloc(en)
+ call RT_alloc(en,"carriers")
  !
  call RT_carriers_object(RT_carriers,en,kpt,ID,"allocate")
  !
@@ -62,18 +64,18 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  if(l_RTpump_Fermi)                       call RT_Fermi_excitation(en,kpt)
  !
- OBS_RT_IO_t%N=1
- allocate(OBS_RT_IO_t%Time(1))
- OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=0._SP
+ CARR_RT_IO_t%N=1
+ allocate(CARR_RT_IO_t%Time(1))
+ CARR_RT_IO_t%Time(CARR_RT_IO_t%N)=0._SP
  !
- call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=REP,ID=ID)
+ call io_control(ACTION=OP_WR,SEC=(/1,2/),COM=REP,ID=ID)
  io_RT_err=io_RT_components("carriers",ID)
  !
- call io_control(ACTION=OP_WR_CL,SEC=(/NE_i_time+1/),COM=REP,ID=ID)
+ call io_control(ACTION=WR_CL,SEC=(/3/),COM=REP,ID=ID)
  io_RT_err=io_RT_components("carriers",ID)
  !
  call RT_carriers_object(RT_carriers,en,kpt,ID,"free")
  !
- call RT_free()
+ call RT_free("carriers")
  !
 end subroutine

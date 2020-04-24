@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -404,6 +404,7 @@ module parallel_m
  integer            :: PAR_n_c_bands(2) = 0
  integer            :: PAR_n_v_bands(2) = 0
  integer            :: PAR_n_G_vectors  = 0
+ integer            :: PAR_G_kpts(2)    = 0  ! For parallel I/O of G
  !
  ! ... and derived variables
  !==========================
@@ -470,8 +471,10 @@ module parallel_m
    !
    subroutine PAR_build_index(PAR_ind,N_elements,V_ind,n_V_ind)
      !
-     integer           ::N_elements,n_V_ind,V_ind(N_elements),i_p
-     type(PP_indexes)  ::PAR_ind
+     type(PP_indexes), intent(in)   :: PAR_ind
+     integer,          intent(in)   :: N_elements
+     integer,          intent(out)  :: n_V_ind,V_ind(N_elements)
+     integer                        :: i_p
      !
      V_ind  =0
      n_V_ind=0
@@ -561,8 +564,8 @@ module parallel_m
    subroutine CPU_str_reset()
      CPU_structure(1)%Long_Description="DIPOLES"
      CPU_structure(1)%Short_Description="DIP"
-     CPU_structure(2)%Long_Description="Response_G_space_Finite_Momentum"
-     CPU_structure(2)%Short_Description="X_finite_q"
+     CPU_structure(2)%Long_Description="Response_G_space_and_IO"
+     CPU_structure(2)%Short_Description="X_and_IO"
      CPU_structure(3)%Long_Description="Response_G_space"
      CPU_structure(3)%Short_Description="X"
      CPU_structure(4)%Long_Description="Response_T_space"
@@ -642,9 +645,7 @@ module parallel_m
      if (ncpu==1) return
      !
      local_COMM=mpi_comm_world
-     if (present(COMM)) then
-       local_COMM=COMM
-     endif
+     if (present(COMM)) local_COMM=COMM
      if (local_COMM==comm_default_value) return
      call mpi_barrier(local_COMM,i_err)
 #endif

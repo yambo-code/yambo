@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -76,6 +76,11 @@ subroutine k_expand(k)
  logical         :: k_found
  !
  if (allocated(k%sstar)) return
+ !
+ YAMBO_FREE(k%star)
+ YAMBO_FREE(k%nstar)
+ YAMBO_FREE(k%weights)
+ 
  !
  YAMBO_ALLOC(k%star,(k%nibz,nsym))
  YAMBO_ALLOC(k%nstar,(k%nibz))

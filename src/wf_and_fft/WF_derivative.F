@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -40,7 +40,6 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
 #if defined _MAGNETIC
  use SC,             ONLY:SC_bands,found_SC_DB
 #endif
- use com,            ONLY:warning
  !
 #include<memory.h>
  ! Input variables

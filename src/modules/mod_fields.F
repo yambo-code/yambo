@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -80,6 +80,7 @@ module fields
 &                        trim(E_field%ef_name) == 'THETA' ,& 
 &                        trim(E_field%ef_name) == 'PULSE' ,& 
 &                        trim(E_field%ef_name) == 'QSSIN' ,&
+&                        trim(E_field%ef_name) == 'SPULSE',&
 &                        trim(E_field%ef_name) == 'QSFIELD' /)) .and. &
 &                 any((/ trim(E_field%ef_pol)  == 'linear' ,&
 &                        trim(E_field%ef_pol)  == 'circular' /))
@@ -245,8 +246,6 @@ module fields
        case('QSFIELD')
          WtimesT=W_0*(T-T_0)+fr_shift(i_field)
          EXPf=exp(-(T-T_0)**2/(2._SP*sigma**2) )
-         cZ=(sigma**2*W_0-cI*(T-T_0))/(sigma*sqrt(2._SP))
-         cS=cmplx(W_0**2*sigma**2/2._SP,fr_shift(i_field),SP)
          !
          if (order==0 ) f_t(i_field)=      sin(WtimesT)                                 *EXPf
          if (order==1 ) f_t(i_field)=( W_0*cos(WtimesT)-(T-T_0)*sin(WtimesT)/sigma**2)*EXPf

@@ -1,6 +1,6 @@
 #! @SHELL@
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -30,6 +30,7 @@ target=$1
 if test `find . -maxdepth 1 -name '__*' | wc -l` -ge 1 ; then
  for file in __*
  do
+ echo "Saving objects in .objects$file";
   if test `find . -maxdepth 1 -name '*.o' | wc -l` -ge 1 ; then
    if test ! -d .objects$file; then mkdir .objects$file; fi
    mv *.o .objects"$file"/
@@ -46,6 +47,7 @@ touch "$target"
 #
 if test -d .objects$target; then
  if test `find .objects$target/ -name '*.o' | wc -l` -ge 1 ; then
+  echo "Loading objects from $target";
   mv .objects$target/*.o .
  fi
 fi

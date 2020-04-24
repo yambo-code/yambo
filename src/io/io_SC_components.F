@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,7 +34,7 @@ integer function io_SC_components(what,E_sc,ID)
  use hamiltonian,    ONLY:V_xc_sc,V_hartree_sc,H_nl_sc,l_sc_V_is_local,H_rotation
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,frag_SC,&
-&                         manage_OP_IF_START_and_CL_IF_END,variable_exist,io_SC,IO_NOT_ALLOWED,&
+&                         variable_exist,io_SC,IO_NOT_ALLOWED,&
 &                         io_fragment,ver_is_gt_or_eq
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:levels,n_sp_pol,n_spin
@@ -48,8 +48,6 @@ integer function io_SC_components(what,E_sc,ID)
  ! Work Space
  !
  integer, external     :: variables_SC
- character(lchlen)     :: local_description(100)
- !
  integer               :: ik,i_sp_pol,ib,i_sec,bands_to_load,VAR_SIZE
  logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_T_EL
  real(SP), allocatable :: E_tmp(:,:)
@@ -109,8 +107,8 @@ integer function io_SC_components(what,E_sc,ID)
    !
    if (io_SC_components/=0) goto 1
    !
-   io_SC_components=variables_SC(ID,local_description,what)
-   !=======================================================
+   io_SC_components=variables_SC(ID,what)
+   !======================================
    if (io_SC_components/=0) goto 1
    !
    if(any((/l_E,l_V,l_WF,l_MP/))) then
@@ -129,8 +127,6 @@ integer function io_SC_components(what,E_sc,ID)
    if (io_SC_components/=0) goto 1
    !
  endif
- ! 
- call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,LAST=nkibz)
  !
  ! Potential
  !===========

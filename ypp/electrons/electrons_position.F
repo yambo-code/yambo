@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -30,7 +30,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  use wave_func,      ONLY:WF
  use electrons,      ONLY:n_sp_pol
  use LIVE_t,         ONLY:live_timing
- use com,            ONLY:msg,of_open_close,error
+ use com,            ONLY:msg,of_open_close
  use YPPm,           ONLY:output_fname
  use wrapper,        ONLY:Vstar_dot_V
  use stderr,         ONLY:intc

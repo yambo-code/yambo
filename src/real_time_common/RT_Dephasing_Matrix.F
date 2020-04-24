@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -25,7 +25,7 @@ subroutine RT_Dephasing_Matrix(E)
  !
  use pars,          ONLY:SP,pi
  use units,         ONLY:FS2AUT
- use com,           ONLY:error,msg
+ use com,           ONLY:msg
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:nXkibz
  use real_time,     ONLY:RT_Deph_Matrix,RT_is_statically_dephased,Phase_LifeTime,&

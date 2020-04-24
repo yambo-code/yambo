@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, HM, DS
@@ -28,7 +28,7 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
                                      &  Z0, Z1, Z2, Z3, Z4, Z5,    &
                                      &  L0, L1, L2, L3, L4,        &
                                      & CH0,CH1,CH2,CH3,CH4,        &
-                                     &                     IPOS)
+                                     & STR0,STR1,              IPOS)
  !
  use pars,          ONLY:SP,DP,LP
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
@@ -42,8 +42,10 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  integer,     optional, intent(inout) ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
  real(SP),    optional, intent(inout) ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
  real(DP),    optional, intent(inout) ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
- complex(SP), optional, target, intent(inout) ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
- complex(DP), optional, target, intent(inout) ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
+ complex(SP), optional, target, intent(inout) ::  C0, C1(:)
+ complex(DP), optional, target, intent(inout) ::  Z0, Z1(:)
+ complex(SP), optional, target, contiguous, intent(inout) ::  C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
+ complex(DP), optional, target, contiguous, intent(inout) ::  Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
  !
  ! These types can be used instead of logical that are not supported by NetCdf
  !
@@ -52,30 +54,46 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  ! Characters (nf90_char) in netcdf occupy the same space as L0 (nf90_byte)
  !
  character,   optional, intent(inout) :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
+ character(*),optional, intent(inout) :: STR0,STR1(:)
  ! 
  ! Work Space
  !
- real(SP), pointer    :: RC0(:),RC1(:,:),RC2(:,:,:),RC3(:,:,:,:),RC4(:,:,:,:,:),RC5(:,:,:,:,:,:),RC6(:,:,:,:,:,:,:)
- real(DP), pointer    :: RZ0(:),RZ1(:,:),RZ2(:,:,:),RZ3(:,:,:,:),RZ4(:,:,:,:,:),RZ5(:,:,:,:,:,:)
+ real(SP), pointer, contiguous :: RC0(:),RC1(:,:),RC2(:,:,:),RC3(:,:,:,:),RC4(:,:,:,:,:),RC5(:,:,:,:,:,:),RC6(:,:,:,:,:,:,:)
+ real(DP), pointer, contiguous :: RZ0(:),RZ1(:,:),RZ2(:,:,:),RZ3(:,:,:,:),RZ4(:,:,:,:,:),RZ5(:,:,:,:,:,:)
  !
  integer, allocatable :: ipos_loc(:),isize_loc(:)
- integer              :: nf_error,dims,link_err
+ integer              :: nf_error,dims
  !
  nf_error=0
  dims =0
  !
- if (present(CH1).or.present(L1).or.present(I1).or.present(R1).or.present(D1)                              ) dims=1
- if (present(CH2).or.present(L2).or.present(I2).or.present(R2).or.present(D2).or.present(C1).or.present(Z1)) dims=2
- if (present(CH3).or.present(L3).or.present(I3).or.present(R3).or.present(D3).or.present(C2).or.present(Z2)) dims=3
- if (present(CH4).or.present(L4).or.present(I4).or.present(R4).or.present(D4).or.present(C3).or.present(Z3)) dims=4
- if (                               present(I5).or.present(R5).or.present(D5).or.present(C4).or.present(Z4)) dims=5
- if (                                                                            present(C5).or.present(Z5)) dims=6
- if (                                                                            present(C6)               ) dims=7
+ if (present(CH0).or.present(L0).or.present(I0).or.present(R0).or.present(D0)                              ) dims=0
+ if (present(CH1).or.present(L1).or.present(I1).or.present(R1).or.present(D1).or.present(STR0)                              ) dims=1
+ if (present(CH2).or.present(L2).or.present(I2).or.present(R2).or.present(D2).or.present(STR1).or.present(C1).or.present(Z1)) dims=2
+ if (present(CH3).or.present(L3).or.present(I3).or.present(R3).or.present(D3)                 .or.present(C2).or.present(Z2)) dims=3
+ if (present(CH4).or.present(L4).or.present(I4).or.present(R4).or.present(D4)                 .or.present(C3).or.present(Z3)) dims=4
+ if (                               present(I5).or.present(R5).or.present(D5)                 .or.present(C4).or.present(Z4)) dims=5
+ if (                                                                                             present(C5).or.present(Z5)) dims=6
+ if (                                                                                             present(C6)               ) dims=7
  !
  if(dims>0) then
    allocate(ipos_loc(dims),isize_loc(dims))
    if (     present(IPOS)) ipos_loc=IPOS
    if (.not.present(IPOS)) ipos_loc=1
+ endif
+ !
+ ! Strings numbers / vectors
+ !
+ if (present(STR0)) then
+   isize_loc=(/len(STR0)/)
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), STR0, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), STR0, ipos_loc, isize_loc)
+ endif
+ !
+ if (present(STR1)) then
+   isize_loc=(/len(STR1(1)),size(STR1)/)
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), STR1, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), STR1, ipos_loc, isize_loc)
  endif
  !
  ! Character numbers / vectors / matricies

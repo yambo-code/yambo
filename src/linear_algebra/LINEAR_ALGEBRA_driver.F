@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -46,8 +46,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use parallel_m,    ONLY:linear_algebra_is_parallel,ncpu
  use interfaces,    ONLY:MATRIX_transfer
  use BS,            ONLY:BS_block,BS_H_dim
- use com,           ONLY:warning
  use timing_m,      ONLY:timing
+ !
 #include<memory.h>
  !
  integer                    :: idriver

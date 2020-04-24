@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MF, AF
@@ -96,7 +96,6 @@ contains
   end subroutine cuda_setup
   !
   subroutine cuda_linalg_setup()
-    use com,  ONLY:error
     implicit none
 #ifdef _CUDA
     integer :: istat 

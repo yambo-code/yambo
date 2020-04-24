@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -41,11 +41,11 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:nel,levels,n_spin,Spin_magn,Orbital_magn,Itinerant_magn
  use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_bands,&
-&                         RT_P,RT_magn,RT_P_prev,RT_nk,G_lesser_reference,NE_i_time,&
+&                         RT_P,RT_spin_magn,RT_orbt_magn,RT_P_prev,G_lesser_reference,NE_i_time,&
 &                         RT_dyn_step,l_P_integrating_J,l_velocity_gauge_diam,integrator_step
  use fields,         ONLY:gauge_field
  use DIPOLES,        ONLY:DIP_iR,DIP_v,DIP_spin,DIP_orbital
- use parallel_m,     ONLY:PAR_DIPk_nibz
+ use parallel_m,     ONLY:PAR_DIPk_nibz,PAR_G_kpts
  use RT_interfaces,  ONLY:RT_average_operator
  use RT_control,     ONLY:RT_do_it
  !
@@ -53,7 +53,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  type(bz_samp),     intent(in) :: k
  type(levels),      intent(in) :: E
- complex(SP),       intent(in) :: G_input(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP),       intent(in) :: G_input(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2))
  type(gauge_field), intent(in) :: A_input
  !
  ! Work Space
@@ -105,27 +105,26 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  ! GPL_EXCLUDE_START
  !
- if (.not.(RT_do_it('OUT').or.RT_do_it('OBS'))) return
- !
  if(n_spin>1) then
    !
    ! C : Spin magnetization
    !
-   call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin,&
+   call RT_average_operator(N_V=3,V_VALUE=RT_spin_magn,PV_MATRIX=DIP_spin(:,:,:,:,:),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-   RT_magn(:,1)=RT_M_tmp
    !
    if(NE_i_time==1) then
-     call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin,&
+     call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:),&
 &                             G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
      Spin_magn=real(RT_M_tmp,SP)
    endif
+   !
+   if (.not.(RT_do_it('OUT').or.RT_do_it('OBS'))) return
    !
    ! D : Orbital magentization (local and itinerant contributions)
    !
    call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-   RT_magn(:,2)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
+   RT_orbt_magn(:,1)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
    !
    if(NE_i_time==1) then
      call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
@@ -135,7 +134,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
    !
    call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-   RT_magn(:,3)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
+   RT_orbt_magn(:,2)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
    ! 
    if(NE_i_time==1) then
      call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&

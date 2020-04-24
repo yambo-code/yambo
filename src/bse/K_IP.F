@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -43,7 +43,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,L_kind,BS_bands
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
-&                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
+&                        PAR_COM_Xk_ibz_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use parser_m,      ONLY:parser
  use timing_m,      ONLY:timing
@@ -69,7 +69,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2/n_sp_pol),&
 &                    para_term_w0,diam_term_used
 #if defined _PL
- complex(SP)       ::rotated_P(3),P_weighted(3)
+ complex(SP)       ::P_weighted(3)
  real(SP)          ::res_PL(2)
 #endif
  !
@@ -89,8 +89,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Polarizability ?
  !==================
  if (trim(alpha_dim)/='adim') then
-   call msg('r', 'Optical renormalization   [au]:',eps_2_alpha)
-   call msg('rn','Polarizability dimension      :',trim(alpha_dim))
+   call msg('r', 'Optical renormalization   [au]',eps_2_alpha)
+   call msg('rn','Polarizability dimension      ',trim(alpha_dim))
  endif
  !
  if(trim(global_gauge)=="velocity") call parser('NoCondSumRule',skip_cond_sum_rule)
@@ -123,7 +123,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if (iq==1) then
    call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err,'K')
  else
-   call WF_load(WF,1,maxval(qindx_X(:,:,2)),BS_bands,(/1,Xk%nibz/),title='-Oscillators/R space')
+   call WF_load(WF,1,maxval(qindx_X(:,:,2)),BS_bands,(/1,Xk%nibz/),title='-Oscillators/R space/K_IP')
    call elemental_collision_free(BSE_scatt)
    call elemental_collision_alloc(BSE_scatt,NG=1,TITLE="BSE") 
  endif
@@ -132,12 +132,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (trim(global_gauge)=='length'  ) then
    conjg_fac=-1._SP
-   dip_kind ="DIP_iR"
+   DIP_kind ="DIP_iR"
    field_dir=Dip%q0/v_norm(Dip%q0)*q0_def_norm
  endif
  if (trim(global_gauge)=='velocity') then
    conjg_fac=+1._SP
-   dip_kind ="DIP_v"
+   DIP_kind ="DIP_v"
    field_dir=Dip%q0/v_norm(Dip%q0)
  endif
  !
@@ -168,7 +168,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      if(iq==1) then
        !
-       DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ik_bz,i_sp_pol,dip_kind,Xk))
+       DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ik_bz,i_sp_pol,DIP_kind,Xk))
        !
      else
        !

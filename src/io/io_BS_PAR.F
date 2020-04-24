@@ -21,38 +21,33 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_BS_PAR_init(iq,X,ID)
+subroutine io_BS_header(iq,X,ID)
  !
  ! Intialize variables on BSE netcdf parallel file
  !
- use parallel_m,    ONLY:master_cpu,MPI_COMM_WORLD,PP_redux_wait
+ use parallel_m,    ONLY:MPI_COMM_WORLD,PP_redux_wait
  use com,           ONLY:msg
- use pars,          ONLY:IP,IPL,SP,schlen,lchlen,max_io_vars_open
+ use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
- use BS,            ONLY:BS_K_dim,BS_IO_dim,BS_K_coupling,l_BSE_restart,l_BSE_kernel_complete,&
-&                        BSK_IO_mode,MAX_BSK_LIN_SIZE
+ use BS,            ONLY:BS_K_cutoff,l_BSE_restart,l_BSE_kernel_complete
  use BS_solvers,    ONLY:variables_BS,BSS_desc
  use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,&
-&                        io_connect,io_elemental,def_variable_bulk,variable_exist,&
-&                        io_header,io_file,io_BS_K
+&                        io_connect,io_elemental,io_header,io_BS_K
  use descriptors,   ONLY:IO_desc,IO_desc_duplicate
  !
  implicit none
  !
  type(X_t) :: X 
- integer :: iq, ID
+ integer   :: iq, ID
  !
  logical, external :: file_exists
  integer, external :: variables_BS_more
  !
- logical :: def_var, io_var
- integer(IPL) :: BS_lin_size
- integer :: io_BS, VAR_IDs(max_io_vars_open), n_vars, i1, i_rep,i_var, BSK_n_dims,n_replica
+ integer           :: io_BS
  type(IO_desc)     :: local_desc
  character(schlen) :: db_name
- character(lchlen) :: full_db_name,ch(8,max_io_vars_open)
- character(schlen) :: dim_names(3)
+ character(lchlen) :: full_db_name
  !
  ! Connect to parallel netCDF file.
  !
@@ -74,6 +69,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  call PP_redux_wait()
  !
+ db_name='BS_head_Q'//trim(intc(iq))
+ !
  io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
  if(io_BS/=0) return
  !
@@ -89,18 +86,24 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  if (io_BS/=0) then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
-   call warning('Invalid dimensions found. BSE restart file '//trim(io_file(ID))//' not accepted')
+   call warning('Invalid dimensions found. BSE restart file '//trim(full_db_name)//' not accepted')
    return
  endif
  !
  io_BS=variables_BS_more(ID,'start')
  !
  if(read_is_on(ID).and.io_BS_K) then
-   if(l_BSE_kernel_complete) then
-     call msg("s","Complete BSE file found in "//trim(io_file(ID))//". Loading kernel.")
+   if(l_BSE_kernel_complete.and.BS_K_cutoff==0._SP) then
+     call msg("s","Trying to load complete BSE file  ",trim(full_db_name))
    else
-     call msg("s","Partial BSE file found in "//trim(io_file(ID))//". Not accepted in reading mode.")
+     call msg("s","Possible partial BSE file not accepted in reading mode ",trim(full_db_name))
    endif
+ endif
+ !
+ if(read_is_on(ID).and.BS_K_cutoff>0._SP.and.l_BSE_kernel_complete) then
+   db_name='BS_COMPRESSED_Q'//trim(intc(iq))
+   full_db_name=get_name(trim(db_name)," ",2,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
+   call msg("s","Trying to load compressed BSE file  ",trim(full_db_name))
  endif
  !
  call PP_redux_wait()
@@ -109,8 +112,43 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !   
  call IO_desc_duplicate(local_desc,BSS_desc)
  !
- if(.not.io_BS_K) return
- ! 
+end subroutine io_BS_header
+!
+!
+subroutine io_BS_PAR_init(iq,ID_head,ID,mode)
+ !
+ use stderr,        ONLY:intc
+ use parallel_m,    ONLY:MPI_COMM_WORLD
+ use pars,          ONLY:IP,IPL,SP,schlen,lchlen,max_io_vars_open
+ use BS,            ONLY:BS_K_dim,BS_IO_dim,BS_K_coupling,l_BSE_restart,l_BSE_kernel_complete,&
+&                        BSK_IO_mode,MAX_BSK_LIN_SIZE,BS_lin_size_compressed,BS_K_cutoff
+ use IO_m,          ONLY:io_connect,def_variable_bulk,io_BS_K
+ !
+ implicit none
+ !
+ integer,      intent(in)    :: iq,ID,ID_head
+ character(*), intent(inout) :: mode
+ !
+ ! Workspace
+ !
+ character(schlen) :: db_name,ch_tmp,dim_names(3),BSK_IO_local
+ character(lchlen) :: ch(8,max_io_vars_open)
+ logical           :: def_var, io_var
+ integer(IPL)      :: BS_lin_size
+ integer           :: io_BS, VAR_IDs(max_io_vars_open), n_vars, i1, i_rep,i_var, BSK_n_dims,n_replica
+ !
+ if(.not.io_BS_K .and. (.not.BS_K_cutoff>0._SP)) return
+ !
+ if(.not.io_BS_K .and. trim(mode)=="full" ) mode="head"
+ !
+ if(trim(mode)=="full")       db_name='BS_PAR_Q'//trim(intc(iq))
+ if(trim(mode)=="compressed") db_name='BS_COMPRESSED_Q'//trim(intc(iq))
+ !
+ if(trim(mode)=="full" .or. trim(mode)=="compressed") then
+   io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
+   if(io_BS/=0) return
+ endif
+ !
  ! Define vars
  !
  ch(1,:)="BSE_RESONANT"
@@ -124,53 +162,41 @@ subroutine io_BS_PAR_init(iq,X,ID)
  if (     BS_K_coupling.and.iq==1) n_vars=2
  if (     BS_K_coupling.and.iq/=1) n_vars=4
  !
- select case(trim(BSK_IO_mode))
- case("1D_linear")
+ BSK_IO_local=trim(BSK_IO_mode)
+ if(trim(mode)=="compressed") BSK_IO_local=trim(mode)
+ !
+ select case(trim(BSK_IO_local))
+ case("1D_linear","compressed")
    !
    ! This is the upper triangular matrix rescared in (many) 1D arrays
    !
    BSK_n_dims=1
    !
-   dim_names(2:3)=[ 'BS_K_linearized1', 'BS_K_linearized2' ]
-   !
    !                46341 is the sqare root of the maximum integer 2147483647
    MAX_BSK_LIN_size=45000*45000
    !
-   BS_LIN_size=int(BS_K_dim,kind=IPL)*int(BS_K_dim+1,kind=IPL)/int(2,kind=IPL)
-   !
+   if(trim(BSK_IO_local)=="1D_linear" ) then
+     dim_names(2:3)=[ 'BS_K_linearized1', 'BS_K_linearized2' ]
+     BS_LIN_size=int(BS_K_dim,kind=IPL)*int(BS_K_dim+1,kind=IPL)/int(2,kind=IPL)
+     ch_tmp="_LINEARIZED"
+   endif
+   if(trim(BSK_IO_local)=="compressed") then
+     dim_names(2:3)=[ 'BS_K_compressed1', 'BS_K_compressed2' ]
+     BS_LIN_size=BS_lin_size_compressed
+     ch_tmp="_COMPRESSED"
+   endif
    BS_IO_dim=int(min(int(MAX_BSK_LIN_size,IPL),BS_lin_size),IP)
    !
    n_replica=1+int(BS_LIN_size/int(MAX_BSK_LIN_size,IPL),IP)
    do i_rep=1,n_replica
      do i_var=1,n_vars
        i1=i_var+n_vars*(i_rep-1)
-       ch(i_var,i_rep)=trim(ch(i_var,i_rep))//"_LINEARIZED"//trim(intc(i_rep))
+       ch(i_var,i_rep)=trim(ch(i_var,i_rep))//trim(ch_tmp)//trim(intc(i_rep))
      enddo
    enddo
    BS_LIN_size=BS_LIN_size-int(MAX_BSK_LIN_size,IPL)*int(n_replica-1,IPL)
    !
    BS_IO_dim(2)=int(BS_LIN_size,IP)
-   !
- case("2D_rescaled")
-   !
-   ! This is the upper triangular matrix rescaled in a 2D matrix
-   !
-   BSK_n_dims=2
-   n_replica=1
-   !
-   dim_names(2:3) =  ['BS_IO_dim1','BS_IO_dim2']
-   !
-   if(mod(BS_K_dim,2)==0) then
-     BS_IO_dim(1) = BS_K_dim+1
-     BS_IO_dim(2) = BS_K_dim/2
-   else
-     BS_IO_dim(1) = BS_K_dim
-     BS_IO_dim(2) = (BS_K_dim+1)/2
-   endif
-   !
-   do i1=1,n_vars
-     ch(i_var,1)=trim(ch(i_var,1))//"_RESCALED"
-   enddo
    !
  case("2D_standard")
    !
@@ -188,21 +214,23 @@ subroutine io_BS_PAR_init(iq,X,ID)
  do i_rep=1,n_replica
    do i_var=1,n_vars
      i1=i_var+n_vars*(i_rep-1)
-     if(trim(BSK_IO_mode)=="1D_linear".and.i_rep==n_replica.and.i_rep>1) then
+     if( (trim(BSK_IO_local)=="1D_linear".or.trim(BSK_IO_local)=="compressed") &
+     &   .and.i_rep==n_replica.and.i_rep>1) then
        dim_names(2)=dim_names(3)
        BS_IO_dim(1)=BS_IO_dim(2)
      endif
-     call def_variable_bulk(ID,trim(ch(i_var,i_rep)),         1+(i_var-1)*2+(i_rep-1)*8,&
-             &               [2,BS_IO_dim(1:BSK_n_dims)],SP,dim_names(1:BSK_n_dims+1),     par_io_kind='independent')
-     call def_variable_bulk(ID,trim(ch(i_var,i_rep))//"_DONE",2+(i_var-1)*2+(i_rep-1)*8,&
-             &                  BS_IO_dim(1:BSK_n_dims) , 0,dim_names(2:BSK_n_dims+1),par_io_kind='independent')
+     if(trim(mode)=="full" .or. trim(mode)=="compressed") &
+     &  call def_variable_bulk(ID,trim(ch(i_var,i_rep)),         1+(i_var-1)*2+(i_rep-1)*8,&
+     &               [2,BS_IO_dim(1:BSK_n_dims)],SP,dim_names(1:BSK_n_dims+1),par_io_kind='independent')
+     if(trim(mode)=="head" .or. trim(mode)=="full") &
+     &  call def_variable_bulk(ID_head,trim(ch(i_var,i_rep))//"_DONE",2+(i_var-1)*2+(i_rep-1)*8,&
+     &                  BS_IO_dim(1:BSK_n_dims) , 0,dim_names(2:BSK_n_dims+1),par_io_kind='independent')
    enddo
  enddo
  !
 end subroutine
 !
-!
-subroutine io_BS_PAR_free(ID,l_kernel_complete)
+subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
  !
  ! close BSE netcdf parallel file
  !
@@ -212,25 +240,31 @@ subroutine io_BS_PAR_free(ID,l_kernel_complete)
  !
  implicit none
  !
- integer, intent(in)  :: ID
- logical, intent(in)  :: l_kernel_complete
+ integer,      intent(in)  :: ID,ID_head
+ logical,      intent(in)  :: l_kernel_complete
+ character(*), intent(in)  :: mode
  !
  integer              :: io_BS
  integer, external    :: variables_BS_more
  !
  call PP_redux_wait()
  !
+ call io_disconnect(ID)
+ !
+ if(trim(mode)=="compressed") return
+ !
  BS_K_has_been_calculated_loaded=l_kernel_complete
+ !
  l_BSE_kernel_complete          =l_kernel_complete
  !
- io_BS=variables_BS_more(ID,'end')
+ io_BS=variables_BS_more(ID_head,'end')
  !
- call io_disconnect(ID)
+ call io_disconnect(ID_head)
  !
 end subroutine
 !
 !
-subroutine io_BS_PAR_block(iq,i_block,ID)
+subroutine io_BS_PAR_block(iq,i_block,ID_head,ID,mode)
  !
  ! Write one block of the BSE matrix to disk
  ! There is a single file for the full BSE matrix with maximum four variables
@@ -238,23 +272,28 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  ! For each block only the upper triangular part is written
  ! Each block has a status variables indicating if the matrix element was already calculated
  !
- use pars,          ONLY:IP,IPL
- use BS,            ONLY:BS_blk,BSK_IO_mode,BS_IO_dim,MAX_BSK_LIN_size
+ use pars,          ONLY:IP,IPL,SP,schlen
+ use BS,            ONLY:BS_blk,BSK_IO_mode,BS_K_cutoff,BS_IO_dim,MAX_BSK_LIN_size
  use timing_m,      ONLY:timing
  use IO_m,          ONLY:io_variable_bulk,io_unit,netcdf_call,nf90_sync,&
 &                        write_is_on,io_BS_K
  !
  implicit none
  !
- integer  :: ID
+ integer,      intent(in) :: ID,ID_head
+ integer,      intent(in) :: iq,i_block
+ character(*), intent(in) :: mode
  !
  ! Work Space
  !
- integer             :: i_block,x1,x2,iq,VAR_IDs(2),stat
+ character(schlen)   :: BSK_IO_local
+ integer             :: x1,x2,VAR_IDs(2),stat
  integer             :: n2,i1,i2,idx1,idx2,imax,i_rep(2),ilast
  integer(IPL)        :: idx
  !
- if(.not.io_BS_K) return
+ complex(SP), allocatable :: TMP_IO_VAR(:)
+ !
+ if(.not.io_BS_K .and. (.not.BS_K_cutoff>0._SP)) return
  !
  call timing('io_BS',OPR='start')
  !
@@ -271,69 +310,128 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
    VAR_IDs=(/7,8/)
  end select
  !
- ! Get dimensions
+ ! Get lower bound coordinates in 2D matrix
  x1=BS_blk(i_block)%coordinate(1)
  x2=BS_blk(i_block)%coordinate(2)
  !
+ BSK_IO_local=trim(BSK_IO_mode)
+ if(trim(mode)=="compressed") BSK_IO_local=trim(mode)
  !
- select case(trim(BSK_IO_mode))
+ select case(trim(BSK_IO_local))
  case("1D_linear")
    !
    do i2=1,BS_blk(i_block)%size(2)
+     !
+     ! tmp coordinate in 2D matrix, runs from x2 to x2 + SIZE -1
      n2  = (x2+i2-1)
+     !
+     ! coordinate in linearized matrix n2*(n2-1)/2 counting all the elements of the
+     ! triangular matrix as follow
+     ! 1  2  4  7 11
+     ! x  3  5  8 12
+     ! x  x  6  9 
+     ! x  x  x 10 
      idx = int(n2,kind=IPL)*int(n2-1,kind=IPL)/int(2,kind=IPL)+int(x1,kind=IPL)
+     !
+     ! number of rows from the first in the block to the diagonal of the matrix
+     ! I'm going to write elements from idx to idx+imax
      imax=min(BS_blk(i_block)%size(1),n2-x1+1)
      if(imax<1) cycle
      !
+     ! if idx > MAX_BSK_LIN_size switch to the next variable
      i_rep(1)=1+int(idx/int(MAX_BSK_LIN_size,IPL),IP)
+     ! if idx+imax  > MAX_BSK_LIN_size switch to the next variable
      i_rep(2)=1+int((idx+int(imax,IPL))/int(MAX_BSK_LIN_size,IPL),IP)
+     ! I need both the previous two because a block can be written
+     ! part on linear variable, part on the next
      !
      idx1= int(idx-int(MAX_BSK_LIN_size,IPL)*int(i_rep(1)-1,IPL),IP)
      !
      ! Write column by column in 1D
      !
      if(idx1+imax-1<MAX_BSK_LIN_size) then
-       call io_variable_bulk(ID, VAR_IDs(1)+(i_rep(1)-1)*8,  C1=BS_blk(i_block)%mat(:imax,i2),  IPOS=[1,idx1] )
-       call io_variable_bulk(ID, VAR_IDs(2)+(i_rep(1)-1)*8, CH1=BS_blk(i_block)%done(:imax,i2), IPOS=[  idx1] )
+       ! Block is all in one variable
+       call io_variable_bulk(ID_head, VAR_IDs(2)+(i_rep(1)-1)*8, CH1=BS_blk(i_block)%done(:imax,i2), IPOS=[  idx1] )
      else
+       ! Block is split
        ilast=MAX_BSK_LIN_size-idx1+1
-       call io_variable_bulk(ID, VAR_IDs(1)+(i_rep(1)-1)*8,  C1=BS_blk(i_block)%mat(:ilast,i2),        IPOS=[1,idx1] )
-       call io_variable_bulk(ID, VAR_IDs(2)+(i_rep(1)-1)*8, CH1=BS_blk(i_block)%done(:ilast,i2),       IPOS=[  idx1] )
-       call io_variable_bulk(ID, VAR_IDs(1)+(i_rep(2)-1)*8,  C1=BS_blk(i_block)%mat(ilast+1:imax,i2),  IPOS=[1,   1] )
-       call io_variable_bulk(ID, VAR_IDs(2)+(i_rep(2)-1)*8, CH1=BS_blk(i_block)%done(ilast+1:imax,i2), IPOS=[     1] )
+       call io_variable_bulk(ID_head, VAR_IDs(2)+(i_rep(1)-1)*8, CH1=BS_blk(i_block)%done(:ilast,i2),       IPOS=[  idx1] )
+       call io_variable_bulk(ID_head, VAR_IDs(2)+(i_rep(2)-1)*8, CH1=BS_blk(i_block)%done(ilast+1:imax,i2), IPOS=[     1] )
+     endif
+     !
+     if(trim(mode)=="full") then
+       if(idx1+imax-1<MAX_BSK_LIN_size) then
+         ! Block is all in one variable
+         call io_variable_bulk(ID,    VAR_IDs(1)+(i_rep(1)-1)*8,  C1=BS_blk(i_block)%mat(:imax,i2),  IPOS=[1,idx1] )
+       else
+         ! Block is split
+         ilast=MAX_BSK_LIN_size-idx1+1
+         call io_variable_bulk(ID,    VAR_IDs(1)+(i_rep(1)-1)*8,  C1=BS_blk(i_block)%mat(:ilast,i2),        IPOS=[1,idx1] )
+         call io_variable_bulk(ID,    VAR_IDs(1)+(i_rep(2)-1)*8,  C1=BS_blk(i_block)%mat(ilast+1:imax,i2),  IPOS=[1,   1] )
+       endif
      endif
      !
    enddo
    !
- case("2D_rescaled")
+ case("compressed")
    !
-   do i2=1,BS_blk(i_block)%size(2)
-     n2  = (x2+i2-1)
-     idx = int(n2,kind=IPL)*int(n2-1,kind=IPL)/int(2,kind=IPL)+int(x1,kind=IPL)
-     imax=min(BS_blk(i_block)%size(1),n2-x1+1)
-     !
-     ! Write element by element in a reduced 2D matrix
-     !
-     do i1=1,imax
-       idx1=int(mod(idx+int(i1-2,kind=IPL),int(BS_IO_dim(1),kind=IPL)),kind=IP)+1
-       idx2=int((idx+int(i1-2,kind=IPL))/int(BS_IO_dim(1),kind=IPL),kind=IP)+1
-       call io_variable_bulk(ID, VAR_IDs(1),  C2=BS_blk(i_block)%mat(i1:i1,i2:i2),  IPOS=[1,idx1,idx2] )
-       call io_variable_bulk(ID, VAR_IDs(2), CH2=BS_blk(i_block)%done(i1:i1,i2:i2), IPOS=[  idx1,idx2] )
+   imax=count(BS_blk(i_block)%done(:,:)=="t")
+   !
+   allocate(TMP_IO_VAR(imax))
+   !
+   idx=0
+   do i1=1,BS_blk(i_block)%size(1)
+     do i2=1,BS_blk(i_block)%size(2)
+       if( BS_blk(i_block)%done(i1,i2)/="t") cycle
+       idx=idx+1
+       TMP_IO_VAR(idx)=BS_blk(i_block)%mat(i1,i2)
      enddo
    enddo
+   !
+   idx = BS_blk(i_block)%idx_compr
+   !
+   ! if idx > MAX_BSK_LIN_size switch to the next variable
+   i_rep(1)=1+int(idx/int(MAX_BSK_LIN_size,IPL),IP)
+   ! if idx+imax  > MAX_BSK_LIN_size switch to the next variable
+   i_rep(2)=1+int((idx+int(imax,IPL))/int(MAX_BSK_LIN_size,IPL),IP)
+   ! I need both the previous two because a block can be written
+   ! part on linear variable, part on the next
+   !
+   idx1= int(idx-int(MAX_BSK_LIN_size,IPL)*int(i_rep(1)-1,IPL),IP)
+   !
+   ! Write BS_blk with %mat set to zero
+   !
+   if(idx1+imax-1<MAX_BSK_LIN_size) then
+     ! Block is all in one variable
+     call io_variable_bulk(ID, VAR_IDs(1)+(i_rep(1)-1)*8,  C1=TMP_IO_VAR,  IPOS=[1,idx1] )
+   else
+     ! Block is split
+     ilast=MAX_BSK_LIN_size-idx1+1
+     call io_variable_bulk(ID, VAR_IDs(1)+(i_rep(1)-1)*8,  C1=TMP_IO_VAR(:ilast),        IPOS=[1,idx1] )
+     call io_variable_bulk(ID, VAR_IDs(1)+(i_rep(2)-1)*8,  C1=TMP_IO_VAR(ilast+1:imax),  IPOS=[1,   1] )
+   endif
+   !
+   deallocate(TMP_IO_VAR)
    !
  case("2D_standard")
    ! 
    ! Write one block at a time in 2D
    !
    call io_variable_bulk(ID, VAR_IDs(1),  C2=BS_blk(i_block)%mat , IPOS=(/1,x1,x2/) )
-   call io_variable_bulk(ID, VAR_IDs(2), CH2=BS_blk(i_block)%done, IPOS=(/  x1,x2/) )
+   call io_variable_bulk(ID_head, VAR_IDs(2), CH2=BS_blk(i_block)%done, IPOS=(/  x1,x2/) )
    !
  end select
  !
- if(write_is_on(ID)) then
-   stat = nf90_sync(io_unit(ID))
-   call netcdf_call(stat,ID)
+ if(write_is_on(ID_head)) then
+   stat = nf90_sync(io_unit(ID_head))
+   call netcdf_call(stat,ID_head)
+ endif
+ !
+ if( trim(mode)=="compressed" .or. trim(mode)=="full" ) then
+   if(write_is_on(ID)) then
+     stat = nf90_sync(io_unit(ID))
+     call netcdf_call(stat,ID)
+   endif
  endif
  !
  call timing('io_BS',OPR='stop')

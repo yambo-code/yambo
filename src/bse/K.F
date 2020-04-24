@@ -82,7 +82,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Work Space ...
  !
- character(schlen) :: section_title
+ character(schlen) :: section_title,IO_mode
  !
  ! ... Kernel loop
  !
@@ -104,7 +104,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! I/O
  !
- integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,io_qindx_err,qindx_ID,ID
+ integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,io_qindx_err,qindx_ID,ID,ID_head
  integer, external ::io_BS
  integer, external ::io_QINDX
  !
@@ -191,21 +191,28 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
 #if defined _PAR_IO
    !
+   call io_control(ACTION=OP_RD,COM=REP,MODE=VERIFY,ID=ID_head)
+   call io_BS_header(iq,X,ID_head)
+   !
+   !
+   if(BS_K_cutoff==0._SP) IO_mode="full"
+   if(BS_K_cutoff> 0._SP) IO_mode="compressed"
    call io_control(ACTION=OP_RD,COM=REP,MODE=VERIFY,ID=ID)
-   call io_BS_PAR_init(iq,X,ID)
+   call io_BS_PAR_init(iq,ID_head,ID,IO_mode)
    !
    if(l_BSE_kernel_complete.and.l_bss) then
      if(n_BS_blks>0) call live_timing("Loading BSE kernel",n_BS_blks)
      do i_block=1,n_BS_blks
        call io_control(ACTION=RD,ID=ID)
-       call io_BS_PAR_block(iq,i_block,ID)
+       call io_BS_PAR_block(iq,i_block,ID_head,ID,IO_MODE)
        if(n_BS_blks>0) call live_timing(steps=1)
      enddo
      if(n_BS_blks>0) call live_timing()
    endif
    !
+   call io_control(ACTION=RD_CL,COM=REP,ID=ID_head)
    call io_control(ACTION=RD_CL,COM=REP,ID=ID)
-   call io_BS_PAR_free(ID,l_BSE_kernel_complete)
+   call io_BS_PAR_free(ID_head,ID,IO_mode,l_BSE_kernel_complete)
    !
    if(l_BSE_kernel_complete) return
    !
@@ -336,8 +343,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
 #if defined _PAR_IO
+ call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID_head)
+ call io_BS_header(iq,X,ID_head)
+ !
+ IO_mode="full"
  call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID)
- call io_BS_PAR_init(iq,X,ID)
+ call io_BS_PAR_INIT(iq,ID_head,ID,IO_mode)
 #else
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)
@@ -366,7 +377,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      ! Read BS_blk to check if the transition was already computed
      !
      call io_control(ACTION=RD,ID=ID)
-     call io_BS_PAR_block(iq,i_block,ID)
+     call io_control(ACTION=RD,ID=ID_head)
+     call io_BS_PAR_block(iq,i_block,ID_head,ID,IO_mode)
      !
      if (BS_LiveTiming_steps>= 0) i_steps=BS_Block_size(i_block)
      if (BS_LiveTiming_steps==-1) i_steps=1
@@ -380,7 +392,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      BS_blk_done(i_block)=.true.
      skip_check: do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
-         if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t".or.BS_blk(i_block)%done(i_Tk,i_Tp)=="n") cycle
+         if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t") cycle
          BS_blk_done(i_block)=.false.
          exit skip_check
        enddo
@@ -458,7 +470,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        ! skip this block if already done
        !
-       if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t".or.BS_blk(i_block)%done(i_Tk,i_Tp)=="n") cycle
+       if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t".and.l_BSE_restart) cycle
        !
        FILL_BSK_COMMON_INDEXES
        FILL_BSK_KERNEL_INDEXES
@@ -579,7 +591,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
 #if defined _PAR_IO
    call io_control(ACTION=WR,ID=ID)
-   call io_BS_PAR_block(iq,i_block,ID)
+   call io_control(ACTION=WR,ID=ID_head)
+   call io_BS_PAR_block(iq,i_block,ID_head,ID,IO_mode)
 #else
    call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/i_block+1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
@@ -593,11 +606,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if(BS_K_cutoff>0._SP) then
    call PP_redux_wait(BS_max_val_CPU)
    BS_max_val=maxval(BS_max_val_CPU)
-   call K_compress(iq,i_steps,n_steps,ID)
+   call K_compress(iq,i_steps,n_steps,ID_head)
  endif
  !
+ call io_control(ACTION=WR_CL,COM=REP,ID=ID_head)
  call io_control(ACTION=WR_CL,COM=REP,ID=ID)
- call io_BS_PAR_free(ID,.true.)
+ call io_BS_PAR_free(ID_head,ID,IO_mode,.true.)
 #endif
  !
  if (n_steps>0) call live_timing( )

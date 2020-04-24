@@ -23,7 +23,7 @@
 !
 module BS
  !
- use pars,          ONLY:IP,SP,schlen,lchlen
+ use pars,          ONLY:IP,IPL,SP,schlen,lchlen
  use collision_el,  ONLY:elemental_collision
 #include<memory.h>
  !
@@ -58,6 +58,7 @@ module BS
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier
+ integer(IPL) :: BS_lin_size_compressed
  real(SP):: BS_K_cutoff
  real(SP):: BS_max_val
  real(SP),allocatable :: BSqpts(:,:)
@@ -128,6 +129,8 @@ module BS
    integer                       :: size(2)       ! rows x columns
    integer                       :: coordinate(2) ! Position of the left-bottom corner in the whole matrix
    character(1)                  :: mode          ! "R"esonant/"A"ntiresonant
+   !
+   integer(IPL)                  :: idx_compr     ! Position in the compressed file
    !
    ! Matrix Block
    !--------------

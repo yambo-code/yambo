@@ -28,7 +28,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use IO_m,       ONLY:io_DIP
  use R_lattice,  ONLY:bz_samp
  use electrons,  ONLY:levels,n_sp_pol
- use DIPOLES,    ONLY:DIPOLE_t,DIP_v,use_covariant_approach
+ use DIPOLES,    ONLY:DIPOLE_t,use_covariant_approach
  use IO_m,       ONLY:io_control,manage_action,VERIFY,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
 &                     OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use parallel_m, ONLY:master_cpu,PP_redux_wait,PAR_K_scheme
@@ -176,6 +176,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    !
    ! For a definition of v_eff see PRB 48, 11789 (1993)
    !
+   use DIPOLES,   ONLY:DIP_v
+   !
    integer,       intent(in)    :: dir
    type(DIPOLE_t),intent(inout) :: Dip
    !
@@ -232,7 +234,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  end subroutine
  !
  subroutine project_dipoles(Dip)
-   use DIPOLES,   ONLY:DIP_spin,DIP_orbital
+   use DIPOLES,   ONLY:DIP_spin,DIP_orbital,DIP_v
    type(DIPOLE_t),  intent(in) :: Dip
    !
    if(.not.allocated(DIP_spin)) return
@@ -244,15 +246,11 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
        !
        if (ic<=Xen%nbf .and. iv<=Xen%nbf) then
          DIP_spin   (:,ic,iv,:,:,2)=DIP_spin(:,ic,iv,:,:,1)
-         if(iv==ic) cycle
-         DIP_orbital(:,ic,iv,:,:,1)=1._SP
-         DIP_orbital(:,ic,iv,:,:,2)=0._SP
+         DIP_orbital(:,ic,iv,:,:,1)=DIP_v(:,ic,iv,:,:)
        endif
        if (ic> Xen%nbf .and. iv> Xen%nbf ) then
          DIP_spin(:,ic,iv,:,:,3)=DIP_spin(:,ic,iv,:,:,1)
-         if(iv==ic) cycle
-         DIP_orbital(:,ic,iv,:,:,2)=1._SP
-         DIP_orbital(:,ic,iv,:,:,1)=0._SP
+         DIP_orbital(:,ic,iv,:,:,2)=DIP_v(:,ic,iv,:,:)
        endif
        !
      enddo

@@ -46,7 +46,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  use wrapper,       ONLY:M_by_M
  use interfaces,    ONLY:LINEAR_ALGEBRA_driver,MATRIX_transfer
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_use_lin_sys,X_par_lower_triangle
+ use X_m,           ONLY:X_t,X_use_lin_sys,X_use_gpu,X_par_lower_triangle
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
  use timing_m,      ONLY:timing
  use cuda_m
@@ -66,6 +66,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  integer          :: ig1,ig2,iw_par,iw,iw_X(1),INV_MODE,i_LA_pool,&
 &                    PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%n_CPU)
  integer          :: Xo_rows(2), Xo_cols(2)
+ logical          :: compute_on_gpu
  type(PAR_matrix) :: K_FXC
  type(PAR_matrix), target :: BUFFER,KERNEL,Xo
  complex(SP), pointer DEV_ATTRIBUTE :: BUFFER_blc_d(:,:,:)
@@ -77,6 +78,12 @@ subroutine X_redux(iq,X_par,Xw,X)
  ! Barrier... 
  !
  call PP_redux_wait(COMM=PAR_COM_X_WORLD%COMM)
+ !
+ ! compute X on GPU if compiled with GPU support,
+ ! unless GPU-usage is switchoff from input
+ !
+ compute_on_gpu=have_cuda.and.X_use_gpu
+ !
  !
  ! ... and frequencies distribution
  !         ========================
@@ -99,7 +106,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  YAMBO_ALLOC(BUFFER%blc,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
  BUFFER%blc=cZERO
  !
- if (have_cuda) then
+ if (compute_on_gpu) then
    YAMBO_ALLOC(KERNEL%blc_d,(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
    YAMBO_ALLOC(BUFFER%blc_d,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
    YAMBO_ALLOC(Xo%blc_d,(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
@@ -159,7 +166,7 @@ subroutine X_redux(iq,X_par,Xw,X)
    iw         = PAR_FREQS_index(iw_par)
    BUFFER%I   = iw_par
    KERNEL%blc = cZERO
-   if (have_cuda) call dev_memset(KERNEL%blc_d,cZERO)
+   if (compute_on_gpu) call dev_memset(KERNEL%blc_d,cZERO)
    !
    Xo_cols(:)=Xo%cols(:)
    Xo_rows(:)=Xo%rows(:)
@@ -204,7 +211,7 @@ subroutine X_redux(iq,X_par,Xw,X)
    !
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
-   if (have_cuda) then
+   if (compute_on_gpu) then
       if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) call dev_memcpy(KERNEL%blc_d,KERNEL%blc)
       call dev_memcpy(Xo%blc_d,Xo%blc)
    endif
@@ -217,7 +224,12 @@ subroutine X_redux(iq,X_par,Xw,X)
      !
      ! Linear System
      !
-     call dev_memcpy(DEV_VARNAME(BUFFER%blc)(:,:,BUFFER%I),DEV_VARNAME(Xo%blc)(:,:,1))
+     if (compute_on_gpu) then
+       call dev_memcpy(BUFFER%blc_d(:,:,BUFFER%I),Xo%blc_d(:,:,1))
+     else
+       call dev_memcpy(BUFFER%blc(:,:,BUFFER%I),  Xo%blc(:,:,1))
+     endif
+     !
      call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)
      !
    else
@@ -232,7 +244,7 @@ subroutine X_redux(iq,X_par,Xw,X)
    !
    ! update X by multiplying left and right for v_coul^1/2 (diagonal in reciprocal space)
    !
-   if (have_cuda) then
+   if (compute_on_gpu) then
       !
 !      call dev_mat_upd_dMd(Xo_rows(2)-Xo_rows(1)+1,Xo_cols(2)-Xo_cols(1)+1,BUFFER%blc_d(:,:,iw_par),&
 !&                          bare_qpg_d(Xo_rows(1):,iq),"R",bare_qpg_d(Xo_cols(1):,iq),"R",scal=cmplx(4._SP*pi,kind=SP)) 
@@ -343,34 +355,35 @@ contains
      integer, intent(in)      :: Xo_rows(2),Xo_cols(2)
      integer :: ig1,ig2
      !
-#ifdef _CUDA
-     complex(SP), device, pointer :: KERNEL_blc_d(:,:,:)
-     complex(SP), device, pointer :: Xo_blc_d(:,:,:)
+     complex(SP), pointer DEV_ATTRIBUTE :: KERNEL_blc_d(:,:,:)
+     complex(SP), pointer DEV_ATTRIBUTE :: Xo_blc_d(:,:,:)
      !
-     KERNEL_blc_d=>KERNEL%blc_d(:,:,:)
-     Xo_blc_d    => Xo%blc_d(:,:,:)
-     !
-     !$cuf kernel do(2) <<<*,*>>>
-     do ig2=Xo_cols(1),Xo_cols(2)
+     if (compute_on_gpu) then
+       !
+       KERNEL_blc_d=>KERNEL%blc_d(:,:,:)
+       Xo_blc_d    => Xo%blc_d(:,:,:)
+       !
+       !$cuf kernel do(2) <<<*,*>>>
+       do ig2=Xo_cols(1),Xo_cols(2)
        do ig1=Xo_rows(1),Xo_rows(2)
          KERNEL_blc_d(ig1,ig2,1) =KERNEL_blc_d(ig1,ig2,1)-Xo_blc_d(ig1,ig2,1)*4._SP*pi/bare_qpg_d(ig2,iq)**2
          if (ig1==ig2) KERNEL_blc_d(ig1,ig1,1)=KERNEL_blc_d(ig1,ig1,1)+cONE
        enddo
-     enddo
-     !
-#else
-     !
-     !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
-     do ig2=Xo%cols(1),Xo%cols(2)
+       enddo
+       !
+     else
+       !
+       !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
+       do ig2=Xo%cols(1),Xo%cols(2)
        do ig1=Xo%rows(1),Xo%rows(2)
          KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
          if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
        enddo
-     enddo
-     !$omp end parallel do
+       enddo
+       !$omp end parallel do
+       !
+     endif
      !
-#endif
-   !
    end subroutine X_redux_build_kernel
    !
 end subroutine

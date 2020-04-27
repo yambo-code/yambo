@@ -61,12 +61,10 @@ module X_m
  real(SP)             :: X_DbGd_percentual=0.5
  integer ,allocatable :: X_DbGd_nkpt_at_q(:)
  integer ,allocatable :: X_DbGd_nkpt_at_q_table(:,:,:)
-#ifdef _CUDA
  !
- ! GPU X_irredux_residuals workspace
+ ! workspace for X_irredux_residuals on GPUs
  !
- complex(SP), allocatable, device :: rhotw_save_d(:), rhotw_save2_d(:)
-#endif
+ complex(SP), allocatable DEV_ATTRIBUTE :: rhotw_save_d(:), rhotw_save2_d(:)
  !
  ! Absorption & Polarizability
  !

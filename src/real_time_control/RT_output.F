@@ -85,7 +85,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    RT_descriptors_dumped=.FALSE.
    !
    do i_f=1,N_RT_o_files
-     if (.not.file_is_todo(i_f).or.RT_o_file_is_open(i_f)) cycle
+     if ((.not.file_is_todo(i_f)).or.RT_o_file_is_open(i_f)) cycle
      call of_open_close(RT_o_file_long(i_f),'ot')
      RT_o_file_is_open(i_f)=.TRUE.
    enddo

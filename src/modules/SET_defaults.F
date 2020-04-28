@@ -106,8 +106,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
- use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_headings,YPP_append,&
-&                     Gr_desc,TIME_STEP_desc,RT_desc
+ use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_o_file_is_open,&
+&                     RT_headings,YPP_append,Gr_desc,TIME_STEP_desc,RT_desc
  use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
@@ -640,6 +640,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  n_RT_headings=0
  N_RT_o_files=0
+ RT_o_file_is_open=.FALSE.
  RT_o_file_long= " "
  RT_o_file_short= " "
  RT_headings= " "

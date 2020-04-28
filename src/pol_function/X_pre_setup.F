@@ -116,10 +116,10 @@ subroutine X_pre_setup(Xen,X)
  !
  X_use_lin_sys=.true.
  X_use_gpu=have_cuda
- if (index(Chi_linalg_mode,"inversion")>0) X_use_lin_sys=.false.
- if (index(Chi_linalg_mode,"lin_sys")>0  ) X_use_lin_sys=.true.
- if (index(Chi_linalg_mode,"cpu")>0      ) X_use_gpu=.false.
- if (index(Chi_linalg_mode,"gpu")>0      ) X_use_gpu=.true..and.have_cuda
+ if (index(Chi_linalg_mode,"INVERSION")>0) X_use_lin_sys=.false.
+ if (index(Chi_linalg_mode,"LIN_SYS")>0  ) X_use_lin_sys=.true.
+ if (index(Chi_linalg_mode,"CPU")>0      ) X_use_gpu=.false.
+ if (index(Chi_linalg_mode,"GPU")>0      ) X_use_gpu=.true..and.have_cuda
  !
  ! Copy of X dimension for Parallel default environment solver
  !

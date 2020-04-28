@@ -35,6 +35,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  ! SER/SLK -> PAR/SER interface
  !
  use pars,          ONLY:SP,pi,cZERO,cONE
+ use com,           ONLY:msg
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_X_WORLD_RL_resolved,PP_bcast,&
@@ -83,12 +84,13 @@ subroutine X_redux(iq,X_par,Xw,X)
  ! unless GPU-usage is switchoff from input
  !
  compute_on_gpu=have_cuda.and.X_use_gpu
+ call msg('s','[LA] X compute_on_gpu ',compute_on_gpu )
  !
  !
  ! ... and frequencies distribution
  !         ========================
  call PARALLEL_FREQS_setup(Xw,PAR_IND_freqs,PAR_COM_SLK_INDEX_local)
- PAR_n_freqs_global                                  =0
+ PAR_n_freqs_global =0
  PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%CPU_id+1)=PAR_n_freqs
  call PP_redux_wait(PAR_n_freqs_global,COMM=PAR_COM_SLK_INDEX_local%COMM)
  !
@@ -225,9 +227,9 @@ subroutine X_redux(iq,X_par,Xw,X)
      ! Linear System
      !
      if (compute_on_gpu) then
-       call dev_memcpy(BUFFER%blc_d(:,:,BUFFER%I),Xo%blc_d(:,:,1))
+       call dev_memcpy(BUFFER%blc_d(:,:,BUFFER%I), Xo%blc_d(:,:,1))
      else
-       call dev_memcpy(BUFFER%blc(:,:,BUFFER%I),  Xo%blc(:,:,1))
+                       BUFFER%blc(:,:,BUFFER%I) =  Xo%blc(:,:,1)
      endif
      !
      call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)

@@ -84,7 +84,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  ! unless GPU-usage is switchoff from input
  !
  compute_on_gpu=have_cuda.and.X_use_gpu
- call msg('s','[LA] X compute_on_gpu ',compute_on_gpu )
+ if (have_cuda) call msg('s','[LA] X compute_on_gpu ',compute_on_gpu )
  !
  !
  ! ... and frequencies distribution

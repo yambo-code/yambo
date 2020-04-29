@@ -81,7 +81,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Work Space ...
  !
- character(schlen) :: section_title,IO_mode
+ character(schlen) :: section_title
  !
  ! ... Kernel loop
  !
@@ -277,8 +277,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
 #if defined _PAR_IO
  !
- IO_mode="full"
- !
  call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID_head)
  io_BS_err=io_BS_header(iq,X,ID_head,"full")
  !
@@ -315,7 +313,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      if (.not.l_partial_kernel_loaded) then
        call io_control(ACTION=RD,ID=ID)
        call io_control(ACTION=RD,ID=ID_head)
-       call io_BS_PAR_block(iq,i_block,ID,IO_mode)
+       call io_BS_PAR_block(iq,i_block,ID,"full")
      endif
      !
      if (BS_LiveTiming_steps>= 0) i_steps=BS_Block_size(i_block)
@@ -365,7 +363,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #if defined _PAR_IO
      if(l_partial_kernel_loaded) then
        call io_control(ACTION=WR,ID=ID)
-       call io_BS_PAR_block(iq,i_block,ID,IO_mode)
+       call io_BS_PAR_block(iq,i_block,ID,"full")
      endif
 #endif
      cycle
@@ -537,7 +535,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
 #if defined _PAR_IO
    call io_control(ACTION=WR,ID=ID)
-   call io_BS_PAR_block(iq,i_block,ID,IO_mode)
+   call io_BS_PAR_block(iq,i_block,ID,"full")
 #else
    call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/i_block+1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
@@ -557,7 +555,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call io_control(ACTION=WR_CL,COM=REP,ID=ID_head)
  call io_control(ACTION=WR_CL,COM=REP,ID=ID)
- call io_BS_PAR_free(ID_head,ID,IO_mode,.true.)
+ call io_BS_PAR_free(ID_head,ID,"full",.true.)
 #endif
  !
  if (n_steps>0) call live_timing( )

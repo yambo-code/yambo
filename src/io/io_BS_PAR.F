@@ -269,7 +269,7 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
  !
  use parallel_m,    ONLY:PP_redux_wait
  use BS,            ONLY:l_BSE_kernel_complete,BS_K_has_been_calculated_loaded
- use IO_m,          ONLY:io_disconnect,read_is_on,write_is_on
+ use IO_m,          ONLY:io_disconnect,read_is_on,write_is_on,io_BS_K
  !
  implicit none
  !
@@ -294,6 +294,8 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
      l_BSE_kernel_complete          =l_kernel_complete
    endif
  endif
+ !
+ if(.not.io_BS_K .and. trim(mode)=="full" )      return
  !
  if(trim(mode)=="compressed_mat".or.trim(mode)=="full") call io_disconnect(ID)
  !
@@ -329,7 +331,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  !
  complex(SP), allocatable :: TMP_IO_VAR(:)
  !
- if(.not.io_BS_K .and. (.not.BS_K_cutoff>0._SP)) return
+ if(.not.io_BS_K .and. trim(mode)=="full") return
  !
  call timing('io_BS',OPR='start')
  !

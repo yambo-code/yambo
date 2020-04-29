@@ -46,9 +46,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                       BS_nT_grps,BS_blks_free,&
-&                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
-&                       BS_K_cutoff,BS_max_val
+&                       BS_nT_grps,BS_blks_free,l_BSE_kernel_complete,&
+&                       l_BSE_minimize_memory,l_BSE_restart,BS_K_cutoff,BS_max_val
  use collision_el, ONLY:elemental_collision_free
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_APP,OP_APP_CL,DUMP,&
@@ -87,11 +86,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! ... Kernel loop
  !
  DEFINE_BSK_COMMON_INDEXES
- integer    :: i_block,O_ng_shift,IO_ACT,MD_CL,&
+ integer    :: i_block,O_ng_shift,&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
 &              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4)
  complex(SP):: Co,H_x,H_c
- real(SP)   :: sqrt_f_itk,sqrt_f_itp,BS_K_cutoff_inp
+ real(SP)   :: sqrt_f_itk,sqrt_f_itp
  real(SP), allocatable :: BS_max_val_CPU(:)
  !
  complex(SP),   external ::TDDFT_ALDA_R_space
@@ -104,13 +103,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! I/O
  !
- integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,io_qindx_err,qindx_ID,ID,ID_head
- integer, external ::io_BS,io_BS_PAR_init
+ integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,io_qindx_err,qindx_ID,ID,ID_head,ID_compr
+ integer, external ::io_BS,io_BS_PAR_init,io_BS_header
  integer, external ::io_QINDX
  !
  ! Timing and restart
  !
- logical :: BS_blk_done(n_BS_blks),l_partial_kernel_to_be_loaded
+ logical :: BS_blk_done(n_BS_blks),l_partial_kernel_loaded
  integer :: n_steps,m_steps,i_steps
  !
  ! Constants & Setup
@@ -174,113 +173,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if(iq/=1) O_ng_shift=max(qindx_B_max,O_ng_shift)
  endif
  !
- ! GPL_EXCLUDE_START
+ call K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
  !
- ! BS/FXC DB I/O
- !===============
- !
- if (l_bs_fxc) then
-   !
-   !call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   !
-   !io_BS_Fxc_err=io_BS_Fxc(iq,W_bss,ID,X=X)
-   !
- else
-   !
-   ! GPL_EXCLUDE_END
-   !
-#if defined _PAR_IO
-   !
-   BS_K_cutoff_inp=BS_K_cutoff
-   l_BSE_restart=.false.
-   IO_mode="full"
-   MD_CL=RD_CL
-   !
-   call io_control(ACTION=OP_RD,COM=REP,MODE=VERIFY,ID=ID_head)
-   call io_BS_header(iq,X,ID_head,IO_mode)
-   !
-   call io_control(ACTION=OP_RD,COM=REP,MODE=VERIFY,ID=ID)
-   io_BS_err=io_BS_PAR_init(iq,ID_head,ID,IO_mode)
-   !
-   if(l_BSE_kernel_complete.and.l_bss.and.io_BS_err==0) then
-     if(trim(IO_mode)=="full") section_title="Loading full BSE kernel"
-     if(trim(IO_mode)=="head") section_title="Loading compressed BSE kernel"
-     if(n_BS_blks>0) call live_timing(trim(section_title),n_BS_blks)
-     do i_block=1,n_BS_blks
-       call io_control(ACTION=RD,ID=ID)
-       call io_BS_PAR_block(iq,i_block,ID_head,ID,IO_MODE)
-       if(n_BS_blks>0) call live_timing(steps=1)
-     enddo
-     if(n_BS_blks>0) call live_timing()
-     !
-     if(trim(IO_mode)=="head") then
-       call K_compressed_IO(iq,io_BS_err,"read")
-       if (BS_K_cutoff_inp<BS_K_cutoff.and.io_BS_err==0) then
-         call msg("s","Found kernel more compressed than needed. Switching to restart mode")
-         l_BSE_kernel_complete=.false.
-         l_BSE_restart=.true.
-       endif
-       if (io_BS_err/=0) then
-         call msg("s","Compressed kernel file missing.")
-         l_BSE_kernel_complete=.false.
-         l_BSE_restart=.false.
-       endif
-     endif
-     !
-     if(BS_K_cutoff_inp>0._SP) then
-       if(trim(IO_mode)=="full".or.BS_K_cutoff_inp>BS_K_cutoff) then
-         ! switch from reading to writing mode
-         call io_control(ACTION=RD_CL,COM=REP,ID=ID_head)
-         call io_BS_PAR_free(ID_head,ID,"head",.true.)
-         BS_K_cutoff=BS_K_cutoff_inp
-         call io_control(ACTION=OP_APP,COM=REP,ID=ID_head)
-         call io_BS_header(iq,X,ID_head,"connect")
-         io_BS_err=io_BS_PAR_init(iq,ID_head,ID,"head")
-         ! Perform compression
-         call K_compress(iq,ID_head)
-         call K_compressed_IO(iq,io_BS_err,"write")
-         MD_CL=WR_CL
-       endif
-     endif
-     !
-   endif
-   !
-   call io_control(ACTION=MD_CL,COM=REP,ID=ID_head)
-   call io_control(ACTION=RD_CL,COM=REP,ID=ID)
-   if(     l_BSE_kernel_complete) call io_BS_PAR_free(ID_head,ID,IO_mode,.true.)
-   if(.not.l_BSE_kernel_complete) call io_BS_PAR_free(ID_head,ID,IO_mode,.false.)
-   !
-   BS_K_cutoff=BS_K_cutoff_inp
-   !
-   if(l_BSE_kernel_complete) return
-   !
-#else
-   !
-   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   io_BS_err=io_BS(iq,X,ID)
-   !
-   if (io_BS_err==0.and.l_bss) then
-     if(n_BS_blks>0) call live_timing("Loading BSE kernel",n_BS_blks)
-     call io_control(ACTION=OP_RD,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
-     io_BS_err=io_BS(iq,X,ID)
-     do i_block=1,n_BS_blks
-       IO_ACT=manage_action(RD_CL_IF_END,i_block,FIRST=1,LAST=n_BS_blks)       
-       call io_control(ACTION=IO_ACT,COM=NONE,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
-       io_BS_err=io_BS(iq,X,ID)
-       if(n_BS_blks>0) call live_timing(steps=1)
-     enddo
-     if(n_BS_blks>0) call live_timing()
-   endif
-   !
-   if (io_BS_err==0) return
-   !
-#endif
-   !
-   ! GPL_EXCLUDE_START
-   !
- endif
- !
- ! GPL_EXCLUDE_END
+ if( l_BSE_kernel_complete ) return
  !
  if (l_BSE_PAR_incomplete) then
    ! qindx_B is allocated and loaded again at each q-point
@@ -382,15 +277,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
 #if defined _PAR_IO
  !
- l_partial_kernel_to_be_loaded=.not.l_BSE_restart
- if (     l_partial_kernel_to_be_loaded) IO_mode="full"
- if (.not.l_partial_kernel_to_be_loaded) IO_mode="head"
+ IO_mode="full"
  !
  call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID_head)
- call io_BS_header(iq,X,ID_head,IO_mode)
+ io_BS_err=io_BS_header(iq,X,ID_head,"full")
  !
  call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID)
- io_BS_err=io_BS_PAR_INIT(iq,ID_head,ID,IO_mode)
+ io_BS_err=io_BS_PAR_INIT(iq,ID,"full")
  !
 #else
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
@@ -419,10 +312,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      ! Read BS_blk to check if the transition was already computed
      !
-     if (l_partial_kernel_to_be_loaded) then
+     if (.not.l_partial_kernel_loaded) then
        call io_control(ACTION=RD,ID=ID)
        call io_control(ACTION=RD,ID=ID_head)
-       call io_BS_PAR_block(iq,i_block,ID_head,ID,IO_mode)
+       call io_BS_PAR_block(iq,i_block,ID,IO_mode)
      endif
      !
      if (BS_LiveTiming_steps>= 0) i_steps=BS_Block_size(i_block)
@@ -468,7 +361,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  block_loop:&
  do i_block=1,n_BS_blks
    !
-   if (BS_blk_done(i_block)) cycle
+   if (BS_blk_done(i_block)) then
+#if defined _PAR_IO
+     if(l_partial_kernel_loaded) then
+       call io_control(ACTION=WR,ID=ID)
+       call io_BS_PAR_block(iq,i_block,ID,IO_mode)
+     endif
+#endif
+     cycle
+   endif
    !
    ! Read BS_blk to check if the transition was already computed
    !
@@ -636,8 +537,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
 #if defined _PAR_IO
    call io_control(ACTION=WR,ID=ID)
-   call io_control(ACTION=WR,ID=ID_head)
-   call io_BS_PAR_block(iq,i_block,ID_head,ID,IO_mode)
+   call io_BS_PAR_block(iq,i_block,ID,IO_mode)
 #else
    call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/i_block+1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
@@ -651,7 +551,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if(BS_K_cutoff>0._SP) then
    call PP_redux_wait(BS_max_val_CPU)
    BS_max_val=maxval(BS_max_val_CPU)
-   call K_compress(iq,ID_head)
+   call K_compress(iq,ID_compr)
    call K_compressed_IO(iq,io_BS_err,"write")
  endif
  !
@@ -694,3 +594,200 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call timing('X T_space Kernel',OPR='stop')
  !
 end subroutine K
+!
+!
+subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
+ !
+ use pars,         ONLY:SP,schlen
+ use LIVE_t,       ONLY:live_timing
+ use com,          ONLY:msg
+ use X_m,          ONLY:X_t
+ use drivers,      ONLY:l_bs_fxc,l_bss
+ use BS,           ONLY:l_BSE_restart,l_BSE_kernel_complete,&
+&                       BS_K_cutoff,BS_K_cutoff_done,n_BS_blks
+ use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
+&                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR,OP_WR_CL,WR_CL,OP_APP,OP_APP_CL,DUMP,&
+&                       manage_action
+ !
+ implicit none
+ !
+ type(X_t), intent(inout) :: X
+ integer, intent(in)      :: iq
+ integer, intent(out)     :: ID_head,ID,ID_compr
+ logical, intent(out)     :: l_partial_kernel_loaded
+ !
+ ! Work space
+ !
+ logical           :: create_compressed_file
+ integer           :: i_file,i_block,io_BS_err,IO_ACT,MD_CL,ID_now
+ real(SP)          :: BS_K_cutoff_inp
+ character(schlen) :: timing_string,IO_mode
+ !
+ integer, external :: io_BS,io_BS_PAR_init,io_BS_header
+ real(SP),external :: best_cutoff_allocated
+ !
+ ! GPL_EXCLUDE_START
+ !
+ ! BS/FXC DB I/O
+ !===============
+ if (l_bs_fxc) then
+   !
+   !call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
+   !
+   !io_BS_Fxc_err=io_BS_Fxc(iq,W_bss,ID,X=X)
+   !
+   return
+   !
+ endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+#if defined _PAR_IO
+ !
+ BS_K_cutoff_inp=BS_K_cutoff
+ l_BSE_restart=.false.
+ l_partial_kernel_loaded=.false.
+ IO_mode="full"   ! Full loads BS_blk%done from header & BS_blk%mat from BS_PAR 
+ MD_CL=RD_CL
+ !
+ call io_control(ACTION=OP_RD,COM=REP,MODE=VERIFY,ID=ID_head)
+ io_BS_err=io_BS_header(iq,X,ID_head,IO_mode)
+ if(io_BS_err/=0) return
+ !
+ BS_K_cutoff=best_cutoff_allocated(BS_K_cutoff_inp)
+ !
+ ! Check if ndb.BS_PAR exist.
+ ! In case use it
+ call io_control(ACTION=OP_RD,COM=REP,MODE=VERIFY,ID=ID)
+ io_BS_err=io_BS_PAR_init(iq,ID,IO_mode)
+ !
+ if(io_BS_err/=0) then
+   IO_mode="compressed_head"
+   ! Chck for ndb.BS_PAR compressed from the list of previous calculations
+   do i_file=1,size(BS_K_cutoff_done)
+     call io_control(ACTION=OP_RD,COM=REP,MODE=VERIFY,ID=ID_compr)
+     io_BS_err=io_BS_PAR_init(iq,ID_compr,IO_mode)
+     if(io_BS_err==0) exit
+     BS_K_cutoff=best_cutoff_allocated(BS_K_cutoff_inp)
+   enddo
+ endif
+ !
+ if(l_BSE_kernel_complete.and.l_bss.and.io_BS_err==0) then
+   if(trim(IO_mode)=="full") then
+     timing_string="Loading full BSE kernel"
+     ID_now=ID
+   endif
+   if(trim(IO_mode)=="compressed_head") then
+     timing_string="Loading BSE_done from compressed file"
+     ID_now=ID_compr
+   endif
+   if(n_BS_blks>0) call live_timing(trim(timing_string),n_BS_blks)
+   do i_block=1,n_BS_blks
+     call io_control(ACTION=RD,ID=ID_now)
+     call io_BS_PAR_block(iq,i_block,ID_now,IO_MODE)
+     if(n_BS_blks>0) call live_timing(steps=1)
+   enddo
+   if(n_BS_blks>0) call live_timing()
+   !
+   ! Only BS_blk%done was loaded
+   ! Now I need to estimate compressed size and load
+   ! also BS_blk%mat from compressed file
+   !
+   if(trim(IO_mode)=="compressed_head") then
+     call K_compressed_IO(iq,io_BS_err,"read")
+     if (BS_K_cutoff_inp<BS_K_cutoff.and.io_BS_err==0) then
+       call msg("s","Found kernel more compressed than needed. Switching to restart mode")
+       l_BSE_kernel_complete=.false.
+       l_BSE_restart=.true.
+       l_partial_kernel_loaded=.true.
+     endif
+     if (io_BS_err/=0) then
+       call msg("s","Compressed kernel file missing.")
+       l_BSE_kernel_complete=.false.
+       l_BSE_restart=.false.
+     endif
+   endif
+   !
+   ! Finally I check if I need to write the compressed file
+   !
+   if(BS_K_cutoff_inp>0._SP.and.l_BSE_kernel_complete) then
+     ! If my compression level now is different from existing one
+     if(BS_K_cutoff_inp/=BS_K_cutoff) then
+       call msg("s","Performing extra compression requested from input.")
+       ! switch from reading to writing mode
+       call io_control(ACTION=RD_CL,COM=REP,ID=ID_head)
+       call io_BS_PAR_free(ID_head,ID,"compressed_head",.true.)
+       BS_K_cutoff=BS_K_cutoff_inp
+       call io_control(ACTION=OP_APP,COM=REP,ID=ID_head)
+       io_BS_err=io_BS_header(iq,X,ID_head,"connect")
+       ! Perform compression
+       call K_compress(iq,ID_compr)
+       call K_compressed_IO(iq,io_BS_err,"write")
+       MD_CL=WR_CL
+     endif
+   endif
+   !
+ endif
+ !
+ call io_control(ACTION=MD_CL,COM=REP,ID=ID_head)
+ call io_control(ACTION=RD_CL,COM=REP,ID=ID)
+ if(     l_BSE_kernel_complete) call io_BS_PAR_free(ID_head,ID,IO_mode,.true.)
+ if(.not.l_BSE_kernel_complete) call io_BS_PAR_free(ID_head,ID,IO_mode,.false.)
+ !
+ BS_K_cutoff=BS_K_cutoff_inp
+ !
+#else
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
+ io_BS_err=io_BS(iq,X,ID)
+ !
+ if (io_BS_err==0.and.l_bss) then
+   if(n_BS_blks>0) call live_timing("Loading BSE kernel",n_BS_blks)
+   call io_control(ACTION=OP_RD,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
+   io_BS_err=io_BS(iq,X,ID)
+   do i_block=1,n_BS_blks
+     IO_ACT=manage_action(RD_CL_IF_END,i_block,FIRST=1,LAST=n_BS_blks)       
+     call io_control(ACTION=IO_ACT,COM=NONE,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
+     io_BS_err=io_BS(iq,X,ID)
+     if(n_BS_blks>0) call live_timing(steps=1)
+   enddo
+   if(n_BS_blks>0) call live_timing()
+ endif
+ !
+ if (io_BS_err==0) l_BSE_kernel_complete=.true.
+ !
+#endif
+ !
+end subroutine K_restart
+!
+!
+function best_cutoff_allocated(BS_K_cutoff_inp)
+ !
+ use vec_operate,  ONLY:sort
+ use pars,         ONLY:SP
+ use BS,           ONLY:BS_K_cutoff_done,BS_K_cutoff
+ !
+ implicit none
+ !
+ real(SP)             :: best_cutoff_allocated
+ real(SP), intent(in) :: BS_K_cutoff_inp
+ !
+ integer :: i1
+ !
+ best_cutoff_allocated=BS_K_cutoff_inp
+ !
+ if(.not.allocated(BS_K_cutoff_done)) return
+ !
+ call sort(BS_K_cutoff_done)
+ !
+ do i1=size(BS_K_cutoff_done),1,-1
+   if(BS_K_cutoff_done(i1)>BS_K_cutoff) cycle
+   exit
+ enddo
+ !
+ if(i1==0) i1=minloc(BS_K_cutoff_done,1)
+ !
+ best_cutoff_allocated=BS_K_cutoff_done(i1)
+ BS_K_cutoff_done(i1)=1
+ !
+end function best_cutoff_allocated

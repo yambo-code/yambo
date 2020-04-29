@@ -59,8 +59,9 @@ module BS
  integer :: BS_q(2)
  integer :: BS_identifier
  integer(IPL) :: BS_lin_size_compressed
- real(SP):: BS_K_cutoff
  real(SP):: BS_max_val
+ real(SP):: BS_K_cutoff
+ real(SP),allocatable :: BS_K_cutoff_done(:)
  real(SP),allocatable :: BSqpts(:,:)
  !
  ! Live Timing

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_BS_header(iq,X,ID,mode)
+integer function io_BS_header(iq,X,ID,mode)
  !
  ! Intialize variables on BSE netcdf parallel file
  !
@@ -30,7 +30,7 @@ subroutine io_BS_header(iq,X,ID,mode)
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:intc,real2ch
  use X_m,           ONLY:X_t
- use BS,            ONLY:BS_K_cutoff,l_BSE_restart,l_BSE_kernel_complete
+ use BS,            ONLY:BS_K_cutoff_done,l_BSE_restart,l_BSE_kernel_complete
  use BS_solvers,    ONLY:variables_BS,BSS_desc
  use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,&
 &                        io_connect,io_elemental,io_header,io_BS_K
@@ -45,7 +45,6 @@ subroutine io_BS_header(iq,X,ID,mode)
  logical, external :: file_exists
  integer, external :: variables_BS_more
  !
- integer           :: io_BS
  type(IO_desc)     :: local_desc
  character(schlen) :: db_name,tmp_ch
  character(lchlen) :: full_db_name
@@ -59,26 +58,26 @@ subroutine io_BS_header(iq,X,ID,mode)
    !
    l_BSE_kernel_complete=.false.
    !
- endif
- !
- ! If l_BSE_restart true at this point, I'm already re-starting from a compressed kernel
- !
- if (write_is_on(ID).and.io_BS_K.and..not.l_BSE_restart) then
-   if (.not.file_exists(trim(full_db_name))) then
-     call msg("s","BSE file not found. Creating an empty one.")
-     l_BSE_restart=.false.
-   else if(trim(mode)=="full") then
-     call msg("s","Partial BSE file found in "//trim(full_db_name)//". Using for restart.")
-     l_BSE_restart = .true.
+   ! If l_BSE_restart true at this point, I'm already re-starting from a compressed kernel
+   !
+   if (write_is_on(ID).and.io_BS_K.and..not.l_BSE_restart) then
+     if (.not.file_exists(trim(full_db_name))) then
+       call msg("s","BSE file not found. Creating an empty one.")
+       l_BSE_restart=.false.
+     else if(trim(mode)=="full") then
+       call msg("s","Partial BSE file found in "//trim(full_db_name)//". Using for restart.")
+       l_BSE_restart = .true.
+     endif
    endif
+   !
+   call PP_redux_wait()
+   !
  endif
- !
- call PP_redux_wait()
  !
  db_name='BS_head_Q'//trim(intc(iq))
  !
- io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
- if(io_BS/=0) return
+ io_BS_header=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
+ if(io_BS_header/=0)       return
  if(trim(mode)=="connect") return
  !
  ! Check if the file already contains data and it is consistent
@@ -87,17 +86,18 @@ subroutine io_BS_header(iq,X,ID,mode)
  !              I cannot put here if(master_cpu) because I need all MPI_tasks to
  !              go through the definition of the variables (see similar issue in io_X.F)
  !
- io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",CUTOFF=.true.,FRAG=frag_BS_K)
+ io_BS_header=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,&
+ &                      IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",CUTOFF=.true.,FRAG=frag_BS_K)
  !
- io_BS=variables_BS(ID,iq,local_desc,.TRUE.,X=X)
+ io_BS_header=variables_BS(ID,iq,local_desc,.TRUE.,X=X)
  !
- if (io_BS/=0) then
+ if (io_BS_header/=0) then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    call warning('Invalid dimensions found. BSE restart file '//trim(full_db_name)//' not accepted')
    return
  endif
  !
- io_BS=variables_BS_more(ID,'start')
+ io_BS_header=variables_BS_more(ID,'start')
  !
  if(read_is_on(ID).and.io_BS_K) then
    if(l_BSE_kernel_complete) then
@@ -107,12 +107,11 @@ subroutine io_BS_header(iq,X,ID,mode)
    endif
  endif
  !
- if(read_is_on(ID).and.BS_K_cutoff>0._SP.and.l_BSE_kernel_complete) then
-   db_name='BS_COMPRESS'//trim(adjustl(real2ch(BS_K_cutoff)))//'_Q'//trim(intc(iq))
-   full_db_name=get_name(trim(db_name)," ",2,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
+ if(read_is_on(ID).and.allocated(BS_K_cutoff_done).and.l_BSE_kernel_complete) then
    if (     io_BS_K) tmp_ch="Backup option will be compressed BSE file"
    if (.not.io_BS_K) tmp_ch="Trying to load compressed BSE file"
-   call msg("s",trim(tmp_ch),trim(full_db_name))
+   call msg("s",trim(tmp_ch))
+   call msg("s","Previously computed compressed files ",BS_K_cutoff_done)
  endif
  !
  call PP_redux_wait()
@@ -121,10 +120,10 @@ subroutine io_BS_header(iq,X,ID,mode)
  !   
  call IO_desc_duplicate(local_desc,BSS_desc)
  !
-end subroutine io_BS_header
+end function io_BS_header
 !
 !
-integer function io_BS_PAR_init(iq,ID_head,ID,mode)
+integer function io_BS_PAR_init(iq,ID,mode)
  !
  use stderr,        ONLY:intc,real2ch
  use parallel_m,    ONLY:MPI_COMM_WORLD
@@ -136,8 +135,8 @@ integer function io_BS_PAR_init(iq,ID_head,ID,mode)
  !
  implicit none
  !
- integer,      intent(in)    :: iq,ID,ID_head
- character(*), intent(inout) :: mode
+ integer,      intent(in) :: iq,ID
+ character(*), intent(in) :: mode
  !
  ! Workspace
  !
@@ -151,25 +150,32 @@ integer function io_BS_PAR_init(iq,ID_head,ID,mode)
  !
  if(.not.io_BS_K .and. (.not.BS_K_cutoff>0._SP)) return
  !
- if(.not.io_BS_K .and. trim(mode)=="full" ) mode="head"
+ if(.not.io_BS_K .and. trim(mode)=="full" )      return
  !
- if(trim(mode)=="full")       db_name='BS_PAR_Q'//trim(intc(iq))
- if(trim(mode)=="compressed") db_name='BS_COMPRESS'//trim(adjustl(real2ch(BS_K_cutoff)))//'_Q'//trim(intc(iq))
+ if( trim(mode)=="full"        ) db_name='BS_PAR_Q'//trim(intc(iq))
+ if(index(mode,"compressed")/=0) db_name='BS_COMPRESS'//trim(adjustl(real2ch(BS_K_cutoff)))//'_Q'//trim(intc(iq))
  !
- if(trim(mode)=="full" .or. trim(mode)=="compressed") then
-   io_BS_PAR_init=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
-   if(write_is_on(ID).and.io_BS_PAR_init/=0)  return ! here it should give error
-   if( read_is_on(ID).and.io_BS_PAR_init/=0.and.trim(mode)=="compressed") return
-   !if( read_is_on(ID).and.io_BS_PAR_init==0.and.trim(mode)=="compressed") no action
-   if( read_is_on(ID).and.                      trim(mode)=="full") then
-     if (.not.l_BSE_kernel_complete ) return
-     if (     l_BSE_kernel_complete ) then
-       if(io_BS_PAR_init/=0) then
-         call msg("s","Complete BSE file not found. Switching to head mode")
-         mode="head"
-       endif
-       call msg("s","Complete BSE file loading  ",trim(io_file(ID)))
-     endif
+ ! If I'm in compressed_check mode I skip the definition of variables
+ !
+ io_BS_PAR_init=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
+ !
+ if(write_is_on(ID).and.io_BS_PAR_init/=0)  return ! here it should give error
+ !
+ if( read_is_on(ID).and.index(mode,"compressed")/=0) then
+   ch_tmp="Compressed BSE file found"
+   if(trim(mode)=="compressed_head") ch_tmp=ch_tmp//", initializing head "
+   if(trim(mode)=="compressed_mat" ) ch_tmp="Compressed BSE file, initializing mat "
+   if(io_BS_PAR_init==0) call msg("s",trim(ch_tmp),trim(io_file(ID)))
+   if(io_BS_PAR_init/=0.or.trim(mode)=="compressed_check") return
+ endif
+ if( read_is_on(ID).and.trim(mode)=="full") then
+   if(io_BS_PAR_init/=0) then
+     call msg("s","Complete BSE file not found",trim(io_file(ID)))
+     return
+   endif
+   if (.not.l_BSE_kernel_complete ) return
+   if (     l_BSE_kernel_complete ) then
+     call msg("s","Complete BSE file loading  ",trim(io_file(ID)))
    endif
  endif
  !
@@ -189,10 +195,10 @@ integer function io_BS_PAR_init(iq,ID_head,ID,mode)
  if (     BS_K_coupling.and.iq/=1) n_vars=4
  !
  BSK_IO_local=trim(BSK_IO_mode)
- if(trim(mode)=="compressed") BSK_IO_local=trim(mode)
+ if(index(mode,"compressed")/=0 ) BSK_IO_local=trim(mode)
  !
  select case(trim(BSK_IO_local))
- case("1D_linear","compressed")
+ case("1D_linear","compressed_head","compressed_mat")
    !
    ! This is the upper triangular matrix rescared in (many) 1D arrays
    !
@@ -201,16 +207,17 @@ integer function io_BS_PAR_init(iq,ID_head,ID,mode)
    !                46341 is the sqare root of the maximum integer 2147483647
    MAX_BSK_LIN_size=45000*45000
    !
-   if(trim(BSK_IO_local)=="1D_linear" ) then
+   if(trim(BSK_IO_local)=="1D_linear" .or. trim(BSK_IO_local)=="compressed_head" ) then
      dim_names(2:3)=[ 'BS_K_linearized1', 'BS_K_linearized2' ]
      BS_LIN_size=int(BS_K_dim,kind=IPL)*int(BS_K_dim+1,kind=IPL)/int(2,kind=IPL)
-     ch_tmp="_LINEARIZED"
    endif
-   if(trim(BSK_IO_local)=="compressed") then
+   if(trim(BSK_IO_local)=="compressed_mat") then
      dim_names(2:3)=[ 'BS_K_compressed1', 'BS_K_compressed2' ]
      BS_LIN_size=BS_lin_size_compressed
-     ch_tmp="_COMPRESSED"
    endif
+   !
+   if(trim(BSK_IO_local)=="1D_linear" )                                                 ch_tmp="_LINEARIZED"
+   if(trim(BSK_IO_local)=="compressed_mat" .or. trim(BSK_IO_local)=="compressed_head" ) ch_tmp="_COMPRESSED"
    BS_IO_dim=int(min(int(MAX_BSK_LIN_size,IPL),BS_lin_size),IP)
    !
    n_replica=1+int(BS_LIN_size/int(MAX_BSK_LIN_size,IPL),IP)
@@ -240,16 +247,16 @@ integer function io_BS_PAR_init(iq,ID_head,ID,mode)
  do i_rep=1,n_replica
    do i_var=1,n_vars
      i1=i_var+n_vars*(i_rep-1)
-     if( (trim(BSK_IO_local)=="1D_linear".or.trim(BSK_IO_local)=="compressed") &
+     if( (trim(BSK_IO_local)=="1D_linear".or.trim(BSK_IO_local)=="compressed_mat".or.trim(BSK_IO_local)=="compressed_head") &
      &   .and.i_rep==n_replica.and.i_rep>1) then
        dim_names(2)=dim_names(3)
        BS_IO_dim(1)=BS_IO_dim(2)
      endif
-     if(trim(mode)=="full" .or. trim(mode)=="compressed") &
+     if(trim(mode)=="full" .or. trim(mode)=="compressed_mat") &
      &  call def_variable_bulk(ID,trim(ch(i_var,i_rep)),         1+(i_var-1)*2+(i_rep-1)*8,&
      &               [2,BS_IO_dim(1:BSK_n_dims)],SP,dim_names(1:BSK_n_dims+1),par_io_kind='independent')
-     if(trim(mode)=="head" .or. trim(mode)=="full") &
-     &  call def_variable_bulk(ID_head,trim(ch(i_var,i_rep))//"_DONE",2+(i_var-1)*2+(i_rep-1)*8,&
+     if(trim(mode)=="full" .or. trim(mode)=="compressed_head") &
+     &  call def_variable_bulk(ID,trim(ch(i_var,i_rep))//"_DONE",2+(i_var-1)*2+(i_rep-1)*8,&
      &                  BS_IO_dim(1:BSK_n_dims) , 0,dim_names(2:BSK_n_dims+1),par_io_kind='independent')
    enddo
  enddo
@@ -275,7 +282,7 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
  !
  call PP_redux_wait()
  !
- if(trim(mode)=="head".or.trim(mode)=="full") then
+ if(trim(mode)=="compressed_head".or.trim(mode)=="full") then
    if(write_is_on(ID)) then
      BS_K_has_been_calculated_loaded=l_kernel_complete
      l_BSE_kernel_complete          =l_kernel_complete
@@ -288,12 +295,12 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
    endif
  endif
  !
- if(trim(mode)=="compressed".or.trim(mode)=="full") call io_disconnect(ID)
+ if(trim(mode)=="compressed_mat".or.trim(mode)=="full") call io_disconnect(ID)
  !
 end subroutine
 !
 !
-subroutine io_BS_PAR_block(iq,i_block,ID_head,ID,mode)
+subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  !
  ! Write one block of the BSE matrix to disk
  ! There is a single file for the full BSE matrix with maximum four variables
@@ -305,11 +312,11 @@ subroutine io_BS_PAR_block(iq,i_block,ID_head,ID,mode)
  use BS,            ONLY:BS_blk,BSK_IO_mode,BS_K_cutoff,BS_IO_dim,MAX_BSK_LIN_size
  use timing_m,      ONLY:timing
  use IO_m,          ONLY:io_variable_bulk,io_unit,netcdf_call,nf90_sync,&
-&                        write_is_on,io_BS_K
+&                        write_is_on,read_is_on,io_BS_K
  !
  implicit none
  !
- integer,      intent(in) :: ID,ID_head
+ integer,      intent(in) :: ID
  integer,      intent(in) :: iq,i_block
  character(*), intent(in) :: mode
  !
@@ -344,10 +351,10 @@ subroutine io_BS_PAR_block(iq,i_block,ID_head,ID,mode)
  x2=BS_blk(i_block)%coordinate(2)
  !
  BSK_IO_local=trim(BSK_IO_mode)
- if(trim(mode)=="compressed") BSK_IO_local=trim(mode)
+ if(index(mode,"compressed")/=0) BSK_IO_local=trim(mode)
  !
  select case(trim(BSK_IO_local))
- case("1D_linear")
+ case("1D_linear","compressed_head")
    !
    do i2=1,BS_blk(i_block)%size(2)
      !
@@ -380,12 +387,12 @@ subroutine io_BS_PAR_block(iq,i_block,ID_head,ID,mode)
      !
      if(idx1+imax-1<MAX_BSK_LIN_size) then
        ! Block is all in one variable
-       call io_variable_bulk(ID_head, VAR_IDs(2)+(i_rep(1)-1)*8, CH1=BS_blk(i_block)%done(:imax,i2), IPOS=[  idx1] )
+       call io_variable_bulk(ID, VAR_IDs(2)+(i_rep(1)-1)*8, CH1=BS_blk(i_block)%done(:imax,i2), IPOS=[  idx1] )
      else
        ! Block is split
        ilast=MAX_BSK_LIN_size-idx1+1
-       call io_variable_bulk(ID_head, VAR_IDs(2)+(i_rep(1)-1)*8, CH1=BS_blk(i_block)%done(:ilast,i2),       IPOS=[  idx1] )
-       call io_variable_bulk(ID_head, VAR_IDs(2)+(i_rep(2)-1)*8, CH1=BS_blk(i_block)%done(ilast+1:imax,i2), IPOS=[     1] )
+       call io_variable_bulk(ID, VAR_IDs(2)+(i_rep(1)-1)*8, CH1=BS_blk(i_block)%done(:ilast,i2),       IPOS=[  idx1] )
+       call io_variable_bulk(ID, VAR_IDs(2)+(i_rep(2)-1)*8, CH1=BS_blk(i_block)%done(ilast+1:imax,i2), IPOS=[     1] )
      endif
      !
      if(trim(mode)=="full") then
@@ -402,20 +409,22 @@ subroutine io_BS_PAR_block(iq,i_block,ID_head,ID,mode)
      !
    enddo
    !
- case("compressed")
+ case("compressed_mat")
    !
    imax=count(BS_blk(i_block)%done(:,:)=="t")
    !
    allocate(TMP_IO_VAR(imax))
    !
-   idx=0
-   do i1=1,BS_blk(i_block)%size(1)
-     do i2=1,BS_blk(i_block)%size(2)
-       if( BS_blk(i_block)%done(i1,i2)/="t") cycle
-       idx=idx+1
-       TMP_IO_VAR(idx)=BS_blk(i_block)%mat(i1,i2)
+   if(write_is_on(ID)) then
+     idx=0
+     do i1=1,BS_blk(i_block)%size(1)
+       do i2=1,BS_blk(i_block)%size(2)
+         if( BS_blk(i_block)%done(i1,i2)/="t") cycle
+         idx=idx+1
+         TMP_IO_VAR(idx)=BS_blk(i_block)%mat(i1,i2)
+       enddo
      enddo
-   enddo
+   endif
    !
    idx = BS_blk(i_block)%idx_compr
    !
@@ -440,6 +449,17 @@ subroutine io_BS_PAR_block(iq,i_block,ID_head,ID,mode)
      call io_variable_bulk(ID, VAR_IDs(1)+(i_rep(2)-1)*8,  C1=TMP_IO_VAR(ilast+1:imax),  IPOS=[1,   1] )
    endif
    !
+   if(read_is_on(ID)) then
+     idx=0
+     do i1=1,BS_blk(i_block)%size(1)
+       do i2=1,BS_blk(i_block)%size(2)
+         if( BS_blk(i_block)%done(i1,i2)/="t") cycle
+         idx=idx+1
+         BS_blk(i_block)%mat(i1,i2)=TMP_IO_VAR(idx)
+       enddo
+     enddo
+   endif
+   !
    deallocate(TMP_IO_VAR)
    !
  case("2D_standard")
@@ -447,22 +467,13 @@ subroutine io_BS_PAR_block(iq,i_block,ID_head,ID,mode)
    ! Write one block at a time in 2D
    !
    call io_variable_bulk(ID, VAR_IDs(1),  C2=BS_blk(i_block)%mat , IPOS=(/1,x1,x2/) )
-   call io_variable_bulk(ID_head, VAR_IDs(2), CH2=BS_blk(i_block)%done, IPOS=(/  x1,x2/) )
+   call io_variable_bulk(ID, VAR_IDs(2), CH2=BS_blk(i_block)%done, IPOS=(/  x1,x2/) )
    !
  end select
  !
- if( trim(mode)=="head" .or. trim(mode)=="full" ) then
-   if(write_is_on(ID_head)) then
-     stat = nf90_sync(io_unit(ID_head))
-     call netcdf_call(stat,ID_head)
-   endif
- endif
- !
- if( trim(mode)=="compressed" .or. trim(mode)=="full" ) then
-   if(write_is_on(ID)) then
-     stat = nf90_sync(io_unit(ID))
-     call netcdf_call(stat,ID)
-   endif
+ if(write_is_on(ID)) then
+   stat = nf90_sync(io_unit(ID))
+   call netcdf_call(stat,ID)
  endif
  !
  call timing('io_BS',OPR='stop')

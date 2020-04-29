@@ -206,13 +206,15 @@ module IO_m
    !
    !  NEW: def and IO subroutines split in two
    !
-   subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
-     integer               :: ID
-     character(*)          :: VAR
-     integer               :: VAR_SZ
-     integer               :: VAR_KIND
-     integer               :: MENU
-     character(*),optional :: par_io_kind
+   subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,dim_names,par_io_kind)
+     use pars,              ONLY:schlen
+     integer     , intent(in) :: ID
+     character(*), intent(in) :: VAR
+     integer     , intent(in) :: VAR_SZ
+     integer     , intent(in) :: VAR_KIND
+     integer     , intent(in) :: MENU
+     character(schlen), optional, intent(in) :: dim_names(:)
+     character(*),      optional, intent(in) :: par_io_kind
    end subroutine def_variable_elemental
    !
    subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind,silent)
@@ -644,16 +646,29 @@ module IO_m
      end if
    end subroutine
    !
+   integer function netcdf_dim_size(ID,DIMNAME)
+     ! Returns the value of the specified dim of a variable
+     integer,      intent(in)    :: ID
+     character(*), intent(inout) :: DIMNAME
+     integer                     :: nf90_err,NF90_DIM_ID
+     netcdf_dim_size=0
+     nf90_err=nf90_inq_dimid(io_unit(ID),DIMNAME,NF90_DIM_ID)
+     if(nf90_err/=NF90_NOERR) return
+     nf90_err=nf90_inquire_dimension(io_unit(ID),NF90_DIM_ID, name = dimname, len = netcdf_dim_size)
+   end function
+   !
    integer function netcdf_dim(ID,DIM,dim_name)
-     integer,intent(in)       :: ID,DIM
-     integer                  :: dim_found
-     character(schlen)          :: dim_strng
+     ! Returns the ID of the netcdf dimension
+     integer,intent(in)         :: ID,DIM
      character(schlen),optional :: dim_name
+     !
+     integer                    :: nf90_err
+     character(schlen)          :: dim_strng
      netcdf_dim=0
      if (.not.present(dim_name)) write (dim_strng,'(a,i10.10)') 'D_',dim
      if (     present(dim_name)) dim_strng = dim_name
-     dim_found=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
-     if (dim_found/=NF90_NOERR) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
+     nf90_err=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
+     if (nf90_err/=NF90_NOERR) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
    end function
    !
    logical function variable_exist(ID,var_name,var_ID)

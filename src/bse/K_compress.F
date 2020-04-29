@@ -21,31 +21,33 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_compress(iq,ID_head)
+subroutine K_compress(iq,ID_compr)
  !
  use pars,         ONLY:cZERO
  use com,          ONLY:msg
  use LIVE_t,       ONLY:live_timing
- use IO_m,         ONLY:io_control,WR
+ use IO_m,         ONLY:io_control,OP_WR,WR
  use BS,           ONLY:BS_blk,BS_T_grp,BS_max_val,BS_K_cutoff,n_BS_blks
  !
  implicit none
  !
  integer, intent(in)    :: iq
- integer, intent(inout) :: ID_head
+ integer, intent(inout) :: ID_compr
  !
  ! Work space
  !
- integer      :: ID,i_block,i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk
+ integer      :: i_block,i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,io_BS_err
+ integer, external :: io_BS_PAR_init
  !
  ! STEP 1: Check which matrix elements can be neglected
  !======================================================
  !
  call msg("s","Kernel compression with parameter",BS_K_cutoff)
  !
- if (n_BS_blks>0) call live_timing('Kernel compression',n_BS_blks)
+ call io_control(ACTION=OP_WR,ID=ID_compr)
+ io_BS_err=io_BS_PAR_init(iq,ID_compr,"compressed_head")
  !
- ID=0   ! Not used here
+ if (n_BS_blks>0) call live_timing('Kernel compression',n_BS_blks)
  !
  do i_block=1,n_BS_blks
    !
@@ -72,8 +74,8 @@ subroutine K_compress(iq,ID_head)
    !
    ! Update BS_blk with %done 
    !
-   call io_control(ACTION=WR,ID=ID_head)
-   call io_BS_PAR_block(iq,i_block,ID_head,ID,"head")
+   call io_control(ACTION=WR,ID=ID_compr)
+   call io_BS_PAR_block(iq,i_block,ID_compr,"head")
    !
    call live_timing(steps=1)
    !
@@ -88,7 +90,7 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  !
  use pars,         ONLY:IPL
  use LIVE_t,       ONLY:live_timing
- use IO_m,         ONLY:io_control,OP_WR,OP_RD,RD,WR
+ use IO_m,         ONLY:io_control,OP_APP,OP_RD,RD,WR
  use BS,           ONLY:BS_max_val,BS_lin_size_compressed,BS_K_cutoff,BS_blk,&
 &                       BS_nT_grps,BS_T_grp,n_BS_blks
  use parallel_m,   ONLY:ncpu,myid,PP_redux_wait,PAR_IND_T_ordered
@@ -99,7 +101,7 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  integer,      intent(out):: io_BS_err
  character(*), intent(in) :: mode
  !
- integer      :: ID_head,ID,IO_ACT
+ integer      :: ID_head,ID_compr,IO_ACT
  integer      :: i_block,i_block_ref,i_tgrp_k,i_Tgrp_p,i_Tp,i_Tk,x1,x2
  integer(IPL) :: imx_ref(ncpu),idx,idx_tmp,idx_ref
  !
@@ -172,20 +174,20 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  !=================================
  !
  if(mode=="read" ) IO_ACT=OP_RD
- if(mode=="write") IO_ACT=OP_WR
+ if(mode=="write") IO_ACT=OP_APP
  !
- call io_control(ACTION=IO_ACT,ID=ID)
- io_BS_err=io_BS_PAR_init(iq,ID_head,ID,"compressed")
+ call io_control(ACTION=IO_ACT,ID=ID_compr)
+ io_BS_err=io_BS_PAR_init(iq,ID_compr,"compressed_mat")
  !
- if (n_BS_blks>0) call live_timing('Kernel compressed I/O',n_BS_blks)
+ if (n_BS_blks>0) call live_timing('Kernel compressed '//trim(mode),n_BS_blks)
  !
  if(mode=="read" ) IO_ACT=RD
  if(mode=="write") IO_ACT=WR
  !
  do i_block=1,n_BS_blks
    !
-   call io_control(ACTION=IO_ACT,ID=ID)
-   call io_BS_PAR_block(iq,i_block,ID_head,ID,"compressed")
+   call io_control(ACTION=IO_ACT,ID=ID_compr)
+   call io_BS_PAR_block(iq,i_block,ID_compr,"compressed_mat")
    !
    call live_timing(steps=1)
    !
@@ -193,6 +195,6 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  !
  if (n_BS_blks>0) call live_timing( )
  !
- call io_BS_PAR_free(ID_head,ID,"compressed",.true.)
+ call io_BS_PAR_free(ID_head,ID_compr,"compressed_mat",.true.)
  !
-end subroutine
+end subroutine  K_compressed_IO

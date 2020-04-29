@@ -210,23 +210,22 @@ end function
 !
 integer function variables_BS_more(ID,mode)
  !
- use pars,       ONLY:SP,LP
+ use pars,       ONLY:SP,LP,schlen
  use parallel_m, ONLY:master_cpu
- use BS,         ONLY:BS_K_cutoff,BS_max_val,l_BSE_kernel_complete
+ use BS,         ONLY:BS_K_cutoff,BS_K_cutoff_done,BS_max_val,l_BSE_kernel_complete
  use IO_m,       ONLY:def_variable_elemental,io_variable_elemental,&
-&                     write_is_on,variable_exist
+&                     def_variable_bulk,io_variable_bulk,&
+&                     write_is_on,read_is_on,variable_exist,NF90_unlimited,netcdf_dim_size
  !
  implicit none
  !
  integer,      intent(in) :: ID
  character(*), intent(in) :: mode
  !
- logical :: def_var,io_var
- !
- if (write_is_on(ID).or.variable_exist(ID,"BSE_KERNEL_CUTOFF")) then
-   call def_variable_elemental(ID,"BSE_KERNEL_CUTOFF",1,SP,0)
-   call  io_variable_elemental(ID,VAR=" Kernel cutoff",R0=BS_K_cutoff,DB_R0=BS_K_cutoff)
- endif
+ integer           :: N_cutoff
+ logical           :: def_var,io_var
+ real(SP)          :: BS_K_cutoff_IO(1)
+ character(schlen) :: kernel_dim_name(1)
  !
  if ((write_is_on(ID).and.trim(mode)=="end").or.variable_exist(ID,"BSE_KERNEL_MAXVAL")) then
    call def_variable_elemental(ID,"BSE_KERNEL_MAXVAL",1,SP,0)
@@ -241,6 +240,21 @@ integer function variables_BS_more(ID,mode)
    if(def_var) call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0,par_io_kind="independent")
    if(io_var)  call io_variable_elemental(ID,VAR=" Kernel complete",&
                &                          DB_L0=l_BSE_kernel_complete,L0=l_BSE_kernel_complete)
+ endif
+ !
+ kernel_dim_name="N_COMPRESSED_KERNELS"
+ if (trim(mode)=="end".and.l_BSE_kernel_complete.and.write_is_on(ID)) then
+   call def_variable_bulk(ID,"BSE_KERNEL_CUTOFF",1,(/NF90_unlimited/),SP,kernel_dim_name)
+   N_cutoff=netcdf_dim_size(ID,kernel_dim_name(1))
+   BS_K_cutoff_IO=BS_K_cutoff
+   call  io_variable_bulk(ID,1,R1=BS_K_cutoff_IO,IPOS=(/N_cutoff+1/))
+ endif
+ !
+ if (read_is_on(ID).and.variable_exist(ID,"BSE_KERNEL_CUTOFF").and..not.allocated(BS_K_cutoff_done)) then
+   call def_variable_bulk(ID,"BSE_KERNEL_CUTOFF",1,(/NF90_unlimited/),SP,kernel_dim_name)
+   N_cutoff=netcdf_dim_size(ID,kernel_dim_name(1))
+   allocate(BS_K_cutoff_done(N_cutoff))
+   call  io_variable_bulk(ID,1,R1=BS_K_cutoff_done)
  endif
  !
 end function

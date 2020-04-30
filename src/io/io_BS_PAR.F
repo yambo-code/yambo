@@ -32,8 +32,8 @@ integer function io_BS_header(iq,X,ID,mode)
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_K_cutoff_done,l_BSE_restart,l_BSE_kernel_complete
  use BS_solvers,    ONLY:variables_BS,BSS_desc
- use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,&
-&                        io_connect,io_elemental,io_header,io_BS_K
+ use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,io_mode,&
+&                        io_connect,io_elemental,io_header,io_BS_K,DUMP
  use descriptors,   ONLY:IO_desc,IO_desc_duplicate
  !
  implicit none
@@ -60,7 +60,7 @@ integer function io_BS_header(iq,X,ID,mode)
    !
    ! If l_BSE_restart true at this point, I'm already re-starting from a compressed kernel
    !
-   if (write_is_on(ID).and.io_BS_K.and..not.l_BSE_restart) then
+   if (write_is_on(ID).and.io_BS_K.and..not.l_BSE_restart.and.io_mode(ID)/=DUMP) then
      if (.not.file_exists(trim(full_db_name))) then
        call msg("s","BSE file not found. Creating an empty one.")
        l_BSE_restart=.false.
@@ -76,7 +76,7 @@ integer function io_BS_header(iq,X,ID,mode)
  !
  db_name='BS_head_Q'//trim(intc(iq))
  !
- io_BS_header=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
+ io_BS_header=io_connect(desc=trim(db_name),type=2,ID=ID)
  if(io_BS_header/=0)       return
  if(trim(mode)=="connect") return
  !
@@ -107,7 +107,7 @@ integer function io_BS_header(iq,X,ID,mode)
    endif
  endif
  !
- if(read_is_on(ID).and.allocated(BS_K_cutoff_done).and.l_BSE_kernel_complete) then
+ if(read_is_on(ID).and.allocated(BS_K_cutoff_done).and.l_BSE_kernel_complete.and.io_mode(ID)/=DUMP) then
    if (     io_BS_K) tmp_ch="Backup option will be compressed BSE file"
    if (.not.io_BS_K) tmp_ch="Trying to load compressed BSE file"
    call msg("s",trim(tmp_ch))
@@ -203,9 +203,6 @@ integer function io_BS_PAR_init(iq,ID,mode)
    ! This is the upper triangular matrix rescared in (many) 1D arrays
    !
    BSK_n_dims=1
-   !
-   !                46341 is the sqare root of the maximum integer 2147483647
-   MAX_BSK_LIN_size=45000*45000
    !
    if(trim(BSK_IO_local)=="1D_linear" .or. trim(BSK_IO_local)=="compressed_head" ) then
      dim_names(2:3)=[ 'BS_K_linearized1', 'BS_K_linearized2' ]

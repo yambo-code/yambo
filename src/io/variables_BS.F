@@ -237,7 +237,7 @@ integer function variables_BS_more(ID,mode)
  if(trim(mode)=="start".or.(trim(mode)=="end".and.l_BSE_kernel_complete.and.write_is_on(ID))) then
    def_var=                write_is_on(ID) .or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
    io_var =(master_cpu.and.write_is_on(id)).or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
-   if(def_var) call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0,par_io_kind="independent")
+   if(def_var) call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0)
    if(io_var)  call io_variable_elemental(ID,VAR=" Kernel complete",&
                &                          DB_L0=l_BSE_kernel_complete,L0=l_BSE_kernel_complete)
  endif

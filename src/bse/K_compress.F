@@ -36,7 +36,7 @@ subroutine K_compress(iq,ID_compr)
  !
  ! Work space
  !
- integer      :: i_block,i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,io_BS_err
+ integer      :: i_block,i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,io_BS_err,H_pos(2)
  integer, external :: io_BS_PAR_init
  !
  ! STEP 1: Check which matrix elements can be neglected
@@ -63,6 +63,11 @@ subroutine K_compress(iq,ID_compr)
    do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
      do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
        !
+       H_pos(1) = sum(BS_T_grp(:I_Tgrp_k-1)%size)+i_Tk
+       H_pos(2) = sum(BS_T_grp(:I_Tgrp_p-1)%size)+i_Tp
+       !
+       if (H_pos(1)>H_pos(2)) cycle
+       !
        if( abs(BS_blk(i_block)%mat(i_Tk,i_Tp)) >= BS_max_val*BS_K_cutoff ) cycle
        !
        BS_blk(i_block)%done(i_Tk,i_Tp)="n"
@@ -75,7 +80,7 @@ subroutine K_compress(iq,ID_compr)
    ! Update BS_blk with %done 
    !
    call io_control(ACTION=WR,ID=ID_compr)
-   call io_BS_PAR_block(iq,i_block,ID_compr,"head")
+   call io_BS_PAR_block(iq,i_block,ID_compr,"compressed_head")
    !
    call live_timing(steps=1)
    !
@@ -91,8 +96,7 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  use pars,         ONLY:IPL
  use LIVE_t,       ONLY:live_timing
  use IO_m,         ONLY:io_control,OP_APP,OP_RD,RD,WR
- use BS,           ONLY:BS_max_val,BS_lin_size_compressed,BS_K_cutoff,BS_blk,&
-&                       BS_nT_grps,BS_T_grp,n_BS_blks
+ use BS,           ONLY:BS_lin_size_compressed,BS_blk,BS_nT_grps,n_BS_blks
  use parallel_m,   ONLY:ncpu,myid,PP_redux_wait,PAR_IND_T_ordered
  !
  implicit none
@@ -102,8 +106,8 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  character(*), intent(in) :: mode
  !
  integer      :: ID_head,ID_compr,IO_ACT
- integer      :: i_block,i_block_ref,i_tgrp_k,i_Tgrp_p,i_Tp,i_Tk,x1,x2
- integer(IPL) :: imx_ref(ncpu),idx,idx_tmp,idx_ref
+ integer      :: i_block,i_block_ref_CPU,last_block_CPU,i_Tgrp_k,i_Tgrp_p,x1,x2
+ integer(IPL) :: imx_ref(ncpu),idx_CPU,idx,idx_tmp,idx_ref
  !
  integer, external :: io_BS_PAR_init
  !
@@ -115,8 +119,14 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  ID_head=0   ! Not used here
  imx_ref=0
  !
- do i_Tgrp_k=1,BS_nT_grps
-   do i_Tgrp_p=1,BS_nT_grps
+ idx_CPU=0
+ last_block_CPU=1
+ i_block_ref_CPU=1
+ !
+ ! Proceed by columns since we are in fortran
+ !
+ do i_Tgrp_p=1,BS_nT_grps
+   do i_Tgrp_k=1,BS_nT_grps
      !
      idx_ref=0
      !
@@ -124,9 +134,8 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
        !
        ! It is my block
        !
-       i_block_ref=-1
-       ! 
-       do i_block=1,n_BS_blks
+       do i_block=i_block_ref_CPU,n_BS_blks
+       !do i_block=1,n_BS_blks
          !
          if(BS_blk(i_block)%iT_k/=i_Tgrp_k .or. BS_blk(i_block)%iT_p/=i_Tgrp_p) cycle
          !
@@ -134,7 +143,7 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
          x2=BS_blk(i_block)%coordinate(2)
          idx_ref = int(x2,kind=IPL)*int(x2-1,kind=IPL)/int(2,kind=IPL)+int(x1,kind=IPL)
          !
-         i_block_ref=i_block
+         i_block_ref_CPU=i_block
          !
          exit
          !
@@ -144,20 +153,26 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
      !
      call PP_redux_wait((/idx_ref/))
      !
-     idx_tmp=0
-     do i_block=1,n_BS_blks
+     idx_tmp=idx_CPU
+     do i_block=last_block_CPU,n_BS_blks
+     !idx_tmp=0
+     !do i_block=1,n_BS_blks
        x1=BS_blk(i_block)%coordinate(1)
        x2=BS_blk(i_block)%coordinate(2)
        idx = int(x2,kind=IPL)*int(x2-1,kind=IPL)/int(2,kind=IPL)+int(x1,kind=IPL)
-       if(idx>=idx_ref) cycle
+       if(idx>=idx_ref) exit
+       !if(idx>=idx_ref) cycle
        idx_tmp=idx_tmp+int(count(BS_blk(i_block)%done(:,:)=="t"),IPL)
      enddo
+     !
+     last_block_CPU=i_block
+     idx_CPU=idx_tmp
      !
      call PP_redux_wait((/idx_tmp/))
      !
      if (PAR_IND_T_ordered%element_2D(i_Tgrp_k,i_Tgrp_p)) then
-       BS_blk(i_block_ref)%idx_compr=idx_tmp+1
-       imx_ref(myid+1)=max(imx_ref(myid+1),idx_tmp+count(BS_blk(i_block_ref)%done(:,:)=="t"))
+       BS_blk(i_block_ref_CPU)%idx_compr=idx_tmp+1
+       imx_ref(myid+1)=max(imx_ref(myid+1),idx_tmp+count(BS_blk(i_block_ref_CPU)%done(:,:)=="t"))
      endif
      !
    enddo
@@ -179,7 +194,7 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  call io_control(ACTION=IO_ACT,ID=ID_compr)
  io_BS_err=io_BS_PAR_init(iq,ID_compr,"compressed_mat")
  !
- if (n_BS_blks>0) call live_timing('Kernel compressed '//trim(mode),n_BS_blks)
+ if (n_BS_blks>0) call live_timing('Compressed BSE_mat '//trim(mode),n_BS_blks)
  !
  if(mode=="read" ) IO_ACT=RD
  if(mode=="write") IO_ACT=WR

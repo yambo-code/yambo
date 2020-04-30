@@ -61,9 +61,11 @@ subroutine K_blocks(iq)
  allocate(BS_blk(n_BS_blks*n_new_blocks))
  !
  ! Allocate the blocks
+ ! Proceed by columns since we are in fortran
+ !
  n_BS_blks=0
- do i_T=1,BS_nT_grps
-   do j_T=1,BS_nT_grps
+ do j_T=1,BS_nT_grps
+   do i_T=1,BS_nT_grps
      !
      if (.not.PAR_IND_T_ordered%element_2D(i_T,j_T)) cycle
      !

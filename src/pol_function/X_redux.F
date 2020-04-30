@@ -300,7 +300,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  if (X_par%INTER_comm%n_CPU>1) then
    !
    call MATRIX_reset(X_par)
-   call X_PARALLEL_alloc(X_par,X%ng,Xw%n_freqs,"X")
+   call X_PARALLEL_alloc(X_par,X%ng,Xw%n_freqs,"X,CPU_ONLY")
    !
  endif
  !

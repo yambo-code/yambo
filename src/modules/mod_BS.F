@@ -131,7 +131,7 @@ module BS
    integer                       :: coordinate(2) ! Position of the left-bottom corner in the whole matrix
    character(1)                  :: mode          ! "R"esonant/"A"ntiresonant
    !
-   integer(IPL)                  :: idx_compr     ! Position in the compressed file
+   integer(IPL),allocatable      :: idx_compr(:)  ! Position in the compressed file
    !
    ! Matrix Block
    !--------------

@@ -106,8 +106,9 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  character(*), intent(in) :: mode
  !
  integer      :: ID_head,ID_compr,IO_ACT
- integer      :: i_block,i_block_ref_CPU,last_block_CPU,i_Tgrp_k,i_Tgrp_p,x1,x2
- integer(IPL) :: imx_ref(ncpu),idx_CPU,idx,idx_tmp,idx_ref
+ integer      :: i_block,i_block_ref_CPU,last_block_CPU,i_Tgrp_k,i_Tgrp_p,x1,x2,ib2,N
+ integer(IPL) :: idx,imx,idx_CPU,idx_tmp(maxval(BS_blk(:)%size(2))),&
+&                idx_ref(1),imx_ref(1),imx_last(ncpu)
  !
  integer, external :: io_BS_PAR_init
  !
@@ -117,11 +118,11 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  call live_timing('Compressed size',BS_nT_grps)
  !
  ID_head=0   ! Not used here
- imx_ref=0
+ imx_last=0
  !
  idx_CPU=0
  last_block_CPU=1
- i_block_ref_CPU=1
+ i_block_ref_CPU=0
  !
  ! Proceed by columns since we are in fortran
  !
@@ -129,21 +130,30 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
    do i_Tgrp_k=1,BS_nT_grps
      !
      idx_ref=0
+     imx_ref=0
      !
      if (PAR_IND_T_ordered%element_2D(i_Tgrp_k,i_Tgrp_p)) then
        !
        ! It is my block
        !
-       do i_block=i_block_ref_CPU,n_BS_blks
-       !do i_block=1,n_BS_blks
+       !do i_block=i_block_ref_CPU+1,n_BS_blks
+       do i_block=1,n_BS_blks
          !
          if(BS_blk(i_block)%iT_k/=i_Tgrp_k .or. BS_blk(i_block)%iT_p/=i_Tgrp_p) cycle
+         !
+         i_block_ref_CPU=i_block
          !
          x1=BS_blk(i_block)%coordinate(1)
          x2=BS_blk(i_block)%coordinate(2)
          idx_ref = int(x2,kind=IPL)*int(x2-1,kind=IPL)/int(2,kind=IPL)+int(x1,kind=IPL)
          !
-         i_block_ref_CPU=i_block
+         x1=x1+BS_blk(i_block)%size(1)-1
+         x2=x2+BS_blk(i_block)%size(2)-1
+         imx_ref = int(x2,kind=IPL)*int(x2-1,kind=IPL)/int(2,kind=IPL)+int(x1,kind=IPL)
+         !
+         N=BS_blk(i_block_ref_CPU)%size(2)
+         !
+         allocate(BS_blk(i_block)%idx_compr(BS_blk(i_block)%size(2)))
          !
          exit
          !
@@ -151,37 +161,66 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
        !
      endif
      !
-     call PP_redux_wait((/idx_ref/))
+     call PP_redux_wait(idx_ref)
+     call PP_redux_wait(imx_ref)
      !
-     idx_tmp=idx_CPU
-     do i_block=last_block_CPU,n_BS_blks
-     !idx_tmp=0
-     !do i_block=1,n_BS_blks
+     !idx_tmp=idx_CPU
+     !do i_block=last_block_CPU,n_BS_blks
+     idx_tmp=0
+     do i_block=1,n_BS_blks
+       !
        x1=BS_blk(i_block)%coordinate(1)
        x2=BS_blk(i_block)%coordinate(2)
        idx = int(x2,kind=IPL)*int(x2-1,kind=IPL)/int(2,kind=IPL)+int(x1,kind=IPL)
-       if(idx>=idx_ref) exit
-       !if(idx>=idx_ref) cycle
-       idx_tmp=idx_tmp+int(count(BS_blk(i_block)%done(:,:)=="t"),IPL)
+       !
+       if(idx> imx_ref(1)) exit
+       !
+       ! Present block plus blocks below
+       !
+       if(idx>=idx_ref(1)) then
+         if(idx==idx_ref(1)) idx_tmp(:N)=idx_tmp(:N)+1
+         do ib2=2,N
+           idx_tmp(ib2)=idx_tmp(ib2)+int(count(BS_blk(i_block)%done(:,:ib2-1)=="t"),IPL)
+         enddo
+         cycle
+       endif
+       !
+       x1=x1+BS_blk(i_block)%size(1)-1
+       x2=x2+BS_blk(i_block)%size(2)-1
+       imx = int(x2,kind=IPL)*int(x2-1,kind=IPL)/int(2,kind=IPL)+int(x1,kind=IPL)
+       !
+       ! Blocks above
+       !
+       if(imx>idx_ref(1)) then
+         do ib2=1,N
+           idx_tmp(ib2)=idx_tmp(ib2)+int(count(BS_blk(i_block)%done(:,:ib2)=="t"),IPL)
+         enddo
+         cycle
+       endif
+       !
+       ! Blocks before
+       !
+       idx_tmp(1:N)=idx_tmp(1:N)+int(count(BS_blk(i_block)%done(:,:)=="t"),IPL)
+       !
+       last_block_CPU=i_block+1
+       idx_CPU=idx_tmp(1)
+       !
      enddo
      !
-     last_block_CPU=i_block
-     idx_CPU=idx_tmp
-     !
-     call PP_redux_wait((/idx_tmp/))
+     call PP_redux_wait(idx_tmp)
      !
      if (PAR_IND_T_ordered%element_2D(i_Tgrp_k,i_Tgrp_p)) then
-       BS_blk(i_block_ref_CPU)%idx_compr=idx_tmp+1
-       imx_ref(myid+1)=max(imx_ref(myid+1),idx_tmp+count(BS_blk(i_block_ref_CPU)%done(:,:)=="t"))
+       BS_blk(i_block_ref_CPU)%idx_compr(:N)=idx_tmp(:N)
+       imx_last(myid+1)=idx_tmp(N)+max(int(count(BS_blk(i_block_ref_CPU)%done(:,N)=="t")-1,IPL),0)
      endif
      !
    enddo
    call live_timing(steps=1)
  enddo
  !
- call PP_redux_wait(imx_ref)
+ call PP_redux_wait(imx_last)
  !
- BS_lin_size_compressed=maxval(imx_ref)
+ BS_lin_size_compressed=maxval(imx_last)
  !
  call live_timing( )
  !

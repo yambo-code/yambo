@@ -106,7 +106,7 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  character(*), intent(in) :: mode
  !
  integer      :: ID_head,ID_compr,IO_ACT
- integer      :: i_block,i_block_ref_CPU,last_block_CPU,i_Tgrp_k,i_Tgrp_p,x1,x2,ib2,N
+ integer      :: i_block,i_block_ref_CPU,last_block_CPU,i_Tgrp_k,i_Tgrp_p,x1,x2,ib2,N(1)
  integer(IPL) :: idx,imx,idx_CPU,idx_tmp(maxval(BS_blk(:)%size(2))),&
 &                idx_ref(1),imx_ref(1),imx_last(ncpu)
  !
@@ -121,7 +121,7 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  imx_last=0
  !
  idx_CPU=0
- last_block_CPU=1
+ last_block_CPU=0
  i_block_ref_CPU=0
  !
  ! Proceed by columns since we are in fortran
@@ -131,13 +131,14 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
      !
      idx_ref=0
      imx_ref=0
+     N=0
      !
      if (PAR_IND_T_ordered%element_2D(i_Tgrp_k,i_Tgrp_p)) then
        !
        ! It is my block
        !
-       !do i_block=i_block_ref_CPU+1,n_BS_blks
-       do i_block=1,n_BS_blks
+       do i_block=i_block_ref_CPU+1,n_BS_blks
+       !do i_block=1,n_BS_blks
          !
          if(BS_blk(i_block)%iT_k/=i_Tgrp_k .or. BS_blk(i_block)%iT_p/=i_Tgrp_p) cycle
          !
@@ -163,11 +164,12 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
      !
      call PP_redux_wait(idx_ref)
      call PP_redux_wait(imx_ref)
+     call PP_redux_wait(N)
      !
-     !idx_tmp=idx_CPU
-     !do i_block=last_block_CPU,n_BS_blks
-     idx_tmp=0
-     do i_block=1,n_BS_blks
+     idx_tmp=idx_CPU
+     do i_block=last_block_CPU+1,n_BS_blks
+     !idx_tmp=0
+     !do i_block=1,n_BS_blks
        !
        x1=BS_blk(i_block)%coordinate(1)
        x2=BS_blk(i_block)%coordinate(2)
@@ -178,8 +180,8 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
        ! Present block plus blocks below
        !
        if(idx>=idx_ref(1)) then
-         if(idx==idx_ref(1)) idx_tmp(:N)=idx_tmp(:N)+1
-         do ib2=2,N
+         if(idx==idx_ref(1)) idx_tmp(:N(1))=idx_tmp(:N(1))+1
+         do ib2=2,N(1)
            idx_tmp(ib2)=idx_tmp(ib2)+int(count(BS_blk(i_block)%done(:,:ib2-1)=="t"),IPL)
          enddo
          cycle
@@ -192,7 +194,7 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
        ! Blocks above
        !
        if(imx>idx_ref(1)) then
-         do ib2=1,N
+         do ib2=1,N(1)
            idx_tmp(ib2)=idx_tmp(ib2)+int(count(BS_blk(i_block)%done(:,:ib2)=="t"),IPL)
          enddo
          cycle
@@ -200,9 +202,9 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
        !
        ! Blocks before
        !
-       idx_tmp(1:N)=idx_tmp(1:N)+int(count(BS_blk(i_block)%done(:,:)=="t"),IPL)
+       idx_tmp(1:N(1))=idx_tmp(1:N(1))+int(count(BS_blk(i_block)%done(:,:)=="t"),IPL)
        !
-       last_block_CPU=i_block+1
+       last_block_CPU=i_block
        idx_CPU=idx_tmp(1)
        !
      enddo
@@ -210,8 +212,8 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
      call PP_redux_wait(idx_tmp)
      !
      if (PAR_IND_T_ordered%element_2D(i_Tgrp_k,i_Tgrp_p)) then
-       BS_blk(i_block_ref_CPU)%idx_compr(:N)=idx_tmp(:N)
-       imx_last(myid+1)=idx_tmp(N)+max(int(count(BS_blk(i_block_ref_CPU)%done(:,N)=="t")-1,IPL),0)
+       BS_blk(i_block_ref_CPU)%idx_compr(:N(1))=idx_tmp(:N(1))
+       imx_last(myid+1)=idx_tmp(N(1))+max(int(count(BS_blk(i_block_ref_CPU)%done(:,N(1))=="t")-1,IPL),0)
      endif
      !
    enddo

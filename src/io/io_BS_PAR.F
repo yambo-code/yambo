@@ -408,7 +408,6 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
      lwrite(2)=                                 trim(mode)=="full"
      lwrite(3)=trim(mode)=="compressed_mat"
      !
-     !write(*,*) idx1,imax
      if(idx1+imax-1<=MAX_BSK_LIN_size) then
        ! Block is all in one variable
        ID_now(1)=VAR_IDs(2)+(i_rep(1)-1)*8

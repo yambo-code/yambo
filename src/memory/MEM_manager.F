@@ -291,7 +291,7 @@ subroutine MEM_manager_messages(what,adding,MEM_now_Kb,where)
  use pars,         ONLY:lchlen
  use com,          ONLY:msg
  use memory,       ONLY:TOT_MEM_Kb,TOT_MEM_Kb_MEMSTAT,TOT_MEM_Kb_SAVE,MEM_treshold,&
-&                       MEM_jump_treshold,mem_string,_HOST_,_DEV_
+&                       MEM_jump_treshold,mem_string,HOST_,DEV_
  !
  implicit none
  !
@@ -307,8 +307,8 @@ subroutine MEM_manager_messages(what,adding,MEM_now_Kb,where)
  !
  label=" "
 #if defined _CUDA
- if (where==_HOST_) label=" (HOST)" 
- if (where==_DEV_)  label=" (DEV)" 
+ if (where==HOST_) label=" (HOST)" 
+ if (where==DEV_)  label=" (DEV)" 
 #endif
  !
 #if defined _MEM_CHECK

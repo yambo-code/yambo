@@ -132,7 +132,7 @@ if ! test -d "$extlibs_path/${FCKIND}/${FC}/bin";     then mkdir    "$extlibs_pa
 #
 if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
  BIN_LIBRARIES=$extlibs_path/${FCKIND}/${FC}/bin/* ;
- BIN_NETCDF=$extlibs_path/${FCKIND}/${FC}/${NETCDF_VER}/${HDF5_VER}/bin/* ;
+ BIN_NETCDF=$extlibs_path/${FCKIND}/${FC}/${NETCDF_VER}/${IO_LIB_VER}/bin/* ;
  BIN_SLEPC=$extlibs_path/${FCKIND}/${FC}/${build_precision}/bin/* ;
  for file in BIN_LIBRARIES $BIN_NETCDF $BIN_SLEPC; do
   if test -f $file; then 

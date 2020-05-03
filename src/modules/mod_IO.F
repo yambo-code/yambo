@@ -112,6 +112,10 @@ module IO_m
  integer, parameter:: PAR_IO_CREATE_MODE=ior(nf90_mpiio,nf90_netcdf4)
  integer, parameter:: PAR_IO_WRITE_MODE =ior(nf90_mpiio,nf90_write)
 #endif
+#if defined _PAR_IO && !defined _HDF5_IO
+ integer, parameter:: PAR_IO_CREATE_MODE=ior(nf90_mpiio,nf90_64bit_offset)
+ integer, parameter:: PAR_IO_WRITE_MODE =ior(nf90_mpiio,nf90_write)
+#endif
  !
  ! Units
  !

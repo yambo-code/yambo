@@ -6,19 +6,18 @@
 include ../../config/setup
 include ../archive/package.list
 
-LIBNAME=libnetcdf.a
+LIBNAME=libpnetcdf.a
 LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${netcdf_ver}/${io_lib_ver}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
-PACKAGE=$(pkgname_netcdf)
-TARBALL=$(tarball_netcdf)
+PACKAGE=$(pkgname_pnetcdf)
+TARBALL=$(tarball_pnetcdf)
 
 #
 # redefinitions
 #
 AUXFLAGS=--prefix=$(LIBPATH) \
-         --without-pic --enable-static --disable-shared \
-         --disable-dap  $(netcdf_opt)
+         --without-pic --enable-static --disable-shared
 
 # DEBUG <
 # This option is useful for debugging netcdf4 problems
@@ -26,7 +25,6 @@ AUXFLAGS=--prefix=$(LIBPATH) \
 # See also the connected call in src/setup/setup.F
 # call netcdf_call(nf90_set_log_level(3),1)
 # DEBUG >
-
 
 #
 # MAIN target
@@ -47,16 +45,15 @@ configure-stamp: uncompress-stamp
 	      CXX="$(cc)" \
 	      CXXCPP="$(cpp)" \
 	      FC="$(fc)" \
-	      CPPFLAGS="$(netcdf_flag) $(ihdf5) $(ipnetcdf)" \
-	      LDFLAGS="-L${LIBPATH}/lib -lpnetcdf" \
+	      CPPFLAGS="$(netcdf_flag) $(inetcdf)" \
 	      F77="$(f77)" ); \
 	fi
-#	      LIBS="$(lhdf5)" \#
 	touch configure-stamp
 
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) ) ; fi
+	#
 	touch package-ready-stamp
 
 package-installed: uncompress-stamp configure-stamp package-ready-stamp
@@ -69,7 +66,7 @@ $(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-install
 # cleaning
 #
 clean:
-	@if test -d $(PACKAGE) && test -e configure-stamp ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
+	@if test -d $(PACKAGE) && test -e configure-stamp; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
 	@- rm -rf package-ready-stamp configure-stamp package-installed
 
 clean_all: clean

@@ -216,7 +216,7 @@ hdf5:
 	@+if test "$(do_hdf5)" = yes ; then LIBS2DO="hdf5" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 netcdf:
-	@+if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf netcdff" ; \
+	@+if test "$(do_netcdf)" = yes ; then LIBS2DO="pnetcdf netcdf netcdff" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 etsf_io:
 	@+if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \

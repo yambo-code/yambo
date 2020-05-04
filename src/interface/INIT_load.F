@@ -269,7 +269,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! Xs Xd Xp
  !
  call it(defs,'Chimod',       '[X] IP/Hartree/ALDA/LRC/PF/BSfxc',Chi_mode,protect=.FALSE.,case="A")
- call it(defs,'ChiLinAlgMod', '[X] inversion/lin_sys',Chi_linalg_mode,verb_level=V_resp,case="A")
+ call it(defs,'ChiLinAlgMod', '[X] inversion/lin_sys,cpu/gpu',Chi_linalg_mode,verb_level=V_resp,case="A")
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))

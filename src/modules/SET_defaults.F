@@ -36,7 +36,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     eval_alpha,&
 &                     q_plus_G_direction,Q_Shift_Order,&
 &                     l_X_terminator,X_terminator_E,global_gauge,&
-&                     Chi_linalg_mode,X_use_lin_sys,X_DbGd_percentual
+&                     Chi_linalg_mode,X_use_lin_sys,X_use_gpu,X_DbGd_percentual
  use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
 &                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
@@ -106,8 +106,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
- use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_headings,YPP_append,&
-&                     Gr_desc,TIME_STEP_desc,RT_desc
+ use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_o_file_is_open,&
+&                     RT_headings,YPP_append,Gr_desc,TIME_STEP_desc,RT_desc
  use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
@@ -137,6 +137,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use timing_m,    ONLY:timing_allocate,nclockx
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
+ use cuda_m,      ONLY:have_cuda
  !
  implicit none
  !
@@ -354,6 +355,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Chi_mode=' '
  Chi_linalg_mode="lin_sys"
  X_use_lin_sys=.FALSE.
+ X_use_gpu=have_cuda
  current_iq=0
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.
@@ -640,6 +642,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  n_RT_headings=0
  N_RT_o_files=0
+ RT_o_file_is_open=.FALSE.
  RT_o_file_long= " "
  RT_o_file_short= " "
  RT_headings= " "

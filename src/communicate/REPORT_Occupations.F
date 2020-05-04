@@ -92,7 +92,7 @@ subroutine REPORT_Occupations(what,E)
    endif
    !
    if (Nbf(i_sp_pol)==Nbm(i_sp_pol).and.Nbf(i_sp_pol)>0) then
-     call msg('r',COMPOSE_msg('Direct Gap',i_sp_pol),E_g_ind(i_sp_pol,1)*HA2EV,'[eV]')
+     call msg('r',COMPOSE_msg('Direct Gap',i_sp_pol),E_g_dir(i_sp_pol,1)*HA2EV,'[eV]')
      if (E%nk>1) then
        call msg('r',COMPOSE_msg('Indirect Gap',i_sp_pol),E_g_ind(i_sp_pol,1)*HA2EV,'[eV]')
        call msg('r',COMPOSE_msg('Last valence band width',i_sp_pol),E_g_ind(i_sp_pol,2)*HA2EV,'[eV]')

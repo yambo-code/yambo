@@ -106,7 +106,7 @@ subroutine RT_time_step_update( )
    !=========================
    !
    CACHE_OBS_last_point    = NE_i_time
-   CACHE_OBS_INTERVAL_time = TIME_adjust(CACHE_OBS_INTERVAL_time,RT_dyn_step)
+   CACHE_OBS_INTERVAL_time = max(TIME_adjust(CACHE_OBS_INTERVAL_time,RT_dyn_step),RT_dyn_step)
    !
    OBS_RT_IO_t%INTERVAL_time=TIME_adjust(OBS_RT_IO_t%INTERVAL_time,NE_time_step_update_jump)
    CACHE_OBS_INTERVAL_time=STEP_adjust(OBS_RT_IO_t%INTERVAL_time,CACHE_OBS_INTERVAL_time,RT_dyn_step)

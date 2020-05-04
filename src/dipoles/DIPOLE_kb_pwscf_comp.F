@@ -25,7 +25,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_kb_pwscf_comp(ik,Xk,kbv)
+subroutine DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
  !
  use pars,          ONLY:SP,pi,cZERO
  use electrons,     ONLY:n_spinor

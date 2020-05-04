@@ -90,32 +90,32 @@ lock_file=`echo $lock_file  | sed "s/_DOUBLE//2"`;
 llibs="-L\$(libdir) $llibs"
 lf90include="@IFLAG@\$(includedir) @IFLAG@\$(modinclude) @IFLAG@\$(sysinclude) @IFLAG@\$(includedir)/headers/common @IFLAG@\$(includedir)/headers/parser @IFLAG@\$(srcdir)/driver/include"
 linclude="-I\$(includedir) -I\$(modinclude) -I\$(sysinclude) -I\$(includedir)/headers/common -I\$(includedir)/headers/parser -I\$(srcdir)/driver/include"
-lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ipetsc) \$(islepc)"
+lf90libinclude="\$(ipnetcdf) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ipetsc) \$(islepc)"
 #
 case $target in
   yambo*)
    llibs="$llibs -lqe_pseudo -lmath77 -lslatec -llocal \$(lscalapack) \$(lslepc) \$(lpetsc) \$(llapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(liotk) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
-   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ifutile) \$(iyaml)"
+   llibs="$llibs \$(liotk) \$(lpnetcdf) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
+   lf90libinclude="\$(ipnetcdf) \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ifutile) \$(iyaml)"
     ;;
   a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
-   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(iyaml)"
+   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lpnetcdf) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
+   lf90libinclude="\$(ipnetcdf) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(iyaml)"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(liotk) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
+   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(liotk) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lpnetcdf) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
    lf90libinclude="\$(iiotk) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(iyaml)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(letsf) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
+   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(letsf) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lpnetcdf) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
    lf90libinclude="\$(ietsf) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(iyaml)"
     ;;
   ypp*)
-   llibs="$llibs -lqe_pseudo -llocal -lmath77 -lslatec \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
-   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)  \$(ifutile) \$(iyaml)"
+   llibs="$llibs -lqe_pseudo -llocal -lmath77 -lslatec \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lpnetcdf) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
+   lf90libinclude="\$(ipnetcdf) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)  \$(ifutile) \$(iyaml)"
     ;;
   lib*)
-   lf90libinclude="\$(iiotk) \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ilibxc) \$(iyaml)"
+   lf90libinclude="\$(iiotk) \$(ipnetcdf) \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ilibxc) \$(iyaml)"
     ;;
 esac
 

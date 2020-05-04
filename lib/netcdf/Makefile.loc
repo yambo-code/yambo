@@ -48,10 +48,10 @@ configure-stamp: uncompress-stamp
 	      CXXCPP="$(cpp)" \
 	      FC="$(fc)" \
 	      CPPFLAGS="$(netcdf_flag) $(ihdf5) $(ipnetcdf)" \
-	      LDFLAGS="-L${LIBPATH}/lib -lpnetcdf" \
+	      LIBS="$(lhdf5)" \
 	      F77="$(f77)" ); \
 	fi
-#	      LIBS="$(lhdf5)" \#
+#	      LDFLAGS="-L${LIBPATH}/lib -lpnetcdf" \#
 	touch configure-stamp
 
 package-ready-stamp: uncompress-stamp configure-stamp

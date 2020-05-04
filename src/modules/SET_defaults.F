@@ -108,7 +108,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _RT || defined _YPP_RT
  use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_o_file_is_open,&
 &                     RT_headings,YPP_append,Gr_desc,TIME_STEP_desc,RT_desc
- use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db
+ use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db,&
+&                     IO_OBS_cache_last_point,IO_OBS_cache_INTERVAL_time,IO_OBS_cache_INTERVAL_time_SAVE,   &
+&                     IO_OBS_cache_steps,TMP_OBS_cache_steps,FORCE_IO_OBS
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
@@ -118,7 +120,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
 &                     RAD_prefactor,i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,           &
 &                     RT_is_statically_dephased,RT_is_dynamically_dephased,               &
-&                     RT_deph_deg_thresh,RT_deph_cv_only
+&                     RT_deph_deg_thresh,RT_deph_cv_only,                                 &
+&                     NE_time_step_update_last_point,NE_time_step_update_jump,NE_time_step_update_jump_SAVE, &
+&                     NE_initial_time_step_update,NE_step_update_treshold
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_tot,A_ind,A_ext
  use plasma,     ONLY:PLASMA_redux_percent
@@ -585,6 +589,18 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NE_steps=1
  NE_time=0._SP
  NE_tot_time= 1000._SP*FS2AUT
+ !
+ NE_time_step_update_last_point = 1
+ NE_time_step_update_jump       = 0._SP
+ NE_time_step_update_jump_SAVE  = 0._SP
+ NE_initial_time_step_update    = 0._SP
+ NE_step_update_treshold        = 0.1_SP
+ !
+ FORCE_IO_OBS            = .false.
+ IO_OBS_cache_steps      = 1
+ IO_OBS_cache_last_point = 1
+ IO_OBS_cache_INTERVAL_time       = 0._SP
+ IO_OBS_cache_INTERVAL_time_SAVE  = 0._SP
  !
  G_MEM_steps = 2
  i_MEM_old   = 0

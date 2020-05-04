@@ -29,8 +29,12 @@ module RT_control
  !
 #include<memory.h>
  !
- integer                  ::  IO_OBS_cache_steps=1
- integer                  :: TMP_OBS_cache_steps=1
+ logical                  :: FORCE_IO_OBS
+ integer                  :: IO_OBS_cache_last_point
+ real(SP)                 :: IO_OBS_cache_INTERVAL_time
+ real(SP)                 :: IO_OBS_cache_INTERVAL_time_SAVE
+ integer                  :: IO_OBS_cache_steps
+ integer                  ::TMP_OBS_cache_steps
  !
  integer                  :: ID(8)                    ! (/3 GFPAR,4 OBS,5 GFSER,6 OCC,7 THETA,8 REF)
  integer                  :: NE_i_start_time    = 1   ! restart point
@@ -198,6 +202,10 @@ module RT_control
        INTERVAL_steps=GF_RT_IO_t%INTERVAL_steps
        last_point    =GF_RT_IO_t%last_point
      endif
+     if (what=="OBS_cache") then
+       INTERVAL_steps=nint(IO_OBS_cache_INTERVAL_time/RT_step)
+       last_point    =IO_OBS_cache_last_point
+     endif
      if (what=="deltaT") then
        INTERVAL_steps=nint(NE_time_step_update_jump/RT_step)
        last_point    =NE_time_step_update_last_point
@@ -242,6 +250,30 @@ module RT_control
      !
      if (     present(STEP)) TIME_adjust=real(nint(TIME/STEP),SP)*STEP
      if (.not.present(STEP)) TIME_adjust=real(nint(TIME/RT_step),SP)*RT_step
+     !
+   end function
+   !
+   real(SP) function STEP_adjust(TIME,STEP1,STEP2)
+     !
+     use real_time, ONLY:RT_step
+     !
+     real(SP)           :: TIME,STEP1
+     real(SP), optional :: STEP2
+     !
+     integer  :: N1,N2,i1
+     real(SP) :: STEP2_
+     !
+     if (     present(STEP2)) STEP2_=STEP2 
+     if (.not.present(STEP2)) STEP2_=RT_step
+     !
+     N1=nint(TIME/STEP1)
+     N2=nint(TIME/STEP2_)
+     !
+     do i1=N1,N2
+       if( N2/i1*i1==N2) exit 
+     enddo
+     !
+     STEP_adjust=TIME/real(i1,SP)
      !
    end function
    !

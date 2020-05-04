@@ -47,19 +47,21 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),E_IP
  !
- call timing('RT observables',OPR='start')
- !
  ! Current, Polarization and Magnetization
  !=========================================
  ! (evaluated also in RT_integrator when an induced field is included, l_RT_induced_field=.true.)
+ !
+ if (  (.not.RT_do_it('OUT')) .and. (.not.RT_do_it('OBS_cache')) ) return
+ !
+ call timing('RT observables',OPR='start')
+ !
+ call RT_carriers_number(en,k,NCarr)
+ call RT_current_AND_polarization(k,en,dG_lesser,A_tot,Ncarr)
  !
  if (.not. RT_do_it('OUT') ) then
    call timing('RT observables',OPR='stop')
    return
  endif
- !
- call RT_carriers_number(en,k,NCarr)
- call RT_current_AND_polarization(k,en,dG_lesser,A_tot,Ncarr)
  !
  ! GPL_EXCLUDE_START
  !

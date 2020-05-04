@@ -93,7 +93,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  !
  if (index(trim(io_raw_extension(ID)),"BS_Q")>0 .and. .not.frag_BS_K) return
  !
- !call timing('io_fragment',OPR='start')
+ call timing('io_fragment',OPR='start')
  !
  close_is_on_save=close_is_on(ID)
  !
@@ -134,6 +134,6 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  ! Ensures that every MPI task has opened the fragment before writing
  if (par_IO) call PP_redux_wait(COMM=COMM)
  !
- !call timing('io_fragment',OPR='stop')
+ call timing('io_fragment',OPR='stop')
  !
 end subroutine 

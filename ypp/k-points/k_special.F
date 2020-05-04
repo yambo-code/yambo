@@ -166,7 +166,7 @@ subroutine k_special(LIST_only)
      !
      call orthorombic_lengths(ap,bp)
      !
-     SPECIAL_k%nbz=10
+     SPECIAL_k%nbz=15
      !
      SPECIAL_k%pt(1,:)=(/0._SP,0._SP,0._SP/)
      SPECIAL_k_label(1)='G'
@@ -192,6 +192,19 @@ subroutine k_special(LIST_only)
      SPECIAL_k%pt(9,:)=(/ep,bp,0._SP/)
      SPECIAL_k_label(10)='A1'
      SPECIAL_k%pt(10,:)=SPECIAL_k%pt(9,:)+(/0._SP,0._SP,cp/)
+     !
+     SPECIAL_k_label(10)='X2'
+     SPECIAL_k%pt(10,:)=SPECIAL_k%pt(3,:)+SPECIAL_k%pt(5,:)
+     SPECIAL_k_label(11)='A2'
+     SPECIAL_k%pt(11,:)=SPECIAL_k%pt(4,:)-2.*SPECIAL_k%pt(3,:)
+     SPECIAL_k_label(12)='A3'
+     SPECIAL_k%pt(12,:)=SPECIAL_k%pt(4,:)-2.*SPECIAL_k%pt(2,:)
+     SPECIAL_k_label(13)='A4'
+     SPECIAL_k%pt(13,:)=SPECIAL_k%pt(4,:)+SPECIAL_k%pt(5,:)
+     SPECIAL_k_label(14)='A5'
+     SPECIAL_k%pt(14,:)=SPECIAL_k%pt(12,:)+SPECIAL_k%pt(5,:)
+     SPECIAL_k_label(15)='A6'
+     SPECIAL_k%pt(15,:)=SPECIAL_k%pt(11,:)+SPECIAL_k%pt(5,:)
      !
    case('CUB')
      !

@@ -153,8 +153,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Set (J,P,M) caching variables and I/O steps
  !=============================================
- if(CACHE_OBS_INTERVAL_time_SAVE<RT_step) CACHE_OBS_INTERVAL_time_SAVE=RT_step
- CACHE_OBS_INTERVAL_time_SAVE=TIME_adjust(CACHE_OBS_INTERVAL_time_SAVE,RT_step)
+ CACHE_OBS_INTERVAL_time_SAVE=max(TIME_adjust(CACHE_OBS_INTERVAL_time_SAVE,RT_step),RT_step)
  OBS_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time_SAVE)
  call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
  !

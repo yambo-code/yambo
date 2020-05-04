@@ -36,7 +36,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     eval_alpha,&
 &                     q_plus_G_direction,Q_Shift_Order,&
 &                     l_X_terminator,X_terminator_E,global_gauge,&
-&                     Chi_linalg_mode,X_use_lin_sys,X_DbGd_percentual
+&                     Chi_linalg_mode,X_use_lin_sys,X_use_gpu,X_DbGd_percentual
  use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
 &                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
@@ -135,6 +135,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use timing_m,    ONLY:timing_allocate,nclockx
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
+ use cuda_m,      ONLY:have_cuda
  !
  implicit none
  !
@@ -352,6 +353,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Chi_mode=' '
  Chi_linalg_mode="lin_sys"
  X_use_lin_sys=.FALSE.
+ X_use_gpu=have_cuda
  current_iq=0
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.

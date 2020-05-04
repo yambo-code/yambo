@@ -138,22 +138,22 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
    !
    call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-   RT_orbt_magn(:,1)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
+   RT_orbt_magn(:,1)=RT_M_tmp !/(2._SP*SPEED_OF_LIGHT)
    !
    if(NE_i_time==1) then
      call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
 &                             G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-     Orbital_magn=real(RT_M_tmp,SP)/(2._SP*SPEED_OF_LIGHT)
+     Orbital_magn=real(RT_M_tmp,SP) !/(2._SP*SPEED_OF_LIGHT)
    endif
    !
    call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-   RT_orbt_magn(:,2)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
+   RT_orbt_magn(:,2)=RT_M_tmp !/(2._SP*SPEED_OF_LIGHT)
    ! 
    if(NE_i_time==1) then
      call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&
 &                             G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-     Itinerant_magn=real(RT_M_tmp,SP)/(2._SP*SPEED_OF_LIGHT)
+     Itinerant_magn=real(RT_M_tmp,SP) !/(2._SP*SPEED_OF_LIGHT)
    endif
    ! 
  endif

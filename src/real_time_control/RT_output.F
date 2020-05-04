@@ -181,7 +181,7 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-dP_order_5','YPP-dP_order_6','YPP-dP_order_7','YPP-dP_order_8','YPP-dP_order_9',&
 &         'YPP-P_minus_P_pump')
        data_to_dump(2:4) =real(RT_P)
-    !
+     !
      case('spin_magnetization')
        data_to_dump(2: 4) = real(RT_spin_magn(:,1))
        data_to_dump(5: 7) = real(RT_spin_magn(:,2))

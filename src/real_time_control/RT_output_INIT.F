@@ -180,7 +180,8 @@ subroutine RT_output_INIT( )
  if (n_spin>1) then
    call RT_FILE_add('spin_magnetization',&
    &                TITLES=(/'T [fs]',"Ms_x  ","Ms_y  ","Ms_z  ","Mv_x  ","Mv_y  ","Mv_z  ","Mc_x  ","Mc_y  ","Mc_z  "/))
-   call RT_FILE_add('orbt_magnetization',TITLES=(/'T [fs]',"Ml_x  ","Ml_y  ","Ml_z  ","Mi_x  ","Mi_y  ","Mi_z  "/))
+   !call RT_FILE_add('orbt_magnetization',TITLES=(/'T [fs]',"Ml_x  ","Ml_y  ","Ml_z  ","Mi_x  ","Mi_y  ","Mi_z  "/))
+   call RT_FILE_add('orbt_magnetization',TITLES=(/'T [fs]',"Pv_x  ","Pv_y  ","Pv_z  ","Pc_x  ","Pc_y  ","Pc_z  "/))
  endif
  !
  call RT_FILE_add('trans_residual',TITLES=(/'T [fs]','E [eV]'/))

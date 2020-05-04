@@ -27,8 +27,8 @@ subroutine RT_databases_IO(E)
  use drivers,        ONLY:l_elph_scatt
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
-&                         GF_RT_IO_t,CARR_RT_IO_t,TMP_OBS_cache_steps,IO_OBS_cache_steps,IO_OBS_cache_INTERVAL_time,    &
-&                         SAVE_G_history,NE_i_start_time,FORCE_IO_OBS
+&                         GF_RT_IO_t,CARR_RT_IO_t,CACHE_OBS_steps_now,CACHE_OBS_steps,CACHE_OBS_INTERVAL_time,    &
+&                         SAVE_G_history,NE_i_start_time
  use real_time,      ONLY:NE_i_time,NE_steps,l_NE_dynamics,RT_nk,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,&
 &                         l_NE_with_fields,RT_step,RT_dyn_step
  use IO_m,           ONLY:io_control,manage_action,NONE, &
@@ -72,8 +72,8 @@ subroutine RT_databases_IO(E)
      ! Cache the current and the polarization for future writing
      !
      i_time=NE_i_time
-     if((OBS_RT_IO_t%last_point-1)/nint(IO_OBS_cache_INTERVAL_time/RT_dyn_step)>-1) i_time=i_time-OBS_RT_IO_t%last_point
-     i_time=(i_time-1)/nint(IO_OBS_cache_INTERVAL_time/RT_dyn_step)+1
+     if((OBS_RT_IO_t%last_point-1)/nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)>-1) i_time=i_time-OBS_RT_IO_t%last_point
+     i_time=(i_time-1)/nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)+1
      i_time=i_time/nint(RT_dyn_step/RT_step)
      !
      if(i_time>0) then
@@ -100,7 +100,7 @@ subroutine RT_databases_IO(E)
      !
      if(write_OBS) then
        !
-       TMP_OBS_cache_steps=i_time
+       CACHE_OBS_steps_now=i_time
        !
        IO_ACT=manage_action(WR_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2,3/),ID=ID(4))

@@ -36,9 +36,8 @@ subroutine RT_initialize(E,k,q)
  use electrons,      ONLY:levels
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,         &
-&                         SETUP_RT_IO_type,IO_OBS_cache_steps,TIME_adjust,STEP_adjust,        &
-&                         SAVE_G_history,                                                     &
-&                         IO_OBS_cache_INTERVAL_time_SAVE,IO_OBS_cache_INTERVAL_time
+&                         SETUP_RT_IO_type,CACHE_OBS_steps,TIME_adjust,STEP_adjust,           &
+&                         SAVE_G_history,CACHE_OBS_INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
@@ -154,9 +153,9 @@ subroutine RT_initialize(E,k,q)
  !
  ! Set (J,P,M) caching variables and I/O steps
  !=============================================
- if(IO_OBS_cache_INTERVAL_time_SAVE<RT_step) IO_OBS_cache_INTERVAL_time_SAVE=RT_step
- IO_OBS_cache_INTERVAL_time_SAVE=TIME_adjust(IO_OBS_cache_INTERVAL_time_SAVE,RT_step)
- OBS_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,IO_OBS_cache_INTERVAL_time_SAVE)
+ if(CACHE_OBS_INTERVAL_time_SAVE<RT_step) CACHE_OBS_INTERVAL_time_SAVE=RT_step
+ CACHE_OBS_INTERVAL_time_SAVE=TIME_adjust(CACHE_OBS_INTERVAL_time_SAVE,RT_step)
+ OBS_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time_SAVE)
  call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
  !
  ! Dephasing Matrix. Including user-defined matrix-like dephasing factors, constant
@@ -222,7 +221,7 @@ subroutine RT_initialize(E,k,q)
    OBS_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,NE_time_step_update_jump_SAVE)
    if(OBS_RT_IO_t%INTERVAL_time_SAVE>NE_time_step_update_jump_SAVE) OBS_RT_IO_t%INTERVAL_time_SAVE=NE_time_step_update_jump_SAVE
    if(OBS_RT_IO_t%INTERVAL_time_SAVE<RT_step*10._SP)                OBS_RT_IO_t%INTERVAL_time_SAVE=NE_time_step_update_jump_SAVE
-   IO_OBS_cache_INTERVAL_time_SAVE=STEP_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,IO_OBS_cache_INTERVAL_time_SAVE,RT_step)
+   CACHE_OBS_INTERVAL_time_SAVE=STEP_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time_SAVE,RT_step)
    !
    call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
    !
@@ -230,8 +229,8 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
- IO_OBS_cache_INTERVAL_time=IO_OBS_cache_INTERVAL_time_SAVE
- IO_OBS_cache_steps=OBS_RT_IO_t%INTERVAL_steps/nint(IO_OBS_cache_INTERVAL_time/RT_step)
+ CACHE_OBS_INTERVAL_time=CACHE_OBS_INTERVAL_time_SAVE
+ CACHE_OBS_steps=OBS_RT_IO_t%INTERVAL_steps/nint(CACHE_OBS_INTERVAL_time/RT_step)
  !
  ! GPL_EXCLUDE_END
  !

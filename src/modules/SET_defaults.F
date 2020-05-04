@@ -109,8 +109,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_o_file_is_open,&
 &                     RT_headings,YPP_append,Gr_desc,TIME_STEP_desc,RT_desc
  use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db,&
-&                     IO_OBS_cache_last_point,IO_OBS_cache_INTERVAL_time,IO_OBS_cache_INTERVAL_time_SAVE,   &
-&                     IO_OBS_cache_steps,TMP_OBS_cache_steps,FORCE_IO_OBS
+&                     CACHE_OBS_last_point,CACHE_OBS_INTERVAL_time,CACHE_OBS_INTERVAL_time_SAVE,   &
+&                     CACHE_OBS_steps,CACHE_OBS_steps_now
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
@@ -596,11 +596,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NE_initial_time_step_update    = 0._SP
  NE_step_update_treshold        = 0.1_SP
  !
- FORCE_IO_OBS            = .false.
- IO_OBS_cache_steps      = 1
- IO_OBS_cache_last_point = 1
- IO_OBS_cache_INTERVAL_time       = 0._SP
- IO_OBS_cache_INTERVAL_time_SAVE  = 0._SP
+ CACHE_OBS_steps      = 1
+ CACHE_OBS_steps_now  = 1
+ CACHE_OBS_last_point = 1
+ CACHE_OBS_INTERVAL_time       = 0._SP
+ CACHE_OBS_INTERVAL_time_SAVE  = 0._SP
  !
  G_MEM_steps = 2
  i_MEM_old   = 0

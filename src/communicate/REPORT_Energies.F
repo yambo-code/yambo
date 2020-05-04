@@ -44,7 +44,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  !
  real(SP)          :: k_cc(3),k_rlu(3)
  integer           :: ik,is_pol,ib,i1
- character(schlen) :: dumb_ch1,dumb_ch2,dumb_ch3
+ character(schlen) :: dumb_ch1,dumb_ch2
  real(SP)          :: E_(n_bands_,n_sp_pol)
  !
  if(l_kpoints) then

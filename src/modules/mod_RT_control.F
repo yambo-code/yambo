@@ -385,14 +385,15 @@ module RT_control
      enddo
    end subroutine
    !
-   logical function Dynamics_is_over()
+   logical function Dynamics_is_over(WARN)
      use real_time,    ONLY:RT_step,NE_steps,NE_i_time,RT_dyn_step
      use parser_m,     ONLY:parser
      use it_tools,     ONLY:it_reset
-     logical  ::STOP_now
+     logical, intent(in) :: WARN
+     logical             :: STOP_now
      call it_reset(0)
      call parser('STOP_NOW',STOP_now)
-     if (STOP_now ) call warning('USER STOP signal')
+     if (STOP_now .and. WARN ) call warning('USER STOP signal')
      Dynamics_is_over=NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now
    end function
    !

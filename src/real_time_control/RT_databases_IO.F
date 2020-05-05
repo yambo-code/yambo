@@ -66,7 +66,7 @@ subroutine RT_databases_IO(E)
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
    endif
    !
-   force_OBS=RT_do_it('deltaT').or.Dynamics_is_over()
+   force_OBS=RT_do_it('deltaT').or.Dynamics_is_over(.false.)
    !
    if (RT_do_it('OBS_cache').or.NE_i_time>=OBS_RT_IO_t%last_point.or.force_OBS) then
      !

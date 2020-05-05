@@ -332,7 +332,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    ! I (eventually) stop 
    !=======================
-   if (Dynamics_is_over( )) exit
+   if (Dynamics_is_over(.true.)) exit
    !
    ! Integration
    !=============

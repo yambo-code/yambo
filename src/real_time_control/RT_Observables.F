@@ -32,7 +32,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use real_time,      ONLY:RT_nk,RT_bands,l_RT_induced_field,l_P_integrating_J
- use RT_control,     ONLY:RT_do_it
+ use RT_control,     ONLY:RT_do_it,Dynamics_is_over
  use fields,         ONLY:A_tot
  use timing_m,       ONLY:timing
  !
@@ -47,13 +47,13 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),E_IP
  !
+ if ( .not. ( RT_do_it('OUT') .or. RT_do_it('OBS_cache') .or. RT_do_it('deltaT') .or. Dynamics_is_over(.false.) ) ) return
+ !
+ call timing('RT observables',OPR='start')
+ !
  ! Current, Polarization and Magnetization
  !=========================================
  ! (evaluated also in RT_integrator when an induced field is included, l_RT_induced_field=.true.)
- !
- if (  (.not.RT_do_it('OUT')) .and. (.not.RT_do_it('OBS_cache')) ) return
- !
- call timing('RT observables',OPR='start')
  !
  call RT_carriers_number(en,k,NCarr)
  call RT_current_AND_polarization(k,en,dG_lesser,A_tot,Ncarr)

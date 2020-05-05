@@ -48,7 +48,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- logical           :: write_OBS
+ logical           :: write_OBS,cache_OBS
  integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time
  integer, external :: io_RT_components
  logical, external :: stop_NOW
@@ -67,7 +67,10 @@ subroutine RT_databases_IO(E)
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
    endif
    !
-   if ((RT_do_it('OBS_cache').or.RT_do_it('deltaT')).and.NE_i_time>=OBS_RT_IO_t%last_point) then
+   cache_OBS=RT_do_it('OBS_cache').or.RT_do_it('deltaT').or.(NE_i_time>=NE_steps-nint(RT_dyn_step/RT_step)+1)&
+   &         .or.STOP_now(.FALSE.).or.NE_i_time>=OBS_RT_IO_t%last_point
+   !
+   if (cache_OBS) then
      !
      ! Cache the current and the polarization for future writing
      !

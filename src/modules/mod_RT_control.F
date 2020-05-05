@@ -387,8 +387,13 @@ module RT_control
    !
    logical function Dynamics_is_over()
      use real_time,    ONLY:RT_step,NE_steps,NE_i_time,RT_dyn_step
-     logical,   external  ::STOP_now
-     Dynamics_is_over=NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now(.FALSE.)
+     use parser_m,     ONLY:parser
+     use it_tools,     ONLY:it_reset
+     logical  ::STOP_now
+     call it_reset(0)
+     call parser('STOP_NOW',STOP_now)
+     if (STOP_now ) call warning('USER STOP signal')
+     Dynamics_is_over=NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now
    end function
    !
 end module RT_control

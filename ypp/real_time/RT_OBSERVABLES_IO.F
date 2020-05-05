@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM CA
+! Authors (see AUTHORS file for details): AM CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,12 +23,11 @@
 !
 subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
- use YPP_real_time,  ONLY:RT_conf,RT_time,Pol,Curr
- use pars,           ONLY:DP,SP,schlen,cZERO_DP
+ use YPP_real_time,  ONLY:RT_conf,Pol,Curr
+ use pars,           ONLY:DP,schlen,cZERO_DP
  use R_lattice,      ONLY:nkibz
- use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,manage_action,NONE,DUMP,LOG,RD_CL_IF_END
- use RT_control,     ONLY:RT_control_alloc,RT_control_free,J_cache,P_cache
+ use RT_control,     ONLY:RT_control_alloc,RT_control_free,J_cache,P_cache,IO_OBS_cache_steps,TMP_OBS_cache_steps
  use real_time,      ONLY:NE_steps,NE_i_time,&
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
@@ -42,8 +41,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  !
  ! Work Space
  !
- real(SP)           :: TIME
- integer            :: io_OBS,ID,IO_ACT,i_f,io_G,COM_here,ik,NE_steps_save,i_time
+ integer            :: io_OBS,ID,IO_ACT,i_f,io_G,COM_here,ik,NE_steps_save,i_dir
  integer, external  :: io_RT_components
  character(schlen)  :: mesg_
  !
@@ -78,7 +76,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
      !
      do ik=1,nkibz
        IO_ACT=manage_action(RD_CL_IF_END,ik,1,nkibz)
-       call io_control(ACTION=IO_ACT,COM=COM_here,SEC=(/ik+1,1/),MODE=DUMP,ID=ID)
+       call io_control(ACTION=IO_ACT,COM=COM_here,SEC=(/2,ik+2/),MODE=DUMP,ID=ID)
        io_G=io_RT_components('G',ID)
      enddo
      !
@@ -102,16 +100,13 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  ! Check for saved current and polarization database
  !---------------------------------------------------
  !
- if (present(IO_error)) then
-   IO_error=.FALSE.
- endif
+ if (present(IO_error)) IO_error=.FALSE.
  !
+ NE_i_time=1
  call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID)
  io_OBS=io_RT_components(what,ID)
  if( io_OBS/=0 ) then
-   if (present(IO_error)) then
-     IO_error=.TRUE.
-   endif
+   if (present(IO_error)) IO_error=.TRUE.
    return
  endif
  !
@@ -119,7 +114,12 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  !------------------------
  !
  if (present(first_sec_only)) then
-   if (first_sec_only) return
+   if (first_sec_only) then
+     call RT_control_alloc("times")
+     call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/2/),ID=ID)
+     io_OBS=io_RT_components(what,ID)
+     return
+   endif
  endif
  !
  ! I/O of OBSERVABLES
@@ -132,37 +132,23 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  Curr%N   =3
  !
  if (what=="JP".and..not.allocated(Curr%F_t)) then
+   IO_OBS_cache_steps=RT_conf%T_n_steps
+   TMP_OBS_cache_steps=RT_conf%T_n_steps
+   call RT_control_alloc("cache")
+   NE_i_time=NE_steps
+   call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/3/),ID=ID)
+   io_OBS=io_RT_components(what,ID)
    YAMBO_ALLOC(Curr%F_t,(RT_conf%T_n_steps,3))
    YAMBO_ALLOC(Pol%F_t,(RT_conf%T_n_steps,3))
    Curr%F_t =cZERO_DP
    Pol%F_t =cZERO_DP
+   do i_dir=1,3
+     Curr%F_t(:,i_dir)=J_cache(i_dir,:)
+     Pol%F_t(:,i_dir) =P_cache(i_dir,:)
+   enddo
+   !
+   call RT_control_free("cache")
  endif
- !
- call RT_control_alloc(.TRUE.)
- !
- NE_steps=NE_steps_save
- !
- call live_timing('I/O'//trim(mesg_)//'',RT_conf%T_n_steps)
- !
- do i_time=1,RT_conf%T_n_steps
-   !
-   TIME=RT_time(i_time)
-   !
-   NE_i_time=nint( TIME/RT_step ) + 1
-   !
-   call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/2/),ID=ID) 
-   io_OBS=io_RT_components(what,ID)
-   !
-   if (what=="JP") then
-     Curr%F_t(i_time,:) =J_cache(:,1)
-     Pol%F_t(i_time,:)  =P_cache(:,1)
-   endif
-   !
-   call live_timing(steps=1)
-   !
- enddo
- !
- call live_timing()
  !
  ! Define Efield amplitude
  !
@@ -170,6 +156,6 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
    Efield(i_f)%amplitude=Efield_strength(Efield(i_f)%intensity,'AU')
  enddo
  !
- call RT_control_free()
+ call RT_control_free("times")
  !
 end subroutine

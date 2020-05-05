@@ -127,7 +127,9 @@ module IO_m
  integer :: io_code_version(max_io_units,3)
  integer :: io_code_revision(max_io_units,2) ! devel,GPL
  integer :: io_serial_number(max_io_units)
- integer :: io_netcdf_var(max_io_units,max_io_vars_open)
+ ! io_netcdf_var(ID,1)  is used for tmp vars by io_elemental, io_bulk,  def/io_variable_elemental
+ ! io_netcdf_var(ID,2:) is used for stored var-IDs by def/io_variable_bulk
+ integer :: io_netcdf_var(max_io_units,max_io_vars_open) 
  logical :: io_resetable(max_io_units)
  character(lchlen)          :: io_file(max_io_units)
  character(lchlen)          :: io_folder(max_io_units)
@@ -213,7 +215,7 @@ module IO_m
      character(*),optional :: par_io_kind
    end subroutine def_variable_elemental
    !
-   subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
+   subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind,silent)
      use pars,              ONLY:schlen
      integer,      intent(in)  :: ID
      character(*), intent(in)  :: VAR
@@ -222,6 +224,7 @@ module IO_m
      integer,      intent(in)  :: VAR_KIND
      character(schlen), optional, intent(in) :: dim_names(:)
      character(*),      optional, intent(in) :: par_io_kind
+     logical,           optional, intent(in) :: silent
    end subroutine def_variable_bulk
    !
    subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
@@ -263,8 +266,10 @@ module IO_m
      integer,     optional, intent(inout) ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
      real(SP),    optional, intent(inout) ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
      real(DP),    optional, intent(inout) ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
-     complex(SP), optional, target, intent(inout) ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
-     complex(DP), optional, target, intent(inout) ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
+     complex(SP), optional, target, intent(inout) ::  C0, C1(:)
+     complex(DP), optional, target, intent(inout) ::  Z0, Z1(:)
+     complex(SP), optional, target, contiguous, intent(inout) ::  C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
+     complex(DP), optional, target, contiguous, intent(inout) ::  Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
      integer(LP), optional, intent(inout) ::  L0, L1(:), L2(:,:), L3(:,:,:), L4(:,:,:,:)
      character,   optional, intent(inout) :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
      character(*),optional, intent(inout) :: STR0,STR1(:)
@@ -397,31 +402,42 @@ module IO_m
      !
    end subroutine
    !
-   subroutine io_control(ACTION,MODE,COM,SEC,ID)
+   subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM)
+     !
+     use parallel_m,    ONLY:master_cpu,PP_bcast,myid
      !
      integer,intent(in)    :: ACTION
      integer,intent(inout) :: ID
      integer,optional,intent(in) :: MODE,COM,SEC(:)
+     integer,optional,intent(in) :: COMM
      !
      ! Work Space
      !
      integer :: i1
+     logical :: define_ID
      !
      ! Assign a new unit if the unit is not already open
      !
-     if ( any((/ACTION==OP_RD_CL,ACTION==OP_WR_CL,&
-&               ACTION==OP_APP_CL,ACTION==OP_RD,&
-&               ACTION==OP_APP,ACTION==OP_WR/)) ) then
+     define_ID=any((/ACTION==OP_RD_CL, ACTION==OP_WR_CL,    &
+&                     ACTION==OP_APP_CL,ACTION==OP_RD,      &
+&                     ACTION==OP_APP,   ACTION==OP_WR/))
+     !
+     if (  define_ID .and. (master_cpu .or. (.not.present(COMM))) ) then
        ID=-1
        do i1=1,max_io_units
          if (io_unit(i1)==0) then
            ID=i1
            call io_reset(ID)
-           io_unit(ID)=40+i1
+           io_unit(ID)=40+i1  ! This is not used with netcdf since nf90_create assigns the unit
            exit
          endif
        enddo
        if(ID==-1) call error(" Recompile Yambo with a larger: max_io_units")
+     endif
+     !
+     if (present(COMM) .and. define_ID) then
+       call PP_bcast(ID,         0,COMM)
+       call PP_bcast(io_unit(ID),0,COMM)
      endif
      !
      io_action(ID)=ACTION
@@ -623,7 +639,10 @@ module IO_m
          if(local_error/=0) VARNAME=' NOT DEFINED '
        endif
        if(present(VAR)) VARNAME=VAR
-       write (msg,'(6a)') ' File ',trim(FILENAME),'; Variable ',trim(VARNAME),'; ',trim(nf90_strerror(status))
+       if( read_is_on(ID)) write (msg,'(6a)') ' Reading File ',trim(FILENAME),'; Variable ',&
+       &                                      trim(VARNAME),'; ',trim(nf90_strerror(status))
+       if(write_is_on(ID)) write (msg,'(6a)') ' Writing File ',trim(FILENAME),'; Variable ',&
+       &                                      trim(VARNAME),'; ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if
    end subroutine
@@ -634,8 +653,8 @@ module IO_m
      character(schlen)          :: dim_strng
      character(schlen),optional :: dim_name
      netcdf_dim=0
-     write (dim_strng,'(a,i10.10)') 'D_',dim
-     if (present(dim_name)) dim_strng = dim_name
+     if (.not.present(dim_name)) write (dim_strng,'(a,i10.10)') 'D_',dim
+     if (     present(dim_name)) dim_strng = dim_name
      dim_found=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
      if (dim_found/=NF90_NOERR) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
    end function

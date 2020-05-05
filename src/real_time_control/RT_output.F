@@ -36,7 +36,7 @@ subroutine RT_output(what,VALUES,TIME,E)
 &                         N_RT_o_files,RT_o_file_is_open,RT_o_file_short,RT_o_file_long,&
 &                         n_RT_headings,RT_headings,N_MAX_RT_headings,RT_desc,Gr_desc,TIME_STEP_desc
  use RT_control,     ONLY:RT_do_it,RT_NAN_found
- use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_magn,l_lftm_fit_temperatures, &
+ use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_spin_magn,l_lftm_fit_temperatures, &
 &                         EE_prefactor,EP_prefactor,EP_abs_prefactor,RAD_prefactor,    &
 &                         RT_Tfit_lifetimes
  use timing_m,       ONLY:timing
@@ -84,7 +84,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    RT_descriptors_dumped=.FALSE.
    !
    do i_f=1,N_RT_o_files
-     if (.not.file_is_todo(i_f).or.RT_o_file_is_open(i_f)) cycle
+     if ((.not.file_is_todo(i_f)).or.RT_o_file_is_open(i_f)) cycle
      call of_open_close(RT_o_file_long(i_f),'ot')
      RT_o_file_is_open(i_f)=.TRUE.
    enddo
@@ -99,7 +99,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  if (index(what,'close')>0) then
    !
    do i_f=1,N_RT_o_files
-     if (.not.file_is_todo(i_f).or..not.RT_o_file_is_open(i_f)) cycle
+     if ((.not.file_is_todo(i_f)).or.(.not.RT_o_file_is_open(i_f))) cycle
      call of_open_close(RT_o_file_long(i_f))
      RT_o_file_is_open(i_f)=.FALSE.
    enddo
@@ -108,7 +108,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    !
  endif
  !
- if (.not.RT_do_it('OUT')) return
+ if (.not.(RT_do_it('OUT').or.index(code_bin,'ypp')>0)) return
  !
  ! Check for NAN's in the VALUES and eventually stop
  !
@@ -182,7 +182,7 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(2:4) =real(RT_P)
     !
      case('magnetization')
-       data_to_dump(2: 4) = real(RT_magn(:,1))
+       data_to_dump(2: 4) = real(RT_spin_magn)
      case('total_field')
        data_to_dump(2:4) = -real(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1

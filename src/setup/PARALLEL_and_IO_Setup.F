@@ -136,7 +136,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', 'Communications      ',trim(com_path))
  call msg('r', 'Input file          ',trim(infile))
  call msg('r', 'Report file         ',trim(repfile))
- call msg('r', 'Fat (verbose) log   ',fat_log)
+ call msg('r', 'Verbose log/report  ',fat_log)
  if (log_as_a_file) then
    call msg('r','Log files           ',trim(trim(com_path)//"/LOG"))
  endif

@@ -36,7 +36,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     eval_alpha,&
 &                     q_plus_G_direction,Q_Shift_Order,&
 &                     l_X_terminator,X_terminator_E,global_gauge,&
-&                     Chi_linalg_mode,X_use_lin_sys,X_DbGd_percentual
+&                     Chi_linalg_mode,X_use_lin_sys,X_use_gpu,X_DbGd_percentual
  use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
 &                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
@@ -106,9 +106,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
- use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_headings,YPP_append,&
-&                     Gr_desc,TIME_STEP_desc,RT_desc
- use RT_control, ONLY:OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db
+ use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_o_file_is_open,&
+&                     RT_headings,YPP_append,Gr_desc,TIME_STEP_desc,RT_desc
+ use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
@@ -116,7 +116,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
 &                     RT_Efit_lifetimes,l_update_SOC,                                     &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
-&                     RAD_prefactor
+&                     RAD_prefactor,i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_tot,A_ind,A_ext
  use plasma,     ONLY:PLASMA_redux_percent
@@ -135,6 +135,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use timing_m,    ONLY:timing_allocate,nclockx
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
+ use cuda_m,      ONLY:have_cuda
  !
  implicit none
  !
@@ -352,6 +353,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Chi_mode=' '
  Chi_linalg_mode="lin_sys"
  X_use_lin_sys=.FALSE.
+ X_use_gpu=have_cuda
  current_iq=0
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.
@@ -581,11 +583,18 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NE_steps=1
  NE_time=0._SP
  NE_tot_time= 1000._SP*FS2AUT
+ !
+ G_MEM_steps = 2
+ i_MEM_old   = 0
+ i_MEM_prev  = 0
+ i_MEM_now   = 1
+ !
  integrator_step=1
  Integrator_name='RK2'
+ !
  RAD_LifeTime = 0._SP
  Phase_LifeTime = 0._SP
- NE_MEM_treshold=0.
+ NE_MEM_treshold=0._SP
  RT_nk=0
  RT_eh_en=0._SP
  RT_scatt_tresh=-1._SP/HA2EV
@@ -616,15 +625,17 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! RT_ctl
  !
- OBS_RT_IO_t%INTERVAL_time=2._SP*FS2AUT
- OUTPUT_RT_IO_t%INTERVAL_time=5._SP*FS2AUT
+ OBS_RT_IO_t%INTERVAL_time_SAVE   =2._SP*FS2AUT
+ CARR_RT_IO_t%INTERVAL_time_SAVE  =2._SP*FS2AUT
+ OUTPUT_RT_IO_t%INTERVAL_time_SAVE=5._SP*FS2AUT
+ GF_RT_IO_t%INTERVAL_time_SAVE    =1._SP*FS2AUT
  SAVE_G_history=.FALSE.
- GF_RT_IO_t%INTERVAL_time=1._SP*FS2AUT
  !
  ! RT_output
  !
  n_RT_headings=0
  N_RT_o_files=0
+ RT_o_file_is_open=.FALSE.
  RT_o_file_long= " "
  RT_o_file_short= " "
  RT_headings= " "

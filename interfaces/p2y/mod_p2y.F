@@ -852,7 +852,7 @@ contains
       call qexml_read_xc(dft=pw_dft, lda_plus_u=pw_lda_plus_u, ierr=ierr)
       if (ierr/=0) call errore('qexml_read_xc','IOTK error',abs(ierr))
       !
-      if (trim(pw_dft)=="B3LYP") call error('For B3LYP calculation use input_dft=B3LYP-V1R')
+      if (trim(pw_dft)=="B3LYP") call warning('For a full compatible B3LYP calculation consider to use input_dft=B3LYP-V1R')
       if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
       GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
       if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
@@ -876,7 +876,8 @@ contains
                 GS_exx_SCREENING=0.15
              else 
                 if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') &
-                &  call error('Hybrids and HF allowed only with vcut_ws/spherical divergence treatment')   
+                &  call warning('For Hybrids and HF the vcut_ws/spherical divergence treatment & 
+                &  are recommended, Gigy-Baldereschi treatment can lead to a loss of precision')   
              endif
            else
              call error('Hybrid functional: Only HF,PBE0, B3LYP and GAUPBE allowed')
@@ -890,6 +891,7 @@ contains
 &                        dft_is_hybrid=pw_exx_is_active, ierr=ierr)
       if (ierr/=0) call errore('qexsd_read_xc','fmt error',abs(ierr))
       !
+      if (trim(pw_dft)=="B3LYP") call warning('For a full compatible B3LYP calculation consider to use input_dft=B3LYP-V1R')
       if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
       GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
       if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
@@ -913,9 +915,9 @@ contains
              GS_exx_SCREENING=0.15
            else
              if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') &
-              &  call error('Hybrids and HF allowed only with vcut_ws/spherical divergence treatment')
-             endif
-           if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)  GS_exx_SCREENING=0.15
+                &  call warning('For Hybrids and HF the vcut_ws/spherical divergence treatment &
+                & are recommended, Gigy-Baldereschi treatment can lead to a loss of precision')  
+           endif
          !
          else
            call error('Hybrid functional: Only HF,PBE0,B3LYP and GAUPBE allowed')

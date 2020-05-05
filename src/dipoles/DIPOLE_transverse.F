@@ -104,8 +104,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  !
  ! Synchronize some memory
  if (have_cuda) then
-   YAMBO_ALLOC(g_vec_d,(size(g_vec,1),size(g_vec,2)))
-   call dev_memcpy(g_vec_d,g_vec)
+   YAMBO_ALLOC_SOURCE(g_vec_d,g_vec)
  endif
  !
  l_use_comm=l_eval_dip_V.or.l_eval_dip_iR

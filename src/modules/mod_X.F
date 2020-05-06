@@ -27,6 +27,7 @@ module X_m
  use pars,           ONLY:SP,lchlen,schlen
  use units,          ONLY:HA2EV
  use matrix,         ONLY:PAR_matrix
+ use cuda_m,         ONLY:have_cuda
  !
 #include <dev_defs.h>
 #include <memory.h>
@@ -80,6 +81,7 @@ module X_m
  !
  character(schlen)        :: Chi_mode
  character(schlen)        :: Chi_linalg_mode
+ logical                  :: X_use_gpu=have_cuda
  logical                  :: X_use_lin_sys=.false.
  real(SP),    allocatable :: X_poles(:)
  real(SP),    allocatable :: X_Ein_poles(:)

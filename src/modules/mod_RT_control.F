@@ -29,8 +29,11 @@ module RT_control
  !
 #include<memory.h>
  !
- integer                  ::  IO_OBS_cache_steps=1
- integer                  :: TMP_OBS_cache_steps=1
+ integer                  :: CACHE_OBS_last_point
+ real(SP)                 :: CACHE_OBS_INTERVAL_time
+ real(SP)                 :: CACHE_OBS_INTERVAL_time_SAVE
+ integer                  :: CACHE_OBS_steps
+ integer                  :: CACHE_OBS_steps_now
  !
  integer                  :: ID(8)                    ! (/3 GFPAR,4 OBS,5 GFSER,6 OCC,7 THETA,8 REF)
  integer                  :: NE_i_start_time    = 1   ! restart point
@@ -45,6 +48,7 @@ module RT_control
    real(SP), allocatable :: Time(:)
  end type
  !
+ logical                  :: RT_NAN_found
  logical                  :: SAVE_G_history
  !
  type(RT_IO_t),save  :: OBS_RT_IO_t
@@ -118,18 +122,18 @@ module RT_control
      !
      if(trim(what)=="cache" .or. trim(what)=="all") then
        !
-       YAMBO_ALLOC(J_cache,(3,IO_OBS_cache_steps))
+       YAMBO_ALLOC(J_cache,(3,CACHE_OBS_steps))
        J_cache=cZERO
-       YAMBO_ALLOC(P_cache,(3,IO_OBS_cache_steps))
+       YAMBO_ALLOC(P_cache,(3,CACHE_OBS_steps))
        P_cache=cZERO
        if(n_spin>1) then
-         YAMBO_ALLOC(Ms_cache,(3,IO_OBS_cache_steps))
+         YAMBO_ALLOC(Ms_cache,(3,CACHE_OBS_steps))
          Ms_cache=cZERO
-         YAMBO_ALLOC(Ml_cache,(3,2,IO_OBS_cache_steps))
+         YAMBO_ALLOC(Ml_cache,(3,2,CACHE_OBS_steps))
          Ml_cache=cZERO
        endif
        if(l_NE_with_fields) then
-         YAMBO_ALLOC(A_cache,(3,3,IO_OBS_cache_steps))
+         YAMBO_ALLOC(A_cache,(3,3,CACHE_OBS_steps))
          A_cache=cZERO
        endif
        !
@@ -198,6 +202,10 @@ module RT_control
        INTERVAL_steps=GF_RT_IO_t%INTERVAL_steps
        last_point    =GF_RT_IO_t%last_point
      endif
+     if (what=="OBS_cache") then
+       INTERVAL_steps=nint(CACHE_OBS_INTERVAL_time/RT_step)
+       last_point    =CACHE_OBS_last_point
+     endif
      if (what=="deltaT") then
        INTERVAL_steps=nint(NE_time_step_update_jump/RT_step)
        last_point    =NE_time_step_update_last_point
@@ -242,6 +250,30 @@ module RT_control
      !
      if (     present(STEP)) TIME_adjust=real(nint(TIME/STEP),SP)*STEP
      if (.not.present(STEP)) TIME_adjust=real(nint(TIME/RT_step),SP)*RT_step
+     !
+   end function
+   !
+   real(SP) function STEP_adjust(TIME,STEP1,STEP2)
+     !
+     use real_time, ONLY:RT_step
+     !
+     real(SP)           :: TIME,STEP1
+     real(SP), optional :: STEP2
+     !
+     integer  :: N1,N2,i1
+     real(SP) :: STEP2_
+     !
+     if (     present(STEP2)) STEP2_=STEP2 
+     if (.not.present(STEP2)) STEP2_=RT_step
+     !
+     N1=nint(TIME/STEP1)
+     N2=nint(TIME/STEP2_)
+     !
+     do i1=N1,N2
+       if( N2/i1*i1==N2) exit 
+     enddo
+     !
+     STEP_adjust=TIME/real(i1,SP)
      !
    end function
    !
@@ -353,11 +385,5 @@ module RT_control
        if (what=="df") E%f(ib,ik,i_sp_pol)=RT_carriers%delta_f(i_RT)
      enddo
    end subroutine
-   !
-   logical function Dynamics_is_over()
-     use real_time,    ONLY:RT_step,NE_steps,NE_i_time,RT_dyn_step
-     logical,   external  ::STOP_now
-     Dynamics_is_over=NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now(.FALSE.)
-   end function
    !
 end module RT_control

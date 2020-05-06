@@ -110,7 +110,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     RT_headings,YPP_append,Gr_desc,TIME_STEP_desc,RT_desc
  use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db,&
 &                     CACHE_OBS_last_point,CACHE_OBS_INTERVAL_time,CACHE_OBS_INTERVAL_time_SAVE,   &
-&                     CACHE_OBS_steps,CACHE_OBS_steps_now
+&                     CACHE_OBS_steps,CACHE_OBS_steps_now,RT_NAN_found
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
@@ -653,6 +653,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  OUTPUT_RT_IO_t%INTERVAL_time_SAVE=5._SP*FS2AUT
  GF_RT_IO_t%INTERVAL_time_SAVE    =1._SP*FS2AUT
  SAVE_G_history=.FALSE.
+ RT_NAN_found  =.FALSE.
  !
  ! RT_output
  !

@@ -28,7 +28,7 @@ subroutine RT_databases_IO(E)
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
 &                         GF_RT_IO_t,CARR_RT_IO_t,CACHE_OBS_steps_now,CACHE_OBS_steps,CACHE_OBS_INTERVAL_time,    &
-&                         SAVE_G_history,NE_i_start_time,Dynamics_is_over
+&                         SAVE_G_history,NE_i_start_time
  use real_time,      ONLY:NE_i_time,NE_steps,l_NE_dynamics,RT_nk,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,&
 &                         l_NE_with_fields,RT_step,RT_dyn_step
  use IO_m,           ONLY:io_control,manage_action,NONE, &
@@ -51,6 +51,7 @@ subroutine RT_databases_IO(E)
  logical           :: write_OBS,force_OBS
  integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time
  integer, external :: io_RT_components
+ logical, external :: RT_Dynamics_is_over
  !
  call timing('RT databases IO',OPR='start')
  !
@@ -66,7 +67,7 @@ subroutine RT_databases_IO(E)
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
    endif
    !
-   force_OBS=RT_do_it('deltaT').or.Dynamics_is_over(.false.)
+   force_OBS=RT_do_it('deltaT').or.RT_Dynamics_is_over(.false.)
    !
    if (RT_do_it('OBS_cache').or.NE_i_time>=OBS_RT_IO_t%last_point.or.force_OBS) then
      !

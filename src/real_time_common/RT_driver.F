@@ -37,7 +37,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,rho_n,magn_n,&
 &                         H_potential,H_kind,H_xc_functional,H_perturbation
- use RT_control,     ONLY:RT_control_alloc,RT_control_free,ID,Dynamics_is_over,&
+ use RT_control,     ONLY:RT_control_alloc,RT_control_free,ID,&
 &                         NE_i_start_time,RT_carriers_object,RT_apply
  use real_time,      ONLY:RT_potential,RT_kind,RT_xc_functional,RT_perturbation,&
 &                         NE_steps,RT_step,G_lesser,RT_bands,&
@@ -72,6 +72,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  logical           :: LT_pump
  character(schlen) :: sec_title(3)
  real(SP)          :: OBSERVABLES(25)
+ logical, external :: RT_Dynamics_is_over
  !
  ! I/O
  !
@@ -332,7 +333,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    ! I (eventually) stop 
    !=======================
-   if (Dynamics_is_over(.true.)) exit
+   if (RT_Dynamics_is_over(.true.)) exit
    !
    ! Integration
    !=============

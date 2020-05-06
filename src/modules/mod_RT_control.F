@@ -48,6 +48,7 @@ module RT_control
    real(SP), allocatable :: Time(:)
  end type
  !
+ logical                  :: RT_NAN_found
  logical                  :: SAVE_G_history
  !
  type(RT_IO_t),save  :: OBS_RT_IO_t
@@ -384,17 +385,5 @@ module RT_control
        if (what=="df") E%f(ib,ik,i_sp_pol)=RT_carriers%delta_f(i_RT)
      enddo
    end subroutine
-   !
-   logical function Dynamics_is_over(WARN)
-     use real_time,    ONLY:RT_step,NE_steps,NE_i_time,RT_dyn_step
-     use parser_m,     ONLY:parser
-     use it_tools,     ONLY:it_reset
-     logical, intent(in) :: WARN
-     logical             :: STOP_now
-     call it_reset(0)
-     call parser('STOP_NOW',STOP_now)
-     if (STOP_now .and. WARN ) call warning('USER STOP signal')
-     Dynamics_is_over=NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now
-   end function
    !
 end module RT_control

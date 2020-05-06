@@ -32,7 +32,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use real_time,      ONLY:RT_nk,RT_bands,l_RT_induced_field,l_P_integrating_J
- use RT_control,     ONLY:RT_do_it,Dynamics_is_over
+ use RT_control,     ONLY:RT_do_it
  use fields,         ONLY:A_tot
  use timing_m,       ONLY:timing
  !
@@ -46,8 +46,9 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  ! Workspace
  !
  real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),E_IP
+ logical, external :: RT_Dynamics_is_over
  !
- if ( .not. ( RT_do_it('OUT') .or. RT_do_it('OBS_cache') .or. RT_do_it('deltaT') .or. Dynamics_is_over(.false.) ) ) return
+ if ( .not. ( RT_do_it('OUT') .or. RT_do_it('OBS_cache') .or. RT_do_it('deltaT') .or. RT_Dynamics_is_over(.false.) ) ) return
  !
  call timing('RT observables',OPR='start')
  !

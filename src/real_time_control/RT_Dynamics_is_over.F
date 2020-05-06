@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-logical function RT_Dynamics_is_over()
+logical function RT_Dynamics_is_over(WARN)
  !
  use parser_m,       ONLY:parser
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_dyn_step
@@ -30,10 +30,14 @@ logical function RT_Dynamics_is_over()
  !
  implicit none
  !
+ logical, intent(in)  :: WARN
+ !
  logical              ::STOP_now
  !
  call it_reset(0)
  call parser('STOP_NOW',STOP_now)
+ !
+ if (STOP_now .and. WARN ) call warning('USER STOP signal')
  !
  RT_Dynamics_is_over=NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now.or.RT_NAN_found
  !

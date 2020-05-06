@@ -56,7 +56,7 @@ module it_m
  integer, parameter :: V_all=99
  !
  integer, parameter :: maxrnlvls=50
- integer, parameter :: maxflags =50
+ integer, parameter :: maxflags =60
  integer, parameter :: maxi1vars=100
  integer, parameter :: maxi2vars=50
  integer, parameter :: maxi3vars=50

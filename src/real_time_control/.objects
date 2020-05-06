@@ -1,4 +1,5 @@
-objs = RT_current_AND_polarization.o RT_output_INIT.o RT_output.o RT_databases_IO.o \
+objs = RT_Dynamics_is_over.o RT_current_AND_polarization.o \
+       RT_output_INIT.o RT_output.o RT_databases_IO.o \
        RT_Observables.o RT_mean_carrier_lifetimes.o RT_average_operator.o RT_occupations_FIT.o \
        RT_carriers_object.o RT_k_grid.o RT_apply.o RT_interpolation.o RT_update_TIME_CONF_descriptions.o \
        RT_entropy.o RT_carriers_number_and_temperature.o RT_energy_components.o  RT_output_and_IO_driver.o

@@ -35,8 +35,9 @@ subroutine RT_initialize(E,k,q)
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:levels
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
- use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,                      &
-&                         SETUP_RT_IO_type,IO_OBS_cache_steps,TIME_adjust,SAVE_G_history
+ use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,         &
+&                         SETUP_RT_IO_type,CACHE_OBS_steps,TIME_adjust,STEP_adjust,           &
+&                         SAVE_G_history,CACHE_OBS_INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
@@ -51,7 +52,7 @@ subroutine RT_initialize(E,k,q)
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
 &                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,l_RT_impose_for_metals, &
-&                         l_P_integrating_J,l_RT_rotate_DM
+&                         l_P_integrating_J,l_RT_rotate_DM,RT_deph_cv_only
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -80,6 +81,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! GPL_EXCLUDE_START
  !
+ call parser('DephCVonly',           RT_deph_cv_only)
  call parser('RAD_prefactor',        RAD_magnification)
  call parser('VelGaugeCorr',         l_velocity_gauge_corr)
  call parser('PfromJ',               l_P_integrating_J)
@@ -143,12 +145,17 @@ subroutine RT_initialize(E,k,q)
  !========================
  RT_dyn_step=RT_step
  !
- ! Set the I/O steps: (J,P,CARRIERs) (GF) (output)
- !=================================================
- call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
+ ! Set the I/O steps: (CARRIERs) (GF) (output)
+ !=============================================
  call SETUP_RT_IO_type(CARR_RT_IO_t,.TRUE.)
  call SETUP_RT_IO_type(OUTPUT_RT_IO_t,.TRUE.)
  call SETUP_RT_IO_type(GF_RT_IO_t,.TRUE.)
+ !
+ ! Set (J,P,M) caching variables and I/O steps
+ !=============================================
+ CACHE_OBS_INTERVAL_time_SAVE=max(TIME_adjust(CACHE_OBS_INTERVAL_time_SAVE,RT_step),RT_step)
+ OBS_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time_SAVE)
+ call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
  !
  ! Dephasing Matrix. Including user-defined matrix-like dephasing factors, constant
  !==================
@@ -212,18 +219,19 @@ subroutine RT_initialize(E,k,q)
    !
    OBS_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,NE_time_step_update_jump_SAVE)
    if(OBS_RT_IO_t%INTERVAL_time_SAVE>NE_time_step_update_jump_SAVE) OBS_RT_IO_t%INTERVAL_time_SAVE=NE_time_step_update_jump_SAVE
-   if(OBS_RT_IO_t%INTERVAL_time_SAVE<RT_step*10._SP) OBS_RT_IO_t%INTERVAL_time_SAVE=NE_time_step_update_jump_SAVE
+   if(OBS_RT_IO_t%INTERVAL_time_SAVE<RT_step*10._SP)                OBS_RT_IO_t%INTERVAL_time_SAVE=NE_time_step_update_jump_SAVE
+   CACHE_OBS_INTERVAL_time_SAVE=STEP_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time_SAVE,RT_step)
+   !
    call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
    !
    if (RT_MAX_step<1.E-5) RT_MAX_step=10._SP*RT_step
    !
  endif
  !
- ! GPL_EXCLUDE_END
+ CACHE_OBS_INTERVAL_time=CACHE_OBS_INTERVAL_time_SAVE
+ CACHE_OBS_steps=OBS_RT_IO_t%INTERVAL_steps/nint(CACHE_OBS_INTERVAL_time/RT_step)
  !
- ! J, P and M (spin) cache Time size
- !=========================
- IO_OBS_cache_steps=OBS_RT_IO_t%INTERVAL_steps
+ ! GPL_EXCLUDE_END
  !
  ! External fields checks
  !========================

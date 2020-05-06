@@ -76,11 +76,12 @@ module real_time
  !
  real(SP) :: NE_time    =0._SP  ! <- incremented
  real(SP) :: NE_tot_time=0._SP  ! Total (fixed)
- integer  :: NE_time_step_update_last_point = 1      ! Last time-point of the dT update
- real(SP) :: NE_initial_time_step_update    = 0._SP  ! Time above which the time-step is dynamically updated (0. means no update)
- real(SP) :: NE_time_step_update_jump       = 0._SP  ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
- real(SP) :: NE_step_update_treshold        = 0.1_SP ! Time-step update treshold
- real(SP) :: NE_time_step_update_jump_SAVE  = 0._SP
+ !
+ integer  :: NE_time_step_update_last_point      ! Last time-point of the dT update
+ real(SP) :: NE_time_step_update_jump            ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
+ real(SP) :: NE_time_step_update_jump_SAVE
+ real(SP) :: NE_initial_time_step_update         ! Time above which the time-step is dynamically updated (0. means no update)
+ real(SP) :: NE_step_update_treshold             ! Time-step update treshold
  !
  integer  :: NE_i_time=1 ! = (NE_time+1)/RT_step
  integer  :: NE_steps    ! Still relative to RT_step
@@ -144,8 +145,11 @@ module real_time
  real(SP)    :: Phase_LifeTime
  real(SP)    :: RAD_LifeTime
  real(SP)    :: RAD_magnification=1._SP
+ real(SP)    :: RT_deph_deg_thresh
+ logical     :: RT_deph_cv_only
  logical     :: RT_is_statically_dephased=.FALSE.
  logical     :: RT_is_dynamically_dephased=.FALSE.
+
  !
  ! Table pointing to the position of the uniform grid points in the
  ! G_lesser structure

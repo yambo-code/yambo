@@ -205,25 +205,29 @@ subroutine k_special(LIST_only)
      SPECIAL_k_label(15)='A6'
      SPECIAL_k%pt(15,:)=SPECIAL_k%pt(11,:)+SPECIAL_k%pt(5,:)
      !
-     call k_add_special_regions( (/0.88,0.  /),"YpR1" )
-     call k_add_special_regions( (/0.12,0.  /),"YpR2" )
-     call k_add_special_regions( (/0.12,0.26/),"YpR3" )
+     call k_add_special_regions( (/0.88,0.  /),"XYR1" )
+     call k_add_special_regions( (/0.12,0.  /),"XYR2" )
+     call k_add_special_regions( (/0.12,0.26/),"XYR3" )
      !
-     call k_add_special_regions( (/0.62,0.16/),"XYR1" )
-     call k_add_special_regions( (/0.38,0.16/),"XYR2" )
-     call k_add_special_regions( (/0.38,0.26/),"XYR3" )
+     call k_add_special_regions( (/0.62,0.16/),"YpR1" )
+     call k_add_special_regions( (/0.38,0.16/),"YpR2" )
+     call k_add_special_regions( (/0.38,0.26/),"YpR3" )
      !
-     call k_add_special_regions( (/0.72,0.26/),"G1" )
-     call k_add_special_regions( (/0.28,0.26/),"G2" )
-     call k_add_special_regions( (/0.28,0.74/),"G3" )
+     call k_add_special_regions( (/0.72,0.26/),"GR1" )
+     call k_add_special_regions( (/0.28,0.26/),"GR2" )
+     call k_add_special_regions( (/0.28,0.50/),"GR3" )
      !
-     call k_add_special_regions( (/0.88,0.74/),"YpL1" )
-     call k_add_special_regions( (/0.12,0.74/),"YpL2" )
-     call k_add_special_regions( (/0.12,1.  /),"YpL3" )
+     call k_add_special_regions( (/0.72,0.50/),"GL1" )
+     call k_add_special_regions( (/0.28,0.50/),"GL2" )
+     call k_add_special_regions( (/0.28,0.74/),"GL3" )
      !
-     call k_add_special_regions( (/0.62,0.74/),"XYL1" )
-     call k_add_special_regions( (/0.38,0.74/),"XYL2" )
-     call k_add_special_regions( (/0.38,0.84/),"XYL3" )
+     call k_add_special_regions( (/0.88,0.74/),"XYL1" )
+     call k_add_special_regions( (/0.12,0.74/),"XYL2" )
+     call k_add_special_regions( (/0.12,1.  /),"XYL3" )
+     !
+     call k_add_special_regions( (/0.62,0.74/),"YpL1" )
+     call k_add_special_regions( (/0.38,0.74/),"YpL2" )
+     call k_add_special_regions( (/0.38,0.84/),"YpL3" )
      !
    case('CUB')
      !

@@ -212,6 +212,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !if (l_NE_with_fields.and.any((/Efield(:n_ext_fields)%t_final>=NE_time/))) then
  if (l_NE_with_fields) then
    !
+   call timing('RT Apply Field',OPR='start')
+   !
    do ik=1,nXkibz 
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      H_nl_sc=cZERO
@@ -220,6 +222,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
        call V_by_V_plus_V_omp(RT_nbands,cONE,H_nl_sc,Ho_plus_sigma(:,:,ik_RT,1))
      enddo
    enddo
+   !
+   call timing('RT Apply Field',OPR='stop')
    !
  endif
  !

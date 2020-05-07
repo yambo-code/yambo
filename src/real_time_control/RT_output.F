@@ -35,7 +35,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use RT_output_m,    ONLY:N_MAX_RT_o_files,RT_descriptors_dumped,RT_o_file_is_open,&
 &                         N_RT_o_files,RT_o_file_is_open,RT_o_file_short,RT_o_file_long,&
 &                         n_RT_headings,RT_headings,N_MAX_RT_headings,RT_desc,Gr_desc,TIME_STEP_desc
- use RT_control,     ONLY:RT_do_it
+ use RT_control,     ONLY:RT_do_it,RT_NAN_found
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_spin_magn,l_lftm_fit_temperatures, &
 &                         EE_prefactor,EP_prefactor,EP_abs_prefactor,RAD_prefactor,    &
 &                         RT_Tfit_lifetimes
@@ -57,7 +57,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  integer                  :: i_f,n_orders,i_o,il,N,i_v
  logical                  :: file_is_todo(N_MAX_RT_o_files)
  real(SP)                 :: data_to_dump(N_MAX_RT_headings)
- logical, external        :: STOP_now
+ !logical, external        :: STOP_now
  !
  call STRING_split(what,orders,n_non_empty_strings=n_orders)
  !
@@ -85,7 +85,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    RT_descriptors_dumped=.FALSE.
    !
    do i_f=1,N_RT_o_files
-     if (.not.file_is_todo(i_f).or.RT_o_file_is_open(i_f)) cycle
+     if ((.not.file_is_todo(i_f)).or.RT_o_file_is_open(i_f)) cycle
      call of_open_close(RT_o_file_long(i_f),'ot')
      RT_o_file_is_open(i_f)=.TRUE.
    enddo
@@ -100,7 +100,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  if (index(what,'close')>0) then
    !
    do i_f=1,N_RT_o_files
-     if (.not.file_is_todo(i_f).or..not.RT_o_file_is_open(i_f)) cycle
+     if ((.not.file_is_todo(i_f)).or.(.not.RT_o_file_is_open(i_f))) cycle
      call of_open_close(RT_o_file_long(i_f))
      RT_o_file_is_open(i_f)=.FALSE.
    enddo
@@ -118,7 +118,9 @@ subroutine RT_output(what,VALUES,TIME,E)
    do i_v=1,N
      if (NAN(VALUES(i_v))) then
        call warning("Found NaN in "//trim(what)//". Dynamics stopped")
-       if (STOP_now(.TRUE.)) stop
+       RT_NAN_found=.TRUE.
+       exit
+       !if (STOP_now(.TRUE.)) stop
      endif
    enddo
  endif

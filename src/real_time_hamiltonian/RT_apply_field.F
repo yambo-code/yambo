@@ -50,8 +50,6 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
 &               ExJs(3,n_spinor,n_spinor),A_vec_pot(3),E_vec_pot(3),&
 &               POL(3),Jtot(3),Jspinor(3,n_spinor,n_spinor),sigma_dot_ExJs
  !
- call timing('RT Apply Field',OPR='start')
- !
  select case(trim(global_gauge))
    !
  case('velocity')
@@ -159,7 +157,5 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    enddo
    !
  end select
- !
- call timing('RT Apply Field',OPR='stop')
  !
 end subroutine RT_apply_field

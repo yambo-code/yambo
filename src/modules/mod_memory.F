@@ -225,27 +225,27 @@ module memory
    subroutine MEM_i1_d(name,i)
      character(*)::name
      integer, device ::i(:)
-     call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1)),_DEV_)
+     call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1)),DEV_)
    end subroutine
    subroutine MEM_i2_d(name,i)
      character(*)::name
      integer, device ::i(:,:)
-     call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1)),DEV_)
    end subroutine
    subroutine MEM_i3_d(name,i)
      character(*)::name
      integer, device ::i(:,:,:)
-     call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1,1)),DEV_)
    end subroutine
    subroutine MEM_i4_d(name,i)
      character(*)::name
      integer, device ::i(:,:,:,:)
-     call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1,1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1,1,1)),DEV_)
    end subroutine
    subroutine MEM_i5_d(name,i)
      character(*)::name
      integer, device ::i(:,:,:,:,:)
-     call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1,1,1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1,1,1,1)),DEV_)
    end subroutine
 #endif
    subroutine MEM_r1(name,r)
@@ -294,27 +294,27 @@ module memory
    subroutine MEM_r1_d(name,r)
      character(*)::name
      real(SP), device ::r(:)
-     call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r),_DEV_)
+     call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r),DEV_)
    end subroutine
    subroutine MEM_r2_d(name,r)
      character(*)::name
      real(SP), device ::r(:,:)
-     call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1)),DEV_)
    end subroutine
    subroutine MEM_r3_d(name,r)
      character(*)::name
      real(SP), device ::r(:,:,:)
-     call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1)),DEV_)
    end subroutine
    subroutine MEM_r4_d(name,r)
      character(*)::name
      real(SP), device ::r(:,:,:,:)
-     call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1,1)),DEV_)
    end subroutine
    subroutine MEM_r5_d(name,r)
      character(*)::name
      real(SP), device ::r(:,:,:,:,:)
-     call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1,1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1,1,1)),DEV_)
    end subroutine
 #endif
    subroutine MEM_c1(name,c)
@@ -383,63 +383,63 @@ module memory
    subroutine MEM_c1_d(name,c)
      character(*)::name
      complex(SP), device ::c(:)
-     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1)),_DEV_)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1)),DEV_)
    end subroutine
    subroutine MEM_c2_d(name,c)
      character(*)::name
      complex(SP), device ::c(:,:)
-     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1)),DEV_)
    end subroutine
    subroutine MEM_c3_d(name,c)
      character(*)::name
      complex(SP), device ::c(:,:,:)
-     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1)),DEV_)
    end subroutine
    subroutine MEM_c4_d(name,c)
      character(*)::name
      complex(SP), device ::c(:,:,:,:)
-     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1)),DEV_)
    end subroutine
    subroutine MEM_c5_d(name,c)
      character(*)::name
      complex(SP), device ::c(:,:,:,:,:)
-     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1)),DEV_)
    end subroutine
    subroutine MEM_c6_d(name,c)
      character(*)::name
      complex(SP), device ::c(:,:,:,:,:,:)
-     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1,1)),DEV_)
    end subroutine
 #  ifndef _DOUBLE
    subroutine MEM_cd1_d(name,c)
      character(*)::name
      complex(DP), device ::c(:)
-     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1)),_DEV_)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1)),DEV_)
    end subroutine
    subroutine MEM_cd2_d(name,c)
      character(*)::name
      complex(DP), device ::c(:,:)
-     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1)),DEV_)
    end subroutine
    subroutine MEM_cd3_d(name,c)
      character(*)::name
      complex(DP), device ::c(:,:,:)
-     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1)),DEV_)
    end subroutine
    subroutine MEM_cd4_d(name,c)
      character(*)::name
      complex(DP), device ::c(:,:,:,:)
-     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1)),DEV_)
    end subroutine
    subroutine MEM_cd5_d(name,c)
      character(*)::name
      complex(DP), device ::c(:,:,:,:,:)
-     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1)),DEV_)
    end subroutine
    subroutine MEM_cd6_d(name,c)
      character(*)::name
      complex(DP), device ::c(:,:,:,:,:,:)
-     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1,1)),_DEV_)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1,1)),DEV_)
    end subroutine
 #  endif
 #endif

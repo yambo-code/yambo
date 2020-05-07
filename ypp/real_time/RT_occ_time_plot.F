@@ -50,7 +50,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2),i_a,n_axis,Nk_path,last_ik
  real(SP)              :: io_Time,tmp_lifetimes(6),data_to_plot(9),k_al(3),k_cc(3),axis(3,3),&
-&                         data_to_plot_cumulative(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,9),O(3),path_total_K_weight
+&                         data_to_plot_cumulative(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,9),O(3)
  character(schlen)     :: titles(9),specs(9,2),dumb_ch(2)
  character(lchlen)     :: output_fname_short(2),output_fname(2,RT_carriers%nstates)
  character(3)          :: ch3_dummy
@@ -67,7 +67,6 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  call parser('CarrEnRnge', l_E_select)
  !
  data_to_plot_cumulative=rZERO
- path_total_K_weight=rZERO
  !
  if (n_spinor==2) then
    k_range    =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)
@@ -236,7 +235,6 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        endif
        if (ib<=En%nbf  ) data_to_plot(2)=data_to_plot(2)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
        if (ib>=En%nbf+1) data_to_plot(3)=data_to_plot(3)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
-       if (i_T==1) path_total_K_weight=path_total_K_weight+RT_carriers%k_weight(ik_RT)
      else
        data_to_plot(2)=RT_carriers%delta_f(i_RT)
        call msg('o '//trim(output_fname_short(1)),'',data_to_plot(:n_gamma+3),INDENT=-2,USE_TABS=.true.)
@@ -266,7 +264,6 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      output_fname_short(1)='YPP-RT_cumulative_occupations'
      if (i_T==1) output_fname(1,1)=output_fname_short(1)
      call open_file( output_fname(1,1),output_fname_short(1))
-     if (Nk_path>0) data_to_plot(2:3)=data_to_plot(2:3)/path_total_K_weight
      call msg('o '//trim(output_fname_short(1)),'',(/data_to_plot(1),data_to_plot(2:3)/),INDENT=-2,USE_TABS=.true.)
      call of_open_close(output_fname(1,1))
    endif

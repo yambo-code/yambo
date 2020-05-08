@@ -235,7 +235,7 @@ integer function variables_BS_more(ID,mode)
  !
  ! Check if BSE kernel is complete in reading mode, set the variable to false in writing mode
  !
- if( (trim(mode)=="start".or.(trim(mode)=="end".and.l_BSE_kernel_complete.and.write_is_on(ID)) .and. io_BS_K ) then
+ if( (trim(mode)=="start".or.(trim(mode)=="end".and.l_BSE_kernel_complete.and.write_is_on(ID)) ) .and. io_BS_K ) then
    def_var=                write_is_on(ID) .or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
    io_var =(master_cpu.and.write_is_on(id)).or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
    if(def_var) call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0,par_io_kind="independent")

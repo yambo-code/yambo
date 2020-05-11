@@ -32,6 +32,8 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  use wave_func,     ONLY:WF,wf_ng
  use electrons,     ONLY:n_spinor
  use pseudo,        ONLY:pp_kbv_dim_yambo
+ use cuda_m,        ONLY:have_cuda
+ use deviceXlib_m,  ONLY:dev_memcpy
  !
 #include<dev_defs.h>
  !
@@ -43,20 +45,37 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  ! 
  ! Work Space
  !
- integer     :: i1,i2,i_spinor
- complex(SP) :: XX(2,n_spinor,4,pp_kbv_dim_yambo),drho(n_spinor,3,pp_kbv_dim_yambo)
+ integer     :: i1,i2,i_spinor,ig
+ complex(SP) DEV_ATTRIBUTE :: XX(2,n_spinor,4,pp_kbv_dim_yambo)
+ complex(SP) DEV_ATTRIBUTE :: DEV_VARNAME(drho)(n_spinor,3,pp_kbv_dim_yambo)
+#ifdef _CUDA
+ complex(SP) :: drho(n_spinor,3,pp_kbv_dim_yambo)
+ complex(SP), device, pointer :: WF_c_d(:,:,:)
+#endif
+ !
+ if (pp_kbv_dim_yambo==0) return
  !
  XX=cZERO
- drho=cZERO
+ DEV_VARNAME(drho)=cZERO
  !
-#if ! defined(_CUDA)
+#if defined(_CUDA)
+ WF_c_d => WF%c_d
+ !$cuf kernel do(3) <<<*,*>>>
+#else
  !$omp parallel do default(shared), private(i1,i2,i_spinor), collapse(3)
 #endif
  do i1=1,pp_kbv_dim_yambo
    do i2=1,4
      do i_spinor=1,n_spinor
+#ifdef _CUDA
+       do ig=1,wf_ng
+         XX(1,i_spinor,i2,i1)=XX(1,i_spinor,i2,i1)+WF_c_d(ig,i_spinor,iv_wf)*kbv(ig,i_spinor,i2,i1)
+         XX(2,i_spinor,i2,i1)=XX(2,i_spinor,i2,i1)+WF_c_d(ig,i_spinor,ic_wf)*kbv(ig,i_spinor,i2,i1)
+       enddo
+#else
        XX(1,i_spinor,i2,i1)=V_dot_V(wf_ng,DEV_VARNAME(WF%c)(:,i_spinor,iv_wf),kbv(:,i_spinor,i2,i1))
        XX(2,i_spinor,i2,i1)=V_dot_V(wf_ng,DEV_VARNAME(WF%c)(:,i_spinor,ic_wf),kbv(:,i_spinor,i2,i1))
+#endif
      enddo
    enddo
  enddo
@@ -64,16 +83,25 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  !$omp end parallel do
 #endif
  !
+ !
+#if defined _CUDA
+ !$cuf kernel do(3) <<<*,*>>>
+#else
  !$omp parallel do default(shared), private(i1,i2,i_spinor), collapse(3)
+#endif
  do i1=1,pp_kbv_dim_yambo
    do i2=1,3
      do i_spinor=1,n_spinor
-       drho(i_spinor,i2,i1)=conjg(XX(1,i_spinor,1,i1))*XX(2,i_spinor,i2+1,i1)+conjg(XX(1,i_spinor,i2+1,i1))*XX(2,i_spinor,1,i1)
+       DEV_VARNAME(drho)(i_spinor,i2,i1)=conjg(XX(1,i_spinor,1,i1))*XX(2,i_spinor,i2+1,i1)+ &
+&                                        conjg(XX(1,i_spinor,i2+1,i1))*XX(2,i_spinor,1,i1)
      enddo
    enddo
  enddo
+#if ! defined _CUDA
  !$omp end parallel do
+#endif
  !
+ if (have_cuda) call dev_memcpy(drho,DEV_VARNAME(drho))
  forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(:,i1,:))
  !
 end subroutine

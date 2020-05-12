@@ -118,7 +118,7 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  !
  if (LOG_msg) then
    if(.not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
-   if(     log_as_a_file) flush(logfile_unit)
+   if(     log_as_a_file) call yambo_flush(logfile_unit)
  endif
  if (STD_msg) call LIVE_message(trim(lch),"n","","%s")
  !

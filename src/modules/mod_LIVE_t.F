@@ -283,6 +283,7 @@ module LIVE_t
        log_line=trim(message_composed) 
        if (trim(rfmt_)=="n".or.trim(rfmt_)=="nn") log_line=""
        if (trim(rfmt_)=="nn") write (logfile_unit,'(a/)') ""
+       call yambo_flush(logfile_unit)
        return
      endif
      fmt_here='(2a)'

@@ -25,7 +25,7 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  !
  use pars,         ONLY:lchlen,schlen,max_open_ofs,repfile_index
  use stderr,       ONLY:gen_fmt,STRING_remove
- use stderr,       ONLY:c_print,write_to_log,log_as_a_file
+ use stderr,       ONLY:c_print,write_to_log,log_as_a_file,logfile_unit
  use LIVE_t,       ONLY:LIVE_message
  use com,          ONLY:repfile,of_unit,terminator
  use com_interfcs, ONLY:composed_fmt
@@ -105,6 +105,7 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  ! Write to logfile or to report
  !
  if (.not.write_to_log.or.(.not.STD_msg.and..not.LOG_msg)) return
+
  !
  msgfmt=composed_fmt(trim(gen_fmt(val)),-size(val),.false.,-1)
  !
@@ -115,7 +116,10 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  if (len_trim(after_msg_)==0) write (lch,trim(msgfmt)) mesg_plus(1:nm),val
  if (len_trim(after_msg_)> 0) write (lch,trim(msgfmt)) mesg_plus(1:nm),val,trim(after_msg_)
  !
- if (LOG_msg.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
+ if (LOG_msg) then
+   if(.not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
+   if(     log_as_a_file) flush(logfile_unit)
+ endif
  if (STD_msg) call LIVE_message(trim(lch),"n","","%s")
  !
 end subroutine

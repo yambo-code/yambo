@@ -24,7 +24,7 @@
 subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT)
  !
  use pars,         ONLY:SP,schlen,lchlen,max_open_ofs,repfile_index
- use stderr,       ONLY:c_print,write_to_log,log_as_a_file,gen_fmt,STRING_remove
+ use stderr,       ONLY:c_print,write_to_log,log_as_a_file,logfile_unit,gen_fmt,STRING_remove
  use LIVE_t,       ONLY:LIVE_message
  use IO_m,         ONLY:NO_VAR
  use com,          ONLY:repfile,of_unit,terminator
@@ -127,7 +127,10 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  if (len_trim(after_msg_)==0) write (lch,trim(msgfmt)) mesg_plus(1:nm),val
  if (len_trim(after_msg_)> 0) write (lch,trim(msgfmt)) mesg_plus(1:nm),val,trim(after_msg_)
  !
- if (LOG_msg.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
+ if (LOG_msg) then
+   if(.not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
+   if(     log_as_a_file) flush(logfile_unit)
+ endif
  if (STD_msg) call LIVE_message(trim(lch),"n","","%s")
  !
 end subroutine

@@ -296,7 +296,7 @@ module LIVE_t
        if (trim(rfmt_)=="nn") write (logfile_unit,'(a/)') ""
        log_line=""
      endif
-     flush(logfile_unit)
+     call yambo_flush(logfile_unit)
      !
    end subroutine
    !

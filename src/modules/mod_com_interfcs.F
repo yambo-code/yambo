@@ -61,6 +61,12 @@ module com_interfcs
      logical           :: USE_TABS
    end function composed_fmt
    !
+   function fsync (fd) bind(c,name="fsync")
+     use iso_c_binding, only: c_int
+     integer(c_int), value :: fd
+     integer(c_int) :: fsync
+   end function fsync
+   !
  end interface
  !
 end module com_interfcs

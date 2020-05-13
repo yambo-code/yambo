@@ -57,12 +57,11 @@ integer function io_RT_components(what,ID)
  use R_lattice,      ONLY:nqbz
  use stderr,         ONLY:intc
  use timing_m,       ONLY:timing
- use netcdf,         ONLY:NF90_UNLIMITED
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,read_is_on,io_fragment,write_is_on,&
 &                         def_variable_bulk,io_variable_bulk
  use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step, &
 &                         RT_carriers,RT_nbands,G_MEM_steps
- use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,TMP_OBS_cache_steps,&
+ use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&
 &                         NE_i_start_time,SAVE_G_history
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
@@ -182,7 +181,7 @@ integer function io_RT_components(what,ID)
    if(NE_i_time> 1 .and. .not.SAVE_G_history) T_size=    G_MEM_steps
    if(NE_i_time> 1 .and.      SAVE_G_history) T_size=min(G_MEM_steps,G_IO_steps)
  endif
- if(l_OBS .and. NE_i_time> 1) T_size=TMP_OBS_cache_steps
+ if(l_OBS .and. NE_i_time> 1) T_size=CACHE_OBS_steps_now
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
@@ -546,7 +545,7 @@ subroutine RT_OBS_IO(ID,l_JP,l_M,what)
  use real_time,   ONLY:l_NE_with_fields,NE_i_time
  use netcdf,         ONLY:NF90_UNLIMITED
  use RT_control,  ONLY:J_cache,P_cache,Ms_cache,Ml_cache,A_cache,&
-&                      TMP_OBS_cache_steps,OBS_RT_IO_t
+&                      CACHE_OBS_steps_now,OBS_RT_IO_t
  !
 #include<memory.h>
  !
@@ -588,10 +587,10 @@ subroutine RT_OBS_IO(ID,l_JP,l_M,what)
    !
    if(write_is_on(ID)) then
      if(NE_i_time==1) CACHE_SZ=1
-     if(NE_i_time> 1) CACHE_SZ=TMP_OBS_cache_steps
-     IPOS    =OBS_RT_IO_t%N-TMP_OBS_cache_steps+1
+     if(NE_i_time> 1) CACHE_SZ=CACHE_OBS_steps_now
+     IPOS    =OBS_RT_IO_t%N-CACHE_OBS_steps_now+1
    else if(read_is_on(ID)) then
-     CACHE_SZ=TMP_OBS_cache_steps
+     CACHE_SZ=CACHE_OBS_steps_now
      IPOS    =1
    endif
    !

@@ -90,7 +90,7 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
  !
  if(io_BS_err/=0) then
    IO_mode="compressed_head"
-   ! Chck for ndb.BS_PAR compressed from the list of previous calculations
+   ! Check for ndb.BS_PAR compressed from the list of previous calculations
    do i_file=1,size(BS_K_cutoff_done)
      call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,ID=ID_compr)
      io_BS_err=io_BS_PAR_init(iq,ID_compr,IO_mode)

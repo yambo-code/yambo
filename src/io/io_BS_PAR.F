@@ -33,7 +33,7 @@ integer function io_BS_header(iq,X,ID,mode)
  use BS,            ONLY:BS_K_cutoff_done,l_BSE_restart,l_BSE_kernel_complete
  use BS_solvers,    ONLY:variables_BS,BSS_desc
  use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,io_mode,&
-&                        io_connect,io_elemental,io_header,io_BS_K,DUMP
+&                        io_connect,io_disconnect,io_elemental,io_header,io_BS_K,DUMP
  use descriptors,   ONLY:IO_desc,IO_desc_duplicate
  !
  implicit none
@@ -80,6 +80,7 @@ integer function io_BS_header(iq,X,ID,mode)
  if(io_BS_header/=0)       return
  if(trim(mode)=="connect") return
  !
+ !
  ! Check if the file already contains data and it is consistent
  ! DS: warning. This is potentially dangerous since all MPI tasts are all writing
  !              both the header and the variables
@@ -91,7 +92,7 @@ integer function io_BS_header(iq,X,ID,mode)
  !
  io_BS_header=variables_BS(ID,iq,local_desc,.TRUE.,X=X)
  !
- if (io_BS_header/=0) then
+ if (io_BS_header/=0.and.io_mode(ID)/=DUMP) then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    call warning('Invalid dimensions found. BSE restart file '//trim(full_db_name)//' not accepted')
    return
@@ -99,7 +100,7 @@ integer function io_BS_header(iq,X,ID,mode)
  !
  io_BS_header=variables_BS_more(ID,'start')
  !
- if(read_is_on(ID).and.io_BS_K) then
+ if(read_is_on(ID).and.io_BS_K.and.io_mode(ID)/=DUMP) then
    if(l_BSE_kernel_complete) then
      call msg("s","Trying to load complete BSE file  ",trim(full_db_name))
    else
@@ -113,6 +114,8 @@ integer function io_BS_header(iq,X,ID,mode)
    call msg("s",trim(tmp_ch))
    call msg("s","Previously computed compressed files ",BS_K_cutoff_done)
  endif
+ !
+ call io_disconnect(ID)
  !
  call PP_redux_wait()
  !
@@ -252,7 +255,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
      if(trim(mode)=="full" .or. trim(mode)=="compressed_mat") &
      &  call def_variable_bulk(ID,trim(ch(i_var,i_rep)),         1+(i_var-1)*2+(i_rep-1)*8,&
      &               [2,BS_IO_dim(1:BSK_n_dims)],SP,dim_names(1:BSK_n_dims+1),par_io_kind='independent')
-     if(trim(mode)=="full" .or. trim(mode)=="compressed_head") &
+     if(                        trim(mode)=="compressed_head") &
      &  call def_variable_bulk(ID,trim(ch(i_var,i_rep))//"_DONE",2+(i_var-1)*2+(i_rep-1)*8,&
      &                  BS_IO_dim(1:BSK_n_dims) , 0,dim_names(2:BSK_n_dims+1),par_io_kind='independent')
    enddo
@@ -311,7 +314,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  use BS,            ONLY:BS_blk,BSK_IO_mode,BS_K_cutoff,BS_IO_dim,MAX_BSK_LIN_size
  use timing_m,      ONLY:timing
  use IO_m,          ONLY:io_variable_bulk,io_unit,netcdf_call,nf90_sync,&
-&                        write_is_on,read_is_on,io_BS_K
+&                        write_is_on,read_is_on,io_BS_K,YAMBO_CMPLX_NO_FILL
  !
  implicit none
  !
@@ -404,8 +407,8 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
      !
      ! Write column by column in 1D
      !
-     lwrite(1)=trim(mode)=="compressed_head".or.trim(mode)=="full"
-     lwrite(2)=                                 trim(mode)=="full"
+     lwrite(1)=trim(mode)=="compressed_head"
+     lwrite(2)=trim(mode)=="full"
      lwrite(3)=trim(mode)=="compressed_mat"
      !
      if(idx1+imax-1<=MAX_BSK_LIN_size) then
@@ -438,6 +441,13 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
        endif
      endif
      !
+     if(trim(mode)=="full".and.read_is_on(ID)) then
+       do i1=1,imax
+         if(BS_blk(i_block)%mat(i1,i2)==YAMBO_CMPLX_NO_FILL) cycle
+         BS_blk(i_block)%done(i1,i2)='t'
+       enddo
+     endif
+     !
      if(trim(mode)=="compressed_mat") then
        if(read_is_on(ID)) then
          idx=0
@@ -459,7 +469,14 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
    ! Write one block at a time in 2D
    !
    call io_variable_bulk(ID, VAR_IDs(1),  C2=BS_blk(i_block)%mat , IPOS=(/1,x1,x2/) )
-   call io_variable_bulk(ID, VAR_IDs(2), CH2=BS_blk(i_block)%done, IPOS=(/  x1,x2/) )
+   if(read_is_on(ID)) then
+     do i2=1,BS_blk(i_block)%size(2)
+       do i1=1,BS_blk(i_block)%size(1)
+         if(BS_blk(i_block)%mat(i1,i2)==YAMBO_CMPLX_NO_FILL) cycle
+         BS_blk(i_block)%done(i1,i2)='t'
+       enddo
+     enddo
+   endif
    !
  end select
  !

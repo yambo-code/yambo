@@ -210,11 +210,11 @@ end function
 !
 integer function variables_BS_more(ID,mode)
  !
- use pars,       ONLY:SP,LP,schlen
+ use pars,       ONLY:IP,SP,LP,schlen
  use parallel_m, ONLY:master_cpu
  use BS,         ONLY:BS_K_cutoff,BS_K_cutoff_done,BS_max_val,l_BSE_kernel_complete
  use IO_m,       ONLY:def_variable_elemental,io_variable_elemental,&
-&                     def_variable_bulk,io_variable_bulk,&
+&                     def_variable_bulk,io_variable_bulk,nf90_sync,io_unit,&
 &                     write_is_on,read_is_on,variable_exist,NF90_unlimited,netcdf_dim_size
  !
  implicit none
@@ -222,7 +222,7 @@ integer function variables_BS_more(ID,mode)
  integer,      intent(in) :: ID
  character(*), intent(in) :: mode
  !
- integer           :: N_cutoff
+ integer           :: N_cutoff,stat
  logical           :: def_var,io_var
  real(SP)          :: BS_K_cutoff_IO(1)
  character(schlen) :: kernel_dim_name(1)
@@ -236,9 +236,9 @@ integer function variables_BS_more(ID,mode)
  !
  if(trim(mode)=="start".or.(trim(mode)=="end".and.l_BSE_kernel_complete.and.write_is_on(ID))) then
    def_var=                write_is_on(ID) .or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
-   io_var =(master_cpu.and.write_is_on(id)).or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
+   io_var =(master_cpu.and.write_is_on(ID)).or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
    if(def_var) call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0)
-   if(io_var)  call io_variable_elemental(ID,VAR=" Kernel complete",&
+   if( io_var) call  io_variable_elemental(ID,VAR=" Kernel complete",&
                &                          DB_L0=l_BSE_kernel_complete,L0=l_BSE_kernel_complete)
  endif
  !
@@ -256,6 +256,8 @@ integer function variables_BS_more(ID,mode)
    allocate(BS_K_cutoff_done(N_cutoff))
    call  io_variable_bulk(ID,1,R1=BS_K_cutoff_done)
  endif
+ !
+ if(write_is_on(ID)) stat = nf90_sync(io_unit(ID))
  !
 end function
 !

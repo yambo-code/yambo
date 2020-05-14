@@ -46,11 +46,11 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  ! Work Space
  !
  integer     :: i1,i2,i_spinor,ig
+ complex(SP), pointer DEV_ATTRIBUTE :: WF_c(:,:,:)
  complex(SP) DEV_ATTRIBUTE :: XX(2,n_spinor,4,pp_kbv_dim_yambo)
- complex(SP) DEV_ATTRIBUTE :: DEV_VARNAME(drho)(n_spinor,3,pp_kbv_dim_yambo)
-#ifdef _CUDA
  complex(SP) :: drho(n_spinor,3,pp_kbv_dim_yambo)
- complex(SP), device, pointer :: WF_c_d(:,:,:)
+#ifdef _CUDA
+ complex(SP) DEV_ATTRIBUTE :: DEV_VARNAME(drho)(n_spinor,3,pp_kbv_dim_yambo)
 #endif
  !
  if (pp_kbv_dim_yambo==0) return
@@ -58,8 +58,9 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  XX=cZERO
  DEV_VARNAME(drho)=cZERO
  !
+ WF_c => DEV_VARNAME(WF%c)
+ !
 #if defined(_CUDA)
- WF_c_d => WF%c_d
  !$cuf kernel do(3) <<<*,*>>>
 #else
  !$omp parallel do default(shared), private(i1,i2,i_spinor), collapse(3)
@@ -67,15 +68,10 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  do i1=1,pp_kbv_dim_yambo
    do i2=1,4
      do i_spinor=1,n_spinor
-#ifdef _CUDA
        do ig=1,wf_ng
-         XX(1,i_spinor,i2,i1)=XX(1,i_spinor,i2,i1)+WF_c_d(ig,i_spinor,iv_wf)*kbv(ig,i_spinor,i2,i1)
-         XX(2,i_spinor,i2,i1)=XX(2,i_spinor,i2,i1)+WF_c_d(ig,i_spinor,ic_wf)*kbv(ig,i_spinor,i2,i1)
+         XX(1,i_spinor,i2,i1)=XX(1,i_spinor,i2,i1)+WF_c(ig,i_spinor,iv_wf)*kbv(ig,i_spinor,i2,i1)
+         XX(2,i_spinor,i2,i1)=XX(2,i_spinor,i2,i1)+WF_c(ig,i_spinor,ic_wf)*kbv(ig,i_spinor,i2,i1)
        enddo
-#else
-       XX(1,i_spinor,i2,i1)=V_dot_V(wf_ng,DEV_VARNAME(WF%c)(:,i_spinor,iv_wf),kbv(:,i_spinor,i2,i1))
-       XX(2,i_spinor,i2,i1)=V_dot_V(wf_ng,DEV_VARNAME(WF%c)(:,i_spinor,ic_wf),kbv(:,i_spinor,i2,i1))
-#endif
      enddo
    enddo
  enddo

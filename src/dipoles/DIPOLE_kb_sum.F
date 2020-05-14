@@ -79,9 +79,6 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
      enddo
    enddo
  enddo
-#if ! defined(_CUDA)
- !$omp end parallel do
-#endif
  !
  !
 #if defined _CUDA
@@ -97,9 +94,6 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
      enddo
    enddo
  enddo
-#if ! defined _CUDA
- !$omp end parallel do
-#endif
  !
  if (have_cuda) call dev_memcpy(drho,DEV_VARNAME(drho))
  forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(:,i1,:))

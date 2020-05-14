@@ -24,6 +24,7 @@
 module electrons
  !
  use pars,  ONLY:SP,IP
+ !
 #include<memory.h>
  !
  real(SP) :: nel

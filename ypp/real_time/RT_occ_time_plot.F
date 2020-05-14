@@ -225,7 +225,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      endif
      !
      if (l_OCCgroup_k_and_b) then
-       data_to_plot_cumulative(ik,ib,2:)=data_to_plot_cumulative(ik,ib,2:)+data_to_plot(2:)*RT_carriers%k_weight(ik_RT)
+       data_to_plot_cumulative(ib,ik,2:)=data_to_plot_cumulative(ib,ik,2:)+data_to_plot(2:)*RT_carriers%k_weight(ik_RT)
      endif
      !
      if (l_OCCgroup_path) then
@@ -233,8 +233,11 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
          last_ik=ik_RT
          Nk_path=Nk_path+1
        endif
-       if (ib<=En%nbf  ) data_to_plot(2)=data_to_plot(2)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
-       if (ib>=En%nbf+1) data_to_plot(3)=data_to_plot(3)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
+       if (RT_carriers%E_bare(i_RT)+RT_carriers%delta_E(i_RT)<=0.) then
+         data_to_plot(2)=data_to_plot(2)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
+       else
+         data_to_plot(3)=data_to_plot(3)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
+       endif
      else
        data_to_plot(2)=RT_carriers%delta_f(i_RT)
        call msg('o '//trim(output_fname_short(1)),'',data_to_plot(:n_gamma+3),INDENT=-2,USE_TABS=.true.)
@@ -253,7 +256,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
            output_fname_short(2)='YPP-RT_cumulative_occupations_k'//trim(intc(ik))//'_b'//trim(intc(ib))
            if (i_T==1) output_fname(2,i_RT)=output_fname_short(2)
            call open_file( output_fname(2,i_RT),output_fname_short(2))
-           call msg('o '//trim(output_fname_short(2)),'',data_to_plot_cumulative(ik,ib,:n_gamma+3),INDENT=-2,USE_TABS=.true.)
+           call msg('o '//trim(output_fname_short(2)),'',data_to_plot_cumulative(ib,ik,:n_gamma+3),INDENT=-2,USE_TABS=.true.)
            call of_open_close(output_fname(2,i_RT))
          enddo
        enddo

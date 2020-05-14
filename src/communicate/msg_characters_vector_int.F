@@ -24,7 +24,7 @@
 subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  !
  use pars,         ONLY:lchlen,max_open_ofs,repfile_index
- use stderr,       ONLY:c_print,write_to_log,log_as_a_file,STRING_remove
+ use stderr,       ONLY:c_print,write_to_log,log_as_a_file,logfile_unit,STRING_remove
  use LIVE_t,       ONLY:LIVE_message
  use com,          ONLY:repfile,terminator,of_unit
  use com_interfcs, ONLY:composed_fmt
@@ -103,7 +103,11 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  else
    write (lch,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
  endif
- if (LOG_msg.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
+ !
+ if (LOG_msg) then
+   if(.not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
+   if(     log_as_a_file) call yambo_flush(logfile_unit)
+ endif
  if (STD_msg) call LIVE_message(trim(lch),"n","","%s")
  !
 end subroutine

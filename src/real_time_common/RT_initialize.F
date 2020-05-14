@@ -52,12 +52,12 @@ subroutine RT_initialize(E,k,q)
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
 &                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,l_RT_impose_for_metals, &
-&                         l_P_integrating_J,l_RT_rotate_DM,RT_Nk_ibz,RT_deph_cv_only
+&                         l_P_integrating_J,l_RT_rotate_DM,RT_Nk_ibz,RT_deph_cv_only,RT_ibz_coo
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
  use parser_m,       ONLY:parser
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait,PAR_G_kpts
  !
 #include<memory.h>
  !
@@ -123,6 +123,13 @@ subroutine RT_initialize(E,k,q)
  !
  eval_DFT     =  l_sc_is_libDFT
  eval_HARTREE =  l_sc_hartree
+ !
+ ! DbGd PAR memory distribution index updated
+ !============================================
+ if (l_RT_uses_E_DbGd) then
+   PAR_G_kpts(1)=RT_ibz_coo(PAR_G_kpts(1),1)
+   PAR_G_kpts(2)=RT_ibz_coo(PAR_G_kpts(2),2)
+ endif
  !
  ! Integrator FLAGS
  !==================

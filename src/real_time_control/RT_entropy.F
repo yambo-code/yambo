@@ -24,18 +24,18 @@
 subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  !
  use pars,           ONLY:SP,cZERO,rZERO
- use parallel_m,     ONLY:PAR_G_kpts
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2KEL
  use electrons,      ONLY:levels,spin_occ
  use real_time,      ONLY:RT_bands,RT_Nk_ibz,RT_ibz_coo,eval_entropy,DbGd_ibz_coo, &
 &                         l_RT_uses_E_DbGd,RT_E_occupations,RT_H_occupations
+ use parallel_m,     ONLY:PAR_G_k_range
  !
  implicit none 
  !
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
- complex(SP),   intent(in) :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2))
+ complex(SP),   intent(in) :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
  real(SP),      intent(in) :: E_IP
  real(SP),     intent(out) :: TEntr(3)
  real(SP),   intent(inout) :: Entr(3),EnEntr(3)
@@ -45,8 +45,8 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  integer     :: ib1,ib2,ik,ik_RT,ik_E,i1
  real(SP)    :: Energies_e(5),Energies_h(5),tmp_E(2),Entr_prev(3),EnEntr_prev(3),   &
 &               S_e,S_h,VALUE_tmp(3),one_over_T
- complex(SP) :: dG_lesser_h(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2)), &
-&               dG_lesser_e(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2))
+ complex(SP) :: dG_lesser_h(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2)), &
+&               dG_lesser_e(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
  !
  TEntr=rZERO
  Entr=rZERO
@@ -77,7 +77,7 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
            tmp_E(2)=en%E(ib2,ik,1)
          endif
          !
-         if( ik_RT<PAR_G_kpts(1) .or. ik_RT>PAR_G_kpts(2) ) cycle
+         if( ik_RT<PAR_G_k_range(1) .or. ik_RT>PAR_G_k_range(2) ) cycle
          !
          if ( tmp_E(1)<=0._SP .and. tmp_E(2)<=0._SP ) dG_lesser_h(ib1,ib2,ik_RT)=dG_lesser(ib1,ib2,ik_RT)
          if ( tmp_E(1)> 0._SP .and. tmp_E(2)> 0._SP ) dG_lesser_e(ib1,ib2,ik_RT)=dG_lesser(ib1,ib2,ik_RT)

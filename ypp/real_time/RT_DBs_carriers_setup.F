@@ -28,7 +28,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  use IO_m,          ONLY:io_control,OP_WR,WR_CL,REP
  use R_lattice,     ONLY:bz_samp
  use RT_control,    ONLY:CARR_RT_IO_t
- use parallel_m,    ONLY:PAR_G_kpts
+ use parallel_m,    ONLY:PAR_G_k_range
  use real_time,     ONLY:RT_carriers,NE_i_time,l_elel_scatt,l_elph_scatt,&
 &                        l_elphoton_scatt,l_RT_CCA_Kernel,RT_alloc,RT_free,RT_potential
  use YPP_real_time, ONLY:l_RTpump_energy,l_RTpump_kspace,l_RTpump_Fermi
@@ -52,7 +52,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  call section('*','Manual carriers excitation via '//trim(sec_ch))
  !
  NE_i_time   =1
- PAR_G_kpts=(/1,kpt%nibz/)
+ PAR_G_k_range=(/1,kpt%nibz/)
  !
  l_elel_scatt    =.true.
  l_elph_scatt    =.true.

@@ -34,8 +34,8 @@ subroutine RT_databases_IO(E)
  use IO_m,           ONLY:io_control,manage_action,NONE, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
 &                         OP_IF_START_APP_CL_IF_END,WR_CL_IF_END,OP_APP,OP_APP_CL,OP_WR_CL
- use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,G_MEM_steps
- use parallel_m,     ONLY:PP_redux_wait,PP_bcast,PAR_G_kpts,HEAD_k_cpu
+ use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,G_MEM_steps,RT_all2ibz
+ use parallel_m,     ONLY:PP_redux_wait,PP_bcast,HEAD_k_cpu,PAR_G_k_range,PAR_IND_Xk_ibz,myid,ncpu
  use timing_m,       ONLY:timing
  use fields,         ONLY:A_tot
 #if defined _PAR_IO
@@ -49,7 +49,7 @@ subroutine RT_databases_IO(E)
  ! Work Space
  !
  logical           :: write_OBS,force_OBS
- integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time
+ integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,i_cpu
  integer, external :: io_RT_components
  logical, external :: RT_Dynamics_is_over
  !
@@ -188,7 +188,7 @@ subroutine RT_databases_IO(E)
      !
 #if defined _PAR_IO
      !
-     if(PAR_G_kpts(1)>0.and.HEAD_k_CPU) then
+     if(PAR_G_k_range(1)>0.and.HEAD_k_CPU) then
        IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/3/),ID=ID(3),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
        io_G=io_RT_components('G',ID(3))
@@ -196,12 +196,23 @@ subroutine RT_databases_IO(E)
      !
 #else
      !
-     call PP_redux_wait( )
-     do ik = PAR_G_kpts(1),PAR_G_kpts(2)
-       call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ik+2/),ID=ID(5))
-       io_G=io_RT_components('G',ID(5))
+     do i_cpu=1,ncpu
+       !
+       do ik = 1, RT_nk
+         !
+         if (myid+1/=i_cpu) cycle
+         !
+         if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+         !
+         IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,ik,FIRST=PAR_G_k_range(1),LAST=PAR_G_k_range(2))
+         call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID(5))
+         io_G=io_RT_components('G',ID(5))
+         !
+       enddo 
+       !
+       call PP_redux_wait( )
+       !
      enddo
-     call PP_redux_wait( )
      !
 #endif
      !

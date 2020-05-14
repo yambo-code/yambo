@@ -62,7 +62,7 @@ subroutine RT_start_and_restart(E,k,q)
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
  use H_interfaces,   ONLY:V_real_space_to_H
- use parallel_m,     ONLY:PP_redux_wait,PAR_G_kpts
+ use parallel_m,     ONLY:PP_redux_wait,PAR_G_k_range
  use RT_output_m,    ONLY:RT_desc,TIME_STEP_desc,Gr_desc
  !
 #include<memory.h>
@@ -99,8 +99,8 @@ subroutine RT_start_and_restart(E,k,q)
  !
  if(.not.l_RT_is_WFfree) then
    !
-   call el_density_matrix(G_lesser_reference(:,:,PAR_G_kpts(1):PAR_G_kpts(2)),E,k,rho_reference,1)
-   if(n_spin>1) call el_magnetization_matrix(G_lesser_reference(:,:,PAR_G_kpts(1):PAR_G_kpts(2)),E,k,magn_reference,1)
+   call el_density_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2)),E,k,rho_reference,1)
+   if(n_spin>1) call el_magnetization_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2)),E,k,magn_reference,1)
    !
    call Bare_Hamiltonian(E,k,k)
    !
@@ -192,8 +192,8 @@ subroutine RT_start_and_restart(E,k,q)
    !
 #else
    !
-   do ik=PAR_G_kpts(1),PAR_G_kpts(2)
-     IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,PAR_G_kpts(1),PAR_G_kpts(2))
+   do ik=PAR_G_k_range(1),PAR_G_k_range(2)
+     IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,PAR_G_k_range(1),PAR_G_k_range(2))
      call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),MODE=VERIFY,ID=ID(5))
      io_G=io_RT_components('G',ID(5))
    enddo
@@ -203,7 +203,7 @@ subroutine RT_start_and_restart(E,k,q)
    ! The G_lesser must be now rebuild from the reference (T=0) and latest dG components
    !
    do i_mem=1,G_MEM_steps
-     G_lesser(:,:,:,i_mem)=G_lesser_reference(:,:,PAR_G_kpts(1):PAR_G_kpts(2))+dG_lesser(:,:,:,i_mem)
+     G_lesser(:,:,:,i_mem)=G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2))+dG_lesser(:,:,:,i_mem)
    enddo
    !
    if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
@@ -419,7 +419,7 @@ subroutine RT_start_and_restart(E,k,q)
            !
            G_lesser_reference(ib,ib,ik_RT_DbGd) = cmplx(0.,f_occ_ref,SP)
            !
-           if( ik_RT_DbGd<PAR_G_kpts(1) .or. ik_RT_DbGd>PAR_G_kpts(2) ) cycle
+           if( ik_RT_DbGd<PAR_G_k_range(1) .or. ik_RT_DbGd>PAR_G_k_range(2) ) cycle
            !
            G_lesser(ib,ib,ik_RT_DbGd,1)         = cmplx(0.,f_occ    ,SP)
            dG_lesser(ib,ib,ik_RT_DbGd,1)        = G_lesser(ib,ib,ik_RT_DbGd,1)-G_lesser_reference(ib,ib,ik_RT_DbGd)
@@ -444,7 +444,7 @@ subroutine RT_start_and_restart(E,k,q)
      !
      ! Occupations are defined from G_lesser and G_lesser_reference
      !
-     Nk=PAR_G_kpts
+     Nk=PAR_G_k_range
      !
      do ib=RT_bands(1),RT_bands(2)
        RT_E_occupations_reference(ib,:) =          aimag(G_lesser_reference(ib,ib,:))

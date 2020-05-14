@@ -413,7 +413,7 @@ module parallel_m
  integer            :: PAR_n_c_bands(2) = 0
  integer            :: PAR_n_v_bands(2) = 0
  integer            :: PAR_n_G_vectors  = 0
- integer            :: PAR_G_kpts(2)    = 0  ! For parallel I/O of G
+ integer            :: PAR_G_k_range(2) = 0  ! For parallel I/O of G
  !
  ! ... and derived variables
  !==========================

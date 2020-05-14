@@ -205,29 +205,29 @@ subroutine k_special(LIST_only)
      SPECIAL_k_label(15)='A6'
      SPECIAL_k%pt(15,:)=SPECIAL_k%pt(11,:)+SPECIAL_k%pt(5,:)
      !
-     call k_add_special_regions( (/0.88,0.  /),"XYR1" )
-     call k_add_special_regions( (/0.12,0.  /),"XYR2" )
-     call k_add_special_regions( (/0.12,0.26/),"XYR3" )
+     call k_add_special_regions( (/0.88_SP,0._SP  /),"XYR1" )
+     call k_add_special_regions( (/0.12_SP,0._SP  /),"XYR2" )
+     call k_add_special_regions( (/0.12_SP,0.26_SP/),"XYR3" )
      !
-     call k_add_special_regions( (/0.62,0.16/),"YpR1" )
-     call k_add_special_regions( (/0.38,0.16/),"YpR2" )
-     call k_add_special_regions( (/0.38,0.26/),"YpR3" )
+     call k_add_special_regions( (/0.62_SP,0.16_SP/),"YpR1" )
+     call k_add_special_regions( (/0.38_SP,0.16_SP/),"YpR2" )
+     call k_add_special_regions( (/0.38_SP,0.26_SP/),"YpR3" )
      !
-     call k_add_special_regions( (/0.72,0.26/),"GR1" )
-     call k_add_special_regions( (/0.28,0.26/),"GR2" )
-     call k_add_special_regions( (/0.28,0.50/),"GR3" )
+     call k_add_special_regions( (/0.72_SP,0.26_SP/),"GR1" )
+     call k_add_special_regions( (/0.28_SP,0.26_SP/),"GR2" )
+     call k_add_special_regions( (/0.28_SP,0.50_SP/),"GR3" )
      !
-     call k_add_special_regions( (/0.72,0.50/),"GL1" )
-     call k_add_special_regions( (/0.28,0.50/),"GL2" )
-     call k_add_special_regions( (/0.28,0.74/),"GL3" )
+     call k_add_special_regions( (/0.72_SP,0.50_SP/),"GL1" )
+     call k_add_special_regions( (/0.28_SP,0.50_SP/),"GL2" )
+     call k_add_special_regions( (/0.28_SP,0.74_SP/),"GL3" )
      !
-     call k_add_special_regions( (/0.88,0.74/),"XYL1" )
-     call k_add_special_regions( (/0.12,0.74/),"XYL2" )
-     call k_add_special_regions( (/0.12,1.  /),"XYL3" )
+     call k_add_special_regions( (/0.88_SP,0.74_SP/),"XYL1" )
+     call k_add_special_regions( (/0.12_SP,0.74_SP/),"XYL2" )
+     call k_add_special_regions( (/0.12_SP,1._SP  /),"XYL3" )
      !
-     call k_add_special_regions( (/0.62,0.74/),"YpL1" )
-     call k_add_special_regions( (/0.38,0.74/),"YpL2" )
-     call k_add_special_regions( (/0.38,0.84/),"YpL3" )
+     call k_add_special_regions( (/0.62_SP,0.74_SP/),"YpL1" )
+     call k_add_special_regions( (/0.38_SP,0.74_SP/),"YpL2" )
+     call k_add_special_regions( (/0.38_SP,0.84_SP/),"YpL3" )
      !
    case('CUB')
      !

@@ -30,14 +30,14 @@ subroutine RT_time_step_update( )
 &                         i_MEM_prev,i_MEM_now,RT_step,RT_dyn_step,&
 &                         RT_life_extrap_times,Life_MEM_steps,NE_time,NE_time_step_update_jump,&
 &                         NE_step_update_treshold,NE_i_time,NE_time_step_update_last_point,RT_MAX_step,&
-&                         NE_initial_time_step_update
+&                         NE_initial_time_step_update,RT_nk,RT_all2ibz
  use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,&
 &                         RT_do_it,SETUP_RT_IO_type,TIME_adjust,STEP_adjust,&
 &                         CACHE_OBS_steps,RT_control_alloc,RT_control_free,&
 &                         CACHE_OBS_INTERVAL_time,CACHE_OBS_last_point
  use RT_output_m,    ONLY:TIME_STEP_desc
  use com,            ONLY:msg
- use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_G_kpts
+ use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use interfaces,     ONLY:DESC_write
  !
  implicit none
@@ -63,7 +63,10 @@ subroutine RT_time_step_update( )
  dT_now      =(MEM_pointer(i_MEM_now)-MEM_pointer(i_MEM_prev))*RT_step
  dT_previous =(MEM_pointer(i_MEM_prev)-MEM_pointer(i_MEM_old))*RT_step
  !
- do ik=PAR_G_kpts(1),PAR_G_kpts(2)
+ do ik=1,RT_nk
+   !
+   if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+   !
    do ib=RT_bands(1),RT_bands(2)
      do ibp=RT_bands(1),RT_bands(2)
        dG_dT(1)=(dG_lesser(ib,ibp,ik,i_MEM_prev)-dG_lesser(ib,ibp,ik,i_MEM_old))/dT_previous

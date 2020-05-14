@@ -41,13 +41,14 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  use D_lattice,  ONLY:Tel
  use functions,  ONLY:Fermi_fnc
  use interfaces, ONLY:OCCUPATIONS_Gaps
+ !
 #include<memory.h>
  !
  type(levels)::Xe,E
  !
  !Work Space
  !
- real(SP) :: Ef_test
+ real(SP)           :: Ef_test
  real(SP),parameter :: Ef_step=0.1/HA2EV
  !
   if (.not.allocated(E%f)) then

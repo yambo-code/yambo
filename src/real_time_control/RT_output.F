@@ -279,6 +279,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    end select
    !
    call msg('o '//trim(RT_o_file_short(i_f)),'',data_to_dump(1:n_RT_headings(i_f)),USE_TABS=.TRUE.)
+   call of_open_close(trim(RT_o_file_short(i_f)),'f')
    !
  enddo
  !

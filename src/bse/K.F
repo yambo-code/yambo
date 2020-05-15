@@ -277,10 +277,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
 #if defined _PAR_IO
  !
- call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID_head)
+ call io_control(ACTION=OP_APP,COM=REP,ID=ID_head)
  io_BS_err=io_BS_header(iq,X,ID_head,"full")
  !
- call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID)
+ call io_control(ACTION=OP_APP,COM=REP,ID=ID)
  io_BS_err=io_BS_PAR_INIT(iq,ID,"full")
  !
 #else
@@ -312,7 +312,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      if (.not.l_partial_kernel_loaded) then
        call io_control(ACTION=RD,ID=ID)
-       call io_control(ACTION=RD,ID=ID_head)
        call io_BS_PAR_block(iq,i_block,ID,"full")
      endif
      !

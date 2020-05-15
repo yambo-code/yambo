@@ -37,6 +37,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  use IO_m,          ONLY:io_status,ver_is_gt_or_eq,variable_exist,write_is_on,&
 &                        def_variable_elemental,io_variable_elemental
  use descriptors,   ONLY:IO_desc,IO_desc_reset
+ use parallel_m,    ONLY:master_cpu
 #if defined _PAR_IO
  use BS,            ONLY:BSK_IO_mode
 #endif
@@ -54,113 +55,118 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  logical             ::res_corr_disk,res_exch_disk,cpl_disk,&
 &                      cpl_corr_disk,cpl_exch_disk,td_hf_disk,local_long_gauge
  !
- ! PARS1
- !
- var_size=29
- if (ver_is_gt_or_eq(ID,(/3,0,9/)))      var_size=30
- if (ver_is_gt_or_eq(ID,revision=16339)) var_size=33
- if (iq>1)                               var_size=35
+ if (write_is_on(ID).and..not.master_cpu) return
  !
  call IO_desc_reset(desc)
  !
- call def_variable_elemental(ID,"PARS1",var_size,SP,0)
- call io_variable_elemental(ID,&
-&     VAR="[K] Identifier               ",I0=BS_identifier,DESCRIPTOR=desc)
+ call def_variable_elemental(ID,"BS_identifier",1,IP+100,0)
+ call io_variable_elemental(ID,VAR="[K] Identifier",I0=BS_identifier,DESCRIPTOR=desc)
+ !
  if(iq>1) then
+   call def_variable_elemental(ID,"Q-point",3,SP,0)
    call io_variable_elemental(ID,VAR="[K] Q-point",&
 &                             R1=BSqpts(:,iq),CHECK=.true.,OP=(/"==","==","=="/),DESCRIPTOR=desc)
  endif
+ !
+ call def_variable_elemental(ID,"Dimension",1,IP+100,0)
  call io_variable_elemental(ID,VAR="[K] Dimension",I0=BS_K_dim,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+ !
+ call def_variable_elemental(ID,"Bands",2,IP+100,0)
  call io_variable_elemental(ID,VAR="[K] Bands",I1=BS_bands,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)
- call io_variable_elemental(ID,DB_L0=res_exch_disk,VAR="[K] Exchange",&
-&                           TERMINATOR="res",L0=BS_res_K_exchange,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
-
+ !
+ call def_variable_elemental(ID,"RES_EXCH",1,LP+100,0)
+ call io_variable_elemental(ID,DB_L0=res_exch_disk,VAR="[K] Exchange res",&
+&                           L0=BS_res_K_exchange,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+ !
+ call def_variable_elemental(ID,"RES_CORR",1,LP+100,0)
  call io_variable_elemental(ID,DB_L0=res_corr_disk,&
-&     VAR="[K] Correlation",TERMINATOR="res",L0=BS_res_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&     VAR="[K] Correlation res",L0=BS_res_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+ !
+ call def_variable_elemental(ID,"COUPLING",1,LP+100,0)
  call io_variable_elemental(ID,DB_L0=cpl_disk,&
 &     VAR="[K] Kernel`s coupling        ",L0=BS_K_coupling,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+ !
+ call def_variable_elemental(ID,"CPL_EXCH",1,LP+100,0)
  call io_variable_elemental(ID,DB_L0=cpl_exch_disk,&
-&     VAR="[K] Exchange",TERMINATOR="cpl",L0=BS_cpl_K_exchange,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&     VAR="[K] Exchange cpl",L0=BS_cpl_K_exchange,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  !
- if (ver_is_gt_or_eq(ID,revision=4888)) then
-   call io_variable_elemental(ID,DB_L0=cpl_corr_disk,&
-&       VAR="[K] Correlation",TERMINATOR="cpl",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
-     call io_variable_elemental(ID,DB_L0=td_hf_disk,&
-&       VAR="[K] W interaction is bare    ",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
- else
-   call io_variable_elemental(ID,DB_L0=td_hf_disk,&
-&       VAR="[K] W interaction is bare    ",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
-     call io_variable_elemental(ID,DB_L0=cpl_corr_disk,&
-&       VAR="[K] Correlation",TERMINATOR="cpl",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
- endif
+ call def_variable_elemental(ID,"CPL_CORR",1,LP+100,0)
+ call io_variable_elemental(ID,DB_L0=cpl_corr_disk,&
+&     VAR="[K] Correlation cpl",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  !
+ call def_variable_elemental(ID,"W_BARE",1,LP+100,0)
+ call io_variable_elemental(ID,DB_L0=td_hf_disk,&
+&       VAR="[K] W interaction is bare",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+ !
+ call def_variable_elemental(ID,"ALDA_KERNEL",1,LP+100,0)
  call io_variable_elemental(ID,&
-&     VAR="[K] ALDA kernel in R-space   ",L0=BS_K_is_ALDA,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&     VAR="[K] ALDA kernel in R-space",L0=BS_K_is_ALDA,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  !
  if (res_exch_disk.or.cpl_exch_disk) then
-     call io_variable_elemental(ID,&
-&      VAR="[K] RL vectors",TERMINATOR="exchange",I0=BS_n_g_exch,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+   call def_variable_elemental(ID,"RL_EXCH",1,IP+100,0)
+   call io_variable_elemental(ID,&
+&      VAR="[K] RL vectors exchange",I0=BS_n_g_exch,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  endif
  if (res_corr_disk.or.cpl_corr_disk) then
-     call io_variable_elemental(ID,&
-&     VAR="[K] RL vectors",TERMINATOR="correlation",I0=BS_n_g_W,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+   call def_variable_elemental(ID,"RL_CORR",1,IP+100,0)
+   call io_variable_elemental(ID,&
+&     VAR="[K] RL vectors correlation",I0=BS_n_g_W,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  endif
+ !
+ call def_variable_elemental(ID,"EH_E_RANGE",2,SP,0)
  call io_variable_elemental(ID,UNIT=HA2EV,&
-&     VAR="[K] E/h energy range",TERMINATOR="ev",R1=BS_eh_en,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)
+&     VAR="[K] E/h energy range",TERMINATOR="[eV]",R1=BS_eh_en,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)
+ !
+ call def_variable_elemental(ID,"CPL_RANGE",2,SP,0)
  call io_variable_elemental(ID,&
-&     VAR="[K] Coupling range",TERMINATOR="o/o",R1=BS_eh_win,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)
+&     VAR="[K] Coupling range",TERMINATOR="[o/o]",R1=BS_eh_win,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)
  !
  ! Interaction
  !
  if (res_corr_disk.or.cpl_corr_disk) then
-     call io_variable_elemental(ID,&
-&       VAR="[W] Interaction is diagonal  ",L0=BS_W_is_diagonal,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
-     call io_variable_elemental(ID,&
-&       VAR="[W] Matrix size              ",I0=X%ng,WARN=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+   call def_variable_elemental(ID,"BS_W_DIAGONAL",1,LP+100,0)
+   call io_variable_elemental(ID,&
+&       VAR="[W] Interaction is diagonal",L0=BS_W_is_diagonal,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+   !
+   call def_variable_elemental(ID,"BS_W_NG",1,IP+100,0)
+   call io_variable_elemental(ID,VAR="[W] Matrix size",I0=X%ng,WARN=.true.,OP=(/"=="/),DESCRIPTOR=desc)
    !
    ! Only if full screened interaction is used
    !
    if (.not.td_hf_disk) then
      !
-     call io_variable_elemental(ID,&
-&         VAR="[W] Bands                    ",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)
+     call def_variable_elemental(ID,"BS_W_BANDS",2,IP+100,0)
+     call io_variable_elemental(ID,VAR="[W] Bands",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)
+     !
+     call def_variable_elemental(ID,"BS_W_EH_RANGE",2,SP,0)
      call io_variable_elemental(ID,UNIT=HA2EV,&
-&         VAR="[W] e/h energy range",TERMINATOR="ev",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),DESCRIPTOR=desc)
-     call io_variable_elemental(ID,&
-&         VAR="[W] Poles",TERMINATOR="o/o",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
-     call io_variable_elemental(ID,&
-&         VAR="[W] RL vectors in the sum    ",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),DESCRIPTOR=desc)
-     call io_variable_elemental(ID,&
-&         VAR="[W] [r,Vnl] included         ",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&         VAR="[W] e/h energy range",TERMINATOR="[eV]",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),DESCRIPTOR=desc)
      !
-     if (ver_is_gt_or_eq(ID,(/3,0,9/)).and..not.ver_is_gt_or_eq(ID,revision=626)) then
-       !
-       ! v 3.0.8: Inclusion of %long_gauge 
-       !
-       call io_variable_elemental(ID,&
-&           VAR="[W] Longitudinal Gauge       ",L0=local_long_gauge,DESCRIPTOR=desc)
-       !
-     endif
+     call def_variable_elemental(ID,"BS_W_POLES",1,SP,0)
+     call io_variable_elemental(ID,VAR="[W] Poles",TERMINATOR="[o/o]",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
      !
+     call def_variable_elemental(ID,"BS_W_DIP_NG",1,IP+100,0)
      call io_variable_elemental(ID,&
-&         VAR="[W] Field direction          ",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/),DESCRIPTOR=desc)
+&         VAR="[W] RL vectors in the sum",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),DESCRIPTOR=desc)
+     !
+     call def_variable_elemental(ID,"BS_W_DIP_rVnl",1,LP+100,0)
+     call io_variable_elemental(ID,&
+&         VAR="[W] [r,Vnl] included",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+     !
+     call def_variable_elemental(ID,"BS_W_DIP_rVnl",1,LP+100,0)
+     call io_variable_elemental(ID,VAR="[W] Longitudinal Gauge",L0=local_long_gauge,DESCRIPTOR=desc)
+     !
+     call def_variable_elemental(ID,"BS_W_q_dir",3,SP,0)
+     call io_variable_elemental(ID,VAR="[W] Field direction",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/),DESCRIPTOR=desc)
      call def_variable_elemental(ID,"",0,0,0)
      !
-     if (ver_is_gt_or_eq(ID,(/3,0,11/))) then
-       !
-       ! v 3.0.11: Inclusion of cut_geometry
-       !
-       call def_variable_elemental(ID,"W_Cutoff",1,0,0)
-       call io_variable_elemental(ID,&
-&           VAR="[W] Coulomb Cutoff           ",CH0=cut_geometry,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
-     endif
+     call def_variable_elemental(ID,"W_Cutoff",1,0,0)
+     call io_variable_elemental(ID,VAR="[W] Coulomb Cutoff",CH0=cut_geometry,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
      !
      ! W_TDDFT_KERNEL
      !
      call def_variable_elemental(ID,"W_TDDFT_KERNEL",1,0,0)
-     call io_variable_elemental(ID,&
-&       VAR='[W] xc-Kernel               ',CH0=X%f_xc,CHECK=.true.,&
-&       DESCRIPTOR=desc)
+     call io_variable_elemental(ID,VAR='[W] xc-Kernel',CH0=X%f_xc,CHECK=.true.,DESCRIPTOR=desc)
      !
    endif
    !
@@ -168,19 +174,19 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
    !
    call def_variable_elemental(ID,"W_DbGd",2,IP+100,0)
      call io_variable_elemental(ID,I0=RIM_ng,&
-&     VAR='[RIM] RL components',TERMINATOR='col',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
+&     VAR='[RIM] RL components col',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
      call io_variable_elemental(ID,I0=RIM_n_rand_pts,&
-&     VAR='[RIM] Random points',TERMINATOR='col',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
+&     VAR='[RIM] Random points col',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
    !
    if (write_is_on(ID).or.variable_exist(ID,"PERT_SOC")) then
      !
      ! SOC
      !
      call def_variable_elemental(ID,"PERT_SOC",2,LP+100,MENU=0)
-         call io_variable_elemental(ID,L0=BS_perturbative_SOC,&
-&       VAR='[SOC] Perturbative SOC        ',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
-         call io_variable_elemental(ID,I0=E_SOC_nbands,&
-&       VAR='[SOC] Bands in the MAP db     ',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
+       call io_variable_elemental(ID,L0=BS_perturbative_SOC,&
+&        VAR='[SOC] Perturbative SOC',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
+       call io_variable_elemental(ID,I0=E_SOC_nbands,&
+&        VAR='[SOC] Bands in the MAP db',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
    endif
    !
  endif
@@ -223,9 +229,11 @@ integer function variables_BS_more(ID,mode)
  character(*), intent(in) :: mode
  !
  integer           :: N_cutoff,stat
- logical           :: def_var,io_var
+ logical           :: io_var
  real(SP)          :: BS_K_cutoff_IO(1)
  character(schlen) :: kernel_dim_name(1)
+ !
+ if (write_is_on(ID).and..not.master_cpu) return
  !
  if ((write_is_on(ID).and.trim(mode)=="end").or.variable_exist(ID,"BSE_KERNEL_MAXVAL")) then
    call def_variable_elemental(ID,"BSE_KERNEL_MAXVAL",1,SP,0)
@@ -234,27 +242,26 @@ integer function variables_BS_more(ID,mode)
  !
  ! Check if BSE kernel is complete in reading mode, set the variable to false in writing mode
  !
- if(trim(mode)=="start".or.(trim(mode)=="end".and.l_BSE_kernel_complete.and.write_is_on(ID))) then
-   def_var=                write_is_on(ID) .or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
-   io_var =(master_cpu.and.write_is_on(ID)).or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
-   if(def_var) call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0)
-   if( io_var) call  io_variable_elemental(ID,VAR=" Kernel complete",&
-               &                          DB_L0=l_BSE_kernel_complete,L0=l_BSE_kernel_complete)
+ if(write_is_on(ID)) io_var=trim(mode)=="start".or.(trim(mode)=="end".and.l_BSE_kernel_complete)
+ if( read_is_on(ID)) io_var=trim(mode)=="start".and.variable_exist(ID,"BSE_KERNEL_COMPLETE")
+ if(io_var) then
+   call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0)
+   call  io_variable_elemental(ID,VAR=" Kernel complete",DB_L0=l_BSE_kernel_complete,L0=l_BSE_kernel_complete)
  endif
  !
- kernel_dim_name="N_COMPRESSED_KERNELS"
- if (trim(mode)=="end".and.l_BSE_kernel_complete.and.write_is_on(ID)) then
+ if(write_is_on(ID)) io_var=trim(mode)=="end".and.l_BSE_kernel_complete.and.BS_K_cutoff>0._SP
+ if( read_is_on(ID)) io_var=variable_exist(ID,"BSE_KERNEL_CUTOFF").and..not.allocated(BS_K_cutoff_done)
+ if (io_var) then
+   kernel_dim_name="N_COMPRESSED_KERNELS"
    call def_variable_bulk(ID,"BSE_KERNEL_CUTOFF",1,(/NF90_unlimited/),SP,kernel_dim_name)
    N_cutoff=netcdf_dim_size(ID,kernel_dim_name(1))
-   BS_K_cutoff_IO=BS_K_cutoff
-   call  io_variable_bulk(ID,1,R1=BS_K_cutoff_IO,IPOS=(/N_cutoff+1/))
- endif
- !
- if (read_is_on(ID).and.variable_exist(ID,"BSE_KERNEL_CUTOFF").and..not.allocated(BS_K_cutoff_done)) then
-   call def_variable_bulk(ID,"BSE_KERNEL_CUTOFF",1,(/NF90_unlimited/),SP,kernel_dim_name)
-   N_cutoff=netcdf_dim_size(ID,kernel_dim_name(1))
-   allocate(BS_K_cutoff_done(N_cutoff))
-   call  io_variable_bulk(ID,1,R1=BS_K_cutoff_done)
+   if(write_is_on(ID)) then
+     BS_K_cutoff_IO=BS_K_cutoff
+     call  io_variable_bulk(ID,1,R1=BS_K_cutoff_IO,IPOS=(/N_cutoff+1/))
+   else if(read_is_on(ID)) then
+     allocate(BS_K_cutoff_done(N_cutoff))
+     call  io_variable_bulk(ID,1,R1=BS_K_cutoff_done)
+   endif
  endif
  !
  if(write_is_on(ID)) stat = nf90_sync(io_unit(ID))

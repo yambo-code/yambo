@@ -105,7 +105,7 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  integer,      intent(out):: io_BS_err
  character(*), intent(in) :: mode
  !
- integer      :: ID_head,ID_compr,IO_ACT
+ integer      :: ID_compr,IO_ACT
  integer      :: i_block,i_block_ref_CPU,last_block_CPU,i_Tgrp_k,i_Tgrp_p,x1,x2,ib2,N(1)
  integer(IPL) :: idx,imx,idx_CPU,idx_tmp(maxval(BS_blk(:)%size(2))),&
 &                idx_ref(1),imx_ref(1),imx_last(ncpu)
@@ -117,7 +117,6 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  !
  call live_timing('Compressed size',BS_nT_grps)
  !
- ID_head=0   ! Not used here
  imx_last=0
  !
  idx_CPU=0
@@ -251,6 +250,6 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  !
  if (n_BS_blks>0) call live_timing( )
  !
- call io_BS_PAR_free(ID_head,ID_compr,"compressed_mat",.true.)
+ call io_BS_PAR_free(0,ID_compr,"compressed_mat",.true.)
  !
 end subroutine  K_compressed_IO

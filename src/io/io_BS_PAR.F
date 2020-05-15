@@ -25,7 +25,7 @@ integer function io_BS_header(iq,X,ID,mode)
  !
  ! Intialize variables on BSE netcdf parallel file
  !
- use parallel_m,    ONLY:MPI_COMM_WORLD,PP_redux_wait
+ use parallel_m,    ONLY:MPI_COMM_WORLD,PP_redux_wait,master_cpu
  use com,           ONLY:msg
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:intc,real2ch
@@ -74,6 +74,8 @@ integer function io_BS_header(iq,X,ID,mode)
    !
  endif
  !
+ if(write_is_on(ID).and..not.master_cpu)  return
+ !
  db_name='BS_head_Q'//trim(intc(iq))
  !
  io_BS_header=io_connect(desc=trim(db_name),type=2,ID=ID)
@@ -117,7 +119,7 @@ integer function io_BS_header(iq,X,ID,mode)
  !
  call io_disconnect(ID)
  !
- call PP_redux_wait()
+ if(read_is_on(ID)) call PP_redux_wait()
  !
  ! Descriptions transfer
  !   
@@ -267,7 +269,7 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
  !
  ! close BSE netcdf parallel file
  !
- use parallel_m,    ONLY:PP_redux_wait
+ use parallel_m,    ONLY:PP_redux_wait,master_cpu
  use BS,            ONLY:l_BSE_kernel_complete,BS_K_has_been_calculated_loaded
  use IO_m,          ONLY:io_disconnect,read_is_on,write_is_on,io_BS_K
  !
@@ -287,8 +289,10 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
      BS_K_has_been_calculated_loaded=l_kernel_complete
      l_BSE_kernel_complete          =l_kernel_complete
    endif
-   io_BS=variables_BS_more(ID_head,'end')
-   call io_disconnect(ID_head)
+   if((write_is_on(ID).and.master_cpu).or.read_is_on(ID)) then
+     io_BS=variables_BS_more(ID_head,'end')
+     call io_disconnect(ID_head)
+   endif
    if(read_is_on(ID)) then
      BS_K_has_been_calculated_loaded=l_kernel_complete
      l_BSE_kernel_complete          =l_kernel_complete

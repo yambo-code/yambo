@@ -248,10 +248,12 @@ if test x"$enable_hdf5" = "xno"; then
     #
     if test x"$enable_pnetcdf" = "xyes"; then
       NETCDF_OPT="--enable-pnetcdf --disable-netcdf-4 --enable-cdf5"
-      NETCDF_VER="v5"
+      NETCDF_VER="v3"
+      IO_LIB_VER="parallel";
     else
       NETCDF_OPT="--disable-netcdf-4"
       NETCDF_VER="v3"
+      IO_LIB_VER="serial";
     fi
     # 
     # the following may change if we use a different version

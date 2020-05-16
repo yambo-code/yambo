@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, DS
+! Authors (see AUTHORS file for details): AM, DS, AF
 !
 ! Copyright (C) 1992-2005, Lucia Reining, Valerio Olevano,
 !   Francesco Sottile, Stefan Albrecht, Giovanni Onida,
@@ -46,10 +46,9 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  ! Work Space
  !
  integer     :: i1,i2,i_spinor,ig,dims(2)
- complex(SP), pointer DEV_ATTRIBUTE :: WF_c(:,:,:)
-! complex(SP) DEV_ATTRIBUTE :: XX(2,n_spinor,4,pp_kbv_dim_yambo)
+ complex(SP) DEV_ATTRIBUTE, pointer :: WF_c(:,:,:)
  complex(SP) DEV_ATTRIBUTE :: XX(n_spinor,n_spinor,4,pp_kbv_dim_yambo,2)
- complex(SP) :: drho(n_spinor,3,pp_kbv_dim_yambo)
+ complex(SP)               :: drho(n_spinor,3,pp_kbv_dim_yambo)
 #ifdef _CUDA
  complex(SP) DEV_ATTRIBUTE :: DEV_VARNAME(drho)(n_spinor,3,pp_kbv_dim_yambo)
 #endif
@@ -58,35 +57,20 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  !
  WF_c => DEV_VARNAME(WF%c)
  !
- XX=cZERO
+ ! This is the fortran expanded code for the M?by?M calls below
+ ! note that an extra i_spinor index is added for the sake of using ZGEMM
  !
-!#if defined(_CUDA)
-! !$cuf kernel do(3) <<<*,*>>>
-!#else
-! !$omp parallel do default(shared), private(i1,i2,i_spinor), collapse(3)
-!#endif
-! do i1=1,pp_kbv_dim_yambo
-!   do i2=1,4
-!     do i_spinor=1,n_spinor
-!       do ig=1,wf_ng
-!         XX(1,i_spinor,i2,i1)=XX(1,i_spinor,i2,i1)+WF_c(ig,i_spinor,iv_wf)*kbv(ig,i_spinor,i2,i1)
-!         XX(2,i_spinor,i2,i1)=XX(2,i_spinor,i2,i1)+WF_c(ig,i_spinor,ic_wf)*kbv(ig,i_spinor,i2,i1)
-!       enddo
-!     enddo
-!   enddo
-! enddo
-! !
-!#ifdef _CUDA
-! call cublasCGEMM('T','N', n_spinor, n_spinor*4*pp_kbv_dim_yambo, wf_ng, cONE, &
-!             WF_c(:,:,iv_wf), wf_ng, kbv, wf_ng, cZERO, XX(:,:,:,:,1), n_spinor)
-! call cublasCGEMM('T','N', n_spinor, n_spinor*4*pp_kbv_dim_yambo, wf_ng, cONE, &
-!             WF_c(:,:,ic_wf), wf_ng, kbv, wf_ng, cZERO, XX(:,:,:,:,2), n_spinor)
-!#else
-! call CGEMM('T','N', n_spinor, n_spinor*4*pp_kbv_dim_yambo, wf_ng, cONE, &
-!             WF_c(:,:,iv_wf), wf_ng, kbv, wf_ng, cZERO, XX(:,:,:,:,1), n_spinor)
-! call CGEMM('T','N', n_spinor, n_spinor*4*pp_kbv_dim_yambo, wf_ng, cONE, &
-!             WF_c(:,:,ic_wf), wf_ng, kbv, wf_ng, cZERO, XX(:,:,:,:,2), n_spinor)
-!#endif
+ ! XX=cZERO
+ ! do i1=1,pp_kbv_dim_yambo
+ !   do i2=1,4
+ !     do i_spinor=1,n_spinor
+ !       do ig=1,wf_ng
+ !         XX(i_spinor,i2,i1,1)=XX(i_spinor,i2,i1,1)+WF_c(ig,i_spinor,iv_wf)*kbv(ig,i_spinor,i2,i1)
+ !         XX(i_spinor,i2,i1,2)=XX(i_spinor,i2,i1,2)+WF_c(ig,i_spinor,ic_wf)*kbv(ig,i_spinor,i2,i1)
+ !       enddo
+ !     enddo
+ !   enddo
+ ! enddo
  !
  dims=(/n_spinor, n_spinor*4*pp_kbv_dim_yambo/)
  !
@@ -95,7 +79,6 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  call M_by_M('T','N', dims(1), dims(2), wf_ng, cONE, WF_c(1,1,ic_wf), wf_ng, kbv(1,1,1,1), wf_ng, &
               cZERO, XX(1,1,1,1,2), n_spinor)
  !
- DEV_VARNAME(drho)=cZERO
  !
 #if defined _CUDA
  !$cuf kernel do(3) <<<*,*>>>
@@ -105,8 +88,6 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  do i1=1,pp_kbv_dim_yambo
    do i2=1,3
      do i_spinor=1,n_spinor
-!       DEV_VARNAME(drho)(i_spinor,i2,i1)=conjg(XX(1,i_spinor,1,i1))*XX(2,i_spinor,i2+1,i1)+ &
-!&                                        conjg(XX(1,i_spinor,i2+1,i1))*XX(2,i_spinor,1,i1)
        DEV_VARNAME(drho)(i_spinor,i2,i1)=conjg(XX(i_spinor,i_spinor,1,i1,1))*XX(i_spinor,i_spinor,i2+1,i1,2)+ &
 &                                        conjg(XX(i_spinor,i_spinor,i2+1,i1,1))*XX(i_spinor,i_spinor,1,i1,2)
      enddo

@@ -67,7 +67,7 @@ subroutine of_open_close(of_name_extension,mode)
    ! Flush output if file is opened
    !
    if (index(mode,'f')/=0.and.(len_trim(of_opened(file_index))>0)) then
-     call yambo_flush(abs(of_unit(file_index)))
+     call flush(abs(of_unit(file_index)))
      if (trim(mode)=='f') return
    endif
    !
@@ -264,8 +264,8 @@ subroutine yambo_flush(unit)
   integer :: ierr
   !
   flush(unit)
-  ierr = fsync(fnum(unit))
   !
+  ierr = fsync(fnum(unit))
   if (ierr /= 0) stop "Error calling fsync"
   !
 end subroutine yambo_flush

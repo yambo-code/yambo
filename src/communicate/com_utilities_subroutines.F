@@ -67,7 +67,7 @@ subroutine of_open_close(of_name_extension,mode)
    ! Flush output if file is opened
    !
    if (index(mode,'f')/=0.and.(len_trim(of_opened(file_index))>0)) then
-     call flush(abs(of_unit(file_index)))
+     flush(abs(of_unit(file_index)))
      if (trim(mode)=='f') return
    endif
    !

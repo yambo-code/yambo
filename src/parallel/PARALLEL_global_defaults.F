@@ -88,7 +88,8 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
       l_BSE_PAR_incomplete=.TRUE.
       call GIMME_a_parallel_proposal(2,(/"eh"," k"/))
    case("BZ_Indexes")
-     call GIMME_a_parallel_proposal(1,(/"k"/))
+     CPU_structure(i_PAR_structure)%ROLE(1)="k"
+     CPU_structure(i_PAR_structure)%CPU(1)=ncpu
  end select
  !
  ! Reset the active structures

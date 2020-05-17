@@ -69,7 +69,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !
  if (n_sp_pol==2) call error(' case n_sp_pol=2 not yet coded in yambo_rt')
  !
- if(lowest_band<RT_bands(1)-1) then
+ if(lowest_band<RT_bands(1)) then
    !
    do i_sp_pol=1,n_sp_pol
      do ik=1,Xk%nibz

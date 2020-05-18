@@ -74,6 +74,12 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  !
  dims=(/n_spinor, n_spinor*4*pp_kbv_dim_yambo/)
  !
+ ! here I use the interface with all scalars instead of that for
+ ! rank 2 objects because reshape seems not to work properly on
+ ! "device" data (at least using PGI 19.10).
+ ! A direct call to CGEMM/cublasCGEMM is also possible, but I think
+ ! the wrapped M_by_M interface is cleaner
+ !
  call M_by_M('T','N', dims(1), dims(2), wf_ng, cONE, WF_c(1,1,iv_wf), wf_ng, kbv(1,1,1,1), wf_ng, &
               cZERO, XX(1,1,1,1,1), n_spinor)
  call M_by_M('T','N', dims(1), dims(2), wf_ng, cONE, WF_c(1,1,ic_wf), wf_ng, kbv(1,1,1,1), wf_ng, &

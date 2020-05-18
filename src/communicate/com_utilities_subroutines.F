@@ -269,7 +269,7 @@ subroutine yambo_flush(unit)
 #ifdef __GFORTRAN__
   ! 2020/05/18 DS
   ! These two lines are useful in long simulations
-  ! since it forces to write the message to file
+  ! since fsync forces to write the message to file.
   ! However in short simulations (i.e. the test-suite)
   ! they cause a small drop of performances.
   ! Thus I comment them for now

@@ -266,6 +266,7 @@ subroutine yambo_flush(unit)
   !
   flush(unit)
   !
+#ifdef __GFORTRAN__
   ! 2020/05/18 DS
   ! These two lines are useful in long simulations
   ! since it forces to write the message to file
@@ -274,5 +275,6 @@ subroutine yambo_flush(unit)
   ! Thus I comment them for now
   !ierr = fsync(fnum(unit))
   !if (ierr /= 0) stop "Error calling fsync"
+#endif
   !
 end subroutine yambo_flush

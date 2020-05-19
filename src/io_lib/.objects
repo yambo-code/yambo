@@ -1,3 +1,3 @@
 objs = io_connect.o io_utilities.o io_elemental.o io_bulk.o io_fragment.o \
        def_variable_elemental.o io_variable_elemental.o def_variable_bulk.o io_variable_bulk.o \
-       IO_and_Messaging_switch.o 
+       IO_make_directories.o IO_and_Messaging_switch.o 

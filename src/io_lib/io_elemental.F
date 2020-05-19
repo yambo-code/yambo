@@ -33,7 +33,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 #endif
  use com,           ONLY:msg,com_compose_msg
  use stderr,        ONLY:STRING_pack
- use IO_m,          ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
+ use IO_m,          ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,&
 &                        netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                        io_status,DUMP,REP,LOG,io_com,io_file,&
 &                        io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR

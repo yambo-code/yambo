@@ -24,7 +24,7 @@ PL_objects = mod_PHOTOLUM.o
 #endif
 #if defined _io_lib
 objs = mod_pars.o mod_stderr.o mod_parallel.o  \
-       mod_com_interfcs.o mod_com.o mod_IO.o
+       mod_com_interfcs.o mod_descriptors.o mod_com.o mod_IO.o
 #else
 ELPH_objects = mod_ELPH.o mod_ELPH_old.o
 DEV_objects = mod_cusolverdn_y.o mod_cuda.o

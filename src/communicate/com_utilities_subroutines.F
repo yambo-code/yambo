@@ -277,8 +277,12 @@ subroutine yambo_flush(unit)
   integer :: ierr
   !
   flush(unit)
-  ierr = fsync(fnum(unit))
   !
+  ! compiler specific instructions below
+  !
+#ifdef __GFORTRAN__
+  ierr = fsync(fnum(unit))
   if (ierr /= 0) stop "Error calling fsync"
+#endif
   !
 end subroutine yambo_flush

@@ -140,7 +140,7 @@ subroutine initinfio(defs,ou)
        v(1)=real(defs%c1def(i2))*unit_factor
        v(2)=aimag(defs%c1def(i2))*unit_factor
        ch(2)=gen_fmt(r_v=v)
-       write (ch(1),'(3a)') '(2a,2(',trim(ch(2)),',1x,a)'//trim(unit_fmt(2))//trim(desc_fmt(2))
+       write (ch(1),'(3a)') '(2a,2(',trim(ch(2)),',1x,a)'//trim(unit_fmt(3))//trim(desc_fmt(3))
        write (flines(nflines),trim(ch(1))) &
 &                trim(c1vars(i2,1)),'= (',real(defs%c1def(i2))*unit_factor,',',&
 &                aimag(defs%c1def(i2))*unit_factor,')',&

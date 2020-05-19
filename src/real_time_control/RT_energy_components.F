@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM DS
@@ -31,23 +31,23 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  use units,          ONLY:HA2EV
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_sc_is_libDFT,l_use_Hxc_collisions,l_sc_hartree
- use real_time,      ONLY:RT_nk,RT_bands,XC0,HARTREE0, &
+ use real_time,      ONLY:RT_bands,XC0,HARTREE0, &
 &                         G_lesser_reference,RT_Vnl_xc,eval_energy
  use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional,WF_kind
- use parallel_m,     ONLY:PAR_DIPk_nibz
+ use parallel_m,     ONLY:PAR_DIPk_nibz,PAR_G_kpts
  use RT_interfaces,  ONLY:RT_average_operator
  !
  implicit none 
  !
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
- complex(SP),   intent(in) :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP),   intent(in) :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2))
  real(SP),      intent(out):: Energies(5),dE_IP
  character(3),  intent(in) :: what
  !
  real(SP) , allocatable    :: E_xc_rt(:,:)
- complex(SP) :: G_full(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),              &
+ complex(SP) :: G_full(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2)), &
 &               dE_tot,dE_kin,dE_ion,dE_h,dE_xc,dE_hxc,dE_h_sc,E_xc_sc,E_xc_ref,dE_xc_sc,dE_hxc_sc
  !
  if(.not.eval_energy) return
@@ -67,7 +67,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  dE_hxc_sc =cZERO
  !
  if(     trim(what)=='el') G_full=dG_lesser
- if(.not.trim(what)=='el') G_full=dG_lesser+G_lesser_reference
+ if(.not.trim(what)=='el') G_full=dG_lesser+G_lesser_reference(:,:,PAR_G_kpts(1):PAR_G_kpts(2))
  !
  ! Non-interacting energy variation
  !

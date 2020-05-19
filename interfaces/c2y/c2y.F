@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DV
@@ -67,6 +67,7 @@ integer function c2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call C_driver_transfer()
  !
  call SET_job_strings_and_dirs(js)
+ call IO_make_directories("MORE LOG")
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en) 
@@ -96,7 +97,7 @@ integer function c2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  endif
  call msg('l',trim(file_name_))
  !
- call msg('s','DBs path set to :',trim(core_io_path))
+ call msg('s','DBs path set to ',trim(core_io_path))
  !
  call c2y_db1(en,k,trim(file_name_))
  !

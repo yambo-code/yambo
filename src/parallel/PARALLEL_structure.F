@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -29,7 +29,7 @@ subroutine PARALLEL_structure(n_elements,ROLE)
 &                      PARALLEL_CPU_role,PARALLEL_CPU_used,PARALLEL_n_structures_active,&
 &                      ncpu_chain,mpi_comm_world,CREATE_the_COMM
  use parallel_m,  ONLY:PAR_Q_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,PAR_K_range,PAR_n_bands,&
-&                      PAR_EH_range,PAR_n_G_vectors,PAR_n_freqs,mycuda_dev
+&                      PAR_EH_range,PAR_n_G_vectors,PAR_n_freqs
  use interfaces,  ONLY:PARALLEL_check_phase_space
 !#ifdef _CUDA
 ! use mpiDeviceUtil

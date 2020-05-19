@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -159,8 +159,8 @@ module LOGO
          logo_line( 9)='   //   //      // //         //  ///////    ///////   '
        case(6)
          logo_line( 1)='                                                       '
-         logo_line( 2)=':::   :::   :::     ::::    ::::  :::::::::   ::::::::  '
-         logo_line( 3)=':+:   :+: :+: :+:   +:+:+: :+:+:+ :+:    :+: :+:    :+: '
+         logo_line( 2)=':   :::   :::     ::::    ::::  :::::::::   ::::::::  '
+         logo_line( 3)=':+:   :+: :+: :+:   +:+:+: :+:+:+ :+:    :+: :+:    :+ '
          logo_line( 4)=' +:+ +:+ +:+   +:+  +:+ +:+:+ +:+ +:+    +:+ +:+    +:+ '
          logo_line( 5)='  +#++: +#++:++#++: +#+  +:+  +#+ +#++:++#+  +#+    +:+ '
          logo_line( 6)='   +#+  +#+     +#+ +#+       +#+ +#+    +#+ +#+    +#+ '

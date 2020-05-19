@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,6 +29,7 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  use X_m,           ONLY:X_par_lower_triangle,X_rows,X_cols,&
 &                        X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
  use interfaces,    ONLY:PARALLEL_live_message
+ use cuda_m,        ONLY:have_cuda
  !
 #include<memory.h>
  !
@@ -38,7 +39,7 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  !
  ! Work Space
  !
- logical         :: l_XUP,l_PAR
+ logical :: l_XUP,l_PAR,l_CPU_ONLY
  !
  ! Reset...
  !
@@ -46,16 +47,17 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  !
  ! Type of allocation....
  !
- l_XUP        =mode=="XUP"
- l_PAR        =mode=="X"
+ !l_XUP        =mode=="XUP"
+ !l_PAR        =mode=="X"
+ l_XUP      = index(mode,"XUP")>0
+ l_PAR      = index(mode,"X")>0.and.index(mode,"XUP")==0
+ l_CPU_ONLY = index(mode,"CPU_ONLY")>0
  !
  ! Clean-up
  !
  if (mode=="CLEAN") then
    YAMBO_FREE(X_par%blc)
-#ifdef _CUDA
    YAMBO_FREE(X_par%blc_d)
-#endif
    call MATRIX_reset(X_par)
    return
  endif
@@ -72,6 +74,7 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  X_cols = X_par%cols
  !
  if (l_XUP.and..not.X_FILL_UP_matrix_only.and.X_par%INTER_comm%n_CPU>1) then
+   !
    call MATRIX_reset(X_par_lower_triangle)
    X_lower_triangle_matrix_in_use=.TRUE.
    X_par_lower_triangle%kind ="XDN"
@@ -79,22 +82,24 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
    X_par_lower_triangle%cols =X_par%rows
    X_par_lower_triangle%nrows=X_par%ncols
    X_par_lower_triangle%ncols=X_par%nrows
+   !
    YAMBO_ALLOC(X_par_lower_triangle%blc,(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
    X_par_lower_triangle%blc=cZERO
-#ifdef _CUDA
-   YAMBO_ALLOC(X_par_lower_triangle%blc_d,(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
-   X_par_lower_triangle%blc_d=cZERO
-#endif
+   if (have_cuda.and..not.l_CPU_ONLY) then
+     YAMBO_ALLOC(X_par_lower_triangle%blc_d,(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
+     X_par_lower_triangle%blc_d=cZERO
+   endif
+   !
    call COMM_copy(PAR_COM_RL_A2A,   X_par_lower_triangle%INTRA_comm)
    call COMM_copy(PAR_COM_RL_INDEX, X_par_lower_triangle%INTER_comm)
  endif
  !
  YAMBO_ALLOC(X_par%blc,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),NW))
  X_par%blc=cZERO
-#ifdef _CUDA
- YAMBO_ALLOC(X_par%blc_d,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),NW))
- X_par%blc_d=cZERO
-#endif
+ if (have_cuda.and..not.l_CPU_ONLY) then
+   YAMBO_ALLOC(X_par%blc_d,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),NW))
+   X_par%blc_d=cZERO
+ endif
  !
  call PARALLEL_live_message("RL vectors(X)",LOADED=X_par%ncols*X_par%nrows,TOTAL=NG**2,NCPU=X_par%INTER_comm%n_CPU)
  !

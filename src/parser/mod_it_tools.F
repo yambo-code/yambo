@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -116,25 +116,27 @@ module it_tools
    end function
    !
    subroutine infile_dump()
+     use com,  ONLY:inpfile_unit
      character(lchlen) :: ch
-     open(unit=12,file=trim(infile))
+     open(unit=inpfile_unit,file=trim(infile))
      do i1=1,10000
-       read(12,'(a)',end=1) ch
+       read(inpfile_unit,'(a)',end=1) ch
        flines(i1)=ch
        if (index(ch,'#')>0) flines(i1)=ch(:index(ch,'#')-1)
        nflines=i1
      enddo
-1    close(12)
+1    close(inpfile_unit)
    end subroutine
    !
    subroutine ofiles_append(line,defs)
-     use com,           ONLY: nofs,of
+     use com,           ONLY: n_ofs_defined,of_name,write_to_of
      character(*),optional  :: line
      type(initdefs),optional::defs
      integer :: i2
-     do i2=1,nofs
-       if (len_trim(of(i2))==0) cycle
-       open(20,file=trim(of(i2)),position='append')
+     do i2=1,n_ofs_defined
+       if (len_trim(of_name(i2))==0) cycle
+       if (.not.write_to_of) cycle
+       open(20,file=trim(of_name(i2)),position='append')
        if (present(defs)) call initinfio(defs,20)
        if (present(line)) write (20,'(2a)') '# ',line
        close(20)
@@ -175,14 +177,14 @@ module it_tools
    !
    ! Modes
    !
-   ! initmode 0:'load'      : defs% <- Default from def+stdefs routines
+   ! initmode 0'load'      : defs% <- Default from def+stdefs routines
    !                          initdefs is initialized
-   ! initmode 1:'todef'     : Like 'load' but as DBs have been read
+   ! initmode 1'todef'     : Like 'load' but as DBs have been read
    !                          defs% are redefined
-   ! initmode 2:'Gclose'    : like  'todef' + Close the G-vectors to the G-shells
-   ! initmode 3:'GameOver'  : Like 'todef' but verbosity defaults are not updated.
+   ! initmode 2'Gclose'    : like  'todef' + Close the G-vectors to the G-shells
+   ! initmode 3'GameOver'  : Like 'todef' but verbosity defaults are not updated.
    !                          To be used at the run end
-   ! initmode 4:'parserload': defs% (and associated variables of the mods) 
+   ! initmode 4'parserload': defs% (and associated variables of the mods) 
    !                          are overwritten with the input file values
    !
    subroutine loadrnlvlflag(what,defs,name,description,verb_level)
@@ -565,328 +567,9 @@ module it_tools
    ! END INTERFACE IT
    !@@@@@@@@@@@@@@@@@@
    !
-   !@@@@@@@@@@@@@@@@@@
-   !    VERBOSITY 
-   !@@@@@@@@@@@@@@@@@@
-   !
-   subroutine initverbosity(var_name,var_id,var_type,defs,verbosity_level)
-     integer        ::var_id,verbosity_level
-     character(*)   ::var_name,var_type
-     type(initdefs) ::defs
-     !
-     if (verbosity_level==0) return
-     !
-     select case (var_type)
-       case('i1')
-         n_verbose_Ivars=n_verbose_Ivars+1
-         if (it_verbose_Itable(1,var_id)>0) then
-           n_verbose_Ivars=it_verbose_Itable(1,var_id)
-         else
-           it_verbose_Ilevel(n_verbose_Ivars)=verbosity_level
-           it_verbose_Itable(1,var_id)=n_verbose_Ivars
-         endif
-         it_verbose_Ivars(n_verbose_Ivars)=var_name
-         it_verbose_Idefs(n_verbose_Ivars,1)=defs%i1def(var_id)
-       case('i2')
-         n_verbose_Ivars=n_verbose_Ivars+1
-         if (it_verbose_Itable(2,var_id)>0) then
-           n_verbose_Ivars=it_verbose_Itable(2,var_id)
-         else
-           it_verbose_Ilevel(n_verbose_Ivars)=verbosity_level
-           it_verbose_Itable(2,var_id)=n_verbose_Ivars
-         endif
-         it_verbose_Ivars(n_verbose_Ivars)=var_name
-         it_verbose_Idefs(n_verbose_Ivars,:2)=defs%i2def(var_id,:)
-       case('i3')
-         n_verbose_Ivars=n_verbose_Ivars+1
-         if (it_verbose_Itable(3,var_id)>0) then
-           n_verbose_Ivars=it_verbose_Itable(3,var_id)
-         else
-           it_verbose_Ilevel(n_verbose_Ivars)=verbosity_level
-           it_verbose_Itable(3,var_id)=n_verbose_Ivars
-         endif
-         it_verbose_Ivars(n_verbose_Ivars)=var_name
-         it_verbose_Idefs(n_verbose_Ivars,:3)=defs%i3def(var_id,:)
-       case('r1')
-         n_verbose_Rvars=n_verbose_Rvars+1
-         if (it_verbose_Rtable(1,var_id)>0) then
-           n_verbose_Rvars=it_verbose_Rtable(1,var_id)
-         else
-           it_verbose_Rlevel(n_verbose_Rvars)=verbosity_level
-           it_verbose_Rtable(1,var_id)=n_verbose_Rvars
-         endif
-         it_verbose_Rvars(n_verbose_Rvars)=var_name
-         it_verbose_Rdefs(n_verbose_Rvars,1)=defs%r1def(var_id)
-       case('r2')
-         n_verbose_Rvars=n_verbose_Rvars+1
-         if (it_verbose_Rtable(2,var_id)>0) then
-           n_verbose_Rvars=it_verbose_Rtable(2,var_id)
-         else
-           it_verbose_Rlevel(n_verbose_Rvars)=verbosity_level
-           it_verbose_Rtable(2,var_id)=n_verbose_Rvars
-         endif
-         it_verbose_Rvars(n_verbose_Rvars)=var_name
-         it_verbose_Rdefs(n_verbose_Rvars,:2)=defs%r2def(var_id,:)
-       case('r3')
-         n_verbose_Rvars=n_verbose_Rvars+1
-         if (it_verbose_Rtable(3,var_id)>0) then
-           n_verbose_Rvars=it_verbose_Rtable(3,var_id)
-         else
-           it_verbose_Rlevel(n_verbose_Rvars)=verbosity_level
-           it_verbose_Rtable(3,var_id)=n_verbose_Rvars
-         endif
-         it_verbose_Rvars(n_verbose_Rvars)=var_name
-         it_verbose_Rdefs(n_verbose_Rvars,:3)=defs%r3def(var_id,:)
-       case('r4')
-         n_verbose_Rvars=n_verbose_Rvars+1
-         if (it_verbose_Rtable(4,var_id)>0) then
-           n_verbose_Rvars=it_verbose_Rtable(4,var_id)
-         else
-           it_verbose_Rlevel(n_verbose_Rvars)=verbosity_level
-           it_verbose_Rtable(4,var_id)=n_verbose_Rvars
-         endif
-         it_verbose_Rvars(n_verbose_Rvars)=var_name
-         it_verbose_Rdefs(n_verbose_Rvars,:4)=defs%r4def(var_id,:)
-       case('c1')
-         n_verbose_Cvars=n_verbose_Cvars+1
-         if (it_verbose_Ctable(var_id)>0) then
-           n_verbose_Cvars=it_verbose_Ctable(var_id)
-         else
-           it_verbose_Clevel(n_verbose_Cvars)=verbosity_level
-           it_verbose_Ctable(var_id)=n_verbose_Cvars
-         endif
-         it_verbose_Cvars(n_verbose_Cvars)=var_name
-         it_verbose_Cdefs(n_verbose_Cvars)=defs%c1def(var_id)
-       case('ch')
-         n_verbose_Chvars=n_verbose_Chvars+1
-         if (it_verbose_Chtable(var_id)>0) then
-           n_verbose_Chvars=it_verbose_Chtable(var_id)
-         else
-           it_verbose_Chlevel(n_verbose_Chvars)=verbosity_level
-           it_verbose_Chtable(var_id)=n_verbose_Chvars
-         endif
-         it_verbose_Chvars(n_verbose_Chvars)=var_name
-         it_verbose_Chdefs(n_verbose_Chvars)=defs%chdef(var_id)
-       case('f')
-         n_verbose_Fvars=n_verbose_Fvars+1
-         if (it_verbose_Ftable(var_id)>0) then
-           n_verbose_Fvars=it_verbose_Ftable(var_id)
-         else
-           it_verbose_Flevel(n_verbose_Fvars)=verbosity_level
-           it_verbose_Ftable(var_id)=n_verbose_Fvars
-         endif
-         it_verbose_Fvars(n_verbose_Fvars)=var_name
-     end select
-   end subroutine
-   !
-   !@@@@@@@@@@@@@@@@@@
-   ! END VERBOSITY 
-   !@@@@@@@@@@@@@@@@@@
-   !
    !@@@@@@@@@@@@@@@@@@@@@
    ! INPUT FILE WRITING
    !@@@@@@@@@@@@@@@@@@@@@
-   ! 
-   subroutine initinfio(defs,ou)
-     use stderr,       ONLY: intc
-     use drivers,      ONLY: infile_editing
-     use stderr,       ONLY: gen_fmt
-     use com,          ONLY: repfile
-     use parallel_m,   ONLY: master_cpu
-     type(initdefs)::defs
-     integer       :: ou
-     ! 
-     ! Work Space
-     !
-     integer :: i2,ifpos,ch_length
-     real(SP):: unit_factor,v(2)
-     character(lchlen)::ch(2)  
-     !
-     if (ou==11) open(unit=11,file=trim(repfile),position='append')
-     !
-     nflines=0
-     flines=' '
-     do ifpos=1,nifpos
-       do i2=1,nrnlvls
-         if (rstatus(i2)==ifpos) then
-           nflines=nflines+1
-           write (flines(nflines),'(a,t32,2a)') trim(rnlvls(i2,1)),'# ',trim(rnlvls(i2,2))
-         endif
-       enddo
-       !
-       ! Variables
-       !
-       do i2=1,nchv
-         if (chst(i2)==ifpos) then
-           if (.not.Chverbose_enough(trim(chvars(i2,1)),defs%chdef(i2))) cycle
-           nflines=nflines+1
-           !
-           ch_length=max(len_trim(defs%chdef(i2))+len_trim(chvars(i2,1))+6,32)
-           !  
-           ch(1)='(4a,t'//trim(intc(ch_length))//',2a)'
-           write (flines(nflines),trim(ch(1))) &                                                     !
-&            trim(chvars(i2,1)),'= "',trim(defs%chdef(i2)),'"','# ',trim(chvars(i2,2))               !
-         endif
-       enddo
-       do i2=1,ni1v
-         if (i1st(i2)==ifpos) then
-           if (.not.Iverbose_enough(trim(i1vars(i2,1)),1,defs%i1def(i2))) cycle
-           nflines=nflines+1
-           if (ou/=20) call PARSER_convert_INT(defs%i1def(i2),i1vars(i2,3),.FALSE.)
-           ch(2)=gen_fmt((/defs%i1def(i2)/))
-           write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t32,2a)'
-           write (flines(nflines),trim(ch(1))) trim(i1vars(i2,1)),'=',&
-&                defs%i1def(i2),trim(i1vars(i2,3)),'# ',trim(i1vars(i2,2))
-         endif
-       enddo
-       do i2=1,ni2v
-         if (i2st(i2)==ifpos) then
-           if (.not.Iverbose_enough(trim(i2vars(i2,1)),2,defs%i2def(i2,:))) cycle
-           if (ou/=20) call PARSER_convert_INT(defs%i2def(i2,1),i2vars(i2,3),.FALSE.)
-           if (ou/=20) call PARSER_convert_INT(defs%i2def(i2,2),i2vars(i2,3),.FALSE.)
-           nflines=nflines+1
-           write (flines(nflines),'(2a)') '% ',trim(i2vars(i2,1))
-           ch(2)=gen_fmt(defs%i2def(i2,:))
-           write (ch(1),'(3a)') '(2(',trim(ch(2)),',1x,a),t24,a,t32,2a)'
-           nflines=nflines+1
-           write (flines(nflines),trim(ch(1))) &
-&           defs%i2def(i2,1),'|',defs%i2def(i2,2),'|',&
-&           trim(i2vars(i2,3)),'# ',trim(i2vars(i2,2))
-           nflines=nflines+1
-           write (flines(nflines),'(a)') '% '
-         endif
-       enddo
-       do i2=1,ni3v
-         if (i3st(i2)==ifpos) then
-           if (.not.Iverbose_enough(trim(i3vars(i2,1)),3,defs%i3def(i2,:))) cycle
-           if (ou/=20) call PARSER_convert_INT(defs%i3def(i2,1),i3vars(i2,3),.FALSE.)
-           if (ou/=20) call PARSER_convert_INT(defs%i3def(i2,2),i3vars(i2,3),.FALSE.)
-           if (ou/=20) call PARSER_convert_INT(defs%i3def(i2,3),i3vars(i2,3),.FALSE.)
-           nflines=nflines+1
-           write (flines(nflines),'(2a)') '% ',trim(i3vars(i2,1))
-           ch(2)=gen_fmt(defs%i3def(i2,:))
-           write (ch(1),'(3a)') '(3(',trim(ch(2)),',1x,a),t36,a,t42,2a)'
-           nflines=nflines+1
-           write (flines(nflines),trim(ch(1))) &
-&           defs%i3def(i2,1),'|',defs%i3def(i2,2),'|',defs%i3def(i2,3),'|',&
-&           trim(i3vars(i2,3)),'# ',trim(i3vars(i2,2))
-           nflines=nflines+1
-           write (flines(nflines),'(a)') '% '
-         endif
-       enddo
-       do i2=1,nc1v
-         if (c1st(i2)==ifpos) then
-           if (.not.Cverbose_enough(trim(c1vars(i2,1)),1,defs%c1def(i2))) cycle
-           unit_factor=1.
-           call PARSER_convert_REAL(unit_factor,c1vars(i2,3))
-           nflines=nflines+1
-           v(1)=real(defs%c1def(i2))*unit_factor
-           v(2)=aimag(defs%c1def(i2))*unit_factor
-           ch(2)=gen_fmt(r_v=v)
-           write (ch(1),'(3a)') '(2a,2(',trim(ch(2)),',1x,a),t36,a,t40,2a)'
-           write (flines(nflines),trim(ch(1))) &
-&                trim(c1vars(i2,1)),'= (',real(defs%c1def(i2))*unit_factor,',',&
-&                aimag(defs%c1def(i2))*unit_factor,')',&
-&                trim(c1vars(i2,3)),'# ',trim(c1vars(i2,2))
-         endif
-       enddo
-       do i2=1,nr1v
-         if (r1st(i2)==ifpos) then
-           if (.not.Rverbose_enough(trim(r1vars(i2,1)),1,defs%r1def(i2))) cycle
-           unit_factor=1.
-           call PARSER_convert_REAL(unit_factor,r1vars(i2,3))
-           nflines=nflines+1
-           ch(2)=gen_fmt(r_v=(/defs%r1def(i2)*unit_factor/))
-           write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t32,2a)'
-           write (flines(nflines),trim(ch(1))) &
-&                trim(r1vars(i2,1)),'=',defs%r1def(i2)*unit_factor,&
-&                trim(r1vars(i2,3)),'# ',trim(r1vars(i2,2))
-         endif
-       enddo
-       do i2=1,nr2v
-         if (r2st(i2)==ifpos) then
-           if (.not.Rverbose_enough(trim(r2vars(i2,1)),2,defs%r2def(i2,:))) cycle
-           unit_factor=1.
-           call PARSER_convert_REAL(unit_factor,r2vars(i2,3))
-           nflines=nflines+1
-           write (flines(nflines),'(2a)') '% ',trim(r2vars(i2,1))
-           ch(2)=gen_fmt(r_v=defs%r2def(i2,:)*unit_factor)
-           write (ch(1),'(3a)') '(2(',trim(ch(2)),',1x,a),t24,a,t32,2a)'
-           nflines=nflines+1
-           write (flines(nflines),trim(ch(1))) &
-&           defs%r2def(i2,1)*unit_factor,'|',defs%r2def(i2,2)*unit_factor,&
-&           '|',trim(r2vars(i2,3)),'# ',trim(r2vars(i2,2))
-           nflines=nflines+1
-           write (flines(nflines),'(a)') '% '
-         endif
-       enddo
-       do i2=1,nr3v
-         if (r3st(i2)==ifpos) then
-           if (.not.Rverbose_enough(trim(r3vars(i2,1)),3,defs%r3def(i2,:))) cycle
-           unit_factor=1.
-           call PARSER_convert_REAL(unit_factor,r3vars(i2,3))
-           nflines=nflines+1
-           write (flines(nflines),'(2a)') '% ',trim(r3vars(i2,1))
-           ch(2)=gen_fmt(r_v=defs%r3def(i2,:)*unit_factor)
-           write (ch(1),'(3a)') '(3(',trim(ch(2)),',1x,a),t36,a,t42,2a)'
-           nflines=nflines+1
-           write (flines(nflines),trim(ch(1))) &
-&           defs%r3def(i2,1)*unit_factor,'|',defs%r3def(i2,2)*unit_factor,&
-&           '|',defs%r3def(i2,3)*unit_factor,'|',&
-&           trim(r3vars(i2,3)),'# ',trim(r3vars(i2,2))
-           nflines=nflines+1
-           write (flines(nflines),'(a)') '% '
-         endif
-       enddo
-       do i2=1,nr4v
-         if (r4st(i2)==ifpos) then
-           if (.not.Rverbose_enough(trim(r4vars(i2,1)),4,defs%r4def(i2,:))) cycle
-           unit_factor=1.
-           call PARSER_convert_REAL(unit_factor,r4vars(i2,3))
-           nflines=nflines+1
-           write (flines(nflines),'(2a)') '% ',trim(r4vars(i2,1))
-           ch(2)=gen_fmt(r_v=defs%r4def(i2,:)*unit_factor)
-           write (ch(1),'(3a)') '(4(',trim(ch(2)),',1x,a),t46,a,t50,2a)'
-           nflines=nflines+1
-           write (flines(nflines),trim(ch(1))) &
-&           defs%r4def(i2,1)*unit_factor,'|',defs%r4def(i2,2)*unit_factor,&
-&           '|',defs%r4def(i2,3)*unit_factor,'|', defs%r4def(i2,4)*unit_factor,'|',&
-&           trim(r4vars(i2,3)),'# ',trim(r4vars(i2,2))
-           nflines=nflines+1
-           write (flines(nflines),'(a)') '% '
-         endif
-       enddo
-       do i2=1,nflags
-         if (fstatus(i2)==ifpos) then
-           if (.not.Fverbose_enough(trim(flags(i2,1)),i2)) cycle
-           nflines=nflines+1
-           write (flines(nflines),'(2a,t32,2a)') '#',trim(flags(i2,1)),'# ',trim(flags(i2,2))
-         else if (fstatus(i2)==-ifpos) then
-           if (.not.Fverbose_enough(trim(flags(i2,1)),i2)) cycle
-           nflines=nflines+1
-           write (flines(nflines),'(a,t32,2a)') trim(flags(i2,1)),'# ',trim(flags(i2,2))
-         endif
-       enddo
-     enddo
-     !
-     if (.not.infile_editing.and.ou==12) return
-     if (master_cpu) then
-       if (ou==12) call write_the_logo(ou,'#')
-       if (ou==11) write (ou,'(2a)') ' .-Input file : ',trim(infile)
-     endif
-     if (ou/=11.and.ou/=12) write (ou,'(a/2a)') '#','# .-Input file : ',trim(infile)
-     do i1=1,nflines
-       if (master_cpu) then
-         if (ou==12) write (ou,'(a)') trim(flines(i1))
-         if (ou==11) write (ou,'(2a)') ' | ',trim(flines(i1))
-       endif
-       if (ou/=11.and.ou/=12) write (ou,'(2a)') '# | ',trim(flines(i1))
-      enddo
-     call PARSER_dump_the_additional_lines(ou)
-     !
-     if (ou==11) close(11)
-     !
-   end subroutine
    !
    logical function Iverbose_enough(var_name,nvar,var_val)
      integer :: nvar
@@ -978,137 +661,5 @@ module it_tools
    !@@@@@@@@@@@@@@@@@@@@@@@@
    ! END INPUT FILE WRITING
    !@@@@@@@@@@@@@@@@@@@@@@@@
-   !
-   !@@@@@@@@@@@@@@@@@@@@@@@@
-   !  ELEMENTS ACTIVATION
-   !@@@@@@@@@@@@@@@@@@@@@@@@
-   !
-   subroutine initactivate(mode,names)
-     !
-     ! mode =  1 : activate var names
-     ! mode = -1 : deactivate var names
-     !
-     integer ::      mode
-     character(*) :: names
-     !
-     ! Work Space
-     !
-     integer ipos,mxpos
-     !
-     !
-     mxpos=-1
-     do i1=1,nrnlvls
-       ipos=index(names,trim(rnlvls(i1,1)))
-       if (ipos==0) cycle
-       if (ipos> 1) then 
-         if (names(ipos-1:ipos-1)/=" ") cycle
-       endif
-       call activate(rstatus(i1),ipos)
-     enddo
-     do i1=1,ni1v
-       ipos=index(names,trim(i1vars(i1,1)))
-       if (ipos==0) cycle
-       if (ipos> 1) then
-         if (names(ipos-1:ipos-1)/=" ") cycle
-       endif
-       call activate(i1st(i1),ipos)
-     enddo
-     do i1=1,ni2v
-       ipos=index(names,trim(i2vars(i1,1)))
-       if (ipos==0) cycle
-       if (ipos>1) then
-         if(names(ipos-1:ipos-1)/=" ") cycle
-       endif
-       call activate(i2st(i1),ipos)
-     enddo
-     do i1=1,ni3v
-       ipos=index(names,trim(i3vars(i1,1)))
-       if (ipos==0) cycle
-       if (ipos>1) then
-         if (names(ipos-1:ipos-1)/=" ") cycle
-       endif
-       call activate(i3st(i1),ipos)
-     enddo
-     do i1=1,nr1v
-       ipos=index(names,trim(r1vars(i1,1)))
-       if (ipos==0) cycle
-       if (mode==2) it_verbose_Rlevel(it_verbose_Rtable(1,i1))=0
-       if (ipos>1 ) then
-         if (names(ipos-1:ipos-1)/=" ") cycle
-       endif
-       call activate(r1st(i1),ipos)
-     enddo
-     do i1=1,nr2v
-       ipos=index(names,trim(r2vars(i1,1)))
-       if (ipos>0 .and. mode==2) it_verbose_Rlevel(it_verbose_Rtable(2,i1))=0
-       if (ipos>1) then
-         if (names(ipos-1:ipos-1)/=" ") cycle
-       endif
-       call activate(r2st(i1),ipos)
-     enddo
-     do i1=1,nr3v
-       ipos=index(names,trim(r3vars(i1,1)))
-       if (ipos==0) cycle
-       if (mode==2) it_verbose_Rlevel(it_verbose_Rtable(3,i1))=0
-       if (ipos>1) then
-         if(names(ipos-1:ipos-1)/=" ") cycle
-       endif
-       call activate(r3st(i1),ipos)
-     enddo
-     do i1=1,nr4v
-       ipos=index(names,trim(r4vars(i1,1)))
-       if (ipos==0) cycle
-       if (mode==2) it_verbose_Rlevel(it_verbose_Rtable(4,i1))=0
-       if (ipos>1) then
-         if(names(ipos-1:ipos-1)/=" ") cycle
-       endif
-       call activate(r4st(i1),ipos)
-     enddo
-     do i1=1,nc1v
-       ipos=index(names,trim(c1vars(i1,1)))
-       if (ipos==0) cycle
-       if (ipos>1) then
-         if( names(ipos-1:ipos-1)/=" ") cycle
-       endif
-       call activate(c1st(i1),ipos)
-     enddo
-     do i1=1,nchv
-       ipos=index(names,trim(chvars(i1,1)))
-       if (ipos==0) cycle
-       if (ipos>1) then
-         if (names(ipos-1:ipos-1)/=" ") cycle
-       endif
-       call activate(chst(i1),ipos)
-     enddo
-     do i1=1,nflags
-       ipos=index(names,trim(flags(i1,1)))
-       if (ipos==0) cycle
-       if (ipos>1) then
-         if (names(ipos-1:ipos-1)/=" ") cycle
-       endif
-       call activate(fstatus(i1),ipos)
-     enddo
-     nifpos=nifpos+mxpos+1
-     !
-     contains
-       !
-       subroutine activate(iflg,ip)
-         integer :: iflg,ip
-         if (ip==0) return
-         if (mode<0) then
-           iflg=-1001 ! pushed to -1001 to not be considered at all
-           return
-         endif
-         mxpos=max(mxpos,ip)
-         if (iflg/=0.and.iflg<-1000) return
-         if (iflg==0) iflg=nifpos+ip
-         if (iflg< 0) iflg=-nifpos-ip
-       end subroutine
-       !
-   end subroutine
-   !
-   !@@@@@@@@@@@@@@@@@@@@@@@@@
-   ! END ELEMENTS ACTIVATION
-   !@@@@@@@@@@@@@@@@@@@@@@@@@
    !
 end module it_tools

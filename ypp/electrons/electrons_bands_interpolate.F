@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, DS, AM
@@ -25,9 +25,12 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  !
  use pars,           ONLY:SP
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,CIRCUIT_k,BANDS_from_db,&
-&                         CIRCUIT_E_db
+&                         CIRCUIT_E_db,l_PROJECT_plane,l_PROJECT_line
  use electrons,      ONLY:levels,n_sp_pol
- use R_lattice,      ONLY:bz_samp,bz_samp_reset,k_the_nearest
+#if defined _YPP_RT
+ use YPP_real_time,  ONLY:l_RT_occupations,l_RT_lifetimes
+#endif
+ use R_lattice,      ONLY:bz_samp
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k
  !
  implicit none
@@ -42,9 +45,12 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  !
  ! Work space
  !
- logical               :: l_interp_dE
+ logical               :: l_interp_dE,NEAREST,GRID
  real(SP)              :: delta_align
  integer               :: ib,ik,i_sp_pol
+ !
+ NEAREST=.FALSE.
+ GRID   =.FALSE.
  !
  if (any(BANDS_range<=0))                call error(" Wrong bands range")
  !
@@ -57,21 +63,28 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  ! 1: interpolate on the circuit      if (BANDS_steps>0)
  ! 2: interpolate on the regular grid if (interp_grid>0)
  !
- if(all(INTERP_grid>0)) then
+ if (all(INTERP_grid>0)               ) GRID=.TRUE.
+#if defined _YPP_RT
+ if (l_PROJECT_plane.or.l_PROJECT_line) GRID=.not.l_RT_occupations.and..not.l_RT_lifetimes
+#else
+ if (l_PROJECT_plane.or.l_PROJECT_line) GRID=.TRUE.
+#endif
+ !
+ if(GRID) then
    !
-   call INTERPOLATION_driver_create_grid(INTERP_grid)
-   call INTERPOLATION_driver_seed("E_INTERP_grid",ID_bands(1),BANDS_range,Xk,SEED_E=Xen,NEAREST=.FALSE.)
+   if (.not.l_PROJECT_plane.and..not.l_PROJECT_line) call INTERPOLATION_driver_create_grid(INTERP_grid)
+   call INTERPOLATION_driver_seed("E_INTERP_grid",ID_bands(1),BANDS_range,Xk,SEED_E=Xen,NEAREST=NEAREST)
    call INTERPOLATION_driver_do("E_INTERP_grid",ID_bands(1),GRID_k,OUT_E=GRID_E)
    !
  endif
  !
  if (BANDS_steps> 0) then
    !
-   call INTERPOLATION_driver_seed("E_K_PATH",ID_bands(2),BANDS_range,Xk,SEED_E=Xen,NEAREST=.FALSE.)
+   call INTERPOLATION_driver_seed("E_K_PATH",ID_bands(2),BANDS_range,Xk,SEED_E=Xen,NEAREST=NEAREST)
    call INTERPOLATION_driver_do("E_K_PATH",ID_bands(2),CIRCUIT_k,OUT_E=CIRCUIT_E)
    !
    if (l_interp_dE) then
-     call INTERPOLATION_driver_seed("dE_K_PATH",ID_bands(3),BANDS_range,Xk,SEED_E=Xen,NEAREST=.FALSE.)
+     call INTERPOLATION_driver_seed("dE_K_PATH",ID_bands(3),BANDS_range,Xk,SEED_E=Xen,NEAREST=NEAREST)
      call INTERPOLATION_driver_do("dE_K_PATH",ID_bands(3),CIRCUIT_k,OUT_E=CIRCUIT_dE)
    endif
    !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -72,9 +72,9 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
      !
    enddo
    !
-   call msg('s','[RT] Effective max time period [fs]:',T_period_max*AUT2FS)
+   call msg('s','[RT] Effective max time period [fs]',T_period_max*AUT2FS)
    !
-   call live_timing('X effective :',N_probes)
+   call live_timing('X effective ',N_probes)
    !
    do i_p=1,N_probes
      !
@@ -114,7 +114,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
    !
    T_period=T_range(1,0)
    !
-   call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_conf%delta_T*AUT2FS)
+   call msg('s','[RT] Time range [fs]',(/real(i_t_start),real(i_t_end)/)*RT_conf%delta_T*AUT2FS)
    !
    do i_c = 1,3
      !

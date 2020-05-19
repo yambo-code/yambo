@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -24,7 +24,7 @@
 function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING,ALT_JOB_DIR)
  !
  use pars,     ONLY:lchlen
- use com,      ONLY:com_path,more_io_path,core_io_path,jobdir,jobstr,alt_jobstr
+ use com,      ONLY:com_path,more_io_path,core_io_path,jobdir,jobstr
  !
  ! -4 ----------------  -> JOBSTR/JOBFOLDER/desc (no NETCDF support)
  ! -3 ----------------  -> desc 
@@ -189,3 +189,39 @@ function all_locations(desc,subfolder)
  enddo
  !
 end function all_locations
+!
+!
+function desc_to_varname(desc)
+ !
+ use pars,          ONLY:schlen
+ use stderr,        ONLY:STRING_remove
+ !
+ implicit none
+ !
+ character(*), intent(in)  :: desc
+ !
+ character(schlen)  :: desc_to_varname
+ character(schlen)  :: VARNAME
+ !
+ VARNAME=STRING_remove(STRING_remove(STRING_remove(adjustl(desc)," ","_"),"/","_"),",")
+ VARNAME=STRING_remove(STRING_remove(STRING_remove(VARNAME,"[","_"),"]","_"),"`")
+ !
+ VARNAME=STRING_remove(VARNAME,"__________","_")    ! 10
+ VARNAME=STRING_remove(VARNAME,"_________","_")     ! 9
+ VARNAME=STRING_remove(VARNAME,"________","_")      ! 8
+ VARNAME=STRING_remove(VARNAME,"_______","_")       ! 7
+ VARNAME=STRING_remove(VARNAME,"______","_")        ! 6
+ VARNAME=STRING_remove(VARNAME,"_____","_")         ! 5
+ VARNAME=STRING_remove(VARNAME,"____","_")          ! 4
+ VARNAME=STRING_remove(VARNAME,"___","_")           ! 3
+ VARNAME=STRING_remove(VARNAME,"__","_")            ! 2
+ !
+ VARNAME=STRING_remove(VARNAME,".","_") 
+ VARNAME=STRING_remove(VARNAME,"=","_") 
+ VARNAME=STRING_remove(VARNAME,"\","_") 
+ VARNAME=STRING_remove(VARNAME,"(","_") 
+ VARNAME=STRING_remove(VARNAME,")","_") 
+ !
+ desc_to_varname=VARNAME
+ !
+end function desc_to_varname

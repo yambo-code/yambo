@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -24,7 +24,7 @@
 subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
  !
  use netcdf
- use pars,       ONLY:SP,DP,IP,LP,schlen,lchlen,nf90_SP
+ use pars,       ONLY:SP,DP,IP,LP,schlen,lchlen,nf90_SP,DB_menu_length
 #if !defined _io_lib
  use drivers,    ONLY:list_dbs
 #endif
@@ -105,7 +105,6 @@ subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
    !
  endif
  !
- !
  if (MENU==1) then
    !
    msg_where=""
@@ -117,20 +116,20 @@ subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
    if (VAR_SZ>0) then
      if (write_is_on(ID)) MODE="[WR"
      if ( read_is_on(ID)) MODE="[RD"
-     ch=STRING_pack(MODE,trim(io_file(ID)),"]",repeat('-',max( 60-len_trim(io_file(ID))-4,1) ))
+     ch=STRING_pack(MODE,trim(io_file(ID)),"]",repeat('-',max( DB_menu_length-len_trim(io_file(ID))-4,1) ))
    else
      !
      ! GPL_EXCLUDE_START
      !
      write (ch,'(a,i6.6,2a,3(a,i2.2),a,i5.5,a)')  '- S/N ',io_serial_number(ID),' ',&
-&            repeat('-',25),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
+&            repeat('-',DB_menu_length-35),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
 &            '.',io_code_version(ID,3),' r.',io_code_revision(ID,1),' -'
      !
      ! GPL_EXCLUDE_END
      !
      ! GPL_INCLUDE_START
 !     write (ch,'(a,i6.6,2a,3(a,i2.2),a,i5.5,a)')  '- S/N ',io_serial_number(ID),' ',&
-!&          repeat('-',25),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
+!&          repeat('-',DB_menu_length-35),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
 !&          '.',io_code_version(ID,3),' r.',io_code_revision(ID,2),' -'
      ! GPL_INCLUDE_END
      !

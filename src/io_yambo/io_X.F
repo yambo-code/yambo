@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,13 +25,12 @@ integer function io_X(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
- use R_lattice,     ONLY:nqibz,g_vec
- use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_description,X_alloc
+ use R_lattice,     ONLY:g_vec
+ use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_desc,X_alloc
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
 &                        io_elemental,io_status,io_bulk,&
 &                        read_is_on,write_is_on,io_header,&
-&                        manage_OP_IF_START_and_CL_IF_END,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED,&
 &                        io_fragment,IO_OUTDATED_DB,frag_RESPONSE,&
@@ -109,7 +108,7 @@ integer function io_X(X,Xw,ID)
    ! Global Descriptions
    !=====================
    !
-   io_X=variables_X(ID,X_description,X)
+   io_X=variables_X(ID,X_desc,X)
    if (io_X/=0) goto 1
    !
    ! When the SN is different and I am importing this DB 
@@ -149,9 +148,6 @@ integer function io_X(X,Xw,ID)
  !
  if (iq==0) goto 1
  !
- ! Manage OP_IF_START_and_RD_CL_IF_END
- !
- call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
  call io_fragment(ID,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
  !
  !  type(X_t)    ::X(4)  x s d p
@@ -172,13 +168,13 @@ integer function io_X(X,Xw,ID)
    !
    if (perform_IO) then
      if (X%whoami==4) then
-       call io_variable_elemental(ID,UNIT=HA2EV,VAR=" PPA Im  energy     [ev]:",   R0=X%ppaE,    CHECK=.true.,OP=(/"=="/))
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR="PPA Im  energy",TERMINATOR="ev",   R0=X%ppaE,    CHECK=.true.,OP=(/"=="/))
      endif
      if (X%whoami/=4) then
-       call io_variable_elemental(ID,           VAR=" :: Current Q-pt index     :",I0=iq)
-       call io_variable_elemental(ID,UNIT=HA2EV,VAR=" :: X energy range     [ev]:",R1=Xw%er,     WARN =.true.,OP=(/"==","=="/))
-       call io_variable_elemental(ID,UNIT=HA2EV,VAR=" :: X damping range    [ev]:",R1=Xw%dr,     CHECK=.true.,OP=(/"==","=="/))
-       call io_variable_elemental(ID,           VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
+       call io_variable_elemental(ID,           VAR="Current Q-pt index      ",I0=iq)
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR="X energy range",TERMINATOR="ev ",R1=Xw%er,WARN =.true.,OP=(/"==","=="/))
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR="X damping range",TERMINATOR="ev",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
+       call io_variable_elemental(ID,           VAR="Number of frequencies   ",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
      endif
      !
    endif

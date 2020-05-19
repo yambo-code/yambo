@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH DS HM
@@ -289,7 +289,7 @@ contains
       call msg('s','Closing shells against inversion...')
       call G_rot_grid(-1,'extend_grid')
       call msg('l','done')
-      if(ng_vec/=wf_ncx) call msg('s',':: ng_vec was increased to close the G-shells')
+      if(ng_vec/=wf_ncx) call msg('s',' ng_vec was increased to close the G-shells')
     endif
     !
     wf_igk=-1
@@ -385,9 +385,9 @@ contains
         do i3=-n3,n3
           igv = [i1,i2,i3]
           g_vec_tmp1 = matmul(b_transpose,igv)/2.0_SP/pi
-          norm_2 = g_vec_tmp1(1)**2.0_SP + &
-                   g_vec_tmp1(2)**2.0_SP + &
-                   g_vec_tmp1(3)**2.0_SP
+          norm_2 = g_vec_tmp1(1)**2 + &
+                   g_vec_tmp1(2)**2 + &
+                   g_vec_tmp1(3)**2
           if (ecut .gt. 0.25_SP*norm_2) then
               npw = npw+1
               igk_tmp(:,npw) = igv

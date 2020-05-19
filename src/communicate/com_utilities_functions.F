@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -24,7 +24,7 @@
 logical function OF_exists(name)
  !
  use pars,      ONLY:max_open_ofs
- use com,       ONLY:opened_of
+ use com,       ONLY:of_opened
  !
  implicit none
  !
@@ -32,11 +32,10 @@ logical function OF_exists(name)
  integer      ::i_f
  OF_exists=.false. 
  do i_f=1,max_open_ofs
-   if (index(opened_of(i_f),name)/=0) OF_exists=.TRUE.
+   if (index(of_opened(i_f),name)/=0) OF_exists=.TRUE.
  enddo
  !
 end function OF_exists
-!
 !
 logical function file_exists(name)
  !
@@ -49,7 +48,6 @@ logical function file_exists(name)
  inquire(file=name,exist=file_exists)
  !
 end function file_exists
-!
 !
 function composed_fmt(basic_fmt,n,USE_TABS,INDENT)
  !
@@ -83,8 +81,8 @@ function composed_fmt(basic_fmt,n,USE_TABS,INDENT)
    if (INDENT==0) write (composed_fmt,'(2a,i5.4,4a)')  trim(terminator(1)),'a,',n,'(',basic_fmt,',1x)',trim(terminator(2))
  endif
  if (n<0) write (composed_fmt,'(a,i5.4,3a)') '(a,',iabs(n),'(',basic_fmt,',1x))'
+ !
 end function composed_fmt
-!
 !
 function filename(name)
  !
@@ -104,3 +102,32 @@ function filename(name)
  filename=trim(names(N))
  !
 end function filename
+!
+integer function get_file_index(of_name_complete)
+ !
+ use pars,      ONLY:max_n_ofs,lchlen
+ use com,       ONLY:n_ofs_defined,of_name
+ !
+ implicit none
+ !
+ character(lchlen), intent(in) :: of_name_complete
+ integer :: i2
+ !
+ get_file_index=-1
+ !
+ do i2=1,n_ofs_defined
+   ! the two can differ only by the _0n appendend in case it is not the first run
+   if (index(trim(of_name(i2)),trim(of_name_complete))==0) cycle
+   get_file_index=i2
+   return
+ enddo
+ !
+ if(i2==n_ofs_defined+1) then
+   n_ofs_defined=n_ofs_defined+1
+   get_file_index=n_ofs_defined
+ endif
+ !
+ if(n_ofs_defined>max_n_ofs) call error(" Maximum number of file names exceeded")
+ if(get_file_index==-1)      call error(" Negative file index, something went wrong")
+ !
+end function get_file_index

@@ -4,7 +4,7 @@
 include ./package.list
 WGETFLAGS=--no-check-certificate
 #
-all: $(tarball_futile) $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) \
+all: $(tarball_futile) $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_pnetcdf) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) \
      $(tarball_lapack) $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe) $(tarball_yaml)
 
 #
@@ -20,6 +20,8 @@ $(tarball_netcdf):
 	@+TARBALL="$(tarball_netcdf)"   ; URL="$(url_netcdf)"   ; LIB="NETCDF"; $(getsrc)
 $(tarball_netcdff):
 	@+TARBALL="$(tarball_netcdff)"  ; URL="$(url_netcdff)"  ; LIB="NETCDFF"; $(getsrc)
+$(tarball_pnetcdf):
+	@+TARBALL="$(tarball_pnetcdf)"  ; URL="$(url_pnetcdf)"  ; LIB="PNETCDF"; $(getsrc)
 $(tarball_etsf_io):
 	@+TARBALL="$(tarball_etsf_io)"  ; URL="$(url_etsf_io)"  ; LIB="ETSF_IO"; $(getsrc)
 $(tarball_libxc):
@@ -49,6 +51,7 @@ clean_all:
           if test -s $(tarball_iotk)     && test "$(keep_iotk)"      != "yes" ;  then rm $(tarball_iotk)      ; fi ; \
           if test -s $(tarball_netcdf)   && test "$(keep_netcdf)"    != "yes" ;  then rm $(tarball_netcdf)    ; fi ; \
           if test -s $(tarball_netcdff)  && test "$(keep_netcdff)"   != "yes" ;  then rm $(tarball_netcdff)   ; fi ; \
+          if test -s $(tarball_pnetcdf)  && test "$(keep_pnetcdf)"   != "yes" ;  then rm $(tarball_pnetcdf)   ; fi ; \
           if test -s $(tarball_hdf5)     && test "$(keep_hdf5)"      != "yes" ;  then rm $(tarball_hdf5)      ; fi ; \
           if test -s $(tarball_etsf_io)  && test "$(keep_etsf_io)"   != "yes" ;  then rm $(tarball_etsf_io)   ; fi ; \
           if test -s $(tarball_lapack)   && test "$(keep_lapack)"    != "yes" ;  then rm $(tarball_lapack)    ; fi ; \

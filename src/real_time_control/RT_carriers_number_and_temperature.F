@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -21,14 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_carriers_number_and_temperature(en,k,Ncarr,Tfit,EfFit)
+subroutine RT_carriers_number(en,k,Ncarr)
  !
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use units,          ONLY:HA2KEL,HA2EV
  use RT_control,     ONLY:NE_i_start_time
- use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use real_time,      ONLY:RT_ibz_coo,DbGd_ibz_coo,l_RT_uses_E_DbGd,RT_Nk_ibz,NE_i_time,       &
 &                         RT_E_occupations,RT_H_occupations,RT_bands,RT_delta_occupations
  !
@@ -37,35 +35,11 @@ subroutine RT_carriers_number_and_temperature(en,k,Ncarr,Tfit,EfFit)
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
  real(SP),      intent(out):: Ncarr(3)
- real(SP),    intent(inout):: Tfit(2),EfFit(2)
  !
  ! Workspace
  !
  integer     :: ib,ik,ik_RT,ik_E
  real(SP)    :: tmp_E,VALUE_tmp(2)
- !
- ! Electrons and holes temperatures
- !
- Tfit =0._SP
- Effit=0._SP
- !
- if ( (l_elel_scatt.or.l_elph_scatt)) then
-   !
-   call RT_occupations_FIT(Tfit,EfFit,RT_E_occupations)
-   !
-   if (abs(Tfit(1))>50000._SP/HA2KEL) then
-     Tfit(1)=0._SP
-     EfFit(1)=0._SP
-   endif
-   if (abs(Tfit(2))>50000._SP/HA2KEL) then
-     Tfit(2)=0._SP
-     EfFit(2)=0._SP
-   endif
-   !
-   EfFit=EfFit*HA2EV
-   Tfit =Tfit*HA2KEL
-   !
- endif
  !
  ! Electrons and holes number
  !
@@ -95,4 +69,42 @@ subroutine RT_carriers_number_and_temperature(en,k,Ncarr,Tfit,EfFit)
  !
  Ncarr(1)=Ncarr(2)-Ncarr(3)
  !
-end subroutine RT_carriers_number_and_temperature
+end subroutine RT_carriers_number
+!
+subroutine RT_temperature(Tfit,EfFit)
+ !
+ use pars,           ONLY:SP
+ use units,          ONLY:HA2KEL,HA2EV
+ use drivers,        ONLY:l_elel_scatt,l_elph_scatt
+ use real_time,      ONLY:RT_E_occupations
+ !
+ implicit none
+ !
+ real(SP),    intent(inout):: Tfit(2),EfFit(2)
+ !
+ ! Workspace
+ !
+ ! Electrons and holes temperatures
+ !
+ Tfit =0._SP
+ EfFit=0._SP
+ !
+ if ( (l_elel_scatt.or.l_elph_scatt)) then
+   !
+   call RT_occupations_FIT(Tfit,EfFit,RT_E_occupations)
+   !
+   if (abs(Tfit(1))>50000._SP/HA2KEL) then
+     Tfit(1)=0._SP
+     EfFit(1)=0._SP
+   endif
+   if (abs(Tfit(2))>50000._SP/HA2KEL) then
+     Tfit(2)=0._SP
+     EfFit(2)=0._SP
+   endif
+   !
+   EfFit=EfFit*HA2EV
+   Tfit =Tfit*HA2KEL
+   !
+ endif
+ !
+end subroutine RT_temperature

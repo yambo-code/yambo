@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,6 +28,8 @@ subroutine PARSER_close_G(ng,what)
  use R_lattice,   ONLY:n_g_shells,E_of_shell,ng_in_shell
  implicit none
  integer :: ng
+ integer,  external  :: G2G,E2G
+ real(SP), external  :: G2E
  ! 
  ! Work Space
  !
@@ -65,40 +67,50 @@ subroutine PARSER_close_G(ng,what)
      ng=G2G(ng)
  end select
  !
-contains
-  !
-  integer function G2G(ng2close)
-    integer :: ng2close,i1
-    G2G=ng2close
-    if (ng2close>ng_in_shell(n_g_shells)) G2G=ng_in_shell(n_g_shells)
-    do i1=1,n_g_shells
-      if (ng2close==ng_in_shell(i1)) return
-      if (ng2close<ng_in_shell(i1)) then
-        G2G=ng_in_shell(i1)
-        exit 
-      endif
-    enddo
-  end function
-  !
-  integer function E2G(Energy)
-    integer :: i1
-    real(SP):: Energy
-    if (Energy<0.) E2G=ng_in_shell(n_g_shells)
-    if (Energy>E_of_shell(n_g_shells)) E2G=ng_in_shell(n_g_shells)
-    do i1=1,n_g_shells
-      if (Energy<=E_of_shell(i1)) then
-        E2G=ng_in_shell(i1)
-        return
-      endif
-    enddo
-  end function
-  !
-  real function G2E(ng2close)
-    integer :: ng2close,i1
-    do i1=1,n_g_shells
-      if (ng2close==ng_in_shell(i1)) G2E=E_of_shell(i1)
-    enddo
-  end function
-  !
 end subroutine
-
+!
+integer function G2G(ng2close)
+  use R_lattice,   ONLY:n_g_shells,E_of_shell,ng_in_shell
+  implicit none
+  integer, intent(in) :: ng2close
+  integer :: i1
+  !
+  G2G=ng2close
+  if (ng2close>ng_in_shell(n_g_shells)) G2G=ng_in_shell(n_g_shells)
+  do i1=1,n_g_shells
+    if (ng2close==ng_in_shell(i1)) return
+    if (ng2close<ng_in_shell(i1)) then
+       G2G=ng_in_shell(i1)
+     exit 
+    endif
+  enddo
+end function
+!
+integer function E2G(Energy)
+  use pars,        ONLY:SP
+  use R_lattice,   ONLY:n_g_shells,E_of_shell,ng_in_shell
+  implicit none
+  real(SP), intent(in) :: Energy
+  integer :: i1
+  !
+  if (Energy<0.) E2G=ng_in_shell(n_g_shells)
+  if (Energy>E_of_shell(n_g_shells)) E2G=ng_in_shell(n_g_shells)
+  do i1=1,n_g_shells
+    if (Energy<=E_of_shell(i1)) then
+      E2G=ng_in_shell(i1)
+      return
+    endif
+  enddo
+end function
+!
+function G2E(ng2close)
+  use pars,        ONLY:SP
+  use R_lattice,   ONLY:n_g_shells,E_of_shell,ng_in_shell
+  implicit none
+  integer, intent(in) :: ng2close
+  real(SP) :: G2E
+  integer :: i1
+  do i1=1,n_g_shells
+    if (ng2close==ng_in_shell(i1)) G2E=E_of_shell(i1)
+  enddo
+end function

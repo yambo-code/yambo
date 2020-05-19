@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -27,7 +27,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  use units,               ONLY:HA2EV
  use zeros,               ONLY:k_iku_zero,k_rlu_zero,define_zeros
  use stderr,              ONLY:intc
- use R_lattice,           ONLY:bz_samp,k_the_nearest,bz_samp_reset,rl_sop
+ use R_lattice,           ONLY:bz_samp,k_the_nearest,bz_samp_reset,rl_sop,nkibz
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
  use com,                 ONLY:msg
@@ -100,11 +100,11 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
      ! DB1 checks
      !
      if (i_err(i_db)==0.and.any(a/=a_save))  then
-       call msg("s",':: DbGd DB1 DL structure does not fit')
+       call msg("s",' DbGd DB1 DL structure does not fit')
        i_err(i_db)=-1
      endif
      if (i_err(i_db)==0.and.any(alat/=alat_save))  then
-       call msg("s",':: DbGd DB1 alat does not fit.')
+       call msg("s",' DbGd DB1 alat does not fit.')
        i_err(i_db)=-1
      endif
      !
@@ -150,12 +150,12 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  call section('*','BZ Double Grid DB(s)')
  !
- call msg('s',':: Electrons             :',default_nel)
- call msg('s',':: Temperature       [ev]:',input_GS_Tel)
- call msg('s',':: Lattice factors [a.u.]:',alat)
+ call msg('s',' Electrons             ',default_nel)
+ call msg('s',' Temperature       [ev]',input_GS_Tel)
+ call msg('s',' Lattice factors [a.u.]',alat)
  do i_db=1,n_DbGd_DBs
-   if (i_db==1) call msg('s',':: K points        [DB #'//trim(intc(i_db))//']:',DbGd_E(i_db)%nk)
-   if (i_db> 1) call msg('s','::                 [DB #'//trim(intc(i_db))//']:',DbGd_E(i_db)%nk)
+   if (i_db==1) call msg('s',' K points        [DB #'//trim(intc(i_db))//']',DbGd_E(i_db)%nk)
+   if (i_db> 1) call msg('s','                 [DB #'//trim(intc(i_db))//']',DbGd_E(i_db)%nk)
  enddo
  !
  ! Mergering of ALL DbGd_E(:) => DbGd_E(n_DbGd_DBs+1)
@@ -208,16 +208,16 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    endif
  enddo
  !
- call msg('s','::              [imposed]:',BZ_DbGd_nkpts_to_use)
- call msg('s',':: Bands                 :',n_bands)
- call msg('s',':: Symmetries            :',nsym_DbGd_DB)
+ call msg('s','              [imposed]',BZ_DbGd_nkpts_to_use)
+ call msg('s',' Bands                 ',n_bands)
+ call msg('s',' Symmetries            ',nsym_DbGd_DB)
  if(i_time_rev_DB==1)&
-&   call msg('s',':: Time reversal included ')
+&   call msg('s',' Time reversal included ')
  if(i_time_rev_DB==0)&
-&   call msg('s',':: Time reversal not included')
+&   call msg('s',' Time reversal not included')
  if (Xen%nbf==Xen%nbm) then
-   call msg('s',':: Gap indirect      [ev]:',gap(1)*HA2EV)
-   call msg('s','::     direct        [ev]:',gap(2)*HA2EV)
+   call msg('s',' Gap indirect      [ev]',gap(1)*HA2EV)
+   call msg('s','     direct        [ev]',gap(2)*HA2EV)
  endif
  !
  ! See if there is correspondance between the random and the built-in k-points
@@ -409,7 +409,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  BZ_DbGd_nkpt=BZ_DbGd_nkpt+1
  !
  BZ_DbGd_max_filling=maxval(BZ_DbGd_nkpt)
- call msg('s',':: Blocks filling range  :',(/minval(BZ_DbGd_nkpt),BZ_DbGd_max_filling/))
+ call msg('s',' Blocks filling range  ',(/minval(BZ_DbGd_nkpt),BZ_DbGd_max_filling/))
  !
  ! Dimensions & allocations
  !
@@ -489,6 +489,9 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  endif
  !
  ! Final I/O
+ !
+ ! .. restoring of built-in value of nkibz to be used in io_header 
+ nkibz=Xk%nibz
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=LOG,ID=ID)
  i_err=io_Double_Grid(Xen,Xk,ID)

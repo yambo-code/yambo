@@ -1,4 +1,4 @@
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG DS
@@ -29,7 +29,7 @@ subroutine K_Haydock(iq,W)
  use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
- use BS_solvers,     ONLY:BSS_n_descs,Haydock_threshold,BSS_description,io_BSS_Haydock,Co_factor,diam_term_exact,&
+ use BS_solvers,     ONLY:BSS_desc,Haydock_threshold,io_BSS_Haydock,Co_factor,diam_term_exact,&
 &                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod,Haydock_iterIO,&
 &                         BSS_eels_to_eps
  use BS,             ONLY:BS_K_Coupling,BSE_mode,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,BS_K_dim
@@ -44,6 +44,7 @@ subroutine K_Haydock(iq,W)
  use KERR,           ONLY:B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
+ use descriptors,    ONLY:IO_desc_add
  !
 #include<memory.h>
  !
@@ -52,7 +53,7 @@ subroutine K_Haydock(iq,W)
  !
  ! Work Space
  !
- integer            ::it,it_on_disk,i_g,ID,io_err
+ integer            ::it,it_on_disk,i_g,ID,io_err,i_desc_acc,i_desc_iter
  integer, parameter ::Max_iterations=1000
  type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:),V0(:),V_tmp(:)
  complex(SP),allocatable :: Cf(:)
@@ -80,8 +81,8 @@ subroutine K_Haydock(iq,W)
  !
  call timing('Haydock Solver',OPR='start')
  !
- if (isec(4)/=0) sec="="
- if (isec(4)==0) sec="+"
+ if (isec(2)/=0) sec="="
+ if (isec(2)==0) sec="+"
  call section(sec,'Haydock Solver @q'//trim(intc(iq)))
  !
  call BS_Blocks_symmetrize_K()
@@ -204,17 +205,15 @@ subroutine K_Haydock(iq,W)
  !
  ! Update Descriptions
  !=====================
- BSS_n_descs=BSS_n_descs+2
- BSS_description(BSS_n_descs-1)=' '
- BSS_description(BSS_n_descs)=' Haydock|Accuracy (requested) [o/o]:'&
-      &// trim(real2ch(Haydock_threshold))
- BSS_n_descs=BSS_n_descs+1
- BSS_description(BSS_n_descs)='        |Accuracy (reached)   [o/o]:'&
-      &// trim(real2ch(0._SP))
- BSS_n_descs=BSS_n_descs+1
- BSS_description(BSS_n_descs)='        |Iteration            [o/o]: 0'
+ call IO_desc_add(BSS_desc,kind="s",str=" ",S=" ")
  !
- call msg('r','Accuracy (requested) [o/o]:',Haydock_threshold)
+ call IO_desc_add(BSS_desc,kind="r",str='[Haydock] Accuracy (requested)',term='o/o',R=(/Haydock_threshold/))
+ call IO_desc_add(BSS_desc,kind="r",str='[Haydock] Accuracy (reached)',term='o/o',R=(/0._SP/))
+ i_desc_acc=BSS_desc%n
+ call IO_desc_add(BSS_desc,kind="i",str='[Haydock] Iterations',I=(/0/))
+ i_desc_iter=BSS_desc%n
+ !
+ call msg('r','Accuracy (requested) [o/o]',Haydock_threshold)
  !
  ! Initialization of Haydock vectors and tridiagonal matrix elements
  !
@@ -464,12 +463,11 @@ subroutine K_Haydock(iq,W)
      if(l_kerr) call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,2,Cf_kerr(:it))
 #endif
      !
-     BSS_description(BSS_n_descs-1)='        |Accuracy (reached)   [o/o]:'//&
-&                                    trim(real2ch(reached_threshold))
-     BSS_description(BSS_n_descs)='        |Iteration                 :'//trim(intc(it))
+     BSS_desc%rval(1,i_desc_acc) =reached_threshold
+     BSS_desc%ival(1,i_desc_iter)=it
      !
      call K_output_file(iq,"Haydock")
-     dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy :'//&
+     dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy '//&
 &            trim(real2ch(reached_threshold))//'|'//trim(real2ch(Haydock_threshold))
      if (tty_size>0.and.it_on_disk==0) call LIVE_message(dumb_ch,"r","","%s")
      if (tty_size>0.and.it_on_disk> 0) call LIVE_message(dumb_ch,"n","","%s")
@@ -521,8 +519,8 @@ subroutine K_Haydock(iq,W)
    !
    if ( (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
 &       STOP_now(.FALSE.)) then
-     call msg('r','Accuracy (reached)   [o/o]:',reached_threshold)
-     call msg('r','Iterations                :',it)
+     call msg('r','Accuracy (reached)   [o/o]',reached_threshold)
+     call msg('r','Iterations                ',it)
      exit
    endif
    !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA
@@ -87,7 +87,7 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  call msg('r',' * * * Polarization * * * ')
  call msg('r','==========================')
  !
- write(dumb_ch,'(a,f16.8,a)') ' Volume : ',DL_vol,' bohr^3 '
+ write(dumb_ch,'(a,f16.8,a)') ' Volume  ',DL_vol,' bohr^3 '
  call msg('r',dumb_ch)
  ! 
  do id=1,3
@@ -97,25 +97,25 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
    if(k_map%max_kdir(id)==1) cycle
    call get_id_perpendicular(id,id2,id3)
    Nperpend=k_map%max_kdir(id2)*k_map%max_kdir(id3)
-   call msg('r',' Direction: '//intc(id))
-   call msg('r',' Numer of k-points per string : '//intc(k_map%max_kdir(id)))
-   call msg('r',' Numer of different strings   : '//intc(k_map%max_kdir(id2)*k_map%max_kdir(id3)))
-   write(dumb_ch,'(a,f16.8,a,i1.1,a)') ' Electronic Phase : ',real(P_Berry_RED(id),SP),'   mod(',2,')'
+   call msg('r',' Direction '//intc(id))
+   call msg('r',' Numer of k-points per string  '//intc(k_map%max_kdir(id)))
+   call msg('r',' Numer of different strings    '//intc(k_map%max_kdir(id2)*k_map%max_kdir(id3)))
+   write(dumb_ch,'(a,f16.8,a,i1.1,a)') ' Electronic Phase  ',real(P_Berry_RED(id),SP),'   mod(',2,')'
    call msg('r',dumb_ch)
-   write(dumb_ch,'(a,f16.8,a,i1.1,a)') ' Ionic      Phase : ',I_Berry_RED(id)  ,'   mod(',mod_tot,')'
+   write(dumb_ch,'(a,f16.8,a,i1.1,a)') ' Ionic      Phase  ',I_Berry_RED(id)  ,'   mod(',mod_tot,')'
    call msg('r',dumb_ch)
-   write(dumb_ch,'(a,f16.8,a,i1.1,a)') ' Total      Phase : ',Tot_Berry_RED(id),'   mod(',mod_tot,')'
+   write(dumb_ch,'(a,f16.8,a,i1.1,a)') ' Total      Phase  ',Tot_Berry_RED(id),'   mod(',mod_tot,')'
    call msg('r',dumb_ch)
    modfac=rmod
-   write(dumb_ch,'(a,f16.8,a,f11.8,a)') ' Polarization : ',Tot_Berry_RED(id)*modfac,& 
+   write(dumb_ch,'(a,f16.8,a,f11.8,a)') ' Polarization  ',Tot_Berry_RED(id)*modfac,& 
 &       '  mod(',real(mod_tot)*modfac,') (e/Volume).bohr'
    call msg('r',dumb_ch)
    modfac=rmod/DL_vol
-   write(dumb_ch,'(a,f16.8,a,f11.8,a)') ' Polarization : ',Tot_Berry_RED(id)*modfac,&
+   write(dumb_ch,'(a,f16.8,a,f11.8,a)') ' Polarization  ',Tot_Berry_RED(id)*modfac,&
 &       '  mod(',real(mod_tot)*modfac,') e/bohr^2'
    call msg('r',dumb_ch)
    modfac=(rmod/DL_vol)*(e_SI/AU2M**2)
-   write(dumb_ch,'(a,f16.8,a,f11.8,a)') ' Polarization : ',Tot_Berry_RED(id)*modfac,&
+   write(dumb_ch,'(a,f16.8,a,f11.8,a)') ' Polarization  ',Tot_Berry_RED(id)*modfac,&
 &       '  mod(',real(mod_tot)*modfac,') C/m^2'
    call msg('r',dumb_ch)
    call msg('r','')

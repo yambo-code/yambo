@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -30,7 +30,7 @@ subroutine QP_load_SC_xc()
  use IO_m,            ONLY:VERIFY,DUMP,NONE
  use R_lattice,       ONLY:nkibz
  use SC,              ONLY:SC_bands,load_SC_components,compatible_SC_DB,&
-&                          found_SC_DB
+&                          found_SC_DB,SC_bands
  use hamiltonian,     ONLY:H_nl_sc,H_rotation
  use interfaces,      ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,  ONLY:INV
@@ -58,9 +58,11 @@ subroutine QP_load_SC_xc()
      call OBS_rotate(H_rotation(:,:,i_k,i_sp_pol),H_nl_sc,SC_bands(2),-1)
      !
      do i_qp=1,QP_n_states
-       if (.not.QP_table(i_qp,3) ==i_k)      cycle
-       if (spin(QP_table(i_qp,:))==i_sp_pol) cycle
-       QP_vnl_xc(i_qp)=QP_vnl_xc(i_qp)-H_nl_sc(QP_table(i_qp,1),QP_table(i_qp,2))
+       if (QP_table(i_qp,1) < SC_bands(1))        cycle
+       if (QP_table(i_qp,1) > SC_bands(2))        cycle
+       if (.not.QP_table(i_qp,3) ==i_k)           cycle
+       if (.not.spin(QP_table(i_qp,:))==i_sp_pol) cycle
+       QP_vnl_xc(i_qp)=QP_vnl_xc(i_qp)-H_nl_sc(QP_table(i_qp,1),QP_table(i_qp,1))
      enddo
      !
    enddo

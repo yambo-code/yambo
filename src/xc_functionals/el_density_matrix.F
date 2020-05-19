@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -34,15 +34,15 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  use D_lattice,      ONLY:nsym,i_time_rev
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:WF,WAVEs
- use real_time,      ONLY:RT_nk,RT_bands,RT_ibz_coo,RT_Nk_ibz
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
+ use real_time,      ONLY:RT_bands,RT_ibz_coo,RT_Nk_ibz
+ use parallel_m,     ONLY:PAR_G_kpts,PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
  use matrix_operate, ONLY:UP_matrix_index
  use timing_m,       ONLY:timing
  !
  implicit none
  !
  type(bz_samp), intent(in)  :: Xk
- complex(SP),   intent(in)  :: G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol)
+ complex(SP),   intent(in)  :: G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),n_sp_pol)
  integer,       intent(in)  :: lowest_band
  type(levels),  intent(in)  :: en       
  real(SP),      intent(out) :: rho(fft_size)

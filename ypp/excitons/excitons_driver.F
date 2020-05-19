@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV DS
@@ -26,15 +26,13 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use pars,          ONLY:SP,pi,schlen
  use R_lattice,     ONLY:bz_samp
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t
- use QP_CTL_m,      ONLY:QP_apply
- use electrons,     ONLY:levels,n_spin,n_sp_pol,spin,E_SOC_nbands
+ use electrons,     ONLY:levels,spin
  use YPP_interfaces,ONLY:excitons_sort_and_report
  use YPPm,          ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,EXCITONS_user_indexes,BSiq, &
-&                        BS_R_left,BS_R_right,BS_E,BS_E_SOC_corr,BS_R_PL,BS_R_kerr,Xbsk
- use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
- use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_K_coupling,BS_cpl_mode,&
-&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSqpts
+&                        BS_R_right,BS_E,BS_E_SOC_corr
+ use BS_solvers,    ONLY:BSS_n_eig
+ use BS,            ONLY:BS_H_dim,&
+&                        BSqpts
 #if defined _YPP_ELPH
  use YPP_ELPH,      ONLY:l_eliashberg,l_gkkp
 #endif
@@ -49,16 +47,10 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Work Space
  !
- logical          :: l_flag
- !
+ logical              :: l_flag
  integer ,allocatable :: BS_E_degs(:)
- !
  !... I/0
- !
- integer           ::io_err,io_ID,i_sec
- integer, external ::io_BS,io_E_SOC_map
- !
- integer                  ::iq,neh
+ integer              :: iq
  !
  call section('*','Excitonic Properties @ Q-index #'//trim(intc(BSiq)))
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -122,13 +122,13 @@ integer function MEM_component_finder( i_SHELF, name, Sz, desc, ADD )
 end function
 !
 subroutine MEM_STAT_update
- use memory, ONLY:TOT_MEM_Kb_MEMSTAT
+ use memory, ONLY:TOT_MEM_Kb_MEMSTAT,HOST_
  implicit none
  ! Process Memory Update
  !=======================
- call memstat( TOT_MEM_Kb_MEMSTAT )
- if (TOT_MEM_Kb_MEMSTAT<0) then
-   TOT_MEM_Kb_MEMSTAT=0
+ call memstat( TOT_MEM_Kb_MEMSTAT(HOST_) )
+ if (TOT_MEM_Kb_MEMSTAT(HOST_)<0) then
+   TOT_MEM_Kb_MEMSTAT(HOST_)=0
    return
  endif
 end subroutine

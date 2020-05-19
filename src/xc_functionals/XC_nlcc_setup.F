@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -83,6 +83,5 @@ subroutine XC_nlcc_setup()
 #endif  
  !
  pp_rho_nlcc=pp_rho_nlcc*DL_vol/real(fft_size,DP)
- return
  !
 end subroutine XC_nlcc_setup

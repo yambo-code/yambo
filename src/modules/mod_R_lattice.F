@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -104,6 +104,7 @@ module R_lattice
  integer ,allocatable :: minus_G(:)
  real(SP),allocatable :: g_vec(:,:)
  real(SP),allocatable :: E_of_shell(:)
+ ! GPUs
  real(SP),allocatable :: g_vec_d(:,:)
  integer ,allocatable :: g_rot_d(:,:)
  integer ,allocatable :: G_m_G_d(:,:)
@@ -174,28 +175,44 @@ module R_lattice
  !
  contains
    !
-   subroutine qindx_alloc()
+   subroutine qindx_alloc(what)
      !
-     YAMBO_ALLOC(qindx_X,(nqibz,nXkbz,2))
-     if (.not.Xk_grid_is_uniform) return
+     character(*), intent(in) :: what
      !
-     YAMBO_ALLOC(qindx_S,(QP_states_k(2),nqbz,2))
-     !     
-     if (bse_scattering) then
+     if(  index(what,"X")/=0 .or. index(what,"ALL")/=0) then
+       YAMBO_ALLOC(qindx_X,(nqibz,nXkbz,2))
+     endif
+     !
+     if( (index(what,"S")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform) then
+       YAMBO_ALLOC(qindx_S,(QP_states_k(2),nqbz,2))
+     endif
+     !
+     if( (index(what,"B")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform .and. bse_scattering) then
        YAMBO_ALLOC(qindx_B,(nXkbz,nXkbz,2))
      endif
      !
-     if (coll_scattering) then
+     if( (index(what,"C")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform .and. coll_scattering) then
        YAMBO_ALLOC(qindx_C,(nXkbz,nXkbz,2))
      endif
      !
    end subroutine
    !
-   subroutine qindx_free()
-     YAMBO_FREE(qindx_X)
+   subroutine qindx_free(what)
+     !
+     character(*), intent(in) :: what
+     !
+     if(  index(what,"X")/=0 .or. index(what,"ALL")/=0) then
+       YAMBO_FREE(qindx_X)
+     endif
+     if(  index(what,"B")/=0 .or. index(what,"ALL")/=0) then
      YAMBO_FREE(qindx_B)
+     endif
+     if(  index(what,"S")/=0 .or. index(what,"ALL")/=0) then
      YAMBO_FREE(qindx_S)
+     endif
+     if(  index(what,"C")/=0 .or. index(what,"ALL")/=0) then
      YAMBO_FREE(qindx_C)
+     endif
    end subroutine qindx_free
    !
    subroutine bz_samp_reset(k)

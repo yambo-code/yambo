@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -29,8 +29,7 @@ integer function io_DIPOLES(Dip,ID)
  use R_lattice,     ONLY:nXkibz
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,io_DIP,&
 &                        io_variable_bulk,def_variable_bulk,read_is_on,io_header,io_extension,&
-&                        IO_NOT_ALLOWED,io_fragment,manage_OP_IF_START_and_CL_IF_END,io_action,&
-&                        open_is_on,close_is_on
+&                        IO_NOT_ALLOWED
 #if defined _RT
  use DIPOLES,       ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
  use electrons,     ONLY:n_spinor
@@ -39,7 +38,7 @@ integer function io_DIPOLES(Dip,ID)
  use DIPOLES,       ONLY:P_square
  use drivers,       ONLY:l_real_time,l_sc_run
 #endif
- use parallel_m,    ONLY:PAR_K_scheme,master_cpu,myid
+ use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
  !
  implicit none
@@ -73,10 +72,6 @@ integer function io_DIPOLES(Dip,ID)
    i_sp_pol=2
    ik=i_fragment-nXkibz
  endif
- !
- ! Manage OP_IF_START_and_RD_CL_IF_END
- !
- call manage_OP_IF_START_and_CL_IF_END(ID,NOW=i_fragment,FIRST=-1,LAST=(nXkibz*n_sp_pol+1))
  !
  call timing('io_DIPOLES',OPR='start')
  !

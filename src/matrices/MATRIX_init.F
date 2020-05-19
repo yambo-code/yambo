@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -139,8 +139,8 @@ subroutine MATRIX_init( what, M_par, N, Nb)
    !
    integer function UPPER_solver(N)
      integer :: N
-     UPPER_solver=nint( (real(N)+.5_SP)-sqrt( (real(N)+0.5_SP)**2 - 2.*real(M) ) )+1
-     if (  (real(N)+.5_SP)**2 - 2.*real(M) < 0 ) UPPER_solver=0
+     UPPER_solver=nint( (real(N,SP)+.5_SP)-sqrt( (real(N)+0.5_SP)**2 - 2._SP*real(M,SP) ) )+1
+     if (  (real(N,SP)+.5_SP)**2 - 2._SP*real(M,SP) < 0 ) UPPER_solver=0
    end function
    !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -26,7 +26,10 @@ subroutine INTERPOLATION_BZ(R1D,R2D,C1D,C2D,E,K,ID)
  use R_lattice,   ONLY:bz_samp
  use electrons,   ONLY:levels
  use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D
- implicit none
+ use timing_m,    ONLY:timing
+ !
+#include<memory.h>
+ !
  type(bz_samp), intent(in)              :: K
  real(SP),      intent(out), optional   :: R1D(:,:),R2D(:,:,:)
  complex(SP),   intent(out), optional   :: C1D(:,:),C2D(:,:,:)
@@ -41,13 +44,15 @@ subroutine INTERPOLATION_BZ(R1D,R2D,C1D,C2D,E,K,ID)
  if(interpls(ID)%ndim==0) call error("Interpolation coefficients not present!")
  !
  if(interpls(ID)%interp_type==REAL1D.and.present(R1D)) then
-   call INTERPOLATION_fourier(K,R1D,interpls(ID)%engre,interpls(ID)%ndim,K%nibz)
+   call INTERPOLATION_fourier(K,R1D,interpls(ID)%engre,interpls(ID)%ndim,K%nibz,ID)
    return
  endif
  !
- allocate(RDATA(interpls(ID)%ndim,K%nibz))
+ YAMBO_ALLOC(RDATA,(interpls(ID)%ndim,K%nibz))
  !
- call INTERPOLATION_fourier(K,RDATA,interpls(ID)%engre,interpls(ID)%ndim,K%nibz)
+ call INTERPOLATION_fourier(K,RDATA,interpls(ID)%engre,interpls(ID)%ndim,K%nibz,ID)
+ !
+ call timing('INTERPOLATE bz',OPR='start')
  !
  if(interpls(ID)%interp_type==CMPLX1D.and.present(C1D)) then
    !   
@@ -85,6 +90,8 @@ subroutine INTERPOLATION_BZ(R1D,R2D,C1D,C2D,E,K,ID)
    !
  endif
  !
- deallocate(RDATA)
+ YAMBO_FREE(RDATA)
+ !
+ call timing('INTERPOLATE bz',OPR='stop')
  !
 end subroutine INTERPOLATION_BZ

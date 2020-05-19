@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,6 @@
 subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
  use pars,           ONLY:SP,pi
- use vec_operate,    ONLY:c2a
  use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv,i_time_rev,alat
  use R_lattice,      ONLY:b,g_vec,ng_vec
  use matrix_operate, ONLY:m3inv

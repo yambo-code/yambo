@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -78,17 +78,16 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  l_use_collisions=.TRUE.
  !
- call XC_potentials(H_potential,"COLLISIONS")
+ ! XC Potentials 
+ !===============
+ !
+ call XC_potentials(H_potential)
  !
  ! Check for the Time Reversal Symmetry
  !
  if ( (l_use_Hxc_collisions.or.l_elel_scatt) .and. (i_time_rev==1) ) then
    call error(" COLLISIONS not compatible with Time Reversal Symmetry! ")
  endif
- !
- ! Switch 
- !========
- call XC_switch()
  !
  ! Naming 
  !========

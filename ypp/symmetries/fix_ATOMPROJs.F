@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -107,7 +107,7 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
  select case(action_kind)
  case(1)
    !
-   call msg('s',':: Copying existing database ...')
+   call msg('s',' Copying existing database ...')
    !
    call cp_file(trim(core_io_path_save)//"/SAVE/ns.atom_proj_pwscf",trim(more_io_path)//"/SAVE",ierr)
    do i_sp_pol=1,n_sp_pol
@@ -124,9 +124,6 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
 &                   trim(more_io_path)//"/SAVE/"//trim(fragment_name),ierr)
      enddo
    enddo
-   !
-   call msg('s','done')
-   !
    !
    if(n_steps>0) call live_timing('Atomic projections rotation',n_steps*n_sp_pol)
    !
@@ -158,7 +155,7 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
    !
  case(2)
    !
-   if(io_err==0) call msg('s',':: Atomic projections reduction...')
+   if(io_err==0) call msg('s',' Atomic projections reduction...')
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
    io_err=io_ATMPROJ_pwscf(ID) 
@@ -177,8 +174,6 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
    enddo
    !
    YAMBO_FREE(atom_proj_store)
-   !
-   call msg('s','done')
    !
  end select
  core_io_path=core_io_path_save

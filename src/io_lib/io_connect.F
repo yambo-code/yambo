@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -115,7 +115,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
  endif
  !
  if (write_is_on(ID).and.(type==2.or.len_trim(jobstr)==0)) then
-   call mk_dir(more_io_path)
+   call IO_make_directories("MORE")
    call mk_dir(folder)
    if (present(subfolder)) call mk_dir(STRING_pack(folder,"/",subfolder))
  endif

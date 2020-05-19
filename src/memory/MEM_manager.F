@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MEM_manager_alloc(what,Sz,Kn)
+subroutine MEM_manager_alloc(what,Sz,Kn,where)
  !
  use pars,         ONLY:schlen,DP,IPL
  use com,          ONLY:secnm
@@ -38,6 +38,7 @@ subroutine MEM_manager_alloc(what,Sz,Kn)
  character(*), intent(in) :: what
  integer(IPL), intent(in) :: Sz
  integer,      intent(in) :: Kn
+ integer,      intent(in) :: where
  ! 
  ! Defined in the init
  !
@@ -80,9 +81,9 @@ subroutine MEM_manager_alloc(what,Sz,Kn)
  !
  if (MEM_now_Kb==0) MEM_now_Kb=1
  !
- TOT_MEM_Kb=TOT_MEM_Kb+MEM_now_Kb
+ TOT_MEM_Kb(where)=TOT_MEM_Kb(where)+MEM_now_Kb
  !
- if (TOT_MEM_Kb>MAX_MEM_Kb) MAX_MEM_Kb=TOT_MEM_Kb
+ if (TOT_MEM_Kb(where)>MAX_MEM_Kb(where)) MAX_MEM_Kb(where)=TOT_MEM_Kb(where)
  !
  if (i_SHELF==0) then
    if (N_MEM_elements<N_MEM_SAVE_max) then
@@ -106,6 +107,7 @@ subroutine MEM_manager_alloc(what,Sz,Kn)
    MEMs(i_SHELF)%desc(i_COMPONENT)=trim(secnm)
    MEMs(i_SHELF)%name(i_COMPONENT)=what
    MEMs(i_SHELF)%kind(i_COMPONENT)=Kn
+   MEMs(i_SHELF)%where(i_COMPONENT)=where
    MEMs(i_SHELF)%composed(i_COMPONENT)=.FALSE.
  else
    MEMs(i_SHELF)%composed(i_COMPONENT)=.TRUE.
@@ -125,7 +127,7 @@ subroutine MEM_manager_alloc(what,Sz,Kn)
    endif
  endif
  !
- if(.not.just_started) call MEM_manager_messages(what,.true.,MEM_now_Kb)
+ if(.not.just_started) call MEM_manager_messages(what,.true.,MEM_now_Kb,where)
  !
 #else
  if (MEM_err/=0) call error("Allocation of "//what//" failed")
@@ -156,6 +158,7 @@ subroutine MEM_manager_free(what,Sz)
  logical :: verbose=.false.
  real(DP):: LARGE_wk
  integer :: i_mem,i_el,MEM_now_Kb
+ integer :: where
  !
  if (.not.master_thread) return
  !
@@ -171,8 +174,9 @@ subroutine MEM_manager_free(what,Sz)
  if (.not. (i_SHELF/=0.and.i_COMPONENT/=0) ) return
  !
  LARGE_wk=real(Sz,DP)*real(MEMs(i_SHELF)%kind(i_COMPONENT),DP)/Kilobyte
+ where=MEMs(i_SHELF)%where(i_COMPONENT)
  MEM_now_Kb=int(LARGE_wk)
- TOT_MEM_Kb=TOT_MEM_Kb-MEM_now_Kb
+ TOT_MEM_Kb(where)=TOT_MEM_Kb(where)-MEM_now_Kb
  !
  if (MEM_now_Kb==0) MEM_now_Kb=1
  !
@@ -194,13 +198,14 @@ subroutine MEM_manager_free(what,Sz)
      MEMs(i_SHELF)%desc(i_el)=MEMs(i_SHELF)%desc(i_el+1)
      MEMs(i_SHELF)%kind(i_el)=MEMs(i_SHELF)%kind(i_el+1)
      MEMs(i_SHELF)%size(i_el)=MEMs(i_SHELF)%size(i_el+1)
+     MEMs(i_SHELF)%where(i_el)=MEMs(i_SHELF)%where(i_el+1)
    enddo    
    !
    MEMs(i_SHELF)%N=MEMs(i_SHELF)%N-1
    !
  endif
  !
- if(.not.just_started) call MEM_manager_messages(what,.false.,MEM_now_Kb)
+ if(.not.just_started) call MEM_manager_messages(what,.false.,MEM_now_Kb,where)
  !
 #endif
  !
@@ -281,23 +286,30 @@ subroutine MEM_manager_init(what,adding,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUN
  !
 end subroutine MEM_manager_init
 !
-subroutine MEM_manager_messages(what,adding,MEM_now_Kb)
+subroutine MEM_manager_messages(what,adding,MEM_now_Kb,where)
  !
  use pars,         ONLY:lchlen
  use com,          ONLY:msg
  use memory,       ONLY:TOT_MEM_Kb,TOT_MEM_Kb_MEMSTAT,TOT_MEM_Kb_SAVE,MEM_treshold,&
-&                       MEM_jump_treshold,mem_string
+&                       MEM_jump_treshold,mem_string,HOST_,DEV_
  !
  implicit none
  !
  character(*), intent(in) :: what
  logical,      intent(in) :: adding
  integer,      intent(in) :: MEM_now_Kb
+ integer,      intent(in) :: where
  !
  ! Work space
  !
  logical           :: deliver_a_msg
- character(lchlen) :: msg_
+ character(lchlen) :: msg_,label
+ !
+ label=" "
+#if defined _CUDA
+ if (where==HOST_) label=" (HOST)" 
+ if (where==DEV_)  label=" (DEV)" 
+#endif
  !
 #if defined _MEM_CHECK
  !
@@ -311,23 +323,23 @@ subroutine MEM_manager_messages(what,adding,MEM_now_Kb)
    if (     adding) msg_=trim(msg_)//" Alloc "//what
    if (.not.adding) msg_=trim(msg_)//"  Free "//what
    msg_=trim(msg_)//"("//trim(mem_string(MEM_now_Kb))//")"
-   msg_=trim(msg_)//" TOTAL: "//trim(mem_string(TOT_MEM_Kb))//" (traced)"
-   if (TOT_MEM_Kb_MEMSTAT>0) then
-     msg_=trim(msg_)//" "//trim(mem_string(TOT_MEM_Kb_MEMSTAT))//" (memstat)"
+   msg_=trim(msg_)//trim(label)//" TOTAL: "//trim(mem_string(TOT_MEM_Kb(where)))//" (traced)"
+   if (TOT_MEM_Kb_MEMSTAT(where)>0) then
+     msg_=trim(msg_)//" "//trim(mem_string(TOT_MEM_Kb_MEMSTAT(where)))//" (memstat)"
    endif
    call msg("s",trim(msg_))
  endif
  !#2
- deliver_a_msg=int((TOT_MEM_Kb-TOT_MEM_Kb_SAVE)/1000)>int(MEM_jump_treshold/10.).and.adding
+ deliver_a_msg=int((TOT_MEM_Kb(where)-TOT_MEM_Kb_SAVE(where))/1000)>int(MEM_jump_treshold/10.).and.adding
  if (deliver_a_msg) then
    call MEM_STAT_update( )
    msg_="[MEMORY] In use: "
-   msg_=trim(msg_)//" TOTAL: "//trim(mem_string(TOT_MEM_Kb))//" (traced)"
-   if (TOT_MEM_Kb_MEMSTAT>0) then
-     msg_=trim(msg_)//" "//trim(mem_string(TOT_MEM_Kb_MEMSTAT))//" (memstat)"
+   msg_=trim(msg_)//trim(label)//" TOTAL: "//trim(mem_string(TOT_MEM_Kb(where)))//" (traced)"
+   if (TOT_MEM_Kb_MEMSTAT(where)>0) then
+     msg_=trim(msg_)//" "//trim(mem_string(TOT_MEM_Kb_MEMSTAT(where)))//" (memstat)"
    endif
    call msg("s",trim(msg_))
-   TOT_MEM_Kb_SAVE=TOT_MEM_Kb
+   TOT_MEM_Kb_SAVE(where)=TOT_MEM_Kb(where)
  endif
  !
 #endif

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -97,7 +97,7 @@ subroutine QP_fit_energies(i_ACTION,bands,en,qp)
    if (Nqpc>1) then
      call POL_LK_fit(Nqpc,Dx(:Nqpc),Dy(:Nqpc),fit_order,M_con,EPS,0._SP)
      if (fit_order==0) then
-       call warning(' Fit order on energies [c] reduced to 0')
+       call warning('Fit order on energies [c] reduced to 0')
        M_con(2)=M_def(2)
      endif
      QP_action(i_ACTION)%CTL(i_spin)%E_err(1)=EPS
@@ -118,7 +118,7 @@ subroutine QP_fit_energies(i_ACTION,bands,en,qp)
    if (Nqpv>1) then
      call POL_LK_fit(Nqpv,Dx(:Nqpv),Dy(:Nqpv),fit_order,M_val,EPS,0._SP)
      if (fit_order==0) then
-       call warning(' Fit order on energies [v] reduced to 0')
+       call warning('Fit order on energies [v] reduced to 0')
        M_val(2)=M_def(2)
      endif
      QP_action(i_ACTION)%CTL(i_spin)%E_err(2)=EPS

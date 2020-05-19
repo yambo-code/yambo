@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -38,7 +38,7 @@ subroutine QP_load_DB(i_ACTION,bands,en,k)
  !
  ! Work Space
  !
- type(QP_t)        :: qp
+ type(QP_t)        ::qp
  integer           ::io_err,ID
  integer, external ::io_QP_and_GF
  !

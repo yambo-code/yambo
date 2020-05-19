@@ -30,7 +30,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  use X_m,           ONLY:X_t
  use wave_func,     ONLY:WF
  use FFT_m,         ONLY:fft_size
- use pseudo,        ONLY:pp_kbv_dim
+ use pseudo,        ONLY:pp_kbv_dim_yambo
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:n_atoms
  use LIVE_t,        ONLY:live_timing
@@ -56,7 +56,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  complex(SP),allocatable :: kbv_real_space(:,:,:),kbv_ks_space(:),kbv_gauged(:,:),gauge_factor(:,:)
  complex(SP)             :: H_pseudo_ik(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)), &
 &                           H_pseudo(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),Xk%nibz,n_sp_pol)
- integer                 :: kbv_real_space_table(pp_kbv_dim)
+ integer                 :: kbv_real_space_table(pp_kbv_dim_yambo)
  !
  ! Dummies
  integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf,i_atom,ifrag
@@ -69,7 +69,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  if(l_sc_magnetic) call fft_setup(0,1,.true.)  ! fft_size
 #endif
  !
- YAMBO_ALLOC(kbv_real_space,(fft_size,n_spinor,pp_kbv_dim))
+ YAMBO_ALLOC(kbv_real_space,(fft_size,n_spinor,pp_kbv_dim_yambo))
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),ID=ID)
  io_KB_real_space_err=io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)

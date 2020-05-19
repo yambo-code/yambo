@@ -100,13 +100,13 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
      ! 
      ! [Vnl,r]
      !
-     if (io_KB_pwscf_err==0.and.i_frag>1) then
+     if (io_KB_pwscf_err==0.and.ifrag>1) then
        IO_ACT_NOW=manage_action(RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
        call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
        io_KB_pwscf_err=io_KB_pwscf(ID)
      endif
      !
-     if (io_KB_abinit_err==0.and.i_frag>1) then
+     if (io_KB_abinit_err==0.and.ifrag>1) then
        IO_ACT_NOW=manage_action(RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
        call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
        io_KB_abinit_err=io_KB_abinit(ID)

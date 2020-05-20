@@ -48,7 +48,8 @@ subroutine K_blocks(iq)
  !
  ! YAMBO_PAR_ALLOC
  !
- integer :: HOST_SIZE(2),LOCAL_SIZE(2)
+ integer :: HOST_SIZE(1),LOCAL_SIZE(1),TMP_SIZE
+ complex(SP), allocatable :: BS_MAT(:)
  !
  ! Work Space
  !
@@ -66,6 +67,7 @@ subroutine K_blocks(iq)
  !
  ! Allocate the blocks
  n_BS_blks=0
+ TMP_SIZE=0
  do i_T=1,BS_nT_grps
    do j_T=1,BS_nT_grps
      !
@@ -73,12 +75,12 @@ subroutine K_blocks(iq)
      !
      do i_block=1,n_new_blocks
         iB = n_BS_blks + i_block
-        YAMBO_PAR_ALLOC2(BS_blk(iB)%mat,(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/))
-        !AMBO_PAR_ALLOC(BS_blk(iB)%mat,(/100000000,100000000/))
         BS_blk(iB)%mat=cZERO
+        YAMBO_ALLOC(BS_blk(iB)%mat,(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
         allocate(BS_blk(iB)%done(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
         bs_blk(ib)%done(:,:)="f"
         BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
+        TMP_SIZE=TMP_SIZE+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
         if (i_block==1) BS_blk(iB)%mode="R"
         if (i_block==2) BS_blk(iB)%mode="C"
         if (i_block==3) BS_blk(iB)%mode="A"
@@ -94,6 +96,8 @@ subroutine K_blocks(iq)
      !
    enddo
  enddo
+ !
+ YAMBO_PAR_ALLOC_CHECK1(BS_MAT,(/TMP_SIZE/))
  !
  ! Live Timing Blocks
  !====================

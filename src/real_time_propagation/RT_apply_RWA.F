@@ -47,7 +47,7 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
  ik_DbGd=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
  !
  do i_n=RT_bands(1),RT_bands(2)
-   do i_np=i_n+1,RT_bands(2)
+   do i_np=i_n,RT_bands(2)
      !
      sumGAMMA=0._SP
      !
@@ -75,8 +75,8 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
      !
      if (l_RT_EXP.or.dTp>0._SP) then
        !
-       dG_out(i_n,i_np)=dG_out(i_n,i_np)*      phase *dec_exp
-       dG_out(i_np,i_n)=dG_out(i_np,i_n)*conjg(phase)*dec_exp
+                     dG_out(i_n,i_np)=dG_out(i_n,i_np)*      phase *dec_exp
+       if(i_np/=i_n) dG_out(i_np,i_n)=dG_out(i_np,i_n)*conjg(phase)*dec_exp
        !
      endif
      !
@@ -93,12 +93,10 @@ subroutine RT_apply_RWA(ik,E,dT,dTp,dG_out,dG_in)
        !
      endif
      !
-     dG_out(i_n,i_np)=dG_out(i_n,i_np)+dG_in(i_n,i_np)*      phase *dec_exp
-     dG_out(i_np,i_n)=dG_out(i_np,i_n)+dG_in(i_np,i_n)*conjg(phase)*dec_exp
+                   dG_out(i_n,i_np)=dG_out(i_n,i_np)+dG_in(i_n,i_np)*      phase *dec_exp
+     if(i_np/=i_n) dG_out(i_np,i_n)=dG_out(i_np,i_n)+dG_in(i_np,i_n)*conjg(phase)*dec_exp
      !
    enddo
-   !
-   dG_out(i_n,i_n)=dG_out(i_n,i_n)+dG_in(i_n,i_n)
    !
    ! It is higly non satisfactory that
    !     Gamma_neq[f_eq] /= Gamma_eq                              (1)

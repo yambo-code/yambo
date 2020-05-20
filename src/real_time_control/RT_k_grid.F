@@ -39,6 +39,7 @@ subroutine RT_k_grid(E,k,q)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:qindx_S
+ use parallel_m,     ONLY:PAR_G_kpts
  use C_driver,       ONLY:code_bin
  use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,DbGd_is_symmetry_expanded
  use real_time,      ONLY:DbGd_bz_coo,DbGd_ibz_coo,DbGd_EE_scatt_table,&
@@ -118,6 +119,9 @@ subroutine RT_k_grid(E,k,q)
    RT_nk=RT_nk+BZ_DbGd_nkpt(ik_bz)
    !
  enddo
+ !
+ PAR_G_kpts(1)=RT_ibz_coo(PAR_G_kpts(1),1)
+ PAR_G_kpts(2)=RT_ibz_coo(PAR_G_kpts(2),2)
  !
  do ik=1,k%nbz
    DbGd_bz_coo(ik,:)=(/sum(BZ_DbGd_nkpt(:ik-1))+1,sum(BZ_DbGd_nkpt(:ik))/)

@@ -37,7 +37,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,rho_n,magn_n,&
 &                         H_potential,H_kind,H_xc_functional,H_perturbation
- use RT_control,     ONLY:RT_control_alloc,RT_control_free,ID,Dynamics_is_over,&
+ use RT_control,     ONLY:RT_control_alloc,RT_control_free,ID,&
 &                         NE_i_start_time,RT_carriers_object,RT_apply
  use real_time,      ONLY:RT_potential,RT_kind,RT_xc_functional,RT_perturbation,&
 &                         NE_steps,RT_step,G_lesser,RT_bands,&
@@ -45,7 +45,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                         rho_reference,magn_reference, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_RT_is_WFfree,&
 &                         dG_lesser,l_initial_equilibrium,NE_tot_time,&
-&                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
+&                         i_MEM_prev,i_MEM_now,RT_is_dynamically_dephased,&
 &                         l_RT_update_Energies,l_NE_with_fields,l_update_SOC,l_velocity_gauge_corr
  use plasma,          ONLY:PLASMA_free,EH_gas
  use com,             ONLY:msg
@@ -65,7 +65,6 @@ subroutine RT_driver(E,X,k,q,Dip)
  type(bz_samp)     :: k,q
  type(X_t)         :: X(2)
  type(DIPOLE_t)    :: Dip
- logical, external :: STOP_now
  ! 
  ! Work Space
  !
@@ -73,6 +72,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  logical           :: LT_pump
  character(schlen) :: sec_title(3)
  real(SP)          :: OBSERVABLES(25)
+ logical, external :: RT_Dynamics_is_over
  !
  ! I/O
  !
@@ -172,8 +172,8 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  ! Core allocations
  !
- call RT_alloc(E)
- call RT_control_alloc(.FALSE.)
+ call RT_alloc(E,"all")
+ call RT_control_alloc("all")
  !
  ! GPL_EXCLUDE_START
  !
@@ -234,6 +234,8 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    call RT_relaxation(E,k,q,0._SP)
    !
+   call RT_carriers_object(RT_carriers,WHAT='fill_ref')
+   !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
    !
@@ -287,7 +289,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    ! Calculate the RT Hamiltonian Ho_plus_Sigma
    !============================================
-   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_tot,E,k)
+   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_now),A_tot,E,k)
    !
    ! GPL_EXCLUDE_START
    !
@@ -299,7 +301,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
-   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),OBSERVABLES)
+   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_now),OBSERVABLES)
    !
    ! GPL_EXCLUDE_START
    !
@@ -331,11 +333,11 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    ! I (eventually) stop 
    !=======================
-   if (Dynamics_is_over( )) exit
+   if (RT_Dynamics_is_over(.true.)) exit
    !
    ! Integration
    !=============
-   call RT_Integrator(G_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_tot,A_tot,E,k,q)
+   call RT_Integrator(G_lesser(:,:,:,i_MEM_now),dG_lesser(:,:,:,i_MEM_now),dG_lesser(:,:,:,i_MEM_prev),A_tot,A_tot,E,k,q)
    !
  enddo
  !
@@ -350,8 +352,8 @@ subroutine RT_driver(E,X,k,q,Dip)
  contains
    !
    subroutine CLOSE_and_clean( )
-     call RT_free()
-     call RT_control_free()
+     call RT_free("all")
+     call RT_control_free("all")
      call WF_free(WF)
      !
      ! GPL_EXCLUDE_START

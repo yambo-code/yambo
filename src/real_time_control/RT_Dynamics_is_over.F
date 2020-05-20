@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM 
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,39 +21,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_MEMORY_index( )
+logical function RT_Dynamics_is_over(WARN)
  !
- use real_time,      ONLY:G_MEM_steps,MEM_pointer,i_MEM_prev,NE_i_time,&
-&                         i_MEM_old,i_MEM_now,RT_dyn_step,RT_step
+ use parser_m,       ONLY:parser
+ use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_dyn_step
+ use RT_control,     ONLY:RT_NAN_found
+ use it_tools,       ONLY:it_reset
  !
  implicit none
  !
- ! Work Space
+ logical, intent(in)  :: WARN
  !
- integer :: i_min_index,i_mem
+ logical              ::STOP_now
  !
- i_MEM_prev=0
- i_MEM_now =0
- i_MEM_old =0
+ call it_reset(0)
+ call parser('STOP_NOW',STOP_now)
  !
- ! Find a "NEW" Memory Location for  NE_i_time+RT_dyn_step/RT_step
+ if (STOP_now .and. WARN ) call warning('USER STOP signal')
  !
- i_min_index=minval(MEM_pointer)
+ RT_Dynamics_is_over=NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now.or.RT_NAN_found
  !
- do i_mem=1,G_MEM_steps
-   if (MEM_pointer(i_mem)/=i_min_index) cycle
-   MEM_pointer(i_mem)=NE_i_time+nint(RT_dyn_step/RT_step)
-   i_MEM_now=i_mem
- enddo
- !
- ! Find a "OLD" Memory Location for NE_i_time and for the previous Time point
- !
- i_min_index=minval(MEM_pointer)
- !
- do i_mem=1,G_MEM_steps
-   if (MEM_pointer(i_mem)==NE_i_time)    i_MEM_prev=i_mem
-   if (G_MEM_steps==2.and.G_MEM_steps>1) cycle
-   if (MEM_pointer(i_mem)==i_min_index)  i_MEM_old=i_mem
- enddo
- !
-end subroutine RT_MEMORY_index
+end function

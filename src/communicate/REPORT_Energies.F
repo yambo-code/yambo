@@ -29,7 +29,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  use electrons,      ONLY:n_sp_pol,nel,n_full_bands
  use stderr,         ONLY:intc
  use wave_func,      ONLY:wf_nc_k
- use com,            ONLY:msg
+ use com,            ONLY:msg,verbose
  use vec_operate,    ONLY:c2a
  !
  implicit none
@@ -42,7 +42,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  !
  ! Work Space
  !
- real(SP)          :: k_cc(3),k_al(3)
+ real(SP)          :: k_cc(3),k_rlu(3)
  integer           :: ik,is_pol,ib,i1
  character(schlen) :: dumb_ch1,dumb_ch2
  real(SP)          :: E_(n_bands_,n_sp_pol)
@@ -56,7 +56,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
    !
    !call msg('r','')
    !
-   call c2a(v_in=k%pt(ik,:),v_out=k_al,mode='ki2a')
+   call c2a(v_in=k%pt(ik,:),v_out=k_rlu,mode='ki2a')
    call c2a(v_in=k%pt(ik,:),v_out=k_cc,mode='ki2c')
    !
    dumb_ch1=trim(intc(ik))//'] '
@@ -72,9 +72,9 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
      if (ik<=nXkibz .or. trim(what)=="Q") call msg('r',trim(dumb_ch1)//' : weight       ',Xk%weights(ik) )
      if(trim(what)=="K") call msg('r','      : wf components',wf_nc_k(ik) )
      if (ik<=nXkibz .or. (trim(what)=="Q")) then
-       call msg('r','      : point-cc     ',k_cc,' [cc] ')
-       call msg('r','      : point-alat   ',k_al,' [alat] ')
-       call msg('r','      : point-iku    ',k%pt(ik,:),' [iku] ')
+       if(verbose) call msg('r','      : point-cc     ',k_cc,' [cc] ')
+                   call msg('r','      : point-rlu    ',k_rlu,' [rlu] ')
+       if(verbose) call msg('r','      : point-iku    ',k%pt(ik,:),' [iku] ')
      endif
    endif
    !

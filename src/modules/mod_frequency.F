@@ -70,12 +70,16 @@ module frequency
      endif
    end subroutine W_duplicate
    !
-   subroutine W_reset(W)
+   subroutine W_reset(W,damping)
      type(w_samp)::W
+     real(SP), optional, intent(in) :: damping
+     real :: local_damping
+     local_damping=0.1_SP
+     if(present(damping)) local_damping=damping
      W%n_freqs=100
      W%per_memstps=100._SP
      W%er=(/0._SP,10._SP/)/HA2EV
-     W%dr=(/0.1_SP,0.1_SP/)/HA2EV
+     W%dr=(/local_damping,local_damping/)/HA2EV
      W%damp_reference=0._SP
      YAMBO_FREE(W%p)
    end subroutine W_reset

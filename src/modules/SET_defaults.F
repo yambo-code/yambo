@@ -36,7 +36,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     eval_alpha,&
 &                     q_plus_G_direction,Q_Shift_Order,&
 &                     l_X_terminator,X_terminator_E,global_gauge,&
-&                     Chi_linalg_mode,X_use_lin_sys,X_DbGd_percentual
+&                     Chi_linalg_mode,X_use_lin_sys,X_use_gpu,X_DbGd_percentual
  use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
 &                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
@@ -61,7 +61,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     eval_magn,E_SOC_nbands
  use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
-&                     more_io_path,core_io_path,com_path,repfile,grid_paths,fat_log
+&                     more_io_path,core_io_path,com_path,repfile,grid_paths,verbose
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
@@ -106,9 +106,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
- use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_headings,YPP_append,&
-&                     Gr_desc,TIME_STEP_desc,RT_desc
- use RT_control, ONLY:OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db
+ use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_o_file_is_open,&
+&                     RT_headings,YPP_append,Gr_desc,TIME_STEP_desc,RT_desc
+ use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db,&
+&                     CACHE_OBS_last_point,CACHE_OBS_INTERVAL_time,CACHE_OBS_INTERVAL_time_SAVE,   &
+&                     CACHE_OBS_steps,CACHE_OBS_steps_now,RT_NAN_found
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
@@ -116,7 +118,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
 &                     RT_Efit_lifetimes,l_update_SOC,                                     &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
-&                     RAD_prefactor
+&                     RAD_prefactor,i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,           &
+&                     RT_is_statically_dephased,RT_is_dynamically_dephased,               &
+&                     RT_deph_deg_thresh,RT_deph_cv_only,                                 &
+&                     NE_time_step_update_last_point,NE_time_step_update_jump,NE_time_step_update_jump_SAVE, &
+&                     NE_initial_time_step_update,NE_step_update_treshold
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_tot,A_ind,A_ext
  use plasma,     ONLY:PLASMA_redux_percent
@@ -135,6 +141,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use timing_m,    ONLY:timing_allocate,nclockx
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
+ use cuda_m,      ONLY:have_cuda
  !
  implicit none
  !
@@ -154,8 +161,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! Fat Log?
  !
- fat_log    = .FALSE.
- if (index(INSTR,'fatlog')>0) fat_log=.TRUE.
+ verbose    = .FALSE.
+ if (index(INSTR,'verbose')>0) verbose=.TRUE.
  !
  ! CPU structures
  !
@@ -352,6 +359,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Chi_mode=' '
  Chi_linalg_mode="lin_sys"
  X_use_lin_sys=.FALSE.
+ X_use_gpu=have_cuda
  current_iq=0
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.
@@ -581,11 +589,35 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NE_steps=1
  NE_time=0._SP
  NE_tot_time= 1000._SP*FS2AUT
+ !
+ NE_time_step_update_last_point = 1
+ NE_time_step_update_jump       = 0._SP
+ NE_time_step_update_jump_SAVE  = 0._SP
+ NE_initial_time_step_update    = 0._SP
+ NE_step_update_treshold        = 0.1_SP
+ !
+ CACHE_OBS_steps      = 1
+ CACHE_OBS_steps_now  = 1
+ CACHE_OBS_last_point = 1
+ CACHE_OBS_INTERVAL_time       = 0._SP
+ CACHE_OBS_INTERVAL_time_SAVE  = 0._SP
+ !
+ G_MEM_steps = 2
+ i_MEM_old   = 0
+ i_MEM_prev  = 0
+ i_MEM_now   = 1
+ !
  integrator_step=1
  Integrator_name='RK2'
+ !
  RAD_LifeTime = 0._SP
  Phase_LifeTime = 0._SP
- NE_MEM_treshold=0.
+ RT_deph_deg_thresh = 1.E-5_SP
+ RT_deph_cv_only =.FALSE.
+ RT_is_statically_dephased=.FALSE.
+ RT_is_dynamically_dephased=.FALSE.
+ !
+ NE_MEM_treshold=0._SP
  RT_nk=0
  RT_eh_en=0._SP
  RT_scatt_tresh=-1._SP/HA2EV
@@ -616,15 +648,18 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! RT_ctl
  !
- OBS_RT_IO_t%INTERVAL_time=2._SP*FS2AUT
- OUTPUT_RT_IO_t%INTERVAL_time=5._SP*FS2AUT
+ OBS_RT_IO_t%INTERVAL_time_SAVE   =2._SP*FS2AUT
+ CARR_RT_IO_t%INTERVAL_time_SAVE  =2._SP*FS2AUT
+ OUTPUT_RT_IO_t%INTERVAL_time_SAVE=5._SP*FS2AUT
+ GF_RT_IO_t%INTERVAL_time_SAVE    =1._SP*FS2AUT
  SAVE_G_history=.FALSE.
- GF_RT_IO_t%INTERVAL_time=1._SP*FS2AUT
+ RT_NAN_found  =.FALSE.
  !
  ! RT_output
  !
  n_RT_headings=0
  N_RT_o_files=0
+ RT_o_file_is_open=.FALSE.
  RT_o_file_long= " "
  RT_o_file_short= " "
  RT_headings= " "

@@ -406,6 +406,7 @@ module parallel_m
  integer            :: PAR_n_c_bands(2) = 0
  integer            :: PAR_n_v_bands(2) = 0
  integer            :: PAR_n_G_vectors  = 0
+ integer            :: PAR_G_kpts(2)    = 0  ! For parallel I/O of G
  !
  ! ... and derived variables
  !==========================
@@ -664,9 +665,7 @@ module parallel_m
      if (ncpu==1) return
      !
      local_COMM=mpi_comm_world
-     if (present(COMM)) then
-       local_COMM=COMM
-     endif
+     if (present(COMM)) local_COMM=COMM
      if (local_COMM==comm_default_value) return
      call mpi_barrier(local_COMM,i_err)
 #endif

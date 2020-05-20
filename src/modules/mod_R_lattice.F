@@ -104,6 +104,7 @@ module R_lattice
  integer ,allocatable :: minus_G(:)
  real(SP),allocatable :: g_vec(:,:)
  real(SP),allocatable :: E_of_shell(:)
+ ! GPUs
  real(SP),allocatable :: g_vec_d(:,:)
  integer ,allocatable :: g_rot_d(:,:)
  integer ,allocatable :: G_m_G_d(:,:)

@@ -35,7 +35,7 @@
     if (PAR_COM_HOST%CPU_id==0 ) then
 
 #define CHECK_ALLOC_B(x,HOST_SIZE) \
-      call MEM_global_mesg(QUOTES x QUOTES,HOST_SIZE) NEWLINE \
+      call MEM_global_mesg(QUOTES x QUOTES,kind(x),HOST_SIZE) NEWLINE \
       deallocate(x) NEWLINE \
     endif NEWLINE \
     call PP_redux_wait(COMM=PAR_COM_HOST%COMM)  NEWLINE \

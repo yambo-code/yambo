@@ -142,7 +142,7 @@ end subroutine MEM_manager_alloc
 !
 subroutine MEM_free(what,Sz)
  !
- use pars,         ONLY:schlen,DP,IPL
+ use pars,         ONLY:schlen,DP,IPL,IP
  use units,        ONLY:Kilobyte
  use openmp,       ONLY:master_thread
  use memory,       ONLY:TOT_MEM_Kb,MEM_element_copy,N_MEM_elements,MEMs
@@ -179,7 +179,7 @@ subroutine MEM_free(what,Sz)
  if (.not. (i_SHELF/=0.and.i_COMPONENT/=0) ) return
  !
  LARGE_wk=real(Sz,DP)*real(MEMs(i_SHELF)%kind(i_COMPONENT),DP)/Kilobyte
- where=MEMs(i_SHELF)%where(i_COMPONENT)
+ where=int(MEMs(i_SHELF)%where(i_COMPONENT),IP)
  MEM_now_Kb=int(LARGE_wk)
  TOT_MEM_Kb(where)=TOT_MEM_Kb(where)-MEM_now_Kb
  !
@@ -216,21 +216,39 @@ subroutine MEM_free(what,Sz)
  !
 end subroutine MEM_free
 !
-subroutine MEM_global_mesg(what,HOST_SIZE)
+subroutine MEM_global_mesg(what,xkind,HOST_SIZE)
  !
+ use pars,         ONLY:SP,DP
  use parallel_m,   ONLY:host_name
- use stderr,       ONLY:intc
+ use stderr,       ONLY:real2ch
+ !use memory,       ONLY:mem_string
+ use units,        ONLY:Kilobyte
  use LIVE_t,       ONLY:LIVE_message
  !
  implicit none
  !
  character(*), intent(in) :: what
+ integer,      intent(in) :: xkind
  integer,      intent(in) :: HOST_SIZE(:)
+ !
+ integer   :: i1
+ real(DP)  :: MEM_size
+ !
+ MEM_size=0
+ do i1=1,size(HOST_SIZE)
+   MEM_size=MEM_size+real(HOST_SIZE(i1),DP)
+ enddo
+ MEM_size=MEM_size*real(xkind,DP)/real(Kilobyte,DP)/real(1000,DP)
  !
  ! Error Message
  !===============
- call LIVE_message("Parallel distribution of "//what//" on HOST "//trim(host_name)//&
-&                  " with size "//trim(intc(product(HOST_SIZE))) )
+ call LIVE_message("[MEMORY] Parallel distribution of "//what//" on HOST "//trim(host_name)//&
+&                  " with size "//trim(real2ch(real(MEM_size,SP)))//" [Mb] ")
+ ! 2020/05/20: Here I do not use mem_string since it wants an integer in input
+ !             It is not a good solution since integers are limited to their maximum value
+ !             A real would be much better for the size in Kb ...
+!&                  " with size "//trim(mem_string(real(MEM_size,SP))))
+ !
  call MEM_error("GLOBAL_"//what)
  !
 end subroutine MEM_global_mesg

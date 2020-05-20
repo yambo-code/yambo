@@ -65,7 +65,7 @@ subroutine K_blocks(iq)
  n_BS_blks=count(PAR_IND_T_ordered%element_2D)
  allocate(BS_blk(n_BS_blks*n_new_blocks))
  !
- ! Allocate the blocks
+ ! Define blocks parameters
  n_BS_blks=0
  TMP_SIZE=0
  do i_T=1,BS_nT_grps
@@ -75,10 +75,6 @@ subroutine K_blocks(iq)
      !
      do i_block=1,n_new_blocks
         iB = n_BS_blks + i_block
-        BS_blk(iB)%mat=cZERO
-        YAMBO_ALLOC(BS_blk(iB)%mat,(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
-        allocate(BS_blk(iB)%done(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
-        bs_blk(ib)%done(:,:)="f"
         BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
         TMP_SIZE=TMP_SIZE+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
         if (i_block==1) BS_blk(iB)%mode="R"
@@ -97,7 +93,16 @@ subroutine K_blocks(iq)
    enddo
  enddo
  !
+ ! Allocate the blocks
+ !
  YAMBO_PAR_ALLOC_CHECK1(BS_MAT,(/TMP_SIZE/))
+ !
+ do iB=1,n_BS_blks
+   YAMBO_ALLOC(BS_blk(iB)%mat,(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
+   allocate(BS_blk(iB)%done(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
+   BS_blk(iB)%mat=cZERO
+   bs_blk(iB)%done(:,:)="f"
+ enddo
  !
  ! Live Timing Blocks
  !====================

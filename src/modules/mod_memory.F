@@ -81,8 +81,9 @@ module memory
  !
  interface
    !
-   subroutine MEM_global_mesg(what,HOST_SIZE)
+   subroutine MEM_global_mesg(what,xkind,HOST_SIZE)
     character(*), intent(in) :: what
+    integer,      intent(in) :: xkind
     integer,      intent(in) :: HOST_SIZE(:)
    end subroutine MEM_global_mesg
    !
@@ -143,11 +144,11 @@ module memory
      endif
      !
      if (MEM<1000) then
-       mem_string=trim(real2ch(real(MEM,SP)))//"Kb"
+       mem_string=trim(real2ch(real(MEM,SP)))//" [Kb]"
      else if (MEM<1000000) then
-       mem_string=trim(real2ch(real(MEM,SP)/1000))//"Mb"
+       mem_string=trim(real2ch(real(MEM,SP)/1000))//" [Mb]"
      else
-       mem_string=trim(real2ch(real(MEM,SP)/1000000))//"Gb"
+       mem_string=trim(real2ch(real(MEM,SP)/1000000))//" [Gb]"
      endif
      mem_string=trim(mem_string)//trim(where_str)
    end function

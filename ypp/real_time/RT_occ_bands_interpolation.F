@@ -46,9 +46,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
 #include<memory.h>
  !
- integer,       intent(in) :: n_T_steps
- type(bz_samp), intent(in) :: k
- type(levels),  intent(in) :: en
+ integer,       intent(in)    :: n_T_steps
+ type(bz_samp), intent(in)    :: k
+ type(levels),  intent(inout) :: en
  !
  ! Work space
  !

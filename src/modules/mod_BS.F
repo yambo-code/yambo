@@ -53,6 +53,7 @@ module BS
  !=============
  integer :: BS_K_dim
  integer :: BS_H_dim
+ integer :: BS_IO_dim(2)
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier

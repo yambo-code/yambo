@@ -40,6 +40,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
+ use pars,           ONLY:SP
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
@@ -117,8 +118,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
    call bz_samp_reset(k)
    call bz_samp_reset(q)
-   call W_reset(Xw(1))
-   call W_reset(Xw(2))
+   call W_reset(Xw(1),damping=0.001_SP)
+   call W_reset(Xw(2),damping=0.001_SP)
    call W_reset(Xw(3))
    call W_reset(Xw(4))
    call X_reset(X(1),type=1)
@@ -546,7 +547,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
        !
        if (io_BS_err==0) then
-         if (l_ppa)      call X_duplicate(Xbsk,X(4))
+         if (     l_ppa) call X_duplicate(Xbsk,X(4))
          if (.not.l_ppa) call X_duplicate(Xbsk,X(2))
        endif
        !

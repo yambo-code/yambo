@@ -133,7 +133,7 @@ subroutine MEM_manager_alloc(what,Sz,Kn)
  if(.not.just_started) call MEM_manager_messages(what,.true.,MEM_now_Kb)
  !
 #else
- call MEM_manager_error(what)
+ call MEM_error(what)
 #endif
  !
 end subroutine MEM_manager_alloc

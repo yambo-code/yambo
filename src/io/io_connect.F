@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
+integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID,COMM)
  !
  use pars,          ONLY:schlen,lchlen,num_of_alternative_locations
  use stderr,        ONLY:STRING_pack
@@ -47,6 +47,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
  integer     , optional :: type,ID
  character(*), optional :: subfolder
  logical,      optional :: no_full_RESET
+ logical,      optional :: FORCE_READ_MODE
  integer,      optional :: COMM
  !
  ! Work Space
@@ -54,12 +55,21 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
  integer          ::i_jobstr
  character(lchlen)::alternative_file(num_of_alternative_locations),folder
  character(schlen)::subfolder_
- logical          ::file_found,full_RESET,par_IO
+ logical          ::file_found,full_RESET,par_IO,write_mode,read_mode
  !
  logical,           external :: file_exists
  !
  full_RESET=.true.
  if (present(no_full_RESET)) full_RESET=.not.no_full_RESET
+ !
+ write_mode=write_is_on(ID)
+ read_mode =read_is_on(ID)
+ if(present(FORCE_READ_MODE)) then
+   if(FORCE_READ_MODE) then
+     write_mode=.false.
+     read_mode =.true.
+   endif
+ endif
  !
  io_connect=0
  par_IO=present(COMM).and.ncpu>1
@@ -80,13 +90,13 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
  !
  if (len_trim(io_file(ID))==0) then
    !
-   if (write_is_on(ID)) then
+   if (write_mode) then
      !
      ! NEW databases are always written respecting the "type" (see mod_com.F)
      !
      io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
      !
-   else if (read_is_on(ID)) then
+   else if (read_mode) then
      !
      io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
      !
@@ -114,7 +124,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
    if (len_trim(jobdir)==0) write (folder,'(3a)') trim(more_io_path),'/',trim(jobstr)
  endif
  !
- if (write_is_on(ID).and.(type==2.or.len_trim(jobstr)==0)) then
+ if (write_mode.and.(type==2.or.len_trim(jobstr)==0)) then
    call IO_make_directories("MORE")
    call mk_dir(folder)
    if (present(subfolder)) call mk_dir(STRING_pack(folder,"/",subfolder))
@@ -122,7 +132,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
  !
  ! Open if to open and to write
  !
- if (open_is_on(ID).and.write_is_on(ID)) then
+ if (open_is_on(ID).and.write_mode) then
    !
    if ( (io_action(ID)==OP_APP_CL.or.io_action(ID)==OP_APP) .and. file_exists(trim(io_file(ID))) ) then
      !
@@ -154,7 +164,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
  !
  ! Open if to open and to read
  !
- if (open_is_on(ID).and.read_is_on(ID)) then
+ if (open_is_on(ID).and.read_mode) then
    !
    if (.not.file_exists(trim(io_file(ID)))) then
      !

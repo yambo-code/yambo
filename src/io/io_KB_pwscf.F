@@ -42,6 +42,7 @@ integer function io_KB_pwscf(ID)
  ! 
  ! Work Space
  !
+ logical :: force_io_mode
  integer :: ifrag,ik,i_sp_pol
  !
  call timing('io_KB_pwscf',OPR='start')
@@ -55,7 +56,9 @@ integer function io_KB_pwscf(ID)
    i_sp_pol=2
  endif
  !
- io_KB_pwscf=io_connect(desc="kb_pp_pwscf",type=0,ID=ID)
+ force_io_mode=.not.(any((/io_sec(ID,:)==1/)).or.(ik==1.and.i_sp_pol==1))
+ !
+ io_KB_pwscf=io_connect(desc="kb_pp_pwscf",type=0,ID=ID,FORCE_READ_MODE=force_io_mode)
  if (io_KB_pwscf/=0) goto 1
  !
  ! Dimensions

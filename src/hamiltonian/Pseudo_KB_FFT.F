@@ -81,12 +81,12 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt)
        !
        do im = 1,2*(il-1)+1
          !
-         i1=i1
-         i2=pp_kbv_table(i1)
-         !
-         if(i2==0) cycle
-         !
          do i_spinor=1,n_spinor
+           !
+           i1=i1+2-i_spinor
+           i2=pp_kbv_table(i1)
+           !
+           if(i2==0) cycle
            !
            kbv_DP=(0._DP,0._DP)
            kbv_DP(fft_g_table(1:wf_ng,1))=conjg(kbv(1:wf_ng,i_spinor,1,i2))*fft_norm

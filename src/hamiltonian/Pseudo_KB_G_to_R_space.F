@@ -144,7 +144,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
    subroutine define_kbv_table()
      !
      use electrons,     ONLY:n_spinor
-     use pseudo,        ONLY:pp_n_l_times_proj_max,pp_table
+     use pseudo,        ONLY:pp_n_l_times_proj_max,pp_table,pp_kbv_table
      use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms
      !
      integer :: i_atom,i1,is,ia,i_pp,il,im,i_spinor,pp_spin
@@ -161,7 +161,8 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
            do im = 1,2*(il-1)+1
              do i_spinor=1,n_spinor
                i1=i1+2-i_spinor
-               kbv_real_space_table(i1)=i_atom
+               if(pp_kbv_table(i1)==0) cycle
+               kbv_real_space_table(pp_kbv_table(i1))=i_atom
              enddo
            enddo
          enddo

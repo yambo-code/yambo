@@ -76,7 +76,7 @@ integer function io_ELPH(ID,what)
  l_gFsq                 =index(what,'gFsq')>0
  l_no_matrix_elements   =index(what,'no_matrix_elements')>0
  !
- io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID)
+ io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))))
  if (io_ELPH/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then

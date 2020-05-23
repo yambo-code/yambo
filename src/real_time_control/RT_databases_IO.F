@@ -48,8 +48,8 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- logical           :: write_OBS,force_OBS
- integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time
+ logical           :: write_OBS,force_OBS_IO,force_OBS_caching
+ integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,n_OBS_cache
  integer, external :: io_RT_components
  logical, external :: RT_Dynamics_is_over
  !
@@ -67,15 +67,17 @@ subroutine RT_databases_IO(E)
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
    endif
    !
-   force_OBS=RT_do_it('deltaT').or.RT_Dynamics_is_over(.false.)
+   force_OBS_IO=RT_do_it('deltaT').or.RT_Dynamics_is_over(.false.).or.NE_i_time==OBS_RT_IO_t%last_point
+   force_OBS_caching=NE_i_time>=OBS_RT_IO_t%last_point.and.NE_i_time<=OBS_RT_IO_t%last_point+n_OBS_cache-1
+   n_OBS_cache=nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)
    !
-   if (RT_do_it('OBS_cache').or.NE_i_time>=OBS_RT_IO_t%last_point.or.force_OBS) then
+   if (RT_do_it('OBS_cache').or.force_OBS_caching.or.force_OBS_IO) then
      !
      ! Cache the current and the polarization for future writing
      !
      i_time=NE_i_time
-     if((OBS_RT_IO_t%last_point-1)/nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)>-1) i_time=i_time-OBS_RT_IO_t%last_point
-     i_time=(i_time-1)/nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)+1
+     if((OBS_RT_IO_t%last_point-1)/n_OBS_cache>-1) i_time=i_time-OBS_RT_IO_t%last_point
+     i_time=(i_time-1)/n_OBS_cache+1
      i_time=i_time/nint(RT_dyn_step/RT_step)
      !
      if(i_time>0) then
@@ -97,7 +99,7 @@ subroutine RT_databases_IO(E)
        A_cache(1:3,3,i_time)=A_tot%vecpot_acc
      endif
      !
-     write_OBS=RT_do_it('OBS').or.NE_i_time==OBS_RT_IO_t%last_point.or.force_OBS
+     write_OBS=RT_do_it('OBS').or.force_OBS_IO
      !
      if(write_OBS) then
        !

@@ -56,7 +56,7 @@ integer function io_NL(ID)
  !
  io_extension(ID)='Nonlinear'
  !
- io_NL=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
+ io_NL=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))) )
  if (io_NL/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then

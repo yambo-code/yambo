@@ -238,7 +238,7 @@ subroutine RT_start_and_restart(E,k,q)
    call msg('r',  'Time reached                  [fs]',real(NE_i_time)*RT_step*AUT2FS)
    call msg('r',  'Time step                     [fs]',RT_dyn_step*AUT2FS)
    !
-   OBS_RT_IO_t%INTERVAL_time=TIME_adjust(OBS_RT_IO_t%INTERVAL_time,NE_time_step_update_jump)
+   if(NE_time_step_update_jump>0._SP) OBS_RT_IO_t%INTERVAL_time=TIME_adjust(OBS_RT_IO_t%INTERVAL_time,NE_time_step_update_jump)
    CACHE_OBS_INTERVAL_time = max(TIME_adjust(CACHE_OBS_INTERVAL_time,RT_dyn_step),RT_dyn_step)
    CACHE_OBS_INTERVAL_time=STEP_adjust(OBS_RT_IO_t%INTERVAL_time,CACHE_OBS_INTERVAL_time,RT_dyn_step)
    !

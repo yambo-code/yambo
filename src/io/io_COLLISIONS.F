@@ -74,7 +74,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    call error("COLLISIONS I/O : Unknown database type ")
  endif
  !
- io_COLLISIONS=io_connect(desc=db_name,type=2,ID=ID)
+ io_COLLISIONS=io_connect(desc=db_name,type=2,ID=ID,FORCE_READ_MODE=(.not.any(io_sec(ID,:)==1)))
  if(io_COLLISIONS/=0) goto 1
  !
  if (any(io_sec(ID,:)==1)) then

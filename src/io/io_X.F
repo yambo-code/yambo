@@ -52,7 +52,7 @@ integer function io_X(X,Xw,ID)
  !Work Space
  !
  integer             ::sec_size,i1,iq,i_err,io_com_save,io_err
- logical             ::different_db_RL_order,perform_IO
+ logical             ::different_db_RL_order,perform_IO,force_read_mode
  character (schlen)  ::ch,db_desc
  character (2)       ::local_XC_KIND
  real(SP),   allocatable :: RL_vecs_disk(:,:)
@@ -77,6 +77,7 @@ integer function io_X(X,Xw,ID)
  if (X%whoami==3) db_desc='em1d'
  if (X%whoami==4) db_desc='pp'
  !
+ force_read_mode=.not.any((/io_sec(ID,:)==1/)).and.write_is_on(ID)
 #if defined _PAR_IO
  perform_IO=PAR_COM_X_WORLD%CPU_id==0.or.read_is_on(ID)
 #else
@@ -84,7 +85,7 @@ integer function io_X(X,Xw,ID)
 #endif
  !
  if(perform_IO) then
-   io_X=io_connect(desc=trim(db_desc),type=2,ID=ID) 
+   io_X=io_connect(desc=trim(db_desc),type=2,ID=ID,FORCE_READ_MODE=force_read_mode)
    if (io_X/=0) goto 1
  endif
  !

@@ -48,7 +48,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- logical           :: write_OBS,force_OBS_IO,force_OBS_caching
+ logical           :: write_OBS,force_OBS_IO!,force_OBS_caching
  integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,n_OBS_cache
  integer, external :: io_RT_components
  logical, external :: RT_Dynamics_is_over
@@ -70,9 +70,10 @@ subroutine RT_databases_IO(E)
    !
    n_OBS_cache=nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)
    force_OBS_IO=RT_do_it('deltaT').or.RT_Dynamics_is_over(.false.).or.NE_i_time==OBS_RT_IO_t%last_point
-   force_OBS_caching=NE_i_time>=OBS_RT_IO_t%last_point.and.NE_i_time<=OBS_RT_IO_t%last_point+n_OBS_cache-1
+   !force_OBS_caching=(NE_i_time==NE_i_start_time).and.(NE_i_time>=OBS_RT_IO_t%last_point).and.(NE_i_time<=OBS_RT_IO_t%last_point+n_OBS_cache-1)
    !
-   if (RT_do_it('OBS_cache').or.force_OBS_caching.or.force_OBS_IO) then
+   !if (RT_do_it('OBS_cache').or.force_OBS_caching.or.force_OBS_IO) then
+   if (RT_do_it('OBS_cache').or.force_OBS_IO) then
      !
      ! Cache the current and the polarization for future writing
      !

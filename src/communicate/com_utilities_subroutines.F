@@ -264,6 +264,8 @@ subroutine yambo_flush(unit)
   !
   flush(unit)
   !
+  ! compiler specific instructions below
+  !
 #ifdef __GFORTRAN__
   ! 2020/05/18 DS
   ! These two lines are useful in long simulations

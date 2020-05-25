@@ -84,7 +84,7 @@ integer function io_X(X,Xw,ID)
 #endif
  !
  if(perform_IO) then
-   io_X=io_connect(desc=trim(db_desc),type=2,ID=ID) 
+   io_X=io_connect(desc=trim(db_desc),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_RESPONSE)
    if (io_X/=0) goto 1
  endif
  !

@@ -196,11 +196,12 @@ module IO_m
      !
    end subroutine
    !
-   integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
+   integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID,COMM)
      character(*)           :: desc
      integer,      optional :: type,ID
      character(*), optional :: subfolder
      logical,      optional :: no_full_RESET
+     logical,      optional :: FORCE_READ_MODE
      integer,      optional :: COMM
    end function
    !

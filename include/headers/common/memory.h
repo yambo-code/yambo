@@ -123,10 +123,19 @@
   allocate(x SIZE, &NEWLINE& stat=MEM_err,errmsg=MEM_msg)NEWLINE \
   if (     associated(x)) &NEWLINE& call MEM_count(QUOTES x QUOTES,x)NEWLINE \
   if (.not.associated(x)) &NEWLINE& call MEM_error(QUOTES x QUOTES)
-#define YAMBO_ALLOC(x,SIZE) \
-  allocate(x SIZE,  &NEWLINE& stat=MEM_err,errmsg=MEM_msg)NEWLINE \
+
+#define YAMBO_ALLOC_CHECK(x) \
   if (     allocated(x)) &NEWLINE& call MEM_count(QUOTES x QUOTES,x)NEWLINE \
   if (.not.allocated(x)) &NEWLINE& call MEM_error(QUOTES x QUOTES)
+#define YAMBO_ALLOC(x,SIZE) \
+  allocate(x SIZE,  &NEWLINE& stat=MEM_err,errmsg=MEM_msg)NEWLINE \
+  YAMBO_ALLOC_CHECK(x)
+#define YAMBO_ALLOC_SOURCE(x,y) \
+  allocate(x, source=y,  &NEWLINE& stat=MEM_err,errmsg=MEM_msg)NEWLINE \
+  YAMBO_ALLOC_CHECK(x)
+#define YAMBO_ALLOC_MOLD(x,y) \
+  allocate(x, mold=y,  &NEWLINE& stat=MEM_err,errmsg=MEM_msg)NEWLINE \
+  YAMBO_ALLOC_CHECK(x)
 
 #define YAMBO_FREE(x) \
   if (.not.allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \

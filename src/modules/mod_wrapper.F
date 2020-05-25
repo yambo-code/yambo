@@ -37,7 +37,11 @@ module wrapper
  implicit none
  !
  interface M_by_M
-   module procedure mm_cgemm,mm_c 
+   module procedure mm_cgemm,     mm_cgemm_APIscal
+   module procedure mm_c 
+#ifdef _CUDA
+   module procedure mm_cgemm_gpu, mm_cgemm_APIscal_gpu
+#endif
  end interface
  !
  interface M_by_V 
@@ -89,6 +93,7 @@ module wrapper
 #endif
  end interface
  !
+ public :: M_by_M
  public :: V_copy
  public :: Vstar_dot_V
  public :: Vstar_dot_VV
@@ -106,6 +111,7 @@ module wrapper
    !===================
    !
    subroutine mm_cgemm(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+     implicit none
      !
      ! CGEMM  performs one of the matrix-matrix operations
      !
@@ -129,6 +135,51 @@ module wrapper
      call CGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
 #endif
    end subroutine mm_cgemm
+   !
+   subroutine mm_cgemm_APIscal(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+     implicit none
+     complex(SP), intent(in)  :: ALPHA,BETA
+     integer,     intent(in)  :: K,LDA,LDB,LDC,M,N
+     character,   intent(in)  :: TRANSA,TRANSB
+     complex(SP), intent(in)  :: A,B
+     complex(SP), intent(out) :: C
+#if defined _DOUBLE
+     call ZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+#else
+     call CGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+#endif
+   end subroutine mm_cgemm_APIscal
+   !
+#ifdef _CUDA
+   subroutine mm_cgemm_gpu(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+     implicit none
+     complex(SP), intent(in)  :: ALPHA,BETA
+     integer,     intent(in)  :: K,LDA,LDB,LDC,M,N
+     character,   intent(in)  :: TRANSA,TRANSB
+     complex(SP), device, intent(in)  :: A(LDA,*),B(LDB,*)
+     complex(SP), device, intent(out) :: C(LDC,*)
+#  if defined _DOUBLE
+     call cublasZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+#else
+     call cublasCGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+#  endif
+   end subroutine mm_cgemm_gpu
+   !
+   subroutine mm_cgemm_APIscal_gpu(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+     implicit none
+     complex(SP), intent(in)  :: ALPHA,BETA
+     integer,     intent(in)  :: K,LDA,LDB,LDC,M,N
+     character,   intent(in)  :: TRANSA,TRANSB
+     complex(SP), device, intent(in)  :: A,B
+     complex(SP), device, intent(out) :: C
+#  if defined _DOUBLE
+     call cublasZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+#else
+     call cublasCGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+#  endif
+   end subroutine mm_cgemm_APIscal_gpu
+   !
+#endif
    !
    subroutine mm_c(TRANSA,TRANSB,msize,A,B,C)
      integer,  intent(in)  :: msize

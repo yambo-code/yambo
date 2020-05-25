@@ -149,6 +149,7 @@ subroutine RT_initialize(E,k,q)
  !=============================================
  call SETUP_RT_IO_type(CARR_RT_IO_t,.TRUE.)
  call SETUP_RT_IO_type(OUTPUT_RT_IO_t,.TRUE.)
+ GF_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(GF_RT_IO_t%INTERVAL_time_SAVE,CARR_RT_IO_t%INTERVAL_time_SAVE)
  call SETUP_RT_IO_type(GF_RT_IO_t,.TRUE.)
  !
  ! Set (J,P,M) caching variables and I/O steps

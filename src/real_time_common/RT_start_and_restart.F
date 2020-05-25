@@ -43,7 +43,8 @@ subroutine RT_start_and_restart(E,k,q)
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
  use RT_control,     ONLY:ID,NE_i_start_time,CARR_RT_IO_t,OBS_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,&
-&                         CACHE_OBS_INTERVAL_time,TIME_adjust,STEP_adjust
+&                         CACHE_OBS_INTERVAL_time,CACHE_OBS_steps,TIME_adjust,STEP_adjust,      &
+&                         SETUP_RT_IO_type,RT_control_alloc,RT_control_free
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,l_RT_is_WFfree, &
@@ -252,8 +253,15 @@ subroutine RT_start_and_restart(E,k,q)
    call msg('r',  'Time reached                  [fs]',real(NE_i_time)*RT_step*AUT2FS)
    call msg('r',  'Time step                     [fs]',RT_dyn_step*AUT2FS)
    !
+   if(NE_time_step_update_jump>0._SP) OBS_RT_IO_t%INTERVAL_time=TIME_adjust(OBS_RT_IO_t%INTERVAL_time,NE_time_step_update_jump)
    CACHE_OBS_INTERVAL_time = max(TIME_adjust(CACHE_OBS_INTERVAL_time,RT_dyn_step),RT_dyn_step)
    CACHE_OBS_INTERVAL_time=STEP_adjust(OBS_RT_IO_t%INTERVAL_time,CACHE_OBS_INTERVAL_time,RT_dyn_step)
+   !
+   call SETUP_RT_IO_type(OBS_RT_IO_t,.FALSE.)
+   !
+   CACHE_OBS_steps=OBS_RT_IO_t%INTERVAL_steps/nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)/nint(RT_dyn_step/RT_step)
+   call RT_control_free("cache")
+   call RT_control_alloc("cache")
    !
    call msg('r',  'dT Update Interval            [fs]',NE_time_step_update_jump*AUT2FS)
    call msg('r',  'Lifetimes inter/intr times    [fs]',RT_life_extrap_times*AUT2FS)

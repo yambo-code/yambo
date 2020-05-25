@@ -73,7 +73,7 @@ integer function io_WF(ID,wf,wf_d)
    i_sp_pol=2
  endif
  !
- io_WF=io_connect(desc="wf",type=0,ID=ID)
+ io_WF=io_connect(desc="wf",type=0,ID=ID,FORCE_READ_MODE=(head_io/=1).and.frag_WF)
  if (io_WF/=0) goto 1
  !
  ! S/N

@@ -28,7 +28,7 @@ subroutine RT_databases_IO(E)
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
 &                         GF_RT_IO_t,CARR_RT_IO_t,CACHE_OBS_steps_now,CACHE_OBS_steps,CACHE_OBS_INTERVAL_time,    &
-&                         SAVE_G_history,NE_i_start_time
+&                         CACHE_OBS_last_point,SAVE_G_history,NE_i_start_time
  use real_time,      ONLY:NE_i_time,NE_steps,l_NE_dynamics,RT_nk,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,&
 &                         l_NE_with_fields,RT_step,RT_dyn_step
  use IO_m,           ONLY:io_control,manage_action,NONE, &
@@ -48,8 +48,8 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- logical           :: write_OBS,force_OBS
- integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time
+ logical           :: write_OBS,force_OBS_IO!,force_OBS_caching
+ integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,n_OBS_cache
  integer, external :: io_RT_components
  logical, external :: RT_Dynamics_is_over
  !
@@ -65,17 +65,22 @@ subroutine RT_databases_IO(E)
    if(NE_i_time==NE_i_start_time) then
      call io_control(ACTION=OP_APP,COM=NONE,SEC=(/1/),ID=ID(4)) 
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
+     CACHE_OBS_last_point=OBS_RT_IO_t%last_point
    endif
    !
-   force_OBS=RT_do_it('deltaT').or.RT_Dynamics_is_over(.false.)
+   n_OBS_cache=nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)
+   force_OBS_IO=RT_do_it('deltaT').or.RT_Dynamics_is_over(.false.).or.NE_i_time==OBS_RT_IO_t%last_point
+   !force_OBS_caching=(NE_i_time==NE_i_start_time).and.(NE_i_time>=OBS_RT_IO_t%last_point).and.(NE_i_time<=OBS_RT_IO_t%last_point+n_OBS_cache-1)
    !
-   if (RT_do_it('OBS_cache').or.NE_i_time>=OBS_RT_IO_t%last_point.or.force_OBS) then
+   !if (RT_do_it('OBS_cache').or.force_OBS_caching.or.force_OBS_IO) then
+   if (RT_do_it('OBS_cache').or.force_OBS_IO) then
      !
      ! Cache the current and the polarization for future writing
      !
      i_time=NE_i_time
-     if((OBS_RT_IO_t%last_point-1)/nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)>-1) i_time=i_time-OBS_RT_IO_t%last_point
-     i_time=(i_time-1)/nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)+1
+     CACHE_OBS_last_point=NE_i_time
+     if((OBS_RT_IO_t%last_point-1)/n_OBS_cache>-1) i_time=i_time-OBS_RT_IO_t%last_point
+     i_time=(i_time-1)/n_OBS_cache+1
      i_time=i_time/nint(RT_dyn_step/RT_step)
      !
      if(i_time>0) then
@@ -97,7 +102,7 @@ subroutine RT_databases_IO(E)
        A_cache(1:3,3,i_time)=A_tot%vecpot_acc
      endif
      !
-     write_OBS=RT_do_it('OBS').or.NE_i_time==OBS_RT_IO_t%last_point.or.force_OBS
+     write_OBS=RT_do_it('OBS').or.force_OBS_IO
      !
      if(write_OBS) then
        !

@@ -55,7 +55,9 @@ module parallel_m
  !
  use pars,       ONLY:SP,DP,schlen,lchlen,max_n_of_cpus,MAX_N_GROUPS,MAX_N_OF_CHAINS,n_CPU_str_max
  !
+#if !defined _io_lib
 #include<memory.h>
+#endif
  !
 #if defined _MPI
  include 'mpif.h'
@@ -523,6 +525,7 @@ module parallel_m
      i_INTER_CHAIN=(myid/N_father)*(N_father/N_child)+mod(myid,N_father/N_child)
    end function
    !
+#if !defined _io_lib
    character(lchlen) function PARALLEL_message(i_s)
      use stderr, ONLY:intc
      use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K, &
@@ -554,6 +557,7 @@ module parallel_m
      endif
      !
    end function
+#endif
    !
    subroutine CPU_and_ROLE_strings_save()
      implicit none
@@ -608,6 +612,7 @@ module parallel_m
      COMM_out%CPU_ID     =COMM_in%CPU_ID
    end subroutine
    !
+#if !defined _io_lib
    subroutine PAR_INDEX_copy(IND_in,IND_out)
      type(PP_indexes):: IND_in,IND_out
      integer :: dim_
@@ -647,6 +652,7 @@ module parallel_m
      YAMBO_FREE(IND_out%first_of_1D)
      YAMBO_FREE(IND_out%last_of_1D)
    end subroutine
+#endif
    !
    subroutine PARALLEL_wait(COMM)
      integer, optional :: COMM

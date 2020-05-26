@@ -32,10 +32,12 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  use pars,          ONLY:LP,SP,DP,schlen,msg_len
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use netcdf
+#if !defined _io_lib
  use drivers, ONLY:list_dbs
+#endif
  use com,     ONLY:msg,com_compose_msg
  use stderr,  ONLY:STRING_pack,int2log,log2int
- use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
+ use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                  io_status,DUMP,REP,LOG,NO_VAR,io_com,io_file,&
 &                  io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR
@@ -91,7 +93,9 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  !
  msg_where=""
  if (io_com(ID)==REP            ) msg_where="r"
+#if !defined _io_lib
  if (io_com(ID)==LOG.or.list_dbs) msg_where="s"
+#endif
  !
  ! I0
  !

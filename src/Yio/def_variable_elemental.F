@@ -25,11 +25,13 @@ subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
  !
  use netcdf
  use pars,       ONLY:SP,DP,IP,LP,schlen,lchlen,nf90_SP,DB_menu_length
+#if !defined _io_lib
  use drivers,    ONLY:list_dbs
+#endif
  use com,        ONLY:msg
  use parallel_m, ONLY:ncpu
  use stderr,     ONLY:STRING_pack
- use IO_m,       ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
+ use IO_m,       ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,&
 &                     netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                     io_status,DUMP,REP,LOG,io_com,io_file,&
 &                     io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR
@@ -107,7 +109,9 @@ subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
    !
    msg_where=""
    if (io_com(ID)==REP            ) msg_where="r"
+#if !defined _io_lib
    if (io_com(ID)==LOG.or.list_dbs) msg_where="s"
+#endif
    !
    if (VAR_SZ>0) then
      if (write_is_on(ID)) MODE="[WR"

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,12 +23,12 @@
 !
 subroutine REPORT_Occupations(what,E)
  !
- use pars,          ONLY:SP,lchlen,schlen
+ use pars,          ONLY:SP,schlen,msg_len
  use units,         ONLY:HA2EV,BO2ANG,HA2EV,HA2KEL
  use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
  use drivers,       ONLY:Finite_Tel
  use com,           ONLY:msg
- use electrons,     ONLY:levels,n_sp_pol,nel,spin_occ
+ use electrons,     ONLY:levels,n_sp_pol,nel,spin_string
  use interfaces,    ONLY:OCCUPATIONS_Gaps
  !
  implicit none
@@ -38,21 +38,20 @@ subroutine REPORT_Occupations(what,E)
  ! 
  ! Work Space
  ! 
- integer           ::i_sp_pol
- integer           ::first_occ_state
- integer           ::Nbf(n_sp_pol)
- integer           ::Nbm(n_sp_pol)
- character(lchlen) ::ch_,prefix_
+ integer           ::i_sp_pol,Nbf(n_sp_pol),Nbm(n_sp_pol),title_len
  character(schlen) ::title
- real(SP)          ::N_met
- real(SP)          ::f_met
- real(SP)          ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min - max
- real(SP)          ::E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
+ real(SP)          ::N_met,f_met,val(10,2,1+(n_sp_pol-1)*2)
+ real(SP)          ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min gap - max gap
+ real(SP)          ::E_g_ind(1+(n_sp_pol-1)*2,3) ! min - val. band width - cond. band width
  !
  ! Title
  !
  title=""
- if (len_trim(what)>0) title="["//trim(what)//"]"
+ title_len=0
+ if (len_trim(what)>0) then 
+   title_len=3+len_trim(what)
+   title="["//trim(what)//"] "
+ endif
  !
  ! Gaps, VBM/CBM
  !
@@ -60,91 +59,80 @@ subroutine REPORT_Occupations(what,E)
  !
  ! Initial Report
  !
- call msg('r',trim(title)//'Fermi Level        [ev]: ',E%E_Fermi*HA2EV)
- do i_sp_pol=1,n_sp_pol
-   call msg('r',trim(title)//'VBM / CBm          [ev]: ',(/E%E_VBM(i_sp_pol),E%E_CBm(i_sp_pol)/)*HA2EV)
- enddo
- call msg('r',trim(title)//'Electronic Temp. [ev K]: ',(/Tel*HA2EV,Tel*HA2KEL/))
- call msg('r',trim(title)//'Bosonic    Temp. [ev K]: ',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
- call msg('r',trim(title)//'Finite Temperature mode: ',Finite_Tel)
- call msg('r',trim(title)//'El. density      [cm-3]: ',(/nel/(DL_vol*BO2ANG**3*1.E-24)/))
- call msg('r',trim(title)//'States summary         : Full        Metallic    Empty')
- !
- ! [1] States occupations
+ if (n_sp_pol==1) call msg('r',title(1:title_len)//"=== General ===")
+ if (n_sp_pol==2) call msg('r',title(1:title_len)//"=== Spin Independent ===")
+ call msg('r',COMPOSE_msg('Electronic Temperature',0),(/Tel*HA2EV,Tel*HA2KEL/),'[eV K]')
+ call msg('r',COMPOSE_msg('Bosonic    Temperature',0),(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/),'[eV K]')
+ call msg('r',COMPOSE_msg('Finite Temperature mode',0),Finite_Tel)
+ call msg('r',COMPOSE_msg('El. density',0),(/nel/(DL_vol*BO2ANG**3*1.E-24)/),'[cm-3]')
+ call msg('rn',COMPOSE_msg('Fermi Level',0),E%E_Fermi*HA2EV,'[eV]')
  !
  do i_sp_pol=1,n_sp_pol
-   first_occ_state=1
    !
-   prefix_=''
-   if (n_sp_pol>1.and.i_sp_pol==1) prefix_=trim(title)//'             [spin up]'
-   if (n_sp_pol>1.and.i_sp_pol==2) prefix_=trim(title)//'                  [dn]'
-   !
-   if (Nbf(i_sp_pol)==0) first_occ_state=0
-   if (Nbf(i_sp_pol)/=Nbm(i_sp_pol)) then
-     write (ch_,'(3(i4.4,a,i4.4,3x))') first_occ_state,'-',Nbf(i_sp_pol),&
-&          Nbf(i_sp_pol)+1,'-',Nbm(i_sp_pol),Nbm(i_sp_pol)+1,'-',E%nb
+   if (n_sp_pol==2) then
+     call msg('r',title(1:title_len)//"=== Spin "//spin_string(i_sp_pol)//" channel ===")
    else
-     write (ch_,'(2(i4.4,a,i4.4,15x))') first_occ_state,'-',Nbf(i_sp_pol),Nbf(i_sp_pol)+1,'-',E%nb
+     call msg('r',title(1:title_len)//"=== Gaps and Widths ===")
    endif
-   call msg('r',prefix_(1:25+len_trim(what))//repeat(" ",len_trim(title))//'  '//trim(ch_))
+   !
+   call msg('r',COMPOSE_msg('Conduction Band Min',i_sp_pol),E%E_CBm(i_sp_pol)*HA2EV,'[eV]')
+   call msg('r',COMPOSE_msg('Valence Band Max',i_sp_pol),E%E_VBM(i_sp_pol)*HA2EV,'[eV]')
+   !
+   if (Nbf(i_sp_pol)> 0) then
+     call msg('r',COMPOSE_msg('Filled Bands',i_sp_pol),Nbf(i_sp_pol))
+   endif
+   !
+   if (Nbm(i_sp_pol)>Nbf(i_sp_pol)) then
+     call msg('r',COMPOSE_msg('Metallic Bands',i_sp_pol), (/Nbf(i_sp_pol)+1,Nbm(i_sp_pol)/))
+   endif
+   !
+   if (E%nb>Nbm(i_sp_pol)) then
+     call msg('r',COMPOSE_msg('Empty Bands',i_sp_pol),(/Nbm(i_sp_pol)+1,E%nb/)) 
+   endif
+   !
+   if (Nbf(i_sp_pol)==Nbm(i_sp_pol).and.Nbf(i_sp_pol)>0) then
+     call msg('r',COMPOSE_msg('Direct Gap',i_sp_pol),E_g_dir(i_sp_pol,1)*HA2EV,'[eV]')
+     if (E%nk>1) then
+       call msg('r',COMPOSE_msg('Indirect Gap',i_sp_pol),E_g_ind(i_sp_pol,1)*HA2EV,'[eV]')
+       call msg('r',COMPOSE_msg('Last valence band width',i_sp_pol),E_g_ind(i_sp_pol,2)*HA2EV,'[eV]')
+       call msg('r',COMPOSE_msg('1st conduction band width',i_sp_pol),E_g_ind(i_sp_pol,3)*HA2EV,'[eV]')
+     endif
+   endif
+   !
+   call msg('r',' ')
    !
  enddo
- !
- ! [2] Indirect Gaps (min/max)
- !
- if(all(Nbf==Nbm)) then
-   prefix_=                               trim(title)//'Indirect Gaps      [ev]'
-   call msg('r',prefix_(1:25+len_trim(what))//':',E_g_ind(1,:)*HA2EV)
- endif
- !
- if(n_sp_pol==2.and.any(Nbf==Nbm)) then 
-   do i_sp_pol=1,n_sp_pol
-     if (Nbf(i_sp_pol)/=Nbm(i_sp_pol)) cycle
-     if (Nbf(i_sp_pol)==0) cycle
-     if (i_sp_pol==1) prefix_=trim(title)//'              [spin up]'
-     if (i_sp_pol==2) prefix_=trim(title)//'              [spin dn]'
-     call msg('r',prefix_(1:25+len_trim(what))//':',E_g_ind(i_sp_pol+1,:)*HA2EV)
-   enddo
- endif
- !
- ! [3] Direct Gaps (min/max)
- !
- if(all(Nbf==Nbm)) then
-   prefix_=trim(title)//'Direct Gaps        [ev]'
-   call msg('r',prefix_(1:25+len_trim(what))//':',E_g_dir(1,:)*HA2EV)
- endif
- !
- if(n_sp_pol==2.and.any(Nbf==Nbm)) then 
-   do i_sp_pol=1,n_sp_pol
-     if (Nbf(i_sp_pol)/=Nbm(i_sp_pol)) cycle
-     if (Nbf(i_sp_pol)==0) cycle
-     if (i_sp_pol==1) prefix_=trim(title)//'              [spin up]'
-     if (i_sp_pol==2) prefix_=trim(title)//'              [spin dn]'
-     call msg('r',prefix_(1:25+len_trim(what))//':',E_g_dir(i_sp_pol+1,:)*HA2EV)
-   enddo
- endif
- !
- !
- ! [3] Report if the system is treated as a metal
+ ! Report if the system is treated as a metal
  !
  if (.not.all(Nbf==Nbm)) then
    !
-   N_met=0
-   f_met=0
-   do i_sp_pol=1,n_sp_pol
-     f_met=f_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/sum(spin_occ*real(E%nk*(Nbm(:)-Nbf(:))))
-     N_met=N_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk)
-   enddo
+   call msg('r',title(1:title_len)//"=== Metallic Characters ===")
    !
-   call msg('r',trim(title)//'N of el / N of met el  : ',       (/nel,N_met/))
-   call msg('r',trim(title)//'Average metallic occ.  :            ',(/f_met/))
+   call msg('r',COMPOSE_msg('N of el / N of met el',0),(/nel,N_met/))
+   call msg('r',COMPOSE_msg('Average metallic occ.',0),(/f_met/))
    !
-   if (n_sp_pol==1) call warning(trim(title)//' Metallic system')
-   if(n_sp_pol==2) then
-     if(all(Nbf/=Nbm)) call warning(trim(title)//' Metallic system')
-     if(any(Nbf==Nbm)) call warning(trim(title)//' System is an half-metal')
+   if (n_sp_pol==1) call warning(COMPOSE_msg('Metallic system',0))
+   if (n_sp_pol==2) then
+     if(all(Nbf/=Nbm)) call warning(COMPOSE_msg('Metallic system',0))
+     if(any(Nbf==Nbm)) call warning(COMPOSE_msg('System is an half-metal',0))
    endif
    !
  endif
  !
+ call msg('r','')
+ !
+ contains
+   !
+   character(msg_len) function COMPOSE_msg(msg_,i_spin)
+     use com,  ONLY:com_compose_msg
+     character(*) :: msg_
+     integer      :: i_spin
+     !ws
+     character(schlen) :: spin_ch
+     spin_ch=" "
+     if (n_sp_pol==2.and.i_spin==1) spin_ch="  [spin UP]"
+     if (n_sp_pol==2.and.i_spin==2) spin_ch=" [spin DN]"
+     COMPOSE_msg=com_compose_msg(title(1:title_len),msg_,spin_ch)
+   end function
+   !
 end subroutine

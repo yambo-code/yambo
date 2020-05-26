@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -133,7 +133,7 @@ subroutine NL_driver(en,k)
  if((RT_conf%T_range(2) - RT_conf%T_range(1))<T_period) &
 &   call warning('Simulation time not long enough. Period is'//trim(real2ch(T_period*AUT2FS))//' fs')
  !
- call msg('s',':: Field type    :', trim(Efield_probe%ef_name))
+ call msg('s',' Field type    ', trim(Efield_probe%ef_name))
  !
  select case (trim(Efield_probe%ef_name))
    !
@@ -149,13 +149,13 @@ subroutine NL_driver(en,k)
        Harmonic_Frequency(i_order,:)=real(i_order,SP)*Probe_Frequency(:)
      enddo
      !
-     call msg('s',':: Harmonic frequencies    [eV]:',(/minval(Harmonic_Frequency),maxval(Harmonic_Frequency)/)*HA2EV)
+     call msg('s',' Harmonic frequencies    [eV]',(/minval(Harmonic_Frequency),maxval(Harmonic_Frequency)/)*HA2EV)
      !
      ! Find the Fourier coefficients by inversion
      !
-     call msg('s','[RT] Effective max time period [fs]:',T_period*AUT2FS)
+     call msg('s','[RT] Effective max time period [fs]',T_period*AUT2FS)
      !
-     call live_timing('X effective :', n_frequencies)
+     call live_timing('X effective ', n_frequencies)
      !
      time_range_save=RT_conf%T_range
      !
@@ -232,8 +232,8 @@ contains
      use RT_control,     ONLY:RT_output
      use com,            ONLY:msg,of_open_close
      use vec_operate,    ONLY:sort
-     use stderr,         ONLY:set_real_printed_length
-     use nl_optics,      ONLY:n_NL_descriptions,NL_description
+     use interfaces,     ONLY:DESC_write
+     use nl_optics,      ONLY:NL_desc
      !
      ! Working Space
      !
@@ -259,13 +259,9 @@ contains
        !
        X_file_name="YPP-X_probe_order_"//trim(intc(i_order))
        !
-       call set_real_printed_length(f_length=15,g_length=15)
-       !
        call of_open_close(trim(X_file_name),'ot')
        !
-       do i_dsc=1,n_NL_descriptions
-         call msg('o '//trim(X_file_name),'#',trim(NL_description(i_dsc)),INDENT=0)
-       enddo
+       call DESC_write('o '//trim(X_file_name),'#',NL_desc)
        !
        call msg('o '//trim(X_file_name),'#')
        call msg('o '//trim(X_file_name),'#',headings(1:n_headings),INDENT=0,USE_TABS=.TRUE.)
@@ -295,8 +291,6 @@ contains
        enddo 
        !
        call of_open_close(trim(X_file_name))
-       !
-       call set_real_printed_length()
        !
      enddo
      !

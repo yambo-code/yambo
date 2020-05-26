@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,7 +28,8 @@ subroutine XCo_driver(E,k,Xk,q)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use QP_m,          ONLY:QP_Vxc,QP_Vnl_xc,QP_n_states,XCo_Hartree_Fock,QP_t,Vxc_kind,Vnlxc_kind
+ use QP_m,          ONLY:QP_n_states,XCo_Hartree_Fock,QP_t,Vxc_kind,Vnlxc_kind,&
+&                        QP_Vxc,QP_Vnl_xc,QP_Vnl_sex,QP_XCo_alloc,QP_XCo_free
  use interfaces,    ONLY:WF_free
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening,EXT_NONE,WF_kind,&
@@ -44,16 +45,12 @@ subroutine XCo_driver(E,k,Xk,q)
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
  !
- ! Screened Hybrids
- !
- logical                :: l_screen_hyb
- complex(SP),allocatable:: QP_Vnl_sex(:)
- !
  ! Reporting
  !
  character(schlen) ::sec_mode_and_message(2),ch
  integer           ::WF_kind_no_H
- logical           ::l_Vxc,l_Vnl_xc,l_section,l_load_SC_V
+ logical           ::l_section,l_load_SC_V
+ logical           ::l_Vxc,l_Vnl_xc,l_screen_hyb
  type(QP_t)        ::qp
  !
  ! IO
@@ -82,8 +79,12 @@ subroutine XCo_driver(E,k,Xk,q)
  !
 #endif
  !
+ !
+ ! Logicals setup
+ !
  l_Vxc   =.not.l_sc_run.and..not.l_real_time
  l_Vnl_xc=.TRUE.
+ l_screen_hyb=(WF_exx_screening > rZERO) 
  !
 #if defined _SC
  WF_kind_no_H=WF_kind
@@ -99,7 +100,7 @@ subroutine XCo_driver(E,k,Xk,q)
 #endif
  !
  if (.not.l_Vxc.and..not.l_Vnl_xc) then
-  if (l_sc_run) call LOCAL_alloc()
+  if (l_sc_run) call QP_XCo_alloc(l_Vxc,l_Vnl_xc,l_screen_hyb)
   return
  endif
  !
@@ -121,13 +122,9 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  call QP_state_table_setup(E)
  !
- ! Logicals setup
- !
- l_screen_hyb=(WF_exx_screening.gt.rZERO) 
- !
  ! Allocation
  !
- call LOCAL_alloc()
+ call QP_XCo_alloc(l_Vxc,l_Vnl_xc,l_screen_hyb)
  !
  ! Main DB I/O
  !
@@ -154,7 +151,8 @@ subroutine XCo_driver(E,k,Xk,q)
    ! ... hybrids
    !
    if (l_screen_hyb) then                           
-     call XCo_Hartree_Fock(E,k,xk,q,mode='hyb')    ! For screened hybrids calculate the  model nonlocal screened exchange part
+     ! For screened hybrids calculate the  model nonlocal screened exchange part
+     call XCo_Hartree_Fock(E,k,xk,q,mode='hyb')
      QP_Vnl_sex=QP_Vnl_xc                        
      QP_Vnl_xc=cZERO                                
    end if
@@ -180,7 +178,7 @@ subroutine XCo_driver(E,k,Xk,q)
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...
    else
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_sex 
-     YAMBO_FREE(QP_Vnl_sex)
+     call QP_XCo_free(l_screen_hyb=.true.)
    endif
    !
    call PP_nlcc_free()
@@ -224,28 +222,4 @@ subroutine XCo_driver(E,k,Xk,q)
    !
  endif
  !
- contains
-   !
-   subroutine LOCAL_alloc()
-     if (.not.allocated(QP_Vnl_xc).and.l_Vnl_xc) then
-       YAMBO_ALLOC(QP_Vnl_xc,(QP_n_states))
-     endif
-     if (.not.allocated(QP_Vxc).and.l_Vxc) then
-       YAMBO_ALLOC(QP_Vxc,(QP_n_states))
-     endif
-     if (.not.allocated(QP_Vnl_sex).and.l_screen_hyb) then
-       YAMBO_ALLOC(QP_Vnl_sex,(QP_n_states))
-       QP_Vnl_sex=cZERO
-     endif
-     if (l_Vnl_xc) then
-       QP_Vnl_xc=cZERO
-     endif
-     if (l_Vxc) then
-       QP_Vxc=cZERO
-     endif
-     if (l_screen_hyb) then
-       QP_Vnl_sex=cZERO
-     endif
-   end subroutine
-   !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -89,7 +89,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
      YAMBO_ALLOC(DbGd_k%weights,(BZ_DbGd_tot_nk_levels))
      DbGd_k%pt=BZ_DbGd_kpts
      DbGd_k%weights=1._SP/real(BZ_DbGd_tot_nk_levels,SP)
-     YAMBO_ALLOC(E%df_DbGd,(E%nb,BZ_DbGd_tot_nk_levels,n_sp_pol))
+     YAMBO_ALLOC(E%df_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
      E%df_DbGd=0._SP
      call Interpolate_and_transfer("df",DbGd_k,.TRUE.)
      E%f_DbGd=E%f_DbGd+E%df_DbGd
@@ -130,20 +130,20 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  !
  call msg('nr',   'Updated Carrier components')
  call msg('rn',   '==========================')
- call msg('r',    '['//trim(title)//'] Reference Time           [fs]: ',Time*AUT2FS)
- call msg('r',    '['//trim(title)//'] Bands range                  : ', (/nb(1),nb(2)/)) 
+ call msg('r',    '['//trim(title)//'] Reference Time           [fs] ',Time*AUT2FS)
+ call msg('r',    '['//trim(title)//'] Bands range                   ', (/nb(1),nb(2)/)) 
  !
  if (l_f) then
-   call msg('r',  '['//trim(title)//'] Maximum occupations change   : ',df_Max)
-   call msg('r',  '['//trim(title)//'] N of carriers                : ',N_carriers(1))
-   if (l_DbGd) call msg('r',  '['//trim(title)//']                 (Double Grid): ',N_carriers(2))
+   call msg('r',  '['//trim(title)//'] Maximum occupations change    ',df_Max)
+   call msg('r',  '['//trim(title)//'] N of carriers                 ',N_carriers(1))
+   if (l_DbGd) call msg('r',  '['//trim(title)//']                 (Double Grid) ',N_carriers(2))
  endif
  !
  if (l_E) then
-   call msg('r',  '['//trim(title)//'] Max energy levels change [ev]: ',dE_Max*HA2EV)
+   call msg('r',  '['//trim(title)//'] Max energy levels change [ev] ',dE_Max*HA2EV)
  endif
  !
- call msg('rn',  '['//trim(title)//'] Full and metallic bands       : ', (/E%nbf,E%nbm/)) 
+ call msg('rn',  '['//trim(title)//'] Full and metallic bands        ', (/E%nbf,E%nbm/)) 
  !
  if (.not.l_real_time) call REPORT_Occupations(trim(title),E)
  !

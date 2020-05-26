@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 subroutine CLOSE_the_run(MEM,TIME,INIT_stop)
  !
- use timing_m,       ONLY:timing_overview,timing_deallocate,global_list
+ use timing_m,       ONLY:timing_deallocate,global_list
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_reset
@@ -51,7 +51,7 @@ subroutine CLOSE_the_run(MEM,TIME,INIT_stop)
    !
    call section('*','Timing Overview')
    !
-   call timing_overview(LIST=global_list,MAIN_NAME="yambo")
+   call TIMING_overview(global_list,"yambo")
    !
  endif
  !

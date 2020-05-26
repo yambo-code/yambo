@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,7 +26,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  ! Load and (eventually) FFTs the wavefunctions
  !
  use pars,          ONLY:SP,DP,schlen
- use com,           ONLY:msg,core_io_path
+ use com,           ONLY:msg,core_io_path,fat_log
  use vec_operate,   ONLY:c2a
  use stderr,        ONLY:intc
  use electrons,     ONLY:nel,n_spinor,n_sp_pol
@@ -282,7 +282,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  ! LOG the states loaded
  !
- if (.not.(QUIET_alloc.or.QUIET_free)) then
+ if (.not.(QUIET_alloc.or.QUIET_free).and.fat_log) then
    if (buffer_is_ok.and.WF%space/="B") then
      call msg('rns','[WF'//trim(wf_title)//'] Loading Wave-Functions from buffer')
    else
@@ -290,7 +290,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    endif
  endif
  !
- if (WF%space=='R'.and..not.(QUIET_alloc.or.QUIET_free)) call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
+ if (WF%space=='R'.and..not.(QUIET_alloc.or.QUIET_free)) call msg('rns','[FFT'//trim(wf_title)//'] Mesh size',fft_dim)
 
  !
  ! actual IO
@@ -578,7 +578,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  enddo
  !
  wf_norm_test=.false.
- call msg('rn','[WF'//trim(wf_title)//' loader] Normalization (few states)  min/max  :',(/mndp,mxdp/))
+ call msg('rn','[WF'//trim(wf_title)//' loader] Normalization (few states)  min/max  ',(/mndp,mxdp/))
  !
  if (QUIET_alloc) call IO_and_Messaging_switch("+report +log ")
  !

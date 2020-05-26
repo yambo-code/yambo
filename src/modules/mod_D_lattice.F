@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -131,7 +131,7 @@ module D_lattice
        enddo
      enddo
      if (any(sop_inv==0)) call error('[SYMs] check the input symmetries!')
-     call msg(msg_where,'[SYMs] Group table built correctly')
+     call msg(msg_where,'Group table correct   ',.true.)
      !
 #ifdef _CUDA
      if(allocated(sop_inv_d)) deallocate(sop_inv_d)

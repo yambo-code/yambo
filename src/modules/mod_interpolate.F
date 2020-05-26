@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -46,6 +46,7 @@ module interpolate
  !
  ! NN method
  !
+ integer :: OUT_k_nk=0
  integer :: NN_nk_exact=0
  integer :: NN_n_of_nearest=1
  integer :: NN_MAX_real_nearest=0
@@ -90,6 +91,7 @@ module interpolate
    integer                  :: ID=0
    logical                  :: in_use=.FALSE.
    logical                  :: use_NN=.FALSE.
+   character(schlen)        :: seed_kind=" "
    character(schlen)        :: what=" "
    real(SP),    allocatable :: weights(:)
    real(SP),    allocatable :: k(:,:)
@@ -112,7 +114,7 @@ module interpolate
      real(SP)                :: V_out(:,:,:)
    end subroutine
    !
-   subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
+   subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,ID,ID_obj)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      use electrons,  ONLY:levels
@@ -121,7 +123,6 @@ module interpolate
      real(SP),      intent(in), optional :: R1D(:,:),R2D(:,:,:)
      complex(SP),   intent(in), optional :: C1D(:,:),C2D(:,:,:)
      type(levels),  intent(in), optional :: E
-     integer,       intent(in), optional :: Nk
      integer,       intent(in)           :: ID_obj
      integer,       intent(out)          :: ID
    end subroutine  INTERPOLATION_coefficients

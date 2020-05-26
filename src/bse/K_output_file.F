@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,16 +26,17 @@ subroutine K_output_file(iq,mode)
  use pars,      ONLY:pi,SP
  use units,     ONLY:HA2EV
  use drivers,   ONLY:l_col_cut
- use BS_solvers,ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
-&                    BSS_n_descs,BSS_n_freqs,K_diago_in_BS_mat
+ use BS_solvers,ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,&
+&                    BSS_n_freqs,K_diago_in_BS_mat
  use BS,        ONLY:BSE_mode,BS_K_is_ALDA,BSqpts
  use X_m,       ONLY:Epsilon_ii,Joint_DOS,eval_alpha,eps_2_alpha,alpha_dim,OPTICS_eels
  use com,       ONLY:msg,of_open_close
  use parser_m,  ONLY:parser
  use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,jdos_file_name,&
-&                    eel_file_name,alpha_file_name,refl_file_name,X_write_descriptions,&
+&                    eel_file_name,alpha_file_name,refl_file_name,&
 &                    X_write_messages_before_headers,X_write_q_plus_g
  use R_lattice, ONLY:bare_qpg,q_norm
+ use interfaces,ONLY:DESC_write
 #if defined _KERR
  use pars,      ONLY:cI
  use electrons, ONLY:spin_occ
@@ -132,7 +133,7 @@ subroutine K_output_file(iq,mode)
  !
  ! Description of the run and headers for output files:
  !
- call X_write_descriptions(BSS_n_descs,BSS_description)
+ call DESC_write('o eps_q refl eel_q fxc alpha off beta moke jdos','#',BSS_desc)
  !
  if (l_INIT) then 
    call CLOSE_the_files( )

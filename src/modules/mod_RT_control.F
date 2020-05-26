@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -25,34 +25,34 @@ module RT_control
  !
  use pars,       ONLY:SP,lchlen,schlen,rZERO
  use units,      ONLY:AUT2FS
- use real_time,  ONLY:l_NE_dynamics,l_elph_scatt
+ use real_time,  ONLY:l_NE_dynamics,l_NE_with_fields,l_elph_scatt
  !
 #include<memory.h>
  !
- integer                  :: n_RT_descriptions = 0
- character(lchlen)        :: RT_description(100)
+ integer                  :: CACHE_OBS_last_point
+ real(SP)                 :: CACHE_OBS_INTERVAL_time
+ real(SP)                 :: CACHE_OBS_INTERVAL_time_SAVE
+ integer                  :: CACHE_OBS_steps
+ integer                  :: CACHE_OBS_steps_now
  !
- integer                  :: n_TIME_STEP_CONF_descriptions = 0
- character(lchlen)        :: TIME_STEP_CONF_description(100)
- !
- integer                  :: IO_OBS_cache_steps=1
- !
- integer                  :: ID(8)
+ integer                  :: ID(8)                    ! (/3 GFPAR,4 OBS,5 GFSER,6 OCC,7 THETA,8 REF)
  integer                  :: NE_i_start_time    = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point
  type RT_IO_t
-   integer               :: N              = 0
-   integer               :: INTERVAL_steps =-1
-   integer               :: last_point     = 0
+   integer               :: N
+   integer               :: INTERVAL_steps
+   integer               :: last_point
    real(SP)              :: INTERVAL_time
    real(SP)              :: INTERVAL_time_SAVE
    real(SP), allocatable :: Time(:)
  end type
  !
+ logical                  :: RT_NAN_found=.FALSE.
  logical                  :: SAVE_G_history
  !
  type(RT_IO_t),save  :: OBS_RT_IO_t
+ type(RT_IO_t),save  :: CARR_RT_IO_t
  type(RT_IO_t),save  :: OUTPUT_RT_IO_t
  type(RT_IO_t),save  :: GF_RT_IO_t
  !
@@ -61,7 +61,8 @@ module RT_control
  complex(SP), allocatable    :: J_cache(:,:)
  complex(SP), allocatable    :: P_cache(:,:)
  complex(SP), allocatable    :: Ms_cache(:,:)
- complex(SP), allocatable    :: Ml_cache(:,:)
+ complex(SP), allocatable    :: Ml_cache(:,:,:)
+ complex(SP), allocatable    :: A_cache(:,:,:)
  !
  ! TD-ABS and RT-BSE [yambo]
  !
@@ -80,19 +81,20 @@ module RT_control
      real(SP), optional, intent(in) :: E
    end subroutine
    !
-   subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
+   subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ONLY)
     use pars,           ONLY:SP
     use electrons,      ONLY:levels
     use R_lattice,      ONLY:bz_samp
     implicit none
-    integer      :: bands(2)
-    type(levels) :: E
-    type(bz_samp):: K
-    character(*),optional :: what ! X,K,G
-    logical ,    optional :: VERBOSE
-    integer ,    optional :: IO_COM
-    real(SP),    optional :: Time
-    logical ,    optional :: keep_RT_carriers
+    integer     , intent(in)    :: bands(2)
+    type(levels), intent(inout) :: E
+    type(bz_samp), intent(in)   :: K
+    character(*),optional, intent(in) :: what ! X,K,G
+    logical ,    optional, intent(in) :: VERBOSE
+    integer ,    optional, intent(in) :: IO_COM
+    real(SP),    optional, intent(in) :: Time
+    logical ,    optional, intent(in) :: keep_RT_carriers
+    logical ,    optional, intent(in) :: TIMES_ONLY
    end subroutine
    !
    subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
@@ -110,94 +112,117 @@ module RT_control
  !
  contains
    !
-   subroutine RT_control_alloc(FORCE)
+   subroutine RT_control_alloc(what)
      !
      use pars,           ONLY:cZERO,rZERO
      use real_time,      ONLY:NE_steps
      use electrons,      ONLY:n_spin
-     use ELPH,           ONLY:ph_modes
      !
-     logical :: FORCE
+     character(*), intent(in) :: what
      !
-     if(l_NE_dynamics.or.FORCE) then
+     if(trim(what)=="cache" .or. trim(what)=="all") then
        !
-       YAMBO_ALLOC(J_cache,(3,IO_OBS_cache_steps))
+       YAMBO_ALLOC(J_cache,(3,CACHE_OBS_steps))
        J_cache=cZERO
-       YAMBO_ALLOC(P_cache,(3,IO_OBS_cache_steps))
+       YAMBO_ALLOC(P_cache,(3,CACHE_OBS_steps))
        P_cache=cZERO
        if(n_spin>1) then
-         YAMBO_ALLOC(Ms_cache,(3,IO_OBS_cache_steps))
+         YAMBO_ALLOC(Ms_cache,(3,CACHE_OBS_steps))
          Ms_cache=cZERO
-         YAMBO_ALLOC(Ml_cache,(3,IO_OBS_cache_steps))
+         YAMBO_ALLOC(Ml_cache,(3,2,CACHE_OBS_steps))
          Ml_cache=cZERO
+       endif
+       if(l_NE_with_fields) then
+         YAMBO_ALLOC(A_cache,(3,3,CACHE_OBS_steps))
+         A_cache=cZERO
        endif
        !
      endif
      !
-     YAMBO_FREE(OBS_RT_IO_t%Time)
-     !
-     YAMBO_ALLOC(OBS_RT_IO_t%Time,(NE_steps))
-     OBS_RT_IO_t%Time=rZERO
-     !
-     YAMBO_FREE(GF_RT_IO_t%Time)
-     !
-     YAMBO_ALLOC(GF_RT_IO_t%Time,(NE_steps))
-     GF_RT_IO_t%Time=rZERO
+     if(trim(what)=="times" .or. trim(what)=="all") then
+       !
+       YAMBO_ALLOC(OBS_RT_IO_t%Time,(NE_steps))
+       OBS_RT_IO_t%Time=rZERO
+       !
+       YAMBO_ALLOC(CARR_RT_IO_t%Time,(NE_steps))
+       CARR_RT_IO_t%Time=rZERO
+       !
+       YAMBO_ALLOC(GF_RT_IO_t%Time,(NE_steps))
+       GF_RT_IO_t%Time=rZERO
+       !
+     endif
      !
    end subroutine RT_control_alloc
    !
-   subroutine RT_control_free
+   subroutine RT_control_free(what)
      !
-     YAMBO_FREE(J_cache)
-     YAMBO_FREE(P_cache)
-     YAMBO_FREE(Ms_cache)
-     YAMBO_FREE(Ml_cache)
-     YAMBO_FREE(OBS_RT_IO_t%Time)
-     YAMBO_FREE(GF_RT_IO_t%Time)
+     character(*), intent(in) :: what
+     !
+     if(trim(what)=="cache" .or. trim(what)=="all") then
+       YAMBO_FREE(J_cache)
+       YAMBO_FREE(P_cache)
+       YAMBO_FREE(Ms_cache)
+       YAMBO_FREE(Ml_cache)
+       YAMBO_FREE(A_cache)
+     endif
+     if(trim(what)=="times" .or. trim(what)=="all") then
+       YAMBO_FREE(OBS_RT_IO_t%Time)
+       YAMBO_FREE(CARR_RT_IO_t%Time)
+       YAMBO_FREE(GF_RT_IO_t%Time)
+     endif
      !
    end subroutine RT_control_free
    !
    logical function RT_do_it(what)
      !
      use real_time, ONLY:NE_i_time,RT_step,NE_time_step_update_jump,NE_time_step_update_last_point
+     !
      character(*) :: what
      !
      ! Work Space
      !
-     integer :: DO_IT_steps,i_grp,IT_last
+     integer :: INTERVAL_steps,i_grp,last_point
      !
      RT_do_it= .FALSE.
-     IT_last = 1
+     last_point = 1
      !
      if (what=="OBS") then
-       DO_IT_steps=OBS_RT_IO_t%INTERVAL_steps
-       IT_last    =OBS_RT_IO_t%last_point
+       INTERVAL_steps=OBS_RT_IO_t%INTERVAL_steps
+       last_point    =OBS_RT_IO_t%last_point
+     endif
+     if (what=="CARR") then
+       INTERVAL_steps=CARR_RT_IO_t%INTERVAL_steps
+       last_point    =CARR_RT_IO_t%last_point
      endif
      if (what=="OUT") then
-       DO_IT_steps=OUTPUT_RT_IO_t%INTERVAL_steps
-       IT_last    =OUTPUT_RT_IO_t%last_point
+       INTERVAL_steps=OUTPUT_RT_IO_t%INTERVAL_steps
+       last_point    =OUTPUT_RT_IO_t%last_point
      endif
      if (what=="G") then
-       DO_IT_steps=GF_RT_IO_t%INTERVAL_steps
-       IT_last    =GF_RT_IO_t%last_point
+       INTERVAL_steps=GF_RT_IO_t%INTERVAL_steps
+       last_point    =GF_RT_IO_t%last_point
+     endif
+     if (what=="OBS_cache") then
+       INTERVAL_steps=nint(CACHE_OBS_INTERVAL_time/RT_step)
+       last_point    =CACHE_OBS_last_point
      endif
      if (what=="deltaT") then
-       DO_IT_steps=nint(NE_time_step_update_jump/RT_step)
-       IT_last    =NE_time_step_update_last_point
+       INTERVAL_steps=nint(NE_time_step_update_jump/RT_step)
+       last_point    =NE_time_step_update_last_point
      endif
      !
      ! In RESTART mode the GF and J/P/C databases could be not time aligned
      !
-     if (IT_last>=NE_i_time) return
+     if (last_point>NE_i_time) return
      !
-     if (DO_IT_steps<0) then
+     if (INTERVAL_steps<0) then
        RT_do_it=.TRUE. 
        return
      endif
      !
-     i_grp=nint(real(NE_i_time-IT_last)/real(DO_IT_steps))
+     i_grp=nint(real(NE_i_time-last_point)/real(INTERVAL_steps))
      !
-     RT_do_it= (NE_i_time-IT_last)==(i_grp*DO_IT_steps)
+     RT_do_it= (NE_i_time-last_point)==(i_grp*INTERVAL_steps)
      !
    end function
    !
@@ -225,6 +250,30 @@ module RT_control
      !
      if (     present(STEP)) TIME_adjust=real(nint(TIME/STEP),SP)*STEP
      if (.not.present(STEP)) TIME_adjust=real(nint(TIME/RT_step),SP)*RT_step
+     !
+   end function
+   !
+   real(SP) function STEP_adjust(TIME,STEP1,STEP2)
+     !
+     use real_time, ONLY:RT_step
+     !
+     real(SP)           :: TIME,STEP1
+     real(SP), optional :: STEP2
+     !
+     integer  :: N1,N2,i1
+     real(SP) :: STEP2_
+     !
+     if (     present(STEP2)) STEP2_=STEP2 
+     if (.not.present(STEP2)) STEP2_=RT_step
+     !
+     N1=nint(TIME/STEP1)
+     N2=nint(TIME/STEP2_)
+     !
+     do i1=N1,N2
+       if( N2/i1*i1==N2) exit 
+     enddo
+     !
+     STEP_adjust=TIME/real(i1,SP)
      !
    end function
    !
@@ -260,7 +309,12 @@ module RT_control
      type(RT_IO_t) :: TYP
      logical       :: INIT
      !
-     if (INIT) TYP%INTERVAL_time=TYP%INTERVAL_time_SAVE
+     if (INIT) then
+       if (allocated(TYP%Time)) then
+         YAMBO_FREE(TYP%Time)
+       endif
+       TYP%INTERVAL_time=TYP%INTERVAL_time_SAVE
+     endif
      !
      ! Initialization always using RT_step
      !
@@ -268,15 +322,17 @@ module RT_control
      !
      if (TYP%INTERVAL_time<=RT_dyn_step) TYP%INTERVAL_time = RT_dyn_step
      !
-     TYP%INTERVAL_time  =            nint(TYP%INTERVAL_time/RT_dyn_step)*RT_dyn_step
+     TYP%INTERVAL_time  = nint(TYP%INTERVAL_time/RT_dyn_step)*RT_dyn_step
      !
      ! The steps are always relative to RT_step
      !
-     TYP%INTERVAL_steps             =nint(TYP%INTERVAL_time/RT_step)
+     TYP%INTERVAL_steps = nint(TYP%INTERVAL_time/RT_step)
      !
-     if (INIT) TYP%INTERVAL_time_SAVE=TYP%INTERVAL_time
-     !
-     if (INIT.and.TYP%last_point==0) TYP%last_point=-TYP%INTERVAL_steps+1
+     if (INIT) then
+       TYP%INTERVAL_time_SAVE=TYP%INTERVAL_time
+       TYP%N                 = 0
+       TYP%last_point        =-TYP%INTERVAL_steps+1
+     endif
      !
    end subroutine
    !
@@ -307,8 +363,6 @@ module RT_control
        call E_reset(E)
        E%nk=RT_carriers%nk
        E%nb=RT_carriers%nb(2)
-       E%nb=RT_carriers%nb(2)
-       E%nk=RT_carriers%nk
        E%nbf=E_eq%nbf
        E%nbm=E_eq%nbm
        E%E_Fermi  =E_eq%E_Fermi

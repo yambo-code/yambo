@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -41,13 +41,14 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  use D_lattice,  ONLY:Tel
  use functions,  ONLY:Fermi_fnc
  use interfaces, ONLY:OCCUPATIONS_Gaps
+ !
 #include<memory.h>
  !
  type(levels)::Xe,E
  !
  !Work Space
  !
- real(SP) :: Ef_test
+ real(SP)           :: Ef_test
  real(SP),parameter :: Ef_step=0.1/HA2EV
  !
   if (.not.allocated(E%f)) then

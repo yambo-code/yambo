@@ -2,7 +2,7 @@
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -32,11 +32,11 @@ AC_LANG_CASE([C], [
         AC_REQUIRE([AC_PROG_CC])
         AC_ARG_VAR(MPICC,[Parallel C compiler command])
         if test x"$MPICC" = "x" ; then
-          AC_CHECK_PROGS(MPICC_test,$MPICC mpiicc mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)
+          AC_CHECK_PROGS(MPICC_test,$MPICC mpipgicc mpiicc mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)
         else
           AC_CHECK_FILES($MPICC,
                          [MPICC_test=$MPICC],
-                         [AC_CHECK_PROGS(MPICC_test,$MPICC mpiicc mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)])
+                         [AC_CHECK_PROGS(MPICC_test,$MPICC mpipgicc mpiicc mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)])
         fi
         MPICC=$MPICC_test
         CC=$MPICC_test
@@ -54,13 +54,13 @@ AC_LANG_CASE([C], [
         if ! test x"$MPIF77" = "x" ; then
           AC_CHECK_FILE($MPIF77,
                          [MPIF77_test=$MPIF77],
-                         [AC_CHECK_PROGS(MPIF77_test,$MPIF77 $MPIFC mpiifort mpifort mpif77 hf77 mpxlf mpf77 mpif90 mpf90 mpxlf90 mpxlf95 mpxlf_r cmpifc cmpif90c, $F77)])
+                         [AC_CHECK_PROGS(MPIF77_test,$MPIF77 $MPIFC mpipgifort mpiifort mpifort mpif77 hf77 mpxlf mpf77 mpif90 mpf90 mpxlf90 mpxlf95 mpxlf_r cmpifc cmpif90c, $F77)])
         elif ! test x"$MPIFC" = "x" ; then
           AC_CHECK_FILE($MPIFC,
                          [MPIF77_test=$MPIFC],
-                         [AC_CHECK_PROGS(MPIF77_test,$MPIF77 $MPIFC mpiifort mpifort mpif77 hf77 mpxlf mpf77 mpif90 mpf90 mpxlf90 mpxlf95 mpxlf_r cmpifc cmpif90c, $F77)])
+                         [AC_CHECK_PROGS(MPIF77_test,$MPIF77 $MPIFC mpipgifort mpiifort mpifort mpif77 hf77 mpxlf mpf77 mpif90 mpf90 mpxlf90 mpxlf95 mpxlf_r cmpifc cmpif90c, $F77)])
         else
-          AC_CHECK_PROGS(MPIF77_test,$MPIF77 $MPIFC mpiifort mpifort mpif77 hf77 mpxlf mpf77 mpif90 mpf90 mpxlf90 mpxlf95 mpxlf_r cmpifc cmpif90c, $F77)
+          AC_CHECK_PROGS(MPIF77_test,$MPIF77 $MPIFC mpipgifort mpiifort mpifort mpif77 hf77 mpxlf mpf77 mpif90 mpf90 mpxlf90 mpxlf95 mpxlf_r cmpifc cmpif90c, $F77)
         fi
         MPIF77=$MPIF77_test
         F77=$MPIF77_test
@@ -69,11 +69,11 @@ AC_LANG_CASE([C], [
         AC_REQUIRE([AC_PROG_FC])
         AC_ARG_VAR(MPIFC,[Parallel Fortran compiler command])
         if test x"$MPIFC" = "x" ; then
-          AC_CHECK_PROGS(MPIFC_test,$MPIFC mpiifort mpifort mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)
+          AC_CHECK_PROGS(MPIFC_test,$MPIFC mpipgifort mpiifort mpifort mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)
         else
           AC_CHECK_FILE($MPIFC,
                         [MPIFC_test=$MPIFC],
-                        [AC_CHECK_PROGS(MPIFC_test,$MPIFC mpiifort mpifort mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)])
+                        [AC_CHECK_PROGS(MPIFC_test,$MPIFC mpipgifort mpiifort mpifort mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)])
         fi
         MPIFC=$MPIFC_test
         FC=$MPIFC_test
@@ -93,6 +93,12 @@ fi
 
 # We have to use AC_TRY_COMPILE and not AC_CHECK_HEADER because the
 # latter uses $CPP, not $CC (which may be mpicc).
+#
+# In the following, we tentatively skip the check for mpipgicc,
+# which would require the include of mpi.h out of the main()
+#
+if test x"$MPICC" != x"mpipgicc" ; then
+echo > /dev/null
 AC_LANG_CASE([C], [if test "$acx_mpi_ok" = "no"; then
         AC_MSG_CHECKING([for a working mpi.h])
         AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], 
@@ -106,6 +112,9 @@ fi],
         [AC_MSG_RESULT(yes);acx_mpi_ok="yes"],
         [AC_MSG_RESULT(no); acx_mpi_ok="no" ])
 fi])
+else
+  acx_mpi_ok="yes"
+fi
 
 AC_LANG_CASE([Fortran 77],[acx_mpi_ok="yes"])
 

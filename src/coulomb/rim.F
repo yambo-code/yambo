@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -65,7 +65,7 @@ subroutine rim()
  YAMBO_ALLOC(qr,(3,RIM_n_rand_pts))
  !
  em1_anis=RIM_epsm1(:)-1.
-
+ !
  if (RIM_id_epsm1_reference<0.or.RIM_id_epsm1_reference>3) RIM_id_epsm1_reference=0
  if (RIM_id_epsm1_reference==0) em1_anis=0.
  if (RIM_id_epsm1_reference>0 ) em1_anis=em1_anis/em1_anis(RIM_id_epsm1_reference)
@@ -76,8 +76,8 @@ subroutine rim()
  call section('+','RIM initialization')
  if (RIM_is_diagonal) call msg('r','* Diagonal components only detected *')
  !
- call msg('nr','8 x (sBL volume)    [au]:',8._SP*k_grid_uc_vol)
- call msg('r', 'sBZ random points       :',RIM_n_rand_pts)
+ call msg('nr','8 x (sBL volume)    [au]',8._SP*k_grid_uc_vol)
+ call msg('r', 'sBZ random points       ',RIM_n_rand_pts)
  !
  ! Random generator seed
  !
@@ -146,13 +146,13 @@ subroutine rim()
    if (mod(N_in,rep_factor)==0) call live_timing(steps=1)
  enddo loop
  call live_timing()
- call msg('r','Points outside the sBZ  :',N_out)
+ call msg('r','Points outside the sBZ  ',N_out)
  !  
  !Integrated RL VOLUME 
  !
  RIM_RL_vol=8._SP*k_grid_uc_vol*real(RIM_n_rand_pts)/real(N_out)*real(nqbz)
- call msg('r', 'RL volume           [au]:',RL_vol)
- call msg('rn','Integrated volume   [au]:',RIM_RL_vol)
+ call msg('r', 'RL volume           [au]',RL_vol)
+ call msg('rn','Integrated volume   [au]',RIM_RL_vol)
  !
  call section('=','RIM integrals')
  !
@@ -167,13 +167,13 @@ subroutine rim()
    call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
    !
    if (iq==1) then
-     call msg('r','Gamma point sphere radius         [au]:',G_sph_radii)
-     call msg('r','Points outside the sphere             :',n_out_G)
+     call msg('r','Gamma point sphere radius         [au]',G_sph_radii)
+     call msg('r','Points outside the sphere             ',n_out_G)
      call msg('r','[Int_sBZ(q=0) 1/q^2]*(Vol_sBZ)^(-1/3) =',&
 &                     4.*pi**3.*RIM_qpg(1,1,1)*k_grid_uc_vol**(-1./3.))
      call msg('r','                               should be <',7.7956_SP)
      if (RIM_id_epsm1_reference/=0) call &
-&         msg('r','Anisotropy correction            [o/o]:',&
+&         msg('r','Anisotropy correction            [o/o]',&
 &                 (RIM_anisotropy-RIM_qpg(iq,1,1))/RIM_qpg(iq,1,1)*100.)
    endif
    call live_timing(steps=1)

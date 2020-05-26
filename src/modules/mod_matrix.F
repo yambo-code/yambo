@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -113,10 +113,8 @@ module matrix
      call COMM_reset(M_par%INTRA_comm)
      !
      YAMBO_FREE(M_par%blc)
-#ifdef _CUDA
      YAMBO_FREE(M_par%blc_d)
-#endif
      !
    end subroutine
- !
+   !
 end module matrix

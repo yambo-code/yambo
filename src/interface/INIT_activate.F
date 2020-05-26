@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -23,7 +23,6 @@
 !
 subroutine INIT_activate()
  !
- use it_tools,       ONLY:initactivate
  use BS_solvers,     ONLY:BSS_mode
  use QP_m,           ONLY:QP_solver,COHSEX_use_empties
  use stderr,         ONLY:intc,STRING_match
@@ -271,10 +270,10 @@ subroutine INIT_activate()
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
    !GPL_EXCLUDE_START
-   call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')
+   call initactivate(1,'BSEQptR BSEBands BSKCut BSEEhEny BSehWind')
    !GPL_EXCLUDE_END
    !GPL_INCLUDE_START
-   !call initactivate(1,'BSEBands BSEEhEny BSehWind')
+   !call initactivate(1,'BSEBands BSKCut BSEEhEny BSehWind')
    !GPL_INCLUDE_END
    !
 #if defined _RT
@@ -385,7 +384,7 @@ subroutine INIT_activate()
        if (trim(QP_solver)=="g") then
          call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
        else
-         call initactivate(1,'GWoIter')
+         call initactivate(1,'GWoIter GWIter SCEtresh')
          if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
        endif
      else if (l_life) then
@@ -425,7 +424,7 @@ subroutine INIT_activate()
          if (trim(QP_solver)=="g") then
            call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
          else
-           call initactivate(1,'GWoIter')
+           call initactivate(1,'GWoIter GWIter SCEtresh')
            if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
          endif
        endif
@@ -487,14 +486,20 @@ subroutine INIT_activate()
    !
    call initactivate( 1,'FFTGvecs')
    !
+   ! The following variable is called EXXCut, but it should be renamed COLLCut
+   ! since it affects all collisions
+   !
+   call initactivate( 1,'EXXCut')
+   !
    call initactivate(-1,'QpntsRXs')
    !
+   if( index(H_potential,"IP")>0 )  call initactivate(1,'HARRLvcs ALLGHAR')
    if( index(H_potential,"HARTREE")>0 .or. index(H_potential,"DEFAULT")>0)  call initactivate(1,'HARRLvcs ALLGHAR')
    if( index(H_potential,"GS_XC")>0   .or. index(H_potential,"DEFAULT")>0 ) call initactivate(1,'VXCRLvcs')
    !
    if (l_eval_collisions) then
      if( STRING_match(trim(H_potential),"SEX").or.&
-&        STRING_match(trim(H_potential),"FOCK")) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
+&        STRING_match(trim(H_potential),"FOCK") ) call initactivate(1,'EXXRLvcs ALLGexx')
      if( STRING_match(trim(H_potential),"SEX").or.&
 &        STRING_match(trim(H_potential),"COH") ) call initactivate(1,'CORRLvcs ALLGexx')
    endif
@@ -536,6 +541,7 @@ subroutine INIT_activate()
    ! GPL_EXCLUDE_START
    !
    call INIT_RT_ctl_switch('G')
+   !
    call initactivate(1,'RTskipImposeN RTeeImposeE InducedField')
    call initactivate(1,'Gauge VelGaugeCorr VelGaugeDiam PfromJ RTUpdateSOC RTUpdateE SaveGhistory')
    call initactivate(1,'RTEqScatt RTImpForMet RTzeroTempRef RTEvalEnergy RTEvalEntropy')
@@ -549,7 +555,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime RAD_prefactor PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
-   call initactivate(1,'IOtime')
+   call initactivate(1,'IOtime IOCachetime')
    !
    ! n_ext_fields is by default 0.  It is set to the input number of fields when a command line option is provided (below in init.F)
    ! or parsed from the input file in INIT_load.F

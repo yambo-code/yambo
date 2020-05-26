@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -23,10 +23,11 @@
 !
 integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
- use pars,          ONLY:schlen,lchlen,IP,SP
+ use pars,          ONLY:schlen,IP,SP
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collision_ext, ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
- use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
+ use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,&
+&                        io_elemental, &
 &                        io_variable_bulk,def_variable_bulk,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
@@ -35,8 +36,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
 &                        H_SE_FOCK,H_SE_COH,H_SE_SEX,H_SE_HARTREE
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH,SC_band_mixing,QP_QED_ng
- use X_m,           ONLY:n_X_descs,X_description
- use stderr,        ONLY:intc
+ use X_m,           ONLY:X_desc
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
  use timing_m,      ONLY:timing
 #include<memory.h>
@@ -49,8 +49,9 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  ! Work Space
  !
  character(schlen)     :: db_name
- integer               :: V_kind_disk,i_desc,i_coll_loop,io_err,i_coll,SIZE_
- character(lchlen)     :: X_string
+ integer               :: V_kind_disk,i_coll_loop,io_err,i_coll,SIZE_
+ !
+ integer, external     :: io_descriptors
  !
  ! Collision element...
  !
@@ -73,7 +74,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    call error("COLLISIONS I/O : Unknown database type ")
  endif
  !
- io_COLLISIONS=io_connect(desc=db_name,type=2,ID=ID)
+ io_COLLISIONS=io_connect(desc=db_name,type=2,ID=ID,FORCE_READ_MODE=(.not.any(io_sec(ID,:)==1)))
  if(io_COLLISIONS/=0) goto 1
  !
  if (any(io_sec(ID,:)==1)) then
@@ -85,8 +86,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      goto 1
    endif
    !
-   call io_elemental(ID,VAR="COLLISION DESCRIPTION",VAR_SZ=1,CH0="",MENU=0)
-   call io_elemental(ID,CH0=COLL%name,VAR=' COLLISIONS name                 :')
+   call io_elemental(ID,VAR="COLLISION_DESCRIPTION",VAR_SZ=1,CH0="",MENU=0)
+   call io_elemental(ID,CH0=COLL%name,VAR=' COLLISIONS name                 ')
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    SIZE_=6
@@ -95,33 +96,33 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=SIZE_,MENU=0)
    !
    call io_elemental(ID,I0=COLL%N,&
-&       VAR=' Total number of COLLISIONS      :',CHECK=.true.,OP=(/"=="/))
+&       VAR='Total number of COLLISIONS      ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=COLL%kind,&
-&       VAR=' COLLISIONS kind                 :',CHECK=.true.,OP=(/"=="/))
+&       VAR='COLLISIONS kind                 ',CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(ID,I1=COLL_bands,&
-&       VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
+&       VAR='Bands                           ',CHECK=.true.,OP=(/"==","=="/))
    !
    if (COLL%kind==QP_SE_GW_NEQ) then
      call io_elemental(ID,L0=l_elel_scatt,&
-&         VAR=' Electron-Electron scattering    :',WARN=.true.,OP=(/"=="/))
+&         VAR='Electron-Electron scattering    ',WARN=.true.,OP=(/"=="/))
      if(l_elel_scatt) then
       call io_elemental(ID,I0=N_plasma_poles_global,&
-&          VAR=' Max N plasma poles (q-resolved) :',CHECK=.true.,OP=(/"=="/))
+&          VAR='Max N plasma poles (q-resolved) ',CHECK=.true.,OP=(/"=="/))
       call io_elemental(ID,R0=PLASMA_redux_percent,&
-&          VAR=' Plasma redux percent            :',CHECK=.true.,OP=(/"=="/))
+&          VAR='Plasma redux percent            ',CHECK=.true.,OP=(/"=="/))
      endif
    endif
    !
    if (COLL%kind==QP_SE_GW_QED) then
      call io_elemental(ID,L0=l_elphoton_scatt,&
-&         VAR=' Electron-Photon   scattering    :',WARN=.true.,OP=(/"=="/))
+&         VAR='Electron-Photon   scattering    ',WARN=.true.,OP=(/"=="/))
      call io_elemental(ID,I0=QP_QED_ng,&
-&         VAR=' Electron-Photon   RL vectors    :',CHECK=.true.,OP=(/"=="/))
+&         VAR='Electron-Photon   RL vectors    ',CHECK=.true.,OP=(/"=="/))
    endif
    !
    call io_elemental(ID,R0=SC_band_mixing,&
-&       VAR=' Bands mixing                    :',CHECK=.true.,OP=(/"=="/))
+&       VAR='Bands mixing                    ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=COLL%kind,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
@@ -135,48 +136,31 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
 &        V_kind_disk==H_SE_HARTREE+H_SE_FOCK.or.V_kind_disk==H_SE_HARTREE+H_SE_SEX     ) SIZE_=SIZE_+1
      call io_elemental(ID,VAR="HXC_PARAMETERS",VAR_SZ=SIZE_,MENU=0)
      call io_elemental(ID,R0=COLLISIONS_cutoff,&
-&         VAR=' Exchange Cutoff                 :',CHECK=.true.,OP=(/"=="/))
+&         VAR='Exchange Cutoff                 ',CHECK=.true.,OP=(/"=="/))
      !
      if (V_kind_disk>=H_SE_HARTREE) then
        call io_elemental(ID,I0=QP_ng_SH,&
-&         VAR=' Hartree  RL vectors             :',CHECK=.true.,OP=(/"=="/))
+&         VAR='Hartree  RL vectors             ',CHECK=.true.,OP=(/"=="/))
      endif
      if (V_kind_disk==             H_SE_FOCK.or.V_kind_disk==             H_SE_SEX.or.&
 &        V_kind_disk==H_SE_HARTREE+H_SE_FOCK.or.V_kind_disk==H_SE_HARTREE+H_SE_SEX) then
        call io_elemental(ID,I0=QP_ng_Sx,&
-&         VAR=' Exchange RL vectors             :',CHECK=.true.,OP=(/"=="/))
+&         VAR='Exchange RL vectors             ',CHECK=.true.,OP=(/"=="/))
      endif
    endif
    !
-   if (V_kind_disk==QP_SE_GW_NEQ   .or.V_kind_disk==H_SE_COH  .or.V_kind_disk==H_SE_SEX.or.&
-&      V_kind_disk==H_SE_HARTREE.or.V_kind_disk==H_SE_FOCK .or.V_kind_disk>=H_SE_HARTREE) then
+   if (V_kind_disk==QP_SE_GW_NEQ   .or.V_kind_disk==H_SE_COH  .or.V_kind_disk==H_SE_SEX) then
      !
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
      ! Global Response Descriptions
      !==============================
-     call io_elemental(ID,VAR="N_X_descriptions",VAR_SZ=1,MENU=0)
-     if (n_X_descs> 0) call io_elemental(ID,I0=n_X_descs,CHECK=.true.,OP=(/"=="/))
-     if (n_X_descs==0) then
-       call io_elemental(ID,DB_I0=n_X_descs,I0=n_X_descs)
-       n_X_descs=-n_X_descs
-     endif
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
-     ! In this case I have loaded the em1s DB and I know the parameters.
-     ! I can, therefore, write/read and/or VERIFIY the values
-     !
-     do i_desc=1,iabs(n_X_descs)
-       !
-       call io_elemental(ID,VAR='X_descriptions_'//trim(intc(i_desc)),CH0="",VAR_SZ=1,MENU=0)
-       call io_elemental(ID,DB_CH0=X_string,CH0=X_description(i_desc),VAR='',CHECK=n_X_descs>0,OP=(/"=="/))
-       call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-       !
-     enddo
+     io_COLLISIONS=io_descriptors(X_desc,"X",ID,.FALSE.)
      !
      call io_elemental(ID,VAR="RIM_PARAMETERS",VAR_SZ=2,MENU=0)
-     call io_elemental(ID,I0=RIM_ng,VAR=        ' RIM RL components      :',WARN=.true.)
-     call io_elemental(ID,I0=RIM_n_rand_pts,VAR=' RIM random points      :',WARN=.true.)
+     call io_elemental(ID,I0=RIM_ng,VAR=        ' RIM RL components      ',WARN=.true.)
+     call io_elemental(ID,I0=RIM_n_rand_pts,VAR=' RIM random points      ',WARN=.true.)
      !
    endif
    !
@@ -220,7 +204,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    !
    call io_fragment(ID,i_fragment=i_coll)
    !
-   call def_variable_bulk(ID,'N_COLLISIONS_STATES',1,(/1/),IP+100)
+   call def_variable_bulk(ID,'N_COLLISIONS_STATES',1,(/1/),IP+100,silent=.true.)
    call  io_variable_bulk(ID,1,I0=COLL_element%N)
    !
  endif
@@ -234,7 +218,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    call def_variable_bulk(ID,'COLLISIONS_TABLE',1,&
 &                           (/COLL%D(1,2)-COLL%D(1,1)+1,&
 &                             COLL%D(2,2)-COLL%D(2,1)+1,&
-&                             COLL%D(3,2)-COLL%D(3,1)+1/),0)
+&                             COLL%D(3,2)-COLL%D(3,1)+1/),0,silent=.true.)
    !
    call  io_variable_bulk(ID,1,CH3=COLL_element%table(COLL%D(1,1):COLL%D(1,2),&
 &                                                    COLL%D(2,1):COLL%D(2,2),&
@@ -242,11 +226,11 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    !
    if(COLL%kind==QP_SE_GW_NEQ.or.COLL%kind==QP_SE_GW_QED) then
      ! Real collisions
-     call def_variable_bulk(ID,'COLLISIONS_v',1,(/COLL_element%N/),SP)
+     call def_variable_bulk(ID,'COLLISIONS_v',1,(/COLL_element%N/),SP,silent=.true.)
      call  io_variable_bulk(ID,1,R1=COLL_element%v_r)
    else
      ! Complex collisions
-     call def_variable_bulk(ID,'COLLISIONS_v',1,(/2,COLL_element%N/),SP)
+     call def_variable_bulk(ID,'COLLISIONS_v',1,(/2,COLL_element%N/),SP,silent=.true.)
      call  io_variable_bulk(ID,1,C1=COLL_element%v_c)
    endif
    !

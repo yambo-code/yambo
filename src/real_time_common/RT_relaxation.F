@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -150,30 +150,35 @@ subroutine RT_relaxation(E,k,q,Time)
    !
  endif
  !
- ! PARALLEL Mergering & N/dN conservation (of the evaluated Lifetimes)
- !=====================================================================
  if (l_RT_eval_lifetimes) then
-   if (l_elel_scatt) then
-     call RT_Lifetimes_merge(E,k,E_E_Hole_lifetime,1)
-     call RT_Lifetimes_merge(E,k,E_E_Electron_lifetime,2)
-   endif
-   if (l_elph_scatt) then
-     call RT_Lifetimes_merge(E,k,E_P_Hole_lifetime,3)
-     call RT_Lifetimes_merge(E,k,E_P_Electron_lifetime,4)
-     if(Bose_Temp>0._SP) then
-       call RT_Lifetimes_merge(E,k,E_P_Ho_abs_lifetime,5)
-       call RT_Lifetimes_merge(E,k,E_P_El_abs_lifetime,6)
-     endif
-   endif
-   if (l_elphoton_scatt) then
-     call RT_Lifetimes_merge(E,k,E_PHOT_Hole_lifetime,7)
-     call RT_Lifetimes_merge(E,k,E_PHOT_Electron_lifetime,8)
-   endif
+   !
+   ! PARALLEL Mergering 
+   !====================
+   call RT_Lifetimes_merge_driver("INTRA_k")
+   !
  endif
  !
- if (l_RT_eval_lifetimes) call Impose_Conservations( )
+ call timing('RT relaxation (impose and idle)',OPR='start')
  !
- if (l_initial_equilibrium) return
+ if (l_RT_eval_lifetimes) then
+   !
+   ! Conservation Rules
+   !====================
+   call Impose_Conservations( )
+   !
+ endif
+ !
+ if (l_initial_equilibrium) then
+   !
+   ! PARALLEL Mergering 
+   !====================
+   call RT_Lifetimes_merge_driver("REF")
+   !
+   call timing('RT relaxation (impose and idle)',OPR='stop')
+   !
+   return
+   !
+ endif
  !
  ! SAVE, extrapolate & N/dN conservation (of the extrapolated Lifetimes)
  !======================================================================
@@ -200,6 +205,8 @@ subroutine RT_relaxation(E,k,q,Time)
  endif
  !
  if (.not.l_RT_eval_lifetimes) call Impose_Conservations( )
+ !
+ call timing('RT relaxation (impose and idle)',OPR='stop')
  !
  contains
    !

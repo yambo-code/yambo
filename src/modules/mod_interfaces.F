@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,7 +29,16 @@ module interfaces
  !
  interface
    !
-  subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
+   subroutine DESC_write(dest,prefix,desc,range,skip_patt)
+     use descriptors,ONLY:IO_desc
+     character(*),           intent(in) :: dest
+     character(*),           intent(in) :: prefix
+     type(IO_desc),          intent(in) :: desc
+     integer, optional,      intent(in) :: range(2)
+     character(*), optional, intent(in) :: skip_patt
+   end subroutine
+   !
+   subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
      type(levels)  ::E
@@ -315,13 +324,13 @@ module interfaces
    subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP
      use electrons,     ONLY:n_spinor,n_sp_pol
-     use wave_func,     ONLY:wf_ng
+     use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
      use R_lattice,     ONLY:bz_samp
      implicit none
      integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2)
      type(bz_samp), intent(in) :: Xk
-     complex(SP), intent(out)  :: WF_k_out(wf_ng,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
-     complex(SP), intent(in)   :: WF_k_in (wf_ng,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
+     complex(SP), intent(in)   :: WF_k_in (wf_ng_1st_BZ,  n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
+     complex(SP), intent(out)  :: WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
 #ifdef _CUDA
      attributes(device) :: WF_k_out,WF_k_in
 #endif
@@ -333,24 +342,24 @@ module interfaces
    subroutine WF_symm_kpoint_cpu(b_to_load,ikbz,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
-     use wave_func,     ONLY:wf_ng
+     use wave_func,     ONLY:wf_ng_1st_BZ
      use electrons,     ONLY:n_spinor,n_sp_pol
      implicit none
      integer,       intent(in)  :: ikbz,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
-     complex(SP),   intent(out) :: WF_k_out(wf_ng,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
+     complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
    end subroutine WF_symm_kpoint_cpu
    !
 #ifdef _CUDA
    subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
-     use wave_func,     ONLY:wf_ng
+     use wave_func,     ONLY:wf_ng_1st_BZ
      use electrons,     ONLY:n_spinor,n_sp_pol
      implicit none
      integer,       intent(in)  :: ikbz,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
-     complex(SP),   intent(out) :: WF_k_out(wf_ng,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
+     complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
      attributes(device) :: WF_k_out
    end subroutine WF_symm_kpoint_gpu
 #endif

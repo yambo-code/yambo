@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -29,8 +29,8 @@ subroutine NL_output(i_time,i_freq)
  use com,          ONLY:msg,of_open_close
  use stderr,       ONLY:intc
  use real_time,    ONLY:NE_steps,RT_step
- use nl_optics,    ONLY:NL_er,NL_estep,VERB_LOW,NL_verbosity,NL_J,l_eval_CURRENT,NL_P
- use stderr,       ONLY:set_real_printed_length
+ use nl_optics,    ONLY:NL_er,NL_estep,VERB_LOW,NL_verbosity,NL_J,l_eval_CURRENT,NL_P,NL_desc
+ use interfaces,   ONLY:DESC_write
  !
  implicit none
  !
@@ -44,8 +44,6 @@ subroutine NL_output(i_time,i_freq)
  integer            :: n_files,n_headings(4),i_f
  !
  if(NL_verbosity==VERB_LOW) return
- !
- call set_real_printed_length(f_length=18,g_length=18)
  !
  file_name(1)='external_potential_F'//intc(i_freq)
  file_name(2)='polarization_F'//intc(i_freq)
@@ -91,13 +89,16 @@ subroutine NL_output(i_time,i_freq)
    !
    do i_f=1,n_files
      call of_open_close(trim(file_name(i_f)),'ot')
+     call DESC_write('o '//trim(short_file_name(i_f)),'#',NL_desc)
      call msg('o '//trim(short_file_name(i_f)),'#')
-     call msg('o '//trim(short_file_name(i_f)),'# Frequency number '//intc(i_freq))
-     call msg('o '//trim(short_file_name(i_f)),'# Frequency value  ',(NL_er(1)+real((i_freq-1),SP)*NL_estep)*HA2EV)
+     call msg('o '//trim(short_file_name(i_f)),'# Frequency number    ',i_freq,INDENT=0)
+     call msg('o '//trim(short_file_name(i_f)),'# Frequency value [ev]',&
+&            (NL_er(1)+real((i_freq-1),SP)*NL_estep)*HA2EV,INDENT=0)
      call msg('o '//trim(short_file_name(i_f)),'#')
      call msg('o '//trim(short_file_name(i_f)),'#',headings(i_f,1:n_headings(i_f)),INDENT=0,USE_TABS=.TRUE.)
      call msg('o '//trim(short_file_name(i_f)),'#')
    enddo
+   !
  endif
  !
  ! Write data on files
@@ -129,7 +130,5 @@ subroutine NL_output(i_time,i_freq)
      call of_open_close(trim(short_file_name(i_f)))
    enddo
  endif
- !
- call set_real_printed_length()
  !
 end subroutine NL_output

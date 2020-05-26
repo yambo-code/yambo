@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,6 +25,7 @@ module R_lattice
  !
  use pars, ONLY:SP,schlen, IP
  !
+#include<dev_defs.h>
 #include<memory.h>
  !
  ! K lattice
@@ -104,13 +105,11 @@ module R_lattice
  integer ,allocatable :: minus_G(:)
  real(SP),allocatable :: g_vec(:,:)
  real(SP),allocatable :: E_of_shell(:)
- real(SP),allocatable :: g_vec_d(:,:)
- integer ,allocatable :: g_rot_d(:,:)
- integer ,allocatable :: G_m_G_d(:,:)
- integer ,allocatable :: minus_G_d(:)
-#ifdef _CUDA
- attributes(device) :: g_vec_d, g_rot_d, G_m_G_d, minus_G_d
-#endif
+ ! GPUs
+ real(SP),allocatable DEV_ATTRIBUTE :: g_vec_d(:,:)
+ integer ,allocatable DEV_ATTRIBUTE :: g_rot_d(:,:)
+ integer ,allocatable DEV_ATTRIBUTE :: G_m_G_d(:,:)
+ integer ,allocatable DEV_ATTRIBUTE :: minus_G_d(:)
  !
  ! RIM
  !

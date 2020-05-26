@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH DS
@@ -22,6 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function e2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
+ !
  use etsf_io
  use etsf_io_low_level
  use etsf_data
@@ -79,6 +80,7 @@ integer function e2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call C_driver_transfer()
  !
  call SET_job_strings_and_dirs(js)
+ call IO_make_directories("MORE LOG")
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en)
@@ -133,7 +135,7 @@ integer function e2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  if(trim(ETSF_kind)=='WFK') call etsf_io_low_open_read(ncid, trim(WFK_filename), lstat, error_data = error_data)
  !
  if (.not. lstat) call etsf_long_error(error_data)
- call msg('s','DBs path set to :',trim(core_io_path))
+ call msg('s','DBs path set to ',trim(core_io_path))
  !
  ! DB1
  !==========================================

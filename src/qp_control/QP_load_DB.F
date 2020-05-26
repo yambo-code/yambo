@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -38,7 +38,7 @@ subroutine QP_load_DB(i_ACTION,bands,en,k)
  !
  ! Work Space
  !
- type(QP_t)        :: qp
+ type(QP_t)        ::qp
  integer           ::io_err,ID
  integer, external ::io_QP_and_GF
  !
@@ -48,7 +48,7 @@ subroutine QP_load_DB(i_ACTION,bands,en,k)
  io_err=io_QP_and_GF(trim(QP_action(i_ACTION)%CTL(1)%db),qp,ID)
  !
  if (io_err/=0) then
-   call warning("I/O problems from QP database "//trim(QP_action(i_ACTION)%CTL(1)%db))
+   call warning("I/O problems in reading QP database "//trim(QP_action(i_ACTION)%CTL(1)%db))
    QP_action(i_ACTION)%active=.FALSE.
    return
  endif

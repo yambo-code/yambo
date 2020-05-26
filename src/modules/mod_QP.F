@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,8 @@
 !
 module QP_m
  !
- use pars,      ONLY:SP,schlen,max_qp_descs
+ use descriptors,    ONLY:IO_desc,IO_desc_duplicate,IO_desc_reset
+ use pars,           ONLY:SP,schlen,cZERO
  !
 #include<memory.h>
  !
@@ -46,10 +47,12 @@ module QP_m
  integer           :: QP_ng_Vxc
  integer           :: QP_n_G_bands(2)
  integer           :: GWo_iterations
+ integer           :: GW_iterations
  logical           :: QP_dSc_test
  logical           :: GWo_SC_done
  logical           :: COHSEX_use_empties
  logical           :: l_GW_terminator=.FALSE.
+ logical           :: l_update_W=.FALSE.
  logical           :: On_Mass_Shell_approx
  logical           :: l_QP_Expand
  logical           :: use_GreenF_to_eval_QP
@@ -74,6 +77,7 @@ module QP_m
  complex(SP),allocatable:: QP_dSc(:,:)
  complex(SP),allocatable:: QP_W(:,:,:,:)
  complex(SP),allocatable:: QP_Vnl_xc(:)
+ complex(SP),allocatable:: QP_Vnl_sex(:)
  complex(SP),allocatable:: QP_Sc(:,:)
  complex(SP),allocatable:: QP_Vxc(:)
  integer,    allocatable:: QP_solver_state(:)
@@ -96,17 +100,17 @@ module QP_m
  !
  type QP_t
    !
-   character(schlen)  :: description(max_qp_descs)
    integer,    allocatable:: table(:,:)
    real(SP)   ,allocatable:: k(:,:)
    real(SP)   ,allocatable:: wk(:)
    real(SP)   ,allocatable:: E_bare(:)
    complex(SP),allocatable:: E(:)
    complex(SP),allocatable:: Z(:)
-   integer  :: n_descs
    integer  :: nk
    integer  :: nb
    integer  :: n_states
+   !
+   type(IO_desc) :: desc
    !
    ! Green Function and Self-Energy
    !
@@ -144,6 +148,56 @@ module QP_m
  end interface
  !
  contains
+   !
+   subroutine QP_XCo_alloc(l_Vxc,l_Vnl_xc,l_screen_hyb)
+   implicit none
+     logical, optional, intent(in) :: l_Vxc,l_Vnl_xc,l_screen_hyb
+     logical :: l_Vxc_,l_Vnl_xc_,l_screen_hyb_
+     !
+     l_Vxc_=.false.
+     l_Vnl_xc_=.false.
+     l_screen_hyb_=.false.
+     if (present(l_Vxc)) l_Vxc_=l_Vxc
+     if (present(l_Vnl_xc)) l_Vnl_xc_=l_Vnl_xc
+     if (present(l_screen_hyb)) l_screen_hyb_=l_screen_hyb
+     !
+     if (.not.allocated(QP_Vxc).and.l_Vxc_) then
+       YAMBO_ALLOC(QP_Vxc,(QP_n_states))
+     endif
+     if (.not.allocated(QP_Vnl_xc).and.l_Vnl_xc_) then
+       YAMBO_ALLOC(QP_Vnl_xc,(QP_n_states))
+     endif
+     if (.not.allocated(QP_Vnl_sex).and.l_screen_hyb_) then
+       YAMBO_ALLOC(QP_Vnl_sex,(QP_n_states))
+     endif
+     if (l_Vnl_xc_)     QP_Vnl_xc=cZERO
+     if (l_Vxc_)        QP_Vxc=cZERO
+     if (l_screen_hyb_) QP_Vnl_sex=cZERO
+   end subroutine 
+   !
+   subroutine QP_XCo_free(l_Vxc,l_Vnl_xc,l_screen_hyb)
+   implicit none
+     logical, optional, intent(in) :: l_Vxc,l_Vnl_xc,l_screen_hyb
+     logical :: l_Vxc_,l_Vnl_xc_,l_screen_hyb_
+     !
+     l_Vxc_=.false.
+     l_Vnl_xc_=.false.
+     l_screen_hyb_=.false.
+     if (present(l_Vxc)) l_Vxc_=l_Vxc
+     if (present(l_Vnl_xc)) l_Vnl_xc_=l_Vnl_xc
+     if (present(l_screen_hyb)) l_screen_hyb_=l_screen_hyb
+     !
+     if (l_Vxc_) then
+       YAMBO_FREE(QP_Vxc)
+     endif
+     if (l_Vnl_xc_) then
+       YAMBO_FREE(QP_Vnl_xc)
+     endif
+     if (l_screen_hyb_) then
+       YAMBO_FREE(QP_Vnl_sex)
+     endif
+     !
+   end subroutine QP_XCo_free
    !
    ! Lifetimes definition
    !----------------------
@@ -187,8 +241,9 @@ module QP_m
    end subroutine
    !
    subroutine QP_copy(qp_in,qp,what,OP,pre_factor)
-     use pars,      ONLY:SP,cI,rONE,rZERO
-     use electrons, ONLY:n_sp_pol
+     use pars,          ONLY:SP,cI,rONE,rZERO
+     use electrons,     ONLY:n_sp_pol
+     use descriptors,   ONLY:IO_desc_duplicate
      type(QP_t)   ::qp_in,qp
      character(*) ::what,OP
      real(SP)     ::pre_factor,operation
@@ -196,10 +251,9 @@ module QP_m
      if (OP=="-") operation =-1.
      qp%nk=qp_in%nk
      qp%nb=qp%nb
-     qp%n_descs=qp_in%n_descs
      qp%n_states=qp_in%n_states
      qp%GreenF_n_steps=qp_in%GreenF_n_steps
-     qp%description=qp_in%description
+     call IO_desc_duplicate(qp_in%desc,qp%desc)
      YAMBO_ALLOC(qp%k,(qp%nk,3))
      YAMBO_ALLOC(qp%table,(qp%n_states,3+n_sp_pol-1))
      YAMBO_ALLOC(qp%wk,(qp%nk))
@@ -253,10 +307,9 @@ module QP_m
      type(QP_t)::qp
      qp%nk=0
      qp%nb=0
-     qp%n_descs=0
      qp%n_states=0
      qp%GreenF_n_steps=0
-     qp%description=' '
+     call IO_desc_reset(qp%desc)
      YAMBO_FREE(qp%table)
      YAMBO_FREE(qp%k)
      YAMBO_FREE(qp%wk)

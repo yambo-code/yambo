@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, DS, AM
@@ -24,12 +24,12 @@
 subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfiles,basename,int_kind)
  !
  use units,          ONLY:HA2EV
- use pars,           ONLY:SP,schlen,lchlen
+ use pars,           ONLY:SP,schlen
  use com,            ONLY:msg,of_open_close
  use electrons,      ONLY:levels,n_sp_pol,n_spinor
  use vec_operate,    ONLY:v_norm,iku_v_norm
  use R_lattice,      ONLY:bz_samp
- use stderr,         ONLY:intc,set_real_printed_length
+ use stderr,         ONLY:intc
  use YPPm,           ONLY:coo_out,K_transform,CIRCUIT_E_db,CIRCUIT_k_label
  use interpolate,    ONLY:INTERP_obj
  !
@@ -46,7 +46,6 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  integer               :: ik_local,ik_ibz_grid,ik_bz_grid,iqnt,i_dim,ifile,i_point,i_sp_pol,ivalue,&
 &                         ndims,nval,n_points,n_points_max
  logical               :: PLOT_BANDS,PLOT_from_DB,PLOT_interpolated,PLOT_built_in,l_print_k_name
- character(lchlen)     :: of_string
  character(schlen)     :: headings_k(4),headings(dims(2)-dims(1)+1+4), &
 &                         file_name(sum(nfiles)),k_name
  real(SP)              :: value_k,        values(dims(2)-dims(1)+1+4), &
@@ -57,8 +56,6 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  integer,  allocatable :: Grid_to_path_map(:,:)
  real(SP), allocatable :: circuit_versor(:,:),circuit_dist(:,:)
  real(SP), allocatable :: auxiliary_var(:,:,:,:),tmp_k(:,:),tmp_k_dist(:,:)
- !
- call set_real_printed_length(f_length=10,g_length=10)
  !
  PLOT_interpolated = trim(basename)=="interpolated"
  PLOT_built_in     = trim(basename)=="built_in"    
@@ -140,15 +137,6 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    file_name(ifile+3)="magnetization_x_"//trim(basename)
    file_name(ifile+4)="magnetization_y_"//trim(basename)
    file_name(ifile+5)="magnetization_z_"//trim(basename)
-   ! TMP coding for back compatibility <
-   if(PLOT_interpolated.and.PLOT_BANDS) then
-     file_name(ifile+1)="spin_factors_UP"
-     file_name(ifile+2)="spin_factors_DN"
-     file_name(ifile+3)="magnetization_x"
-     file_name(ifile+4)="magnetization_y"
-     file_name(ifile+5)="magnetization_z"
-   endif
-   ! TMP coding for back compatibility >
    ifile=ifile+5
  endif
  !
@@ -188,6 +176,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  do ik_local=1,LOCAL_k%nbz
    !
    l_print_k_name=.false.
+   k_name=""
    !
    if (PLOT_built_in) then
      !
@@ -260,14 +249,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
          if(i_point==1) values(2:ndims+1)=      tmp_var(:,ifile,iqnt)
          if(i_point> 1) values(2:ndims+1)=auxiliary_var(:,ifile,iqnt,i_point-1)
          if(PLOT_BANDS .and. ivalue==1) values(2:ndims+1)=values(2:ndims+1)*HA2EV
-         !
-         if (l_print_k_name) then
-           call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
-           of_string=trim(of_string)//trim(k_name)
-           call msg_deliver(trim(file_name(ivalue)),of_string)
-         else
-           call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.true.)
-         endif
+         call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.true.,after_msg=k_name)
        enddo
        !
      enddo
@@ -284,7 +266,5 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  if(n_points_max>1) then
    YAMBO_FREE(auxiliary_var)
  endif
- !
- call set_real_printed_length( )
  !
 end subroutine plot_interpolated_values

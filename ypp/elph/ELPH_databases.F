@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -263,13 +263,13 @@ integer function ELPH_databases(k,E,q)
  if (use_ext_ph_freqs) close(99)
  if (use_ext_ph_modes) close(98)
  !
- call msg("s",':: Modes           :',ph_modes)
- call msg("s",':: Bands range     :',elph_nb)
+ call msg("s",' Modes           ',ph_modes)
+ call msg("s",' Bands range     ',elph_nb)
  !
  ! Print the list of PW q-points (to be used with matdyn, for example)
  !
  call msg("s",'Databases Q-points PW-formatted')
- call k_grid_printer(elph_nDBs,ph_q_disk(:elph_nDBs,:),'iku',"PW",coo_out="alat")
+ call k_grid_printer(nDBs_disk,ph_q_disk(:nDBs_disk,:),'iku',"PW",coo_out="alat")
  !
  call elph_global_free()
  !

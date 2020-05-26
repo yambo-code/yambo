@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -23,10 +23,11 @@
 !
 subroutine of_open_close(of_name_extension,mode)
  !
- use pars,            ONLY:lchlen,max_open_ofs
- use com,             ONLY:of_name,opened_of,of_unit,write_to_of
+ use pars,            ONLY:lchlen
+ use com,             ONLY:of_name,of_opened,of_unit,write_to_of,n_ofs_defined
  use IO_m,            ONLY:get_name
 #if defined _NC_OUTPUT
+ use stderr,          ONLY:STRING_remove
  use com,             ONLY:of_nc_pos,of_nc_var_names,of_nc_IDs
  use IO_m,            ONLY:io_control,io_connect,io_disconnect,OP_WR,WR_CL,NONE
 #endif
@@ -65,7 +66,8 @@ subroutine of_open_close(of_name_extension,mode)
    !
    ! Flush output if file is opened
    !
-   if (index(mode,'f')/=0.and.(len_trim(opened_of(file_index))>0)) then
+   if (index(mode,'f')/=0.and.(len_trim(of_opened(file_index))>0)) then
+     ! here I do not use yambo_flush since it could cause a significant drop of performances
      flush(abs(of_unit(file_index)))
      if (trim(mode)=='f') return
    endif
@@ -86,8 +88,8 @@ subroutine of_open_close(of_name_extension,mode)
    !
    ! Check first if already open
    !
-   do i2=1,max_open_ofs
-     if (trim(opened_of(i2))==of_name_complete) return
+   do i2=1,n_ofs_defined
+     if (trim(of_opened(i2))==of_name_complete) return
    enddo
    !
    ! Find the first free unit
@@ -97,22 +99,27 @@ subroutine of_open_close(of_name_extension,mode)
 #else
    of_unit(file_index)=file_index+20
 #endif
-   opened_of(file_index)=of_name_complete
+   of_opened(file_index)=of_name_complete
    !
-   if (index(mode,'a')==0) open(of_unit(file_index),file=trim(opened_of(file_index)))
-   if (index(mode,'a')/=0) open(of_unit(file_index),file=trim(opened_of(file_index)),position='append')
+   if (index(mode,'a')==0) open(of_unit(file_index),file=trim(of_opened(file_index)))
+   if (index(mode,'a')/=0) open(of_unit(file_index),file=trim(of_opened(file_index)),position='append')
    if (index(mode,"t")>0) call write_the_logo(of_unit(file_index),'#')
+   !
+   ! A opened file has a unit assigned
+   ! However the unit is kept negative
+   ! Only msg_manager switchis it to positive just before writing to file
+   ! Immediately after writing the msg_interfaces will switch it back to negative
    !
    of_unit(file_index)=-of_unit(file_index)
    !
 #if defined _NC_OUTPUT
    call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=of_nc_IDs(file_index))
    io_out=io_connect(desc="output_"//trim(of_name_extension),type=2, ID=of_nc_IDs(file_index))
-   of_nc_var_names(file_index)=trim(of_name_extension)
+   of_nc_var_names(file_index)=trim(STRING_remove(trim(of_name_extension),"-",replace="_"))
    of_nc_pos(:,file_index)=0
 #endif
 #if defined _YAML_OUTPUT
-   call yaml_set_stream(filename=trim(of_name_complete)//".yaml")
+   call yaml_set_stream(filename=trim(of_name_complete)//".yaml",record_length=200)
    call yaml_stream_connected(trim(of_name_complete)//".yaml",of_yaml_IDs(file_index))
 #endif
    !
@@ -120,8 +127,8 @@ subroutine of_open_close(of_name_extension,mode)
    !
    ! Close file
    !  
-   do i2=1,max_open_ofs
-     if (index(opened_of(i2),trim(of_name_extension))/=0) then
+   do i2=1,n_ofs_defined
+     if (index(of_opened(i2),trim(of_name_extension))/=0) then
        close(iabs(of_unit(i2)))
        of_unit(i2)=0
 #if defined _NC_OUTPUT
@@ -131,7 +138,7 @@ subroutine of_open_close(of_name_extension,mode)
 #if defined _YAML_OUTPUT
        call yaml_close_stream(unit=of_yaml_IDs(i2))
 #endif
-       opened_of(i2)=' '
+       of_opened(i2)=' '
        exit
      endif
    enddo
@@ -145,7 +152,6 @@ subroutine write_the_logo(unit_,comment_)
  use LIVE_t,       ONLY:LIVE_message
  use LOGO,         ONLY:pickup_a_logo,logo_line,n_logo_lines
  use pars,         ONLY:schlen
- use com,          ONLY:repfile
  !
  implicit none
  !
@@ -167,8 +173,6 @@ subroutine write_the_logo(unit_,comment_)
    enddo
  endif
  !
- if (unit_==11) open(unit=11,file=trim(repfile),position='append')
- !
  do i1=1,n_logo_lines
    if (unit_/=6) write (unit_,trim(space_)) logo_line(i1)
    if (unit_==6.and.i1>=n_logo_lines-3) cycle
@@ -176,8 +180,6 @@ subroutine write_the_logo(unit_,comment_)
  enddo
  if (unit_/=6.and.trim(comment_)=='')  write (unit_,'(a)') ' '
  if (unit_/=6.and.trim(comment_)=='#') write (unit_,'(a)') '#'
- !
- if (unit_==11) close(11)
  !
 end subroutine write_the_logo
 !
@@ -221,7 +223,7 @@ end subroutine warning
 subroutine error(mesg)
  !
  use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
- use stderr,     ONLY:STRING_pack
+ use stderr,     ONLY:STRING_pack,logfile_unit,log_as_a_file
  use com,        ONLY:secnm,msg
 #if defined _MPI
  use parallel_m, ONLY:mpi_comm_world,ncpu
@@ -237,13 +239,13 @@ subroutine error(mesg)
  live_timing_is_on=.FALSE.
  !
  if (len_trim(secnm)>0) then
-   call msg('nr',STRING_pack('[ERROR] STOP signal received while in :',trim(secnm)))
-   call LIVE_message(STRING_pack('[ERROR] STOP signal received while in :',trim(secnm)),"nn","","%s")
+   call msg('nr',STRING_pack('[ERROR] STOP signal received while in ',trim(secnm)))
+   call LIVE_message(STRING_pack('[ERROR] STOP signal received while in ',trim(secnm)),"nn","","%s")
  endif
  call msg('nr',STRING_pack('[ERROR] ',trim(mesg)))
  call LIVE_message(STRING_pack('[ERROR] ',trim(mesg)),"n","","%s")
  call LIVE_message("","n","","%s")
- flush(6)
+ if(log_as_a_file) call yambo_flush(logfile_unit)
  !
 #if defined _MPI
  if (ncpu>1) call MPI_Abort(mpi_comm_world,1,ierr)
@@ -252,84 +254,27 @@ subroutine error(mesg)
  !
 end subroutine error
 !
-subroutine msg_deliver(of_name_extension,formatted_msg)
- !
- use pars,      ONLY:max_open_ofs
- use com,       ONLY:opened_of,repfile,of_unit
- !
- implicit none
- !
- character(*) :: of_name_extension,formatted_msg
- integer      :: i_unit
- !
- do i_unit=1,max_open_ofs
-   if (index(opened_of(i_unit),trim(of_name_extension))==0) cycle
-   if (of_unit(i_unit)<=0) cycle
-   if (of_unit(i_unit)==11) open(unit=11,file=trim(repfile),position='append')
-   write (of_unit(i_unit),'(a)') trim(formatted_msg)
-   if (of_unit(i_unit)==11) close(11)
-   of_unit(i_unit)=-of_unit(i_unit)
- enddo
- !
-end subroutine msg_deliver
 !
-subroutine msg_manager(how)
- !
- ! how = '(n)s(n)' '(n)r(n)' '(n)l(n)' 'o PATTERN'
- !
- ! r(eport)
- ! s(tderr)
- ! oN=msgunits(N) 
- !
- use pars,    ONLY:schlen,lchlen
- use stderr,  ONLY:STRING_split,STRING_remove
- use com,     ONLY:terminator,opened_of,of_unit,max_open_ofs,jobstr,&
-&                  write_to_report,write_to_of
- !
- implicit none
- !
- character(*) how
- ! 
- ! Work Space
- !
- integer          ::i1,i2
- character(schlen)::ch_piece(10)
- character(lchlen)::stripped_file_name
- !
- terminator(1)='('
- terminator(2)=')'
- !
- ! o. files
- !
- if (how(:1)=="o".and.write_to_of) then
-   call STRING_split(how,ch_piece)
-   do i2=2,10
-     if (len_trim(ch_piece(i2))==0) cycle
-     do i1=1,max_open_ofs-1
-       if (len_trim(opened_of(i1))==0) cycle
-       stripped_file_name=STRING_remove(opened_of(i1),trim(jobstr))
-       if (index( stripped_file_name,trim(ch_piece(i2)) )/=0) then
-         of_unit(i1) =-of_unit(i1)
-       endif
-     enddo
-   enddo
-   return
- endif
- !
- ! Report
- !
- if (index(how,'r' )/=0.and.write_to_report) then
-   of_unit(max_open_ofs) =-of_unit(max_open_ofs)
-   if (index(how,'nr')/=0) terminator(1)='(/'
-   if (index(how,'rn')/=0) terminator(2)='/)'
- endif
- !
- ! Log 
- !
- if (index(how,'l' )/=0) then
-   terminator(3:4)=' '
-   if (index(how,'nl')/=0) terminator(3)='n'
-   if (index(how,'ln')/=0) terminator(4)='n'
- endif
- !
-end subroutine msg_manager
+subroutine yambo_flush(unit)
+  !
+  !
+  implicit none
+  !
+  integer, intent(in) :: unit
+  !
+  flush(unit)
+  !
+  ! compiler specific instructions below
+  !
+#ifdef __GFORTRAN__
+  ! 2020/05/18 DS
+  ! These two lines are useful in long simulations
+  ! since fsync forces to write the message to file.
+  ! However in short simulations (i.e. the test-suite)
+  ! they cause a small drop of performances.
+  ! Thus I comment them for now
+  !ierr = fsync(fnum(unit))
+  !if (ierr /= 0) stop "Error calling fsync"
+#endif
+  !
+end subroutine yambo_flush

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -45,6 +45,7 @@ subroutine RT_k_grid(E,k,q)
 &                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
 &                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_DbGd,RT_bands,RT_DbGd_nk,RT_nk
  use R_lattice,      ONLY:bz_samp
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz
  !
 #include<memory.h>
  !
@@ -118,6 +119,11 @@ subroutine RT_k_grid(E,k,q)
    RT_nk=RT_nk+BZ_DbGd_nkpt(ik_bz)
    !
  enddo
+ !
+ ! Define K-weights to be used in the k-points distribution
+ !
+ YAMBO_ALLOC(PAR_IND_Xk_ibz%weight_1D,(k%nibz))
+ PAR_IND_Xk_ibz%weight_1D=RT_Nk_ibz
  !
  do ik=1,k%nbz
    DbGd_bz_coo(ik,:)=(/sum(BZ_DbGd_nkpt(:ik-1))+1,sum(BZ_DbGd_nkpt(:ik))/)

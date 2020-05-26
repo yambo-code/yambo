@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -186,7 +186,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
          !
          do while (CONDITION)
            !
-           call define_the_basis( )
+           call PARALLEL_global_defaults__define_the_basis(NC,BASIS)
            !
            if (all(VALS_sorted<BASIS)) exit sc_loop
            if (BASIS>VALS_sorted(i_v)) exit
@@ -212,17 +212,21 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
      !
    end subroutine
    !
-   subroutine define_the_basis( )
-     integer :: i1,i3
-     i1_loop: do i1=2,NC
-       do i3=2,i1-1
-         if (mod(i1,i3)==0) cycle i1_loop
-       enddo
-       if (mod(NC,i1)==0) then
-         BASIS=i1
-         return
-       endif
-     enddo i1_loop
-   end subroutine
-   !
+end subroutine
+!
+subroutine PARALLEL_global_defaults__define_the_basis(NC,BASIS)
+  implicit none
+  integer, intent(in) :: NC
+  integer, intent(out):: BASIS
+  integer :: i1,i3
+  !
+  i1_loop: do i1=2,NC
+    do i3=2,i1-1
+      if (mod(i1,i3)==0) cycle i1_loop
+    enddo
+    if (mod(NC,i1)==0) then
+      BASIS=i1
+      return
+    endif
+  enddo i1_loop
 end subroutine

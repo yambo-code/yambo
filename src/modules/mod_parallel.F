@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -184,6 +184,15 @@ module parallel_m
  end type
  !
  type(PARk_str),SAVE   :: PAR_K_scheme
+ !
+ ! SND & RCV plan
+ !
+ type SND_RCV_geometry
+   integer,allocatable :: SND_to_id(:)
+   integer,allocatable :: RCV_from_id(:)
+ end type
+ integer               :: N_SND_RCV_operations
+ type(SND_RCV_geometry), allocatable :: SND_RCV_op(:)
  !
  ! Number of Bands to load
  !=========================
@@ -404,6 +413,7 @@ module parallel_m
  integer            :: PAR_n_c_bands(2) = 0
  integer            :: PAR_n_v_bands(2) = 0
  integer            :: PAR_n_G_vectors  = 0
+ integer            :: PAR_G_k_range(2) = 0  ! For parallel I/O of G
  !
  ! ... and derived variables
  !==========================
@@ -444,13 +454,14 @@ module parallel_m
  integer, private   :: local_type
  !
  interface PP_redux_wait
-   module procedure l1share,                                         &
-&                   i1share,i2share,i3share,                         &
-&                   i81share,                                        &
-&                   r0share,r1share,r2share,r3share,                 &
-&                   c0share,c1share,c2share,c3share,c4share,c5share, &
+   module procedure l1share,                                           &
+&                   i1share, i2share, i3share,                         &
+&                   i81share,                                          &
+&                   r0share, r1share, r2share,r3share,                 &
+&                   c0share, c1share, c2share,c3share,c4share,c5share, &
 #if ! defined _DOUBLE
-                    d0share,d1share,d2share,d3share,                 &
+&                   d0share, d1share, d2share,d3share,                 &
+&                   dc0share,dc1share,dc2share,                        &
 #endif
 &                   PARALLEL_wait
  end interface PP_redux_wait
@@ -463,7 +474,7 @@ module parallel_m
  end interface PP_bcast
  !
  interface PP_send_and_receive
-   module procedure PP_snd_rcv_c2,PP_snd_rcv_c1
+   module procedure PP_snd_rcv_c2,PP_snd_rcv_c1,PP_snd_rcv_r2
  end interface PP_send_and_receive
  !
  contains
@@ -644,9 +655,7 @@ module parallel_m
      if (ncpu==1) return
      !
      local_COMM=mpi_comm_world
-     if (present(COMM)) then
-       local_COMM=COMM
-     endif
+     if (present(COMM)) local_COMM=COMM
      if (local_COMM==comm_default_value) return
      call mpi_barrier(local_COMM,i_err)
 #endif
@@ -1243,6 +1252,97 @@ module parallel_m
 #endif
    end subroutine
    !
+   subroutine dc0share(cval,imode,COMM)
+     complex(DP)       :: cval
+     integer, optional :: imode,COMM
+#if defined _MPI
+     integer :: omode,LOCAL_COMM  ! Work Space
+     complex(DP):: local_cval  ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     local_type=MPI_DOUBLE_COMPLEX
+     !
+     call mpi_barrier(LOCAL_COMM,i_err)
+     if (present(imode)) then
+       if (imode==1) omode=mpi_sum
+       if (imode==2) omode=mpi_prod
+     else
+       omode=mpi_sum
+     endif
+     local_cval=0.
+     call mpi_allreduce(cval,local_cval,1,local_type,omode,LOCAL_COMM,i_err)
+     cval=local_cval
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
+   subroutine dc1share(array,COMM)
+     complex(DP):: array(:)
+     integer, optional :: COMM
+#if defined _MPI
+     integer::dimensions(1),dimension,LOCAL_COMM  ! Work Space
+     complex(DP),allocatable::larray(:)  ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     local_type=MPI_DOUBLE_COMPLEX
+     !
+     call mpi_barrier(LOCAL_COMM,i_err)
+     dimensions=shape(array)
+     if( any(dimensions<1) ) return
+     dimension=product(dimensions)
+     allocate(larray(dimension))
+     larray=(0.,0.)
+     call mpi_allreduce(array(1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
+     array=larray
+     deallocate(larray)
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
+   subroutine dc2share(array,COMM)
+     complex(DP):: array(:,:)
+     integer, optional :: COMM
+#if defined _MPI
+     integer::dimensions(2),dimension,LOCAL_COMM  ! Work Space
+     complex(DP),allocatable::larray(:)  ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     local_type=MPI_DOUBLE_COMPLEX
+     !
+     call mpi_barrier(LOCAL_COMM,i_err)
+     dimensions=shape(array)
+     if( any(dimensions<1) ) return
+     dimension=product(dimensions)
+     allocate(larray(dimension))
+     larray=(0.,0.)
+     call mpi_allreduce(array(1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
+     array=reshape(larray,dimensions)
+     deallocate(larray)
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
    subroutine i0bcast(ival,node,COMM)
      integer  :: ival
      integer, intent(in) :: node
@@ -1452,6 +1552,32 @@ module parallel_m
    end subroutine z3bcast
    !
 #endif
+   !
+   subroutine PP_snd_rcv_r2(mode,array,node,COMM)
+     character(*):: mode
+     real(SP)    :: array(:,:)
+     integer, intent(in) :: node
+     integer, optional   :: COMM
+#if defined _MPI
+     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
+     integer::LOCAL_COMM,i_err! Work Space
+     if (ncpu==1) return
+     !
+     local_type=MPI_REAL
+     if (SP==DP) local_type=MPI_DOUBLE_PRECISION
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,1, LOCAL_COMM,i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,1, LOCAL_COMM, MPI_status, i_err)
+     !
+#endif
+   end subroutine
    !
    subroutine PP_snd_rcv_c2(mode,array,node,COMM)
      character(*):: mode

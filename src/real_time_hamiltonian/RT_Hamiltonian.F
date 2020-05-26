@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -60,11 +60,10 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc, &
 &                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,         &
 &                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_potential,      &
-&                         RT_bands,RT_nbands,RT_nk,l_update_SOC,l_velocity_gauge_corr!,&
-!&                        NE_time
- use fields,         ONLY:gauge_field!,Efield,n_ext_fields
+&                         RT_bands,RT_nbands,l_update_SOC,l_velocity_gauge_corr
+ use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A,PP_redux_wait
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A,PP_redux_wait,PAR_G_k_range
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
@@ -75,7 +74,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  type(levels),  intent(inout) :: E
  type(bz_samp), intent(in)    :: k
- complex(SP),   intent(in)    :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP),   intent(in)    :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
  type(gauge_field), intent(in):: A_input
  !
  ! Work Space
@@ -212,6 +211,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !if (l_NE_with_fields.and.any((/Efield(:n_ext_fields)%t_final>=NE_time/))) then
  if (l_NE_with_fields) then
    !
+   call timing('RT Apply Field',OPR='start')
+   !
    do ik=1,nXkibz 
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      H_nl_sc=cZERO
@@ -220,6 +221,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
        call V_by_V_plus_V_omp(RT_nbands,cONE,H_nl_sc,Ho_plus_sigma(:,:,ik_RT,1))
      enddo
    enddo
+   !
+   call timing('RT Apply Field',OPR='stop')
    !
  endif
  !

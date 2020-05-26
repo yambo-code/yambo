@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -25,7 +25,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_use_collisions,l_use_Hxc_collisions,l_elph_scatt,l_elel_scatt,l_elphoton_scatt
- use stderr,         ONLY:set_real_printed_length,real2ch
+ use stderr,         ONLY:real2ch
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_spin,n_spinor
  use X_m,            ONLY:X_t
@@ -45,7 +45,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                         rho_reference,magn_reference, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_RT_is_WFfree,&
 &                         dG_lesser,l_initial_equilibrium,NE_tot_time,&
-&                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
+&                         i_MEM_prev,i_MEM_now,RT_is_dynamically_dephased,&
 &                         l_RT_update_Energies,l_NE_with_fields,l_update_SOC,l_velocity_gauge_corr
  use plasma,          ONLY:PLASMA_free,EH_gas
  use com,             ONLY:msg
@@ -53,7 +53,8 @@ subroutine RT_driver(E,X,k,q,Dip)
  use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element,COLLISIONS_have_HARTREE
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast,PP_redux_wait
+ use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast,PP_redux_wait,&
+&                          PAR_COM_Xk_ibz_INDEX
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  use units,           ONLY:FS2AUT
  !
@@ -65,14 +66,14 @@ subroutine RT_driver(E,X,k,q,Dip)
  type(bz_samp)     :: k,q
  type(X_t)         :: X(2)
  type(DIPOLE_t)    :: Dip
- logical, external :: STOP_now
  ! 
  ! Work Space
  !
  integer           :: io_REF,io_err
- logical           :: l_Dynamics_is_over,LT_pump
+ logical           :: LT_pump
  character(schlen) :: sec_title(3)
  real(SP)          :: OBSERVABLES(25)
+ logical, external :: RT_Dynamics_is_over
  !
  ! I/O
  !
@@ -84,15 +85,9 @@ subroutine RT_driver(E,X,k,q,Dip)
  real(SP)          :: LT_pump_duration
  !
  sec_title   =' '
- sec_title(1)='none'
- if (l_elph_scatt)                  sec_title(1)='el-ph'
- if (l_elel_scatt)                  sec_title(2)='el-el'
- if (l_elph_scatt.and.l_elel_scatt) sec_title(2)='+el-el'
- if (l_elphoton_scatt)              sec_title(3)='el-photon'
- if (l_elphoton_scatt.and.&
-&   (l_elel_scatt.or.l_elph_scatt)) sec_title(3)='+el-photon'
- !
- call set_real_printed_length(f_length=10,g_length=10)  
+ if (l_elph_scatt)                  sec_title(1)='+el-ph'
+ if (l_elel_scatt)                  sec_title(2)='+el-el'
+ if (l_elphoton_scatt)              sec_title(3)='+el-photon'
  !
  ! Potential 
  !===========
@@ -104,22 +99,33 @@ subroutine RT_driver(E,X,k,q,Dip)
  RT_xc_functional=H_xc_functional
  RT_perturbation =H_perturbation
  !
- call section('*',trim(RT_potential)//' Real-Time Dynamics')
+ call section('*',trim(RT_potential)//' Real-Time Dynamics '//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
  !
  ! GPL_EXCLUDE_START
  !
- call msg('s','Scattering(s):'//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
+ !call msg('s','Scattering(s)'//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
  !
  ! GPL_EXCLUDE_END
  !
  call section('+','Initialization')
  !#################################
  !
+ ! Parallel reset...
+ !
+ call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
+ !
+ ! The K-grid must be defined at the very beginning to provide PARALLEL_global_indexes with the right k-weights
+ !============
+ !
+ call RT_k_grid(E,k,q)
+ !
  ! Parallel Setups
  !=================
  !
- call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
  call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
+ if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) then
+   call PARALLEL_SND_RCV_plan( PAR_COM_Xk_ibz_INDEX,  PAR_COM_Xk_ibz_INDEX%n_CPU)
+ endif
  !
  ! QP & carriers corrections 
  !===========================
@@ -174,8 +180,8 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  ! Core allocations
  !
- call RT_alloc(E)
- call RT_control_alloc(.FALSE.)
+ call RT_alloc(E,"all")
+ call RT_control_alloc("all")
  !
  ! GPL_EXCLUDE_START
  !
@@ -189,7 +195,6 @@ subroutine RT_driver(E,X,k,q,Dip)
  ! 
  call section('=','Start and Restart')
  !######################################
- !
  call RT_start_and_restart(E,k,q)
  !
  ! If I loaded the WFs just to compute HARTREE0 and XC0 I can now free the WFs 
@@ -237,6 +242,8 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    call RT_relaxation(E,k,q,0._SP)
    !
+   call RT_carriers_object(RT_carriers,WHAT='fill_ref')
+   !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
    !
@@ -261,8 +268,6 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  ! Loop on time
  !==============
- l_Dynamics_is_over=.FALSE.
- !
  ! See [23/9/2011] comments in RT_start_and_restart regarding the value of it_start
  !
  NE_i_time = NE_i_start_time
@@ -275,7 +280,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  call RT_timing(0)
  !
- do while (.not.l_Dynamics_is_over)
+ do while (.TRUE.)
    !
    ! Dynamics single step is composed by few sections:
    !
@@ -292,7 +297,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    ! Calculate the RT Hamiltonian Ho_plus_Sigma
    !============================================
-   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_tot,E,k)
+   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_now),A_tot,E,k)
    !
    ! GPL_EXCLUDE_START
    !
@@ -304,7 +309,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
-   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),OBSERVABLES)
+   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_now),OBSERVABLES)
    !
    ! GPL_EXCLUDE_START
    !
@@ -336,11 +341,11 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    ! I (eventually) stop 
    !=======================
-   if (l_Dynamics_is_over) cycle
+   if (RT_Dynamics_is_over( )) exit
    !
    ! Integration
    !=============
-   call RT_Integrator(G_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_tot,A_tot,E,k,q)
+   call RT_Integrator(G_lesser(:,:,:,i_MEM_now),dG_lesser(:,:,:,i_MEM_now),dG_lesser(:,:,:,i_MEM_prev),A_tot,A_tot,E,k,q)
    !
  enddo
  !
@@ -355,8 +360,8 @@ subroutine RT_driver(E,X,k,q,Dip)
  contains
    !
    subroutine CLOSE_and_clean( )
-     call RT_free()
-     call RT_control_free()
+     call RT_free("all")
+     call RT_control_free("all")
      call WF_free(WF)
      !
      ! GPL_EXCLUDE_START
@@ -368,7 +373,6 @@ subroutine RT_driver(E,X,k,q,Dip)
      ! GPL_EXCLUDE_END
      !
      if (allocated(HXC_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
-     call set_real_printed_length()
    end subroutine
    !
    subroutine RT_timing(steps)
@@ -387,19 +391,17 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                         LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP)
        else
          LT_pump=.FALSE.
-         call live_timing('[RT] Dynamics :',NE_steps-NE_i_start_time+1,DEPTH=0.01_SP)
+         call live_timing('[RT] Dynamics ',NE_steps-NE_i_start_time+1,DEPTH=0.01_SP)
        endif
        !
-     else if(steps>0) then
+     else if (steps>0) then
        !
        call PP_redux_wait()
-       !
-       l_Dynamics_is_over=NE_i_time==NE_steps.or.NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now(.FALSE.)
        !
        if (NE_i_time>=LT_pump_steps.and.LT_pump) then
          LT_pump=.FALSE.
          call live_timing( )
-         call live_timing('[RT] Dynamics (pump-free region) :',NE_steps-LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP) 
+         call live_timing('[RT] Dynamics (pump-free region) ',NE_steps-LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP) 
        endif
        call live_timing(steps=steps)
        !

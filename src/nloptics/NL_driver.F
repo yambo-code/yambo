@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -25,7 +25,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use drivers,        ONLY:l_use_Hxc_collisions
- use stderr,         ONLY:set_real_printed_length
  use QP_m,           ONLY: QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels
@@ -42,7 +41,7 @@ subroutine NL_driver(E,X,k,q,Dip)
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
- use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_step,RT_nbands,RT_bands,eval_DFT
+ use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz
@@ -75,8 +74,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  call section('+','Initialization')
  !#################################
- !
- call set_real_printed_length(f_length=10,g_length=10)  
  !
  ! Initialize
  !=========
@@ -196,7 +193,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Start-Up & Timing
  !===================
- call live_timing('[NL] Frequencies :',PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1)*NE_steps)
+ call live_timing('[NL] Frequencies ',PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1)*NE_steps)
  !
  do i_f=1,n_frequencies
    !
@@ -273,7 +270,5 @@ subroutine NL_driver(E,X,k,q,Dip)
  call DIP_alloc('DIP_S')
  call DIP_alloc('DIP_R')
  call DIP_alloc('DIP_v')
- !
- call set_real_printed_length()
  !
 end subroutine NL_driver

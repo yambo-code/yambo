@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -60,14 +60,13 @@ module pars
  !...Output Files/Report File
  integer,parameter  :: max_n_ofs=1000
  integer,parameter  :: max_open_ofs=1000
+ integer,parameter  :: repfile_index=1001
+ integer,parameter  :: logfile_index=1002
  !
  !...I/O
- integer, parameter :: max_io_units=10
- integer, parameter :: max_io_vars_open=10
+ integer, parameter :: max_io_units=20
+ integer, parameter :: max_io_vars_open=50
  integer, parameter :: max_active_sections=10
- !
- !...QP
- integer, parameter :: max_qp_descs=100
  !
  !...QP_apply
  integer, parameter :: n_QP_actions_MAX=10
@@ -99,6 +98,8 @@ module pars
  !=========
  integer, parameter  :: schlen=100
  integer, parameter  :: lchlen=300
+ integer, parameter  :: msg_len=50
+ integer, parameter  :: DB_menu_length=30+msg_len
  !
  ! CONSTANTs
  !===========
@@ -109,6 +110,8 @@ module pars
  real(SP),    parameter :: infinity_dfl=HUGE(1._SP)
  real(SP),    parameter :: rZERO=0._SP
  real(SP),    parameter :: rONE =1._SP
+ !
+ real(SP),    parameter :: VAR_EMPTY=-9.9999999_SP
  !
  complex(SP), parameter :: cI   =(0._SP,1._SP)
  complex(SP), parameter :: cONE =(1._SP,0._SP)

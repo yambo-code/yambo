@@ -1,6 +1,6 @@
 ! 
 ! Copyright (C) 2004 WanT Group
-! Copyright (C) 2000-2019 the YAMBO team
+! Copyright (C) 2000-2020 the YAMBO team
 ! 
 ! This file is distributed under the terms of the 
 ! GNU General Public License. See the file `License' 
@@ -11,8 +11,7 @@
 !
 MODULE timing_m
  !
- USE pars,          ONLY:SP,DP
- USE parallel_m,    ONLY:ncpu,PP_redux_wait,mpi_comm_world
+ USE pars,          ONLY:SP,DP,lchlen
  USE openmp,        ONLY:master_thread
  USE stderr,        ONLY:log_as_a_file
  !
@@ -36,10 +35,15 @@ MODULE timing_m
  ! </INFO>
  !
  INTEGER, PARAMETER             :: nclockx = 200
- INTEGER, PARAMETER             :: str_len = 200
+ !
+ ! Overview
+ !
+ INTEGER :: MAX_name_length=0
+ INTEGER :: MAX_calls_length=0
  !
  TYPE clock
-   CHARACTER(str_len)          :: name              ! clock name
+   CHARACTER(lchlen)           :: name              ! clock name
+   INTEGER                     :: cpu_id            ! CPU id
    INTEGER                     :: call_number       ! number of runs for this clock
    REAL(DP)                    :: start             ! last start
    REAL(DP)                    :: stop              ! last stop 
@@ -51,7 +55,7 @@ MODULE timing_m
  !     
  TYPE clock_list
    TYPE(clock), POINTER        :: clock(:) => null()
-   CHARACTER(str_len)          :: name              ! list name
+   CHARACTER(lchlen)           :: name              ! list name
    INTEGER                     :: nclock            ! actual number of clocks
    INTEGER                     :: nclock_max        ! max number of clocks
    LOGICAL                     :: alloc 
@@ -65,18 +69,20 @@ MODULE timing_m
  ! end of declarations
  !
  INTERFACE ASSIGNMENT(=)
+   !
    MODULE PROCEDURE clock_assignment
+   !
  END INTERFACE
  !
  PUBLIC ::  nclockx
- PUBLIC ::  clock, clock_list, ASSIGNMENT(=)
+ PUBLIC ::  clock, clock_list, clock_update, ASSIGNMENT(=)
  PUBLIC ::  global_list
  PUBLIC ::  timing
  PUBLIC ::  timing_allocate
  PUBLIC ::  timing_deallocate
- PUBLIC ::  timing_overview
  PUBLIC ::  timing_upto_now
  PUBLIC ::  alloc
+ PUBLIC ::  MAX_name_length,MAX_calls_length
  !
  CONTAINS
    !
@@ -235,6 +241,7 @@ MODULE timing_m
      nclock = nclock + 1
      obj%indx=nclock
      obj%name=TRIM(name)
+     obj%cpu_id=-1
      obj%call_number=0
      obj%start=0.0
      obj%stop=0.0
@@ -249,6 +256,7 @@ MODULE timing_m
      TYPE(clock),    INTENT(in)    :: obj2    
      IF ( .NOT. obj2%alloc ) CALL error('clock_assignment:  Clock2 not allocated')
      obj1%name = obj2%name
+     obj1%cpu_id = obj2%cpu_id
      obj1%call_number = obj2%call_number
      obj1%start = obj2%start
      obj1%stop = obj2%stop
@@ -330,112 +338,6 @@ MODULE timing_m
      ENDIF
    END SUBROUTINE clock_update
    !
-   SUBROUTINE clock_write(obj,form)
-     use pars,       ONLY:lchlen
-     use LIVE_t,     ONLY:LIVE_message
-     use com,        ONLY:msg
-     IMPLICIT NONE
-     TYPE(clock),         INTENT(inout) :: obj    
-     CHARACTER(*), OPTIONAL, INTENT(in) :: form
-     CHARACTER(4)                       :: form_
-     CHARACTER(256)                     :: str
-     CHARACTER(15)                      :: sec_str
-     CHARACTER(lchlen)                  :: local_ch
-     INTEGER                            :: nday,nhour,nmin
-     INTEGER                            :: call_number(1)
-     REAL(DP)                           :: total_time,effective_total_time
-     REAL(DP)                           :: nsec
-     !
-     form_="sec "
-     IF ( PRESENT(form) ) form_ = TRIM(form)
-     !
-     ! define an average over the pools
-     !
-     total_time     = obj%total_time
-     call_number(1) = obj%call_number
-     !
-     ! do suitable averages only for MPI related clocks
-     !
-     str = obj%name
-     str(4:) = ' '
-     IF ( TRIM(str) == 'mp_' .OR. TRIM(str) == 'para_' ) THEN
-       !
-       CALL PP_redux_wait( total_time )
-       total_time = total_time / REAL( ncpu, DP )
-       !
-       CALL PP_redux_wait( call_number )
-       call_number(1) = NINT ( call_number(1) / REAL( ncpu, DP ) )
-       !
-     ENDIF
-     !
-     sec_str=" sec avg)"
-     effective_total_time = total_time
-     if (total_time<1._DP) then
-       sec_str=" millisec avg)"
-       effective_total_time=total_time*1000._DP
-     endif
-     !
-     SELECT CASE ( TRIM(form_) ) 
-       CASE ( "dhms" )
-         nday  = INT(  total_time/ 86400 )
-         nhour = INT( (total_time -86400*nday)/3600 )
-         nmin =  INT( (total_time -86400*nday -3600*nhour)/60 )
-         nsec =  INT(  total_time -86400*nday -3600*nhour -60*nmin )
-         IF ( call_number(1) == 1 )  THEN
-           IF (nday > 0) THEN
-             WRITE (local_ch, '(a40," : ",3x,i2,"d",i2,"h CPU ")') &
-                         TRIM(obj%name), nday, nhour
-           ELSEIF (nhour > 0) THEN
-             WRITE (local_ch, '(a40," : ",3x,i2,"h",i2,"m CPU ")') &
-                         TRIM(obj%name), nhour, nmin
-           ELSEIF (nmin > 0) THEN
-             WRITE (local_ch, '(a40," : ",i2,"m",f5.2,"s CPU ")') &
-                   TRIM(obj%name), nmin, nsec
-           ELSE
-             WRITE (local_ch, '(a40," : ",3x,f5.2,"s CPU ")') &
-                   TRIM(obj%name), nsec
-           ENDIF
-           if (log_as_a_file) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
-           call msg('r',local_ch(:100))
-         ELSE
-           IF (nday > 0) THEN
-             WRITE(local_ch,'(a40," : ",3x,i2,"d",i2,"h CPU (",i12," calls,",f8.3,a)') TRIM(obj%name), nday, nhour, &
-                   call_number(1) , effective_total_time / REAL( call_number(1), DP ),sec_str
-           ELSEIF (nhour > 0) THEN
-             WRITE(local_ch,'(a40," : ",3x,i2,"h",i2,"m CPU (", &
-                   & i12," calls,",f8.3,a)') TRIM(obj%name), nhour, nmin, &
-                   call_number(1) , effective_total_time / REAL( call_number(1), DP ),sec_str
-           ELSEIF (nmin > 0) THEN
-             WRITE (local_ch, '(a40," : ",i2,"m",f5.2,"s CPU (", &
-                   &   i12," calls,",f8.3,a)') TRIM(obj%name), nmin, nsec, &
-                        call_number(1) , effective_total_time / REAL( call_number(1), DP ),sec_str
-           ELSE
-             WRITE (local_ch, '(a40," : ",3x,f5.2,"s CPU (", &
-                   &   i12," calls,",f8.3,a)') TRIM(obj%name), nsec, &
-                        call_number(1) , effective_total_time / REAL( call_number(1), DP ),sec_str
-           ENDIF
-           if (log_as_a_file) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
-           call msg('r',local_ch(:100))
-         ENDIF
-       CASE ( "sec " )
-         !
-         ! time in seconds
-         !
-         IF ( call_number(1) == 1) THEN
-           WRITE (local_ch, '(a40," :",f10.4," s CPU")') TRIM(obj%name), total_time
-         ELSE
-           WRITE (local_ch, '(a40," :",f10.4," s CPU (", i12," calls,",f10.4," s avg)")')  &
-                        TRIM(obj%name) , total_time , call_number(1) ,   &
-                        total_time / REAL( call_number(1), DP )
-         ENDIF
-         if (log_as_a_file) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
-         call msg('r',local_ch(:100))
-       CASE DEFAULT
-         CALL error('clock_write:  Invalid FORM '//TRIM(form_) )
-     END SELECT
-     !
-   END SUBROUTINE clock_write        
-   !
    SUBROUTINE timing_upto_now()
      use pars,    ONLY:lchlen
      use com,     ONLY:msg
@@ -462,42 +364,5 @@ MODULE timing_m
      if (log_as_a_file) call LIVE_message(message="[TIMING]"//ch(:100),lfmt="n")
      !
    END SUBROUTINE timing_upto_now    
-   !
-   SUBROUTINE timing_overview(list,main_name)
-     use LIVE_t,     ONLY:LIVE_message
-     use com,        ONLY:msg
-     IMPLICIT NONE
-     TYPE(clock_list),       INTENT(in) :: list
-     CHARACTER(*),           INTENT(in) :: main_name
-     TYPE(clock)                        :: tmp_clock
-     INTEGER                            :: i
-     !
-#ifndef _TIMING
-     return
-#endif
-     IF ( .NOT. list%alloc ) CALL error('timing_overview:  list not allocated')
-     !
-     call msg('r','Routines: '//TRIM(list%name)//' (Only MASTER cpu here)')
-     !
-     IF ( list%nclock == 0 ) THEN
-       if (log_as_a_file) call LIVE_message(message="[TIMING]"//'No clock to display',lfmt="n")
-       call msg('r','No clock to display')
-       RETURN
-     ENDIF
-     !
-     DO i=1,list%nclock 
-       !
-       tmp_clock = list%clock(i)
-       CALL clock_update(tmp_clock)
-       !
-       IF ( tmp_clock%total_time < 600.0 ) THEN
-          CALL clock_write(tmp_clock,FORM="sec")
-       ELSE
-          CALL clock_write(tmp_clock,FORM="dhms")
-       ENDIF
-       !
-     ENDDO
-     !
-   END SUBROUTINE timing_overview
    !
 END MODULE timing_m

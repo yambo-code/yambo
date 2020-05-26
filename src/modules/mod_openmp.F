@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -117,6 +117,7 @@ module openmp
        !
      endif
      !
+     !call openblas_set_num_threads(1)
      call omp_set_dynamic(.false.)
      call omp_set_nested(.false.)
 #endif

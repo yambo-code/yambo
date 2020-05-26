@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -52,7 +52,7 @@ subroutine TDDFT_ALDA_G_space(E,k)
  !
  if (FXC_n_g_corr/= eval_G_minus_G(FXC_n_g_corr,0) ) then
    FXC_n_g_corr   = eval_G_minus_G(FXC_n_g_corr,0)
-   call msg('s','[TDDFT] ALDA Fxc size forced by symmetry to be :',FXC_n_g_corr)
+   call msg('s','[TDDFT] ALDA Fxc size forced by symmetry to be ',FXC_n_g_corr)
  endif
  !
  ! WF distributed & load

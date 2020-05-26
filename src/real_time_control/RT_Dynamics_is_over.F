@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,22 +21,20 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_write_descriptions(file_name)
+logical function RT_Dynamics_is_over()
  !
- use RT_control,     ONLY:RT_description,n_RT_descriptions
- use com,            ONLY:msg
+ use parser_m,       ONLY:parser
+ use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_dyn_step
+ use RT_control,     ONLY:RT_NAN_found
+ use it_tools,       ONLY:it_reset
  !
  implicit none
  !
- character(*), intent(in)      :: file_name
- !                          
- ! Work Space 
+ logical              ::STOP_now
  !
- integer  :: i_fp
+ call it_reset(0)
+ call parser('STOP_NOW',STOP_now)
  !
- do i_fp=1,n_RT_descriptions
-   call msg('o '//trim(file_name),'#',trim(RT_description(i_fp)),INDENT=0)
- enddo
+ RT_Dynamics_is_over=NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now.or.RT_NAN_found
  !
-end subroutine RT_write_descriptions
-
+end function

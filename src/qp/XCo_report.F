@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -65,7 +65,7 @@ subroutine XCo_report(qp,E,k)
  qp%nk=QP_nk
  qp%nb=QP_nb
  qp%n_states=QP_n_states
- qp%n_descs=0
+ qp%desc%n=0
  !
  report_Sc   =.FALSE.
  report_Vnlxc=allocated(QP_Vnl_xc)
@@ -74,6 +74,9 @@ subroutine XCo_report(qp,E,k)
  !
  YAMBO_ALLOC(qp%E,(qp%n_states))
  YAMBO_ALLOC(qp%E_bare,(qp%n_states))
+ !
+ call msg('nr',' Local XC kind (lXC) ',trim(Vxc_kind))
+ call msg('r',' Non-Local XC kind (nlXC) ',trim(Vnlxc_kind))
  !
  ik=-1
  do i_qp=1,QP_n_states
@@ -95,9 +98,7 @@ subroutine XCo_report(qp,E,k)
      ik=ikp
      loc_fmt =' '
      nloc_fmt=' '
-     if (l_Vxc)    loc_fmt ='+  Local '//trim(Vxc_kind)
-     if (l_Vnl_xc) nloc_fmt='Non-Local '//trim(Vnlxc_kind)
-     call msg('nr',trim(nloc_fmt)//trim(loc_fmt)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
+     call msg('nr',' Corrections @ K ['//trim(intc(ik))//'] ',' [eV] ')
    endif
    !
    ch_spin=' '
@@ -105,9 +106,9 @@ subroutine XCo_report(qp,E,k)
    if (n_sp_pol==2.and.i_s==1) ch_spin='(up)'
    if (n_sp_pol==2.and.i_s==2) ch_spin='(dn)'
    ! 
-   nloc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|'//trim(Vnlxc_kind)//'|'//trim(intc(ibp))&
+   nloc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|nlXC|'//trim(intc(ibp))&
       //trim(ch_spin)//'> ='
-   loc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|'//trim(Vxc_kind)//'|'//trim(intc(ibp))&
+   loc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|lXC|'//trim(intc(ibp))&
       //trim(ch_spin)//'> ='
    !
    if (l_Vnl_xc) then

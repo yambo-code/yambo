@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, HM, DS
@@ -21,9 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
+subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind,silent)
  !
  use netcdf
+ use com,        ONLY:fat_log
  use pars,       ONLY:SP,DP,IP,LP,schlen,nf90_SP
  use parallel_m, ONLY:ncpu
  use IO_m,       ONLY:write_is_on,read_is_on,io_unit,netcdf_call,io_netcdf_var,&
@@ -38,11 +39,13 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
  integer,      intent(in)  :: VAR_KIND
  character(schlen), optional, intent(in) :: dim_names(:)
  character(*),      optional, intent(in) :: par_io_kind
+ logical,           optional, intent(in) :: silent
  !
  ! Work Space
  !
  integer, allocatable :: var_dim(:),var_dim_db(:)
  integer              :: j1,dims_db,nf_error,netcdf_par_io_kind,netcdf_var_kind
+ logical              :: silent_
 #if defined _HDF5_COMPRESSION
  integer              :: shuffle,deflate,deflate_level
 #endif
@@ -54,6 +57,9 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
  if(VAR_KIND==IP+100) netcdf_var_kind=nf90_int
  if(VAR_KIND==LP+100) netcdf_var_kind=nf90_byte
  if(VAR_KIND==0 )     netcdf_var_kind=nf90_char
+ !
+ silent_=.not.fat_log
+ if(present(silent)) silent_=silent
  !
 #if defined _PAR_IO
  !
@@ -86,11 +92,12 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
      call netcdf_call(nf_error,ID,VAR=VAR)
      if(any((/var_dim(:)/=var_dim_db(:)/))) &
 &        call error(' Trying to owrite variable '//trim(VAR)//' in '//trim(io_file(ID))//' with wrong dimensions ')
-     call warning(' Overwriting variable '//trim(VAR)//' in file '//trim(io_file(ID)))
+     if(.not.silent_) call warning(' Overwriting variable '//trim(VAR)//' in file '//trim(io_file(ID)))
      deallocate(var_dim_db)
    endif
    !
    if (nf_error/=NF90_NOERR) then
+     if(.not.silent_) call warning(' Re-defining variable '//trim(VAR)//' in file '//trim(io_file(ID)))
      nf_error=nf90_def_var(io_unit(ID),VAR,netcdf_var_kind,var_dim,io_netcdf_var(ID,VAR_ID)) 
      call netcdf_call(nf_error,ID,VAR=VAR)
 #if defined _PAR_IO

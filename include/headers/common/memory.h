@@ -1,5 +1,5 @@
 /*
-        Copyright (C) 2000-2019 the YAMBO team
+        Copyright (C) 2000-2020 the YAMBO team
               http://www.yambo-code.org
 
  Authors (see AUTHORS file for details): HM AM
@@ -30,6 +30,14 @@
   if (.not.associated(x)) &NEWLINE& call MEM_dri(QUOTES x QUOTES)
 #define YAMBO_ALLOC(x,SIZE) \
   allocate(x SIZE,stat=MEM_err)NEWLINE \
+  if (     allocated(x)) &NEWLINE& call MEM_dri(QUOTES x QUOTES,x)NEWLINE \
+  if (.not.allocated(x)) &NEWLINE& call MEM_dri(QUOTES x QUOTES)
+#define YAMBO_ALLOC_SOURCE(x,y) \
+  allocate(x, source=y,stat=MEM_err)NEWLINE \
+  if (     allocated(x)) &NEWLINE& call MEM_dri(QUOTES x QUOTES,x)NEWLINE \
+  if (.not.allocated(x)) &NEWLINE& call MEM_dri(QUOTES x QUOTES)
+#define YAMBO_ALLOC_MOLD(x,y) \
+  allocate(x, mold=y,stat=MEM_err)NEWLINE \
   if (     allocated(x)) &NEWLINE& call MEM_dri(QUOTES x QUOTES,x)NEWLINE \
   if (.not.allocated(x)) &NEWLINE& call MEM_dri(QUOTES x QUOTES)
 #define YAMBO_FREE(x) \

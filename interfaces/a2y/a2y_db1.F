@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH DS HM
@@ -289,7 +289,7 @@ contains
       call msg('s','Closing shells against inversion...')
       call G_rot_grid(-1,'extend_grid')
       call msg('l','done')
-      if(ng_vec/=wf_ncx) call msg('s',':: ng_vec was increased to close the G-shells')
+      if(ng_vec/=wf_ncx) call msg('s',' ng_vec was increased to close the G-shells')
     endif
     !
     wf_igk=-1

@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM CA
+! Authors (see AUTHORS file for details): AM CA DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -103,7 +103,6 @@ subroutine RT_X_LRR_real_field(en)
  !
  iE_err=-1
  if (n_fields==1) then
-   iE_err=0
    do i_w = 1, RT_conf%W_n_steps
      !
      if(trim(RT_conf%damping) /= "NONE")                      Field_freq=ElField%W(i_w)-cI*RT_conf%damp_factor
@@ -130,6 +129,7 @@ subroutine RT_X_LRR_real_field(en)
  do i_p_dir=1,3
    if (l_rm_asympt_limit) Pol%F_t(:,i_p_dir)= Pol%F_t(:,i_p_dir)-Pol%F_t(RT_conf%T_n_steps,i_p_dir)
  enddo
+ !
  !
  ! Pol FT
  !--------

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -25,24 +25,24 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
 &                              V_MATRIX,PV_MATRIX,G,k,en,TRANS,Double_Grid,nK_mem)
  !
  use pars,           ONLY:SP,cI,cZERO
- use real_time,      ONLY:DbGd_ibz_coo,RT_Nk_ibz,RT_nk,RT_ibz_coo,l_RT_uses_E_DbGd,&
+ use real_time,      ONLY:DbGd_ibz_coo,RT_Nk_ibz,RT_ibz_coo,l_RT_uses_E_DbGd,&
 &                         RT_bands,RT_nbands
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_n_states
  use electrons,      ONLY:n_sp_pol,n_spin,levels
  use FFT_m,          ONLY:fft_size
- !use DIPOLES,        ONLY:Dipole_Energy_treshold
  use H_interfaces,   ONLY:V_real_space_to_H
  use wave_func,      ONLY:WF
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,&
+&                         PAR_COM_Xk_ibz_INDEX,PAR_G_k_range
  use timing_m,       ONLY:timing
  !
  implicit none
  !
  type(bz_samp), intent(in) :: k
  type(levels),  intent(in) :: en
- complex(SP),   intent(in) :: G(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP),   intent(in) :: G(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
  integer,       intent(in) :: nK_mem,N_V
  !
  ! Optionals

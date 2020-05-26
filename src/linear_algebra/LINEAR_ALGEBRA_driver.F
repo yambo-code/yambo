@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -47,6 +47,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use interfaces,    ONLY:MATRIX_transfer
  use BS,            ONLY:BS_block,BS_H_dim
  use timing_m,      ONLY:timing
+ use cuda_m,        ONLY:have_cuda
  !
 #include<memory.h>
  !
@@ -84,9 +85,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
 #if defined _SCALAPACK 
    if (M_slk%kind=="SLK") lib_in_use=USE_SLK
 #endif
-#if defined _CUDA
-   if (allocated(M_slk%blc_d)) USE_CUDA=.true.
-#endif
+   if (have_cuda.and.allocated(M_slk%blc_d)) USE_CUDA=.true.
  else if (present(M_bse)) then
    N=BS_H_dim
  else if (present(M)) then
@@ -285,17 +284,19 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  ! =============== SERIAL SECTION GPU ============================================================
  !
-#ifdef _CUDA
  if (lib_in_use==USE_LK.and.USE_CUDA) then
    !
    ! ####> LINEAR SYSTEM SOLUTION
    !
    if (idriver==LIN_SYS) then
+#ifdef _CUDA
      call SERIAL_lin_system_gpu(N,N,M_slk%blc_d(:,:,M_slk%I),B_slk%blc_d(:,:,B_slk%I))
+#else
+     call error('[LA] CUDA support required but not present')
+#endif
    endif
    !
  endif
-#endif
  !
  ! ===========================================================================================
  !

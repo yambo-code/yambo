@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -40,7 +40,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD_CL_IF_END,&
 &                        io_RESPONSE,deliver_IO_error_message
- use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
+ use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_table,l_update_W,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind,QP_states_simmetrize
  use X_m,           ONLY:X_alloc,X_mat,X_mat_d,X_t
@@ -80,7 +80,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,IO_ACT,timing_steps
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(elemental_collision),target ::isc,iscp
- character(schlen)::ch,SECTION_name
+ character(schlen)::ch,SECTION_name,W_name
  logical          ::X_is_TR_rotated,l_X_alloc
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
  complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor
@@ -125,18 +125,20 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #endif
  if (.not.l_sc_run) then
    SECTION_name='G'//trim(intc(GW_iter))
-   if (                    l_cohsex) SECTION_name=trim(SECTION_name)//'W0 (COHSEX)'
-   if (     l_ppa                  ) SECTION_name=trim(SECTION_name)//'W0 (W PPA)'
-   if (.not.l_ppa.and..not.l_cohsex) SECTION_name=trim(SECTION_name)//'W0 (W real-axis)'
+   W_name      ='W0'
+   if(l_update_W) W_name='W'//trim(intc(GW_iter))
+   if (                    l_cohsex) SECTION_name=trim(SECTION_name)//trim(W_name)//' (COHSEX)'
+   if (     l_ppa                  ) SECTION_name=trim(SECTION_name)//trim(W_name)//' (W PPA)'
+   if (.not.l_ppa.and..not.l_cohsex) SECTION_name=trim(SECTION_name)//trim(W_name)//' (W real-axis)'
  endif
  !
  if (GW_iter==0) call section('+',trim(SECTION_name))
  if (GW_iter> 0) call section('=',trim(SECTION_name))
  !
  if (GW_iter==0) then
-   call msg('r', '[  GW  ] Bands range     :',QP_n_G_bands)
+   call msg('r', '[  GW  ] Bands range     ',QP_n_G_bands)
    if (l_ppa) then
-     call msg('r', '[GW/PPA] G damping   [ev]:',QP_G_damp*HA2EV)
+     call msg('r', '[GW/PPA] G damping   [ev]',QP_G_damp*HA2EV)
      call msg('r','')
    endif
    ch=trim(SECTION_name)
@@ -462,7 +464,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !$omp end parallel do
          endif
          !
-         forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E_bare(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+         forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
          !
          E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
@@ -577,7 +579,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if(l_GW_terminator) then
        !
-       forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E_bare(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+       forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
        !
        do i_w=1,QP_dSc_steps
          !
@@ -610,16 +612,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call live_timing()
  !
- ! AM, Sept 2019. The COH potential seems to break (in some case of a large amount) the
- ! energy degenerations. 
- !
- if (.not.l_sc_run.and..not.l_rt_carriers_in_use) then
-   do i_w=1,QP_dSc_steps
-     if (i_w==1) call QP_states_simmetrize(E,what="COHSEX Sc",V_complex=QP_Sc(:,1),warn_me=.TRUE.)
-     if (i_w> 1) call QP_states_simmetrize(E,V_complex=QP_Sc(:,i_w))
-   enddo
- endif
- !
  ! CLEAN
  !
  deallocate(dc)
@@ -647,5 +639,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call timing('GW(REDUX)',OPR='start')
  call PP_redux_wait(QP_Sc)
  call timing('GW(REDUX)',OPR='stop')
+ !
+ ! AM, Sept 2019. The COH potential seems to break (in some case of a large amount) the
+ ! energy degenerations. 
+ !
+ if (.not.l_sc_run.and..not.l_rt_carriers_in_use) then
+   do i_w=1,QP_dSc_steps
+     if (i_w==1) call QP_states_simmetrize(E,what="COHSEX Sc",V_complex=QP_Sc(:,1),warn_me=.TRUE.)
+     if (i_w> 1) call QP_states_simmetrize(E,V_complex=QP_Sc(:,i_w))
+   enddo
+ endif
  !
 end subroutine

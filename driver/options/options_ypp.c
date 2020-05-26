@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2019 the YAMBO team
+         Copyright (C) 2000-2020 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -82,7 +82,8 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].section="Convertions";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Quasiparticle Databases";
- options[*i_opt].long_desc[0]="<string>=(g)enerate-modify/(m)erge";
+ options[*i_opt].long_desc[0]="<string>=(g)enerate-modify/(m)erge/(e)xpand";
+ options[*i_opt].long_desc[1]="         (e)xpand uses the symmetries to generate a BZ-expanded QP database";
  options[*i_opt].long_opt="qpdb";
  options[*i_opt].bin="ypp";
  options[*i_opt].yambo_string="QPDBs";

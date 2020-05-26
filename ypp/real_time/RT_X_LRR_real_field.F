@@ -29,7 +29,7 @@ subroutine RT_X_LRR_real_field(en)
  !
  use YPP_real_time,  ONLY:RT_conf,Use_FFT,l_force_min_damp,RT_time,Pol,ElField,FT_free
  use pars,           ONLY:SP,pi,cI,cZERO
- use units,          ONLY:HA2EV,FS2AUT
+ use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use vec_operate,    ONLY:v_norm
  use RT_control,     ONLY:RT_output

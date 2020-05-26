@@ -32,6 +32,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use real_time,      ONLY:eval_energy,eval_entropy,l_RT_update_Energies,l_NE_with_fields,NE_time, &
 &                         l_RT_induced_field,l_RT_impose_N_dN,l_RT_impose_E,RT_is_dynamically_dephased,NE_i_time
+ use D_lattice,      ONLY:Bose_Temp
  use RT_control,     ONLY:RT_do_it
  !
  implicit none
@@ -84,6 +85,12 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
  case('write')
    !
+   if (RT_is_dynamically_dephased) then
+     !
+     call RT_Lifetimes_merge_driver("INTER_k")
+     !
+   endif
+   !
    ! GPL_EXCLUDE_START
    !
    NCarr =OBSERVABLES( 1: 3)
@@ -122,11 +129,14 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    ! Mean Carrier Lifetimes
    !========================
    if (RT_is_dynamically_dephased) then
+     !
      call RT_mean_carrier_lifetimes(E,k)
-     if(l_elph_scatt)                      call RT_output('mean_EPlife', TIME=NE_time*AUT2FS)
-     if(l_elel_scatt)                      call RT_output('mean_EElife', TIME=NE_time*AUT2FS)
-     if(l_elphoton_scatt)                  call RT_output('mean_RADlife',TIME=NE_time*AUT2FS)
-     if(l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('N_dN_E',TIME=NE_time*AUT2FS)
+     !
+     if (l_elph_scatt)                      call RT_output('mean_EPlife', TIME=NE_time*AUT2FS)
+     if (l_elel_scatt)                      call RT_output('mean_EElife', TIME=NE_time*AUT2FS)
+     if (l_elphoton_scatt)                  call RT_output('mean_RADlife',TIME=NE_time*AUT2FS)
+     if (l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('N_dN_E',TIME=NE_time*AUT2FS)
+     !
    endif
    !
    ! GPL_EXCLUDE_END

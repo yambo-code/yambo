@@ -27,6 +27,8 @@ subroutine QP_expand(k,qp,qp_expanded)
  use QP_m,          ONLY:QP_t
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:n_sp_pol
+ use descriptors,   ONLY:IO_desc_duplicate
+ !
 #include<memory.h>
  !
  type(bz_samp)    ::k
@@ -36,8 +38,14 @@ subroutine QP_expand(k,qp,qp_expanded)
  !
  integer :: i_qp,ik,ib(2),is,ik_bz,n_qp_expanded,i1,max_ik
  !
+ call IO_desc_duplicate(qp%desc,qp_expanded%desc)
+ !
  do i_qp=1,qp_expanded%desc%n
-   if (index(qp_expanded%desc%str(i_qp),"QP @ K")>0) then
+   if (index(qp_expanded%desc%str(i_qp),"kind")>0) then
+     qp_expanded%desc%kind(i_qp)=" "
+     qp_expanded%desc%size(i_qp)=0
+   endif
+   if (index(qp_expanded%desc%str(i_qp),"QP @ state")>0) then
      qp_expanded%desc%str(i_qp)=trim(qp_expanded%desc%str(i_qp))//" [BZ expanded]"
    endif
  enddo

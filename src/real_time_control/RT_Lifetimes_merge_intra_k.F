@@ -21,43 +21,39 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
+subroutine RT_Lifetimes_merge_intra_k(what,LIFE)
  !
  use pars,           ONLY:SP
- use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp
- use parallel_m,     ONLY:PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,PP_redux_wait
- use real_time,      ONLY:REF_lifetime,l_initial_equilibrium,RT_nk,RT_bands
- use timing_m,       ONLY:timing
+ use parallel_m,     ONLY:PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,PP_redux_wait,&
+&                         PAR_COM_Xk_ibz_A2A,PAR_IND_Xk_ibz
+ use real_time,      ONLY:RT_nk,RT_bands,RT_ibz_coo
+ use R_lattice,      ONLY:nkibz
  !
  implicit none
  !
- type(levels),  intent(in)    :: E
- type(bz_samp), intent(in)    :: k
- integer,       intent(in)    :: SAVE_index
- real(SP),      intent(inout) :: LIFE(RT_bands(1):RT_bands(2),RT_nk)
+ character(*)            :: what
+ real(SP), intent(inout) :: LIFE(RT_bands(1):RT_bands(2),RT_nk)
  !
  ! Work Space
  !
- integer          :: ik
+ integer          :: NC,ik,COMM
  !
- call timing('RT life merge',OPR='start')
+ if (PAR_COM_Xk_ibz_A2A%n_CPU==1) return
  !
- do ik=1,RT_nk
+ ! Prefactor
+ !
+ NC=1
+ if (what=="elph".or.what=="bose") NC=PAR_COM_PLASMA_INDEX%n_CPU
+ if (what=="elgm")                 NC=PAR_COM_Q_INDEX%n_CPU*PAR_COM_PLASMA_INDEX%n_CPU
+ !
+ if (NC>1) LIFE=LIFE/NC
+ !
+ do ik=1,nkibz
    !
-   if (SAVE_index>2) LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_PLASMA_INDEX%n_CPU)
-   if (SAVE_index>6) LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_Q_INDEX%n_CPU)
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
    !
- enddo
- !
- call PP_redux_wait(LIFE)
- !
- do ik=1,RT_nk
-   !
-   if (l_initial_equilibrium) REF_lifetime(:,ik,SAVE_index)=LIFE(:,ik)
+   call PP_redux_wait(LIFE(:,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
    !
  enddo 
  !
- call timing('RT life merge',OPR='stop')
- !
-end subroutine RT_Lifetimes_merge
+end subroutine RT_Lifetimes_merge_intra_k

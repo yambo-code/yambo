@@ -139,11 +139,11 @@ subroutine INIT_read_command_line(rstr,init_)
            infile_verbosity=V_general
          case ('resp','X')
            infile_verbosity=V_resp
-         case ('rt')
+         case ('RT','rt')
            infile_verbosity=V_real_time
-         case ('nl')
+         case ('NL','nl')
            infile_verbosity=V_nl_optics
-         case ('par')
+         case ('PAR','par')
            infile_verbosity=V_parallel
          case ('all')
            infile_verbosity=V_all

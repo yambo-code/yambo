@@ -88,7 +88,7 @@ contains
     !
     stream_default=cudaforGetDefaultStream()
     ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
-    ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
+    ierr = CudaStreamCreateWithFlags(stream_d2h,cudaStreamNonBlocking)
 #else
     have_cuda_devices=.false.
 #endif

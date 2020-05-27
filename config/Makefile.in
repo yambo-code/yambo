@@ -87,16 +87,14 @@ EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KE
 #
 # Libraries (ordered for compiling & linking)
 #
-LIBS     = get_extlibs ext-libs yambo-libs
-#
 EXT_LIBS   = libxc lapack fftw fftqe yaml futile iotk hdf5 netcdf etsf_io blacs scalapack petsc slepc
 INT_LIBS   = qe_pseudo slatec math77 local
-YAMBO_LIBS = Yio
+YAMBO_LIBS = io driver
+YLIBIO         = modules Yio
+YLIBIO_LD      = modules Yio
 #
 DRIVER_LIBS    = interface lib options
 DRIVER_LIBS_LD = driver_options driver_interface driver_lib 
-YLIBIO         = modules Yio
-YLIBIO_LD      = modules Yio
 #
 # Source code
 #
@@ -188,56 +186,56 @@ all: ext-libs
 #
 # External libs #
 #
-ext-libs: 
+ext-libs:  
 	@for target in $(EXT_LIBS) ; do $(MAKE) $$target; \
 	if test -f "$(topdir)/lib/$$target/Makefile" && test ! -f "$(topdir)/lib/$$target/package-installed"; then \
 	echo "$$target build failed"; break; fi; done
 #
-# BLACS& SLK ) Parallel compilation of blacs and scalapack fails
-# SLEPC&PETSC) The internal build system of petsc and slepc already compiles the two libraries in parallel.
+# BLACS& SLK : Parallel compilation of blacs and scalapack fails
+# SLEPC&PETSC: The internal build system of petsc and slepc already compiles the two libraries in parallel.
 #
 # Thus for these libraries the instruction to build in parallel (@+if) is not used
 #
-libxc:
+libxc: get_extlibs
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-lapack:
+lapack: get_extlibs
 	@+if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-fftw:
+fftw: get_extlibs
 	@+if test "$(do_fftw)" = yes ; then LIBS2DO="fftw" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-fftqe:
+fftqe: get_extlibs
 	@+if test "$(do_fftqe)" = yes ; then LIBS2DO="fftqe" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); $(mklib_internal); fi
-yaml:
+yaml: get_extlibs
 	@+if test "$(do_yaml)" = yes ; then LIBS2DO="yaml" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-futile:
+futile: get_extlibs
 	@+if test "$(do_futile)" = yes ; then LIBS2DO="futile" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-iotk:
+iotk: get_extlibs
 	@+if test "$(do_iotk)" = yes ; then LIBS2DO="iotk" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-hdf5:
+hdf5: get_extlibs
 	@+if test "$(do_hdf5)" = yes ; then LIBS2DO="hdf5" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-netcdf:
+netcdf: get_extlibs
 	@+if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf netcdff" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-etsf_io:
+etsf_io: get_extlibs
 	@+if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-blacs:
+blacs: get_extlibs
 	@if test "$(do_blacs)" = yes ; then LIBS2DO="blacs" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-scalapack:
+scalapack: get_extlibs
 	@if test "$(do_slk)" = yes ; then LIBS2DO="scalapack" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-petsc:
+petsc: get_extlibs
 	@if test "$(do_petsc)" = yes ; then LIBS2DO="petsc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-slepc:
+slepc: get_extlibs
 	@if test "$(do_slepc)" = yes ; then LIBS2DO="slepc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 #
@@ -262,6 +260,9 @@ yambo-libs:
 #
 Yio: ext-libs
 	@+LIBS2DO="$(YLIBIO)"; DIR2GO="src"; VPATH="$(topdir)/src"; ADF="-D_io_lib"; $(mklib_yambo)
+#
+Ydriver: 
+	@+LIBS2DO="$(YDRIVER)"; DIR2GO="lib/yambo"; VPATH="$(topdir)/lib/yambo"; ADF="-D_io_lib"; $(mklib_ext_yambo)
 #
 # All libs #
 #
@@ -441,19 +442,20 @@ distclean: clean_all remove_ext_libs
 #
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SSUBVERSION@.@SPATCHLEVEL@ r.@SREVISION@ targets;echo;\
- echo " [all projects] all";\
- echo " [project-related suite] project (core, rt-project, ...)";      echo;\
- for target in $(CORE);      do echo " [core] $$target"         ; done;echo;\
- for target in $(SC_PROJ);   do echo " [sc-project] $$target"   ; done;echo;\
- for target in $(MAG_PROJ);  do echo " [magn-project] $$target" ; done;echo;\
- for target in $(PH_PROJ);   do echo " [ph-project] $$target"   ; done;echo;\
- for target in $(RT_PROJ);   do echo " [rt-project] $$target"   ; done;echo;\
- for target in $(NL_PROJ);   do echo " [nl-project] $$target (double-precision compilation)"   ; done;echo;\
- for target in $(RTE_PROJ);  do echo " [rtext-project] $$target"; done;echo;\
- for target in $(KERR_PROJ); do echo " [kerr-project] $$target" ; done;echo;\
- for target in $(LIBS);      do echo " [libs] $$target"         ; done;echo;\
- for target in $(UTILS);     do echo " [utils] $$target"        ; done;echo;\
- for target in $(CLEANS);    do echo " [clean] $$target"        ; done;echo
+ echo " [everything] all";\
+ echo " [components] core, rt-project, ext-libs, yambo-libs...";      echo;\
+ for target in $(CORE);        do echo " [core] $$target"         ; done;echo;\
+ for target in $(SC_PROJ);     do echo " [sc-project] $$target"   ; done;echo;\
+ for target in $(MAG_PROJ);    do echo " [magn-project] $$target" ; done;echo;\
+ for target in $(PH_PROJ);     do echo " [ph-project] $$target"   ; done;echo;\
+ for target in $(RT_PROJ);     do echo " [rt-project] $$target"   ; done;echo;\
+ for target in $(NL_PROJ);     do echo " [nl-project] $$target (double-precision compilation)"   ; done;echo;\
+ for target in $(RTE_PROJ);    do echo " [rtext-project] $$target"; done;echo;\
+ for target in $(KERR_PROJ);   do echo " [kerr-project] $$target" ; done;echo;\
+ for target in $(EXT_LIBS);    do echo " [ext-libs] $$target"         ; done;echo;\
+ for target in $(YAMBO_LIBS);  do echo " [yambo-libs] $$target"         ; done;echo;\
+ for target in $(UTILS);       do echo " [utils] $$target"        ; done;echo;\
+ for target in $(CLEANS);      do echo " [clean] $$target"        ; done;echo
 endef
 #
 # SRC's and LIB's (needing the locks)
@@ -524,6 +526,20 @@ endef
 define mklib_yambo
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" ; then \
+   echo " " ; \
+   echo ">>>[Making $$ldir]<<<" ; \
+   if test ! -d "$$DIR2GO/$$ldir" ; then mkdir -p "$$DIR2GO/$$ldir" ; fi ; \
+   if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
+    cp $$VPATH/$$ldir/.objects $$DIR2GO/$$ldir ; \
+   fi ; \
+   ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $(xcpp) $$ADF ; \
+   cd $$DIR2GO/$$ldir ; $(MAKE) VPATH=$$VPATH/$$ldir || exit "$$?" ; cd ../../; \
+  fi \
+ done
+endef
+define mklib_ext_yambo
+ for ldir in $$LIBS2DO; do \
+  if test ! -f "$(libdir)/$$ldir.a" ; then \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
    if test ! -d "$$DIR2GO/$$ldir" ; then mkdir -p "$$DIR2GO/$$ldir" ; fi ; \

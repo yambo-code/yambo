@@ -21,7 +21,7 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-m4_include([config/version.m4])
+m4_include([config/version/version.m4])
 #
 CURRENT_DIR=`echo "$PWD" | sed -e "s/ /X/g"`
 if ! test -d $CURRENT_DIR ; then 
@@ -36,25 +36,25 @@ AC_CONFIG_SRCDIR([driver/driver.c])
 #
 # YAMBO SPECIFIC
 #
-m4_include([config/yambo_specific.m4])
+m4_include([config/m4/yambo_specific.m4])
 # 
 #  General
 #
-m4_include([config/acx_misc.m4])
-m4_include([config/acx_gmake.m4])
-m4_include([config/acx_cpp.m4])
-m4_include([config/acx_fpp.m4])
-m4_include([config/ax_f90_module_flag.m4])
-m4_include([config/acx_get_fc_kind.m4])
-m4_include([config/acx_get_mpi_kind.m4])
-m4_include([config/acx_fortran_flags.m4])
-m4_include([config/acx_mpi.m4])
-m4_include([config/cuda.m4])
-m4_include([config/acx_branch.m4])
+m4_include([config/m4/acx_misc.m4])
+m4_include([config/m4/acx_gmake.m4])
+m4_include([config/m4/acx_cpp.m4])
+m4_include([config/m4/acx_fpp.m4])
+m4_include([config/m4/ax_f90_module_flag.m4])
+m4_include([config/m4/acx_get_fc_kind.m4])
+m4_include([config/m4/acx_get_mpi_kind.m4])
+m4_include([config/m4/acx_fortran_flags.m4])
+m4_include([config/m4/acx_mpi.m4])
+m4_include([config/m4/cuda.m4])
+m4_include([config/m4/acx_branch.m4])
 # 
 #  Report
 #
-m4_include([config/acx_report.m4])
+m4_include([config/m4/acx_report.m4])
 # ============================================================================
 # Current branch
 ACX_BRANCH
@@ -220,26 +220,26 @@ AC_LANG_POP(Fortran 77)
 # ============================================================================
 #  Scripts
 #
-m4_include([config/scripts.m4])
+m4_include([config/m4/scripts.m4])
 #
 # ============================================================================
 # MPI
-m4_include([config/mpi.m4])
-m4_include([config/repos.list])
+m4_include([config/m4/mpi.m4])
+m4_include([config/urls/repos.list])
 # 
 # ============================================================================
 #  Libs
 #
-m4_include([config/blas.m4])
-m4_include([config/lapack.m4])
-m4_include([config/netcdf_f90.m4])
-m4_include([config/libxc.m4])
-m4_include([config/fft.m4])
-m4_include([config/futile.m4])
-m4_include([config/iotk.m4])
-m4_include([config/etsf_io.m4])
-m4_include([config/scalapack.m4])
-m4_include([config/petsc_slepc.m4])
+m4_include([config/m4/blas.m4])
+m4_include([config/m4/lapack.m4])
+m4_include([config/m4/netcdf_f90.m4])
+m4_include([config/m4/libxc.m4])
+m4_include([config/m4/fft.m4])
+m4_include([config/m4/futile.m4])
+m4_include([config/m4/iotk.m4])
+m4_include([config/m4/etsf_io.m4])
+m4_include([config/m4/scalapack.m4])
+m4_include([config/m4/petsc_slepc.m4])
 #
 AC_LANG_PUSH(Fortran)
 # ============================================================================
@@ -290,7 +290,7 @@ AC_OUTPUT
 #
 # Folders
 #
-m4_include([config/yambo_folders.m4])
+m4_include([config/m4/yambo_folders.m4])
 #
 cat config/report
 #

@@ -1,7 +1,6 @@
 #
 # storing options
 #
-#keep_iotk=no
 keep_iotk=yes
 keep_netcdf=no
 keep_netcdff=no

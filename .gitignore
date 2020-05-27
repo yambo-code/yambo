@@ -78,7 +78,6 @@ src/external_c/.objects
 *__lock*
 Makefile.locks
 Makefile.archive
-Makefile
 make.dep
 commit.msg
 

@@ -19,8 +19,6 @@ modfiles.list
 ##########
 driver/include/editor.h
 driver/include/version.h
-include/driver.h
-include/editor.h
 include/fortran_arguments.h
 include/fortran_driver.h
 include/kind.h
@@ -32,8 +30,6 @@ config.status
 config/report
 config/setup
 config/msg_ydb
-driver/codever.h
-driver/editor.h
 include/branch.inc
 include/netcdf.h
 include/netcdf_*.h

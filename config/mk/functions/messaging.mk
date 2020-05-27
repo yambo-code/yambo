@@ -1,10 +1,4 @@
-define warn_if_conf_not_done
-  if test ! -f "$(topdir)/config/mk/defs.mk" ; then \
-    echo;echo " Run ./configure first";echo; \
-  fi
-endef
 define make_message
- if test -f "$(topdir)/config/mk/defs.mk" ; then \
   echo;echo " This is $(y_version)";echo;\
   echo " [all]        all";\
   echo " [components] core, rt-project, ext-libs, yambo-libs...";      echo;\
@@ -26,7 +20,6 @@ define make_message
   echo ; echo " *** Utils & Cleans ***";\
   echo -n " [utils]        "; for target in $(UTILS); do echo -n " $$target" ; done;echo;\
   echo -n " [clean]        "; for target in $(CLEANS); do echo -n " $$target" ; done;echo;\
-  echo; \
- fi
+  echo
 endef
 

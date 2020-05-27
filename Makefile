@@ -22,7 +22,9 @@
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 ifeq ($(wildcard config/mk/defs.mk),config/mk/defs.mk)
-  include config/mk/defs.mk
+ include config/mk/defs.mk
+else
+ $(error Run ./configure first)
 endif
 #
 # STAMPS and CFGFILES
@@ -37,7 +39,6 @@ include config/mk/libraries.mk
 .PHONY: interfaces
 
 nothing: 
-	@$(warn_if_conf_not_done)
 	@$(make_message)
 changelog:
 	./sbin/gitchangelog.py > ChangeLog

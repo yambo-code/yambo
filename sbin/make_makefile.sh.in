@@ -88,8 +88,9 @@ comp_modules=`echo $comp_modules | sed "s/_DOUBLE//2"`;
 lock_file=`echo $lock_file  | sed "s/_DOUBLE//2"`;
 #
 llibs="-L\$(libdir) $llibs"
-lf90include="@IFLAG@\$(includedir) @IFLAG@\$(modinclude) @IFLAG@\$(sysinclude) @IFLAG@\$(includedir)/headers/common @IFLAG@\$(includedir)/headers/parser @IFLAG@\$(libdir)/yambo/driver/include""
-linclude="-I\$(includedir) -I\$(modinclude) -I\$(sysinclude) -I\$(includedir)/headers/common -I\$(includedir)/headers/parser -I\$(srcdir)\$(libdir)/yambo/driver/include""
+driverinclude="@IFLAG@\$(libdir)/yambo/driver/include @IFLAG@\$(srcdir)/driver/include"
+lf90include="@IFLAG@\$(includedir) @IFLAG@\$(modinclude) @IFLAG@\$(sysinclude) @IFLAG@\$(includedir)/headers/common @IFLAG@\$(includedir)/headers/parser $driverinclude"
+linclude="-I\$(includedir) -I\$(modinclude) -I\$(sysinclude) -I\$(includedir)/headers/common -I\$(includedir)/headers/parser $driverinclude"
 lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ipetsc) \$(islepc)"
 #
 case $target in

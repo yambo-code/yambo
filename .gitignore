@@ -75,9 +75,11 @@ lib/bin/*
 ##########
 src/external_c/.objects
 .check_configure
+config/mk/defs.mk
 *__lock*
 Makefile.locks
 Makefile.archive
+*Makefile
 make.dep
 commit.msg
 

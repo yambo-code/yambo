@@ -32,7 +32,7 @@ AC_PREFIX_DEFAULT($PWD)
 if test "$exec_prefix" = "NONE" ; then exec_prefix="$PWD" ; fi
 #
 AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_SRCDIR([driver/driver.c])
+AC_CONFIG_SRCDIR([driver/yambo.F])
 #
 # YAMBO SPECIFIC
 #
@@ -284,7 +284,7 @@ AC_CONFIG_HEADERS([include/headers/common/have_malloc.h:include/headers/common/h
 AC_CONFIG_FILES([config/setup config/mk/defs.mk config/report config/msg_ydb
                  src/wf_and_fft/sgfft.F
                  sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh
-                 driver/include/editor.h src/tools/.objects driver/include/version.h include/branch.inc])
+                 lib/yambo/driver/include/editor.h src/tools/.objects lib/yambo/driver/include/version.h include/branch.inc])
 #
 AC_OUTPUT
 #

@@ -1,5 +1,4 @@
 define mk_driver_src
- cp -r $(topdir)/lib/yambo/driver/include/*.h include/ ;\
  for ldir in $(DRIVER_LIBS); do \
   if test ! -f "$(libdir)/libdriver_$$ldir.a" || test "$(keep_objs)" = yes  ; then \
    rm -f "$(libdir)/libdriver_$$ldir.a" ; \

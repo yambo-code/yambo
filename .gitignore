@@ -17,12 +17,8 @@ modfiles.list
 
 # source #
 ##########
-driver/include/editor.h
-driver/include/version.h
-include/fortran_arguments.h
-include/fortran_driver.h
-include/kind.h
-include/tool.h
+lib/yambo/driver/yambo/include/editor.h
+lib/yambo/driver/yambo/include/version.h
 include/version.h
 include/branch.inc
 src/tools/.objects

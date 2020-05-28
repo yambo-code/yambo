@@ -1,0 +1,68 @@
+#! /bin/bash
+
+LIB="-D_MPI -D_CUDA -D_SCALAPACK -D_SLEPC -D_PAR_IO -D_HDF5_IO -D_HDF5_LIB"
+COMP=" -D_FORTRAN_US -D_DRIVER_TEST -D_C_US"
+CWD=`pwd`
+BIN="CLEAN";
+case "$1"
+in
+example) BIN="-D_example_driver";;
+yambo) BIN="-D_yambo_driver";;
+esac
+#
+if [ $BIN = "CLEAN" ]
+then
+ file_list=`find . -type f | grep -E '\.o|\.x|\.mod|\.f90|\.a' |grep -v '\.object' | grep -v .swp` 
+ for file in $file_list; do
+  echo $file
+  rm -f $file
+ done
+ exit
+fi
+
+if [ $BIN = "-D_yambo_driver" ]
+then
+ DIRS='interface lib options yambo/options'
+else
+ DIRS='interface lib options example/options'
+fi
+
+if [ $BIN = "-D_yambo_driver" ]
+then
+ INCS="-I$CWD/yambo/include/"
+else
+ INCS="-I$CWD/example/include/"
+fi
+
+for dir in $DIRS; do
+ cd $dir
+ file_list=`find . -maxdepth 1 -type f | grep -E '\.c' |grep -v .swp`
+ for file in $file_list; do
+  echo $dir/$file
+  mpicc $COMP $LIB $BIN -c $file -I$CWD/include $INCS
+ done
+ if [ $dir = "interface" ]
+ then
+  file_list='mod_C_driver.F C_driver_transfer.F'
+  for file in $file_list; do
+   F_file=`echo $file | sed 's/.F/.f90/g'`
+   cp $file $F_file
+   echo $dir/$file
+   mpif90 $COMP $LIB $OPT $BIN -c $F_file -I$CWD/include  
+  done
+ fi
+ find . -type f | grep -E '\.o|\.mod' | xargs ar -r $CWD/include/driver_lib.a 
+ cd $CWD/
+done
+
+mpicc $COMP $LIB $OPT $BIN -c driver.c -I include $INCS
+
+cp example/main.F main.f90
+mpif90  -c main.f90 -I interface -I include
+rm -f driver.x
+mpif90 -o driver.x driver.o main.o include/driver_lib.a -I include $INCS
+
+#./driver.x -h
+#./driver.x -x -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file -nompi -noopenmp -setup -opt chi -Q
+#./driver.x -x -optics c -y d -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file -t
+

@@ -30,13 +30,19 @@
 #include <wrapper.h>
 #include <tool.h>
 #include <driver.h>
-#include <editor.h>
+#if defined _yambo_driver
+ #include <editor.h>
+#endif
 
 struct tool_struct tool_init( )
 {
  tool_struct t;
  t=versions();
+#if defined _yambo_driver
  t.editor=editor;
+#else
+ t.editor="vim";
+#endif
  t.tool=tool;
  t.desc=tool_desc;
  /*

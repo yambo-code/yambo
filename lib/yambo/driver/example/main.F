@@ -1,5 +1,5 @@
 !
-integer function driver_test(&
+integer function main(&
 &  np,pid,&
 &  string_N,in_file_N,in_dir_N,out_dir_N,com_dir_N,job_N,&
 &  string,   in_file,   in_dir,   out_dir,   com_dir,   job)
@@ -30,19 +30,17 @@ integer function driver_test(&
    write (*,*) "JOB       :",job_N,job
   
    call C_driver_transfer( )
-   write (*,'(/2a)') " RUNNING   :",trim(what_is_running)
+   write (*,'(/2a)') " RUNNING   :",trim(code_bin)
    write (*,'(2a)') " LIBS      :",trim(code_libraries)
    write (*,'(a,2(i1,a),i1,1x,i5,1x,a/)') " VERSION   :",code_version(1),".",code_version(2),".",&
 &                                         code_version(3),code_revision,trim(code_hash)
    do i_runlevel=0,199
      key=" "
      desc=" "
-     pj=" "
      call get_runlevel(key,1,i_runlevel)
      call get_runlevel(desc,2,i_runlevel)
-     call get_runlevel(pj,3,i_runlevel)
      if (trim(key)=="EMPTY") cycle
-     write (*,*) "RUNLEVEL #",i_runlevel," KEY:",trim(key),' DESC:',trim(desc),' PJ:',trim(pj)
+     write (*,*) "RUNLEVEL #",i_runlevel," KEY:",trim(key),' DESC:',trim(desc)
    enddo
 endif
 

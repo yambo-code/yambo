@@ -1,1 +1,1 @@
-objs = options_control.o options_help.o options_interfaces.o options_projects.o options_yambo.o options_ypp.o
+objs = options_help.o 

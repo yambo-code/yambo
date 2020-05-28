@@ -28,6 +28,9 @@
 #include <fortran_driver.h>
 #include <kind.h>
 #include <driver.h>
+#if defined _yambo_driver
+ #include <yambo_driver.h>
+#endif
 #if defined _MPI 
  #include <mpi.h>
 #endif
@@ -38,6 +41,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
  /* 
    Par Environments? Yes? => Return
  */
+#if defined _yambo_driver
  if (y.parenv_file !=NULL) 
  {
   int env_editor=load_environments(y.parenv_file);
@@ -47,6 +51,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
    return;
   };
  };
+#endif
  /* 
    MPI
  */
@@ -57,7 +62,16 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
    MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
  };
 #endif
-#if defined _yambo
+#if defined _example_driver
+ /* 
+   Testing Driver
+ ===========================================================================
+ */
+ yambo_err=F90_FUNC(main)(
+#include <fortran_arguments.h>
+ );
+#endif
+#if defined _yambo_driver
  /* 
    Running the Fortran YAMBO driver 
  ===========================================================================

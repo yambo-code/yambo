@@ -21,17 +21,27 @@
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
-struct yambo_seed_struct command_line(int argc, char *argv[],struct options_struct options[], struct tool_struct t, int *use_editor, int *use_mpi, int n_options);
-void input_file(struct yambo_seed_struct y,struct tool_struct t, int *use_editor);
-void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor , int *use_mpi );
-void options_maker(struct options_struct options[], int n_options);
-struct tool_struct tool_init( );
-void usage(struct options_struct options[], struct tool_struct t, char* what, int n_options);
-struct tool_struct versions( );
-void title(FILE *file_name,char *cmnt, struct tool_struct t);
-int use_me(struct options_struct options[], struct tool_struct t, int i_opt);
-char *running_tool();
-char *running_project();
-char *running_libraries();
-char *runlevel(int *runid, int *id);
-void options_help(struct options_struct options[],int *i_opt);
+
+#include <string.h>
+#include <stdio.h>
+#include <sys/ioctl.h>
+#include <wrapper.h>
+#include <unistd.h>
+
+int guess_winsize()
+{
+ int width;
+ struct winsize ws;
+ if (!isatty(2)) {width=-1;return width;}
+ if( ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0 )
+  width = 79;
+ else
+  width = ws.ws_col - 1;
+ return width;
+};
+int C_FUNC(win_size, WIN_SIZE)(int *win_width)
+{
+ *win_width = 0;
+ *win_width = guess_winsize();
+ return 0;
+};

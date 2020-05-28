@@ -37,6 +37,7 @@ AC_CONFIG_SRCDIR([driver/yambo.F])
 # YAMBO SPECIFIC
 #
 m4_include([config/m4/yambo_specific.m4])
+m4_include([config/m4/yambo_libraries.m4])
 # 
 #  General
 #
@@ -243,6 +244,9 @@ m4_include([config/m4/petsc_slepc.m4])
 #
 AC_LANG_PUSH(Fortran)
 # ============================================================================
+# Yambo Libs
+AC_YAMBO_LIBRARIES
+# ============================================================================
 # YDB/YAMBOpy
 ACX_SCRIPTS
 # ============================================================================
@@ -283,8 +287,8 @@ ACX_REPORT()
 AC_CONFIG_HEADERS([include/headers/common/have_malloc.h:include/headers/common/have_malloc.h.in])
 AC_CONFIG_FILES([config/setup config/mk/defs.mk config/report config/msg_ydb
                  src/wf_and_fft/sgfft.F
-                 sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh
-                 driver/include/editor.h src/tools/.objects driver/include/version.h include/branch.inc])
+                 sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh src/tools/.objects include/branch.inc
+                 lib/yambo/driver/yambo/include/editor.h lib/yambo/driver/yambo/include/version.h])
 #
 AC_OUTPUT
 #

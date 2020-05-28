@@ -30,8 +30,10 @@ fi
 if [ $BIN = "-D_yambo_driver" ]
 then
  INCS="-I$CWD/yambo/include/"
+ LIBa="$CWD/../../libdriver.a"
 else
  INCS="-I$CWD/example/include/"
+ LIBa="$CWD/lib/libdriver.a"
 fi
 
 for dir in $DIRS; do
@@ -51,16 +53,21 @@ for dir in $DIRS; do
    mpif90 $COMP $LIB $OPT $BIN -c $F_file -I$CWD/include  
   done
  fi
- find . -type f | grep -E '\.o|\.mod' | xargs ar -r $CWD/include/driver_lib.a 
+ find . -type f | grep -E '\.o|\.mod' | xargs ar -r $LIBa
  cd $CWD/
 done
 
 mpicc $COMP $LIB $OPT $BIN -c driver.c -I include $INCS
 
-cp example/main.F main.f90
-mpif90  -c main.f90 -I interface -I include
-rm -f driver.x
-mpif90 -o driver.x driver.o main.o include/driver_lib.a -I include $INCS
+if [ $BIN = "-D_example_driver" ]
+then
+ cp example/main.F main.f90
+ mpif90  -c main.f90 -I interface -I include
+ rm -f driver.x
+ mpif90 -o driver.x driver.o main.o $LIBa -I include $INCS
+else
+ cp interface/c_driver.mod ../../../include
+fi
 
 #./driver.x -h
 #./driver.x -x -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file -nompi -noopenmp -setup -opt chi -Q

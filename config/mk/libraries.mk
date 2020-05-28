@@ -4,20 +4,15 @@ YAMBO_LIBS = io driver
 YLIBIO     = modules Yio
 YLIBIO_LD  = modules Yio
 #
-DRIVER_LIBS    = interface lib options
-DRIVER_LIBS_LD = driver_options driver_interface driver_lib 
-#
 # Source code
 #
 BASIC_LIBS   = tools modules memory matrices linear_algebra parallel parser communicate common timing Yio io \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
-BASIC_LIBS_LD= $(DRIVER_LIBS_LD) tools memory Yio communicate modules matrices linear_algebra bz_ops parallel parser communicate common timing Yio io \
+BASIC_LIBS_LD= tools memory Yio communicate modules matrices linear_algebra bz_ops parallel parser communicate common timing Yio io \
                xc_functionals interface stop_and_restart wf_and_fft coulomb
 
-MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup \
-               tddft dipoles pol_function qp acfdt bse
-MAIN_LIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup \
-               tddft dipoles pol_function qp acfdt bse
+MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
+MAIN_LIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
 
 PJ_SCLIBS    = $(MAIN_LIBS) collisions hamiltonian sc
 PJ_SCLIBS_LD = $(MAIN_LIBS_LD) hamiltonian collisions sc
@@ -42,7 +37,7 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 # Interfaces
 #
 2YLIBS       = tools modules memory matrices linear_algebra parallel parser communicate common timing Yio io setup interface stop_and_restart bz_ops
-2YLIBS_LD    = $(DRIVER_LIBS_LD) tools memory communicate modules matrices linear_algebra parallel parser communicate common timing Yio io setup interface stop_and_restart bz_ops
+2YLIBS_LD    = tools memory communicate modules matrices linear_algebra parallel parser communicate common timing Yio io setup interface stop_and_restart bz_ops
 #
 # YPP
 #

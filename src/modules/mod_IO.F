@@ -477,16 +477,19 @@ module IO_m
      !
      manage_action=IO_ACTION
      !
+     if (IO_ACTION== OP_IF_START_RD_CL_IF_END.and.NOW> start_.and.NOW< end_) manage_action=    RD
      if (IO_ACTION== OP_IF_START_RD_CL_IF_END.and.NOW==start_              ) manage_action= OP_RD
      if (IO_ACTION== OP_IF_START_RD_CL_IF_END.and.                NOW==end_) manage_action=    RD_CL
      if (IO_ACTION==             RD_CL_IF_END.and.                NOW==end_) manage_action=    RD_CL
      if (IO_ACTION== OP_IF_START_RD_CL_IF_END.and.NOW==start_.and.NOW==end_) manage_action= OP_RD_CL
      !
+     if (IO_ACTION== OP_IF_START_WR_CL_IF_END.and.NOW> start_.and.NOW< end_) manage_action=    WR
      if (IO_ACTION== OP_IF_START_WR_CL_IF_END.and.NOW==start_              ) manage_action= OP_WR
      if (IO_ACTION== OP_IF_START_WR_CL_IF_END.and.                NOW==end_) manage_action=    WR_CL
      if (IO_ACTION==             WR_CL_IF_END.and.                NOW==end_) manage_action=    WR_CL
      if (IO_ACTION== OP_IF_START_WR_CL_IF_END.and.NOW==start_.and.NOW==end_) manage_action= OP_WR_CL
      !
+     if (IO_ACTION==OP_IF_START_APP_CL_IF_END.and.NOW> start_.and.NOW< end_) manage_action=    WR
      if (IO_ACTION==OP_IF_START_APP_CL_IF_END.and.NOW==start_              ) manage_action=OP_APP
      if (IO_ACTION==OP_IF_START_APP_CL_IF_END.and.                NOW==end_) manage_action=    WR_CL
      if (IO_ACTION==OP_IF_START_APP_CL_IF_END.and.NOW==start_.and.NOW==end_) manage_action=OP_APP_CL

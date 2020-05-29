@@ -31,8 +31,7 @@ subroutine k_special(LIST_only)
  use D_lattice,           ONLY:alat,lattice,a
  use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a
- use YPPm,                ONLY:K_transform,SPECIAL_k,n_SPECIAL_k_MAX,&
-&                              SPECIAL_k_label,n_SPECIAL_k_MAX
+ use YPPm,                ONLY:K_transform,SPECIAL_k,n_SPECIAL_k_MAX,SPECIAL_k_label
  use LIVE_t,              ONLY:live_timing_is_on
  !
 #include<memory.h>
@@ -166,7 +165,7 @@ subroutine k_special(LIST_only)
      !
      call orthorombic_lengths(ap,bp)
      !
-     SPECIAL_k%nbz=10
+     SPECIAL_k%nbz=15
      !
      SPECIAL_k%pt(1,:)=(/0._SP,0._SP,0._SP/)
      SPECIAL_k_label(1)='G'
@@ -192,6 +191,43 @@ subroutine k_special(LIST_only)
      SPECIAL_k%pt(9,:)=(/ep,bp,0._SP/)
      SPECIAL_k_label(10)='A1'
      SPECIAL_k%pt(10,:)=SPECIAL_k%pt(9,:)+(/0._SP,0._SP,cp/)
+     !
+     SPECIAL_k_label(10)='X2'
+     SPECIAL_k%pt(10,:)=SPECIAL_k%pt(3,:)+SPECIAL_k%pt(5,:)
+     SPECIAL_k_label(11)='A2'
+     SPECIAL_k%pt(11,:)=SPECIAL_k%pt(4,:)-2.*SPECIAL_k%pt(3,:)
+     SPECIAL_k_label(12)='A3'
+     SPECIAL_k%pt(12,:)=SPECIAL_k%pt(4,:)-2.*SPECIAL_k%pt(2,:)
+     SPECIAL_k_label(13)='A4'
+     SPECIAL_k%pt(13,:)=SPECIAL_k%pt(4,:)+SPECIAL_k%pt(5,:)
+     SPECIAL_k_label(14)='A5'
+     SPECIAL_k%pt(14,:)=SPECIAL_k%pt(12,:)+SPECIAL_k%pt(5,:)
+     SPECIAL_k_label(15)='A6'
+     SPECIAL_k%pt(15,:)=SPECIAL_k%pt(11,:)+SPECIAL_k%pt(5,:)
+     !
+     call k_add_special_regions( (/0.88_SP,0._SP  /),"XYR1" )
+     call k_add_special_regions( (/0.12_SP,0._SP  /),"XYR2" )
+     call k_add_special_regions( (/0.12_SP,0.26_SP/),"XYR3" )
+     !
+     call k_add_special_regions( (/0.62_SP,0.16_SP/),"YpR1" )
+     call k_add_special_regions( (/0.38_SP,0.16_SP/),"YpR2" )
+     call k_add_special_regions( (/0.38_SP,0.26_SP/),"YpR3" )
+     !
+     call k_add_special_regions( (/0.72_SP,0.26_SP/),"GR1" )
+     call k_add_special_regions( (/0.28_SP,0.26_SP/),"GR2" )
+     call k_add_special_regions( (/0.28_SP,0.50_SP/),"GR3" )
+     !
+     call k_add_special_regions( (/0.72_SP,0.50_SP/),"GL1" )
+     call k_add_special_regions( (/0.28_SP,0.50_SP/),"GL2" )
+     call k_add_special_regions( (/0.28_SP,0.74_SP/),"GL3" )
+     !
+     call k_add_special_regions( (/0.88_SP,0.74_SP/),"XYL1" )
+     call k_add_special_regions( (/0.12_SP,0.74_SP/),"XYL2" )
+     call k_add_special_regions( (/0.12_SP,1._SP  /),"XYL3" )
+     !
+     call k_add_special_regions( (/0.62_SP,0.74_SP/),"YpL1" )
+     call k_add_special_regions( (/0.38_SP,0.74_SP/),"YpL2" )
+     call k_add_special_regions( (/0.38_SP,0.84_SP/),"YpL3" )
      !
    case('CUB')
      !
@@ -291,3 +327,26 @@ subroutine k_special(LIST_only)
    end subroutine
    !
 end subroutine k_special
+!
+subroutine k_add_special_regions( coordinates,label )
+ !
+ use pars,                ONLY:SP
+ use YPPm,                ONLY:SPECIAL_k,n_SPECIAL_k_MAX,SPECIAL_k_label
+ !
+ implicit none
+ !
+ real(SP)     :: coordinates(2)
+ character(*) :: label
+ !
+ SPECIAL_k%nbz=SPECIAL_k%nbz+1
+ SPECIAL_k%pt(SPECIAL_k%nbz,:)=K_el(coordinates(1),coordinates(2))
+ SPECIAL_k_label(SPECIAL_k%nbz)=label
+ !
+ contains 
+   !
+   function K_el(alpha,beta)
+     real(SP) :: K_el(3),alpha,beta
+     K_el=(1.-alpha-beta)*SPECIAL_k%pt(13,:)+alpha*SPECIAL_k%pt(14,:)+beta*SPECIAL_k%pt(15,:)
+   end function
+ !
+end subroutine

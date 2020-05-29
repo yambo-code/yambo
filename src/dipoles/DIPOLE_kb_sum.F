@@ -28,7 +28,7 @@
 subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  !
  use pars,          ONLY:SP,cONE,cZERO
- use wrapper,       ONLY:V_dot_V,M_by_M
+ use wrapper,       ONLY:M_by_M
  use wave_func,     ONLY:WF,wf_ng
  use electrons,     ONLY:n_spinor
  use pseudo,        ONLY:pp_kbv_dim_yambo
@@ -45,7 +45,7 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  ! 
  ! Work Space
  !
- integer     :: i1,i2,i_spinor,ig,dims(2)
+ integer     :: i1,i2,i_spinor,dims(2)
  complex(SP) DEV_ATTRIBUTE, pointer :: WF_c(:,:,:)
  complex(SP) DEV_ATTRIBUTE :: XX(n_spinor,n_spinor,4,pp_kbv_dim_yambo,2)
  complex(SP)               :: drho(n_spinor,3,pp_kbv_dim_yambo)

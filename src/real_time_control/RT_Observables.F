@@ -31,7 +31,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use real_time,      ONLY:RT_nk,RT_bands,l_RT_induced_field,l_P_integrating_J
+ use real_time,      ONLY:RT_nk,RT_bands
  use RT_control,     ONLY:RT_do_it
  use fields,         ONLY:A_tot
  use timing_m,       ONLY:timing

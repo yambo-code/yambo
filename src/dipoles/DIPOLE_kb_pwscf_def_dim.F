@@ -29,13 +29,12 @@ subroutine Dipole_kb_pwscf_def_dim()
  !
  use pars,          ONLY:SP,pi,cZERO
  use electrons,     ONLY:n_spinor
- use R_lattice,     ONLY:b,g_vec,bz_samp
- use vec_operate,   ONLY:v_norm,c2a
+ use R_lattice,     ONLY:b
  use wave_func,     ONLY:wf_ncx,wf_nc_k
- use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
- use pseudo,        ONLY:pp_n_l_max,pp_n_l_times_proj_max,pp_table, &
+ use D_lattice,     ONLY:n_atomic_species,n_atoms_species
+ use pseudo,        ONLY:pp_n_l_times_proj_max,pp_table, &
 &                        pp_kbs,pp_kb,pp_kbd,pp_kbv_dim,pp_kbv_dim_yambo,   &
-&                        pp_factor,pp_kbv_table
+&                        pp_kbv_table
  !
  implicit none
  !
@@ -43,7 +42,7 @@ subroutine Dipole_kb_pwscf_def_dim()
  !
  complex(SP) :: tmp_var(wf_ncx,n_spinor,2),check(2)
  !
- integer     :: ic,ig,i2,i1,is,ia,i_spinor
+ integer     :: ic,i2,i1,is,ia,i_spinor
  integer     :: im,il,i_pp,j2p1
  !
  allocate(pp_kbv_table(pp_kbv_dim))

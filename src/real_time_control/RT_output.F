@@ -57,7 +57,6 @@ subroutine RT_output(what,VALUES,TIME,E)
  integer                  :: i_f,n_orders,i_o,il,N,i_v
  logical                  :: file_is_todo(N_MAX_RT_o_files)
  real(SP)                 :: data_to_dump(N_MAX_RT_headings)
- !logical, external        :: STOP_now
  !
  call STRING_split(what,orders,n_non_empty_strings=n_orders)
  !
@@ -119,8 +118,6 @@ subroutine RT_output(what,VALUES,TIME,E)
      if (NAN(VALUES(i_v))) then
        call warning("Found NaN in "//trim(what)//". Dynamics stopped")
        RT_NAN_found=.TRUE.
-       exit
-       !if (STOP_now(.TRUE.)) stop
      endif
    enddo
  endif

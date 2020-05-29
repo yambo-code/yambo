@@ -257,14 +257,14 @@ end subroutine error
 !
 subroutine yambo_flush(unit)
   !
-  use com_interfcs,  ONLY:fsync
   !
   implicit none
   !
   integer, intent(in) :: unit
-  integer :: ierr
   !
   flush(unit)
+  !
+  ! compiler specific instructions below
   !
 #ifdef __GFORTRAN__
   ! 2020/05/18 DS

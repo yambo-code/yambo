@@ -61,19 +61,26 @@ module YPP_real_time
  real(SP) :: Gr_E_step
  real(SP) :: GF_T_step
  !
- ! Manual pump
+ ! Manual pump ...
  !
  real(SP)    :: Eh_pumped_Nel
+ !
+ ! ... Energy
+ !
  real(SP)    :: Eh_pumped_pair_energy(2)
  !
+ ! ... K-space
+ !
  real(SP)    :: Eh_pumped_pair_deltaE
- real(SP)    :: Eh_pumped_pair_BZ_regions(3,6)   
- !
- real(SP)    :: Eh_pumped_pair_width               ! energy with
- real(SP)    :: Eh_pumped_pair_BZ_width            ! k width
+ real(SP)    :: Eh_pumped_pair_BZ_width         
  integer     :: Eh_pumped_pair_n_BZ_regions
+ real(SP), allocatable :: Eh_pumped_pair_BZ_regions(:,:)   
  !
- ! Fermi function pump
+ ! ... Energy and K-space
+ !
+ real(SP)    :: Eh_pumped_pair_width               ! energy width
+ !
+ ! ... Fermi function 
  !
  real(SP) :: Eh_mu(2)            ! chemical potential for holes, electrons
  real(SP) :: Eh_temp(2)          ! effective temperature for holes, electrons

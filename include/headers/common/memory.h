@@ -32,6 +32,14 @@
   allocate(x SIZE,stat=MEM_err)NEWLINE \
   if (     allocated(x)) &NEWLINE& call MEM_dri(QUOTES x QUOTES,x)NEWLINE \
   if (.not.allocated(x)) &NEWLINE& call MEM_dri(QUOTES x QUOTES)
+#define YAMBO_ALLOC_SOURCE(x,y) \
+  allocate(x, source=y,stat=MEM_err)NEWLINE \
+  if (     allocated(x)) &NEWLINE& call MEM_dri(QUOTES x QUOTES,x)NEWLINE \
+  if (.not.allocated(x)) &NEWLINE& call MEM_dri(QUOTES x QUOTES)
+#define YAMBO_ALLOC_MOLD(x,y) \
+  allocate(x, mold=y,stat=MEM_err)NEWLINE \
+  if (     allocated(x)) &NEWLINE& call MEM_dri(QUOTES x QUOTES,x)NEWLINE \
+  if (.not.allocated(x)) &NEWLINE& call MEM_dri(QUOTES x QUOTES)
 #define YAMBO_FREE(x) \
   if (.not.allocated(x)) &NEWLINE& call MEM_dri(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \
   if (     allocated(x)) &NEWLINE& call MEM_dri(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \

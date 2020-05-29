@@ -23,12 +23,12 @@
 !
 subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,schlen
  use electrons,     ONLY:levels
  use IO_m,          ONLY:io_control,OP_WR,WR_CL,REP
  use R_lattice,     ONLY:bz_samp
  use RT_control,    ONLY:CARR_RT_IO_t
- use parallel_m,    ONLY:PAR_G_kpts
+ use parallel_m,    ONLY:PAR_G_k_range
  use real_time,     ONLY:RT_carriers,NE_i_time,l_elel_scatt,l_elph_scatt,&
 &                        l_elphoton_scatt,l_RT_CCA_Kernel,RT_alloc,RT_free,RT_potential
  use YPP_real_time, ONLY:l_RTpump_energy,l_RTpump_kspace,l_RTpump_Fermi
@@ -42,11 +42,17 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  integer           :: io_RT_err,ID
  integer, external :: io_RT_components
+ logical           :: SUCCESS
+ character(schlen) :: sec_ch
  !
- call section('*','Manual carriers excitation')
+ if (l_RTpump_energy) sec_ch="Energy selection"
+ if (l_RTpump_kspace) sec_ch="K-space selection"
+ if (l_RTpump_Fermi)  sec_ch="Fermi function"
+ !
+ call section('*','Manual carriers excitation via '//trim(sec_ch))
  !
  NE_i_time   =1
- PAR_G_kpts=(/1,kpt%nibz/)
+ PAR_G_k_range=(/1,kpt%nibz/)
  !
  l_elel_scatt    =.true.
  l_elph_scatt    =.true.
@@ -60,9 +66,14 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  call RT_carriers_object(RT_carriers,en,kpt,ID,"allocate")
  !
- if(l_RTpump_energy .or. l_RTpump_kspace) call RT_manual_excitation(en,kpt)
+ if(l_RTpump_energy .or. l_RTpump_kspace) call RT_manual_excitation(en,kpt,SUCCESS)
  !
- if(l_RTpump_Fermi)                       call RT_Fermi_excitation(en,kpt)
+ if(l_RTpump_Fermi)                       call RT_Fermi_excitation(en,kpt,SUCCESS)
+ !
+ if (.not.SUCCESS) then
+   call warning("No level to be manually pumped found")
+   return
+ endif
  !
  CARR_RT_IO_t%N=1
  allocate(CARR_RT_IO_t%Time(1))

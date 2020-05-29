@@ -36,7 +36,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Ho_abs_lifetime, &
 &                         E_P_El_abs_lifetime,l_RT_uses_E_DbGd,RT_ibz_coo,DbGd_ibz_coo,  &
 &                         RT_nk,RT_all2ibz,RT_delta_occupations,RT_Nk_ibz,RT_bands,&
-&                         RT_obj_alloc,RT_obj_free,RT_E_and_k,NE_i_time,&
+&                         RT_obj_alloc,RT_obj_free,RT_E_and_k,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime
  use hamiltonian,    ONLY:E_reference
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,NF90_unlimited
@@ -45,7 +45,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  !
  ! WHAT=1 allocate and define, 2 deallocate
  !
- type(RT_t), target, intent(inout):: RT
+ type(RT_t),      target, intent(inout):: RT
  type(levels),  intent(inout),optional :: E
  type(bz_samp), intent(in)   ,optional :: K
  integer,       intent(in)   ,optional :: DB_id
@@ -124,20 +124,16 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        if (what=="fill") then
          RT%delta_f(i_RT)=RT_delta_occupations(i_b,i_k_RT)
-         !RT%delta_f(i_RT)=RT_E_occupations(i_b,i_k_RT)
        else if (what=="dump".and.allocated(RT_delta_occupations)) then
          RT_delta_occupations(i_b,i_k_RT)=RT%delta_f(i_RT)
-         !RT_occupations(i_b,i_k_RT)=RT%delta_f(i_RT)
        endif
        !
        ! Energies
        !
        if (what=="fill") then
          RT%delta_E(i_RT)=RT_E_and_k%E(i_b,i_k_RT,i_spin)-RT%E_bare(i_RT)
-         !RT%E(i_RT)      =RT_E_and_k%E(i_b,i_k_RT,i_spin)
        else if (what=="dump".and.allocated(RT_E_and_k%E)) then
          RT_E_and_k%E(i_b,i_k_RT,i_spin)=RT%delta_E(i_RT)+RT%E_bare(i_RT)
-         !RT_E_and_k%E(i_b,i_k_RT,i_spin)=RT%E(i_RT)
        endif
        !
        if(l_elphoton_scatt) then

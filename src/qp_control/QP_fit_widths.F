@@ -27,7 +27,7 @@ subroutine QP_fit_widths(i_ACTION,bands,en,k,qp)
  ! that will be passed to the QP_apply_stretch routine driven by
  ! the mod_QP_CTL module
  !
- use pars,          ONLY:SP,DP,rZERO
+ use pars,          ONLY:SP,DP
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:bz_samp
  use QP_m,          ONLY:QP_t

@@ -23,14 +23,13 @@
 !
 integer function variables_RT_static(ID,what)
  !
- use pars,           ONLY:lchlen,SP,LP,IP
+ use pars,           ONLY:SP,LP,IP
  use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr,l_elphoton_scatt
  use stderr,         ONLY:intc
  use hamiltonian,    ONLY:H_ref_bands
  use descriptors,    ONLY:IO_desc_reset
  use RT_output_m,    ONLY:RT_desc,Gr_desc,TIME_STEP_desc,n_RT_desc_static
- use IO_m,           ONLY:variable_exist,write_is_on
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_extrapolation, &
 &                         RAD_LifeTime,Phase_LifeTime,&
@@ -47,7 +46,7 @@ integer function variables_RT_static(ID,what)
  !
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
- use IO_m,           ONLY:io_variable_elemental,def_variable_elemental,io_status,ver_is_gt_or_eq,read_is_on
+ use IO_m,           ONLY:io_variable_elemental,def_variable_elemental,io_status,read_is_on
  !
  implicit none
  !

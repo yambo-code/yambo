@@ -56,7 +56,8 @@ module com
  ! Sectioning
  !
  integer           :: depth,isec(5)
- integer           :: depth_SAVE,isec_SAVE(5)
+ integer           :: depth_SAVE_pp,isec_SAVE_pp(5) ! +/-P
+ integer           :: depth_SAVE_p,isec_SAVE_p(5)   ! p
  character(2)      :: previous_secmode
  character(schlen) :: secnm
  !
@@ -78,7 +79,7 @@ module com
  !
  logical            :: write_to_of
  logical            :: write_to_report
- logical            :: verbose
+ logical            :: fat_log
  !
  interface
    !

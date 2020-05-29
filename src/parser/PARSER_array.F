@@ -87,7 +87,7 @@ subroutine PARSER_array(mode,VAR,N,M,DESC,CH_v,R_v,I_v,Kn)
    if (l_R)  call parser(VAR,R_v(1:N,:))
    if (l_I)  call parser(VAR,I_v(1:N,:))
  else if (trim(mode)=="write") then
-   write (ADDITIONAL_flines(nADDITIONAL_flines+1),'(a,t32,a)') '%'//trim(VAR),'# '//DESC
+   write (ADDITIONAL_flines(nADDITIONAL_flines+1),'(a,t34,a)') '%'//trim(VAR),'# '//DESC
    nADDITIONAL_flines=nADDITIONAL_flines+1
    do i1=1,N
      ADDITIONAL_flines(nADDITIONAL_flines+1)=""

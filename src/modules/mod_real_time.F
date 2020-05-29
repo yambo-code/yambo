@@ -468,7 +468,7 @@ module real_time
    subroutine RT_alloc(en,what)
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
-     use parallel_m,     ONLY:PAR_G_kpts
+     use parallel_m,     ONLY:PAR_G_k_range
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
      use FFT_m,          ONLY:fft_size
@@ -482,7 +482,7 @@ module real_time
      type(levels), intent(in) :: en
      character(*), intent(in) :: what
      !
-     integer :: i_mem
+     integer :: i_mem,nk(2)
      logical :: l_carriers,l_all,l_G_lesser
      !
      l_carriers = trim(what)=="carriers"
@@ -493,6 +493,7 @@ module real_time
      !
      call H_QP_table_setup(en)
      !
+     nk=PAR_G_k_range
      RT_nbands=RT_bands(2)-RT_bands(1)+1
      !
      YAMBO_ALLOC(RT_E_and_k%E,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
@@ -558,7 +559,7 @@ module real_time
      !
      if(l_all .or. l_G_lesser) then
        !
-       YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),n_sp_pol))
+       YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nk(1):nk(2),n_sp_pol))
        !
        if (l_velocity_gauge_corr) then
          YAMBO_ALLOC(H_pseudo_eq,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
@@ -577,8 +578,8 @@ module real_time
        !
        ! G's ...
        YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
-       YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),G_MEM_steps))
-       YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),G_MEM_steps))
+       YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nk(1):nk(2),G_MEM_steps))
+       YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nk(1):nk(2),G_MEM_steps))
        G_lesser_reference=cZERO
        dG_lesser         =cZERO
        G_lesser          =cZERO

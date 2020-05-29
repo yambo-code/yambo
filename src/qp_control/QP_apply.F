@@ -46,9 +46,9 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
  use QP_m,          ONLY:QP_t
  use interfaces,    ONLY:OCCUPATIONS_Fermi
  use com,           ONLY:msg
- use electrons,     ONLY:levels,n_sp_pol,E_duplicate,E_reset
+ use electrons,     ONLY:levels,n_sp_pol
  use D_lattice,     ONLY:input_Tel_is_negative
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,nkibz,nXkibz
  use QP_CTL_m,      ONLY:QP_actions_reset,n_QP_actions,QP_action,QP_CTL_copy,&
 &                        QP_ctl_ID,QP_ctl_t,QP_ctl_msg_fmt,QP_ctl_xc_STRING,QP_ctl_what,&
 &                        At_least_one_band_corrected
@@ -67,14 +67,12 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
  !
  ! Work Space
  !
- type(levels)     ::Fermi_en
  integer          ::i_spin,nbf_m_SAVE(2),i_a
  character(2)     ::sec_mode
  !
  ! Resets
  !========
  call QP_actions_reset( )
- call E_reset(Fermi_en)
  QP_ctl_msg_fmt=msg_fmt
  QP_ctl_xc_STRING=" "
  At_least_one_band_corrected=.FALSE.
@@ -163,7 +161,6 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
  !
  if (.not.At_least_one_band_corrected) then
    !
-   call E_reset(Fermi_en)
    call QP_actions_reset( )
    !
    call section('-P'," ")
@@ -181,62 +178,38 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
  ! Fermi Level Updates
  !=====================
  !
- ! X/K -> Fermi Level Update
+ if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
  !
- if ((QP_ctl_ID<3.and.allocated(en%Eo).and..not.allocated(en%GreenF)).or.allocated(en%E_FineGd)) then
-   !
-   if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
-   !
-   if (.not.allocated(en%fo) .and. .not. l_sc_run) then
-     if (QP_ctl_ID==1) call OCCUPATIONS_Fermi(en,k,OBJ="X+QP")
-     if (QP_ctl_ID==2) call OCCUPATIONS_Fermi(en,k,OBJ="K+QP")
+ if (.not.allocated(en%fo) .and. .not. l_sc_run) then
+   if (QP_ctl_ID==1) call OCCUPATIONS_Fermi(en,k,OBJ="X+QP")
+   if (QP_ctl_ID==2) call OCCUPATIONS_Fermi(en,k,OBJ="K+QP")
+   if (QP_ctl_ID==3) then
+     call OCCUPATIONS_Fermi(en,k,OBJ="G+QP")
+     if (nkibz/=nXkibz) call warning("G and X k-grids have different number of k-points. G Fermi level potentially not alligned")
    endif
-   !
-   if (input_Tel_is_negative) then
-     en%nbf=nbf_m_SAVE(1)
-     en%nbm=nbf_m_SAVE(2)
-   endif
-   !
  endif
  !
- ! G -> Fermi Level Update... but using the levels cooresponding to
- ! the K-points of the X grid !
- !
- if (QP_ctl_ID==3.and.allocated(en%Eo).and..not.allocated(en%GreenF).and..not.allocated(en%E_FineGd)) then
-   !
-   call E_duplicate(en,Fermi_en)
-   !
-   call OCCUPATIONS_Fermi(Fermi_en,k,mode="OCCUPATIONS")
-   !
-   ! In OCCUPATIONS_Fermi the Fermi_en the %E and CBm and VMB are coherent. 
-   ! Instead the en%E are out-of-date and are not shifted in OCCUPATIONS_Extend.
-   ! This line is to prevent that CBm and VMB are not the same as en%E
-   !
-   en%E(:,:,:)=en%E(:,:,:)-Fermi_en%E_Fermi
-   !
-   call OCCUPATIONS_Extend(Fermi_en,en)
-   !
-   YAMBO_FREE(Fermi_en%E)
-   !
+ if (input_Tel_is_negative) then
+   en%nbf=nbf_m_SAVE(1)
+   en%nbm=nbf_m_SAVE(2)
  endif
  !
  ! Energies report
+ !-----------------
+ !
+ if (en%nbf==en%nbm) then
+   !
+   call QP_apply_gap_report(en,"coarse-grid")
+   if (allocated(en%E_FineGd)) call QP_apply_gap_report(en,"FineGd")
+   call msg('r','')
+   !
+ endif
  !
  call REPORT_Energies(en%E,k,k,en%nb,(/1,k%nibz/),'Eqp',.FALSE.,.TRUE.)
  !
  ! CLEAN
  !
- call E_reset(Fermi_en)
  call QP_actions_reset( )
- !
- if (en%nbf==en%nbm) then
-   !
-   call QP_apply_gap_report(en,"built-in")
-   if (allocated(en%E_FineGd)) call QP_apply_gap_report(en,"FineGd")
-   !
- endif
- !
- call msg('r','')
  !
  call section('-P'," ")
  !
@@ -259,17 +232,17 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
         Eg(i_spin)=minval(E%E(E%nbf+1,:,i_spin))-maxval(E%E(E%nbf,:,i_spin))
       endif
       !
-      msg_ch='['//title//'] Minimum Indirect Gap        [ev]'
+      msg_ch='['//title//'] Minimum Bare Gap        [ev]'
       if (n_sp_pol==2) then
-        if (i_spin==1) msg_ch='['//title//'] Minimum Indirect Gap         (up)[ev]'
-        if (i_spin==2) msg_ch='['//title//']                            (down)[ev]'
+        if (i_spin==1) msg_ch='['//title//'] Minimum Bare Gap         (up)[ev]'
+        if (i_spin==2) msg_ch='['//title//']                        (down)[ev]'
       endif
       call msg('r',trim(msg_ch),Ego(i_spin)*HA2EV)
       !
-      msg_ch='['//title//'] Minimum Ind Gap Correction  [ev]'
+      msg_ch='['//title//'] Minimum Gap Correction  [ev]'
       if (n_sp_pol==2) then
-        if (i_spin==1) msg_ch='['//title//'] Minimum Ind Gap Correction   (up)[ev]'
-        if (i_spin==2) msg_ch='['//title//']                            (down)[ev]'
+        if (i_spin==1) msg_ch='['//title//'] Minimum Gap Correction   (up)[ev]'
+        if (i_spin==2) msg_ch='['//title//']                        (down)[ev]'
       endif
       call msg('r',trim(msg_ch),(Eg(i_spin)-Ego(i_spin))*HA2EV)
       !

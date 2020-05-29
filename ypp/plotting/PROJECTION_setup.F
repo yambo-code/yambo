@@ -83,8 +83,6 @@ subroutine PROJECTION_setup( what ,bands )
  !
  if (l_PROJECT_line) then
    call PROJECTION_perpendicular_sampling(CIRCUIT_k,axis(n_axis,:))
-   call msg("sr","[PROJECT] Direction  _|_ circuit [iku]:",axis(n_axis,:))
-   call msg("sr","[PROJECT] Total Points                :",GRID_k%nbz)
  endif
  !
  if (l_PROJECT_plane) then
@@ -122,9 +120,6 @@ subroutine PROJECTION_setup( what ,bands )
    call of_open_close(trim(output_fname))
    !
    call PROJECTION_perpendicular_sampling(PLANE_k,axis(3,:))
-   !
-   call msg("sr","[PROJECT] Direction  _|_ plane [iku]:",axis(3,:))
-   call msg("sr","[PROJECT] Total Points              :",GRID_k%nbz)
    !
  endif
  !

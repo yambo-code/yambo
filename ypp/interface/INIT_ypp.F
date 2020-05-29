@@ -609,21 +609,19 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_RT_DBs)    then
    call initactivate(1,'RTpumpNel RTpumpSpin RTBands')
    if (l_RTpump_energy) call initactivate(1,'RTpumpEhEn RTpumpEhWd')
+   if (l_RTpump_kspace) call initactivate(1,'RTpumpDE RTpumpEhWd RTpumpBZWd cooIn BANDS_path')
    if (l_RTpump_kspace) then
-     call initactivate(1,'RTpumpDE RTpumpEhWd RTpumpBZWd cooIn')
-     !
      call PARSER_array(mode="REAL dimensions",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3)
      if (Eh_pumped_pair_n_BZ_regions>0) then
-       call PARSER_array(mode="read",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3,&
+       YAMBO_ALLOC(Eh_pumped_pair_BZ_regions,(Eh_pumped_pair_n_BZ_regions,3))
+       call PARSER_array(mode="read",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3,R_v=Eh_pumped_pair_BZ_regions)
+       call PARSER_array(mode="write",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3,&
+&                        DESC="[RT] K-points manually excited",&
 &                        R_v=Eh_pumped_pair_BZ_regions(:Eh_pumped_pair_n_BZ_regions,:))
-     else
-       Eh_pumped_pair_n_BZ_regions=1
-       Eh_pumped_pair_BZ_regions(1,:)=-1.
+     else if (infile_editing) then
+       call PARSER_array(mode="write",VAR="RTpumpBZ",N=0,M=3,&
+&                        DESC="[RT] K-points manually excited")
      endif
-     call PARSER_array(mode="write",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3,&
-&                      DESC="[RT] K-points manually excited",&
-&                      R_v=Eh_pumped_pair_BZ_regions(:Eh_pumped_pair_n_BZ_regions,:))
-     !
    endif
    if (l_RTpump_Fermi) call initactivate(1, 'RTmuEh RTtempEh RTautotuneThr')
  endif

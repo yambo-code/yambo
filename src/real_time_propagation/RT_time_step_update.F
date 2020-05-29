@@ -26,17 +26,18 @@ subroutine RT_time_step_update( )
  use pars,           ONLY:SP,cZERO
  use stderr,         ONLY:real2ch
  use units,          ONLY:AUT2FS
- use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,MEM_pointer,i_MEM_old,l_Update_Time_Step,&
+ use real_time,      ONLY:RT_bands,dG_lesser,MEM_pointer,i_MEM_old,l_Update_Time_Step,&
 &                         i_MEM_prev,i_MEM_now,RT_step,RT_dyn_step,&
 &                         RT_life_extrap_times,Life_MEM_steps,NE_time,NE_time_step_update_jump,&
 &                         NE_step_update_treshold,NE_i_time,NE_time_step_update_last_point,RT_MAX_step,&
-&                         NE_initial_time_step_update,RT_all2ibz
+&                         NE_initial_time_step_update,RT_nk,RT_all2ibz
  use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,&
-&                         RT_do_it,SETUP_RT_IO_type,TIME_adjust,&
-&                         IO_OBS_cache_steps,RT_control_alloc,RT_control_free,J_cache
+&                         RT_do_it,SETUP_RT_IO_type,TIME_adjust,STEP_adjust,&
+&                         CACHE_OBS_steps,RT_control_alloc,RT_control_free,&
+&                         CACHE_OBS_INTERVAL_time,CACHE_OBS_last_point
  use RT_output_m,    ONLY:TIME_STEP_desc
  use com,            ONLY:msg
- use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_G_kpts,myid
+ use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use interfaces,     ONLY:DESC_write
  !
  implicit none
@@ -45,7 +46,7 @@ subroutine RT_time_step_update( )
  ! 
  integer           :: ib,ibp,ik,nT_updated,i_desc_ref
  complex(SP)       :: dG_dT_max(2),dG_dT(2),ERROR,dG(3)
- real(SP)          :: dT_now,dT_previous,dT_next,T_tmp(4)
+ real(SP)          :: dT_now,dT_previous,dT_next
  integer, external :: RT_Lifetimes_evaluation_plan
  !
  l_Update_Time_Step=NE_time>=NE_initial_time_step_update.and.NE_initial_time_step_update>0._SP
@@ -62,7 +63,10 @@ subroutine RT_time_step_update( )
  dT_now      =(MEM_pointer(i_MEM_now)-MEM_pointer(i_MEM_prev))*RT_step
  dT_previous =(MEM_pointer(i_MEM_prev)-MEM_pointer(i_MEM_old))*RT_step
  !
- do ik=PAR_G_kpts(1),PAR_G_kpts(2)
+ do ik=1,RT_nk
+   !
+   if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+   !
    do ib=RT_bands(1),RT_bands(2)
      do ibp=RT_bands(1),RT_bands(2)
        dG_dT(1)=(dG_lesser(ib,ibp,ik,i_MEM_prev)-dG_lesser(ib,ibp,ik,i_MEM_old))/dT_previous
@@ -104,13 +108,17 @@ subroutine RT_time_step_update( )
    ! J, P and M (spin) cache Time size
    !=========================
    !
+   CACHE_OBS_last_point    = NE_i_time
+   CACHE_OBS_INTERVAL_time = max(TIME_adjust(CACHE_OBS_INTERVAL_time,RT_dyn_step),RT_dyn_step)
+   !
    OBS_RT_IO_t%INTERVAL_time=TIME_adjust(OBS_RT_IO_t%INTERVAL_time,NE_time_step_update_jump)
+   CACHE_OBS_INTERVAL_time=STEP_adjust(OBS_RT_IO_t%INTERVAL_time,CACHE_OBS_INTERVAL_time,RT_dyn_step)
+   !
    call SETUP_RT_IO_type(OBS_RT_IO_t,.FALSE.)
    !
+   CACHE_OBS_steps=OBS_RT_IO_t%INTERVAL_steps/nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)/nint(RT_dyn_step/RT_step)
    call RT_control_free("cache")
-   IO_OBS_cache_steps=OBS_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
    call RT_control_alloc("cache")
-   !
    !
    ! I need to re-calculate the lifetimes evaluation plan in order to be consistent with the new Time Step
    !

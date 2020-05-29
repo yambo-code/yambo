@@ -24,7 +24,8 @@
 subroutine X_pre_setup(Xen,Xk,X)
  !
  use pars,          ONLY:SP
- use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,l_X_terminator,X_use_lin_sys,Chi_linalg_mode,X_ng
+ use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,l_X_terminator,X_use_lin_sys,&
+&                        X_use_gpu,Chi_linalg_mode,X_ng
  use electrons,     ONLY:levels
  use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_cohsex,l_rt_carriers_in_use
  use R_lattice,     ONLY:nqibz,bz_samp
@@ -33,6 +34,7 @@ subroutine X_pre_setup(Xen,Xk,X)
  use interfaces,    ONLY:eval_G_minus_G
  use parallel_m,    ONLY:PAR_COM_WORLD
  use stderr,        ONLY:intc
+ use cuda_m,        ONLY:have_cuda
  !
  implicit none
  !
@@ -109,8 +111,11 @@ subroutine X_pre_setup(Xen,Xk,X)
  ! Dyson solver
  !
  X_use_lin_sys=.true.
- if (trim(Chi_linalg_mode)=="inversion") X_use_lin_sys=.false.
- if (trim(Chi_linalg_mode)=="lin_sys"  ) X_use_lin_sys=.true.
+ X_use_gpu=have_cuda
+ if (index(Chi_linalg_mode,"INVERSION")>0) X_use_lin_sys=.false.
+ if (index(Chi_linalg_mode,"LIN_SYS")>0  ) X_use_lin_sys=.true.
+ if (index(Chi_linalg_mode,"CPU")>0      ) X_use_gpu=.false.
+ if (index(Chi_linalg_mode,"GPU")>0      ) X_use_gpu=.true..and.have_cuda
  !
  ! Copy of X dimension for Parallel default environment solver
  !

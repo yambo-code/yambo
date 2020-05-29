@@ -26,7 +26,7 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
  use electrons,      ONLY:spin_occ
  use pars,           ONLY:SP
- use parallel_m,     ONLY:ncpu,PAR_COM_PLASMA_INDEX
+ use parallel_m,     ONLY:PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A
  use real_time,      ONLY:RT_occupations_locked,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         RT_life_delta_occupations,l_RT_relaxation_update_reference,&
 &                         RT_H_occupations,RT_E_occupations,RT_delta_occupations,&
@@ -35,14 +35,14 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,&
-&                         G_lesser_reference,RT_nk
+&                         G_lesser_reference,RT_nk,RT_all2ibz
  !
  implicit none
  !
  ! Work Space
  !
- integer :: ik,ib
- real(SP):: f_E_occ,f_H_occ,f_E_occ_reference,f_H_occ_reference
+ integer  :: ik,ib
+ real(SP) :: f_E_occ,f_H_occ,f_E_occ_reference,f_H_occ_reference,NC
  !
  if (l_RT_relaxation_update_reference) then
    !
@@ -71,30 +71,30 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
      !
      if (l_RT_relaxation_update_reference) then
        !
+       if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+       !
        ! _lifetime(ib,ik) are never used at different k-points. While occupations are
        !
-       ! March 2015. AndreaM. The npcu fraction here is because the Lifetimes go trough
-       ! an ALL2ALL later. BUT the e-p & e-g lifetimes use only ncpu/PAR_COM_Plasma_INDEX%n_CPU CPU's.
+       ! April 2020. AndreaM. The additional NC prefactor here is because the Lifetimes go trough
+       ! an ALL2ALL in the PAR_COM_Xk_ibz_A2A WORLD in RT_Lifetimes_merge. 
+       ! BUT the e-p lifetimes, for example, do not use the PLASMA communicator
        !
        if (l_elphoton_scatt) then
-         E_PHOT_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,7,Life_MEM_steps)/&
-&                                         real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
-         E_PHOT_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,8,Life_MEM_steps)/&
-&                                         real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
+         NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)/real(PAR_COM_PLASMA_INDEX%n_CPU*PAR_COM_Q_INDEX%n_CPU)
+         E_PHOT_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,7,Life_MEM_steps)/NC
+         E_PHOT_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,8,Life_MEM_steps)/NC
        endif
        if (l_elel_scatt) then
-         E_E_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,1,Life_MEM_steps)/real(ncpu)
-         E_E_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,2,Life_MEM_steps)/real(ncpu)
+         NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)
+         E_E_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,1,Life_MEM_steps)/NC
+         E_E_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,2,Life_MEM_steps)/NC
        endif
        if (l_elph_scatt) then
-         E_P_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,3,Life_MEM_steps)/&
-&                                      real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
-         E_P_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,4,Life_MEM_steps)/&
-&                                      real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
-         E_P_Ho_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,5,Life_MEM_steps)/&
-&                                      real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
-         E_P_El_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,6,Life_MEM_steps)/&
-&                                      real(ncpu)*real(PAR_COM_PLASMA_INDEX%n_CPU)
+         NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)/real(PAR_COM_PLASMA_INDEX%n_CPU)
+         E_P_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,3,Life_MEM_steps)/NC
+         E_P_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,4,Life_MEM_steps)/NC
+         E_P_Ho_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,5,Life_MEM_steps)/NC
+         E_P_El_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,6,Life_MEM_steps)/NC
        endif
        !
      else

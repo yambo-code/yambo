@@ -110,7 +110,6 @@ subroutine electrons_dos(Xk,Xen)
 &                               SPIN_fac_p,PDOS_fac_p,USE_the_DbGd=l_DbGD)
  endif
  !
- !
  ! Define the regular grid for interpolation if (all(interp_grid>0))
  !===================================================================
  N_files=1

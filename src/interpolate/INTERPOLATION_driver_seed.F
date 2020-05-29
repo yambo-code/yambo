@@ -26,8 +26,10 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  !
  ! BOLTZ structure:
  !
- ! INTERPOLATION_BZ_setup
- ! INTERPOLATION_coefficients
+ ! call INTERPOLATION_BZ_setup
+ ! call INTERPOLATION_coefficients
+ !  !
+ !  .call INTERPOLATION_BZ_coeff
  !
  use pars,                 ONLY:SP
  use real_time,            ONLY:RT_t

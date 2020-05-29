@@ -32,7 +32,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use collision_ext, ONLY:COH_collisions,HXC_collisions,GW_NEQ_collisions
  use matrix_operate,ONLY:UP_matrix_index
  use hamiltonian,   ONLY:B_mat_index
- use real_time,     ONLY:RT_bands
+ use real_time,     ONLY:RT_bands,l_RT_uses_E_FineGd,RT_nk
  use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,HEAD_q_cpu,COMM_copy,PAR_INDEX_copy,&
 &                        PAR_build_index,PP_indexes_reset
  ! COMMUNICATORS
@@ -45,7 +45,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_Xk_ibz_index,PAR_Q_index,PAR_COM_VAL_INDEX_X,PAR_COM_QP_INDEX,&
 &                        PAR_COM_CON_INDEX_X
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_nQ,PAR_Xk_nibz,PAR_G_kpts
+ use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_nQ,PAR_Xk_nibz,PAR_G_k_range
  ! ID's
  use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Bp_mat_ID,PAR_IND_Xk_ibz_ID,      &
 &                        PAR_IND_DIPk_ibz_ID,PAR_IND_Q_ID,PAR_IND_WF_b_ID
@@ -58,8 +58,8 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  ! Work space
  !
- integer              :: ib1,ib2
- integer              :: ik,nk_G_IO
+ integer              :: ib1,ib2,ik,nk_G_IO
+ logical              :: CONSECUTIVE
  !
  CALL PARALLEL_structure(4,(/"k ","b ","q ","qp"/))
  !
@@ -89,11 +89,12 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  ! K-points (IBZ)
  !
- call PARALLEL_index(PAR_IND_Xk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+ CONSECUTIVE=.not.l_RT_uses_E_FineGd
+ call PARALLEL_index(PAR_IND_Xk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=CONSECUTIVE,NO_EMPTIES=.TRUE.)
  PAR_IND_Xk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
  !
  call PARALLEL_live_message("K(ibz)",ENVIRONMENT="Real_Time",&
-&         LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz,&
+&         LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=RT_nk,&
 &         NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
  !
  !.........................................................................
@@ -166,13 +167,15 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  enddo
  !
  nk_G_IO=0
- PAR_G_kpts=0
+ PAR_G_k_range=0
  do ik = 1, Xk%nibz
    if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
-   if (nk_G_IO==0) PAR_G_kpts=ik
+   if (nk_G_IO==0) PAR_G_k_range=ik
    if (nk_G_IO >0) then
-     if (ik/=PAR_G_kpts(2)+1) call error(" Non contiguous G distr is not allowed")
-     PAR_G_kpts(2)=ik
+#if defined _PAR_IO
+     if (ik/=PAR_G_k_range(2)+1) call error(" Non contiguous G distr is not allowed")
+#endif
+     PAR_G_k_range(2)=ik
    endif
    nk_G_IO=nk_G_IO+1
  enddo

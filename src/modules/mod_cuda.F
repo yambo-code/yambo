@@ -33,9 +33,9 @@ module cuda_m
   public
 
 #ifdef _CUDA
-  logical:: have_cuda=.true.
+  logical, parameter:: have_cuda=.true.
 #else
-  logical:: have_cuda=.false.
+  logical, parameter:: have_cuda=.false.
 #endif
   !
   logical:: have_cuda_devices=.false.
@@ -88,7 +88,7 @@ contains
     !
     stream_default=cudaforGetDefaultStream()
     ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
-    ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
+    ierr = CudaStreamCreateWithFlags(stream_d2h,cudaStreamNonBlocking)
 #else
     have_cuda_devices=.false.
 #endif

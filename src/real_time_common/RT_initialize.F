@@ -35,8 +35,9 @@ subroutine RT_initialize(E,k,q)
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:levels
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
- use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,                      &
-&                         SETUP_RT_IO_type,IO_OBS_cache_steps,TIME_adjust,SAVE_G_history
+ use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,         &
+&                         SETUP_RT_IO_type,CACHE_OBS_steps,TIME_adjust,STEP_adjust,           &
+&                         SAVE_G_history,CACHE_OBS_INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
@@ -51,11 +52,13 @@ subroutine RT_initialize(E,k,q)
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
 &                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,l_RT_impose_for_metals, &
-&                         l_P_integrating_J,l_RT_rotate_DM
+&                         l_P_integrating_J,l_RT_rotate_DM,RT_Nk_ibz,RT_deph_cv_only,         &
+&                         RT_ibz_coo
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
  use parser_m,       ONLY:parser
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait,PAR_G_k_range
  !
 #include<memory.h>
  !
@@ -64,7 +67,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Work space
  !
- integer                  :: i1,N_T_samplings
+ integer                  :: i1,N_T_samplings,ik,NK_cpu(PAR_COM_Xk_ibz_INDEX%n_CPU)
  character(schlen)        :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_skip_it,l_velocity_gauge_tmp
@@ -80,6 +83,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! GPL_EXCLUDE_START
  !
+ call parser('DephCVonly',           RT_deph_cv_only)
  call parser('RAD_prefactor',        RAD_magnification)
  call parser('VelGaugeCorr',         l_velocity_gauge_corr)
  call parser('PfromJ',               l_P_integrating_J)
@@ -121,6 +125,13 @@ subroutine RT_initialize(E,k,q)
  eval_DFT     =  l_sc_is_libDFT
  eval_HARTREE =  l_sc_hartree
  !
+ ! DbGd PAR memory distribution index updated
+ !============================================
+ if (l_RT_uses_E_FineGd) then
+   PAR_G_k_range(1)=RT_ibz_coo(PAR_G_k_range(1),1)
+   PAR_G_k_range(2)=RT_ibz_coo(PAR_G_k_range(2),2)
+ endif
+ !
  ! Integrator FLAGS
  !==================
  call RT_Integrator_init()
@@ -143,12 +154,17 @@ subroutine RT_initialize(E,k,q)
  !========================
  RT_dyn_step=RT_step
  !
- ! Set the I/O steps: (J,P,CARRIERs) (GF) (output)
- !=================================================
- call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
+ ! Set the I/O steps: (CARRIERs) (GF) (output)
+ !=============================================
  call SETUP_RT_IO_type(CARR_RT_IO_t,.TRUE.)
  call SETUP_RT_IO_type(OUTPUT_RT_IO_t,.TRUE.)
  call SETUP_RT_IO_type(GF_RT_IO_t,.TRUE.)
+ !
+ ! Set (J,P,M) caching variables and I/O steps
+ !=============================================
+ CACHE_OBS_INTERVAL_time_SAVE=max(TIME_adjust(CACHE_OBS_INTERVAL_time_SAVE,RT_step),RT_step)
+ OBS_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time_SAVE)
+ call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
  !
  ! Dephasing Matrix. Including user-defined matrix-like dephasing factors, constant
  !==================
@@ -212,18 +228,19 @@ subroutine RT_initialize(E,k,q)
    !
    OBS_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,NE_time_step_update_jump_SAVE)
    if(OBS_RT_IO_t%INTERVAL_time_SAVE>NE_time_step_update_jump_SAVE) OBS_RT_IO_t%INTERVAL_time_SAVE=NE_time_step_update_jump_SAVE
-   if(OBS_RT_IO_t%INTERVAL_time_SAVE<RT_step*10._SP) OBS_RT_IO_t%INTERVAL_time_SAVE=NE_time_step_update_jump_SAVE
+   if(OBS_RT_IO_t%INTERVAL_time_SAVE<RT_step*10._SP)                OBS_RT_IO_t%INTERVAL_time_SAVE=NE_time_step_update_jump_SAVE
+   CACHE_OBS_INTERVAL_time_SAVE=STEP_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time_SAVE,RT_step)
+   !
    call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
    !
    if (RT_MAX_step<1.E-5) RT_MAX_step=10._SP*RT_step
    !
  endif
  !
- ! GPL_EXCLUDE_END
+ CACHE_OBS_INTERVAL_time=CACHE_OBS_INTERVAL_time_SAVE
+ CACHE_OBS_steps=OBS_RT_IO_t%INTERVAL_steps/nint(CACHE_OBS_INTERVAL_time/RT_step)
  !
- ! J, P and M (spin) cache Time size
- !=========================
- IO_OBS_cache_steps=OBS_RT_IO_t%INTERVAL_steps
+ ! GPL_EXCLUDE_END
  !
  ! External fields checks
  !========================
@@ -293,7 +310,12 @@ subroutine RT_initialize(E,k,q)
  !
  ! Number of K-points
  !====================
- call RT_k_grid(E,k,q)
+ NK_cpu=0
+ do ik=1,k%nibz
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+   NK_cpu(PAR_COM_Xk_ibz_INDEX%CPU_id+1)= NK_cpu(PAR_COM_Xk_ibz_INDEX%CPU_id+1)+RT_Nk_ibz(ik)
+ enddo
+ call PP_redux_wait(NK_cpu,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  ! GPL_EXCLUDE_START
  !
@@ -456,6 +478,9 @@ subroutine RT_initialize(E,k,q)
    call msg( 'r', 'K-pts    (Fine grid IBZ/BZ)',(/k%nibz_FineGd,k%nbz_FineGd/))
    call msg( 'r', 'K-pts       (Common IBZ/BZ)',(/k%nibz_duplicate,k%nbz_duplicate/))
    call msg( 'r', 'K-pts  (Real-time IBZ only)',RT_nk)
+   if (PAR_COM_Xk_ibz_INDEX%n_CPU>1) then
+     call msg( 'r',  '      (DISTRIBUTED min-MAX)',(/minval(NK_cpu),maxval(NK_cpu)/))
+   endif
    if (l_elel_scatt) then
      call msg( 'r',  'Percentual used in e-e[o/o]',DbGd_EE_percent)
      call msg( 'r',  'Max e-e scattering states  ',maxval(DbGd_EE_Nk_table))

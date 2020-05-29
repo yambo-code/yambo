@@ -27,6 +27,7 @@ module X_m
  use pars,           ONLY:SP,lchlen,schlen
  use units,          ONLY:HA2EV
  use matrix,         ONLY:PAR_matrix
+ use cuda_m,         ONLY:have_cuda
  !
 #include <dev_defs.h>
 #include <memory.h>
@@ -61,12 +62,10 @@ module X_m
  real(SP)             :: X_DbGd_percentual
  integer ,allocatable :: X_DbGd_nkpt_at_q(:)
  integer ,allocatable :: X_DbGd_nkpt_at_q_table(:,:,:)
-#ifdef _CUDA
  !
- ! GPU X_irredux_residuals workspace
+ ! workspace for X_irredux_residuals on GPUs
  !
- complex(SP), allocatable, device :: rhotw_save_d(:), rhotw_save2_d(:)
-#endif
+ complex(SP), allocatable DEV_ATTRIBUTE :: rhotw_save_d(:), rhotw_save2_d(:)
  !
  ! Absorption & Polarizability
  !
@@ -82,6 +81,7 @@ module X_m
  !
  character(schlen)        :: Chi_mode
  character(schlen)        :: Chi_linalg_mode
+ logical                  :: X_use_gpu=have_cuda
  logical                  :: X_use_lin_sys=.false.
  real(SP),    allocatable :: X_poles(:)
  real(SP),    allocatable :: X_Ein_poles(:)

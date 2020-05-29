@@ -67,6 +67,7 @@ subroutine of_open_close(of_name_extension,mode)
    ! Flush output if file is opened
    !
    if (index(mode,'f')/=0.and.(len_trim(of_opened(file_index))>0)) then
+     ! here I do not use yambo_flush since it could cause a significant drop of performances
      flush(abs(of_unit(file_index)))
      if (trim(mode)=='f') return
    endif
@@ -244,7 +245,7 @@ subroutine error(mesg)
  call msg('nr',STRING_pack('[ERROR] ',trim(mesg)))
  call LIVE_message(STRING_pack('[ERROR] ',trim(mesg)),"n","","%s")
  call LIVE_message("","n","","%s")
- if(log_as_a_file) flush(logfile_unit)
+ if(log_as_a_file) call yambo_flush(logfile_unit)
  !
 #if defined _MPI
  if (ncpu>1) call MPI_Abort(mpi_comm_world,1,ierr)
@@ -252,3 +253,28 @@ subroutine error(mesg)
  stop
  !
 end subroutine error
+!
+!
+subroutine yambo_flush(unit)
+  !
+  !
+  implicit none
+  !
+  integer, intent(in) :: unit
+  !
+  flush(unit)
+  !
+  ! compiler specific instructions below
+  !
+#ifdef __GFORTRAN__
+  ! 2020/05/18 DS
+  ! These two lines are useful in long simulations
+  ! since fsync forces to write the message to file.
+  ! However in short simulations (i.e. the test-suite)
+  ! they cause a small drop of performances.
+  ! Thus I comment them for now
+  !ierr = fsync(fnum(unit))
+  !if (ierr /= 0) stop "Error calling fsync"
+#endif
+  !
+end subroutine yambo_flush

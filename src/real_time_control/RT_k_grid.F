@@ -26,13 +26,13 @@ subroutine RT_k_grid(E,k,q)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:qindx_S
- use parallel_m,     ONLY:PAR_G_kpts
  use C_driver,       ONLY:code_bin
  use electrons,      ONLY:levels
  use real_time,      ONLY:DbGd_EE_scatt_table,&
 &                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
 &                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_FineGd,RT_bands,RT_nk
  use R_lattice,      ONLY:bz_samp
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz
  !
 #include<memory.h>
  !
@@ -102,8 +102,10 @@ subroutine RT_k_grid(E,k,q)
    !
  enddo
  !
- PAR_G_kpts(1)=RT_ibz_coo(PAR_G_kpts(1),1)
- PAR_G_kpts(2)=RT_ibz_coo(PAR_G_kpts(2),2)
+ ! Define K-weights to be used in the k-points distribution
+ !
+ YAMBO_ALLOC(PAR_IND_Xk_ibz%weight_1D,(k%nibz))
+ PAR_IND_Xk_ibz%weight_1D=RT_Nk_ibz
  !
  YAMBO_ALLOC(RT_all2ibz,(RT_nk))
  do ik=1,k%nibz

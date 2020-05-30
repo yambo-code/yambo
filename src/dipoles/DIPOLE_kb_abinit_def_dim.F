@@ -32,13 +32,11 @@ subroutine Dipole_kb_abinit_def_dim()
  ! To be verified
  !
  use pars,          ONLY:SP,pi,cZERO
- use electrons,     ONLY:n_spinor
- use R_lattice,     ONLY:b,g_vec,bz_samp
- use vec_operate,   ONLY:v_norm,c2a
+ use R_lattice,     ONLY:b
  use wave_func,     ONLY:wf_ncx
- use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
+ use D_lattice,     ONLY:n_atomic_species,n_atoms_species
  use pseudo,        ONLY:pp_kbv_dim,pp_kbv_dim_yambo,pp_n_l_times_proj_max,pp_kbs,&
-&                        pp_kb,pp_kbd,pp_table,pp_n_l_max,pp_kbv_table
+&                        pp_kb,pp_kbd,pp_table,pp_kbv_table
  !
  implicit none
  !
@@ -46,7 +44,7 @@ subroutine Dipole_kb_abinit_def_dim()
  !
  complex(SP) :: tmp_var(wf_ncx,2),check(2)
  !
- integer     :: ig,i1,i2,is,ia,pp_spin
+ integer     :: i1,i2,is,ia,pp_spin
  integer     :: im,il,i_pp
  !
  allocate(pp_kbv_table(pp_kbv_dim))

@@ -28,8 +28,7 @@ subroutine PP_PWscf_comp(basis,atoms)
   use num_interpolation_module
   use pw_pseudo_module
   !
-  use pars,                  ONLY:SP,DP
-  use electrons,     ONLY:n_spinor
+  use pars,          ONLY:SP
   use pseudo,        ONLY:pp_kb,pp_kbd,pp_kbs
   !
   implicit none

@@ -289,7 +289,7 @@ end subroutine MEM_manager_init
 subroutine MEM_manager_messages(what,adding,MEM_now_Kb,where)
  !
  use pars,         ONLY:lchlen
- use com,          ONLY:msg
+ use com,          ONLY:msg,fat_log
  use memory,       ONLY:TOT_MEM_Kb,TOT_MEM_Kb_MEMSTAT,TOT_MEM_Kb_SAVE,MEM_treshold,&
 &                       MEM_jump_treshold,mem_string,HOST_,DEV_
  !
@@ -317,6 +317,7 @@ subroutine MEM_manager_messages(what,adding,MEM_now_Kb,where)
  !==========
  !#1
  deliver_a_msg=MEM_now_Kb>MEM_treshold
+ if (fat_log) deliver_a_msg=MEM_now_Kb>MEM_treshold*10
  if (deliver_a_msg) then
    call MEM_STAT_update( )
    msg_="[MEMORY]"

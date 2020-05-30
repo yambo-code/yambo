@@ -23,7 +23,7 @@
 !
 subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ONLY)
  !
- use drivers,        ONLY:l_elel_corr,l_rt_carriers_in_use,l_real_time
+ use drivers,        ONLY:l_elel_corr,l_rt_carriers_in_use
  use pars,           ONLY:schlen,SP,lchlen
  use stderr,         ONLY:STRING_split,real2ch,intc,STRING_same
  use parser_m,       ONLY:parser

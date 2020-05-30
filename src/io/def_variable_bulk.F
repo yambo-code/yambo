@@ -24,7 +24,7 @@
 subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind,silent)
  !
  use netcdf
- use com,        ONLY:verbose
+ use com,        ONLY:fat_log
  use pars,       ONLY:SP,DP,IP,LP,schlen,nf90_SP
  use parallel_m, ONLY:ncpu
  use IO_m,       ONLY:write_is_on,read_is_on,io_unit,netcdf_call,io_netcdf_var,&
@@ -58,7 +58,7 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
  if(VAR_KIND==LP+100) netcdf_var_kind=nf90_byte
  if(VAR_KIND==0 )     netcdf_var_kind=nf90_char
  !
- silent_=.not.verbose
+ silent_=.not.fat_log
  if(present(silent)) silent_=silent
  !
 #if defined _PAR_IO

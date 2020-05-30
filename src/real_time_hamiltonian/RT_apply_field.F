@@ -35,7 +35,6 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  use vec_operate,    ONLY:cross_product
  use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z
  use parallel_m,     ONLY:PAR_Xk_ibz_index
- use timing_m,       ONLY:timing
  !
  implicit none
  !

@@ -257,12 +257,12 @@ end subroutine error
 !
 subroutine yambo_flush(unit)
   !
-  use com_interfcs,  ONLY:fsync
+  !use com_interfcs,  ONLY:fsync
   !
   implicit none
   !
   integer, intent(in) :: unit
-  integer :: ierr
+  !integer :: ierr
   !
   flush(unit)
   !

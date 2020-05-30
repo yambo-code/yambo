@@ -27,7 +27,8 @@ subroutine MEM_report( REPORT )
  use memory,       ONLY:MEMs,N_MEM_elements,mem_string,MEM_element,MAX_MEM_Kb,N_MEM_SAVE_elements,&
 &                       LARGE_MEMs,MEM_treshold,MEM_SAVE_treshold,HOST_,DEV_
  use units,        ONLY:Kilobyte
- use com,          ONLY:msg
+ use com,          ONLY:msg,fat_log
+ !
  implicit none
  !
  character(*) :: REPORT
@@ -61,7 +62,7 @@ subroutine MEM_report( REPORT )
    !
  endif
  !
- if (ORPHAN_TOT>0) then
+ if (ORPHAN_TOT>0.and.fat_log) then
    if (loc=="r") call msg(loc,"")
    WRITE(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),"TOTAL not deallocated",trim(mem_string(ORPHAN_TOT))
    call msg(loc,msg_(1:len_trim(msg_)))

@@ -25,10 +25,9 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  !
  ! BOLTZ structure:
  !
- ! INTERPOLATION_BZ
+ ! call INTERPOLATION_BZ
  !  |
- !  .-INTERPOLATION_fourier
- !
+ !  .call INTERPOLATION_fourier
  !
  use R_lattice,            ONLY:bz_samp
  use electrons,            ONLY:levels

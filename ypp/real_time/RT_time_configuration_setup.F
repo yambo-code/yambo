@@ -25,10 +25,9 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !
  use units,          ONLY:AUT2FS,pi,HA2EV
  use YPP_real_time,  ONLY:RT_conf,RT_time
- use real_time,      ONLY:G_mem_steps
  use pars,           ONLY:SP
  use com,            ONLY:msg
- use real_time,      ONLY:RT_step
+ use real_time,      ONLY:RT_step,G_MEM_steps
  use RT_control,     ONLY:TIME_adjust,RT_IO_t
  !
 #include<memory.h>
@@ -38,7 +37,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !
  ! Work Space
  !
- integer  :: i_t,i_ref(2),i_c,j_ref,step_ratio
+ integer  :: i_t,i_ref(2),j_ref
  logical  :: UNIFORM,l_carriers,l_current,l_G_lesser,l_rho_f,l_rho_G
  real(SP) :: STEP,TIME,TIME_diff,REF_diff(2)
  integer, allocatable :: i_table(:)

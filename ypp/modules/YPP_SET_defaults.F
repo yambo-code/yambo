@@ -47,7 +47,7 @@ subroutine YPP_SET_defaults()
  use YPPm,           ONLY:B_field,B_psi,B_theta,l_angular_momentum,l_position
 #endif
 #if defined _YPP_RT
- use YPP_real_time,  ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_BZ_regions,Eh_pumped_pair_BZ_width,&
+ use YPP_real_time,  ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_BZ_width,&
 &                         Eh_pumped_pair_deltaE,Eh_pumped_pair_energy,Eh_pumped_pair_width,l_RealTime,l_RT_dos,&
 &                         l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,l_RT_energy,l_RT_lifetimes,l_RT_occupations,&
 &                         l_RT_time,l_RT_X,Eh_pumped_pair_n_BZ_regions,Probe_Keyword ,Pump_Keyword,X_order,&
@@ -237,12 +237,11 @@ subroutine YPP_SET_defaults()
  !
  !MANUAL PUMP
  !
- Eh_pumped_pair_n_BZ_regions=1
+ Eh_pumped_pair_n_BZ_regions=0
  Eh_pumped_pair_deltaE=-1._SP/HA2EV
  Eh_pumped_pair_energy=-1._SP/HA2EV
  Eh_pumped_pair_width=0.1_SP/HA2EV
  Eh_pumped_pair_BZ_width=0.1_SP
- Eh_pumped_pair_BZ_regions=-1.0_SP
  Eh_pumped_Nel=1._SP
  !
  !FERMI FUNCTION PUMP

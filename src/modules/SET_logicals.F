@@ -26,7 +26,7 @@ subroutine SET_logicals()
  use pars,       ONLY:schlen,n_max_DB_IO_off_fields
  use drivers,    ONLY:l_eval_collisions
  use parallel_m, ONLY:IO_write_default,master_cpu,myid,master_cpu,myid,n_log_CPUs,ncpu
- use com,        ONLY:write_to_of,write_to_report,verbose
+ use com,        ONLY:write_to_of,write_to_report,fat_log
  use IO_m,       ONLY:IO_write,IO_read,DBs_IO_control_string,DBs_FRAG_control_string,                   &
 &                     io_DIP,io_RESPONSE,io_HF,io_COLLs,io_GF,io_OBSERVABLES,io_CARRIERs,io_SC,io_BS_K,io_SCREEN, &
 &                     frag_DIP,frag_RESPONSE,frag_HF,frag_SC,   &
@@ -52,7 +52,7 @@ subroutine SET_logicals()
  ! Write permissions 
  !===================
  !
- write_fragments_IO_log    =write_to_log_default.and.verbose
+ write_fragments_IO_log    =write_to_log_default.and.fat_log
  IO_write_default(myid+1)  =master_cpu
  IO_write                  =master_cpu
  write_to_of               =master_cpu

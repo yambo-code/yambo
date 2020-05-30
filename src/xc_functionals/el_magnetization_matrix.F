@@ -31,7 +31,6 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !  Sigma_Pauli=the 3 Pauli matrices
  !
  use pars,           ONLY:SP,cI,cZERO
- use parallel_m,     ONLY:PAR_G_kpts
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
  use D_lattice,      ONLY:nsym,dl_sop,i_time_rev
@@ -39,8 +38,8 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  use interfaces,     ONLY:WF_load,WF_free
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx
  use wave_func,      ONLY:WF,WAVEs
- use real_time,      ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_bands
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
+ use real_time,      ONLY:RT_ibz_coo,RT_Nk_ibz,RT_bands
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear,PAR_G_k_range
  use matrix_operate, ONLY:UP_matrix_index,m3det
  use electrons,      ONLY:Spin_magn
  use timing_m,       ONLY:timing
@@ -48,7 +47,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  implicit none
  !
  type(bz_samp), intent(in)  :: Xk
- complex(SP),   intent(in)  :: G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_kpts(1):PAR_G_kpts(2),n_sp_pol)
+ complex(SP),   intent(in)  :: G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2),n_sp_pol)
  integer,       intent(in)  :: lowest_band
  type(levels),  intent(in)  :: en       
  real(SP),      intent(out) :: magn(fft_size,3)

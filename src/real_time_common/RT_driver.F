@@ -53,7 +53,8 @@ subroutine RT_driver(E,X,k,q,Dip)
  use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element,COLLISIONS_have_HARTREE
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast,PP_redux_wait
+ use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast,PP_redux_wait,&
+&                          PAR_COM_Xk_ibz_INDEX
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  use units,           ONLY:FS2AUT
  !
@@ -84,13 +85,9 @@ subroutine RT_driver(E,X,k,q,Dip)
  real(SP)          :: LT_pump_duration
  !
  sec_title   =' '
- sec_title(1)='none'
- if (l_elph_scatt)                  sec_title(1)='el-ph'
- if (l_elel_scatt)                  sec_title(2)='el-el'
- if (l_elph_scatt.and.l_elel_scatt) sec_title(2)='+el-el'
- if (l_elphoton_scatt)              sec_title(3)='el-photon'
- if (l_elphoton_scatt.and.&
-&   (l_elel_scatt.or.l_elph_scatt)) sec_title(3)='+el-photon'
+ if (l_elph_scatt)                  sec_title(1)='+el-ph'
+ if (l_elel_scatt)                  sec_title(2)='+el-el'
+ if (l_elphoton_scatt)              sec_title(3)='+el-photon'
  !
  ! Potential 
  !===========
@@ -102,22 +99,33 @@ subroutine RT_driver(E,X,k,q,Dip)
  RT_xc_functional=H_xc_functional
  RT_perturbation =H_perturbation
  !
- call section('*',trim(RT_potential)//' Real-Time Dynamics')
+ call section('*',trim(RT_potential)//' Real-Time Dynamics '//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
  !
  ! GPL_EXCLUDE_START
  !
- call msg('s','Scattering(s)'//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
+ !call msg('s','Scattering(s)'//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
  !
  ! GPL_EXCLUDE_END
  !
  call section('+','Initialization')
  !#################################
  !
+ ! Parallel reset...
+ !
+ call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
+ !
+ ! The K-grid must be defined at the very beginning to provide PARALLEL_global_indexes with the right k-weights
+ !============
+ !
+ call RT_k_grid(E,k,q)
+ !
  ! Parallel Setups
  !=================
  !
- call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
  call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
+ if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) then
+   call PARALLEL_SND_RCV_plan( PAR_COM_Xk_ibz_INDEX,  PAR_COM_Xk_ibz_INDEX%n_CPU)
+ endif
  !
  ! QP & carriers corrections 
  !===========================
@@ -333,7 +341,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    ! I (eventually) stop 
    !=======================
-   if (RT_Dynamics_is_over(.true.)) exit
+   if (RT_Dynamics_is_over( )) exit
    !
    ! Integration
    !=============

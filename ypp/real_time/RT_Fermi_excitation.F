@@ -21,7 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Fermi_excitation(E,k)
+subroutine RT_Fermi_excitation(E,k,SUCCESS)
+ !
+ ! What I want is:
+ ! [i]   Select arbitrarily chemical potentials for holes and electrons 
+ ! [ii]  Put some checks to for the carrier density in conduction and valence
+ ! [iii] Put some fictitious temperature for holes and electrons to model the Fermi distribution
  !
  use pars,           ONLY:SP
  use units,          ONLY:BO2ANG,HA2EV
@@ -37,15 +42,12 @@ subroutine RT_Fermi_excitation(E,k)
  !
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k
- integer  :: i_RT,ib,ik,i_mu
- real(SP) :: mu_elec,mu_hole,delta_Nel,delta_Nho,mu_step
+ logical,       intent(out):: SUCCESS
  !
  ! Work Space
  !
- ! What I want is:
- ! [i]   Select arbitrarily chemical potentials for holes and electrons 
- ! [ii]  Put some checks to for the carrier density in conduction and valence
- ! [iii] Put some fictitious temperature for holes and electrons to model the Fermi distribution
+ integer  :: i_RT,ib,ik,i_mu
+ real(SP) :: mu_elec,mu_hole,delta_Nel,delta_Nho,mu_step
  !
  RT_carriers%delta_f=0._SP
  mu_hole=Eh_mu(1)+E%E_VBM(1) ! Negative wrt VBM
@@ -66,7 +68,6 @@ subroutine RT_Fermi_excitation(E,k)
        if(i_mu<0) mu_step=mu_step/10._SP
        mu_hole=mu_hole-mu_step
        i_mu=abs(i_mu)+1
-     !
      else
        if(i_mu>0) mu_step=mu_step/10._SP
        mu_hole=mu_hole+mu_step
@@ -88,6 +89,8 @@ subroutine RT_Fermi_excitation(E,k)
    call msg('sr','[RT] Pumped holes     number and density [none,cm-3]',delta_Nho*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/))
    call msg('sr','[RT] Pumped electrons number and density [none,cm-3]',delta_Nel*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/))
  endif ! autotune or not
+ !
+ SUCCESS=.TRUE.
  ! 
  contains
    !

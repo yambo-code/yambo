@@ -48,7 +48,7 @@ module RT_control
    real(SP), allocatable :: Time(:)
  end type
  !
- logical                  :: RT_NAN_found
+ logical                  :: RT_NAN_found=.FALSE.
  logical                  :: SAVE_G_history
  !
  type(RT_IO_t),save  :: OBS_RT_IO_t

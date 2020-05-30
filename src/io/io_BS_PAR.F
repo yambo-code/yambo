@@ -25,7 +25,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  ! Intialize variables on BSE netcdf parallel file
  !
- use parallel_m,    ONLY:master_cpu,MPI_COMM_WORLD,PP_redux_wait
+ use parallel_m,    ONLY:MPI_COMM_WORLD,PP_redux_wait
  use com,           ONLY:msg
  use pars,          ONLY:IP,IPL,SP,schlen,lchlen,max_io_vars_open
  use stderr,        ONLY:intc
@@ -34,7 +34,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
 &                        BSK_IO_mode,MAX_BSK_LIN_SIZE
  use BS_solvers,    ONLY:variables_BS,BSS_desc
  use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,&
-&                        io_connect,io_elemental,def_variable_bulk,variable_exist,&
+&                        io_connect,io_elemental,def_variable_bulk,&
 &                        io_header,io_file,io_BS_K
  use descriptors,   ONLY:IO_desc,IO_desc_duplicate
  !
@@ -46,7 +46,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  logical, external :: file_exists
  integer, external :: variables_BS_more
  !
- logical :: def_var, io_var
+ logical :: def_var
  integer(IPL) :: BS_lin_size
  integer :: io_BS, VAR_IDs(max_io_vars_open), n_vars, i1, i_rep,i_var, BSK_n_dims,n_replica
  type(IO_desc)     :: local_desc

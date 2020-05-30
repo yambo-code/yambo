@@ -52,11 +52,13 @@ subroutine RT_initialize(E,k,q)
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
 &                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,l_RT_impose_for_metals, &
-&                         l_P_integrating_J,l_RT_rotate_DM,RT_deph_cv_only
+&                         l_P_integrating_J,l_RT_rotate_DM,RT_Nk_ibz,RT_deph_cv_only,         &
+&                         RT_ibz_coo
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
  use parser_m,       ONLY:parser
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait,PAR_G_k_range
  !
 #include<memory.h>
  !
@@ -65,7 +67,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Work space
  !
- integer                  :: i1,N_T_samplings
+ integer                  :: i1,N_T_samplings,ik,NK_cpu(PAR_COM_Xk_ibz_INDEX%n_CPU)
  character(schlen)        :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_skip_it,l_velocity_gauge_tmp
@@ -122,6 +124,13 @@ subroutine RT_initialize(E,k,q)
  !
  eval_DFT     =  l_sc_is_libDFT
  eval_HARTREE =  l_sc_hartree
+ !
+ ! DbGd PAR memory distribution index updated
+ !============================================
+ if (l_RT_uses_E_DbGd) then
+   PAR_G_k_range(1)=RT_ibz_coo(PAR_G_k_range(1),1)
+   PAR_G_k_range(2)=RT_ibz_coo(PAR_G_k_range(2),2)
+ endif
  !
  ! Integrator FLAGS
  !==================
@@ -301,7 +310,12 @@ subroutine RT_initialize(E,k,q)
  !
  ! Number of K-points
  !====================
- call RT_k_grid(E,k,q)
+ NK_cpu=0
+ do ik=1,k%nibz
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+   NK_cpu(PAR_COM_Xk_ibz_INDEX%CPU_id+1)= NK_cpu(PAR_COM_Xk_ibz_INDEX%CPU_id+1)+RT_Nk_ibz(ik)
+ enddo
+ call PP_redux_wait(NK_cpu,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  ! GPL_EXCLUDE_START
  !
@@ -462,6 +476,9 @@ subroutine RT_initialize(E,k,q)
  if (l_RT_uses_E_DbGd) then
    call msg( 'r',    'K-points            (TOTAL)',RT_DbGd_nk)
    call msg( 'r',    '                  (EVOLVED)',RT_nk)
+   if (PAR_COM_Xk_ibz_INDEX%n_CPU>1) then
+     call msg( 'r',  '      (DISTRIBUTED min-MAX)',(/minval(NK_cpu),maxval(NK_cpu)/))
+   endif
    if (l_elel_scatt) then
      call msg( 'r',  'Percentual used in e-e[o/o]',DbGd_EE_percent)
      call msg( 'r',  'Max e-e scattering states  ',maxval(DbGd_EE_Nk_table))

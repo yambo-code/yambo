@@ -118,7 +118,7 @@ module interpolate
      real(SP)                :: V_out(:,:,:)
    end subroutine
    !
-   subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,ID,ID_obj)
+   subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      use electrons,  ONLY:levels
@@ -127,6 +127,7 @@ module interpolate
      real(SP),      intent(in), optional :: R1D(:,:),R2D(:,:,:)
      complex(SP),   intent(in), optional :: C1D(:,:),C2D(:,:,:)
      type(levels),  intent(in), optional :: E
+     integer,       intent(in), optional :: Nk
      integer,       intent(in)           :: ID_obj
      integer,       intent(out)          :: ID
    end subroutine  INTERPOLATION_coefficients

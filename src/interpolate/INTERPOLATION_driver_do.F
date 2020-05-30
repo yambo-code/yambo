@@ -23,11 +23,16 @@
 !
 subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  !
- ! BOLTZ structure:
+ ! INTREPOLATION_driver_do at present interpolates both to the Coarse grid and to the Fine grid
  !
- ! call INTERPOLATION_BZ
- !  |
- !  .call INTERPOLATION_fourier
+ ! Starting from the coefficients defined previously
+ ! interpolates to OUT_k
+ !
+ ! INPUT: OUT_k,ID
+ ! calls INTERPOLATION_BZ
+ !  !
+ !  calls INTERPOLATION_Fourier
+ !  From the values on the shells defines the values on the given k-grid
  !
  use R_lattice,            ONLY:bz_samp
  use electrons,            ONLY:levels

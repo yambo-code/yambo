@@ -30,9 +30,10 @@ module memory
  !
  implicit none
  !
+ character(schlen)   :: MEM_msg
+ integer             :: MEM_err = 0
  integer, parameter  :: HOST_=1
  integer, parameter  :: DEV_=2
- integer :: MEM_err                  = 0
  integer(kind=c_int) :: TOT_MEM_Kb_MEMSTAT(2)    ! 2 slots: HOST, DEV
  integer(IP)         :: MAX_MEM_Kb(2)      = 0
  integer(IP)         :: TOT_MEM_Kb(2)
@@ -78,8 +79,18 @@ module memory
  character(schlen)     :: MEM_shelf(N_MEM_shelf_max)
  type(MEM_lib_element) :: MEM_LIBs(N_MEM_LIBs_max)
  !
- interface MEM_dri
-   module procedure MEM_clean,MEM_error,&
+ interface
+   !
+   subroutine MEM_global_mesg(what,xkind,HOST_SIZE)
+    character(*), intent(in) :: what
+    integer,      intent(in) :: xkind
+    integer,      intent(in) :: HOST_SIZE(:)
+   end subroutine MEM_global_mesg
+   !
+ end interface
+ !
+ interface MEM_count
+   module procedure &
 #ifdef _CUDA
 &                             MEM_i1_d, MEM_i2_d, MEM_i3_d, MEM_i4_d, MEM_i5_d,             &
 &                             MEM_r1_d, MEM_r2_d, MEM_r3_d, MEM_r4_d, MEM_r5_d,             &
@@ -98,7 +109,7 @@ module memory
 &                             MEM_l1,  MEM_l2,  MEM_l3,  MEM_l4,  MEM_l5,  MEM_l6,          &
 &                             MEM_lp1,          MEM_lp3,                                    &
 &                             MEM_ch1,          MEM_ch3
- end interface MEM_dri
+ end interface MEM_count
  !
  contains
    !
@@ -133,11 +144,11 @@ module memory
      endif
      !
      if (MEM<1000) then
-       mem_string=trim(real2ch(real(MEM,SP)))//"Kb"
+       mem_string=trim(real2ch(real(MEM,SP)))//" [Kb]"
      else if (MEM<1000000) then
-       mem_string=trim(real2ch(real(MEM,SP)/1000))//"Mb"
+       mem_string=trim(real2ch(real(MEM,SP)/1000))//" [Mb]"
      else
-       mem_string=trim(real2ch(real(MEM,SP)/1000000))//"Gb"
+       mem_string=trim(real2ch(real(MEM,SP)/1000000))//" [Gb]"
      endif
      mem_string=trim(mem_string)//trim(where_str)
    end function
@@ -153,17 +164,6 @@ module memory
      M2%size       = M1%size
      M2%where      = M1%where
      M2%composed   = M1%composed
-   end subroutine
-   !
-   subroutine MEM_error(name)
-     character(*)::name
-     call MEM_manager_error(name)
-   end subroutine
-   !
-   subroutine MEM_clean(name,N)
-     character(*)::name
-     integer(IPL)::N
-     call MEM_manager_free(name,N)
    end subroutine
    !
    subroutine MEM_i1(name,i)

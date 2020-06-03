@@ -40,10 +40,11 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,NK,ID)
  integer,intent(in)        :: NK,ID
  type(bz_samp), intent(in) :: K
  real(SP), intent(out)     :: VALUES(nvalues,NK)
- real(SP), parameter       :: twopi=2._SP*pi
  complex(DP), intent(in)   :: engre(nshells,nvalues)
  !
  ! Work Space
+ !
+ real(SP), parameter:: twopi=2._SP*pi
  !
  integer            :: i_shell,iv,ik,is,nstar
  real(SP)           :: star_vec(3,nsym),v(3)

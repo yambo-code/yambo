@@ -155,6 +155,7 @@ module real_time
  ! G_lesser structure
  !
  integer,     allocatable :: RT_ibz_coo(:,:)
+ integer,     allocatable :: RT_ibz_dupl(:)
  integer,     allocatable :: RT_all2ibz(:)  
  integer,     allocatable :: RT_Nk_ibz(:)  
  !

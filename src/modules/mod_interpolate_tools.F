@@ -55,9 +55,6 @@ module interpolate_tools
        call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Interpolations [o/o]',dummy)
      endif
      !
-     OUT_k_nk=0
-     NN_nk_exact=0
-     !
    end subroutine
    !
    subroutine INTERPOLATION_reset(ID)

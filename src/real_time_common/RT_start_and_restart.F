@@ -49,7 +49,7 @@ subroutine RT_start_and_restart(E,k,q)
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,RT_E_and_k,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
-&                         Gr_kind,l_RT_is_WFfree,&
+&                         Gr_kind,l_RT_is_WFfree,RT_ibz_dupl,&
 &                         RT_E_occupations_reference,RT_nk,G_lesser,l_RT_uses_E_FineGd, &
 &                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
 &                         RT_eh_en,G_MEM_steps,RT_bands,&
@@ -399,7 +399,7 @@ subroutine RT_start_and_restart(E,k,q)
            !
            if (ik_RT_DbGd/=RT_ibz_coo(ik,1)) then
              !
-             ik_FineGd=ik_RT_DbGd-ik-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(1,ik)
+             ik_FineGd=ik_RT_DbGd-ik+sum(RT_ibz_dupl(:ik))
              !
              if (allocated(E%W))  E%W_FineGd(ib,ik_FineGd,1)     = abs(E%W(ib,ik,1))
              !
@@ -472,7 +472,7 @@ subroutine RT_start_and_restart(E,k,q)
          do ik=1,k%nibz
            do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
              if (ik_RT_DbGd/=RT_ibz_coo(ik,1)) then
-               ik_FineGd=ik_RT_DbGd-ik-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(1,ik)
+               ik_FineGd=ik_RT_DbGd-ik+sum(RT_ibz_dupl(:ik))
                En=E%E_FineGd(ib,ik_FineGd,1)
              else 
                En=E%E(ib,ik,1)

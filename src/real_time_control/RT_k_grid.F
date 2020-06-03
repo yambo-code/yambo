@@ -29,7 +29,7 @@ subroutine RT_k_grid(E,k,q)
  use C_driver,       ONLY:code_bin
  use electrons,      ONLY:levels
  use real_time,      ONLY:DbGd_EE_scatt_table,&
-&                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
+&                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,RT_ibz_dupl,&
 &                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_FineGd,RT_bands,RT_nk
  use R_lattice,      ONLY:bz_samp
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
@@ -59,6 +59,7 @@ subroutine RT_k_grid(E,k,q)
  !
  if (.not.allocated(RT_ibz_coo)) then
    YAMBO_ALLOC(RT_ibz_coo,(k%nibz,2))
+   YAMBO_ALLOC(RT_ibz_dupl,(k%nibz))
    YAMBO_ALLOC(RT_Nk_ibz,(k%nibz))
  endif
  !
@@ -68,6 +69,7 @@ subroutine RT_k_grid(E,k,q)
    !
    RT_nk    =k%nibz
    !
+   RT_ibz_dupl=0
    RT_Nk_ibz=1
    DbGd_EE_percent=0._SP
    YAMBO_ALLOC(RT_all2ibz,(k%nibz))
@@ -98,6 +100,8 @@ subroutine RT_k_grid(E,k,q)
    RT_ibz_coo(ik,:)=(/RT_nk+1,RT_nk+1+k%nibz_mapped(ik)/)
    RT_nk=RT_nk+1+k%nibz_mapped(ik)
    RT_Nk_ibz(ik)=k%nibz_mapped(ik)+1
+   if(ik==1) RT_ibz_dupl(ik)=k%ibz_DbGd_map(1,ik)-1
+   if(ik> 1) RT_ibz_dupl(ik)=k%ibz_DbGd_map(1,ik)-k%ibz_DbGd_map(2,ik-1)-1
    !
  enddo
  !

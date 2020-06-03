@@ -34,7 +34,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  use RT_control,     ONLY:CARR_RT_IO_t
  use real_time,      ONLY:RT_t,REF_lifetime,E_E_Hole_lifetime,E_E_Electron_lifetime,   &
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Ho_abs_lifetime, &
-&                         E_P_El_abs_lifetime,l_RT_uses_E_FineGd,RT_ibz_coo,  &
+&                         E_P_El_abs_lifetime,l_RT_uses_E_FineGd,RT_ibz_coo,RT_ibz_dupl,&
 &                         RT_nk,RT_all2ibz,RT_delta_occupations,RT_Nk_ibz,RT_bands,&
 &                         RT_obj_alloc,RT_obj_free,RT_E_and_k,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime
@@ -51,7 +51,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  integer,       intent(in)   ,optional :: DB_id
  character(*),  intent(in)   ,optional :: WHAT
  !
- integer  :: i_RT,i_b,i_k,i_k_FineGd,i_k_RT,i_spin
+ integer  :: i_RT,i_b,i_k,i_k_FineGd,i_k_RT,i_spin,i_dupl
  real(SP) :: Hole_lifetime,Elec_lifetime,df_occ,f_occ
  !
  integer           :: VAR_SZ(2),IPOS(2),TMP_SIZE(2)
@@ -93,8 +93,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        i_spin =RT%table(i_RT,4)
        !
        if(i_k_RT/=RT_ibz_coo(i_k,1)) then
-         i_k_FineGd=i_k_RT-i_k-RT_ibz_coo(i_k,1)+K%ibz_DbGd_map(1,i_k)
-         RT%E_bare(i_RT)=E%E_FineGd(i_b,i_k_FineGd,i_spin)
+         i_k_FineGd=i_k_RT-i_k+sum(RT_ibz_dupl(:i_k))
+         RT%E_bare(i_RT)=E_reference%E_FineGd(i_b,i_k_FineGd,i_spin)
          if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%f_FineGd(i_b,i_k_FineGd,i_spin)
          if(     allocated(E%fo)) RT%f_bare(i_RT)=E%f_FineGd(i_b,i_k_FineGd,i_spin)-E%df_FineGd(i_b,i_k_FineGd,i_spin)
        else

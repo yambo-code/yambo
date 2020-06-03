@@ -42,7 +42,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
  use hamiltonian,    ONLY:H_rotation,E_reference
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
  !use interfaces,     ONLY:LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
- use real_time,      ONLY:RT_E_and_k,Ho_plus_Sigma,RT_ibz_coo,RT_bands,&
+ use real_time,      ONLY:RT_E_and_k,Ho_plus_Sigma,RT_ibz_coo,RT_ibz_dupl,RT_bands,&
 &                         l_RT_uses_E_FineGd,l_RT_update_Energies,l_RT_rotate_DM,&
 &                         l_RT_eval_lifetimes,RT_nbands,l_NE_with_fields
  use R_lattice,      ONLY:bz_samp
@@ -111,7 +111,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
        if(      l_RT_uses_E_FineGd .and.ik_RT/=RT_ibz_coo(ik,1)) then
-         ik_E_FineGd=ik_RT-ik-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(1,ik)
+         ik_E_FineGd=ik_RT-ik+sum(RT_ibz_dupl(:ik))
          E%E_FineGd(ib,ik_E_FineGd,1) = E_reference%E_FineGd(ib,ik_E_FineGd,1)+dE
          if (ib>=RT_bands(1)) RT_E_and_k%E(ib,ik_RT,1) =E%E_FineGd(ib,ik_E_FineGd,1)
        else

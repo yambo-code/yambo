@@ -40,7 +40,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  use interpolate,          ONLY:INTERP_obj,INTERPOLATE_is_quiet,&
 &                               INTERPOLATION_BZ,INTERPOLATION_nearest_k,&
 &                               l_INTERP_f,l_INTERP_E,l_INTERP_dE,&
-&                               l_integral_respect,OUT_k_nk
+&                               l_integral_respect,OUT_k_nk,NN_nk_exact
  use IO_m,                 ONLY:IO_and_Messaging_switch
  !
 #include<memory.h>
@@ -62,6 +62,10 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  nk1 =OUT_k%nibz
  nk2 =OUT_k%nibz_FineGd
  dimI=INTERP_obj(ID)%D
+ !
+ ! Needed for report
+ OUT_k_nk=0
+ NN_nk_exact=0
  !
  if(nk1>0) OUT_k_nk=OUT_k_nk+OUT_k%nibz
  if(nk2>0) OUT_k_nk=OUT_k_nk+OUT_k%nibz_FineGd

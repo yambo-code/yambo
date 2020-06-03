@@ -525,7 +525,7 @@ subroutine RT_initialize(E,k,q)
    subroutine RT_adjust_equilibrium()
      !
      use electrons,          ONLY:spin_occ,n_sp_pol
-     use real_time,          ONLY:RT_ibz_coo
+     use real_time,          ONLY:RT_ibz_coo,RT_ibz_dupl
      !
      integer :: ik,ik_RT_DbGd,ik_E_FineGd,ib
      !
@@ -555,7 +555,7 @@ subroutine RT_initialize(E,k,q)
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
            !
            if (l_RT_uses_E_FineGd) then
-             ik_E_FineGd=ik_RT_DbGd-ik-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(1,ik)
+             ik_E_FineGd=ik_RT_DbGd-ik+sum(RT_ibz_dupl(:ik))
              if(E%E_FineGd(ib,ik_E_FineGd,1)<=E%E_Fermi) then
                E%df_FineGd(ib,ik_E_FineGd,1)=(E%f_FineGd(ib,ik_E_FineGd,1)-spin_occ)
              else

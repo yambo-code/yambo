@@ -397,8 +397,9 @@ subroutine RT_start_and_restart(E,k,q)
          !
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
            !
-           ik_FineGd=ik_RT_DbGd-ik
            if (ik_RT_DbGd/=RT_ibz_coo(ik,1)) then
+             !
+             ik_FineGd=ik_RT_DbGd-ik-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(1,ik)
              !
              if (allocated(E%W))  E%W_FineGd(ib,ik_FineGd,1)     = abs(E%W(ib,ik,1))
              !
@@ -470,9 +471,12 @@ subroutine RT_start_and_restart(E,k,q)
        do ib=RT_bands(1),RT_bands(2)
          do ik=1,k%nibz
            do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-             ik_FineGd=ik_RT_DbGd-ik
-             if (     l_RT_uses_E_FineGd) En=E%E_FineGd(ib,ik_FineGd,1)
-             if (.not.l_RT_uses_E_FineGd) En=E%E(ib,ik,1)
+             if (ik_RT_DbGd/=RT_ibz_coo(ik,1)) then
+               ik_FineGd=ik_RT_DbGd-ik-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(1,ik)
+               En=E%E_FineGd(ib,ik_FineGd,1)
+             else 
+               En=E%E(ib,ik,1)
+             endif
              RT_RTA_E_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(  En-E%E_CBm(1)-RT_RTA_chem(1) ,RT_RTA_temp(1))*spin_occ
              RT_RTA_H_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(-(En-E%E_VBM(1)-RT_RTA_chem(2)),RT_RTA_temp(2))*spin_occ
            enddo

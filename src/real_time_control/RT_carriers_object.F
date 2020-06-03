@@ -78,7 +78,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        RT%kpt(RT_ibz_coo(i_k,1),:)    = K%pt(i_k,:)
        RT%k_weight(RT_ibz_coo(i_k,1)) = K%weights(i_k)
        if(     l_RT_uses_E_FineGd) then
-         RT%kpt(RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),:)  = K%pt_FineGd(RT_ibz_coo(i_k,1)+1-i_k:RT_ibz_coo(i_k,2)-i_k,:)
+         RT%kpt(RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),:)  = K%pt_FineGd(K%ibz_DbGd_map(1,i_k):K%ibz_DbGd_map(2,i_k),:)
          RT%k_weight(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2)) = K%weights(i_k)/real(RT_Nk_ibz(i_k),SP)        
        endif
      enddo
@@ -92,9 +92,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        i_k_RT =RT%table(i_RT,3)
        i_spin =RT%table(i_RT,4)
        !
-       i_k_FineGd=i_k_RT-i_k
-       !
        if(i_k_RT/=RT_ibz_coo(i_k,1)) then
+         i_k_FineGd=i_k_RT-i_k-RT_ibz_coo(i_k,1)+K%ibz_DbGd_map(1,i_k)
          RT%E_bare(i_RT)=E%E_FineGd(i_b,i_k_FineGd,i_spin)
          if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%f_FineGd(i_b,i_k_FineGd,i_spin)
          if(     allocated(E%fo)) RT%f_bare(i_RT)=E%f_FineGd(i_b,i_k_FineGd,i_spin)-E%df_FineGd(i_b,i_k_FineGd,i_spin)

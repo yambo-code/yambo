@@ -86,7 +86,7 @@ module R_lattice
    integer,  allocatable :: nbz_mapped(:)             ! For each  BZ kpt in the Cg, n° of  BZ kpt_FineGd assoc.
    integer,  allocatable :: ibz_DbGd_map(:,:)         ! For each IBZ kpt in the Cg, lower/upper range of kpts_FineGd in the IBZ Fg
    integer,  allocatable :: bz_DbGd_map(:,:)          ! For each  BZ kpt in the Cg, lower/upper range of kpts_FineGd in the  BZ Fg
-   real(SP), allocatable :: weights_DbGd(:) 
+   real(SP), allocatable :: weights_DbGd(:)
    real(SP), allocatable :: weights_ipol(:)           ! something used by mapping with wannier
    !                                               
  end type bz_samp

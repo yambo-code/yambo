@@ -152,18 +152,16 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  if (.not.INTERPOLATE_is_quiet)  call live_timing()
  !
- if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation@"//trim(INTERP_obj(ID)%what)//" (H fill)",Nkm1**2/2+Nkm1)
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation@"//trim(INTERP_obj(ID)%what)//" (H fill)",Nkm1*(Nkm1-1)/2)
  !=======================================================================================================================
  YAMBO_ALLOC(h_mat,(Nkm1,Nkm1))
  h_mat  =cZERO
  !
  do ik=1,Nkm1
-   do ikp=ik,Nkm1
-     if(ikp==ik) h_mat(ik,ik)=real(ZDOTC(PAR_nshells,BZ_star(:,ik),1,BZ_star(:,ik),1),SP)
-     if(ikp/=ik) then
-       h_mat(ik,ikp)=real(ZDOTC(PAR_nshells,BZ_star(:,ikp),1,BZ_star(:,ik),1),SP)
-       h_mat(ikp,ik)=conjg(h_mat(ik,ikp))
-     endif
+   h_mat(ik,ik)=real(ZDOTC(PAR_nshells,BZ_star(:,ik),1,BZ_star(:,ik),1),SP)
+   do ikp=ik+1,Nkm1
+     h_mat(ik,ikp)=cmplx(ZDOTC(PAR_nshells,BZ_star(:,ikp),1,BZ_star(:,ik),1),kind=SP)
+     h_mat(ikp,ik)=conjg(h_mat(ik,ikp))
      if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
    enddo
  enddo

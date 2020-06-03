@@ -43,7 +43,7 @@ subroutine RT_k_grid(E,k,q)
  ! Work space
  !
  logical :: l_check(k%nibz,k%nibz)
- integer :: ik,ik_bz,ik_rim,iqbz,ik_m_q,ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
+ integer :: ik,ik_rim,iqbz,ik_m_q,ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
  ! 
  ! GPL_EXCLUDE_START
  !
@@ -95,7 +95,6 @@ subroutine RT_k_grid(E,k,q)
  !
  do ik=1,k%nibz
    !
-   ik_bz=1+sum(k%nstar(:ik-1))
    RT_ibz_coo(ik,:)=(/RT_nk+1,RT_nk+1+k%nibz_mapped(ik)/)
    RT_nk=RT_nk+1+k%nibz_mapped(ik)
    RT_Nk_ibz(ik)=k%nibz_mapped(ik)+1

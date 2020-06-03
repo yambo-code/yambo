@@ -63,7 +63,6 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  nk2 =OUT_k%nibz_FineGd
  dimI=INTERP_obj(ID)%D
  !
- OUT_k_nk=0
  if(nk1>0) OUT_k_nk=OUT_k_nk+OUT_k%nibz
  if(nk2>0) OUT_k_nk=OUT_k_nk+OUT_k%nibz_FineGd
  !
@@ -92,7 +91,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  !
  ! f/dF normalization
  !====================
- if (l_INTERP_f) then
+ if (l_INTERP_f.and.l_integral_respect) then
    if(nk1>0) call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP       ,l_integral_respect,nk1)
    if(nk2>0) call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP_FineGd,l_integral_respect,nk2)
  endif

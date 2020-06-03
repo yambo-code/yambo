@@ -183,9 +183,9 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !
  ! DEBUG <
  !do ikibz=1,Xk%nibz
- !  write(100,*) Xk%pt(ikibz,:)
+ !  write(*,*) ikibz,Xk%pt(ikibz,:)," CG"
  !  do ikibz_FineGd=Xk%ibz_DbGd_map(1,ikibz),Xk%ibz_DbGd_map(2,ikibz)
- !    write(100+ikibz,*) Xk%pt_FineGd(ikibz_FineGd,:)
+ !    write(*,*) ikibz_FineGd,Xk%pt_FineGd(ikibz_FineGd,:)
  !  enddo
  !enddo
  ! DEBUG >

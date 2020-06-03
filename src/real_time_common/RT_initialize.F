@@ -553,9 +553,9 @@ subroutine RT_initialize(E,k,q)
      do ib=RT_bands(1),RT_bands(2)
        do ik=1,k%nibz
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-           ik_E_FineGd=ik_RT_DbGd-ik
            !
            if (l_RT_uses_E_FineGd) then
+             ik_E_FineGd=ik_RT_DbGd-ik-RT_ibz_coo(ik,1)+k%ibz_DbGd_map(1,ik)
              if(E%E_FineGd(ib,ik_E_FineGd,1)<=E%E_Fermi) then
                E%df_FineGd(ib,ik_E_FineGd,1)=(E%f_FineGd(ib,ik_E_FineGd,1)-spin_occ)
              else

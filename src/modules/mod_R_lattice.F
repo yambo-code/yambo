@@ -275,6 +275,7 @@ module R_lattice
    subroutine bz_samp_duplicate(BZi, BZo)
      type(bz_samp), intent(in)    :: BZi
      type(bz_samp), intent(inout) :: BZo
+     !
      BZo%nibz  = BZi%nibz
      BZo%nbz   = BZi%nbz
      BZo%units = BZi%units
@@ -302,6 +303,16 @@ module R_lattice
        BZo%ptbz=BZi%ptbz
      endif
      !
+     call bz_samp_duplicate_Fg(BZi, BZo)
+     !
+     return
+     !
+   end subroutine bz_samp_duplicate
+     !
+   subroutine bz_samp_duplicate_Fg(BZi, BZo)
+     type(bz_samp), intent(in)    :: BZi
+     type(bz_samp), intent(inout) :: BZo
+     !
      BZo%nbz_FineGd =BZi%nbz_FineGd
      BZo%nibz_FineGd=BZi%nibz_FineGd
      !
@@ -323,19 +334,19 @@ module R_lattice
      !
      if (allocated( BZi%nibz_mapped )) then
        allocate(BZo%nibz_mapped(BZo%nibz))
-       BZo%nibz_mapped=BZi%nibz_mapped
+       BZo%nibz_mapped(:BZo%nibz)=BZi%nibz_mapped(:BZo%nibz)
      endif
      if (allocated( BZi%nbz_mapped )) then
        allocate(BZo%nbz_mapped(BZo%nbz))
-       BZo%nbz_mapped=BZi%nbz_mapped
+       BZo%nbz_mapped(:BZo%nbz)=BZi%nbz_mapped(:BZo%nbz)
      endif
      if (allocated( BZi%ibz_DbGd_map )) then
        allocate(BZo%ibz_DbGd_map(2,BZo%nibz))
-       BZo%ibz_DbGd_map=BZi%ibz_DbGd_map
+       BZo%ibz_DbGd_map(:,:BZo%nibz)=BZi%ibz_DbGd_map(:,:BZo%nibz)
      endif
      if (allocated( BZi%bz_DbGd_map )) then
        allocate(BZo%bz_DbGd_map(2,BZo%nbz))
-       BZo%ibz_DbGd_map=BZi%bz_DbGd_map
+       BZo%bz_DbGd_map(:,:BZo%nbz)=BZi%bz_DbGd_map(:,:BZo%nbz)
      endif
      !
      ! To code the duplication of the Fine grid and DbGd structure
@@ -345,7 +356,7 @@ module R_lattice
      !
      return
      !
-   end subroutine bz_samp_duplicate
+   end subroutine bz_samp_duplicate_Fg
    !
    subroutine cutoff_presets()
      Box_length=0.

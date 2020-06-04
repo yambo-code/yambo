@@ -34,7 +34,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,&
-&                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed
+&                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed,bz_samp_duplicate_Fg
  use com,            ONLY:msg,fat_log
  use stderr,         ONLY:intc
  use IO_m,           ONLY:REP,DUMP,NONE,io_control,OP_RD_CL
@@ -270,6 +270,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID)
  i_err=io_Double_Grid(en,k,ID)
+ !
+ call bz_samp_duplicate_Fg(k,Xk) 
  !
  if (En%nb_FineGd>0.and.allocated(en%E_FineGd)) then
    !

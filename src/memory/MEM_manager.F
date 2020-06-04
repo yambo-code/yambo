@@ -25,10 +25,12 @@ subroutine MEM_manager_alloc(what,Sz,Kn,where)
  !
  use pars,         ONLY:schlen,DP,IPL
  use com,          ONLY:secnm
+ use LIVE_t,       ONLY:LIVE_message
+ use stderr,       ONLY:intc
  use units,        ONLY:Kilobyte
  use openmp,       ONLY:master_thread
  use memory,       ONLY:TOT_MEM_Kb,MEM_element_copy,&
-&                       MEM_err,N_MEM_elements,LARGE_MEMs,N_MEM_SAVE_max,&
+&                       MEM_err,MEM_msg,N_MEM_elements,LARGE_MEMs,N_MEM_SAVE_max,&
 &                       N_MEM_SAVE_elements,N_MEM_SAVE_max,&
 &                       MEM_SAVE_treshold,MAX_MEM_Kb,MEMs,&
 &                       N_MEM_max_element_components
@@ -44,7 +46,7 @@ subroutine MEM_manager_alloc(what,Sz,Kn,where)
  !
  logical           :: just_started
  integer           :: i_SAVE,i_COMPONENT,i_SHELF
- character(schlen) :: SHELF,TRUNK
+ character(schlen) :: SHELF,TRUNK,TMP_MSG
  !
  ! Work
  !
@@ -60,8 +62,11 @@ subroutine MEM_manager_alloc(what,Sz,Kn,where)
  ! Error Message of an already allocated array and/or other errors
  !=================================================================
  if (MEM_err/=0) then
-   if (i_SHELF> 0) call warning("Allocation of "//what//" failed. Object was already allocated in "//trim(MEMs(i_SHELF)%shelf))
-   if (i_SHELF<=0) call warning("Allocation of "//what//" failed. Object was already allocated, tough, not present in the archive.")
+   call LIVE_message("[WARNING] Allocation of "//what//" failed with code "//trim(intc(MEM_err)))
+   call LIVE_message("[WARNING] "//trim(MEM_msg))
+   if (i_SHELF> 0) TMP_MSG="Object was already allocated in "//trim(MEMs(i_SHELF)%shelf)
+   if (i_SHELF<=0) TMP_MSG="Object was already allocated, tough, not present in the archive."
+   call LIVE_message("[WARNING] "//trim(TMP_MSG))
    return
  endif
  if (Sz==0) then
@@ -130,14 +135,14 @@ subroutine MEM_manager_alloc(what,Sz,Kn,where)
  if(.not.just_started) call MEM_manager_messages(what,.true.,MEM_now_Kb,where)
  !
 #else
- if (MEM_err/=0) call error("Allocation of "//what//" failed")
+ call MEM_error(what)
 #endif
  !
 end subroutine MEM_manager_alloc
 !
-subroutine MEM_manager_free(what,Sz)
+subroutine MEM_free(what,Sz)
  !
- use pars,         ONLY:schlen,DP,IPL
+ use pars,         ONLY:schlen,DP,IPL,IP
  use units,        ONLY:Kilobyte
  use openmp,       ONLY:master_thread
  use memory,       ONLY:TOT_MEM_Kb,MEM_element_copy,N_MEM_elements,MEMs
@@ -174,7 +179,7 @@ subroutine MEM_manager_free(what,Sz)
  if (.not. (i_SHELF/=0.and.i_COMPONENT/=0) ) return
  !
  LARGE_wk=real(Sz,DP)*real(MEMs(i_SHELF)%kind(i_COMPONENT),DP)/Kilobyte
- where=MEMs(i_SHELF)%where(i_COMPONENT)
+ where=int(MEMs(i_SHELF)%where(i_COMPONENT),IP)
  MEM_now_Kb=int(LARGE_wk)
  TOT_MEM_Kb(where)=TOT_MEM_Kb(where)-MEM_now_Kb
  !
@@ -209,11 +214,50 @@ subroutine MEM_manager_free(what,Sz)
  !
 #endif
  !
-end subroutine MEM_manager_free
+end subroutine MEM_free
 !
-subroutine MEM_manager_error(what)
+subroutine MEM_global_mesg(what,xkind,HOST_SIZE)
  !
- use memory,       ONLY:MEM_err
+ use pars,         ONLY:SP,DP
+ use parallel_m,   ONLY:host_name
+ use stderr,       ONLY:real2ch
+ !use memory,       ONLY:mem_string
+ use units,        ONLY:Kilobyte
+ use LIVE_t,       ONLY:LIVE_message
+ !
+ implicit none
+ !
+ character(*), intent(in) :: what
+ integer,      intent(in) :: xkind
+ integer,      intent(in) :: HOST_SIZE(:)
+ !
+ integer   :: i1
+ real(DP)  :: MEM_size
+ !
+ MEM_size=0
+ do i1=1,size(HOST_SIZE)
+   MEM_size=MEM_size+real(HOST_SIZE(i1),DP)
+ enddo
+ MEM_size=MEM_size*real(xkind,DP)/real(Kilobyte,DP)/real(1000,DP)
+ !
+ ! Error Message
+ !===============
+ call LIVE_message("[MEMORY] Parallel distribution of "//what//" on HOST "//trim(host_name)//&
+&                  " with size "//trim(real2ch(real(MEM_size,SP)))//" [Mb] ")
+ ! 2020/05/20: Here I do not use mem_string since it wants an integer in input
+ !             It is not a good solution since integers are limited to their maximum value
+ !             A real would be much better for the size in Kb ...
+!&                  " with size "//trim(mem_string(real(MEM_size,SP))))
+ !
+ call MEM_error("GLOBAL_"//what)
+ !
+end subroutine MEM_global_mesg
+!
+subroutine MEM_error(what)
+ !
+ use memory,       ONLY:MEM_err,MEM_msg
+ use LIVE_t,       ONLY:LIVE_message
+ use stderr,       ONLY:intc
  !
  implicit none
  !
@@ -221,9 +265,12 @@ subroutine MEM_manager_error(what)
  !
  ! Error Message
  !===============
- if (MEM_err/=0) call error("Allocation of "//trim(what)//" failed")
+ if (MEM_err/=0) then
+   call LIVE_message("[ERROR] Allocation of "//what//" failed with code "//trim(intc(MEM_err)))
+   call error(trim(MEM_msg))
+ endif
  !
-end subroutine MEM_manager_error
+end subroutine MEM_error
 !
 subroutine MEM_manager_init(what,adding,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUNK,just_started)
  !

@@ -83,7 +83,7 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  Xk%nbz_duplicate=sum(N_bz_duplicate)
  !
  call msg('s','::  BZ Blocks dupicate       :',Xk%nbz_duplicate)
- call msg('s','::  BZ Blocks filling range  :',(/minval( Xk%nbz_mapped),maxval( Xk%nbz_mapped)/))
+ call msg('s','::  BZ Blocks filling range  :',(/minval(Xk%nbz_mapped)+1,maxval(Xk%nbz_mapped)+1/))
  !
  ! BZ table
  !==========

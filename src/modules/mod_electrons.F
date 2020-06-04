@@ -96,6 +96,7 @@ module electrons
    real(SP),   allocatable :: E_FineGd(:,:,:)        
    real(SP),   allocatable :: W_FineGd(:,:,:)        
    real(SP),   allocatable :: f_FineGd(:,:,:)        
+   !real(SP),   allocatable :: Z_FineGd(:,:,:)
    real(SP),   allocatable :: df_FineGd(:,:,:)       
    !
    ! Perturbative SOC

@@ -100,7 +100,7 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  Xk%nibz_duplicate=sum(N_ibz_duplicate)
  !
  call msg('s',':: IBZ Blocks duplicate      :',Xk%nibz_duplicate)
- call msg('s',':: IBZ Blocks filling range  :',(/minval(Xk%nibz_mapped),maxval(Xk%nibz_mapped)/))
+ call msg('s',':: IBZ Blocks filling range  :',(/minval(Xk%nibz_mapped)+1,maxval(Xk%nibz_mapped)+1/))
  !
  ! IBZ table
  !===========

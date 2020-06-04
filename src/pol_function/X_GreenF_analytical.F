@@ -51,6 +51,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  complex(SP)  :: GreenF(Xw%n_freqs)
  character(*) :: ordering,space
  logical      :: no_occupations
+ logical      :: intra_band
  !
  ! Work Space
  !
@@ -136,6 +137,12 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  ! In the K case, the anti-res part of Lo uses a w+\Omega (and not -\Omega) simply
  ! because this routine is always called using the i_res \Omega. Indeed 
  !
+ intra_band = .FALSE.
+ if( ic <= Xen%nbf ) intra_band = .TRUE.
+ !
+ ! 1/6/2020 CA When Terminator is on, there are v->v' transition and therefore occupation factor
+ ! cg_ffac goes to zeros and gives NaN. Fixed by introducing a flag for intra-band transitions
+ !
  !  \Omega_{anti-res} = -\Omega_{res}
  !
  ikbz_mem=PAR_Xk_bz_index(ikbz)
@@ -174,7 +181,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
    !
    if( X_os_run       ) ffac=(f_e*f_h)/cg_ffac*weight
    if( K_inv_run      ) ffac=(f_e-f_h)/cg_ffac*weight
-   if( no_occupations ) ffac = 1._SP
+   if( no_occupations .or. intra_band ) ffac = 1._SP
    !
    do iw=1,Xw%n_freqs
      !

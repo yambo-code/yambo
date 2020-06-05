@@ -118,12 +118,12 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
        do i_spin=1,n_sp_pol
          !
          call INTERPOLATION_nearest_E(En%Eo(iband,ik,i_spin),qp,E_diff(i_spin),i_qp,i_spin)
-         call QP_transfer('Stnd_Gd')
+         call QP_transfer_nearest('Stnd_Gd')
          !
          if(allocated(en%E_FineGd)) then
            do ik_fg=k%ibz_DbGd_map(1,ik),k%ibz_DbGd_map(2,ik)
              call INTERPOLATION_nearest_E(En%E_FineGd(iband,ik_fg,i_spin),qp,E_diff(i_spin),i_qp,i_spin)
-             call QP_transfer('Fine_Gd')
+             call QP_transfer_nearest('Fine_Gd')
            enddo
          endif
          !

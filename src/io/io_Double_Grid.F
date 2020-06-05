@@ -87,10 +87,10 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Kpts
  !
  if (read_is_on(ID)) then
-   allocate(Xk%pt_FineGd(Xk%nibz_FineGd,3))
-   allocate(Xk%weights_FineGd(Xk%nibz_FineGd))
-   allocate(Xk%ptbz_FineGd(Xk%nbz_FineGd,3))
-   allocate(Xk%sstar_FineGd(Xk%nbz_FineGd))
+   YAMBO_ALLOC(Xk%pt_FineGd,(Xk%nibz_FineGd,3))
+   YAMBO_ALLOC(Xk%weights_FineGd,(Xk%nibz_FineGd))
+   YAMBO_ALLOC(Xk%ptbz_FineGd,(Xk%nbz_FineGd,3))
+   YAMBO_ALLOC(Xk%sstar_FineGd,(Xk%nbz_FineGd))
  endif
  !
  call io_bulk(ID, VAR="KPTS_IBZ", VAR_SZ=shape(Xk%pt_FineGd) ) 
@@ -108,7 +108,10 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Block filling
  !
- if (read_is_on(ID)) allocate(Xk%nibz_mapped(Xk%nibz),Xk%nbz_mapped(Xk%nbz))
+ if (read_is_on(ID)) then
+   YAMBO_ALLOC(Xk%nibz_mapped,(Xk%nibz))
+   YAMBO_ALLOC(Xk%nbz_mapped,(Xk%nbz))
+ endif
  !
  call io_bulk(ID, VAR="BLOCK_FILLING_IBZ", VAR_SZ=(/Xk%nibz/) ) 
  call io_bulk(ID, I1=Xk%nibz_mapped )
@@ -119,8 +122,8 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Block table
  !
  if (read_is_on(ID)) then
-   allocate(Xk%ibz_DbGd_map(2,Xk%nibz))
-   allocate(Xk%bz_DbGd_map(2,Xk%nbz))
+   YAMBO_ALLOC(Xk%ibz_DbGd_map,(2,Xk%nibz))
+   YAMBO_ALLOC(Xk%bz_DbGd_map,(2,Xk%nbz))
  endif
  !
  call io_bulk(ID, VAR="BLOCK_TABLE_IBZ", VAR_SZ=shape(Xk%ibz_DbGd_map) ) 
@@ -131,7 +134,9 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Double grid weights
  !
- if (read_is_on(ID)) allocate(Xk%weights_DbGd(Xk%nibz))
+ if (read_is_on(ID)) then
+   YAMBO_ALLOC(Xk%weights_DbGd,(Xk%nibz))
+ endif
  !
  call io_bulk(ID, VAR="KPTS_WEIGHT", VAR_SZ=(/Xk%nibz/) ) 
  call io_bulk(ID, R1=Xk%weights_DbGd)

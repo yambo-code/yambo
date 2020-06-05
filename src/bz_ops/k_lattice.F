@@ -30,13 +30,11 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  use pars,           ONLY:SP,schlen,zero_dfl
  use vec_operate,    ONLY:v_norm,v_is_zero,cross_product,&
 &                         c2a,sort,rlu_v_norm
- use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
  use com,            ONLY:msg
  use matrix_operate, ONLY:m3det,m3inv
  use R_lattice,      ONLY:b,k_grid_b,k_grid_dim,k_grid,RL_vol,&
 &                         k_grid_uc_vol,nkibz,nkbz,nXkibz,nXkbz,d3k_factor,&
 &                         bz_samp,g_vec,ng_in_shell,Xk_grid_new_mapping
- use electrons,      ONLY:levels
  use zeros,          ONLY:k_rlu_zero
 #include<memory.h>
  !
@@ -46,7 +44,6 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  !
  ! Work Space
  !
- type(levels) ::Xen
  integer  :: i1,i2,i3,iv(3),ig,N_g_vecs,N_ext_K_pts,k_grid_borders(3,2)
  real(SP) :: v0(3),v1(3),v0_ibz_mod,k_b_m1(3,3),min_idist(2)
  real(SP),allocatable ::idist(:),extended_k_points(:,:)
@@ -54,9 +51,6 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  character(schlen)    ::warn_msg,ch 
  logical  :: small_b_in_UC
  !
- integer           :: io_err,io_ID
- integer, external :: io_Double_grid
- ! 
  ! ################## NEW MAPPING ######################
  real(SP) :: q_step(3),k_shift(3)
  integer  :: id
@@ -79,12 +73,6 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    !
    call k_expand(k)
    call k_expand(Xk)
-   !
-   !
-   ! E_rim
-   !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
-   io_err=io_Double_Grid(Xen,Xk,io_ID)
    !
  endif
  !

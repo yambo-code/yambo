@@ -180,8 +180,6 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
          !
        case('appl')
          !
-         ! To be coded : application to the Fine Grid
-         !
          do ik=1,k%nibz
            do iband=bands(1),bands(2)
              !

@@ -169,8 +169,8 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
    !
  endif
  !
- ! The extension to the Fine Grid has been removed from here and should be included in 
- ! QP_transfer, inside QP_apply_interpolate_QP
+ ! The extension to the Fine Grid has been removed from here and 
+ ! included in QP_transfer, inside QP_apply_interpolate_QP
  !
  call section('p'," QP corrections report")
  !==========================================

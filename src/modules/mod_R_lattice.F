@@ -317,15 +317,15 @@ module R_lattice
      BZo%nibz_FineGd=BZi%nibz_FineGd
      !
      if (allocated( BZi%sstar_FineGd )) then
-       allocate(BZo%sstar_FineGd(BZo%nbz_FineGd))
+       YAMBO_ALLOC(BZo%sstar_FineGd,(BZo%nbz_FineGd))
        BZo%sstar_FineGd=BZi%sstar_FineGd
      endif
      if (allocated( BZi%pt_FineGd )) then
-       allocate(BZo%pt_FineGd(BZo%nibz_FineGd,3))
+       YAMBO_ALLOC(BZo%pt_FineGd,(BZo%nibz_FineGd,3))
        BZo%pt_FineGd=BZi%pt_FineGd
      endif
      if (allocated( BZi%ptbz_FineGd )) then
-       allocate(BZo%ptbz_FineGd(BZo%nbz_FineGd,3))
+       YAMBO_ALLOC(BZo%ptbz_FineGd,(BZo%nbz_FineGd,3))
        BZo%ptbz_FineGd=BZi%ptbz_FineGd
      endif
      !
@@ -333,19 +333,19 @@ module R_lattice
      BZo%nibz_duplicate=BZi%nibz_duplicate
      !
      if (allocated( BZi%nibz_mapped )) then
-       allocate(BZo%nibz_mapped(BZo%nibz))
+       YAMBO_ALLOC(BZo%nibz_mapped,(BZo%nibz))
        BZo%nibz_mapped(:BZo%nibz)=BZi%nibz_mapped(:BZo%nibz)
      endif
      if (allocated( BZi%nbz_mapped )) then
-       allocate(BZo%nbz_mapped(BZo%nbz))
+       YAMBO_ALLOC(BZo%nbz_mapped,(BZo%nbz))
        BZo%nbz_mapped(:BZo%nbz)=BZi%nbz_mapped(:BZo%nbz)
      endif
      if (allocated( BZi%ibz_DbGd_map )) then
-       allocate(BZo%ibz_DbGd_map(2,BZo%nibz))
+       YAMBO_ALLOC(BZo%ibz_DbGd_map,(2,BZo%nibz))
        BZo%ibz_DbGd_map(:,:BZo%nibz)=BZi%ibz_DbGd_map(:,:BZo%nibz)
      endif
      if (allocated( BZi%bz_DbGd_map )) then
-       allocate(BZo%bz_DbGd_map(2,BZo%nbz))
+       YAMBO_ALLOC(BZo%bz_DbGd_map,(2,BZo%nbz))
        BZo%bz_DbGd_map(:,:BZo%nbz)=BZi%bz_DbGd_map(:,:BZo%nbz)
      endif
      !

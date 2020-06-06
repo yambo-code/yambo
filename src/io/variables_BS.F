@@ -165,7 +165,11 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
    !
    ! W_RIM
    !
-   call def_variable_elemental(ID,"W_RIM",2,IP+100,0)
+   ! Here the name W_RIM is correct. 
+   ! However the ndb.BS_PAR_Q1 used for restart in the test-suite should
+   ! be updated, otherwise the hBN/GW-OPTICS/ corresponding test fails
+   !call def_variable_elemental(ID,"W_RIM",2,IP+100,0) 
+   call def_variable_elemental(ID,"W_DbGd",2,IP+100,0)
      call io_variable_elemental(ID,I0=RIM_ng,&
 &     VAR='[RIM] RL components',TERMINATOR='col',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
      call io_variable_elemental(ID,I0=RIM_n_rand_pts,&

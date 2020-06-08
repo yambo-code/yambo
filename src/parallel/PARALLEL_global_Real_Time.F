@@ -89,7 +89,11 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  ! K-points (IBZ)
  !
+#if defined _PAR_IO
+ CONSECUTIVE=.TRUE.
+#else
  CONSECUTIVE=.not.l_RT_uses_E_DbGd
+#endif
  call PARALLEL_index(PAR_IND_Xk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=CONSECUTIVE,NO_EMPTIES=.TRUE.)
  PAR_IND_Xk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
  !

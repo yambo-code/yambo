@@ -78,15 +78,27 @@ module linear_algebra
  contains
    !
    subroutine LINEAR_ALGEBRA_WS_reset(WS)
+     use drivers,   ONLY:l_nl_optics,l_real_time
      type(LALGEBRA_WS) :: WS
-     YAMBO_FREE(WS%v_real)
-     YAMBO_FREE(WS%vp_real)
-     YAMBO_FREE(WS%v_cmplx)
-     YAMBO_FREE(WS%vp_cmplx)
-     YAMBO_FREE(WS%m1_cmplx)
-     YAMBO_FREE(WS%m2_cmplx)
-     YAMBO_FREE(WS%v_int)
-     YAMBO_FREE(WS%vp_int)
+     if(.not.(l_nl_optics.or.l_real_time)) then
+       YAMBO_FREE(WS%v_real)
+       YAMBO_FREE(WS%vp_real)
+       YAMBO_FREE(WS%vp_cmplx)
+       YAMBO_FREE(WS%m1_cmplx)
+       YAMBO_FREE(WS%m2_cmplx)
+       YAMBO_FREE(WS%vp_int)
+       YAMBO_FREE(WS%v_int)
+       YAMBO_FREE(WS%v_cmplx)
+     else
+       if(allocated(WS%v_real))   deallocate(WS%v_real)
+       if(allocated(WS%vp_real))  deallocate(WS%vp_real)
+       if(allocated(WS%vp_cmplx)) deallocate(WS%vp_cmplx)
+       if(allocated(WS%m1_cmplx)) deallocate(WS%m1_cmplx)
+       if(allocated(WS%m2_cmplx)) deallocate(WS%m2_cmplx)
+       if(allocated(WS%vp_int))   deallocate(WS%vp_int)
+       if(allocated(WS%v_int))    deallocate(WS%v_int)
+       if(allocated(WS%v_cmplx))  deallocate(WS%v_cmplx)
+     endif
      !
 #ifdef _CUDA
      YAMBO_FREE(WS%v_real_d)

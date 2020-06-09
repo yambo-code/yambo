@@ -30,7 +30,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  use electrons,     ONLY:levels,spin_occ,n_sp_pol,filled_tresh
  use R_lattice,     ONLY:bz_samp,q_norm
  use D_lattice,     ONLY:DL_vol
- use X_m,           ONLY:use_X_DbGd,l_drude
+ use X_m,           ONLY:use_X_DbGd,l_drude,drude_n_states
  use stderr,        ONLY:intc,real2ch
  use parser_m,      ONLY:parser
  !
@@ -46,13 +46,13 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  !
  real(SP)             :: drude_factor,f_eh,f_occ
  logical              :: Drude_term(4),l_Jellium,l_Classical
- integer              :: iw,ik,ib,is,n_states
+ integer              :: iw,ik,ib,is
  !
  drude_GreenF = cZERO
  !
  ! Compute metallic occupations
  !
- n_states=0
+ drude_n_states=0
  f_eh=0._SP
  do is=1,n_sp_pol
    do ik=1,Xen%nk
@@ -63,14 +63,14 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
        if (            f_occ < filled_tresh ) cycle
        if ( spin_occ - f_occ < filled_tresh ) cycle
        !
-       n_states=n_states+int(Xk%weights(ik)*real(Xk%nbz,SP))
+       drude_n_states=drude_n_states+int(Xk%weights(ik)*real(Xk%nbz,SP))
        f_eh=f_eh+f_occ*(spin_occ-f_occ)*Xk%weights(ik)*real(Xk%nbz,SP)
        !
      enddo
    enddo
  enddo
  !
- f_eh=f_eh/real(n_states,SP)
+ f_eh=f_eh/real(drude_n_states,SP)
  !
  ! Drude Contrib. if all of following conditions hold
  !====================================================
@@ -109,7 +109,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  l_Jellium=.not.l_Classical
  if(.not.all(Drude_term)) return
  !
- call msg(' rs','[X/K] Drude nstates            ',n_states)
+ call msg(' rs','[X/K] Drude nstates            ',drude_n_states)
  call msg(' rs','[X/K] Drude average occ        ',f_eh)
  call msg('nrs','[X/K] Drude energies           ',(/real(Wd),aimag(Wd)/)*HA2EV,'[eV]')
  !

@@ -38,6 +38,7 @@ module X_m
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
  logical                  :: eval_alpha
  logical                  :: l_drude
+ integer                  :: drude_n_states
  !
  ! Main Gauge
  !

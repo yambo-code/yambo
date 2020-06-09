@@ -33,7 +33,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_by_V_plus_V
  use DIPOLES,       ONLY:DIPOLE_t,DIP_rotated
- use X_m,           ONLY:X_t,X_poles_tab,l_X_terminator,X_cols,X_rows
+ use X_m,           ONLY:X_t,X_poles_tab,l_X_terminator,X_cols,X_rows,drude_n_states
  use X_m,           ONLY:rhotw_save_d, rhotw_save2_d
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N,coarse_grid_pt
@@ -73,7 +73,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  logical            :: l_X_term_vv
  integer            :: ngrho
  integer            :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,&
-&                      isp,iv,ic,isave(4),n_poles,n_drude_poles,i_bg,ig_start,ROWS(2)
+&                      isp,iv,ic,isave(4),n_poles,i_bg,ig_start,ROWS(2)
  !
  ! DIPOLES
  !
@@ -83,7 +83,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  !
  isave         = 0
  n_poles       = sum(bare_grid_N(1:i_cg-1))
- n_drude_poles = 0
  Xo_res        = cZERO
  Z_            = cONE
  !
@@ -124,10 +123,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    !
    Z_eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    !
-   if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) then
-     Z_eh_occ=1._SP
-     if(ic==iv) n_drude_poles=n_drude_poles+1
-   endif
+   if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) Z_eh_occ=1._SP
    !
    if (l_X_term_vv) Z_eh_occ = Xen%f(iv,ikp,i_spin)*Xen%f(ic,ik,i_spin)/spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    !
@@ -298,6 +294,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    !
  enddo loop_bare_grid
  !
- if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) Xo_res=Xo_res/real(n_drude_poles,SP)
+ if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) Xo_res=Xo_res/real(drude_n_states,SP)
  !
 end subroutine X_irredux_residuals

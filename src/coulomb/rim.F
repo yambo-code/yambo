@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine rim()
+subroutine rim(cut_is_slab,is_cut)
  !
- use pars,          ONLY:SP,pi,DP
- use com,           ONLY:msg
+ use pars,          ONLY:SP,pi,DP,schlen
+ use com,           ONLY:msg,error
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
  use LIVE_t,        ONLY:live_timing
@@ -42,15 +42,18 @@ subroutine rim()
  type(PP_indexes)::px
  integer   :: iq
  real(SP)  :: em1_anis(3),G_sph_radii
+ logical   :: cut_is_slab,is_cut(3)
  !
  ! Random generator
  !
  real(SP)  :: first_neighbour(26,3)
  integer   :: N_out,N_in,N_out_G,rep_factor,inn1,inn2,inn3,ic
+ integer       :: ipar1,ipar2,iort
  real(SP)  :: v1(3),v2(3),qr(RIM_n_rand_pts,3),v1_norm(2)
  character(12)      :: ch(3)
  integer            :: iseed(8)
  real(DP), external :: dlaran
+ character(schlen) :: msg_dum(2)
  ! 
  call timing('RIM',OPR='start')
  !
@@ -65,6 +68,25 @@ subroutine rim()
  if (RIM_id_epsm1_reference<0.or.RIM_id_epsm1_reference>3) RIM_id_epsm1_reference=0
  if (RIM_id_epsm1_reference==0) em1_anis=0.
  if (RIM_id_epsm1_reference>0 ) em1_anis=em1_anis/em1_anis(RIM_id_epsm1_reference)
+ !
+ !v_slab setup
+ if(is_cut(1).and.is_cut(2)) call error('Check slab normal direction')
+ if(is_cut(2).and.is_cut(3)) call error('Check slab normal direction')
+ if(is_cut(1).and.is_cut(3)) call error('Check slan normal direction')
+ !
+ if(is_cut(1)) then
+   iort=1
+   ipar1=2
+   ipar2=3
+ elseif(is_cut(2)) then
+   iort=2
+   ipar1=1
+   ipar2=3
+ elseif(is_cut(3)) then
+   iort=3
+   ipar1=2
+   ipar2=1
+ endif
  !
  ! Filling the small BZ with the random grid
  !===========================================
@@ -105,9 +127,22 @@ subroutine rim()
  call live_timing('Random points',RIM_n_rand_pts/rep_factor)
  loop: do while(.not.N_in==RIM_n_rand_pts+1)
    !
-   do ic=1,3
-     v2(ic)=2.*dlaran(iseed(4:))-1
-   enddo
+   if (cut_is_slab) then
+     !
+     do ic=1,3
+      !
+      if (ic == iort) then
+        v2(ic) = 0._SP
+      else
+        v2(ic) = 2.*dlaran(iseed(4:))-1
+      endif
+      !
+     enddo
+   else  
+     do ic=1,3
+       v2(ic)=2.*dlaran(iseed(4:))-1
+     enddo
+   endif
    N_out=N_out+1
    !
    ! From rlu in the k_grid_b units (v2) to Cartesian (v1)
@@ -124,6 +159,19 @@ subroutine rim()
      ! 
    enddo
    qr(N_in,:)=v1*alat(:)/2./pi
+   !
+   !Write the random number
+   !
+   write(msg_dum(2) , *) N_in
+   msg_dum(1) = "v2("//trim(msg_dum(2))//") = ("
+   write(msg_dum(2) , *) v2(1)
+   msg_dum(1) = trim(msg_dum(1))//","//trim(msg_dum(2))
+   write(msg_dum(2) , *) v2(2)
+   msg_dum(1) = trim(msg_dum(1))//","//trim(msg_dum(2))
+   write(msg_dum(2) , *) v2(3)
+   msg_dum(1) = trim(msg_dum(1))//","//trim(msg_dum(2)//")")
+   call msg('r', msg_dum(1))
+   !
    N_in=N_in+1
    if (mod(N_in,rep_factor)==0) call live_timing(steps=1)
  enddo loop

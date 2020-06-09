@@ -101,7 +101,8 @@ subroutine TIMING_overview(list,main_name)
    call PP_redux_wait(list_all_cpu%clock(:)%cpu_id)
    !
    do i=1,list_all_cpu%nclock 
-     if (list_all_cpu%clock(i)%cpu_id>=0) bcast_id=list_all_cpu%clock(i)%cpu_id-1
+     if (list_all_cpu%clock(i)%cpu_id<0) cycle
+     bcast_id=list_all_cpu%clock(i)%cpu_id-1
      call PP_bcast(list_all_cpu%clock(i)%name,bcast_id)
    enddo
    !

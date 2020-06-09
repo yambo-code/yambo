@@ -3,28 +3,28 @@
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details):
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine RT_initialize(E,k,q)
- ! 
+ !
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_hartree,l_use_Hxc_collisions,&
-&                         l_sc_is_libDFT,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_rt_carriers_in_use
+&                         l_sc_is_libDFT,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_rt_carriers_in_use,l_phel_scatt
  use pars,           ONLY:SP,pi,schlen
  use units,          ONLY:HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,AUT2FS
  use stderr,         ONLY:intc
@@ -173,7 +173,7 @@ subroutine RT_initialize(E,k,q)
  !
  call section('=','Dephasing matrix setup')
  !
- call RT_Dephasing_Matrix(E) 
+ call RT_Dephasing_Matrix(E)
  !
  ! GPL_EXCLUDE_START
  !
@@ -222,7 +222,7 @@ subroutine RT_initialize(E,k,q)
    !
    if (all(RT_life_extrap_times>0)) then
      NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,2._SP*RT_life_extrap_times(1))
-     if(NE_time_step_update_jump_SAVE<2._SP*RT_life_extrap_times(1)) NE_time_step_update_jump_SAVE=2._SP*RT_life_extrap_times(1) 
+     if(NE_time_step_update_jump_SAVE<2._SP*RT_life_extrap_times(1)) NE_time_step_update_jump_SAVE=2._SP*RT_life_extrap_times(1)
    endif
    !
    NE_time_step_update_jump=NE_time_step_update_jump_SAVE
@@ -249,8 +249,8 @@ subroutine RT_initialize(E,k,q)
  l_NE_with_fields=.false.
  !
  do i1=1,n_ext_fields
-   !      
-   Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
+   !
+   Efield(i1)%ef_name=trim(Efield(i1)%ef_name)
    !
    MSG_ch="Field#"//trim(intc(i1))//" "//trim(Efield(i1)%ef_name)
    !
@@ -258,7 +258,7 @@ subroutine RT_initialize(E,k,q)
      !
      if (.not.field_is_ok( Efield(i1)) ) &
 &      call error(trim(MSG_ch)//' not supported or polarization is wrong')
-     !      
+     !
      l_NE_with_fields=.true.
      !
      if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%frequency(1)==0._SP) &
@@ -285,7 +285,7 @@ subroutine RT_initialize(E,k,q)
      !
      if ( Efield(i1)%ef_name=='DELTA' ) then
        Efield(i1)%t_final_indx=Efield(i1)%t_initial_indx+2
-       Efield(i1)%t_final=RT_step*(Efield(i1)%t_final_indx-1)       
+       Efield(i1)%t_final=RT_step*(Efield(i1)%t_final_indx-1)
      else if ( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='PULSE') ) then
        call RT_Fluence(i1)
      else
@@ -433,6 +433,7 @@ subroutine RT_initialize(E,k,q)
  ! GPL_EXCLUDE_START
  !
  if (l_elph_scatt)         call msg( 'r','El-Ph         scattering   ',l_elph_scatt)
+ if (l_phel_scatt)         call msg( 'r','Ph-El         scattering   ',l_phel_scatt)
  if (l_elel_scatt)         call msg( 'r','El-El         scattering   ',l_elel_scatt)
  if (l_elphoton_scatt)     call msg( 'r','El-Photon     scattering   ',l_elphoton_scatt)
  if (l_RT_update_Energies) then

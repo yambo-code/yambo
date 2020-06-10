@@ -21,105 +21,116 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_PHEL_total_Kernel(ik,E,k,q,TIME)
+subroutine RT_ELPH_total_Kernel(iq,E,k,q,TIME)
  !
- ! COMMENTS
+ ! In this routine I do not perform a time step. I calculate
+ ! the el-ph Kernel at time TIME using an approximate iterative scheme (light but approximated).
+ !
+ ! EULER:
+ !
+ !  In the EULER scheme everything is extremely easy. G_lesser is G(TIME) and
+ !  I use the saved THETA_matrix (that in EULER is saved at TIME-RT_step) and the newly calculated
+ !  DELTA matrix to get the new THETA_matrix.
+ !
+ ! RK2:
+ !
+ !  In RK2 everything is much more complicated because RT_elph_kernel is called at NE_time and
+ !  at NE_time+RT_step/2 and in the two cases a different strategy ***should*** be applied.
+ !
+ ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !
  use pars,           ONLY:SP,rZERO,cZERO
  use electrons,      ONLY:levels,spin_occ
- use R_lattice,      ONLY:bz_samp,qindx_S
- use real_time,      ONLY:elph_gkkp_expanded_sq,l_RT_CCA_Kernel,RT_bands
+ use R_lattice,      ONLY:bz_samp,qindx_X
+ use real_time,      ONLY:elph_gkkp_expanded_sq,RT_bands
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_ibz_index
  use parser_m,       ONLY:parser
+ ! [NOTE] phonon database
+ use IO_m,           ONLY:io_control,OP_RD_CL,deliver_IO_error_message
+ ! [NOTE] phonon database
  !
  implicit none
  !
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k,q
- integer,       intent(in) :: ik
+ integer,       intent(in) :: iq
  real(SP),      intent(in) :: TIME
  !
  ! Work Space ...
  !
- integer               :: i_s,i_map(-1:1),il
+ ! [NOTE] phonon database
+ integer               :: ID_gkkp
+ real                  :: elph_gkkp_sq
+ ! [NOTE] phonon database
+ integer               :: il
  real(SP)              :: ph_freq,N_q(2)
  real(SP), parameter   :: cutoff= 5.E-3
  !
  real(SP)              :: Gkkp_sq(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
- complex(SP)           :: S_mat_out_of_eq(2,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP)           :: S_mat_eq(2,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP)           :: S_mat_sum(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- !
- logical :: l_skip_ABS
- !
  ! ... band index ...
  integer               :: i_n,i_np
  ! ... BZ index ...
- integer               :: iqbz,ik_m_q,ik_mem,iq_mem
+ integer               :: iqbz,ikbz,ik,ik_m_q,ik_mem,iq_mem
  !
- ik_mem=PAR_Xk_ibz_index(ik)
+ iq_mem=PAR_Q_index(iq)
  !
- call parser('NOABS',l_skip_ABS)
- !
- i_map(-1)=1
- i_map( 0)=1
- i_map( 1)=2
- !
- S_mat_eq=cZERO
- S_mat_out_of_eq=cZERO
- S_mat_sum=cZERO
- !
- do iqbz=1,q%nbz
+ do ikbz=1,k%nbz
    !
    if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
    !
-   ik_m_q =k%sstar(qindx_S(ik,iqbz,1),1)
+   ! Obtain k-q in the ibz from k in the bz and q in the ibz
+   ik_m_q =k%sstar(qindx_X(iq_mem,ikbz,1),1)
+   ! Obtain k in the ibz from k in the bz
+   ik = k%sstar(ikbz,1)
    !
-   iq_mem=PAR_Q_index(iqbz)
+   ik_mem=PAR_Xk_ibz_index(ik)
    !
    do il=elph_branches(1),elph_branches(2)
      !
-     ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
+     ! Given iq in the ibz, get corresponding index in the bz
+     iqbz = q%k_table(iq_mem,1)
      !
-     !  This frequency, which in principle should not be included, describes the region
-     !  around q=0, which is taken into account by the integral embodied in the q_qeights
-     !  Thus I do not cycle
+     ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
      !
      if ( (iqbz==1 .and. il<=3) ) cycle
      if ( abs(ph_freq)<3.E-5)     cycle
      !
-     ! N+/-
+     ! N+/-[NOTE] This has to be changed to time dependent occupation (also in the electronic case)
      !
      N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
      !
      ! Note the m.e. in elph_gkkp_expanded_sq are stored with indexes order exchanged (see RT_ELPH_initialize)
      !
      Gkkp_sq=rZERO
+     ! [NOTE] phonon database
+     call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_bz+1/),ID=ID_gkkp)
+     io_err=io_ELPH(ID,'gkkp_expanded')
+     ! [NOTE] phonon database
      do i_n=RT_bands(1),RT_bands(2)
-       !
-       Gkkp_sq(i_n,i_n)=elph_gkkp_expanded_sq(i_n,i_n,il,iq_mem,ik_mem)
+       Gkkp_sq(i_n,i_n)=elph_gkkp_sq(i_n,i_n,il,iq_mem,ik_mem)
        if(sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_n)=rZERO
        !
        do i_np=RT_bands(1),RT_bands(2)
          !
          if (i_n==i_np) cycle
-         Gkkp_sq(i_n,i_np)=elph_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ik_mem)
+         Gkkp_sq(i_n,i_np)=elph_gkkp_sq(i_np,i_n,il,iq_mem,ik_mem)
          if (sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_np)=rZERO
          !
        enddo
        !
      enddo
      !
-     ! Time scales separation + QP approximation
+     ! Time Scales separation (TS) and quasiparticle approximation (QP)
      !=======================================
      !
-     call RT_PHEL_TSQP_Kernel(ik,ik_m_q,iqbz,il,N_q(1),E,ph_freq,Gkkp_sq,l_skip_ABS)
+     ! [NOTE] Here N_q should be the phonon occupation at the current time step
+     call RT_PHEL_TSQP_Kernel(ik,ik_m_q,iqbz,il,N_q(1),E,ph_freq,Gkkp_sq)
      !
    enddo ! ph branch
    !
- enddo ! iqbz
+ enddo ! ikbz
  !
-end subroutine RT_PHEL_total_kernel
+end subroutine RT_ELPH_total_kernel

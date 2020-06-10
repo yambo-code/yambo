@@ -65,7 +65,7 @@ subroutine RT_relaxation(E,k,q,Time)
  use D_lattice,      ONLY:Bose_Temp
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
- use R_lattice,      ONLY:bz_samp,nkibz
+ use R_lattice,      ONLY:bz_samp,nkibz,nqibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
@@ -84,7 +84,7 @@ subroutine RT_relaxation(E,k,q,Time)
  !
  ! Work Space
  !
- integer          :: ik
+ integer          :: ik,iq
  !
  if ( (.not.RT_is_statically_dephased.and..not.l_elphoton_scatt) .or. &
 &     (.not.RT_is_dynamically_dephased)                          .or. &
@@ -134,15 +134,15 @@ subroutine RT_relaxation(E,k,q,Time)
  !
  ! Ph-El (phonon dynamics)
  !=======
- if(l_phel_scatt.and.l_RT_eval_lifetimes) then
+ if(l_phel_scatt.and.l_elph_scatt.and.l_RT_eval_lifetimes) then
    !
    call timing('RT relaxation (p-e)',OPR='start')
    !
-   do ik=1,nkibz
+   do iq=1,nqibz
      !
-     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+     if (.not.PAR_IND_Xk_ibz%element_1D(iq)) cycle
      !
-     call RT_PHEL_total_Kernel(ik,E,k,q,Time)
+     call RT_PHEL_total_Kernel(iq,E,k,q,Time)
      !
    enddo
    !

@@ -21,16 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS)
+subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq)
  !
- ! COMMENTS
+ ! This subroutine is the same as RT_ELPH_CCA_Kernel, except it also
+ ! computes the phonon-electron lifetimes needed for the collision
+ ! integral in the phonon dynamics case.
  !
  use pars,           ONLY:SP,zero_dfl,rZero,pi
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ
  use hamiltonian,    ONLY:B_mat_index
- use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
-&                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
+ use real_time,      ONLY:P_E_sp_res_lifetime,P_E_sp_ares_lifetime,P_E_eh_lifetime,&
 &                         l_RT_uses_E_DbGd,DbGd_ibz_coo,RT_occupations_locked,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_life_delta_occupations,l_initial_equilibrium,q_weight_RT,&
@@ -43,14 +44,12 @@ subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_AB
  integer,       intent(in) :: ik,ik_m_q,i_q,i_l
  real(SP),      intent(in) :: ph_freq,N_q
  real(SP),      intent(in) :: Gkkp_sq(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- logical,       intent(in) :: l_skip_ABS
  !
  ! Work Space ...
  !
  integer  :: i_n,i_np,ik_rim,ip_rim,i1,i2
- real(SP) :: P_ph_abs,P_ph_emit,D_res,D_ares,DELTA_E,DELTA_W,pre_factor,&
-&            TMP_Hole_lifetime(2),TMP_Electron_lifetime(2),f_kmq,Hole_f_kmq
- real(SP), external :: RT_G_retarded_convolution
+ real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,f_nkq,Hole_f_nkq,f_mk,Hole_f_mk,&
+&            TMP_Res_lifetime,TMP_Ares_lifetime,TMP_eh_lifetime
  !
  ! Kernel kind
  !=============
@@ -75,8 +74,8 @@ subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_AB
        DELTA_W=abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik_m_q,1))
        !
      endif
-     !
-     pre_factor=4._SP*pi*Gkkp_sq(i_np,i_n)/real(RT_Nk_ibz(ik_m_q))
+     ! [NOTE] Full prefactor here is 4._SP*pi. Only for now I put 2._SP *assuming* the rest comes from the delta function
+     pre_factor=2._SP*Gkkp_sq(i_np,i_n)/real(RT_Nk_ibz(ik)) !Full prefactor should be 4
      !
      if( pre_factor==0._SP ) cycle
      !
@@ -86,8 +85,9 @@ subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_AB
        !
        ! Zeroing
        !=========
-       TMP_Hole_lifetime=rZero
-       TMP_Electron_lifetime=rZero
+       TMP_Res_lifetime=rZero
+       TMP_Ares_lifetime=rZero
+       TMP_eh_lifetime=rZero
        !
        do ip_rim=RT_ibz_coo(ik_m_q,1),RT_ibz_coo(ik_m_q,2)
          !
@@ -106,61 +106,44 @@ subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_AB
            !
          endif
          !
-         P_ph_abs  =RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,'EP')
-         P_ph_emit =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,'EP')
-         ! Delta functions
-         D_res  =!RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,'EP')
-         D_ares =!RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,'EP')
-         !
-         ! [CONTINUE FROM HERE]
+         ! Delta functions [NOTE] I need to check that this function does what I want
+         D_ares  =RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,'SQ')
+         D_res =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,'SQ')
          !
          if(l_initial_equilibrium) then
-           f_kmq      = RT_E_occupations_reference(i_np,ip_rim)/spin_occ
-           Hole_f_kmq = RT_H_occupations_reference(i_np,ip_rim)/spin_occ
-           ! Add Bose (should it go into the electrons as well?)
+           f_nkq      = RT_E_occupations_reference(i_np,ip_rim)/spin_occ
+           Hole_f_nkq = RT_H_occupations_reference(i_np,ip_rim)/spin_occ
+           f_mk       = RT_E_occupations_reference(i_n,ik_rim)/spin_occ
+           Hole_f_mk  = RT_H_occupations_reference(i_n,ik_rim)/spin_occ
          else
-           f_kmq      =  RT_life_delta_occupations(i_np,ip_rim)/spin_occ
-           Hole_f_kmq = -RT_life_delta_occupations(i_np,ip_rim)/spin_occ
-           ! Add phonon occupation
+           f_nkq      =  RT_life_delta_occupations(i_np,ip_rim)/spin_occ
+           Hole_f_nkq = -RT_life_delta_occupations(i_np,ip_rim)/spin_occ
+           f_mk       =  RT_life_delta_occupations(i_n,ik_rim)/spin_occ
+           Hole_f_mk  = -RT_life_delta_occupations(i_n,ik_rim)/spin_occ
          endif
          !
-         TMP_Hole_lifetime(1)=TMP_Hole_lifetime(1)+f_kmq*P_ph_abs
-         TMP_Electron_lifetime(1)=TMP_Electron_lifetime(1)+Hole_f_kmq*P_ph_emit
+         TMP_Res_lifetime=TMP_Res_lifetime+Hole_f_nkq*f_mk*D_res
+         TMP_Ares_lifetime=TMP_Ares_lifetime+f_nkq*Hole_f_mk*D_ares
          !
-         if( abs(N_q)>zero_dfl .and. .not.l_skip_ABS) then
-           TMP_Hole_lifetime(2)=TMP_Hole_lifetime(2)+f_kmq*P_ph_emit
-           TMP_Electron_lifetime(2)=TMP_Electron_lifetime(2)+Hole_f_kmq*P_ph_abs
+         if( abs(N_q)>zero_dfl ) then
+           TMP_eh_lifetime=TMP_eh_lifetime+(f_nkq-f_kmq)*(D_ares-D_res)
          endif
-         !
-         ! Add the PHEL lifetimes components here
          !
        enddo
        !
-       ! Emission
-       E_P_Hole_lifetime(i_n,ik_rim)=E_P_Hole_lifetime(i_n,ik_rim)+&
-&                                    TMP_Hole_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,1)
-       E_P_Electron_lifetime(i_n,ik_rim)=E_P_Electron_lifetime(i_n,ik_rim)+&
-&                                        TMP_Electron_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,1)
-       !
-       if(.not.abs(N_q)>zero_dfl) cycle
-       !
-       ! Stimulated Emission
-       E_P_Hole_lifetime(i_n,ik_rim)=E_P_Hole_lifetime(i_n,ik_rim)+&
-&                                    TMP_Hole_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,2)
-       E_P_Electron_lifetime(i_n,ik_rim)=E_P_Electron_lifetime(i_n,ik_rim)+&
-&                                        TMP_Electron_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,2)
-       !
-       if(l_skip_ABS) cycle
-       !
-       ! Absorption
-       E_P_Ho_abs_lifetime(i_n,ik_rim)=E_P_Ho_abs_lifetime(i_n,ik_rim)+&
-&                                      TMP_Hole_lifetime(2)*pre_factor*q_weight_RT(i_q,i_l,2)
-       E_P_El_abs_lifetime(i_n,ik_rim)=E_P_El_abs_lifetime(i_n,ik_rim)+&
-&                                      TMP_Electron_lifetime(2)*pre_factor*q_weight_RT(i_q,i_l,2)
-       !
-       ! Here the final lifetimes 
-       !
      enddo
+     !
+     ! Spontaneous phonon emission (resonant and antiresonant)
+     P_E_sp_res_lifetime(i_l,i_q)=P_E_sp_res_lifetime(i_l,i_q)+&
+&                                    TMP_Res_lifetime*pre_factor
+     P_E_sp_ares_lifetime(il,ik_rim)=E_P_Electron_lifetime(i_n,ik_rim)+&
+&                                        TMP_Ares_lifetime(1)*pre_factor
+     !
+     if(.not.abs(N_q)>zero_dfl) cycle
+     !
+     ! Stimulated Emission / absorption
+     P_E_eh_lifetime(i_n,ik_rim)=P_E_eh_lifetime(i_n,ik_rim)+&
+&                                    TMP_eh_lifetime(1)*pre_factor
      !
    enddo
    !

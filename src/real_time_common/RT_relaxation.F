@@ -64,7 +64,7 @@ subroutine RT_relaxation(E,k,q,Time)
  use pars,           ONLY:SP
  use D_lattice,      ONLY:Bose_Temp
  use electrons,      ONLY:levels
- use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,l_phel_scatt
  use R_lattice,      ONLY:bz_samp,nkibz,nqibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
@@ -142,7 +142,7 @@ subroutine RT_relaxation(E,k,q,Time)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(iq)) cycle
      !
-     call RT_PHEL_total_Kernel(iq,E,k,q,Time)
+     !call RT_PHEL_total_Kernel(iq,E,k,q,Time)
      !
    enddo
    !

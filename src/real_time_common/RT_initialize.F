@@ -365,6 +365,14 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
+ !if (l_phel_scatt) then
+   !
+   !call section('=','Ph-El matrix elements loading and setup')
+   !                 =======================================
+   !call RT_PHEL_initialize(k,q)
+   !
+ !endif
+ !
 #endif
  !
  ! GPL_EXCLUDE_END

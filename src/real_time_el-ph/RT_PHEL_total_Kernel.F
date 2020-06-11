@@ -42,14 +42,12 @@ subroutine RT_ELPH_total_Kernel(iq,E,k,q,TIME)
  use pars,           ONLY:SP,rZERO,cZERO
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_X
- use real_time,      ONLY:elph_gkkp_expanded_sq,RT_bands
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
+ use real_time,      ONLY:phel_gkkp_expanded_sq,RT_bands,RT_PH_occupations,&
+ &                        RT_PH_occupations_reference,l_initial_equilibrium
+ use ELPH,           ONLY:ph_freqs_sq,elph_branches,elph_gkkp,MAX_gkkp
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_ibz_index
  use parser_m,       ONLY:parser
- ! [NOTE] phonon database
- use IO_m,           ONLY:io_control,OP_RD_CL,deliver_IO_error_message
- ! [NOTE] phonon database
  !
  implicit none
  !
@@ -60,12 +58,8 @@ subroutine RT_ELPH_total_Kernel(iq,E,k,q,TIME)
  !
  ! Work Space ...
  !
- ! [NOTE] phonon database
- integer               :: ID_gkkp
- real                  :: elph_gkkp_sq
- ! [NOTE] phonon database
  integer               :: il
- real(SP)              :: ph_freq,N_q(2)
+ real(SP)              :: ph_freq
  real(SP), parameter   :: cutoff= 5.E-3
  !
  real(SP)              :: Gkkp_sq(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -98,25 +92,17 @@ subroutine RT_ELPH_total_Kernel(iq,E,k,q,TIME)
      if ( (iqbz==1 .and. il<=3) ) cycle
      if ( abs(ph_freq)<3.E-5)     cycle
      !
-     ! N+/-[NOTE] This has to be changed to time dependent occupation (also in the electronic case)
-     !
-     N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
-     !
-     ! Note the m.e. in elph_gkkp_expanded_sq are stored with indexes order exchanged (see RT_ELPH_initialize)
+     ! Note the m.e. in elph_gkkp DO NOT have indices order exchanged (unlike RT_ELPH case)
      !
      Gkkp_sq=rZERO
-     ! [NOTE] phonon database
-     call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_bz+1/),ID=ID_gkkp)
-     io_err=io_ELPH(ID,'gkkp_expanded')
-     ! [NOTE] phonon database
      do i_n=RT_bands(1),RT_bands(2)
-       Gkkp_sq(i_n,i_n)=elph_gkkp_sq(i_n,i_n,il,iq_mem,ik_mem)
+       Gkkp_sq(i_n,i_n)=abs(elph_gkkp(i_n,i_n,il,iq_mem,ik_mem))**2.
        if(sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_n)=rZERO
        !
        do i_np=RT_bands(1),RT_bands(2)
          !
          if (i_n==i_np) cycle
-         Gkkp_sq(i_n,i_np)=elph_gkkp_sq(i_np,i_n,il,iq_mem,ik_mem)
+         Gkkp_sq(i_n,i_np)=abs(elph_gkkp(i_n,i_np,il,iq_mem,ik_mem))**2.
          if (sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_np)=rZERO
          !
        enddo

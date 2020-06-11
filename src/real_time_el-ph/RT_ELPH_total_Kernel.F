@@ -42,7 +42,9 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
  use pars,           ONLY:SP,rZERO,cZERO
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
- use real_time,      ONLY:elph_gkkp_expanded_sq,l_RT_CCA_Kernel,RT_bands
+ use drivers,        ONLY:l_phel_scatt
+ use real_time,      ONLY:elph_gkkp_expanded_sq,l_RT_CCA_Kernel,RT_bands,&
+ &                        RT_PH_occupations,RT_PH_occupations_reference,l_initial_equilibrium
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_ibz_index
@@ -105,9 +107,15 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
      if ( (iqbz==1 .and. il<=3) ) cycle
      if ( abs(ph_freq)<3.E-5)     cycle
      !
-     ! N+/- [NOTE] introduce the option for out of equilibrium N_q
-     !
-     N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
+     if (.not.l_phel_scatt) then
+       N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
+     else
+       if (l_initial_equilibrium) then
+         N_q    = (RT_PH_occupations_reference(il,iq_mem)+(/0._SP,spin_occ/))/spin_occ
+       else
+         N_q    = (RT_PH_occupations(il,iq_mem)+(/0._SP,spin_occ/))/spin_occ
+       endif
+     endif
      !
      ! Note the m.e. in elph_gkkp_expanded_sq are stored with indexes order exchanged (see RT_ELPH_initialize)
      !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq)
+subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,E,ph_freq,Gkkp_sq)
  !
  ! This subroutine is the same as RT_ELPH_CCA_Kernel, except it also
  ! computes the phonon-electron lifetimes needed for the collision
@@ -35,7 +35,8 @@ subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq)
 &                         l_RT_uses_E_DbGd,DbGd_ibz_coo,RT_occupations_locked,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_life_delta_occupations,l_initial_equilibrium,q_weight_RT,&
-&                         RT_eh_en,RT_ibz_coo,RT_Nk_ibz,RT_bands
+&                         RT_eh_en,RT_ibz_coo,RT_Nk_ibz,RT_bands,&
+&                         RT_PH_occupations,RT_PH_occupations_reference
  use parallel_m,     ONLY:PAR_IND_B_mat
  !
  implicit none
@@ -49,7 +50,13 @@ subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq)
  !
  integer  :: i_n,i_np,ik_rim,ip_rim,i1,i2
  real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,f_nkq,Hole_f_nkq,f_mk,Hole_f_mk,&
-&            TMP_Res_lifetime,TMP_Ares_lifetime,TMP_eh_lifetime
+&            TMP_Res_lifetime,TMP_Ares_lifetime,TMP_eh_lifetime,N_q(2)
+ !
+ if (l_initial_equilibrium) then
+   N_q    = (RT_PH_occupations_reference(il,iq_mem)+(/0._SP,spin_occ/))/spin_occ
+ else
+   N_q    = (RT_PH_occupations(il,iq_mem)+(/0._SP,spin_occ/))/spin_occ
+ endif
  !
  ! Kernel kind
  !=============

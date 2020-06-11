@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii,cut_is_slab,iort,ipar1,ipar2)
+subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,cut_is_slab,iort,ipar1,ipar2)
  !
  use pars,          ONLY:SP,DP,pi
  use vec_operate,   ONLY:iku_v_norm
@@ -31,7 +31,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii,cut_is_slab,io
  !
  implicit none
  integer  :: iq,N_out,N_out_G
- real(SP) :: qr(RIM_n_rand_pts,3),em1_anis(3),G_sph_radii
+ real(SP) :: qr(RIM_n_rand_pts,3),em1_anis(3),G_radii
  ! 
  ! Work Space
  !
@@ -93,9 +93,23 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii,cut_is_slab,io
  !
  RIM_acc=0._DP
  !
- G_sph_radii=(3.*.2/(4.*pi)*k_grid_uc_vol)**(1./3.)
- RIM_acc(1)  =2._DP*4._DP*pi*G_sph_radii/(2._DP*pi)**3._DP
- RIM_acc_anis=2._DP*4._DP*pi/3._DP*G_sph_radii/(2._DP*pi)**3._DP*sum(em1_anis)
+ if (cut_is_slab) then
+   ! Here put the integral over the circle
+   G_circ = .2_SP*k_grid_uc_vol/((2._SP*pi)/alat(iort))
+   G_radii = sqrt(G_circ/pi)
+   n_max = 15
+   factorial = 1._SP
+   pre_factor = 0._SP
+   do n_idx=1,n_max
+     factorial = factorial*n_idx
+     pre_factor = pre_factor+(-1._SP)**(n_idx+1)/n_idx/factorial*(G_radii*lcut)**n_idx
+   enddo
+   RIM_acc(1) = pre_factor/(2*pi*lcut)
+ else
+   G_radii=(3.*.2/(4.*pi)*k_grid_uc_vol)**(1./3.)
+   RIM_acc(1)  =2._DP*4._DP*pi*G_radii/(2._DP*pi)**3._DP
+   RIM_acc_anis=2._DP*4._DP*pi/3._DP*G_radii/(2._DP*pi)**3._DP*sum(em1_anis)
+ endif
  !
  N_out_G=0
  i2max=RIM_ng 
@@ -106,15 +120,28 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii,cut_is_slab,io
    v1=4.*pi**2.*(/qr(i1,1)**2.,qr(i1,2)**2,qr(i1,3)**2/)
    v1(:)=v1(:)/alat(:)**2./r1**4.
    !
-   if(r1>=G_sph_radii) then
+   if(r1>=G_radii) then
      !
-     ! Integrate the 1/|q|^2 term outside the sphere of radius G_sph_radii
+     ! Integrate the Coulomb term outside the sphere of radius G_radii
      !
      N_out_G=N_out_G+1
-     RIM_acc(1)=RIM_acc(1)+2._DP*rfac/(r1**2._DP)
-     RIM_acc_anis=RIM_acc_anis+2._DP*rfac*dot_product(em1_anis,v1)
+     if (cut_is_slab) then
+       !Evaluate v_slab
+       !kz
+       slab_vz=qr(i1,iort)*2.*pi/alat(iort)
+       !kxy
+       slab_vplane=sqrt((qr(i1,ipar1)*2.*pi/alat(ipar1))**2+&
+&                 (qr(i1,ipar2)*2.*pi/alat(ipar2))**2)
+       !     
+       pre_factor=1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)
+       if (abs(pre_factor)<1.E-5_SP) pre_factor=1.E-5_SP        
+       RIM_acc(1)=RIM_acc(1)+2._DP*pre_factor*rfac/(r1**2._DP)
+     else
+       RIM_acc(1)=RIM_acc(1)+2._DP*rfac/(r1**2._DP)
+       RIM_acc_anis=RIM_acc_anis+2._DP*rfac*dot_product(em1_anis,v1)
+     endif
      !
-     ! Integrate the 1/|q||q+Go| term outside the sphere of radius G_sph_radii as well
+     ! Integrate the 1/|q||q+Go| term outside the sphere of radius G_radii as well
      ! because the intergral in the sphere gose to zero as NQ->\infty
      !
      do i2=2,i2max,1

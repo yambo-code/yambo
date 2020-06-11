@@ -28,12 +28,12 @@ subroutine rim(cut_is_slab,is_cut)
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
  use LIVE_t,        ONLY:live_timing
- use vec_operate,   ONLY:v_norm
+ use vec_operate,   ONLY:v_norm,iku_v_norm
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
 &                        RIM_n_rand_pts,RIM_ng,RIM_qpg,&
-&                        RIM_id_epsm1_reference,RIM_anisotropy
+&                        RIM_id_epsm1_reference,RIM_anisotropy,q_pt
  use timing_m,      ONLY:timing
 #include<memory.h>
  !
@@ -181,6 +181,7 @@ subroutine rim(cut_is_slab,is_cut)
  !Integrated RL VOLUME 
  !
  RIM_RL_vol=8.*k_grid_uc_vol*real(RIM_n_rand_pts)/real(N_out)*real(nqbz)
+ if (cut_is_slab) RIM_RL_vol = RIM_RL_vol/2._SP
  call msg('r', 'RL volume           [au]:',RL_vol)
  call msg('rn','Integrated volume   [au]:',RIM_RL_vol)
  !
@@ -192,9 +193,13 @@ subroutine rim(cut_is_slab,is_cut)
  call PARALLEL_index(px,(/nqibz/))
  call live_timing('Momenta loop',px%n_of_elements(myid+1))
  do iq=1,nqibz
+   call msg("r", "q_pt(1) =", q_pt(iq,1))
+   call msg("r", "q_pt(2) =", q_pt(iq,2))
+   call msg("rn", "q_pt(3) =", q_pt(iq,3))
+   call msg("r","iku_norm =", iku_v_norm(q_pt(iq,:)))
    if (.not.px%element_1D(iq)) cycle
    !
-   call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
+   call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii,cut_is_slab,iort,ipar1,ipar2)
    !
    if (iq==1) then
      call msg('r','Gamma point sphere radius         [au]:',G_sph_radii)

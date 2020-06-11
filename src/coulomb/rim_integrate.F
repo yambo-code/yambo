@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
+subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii,cut_is_slab,iort,ipar1,ipar2)
  !
  use pars,          ONLY:SP,DP,pi
  use vec_operate,   ONLY:iku_v_norm
@@ -35,11 +35,18 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
  ! 
  ! Work Space
  !
- integer  :: i1,i1min,i2,i2max,i3
+ integer  :: i1,i1min,i2,i2max,i3,iort,ipar1,ipar2
  real(SP) :: v1(3),v2(3)
  real(DP) :: r1,rfac,RIM_acc(RIM_ng),RIM_acc_anis
+ logical  :: cut_is_slab
+ real(SP) :: slab_vz,slab_vplane,lcut,pre_factor
  !
- rfac=8.*k_grid_uc_vol/real(N_out)/(2.*pi)**3.
+ if (cut_is_slab) then
+   lcut=alat(iort)/2.
+   rfac=4.*k_grid_uc_vol/real(N_out)/(2.*pi)**3.
+ else
+   rfac=8.*k_grid_uc_vol/real(N_out)/(2.*pi)**3.
+ endif
  !
  !    ----------------
  !    MonteCarlo volume
@@ -59,7 +66,22 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
        v1(:)=g_vec(i1,:)+q_pt(iq,:)+qr(i3,:)
        v2(:)=g_vec(i2,:)+q_pt(iq,:)+qr(i3,:)
        r1=iku_v_norm(v1)*iku_v_norm(v2)
-       RIM_acc(1)=RIM_acc(1)+2._DP*rfac/r1
+       !    
+       if (cut_is_slab) then
+         !
+         !Evaluate v_slab
+         !kz
+         slab_vz=(q_pt(iq,iort)+qr(i3,iort)+g_vec(i1,iort) )*2.*pi/alat(iort)
+         !kxy
+         slab_vplane=sqrt(((q_pt(iq,ipar1)+qr(i3,ipar1)+g_vec(i1,ipar1))*2.*pi/alat(ipar1))**2+&
+&                 ((q_pt(iq,ipar2)+qr(i3,ipar2)+g_vec(i1,ipar2))*2.*pi/alat(ipar2))**2)
+         !     
+         pre_factor=1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)
+         if (abs(pre_factor)<1.E-5_SP) pre_factor=1.E-5_SP        
+         RIM_acc(1)=RIM_acc(1)+2._DP*pre_factor*rfac/r1
+       else
+         RIM_acc(1)=RIM_acc(1)+2._DP*rfac/r1
+       endif
      enddo
      RIM_qpg(iq,i1,i2)=RIM_acc(1)
      RIM_qpg(iq,i2,i1)=RIM_qpg(iq,i1,i2)

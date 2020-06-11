@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,cut_is_slab,iort,ipar1,ipar2)
+subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab,iort,ipar1,ipar2)
  !
  use pars,          ONLY:SP,DP,pi
  use vec_operate,   ONLY:iku_v_norm
@@ -35,8 +35,8 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,cut_is_slab,iort,i
  ! 
  ! Work Space
  !
- integer  :: i1,i1min,i2,i2max,i3,iort,ipar1,ipar2
- real(SP) :: v1(3),v2(3)
+ integer  :: i1,i1min,i2,i2max,i3,iort,ipar1,ipar2,n_idx,n_max
+ real(SP) :: v1(3),v2(3),factorial,G_circ
  real(DP) :: r1,rfac,RIM_acc(RIM_ng),RIM_acc_anis
  logical  :: cut_is_slab
  real(SP) :: slab_vz,slab_vplane,lcut,pre_factor

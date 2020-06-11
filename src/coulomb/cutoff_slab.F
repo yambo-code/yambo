@@ -39,8 +39,8 @@
  type(bz_samp) :: q
  logical       :: is_cut(3)
  integer       :: ipar1,ipar2,iort
- integer       :: iq,ig
- real(SP)      :: slab_vz,slab_vplane,lcut,pre_factor,R_sphere,q_weight
+ integer       :: iq,ig,n_idx,n_max
+ real(SP)      :: slab_vz,slab_vplane,lcut,pre_factor,R_circle,Sup,factorial
  type(PP_indexes) ::px
  !
  call PP_indexes_reset(px)
@@ -85,18 +85,18 @@
    enddo
  enddo
 !
-!MM: check this not sure is correct:
-!pre_factor=2.0*pi*sqrt(lcut*k_grid_uc_vol)
-!DV: I do not understand the expression above.
-!Divergency V(q_xy=0)=zc/q_xy to be treated separately when calculateing W(q=0)
-! Just for TESTING  PURPOSE Vcut oculd be regolarized in a small equivalen sphere
-! 
-! \int_q (region) Vcut /(2*pi)**3 = 4piR+4pi/lcut(exp(-lcut*R)-1) 
-! CHeck prefactors.
- R_sphere=(3._SP/4._SP/pi)**(1._SP/3._SP)*d3q_factor**(1._SP/3._SP)
- q_weight=d3q_factor/(2._SP*pi)**3
- pre_factor=4._SP*pi*R_sphere+4_SP*pi*(exp(-(lcut*R_sphere))-1)/lcut
- pre_factor=pre_factor/d3q_factor
- bare_qpg(1,1)=1._SP/sqrt(pre_factor)
-!
+!AG: The previous regularization was not correct.
+!Here, my proposal, in which the potential is regularized over a circle centered in Gamma
+ n_max = 15
+ factorial = 1._SP
+ pre_factor = 0._SP
+ Sup = d3q_factor/((2._SP*pi)/alat(iort))
+ R_circle = sqrt(Sup/pi)
+ do n_idx=1,n_max
+    factorial = factorial*n_idx
+    pre_factor = pre_factor+(-1._SP)**(n_idx+1)/n_idx/factorial*(R_circle*lcut)**n_idx
+ enddo
+ pre_factor = 2._SP*pi/Sup*pre_factor
+ bare_qpg(1,1) = 1._SP/sqrt(pre_factor)
+
 end subroutine

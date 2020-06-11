@@ -41,7 +41,7 @@ subroutine rim(cut_is_slab,is_cut)
  !
  type(PP_indexes)::px
  integer   :: iq
- real(SP)  :: em1_anis(3),G_radii
+ real(SP)  :: em1_anis(3),G_radii,G_circ
  logical   :: cut_is_slab,is_cut(3)
  !
  ! Random generator
@@ -199,9 +199,10 @@ subroutine rim(cut_is_slab,is_cut)
    call msg("r","iku_norm =", iku_v_norm(q_pt(iq,:)))
    if (.not.px%element_1D(iq)) cycle
    !
-   call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,cut_is_slab,iort,ipar1,ipar2)
+   call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab,iort,ipar1,ipar2)
    !
    if (iq==1) then
+     call msg('r','Gamma point circle area         [au]:',G_circ)
      call msg('r','Gamma point sphere radius         [au]:',G_radii)
      call msg('r','Points outside the sphere             :',n_out_G)
      call msg('r','[Int_sBZ(q=0) 1/q^2]*(Vol_sBZ)^(-1/3) =',&

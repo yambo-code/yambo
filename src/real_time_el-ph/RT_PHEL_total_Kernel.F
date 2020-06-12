@@ -42,8 +42,8 @@ subroutine RT_ELPH_total_Kernel(iq,E,k,q,TIME)
  use pars,           ONLY:SP,rZERO,cZERO
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_X
- use real_time,      ONLY:phel_gkkp_expanded_sq,RT_bands,RT_PH_occupations,&
- &                        RT_PH_occupations_reference,l_initial_equilibrium
+ use real_time,      ONLY:RT_bands,l_initial_equilibrium
+ use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_occupations_reference
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,elph_gkkp,MAX_gkkp
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_ibz_index
@@ -112,8 +112,7 @@ subroutine RT_ELPH_total_Kernel(iq,E,k,q,TIME)
      ! Time Scales separation (TS) and quasiparticle approximation (QP)
      !=======================================
      !
-     ! [NOTE] Here N_q should be the phonon occupation at the current time step
-     call RT_PHEL_TSQP_Kernel(ik,ik_m_q,iqbz,il,N_q(1),E,ph_freq,Gkkp_sq)
+     call RT_PHEL_TSQP_Kernel(ik,ik_m_q,iqbz,il,E,ph_freq,Gkkp_sq)
      !
    enddo ! ph branch
    !

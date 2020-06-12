@@ -31,12 +31,12 @@ subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,E,ph_freq,Gkkp_sq)
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ
  use hamiltonian,    ONLY:B_mat_index
- use real_time,      ONLY:P_E_sp_res_lifetime,P_E_sp_ares_lifetime,P_E_eh_lifetime,&
-&                         l_RT_uses_E_DbGd,DbGd_ibz_coo,RT_occupations_locked,&
+ use real_time,      ONLY:l_RT_uses_E_DbGd,DbGd_ibz_coo,RT_occupations_locked,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_life_delta_occupations,l_initial_equilibrium,q_weight_RT,&
-&                         RT_eh_en,RT_ibz_coo,RT_Nk_ibz,RT_bands,&
-&                         RT_PH_occupations,RT_PH_occupations_reference
+&                         RT_eh_en,RT_ibz_coo,RT_Nk_ibz,RT_bands
+use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
+&                         P_E_sp_res_lifetime,P_E_sp_ares_lifetime,P_E_eh_lifetime
  use parallel_m,     ONLY:PAR_IND_B_mat
  !
  implicit none
@@ -114,8 +114,8 @@ subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,E,ph_freq,Gkkp_sq)
          endif
          !
          ! Delta functions [NOTE] I need to check that this function does what I want
-         D_ares  =RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,'SQ')
-         D_res =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,'SQ')
+         D_ares  =RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,'EP')
+         D_res =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,'EP')
          !
          if(l_initial_equilibrium) then
            f_nkq      = RT_E_occupations_reference(i_np,ip_rim)/spin_occ

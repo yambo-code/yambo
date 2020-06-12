@@ -203,7 +203,7 @@ module real_time
  ! ... THETA matrix
  complex(SP), allocatable :: THETA_matrix(:,:,:,:)
  ! ... Q-parallelization  and GKKP
- real(SP),    allocatable :: elph_gkkp_expanded_sq(:,:,:,:,:),phel_gkkp_expanded_sq(:,:,:,:,:)
+ real(SP),    allocatable :: elph_gkkp_expanded_sq(:,:,:,:,:)
  ! ... indexes ...
  integer,     allocatable :: THETA_matrix_index(:,:,:)
  integer,     allocatable :: Q_io_map(:)
@@ -238,9 +238,6 @@ module real_time
  real(SP),    allocatable :: RT_life_delta_occupations(:,:)  ! Used in the Lifetimes definition. Defined in the Lifetimes procedure only.
  real(SP),    allocatable :: RT_E_occupations_reference(:,:)
  real(SP),    allocatable :: RT_H_occupations_reference(:,:)
- real(SP),    allocatable :: RT_PH_occupations(:,:)
- real(SP),    allocatable :: RT_PH_delta_occupations(:,:)    ! Running values. Updated at each time step.
- real(SP),    allocatable :: RT_PH_occupations_reference(:,:)
  !
  logical,     allocatable :: RT_occupations_locked(:,:)
  !
@@ -250,12 +247,6 @@ module real_time
  real(SP),    allocatable :: E_P_Electron_lifetime(:,:)
  real(SP),    allocatable :: E_P_El_abs_lifetime(:,:)
  real(SP),    allocatable :: E_P_Ho_abs_lifetime(:,:)
- !
- ! PH-EL RT life-times
- !-----------------------------------------
- real(SP),    allocatable :: P_E_sp_res_lifetime(:,:)
- real(SP),    allocatable :: P_E_sp_ares_lifetime(:,:)
- real(SP),    allocatable :: P_E_eh_lifetime(:,:)
  !
  ! Coulomb RT life-times
  !-----------------------
@@ -675,9 +666,6 @@ module real_time
        YAMBO_FREE(RT_E_occupations_reference)
        YAMBO_FREE(RT_H_occupations_reference)
        YAMBO_FREE(RT_occupations_locked)
-       YAMBO_FREE(RT_PH_occupations)
-       YAMBO_FREE(RT_PH_delta_occupations)
-       YAMBO_FREE(RT_PH_occupations_reference)
        !
      endif
      !
@@ -706,7 +694,6 @@ module real_time
      YAMBO_FREE(THETA_matrix)
      YAMBO_FREE(THETA_matrix_index)
      YAMBO_FREE(elph_gkkp_expanded_sq)
-     YAMBO_FREE(phel_gkkp_expanded_sq)
      YAMBO_FREE(I1_matrix)
      YAMBO_FREE(rho_reference)
      YAMBO_FREE(magn_reference)

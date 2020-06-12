@@ -62,7 +62,7 @@ module PH_real_time
      !
      if (l_phel_scatt) then
        !
-       YAMBO_ALLOC(P_E_sp_res_lifetime,(elph_branches(1):elph_brances(2),nqbz))
+       YAMBO_ALLOC(P_E_sp_res_lifetime,(elph_branches(1):elph_branches(2),nqbz))
        YAMBO_ALLOC(P_E_sp_ares_lifetime,(elph_branches(1):elph_branches(2),nqbz))
        YAMBO_ALLOC(P_E_eh_lifetime,(elph_branches(1):elph_branches(2),nqbz))
        P_E_sp_res_lifetime=0._SP
@@ -74,7 +74,7 @@ module PH_real_time
      if(l_all.or.l_phonons) then
        !
        ! Occ's ...
-       YAMBO_ALLOC(RT_PH_occupations,(elph_branches(1):elph_brances(2),nqbz))
+       YAMBO_ALLOC(RT_PH_occupations,(elph_branches(1):elph_branches(2),nqbz))
        YAMBO_ALLOC(RT_PH_occupations_reference,(elph_branches(1):elph_branches(2),nqbz))
        YAMBO_ALLOC(RT_PH_delta_occupations,(elph_branches(1):elph_branches(2),nqbz))
        RT_PH_occupations_reference=0._SP

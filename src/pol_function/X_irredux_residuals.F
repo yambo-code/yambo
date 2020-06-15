@@ -81,10 +81,10 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  !
  field_dir=Dip%q0/v_norm(Dip%q0)*q0_def_norm
  !
- isave         = 0
- n_poles       = sum(bare_grid_N(1:i_cg-1))
- Xo_res        = cZERO
- Z_            = cONE
+ isave     = 0
+ n_poles   = sum(bare_grid_N(1:i_cg-1))
+ Xo_res    = cZERO
+ Z_        = cONE
  !
  ngrho     = Xo_scatt%ngrho
  !
@@ -109,7 +109,15 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    isp= Xk%sstar(ikpbz,2)
    !
    l_X_term_vv = (l_X_terminator.and.ic>=X%ib(1).and.ic<=Xen%nbm)
-   ! 
+   !
+   ! take into account the cancellation of terms
+   ! occurring when dealing with the wings
+   ig_start=X_rows(1)
+   if (iq==1) ig_start= max(2,ig_start)
+   !
+#ifdef _CUDA
+   X_ng=X%ng
+#endif
    !
    ! Note the renormalization of the Z_eh_occ=f(1-f)*Z factor
    !
@@ -155,7 +163,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
        endif
        !
 #ifdef _CUDA
-       X_ng=X%ng
        sop_inv_l=sop_inv(is)
        !
        !$cuf kernel do(1) <<<*,*>>>
@@ -198,8 +205,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    ! Filling the upper triangular part of the residual here ! 
    !-------------^^^^^---------------------------------------
 #ifdef _CUDA
-   X_ng=X%ng
-   !
    !$cuf kernel do(2) <<<*,*>>>
    do ig2=X_cols(1),X_cols(2)
      do ig1=X_rows(1),X_rows(2)
@@ -209,7 +214,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
        endif
      enddo
    enddo
-   !
 #else
    !$omp parallel do default(shared), private(ig2)
    do ig2=X_cols(1),X_cols(2)
@@ -242,7 +246,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      call dev_memcpy(DEV_VARNAME(rhotw_save),DEV_VARNAME(Xo_scatt%rhotw))
      !
 #ifdef _CUDA
-     X_ng=X%ng
      sop_inv_l=sop_inv(is)
      !
      !$cuf kernel do(1) <<<*,*>>>
@@ -263,19 +266,12 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
        call dev_conjg(DEV_VARNAME(Xo_scatt%rhotw))
      endif
      !
-     !
-     ! take into account the cancellation of terms
-     ! occurring when dealing with the wings
-     ig_start=X_rows(1)
-     if (iq==1) ig_start= max(2,ig_start)
-     !
 #ifdef _CUDA
      !$cuf kernel do(2) <<<*,*>>>
      do ig2=X_cols(1),X_cols(2)
        do ig1=ig_start,X_rows(2)
-         if (ig1 <= ig2) then
-           Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt_rhotw_d(G_m_G_d(ig2,ig1))
-         endif
+         if (ig1 > ig2) cycle
+         Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt_rhotw_d(G_m_G_d(ig2,ig1))
        enddo
      enddo
 #else
@@ -294,6 +290,21 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    !
  enddo loop_bare_grid
  !
- if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) Xo_res=Xo_res/real(drude_n_states,SP)
+ if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) then
+#ifdef _CUDA
+   !$cuf kernel do(2) <<<*,*>>>
+#else
+   !$omp parallel do default(shared), private(ig1,ig2)
+#endif
+   do ig2=X_cols(1),X_cols(2)
+     do ig1=ig_start,X_rows(2)
+       if (ig1 > ig2) cycle
+       Xo_res(ig1,ig2)=Xo_res(ig1,ig2)/real(drude_n_states,SP)
+     enddo
+   enddo
+#ifndef _CUDA
+   !$omp end parallel do 
+#endif
+ endif
  !
 end subroutine X_irredux_residuals

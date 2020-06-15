@@ -400,16 +400,16 @@ subroutine INIT_read_command_line(rstr,init_)
      if ( trim(rstr_piece(i1)) == 'scattp' ) then
        if ( index(rstr_piece(i1+1),'e') > 0 .or. trim(rstr_piece(i1+1)) == 'a') l_elel_scatt=.true.
        if ( index(rstr_piece(i1+1),'p') > 0 .or. trim(rstr_piece(i1+1)) == 'a') l_elph_scatt=.true.
-       if ( index(rstr_piece(i1+1),'d') > 0 .or. trim(rstr_piece(i1+1)) == 'a') l_phel_scatt=.true.
+       if ( index(rstr_piece(i1+1),'d') > 0 ) l_phel_scatt=.true.
 #endif
 #if defined _RT
        if ( index(rstr_piece(i1+1),'h') > 0 .or. trim(rstr_piece(i1+1)) == 'a') l_elphoton_scatt=.true.
        if (l_elphoton_scatt) call initactivate(1,'el_photon_scatt')
 #endif
 #if defined _RT
+       if (.not.l_elph_scatt.and.l_phel_scatt) l_elph_scatt=.true.
        if (l_elph_scatt)     call initactivate(1,'el_ph_scatt')
        if (l_phel_scatt)     call initactivate(1,'ph_el_scatt')
-       if (.not.l_elph_scatt.and.l_phel_scatt) l_elph_scatt=.true.
        if (l_elel_scatt)     call initactivate(1,'el_el_scatt')
        if (.not.l_elph_scatt.and..not.l_elel_scatt.and..not.l_elphoton_scatt) l_elph_scatt=.true.
      endif

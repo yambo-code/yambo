@@ -114,7 +114,7 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="NEQ scattering kind";
- options[*i_opt].long_desc[0]="<string>=(e)lectrons/(p)honons/p(h)otons/(a)ll";
+ options[*i_opt].long_desc[0]="<string>=(e)lectrons/(p)honons/p(h)otons/(a)ll/phonon (d)ynamics";
  options[*i_opt].long_opt="scattering";
  options[*i_opt].short_opt='s';
  options[*i_opt].bin="yambo_rt";

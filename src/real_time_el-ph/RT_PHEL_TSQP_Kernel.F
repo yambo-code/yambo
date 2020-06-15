@@ -43,8 +43,9 @@ use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
  !
  type(levels),  intent(in) :: E
  integer,       intent(in) :: ik,ik_m_q,i_q,i_l
- real(SP),      intent(in) :: ph_freq,N_q
+ real(SP),      intent(in) :: ph_freq
  real(SP),      intent(in) :: Gkkp_sq(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ real(SP), external        :: RT_G_retarded_convolution
  !
  ! Work Space ...
  !
@@ -53,9 +54,9 @@ use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
 &            TMP_Res_lifetime,TMP_Ares_lifetime,TMP_eh_lifetime,N_q(2)
  !
  if (l_initial_equilibrium) then
-   N_q    = (RT_PH_occupations_reference(il,iq_mem)+(/0._SP,spin_occ/))/spin_occ
+   N_q    = (RT_PH_occupations_reference(i_l,i_q)+(/0._SP,spin_occ/))/spin_occ
  else
-   N_q    = (RT_PH_occupations(il,iq_mem)+(/0._SP,spin_occ/))/spin_occ
+   N_q    = (RT_PH_occupations(i_l,i_q)+(/0._SP,spin_occ/))/spin_occ
  endif
  !
  ! Kernel kind
@@ -82,7 +83,7 @@ use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
        !
      endif
      ! [NOTE] Full prefactor here is 4._SP*pi. Only for now I put 2._SP *assuming* the rest comes from the delta function
-     pre_factor=2._SP*Gkkp_sq(i_np,i_n)/real(RT_Nk_ibz(ik)) !Full prefactor should be 4
+     pre_factor=2._SP*Gkkp_sq(i_np,i_n)/real(RT_Nk_ibz(ik)) !Full prefactor should be 4*pi
      !
      if( pre_factor==0._SP ) cycle
      !
@@ -132,8 +133,8 @@ use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
          TMP_Res_lifetime=TMP_Res_lifetime+Hole_f_nkq*f_mk*D_res
          TMP_Ares_lifetime=TMP_Ares_lifetime+f_nkq*Hole_f_mk*D_ares
          !
-         if( abs(N_q)>zero_dfl ) then
-           TMP_eh_lifetime=TMP_eh_lifetime+(f_nkq-f_kmq)*(D_ares-D_res)
+         if( abs(N_q(1))>zero_dfl ) then
+           TMP_eh_lifetime=TMP_eh_lifetime+(f_nkq-f_mk)*(D_ares-D_res)
          endif
          !
        enddo
@@ -143,14 +144,14 @@ use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
      ! Spontaneous phonon emission (resonant and antiresonant)
      P_E_sp_res_lifetime(i_l,i_q)=P_E_sp_res_lifetime(i_l,i_q)+&
 &                                    TMP_Res_lifetime*pre_factor
-     P_E_sp_ares_lifetime(il,ik_rim)=E_P_Electron_lifetime(i_n,ik_rim)+&
-&                                        TMP_Ares_lifetime(1)*pre_factor
+     P_E_sp_ares_lifetime(i_l,i_q)=P_E_sp_ares_lifetime(i_l,i_q)+&
+&                                    TMP_Ares_lifetime*pre_factor
      !
-     if(.not.abs(N_q)>zero_dfl) cycle
+     if(.not.abs(N_q(1))>zero_dfl) cycle
      !
      ! Stimulated Emission / absorption
-     P_E_eh_lifetime(i_n,ik_rim)=P_E_eh_lifetime(i_n,ik_rim)+&
-&                                    TMP_eh_lifetime(1)*pre_factor
+     P_E_eh_lifetime(i_l,i_q)=P_E_eh_lifetime(i_l,i_q)+&
+&                                    TMP_eh_lifetime*pre_factor
      !
    enddo
    !

@@ -1,3 +1,4 @@
 objs =  RT_ELPH_zeroing.o RT_ELPH_gkkp_remap.o RT_ELPH_initialize.o \
         RT_ELPH_eq_Kernel.o RT_ELPH_CCA_Kernel.o RT_ELPH_out_of_eq_Kernel.o \
-        RT_ELPH_total_Kernel.o RT_G_retarded_time.o RT_G_retarded_convolution.o
+        RT_ELPH_total_Kernel.o RT_G_retarded_time.o RT_G_retarded_convolution.o \
+        RT_PHEL_TSQP_Kernel.o RT_PHEL_total_Kernel.o

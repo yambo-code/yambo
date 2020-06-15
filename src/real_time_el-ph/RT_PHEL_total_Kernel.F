@@ -21,10 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_total_Kernel(iq,E,k,q,TIME)
- !
- ! In this routine I do not perform a time step. I calculate
- ! the el-ph Kernel at time TIME using an approximate iterative scheme (light but approximated).
+subroutine RT_PHEL_total_Kernel(iq,E,k,q)
  !
  ! EULER:
  !
@@ -40,10 +37,9 @@ subroutine RT_ELPH_total_Kernel(iq,E,k,q,TIME)
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !
  use pars,           ONLY:SP,rZERO,cZERO
- use electrons,      ONLY:levels,spin_occ
+ use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,qindx_X
- use real_time,      ONLY:RT_bands,l_initial_equilibrium
- use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_occupations_reference
+ use real_time,      ONLY:RT_bands
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,elph_gkkp,MAX_gkkp
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_ibz_index
@@ -54,7 +50,6 @@ subroutine RT_ELPH_total_Kernel(iq,E,k,q,TIME)
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k,q
  integer,       intent(in) :: iq
- real(SP),      intent(in) :: TIME
  !
  ! Work Space ...
  !
@@ -92,17 +87,17 @@ subroutine RT_ELPH_total_Kernel(iq,E,k,q,TIME)
      if ( (iqbz==1 .and. il<=3) ) cycle
      if ( abs(ph_freq)<3.E-5)     cycle
      !
-     ! Note the m.e. in elph_gkkp DO NOT have indices order exchanged (unlike RT_ELPH case)
-     !
+     ! [NOTE] the m.e. in elph_gkkp DO NOT have indices order exchanged (unlike RT_ELPH case)
+     ! [NOTE] the m.e. have to be read and stored for a specific iq_mem! I should do it in RT_ELPH_initialize by defining and allocating a variable
      Gkkp_sq=rZERO
      do i_n=RT_bands(1),RT_bands(2)
-       Gkkp_sq(i_n,i_n)=abs(elph_gkkp(i_n,i_n,il,iq_mem,ik_mem))**2.
+       Gkkp_sq(i_n,i_n)=abs(elph_gkkp(il,i_n,i_n,ik_mem))**2.
        if(sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_n)=rZERO
        !
        do i_np=RT_bands(1),RT_bands(2)
          !
          if (i_n==i_np) cycle
-         Gkkp_sq(i_n,i_np)=abs(elph_gkkp(i_n,i_np,il,iq_mem,ik_mem))**2.
+         Gkkp_sq(i_n,i_np)=abs(elph_gkkp(il,i_n,i_np,ik_mem))**2.
          if (sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_np)=rZERO
          !
        enddo
@@ -118,4 +113,4 @@ subroutine RT_ELPH_total_Kernel(iq,E,k,q,TIME)
    !
  enddo ! ikbz
  !
-end subroutine RT_ELPH_total_kernel
+end subroutine RT_PHEL_total_kernel

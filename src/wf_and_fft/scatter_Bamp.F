@@ -54,9 +54,7 @@ subroutine scatter_Bamp(isc)
  !
  integer     :: qs,iGo
  integer     :: ib,ibp
-#if defined _FFTQE && !defined _USE_3D_FFT || defined _OPENMP
  integer     :: ig, ir
-#endif
  !call timing("scatter_Bamp",opr="start")
  !
  ! |ib ik_is i_sp>
@@ -88,8 +86,7 @@ subroutine scatter_Bamp(isc)
  !$omp end parallel
  !
 #else
-!
-#if defined _OPENMP
+ !
  !$omp parallel default(shared), private(ir)
  !$omp do
  do ir = 1, fft_size
@@ -105,10 +102,6 @@ subroutine scatter_Bamp(isc)
  !$omp end do
  endif
  !$omp end parallel
-#else
- isc%rho_tw_rs(:)=cmplx(conjg(isc%WF_symm_i(:,1))*isc%WF_symm_o(:,1),kind=DP)
- if (n_spinor==2) isc%rho_tw_rs(:)=isc%rho_tw_rs(:)+cmplx(conjg(isc%WF_symm_i(:,2))*isc%WF_symm_o(:,2),kind=DP)
-#endif
  !
 #endif
  !
@@ -152,8 +145,9 @@ subroutine scatter_Bamp(isc)
    enddo
    !$omp end parallel do
  endif
+ !
 #else
-#  if defined _OPENMP
+ !
  if (qs==idt_index) then 
    !$omp parallel do default(shared), private(ig)
    do ig = 1, isc%ngrho
@@ -167,10 +161,7 @@ subroutine scatter_Bamp(isc)
    enddo
    !$omp end parallel do
  endif
-#  else
- if (qs==idt_index) isc%rhotw(1:isc%ngrho)= cmplx(isc%rho_tw_rs(fft_g_table(1:isc%ngrho,iGo)),kind=SP)
- if (qs/=idt_index) isc%rhotw(1:isc%ngrho)= cmplx(isc%rho_tw_rs(fft_g_table(g_rot(1:isc%ngrho,qs),iGo)),kind=SP)
-#  endif
+ !
 #endif
  !
  ! add USPP augmentation
@@ -217,15 +208,16 @@ subroutine scatter_Bamp_gpu(isc)
  use FFT_m,          ONLY:cufft_plan
  use timing_m
  !
+#include<dev_defs.h>
  implicit none
  !
  type(elemental_collision), target::isc
  
  integer :: qs,iGo
  integer :: ig,ir,isc_ngrho
- complex(SP), pointer, device :: WF_symm_i_d(:,:), WF_symm_o_d(:,:)
- complex(SP), pointer, device :: rhotw_d(:)
- complex(DP), pointer, device :: rho_tw_rs_d(:)
+ complex(SP), pointer DEV_ATTRIBUTE :: WF_symm_i_d(:,:), WF_symm_o_d(:,:)
+ complex(SP), pointer DEV_ATTRIBUTE :: rhotw_d(:)
+ complex(DP), pointer DEV_ATTRIBUTE :: rho_tw_rs_d(:)
  !call timing("scatter_Bamp_gpu",opr="start")
 
  !

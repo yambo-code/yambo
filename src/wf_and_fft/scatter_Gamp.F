@@ -44,6 +44,7 @@ subroutine scatter_Gamp(isc,mode)
  integer :: ng(2),ig1,ig2,iq,i1,i2
  logical :: l_RIM
  real(SP):: reg_q_m2,q_weight,R_sphere
+
  call timing("scatter_Gamp",opr="start")
  !
  ! q_weight = 1./(DL_vol*q%nbz)
@@ -162,7 +163,10 @@ subroutine scatter_Gamp(isc,mode)
 end subroutine
 
 #ifdef _CUDA
-subroutine scatter_Gamp_gpu(isc,mode)
+ !
+#include<dev_defs.h>
+ !
+subroutine DEV_SUBNAME(scatter_Gamp)(isc,mode)
  !
  ! isc%gamp(G,G') = \int_p (region around q) 1/|p+G|/|p+G'|/(2*pi)**3
  !
@@ -176,8 +180,9 @@ subroutine scatter_Gamp_gpu(isc,mode)
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&
 &                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts
  use R_lattice,     ONLY:RIM_qpg_d, bare_qpg_d
- use timing_m
+ use cuda_m,        ONLY:have_cuda
  use deviceXlib_m
+ use timing_m
  !
 #include<memory.h>
  !
@@ -190,10 +195,10 @@ subroutine scatter_Gamp_gpu(isc,mode)
  logical :: l_RIM
  real(SP):: reg_q_m2,q_weight,R_sphere
 
- complex(SP), pointer, device :: gamp_d(:,:)
+ complex(SP), pointer DEV_ATTRIBUTE :: gamp_d(:,:)
  integer :: ng1, ng2
 
- call timing("scatter_Gamp_gpu",opr="start")
+ call timing("DEV_SUBNAME(scatter_Gamp)",opr="start")
  !
  ! q_weight = 1./(DL_vol*q%nbz)
  !
@@ -225,13 +230,13 @@ subroutine scatter_Gamp_gpu(isc,mode)
    RIM_ng=0
    RIM_n_rand_pts=0
  else
-   if (.not.allocated(RIM_qpg_d)) then
-     allocate(RIM_qpg_d, source=RIM_qpg)
+   if (have_cuda.and..not.allocated(RIM_qpg_d)) then
+     YAMBO_ALLOC_SOURCE(RIM_qpg_d,RIM_qpg)
    endif
    reg_q_m2=RIM_qpg(iq,1,1)/2._SP
  endif
 
- if (.not.allocated(bare_qpg_d)) then
+ if (have_cuda.and..not.allocated(bare_qpg_d)) then
    YAMBO_ALLOC(bare_qpg_d,(size(bare_qpg,2),size(bare_qpg,1)))
    bare_qpg_d=transpose(bare_qpg)
  endif
@@ -239,7 +244,6 @@ subroutine scatter_Gamp_gpu(isc,mode)
  ng=shape(isc%gamp)
  ng1=ng(1)
  ng2=ng(2)
- !
 
  gamp_d => isc%gamp_d
  !$cuf kernel do(2)

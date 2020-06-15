@@ -44,3 +44,9 @@
 #  define DEV_PINNED
 #endif
 
+#define DEV_SUB(x)          DEV_SUBNAME(x)
+#define DEV_SUB_ALT(x)      DEV_SUBNAME_ALT(x)
+#define DEV_VAR(x)          DEV_VARNAME(x)
+#define DEV_ATTR            DEV_ATTRIBUTE
+#define DEV_PIN             DEV_PINNED
+

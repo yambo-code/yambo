@@ -40,7 +40,8 @@ subroutine RT_PHEL_total_Kernel(iq,E,k,q)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,qindx_X
  use real_time,      ONLY:RT_bands
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,elph_gkkp,MAX_gkkp
+ use PH_real_time,   ONLY:phel_gkkp_expanded_sq
+ use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_ibz_index
  use parser_m,       ONLY:parser
@@ -68,8 +69,6 @@ subroutine RT_PHEL_total_Kernel(iq,E,k,q)
  !
  do ikbz=1,k%nbz
    !
-   if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
-   !
    ! Obtain k-q in the ibz from k in the bz and q in the ibz
    ik_m_q =k%sstar(qindx_X(iq_mem,ikbz,1),1)
    ! Obtain k in the ibz from k in the bz
@@ -79,25 +78,25 @@ subroutine RT_PHEL_total_Kernel(iq,E,k,q)
    !
    do il=elph_branches(1),elph_branches(2)
      !
-     ! Given iq in the ibz, get corresponding index in the bz
+     ! Given iq in the ibz, get corresponding index in the bz [NOTE] NOT USED
      iqbz = q%k_table(iq_mem,1)
      !
-     ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
+     ph_freq=abs(sqrt(ph_freqs_sq(iq_mem,il)))
      !
-     if ( (iqbz==1 .and. il<=3) ) cycle
+     if ( (iq_mem==1 .and. il<=3) ) cycle
      if ( abs(ph_freq)<3.E-5)     cycle
      !
      ! [NOTE] the m.e. in elph_gkkp DO NOT have indices order exchanged (unlike RT_ELPH case)
-     ! [NOTE] the m.e. have to be read and stored for a specific iq_mem! I should do it in RT_ELPH_initialize by defining and allocating a variable
+     !
      Gkkp_sq=rZERO
      do i_n=RT_bands(1),RT_bands(2)
-       Gkkp_sq(i_n,i_n)=abs(elph_gkkp(il,i_n,i_n,ik_mem))**2.
+       Gkkp_sq(i_n,i_n)=phel_gkkp_expanded_sq(il,i_n,i_n,iq_mem,ik_mem)
        if(sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_n)=rZERO
        !
        do i_np=RT_bands(1),RT_bands(2)
          !
          if (i_n==i_np) cycle
-         Gkkp_sq(i_n,i_np)=abs(elph_gkkp(il,i_n,i_np,ik_mem))**2.
+         Gkkp_sq(i_n,i_np)=phel_gkkp_expanded_sq(il,i_n,i_np,iq_mem,ik_mem)
          if (sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_np)=rZERO
          !
        enddo
@@ -107,7 +106,7 @@ subroutine RT_PHEL_total_Kernel(iq,E,k,q)
      ! Time Scales separation (TS) and quasiparticle approximation (QP)
      !=======================================
      !
-     call RT_PHEL_TSQP_Kernel(ik,ik_m_q,iqbz,il,E,ph_freq,Gkkp_sq)
+     call RT_PHEL_TSQP_Kernel(ik,ik_m_q,iq_mem,il,E,ph_freq,Gkkp_sq)
      !
    enddo ! ph branch
    !

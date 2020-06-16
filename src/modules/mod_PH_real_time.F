@@ -41,6 +41,8 @@ module PH_real_time
  real(SP),    allocatable :: P_E_sp_res_lifetime(:,:)
  real(SP),    allocatable :: P_E_sp_ares_lifetime(:,:)
  real(SP),    allocatable :: P_E_eh_lifetime(:,:)
+ ! ... Q-parallelization  and GKKP
+ real(SP),    allocatable :: phel_gkkp_expanded_sq(:,:,:,:,:)
  !
  contains
    !
@@ -97,6 +99,7 @@ module PH_real_time
      YAMBO_FREE(P_E_sp_res_lifetime)
      YAMBO_FREE(P_E_sp_ares_lifetime)
      YAMBO_FREE(P_E_eh_lifetime)
+     YAMBO_FREE(phel_gkkp_expanded_sq)
      !
      if(l_all.or.l_phonons) then
        !

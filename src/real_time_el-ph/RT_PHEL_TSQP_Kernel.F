@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM DS
+! Authors (see AUTHORS file for details): FP
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -33,7 +33,7 @@ subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,E,ph_freq,Gkkp_sq)
  use hamiltonian,    ONLY:B_mat_index
  use real_time,      ONLY:l_RT_uses_E_DbGd,DbGd_ibz_coo,RT_occupations_locked,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
-&                         RT_life_delta_occupations,l_initial_equilibrium,q_weight_RT,&
+&                         RT_life_delta_occupations,l_initial_equilibrium,&
 &                         RT_eh_en,RT_ibz_coo,RT_Nk_ibz,RT_bands
 use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
 &                         P_E_sp_res_lifetime,P_E_sp_ares_lifetime,P_E_eh_lifetime

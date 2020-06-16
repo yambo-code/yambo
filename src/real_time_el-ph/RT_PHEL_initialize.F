@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): FP
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -44,7 +44,7 @@ subroutine RT_PHEL_initialize(k,q)
  !
  ! Work Space
  !
- integer             ::iq,ID,io_err,ik,iq_io,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
+ integer             ::iq,ID,io_err,ik,iq_io,i_n,i_np,ik_mem,&
 &                      iq_mem,io_REF
  real(SP)            ::MAX_gkkp_expanded_at_kpq(k%nibz,q%nbz)
  integer, external   ::io_ELPH,io_RT_components

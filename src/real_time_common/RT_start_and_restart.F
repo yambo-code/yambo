@@ -54,7 +54,7 @@ subroutine RT_start_and_restart(E,k,q)
 &                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,&
 &                         NE_time_step_update_jump,RT_life_extrap_times,l_velocity_gauge_corr                  
-use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_delta_occupations,RT_PH_occupations_reference
+ use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_delta_occupations,RT_PH_occupations_reference
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,&

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): FP
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -36,15 +36,13 @@ subroutine RT_PHEL_total_Kernel(iq,E,k,q)
  !
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !
- use pars,           ONLY:SP,rZERO,cZERO
+ use pars,           ONLY:SP,rZERO
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,qindx_X
  use real_time,      ONLY:RT_bands
  use PH_real_time,   ONLY:phel_gkkp_expanded_sq
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
- use functions,      ONLY:bose_f
- use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_ibz_index
- use parser_m,       ONLY:parser
+ use parallel_m,     ONLY:PAR_Q_index,PAR_Xk_ibz_index
  !
  implicit none
  !

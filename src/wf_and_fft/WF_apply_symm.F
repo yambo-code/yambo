@@ -21,8 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-!#include<dev_defs.h>
- !
 subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  !
  use pars,          ONLY:SP

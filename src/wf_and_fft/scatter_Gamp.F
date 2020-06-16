@@ -197,8 +197,9 @@ subroutine DEV_SUBNAME(scatter_Gamp)(isc,mode)
 
  complex(SP), pointer DEV_ATTRIBUTE :: gamp_d(:,:)
  integer :: ng1, ng2
+ character(32) :: subname="scatter_Gamp_gpu"
 
- call timing("DEV_SUBNAME(scatter_Gamp)",opr="start")
+ call timing(subname,opr="start")
  !
  ! q_weight = 1./(DL_vol*q%nbz)
  !
@@ -322,6 +323,6 @@ subroutine DEV_SUBNAME(scatter_Gamp)(isc,mode)
    if (all((/iq==1,RIM_ng>0,mode=='c',RIM_anisotropy/=0._SP/))) gamp_d(1,1)=RIM_anisotropy/2._SP
  endif
  !
- call timing("scatter_Gamp_gpu",opr="stop")
+ call timing(subname,opr="stop")
 end subroutine
 #endif

@@ -114,7 +114,13 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="NEQ scattering kind";
- options[*i_opt].long_desc[0]="<string>=(e)lectrons/(p)honons/p(h)otons/(a)ll/phonon (d)ynamics";
+#if defined _PHEL
+ options[*i_opt].long_desc[0]="<string>=(ee)el-el/(ep)el-ph/(el)el-light/(pe)ph-el";
+ options[*i_opt].long_desc[1]=" ";
+ options[*i_opt].long_desc[2]="Use -scattering ee+ep/ee+pe to activate more than one kind simultaneously";
+#else
+ options[*i_opt].long_desc[0]="<string>=(e)el-el/(p)el-ph/(h)el-light/(a)ll";
+#endif
  options[*i_opt].long_opt="scattering";
  options[*i_opt].short_opt='s';
  options[*i_opt].bin="yambo_rt";

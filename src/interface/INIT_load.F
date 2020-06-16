@@ -162,6 +162,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! GPL_EXCLUDE_END
  !
+#if defined _PHEL
+ call it('r',defs,'ph_el_scatt','[R] Phonon-Electron Scattering')   
+#endif
 #if defined _RT
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   

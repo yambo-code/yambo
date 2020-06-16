@@ -46,7 +46,7 @@ module PH_real_time
  !
  contains
    !
-   subroutine RT_PH_alloc(what)
+   subroutine RT_PHEL_alloc(what)
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_phel_scatt
@@ -83,9 +83,9 @@ module PH_real_time
        !
      endif
      !
-   end subroutine RT_PH_alloc
+   end subroutine RT_PHEL_alloc
    !
-   subroutine RT_PH_free(what)
+   subroutine RT_PHEL_free(what)
      !
      implicit none
      !
@@ -109,6 +109,6 @@ module PH_real_time
        !
      endif
      !
-   end subroutine RT_PH_free
+   end subroutine RT_PHEL_free
    !
 end module

@@ -64,8 +64,12 @@ subroutine RT_relaxation(E,k,q,Time)
  use pars,           ONLY:SP
  use D_lattice,      ONLY:Bose_Temp
  use electrons,      ONLY:levels
- use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,l_phel_scatt
- use R_lattice,      ONLY:bz_samp,nkibz,nqibz
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
+ use R_lattice,      ONLY:bz_samp,nkibz
+#if defined _PHEL
+ use drivers,        ONLY:l_phel_scatt
+ use R_lattice,      ONLY:nqibz
+#endif
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
@@ -131,6 +135,7 @@ subroutine RT_relaxation(E,k,q,Time)
    call timing('RT relaxation (e-p)',OPR='stop')
    !
  endif
+#if defined _PHEL
  !
  ! Ph-El (phonon dynamics)
  !=======
@@ -149,6 +154,7 @@ subroutine RT_relaxation(E,k,q,Time)
    call timing('RT relaxation (p-e)',OPR='stop')
    !
  endif
+#endif
  !
  ! El-Photon
  !============

@@ -26,13 +26,16 @@ subroutine INIT_read_command_line(rstr,init_)
  use pars,           ONLY:schlen
  use drivers,        ONLY:infile_editing,l_bse,l_alda_fxc,l_chi,l_elel_corr,&
 &                         l_elel_scatt,l_elph_corr,l_elph_scatt,l_elphoton_corr,&
-&                         l_elphoton_scatt,l_em1s,l_em1d,l_ppa,l_phel_scatt
+&                         l_elphoton_scatt,l_em1s,l_em1d,l_ppa
+#if defined _PHEL
+ use drivers,        ONLY:l_phel_scatt
+#endif
  use BS,             ONLY:BSK_mode
  use BS_solvers,     ONLY:BSS_mode
  use X_m,            ONLY:Chi_mode
  use QP_m,           ONLY:QP_solver
  use LIVE_t,         ONLY:USER_wall_time_string,GET_user_WALL_time
- use stderr,         ONLY:STRING_split,STRING_match
+ use stderr,         ONLY:STRING_split,STRING_match,STRING_same
  use it_tools,       ONLY:runlevel_is_on,switch_off_runlevel
  use it_m,           ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,      &
 &                         V_real_time,V_nl_optics,V_all,V_parallel,        &
@@ -59,7 +62,7 @@ subroutine INIT_read_command_line(rstr,init_)
  logical            ::l_user_kernel,V_is_defined
  logical, external  ::INIT_read_command_line_potentials
  integer, parameter ::n_strings_not_allowed=8
- character(schlen)  ::rstr_piece(2*nrnlvls),strings_to_not_use_as_runlevels(n_strings_not_allowed),V_string
+ character(schlen)  ::rstr_piece(2*nrnlvls),strings_to_not_use_as_runlevels(n_strings_not_allowed),V_string,scattp_piece(10)
  !
  ! Keep track if the user provided a kernel option
  !
@@ -397,25 +400,32 @@ subroutine INIT_read_command_line(rstr,init_)
        if ( i_cycle == 2 .and. .not. V_is_defined ) H_potential='IP'
        !
      endif
+#endif
      !
      if ( trim(rstr_piece(i1)) == 'scattp' ) then
+#if defined _PHEL && defined _RT
+       call STRING_split(rstr_piece(i1+1),scattp_piece,space="+")
+       do i2=1,10
+         if (len_trim(scattp_piece(i2))==0) cycle
+         if ( STRING_same(scattp_piece(i2),"ee")) l_elel_scatt=.true.
+         if ( STRING_same(scattp_piece(i2),"ep")) l_elph_scatt=.true.
+         if ( STRING_same(scattp_piece(i2),"pe")) l_phel_scatt=.true.
+         if ( STRING_same(scattp_piece(i2),"el")) l_elphoton_scatt=.true.
+       enddo
+       if (.not.l_elph_scatt.and.l_phel_scatt) l_elph_scatt=.true.
+       if (l_phel_scatt)     call initactivate(1,'ph_el_scatt')
+#elif !defined _PHEL && defined _RT
        if ( index(rstr_piece(i1+1),'e') > 0 .or. trim(rstr_piece(i1+1)) == 'a') l_elel_scatt=.true.
        if ( index(rstr_piece(i1+1),'p') > 0 .or. trim(rstr_piece(i1+1)) == 'a') l_elph_scatt=.true.
-       if ( index(rstr_piece(i1+1),'d') > 0 ) l_phel_scatt=.true.
-#endif
-#if defined _RT
        if ( index(rstr_piece(i1+1),'h') > 0 .or. trim(rstr_piece(i1+1)) == 'a') l_elphoton_scatt=.true.
-       if (l_elphoton_scatt) call initactivate(1,'el_photon_scatt')
 #endif
 #if defined _RT
-       if (.not.l_elph_scatt.and.l_phel_scatt) l_elph_scatt=.true.
+       !if (.not.l_elph_scatt.and..not.l_elel_scatt.and..not.l_elphoton_scatt) l_elph_scatt=.true.
+       if (l_elphoton_scatt) call initactivate(1,'el_photon_scatt')
        if (l_elph_scatt)     call initactivate(1,'el_ph_scatt')
-       if (l_phel_scatt)     call initactivate(1,'ph_el_scatt')
        if (l_elel_scatt)     call initactivate(1,'el_el_scatt')
-       if (.not.l_elph_scatt.and..not.l_elel_scatt.and..not.l_elphoton_scatt) l_elph_scatt=.true.
-     endif
-     !
 #endif
+     endif
      !
 #if defined _SC || defined _RT
      !

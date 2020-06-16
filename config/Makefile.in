@@ -72,18 +72,19 @@ INTERFCS = a2y c2y $(p2y) $(e2y)
 CORE     = yambo ypp $(INTERFCS)
 UTILS    = changelog get_extlibs ext-libs
 CLEANS   = clean_fast clean clean_all distclean
-PH_PROJ  = yambo_ph ypp_ph
+PH_PROJ      = yambo_ph ypp_ph
+PH_DYN_PROJ  = yambo_ph_dyn
 SC_PROJ  = yambo_sc ypp_sc
 MAG_PROJ = yambo_magnetic ypp_magnetic
 RT_PROJ  = yambo_rt ypp_rt
 NL_PROJ  = yambo_nl ypp_nl
 RTE_PROJ = yambo_rt yambo_qed yambo_pl ypp_rt
 KERR_PROJ= yambo_kerr
-ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KERR_PROJ) $(TESTS)
+ALL      = $(CORE) $(PH_PROJ) $(PH_DYN_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KERR_PROJ) $(TESTS) 
 BROKEN   = yambo_electric
 TESTS    = 
 SCRIPTS  = ydb.pl
-EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS) $(SCRIPTS)
+EXE      = $(CORE) $(PH_PROJ) $(PH_DYN_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS) $(SCRIPTS)
 EXT_LIBS = libxc lapack fftw fftqe yaml futile iotk hdf5 netcdf etsf_io blacs scalapack petsc slepc
 #
 # Libraries (ordered for compiling & linking)
@@ -164,6 +165,8 @@ core: ext-libs
 	for target in $(CORE)     ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 ph-project: ext-libs
 	for target in $(PH_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+ph-dyn-project: ext-libs
+	for target in $(PH_DYN_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 sc-project: ext-libs
 	for target in $(SC_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 magn-project: ext-libs
@@ -279,6 +282,11 @@ yambo_pl: ext-libs
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_RT -D_SC -D_ELPH -D_PL -D_yambo"; $(mk_driver_src)
 	@+LIBS2DO="$(PJ_PLLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_SC -D_ELPH -D_PL"; $(mksrc)
 	@+X2DO="yambo_pl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_PLLIBS_LD)"; ADF="-D_RT -D_SC -D_ELPH -D_PL"; $(mkx)
+yambo_ph_dyn: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_RT -D_ELPH -D_PHEL -D_yambo"; $(mk_driver_src)
+	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH -D_PHEL"; $(mksrc)
+	@+X2DO="yambo_ph_dyn"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)"; ADF="-D_RT -D_ELPH -D_PHEL"; $(mkx)
 yambo_rt: ext-libs
 	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_RT -D_ELPH -D_yambo"; $(mk_driver_src)
@@ -414,6 +422,7 @@ define make_message
  for target in $(SC_PROJ);   do echo " [sc-project] $$target"   ; done;echo;\
  for target in $(MAG_PROJ);  do echo " [magn-project] $$target" ; done;echo;\
  for target in $(PH_PROJ);   do echo " [ph-project] $$target"   ; done;echo;\
+ for target in $(PH_DYN_PROJ);   do echo " [ph-dyn-project] $$target"   ; done;echo;\
  for target in $(RT_PROJ);   do echo " [rt-project] $$target"   ; done;echo;\
  for target in $(NL_PROJ);   do echo " [nl-project] $$target (double-precision compilation)"   ; done;echo;\
  for target in $(RTE_PROJ);  do echo " [rtext-project] $$target"; done;echo;\

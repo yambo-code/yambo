@@ -93,6 +93,9 @@ subroutine INIT_barriers()
  if (l_real_time) then
    on_runlevels='HF_and_locXC cohsex em1s dipoles negf collisions el_el_corr el_ph_corr '//&
 &               'el_el_scatt el_ph_scatt el_photon_scatt el_photon_corr'
+#if defined _PHEL
+   on_runlevels=trim(on_runlevels)//' ph_el_scatt'
+#endif
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif

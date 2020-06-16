@@ -24,8 +24,11 @@
 subroutine RT_driver(E,X,k,q,Dip)
  !
  use pars,           ONLY:SP,schlen
- use drivers,        ONLY:l_use_collisions,l_use_Hxc_collisions,l_elph_scatt,l_phel_scatt,&
- &                        l_elel_scatt,l_elphoton_scatt
+ use drivers,        ONLY:l_use_collisions,l_use_Hxc_collisions,l_elph_scatt,&
+                          l_elel_scatt,l_elphoton_scatt
+#if defined _PHEL
+ use drivers,        ONLY:l_phel_scatt
+#endif
  use stderr,         ONLY:real2ch
  use LIVE_t,         ONLY:live_timing
  use electrons,      ONLY:levels,n_spin,n_spinor
@@ -48,7 +51,9 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                         dG_lesser,l_initial_equilibrium,NE_tot_time,&
 &                         i_MEM_prev,i_MEM_now,RT_is_dynamically_dephased,&
 &                         l_RT_update_Energies,l_NE_with_fields,l_update_SOC,l_velocity_gauge_corr
- use PH_real_time,    ONLY:RT_PH_alloc,RT_PH_free
+#if defined _PHEL
+ use PH_real_time,    ONLY:RT_PHEL_alloc,RT_PHEL_free
+#endif
  use plasma,          ONLY:PLASMA_free,EH_gas
  use com,             ONLY:msg
  use fields,          ONLY:A_tot,Efield
@@ -184,7 +189,9 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  call RT_alloc(E,"all")
  call RT_control_alloc("all")
- if (l_phel_scatt) call RT_PH_alloc("phonons")
+#if defined _PHEL
+ if (l_phel_scatt) call RT_PHEL_alloc("phonons")
+#endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -365,7 +372,9 @@ subroutine RT_driver(E,X,k,q,Dip)
    subroutine CLOSE_and_clean( )
      call RT_free("all")
      call RT_control_free("all")
-     if (l_phel_scatt) call RT_PH_free("all")
+#if defined _PHEL
+     if (l_phel_scatt) call RT_PHEL_free("all")
+#endif
      call WF_free(WF)
      !
      ! GPL_EXCLUDE_START

@@ -24,7 +24,10 @@
 subroutine RT_initialize(E,k,q)
  !
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_hartree,l_use_Hxc_collisions,&
-&                         l_sc_is_libDFT,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_rt_carriers_in_use,l_phel_scatt
+&                         l_sc_is_libDFT,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_rt_carriers_in_use
+#if defined _PHEL
+ use drivers,        ONLY:l_phel_scatt
+#endif
  use pars,           ONLY:SP,pi,schlen
  use units,          ONLY:HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,AUT2FS
  use stderr,         ONLY:intc
@@ -365,6 +368,7 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
+#if defined _PHEL
  if (l_phel_scatt) then
    !
    call section('=','Ph-El matrix elements loading and setup')
@@ -372,6 +376,7 @@ subroutine RT_initialize(E,k,q)
    call RT_PHEL_initialize(k,q)
    !
  endif
+#endif
  !
 #endif
  !
@@ -441,7 +446,9 @@ subroutine RT_initialize(E,k,q)
  ! GPL_EXCLUDE_START
  !
  if (l_elph_scatt)         call msg( 'r','El-Ph         scattering   ',l_elph_scatt)
+#if defined _PHEL
  if (l_phel_scatt)         call msg( 'r','Ph-El         scattering   ',l_phel_scatt)
+#endif
  if (l_elel_scatt)         call msg( 'r','El-El         scattering   ',l_elel_scatt)
  if (l_elphoton_scatt)     call msg( 'r','El-Photon     scattering   ',l_elphoton_scatt)
  if (l_RT_update_Energies) then

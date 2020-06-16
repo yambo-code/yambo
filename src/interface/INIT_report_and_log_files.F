@@ -99,7 +99,7 @@ subroutine INIT_report_and_log_files()
    !
  endif
  !
- if (log_as_a_file) then
+ if (log_as_a_file.and.write_to_log) then
    !
    ! Log file
    !

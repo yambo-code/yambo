@@ -44,6 +44,15 @@ module PH_real_time
  ! ... Q-parallelization  and GKKP
  real(SP),    allocatable :: phel_gkkp_expanded_sq(:,:,:,:,:)
  !
+ ! Diagonal (QP) and off-diagonal (Phase) relaxation time
+ !
+ logical     :: RT_PHEL_is_statically_dephased=.FALSE.
+ logical     :: RT_PHEL_is_dynamically_dephased=.FALSE.
+ !
+ ! Relaxation: Dephasing Matrix
+ !------------------------------
+ real(SP),    allocatable :: PHEL_Deph_Matrix(:,:)
+ !
  contains
    !
    subroutine RT_PHEL_alloc(what)
@@ -100,6 +109,7 @@ module PH_real_time
      YAMBO_FREE(P_E_sp_ares_lifetime)
      YAMBO_FREE(P_E_eh_lifetime)
      YAMBO_FREE(phel_gkkp_expanded_sq)
+     YAMBO_FREE(PHEL_Deph_Matrix)
      !
      if(l_all.or.l_phonons) then
        !

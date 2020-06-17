@@ -36,7 +36,8 @@ subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,E,ph_freq,Gkkp_sq)
 &                         RT_life_delta_occupations,l_initial_equilibrium,&
 &                         RT_eh_en,RT_ibz_coo,RT_Nk_ibz,RT_bands
 use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
-&                         P_E_sp_res_lifetime,P_E_sp_ares_lifetime,P_E_eh_lifetime
+&                         P_E_sp_res_lifetime,P_E_sp_ares_lifetime,P_E_eh_lifetime,&
+&                         EQ_P_E_sp_res_lifetime,EQ_P_E_sp_ares_lifetime,EQ_P_E_eh_lifetime
  use parallel_m,     ONLY:PAR_IND_B_mat
  !
  implicit none
@@ -82,8 +83,16 @@ use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
        DELTA_W=abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik_m_q,1))
        !
      endif
-     ! [NOTE] Full prefactor here is 4._SP*pi. Only for now I put 2._SP *assuming* the rest comes from the delta function
-     pre_factor=2._SP*Gkkp_sq(i_np,i_n)/real(RT_Nk_ibz(ik)) !Full prefactor should be 4*pi
+     !
+     ! The weight here is
+     !
+     !                    (2*spin_occ*pi)/(RT_Nk_ibz*2*ph_freq)
+     !
+     ! 2 from KBE collision integral, spin_occ=2 from ph-el self-energy, pi from delta functions,
+     ! 1/Nk from k-sum, (2*ph_freq)^-1 to correctly normalize Gkkp_sq.
+     ! [NOTE] Variable pre_factor below is missing pi since it *should* come later from the hyperbolic secant FT
+     !
+     pre_factor=spin_occ*Gkkp_sq(i_np,i_n)/(real(RT_Nk_ibz(ik))*ph_freq)
      !
      if( pre_factor==0._SP ) cycle
      !
@@ -114,7 +123,6 @@ use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
            !
          endif
          !
-         ! Delta functions [NOTE] I need to check that this function does what I want
          D_ares  =RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,'EP')
          D_res =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,'EP')
          !
@@ -152,6 +160,13 @@ use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
      ! Stimulated Emission / absorption
      P_E_eh_lifetime(i_l,i_q)=P_E_eh_lifetime(i_l,i_q)+&
 &                                    TMP_eh_lifetime*pre_factor
+     !
+     ! Store equilibrium values
+     if (l_initial_equilibrium) then
+       EQ_P_E_sp_res_lifetime(i_l,i_q)  = EQ_P_E_sp_res_lifetime(i_l,i_q)+P_E_sp_res_lifetime(i_l,i_q)
+       EQ_P_E_sp_ares_lifetime(i_l,i_q) = EQ_P_E_sp_ares_lifetime(i_l,i_q)+P_E_sp_ares_lifetime(i_l,i_q)
+       EQ_P_E_eh_lifetime(i_l,i_q)      = EQ_P_E_eh_lifetime(i_l,i_q)+ P_E_eh_lifetime(i_l,i_q)
+     endif
      !
    enddo
    !

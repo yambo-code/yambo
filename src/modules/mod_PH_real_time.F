@@ -41,6 +41,9 @@ module PH_real_time
  real(SP),    allocatable :: P_E_sp_res_lifetime(:,:)
  real(SP),    allocatable :: P_E_sp_ares_lifetime(:,:)
  real(SP),    allocatable :: P_E_eh_lifetime(:,:)
+ real(SP),    allocatable :: EQ_P_E_sp_res_lifetime(:,:)
+ real(SP),    allocatable :: EQ_P_E_sp_ares_lifetime(:,:)
+ real(SP),    allocatable :: EQ_P_E_eh_lifetime(:,:)
  ! ... Q-parallelization  and GKKP
  real(SP),    allocatable :: phel_gkkp_expanded_sq(:,:,:,:,:)
  !
@@ -76,9 +79,15 @@ module PH_real_time
        YAMBO_ALLOC(P_E_sp_res_lifetime,(elph_branches(1):elph_branches(2),nqbz))
        YAMBO_ALLOC(P_E_sp_ares_lifetime,(elph_branches(1):elph_branches(2),nqbz))
        YAMBO_ALLOC(P_E_eh_lifetime,(elph_branches(1):elph_branches(2),nqbz))
+       YAMBO_ALLOC(EQ_P_E_sp_res_lifetime,(elph_branches(1):elph_branches(2),nqbz))
+       YAMBO_ALLOC(EQ_P_E_sp_ares_lifetime,(elph_branches(1):elph_branches(2),nqbz))
+       YAMBO_ALLOC(EQ_P_E_eh_lifetime,(elph_branches(1):elph_branches(2),nqbz))
        P_E_sp_res_lifetime=0._SP
        P_E_sp_ares_lifetime=0._SP
        P_E_eh_lifetime=0._SP
+       EQ_P_E_sp_res_lifetime=0._SP
+       EQ_P_E_sp_ares_lifetime=0._SP
+       EQ_P_E_eh_lifetime=0._SP
        !
      endif
      !
@@ -108,6 +117,9 @@ module PH_real_time
      YAMBO_FREE(P_E_sp_res_lifetime)
      YAMBO_FREE(P_E_sp_ares_lifetime)
      YAMBO_FREE(P_E_eh_lifetime)
+     YAMBO_FREE(EQ_P_E_sp_res_lifetime)
+     YAMBO_FREE(EQ_P_E_sp_ares_lifetime)
+     YAMBO_FREE(EQ_P_E_eh_lifetime)
      YAMBO_FREE(phel_gkkp_expanded_sq)
      YAMBO_FREE(PHEL_Deph_Matrix)
      !

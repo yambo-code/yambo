@@ -41,8 +41,9 @@ subroutine RT_PHEL_Scattering_step(iq,deltaT)
  !
  use pars,           ONLY:SP
  use ELPH,           ONLY:elph_branches
- use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_occupations_reference,PHEL_Deph_Matrix,&
- &                        P_E_sp_res_lifetime,P_E_sp_ares_lifetime,P_E_eh_lifetime,&
+ use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_occupations_reference,RT_PH_delta_occupations,&
+ &                        P_E_sp_res_lifetime,P_E_sp_ares_lifetime,P_E_eh_lifetime,PHEL_Deph_Matrix,&
+ &                        EQ_P_E_sp_res_lifetime,EQ_P_E_sp_ares_lifetime,EQ_P_E_eh_lifetime,&
  &                        RT_PHEL_is_statically_dephased,RT_PHEL_is_dynamically_dephased
  !
  implicit none
@@ -62,9 +63,9 @@ subroutine RT_PHEL_Scattering_step(iq,deltaT)
    !N0_lq = RT_PH_occupations_reference(il,iq)
    !dN_lq = RT_PH_delta_occupations(il,iq)
    !
-   ![NOTE] What's this?? REF_lifetime??
-   GAMMA0(1)=0.
-   GAMMA0(2)=0.
+   ![NOTE] Is this right??
+   GAMMA0(1)=EQ_P_E_eh_lifetime(il,iq)
+   GAMMA0(2)=EQ_P_E_sp_res_lifetime(il,iq)+EQ_P_E_sp_ares_lifetime(il,iq)
    !
    dGAMMA(1)=0._SP
    dGAMMA(2)=0._SP

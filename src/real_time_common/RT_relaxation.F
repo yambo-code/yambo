@@ -69,6 +69,10 @@ subroutine RT_relaxation(E,k,q,Time)
 #if defined _PHEL
  use drivers,        ONLY:l_phel_scatt
  use R_lattice,      ONLY:nqibz
+ !DEBUG>
+ use units,        ONLY:HA2EV
+ use PH_real_time, ONLY:EQ_P_E_sp_res_lifetime,EQ_P_E_sp_ares_lifetime,EQ_P_E_eh_lifetime
+ !DEBUG<
 #endif
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
@@ -150,6 +154,11 @@ subroutine RT_relaxation(E,k,q,Time)
      call RT_PHEL_total_Kernel(iq,E,k,q)
      !
    enddo
+   !
+   !DEBUG>
+   write(*,*) HA2EV*(EQ_P_E_sp_res_lifetime(2,6)+EQ_P_E_sp_ares_lifetime(2,6))
+   write(*,*) HA2EV*EQ_P_E_eh_lifetime(2,6)
+   !DEBUG<
    !
    call timing('RT relaxation (p-e)',OPR='stop')
    !

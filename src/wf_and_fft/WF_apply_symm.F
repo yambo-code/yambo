@@ -23,6 +23,8 @@
 !
 subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  !
+ ! INCLUDED in: WF_apply_symm_incl.F 
+ !
  use pars,          ONLY:SP
  use wave_func,     ONLY:WF
  use FFT_m,         ONLY:DEV_VAR(fft_rot_r),fft_size

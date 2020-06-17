@@ -136,9 +136,6 @@ module R_lattice
  complex(SP),allocatable :: bare_qpg(:,:)
  complex(SP),allocatable DEV_ATTR :: bare_qpg_d(:,:)
  !
- ! AF: for the sake of performance, this variable is defined 
- !     as the transpose of the host variable bare_qpg
- !
  logical                 :: CUTOFF_plus_RIM
  real(SP)                :: cyl_vr_save
  real(SP)                :: cyl_vz_save

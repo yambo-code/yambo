@@ -150,8 +150,7 @@ subroutine col_driver(bare_NG,q)
 #ifdef _CUDA
    YAMBO_FREE(bare_qpg_d)
    if (size(bare_qpg)>0) then
-     YAMBO_ALLOC(bare_qpg_d,(size(bare_qpg,2),size(bare_qpg,1)))
-     bare_qpg_d=transpose(bare_qpg)
+     YAMBO_ALLOC_SOURCE(bare_qpg_d,bare_qpg)
    endif
 #endif
    return
@@ -165,8 +164,7 @@ subroutine col_driver(bare_NG,q)
 #ifdef _CUDA
  YAMBO_FREE(bare_qpg_d)
  if (size(bare_qpg)>0) then
-   YAMBO_ALLOC(bare_qpg_d,(size(bare_qpg,2),size(bare_qpg,1)))
-   bare_qpg_d=transpose(bare_qpg)
+   YAMBO_ALLOC_SOURCE(bare_qpg_d,bare_qpg)
  endif
 #endif
  !

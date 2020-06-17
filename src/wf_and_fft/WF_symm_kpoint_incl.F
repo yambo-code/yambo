@@ -24,25 +24,25 @@
 
 !
 !====================
-! WF_apply_symm_cpu
+! WF_symm_kpoint_cpu
 !====================
 !
 #include<dev_defs_nocuda.h>
 #undef _CUDA_LOC
-#include"WF_apply_symm.F"
+#include"WF_symm_kpoint.F"
 !
 #include<dev_undefs.h>
 
 !
 !====================
-! WF_apply_symm_gpu 
+! WF_symm_kpoint_gpu
 !====================
 !
 #if defined _CUDA
 
 #include<dev_defs.h>
 #define _CUDA_LOC
-#include"WF_apply_symm.F"
+#include"WF_symm_kpoint.F"
 
 #endif
 

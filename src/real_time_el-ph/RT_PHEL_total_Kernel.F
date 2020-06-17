@@ -42,7 +42,7 @@ subroutine RT_PHEL_total_Kernel(iq,E,k,q)
  use real_time,      ONLY:RT_bands
  use PH_real_time,   ONLY:phel_gkkp_expanded_sq
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
- use parallel_m,     ONLY:PAR_Q_index,PAR_Xk_ibz_index
+ use parallel_m,     ONLY:PAR_Q_ibz_index,PAR_Xk_ibz_index
  !
  implicit none
  !
@@ -63,7 +63,7 @@ subroutine RT_PHEL_total_Kernel(iq,E,k,q)
  ! ... BZ index ...
  integer               :: iqbz,ikbz,ik,ik_m_q,ik_mem,iq_mem
  !
- iq_mem=PAR_Q_index(iq)
+ iq_mem=PAR_Q_ibz_index(iq)
  !
  do ikbz=1,k%nbz
    !

@@ -3,22 +3,22 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
@@ -49,6 +49,19 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Bp_mat_ID,PAR_IND_Xk_ibz_ID,      &
 &                        PAR_IND_DIPk_ibz_ID,PAR_IND_Q_ID,PAR_IND_WF_b_ID
+#if defined _PHEL
+ ! COMMUNICATORS
+ use parallel_m,    ONLY:PAR_COM_Q_ibz_INDEX,PAR_COM_Xk_bz_INDEX,    &
+&                       PAR_COM_Q_ibz_A2A,PAR_COM_Xk_bz_A2A
+ ! IND
+ use parallel_m,    ONLY:PAR_IND_Xk_bz,PAR_IND_Q_ibz
+ ! INDEX
+ use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Q_ibz_index
+ ! DIMENSIONS
+ use parallel_m,    ONLY:PAR_nQ_ibz,PAR_Xk_nbz
+ ! ID's
+ use parallel_m,    ONLY:PAR_IND_Xk_bz_ID,PAR_IND_Q_ibz_ID
+#endif
  !
 #include<memory.h>
  !
@@ -61,6 +74,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  integer              :: ib1,ib2,ik,nk_G_IO,TOTAL_Nk
  logical              :: CONSECUTIVE
  !
+#if !defined _PHEL
  CALL PARALLEL_structure(4,(/"k ","b ","q ","qp"/))
  !
  call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
@@ -70,6 +84,21 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
 &                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
 &                                        COMM_A2A_2=PAR_COM_G_b_A2A,&
 &                                        COMM_A2A_3=PAR_COM_Q_A2A)
+#elif defined _PHEL
+ CALL PARALLEL_structure(6,(/"k ","b ","q ","qp","kp","qp"/))
+ !
+ call PARALLEL_assign_chains_and_COMMs(6,COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
+&                                        COMM_index_2=PAR_COM_G_b_INDEX,&
+&                                        COMM_index_3=PAR_COM_Q_INDEX,&
+&                                        COMM_index_4=PAR_COM_Xk_bz_INDEX,&
+&                                        COMM_index_5=PAR_COM_Q_ibz_INDEX,&
+&                                        COMM_index_6=PAR_COM_PLASMA_INDEX,&
+&                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
+&                                        COMM_A2A_2=PAR_COM_G_b_A2A,&
+&                                        COMM_A2A_3=PAR_COM_Q_A2A,&
+&                                        COMM_A2A_4=PAR_COM_Xk_bz_A2A,&
+&                                        COMM_A2A_5=PAR_COM_Q_ibz_A2A)
+#endif
  !
  ! COMMs setup
  !
@@ -149,7 +178,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! PAR_WF_k is like PAR_IND_Xk_ibz with WF loaded only for 1 cpu per k-block
  !
  !.........................................................................
- if (allocated(PAR_IND_Xk_ibz%n_of_elements)) then 
+ if (allocated(PAR_IND_Xk_ibz%n_of_elements)) then
    !
    ! This allocation can be left over from previous calls to PARALLEL_global routine
    !
@@ -188,7 +217,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  !.........................................................................
  ! WFs & QPs
- !......................................................................... 
+ !.........................................................................
  !
  ! QP "head"
  !
@@ -214,7 +243,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! Xo Xo Xo Xo Xo Xo Xo Xo <- b
  !
  ! NOTE: HEAD_k/q_cpu=.TRUE. => HEAD_QP_cpu=.TRUE.
- !  
+ !
  ! but HEAD_QP_cpu=.TRUE. defines a larger set of CPU's.
  !
  ! Not all CPU's (o) load the WFs. Only X
@@ -245,6 +274,36 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  call PARALLEL_live_message("Q(bz)",ENVIRONMENT="Real_Time",&
 &                           LOADED=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1),TOTAL=q%nbz,&
 &                           NCPU=PAR_COM_Q_INDEX%n_CPU)
+ !
+#if defined _PHEL
+!
+! K-points (BZ)
+!
+call PARALLEL_index(PAR_IND_Xk_bz,(/Xk%nbz/),COMM=PAR_COM_Xk_bz_INDEX,CONSECUTIVE=CONSECUTIVE,NO_EMPTIES=.TRUE.)
+PAR_IND_Xk_bz_ID=PAR_COM_Xk_bz_INDEX%CPU_id
+!
+YAMBO_ALLOC(PAR_Xk_bz_index,(Xk%nbz))
+call PAR_build_index(PAR_IND_Xk_bz,Xk%nbz,PAR_Xk_bz_index,PAR_Xk_nbz)
+!
+call PARALLEL_live_message("K(bz)",ENVIRONMENT="Real_Time",&
+&         LOADED=PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1),TOTAL=TOTAL_Nk,&
+&         NCPU=PAR_COM_Xk_bz_INDEX%n_CPU)
+!
+!.........................................................................
+!   "q" -> Q-points (IBZ)
+!.........................................................................
+!
+call PARALLEL_index(PAR_IND_Q_ibz,(/q%nibz/),COMM=PAR_COM_Q_ibz_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+PAR_IND_Q_ibz_ID=PAR_COM_Q_ibz_INDEX%CPU_id
+PAR_nQ_ibz=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)
+!
+YAMBO_ALLOC(PAR_Q_ibz_index,(q%nibz))
+call PAR_build_index(PAR_IND_Q_ibz,q%nibz,PAR_Q_ibz_index,PAR_nQ_ibz)
+!
+call PARALLEL_live_message("Q(ibz)",ENVIRONMENT="Real_Time",&
+&                           LOADED=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1),TOTAL=q%nibz,&
+&                           NCPU=PAR_COM_Q_ibz_INDEX%n_CPU)
+#endif
  !
  !.........................................................................
  !   "COLLISIONS" & "q" -> k-q

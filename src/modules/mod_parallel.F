@@ -3,22 +3,22 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module parallel_m
@@ -26,32 +26,32 @@ module parallel_m
  ! Collective Operations (from  http://linux.die.net/man/3/mpi_lor )
  !
  ! The collective combination operations ( MPI_REDUCE , MPI_ALLREDUCE , MPI_REDUCE_SCATTER , and MPI_SCAN ) take a combination operation. This operation is of type
- ! MPI_Op in C and of type INTEGER in Fortran. The predefined operations are 
+ ! MPI_Op in C and of type INTEGER in Fortran. The predefined operations are
  !
  !MPI_MAX
- !    - return the maximum 
+ !    - return the maximum
  !MPI_MIN
- !    - return the minumum 
+ !    - return the minumum
  !MPI_SUM
- !    - return the sum 
+ !    - return the sum
  !MPI_PROD
- !    - return the product 
+ !    - return the product
  !MPI_LAND
- !    - return the logical and 
+ !    - return the logical and
  !MPI_BAND
- !    - return the bitwise and 
+ !    - return the bitwise and
  !MPI_LOR
- !    - return the logical or 
+ !    - return the logical or
  !MPI_BOR
- !    - return the bitwise of 
+ !    - return the bitwise of
  !MPI_LXOR
- !    - return the logical exclusive or 
+ !    - return the logical exclusive or
  !MPI_BXOR
- !    - return the bitwise exclusive or 
+ !    - return the bitwise exclusive or
  !MPI_MINLOC
- !    - return the minimum and the location (actually, the value of the second element of the structure where the minimum of the first is found) 
+ !    - return the minimum and the location (actually, the value of the second element of the structure where the minimum of the first is found)
  !MPI_MAXLOC
- !    - return the maximum and the location 
+ !    - return the maximum and the location
  !
  use pars,       ONLY:SP,DP,schlen,lchlen,max_n_of_cpus,MAX_N_GROUPS,MAX_N_OF_CHAINS,n_CPU_str_max
  !
@@ -84,7 +84,7 @@ module parallel_m
  !
  logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_SE,l_par_RT,l_par_SC,l_par_NL
  !
- ! In a parallel runs, when some loops not involving all CPU's are parallelized it is usefull to keep 
+ ! In a parallel runs, when some loops not involving all CPU's are parallelized it is usefull to keep
  ! the operations local in the cpu world
  !
  logical           :: HEAD_QP_cpu=.TRUE.
@@ -100,24 +100,24 @@ module parallel_m
  !
  ! MPI intra-groups Communicators
  !
- type MPI_comm 
-   integer  :: COMM      
-   integer  :: CPU_id    
+ type MPI_comm
+   integer  :: COMM
+   integer  :: CPU_id
    integer  :: my_CHAIN    ! equivalent to CPU_id+1 in INTER_CHAIN
    integer  :: chain_order ! this corresponds to the order in the local hierarchy
-   integer  :: n_CPU     
+   integer  :: n_CPU
  end type MPI_comm
- ! 
- ! CHAINS 
+ !
+ ! CHAINS
  !========
  type(MPI_comm),SAVE   :: INTRA_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs of the same chain
- type(MPI_comm),SAVE   :: INTER_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among same CPU (same ID) of different CHAINS 
- type(MPI_comm),SAVE   :: CHILD_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs (same ID) of different CHAINS enclosed in 
+ type(MPI_comm),SAVE   :: INTER_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among same CPU (same ID) of different CHAINS
+ type(MPI_comm),SAVE   :: CHILD_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs (same ID) of different CHAINS enclosed in
                                                        ! the above INTER_CHAIN cpu's'
  !
  ! CPU's
  !=======
- type CPU_stru 
+ type CPU_stru
    integer              :: N_chains  =1
    integer              :: CPU(MAX_N_OF_CHAINS) = 1
    character(4)         :: ROLE(MAX_N_OF_CHAINS)= " "
@@ -222,6 +222,9 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_Xk_ibz
  type(PP_indexes),SAVE :: PAR_IND_Xk_bz
  type(PP_indexes),SAVE :: PAR_IND_G_k
+#if defined _PHEL
+ type(PP_indexes),SAVE :: PAR_IND_Q_ibz
+#endif
  !
  ! ... DIPOLES
  type(PP_indexes),SAVE :: PAR_IND_DIPk_ibz
@@ -290,6 +293,9 @@ module parallel_m
  integer            :: PAR_IND_Xk_ibz_ID
  integer            :: PAR_IND_Xk_bz_ID
  integer            :: PAR_IND_G_k_ID
+#if defined _PHEL
+ integer,SAVE       :: PAR_IND_Q_ibz_ID
+#endif
  !
  ! ... DIPOLES
  integer            :: PAR_IND_DIPk_bz_ID
@@ -366,6 +372,10 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_Xk_ibz_A2A
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_A2A
+#if defined _PHEL
+ type(MPI_comm),SAVE :: PAR_COM_Q_ibz_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_Q_ibz_A2A
+#endif
  !
  ! ... DIPOLES
  type(MPI_comm),SAVE :: PAR_COM_DIPk_ibz_INDEX
@@ -396,7 +406,7 @@ module parallel_m
  ! ... density
  type(MPI_comm),SAVE :: PAR_COM_density
  !
- ! ... Frequencies 
+ ! ... Frequencies
  type(MPI_comm),SAVE :: PAR_COM_freqs
  type(MPI_comm),SAVE :: PAR_COM_freqs_A2A
  type(MPI_comm),SAVE :: PAR_COM_freqs_INDEX
@@ -442,12 +452,16 @@ module parallel_m
  integer,allocatable:: PAR_DIPk_ibz_index(:)
  integer            :: PAR_DIPk_nbz
  integer,allocatable:: PAR_DIPk_bz_index(:)
- integer            :: PAR_BS_nT_col_grps 
+ integer            :: PAR_BS_nT_col_grps
  integer,allocatable:: PAR_BS_T_grps_index(:)
- integer            :: PAR_nG_bands 
+ integer            :: PAR_nG_bands
  integer,allocatable:: PAR_G_bands_index(:)
- integer            :: PAR_n_freqs 
+ integer            :: PAR_n_freqs
  integer,allocatable:: PAR_FREQS_index(:)
+#if defined _PHEL
+ integer            :: PAR_nQ_ibz
+ integer,allocatable:: PAR_Q_ibz_index(:)
+#endif
  !
  ! WorkSpace
  !
@@ -515,7 +529,7 @@ module parallel_m
            V_ind(i_p)=n_V_ind
          endif
        enddo
-     else 
+     else
        do i_p=1,size(PAR_IND%element_1D)
          if (PAR_IND%element_1D(i_p)) then
            n_V_ind=n_V_ind+1
@@ -580,7 +594,7 @@ module parallel_m
      !
      CPU_string_save (:)=CPU_structure(:)%CPU_string
      ROLE_string_save(:)=CPU_structure(:)%ROLE_string
-     ! 
+     !
    end subroutine CPU_and_ROLE_strings_save
    !
    subroutine CPU_and_ROLE_strings_restore()
@@ -588,7 +602,7 @@ module parallel_m
      !
      CPU_structure(:)%CPU_string = CPU_string_save(:)
      CPU_structure(:)%ROLE_string=ROLE_string_save(:)
-     ! 
+     !
    end subroutine CPU_and_ROLE_strings_restore
    !
    subroutine CPU_str_reset()
@@ -1624,7 +1638,7 @@ module parallel_m
      !
 #endif
    end subroutine
-   !   
+   !
    subroutine PP_snd_rcv_c1(mode,array,node,COMM)
      character(*):: mode
      complex(SP) :: array(:)

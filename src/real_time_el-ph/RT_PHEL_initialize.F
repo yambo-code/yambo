@@ -34,8 +34,8 @@ subroutine RT_PHEL_initialize(k,q)
  use IO_m,           ONLY:io_control,REP,OP_RD_CL,VERIFY,NONE
  use ELPH,           ONLY:ph_freqs_sq,ph_modes,elph_gkkp,elph_nb,W_debye,MAX_gkkp
  use parser_m,       ONLY:parser
- use parallel_m,     ONLY:PAR_IND_Q,PAR_Xk_bz_index,PAR_IND_Xk_bz,PAR_Q_index,&
- &                        PAR_nQ,PAR_Xk_nbz
+ use parallel_m,     ONLY:PAR_IND_Q_ibz,PAR_Xk_bz_index,PAR_IND_Xk_bz,PAR_Q_ibz_index,&
+ &                        PAR_nQ_ibz,PAR_Xk_nbz
  !
 #include<memory.h>
  !
@@ -80,13 +80,13 @@ subroutine RT_PHEL_initialize(k,q)
  !
  ! Allocation
  !============
- YAMBO_ALLOC(phel_gkkp_expanded_sq,(ph_modes,elph_nb,elph_nb,PAR_nQ,PAR_Xk_nbz))
+ YAMBO_ALLOC(phel_gkkp_expanded_sq,(ph_modes,elph_nb,elph_nb,PAR_nQ_ibz,PAR_Xk_nbz))
  !
  MAX_gkkp_expanded_at_kpq=0._SP
  !
  do iq=1,q%nibz
    !
-   if (.not.PAR_IND_Q%element_1D(iq)) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
    !
    iq_io=Q_io_map(iq)
    !
@@ -98,7 +98,7 @@ subroutine RT_PHEL_initialize(k,q)
      if (.not.PAR_IND_Xk_bz%element_1D(ik)) cycle
      !
      ik_mem = PAR_Xk_bz_index(ik)
-     iq_mem = PAR_Q_index(iq)
+     iq_mem = PAR_Q_ibz_index(iq)
      !
      do i_n=1,elph_nb
        do i_np=1,elph_nb

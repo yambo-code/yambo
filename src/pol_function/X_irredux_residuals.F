@@ -290,21 +290,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    !
  enddo loop_bare_grid
  !
- if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) then
-#ifdef _CUDA
-   !$cuf kernel do(2) <<<*,*>>>
-#else
-   !$omp parallel do default(shared), private(ig1,ig2)
-#endif
-   do ig2=X_cols(1),X_cols(2)
-     do ig1=ig_start,X_rows(2)
-       if (ig1 > ig2) cycle
-       Xo_res(ig1,ig2)=Xo_res(ig1,ig2)/real(drude_n_states,SP)
-     enddo
-   enddo
-#ifndef _CUDA
-   !$omp end parallel do 
-#endif
- endif
+ if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) Xo_res(1,1)=Xo_res(1,1)/real(drude_n_states,SP)
  !
 end subroutine X_irredux_residuals

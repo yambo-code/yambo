@@ -47,12 +47,12 @@ subroutine RT_start_and_restart(E,k,q)
 &                         SETUP_RT_IO_type,RT_control_alloc,RT_control_free
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
-&                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,l_RT_is_WFfree, &
+&                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,RT_E_and_k,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
-&                         Gr_kind,l_RT_uses_E_DbGd,RT_E_and_k,&
-&                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
+&                         Gr_kind,l_RT_is_WFfree,RT_ibz_dupl,&
+&                         RT_E_occupations_reference,RT_nk,G_lesser,l_RT_uses_E_FineGd, &
 &                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
-&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,&
+&                         RT_eh_en,G_MEM_steps,RT_bands,&
 &                         NE_time_step_update_jump,RT_life_extrap_times,l_velocity_gauge_corr                  
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
@@ -295,13 +295,8 @@ subroutine RT_start_and_restart(E,k,q)
  !================
  if( all(RT_eh_en(:)==0._SP) ) then
    ! Case A: was not defined in input
-   if (l_RT_uses_E_DbGd) then
-     RT_eh_en(1)=minval(E%E_DbGd(RT_bands(1):RT_bands(2),:,:))
-     RT_eh_en(2)=maxval(E%E_DbGd(RT_bands(1):RT_bands(2),:,:))
-   else
-     RT_eh_en(1)=minval(E%E(RT_bands(1):RT_bands(2),:,:))
-     RT_eh_en(2)=maxval(E%E(RT_bands(1):RT_bands(2),:,:))
-   endif
+   RT_eh_en(1)=minval(RT_E_and_k%E(RT_bands(1):RT_bands(2),:,1))
+   RT_eh_en(2)=maxval(RT_E_and_k%E(RT_bands(1):RT_bands(2),:,1))
  else
    ! Case B: was defined in input
    RT_eh_en(1)=RT_eh_en(1)+E%E_VBM(1)
@@ -337,6 +332,8 @@ subroutine RT_start_and_restart(E,k,q)
  contains
    !
    subroutine RT_initialize_local_more()
+     !
+     implicit none
      !
      G_lesser          =cZERO
      G_lesser_reference=cZERO
@@ -385,8 +382,10 @@ subroutine RT_start_and_restart(E,k,q)
    !
    subroutine RT_set_G_lesser()
      !
-     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib
-     real(SP):: Energy,f_occ,f_occ_ref,Width
+     implicit none
+     !
+     integer :: ik_RT_DbGd,ik_FineGd,ib
+     real(SP):: Energy,f_occ,f_occ_ref,Width,kpt(3)
      !
      ! Defined from occupations %f
      ! In case RT_apply has been used the reference is
@@ -397,21 +396,21 @@ subroutine RT_start_and_restart(E,k,q)
          !
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
            !
-           ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-           !
-           if (l_RT_uses_E_DbGd) then
+           if (ik_RT_DbGd/=RT_ibz_coo(ik,1)) then
              !
-             if (allocated(E%W))  E%W_DbGd(ib,ik_E_DbGd,1)     = abs(E%W(ib,ik,1))
+             ik_FineGd=ik_RT_DbGd-ik+sum(RT_ibz_dupl(:ik))
              !
-             Energy    = E%E_DbGd(ib,ik_E_DbGd,1)
-             f_occ     = E%f_DbGd(ib,ik_E_DbGd,1)
+             if (allocated(E%W))  E%W_FineGd(ib,ik_FineGd,1)     = abs(E%W(ib,ik,1))
+             !
+             kpt       = k%pt_FineGd(ik_FineGd,:)
+             Energy    = E%E_FineGd(ib,ik_FineGd,1)
+             f_occ     = E%f_FineGd(ib,ik_FineGd,1)
              f_occ_ref = f_occ
              Width     = 0._SP
-             if (allocated(E%fo)) f_occ_ref = E%f_DbGd(ib,ik_E_DbGd,1)-E%df_DbGd(ib,ik_E_DbGd,1)
-             if (allocated(E%W))  Width     = abs(E%W_DbGd(ib,ik_E_DbGd,1))
-             !
+             if (allocated(E%fo)) f_occ_ref = E%f_FineGd(ib,ik_FineGd,1)-E%df_FineGd(ib,ik_FineGd,1)
+             if (allocated(E%W))  Width     = abs(E%W_FineGd(ib,ik_FineGd,1))
            else
-             !
+             kpt       = k%pt(ik,:)
              Energy    = E%E(ib,ik,1)
              f_occ     = E%f(ib,ik,1)
              f_occ_ref = f_occ
@@ -422,7 +421,8 @@ subroutine RT_start_and_restart(E,k,q)
            endif
            !
            RT_E_and_k%E(ib,ik_RT_DbGd,1) = Energy
-           RT_E_and_k%W(ib,ik_RT_DbGd,1) = Width
+           RT_E_and_k%W(ib,ik_RT_DbGd,1) = Width 
+           RT_E_and_k%k(:,ik_RT_DbGd)    = kpt
            !
            G_lesser_reference(ib,ib,ik_RT_DbGd) = cmplx(0.,f_occ_ref,SP)
            !
@@ -446,8 +446,10 @@ subroutine RT_start_and_restart(E,k,q)
      use real_time,  ONLY:l_RT_relax_time_approx,RT_RTA_chem,RT_RTA_temp, &
 &                         RT_RTA_E_occ_infty,RT_RTA_H_occ_infty
      !
+     implicit none
+     !
      real(SP):: En
-     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib,Nk(2)
+     integer :: ik,ik_RT_DbGd,ik_FineGd,ib,Nk(2)
      !
      ! Occupations are defined from G_lesser and G_lesser_reference
      !
@@ -468,9 +470,12 @@ subroutine RT_start_and_restart(E,k,q)
        do ib=RT_bands(1),RT_bands(2)
          do ik=1,k%nibz
            do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-             ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-             if (     l_RT_uses_E_DbGd) En=E%E_DbGd(ib,ik_E_DbGd,1)
-             if (.not.l_RT_uses_E_DbGd) En=E%E(ib,ik,1)
+             if (ik_RT_DbGd/=RT_ibz_coo(ik,1)) then
+               ik_FineGd=ik_RT_DbGd-ik+sum(RT_ibz_dupl(:ik))
+               En=E%E_FineGd(ib,ik_FineGd,1)
+             else 
+               En=E%E(ib,ik,1)
+             endif
              RT_RTA_E_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(  En-E%E_CBm(1)-RT_RTA_chem(1) ,RT_RTA_temp(1))*spin_occ
              RT_RTA_H_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(-(En-E%E_VBM(1)-RT_RTA_chem(2)),RT_RTA_temp(2))*spin_occ
            enddo

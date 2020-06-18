@@ -55,7 +55,8 @@ subroutine bz_samp_indexes(k,Xk,q)
 &                         qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
-&                         q_sstar,coll_scattering,q_source,Xk_grid_new_mapping
+&                         q_sstar,coll_scattering,q_source,smallest_q_norm,&
+&                         Xk_grid_new_mapping
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
@@ -559,14 +560,16 @@ subroutine bz_samp_indexes(k,Xk,q)
        k_pt=k%pt
        if(allocated(q_sstar)) q_sstar=1
        q_norm=q0_def_norm
+       smallest_q_norm=q0_def_norm
      else
        q_pt=q%pt
        k_pt=k%pt
-       do i1=1,q%nibz
+       q_sstar=q%sstar
+       q_norm(1)=q0_def_norm
+       do i1=2,q%nibz
          q_norm(i1)=iku_v_norm(q_pt(i1,:))
        enddo
-       q_norm(1)=q0_def_norm
-       q_sstar=q%sstar
+       smallest_q_norm=minval(q_norm(2:))
      endif
      !
    end subroutine q_shadows

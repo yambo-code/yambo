@@ -23,7 +23,7 @@
 !
 subroutine K_inversion_driver(iq,W,E,k,q) 
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,pi
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,Co_factor,&
 &                         K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
@@ -300,7 +300,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !==============
  !
  if (BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
- if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/bare_qpg(iq,1)**2
+ if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*4._SP*pi/bare_qpg(iq,1)**2
  !
  ratio=real(count(K_INV_EPS%err==0))/real(W%n_freqs)*100._SP
  !

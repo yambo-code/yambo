@@ -41,7 +41,7 @@ subroutine RT_initialize(E,k,q)
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
-&                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_DbGd,DbGd_EE_Nk_table,      &
+&                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_FineGd,DbGd_EE_Nk_table,    &
 &                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,Gr_kind,     &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
 &                         l_RT_update_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
@@ -127,7 +127,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! DbGd PAR memory distribution index updated
  !============================================
- if (l_RT_uses_E_DbGd) then
+ if (l_RT_uses_E_FineGd) then
    PAR_G_k_range(1)=RT_ibz_coo(PAR_G_k_range(1),1)
    PAR_G_k_range(2)=RT_ibz_coo(PAR_G_k_range(2),2)
  endif
@@ -473,10 +473,12 @@ subroutine RT_initialize(E,k,q)
  endif
  !
  call msg( 'nr','---K Grid---')
- call msg( 'r',      'Double Grid support        ',l_RT_uses_E_DbGd)
- if (l_RT_uses_E_DbGd) then
-   call msg( 'r',    'K-points            (TOTAL)',RT_DbGd_nk)
-   call msg( 'r',    '                  (EVOLVED)',RT_nk)
+ call msg( 'r', 'Double Grid support          ',l_RT_uses_E_FineGd)
+ if (l_RT_uses_E_FineGd) then
+   call msg( 'r', 'K-pts  (Coarse grid IBZ/BZ)',(/k%nibz,k%nbz/))
+   call msg( 'r', 'K-pts    (Fine grid IBZ/BZ)',(/k%nibz_FineGd,k%nbz_FineGd/))
+   call msg( 'r', 'K-pts       (Common IBZ/BZ)',(/k%nibz_duplicate,k%nbz_duplicate/))
+   call msg( 'r', 'K-pts  (Real-time IBZ only)',RT_nk)
    if (PAR_COM_Xk_ibz_INDEX%n_CPU>1) then
      call msg( 'r',  '      (DISTRIBUTED min-MAX)',(/minval(NK_cpu),maxval(NK_cpu)/))
    endif
@@ -523,10 +525,10 @@ subroutine RT_initialize(E,k,q)
    !
    subroutine RT_adjust_equilibrium()
      !
-     use electrons,          ONLY:spin_occ,n_sp_pol,BZ_DbGd_tot_nk_levels
-     use real_time,          ONLY:RT_ibz_coo,DbGd_ibz_coo
+     use electrons,          ONLY:spin_occ,n_sp_pol
+     use real_time,          ONLY:RT_ibz_coo,RT_ibz_dupl
      !
-     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib
+     integer :: ik,ik_RT_DbGd,ik_E_FineGd,ib
      !
      if(.not.l_RT_eq_is_zero_temp) return
      !
@@ -540,9 +542,9 @@ subroutine RT_initialize(E,k,q)
        E%df=0._SP
      endif
      !
-     if (l_RT_uses_E_DbGd.and..not.allocated(E%df_DbGd)) then
-       YAMBO_ALLOC(E%df_DbGd,(E%nb,BZ_DbGd_tot_nk_levels,n_sp_pol))
-       E%df_DbGd=0._SP
+     if (l_RT_uses_E_FineGd.and..not.allocated(E%df_FineGd)) then
+       YAMBO_ALLOC(E%df_FineGd,(E%nb,k%nibz_FineGd,n_sp_pol))
+       E%df_FineGd=0._SP
      endif
      !
      ! Defined from occupations %f
@@ -552,13 +554,13 @@ subroutine RT_initialize(E,k,q)
      do ib=RT_bands(1),RT_bands(2)
        do ik=1,k%nibz
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-           ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
            !
-           if (l_RT_uses_E_DbGd) then
-             if(E%E_DbGd(ib,ik_E_DbGd,1)<=E%E_Fermi) then
-               E%df_DbGd(ib,ik_E_DbGd,1)=(E%f_DbGd(ib,ik_E_DbGd,1)-spin_occ)
+           if (l_RT_uses_E_FineGd) then
+             ik_E_FineGd=ik_RT_DbGd-ik+sum(RT_ibz_dupl(:ik))
+             if(E%E_FineGd(ib,ik_E_FineGd,1)<=E%E_Fermi) then
+               E%df_FineGd(ib,ik_E_FineGd,1)=(E%f_FineGd(ib,ik_E_FineGd,1)-spin_occ)
              else
-               E%df_DbGd(ib,ik_E_DbGd,1)= E%f_DbGd(ib,ik_E_DbGd,1)
+               E%df_FineGd(ib,ik_E_FineGd,1)= E%f_FineGd(ib,ik_E_FineGd,1)
              endif
            else
              if(E%E(ib,ik,1)<=E%E_Fermi) then

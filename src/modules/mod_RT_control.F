@@ -358,7 +358,7 @@ module RT_control
      use real_time,      ONLY:RT_carriers
      type(levels) :: E,E_eq
      character(*) :: what
-     integer      :: i_RT,i_sp_pol,ib,ik
+     integer      :: i_RT,i_sp_pol,ib,ik_RT
      if (.not.allocated(E%E)) then
        call E_reset(E)
        E%nk=RT_carriers%nk
@@ -376,13 +376,13 @@ module RT_control
      endif
      do i_RT=1,RT_carriers%nstates
        ib      =RT_carriers%table(i_RT,1)
-       ik      =RT_carriers%table(i_RT,3)
+       ik_RT   =RT_carriers%table(i_RT,3)
        i_sp_pol=RT_carriers%table(i_RT,4)
-       if (what=="Eo") E%E(ib,ik,i_sp_pol)=RT_carriers%E_bare(i_RT)
-       if (what=="E" ) E%E(ib,ik,i_sp_pol)=RT_carriers%E_bare(i_RT)+RT_carriers%delta_E(i_RT)
-       if (what=="fo") E%f(ib,ik,i_sp_pol)=RT_carriers%f_bare(i_RT)
-       if (what=="f" ) E%f(ib,ik,i_sp_pol)=RT_carriers%f_bare(i_RT)+RT_carriers%delta_f(i_RT)
-       if (what=="df") E%f(ib,ik,i_sp_pol)=RT_carriers%delta_f(i_RT)
+       if (what=="Eo") E%E(ib,ik_RT,i_sp_pol)=RT_carriers%E_bare(i_RT)
+       if (what=="E" ) E%E(ib,ik_RT,i_sp_pol)=RT_carriers%E_bare(i_RT)+RT_carriers%delta_E(i_RT)
+       if (what=="fo") E%f(ib,ik_RT,i_sp_pol)=RT_carriers%f_bare(i_RT)
+       if (what=="f" ) E%f(ib,ik_RT,i_sp_pol)=RT_carriers%f_bare(i_RT)+RT_carriers%delta_f(i_RT)
+       if (what=="df") E%f(ib,ik_RT,i_sp_pol)=RT_carriers%delta_f(i_RT)
      enddo
    end subroutine
    !

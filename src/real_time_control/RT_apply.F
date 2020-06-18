@@ -27,7 +27,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  use pars,           ONLY:schlen,SP,lchlen
  use stderr,         ONLY:STRING_split,real2ch,intc,STRING_same
  use parser_m,       ONLY:parser
- use electrons,      ONLY:levels,BZ_DbGd_tot_nk_levels
+ use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,nkibz
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control,DB_path
  use units,          ONLY:FS2AUT,AUT2FS,PS2AUT
@@ -49,7 +49,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  !
  ! Work space
  !
- integer               :: I_id,i1,i_t,io_err,ID,COM_,i2,nkibz_save,i_j,BZ_DbGd_tot_nk_levels_save
+ integer               :: I_id,i1,i_t,io_err,ID,COM_,i2,nkibz_save,i_j
  real(SP)              :: local_Time,TIME_diff,REF_diff
  integer,parameter     :: n_pieces=10
  integer, external     :: io_RT_components
@@ -178,7 +178,6 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  !
  l_elel_corr_save      =l_elel_corr
  nkibz_save            =nkibz
- BZ_DbGd_tot_nk_levels_save=BZ_DbGd_tot_nk_levels
  ! 
  ! CARRIERS I/O (I)
  !====================
@@ -186,7 +185,6 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  call io_control(ACTION=OP_RD_CL,COM=COM_,MODE=DUMP,SEC=(/1/),ID=ID) 
  io_err=io_RT_components(trim(db_name),ID)
  !
- BZ_DbGd_tot_nk_levels=BZ_DbGd_tot_nk_levels_save
  nkibz            =nkibz_save
  l_elel_corr      =l_elel_corr_save
  !

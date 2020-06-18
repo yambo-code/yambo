@@ -37,7 +37,6 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
  use interfaces,    ONLY:QP_state_print
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:BZ_DbGd_tot_nk_levels
  use IO_m,          ONLY:ver_is_gt_or_eq
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr 
@@ -112,8 +111,6 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
      !
      call IO_desc_add(qp%desc,str='X BZ energy Double Grid',kind='l',L=use_X_DbGd)
-     !
-     call IO_desc_add(qp%desc,str='X BZ Double Grid points',kind='i',I=(/BZ_DbGd_tot_nk_levels/))
      !
    endif
    !

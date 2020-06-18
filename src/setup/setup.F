@@ -27,15 +27,14 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use drivers,        ONLY:l_setup
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:wf_ng,wf_ncx
- use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,&
-&                         BZ_DbGd_nbands,DbGd_is_symmetry_expanded,BZ_DbGd_tot_nk_levels
+ use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,&
-&                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed
+&                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed,bz_samp_duplicate_Fg
  use com,            ONLY:msg,fat_log
  use stderr,         ONLY:intc
  use IO_m,           ONLY:REP,DUMP,NONE,io_control,OP_RD_CL
@@ -272,14 +271,16 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID)
  i_err=io_Double_Grid(en,k,ID)
  !
- if (BZ_DbGd_nbands>0.and.allocated(en%E_DbGd)) then
+ call bz_samp_duplicate_Fg(k,Xk) 
+ !
+ if (En%nb_FineGd>0.and.allocated(en%E_FineGd)) then
    !
    call section('=','Double K-grid')
    !=======================================
    !
-   call msg('r', 'K-points             ',BZ_DbGd_tot_nk_levels)
-   call msg('r', 'Bands                ',BZ_DbGd_nbands)
-   call msg('rn','Is the grid expanded ',DbGd_is_symmetry_expanded)
+   call msg('r', 'Kpts (IBZ): CG,FG,DUPL.    ',(/k%nibz,k%nibz_FineGd,k%nibz_duplicate/))
+   call msg('r', 'Kpts ( BZ): CG,FG,DUPL.    ',(/k%nbz, k%nbz_FineGd, k%nbz_duplicate/))
+   call msg('r', 'Bands                      ',en%nb_FineGd)
    !
  endif
  !

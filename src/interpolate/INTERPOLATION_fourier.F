@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,ID)
+subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,NK,ID)
  !
  use pars,              ONLY:SP,pi,cI,cZERO,DP,rZERO
  use interpolate,       ONLY:nshells,lattice_vectors,int_sop,INTERPOLATE_is_serial,INTERPOLATE_is_quiet,INTERP_obj
@@ -37,13 +37,14 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,ID)
  implicit none
  !
  integer,intent(in)        :: nvalues
- integer,intent(in)        :: ID
+ integer,intent(in)        :: NK,ID
  type(bz_samp), intent(in) :: K
- real(SP), intent(out)     :: VALUES(nvalues,K%nibz)
- real(SP), parameter       :: twopi=2._SP*pi
+ real(SP), intent(out)     :: VALUES(nvalues,NK)
  complex(DP), intent(in)   :: engre(nshells,nvalues)
  !
  ! Work Space
+ !
+ real(SP), parameter:: twopi=2._SP*pi
  !
  integer            :: i_shell,iv,ik,is,nstar
  real(SP)           :: star_vec(3,nsym),v(3)
@@ -56,18 +57,19 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,ID)
  !---------------------------------
  if (.not.INTERPOLATE_is_serial) then
    call PP_indexes_reset(px)
-   call PARALLEL_index(px,(/K%nibz/))
+   call PARALLEL_index(px,(/Nk/))
  endif
  VALUES=rZERO
  !
  if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolate@"//trim(INTERP_obj(ID)%what)//" Fourier",nshells)
  !
- do ik=1,K%nibz
+ do ik=1,Nk
    F_star=cZERO
    if (.not.INTERPOLATE_is_serial) then
      if (.not.px%element_1D(ik)) cycle
    endif
-   call c2a(v_in=K%pt(ik,:),v_out=v,mode='ki2a')
+   if(Nk==K%nibz)        call c2a(v_in=K%pt(ik,:),       v_out=v,mode='ki2a')
+   if(Nk==K%nibz_FineGd) call c2a(v_in=K%pt_FineGd(ik,:),v_out=v,mode='ki2a')
    do i_shell=1,nshells
      call make_star(lattice_vectors(:,i_shell),nsym,int_sop,nstar,star_vec)  
      do is=1,nstar

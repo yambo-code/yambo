@@ -155,6 +155,7 @@ module real_time
  ! G_lesser structure
  !
  integer,     allocatable :: RT_ibz_coo(:,:)
+ integer,     allocatable :: RT_ibz_dupl(:)
  integer,     allocatable :: RT_all2ibz(:)
  integer,     allocatable :: RT_Nk_ibz(:)
  !
@@ -182,15 +183,13 @@ module real_time
  ! Relaxation and Dissipation
  !
  !----------------------------
- logical                  :: l_RT_uses_E_DbGd
+ logical                  :: l_RT_uses_E_FineGd
  logical                  :: l_RT_eq_is_zero_temp
  logical                  :: l_RT_include_eq_scatt
  logical                  :: l_RT_impose_for_metals
- logical,     allocatable :: DbGd_EE_scatt_table(:,:)
- integer,     allocatable :: DbGd_EE_Nk_table(:,:)
- integer,     allocatable :: DbGd_ibz_coo(:,:)
- integer,     allocatable :: DbGd_bz_coo(:,:)
- real(SP)                 :: DbGd_EE_percent
+ logical,     allocatable :: DbGd_EE_scatt_table(:,:)  
+ integer,     allocatable :: DbGd_EE_Nk_table(:,:)  
+ real(SP)                 :: DbGd_EE_percent 
  !
  ! ELPH kernel...
  !----------------
@@ -209,9 +208,9 @@ module real_time
  integer,     allocatable :: Q_io_map(:)
  integer,     allocatable :: K_io_map(:)
  !
- ! Locks and reference
+ ! Conservations
  !----------------------
- logical                  :: l_RT_impose_N_dN    = .TRUE.
+ logical                  :: l_RT_impose_N_dN = .TRUE.
  logical                  :: l_RT_impose_E    = .TRUE.
  !
  ! Energies
@@ -222,8 +221,8 @@ module real_time
    real(SP), allocatable :: k(:,:)
  end type
  !
- type(RT_DbGd),SAVE  :: RT_E_and_k
- !
+ type(RT_DbGd),save  :: RT_E_and_k
+ ! 
  ! Locks, reference & Logicals
  !-----------------------------
  logical                  :: l_RT_relaxation_update_reference
@@ -291,6 +290,7 @@ module real_time
  integer           :: two_alpha
  real(SP)          :: Gr_QP_width
  character(schlen) :: Gr_kind
+ !
  !
  ! GFs
  !-----
@@ -636,8 +636,6 @@ module real_time
      call DIP_alloc('P_square')
      call DIP_alloc('DIP_P_spinor')
      !
-     YAMBO_FREE(DbGd_ibz_coo)
-     YAMBO_FREE(DbGd_bz_coo)
      YAMBO_FREE(RT_ibz_coo)
      YAMBO_FREE(RT_all2ibz)
      YAMBO_FREE(RT_Nk_ibz)

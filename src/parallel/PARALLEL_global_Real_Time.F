@@ -85,7 +85,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
 &                                        COMM_A2A_2=PAR_COM_G_b_A2A,&
 &                                        COMM_A2A_3=PAR_COM_Q_A2A)
 #elif defined _PHEL
- CALL PARALLEL_structure(6,(/"k ","b ","q ","qp","kp","qp"/))
+ CALL PARALLEL_structure(6,(/"k ","b ","q ","qp","kd","qd"/))
  !
  call PARALLEL_assign_chains_and_COMMs(6,COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
 &                                        COMM_index_2=PAR_COM_G_b_INDEX,&
@@ -275,32 +275,34 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
 &                           LOADED=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1),TOTAL=q%nbz,&
 &                           NCPU=PAR_COM_Q_INDEX%n_CPU)
  !
+
 #if defined _PHEL
-!
-! K-points (BZ)
-!
-call PARALLEL_index(PAR_IND_Xk_bz,(/Xk%nbz/),COMM=PAR_COM_Xk_bz_INDEX,CONSECUTIVE=CONSECUTIVE,NO_EMPTIES=.TRUE.)
-PAR_IND_Xk_bz_ID=PAR_COM_Xk_bz_INDEX%CPU_id
-!
-YAMBO_ALLOC(PAR_Xk_bz_index,(Xk%nbz))
-call PAR_build_index(PAR_IND_Xk_bz,Xk%nbz,PAR_Xk_bz_index,PAR_Xk_nbz)
-!
-call PARALLEL_live_message("K(bz)",ENVIRONMENT="Real_Time",&
+ !
+ ! K-points (BZ)
+ !
+ call PARALLEL_index(PAR_IND_Xk_bz,(/Xk%nbz/),COMM=PAR_COM_Xk_bz_INDEX,CONSECUTIVE=CONSECUTIVE,NO_EMPTIES=.TRUE.)
+ PAR_IND_Xk_bz_ID=PAR_COM_Xk_bz_INDEX%CPU_id
+ !
+ YAMBO_ALLOC(PAR_Xk_bz_index,(Xk%nbz))
+ call PAR_build_index(PAR_IND_Xk_bz,Xk%nbz,PAR_Xk_bz_index,PAR_Xk_nbz)
+ !
+ call PARALLEL_live_message("K(bz)",ENVIRONMENT="Real_Time",&
 &         LOADED=PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1),TOTAL=TOTAL_Nk,&
 &         NCPU=PAR_COM_Xk_bz_INDEX%n_CPU)
-!
-!.........................................................................
-!   "q" -> Q-points (IBZ)
-!.........................................................................
-!
-call PARALLEL_index(PAR_IND_Q_ibz,(/q%nibz/),COMM=PAR_COM_Q_ibz_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
-PAR_IND_Q_ibz_ID=PAR_COM_Q_ibz_INDEX%CPU_id
-PAR_nQ_ibz=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)
-!
-YAMBO_ALLOC(PAR_Q_ibz_index,(q%nibz))
-call PAR_build_index(PAR_IND_Q_ibz,q%nibz,PAR_Q_ibz_index,PAR_nQ_ibz)
-!
-call PARALLEL_live_message("Q(ibz)",ENVIRONMENT="Real_Time",&
+ !
+ !.........................................................................
+ !   "q" -> Q-points (IBZ)
+ !.........................................................................
+ !
+ write(*,*) q%nibz
+ call PARALLEL_index(PAR_IND_Q_ibz,(/q%nibz/),COMM=PAR_COM_Q_ibz_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+ PAR_IND_Q_ibz_ID=PAR_COM_Q_ibz_INDEX%CPU_id
+ PAR_nQ_ibz=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)
+ !
+ YAMBO_ALLOC(PAR_Q_ibz_index,(q%nibz))
+ call PAR_build_index(PAR_IND_Q_ibz,q%nibz,PAR_Q_ibz_index,PAR_nQ_ibz)
+ !
+ call PARALLEL_live_message("Q(ibz)",ENVIRONMENT="Real_Time",&
 &                           LOADED=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1),TOTAL=q%nibz,&
 &                           NCPU=PAR_COM_Q_ibz_INDEX%n_CPU)
 #endif

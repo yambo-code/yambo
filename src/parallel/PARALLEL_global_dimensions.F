@@ -3,22 +3,22 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
@@ -27,6 +27,9 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  use parallel_m,    ONLY:PAR_Q_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,PAR_K_range,PAR_n_bands,&
 &                        PAR_EH_range,PAR_Dip_ib,PAR_Dip_ib_lim,PAR_X_ib,PAR_X_iq,PAR_n_G_vectors, &
 &                        PAR_n_freqs
+#if defined _PHEL
+use parallel_m,     ONLY:PAR_PHEL_K_range,PAR_PHEL_Q_range
+#endif
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run
  use BS,            ONLY:BS_bands,BS_nT_at_k
  use X_m,           ONLY:X_ng
@@ -88,7 +91,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
 #endif
  if (ENVIRONMENT=="Response_T_space")                 PAR_n_v_bands= (/BS_bands(1),E%nbm/)
  !
- ! # G vectors 
+ ! # G vectors
  !-------------
  if (index(ENVIRONMENT, "Response_G_space")>0) PAR_n_G_vectors= X_ng
  !
@@ -151,6 +154,13 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
 #if defined _NL
  if (ENVIRONMENT=="Non_Linear"                      ) PAR_n_freqs =n_frequencies
+#endif
+ !
+#if defined _PHEL
+ if (ENVIRONMENT=="Real_Time"       ) then
+   PAR_PHEL_K_range=Xk%nbz
+   PAR_PHEL_Q_range=(/1,nqibz/)
+ endif
 #endif
  !
 end subroutine PARALLEL_global_dimensions

@@ -258,24 +258,6 @@ module interfaces
      real(SP),    pointer     :: BS_R_PL(:,:)
    end subroutine
    !
-#if !defined _PHEL
-   subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2,COMM_index_3,&
-&                                              COMM_index_4,COMM_index_5,COMM_A2A_1,COMM_A2A_2,&
-&                                              COMM_A2A_3,COMM_A2A_4)
-     use parallel_m,    ONLY:MPI_comm
-     integer                 :: n_elements
-     type(MPI_comm)          :: COMM_index_1
-     type(MPI_comm),optional :: COMM_index_2
-     type(MPI_comm),optional :: COMM_index_3
-     type(MPI_comm),optional :: COMM_index_4
-     type(MPI_comm),optional :: COMM_index_5
-     type(MPI_comm),optional :: COMM_A2A_1
-     type(MPI_comm),optional :: COMM_A2A_2
-     type(MPI_comm),optional :: COMM_A2A_3
-     type(MPI_comm),optional :: COMM_A2A_4
-   end subroutine
-   !
-#elif defined _PHEL
    subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2,COMM_index_3,&
 &                                              COMM_index_4,COMM_index_5,COMM_index_6,COMM_A2A_1,COMM_A2A_2,&
 &                                              COMM_A2A_3,COMM_A2A_4,COMM_A2A_5)
@@ -293,7 +275,6 @@ module interfaces
      type(MPI_comm),optional :: COMM_A2A_4
      type(MPI_comm),optional :: COMM_A2A_5
    end subroutine
-#endif
    !
    subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)
      use parallel_m, ONLY:PP_indexes,MPI_COMM

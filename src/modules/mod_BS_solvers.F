@@ -186,9 +186,8 @@ module BS_solvers
    subroutine BSS_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
-     use electrons, ONLY:E_SOC_nbands
      integer :: i_g
-     logical :: W_is_allocated,Z_is_allocated
+     logical :: W_is_allocated,Z_is_allocated,E_SOC_is_allocated
      YAMBO_ALLOC(BSS_dipoles,(BS_H_dim))
      BSS_dipoles = cZERO
      YAMBO_ALLOC(BSS_eh_table,(BS_K_dim,3+n_sp_pol-1))
@@ -197,11 +196,13 @@ module BS_solvers
      BSS_eh_table = 0
      BSS_eh_E     = rZERO
      BSS_eh_f     = rZERO
-     W_is_allocated=.FALSE.
-     Z_is_allocated=.FALSE.
+     W_is_allocated     = .FALSE.
+     Z_is_allocated     = .FALSE.
+     E_SOC_is_allocated = .FALSE.
      do i_g=1,BS_nT_grps
-       if (.not.W_is_allocated) W_is_allocated=allocated(BS_T_grp(i_g)%W)
-       if (.not.Z_is_allocated) Z_is_allocated=allocated(BS_T_grp(i_g)%Z)
+       if (.not.W_is_allocated    ) W_is_allocated     = allocated(BS_T_grp(i_g)%W)
+       if (.not.Z_is_allocated    ) Z_is_allocated     = allocated(BS_T_grp(i_g)%Z)
+       if (.not.E_SOC_is_allocated) E_SOC_is_allocated = allocated(BS_T_grp(i_g)%E_SOC_corr)
      enddo
      if (W_is_allocated) then
        YAMBO_ALLOC(BSS_eh_W,(BS_K_dim))
@@ -211,7 +212,7 @@ module BS_solvers
        YAMBO_ALLOC(BSS_eh_Z,(BS_K_dim))
        BSS_eh_Z = cZERO
      endif
-     if (E_SOC_nbands/=0) then
+     if (E_SOC_is_allocated) then
        YAMBO_ALLOC(BSS_eh_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
        BSS_eh_E_SOC_corr = rZERO
      endif

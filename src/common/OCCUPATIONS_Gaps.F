@@ -85,6 +85,12 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  !
  E%nbf=minval(Nbf_)
  E%nbm=maxval(Nbm_)
+#if defined _RT
+ if(all(E%nbc/=0)) then
+   E%nbf=min(E%nbc(1)-1,E%nbf)
+   E%nbm=max(E%nbc(2)  ,E%nbm)
+ endif
+#endif
  !
  if (E%Nbm+1 > E%nb) call warning(' No completely empy band found. Include more states in the DFT run?')
  !

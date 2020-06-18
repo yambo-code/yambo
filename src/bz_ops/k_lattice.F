@@ -339,6 +339,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  ! CLEAN
  !
  call k_ibz2bz(Xk,"d",.false.)
+ call k_ibz2bz(Xk,'i',.true.)
  return
  !
 1 continue
@@ -348,6 +349,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    k_lattice=-1
  endif
  call k_ibz2bz(Xk,"d",.false.)
+ !
+ call k_ibz2bz(Xk,'i',.true.)
  !
  contains
    !

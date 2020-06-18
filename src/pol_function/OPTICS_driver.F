@@ -31,7 +31,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,BZ_DbGd_tot_nk_levels
+ use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use DIPOLES,       ONLY:DIPOLE_t
@@ -71,7 +71,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  ! Basical Checks
  !
- call X_pre_setup(Xen,X)
+ call X_pre_setup(Xen,Xk,X)
  !
  allocate(X_par(1))
  !
@@ -257,7 +257,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! BZ Double Grid
    !
-   if (use_X_DbGd) call msg('o eps_q eel_q fxc alpha','# DbGd| Energy Points   ',BZ_DbGd_tot_nk_levels,INDENT=0)
+   if (use_X_DbGd) then
+     call msg('o eps_q eel_q fxc alpha','# DbGd| IBZ Energy points',Xk%nibz+Xk%nibz_FineGd,INDENT=0)
+     call msg('o eps_q eel_q fxc alpha','#        BZ Energy points',Xk%nbz+Xk%nbz_FineGd,INDENT=0)
+   endif
    !
    ! Titles 
    !

@@ -26,10 +26,11 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
  use pars,           ONLY:SP,zero_dfl,rZero
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ
+ use R_lattice,      ONLY:bz_samp
  use hamiltonian,    ONLY:B_mat_index
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         l_RT_uses_E_DbGd,DbGd_ibz_coo,RT_occupations_locked,&
+&                         l_RT_uses_E_FineGd,RT_occupations_locked,RT_E_and_k,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_life_delta_occupations,l_initial_equilibrium,q_weight_RT,&
 &                         RT_eh_en,RT_ibz_coo,RT_Nk_ibz,RT_bands
@@ -45,7 +46,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
  !
  ! Work Space ...
  !
- integer  :: i_n,i_np,ik_rim,ip_rim,i1,i2
+ integer  :: i_n,i_np,ik_rim,ip_rim
  real(SP) :: P_ph_abs,P_ph_emit,DELTA_E,DELTA_W,pre_factor,&
 &            TMP_Hole_lifetime(2),TMP_Electron_lifetime(2),f_kmq,Hole_f_kmq
  real(SP), external :: RT_G_retarded_convolution
@@ -64,13 +65,13 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
      !
      if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n,i_np,RT_bands) ) ) cycle
      !
-     if (.not. l_RT_uses_E_DbGd) then
+     if (.not. l_RT_uses_E_FineGd) then
        !
-       if(E%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. E%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
-       if(E%E(i_n ,ik    ,1)<RT_eh_en(1) .or. E%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
+       if(RT_E_and_k%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
+       if(RT_E_and_k%E(i_n ,ik    ,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
        !
-       DELTA_E=    E%E(i_n,ik,1) -    E%E(i_np,ik_m_q,1)
-       DELTA_W=abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik_m_q,1))
+       DELTA_E=RT_E_and_k%E(i_n,ik,1)-RT_E_and_k%E(i_np,ik_m_q,1)
+       DELTA_W=RT_E_and_k%W(i_n,ik,1)+RT_E_and_k%W(i_np,ik_m_q,1)
        !
      endif
      !
@@ -91,16 +92,13 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
          !
          if (RT_occupations_locked(i_np,ip_rim)) cycle
          !
-         if (l_RT_uses_E_DbGd) then
+         if (l_RT_uses_E_FineGd) then
            !
-           i1=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-           i2=ip_rim-RT_ibz_coo(ik_m_q,1)+DbGd_ibz_coo(ik_m_q,1)
+           if(RT_E_and_k%E(i_np,ip_rim,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
+           if(RT_E_and_k%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
            !
-           if(E%E_DbGd(i_np,i2,1)<RT_eh_en(1) .or. E%E_DbGd(i_np,i2,1)>RT_eh_en(2)) cycle
-           if(E%E_DbGd(i_n ,i1,1)<RT_eh_en(1) .or. E%E_DbGd(i_n ,i1,1)>RT_eh_en(2)) cycle
-           !
-           DELTA_E=    E%E_DbGd(i_n,i1,1) -    E%E_DbGd(i_np,i2,1)
-           DELTA_W=abs(E%W_DbGd(i_n,i1,1))+abs(E%W_DbGd(i_np,i2,1))
+           DELTA_E=RT_E_and_k%E(i_n,ik_rim,1)-RT_E_and_k%E(i_np,ip_rim,1)
+           DELTA_W=RT_E_and_k%W(i_n,ik_rim,1)+RT_E_and_k%W(i_np,ip_rim,1)
            !
          endif
          !

@@ -71,6 +71,11 @@ subroutine electrons_bands(Xk,Xen)
  !=====================================
  call parser('BANDS_built_in',BANDS_built_in)
  !
+ call E_reset(GRID_E)
+ call E_reset(CIRCUIT_E)
+ call E_reset(CIRCUIT_DE)
+ !call E_reset(CIRCUIT_E_db)
+ !
  if (.not.file_exists(trim(CIRCUIT_E_DB_path)//"/SAVE/ns.db1")) CIRCUIT_E_DB_path="none"
  !
  BANDS_from_db       = trim(CIRCUIT_E_DB_path)/="none"

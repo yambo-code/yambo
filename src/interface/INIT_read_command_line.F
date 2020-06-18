@@ -420,8 +420,6 @@ subroutine INIT_read_command_line(rstr,init_)
        if ( index(rstr_piece(i1+1),'h') > 0 .or. trim(rstr_piece(i1+1)) == 'a') l_elphoton_scatt=.true.
 #endif
 #if defined _RT
-       !if (.not.l_elph_scatt.and..not.l_elel_scatt.and..not.l_elphoton_scatt) l_elph_scatt=.true.
-       if (l_elphoton_scatt) call initactivate(1,'el_photon_scatt')
        if (l_elph_scatt)     call initactivate(1,'el_ph_scatt')
        if (l_elel_scatt)     call initactivate(1,'el_el_scatt')
 #endif

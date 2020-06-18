@@ -31,11 +31,11 @@ subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,E,ph_freq,Gkkp_sq)
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ
  use hamiltonian,    ONLY:B_mat_index
- use real_time,      ONLY:l_RT_uses_E_DbGd,DbGd_ibz_coo,RT_occupations_locked,&
+ use real_time,      ONLY:l_RT_uses_E_FineGd,RT_occupations_locked,RT_E_and_k,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_life_delta_occupations,l_initial_equilibrium,&
 &                         RT_eh_en,RT_ibz_coo,RT_Nk_ibz,RT_bands
-use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
+ use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
 &                         P_E_sp_res_lifetime,P_E_sp_ares_lifetime,P_E_eh_lifetime,&
 &                         EQ_P_E_sp_res_lifetime,EQ_P_E_sp_ares_lifetime,EQ_P_E_eh_lifetime
  use parallel_m,     ONLY:PAR_IND_B_mat
@@ -50,7 +50,7 @@ use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
  !
  ! Work Space ...
  !
- integer  :: i_n,i_np,ik_rim,ip_rim,i1,i2
+ integer  :: i_n,i_np,ik_rim,ip_rim
  real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,f_nkq,Hole_f_nkq,f_mk,Hole_f_mk,&
 &            TMP_Res_lifetime,TMP_Ares_lifetime,TMP_eh_lifetime,N_q(2)
  !
@@ -74,13 +74,13 @@ use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
      !
      if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n,i_np,RT_bands) ) ) cycle
      !
-     if (.not. l_RT_uses_E_DbGd) then
+     if (.not. l_RT_uses_E_FineGd) then
        !
-       if(E%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. E%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
-       if(E%E(i_n ,ik    ,1)<RT_eh_en(1) .or. E%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
+       if(RT_E_and_k%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
+       if(RT_E_and_k%E(i_n ,ik    ,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
        !
-       DELTA_E=    E%E(i_n,ik,1) -    E%E(i_np,ik_m_q,1)
-       DELTA_W=abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik_m_q,1))
+       DELTA_E=RT_E_and_k%E(i_n,ik,1)-RT_E_and_k%E(i_np,ik_m_q,1)
+       DELTA_W=RT_E_and_k%W(i_n,ik,1)+RT_E_and_k%W(i_np,ik_m_q,1)
        !
      endif
      !
@@ -110,16 +110,13 @@ use PH_real_time,    ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
          !
          if (RT_occupations_locked(i_np,ip_rim)) cycle
          !
-         if (l_RT_uses_E_DbGd) then
+         if (l_RT_uses_E_FineGd) then
            !
-           i1=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-           i2=ip_rim-RT_ibz_coo(ik_m_q,1)+DbGd_ibz_coo(ik_m_q,1)
+           if(RT_E_and_k%E(i_np,ip_rim,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
+           if(RT_E_and_k%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
            !
-           if(E%E_DbGd(i_np,i2,1)<RT_eh_en(1) .or. E%E_DbGd(i_np,i2,1)>RT_eh_en(2)) cycle
-           if(E%E_DbGd(i_n ,i1,1)<RT_eh_en(1) .or. E%E_DbGd(i_n ,i1,1)>RT_eh_en(2)) cycle
-           !
-           DELTA_E=    E%E_DbGd(i_n,i1,1) -    E%E_DbGd(i_np,i2,1)
-           DELTA_W=abs(E%W_DbGd(i_n,i1,1))+abs(E%W_DbGd(i_np,i2,1))
+           DELTA_E=RT_E_and_k%E(i_n,ik_rim,1)-RT_E_and_k%E(i_np,ip_rim,1)
+           DELTA_W=RT_E_and_k%W(i_n,ik_rim,1)+RT_E_and_k%W(i_np,ip_rim,1)
            !
          endif
          !

@@ -95,6 +95,7 @@ subroutine RT_time_step_update( )
    !call SETUP_RT_IO_type(OBS_RT_IO_t,.FALSE.)
    call SETUP_RT_IO_type(CARR_RT_IO_t,.FALSE.)
    call SETUP_RT_IO_type(OUTPUT_RT_IO_t,.FALSE.)
+   GF_RT_IO_t%INTERVAL_time=TIME_adjust(GF_RT_IO_t%INTERVAL_time,CARR_RT_IO_t%INTERVAL_time)
    call SETUP_RT_IO_type(GF_RT_IO_t,.FALSE.)
    !
    CARR_RT_IO_t%last_point   = NE_i_time

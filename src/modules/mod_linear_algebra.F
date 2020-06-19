@@ -24,7 +24,8 @@
 module linear_algebra
  !
  use pars,       ONLY:SP,schlen
- use cuda_m
+ !
+#include<dev_defs.h>
 #include<memory.h>
  !
  integer, parameter :: USE_LK=1
@@ -53,16 +54,14 @@ module linear_algebra
    integer                  :: i_fail
    integer                  :: dim
    !
-#ifdef _CUDA
-   real(SP),    allocatable, device :: v_real_d(:)
-   real(SP),    allocatable, device :: vp_real_d(:)
-   complex(SP), allocatable, device :: v_cmplx_d(:)
-   complex(SP), allocatable, device :: vp_cmplx_d(:)
-   complex(SP), allocatable, device :: m1_cmplx_d(:,:)
-   complex(SP), allocatable, device :: m2_cmplx_d(:,:)
-   integer    , allocatable, device :: v_int_d(:)
-   integer    , allocatable, device :: vp_int_d(:)
-#endif
+   real(SP),    allocatable DEV_ATTRIBUTE :: v_real_d(:)
+   real(SP),    allocatable DEV_ATTRIBUTE :: vp_real_d(:)
+   complex(SP), allocatable DEV_ATTRIBUTE :: v_cmplx_d(:)
+   complex(SP), allocatable DEV_ATTRIBUTE :: vp_cmplx_d(:)
+   complex(SP), allocatable DEV_ATTRIBUTE :: m1_cmplx_d(:,:)
+   complex(SP), allocatable DEV_ATTRIBUTE :: m2_cmplx_d(:,:)
+   integer    , allocatable DEV_ATTRIBUTE :: v_int_d(:)
+   integer    , allocatable DEV_ATTRIBUTE :: vp_int_d(:)
    !
  end type LALGEBRA_WS
  !
@@ -78,26 +77,46 @@ module linear_algebra
  contains
    !
    subroutine LINEAR_ALGEBRA_WS_reset(WS)
+     use drivers,   ONLY:l_nl_optics,l_real_time
      type(LALGEBRA_WS) :: WS
-     YAMBO_FREE(WS%v_real)
-     YAMBO_FREE(WS%vp_real)
-     YAMBO_FREE(WS%v_cmplx)
-     YAMBO_FREE(WS%vp_cmplx)
-     YAMBO_FREE(WS%m1_cmplx)
-     YAMBO_FREE(WS%m2_cmplx)
-     YAMBO_FREE(WS%v_int)
-     YAMBO_FREE(WS%vp_int)
+     if(.not.(l_nl_optics.or.l_real_time)) then
+       YAMBO_FREE(WS%v_real)
+       YAMBO_FREE(WS%vp_real)
+       YAMBO_FREE(WS%v_cmplx)
+       YAMBO_FREE(WS%vp_cmplx)
+       YAMBO_FREE(WS%m1_cmplx)
+       YAMBO_FREE(WS%m2_cmplx)
+       YAMBO_FREE(WS%vp_int)
+       YAMBO_FREE(WS%v_int)
+       !
+       YAMBO_FREE(WS%v_real_d)
+       YAMBO_FREE(WS%vp_real_d)
+       YAMBO_FREE(WS%v_cmplx_d)
+       YAMBO_FREE(WS%vp_cmplx_d)
+       YAMBO_FREE(WS%m1_cmplx_d)
+       YAMBO_FREE(WS%m2_cmplx_d)
+       YAMBO_FREE(WS%v_int_d)
+       YAMBO_FREE(WS%vp_int_d)
+     else
+       if(allocated(WS%v_real))   deallocate(WS%v_real)
+       if(allocated(WS%vp_real))  deallocate(WS%vp_real)
+       if(allocated(WS%v_cmplx))  deallocate(WS%v_cmplx)
+       if(allocated(WS%vp_cmplx)) deallocate(WS%vp_cmplx)
+       if(allocated(WS%m1_cmplx)) deallocate(WS%m1_cmplx)
+       if(allocated(WS%m2_cmplx)) deallocate(WS%m2_cmplx)
+       if(allocated(WS%vp_int))   deallocate(WS%vp_int)
+       if(allocated(WS%v_int))    deallocate(WS%v_int)
+       !
+       if(allocated(WS%v_real_d))   deallocate(WS%v_real_d)
+       if(allocated(WS%vp_real_d))  deallocate(WS%vp_real_d)
+       if(allocated(WS%v_cmplx_d))  deallocate(WS%v_cmplx_d)
+       if(allocated(WS%vp_cmplx_d)) deallocate(WS%vp_cmplx_d)
+       if(allocated(WS%m1_cmplx_d)) deallocate(WS%m1_cmplx_d)
+       if(allocated(WS%m2_cmplx_d)) deallocate(WS%m2_cmplx_d)
+       if(allocated(WS%vp_int_d))   deallocate(WS%vp_int_d)
+       if(allocated(WS%v_int_d))    deallocate(WS%v_int_d)
+     endif
      !
-#ifdef _CUDA
-     YAMBO_FREE(WS%v_real_d)
-     YAMBO_FREE(WS%vp_real_d)
-     YAMBO_FREE(WS%v_cmplx_d)
-     YAMBO_FREE(WS%vp_cmplx_d)
-     YAMBO_FREE(WS%m1_cmplx_d)
-     YAMBO_FREE(WS%m2_cmplx_d)
-     YAMBO_FREE(WS%v_int_d)
-     YAMBO_FREE(WS%vp_int_d)
-#endif
    end subroutine
    !
    subroutine LINEAR_ALGEBRA_error(calling_subr,message_)

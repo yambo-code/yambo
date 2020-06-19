@@ -25,8 +25,8 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
 &                              V_MATRIX,PV_MATRIX,G,k,en,TRANS,Double_Grid,nK_mem)
  !
  use pars,           ONLY:SP,cI,cZERO
- use real_time,      ONLY:DbGd_ibz_coo,RT_Nk_ibz,RT_ibz_coo,l_RT_uses_E_DbGd,&
-&                         RT_bands,RT_nbands
+ use real_time,      ONLY:RT_Nk_ibz,RT_ibz_coo,l_RT_uses_E_FineGd,&
+&                         RT_bands,RT_nbands,RT_ibz_dupl
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_n_states
  use electrons,      ONLY:n_sp_pol,n_spin,levels
@@ -58,20 +58,20 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  !
  ! Work Space
  !
- integer     :: ib,ibp,ik,RT_bands2,ik_ibz,i_sp_pol,iE_rim,i_cmp
- real(SP)    :: deltaE,deltaE_DbGd
+ integer     :: ib,ibp,ik,RT_bands2,ik_ibz,i_sp_pol,iE_FineGd,i_cmp
+ real(SP)    :: deltaE,deltaE_FineGd
  complex(SP) :: Hk(N_V,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)),VALUE_tmp(N_V), &
 &               Hk_tmp(RT_bands(2),RT_bands(2)),                                    &
 &               Hk_vec_tmp(N_V,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- logical     :: l_rim_energy,l_rim_dipole
+ logical     :: l_DbGd_energy,l_DbGd_dipole
  !
  call timing('RT average Op',OPR='start')
  !
- l_rim_energy=.false.
- l_rim_dipole=.false.
- if(present(Double_Grid).and.l_RT_uses_E_DbGd) then
-   if(trim(Double_Grid)=='ENERGY') l_rim_energy=.true.
-   if(trim(Double_Grid)=='DIPOLE') l_rim_dipole=.true.
+ l_DbGd_energy=.false.
+ l_DbGd_dipole=.false.
+ if(present(Double_Grid).and.l_RT_uses_E_FineGd) then
+   if(trim(Double_Grid)=='ENERGY') l_DbGd_energy=.true.
+   if(trim(Double_Grid)=='DIPOLE') l_DbGd_dipole=.true.
  endif
  !
  if (N_V==0) call error('RT_average_operator: not a valid call')
@@ -92,28 +92,27 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
      call make_Hk_matrix(ik_ibz,i_sp_pol)
      !
      do i_cmp=1,N_V
-       !
        do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
          !
-         if(l_rim_energy) then
-           iE_rim=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
+         if(l_DbGd_energy.and.RT_ibz_coo(ik_ibz,1)/=ik) then
+           iE_FineGd=ik-ik_ibz+sum(RT_ibz_dupl(:ik_ibz))
            do ib=RT_bands(1),RT_bands(2)
-             Hk(1,ib,ib)=Hk_tmp(ib,ib)-en%E(ib,ik_ibz,i_sp_pol)+en%E_DbGd(ib,iE_rim,i_sp_pol)
+             Hk(1,ib,ib)=Hk_tmp(ib,ib)-en%E(ib,ik_ibz,i_sp_pol)+en%E_FineGd(ib,iE_FineGd,i_sp_pol)
              do ibp=ib+1,RT_bands(2)
                Hk(1,ib,ibp)=Hk_tmp(ib,ibp)
                Hk(1,ibp,ib)=Hk_tmp(ibp,ib)
              enddo
            enddo
-         else if(l_rim_dipole) then
-           iE_rim=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
+         else if(l_DbGd_dipole.and.RT_ibz_coo(ik_ibz,1)/=ik) then
+           iE_FineGd=ik-ik_ibz+sum(RT_ibz_dupl(:ik_ibz))
            do ib=RT_bands(1),RT_bands(2)
              Hk(i_cmp,ib,ib)=Hk_vec_tmp(i_cmp,ib,ib)
              do ibp=ib+1,RT_bands(2)
-               deltaE     =en%E(ib,ik_ibz,i_sp_pol)     -en%E(ibp,ik_ibz,i_sp_pol)
-               deltaE_DbGd=en%E_DbGd(ib,iE_rim,i_sp_pol)-en%E_DbGd(ibp,iE_rim,i_sp_pol)
-               if(abs(deltaE)>1.E-5_SP .and. abs(deltaE_DbGd)>1.E-5_SP) then
-                 Hk(i_cmp,ib,ibp)=Hk_vec_tmp(i_cmp,ib,ibp)*deltaE/deltaE_DbGd
-                 Hk(i_cmp,ibp,ib)=Hk_vec_tmp(i_cmp,ibp,ib)*deltaE/deltaE_DbGd
+               deltaE       =en%E(ib,ik_ibz,i_sp_pol)          -en%E(ibp,ik_ibz,i_sp_pol)
+               deltaE_FineGd=en%E_FineGd(ib,iE_FineGd,i_sp_pol)-en%E_FineGd(ibp,iE_FineGd,i_sp_pol)
+               if(abs(deltaE)>1.E-5 .and. abs(deltaE_FineGd)>1.E-5) then
+                 Hk(i_cmp,ib,ibp)=Hk_vec_tmp(i_cmp,ib,ibp)*deltaE/deltaE_FineGd
+                 Hk(i_cmp,ibp,ib)=Hk_vec_tmp(i_cmp,ibp,ib)*deltaE/deltaE_FineGd
                else
                  Hk(i_cmp,ibp,ib)=Hk_vec_tmp(i_cmp,ibp,ib)
                endif

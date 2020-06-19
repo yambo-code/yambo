@@ -105,7 +105,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
    !
    ! Evaluate @ T+dt1
    !
-   call RT_Glesser_evolve(E,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),delta_T1,delta_T3)
+   call RT_Glesser_evolve(E,k,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),delta_T1,delta_T3)
    !
    ! GPL_EXCLUDE_START
    !
@@ -141,7 +141,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
  !
  ! final step @ T+dt
  !
- call RT_Glesser_evolve(E,dG_old,dG_tmp(:,:,:,Integrator_nsteps),dG_tmp(:,:,:,Integrator_nsteps+1), &
+ call RT_Glesser_evolve(E,k,dG_old,dG_tmp(:,:,:,Integrator_nsteps),dG_tmp(:,:,:,Integrator_nsteps+1), &
 &                                               RT_dyn_step,RT_dyn_step*RWA_table(Integrator_nsteps+1))
  !
  call RT_build_dG_new()

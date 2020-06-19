@@ -128,7 +128,7 @@ integer function io_DB1(E,k,ID)
    !
    if (write_is_on(ID)) code_revision_local=code_revision
    call io_elemental(ID,DB_I0=io_code_revision(ID,1),I0=code_revision_local)
-   ! 
+   !
    call io_elemental(ID,I0=E%nb,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' Bands                           ')
    call io_elemental(ID,I0=k%nibz,CHECK=.true.,OP=(/"=="/),&

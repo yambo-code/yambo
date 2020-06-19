@@ -33,7 +33,7 @@ subroutine K_compress(iq,i_steps,n_steps,ID)
  integer, intent(in)    :: iq,i_steps,n_steps
  integer, intent(inout) :: ID
  !
- integer :: i_block,i_Tgrp_p,i_Tp,i_Tk
+ integer :: i_block,i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk
  !
  if (n_steps>0) call live_timing('Kernel compression',n_steps)
  !

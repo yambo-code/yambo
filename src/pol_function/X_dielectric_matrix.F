@@ -110,7 +110,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    X%ordering='R'
  endif
  !
- call X_pre_setup(Xen,X)
+ call X_pre_setup(Xen,Xk,X)
  !
  ! Build frequency range only if Xw%p was not already allocated
  ! like in LifeTimes calculations or when self_detect_E_range=.TRUE. (real axis GW)

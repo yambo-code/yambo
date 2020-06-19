@@ -169,7 +169,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! Rim energies and kpts
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,ID=ID)
- i_err_DbGd=io_Double_Grid(en,Xk,ID) 
+ i_err_DbGd=io_Double_Grid(en,k,ID)
  ! 
  ! Allocate and fill the k_pt/q_pt array for the DBs header
  !
@@ -199,7 +199,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  if (l_bz_grids) call k_grids(en,k,Xk,q)
  !
- if (l_map_kpts) call k_map_fine_to_coarse(Xk,Xen)
+ if (l_map_kpts) call k_map_fine_to_coarse_driver(Xk,Xen)
  !
  if (l_map_WFs) call WF_map_perturbative_SOC(Xk,Xen)
  !

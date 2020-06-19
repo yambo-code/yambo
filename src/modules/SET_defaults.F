@@ -56,10 +56,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets,k_map
- use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,&
-&                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
-&                     eval_magn,E_SOC_nbands
- use parallel_m, ONLY:ncpu,CPU_str_reset,PARALLEL_host_name
+ use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
+ use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,com_path,repfile,grid_paths,fat_log
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,log_as_a_file
@@ -77,7 +75,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
-&                     BS_K_is_ALDA,BSE_mode,L_kind,BS_K_cutoff
+&                     BS_K_is_ALDA,BSE_mode,L_kind,BS_K_cutoff,BS_perturbative_SOC
  use TDDFT,      ONLY:FXC_type,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
@@ -199,7 +197,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! Node name
  !
- call PARALLEL_host_name( )
+ call CREATE_hosts_COMM( )
  !
  ! ZEROs 
  !
@@ -319,10 +317,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  n_spinor=1
  n_spin_den=1
  l_spin_orbit       = .FALSE.
- BZ_DbGd_nbands=0
- BZ_DbGd_tot_nk_levels=0
- BZ_ASSOCIATED_nkpts=0
- E_SOC_nbands=0
  filled_tresh=0.00001
  !
  ! Magnetization and density
@@ -463,6 +457,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_damp_reference=0._SP
  BS_K_is_ALDA=.FALSE.
  BS_not_const_eh_f=.FALSE.
+ BS_perturbative_SOC=.FALSE.
  Haydock_threshold=-0.02_SP
  Haydock_iterIO=100
  BSS_Vnl_included=.FALSE.

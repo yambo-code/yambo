@@ -3,22 +3,22 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine RT_start_and_restart(E,k,q)
@@ -33,7 +33,7 @@ subroutine RT_start_and_restart(E,k,q)
  !   > RESTART from a previous run
  ! [4] Initialize the bare Hartree and XC
  ! [5] Initialize the fields
- ! [6] (Eventually) load the retarded Green Functions 
+ ! [6] (Eventually) load the retarded Green Functions
  !
  use pars,           ONLY:SP,cZERO,rZERO
  use units,          ONLY:HA2EV,AUT2FS
@@ -47,14 +47,13 @@ subroutine RT_start_and_restart(E,k,q)
 &                         SETUP_RT_IO_type,RT_control_alloc,RT_control_free
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
-&                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,l_RT_is_WFfree, &
+&                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,RT_E_and_k,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
-&                         Gr_kind,l_RT_uses_E_DbGd,RT_E_and_k,&
-&                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
+&                         Gr_kind,l_RT_is_WFfree,RT_ibz_dupl,&
+&                         RT_E_occupations_reference,RT_nk,G_lesser,l_RT_uses_E_FineGd, &
 &                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
-&                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,&
-&                         NE_time_step_update_jump,RT_life_extrap_times,&
-&                         l_velocity_gauge_corr
+&                         RT_eh_en,G_MEM_steps,RT_bands,&
+&                         NE_time_step_update_jump,RT_life_extrap_times,l_velocity_gauge_corr                  
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,&
@@ -109,8 +108,8 @@ subroutine RT_start_and_restart(E,k,q)
    !==========================
    do i_sp_pol=1,n_sp_pol
      do ik=1,nXkibz
-       call V_real_space_to_H(ik,i_sp_pol,HARTREE0(:,:,ik,i_sp_pol),WF,'def',V=V_hartree_sc) 
-       call V_real_space_to_H(ik,i_sp_pol,     XC0(:,:,ik,i_sp_pol),WF,'xc ',Vxc=V_xc) 
+       call V_real_space_to_H(ik,i_sp_pol,HARTREE0(:,:,ik,i_sp_pol),WF,'def',V=V_hartree_sc)
+       call V_real_space_to_H(ik,i_sp_pol,     XC0(:,:,ik,i_sp_pol),WF,'xc ',Vxc=V_xc)
      enddo
    enddo
    !
@@ -126,7 +125,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
  endif
  !
- ! Perform a first I/O to check which DBs are present. 
+ ! Perform a first I/O to check which DBs are present.
  !=====================================================
  !
  RESTART=.FALSE.
@@ -157,12 +156,12 @@ subroutine RT_start_and_restart(E,k,q)
  !
  if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = RESTART.and.(io_THETA==0)
  !
- ! Starting point 
+ ! Starting point
  !================
  !
  if (RESTART) then
    !
-   ! I read NE_i_time, NE_time and all infos on time status from section 2 of the databases. 
+   ! I read NE_i_time, NE_time and all infos on time status from section 2 of the databases.
    ! The important DB is the one of the Green function and it must be the only one with MODE=DUMP.
    ! From it I reconstruct everything.
    !
@@ -225,7 +224,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
    nt=RT_Lifetimes_evaluation_plan( )
    !
-   ! Update occupations after loading from DB 
+   ! Update occupations after loading from DB
    !==========================================
    !
    call RT_initialize_local_occupations()
@@ -296,13 +295,8 @@ subroutine RT_start_and_restart(E,k,q)
  !================
  if( all(RT_eh_en(:)==0._SP) ) then
    ! Case A: was not defined in input
-   if (l_RT_uses_E_DbGd) then
-     RT_eh_en(1)=minval(E%E_DbGd(RT_bands(1):RT_bands(2),:,:)) 
-     RT_eh_en(2)=maxval(E%E_DbGd(RT_bands(1):RT_bands(2),:,:)) 
-   else
-     RT_eh_en(1)=minval(E%E(RT_bands(1):RT_bands(2),:,:)) 
-     RT_eh_en(2)=maxval(E%E(RT_bands(1):RT_bands(2),:,:)) 
-   endif
+   RT_eh_en(1)=minval(RT_E_and_k%E(RT_bands(1):RT_bands(2),:,1))
+   RT_eh_en(2)=maxval(RT_E_and_k%E(RT_bands(1):RT_bands(2),:,1))
  else
    ! Case B: was defined in input
    RT_eh_en(1)=RT_eh_en(1)+E%E_VBM(1)
@@ -338,6 +332,8 @@ subroutine RT_start_and_restart(E,k,q)
  contains
    !
    subroutine RT_initialize_local_more()
+     !
+     implicit none
      !
      G_lesser          =cZERO
      G_lesser_reference=cZERO
@@ -386,8 +382,10 @@ subroutine RT_start_and_restart(E,k,q)
    !
    subroutine RT_set_G_lesser()
      !
-     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib
-     real(SP):: Energy,f_occ,f_occ_ref,Width
+     implicit none
+     !
+     integer :: ik_RT_DbGd,ik_FineGd,ib
+     real(SP):: Energy,f_occ,f_occ_ref,Width,kpt(3)
      !
      ! Defined from occupations %f
      ! In case RT_apply has been used the reference is
@@ -398,21 +396,21 @@ subroutine RT_start_and_restart(E,k,q)
          !
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
            !
-           ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-           !
-           if (l_RT_uses_E_DbGd) then
+           if (ik_RT_DbGd/=RT_ibz_coo(ik,1)) then
              !
-             if (allocated(E%W))  E%W_DbGd(ib,ik_E_DbGd,1)     = abs(E%W(ib,ik,1))
+             ik_FineGd=ik_RT_DbGd-ik+sum(RT_ibz_dupl(:ik))
              !
-             Energy    = E%E_DbGd(ib,ik_E_DbGd,1)
-             f_occ     = E%f_DbGd(ib,ik_E_DbGd,1)
+             if (allocated(E%W))  E%W_FineGd(ib,ik_FineGd,1)     = abs(E%W(ib,ik,1))
+             !
+             kpt       = k%pt_FineGd(ik_FineGd,:)
+             Energy    = E%E_FineGd(ib,ik_FineGd,1)
+             f_occ     = E%f_FineGd(ib,ik_FineGd,1)
              f_occ_ref = f_occ
              Width     = 0._SP
-             if (allocated(E%fo)) f_occ_ref = E%f_DbGd(ib,ik_E_DbGd,1)-E%df_DbGd(ib,ik_E_DbGd,1)
-             if (allocated(E%W))  Width     = abs(E%W_DbGd(ib,ik_E_DbGd,1))
-             !
+             if (allocated(E%fo)) f_occ_ref = E%f_FineGd(ib,ik_FineGd,1)-E%df_FineGd(ib,ik_FineGd,1)
+             if (allocated(E%W))  Width     = abs(E%W_FineGd(ib,ik_FineGd,1))
            else
-             !
+             kpt       = k%pt(ik,:)
              Energy    = E%E(ib,ik,1)
              f_occ     = E%f(ib,ik,1)
              f_occ_ref = f_occ
@@ -423,7 +421,8 @@ subroutine RT_start_and_restart(E,k,q)
            endif
            !
            RT_E_and_k%E(ib,ik_RT_DbGd,1) = Energy
-           RT_E_and_k%W(ib,ik_RT_DbGd,1) = Width
+           RT_E_and_k%W(ib,ik_RT_DbGd,1) = Width 
+           RT_E_and_k%k(:,ik_RT_DbGd)    = kpt
            !
            G_lesser_reference(ib,ib,ik_RT_DbGd) = cmplx(0.,f_occ_ref,SP)
            !
@@ -447,8 +446,10 @@ subroutine RT_start_and_restart(E,k,q)
      use real_time,  ONLY:l_RT_relax_time_approx,RT_RTA_chem,RT_RTA_temp, &
 &                         RT_RTA_E_occ_infty,RT_RTA_H_occ_infty
      !
+     implicit none
+     !
      real(SP):: En
-     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib,Nk(2)
+     integer :: ik,ik_RT_DbGd,ik_FineGd,ib,Nk(2)
      !
      ! Occupations are defined from G_lesser and G_lesser_reference
      !
@@ -469,9 +470,12 @@ subroutine RT_start_and_restart(E,k,q)
        do ib=RT_bands(1),RT_bands(2)
          do ik=1,k%nibz
            do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-             ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-             if (     l_RT_uses_E_DbGd) En=E%E_DbGd(ib,ik_E_DbGd,1)
-             if (.not.l_RT_uses_E_DbGd) En=E%E(ib,ik,1)
+             if (ik_RT_DbGd/=RT_ibz_coo(ik,1)) then
+               ik_FineGd=ik_RT_DbGd-ik+sum(RT_ibz_dupl(:ik))
+               En=E%E_FineGd(ib,ik_FineGd,1)
+             else 
+               En=E%E(ib,ik,1)
+             endif
              RT_RTA_E_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(  En-E%E_CBm(1)-RT_RTA_chem(1) ,RT_RTA_temp(1))*spin_occ
              RT_RTA_H_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(-(En-E%E_VBM(1)-RT_RTA_chem(2)),RT_RTA_temp(2))*spin_occ
            enddo

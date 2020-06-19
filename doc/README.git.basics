@@ -39,8 +39,8 @@ diff:
 
 I am in branch PIPPO
 
-git diff ...bug-fixes src/io/io_DIPOLE.F (new commits after last merge of bug-fixes)
-git diff bug-fixes... src/io/io_DIPOLE.F (commit of PIPPO)
+git diff ...bug-fixes src/io/io_DIPOLE.F (changes in bug-fixes after last merge of bug-fixes into PIPPO)
+git diff bug-fixes... src/io/io_DIPOLE.F (changes in PIPPO     after last merge of PIPPO into bug-fixes)
 
 LOG
 ====

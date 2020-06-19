@@ -25,7 +25,7 @@
 AC_DEFUN([AC_YAMBO_LIBRARIES],[
 
 DRIVER_LIBS="$PWD/lib/libdriver.a"
-DRIVER_INCS="-I$PWD/lib/yambo/driver/include/ -I$PWD/lib/yambo/driver/yambo/include/"
+DRIVER_INCS="-I$PWD/lib/yambo/driver/include/ -I$PWD/lib/yambo/driver/src/headers/ -I$PWD/lib/yambo/driver/include/yambo"
 AC_SUBST(DRIVER_LIBS)
 AC_SUBST(DRIVER_INCS)
 

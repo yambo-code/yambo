@@ -114,7 +114,6 @@ include config/mk/functions/mk_external_lib.mk
 #
 # Yambo LIBS
 include config/mk/functions/mk_external_yambo_lib.mk
-include config/mk/functions/mk_external_yambo_lib_IO.mk
 #
 # Final exe's
 include config/mk/functions/mk_exe.mk

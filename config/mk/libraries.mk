@@ -1,8 +1,11 @@
-EXT_LIBS   = libxc lapack fftw fftqe yaml futile iotk hdf5 netcdf etsf_io blacs scalapack petsc slepc
-INT_LIBS   = qe_pseudo slatec math77 local
-YAMBO_LIBS = io driver
-YLIBIO     = modules Yio
-YLIBIO_LD  = modules Yio
+EXT_LIBS      = yambo_driver libxc lapack fftw fftqe yaml futile iotk hdf5 netcdf etsf_io blacs scalapack petsc slepc
+INT_LIBS      = qe_pseudo slatec math77 local
+YAMBO_INT_LIBS= Yio 
+YAMBO_EXT_LIBS= Ydriver 
+YLIBDRIVER    = interface main options y_options
+YLIBDRIVER_LD = _driver_options _driver_y_options _driver_interface _driver_main 
+YLIBIO        = modules Yio
+YLIBIO_LD     = $(YLIBIO_LD)
 #
 # Source code
 #

@@ -99,25 +99,24 @@ lPLA="\$(lscalapack) \$(lslepc) \$(lpetsc) \$(llapack) \$(lblacs) \$(lblas)"
 lSLA="\$(llapack) \$(lblas)"
 lIO="\$(liotk) \$(lnetcdff) \$(lnetcdf) \$(lhdf5)"
 lextlibs="\$(llibxc) \$(lfft) \$(lfutile) \$(lyaml)"
-lYlibs="\$(ldriver)"
 #
 lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ifutile) \$(iyaml) \$(idriver)"
 #
 case $target in
   yambo*)
-   llibs="$llibs $llocal $lPLA $lIO $lextlibs $lYlibs -lm"
+   llibs="$llibs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs $llocal $lSLA $lIO $lextlibs $lYlibs -lm"
+   llibs="-lint_modules $llibs $llocal $lSLA $lIO $lextlibs -lm"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs $llocal $lSLA $lIO $lextlibs $lYlibs -lm"
+   llibs="-lint_modules $llibs $llocal $lSLA $lIO $lextlibs -lm"
     ;;
   e2y)
-   llibs="-lint_modules $llibs $llocal $lSLA $lIO $lextlibs $lYlibs -lm"
+   llibs="-lint_modules $llibs $llocal $lSLA $lIO $lextlibs -lm"
     ;;
   ypp*)
-   llibs="$llibs $llocal $lSLA $lIO $lextlibs $lYlibs -lm"
+   llibs="$llibs $llocal $lSLA $lIO $lextlibs -lm"
     ;;
   lib*)
     ;;
@@ -176,7 +175,7 @@ arcreate: \$(objs)
 # Functions
 #
 define driver
- ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -L\$(libdir) -ldriver -D_\$@ -c \$(libdir)/yambo/driver/driver.c > /dev/null)
+ ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -L\$(libdir) -D_\$@ -c \$(libdir)/yambo/driver/src/driver/driver.c > /dev/null)
  @echo
 endef
 define link

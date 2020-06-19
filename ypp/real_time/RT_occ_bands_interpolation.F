@@ -120,9 +120,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  ! Perform interpolation of spinorial factors and magnetization
  !==============================================================
- if(n_spinor>1) then
-   call electrons_spin_and_magn_interpolate("S",k,CIRCUIT_k,RT_bands,ID_spin,ID_magn)
- endif
+ if(n_spinor>1) call electrons_spin_and_magn_interpolate("S",k,CIRCUIT_k,RT_bands,ID_spin,ID_magn)
  !
  ! Output: bands on circuit
  !==========================
@@ -313,10 +311,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  ! Clean
  !
- if(n_spinor>1) then
-   call INTERPOLATION_driver_end(ID_spin)
-   call INTERPOLATION_driver_end(ID_magn)
- endif
+ if(n_spinor>1) call INTERPOLATION_driver_end(ID_spin)
  call INTERPOLATION_driver_end(0)
  call RT_carriers_object(RT_carriers,WHAT='free')
  call E_reset(CIRCUIT_E)

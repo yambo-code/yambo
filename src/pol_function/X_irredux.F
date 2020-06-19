@@ -262,7 +262,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
      call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VARNAME(Xo_res),Xo_scatt)
      ctmp = DEV_VARNAME(Xo_res)(1,1)
      !
-     X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)/real(bare_grid_N(i_cg),SP)
+     X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)
      !
      if (have_cuda) then
        do iw=1,Xw%n_freqs

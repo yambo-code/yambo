@@ -33,7 +33,7 @@ subroutine INIT_ypp_load(defs)
  use electrons,     ONLY:n_spinor
  use interpolate,   ONLY:INTERP_shell_factor,INTERP_mode,NN_n_of_nearest
  use YPPm,          ONLY:E_field,alat_used_for_output,B_field,B_psi,B_theta,BANDS_bands,BANDS_path,&
-&                        BZ_DbGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
+&                        BZ_FineGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
 &                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,PROJECT_path,QP_DB_to_expand,&
 &                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
 &                        gamma_radius,INTERP_grid,mag_dir,N_path_pts,ncell,ord_dgrid_ipol,p_dir,p_format,PDOS_atoms,&
@@ -310,9 +310,8 @@ subroutine INIT_ypp_load(defs)
  !
  !BZ E Double Grid
  !
- call it(defs,'BZ_DbGd_Nk','BZ Number of points in the double grid',BZ_DbGd_nkpts_to_use)
+ call it(defs,'BZ_DbGd_Nk',     'BZ Number of points in the fine grid',BZ_FineGd_nkpts_to_use)
  call it('f',defs,'SkipCheck' , 'Skip internal consistency check on k-point grids')
- call it('f',defs,'noBZExpand' , 'Keep the Double Grid k-points in the IBZ without using the symmetries')
  !
  !WFs perturbative SOC mapping
  !

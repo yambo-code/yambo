@@ -177,6 +177,8 @@ subroutine scatter_Gamp_gpu(isc,mode)
 &                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts
  use R_lattice,     ONLY:RIM_qpg_d, bare_qpg_d
  use timing_m
+ use deviceXlib_m
+ !
 #include<memory.h>
  !
  type(elemental_collision), target::isc

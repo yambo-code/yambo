@@ -38,6 +38,7 @@ module X_m
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
  logical                  :: eval_alpha
  logical                  :: l_drude
+ integer                  :: drude_n_states
  !
  ! Main Gauge
  !
@@ -59,7 +60,7 @@ module X_m
  !
  integer              :: X_DbGd_nkpts
  logical              :: use_X_DbGd
- real(SP)             :: X_DbGd_percentual=0.5
+ real(SP)             :: X_DbGd_percentual
  integer ,allocatable :: X_DbGd_nkpt_at_q(:)
  integer ,allocatable :: X_DbGd_nkpt_at_q_table(:,:,:)
  !

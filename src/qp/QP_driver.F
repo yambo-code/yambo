@@ -230,7 +230,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  ! must be correctly written in the QP%desc(s)
  !
  if (l_life) then
-   call X_pre_setup(Xen,X)
+   call X_pre_setup(Xen,Xk,X)
    if (X%ng_db==0) X%ng_db=X%ng
  endif
  !

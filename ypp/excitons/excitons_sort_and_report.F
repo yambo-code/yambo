@@ -25,7 +25,7 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  !
  use pars,          ONLY:SP,schlen,pi
  use units,         ONLY:HA2EV
- use electrons,     ONLY:spin_occ,spin,E_SOC_nbands,n_sp_pol,n_spinor
+ use electrons,     ONLY:spin_occ,spin,n_sp_pol,n_spinor
  use stderr,        ONLY:intc
  use BS_solvers,    ONLY:BSS_desc,BSS_n_eig
  use com,           ONLY:msg,of_open_close
@@ -55,7 +55,8 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  !
  write_spin    = present(EXC_spin)
  write_widths  = any(abs(aimag(BS_E))>1.E-5)
- write_soc_corr= (E_SOC_nbands/=0)
+ write_soc_corr= .false.
+ if(present(BS_E_SOC_corr)) write_soc_corr=associated(BS_E_SOC_corr)
  !
  dump_ch=" "
  if (write_spin)     dump_ch=trim(dump_ch)//" Spin"

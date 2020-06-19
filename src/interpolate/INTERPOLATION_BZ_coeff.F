@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
+subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  ! Interpolation scheme (PRB 38 p2721)
  ! Aug2002 Georg Madsen : First version based on subroutine from D.Singh
@@ -43,9 +43,9 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
 #include<memory.h>
  !
  integer,       intent(in)  :: nvalues
- integer,       intent(in)  :: ID
+ integer,       intent(in)  :: Nk,ID
  type(bz_samp), intent(in)  :: Xk
- real(SP),      intent(in)  :: VALUEs(nvalues,Xk%nibz)
+ real(SP),      intent(in)  :: VALUEs(nvalues,Nk)
  complex(DP),   intent(out) :: engre(nshells,nvalues)
  !
  ! Work Space
@@ -71,7 +71,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
  !
  complex(DP) :: ZDOTC,ZDOTU
  !
- Nkm1=Xk%nibz-1           ! number of k-points minus 1 in the BZ
+ Nkm1=Nk-1           ! number of k-points minus 1
  !
  YAMBO_ALLOC(delta,(Nkm1,nvalues))
  YAMBO_ALLOC(ipiv,(Nkm1))
@@ -81,7 +81,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
  delta=cZERO
  !
  do ik=1,Nkm1
-   delta(ik,:)=VALUEs(:,ik)-VALUEs(:,Xk%nibz)
+   delta(ik,:)=VALUEs(:,ik)-VALUEs(:,Nk)
  enddo
  !
  PAR_nshells=nshells
@@ -111,7 +111,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
    rho(i_par_shell)=roughness_func(R2,R2_min)
  enddo
  !
- YAMBO_ALLOC(BZ_star,(PAR_nshells,Xk%nibz))
+ YAMBO_ALLOC(BZ_star,(PAR_nshells,Nk))
  BZ_star=cZERO
  !
  if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation@"//trim(INTERP_obj(ID)%what)//" (star)",PAR_nshells)
@@ -128,9 +128,12 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
    if (.not.px%element_1D(i_shell)) cycle
    !
    call make_star(lattice_vectors(:,i_shell),nsym,int_sop,nstar,star_vec) 
-   !
-   do ik=1,Xk%nibz
-     call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki2a')
+   do ik=1,Nk
+     ! Implementation to be finished.
+     ! OLD comment: Here I cannot use Xk%pt_DbGd bacuse also extra points in the BZ are included ...
+     ! In this new branch with Xk%pt_FineGd the problem maybe (?) overcome
+     if(Nk==Xk%nibz)        call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki2a')
+     !if(Nk==Xk%nibz_FineGd) call c2a(v_in=Xk%pt_FineGd(ik,:),v_out=v,mode='ki2a')
      do i_star=1,nstar
        BZ_star(i_par_shell,ik)=BZ_star(i_par_shell,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,i_star)))
      enddo
@@ -139,7 +142,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
    BZ_star(i_par_shell,:)=BZ_star(i_par_shell,:)/real(nstar)
    !
    do ik=1,Nkm1
-     BZ_star(i_par_shell,ik) = BZ_star(i_par_shell,ik) - BZ_star(i_par_shell,Xk%nibz)
+     BZ_star(i_par_shell,ik) = BZ_star(i_par_shell,ik) - BZ_star(i_par_shell,Nk)
      BZ_star(i_par_shell,ik) = BZ_star(i_par_shell,ik) / sqrt(rho(i_par_shell))
    enddo
    !
@@ -204,7 +207,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
  pre_factor=1._SP/real(ncpu,SP)
  if (INTERPOLATE_is_serial) pre_factor=1.
  do iv=1,nvalues
-   engre(1,iv)=VALUEs(iv,Xk%nibz)*pre_factor - ZDOTU(PAR_nshells,PAR_engre(:,iv),1,BZ_star(:,Xk%nibz),1)
+   engre(1,iv)=VALUEs(iv,Nk)*pre_factor - ZDOTU(PAR_nshells,PAR_engre(:,iv),1,BZ_star(:,Nk),1)
  enddo
  !
  if (.not.INTERPOLATE_is_serial) call PP_redux_wait( engre )
@@ -219,7 +222,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
  YAMBO_FREE(SHELL_index)
  YAMBO_FREE(PAR_engre)
  !
- call k_compare(Xk,VALUEs,engre,nshells,nvalues)
+ call k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
  !
  contains
   !
@@ -231,15 +234,15 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
    !
   end function roughness_func
   !
-  subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues)
+  subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
    use units,          ONLY:HA2EV
    use pars,           ONLY:SP,lchlen
    use R_lattice,      ONLY:bz_samp
    use com,            ONLY:msg
    !
    type(bz_samp), intent(in) :: Xk
-   integer,       intent(in) :: nvalues,nshells
-   real(SP),      intent(in) :: VALUEs(nvalues,Xk%nibz)
+   integer,       intent(in) :: nvalues,nshells,Nk
+   real(SP),      intent(in) :: VALUEs(nvalues,Nk)
    complex(DP),   intent(in) :: engre(nshells,nvalues)
    !
    ! Work Space
@@ -249,15 +252,15 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
    real(SP), allocatable :: new_VALUEs(:,:)
    real(SP) :: ave_err,max_err,rel_ave_err
    !
-   YAMBO_ALLOC(new_VALUEs,(nvalues,Xk%nibz))
+   YAMBO_ALLOC(new_VALUEs,(nvalues,Nk))
    !
-   call INTERPOLATION_fourier(Xk,new_VALUEs,engre,nvalues,ID)
+   call INTERPOLATION_fourier(Xk,new_VALUEs,engre,nvalues,Nk,ID)
    !
    max_err=0._SP
    ave_err=0._SP
    rel_ave_err=0._SP
    !
-   do ik=1,Xk%nibz
+   do ik=1,Nk
      do iv=1,nvalues
        ave_err=ave_err+abs(new_VALUEs(iv,ik)-VALUEs(iv,ik))
        if(abs(new_VALUEs(iv,ik))>0._SP) rel_ave_err=rel_ave_err+abs(new_VALUEs(iv,ik)-VALUEs(iv,ik))/abs(new_VALUEs(iv,ik))
@@ -265,8 +268,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,ID)
      enddo
    enddo
    !
-   ave_err=ave_err/real(nvalues*Xk%nibz)
-   rel_ave_err=rel_ave_err/real(nvalues*Xk%nibz)
+   ave_err=ave_err/real(nvalues*Nk)
+   rel_ave_err=rel_ave_err/real(nvalues*Nk)
    !
    write(dump_ch,'(a,3es16.8)') '[INTERPOLATION@'//trim(INTERP_obj(ID)%what)//&
 &                               '] Errors: Max, Avg, Avg_rel = ',max_err,ave_err,rel_ave_err

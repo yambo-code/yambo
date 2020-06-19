@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_DbGd_grid_consistency_check(IK_ref,k,E,k_DbGd,E_DbGd)
+integer function k_FineGd_grid_consistency_check(k,E,k_FineGd,E_FineGd)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
@@ -29,38 +29,41 @@ subroutine k_DbGd_grid_consistency_check(IK_ref,k,E,k_DbGd,E_DbGd)
  use vec_operate,    ONLY:v_is_zero
  implicit none
  !
- type(bz_samp), intent(in)    :: k,k_DbGd
+ type(bz_samp), intent(in)    :: k,k_FineGd
  type(levels),  intent(in)    :: E
- type(levels),  intent(inout) :: E_DbGd
- integer                      :: IK_ref(E_DbGd%nk)
+ type(levels),  intent(inout) :: E_FineGd
  !
  ! Work Space
  !
- integer :: ik,ik_DbGd,nb
- real(SP):: shifts(2)=0.
+ integer :: ik,ik_FineGd,nb
+ real(SP):: shifts(2)
  !
- IK_ref=-1
+ k_FineGd_grid_consistency_check=-1
  !
- nb=min(E%nb,E_DbGd%nb)
+ nb=min(E%nb,E_FineGd%nb)
  !
  ik_loop: do ik=1,E%nk
-   do ik_DbGd=1,E_DbGd%nk
+   do ik_FineGd=1,E_FineGd%nk
      !
-     if (v_is_zero(k_DbGd%pt(ik_DbGd,:)-k%pt(ik,:))) then
+     if (v_is_zero(k_FineGd%pt(ik_FineGd,:)-k%pt(ik,:))) then
        !
-       shifts(1)=E%E(1,ik,1)-E_DbGd%E(1,ik_DbGd,1)
-       shifts(2)=E%E(nb,ik,1)-E_DbGd%E(nb,ik_DbGd,1)
+       shifts(1)=E%E(1,ik,1)-E_FineGd%E(1,ik_FineGd,1)
+       shifts(2)=E%E(nb,ik,1)-E_FineGd%E(nb,ik_FineGd,1)
        !
-       IK_ref(ik_DbGd)=ik
+       exit  ik_loop
        !
      endif
      !
    enddo
  enddo ik_loop
  !
+ if (abs(shifts(1)-shifts(2))>max(0.01*abs(shifts(1)),1.E-5) .or. ik_FineGd==E_FineGd%nk+1 ) return
+ !
+ k_FineGd_grid_consistency_check=ik_FineGd
+ !
  ! Here I add E_Fermi as OCCUPATIONS_Fermi in ypp has been
- ! called without the DbGd loaded so the Fermi level has not been applied to E_DbGd.
+ ! called without the DbGd loaded so the Fermi level has not been applied to E_FineGd.
  !
- E_DbGd%E(:,:,:)=E_DbGd%E(:,:,:)+(shifts(1)+shifts(2))/2.+E%E_Fermi
+ E_FineGd%E(:,:,:)=E_FineGd%E(:,:,:)+(shifts(1)+shifts(2))/2._SP+E%E_Fermi
  !
-end subroutine
+end function

@@ -69,6 +69,7 @@ module cuda_m
   public :: cuda_linalg_init
   public :: cuda_linalg_setup
   public :: cuda_getstat
+  public :: cuda_devsync
   !
   public :: stream_kind
   public :: stream_default
@@ -115,6 +116,16 @@ contains
     ierr = CudaDeviceSynchronize()
     ierr = CudaGetLastError()
     !write(*,*) CudaGetLastMessage(ierr)
+#endif
+    return
+  end function
+
+  function cuda_devsync() result(ierr)
+    implicit none
+    integer :: ierr
+    ierr = 0 
+#ifdef _CUDA
+    ierr = CudaDeviceSynchronize()
 #endif
     return
   end function

@@ -40,8 +40,8 @@ module BS
  logical :: BS_cpl_K_corr
  logical :: BS_K_is_ALDA
  logical :: BS_not_const_eh_f
- logical :: BS_perturbative_SOC=.FALSE.
- logical :: BS_K_has_been_calculated_loaded=.FALSE.
+ logical :: BS_perturbative_SOC
+ logical :: BS_K_has_been_calculated_loaded
  character(schlen) :: L_kind
  character(schlen) :: BSE_mode
  character(schlen) :: BSK_mode
@@ -248,7 +248,7 @@ module BS
      use pars,       ONLY:IP,cZERO
      use drivers,    ONLY:l_kerr,l_photolum
      use stderr,     ONLY:intc
-     use electrons,  ONLY:levels,E_SOC_nbands,n_sp_pol
+     use electrons,  ONLY:levels,n_sp_pol
      integer      :: iT,nT
      type(levels) :: E
      !
@@ -281,7 +281,7 @@ module BS
      if (allocated(E%W)) then
        YAMBO_ALLOC(BS_T_grp(iT)%W,(nT))
      endif
-     if (E_SOC_nbands/=0) then
+     if (allocated(E%E_SOC)) then
        YAMBO_ALLOC(BS_T_grp(iT)%E_SOC_corr,(2/n_sp_pol,nT))
      endif
      !
@@ -299,7 +299,6 @@ module BS
      use stderr,     ONLY:intc
      use drivers,    ONLY:l_kerr,l_photolum
      use parallel_m, ONLY:PAR_BS_T_grps_index
-     use electrons,  ONLY:E_SOC_nbands
      integer :: iT
      !
      YAMBO_FREE(BS_nT_at_k)

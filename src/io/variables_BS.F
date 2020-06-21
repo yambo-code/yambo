@@ -26,7 +26,6 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  use pars,          ONLY:SP,IP,LP
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_td_hf
- use electrons,     ONLY:E_SOC_nbands
  use X_m,           ONLY:X_t
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts,cut_geometry
  use BS,            ONLY:BS_identifier,BS_K_dim,BS_bands,&
@@ -172,21 +171,26 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
    !
    ! W_RIM
    !
+   ! Here the name W_RIM is correct. 
+   ! However the ndb.BS_PAR_Q1 used for restart in the test-suite should
+   ! be updated, otherwise the hBN/GW-OPTICS/ corresponding test fails
+   !call def_variable_elemental(ID,"W_RIM",2,IP+100,0) 
    call def_variable_elemental(ID,"W_DbGd",2,IP+100,0)
      call io_variable_elemental(ID,I0=RIM_ng,&
 &     VAR='[RIM] RL components col',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
      call io_variable_elemental(ID,I0=RIM_n_rand_pts,&
 &     VAR='[RIM] Random points col',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
    !
+   !
+   ! Perturbative SOC
+   !
    if (write_is_on(ID).or.variable_exist(ID,"PERT_SOC")) then
      !
      ! SOC
      !
-     call def_variable_elemental(ID,"PERT_SOC",2,LP+100,MENU=0)
-       call io_variable_elemental(ID,L0=BS_perturbative_SOC,&
-&        VAR='[SOC] Perturbative SOC',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
-       call io_variable_elemental(ID,I0=E_SOC_nbands,&
-&        VAR='[SOC] Bands in the MAP db',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
+     call def_variable_elemental(ID,"PERT_SOC",1,LP+100,MENU=0)
+     call io_variable_elemental(ID,L0=BS_perturbative_SOC,&
+&       VAR='[SOC] Perturbative SOC',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
    endif
    !
  endif

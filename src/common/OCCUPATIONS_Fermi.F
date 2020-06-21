@@ -40,8 +40,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
-&                        BZ_DbGd_nbands,BZ_DbGd_nkpt,n_spinor,n_spin,&
-&                        BZ_DbGd_table
+&                        n_spinor,n_spin
  use R_lattice,     ONLY:bz_samp
  use stderr,        ONLY:real2ch
  use vec_operate,   ONLY:sort
@@ -56,9 +55,9 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  !
  ! Work Space
  !
- integer :: i1,is,ib,ik,ikbz,ik_rand,i_trials(2),n_b_full_guess,i_Ef(2),i_Ef_fine(2),n_total_states,group_size,nb_here
+ integer :: i1,is,ib,ik,ikbz,ik_FineGd,i_trials(2),n_b_full_guess,i_Ef(2),i_Ef_fine(2),n_total_states,group_size,nb_here
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
- real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),Efdist,nel_DbGd,nel_diff_zero
+ real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),nel_DbGd,nel_diff_zero
  logical :: Fermi_is_converged
  real(SP),parameter :: Tel_step=0.1_SP/HA2KEL
  !
@@ -129,7 +128,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  ! a very small temperature is imposed forcing the Fermi level to fall within the
  ! gap.
  !
- if (BZ_DbGd_nbands>0) Tel=Tel_step
+ if (E%nb_FineGd>0) Tel=Tel_step
  !
  FERMI_LOOP: do while (.not.Fermi_is_converged)
    !
@@ -237,12 +236,11 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
    if (mode=="FERMI") return
  endif
  !
- ! Build the occupations and find the nearest occupied state to the Fermi level
+ ! Build the occupations
  !
-  if (.not.allocated(E%f)) then  
+ if (.not.allocated(E%f)) then  
    YAMBO_ALLOC(E%f,(nb_here,E%nk,n_sp_pol))
  endif
- Efdist=1.E5_SP
  !
  do i1=1,n_total_states
    ib=index( index_E_sorted(i1) , 1)
@@ -251,41 +249,29 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
    !
    E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-E%E_Fermi,Tel)
    !
-   if (abs(E%E(ib,ik,is)-E%E_Fermi)<Efdist) then
-     if ( E%f(ib,ik,is) < filled_tresh ) cycle
-     if ( E%f(ib,ik,is)  ==   spin_occ ) cycle
-     E%bf=ib
-     E%kf=ik
-     E%sf=is
-     Efdist=abs(E%E(ib,ik,is)-E%E_Fermi)
-   endif
-   !
  enddo
  !
  E%E(:,:,:)=E%E(:,:,:)-E%E_Fermi
  !
- ! If %E_DbGd is associated I simply extend the %E occupations to %E_DbGd
+ ! If %E_FineGd is associated I simply extend the %E occupations to %E_FineGd
  !
- if (BZ_DbGd_nbands>0.and.allocated(E%E_DbGd)) then
+ if (E%nb_FineGd>0.and.allocated(E%E_FineGd)) then
    ! 
-   nel_DbGd=0._SP 
+   !nel_DbGd=0._SP 
    !
-   E%E_DbGd(:,:,:)=E%E_DbGd(:,:,:)-E%E_Fermi
+   E%E_FineGd(:,:,:)=E%E_FineGd(:,:,:)-E%E_Fermi
    do is=1,n_sp_pol
-     do ikbz=1,K%nbz
-       do i1=1,BZ_DbGd_nkpt(ikbz)
-         ik_rand = BZ_DbGd_table(ikbz,i1,1)
-         do ib=1,BZ_DbGd_nbands
-           E%f_DbGd(ib,ik_rand,is)=spin_occ*Fermi_fnc(E%E_DbGd(ib,ik_rand,is),Tel)
-           nel_DbGd=nel_DbGd+E%f_DbGd(ib,ik_rand,is)
-         enddo
+     do ik_FineGd=1,K%nibz_FineGd
+       do ib=1,E%nb_FineGd
+         E%f_FineGd(ib,ik_FineGd,is)=spin_occ*Fermi_fnc(E%E_FineGd(ib,ik_FineGd,is),Tel)
        enddo
+       !nel_DbGd=nel_DbGd+sum(E%f_FineGd(:,ik_FineGd,is))*K%weights_FineGd(ik_FineGd)
      enddo
    enddo
-   nel_DbGd=nel_DbGd/real(sum(BZ_DbGd_nkpt),SP)
+   !nel_DbGd=nel_DbGd
    !
-   if (abs(nel-nel_DbGd)>        1.E-2) call error  (' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
-   if (abs(nel-nel_DbGd)>nel_diff_zero) call warning(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
+   !if (abs(nel-nel_DbGd)>1.E-2) call error(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
+   !if (abs(nel-nel_DbGd)>1.E-5) call warning(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
    !
  endif
  !

@@ -343,6 +343,8 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_WORLD
  ! ... Serial
  type(MPI_comm),SAVE :: PAR_COM_NULL
+ ! ... HOST
+ type(MPI_comm),SAVE :: PAR_COM_HOST
  !
  ! ... linear algebra
  type(MPI_comm),SAVE :: PAR_COM_SLK
@@ -496,6 +498,24 @@ module parallel_m
  interface PP_send_and_receive
    module procedure PP_snd_rcv_c2,PP_snd_rcv_c1,PP_snd_rcv_r2
  end interface PP_send_and_receive
+ !
+ !interface
+ !  subroutine c_chsort(base, nmemb, elemsize, compar) bind(C,name='qsort')
+ !    use iso_c_binding
+ !    implicit none
+ !    type(C_PTR), value :: base
+ !    integer(C_SIZE_T), value :: nmemb, elemsize
+ !    type(C_FUNPTR), value :: compar
+ !  end subroutine c_chsort
+ !  !
+ !  pure function c_strcmp(a,b) result(strcmp_out) bind(C,name='strcmp')
+ !    use iso_c_binding
+ !    implicit none
+ !    integer(C_int) :: strcmp_out
+ !    !pgi$ ignore_tkr a,b
+ !    type(C_PTR), value :: a, b
+ !  end function c_strcmp
+ !end interface
  !
  contains
    !
@@ -1654,19 +1674,49 @@ module parallel_m
 #endif
    end subroutine
    !
-   subroutine PARALLEL_host_name
+   subroutine CREATE_hosts_COMM( )
 #if defined _MPI
-     character(MPI_MAX_PROCESSOR_NAME) :: machine_name
-     integer :: i_err
-     if (ncpu>1) then
-       call MPI_GET_PROCESSOR_NAME(machine_name,host_name_length,i_err)
-       host_name=machine_name
-     else
-       call igethname(host_name,host_name_length)
-     endif
-#else
-     call igethname(host_name,host_name_length)
+     !use pars,  ONLY:IPL
+     !use iso_c_binding
+     use LexicalSort,  ONLY:ch_sort
+     character (MPI_MAX_PROCESSOR_NAME), pointer :: tmp_hosts(:)
+     integer :: i_err,i_cpu
+     !type(C_PTR) :: ptr_hosts
 #endif
-   end subroutine
+     !
+     if (ncpu==1) then
+       call igethname(host_name,host_name_length)
+       return
+     endif
+     !
+#if defined _MPI
+     !
+     allocate(tmp_hosts(0:ncpu-1))
+     !
+     call MPI_GET_PROCESSOR_NAME(tmp_hosts(myid),host_name_length,i_err)
+     host_name=tmp_hosts(myid)
+     !
+     do i_cpu=0,ncpu-1
+       call MPI_BCAST(tmp_hosts(i_cpu),MPI_MAX_PROCESSOR_NAME,MPI_CHARACTER,i_cpu,MPI_COMM_WORLD,i_err)
+     end do
+     !
+     !call c_f_pointer(ptr_hosts,tmp_hosts,[ncpu])
+     !call c_chsort(ptr_hosts,int(ncpu,IPL),int(MPI_MAX_PROCESSOR_NAME,IPL),c_strcmp)
+     call ch_sort(tmp_hosts)
+     !
+     ! assign the same color to the same node
+     PAR_COM_HOST%my_CHAIN=0
+     do i_cpu=1,ncpu-1
+       if ( trim(tmp_hosts(i_cpu-1))/=trim(tmp_hosts(i_cpu)) ) PAR_COM_HOST%my_CHAIN=PAR_COM_HOST%my_CHAIN+1
+       if ( trim(host_name)==tmp_hosts(i_cpu) ) exit
+    end do
+    !
+    call MPI_COMM_SPLIT(MPI_COMM_WORLD,PAR_COM_HOST%my_CHAIN,myid,PAR_COM_HOST%COMM,i_err)
+    call MPI_COMM_RANK(PAR_COM_HOST%COMM,PAR_COM_HOST%CPU_id,i_err)
+    call MPI_COMM_SIZE(PAR_COM_HOST%COMM,PAR_COM_HOST%n_CPU ,i_err)
+    !
+    deallocate(tmp_hosts)
+#endif
+   end subroutine CREATE_hosts_COMM
    !
 end module parallel_m

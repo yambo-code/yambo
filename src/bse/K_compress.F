@@ -36,7 +36,7 @@ subroutine K_compress(iq,ID_compr)
  !
  ! Work space
  !
- integer      :: i_block,i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,io_BS_err,H_pos(2)
+ integer :: i_block,i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,io_BS_err,H_pos(2)
  integer, external :: io_BS_PAR_init
  !
  ! STEP 1: Check which matrix elements can be neglected

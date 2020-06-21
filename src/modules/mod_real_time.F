@@ -1,24 +1,24 @@
-! 
+!
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module real_time
@@ -34,9 +34,9 @@ module real_time
  !
  ! NE dynamics
  !
- logical           :: l_NE_dynamics  
+ logical           :: l_NE_dynamics
  logical           :: l_NE_with_fields
- logical           :: l_Dynamics_is_over   
+ logical           :: l_Dynamics_is_over
  logical           :: l_Update_Time_Step  = .FALSE.
  logical           :: l_RT_is_WFfree
  !
@@ -71,7 +71,7 @@ module real_time
  real(SP)              :: RT_step             ! Elemental step used to define dimensions and time-points
  real(SP)              :: RT_dyn_step = 0._SP ! On-the-fly time-step
  real(SP)              :: RT_MAX_step =-1._SP*FS2AUT ! MAX value of the dynamical RT step value
- ! 
+ !
  ! ... NE dynamics ...
  !
  real(SP) :: NE_time    =0._SP  ! <- incremented
@@ -99,9 +99,9 @@ module real_time
  real(SP) :: RT_RTA_chem(2)
  real(SP), allocatable :: RT_RTA_E_occ_infty(:,:)
  real(SP), allocatable :: RT_RTA_H_occ_infty(:,:)
- ! 
- ! Lifetimes Extrapolation Time status 
- ! 
+ !
+ ! Lifetimes Extrapolation Time status
+ !
  integer(LP), allocatable :: RT_TIME_status(:)
  !
  ! Kind of e-e interactions (for the CORR and SCATT parts)
@@ -124,7 +124,7 @@ module real_time
  real(SP)             :: RT_eh_en(2)
  real(SP)             :: RT_scatt_tresh
  !
- ! Macroscopic induced current ... 
+ ! Macroscopic induced current ...
  !--------------------------------
  !
  complex(SP) :: RT_ind_J(3)
@@ -155,11 +155,12 @@ module real_time
  ! G_lesser structure
  !
  integer,     allocatable :: RT_ibz_coo(:,:)
- integer,     allocatable :: RT_all2ibz(:)  
- integer,     allocatable :: RT_Nk_ibz(:)  
+ integer,     allocatable :: RT_ibz_dupl(:)
+ integer,     allocatable :: RT_all2ibz(:)
+ integer,     allocatable :: RT_Nk_ibz(:)
  !
  ! K-points: In case I want to use the G_lesser to define the occupations
- ! of a post-run I need to keep here the number of k-points 
+ ! of a post-run I need to keep here the number of k-points
  !
  integer                 :: RT_nk
  integer                 :: RT_DbGd_nk
@@ -169,8 +170,8 @@ module real_time
  ! Equilibrium V_xc and V_hartree in real space
  ! Presently REF_V_hartree_sc is not used
  !
- real(SP),    allocatable :: REF_V_xc_sc(:,:)  
- real(SP),    allocatable :: REF_V_hartree_sc(:,:)   
+ real(SP),    allocatable :: REF_V_xc_sc(:,:)
+ real(SP),    allocatable :: REF_V_hartree_sc(:,:)
  !
  ! Update Energies, eval Lifetimes rotate DM (density matrix)
  !-----------------------------------------------------------
@@ -179,17 +180,15 @@ module real_time
  logical                  :: l_RT_rotate_DM
  logical                  :: l_update_SOC
  !
- ! Relaxation and Dissipation 
+ ! Relaxation and Dissipation
  !
  !----------------------------
- logical                  :: l_RT_uses_E_DbGd
+ logical                  :: l_RT_uses_E_FineGd
  logical                  :: l_RT_eq_is_zero_temp
  logical                  :: l_RT_include_eq_scatt
  logical                  :: l_RT_impose_for_metals
  logical,     allocatable :: DbGd_EE_scatt_table(:,:)  
  integer,     allocatable :: DbGd_EE_Nk_table(:,:)  
- integer,     allocatable :: DbGd_ibz_coo(:,:)
- integer,     allocatable :: DbGd_bz_coo(:,:)  
  real(SP)                 :: DbGd_EE_percent 
  !
  ! ELPH kernel...
@@ -209,9 +208,9 @@ module real_time
  integer,     allocatable :: Q_io_map(:)
  integer,     allocatable :: K_io_map(:)
  !
- ! Locks and reference
+ ! Conservations
  !----------------------
- logical                  :: l_RT_impose_N_dN    = .TRUE.
+ logical                  :: l_RT_impose_N_dN = .TRUE.
  logical                  :: l_RT_impose_E    = .TRUE.
  !
  ! Energies
@@ -222,8 +221,8 @@ module real_time
    real(SP), allocatable :: k(:,:)
  end type
  !
- type(RT_DbGd),SAVE  :: RT_E_and_k
- !
+ type(RT_DbGd),save  :: RT_E_and_k
+ ! 
  ! Locks, reference & Logicals
  !-----------------------------
  logical                  :: l_RT_relaxation_update_reference
@@ -232,14 +231,14 @@ module real_time
  logical                  :: l_RT_eval_lifetimes
  logical                  :: l_initial_equilibrium
  !
- real(SP),    allocatable :: RT_E_occupations(:,:) 
- real(SP),    allocatable :: RT_H_occupations(:,:) 
+ real(SP),    allocatable :: RT_E_occupations(:,:)
+ real(SP),    allocatable :: RT_H_occupations(:,:)
  real(SP),    allocatable :: RT_delta_occupations(:,:)       ! Running values. Updated at each time step.
  real(SP),    allocatable :: RT_life_delta_occupations(:,:)  ! Used in the Lifetimes definition. Defined in the Lifetimes procedure only.
- real(SP),    allocatable :: RT_E_occupations_reference(:,:) 
+ real(SP),    allocatable :: RT_E_occupations_reference(:,:)
  real(SP),    allocatable :: RT_H_occupations_reference(:,:)
  !
- logical,     allocatable :: RT_occupations_locked(:,:) 
+ logical,     allocatable :: RT_occupations_locked(:,:)
  !
  ! EL-PH RT life-times
  !-----------------------------------------
@@ -276,7 +275,7 @@ module real_time
  real(SP)                 :: EE_prefactor(2)      ! 1=valence, 2=conduction
  real(SP)                 :: RAD_prefactor(2)
  real(SP)                 :: EP_prefactor(2)
- real(SP)                 :: EP_abs_prefactor(2) 
+ real(SP)                 :: EP_abs_prefactor(2)
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
@@ -291,6 +290,7 @@ module real_time
  integer           :: two_alpha
  real(SP)          :: Gr_QP_width
  character(schlen) :: Gr_kind
+ !
  !
  ! GFs
  !-----
@@ -309,8 +309,8 @@ module real_time
  ! Density
  !---------
  !
- real(SP),    allocatable :: rho_reference(:)    ! reference density from all bands 
- real(SP),    allocatable :: magn_reference(:,:) ! reference magnetization from all bands 
+ real(SP),    allocatable :: rho_reference(:)    ! reference density from all bands
+ real(SP),    allocatable :: magn_reference(:,:) ! reference magnetization from all bands
  !
  ! Integrators
  !
@@ -337,7 +337,7 @@ module real_time
  real(SP) :: c_tableau(4)
  real(SP) :: RWA_table(5)
  !
- ! Integrate exactly the part of the dynamics due to H_o 
+ ! Integrate exactly the part of the dynamics due to H_o
  ! as it is done in Comp. Phys. Comm. 123(1999)
  ! in this case I choosed H_o = H_lda ( rho_0 )
  !
@@ -357,8 +357,8 @@ module real_time
    integer  :: nstates
    character(schlen)  :: description
    integer,    allocatable:: table(:,:)      ! ib,ik_RT,ik,i_spin
-   real(SP)   ,allocatable:: kpt(:,:)        
-   real(SP)   ,allocatable:: k_weight(:)     
+   real(SP)   ,allocatable:: kpt(:,:)
+   real(SP)   ,allocatable:: k_weight(:)
    !
    ! Energies
    !
@@ -376,14 +376,14 @@ module real_time
                                                    ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
    real(SP)   ,allocatable:: NEQ_Lifetime(:) ! time dependent lifetime defined as for Silicon
    real(SP)   ,allocatable:: delta_GAMMA(:)  ! change with respect to the "initial equilibrium" lifetimes
-   real(SP)   ,allocatable:: dGAMMA_E_P_Hole(:)     
-   real(SP)   ,allocatable:: dGAMMA_E_P_Electron(:) 
-   real(SP)   ,allocatable:: dGAMMA_E_P_Ho_abs(:)   
-   real(SP)   ,allocatable:: dGAMMA_E_P_El_abs(:)   
-   real(SP)   ,allocatable:: dGAMMA_E_E_Hole(:)     
-   real(SP)   ,allocatable:: dGAMMA_E_E_Electron(:) 
-   real(SP)   ,allocatable:: dGAMMA_E_PHOT_Hole(:)     
-   real(SP)   ,allocatable:: dGAMMA_E_PHOT_Electron(:) 
+   real(SP)   ,allocatable:: dGAMMA_E_P_Hole(:)
+   real(SP)   ,allocatable:: dGAMMA_E_P_Electron(:)
+   real(SP)   ,allocatable:: dGAMMA_E_P_Ho_abs(:)
+   real(SP)   ,allocatable:: dGAMMA_E_P_El_abs(:)
+   real(SP)   ,allocatable:: dGAMMA_E_E_Hole(:)
+   real(SP)   ,allocatable:: dGAMMA_E_E_Electron(:)
+   real(SP)   ,allocatable:: dGAMMA_E_PHOT_Hole(:)
+   real(SP)   ,allocatable:: dGAMMA_E_PHOT_Electron(:)
    !
  end type RT_t
  !
@@ -609,7 +609,7 @@ module real_time
      endif
      !
    end subroutine RT_alloc
-   !   
+   !
    subroutine RT_free(what)
      !
      use DIPOLES,        ONLY:DIP_alloc
@@ -633,11 +633,9 @@ module real_time
      call DIP_alloc('DIP_v')
      call DIP_alloc('DIP_spin')
      call DIP_alloc('DIP_orbital')
-     call DIP_alloc('P_square') 
+     call DIP_alloc('P_square')
      call DIP_alloc('DIP_P_spinor')
      !
-     YAMBO_FREE(DbGd_ibz_coo)
-     YAMBO_FREE(DbGd_bz_coo)
      YAMBO_FREE(RT_ibz_coo)
      YAMBO_FREE(RT_all2ibz)
      YAMBO_FREE(RT_Nk_ibz)

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
+subroutine RT_Glesser_evolve(En,kpt,dG_old,dG_in,dG_out,dT,dTp)
  !
  ! dG_old = dG(T0)     --> Time at first iteration in integrator with more than one step
  ! dG_in  = dG(T )     --> Effective time at the present step, i.e. for RK2 at step 2, T=T0+dt/2
@@ -31,6 +31,7 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  !
  use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:levels,spin_occ
+ use R_lattice,      ONLY:bz_samp
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_G_k_range
  use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV, &
 &                         l_RT_RWA,l_RT_DIAG,l_RT_ACC,  &
@@ -38,6 +39,7 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  !
  implicit none
  !
+ type(bz_samp),  intent(in) :: kpt
  type(levels),   intent(in) :: En
  !
  real(SP),       intent(in) :: dT,dTp
@@ -73,7 +75,7 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
    !
    ! Dephasing is integrated analitically in this case.
    !
-   if(     l_RT_RWA)           call RT_apply_RWA(ik,En,dT,dTp,dG_out(:,:,ik),dG_old(:,:,ik))
+   if(     l_RT_RWA)           call RT_apply_RWA(ik,En,kpt,dT,dTp,dG_out(:,:,ik),dG_old(:,:,ik))
    !
    if(.not.l_RT_RWA)           call RT_Dephasing_step(dG_out(:,:,ik),dG_old(:,:,ik),ik,dT)
    !

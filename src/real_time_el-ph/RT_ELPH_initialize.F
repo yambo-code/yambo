@@ -139,7 +139,7 @@ subroutine RT_ELPH_initialize(E,k,q)
      enddo
      !
      ! Feb 2014. Here I symmetrize the gkkp m.e. with respect to denerated bands. This procedure is not
-     ! needed in the case the RIM is not used. But when the RIM is used gkkp m.e. corresponding to transitions between degenerate
+     ! needed in the case the Double Grid is not used. But when the Double Grid is used gkkp m.e. corresponding to transitions between degenerate
      ! states can be exported to non-degenerate bands belonging to a k of the small grid. In this way
      ! the detailled balance condition is not satisfied anymore.
      !

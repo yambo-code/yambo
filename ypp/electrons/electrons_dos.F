@@ -28,7 +28,7 @@ subroutine electrons_dos(Xk,Xen)
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use pointers,       ONLY:linkM2M
- use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol,E_reset
+ use electrons,      ONLY:levels,spin,n_spinor,n_spin,n_sp_pol,E_reset
  use LIVE_t,         ONLY:live_timing
  use YPP_interfaces, ONLY:electrons_dos_elemental,PROJECTION_k_on_the_path_or_plane,PROJECTION_plot,PROJECTION_setup
  use YPPm,           ONLY:output_fname,DOS_bands,DOS_E_steps,K_transform,&
@@ -64,9 +64,9 @@ subroutine electrons_dos(Xk,Xen)
  ! E Double Grid
  !===============
  !
- l_DbGD=BZ_DbGd_nbands>0
+ l_DbGD=Xen%nb_FineGd>0
  !
- if (l_DbGd) DOS_bands(2)=min(DOS_bands(2),BZ_DbGd_nbands)
+ if (l_DbGd) DOS_bands(2)=min(DOS_bands(2),Xen%nb_FineGd)
  !
  call QP_state_table_setup(Xen)
  call QP_apply(DOS_bands,Xen,Xk,'G',msg_fmt='rs')

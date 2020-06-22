@@ -103,7 +103,6 @@ include config/mk/functions/messaging.mk
 #
 # SRC functions
 include config/mk/functions/mk_src.mk
-include config/mk/functions/mk_driver_src.mk
 include config/mk/functions/mk_ypp_src.mk
 #
 # LIBs (locks driven)...

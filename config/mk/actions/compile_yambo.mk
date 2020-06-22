@@ -48,7 +48,7 @@ yambo_ph: ext-libs
 	@+X2DO="yambo_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)" ; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_ELPH"; $(mk_yambo)
 yambo_qed: ext-libs
 	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
-	@+LIBS2DO="$(YLIBDRIVER)"; NAME="yambo_qed_driver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/lib/yambo/driver/src"; ADF=""-D_QED -D_RT -D_ELPH -D_yambo"; $(mk_external_yambo_lib)
+	@+LIBS2DO="$(YLIBDRIVER)"; NAME="yambo_qed_driver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/lib/yambo/driver/src"; ADF="-D_QED -D_RT -D_ELPH -D_yambo"; $(mk_external_yambo_lib)
 	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_QED -D_RT -D_ELPH"; $(mk_src)
 	@+X2DO="yambo_qed"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)" ; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_QED -D_RT -D_ELPH"; $(mk_yambo)
 

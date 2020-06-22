@@ -2,14 +2,14 @@ EXT_LIBS      = libxc lapack fftw fftqe yaml futile iotk hdf5 netcdf etsf_io bla
 INT_LIBS      = qe_pseudo slatec math77 local
 YAMBO_INT_LIBS= Yio 
 YAMBO_EXT_LIBS= Ydriver 
-YLIBDRIVER    = interface main options y_options
-YLIBDRIVER_LD = _driver_options _driver_y_options _driver_interface _driver_main 
+YLIBDRIVER    = interface main options 
+YLIBDRIVER_LD = _driver_options _driver_interface _driver_main 
 YLIBIO        = modules Yio
 YLIBIO_LD     = $(YLIBIO_LD)
 #
 # Source code
 #
-BASIC_LIBS   = tools modules memory matrices linear_algebra parallel parser communicate common timing Yio io \
+BASIC_LIBS   = driver tools modules memory matrices linear_algebra parallel parser communicate common timing Yio io \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
 BASIC_LIBS_LD= tools memory Yio communicate modules matrices linear_algebra bz_ops parallel parser communicate common timing Yio io \
                xc_functionals interface stop_and_restart wf_and_fft coulomb

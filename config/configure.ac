@@ -288,7 +288,7 @@ AC_CONFIG_HEADERS([include/headers/common/have_malloc.h:include/headers/common/h
 AC_CONFIG_FILES([config/setup config/mk/defs.mk config/report config/msg_ydb
                  src/wf_and_fft/sgfft.F
                  sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh src/tools/.objects include/branch.inc
-                 lib/yambo/driver/include/yambo/editor.h lib/yambo/driver/include/yambo/version.h])
+                 include/driver/editor.h include/driver/version.h])
 #
 AC_OUTPUT
 #

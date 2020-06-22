@@ -5,7 +5,7 @@ define makefiles_clean
         grep -v '.*iotk.*\/Makefile' |  \
         grep -v '.*etsf_io.*\/Makefile' | \
         grep -v '.*hdf5.*\/Makefile' | grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | \
-        grep -v '.*fftw.*\/Makefile' | grep -v '.*fftqe.*\/Makefile' | grep -v '.*driver.*\Makefile'| xargs rm -f
+        grep -v '.*fftw.*\/Makefile' | grep -v '.*fftqe.*\/Makefile' | grep -v '.*driver\/Makefile'| xargs rm -f
  echo "[CLEAN] Makefiles ... done"
 endef
 define objects_clean

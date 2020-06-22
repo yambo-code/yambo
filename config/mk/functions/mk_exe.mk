@@ -1,7 +1,7 @@
 define mk_yambo
  LLIBS="";for exe in $$XLIBS; do LLIBS="$$LLIBS -l$$exe" ; done ; \
  for exe in $$X2DO; do \
-  DLIBS="";for lib in $$DRILIBS; do DLIBS="$$DLIBS -l$$exe$$lib" ; done ; \
+  DLIBS="-ldriver";for lib in $$DRILIBS; do DLIBS="$$DLIBS -l$$exe$$lib" ; done ; \
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
   if test ! -f "$(bindir)/$$exe" || test "$(keep_objs)" = yes  ; then \
@@ -19,7 +19,7 @@ define mk_ypp
  LLIBS="";for exe in $$XLIBS; do LLIBS="$$LLIBS -l$$exe" ; done ; \
  for exe in $$X_ypp_LIBS; do LLIBS="$$LLIBS -l_ypp_$$exe" ; done ; \
  for exe in $$X2DO; do \
-  DLIBS="";for lib in $$DRILIBS; do DLIBS="$$DLIBS -l$$exe$$lib" ; done ; \
+  DLIBS="-ldriver";for lib in $$DRILIBS; do DLIBS="$$DLIBS -l$$exe$$lib" ; done ; \
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
   if test ! -f "$(bindir)/$$exe" || test "$(keep_objs)" = yes  ; then \

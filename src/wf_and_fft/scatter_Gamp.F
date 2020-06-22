@@ -29,11 +29,12 @@ subroutine scatter_Gamp(isc,mode)
  ! isc%gamp are used multiplied by eps^-1 so, if present, the anisotropy
  ! is incuded.
  !
- use pars,          ONLY:SP,pi
+ use pars,          ONLY:SP,pi,schlen
  use drivers,       ONLY:l_col_cut
  use collision_el,  ONLY:elemental_collision
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&
-&                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts
+&                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts,cut_geometry
+ use stderr,        ONLY:STRING_split
  implicit none
  type(elemental_collision)::isc
  character(1)             ::mode
@@ -41,8 +42,9 @@ subroutine scatter_Gamp(isc,mode)
  !Working Space
  !
  integer :: ng(2),ig1,ig2,iq,i1,i2
- logical :: l_RIM
+ logical :: l_RIM,cut_is_slab
  real(SP):: reg_q_m2,q_weight,R_sphere
+ character(schlen):: str_piece(5)
  !
  ! q_weight = 1./(DL_vol*q%nbz)
  !
@@ -68,6 +70,13 @@ subroutine scatter_Gamp(isc,mode)
  iq=isc%qs(2)
  isc%iqref=iq
  !
+ !Here, we need to check if we have the slab cutoff
+ !For cutoff slab, we want to use RIM
+ !For other cutoffs, we want to avoid RIM
+ !
+ call STRING_split(cut_geometry,str_piece)
+ !
+ cut_is_slab=trim(str_piece(1))=='slab'
  ! RIM support ?
  !
  if (.not.allocated(RIM_qpg)) then
@@ -94,7 +103,7 @@ subroutine scatter_Gamp(isc,mode)
      l_RIM=all((/ig1<=RIM_ng,ig2<=RIM_ng/))
      if (RIM_is_diagonal.and.l_RIM) l_RIM=(ig1==ig2)
      !
-     if (l_RIM.and..not.l_col_cut) then
+     if (l_RIM.and.(.not.l_col_cut.or.cut_is_slab)) then
        isc%gamp(i1,i2)=RIM_qpg(iq,ig1,ig2)/2._SP
        cycle
      else

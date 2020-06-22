@@ -190,10 +190,8 @@ AC_LANG_POP(Fortran)
 #=============================================================================
 # FLAGS TO INCLUDE MODULE
 AX_F90_MODULE_FLAG
-#F90_MODULE_FLAG="$ax_cv_f90_modflag"
 IFLAG="$ax_cv_f90_modflag"
 if test -z "$IFLAG" ; then IFLAG="-I" ; fi
-#AC_SUBST([F90_MODULE_FLAG])
 AC_SUBST(IFLAG)
 #
 # ============================================================================

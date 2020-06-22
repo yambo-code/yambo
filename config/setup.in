@@ -77,7 +77,6 @@ lfutile     = @FUTILE_LIBS@
 ifutile     = @FUTILE_INCS@
 letsf       = @ETSF_LIBS@
 ietsf       = @ETSF_INCS@
-ldriver     = @DRIVER_LIBS@
 idriver     = @DRIVER_INCS@
 #
 # VPATH

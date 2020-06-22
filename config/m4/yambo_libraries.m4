@@ -24,9 +24,18 @@
 #
 AC_DEFUN([AC_YAMBO_LIBRARIES],[
 
-DRIVER_LIBS="$PWD/lib/libdriver.a"
 DRIVER_INCS="-I$PWD/lib/yambo/driver/include/ -I$PWD/include/driver"
-AC_SUBST(DRIVER_LIBS)
 AC_SUBST(DRIVER_INCS)
+
+AC_MSG_CHECKING([driver lib])
+if ! test -d "$PWD/lib/yambo/driver/src"; then
+ cd $PWD/lib/
+ git clone git@github.com:yambo-code/yambo-libraries.git yambo
+ cd $PWD
+fi
+
+m4_include([lib/yambo/driver/config/version.m4])
+
+AC_MSG_RESULT([@ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL])
 
 ])

@@ -151,7 +151,7 @@ subroutine RT_relaxation(E,k,q,Time)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(iq)) cycle
      !
-     call RT_PHEL_total_Kernel(iq,E,k,q)
+     call RT_PHEL_lifetimes(iq,E,k,q)
      !
    enddo
    !

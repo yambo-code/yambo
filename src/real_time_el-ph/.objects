@@ -1,5 +1,5 @@
 #if defined _PHEL
-PHEL_objects = RT_PHEL_TSQP_Kernel.o RT_PHEL_total_Kernel.o RT_PHEL_initialize.o
+PHEL_objects = RT_PHEL_lifetimes.o RT_PHEL_initialize.o
 #endif
 objs =  RT_ELPH_zeroing.o RT_ELPH_gkkp_remap.o RT_ELPH_initialize.o \
         RT_ELPH_eq_Kernel.o RT_ELPH_CCA_Kernel.o RT_ELPH_out_of_eq_Kernel.o \

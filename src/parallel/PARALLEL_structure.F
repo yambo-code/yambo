@@ -3,22 +3,22 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
 ! for more details.
 !
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine PARALLEL_structure(n_elements,ROLE)
@@ -40,10 +40,10 @@ use parallel_m,     ONLY:PAR_PHEL_K_range,PAR_PHEL_Q_range
  !
  implicit none
  !
- integer        :: n_elements
+ integer        :: n_elements 
  character(*)   :: ROLE(n_elements)
  !
- ! Work Space
+ ! Work Space 
  !
  integer     ::ID(n_elements),i_cpu,i_chain,chain_now,i_order,&
 &              tmp_comm_inter,tmp_comm_intra,i_structure,PHASE_space

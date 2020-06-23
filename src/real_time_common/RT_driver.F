@@ -23,7 +23,7 @@
 !
 subroutine RT_driver(E,X,k,q,Dip)
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,lchlen
  use drivers,        ONLY:l_use_collisions,l_use_Hxc_collisions,l_elph_scatt,&
                           l_elel_scatt,l_elphoton_scatt
 #if defined _PHEL
@@ -76,9 +76,9 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  ! Work Space
  !
- integer           :: io_REF,io_err
+ integer           :: io_REF,io_err,i_t
  logical           :: LT_pump
- character(schlen) :: sec_title(3)
+ character(lchlen) :: sec_title
  real(SP)          :: OBSERVABLES(25)
  logical, external :: RT_Dynamics_is_over
  !
@@ -92,11 +92,11 @@ subroutine RT_driver(E,X,k,q,Dip)
  real(SP)          :: LT_pump_duration
  !
  sec_title   =' '
- if (l_elph_scatt)                  sec_title(1)='+el-ph'
- if (l_elel_scatt)                  sec_title(2)='+el-el'
- if (l_elphoton_scatt)              sec_title(3)='+el-photon'
+ if (l_elph_scatt)                  sec_title='+el-ph'
+ if (l_elel_scatt)                  sec_title=trim(sec_title)//'+el-el'
+ if (l_elphoton_scatt)              sec_title=trim(sec_title)//'+el-photon'
 #if defined _PHEL
-if (l_phel_scatt)                   sec_title(3)='+ph-el' !Rewriting el-photon! Temporary!
+if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
 #endif
  !
  ! Potential
@@ -109,7 +109,7 @@ if (l_phel_scatt)                   sec_title(3)='+ph-el' !Rewriting el-photon! 
  RT_xc_functional=H_xc_functional
  RT_perturbation =H_perturbation
  !
- call section('*',trim(RT_potential)//' Real-Time Dynamics '//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
+ call section('*',trim(RT_potential)//' Real-Time Dynamics '//trim(sec_title))
  !
  ! GPL_EXCLUDE_START
  !

@@ -3,22 +3,22 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
 ! for more details.
 !
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module interfaces
@@ -95,7 +95,7 @@ module interfaces
      complex(SP),      optional :: V_right(:,:)
      real(SP),         optional :: E_real(:)
      complex(SP),      optional :: E_cmpl(:)
-     integer,          optional :: SVD_digits
+     integer,          optional :: SVD_digits 
      complex(SP),      optional :: det
      !
    end subroutine
@@ -107,7 +107,7 @@ module interfaces
      use FFT_m,          ONLY:fft_size
      implicit none
      type(bz_samp)::k
-     type(levels) ::E
+     type(levels) ::E       
      real(SP), optional             ::rho(fft_size)
      real(SP), optional             ::J(fft_size,3)
      integer,  optional, intent(in) ::bands(2)
@@ -118,7 +118,7 @@ module interfaces
 &                                  USE_the_DbGd,USE_Eo,USE_occupations,WF_fac,PDOS_fac)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
-     use R_lattice,      ONLY:bz_samp
+     use R_lattice,      ONLY:bz_samp 
      use electrons,      ONLY:n_spin
      implicit none
      type(bz_samp), intent(in)  :: Xk
@@ -232,7 +232,7 @@ module interfaces
      type(PP_indexes),    optional :: Bm_index
      logical, intent(in), optional :: CLEAN_UP
      !
-   end subroutine
+   end subroutine 
    !
    subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,N_f,N_m,I_dir)
      use pars,          ONLY: SP
@@ -243,7 +243,7 @@ module interfaces
      integer , optional :: N_f(n_sp_pol)
      integer , optional :: N_m(n_sp_pol)
      integer , optional :: I_dir(2)
-   end subroutine
+   end subroutine 
    !
    subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
      use BS,            ONLY:BS_H_dim
@@ -309,13 +309,13 @@ module interfaces
      type(bz_samp)     :: k
      character(*)      :: DB1_path,what
      real(SP),optional :: db1_a(3,3)
-     real(SP),optional :: db1_alat(3)
+     real(SP),optional :: db1_alat(3) 
    end function
    !
    subroutine QP_state_print(qp)
      use QP_m,          ONLY:QP_t
      implicit none
-     type(QP_t),optional ::qp
+     type(QP_t),optional ::qp              
    end subroutine
    !
  end interface
@@ -336,12 +336,12 @@ module interfaces
      complex(SP), intent(out) DEV_ATTRIBUTE :: &
 &         WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
    end subroutine
- end interface
+ end interface 
  !
  interface WF_symm_kpoint
    !
    subroutine WF_symm_kpoint_cpu(b_to_load,ikbz,Xk,WF_k_out)
-     use pars,          ONLY:SP
+     use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
      use wave_func,     ONLY:wf_ng_1st_BZ
      use electrons,     ONLY:n_spinor,n_sp_pol
@@ -353,7 +353,7 @@ module interfaces
    !
 #ifdef _CUDA
    subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,Xk,WF_k_out)
-     use pars,          ONLY:SP
+     use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
      use wave_func,     ONLY:wf_ng_1st_BZ
      use electrons,     ONLY:n_spinor,n_sp_pol

@@ -3,22 +3,22 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
 ! for more details.
 !
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
@@ -179,7 +179,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! PAR_WF_k is like PAR_IND_Xk_ibz with WF loaded only for 1 cpu per k-block
  !
  !.........................................................................
- if (allocated(PAR_IND_Xk_ibz%n_of_elements)) then
+ if (allocated(PAR_IND_Xk_ibz%n_of_elements)) then 
    !
    ! This allocation can be left over from previous calls to PARALLEL_global routine
    !
@@ -218,7 +218,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  !.........................................................................
  ! WFs & QPs
- !.........................................................................
+ !......................................................................... 
  !
  ! QP "head"
  !
@@ -244,7 +244,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! Xo Xo Xo Xo Xo Xo Xo Xo <- b
  !
  ! NOTE: HEAD_k/q_cpu=.TRUE. => HEAD_QP_cpu=.TRUE.
- !
+ !  
  ! but HEAD_QP_cpu=.TRUE. defines a larger set of CPU's.
  !
  ! Not all CPU's (o) load the WFs. Only X

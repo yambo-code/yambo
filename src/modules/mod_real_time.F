@@ -187,9 +187,9 @@ module real_time
  logical                  :: l_RT_eq_is_zero_temp
  logical                  :: l_RT_include_eq_scatt
  logical                  :: l_RT_impose_for_metals
- logical,     allocatable :: DbGd_EE_scatt_table(:,:)
- integer,     allocatable :: DbGd_EE_Nk_table(:,:)
- real(SP)                 :: DbGd_EE_percent
+ logical,     allocatable :: DbGd_EE_scatt_table(:,:)  
+ integer,     allocatable :: DbGd_EE_Nk_table(:,:)  
+ real(SP)                 :: DbGd_EE_percent 
  !
  ! ELPH kernel...
  !----------------
@@ -222,7 +222,7 @@ module real_time
  end type
  !
  type(RT_DbGd),save  :: RT_E_and_k
- !
+ ! 
  ! Locks, reference & Logicals
  !-----------------------------
  logical                  :: l_RT_relaxation_update_reference

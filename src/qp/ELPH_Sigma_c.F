@@ -35,8 +35,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:l_elel_corr
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index,PAR_IND_QP,&
-&                        PAR_IND_Q_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q_bz,PAR_Q_bz_index,PAR_IND_QP,&
+&                        PAR_IND_Q_bz_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
                          PAR_COM_Q_A2A,PAR_COM_Q_INDEX,myid
  use IO_m,          ONLY:io_control,manage_action,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch,&
 &                        deliver_IO_error_message,OP_WR_CL,OP_APP_CL
@@ -200,7 +200,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! Timing steps
  !--------------
  live_timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
-&                  PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&
+&                  PAR_IND_Q_bz%n_of_elements(PAR_IND_Q_bz_ID+1)*&
 &                  PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1)
  !
  call PP_redux_wait
@@ -226,8 +226,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    ! DB I/O can be skipped except at the gamma point which is used to define E_k_plus_q_at_gamma array
    !
-   if (.not.PAR_IND_Q%element_1D(iq_loop).and.iq_db>1) cycle
-   iq_mem=PAR_Q_index(iq_loop)
+   if (.not.PAR_IND_Q_bz%element_1D(iq_loop).and.iq_db>1) cycle
+   iq_mem=PAR_Q_bz_index(iq_loop)
    !
    if (iq_db/=iabs(iq_db_ref)) then
      !
@@ -262,7 +262,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      !
    endif
    !
-   if (.not.PAR_IND_Q%element_1D(iq_loop)) cycle
+   if (.not.PAR_IND_Q_bz%element_1D(iq_loop)) cycle
    !
    do i_qp=1,QP_n_states
      !
@@ -447,7 +447,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      q_each_cpu=0
      do iq_ibz=2,q%nibz
        do iq_s=1,q%nstar(iq_ibz)
-         if ( PAR_IND_Q%element_1D(sum(q%nstar(:iq_ibz-1))+iq_s) ) q_each_cpu(iq_ibz)=1
+         if ( PAR_IND_Q_bz%element_1D(sum(q%nstar(:iq_ibz-1))+iq_s) ) q_each_cpu(iq_ibz)=1
        enddo
      enddo
      !
@@ -463,7 +463,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    iq_range=(/nq_to_sum,1/)
    do iq_loop=1,nq_to_sum
-     if (PAR_Q_index(iq_loop)>0) then
+     if (PAR_Q_bz_index(iq_loop)>0) then
        iq_range(1)=min(iq_range(1),iq_loop)
        iq_range(2)=max(iq_range(2),iq_loop)
      endif

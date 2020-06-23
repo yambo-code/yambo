@@ -119,15 +119,15 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
      !
      use stderr,      ONLY:STRING_remove
      use vec_operate, ONLY:sort
-     use parallel_m,  ONLY:PAR_QP_range,PAR_n_bands,PAR_n_c_bands,PAR_n_v_bands,PAR_Q_range,&
+     use parallel_m,  ONLY:PAR_QP_range,PAR_n_bands,PAR_n_c_bands,PAR_n_v_bands,&
 &                          PAR_EH_range,PAR_K_range,PAR_n_freqs,PAR_n_G_vectors,&
-&                          PARALLEL_default_mode,master_cpu
+&                          PARALLEL_default_mode,master_cpu,PAR_Q_ibz_range,PAR_Q_bz_range
      !
      ! "c" -> PAR_n_c_bands(2)-PAR_n_c_bands(1)+1
      ! "v" -> PAR_n_v_bands(2)-PAR_n_v_bands(1)+1
      ! "k" -> PAR_K_range
      ! "b" -> PAR_n_bands(2)-PAR_n_bands(1)+1
-     ! "q" -> PAR_Q_range(2)- PAR_Q_range(1)+1
+     ! "q" -> PAR_Q_ibz_range(2)- PAR_Q_ibz_range(1)+1
      ! "qp"-> PAR_QP_range
      ! "eh"-> PAR_EH_range
      ! "w" -> PAR_n_freqs
@@ -152,7 +152,12 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
        if (trim(ch)=="v" ) VALS(i_f)=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1
        if (trim(ch)=="b" ) VALS(i_f)=PAR_n_bands(2)-PAR_n_bands(1)+1
        if (trim(ch)=="k" ) VALS(i_f)=PAR_K_range
-       if (trim(ch)=="q" ) VALS(i_f)=PAR_Q_range(2)-PAR_Q_range(1)+1
+       if (trim(ch)=="q" ) then
+         !
+         if (N_fields==5.or.N_fields==3) VALS(i_f)=PAR_Q_ibz_range(2)-PAR_Q_ibz_range(1)+1
+         if (N_fields==4)                VALS(i_f)=PAR_Q_bz_range(2)-PAR_Q_bz_range(1)+1
+         !
+       endif
        if (trim(ch)=="qp") VALS(i_f)=PAR_QP_range
        if (trim(ch)=="eh") VALS(i_f)=PAR_EH_range
        if (trim(ch)=="w ") VALS(i_f)=PAR_n_freqs

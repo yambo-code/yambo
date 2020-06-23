@@ -30,19 +30,20 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use IO_m,          ONLY:io_COLLs,IO_and_Messaging_switch
  use QP_m,          ONLY:QP_n_states,QP_nk
  use openmp,        ONLY:n_threads_SE,OPENMP_set_threads
- use parallel_m,    ONLY:HEAD_QP_cpu,HEAD_b_cpu,master_cpu,n_WF_bands_to_load,&
-&                        COMM_copy,PAR_Q_range,PAR_n_bands,PAR_build_index,ncpu
+ use parallel_m,    ONLY:HEAD_QP_cpu,HEAD_b_cpu,master_cpu,n_WF_bands_to_load,COMM_copy,&
+&                        PAR_Q_bz_range,PAR_Q_ibz_range,PAR_n_bands,PAR_build_index,ncpu
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_Q_INDEX,PAR_COM_QP_A2A,PAR_COM_G_b_INDEX, &
 &                        PAR_COM_Q_A2A
  ! IND
- use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q,PAR_IND_G_b,PAR_IND_Q_bz,PAR_IND_Xk_ibz,PAR_IND_G_k
+ use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q_ibz,PAR_IND_G_b,PAR_IND_Q_bz,PAR_IND_Xk_ibz,PAR_IND_G_k
  ! INDEX
- use parallel_m,    ONLY:PAR_QP_index,PAR_Q_index,PAR_Q_bz_index,PAR_G_bands_index
+ use parallel_m,    ONLY:PAR_QP_index,PAR_Q_ibz_index,PAR_Q_bz_index,PAR_G_bands_index
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_nG_bands,PAR_nQ,PAR_nQ_bz,PAR_nQP
+ use parallel_m,    ONLY:PAR_nG_bands,PAR_nQ_ibz,PAR_nQ_bz,PAR_nQP
  ! ID's
- use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_G_b_ID,PAR_IND_Q_ID,PAR_IND_QP_ID
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_G_b_ID,PAR_IND_QP_ID,&
+&                        PAR_IND_Q_ibz_ID,PAR_IND_Q_bz_ID
 #if defined _ELECTRIC
  use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_bz
 #endif
@@ -54,7 +55,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_G_b_INDEX
  ! IND
- use parallel_m,    ONLY:PAR_IND_Bp_mat,PAR_IND_QP,PAR_IND_Q
+ use parallel_m,    ONLY:PAR_IND_Bp_mat,PAR_IND_QP,PAR_IND_Q_ibz,PAR_IND_Q_bz
  ! INDEX
  use parallel_m,    ONLY:PAR_DIPk_ibz_index
  ! DIMENSIONS
@@ -115,20 +116,36 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  if (l_elph_corr.and..not.elph_use_q_grid)    WHAT="RIM"
 #endif
  !
- call PARALLEL_index(PAR_IND_Q,(/PAR_Q_range(2)/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
- PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id
- PAR_nQ=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)
- call PARALLEL_live_message("Q("//trim(WHAT)//")",ENVIRONMENT="Self_Energy",&
-&                           LOADED=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1),TOTAL=PAR_Q_range(2),&
-&                           NCPU=PAR_COM_Q_INDEX%n_CPU)
- !
- YAMBO_ALLOC(PAR_Q_index,(PAR_Q_range(2)))
- call PAR_build_index(PAR_IND_Q,PAR_Q_range(2),PAR_Q_index,PAR_nQ)
+ if (trim(WHAT)=="ibz".or.trim(WHAT)=="RIM") then
+   !
+   call PARALLEL_index(PAR_IND_Q_ibz,(/PAR_Q_ibz_range(2)/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+   PAR_IND_Q_ibz_ID=PAR_COM_Q_INDEX%CPU_id
+   PAR_nQ_ibz=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)
+   call PARALLEL_live_message("Q("//trim(WHAT)//")",ENVIRONMENT="Self_Energy",&
+&                             LOADED=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1),TOTAL=PAR_Q_ibz_range(2),&
+&                             NCPU=PAR_COM_Q_INDEX%n_CPU)
+   !
+   YAMBO_ALLOC(PAR_Q_ibz_index,(PAR_Q_ibz_range(2)))
+   call PAR_build_index(PAR_IND_Q_ibz,PAR_Q_ibz_range(2),PAR_Q_ibz_index,PAR_nQ_ibz)
+   !
+ else if (trim(WHAT)=="bz") then
+   !
+   call PARALLEL_index(PAR_IND_Q_bz,(/PAR_Q_bz_range(2)/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+   PAR_IND_Q_bz_ID=PAR_COM_Q_INDEX%CPU_id
+   PAR_nQ_bz=PAR_IND_Q_bz%n_of_elements(PAR_IND_Q_bz_ID+1)
+   call PARALLEL_live_message("Q("//trim(WHAT)//")",ENVIRONMENT="Self_Energy",&
+&                              LOADED=PAR_IND_Q_bz%n_of_elements(PAR_IND_Q_bz_ID+1),TOTAL=PAR_Q_bz_range(2),&
+&                              NCPU=PAR_COM_Q_INDEX%n_CPU)
+   !
+   YAMBO_ALLOC(PAR_Q_bz_index,(PAR_Q_bz_range(2)))
+   call PAR_build_index(PAR_IND_Q_bz,PAR_Q_bz_range(2),PAR_Q_bz_index,PAR_nQ_bz)
+   !
+ endif
  !
  if (trim(WHAT)=="ibz") then
    YAMBO_ALLOC(PAR_Q_bz_index,(nqbz))
-   call distribute_BZk_using_IBZk(PAR_COM_Q_INDEX,q,PAR_IND_Q   , PAR_IND_Q_ID,&
-&                                                   PAR_IND_Q_bz, PAR_IND_Q_ID,&
+   call distribute_BZk_using_IBZk(PAR_COM_Q_INDEX,q,PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,&
+&                                                   PAR_IND_Q_bz, PAR_IND_Q_ibz_ID,&
 &                                                   PAR_Q_bz_index,PAR_nQ_bz)
    call PAR_build_index(PAR_IND_Q_bz,nqbz,PAR_Q_bz_index,PAR_nQ_bz)
  endif
@@ -167,8 +184,13 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  ! K-points
  !
- call PARALLEL_add_Q_to_K_list('k_qp_q_'//trim(WHAT),PAR_IND_QP,PAR_IND_QP_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
-&                                PAR_IND_Q,PAR_COM_QP_INDEX,(/0,0/),Xk,q)
+ if (trim(WHAT)=="ibz".or.trim(WHAT)=="RIM") then
+   call PARALLEL_add_Q_to_K_list('k_qp_q_'//trim(WHAT),PAR_IND_QP,PAR_IND_QP_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
+&                                PAR_IND_Q_ibz,PAR_COM_QP_INDEX,(/0,0/),Xk,q)
+ else if (trim(WHAT)=="bz") then
+   call PARALLEL_add_Q_to_K_list('k_qp_q_'//trim(WHAT),PAR_IND_QP,PAR_IND_QP_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
+&                                PAR_IND_Q_bz,PAR_COM_QP_INDEX,(/0,0/),Xk,q)
+ endif
  !
  ! G bands
  !=========

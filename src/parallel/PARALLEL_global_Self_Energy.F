@@ -116,7 +116,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  if (l_elph_corr.and..not.elph_use_q_grid)    WHAT="RIM"
 #endif
  !
- if (trim(WHAT)=="ibz".or.trim(WHAT)=="RIM") then
+ if (trim(WHAT)=="ibz") then
    !
    call PARALLEL_index(PAR_IND_Q_ibz,(/PAR_Q_ibz_range(2)/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
    PAR_IND_Q_ibz_ID=PAR_COM_Q_INDEX%CPU_id
@@ -128,7 +128,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    YAMBO_ALLOC(PAR_Q_ibz_index,(PAR_Q_ibz_range(2)))
    call PAR_build_index(PAR_IND_Q_ibz,PAR_Q_ibz_range(2),PAR_Q_ibz_index,PAR_nQ_ibz)
    !
- else if (trim(WHAT)=="bz") then
+ else if (trim(WHAT)=="bz".or.trim(WHAT)=="RIM") then
    !
    call PARALLEL_index(PAR_IND_Q_bz,(/PAR_Q_bz_range(2)/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
    PAR_IND_Q_bz_ID=PAR_COM_Q_INDEX%CPU_id

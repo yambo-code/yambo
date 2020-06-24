@@ -45,7 +45,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
 &                        COLLISIONS_HXC_use_TDDFT
  use timing_m,      ONLY:timing
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,Io_and_Messaging_switch,io_COLLs
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,IO_and_Messaging_switch,io_COLLs
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -459,6 +459,9 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      !     (i_n,i_k,1)-->--.---------->----------.---->----(i_m,i_k,1)
      !                          (i_kmq,i_kmq_s)
      !
+     !
+     integer :: TMP_INDEX(COLL_bands(1):COLL_bands(2))
+     !
      if (l_compute_screening) then
        call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1/),ID=ID)
        io_err=io_X(X,Xw,ID)
@@ -519,6 +522,12 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
        endif
        !
        do i_mp=COLL_bands(1),COLL_bands(2)
+         !
+         do i_np=COLL_bands(1),COLL_bands(2)
+           TMP_index(i_np)=B_mat_index(i_np,i_mp,COLL_bands)
+         enddo
+         !
+         if ( .not. any(PAR_IND_Bp_mat%element_1D(TMP_index(:))) ) cycle
          !
          iscp_XC%os(1)=i_mp
          !

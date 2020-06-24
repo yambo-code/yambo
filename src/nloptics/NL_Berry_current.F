@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the Yambo team
+!        Copyright (C) 2000-2020 the Yambo team
 !              http://www.yambo-code.org/ 
 !
 ! Authors (see AUTHORS file for details): CA

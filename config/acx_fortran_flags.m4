@@ -70,11 +70,11 @@ i?86*linux*)
     ;;
   *gfortran*)
     SYSFLAGS="-O3 -g -mtune=native"
-    FUFLAGS="-O0 -mtune=native"
+    FUFLAGS="-O0 -g -mtune=native"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
+    DEBUG_FLAGS="-g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *ifort*)
     OMPFLAGS="-openmp"
@@ -97,16 +97,16 @@ i?86*linux*)
        ;;
     esac
     SYSFLAGS="-assume bscc -O3 -g -ip $CPU_FLAG"
-    FUFLAGS="-assume bscc -O0 $CPU_FLAG"
+    FUFLAGS="-assume bscc -O0 -g $CPU_FLAG"
     FCMFLAG="-nofor_main"
-    DEBUG_FLAGS="-check all -CB -traceback -check bound"
+    DEBUG_FLAGS="-check all -CB -g -traceback -check bound"
   ;;
   *pathf9*)
     SYSFLAGS="-O2 -g -fno-second-underscore"
     FUFLAGS="-O0 -g -fno-second-underscore"
     FCMFLAG=""
     OMPFLAGS=""
-    DEBUG_FLAGS="-ffortran-bounds-check -C"
+    DEBUG_FLAGS="-g -ffortran-bounds-check -C"
     ;;
   *)
     SYSFLAGS="-O -g"
@@ -131,13 +131,13 @@ i?86*linux*)
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
+    DEBUG_FLAGS="-g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *g95*)
     SYSFLAGS="-O3 -g -fno-second-underscore -mtune=pentium4"
     FUFLAGS="-O0 -g -fno-second-underscore"
     FCMFLAG=""
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ftrace=full"
+    DEBUG_FLAGS="-g -Wall -pedantic -fbounds-check -ftrace=full"
     ;;
   *ifort*)
     CPU_FLAG=""
@@ -154,7 +154,7 @@ i?86*linux*)
     FCMFLAG="-nofor_main"
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
-    DEBUG_FLAGS="-check all -CB -traceback -check bound"
+    DEBUG_FLAGS="-check all -CB -g -traceback -check bound"
     ;;
   *)
     SYSFLAGS="-O -g"
@@ -180,13 +180,13 @@ ia64*linux* )
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
+    DEBUG_FLAGS="-g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *g95*)
     SYSFLAGS="-O3 -g -fbackslash -fno-second-underscore"
     FUFLAGS="-O0 -g -fbackslash -fno-second-underscore"
     FCMFLAG=""
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ftrace=full"
+    DEBUG_FLAGS="-g -Wall -pedantic -fbounds-check -ftrace=full"
     ;;
   *abf90*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
@@ -196,7 +196,7 @@ ia64*linux* )
     FUFLAGS="-O0 -g -w"
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
-    DEBUG_FLAGS=""
+    DEBUG_FLAGS="-g"
     ;;
   *ifort*)
     CPU_FLAG=""
@@ -213,7 +213,7 @@ ia64*linux* )
     FCMFLAG="-nofor_main"
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
-    DEBUG_FLAGS="-check all -CB -traceback -check bound"
+    DEBUG_FLAGS="-g -check all -CB -traceback -check bound"
     ;;
   *openf9*)
     SYSFLAGS="-O2 -fno-second-underscore"
@@ -221,11 +221,11 @@ ia64*linux* )
     FCMFLAG=""
     ;;
   *pathf9*)
-    SYSFLAGS="-O2 -fno-second-underscore"
-    FUFLAGS="-O0 -fno-second-underscore"
+    SYSFLAGS="-O2 -g -fno-second-underscore"
+    FUFLAGS="-O0 -g -fno-second-underscore"
     FCMFLAG=""
     OMPFLAGS=""
-    DEBUG_FLAGS="-ffortran-bounds-check -C"
+    DEBUG_FLAGS="-g -ffortran-bounds-check -C"
     ;;
   *)
     SYSFLAGS="-g -O"
@@ -251,13 +251,13 @@ ia64*linux* )
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
+    DEBUG_FLAGS="-g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *g95*)
     SYSFLAGS="-O3 -g -fbackslash -fno-second-underscore"
     FUFLAGS="-O0 -g -fbackslash -fno-second-underscore"
     FCMFLAG=""
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ftrace=full"
+    DEBUG_FLAGS="-g -Wall -pedantic -fbounds-check -ftrace=full"
     ;;
   *abf90*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
@@ -291,7 +291,7 @@ ia64*linux* )
     FUFLAGS="-assume bscc -O0 -g ${CPU_FLAG}"
     FCMFLAG="-nofor_main"
     NETCDFFLAGS="-DpgiFortran"
-    DEBUG_FLAGS="-CB -traceback"
+    DEBUG_FLAGS="-g -CB -traceback"
     ;;
   *openf9*)
     SYSFLAGS="-O2 -fno-second-underscore"

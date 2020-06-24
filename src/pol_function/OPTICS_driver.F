@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -222,21 +222,23 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! Without LF eps
    !
-   if (Macroscopic_CPU) Epsilon_ii(:,1)=1.0_SP-X_par(1)%blc(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
+   if (Macroscopic_CPU) Alpha(:,1)=-X_par(1)%blc(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
    !
    ! X Dyson equation solver
    !
-   if (l_rpa_IP) then
+   if (.not.l_rpa_IP) call X_redux(iq,X_par(1),wv,X)
+   !
+   if (Macroscopic_CPU) then
      !
-     if (Macroscopic_CPU) Epsilon_ii(:,2)=Epsilon_ii(:,1)
+     if (     l_rpa_IP) then
+       Alpha(:,2)=Alpha(:,1)
+     else
+       if(.not.l_col_cut) Alpha(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)-1._SP
+       ! Here I assume X_par is small and I use 1/(1+x)~1-x
+       if(     l_col_cut) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
+     endif
      !
-   else
-     !
-     call X_redux(iq,X_par(1),wv,X)
-     !
-!     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
-!&                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
-     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)
+     Epsilon_ii(:,1:2)=1._SP+Alpha(:,1:2)
      !
    endif
    !
@@ -317,10 +319,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      call of_open_close(alpha_file_name,'oa')
      !
      if(l_col_cut) then
-       alpha_factor=eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
-       Alpha(:,1)=(Epsilon_ii(:,1)-1._SP)*alpha_factor
-       if(     l_rpa_IP) Alpha(:,2)= Alpha(:,1)
-       if(.not.l_rpa_IP) Alpha(:,2)=(Epsilon_ii(:,2)-1._SP)*alpha_factor
+       alpha_factor=eps_2_alpha/4._SP/pi
+       Alpha(:,1)=Alpha(:,1)*alpha_factor
+       if(     l_rpa_IP) Alpha(:,2)=Alpha(:,1)
+       if(.not.l_rpa_IP) Alpha(:,2)=Alpha(:,2)*alpha_factor*bare_qpg(1,1)**2/q_norm(1)**2 
      else
        alpha_factor=eps_2_alpha/4._SP/pi
        Alpha(:,1)=(1._SP+EEL(:,1))*alpha_factor

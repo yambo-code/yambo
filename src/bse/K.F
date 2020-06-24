@@ -168,7 +168,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  O_ng=1
  O_ng_shift=maxval(qindx_X(iq,:,2))
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) then
    O_ng=maxval(G_m_G)
    call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
    if(iq/=1) O_ng_shift=max(qindx_B_max,O_ng_shift)
@@ -178,14 +178,18 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if( l_BSE_kernel_complete ) return
  !
- if (l_BSE_PAR_incomplete) then
-   ! qindx_B is allocated and loaded again at each q-point
-   if(iq/=1) call PARALLEL_SETUP_K_scheme("K") ! at q=1 distribution is done in DIPOLE_IO
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=qindx_ID)
-   io_qindx_err=io_QINDX(Xk,q,qindx_ID)
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) then
+   if (l_BSE_PAR_incomplete) then
+     ! qindx_B is allocated and loaded again at each q-point
+     if(iq/=1) call PARALLEL_SETUP_K_scheme("K") ! at q=1 distribution is done in DIPOLE_IO
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=qindx_ID)
+     io_qindx_err=io_QINDX(Xk,q,qindx_ID)
+   endif
+   !
+   qindx_tmp=qindx_B_init(qindx_ID)
+   !
  endif
  !
- qindx_tmp=qindx_B_init(qindx_ID)
  i_p_bz_last=0   ; i_k_bz_last=0
  i_pmq_bz_last=0 ; i_kmq_bz_last=0
  !
@@ -582,9 +586,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    YAMBO_FREE(F_xc)
  endif
  !
- if(l_BSE_PAR_incomplete) call qindx_free('B')
- !
- qindx_tmp=qindx_B_close(qindx_ID)
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) then
+   if(l_BSE_PAR_incomplete) call qindx_free('B')
+   qindx_tmp=qindx_B_close(qindx_ID)
+ endif
  !
  YAMBO_FREE(BS_W)
  call WF_free(WF)

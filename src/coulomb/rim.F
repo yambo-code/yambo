@@ -162,15 +162,15 @@ subroutine rim(cut_is_slab,is_cut)
    !
    !Write the random number
    !
-   write(msg_dum(2) , *) N_in
-   msg_dum(1) = "v2("//trim(msg_dum(2))//") = ("
-   write(msg_dum(2) , *) v2(1)
-   msg_dum(1) = trim(msg_dum(1))//","//trim(msg_dum(2))
-   write(msg_dum(2) , *) v2(2)
-   msg_dum(1) = trim(msg_dum(1))//","//trim(msg_dum(2))
-   write(msg_dum(2) , *) v2(3)
-   msg_dum(1) = trim(msg_dum(1))//","//trim(msg_dum(2)//")")
-   call msg('r', msg_dum(1))
+   !write(msg_dum(2) , *) N_in
+   !msg_dum(1) = "v2("//trim(msg_dum(2))//") = ("
+   !write(msg_dum(2) , *) v2(1)
+   !msg_dum(1) = trim(msg_dum(1))//","//trim(msg_dum(2))
+   !write(msg_dum(2) , *) v2(2)
+   !msg_dum(1) = trim(msg_dum(1))//","//trim(msg_dum(2))
+   !write(msg_dum(2) , *) v2(3)
+   !msg_dum(1) = trim(msg_dum(1))//","//trim(msg_dum(2)//")")
+   !call msg('r', msg_dum(1))
    !
    N_in=N_in+1
    if (mod(N_in,rep_factor)==0) call live_timing(steps=1)

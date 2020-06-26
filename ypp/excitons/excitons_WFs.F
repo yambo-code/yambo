@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -23,24 +23,24 @@
 !
 subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
- use pars,          ONLY:SP,cZERO,cI,pi
+ use pars,          ONLY:SP,cZERO,pi
  use R_lattice,     ONLY:bz_samp,qindx_X
  use units,         ONLY:BO2ANG
  use stderr,        ONLY:intc
  use D_lattice,     ONLY:a,alat
  use FFT_m,         ONLY:fft_dim
- use com,           ONLY:msg,warning,of_open_close,error
+ use com,           ONLY:msg,of_open_close
  use electrons,     ONLY:spin,n_spinor
  use YPPm,          ONLY:v2plot,ncell,r_hole,l_free_hole,&
 &                        nr,nr_tot,output_fname,&
 &                        use_xcrysden,use_gnuplot,use_cube,plot_dim,&
 &                        EXCITONS_user_indexes,EXCITONS_n_user_states
- use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_n_descs,BSS_description,&
-&                        BSS_n_eig
+ use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_desc,BSS_n_eig
  use BS,            ONLY:BS_bands,BS_H_dim
- use interfaces,    ONLY:PARALLEL_index,WF_load,WF_free
+ use interfaces,    ONLY:PARALLEL_index,WF_load,WF_free,DESC_write
  use wave_func,     ONLY:WF,WF_symm,wf_ng
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use openmp,        ONLY:OPENMP_update,master_thread
  use LIVE_t,        ONLY:live_timing
  use wrapper,       ONLY:V_dot_V
  use vec_operate,   ONLY:c2a
@@ -55,9 +55,9 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  type(PP_indexes)  :: px
  integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_l,i_lambda,j_lambda,i_spin,ir,ir_hole,j1,&
 &                     n_lambda_deg
- integer          :: ikpbz,ikp,isp
+ integer           :: ikpbz,ikp,isp
  real(SP)          :: r_hole_rlu(3),kp_dot_r_h,k_dot_r_e
- complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor)
+ complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor),phase
  !
  integer,  allocatable :: rindex(:)
  real(SP), allocatable :: r_cell_cc(:,:)
@@ -92,7 +92,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      r_hole_rlu(j1)=r_hole_rlu(j1)-int(r_hole_rlu(j1))
    enddo
    call c2a(b_in=a,v_in=r_hole_rlu,v_out=r_hole,mode='ka2c')
-   call msg('s',':: Hole position in the DL cell  [cc]:',r_hole)
+   call msg('s',' Hole position in the DL cell  [cc]',r_hole)
    !
    ! [2] Bare position in the FFT grid
    !
@@ -100,7 +100,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    r_hole_rlu(:)=nint(r_hole_rlu(:)*fft_dim(:))
    ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
    if (ir_hole.lt.0) call error(' Hole coordinates in input must be positive') 
-   call msg('s','::      position in the FFT grid [cc]:',r_cell_cc(:,ir_hole))
+   call msg('s','      position in the FFT grid [cc]',r_cell_cc(:,ir_hole))
    !
    ! [3] Translation in the center of the Big grid
    !
@@ -118,8 +118,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
    r_hole=r_cell_cc(:,ir_hole)
    !
-   call msg('s','::      translated position      [cc]:',r_hole)
-   call msg('s','::                                [A]:',r_hole*BO2ANG)
+   call msg('s','      translated position      [cc]',r_hole)
+   call msg('s','                                [A]',r_hole*BO2ANG)
    !
  endif
  !
@@ -144,18 +144,25 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    !
    n_lambda_deg=count(BS_E_degs==BS_E_degs(j_lambda))
    !
-   if (n_lambda_deg>1) call msg('s',':: State '//trim(intc(j_lambda))//' Merged with states '//&
+   if (n_lambda_deg>1) call msg('s',' State '//trim(intc(j_lambda))//' Merged with states '//&
 &                                   trim(intc(BS_E_degs(j_lambda)))//' -> '//&
 &                                   trim(intc(BS_E_degs(j_lambda)+n_lambda_deg-1)))
    !
    call live_timing('ExcWF@'//trim(intc(j_lambda)),px%n_of_elements(myid+1))  
    !
    v2plot  =0._SP
-   wf_vc   =cZERO
    !
+   !$omp parallel default(shared), firstprivate(ir_hole,r_hole), &
+   !$omp private(wf_vc, ir,neh, ikbz,iv,ic,i_spin,ikibz,is, ikpbz,ikp,isp, &
+   !$omp &       k_dot_r_e,kp_dot_r_h, WF1_ir,WF2_ir,phase, i_l,wf_ )
+   !
+   call OPENMP_update(master_thread)
+   !
+   !$omp do schedule(dynamic)
    do ir=1,nr_tot
      !
      if (.not.px%element_1D(ir)) cycle
+     wf_vc   =cZERO
      !
      if (l_free_hole) then
        ir_hole=ir
@@ -176,9 +183,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
        ikp   = Xk%sstar(ikpbz,1)
        isp   = Xk%sstar(ikpbz,2)
        !
-       k_dot_r_e = dot_product(r_cell_cc(:,ir),Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
+       k_dot_r_e  = dot_product(r_cell_cc(:,ir),Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
        kp_dot_r_h = dot_product(r_hole,Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
-        
        !
        WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))
        WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))
@@ -186,21 +192,25 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
        wf_vc(neh) = conjg(WF1_ir(1))*WF2_ir(1)
        if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF1_ir(2))*WF2_ir(2)
        !
-       wf_vc(neh) = wf_vc(neh)*exp(cI*k_dot_r_e)*exp(-cI*kp_dot_r_h)
+       phase=cmplx(cos(k_dot_r_e-kp_dot_r_h),sin(k_dot_r_e-kp_dot_r_h),kind=SP)
+       wf_vc(neh) = wf_vc(neh)*phase
        ! 
      enddo  !Matrix elements
      !
      do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
        !
-       wf_ = V_dot_V(BS_H_dim,BS_mat(1,i_l),wf_vc)
+       wf_ = V_dot_V(BS_H_dim,BS_mat(:,i_l),wf_vc)
        !
        v2plot(ir) = v2plot(ir)+abs(wf_)**2
        !
      enddo
      !
-     call live_timing(steps=1)
+     if (master_thread) call live_timing(steps=1)
      !
    enddo   !grid points
+   !
+   !$omp end do
+   !$omp end parallel
    !
    call live_timing()
    !
@@ -208,19 +218,15 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    !
    ! PLOT
    !
-
-   if (use_cube)     output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
-   if (use_xcrysden)     output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.xsf'
-   if (use_gnuplot)     output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))
+   if (use_cube)      output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
+   if (use_xcrysden)  output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.xsf'
+   if (use_gnuplot)   output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))
    !
    if (use_cube) then 
      call of_open_close(trim(output_fname),'o')
    else
     call of_open_close(trim(output_fname),'ot')
-    do i1=1,BSS_n_descs
-      call msg('o exc',"#",trim(BSS_description(i1)),INDENT=0)
-    enddo
-      call msg('o exc',"#")
+    call DESC_write('o exc','#',BSS_desc)
    endif
    !
    call plot_check_and_launch(.false.)
@@ -269,7 +275,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      YAMBO_ALLOC(rindex,(nr_tot))
      !
      nr=(/ncell(1)*fft_dim(1),ncell(2)*fft_dim(2),ncell(3)*fft_dim(3)/)
-     call msg('s',':: Extended grid :',nr)
+     call msg('s',' Extended grid ',nr)
      !
      ir = 0
      do ir1 = 0, nr(1)-1

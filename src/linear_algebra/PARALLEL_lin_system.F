@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF, AM
@@ -31,7 +31,7 @@ subroutine PARALLEL_lin_system(A,B,n,nrhs)
  !
  use SLK_m,          ONLY:SLK_ORTHO
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LALGEBRA_WS,&
-&                         LINEAR_ALGEBRA_WS_clean_up
+&                         LINEAR_ALGEBRA_WS_reset
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
 #include<memory.h>
@@ -60,7 +60,7 @@ subroutine PARALLEL_lin_system(A,B,n,nrhs)
  !
  if (WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing P(Z/C)GESV')
  !
- call LINEAR_ALGEBRA_WS_clean_up(WS) 
+ call LINEAR_ALGEBRA_WS_reset(WS) 
  ! 
  call timing('PARALLEL_lin_system',OPR='stop')
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM
@@ -25,7 +25,6 @@ subroutine QP_DBs_create_and_modify(en,k)
  !
  use pars,          ONLY:SP
  use units,         ONLY:HA2EV
- use com,           ONLY:error
  use electrons,     ONLY:levels,n_sp_pol
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use QP_m,          ONLY:QP_t,QP_reset,QP_state,QP_nb,QP_nk,QP_n_states,QP_alloc

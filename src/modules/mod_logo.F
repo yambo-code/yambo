@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,7 +31,7 @@ module LOGO
  integer                     :: ID_logo
  integer                     :: ID_logo_stderr
  integer, parameter, private :: max_n_logo_lines=100
- character(60)               :: logo_line(max_n_logo_lines)
+ character(70)               :: logo_line(max_n_logo_lines)
  !
  contains
    !
@@ -82,7 +82,13 @@ module LOGO
 !&                '.'//' (Based on r.'//trim(intc(code_revision))//' h.'//trim(code_hash)//')'
      ! GPL_INCLUDE_END
      !
+     ! GPL_EXCLUDE_START
      comment(2)="Branch is "//trim(code_branch)
+     ! GPL_EXCLUDE_END
+     !
+     ! GPL_INCLUDE_START
+     !comment(2)=""
+     ! GPL_INCLUDE_END
      !
      comment(3)=trim(code_libraries)//" Build"
      !
@@ -153,8 +159,8 @@ module LOGO
          logo_line( 9)='   //   //      // //         //  ///////    ///////   '
        case(6)
          logo_line( 1)='                                                       '
-         logo_line( 2)=':::   :::   :::     ::::    ::::  :::::::::   ::::::::  '
-         logo_line( 3)=':+:   :+: :+: :+:   +:+:+: :+:+:+ :+:    :+: :+:    :+: '
+         logo_line( 2)=':   :::   :::     ::::    ::::  :::::::::   ::::::::  '
+         logo_line( 3)=':+:   :+: :+: :+:   +:+:+: :+:+:+ :+:    :+: :+:    :+ '
          logo_line( 4)=' +:+ +:+ +:+   +:+  +:+ +:+:+ +:+ +:+    +:+ +:+    +:+ '
          logo_line( 5)='  +#++: +#++:++#++: +#+  +:+  +#+ +#++:++#+  +#+    +:+ '
          logo_line( 6)='   +#+  +#+     +#+ +#+       +#+ +#+    +#+ +#+    +#+ '

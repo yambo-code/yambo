@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,13 +34,19 @@ module stderr
  logical          :: log_as_a_file
  character(lchlen):: logfile
  !
+ integer :: logfile_unit
+ !
  integer :: f_format_length
  integer :: g_format_length
+ !
+ integer :: of_format_length
+ integer :: og_format_length
+ !
  integer :: of_tabs(30)
  !
  ! Slash
  !
-#if defined _aix || defined _XLF
+#if defined _aix || defined _XLF || defined _PGI
  character(2), parameter :: slash="\\"
 #else 
  character(1), parameter :: slash="\"
@@ -60,24 +66,36 @@ module stderr
  !
  contains
    !
-   subroutine set_real_printed_length(f_length,g_length)
+   subroutine set_real_printed_length(f_length,g_length,of_length,og_length)
      integer, optional :: f_length,g_length
+     integer, optional :: of_length,og_length
      integer           :: it
-     if (present(f_length)) then
-       f_format_length=f_length
-     endif
-     if (present(g_length)) then
-       g_format_length=g_length
-     endif
-     if (.not.present(f_length).and..not.present(g_length)) then
-       f_format_length=9
-       g_format_length=9
-     endif
+     !
+     ! logs, reports and input
+     if (present( f_length))  f_format_length= f_length
+     if (present( g_length))  g_format_length= g_length
+     ! output files
+     if (present(of_length)) of_format_length=of_length
+     if (present(og_length)) og_format_length=og_length
+     !
+#if defined _DP
+     if (.not.present( f_length))  f_format_length=12
+     if (.not.present( g_length))  g_format_length=15
+     if (.not.present(of_length)) of_format_length=17
+     if (.not.present(og_length)) og_format_length=20
+#else
+     if (.not.present( f_length))  f_format_length=9
+     if (.not.present( g_length))  g_format_length=12
+     if (.not.present(of_length)) of_format_length=12
+     if (.not.present(og_length)) og_format_length=15
+#endif
      !
      of_tabs(1)=4
+     !
      do it=2,30
-       of_tabs(it)=of_tabs(it-1)+4+max(f_format_length,g_format_length)
+       of_tabs(it)=of_tabs(it-1)+4+max(of_format_length,og_format_length)
      enddo
+     !
    end subroutine
    !
    subroutine c_print(lfmt,msg,rfmt,sfmt)
@@ -204,7 +222,7 @@ module stderr
      !
      STRING_remove=string_in
      !
-     i_pos=index(string_in,what)
+     i_pos=index(trim(string_in),what)
      !
      if (i_pos==0) return
      !
@@ -217,7 +235,7 @@ module stderr
          STRING_remove=string_tmp(:i_pos-1)//string_tmp(i_pos+len(what):)
        endif
        string_tmp=STRING_remove
-       i_pos=index(string_tmp,what)
+       i_pos=index(trim(string_tmp),what)
        if (i_pos==0) return
      enddo
      !
@@ -286,6 +304,24 @@ module stderr
      !
    end function real2ch
    !
+   logical function int2log(i)
+     !
+     integer(LP) :: i
+     !
+     if(i==1) int2log=.true.
+     if(i==0) int2log=.false.
+     !
+   end function int2log
+   !
+   integer(LP) function log2int(l)
+     !
+     logical :: l
+     !
+     if(     l) log2int=1
+     if(.not.l) log2int=0
+     !
+   end function log2int
+   !
    character(schlen) function complex2ch(c)
      !
      complex(SP), intent(in) :: c
@@ -300,14 +336,20 @@ module stderr
      !
    end function complex2ch
    !
-   character(schlen) function gen_fmt(i_v,r_v)
-     integer ,optional :: i_v(:)
-     real(SP),optional :: r_v(:)
+   character(schlen) function gen_fmt(i_v,r_v,l_omode)
+     integer ,    optional :: i_v(:)
+     real(SP),    optional :: r_v(:)
+     logical,     optional :: l_omode
      !
      ! Work Space
      !
-     integer  :: MXexp,MNexp,MDexp,iexp,MXval,i1
+     integer  :: f_length,g_length
+     logical  :: l_omode_
+     integer  :: MXexp,MNexp,MDexp,iexp,iexp_pos,MXval,i1,G_shift
      real(SP) :: MX,MN,abs_r_v
+     !
+     l_omode_=.false.
+     if(present(l_omode)) l_omode_=l_omode
      !
      if (present(i_v)) then
        MXval=max(maxval(i_v),-minval(i_v))
@@ -317,37 +359,48 @@ module stderr
      endif
      !
      if (present(r_v)) then
-       MN= huge(SP)
-       MX=-huge(SP)
+       MN= huge(1._SP)
+       MX=-huge(1._SP)
        do i1=1,size(r_v)
          abs_r_v=abs(r_v(i1))
          if (abs_r_v<MN.and.abs_r_v>0._SP) MN=abs_r_v
          if (abs_r_v>MX.and.abs_r_v>0._SP) MX=abs_r_v
        enddo
-       MXexp=int(log10(MX))
-       MNexp=int(log10(MN))
-       iexp=max(iabs(MXexp),iabs(MNexp))
-       MDexp=int(log10(MX/MN))
-       if (size(r_v)==1.and.r_v(1)==0.) then
+       if (all((/r_v(:)==0._SP/))) then
          iexp=0
+         iexp_pos=0
          MDexp=0
+       else
+         MXexp=int(log10(MX))
+         MNexp=int(log10(MN))
+         iexp=max(iabs(MXexp),iabs(MNexp))
+         iexp_pos=max(MXexp,0)
+         MDexp=int(log10(MX/MN))
        endif
        !
-       if (iexp<=2.and.MDexp<=2) then
+       g_length=g_format_length
+       f_length=f_format_length
+       !
+       if (l_omode_) then
+         g_length=og_format_length
+         f_length=of_format_length
+       endif
+       !
+       if (iexp<=2.and.MDexp<=2.and..not.l_omode_) then
          !
          !  f_format_length-3-iexp:  3 for '-','.' + 1 as iexp(10)=1/iexp(100)=2
          !
-         write (gen_fmt,'(2(a,i2.2))')  'F',f_format_length,'.',f_format_length-3-iexp
+         write (gen_fmt,'(2(a,i2.2))')  'F',f_length,'.',f_length-3-iexp_pos
          !
        else
          !
-         ! 23/9/2011. Field intensities formats are wrong when iexp=9. This is beacause
-         ! depending on the compiler 1.E9 is written  as 0.1E10. Therefore I need to uses
-         ! a reference iexp=8 to distinguish the two possible formats.
+         if (iexp< 9)  G_shift=6   !Gx.x-6E1  g_length-6: 6 because of '-.','E-0'   +1 for leading number
+         if (iexp>=9)  G_shift=7   !Gx.x-7E2  g_length-7: 7 because of '-.','E-00'  +1 for leading number
+         if (iexp>=99) G_shift=8   !Gx.x-8E3  g_length-8: 8 because of '-.','E-000' +1 for leading number
          !
-         if (iexp< 9)  write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-5,'E1'   !G9.4E1  g_format_length-5: 5 because of '-1.','E0'
-         if (iexp>=9)  write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-6,'E2'   !G9.3E2  g_format_length-6: 6 because of '-1.','E00'
-         if (iexp>=99) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-7,'E3'   !G9.2E3  g_format_length-7: 7 because of '-1.','E000'
+         if (iexp< 9)  write (gen_fmt,'(2(a,i2.2),a)')  'G',g_length,'.',g_length-G_shift,'E1'
+         if (iexp>=9)  write (gen_fmt,'(2(a,i2.2),a)')  'G',g_length,'.',g_length-G_shift,'E2'
+         if (iexp>=99) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_length,'.',g_length-G_shift,'E3' 
          !
        endif
        !
@@ -393,7 +446,6 @@ module stderr
     !
     character(len=len(strIn)) :: str_
     character(len=len(MATCH)) :: MATCH_
-    integer :: i,j
     !
     STRING_same=.FALSE.
     !
@@ -416,7 +468,6 @@ module stderr
     !
     character(len=len(strIn)) :: str_
     character(len=len(MATCH)) :: MATCH_
-    integer :: i,j
     !
     STRING_match=.FALSE.
     !

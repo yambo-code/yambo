@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2019 the YAMBO team
+         Copyright (C) 2000-2020 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -26,6 +26,9 @@
 #include <string.h>
 #include <kind.h>
 #include <driver.h>
+#if defined _MPI 
+ #include <mpi.h>
+#endif
 /* 
   MAIN
 */
@@ -61,5 +64,15 @@ int main(int argc, char *argv[])
    Input File
  */
  input_file(y,tool,&use_editor);
+ /* 
+   CLEAN & EXIT
+ ===========================================================================
+ */
+#if defined _MPI
+  if (use_mpi==1) {
+   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Finalize();
+  };
+#endif 
 }
 

@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -27,9 +27,8 @@ mpi         = @def_mpi@
 netcdf      = @def_netcdf@
 scalapack   = @def_scalapack@
 slepc       = @def_slepc@
-precision   = @def_dp@
 fft         = @def_fft@
-xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@ @def_uspp@
+xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@ @def_uspp@ @def_cuda@ @def_yaml@
 keep_objs   = @enable_keep_objects@
 do_blacs    = @compile_blacs@
 do_slk      = @compile_slk@
@@ -37,6 +36,8 @@ do_lapack   = @compile_lapack@
 do_fftw     = @compile_fftw@
 do_fftqe    = @compile_fftqe@
 do_iotk     = @compile_iotk@
+do_futile   = @compile_futile@
+do_yaml     = @compile_yaml@
 do_hdf5     = @compile_hdf5@
 do_netcdf   = @compile_netcdf@
 do_etsf     = @compile_etsf@
@@ -83,15 +84,18 @@ BROKEN   = yambo_electric
 TESTS    = 
 SCRIPTS  = ydb.pl
 EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS) $(SCRIPTS)
+EXT_LIBS = libxc lapack fftw fftqe yaml futile iotk hdf5 netcdf etsf_io blacs scalapack petsc slepc
 #
 # Libraries (ordered for compiling & linking)
+#
+INT_LIBS = qe_pseudo slatec math77 local
 #
 DRIVER_LIBS    = interface lib options
 DRIVER_LIBS_LD = driver_options driver_interface driver_lib 
 
-BASIC_LIBS   = tools modules memory matrices linear_algebra parallel parser communicate common io \
+BASIC_LIBS   = tools modules memory matrices linear_algebra parallel parser communicate common timing io \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
-BASIC_LIBS_LD= $(DRIVER_LIBS_LD) tools memory modules matrices linear_algebra bz_ops parallel parser communicate common io \
+BASIC_LIBS_LD= $(DRIVER_LIBS_LD) tools memory io communicate modules matrices linear_algebra bz_ops parallel parser communicate common timing io \
                xc_functionals interface stop_and_restart wf_and_fft coulomb
 
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup \
@@ -100,20 +104,20 @@ MAIN_LIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup \
                tddft dipoles pol_function qp acfdt bse
 
 PJ_SCLIBS    = $(MAIN_LIBS) collisions hamiltonian sc
-PJ_SCLIBS_LD = $(MAIN_LIBS_LD) collisions hamiltonian sc
+PJ_SCLIBS_LD = $(MAIN_LIBS_LD) hamiltonian collisions sc
 
 PJ_RTLIBS    = $(BASIC_LIBS) interpolate real_time_control qp_control setup \
                tddft dipoles pol_function qp acfdt bse collisions hamiltonian \
                real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
 PJ_RTLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
-               tddft dipoles pol_function qp acfdt bse collisions hamiltonian \
+               tddft dipoles pol_function qp acfdt bse hamiltonian collisions \
                real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
 
 PJ_PLLIBS    = $(BASIC_LIBS) interpolate real_time_control qp_control setup \
                tddft dipoles pol_function qp acfdt bse collisions hamiltonian sc \
                real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
 PJ_PLLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
-               tddft dipoles pol_function qp acfdt bse collisions hamiltonian sc \
+               tddft dipoles pol_function qp acfdt bse hamiltonian collisions sc \
                real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
 
 PJ_NLLIBS    = $(PJ_RTLIBS) nloptics
@@ -121,19 +125,19 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 #
 # Interfaces
 #
-2YLIBS       = tools modules memory matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
-2YLIBS_LD    = $(DRIVER_LIBS_LD) tools memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
+2YLIBS       = tools modules memory matrices linear_algebra parallel parser communicate common timing io setup interface stop_and_restart bz_ops
+2YLIBS_LD    = $(DRIVER_LIBS_LD) tools memory io communicate modules matrices linear_algebra parallel parser communicate common timing io setup interface stop_and_restart bz_ops
 #
 # YPP
 #
-YPP_BASIC_LIBS     = modules interface qp plotting electrons 
-YPP_BASIC_LIBS_LD  = modules interface qp plotting electrons 
-YPP_LIBS           = $(YPP_BASIC_LIBS) excitons symmetries k-points bits 
-YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons symmetries k-points bits 
-YPPPH_LIBS         = $(YPP_BASIC_LIBS) elph excitons symmetries k-points bits 
-YPPPH_LIBS_LD      = $(YPP_BASIC_LIBS_LD) elph excitons symmetries k-points bits 
-YPPRT_LIBS         = $(YPP_BASIC_LIBS) elph real_time excitons symmetries k-points bits 
-YPPRT_LIBS_LD      = $(YPP_BASIC_LIBS_LD) elph real_time excitons symmetries k-points bits 
+YPP_BASIC_LIBS     = modules interface qp plotting k-points symmetries bits electrons 
+YPP_BASIC_LIBS_LD  = modules interface qp plotting k-points symmetries bits electrons 
+YPP_LIBS           = $(YPP_BASIC_LIBS) excitons
+YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons
+YPPPH_LIBS         = $(YPP_BASIC_LIBS) elph excitons
+YPPPH_LIBS_LD      = $(YPP_BASIC_LIBS_LD) elph excitons
+YPPRT_LIBS         = $(YPP_BASIC_LIBS) elph real_time excitons
+YPPRT_LIBS_LD      = $(YPP_BASIC_LIBS_LD) elph real_time excitons
 #
 YPP_MAIN_LIBS      = $(BASIC_LIBS) interpolate qp_control setup interface tddft dipoles pol_function qp bse
 YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) interpolate qp_control setup interface tddft dipoles pol_function qp bse
@@ -142,11 +146,11 @@ YPPSC_MAIN_LIBS_LD = $(YPP_MAIN_LIBS_LD) collisions hamiltonian sc
 YPPRT_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setup interface \
                      dipoles pol_function qp bse collisions hamiltonian 
 YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) real_time_control interpolate qp_control setup interface \
-                     dipoles pol_function qp bse collisions hamiltonian 
+                     dipoles pol_function qp bse hamiltonian collisions
 YPPNL_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setup interface \
                      dipoles pol_function qp bse collisions hamiltonian nloptics 
 YPPNL_MAIN_LIBS_LD = $(BASIC_LIBS_LD) real_time_control interpolate qp_control setup interface \
-                     dipoles pol_function qp bse collisions hamiltonian nloptics 
+                     dipoles pol_function qp bse hamiltonian collisions nloptics 
 
 .PHONY: interfaces
 
@@ -154,68 +158,81 @@ nothing:
 	@$(make_message)
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
-interfaces:
-	for target in $(INTERFCS) ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
-core:      
-	for target in $(CORE)     ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
-ph-project:
+interfaces: ext-libs
+	for target in $(INTERFCS) ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+core: ext-libs
+	for target in $(CORE)     ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+ph-project: ext-libs
 	for target in $(PH_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-sc-project:
+sc-project: ext-libs
 	for target in $(SC_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-magn-project:
-	for target in $(MAG_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-rt-project:
+magn-project: ext-libs
+	for target in $(MAG_PROJ) ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+rt-project: ext-libs
 	for target in $(RT_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-nl-project:
+nl-project: ext-libs
 	for target in $(NL_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-rtext-project:
-	for target in $(RTE_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-kerr-project:
+rtext-project: ext-libs
+	for target in $(RTE_PROJ) ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+kerr-project: ext-libs
 	for target in $(KERR_PROJ); do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-all: 
-	for target in $(ALL)      ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
+all: ext-libs 
+	for target in $(ALL)      ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 #
 # External libs #
 #
 ext-libs: 
+	@for target in $(EXT_LIBS) ; do $(MAKE) $$target; if test -f "$(topdir)/lib/$$target/Makefile" && test ! -f "$(topdir)/lib/$$target/package-installed"; then echo "$$target build failed"; break;fi ; done
+
+
+#
+# BLACS& SLK ) Parallel compilation of blacs and scalapack fails
+# SLEPC&PETSC) The internal build system of petsc and slepc already compiles the two libraries in parallel.
+#
+# Thus for these libraries the instruction to build in parallel (@+if) is not used
+#
+libxc:
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-	@+if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+lapack:
 	@+if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+fftw:
 	@+if test "$(do_fftw)" = yes ; then LIBS2DO="fftw" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+fftqe:
 	@+if test "$(do_fftqe)" = yes ; then LIBS2DO="fftqe" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); $(mklib_internal); fi
+yaml:
+	@+if test "$(do_yaml)" = yes ; then LIBS2DO="yaml" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+futile:
+	@+if test "$(do_futile)" = yes ; then LIBS2DO="futile" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+iotk:
 	@+if test "$(do_iotk)" = yes ; then LIBS2DO="iotk" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+hdf5:
 	@+if test "$(do_hdf5)" = yes ; then LIBS2DO="hdf5" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+netcdf:
 	@+if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf netcdff" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+etsf_io:
 	@+if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-	@+if test "$(do_blacs)" = yes ; then LIBS2DO="blacs" ; \
+blacs:
+	@if test "$(do_blacs)" = yes ; then LIBS2DO="blacs" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-	@+if test "$(do_slk)" = yes ; then LIBS2DO="scalapack" ; \
+scalapack:
+	@if test "$(do_slk)" = yes ; then LIBS2DO="scalapack" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-	@+if test "$(do_petsc)" = yes ; then LIBS2DO="petsc" ; \
+petsc:
+	@if test "$(do_petsc)" = yes ; then LIBS2DO="petsc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-	@+if test "$(do_slepc)" = yes ; then LIBS2DO="slepc" ; \
+slepc:
+	@if test "$(do_slepc)" = yes ; then LIBS2DO="slepc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-#
-# Internal libs #
-#
-int-libs: ext-libs
-	@+LIBS2DO="qe_pseudo"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
-	@+LIBS2DO="slatec"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
-	@+LIBS2DO="math77"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
-	@+LIBS2DO="local" ; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
-#
-# All libs #
-#
-libs:	ext-libs int-libs
 #
 # Download external libs #
 #
@@ -229,71 +246,85 @@ get_extlibs:
 #
 # Yambo #
 # 
-yambo: libs
+yambo: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_yambo"; $(mk_driver_src)
 	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; $(mksrc)
 	@+X2DO="yambo"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)"; $(mkx)
 #
 # Yambo PROJECTS #
 # 
-yambo_magnetic: libs
+yambo_magnetic: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_MAGNETIC -D_SC -D_yambo"; $(mk_driver_src)
 	@+LIBS2DO="$(PJ_SCLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_MAGNETIC -D_SC"; $(mksrc)
 	@+X2DO="yambo_magnetic"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_SCLIBS_LD)"; ADF="-D_MAGNETIC -D_SC"; $(mkx)
-yambo_electric: libs
+yambo_electric: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ELECTRIC -D_SC -D_yambo"; $(mk_driver_src)
 	@+LIBS2DO="$(PJ_SCLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELECTRIC -D_SC"; $(mksrc)
 	@+X2DO="yambo_electric"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_SCLIBS_LD)"; ADF="-D_ELECTRIC -D_SC"; $(mkx)
-yambo_kerr: libs
+yambo_kerr: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_RT -D_ELPH -D_KERR -D_yambo"; $(mk_driver_src)
 	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH -D_KERR"; $(mksrc)
 	@+X2DO="yambo_kerr"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)";ADF="-D_RT -D_ELPH -D_KERR"; $(mkx)
-yambo_sc: libs
+yambo_sc: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_SC -D_yambo"; $(mk_driver_src)
 	@+LIBS2DO="$(PJ_SCLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_SC"; $(mksrc)
 	@+X2DO="yambo_sc"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_SCLIBS_LD)"; ADF="-D_SC"; $(mkx)
-yambo_pl: libs
+yambo_pl: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_RT -D_SC -D_ELPH -D_PL -D_yambo"; $(mk_driver_src)
 	@+LIBS2DO="$(PJ_PLLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_SC -D_ELPH -D_PL"; $(mksrc)
 	@+X2DO="yambo_pl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_PLLIBS_LD)"; ADF="-D_RT -D_SC -D_ELPH -D_PL"; $(mkx)
-yambo_rt: libs
+yambo_rt: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_RT -D_ELPH -D_yambo"; $(mk_driver_src)
 	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH"; $(mksrc)
 	@+X2DO="yambo_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)"; ADF="-D_RT -D_ELPH"; $(mkx)
-yambo_nl: libs
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_NL -D_RT -D_ELPH -D_yambo"; $(mk_driver_src)
-	@+LIBS2DO="$(PJ_NLLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_NL -D_RT -D_ELPH"; $(mksrc)
-	@+X2DO="yambo_nl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_NLLIBS_LD)"; ADF="-D_NL -D_RT -D_ELPH"; $(mkx)
-yambo_ph: libs
+yambo_nl: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; ADF="-D_DOUBLE -D_SLEPC_OFF" ; $(mklib_internal)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_NL -D_RT -D_ELPH -D_yambo"; $(mk_driver_src)
+	@+LIBS2DO="$(PJ_NLLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_NL -D_RT -D_ELPH"; $(mksrc)
+	@+X2DO="yambo_nl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_NLLIBS_LD)"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_NL -D_RT -D_ELPH"; $(mkx)
+yambo_ph: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ELPH -D_yambo"; $(mk_driver_src)
 	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELPH"; $(mksrc)
 	@+X2DO="yambo_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)"; ADF="-D_ELPH"; $(mkx)
-yambo_qed: libs
+yambo_qed: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_QED -D_RT -D_ELPH -D_yambo"; $(mk_driver_src)
 	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_QED -D_RT -D_ELPH"; $(mksrc)
 	@+X2DO="yambo_qed"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)"; ADF="-D_QED -D_RT -D_ELPH"; $(mkx)
 #
 # Interfaces #
 #
-a2y: libs
+a2y: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_a2y"; $(mk_driver_src)
 	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
 	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
-	@+X2DO="a2y"; XPATH="interfaces/new_a2y"; VPATH="$(topdir)/interfaces/new_a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
-c2y: libs
+	@+X2DO="a2y"; XPATH="interfaces/a2y"; VPATH="$(topdir)/interfaces/a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
+c2y: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_c2y"; $(mk_driver_src)
 	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
 	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
 	@+X2DO="c2y"; XPATH="interfaces/c2y"; VPATH="$(topdir)/interfaces/c2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
 ifeq ($(do_p2y),yes)
-p2y: libs
+p2y: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_p2y"; $(mk_driver_src)
 	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
 	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
 	@+X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; ADF="@PW_CPP@"; $(mkx) ;
 endif
 ifeq ($(do_e2y),yes)
-e2y: libs
+e2y: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_e2y"; $(mk_driver_src)
 	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
 	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
@@ -302,7 +333,8 @@ endif
 #
 # YPP #
 #
-ypp: libs
+ypp: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ypp"; $(mk_driver_src)
 	@+LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
 	@+LIBS2DO="$(YPP_LIBS)"; XPATH="ypp" ; VPATH="$(topdir)/ypp" ; $(mk_ypp_src)
@@ -310,31 +342,36 @@ ypp: libs
 #
 # Ypp projects #
 #
-ypp_ph: libs
+ypp_ph: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_YPP_ELPH -D_ypp"; $(mk_driver_src)
 	@+LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELPH"; $(mksrc)
 	@+LIBS2DO="$(YPPPH_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp";  ADF="-D_YPP_ELPH"; $(mk_ypp_src)
 	@+X2DO="ypp_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPP_MAIN_LIBS_LD)"; \
 	X_ypp_LIBS="$(YPPPH_LIBS_LD) elph"; ADF="-D_YPP_ELPH"; $(mk_ypp_x)
-ypp_rt: libs
+ypp_rt: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ELPH -D_YPP_RT -D_YPP_ELPH -D_ypp"; $(mk_driver_src)
 	@+LIBS2DO="$(YPPRT_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH -D_YPP_RT"; $(mksrc)
 	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_ELPH -D_YPP_RT -D_YPP_ELPH"; $(mk_ypp_src)
 	@+X2DO="ypp_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPRT_MAIN_LIBS_LD)"; \
 	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; ADF="-D_YPP_RT"; $(mk_ypp_x)
-ypp_nl: libs
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ELPH -D_YPP_RT -D_YPP_NL -D_YPP_ELPH -D_ypp"; $(mk_driver_src)
-	@+LIBS2DO="$(YPPNL_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_NL -D_ELPH -D_YPP_NL"; $(mksrc)
-	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_ELPH -D_YPP_RT -D_YPP_NL -D_YPP_ELPH"; $(mk_ypp_src)
+ypp_nl: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; ADF="-D_DOUBLE -D_SLEPC_OFF" ; $(mklib_internal)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_ELPH -D_YPP_RT -D_YPP_NL -D_YPP_ELPH -D_ypp"; $(mk_driver_src)
+	@+LIBS2DO="$(YPPNL_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_RT -D_NL -D_ELPH -D_YPP_NL"; $(mksrc)
+	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_ELPH -D_YPP_RT -D_YPP_NL -D_YPP_ELPH"; $(mk_ypp_src)
 	@+X2DO="ypp_nl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPRT_MAIN_LIBS_LD)"; \
-	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; ADF="-D_YPP_NL -D_YPP_RT -D_YPP_ELPH"; $(mk_ypp_x)
-ypp_sc: libs
+	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_YPP_NL -D_YPP_RT -D_YPP_ELPH"; $(mk_ypp_x)
+ypp_sc: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_SC -D_ypp"; $(mk_driver_src)
 	@+LIBS2DO="$(YPPSC_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_SC"; $(mksrc)
 	@+LIBS2DO="$(YPP_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_YPP_SC"; $(mk_ypp_src)
 	@+X2DO="ypp_sc"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPSC_MAIN_LIBS_LD)"; \
 	X_ypp_LIBS="$(YPP_LIBS_LD)"; ADF="-D_YPP_SC"; $(mk_ypp_x)
-ypp_magnetic: libs
+ypp_magnetic: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_YPP_MAGNETIC -D_ypp"; $(mk_driver_src)
 	@+LIBS2DO="$(YPPSC_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_SC -D_MAGNETIC"; $(mksrc)
 	@+LIBS2DO="$(YPP_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_YPP_SC -D_YPP_MAGNETIC"; $(mk_ypp_src)
@@ -350,7 +387,6 @@ clean:
 	@$(makefiles_clean)
 	@$(lib_mod_clean)
 	@$(sysincs_clean)
-	@$(conf_clean)
 	@$(xclean)
 clean_all:
 	@$(objects_clean)
@@ -379,7 +415,7 @@ define make_message
  for target in $(MAG_PROJ);  do echo " [magn-project] $$target" ; done;echo;\
  for target in $(PH_PROJ);   do echo " [ph-project] $$target"   ; done;echo;\
  for target in $(RT_PROJ);   do echo " [rt-project] $$target"   ; done;echo;\
- for target in $(NL_PROJ);   do echo " [nl-project] $$target"   ; done;echo;\
+ for target in $(NL_PROJ);   do echo " [nl-project] $$target (double-precision compilation)"   ; done;echo;\
  for target in $(RTE_PROJ);  do echo " [rtext-project] $$target"; done;echo;\
  for target in $(KERR_PROJ); do echo " [kerr-project] $$target" ; done;echo;\
  for target in $(UTILS);     do echo " [utils] $$target"        ; done;echo;\
@@ -438,14 +474,15 @@ define mk_ypp_src
 endef
 define mklib_internal
  for ldir in $$LIBS2DO; do \
-  if test ! -f "$(libdir)/lib$$ldir.a" ; then \
+  if test ! -f "$(libdir)/lib$$ldir.a" || test "$(keep_objs)" = yes  ; then \
+   rm -f "$(libdir)/lib$$ldir.a" ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
    if test ! -d "$$DIR2GO/$$ldir" ; then mkdir -p "$$DIR2GO/$$ldir" ; fi ; \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
     cp $$VPATH/$$ldir/.objects $$DIR2GO/$$ldir ; \
    fi ; \
-   ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $(xcpp) $$ADF ; \
+   ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
    cd $$DIR2GO/$$ldir ; $(MAKE) VPATH=$$VPATH/$$ldir || exit "$$?" ; cd ../../; \
   fi \
  done
@@ -513,6 +550,8 @@ endef
 #
 define makefiles_clean
  find . \( -name 'Makefile' -o -name '*make.dep' \) -type f -print | grep -v '\.\/Makefile' | \
+        grep -v '.*yaml.*\/Makefile' |  \
+        grep -v '.*futile.*\/Makefile' |  \
         grep -v '.*iotk.*\/Makefile' |  \
         grep -v '.*etsf_io.*\/Makefile' | \
         grep -v '.*hdf5.*\/Makefile' | grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | \
@@ -523,6 +562,8 @@ define objects_clean
  find . \( -name '*.o' -o -name '*.f90' \
         -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' \) \
         -type f -print | \
+        grep -v '.*yaml.*\/*f90' | \
+        grep -v '.*futile.*\/*f90' | \
         grep -v '.*iotk.*\/*f90' | \
         grep -v '.*etsf_io.*\/*f90' | \
         grep -v '.*lapack*' | grep -v '.*blacs*' |  \
@@ -542,7 +583,7 @@ define lib_ext_clean
            -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
  find . -name 'xc*.h' -type f -print | xargs rm -f
  echo "[CLEAN] External Libraries ... " 
- @for libtoclean in "libxc" "iotk" "netcdff" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
+ @for libtoclean in "libxc" "yaml" "futile" "iotk" "netcdff" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    echo "[CLEAN] ... $$libtoclean" ; \
    cd $(libdir)/$$libtoclean ; \
@@ -580,10 +621,15 @@ define lib_ext_remove
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | \
-       grep -v hdf5 | grep -v netcdf | grep -v xc | grep -v iotk | grep -v typesize | grep -v etsf_io | grep -v fftw | xargs rm -f 
+       grep -v hdf5 | grep -v netcdf | grep -v xc | grep -v yaml | grep -v futile | grep -v iotk | grep -v typesize | grep -v etsf_io | grep -v fftw | xargs rm -f 
  @if test -d $(libbindir); then \
-  cd $(libbindir) ; rm -f * ; cd .. ; rmdir $(libbindir); \
+  cd $(libbindir) ; rm -f * ; cd .. ; \
  fi
+ for folder in $(includedir)/modules__*; do \
+  if test -d $$folder ; then \
+   cd $$folder ; rm -f * ; cd .. ; rmdir $$folder; \
+  fi \
+ done
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 
 endef

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,24 +21,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_pre_setup(Xen,X)
+subroutine X_pre_setup(Xen,Xk,X)
  !
- use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,l_X_terminator,X_use_lin_sys,Chi_linalg_mode,X_ng
- use electrons,     ONLY:levels,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,DbGd_is_symmetry_expanded
+ use pars,          ONLY:SP
+ use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,l_X_terminator,X_use_lin_sys,&
+&                        X_use_gpu,Chi_linalg_mode,X_ng
+ use electrons,     ONLY:levels
  use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_cohsex,l_rt_carriers_in_use
- use com,           ONLY:error,warning
- use R_lattice,     ONLY:nqibz
+ use R_lattice,     ONLY:nqibz,bz_samp
  use QP_m,          ONLY:COHSEX_use_empties
  use TDDFT,         ONLY:FXC_n_g_corr
  use interfaces,    ONLY:eval_G_minus_G
  use parallel_m,    ONLY:PAR_COM_WORLD
+ use stderr,        ONLY:intc
+ use cuda_m,        ONLY:have_cuda
  !
  implicit none
  !
  type(X_t)    :: X 
- type(levels) ::Xen
+ type(bz_samp):: Xk
+ type(levels) :: Xen
  ! 
  ! Work Space
+ !
+ real(SP), external :: G2E
  !
  if (X%ib(1)<0) X%ib(1)=1
  if (X%ib(2)<0) X%ib(2)=1
@@ -60,20 +66,19 @@ subroutine X_pre_setup(Xen,X)
  ! Here I set up the Double Grid flag to (for example) skip the coarse 
  ! grid generator in the Xo calculation
  !
- use_X_DbGd=BZ_DbGd_nbands>0.and.X%ib(1)<BZ_DbGd_nbands.and.(.not.l_bs_fxc)
+ use_X_DbGd=Xen%nb_FineGd/=0.and.X%ib(1)<Xen%nb_FineGd.and.(.not.l_bs_fxc)
  !
- if (use_X_DbGd.and.DbGd_is_symmetry_expanded) then
-   X_DbGd_nkpts=BZ_DbGd_tot_nk_levels
- else if (use_X_DbGd.and..not.DbGd_is_symmetry_expanded) then
-   use_X_DbGd=.FALSE.
-   call warning("Found a Double Grid not symmetry expanded. This is incompatible with the current runlevel")
- endif
+ if (use_X_DbGd) X_DbGd_nkpts=Xk%nbz+Xk%nbz_FineGd
  !
  ! COH check: when the X terminator is used or the empty bands are NOT used the
  ! response function is accessed in G-G' mode. Here I ensure that all G-G' are in the
  ! range provided externally
  !
- if ((l_cohsex.and..not.COHSEX_use_empties).or.l_X_terminator) X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
+ if ((l_cohsex.and..not.COHSEX_use_empties).or.l_X_terminator) then
+     X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
+     call warning(' Response block size reduced to '//intc(X%ng) &
+&     //'RL ('//intc(int(1000.*G2E(X%ng)))//'mHa)')
+ endif
  !
  ! Fxc Checks
  !
@@ -106,8 +111,11 @@ subroutine X_pre_setup(Xen,X)
  ! Dyson solver
  !
  X_use_lin_sys=.true.
- if (trim(Chi_linalg_mode)=="inversion") X_use_lin_sys=.false.
- if (trim(Chi_linalg_mode)=="lin_sys"  ) X_use_lin_sys=.true.
+ X_use_gpu=have_cuda
+ if (index(Chi_linalg_mode,"INVERSION")>0) X_use_lin_sys=.false.
+ if (index(Chi_linalg_mode,"LIN_SYS")>0  ) X_use_lin_sys=.true.
+ if (index(Chi_linalg_mode,"CPU")>0      ) X_use_gpu=.false.
+ if (index(Chi_linalg_mode,"GPU")>0      ) X_use_gpu=.true..and.have_cuda
  !
  ! Copy of X dimension for Parallel default environment solver
  !

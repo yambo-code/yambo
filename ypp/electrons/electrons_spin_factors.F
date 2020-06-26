@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -25,6 +25,7 @@ subroutine electrons_spin_factors(kpts,bands,spin_factors)
  !
  use pars,           ONLY:SP
  use wave_func,      ONLY:WF
+ use electrons,      ONLY:n_spinor
  use YPPm,           ONLY:WF_ref
  use FFT_m,          ONLY:fft_size
  use LIVE_t,         ONLY:live_timing
@@ -35,7 +36,7 @@ subroutine electrons_spin_factors(kpts,bands,spin_factors)
  implicit none
  !
  integer,       intent(in)  :: kpts(2),bands(2)
- real(SP),      intent(out) :: spin_factors(bands(1):bands(2),kpts(1):kpts(2),2)
+ real(SP),      intent(out) :: spin_factors(bands(1):bands(2),kpts(1):kpts(2),n_spinor)
  !
  ! Work Space
  ! 

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -27,6 +27,9 @@ subroutine build_spin_sop()
  use matrix_operate, ONLY:m3det
  use D_lattice,      ONLY:dl_sop,spin_sop,nsym,i_time_rev,&
 &                         sigma_0,sigma_x,sigma_y,sigma_z
+#if defined _CUDA
+ use D_lattice,      ONLY:spin_sop_d
+#endif
  use electrons,      ONLY:n_spinor
  !
 #include<memory.h>
@@ -100,6 +103,11 @@ subroutine build_spin_sop()
    enddo
    !
  enddo
+ !
+#if defined _CUDA
+ if (allocated(spin_sop_d)) deallocate(spin_sop_d)
+ allocate(spin_sop_d,source=spin_sop)
+#endif
  !
  ! DEBUG <
  !do is=1,nsym

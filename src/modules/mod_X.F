@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,10 +23,13 @@
 !
 module X_m
  !
+ use descriptors,    ONLY:IO_desc
  use pars,           ONLY:SP,lchlen,schlen
  use units,          ONLY:HA2EV
  use matrix,         ONLY:PAR_matrix
+ use cuda_m,         ONLY:have_cuda
  !
+#include <dev_defs.h>
 #include <memory.h>
  !
  ! Polarizability
@@ -35,6 +38,7 @@ module X_m
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
  logical                  :: eval_alpha
  logical                  :: l_drude
+ integer                  :: drude_n_states
  !
  ! Main Gauge
  !
@@ -56,9 +60,13 @@ module X_m
  !
  integer              :: X_DbGd_nkpts
  logical              :: use_X_DbGd
- real(SP)             :: X_DbGd_percentual=0.5
+ real(SP)             :: X_DbGd_percentual
  integer ,allocatable :: X_DbGd_nkpt_at_q(:)
  integer ,allocatable :: X_DbGd_nkpt_at_q_table(:,:,:)
+ !
+ ! workspace for X_irredux_residuals on GPUs
+ !
+ complex(SP), allocatable DEV_ATTRIBUTE :: rhotw_save_d(:), rhotw_save2_d(:)
  !
  ! Absorption & Polarizability
  !
@@ -75,6 +83,7 @@ module X_m
  !
  character(schlen)        :: Chi_mode
  character(schlen)        :: Chi_linalg_mode
+ logical                  :: X_use_gpu=have_cuda
  logical                  :: X_use_lin_sys=.false.
  real(SP),    allocatable :: X_poles(:)
  real(SP),    allocatable :: X_Ein_poles(:)
@@ -87,6 +96,7 @@ module X_m
  real(SP):: X_terminator_E
  real(SP):: X_term_E
  logical :: l_X_terminator=.false.
+ logical :: l_recalculate_X=.false.
  character(schlen) :: X_terminator_Kind="none"
  !
  ! I/O parameters
@@ -97,17 +107,17 @@ module X_m
  !
  ! I/O descriptions
  !
- integer          :: n_X_descs
- character(lchlen):: X_description(100)
+ type(IO_desc)    :: X_desc
  !
  ! PARALLEL distribution
  !
- type(PAR_matrix), allocatable :: X_par(:)
- type(PAR_matrix)              :: X_par_lower_triangle
+ type(PAR_matrix), allocatable, target :: X_par(:)
+ type(PAR_matrix), target      :: X_par_lower_triangle
  logical                       :: X_lower_triangle_matrix_in_use=.FALSE.
  integer                       :: X_rows(2) = 0
  integer                       :: X_cols(2) = 0
- complex(SP)     , allocatable :: X_mat(:,:,:)
+ complex(SP),      allocatable :: X_mat(:,:,:)
+ complex(SP),      allocatable DEV_ATTRIBUTE :: X_mat_d(:,:,:)
  !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
@@ -164,6 +174,9 @@ module X_m
          if (allocated(X_mat)) return
          YAMBO_ALLOC(X_mat,(d(1),d(2),d(3)))
          X_mat=cZERO
+#ifdef _CUDA
+         allocate(X_mat_d, source=X_mat)
+#endif
        end select
      else
        select case(what)
@@ -180,6 +193,7 @@ module X_m
          ! and the matrix itself
          !
          YAMBO_FREE(X_mat)
+         YAMBO_FREE(X_mat_d)
          !
        end select
      endif

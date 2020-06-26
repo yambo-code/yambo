@@ -28,7 +28,6 @@ subroutine K_magnons_IP(iq,w,Dip)
  use drivers,        ONLY:l_rpa_IP
  use DIPOLES,        ONLY:DIPOLE_t
  use X_m,            ONLY:X_magnons,global_gauge
- use MAGNONS,        ONLY:DIP_Splus,DIP_Smins,MAGNONS_alloc
  use BS_solvers,     ONLY:BSS_add_antiresonant,BSS_n_freqs,Co_factor
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_coupling
  use electrons,      ONLY:E_SOC_nbands,n_sp_pol
@@ -46,7 +45,7 @@ subroutine K_magnons_IP(iq,w,Dip)
  ! Work Space
  !
  real(SP)          :: conjg_fac
- complex(SP)       :: E_plus_W0,res(2),E_plus_W(2/n_sp_pol)
+ complex(SP)       :: E_plus_W0,res(2),E_plus_W(2/n_sp_pol),DIP_expanded(3),DIP_Splus,DIP_Smins
  integer           :: ik_bz,iv,ic,i_sp_pol,i_sp_pol_rev,i_T,i_T_g,ik_mem,i_pert_SOC,n_SOC
  !
  n_SOC=1
@@ -67,25 +66,59 @@ subroutine K_magnons_IP(iq,w,Dip)
      ic    = BS_T_grp(i_T_g)%table(i_T,3)
      i_sp_pol = BS_T_grp(i_T_g)%table(i_T,4)
      !
-     ik_mem= PAR_Xk_bz_index(ik_bz)
+     if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
+     if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
      !
-     if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E_SFLIP(i_T)
-     if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E_SFLIP(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
+     if (.not.BS_perturbative_SOC) E_plus_W=E_plus_W0
      !
-     if (E_SOC_nbands==0) E_plus_W=E_plus_W0
-     if (E_SOC_nbands/=0) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
-     !
-     ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_v) while I need  <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_rev))
-     ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_v) while I need  <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_rev))
+     if (     BS_perturbative_SOC) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
      if(i_sp_pol==1.and.n_sp_pol==2) i_sp_pol_rev=2
      if(i_sp_pol==2.and.n_sp_pol==2) i_sp_pol_rev=1
      !
-     BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)=conjg(DIP_Smins(ic,iv,ik_mem,i_sp_pol_rev))  ! <c|S+|v>(i_sp_pol_c)
-     BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)=conjg(DIP_Splus(ic,iv,ik_mem,i_sp_pol_rev))  ! <c|S-|v>(i_sp_pol_c)
+     ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_c) while I need  <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_c))
+     ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_c) while I need  <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_c))
+     !
+     ! notice: in optics q=0 requires a special treatment due to the non analytic behaviour
+     !         not sure this is needed for magnons as well. To be checked
+     !
+     if(iq==1) then
+       !
+       DIP_expanded = DIP_rotated(ic,iv,ik_bz,i_sp_pol,"DIP_s",Xk)
+       !
+     else
+       !
+       ok_bz=qindx_X(iq,ik_bz,1)
+       iGo  =qindx_X(iq,ik_bz,2)
+       !
+       ik   =Xk%sstar(ik_bz,1) 
+       isymm=Xk%sstar(ik_bz,2) 
+       !
+       ok   =Xk%sstar(ok_bz,1)
+       osymm=Xk%sstar(ok_bz,2)
+       !
+       BSE_scatt%is=(/ic,ik,isymm,i_sp_pol/)
+       BSE_scatt%os=(/iv,ok,osymm,i_sp_pol_rev/)
+       BSE_scatt%qs=(/iGo,iq,1/)
+       !
+       call scatter_Bamp_spin(BSE_scatt,'x')
+       DIP_expanded(1)=-conjg(BSE_scatt%rhotw(1))
+       call scatter_Bamp_spin(BSE_scatt,'y')
+       DIP_expanded(2)=-conjg(BSE_scatt%rhotw(1))
+       !BSE_scatt%is(4)=(i_sp_pol)
+       !call scatter_Bamp_spin(BSE_scatt,'z')
+       !DIP_expanded(3)=-conjg(BSE_scatt%rhotw(1))
+       !
+     endif
+     !
+     DIP_Splus = 0.5_SP*(DIP_expanded(1)+cI*DIP_expanded(2))
+     DIP_Smins = 0.5_SP*(DIP_expanded(1)-cI*DIP_expanded(2))
+     !
+     BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)=conjg(DIP_Smins)
+     BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)=conjg(DIP_Splus)
      if (BSS_add_antiresonant.or.BS_K_coupling) then
-       BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)=DIP_Splus(ic,iv,ik_mem,i_sp_pol_rev)  ! <v|S+|c>(i_sp_pol_c)
-       BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)=DIP_Smins(ic,iv,ik_mem,i_sp_pol_rev)  ! <v|S-|c>(i_sp_pol_c)
+       BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)=DIP_Splus
+       BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)=DIP_Smins
      endif
      !
      ! Residuals: (1) <c|S+|v>(i_sp_pol_c)<v|S-|c>(i_sp_pol_c) = dip_R_magn(1)*dip_A_magn(2)

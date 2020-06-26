@@ -1,24 +1,24 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
@@ -40,27 +40,27 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
+ use pars,           ONLY:SP
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
- use it_tools,       ONLY:it,initactivate,initinfio,infile_dump,ofiles_append,&
+ use it_tools,       ONLY:it,infile_dump,ofiles_append,&
 &                         switch_off_runlevel,check_verbosity,runlevel_is_on
  use it_m,           ONLY:initdefs,rstatus,initmode,infile,nrnlvls,rnlvls
- use parallel_m,     ONLY:PP_redux_wait,master_cpu
- use com,            ONLY:msg,repfile,com_path,&
-&                         write_the_logo,file_exists,rename_file,write_to_report
+ use parallel_m,     ONLY:PP_redux_wait
+ use com,            ONLY:msg,repfile_unit,inpfile_unit,com_path,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on
  use QP_m,           ONLY:QP_t,QP_state,QP_reset,&
 &                         QP_table,COHSEX_use_empties
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset
- use stderr,         ONLY:write_to_log,log_as_a_file,logfile,STRING_add,STRING_remove,STRING_same
- use R_lattice,      ONLY:q0_def_norm,bz_samp,bz_samp_reset 
+ use stderr,         ONLY:write_to_log,log_as_a_file,logfile,logfile_unit,STRING_add,STRING_remove,STRING_same
+ use R_lattice,      ONLY:q0_def_norm,bz_samp,bz_samp_reset
  use BS,             ONLY:BS_bands,BS_n_g_W,&
 &                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode,BSK_mode
  use BS_solvers,     ONLY:BSS_mode,BSS_q0
-#if defined  _ELPH 
+#if defined  _ELPH
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used
 #endif
 #if defined _SC
@@ -70,10 +70,15 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _OPENMP
  use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K,n_threads_NL
 #endif
+#if defined _YAML_OUTPUT
+ use pars,           ONLY:logfile_index,repfile_index
+ use com,            ONLY:of_yaml_IDs
+ use yaml_output,    ONLY:yaml_close_stream
+#endif
  !
 #include<memory.h>
  !
- type(levels)    ::en        
+ type(levels)    ::en
  type(bz_samp)   ::q,k
  type(X_t)       ::X(4)
  type(DIPOLE_t)  ::Dip
@@ -95,6 +100,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err,i_r
  !
+ logical, external:: file_exists
+ !
  ! Presets
  !
  INIT = 0
@@ -111,8 +118,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
    call bz_samp_reset(k)
    call bz_samp_reset(q)
-   call W_reset(Xw(1))
-   call W_reset(Xw(2))
+   call W_reset(Xw(1),damping=0.001_SP)
+   call W_reset(Xw(2),damping=0.001_SP)
    call W_reset(Xw(3))
    call W_reset(Xw(4))
    call X_reset(X(1),type=1)
@@ -130,8 +137,15 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
-   call initinfio(defs,11)
+   call initinfio(defs,repfile_unit)
    call ofiles_append(defs=defs)
+   close(unit=repfile_unit)
+   if(log_as_a_file) close(unit=logfile_unit)
+#if defined _YAML_OUTPUT
+   call yaml_close_stream(unit=of_yaml_IDs(repfile_index))
+   if(log_as_a_file) call yaml_close_stream(unit=of_yaml_IDs(logfile_index))
+   call f_lib_finalize()
+#endif
    return
  endif
  if (CLOSE_Gs) then
@@ -142,7 +156,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
  !
  ! First vars loading
- ! 
+ !
  call call_INIT_load('create_shadow_vars')
  !
  ! Command line reading
@@ -250,9 +264,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Are we editing the input file ?
  !
  if (infile_editing) then
-   open(unit=12,file=trim(infile))
-   call initinfio(defs,12)
-   close(12)
+   inpfile_unit=12
+   open(unit=inpfile_unit,file=trim(infile))
+   call initinfio(defs,inpfile_unit)
+   close(inpfile_unit)
    call PP_redux_wait
    return
  endif
@@ -267,17 +282,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call INIT_report_and_log_files()
  !
- if (log_as_a_file) call rename_file(logfile)
- !
- call rename_file(repfile)
- !
  ! Finalize
- call PP_redux_wait
  !
- if (master_cpu) then
-   open(unit=11,file=trim(repfile))
-   call write_the_logo(11,' ')
- endif
+ call PP_redux_wait
  !
  contains
    !
@@ -317,11 +324,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_cohsex=runlevel_is_on('cohsex')
        !
        ! GPL_EXCLUDE_START
-       ! 
+       !
        l_acfdt=runlevel_is_on('acfdt')
        !
        ! GPL_EXCLUDE_END
-       ! 
+       !
 #if defined _SCALAPACK
        l_slk_test =runlevel_is_on('slktest')
 #endif
@@ -344,7 +351,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _NL
        l_nl_optics=runlevel_is_on('nloptics')
 #endif
-#if defined  _ELPH  
+#if defined  _ELPH
        if (.not.CLOSE_Gs) then
          !
          ! Only in this case ioELPH_err is defined
@@ -367,7 +374,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
        l_elel_corr=runlevel_is_on('el_el_corr')
 #endif
-#if defined  _QED  
+#if defined  _QED
        l_elel_corr    =runlevel_is_on('el_el_corr')
        l_elphoton_corr=runlevel_is_on('el_photon_corr')
 #endif
@@ -378,7 +385,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
          l_elel_corr=(l_gw0.or.l_life).and.(.not.l_elph_corr.and..not.l_elphoton_corr)
        endif
        !
-       ! Check if this runlevel is allowed in the 
+       ! Check if this runlevel is allowed in the
        ! present configuration
        !
        if (i1==1) call INIT_barriers( )
@@ -391,7 +398,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      l_td_hartree = STRING_same(trim(Chi_mode),"HARTREE").or.STRING_same(trim(BSK_mode),"HARTREE")
      l_alda_fxc   = STRING_same(trim(Chi_mode),"ALDA").or.STRING_same(trim(BSK_mode),"ALDA")
      l_lrc_fxc    = STRING_same(trim(Chi_mode),"LRC")
-     l_pf_fxc     = STRING_same(Chi_mode,'PF')      
+     l_pf_fxc     = STRING_same(Chi_mode,'PF')
      l_bs_fxc     = STRING_same(trim(Chi_mode),"BSFXC").or.STRING_same(trim(BSK_mode),"BSFXC")
      l_tddft      = l_alda_fxc.or.l_lrc_fxc.or.l_bs_fxc
      l_td_hf      = trim(BSK_mode)=="HF"
@@ -411,13 +418,13 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      l_local=l_sc_run.or.l_real_time.or.l_nl_optics
      if (l_local)         Dip%bands_ordered=.false.
 #endif
-#if defined _QED 
-     if (l_elphoton_corr) Dip%bands_ordered=.false.
+#if defined _QED
+     if (l_elphoton_corr)                          Dip%bands_ordered=.false.
 #endif
      !
    end subroutine Dip_check_ordered
-   ! 
-   subroutine before_infile_write_setup 
+   !
+   subroutine before_infile_write_setup
      !
      ! After DB reading/stdin logicals I propose here values for the input file
      !
@@ -432,7 +439,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        call initactivate(2,'XfnQP_E')
      endif
      if (.not.l_elel_corr.and..not.l_elph_corr.and..not.l_elphoton_corr) l_elel_corr=.true.
-#if defined  _ELPH 
+#if defined  _ELPH
      elph_nDBs_used=elph_nDBs
 #endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
@@ -450,7 +457,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_bse) then
        !
-       if (l_alda_fxc) BS_res_mode='x'     
+       if (l_alda_fxc) BS_res_mode='x'
        !
        if (io_X_err(2)==0) then
          if (io_BS_err/=0) BS_n_g_W=X(2)%ng
@@ -498,9 +505,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_eval_collisions)    n_threads_NL=0
 #endif
      !
-   end subroutine before_infile_write_setup 
+   end subroutine before_infile_write_setup
    !
-   subroutine varsetup2 
+   subroutine varsetup2
      !
      ! q0 renormalization
      !
@@ -541,7 +548,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
        !
        if (io_BS_err==0) then
-         if (l_ppa)      call X_duplicate(Xbsk,X(4))
+         if (     l_ppa) call X_duplicate(Xbsk,X(4))
          if (.not.l_ppa) call X_duplicate(Xbsk,X(2))
        endif
        !

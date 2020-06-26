@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -24,18 +24,19 @@
 subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo) 
  !
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO,schlen
- use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,bare_qpg
- use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,l_drude,X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,skip_cond_sum_rule
- use electrons,      ONLY:levels,BZ_DbGd_tot_nk_levels,spin
+ use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,l_drude,&
+&                         X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,skip_cond_sum_rule
+ use electrons,      ONLY:levels,spin
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
- use BS_solvers,     ONLY:Co_factor,diam_term_exact,BSS_dipoles,&
+ use BS_solvers,     ONLY:Co_factor,diam_term_exact,BSS_dipoles,BSS_uses_DbGd,&
 &                         BSS_eh_table,BSS_eh_E,BSS_eh_f,&
-&                         BSS_n_descs,BSS_description,BSS_eh_W,&
-&                         BSS_add_antiresonant,K_diago_in_BS_mat,BS_diagonal,BSS_uses_DbGd
- use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q
+&                         BSS_desc,BSS_eh_W,&
+&                         BSS_add_antiresonant,K_diago_in_BS_mat,BS_diagonal
+ use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q,BS_perturbative_SOC
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use LIVE_t,         ONLY:live_timing
+ use descriptors,    ONLY:IO_desc_add
  !
 #if defined _ELPH
  use BS_solvers,     ONLY:BSS_uses_GreenF
@@ -245,7 +246,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)= Epsilon_ii(:,i_eps)                *Co_factor/bare_qpg(iq,1)**2
    if(trim(global_gauge)=="velocity") Epsilon_ii(:,i_eps)=(Epsilon_ii(:,i_eps)-diam_term_used)*Co_factor/    W%p(:)    **2
    !
-   if (l_drude) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+X_drude_term(:)*Co_factor/bare_qpg(iq,1)**2
+   if (l_drude) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+X_drude_term(:)*4._SP*pi/bare_qpg(iq,1)**2
    if (skip_cond_sum_rule) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+(para_term_w0-diam_term_exact)*Co_factor/ W%p(:)**2
    !
  enddo
@@ -253,6 +254,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  if(.not.K_diago_in_BS_mat) then
    YAMBO_FREE(BS_diagonal)
  endif
+ !
  if (BSS_uses_DbGd) then
    YAMBO_FREE(X_DbGd_nkpt_at_q)
    YAMBO_FREE(X_DbGd_nkpt_at_q_table)
@@ -260,8 +262,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  if (iq>BS_q(1)) return
  !
- BSS_n_descs=BSS_n_descs+2
- BSS_description(BSS_n_descs-1)=' '
- BSS_description(BSS_n_descs)=' BSS|BZ Double Grid points      :'//intc(BZ_DbGd_tot_nk_levels)
+ call IO_desc_add(BSS_desc,kind="s",str=" ",S=" ")
+ !
+ call IO_desc_add(BSS_desc,kind="i",str="[INV] BZ Double Grid points",I=(/k%nibz+k%nibz_FineGd/))
  !
 end subroutine K_inversion_Lo

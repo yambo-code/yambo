@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -31,7 +31,6 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_spin
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:error,warning
  use hamiltonian,   ONLY:H_potential
  use D_lattice,     ONLY:DL_vol,sop_inv
  use xc_functionals,ONLY:F_xc,XC_potential_driver
@@ -133,7 +132,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  NG_max=maxval((/N_g_vecs_H,N_g_vecs_X,N_g_vecs_C/))
  NG_XC =max(N_g_vecs_X,N_g_vecs_C)
  !
- call msg('s', '['//trim(H_potential)//'] Plane waves (H,X,C) :',(/N_g_vecs_H,N_g_vecs_X,N_g_vecs_C/))
+ call msg('s', '['//trim(H_potential)//'] Plane waves (H,X,C) ',(/N_g_vecs_H,N_g_vecs_X,N_g_vecs_C/))
  !
  ! WFs
  !
@@ -459,6 +458,9 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      !     (i_n,i_k,1)-->--.---------->----------.---->----(i_m,i_k,1)
      !                          (i_kmq,i_kmq_s)
      !
+     !
+     integer :: TMP_INDEX(COLL_bands(1):COLL_bands(2))
+     !
      if (l_compute_screening) then
        call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1/),ID=ID)
        io_err=io_X(X,Xw,ID)
@@ -519,6 +521,12 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
        endif
        !
        do i_mp=COLL_bands(1),COLL_bands(2)
+         !
+         do i_np=COLL_bands(1),COLL_bands(2)
+           TMP_index(i_np)=B_mat_index(i_np,i_mp,COLL_bands)
+         enddo
+         !
+         if ( .not. any(PAR_IND_Bp_mat%element_1D(TMP_index(:))) ) cycle
          !
          iscp_XC%os(1)=i_mp
          !

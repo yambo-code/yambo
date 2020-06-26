@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -29,15 +29,15 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use D_lattice,       ONLY:alat
  use electrons,       ONLY:levels,n_sp_pol,spin,spin_occ
  use LIVE_t,          ONLY:live_timing
- use DIPOLES,         ONLY:DIP_projected,DIPOLE_t
+ use DIPOLES,         ONLY:DIPOLE_t,DIP_rotated
+ use vec_operate,     ONLY:v_norm,rot_v_xy_plane
 #if defined _KERR
  use drivers,         ONLY:l_kerr
- use KERR,            ONLY:DIP_projected_r90
 #endif
- use RT_control,      ONLY:RT_output,RT_apply,OBS_RT_IO_t
+ use RT_control,      ONLY:RT_output,RT_apply,CARR_RT_IO_t
  use IO_m,            ONLY:io_DIP
  use YPP_real_time,   ONLY:RT_conf,RT_time
- use X_m,             ONLY:Epsilon_ii
+ use X_m,             ONLY:Epsilon_ii,global_gauge
  use BS,              ONLY:BS_bands
  use BS_solvers,      ONLY:BSS_eh_table,BS_mat
  use frequency,       ONLY:w_samp
@@ -64,6 +64,8 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  real(SP),allocatable    :: X_absorption_coeff(:,:)
  complex(SP),allocatable :: X_reflectance(:,:)
+ complex(SP)             :: dip_tmp(3)
+ real(SP)                :: field_dir(3),kerr_dir(3)
  !
  l_RT_abs_YAMBO=.TRUE.
 #if defined _KERR
@@ -76,7 +78,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  ! Setup of Time-range & Report
  !
- call RT_time_configuration_setup("CARRIERS",OBS_RT_IO_t)
+ call RT_time_configuration_setup("CARRIERS",CARR_RT_IO_t)
  !
  call parser('Transmission',l_TR_transm)
  call parser('Reflectivity',l_TR_reflec)
@@ -89,7 +91,9 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  io_DIP=.TRUE.
  call DIPOLE_IO(Xk,Xen,Dip,'read',io_err,'YPP')
- call DIPOLE_expand_and_project(Xk,Dip)
+ if (trim(global_gauge)=='length'  ) field_dir=Dip%q0/v_norm(Dip%q0)*q0_def_norm
+ if (trim(global_gauge)=='velocity') field_dir=Dip%q0/v_norm(Dip%q0)
+ call rot_v_xy_plane(-pi/2._SP,field_dir,kerr_dir)
  !
  YAMBO_ALLOC(Epsilon_ii,(RT_conf%W_n_steps,2))
  if(l_TR_reflec) then
@@ -101,7 +105,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  ! Frequency setup
  !
- W_bss%er=RT_conf%W_range
+ W_bss%er=RT_conf%X_W_range
  W_bss%n_freqs=RT_conf%W_n_steps
  W_bss%per_memstps=100._SP
  W_bss%dr=RT_conf%damp_factor
@@ -146,10 +150,11 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        f_cv=      (Xen%fo(i_v,i_kibz,i_spin)-Xen%fo(i_c,i_kibz,i_spin))/spin_occ
        delta_f_cv=(Xen%df(i_v,i_kibz,i_spin)-Xen%df(i_c,i_kibz,i_spin))/spin_occ
        !
+       dip_tmp=DIP_rotated(i_c,i_v,i_kbz,i_spin,"DIP_iR",Xk)
 #if defined _KERR
-       dipole=sqrt(0.5_SP)*(DIP_projected(i_c,i_v,i_kbz,i_spin)+cI*DIP_projected_r90(i_c,i_v,i_kbz,i_spin))
+       dipole=sqrt(0.5_SP)*(dot_product(field_dir,dip_tmp)+cI*dot_product(kerr_dir,dip_tmp))
 #else
-       dipole=DIP_projected(i_c,i_v,i_kbz,i_spin)
+       dipole=dot_product(field_dir,dip_tmp)
 #endif
        BS_R0(i_l)=BS_R0(i_l)-dipole*BS_mat(neh,i_l)*sqrt(cmplx(f_cv,0.))
        BS_R1(i_l)=BS_R1(i_l)-dipole*BS_mat(neh,i_l)*delta_f_cv/sqrt(cmplx(f_cv,0.))
@@ -166,7 +171,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
      !
      BS_R_tmp=-real(BS_R_var+conjg(BS_R_var),SP)
      !
-     if( RT_conf%W_range(1)<real(BS_E(i_l)) .and. real(BS_E(i_l))<RT_conf%W_range(2) ) &
+     if( RT_conf%X_W_range(1)<real(BS_E(i_l)) .and. real(BS_E(i_l))<RT_conf%X_W_range(2) ) &
 &       call RT_output("trans_residual",VALUEs=(/BS_R_tmp/),E=real(BS_E(i_l))*HA2EV,TIME=RT_time(i_T)*AUT2FS)
      !
    enddo
@@ -185,10 +190,11 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
              if(i_v==i_vp) cycle
              !
              f_vpv=-Xen%f(i_v,i_kibz,i_spin)*(Xen%df(i_vp,i_kibz,i_spin))/spin_occ/spin_occ
+             dip_tmp=DIP_rotated(i_vp,i_v,i_kbz,i_spin,"DIP_iR",Xk)
 #if defined _KERR
-             dipole=sqrt(0.5_SP)*(DIP_projected(i_vp,i_v,i_kbz,i_spin)+cI*DIP_projected_r90(i_vp,i_v,i_kbz,i_spin))
+             dipole=sqrt(0.5_SP)*(dot_product(field_dir,dip_tmp)+cI*dot_product(kerr_dir,dip_tmp))
 #else
-             dipole=DIP_projected(i_vp,i_v,i_kbz,i_spin)
+             dipole=dot_product(field_dir,dip_tmp)
 #endif
              IP_R=-conjg(dipole)*sqrt(f_vpv)
              IP_E=Xen%E(i_vp,i_kibz,i_spin)-Xen%E(i_v,i_kibz,i_spin)
@@ -206,10 +212,11 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
              if(i_c==i_cp) cycle
              !
              f_ccp= (Xen%df(i_cp,i_kibz,i_spin))*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
+             dip_tmp=DIP_rotated(i_c,i_cp,i_kbz,i_spin,"DIP_iR",Xk)
 #if defined _KERR
-             dipole=sqrt(0.5_SP)*(DIP_projected(i_c,i_cp,i_kbz,i_spin)+cI*DIP_projected_r90(i_vp,i_v,i_kbz,i_spin))
+             dipole=sqrt(0.5_SP)*(dot_product(field_dir,dip_tmp)+cI*dot_product(kerr_dir,dip_tmp))
 #else
-             dipole=DIP_projected(i_c,i_cp,i_kbz,i_spin)
+             dipole=dot_product(field_dir,dip_tmp)
 #endif
              IP_R=-conjg(dipole)*sqrt(f_ccp)
              IP_E=Xen%E(i_c,i_kibz,i_spin)-Xen%E(i_cp,i_kibz,i_spin)

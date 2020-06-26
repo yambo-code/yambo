@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, AF
@@ -12,7 +12,6 @@
 !
 subroutine SLK_ORTHO_group( ORTHO, POOL, nproc_try_in, comm_all )
  !
- use com,        ONLY:error
  use SLK_m,      ONLY:ORTHO_group,POOL_group,n_pools
  use parallel_m, ONLY:MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -54,10 +54,12 @@ subroutine col_driver(bare_NG,q)
  use D_lattice,     ONLY:DL_vol
  use R_lattice,     ONLY:d3q_factor,RIM_is_diagonal,RIM_qpg,bare_qpg,&
 &                        nqibz,g_vec,q_pt,nqbz,RIM_ng,RIM_n_rand_pts,&
-&                        bz_samp,q_norm,cutoff_presets
+&                        bz_samp,q_norm,cutoff_presets, &
+&                        bare_qpg_d
  use wave_func,     ONLY:wf_ng
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
 #include<memory.h>
+ !
  integer       :: bare_NG
  type(bz_samp) :: q
  !
@@ -115,7 +117,7 @@ subroutine col_driver(bare_NG,q)
      io_err=io_RIM(ID)
    endif
    !
-   call msg('nr','Summary of Coulomb integrals for non-metallic bands |Q|[au] RIM/Bare:')
+   call msg('nr','Summary of Coulomb integrals for non-metallic bands |Q|[au] RIM/Bare')
    call sort(arrin=q_norm,arrout=q_norm_s,indx=q_norm_i)
    do i1=1,nqibz,2
      !
@@ -124,8 +126,8 @@ subroutine col_driver(bare_NG,q)
      do i2=i1,min(i1+1,nqibz)
        !
        iq=q_norm_i(i2)
-       ch_dum='Q ['//trim(intc(iq))//']:'
-       if (i1/=i2) ch_dum=' * Q ['//trim(intc(iq))//']:'
+       ch_dum='Q ['//trim(intc(iq))//']'
+       if (i1/=i2) ch_dum=' * Q ['//trim(intc(iq))//']'
        !
        r_dum(1)=q_norm(iq)
        r_dum(2)=2./(abs(bare_qpg(iq,1))**2.*DL_vol*real(nqbz))
@@ -145,9 +147,27 @@ subroutine col_driver(bare_NG,q)
  !
  if (.not.l_col_cut) then
    call cutoff_presets()
+#ifdef _CUDA
+   YAMBO_FREE(bare_qpg_d)
+   if (size(bare_qpg)>0) then
+     YAMBO_ALLOC(bare_qpg_d,(size(bare_qpg,2),size(bare_qpg,1)))
+     bare_qpg_d=transpose(bare_qpg)
+   endif
+#endif
    return
  endif
  !
  call cutoff_driver(q)
+ !
+ ! copy again,
+ ! bare_qpg is modified by cutff_driver
+ !
+#ifdef _CUDA
+ YAMBO_FREE(bare_qpg_d)
+ if (size(bare_qpg)>0) then
+   YAMBO_ALLOC(bare_qpg_d,(size(bare_qpg,2),size(bare_qpg,1)))
+   bare_qpg_d=transpose(bare_qpg)
+ endif
+#endif
  !
 end subroutine

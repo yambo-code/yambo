@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,8 +24,8 @@
 module D_lattice
  !
  use pars,        ONLY:SP,lchlen,cONE,cZERO,cI,schlen
- use com,         ONLY:error
  !
+#include<dev_defs.h>
 #include<memory.h>
  !
  ! Non periodic directions
@@ -55,6 +55,9 @@ module D_lattice
  integer, allocatable    :: sop_inv(:)
  integer, allocatable    :: irt(:,:,:)     ! (nsym,nat,n_at_species) gives the index of a rotated atomic position
  integer, allocatable    :: icell(:,:,:,:) ! (3,nsym,nat,n_at_species) gives the referene cell after a symm is operated
+ ! device memory
+ complex(SP),allocatable DEV_ATTRIBUTE :: spin_sop_d(:,:,:)
+ integer,    allocatable DEV_ATTRIBUTE :: sop_inv_d(:)
  !
  ! Pauli matrices
  !
@@ -98,7 +101,7 @@ module D_lattice
    subroutine symmetry_group_table(msg_where)
      !
      use pars,           ONLY:SP,IP
-     use com,            ONLY:error,msg
+     use com,            ONLY:msg
      implicit none
      !
      character(*) :: msg_where
@@ -128,7 +131,12 @@ module D_lattice
        enddo
      enddo
      if (any(sop_inv==0)) call error('[SYMs] check the input symmetries!')
-     call msg(msg_where,'[SYMs] Group table built correctly')
+     call msg(msg_where,'Group table correct   ',.true.)
+     !
+#ifdef _CUDA
+     if(allocated(sop_inv_d)) deallocate(sop_inv_d)
+     allocate(sop_inv_d,source=sop_inv)
+#endif
      !
    end subroutine symmetry_group_table
    !

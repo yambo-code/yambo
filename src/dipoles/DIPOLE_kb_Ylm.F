@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -39,7 +39,6 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  ! Ygrad(2,i) = \partial(phi)/\partial(k_i) i=1,3
  !
  use pars, ONLY:SP,DP,pi,cI,cZERO
- use com,  ONLY:warning
  !
  implicit none
  integer     :: lang

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,6 +23,8 @@
 !
 module FFT_m
  use pars,         ONLY: SP
+#include<dev_defs.h>
+ !
  implicit none
  !
  real(SP)             :: fft_norm
@@ -33,11 +35,17 @@ module FFT_m
  integer, allocatable :: fft_g_table(:,:)
  integer, allocatable :: fft_rot_r(:,:)
  integer, allocatable :: fft_rot_r_inv(:)
+ integer, allocatable DEV_ATTRIBUTE :: fft_g_table_d(:,:)
+ integer, allocatable DEV_ATTRIBUTE :: fft_rot_r_d(:,:)
+ integer, allocatable DEV_ATTRIBUTE :: fft_rot_r_inv_d(:)
  !
  ! FFTW support
  !
  integer(8)  :: fftw_plan !(FW) +1 sign: G-space to R-space & oscillators
                           !(BW) -1 sign: R-space to G-space
+ integer     :: cufft_plan !(FW) +1 sign: G-space to R-space & oscillators
+                           !(BW) -1 sign: R-space to G-space
+
  contains
    !
    integer function modx(i,j)

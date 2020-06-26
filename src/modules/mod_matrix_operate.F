@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -171,7 +171,6 @@ module matrix_operate
      !
      ! Analitic inverse of a real 3x3 matrix
      !
-     use com,  ONLY:error,warning
      real(SP)          :: m(3,3)
      real(SP),optional :: m_inv(3,3)
      real(SP)          :: det,inv(3,3) ! Work Space
@@ -196,7 +195,6 @@ module matrix_operate
      !
      ! Analitic inverse of a complex 3x3 matrix
      !
-     use com,  ONLY:error,warning
      complex(SP)          :: m(3,3)
      complex(SP),optional :: m_inv(3,3)
      complex(SP)          :: det,inv(3,3) ! Work Space

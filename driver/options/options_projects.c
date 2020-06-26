@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2019 the YAMBO team
+         Copyright (C) 2000-2020 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -55,7 +55,7 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].long_desc[13]="Potentials can be combined. Example: use hf for Hartree-Fock";
  options[*i_opt].long_opt="potential";
  options[*i_opt].short_opt='v';
- options[*i_opt].bin="yambo_sc yambo_magnetic yambo_rt yambo_electric";
+ options[*i_opt].bin="yambo_sc yambo_magnetic yambo_rt yambo_electric yambo_nl";
  options[*i_opt].yambo_string="potential";
  options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
@@ -77,7 +77,7 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].short_desc="Collisions";
  options[*i_opt].long_opt="collisions";
  options[*i_opt].short_opt='e';
- options[*i_opt].bin="yambo_rt yambo_sc yambo_electric yambo_magnetic";
+ options[*i_opt].bin="yambo_rt yambo_sc yambo_electric yambo_magnetic yambo_nl";
  options[*i_opt].yambo_string="collisions";
  options[*i_opt].section=desc;
  /* GPL_EXCLUDE_START */

@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): DS AM
@@ -33,6 +33,23 @@ if   test -d include/system ; then rm -r include/system ; fi
 if ! test -d include/system ; then mkdir include/system ; fi
 #
 # Copy system headers
+#
+#
+YAML_INCDIRS=`echo $YAML_INCS       | sed "s/$IFLAG/ /g"` ;                       #  
+for includedir in $YAML_INCDIRS;   do                                             #  This part
+  count=`ls -1 $includedir/*yaml*.h   2>/dev/null | wc -l`                        #  need to be
+  if test $count != 0; then ln -fs $includedir/*yaml*.h   include/system/  ; fi   #  fixed
+  count=`ls -1 $includedir/*yaml*.mod 2>/dev/null | wc -l`                        #
+  if test $count != 0; then ln -fs $includedir/*yaml*.mod include/system/  ; fi   #
+done
+#
+FUTILE_INCDIRS=`echo $FUTILE_INCS       | sed "s/$IFLAG/ /g"` ;                     #  
+for includedir in $FUTILE_INCDIRS;   do                                             #  This part
+  count=`ls -1 $includedir/*futile*.h   2>/dev/null | wc -l`                        #  need to be
+  if test $count != 0; then ln -fs $includedir/*futile*.h   include/system/  ; fi   #  fixed
+  count=`ls -1 $includedir/*futile*.mod 2>/dev/null | wc -l`                        #
+  if test $count != 0; then ln -fs $includedir/*futile*.mod include/system/  ; fi   #
+done
 #
 IOTK_INCDIRS=`echo $IOTK_INCS       | sed "s/$IFLAG/ /g"` ; 
 for includedir in $IOTK_INCDIRS;   do

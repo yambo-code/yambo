@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2019 the YAMBO team
+         Copyright (C) 2000-2020 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -65,6 +65,7 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct options_str
   Pre-sets 
  */
  y.in_file = malloc(strlen(t.tool)+3);
+ y.parenv_file = NULL;
  strcpy(y.in_file,t.tool);
  strcat(y.in_file,".in");
  y.in_dir=".";

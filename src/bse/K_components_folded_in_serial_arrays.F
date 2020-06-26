@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -31,12 +31,12 @@ subroutine K_components_folded_in_serial_arrays(iq)
  !      | (-cI*K_c^*)  (-K_r^*) |
  !
  !
- use electrons,      ONLY:n_sp_pol,E_SOC_nbands
+ use electrons,      ONLY:n_sp_pol
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                         PAR_COM_Xk_ibz_INDEX
  use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,&
 &                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BSS_alloc
- use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_T_grp,BS_K_coupling
+ use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_T_grp,BS_K_coupling,BS_perturbative_SOC
  use timing_m,       ONLY:timing
  !
 #if defined _KERR
@@ -114,7 +114,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
        BSS_dipoles(H_pos(1))=BS_T_grp(i_g)%dipoles_R(i_c)
        if (BS_K_coupling) BSS_dipoles(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A(i_c)
        !
-       if (E_SOC_nbands/=0) BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_c)
+       if (BS_perturbative_SOC) BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_c)
        !
 #if defined _KERR
        if (l_kerr) then
@@ -178,7 +178,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
    call PP_redux_wait(BSS_PL_f,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait(BSS_PL_f,COMM=PAR_COM_eh_INDEX%COMM)
 #endif
-   if (E_SOC_nbands/=0) then
+   if ( BS_perturbative_SOC ) then
      call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
      call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_eh_INDEX%COMM)
    endif

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -33,9 +33,8 @@ subroutine X_Double_Grid_setup(iq,k)
  use X_m,           ONLY:use_X_DbGd,X_DbGd_nkpt_at_q,X_DbGd_percentual,X_DbGd_nkpt_at_q_table
  use com,           ONLY:msg
  use stderr,        ONLY:intc
- use electrons,     ONLY:BZ_DbGd_nkpt,BZ_DbGd_kpts,BZ_DbGd_table
  use R_lattice,     ONLY:nXkbz,bz_samp
- use R_lattice,     ONLY:q_pt,nqibz,qindx_X
+ use R_lattice,     ONLY:qindx_X,smallest_q_norm
  use vec_operate,   ONLY:v_norm,iku_v_norm
  use parallel_m,    ONLY:PAR_Xk_nbz,PP_redux_wait,PAR_IND_Xk_bz,PAR_Xk_bz_index,PAR_COM_Xk_bz_INDEX
  use BS_solvers,    ONLY:BSS_uses_DbGd
@@ -47,27 +46,26 @@ subroutine X_Double_Grid_setup(iq,k)
  ! 
  ! Work Space
  !
- integer   :: iq_,ik,ip,ikbz,ikbz_rand,ipbz_rand,ipbz,ikbz_mem,N_all_pairs
- real(SP)  :: central_q(3),running_q(3),q_radius,PREC(1)
+ integer   :: ikbz,ikpbz,ikbz_mem,ikbz_FineGd,ikpbz_FineGd,N_all_pairs
+ real(SP)  :: central_q(3),running_q(3),k_pt_loc(3),kp_pt_loc(3),q_radius,PREC(1)
  logical   :: FILL_it
  !
  if (.not.use_X_DbGd.and..not.BSS_uses_DbGd) return
  !
  YAMBO_ALLOC(X_DbGd_nkpt_at_q,(PAR_Xk_nbz))
  !
- q_radius=100000._SP
- do iq_=2,nqibz
-   q_radius=min(q_radius,iku_v_norm(q_pt(iq_,:)))
- enddo
- q_radius=q_radius/100.
+ if(.not.allocated(k%ptbz)) call k_ibz2bz(k,'i',.true.)
  !
- PREC=0.
+ q_radius=smallest_q_norm/100._SP
+ !
+ PREC=0._SP
  FILL_it=.FALSE.
  !
  N_all_pairs=0
  do ikbz=1,nXkbz
-   ipbz    =qindx_X(iq,ikbz,1) 
-   N_all_pairs=N_all_pairs+BZ_DbGd_nkpt(ikbz)*BZ_DbGd_nkpt(ipbz)
+   ikpbz      =qindx_X(iq,ikbz,1) 
+   N_all_pairs=N_all_pairs+ (k%bz_DbGd_map(2,ikbz)-k%bz_DbGd_map(1,ikbz)+1) &
+&                          *(k%bz_DbGd_map(2,ikpbz)-k%bz_DbGd_map(1,ikpbz)+1)
  enddo
  !
  do while(PREC(1)<X_DbGd_percentual.or.FILL_it)
@@ -75,7 +73,7 @@ subroutine X_Double_Grid_setup(iq,k)
    if (FILL_it) then
      YAMBO_ALLOC(X_DbGd_nkpt_at_q_table,(PAR_Xk_nbz, maxval(X_DbGd_nkpt_at_q) ,2))
    else
-     q_radius=q_radius*1.5
+     q_radius=q_radius*1.5_SP
    endif
    !
    X_DbGd_nkpt_at_q=0
@@ -85,26 +83,28 @@ subroutine X_Double_Grid_setup(iq,k)
      if (.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
      !
      ikbz_mem=PAR_Xk_bz_index(ikbz)
-     ipbz    =qindx_X(iq,ikbz,1) 
      !
-     central_q=BZ_DbGd_kpts(BZ_DbGd_table(ipbz,BZ_DbGd_nkpt(ipbz),2),:)-&
-&              BZ_DbGd_kpts(BZ_DbGd_table(ikbz,BZ_DbGd_nkpt(ikbz),2),:)
+     ikpbz   =qindx_X(iq,ikbz,1) 
      !
-     do ik=1,BZ_DbGd_nkpt(ikbz)
-       !
-       ikbz_rand = BZ_DbGd_table(ikbz,ik,2)
-       !
-       do ip=1,BZ_DbGd_nkpt(ipbz)
+     central_q=k%ptbz(ikbz,:)-k%ptbz(ikpbz,:)
+     !
+     ! Coarse grid points are included for ikbz_FineGd= k%bz_DbGd_map(1,ikbz)-1
+     ! Fine   grid points are included for ikbz_FineGd>=k%bz_DbGd_map(1,ikbz)
+     !
+     do ikbz_FineGd=k%bz_DbGd_map(1,ikbz)-1,  k%bz_DbGd_map(2,ikbz)
+       if(ikbz_FineGd< k%bz_DbGd_map(1,ikbz)) k_pt_loc=k%ptbz(ikbz,:)
+       if(ikbz_FineGd>=k%bz_DbGd_map(1,ikbz)) k_pt_loc=k%ptbz_FineGd(ikbz_FineGd,:)
+       do ikpbz_FineGd=k%bz_DbGd_map(1,ikpbz)-1,k%bz_DbGd_map(2,ikpbz)
+         if(ikpbz_FineGd< k%bz_DbGd_map(1,ikpbz)) kp_pt_loc=k%ptbz(ikpbz,:)
+         if(ikpbz_FineGd>=k%bz_DbGd_map(1,ikpbz)) kp_pt_loc=k%ptbz_FineGd(ikpbz_FineGd,:)
          !
-         ipbz_rand = BZ_DbGd_table(ipbz,ip,2)
+         running_q(:)=(k_pt_loc-kp_pt_loc)
          !
-         running_q(:)=BZ_DbGd_kpts(ipbz_rand,:)-BZ_DbGd_kpts(ikbz_rand,:)-central_q
-         !
-         if (iku_v_norm( running_q ) > q_radius) cycle
+         if (iku_v_norm( running_q - central_q ) > q_radius) cycle
          !
          X_DbGd_nkpt_at_q(ikbz_mem)=X_DbGd_nkpt_at_q(ikbz_mem)+1
          if (FILL_it) then
-           X_DbGd_nkpt_at_q_table(ikbz_mem, X_DbGd_nkpt_at_q(ikbz_mem) ,:)=(/ik,ip/)
+           X_DbGd_nkpt_at_q_table(ikbz_mem, X_DbGd_nkpt_at_q(ikbz_mem) ,:)=(/ikbz_FineGd,ikpbz_FineGd/)
          endif
          !
        enddo
@@ -112,7 +112,7 @@ subroutine X_Double_Grid_setup(iq,k)
      !
    enddo
    !
-   PREC=real(sum(X_DbGd_nkpt_at_q))/real(N_all_pairs)*100.
+   PREC=real(sum(X_DbGd_nkpt_at_q))/real(N_all_pairs)*100._SP
    !
    call PP_redux_wait(PREC,COMM=PAR_COM_Xk_bz_INDEX%COMM)
    !
@@ -122,6 +122,6 @@ subroutine X_Double_Grid_setup(iq,k)
    !
  enddo 
  !
- call msg('nrsn','DbGd@q['//trim(intc(iq))//'] k->k-q transitions included [%]:',PREC)
+ call msg('nrsn','DbGd@q['//trim(intc(iq))//'] k->k-q (trans %, q-rad %)]',(/PREC,q_radius/smallest_q_norm*100._SP/))
  !
 end subroutine

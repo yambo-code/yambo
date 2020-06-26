@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -23,6 +23,8 @@
 !
 subroutine DIPOLE_dimensions(Xen,Dip,bands,q0)
  !
+ use drivers,        ONLY:l_col_cut
+ use R_lattice,      ONLY:q_norm,bare_qpg,q0_def_norm
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
  use DIPOLES,        ONLY:DIPOLE_t
@@ -50,6 +52,9 @@ subroutine DIPOLE_dimensions(Xen,Dip,bands,q0)
  ! Check if terminator is required
  !
  l_X_terminator = X_terminator_Kind/='none'
+ !
+ if (     l_col_cut) q_norm(1)    =q0_def_norm
+ if (.not.l_col_cut) bare_qpg(1,1)=q0_def_norm
  !
  ! Set up band limits
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -27,8 +27,9 @@ subroutine fix_QP_DBs(k,k_save,kpoints_map,action_kind)
  use QP_m,                ONLY:QP_t,QP_reset
  use stderr,              ONLY:intc
  use vec_operate,         ONLY:v_is_zero
- use com,                 ONLY:core_io_path,warning
+ use com,                 ONLY:core_io_path
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_RD_CL,DUMP
+ use descriptors,         ONLY:IO_desc_duplicate
  use electrons,           ONLY:n_sp_pol
  use R_lattice,           ONLY:bz_samp
  !
@@ -82,8 +83,7 @@ subroutine fix_QP_DBs(k,k_save,kpoints_map,action_kind)
  !
  call QP_reset(qp_expanded)
  !
- qp_expanded%description=qp%description
- qp_expanded%n_descs    =qp%n_descs
+ call IO_desc_duplicate(qp%desc,qp_expanded%desc)
  !
  qp_expanded%nk      =k%nibz
  qp_expanded%nb      =qp%nb

@@ -52,7 +52,7 @@ clean:
 clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
 	@- rm -rf uncompress-stamp
-	
+
 define install
  cd $(PACKAGE);  cp *.a $(LIBPATH)/lib ; chmod +x $(LIBPATH)/lib/*scalapack*.a 
 endef    

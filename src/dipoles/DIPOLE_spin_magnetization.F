@@ -97,13 +97,13 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
          !
          ! mx
          !
-         DIP_spin(1,ic,iv,ik_mem,1)=    Vstar_dot_V(fft_size,WF%c(:,1,iv_wf(1)),WF%c(:,1,ic_wf(2)))
-         DIP_spin(1,ic,iv,ik_mem,2)=    Vstar_dot_V(fft_size,WF%c(:,1,iv_wf(2)),WF%c(:,1,ic_wf(1)))
+         DIP_spin(1,ic,iv,ik_mem,2)=    Vstar_dot_V(fft_size,WF%c(:,1,iv_wf(1)),WF%c(:,1,ic_wf(2)))
+         DIP_spin(1,ic,iv,ik_mem,1)=    Vstar_dot_V(fft_size,WF%c(:,1,iv_wf(2)),WF%c(:,1,ic_wf(1)))
          !
          ! my
          !
-         DIP_spin(2,ic,iv,ik_mem,1)=-cI*Vstar_dot_V(fft_size,WF%c(:,1,iv_wf(1)),WF%c(:,1,ic_wf(2)))
-         DIP_spin(2,ic,iv,ik_mem,2)=+cI*Vstar_dot_V(fft_size,WF%c(:,1,iv_wf(2)),WF%c(:,1,ic_wf(1)))
+         DIP_spin(2,ic,iv,ik_mem,2)=-cI*Vstar_dot_V(fft_size,WF%c(:,1,iv_wf(1)),WF%c(:,1,ic_wf(2)))
+         DIP_spin(2,ic,iv,ik_mem,1)=+cI*Vstar_dot_V(fft_size,WF%c(:,1,iv_wf(2)),WF%c(:,1,ic_wf(1)))
          !
          ! mz
          !

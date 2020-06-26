@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -31,33 +31,8 @@ module KERR
  complex(SP)              :: A_drude(2)
  complex(SP)              :: B_Hall(2)
  complex(SP), allocatable :: BSS_dipoles_kerr(:)
- complex(SP), allocatable :: DIP_projected_r90(:,:,:,:)
  !
  contains
-   !
-   subroutine KERR_alloc(what,d)
-     !
-     use electrons, ONLY:n_sp_pol
-     character(*)      :: what
-     integer, optional :: d(:)
-     !
-     ! Work Space
-     !
-     integer :: err
-     !
-     if (present(d)) then
-       select case(what)
-       case('DIP_projected')
-         if (allocated(DIP_projected_r90)) return
-         YAMBO_ALLOC(DIP_projected_r90,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
-       end select
-     else
-       select case(what)
-       case('DIP_projected')
-         YAMBO_FREE(DIP_projected_r90)
-       end select
-     endif
-   end subroutine
    !
    subroutine BSS_KERR_alloc( )
      use pars,       ONLY:cZERO

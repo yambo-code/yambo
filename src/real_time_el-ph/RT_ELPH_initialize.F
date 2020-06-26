@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,7 +31,6 @@ subroutine RT_ELPH_initialize(E,k,q)
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt
  use vec_operate,    ONLY:v_norm
- use com,            ONLY:warning
  use D_lattice,      ONLY:Bose_Temp
  use R_lattice,      ONLY:RL_vol,bz_samp,qindx_S,nXkibz
  use IO_m,           ONLY:io_control,REP,OP_RD_CL,VERIFY,NONE
@@ -140,7 +139,7 @@ subroutine RT_ELPH_initialize(E,k,q)
      enddo
      !
      ! Feb 2014. Here I symmetrize the gkkp m.e. with respect to denerated bands. This procedure is not
-     ! needed in the case the RIM is not used. But when the RIM is used gkkp m.e. corresponding to transitions between degenerate
+     ! needed in the case the Double Grid is not used. But when the Double Grid is used gkkp m.e. corresponding to transitions between degenerate
      ! states can be exported to non-degenerate bands belonging to a k of the small grid. In this way
      ! the detailled balance condition is not satisfied anymore.
      !

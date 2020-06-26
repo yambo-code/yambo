@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,6 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nXkibz,nXkbz
  use linear_algebra,ONLY:INV
- use com,           ONLY:error,warning
  use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_X,OPENMP_set_threads
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
@@ -60,7 +59,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  character(10)        :: WHAT,WHATp
  !
  !===========================================================================================
- if (ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_G_space_Finite_Momentum") then
+ if (ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_G_space_and_IO") then
    !=========================================================================================
    !
    CALL PARALLEL_structure(5,(/"q","g","k","c","v"/))
@@ -158,7 +157,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_X)
    !
-   if (ENVIRONMENT=="Response_G_space") call PARALLEL_global_Response_IO( )
+   if (ENVIRONMENT=="Response_G_space_and_IO") call PARALLEL_global_Response_IO( )
    !
  endif
  !

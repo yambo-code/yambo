@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): PM AM
@@ -43,7 +43,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                              PAR_IND_Q,PAR_nQ,PAR_nQP
  use functions,           ONLY:theta_function
- use com,                 ONLY:warning
  use timing_m,            ONLY:timing
  !
 #include<memory.h>
@@ -249,7 +248,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! Symmetrize
  !
- call QP_states_simmetrize(E,V_complex=QP_Sc(:,1))
+ call QP_states_simmetrize(E,what="QED Sigma_c",V_complex=QP_Sc(:,1),warn_me=.TRUE.)
  call QP_states_simmetrize(E,V_complex=QP_dSc(:,1))
  !
  ! Clean-UP

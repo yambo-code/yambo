@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -44,16 +44,17 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  !
  use pars,         ONLY:SP
  use stderr,       ONLY:intc
- use com,          ONLY:warning,error,isec
+ use com,          ONLY:isec
  use BS_solvers,   ONLY:BSS_add_antiresonant,BSS_mode
  use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
 &                       BS_bands,BS_nT_at_k,BSE_mode,BS_T_grp,BS_nT_grps,&
-&                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc
+&                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc,&
+&                       BS_perturbative_SOC
  use DIPOLES,      ONLY:DIPOLE_t
  use X_m,          ONLY:global_gauge
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_ordered,PAR_IND_T_groups,&
 &                       PAR_IND_T_Haydock
- use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,E_SOC_nbands,E_SOC_table
+ use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
 #if defined _RT
@@ -142,6 +143,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  !
  nb(1)=Ken%nbf+1
  nb(2)=Ken%nbm
+!#if defined _RT
+! if(all(Ken%nbc/=0)) nb=Ken%nbc
+!#endif
  !
  do i_loop=1,n_loops
    !
@@ -241,7 +245,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
              !
              if (allocated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=abs(Ken%W(ic,ik,i_sp))+abs(Ken%W(iv,ikp,i_sp))
              !
-             if (E_SOC_nbands/=0) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
+             if ( BS_perturbative_SOC ) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
              !
            enddo ! spin
          enddo ! symmetries
@@ -298,11 +302,11 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      ! Small energy transitions. Dipoles in length gauge are not defined
      !if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length" .and. iq==1 ) T_is_ok=.FALSE.
      !
-     if(E_SOC_nbands/=0) then
+     if( BS_perturbative_SOC ) then
        if(n_sp_pol==1) pert_range=reshape((/1,2,1,2/),(/2,2/))
        if(n_sp_pol==2) pert_range=reshape((/i_sp,1 /),(/1,2/))
-       iv_SOC(pert_range(:,2))=E_SOC_table(pert_range(:,1),iv,ikp)
-       ic_SOC(pert_range(:,2))=E_SOC_table(pert_range(:,1),ic,ik )
+       iv_SOC(pert_range(:,2))=Ken%table_SOC(pert_range(:,1),iv,ikp)
+       ic_SOC(pert_range(:,2))=Ken%table_SOC(pert_range(:,1),ic,ik )
        if(     all(iv_SOC/=0)) E_v_SOC(:)=Ken%E_SOC(iv_SOC(:),ikp)
        if(     all(ic_SOC/=0)) E_c_SOC(:)=Ken%E_SOC(ic_SOC(:),ik )
        if(.not.all(iv_SOC/=0)) E_v_SOC(:)=Ken%E(iv,ikp,i_sp)

@@ -220,8 +220,11 @@ if (-d $OBJ) then
   git status -uno $OBJ | grep $kind | grep -v '\.pl' | grep  -v '\.pm'  | grep -v '\.c' |grep -v '\.m4' | grep -v '\.git' |grep -v '\.\.\/' > LIST
   cat LIST | grep -v "mod_" | grep -v "Makefile" | grep -v "configure" | grep -v "\.h" | grep -v "\.object" | grep -v "\.tcsh" > LIST
   sed -i -e 's/new file/new_file/g' LIST
-  #echo $kind  
-  set FILES=($FILES `awk '{print $2}' "LIST"`)
+  if ($kind =~ "renamed") then
+   set FILES=($FILES `awk '{print $4}' "LIST"`)
+  else
+   set FILES=($FILES `awk '{print $2}' "LIST"`)
+  endif
  end
 endif
 if ($filter =~ "all" && $OBJ =~ ".") then
@@ -236,9 +239,6 @@ endif
 if (-f $OBJ) then
  set FILES=$OBJ
 endif
-
-#echo $FILES
-#exit
 
 foreach file ($FILES)
  gawk -f AWK_split ${file}
@@ -274,7 +274,7 @@ foreach file ($FILES)
    set CHECK = `grep $var "${file}"_VARIABLES| wc -l`
    set FOUND = `grep $var "${file}"_BODY| wc -l`
    set HEAD  = `grep $var "${file}"_HEADER| wc -l`
-   if ($FOUND == 0 && $CHECK == 1 && $HEAD == 0) then
+   if ($FOUND == 0 && $CHECK == 1 && $HEAD == 0 && "$var" != "code_branch" ) then
     @ N_unused ++
     set UNUSED = ($UNUSED $var)
     #echo -n $var $source  $N_unused 

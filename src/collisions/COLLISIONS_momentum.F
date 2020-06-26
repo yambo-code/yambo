@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -63,7 +63,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  !
  ! COLLISIONS 
  !
- call msg('r', '[Momentum] Plane waves :',QP_QED_ng)
+ call msg('r', '[Momentum] Plane waves ',QP_QED_ng)
  !
  if (WF_buffered_IO) then
    !

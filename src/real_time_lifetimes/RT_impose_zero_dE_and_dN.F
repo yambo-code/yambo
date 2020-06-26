@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -27,11 +27,12 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:DbGd_ibz_coo,l_RT_uses_E_DbGd,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
+ use real_time,      ONLY:RT_E_and_k,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
 &                         REF_lifetime,G_lesser_reference,&
 &                         l_initial_equilibrium,RT_delta_occupations,&
 &                         l_RT_impose_E,l_RT_impose_for_metals,RT_nk,RT_ibz_coo,RT_Nk_ibz,&
 &                         l_RT_impose_N_dN,RT_bands,RAD_prefactor,l_RT_include_eq_scatt
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait
  !
  implicit none
  !
@@ -53,7 +54,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
 &                dN0_dT_h_v,dN0_dT_h_c,dN0_dT_e_v,dN0_dT_e_c,dE0_dT_h_v,dE0_dT_h_c,dE0_dT_e_v,dE0_dT_e_c,&
 &                dN_v,dN_c,dE_v,dE_c,dN_e,dN_h,dE_e,dE_h,&
 &                dN0_v,dN0_c,dE0_v,dE0_c,dN0_e,dN0_h,dE0_e,dE0_h,&
-&                NUM,NUM0,DEN
+&                NUM,NUM0,DEN,VALS(16)
  !
  ! Prefactors
  real(DP)     :: prefactor(2),prefactor_to_use
@@ -115,11 +116,11 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    !
    do ik=1,k%nibz
      !
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+     !
      k_weight=real(k%weights(ik),DP)/real(RT_Nk_ibz(ik),DP)
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       !
-       iE_rim=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
        !
        f0_E=real(         aimag(G_lesser_reference(ib,ib,ik_rim)),DP)
        f0_H=real(spin_occ-aimag(G_lesser_reference(ib,ib,ik_rim)),DP)
@@ -146,8 +147,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
          Elec_fac0=0._DP
        endif
        !
-       if(.not.l_RT_uses_E_DbGd) En=real(E%E(ib,ik,1)         ,DP)
-       if(     l_RT_uses_E_DbGd) En=real(E%E_DbGd(ib,iE_rim,1),DP) 
+       En=real(RT_E_and_k%E(ib,ik_rim,1),DP)
        !
        if (En<=0._DP) then
          !
@@ -179,6 +179,28 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      !
    enddo
  enddo
+ !
+ VALS=(/dN_dT_h_v,dE_dT_h_v,dN_dT_e_v,dE_dT_e_v,dN_dT_h_c,dE_dT_h_c,dN_dT_e_c,dE_dT_e_c,&
+&       dN0_dT_h_v,dE0_dT_h_v,dN0_dT_e_v,dE0_dT_e_v,dN0_dT_h_c,dE0_dT_h_c,dN0_dT_e_c,dE0_dT_e_c/)
+ !
+ call PP_redux_wait(VALS,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ !
+ dN_dT_h_v=VALS(1)
+ dE_dT_h_v=VALS(2)
+ dN_dT_e_v=VALS(3)
+ dE_dT_e_v=VALS(4)
+ dN_dT_h_c=VALS(5)
+ dE_dT_h_c=VALS(6)
+ dN_dT_e_c=VALS(7)
+ dE_dT_e_c=VALS(8)
+ dN0_dT_h_v=VALS(9)
+ dE0_dT_h_v=VALS(10)
+ dN0_dT_e_v=VALS(11)
+ dE0_dT_e_v=VALS(12)
+ dN0_dT_h_c=VALS(13)
+ dE0_dT_h_c=VALS(14)
+ dN0_dT_e_c=VALS(15)
+ dE0_dT_e_c=VALS(16)
  !
  ! Compute the pre-factors
  !=========================
@@ -246,23 +268,21 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  ! DS: This is commented to avoid problems with the test-suite
  !     It should be restored
-! do i1=1,2
-!   if ( abs(prefactor(i1))>cut_off ) prefactor(i1)=prefactor(i1)/abs(prefactor(i1))*cut_off
-! enddo
+ ! do i1=1,2
+ !   if ( abs(prefactor(i1))>cut_off ) prefactor(i1)=prefactor(i1)/abs(prefactor(i1))*cut_off
+ ! enddo
  !
  ! Pre-factors transfer to internal variables and application to the lifetimes
  !==============================================================================
  !
  do ik=1,k%nibz
    !
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+   !
    do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     !
-     iE_rim=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-     !
      do ib=RT_bands(1),RT_bands(2)
        !
-       if(.not.l_RT_uses_E_DbGd) En=real(E%E(ib,ik,1)         ,DP)
-       if(     l_RT_uses_E_DbGd) En=real(E%E_DbGd(ib,iE_rim,1),DP)
+       En=real(RT_E_and_k%E(ib,ik_rim,1),DP)
        !
        if (En<=0._DP) prefactor_to_use=prefactor(1)
        if (En> 0._DP) prefactor_to_use=prefactor(2)

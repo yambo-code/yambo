@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,7 +26,7 @@ subroutine SERIAL_SVD_inversion(n,M,SVD_digits)
  use pars,           ONLY:SP,cZERO
  use wrapper,        ONLY:M_by_M
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,SV_decomposition,&
-&                         LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
+&                         LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
 #include<memory.h>
  !
@@ -70,7 +70,7 @@ subroutine SERIAL_SVD_inversion(n,M,SVD_digits)
  !
  call M_by_M('c','c',n,WS%m1_cmplx,WS%m2_cmplx,M)
  !
- call LINEAR_ALGEBRA_WS_clean_up(WS)
+ call LINEAR_ALGEBRA_WS_reset(WS)
  !
  call timing('SERIAL_SVD_inversion',OPR='stop')
  !

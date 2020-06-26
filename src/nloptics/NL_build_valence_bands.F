@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -55,7 +55,7 @@ subroutine NL_build_valence_bands(en,V_input,VAL_BANDS,lowest_band)
      do ib=lowest_band,NL_bands(2)
        !
        i_wf=WF%index(ib,ik,is)
-!$omp parallel do default(shared), private(i_v)
+!$omp parallel do default(shared), private(i_v,i_spinor)
        do i_v=1,en%nbf
          do i_spinor=1,n_spinor
            Val_bands(:,i_v,ik_mem,is)=Val_bands(:,i_v,ik_mem,is)+V_input(ib,i_v,ik,is)*WF%c(:,i_spinor,i_wf)

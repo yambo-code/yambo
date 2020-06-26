@@ -11,8 +11,6 @@
 MODULE atmproj_tools_module
 !*********************************************
    !
-   use com,                 ONLY:error
-   !
    USE parameters,          ONLY : nstrx
    !
    IMPLICIT NONE 

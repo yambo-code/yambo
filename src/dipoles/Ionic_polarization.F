@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA
@@ -31,7 +31,6 @@ subroutine Ionic_polarization(I_Berry_RED,en)
  use D_lattice,      ONLY:Z_species,atom_pos,n_atoms,n_atoms_species,n_atomic_species
  use R_lattice,      ONLY:k_map,g_vec
  use vec_operate,    ONLY:c2a
- use com,            ONLY:warning
  !
  implicit none           
  !

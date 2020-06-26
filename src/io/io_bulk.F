@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, HM, DS
@@ -32,7 +32,6 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
  use netcdf
  use pars,          ONLY:SP,DP,LP,nf90_SP
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
- use com,           ONLY:warning,error
  use IO_m,          ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                        netcdf_dim,read_is_on,io_file
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -31,7 +31,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use real_time,      ONLY:RT_nk,RT_bands,l_RT_induced_field,l_P_integrating_J
+ use real_time,      ONLY:RT_nk,RT_bands
  use RT_control,     ONLY:RT_do_it
  use fields,         ONLY:A_tot
  use timing_m,       ONLY:timing
@@ -46,16 +46,14 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  ! Workspace
  !
  real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),E_IP
- logical  :: l_current_needed
+ logical, external :: RT_Dynamics_is_over
  !
- l_current_needed = RT_do_it('OUT') .or. RT_do_it('OBS') .or. l_P_integrating_J .or. l_RT_induced_field
- !
- if (.not. l_current_needed ) return
+ if ( .not. ( RT_do_it('OUT') .or. RT_do_it('OBS_cache') .or. RT_do_it('deltaT') .or. RT_Dynamics_is_over(.false.) ) ) return
  !
  call timing('RT observables',OPR='start')
  !
  ! Current, Polarization and Magnetization
- !==========================================
+ !=========================================
  ! (evaluated also in RT_integrator when an induced field is included, l_RT_induced_field=.true.)
  !
  call RT_current_AND_polarization(k,en,dG_lesser,A_tot)
@@ -67,9 +65,13 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  ! GPL_EXCLUDE_START
  !
- ! Carriers
- !==========
- call RT_carriers_number_and_temperature(en,k,NCarr,TFit,EfFit)
+ ! Carriers number
+ !================
+ call RT_carriers_number(en,k,NCarr)
+ !
+ ! Temperature
+ !=============
+ call RT_temperature(TFit,EfFit)
  !
  ! Energy
  !========

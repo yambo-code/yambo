@@ -29,36 +29,8 @@ module MAGNONS
 #include<memory.h>
  !
  complex(SP), allocatable :: BSS_dipoles_magnons(:,:)
- complex(SP), allocatable :: DIP_Splus(:,:,:,:)
- complex(SP), allocatable :: DIP_Smins(:,:,:,:)
  !
  contains
-   !
-   subroutine MAGNONS_alloc(what,d)
-     !
-     use electrons, ONLY:n_sp_pol
-     character(*)      :: what
-     integer, optional :: d(:)
-     !
-     ! Work Space
-     !
-     integer :: err
-     !
-     if (present(d)) then
-       select case(what)
-       case('DIP_S')
-         if (allocated(DIP_Splus)) return
-         YAMBO_ALLOC(DIP_Splus,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
-         YAMBO_ALLOC(DIP_Smins,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
-       end select
-     else
-       select case(what)
-       case('DIP_S')
-         YAMBO_FREE(DIP_Splus)
-         YAMBO_FREE(DIP_Smins)
-       end select
-     endif
-   end subroutine
    !
    subroutine BSS_MAGNONS_alloc( )
      use pars,       ONLY:cZERO

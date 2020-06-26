@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -48,6 +48,8 @@ subroutine K_WF_phases(Xk)
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear
  use electrons,     ONLY:n_sp_pol,n_spinor
+ use interfaces,    ONLY:WF_apply_symm
+ use timing_m,      ONLY:timing
  !
 #include<memory.h>
  !
@@ -57,9 +59,13 @@ subroutine K_WF_phases(Xk)
  !
  complex(SP) :: wf_cmp,WF_symm1(fft_size,n_spinor),WF_symm2(fft_size,n_spinor)
  integer     :: i_k,i_s,i_s_star,i_b,i_sp_pol,n_phases(1)
- !
+!#ifdef _CUDA
+! attributes(device):: WF_symm1,WF_symm2
+!#endif
+ 
  if (.not.BS_res_K_corr) return 
  !
+ call timing("K_WF_phases","start")
  call section('=','Wave-Function Phases')
  !
  if (.not.allocated(WF_phase)) then
@@ -117,6 +123,8 @@ subroutine K_WF_phases(Xk)
  call PP_redux_wait(WF_phase)
  call PP_redux_wait(n_phases)
  !
- call msg('r','[BSE] WF phases found  [o/o]:',real(n_phases(1),SP)/real(size(WF_phase),SP)*100._SP)
+ call msg('r','[BSE] WF phases found  [o/o]',real(n_phases(1),SP)/real(size(WF_phase),SP)*100._SP)
+ !
+ call timing("K_WF_phases","stop")
  !
 end subroutine K_WF_phases

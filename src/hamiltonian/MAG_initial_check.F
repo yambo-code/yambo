@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -25,7 +25,6 @@ subroutine MAG_initial_check()
  !
  use pars,        ONLY:SP,pi
  use electrons,   ONLY:n_sp_pol,n_spin
- use com,         ONLY:warning
  use D_lattice,   ONLY:a
  use SC,          ONLY:SC_potential
  use parser_m,    ONLY:parser

@@ -2,7 +2,7 @@
 
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF, DS
@@ -55,40 +55,42 @@ AC_ARG_WITH(hdf5_includedir,AC_HELP_STRING([--with-hdf5-includedir=<path>],
 #
 # Large Databases Support (LFS)
 #
-AC_ARG_ENABLE(netcdf-classic, AC_HELP_STRING([--enable-netcdf-classic],
+AC_ARG_ENABLE(netcdf_classic, AC_HELP_STRING([--enable-netcdf-classic],
              [Switch to OLD NetCDF classic. Default is no.]))
 #
 # HDF5 support
 #
-AC_ARG_ENABLE(netcdf_hdf5,AC_HELP_STRING([--enable-netcdf-hdf5],
-             [Activate the HDF5 support. Default is no.]))
-#
+AC_ARG_ENABLE(netcdf_v3,AC_HELP_STRING([--enable-netcdf-v3],
+             [Switch to OLD NETCD v3 format. Default is no.]))
 #
 # HDF5 data compression
 #
 AC_ARG_ENABLE(hdf5_compression,AC_HELP_STRING([--enable-hdf5-compression],
              [Activate the HDF5 data compression. Default is no.]))
 #
-#
 # HDF5 PAR IO
 #
 AC_ARG_ENABLE(hdf5_par_io,AC_HELP_STRING([--enable-hdf5-par-io],
              [Activate the HDF5 parallel io. Default is no.]))
+#
+# NETCDF SHODOW FOR OUTPUT FILES
+#
+AC_ARG_ENABLE(netcdf_output,AC_HELP_STRING([--enable-netcdf-output],
+             [Activate the netcdf copy for some output files. Default is no.]))
 #
 # HDF5 FOR P2Y (also requires parallel HDF5)
 #
 AC_ARG_ENABLE(hdf5_p2y_support, AC_HELP_STRING([--enable-hdf5-p2y-support],
  [Activate HDF5 support in p2y. Default is no unless parallel HDF5 libs are linked.]))
 #
-enable_netcdf="no"
-enable_hdf5="no"
+enable_hdf5="yes" ;
 compile_netcdf="no"
 internal_netcdf="no"
 compile_hdf5="no"
 internal_hdf5="no"
 def_netcdf=""
-NETCDF_OPT="--disable-netcdf-4"
-NETCDF_VER="v3"
+NETCDF_OPT="--enable-netcdf-4"
+NETCDF_VER="v4"
 HDF5_OPT="--disable-parallel";
 HDF5_VER="serial";
 #
@@ -104,19 +106,12 @@ AC_LANG_POP(C)
 #
 # global options
 #
-if test -d "$with_hdf5_libdir"          ; then enable_hdf5=yes ; fi
-if test -d "$with_hdf5_path"            ; then enable_hdf5=yes ; fi
-if test x"$with_hdf5_libs" != "x"       ; then enable_hdf5=yes ; fi
-if test x"$enable_netcdf_hdf5" = "xyes" ; then enable_hdf5=yes ; fi
 #
-if test x"$enable_hdf5_p2y_support" = "xyes" ; then enable_hdf5=yes ; fi
-#
-if test x"$enable_hdf5_par_io" = "xyes" ; then
-  enable_netcdf_hdf5=yes ;
-  enable_hdf5=yes ;
-fi
+if test x"$enable_netcdf_classic" = "xyes" ; then  enable_hdf5=no  ; fi
+if test x"$enable_netcdf_v3"      = "xyes" ; then  enable_hdf5=no  ; fi
+if test x"$enable_hdf5_par_io"    = "xyes" ; then  enable_hdf5=yes ; fi
 #    
-if test x"$enable_hdf5_par_io" = "xyes" || test x"$enable_hdf5_p2y_support" = "xyes" ; then HDF5_VER="parallel"; fi
+if test x"$enable_hdf5_par_io" = "xyes" ; then HDF5_VER="parallel"; fi
 #
 #
 #
@@ -221,6 +216,9 @@ if test x"$enable_hdf5" = "xno"; then
     AC_MSG_CHECKING([for internal NetCDF library])
     #
     internal_netcdf="yes"
+    #
+    NETCDF_OPT="--disable-netcdf-4"
+    NETCDF_VER="v3"
     # 
     # the following may change if we use a different version
     # of the netcdf lib
@@ -397,7 +395,6 @@ if test x"$enable_hdf5" = "xyes"; then
   fi
 fi
 #
-#
 # NETCDF-HDF5 LIBS
 #
 if test x"$hdf5" = "xyes"; then
@@ -409,23 +406,32 @@ if test x"$hdf5" = "xyes"; then
   #fi
 fi
 #
-# Disable large File Support
+# Enable netcdf for output files support
 #
-if test x"$enable_netcdf_classic" = "xyes"; then
+if test x"$enable_netcdf_output" = "xyes"; then
+  def_netcdf="${def_netcdf} -D_NC_OUTPUT";
+fi
+#
+if test x"$enable_netcdf_classic" = "xyes" ; then
+  #
+  # Disable large File Support
+  #
   def_netcdf="${def_netcdf} -D_NC_CLASSIC";
-#
-# NETCDF-HDF5 IO
-#
-elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
+  #
+elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" ; then
+  #
+  # NETCDF-HDF5 IO
+  #
   def_netcdf="${def_netcdf} -D_HDF5_IO";
+  #
 fi
 #
 # NETCDF-HDF5 PAR IO or HDF5-DATA COMPRESSION (the two are exclusive)
 #
-if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
+if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_PAR_IO";
     enable_hdf5_compression="no";
-elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
+elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
 fi
 #

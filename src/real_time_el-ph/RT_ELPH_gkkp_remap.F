@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,6 @@
 subroutine RT_ELPH_gkkp_remap(k,q)
  !
  use pars,           ONLY:SP
- use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp
  use ELPH,           ONLY:ph_qpt,ph_kpt_bz,elph_nDBs,elph_nk_bz
  use real_time,      ONLY:K_io_map,Q_io_map

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,15 +23,26 @@
 !
 subroutine INIT_QP_ctl_switch(what)
  !
- use it_tools,   ONLY:initactivate
  use electrons,  ONLY:n_sp_pol
+ !
  implicit none
  !
  character(1)::what
  !
- ! Work Space
+ ! Occupations...
  !
- call initactivate(1,what//'fnQPdb '//what//'fnQP_N '//what//'fnFdb')
+ call initactivate(1,what//'fnFdb')
+ !
+ ! QP database ...
+ !
+ call initactivate(1,what//'fnQPdb '//what//'fnQP_INTERP_NN '//what//'fnQP_INTERP_shells ')
+ !
+ ! DbGd extension
+ !
+ call initactivate(1,what//'fnQP_DbGd_INTERP_mode')
+ !
+ ! Stretching
+ !
  if (n_sp_pol==1) then
    call initactivate(1,what//'fnQP_E '//what//'fnQP_Z')   
    call initactivate(1,what//'fnQP_Wv_E '//what//'fnQP_Wv '//what//'fnQP_Wv_dos ')

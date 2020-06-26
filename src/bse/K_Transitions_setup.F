@@ -57,7 +57,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
-#if defined _RT
+#if defined _KERR
  use drivers,      ONLY:l_magnons
 #endif
 #if defined _PL
@@ -291,7 +291,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      if(     allocated(Ken%Eo)) Eo_eh= Ken%Eo(ic,ik ,i_sp)-Ken%Eo(iv,ikp,i_sp)
      if(.not.allocated(Ken%Eo)) Eo_eh= E_eh
      !
-#if defined _RT
+#if defined _KERR
      E_eh_SFLIP=E_eh
      if(l_magnons.and.n_sp_pol==2) then
        if (i_sp==1) E_eh_SFLIP = Ken%E(ic,ikp,1)-Ken%E(iv,ik ,2)
@@ -322,7 +322,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      f_eh_RES =f_eh_REF
      f_check  =f_eh_REF
      !
-#if defined _RT
+#if defined _KERR
      f_eh_SFLIP=f_eh_REF
      if(l_magnons.and.n_sp_pol==2) then
        if (i_sp==1) f_eh_SFLIP =(Ken%f(iv,ikp,2)-Ken%f(ic,ik ,1))/spin_occ
@@ -351,7 +351,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      !
      f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
      f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
-#if defined _RT
+#if defined _KERR
      if(l_magnons.and.n_sp_pol==2) then
        if (i_sp==1) f_e = (         Ken%f(iv,ikp,2))/spin_occ
        if (i_sp==2) f_e = (         Ken%f(iv,ikp,1))/spin_occ

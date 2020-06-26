@@ -21,24 +21,27 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_magnons_IP(iq,w,Dip)
+subroutine K_magnons_IP(iq,Xk,BSE_scatt,w,Dip)
  !
  use pars,           ONLY:SP,cZERO,cI,pi
  use LIVE_t,         ONLY:live_timing
  use drivers,        ONLY:l_rpa_IP
- use DIPOLES,        ONLY:DIPOLE_t
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_rotated
  use X_m,            ONLY:X_magnons,global_gauge
  use BS_solvers,     ONLY:BSS_add_antiresonant,BSS_n_freqs,Co_factor
- use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_coupling
- use electrons,      ONLY:E_SOC_nbands,n_sp_pol
- use R_lattice,      ONLY:bare_qpg
+ use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_coupling,BS_perturbative_SOC
+ use electrons,      ONLY:n_sp_pol
+ use R_lattice,      ONLY:bz_samp,qindx_X
+ use collision_el,   ONLY:elemental_collision
  use parallel_m,     ONLY:PAR_BS_nT_col_grps,PP_redux_wait,&
 &                         PAR_IND_T_groups,PAR_Xk_bz_index,&
 &                         PAR_COM_eh_INDEX,PAR_COM_Xk_ibz_INDEX
  !
 #include<memory.h>
  !
- type(DIPOLE_t), intent(in) :: Dip
+ type(DIPOLE_t),               intent(in) :: Dip
+ type(bz_samp),                intent(in) :: Xk
+ type(elemental_collision), intent(inout) :: BSE_scatt
  integer,    intent(in) :: iq
  complex(SP),intent(in) :: w(BSS_n_freqs) 
  !
@@ -46,12 +49,13 @@ subroutine K_magnons_IP(iq,w,Dip)
  !
  real(SP)          :: conjg_fac
  complex(SP)       :: E_plus_W0,res(2),E_plus_W(2/n_sp_pol),DIP_expanded(3),DIP_Splus,DIP_Smins
- integer           :: ik_bz,iv,ic,i_sp_pol,i_sp_pol_rev,i_T,i_T_g,ik_mem,i_pert_SOC,n_SOC
+ integer           :: ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol,i_sp_pol_rev,i_T_g,i_T,n_SOC,i_pert_SOC,io_err
  !
  n_SOC=1
  i_sp_pol_rev=1
  !
- if(E_SOC_nbands/=0.and.n_sp_pol==1) n_SOC=2
+ if( .not.BS_perturbative_SOC.or. n_sp_pol==2) n_SOC=1
+ if(      BS_perturbative_SOC.and.n_sp_pol==1) n_SOC=2
  !
  if (l_rpa_IP) call live_timing('IP Magnons',PAR_BS_nT_col_grps)
  !
@@ -84,7 +88,9 @@ subroutine K_magnons_IP(iq,w,Dip)
      !
      if(iq==1) then
        !
-       DIP_expanded = DIP_rotated(ic,iv,ik_bz,i_sp_pol,"DIP_s",Xk)
+       write(*,*) 'pippo1'
+       DIP_expanded = DIP_rotated(ic,iv,ik_bz,i_sp_pol,"DIP_S",Xk)
+       write(*,*) 'pippo2'
        !
      else
        !
@@ -164,9 +170,5 @@ subroutine K_magnons_IP(iq,w,Dip)
  call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
  !
  X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)
- !
- ! CLEAN
- !
- if (iq==1) call MAGNONS_alloc('DIP_Splus')
  !
 end subroutine

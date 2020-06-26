@@ -51,13 +51,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use drivers,       ONLY:l_photolum
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
 #endif
-#if defined _RT
- use drivers,       ONLY:l_magnons
- use X_m,           ONLY:X_magnons
-#endif
 #if defined _KERR
- use drivers,       ONLY:l_kerr
+ use drivers,       ONLY:l_kerr,l_magnons
  use KERR,          ONLY:A_drude
+ use X_m,           ONLY:X_magnons
 #endif
 #include<memory.h>
  type(levels) ::Ken
@@ -317,11 +314,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (l_kerr) call K_kerr_IP(iq,W_bss%p,Dip,Xk)
  !
-#endif
- !
-#if defined _RT
- !
- if (l_magnons) call K_magnons_IP(iq,W_bss%p,Dip)
+ if (l_magnons) call K_magnons_IP(iq,Xk,BSE_scatt,W_bss%p,Dip)
  !
 #endif
  !

@@ -214,7 +214,8 @@ module DIPOLES
      !
      ! Work space
      !
-     complex(SP) :: DIP_in(3),tmp_sop(3,3)
+     complex(SP) :: DIP_in(3)
+     real(SP)    :: tmp_sop(3,3)
      integer :: ik,is,ik_mem
      logical :: t_rev
      !

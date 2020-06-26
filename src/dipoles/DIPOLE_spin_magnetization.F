@@ -34,7 +34,6 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
  use DIPOLES,             ONLY:DIP_spin,DIPOLE_t
  use fft_m,               ONLY:fft_size
  use wave_func,           ONLY:WF
- use com,                 ONLY:error
  use wrapper,             ONLY:Vstar_dot_V
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&

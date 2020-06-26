@@ -40,12 +40,8 @@ subroutine K_components_folded_in_serial_arrays(iq)
  use timing_m,       ONLY:timing
  !
 #if defined _KERR
- use drivers,        ONLY:l_kerr
+ use drivers,        ONLY:l_kerr,l_magnons
  use KERR,           ONLY:BSS_dipoles_kerr,BSS_KERR_alloc
-#endif
- !
-#if defined _RT
- use drivers,        ONLY:l_magnons
  use MAGNONS,        ONLY:BSS_dipoles_magnons,BSS_MAGNONS_alloc
 #endif
  !
@@ -77,9 +73,6 @@ subroutine K_components_folded_in_serial_arrays(iq)
    !
 #if defined _KERR
    call BSS_KERR_alloc( )
-#endif
-   !
-#if defined _RT
    call BSS_MAGNONS_alloc( )
 #endif
    !
@@ -121,9 +114,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
          BSS_dipoles_kerr(H_pos(1))=BS_T_grp(i_g)%dipoles_R_kerr(i_c)
          if (BS_K_coupling) BSS_dipoles_kerr(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_kerr(i_c)
        endif
-#endif
        !
-#if defined _RT
        if (l_magnons) then
          BSS_dipoles_magnons(2,H_pos(1))=BS_T_grp(i_g)%dipoles_R_mag(2,i_c)
          if (BS_K_coupling) BSS_dipoles_magnons(2,H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_mag(2,i_c)
@@ -167,8 +158,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
 #if defined _KERR
    call PP_redux_wait(BSS_dipoles_kerr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait(BSS_dipoles_kerr,COMM=PAR_COM_eh_INDEX%COMM)
-#endif
-#if defined _RT
+   !
    call PP_redux_wait(BSS_dipoles_magnons,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait(BSS_dipoles_magnons,COMM=PAR_COM_eh_INDEX%COMM)
 #endif

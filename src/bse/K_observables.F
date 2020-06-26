@@ -24,12 +24,15 @@
 subroutine K_observables(WHAT,W)
  !
  use pars,          ONLY:cZERO
- use X_m,           ONLY:X_alloc,Epsilon_ij,Epsilon_ii,Joint_DOS
+ use X_m,           ONLY:X_alloc,Epsilon_ii,Joint_DOS
  use frequency,     ONLY:w_samp
 #if defined _PL
  use PHOTOLUM,      ONLY:PL,PL_init
 #endif
  use BS_solvers,    ONLY:BSS_n_freqs
+#if defined _KERR
+ use X_m,           ONLY:Epsilon_ij,X_magnons
+#endif
  !
 #include<memory.h>
  !
@@ -42,12 +45,11 @@ subroutine K_observables(WHAT,W)
    YAMBO_ALLOC(Epsilon_ij,(BSS_n_freqs,4))
    Epsilon_ij=cZERO
    Epsilon_ij(:,1)=W%p(:)
-#endif
-#if defined _RT
- YAMBO_ALLOC(X_magnons,(BSS_n_freqs,2,4))
- X_magnons=cZERO
- X_magnons(:,1,1)=w(:)
- X_magnons(:,2,1)=w(:)
+   !
+   YAMBO_ALLOC(X_magnons,(BSS_n_freqs,2,4))
+   X_magnons=cZERO
+   X_magnons(:,1,1)=W%p(:)
+   X_magnons(:,2,1)=W%p(:)
 #endif
 #if defined _PL
    call PL_init( )
@@ -62,9 +64,7 @@ subroutine K_observables(WHAT,W)
    !
 #if defined _KERR
    YAMBO_FREE(Epsilon_ij)
-#endif
    !
-#if defined _KERR
    YAMBO_FREE(X_magnons)
 #endif
    !

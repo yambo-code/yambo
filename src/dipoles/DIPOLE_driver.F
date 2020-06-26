@@ -187,7 +187,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    ! GPL_EXCLUDE_START 
    !
 #if defined _RT
-   if (l_magn_dipoles)             call DIPOLE_orbital_magnetization(Xen,Xk,Dip)
+   if (l_real_time.and.n_spin>1)   call DIPOLE_orbital_magnetization(Xen,Xk,Dip)
    !
    if (l_magn_dipoles)             call DIPOLE_spin_magnetization(Xen,Xk,Dip)
 #endif

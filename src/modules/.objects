@@ -5,7 +5,7 @@ COMMON_objects = mod_collision_ext.o mod_plasma.o mod_COLL_interfaces.o mod_H_in
 SC_objects       = mod_SC.o
 #endif
 #if defined _RT
-RT_objects       = mod_fields.o mod_RT_output.o mod_RT_control.o mod_RT_interfaces.o mod_MAGNONS.o
+RT_objects       = mod_fields.o mod_RT_output.o mod_RT_control.o mod_RT_interfaces.o
 #endif
 #if defined _NL
 NL_objects       = mod_fields.o mod_electric.o mod_nl_optics.o mod_NL_interfaces.o
@@ -17,7 +17,7 @@ ELECTRIC_objects = mod_fields.o mod_electric.o
 MAGNETIC_objects = mod_magnetic.o
 #endif
 #if defined _KERR 
-KERR_objects = mod_KERR.o
+KERR_objects = mod_KERR.o mod_MAGNONS.o
 #endif
 #if defined _PL 
 PL_objects = mod_PHOTOLUM.o

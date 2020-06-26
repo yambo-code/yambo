@@ -44,10 +44,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X
  use D_lattice,      ONLY:l_0D,l_1D,l_2D
 #if defined _KERR
- use drivers,        ONLY:l_kerr,l_anomalous_Hall
+ use drivers,        ONLY:l_kerr,l_anomalous_Hall,l_magnons
 #endif
 #if defined _RT
- use drivers,        ONLY:l_magnons,l_rt_carriers_in_use
+ use drivers,        ONLY:l_rt_carriers_in_use
 #endif
  !
 #include<memory.h>
@@ -162,11 +162,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  BS_K_is_ALDA=l_alda_fxc
 #if defined _KERR
- call parser('EvalKerr',l_kerr)
- if(l_kerr) call parser('AnHall',l_anomalous_Hall)
-#endif
-#if defined _RT
  call parser('EvalMagnons',l_magnons)
+ call parser('EvalKerr',   l_kerr)
+ if(l_kerr) call parser('AnHall',l_anomalous_Hall)
 #endif
  !
  ! Energy points

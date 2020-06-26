@@ -1,8 +1,5 @@
 #if defined _KERR
-KERR_objects = K_kerr_IP.o K_diago_kerr_residual.o
-#endif
-#if defined _RT
-MAGN_objects = K_magnons_IP.o
+KERR_objects = K_kerr_IP.o K_magnons_IP.o K_diago_kerr_residual.o
 #endif
 #if defined _PL
 PL_objects = PL_diago_residual.o PL_via_perturbative_inversion.o

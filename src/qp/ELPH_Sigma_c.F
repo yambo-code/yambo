@@ -444,6 +444,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    ! that cpu
    !
    if (elph_use_q_grid) then
+     !
      q_each_cpu=0
      do iq_ibz=2,q%nibz
        do iq_s=1,q%nstar(iq_ibz)

@@ -69,8 +69,8 @@ subroutine X_redux(iq,X_par,Xw,X)
  integer          :: Xo_rows(2), Xo_cols(2)
  logical          :: compute_on_gpu
  type(PAR_matrix) :: K_FXC
- type(PAR_matrix), target :: BUFFER,KERNEL,Xo
- complex(SP), pointer DEV_ATTRIBUTE :: BUFFER_blc_d(:,:,:)
+ type(PAR_matrix), target      :: BUFFER,KERNEL,Xo
+ complex(SP), pointer DEV_ATTR :: BUFFER_blc_d(:,:,:)
  !
  ! Setup 
  !
@@ -357,8 +357,8 @@ contains
      integer, intent(in)      :: Xo_rows(2),Xo_cols(2)
      integer :: ig1,ig2
      !
-     complex(SP), pointer DEV_ATTRIBUTE :: KERNEL_blc_d(:,:,:)
-     complex(SP), pointer DEV_ATTRIBUTE :: Xo_blc_d(:,:,:)
+     complex(SP), pointer DEV_ATTR :: KERNEL_blc_d(:,:,:)
+     complex(SP), pointer DEV_ATTR :: Xo_blc_d(:,:,:)
      !
      if (compute_on_gpu) then
        !

@@ -188,14 +188,14 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  ! Anisotropy correction. Note that isc%gamp(1,1)=RIM_anisotropy while
  ! the \delta(G,G') term must be multiplied by the standard RIM_qpg(1,1)
  !
- if (have_cuda) then
-   if (RIM_anisotropy/=0.) then
+ if (RIM_anisotropy/=0.) then
+#ifdef _CUDA
      rtmp=BS_W(1,1,1)
      rtmp=rtmp+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
      BS_W(1,1,1)=rtmp
-   endif
- else
-   if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
+#else
+     BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
+#endif
  endif
  !
  call elemental_collision_free(isc)

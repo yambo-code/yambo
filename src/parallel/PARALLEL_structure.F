@@ -30,9 +30,6 @@ subroutine PARALLEL_structure(n_elements,ROLE)
 &                      ncpu_chain,mpi_comm_world,CREATE_the_COMM
  use parallel_m,  ONLY:PAR_Q_ibz_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,PAR_K_range,PAR_n_bands,&
 &                      PAR_EH_range,PAR_n_G_vectors,PAR_n_freqs
-#if defined _PHEL
-use parallel_m,     ONLY:PAR_PHEL_K_range,PAR_PHEL_Q_range
-#endif
  use interfaces,  ONLY:PARALLEL_check_phase_space
 !#ifdef _CUDA
 ! use mpiDeviceUtil
@@ -88,11 +85,6 @@ use parallel_m,     ONLY:PAR_PHEL_K_range,PAR_PHEL_Q_range
        if (trim(ROLE(i_order))=="c" ) PHASE_space=PAR_n_c_bands(2)-PAR_n_c_bands(1)+1
        if (trim(ROLE(i_order))=="v" ) PHASE_space=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1
        if (trim(ROLE(i_order))=="w" ) PHASE_space=PAR_n_freqs
-       !
-#if defined _PHEL
-       if (trim(ROLE(i_order))=="kd" ) PHASE_space=PAR_PHEL_K_range
-       if (trim(ROLE(i_order))=="qd" ) PHASE_space=PAR_PHEL_Q_range(2)-PAR_PHEL_Q_range(1)+1
-#endif
        !
        if (PARALLEL_CPU_used(i_structure)>PHASE_space) then
          USER_structure_msg=trim(intc(PARALLEL_CPU_used(i_structure)))//" CPU for "//&

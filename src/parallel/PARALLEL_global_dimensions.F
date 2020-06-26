@@ -27,9 +27,6 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  use parallel_m,    ONLY:PAR_Q_bz_range,PAR_Q_ibz_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,&
 &                        PAR_EH_range,PAR_Dip_ib,PAR_Dip_ib_lim,PAR_X_ib,PAR_X_iq,PAR_n_G_vectors,&
 &                        PAR_n_freqs,PAR_K_range,PAR_n_bands
-#if defined _PHEL
- use parallel_m,     ONLY:PAR_PHEL_K_range,PAR_PHEL_Q_range
-#endif
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run
  use BS,            ONLY:BS_bands,BS_nT_at_k
  use X_m,           ONLY:X_ng
@@ -155,13 +152,6 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
 #if defined _NL
  if (ENVIRONMENT=="Non_Linear"                      ) PAR_n_freqs =n_frequencies
-#endif
- !
-#if defined _PHEL
- if (ENVIRONMENT=="Real_Time"       ) then
-   PAR_PHEL_K_range=Xk%nbz
-   PAR_PHEL_Q_range=(/1,nqibz/)
- endif
 #endif
  !
 end subroutine PARALLEL_global_dimensions

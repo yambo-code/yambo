@@ -222,9 +222,6 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_Xk_ibz
  type(PP_indexes),SAVE :: PAR_IND_Xk_bz
  type(PP_indexes),SAVE :: PAR_IND_G_k
-#if defined _PHEL
- type(PP_indexes),SAVE :: PAR_IND_Q_ibz
-#endif
  !
  ! ... DIPOLES
  type(PP_indexes),SAVE :: PAR_IND_DIPk_ibz
@@ -294,9 +291,6 @@ module parallel_m
  integer            :: PAR_IND_Xk_ibz_ID
  integer            :: PAR_IND_Xk_bz_ID
  integer            :: PAR_IND_G_k_ID
-#if defined _PHEL
- integer,SAVE       :: PAR_IND_Q_ibz_ID
-#endif
  !
  ! ... DIPOLES
  integer            :: PAR_IND_DIPk_bz_ID
@@ -373,10 +367,6 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_Xk_ibz_A2A
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_A2A
-#if defined _PHEL
- type(MPI_comm),SAVE :: PAR_COM_Q_ibz_INDEX
- type(MPI_comm),SAVE :: PAR_COM_Q_ibz_A2A
-#endif
  !
  ! ... DIPOLES
  type(MPI_comm),SAVE :: PAR_COM_DIPk_ibz_INDEX
@@ -428,10 +418,6 @@ module parallel_m
  integer            :: PAR_n_v_bands(2)  = 0
  integer            :: PAR_n_G_vectors   = 0
  integer            :: PAR_G_k_range(2)  = 0  ! For parallel I/O of G
- #if defined _PHEL
-  integer            :: PAR_PHEL_K_range   = 0
-  integer            :: PAR_PHEL_Q_range(2)   = 0
- #endif
  !
  ! ... and derived variables
  !==========================
@@ -464,10 +450,6 @@ module parallel_m
  integer,allocatable:: PAR_G_bands_index(:)
  integer            :: PAR_n_freqs 
  integer,allocatable:: PAR_FREQS_index(:)
-#if defined _PHEL
- integer            :: PAR_nQ_ibz
- integer,allocatable:: PAR_Q_ibz_index(:)
-#endif
  !
  ! WorkSpace
  !

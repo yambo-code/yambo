@@ -77,6 +77,9 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
  integer               :: i_n,i_np
  ! ... BZ index ...
  integer               :: iqbz,ik_m_q,ik_mem,iq_mem
+#if defined _PHEL
+ integer               :: iqibz
+#endif
  !
  ik_mem=PAR_Xk_ibz_index(ik)
  !
@@ -112,10 +115,11 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
      N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
      !
 #if defined _PHEL
+     iqibz = k%sstar(iqbz,1)
      if (l_initial_equilibrium) then
-       N_q    = (RT_PH_occupations_reference(il,iq_mem)+(/0._SP,spin_occ/))/spin_occ
+       N_q    = (RT_PH_occupations_reference(il,iqibz)+(/0._SP,spin_occ/))/spin_occ
      else
-       N_q    = (RT_PH_occupations(il,iq_mem)+(/0._SP,spin_occ/))/spin_occ
+       N_q    = (RT_PH_occupations(il,iqibz)+(/0._SP,spin_occ/))/spin_occ
      endif
 #endif
      !

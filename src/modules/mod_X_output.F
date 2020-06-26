@@ -23,9 +23,9 @@
 !
 module X_output
  !
- use pars,      ONLY:schlen,SP
+ use pars,      ONLY:schlen,SP,msg_len
  use stderr,    ONLY:intc
- use com,       ONLY:msg
+ use com,       ONLY:msg,com_compose_msg
  use X_m,       ONLY:alpha_dim,global_gauge
  use drivers,   ONLY:l_kerr
  !
@@ -51,74 +51,60 @@ module X_output
      files='o eps refl eel alpha off beta moke jdos'
      if (l_chi) files= 'o eps refl eel alpha'
      if (GreenF) then
-       call msg(trim(files),'# ',' GEN| GF poles        : '//trim(X_E_xc_string(4)),INDENT=0)
+       call msg(trim(files),com_compose_msg(pre="# ",body="[GEN] GF poles"),trim(X_E_xc_string(4)),INDENT=0)
      else
-       call msg(trim(files),'# ',' GEN| Energies        : '//trim(X_E_xc_string(4)),INDENT=0)
+       call msg(trim(files),com_compose_msg(pre="# ",body="[GEN] GF Energies"),trim(X_E_xc_string(4)),INDENT=0)
      endif
-     call msg(trim(files),'# ','    | Wavefunctions   : '//trim(X_WF_xc_string(4)),INDENT=0)
+     call msg(trim(files),com_compose_msg(pre="# ",body="[GEN] Wavefunctions"),trim(X_WF_xc_string(4)),INDENT=0)
      message='T-ordered'
      if (trim(ordering)=='Ra') message='Retarded-antiresonant'
      if (trim(ordering)=='Ta') message='T-ordered-antiresonant'
      if (trim(ordering)=='r')  message='Resonant'
      if (trim(ordering)=='R')  message='Retarded'
-     call msg(trim(files),'# ','    | Green`s Function:'//trim(message),INDENT=0)
+     call msg(trim(files),com_compose_msg(pre="# ",body="[GEN] Green`s Function"),trim(message),INDENT=0)
      !
      ! Gauges
      !
      if (iq==1) then
        if (trim(global_gauge)=='length')         message='Length'
        if (trim(global_gauge)=='velocity')       message='Velocity'
-       call msg(trim(files),'# ','    | Gauge           :'//trim(message),INDENT=0)
-       call msg(trim(files),'#     | [r,Vnl] included:',Vnl_included,INDENT=0)
+       call msg(trim(files),com_compose_msg(pre="# ",body="[GEN] Gauge"),trim(message),INDENT=0)
+       call msg(trim(files),com_compose_msg(pre="# ",body="[GEN] [r,Vnl] included"),Vnl_included,INDENT=0)
      endif
      !
    end subroutine
    !
-   subroutine X_write_descriptions(n_descs,desc,vars)
-     use pars,     ONLY:VAR_EMPTY
-     integer,     intent(in) :: n_descs
-     character(*),intent(in) :: desc(n_descs)
-     real(SP),    intent(in) :: vars(10,n_descs)
-     integer      :: i_d,ivar
-     call msg('o eps refl eel fxc alpha off beta moke jdos','#')    
-     do i_d=1,n_descs
-       do ivar=1,10
-         if( vars(ivar,i_d)==VAR_EMPTY ) exit
-       enddo
-       if(ivar> 1) call msg('o eps refl eel fxc alpha off beta moke jdos','#  '//trim(desc(i_d)),vars(:ivar-1,i_d),INDENT=0)    
-       if(ivar==1) call msg('o eps refl eel fxc alpha off beta moke jdos','#  '//trim(desc(i_d)),0,INDENT=0)    
-     enddo
-     call msg('o eps refl eel fxc alpha off beta moke jdos','#')    
-   end subroutine
-   !
    subroutine X_write_q_plus_G(iq,Q_plus_G_pt,ig)
      !
-     integer           :: iq
-     integer,optional  :: ig
-     real(SP)          :: Q_plus_G_pt(3)
-     character(schlen) :: message(9)
+     integer            :: iq
+     integer,optional   :: ig
+     real(SP)           :: Q_plus_G_pt(3)
+     character(msg_len) :: message(9)
      !
      if (iq==1.and.ig==1) then
-       message(1) = '# Absorption @ Q('//trim(intc(iq))//') [q->0 direction] '
-       message(2) = '# EELS @ Q('//trim(intc(iq))//')  [q->0 direction]'
-       message(3) = '# Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//') [q->0 direction]'
-       message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [q->0 direction]'
-       message(5) = '# Off-diagonal Absorption @ Q('//trim(intc(iq))//') [q->0 direction] '
-       message(6) = '# Off-diagonal Polarizability @ Q('//trim(intc(iq))//') [q->0 direction] '
-       message(7) = '# moke parameters @ Q('//trim(intc(iq))//') [q->0 direction] '
-       message(8) = '# Reflectivity @ Q('//trim(intc(iq))//') [q->0 direction] '
-       message(9) = '# Joint density of states @ Q('//trim(intc(iq))//') [q->0 direction] '
+       message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//')',post='q->0 direction')
+       message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')',post='q->0 direction')
+       message(3) = com_compose_msg(pre='# ',&
+&                   body='Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//')',post='q->0 direction')
+       message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')',post='q->0 direction')
+       message(5) = com_compose_msg(pre='# ',body='Off-diagonal Absorption @ Q('//trim(intc(iq))//')',post='q->0 direction')
+       message(6) = com_compose_msg(pre='# ',body='Off-diagonal Polarizability @ Q('//trim(intc(iq))//')',post='q->0 direction')
+       message(7) = com_compose_msg(pre='# ',body='moke parameters @ Q('//trim(intc(iq))//')',post='q->0 direction')
+       message(8) = com_compose_msg(pre='# ',body='Reflectivity @ Q('//trim(intc(iq))//')',post='q->0 direction')
+       message(9) = com_compose_msg(pre='# ',body='Joint density of states @ Q('//trim(intc(iq))//')',post='q->0 direction')
      else  if (iq/=1.and.ig==1) then
-       message(1) = '# Absorption @ Q('//trim(intc(iq))//') [iku] '
-       message(2) = '# EELS @ Q('//trim(intc(iq))//')  [iku]'
-       message(3) = '# Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//') [iku]'
-       message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [iku]'
-       message(9) = '# Joint density of states @ Q('//trim(intc(iq))//') [iku] '
+       message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//')',post='iku')
+       message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')',post='iku')
+       message(3) = com_compose_msg(pre='# ',body='Polarizability ( -<<X>> ) ['//trim(alpha_dim)//&
+&                                   ' @ Q('//trim(intc(iq))//')',post='iku')
+       message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')',post='iku')
+       message(9) = com_compose_msg(pre='# ',body='Joint density of states @ Q('//trim(intc(iq))//')',post='iku')
      else  if (ig/=1) then
-       message(1) = '# Absorption @ Q('//trim(intc(iq))//') + G('//trim(intc(ig))//') [iku] '
-       message(2) = '# EELS @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//') [iku]'
-       message(3) = '# Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//') [iku]'
-       message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [iku]'
+       message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//') + G('//trim(intc(ig))//')',post='iku')
+       message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//'',post='iku')
+       message(3) = com_compose_msg(pre='# ',body='Polarizability ( -<<X>> ) ['//trim(alpha_dim)//&
+&                                   ' @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//')',post='iku')
+       message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')',post='iku')
      endif
      call msg("o eps_q",trim(message(1)),Q_plus_G_pt,INDENT=0)
      call msg("o eel_q",trim(message(2)),Q_plus_G_pt,INDENT=0)

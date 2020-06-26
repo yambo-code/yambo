@@ -26,7 +26,7 @@ integer function io_X(X,Xw,ID)
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:g_vec
- use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_desc_var,X_desc_str,X_desc_size,X_alloc
+ use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_desc,X_alloc
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
 &                        io_elemental,io_status,io_bulk,&
@@ -84,7 +84,7 @@ integer function io_X(X,Xw,ID)
 #endif
  !
  if(perform_IO) then
-   io_X=io_connect(desc=trim(db_desc),type=2,ID=ID) 
+   io_X=io_connect(desc=trim(db_desc),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_RESPONSE)
    if (io_X/=0) goto 1
  endif
  !
@@ -108,7 +108,7 @@ integer function io_X(X,Xw,ID)
    ! Global Descriptions
    !=====================
    !
-   io_X=variables_X(ID,X_desc_var,X_desc_str,X_desc_size,X)
+   io_X=variables_X(ID,X_desc,X)
    if (io_X/=0) goto 1
    !
    ! When the SN is different and I am importing this DB 
@@ -168,13 +168,13 @@ integer function io_X(X,Xw,ID)
    !
    if (perform_IO) then
      if (X%whoami==4) then
-       call io_variable_elemental(ID,UNIT=HA2EV,VAR=" PPA Im  energy     [ev] ",   R0=X%ppaE,    CHECK=.true.,OP=(/"=="/))
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR="PPA Im  energy",TERMINATOR="ev",   R0=X%ppaE,    CHECK=.true.,OP=(/"=="/))
      endif
      if (X%whoami/=4) then
-       call io_variable_elemental(ID,           VAR=" :: Current Q-pt index      ",I0=iq)
-       call io_variable_elemental(ID,UNIT=HA2EV,VAR=" :: X energy range     [ev] ",R1=Xw%er,     WARN =.true.,OP=(/"==","=="/))
-       call io_variable_elemental(ID,UNIT=HA2EV,VAR=" :: X damping range    [ev] ",R1=Xw%dr,     CHECK=.true.,OP=(/"==","=="/))
-       call io_variable_elemental(ID,           VAR=" :: Number of frequencies   ",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
+       call io_variable_elemental(ID,           VAR="Current Q-pt index      ",I0=iq)
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR="X energy range",TERMINATOR="ev ",R1=Xw%er,WARN =.true.,OP=(/"==","=="/))
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR="X damping range",TERMINATOR="ev",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
+       call io_variable_elemental(ID,           VAR="Number of frequencies   ",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
      endif
      !
    endif

@@ -55,13 +55,17 @@ module com_interfcs
    !
    function composed_fmt(basic_fmt,n,USE_TABS,INDENT)
      use pars,   ONLY:lchlen
-     !
      character(lchlen) :: composed_fmt 
-     !
-     character(*)     :: basic_fmt
-     integer          :: n,INDENT
-     logical          :: USE_TABS
+     character(*)      :: basic_fmt
+     integer           :: n,INDENT
+     logical           :: USE_TABS
    end function composed_fmt
+   !
+   function fsync (fd) bind(c,name="fsync")
+     use iso_c_binding, only: c_int
+     integer(c_int), value :: fd
+     integer(c_int) :: fsync
+   end function fsync
    !
  end interface
  !

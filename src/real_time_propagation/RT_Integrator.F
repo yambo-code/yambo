@@ -64,18 +64,19 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
  use RT_control,     ONLY:TIME_adjust
  use real_time,      ONLY:Integrator_step,RT_nk,RT_bands,a_tableau,b_tableau,&
 &                         c_tableau,RWA_table,Integrator_nsteps,G_lesser_reference,&
-&                         NE_time,NE_i_time,RT_step,RT_dyn_step,i_MEM_collision,i_MEM_next
+&                         NE_time,NE_i_time,RT_step,RT_dyn_step
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:levels
  use timing_m,       ONLY:timing
+ use parallel_m,     ONLY:PAR_G_k_range
  !
  implicit none
  !
  type(bz_samp),        intent(in) :: k,q
  type(levels),      intent(inout) :: E
- complex(SP),       intent(inout) :: G_new(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- complex(SP),          intent(in) :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- complex(SP),         intent(out) :: dG_new(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP),       intent(inout) :: G_new(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
+ complex(SP),          intent(in) :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
+ complex(SP),         intent(out) :: dG_new(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
  type(gauge_field),    intent(in) :: A_old
  type(gauge_field),   intent(out) :: A_new
  !
@@ -83,7 +84,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
  !
  integer     :: i_step
  real(SP)    :: delta_T1,delta_T2,delta_T3
- complex(SP) :: dG_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,Integrator_nsteps+1)
+ complex(SP) :: dG_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2),Integrator_nsteps+1)
  !
  type(gauge_field) :: A_tmp(Integrator_nsteps+1)
  !
@@ -104,7 +105,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
    !
    ! Evaluate @ T+dt1
    !
-   call RT_Glesser_evolve(E,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),delta_T1,delta_T3)
+   call RT_Glesser_evolve(E,k,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),delta_T1,delta_T3)
    !
    ! GPL_EXCLUDE_START
    !
@@ -140,7 +141,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
  !
  ! final step @ T+dt
  !
- call RT_Glesser_evolve(E,dG_old,dG_tmp(:,:,:,Integrator_nsteps),dG_tmp(:,:,:,Integrator_nsteps+1), &
+ call RT_Glesser_evolve(E,k,dG_old,dG_tmp(:,:,:,Integrator_nsteps),dG_tmp(:,:,:,Integrator_nsteps+1), &
 &                                               RT_dyn_step,RT_dyn_step*RWA_table(Integrator_nsteps+1))
  !
  call RT_build_dG_new()
@@ -170,7 +171,6 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
  !
  NE_i_time       = NE_i_time+nint(RT_dyn_step/RT_step)
  NE_time         = TIME_adjust((NE_i_time-1)*RT_step)
- i_MEM_collision = i_MEM_next
  !
  call timing('RT integrator',OPR='stop')
  !
@@ -204,7 +204,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
        !
      enddo
      !
-     G_new=G_lesser_reference+dG_new
+     G_new=G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2))+dG_new
      !
    end subroutine RT_build_dG_new
    !

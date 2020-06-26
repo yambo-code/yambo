@@ -23,7 +23,7 @@
 !
 module com
  !
- use pars,          ONLY:SP,lchlen,schlen,max_n_ofs,max_open_ofs,n_max_jobstr
+ use pars,          ONLY:DP,SP,lchlen,schlen,max_n_ofs,max_open_ofs,n_max_jobstr
  use com_interfcs,  ONLY:msg_characters_vector_int,msg_integers_vector_int,msg_reals_vector_int
  !
  implicit none
@@ -56,7 +56,9 @@ module com
  ! Sectioning
  !
  integer           :: depth,isec(5)
- character(1)      :: previous_secmode
+ integer           :: depth_SAVE_pp,isec_SAVE_pp(5) ! +/-P
+ integer           :: depth_SAVE_p,isec_SAVE_p(5)   ! p
+ character(2)      :: previous_secmode
  character(schlen) :: secnm
  !
  ! Output Files/Report File
@@ -77,6 +79,7 @@ module com
  !
  logical            :: write_to_of
  logical            :: write_to_report
+ logical            :: fat_log
  !
  interface
    !
@@ -88,6 +91,13 @@ module com
      character(*), intent(in)            :: of_name
      character(*), intent(in), optional  :: mode
    end subroutine of_open_close
+   !
+   function com_compose_msg(pre,body,post)
+     use pars,          ONLY:msg_len
+     character(msg_len)                  :: com_compose_msg
+     character(*), intent(in)            :: body
+     character(*), intent(in), optional  :: pre,post
+   end function com_compose_msg
    !
  end interface
  !
@@ -146,7 +156,7 @@ module com
      character(*), optional :: after_msg
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     call msg_integers_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT)
+     call msg_integers_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT,after_msg=after_msg)
    end subroutine
    !
    subroutine msg_real(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT)

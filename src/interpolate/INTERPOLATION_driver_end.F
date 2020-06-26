@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,22 +21,43 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_write_descriptions(file_name)
+subroutine INTERPOLATION_driver_end(ID)
  !
- use RT_control,     ONLY:RT_description,n_RT_descriptions
- use com,            ONLY:msg
+ use interpolate_tools,    ONLY:INTERPOLATION_reset
+ use interpolate,          ONLY:INTERPOLATE_msg_fmt,INTERPOLATE_initialized,&
+&                               lattice_vectors,INTERP_obj,max_interpls,int_sop,NN_nk_exact
  !
- implicit none
+#include<memory.h>
  !
- character(*), intent(in)      :: file_name
- !                          
- ! Work Space 
+ integer, intent(in) :: ID
  !
- integer  :: i_fp
+ ! Work space
  !
- do i_fp=1,n_RT_descriptions
-   call msg('o '//trim(file_name),'#',trim(RT_description(i_fp)),INDENT=0)
- enddo
+ integer             :: i_obj
  !
-end subroutine RT_write_descriptions
-
+ if (ID>0) then
+   !
+   ! Reset only specific ID
+   !
+   if (.not.INTERP_obj(ID)%in_use) return 
+   call INTERPOLATION_reset(ID)
+   !
+ else
+   !
+   ! Reset all IDs and clear lattice vectors
+   !
+   do i_obj=1,max_interpls
+     call INTERPOLATION_reset(i_obj)
+   enddo
+   !
+   YAMBO_FREE_P(lattice_vectors)
+   !
+   YAMBO_FREE(int_sop)
+   INTERPOLATE_initialized=.FALSE.
+   INTERPOLATE_msg_fmt="rs"
+   !
+ endif
+ !
+ NN_nk_exact=0
+ !
+end subroutine INTERPOLATION_driver_end

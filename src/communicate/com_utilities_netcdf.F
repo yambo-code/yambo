@@ -81,7 +81,7 @@ subroutine of_netcdf_shadow_real(i1,mesg,val,nval)
  !
  if(def_var) then
    call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME),VAR_ID,VAR_SIZE,SP,dim_names)
-   if(imsg> 0) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME)//"_titles",VAR_ID_STR,VAR_SIZE_STR,0,dim_names_str)
+   if(imsg> 0) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME)//"_titles",VAR_ID_STR,VAR_SIZE_STR,0,dim_names_str,silent=.true.)
  endif
  !
  nc_var(:,1)=val
@@ -117,7 +117,6 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
  integer, parameter    :: max_headers_lines=50
  integer               :: i_var,i_char,strlen(nval),VAR_ID,VAR_POS(2),VAR_SZ(2)
  character(schlen)     :: VAR_NAME
- character(3)          :: end_string
  character(schlen)     :: dim_names(2)
  character(1), allocatable  :: nc_var(:,:)
  !
@@ -159,12 +158,12 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
    VAR_POS =(/1,1/)
  endif
  !
- if(def_var) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME),VAR_ID,VAR_SZ,0,dim_names)
+ if(def_var) call def_variable_bulk(of_nc_IDs(i1),trim(VAR_NAME),VAR_ID,VAR_SZ,0,dim_names,silent=.true.)
  !
- end_string=" # "
  nc_var=""
  do i_var=1,nval
    do i_char=1,strlen(i_var)
+     if(nval==1.and.i_char>schlen) cycle
      nc_var(i_char,i_var)=val(i_var)(i_char:i_char)
    enddo
  enddo

@@ -23,12 +23,13 @@
 !
 module TDDFT
  !
- use pars,     ONLY:SP,lchlen,schlen
+ use descriptors,ONLY:IO_desc
+ use pars,       ONLY:SP,lchlen,schlen
+ !
  implicit none
  !
  character(schlen):: TDDFT_mode
- character(lchlen):: FXC_desc_str(100)
- real(SP)         :: FXC_desc_var(10,100)
+ type(IO_desc)    :: FXC_desc
  character(10)    :: FXC_type
  integer          :: FXC_n_descs
  integer          :: FXC_n_g_corr

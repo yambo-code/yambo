@@ -24,19 +24,19 @@
 subroutine setup(en,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,pi,schlen
+ use drivers,        ONLY:l_setup
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:wf_ng,wf_ncx
- use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,&
-&                         BZ_DbGd_nbands,DbGd_is_symmetry_expanded,BZ_DbGd_tot_nk_levels
+ use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,&
-&                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed
- use com,            ONLY:msg
- use stderr,         ONLY:intc,real2ch
+&                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed,bz_samp_duplicate_Fg
+ use com,            ONLY:msg,fat_log
+ use stderr,         ONLY:intc
  use IO_m,           ONLY:REP,DUMP,NONE,io_control,OP_RD_CL
  use vec_operate,    ONLY:c2a,define_b_and_DL_vol
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
@@ -64,7 +64,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Work Space
  !
  real(SP)          :: Tel_SAVE,tmp_V(3)
- integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2),ID
+ integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2),ID,n_to_print
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch
  integer, external :: k_lattice,io_Double_Grid
@@ -87,10 +87,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call load_PT_elements()
  !
  atoms_string=' '
- !
  if (allocated(Z_species)) then
    call msg('r','Atoms in the cell     ',' '//PT_elements(Z_species(:)))
    do is=1,n_atomic_species
+     atoms_string=trim(atoms_string)//trim(intc(n_atoms_species(is)))//PT_elements(Z_species(is))
+     if (is<n_atomic_species) atoms_string=atoms_string//"+"
      call msg('r','number of '//PT_elements(Z_species(is))//' atoms    ',n_atoms_species(is))
    enddo
  endif
@@ -104,13 +105,13 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call msg('r','Direct lattice vectors',(/' A[ 1 ]  ',' A[ 2 ]  ',' A[ 3 ]  '/))
  tmp_V=(/a(1,1)/alat(1),a(1,2)/alat(2),a(1,3)/alat(3)/)
  call msg('r',' A[ 1 ]',tmp_V, ' [iru] ')
- call msg('r','        ',a(1,:),' [cc] ')
+ if(fat_log.or.l_setup) call msg('r','        ',a(1,:),' [cc] ')
  tmp_V=(/a(2,1)/alat(1),a(2,2)/alat(2),a(2,3)/alat(3)/)
  call msg('r',' A[ 2 ]',tmp_V, ' [iru] ')
- call msg('r','        ',a(2,:),' [cc] ')
+ if(fat_log.or.l_setup) call msg('r','        ',a(2,:),' [cc] ')
  tmp_V=(/a(3,1)/alat(1),a(3,2)/alat(2),a(3,3)/alat(3)/)
  call msg('r',' A[ 3 ]',tmp_V, ' [iru] ')
- call msg('r','        ',a(3,:),' [cc] ')
+ if(fat_log.or.l_setup) call msg('r','        ',a(3,:),' [cc] ')
  !
  RL_vol=(2._SP*pi)**3/DL_vol
  call msg('nr','Recip. lattice volume ',RL_vol,'[a.u.]')
@@ -118,15 +119,15 @@ subroutine setup(en,Xen,Ken,k,Xk)
  tmp_V=b(1,:)
  call c2a(b_in=b,v_in=tmp_V,mode='kc2i')
  call msg('r',' B[ 1 ]',tmp_V, ' [iku] ')
- call msg('r','        ',b(1,:),' [cc] ')
+ if(fat_log.or.l_setup) call msg('r','        ',b(1,:),' [cc] ')
  tmp_V=b(2,:)
  call c2a(b_in=b,v_in=tmp_V,mode='kc2i')
  call msg('r',' B[ 2 ]',tmp_V, ' [iku] ')
- call msg('r','        ',b(2,:),' [cc] ')
+ if(fat_log.or.l_setup) call msg('r','        ',b(2,:),' [cc] ')
  tmp_V=b(3,:)
  call c2a(b_in=b,v_in=tmp_V,mode='kc2i')
  call msg('r',' B[ 3 ]',tmp_V, ' [iku] ')
- call msg('r','        ',b(3,:),' [cc] ')
+ if(fat_log.or.l_setup) call msg('r','        ',b(3,:),' [cc] ')
  !
  ! ZERO's SETUP
  !
@@ -209,6 +210,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call G_shells_finder()
  !
+ call msg('r','nG shells         ',n_g_shells)
  call msg('r','nG charge         ',ng_closed)
  call msg('r','nG WFs            ',wf_ng)
  call msg('r','nC WFs            ',wf_ncx)
@@ -217,25 +219,21 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! the map is built in G_shells_finder
  !
  if (inv_index>0) call eval_minus_G()
- !             'Shells units      '
- call msg('r','G-vecs. in shell  ',' [ Number ] ')
- !call msg('r' ,'Shells NG         ',' [ list ]')
- do i1=1,n_g_shells,9
-   !dumb_ch=' [SNG_'//trim(intc(i1))//'-'//trim(intc(min(i1+8,n_g_shells)))//']'
-   if (i1==800 .and. i1<n_g_shells-800) call msg('r',"...")
-   if (i1> 800 .and. i1<n_g_shells-800) cycle
-   !call msg('r',trim(dumb_ch),ng_in_shell(i1:min(i1+8,n_g_shells)) )
-   call msg('r',' ',ng_in_shell(i1:min(i1+8,n_g_shells)) )
- enddo
  !
- call msg('nr','Shells energy     ',' [ mHa ] ')
- !call msg('r' ,'Shells E          ',' [ list ]')
- do i1=1,n_g_shells,9
-   !dumb_ch=' [SE_'//trim(intc(i1))//'-'//trim(intc(min(i1+8,n_g_shells)))//']'
-   if (i1==800 .and. i1<n_g_shells-800) call msg('r',"...")
-   if (i1> 800 .and. i1<n_g_shells-800) cycle
-   call msg('r',' ',E_of_shell(i1:min(i1+8,n_g_shells))*1000._SP)
+ n_to_print=min(800,n_g_shells)
+ if (.not.fat_log) n_to_print=n_to_print/10
+ !
+ call msg('r','G-vecs. in first '//trim(intc(n_to_print))//' shells',' [ Number ] ')
+ do i1=1,n_to_print,9
+   call msg('r',' ',ng_in_shell(i1:min(i1+8,n_to_print)) )
  enddo
+ if (n_to_print<n_g_shells) call msg('r',"...")
+ !
+ call msg('r','Shell energy in first '//trim(intc(n_to_print))//' shells',' [ mHa ] ')
+ do i1=1,n_to_print,9
+   call msg('r',' ',E_of_shell(i1:min(i1+8,n_to_print))*1000._SP)
+ enddo
+ if (n_to_print<n_g_shells) call msg('r',"...")
  !
  ! First simplified implementation of wf_ng_1st_BZ & wf_ng_2st_BZ
  ! A more correct implementation would involve a rotation of the shells
@@ -266,21 +264,23 @@ subroutine setup(en,Xen,Ken,k,Xk)
    if (i_err/=0) call error('Impossible to determine the K-grid lattice')
  endif
  !
- call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'K',.TRUE.,.FALSE.)
+ if(l_setup.or.fat_log) call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'K',.TRUE.,.FALSE.)
  ! 
  ! E_dbgd
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID)
  i_err=io_Double_Grid(en,k,ID)
  !
- if (BZ_DbGd_nbands>0.and.allocated(en%E_DbGd)) then
+ call bz_samp_duplicate_Fg(k,Xk) 
+ !
+ if (En%nb_FineGd>0.and.allocated(en%E_FineGd)) then
    !
    call section('=','Double K-grid')
    !=======================================
    !
-   call msg('r', 'K-points             ',BZ_DbGd_tot_nk_levels)
-   call msg('r', 'Bands                ',BZ_DbGd_nbands)
-   call msg('rn','Is the grid expanded ',DbGd_is_symmetry_expanded)
+   call msg('r', 'Kpts (IBZ): CG,FG,DUPL.    ',(/k%nibz,k%nibz_FineGd,k%nibz_duplicate/))
+   call msg('r', 'Kpts ( BZ): CG,FG,DUPL.    ',(/k%nbz, k%nbz_FineGd, k%nbz_duplicate/))
+   call msg('r', 'Bands                      ',en%nb_FineGd)
    !
  endif
  !
@@ -355,7 +355,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Energies report
  !
- call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.FALSE.,.TRUE.)
+ if(l_setup.or.fat_log) call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.FALSE.,.TRUE.)
  !
  ! Once the occupations have been evaluated I dump Xen in Ken
  !

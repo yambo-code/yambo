@@ -24,15 +24,15 @@
 subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  !
  use pars,           ONLY:SP
- use RT_control,     ONLY:RT_output
+ use RT_control,     ONLY:RT_output,ID
  use units,          ONLY:AUT2FS
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use stderr,         ONLY:set_real_printed_length
- use IO_m,           ONLY:IO_and_Messaging_switch
+ use IO_m,           ONLY:IO_and_Messaging_switch,io_control,io_disconnect,WR_CL
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use real_time,      ONLY:eval_energy,eval_entropy,l_RT_update_Energies,l_NE_with_fields,NE_time, &
 &                         l_RT_induced_field,l_RT_impose_N_dN,l_RT_impose_E,RT_is_dynamically_dephased,NE_i_time
+ use D_lattice,      ONLY:Bose_Temp
  use RT_control,     ONLY:RT_do_it
  !
  implicit none
@@ -44,6 +44,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  !
  ! Workspace
  !
+ integer  :: i_ID
  real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),BGR(4)
  !
  select case(trim(what))
@@ -74,7 +75,21 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
      if(l_RT_induced_field)  call RT_output(what=trim(what)//" tot ind")
    endif
    !
+   if(trim(what)=="close") then
+     do i_ID=1,8
+       if(ID(i_ID)==0) cycle
+       call io_control(ACTION=WR_CL,ID=ID(i_ID))
+       call io_disconnect(ID=ID(i_ID))
+     enddo
+   endif
+   !
  case('write')
+   !
+   if (RT_is_dynamically_dephased) then
+     !
+     call RT_Lifetimes_merge_driver("INTER_k")
+     !
+   endif
    !
    ! GPL_EXCLUDE_START
    !
@@ -89,11 +104,9 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    ! GPL_EXCLUDE_END
    !
-   call set_real_printed_length()
    call IO_and_Messaging_switch("-fragments_IO_log")
    call RT_databases_IO(E)
    call IO_and_Messaging_switch("+fragments_IO_log")
-   call set_real_printed_length(f_length=10,g_length=10)
    !
    ! OUTPUT(s)
    !###########
@@ -116,11 +129,14 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    ! Mean Carrier Lifetimes
    !========================
    if (RT_is_dynamically_dephased) then
+     !
      call RT_mean_carrier_lifetimes(E,k)
-     if(l_elph_scatt)                      call RT_output('mean_EPlife', TIME=NE_time*AUT2FS)
-     if(l_elel_scatt)                      call RT_output('mean_EElife', TIME=NE_time*AUT2FS)
-     if(l_elphoton_scatt)                  call RT_output('mean_RADlife',TIME=NE_time*AUT2FS)
-     if(l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('N_dN_E',TIME=NE_time*AUT2FS)
+     !
+     if (l_elph_scatt)                      call RT_output('mean_EPlife', TIME=NE_time*AUT2FS)
+     if (l_elel_scatt)                      call RT_output('mean_EElife', TIME=NE_time*AUT2FS)
+     if (l_elphoton_scatt)                  call RT_output('mean_RADlife',TIME=NE_time*AUT2FS)
+     if (l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('N_dN_E',TIME=NE_time*AUT2FS)
+     !
    endif
    !
    ! GPL_EXCLUDE_END

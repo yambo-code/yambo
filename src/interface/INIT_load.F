@@ -23,6 +23,7 @@
 !
 subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
+ use drivers,       ONLY:infile_editing
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
@@ -47,7 +48,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
-&                        BS_n_g_W,BS_n_g_exch,L_kind
+&                        BS_n_g_W,BS_n_g_exch,L_kind,BS_K_cutoff
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig
@@ -75,7 +76,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        SC_bands,SC_preconditioning,OEP_approx
 #endif
 #if defined _RT
- use RT_control,    ONLY:OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
+ use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,     &
+&                        CACHE_OBS_INTERVAL_time_SAVE
  use stderr,        ONLY:intc
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
 &                        NE_tot_time,RT_life_extrap_times_SAVE,RT_bands,         &
@@ -83,7 +85,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        NE_MEM_treshold,NE_time_step_update_jump_SAVE,          &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
-&                        RT_MAX_step,RT_RTA_temp,RT_RTA_chem,RAD_magnification
+&                        RT_MAX_step,RT_RTA_temp,RT_RTA_chem,RAD_magnification,  &
+&                        RT_deph_deg_thresh
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
@@ -267,7 +270,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! Xs Xd Xp
  !
  call it(defs,'Chimod',       '[X] IP/Hartree/ALDA/LRC/PF/BSfxc',Chi_mode,protect=.FALSE.,case="A")
- call it(defs,'ChiLinAlgMod', '[X] inversion/lin_sys',Chi_linalg_mode,verb_level=V_resp,case="A")
+ call it(defs,'ChiLinAlgMod', '[X] inversion/lin_sys,cpu/gpu',Chi_linalg_mode,verb_level=V_resp,case="A")
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
@@ -284,6 +287,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &         BS_n_g_W,G_unit,verb_level=V_resp)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
+ call it(defs,'BSKCut',  '[BSK] Cutoff on the BSE Kernel, 0=full 1=none',BS_K_cutoff,verb_level=V_resp)
+ call it('f',defs,'BSKTriangIO' ,'[BSK] Write only the upper part of the BSE matrix with parallel I/O',verb_level=V_resp)
  !
  !GPL_INCLUDE_START
  !
@@ -419,6 +424,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
  call it(defs,'RAD_prefactor','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
  call it(defs,'PhLifeTime', '[RT] Constant Dephasing Time',Phase_LifeTime,unit=Time_unit(1))
+ call it(defs,'DephEThresh', '[RT] Threshold on the energy difference between two states to dephase them',&
+         &   RT_deph_deg_thresh,unit=E_unit,Verb_level=V_real_time)
  !
  ! Dynamics
  !
@@ -433,15 +440,22 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/EXPn/INV" "SIMPLE/RK2/RK4/HEUN" "RWA") ',&
 &              Integrator_name)
  !
- IO_times=(/OBS_RT_IO_t%INTERVAL_time_SAVE,GF_RT_IO_t%INTERVAL_time_SAVE,OUTPUT_RT_IO_t%INTERVAL_time_SAVE/)
- call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (OBSERVABLEs,CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
- OBS_RT_IO_t%INTERVAL_time_SAVE   =IO_times(1)
+ IO_times=(/CARR_RT_IO_t%INTERVAL_time_SAVE,GF_RT_IO_t%INTERVAL_time_SAVE,OUTPUT_RT_IO_t%INTERVAL_time_SAVE/)
+ call it(defs,'IOtime',      '[RT] Time between two consecutive I/O (CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
+ CARR_RT_IO_t%INTERVAL_time_SAVE  =IO_times(1)
  GF_RT_IO_t%INTERVAL_time_SAVE    =IO_times(2)
  OUTPUT_RT_IO_t%INTERVAL_time_SAVE=IO_times(3)
+ !
+ IO_times(1:2)=(/CACHE_OBS_INTERVAL_time_SAVE,OBS_RT_IO_t%INTERVAL_time_SAVE/)
+ call it(defs,'IOCachetime', '[RT] Time between two consecutive (caching - I/O) of OBSERVABLES',IO_times(1:2),unit=Time_unit(1),&
+ &       verb_level=V_real_time)
+ CACHE_OBS_INTERVAL_time_SAVE  =IO_times(1)
+ OBS_RT_IO_t%INTERVAL_time_SAVE=IO_times(2)
  !
  call it(defs,'RTehEny',     '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
  !
  ! ... flags ...
+ call it('f',defs,'DephCVonly',    '[RT] Dephase only in the CV channel',Verb_level=V_real_time)
  call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly',Verb_level=V_real_time)
  call it('f',defs,'RTEvalEnergy',  '[RT] Energy variation computed on the fly',Verb_level=V_real_time)
  call it('f',defs,'RTEvalEntropy', '[RT] Entropy variation computed on the fly',Verb_level=V_real_time)
@@ -482,7 +496,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! External fields
  !
- if (initmode==4) n_ext_fields=0
+ if (initmode==4.and..not.infile_editing) n_ext_fields=0
  do i_field=1,n_ext_fields_max
    call Afield(i_field)
  enddo
@@ -723,7 +737,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
 &            Efield(i_field)%t_initial,unit=Time_unit(1))
      !
-     if (initmode==4) then
+     if (initmode==4.and..not.infile_editing) then
        !
        call parser(trim(name)//'_FWHM',is_def)
        if (     is_def) Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
@@ -750,7 +764,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      do i_s=1,n_CPU_str_max 
        !
        if (i_s==1) possible_fields='(k,c,v)'     ! DIP
-       if (i_s==2) possible_fields='(q,g,k,c,v)' ! X_finite_q
+       if (i_s==2) possible_fields='(q,g,k,c,v)' ! X_and_IO
        if (i_s==3) possible_fields='(q,g,k,c,v)' ! X
        if (i_s==4) possible_fields='(k,eh,t)'    ! BS
        if (i_s==5) possible_fields='(q,qp,b)'    ! SE

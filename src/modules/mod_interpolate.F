@@ -46,6 +46,7 @@ module interpolate
  !
  ! NN method
  !
+ integer :: OUT_k_nk=0
  integer :: NN_nk_exact=0
  integer :: NN_n_of_nearest=1
  integer :: NN_MAX_real_nearest=0
@@ -90,11 +91,16 @@ module interpolate
    integer                  :: ID=0
    logical                  :: in_use=.FALSE.
    logical                  :: use_NN=.FALSE.
+   logical                  :: has_fineGd=.FALSE.
+   character(schlen)        :: seed_kind=" "
    character(schlen)        :: what=" "
-   real(SP),    allocatable :: weights(:)
-   real(SP),    allocatable :: k(:,:)
+   !
    real(SP),    allocatable :: SEED(:,:,:)
+   real(SP),    allocatable :: k(:,:)
+   real(SP),    allocatable :: weights(:)
+   !
    real(SP),    allocatable :: INTERP(:,:,:)
+   real(SP),    allocatable :: INTERP_FineGd(:,:,:)
  end type INTERP_element
  !
  integer, parameter :: max_interpls=10
@@ -126,16 +132,16 @@ module interpolate
      integer,       intent(out)          :: ID
    end subroutine  INTERPOLATION_coefficients
    !
-   subroutine INTERPOLATION_BZ(R1D,R2D,C1D,C2D,E,K,ID)
+   subroutine INTERPOLATION_BZ(K,NK,ID,R1D,R2D,C1D,C2D,E)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      use electrons,  ONLY:levels
      implicit none
      type(bz_samp), intent(in)            :: K
+     integer,       intent(in)            :: ID,NK
      real(SP),      intent(out), optional :: R1D(:,:),R2D(:,:,:)
      complex(SP),   intent(out), optional :: C1D(:,:),C2D(:,:,:)
      type(levels),  intent(out), optional :: E
-     integer,       intent(in)            :: ID
    end subroutine INTERPOLATION_BZ
    !
    subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRID_E,CIRCUIT_dE)

@@ -27,18 +27,16 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  use electrons,      ONLY:levels,n_spinor
  use C_driver,       ONLY:code_branch
  use drivers,        ONLY:infile_editing
- use X_m,            ONLY:X_t,X_duplicate
+ use X_m,            ONLY:X_t
  use DIPOLES,        ONLY:DIPOLE_t
- use frequency,      ONLY:w_samp,W_duplicate
+ use frequency,      ONLY:w_samp
  use BS,             ONLY:BS_n_g_exch,BS_q
  use R_lattice,      ONLY:ng_closed,nqibz,bz_samp
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_ng_Vxc
  use wave_func,      ONLY:io_WF
  use TDDFT,          ONLY:io_BS_Fxc
  use it_tools,       ONLY:switch_off_runlevel
- use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
- use com,            ONLY:com_path
- use parallel_m,     ONLY:ncpu
+ use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
 #if defined _SC || defined _RT
  use collision_ext,  ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
  use COLL_interfaces,ONLY:io_COLLISIONS
@@ -60,7 +58,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  ! Workspace
  !
- integer           :: i1,io_ID,io_err,io_WF_err,io_KB_abinit_err,io_KB_pwscf_err,io_ATMPROJ_pwscf_err
+ integer           :: i1,io_ID,io_err,io_DIP_err,io_WF_err,io_KB_abinit_err,io_KB_pwscf_err,io_ATMPROJ_pwscf_err
  !
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
@@ -103,15 +101,9 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
    INIT =-1
    return
  else
-   call mk_dir(com_path)
-   if (INIT==0.and.ncpu>1) call mk_dir(trim(com_path)//"/LOG")
+   call IO_make_directories("COM")
+   if (INIT==0) call IO_make_directories("LOG")
  endif
- !
- ! Exporting DB1 informations to variables to be
- ! proposed in the input file.
- !
- X(3)%ib=(/1,en%nb/)
- Dip%ib= (/1,en%nb/)
  !
  ! gops
  !
@@ -120,11 +112,10 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  ! Updates RL variables
  !
- QP_ng_Sx=ng_closed
- QP_ng_Sc=ng_closed
- QP_ng_SH=ng_closed
- QP_ng_Vxc=ng_closed
- !
+ QP_ng_Sx   =ng_closed
+ QP_ng_Sc   =ng_closed
+ QP_ng_SH   =ng_closed
+ QP_ng_Vxc  =ng_closed
  BS_n_g_exch=ng_closed
  !
  ! kindx
@@ -188,10 +179,11 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
  io_err=io_QP_and_GF('W',qp,io_ID) 
  !
- ! Vnl PWscf old format
+ ! Dipoles: Exporting DB1 informations to variables to be proposed in the input file.
  !
+ Dip%ib= (/1,en%nb/)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=io_DIPOLES(Dip,io_ID)
+ io_DIP_err=io_DIPOLES(Dip,io_ID)
  !
  ! KB PWscf
  !
@@ -203,46 +195,33 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_KB_abinit_err=io_KB_abinit(io_ID)
  !
- ! ATOMIC PROJETIONS pwscf
+ ! X
+ ! a. Exporting DB1 informations to variables to be proposed in the input file.
+ ! b. The GLOBAL vcalue of %Vnl_included is decided on the presence of the KB_PP.
+ !    This means that if the response functions DBs were made in presence of KB_PP and
+ !    later this DB is deleted the X dbs will be recalculated
+ ! c. When no setup has been done nqibz=0
  !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_ATMPROJ_pwscf_err=io_ATMPROJ_pwscf(io_ID)
+ if (io_DIP_err==0) OSTNTS_Vnl_included= Dip%Vnl_included
+ if (io_DIP_err/=0) OSTNTS_Vnl_included= (io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
  !
- !
- if (io_err==0) OSTNTS_Vnl_included= Dip%Vnl_included
- if (io_err/=0) OSTNTS_Vnl_included= (io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
- !
- ! I transfer to all X types the X(3) used in the previous io's 
- !
- call X_var_setup
- !
- ! When no setup has been done nqibz=0
+ do i1=1,4 ! Xx Xs Xd Xp
+   ! .a
+   X(i1)%ib=(/1,en%nb/)
+   ! .b
+   X(i1)%Vnl_included=OSTNTS_Vnl_included
+ enddo
  !
  if (nqibz>0) then
-   !
    if (trim(code_branch)=="devel-cumulant") BS_q=(/1,nqibz/)
-   !
    do i1=1,4 ! Xx Xs Xd Xp
-     !
      X(i1)%iq=(/1,nqibz/)
-     !
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
-     !
      io_X_err(i1)=io_X(X(i1),Xw(i1),io_ID)
-     !
    enddo
-   !
  endif
  !
- !
- ! The GLOBAL vcalue of %Vnl_included is decided on the basis of the contents
- ! of db.OSTENTS OR on the presence of the KB_PP. This means that if the
- ! response functions DBs were made in presence of KB_PP and later this
- ! DB is deleted the X dbs will be recalculated
- !
- forall(i1=1:4) X(i1)%Vnl_included=OSTNTS_Vnl_included
- !
- ! bs
+ ! BS
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_BS_err=io_BS(1,Xbsk,io_ID)
@@ -252,6 +231,11 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  ! the default (notice by MP, July 2015).
  !
  if (io_X_err(4)>=0) Xbsk%ppaE=X(4)%ppaE
+ !
+ ! ATOMIC PROJETIONS pwscf
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
+ io_ATMPROJ_pwscf_err=io_ATMPROJ_pwscf(io_ID)
  !
  ! GPL_EXCLUDE_START
  !
@@ -311,19 +295,4 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  io_COLLISIONS_err=io_COLLISIONS(io_ID,P_collisions)
 #endif
  !
- contains
-   !
-   subroutine X_var_setup 
-     !
-     ! Before any X DB/infile reading
-     !
-     call X_duplicate(X(3),X(2))
-     call X_duplicate(X(3),X(1))
-     call X_duplicate(X(3),X(4))
-     call W_duplicate(Xw(3),Xw(2))
-     call W_duplicate(Xw(3),Xw(1))
-     call W_duplicate(Xw(3),Xw(4))
-     !
-   end subroutine X_var_setup
-   !
 end subroutine

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CA, DS
+! Authors (see AUTHORS file for details): CA, DS, AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
+subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  ! Interpolation scheme (PRB 38 p2721)
  ! Aug2002 Georg Madsen : First version based on subroutine from D.Singh
@@ -38,12 +38,12 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  use vec_operate,       ONLY:c2a
  use LIVE_t,            ONLY:live_timing
  use interfaces,        ONLY:PARALLEL_index
- use parallel_m,        ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid
+ use parallel_m,        ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid,PAR_build_index,ncpu
  !
 #include<memory.h>
  !
  integer,       intent(in)  :: nvalues
- integer,       intent(in)  :: Nk,ID_obj
+ integer,       intent(in)  :: Nk,ID
  type(bz_samp), intent(in)  :: Xk
  real(SP),      intent(in)  :: VALUEs(nvalues,Nk)
  complex(DP),   intent(out) :: engre(nshells,nvalues)
@@ -52,8 +52,9 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  !
  type(PP_indexes)  :: px
  real(DP)          :: R2_min,R2
- real(SP)          :: v(3),star_vec(3,nsym)
- integer           :: ik,ik2,ik_prod,iv,i1,i2,nstar,Nkm1,info,ikn,Npx(1)
+ real(SP)          :: v(3),star_vec(3,nsym),pre_factor
+ integer           :: ik,ikp,iv,i_shell,i_star,nstar,Nkm1,info,&
+&                     PAR_nshells,i_par_shell
  !
  ! Parameters
  !
@@ -63,20 +64,16 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  !
  real(DP),    allocatable :: rho(:)
  complex(SP), allocatable :: h_mat(:,:),delta(:,:)
- complex(DP), allocatable :: star_1(:,:)
- integer,     allocatable :: ipiv(:)
+ complex(DP), allocatable :: BZ_star(:,:),PAR_engre(:,:)
+ integer,     allocatable :: ipiv(:),SHELL_index(:)
  !
  ! External
  !
  complex(DP) :: ZDOTC,ZDOTU
  !
- Nkm1=Nk-1           ! number of k-points minus 1 in the BZ
- ikn =Nk             ! last k-point index
+ Nkm1=Nk-1           ! number of k-points minus 1
  !
  YAMBO_ALLOC(delta,(Nkm1,nvalues))
- YAMBO_ALLOC(rho,(nshells))
- YAMBO_ALLOC(h_mat,(Nkm1,Nkm1))
- YAMBO_ALLOC(star_1,(nshells,Nk))
  YAMBO_ALLOC(ipiv,(Nkm1))
  !
  ! Construct delta_epsilon eq. 10
@@ -84,75 +81,95 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  delta=cZERO
  !
  do ik=1,Nkm1
-   delta(ik,:)=VALUEs(:,ik)-VALUEs(:,ikn)
+   delta(ik,:)=VALUEs(:,ik)-VALUEs(:,Nk)
  enddo
  !
- rho(1)=0._DP
- R2_min=dot_product(lattice_vectors(:,2),matmul(metric,lattice_vectors(:,2)))
- !
- do i1=2,nshells
-   R2=dot_product(lattice_vectors(:,i1),matmul(metric,lattice_vectors(:,i1)))
-   rho(i1)=roughness_func(R2,R2_min)
- enddo
- !
- h_mat =cZERO
- star_1=cZERO
- !
- if (.not.INTERPOLATE_is_quiet) call live_timing("Definition of star_1",nshells-1)
- !
- do i1=2,nshells
-   call make_star(lattice_vectors(:,i1),nsym,int_sop,nstar,star_vec) 
-   do ik=1,Nk
-     if(Nk==Xk%nibz) call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki2a')
-     ! Implementation to be finished. Here I canno use BZ_DbGd_kpts
-     ! bacuse also extra points in the BZ are included ...
-     !if(Nk> Xk%nibz) call c2a(v_in=Xk%pt_DbGd(ik,:),v_out=v,mode='ki2a')
-     do i2=1,nstar
-       star_1(i1,ik)=star_1(i1,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,i2)))
-     enddo
-   enddo
-   if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
-   star_1(i1,:)=star_1(i1,:)/real(nstar)
- enddo
- if (.not.INTERPOLATE_is_quiet) call live_timing()
- !
- do ik=1,Nkm1
-   star_1(2:nshells,ik) = star_1(2:nshells,ik) - star_1(2:nshells,Nk)
-   star_1(2:nshells,ik) = star_1(2:nshells,ik) / sqrt(rho(2:nshells))
- enddo
- !
- ! Par Proc
- !
- Npx=(Nkm1*(Nkm1+1))/2
+ PAR_nshells=nshells
+ call PP_indexes_reset(px)
  if (INTERPOLATE_is_serial) then
-   if (.not.INTERPOLATE_is_quiet) call live_timing("Computing h_mat",Npx(1))
+   YAMBO_ALLOC(px%element_1D,(nshells))
+   YAMBO_ALLOC(px%n_of_elements,(ncpu))
+   px%n_of_elements=nshells
+   px%element_1D=.TRUE.
  else
-   call PP_indexes_reset(px)
-   call PARALLEL_index(px,Npx)
-   if (.not.INTERPOLATE_is_quiet) call live_timing("Computing h_mat",px%n_of_elements(myid+1))
+   call PARALLEL_index(px,(/nshells/))
+   YAMBO_ALLOC(SHELL_index,(nshells))
+   call PAR_build_index(px,nshells,SHELL_index,px%n_of_elements(myid+1))
+   PAR_nshells=px%n_of_elements(myid+1)
  endif
  !
+ ! Rho
+ !
+ YAMBO_ALLOC(rho,(PAR_nshells))
+ rho=0._DP
+ R2_min=dot_product(lattice_vectors(:,2),matmul(metric,lattice_vectors(:,2)))
+ do i_shell=1,nshells
+   if (.not.px%element_1D(i_shell)) cycle
+   i_par_shell=SHELL_index(i_shell)
+   if (i_shell==1) cycle
+   R2=dot_product(lattice_vectors(:,i_shell),matmul(metric,lattice_vectors(:,i_shell)))
+   rho(i_par_shell)=roughness_func(R2,R2_min)
+ enddo
+ !
+ YAMBO_ALLOC(BZ_star,(PAR_nshells,Nk))
+ BZ_star=cZERO
+ !
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation@"//trim(INTERP_obj(ID)%what)//" (star)",PAR_nshells)
+ !==================================================================================================================
+ do i_shell=1,nshells
+   !
+   i_par_shell=SHELL_index(i_shell)
+   !
+   if (i_shell==1) then
+     if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
+     cycle
+   endif
+   !
+   if (.not.px%element_1D(i_shell)) cycle
+   !
+   call make_star(lattice_vectors(:,i_shell),nsym,int_sop,nstar,star_vec) 
+   do ik=1,Nk
+     ! Implementation to be finished.
+     ! OLD comment: Here I cannot use Xk%pt_DbGd bacuse also extra points in the BZ are included ...
+     ! In this new branch with Xk%pt_FineGd the problem maybe (?) overcome
+     if(Nk==Xk%nibz)        call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki2a')
+     !if(Nk==Xk%nibz_FineGd) call c2a(v_in=Xk%pt_FineGd(ik,:),v_out=v,mode='ki2a')
+     do i_star=1,nstar
+       BZ_star(i_par_shell,ik)=BZ_star(i_par_shell,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,i_star)))
+     enddo
+   enddo
+   !
+   BZ_star(i_par_shell,:)=BZ_star(i_par_shell,:)/real(nstar)
+   !
+   do ik=1,Nkm1
+     BZ_star(i_par_shell,ik) = BZ_star(i_par_shell,ik) - BZ_star(i_par_shell,Nk)
+     BZ_star(i_par_shell,ik) = BZ_star(i_par_shell,ik) / sqrt(rho(i_par_shell))
+   enddo
+   !
+   if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
+   !
+ enddo
+ !
+ if (.not.INTERPOLATE_is_quiet)  call live_timing()
+ !
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation@"//trim(INTERP_obj(ID)%what)//" (H fill)",Nkm1*(Nkm1-1)/2)
+ !=======================================================================================================================
+ YAMBO_ALLOC(h_mat,(Nkm1,Nkm1))
+ h_mat  =cZERO
+ !
  do ik=1,Nkm1
-   do ik2=ik,Nkm1
-     ik_prod=ik2-ik+1+(ik-1)*(Nkm1-ik+2)
-     if (.not.INTERPOLATE_is_serial) then
-       if (.not.px%element_1D(ik_prod)) cycle
-     endif
-     if(ik2==ik) h_mat(ik,ik)=real(ZDOTC(nshells-1,star_1(2:nshells,ik),1,star_1(2:nshells,ik),1),DP)
-     if(ik2/=ik) then
-       h_mat(ik,ik2)=ZDOTC(nshells-1,star_1(2:nshells,ik2),1,star_1(2:nshells,ik),1)
-       h_mat(ik2,ik)=conjg(h_mat(ik,ik2))
-     endif
+   h_mat(ik,ik)=real(ZDOTC(PAR_nshells,BZ_star(:,ik),1,BZ_star(:,ik),1),SP)
+   do ikp=ik+1,Nkm1
+     h_mat(ik,ikp)=cmplx(ZDOTC(PAR_nshells,BZ_star(:,ikp),1,BZ_star(:,ik),1),kind=SP)
+     h_mat(ikp,ik)=conjg(h_mat(ik,ikp))
      if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
    enddo
  enddo
- if (.not.INTERPOLATE_is_quiet) call live_timing()
- !
+ if (.not.INTERPOLATE_is_quiet)  call live_timing()
  if (.not.INTERPOLATE_is_serial) call PP_redux_wait(h_mat)
  !
- do ik=1,Nkm1
-   star_1(2:nshells,ik) = star_1(2:nshells,ik) * sqrt(rho(2:nshells))
- enddo
+ ! Lapack CALL
+ !============
  !
 #if defined _DOUBLE
  call ZGETRF(Nkm1,Nkm1,h_mat,Nkm1,ipiv,info)
@@ -168,27 +185,42 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  call  CGETRS('N',Nkm1,nvalues,h_mat,Nkm1,ipiv,delta,Nkm1,info)
 #endif
  !
- if(info/=0) call error("[INTERPOLATION] Error in -getrs")
+ if(info/=0) call error("[INTERPOLATION] Error in GETRS")
  !
- engre=cZERO
+ YAMBO_ALLOC(PAR_engre,(PAR_nshells,nvalues))
+ PAR_engre=cZERO
+ engre    =cZERO
  !
- do i1=2,nshells
+ do ik=1,Nkm1
+   BZ_star(:,ik) = BZ_star(:,ik) * sqrt(rho(:))
+ enddo
+ do i_shell=1,nshells
+   if (i_shell==1) cycle
+   if (.not.px%element_1D(i_shell)) cycle
+   i_par_shell=SHELL_index(i_shell)
    do iv=1,nvalues
-     engre(i1,iv)= ZDOTC(Nkm1,star_1(i1,1:Nkm1)/rho(i1),1,cmplx(delta(1:Nkm1,iv),kind=DP),1)
+     PAR_engre(i_par_shell,iv)= ZDOTC(Nkm1,BZ_star(i_par_shell,1:Nkm1)/rho(i_par_shell),1,cmplx(delta(1:Nkm1,iv),kind=DP),1)
    enddo
+   engre(i_shell,:)=PAR_engre(i_par_shell,:)
  enddo
  !
+ pre_factor=1._SP/real(ncpu,SP)
+ if (INTERPOLATE_is_serial) pre_factor=1.
  do iv=1,nvalues
-   engre(1,iv)=VALUEs(iv,ikn) - ZDOTU(nshells-1,engre(2:nshells,iv),1,star_1(2:nshells,Nk),1)
+   engre(1,iv)=VALUEs(iv,Nk)*pre_factor - ZDOTU(PAR_nshells,PAR_engre(:,iv),1,BZ_star(:,Nk),1)
  enddo
+ !
+ if (.not.INTERPOLATE_is_serial) call PP_redux_wait( engre )
  !
  ! Deallocation
  !
  YAMBO_FREE(h_mat)
- YAMBO_FREE(star_1)
+ YAMBO_FREE(BZ_star)
  YAMBO_FREE(ipiv)
  YAMBO_FREE(delta)
  YAMBO_FREE(rho)
+ YAMBO_FREE(SHELL_index)
+ YAMBO_FREE(PAR_engre)
  !
  call k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
  !
@@ -222,7 +254,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
    !
    YAMBO_ALLOC(new_VALUEs,(nvalues,Nk))
    !
-   call INTERPOLATION_fourier(Xk,new_VALUEs,engre,nvalues,Nk)
+   call INTERPOLATION_fourier(Xk,new_VALUEs,engre,nvalues,Nk,ID)
    !
    max_err=0._SP
    ave_err=0._SP
@@ -239,11 +271,11 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
    ave_err=ave_err/real(nvalues*Nk)
    rel_ave_err=rel_ave_err/real(nvalues*Nk)
    !
-   write(dump_ch,'(a,3es16.8)') '[INTERPOLATION@'//trim(INTERP_obj(ID_obj)%what)//&
+   write(dump_ch,'(a,3es16.8)') '[INTERPOLATION@'//trim(INTERP_obj(ID)%what)//&
 &                               '] Errors: Max, Avg, Avg_rel = ',max_err,ave_err,rel_ave_err
    call msg('s',dump_ch)
    !
-   deallocate (new_VALUEs)
+   YAMBO_FREE(new_VALUES)
    !
   end subroutine k_compare 
   !

@@ -27,7 +27,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr
  use electrons,     ONLY:levels,n_sp_pol,spin
- use stderr,        ONLY:real2ch
  use R_lattice,     ONLY:bz_samp
  use DIPOLES,       ONLY:DIPOLE_t
  use frequency,     ONLY:w_samp
@@ -49,6 +48,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
 &                        QP_SE_GWo,QP_SE_POLARON,QP_SE_GW_QED,QP_SE_GW_PPA
  use interfaces,    ONLY:eval_G_minus_G
  use parallel_m,    ONLY:PAR_COM_WORLD,PAR_IND_WF_linear
+ use stderr,        ONLY:intc
+ use descriptors,   ONLY:IO_desc,IO_desc_reset,IO_desc_add
+ !
 #include<memory.h>
  !
  type(levels) ::en,Xen
@@ -61,8 +63,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  type(QP_t)        ::qp
  integer           ::i1,io_QP_and_GF_err,io_G_err,ID_QP,ID_G,i_spin
- integer           :: lw_bnd,hg_bnd
+ integer           :: lw_bnd
  integer, external ::io_QP_and_GF
+ real(SP),external ::G2E
  !
  ! Driver Logicals
  !=================
@@ -109,10 +112,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !==============================
  call QP_SET_temperature_pre_factor( )
  !
- qp%n_descs=1
+ call IO_desc_reset(qp%desc)
+ !
  if (trim(QP_solver)=='n') then
-   write (qp%description(1),'(a)') ' GW solver              : Newton'
+   !
    call section('*','Dyson equation: Newton solver')
+   !
+   call IO_desc_add(qp%desc,kind="s",str='GW solver',S="Newton",check=.TRUE.,ops=(/"=="/))
+   !
  else if (trim(QP_solver)=='s') then
    !
    ! When using secant no SC available
@@ -123,15 +130,17 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
      call warning("Self-consistent GW not compatible with 'secant solver' turned off")
    endif
    !
-   write (qp%description(1),'(a)') ' GW solver              : Secant'
    call section('*','Dyson equation: non perturbative QP_secant method')
    !
+   call IO_desc_add(qp%desc,kind="s",str='GW solver',S="Secant",check=.TRUE.,ops=(/"=="/))
+   !
  else if (trim(QP_solver)=='g') then
-   write (qp%description(1),'(a)') ' GW solver              : Full Green`s function'
    call section('*','Dyson equation: full Green`s function')
    call msg('r', '[Green] Sc steps                                         ',QP_Sc_steps)
    call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]',QP_G_er*HA2EV)
    call msg('rn','[Green] Sc damping range                             [ev]',QP_G_dr*HA2EV)
+   !
+   call IO_desc_add(qp%desc,kind="s",str='GW solver',S="Full Green`s function",check=.TRUE.,ops=(/"=="/))
    !
    GF_is_causal=Finite_Tel.or.l_elph_corr 
    !
@@ -142,13 +151,12 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    return
    !
  endif
- qp%n_descs=3
+ !
  if (l_ppa) then
    !
-   qp%description(2)=' == PPA-GN GW =='
-   qp%description(3)=' '
-   qp%description(4)=' PPA imaginary pt   [ev]'//trim(real2ch(X%ppaE*HA2EV))
-   qp%n_descs=4
+   call IO_desc_add(qp%desc,kind="s",str='GW approximation',S="PPA",check=.TRUE.,ops=(/"=="/))
+   !
+   call IO_desc_add(qp%desc,kind="r",str='PPA imaginary Energy',R=(/X%ppaE*HA2EV/),check=.TRUE.,ops=(/"=="/),term="ev")
    !
    QP_DB_kind=QP_SE_GoWo_PPA
    !
@@ -165,17 +173,19 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    endif
    if(GW_iterations/=0) call error('Self-consistent COHSEX not implemented yet')
    !
-   qp%description(2)=' == COHSEX GW =='
-   qp%description(3)=' '
+   call IO_desc_add(qp%desc,kind="s",str='GW approximation',S="COHSEX",check=.TRUE.,ops=(/"=="/))
    !
    QP_DB_kind=QP_SE_COHSEX
    !
  else
    !
-   if (l_elel_corr)     qp%description(2)=' == Real Axis GW =='
-   if (l_elph_corr)     qp%description(2)=' == El-Ph Self-Energy =='
-   if (l_elphoton_corr) qp%description(2)=' == Lamb Shift =='
-   qp%description(3)=' '
+   if (l_elel_corr) then
+      call IO_desc_add(qp%desc,kind="s",str='GW approximation',S="Real Axis",check=.TRUE.,ops=(/"=="/))
+   else if (l_elph_corr) then
+      call IO_desc_add(qp%desc,kind="s",str='GW approximation',S="Fan + DW",check=.TRUE.,ops=(/"=="/))
+   else if (l_elphoton_corr) then
+      call IO_desc_add(qp%desc,kind="s",str='GW approximation',S="Lamb",check=.TRUE.,ops=(/"=="/))
+   endif
    !
    ! Here I am not considering the case where ELPH + GW is used.
    ! For this case I need to create a new global KIND.
@@ -217,14 +227,18 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  ! In lifetimes calculations  the X db may be not
  ! present. So I need to define some variables that 
- ! must be correctly written in the QP_description(s)
+ ! must be correctly written in the QP%desc(s)
  !
  if (l_life) then
-   call X_pre_setup(Xen,X)
+   call X_pre_setup(Xen,Xk,X)
    if (X%ng_db==0) X%ng_db=X%ng
  endif
  !
- if (l_ppa.and.l_GW_terminator) X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
+ if (l_ppa.and.l_GW_terminator) then
+     X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
+     call warning(' Response block size in GW reduced to '//intc(X%ng) &
+&     //'RL ('//intc(int(1000.*G2E(X%ng)))//'mHa)')
+ endif
  !
  ! Local Allocations
  !===================

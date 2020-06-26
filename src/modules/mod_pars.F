@@ -64,12 +64,9 @@ module pars
  integer,parameter  :: logfile_index=1002
  !
  !...I/O
- integer, parameter :: max_io_units=10
- integer, parameter :: max_io_vars_open=10
+ integer, parameter :: max_io_units=20
+ integer, parameter :: max_io_vars_open=50
  integer, parameter :: max_active_sections=10
- !
- !...QP
- integer, parameter :: max_qp_descs=100
  !
  !...QP_apply
  integer, parameter :: n_QP_actions_MAX=10
@@ -101,6 +98,8 @@ module pars
  !=========
  integer, parameter  :: schlen=100
  integer, parameter  :: lchlen=300
+ integer, parameter  :: msg_len=50
+ integer, parameter  :: DB_menu_length=30+msg_len
  !
  ! CONSTANTs
  !===========

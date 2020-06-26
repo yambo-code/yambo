@@ -23,48 +23,72 @@
 !
 subroutine section(mode,name)
  !
- ! mode = * 	: new basic level
- !      = +     : increase level
- !      = -     : decrease level
- !      = p     : increase level only in this section
- !      = #     : increase level #
- !      = r     : reset to zero level end exit
+ ! mode =  * 	 : new basic level
+ !      =  +     : increase level
+ !      =  -     : decrease level
+ !      =  p     : increase the level ONLY in this section
+ !      = +P     : increase the level and save the current level
+ !      = -P     : restore the level saved with +P and exit
+ !      =  #     : increase level #
+ !      =  r     : reset to zero level end exit
  !
  use pars,       ONLY:lchlen,schlen,DP
  use it_tools,   ONLY:ofiles_append
  use stderr,     ONLY:STRING_pack
- use LIVE_t,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,&
-&                     date_and_time_string
+ use LIVE_t,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,date_and_time_string
  use parallel_m, ONLY:PP_redux_wait,ncpu
- use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&
-&                     write_to_report,repfile_unit,repfile
+ use com,        ONLY:msg,depth,isec,secnm,depth_SAVE_pp,isec_SAVE_pp,depth_SAVE_p,isec_SAVE_p,&
+&                     write_to_report,repfile_unit,repfile,previous_secmode
  use timing_m,   ONLY:timing_upto_now
 #if defined _YAML_OUTPUT
  use pars,            ONLY:repfile_index
  use com,             ONLY:of_yaml_IDs,depth_yaml
  use yaml_output,     ONLY:yaml_sequence_open,yaml_sequence_close,yaml_new_document,&
-&                          yaml_comment,yaml_release_document!,yaml_newline
+&                          yaml_comment,yaml_release_document!
 #endif
  !
  implicit none
  !
- character(1)::mode
+ character(*)::mode
  character(*)::name
  ! 
  ! Work Space
  !
  character(schlen)::chs
  character(lchlen)::ch,chp
- integer      :: i1,isec_save(5)
+ integer      :: i1
  real(DP)     :: cput_here(ncpu)
  !
  ! Final Timing Strings
  !
  character(schlen):: average_time,min_time,max_time
  !
- if (mode=='r') then
+ if (trim(mode)=='r') then
    depth=0
    return
+ endif
+ !
+ ! To handle menu's like sections I need to reset 
+ ! the depth when the previous section is 'p'-like
+ !
+ if (trim(mode)=='-P') then
+   isec=isec_SAVE_pp
+   depth=depth_SAVE_pp
+   previous_secmode=' '
+   return
+ endif
+ if (trim(previous_secmode)=='p') then
+   isec=isec_SAVE_p
+   depth=depth_SAVE_p
+   isec(depth+1)=isec(depth+1)+1
+ endif
+ if (trim(mode)=="+P") then
+   isec_SAVE_pp=isec
+   depth_SAVE_pp=depth 
+ endif
+ if (trim(mode)=="p") then
+   isec_SAVE_p=isec
+   depth_SAVE_p=depth 
  endif
  !
  call PP_redux_wait()
@@ -77,13 +101,6 @@ subroutine section(mode,name)
    call write_the_logo(6,' ')
    previous_secmode=' '
  endif
- !
- ! To handle menu's like sections I need to reset 
- ! the depth when the previous section is 'p'-like
- !
- if (previous_secmode=='p') depth=depth-1
- !
- isec_save=isec
  !
  ! Update Section Depth & Timing 
  !
@@ -101,11 +118,11 @@ subroutine section(mode,name)
    max_time=time_string(maxval(cput_here))
    average_time =time_string(sum(cput_here)/real(ncpu,DP))
    if (all((/len_trim(min_time)>0,len_trim(max_time)>0,len_trim(average_time)>0/))) then
-     write (ch,'(6a)') 'Timing [Min/Max/Average] ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
+     write (ch,'(6a)') 'Timing [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
      call msg('nr',trim(ch))
    endif
    call ct(INIT_SEC=.true.)
- case ('+')
+ case ('+','+P')
    depth=depth+1
  case ('p')
    previous_secmode='p'
@@ -152,7 +169,7 @@ subroutine section(mode,name)
  !
  ! Finalize
  !
- if (mode=='X') then
+ if (trim(mode)=='X') then
    !
    cput_here=cput_tot(:,1)
    call PP_redux_wait(cput_here)
@@ -175,7 +192,7 @@ subroutine section(mode,name)
    !
    if (all((/trim(min_time)/='',trim(max_time)/='',trim(average_time)/=''/))) then
      !
-     write (ch,'(6a)')     'Timing   [Min/Max/Average] ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
+     write (ch,'(6a)')     'Timing   [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
      !
      call msg('nr',trim(ch))
      call timing_upto_now()
@@ -194,10 +211,6 @@ subroutine section(mode,name)
    call ct(FIN=.TRUE.)
    !
  endif
- !
- ! If mode is p
- !
- if (mode=='p') isec=isec_save
  !
  call PP_redux_wait
  !

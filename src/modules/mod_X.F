@@ -23,9 +23,11 @@
 !
 module X_m
  !
+ use descriptors,    ONLY:IO_desc
  use pars,           ONLY:SP,lchlen,schlen
  use units,          ONLY:HA2EV
  use matrix,         ONLY:PAR_matrix
+ use cuda_m,         ONLY:have_cuda
  !
 #include <dev_defs.h>
 #include <memory.h>
@@ -36,6 +38,7 @@ module X_m
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
  logical                  :: eval_alpha
  logical                  :: l_drude
+ integer                  :: drude_n_states
  !
  ! Main Gauge
  !
@@ -57,15 +60,13 @@ module X_m
  !
  integer              :: X_DbGd_nkpts
  logical              :: use_X_DbGd
- real(SP)             :: X_DbGd_percentual=0.5
+ real(SP)             :: X_DbGd_percentual
  integer ,allocatable :: X_DbGd_nkpt_at_q(:)
  integer ,allocatable :: X_DbGd_nkpt_at_q_table(:,:,:)
-#ifdef _CUDA
  !
- ! GPU X_irredux_residuals workspace
+ ! workspace for X_irredux_residuals on GPUs
  !
- complex(SP), allocatable, device :: rhotw_save_d(:), rhotw_save2_d(:)
-#endif
+ complex(SP), allocatable DEV_ATTRIBUTE :: rhotw_save_d(:), rhotw_save2_d(:)
  !
  ! Absorption & Polarizability
  !
@@ -81,6 +82,7 @@ module X_m
  !
  character(schlen)        :: Chi_mode
  character(schlen)        :: Chi_linalg_mode
+ logical                  :: X_use_gpu=have_cuda
  logical                  :: X_use_lin_sys=.false.
  real(SP),    allocatable :: X_poles(:)
  real(SP),    allocatable :: X_Ein_poles(:)
@@ -104,10 +106,7 @@ module X_m
  !
  ! I/O descriptions
  !
- integer          :: n_X_descs
- integer          :: X_desc_size(100)
- real(SP)         :: X_desc_var(10,100)
- character(lchlen):: X_desc_str(100)
+ type(IO_desc)    :: X_desc
  !
  ! PARALLEL distribution
  !

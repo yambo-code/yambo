@@ -39,7 +39,7 @@ integer function io_ELPH(ID,what)
  use D_lattice,      ONLY:n_atoms_species
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table
- use parallel_m,     ONLY:PAR_Q_index
+ use parallel_m,     ONLY:PAR_Q_bz_index
  use vec_operate,    ONLY:rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
  use timing_m,       ONLY:timing
@@ -76,7 +76,7 @@ integer function io_ELPH(ID,what)
  l_gFsq                 =index(what,'gFsq')>0
  l_no_matrix_elements   =index(what,'no_matrix_elements')>0
  !
- io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID)
+ io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_ELPH)
  if (io_ELPH/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -181,8 +181,8 @@ integer function io_ELPH(ID,what)
    endif
    !
    iq_mem=iq
-   if (allocated(PAR_Q_index)) then
-     iq_mem=PAR_Q_index(iq)
+   if (allocated(PAR_Q_bz_index)) then
+     iq_mem=PAR_Q_bz_index(iq)
    endif
    !
    call io_bulk(ID,VAR="ELPH_GFSQ_fan_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))

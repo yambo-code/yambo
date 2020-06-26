@@ -67,6 +67,7 @@ subroutine of_open_close(of_name_extension,mode)
    ! Flush output if file is opened
    !
    if (index(mode,'f')/=0.and.(len_trim(of_opened(file_index))>0)) then
+     ! here I do not use yambo_flush since it could cause a significant drop of performances
      flush(abs(of_unit(file_index)))
      if (trim(mode)=='f') return
    endif
@@ -244,7 +245,7 @@ subroutine error(mesg)
  call msg('nr',STRING_pack('[ERROR] ',trim(mesg)))
  call LIVE_message(STRING_pack('[ERROR] ',trim(mesg)),"n","","%s")
  call LIVE_message("","n","","%s")
- if(log_as_a_file) flush(logfile_unit)
+ if(log_as_a_file) call yambo_flush(logfile_unit)
  !
 #if defined _MPI
  if (ncpu>1) call MPI_Abort(mpi_comm_world,1,ierr)
@@ -253,75 +254,29 @@ subroutine error(mesg)
  !
 end subroutine error
 !
-subroutine msg_manager(how,msg_for_out,msg_for_rep,msg_for_log)
- !
- ! how = '(n)s(n)' '(n)r(n)' '(n)l(n)' 'o PATTERN'
- !
- ! r(eport)
- ! s(tderr)
- ! oN=msgunits(N) 
- !
- ! This subroutine switches to positive the value of of_unit just before writing
- ! plus extra operations
- !
- use pars,    ONLY:schlen,lchlen,repfile_index
- use stderr,  ONLY:STRING_split,STRING_remove
- use com,     ONLY:terminator,of_opened,of_name,of_unit,n_ofs_defined,jobstr,&
-&                  write_to_report,write_to_of
- !
- implicit none
- !
- character(*), intent(in)  :: how
- logical,      intent(out) :: msg_for_out,msg_for_rep,msg_for_log
- ! 
- ! Work Space
- !
- integer          ::i1,i2
- character(schlen)::ch_piece(10)
- character(lchlen)::stripped_file_name
- !
- terminator(1)='('
- terminator(2)=')'
- !
- msg_for_out=.false.
- msg_for_rep=.false.
- msg_for_log=.false.
- !
- ! o. files
- !
- if (how(:1)=="o".and.write_to_of) then
-   call STRING_split(how,ch_piece)
-   do i2=2,10
-     if (len_trim(ch_piece(i2))==0) cycle
-     do i1=1,n_ofs_defined
-       if (len_trim(of_name(i1))==0) cycle
-       stripped_file_name=STRING_remove(of_opened(i1),trim(jobstr))
-       if (index( stripped_file_name,trim(ch_piece(i2)) )/=0) then
-         if (len_trim(of_opened(i1))==0) call error(' Trying to write on closed file '//trim(of_name(i1)))
-         of_unit(i1) =-of_unit(i1)
-       endif
-     enddo
-   enddo
-   msg_for_out=.true.
-   return
- endif
- !
- ! Report
- !
- if (index(how,'r' )/=0.and.write_to_report) then
-   of_unit(repfile_index) =-of_unit(repfile_index)
-   msg_for_rep=.true.
-   if (index(how,'nr')/=0) terminator(1)='(/'
-   if (index(how,'rn')/=0) terminator(2)='/)'
- endif
- !
- ! Log 
- !
- if (index(how,'l' )/=0) then
-   msg_for_log=.true.
-   terminator(3:4)=' '
-   if (index(how,'nl')/=0) terminator(3)='n'
-   if (index(how,'ln')/=0) terminator(4)='n'
- endif
- !
-end subroutine msg_manager
+!
+subroutine yambo_flush(unit)
+  !
+  !use com_interfcs,  ONLY:fsync
+  !
+  implicit none
+  !
+  integer, intent(in) :: unit
+  !integer :: ierr
+  !
+  flush(unit)
+  !
+  ! compiler specific instructions below
+  !
+#ifdef __GFORTRAN__
+  ! 2020/05/18 DS
+  ! These two lines are useful in long simulations
+  ! since fsync forces to write the message to file.
+  ! However in short simulations (i.e. the test-suite)
+  ! they cause a small drop of performances.
+  ! Thus I comment them for now
+  !ierr = fsync(fnum(unit))
+  !if (ierr /= 0) stop "Error calling fsync"
+#endif
+  !
+end subroutine yambo_flush

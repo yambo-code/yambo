@@ -3,25 +3,25 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INIT_read_command_line(rstr,init_) 
+subroutine INIT_read_command_line(rstr,init_)
  !
  use pars,           ONLY:schlen
  use drivers,        ONLY:infile_editing,l_bse,l_alda_fxc,l_chi,l_elel_corr,&
@@ -64,8 +64,8 @@ subroutine INIT_read_command_line(rstr,init_)
  !
  l_user_kernel=.FALSE.
  !
- ! Bug fix (17/9/2012). If any string following a -### identifier contains 
- ! a string related to a runlevel this is erronously switched on. 
+ ! Bug fix (17/9/2012). If any string following a -### identifier contains
+ ! a string related to a runlevel this is erronously switched on.
  !
  strings_to_not_use_as_runlevels=" "
  strings_to_not_use_as_runlevels(1)="jobstr"
@@ -139,11 +139,11 @@ subroutine INIT_read_command_line(rstr,init_)
            infile_verbosity=V_general
          case ('resp','X')
            infile_verbosity=V_resp
-         case ('rt')
+         case ('RT','rt')
            infile_verbosity=V_real_time
-         case ('nl')
+         case ('NL','nl')
            infile_verbosity=V_nl_optics
-         case ('par')
+         case ('PAR','par')
            infile_verbosity=V_parallel
          case ('all')
            infile_verbosity=V_all
@@ -262,7 +262,7 @@ subroutine INIT_read_command_line(rstr,init_)
 #endif
      endif
      !
-     ! GW approximation 
+     ! GW approximation
      !
      if ( trim(rstr_piece(i1)) == 'gw0' ) then
        !
@@ -276,11 +276,11 @@ subroutine INIT_read_command_line(rstr,init_)
        else if (trim(rstr_piece(i1+1))=='c') then
          infile_editing=.true.
          QP_solver="n"
-         call initactivate(1,'cohsex dyson') 
+         call initactivate(1,'cohsex dyson')
        else if (trim(rstr_piece(i1+1))=='r') then
          infile_editing=.true.
          QP_solver="s"
-         call initactivate(1,'em1d') 
+         call initactivate(1,'em1d')
        endif
        !
      endif
@@ -295,7 +295,7 @@ subroutine INIT_read_command_line(rstr,init_)
          do i2=1,nrnlvls
            if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i3))) exit P_loop
          enddo
-         V_string=trim(V_string)//" "//trim(rstr_piece(i3))  
+         V_string=trim(V_string)//" "//trim(rstr_piece(i3))
        enddo P_loop
      endif
      !
@@ -378,7 +378,7 @@ subroutine INIT_read_command_line(rstr,init_)
      endif
 #endif
      !
-#if defined _RT 
+#if defined _RT
      !
      ! RT
      !
@@ -393,17 +393,19 @@ subroutine INIT_read_command_line(rstr,init_)
        !
        if( n_ext_fields==0) n_ext_fields=1
        !
+       if ( i_cycle == 2 .and. .not. V_is_defined ) H_potential='IP'
+       !
      endif
      !
      if ( trim(rstr_piece(i1)) == 'scattp' ) then
        if ( index(rstr_piece(i1+1),'e') > 0 .or. trim(rstr_piece(i1+1)) == 'a') l_elel_scatt=.true.
        if ( index(rstr_piece(i1+1),'p') > 0 .or. trim(rstr_piece(i1+1)) == 'a') l_elph_scatt=.true.
 #endif
-#if defined _RT 
+#if defined _RT
        if ( index(rstr_piece(i1+1),'h') > 0 .or. trim(rstr_piece(i1+1)) == 'a') l_elphoton_scatt=.true.
        if (l_elphoton_scatt) call initactivate(1,'el_photon_scatt')
 #endif
-#if defined _RT 
+#if defined _RT
        if (l_elph_scatt)     call initactivate(1,'el_ph_scatt')
        if (l_elel_scatt)     call initactivate(1,'el_el_scatt')
        if (.not.l_elph_scatt.and..not.l_elel_scatt.and..not.l_elphoton_scatt) l_elph_scatt=.true.
@@ -411,7 +413,7 @@ subroutine INIT_read_command_line(rstr,init_)
      !
 #endif
      !
-#if defined _SC || defined _RT 
+#if defined _SC || defined _RT
      !
      ! COLLISIONS
      !

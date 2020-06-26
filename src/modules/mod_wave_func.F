@@ -24,9 +24,8 @@
 module wave_func
  !
  use pars,           ONLY:SP
-#if defined _CUDA
- use cudafor
-#endif
+ !
+#include <dev_defs.h>
 #include <memory.h>
  !
  type WAVEs 
@@ -39,9 +38,7 @@ module wave_func
    integer    , allocatable :: index(:,:,:)
    logical    , allocatable :: state(:,:,:)
    logical                  :: to_load = .TRUE.
-#if defined _CUDA
-   complex(SP), allocatable, device :: c_d(:,:,:)
-#endif
+   complex(SP), allocatable DEV_ATTRIBUTE :: c_d(:,:,:)
  end type WAVEs
  !
  ! Buffered WFs
@@ -83,18 +80,16 @@ module wave_func
  !
  ! Parallel wave-function distribution
  !
- logical    ,allocatable:: states_to_load(:,:,:) 
+ logical,    allocatable:: states_to_load(:,:,:) 
  !
  ! Num. of COMPONENTS at each k
  !
- integer    ,allocatable:: wf_nc_k(:)
+ integer,    allocatable:: wf_nc_k(:)
  !
  ! Table correspondance G-vec <-> Components: G_ic = wf_igk(ic,ik)
  !
- integer    ,allocatable:: wf_igk(:,:)
-#ifdef _CUDA
- integer    ,allocatable, device :: wf_igk_d(:,:)
-#endif
+ integer,    allocatable:: wf_igk(:,:)
+ integer,    allocatable DEV_ATTRIBUTE :: wf_igk_d(:,:)
  logical                :: wf_norm_test
  !
  ! Allocation/deallocation messaging verbosity
@@ -114,10 +109,7 @@ module wave_func
      use pars,       ONLY: SP
      integer            :: ID
      complex(SP), optional :: wf(:,:,:)
-     complex(SP), optional :: wf_d(:,:,:)
-#ifdef _CUDA
-     attributes(device) :: wf_d
-#endif
+     complex(SP), optional DEV_ATTRIBUTE :: wf_d(:,:,:)
    end function
    !
    function WF_symm(ifft,isc)
@@ -132,7 +124,7 @@ module wave_func
      use pars,        ONLY: SP
      use electrons,   ONLY: n_spinor
      integer             :: ifft,isc(4)
-     complex(SP),dimension(n_spinor), device :: WF_symm_gpu
+     complex(SP),dimension(n_spinor) DEV_ATTRIBUTE :: WF_symm_gpu
    end function
 #endif
    !
@@ -154,9 +146,10 @@ module wave_func
      WF_out%to_load= WF_in%to_load
      WF_out%c      = WF_in%c
      WF_out%index  = WF_in%index
-#if defined _CUDA
-     if (allocated(WF_in%c_d)) allocate(WF_out%c_d,source=WF_in%c)
-#endif
+     !
+     if (allocated(WF_in%c_d)) then
+        YAMBO_ALLOC_SOURCE(WF_out%c_d,WF_in%c)
+     endif
    end subroutine
    !
    subroutine WF_derivative_alloc(cart_direction)

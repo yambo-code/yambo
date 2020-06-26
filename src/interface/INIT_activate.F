@@ -270,10 +270,10 @@ subroutine INIT_activate()
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
    !GPL_EXCLUDE_START
-   call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')
+   call initactivate(1,'BSEQptR BSEBands BSKCut BSEEhEny BSehWind')
    !GPL_EXCLUDE_END
    !GPL_INCLUDE_START
-   !call initactivate(1,'BSEBands BSEEhEny BSehWind')
+   !call initactivate(1,'BSEBands BSKCut BSEEhEny BSehWind')
    !GPL_INCLUDE_END
    !
 #if defined _RT
@@ -493,6 +493,7 @@ subroutine INIT_activate()
    !
    call initactivate(-1,'QpntsRXs')
    !
+   if( index(H_potential,"IP")>0 )  call initactivate(1,'HARRLvcs ALLGHAR')
    if( index(H_potential,"HARTREE")>0 .or. index(H_potential,"DEFAULT")>0)  call initactivate(1,'HARRLvcs ALLGHAR')
    if( index(H_potential,"GS_XC")>0   .or. index(H_potential,"DEFAULT")>0 ) call initactivate(1,'VXCRLvcs')
    !
@@ -540,6 +541,7 @@ subroutine INIT_activate()
    ! GPL_EXCLUDE_START
    !
    call INIT_RT_ctl_switch('G')
+   !
    call initactivate(1,'RTskipImposeN RTeeImposeE InducedField')
    call initactivate(1,'Gauge VelGaugeCorr VelGaugeDiam PfromJ RTUpdateSOC RTUpdateE SaveGhistory')
    call initactivate(1,'RTEqScatt RTImpForMet RTzeroTempRef RTEvalEnergy RTEvalEntropy')
@@ -553,7 +555,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime RAD_prefactor PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
-   call initactivate(1,'IOtime')
+   call initactivate(1,'IOtime IOCachetime')
    !
    ! n_ext_fields is by default 0.  It is set to the input number of fields when a command line option is provided (below in init.F)
    ! or parsed from the input file in INIT_load.F

@@ -32,8 +32,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use stderr,        ONLY:intc
  use electrons,     ONLY:levels,spin_occ,spin
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&
-&                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_G_b,&
-&                        PAR_IND_Q_ID,n_WF_bands_to_load
+&                        PAR_IND_QP_ID,PAR_IND_Q_ibz,PAR_IND_G_b,&
+&                        PAR_IND_Q_ibz_ID,n_WF_bands_to_load
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_ng_Vxc,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
@@ -127,7 +127,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
 ! endif
 !
  n_lt_bands=count( PAR_IND_G_b%element_1D(:Sx_upper_band) )
- n_lt_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands/n_threads_SE
+ n_lt_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)*n_lt_bands/n_threads_SE
  if (n_lt_steps>0) call live_timing(trim(ch),n_lt_steps)
  !
  do i_qp=1,QP_n_states
@@ -179,7 +179,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      iq_ibz=q%sstar(iq,1)
      is_ibz=q%sstar(iq,2)
      !
-     if (.not.PAR_IND_Q%element_1D(iq_ibz)) cycle
+     if (.not.PAR_IND_Q_ibz%element_1D(iq_ibz)) cycle
      !
      isc%qs(2:)=(/iq_ibz,is_ibz/)
      !

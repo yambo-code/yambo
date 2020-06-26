@@ -69,6 +69,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  complex(SP), pointer, device :: Xo_scatt_rhotw_d(:)
  integer            :: sop_inv_l,X_ng
 #endif
+ complex(SP)        :: ctmp
  real(SP)           :: Z_eh_occ
  logical            :: l_X_term_vv
  integer            :: ngrho
@@ -259,7 +260,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
        ig2=g_rot(ig1,sop_inv(is))
        Xo_scatt%rhotw(ig1)=rhotw_save(ig2)
      enddo
-     !$omp end parallel do
 #endif
      !
      if (is>nsym/(i_time_rev+1)) then
@@ -281,7 +281,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
          Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt%rhotw(G_m_G(ig2,ig1))
        enddo
      enddo
-     !$omp end parallel do 
 #endif
      !
      call dev_memcpy(DEV_VARNAME(Xo_scatt%rhotw),DEV_VARNAME(rhotw_save2))
@@ -290,6 +289,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    !
  enddo loop_bare_grid
  !
- if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) Xo_res(1,1)=Xo_res(1,1)/real(drude_n_states,SP)
+ if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) then
+    ctmp=Xo_res(1,1)
+    Xo_res(1,1)=ctmp/real(drude_n_states,SP)
+ endif
  !
 end subroutine X_irredux_residuals

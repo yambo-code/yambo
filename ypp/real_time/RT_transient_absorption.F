@@ -34,7 +34,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
 #if defined _KERR
  use drivers,         ONLY:l_kerr
 #endif
- use RT_control,      ONLY:RT_output,RT_apply,OBS_RT_IO_t
+ use RT_control,      ONLY:RT_output,RT_apply,CARR_RT_IO_t
  use IO_m,            ONLY:io_DIP
  use YPP_real_time,   ONLY:RT_conf,RT_time
  use X_m,             ONLY:Epsilon_ii,global_gauge
@@ -78,7 +78,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  ! Setup of Time-range & Report
  !
- call RT_time_configuration_setup("CARRIERS",OBS_RT_IO_t)
+ call RT_time_configuration_setup("CARRIERS",CARR_RT_IO_t)
  !
  call parser('Transmission',l_TR_transm)
  call parser('Reflectivity',l_TR_reflec)
@@ -105,7 +105,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  ! Frequency setup
  !
- W_bss%er=RT_conf%W_range
+ W_bss%er=RT_conf%X_W_range
  W_bss%n_freqs=RT_conf%W_n_steps
  W_bss%per_memstps=100._SP
  W_bss%dr=RT_conf%damp_factor
@@ -171,7 +171,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
      !
      BS_R_tmp=-real(BS_R_var+conjg(BS_R_var),SP)
      !
-     if( RT_conf%W_range(1)<real(BS_E(i_l)) .and. real(BS_E(i_l))<RT_conf%W_range(2) ) &
+     if( RT_conf%X_W_range(1)<real(BS_E(i_l)) .and. real(BS_E(i_l))<RT_conf%X_W_range(2) ) &
 &       call RT_output("trans_residual",VALUEs=(/BS_R_tmp/),E=real(BS_E(i_l))*HA2EV,TIME=RT_time(i_T)*AUT2FS)
      !
    enddo

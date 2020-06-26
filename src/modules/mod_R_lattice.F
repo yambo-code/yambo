@@ -25,6 +25,7 @@ module R_lattice
  !
  use pars, ONLY:SP,schlen, IP
  !
+#include<dev_defs.h>
 #include<memory.h>
  !
  ! K lattice
@@ -48,11 +49,14 @@ module R_lattice
  real(SP) :: d3k_factor
  real(SP) :: d3q_factor
  real(SP) :: b(3,3)
- real(SP) :: q0_def_norm, q0_shift_norm
+ real(SP) :: q0_def_norm, q0_shift_norm, smallest_q_norm
  real(SP),allocatable :: q_norm(:)
  character(schlen)    :: q_source="User defined / from ndb.kindx."
  !
  type bz_samp
+   !
+   ! Coarse grid
+   !
    integer           :: nibz,nbz
    integer,  allocatable :: nstar(:)      ! n° of points in the star
    integer,  allocatable :: star(:,:)     ! ik,ikstar --> is     is sends ik in ikstar
@@ -64,6 +68,27 @@ module R_lattice
    real(SP), allocatable :: weights(:)   
    character(6)      :: description
    character(1)      :: units
+   !
+   ! Fine grid
+   !
+   integer           :: nibz_FineGd
+   integer           :: nbz_FineGd                     
+   integer,  allocatable :: sstar_FineGd(:)
+   real(SP), allocatable :: pt_FineGd(:,:)
+   real(SP), allocatable :: ptbz_FineGd(:,:)
+   real(SP), allocatable :: weights_FineGd(:)
+   !
+   ! Double grid: Mapping Fine to Coarse grid
+   !
+   integer           :: nibz_duplicate
+   integer           :: nbz_duplicate
+   integer,  allocatable :: nibz_mapped(:)            ! For each IBZ kpt in the Cg, n° of IBZ kpt_FineGd assoc.
+   integer,  allocatable :: nbz_mapped(:)             ! For each  BZ kpt in the Cg, n° of  BZ kpt_FineGd assoc.
+   integer,  allocatable :: ibz_DbGd_map(:,:)         ! For each IBZ kpt in the Cg, lower/upper range of kpts_FineGd in the IBZ Fg
+   integer,  allocatable :: bz_DbGd_map(:,:)          ! For each  BZ kpt in the Cg, lower/upper range of kpts_FineGd in the  BZ Fg
+   real(SP), allocatable :: weights_DbGd(:)
+   real(SP), allocatable :: weights_ipol(:)           ! something used by mapping with wannier
+   !                                               
  end type bz_samp
  !
  type bz_map
@@ -104,13 +129,11 @@ module R_lattice
  integer ,allocatable :: minus_G(:)
  real(SP),allocatable :: g_vec(:,:)
  real(SP),allocatable :: E_of_shell(:)
- real(SP),allocatable :: g_vec_d(:,:)
- integer ,allocatable :: g_rot_d(:,:)
- integer ,allocatable :: G_m_G_d(:,:)
- integer ,allocatable :: minus_G_d(:)
-#ifdef _CUDA
- attributes(device) :: g_vec_d, g_rot_d, G_m_G_d, minus_G_d
-#endif
+ ! GPUs
+ real(SP),allocatable DEV_ATTRIBUTE :: g_vec_d(:,:)
+ integer ,allocatable DEV_ATTRIBUTE :: g_rot_d(:,:)
+ integer ,allocatable DEV_ATTRIBUTE :: G_m_G_d(:,:)
+ integer ,allocatable DEV_ATTRIBUTE :: minus_G_d(:)
  !
  ! RIM
  !
@@ -122,10 +145,7 @@ module R_lattice
  real(SP):: RIM_epsm1(3)
  real(SP):: RIM_anisotropy
  real(SP),   allocatable :: RIM_qpg(:,:,:)
- real(SP),   allocatable :: RIM_qpg_d(:,:,:)
-#ifdef _CUDA
- attributes(device) :: RIM_qpg_d
-#endif
+ real(SP),   allocatable DEV_ATTRIBUTE :: RIM_qpg_d(:,:,:)
  !
  ! Coulomb (including Cutoff)
  !
@@ -136,13 +156,13 @@ module R_lattice
  real(SP)                :: ws_cutoff 
  character(schlen)       :: cut_geometry
  character(schlen)       :: cut_description
+ !
  complex(SP),allocatable :: bare_qpg(:,:)
- complex(SP),allocatable :: bare_qpg_d(:,:)
-#ifdef _CUDA
- attributes(device) :: bare_qpg_d
+ complex(SP),allocatable DEV_ATTRIBUTE :: bare_qpg_d(:,:)
+ !
  ! AF: for the sake of performance, this variable is defined 
  !     as the transpose of the host variable bare_qpg
-#endif
+ !
  logical                 :: CUTOFF_plus_RIM
  real(SP)                :: cyl_vr_save
  real(SP)                :: cyl_vz_save
@@ -152,7 +172,7 @@ module R_lattice
  !
  type(bz_map) :: k_map
  !
- ! Shift by a G-vector associated for points out of the BZ
+ ! Shift by a G-vector assoc. for points out of the BZ
  ! because of symmtry operations
  ! 
  integer, allocatable :: WF_shifts(:,:)
@@ -230,11 +250,29 @@ module R_lattice
      YAMBO_FREE(k%ptbz)
      YAMBO_FREE(k%weights)
      !
+     ! Double Grid
+     !
+     k%nbz_FineGd=0
+     k%nibz_FineGd=0
+     !
+     YAMBO_FREE(k%sstar_FineGd)
+     YAMBO_FREE(k%pt_FineGd)
+     YAMBO_FREE(k%ptbz_FineGd)
+     YAMBO_FREE(k%weights_FineGd)
+     !
+     YAMBO_FREE(k%nibz_mapped)
+     YAMBO_FREE(k%nbz_mapped)
+     YAMBO_FREE(k%ibz_DbGd_map)
+     YAMBO_FREE(k%bz_DbGd_map)
+     YAMBO_FREE(k%weights_DbGd)
+     YAMBO_FREE(k%weights_ipol)
+     !
    end subroutine bz_samp_reset
    !
    subroutine bz_samp_duplicate(BZi, BZo)
      type(bz_samp), intent(in)    :: BZi
      type(bz_samp), intent(inout) :: BZo
+     !
      BZo%nibz  = BZi%nibz
      BZo%nbz   = BZi%nbz
      BZo%units = BZi%units
@@ -261,8 +299,61 @@ module R_lattice
        YAMBO_ALLOC(BZo%ptbz,(BZo%nbz,3))
        BZo%ptbz=BZi%ptbz
      endif
-   return
+     !
+     call bz_samp_duplicate_Fg(BZi, BZo)
+     !
+     return
+     !
    end subroutine bz_samp_duplicate
+     !
+   subroutine bz_samp_duplicate_Fg(BZi, BZo)
+     type(bz_samp), intent(in)    :: BZi
+     type(bz_samp), intent(inout) :: BZo
+     !
+     BZo%nbz_FineGd =BZi%nbz_FineGd
+     BZo%nibz_FineGd=BZi%nibz_FineGd
+     !
+     if (allocated( BZi%sstar_FineGd )) then
+       YAMBO_ALLOC(BZo%sstar_FineGd,(BZo%nbz_FineGd))
+       BZo%sstar_FineGd=BZi%sstar_FineGd
+     endif
+     if (allocated( BZi%pt_FineGd )) then
+       YAMBO_ALLOC(BZo%pt_FineGd,(BZo%nibz_FineGd,3))
+       BZo%pt_FineGd=BZi%pt_FineGd
+     endif
+     if (allocated( BZi%ptbz_FineGd )) then
+       YAMBO_ALLOC(BZo%ptbz_FineGd,(BZo%nbz_FineGd,3))
+       BZo%ptbz_FineGd=BZi%ptbz_FineGd
+     endif
+     !
+     BZo%nbz_duplicate =BZi%nbz_duplicate
+     BZo%nibz_duplicate=BZi%nibz_duplicate
+     !
+     if (allocated( BZi%nibz_mapped )) then
+       YAMBO_ALLOC(BZo%nibz_mapped,(BZo%nibz))
+       BZo%nibz_mapped(:BZo%nibz)=BZi%nibz_mapped(:BZo%nibz)
+     endif
+     if (allocated( BZi%nbz_mapped )) then
+       YAMBO_ALLOC(BZo%nbz_mapped,(BZo%nbz))
+       BZo%nbz_mapped(:BZo%nbz)=BZi%nbz_mapped(:BZo%nbz)
+     endif
+     if (allocated( BZi%ibz_DbGd_map )) then
+       YAMBO_ALLOC(BZo%ibz_DbGd_map,(2,BZo%nibz))
+       BZo%ibz_DbGd_map(:,:BZo%nibz)=BZi%ibz_DbGd_map(:,:BZo%nibz)
+     endif
+     if (allocated( BZi%bz_DbGd_map )) then
+       YAMBO_ALLOC(BZo%bz_DbGd_map,(2,BZo%nbz))
+       BZo%bz_DbGd_map(:,:BZo%nbz)=BZi%bz_DbGd_map(:,:BZo%nbz)
+     endif
+     !
+     ! To code the duplication of the Fine grid and DbGd structure
+     !
+     !real(SP), pointer :: weights_DbGd(:)   => null()
+     !real(SP), pointer :: weights_ipol(:)   => null()  ! something used by mapping with wannier
+     !
+     return
+     !
+   end subroutine bz_samp_duplicate_Fg
    !
    subroutine cutoff_presets()
      Box_length=0.

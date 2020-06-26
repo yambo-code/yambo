@@ -34,6 +34,7 @@
 
 void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor, int *use_mpi)
 {
+ int yambo_err;
  /* 
    Par Environments? Yes? => Return
  */
@@ -61,9 +62,10 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
    Running the Fortran YAMBO driver 
  ===========================================================================
  */
- F90_FUNC(yambo)(
+ yambo_err=F90_FUNC(yambo)(
 #include <fortran_arguments.h>
  );
+ if(yambo_err==2) exit(0); /* DB listing mode */
 #endif
 #if defined _ypp
  /* 

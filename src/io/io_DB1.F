@@ -128,23 +128,23 @@ integer function io_DB1(E,k,ID)
    !
    if (write_is_on(ID)) code_revision_local=code_revision
    call io_elemental(ID,DB_I0=io_code_revision(ID,1),I0=code_revision_local)
-   ! 
+   !
    call io_elemental(ID,I0=E%nb,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' Bands                           ')
    call io_elemental(ID,I0=k%nibz,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' K-points                        ')
    call io_elemental(ID,I0=ng_vec,CHECK=.true.,OP=(/"=="/),&
-&                    VAR=' G-vectors             [RL space]')
+&                    VAR=' G-vectors',TERMINATOR='RL space')
    call io_elemental(ID,I0=wf_ncx,CHECK=.true.,OP=(/"=="/),&
-&                    VAR=' Components       [wavefunctions]')
+&                    VAR=' Components',TERMINATOR='wavefunctions')
    call io_elemental(ID,I0=i_time_rev,CHECK=.true.,OP=(/"=="/))
    !
    if (i_time_rev==1) then
      call io_elemental(ID,I0=nsym,CHECK=.true.,OP=(/"=="/),&
-&                      VAR=' Symmetries       [spatial+T-rev]')
+&                      VAR=' Symmetries',TERMINATOR='spatial+T-rev')
    else
      call io_elemental(ID,I0=nsym,CHECK=.true.,OP=(/"=="/),&
-&                      VAR=' Symmetries             [spatial]')
+&                      VAR=' Symmetries',TERMINATOR='spatial')
    endif
    !
    call io_elemental(ID,I0=n_spinor,CHECK=.true.,OP=(/"=="/),&
@@ -157,7 +157,7 @@ integer function io_DB1(E,k,ID)
    n_spin=max(n_sp_pol,n_spinor,1)
    !
    call io_elemental(ID, UNIT=HA2EV,R0=input_GS_Tel,CHECK=.true.,OP=(/"=="/),&
-&                    VAR=' Temperature                 [ev]')
+&                    VAR=' Temperature',TERMINATOR='ev')
    call io_elemental(ID, R0=default_nel,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' Electrons                       ')
    call io_elemental(ID, I0=GS_xc_KIND)

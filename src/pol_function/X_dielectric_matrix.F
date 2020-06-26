@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -34,7 +34,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index, PAR_nq, &
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD,&
 &                        PAR_COM_X_WORLD_RL_resolved
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
@@ -110,7 +110,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    X%ordering='R'
  endif
  !
- call X_pre_setup(Xen,X)
+ call X_pre_setup(Xen,Xk,X)
  !
  ! Build frequency range only if Xw%p was not already allocated
  ! like in LifeTimes calculations or when self_detect_E_range=.TRUE. (real axis GW)
@@ -178,8 +178,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
 #endif
    else
-     allocate(X_par(PAR_nq))
-     call X_alloc('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nq/))
+     allocate(X_par(PAR_nQ_ibz))
+     call X_alloc('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nQ_ibz/))
    endif
    !
  endif
@@ -206,7 +206,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  do iq=X%iq(1),X%iq(2)
    !
    if (     io_X_done(iq) > 0       ) cycle
-   if (.not.PAR_IND_Q%element_1D(iq)) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
    !
    ! TDDFT setup
    !
@@ -233,7 +233,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    ! Allocation
    !
-   iq_mem=PAR_Q_index(iq)
+   iq_mem=PAR_Q_ibz_index(iq)
    if (io_RESPONSE) iq_mem=1
    call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
    !
@@ -276,7 +276,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    X%ng_db=X%ng
    !
-   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),  ID=Xdb)
+   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
    !
    ! CLEAN (1)

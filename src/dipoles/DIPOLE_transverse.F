@@ -30,26 +30,27 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
 #if defined _PL
  use drivers,             ONLY:l_photolum
 #endif
- use interfaces,          ONLY:WF_load,WF_free
- use LIVE_t,              ONLY:live_timing
- use electrons,           ONLY:levels,n_spinor,n_sp_pol
- use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
-&                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
-&                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
- use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,pp_kbv_dim,pp_factor
- use R_lattice,           ONLY:bz_samp
- use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach
- use X_m,                 ONLY:l_X_terminator
- use IO_m,                ONLY:io_control,RD_CL,RD
- use wave_func,           ONLY:wf_ng,WF
- use com,                 ONLY:msg
- use timing_m,            ONLY:timing
 #if defined _RT
  use drivers,             ONLY:l_real_time
 #endif
-#ifdef _CUDA
+ use interfaces,          ONLY:WF_load,WF_free
+ use LIVE_t,              ONLY:live_timing
+ use electrons,           ONLY:levels,n_spinor,n_sp_pol,spin_string
+ use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
+&                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
+&                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
+ use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,pp_kbv_dim_yambo,pp_kbv_table,pp_factor
+ use R_lattice,           ONLY:bz_samp
  use R_lattice,           ONLY:g_vec_d,g_vec
-#endif
+ use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach
+ use X_m,                 ONLY:l_X_terminator
+ use IO_m,                ONLY:io_control,manage_action,RD_CL_IF_END,OP_RD
+ use wave_func,           ONLY:wf_ng,WF
+ use com,                 ONLY:msg
+ use timing_m,            ONLY:timing
+ use cuda_m,              ONLY:have_cuda
+ use deviceXlib_m,        ONLY:dev_memcpy
+ !
 #include<dev_defs.h>
 #include<memory.h>
  !
@@ -65,15 +66,13 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  integer                      :: ik,ic_wf,iv_wf,ic,iv,ifrag,&
 &                                i_sp_pol,n_LT_steps,ik_mem,ic_min
  complex(SP), allocatable     :: kbv(:,:,:,:)
-#ifdef _CUDA
- complex(SP), allocatable, device :: kbv_d(:,:,:,:)
-#endif
+ complex(SP), allocatable DEV_ATTRIBUTE :: kbv_d(:,:,:,:)
  complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),P2
  real(SP)                     :: Ev_m_Ev_KS,Dipole_Energy_treshold
  !
  !I/O and external functions
  !
- integer                      :: ID,io_err(3),io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
+ integer                      :: ID,IO_ACT_NOW,io_err(3),io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
  integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
  !
  call timing('DIPOLE_transverse',OPR='start')
@@ -103,9 +102,10 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  !
  ! GPL_EXCLUDE_END
  !
-#ifdef _CUDA
- allocate(g_vec_d,source=g_vec)
-#endif
+ ! Synchronize some memory
+ if (have_cuda) then
+   YAMBO_ALLOC_SOURCE(g_vec_d,g_vec)
+ endif
  !
  l_use_comm=l_eval_dip_V.or.l_eval_dip_iR
  !
@@ -117,13 +117,27 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
    io_KB_pwscf_err = io_err(2)
    io_Vnl_err      = io_err(3)
    !
+   ! Define pp_kbv_dim_yambo and pp_kbv_table
+   !
+   if (io_KB_pwscf_err==0) then
+     call io_control(ACTION=OP_RD,SEC=(/2/),ID=ID)
+     io_KB_pwscf_err=io_KB_pwscf(ID)
+     call DIPOLE_kb_pwscf_def_dim()
+   endif
+   !
+   if (io_KB_abinit_err==0) then
+     call io_control(ACTION=OP_RD,SEC=(/2/),ID=ID)
+     io_KB_abinit_err=io_KB_abinit(ID)
+     call DIPOLE_kb_abinit_def_dim()
+   endif
+   !
    if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
-     YAMBO_ALLOC(kbv,(wf_ng,pp_kbv_dim,4,n_spinor))
-     !
-#ifdef _CUDA
-     ! allocations with zero dims seem to be a problem
-     YAMBO_ALLOC(kbv_d,(wf_ng,max(pp_kbv_dim,1),4,n_spinor))
-#endif
+     YAMBO_ALLOC(kbv,(wf_ng,n_spinor,4,pp_kbv_dim_yambo))
+     ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
+     if (have_cuda) then
+       YAMBO_ALLOC(kbv_d,(wf_ng,n_spinor,4,max(pp_kbv_dim_yambo,1)))
+       kbv_d=cZERO
+     endif
    endif
    !
    ! Eo    are always the eigenvalues consistent with the WFs
@@ -158,17 +172,18 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
      ! [Vnl,r]
      !
      if(l_use_comm) then
-       if (io_KB_pwscf_err==0) then
-         if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
-         if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
+       if (io_KB_pwscf_err==0.and.ifrag>1) then
+         IO_ACT_NOW=manage_action(RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
+         call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
          io_KB_pwscf_err=io_KB_pwscf(ID)
        endif
        !
-       if (io_KB_abinit_err==0) then
-         if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
-         if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
+       if (io_KB_abinit_err==0.and.ifrag>1) then
+         IO_ACT_NOW=manage_action(RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
+         call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
          io_KB_abinit_err=io_KB_abinit(ID)
        endif
+       !
      endif
      ! 
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
@@ -177,14 +192,14 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
      !
      ! WF load
      !
-     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',title='-Oscillators/G space',&
-&               force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',&
+&                 title='-Oscillators/G space/Transverse '//spin_string(i_sp_pol),force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      !
      if (io_KB_abinit_err==0.and.l_use_comm) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
      if (io_KB_pwscf_err ==0.and.l_use_comm) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
-#ifdef _CUDA
-     if ((io_KB_abinit_err==0.or.io_KB_pwscf_err ==0).and.l_use_comm.and.size(kbv)>0) kbv_d=kbv
-#endif
+     !
+     if (have_cuda .and. (io_KB_abinit_err==0.or.io_KB_pwscf_err ==0) &
+&                  .and. l_use_comm.and.size(kbv)>0) call dev_memcpy(kbv_d,kbv)
      !
      do iv=Dip%ib(1),Dip%ib_lim(1) 
        !
@@ -241,8 +256,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
          !================================
          if (io_Vnl_err==0) rho(:) = rho(:) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
          !
-         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,DEV_VARNAME(kbv))
-         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,DEV_VARNAME(kbv))
+         if (io_KB_abinit_err==0.and.pp_kbv_dim_yambo>0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,DEV_VARNAME(kbv))
+         if (io_KB_pwscf_err ==0.and.pp_kbv_dim_yambo>0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,DEV_VARNAME(kbv))
          !
          ! define a different thr for val-val transitions
          ! used for XTerm (here Ev_m_Ev_KS may become very large)
@@ -302,17 +317,16 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  !
  if (io_KB_pwscf_err==0.or.io_KB_abinit_err==0) then
    YAMBO_FREE(kbv)
+   YAMBO_FREE(kbv_d)
    YAMBO_FREE(pp_n_l_comp)
    YAMBO_FREE(pp_table)
+   YAMBO_FREE(pp_kbv_table)
    YAMBO_FREE(pp_factor)
    call PP_free()
  else if (io_Vnl_err==0) then
    YAMBO_FREE(Vnl)
  endif
-#ifdef _CUDA
- YAMBO_FREE(kbv_d)
  YAMBO_FREE(g_vec_d)
-#endif
  !
  call timing('DIPOLE_transverse',OPR='stop')
  !

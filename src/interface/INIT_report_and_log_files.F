@@ -26,7 +26,7 @@ subroutine INIT_report_and_log_files()
  use pars,           ONLY:lchlen,repfile_index,logfile_index
  use stderr,         ONLY:logfile,logfile_unit,log_as_a_file,intc,write_to_log,write_to_log_default
  use it_m,           ONLY:rstatus,nrnlvls,rnlvls
- use com,            ONLY:repfile,repfile_unit,write_to_report,com_path,jobstr,max_open_ofs,of_unit
+ use com,            ONLY:repfile,repfile_unit,write_to_report,com_path,jobstr,of_unit
  use parallel_m,     ONLY:myid,ncpu
  use LIVE_t,         ONLY:live_timing_is_on
 #if defined _YAML_OUTPUT
@@ -99,7 +99,7 @@ subroutine INIT_report_and_log_files()
    !
  endif
  !
- if (log_as_a_file) then
+ if (log_as_a_file.and.write_to_log) then
    !
    ! Log file
    !
@@ -108,7 +108,7 @@ subroutine INIT_report_and_log_files()
 #else
    logfile_unit=13
 #endif
-   of_unit(repfile_index) = repfile_unit
+   of_unit(logfile_index) = logfile_unit
    open(unit=logfile_unit,file=trim(logfile))
 #if defined _YAML_OUTPUT
    call yaml_set_stream(filename=trim(logfile)//".yaml",record_length=200)

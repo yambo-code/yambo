@@ -35,10 +35,9 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
 &                        nr,nr_tot,output_fname,&
 &                        use_xcrysden,use_gnuplot,use_cube,plot_dim,&
 &                        EXCITONS_user_indexes,EXCITONS_n_user_states
- use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_n_descs,&
-&                        BSS_desc_var,BSS_desc_str,BSS_n_eig
+ use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_desc,BSS_n_eig
  use BS,            ONLY:BS_bands,BS_H_dim
- use interfaces,    ONLY:PARALLEL_index,WF_load,WF_free
+ use interfaces,    ONLY:PARALLEL_index,WF_load,WF_free,DESC_write
  use wave_func,     ONLY:WF,WF_symm,wf_ng
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use openmp,        ONLY:OPENMP_update,master_thread
@@ -227,10 +226,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      call of_open_close(trim(output_fname),'o')
    else
     call of_open_close(trim(output_fname),'ot')
-    do i1=1,BSS_n_descs
-      call msg('o exc',"#"//trim(BSS_desc_str(j1)),BSS_desc_var(:,j1),INDENT=0)
-    enddo
-      call msg('o exc',"#")
+    call DESC_write('o exc','#',BSS_desc)
    endif
    !
    call plot_check_and_launch(.false.)

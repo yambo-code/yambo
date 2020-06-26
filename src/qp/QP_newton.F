@@ -30,12 +30,11 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,current_iq,l_recalculate_X
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,l_update_W,QP_table,&
-&                        QP_n_states,QP_dSc,QP_dSc_delta,QP_n_G_bands,GW_iterations,report_Sc,&
+&                        QP_n_states,QP_dSc,QP_dSc_delta,GW_iterations,report_Sc,&
 &                        GWo_SC_done,GWo_iterations,SC_E_threshold,On_Mass_Shell_approx
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,n_bands,spin
  use R_lattice,     ONLY:bz_samp
- use QP_CTL_m,      ONLY:QP_apply
  use interfaces,    ONLY:OCCUPATIONS_Fermi
  use stderr,        ONLY:intc
  use IO_m,          ONLY:IO_and_Messaging_switch
@@ -56,7 +55,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  ! Work Space
  !
  integer     :: i1,i2,iter,SC_iter,SC_iterations,io_X_err
- integer     :: ik,lowest_bnd,highest_bnd,is,ib,i_spin
+ integer     :: ik,lowest_bnd,highest_bnd,is,ib
  real(SP)    :: SC_corr_prev,SC_corr_now
  complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
  integer, external ::  X_dielectric_matrix

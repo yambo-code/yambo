@@ -26,7 +26,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ! GPL_EXCLUDE_START
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
- use pars,       ONLY:SP,cZERO,VAR_EMPTY
+ use pars,       ONLY:SP,cZERO
  use C_driver,   ONLY:code_branch
  use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
@@ -34,9 +34,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                     eval_alpha,&
-&                     q_plus_G_direction,Q_Shift_Order,n_X_descs,&
+&                     q_plus_G_direction,Q_Shift_Order,&
 &                     l_X_terminator,X_terminator_E,global_gauge,&
-&                     Chi_linalg_mode,X_use_lin_sys,X_DbGd_percentual
+&                     Chi_linalg_mode,X_use_lin_sys,X_use_gpu,X_DbGd_percentual
  use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
 &                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
@@ -47,7 +47,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     COHSEX_use_empties,On_Mass_Shell_approx,&
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,l_GW_terminator,&
 &                     GW_terminator_E
- use QP_CTL_m,   ONLY:QP_ctl_user,QP_ctl_db,QP_ctl_interp_neigh
+ use QP_CTL_m,   ONLY:QP_ctl_user,QP_ctl_DB_user
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp
@@ -56,28 +56,27 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets,k_map
- use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,&
-&                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
-&                     eval_magn,E_SOC_nbands
- use parallel_m, ONLY:ncpu,CPU_str_reset,PARALLEL_host_name
+ use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
+ use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
-&                     more_io_path,core_io_path,com_path,repfile,grid_paths
+&                     more_io_path,core_io_path,com_path,repfile,grid_paths,fat_log
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,frag_WF
- use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_desc_str,BSS_desc_var,BSS_er,BSS_dr,&
+ use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_threshold,Haydock_iterIO,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
+ use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers, ONLY:BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol, BSS_target_E, Slepc_shell
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
-&                     BS_K_is_ALDA,BSE_mode,L_kind
- use TDDFT,      ONLY:FXC_desc_str,FXC_desc_var,FXC_type,FXC_n_descs,FXC_n_g_corr,&
+&                     BS_K_is_ALDA,BSE_mode,L_kind,BS_K_cutoff,BS_perturbative_SOC
+ use TDDFT,      ONLY:FXC_type,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -98,15 +97,18 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
-&                     l_SC_nl_mix,SC_kind,SC_perturbation
+&                     l_SC_nl_mix,SC_kind,SC_perturbation,SC_desc
 #endif
 #if defined _SC || defined _RT || defined _QED || defined _NL
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
  use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
- use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_headings,YPP_append
- use RT_control, ONLY:OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db
+ use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_o_file_is_open,&
+&                     RT_headings,YPP_append,Gr_desc,TIME_STEP_desc,RT_desc
+ use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db,&
+&                     CACHE_OBS_last_point,CACHE_OBS_INTERVAL_time,CACHE_OBS_INTERVAL_time_SAVE,   &
+&                     CACHE_OBS_steps,CACHE_OBS_steps_now,RT_NAN_found
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
@@ -114,14 +116,18 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
 &                     RT_Efit_lifetimes,l_update_SOC,                                     &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
-&                     RAD_prefactor
+&                     RAD_prefactor,i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,           &
+&                     RT_is_statically_dephased,RT_is_dynamically_dephased,               &
+&                     RT_deph_deg_thresh,RT_deph_cv_only,                                 &
+&                     NE_time_step_update_last_point,NE_time_step_update_jump,NE_time_step_update_jump_SAVE, &
+&                     NE_initial_time_step_update,NE_step_update_treshold
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_tot,A_ind,A_ext
  use plasma,     ONLY:PLASMA_redux_percent
 #endif
 #if defined _NL
  use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,         &
-&                     NL_verb_name,NL_bands,n_order
+&                     NL_verb_name,NL_bands,n_order,NL_desc
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _MAGNETIC
@@ -133,6 +139,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use timing_m,    ONLY:timing_allocate,nclockx
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
+ use cuda_m,      ONLY:have_cuda
  !
  implicit none
  !
@@ -150,12 +157,16 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  call set_real_printed_length()
  !
+ ! Fat Log?
+ !
+ fat_log    = .FALSE.
+ if (index(INSTR,'fatlog')>0) fat_log=.TRUE.
+ !
  ! CPU structures
  !
  call CPU_str_reset()
  !
  ! OpenMP
- !
  !
 #if defined _OPENMP
  omp_is_off    = .FALSE.
@@ -186,7 +197,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! Node name
  !
- call PARALLEL_host_name( )
+ call CREATE_hosts_COMM( )
  !
  ! ZEROs 
  !
@@ -306,10 +317,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  n_spinor=1
  n_spin_den=1
  l_spin_orbit       = .FALSE.
- BZ_DbGd_nbands=0
- BZ_DbGd_tot_nk_levels=0
- BZ_ASSOCIATED_nkpts=0
- E_SOC_nbands=0
  filled_tresh=0.00001
  !
  ! Magnetization and density
@@ -346,6 +353,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Chi_mode=' '
  Chi_linalg_mode="lin_sys"
  X_use_lin_sys=.FALSE.
+ X_use_gpu=have_cuda
  current_iq=0
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.
@@ -365,7 +373,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Vnl_commutator_warning=.FALSE.
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
- n_X_descs=0
  l_X_terminator=.FALSE.
  X_terminator_E=40._SP/HA2EV
  !
@@ -398,9 +405,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! QP_ctl control
  !
- QP_ctl_db="none"
- QP_ctl_interp_neigh=1
  do i1=1,3
+   QP_ctl_DB_user(i1)%INTERP_shell_factor=20._SP
+   QP_ctl_DB_user(i1)%INTERP_N_neigh=1
+   QP_ctl_DB_user(i1)%INTERP_DbGd_mode="NN"
+   QP_ctl_DB_user(i1)%action="none"
    do i2=1,3
      QP_ctl_user(i1,i2)%E=(/0.,1.,1./)
      QP_ctl_user(i1,i2)%Wc=0._SP
@@ -438,11 +447,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_Wd=cZERO
  l_drude=.false.
  BS_K_dim=0
+ BS_K_cutoff=0.0000_SP
  BSS_mode=' '
  BSS_inversion_mode='pf'
- BSS_n_descs=0
- BSS_desc_var=VAR_EMPTY
- BSS_desc_str=''
  BSS_er=(/0._SP,10._SP/)/HA2EV
  BSS_dr=0.1_SP/HA2EV
  BSS_q0=(/1._SP,0._SP,0._SP/)
@@ -450,6 +457,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_damp_reference=0._SP
  BS_K_is_ALDA=.FALSE.
  BS_not_const_eh_f=.FALSE.
+ BS_perturbative_SOC=.FALSE.
  Haydock_threshold=-0.02_SP
  Haydock_iterIO=100
  BSS_Vnl_included=.FALSE.
@@ -471,10 +479,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! TDDFT
  !
- FXC_desc_var=VAR_EMPTY
- FXC_desc_str=""
  FXC_type='rpa'
- FXC_n_descs=0
  FXC_n_g_corr=1
  FXC_per_memstps=100._SP
  FXC_LRC_alpha=0._SP
@@ -551,6 +556,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  l_SC_nl_mix =.FALSE.
  l_NSC_shot  =.FALSE.
  !
+ call IO_desc_reset(SC_desc)
+ !
 #endif
  !
 #if defined _RT
@@ -577,11 +584,35 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NE_steps=1
  NE_time=0._SP
  NE_tot_time= 1000._SP*FS2AUT
+ !
+ NE_time_step_update_last_point = 1
+ NE_time_step_update_jump       = 0._SP
+ NE_time_step_update_jump_SAVE  = 0._SP
+ NE_initial_time_step_update    = 0._SP
+ NE_step_update_treshold        = 0.1_SP
+ !
+ CACHE_OBS_steps      = 1
+ CACHE_OBS_steps_now  = 1
+ CACHE_OBS_last_point = 1
+ CACHE_OBS_INTERVAL_time       = 0._SP
+ CACHE_OBS_INTERVAL_time_SAVE  = 0._SP
+ !
+ G_MEM_steps = 2
+ i_MEM_old   = 0
+ i_MEM_prev  = 0
+ i_MEM_now   = 1
+ !
  integrator_step=1
  Integrator_name='RK2'
+ !
  RAD_LifeTime = 0._SP
  Phase_LifeTime = 0._SP
- NE_MEM_treshold=0.
+ RT_deph_deg_thresh = 1.E-5_SP
+ RT_deph_cv_only =.FALSE.
+ RT_is_statically_dephased=.FALSE.
+ RT_is_dynamically_dephased=.FALSE.
+ !
+ NE_MEM_treshold=0._SP
  RT_nk=0
  RT_eh_en=0._SP
  RT_scatt_tresh=-1._SP/HA2EV
@@ -612,19 +643,26 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! RT_ctl
  !
- OBS_RT_IO_t%INTERVAL_time=2._SP*FS2AUT
- OUTPUT_RT_IO_t%INTERVAL_time=5._SP*FS2AUT
+ OBS_RT_IO_t%INTERVAL_time_SAVE   =2._SP*FS2AUT
+ CARR_RT_IO_t%INTERVAL_time_SAVE  =2._SP*FS2AUT
+ OUTPUT_RT_IO_t%INTERVAL_time_SAVE=5._SP*FS2AUT
+ GF_RT_IO_t%INTERVAL_time_SAVE    =1._SP*FS2AUT
  SAVE_G_history=.FALSE.
- GF_RT_IO_t%INTERVAL_time=1._SP*FS2AUT
+ RT_NAN_found  =.FALSE.
  !
  ! RT_output
  !
  n_RT_headings=0
  N_RT_o_files=0
+ RT_o_file_is_open=.FALSE.
  RT_o_file_long= " "
  RT_o_file_short= " "
  RT_headings= " "
  YPP_append=" "
+ !
+ call IO_desc_reset(RT_desc)
+ call IO_desc_reset(Gr_desc)
+ call IO_desc_reset(TIME_STEP_desc)
  !
 #endif
  !
@@ -645,6 +683,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Efield(1)%FWHM=2._SP*FS2AUT
  Efield(1)%ef_name="SOFTSIN"
  NL_verb_name='low'
+ !
+ call IO_desc_reset(NL_desc)
  !
 #endif
  !

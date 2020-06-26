@@ -28,7 +28,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t,Joint_DOS
- use BS_solvers,     ONLY:BSS_mode,BSS_n_descs,BSS_eval_JDOS,BSS_free,BS_mat,&
+ use BS_solvers,     ONLY:BSS_mode,BSS_desc,BSS_eval_JDOS,BSS_free,BS_mat,&
 &                         run_Haydock,run_inversion,run_Diago
 #if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers,     ONLY:run_Slepc
@@ -141,13 +141,16 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  if (run_Haydock) then
    !
+   ! Remove Inv specific descriptors
+   !
+   if (run_inversion) BSS_desc%n=BSS_desc%n-3
+   !
    stop_Haydock = (BS_not_const_eh_f.and.index(BSE_mode,'coupling')>0)
    if (stop_Haydock) call warning('Fractional occupations and coupling still unsupported (Haydock)')
    !
    if(.not.stop_Haydock) then
      call K_output_file(iq,"open Haydock")
      call K_Haydock(iq,W_bss)
-     BSS_n_descs=BSS_n_descs-4 
    endif
    !
  endif

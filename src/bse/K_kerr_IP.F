@@ -31,7 +31,7 @@ subroutine K_kerr_IP(iq,w,Dip,Xk)
  use KERR,           ONLY:B_Hall
  use BS_solvers,     ONLY:BSS_add_antiresonant,BSS_n_freqs,Co_factor
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_coupling
- use electrons,      ONLY:E_SOC_nbands,n_sp_pol
+ use electrons,      ONLY:n_sp_pol
  use R_lattice,      ONLY:bare_qpg,q0_def_norm,bz_samp
  use vec_operate,    ONLY:v_norm,rot_v_xy_plane
  use drivers,        ONLY:l_anomalous_Hall
@@ -57,7 +57,7 @@ subroutine K_kerr_IP(iq,w,Dip,Xk)
  !
  n_SOC=1
  !
- if(E_SOC_nbands/=0.and.n_sp_pol==1) n_SOC=2
+ if(allocated(BS_T_grp(1)%E_SOC_corr).and.n_sp_pol==1) n_SOC=2
  !
  B_Hall=cZERO
  !
@@ -90,9 +90,9 @@ subroutine K_kerr_IP(iq,w,Dip,Xk)
      if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
      if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
      !
-     if (E_SOC_nbands==0) E_plus_W=E_plus_W0
+     if (.not.allocated(BS_T_grp(i_T_g)%E_SOC_corr)) E_plus_W=E_plus_W0
      !
-     if (E_SOC_nbands/=0) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
+     if (    allocated(BS_T_grp(i_T_g)%E_SOC_corr)) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
      DIP_projected=dot_product(kerr_dir,DIP_rotated(ic,iv,ik_bz,i_sp_pol,DIP_kind,Xk))
      !

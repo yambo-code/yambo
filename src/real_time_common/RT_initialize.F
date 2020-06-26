@@ -3,29 +3,29 @@
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details):
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine RT_initialize(E,k,q)
- ! 
+ !
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_hartree,l_use_Hxc_collisions,&
 &                         l_sc_is_libDFT,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_rt_carriers_in_use
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:SP,pi,schlen
  use units,          ONLY:HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,AUT2FS
  use stderr,         ONLY:intc
  use com,            ONLY:msg
@@ -35,27 +35,30 @@ subroutine RT_initialize(E,k,q)
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:levels
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
- use RT_control,     ONLY:OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,                      &
-&                         SETUP_RT_IO_type,IO_OBS_cache_steps,TIME_adjust,SAVE_G_history
+ use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,         &
+&                         SETUP_RT_IO_type,CACHE_OBS_steps,TIME_adjust,STEP_adjust,           &
+&                         SAVE_G_history,CACHE_OBS_INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
-&                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_DbGd,DbGd_EE_Nk_table,      &
+&                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_FineGd,DbGd_EE_Nk_table,    &
 &                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,Gr_kind,     &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
 &                         l_RT_update_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
-&                         NE_time_step_update_jump,NE_initial_time_step_update,               &
+&                         NE_time_step_update_jump,NE_initial_time_step_update,NE_i_time,     &
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
 &                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,l_RT_impose_for_metals, &
-&                         l_P_integrating_J,l_RT_rotate_DM
+&                         l_P_integrating_J,l_RT_rotate_DM,RT_Nk_ibz,RT_deph_cv_only,         &
+&                         RT_ibz_coo
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
  use parser_m,       ONLY:parser
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait,PAR_G_k_range
  !
 #include<memory.h>
  !
@@ -64,12 +67,12 @@ subroutine RT_initialize(E,k,q)
  !
  ! Work space
  !
- integer                  :: i1,N_T_samplings
- character(6)             :: MSG_ch
+ integer                  :: i1,N_T_samplings,ik,NK_cpu(PAR_COM_Xk_ibz_INDEX%n_CPU)
+ character(schlen)        :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_skip_it,l_velocity_gauge_tmp
  real(SP), parameter      :: thresh=1.E-5_SP
- integer,         external:: RT_Lifetimes_evaluation_plan
+ integer,  external       :: RT_Lifetimes_evaluation_plan
  !
  ! Logicals
  !==========
@@ -80,6 +83,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! GPL_EXCLUDE_START
  !
+ call parser('DephCVonly',           RT_deph_cv_only)
  call parser('RAD_prefactor',        RAD_magnification)
  call parser('VelGaugeCorr',         l_velocity_gauge_corr)
  call parser('PfromJ',               l_P_integrating_J)
@@ -121,6 +125,13 @@ subroutine RT_initialize(E,k,q)
  eval_DFT     =  l_sc_is_libDFT
  eval_HARTREE =  l_sc_hartree
  !
+ ! DbGd PAR memory distribution index updated
+ !============================================
+ if (l_RT_uses_E_FineGd) then
+   PAR_G_k_range(1)=RT_ibz_coo(PAR_G_k_range(1),1)
+   PAR_G_k_range(2)=RT_ibz_coo(PAR_G_k_range(2),2)
+ endif
+ !
  ! Integrator FLAGS
  !==================
  call RT_Integrator_init()
@@ -136,17 +147,25 @@ subroutine RT_initialize(E,k,q)
  !
  ! Use NE_tot_time if provided
  !==============================
+ NE_i_time=1
  if (NE_tot_time>0._SP) NE_steps=max(NE_steps,nint(NE_tot_time/RT_step)+1)
  !
  ! Initialize RT_dyn_step
  !========================
  RT_dyn_step=RT_step
  !
- ! Set the I/O steps: (J,P,CARRIERs) (GF) (output)
- !=================================================
- call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
+ ! Set the I/O steps: (CARRIERs) (GF) (output)
+ !=============================================
+ call SETUP_RT_IO_type(CARR_RT_IO_t,.TRUE.)
  call SETUP_RT_IO_type(OUTPUT_RT_IO_t,.TRUE.)
+ GF_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(GF_RT_IO_t%INTERVAL_time_SAVE,CARR_RT_IO_t%INTERVAL_time_SAVE)
  call SETUP_RT_IO_type(GF_RT_IO_t,.TRUE.)
+ !
+ ! Set (J,P,M) caching variables and I/O steps
+ !=============================================
+ CACHE_OBS_INTERVAL_time_SAVE=max(TIME_adjust(CACHE_OBS_INTERVAL_time_SAVE,RT_step),RT_step)
+ OBS_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time_SAVE)
+ call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
  !
  ! Dephasing Matrix. Including user-defined matrix-like dephasing factors, constant
  !==================
@@ -154,7 +173,7 @@ subroutine RT_initialize(E,k,q)
  !
  call section('=','Dephasing matrix setup')
  !
- call RT_Dephasing_Matrix(E) 
+ call RT_Dephasing_Matrix(E)
  !
  ! GPL_EXCLUDE_START
  !
@@ -203,28 +222,24 @@ subroutine RT_initialize(E,k,q)
    !
    if (all(RT_life_extrap_times>0)) then
      NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,2._SP*RT_life_extrap_times(1))
-     if(NE_time_step_update_jump_SAVE<2._SP*RT_life_extrap_times(1)) NE_time_step_update_jump_SAVE=2._SP*RT_life_extrap_times(1) 
+     if(NE_time_step_update_jump_SAVE<2._SP*RT_life_extrap_times(1)) NE_time_step_update_jump_SAVE=2._SP*RT_life_extrap_times(1)
    endif
    !
-   NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,OBS_RT_IO_t%INTERVAL_time)
-   if(NE_time_step_update_jump_SAVE<OBS_RT_IO_t%INTERVAL_time) NE_time_step_update_jump_SAVE=OBS_RT_IO_t%INTERVAL_time
+   NE_time_step_update_jump=NE_time_step_update_jump_SAVE
    !
-   NE_time_step_update_jump = NE_time_step_update_jump_SAVE
+   OBS_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,NE_time_step_update_jump_SAVE)
+   if(OBS_RT_IO_t%INTERVAL_time_SAVE>NE_time_step_update_jump_SAVE) OBS_RT_IO_t%INTERVAL_time_SAVE=NE_time_step_update_jump_SAVE
+   if(OBS_RT_IO_t%INTERVAL_time_SAVE<RT_step*10._SP)                OBS_RT_IO_t%INTERVAL_time_SAVE=NE_time_step_update_jump_SAVE
+   CACHE_OBS_INTERVAL_time_SAVE=STEP_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time_SAVE,RT_step)
    !
-   if (RT_MAX_step<1.E-5) RT_MAX_step=10.*RT_step
+   call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
    !
- else
- !
- ! GPL_EXCLUDE_END
- !
-   ! J, P and M (spin) cache Time size (is switched off when an adaptative time step is used)
-   !=========================
-   IO_OBS_cache_steps=OBS_RT_IO_t%INTERVAL_steps
+   if (RT_MAX_step<1.E-5) RT_MAX_step=10._SP*RT_step
    !
- !
- ! GPL_EXCLUDE_START
- !
  endif
+ !
+ CACHE_OBS_INTERVAL_time=CACHE_OBS_INTERVAL_time_SAVE
+ CACHE_OBS_steps=OBS_RT_IO_t%INTERVAL_steps/nint(CACHE_OBS_INTERVAL_time/RT_step)
  !
  ! GPL_EXCLUDE_END
  !
@@ -234,42 +249,35 @@ subroutine RT_initialize(E,k,q)
  l_NE_with_fields=.false.
  !
  do i1=1,n_ext_fields
-   !      
-   Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
+   !
+   Efield(i1)%ef_name=trim(Efield(i1)%ef_name)
+   !
+   MSG_ch="Field#"//trim(intc(i1))//" "//trim(Efield(i1)%ef_name)
    !
    if((Efield(i1)%ef_name/='none')) then
      !
      if (.not.field_is_ok( Efield(i1)) ) &
-&      call error('Field '//trim(Efield(i1)%ef_name)//' not supported or polarization is wrong')
-     !      
+&      call error(trim(MSG_ch)//' not supported or polarization is wrong')
+     !
      l_NE_with_fields=.true.
      !
      if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%frequency(1)==0._SP) &
-&      call error("External "//trim(Efield(i1)%ef_name)//" field has zero frequency.")
+&      call error(trim(MSG_ch)//" field has zero frequency.")
      !
      if(Efield(i1)%intensity==0._SP) &
-&      call error("External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
+&      call error(trim(MSG_ch)//" field has zero intensity.")
      !
      if( all( abs(Efield(i1)%versor(:))<epsilon(1.) ) ) &
-&      call error("External "//trim(Efield(i1)%ef_name)//" field has undefined direction.")
+&      call error(trim(MSG_ch)//" field has undefined direction.")
      !
      if ( ((Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='PULSE')) &
 &        .and. Efield(i1)%width<epsilon(1.)  ) &
-&      call error("External "//trim(Efield(i1)%ef_name)//" field has undefined duration.")
+&      call error(trim(MSG_ch)//" field has undefined duration.")
      !
      Efield(i1)%versor   =normalize_v(Efield(i1)%versor)
      Efield(i1)%amplitude=Efield_strength(Efield(i1)%intensity,'AU')
      !
-     Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
-     !
-     if ( mod(Efield(i1)%t_initial_indx-1,OBS_RT_IO_t%INTERVAL_steps)/=0 ) then
-       call warning('Field starting time corrected to be a mutiple of the I/O step.')
-       Efield(i1)%t_initial_indx=Efield(i1)%t_initial_indx-mod(Efield(i1)%t_initial_indx-1,OBS_RT_IO_t%INTERVAL_steps)
-     endif
-     if (Efield(i1)%t_initial_indx< OBS_RT_IO_t%INTERVAL_steps+1 ) then
-       call warning('Field starting time corrected to respect the I/O times.')
-       Efield(i1)%t_initial_indx=OBS_RT_IO_t%INTERVAL_steps+1
-     endif
+     Efield(i1)%t_initial_indx=max(nint(Efield(i1)%t_initial/RT_step)+1,2)
      !
      Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step
      !
@@ -277,7 +285,7 @@ subroutine RT_initialize(E,k,q)
      !
      if ( Efield(i1)%ef_name=='DELTA' ) then
        Efield(i1)%t_final_indx=Efield(i1)%t_initial_indx+2
-       Efield(i1)%t_final=RT_step*(Efield(i1)%t_final_indx-1)       
+       Efield(i1)%t_final=RT_step*(Efield(i1)%t_final_indx-1)
      else if ( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='PULSE') ) then
        call RT_Fluence(i1)
      else
@@ -303,7 +311,12 @@ subroutine RT_initialize(E,k,q)
  !
  ! Number of K-points
  !====================
- call RT_k_grid(E,k,q)
+ NK_cpu=0
+ do ik=1,k%nibz
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+   NK_cpu(PAR_COM_Xk_ibz_INDEX%CPU_id+1)= NK_cpu(PAR_COM_Xk_ibz_INDEX%CPU_id+1)+RT_Nk_ibz(ik)
+ enddo
+ call PP_redux_wait(NK_cpu,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  ! GPL_EXCLUDE_START
  !
@@ -430,9 +443,10 @@ subroutine RT_initialize(E,k,q)
  ! GPL_EXCLUDE_END
  !
  call msg( 'nr','---I/O---')
- call                          msg('r', 'T between I/O of   OBS     ',OBS_RT_IO_t%INTERVAL_time*AUT2FS,'[fs]')
- call                          msg('r', '          I/O of   GFs     ',GF_RT_IO_t%INTERVAL_time*AUT2FS,'[fs]')
- call                          msg('r', '               outputs     ',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS,'[fs]')
+ call                          msg('r', 'T between I/O of   OBS [fs]',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
+ call                          msg('r', 'T between I/O of   CAR [fs]',CARR_RT_IO_t%INTERVAL_time*AUT2FS)
+ call                          msg('r', '          I/O of   GFs [fs]',GF_RT_IO_t%INTERVAL_time*AUT2FS)
+ call                          msg('r', '               outputs [fs]',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
  if (l_use_collisions)    call msg( 'r','Extended collisions   [I/O]',io_COLLs)
  !
  ! GPL_EXCLUDE_START
@@ -459,10 +473,15 @@ subroutine RT_initialize(E,k,q)
  endif
  !
  call msg( 'nr','---K Grid---')
- call msg( 'r',      'Double Grid support        ',l_RT_uses_E_DbGd)
- if (l_RT_uses_E_DbGd) then
-   call msg( 'r',    'K-points            (TOTAL)',RT_DbGd_nk)
-   call msg( 'r',    '                  (EVOLVED)',RT_nk)
+ call msg( 'r', 'Double Grid support          ',l_RT_uses_E_FineGd)
+ if (l_RT_uses_E_FineGd) then
+   call msg( 'r', 'K-pts  (Coarse grid IBZ/BZ)',(/k%nibz,k%nbz/))
+   call msg( 'r', 'K-pts    (Fine grid IBZ/BZ)',(/k%nibz_FineGd,k%nbz_FineGd/))
+   call msg( 'r', 'K-pts       (Common IBZ/BZ)',(/k%nibz_duplicate,k%nbz_duplicate/))
+   call msg( 'r', 'K-pts  (Real-time IBZ only)',RT_nk)
+   if (PAR_COM_Xk_ibz_INDEX%n_CPU>1) then
+     call msg( 'r',  '      (DISTRIBUTED min-MAX)',(/minval(NK_cpu),maxval(NK_cpu)/))
+   endif
    if (l_elel_scatt) then
      call msg( 'r',  'Percentual used in e-e[o/o]',DbGd_EE_percent)
      call msg( 'r',  'Max e-e scattering states  ',maxval(DbGd_EE_Nk_table))
@@ -481,21 +500,21 @@ subroutine RT_initialize(E,k,q)
    !call msg('r','Pump/Probe energy step  [eV]',maxval(Efield(:)%W_step)*HA2EV)
    !
    do i1=1,n_ext_fields
-     MSG_ch="Field"//trim(intc(i1))
-     call msg('r', MSG_ch//' field                       '//trim(Efield(i1)%ef_name))
-     call msg('r', MSG_ch//' polarization                '//trim(Efield(i1)%ef_pol))
-     call msg('r', MSG_ch//' energy window/period [eV/fs]',(/Efield(i1)%frequency*HA2EV,&
+     MSG_ch="Field#"//trim(intc(i1))
+     call msg('r', trim(MSG_ch)//' field                       '//trim(Efield(i1)%ef_name))
+     call msg('r', trim(MSG_ch)//' polarization                '//trim(Efield(i1)%ef_pol))
+     call msg('r', trim(MSG_ch)//' energy window/period [eV/fs]',(/Efield(i1)%frequency*HA2EV,&
 &                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/))
-     call msg('r', MSG_ch//' elemental oscillation   [fs]',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))*AUT2FS)
-     call msg('r', MSG_ch//' width                   [fs]',Efield(i1)%width*AUT2FS)
-     call msg('r', MSG_ch//' energy steps                ',Efield(i1)%n_frequencies)
-     call msg('r', MSG_ch//' electric field         [V/m]',Efield(i1)%amplitude*AU2VMm1)
-     call msg('r', MSG_ch//' max intensity      [kW/cm^2]',Efield(i1)%intensity*AU2KWCMm2)
+     call msg('r', trim(MSG_ch)//' elemental oscillation   [fs]',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))*AUT2FS)
+     call msg('r', trim(MSG_ch)//' width                   [fs]',Efield(i1)%width*AUT2FS)
+     call msg('r', trim(MSG_ch)//' energy steps                ',Efield(i1)%n_frequencies)
+     call msg('r', trim(MSG_ch)//' electric field         [V/m]',Efield(i1)%amplitude*AU2VMm1)
+     call msg('r', trim(MSG_ch)//' max intensity      [kW/cm^2]',Efield(i1)%intensity*AU2KWCMm2)
      !
      if( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='DELTA') ) then
-       call msg('r', MSG_ch//' max fluence        [nJ/cm^2]',Efield(i1)%fluence )
-       call msg('r', MSG_ch//' final time              [fs]',Efield(i1)%t_final*AUT2FS)
-       call msg('r', MSG_ch//' half maximum full width [fs]',Efield(i1)%width*2.*sqrt(2.*log(2.))*AUT2FS)
+       call msg('r', trim(MSG_ch)//' max fluence        [nJ/cm^2]',Efield(i1)%fluence )
+       call msg('r', trim(MSG_ch)//' final time              [fs]',Efield(i1)%t_final*AUT2FS)
+       call msg('r', trim(MSG_ch)//' half maximum full width [fs]',Efield(i1)%width*2.*sqrt(2.*log(2.))*AUT2FS)
      endif
      !
    enddo
@@ -506,10 +525,10 @@ subroutine RT_initialize(E,k,q)
    !
    subroutine RT_adjust_equilibrium()
      !
-     use electrons,          ONLY:spin_occ,n_sp_pol,BZ_DbGd_tot_nk_levels
-     use real_time,          ONLY:RT_ibz_coo,DbGd_ibz_coo
+     use electrons,          ONLY:spin_occ,n_sp_pol
+     use real_time,          ONLY:RT_ibz_coo,RT_ibz_dupl
      !
-     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib
+     integer :: ik,ik_RT_DbGd,ik_E_FineGd,ib
      !
      if(.not.l_RT_eq_is_zero_temp) return
      !
@@ -523,9 +542,9 @@ subroutine RT_initialize(E,k,q)
        E%df=0._SP
      endif
      !
-     if (l_RT_uses_E_DbGd.and..not.allocated(E%df_DbGd)) then
-       YAMBO_ALLOC(E%df_DbGd,(E%nb,BZ_DbGd_tot_nk_levels,n_sp_pol))
-       E%df_DbGd=0._SP
+     if (l_RT_uses_E_FineGd.and..not.allocated(E%df_FineGd)) then
+       YAMBO_ALLOC(E%df_FineGd,(E%nb,k%nibz_FineGd,n_sp_pol))
+       E%df_FineGd=0._SP
      endif
      !
      ! Defined from occupations %f
@@ -535,13 +554,13 @@ subroutine RT_initialize(E,k,q)
      do ib=RT_bands(1),RT_bands(2)
        do ik=1,k%nibz
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-           ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
            !
-           if (l_RT_uses_E_DbGd) then
-             if(E%E_DbGd(ib,ik_E_DbGd,1)<=E%E_Fermi) then
-               E%df_DbGd(ib,ik_E_DbGd,1)=(E%f_DbGd(ib,ik_E_DbGd,1)-spin_occ)
+           if (l_RT_uses_E_FineGd) then
+             ik_E_FineGd=ik_RT_DbGd-ik+sum(RT_ibz_dupl(:ik))
+             if(E%E_FineGd(ib,ik_E_FineGd,1)<=E%E_Fermi) then
+               E%df_FineGd(ib,ik_E_FineGd,1)=(E%f_FineGd(ib,ik_E_FineGd,1)-spin_occ)
              else
-               E%df_DbGd(ib,ik_E_DbGd,1)= E%f_DbGd(ib,ik_E_DbGd,1)
+               E%df_FineGd(ib,ik_E_FineGd,1)= E%f_FineGd(ib,ik_E_FineGd,1)
              endif
            else
              if(E%E(ib,ik,1)<=E%E_Fermi) then

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CA
+! Authors (see AUTHORS file for details): CA, AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,52 +21,74 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,Nk)
+subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,NK,ID)
  !
- use pars,              ONLY:SP,pi,cI,cZERO,DP
- use interpolate,       ONLY:nshells,lattice_vectors,int_sop
+ use pars,              ONLY:SP,pi,cI,cZERO,DP,rZERO
+ use interpolate,       ONLY:nshells,lattice_vectors,int_sop,INTERPOLATE_is_serial,INTERPOLATE_is_quiet,INTERP_obj
  use interpolate_tools, ONLY:make_star
+ use interfaces,        ONLY:PARALLEL_index
  use R_lattice,         ONLY:bz_samp
  use D_lattice,         ONLY:nsym
  use vec_operate,       ONLY:c2a
+ use timing_m,          ONLY:timing
+ use LIVE_t,            ONLY:live_timing
+ use parallel_m,        ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
  !
-#include<memory.h>
+ implicit none
  !
  integer,intent(in)        :: nvalues
- integer,intent(in)        :: Nk
+ integer,intent(in)        :: NK,ID
  type(bz_samp), intent(in) :: K
- real(SP), intent(out)     :: VALUES(nvalues,Nk)
- real(SP), parameter       :: twopi=2._SP*pi
+ real(SP), intent(out)     :: VALUES(nvalues,NK)
  complex(DP), intent(in)   :: engre(nshells,nvalues)
  !
  ! Work Space
  !
- integer  :: i1,iv,ik,is,nstar
- real(SP) :: star_vec(3,nsym),v(3)
- complex(SP), allocatable :: star(:,:)
+ real(SP), parameter:: twopi=2._SP*pi
  !
- YAMBO_ALLOC(star,(nshells,Nk))
+ integer            :: i_shell,iv,ik,is,nstar
+ real(SP)           :: star_vec(3,nsym),v(3)
+ complex(SP)        :: F_star(nshells)
+ type(PP_indexes)   :: px
  !
- ! Make stars
+ call timing('INTERPOLATE Fourier',OPR='start')
  !
- star=cZERO
- do i1=1,nshells
-    call make_star(lattice_vectors(:,i1),nsym,int_sop,nstar,star_vec)  
-    do ik=1,Nk
-      if(Nk==K%nibz) call c2a(v_in=K%pt(ik,:),v_out=v,mode='ki2a')
-      do is=1,nstar
-        star(i1,ik)=star(i1,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,is)))
-      enddo
-      star(i1,ik)=star(i1,ik)/real(nstar)
-   enddo
- enddo
+ ! Parallel setup and distribution
+ !---------------------------------
+ if (.not.INTERPOLATE_is_serial) then
+   call PP_indexes_reset(px)
+   call PARALLEL_index(px,(/Nk/))
+ endif
+ VALUES=rZERO
+ !
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolate@"//trim(INTERP_obj(ID)%what)//" Fourier",nshells)
  !
  do ik=1,Nk
-   do iv=1,nvalues
-     VALUES(iv,ik) = sum(engre(1:nshells,iv)*star(1:nshells,ik))
+   F_star=cZERO
+   if (.not.INTERPOLATE_is_serial) then
+     if (.not.px%element_1D(ik)) cycle
+   endif
+   if(Nk==K%nibz)        call c2a(v_in=K%pt(ik,:),       v_out=v,mode='ki2a')
+   if(Nk==K%nibz_FineGd) call c2a(v_in=K%pt_FineGd(ik,:),v_out=v,mode='ki2a')
+   do i_shell=1,nshells
+     call make_star(lattice_vectors(:,i_shell),nsym,int_sop,nstar,star_vec)  
+     do is=1,nstar
+       F_star(i_shell)=F_star(i_shell) + exp(cI*twopi*dot_product(v(:),star_vec(:,is)))
+     enddo
+     F_star(i_shell)=F_star(i_shell)/real(nstar)
    enddo
+   !
+   do iv=1,nvalues
+     VALUES(iv,ik) = sum(engre(1:nshells,iv)*F_star(1:nshells))
+   enddo
+   !
+   if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
+   !
  enddo
  !
- YAMBO_FREE(star)
+ if (.not.INTERPOLATE_is_serial) call PP_redux_wait(VALUES)
+ if (.not.INTERPOLATE_is_quiet)  call live_timing()
+ !
+ call timing('INTERPOLATE Fourier',OPR='stop')
  !
 end subroutine INTERPOLATION_fourier

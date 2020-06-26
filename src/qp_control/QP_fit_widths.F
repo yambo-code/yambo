@@ -32,7 +32,7 @@ subroutine QP_fit_widths(i_ACTION,bands,en,k,qp)
  use R_lattice,     ONLY:bz_samp
  use QP_m,          ONLY:QP_t
  use QP_CTL_m,      ONLY:QP_action
- use electrons,     ONLY:levels,n_sp_pol,n_spin,n_spinor,spin
+ use electrons,     ONLY:levels,n_sp_pol,spin
  use interfaces,    ONLY:el_density_of_states
  use POL_FIT_m,     ONLY:POL_Gilbreth_fit
  !
@@ -47,7 +47,7 @@ subroutine QP_fit_widths(i_ACTION,bands,en,k,qp)
  !
  integer  :: i_s,N,i_c,i_spin
  real(DP) :: Dx(qp%n_states),Dy(qp%n_states),COEFF(3),SIG(qp%n_states)
- real(SP) :: dos_broad,E_ref(2),DOS(n_spin,qp%n_states)
+ real(SP) :: dos_broad,E_ref(2),DOS(n_sp_pol,qp%n_states)
  logical  :: l_EP,l_EE
  character(1) :: where
  !
@@ -61,9 +61,11 @@ subroutine QP_fit_widths(i_ACTION,bands,en,k,qp)
  ! DOS
  !
  if (l_EP) then
-   do i_s=1,qp%n_states
-     call el_density_of_states(k,en,qp%E_bare(i_s),dos_broad,bands,DOS(:,i_s),USE_the_DbGd=.FALSE.,USE_Eo=.TRUE.)
-     DOS(:,i_s)=DOS(:,i_s)*real(n_spinor,SP)
+   do i_spin =1 , n_sp_pol
+     do i_s=1,qp%n_states
+       if (spin(qp%table(i_s,:))/=i_spin) cycle
+       call el_density_of_states(k,en,qp%E_bare(i_s),dos_broad,bands,DOS(i_spin,i_s),USE_the_DbGd=.FALSE.,USE_Eo=.TRUE.)
+     enddo
    enddo
  endif
  !

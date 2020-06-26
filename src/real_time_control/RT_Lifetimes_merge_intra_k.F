@@ -21,46 +21,39 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_DbGd_grid_consistency_check(IK_ref,k,E,k_DbGd,E_DbGd)
+subroutine RT_Lifetimes_merge_intra_k(what,LIFE)
  !
  use pars,           ONLY:SP
- use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp
- use vec_operate,    ONLY:v_is_zero
+ use parallel_m,     ONLY:PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,PP_redux_wait,&
+&                         PAR_COM_Xk_ibz_A2A,PAR_IND_Xk_ibz
+ use real_time,      ONLY:RT_nk,RT_bands,RT_ibz_coo
+ use R_lattice,      ONLY:nkibz
+ !
  implicit none
  !
- type(bz_samp), intent(in)    :: k,k_DbGd
- type(levels),  intent(in)    :: E
- type(levels),  intent(inout) :: E_DbGd
- integer                      :: IK_ref(E_DbGd%nk)
+ character(*)            :: what
+ real(SP), intent(inout) :: LIFE(RT_bands(1):RT_bands(2),RT_nk)
  !
  ! Work Space
  !
- integer :: ik,ik_DbGd,nb
- real(SP):: shifts(2)=0.
+ integer          :: NC,ik,COMM
  !
- IK_ref=-1
+ if (PAR_COM_Xk_ibz_A2A%n_CPU==1) return
  !
- nb=min(E%nb,E_DbGd%nb)
+ ! Prefactor
  !
- ik_loop: do ik=1,E%nk
-   do ik_DbGd=1,E_DbGd%nk
-     !
-     if (v_is_zero(k_DbGd%pt(ik_DbGd,:)-k%pt(ik,:))) then
-       !
-       shifts(1)=E%E(1,ik,1)-E_DbGd%E(1,ik_DbGd,1)
-       shifts(2)=E%E(nb,ik,1)-E_DbGd%E(nb,ik_DbGd,1)
-       !
-       IK_ref(ik_DbGd)=ik
-       !
-     endif
-     !
-   enddo
- enddo ik_loop
+ NC=1
+ if (what=="elph".or.what=="bose") NC=PAR_COM_PLASMA_INDEX%n_CPU
+ if (what=="elgm")                 NC=PAR_COM_Q_INDEX%n_CPU*PAR_COM_PLASMA_INDEX%n_CPU
  !
- ! Here I add E_Fermi as OCCUPATIONS_Fermi in ypp has been
- ! called without the DbGd loaded so the Fermi level has not been applied to E_DbGd.
+ if (NC>1) LIFE=LIFE/NC
  !
- E_DbGd%E(:,:,:)=E_DbGd%E(:,:,:)+(shifts(1)+shifts(2))/2.+E%E_Fermi
+ do ik=1,nkibz
+   !
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+   !
+   call PP_redux_wait(LIFE(:,RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+   !
+ enddo 
  !
-end subroutine
+end subroutine RT_Lifetimes_merge_intra_k

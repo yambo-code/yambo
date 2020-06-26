@@ -28,7 +28,7 @@ subroutine plot_and_project_1D(V,direction)
  use FFT_m,       ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
  use wave_func,   ONLY:wf_ng
  use R_lattice,   ONLY:g_vec
- use D_lattice,   ONLY:alat,a
+ use D_lattice,   ONLY:alat
  use LIVE_t,      ONLY:live_timing
  use vec_operate, ONLY:v_norm
  use com,         ONLY:msg

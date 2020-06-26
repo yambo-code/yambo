@@ -21,43 +21,49 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
+integer function k_FineGd_grid_consistency_check(k,E,k_FineGd,E_FineGd)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use parallel_m,     ONLY:PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,PP_redux_wait
- use real_time,      ONLY:REF_lifetime,l_initial_equilibrium,RT_nk,RT_bands
- use timing_m,       ONLY:timing
- !
+ use vec_operate,    ONLY:v_is_zero
  implicit none
  !
+ type(bz_samp), intent(in)    :: k,k_FineGd
  type(levels),  intent(in)    :: E
- type(bz_samp), intent(in)    :: k
- integer,       intent(in)    :: SAVE_index
- real(SP),      intent(inout) :: LIFE(RT_bands(1):RT_bands(2),RT_nk)
+ type(levels),  intent(inout) :: E_FineGd
  !
  ! Work Space
  !
- integer          :: ik
+ integer :: ik,ik_FineGd,nb
+ real(SP):: shifts(2)
  !
- call timing('RT life merge',OPR='start')
+ k_FineGd_grid_consistency_check=-1
  !
- do ik=1,RT_nk
-   !
-   if (SAVE_index>2) LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_PLASMA_INDEX%n_CPU)
-   if (SAVE_index>6) LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_Q_INDEX%n_CPU)
-   !
- enddo
+ nb=min(E%nb,E_FineGd%nb)
  !
- call PP_redux_wait(LIFE)
+ ik_loop: do ik=1,E%nk
+   do ik_FineGd=1,E_FineGd%nk
+     !
+     if (v_is_zero(k_FineGd%pt(ik_FineGd,:)-k%pt(ik,:))) then
+       !
+       shifts(1)=E%E(1,ik,1)-E_FineGd%E(1,ik_FineGd,1)
+       shifts(2)=E%E(nb,ik,1)-E_FineGd%E(nb,ik_FineGd,1)
+       !
+       exit  ik_loop
+       !
+     endif
+     !
+   enddo
+ enddo ik_loop
  !
- do ik=1,RT_nk
-   !
-   if (l_initial_equilibrium) REF_lifetime(:,ik,SAVE_index)=LIFE(:,ik)
-   !
- enddo 
+ if (abs(shifts(1)-shifts(2))>max(0.01*abs(shifts(1)),1.E-5) .or. ik_FineGd==E_FineGd%nk+1 ) return
  !
- call timing('RT life merge',OPR='stop')
+ k_FineGd_grid_consistency_check=ik_FineGd
  !
-end subroutine RT_Lifetimes_merge
+ ! Here I add E_Fermi as OCCUPATIONS_Fermi in ypp has been
+ ! called without the DbGd loaded so the Fermi level has not been applied to E_FineGd.
+ !
+ E_FineGd%E(:,:,:)=E_FineGd%E(:,:,:)+(shifts(1)+shifts(2))/2._SP+E%E_Fermi
+ !
+end function

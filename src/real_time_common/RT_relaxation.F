@@ -3,22 +3,22 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine RT_relaxation(E,k,q,Time)
@@ -54,10 +54,10 @@ subroutine RT_relaxation(E,k,q,Time)
  !
  !    i:  1 1      2  2        3 3 4 4 5 5 6 6 7 7 ...
  !    T:  T T+dT/2 T' T'+dT/2  ....
- ! 
+ !
  !    After Life_MEM_steps steps... I(extrapolation) E(valuation) dF
- ! 
- !    I     X      X  X          X X X  
+ !
+ !    I     X      X  X          X X X
  !    E  X                     X       X
  !    dF                       X       X
  !
@@ -84,7 +84,7 @@ subroutine RT_relaxation(E,k,q,Time)
  !
  ! Work Space
  !
- integer          :: ik
+ integer          :: ik,iq
  !
  if ( (.not.RT_is_statically_dephased.and..not.l_elphoton_scatt) .or. &
 &     (.not.RT_is_dynamically_dephased)                          .or. &
@@ -124,7 +124,7 @@ subroutine RT_relaxation(E,k,q,Time)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     call RT_ELPH_total_Kernel(ik,E,k,q,Time) 
+     call RT_ELPH_total_Kernel(ik,E,k,q,Time)
      !
    enddo
    !
@@ -150,30 +150,35 @@ subroutine RT_relaxation(E,k,q,Time)
    !
  endif
  !
- ! PARALLEL Mergering & N/dN conservation (of the evaluated Lifetimes)
- !=====================================================================
  if (l_RT_eval_lifetimes) then
-   if (l_elel_scatt) then
-     call RT_Lifetimes_merge(E,k,E_E_Hole_lifetime,1)
-     call RT_Lifetimes_merge(E,k,E_E_Electron_lifetime,2)
-   endif
-   if (l_elph_scatt) then
-     call RT_Lifetimes_merge(E,k,E_P_Hole_lifetime,3)
-     call RT_Lifetimes_merge(E,k,E_P_Electron_lifetime,4)
-     if(Bose_Temp>0._SP) then
-       call RT_Lifetimes_merge(E,k,E_P_Ho_abs_lifetime,5)
-       call RT_Lifetimes_merge(E,k,E_P_El_abs_lifetime,6)
-     endif
-   endif
-   if (l_elphoton_scatt) then
-     call RT_Lifetimes_merge(E,k,E_PHOT_Hole_lifetime,7)
-     call RT_Lifetimes_merge(E,k,E_PHOT_Electron_lifetime,8)
-   endif
+   !
+   ! PARALLEL Mergering
+   !====================
+   call RT_Lifetimes_merge_driver("INTRA_k")
+   !
  endif
  !
- if (l_RT_eval_lifetimes) call Impose_Conservations( )
+ call timing('RT relaxation (impose and idle)',OPR='start')
  !
- if (l_initial_equilibrium) return
+ if (l_RT_eval_lifetimes) then
+   !
+   ! Conservation Rules
+   !====================
+   call Impose_Conservations( )
+   !
+ endif
+ !
+ if (l_initial_equilibrium) then
+   !
+   ! PARALLEL Mergering
+   !====================
+   call RT_Lifetimes_merge_driver("REF")
+   !
+   call timing('RT relaxation (impose and idle)',OPR='stop')
+   !
+   return
+   !
+ endif
  !
  ! SAVE, extrapolate & N/dN conservation (of the extrapolated Lifetimes)
  !======================================================================
@@ -201,6 +206,8 @@ subroutine RT_relaxation(E,k,q,Time)
  !
  if (.not.l_RT_eval_lifetimes) call Impose_Conservations( )
  !
+ call timing('RT relaxation (impose and idle)',OPR='stop')
+ !
  contains
    !
    subroutine Impose_Conservations( )
@@ -211,11 +218,11 @@ subroutine RT_relaxation(E,k,q,Time)
      !
      ! Zero dN/dT & dE/dT & d(DeltaN)/dT
      !===================================
-     if (l_elel_scatt)     call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 
+     if (l_elel_scatt)     call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ')
      if (l_elph_scatt)     call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
      if (l_elph_scatt.and.Bose_Temp>0._SP) &
 &                          call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
-     if (l_elphoton_scatt) call RT_impose_zero_dE_and_dN(E,k,E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,'radiative') 
+     if (l_elphoton_scatt) call RT_impose_zero_dE_and_dN(E,k,E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,'radiative')
      !
    end subroutine
    !

@@ -309,14 +309,15 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  !
  ! ################  END  NEW MAPPING ##################
  !
- !
  ! Reporting
  !
  write (ch,'(i1,a)') k_grid_dim,'D'
  call msg('r','Compatible Grid is   ',trim(ch))
  !
- call msg('r','Base K vectors       ',(/' K_min[ 1 ]  ',' K_min[ 2 ]  ',' K_min[ 3 ]  '/))
- if (k_grid_dim>0) call msg('r','K_min[ 1 ] ',k_grid_b(1,:),"[rlu]")
+ if (k_grid_dim>0) then
+   call msg('r','Base K vectors       ',(/' K_min[ 1 ]  ',' K_min[ 2 ]  ',' K_min[ 3 ]  '/))
+   call msg('r','K_min[ 1 ] ',k_grid_b(1,:),"[rlu]")
+ endif
  if (k_grid_dim>1) call msg('r','K_min[ 2 ] ',k_grid_b(2,:),"[rlu]")
  if (k_grid_dim>2) call msg('r','K_min[ 3 ] ',k_grid_b(3,:),"[rlu]")
  !
@@ -338,6 +339,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  ! CLEAN
  !
  call k_ibz2bz(Xk,"d",.false.)
+ call k_ibz2bz(Xk,'i',.true.)
  return
  !
 1 continue
@@ -347,6 +349,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    k_lattice=-1
  endif
  call k_ibz2bz(Xk,"d",.false.)
+ !
+ call k_ibz2bz(Xk,'i',.true.)
  !
  contains
    !

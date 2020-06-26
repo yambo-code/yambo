@@ -34,14 +34,14 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
  use interfaces,    ONLY:WF_load,WF_free
- use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel,n_sp_pol
+ use electrons,     ONLY:levels,spin_occ,spin,nel,n_sp_pol
  use X_m,           ONLY:Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        X_drude_term,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
 &                        Co_factor,diam_term_exact,BSS_Wd
- use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,L_kind,BS_bands
+ use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind,BS_bands
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
@@ -69,7 +69,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2/n_sp_pol),&
 &                    para_term_w0,diam_term_used
 #if defined _PL
- complex(SP)       ::rotated_P(3),P_weighted(3)
+ complex(SP)       ::P_weighted(3)
  real(SP)          ::res_PL(2)
 #endif
  !
@@ -97,17 +97,17 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  !...Drude
  call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,drude_GreenF)
- if (l_drude) drude_GreenF=drude_GreenF*(Ken%f(Ken%bf,Ken%kf,Ken%sf)*(spin_occ-Ken%f(Ken%bf,Ken%kf,Ken%sf)))
  !
  ! Oscillators I/O & Eps0
  !========================
  !
- if( E_SOC_nbands==0.or.n_sp_pol==2) then
+ if( .not.BS_perturbative_SOC.or.n_sp_pol==2) then
    n_SOC=1
    Co_factor=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
  endif
  !
- if( E_SOC_nbands/=0.and.n_sp_pol==1) then
+ !
+ if( BS_perturbative_SOC.and.n_sp_pol==1) then
    n_SOC=2
    Co_factor=    1._SP     /(2._SP*pi)**3*d3k_factor*4._SP*pi
  endif
@@ -123,7 +123,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if (iq==1) then
    call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err,'K')
  else
-   call WF_load(WF,1,maxval(qindx_X(:,:,2)),BS_bands,(/1,Xk%nibz/),title='-Oscillators/R space')
+   call WF_load(WF,1,maxval(qindx_X(:,:,2)),BS_bands,(/1,Xk%nibz/),title='-Oscillators/R space/K_IP')
    call elemental_collision_free(BSE_scatt)
    call elemental_collision_alloc(BSE_scatt,NG=1,TITLE="BSE") 
  endif
@@ -158,9 +158,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
      if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
      !
-     if (E_SOC_nbands==0) E_plus_W=E_plus_W0
+     if (.not.BS_perturbative_SOC) E_plus_W=E_plus_W0
      !
-     if (E_SOC_nbands/=0) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
+     if (     BS_perturbative_SOC) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
      ! *length*   : DIP_projected(c,v,k) is    iq*<v|r|c> while I need    iq*<c|r|v> = -conjg(   iq*<v|r|c>)
      ! *velocity* : DIP_projected(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> =  conjg(q_ver*<v|r|c>)
@@ -300,7 +300,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  ! Drude term
  !============
- if (l_drude           ) X_drude_term(:)=       -drude_GreenF(:)       *Co_factor/ bare_qpg(iq,1)**2
+ if (l_drude           ) X_drude_term(:)=       -drude_GreenF(:)       *4._SP*pi/ bare_qpg(iq,1)**2
  if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W_bss%p(:)**2
  !
  Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)

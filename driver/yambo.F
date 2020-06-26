@@ -116,7 +116,10 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! iinf=0 => No error message from driver.c 
  !
- if (iinf/=0) return
+ if (iinf/=0) then
+   yambo=iinf
+   return
+ endif
  !
  ! PARALLEL and I/O Setup 
  !=======================

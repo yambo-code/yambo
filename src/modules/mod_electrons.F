@@ -24,6 +24,7 @@
 module electrons
  !
  use pars,  ONLY:SP,IP
+ !
 #include<memory.h>
  !
  real(SP) :: nel
@@ -64,9 +65,7 @@ module electrons
    integer         :: nk
    integer         :: nbf
    integer         :: nbm
-   integer         :: bf
-   integer         :: kf
-   integer         :: sf
+   integer         :: nbc(2)       ! Number of bands with NEQ carriers for yambo_rt
    real(SP)        :: E_Fermi
    real(SP)        :: E_dir_gap(2)       ! 1-2 refers to spin polarizations
    real(SP)        :: E_ind_gap(2)
@@ -90,37 +89,24 @@ module electrons
    complex(SP),allocatable :: GreenF_W(:,:,:,:)   
    complex(SP),allocatable :: GreenF(:,:,:,:)     
    ! 
-   ! Double energy and k-points grid
+   ! Fine grid energy and k-points grid
    !   
-   real(SP),   allocatable :: E_DbGd(:,:,:)        
-   real(SP),   allocatable :: W_DbGd(:,:,:)        
-   real(SP),   allocatable :: f_DbGd(:,:,:)        
-   real(SP),   allocatable :: df_DbGd(:,:,:)       
+   integer             :: nb_FineGd
+   integer             :: nk_FineGd
+   real(SP),   allocatable :: E_FineGd(:,:,:)        
+   real(SP),   allocatable :: W_FineGd(:,:,:)        
+   real(SP),   allocatable :: f_FineGd(:,:,:)        
+   !real(SP),   allocatable :: Z_FineGd(:,:,:)
+   real(SP),   allocatable :: df_FineGd(:,:,:)       
    !
    ! Perturbative SOC
    !
+   integer              :: nb_SOC
+   integer,    allocatable :: table_SOC(:,:,:)
    real(SP),   allocatable :: E_SOC(:,:)           
    !
  end type levels
  ! 
- ! Fine energy grid Tables
- !   
- integer  :: BZ_DbGd_max_filling = 1
- integer  :: BZ_DbGd_tot_nk
- integer  :: BZ_DbGd_tot_nk_levels
- integer  :: BZ_ASSOCIATED_nkpts
- integer  :: BZ_DbGd_nbands
- logical  :: DbGd_is_symmetry_expanded=.FALSE.
- integer ,allocatable :: BZ_DbGd_nkpt(:)
- integer ,allocatable :: BZ_DbGd_table(:,:,:)
- real(SP),allocatable :: BZ_DbGd_weight(:)
- real(SP),allocatable :: BZ_DbGd_kpts(:,:)
- !
- ! Perturbative SOC table
- !
- integer :: E_SOC_nbands
- integer, allocatable :: E_SOC_table(:,:,:)
- !
  contains
    !
    subroutine E_duplicate(Ei,Eo)
@@ -131,16 +117,17 @@ module electrons
      !
      naive=Eo%nk==0
      Eo%nb=Ei%nb
+     Eo%nb_SOC=Ei%nb_SOC
+     Eo%nb_FineGd=Ei%nb_FineGd
      if (naive) then
        Eo%nk=Ei%nk
        Eo%nbf=Ei%nbf
        Eo%nbm=Ei%nbm
-       Eo%bf=Ei%bf
-       Eo%kf=Ei%kf
-       Eo%sf=Ei%sf
+       Eo%nbc=Ei%nbc
        Eo%E_Fermi=Ei%E_Fermi
        Eo%E_VBM=Ei%E_VBM
        Eo%E_CBm=Ei%E_CBm
+       Eo%E_ind_gap=Ei%E_ind_gap
        Eo%E_dir_gap=Ei%E_dir_gap
        Eo%E_ind_gap=Ei%E_ind_gap
      endif
@@ -191,24 +178,27 @@ module electrons
      !
      ! E Double Grid
      !
-     if (BZ_DbGd_nbands>0.and.Ei%nk==Eo%nk) then
-       YAMBO_ALLOC(Eo%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
-       YAMBO_ALLOC(Eo%W_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
-       YAMBO_ALLOC(Eo%f_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
-       Eo%E_DbGd=Ei%E_DbGd
-       Eo%W_DbGd=Ei%W_DbGd
-       Eo%f_DbGd=Ei%f_DbGd
-       if(allocated(Ei%df_DbGd)) then
-         YAMBO_ALLOC(Eo%df_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
-         Eo%df_DbGd=Ei%df_DbGd
+     if (Eo%nb_FineGd/=0.and.Ei%nk==Eo%nk) then
+       Eo%nk_FineGd=Ei%nk_FineGd
+       YAMBO_ALLOC(Eo%E_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
+       YAMBO_ALLOC(Eo%W_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
+       YAMBO_ALLOC(Eo%f_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
+       Eo%E_FineGd=Ei%E_FineGd
+       Eo%W_FineGd=Ei%W_FineGd
+       Eo%f_FineGd=Ei%f_FineGd
+       if(allocated(Ei%df_FineGd)) then
+         YAMBO_ALLOC(Eo%df_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
+         Eo%df_FineGd=Ei%df_FineGd
        endif
      endif
      !
      ! E_SOC
      !
-     if (E_SOC_nbands/=0.and.Ei%nk==Eo%nk) then
-       YAMBO_ALLOC(Eo%E_SOC,(E_SOC_nbands,Eo%nk))
+     if (Eo%nb_SOC/=0.and.Ei%nk==Eo%nk) then
+       YAMBO_ALLOC(Eo%E_SOC,(Eo%nb_SOC,Eo%nk))
        Eo%E_SOC=Ei%E_SOC
+       YAMBO_ALLOC(Eo%table_SOC,(2,Eo%nb,Eo%nk))
+       Eo%table_SOC=Ei%table_SOC
      endif
      !
    end subroutine
@@ -225,8 +215,7 @@ module electrons
      E%nk=0
      E%nbf=0 
      E%nbm=0
-     E%bf=0
-     E%kf=0 
+     E%nbc=0
      E%GreenF_n_E_steps=0 
      E%GreenF_is_causal=.FALSE. 
      YAMBO_FREE(E%E)
@@ -239,34 +228,28 @@ module electrons
      YAMBO_FREE(E%GreenF)
      YAMBO_FREE(E%GreenF_W)
      !
-     call E_DbGd_components_reset(E,.FALSE.)
+     call E_FineGd_components_reset(E,.FALSE.)
      !
+     E%nb_SOC=0
      YAMBO_FREE(E%E_SOC)
+     YAMBO_FREE(E%table_SOC)
      !
    end subroutine
    !
-   subroutine E_DbGd_components_reset(E,FULL_RESET)
+   subroutine E_FineGd_components_reset(E,FULL_RESET)
      !
      type(levels)::E
      logical     ::FULL_RESET
      !
-     YAMBO_FREE(E%E_DbGd)
-     YAMBO_FREE(E%W_DbGd)
-     YAMBO_FREE(E%f_DbGd)
-     YAMBO_FREE(E%df_DbGd)
-     !
+     E%nb_FineGd=0
+     E%nk_FineGd=0
      !
      if (.not.FULL_RESET) return
      !
-     BZ_DbGd_tot_nk=0
-     BZ_DbGd_tot_nk_levels=0
-     BZ_ASSOCIATED_nkpts=0
-     BZ_DbGd_nbands=0
-     !
-     YAMBO_FREE(BZ_DbGd_nkpt)
-     YAMBO_FREE(BZ_DbGd_table)
-     YAMBO_FREE(BZ_DbGd_weight)
-     YAMBO_FREE(BZ_DbGd_kpts)
+     YAMBO_FREE(E%E_FineGd)
+     YAMBO_FREE(E%W_FineGd)
+     YAMBO_FREE(E%f_FineGd)
+     YAMBO_FREE(E%df_FineGd)
      !
    end subroutine
    !
@@ -275,6 +258,15 @@ module electrons
      !
      spin=1
      if (n_sp_pol==2) spin=v(4)
+     !
+   end function
+   !
+   character(2) function spin_string(i_spin)
+     integer :: i_spin
+     !
+     if (n_sp_pol==1) spin_string="  "
+     if (i_spin==1)   spin_string="up"
+     if (i_spin==2)   spin_string="dn"
      !
    end function
    !

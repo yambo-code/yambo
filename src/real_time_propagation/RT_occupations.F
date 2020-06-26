@@ -24,7 +24,7 @@
 subroutine RT_occupations(dG)
  !
  use pars,           ONLY:SP
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_G_k_range
  use real_time,      ONLY:RT_all2ibz,RT_E_occupations,&
 &                         RT_H_occupations,RT_delta_occupations,RT_bands,RT_nk,RT_nbands,&
 &                         G_lesser_reference,l_RT_rotate_DM
@@ -34,7 +34,7 @@ subroutine RT_occupations(dG)
  !
  implicit none
  !
- complex(SP), intent(in) :: dG(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP), intent(in) :: dG(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
  !
  ! Work Space
  !

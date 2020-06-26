@@ -21,16 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine INTERPOLATION_integral_respect(ID,OUT_k,OUT,DO_it)
+subroutine INTERPOLATION_integral_respect(ID,OUT_k,OUT,NK)
  !
  use pars,         ONLY:SP
  use R_lattice,    ONLY:bz_samp
  use interpolate,  ONLY:INTERP_obj
  !
- integer      , intent(in)    :: ID
+ implicit none
+ !
+ integer      , intent(in)    :: ID,NK
  type(bz_samp), intent(in)    :: OUT_k
- real(SP)     , intent(inout) :: OUT(INTERP_obj(ID)%nb(1):INTERP_obj(ID)%nb(2),OUT_k%nibz,INTERP_obj(ID)%D)
- logical,       intent(in)    :: DO_it
+ real(SP)     , intent(inout) :: OUT(INTERP_obj(ID)%nb(1):INTERP_obj(ID)%nb(2),NK,INTERP_obj(ID)%D)
  !
  ! Work Space
  !
@@ -49,21 +50,20 @@ subroutine INTERPOLATION_integral_respect(ID,OUT_k,OUT,DO_it)
  enddo
  !
  do i1=INTERP_obj(ID)%nb(1),INTERP_obj(ID)%nb(2)
-   do ik=1,OUT_k%nibz
+   do ik=1,NK
      do i3=1,INTERP_obj(ID)%D
-       INTERP_int(i3)=INTERP_int(i3)+OUT(i1,ik,i3)*OUT_k%weights(ik)
+       if(NK==OUT_k%nibz)        INTERP_int(i3)=INTERP_int(i3)+OUT(i1,ik,i3)*OUT_k%weights(ik)
+       if(NK==OUT_k%nibz_FineGd) INTERP_int(i3)=INTERP_int(i3)+OUT(i1,ik,i3)*OUT_k%weights_FineGd(ik)
      enddo
    enddo
  enddo
  !
- if (DO_it) then
-   do i1=INTERP_obj(ID)%nb(1),INTERP_obj(ID)%nb(2)
-     do ik=1,OUT_k%nibz
-       do i3=1,INTERP_obj(ID)%D
-         if (abs(INTERP_int(i3))>0.) OUT(i1,ik,i3)=OUT(i1,ik,i3)*ORI_int(i3)/INTERP_int(i3)
-       enddo
+ do i1=INTERP_obj(ID)%nb(1),INTERP_obj(ID)%nb(2)
+   do ik=1,NK
+     do i3=1,INTERP_obj(ID)%D
+       if (abs(INTERP_int(i3))>0._SP) OUT(i1,ik,i3)=OUT(i1,ik,i3)*ORI_int(i3)/INTERP_int(i3)
      enddo
    enddo
- endif
+ enddo
  !
 end subroutine INTERPOLATION_integral_respect

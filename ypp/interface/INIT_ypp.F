@@ -29,8 +29,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,BANDS_bands,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
-&                         l_wannier,l_wavefunction,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
-&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,l_angular_momentum,l_position,&
+&                         l_wannier,l_wavefunction,n_FineGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
+&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,FineGd_DB1_paths,l_angular_momentum,l_position,&
 &                         l_QP_DB_expand
  use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev
@@ -591,7 +591,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- if (l_map_kpts) call initactivate(1,"BZ_DbGd_Nk SkipCheck noBZExpand NoWeights")
+ if (l_map_kpts) call initactivate(1,"BZ_FineGd_nkpts SkipCheck NoWeights")
  !
  if (l_map_WFs)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map bands_buffer")
  !
@@ -762,15 +762,15 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  endif
  !
  if (l_map_kpts) then
-   call PARSER_array(mode="CH dimensions",VAR="DbGd_DB1_paths",N=n_DbGd_DBs,M=1)
-   if (n_DbGd_DBs>0) then
-     call PARSER_array(mode="read",VAR="DbGd_DB1_paths",N=n_DbGd_DBs,M=1,CH_v=DbGd_DB1_paths(:n_DbGd_DBs,:))
+   call PARSER_array(mode="CH dimensions",VAR="FineGd_DB1_paths",N=n_FineGd_DBs,M=1)
+   if (n_FineGd_DBs>0) then
+     call PARSER_array(mode="read",VAR="FineGd_DB1_paths",N=n_FineGd_DBs,M=1,CH_v=FineGd_DB1_paths(:n_FineGd_DBs,:))
    else
-     n_DbGd_DBs=1
-     DbGd_DB1_paths(1,1)="none"
+     n_FineGd_DBs=1
+     FineGd_DB1_paths(1,1)="none"
    endif
-   call PARSER_array(mode="write",VAR="DbGd_DB1_paths",DESC="Paths to the SAVE folders with the Double Grid DB1",&
-&                    N=n_DbGd_DBs,M=1,CH_v=DbGd_DB1_paths(:n_DbGd_DBs,:))
+   call PARSER_array(mode="write",VAR="FineGd_DB1_paths",DESC="Paths to the SAVE folders with the Fine Grid DB1",&
+&                    N=n_FineGd_DBs,M=1,CH_v=FineGd_DB1_paths(:n_FineGd_DBs,:))
  endif
  !
  ! LOG/REP files

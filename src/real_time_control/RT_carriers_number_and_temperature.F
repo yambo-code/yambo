@@ -27,7 +27,7 @@ subroutine RT_carriers_number(en,k,Ncarr)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use RT_control,     ONLY:NE_i_start_time
- use real_time,      ONLY:RT_ibz_coo,DbGd_ibz_coo,l_RT_uses_E_DbGd,RT_Nk_ibz,NE_i_time,       &
+ use real_time,      ONLY:RT_ibz_coo,RT_Nk_ibz,NE_i_time,RT_E_and_k,       &
 &                         RT_E_occupations,RT_H_occupations,RT_bands,RT_delta_occupations
  !
  implicit none
@@ -49,13 +49,7 @@ subroutine RT_carriers_number(en,k,Ncarr)
    do ib=RT_bands(1),RT_bands(2)
      VALUE_tmp=0._SP
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       if (l_RT_uses_E_DbGd) then
-         ik_E=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-         tmp_E=en%E_DbGd(ib,ik_E,1)
-       else
-         tmp_E=en%E(ib,ik,1)
-       endif
-       if ( tmp_E<=0._SP ) then
+       if ( RT_E_and_k%E(ib,ik_RT,1)<=0._SP ) then
          if(NE_i_time==NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib,ik_RT)
          if(NE_i_time/=NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)-RT_delta_occupations(ib,ik_RT)
        else

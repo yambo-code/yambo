@@ -27,7 +27,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:DbGd_ibz_coo,l_RT_uses_E_DbGd,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
+ use real_time,      ONLY:RT_E_and_k,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
 &                         REF_lifetime,G_lesser_reference,&
 &                         l_initial_equilibrium,RT_delta_occupations,&
 &                         l_RT_impose_E,l_RT_impose_for_metals,RT_nk,RT_ibz_coo,RT_Nk_ibz,&
@@ -122,8 +122,6 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
-       iE_rim=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-       !
        f0_E=real(         aimag(G_lesser_reference(ib,ib,ik_rim)),DP)
        f0_H=real(spin_occ-aimag(G_lesser_reference(ib,ib,ik_rim)),DP)
        !
@@ -149,8 +147,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
          Elec_fac0=0._DP
        endif
        !
-       if(.not.l_RT_uses_E_DbGd) En=real(E%E(ib,ik,1)         ,DP)
-       if(     l_RT_uses_E_DbGd) En=real(E%E_DbGd(ib,iE_rim,1),DP) 
+       En=real(RT_E_and_k%E(ib,ik_rim,1),DP)
        !
        if (En<=0._DP) then
          !
@@ -283,13 +280,9 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
    !
    do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     !
-     iE_rim=ik_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-     !
      do ib=RT_bands(1),RT_bands(2)
        !
-       if(.not.l_RT_uses_E_DbGd) En=real(E%E(ib,ik,1)         ,DP)
-       if(     l_RT_uses_E_DbGd) En=real(E%E_DbGd(ib,iE_rim,1),DP)
+       En=real(RT_E_and_k%E(ib,ik_rim,1),DP)
        !
        if (En<=0._DP) prefactor_to_use=prefactor(1)
        if (En> 0._DP) prefactor_to_use=prefactor(2)

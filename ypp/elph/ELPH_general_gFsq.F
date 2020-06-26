@@ -40,7 +40,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  use BS,                  ONLY:BS_K_dim,BS_bands
  use QP_m,                ONLY:QP_n_states,QP_table,QP_state,QP_nb,QP_nk,QP_states_simmetrize
  use LIVE_t,              ONLY:live_timing
- use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid,PAR_nQ
+ use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid,PAR_nQ_bz
  use interfaces,          ONLY:PARALLEL_index
  use functions,           ONLY:Fermi_fnc_derivative
  !
@@ -117,7 +117,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  !
  if (     elph_use_q_grid) nq_loop=q%nbz
  if (.not.elph_use_q_grid) nq_loop=elph_nDBs_used
- PAR_nQ=nq_loop
+ PAR_nQ_bz=nq_loop
  !
  call elph_global_alloc('gFsq')
  ! 

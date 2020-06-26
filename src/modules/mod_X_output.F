@@ -79,7 +79,7 @@ module X_output
      integer            :: iq
      integer,optional   :: ig
      real(SP)           :: Q_plus_G_pt(3)
-     character(msg_len) :: message(9)
+     character(msg_len) :: message(11)
      !
      if (iq==1.and.ig==1) then
        message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//')',post='q->0 direction')

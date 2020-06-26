@@ -105,7 +105,8 @@ subroutine K_magnons_IP(iq,w,Dip)
        DIP_expanded(1)=-conjg(BSE_scatt%rhotw(1))
        call scatter_Bamp_spin(BSE_scatt,'y')
        DIP_expanded(2)=-conjg(BSE_scatt%rhotw(1))
-       !BSE_scatt%is(4)=(i_sp_pol)
+       !The following is commented because it is not used at present
+       !BSE_scatt%os(4)=(i_sp_pol)
        !call scatter_Bamp_spin(BSE_scatt,'z')
        !DIP_expanded(3)=-conjg(BSE_scatt%rhotw(1))
        !

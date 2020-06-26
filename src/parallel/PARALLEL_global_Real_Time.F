@@ -40,15 +40,15 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
 &                        PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A
  ! IND
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_B_mat,PAR_IND_WF_k, &
-&                        PAR_IND_Q,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_DIPk_ibz
+&                        PAR_IND_Q_bz,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_DIPk_ibz
  ! INDEX
- use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_Xk_ibz_index,PAR_Q_index,PAR_COM_VAL_INDEX_X,PAR_COM_QP_INDEX,&
+ use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_Xk_ibz_index,PAR_Q_bz_index,PAR_COM_VAL_INDEX_X,PAR_COM_QP_INDEX,&
 &                        PAR_COM_CON_INDEX_X
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_nQ,PAR_Xk_nibz,PAR_G_k_range
+ use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_nQ_bz,PAR_Xk_nibz,PAR_G_k_range
  ! ID's
  use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Bp_mat_ID,PAR_IND_Xk_ibz_ID,      &
-&                        PAR_IND_DIPk_ibz_ID,PAR_IND_Q_ID,PAR_IND_WF_b_ID
+&                        PAR_IND_DIPk_ibz_ID,PAR_IND_Q_bz_ID,PAR_IND_WF_b_ID
 #if defined _PHEL
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_Q_ibz_INDEX,PAR_COM_Xk_bz_INDEX,    &
@@ -265,15 +265,15 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !   "q" -> Q-points (BZ)
  !.........................................................................
  !
- call PARALLEL_index(PAR_IND_Q,(/q%nbz/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
- PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id
- PAR_nQ=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)
+ call PARALLEL_index(PAR_IND_Q_bz,(/q%nbz/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+ PAR_IND_Q_bz_ID=PAR_COM_Q_INDEX%CPU_id
+ PAR_nQ_bz=PAR_IND_Q_bz%n_of_elements(PAR_IND_Q_bz_ID+1)
  !
- YAMBO_ALLOC(PAR_Q_index,(q%nbz))
- call PAR_build_index(PAR_IND_Q,q%nbz,PAR_Q_index,PAR_nQ)
+ YAMBO_ALLOC(PAR_Q_bz_index,(q%nbz))
+ call PAR_build_index(PAR_IND_Q_bz,q%nbz,PAR_Q_bz_index,PAR_nQ_bz)
  !
  call PARALLEL_live_message("Q(bz)",ENVIRONMENT="Real_Time",&
-&                           LOADED=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1),TOTAL=q%nbz,&
+&                           LOADED=PAR_IND_Q_bz%n_of_elements(PAR_IND_Q_bz_ID+1),TOTAL=q%nbz,&
 &                           NCPU=PAR_COM_Q_INDEX%n_CPU)
  !
 

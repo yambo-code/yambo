@@ -35,9 +35,9 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use D_lattice,     ONLY:DL_vol,sop_inv
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,MPI_COMM_NULL,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q_bz,MPI_COMM_NULL,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
-&                        PAR_IND_Bp_mat,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_INDEX
+&                        PAR_IND_Bp_mat,PAR_nQ_bz,PAR_COM_G_b_A2A,PAR_COM_Q_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_HXC_local,COLLISIONS_HXC_MB,&
 &                        COLL_bands,HXC_COLL_element,HXC_collisions,COH_COLL_element,COH_collisions,&
@@ -225,7 +225,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  n_steps=0
  if (COLLISIONS_HXC_local)                      n_steps=n_steps+PAR_NC_local*K%nibz*PAR_n_Bp_mat_elements
- if (COLLISIONS_HXC_MB.or.l_use_COH_collisions) n_steps=n_steps+PAR_NC_local*PAR_nQ*PAR_n_Bp_mat_elements
+ if (COLLISIONS_HXC_MB.or.l_use_COH_collisions) n_steps=n_steps+PAR_NC_local*PAR_nQ_bz*PAR_n_Bp_mat_elements
  !
  ! Define the local COMM
  !
@@ -347,7 +347,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      !
      do i_q_fake=1,q%nbz
        !
-       if (.not.PAR_IND_Q%element_1D(i_q_fake)) cycle
+       if (.not.PAR_IND_Q_bz%element_1D(i_q_fake)) cycle
        !
        i_p_bz  =qindx_S(i_k,i_q_fake,1)
        i_p     =k%sstar(i_p_bz,1)
@@ -468,7 +468,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      !
      do iqbz=1,q%nbz
        !
-       if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
+       if (.not.PAR_IND_Q_bz%element_1D(iqbz)) cycle
        !
        iqibz    =q%sstar(iqbz,1)
        iqs      =q%sstar(iqbz,2)

@@ -49,7 +49,7 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
 #endif
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
  use functions,      ONLY:bose_f
- use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_ibz_index
+ use parallel_m,     ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_Xk_ibz_index
  use parser_m,       ONLY:parser
  !
  implicit none
@@ -92,11 +92,11 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
  !
  do iqbz=1,q%nbz
    !
-   if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
+   if (.not.PAR_IND_Q_bz%element_1D(iqbz)) cycle
    !
    ik_m_q =k%sstar(qindx_S(ik,iqbz,1),1)
    !
-   iq_mem=PAR_Q_index(iqbz)
+   iq_mem=PAR_Q_bz_index(iqbz)
    !
    do il=elph_branches(1),elph_branches(2)
      !

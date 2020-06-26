@@ -216,7 +216,7 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_SLK
  !
  ! ... BZ sampling
- type(PP_indexes),SAVE :: PAR_IND_Q
+ type(PP_indexes),SAVE :: PAR_IND_Q_ibz
  type(PP_indexes),SAVE :: PAR_IND_Q_bz
  type(PP_indexes),SAVE :: PAR_IND_Kk_ibz
  type(PP_indexes),SAVE :: PAR_IND_Xk_ibz
@@ -288,7 +288,8 @@ module parallel_m
  integer            :: PAR_IND_WF_k_ID
  !
  ! ... BZ
- integer            :: PAR_IND_Q_ID
+ integer            :: PAR_IND_Q_ibz_ID
+ integer            :: PAR_IND_Q_bz_ID
  integer            :: PAR_IND_Kk_ibz_ID
  integer            :: PAR_IND_Xk_ibz_ID
  integer            :: PAR_IND_Xk_bz_ID
@@ -413,23 +414,24 @@ module parallel_m
  !
  ! ... and dimensions (used for automatic cpu distribution)
  !=========================================================
- integer            :: PAR_K_range      = 0
- integer            :: PAR_EH_range     = 0
- integer            :: PAR_QP_range     = 0
- integer            :: PAR_Q_range(2)   = 0
- integer            :: PAR_Dip_ib(2)    = 0
- integer            :: PAR_Dip_ib_lim(2)= 0
- integer            :: PAR_X_ib(2)      = 0
- integer            :: PAR_X_iq(2)      = 0
- integer            :: PAR_n_bands(2)   = 0
- integer            :: PAR_n_c_bands(2) = 0
- integer            :: PAR_n_v_bands(2) = 0
- integer            :: PAR_n_G_vectors  = 0
- integer            :: PAR_G_k_range(2) = 0  ! For parallel I/O of G
-#if defined _PHEL
- integer            :: PAR_PHEL_K_range   = 0
- integer            :: PAR_PHEL_Q_range(2)   = 0
-#endif
+ integer            :: PAR_K_range       = 0
+ integer            :: PAR_EH_range      = 0
+ integer            :: PAR_QP_range      = 0
+ integer            :: PAR_Q_ibz_range(2)= 0
+ integer            :: PAR_Q_bz_range(2) = 0
+ integer            :: PAR_Dip_ib(2)     = 0
+ integer            :: PAR_Dip_ib_lim(2) = 0
+ integer            :: PAR_X_ib(2)       = 0
+ integer            :: PAR_X_iq(2)       = 0
+ integer            :: PAR_n_bands(2)    = 0
+ integer            :: PAR_n_c_bands(2)  = 0
+ integer            :: PAR_n_v_bands(2)  = 0
+ integer            :: PAR_n_G_vectors   = 0
+ integer            :: PAR_G_k_range(2)  = 0  ! For parallel I/O of G
+ #if defined _PHEL
+  integer            :: PAR_PHEL_K_range   = 0
+  integer            :: PAR_PHEL_Q_range(2)   = 0
+ #endif
  !
  ! ... and derived variables
  !==========================
@@ -443,8 +445,8 @@ module parallel_m
  integer,allocatable:: PAR_B_mat_index(:,:)
  integer            :: PAR_n_Bp_mat_elements
  integer,allocatable:: PAR_Bp_mat_index(:,:)
- integer            :: PAR_nQ
- integer,allocatable:: PAR_Q_index(:)
+ integer            :: PAR_nQ_ibz
+ integer,allocatable:: PAR_Q_ibz_index(:)
  integer            :: PAR_nQ_bz
  integer,allocatable:: PAR_Q_bz_index(:)
  integer            :: PAR_Kk_nibz

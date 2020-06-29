@@ -88,9 +88,7 @@ subroutine K_magnons_IP(iq,Xk,BSE_scatt,w,Dip)
      !
      if(iq==1) then
        !
-       write(*,*) 'pippo1'
        DIP_expanded = DIP_rotated(ic,iv,ik_bz,i_sp_pol,"DIP_S",Xk)
-       write(*,*) 'pippo2'
        !
      else
        !

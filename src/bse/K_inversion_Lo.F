@@ -33,7 +33,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
 &                         BSS_eh_table,BSS_eh_E,BSS_eh_f,&
 &                         BSS_desc,BSS_eh_W,&
 &                         BSS_add_antiresonant,K_diago_in_BS_mat,BS_diagonal
- use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q,BS_perturbative_SOC
+ use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use LIVE_t,         ONLY:live_timing
  use descriptors,    ONLY:IO_desc_add
@@ -264,6 +264,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  call IO_desc_add(BSS_desc,kind="s",str=" ",S=" ")
  !
- call IO_desc_add(BSS_desc,kind="i",str="[INV] BZ Double Grid points",I=(/k%nibz+k%nibz_FineGd/))
+ if (k%nibz_FineGd>0) then
+   call IO_desc_add(BSS_desc,kind="i",str="[INV] BZ Double Grid points",I=(/k%nibz+k%nibz_FineGd/))
+ endif
  !
 end subroutine K_inversion_Lo

@@ -41,7 +41,7 @@ integer function io_ELPH_old(ID,what)
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table
  use matrix_operate, ONLY:mat_c2r,mat_r2c
- use parallel_m,     ONLY:PAR_Q_index
+ use parallel_m,     ONLY:PAR_Q_ibz_index
  use vec_operate,    ONLY:rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
  use timing_m,       ONLY:timing
@@ -171,8 +171,8 @@ integer function io_ELPH_old(ID,what)
    endif
    !
    iq_mem=iq
-   if (allocated(PAR_Q_index)) then
-     iq_mem=PAR_Q_index(iq)
+   if (allocated(PAR_Q_ibz_index)) then
+     iq_mem=PAR_Q_ibz_index(iq)
    endif
    !
    call io_bulk(ID,VAR="ELPH_GFSQ_fan_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))

@@ -80,8 +80,9 @@ subroutine K_magnons_IP(iq,Xk,BSE_scatt,w,Dip)
      if(i_sp_pol==1.and.n_sp_pol==2) i_sp_pol_rev=2
      if(i_sp_pol==2.and.n_sp_pol==2) i_sp_pol_rev=1
      !
-     ! notice: in optics q=0 requires a special treatment due to the non analytic behaviour
-     !         not sure this is needed for magnons as well. To be checked
+     ! notice:
+     ! In optics q=0 requires a special treatment due to the non analytic behaviour
+     ! This is needed for magnons.
      !
      if(iq==1) then
        !
@@ -103,13 +104,13 @@ subroutine K_magnons_IP(iq,Xk,BSE_scatt,w,Dip)
        BSE_scatt%qs=(/iGo,iq,1/)
        !
        call scatter_Bamp_spin(BSE_scatt,'x')
-       DIP_expanded(1)=-conjg(BSE_scatt%rhotw(1))
+       DIP_expanded(1)=-BSE_scatt%rhotw(1)
        call scatter_Bamp_spin(BSE_scatt,'y')
-       DIP_expanded(2)=-conjg(BSE_scatt%rhotw(1))
+       DIP_expanded(2)=-BSE_scatt%rhotw(1)
        !The following is commented because it is not used at present
        !BSE_scatt%os(4)=(i_sp_pol)
        !call scatter_Bamp_spin(BSE_scatt,'z')
-       !DIP_expanded(3)=-conjg(BSE_scatt%rhotw(1))
+       !DIP_expanded(3)=-BSE_scatt%rhotw(1)
        !
      endif
      !

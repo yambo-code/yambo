@@ -46,9 +46,12 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! 
  ! Work Space
  !
- integer           :: ID,i_err,i_s,n_max_threads,i_cpu
+ integer           :: ID,i_err,i_s,n_max_threads,i_cpu,i_dev,ierr
  character(lchlen) :: dumb_ch
  integer, external :: io_DB1
+#ifdef _CUDA
+ integer, external :: cudaGetDevice
+#endif
  !
  !
  call section('*','MPI/OPENMP structure, Files & I/O Directories') 
@@ -120,6 +123,8 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', 'CUDA devices        ',have_cuda_devices)
  call msg('r', 'CUDA visible dev    ',trim(cuda_visible_devices))
  call msg('r', 'MPI tasks / GPU     ',cuda_gpu_subscription)
+ ierr = cudaGetDevice(i_dev)
+ call msg('s', 'MPI assigned to GPU ',i_dev)
 #endif
  !
  ! I/O and more

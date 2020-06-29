@@ -38,7 +38,7 @@ module wave_func
    integer    , allocatable :: index(:,:,:)
    logical    , allocatable :: state(:,:,:)
    logical                  :: to_load = .TRUE.
-   complex(SP), allocatable DEV_ATTRIBUTE :: c_d(:,:,:)
+   complex(SP), allocatable DEV_ATTR :: c_d(:,:,:)
  end type WAVEs
  !
  ! Buffered WFs
@@ -60,7 +60,7 @@ module wave_func
  integer                :: wf_nb_io_groups
  !
  integer                :: wf_nb_to_load
- integer, allocatable   :: wf_b_indx(:)            ! given ib_to_load=1,wf_nb_to_load returns the band index
+ integer, allocatable   :: wf_b_indx(:)   ! given ib_to_load=1,wf_nb_to_load returns the band index
  !
  ! Max Num. of COMPONENTS
  !
@@ -89,7 +89,7 @@ module wave_func
  ! Table correspondance G-vec <-> Components: G_ic = wf_igk(ic,ik)
  !
  integer,    allocatable:: wf_igk(:,:)
- integer,    allocatable DEV_ATTRIBUTE :: wf_igk_d(:,:)
+ integer,    allocatable DEV_ATTR :: wf_igk_d(:,:)
  logical                :: wf_norm_test
  !
  ! Allocation/deallocation messaging verbosity
@@ -109,7 +109,7 @@ module wave_func
      use pars,       ONLY: SP
      integer            :: ID
      complex(SP), optional :: wf(:,:,:)
-     complex(SP), optional DEV_ATTRIBUTE :: wf_d(:,:,:)
+     complex(SP), optional DEV_ATTR :: wf_d(:,:,:)
    end function
    !
    function WF_symm(ifft,isc)
@@ -124,7 +124,7 @@ module wave_func
      use pars,        ONLY: SP
      use electrons,   ONLY: n_spinor
      integer             :: ifft,isc(4)
-     complex(SP),dimension(n_spinor) DEV_ATTRIBUTE :: WF_symm_gpu
+     complex(SP),dimension(n_spinor) DEV_ATTR :: WF_symm_gpu
    end function
 #endif
    !

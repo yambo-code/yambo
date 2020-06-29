@@ -38,7 +38,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use wave_func,      ONLY:WF_buffered_IO
  use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads
  use LIVE_t,         ONLY:USER_wall_time_string
- use cuda_m,         ONLY:cuda_setup,cuda_visible_devices,have_cuda_devices
+ use cuda_m,         ONLY:cuda_visible_devices,have_cuda_devices,cuda_gpu_subscription
  implicit none
  !
  type(levels)  :: en
@@ -90,12 +90,6 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  !
 #endif
  !
- ! GET CUDA ENVIROMENT defs 
- !============================
- !
- call cuda_setup()
- !
- !
  ! CPU structure REPORT
  !======================
  !
@@ -125,6 +119,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', 'CUDA support        ',"yes")
  call msg('r', 'CUDA devices        ',have_cuda_devices)
  call msg('r', 'CUDA visible dev    ',trim(cuda_visible_devices))
+ call msg('r', 'MPI tasks / GPU     ',cuda_gpu_subscription)
 #endif
  !
  ! I/O and more

@@ -41,6 +41,7 @@ module cuda_m
   !
   logical:: have_cuda_devices=.false.
   character(256) :: cuda_visible_devices=" "
+  integer:: cuda_gpu_subscription
 
   logical:: cuda_linalg_init=.false.
 #ifdef _CUDA
@@ -72,6 +73,8 @@ module cuda_m
   public :: cuda_getstat
   public :: cuda_devsync
   !
+  public :: cuda_gpu_subscription
+  !
   public :: stream_kind
   public :: stream_default
   public :: stream_h2d
@@ -83,6 +86,30 @@ contains
     implicit none
     integer :: ndev,myid_host_loc
     integer :: ierr
+    !
+    cuda_gpu_subscription=1
+    !
+    ! GPU assignment
+    ! This needs to be done first
+    !
+#if defined _CUDA && defined _MPI
+    !
+    myid_host_loc=PAR_COM_HOST%CPU_id
+    !
+    ierr = cudaGetDeviceCount( ndev )
+    if (ierr/=0) call error("[GPU] cannot get DeviceCount")
+    ierr = cudaSetDevice(mod(myid_host_loc, ndev))
+    if (ierr/=0) call error("[GPU] cannot set device")
+    ierr = cudaDeviceSynchronize()
+    if (ierr/=0) call error("[GPU] cannot device-sync")
+    !
+    cuda_gpu_subscription=PAR_COM_HOST%n_CPU / ndev
+    !
+    !<debug>
+    !write(*,*) "MPI ", myid, " on node ", trim(host_name), " is using GPU: ", mod(myid_host_loc, ndev)
+    !</debug>
+    !
+#endif
     !
 #if defined _CUDA
     !
@@ -96,26 +123,6 @@ contains
     !
 #else
     have_cuda_devices=.false.
-#endif
-
-    !
-    ! gpu assignment
-    !
-#if defined _CUDA && defined _MPI
-    !
-    myid_host_loc=PAR_COM_HOST%CPU_id
-    !
-    ierr = cudaGetDeviceCount( ndev )
-    if (ierr/=0) call error("[GPU] cannot get DeviceCount")
-    ierr = cudaSetDevice(mod(myid_host_loc, ndev))
-    if (ierr/=0) call error("[GPU] cannot set device")
-    ierr = cudaDeviceSynchronize()
-    if (ierr/=0) call error("[GPU] cannot device-sync")
-    !
-#if defined(__DEBUG)
-    write(*,*) "MPI ", myid, " on node ", host_name, " is using GPU: ", mod(myid_host_loc, ndev)
-#endif
-    !
 #endif
     !
   end subroutine cuda_setup

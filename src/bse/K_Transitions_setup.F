@@ -353,8 +353,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
 #if defined _KERR
      if(l_magnons.and.n_sp_pol==2) then
-       if (i_sp==1) f_e = (         Ken%f(iv,ikp,2))/spin_occ
-       if (i_sp==2) f_e = (         Ken%f(iv,ikp,1))/spin_occ
+       if (i_sp==1) f_e = Ken%f(iv,ikp,2)/spin_occ
+       if (i_sp==2) f_e = Ken%f(iv,ikp,1)/spin_occ
      endif
 #endif
      !

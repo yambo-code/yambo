@@ -200,6 +200,7 @@ module DIPOLES
      !
      use pars,           ONLY:cZERO
      use D_lattice,      ONLY:i_time_rev,dl_sop,sop_inv,nsym
+     use electrons,      ONLY:n_sp_pol
      use parallel_m,     ONLY:PAR_K_scheme
      use R_lattice,      ONLY:bz_samp
      use matrix_operate, ONLY:m3det
@@ -216,20 +217,21 @@ module DIPOLES
      !
      complex(SP) :: DIP_in(3)
      real(SP)    :: tmp_sop(3,3)
-     integer :: ik,is,ik_mem
+     integer :: ik,is,ik_mem,i_sp_pol_symm
      logical :: t_rev
      !
      ik=kpt%sstar(ik_bz,1)
      is=kpt%sstar(ik_bz,2)
      !
      ik_mem    = PAR_K_scheme%ibz_index(ik)
-     !is = sop_inv( is )
+     !
+     if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
+     if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
      !
      tmp_sop=dl_sop(:,:,is)
+     !
      ! pseudo vectors are invariant under inversion but reverse under t_rev
      if(trim(what)=="DIP_S" ) tmp_sop=tmp_sop*m3det(dl_sop(:,:,is))
-     ! To be checked if following line is needed
-     !if(trim(what)=="DIP_S" .and. t_rev ) tmp_sop=-tmp_sop
      !
      DIP_in=cZERO
      if(trim(what)=="DIP_P" ) DIP_in=DIP_P(:,ic,iv,ik_mem,i_sp_pol)
@@ -238,9 +240,6 @@ module DIPOLES
      if(trim(what)=="DIP_S" ) DIP_in=DIP_spin(:,ic,iv,ik_mem,i_sp_pol)
      !
      DIP_rotated = matmul( tmp_sop , DIP_in  )
-     !
-     if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
-     if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
      !
      if (t_rev) DIP_rotated = conjg( DIP_rotated )
      !

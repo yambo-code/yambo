@@ -102,7 +102,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Oscillators I/O & Eps0
  !========================
  !
- if( .not.BS_perturbative_SOC.or.n_sp_pol==2) then
+ if((.not.BS_perturbative_SOC).or.n_sp_pol==2) then
    n_SOC=1
    Co_factor=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
  endif

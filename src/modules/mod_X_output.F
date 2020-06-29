@@ -48,7 +48,7 @@ module X_output
      !
      ! T-ordering
      !
-     files='o eps refl eel alpha off beta moke jdos pmag mmag'
+     files='o eps refl eel alpha off beta moke jdos Spm Smp'
      if (l_chi) files= 'o eps refl eel alpha'
      if (GreenF) then
        call msg(trim(files),com_compose_msg(pre="# ",body="[GEN] GF poles"),trim(X_E_xc_string(4)),INDENT=0)
@@ -117,9 +117,9 @@ module X_output
      call msg("o moke",trim(message(7)),Q_plus_G_pt,INDENT=0)
      call msg("o refl",trim(message(8)),Q_plus_G_pt,INDENT=0)
      call msg("o jdos",trim(message(9)),0.,INDENT=0)
-     call msg("o pmag",trim(message(10)),0.,INDENT=0)
-     call msg("o mmag",trim(message(11)),0.,INDENT=0)
-     call msg('o eps refl eel fxc alpha off moke pmag mmag','#')
+     call msg("o Spm",trim(message(10)),0.,INDENT=0)
+     call msg("o Smp",trim(message(11)),0.,INDENT=0)
+     call msg('o eps refl eel fxc alpha off moke Spm Smp','#')
      !
    end subroutine
    !
@@ -143,8 +143,8 @@ module X_output
      !
      jdos_file_name ='jdos_q'//trim(intc(iq))
      !
-     magp_file_name ='pmag_q'//trim(intc(iq))
-     magm_file_name ='mmag_q'//trim(intc(iq))
+     magp_file_name ='Spm_q'//trim(intc(iq))
+     magm_file_name ='Smp_q'//trim(intc(iq))
      !
      if (present(ig)) then
        if (ig>1) then

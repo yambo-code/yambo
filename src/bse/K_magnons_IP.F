@@ -68,10 +68,10 @@ subroutine K_magnons_IP(iq,Xk,BSE_scatt,w,Dip)
      ik_bz = BS_T_grp(i_T_g)%table(i_T,1)
      iv    = BS_T_grp(i_T_g)%table(i_T,2)
      ic    = BS_T_grp(i_T_g)%table(i_T,3)
-     i_sp_pol = BS_T_grp(i_T_g)%table(i_T,4)
+     i_sp_pol = BS_T_grp(i_T_g)%table(i_T,4)  ! This is i_sp_pol_c
      !
-     if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
-     if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
+     if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E_SFLIP(i_T)
+     if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E_SFLIP(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
      !
      if (.not.BS_perturbative_SOC) E_plus_W=E_plus_W0
      !
@@ -80,15 +80,12 @@ subroutine K_magnons_IP(iq,Xk,BSE_scatt,w,Dip)
      if(i_sp_pol==1.and.n_sp_pol==2) i_sp_pol_rev=2
      if(i_sp_pol==2.and.n_sp_pol==2) i_sp_pol_rev=1
      !
-     ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_c) while I need  <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_c))
-     ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_c) while I need  <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_c))
-     !
      ! notice: in optics q=0 requires a special treatment due to the non analytic behaviour
      !         not sure this is needed for magnons as well. To be checked
      !
      if(iq==1) then
        !
-       DIP_expanded = DIP_rotated(ic,iv,ik_bz,i_sp_pol,"DIP_S",Xk)
+       DIP_expanded   = DIP_rotated(ic,iv,ik_bz,i_sp_pol,"DIP_S",Xk)
        !
      else
        !
@@ -121,16 +118,15 @@ subroutine K_magnons_IP(iq,Xk,BSE_scatt,w,Dip)
      !
      BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)=conjg(DIP_Smins)
      BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)=conjg(DIP_Splus)
-     if (BSS_add_antiresonant.or.BS_K_coupling) then
-       BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)=DIP_Splus
-       BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)=DIP_Smins
-     endif
      !
-     ! Residuals: (1) <c|S+|v>(i_sp_pol_c)<v|S-|c>(i_sp_pol_c) = dip_R_magn(1)*dip_A_magn(2)
-     !            (2) <c|S-|v>(i_sp_pol_c)<v|S+|c>(i_sp_pol_c) = dip_R_magn(2)*dip_A_magn(1)
+     ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_c) while I need  <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_v))
+     ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_c) while I need  <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_v))
      !
-     res(1)=BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)*BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)
-     res(2)=BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)*BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)
+     ! Residuals: (Smp) <v|S-|c>(i_sp_pol_c)<c|S+|v>(i_sp_pol_c) = dip_R_magn(1)*conjg(dip_R_magn(1))
+     !            (Spm) <v|S+|c>(i_sp_pol_c)<c|S-|v>(i_sp_pol_c) = dip_R_magn(2)*conjg(dip_R_magn(2))
+     !
+     res(1)=BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
+     res(2)=BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
      if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)
      !
      do i_pert_SOC=1,n_SOC
@@ -140,11 +136,19 @@ subroutine K_magnons_IP(iq,Xk,BSE_scatt,w,Dip)
      !
      if (BSS_add_antiresonant.or.BS_K_coupling) then
        !
-       ! Residuals: (1) <v|S+|c>(i_sp_pol_c)<c|S-|v>(i_sp_pol_c) = dip_A_magn(1)*dip_R_magn(2)
-       !            (2) <v|S-|c>(i_sp_pol_c)<c|S+|v>(i_sp_pol_c) = dip_A_magn(2)*dip_R_magn(1)
+       ! Residuals: (Smp) <c|S-|v>(i_sp_pol_c)<v|S+|c>(i_sp_pol_c) = dip_A_magn(1)*dip_A_magn(1)
+       !            (Spm) <c|S+|v>(i_sp_pol_c)<v|S-|c>(i_sp_pol_c) = dip_A_magn(2)*dip_A_magn(2)
        !
-       res(1)=BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)*BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)
-       res(2)=BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)*BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)
+       BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)=DIP_Splus ! Here I'm using again <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_v))
+       BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)=DIP_Smins ! Here I'm using again <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_v))
+       !
+       ! I'm also using f_SFLIP(i_sp_pol_c)=-f_SFLIP(i_sp_pol_v)
+       !                E_SFLIP(i_sp_pol_c)=-E_SFLIP(i_sp_pol_v)
+       !
+       ! Both -1 factors appear explicitly in the code
+       !
+       res(1)=BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
+       res(2)=BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
        if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)
        !
        do i_pert_SOC=1,n_SOC

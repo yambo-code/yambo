@@ -271,15 +271,15 @@ subroutine K_output_file(iq,mode)
 #if defined _RT
  if(l_magnons) then
    !
-   call X_setup_headers('pmag ')
-   if (l_Haydock.or.l_Inversion) call msg("o pmag",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (l_Diago.or.l_Slepc) call msg("o pmag",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
-   if (l_IP) call msg("o pmag",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+   call X_setup_headers('Spm ')
+   if (l_Haydock.or.l_Inversion) call msg("o Spm",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+   if (l_Diago.or.l_Slepc) call msg("o Spm",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (l_IP) call msg("o Spm",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    !
-   call X_setup_headers('mmag')
-   if (l_Haydock.or.l_Inversion) call msg("o mmag",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (l_Diago.or.l_Slepc) call msg("o mmag",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
-   if (l_IP) call msg("o mmag",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+   call X_setup_headers('Smp')
+   if (l_Haydock.or.l_Inversion) call msg("o Smp",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+   if (l_Diago.or.l_Slepc) call msg("o Smp",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (l_IP) call msg("o Smp",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    !
  endif
 #endif
@@ -291,7 +291,7 @@ subroutine K_output_file(iq,mode)
    if (l_IP) call msg("o jdos",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
  endif
  !
- call msg("o eps refl eel alpha off beta moke jdos pl_ mmag pmag",'#')
+ call msg("o eps refl eel alpha off beta moke jdos pl_ Smp Spm",'#')
  !
 #if defined _PL
  !
@@ -504,7 +504,7 @@ subroutine K_output_file(iq,mode)
  !------
  if(l_magnons) then
    !
-   ! magnons_plus
+   ! magnons Spm
    !
    n_output_data=5
    if (l_Haydock.or.l_Inversion) n_output_data=7
@@ -515,18 +515,18 @@ subroutine K_output_file(iq,mode)
 &                  aimag(X_magnons(iw,1,3)),real(X_magnons(iw,1,3))/)
      if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(X_magnons(iw,1,4)),real(X_magnons(iw,1,4))/)
      if (l_IP) output_data(2:3)=output_data(4:5)
-     call msg('o pmag','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+     call msg('o Spm','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
      !
    enddo
    !
-   ! magnons_minus
+   ! magnons Smp
    !
    do iw=1,BSS_n_freqs 
      output_data(1:5)=(/real(X_magnons(iw,2,1))*HA2EV,aimag(X_magnons(iw,2,2)),real(X_magnons(iw,2,2)),&
 &                  aimag(X_magnons(iw,2,3)),real(X_magnons(iw,2,3))/)
      if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(X_magnons(iw,2,4)),real(X_magnons(iw,2,4))/)
      if (l_IP) output_data(2:3)=output_data(4:5)
-     call msg('o mmag','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+     call msg('o Smp','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
      !
    enddo
    !

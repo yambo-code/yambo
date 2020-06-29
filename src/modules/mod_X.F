@@ -66,7 +66,7 @@ module X_m
  !
  ! workspace for X_irredux_residuals on GPUs
  !
- complex(SP), allocatable DEV_ATTRIBUTE :: rhotw_save_d(:), rhotw_save2_d(:)
+ complex(SP), allocatable DEV_ATTR :: rhotw_save_d(:), rhotw_save2_d(:)
  !
  ! Absorption & Polarizability
  !
@@ -117,7 +117,7 @@ module X_m
  integer                       :: X_rows(2) = 0
  integer                       :: X_cols(2) = 0
  complex(SP),      allocatable :: X_mat(:,:,:)
- complex(SP),      allocatable DEV_ATTRIBUTE :: X_mat_d(:,:,:)
+ complex(SP),      allocatable DEV_ATTR :: X_mat_d(:,:,:)
  !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp

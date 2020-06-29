@@ -54,14 +54,14 @@ module linear_algebra
    integer                  :: i_fail
    integer                  :: dim
    !
-   real(SP),    allocatable DEV_ATTRIBUTE :: v_real_d(:)
-   real(SP),    allocatable DEV_ATTRIBUTE :: vp_real_d(:)
-   complex(SP), allocatable DEV_ATTRIBUTE :: v_cmplx_d(:)
-   complex(SP), allocatable DEV_ATTRIBUTE :: vp_cmplx_d(:)
-   complex(SP), allocatable DEV_ATTRIBUTE :: m1_cmplx_d(:,:)
-   complex(SP), allocatable DEV_ATTRIBUTE :: m2_cmplx_d(:,:)
-   integer    , allocatable DEV_ATTRIBUTE :: v_int_d(:)
-   integer    , allocatable DEV_ATTRIBUTE :: vp_int_d(:)
+   real(SP),    allocatable DEV_ATTR :: v_real_d(:)
+   real(SP),    allocatable DEV_ATTR :: vp_real_d(:)
+   complex(SP), allocatable DEV_ATTR :: v_cmplx_d(:)
+   complex(SP), allocatable DEV_ATTR :: vp_cmplx_d(:)
+   complex(SP), allocatable DEV_ATTR :: m1_cmplx_d(:,:)
+   complex(SP), allocatable DEV_ATTR :: m2_cmplx_d(:,:)
+   integer    , allocatable DEV_ATTR :: v_int_d(:)
+   integer    , allocatable DEV_ATTR :: vp_int_d(:)
    !
  end type LALGEBRA_WS
  !

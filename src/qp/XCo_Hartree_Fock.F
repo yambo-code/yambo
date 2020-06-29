@@ -168,7 +168,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    YAMBO_ALLOC(local_rhotw,(QP_ng_Sx))
    isc%qs    =1
    !
-   call DEV_SUBNAME(scatter_Gamp)(isc,'x')
+   call DEV_SUB(scatter_Gamp)(isc,'x')
    !
    if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
    !
@@ -184,7 +184,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      isc%qs(2:)=(/iq_ibz,is_ibz/)
      !
      if (isc%qs(2)/=isc%iqref) then 
-       call DEV_SUBNAME(scatter_Gamp)(isc,'x')
+       call DEV_SUB(scatter_Gamp)(isc,'x')
        if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
      endif
      !
@@ -233,19 +233,19 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        isc%os(1)=jb
        iscp%os=isc%os
        !
-       call DEV_SUBNAME(scatter_Bamp)(isc)
+       call DEV_SUB(scatter_Bamp)(isc)
        !
        ! Normal case, the density matrix is diagonal
        !
        if (isc%is(1)/=iscp%is(1)) then
-         call DEV_SUBNAME(scatter_Bamp)(iscp)
+         call DEV_SUB(scatter_Bamp)(iscp)
        else
          ! iscp%rhotw = isc%rhotw
-         call dev_memcpy(DEV_VARNAME(iscp%rhotw),DEV_VARNAME(isc%rhotw))
+         call dev_memcpy(DEV_VAR(iscp%rhotw),DEV_VAR(isc%rhotw))
        endif
        !
-       DP_Sx_l=Vstar_dot_VV(isc%ngrho,DEV_VARNAME(iscp%rhotw),&
-&                                     DEV_VARNAME(isc%rhotw),DEV_VARNAME(isc%gamp)(:,1))
+       DP_Sx_l=Vstar_dot_VV(isc%ngrho,DEV_VAR(iscp%rhotw),&
+&                                     DEV_VAR(isc%rhotw),DEV_VAR(isc%gamp)(:,1))
        DP_Sx=DP_Sx + DP_Sx_l * ( -4._SP/spin_occ*pi*E%f(jb,isc%os(2),isc%os(4)) )
        !
        if (master_thread.and.is_ibz==1.and.n_lt_steps>0) call live_timing(steps=1)

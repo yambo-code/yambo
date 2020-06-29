@@ -123,12 +123,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (iq==1) then
    call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err,'K')
- endif
- !else
+ else
    call WF_load(WF,1,maxval(qindx_X(:,:,2)),BS_bands,(/1,Xk%nibz/),title='-Oscillators/R space/K_IP')
    call elemental_collision_free(BSE_scatt)
    call elemental_collision_alloc(BSE_scatt,NG=1,TITLE="BSE") 
- !endif
+ endif
  !
  BSS_Vnl_included=Dip%Vnl_included
  !

@@ -65,9 +65,9 @@ subroutine K_magnons_IP(iq,Xk,BSE_scatt,w,Dip)
    !    
    do i_T=1,BS_T_grp(i_T_g)%size    
      !    
-     ik_bz = BS_T_grp(i_T_g)%table(i_T,1)
-     iv    = BS_T_grp(i_T_g)%table(i_T,2)
-     ic    = BS_T_grp(i_T_g)%table(i_T,3)
+     ik_bz    = BS_T_grp(i_T_g)%table(i_T,1)
+     iv       = BS_T_grp(i_T_g)%table(i_T,2)
+     ic       = BS_T_grp(i_T_g)%table(i_T,3)
      i_sp_pol = BS_T_grp(i_T_g)%table(i_T,4)  ! This is i_sp_pol_c
      !
      if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E_SFLIP(i_T)
@@ -82,7 +82,8 @@ subroutine K_magnons_IP(iq,Xk,BSE_scatt,w,Dip)
      !
      ! notice:
      ! In optics q=0 requires a special treatment due to the non analytic behaviour
-     ! This is needed for magnons.
+     ! This is not needed for magnons.
+     ! However to follow the same structure in K_IP.F fow WFs load / DIPOLE_IO here I keep it
      !
      if(iq==1) then
        !

@@ -86,10 +86,6 @@ module DIPOLES
      character(*)      :: what
      integer, optional :: d(:)
      !
-     ! Work Space
-     !
-     integer :: err
-     !
      if (present(d)) then
        select case(what)
        case('DIP_iR')
@@ -200,7 +196,7 @@ module DIPOLES
      !
      use pars,           ONLY:cZERO
      use D_lattice,      ONLY:i_time_rev,dl_sop,sop_inv,nsym
-     use electrons,      ONLY:n_sp_pol
+     use electrons,      ONLY:n_spinor
      use parallel_m,     ONLY:PAR_K_scheme
      use R_lattice,      ONLY:bz_samp
      use matrix_operate, ONLY:m3det
@@ -217,7 +213,7 @@ module DIPOLES
      !
      complex(SP) :: DIP_in(3)
      real(SP)    :: tmp_sop(3,3)
-     integer :: ik,is,ik_mem,i_sp_pol_symm
+     integer :: ik,is,ik_mem
      logical :: t_rev
      !
      ik=kpt%sstar(ik_bz,1)
@@ -230,8 +226,17 @@ module DIPOLES
      !
      tmp_sop=dl_sop(:,:,is)
      !
-     ! pseudo vectors are invariant under inversion but reverse under t_rev
-     if(trim(what)=="DIP_S" ) tmp_sop=tmp_sop*m3det(dl_sop(:,:,is))
+     if(trim(what)=="DIP_S" ) then
+       if (n_spinor==2) then
+         ! pseudo vectors are invariant under inversion but reverse under t_rev
+         tmp_sop=tmp_sop*m3det(dl_sop(:,:,is))
+         if( t_rev ) tmp_sop=-tmp_sop
+       else
+         ! in case n_sp_pol==2 the spin is assumed to be independent on symmetries
+         tmp_sop=dl_sop(:,:,1)
+         t_rev=.false.
+       endif
+     endif
      !
      DIP_in=cZERO
      if(trim(what)=="DIP_P" ) DIP_in=DIP_P(:,ic,iv,ik_mem,i_sp_pol)

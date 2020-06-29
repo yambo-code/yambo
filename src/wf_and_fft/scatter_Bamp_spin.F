@@ -62,8 +62,8 @@ subroutine scatter_Bamp_spin(isc,which)
  !
  if (n_sp_pol==2) then
    if (which=="x") WF_spin=isc%WF_symm_i
-   if (which=="y") WF_spin=isc%WF_symm_i*cI*(-1)**(isc%os(4)-1)
-   if (which=="z") WF_spin=isc%WF_symm_i   *(-1)**(isc%os(4)-1)
+   if (which=="y") WF_spin=isc%WF_symm_i*cI*(-1)**(isc%is(4)-1)
+   if (which=="z") WF_spin=isc%WF_symm_i   *(-1)**(isc%is(4)-1)
  else
    if (which=="x") then
      WF_spin(:,1)=    isc%WF_symm_i(:,2)

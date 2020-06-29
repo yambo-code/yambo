@@ -36,7 +36,7 @@ integer function io_DIPOLES(Dip,ID)
 #endif
 #if defined _SC || defined _RT
  use DIPOLES,       ONLY:P_square
- use drivers,       ONLY:l_real_time,l_sc_run
+ use drivers,       ONLY:l_real_time,l_sc_run,l_magnons
 #endif
  use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
@@ -50,7 +50,7 @@ integer function io_DIPOLES(Dip,ID)
  !
  integer :: ik,ik_mem,i_fragment,i_sp_pol,DIP_size(6),DIP_ipos(6),VAR_ID
 #if defined _RT || defined _SC
- logical :: l_real_time_magn_dipoles
+ logical :: l_real_time_magn_dipoles,l_magn_dipoles
  integer :: P2_size(5),P2_ipos(5),Pspinor_size(7),Pspinor_ipos(7)
 #endif
  integer, external    :: variables_DIPOLES
@@ -117,6 +117,7 @@ integer function io_DIPOLES(Dip,ID)
 #endif
  !
 #if defined _SC  || defined _RT
+ l_magn_dipoles=(l_real_time.or.l_magnons).and.n_spin>1
  l_real_time_magn_dipoles=l_real_time.and.n_spin>1
 #endif
  !
@@ -128,9 +129,9 @@ integer function io_DIPOLES(Dip,ID)
    ! GPL_EXCLUDE_START
    !
 #if defined _RT
+   if (l_magn_dipoles) call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    if (l_real_time_magn_dipoles) then
      call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
-     call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
      if (n_spinor==2) call DIP_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    endif
 #endif
@@ -182,6 +183,10 @@ integer function io_DIPOLES(Dip,ID)
    if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
    if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_orbital(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,1),IPOS=DIP_ipos)
    !
+ endif
+ !
+ if (l_magn_dipoles) then
+   !
    ! Spin magntization
    !
    VAR_ID=5
@@ -189,16 +194,16 @@ integer function io_DIPOLES(Dip,ID)
    if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
    if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_spin(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
    !
-   if (n_spinor==2) then
-     !
-     ! P_Spinor
-     !
-     VAR_ID=6
-     VAR_name='DIP_P_spinor'
-     if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,Pspinor_size,SP,par_io_kind='independent')
-     if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C6=DIP_P_spinor(:,:,:,:,:,ik_mem:ik_mem),IPOS=Pspinor_ipos)
-     !
-   endif
+ endif
+ !
+ if (l_real_time_magn_dipoles.and.n_spinor==2) then
+   !
+   ! P_Spinor
+   !
+   VAR_ID=6
+   VAR_name='DIP_P_spinor'
+   if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,Pspinor_size,SP,par_io_kind='independent')
+   if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C6=DIP_P_spinor(:,:,:,:,:,ik_mem:ik_mem),IPOS=Pspinor_ipos)
    !
  endif
  !

@@ -223,7 +223,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
              ! Energies
              !
              BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
-#if defined _RT
+#if defined _KERR
              if(l_magnons) BS_T_grp(i_T_group_now)%E_SFLIP(i_T_in_the_grp)=E_eh_SFLIP
 #endif
              !
@@ -234,7 +234,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
              if (l_photolum) BS_T_grp(i_T_group_now)%f_PL(:,i_T_in_the_grp) =f_eh_PL
 #endif
              BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
-#if defined _RT
+#if defined _KERR
              if(l_magnons) BS_T_grp(i_T_group_now)%f_SFLIP(i_T_in_the_grp)=f_eh_SFLIP
 #endif
              !

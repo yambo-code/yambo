@@ -80,6 +80,8 @@ integer function variables_RT_dynamic(ID)
  !
  variables_RT_dynamic=io_descriptors(TIME_STEP_desc,"TIME_STEP",ID,.FALSE.)
  !
+ call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=0,MENU=1)
+ !
  variables_RT_dynamic      =io_status(ID)
  !
 end function variables_RT_dynamic

@@ -38,6 +38,7 @@ integer function variables_RT_static(ID,what)
 &                         l_RT_uses_E_FineGd,RT_life_extrap_times_SAVE,&
 &                         DbGd_EE_percent,l_RT_impose_E,&
 &                         RT_potential
+ use IO_m,           ONLY:io_sec
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
 #endif
@@ -55,7 +56,7 @@ integer function variables_RT_static(ID,what)
  !
  integer, external :: io_descriptors
  !
- integer               :: i1
+ integer               :: i1,MENU_
  logical               :: l_OBS,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic
  real(SP)              :: RT_life_extrap_decay_time
  !
@@ -234,7 +235,9 @@ integer function variables_RT_static(ID,what)
      enddo
      !
    endif
-   call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=0,MENU=1)
+   MENU_=1
+   if (any((/io_sec(ID,:)==2/))) MENU_=0
+   call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=0,MENU=MENU_)
  endif
  !
  n_RT_desc_static=RT_desc%n

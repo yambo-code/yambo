@@ -72,7 +72,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Work Space
  !
- integer :: i_mem,i_sp_pol,ik,COM_,IO_ACT,io_G,io_OBS,io_THETA,io_REF,&
+ integer :: i_mem,i_sp_pol,ik,IO_ACT,io_G,io_OBS,io_THETA,io_REF,&
 &           io_OCCUPATIONS,nt
  !
  integer, external :: io_RT_components
@@ -132,21 +132,20 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! GPL_EXCLUDE_START
  !
- COM_=REP
- call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
  io_OBS=io_RT_components('OBSERVABLES',ID(4))
  !
- call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
  io_G=io_RT_components('G',ID(5))
  !
  ! Reference G_lesser and Lifetimes
  !
- call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(8)) ! Reference
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(8)) ! Reference
  io_REF=io_RT_components('REF',ID(8))
  !
  ! ELPH Theta matrix
  !
- call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(7)) ! THETA matrix
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(7)) ! THETA matrix
  io_THETA=io_RT_components('THETA',ID(7))
  !
  ! To restart from RT only the G_lesser is necessary (latest and reference)
@@ -164,16 +163,16 @@ subroutine RT_start_and_restart(E,k,q)
    ! The important DB is the one of the Green function and it must be the only one with MODE=DUMP.
    ! From it I reconstruct everything.
    !
-   call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID(8))
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
    !
-   call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID(4))
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(4))
    io_OBS=io_RT_components('OBSERVABLES',ID(4))
    !
-   call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID(6))
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(6))
    io_OCCUPATIONS=io_RT_components('carriers',ID(6))
    !
-   call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/2/),MODE=DUMP,ID=ID(5))
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=DUMP,ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
    NE_i_start_time=NE_i_time

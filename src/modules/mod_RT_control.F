@@ -305,7 +305,7 @@ module RT_control
    !
    subroutine SETUP_RT_IO_type(TYP,INIT)
      !
-     use real_time, ONLY:NE_tot_time,RT_dyn_step,RT_step
+     use real_time, ONLY:NE_tot_time,RT_dyn_step,RT_step,NE_i_time
      type(RT_IO_t) :: TYP
      logical       :: INIT
      !
@@ -327,6 +327,8 @@ module RT_control
      ! The steps are always relative to RT_step
      !
      TYP%INTERVAL_steps = nint(TYP%INTERVAL_time/RT_step)
+     !
+     TYP%last_point     = NE_i_time
      !
      if (INIT) then
        TYP%INTERVAL_time_SAVE=TYP%INTERVAL_time

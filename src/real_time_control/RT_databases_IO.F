@@ -48,7 +48,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- logical           :: write_OBS,force_OBS_IO
+ logical           :: write_OBS,force_IO
  integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,n_OBS_cache
  integer, external :: io_RT_components
  logical, external :: RT_Dynamics_is_over
@@ -69,9 +69,9 @@ subroutine RT_databases_IO(E)
    endif
    !
    n_OBS_cache=nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)
-   force_OBS_IO=RT_do_it('deltaT').or.RT_Dynamics_is_over(.false.).or.NE_i_time==OBS_RT_IO_t%last_point
+   force_IO=RT_do_it('deltaT').or.RT_Dynamics_is_over(.false.).or.NE_i_time==OBS_RT_IO_t%last_point
    !
-   if (RT_do_it('OBS_cache').or.force_OBS_IO) then
+   if (RT_do_it('OBS_cache').or.force_IO) then
      !
      ! Cache the current and the polarization for future writing
      !
@@ -100,7 +100,7 @@ subroutine RT_databases_IO(E)
        A_cache(1:3,3,i_time)=A_tot%vecpot_acc
      endif
      !
-     write_OBS=RT_do_it('OBS').or.force_OBS_IO
+     write_OBS=RT_do_it('OBS').or.force_IO
      !
      if(write_OBS) then
        !
@@ -129,7 +129,9 @@ subroutine RT_databases_IO(E)
      io_carr=io_RT_components('carriers',ID(6))
    endif
    !
-   if(RT_do_it('CARR').and.NE_i_time>=CARR_RT_IO_t%last_point) then
+   force_IO=RT_Dynamics_is_over(.false.).or.NE_i_time==CARR_RT_IO_t%last_point
+   !
+   if (RT_do_it('CARR').or.force_IO) then
      !
      if (NE_i_time>CARR_RT_IO_t%last_point) then
        CARR_RT_IO_t%N=CARR_RT_IO_t%N+1
@@ -163,7 +165,9 @@ subroutine RT_databases_IO(E)
      !
    endif
    !
-   if(RT_do_it('G')) then
+   force_IO=RT_Dynamics_is_over(.false.).or.NE_i_time==GF_RT_IO_t%last_point
+   !
+   if(RT_do_it('G').or.force_IO) then
      !
      if (NE_i_time==1) then
        GF_RT_IO_t%N=1

@@ -56,7 +56,6 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,def_var,load_rest_info,unlim,l
 &                       DESCRIPTOR=RT_desc,UNIT=AUT2FS)
  endif
  !
- !
  call def_variable_elemental(ID,"IO_TIME_steps_last_nsteps",3,IP+100,0) 
  call io_variable_elemental(ID,I0=TYP%INTERVAL_steps)
  call io_variable_elemental(ID,I0=TYP%last_point)

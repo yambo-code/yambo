@@ -34,7 +34,7 @@ subroutine RT_time_step_update( )
  use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,&
 &                         RT_do_it,SETUP_RT_IO_type,TIME_adjust,STEP_adjust,&
 &                         CACHE_OBS_steps,RT_control_alloc,RT_control_free,&
-&                         CACHE_OBS_INTERVAL_time,CACHE_OBS_last_point
+&                         CACHE_OBS_INTERVAL_time
  use RT_output_m,    ONLY:TIME_STEP_desc
  use com,            ONLY:msg
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
@@ -92,24 +92,18 @@ subroutine RT_time_step_update( )
    !
    RT_dyn_step=dT_next
    !
-   !call SETUP_RT_IO_type(OBS_RT_IO_t,.FALSE.)
    call SETUP_RT_IO_type(CARR_RT_IO_t,.FALSE.)
    call SETUP_RT_IO_type(OUTPUT_RT_IO_t,.FALSE.)
    GF_RT_IO_t%INTERVAL_time=TIME_adjust(GF_RT_IO_t%INTERVAL_time,CARR_RT_IO_t%INTERVAL_time)
    call SETUP_RT_IO_type(GF_RT_IO_t,.FALSE.)
-   !
-   CARR_RT_IO_t%last_point   = NE_i_time
-   OUTPUT_RT_IO_t%last_point = NE_i_time
-   GF_RT_IO_t%last_point     = NE_i_time
    !
    ! ... and the dT update steps
    !
    NE_time_step_update_jump = max(TIME_adjust(NE_time_step_update_jump,CARR_RT_IO_t%INTERVAL_time),CARR_RT_IO_t%INTERVAL_time)
    !
    ! J, P and M (spin) cache Time size
-   !=========================
+   !===================================
    !
-   CACHE_OBS_last_point    = NE_i_time
    CACHE_OBS_INTERVAL_time = max(TIME_adjust(CACHE_OBS_INTERVAL_time,RT_dyn_step),RT_dyn_step)
    !
    OBS_RT_IO_t%INTERVAL_time=TIME_adjust(OBS_RT_IO_t%INTERVAL_time,NE_time_step_update_jump)

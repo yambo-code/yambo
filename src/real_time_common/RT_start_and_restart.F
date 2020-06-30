@@ -135,7 +135,6 @@ subroutine RT_start_and_restart(E,k,q)
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
  io_OBS=io_RT_components('OBSERVABLES',ID(4))
- !if (io_OBS==0) COM_=NONE
  !
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
  io_G=io_RT_components('G',ID(5))

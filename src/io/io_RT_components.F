@@ -104,11 +104,17 @@ integer function io_RT_components(what,ID)
  l_OBS        =l_JP.or.l_M.or.l_D
  !
  ! The restart time is the last time I wrote G and eequal or before the last time I wrote OBS
- if(l_G       ) first_IO=(NE_i_time==  GF_RT_IO_t%last_point).or.(NE_i_time==1).or.  GF_RT_IO_t%last_point< 0
- if(l_OBS     ) first_IO=(NE_i_time== OBS_RT_IO_t%last_point).or.(NE_i_time==1).or. OBS_RT_IO_t%last_point< 0
+ if(l_G       ) then
+   first_IO=(NE_i_time==  GF_RT_IO_t%last_point).or.(NE_i_time==1).or.  GF_RT_IO_t%last_point< 0
+ endif
+ if(l_OBS     ) then
+   first_IO=(NE_i_time== OBS_RT_IO_t%last_point).or.(NE_i_time==1).or. OBS_RT_IO_t%last_point< 0
+ endif
  ! it is possible that the last time I wrote the carriers was before the restart time of the run
- if(l_carriers) first_IO=(NE_i_time== OBS_RT_IO_t%last_point).or.(NE_i_time==1).or. OBS_RT_IO_t%last_point< 0 .or. &
- &                       (NE_i_time-NE_i_start_time)<=CARR_RT_IO_t%INTERVAL_steps ! (NE_i_time==CARR_RT_IO_t%last_point).or.(NE_i_time==1).or.CARR_RT_IO_t%last_point< 0
+ if(l_carriers) then
+    first_IO=(NE_i_time== CARR_RT_IO_t%last_point).or.(NE_i_time==1).or. CARR_RT_IO_t%last_point< 0 .or. &
+&                       (NE_i_time-NE_i_start_time)<=CARR_RT_IO_t%INTERVAL_steps 
+ endif
  !
  call timing('io_RT_components',OPR='start')
  !
@@ -238,8 +244,9 @@ integer function io_RT_components(what,ID)
  ! Carrier components
  !====================
  if ( l_carriers) then
-   if (first_IO.or.read_is_on(ID)) &
-   &  call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="def_io_variables")
+   if (first_IO.or.read_is_on(ID)) then
+     call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="def_io_variables")
+   endif
    call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="do_io_variables")
    if (read_is_on(ID)) call RT_carriers_object(RT_carriers,WHAT="dump")
  endif

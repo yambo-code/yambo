@@ -62,7 +62,7 @@ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k_bz_mem,i_k,i_p,i_kp_s,& NE
      i_kmq_s_m1 = sop_inv(i_kmq_s) NEWLINE \
      i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) NEWLINE \
      NEWLINE \
-     if (BS_res_K_corr.or.BS_cpl_K_corr) then NEWLINE \
+     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
        i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) NEWLINE \
        if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then NEWLINE \
          i_p_bz_last=i_p_bz NEWLINE \
@@ -94,7 +94,7 @@ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k_bz_mem,i_k,i_p,i_kp_s,& NE
      ig_kmq    = qindx_X(iq,i_k_bz,2) NEWLINE \
      ig_pmq    = qindx_X(iq,i_p_bz,2) NEWLINE \
      NEWLINE \
-     if (BS_res_K_corr.or.BS_cpl_K_corr) then NEWLINE \
+     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
        i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) NEWLINE \
        if (i_pmq_bz_last/=i_pmq_bz.or.i_kmq_bz_last/=i_kmq_bz) then NEWLINE \
          i_pmq_bz_last=i_pmq_bz NEWLINE \

@@ -244,9 +244,9 @@ subroutine RT_databases_IO(E)
    !
  endif
  !
- if(write_OBS       ) call PP_bcast( OBS_RT_IO_t%last_point,0)
- if(RT_do_it('CARR')) call PP_bcast(CARR_RT_IO_t%last_point,0)
- if(RT_do_it('G')   ) call PP_bcast(  GF_RT_IO_t%last_point,0)
+ if(write_OBS                   ) call PP_bcast( OBS_RT_IO_t%last_point,0)
+ if(RT_do_it('CARR').or.force_IO) call PP_bcast(CARR_RT_IO_t%last_point,0)
+ if(RT_do_it('G')   .or.force_IO) call PP_bcast(  GF_RT_IO_t%last_point,0)
  !
  ! GPL_EXCLUDE_END
  !

@@ -91,9 +91,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),ctmp
  complex(SP),allocatable  :: Xo_res(:,:)
  !
- complex(SP),allocatable DEV_ATTRIBUTE :: Xo_res_d(:,:)
- complex(SP),pointer     DEV_ATTRIBUTE :: X_par_blc_d(:,:,:)
- complex(SP),pointer     DEV_ATTRIBUTE :: X_par_lowtri_blc_d(:,:,:)
+ complex(SP),allocatable DEV_ATTR :: Xo_res_d(:,:)
+ complex(SP),pointer     DEV_ATTR :: X_par_blc_d(:,:,:)
+ complex(SP),pointer     DEV_ATTR :: X_par_lowtri_blc_d(:,:,:)
  complex(SP)              :: GreenF_iw
  integer                  :: PAR_COM_RL_INDEX_n_CPU
  !
@@ -259,8 +259,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
      if(.not.Drude_pole) cycle
      if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
      !
-     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VARNAME(Xo_res),Xo_scatt)
-     ctmp = DEV_VARNAME(Xo_res)(1,1)
+     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt)
+     ctmp = DEV_VAR(Xo_res)(1,1)
      !
      X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)
      !
@@ -294,7 +294,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    !
    ! 1) First compute the residuals
    !================================
-   call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VARNAME(Xo_res),Xo_scatt)
+   call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt)
 
    !
    ! 2) Then the frequency dependent term

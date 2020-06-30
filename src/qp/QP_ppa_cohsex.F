@@ -245,7 +245,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      X_range=(/1,Xw%n_freqs/)
      if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
-     call DEV_SUBNAME(scatter_Gamp)(isc,'c')
+     call DEV_SUB(scatter_Gamp)(isc,'c')
      if (have_cuda) call dev_memcpy(isc%gamp,isc%gamp_d)
      !
      ! I/O
@@ -350,7 +350,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        isc%os=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
        isc%qs=(/1,1,1/)
 
-       call DEV_SUBNAME(scatter_Bamp)(isc)
+       call DEV_SUB(scatter_Bamp)(isc)
        if (have_cuda) call dev_memcpy(isc%rhotw,isc%rhotw_d)
        !
        if (l_GW_terminator) then
@@ -438,12 +438,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        isc%os(1)=ib
        !
-       call DEV_SUBNAME(scatter_Bamp)(isc)
+       call DEV_SUB(scatter_Bamp)(isc)
        if (have_cuda) call dev_memcpy(isc%rhotw, isc%rhotw_d)
        iscp%os=isc%os
        !
        if (any(isc%is/=iscp%is)) then
-         call DEV_SUBNAME(scatter_Bamp)(iscp)
+         call DEV_SUB(scatter_Bamp)(iscp)
          if (have_cuda) call dev_memcpy(iscp%rhotw, iscp%rhotw_d)
        else
          iscp%rhotw=isc%rhotw

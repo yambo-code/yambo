@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AF
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,45 +21,28 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_free(WF,keep_fft)
- !
- use wave_func,  ONLY:WAVEs
- use pseudo,     ONLY:pp_is_uspp,PP_uspp_free
- use cuda_m,     ONLY:have_cuda
- !
-#include<memory.h>
- !
- type(WAVEs)       :: WF
- logical, optional :: keep_fft 
- !
- ! Work-space
- !
- logical           :: keep_fft_
- !
- keep_fft_=.false.
- if (present(keep_fft)) keep_fft_=keep_fft
- !
- ! USPP
- if (pp_is_uspp) call PP_uspp_free()
- !
- if (have_cuda) then
-   if (.not. ( allocated(WF%c) .eqv. allocated(WF%c_d) ) ) &
-&    call error("[WF] inconsistent alloc of GPU wfcs")
- endif
- !
- if (.not.allocated(WF%c)) return
- !
- YAMBO_FREE(WF%c)
- YAMBO_FREE(WF%c_d)
- YAMBO_FREE(WF%state)
- YAMBO_FREE(WF%index)
- !
- if(.not.keep_fft_.and.WF%space=="R") call fft_free()
- !
- WF%k=0
- WF%b=0
- WF%sp_pol=0
- WF%space=' '
- WF%to_load=.TRUE.
- !
-end subroutine
+
+!
+!====================
+! WF_symm_kpoint_cpu
+!====================
+!
+#include<dev_defs_nocuda.h>
+#undef _CUDA_LOC
+#include"WF_symm_kpoint.F"
+!
+#include<dev_undefs.h>
+
+!
+!====================
+! WF_symm_kpoint_gpu
+!====================
+!
+#if defined _CUDA
+
+#include<dev_defs.h>
+#define _CUDA_LOC
+#include"WF_symm_kpoint.F"
+
+#endif
+

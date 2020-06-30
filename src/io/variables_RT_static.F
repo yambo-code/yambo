@@ -29,14 +29,14 @@ integer function variables_RT_static(ID,what)
  use stderr,         ONLY:intc
  use hamiltonian,    ONLY:H_ref_bands
  use descriptors,    ONLY:IO_desc_reset
- use RT_output_m,    ONLY:RT_desc,Gr_desc,TIME_STEP_desc,n_RT_desc_static
+ use RT_output_m,    ONLY:RT_desc,Gr_desc,n_RT_desc_static
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_extrapolation, &
 &                         RAD_LifeTime,Phase_LifeTime,&
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_steps,&
 &                         l_RT_CCA_Kernel,l_RT_impose_N_dN, &
 &                         l_RT_uses_E_FineGd,RT_life_extrap_times_SAVE,&
-&                         DbGd_EE_percent,l_RT_impose_E,RT_DbGd_nk,&
+&                         DbGd_EE_percent,l_RT_impose_E,&
 &                         RT_potential
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
@@ -162,10 +162,6 @@ integer function variables_RT_static(ID,what)
 &    VAR=' [RT] Diamagnetic term           ',  CHECK=.false.,OP=(/"=="/),DESCRIPTOR=RT_desc)
    call io_variable_elemental(ID,L0=l_RT_induced_field,&
 &    VAR=' [RT] Induced field              ',  CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
-   !
-   ! Time-Steps configurations
-   !===========================
-   variables_RT_static=io_descriptors(TIME_STEP_desc,"TIME_STEP",ID,.FALSE.)
    !
    ! GPL_EXCLUDE_START
    !

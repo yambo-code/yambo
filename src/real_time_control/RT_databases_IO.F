@@ -31,7 +31,7 @@ subroutine RT_databases_IO(E)
 &                         SAVE_G_history,NE_i_start_time,CACHE_OBS_last_point
  use real_time,      ONLY:NE_i_time,NE_steps,RT_nk,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,&
 &                         l_NE_with_fields,RT_step,RT_dyn_step
- use IO_m,           ONLY:io_control,manage_action,NONE, &
+ use IO_m,           ONLY:io_control,manage_action,NONE,REP, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
 &                         OP_IF_START_APP_CL_IF_END,WR_CL_IF_END,OP_APP,OP_APP_CL,OP_WR_CL
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,G_MEM_steps
@@ -48,7 +48,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- logical           :: write_OBS,force_IO
+ logical           :: write_OBS,force_IO,last_point
  integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,n_OBS_cache
  integer, external :: io_RT_components
  logical, external :: RT_Dynamics_is_over
@@ -155,7 +155,7 @@ subroutine RT_databases_IO(E)
    if(NE_i_time==NE_i_start_time) then
      if(.not.SAVE_G_history) IO_ACT=OP_WR_CL
      if(     SAVE_G_history) IO_ACT=OP_APP_CL
-     call io_control(ACTION=IO_ACT,COM=NONE, SEC=(/1/),ID=ID(5))
+     call io_control(ACTION=IO_ACT,COM=REP, SEC=(/1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
      !
      if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then

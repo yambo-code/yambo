@@ -24,9 +24,9 @@
 subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
  use com,           ONLY:secnm
- use parallel_m,    ONLY:PAR_Q_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,PAR_K_range,PAR_n_bands,&
-&                        PAR_EH_range,PAR_Dip_ib,PAR_Dip_ib_lim,PAR_X_ib,PAR_X_iq,PAR_n_G_vectors, &
-&                        PAR_n_freqs
+ use parallel_m,    ONLY:PAR_Q_bz_range,PAR_Q_ibz_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,&
+&                        PAR_EH_range,PAR_Dip_ib,PAR_Dip_ib_lim,PAR_X_ib,PAR_X_iq,PAR_n_G_vectors,&
+&                        PAR_n_freqs,PAR_K_range,PAR_n_bands
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run
  use BS,            ONLY:BS_bands,BS_nT_at_k
  use X_m,           ONLY:X_ng
@@ -94,21 +94,22 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
  ! Q-pts
  !-------
- PAR_Q_range=(/1,nqibz/)
- if (ENVIRONMENT=="Response_G_space")          PAR_Q_range=(/PAR_X_iq(1),PAR_X_iq(2)/)
- if (ENVIRONMENT=="Real_Time"       )          PAR_Q_range=(/1,nqbz/)
+ PAR_Q_ibz_range=(/1,nqibz/)
+ PAR_Q_bz_range=(/1,nqbz/)
+ if (ENVIRONMENT=="Response_G_space")          PAR_Q_ibz_range=(/PAR_X_iq(1),PAR_X_iq(2)/)
+ if (ENVIRONMENT=="Real_Time"       )          PAR_Q_bz_range=(/1,nqbz/)
  if (ENVIRONMENT=="Self_Energy"     ) then
 #if defined _SC
    if (l_sc_run.and.&
 &      any( (/P_collisions%N,COH_collisions%N,HXC_collisions%N/)> 0))  &
-&                                               PAR_Q_range=(/1,nqbz/)
+&                                               PAR_Q_bz_range=(/1,nqbz/)
 #endif
 #if defined _SC || defined _RT
-   if (l_eval_collisions)                       PAR_Q_range=(/1,nqbz/)
+   if (l_eval_collisions)                       PAR_Q_bz_range=(/1,nqbz/)
 #endif
 #if defined _ELPH
-   if (l_elph_corr.and.elph_use_q_grid)         PAR_Q_range=(/1,nqbz/)
-   if (l_elph_corr.and..not.elph_use_q_grid)    PAR_Q_range=(/1,elph_nDBs_used/)
+   if (l_elph_corr.and.elph_use_q_grid)         PAR_Q_bz_range=(/1,nqbz/)
+   if (l_elph_corr.and..not.elph_use_q_grid)    PAR_Q_bz_range=(/1,elph_nDBs_used/)
 #endif
  endif
  !

@@ -26,7 +26,7 @@ integer function io_Double_Grid(E,Xk,ID)
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
-&                         io_bulk,io_header,ver_is_gt_or_eq,file_is_present,write_is_on,&
+&                         io_bulk,io_header,ver_is_gt_or_eq,write_is_on,&
 &                         IO_OUTDATED_DB,variable_exist
  use timing_m,       ONLY:timing
  !
@@ -39,7 +39,7 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Work Space
  !
  logical :: l_R_LATT
- integer :: DG_format,VAR_SZ
+ integer :: VAR_SZ
  !
  call timing('io_Double_Grid',OPR='start')
  !
@@ -69,7 +69,6 @@ integer function io_Double_Grid(E,Xk,ID)
  ! 
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
- !
  ! Eigenvalues
  !
  if (read_is_on(ID)) then
@@ -80,7 +79,6 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%E_FineGd) ) 
  call io_bulk(ID, R3=E%E_FineGd )
- !
  !
  ! Kpts
  !
@@ -102,7 +100,6 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  call io_bulk(ID, VAR="IBZ_TO_BZ_MAP", VAR_SZ=(/Xk%nbz_FineGd/) )
  call io_bulk(ID, I1=Xk%sstar_FineGd )
- !
  !
  ! Block filling
  !

@@ -137,6 +137,119 @@ interface dev_conjg
     end subroutine sp_dev_conjg_c4d
     !
     !
+#if defined(__HAVE_DEVICE)
+    !
+    subroutine dp_dev_conjg_h_c1d(array_inout, &
+                                   
+                                   range1, lbound1 )
+       implicit none
+       !
+       integer, parameter :: PRCSN = selected_real_kind(14,200)
+       COMPLEX(PRCSN), intent(inout) :: array_inout(:)
+       integer, optional, intent(in) ::  range1(2)
+       integer, optional, intent(in) ::  lbound1
+       !
+    end subroutine dp_dev_conjg_h_c1d
+    !
+    subroutine dp_dev_conjg_h_c2d(array_inout, &
+                                   
+                                   range1, lbound1, &
+                                   range2, lbound2 )
+       implicit none
+       !
+       integer, parameter :: PRCSN = selected_real_kind(14,200)
+       COMPLEX(PRCSN), intent(inout) :: array_inout(:,:)
+       integer, optional, intent(in) ::  range1(2), range2(2)
+       integer, optional, intent(in) ::  lbound1, lbound2
+       !
+    end subroutine dp_dev_conjg_h_c2d
+    !
+    subroutine dp_dev_conjg_h_c3d(array_inout, &
+                                   
+                                   range1, lbound1, &
+                                   range2, lbound2, &
+                                   range3, lbound3 )
+       implicit none
+       !
+       integer, parameter :: PRCSN = selected_real_kind(14,200)
+       COMPLEX(PRCSN), intent(inout) :: array_inout(:,:,:)
+       integer, optional, intent(in) ::  range1(2), range2(2), range3(2)
+       integer, optional, intent(in) ::  lbound1, lbound2, lbound3
+       !
+    end subroutine dp_dev_conjg_h_c3d
+    !
+    subroutine dp_dev_conjg_h_c4d(array_inout, &
+                                   
+                                   range1, lbound1, &
+                                   range2, lbound2, &
+                                   range3, lbound3, &
+                                   range4, lbound4 )
+       implicit none
+       !
+       integer, parameter :: PRCSN = selected_real_kind(14,200)
+       COMPLEX(PRCSN), intent(inout) :: array_inout(:,:,:,:)
+       integer, optional, intent(in) ::  range1(2), range2(2), range3(2), range4(2)
+       integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
+       !
+    end subroutine dp_dev_conjg_h_c4d
+    !
+    subroutine sp_dev_conjg_h_c1d(array_inout, &
+                                   
+                                   range1, lbound1 )
+       implicit none
+       !
+       integer, parameter :: PRCSN = selected_real_kind(6, 37)
+       COMPLEX(PRCSN), intent(inout) :: array_inout(:)
+       integer, optional, intent(in) ::  range1(2)
+       integer, optional, intent(in) ::  lbound1
+       !
+    end subroutine sp_dev_conjg_h_c1d
+    !
+    subroutine sp_dev_conjg_h_c2d(array_inout, &
+                                   
+                                   range1, lbound1, &
+                                   range2, lbound2 )
+       implicit none
+       !
+       integer, parameter :: PRCSN = selected_real_kind(6, 37)
+       COMPLEX(PRCSN), intent(inout) :: array_inout(:,:)
+       integer, optional, intent(in) ::  range1(2), range2(2)
+       integer, optional, intent(in) ::  lbound1, lbound2
+       !
+    end subroutine sp_dev_conjg_h_c2d
+    !
+    subroutine sp_dev_conjg_h_c3d(array_inout, &
+                                   
+                                   range1, lbound1, &
+                                   range2, lbound2, &
+                                   range3, lbound3 )
+       implicit none
+       !
+       integer, parameter :: PRCSN = selected_real_kind(6, 37)
+       COMPLEX(PRCSN), intent(inout) :: array_inout(:,:,:)
+       integer, optional, intent(in) ::  range1(2), range2(2), range3(2)
+       integer, optional, intent(in) ::  lbound1, lbound2, lbound3
+       !
+    end subroutine sp_dev_conjg_h_c3d
+    !
+    subroutine sp_dev_conjg_h_c4d(array_inout, &
+                                   
+                                   range1, lbound1, &
+                                   range2, lbound2, &
+                                   range3, lbound3, &
+                                   range4, lbound4 )
+       implicit none
+       !
+       integer, parameter :: PRCSN = selected_real_kind(6, 37)
+       COMPLEX(PRCSN), intent(inout) :: array_inout(:,:,:,:)
+       integer, optional, intent(in) ::  range1(2), range2(2), range3(2), range4(2)
+       integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
+       !
+    end subroutine sp_dev_conjg_h_c4d
+    !
+    !
+#endif
+    !
 end interface dev_conjg
 
 interface dev_vec_upd_remap
@@ -401,3 +514,272 @@ interface dev_mat_upd_dMd
     !
     !
 end interface dev_mat_upd_dMd
+
+interface dev_mem_addscal
+    !
+    subroutine dp_dev_mem_addscal_r1d(array_out, array_in, scal, &
+                                                range1, lbound1 )
+        use iso_fortran_env
+        implicit none
+        !
+        real(selected_real_kind(14,200)), intent(inout) :: array_out(:)
+        real(selected_real_kind(14,200)), intent(in)    :: array_in(:)
+        real(selected_real_kind(14,200)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2)
+        integer, optional, intent(in) ::  lbound1
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine dp_dev_mem_addscal_r1d
+    !
+    subroutine dp_dev_mem_addscal_r2d(array_out, array_in, scal, &
+                                                range1, lbound1, &
+                                                range2, lbound2 )
+        use iso_fortran_env
+        implicit none
+        !
+        real(selected_real_kind(14,200)), intent(inout) :: array_out(:,:)
+        real(selected_real_kind(14,200)), intent(in)    :: array_in(:,:)
+        real(selected_real_kind(14,200)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2), range2(2)
+        integer, optional, intent(in) ::  lbound1, lbound2
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine dp_dev_mem_addscal_r2d
+    !
+    subroutine dp_dev_mem_addscal_r3d(array_out, array_in, scal, &
+                                                range1, lbound1, &
+                                                range2, lbound2, &
+                                                range3, lbound3 )
+        use iso_fortran_env
+        implicit none
+        !
+        real(selected_real_kind(14,200)), intent(inout) :: array_out(:,:,:)
+        real(selected_real_kind(14,200)), intent(in)    :: array_in(:,:,:)
+        real(selected_real_kind(14,200)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2), range2(2), range3(2)
+        integer, optional, intent(in) ::  lbound1, lbound2, lbound3
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine dp_dev_mem_addscal_r3d
+    !
+    subroutine dp_dev_mem_addscal_r4d(array_out, array_in, scal, &
+                                                range1, lbound1, &
+                                                range2, lbound2, &
+                                                range3, lbound3, &
+                                                range4, lbound4 )
+        use iso_fortran_env
+        implicit none
+        !
+        real(selected_real_kind(14,200)), intent(inout) :: array_out(:,:,:,:)
+        real(selected_real_kind(14,200)), intent(in)    :: array_in(:,:,:,:)
+        real(selected_real_kind(14,200)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2), range2(2), range3(2), range4(2)
+        integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine dp_dev_mem_addscal_r4d
+    !
+    subroutine sp_dev_mem_addscal_r1d(array_out, array_in, scal, &
+                                                range1, lbound1 )
+        use iso_fortran_env
+        implicit none
+        !
+        real(selected_real_kind(6, 37)), intent(inout) :: array_out(:)
+        real(selected_real_kind(6, 37)), intent(in)    :: array_in(:)
+        real(selected_real_kind(6, 37)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2)
+        integer, optional, intent(in) ::  lbound1
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine sp_dev_mem_addscal_r1d
+    !
+    subroutine sp_dev_mem_addscal_r2d(array_out, array_in, scal, &
+                                                range1, lbound1, &
+                                                range2, lbound2 )
+        use iso_fortran_env
+        implicit none
+        !
+        real(selected_real_kind(6, 37)), intent(inout) :: array_out(:,:)
+        real(selected_real_kind(6, 37)), intent(in)    :: array_in(:,:)
+        real(selected_real_kind(6, 37)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2), range2(2)
+        integer, optional, intent(in) ::  lbound1, lbound2
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine sp_dev_mem_addscal_r2d
+    !
+    subroutine sp_dev_mem_addscal_r3d(array_out, array_in, scal, &
+                                                range1, lbound1, &
+                                                range2, lbound2, &
+                                                range3, lbound3 )
+        use iso_fortran_env
+        implicit none
+        !
+        real(selected_real_kind(6, 37)), intent(inout) :: array_out(:,:,:)
+        real(selected_real_kind(6, 37)), intent(in)    :: array_in(:,:,:)
+        real(selected_real_kind(6, 37)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2), range2(2), range3(2)
+        integer, optional, intent(in) ::  lbound1, lbound2, lbound3
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine sp_dev_mem_addscal_r3d
+    !
+    subroutine sp_dev_mem_addscal_r4d(array_out, array_in, scal, &
+                                                range1, lbound1, &
+                                                range2, lbound2, &
+                                                range3, lbound3, &
+                                                range4, lbound4 )
+        use iso_fortran_env
+        implicit none
+        !
+        real(selected_real_kind(6, 37)), intent(inout) :: array_out(:,:,:,:)
+        real(selected_real_kind(6, 37)), intent(in)    :: array_in(:,:,:,:)
+        real(selected_real_kind(6, 37)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2), range2(2), range3(2), range4(2)
+        integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine sp_dev_mem_addscal_r4d
+    !
+    subroutine dp_dev_mem_addscal_c1d(array_out, array_in, scal, &
+                                                range1, lbound1 )
+        use iso_fortran_env
+        implicit none
+        !
+        complex(selected_real_kind(14,200)), intent(inout) :: array_out(:)
+        complex(selected_real_kind(14,200)), intent(in)    :: array_in(:)
+        complex(selected_real_kind(14,200)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2)
+        integer, optional, intent(in) ::  lbound1
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine dp_dev_mem_addscal_c1d
+    !
+    subroutine dp_dev_mem_addscal_c2d(array_out, array_in, scal, &
+                                                range1, lbound1, &
+                                                range2, lbound2 )
+        use iso_fortran_env
+        implicit none
+        !
+        complex(selected_real_kind(14,200)), intent(inout) :: array_out(:,:)
+        complex(selected_real_kind(14,200)), intent(in)    :: array_in(:,:)
+        complex(selected_real_kind(14,200)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2), range2(2)
+        integer, optional, intent(in) ::  lbound1, lbound2
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine dp_dev_mem_addscal_c2d
+    !
+    subroutine dp_dev_mem_addscal_c3d(array_out, array_in, scal, &
+                                                range1, lbound1, &
+                                                range2, lbound2, &
+                                                range3, lbound3 )
+        use iso_fortran_env
+        implicit none
+        !
+        complex(selected_real_kind(14,200)), intent(inout) :: array_out(:,:,:)
+        complex(selected_real_kind(14,200)), intent(in)    :: array_in(:,:,:)
+        complex(selected_real_kind(14,200)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2), range2(2), range3(2)
+        integer, optional, intent(in) ::  lbound1, lbound2, lbound3
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine dp_dev_mem_addscal_c3d
+    !
+    subroutine dp_dev_mem_addscal_c4d(array_out, array_in, scal, &
+                                                range1, lbound1, &
+                                                range2, lbound2, &
+                                                range3, lbound3, &
+                                                range4, lbound4 )
+        use iso_fortran_env
+        implicit none
+        !
+        complex(selected_real_kind(14,200)), intent(inout) :: array_out(:,:,:,:)
+        complex(selected_real_kind(14,200)), intent(in)    :: array_in(:,:,:,:)
+        complex(selected_real_kind(14,200)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2), range2(2), range3(2), range4(2)
+        integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine dp_dev_mem_addscal_c4d
+    !
+    subroutine sp_dev_mem_addscal_c1d(array_out, array_in, scal, &
+                                                range1, lbound1 )
+        use iso_fortran_env
+        implicit none
+        !
+        complex(selected_real_kind(6, 37)), intent(inout) :: array_out(:)
+        complex(selected_real_kind(6, 37)), intent(in)    :: array_in(:)
+        complex(selected_real_kind(6, 37)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2)
+        integer, optional, intent(in) ::  lbound1
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine sp_dev_mem_addscal_c1d
+    !
+    subroutine sp_dev_mem_addscal_c2d(array_out, array_in, scal, &
+                                                range1, lbound1, &
+                                                range2, lbound2 )
+        use iso_fortran_env
+        implicit none
+        !
+        complex(selected_real_kind(6, 37)), intent(inout) :: array_out(:,:)
+        complex(selected_real_kind(6, 37)), intent(in)    :: array_in(:,:)
+        complex(selected_real_kind(6, 37)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2), range2(2)
+        integer, optional, intent(in) ::  lbound1, lbound2
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine sp_dev_mem_addscal_c2d
+    !
+    subroutine sp_dev_mem_addscal_c3d(array_out, array_in, scal, &
+                                                range1, lbound1, &
+                                                range2, lbound2, &
+                                                range3, lbound3 )
+        use iso_fortran_env
+        implicit none
+        !
+        complex(selected_real_kind(6, 37)), intent(inout) :: array_out(:,:,:)
+        complex(selected_real_kind(6, 37)), intent(in)    :: array_in(:,:,:)
+        complex(selected_real_kind(6, 37)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2), range2(2), range3(2)
+        integer, optional, intent(in) ::  lbound1, lbound2, lbound3
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine sp_dev_mem_addscal_c3d
+    !
+    subroutine sp_dev_mem_addscal_c4d(array_out, array_in, scal, &
+                                                range1, lbound1, &
+                                                range2, lbound2, &
+                                                range3, lbound3, &
+                                                range4, lbound4 )
+        use iso_fortran_env
+        implicit none
+        !
+        complex(selected_real_kind(6, 37)), intent(inout) :: array_out(:,:,:,:)
+        complex(selected_real_kind(6, 37)), intent(in)    :: array_in(:,:,:,:)
+        complex(selected_real_kind(6, 37)), optional, intent(in) :: scal
+        integer, optional, intent(in) ::  range1(2), range2(2), range3(2), range4(2)
+        integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
+#if defined(__CUDA)
+        attributes(device) :: array_out, array_in
+#endif
+    end subroutine sp_dev_mem_addscal_c4d
+    !
+    !
+end interface dev_mem_addscal

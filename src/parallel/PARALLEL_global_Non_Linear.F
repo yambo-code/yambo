@@ -35,13 +35,13 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_WF_k_INDEX,PAR_COM_Xk_ibz_A2A
  ! IND
  use parallel_m,    ONLY:PAR_IND_freqs,PAR_IND_OVLPk_ibz,PAR_IND_Xk_ibz, &
-&                        PAR_IND_QP,PAR_IND_Q,PAR_IND_WF_k,PAR_IND_Xk_bz
+&                        PAR_IND_QP,PAR_IND_Q_ibz,PAR_IND_WF_k,PAR_IND_Xk_bz
  ! INDEX
  use parallel_m,    ONLY:PAR_freqs_index,PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_QP_index
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_n_freqs,PAR_nQP,PAR_Xk_nbz,PAR_Xk_nibz
  ! ID's
- use parallel_m,    ONLY:PAR_IND_freqs_ID,PAR_IND_Q_ID,PAR_IND_WF_k_ID,&
+ use parallel_m,    ONLY:PAR_IND_freqs_ID,PAR_IND_Q_ibz_ID,PAR_IND_WF_k_ID,&
 &                        PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz_ID,myid
  use nl_optics,     ONLY:n_frequencies
  use openmp,        ONLY:n_threads_NL,OPENMP_set_threads
@@ -76,7 +76,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    !
    call PARALLEL_index(PAR_IND_freqs,(/n_frequencies/),COMM=PAR_COM_freqs_INDEX)
    PAR_IND_freqs_ID=PAR_COM_freqs_INDEX%CPU_id
-   PAR_n_freqs     =PAR_IND_freqs%n_of_elements(PAR_IND_Q_ID+1)
+   PAR_n_freqs     =PAR_IND_freqs%n_of_elements(PAR_IND_Q_ibz_ID+1)
    call PARALLEL_live_message("Freqs",ENVIRONMENT=ENVIRONMENT,         &
 &                             LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1), &
 &                             TOTAL=n_frequencies,NCPU=PAR_COM_freqs_INDEX%n_CPU)

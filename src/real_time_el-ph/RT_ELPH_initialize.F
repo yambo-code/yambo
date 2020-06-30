@@ -39,7 +39,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  use vec_operate,    ONLY:degeneration_finder
  use parser_m,       ONLY:parser
  use R_lattice,      ONLY:RIM_n_rand_pts
- use parallel_m,     ONLY:PAR_Q_index,PAR_IND_Q,PAR_nQ,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
+ use parallel_m,     ONLY:PAR_Q_bz_index,PAR_IND_Q_bz,PAR_nQ_bz,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
 &                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX
  !
 #include<memory.h>
@@ -89,7 +89,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  ! Allocation
  !============
  !
- YAMBO_ALLOC(elph_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ,PAR_Xk_nibz))
+ YAMBO_ALLOC(elph_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ_bz,PAR_Xk_nibz))
  !
  MAX_gkkp_expanded_at_kpq=0._SP
  !
@@ -107,7 +107,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  do iq=1,q%nbz
    !
-   if (.not.PAR_IND_Q%element_1D(iq)) cycle
+   if (.not.PAR_IND_Q_bz%element_1D(iq)) cycle
    !
    iq_io=Q_io_map(iq)
    !
@@ -124,7 +124,7 @@ subroutine RT_ELPH_initialize(E,k,q)
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
      ik_mem = PAR_Xk_ibz_index(ik)
-     iq_mem = PAR_Q_index(iq)
+     iq_mem = PAR_Q_bz_index(iq)
      !
      do i_n=1,elph_nb
        do i_np=1,elph_nb

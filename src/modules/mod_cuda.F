@@ -29,6 +29,7 @@ module cuda_m
   use cublas
   use cusolverdn_y
 #endif
+  use parallel_m,   ONLY:myid,host_name,PAR_COM_HOST
   implicit none
   public
 
@@ -80,9 +81,11 @@ contains
 
   subroutine cuda_setup()
     implicit none
+    integer :: ndev,myid_host_loc
     integer :: ierr
     !
 #if defined _CUDA
+    !
     have_cuda_devices=.false. 
     call get_environment_variable("CUDA_VISIBLE_DEVICES",cuda_visible_devices)
     if (len_trim(cuda_visible_devices) >0) have_cuda_devices=.true.
@@ -90,8 +93,29 @@ contains
     stream_default=cudaforGetDefaultStream()
     ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
     ierr = CudaStreamCreateWithFlags(stream_d2h,cudaStreamNonBlocking)
+    !
 #else
     have_cuda_devices=.false.
+#endif
+
+    !
+    ! gpu assignment
+    !
+#if defined _CUDA && defined _MPI
+    !
+    myid_host_loc=PAR_COM_HOST%CPU_id
+    !
+    ierr = cudaGetDeviceCount( ndev )
+    if (ierr/=0) call error("[GPU] cannot get DeviceCount")
+    ierr = cudaSetDevice(mod(myid_host_loc, ndev))
+    if (ierr/=0) call error("[GPU] cannot set device")
+    ierr = cudaDeviceSynchronize()
+    if (ierr/=0) call error("[GPU] cannot device-sync")
+    !
+#if defined(__DEBUG)
+    write(*,*) "MPI ", myid, " on node ", host_name, " is using GPU: ", mod(myid_host_loc, ndev)
+#endif
+    !
 #endif
     !
   end subroutine cuda_setup

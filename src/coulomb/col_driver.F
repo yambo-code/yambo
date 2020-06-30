@@ -58,6 +58,7 @@ subroutine col_driver(bare_NG,q)
 &                        bare_qpg_d
  use wave_func,     ONLY:wf_ng
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
+ use cuda_m,        ONLY:have_cuda
 #include<memory.h>
  !
  integer       :: bare_NG
@@ -147,13 +148,14 @@ subroutine col_driver(bare_NG,q)
  !
  if (.not.l_col_cut) then
    call cutoff_presets()
-#ifdef _CUDA
-   YAMBO_FREE(bare_qpg_d)
-   if (size(bare_qpg)>0) then
-     YAMBO_ALLOC(bare_qpg_d,(size(bare_qpg,2),size(bare_qpg,1)))
-     bare_qpg_d=transpose(bare_qpg)
+   !
+   if (have_cuda) then
+     YAMBO_FREE(bare_qpg_d)
+     if (size(bare_qpg)>0) then
+       YAMBO_ALLOC_SOURCE(bare_qpg_d,bare_qpg)
+     endif
    endif
-#endif
+   !
    return
  endif
  !
@@ -162,12 +164,11 @@ subroutine col_driver(bare_NG,q)
  ! copy again,
  ! bare_qpg is modified by cutff_driver
  !
-#ifdef _CUDA
- YAMBO_FREE(bare_qpg_d)
- if (size(bare_qpg)>0) then
-   YAMBO_ALLOC(bare_qpg_d,(size(bare_qpg,2),size(bare_qpg,1)))
-   bare_qpg_d=transpose(bare_qpg)
+ if (have_cuda) then
+   YAMBO_FREE(bare_qpg_d)
+   if (size(bare_qpg)>0) then
+     YAMBO_ALLOC_SOURCE(bare_qpg_d,bare_qpg)
+   endif
  endif
-#endif
  !
 end subroutine

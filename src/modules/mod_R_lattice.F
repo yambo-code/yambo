@@ -94,8 +94,8 @@ module R_lattice
  type bz_map
    integer, allocatable :: k_map_inv(:,:)
    integer, allocatable :: k_map_dir(:,:,:)
-   integer      :: g0_idx(3,2)
-   integer      :: max_kdir(3)
+   integer      :: g0_idx(3,2) ! Index of the G-vectors to bring back k-points in the BZ, in the 3 directions
+   integer      :: max_kdir(3) ! Max k-points in each direction. If 1, the direction is not periodic
    real(SP)     :: g0_length(3)
    real(SP)     :: q_step(3)
  end type bz_map 
@@ -131,10 +131,10 @@ module R_lattice
  real(SP),allocatable :: g_vec(:,:)
  real(SP),allocatable :: E_of_shell(:)
  ! GPUs
- real(SP),allocatable DEV_ATTRIBUTE :: g_vec_d(:,:)
- integer ,allocatable DEV_ATTRIBUTE :: g_rot_d(:,:)
- integer ,allocatable DEV_ATTRIBUTE :: G_m_G_d(:,:)
- integer ,allocatable DEV_ATTRIBUTE :: minus_G_d(:)
+ real(SP),allocatable DEV_ATTR :: g_vec_d(:,:)
+ integer ,allocatable DEV_ATTR :: g_rot_d(:,:)
+ integer ,allocatable DEV_ATTR :: G_m_G_d(:,:)
+ integer ,allocatable DEV_ATTR :: minus_G_d(:)
  !
  ! RIM
  !
@@ -146,7 +146,7 @@ module R_lattice
  real(SP):: RIM_epsm1(3)
  real(SP):: RIM_anisotropy
  real(SP),   allocatable :: RIM_qpg(:,:,:)
- real(SP),   allocatable DEV_ATTRIBUTE :: RIM_qpg_d(:,:,:)
+ real(SP),   allocatable DEV_ATTR :: RIM_qpg_d(:,:,:)
  !
  ! Coulomb (including Cutoff)
  !
@@ -159,10 +159,7 @@ module R_lattice
  character(schlen)       :: cut_description
  !
  complex(SP),allocatable :: bare_qpg(:,:)
- complex(SP),allocatable DEV_ATTRIBUTE :: bare_qpg_d(:,:)
- !
- ! AF: for the sake of performance, this variable is defined 
- !     as the transpose of the host variable bare_qpg
+ complex(SP),allocatable DEV_ATTR :: bare_qpg_d(:,:)
  !
  logical                 :: CUTOFF_plus_RIM
  real(SP)                :: cyl_vr_save

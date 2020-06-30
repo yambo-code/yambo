@@ -35,14 +35,17 @@ module FFT_m
  integer, allocatable :: fft_g_table(:,:)
  integer, allocatable :: fft_rot_r(:,:)
  integer, allocatable :: fft_rot_r_inv(:)
- integer, allocatable DEV_ATTRIBUTE :: fft_g_table_d(:,:)
- integer, allocatable DEV_ATTRIBUTE :: fft_rot_r_d(:,:)
- integer, allocatable DEV_ATTRIBUTE :: fft_rot_r_inv_d(:)
+ integer, allocatable DEV_ATTR :: fft_g_table_d(:,:)
+ integer, allocatable DEV_ATTR :: fft_rot_r_d(:,:)
+ integer, allocatable DEV_ATTR :: fft_rot_r_inv_d(:)
  !
  ! FFTW support
  !
- integer(8)  :: fftw_plan !(FW) +1 sign: G-space to R-space & oscillators
-                          !(BW) -1 sign: R-space to G-space
+ integer(8)  :: fftw_plan  !(FW) +1 sign: G-space to R-space & oscillators
+                           !(BW) -1 sign: R-space to G-space
+ !
+ ! cuFFT support  (CUDA)
+ !
  integer     :: cufft_plan !(FW) +1 sign: G-space to R-space & oscillators
                            !(BW) -1 sign: R-space to G-space
 

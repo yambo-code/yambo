@@ -46,9 +46,9 @@ subroutine INTERPOLATION_create_the_grid(K,units,grid_dim)
  use vec_operate,    ONLY:c2a
  implicit none
  !
- integer, intent(in)        :: grid_dim(3)
- type(bz_samp), intent(out) :: K
- character(1), intent(in)   :: units
+ integer,       intent(in)    :: grid_dim(3)
+ type(bz_samp), intent(inout) :: K
+ character(1),  intent(in)    :: units
  !
  ! Work Space
  !

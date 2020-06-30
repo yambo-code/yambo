@@ -315,7 +315,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  ! Each block has a status variables indicating if the matrix element was already calculated
  !
  use pars,          ONLY:IP,IPL,SP,schlen
- use BS,            ONLY:BS_blk,BSK_IO_mode,BS_K_cutoff,BS_IO_dim,MAX_BSK_LIN_size
+ use BS,            ONLY:BS_blk,BSK_IO_mode,BS_K_cutoff,BS_IO_dim,MAX_BSK_LIN_size,n_BS_blks_min
  use timing_m,      ONLY:timing
  use IO_m,          ONLY:io_variable_bulk,io_unit,netcdf_call,nf90_sync,&
 &                        write_is_on,read_is_on,io_BS_K,YAMBO_CMPLX_NO_FILL
@@ -484,11 +484,11 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
    !
  end select
  !
- if(write_is_on(ID)) then
+ if(write_is_on(ID).and.i_block<=n_BS_blks_min) then
    stat = nf90_sync(io_unit(ID))
    call netcdf_call(stat,ID)
  endif
- !
+ !   
  call timing('io_BS',OPR='stop')
  !
 end subroutine

@@ -38,7 +38,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use collision_ext,   ONLY:HXC_COLL_element,COH_COLL_element,COLLISIONS_have_HARTREE,&
 &                          COH_collisions,HXC_collisions,COLLISIONS_group,COLLISIONS_naming
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP,NONE
- use parallel_m,      ONLY:PAR_IND_Plasma,PAR_IND_Q,PAR_Q_index,PAR_PLASMA_index
+ use parallel_m,      ONLY:PAR_IND_Plasma,PAR_IND_Q_bz,PAR_Q_bz_index,PAR_PLASMA_index
  use COLL_interfaces, ONLY:io_COLLISIONS
  use timing_m,        ONLY:timing
 #if defined _QED || defined _RT
@@ -244,11 +244,11 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
          !
          do iqbz=1,nqbz
            !
-           i_q_mem=PAR_Q_index(iqbz)
+           i_q_mem=PAR_Q_bz_index(iqbz)
            !
            if (COLL%kind==QP_SE_GW_NEQ) then
              !
-             if (.not.PAR_IND_Q%element_1D(iqbz)) then
+             if (.not.PAR_IND_Q_bz%element_1D(iqbz)) then
                ic=ic+N_plasma_poles_global
                cycle
              endif

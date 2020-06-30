@@ -26,7 +26,7 @@ integer function io_Double_Grid(E,Xk,ID)
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
-&                         io_bulk,io_header,ver_is_gt_or_eq,file_is_present,write_is_on,&
+&                         io_bulk,io_header,ver_is_gt_or_eq,write_is_on,&
 &                         IO_OUTDATED_DB,variable_exist
  use timing_m,       ONLY:timing
  !
@@ -38,7 +38,8 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Work Space
  !
- integer :: DG_format,VAR_SZ
+ logical :: l_R_LATT
+ integer :: VAR_SZ
  !
  call timing('io_Double_Grid',OPR='start')
  !
@@ -48,11 +49,8 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  if (io_Double_Grid/=0) goto 1
  !
- if (write_is_on(ID).or.variable_exist(ID,"HEAD_R_LATT")) then
-   io_Double_Grid=io_header(ID,R_LATT=.TRUE.,IMPOSE=.TRUE.)
- else
-   io_Double_Grid=io_header(ID)
- endif
+ l_R_LATT=(write_is_on(ID).or.variable_exist(ID,"HEAD_R_LATT"))
+ io_Double_Grid=io_header(ID,R_LATT=l_R_LATT,IMPOSE=l_R_LATT,NOWARN_SER=.true.)
  !
  if (.not.ver_is_gt_or_eq(ID,revision=3560)) io_Double_Grid=IO_OUTDATED_DB
  !
@@ -71,7 +69,6 @@ integer function io_Double_Grid(E,Xk,ID)
  ! 
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
- !
  ! Eigenvalues
  !
  if (read_is_on(ID)) then
@@ -82,7 +79,6 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%E_FineGd) ) 
  call io_bulk(ID, R3=E%E_FineGd )
- !
  !
  ! Kpts
  !
@@ -104,7 +100,6 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  call io_bulk(ID, VAR="IBZ_TO_BZ_MAP", VAR_SZ=(/Xk%nbz_FineGd/) )
  call io_bulk(ID, I1=Xk%sstar_FineGd )
- !
  !
  ! Block filling
  !

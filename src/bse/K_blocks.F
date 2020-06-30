@@ -36,9 +36,9 @@ subroutine K_blocks(iq)
  !end type BS_block
  !
  use pars,         ONLY:cZERO,SP,IP,IPL
- use parallel_m,   ONLY:PAR_IND_T_ordered,PP_redux_wait,PAR_COM_HOST
+ use parallel_m,   ONLY:PAR_IND_T_ordered,PP_redux_wait,PAR_COM_HOST,myid,ncpu
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
-&                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim
+&                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim,n_BS_blks_min
  use com,          ONLY:msg
  use interfaces,   ONLY:PARALLEL_live_message
  !
@@ -53,7 +53,7 @@ subroutine K_blocks(iq)
  !
  ! Work Space
  !
- integer      :: i_T,j_T,i_block,iB,n_new_blocks
+ integer      :: i_T,j_T,i_block,iB,n_new_blocks,n_BS_blks_CPUs(ncpu)
  integer(IPL) :: local_steps
  real(SP)     :: N_Ts_total,N_Ts_local
  !
@@ -94,6 +94,10 @@ subroutine K_blocks(iq)
      !
    enddo
  enddo
+ !
+ n_BS_blks_CPUs(myid+1)=n_BS_blks
+ call PP_redux_wait(n_BS_blks_CPUs)
+ n_BS_blks_min=minval(n_BS_blks_CPUs)
  !
  ! Allocate the blocks
  !

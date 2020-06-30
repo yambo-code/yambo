@@ -38,7 +38,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q_ibz,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use TDDFT,         ONLY:FXC_desc,FXC_type,&
@@ -112,11 +112,11 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! workaround for possible compiler bug
 #ifdef _PGI
-   if (iq>1.and.size(PAR_IND_Q%n_of_elements)>1) then
+   if (iq>1.and.size(PAR_IND_Q_ibz%n_of_elements)>1) then
 #else
    if (iq>1) then
 #endif
-     if (.not.PAR_IND_Q%element_1D(iq)) cycle
+     if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
    endif
    !
    ! Check if this q is compatible with the user defined direction in chartesian coordinates

@@ -152,7 +152,8 @@ module BS
    !
  end type BS_block
  !
- integer                    :: n_BS_blks = 0
+ integer                    :: n_BS_blks
+ integer                    :: n_BS_blks_min
  type(BS_block), allocatable, target :: BS_blk(:)
  !
  ! WF phases

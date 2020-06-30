@@ -53,7 +53,7 @@ function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   H_x_i=rZERO
   !$cuf kernel do(1) <<<*,*>>>
   do ig = 1, BS_n_g_exch
-    H_x=conjg(BS_T_grp_ip_O_x_d(ig,i_Tp))*BS_T_grp_ik_O_x_d(ig,i_Tk)/bare_qpg_d(ig,iq)**2
+    H_x=conjg(BS_T_grp_ip_O_x_d(ig,i_Tp))*BS_T_grp_ik_O_x_d(ig,i_Tk)/bare_qpg_d(iq,ig)**2
     H_x_r=H_x_r+real(H_x,SP)
     H_x_i=H_x_i+aimag(H_x)
   enddo
@@ -101,7 +101,7 @@ function K_exchange_kernel_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   H_x_i=rZERO
   !$cuf kernel do(1) <<<*,*>>>
   do ig = 1, BS_n_g_exch
-    H_x = BS_T_grp_ip_O_x_d( minus_G_d(ig),i_Tp) *BS_T_grp_ik_O_x_d(ig,i_Tk)/bare_qpg_d(ig,iq)**2
+    H_x = BS_T_grp_ip_O_x_d( minus_G_d(ig),i_Tp) *BS_T_grp_ik_O_x_d(ig,i_Tk)/bare_qpg_d(iq,ig)**2
     H_x_r=H_x_r+real(H_x,SP)
     H_x_i=H_x_i+aimag(H_x)
   enddo

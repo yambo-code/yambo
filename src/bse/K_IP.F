@@ -289,7 +289,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  ! DOS
  !=====
- if (BSS_eval_JDOS) Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor !/(4._SP*pi)
+ if (BSS_eval_JDOS) Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor !/(4._SP*pi) This factor is needed for the correct Jdos
+ !                                                          ! However it is commented for now since all test-suite
+ !                                                          ! references needs to be updated before insterting it
  !
  if (trim(global_gauge)=='velocity') then
    if (     skip_cond_sum_rule) diam_term_used=diam_term_exact

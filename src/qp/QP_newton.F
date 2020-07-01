@@ -190,11 +190,11 @@ end subroutine
 
 subroutine RIM_W(X,Xw,q)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,pi,zero_dfl
  use com,           ONLY:msg
- use R_lattice,     ONLY:bz_samp,RIM_ng,g_vec,b,k_grid_b,ng_vec,rl_sop
+ use R_lattice,     ONLY:bz_samp,RIM_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg
  use memory,        ONLY:MEM_err
- use vec_operate,   ONLY:c2a,v_is_zero
+ use vec_operate,   ONLY:c2a,v_is_zero,v_norm
  use X_m,           ONLY:X_mat,X_t,X_alloc
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
@@ -207,14 +207,15 @@ subroutine RIM_W(X,Xw,q)
  !
  ! Work Space
  !
- integer :: iq1, ig1, iq2, ig2, idx_q(3), iq, ig
+ integer :: iq1, ig1, iq2, ig2, iq, ig
  integer :: out_unit_G=100, out_unit_qpG_in=101,out_unit_qpG_out=102,out_unit_idx=103,out_unit_vX=104
+ integer :: out_unit_f_coeff=105
  integer :: iq_ibz, is, find, nn, i, iq_to_start,idm, ng_tmp
- integer, allocatable :: idx_q_nn(:,:,:),idx_G_nn(:,:,:),idx_is_nn(:,:,:)
- real(SP) :: G_max_ibz(q%nibz)
+ integer, allocatable :: idx_q(:,:,:),idx_G(:,:,:),idx_is(:,:,:)
+ real(SP) :: G_max_ibz(q%nibz), f_func(5)
  complex(SP), allocatable :: vX(:,:,:)
- real, allocatable :: f_func(:,:,:), f_coeff(:,:,:)
- real(SP) :: qpG(3), qpG_nn(3,4), delta_q(3,2), qpG_trial(3)
+ real, allocatable :: f_coeff(:,:,:)
+ real(SP) :: qpG(3,5), delta_q(3,2), qpG_trial(3), v1(3)
  logical :: debug
  integer :: ID, io_err, ng_save
  integer,     external ::io_X
@@ -228,13 +229,13 @@ subroutine RIM_W(X,Xw,q)
    open (unit=out_unit_qpG_out,file="qpG_out.dat",action="write",status="replace")
    open (unit=out_unit_idx,file="idx.dat",action="write",status="replace")
    open (unit=out_unit_vX,file="vX.dat",action="write",status="replace")
+   open (unit=out_unit_f_coeff,file="f_coeff.dat",action="write",status="replace")
  end if
  !
- allocate(idx_q_nn (4,q%nbz,RIM_ng),stat=MEM_err)
- allocate(idx_G_nn (4,q%nbz,RIM_ng),stat=MEM_err)
- allocate(idx_is_nn (4,q%nbz,RIM_ng),stat=MEM_err)
+ allocate(idx_q (5,q%nbz,RIM_ng),stat=MEM_err)
+ allocate(idx_G (5,q%nbz,RIM_ng),stat=MEM_err)
+ allocate(idx_is (5,q%nbz,RIM_ng),stat=MEM_err)
  allocate(vX (5,q%nbz,RIM_ng),stat=MEM_err)
- allocate(f_func (5,q%nbz,RIM_ng),stat=MEM_err)
  allocate(f_coeff (5,q%nbz,RIM_ng),stat=MEM_err)
  !
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -243,39 +244,55 @@ subroutine RIM_W(X,Xw,q)
  !
  !Calculate infinitesimal steps in rlu
  do idm=1,2
-   delta_q(:,idm) = k_grid_b(idm,:)
-   call c2a(b_in=b,v_in=delta_q(:,idm),mode='kc2a')
-   if (debug) then
-     call msg('r', "delta_q =", delta_q(:,idm))
+   v1 = k_grid_b(idm,:)
+   call c2a(b_in=b,v_in=v1,mode='kc2a')
+   if (abs(v1(1)) < zero_dfl) then
+     delta_q(:,2) = v1
+   else if (abs(v1(2)) < zero_dfl) then
+     delta_q(:,1) = v1
+   else
+     call msg('r', 'Error in the selection of Delta_q')
    end if
  end do
  !
+ if (debug) call msg('r', "delta_q(1) =", delta_q(:,1))
+ if (debug) call msg('r', "delta_q(2) =", delta_q(:,2))
+ !
  !Cycles over qpG points
  do ig1=1,RIM_ng
-   !
-   if (debug) then
-     !Print G vectors into a file
-     write(out_unit_G,"(I3,E15.6,E15.6,E15.6)") ig1,g_vec(ig1,1), g_vec(ig1,2), g_vec(ig1,3)
-   end if
    !
    do iq1=1,q%nbz
      !
      find = 0
      !
+     idx_q(1,iq1,ig1) = q%sstar(iq1,1)
+     idx_is(1,iq1,ig1) = q%sstar(iq1,2)
+     idx_G(1,iq1,ig1) = ig1
+     !
      !Calculate qpG and qpG nearest neighbour
-     qpG = matmul(rl_sop(:,:,q%sstar(iq1,2)),q%pt(q%sstar(iq1,1),:)+g_vec(ig1,:))
-     call c2a(b_in=b,v_in=qpG,mode='ki2a')
-     qpG_nn(:,1) = qpG + delta_q(:,1)
-     qpG_nn(:,2) = qpG + delta_q(:,2)
-     qpG_nn(:,3) = qpG - delta_q(:,1)
-     qpG_nn(:,4) = qpG - delta_q(:,2)
+     qpG(:,1) = matmul(rl_sop(:,:,q%sstar(iq1,2)),q%pt(q%sstar(iq1,1),:)+g_vec(ig1,:))
+     call c2a(b_in=b,v_in=qpG(:,1),mode='ki2a')
+     !
+     !Index ordering of nearest neighbours
+     !      2
+     !      ^
+     !      |
+     ! 5 <- 1 -> 3
+     !      |
+     !      v
+     !      4
+     !                 
+     qpG(:,2) = qpG(:,1) + delta_q(:,2)
+     qpG(:,3) = qpG(:,1) + delta_q(:,1)
+     qpG(:,4) = qpG(:,1) - delta_q(:,2)
+     qpG(:,5) = qpG(:,1) - delta_q(:,1)
      !
      if (debug) then
-       !Print qpG and qpG_nn into a file
+       !Print qpG and qpG into a file
        write(out_unit_qpG_in,"(I4,I4,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3)")&
-& iq1,ig1,qpG(1), qpG(2), qpG(3),qpG_nn(1,1), qpG_nn(2,1), qpG_nn(3,1)&
-&,qpG_nn(1,2), qpG_nn(2,2), qpG_nn(3,2),qpG_nn(1,3), qpG_nn(2,3), qpG_nn(3,3)&
-&,qpG_nn(1,4), qpG_nn(2,4), qpG_nn(3,4)
+& iq1,ig1,qpG(1,1), qpG(2,1), qpG(3,1),qpG(1,2), qpG(2,2), qpG(3,2)&
+&,qpG(1,3), qpG(2,3), qpG(3,3),qpG(1,4), qpG(2,4), qpG(3,4)&
+&,qpG(1,5), qpG(2,5), qpG(3,5)
      end if
      !
      !Find nn indexes
@@ -296,51 +313,48 @@ subroutine RIM_W(X,Xw,q)
          qpG_trial = matmul(rl_sop(:,:,is),q%pt(iq_ibz,:)+g_vec(ig2,:))
          call c2a(b_in=b,v_in=qpG_trial,mode='ki2a')
          !
-         do nn=1,4
-           if (v_is_zero(qpG_trial-qpG_nn(:,nn))) then
-             idx_q_nn(nn,iq1,ig1) = iq_ibz
-             idx_G_nn(nn,iq1,ig1) = ig2
-             idx_is_nn(nn,iq1,ig1) = is
+         do nn=2,5
+           if (v_is_zero(qpG_trial-qpG(:,nn))) then
+             idx_q(nn,iq1,ig1) = iq_ibz
+             idx_G(nn,iq1,ig1) = ig2
+             idx_is(nn,iq1,ig1) = is
              find = find + 1
            end if
          end do
          !
-         if (find == 4) then
-           exit
-         end if
+         if (find == 4) exit
          !
        end do
        !
-       if (find == 4) then
-         exit
-       end if
+       if (find == 4) exit
        !
      end do
      !
      if (debug) then
-       !Write indesex into a file
-       write(out_unit_idx,"(I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4)") iq1,q%sstar(iq1,1),q%sstar(iq2,2),ig1&
-&,idx_q_nn(1,iq1,ig1),idx_is_nn(1,iq1,ig1),idx_G_nn(1,iq1,ig1)&
-&,idx_q_nn(2,iq1,ig1),idx_is_nn(2,iq1,ig1),idx_G_nn(2,iq1,ig1)&
-&,idx_q_nn(3,iq1,ig1),idx_is_nn(3,iq1,ig1),idx_G_nn(3,iq1,ig1)&
-&,idx_q_nn(4,iq1,ig1),idx_is_nn(4,iq1,ig1),idx_G_nn(4,iq1,ig1)
+       !Write indexes into a file
+       write(out_unit_idx,"(I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4)") iq1 &
+&,idx_q(1,iq1,ig1),idx_is(1,iq1,ig1),idx_G(1,iq1,ig1)&
+&,idx_q(2,iq1,ig1),idx_is(2,iq1,ig1),idx_G(2,iq1,ig1)&
+&,idx_q(3,iq1,ig1),idx_is(3,iq1,ig1),idx_G(3,iq1,ig1)&
+&,idx_q(4,iq1,ig1),idx_is(4,iq1,ig1),idx_G(4,iq1,ig1)&
+&,idx_q(5,iq1,ig1),idx_is(5,iq1,ig1),idx_G(5,iq1,ig1)
 
        !Check if nearest neighbours are obtained correctly
-       qpG_nn(:,1) = matmul(rl_sop(:,:,idx_is_nn(1,iq1,ig1)),q%pt(idx_q_nn(1,iq1,ig1),:)+g_vec(idx_G_nn(1,iq1,ig1),:))
-       qpG_nn(:,2) = matmul(rl_sop(:,:,idx_is_nn(2,iq1,ig1)),q%pt(idx_q_nn(2,iq1,ig1),:)+g_vec(idx_G_nn(2,iq1,ig1),:))
-       qpG_nn(:,3) = matmul(rl_sop(:,:,idx_is_nn(3,iq1,ig1)),q%pt(idx_q_nn(3,iq1,ig1),:)+g_vec(idx_G_nn(3,iq1,ig1),:))
-       qpG_nn(:,4) = matmul(rl_sop(:,:,idx_is_nn(4,iq1,ig1)),q%pt(idx_q_nn(4,iq1,ig1),:)+g_vec(idx_G_nn(4,iq1,ig1),:))
+       qpG(:,2) = matmul(rl_sop(:,:,idx_is(2,iq1,ig1)),q%pt(idx_q(2,iq1,ig1),:)+g_vec(idx_G(2,iq1,ig1),:))
+       qpG(:,3) = matmul(rl_sop(:,:,idx_is(3,iq1,ig1)),q%pt(idx_q(3,iq1,ig1),:)+g_vec(idx_G(3,iq1,ig1),:))
+       qpG(:,4) = matmul(rl_sop(:,:,idx_is(4,iq1,ig1)),q%pt(idx_q(4,iq1,ig1),:)+g_vec(idx_G(4,iq1,ig1),:))
+       qpG(:,5) = matmul(rl_sop(:,:,idx_is(5,iq1,ig1)),q%pt(idx_q(5,iq1,ig1),:)+g_vec(idx_G(5,iq1,ig1),:))
        !
        !From iku to rlu
-       call c2a(b_in=b,v_in=qpG_nn(:,1),mode='ki2a')
-       call c2a(b_in=b,v_in=qpG_nn(:,2),mode='ki2a')
-       call c2a(b_in=b,v_in=qpG_nn(:,3),mode='ki2a')
-       call c2a(b_in=b,v_in=qpG_nn(:,4),mode='ki2a')
+       call c2a(b_in=b,v_in=qpG(:,2),mode='ki2a')
+       call c2a(b_in=b,v_in=qpG(:,3),mode='ki2a')
+       call c2a(b_in=b,v_in=qpG(:,4),mode='ki2a')
+       call c2a(b_in=b,v_in=qpG(:,5),mode='ki2a')
        !Write qpG out into a file
        write(out_unit_qpG_out,"(I4,I4,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3)")&
-& iq1,ig1,qpG(1), qpG(2), qpG(3),qpG_nn(1,1), qpG_nn(2,1), qpG_nn(3,1)&
-&,qpG_nn(1,2), qpG_nn(2,2), qpG_nn(3,2),qpG_nn(1,3), qpG_nn(2,3), qpG_nn(3,3)&
-&,qpG_nn(1,4), qpG_nn(2,4), qpG_nn(3,4)
+& iq1,ig1,qpG(1,1), qpG(2,1), qpG(3,1),qpG(1,2), qpG(2,2), qpG(3,2)&
+&,qpG(1,3), qpG(2,3), qpG(3,3),qpG(1,4), qpG(2,4), qpG(3,4)&
+&,qpG(1,5), qpG(2,5), qpG(3,5)
      end if
      !
    end do
@@ -359,14 +373,22 @@ subroutine RIM_W(X,Xw,q)
  !Look if G_max_ibz must be increased
  do iq=1,q%nbz
    do ig=1,RIM_ng
-     do nn=1,4
-       if (G_max_ibz(idx_q_nn(nn,iq,ig)) < idx_G_nn(nn,iq,ig)) then
-         G_max_ibz(idx_q_nn(nn,iq,ig)) = idx_G_nn(nn,iq,ig)
+     do nn=2,5
+       if (G_max_ibz(idx_q(nn,iq,ig)) < idx_G(nn,iq,ig)) then
+         G_max_ibz(idx_q(nn,iq,ig)) = idx_G(nn,iq,ig)
        end if
      end do
    end do
  end do
  call msg('r', 'G_max_used =', G_max_ibz(:))
+ !Print G vectors into a file
+ if (debug) then
+   do ig=1,maxval(G_max_ibz)
+     v1 = g_vec(ig,:)
+     call c2a(b_in=b,v_in=v1,mode='ki2a')
+     write(out_unit_G,"(I3,E15.6,E15.6,E15.6)") ig,v1(1), v1(2), v1(3)
+   end do
+ end if
  do iq=1,q%nibz
    !
    !
@@ -391,18 +413,12 @@ subroutine RIM_W(X,Xw,q)
    do ig1=1,RIM_ng
      !
      do iq1=1,q%nbz
-       iq_ibz = q%sstar(iq1,1)
        !
-       !Assign X to the reference point
-       if (iq_ibz == iq) then
-         vX(5,iq1,ig1) = X_mat(ig1,ig1,1)
-       end if
-       !
-       !Assign X to nearest neighbours
-       do nn=1,4
+       !Assign X
+       do nn=1,5
          !
-         if (idx_q_nn(nn,iq1,ig1) == iq) then
-           vX(nn,iq1,ig1) = X_mat(idx_G_nn(nn,iq1,ig1),idx_G_nn(nn,iq1,ig1),1)
+         if (idx_q(nn,iq1,ig1) == iq) then
+           vX(nn,iq1,ig1) = X_mat(idx_G(nn,iq1,ig1),idx_G(nn,iq1,ig1),1)
          end if
          !
        end do
@@ -419,18 +435,49 @@ subroutine RIM_W(X,Xw,q)
    do ig1=1,RIM_ng
      !
      do iq1=1,q%nbz
-       iq_ibz = q%sstar(iq1,1)
-       write(out_unit_vX,"(I4,I4,I4,E15.6,I4,I4,E15.6,I4,I4,E15.6,I4,I4,E15.6,I4,I4,E15.6)")&
-& iq1,ig1,iq_ibz,real(vX(5,iq1,ig1)),idx_q_nn(1,iq1,ig1),idx_G_nn(1,iq1,ig1),real(vX(1,iq1,ig1)),&
-& idx_q_nn(2,iq1,ig1),idx_G_nn(2,iq1,ig1),real(vX(2,iq1,ig1)),&
-& idx_q_nn(3,iq1,ig1),idx_G_nn(3,iq1,ig1),real(vX(3,iq1,ig1)),&
-& idx_q_nn(4,iq1,ig1),idx_G_nn(4,iq1,ig1),real(vX(4,iq1,ig1))
-
+       write(out_unit_vX,"(I4,I4,I4,E15.6,I4,I4,E15.6,I4,I4,E15.6,I4,I4,E15.6,I4,I4,E15.6)") iq1,&
+& idx_q(1,iq1,ig1),idx_G(1,iq1,ig1),real(vX(1,iq1,ig1)),&
+& idx_q(2,iq1,ig1),idx_G(2,iq1,ig1),real(vX(2,iq1,ig1)),&
+& idx_q(3,iq1,ig1),idx_G(3,iq1,ig1),real(vX(3,iq1,ig1)),&
+& idx_q(4,iq1,ig1),idx_G(4,iq1,ig1),real(vX(4,iq1,ig1)),&
+& idx_q(5,iq1,ig1),idx_G(5,iq1,ig1),real(vX(5,iq1,ig1))
      end do
    end do
  end if
  X%ng = ng_save 
-
+ !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ !Calculation of the interpolation coefficients
+ !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ !
+ do ig1=1,RIM_ng
+  !
+  do iq1=1,q%nbz
+    !
+    !Evaluate f_func
+    do nn=1,5
+      !
+      !Select the index of the reference/n.n.
+      iq2 = idx_q(nn,iq1,ig1)
+      ig2 = idx_q(nn,iq1,ig1)
+      !
+      f_func(nn) = bare_qpg(iq2,ig2)**2/(4*pi)*vX(nn,iq1,ig1)/(vX(nn,iq1,ig1)-1)
+      !
+    end do
+    !Store coefficients
+    f_coeff (1,iq1,ig1) = f_func(1)                                                     !f0
+    f_coeff (2,iq1,ig1) = (f_func(3)-f_func(5))/(2*v_norm(delta_q(:,1)))                !f1x
+    f_coeff (3,iq1,ig1) = (f_func(2)-f_func(4))/(2*v_norm(delta_q(:,2)))                !f1y
+    f_coeff (4,iq1,ig1) = (f_func(3)-2*f_func(1)+f_func(5))/(2*v_norm(delta_q(:,1))**2) !f2xx
+    f_coeff (5,iq1,ig1) = (f_func(2)-2*f_func(1)+f_func(4))/(2*v_norm(delta_q(:,2))**2) !f2yy
+    !
+    !Store coefficients into file
+    if (debug) then
+      write(out_unit_f_coeff,"(I4,I4,E15.6,E15.6,E15.6,E15.6,E15.6)") iq1, ig1 &
+&,f_coeff (1,iq1,ig1),f_coeff (2,iq1,ig1),f_coeff (3,iq1,ig1),f_coeff (4,iq1,ig1),f_coeff (5,iq1,ig1)
+    end if
+  end do
+  !
+ end do
 end subroutine
 
 

@@ -231,6 +231,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! I/O
      !
+     call msg('r', "iq_to_start =", iq_to_start)
      if (io_RESPONSE) then
        !
        if (iqbz==iq_to_start) then

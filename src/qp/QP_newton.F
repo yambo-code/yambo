@@ -79,7 +79,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    if (l_elel_corr) then
      if (l_ppa.or.l_cohsex) then
        !
-       call RIM_W(q)
+       call RIM_W(X,Xw,q)
        call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
        !
      else 
@@ -188,43 +188,65 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
 end subroutine
 
-subroutine RIM_W(q)
+subroutine RIM_W(X,Xw,q)
  !
  use pars,          ONLY:SP
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,RIM_ng,g_vec,b,k_grid_b,ng_vec,rl_sop
  use memory,        ONLY:MEM_err
  use vec_operate,   ONLY:c2a,v_is_zero
+ use X_m,           ONLY:X_mat,X_t,X_alloc
+ use frequency,     ONLY:w_samp
+ use IO_m,          ONLY:io_control,OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
+&                        deliver_IO_error_message
  !
  implicit none
+ type(X_t)    ::X
+ type(w_samp) ::Xw
  type(bz_samp):: q
  !
  ! Work Space
  !
- integer :: iq1, ig1, iq2, ig2, idx_q(3), out_unit_G=101, out_unit_qpG_in=102,out_unit_qpG_out,id
- integer :: iq_ibz, is, find, nn, i
+ integer :: iq1, ig1, iq2, ig2, idx_q(3), iq, ig
+ integer :: out_unit_G=100, out_unit_qpG_in=101,out_unit_qpG_out=102,out_unit_idx=103,out_unit_vX=104
+ integer :: iq_ibz, is, find, nn, i, iq_to_start,idm, ng_tmp
  integer, allocatable :: idx_q_nn(:,:,:),idx_G_nn(:,:,:),idx_is_nn(:,:,:)
+ real(SP) :: G_max_ibz(q%nibz)
+ complex(SP), allocatable :: vX(:,:,:)
+ real, allocatable :: f_func(:,:,:), f_coeff(:,:,:)
  real(SP) :: qpG(3), qpG_nn(3,4), delta_q(3,2), qpG_trial(3)
  logical :: debug
+ integer :: ID, io_err, ng_save
+ integer,     external ::io_X
  !
- debug = .false.
+ !
+ debug = .true.
  call k_ibz2bz(q,'a',.true.)
  if (debug) then
    open (unit=out_unit_G,file="G-vec.dat",action="write",status="replace")
    open (unit=out_unit_qpG_in,file="qpG_in.dat",action="write",status="replace")
    open (unit=out_unit_qpG_out,file="qpG_out.dat",action="write",status="replace")
+   open (unit=out_unit_idx,file="idx.dat",action="write",status="replace")
+   open (unit=out_unit_vX,file="vX.dat",action="write",status="replace")
  end if
  !
  allocate(idx_q_nn (4,q%nbz,RIM_ng),stat=MEM_err)
  allocate(idx_G_nn (4,q%nbz,RIM_ng),stat=MEM_err)
  allocate(idx_is_nn (4,q%nbz,RIM_ng),stat=MEM_err)
+ allocate(vX (5,q%nbz,RIM_ng),stat=MEM_err)
+ allocate(f_func (5,q%nbz,RIM_ng),stat=MEM_err)
+ allocate(f_coeff (5,q%nbz,RIM_ng),stat=MEM_err)
+ !
+ !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ !Calculation of the nearest neighbours indexes
+ !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !
  !Calculate infinitesimal steps in rlu
- do id=1,2
-   delta_q(:,id) = k_grid_b(id,:)
-   call c2a(b_in=b,v_in=delta_q(:,id),mode='kc2a')
+ do idm=1,2
+   delta_q(:,idm) = k_grid_b(idm,:)
+   call c2a(b_in=b,v_in=delta_q(:,idm),mode='kc2a')
    if (debug) then
-     call msg('r', "delta_q =", delta_q(:,id))
+     call msg('r', "delta_q =", delta_q(:,idm))
    end if
  end do
  !
@@ -248,11 +270,13 @@ subroutine RIM_W(q)
      qpG_nn(:,3) = qpG - delta_q(:,1)
      qpG_nn(:,4) = qpG - delta_q(:,2)
      !
-     !Print qpG and qpG_nn into a file
-     write(out_unit_qpG_in,"(I4,I4,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3)")&
+     if (debug) then
+       !Print qpG and qpG_nn into a file
+       write(out_unit_qpG_in,"(I4,I4,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3)")&
 & iq1,ig1,qpG(1), qpG(2), qpG(3),qpG_nn(1,1), qpG_nn(2,1), qpG_nn(3,1)&
 &,qpG_nn(1,2), qpG_nn(2,2), qpG_nn(3,2),qpG_nn(1,3), qpG_nn(2,3), qpG_nn(3,3)&
 &,qpG_nn(1,4), qpG_nn(2,4), qpG_nn(3,4)
+     end if
      !
      !Find nn indexes
      do i=1,ng_vec
@@ -294,6 +318,13 @@ subroutine RIM_W(q)
      end do
      !
      if (debug) then
+       !Write indesex into a file
+       write(out_unit_idx,"(I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4,I4)") iq1,q%sstar(iq1,1),q%sstar(iq2,2),ig1&
+&,idx_q_nn(1,iq1,ig1),idx_is_nn(1,iq1,ig1),idx_G_nn(1,iq1,ig1)&
+&,idx_q_nn(2,iq1,ig1),idx_is_nn(2,iq1,ig1),idx_G_nn(2,iq1,ig1)&
+&,idx_q_nn(3,iq1,ig1),idx_is_nn(3,iq1,ig1),idx_G_nn(3,iq1,ig1)&
+&,idx_q_nn(4,iq1,ig1),idx_is_nn(4,iq1,ig1),idx_G_nn(4,iq1,ig1)
+
        !Check if nearest neighbours are obtained correctly
        qpG_nn(:,1) = matmul(rl_sop(:,:,idx_is_nn(1,iq1,ig1)),q%pt(idx_q_nn(1,iq1,ig1),:)+g_vec(idx_G_nn(1,iq1,ig1),:))
        qpG_nn(:,2) = matmul(rl_sop(:,:,idx_is_nn(2,iq1,ig1)),q%pt(idx_q_nn(2,iq1,ig1),:)+g_vec(idx_G_nn(2,iq1,ig1),:))
@@ -316,6 +347,90 @@ subroutine RIM_W(q)
    !
  end do
  !
+ !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ !Load of X_mat
+ !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ !
+ ng_save = X%ng
+ iq_to_start = 1 !This variable will be used in the future to parallelize the code
+ !Initialize G_max_ibz to RIM_ng
+ forall (iq=1:q%nibz) G_max_ibz(iq) = RIM_ng
+ !
+ !Look if G_max_ibz must be increased
+ do iq=1,q%nbz
+   do ig=1,RIM_ng
+     do nn=1,4
+       if (G_max_ibz(idx_q_nn(nn,iq,ig)) < idx_G_nn(nn,iq,ig)) then
+         G_max_ibz(idx_q_nn(nn,iq,ig)) = idx_G_nn(nn,iq,ig)
+       end if
+     end do
+   end do
+ end do
+ call msg('r', 'G_max_used =', G_max_ibz(:))
+ do iq=1,q%nibz
+   !
+   !
+   ! I/O of X
+   !
+   !Load only the G needed
+   X%ng = G_max_ibz(iq)
+   !
+   if (iq==iq_to_start) then
+     call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iq+1/),ID=ID)
+   else if (q%nibz==1) then
+     call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)
+   else if (iq > iq_to_start) then
+     call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq,2*iq+1/),ID=ID)
+   endif
+   !
+   io_err=io_X(X,Xw,ID)
+   !
+   call deliver_IO_error_message(io_err,'PP/Em1s',STOP_it=.TRUE.)
+   !
+   !Assign X
+   do ig1=1,RIM_ng
+     !
+     do iq1=1,q%nbz
+       iq_ibz = q%sstar(iq1,1)
+       !
+       !Assign X to the reference point
+       if (iq_ibz == iq) then
+         vX(5,iq1,ig1) = X_mat(ig1,ig1,1)
+       end if
+       !
+       !Assign X to nearest neighbours
+       do nn=1,4
+         !
+         if (idx_q_nn(nn,iq1,ig1) == iq) then
+           vX(nn,iq1,ig1) = X_mat(idx_G_nn(nn,iq1,ig1),idx_G_nn(nn,iq1,ig1),1)
+         end if
+         !
+       end do
+       !
+     end do
+     !
+   end do
+   !
+   call X_alloc('X')
+ end do
+ !
+ !Print vX into a file
+ if (debug) then
+   do ig1=1,RIM_ng
+     !
+     do iq1=1,q%nbz
+       iq_ibz = q%sstar(iq1,1)
+       write(out_unit_vX,"(I4,I4,I4,E15.6,I4,I4,E15.6,I4,I4,E15.6,I4,I4,E15.6,I4,I4,E15.6)")&
+& iq1,ig1,iq_ibz,real(vX(5,iq1,ig1)),idx_q_nn(1,iq1,ig1),idx_G_nn(1,iq1,ig1),real(vX(1,iq1,ig1)),&
+& idx_q_nn(2,iq1,ig1),idx_G_nn(2,iq1,ig1),real(vX(2,iq1,ig1)),&
+& idx_q_nn(3,iq1,ig1),idx_G_nn(3,iq1,ig1),real(vX(3,iq1,ig1)),&
+& idx_q_nn(4,iq1,ig1),idx_G_nn(4,iq1,ig1),real(vX(4,iq1,ig1))
+
+     end do
+   end do
+ end if
+ X%ng = ng_save 
+
 end subroutine
 
 

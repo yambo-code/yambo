@@ -116,9 +116,9 @@ module X_output
      call msg("o beta",trim(message(6)),Q_plus_G_pt,INDENT=0)
      call msg("o moke",trim(message(7)),Q_plus_G_pt,INDENT=0)
      call msg("o refl",trim(message(8)),Q_plus_G_pt,INDENT=0)
-     call msg("o jdos",trim(message(9)),0.,INDENT=0)
-     call msg("o Spm",trim(message(10)),0.,INDENT=0)
-     call msg("o Smp",trim(message(11)),0.,INDENT=0)
+     call msg("o jdos",trim(message(9)),0._SP,INDENT=0)
+     call msg("o Spm",trim(message(10)),0._SP,INDENT=0)
+     call msg("o Smp",trim(message(11)),0._SP,INDENT=0)
      call msg('o eps refl eel fxc alpha off moke Spm Smp','#')
      !
    end subroutine

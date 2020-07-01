@@ -176,9 +176,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! MPA DB I/O
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID2)
- io_err=io_MPA(X,Xw,ID2)
- if (io_err<0.and.io_MULTIPOLE) call error('Incomplete and/or broken MPA/Poles and Residues database')
+! call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID2)
+! io_err=io_MPA(X,Xw,ID2)
+! if (io_err<0.and.io_MULTIPOLE) call error('Incomplete and/or broken MPA/Poles and Residues database')
  !
  ! MPA workspace
  !
@@ -235,31 +235,31 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! I/O MPA
      !
-     if (io_MULTIPOLE) then
-       !
-       if (iqbz==iq_to_start) then
-         call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID2)
-       else if (q%nbz==1) then
-         call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID2)
-       else if (iqbz> iq_to_start) then
-         call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2)
-       endif
-       !
-       io_err=io_MPA(X,Xw,ID2)
-       !
-       call deliver_IO_error_message(io_err,'MPA/PolRes',STOP_it=.TRUE.)
-       !
-     endif
+!     if (io_MULTIPOLE) then
+!       !
+!       if (iqbz==iq_to_start) then
+!         call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID2)
+!       else if (q%nbz==1) then
+!         call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID2)
+!       else if (iqbz> iq_to_start) then
+!         call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2)
+!       endif
+!       !
+!       io_err=io_MPA(X,Xw,ID2)
+!       !
+!       call deliver_IO_error_message(io_err,'MPA/PolRes',STOP_it=.TRUE.)
+!       !
+!     endif
      !
-!     write(str,*) iqibz
-!     str = adjustl(str)
-!     open(10,file = 'mpa.ER_fragment_'//trim(str))
-!     write(10,*) 'Parameters of the MPA'
-!     write(10,*)
-!     write(10,*) 'matrix_size = ', X%ng
-!     write(10,*) 'number_of_poles = ', X%mpa_npoles
-!     write(10,*)
-!     write(10,*) 'rE_iE_rR_iR(size,size,npoles,4) ='
+     write(str,*) iqibz
+     str = adjustl(str)
+     open(10,file = 'mpa.ER_fragment_'//trim(str))
+     write(10,*) 'Parameters of the MPA'
+     write(10,*)
+     write(10,*) 'matrix_size = ', X%ng
+     write(10,*) 'number_of_poles = ', X%mpa_npoles
+     write(10,*)
+     write(10,*) 'rE_iE_rR_iR(size,size,npoles,4) ='
 !     open(11,file = 'mpa.err_fragment_'//trim(str))
 !     write(11,*) 'Errors of the MPA'
 !     write(11,*)
@@ -316,8 +316,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
            !  write(*,*)
            !endif
            ! 
-           !write(10,*) real(MPA_E_mat(ig1,ig2,i_np),DP),aimag(MPA_E_mat(ig1,ig2,i_np)), &
-           !            real(MPA_R_mat(ig1,ig2,i_np)/isc%gamp(ig1,ig2),DP),aimag(MPA_R_mat(ig1,ig2,i_np)/isc%gamp(ig1,ig2)), ','  
+           write(10,*) real(MPA_E_mat(ig1,ig2,i_np),DP),aimag(MPA_E_mat(ig1,ig2,i_np)), &
+                       real(MPA_R_mat(ig1,ig2,i_np)/isc%gamp(ig1,ig2),DP),aimag(MPA_R_mat(ig1,ig2,i_np)/isc%gamp(ig1,ig2)), ','  
            !
          enddo
          !

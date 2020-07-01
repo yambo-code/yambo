@@ -45,13 +45,12 @@
    implicit none
    !
    integer,     intent(in)    :: np       ! number of desired pairs
-   complex(DP), intent(in)    :: w1,w2    ! segment [w1,w2)
+   complex(SP), intent(in)    :: w1,w2    ! segment [w1,w2)
    character,   intent(in)    :: ps       ! flavour of sampling: hPPS, qPPS, cPPS, ...
-   complex(DP), intent(out)   :: w(2*np)
+   complex(SP), intent(out)   :: w(2*np)
    !
    integer     :: i, a1, a2
-   complex(DP) :: ws
-   real(DP)    :: w_aux1, w_aux2
+   complex(SP) :: ws, uni=(0._SP, 0.1_SP)
    real(SP), parameter :: log2=0.693147180560_SP
    !
    ws = w2-w1
@@ -59,7 +58,8 @@
      case (1)
        select case(ps)
          case ('h') !HPPS
-           w = (/w1, w1+0.5_SP*ws/)
+           !w = (/w1, w1+0.5_SP*ws/)
+           w = (/w1, w2/)
          case ('q') !QPPS
            w = (/w1, w1+0.25_SP*ws/)
          case ('c') !CPPS
@@ -70,7 +70,8 @@
      case (2)
        select case(ps)
          case ('h') !HPPS
-           w = (/w1, w1+0.25_SP*ws, w1+0.5_SP*ws, w1+0.75_SP*ws/)
+           !w = (/w1, w1+0.25_SP*ws, w1+0.5_SP*ws, w1+0.75_SP*ws/)
+           w = (/w1, w2,real(w1,SP)+uni, real(w2,SP)+uni/)
          case ('q') !QPPS
            w = (/w1, w1+0.0625_SP*ws, w1+0.25_SP*ws, w1+0.5625_SP*ws/)
          case ('c') !CPPS
@@ -81,7 +82,8 @@
      case (3)
        select case(ps)
          case ('h') !HPPS
-           w = (/w1, w1+0.25_SP*ws, w1+0.375_SP*ws, w1+0.5_SP*ws, w1+0.625_SP*ws, w1+0.75_SP*ws/)
+           !w = (/w1, w1+0.25_SP*ws, w1+0.375_SP*ws, w1+0.5_SP*ws, w1+0.625_SP*ws, w1+0.75_SP*ws/)
+           w = (/w1, w1+0.33_SP*ws, w1+0.66_SP*ws, real(w1,SP)+uni, real(w1+0.33_SP*ws,SP)+uni, real(w1+0.66_SP*ws,SP)+uni/)
          case ('q') !QPPS
            w = (/w1, w1+0.0625_SP*ws, w1+0.140625_SP*ws, w1+0.25_SP*ws, w1+0.390625_SP*ws, w1+0.5625_SP*ws/)
          case ('c') !CPPS

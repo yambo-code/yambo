@@ -185,6 +185,7 @@ module RT_control
      !
      RT_do_it= .FALSE.
      last_point = 1
+     if (NE_i_time==1) return
      !
      if (what=="OBS") then
        INTERVAL_steps=OBS_RT_IO_t%INTERVAL_steps

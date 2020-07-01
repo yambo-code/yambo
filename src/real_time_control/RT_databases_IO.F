@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_databases_IO(E)
+subroutine RT_databases_IO(E,DO_IT)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elph_scatt
@@ -30,7 +30,7 @@ subroutine RT_databases_IO(E)
 &                         GF_RT_IO_t,CARR_RT_IO_t,CACHE_OBS_steps_now,CACHE_OBS_steps,CACHE_OBS_INTERVAL_time,    &
 &                         SAVE_G_history,NE_i_start_time,CACHE_OBS_last_point
  use real_time,      ONLY:NE_i_time,NE_steps,RT_nk,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,&
-&                         l_NE_with_fields,RT_step,RT_dyn_step
+&                         l_NE_with_fields,RT_step,RT_dyn_step,NE_time
  use IO_m,           ONLY:io_control,manage_action,NONE,REP, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
 &                         OP_IF_START_APP_CL_IF_END,WR_CL_IF_END,OP_APP,OP_APP_CL,OP_WR_CL
@@ -41,11 +41,11 @@ subroutine RT_databases_IO(E)
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX
 #endif
- use units
  !
  implicit none
  !
  type(levels)      :: E
+ logical           :: DO_IT
  !
  ! Work Space
  !
@@ -72,7 +72,7 @@ subroutine RT_databases_IO(E)
    endif
    !
    n_OBS_cache=nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)
-   force_IO=RT_Dynamics_is_over(.false.).or.NE_i_time==OBS_RT_IO_t%last_point
+   force_IO=RT_Dynamics_is_over(.false.).or.DO_IT
    write_OBS=RT_do_it('OBS').or.force_IO
    !
    if (RT_do_it('OBS_cache').or.force_IO) then
@@ -131,7 +131,7 @@ subroutine RT_databases_IO(E)
      io_carr=io_RT_components('carriers',ID(6))
    endif
    !
-   force_IO=RT_Dynamics_is_over(.false.).or.NE_i_time==CARR_RT_IO_t%last_point
+   force_IO=RT_Dynamics_is_over(.false.).or.DO_IT
    write_CARR=RT_do_it('CARR').or.force_IO
    !
    if (write_CARR) then
@@ -168,7 +168,7 @@ subroutine RT_databases_IO(E)
      !
    endif
    !
-   force_IO=RT_Dynamics_is_over(.false.).or.NE_i_time==GF_RT_IO_t%last_point
+   force_IO=RT_Dynamics_is_over(.false.).or.DO_IT
    write_G=RT_do_it('G').or.force_IO
    !
    if(write_G) then
@@ -247,11 +247,6 @@ subroutine RT_databases_IO(E)
    endif
    !
  endif
- 
- !write (*,*) NE_i_time*RT_step/FS2AUT
- !if (write_OBS) write (*,*) "write OBS@",NE_i_time*RT_step/FS2AUT
- !if (write_CARR) write (*,*) "write CARR@",NE_i_time*RT_step/FS2AUT
- !if (write_G) write (*,*) "write G@",NE_i_time*RT_step/FS2AUT
  !
  if (write_OBS)  call PP_bcast( OBS_RT_IO_t%last_point,0)
  if (write_CARR) call PP_bcast(CARR_RT_IO_t%last_point,0)

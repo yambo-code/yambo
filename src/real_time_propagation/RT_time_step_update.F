@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_time_step_update( )
+subroutine RT_time_step_update( E )
  !
  use pars,           ONLY:SP,cZERO
  use stderr,         ONLY:real2ch
@@ -34,10 +34,14 @@ subroutine RT_time_step_update( )
  use RT_control,     ONLY:RT_do_it,TIME_adjust
  use RT_output_m,    ONLY:TIME_STEP_desc
  use com,            ONLY:msg
+ use electrons,      ONLY:levels
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use interfaces,     ONLY:DESC_write
+ use IO_m,           ONLY:IO_and_Messaging_switch
  !
  implicit none
+ !
+ type(levels)           :: E
  ! 
  ! Work Space 
  ! 
@@ -86,6 +90,10 @@ subroutine RT_time_step_update( )
  dT_next=dT_previous*2._SP
  !
  if (all((/abs(ERROR)<NE_step_update_treshold/100,dT_next>RT_dyn_step,dT_next<RT_MAX_step/))) then
+   !
+   call IO_and_Messaging_switch("-fragments_IO_log")
+   call RT_databases_IO(E,.TRUE.)
+   call IO_and_Messaging_switch("+fragments_IO_log")
    !
    RT_dyn_step=dT_next
    !

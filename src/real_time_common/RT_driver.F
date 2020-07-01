@@ -327,7 +327,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    ! Time step update
    !=======================
-   call RT_time_step_update( )
+   call RT_time_step_update( E )
    !
    ! GPL_EXCLUDE_END
    !

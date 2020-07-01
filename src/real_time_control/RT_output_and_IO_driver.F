@@ -105,7 +105,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    ! GPL_EXCLUDE_END
    !
    call IO_and_Messaging_switch("-fragments_IO_log")
-   call RT_databases_IO(E)
+   call RT_databases_IO(E,.FALSE.)
    call IO_and_Messaging_switch("+fragments_IO_log")
    !
    ! OUTPUT(s)

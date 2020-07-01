@@ -36,18 +36,17 @@ subroutine RT_initialize(E,k,q)
  use electrons,      ONLY:levels
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,         &
-&                         SETUP_RT_IO_type,CACHE_OBS_steps,TIME_adjust,STEP_adjust,           &
-&                         SAVE_G_history,CACHE_OBS_INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time
+&                         TIME_adjust,SAVE_G_history,CACHE_OBS_INTERVAL_time
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
 &                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_FineGd,DbGd_EE_Nk_table,    &
-&                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,Gr_kind,     &
+&                         RT_life_extrap_times_INPUT,l_RT_lifetimes_extrapolation,Gr_kind,     &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
 &                         l_RT_update_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
 &                         NE_time_step_update_jump,NE_initial_time_step_update,NE_i_time,     &
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
-&                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
+&                         NE_time_step_update_jump_INPUT,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
 &                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
@@ -154,18 +153,9 @@ subroutine RT_initialize(E,k,q)
  !========================
  RT_dyn_step=RT_step
  !
- ! Set the I/O steps: (CARRIERs) (GF) (output)
- !=============================================
- call SETUP_RT_IO_type(CARR_RT_IO_t,.TRUE.)
- call SETUP_RT_IO_type(OUTPUT_RT_IO_t,.TRUE.)
- GF_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(GF_RT_IO_t%INTERVAL_time_SAVE,CARR_RT_IO_t%INTERVAL_time_SAVE)
- call SETUP_RT_IO_type(GF_RT_IO_t,.TRUE.)
- !
- ! Set (J,P,M) caching variables and I/O steps
- !=============================================
- CACHE_OBS_INTERVAL_time_SAVE=max(TIME_adjust(CACHE_OBS_INTERVAL_time_SAVE,RT_step),RT_step)
- OBS_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time_SAVE)
- call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
+ ! I/O steps
+ !===========
+ call RT_IO_type_time_steps("INIT")
  !
  ! Dephasing Matrix. Including user-defined matrix-like dephasing factors, constant
  !==================
@@ -191,7 +181,7 @@ subroutine RT_initialize(E,k,q)
  !================================================
  if (RT_is_statically_dephased) then
    !
-   RT_life_extrap_times=RT_life_extrap_times_SAVE
+   RT_life_extrap_times=RT_life_extrap_times_INPUT
    !
    if (all(RT_life_extrap_times>0)) then
      Life_MEM_steps=nint(RT_life_extrap_times(1)/RT_life_extrap_times(2))
@@ -201,7 +191,7 @@ subroutine RT_initialize(E,k,q)
      RT_life_extrap_times(1)=RT_life_extrap_times(2)*Life_MEM_steps
    endif
    !
-   RT_life_extrap_times_SAVE=RT_life_extrap_times
+   RT_life_extrap_times_INPUT=RT_life_extrap_times
    !
  endif
  !
@@ -221,25 +211,15 @@ subroutine RT_initialize(E,k,q)
    if (G_MEM_steps<3) G_MEM_steps=3
    !
    if (all(RT_life_extrap_times>0)) then
-     NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,2._SP*RT_life_extrap_times(1))
-     if(NE_time_step_update_jump_SAVE<2._SP*RT_life_extrap_times(1)) NE_time_step_update_jump_SAVE=2._SP*RT_life_extrap_times(1)
+     NE_time_step_update_jump_INPUT = TIME_adjust(NE_time_step_update_jump_INPUT,2._SP*RT_life_extrap_times(1))
+     if(NE_time_step_update_jump_INPUT<2._SP*RT_life_extrap_times(1)) NE_time_step_update_jump_INPUT=2._SP*RT_life_extrap_times(1)
    endif
    !
-   NE_time_step_update_jump=NE_time_step_update_jump_SAVE
-   !
-   OBS_RT_IO_t%INTERVAL_time_SAVE=TIME_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,NE_time_step_update_jump_SAVE)
-   if(OBS_RT_IO_t%INTERVAL_time_SAVE>NE_time_step_update_jump_SAVE) OBS_RT_IO_t%INTERVAL_time_SAVE=NE_time_step_update_jump_SAVE
-   if(OBS_RT_IO_t%INTERVAL_time_SAVE<RT_step*10._SP)                OBS_RT_IO_t%INTERVAL_time_SAVE=NE_time_step_update_jump_SAVE
-   CACHE_OBS_INTERVAL_time_SAVE=STEP_adjust(OBS_RT_IO_t%INTERVAL_time_SAVE,CACHE_OBS_INTERVAL_time_SAVE,RT_step)
-   !
-   call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
+   NE_time_step_update_jump=NE_time_step_update_jump_INPUT
    !
    if (RT_MAX_step<1.E-5) RT_MAX_step=10._SP*RT_step
    !
  endif
- !
- CACHE_OBS_INTERVAL_time=CACHE_OBS_INTERVAL_time_SAVE
- CACHE_OBS_steps=OBS_RT_IO_t%INTERVAL_steps/nint(CACHE_OBS_INTERVAL_time/RT_step)
  !
  ! GPL_EXCLUDE_END
  !
@@ -443,6 +423,7 @@ subroutine RT_initialize(E,k,q)
  ! GPL_EXCLUDE_END
  !
  call msg( 'nr','---I/O---')
+ call                          msg('r', 'T cache step  of J,P,M [fs]',CACHE_OBS_INTERVAL_time*AUT2FS)
  call                          msg('r', 'T between I/O of   OBS [fs]',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
  call                          msg('r', 'T between I/O of   CAR [fs]',CARR_RT_IO_t%INTERVAL_time*AUT2FS)
  call                          msg('r', '          I/O of   GFs [fs]',GF_RT_IO_t%INTERVAL_time*AUT2FS)

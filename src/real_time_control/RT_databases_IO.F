@@ -41,6 +41,7 @@ subroutine RT_databases_IO(E)
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX
 #endif
+ use units
  !
  implicit none
  !
@@ -48,7 +49,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- logical           :: write_OBS,force_IO,last_point
+ logical           :: write_OBS,write_G,force_IO,write_CARR
  integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,n_OBS_cache
  integer, external :: io_RT_components
  logical, external :: RT_Dynamics_is_over
@@ -58,7 +59,9 @@ subroutine RT_databases_IO(E)
  ! Observables (J, P, M ...)
  !===========================
  !
- write_OBS=.false.
+ write_OBS =.false.
+ write_CARR=.false.
+ write_G   =.false.
  !
  if (io_OBSERVABLES) then
    !
@@ -69,7 +72,8 @@ subroutine RT_databases_IO(E)
    endif
    !
    n_OBS_cache=nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)
-   force_IO=RT_do_it('deltaT').or.RT_Dynamics_is_over(.false.).or.NE_i_time==OBS_RT_IO_t%last_point
+   force_IO=RT_Dynamics_is_over(.false.).or.NE_i_time==OBS_RT_IO_t%last_point
+   write_OBS=RT_do_it('OBS').or.force_IO
    !
    if (RT_do_it('OBS_cache').or.force_IO) then
      !
@@ -100,9 +104,7 @@ subroutine RT_databases_IO(E)
        A_cache(1:3,3,i_time)=A_tot%vecpot_acc
      endif
      !
-     write_OBS=RT_do_it('OBS').or.force_IO
-     !
-     if(write_OBS) then
+     if (write_OBS) then
        !
        CACHE_OBS_steps_now=i_time
        !
@@ -130,8 +132,9 @@ subroutine RT_databases_IO(E)
    endif
    !
    force_IO=RT_Dynamics_is_over(.false.).or.NE_i_time==CARR_RT_IO_t%last_point
+   write_CARR=RT_do_it('CARR').or.force_IO
    !
-   if (RT_do_it('CARR').or.force_IO) then
+   if (write_CARR) then
      !
      if (NE_i_time>CARR_RT_IO_t%last_point) then
        CARR_RT_IO_t%N=CARR_RT_IO_t%N+1
@@ -166,8 +169,9 @@ subroutine RT_databases_IO(E)
    endif
    !
    force_IO=RT_Dynamics_is_over(.false.).or.NE_i_time==GF_RT_IO_t%last_point
+   write_G=RT_do_it('G').or.force_IO
    !
-   if(RT_do_it('G').or.force_IO) then
+   if(write_G) then
      !
      if (NE_i_time==1) then
        GF_RT_IO_t%N=1
@@ -243,10 +247,15 @@ subroutine RT_databases_IO(E)
    endif
    !
  endif
+ 
+ !write (*,*) NE_i_time*RT_step/FS2AUT
+ !if (write_OBS) write (*,*) "write OBS@",NE_i_time*RT_step/FS2AUT
+ !if (write_CARR) write (*,*) "write CARR@",NE_i_time*RT_step/FS2AUT
+ !if (write_G) write (*,*) "write G@",NE_i_time*RT_step/FS2AUT
  !
- if(write_OBS                   ) call PP_bcast( OBS_RT_IO_t%last_point,0)
- if(RT_do_it('CARR').or.force_IO) call PP_bcast(CARR_RT_IO_t%last_point,0)
- if(RT_do_it('G')   .or.force_IO) call PP_bcast(  GF_RT_IO_t%last_point,0)
+ if (write_OBS)  call PP_bcast( OBS_RT_IO_t%last_point,0)
+ if (write_CARR) call PP_bcast(CARR_RT_IO_t%last_point,0)
+ if (write_G)    call PP_bcast(  GF_RT_IO_t%last_point,0)
  !
  ! GPL_EXCLUDE_END
  !

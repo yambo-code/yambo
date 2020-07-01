@@ -35,7 +35,7 @@ integer function variables_RT_static(ID,what)
 &                         RAD_LifeTime,Phase_LifeTime,&
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_steps,&
 &                         l_RT_CCA_Kernel,l_RT_impose_N_dN, &
-&                         l_RT_uses_E_FineGd,RT_life_extrap_times_SAVE,&
+&                         l_RT_uses_E_FineGd,RT_life_extrap_times_INPUT,&
 &                         DbGd_EE_percent,l_RT_impose_E,&
 &                         RT_potential
  use IO_m,           ONLY:io_sec
@@ -130,7 +130,7 @@ integer function variables_RT_static(ID,what)
    ! GPL_EXCLUDE_START
    !
    call io_variable_elemental(ID,&
-&    VAR=" [RT] Lif Extr Inte/Intr(sav)[fs]",R1=RT_life_extrap_times_SAVE,CHECK=.true.,OP=(/"==","=="/),&
+&    VAR=" [RT] Lif Extr Inte/Intr(sav)[fs]",R1=RT_life_extrap_times_INPUT,CHECK=.true.,OP=(/"==","=="/),&
 &    DESCRIPTOR=RT_desc,UNIT=AUT2FS)
    !
    ! Lifetimes Extrapolation

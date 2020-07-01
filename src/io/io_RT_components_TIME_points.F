@@ -43,13 +43,13 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,def_var,load_rest_info,unlim,l
  integer                      :: IPOS(1),IO_LIM(2),i_min_index,i_mem
  character(schlen)            :: dim_name(1)
  !
- if(write_is_on(ID)) TYP%last_point=NE_i_time
+ if (write_is_on(ID)) TYP%last_point=NE_i_time
  !
  ! ... for RESTART purposes...
  if(load_rest_info) then
    call def_variable_elemental(ID,"IO_TIMEs",2,SP,0) 
    call io_variable_elemental(ID,VAR=" [RT] I/O time          (input) [fs]",&
-                        R0=TYP%INTERVAL_time_SAVE,CHECK=.TRUE.,OP=(/"=="/),  &
+                        R0=TYP%INTERVAL_time_INPUT,CHECK=.TRUE.,OP=(/"=="/),  &
 &                       DESCRIPTOR=RT_desc,UNIT=AUT2FS)
    call io_variable_elemental(ID,VAR=" [RT] I/O time            (now) [fs]",&
                         R0=TYP%INTERVAL_time     ,CHECK=.FALSE.,             &

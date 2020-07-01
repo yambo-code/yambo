@@ -29,7 +29,7 @@ integer function variables_RT_dynamic(ID)
  use real_time,      ONLY:RT_dyn_step, &
 &                         NE_initial_time_step_update,NE_time_step_update_jump,&
 &                         NE_time,NE_i_time,&
-&                         NE_time_step_update_jump_SAVE, &
+&                         NE_time_step_update_jump_INPUT, &
 &                         l_Update_Time_Step,&
 &                         NE_step_update_treshold,RT_MAX_step,RT_life_extrap_times
  use IO_m,           ONLY:io_variable_elemental,def_variable_elemental,io_status
@@ -68,7 +68,7 @@ integer function variables_RT_dynamic(ID)
  if (l_disk_flag) then
    call io_variable_elemental(ID,R0=NE_initial_time_step_update,&
 &    VAR=' [dT] Starting Time          [fs]',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=AUT2FS)
-   call io_variable_elemental(ID,R0=NE_time_step_update_jump_SAVE,&
+   call io_variable_elemental(ID,R0=NE_time_step_update_jump_INPUT,&
 &    VAR=' [dT] Update interval        [fs]',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=AUT2FS)
    call io_variable_elemental(ID,R0=NE_step_update_treshold,&
 &    VAR=' [dT] Update interval tresh [o/o]',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)

@@ -79,7 +79,7 @@ module real_time
  !
  integer  :: NE_time_step_update_last_point      ! Last time-point of the dT update
  real(SP) :: NE_time_step_update_jump            ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
- real(SP) :: NE_time_step_update_jump_SAVE
+ real(SP) :: NE_time_step_update_jump_INPUT
  real(SP) :: NE_initial_time_step_update         ! Time above which the time-step is dynamically updated (0. means no update)
  real(SP) :: NE_step_update_treshold             ! Time-step update treshold
  !
@@ -92,7 +92,7 @@ module real_time
  !
  logical  :: l_RT_lifetimes_extrapolation = .FALSE.! If .TRUE. the lifetimes not calculated are extrapolated. Otherwise are kept constant
  real(SP) :: RT_life_extrap_times(2)               ! Lifetimes are evaluated at distance RT_life_extrap_times(2) and in groups long RT_life_extrap_times(1)
- real(SP) :: RT_life_extrap_times_SAVE(2)
+ real(SP) :: RT_life_extrap_times_INPUT(2)
  !
  logical  :: l_RT_relax_time_approx = .FALSE.
  real(SP) :: RT_RTA_temp(2)

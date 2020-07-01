@@ -31,7 +31,7 @@ module RT_control
  !
  integer                  :: CACHE_OBS_last_point
  real(SP)                 :: CACHE_OBS_INTERVAL_time
- real(SP)                 :: CACHE_OBS_INTERVAL_time_SAVE
+ real(SP)                 :: CACHE_OBS_INTERVAL_time_INPUT
  integer                  :: CACHE_OBS_steps
  integer                  :: CACHE_OBS_steps_now
  !
@@ -44,7 +44,7 @@ module RT_control
    integer               :: INTERVAL_steps
    integer               :: last_point
    real(SP)              :: INTERVAL_time
-   real(SP)              :: INTERVAL_time_SAVE
+   real(SP)              :: INTERVAL_time_INPUT
    real(SP), allocatable :: Time(:)
  end type
  !
@@ -175,7 +175,7 @@ module RT_control
    !
    logical function RT_do_it(what)
      !
-     use real_time, ONLY:NE_i_time,RT_step,NE_time_step_update_jump,NE_time_step_update_last_point
+     use real_time, ONLY:NE_i_time,RT_step,NE_time_step_update_jump,NE_time_step_update_last_point,NE_steps
      !
      character(*) :: what
      !
@@ -222,7 +222,7 @@ module RT_control
      !
      i_grp=nint(real(NE_i_time-last_point)/real(INTERVAL_steps))
      !
-     RT_do_it= (NE_i_time-last_point)==(i_grp*INTERVAL_steps)
+     RT_do_it= (NE_i_time-last_point)==(i_grp*INTERVAL_steps) .or. NE_i_time==NE_steps
      !
    end function
    !
@@ -248,8 +248,8 @@ module RT_control
      real(SP)          :: TIME
      real(SP), optional:: STEP
      !
-     if (     present(STEP)) TIME_adjust=real(nint(TIME/STEP),SP)*STEP
-     if (.not.present(STEP)) TIME_adjust=real(nint(TIME/RT_step),SP)*RT_step
+     if (     present(STEP)) TIME_adjust=max(real(nint(TIME/STEP),SP)*STEP,STEP)
+     if (.not.present(STEP)) TIME_adjust=max(real(nint(TIME/RT_step),SP)*RT_step,RT_step)
      !
    end function
    !
@@ -306,6 +306,7 @@ module RT_control
    subroutine SETUP_RT_IO_type(TYP,INIT)
      !
      use real_time, ONLY:NE_tot_time,RT_dyn_step,RT_step,NE_i_time
+     !
      type(RT_IO_t) :: TYP
      logical       :: INIT
      !
@@ -313,7 +314,7 @@ module RT_control
        if (allocated(TYP%Time)) then
          YAMBO_FREE(TYP%Time)
        endif
-       TYP%INTERVAL_time=TYP%INTERVAL_time_SAVE
+       TYP%INTERVAL_time=TYP%INTERVAL_time_INPUT
      endif
      !
      ! Initialization always using RT_step
@@ -331,9 +332,9 @@ module RT_control
      TYP%last_point     = NE_i_time
      !
      if (INIT) then
-       TYP%INTERVAL_time_SAVE=TYP%INTERVAL_time
-       TYP%N                 = 0
-       TYP%last_point        =-TYP%INTERVAL_steps+1
+       TYP%INTERVAL_time_INPUT=TYP%INTERVAL_time
+       TYP%N                  = 0
+       TYP%last_point         =-TYP%INTERVAL_steps+1
      endif
      !
    end subroutine

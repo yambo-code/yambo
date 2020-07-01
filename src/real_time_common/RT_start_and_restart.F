@@ -43,17 +43,16 @@ subroutine RT_start_and_restart(E,k,q)
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
  use RT_control,     ONLY:ID,NE_i_start_time,CARR_RT_IO_t,OBS_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,&
-&                         CACHE_OBS_INTERVAL_time,CACHE_OBS_steps,TIME_adjust,STEP_adjust,      &
-&                         SETUP_RT_IO_type,RT_control_alloc,RT_control_free
+&                         CACHE_OBS_INTERVAL_time
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,RT_E_and_k,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
 &                         Gr_kind,l_RT_is_WFfree,RT_ibz_dupl,&
-&                         RT_E_occupations_reference,RT_nk,G_lesser,l_RT_uses_E_FineGd, &
+&                         RT_E_occupations_reference,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
 &                         RT_eh_en,G_MEM_steps,RT_bands,&
-&                         NE_time_step_update_jump,RT_life_extrap_times,l_velocity_gauge_corr                  
+&                         NE_time_step_update_jump,RT_life_extrap_times,l_velocity_gauge_corr
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,&
@@ -172,7 +171,7 @@ subroutine RT_start_and_restart(E,k,q)
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(6))
    io_OCCUPATIONS=io_RT_components('carriers',ID(6))
    !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=DUMP,ID=ID(5))
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2/),MODE=DUMP,ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
    NE_i_start_time=NE_i_time
@@ -228,22 +227,14 @@ subroutine RT_start_and_restart(E,k,q)
    call RT_initialize_local_occupations()
    call RT_set_occupations()
    !
+   call RT_IO_type_time_steps("RESTART")
+   !
    call msg( 'nr','---RESTART report---')
    !
    call msg('s','[RESTART] Number of steps done    [o/o]',real(NE_i_time)/real(NE_steps)*100._SP)
-   call msg('r',  'Number of steps done         [o/o]',real(NE_i_time)/real(NE_steps)*100._SP)
-   call msg('r',  'Time reached                  [fs]',real(NE_i_time)*RT_step*AUT2FS)
-   call msg('r',  'Time step                     [fs]',RT_dyn_step*AUT2FS)
-   !
-   if(NE_time_step_update_jump>0._SP) OBS_RT_IO_t%INTERVAL_time=TIME_adjust(OBS_RT_IO_t%INTERVAL_time,NE_time_step_update_jump)
-   CACHE_OBS_INTERVAL_time = max(TIME_adjust(CACHE_OBS_INTERVAL_time,RT_dyn_step),RT_dyn_step)
-   CACHE_OBS_INTERVAL_time=STEP_adjust(OBS_RT_IO_t%INTERVAL_time,CACHE_OBS_INTERVAL_time,RT_dyn_step)
-   !
-   call SETUP_RT_IO_type(OBS_RT_IO_t,.FALSE.)
-   !
-   CACHE_OBS_steps=OBS_RT_IO_t%INTERVAL_steps/nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)/nint(RT_dyn_step/RT_step)
-   call RT_control_free("cache")
-   call RT_control_alloc("cache")
+   call msg('r','Number of steps done         [o/o]',real(NE_i_time)/real(NE_steps)*100._SP)
+   call msg('r','Time reached                  [fs]',real(NE_i_time)*RT_step*AUT2FS)
+   call msg('r','Time step                     [fs]',RT_dyn_step*AUT2FS)
    !
    call msg('r',  'dT Update Interval            [fs]',NE_time_step_update_jump*AUT2FS)
    call msg('r',  'Lifetimes inter/intr times    [fs]',RT_life_extrap_times*AUT2FS)
@@ -251,11 +242,6 @@ subroutine RT_start_and_restart(E,k,q)
    call msg('r',  'T between I/O of J,P,M        [fs]',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
    call msg('r',  '          I/O of carriers     [fs]',CARR_RT_IO_t%INTERVAL_time*AUT2FS)
    call msg('r',  '          I/O of   GFs        [fs]',GF_RT_IO_t%INTERVAL_time*AUT2FS)
-   !
-   OUTPUT_RT_IO_t%INTERVAL_time  = max(TIME_adjust(OUTPUT_RT_IO_t%INTERVAL_time,RT_dyn_step),RT_dyn_step)
-   OUTPUT_RT_IO_t%INTERVAL_steps = nint(OUTPUT_RT_IO_t%INTERVAL_time/RT_step)
-   OUTPUT_RT_IO_t%last_point     = NE_i_time - OUTPUT_RT_IO_t%INTERVAL_steps
-   !
    call msg('r',  '               outputs        [fs]',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
    !
  endif

@@ -396,7 +396,7 @@ contains
      !endif
 !    Dario: to be tested later
     if(real(E(i),SP)*aimag(E(i))>0._SP) then 
-      E(i) = cmplx( abs(real(E(i),SP)), -abs(aimag(E(i)))  )
+      E(i) = cmplx( abs(real(E(i),SP)), -abs(aimag(E(i))), SP  )
     endif
      !
      if(abs(E(i))>epsilon(1._SP)) R(i) = -R(i)/(2._SP*E(i))

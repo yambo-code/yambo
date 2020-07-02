@@ -116,6 +116,10 @@ module R_lattice
  real(SP):: RIM_anisotropy
  real(SP),   allocatable :: RIM_qpg(:,:,:)
  !
+ ! RIM W
+ !
+ real(SP),   allocatable :: RIM_W(:,:,:) 
+ !
  ! Coulomb (including Cutoff)
  !
  real(SP)                :: cyl_ph_radius

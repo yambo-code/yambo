@@ -79,7 +79,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    if (l_elel_corr) then
      if (l_ppa.or.l_cohsex) then
        !
-       call RIM_W(X,Xw,q)
+       call interpolate_W(X,Xw,q)
        call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
        !
      else 
@@ -188,17 +188,19 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
 end subroutine
 
-subroutine RIM_W(X,Xw,q)
+subroutine interpolate_W(X,Xw,q)
  !
- use pars,          ONLY:SP,pi,zero_dfl
+ use pars,          ONLY:SP,pi,zero_dfl,schlen
  use com,           ONLY:msg
- use R_lattice,     ONLY:bz_samp,RIM_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg
+ use R_lattice,     ONLY:bz_samp,RIM_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
+&                        cut_geometry,RIM_W
  use memory,        ONLY:MEM_err
  use vec_operate,   ONLY:c2a,v_is_zero,v_norm
  use X_m,           ONLY:X_mat,X_t,X_alloc
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
-&                        deliver_IO_error_message
+&                        deliver_IO_error_message,OP_WR_CL,REP,VERIFY
+ use stderr,        ONLY:STRING_split
  !
  implicit none
  type(X_t)    ::X
@@ -214,11 +216,14 @@ subroutine RIM_W(X,Xw,q)
  integer, allocatable :: idx_q(:,:,:),idx_G(:,:,:),idx_is(:,:,:)
  real(SP) :: G_max_ibz(q%nibz), f_func(5)
  complex(SP), allocatable :: vX(:,:,:)
- real, allocatable :: f_coeff(:,:,:)
+ real :: f_coeff (5,q%nibz,RIM_ng)
  real(SP) :: qpG(3,5), delta_q(3,2), qpG_trial(3), v1(3)
  logical :: debug
  integer :: ID, io_err, ng_save
  integer,     external ::io_X
+ logical          :: cut_is_slab,is_cut(3)
+ character(schlen):: str_piece(5)
+ integer, external:: io_RIM_W
  !
  !
  debug = .true.
@@ -232,11 +237,11 @@ subroutine RIM_W(X,Xw,q)
    open (unit=out_unit_f_coeff,file="f_coeff.dat",action="write",status="replace")
  end if
  !
- allocate(idx_q (5,q%nbz,RIM_ng),stat=MEM_err)
- allocate(idx_G (5,q%nbz,RIM_ng),stat=MEM_err)
- allocate(idx_is (5,q%nbz,RIM_ng),stat=MEM_err)
- allocate(vX (5,q%nbz,RIM_ng),stat=MEM_err)
- allocate(f_coeff (5,q%nbz,RIM_ng),stat=MEM_err)
+ allocate(idx_q (5,q%nibz,RIM_ng),stat=MEM_err)
+ allocate(idx_G (5,q%nibz,RIM_ng),stat=MEM_err)
+ allocate(idx_is (5,q%nibz,RIM_ng),stat=MEM_err)
+ allocate(vX (5,q%nibz,RIM_ng),stat=MEM_err)
+ !allocate(f_coeff (5,q%nibz,RIM_ng),stat=MEM_err)
  !
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !Calculation of the nearest neighbours indexes
@@ -261,16 +266,16 @@ subroutine RIM_W(X,Xw,q)
  !Cycles over qpG points
  do ig1=1,RIM_ng
    !
-   do iq1=1,q%nbz
+   do iq1=1,q%nibz
      !
      find = 0
      !
-     idx_q(1,iq1,ig1) = q%sstar(iq1,1)
-     idx_is(1,iq1,ig1) = q%sstar(iq1,2)
+     idx_q(1,iq1,ig1) = iq1
+     idx_is(1,iq1,ig1) = 1
      idx_G(1,iq1,ig1) = ig1
      !
      !Calculate qpG and qpG nearest neighbour
-     qpG(:,1) = matmul(rl_sop(:,:,q%sstar(iq1,2)),q%pt(q%sstar(iq1,1),:)+g_vec(ig1,:))
+     qpG(:,1) = matmul(rl_sop(:,:,idx_is(1,iq1,ig1)),q%pt(idx_q(1,iq1,ig1),:)+g_vec(ig1,:))
      call c2a(b_in=b,v_in=qpG(:,1),mode='ki2a')
      !
      !Index ordering of nearest neighbours
@@ -345,11 +350,12 @@ subroutine RIM_W(X,Xw,q)
        qpG(:,4) = matmul(rl_sop(:,:,idx_is(4,iq1,ig1)),q%pt(idx_q(4,iq1,ig1),:)+g_vec(idx_G(4,iq1,ig1),:))
        qpG(:,5) = matmul(rl_sop(:,:,idx_is(5,iq1,ig1)),q%pt(idx_q(5,iq1,ig1),:)+g_vec(idx_G(5,iq1,ig1),:))
        !
-       !From iku to rlu
-       call c2a(b_in=b,v_in=qpG(:,2),mode='ki2a')
-       call c2a(b_in=b,v_in=qpG(:,3),mode='ki2a')
-       call c2a(b_in=b,v_in=qpG(:,4),mode='ki2a')
-       call c2a(b_in=b,v_in=qpG(:,5),mode='ki2a')
+       !From iku to cc
+       call c2a(b_in=b,v_in=qpG(:,1),mode='ka2c')
+       call c2a(b_in=b,v_in=qpG(:,2),mode='ki2c')
+       call c2a(b_in=b,v_in=qpG(:,3),mode='ki2c')
+       call c2a(b_in=b,v_in=qpG(:,4),mode='ki2c')
+       call c2a(b_in=b,v_in=qpG(:,5),mode='ki2c')
        !Write qpG out into a file
        write(out_unit_qpG_out,"(I4,I4,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3)")&
 & iq1,ig1,qpG(1,1), qpG(2,1), qpG(3,1),qpG(1,2), qpG(2,2), qpG(3,2)&
@@ -371,7 +377,7 @@ subroutine RIM_W(X,Xw,q)
  forall (iq=1:q%nibz) G_max_ibz(iq) = RIM_ng
  !
  !Look if G_max_ibz must be increased
- do iq=1,q%nbz
+ do iq=1,q%nibz
    do ig=1,RIM_ng
      do nn=2,5
        if (G_max_ibz(idx_q(nn,iq,ig)) < idx_G(nn,iq,ig)) then
@@ -412,7 +418,7 @@ subroutine RIM_W(X,Xw,q)
    !Assign X
    do ig1=1,RIM_ng
      !
-     do iq1=1,q%nbz
+     do iq1=1,q%nibz
        !
        !Assign X
        do nn=1,5
@@ -434,7 +440,7 @@ subroutine RIM_W(X,Xw,q)
  if (debug) then
    do ig1=1,RIM_ng
      !
-     do iq1=1,q%nbz
+     do iq1=1,q%nibz
        write(out_unit_vX,"(I4,I4,I4,E15.6,I4,I4,E15.6,I4,I4,E15.6,I4,I4,E15.6,I4,I4,E15.6)") iq1,&
 & idx_q(1,iq1,ig1),idx_G(1,iq1,ig1),real(vX(1,iq1,ig1)),&
 & idx_q(2,iq1,ig1),idx_G(2,iq1,ig1),real(vX(2,iq1,ig1)),&
@@ -451,14 +457,14 @@ subroutine RIM_W(X,Xw,q)
  !
  do ig1=1,RIM_ng
   !
-  do iq1=1,q%nbz
+  do iq1=1,q%nibz
     !
     !Evaluate f_func
     do nn=1,5
       !
       !Select the index of the reference/n.n.
       iq2 = idx_q(nn,iq1,ig1)
-      ig2 = idx_q(nn,iq1,ig1)
+      ig2 = idx_G(nn,iq1,ig1)
       !
       f_func(nn) = bare_qpg(iq2,ig2)**2/(4*pi)*vX(nn,iq1,ig1)/(vX(nn,iq1,ig1)-1)
       !
@@ -478,6 +484,33 @@ subroutine RIM_W(X,Xw,q)
   end do
   !
  end do
+ !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ !Calculation of RIM-W
+ !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ !
+ !Here, we need to check if we want to perform the RIM
+ !of bare_qpg or the RIM of cutoff_slab
+ !
+ call STRING_split(cut_geometry,str_piece)
+ !
+ cut_is_slab=trim(str_piece(1))=='slab'
+ !
+ ! Cutoffed directions
+ !
+ is_cut(1)=index(str_piece(2),'x')/=0.or.index(str_piece(2),'X')/=0
+ is_cut(2)=index(str_piece(2),'y')/=0.or.index(str_piece(2),'Y')/=0
+ is_cut(3)=index(str_piece(2),'z')/=0.or.index(str_piece(2),'Z')/=0
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
+ io_err=io_RIM_W(ID)
+ !
+ if (io_err/=0) then
+   call rim('c',cut_is_slab,is_cut,f_coeff)
+   call msg('r', "shape(RIM_W) =", shape(RIM_W))
+   call msg('r', "RIM_W =", RIM_W(:,1,1))
+ end if
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+ io_err=io_RIM_W(ID)
 end subroutine
 
 

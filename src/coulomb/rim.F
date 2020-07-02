@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine rim(cut_is_slab,is_cut)
+subroutine rim(mode,cut_is_slab,is_cut,f_coeff)
  !
  use pars,          ONLY:SP,pi,DP,schlen
  use com,           ONLY:msg,error
@@ -33,16 +33,19 @@ subroutine rim(cut_is_slab,is_cut)
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
 &                        RIM_n_rand_pts,RIM_ng,RIM_qpg,&
-&                        RIM_id_epsm1_reference,RIM_anisotropy,q_pt
+&                        RIM_id_epsm1_reference,RIM_anisotropy,q_pt,RIM_W
  use timing_m,      ONLY:timing
 #include<memory.h>
+ !
+ character(1)                :: mode
+ logical                     :: cut_is_slab,is_cut(3) 
+ real, optional :: f_coeff(5,nqibz,RIM_ng)
  !
  ! Work Space
  !
  type(PP_indexes)::px
  integer   :: iq
  real(SP)  :: em1_anis(3),G_radii,G_circ
- logical   :: cut_is_slab,is_cut(3)
  !
  ! Random generator
  !
@@ -91,7 +94,11 @@ subroutine rim(cut_is_slab,is_cut)
  ! Filling the small BZ with the random grid
  !===========================================
  !
- call section('+','RIM initialization')
+ if (mode == "x") then
+   call section('+','RIM initialization')
+ else 
+   call section('+','RIM-W initialization')
+ end if  
  if (RIM_is_diagonal) call msg('r','* Diagonal components only detected *')
  !
  call msg('nr','8 x (sBL volume)    [au]:',8.*k_grid_uc_vol)
@@ -187,36 +194,49 @@ subroutine rim(cut_is_slab,is_cut)
  !
  call section('=','RIM integrals')
  !
- YAMBO_ALLOC(RIM_qpg,(nqibz,RIM_ng,RIM_ng))
- RIM_qpg=0._SP
+ if (mode == "x") then
+   YAMBO_ALLOC(RIM_qpg,(nqibz,RIM_ng,RIM_ng))
+   RIM_qpg=0._SP
+ else if (mode == "c") then
+   YAMBO_ALLOC(RIM_W,(nqibz,RIM_ng,RIM_ng))
+   RIM_W=0._SP  
+ end if
  !
  call PARALLEL_index(px,(/nqibz/))
  call live_timing('Momenta loop',px%n_of_elements(myid+1))
+
  do iq=1,nqibz
-   call msg("r", "q_pt(1) =", q_pt(iq,1))
-   call msg("r", "q_pt(2) =", q_pt(iq,2))
-   call msg("rn", "q_pt(3) =", q_pt(iq,3))
-   call msg("r","iku_norm =", iku_v_norm(q_pt(iq,:)))
    if (.not.px%element_1D(iq)) cycle
    !
-   call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab,iort,ipar1,ipar2)
-   !
-   if (iq==1) then
-     call msg('r','Gamma point circle area         [au]:',G_circ)
-     call msg('r','Gamma point sphere radius         [au]:',G_radii)
-     call msg('r','Points outside the sphere             :',n_out_G)
-     call msg('r','[Int_sBZ(q=0) 1/q^2]*(Vol_sBZ)^(-1/3) =',&
+   if (mode == "x") then
+     call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab,iort,ipar1,ipar2,mode)
+     !
+     if (iq==1) then
+       call msg('r','Gamma point circle area         [au]:',G_circ)
+       call msg('r','Gamma point sphere radius         [au]:',G_radii)
+       call msg('r','Points outside the sphere             :',n_out_G)
+       call msg('r','[Int_sBZ(q=0) 1/q^2]*(Vol_sBZ)^(-1/3) =',&
 &                     4.*pi**3.*RIM_qpg(1,1,1)*k_grid_uc_vol**(-1./3.))
-     call msg('r','                               should be <',7.7956_SP)
-     if (RIM_id_epsm1_reference/=0) call &
-&         msg('r','Anisotropy correction            [o/o]:',&
+       call msg('r','                               should be <',7.7956_SP)
+       if (RIM_id_epsm1_reference/=0) call &
+&           msg('r','Anisotropy correction            [o/o]:',&
 &                 (RIM_anisotropy-RIM_qpg(iq,1,1))/RIM_qpg(iq,1,1)*100.)
-   endif
+     end if
+   else
+     !
+     call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab,iort,ipar1,ipar2,mode,f_coeff)
+     !
+   end if
    call live_timing(steps=1)
  enddo
+
  call live_timing()
  !
- call PP_redux_wait(RIM_qpg)
+ if (mode == "x") then
+   call PP_redux_wait(RIM_qpg)
+ else if (mode == "c") then
+   call PP_redux_wait(RIM_W)
+ end if
  call PP_redux_wait(RIM_anisotropy)
  !
  ! CLEAN

@@ -21,22 +21,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab,iort,ipar1,ipar2)
+subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab,iort,ipar1,ipar2,mode,f_coeff)
  !
  use pars,          ONLY:SP,DP,pi
- use vec_operate,   ONLY:iku_v_norm
+ use vec_operate,   ONLY:iku_v_norm,c2a
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,RIM_qpg,&
-&                        RIM_is_diagonal,RIM_ng,q_pt,RIM_anisotropy
+&                        RIM_is_diagonal,RIM_ng,q_pt,RIM_anisotropy,nqibz,RIM_W,b
  use D_lattice,     ONLY:alat
  !
  implicit none
  integer  :: iq,N_out,N_out_G
  real(SP) :: qr(RIM_n_rand_pts,3),em1_anis(3),G_radii
+ character(1)                :: mode
+ real, optional :: f_coeff(5,nqibz,RIM_ng)
  ! 
  ! Work Space
  !
  integer  :: i1,i1min,i2,i2max,i3,iort,ipar1,ipar2,n_idx,n_max
- real(SP) :: v1(3),v2(3),factorial,G_circ
+ real(SP) :: v1(3),v2(3),factorial,G_circ,vslab,func
  real(DP) :: r1,rfac,RIM_acc(RIM_ng),RIM_acc_anis
  logical  :: cut_is_slab
  real(SP) :: slab_vz,slab_vplane,lcut,pre_factor
@@ -47,27 +49,32 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
  else
    rfac=8.*k_grid_uc_vol/real(N_out)/(2.*pi)**3.
  endif
+ if (mode == "c") rfac = rfac/(2*pi)
  !
  !    ----------------
  !    MonteCarlo volume
  !
- RIM_qpg(iq,:,:)=0.
+ if (mode == 'x') then
+   RIM_qpg(iq,:,:)=0.
+ else if (mode == 'c') then
+   RIM_W(iq,:,:)=0.
+ end if
  !
  ! All points
  !
  i1min=1
- if (iq==1) i1min=2
+ if (iq==1 .and. mode == "x") i1min=2
  do i1=i1min,RIM_ng 
    i2max=RIM_ng 
    if (RIM_is_diagonal) i2max=i1
    do i2=i1,i2max
      RIM_acc(1)=0._DP
-     do i3=1,RIM_n_rand_pts
-       v1(:)=g_vec(i1,:)+q_pt(iq,:)+qr(i3,:)
-       v2(:)=g_vec(i2,:)+q_pt(iq,:)+qr(i3,:)
-       r1=iku_v_norm(v1)*iku_v_norm(v2)
-       !    
-       if (cut_is_slab) then
+     if (cut_is_slab .and. mode == 'x') then
+       do i3=1,RIM_n_rand_pts
+         ! 
+         v1(:)=g_vec(i1,:)+q_pt(iq,:)+qr(i3,:)
+         v2(:)=g_vec(i2,:)+q_pt(iq,:)+qr(i3,:)
+         r1=iku_v_norm(v1)*iku_v_norm(v2)
          !
          !Evaluate v_slab
          !kz
@@ -79,15 +86,58 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
          pre_factor=1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)
          if (abs(pre_factor)<1.E-5_SP) pre_factor=1.E-5_SP        
          RIM_acc(1)=RIM_acc(1)+2._DP*pre_factor*rfac/r1
-       else
+         !
+       end do
+       RIM_qpg(iq,i1,i2)=RIM_acc(1)
+       RIM_qpg(iq,i2,i1)=RIM_qpg(iq,i1,i2)
+     else if (cut_is_slab .and. mode == 'c') then
+      
+       do i3=1,RIM_n_rand_pts
+         ! 
+         v1(:)=g_vec(i1,:)+q_pt(iq,:)+qr(i3,:)
+         v2(:)=g_vec(i2,:)+q_pt(iq,:)+qr(i3,:)
+         r1=iku_v_norm(v1)*iku_v_norm(v2)
+         !
+         !Evaluate v_slab
+         !kz
+         slab_vz=(q_pt(iq,iort)+qr(i3,iort)+g_vec(i1,iort) )*2.*pi/alat(iort)
+         !kxy
+         slab_vplane=sqrt(((q_pt(iq,ipar1)+qr(i3,ipar1)+g_vec(i1,ipar1))*2.*pi/alat(ipar1))**2+&
+&                 ((q_pt(iq,ipar2)+qr(i3,ipar2)+g_vec(i1,ipar2))*2.*pi/alat(ipar2))**2)
+         !     
+         pre_factor=1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)
+         if (abs(pre_factor)<1.E-5_SP) pre_factor=1.E-5_SP        
+         vslab=4._DP*pi*pre_factor/r1
+         !
+         !Evaluate func
+         !
+         !call c2a(b_in=b,v_in=qr(i3,:),v_out=v1,mode='ki2a')
+         call c2a(b,qr(i3,:),v1,'ki2a')
+         func = f_coeff(1,iq,i1)+v1(1)*f_coeff(2,iq,i1)+v1(1)*f_coeff(4,iq,i1)*v1(1)+&
+&                               +v1(2)*f_coeff(3,iq,i1)+v1(2)*f_coeff(5,iq,i1)*v1(2)
+         !
+         !Evaluate W
+         !
+         RIM_acc(1) = RIM_acc(1) + rfac*vslab*func*vslab/(1-vslab*func)
+       end do
+       RIM_W(iq,i1,i2)=RIM_acc(1)
+       RIM_W(iq,i2,i1)=RIM_W(iq,i1,i2)
+     else
+       do i3=1,RIM_n_rand_pts
+         ! 
+         v1(:)=g_vec(i1,:)+q_pt(iq,:)+qr(i3,:)
+         v2(:)=g_vec(i2,:)+q_pt(iq,:)+qr(i3,:)
+         r1=iku_v_norm(v1)*iku_v_norm(v2)
          RIM_acc(1)=RIM_acc(1)+2._DP*rfac/r1
-       endif
-     enddo
-     RIM_qpg(iq,i1,i2)=RIM_acc(1)
-     RIM_qpg(iq,i2,i1)=RIM_qpg(iq,i1,i2)
+       enddo
+       RIM_qpg(iq,i1,i2)=RIM_acc(1)
+       RIM_qpg(iq,i2,i1)=RIM_qpg(iq,i1,i2)
+     endif
+
+
    enddo
  enddo
- if (iq>1) return
+ if (iq>1 .or. mode == "c") return
  !
  ! Gamma point (1,I) elements
  !
@@ -105,7 +155,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
      pre_factor = pre_factor+(-1._SP)**(n_idx+1)/n_idx/factorial*(G_radii*lcut)**n_idx
    enddo
    RIM_acc(1) = pre_factor/(2*pi*lcut)
- else
+ else if (.not. cut_is_slab) then
    G_radii=(3.*.2/(4.*pi)*k_grid_uc_vol)**(1./3.)
    RIM_acc(1)  =2._DP*4._DP*pi*G_radii/(2._DP*pi)**3._DP
    RIM_acc_anis=2._DP*4._DP*pi/3._DP*G_radii/(2._DP*pi)**3._DP*sum(em1_anis)

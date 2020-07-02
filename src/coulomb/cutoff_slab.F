@@ -27,7 +27,8 @@
  use pars,          ONLY:SP,pi,schlen
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:alat
- use R_lattice, ONLY:bz_samp,g_vec,bare_qpg,q0_def_norm,k_grid_uc_vol,d3q_factor
+ use R_lattice,     ONLY:bz_samp,g_vec,bare_qpg,q0_def_norm,k_grid_uc_vol,&
+&                        d3q_factor,RIM_qpg,q_norm
  use com,           ONLY:error
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
@@ -84,19 +85,27 @@
      bare_qpg(iq,ig)=bare_qpg(iq,ig)/pre_factor
    enddo
  enddo
-!
-!AG: The previous regularization was not correct.
-!Here, my proposal, in which the potential is regularized over a circle centered in Gamma
- n_max = 15
- factorial = 1._SP
- pre_factor = 0._SP
- Sup = d3q_factor/((2._SP*pi)/alat(iort))
- R_circle = sqrt(Sup/pi)
- do n_idx=1,n_max
-    factorial = factorial*n_idx
-    pre_factor = pre_factor+(-1._SP)**(n_idx+1)/n_idx/factorial*(R_circle*lcut)**n_idx
- enddo
- pre_factor = 2._SP*pi/Sup*pre_factor
- bare_qpg(1,1) = 1._SP/sqrt(pre_factor)
-
+ !
+ !AG: The previous regularization was not correct.
+ if (.not.allocated(RIM_qpg)) then
+   !Here, my proposal, in which the potential is regularized over a circle centered in Gamma
+   n_max = 15
+   factorial = 1._SP
+   pre_factor = 0._SP
+   Sup = d3q_factor/((2._SP*pi)/alat(iort))
+   R_circle = sqrt(Sup/pi)
+   do n_idx=1,n_max
+     factorial = factorial*n_idx
+     pre_factor = pre_factor+(-1._SP)**(n_idx+1)/n_idx/factorial*(R_circle*lcut)**n_idx
+   enddo
+   pre_factor = 2._SP*pi/Sup*pre_factor
+   bare_qpg(1,1) = 1._SP/sqrt(pre_factor)
+   !
+ else
+   !
+   slab_vplane=q_norm(1)
+   pre_factor=sqrt(1._SP-exp(-slab_vplane*lcut))
+   bare_qpg(1,1)=bare_qpg(1,1)/pre_factor
+   !
+ end if
 end subroutine

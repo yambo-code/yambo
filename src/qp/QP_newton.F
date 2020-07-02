@@ -279,13 +279,14 @@ subroutine interpolate_W(X,Xw,q)
      call c2a(b_in=b,v_in=qpG(:,1),mode='ki2a')
      !
      !Index ordering of nearest neighbours
-     !      2
-     !      ^
-     !      |
-     ! 5 <- 1 -> 3
-     !      |
-     !      v
-     !      4
+     !
+     !       2
+     !       ^
+     !       |
+     ! 5 <-- 1 --> 3
+     !       |
+     !       v
+     !       4
      !                 
      qpG(:,2) = qpG(:,1) + delta_q(:,2)
      qpG(:,3) = qpG(:,1) + delta_q(:,1)
@@ -506,11 +507,12 @@ subroutine interpolate_W(X,Xw,q)
  !
  if (io_err/=0) then
    call rim('c',cut_is_slab,is_cut,f_coeff)
-   call msg('r', "shape(RIM_W) =", shape(RIM_W))
-   call msg('r', "RIM_W =", RIM_W(:,1,1))
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+   io_err=io_RIM_W(ID)
  end if
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
- io_err=io_RIM_W(ID)
+ call msg('r', "shape(RIM_W) =", shape(RIM_W))
+ call msg('r', "RIM_W =", RIM_W(:,1,1))
+
 end subroutine
 
 

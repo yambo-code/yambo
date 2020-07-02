@@ -46,7 +46,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF
- use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
+ use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G, RIM_W, RIM_is_diagonal,RIM_ng
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
@@ -78,6 +78,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
  complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,ctmp
  complex(DP)      ::dp_dummy
+ logical          ::l_RIM_W
  !
  integer,     external ::io_X
  complex(SP), external ::QP_ppa_EET_terminator
@@ -463,7 +464,17 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              do ig1=1,X%ng
                !
                PPA_E= real(X%ppaE/X_mat(ig1,ig2,X_range(2)))
-               PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
+               !
+               ! RIM W support
+               !
+               l_RIM_W=all((/ig1<=RIM_ng,ig2<=RIM_ng/))
+               if (RIM_is_diagonal.and.l_RIM_W) l_RIM_W=(ig1==ig2)
+               !
+               if (l_RIM_W) then
+                 PPA_R=-RIM_W(iqibz,ig1,ig2)/4._SP*PPA_E
+               else
+                 PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
+               end if
                !
                ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&

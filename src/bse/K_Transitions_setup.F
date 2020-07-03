@@ -230,12 +230,12 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
              !
              if ( BS_perturbative_SOC ) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
              !
-           enddo ! spin
-         enddo ! symmetries
-       enddo ! k (ibz)
-       !
-     enddo ! conduction
-   enddo ! valence
+           enddo ! conduction 
+         enddo ! valence
+         !
+       enddo ! symmetries
+     enddo ! k (ibz)
+   enddo ! spin 
    !
  enddo ! loop
  !

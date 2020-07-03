@@ -83,7 +83,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
      CPU_structure(i_PAR_structure)%ROLE(2)="d"
      CPU_structure(i_PAR_structure)%CPU(2)=1
    case("Self_Energy") 
-      call GIMME_a_parallel_proposal(3,(/" b","qp"," q"/))
+      call GIMME_a_parallel_proposal(4,(/" b","qp"," g"," q"/))
    case("Response_T_space") 
       call GIMME_a_parallel_proposal(2,(/"eh"," k"/))
  end select

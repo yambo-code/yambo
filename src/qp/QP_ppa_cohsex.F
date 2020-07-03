@@ -69,7 +69,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  type(levels) ::E
  type(bz_samp)::Xk,k,q
- type(X_t)    ::X
+ type(X_t)    ::X 
  type(QP_t)   ::qp
  type(w_samp) ::Xw
  integer      ::GW_iter

@@ -402,6 +402,10 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_freqs_A2A
  type(MPI_comm),SAVE :: PAR_COM_freqs_INDEX
  !
+ ! ... SE
+ type(MPI_comm),SAVE :: PAR_COM_SE_WORLD_RL_resolved
+ type(MPI_comm),SAVE :: PAR_COM_SE_WORLD
+ !
  ! ... and dimensions (used for automatic cpu distribution)
  !=========================================================
  integer            :: PAR_K_range       = 0

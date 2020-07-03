@@ -33,8 +33,9 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use parallel_m,    ONLY:HEAD_QP_cpu,HEAD_b_cpu,master_cpu,n_WF_bands_to_load,COMM_copy,&
 &                        PAR_Q_bz_range,PAR_Q_ibz_range,PAR_n_bands,PAR_build_index,ncpu
  ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_Q_INDEX,PAR_COM_QP_A2A,PAR_COM_G_b_INDEX, &
-&                        PAR_COM_Q_A2A
+ use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_Q_INDEX,PAR_COM_RL_INDEX,PAR_COM_G_b_INDEX,&
+&                        PAR_COM_QP_A2A,PAR_COM_Q_A2A,PAR_COM_RL_A2A,PAR_COM_SE_WORLD,&
+&                        PAR_COM_SE_WORLD_RL_resolved
  ! IND
  use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q_ibz,PAR_IND_G_b,PAR_IND_Q_bz,PAR_IND_Xk_ibz,PAR_IND_G_k
  ! INDEX
@@ -80,13 +81,25 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  integer              :: i_k,nb_mat
 #endif
  !
- CALL PARALLEL_structure(3,(/"q ","qp","b "/))
+ CALL PARALLEL_structure(4,(/"q ","g ","qp","b "/))
  !
- call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_Q_INDEX,&
-&                                        COMM_index_2=PAR_COM_QP_INDEX,&
-&                                        COMM_index_3=PAR_COM_G_b_INDEX,&
+
+ call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Q_INDEX,&
+&                                        COMM_index_2=PAR_COM_RL_INDEX,&
+&                                        COMM_index_3=PAR_COM_QP_INDEX,&
+&                                        COMM_index_4=PAR_COM_G_b_INDEX,&
 &                                        COMM_A2A_1=PAR_COM_Q_A2A,&
-&                                        COMM_A2A_2=PAR_COM_QP_A2A)
+&                                        COMM_A2A_2=PAR_COM_RL_A2A,&
+&                                        COMM_A2A_3=PAR_COM_QP_A2A)
+ !   
+ ! COMMs setup
+ !
+ call COMM_copy(PAR_COM_Q_A2A,PAR_COM_SE_WORLD)
+ call COMM_copy(PAR_COM_Q_A2A,PAR_COM_SE_WORLD_RL_resolved)
+ !
+ !
+ if (PAR_COM_RL_INDEX%n_CPU>1) call COMM_copy(PAR_COM_RL_A2A,PAR_COM_SE_WORLD_RL_resolved)
+ !
  !
  ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
  ! A2A when there is no internal distribution
@@ -278,13 +291,13 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    if (l_eval_collisions.and.io_COLLs) then
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_INDEX%CPU_id==0)
    else 
-     call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
+     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_SE_WORLD%CPU_id==0)
    endif
  else
    call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
  endif
  !
- call IO_and_Messaging_switch("+output",CONDITION=master_cpu)
+ call IO_and_Messaging_switch("+output",CONDITION=PAR_COM_SE_WORLD%CPU_id==0)
  !
  call OPENMP_set_threads(n_threads_in=n_threads_SE)
  !

@@ -96,14 +96,17 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
      i_kmq   =Xk%sstar(i_kmq_bz,1)
      i_pmq   =Xk%sstar(i_pmq_bz,1)
      !
-     if( (BS_blk(i_block)%kp_table(1,i_kmq)/=0) .and. (BS_blk(i_block)%kp_table(2,i_pmq)/=0) ) cycle
+     i_kmq_t =BS_blk(i_block)%kp_table(1,i_kmq)
+     i_pmq_t =BS_blk(i_block)%kp_table(2,i_pmq)     
      !
-     if( BS_blk(i_block)%kp_table(1,i_kmq)==0 ) then
+     if( i_kmq_t/=0 .and. i_pmq_t/=0 ) cycle
+     !
+     if( i_kmq_t==0 ) then
        N_kmq=N_kmq+1
        BS_blk(i_block)%kp_table(1,i_kmq)=N_kmq
      endif
      !
-     if( BS_blk(i_block)%kp_table(2,i_pmq)==0 ) then
+     if( i_pmq_t==0 ) then
        N_pmq=N_pmq+1
        BS_blk(i_block)%kp_table(2,i_pmq)=N_pmq
      endif

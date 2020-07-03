@@ -209,6 +209,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    ! The distribution over k is later recomputed for each k-point inside the iq loop
    ! However this should be not needed. Only the distribution over eh and b should be redone
    !
+   ! ... EH space (no parallelization)
+   call K_compute_transitions_at_ik(1,Ken,Xk,Dip)
    call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
    call PARALLEL_SETUP_K_scheme("K")
    !
@@ -286,14 +288,16 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    call DIPOLE_dimensions(Ken,Dip,BS_bands,BSS_q0)
    !
-   ! ... EH space (no parallelization)
-   call K_Transitions_setup(iq,Ken,Xk,Dip,.FALSE.)
-   !
-   !... Parallel distribution
-   call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
+   if(iq/=1) then
+     ! ... EH space (no parallelization)
+     call K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
+     !
+     !... Parallel distribution
+     call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
+   endif
    !
    ! ... EH space (with parallelization) and Transition groups build-up
-   call K_Transitions_setup(iq,Ken,Xk,Dip,.TRUE.)
+   call K_Transitions_setup(iq,Ken,Xk,Dip)
    !
    !... Blocks build-up
    if (.not.l_rpa_IP) call K_blocks(iq)

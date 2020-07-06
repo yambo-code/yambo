@@ -467,7 +467,7 @@ subroutine interpolate_W(X,Xw,q)
       iq2 = idx_q(nn,iq1,ig1)
       ig2 = idx_G(nn,iq1,ig1)
       !
-      f_func(nn) = bare_qpg(iq2,ig2)**2/(4*pi)*vX(nn,iq1,ig1)/(vX(nn,iq1,ig1)-1)
+      f_func(nn) = bare_qpg(iq2,ig2)**2/(4*pi)*vX(nn,iq1,ig1)/(vX(nn,iq1,ig1)+1)
       !
     end do
     !Store coefficients

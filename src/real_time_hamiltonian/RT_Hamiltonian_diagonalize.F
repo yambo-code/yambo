@@ -46,7 +46,6 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
 &                         l_RT_uses_E_FineGd,l_RT_update_Energies,l_RT_rotate_DM,&
 &                         l_RT_eval_lifetimes,RT_nbands,l_NE_with_fields
  use R_lattice,      ONLY:bz_samp
- use RT_control,     ONLY:RT_do_it
  use fields,         ONLY:gauge_field
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  !
@@ -64,6 +63,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
  real(SP)     :: Ed(RT_bands(1):RT_bands(2)),dE
  integer      :: ib,ik,ik_RT,ik_E_FineGd
  logical      :: l_do_E,l_do_R
+ logical, external        :: RT_do_it
  !
  BGR=rZERO
  !

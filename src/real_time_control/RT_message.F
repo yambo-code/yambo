@@ -21,24 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Glesser_rotate(dG)
+subroutine RT_message(what)
  !
- use pars,           ONLY:SP
- use real_time,      ONLY:RT_bands,RT_nk
+ use real_time
+ use RT_control
+ use units
  !
  implicit none
  !
- complex(SP), intent(in) :: dG(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ character(*) :: what
  !
- ! Work Space
+ write (*,*) NE_i_time,"(I_TIME)",NE_time*AUT2FS,"(TIME)",what
  !
- integer                 :: ik
- !
- do ik=1,RT_nk
-   !
- enddo
- !if (.not.l_RT_eval_lifetimes.and..not..RT_do_it('OUT')) return
- !
- !call OBS_rotate(R,O,N,direction)
- !
-end subroutine RT_Glesser_rotate
+end subroutine

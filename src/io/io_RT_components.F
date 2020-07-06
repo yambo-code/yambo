@@ -62,7 +62,7 @@ integer function io_RT_components(what,ID)
  use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step, &
 &                         RT_carriers,RT_nbands,G_MEM_steps
  use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&
-&                         NE_i_start_time,SAVE_G_history
+&                         SAVE_G_history,CACHE_OBS_steps
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
 #endif
@@ -85,9 +85,9 @@ integer function io_RT_components(what,ID)
 #if defined _PAR_IO
  integer               :: local_COMM
 #endif
- integer               :: ik,db_type,T_size,i_start,G_IO_steps
+ integer               :: ik,db_type,T_size,G_IO_steps
  logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_JP,l_M,l_D,&
-&                         loading_carr_before_neq,par_IO,first_IO
+&                         loading_carr_before_neq,par_IO
  !
  ! DB kind and name...
  !=====================
@@ -102,19 +102,6 @@ integer function io_RT_components(what,ID)
  l_M          =what=="M".or.what=="OBSERVABLES"
  l_D          =what=="D".or.what=="OBSERVABLES"
  l_OBS        =l_JP.or.l_M.or.l_D
- !
- ! The restart time is the last time I wrote G and eequal or before the last time I wrote OBS
- if(l_G       ) then
-   first_IO=(NE_i_time==  GF_RT_IO_t%last_point).or.(NE_i_time==1).or.  GF_RT_IO_t%last_point< 0
- endif
- if(l_OBS     ) then
-   first_IO=(NE_i_time== OBS_RT_IO_t%last_point).or.(NE_i_time==1).or. OBS_RT_IO_t%last_point< 0
- endif
- ! it is possible that the last time I wrote the carriers was before the restart time of the run
- if(l_carriers) then
-    first_IO=(NE_i_time== CARR_RT_IO_t%last_point).or.(NE_i_time==1).or. CARR_RT_IO_t%last_point< 0 .or. &
-&                       (NE_i_time-NE_i_start_time)<=CARR_RT_IO_t%INTERVAL_steps 
- endif
  !
  call timing('io_RT_components',OPR='start')
  !
@@ -194,14 +181,11 @@ integer function io_RT_components(what,ID)
      if (io_RT_components/=0) goto 1
    endif
    !
-#if defined _PAR_IO
-   if(l_G)        call io_RT_components_TIME_points(ID,T_size,first_IO,.false.,SAVE_G_history,l_G,GF_RT_IO_t)
-#else
-   if(l_G)        call io_RT_components_TIME_points(ID,T_size,.true.,.false.,SAVE_G_history,l_G,GF_RT_IO_t)
-#endif
-   if(l_carriers) call io_RT_components_TIME_points(ID,1,first_IO,.not.loading_carr_before_neq,.true.,l_G,CARR_RT_IO_t)
+   if (l_G)        call io_RT_components_TIME_points(ID,T_size,.false.,SAVE_G_history,l_G,GF_RT_IO_t)
    !
-   if(l_OBS)      call io_RT_components_TIME_points(ID,T_size,first_IO,.false.,.true.,l_G,OBS_RT_IO_t)
+   if (l_carriers) call io_RT_components_TIME_points(ID,1,.not.loading_carr_before_neq,.true.,l_G,CARR_RT_IO_t)
+   !
+   if (l_OBS)      call io_RT_components_TIME_points(ID,T_size,.false.,.true.,l_G,OBS_RT_IO_t)
    !
  endif
  !
@@ -244,11 +228,14 @@ integer function io_RT_components(what,ID)
  ! Carrier components
  !====================
  if ( l_carriers) then
-   if (first_IO.or.read_is_on(ID)) then
+   if (CARR_RT_IO_t%first_IO(3).or.read_is_on(ID)) then
      call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="def_io_variables")
    endif
    call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="do_io_variables")
    if (read_is_on(ID)) call RT_carriers_object(RT_carriers,WHAT="dump")
+   !
+   CARR_RT_IO_t%first_IO(3)=.FALSE.
+   !
  endif
  !
  ! GPL_EXCLUDE_END

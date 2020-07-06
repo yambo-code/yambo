@@ -23,24 +23,26 @@
 !                  
 subroutine RT_databases_IO(E,DO_IT)
  !
- use pars,           ONLY:SP
  use drivers,        ONLY:l_elph_scatt
  use electrons,      ONLY:n_spin,levels
- use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
-&                         GF_RT_IO_t,CARR_RT_IO_t,CACHE_OBS_steps_now,CACHE_OBS_steps,CACHE_OBS_INTERVAL_time,    &
+ use RT_control,     ONLY:ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
+&                         GF_RT_IO_t,CARR_RT_IO_t,CACHE_OBS_steps_now,CACHE_OBS_steps,    &
 &                         SAVE_G_history,NE_i_start_time,CACHE_OBS_last_point
  use real_time,      ONLY:NE_i_time,NE_steps,RT_nk,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,&
-&                         l_NE_with_fields,RT_step,RT_dyn_step,NE_time
+&                         l_NE_with_fields,RT_step,RT_dyn_step,NE_time,THETA_matrix,&
+&                         l_RT_CCA_Kernel,RT_carriers,G_MEM_steps
  use IO_m,           ONLY:io_control,manage_action,NONE,REP, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
 &                         OP_IF_START_APP_CL_IF_END,WR_CL_IF_END,OP_APP,OP_APP_CL,OP_WR_CL
- use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,G_MEM_steps
  use parallel_m,     ONLY:PP_redux_wait,PP_bcast,HEAD_k_cpu,PAR_G_k_range
  use timing_m,       ONLY:timing
  use fields,         ONLY:A_tot
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX
 #endif
+ ! DEBUG>
+ !use stderr
+ ! DEBUG<
  !
  implicit none
  !
@@ -49,10 +51,10 @@ subroutine RT_databases_IO(E,DO_IT)
  !
  ! Work Space
  !
- logical           :: write_OBS,write_G,force_IO,write_CARR
- integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,n_OBS_cache
+ logical           :: write_OBS,write_G,write_CARR
+ integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time
  integer, external :: io_RT_components
- logical, external :: RT_Dynamics_is_over
+ logical, external :: RT_do_it
  !
  call timing('RT databases IO',OPR='start')
  !
@@ -71,48 +73,45 @@ subroutine RT_databases_IO(E,DO_IT)
      CACHE_OBS_last_point=OBS_RT_IO_t%last_point
    endif
    !
-   n_OBS_cache=nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)
-   force_IO=RT_Dynamics_is_over(.false.).or.DO_IT
-   write_OBS=RT_do_it('OBS').or.force_IO
+   write_OBS=RT_do_it('OBS').or.DO_IT
    !
-   if (RT_do_it('OBS_cache').or.force_IO) then
+   if (RT_do_it('OBS_cache').or.DO_IT) then
      !
      ! Cache the current and the polarization for future writing
      !
-     i_time=NE_i_time
      CACHE_OBS_last_point=NE_i_time
-     if((OBS_RT_IO_t%last_point-1)/n_OBS_cache>-1) i_time=i_time-OBS_RT_IO_t%last_point
-     i_time=(i_time-1)/n_OBS_cache+1
-     i_time=i_time/nint(RT_dyn_step/RT_step)
+     CACHE_OBS_steps_now =CACHE_OBS_steps_now+1
      !
-     if(i_time>0) then
-       OBS_RT_IO_t%N=OBS_RT_IO_t%N+1
-       OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=NE_time
-     else
-       i_time=1
-     endif
+     OBS_RT_IO_t%N=OBS_RT_IO_t%N+1
+     OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=NE_time
      !
-     J_cache(1:3,i_time)=RT_ind_J
-     P_cache(1:3,i_time)=RT_P
+     ! DEBUG>
+     !call RT_message("CACHE_fill "//trim(intc(CACHE_OBS_steps_now))//" - "//trim(intc(CACHE_OBS_steps)))
+     ! DEBUG<
+     !
+     J_cache(1:3,CACHE_OBS_steps_now)=RT_ind_J
+     P_cache(1:3,CACHE_OBS_steps_now)=RT_P
      if(n_spin>1) then
-       Ms_cache(1:3,i_time)= RT_spin_magn
-       Ml_cache(1:3,1:2,i_time)= RT_orbt_magn
+       Ms_cache(1:3,CACHE_OBS_steps_now)= RT_spin_magn
+       Ml_cache(1:3,1:2,CACHE_OBS_steps_now)= RT_orbt_magn
      endif
      if(l_NE_with_fields) then
-       A_cache(1:3,1,i_time)=A_tot%vecpot
-       A_cache(1:3,2,i_time)=A_tot%vecpot_vel
-       A_cache(1:3,3,i_time)=A_tot%vecpot_acc
+       A_cache(1:3,1,CACHE_OBS_steps_now)=A_tot%vecpot
+       A_cache(1:3,2,CACHE_OBS_steps_now)=A_tot%vecpot_vel
+       A_cache(1:3,3,CACHE_OBS_steps_now)=A_tot%vecpot_acc
      endif
      !
      if (write_OBS) then
        !
-       CACHE_OBS_steps_now=i_time
+       ! DEBUG>
+       !call RT_message("CACHE_write "//trim(intc(CACHE_OBS_steps_now))//" - "//trim(intc(CACHE_OBS_steps)))
+       ! DEBUG<
        !
        IO_ACT=manage_action(WR_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2,3/),ID=ID(4))
        io_OBS=io_RT_components('OBSERVABLES',ID(4))
        !
-       J_cache=0._SP
+       CACHE_OBS_steps_now=0
        !
      endif
      !
@@ -131,8 +130,7 @@ subroutine RT_databases_IO(E,DO_IT)
      io_carr=io_RT_components('carriers',ID(6))
    endif
    !
-   force_IO=RT_Dynamics_is_over(.false.).or.DO_IT
-   write_CARR=RT_do_it('CARR').or.force_IO
+   write_CARR=RT_do_it('CARR').or.DO_IT
    !
    if (write_CARR) then
      !
@@ -168,8 +166,7 @@ subroutine RT_databases_IO(E,DO_IT)
      !
    endif
    !
-   force_IO=RT_Dynamics_is_over(.false.).or.DO_IT
-   write_G=RT_do_it('G').or.force_IO
+   write_G=RT_do_it('G').or.DO_IT
    !
    if(write_G) then
      !

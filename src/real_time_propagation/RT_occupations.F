@@ -29,7 +29,6 @@ subroutine RT_occupations(dG)
 &                         RT_H_occupations,RT_delta_occupations,RT_bands,RT_nk,RT_nbands,&
 &                         G_lesser_reference,l_RT_rotate_DM
  use hamiltonian,    ONLY:H_rotation
- use RT_control,     ONLY:RT_do_it
  use electrons,      ONLY:spin_occ
  !
  implicit none
@@ -42,6 +41,7 @@ subroutine RT_occupations(dG)
  real(SP)                :: df_H
  complex(SP)             :: G_rot(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)),&
 &                           G_ref(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ logical, external       :: RT_do_it
  !
  ! Update the occupations:
  !  RT_delta_occupations are always sensitive to small changes 

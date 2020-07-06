@@ -1,4 +1,4 @@
-objs = RT_Dynamics_is_over.o RT_current_AND_polarization.o \
+objs = RT_Dynamics_is_over.o RT_message.o RT_do_it.o RT_current_AND_polarization.o \
        RT_Lifetimes_merge_intra_k.o RT_Lifetimes_merge_inter_k.o RT_Lifetimes_merge_driver.o \
        RT_output_INIT.o RT_output.o RT_databases_IO.o \
        RT_Observables.o RT_mean_carrier_lifetimes.o RT_average_operator.o RT_occupations_FIT.o \

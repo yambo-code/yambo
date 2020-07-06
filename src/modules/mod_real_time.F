@@ -83,7 +83,7 @@ module real_time
  real(SP) :: NE_initial_time_step_update         ! Time above which the time-step is dynamically updated (0. means no update)
  real(SP) :: NE_step_update_treshold             ! Time-step update treshold
  !
- integer  :: NE_i_time=1 ! = (NE_time+1)/RT_step
+ integer  :: NE_i_time=1 ! = NE_time/RT_step+1
  integer  :: NE_steps    ! Still relative to RT_step
  !
  ! Here I control the way the time evolution is sampled for the e-p and e-e

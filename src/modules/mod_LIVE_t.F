@@ -194,7 +194,7 @@ module LIVE_t
      if (d>0) then
        write (cd,'(i2.2,a)') d,'d'
        write (ch,'(a,i2.2,a)') '-',h,'h'
-       if (m>0)  write (ch,'(a,i2.2,a)') '-',m,'m'
+       write (ch,'(a,i2.2,a)') '-',m,'m'
      else if (h>0) then
        write (cd,'(i2.2,a)') h,'h'
        write (ch,'(a,i2.2,a)') '-',m,'m'

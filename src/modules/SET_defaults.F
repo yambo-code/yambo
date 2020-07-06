@@ -591,9 +591,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NE_initial_time_step_update    = 0._SP
  NE_step_update_treshold        = 0.1_SP
  !
- CACHE_OBS_steps      = 1
- CACHE_OBS_steps_now  = 1
- CACHE_OBS_last_point = 1
+ CACHE_OBS_steps      = 0
+ CACHE_OBS_steps_now  = 0
+ CACHE_OBS_last_point = 0
  CACHE_OBS_INTERVAL_time       = 0._SP
  CACHE_OBS_INTERVAL_time_INPUT  = 0._SP
  !

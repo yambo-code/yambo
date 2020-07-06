@@ -71,8 +71,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Work Space
  !
- integer :: i_mem,i_sp_pol,ik,IO_ACT,io_G,io_OBS,io_THETA,io_REF,&
-&           io_OCCUPATIONS,nt
+ integer :: i_mem,i_sp_pol,ik,IO_ACT,io_G,io_THETA,io_REF,nt
  !
  integer, external :: io_RT_components
  !
@@ -131,10 +130,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! GPL_EXCLUDE_START
  !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
- io_OBS=io_RT_components('OBSERVABLES',ID(4))
- !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
  io_G=io_RT_components('G',ID(5))
  !
  ! Reference G_lesser and Lifetimes
@@ -165,12 +161,6 @@ subroutine RT_start_and_restart(E,k,q)
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
    !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(4))
-   io_OBS=io_RT_components('OBSERVABLES',ID(4))
-   !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(6))
-   io_OCCUPATIONS=io_RT_components('carriers',ID(6))
-   !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2/),MODE=DUMP,ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
@@ -179,19 +169,16 @@ subroutine RT_start_and_restart(E,k,q)
    ! I use G_lesser(:,:,:) to reconstruct everything
    ! Note that the databases must be loaded at the RESTART time (NE_time)
    !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=VERIFY,ID=ID(6))
-   io_OCCUPATIONS=io_RT_components('carriers',ID(6))
-   !
 #if defined _PAR_IO
    !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=VERIFY,ID=ID(5))
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=DUMP,ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
 #else
    !
    do ik=PAR_G_k_range(1),PAR_G_k_range(2)
      IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,PAR_G_k_range(1),PAR_G_k_range(2))
-     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),MODE=VERIFY,ID=ID(5))
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),MODE=DUMP,ID=ID(5))
      io_G=io_RT_components('G',ID(5))
    enddo
    !
@@ -233,7 +220,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
    call msg('s','[RESTART] Number of steps done    [o/o]',real(NE_i_time)/real(NE_steps)*100._SP)
    call msg('r','Number of steps done         [o/o]',real(NE_i_time)/real(NE_steps)*100._SP)
-   call msg('r','Time reached                  [fs]',real(NE_i_time)*RT_step*AUT2FS)
+   call msg('r','Time reached                  [fs]',real(NE_i_time-1)*RT_step*AUT2FS)
    call msg('r','Time step                     [fs]',RT_dyn_step*AUT2FS)
    !
    call msg('r',  'dT Update Interval            [fs]',NE_time_step_update_jump*AUT2FS)

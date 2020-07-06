@@ -23,8 +23,6 @@
 !
 subroutine RT_IO_type_time_steps(what)
  !
- ! Note that all _INPUT = _INPUT, values given and reported in INPUT file
- !
  use real_time,      ONLY:RT_step,RT_dyn_step
  use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,&
 &                         SETUP_RT_IO_type,CACHE_OBS_INTERVAL_time_INPUT,TIME_adjust,&
@@ -38,19 +36,21 @@ subroutine RT_IO_type_time_steps(what)
  !
  if (what=="INIT".or.what=="UPDATE".or.what=="RESTART") then
    !
-   call SETUP_RT_IO_type(CARR_RT_IO_t,what=="INIT")
-   call SETUP_RT_IO_type(OUTPUT_RT_IO_t,what=="INIT")
-   call SETUP_RT_IO_type(GF_RT_IO_t,what=="INIT")
-   call SETUP_RT_IO_type(OBS_RT_IO_t,what=="INIT")
+   call SETUP_RT_IO_type(CARR_RT_IO_t,who="CARR",what=what)
+   call SETUP_RT_IO_type(OUTPUT_RT_IO_t,who="OUTPUT",what=what)
+   call SETUP_RT_IO_type(GF_RT_IO_t,who="GF",what=what)
+   call SETUP_RT_IO_type(OBS_RT_IO_t,who="OBS",what=what)
    !
  endif
  !
  if (what=="INIT") then
    !
+   CACHE_OBS_INTERVAL_time_INPUT=TIME_adjust(CACHE_OBS_INTERVAL_time_INPUT,RT_step)
+   !
    ! CACHE interval => OBS I/O steps. Here I impose the OBS I/O and CACHE steps to be consistent
    !
-   CACHE_OBS_INTERVAL_time_INPUT=TIME_adjust(CACHE_OBS_INTERVAL_time_INPUT,RT_step)
    OBS_RT_IO_t%INTERVAL_time_INPUT=TIME_adjust(OBS_RT_IO_t%INTERVAL_time_INPUT,CACHE_OBS_INTERVAL_time_INPUT)
+   OBS_RT_IO_t%INTERVAL_steps = nint(OBS_RT_IO_t%INTERVAL_time_INPUT/RT_step)
    !
    CACHE_OBS_INTERVAL_time=CACHE_OBS_INTERVAL_time_INPUT
    CACHE_OBS_steps=OBS_RT_IO_t%INTERVAL_steps/nint(CACHE_OBS_INTERVAL_time/RT_step)
@@ -59,23 +59,17 @@ subroutine RT_IO_type_time_steps(what)
    !
  endif
  !
- if (what=="RESTART") then
-   !
-   CACHE_OBS_INTERVAL_time=TIME_adjust(CACHE_OBS_INTERVAL_time,RT_dyn_step)
-   !
-   CACHE_OBS_steps=OBS_RT_IO_t%INTERVAL_steps/nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)/nint(RT_dyn_step/RT_step)
-   !
-   call RT_control_free("cache")
-   call RT_control_alloc("cache")
-   !
-   return
-   !
- endif
- !
- if (what=="UPDATE") then
+ if (what=="UPDATE".or.what=="RESTART") then
    !
    CACHE_OBS_INTERVAL_time = TIME_adjust(CACHE_OBS_INTERVAL_time,RT_dyn_step)
+   !
+   ! CACHE interval => OBS I/O steps. Here I impose the OBS I/O and CACHE steps to be consistent
+   !
+   OBS_RT_IO_t%INTERVAL_time=TIME_adjust(OBS_RT_IO_t%INTERVAL_time,CACHE_OBS_INTERVAL_time)
+   OBS_RT_IO_t%INTERVAL_steps = nint(OBS_RT_IO_t%INTERVAL_time/RT_step)
+   !
    CACHE_OBS_steps=OBS_RT_IO_t%INTERVAL_steps/nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)/nint(RT_dyn_step/RT_step)
+   !
    call RT_control_free("cache")
    call RT_control_alloc("cache")
    !

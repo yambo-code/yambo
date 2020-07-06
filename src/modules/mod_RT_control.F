@@ -33,16 +33,18 @@ module RT_control
  real(SP)                 :: CACHE_OBS_INTERVAL_time
  real(SP)                 :: CACHE_OBS_INTERVAL_time_INPUT
  integer                  :: CACHE_OBS_steps
- integer                  :: CACHE_OBS_steps_now
+ integer                  :: CACHE_OBS_steps_now 
  !
  integer                  :: ID(8)                    ! (/3 GFPAR,4 OBS,5 GFSER,6 OCC,7 THETA,8 REF)
  integer                  :: NE_i_start_time    = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point
  type RT_IO_t
+   character(schlen)     :: name
    integer               :: N
-   integer               :: INTERVAL_steps
+   integer               :: INTERVAL_steps=0
    integer               :: last_point
+   logical               :: first_IO(3)=.TRUE. ! Sec #1, #2 and #3
    real(SP)              :: INTERVAL_time
    real(SP)              :: INTERVAL_time_INPUT
    real(SP), allocatable :: Time(:)
@@ -173,60 +175,6 @@ module RT_control
      !
    end subroutine RT_control_free
    !
-   logical function RT_do_it(what)
-     !
-     use real_time, ONLY:NE_i_time,RT_step,NE_time_step_update_jump,NE_time_step_update_last_point,NE_steps
-     !
-     character(*) :: what
-     !
-     ! Work Space
-     !
-     integer :: INTERVAL_steps,i_grp,last_point
-     !
-     RT_do_it= .FALSE.
-     last_point = 1
-     if (NE_i_time==1) return
-     !
-     if (what=="OBS") then
-       INTERVAL_steps=OBS_RT_IO_t%INTERVAL_steps
-       last_point    =OBS_RT_IO_t%last_point
-     endif
-     if (what=="CARR") then
-       INTERVAL_steps=CARR_RT_IO_t%INTERVAL_steps
-       last_point    =CARR_RT_IO_t%last_point
-     endif
-     if (what=="OUT") then
-       INTERVAL_steps=OUTPUT_RT_IO_t%INTERVAL_steps
-       last_point    =OUTPUT_RT_IO_t%last_point
-     endif
-     if (what=="G") then
-       INTERVAL_steps=GF_RT_IO_t%INTERVAL_steps
-       last_point    =GF_RT_IO_t%last_point
-     endif
-     if (what=="OBS_cache") then
-       INTERVAL_steps=nint(CACHE_OBS_INTERVAL_time/RT_step)
-       last_point    =CACHE_OBS_last_point
-     endif
-     if (what=="deltaT") then
-       INTERVAL_steps=nint(NE_time_step_update_jump/RT_step)
-       last_point    =NE_time_step_update_last_point
-     endif
-     !
-     ! In RESTART mode the GF and J/P/C databases could be not time aligned
-     !
-     if (last_point>NE_i_time) return
-     !
-     if (INTERVAL_steps<0) then
-       RT_do_it=.TRUE. 
-       return
-     endif
-     !
-     i_grp=nint(real(NE_i_time-last_point)/real(INTERVAL_steps))
-     !
-     RT_do_it= (NE_i_time-last_point)==(i_grp*INTERVAL_steps) .or. NE_i_time==NE_steps
-     !
-   end function
-   !
    integer function T2I(TIME,STEP)
      !
      use real_time, ONLY:RT_step
@@ -304,18 +252,21 @@ module RT_control
      !
    end function
    !
-   subroutine SETUP_RT_IO_type(TYP,INIT)
+   subroutine SETUP_RT_IO_type(TYP,who,what)
      !
      use real_time, ONLY:NE_tot_time,RT_dyn_step,RT_step,NE_i_time
      !
      type(RT_IO_t) :: TYP
-     logical       :: INIT
+     character(*), optional :: what,who
      !
-     if (INIT) then
-       if (allocated(TYP%Time)) then
-         YAMBO_FREE(TYP%Time)
+     if (present(what)) then
+       if (what=="INIT") then
+         if (allocated(TYP%Time)) then
+           YAMBO_FREE(TYP%Time)
+         endif
+         TYP%name         =who
+         TYP%INTERVAL_time=TYP%INTERVAL_time_INPUT
        endif
-       TYP%INTERVAL_time=TYP%INTERVAL_time_INPUT
      endif
      !
      ! Initialization always using RT_step
@@ -330,12 +281,16 @@ module RT_control
      !
      TYP%INTERVAL_steps = nint(TYP%INTERVAL_time/RT_step)
      !
-     TYP%last_point     = NE_i_time
+     if (what=="INIT"   ) TYP%last_point     = 0
+     if (what=="RESTART") TYP%last_point     = NE_i_start_time-1
+     if (what=="UPDATE" ) TYP%last_point     = NE_i_time
      !
-     if (INIT) then
-       TYP%INTERVAL_time_INPUT=TYP%INTERVAL_time
-       TYP%N                  = 0
-       TYP%last_point         =-TYP%INTERVAL_steps+1
+     if (present(what)) then
+       if (what=="INIT") then
+         TYP%INTERVAL_time_INPUT=TYP%INTERVAL_time
+         TYP%N                  = 0
+         TYP%first_IO           = .TRUE.
+       endif
      endif
      !
    end subroutine

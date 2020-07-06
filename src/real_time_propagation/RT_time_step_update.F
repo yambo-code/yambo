@@ -31,7 +31,7 @@ subroutine RT_time_step_update( E )
 &                         RT_life_extrap_times,Life_MEM_steps,NE_time,&
 &                         NE_step_update_treshold,NE_i_time,NE_time_step_update_last_point,RT_MAX_step,&
 &                         NE_initial_time_step_update,RT_nk,RT_all2ibz
- use RT_control,     ONLY:RT_do_it,TIME_adjust
+ use RT_control,     ONLY:TIME_adjust
  use RT_output_m,    ONLY:TIME_STEP_desc
  use com,            ONLY:msg
  use electrons,      ONLY:levels
@@ -49,6 +49,7 @@ subroutine RT_time_step_update( E )
  complex(SP)       :: dG_dT_max(2),dG_dT(2),ERROR,dG(3)
  real(SP)          :: dT_now,dT_previous,dT_next
  integer, external :: RT_Lifetimes_evaluation_plan
+ logical, external :: RT_do_it
  !
  l_Update_Time_Step=NE_time>=NE_initial_time_step_update.and.NE_initial_time_step_update>0._SP
  !
@@ -101,7 +102,7 @@ subroutine RT_time_step_update( E )
    !
    ! I need to re-calculate the lifetimes evaluation plan in order to be consistent with the new Time Step
    !
-   RT_life_extrap_times(2) = max(TIME_adjust(RT_life_extrap_times(2),RT_dyn_step),RT_dyn_step)
+   RT_life_extrap_times(2) = TIME_adjust(RT_life_extrap_times(2),RT_dyn_step)
    RT_life_extrap_times(1) = RT_life_extrap_times(2)*Life_MEM_steps
    !
    ! ... and Lifetimes evaluation plan update

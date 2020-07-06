@@ -190,9 +190,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- i_p_bz_last=0   ; i_k_bz_last=0
- i_pmq_bz_last=0 ; i_kmq_bz_last=0
- !
  ! Screened interaction
  !======================
  io_X_err=0
@@ -397,6 +394,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! Transition Loops
    !------------------
+   !
+   i_p_bz_last=0   ; i_k_bz_last=0
+   i_pmq_bz_last=0 ; i_kmq_bz_last=0
    !
 #if defined _OPENMP && ! defined _CUDA
    !$omp parallel default(shared), &

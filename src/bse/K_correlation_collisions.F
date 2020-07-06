@@ -121,6 +121,8 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  BS_blk(i_block)%O_table=0
  O_todo_table=.false.
  !
+ i_p_bz_last=0  ; i_k_bz_last=0
+ !
  do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
    do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
      !
@@ -174,6 +176,8 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  call OPENMP_update(master_thread)
  !
  call elemental_collision_alloc(K_CORR_collision,NG=O_ng, TITLE="CORR_COLL")
+ !
+ i_p_bz_last=0  ; i_k_bz_last=0
  !
 #if !defined _CUDA
  !$omp do collapse(2), schedule(dynamic)

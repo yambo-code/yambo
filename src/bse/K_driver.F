@@ -201,17 +201,17 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call msg('s','[BSE-W] Use all G-vectors of W ',BS_n_g_W)
  endif
  !
+ ! ... EH space (no parallelization)
+ !call K_compute_transitions_at_ik(1,Ken,Xk,Dip)
+ !
+ call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
+ !
  ! Compute qindx_B_max
  ! =====================
+ !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) then
    !
    ! Here I need the distribution over k
-   ! The distribution over k is later recomputed for each k-point inside the iq loop
-   ! However this should be not needed. Only the distribution over eh and b should be redone
-   !
-   ! ... EH space (no parallelization)
-   call K_compute_transitions_at_ik(1,Ken,Xk,Dip)
-   call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
    call PARALLEL_SETUP_K_scheme("K")
    !
    ! here qindx_B is allocated
@@ -231,14 +231,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  ! Tranferred momentum
  !======================
- !
  YAMBO_ALLOC(BSqpts,(3,BS_q(1):BS_q(2)))
+ !
  do iq=BS_q(1),BS_q(2)
+   !
    if (iq==1) BSqpts(:,iq) = BSS_q0
    if (iq/=1) BSqpts(:,iq) = q%pt(iq,:)
- enddo
- !
- do iq=BS_q(1),BS_q(2)
    !
    call section('*','Bethe Salpeter Equation @q'//trim(intc(iq)))
    !
@@ -288,13 +286,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    call DIPOLE_dimensions(Ken,Dip,BS_bands,BSS_q0)
    !
-   if(iq/=1) then
-     ! ... EH space (no parallelization)
-     call K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
-     !
-     !... Parallel distribution
-     call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
-   endif
+   ! ... EH space (no parallelization)
+   call K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
+   !
+   !... Parallel distribution
+   call PARALLEL_global_Response_T_transitions(Xk)
    !
    ! ... EH space (with parallelization) and Transition groups build-up
    call K_Transitions_setup(iq,Ken,Xk,Dip)

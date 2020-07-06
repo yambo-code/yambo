@@ -87,7 +87,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
 #else
  if (index(ENVIRONMENT, "Response_G_space")>0       ) PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
 #endif
- if (ENVIRONMENT=="Response_T_space")                 PAR_n_v_bands= (/BS_bands(1),E%nbm/)
+ if (ENVIRONMENT=="Response_T_space"                ) PAR_n_v_bands= (/BS_bands(1),E%nbm/)
  !
  ! # G vectors 
  !-------------
@@ -117,7 +117,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
  ! EH-range
  !----------
- if (ENVIRONMENT=="Response_T_space".and.allocated(BS_nT_at_k)) then
+ if (ENVIRONMENT=="Response_T_space_transitions") then
    PAR_EH_range=maxval( BS_nT_at_k )
    do i_k=1,Xk%nibz
      if (BS_nT_at_k(i_k)<PAR_EH_range.and.BS_nT_at_k(i_k)>0) PAR_EH_range=BS_nT_at_k(i_k)

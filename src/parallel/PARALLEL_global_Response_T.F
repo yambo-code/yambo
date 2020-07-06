@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,40 +21,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_Response_T(Xk,X_type)
+subroutine PARALLEL_global_Response_T_base(Xk)
  !
  use R_lattice,     ONLY:bz_samp,nXkbz,nXkibz
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use IO_m,          ONLY:IO_and_Messaging_switch
- use BS,            ONLY:BS_nT_at_k,BS_nT_grps
  use openmp,        ONLY:n_threads_K,OPENMP_set_threads
- use parallel_m,    ONLY:master_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index, &
-&                        PAR_n_c_bands,PAR_n_v_bands
+ use parallel_m,    ONLY:master_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX, &
-&                        PAR_COM_Xk_ibz_INDEX,PAR_IND_T_ordered, &
+                         PAR_COM_Xk_ibz_INDEX, &
 &                        PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX_DIP,PAR_COM_VAL_INDEX_DIP,&
 &                        PAR_COM_Xk_bz_INDEX,PAR_COM_Xk_bz_A2A
  ! IND
- use parallel_m,    ONLY:PAR_IND_Kk_ibz,PAR_IND_T_groups,PAR_IND_T_ordered, &
-&                        PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_eh,            &
-&                        PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
+ use parallel_m,    ONLY:PAR_IND_Kk_ibz,PAR_IND_Xk_ibz,PAR_IND_Xk_bz
  ! INDEX
  use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_bz_index
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_Kk_nibz,PAR_Xk_nbz,PAR_Xk_nibz
+ use parallel_m,    ONLY:PAR_Kk_nibz,PAR_Xk_nbz,PAR_Xk_nibz
  ! ID's
- use parallel_m,    ONLY:PAR_IND_Kk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID, &
-&                        PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID
+ use parallel_m,    ONLY:PAR_IND_Kk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID
  !
 #include<memory.h>
  !
  type(bz_samp)        :: Xk
- integer              :: X_type
- !
- ! Work space
- !
- integer              :: i_k
  !
  CALL PARALLEL_structure(3,(/"k ","eh","t "/))
  !
@@ -69,8 +59,6 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  !
  ! Dipoles are calculated using PAR_COM_Xk_ibz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
  !
- !call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPk_ibz_INDEX)
- !call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPk_ibz_A2A)
  call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX_DIP)
  call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX_DIP)
  call COMM_copy(PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_bz_INDEX)
@@ -87,21 +75,8 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
 &       LOADED=PAR_IND_Kk_ibz%n_of_elements(PAR_IND_Kk_ibz_ID+1),TOTAL=nXkibz,&
 &         NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
  ! 
- ! Dipoles k-points uses same distribution of K k-points
- !
  call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_Xk_ibz)
  PAR_Xk_nibz  =PAR_Kk_nibz
- !
- !call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_DIPk_ibz)
- !PAR_IND_DIPk_ibz_ID=PAR_IND_Kk_ibz_ID
- !PAR_DIPk_nibz=PAR_Kk_nibz
- !call PAR_build_index(PAR_IND_DIPk_ibz,nXkibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
- !
-! if(.not.allocated(PAR_DIPk_bz_index)) then
-!   call distribute_BZk_using_IBZk(PAR_COM_DIPk_ibz_INDEX,Xk,PAR_IND_DIPk_ibz,PAR_IND_DIPk_ibz_ID,&
-!&                                                           PAR_IND_DIPk_bz, PAR_IND_DIPk_bz_ID,&
-!&                                                           PAR_DIPk_bz_index,PAR_DIPk_nbz)
-! endif
  !
  YAMBO_ALLOC(PAR_Xk_ibz_index,(nXkibz))
  call PAR_build_index(PAR_IND_Xk_ibz,nXkibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
@@ -118,15 +93,44 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  !
  call OPENMP_set_threads(n_threads_in=n_threads_K)
  !
- if(.not.allocated(BS_nT_at_k)) return
+end subroutine PARALLEL_global_Response_T_base
+!
+!
+subroutine PARALLEL_global_Response_T_transitions(Xk)
+ !
+ use R_lattice,     ONLY:bz_samp,nXkibz
+ use BS,            ONLY:BS_nT_at_k,BS_nT_grps
+ use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
+ use parallel_m,    ONLY:PAR_n_c_bands,PAR_n_v_bands,PP_indexes_reset
+ ! COMMUNICATORS
+ use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_T_INDEX, &
+&                        PAR_COM_CON_INDEX_DIP,PAR_COM_VAL_INDEX_DIP
+ ! IND
+ use parallel_m,    ONLY:PAR_IND_T_groups,PAR_IND_T_ordered,PAR_IND_eh,  &
+&                        PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
+ ! DIMENSIONS
+ use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_Kk_nibz,PAR_Xk_nbz,PAR_Xk_nibz
+ ! ID's
+ use parallel_m,    ONLY:PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID
+ !
+#include<memory.h>
+ !
+ type(bz_samp)        :: Xk
+ !
+ ! Work space
+ !
+ integer              :: i_k
  !
  ! E/h pairs (k resolved)
  !
  ! In this part I distribute the eh transitions within each k. The COMM for this indexing is PAR_COM_eh_INDEX.
  ! I fill the PAR_IND_eh for all k in order to define the total number of Transition groups
  !
+ if (.not.allocated(PAR_IND_eh)) allocate(PAR_IND_eh(nXkibz))
+ !
  do i_k=1,nXkibz
    !
+   call PP_indexes_reset(PAR_IND_eh(i_k))
    call PARALLEL_index(PAR_IND_eh(i_k),(/BS_nT_at_k(i_k)/),COMM=PAR_COM_eh_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.FALSE.)
    !
  enddo
@@ -145,6 +149,8 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  !  
  ! Group@k (among BS_nT_grps) ->Group'@p (among BS_nT_grps)
  !
+ call PP_indexes_reset(PAR_IND_T_ordered)
+ !
  call PARALLEL_index(PAR_IND_T_ordered,(/BS_nT_grps,BS_nT_grps/),COMM=PAR_COM_T_INDEX,&
 &                    MASK=PAR_IND_T_groups%element_1D,ORDERED=.TRUE.,NO_EMPTIES=.FALSE.)
  !
@@ -156,6 +162,7 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  !
  ! Conduction band
  !
+ call PP_indexes_reset(PAR_IND_CON_BANDS_DIP)
  call PARALLEL_index(PAR_IND_CON_BANDS_DIP,(/PAR_n_c_bands(2)/),low_range=(/PAR_n_c_bands(1)/),&
 &                     COMM=PAR_COM_CON_INDEX_DIP,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
  PAR_IND_CON_BANDS_DIP_ID=PAR_COM_CON_INDEX_DIP%CPU_id
@@ -167,6 +174,7 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  !
  ! Response functions valence bands
  !
+ call PP_indexes_reset(PAR_IND_VAL_BANDS_DIP)
  call PARALLEL_index(PAR_IND_VAL_BANDS_DIP,(/PAR_n_v_bands(2)/),low_range=(/PAR_n_v_bands(1)/),&
 &                    COMM=PAR_COM_VAL_INDEX_DIP,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
  PAR_IND_VAL_BANDS_DIP_ID=PAR_COM_VAL_INDEX_DIP%CPU_id
@@ -176,4 +184,4 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
 &                           TOTAL=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1,&
 &                           NCPU=PAR_COM_VAL_INDEX_DIP%n_CPU)
  !  
-end subroutine PARALLEL_global_Response_T
+end subroutine PARALLEL_global_Response_T_transitions

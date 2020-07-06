@@ -44,7 +44,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
 &                       BS_Blocks_and_Transitions_alloc,BS_perturbative_SOC
  use DIPOLES,      ONLY:DIPOLE_t
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_ordered,PAR_IND_T_groups,&
-&                       PAR_IND_T_Haydock
+&                       PAR_IND_T_Haydock,PP_indexes_reset
  use electrons,    ONLY:levels,n_sp_pol
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
@@ -91,12 +91,15 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  !
  call section(sec,'Transition Groups build-up @q'//trim(intc(iq)))
  !
+ call k_build_up_BZ_tables(Xk)
+ !
  allocate(BS_T_grp(BS_nT_grps))
  do i_g=1,BS_nT_grps
    BS_T_grp(i_g)%size=0
  enddo
  n_loops=2
  !
+ call PP_indexes_reset(PAR_IND_WF_b_and_k)
  YAMBO_ALLOC(PAR_IND_WF_b_and_k%element_2D,(BS_bands(2),Xk%nibz))
  PAR_IND_WF_b_and_k%element_2D=.FALSE.
  !

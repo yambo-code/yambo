@@ -58,7 +58,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ibz_ID,PAR_IND_Q_bz_ID,PAR_IND_CON_BANDS_DIP_ID,&
-&                        PAR_IND_VAL_BANDS_OVLP_ID,&
+&                        PAR_IND_VAL_BANDS_DIP_ID,PAR_IND_VAL_BANDS_OVLP_ID,PAR_IND_CON_BANDS_OVLP_ID,&
 &                        PAR_IND_QP_ID,PAR_IND_G_b_ID,PAR_IND_PLASMA_ID,&
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_B_mat_ID,&
 &                        PAR_IND_Bp_mat_ID,PAR_IND_G_k_ID,PAR_IND_freqs_ID
@@ -108,13 +108,6 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call PP_indexes_reset(PAR_IND_freqs)
 #endif
  !
- if (ENVIRONMENT=="Response_T_space") then
-   if (.not.allocated(PAR_IND_eh)) allocate(PAR_IND_eh(nXkibz))
-   do i_k=1,nXkibz
-     call PP_indexes_reset(PAR_IND_eh(i_k))
-   enddo
- endif
- !
  YAMBO_FREE(PAR_B_mat_index)
  YAMBO_FREE(PAR_Bp_mat_index)
  YAMBO_FREE(PAR_QP_index)
@@ -140,8 +133,8 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  PAR_IND_CON_BANDS_X_ID(X_type)=0
  PAR_IND_VAL_BANDS_X_ID(X_type)=0
  PAR_IND_CON_BANDS_DIP_ID=0
- PAR_IND_CON_BANDS_DIP_ID=0
- PAR_IND_VAL_BANDS_OVLP_ID=0
+ PAR_IND_VAL_BANDS_DIP_ID=0
+ PAR_IND_CON_BANDS_OVLP_ID=0
  PAR_IND_VAL_BANDS_OVLP_ID=0
  PAR_IND_QP_ID=0
  PAR_IND_PLASMA_ID=0

@@ -237,7 +237,6 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
    if (depth==0) call section('+',trim(ch))
  endif
  !
- l_verbose=.true.
  if (l_verbose) call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(local_Time*AUT2FS))//' fs')
  !
  ! Interpolatle the RT_carriers object inside the En levels object (energy, occupations and lifetimes)

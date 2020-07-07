@@ -54,7 +54,7 @@ subroutine io_RT_components_header(ID,what,loading_carr_before_neq,l_carriers,l_
    io_RT_components=io_header(ID,IMPOSE_SN=(.not.l_carriers),CUTOFF=.true.,T_EL=.true.,FRAG=frag_RT)
    if (io_RT_components/=0) return
    !
-   io_RT_components=variables_RT_static(ID,trim(what_))
+   io_RT_components=variables_RT_static(ID,trim(what_),l_carriers)
    if (io_RT_components/=0) return
    !
  endif

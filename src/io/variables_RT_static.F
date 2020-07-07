@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function variables_RT_static(ID,what)
+integer function variables_RT_static(ID,what,l_carriers)
  !
  use pars,           ONLY:SP,LP,IP
  use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
@@ -53,11 +53,12 @@ integer function variables_RT_static(ID,what)
  !
  integer            :: ID
  character(*)       :: what
+ logical            :: l_carriers
  !
  integer, external :: io_descriptors
  !
  integer               :: i1,MENU_
- logical               :: l_OBS,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic
+ logical               :: l_OBS,l_G,l_carriers_,l_NE_with_fields_disk,l_RT_diamagnetic
  real(SP)              :: RT_life_extrap_decay_time
  !
  l_RT_diamagnetic          = .false.
@@ -65,7 +66,7 @@ integer function variables_RT_static(ID,what)
  !
  l_OBS         = what=="OBSERVABLES"
  l_G           = what=="G"
- l_carriers    = what=="carriers"
+ l_carriers_   = what=="carriers".or.l_carriers
  !
  call IO_desc_reset(RT_desc)
  !
@@ -114,7 +115,7 @@ integer function variables_RT_static(ID,what)
  !
  ! GPL_EXCLUDE_END
  !
- if(any((/l_OBS,l_G,l_carriers/))) then
+ if(any((/l_OBS,l_G,l_carriers_/))) then
    !
    ! RT_DYNAMICS
    !

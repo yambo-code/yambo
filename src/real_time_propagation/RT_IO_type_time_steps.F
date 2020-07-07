@@ -44,7 +44,7 @@ subroutine RT_IO_type_time_steps(what)
  !
  if (what=="INIT") then
    !
-   CACHE_OBS_INTERVAL_time_INPUT=TIME_adjust(CACHE_OBS_INTERVAL_time_INPUT,RT_step)
+   CACHE_OBS_INTERVAL_time_INPUT=max(TIME_adjust(CACHE_OBS_INTERVAL_time_INPUT,RT_step),RT_step)
    !
    ! CACHE interval => OBS I/O steps. Here I impose the OBS I/O and CACHE steps to be consistent
    !
@@ -60,7 +60,7 @@ subroutine RT_IO_type_time_steps(what)
  !
  if (what=="UPDATE".or.what=="RESTART") then
    !
-   CACHE_OBS_INTERVAL_time = TIME_adjust(CACHE_OBS_INTERVAL_time,RT_dyn_step)
+   CACHE_OBS_INTERVAL_time = max(TIME_adjust(CACHE_OBS_INTERVAL_time,RT_dyn_step),RT_dyn_step)
    !
    ! CACHE interval => OBS I/O steps. Here I impose the OBS I/O and CACHE steps to be consistent
    !

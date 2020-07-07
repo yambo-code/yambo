@@ -198,8 +198,8 @@ module RT_control
      real(SP)          :: TIME
      real(SP), optional:: STEP
      !
-     if (     present(STEP)) TIME_adjust=max(real(nint(TIME/STEP),SP)*STEP,STEP)
-     if (.not.present(STEP)) TIME_adjust=max(real(nint(TIME/RT_step),SP)*RT_step,RT_step)
+     if (     present(STEP)) TIME_adjust=real(nint(TIME/STEP),SP)*STEP
+     if (.not.present(STEP)) TIME_adjust=real(nint(TIME/RT_step),SP)*RT_step
      !
    end function
    !

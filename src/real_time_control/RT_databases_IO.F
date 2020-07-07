@@ -40,9 +40,6 @@ subroutine RT_databases_IO(E,DO_IT)
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX
 #endif
- ! DEBUG>
- !use stderr
- ! DEBUG<
  !
  implicit none
  !
@@ -85,10 +82,6 @@ subroutine RT_databases_IO(E,DO_IT)
      OBS_RT_IO_t%N=OBS_RT_IO_t%N+1
      OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=NE_time
      !
-     ! DEBUG>
-     !call RT_message("CACHE_fill "//trim(intc(CACHE_OBS_steps_now))//" - "//trim(intc(CACHE_OBS_steps)))
-     ! DEBUG<
-     !
      J_cache(1:3,CACHE_OBS_steps_now)=RT_ind_J
      P_cache(1:3,CACHE_OBS_steps_now)=RT_P
      if(n_spin>1) then
@@ -102,10 +95,6 @@ subroutine RT_databases_IO(E,DO_IT)
      endif
      !
      if (write_OBS) then
-       !
-       ! DEBUG>
-       !call RT_message("CACHE_write "//trim(intc(CACHE_OBS_steps_now))//" - "//trim(intc(CACHE_OBS_steps)))
-       ! DEBUG<
        !
        IO_ACT=manage_action(WR_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2,3/),ID=ID(4))

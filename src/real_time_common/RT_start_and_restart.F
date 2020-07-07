@@ -35,7 +35,7 @@ subroutine RT_start_and_restart(E,k,q)
  ! [5] Initialize the fields
  ! [6] (Eventually) load the retarded Green Functions
  !
- use pars,           ONLY:SP,cZERO,rZERO
+ use pars,           ONLY:SP,cZERO,rZERO,schlen
  use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use com,            ONLY:msg
@@ -48,7 +48,7 @@ subroutine RT_start_and_restart(E,k,q)
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,RT_E_and_k,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
-&                         Gr_kind,l_RT_is_WFfree,RT_ibz_dupl,&
+&                         Gr_kind,l_RT_is_WFfree,RT_ibz_dupl,RT_TIME_status,&
 &                         RT_E_occupations_reference,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
 &                         RT_eh_en,G_MEM_steps,RT_bands,&
@@ -71,8 +71,8 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Work Space
  !
- integer :: i_mem,i_sp_pol,ik,IO_ACT,io_G,io_THETA,io_REF,nt,io_OBS
- !
+ integer :: i_mem,i_sp_pol,ik,IO_ACT,nt,i_db,io_err(8)
+ character(schlen) :: db_name(8)
  integer, external :: io_RT_components
  !
  ! GPL_EXCLUDE_START
@@ -130,45 +130,43 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! GPL_EXCLUDE_START
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
- io_G=io_RT_components('G',ID(5))
+ db_name(4)='OBSERVABLES'
+ db_name(5)='G'
+ db_name(6)='carriers'
+ db_name(7)='THETA'
+ db_name(8)='REF'
  !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
- io_OBS=io_RT_components('OBSERVABLES',ID(4))
+ do i_db=4,8
+   if (i_db/=5) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(i_db))
+   if (i_db==5) call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(i_db))
+   io_err(i_db)=io_RT_components(trim(db_name(i_db)),ID(i_db))
+ enddo
  !
- ! Reference G_lesser and Lifetimes
+ ! To restart from RT only I need:
  !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(8)) ! Reference
- io_REF=io_RT_components('REF',ID(8))
+ !  1. The GF -> delta_G_lesser
+ !  2. The OBSERVABLES -> RT_IO_t
+ !  3. The REFERENCE -> G_lesser_ref
  !
- ! ELPH Theta matrix
+ RESTART = io_err(4)==0.and.io_err(5)==0.and.io_err(8)==0
  !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(7)) ! THETA matrix
- io_THETA=io_RT_components('THETA',ID(7))
+ !  4. The THETA (no CCA mode)
  !
- ! To restart from RT only the G_lesser is necessary (latest and reference)
+ if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = RESTART.and.(io_err(7)==0)
  !
- RESTART = (io_G ==0).and.(io_REF==0)
- !
- if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = RESTART.and.(io_THETA==0)
+ ! In case I restart I need to copy the databases in the WD
  !
  ! Starting point
  !================
  !
  if (RESTART) then
    !
-   ! I read NE_i_time, NE_time and all infos on time status from section 2 of the databases.
-   ! The important DB is the one of the Green function and it must be the only one with MODE=DUMP.
-   ! From it I reconstruct everything.
-   !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(8))
-   io_REF=io_RT_components('REF',ID(8))
-   !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(5))
-   io_OBS=io_RT_components('OBSERVABLES',ID(4))
-   !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2/),MODE=DUMP,ID=ID(5))
-   io_G=io_RT_components('G',ID(5))
+   do i_db=4,8
+     call RT_RESTART_database_copy( trim(db_name(i_db)) )
+     if (i_db==6.or.i_db==7) cycle
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(i_db))
+     io_err(i_db)=io_RT_components(trim(db_name(i_db)),ID(i_db))
+   enddo
    !
    NE_i_start_time=NE_i_time
    NE_steps=NE_steps+1
@@ -176,20 +174,22 @@ subroutine RT_start_and_restart(E,k,q)
    call RT_control_free("all")
    call RT_control_alloc("all")
    !
+   YAMBO_FREE(RT_TIME_status)
+   !
    ! I use G_lesser(:,:,:) to reconstruct everything
    ! Note that the databases must be loaded at the RESTART time (NE_time)
    !
 #if defined _PAR_IO
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=DUMP,ID=ID(5))
-   io_G=io_RT_components('G',ID(5))
+   io_err(5)=io_RT_components('G',ID(5))
    !
 #else
    !
    do ik=PAR_G_k_range(1),PAR_G_k_range(2)
      IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,PAR_G_k_range(1),PAR_G_k_range(2))
      call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),MODE=DUMP,ID=ID(5))
-     io_G=io_RT_components('G',ID(5))
+     io_err(5)=io_RT_components('G',ID(5))
    enddo
    !
 #endif
@@ -204,8 +204,8 @@ subroutine RT_start_and_restart(E,k,q)
      do ik=1,RT_nk
        IO_ACT=manage_action(RD_CL_IF_END,ik,FIRST=1,LAST=RT_nk)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),MODE=VERIFY,ID=ID(7))
-       io_THETA=io_RT_components('THETA',ID(7))
-       enddo
+       io_err(7)=io_RT_components('THETA',ID(7))
+     enddo
    endif
    !
    ! Define RT_E/H_occupations_reference
@@ -215,6 +215,7 @@ subroutine RT_start_and_restart(E,k,q)
    if(.not.l_RT_CCA_Kernel) call RT_ELPH_zeroing()
    !
    ! Last thing to do is to update the planned time sampling time (if needed)
+   !
    !
    nt=RT_Lifetimes_evaluation_plan( )
    !

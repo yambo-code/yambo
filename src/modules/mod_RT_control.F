@@ -36,6 +36,7 @@ module RT_control
  integer                  :: CACHE_OBS_steps_now 
  !
  integer                  :: ID(8)                    ! (/3 GFPAR,4 OBS,5 GFSER,6 OCC,7 THETA,8 REF)
+ character(lchlen)        :: RT_DB_file_name(8) = " "
  integer                  :: NE_i_start_time    = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point

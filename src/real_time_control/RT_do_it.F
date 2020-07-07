@@ -26,9 +26,8 @@ logical function RT_do_it(what)
  use RT_control,     ONLY:OBS_RT_IO_t,GF_RT_IO_t,CARR_RT_IO_t,CACHE_OBS_INTERVAL_time,&
 &                         CACHE_OBS_last_point,OUTPUT_RT_IO_t,NE_i_start_time
  use real_time,      ONLY:NE_i_time,RT_step,NE_time_step_update_jump,NE_time_step_update_last_point
- !DEBUG>
- !use stderr
- !DEBUG<
+ !
+ implicit none
  !
  character(*) :: what
  !
@@ -45,9 +44,6 @@ logical function RT_do_it(what)
    last_point=-1
    INTERVAL_steps=-1
    RT_do_it=.TRUE.
-   !DEBUG>
-   !call RT_message("DO_it "//what)
-   !DEBUG<
    return
  endif
  !
@@ -79,9 +75,5 @@ logical function RT_do_it(what)
  i_grp=nint(real(NE_i_time-last_point)/real(INTERVAL_steps))
  !
  RT_do_it= (NE_i_time-last_point)==(i_grp*INTERVAL_steps) 
- !
- !DEBUG>
- !if (RT_do_it) call RT_message("DO_it "//what)
- !DEBUG<
  !
 end function

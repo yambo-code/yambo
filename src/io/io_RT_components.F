@@ -58,11 +58,11 @@ integer function io_RT_components(what,ID)
  use stderr,         ONLY:intc
  use timing_m,       ONLY:timing
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,read_is_on,io_fragment,write_is_on,&
-&                         def_variable_bulk,io_variable_bulk
+&                         def_variable_bulk,io_variable_bulk,io_file
  use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step, &
 &                         RT_carriers,RT_nbands,G_MEM_steps
  use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&
-&                         SAVE_G_history,CACHE_OBS_steps
+&                         SAVE_G_history,CACHE_OBS_steps,RT_DB_file_name
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
 #endif
@@ -140,6 +140,15 @@ integer function io_RT_components(what,ID)
  else
    io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
    if (io_RT_components/=0) goto 1
+ endif
+ !
+ if (read_is_on(ID)) then
+   if (l_OBS     ) db_type=4
+   if (l_G       ) db_type=5
+   if (l_carriers) db_type=6
+   if (l_THETA   ) db_type=7
+   if (l_REF     ) db_type=8
+   RT_DB_file_name(db_type)=io_file(ID)
  endif
  !
  ! 1st SECTION

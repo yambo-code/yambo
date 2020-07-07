@@ -351,10 +351,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    call BS_Blocks_and_Transitions_free( )
    !
-   !... Parallel distribution reset
-   call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators,RESET=.TRUE.)
-   !
  enddo
+ !
+ !... Parallel distribution reset
+ call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators,RESET=.TRUE.)
  !
  YAMBO_FREE(BSqpts)
  if(.not.l_BSE_PAR_incomplete) call qindx_free('B')

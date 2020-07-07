@@ -328,7 +328,7 @@ module BS
      enddo
      !
      YAMBO_FREE(BS_T_grp)
-     YAMBO_FREE(BS_blk)
+     if(allocated(BS_blk)) deallocate(BS_blk)
      !
    end subroutine
    !

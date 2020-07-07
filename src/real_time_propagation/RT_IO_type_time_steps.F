@@ -28,7 +28,6 @@ subroutine RT_IO_type_time_steps(what)
 &                         SETUP_RT_IO_type,CACHE_OBS_INTERVAL_time_INPUT,TIME_adjust,&
 &                         CACHE_OBS_INTERVAL_time,CACHE_OBS_steps,RT_control_free,&
 &                         RT_control_alloc
- !use units
  ! 
  implicit none
  !

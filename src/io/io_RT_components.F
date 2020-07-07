@@ -234,7 +234,7 @@ integer function io_RT_components(what,ID)
    call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="do_io_variables")
    if (read_is_on(ID)) call RT_carriers_object(RT_carriers,WHAT="dump")
    !
-   CARR_RT_IO_t%first_IO(3)=.FALSE.
+   if (write_is_on(ID)) CARR_RT_IO_t%first_IO(3)=.FALSE.
    !
  endif
  !

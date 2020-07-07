@@ -43,7 +43,7 @@ subroutine RT_start_and_restart(E,k,q)
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
  use RT_control,     ONLY:ID,NE_i_start_time,CARR_RT_IO_t,OBS_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,&
-&                         CACHE_OBS_INTERVAL_time
+&                         CACHE_OBS_INTERVAL_time,RT_control_free,RT_control_alloc
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,RT_E_and_k,&
@@ -71,7 +71,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Work Space
  !
- integer :: i_mem,i_sp_pol,ik,IO_ACT,io_G,io_THETA,io_REF,nt
+ integer :: i_mem,i_sp_pol,ik,IO_ACT,io_G,io_THETA,io_REF,nt,io_OBS
  !
  integer, external :: io_RT_components
  !
@@ -133,6 +133,9 @@ subroutine RT_start_and_restart(E,k,q)
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
  io_G=io_RT_components('G',ID(5))
  !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
+ io_OBS=io_RT_components('OBSERVABLES',ID(4))
+ !
  ! Reference G_lesser and Lifetimes
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(8)) ! Reference
@@ -161,10 +164,17 @@ subroutine RT_start_and_restart(E,k,q)
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
    !
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(5))
+   io_OBS=io_RT_components('OBSERVABLES',ID(4))
+   !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2/),MODE=DUMP,ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
    NE_i_start_time=NE_i_time
+   NE_steps=NE_steps+1
+   !
+   call RT_control_free("all")
+   call RT_control_alloc("all")
    !
    ! I use G_lesser(:,:,:) to reconstruct everything
    ! Note that the databases must be loaded at the RESTART time (NE_time)

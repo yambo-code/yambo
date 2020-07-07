@@ -99,6 +99,6 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_rest_info,unlim,l_G,TYP)
  if(write_is_on(ID)) call io_variable_bulk(ID,3,R1=TYP%Time(IO_LIM(1):IO_LIM(2)),IPOS=IPOS)
  if( read_is_on(ID)) call io_variable_bulk(ID,3,R1=TYP%Time(:TYP%N))
  !
- TYP%first_IO(2)=.FALSE.
+ if (write_is_on(ID)) TYP%first_IO(2)=.FALSE.
  !
 end subroutine io_RT_components_TIME_points

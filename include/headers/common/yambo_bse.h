@@ -23,11 +23,13 @@
  
 */
 #define DEFINE_BSK_COMMON_INDEXES \
-integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k_bz_mem,i_k,i_p,i_kp_s,& NEWLINE \
-&               i_kmq_s,i_kmq_s_m1,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq_bz_mem,i_kmq,i_pmq,i_kp_mq_s,& NEWLINE \
-&               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,H_pos(2),qindx_tmp(2),& NEWLINE \
+integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \
+&               i_kmq_s,i_kmq_s_m1,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,& NEWLINE \
+&               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,H_pos(2),& NEWLINE \
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol,i_p_sp_pol,iq_W,iq_W_bz,iq_W_s,ig_W,& NEWLINE \
-&               i_kmq_t,i_pmq_t,i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last
+&               i_kmq_t,i_pmq_t,i_k_bz_mem,i_kmq_bz_mem,qindx_tmp(2), & NEWLINE \
+&               i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & NEWLINE \
+&               iq_W_bz_last,iq_W_last,iq_W_bz_mq_last,iq_W_mq_last
 
 #define FILL_BSK_COMMON_INDEXES \
      NEWLINE \
@@ -75,6 +77,11 @@ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k_bz_mem,i_k,i_p,i_kp_s,& NE
            iq_W_bz=qindx_B(i_p_bz,i_k_bz_mem,1) NEWLINE \
            ig_W   =qindx_B(i_p_bz,i_k_bz_mem,2) NEWLINE \
          endif NEWLINE \
+         iq_W_bz_last=iq_W_bz NEWLINE \
+         iq_W_last   =iq_W    NEWLINE \
+       else NEWLINE \
+         iq_W_bz=iq_W_bz_last NEWLINE \
+         iq_W   =iq_W_last    NEWLINE \
        endif NEWLINE \
        iq_W   =q%sstar( iq_W_bz ,1) NEWLINE \
        iq_W_s =q%sstar( iq_W_bz ,2) NEWLINE \
@@ -107,6 +114,11 @@ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k_bz_mem,i_k,i_p,i_kp_s,& NE
            iq_W_bz_mq=qindx_B(i_pmq_bz,i_kmq_bz_mem,1) NEWLINE \
            ig_W_mq   =qindx_B(i_pmq_bz,i_kmq_bz_mem,2) NEWLINE \
          endif NEWLINE \
+         iq_W_bz_mq_last=iq_W_bz_mq NEWLINE \
+         iq_W_mq_last   =iq_W_mq    NEWLINE \
+       else NEWLINE \
+         iq_W_bz_mq=iq_W_bz_mq_last NEWLINE \
+         iq_W_mq   =iq_W_mq_last    NEWLINE \
        endif NEWLINE \
        iq_W_mq   =q%sstar( iq_W_bz_mq,1) NEWLINE \
        iq_W_s_mq =q%sstar( iq_W_bz_mq,2) NEWLINE \

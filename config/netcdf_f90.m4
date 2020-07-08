@@ -104,13 +104,6 @@ AC_CHECK_LIB(curl, curl_version, [use_libcurl="yes";],[use_libcurl="no";],[])
 AC_CHECK_LIB(m,    cos,          [use_libm="yes";   ],[use_libm="no";   ],[])
 AC_LANG_POP(C)
 #
-# Warning message on the different libraries
-#
-if test "$use_libz"       = "no"; then AC_MSG_WARN([zlib library not found])  ; fi
-if test "$use_libcurl"    = "no"; then AC_MSG_WARN([curl library not found])  ; fi
-if test "$use_libsz"      = "no"; then AC_MSG_WARN([sz   library not found])  ; fi
-if test "$use_libdl"      = "no"; then AC_MSG_WARN([dynamical loader library not found])  ; fi
-#
 # global options
 #
 #

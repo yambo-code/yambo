@@ -149,6 +149,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call k_expand(k)
  !
+ if (allocated(X_par)) then 
+  call msg('r','X_par é allocata ')
+ endif
  ! WF distributed & load
  !=======================
  !

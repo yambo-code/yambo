@@ -26,7 +26,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! Calculates and stores on file the dielectric matrix.
  !
  use pars,          ONLY:SP,cZERO
- use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
+ use drivers,       ONLY:l_alda_fxc,l_gw0,l_life,l_ppa
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,l_recalculate_X,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
@@ -291,7 +291,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    ! CLEAN (2)
    !
-   if (io_RESPONSE) call X_PARALLEL_alloc(X_par(iq_mem),0,0,"CLEAN")
+   if (.not.l_ppa) then
+    if (io_RESPONSE) call X_PARALLEL_alloc(X_par(iq_mem),0,0,"CLEAN")
+   endif
    YAMBO_FREE(X_par_lower_triangle%blc)
    call MATRIX_reset(X_par_lower_triangle)
    !
@@ -310,7 +312,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 #if !defined _PAR_IO
    YAMBO_FREE(X_mat)
 #endif
+ if (.not.l_ppa) then
    deallocate(X_par)
+ endif
  endif
  if (allocated(FXC)) then
    YAMBO_FREE(FXC)

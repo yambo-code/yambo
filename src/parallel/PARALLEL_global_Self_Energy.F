@@ -91,7 +91,9 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
 &                                        COMM_A2A_1=PAR_COM_Q_A2A,&
 &                                        COMM_A2A_2=PAR_COM_RL_A2A,&
 &                                        COMM_A2A_3=PAR_COM_QP_A2A)
- !   
+
+ 
+!   
  ! COMMs setup
  !
  call COMM_copy(PAR_COM_Q_A2A,PAR_COM_SE_WORLD)

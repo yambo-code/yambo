@@ -212,20 +212,17 @@ if (any((/io_sec(ID,:)==2*iq+1/))) then
     call  io_variable_bulk(ID,1,C3=X_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(1)%rows(1),X_par(1)%cols(1),1/))
     !
   else if(read_is_on(ID)) then
-!#endif
-    !
-!    if (.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
-!    call def_variable_bulk(ID,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
-!    call  io_variable_bulk(ID,1,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
     !
     if (.not.allocated(X_par(1)).and.read_is_on(ID)) then
       YAMBO_ALLOC(X_par(1)%blc,(X_par(1)%rows(1):X_par(1)%rows(2),X_par(1)%cols(1):X_par(1)%cols(2),Xw%n_freqs))
     endif
     call def_variable_bulk(ID,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP,par_io_kind='collective')
     call  io_variable_bulk(ID,1,C3=X_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(1)%rows(1),X_par(1)%cols(1),1/))
-#endif
-#if defined _PAR_IO
   endif
+#else 
+    if (.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+    call def_variable_bulk(ID,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
+    call  io_variable_bulk(ID,1,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
 #endif
   !
   if (read_is_on(ID) .and. different_db_RL_order) then 

@@ -191,7 +191,7 @@ end subroutine
 subroutine interpolate_W(X,Xw,q)
  !
  use pars,          ONLY:SP,pi,zero_dfl,schlen
- use com,           ONLY:msg
+ use com,           ONLY:msg, warning
  use R_lattice,     ONLY:bz_samp,RIM_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
 &                        cut_geometry,RIM_W
  use memory,        ONLY:MEM_err
@@ -201,6 +201,7 @@ subroutine interpolate_W(X,Xw,q)
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
 &                        deliver_IO_error_message,OP_WR_CL,REP,VERIFY
  use stderr,        ONLY:STRING_split
+ use D_lattice,     ONLY:alat
  !
  implicit none
  type(X_t)    ::X
@@ -212,12 +213,12 @@ subroutine interpolate_W(X,Xw,q)
  integer :: iq1, ig1, iq2, ig2, iq, ig
  integer :: out_unit_G=100, out_unit_qpG_in=101,out_unit_qpG_out=102,out_unit_idx=103,out_unit_vX=104
  integer :: out_unit_f_coeff=105
- integer :: iq_ibz, is, find, nn, i, iq_to_start,idm, ng_tmp
+ integer :: iq_ibz, is, find, nn, i, iq_to_start,idm, ng_tmp, iort
  integer, allocatable :: idx_q(:,:,:),idx_G(:,:,:),idx_is(:,:,:)
- real(SP) :: G_max_ibz(q%nibz), f_func(5)
- complex(SP), allocatable :: vX(:,:,:)
+ real(SP) :: G_max_ibz(q%nibz), f_func(5), lcut
+ complex(SP) :: vX(5,q%nibz,RIM_ng)
  real :: f_coeff (5,q%nibz,RIM_ng)
- real(SP) :: qpG(3,5), delta_q(3,2), qpG_trial(3), v1(3)
+ real(SP) :: qpG(3,5), delta_q(3,2), qpG_trial(3), v1(3), delta_q_cc(3)
  logical :: debug
  integer :: ID, io_err, ng_save
  integer,     external ::io_X
@@ -240,7 +241,7 @@ subroutine interpolate_W(X,Xw,q)
  allocate(idx_q (5,q%nibz,RIM_ng),stat=MEM_err)
  allocate(idx_G (5,q%nibz,RIM_ng),stat=MEM_err)
  allocate(idx_is (5,q%nibz,RIM_ng),stat=MEM_err)
- allocate(vX (5,q%nibz,RIM_ng),stat=MEM_err)
+ !allocate(vX (5,q%nibz,RIM_ng),stat=MEM_err)
  !allocate(f_coeff (5,q%nibz,RIM_ng),stat=MEM_err)
  !
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,9 +253,9 @@ subroutine interpolate_W(X,Xw,q)
    v1 = k_grid_b(idm,:)
    call c2a(b_in=b,v_in=v1,mode='kc2a')
    if (abs(v1(1)) < zero_dfl) then
-     delta_q(:,2) = v1
+     delta_q(:,2) = abs(v1)
    else if (abs(v1(2)) < zero_dfl) then
-     delta_q(:,1) = v1
+     delta_q(:,1) = abs(v1)
    else
      call msg('r', 'Error in the selection of Delta_q')
    end if
@@ -456,39 +457,6 @@ subroutine interpolate_W(X,Xw,q)
  !Calculation of the interpolation coefficients
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !
- do ig1=1,RIM_ng
-  !
-  do iq1=1,q%nibz
-    !
-    !Evaluate f_func
-    do nn=1,5
-      !
-      !Select the index of the reference/n.n.
-      iq2 = idx_q(nn,iq1,ig1)
-      ig2 = idx_G(nn,iq1,ig1)
-      !
-      f_func(nn) = bare_qpg(iq2,ig2)**2/(4*pi)*vX(nn,iq1,ig1)/(vX(nn,iq1,ig1)+1)
-      !
-    end do
-    !Store coefficients
-    f_coeff (1,iq1,ig1) = f_func(1)                                                     !f0
-    f_coeff (2,iq1,ig1) = (f_func(3)-f_func(5))/(2*v_norm(delta_q(:,1)))                !f1x
-    f_coeff (3,iq1,ig1) = (f_func(2)-f_func(4))/(2*v_norm(delta_q(:,2)))                !f1y
-    f_coeff (4,iq1,ig1) = (f_func(3)-2*f_func(1)+f_func(5))/(2*v_norm(delta_q(:,1))**2) !f2xx
-    f_coeff (5,iq1,ig1) = (f_func(2)-2*f_func(1)+f_func(4))/(2*v_norm(delta_q(:,2))**2) !f2yy
-    !
-    !Store coefficients into file
-    if (debug) then
-      write(out_unit_f_coeff,"(I4,I4,E15.6,E15.6,E15.6,E15.6,E15.6)") iq1, ig1 &
-&,f_coeff (1,iq1,ig1),f_coeff (2,iq1,ig1),f_coeff (3,iq1,ig1),f_coeff (4,iq1,ig1),f_coeff (5,iq1,ig1)
-    end if
-  end do
-  !
- end do
- !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- !Calculation of RIM-W
- !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- !
  !Here, we need to check if we want to perform the RIM
  !of bare_qpg or the RIM of cutoff_slab
  !
@@ -502,8 +470,63 @@ subroutine interpolate_W(X,Xw,q)
  is_cut(2)=index(str_piece(2),'y')/=0.or.index(str_piece(2),'Y')/=0
  is_cut(3)=index(str_piece(2),'z')/=0.or.index(str_piece(2),'Z')/=0
  !
+ if(is_cut(1)) then
+   iort=1
+ elseif(is_cut(2)) then
+   iort=2
+ elseif(is_cut(3)) then
+   iort=3
+ endif
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=io_RIM_W(ID)
+ !
+ !First, we obtain the q = 0, G = 0 term
+ f_coeff(1,1,1) = vX(1,1,1)*(4*pi)/bare_qpg(1,1)**2/(2*pi*alat(iort))**2
+ call warning('  Up to now, the code suppose that the 4 nearest neighbour around q = 0 and G = 0 are equivalent!')
+ do nn=2,5
+   call c2a(b,delta_q(:,MOD(nn+1,2)+1),delta_q_cc,'ka2c')
+   f_func(nn) = bare_qpg(idx_q(nn,1,1),idx_G(nn,1,1))**2/(4*pi)*vX(nn,1,1)/(vX(nn,1,1)+1)
+   f_coeff(nn,1,1) = -1./v_norm(delta_q_cc)*log(f_func(nn)/(v_norm(delta_q_cc)**2*f_coeff(1,1,1)))
+ end do
+ if (debug) write(out_unit_f_coeff,"(I4,I4,E15.6,E15.6,E15.6,E15.6,E15.6)") 1, 1 &
+&,f_coeff(1,1,1),f_coeff(2,1,1),f_coeff(3,1,1),f_coeff(4,1,1),f_coeff(5,1,1)
+ !
+ do ig1=1,RIM_ng
+  !
+  do iq1=1,q%nibz
+    !The q = 0, G = 0 coefficients have been already obtained
+    if (ig1 == 1 .and. iq1 == 1) cycle  
+    !
+    !Evaluate f_func
+    do nn=1,5
+      !
+      !Select the index of the reference/n.n.
+      iq2 = idx_q(nn,iq1,ig1)
+      ig2 = idx_G(nn,iq1,ig1)
+      !
+      f_func(nn) = bare_qpg(iq2,ig2)**2/(4*pi)*vX(nn,iq1,ig1)/(vX(nn,iq1,ig1)+1)
+      !
+    end do
+    !Store coefficients
+    f_coeff (1,iq1,ig1) = f_func(1)                                             !f0
+    f_coeff (2,iq1,ig1) = (f_func(3)-f_func(5))/(2*delta_q(1,1))                !f1x
+    f_coeff (3,iq1,ig1) = (f_func(2)-f_func(4))/(2*delta_q(2,2))                !f1y
+    f_coeff (4,iq1,ig1) = (f_func(3)-2*f_func(1)+f_func(5))/(2*delta_q(1,1)**2) !f2xx
+    f_coeff (5,iq1,ig1) = (f_func(2)-2*f_func(1)+f_func(4))/(2*delta_q(2,2)**2) !f2yy
+    !
+    !Store coefficients into file
+    if (debug) then
+      write(out_unit_f_coeff,"(I4,I4,E15.6,E15.6,E15.6,E15.6,E15.6)") iq1, ig1 &
+&,f_coeff (1,iq1,ig1),f_coeff (2,iq1,ig1),f_coeff (3,iq1,ig1),f_coeff (4,iq1,ig1),f_coeff (5,iq1,ig1)
+    end if
+  end do
+  !
+ end do
+ if (debug) call check_W_interpolation(q,f_coeff,delta_q,vX)
+ !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ !Calculation of RIM-W
+ !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !
  if (io_err/=0) then
    call rim('c',cut_is_slab,is_cut,f_coeff)
@@ -515,7 +538,161 @@ subroutine interpolate_W(X,Xw,q)
 
 end subroutine
 
+subroutine check_W_interpolation(q,f_coeff,delta_q,vX)
+ !
+ use pars,          ONLY:SP,pi,zero_dfl,schlen,DP
+ use com,           ONLY:msg
+ use R_lattice,     ONLY:bz_samp,RIM_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
+&                        cut_geometry,RIM_W
+ use memory,        ONLY:MEM_err
+ use vec_operate,   ONLY:c2a,v_is_zero,v_norm,iku_v_norm
+ use X_m,           ONLY:X_mat,X_t,X_alloc
+ use frequency,     ONLY:w_samp
+ use IO_m,          ONLY:io_control,OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
+&                        deliver_IO_error_message,OP_WR_CL,REP,VERIFY
+ use stderr,        ONLY:STRING_split
+ use D_lattice,     ONLY:alat
+ !
+ implicit none
+ type(bz_samp) :: q
+ real          :: f_coeff (5,q%nibz,RIM_ng)
+ real(SP)      :: delta_q(3,2)
+ complex(SP) :: vX(5,q%nibz,RIM_ng)
+ !
+ ! Work Space
+ !
+ integer :: out_unit_W_intp=200, out_unit_W_num=300
+ integer :: Np = 1001, i, iq, ig, iort, ipar1, ipar2, iqibz, is, gmax
+ real(SP) :: dq, q_sampl(3), func, lcut,slab_vz, slab_vplane, W_sampl,pre_factor,r1,vslab
+ character(schlen):: str_piece
+ !
+ dq = 1./(Np-1)
+ q_sampl = (/0.,0.,0./)
+ gmax = 5
+ iort = 3
+ ipar1 = 1
+ ipar2 = 2
+ lcut=alat(iort)/2.
+ !Print to file interpolated W data
+ do ig=1,gmax
+   !
+   WRITE(str_piece, '(I2.2)') ig 
+   open (unit=out_unit_W_intp,file="W_intp_g"//trim(str_piece)//".dat",action="write",status="replace")
+   open (unit=out_unit_W_num,file="W_num_g"//trim(str_piece)//".dat",action="write",status="replace")
+   !
+   do iq=1,q%nbz
+     if(abs(q%ptbz(iq,1)) > 1.e-5) cycle
+     iqibz = q%sstar(iq,1)
+     is = q%sstar(iq,2)
+     if(iq == 1 .and. ig ==1) then
+       !
+       do i=1,Np
+         !
+         !q_sampl in rlu
+         q_sampl(2) = 2*(dq*(i-1)-0.5)*abs(delta_q(2,2))
+         !
+         !Convert q_sampl to iku
+         call c2a(b_in=b,v_in=q_sampl,mode='ka2i')
+         q_sampl = q_sampl + q%pt(iqibz,:)
+         q_sampl = matmul(rl_sop(:,:,is),q_sampl)
+         !
+         r1=iku_v_norm(q_sampl+g_vec(ig,:))
+         if (r1 < 1.e-5) then
+           W_sampl = f_coeff(1,1,1)*(2*pi*alat(iort))**2
+           cycle
+         end if
+         !
+         !Evaluate v_slab
+         !kz
+         slab_vz=(q_sampl(iort))*2.*pi/alat(iort)
+         !kxy
+         slab_vplane=sqrt((q_sampl(ipar1)*2.*pi/alat(ipar1))**2+&
+&                 (q_sampl(ipar2)*2.*pi/alat(ipar2))**2)
+         !     
+         pre_factor=1.-exp(-slab_vplane*lcut)      
+         vslab=4._DP*pi*pre_factor
+         !Evaluate interpolation function
+         func = f_coeff(1,1,1)*exp(-f_coeff(2,1,1)*slab_vplane)
+         !Evaluate W
+         W_sampl = vslab*func*vslab/r1**2/(1-vslab*func)
+         !Convert q_sampl to cc
+         call c2a(b_in=b,v_in=q_sampl,mode='ki2c')
+         !
+         write(out_unit_W_intp,"(I5, E15.6, E15.6, E15.6, E15.6, E15.6, E15.6)") &
+&                         iq, q_sampl(1),q_sampl(2),q_sampl(3), func, vslab, W_sampl
+         !
+       end do
+       !     
+     else
+       !
+       do i=1,Np
+         !
+         !q_sampl in rlu
+         q_sampl(2) = (dq*(i-1)-0.5)*abs(delta_q(2,2))
+         !
+         !Evaluate interpolation function
+         func = f_coeff(1,iqibz,ig)+q_sampl(1)*f_coeff(2,iqibz,ig)+q_sampl(1)*f_coeff(4,iqibz,ig)*q_sampl(1)&
+&                              +q_sampl(2)*f_coeff(3,iqibz,ig)+q_sampl(2)*f_coeff(5,iqibz,ig)*q_sampl(2)
+         !
+         !Convert q_sampl to iku
+         call c2a(b_in=b,v_in=q_sampl,mode='ka2i')
+         q_sampl = q_sampl + q%pt(iqibz,:)
+         q_sampl = matmul(rl_sop(:,:,is),q_sampl)
+         !
+         r1=iku_v_norm(q_sampl+g_vec(ig,:))*iku_v_norm(q_sampl+g_vec(ig,:))
+         !
+         !Evaluate v_slab
+         !kz
+         slab_vz=(q_sampl(iort)+g_vec(ig,iort) )*2.*pi/alat(iort)
+         !kxy
+         slab_vplane=sqrt(((q_sampl(ipar1)+g_vec(ig,ipar1))*2.*pi/alat(ipar1))**2+&
+&                   ((q_sampl(ipar2)+g_vec(ig,ipar2))*2.*pi/alat(ipar2))**2)
+         !     
+         pre_factor=1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)
+         if (abs(pre_factor)<1.E-5_SP) pre_factor=1.E-5_SP        
+         vslab=4._DP*pi*pre_factor/r1
+         W_sampl = vslab*func*vslab/(1-vslab*func)
+         !Convert q_sampl to cc
+         call c2a(b_in=b,v_in=q_sampl,mode='ki2c')
+         !
+         write(out_unit_W_intp,"(I5, E15.6, E15.6, E15.6, E15.6, E15.6, E15.6)") &
+&                           iq, q_sampl(1),q_sampl(2),q_sampl(3), func, vslab, W_sampl
+         !
+       end do
+       !
+     end if
+   end do
+   !
+   !Print to file numerical W data
+   do iq=1,q%nbz
+     if(abs(q%ptbz(iq,1)) > 1.e-5) cycle
+     !
+     iqibz = q%sstar(iq,1)
+     is = q%sstar(iq,2)
+     !
+     !q point in rlu
+     q_sampl = q%ptbz(iq,:)
+     !
+     !Convert q_sampl to cc
+     call c2a(b_in=b,v_in=q_sampl,mode='ka2c')
+     !Load func
+     func = bare_qpg(iqibz,ig)**2/(4*pi)*vX(1,iqibz,ig)/(vX(1,iqibz,ig)+1)
+     !Calculate vslab
+     vslab = (4*pi)/bare_qpg(iqibz,ig)**2
+     !
+     W_sampl = vX(1,iqibz,ig)*vslab
+     !
+     write(out_unit_W_num,"(I5, E15.6, E15.6, E15.6, E15.6, E15.6, E15.6)") &
+&                         iq, q_sampl(1),q_sampl(2),q_sampl(3), func, vslab, W_sampl
+   !
+   end do
+   !Close files
+   close(out_unit_W_intp) 
+   close(out_unit_W_num)
+   out_unit_W_intp = out_unit_W_intp +1
+   out_unit_W_num = out_unit_W_num + 1
+ end do
 
-
+end subroutine
 
 

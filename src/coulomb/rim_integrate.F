@@ -49,7 +49,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
  else
    rfac=8.*k_grid_uc_vol/real(N_out)/(2.*pi)**3.
  endif
- if (mode == "c") rfac = rfac/(2*pi)
+ if (mode == "c") rfac = rfac/(2.*pi)
  !
  !    ----------------
  !    MonteCarlo volume
@@ -113,6 +113,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
          !
          !call c2a(b_in=b,v_in=qr(i3,:),v_out=v1,mode='ki2a')
          call c2a(b,qr(i3,:),v1,'ki2a')
+         !Typo: in func, I want to use dq instead of q+dq!!!!!!!!!!!!!!!!!!
          func = f_coeff(1,iq,i1)+v1(1)*f_coeff(2,iq,i1)+v1(1)*f_coeff(4,iq,i1)*v1(1)+&
 &                               +v1(2)*f_coeff(3,iq,i1)+v1(2)*f_coeff(5,iq,i1)*v1(2)
          !

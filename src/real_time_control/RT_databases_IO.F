@@ -39,6 +39,9 @@ subroutine RT_databases_IO(E,DO_IT)
  use fields,         ONLY:A_tot
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX
+#else
+ use real_time,      ONLY:RT_all2ibz
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,ncpu,myid
 #endif
  !
  implicit none
@@ -49,7 +52,7 @@ subroutine RT_databases_IO(E,DO_IT)
  ! Work Space
  !
  logical           :: write_OBS,write_G,write_CARR
- integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time
+ integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,i_cpu
  integer, external :: io_RT_components
  logical, external :: RT_do_it
  !
@@ -187,18 +190,29 @@ subroutine RT_databases_IO(E,DO_IT)
      !
      if(PAR_G_k_range(1)>0.and.HEAD_k_CPU) then
        IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
-       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/3/),ID=ID(3),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-       io_G=io_RT_components('G',ID(3))
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/3/),ID=ID(5),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+       io_G=io_RT_components('G',ID(5))
      endif
      !
 #else
      !
-     call PP_redux_wait( )
-     do ik = PAR_G_k_range(1),PAR_G_k_range(2)
-       call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ik+2/),ID=ID(5))
-       io_G=io_RT_components('G',ID(5))
+     do i_cpu=1,ncpu
+       !
+       do ik = 1, RT_nk
+         !
+         if (myid+1/=i_cpu) cycle
+         !
+         if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+         !
+         IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,ik,FIRST=PAR_G_k_range(1),LAST=PAR_G_k_range(2))
+         call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID(5))
+         io_G=io_RT_components('G',ID(5))
+         !
+       enddo 
+       !
+       call PP_redux_wait( )
+       !
      enddo
-     call PP_redux_wait( )
      !
 #endif
      !

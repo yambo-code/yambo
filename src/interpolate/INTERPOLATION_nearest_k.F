@@ -115,7 +115,7 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
    call PP_redux_wait(V_out)
    call PP_redux_wait(NN_MAX)
    call PP_redux_wait(NN_exact)
-   NN_MAX_real_nearest=sum(NN_max)
+   NN_MAX_real_nearest=maxval(NN_max)
    NN_nk_exact=NN_nk_exact+sum(NN_exact)
  else
    NN_MAX_real_nearest=NN_max(myid+1)

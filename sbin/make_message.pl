@@ -35,7 +35,7 @@ use Getopt::Long;
 # 
 # ... modified
 #
-$gitcommand = "git status | sed -n '/not staged/q;p' | grep 'modified' | awk \'{printf\" %s \",\$2 }\' |";
+$gitcommand = "git status | sed -n '/not staged/q;p' | grep 'modified' | awk \'{printf\" %s \",\$2 }\'";
 open(GIT, $gitcommand);
 $changedfiles = <GIT>;
 close(GIT);

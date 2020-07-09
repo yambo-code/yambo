@@ -591,7 +591,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- if (l_map_kpts) call initactivate(1,"BZ_FineGd_nkpts SkipCheck NoWeights")
+ if (l_map_kpts) call initactivate(1,"BZ_DbGd_Nk BZ_FineGd_nkpts SkipCheck NoWeights")
  !
  if (l_map_WFs)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map bands_buffer")
  !

@@ -97,7 +97,7 @@ integer function variables_X(ID,local_description,X)
  if (ver_is_gt_or_eq(ID,(/3,0,1/)))      sec_size=8
  if (ver_is_gt_or_eq(ID,(/3,0,9/)))      sec_size=9
  if (ver_is_gt_or_eq(ID,revision=15206)) sec_size=10
- if (ver_is_gt_or_eq(ID,(/4.5.0/)))      sec_size=11
+ if (ver_is_gt_or_eq(ID,(/4,5,0/)))      sec_size=11
  !
  call io_elemental(ID,VAR=trim(X_label)//"PARS_3",VAR_SZ=sec_size,MENU=0)
  i_local_desc=i_local_desc+1

@@ -99,6 +99,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  if (ENVIRONMENT=="Response_G_space")          PAR_Q_ibz_range=(/PAR_X_iq(1),PAR_X_iq(2)/)
  if (ENVIRONMENT=="Real_Time"       )          PAR_Q_bz_range=(/1,nqbz/)
  if (ENVIRONMENT=="Self_Energy"     ) then
+   PAR_n_G_vectors= X_ng
 #if defined _SC
    if (l_sc_run.and.&
 &      any( (/P_collisions%N,COH_collisions%N,HXC_collisions%N/)> 0))  &

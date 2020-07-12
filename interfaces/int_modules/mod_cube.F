@@ -106,4 +106,41 @@ module cube_m
      !
    end subroutine cube_read
    !
+   subroutine cube_write(filename,msg1,msg2,nr1,nr2,nr3,natom,al1,al2,al3,Z_atoms,CH_atoms,tau,dat,orig)
+     use pars, ONLY:SP
+     implicit none
+     !
+     character(*), intent(in) :: filename
+     character(*), intent(in) :: msg1,msg2
+     integer,      intent(in) :: nr1,nr2,nr3,natom
+     integer       intent(in) :: Z_atoms(*)
+     real(SP),     intent(in) :: CH_atoms(*)
+     real(SP),     intent(in) :: al1(3),al2(3),al3(3)
+     real(SP),     intent(in) :: tau(3,*)
+     real(SP),     intent(in) :: dat(nr1,nr2,nr3)
+     real(SP),     intent(in) :: orig(3)
+     !
+     integer :: iun=12345
+     integer :: ia
+     !
+     open(iun,file=filename)
+     !
+     write(iun,"(a,/,a)") trim(msg1),trim(msg2)
+     write(iun,"(i4,3f15.9)") natom, orig
+     !
+     write(iun,"(i4,3f15.9)") nr1, al1
+     write(iun,"(i4,3f15.9)") nr2, al2
+     write(iun,"(i4,3f15.9)") nr3, al3
+     !
+     do ia = 1, natom
+        write(iun,"(i4,3f15.9)") Z_atoms(ia), CH_atoms(ia), tau(:,ia)
+     enddo
+     !
+     write(iun,"(4f15.9)") dat(:,:,:)
+     !
+     close(iun)
+     !
+   end subroutine cube_write
+   !
 end module cube_m
+

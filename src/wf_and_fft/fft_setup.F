@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,20 +24,24 @@
 subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
  use pars,           ONLY:SP,pi
- use vec_operate,    ONLY:c2a
- use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv,i_time_rev
+ use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv,i_time_rev,alat
  use R_lattice,      ONLY:b,g_vec,ng_vec
+ use matrix_operate, ONLY:m3inv
  use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
-&                         fft_norm,fft_g_table,fft_multiplier,modx
- use wave_func,      ONLY:wf_ng
-#if defined _FFTW
- use FFT_m,          ONLY:fftw_plan
-#endif
+&                         fft_norm,fft_g_table,fft_multiplier,modx,&
+&                         fft_g_table_d,fft_rot_r_d,fft_rot_r_inv_d
+ use FFT_m,          ONLY:fftw_plan,cufft_plan
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
 #endif
+ use wave_func,      ONLY:wf_ng
  use timing_m,       ONLY:timing
+ use cuda_m,         ONLY:have_cuda
+ use deviceXlib_m,   ONLY:dev_memcpy,dev_memset
+ !
+#include<dev_defs.h>
 #include<memory.h>
+ !
  integer :: iG_max,iGo_max
  logical :: ONLY_SIZE
 #if defined _FFTQE
@@ -47,33 +51,105 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  ! Work Space
  !
  integer  :: i1,i2,i3,i4,iv(3),ln(3),is,space_inv(3,3)
- real(SP) :: v1(3),M1(3,3),M2(3,3)
-
+ real(SP) :: v1(3),M1(3,3),M2(3,3),mat(3,3),scal(3)
+ real(SP), allocatable :: g_vec_rot(:,:)
+ real(SP), allocatable DEV_ATTR :: g_vec_rot_d(:,:)
+#ifdef _CUDA
+ integer :: ln_1,ln_2,ln_3,iv_1,iv_2,iv_3
+ integer :: fft_dim_1,fft_dim_2,fft_dim_3
+ integer :: temp_1,temp_2,temp_3,i1_max
+#endif
+ 
  call timing("FFT_setup",opr="start")
+ !
  space_inv=reshape((/-1, 0, 0, 0,-1, 0, 0, 0,-1/),(/3,3/))
+ call m3inv(transpose(b),mat)
+ scal(:)=2._SP*pi/alat(:)
+ ! 
+ mat(:,1)=scal(1)*mat(:,1)
+ mat(:,2)=scal(2)*mat(:,2)
+ mat(:,3)=scal(3)*mat(:,3)
+ !
+ YAMBO_ALLOC_MOLD(g_vec_rot,g_vec)
+ g_vec_rot=transpose(matmul(mat,transpose(g_vec)))
+ !
+ if (have_cuda) then
+   YAMBO_ALLOC_SOURCE(g_vec_rot_d,g_vec_rot)
+ endif
  !
  if (.not.ONLY_SIZE) then
-   if (allocated(fft_g_table)) then
-     YAMBO_FREE(fft_g_table)
-   endif
+   !
+   YAMBO_FREE(fft_g_table)
    YAMBO_ALLOC(fft_g_table,(max(iG_max,wf_ng),iGo_max))
+   fft_g_table=0
+   !
+   if (have_cuda) then
+     YAMBO_FREE(fft_g_table_d)
+     YAMBO_ALLOC(fft_g_table_d,(max(iG_max,wf_ng),iGo_max))
+     call dev_memset(fft_g_table_d,val=0)
+   endif
+   !
  endif
  !
  ! SIZE estimation
  !
+#ifdef _CUDA
+ ln_1=-1
+ ln_2=-1
+ ln_3=-1
+#endif
  ln=-1
  i4=-1
- if (.not.ONLY_SIZE) fft_g_table=0
  do while(.true.)
    !
 #if defined _FFTQE
    if (i4>0.and..not.ONLY_SIZE) call fft_desc_init(fft_dim,iGo_max,dffts)
 #endif
    !
+#ifdef _CUDA
+   fft_dim_1 = fft_dim(1)
+   fft_dim_2 = fft_dim(2)
+   fft_dim_3 = fft_dim(3)
+   i1_max = min(max(iG_max,wf_ng),ng_vec)
+   ! TODO: i1 should be inner loop for performance?
+   !$cuf kernel do(2)
+   do i1=1,i1_max
+     do i2=1,iGo_max
+       !
+       iv_1 = nint(g_vec_rot_d(i1,1) - g_vec_rot_d(i2,1))
+       iv_2 = nint(g_vec_rot_d(i1,2) - g_vec_rot_d(i2,2))
+       iv_3 = nint(g_vec_rot_d(i1,3) - g_vec_rot_d(i2,3))
+       !
+       if (i2==1.or.i1<=iG_max) then
+         ln_1=max(ln_1,iv_1)
+         ln_2=max(ln_2,iv_2)
+         ln_3=max(ln_3,iv_3)
+       endif
+       !
+       if (i4>0.and..not.ONLY_SIZE) then
+
+                       temp_1 = mod(iv_1,fft_dim_1)
+                       temp_2 = mod(iv_2,fft_dim_2)
+                       temp_3 = mod(iv_3,fft_dim_3)
+            if(iv_1<0) temp_1 = mod(temp_1 + fft_dim_1, fft_dim_1)
+            if(iv_2<0) temp_2 = mod(temp_2 + fft_dim_2, fft_dim_2)
+            if(iv_3<0) temp_3 = mod(temp_3 + fft_dim_3, fft_dim_3)
+
+            fft_g_table_d(i1,i2)=1+temp_1+&
+&                                  temp_2*fft_dim_1+&
+&                                  temp_3*fft_dim_1*fft_dim_2
+       endif
+       !
+     enddo
+   enddo
+
+#else
    do i1=1,min(max(iG_max,wf_ng),ng_vec)
      do i2=1,iGo_max
-       call c2a(b,g_vec(i1,:)-g_vec(i2,:),v1,'ki2a')
+       !
+       v1=(g_vec_rot(i1,:)-g_vec_rot(i2,:))
        iv=nint(v1)
+       !
        if (i2==1.or.i1<=iG_max) forall(i3=1:3) ln(i3)=max(ln(i3),iv(i3))
 #if defined _FFTQE
        if (i4>0.and..not.ONLY_SIZE) fft_g_table(i1,i2)=fft_setmap(iv,dffts)
@@ -84,12 +160,24 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 #endif
      enddo
    enddo
+#endif
+   !
+#ifdef _CUDA
+   if (i4>0.and..not.ONLY_SIZE) then
+     ! fft_g_table <= fft_g_table_d
+     call dev_memcpy(fft_g_table,fft_g_table_d)
+   endif
+   ln(1) = ln_1
+   ln(2) = ln_2
+   ln(3) = ln_3
+#endif
    !
    ln=ln*fft_multiplier
    !
    call fft_best_size(ln)
    if (i4>0) then
       call timing("FFT_setup",opr="stop")
+      YAMBO_FREE(g_vec_rot)
       return
    endif
    fft_dim=ln
@@ -100,13 +188,17 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      cycle
    endif
    !
-   if (allocated(fft_rot_r)) then
-     YAMBO_FREE(fft_rot_r)
-   endif
+   YAMBO_FREE(fft_rot_r)
    YAMBO_ALLOC(fft_rot_r,(fft_size,nsym))
-   !
    YAMBO_FREE(fft_rot_r_inv)
    YAMBO_ALLOC(fft_rot_r_inv,(fft_size))
+   !
+   if (have_cuda) then
+     YAMBO_FREE(fft_rot_r_d)
+     YAMBO_ALLOC(fft_rot_r_d,(fft_size,nsym))
+     YAMBO_FREE(fft_rot_r_inv_d)
+     YAMBO_ALLOC(fft_rot_r_inv_d,(fft_size))
+   endif
 
    !
    !Remember
@@ -151,12 +243,22 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      enddo
    enddo
    i4=1
+   !
+   if (have_cuda) then
+     call dev_memcpy(fft_rot_r_d,fft_rot_r)
+     call dev_memcpy(fft_rot_r_inv_d,fft_rot_r_inv)
+   endif
+   !
  enddo
  ! 
 #if defined _FFTW
  fftw_plan=0
 #endif
+#if defined _CUDA
+ cufft_plan=0
+#endif
  !
+ YAMBO_FREE(g_vec_rot)
  call timing("FFT_setup",opr="stop")
  !
  contains

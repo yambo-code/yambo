@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DV DS
@@ -49,7 +49,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  ! Work space
  !
- integer     :: ik,ib,i_sp_pol,iGo_max,iG_bounds_loaded(2)
+ integer     :: ik,ib,i_sp_pol
  !
  Hzero=cZERO
  !
@@ -151,8 +151,6 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    !
  enddo
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _RT
  !
  ! Save the reference xc and Hartree potentials 
@@ -164,8 +162,6 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  endif
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  YAMBO_FREE(QP_Vxc)
  !

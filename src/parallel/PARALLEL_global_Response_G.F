@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,28 +23,29 @@
 !
 subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  !
+ use drivers,       ONLY:l_life
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nXkibz,nXkbz
  use linear_algebra,ONLY:INV
  use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_X,OPENMP_set_threads
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use parallel_m,    ONLY:ncpu,CPU_structure,PARALLEL_n_structures_active,COMM_copy,PAR_INDEX_copy,PAR_Q_range
+ use parallel_m,    ONLY:ncpu,CPU_structure,COMM_copy,PAR_Q_ibz_range
  ! SLK
  use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved,PAR_build_index
  !
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Q_INDEX,&
 &                        PAR_COM_Q_A2A,PAR_COM_Xk_bz_A2A,PAR_COM_Xk_bz_A2A, &
-&                        PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX_X,PAR_COM_VAL_INDEX_X
+&                        PAR_COM_CON_INDEX_X,PAR_COM_VAL_INDEX_X
  ! IND
- use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Q
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Q_ibz
  ! INDEX
- use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Xk_ibz_index,PAR_Q_index
+ use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Xk_ibz_index,PAR_Q_ibz_index
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_nQ,PAR_Xk_nbz,PAR_Xk_nibz
+ use parallel_m,    ONLY:PAR_nQ_ibz,PAR_Xk_nbz,PAR_Xk_nibz
  ! ID's
- use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID,PAR_IND_Q_ID
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID,PAR_IND_Q_ibz_ID
  !
 #include<memory.h>
  !
@@ -58,7 +59,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  character(10)        :: WHAT,WHATp
  !
  !===========================================================================================
- if (ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_G_space_Finite_Momentum") then
+ if (ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_G_space_and_IO") then
    !=========================================================================================
    !
    CALL PARALLEL_structure(5,(/"q","g","k","c","v"/))
@@ -98,25 +99,32 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    WHAT="ibz"
    !
-   call PARALLEL_index(PAR_IND_Q,(/PAR_Q_range(2)/),low_range=(/PAR_Q_range(1)/),COMM=PAR_COM_Q_INDEX,&
+   call PARALLEL_index(PAR_IND_Q_ibz,(/PAR_Q_ibz_range(2)/),low_range=(/PAR_Q_ibz_range(1)/),COMM=PAR_COM_Q_INDEX,&
 &                      CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
-   PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id
-   PAR_nQ=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)
+   PAR_IND_Q_ibz_ID=PAR_COM_Q_INDEX%CPU_id
+   PAR_nQ_ibz=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)
    !
    call PARALLEL_live_message("Q("//trim(WHAT)//")",ENVIRONMENT=ENVIRONMENT,&
-&                             LOADED=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1),&
-&                             TOTAL=PAR_Q_range(2)-PAR_Q_range(1)+1,&
+&                             LOADED=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1),&
+&                             TOTAL=PAR_Q_ibz_range(2)-PAR_Q_ibz_range(1)+1,&
 &                             NCPU=PAR_COM_Q_INDEX%n_CPU)
    !
-   YAMBO_ALLOC(PAR_Q_index,(PAR_Q_range(2)))
-   call PAR_build_index(PAR_IND_Q,PAR_Q_range(2),PAR_Q_index,PAR_nQ)
+   ! AM March 2019. Lifetimes calculations do not support the parallel Q distribution
+   !
+   if (l_life.and.PAR_COM_Q_INDEX%n_CPU>1) then
+     call warning("Parallel Q-distribution still not working for lifetime calculations")
+     call error("USER parallel structure does not fit the current run parameters")
+   endif
+   !
+   YAMBO_ALLOC(PAR_Q_ibz_index,(PAR_Q_ibz_range(2)))
+   call PAR_build_index(PAR_IND_Q_ibz,PAR_Q_ibz_range(2),PAR_Q_ibz_index,PAR_nQ_ibz)
    !
    ! K-points (IBZ) after shifting of Q (BZ/IBZ)
    !
    WHATp="k_bz_q_"//trim(WHAT) 
    !
    call PARALLEL_add_Q_to_K_list(trim(WHATp),PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
-&                                PAR_IND_Q,PAR_COM_Xk_bz_INDEX,PAR_Q_range,Xk,q)
+&                                PAR_IND_Q_ibz,PAR_COM_Xk_bz_INDEX,PAR_Q_ibz_range,Xk,q)
    PAR_Xk_nibz=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)
    !
    ! ... indexes
@@ -129,7 +137,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    ! Inversion
    !
-   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,CPU_structure(1)%nCPU_lin_algebra_INV)
+   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,CPU_structure(3)%nCPU_lin_algebra_INV)
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
@@ -149,7 +157,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_X)
    !
-   if (ENVIRONMENT=="Response_G_space") call PARALLEL_global_Response_IO( )
+   if (ENVIRONMENT=="Response_G_space_and_IO") call PARALLEL_global_Response_IO( )
    !
  endif
  !

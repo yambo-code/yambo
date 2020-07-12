@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,28 +27,26 @@ subroutine electrons_WFs(Xen)
  Use stderr,         ONLY:intc
  use wave_func,      ONLY:WF,wf_ng
  use FFT_m,          ONLY:fft_size,fft_dim
- use com,            ONLY:error
  use electrons,      ONLY:levels,n_spinor,spin,n_sp_pol
  use QP_m,           ONLY:QP_table,QP_n_states
- use YPP,            ONLY:v2plot,output_fname,plot_dim,use_xcrysden,&
+ use YPPm,           ONLY:v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,l_norm_to_one,&
 &                         plot_title
- use com,            ONLY:msg,of_open_close,warning
- use functions,      ONLY:Fermi_fnc_derivative
- use xc_functionals, ONLY:magn
+ use com,            ONLY:msg,of_open_close
 #if defined _YPP_SC
- use YPP,            ONLY:V_value,l_mean_potential
+ use YPPm,           ONLY:V_value,l_mean_potential
  use QP_m,           ONLY:QP_nk
  use wave_func,      ONLY:wf_ng
- use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,io_control,DUMP
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,io_control,manage_action,DUMP
  use SC,             ONLY:V_mean,SC_bands,SC_fft_size
  use R_lattice,      ONLY:qindx_S
 #endif
 #if defined _YPP_ELPH
+ use interfaces,     ONLY:WF_apply_symm
  use YPP_ELPH,       ONLY:elph_residual_treshold
  use pars,           ONLY:cZERO
  use ELPH,           ONLY:elph_Ham_bands
- use com,            ONLY:jobstr,file_exists
+ use com,            ONLY:jobstr
  use R_lattice,      ONLY:nkibz
 #endif
  !
@@ -58,14 +56,15 @@ subroutine electrons_WFs(Xen)
  !
  ! Work Space
  !
- integer               :: i_qp,ik,i_sp_pol,ib,ibp,ir,i_wf,nb_to_load(2),nkpt_to_load(2),ik_ref
+ integer               :: i_qp,ik,i_sp_pol,i_frag,ib,ibp,ir,i_wf,nb_to_load(2),nkpt_to_load(2),ik_ref
  character(lchlen)     :: ch_ws(2)
 #if defined _YPP_ELPH
  integer               :: iq_s,iq_ibz
  logical               :: l_polaronic_wf
+ logical, external     :: file_exists
 #endif
 #if defined _YPP_SC
- integer               :: ID,io_V
+ integer               :: ID,IO_ACT,io_V
  integer, external     :: io_SC_components
 #endif
  !
@@ -79,7 +78,7 @@ subroutine electrons_WFs(Xen)
  integer                 :: ok_ibz,il,ok_s
  real(SP)                :: polaronic_residual(n_max_res),max_residual
  complex(SP)             :: B_n_ok
- complex(SP), allocatable:: v2plot_c(:),wf_rot(:)
+ complex(SP), allocatable:: v2plot_c(:),wf_rot(:,:)
  !
  ! ELPH setup
  !============
@@ -94,7 +93,7 @@ subroutine electrons_WFs(Xen)
    nkpt_to_load  =(/1,nkibz/)
  endif
  YAMBO_ALLOC(v2plot_c,(fft_size))
- YAMBO_ALLOC(wf_rot,(fft_size))
+ YAMBO_ALLOC(wf_rot,(fft_size,n_spinor))
 #endif
  !
 #if defined _YPP_SC 
@@ -155,8 +154,8 @@ subroutine electrons_WFs(Xen)
        if (i_st==1) max_residual=maxval(polaronic_residual(:n_top_residuals))
      enddo 
      ! 
-     call msg('s',':: Found '//trim(intc(n_top_residuals))//' residuals@k'//trim(intc(ik))//&
-&                 '_b'//trim(intc(ib))//':', top_residual(:n_top_residuals))
+     call msg('s',' Found '//trim(intc(n_top_residuals))//' residuals@k'//trim(intc(ik))//&
+&                 '_b'//trim(intc(ib))//'', top_residual(:n_top_residuals))
      !
      do i_st=1,n_top_residuals
        !
@@ -180,7 +179,7 @@ subroutine electrons_WFs(Xen)
            !
            call WF_apply_symm((/ibp,ok_ibz,ok_s,1/),wf_rot)
            !
-           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+B_n_ok*wf_rot(ir)
+           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+B_n_ok*wf_rot(ir,1)
            !
          endif
          !
@@ -262,7 +261,9 @@ subroutine electrons_WFs(Xen)
      !
 #if defined _YPP_SC
      if (l_mean_potential.and.ik/=ik_ref) then
-       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1+(i_sp_pol-1)*QP_nk/),ID=ID)
+       i_frag=ik+(i_sp_pol-1)*QP_nk
+       IO_ACT=manage_action(RD_CL_IF_END,i_frag,1,QP_nk*n_sp_pol)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID)
        io_V=io_SC_components('MP',Xen,ID)
        ik_ref=ik
      endif

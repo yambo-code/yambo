@@ -17,7 +17,7 @@ TARBALL=$(tarball_petsc)
 # redefinitions
 #
 PETSC_ARCH=yambo_${yprecision}_complex
-AUXFLAGS=--prefix=$(LIBPATH) \
+AUXFLAGS=--prefix="$(LIBPATH)" \
          --PETSC_ARCH=${PETSC_ARCH} \
          --with-ssl=0 \
          --with-x=0 \
@@ -43,9 +43,7 @@ configure-stamp: uncompress-stamp
 	  cd $(PACKAGE);  \
 	  unset PETSC_DIR; \
 	  unset PETSC_ARCH; \
-	  ./configure $(AUXFLAGS) \
-	  --with-cc=$(cc) \
-	  --with-fc=$(fc) ; \
+	  python2 ./configure $(AUXFLAGS) --with-cc=$(cc) --with-fc=$(fc) ; \
 	fi
 	touch configure-stamp
 	
@@ -55,20 +53,24 @@ package-ready-stamp: uncompress-stamp configure-stamp
 	#
 	touch package-ready-stamp
 
-$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
-	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) install ) ; fi
-	#
-	chmod u+x $(LIBPATH)/lib/*petsc*.a
+package-installed: uncompress-stamp configure-stamp package-ready-stamp
+	if ! test -e package-installed ; then ($(install)); fi
+	touch package-installed
+
+$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
 
 #
 # cleaning
 #
 clean:
-	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  rm -rf $(PETSC_ARCH) ) ; fi
-	@- rm -rf package-ready-stamp configure-stamp
+	@if test -d $(PACKAGE) && test -e configure-stamp ; then ( cd $(PACKAGE);  rm -rf $(PETSC_ARCH) ) ; fi
+	@- rm -rf package-ready-stamp configure-stamp package-installed
 
-clean_all: 
+clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
-	@- rm -rf uncompress-stamp
-
+	@- rm -rf uncompress-stamp 
+	
+define install
+ cd $(PACKAGE);  $(make) PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) install; \
+ chmod u+x $(LIBPATH)/lib/*petsc*.a
+endef 

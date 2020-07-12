@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -26,7 +26,6 @@ subroutine p2y_atmproj(filename,k)
  use pars,                  ONLY:SP,DP,schlen
  use R_lattice,             ONLY:bz_samp
  use electrons,             ONLY:n_sp_pol
- use com,                   ONLY:error
  use atom_proj,             ONLY:atomic_projections,atomic_table,n_atom_wfc,n_proj_bands
  use IO_m,                  ONLY:OP_WR_CL,OP_APP_CL,REP,io_control
  !
@@ -40,8 +39,7 @@ subroutine p2y_atmproj(filename,k)
  !
  ! Work space
  !
- integer  :: nbnd,nkpts,nspin,ik,i_sp_pol
- integer  :: natomwfc(nsp)!,itypl(nwfcx,nsp)
+ integer  :: nkpts,nspin,ik,i_sp_pol
  !
  ! I/O
  !

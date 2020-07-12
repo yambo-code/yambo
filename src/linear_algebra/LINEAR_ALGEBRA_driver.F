@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -46,8 +46,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use parallel_m,    ONLY:linear_algebra_is_parallel,ncpu
  use interfaces,    ONLY:MATRIX_transfer
  use BS,            ONLY:BS_block,BS_H_dim
- use com,           ONLY:warning
  use timing_m,      ONLY:timing
+ use cuda_m,        ONLY:have_cuda
+ !
 #include<memory.h>
  !
  integer                    :: idriver
@@ -71,16 +72,20 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  complex(SP)         :: det_
  integer             :: N,lib_in_use
  type (PAR_matrix)   :: M_loc,B_loc,C_loc,V_loc
+ logical             :: USE_CUDA
  !
  call timing("LINEAR ALGEBRA",OPR="start")
  !
  ! M dimension
+ !
+ USE_CUDA=.false.
  !
  if (present(M_slk)) then
    N=M_slk%N
 #if defined _SCALAPACK 
    if (M_slk%kind=="SLK") lib_in_use=USE_SLK
 #endif
+   if (have_cuda.and.allocated(M_slk%blc_d)) USE_CUDA=.true.
  else if (present(M_bse)) then
    N=BS_H_dim
  else if (present(M)) then
@@ -97,8 +102,13 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    lib_in_use=lib_in
  endif
  if (idriver==SVD_INV.or.(idriver==DIAGO.and.present(E_cmpl))) lib_in_use=USE_LK 
- !
  if (.not.linear_algebra_is_parallel) lib_in_use=USE_LK
+ !
+ ! whether to use CUDA lib
+ !
+ if (idriver==SVD_INV.or.idriver==INV.or.idriver==DIAGO&
+&                    .or.idriver==MAT_MUL) USE_CUDA=.false.
+ if (USE_CUDA) lib_in_use=USE_LK
  !
 #if defined _SCALAPACK
  if (idriver==DIAGO.and.present(E_cmpl).and.ncpu>1) then
@@ -110,7 +120,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  ! =============== PARALLEL SECTION ==========================================================
  !
- if (lib_in_use==USE_SLK) then 
+ if (lib_in_use==USE_SLK.and..not.USE_CUDA) then 
    !
    if (.not.present(M_slk)) then
      !
@@ -201,7 +211,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  ! =============== SERIAL SECTION ============================================================
  !
- if (lib_in_use==USE_LK) then
+ if (lib_in_use==USE_LK.and..not.USE_CUDA) then
    !
    ! ####> SVD INVERSION (Using Singular Value decomposition)
    !
@@ -268,6 +278,22 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        call M_by_M('N','N',size(C,1),size(C,2),size(M,2),cONE,M,size(M,1),&
 &                          B,size(B,1),cZERO,C,size(C,1))
      endif
+   endif
+   !
+ endif
+ !
+ ! =============== SERIAL SECTION GPU ============================================================
+ !
+ if (lib_in_use==USE_LK.and.USE_CUDA) then
+   !
+   ! ####> LINEAR SYSTEM SOLUTION
+   !
+   if (idriver==LIN_SYS) then
+#ifdef _CUDA
+     call SERIAL_lin_system_gpu(N,N,M_slk%blc_d(:,:,M_slk%I),B_slk%blc_d(:,:,B_slk%I))
+#else
+     call error('[LA] CUDA support required but not present')
+#endif
    endif
    !
  endif

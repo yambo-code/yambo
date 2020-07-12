@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,7 +26,6 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used,&
 &                        ncpu,CPU_structure,i_PAR_structure,PARALLEL_ENV_uses_default,PARALLEL_CPU_role
  use interfaces,    ONLY:PARALLEL_live_message
- use com,           ONLY:error
  use stderr,        ONLY:intc
  !
  implicit none
@@ -35,11 +34,33 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
  ! Work Space
  ! 
- integer :: i_p,NC,BASIS
+ integer :: i_p,NC,BASIS,n_par_la
  !
  ! Is there anything to do?
  !
  if (ncpu==1) return
+ !
+ ! Set default for INVERSION/DIAGONALIZATION
+ !
+ n_par_la=1
+ !
+#if defined _SCALAPACK 
+ !
+ ! In the SLK case the default = nxn (with n=2,4,6)
+ !
+ if (ncpu>=4 ) n_par_la=4
+ if (ncpu>=16) n_par_la=16
+ if (ncpu>=36) n_par_la=36
+ !
+#endif
+ !
+ if(CPU_structure(i_PAR_structure)%nCPU_lin_algebra_INV==-1)  then
+   CPU_structure(i_PAR_structure)%nCPU_lin_algebra_INV  =n_par_la
+ endif
+ if(CPU_structure(i_PAR_structure)%nCPU_lin_algebra_DIAGO==-1)  then
+   CPU_structure(i_PAR_structure)%nCPU_lin_algebra_DIAGO=n_par_la
+ endif
+ !
  if (.not.PARALLEL_ENV_uses_default(i_PAR_structure).and.&
 &    product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))==ncpu) return
  !
@@ -50,7 +71,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  select case(ENVIRONMENT)
    case("DIPOLES")
      call GIMME_a_parallel_proposal(3,(/"v","c","k"/))
-   case("Response_G_space_Finite_Momentum","Response_G_space")
+   case("Response_G_space_and_IO","Response_G_space")
      call GIMME_a_parallel_proposal(5,(/"g","v","c","k","q"/))
    case("Real_Time") 
      call GIMME_a_parallel_proposal(4,(/" k"," b","qp"," q"/))
@@ -98,15 +119,15 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
      !
      use stderr,      ONLY:STRING_remove
      use vec_operate, ONLY:sort
-     use parallel_m,  ONLY:PAR_QP_range,PAR_n_bands,PAR_n_c_bands,PAR_n_v_bands,PAR_Q_range,&
+     use parallel_m,  ONLY:PAR_QP_range,PAR_n_bands,PAR_n_c_bands,PAR_n_v_bands,&
 &                          PAR_EH_range,PAR_K_range,PAR_n_freqs,PAR_n_G_vectors,&
-&                          PARALLEL_default_mode,master_cpu
+&                          PARALLEL_default_mode,master_cpu,PAR_Q_ibz_range,PAR_Q_bz_range
      !
      ! "c" -> PAR_n_c_bands(2)-PAR_n_c_bands(1)+1
      ! "v" -> PAR_n_v_bands(2)-PAR_n_v_bands(1)+1
      ! "k" -> PAR_K_range
      ! "b" -> PAR_n_bands(2)-PAR_n_bands(1)+1
-     ! "q" -> PAR_Q_range(2)- PAR_Q_range(1)+1
+     ! "q" -> PAR_Q_ibz_range(2)- PAR_Q_ibz_range(1)+1
      ! "qp"-> PAR_QP_range
      ! "eh"-> PAR_EH_range
      ! "w" -> PAR_n_freqs
@@ -131,7 +152,12 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
        if (trim(ch)=="v" ) VALS(i_f)=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1
        if (trim(ch)=="b" ) VALS(i_f)=PAR_n_bands(2)-PAR_n_bands(1)+1
        if (trim(ch)=="k" ) VALS(i_f)=PAR_K_range
-       if (trim(ch)=="q" ) VALS(i_f)=PAR_Q_range(2)-PAR_Q_range(1)+1
+       if (trim(ch)=="q" ) then
+         !
+         if (N_fields==5.or.N_fields==3) VALS(i_f)=PAR_Q_ibz_range(2)-PAR_Q_ibz_range(1)+1
+         if (N_fields==4)                VALS(i_f)=PAR_Q_bz_range(2)-PAR_Q_bz_range(1)+1
+         !
+       endif
        if (trim(ch)=="qp") VALS(i_f)=PAR_QP_range
        if (trim(ch)=="eh") VALS(i_f)=PAR_EH_range
        if (trim(ch)=="w ") VALS(i_f)=PAR_n_freqs
@@ -165,7 +191,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
          !
          do while (CONDITION)
            !
-           call define_the_basis( )
+           call PARALLEL_global_defaults__define_the_basis(NC,BASIS)
            !
            if (all(VALS_sorted<BASIS)) exit sc_loop
            if (BASIS>VALS_sorted(i_v)) exit
@@ -191,17 +217,21 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
      !
    end subroutine
    !
-   subroutine define_the_basis( )
-     integer :: i1,i3
-     i1_loop: do i1=2,NC
-       do i3=2,i1-1
-         if (mod(i1,i3)==0) cycle i1_loop
-       enddo
-       if (mod(NC,i1)==0) then
-         BASIS=i1
-         return
-       endif
-     enddo i1_loop
-   end subroutine
-   !
+end subroutine
+!
+subroutine PARALLEL_global_defaults__define_the_basis(NC,BASIS)
+  implicit none
+  integer, intent(in) :: NC
+  integer, intent(out):: BASIS
+  integer :: i1,i3
+  !
+  i1_loop: do i1=2,NC
+    do i3=2,i1-1
+      if (mod(i1,i3)==0) cycle i1_loop
+    enddo
+    if (mod(NC,i1)==0) then
+      BASIS=i1
+      return
+    endif
+  enddo i1_loop
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -69,9 +69,9 @@ integer function io_WF_old(ID,wf_old)
    if (ver_is_gt_or_eq(ID,(/3,1,1/))) then
      call io_elemental(ID, VAR="BAND_GROUPS",VAR_SZ=2,MENU=0)
      call io_elemental(ID,VAR=&
-&         ' Bands in each block             :',I0=wf_nb_io)
+&         ' Bands in each block             ',I0=wf_nb_io)
      call io_elemental(ID,VAR=&
-&         ' Blocks                          :',I0=wf_nb_io_groups)
+&         ' Blocks                          ',I0=wf_nb_io_groups)
      call io_elemental(ID,VAR="",VAR_SZ=0)
    endif
    !

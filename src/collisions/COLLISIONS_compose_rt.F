@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM DS
@@ -31,14 +31,14 @@ subroutine COLLISIONS_compose_rt(dG_in)
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
  use parallel_m,       ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_COM_Q_INDEX,&
-&                           PAR_IND_Xk_ibz,PAR_IND_Bp_mat
+&                           PAR_IND_Xk_ibz,PAR_IND_Bp_mat,PAR_G_k_range
  use hamiltonian,      ONLY:B_mat_index
- use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,RT_bands
+ use real_time,        ONLY:RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,RT_bands
  use timing_m,         ONLY:timing
  !
  implicit none
  !
- complex(SP), intent(in)   :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP), intent(in)   :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
  !
  ! Work Space
  !
@@ -100,7 +100,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
      do ibp=COLL_bands(1),COLL_bands(2)
        do ib=COLL_bands(1),COLL_bands(2)
          !
-         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)==0) cycle
+         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)=='f') cycle
          !
          i_comp=i_comp+1
          !

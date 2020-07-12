@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, HM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_blocks( )
+subroutine K_blocks(iq)
  !
  ! Create and Fill the BSK blocks
  !
@@ -31,38 +31,43 @@ subroutine K_blocks( )
  !  integer                       :: iT_k       ! Index (among n_BS_T_grps) of the cv transitions @ k
  !  integer                       :: iT_p       ! Index (among n_BS_T_grps) of the cv transitions @ p
  !  integer                       :: size(2)    ! rows x columns
- !  character(1)                  :: mode       ! "R"esonant/"A"ntiresonant
+ !  character(1)                  :: mode       ! "R"esonant/"C"oupling
  !  complex(SP), allocatable      :: mat(:,:)
  !end type BS_block
  !
- use pars,         ONLY:cZERO,SP
- use parallel_m,   ONLY:PAR_IND_T_ordered,PP_redux_wait
+ use pars,         ONLY:cZERO,SP,IP,IPL
+ use parallel_m,   ONLY:PAR_IND_T_ordered,PP_redux_wait,PAR_COM_HOST,myid,ncpu
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
-&                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim
+&                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim,n_BS_blks_min
  use com,          ONLY:msg
  use interfaces,   ONLY:PARALLEL_live_message
  !
 #include<memory.h>
  !
+ integer, intent(in)  :: iq
+ !
+ ! YAMBO_PAR_ALLOC
+ !
+ integer :: HOST_SIZE(1),LOCAL_SIZE(1),TMP_SIZE
+ complex(SP), allocatable :: BS_MAT(:)
+ !
  ! Work Space
  !
- integer    :: i_T,j_T,i_block,iB,n_new_blocks
- real(SP)   :: N_Ts_total,N_Ts_local
+ integer      :: i_T,j_T,i_block,iB,n_new_blocks,n_BS_blks_CPUs(ncpu)
+ integer(IPL) :: local_steps
+ real(SP)     :: N_Ts_total,N_Ts_local
  !
- call section('=','CPU-dependent Block structure')
- !                 =============================
- if (BS_K_coupling) then 
-    n_new_blocks = 2
- else                    
-    n_new_blocks = 1
- end if
+ if (.not.BS_K_coupling           ) n_new_blocks=1
+ if (     BS_K_coupling.and. iq==1) n_new_blocks=2
+ if (     BS_K_coupling.and. iq/=1) n_new_blocks=4
  !
  ! Count the blocks
  n_BS_blks=count(PAR_IND_T_ordered%element_2D)
  allocate(BS_blk(n_BS_blks*n_new_blocks))
  !
- ! Allocate the blocks
+ ! Define blocks parameters
  n_BS_blks=0
+ TMP_SIZE=0
  do i_T=1,BS_nT_grps
    do j_T=1,BS_nT_grps
      !
@@ -70,13 +75,12 @@ subroutine K_blocks( )
      !
      do i_block=1,n_new_blocks
         iB = n_BS_blks + i_block
-        YAMBO_ALLOC(BS_blk(iB)%mat,(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
-        BS_blk(iB)%mat=cZERO
-        allocate(BS_blk(iB)%done(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
-        bs_blk(ib)%done(:,:)="f"
         BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
+        TMP_SIZE=TMP_SIZE+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
         if (i_block==1) BS_blk(iB)%mode="R"
-        if (i_block==2) BS_blk(iB)%mode="A"
+        if (i_block==2) BS_blk(iB)%mode="C"
+        if (i_block==3) BS_blk(iB)%mode="A"
+        if (i_block==4) BS_blk(iB)%mode="Q"
         BS_blk(iB)%iT_k=i_T
         BS_blk(iB)%iT_p=j_T
         BS_blk(iB)%ik=BS_T_grp(i_T)%ik
@@ -89,15 +93,33 @@ subroutine K_blocks( )
    enddo
  enddo
  !
+ n_BS_blks_CPUs(myid+1)=n_BS_blks
+ call PP_redux_wait(n_BS_blks_CPUs)
+ n_BS_blks_min=minval(n_BS_blks_CPUs)
+ !
+ ! Allocate the blocks
+ !
+ YAMBO_PAR_ALLOC_CHECK1(BS_MAT,(/TMP_SIZE/))
+ !
+ do iB=1,n_BS_blks
+   YAMBO_ALLOC(BS_blk(iB)%mat,(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
+   allocate(BS_blk(iB)%done(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
+   BS_blk(iB)%mat=cZERO
+   bs_blk(iB)%done(:,:)="f"
+ enddo
+ !
  ! Live Timing Blocks
  !====================
  !
+ local_steps=0
  do iB=1,n_BS_blks
-   BS_LiveTiming_steps=BS_LiveTiming_steps+BS_Block_size(iB)
+   local_steps=local_steps+int(BS_Block_size(iB),IPL)
  enddo
+ BS_LiveTiming_steps=int(local_steps,IP)
+ if( int(BS_LiveTiming_steps,IPL)/=local_steps) BS_LiveTiming_steps=-1
  !
- N_Ts_local=real(BS_LiveTiming_steps,SP)
- N_Ts_total=real(BS_LiveTiming_steps,SP)
+ N_Ts_local=real(local_steps,SP)
+ N_Ts_total=real(local_steps,SP)
  !
  call PP_redux_wait(N_Ts_total)
  !

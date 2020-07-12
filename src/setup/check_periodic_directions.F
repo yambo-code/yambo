@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,26 +21,34 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine check_periodic_directions()
+subroutine check_periodic_directions(is_cut)
  !
  use pars,           ONLY:SP
- use com,            ONLY:msg,warning
+ use com,            ONLY:msg
  use X_m,            ONLY:eps_2_alpha,alpha_dim,eval_alpha
- use D_lattice,      ONLY:DL_vol,a,non_periodic_directions
+ use D_lattice,      ONLY:DL_vol,a,non_periodic_directions,&
+&                         l_0D,l_1D,l_2D,l_3D
  use vec_operate,    ONLY:v_norm
  !
  implicit none
+ !
+ logical, intent(in)  :: is_cut(3)
  !
  ! Work Space
  !
  integer  :: non_p_dir(3),i1,ia,i_check
  real(SP) :: non_p_dot_product(3),periodic_length,non_periodic_length
- logical  :: l_0D,l_1D,l_2D,l_3D
  !
  non_p_dir=0
- if (index(non_periodic_directions,'x')+index(non_periodic_directions,'X')/=0) non_p_dir(1)=1
- if (index(non_periodic_directions,'y')+index(non_periodic_directions,'Y')/=0) non_p_dir(2)=1
- if (index(non_periodic_directions,'z')+index(non_periodic_directions,'Z')/=0) non_p_dir(3)=1
+ if (any(is_cut)) then
+   if (is_cut(1)) non_p_dir(1)=1
+   if (is_cut(2)) non_p_dir(2)=1
+   if (is_cut(3)) non_p_dir(3)=1
+ else
+   if (index(non_periodic_directions,'x')+index(non_periodic_directions,'X')/=0) non_p_dir(1)=1
+   if (index(non_periodic_directions,'y')+index(non_periodic_directions,'Y')/=0) non_p_dir(2)=1
+   if (index(non_periodic_directions,'z')+index(non_periodic_directions,'Z')/=0) non_p_dir(3)=1
+ endif
  !
  l_0D=all(non_p_dir/=0)
  l_1D=sum(non_p_dir)==2
@@ -65,7 +73,7 @@ subroutine check_periodic_directions()
  ! there must be two cell unit vectors _|_ to the 1D non periodic direction that must be
  ! parallel to the third unit cell vector
  !
- if (l_1D.or.l_2D) then 
+ if (l_1D.or.l_2D) then
    do ia=1,3
      non_p_dot_product(ia)=0.
      do i1=1,3
@@ -100,8 +108,8 @@ subroutine check_periodic_directions()
    return
  endif
  !
- call msg('r', 'Non-periodic chartesian directions :',trim(non_periodic_directions))
- call msg('r', 'Optical renormalization        [au]:',eps_2_alpha)
- call msg('rn','Polarizability dimension           :',trim(alpha_dim))
+ call msg('r', 'Non-periodic chartesian directions ',trim(non_periodic_directions))
+ call msg('r', 'Optical renormalization            ',eps_2_alpha,"[au]")
+ call msg('rn','Polarizability dimension           ',trim(alpha_dim))
  !
 end subroutine

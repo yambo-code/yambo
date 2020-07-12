@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,8 +28,8 @@ subroutine RT_Integrator_init()
  use stderr,         ONLY:intc
  use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV,            &
 &                         l_RT_RWA,l_RT_ACC,l_RT_DIAG,l_RT_PERT,   &
-&                         l_RT_simple,l_RT_HEUN,l_RT_RK2,l_RT_RK4, &
-&                         Integrator_exp_order,Integrator_name,    &
+&                         l_RT_HEUN,l_RT_RK2,l_RT_RK4,l_RT_SIMPLE, &
+&                         Integrator_name,integrator_exp_order,    &
 &                         a_tableau,b_tableau,c_tableau,RWA_table, &
 &                         I1_matrix,Integrator_nsteps,RT_bands
  !
@@ -97,7 +97,7 @@ subroutine RT_Integrator_init()
  if (l_RT_DIAG  ) Integrator_name = trim(Integrator_name)//" + DIAG"
  if (l_RT_PERT  ) Integrator_name = trim(Integrator_name)//" + PERT"
  !
- call msg('s','Integrator: '//trim(Integrator_name))
+ call msg('s','Integrator '//trim(Integrator_name))
  !
  ! e) Define integrators tables
  !

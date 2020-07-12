@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -30,7 +30,7 @@ subroutine PLASMA_build_up(E,k,q)
  use electrons,     ONLY:levels,n_sp_pol
  use plasma,        ONLY:PLASMA_alloc,PLASMA_redux_percent,N_plasma_poles_global,EH_gas
  use collision_ext, ONLY:COLL_bands,GW_NEQ_collisions
- use parallel_m,    ONLY:PAR_nQ,PAR_IND_Q,PAR_Q_index,PP_redux_wait,PAR_COM_Q_INDEX
+ use parallel_m,    ONLY:PAR_nQ_bz,PAR_IND_Q_bz,PAR_Q_bz_index,PP_redux_wait,PAR_COM_Q_INDEX
  use timing_m,       ONLY:timing
  implicit none
  !
@@ -53,7 +53,7 @@ subroutine PLASMA_build_up(E,k,q)
  N_plasma_poles_global = N_poles_bare
  EH_gas%max_N_poles    = N_poles_bare
  !
- call PLASMA_alloc(EH_gas,(/q%nbz,PAR_nQ,GW_NEQ_collisions%N/))
+ call PLASMA_alloc(EH_gas,(/q%nbz,PAR_nQ_bz,GW_NEQ_collisions%N/))
  allocate(poles(N_poles_bare))
  poles=0._SP
  !
@@ -62,8 +62,8 @@ subroutine PLASMA_build_up(E,k,q)
  !
  do iqbz=1,q%nbz
    !
-   if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
-   i_q_mem=PAR_Q_index(iqbz)
+   if (.not.PAR_IND_Q_bz%element_1D(iqbz)) cycle
+   i_q_mem=PAR_Q_bz_index(iqbz)
    !
    ! Define the poles @ iq, count the real number
    n_poles=PLASMA_tables_and_dimensions(-iqbz,E,k,q,poles,N_poles_bare)

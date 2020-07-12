@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
+subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
  !
  use pars,           ONLY:SP,schlen,pi,DP
  use units,          ONLY:HA2EV
@@ -33,6 +33,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use linear_algebra, ONLY:INV,USE_LK
  use interfaces,     ONLY:PARALLEL_index,WF_load,WF_free,el_density_and_current,LINEAR_ALGEBRA_driver 
+ use DIPOLES,        ONLY:DIPOLE_t
  use R_lattice,      ONLY:bz_samp,bare_qpg,nqibz
  use electrons,      ONLY:levels,nel
  use D_lattice,      ONLY:DL_vol
@@ -40,15 +41,17 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use X_m,            ONLY:X_t,X_alloc,X_mat
  use QP_m,           ONLY:QP_nb,QP_nk,QP_n_states,QP_table,QP_state,QP_Vnl_xc,QP_Vxc
  use collision_el,   ONLY:elemental_collision,elemental_collision_free
- use IO_m,           ONLY:io_control,RD_CL_IF_END,OP_RD
+ use IO_m,           ONLY:io_control,RD_CL_IF_END,OP_RD,manage_action
  use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
 &                         XC_LDA_X,XC_CORRELATION,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional
+ !
 #include<memory.h>
  !
- type(levels) ::Xen,En
- type(bz_samp)::Xk,q,k
- type(X_t)    ::X
+ type(levels)  ::Xen,En
+ type(bz_samp) ::Xk,q,k
+ type(X_t)     ::X
+ type(DIPOLE_t)::Dip
  ! 
  ! Work Space
  !
@@ -67,7 +70,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  ! ACFDT
  !
- integer       ::iw,il,FUNCTIONAL_,KIND_
+ integer       ::iw,il,FUNCTIONAL_,KIND_,IO_ACT
  real(SP)      ::Ex_LDA,Ec_LDA,dEc_LDA,ACFDT_EXX,ACFDT_Ec,sug_E_rng
  type(elemental_collision)::isc
  type(PP_indexes)         ::plw
@@ -164,17 +167,17 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    ! Report
    !
    sug_E_rng=(nel/DL_vol)**(2./3.)*HA2EV
-   call msg('r','[E] Energy borders [ev][suggested]:',(/25.*sug_E_rng,250*sug_E_rng/))
-   call msg('r','                            [used]:',(/ACFDT_E_range*HA2EV/))
-   call msg('r','    Energy points                 :',(/(ACFDT_n_freqs-1)/2+1,ACFDT_n_freqs/))
-   call msg('r','    First point               [ev]:',(/freq(1)*HA2EV/))
-   call msg('nr','[L] Pts(1-5):',(/lambda(1:min(5,ACFDT_n_lambda))/))
-   call msg(' r','    Wgs(1-5):',(/lambda_weight(1:min(5,ACFDT_n_lambda))/))
-   call msg(' r','    Points  :',(/ACFDT_n_lambda/))
+   call msg('r','[E] Energy borders [ev][suggested]',(/25.*sug_E_rng,250*sug_E_rng/))
+   call msg('r','                            [used]',(/ACFDT_E_range*HA2EV/))
+   call msg('r','    Energy points                 ',(/(ACFDT_n_freqs-1)/2+1,ACFDT_n_freqs/))
+   call msg('r','    First point               [ev]',(/freq(1)*HA2EV/))
+   call msg('nr','[L] Pts(1-5)',(/lambda(1:min(5,ACFDT_n_lambda))/))
+   call msg(' r','    Wgs(1-5)',(/lambda_weight(1:min(5,ACFDT_n_lambda))/))
+   call msg(' r','    Points  ',(/ACFDT_n_lambda/))
    !
    call section('=','Non-interacting Response Function [Xo]')
    !
-   call X_pre_setup(Xen,X)
+   call X_pre_setup(Xen,Xk,X)
    !
    do iqibz=1,nqibz
      X%iq=iqibz
@@ -185,13 +188,13 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
      Xw%dr=(/freq(1),freq(ACFDT_n_freqs)/)
      YAMBO_ALLOC(Xw%p,(ACFDT_n_freqs))
      Xw%p(:)=(0.,1.)*freq(:)
-     i_err=X_dielectric_matrix(Xen,Xk,q,X,Xw,iqibz>1)
+     i_err=X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,iqibz>1)
      if (i_err==0) exit
    enddo
    !
    call section('=','Correlation Energy Loop')
    !
-   call msg('r','[Ec] RL components :',X%ng)
+   call msg('r','[Ec] RL components ',X%ng)
    !
    YAMBO_ALLOC(X_s,(X%ng,X%ng))
    YAMBO_ALLOC(isc%gamp,(X%ng,1))
@@ -213,7 +216,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
      !
      ! X I/O
      !
-     call io_control(ACTION=RD_CL_IF_END,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
+     IO_ACT=manage_action(RD_CL_IF_END,iqibz,1,q%nibz)
+     call io_control(ACTION=IO_ACT,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
      io_err=io_X(X,Xw,ID)
      !
      isc%qs(2)=iqibz
@@ -283,12 +287,12 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  rfac=(/HA2EV*1000.d0/DL_vol,HA2EV/dble(nel),&
 &       1000.d0/dble(DL_vol),1000.d0/dble(nel)/)
  do i1=1,4
-   write (ch,'(2a)') ttl(i1),' Ex         LDA-EXX    :'
+   write (ch,'(2a)') ttl(i1),' Ex         LDA-EXX    '
    call msg('r',trim(ch),Er(1:2)*rfac(i1))
-   call msg('r','          Ec         LDA-Rpa    :',Er(3:4)*rfac(i1))
-   call msg('r','          Exc        LDA-EXX/Rpa:',Er(5:6)*rfac(i1))
-   call msg('r','          HEGc(orrection)       :',(/Er(7)*rfac(i1)/))
-   call msg('rn','          Exc+HEGc   LDA-EXX/Rpa:',Er(8:9)*rfac(i1))
+   call msg('r','          Ec         LDA-Rpa    ',Er(3:4)*rfac(i1))
+   call msg('r','          Exc        LDA-EXX/Rpa',Er(5:6)*rfac(i1))
+   call msg('r','          HEGc(orrection)       ',(/Er(7)*rfac(i1)/))
+   call msg('rn','          Exc+HEGc   LDA-EXX/Rpa',Er(8:9)*rfac(i1))
  enddo
  !
  ! CLEAN

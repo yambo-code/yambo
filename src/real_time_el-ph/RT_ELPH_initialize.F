@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,7 +31,6 @@ subroutine RT_ELPH_initialize(E,k,q)
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt
  use vec_operate,    ONLY:v_norm
- use com,            ONLY:warning
  use D_lattice,      ONLY:Bose_Temp
  use R_lattice,      ONLY:RL_vol,bz_samp,qindx_S,nXkibz
  use IO_m,           ONLY:io_control,REP,OP_RD_CL,VERIFY,NONE
@@ -40,8 +39,8 @@ subroutine RT_ELPH_initialize(E,k,q)
  use vec_operate,    ONLY:degeneration_finder
  use parser_m,       ONLY:parser
  use R_lattice,      ONLY:RIM_n_rand_pts
- use parallel_m,     ONLY:PAR_Q_index,PAR_IND_Q,PAR_nQ,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
-&                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_index
+ use parallel_m,     ONLY:PAR_Q_bz_index,PAR_IND_Q_bz,PAR_nQ_bz,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
+&                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX
  !
 #include<memory.h>
  !
@@ -90,7 +89,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  ! Allocation
  !============
  !
- YAMBO_ALLOC(elph_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ,PAR_Xk_nibz))
+ YAMBO_ALLOC(elph_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ_bz,PAR_Xk_nibz))
  !
  MAX_gkkp_expanded_at_kpq=0._SP
  !
@@ -108,7 +107,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  do iq=1,q%nbz
    !
-   if (.not.PAR_IND_Q%element_1D(iq)) cycle
+   if (.not.PAR_IND_Q_bz%element_1D(iq)) cycle
    !
    iq_io=Q_io_map(iq)
    !
@@ -125,7 +124,7 @@ subroutine RT_ELPH_initialize(E,k,q)
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
      ik_mem = PAR_Xk_ibz_index(ik)
-     iq_mem = PAR_Q_index(iq)
+     iq_mem = PAR_Q_bz_index(iq)
      !
      do i_n=1,elph_nb
        do i_np=1,elph_nb
@@ -140,7 +139,7 @@ subroutine RT_ELPH_initialize(E,k,q)
      enddo
      !
      ! Feb 2014. Here I symmetrize the gkkp m.e. with respect to denerated bands. This procedure is not
-     ! needed in the case the RIM is not used. But when the RIM is used gkkp m.e. corresponding to transitions between degenerate
+     ! needed in the case the Double Grid is not used. But when the Double Grid is used gkkp m.e. corresponding to transitions between degenerate
      ! states can be exported to non-degenerate bands belonging to a k of the small grid. In this way
      ! the detailled balance condition is not satisfied anymore.
      !
@@ -254,7 +253,7 @@ subroutine RT_ELPH_initialize(E,k,q)
        !
        if (RIM_n_rand_pts>0.and.q_mod(iq)<=q0_mod .and. il<=3) then
          q_weight_RT(iq,il,1)=q_weight_tmp(iq,1)/ph_mean_speed(il)
-         q_weight_RT(iq,il,2)=Bose_temp*q_weight_tmp(iq,2)/ph_mean_speed(il)**2/spin_occ
+         q_weight_RT(iq,il,2)=Bose_Temp*q_weight_tmp(iq,2)/ph_mean_speed(il)**2/spin_occ
        endif
        !
      enddo

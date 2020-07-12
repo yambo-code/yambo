@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -25,27 +25,26 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use drivers,        ONLY:l_use_Hxc_collisions
- use stderr,         ONLY:set_real_printed_length
- use com,            ONLY:error,warning
+ use QP_m,           ONLY: QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels
- use X_m,            ONLY:X_t,X_alloc
- use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,use_covariant_approach,DIP_S
+ use X_m,            ONLY:X_t
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:WF_load,WF_free
- use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,H_QP_table_setup
+ use hamiltonian,    ONLY:WF_Go_indx,H_QP_table_setup,H_potential
  use R_lattice,      ONLY:bz_samp,qindx_free
  use fields,         ONLY:Efield
  use QP_CTL_m,       ONLY:QP_apply
  use R_lattice,      ONLY:qindx_S
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
-&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS,NL_ng,JGM,TDDFT, &
+&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
- use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_P,RT_step,RT_nbands,RT_bands
- use IO_m,           ONLY:IO_and_Messaging_switch,io_COLLs
+ use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
+ use IO_m,           ONLY:io_COLLs
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,mpi_comm_world
+ use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
 #include<memory.h>
@@ -58,11 +57,10 @@ subroutine NL_driver(E,X,k,q,Dip)
  type(DIPOLE_t)    :: Dip
  !
  logical, external :: stop_now
- integer, external :: eval_G_minus_G
  ! 
  ! Work Space
  !
- integer           :: i_f,i1,NL_bands1_save,N_sample_size,wf_ng_save,io_err
+ integer           :: i_f,i1,N_sample_size,wf_ng_save,io_err
  logical           :: l_dynamics_is_over
  real(SP)          :: Time
  !
@@ -77,19 +75,18 @@ subroutine NL_driver(E,X,k,q,Dip)
  call section('+','Initialization')
  !#################################
  !
- call set_real_printed_length(f_length=10,g_length=10)  
- !
  ! Initialize
  !=========
  call NL_initialize(E,k,q)
  !
  ! Switch 
  !========
- call XC_switch()
+ call XC_potentials(H_potential)
+ call XC_additional_SC_potentials()
  !
  ! Dipoles & WF dimensions
  !=========================
- call WF_and_dipole_dimensions(X)
+ call WF_and_dipole_dimensions(X,k)
  !
  ! Deallocate qindx_S (used only in previous subroutine)
  ! ========================
@@ -114,12 +111,13 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Free memory: qindx_* and unused DIPOLES
  ! =====================================================
- call qindx_free()
+ call qindx_free('ALL')
  !
  call DIP_alloc('P_square')
  if(l_use_DIPOLES) then
    call DIP_alloc('DIP_S')
  else
+!    call DIP_alloc('DIP_R')
    if(.not.l_eval_CURRENT) then
      call DIP_alloc('DIP_R')
      call DIP_alloc('DIP_v')
@@ -129,8 +127,12 @@ subroutine NL_driver(E,X,k,q,Dip)
  ! WFs loading
  !=============
  !
- wf_ng_save=wf_ng
- wf_ng     =NL_ng
+ wf_ng_save =wf_ng
+ if(eval_DFT) then
+   wf_ng      =max(QP_ng_Sx,QP_ng_SH)
+ else
+   wf_ng      =QP_ng_SH
+ endif
  WF_Go_indx =1
  !
  if(io_COLLs) then
@@ -191,7 +193,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Start-Up & Timing
  !===================
- call live_timing('[NL] Frequencies :',PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1)*NE_steps)
+ call live_timing('[NL] Frequencies ',PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1)*NE_steps)
  !
  do i_f=1,n_frequencies
    !
@@ -235,7 +237,7 @@ subroutine NL_driver(E,X,k,q,Dip)
      !
      ! Store Variables
      !
-     NL_P_t (NE_i_time,:)=real(RT_P,SP)
+     NL_P_t (NE_i_time,:)=real(NL_P(1:3),SP)
      E_ext_t(NE_i_time,:)=E_ext
      E_tot_t(NE_i_time,:)=E_tot
      E_ks_t (NE_i_time,:)=E_ks
@@ -268,7 +270,5 @@ subroutine NL_driver(E,X,k,q,Dip)
  call DIP_alloc('DIP_S')
  call DIP_alloc('DIP_R')
  call DIP_alloc('DIP_v')
- !
- call set_real_printed_length()
  !
 end subroutine NL_driver

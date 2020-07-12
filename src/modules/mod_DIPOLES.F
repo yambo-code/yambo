@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -43,7 +43,6 @@ module DIPOLES
  !
  ! Allocs
  !
- complex(SP), allocatable :: DIP_projected(:,:,:,:)
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
  complex(SP), allocatable :: DIP_v(:,:,:,:,:)
@@ -121,10 +120,6 @@ module DIPOLES
          if (allocated(DIP_P_spinor).or.n_spinor==1) return
          YAMBO_ALLOC(DIP_P_spinor,(d(1),n_spinor,n_spinor,d(2):d(3),d(4):d(5),d(6)))
          DIP_P_spinor=cZERO
-       case('DIP_projected')
-         if (allocated(DIP_projected)) return
-         YAMBO_ALLOC(DIP_projected,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
-         DIP_projected=cZERO
        case('P_square')
          if (allocated(P_square)) return
          YAMBO_ALLOC(P_square,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
@@ -153,9 +148,6 @@ module DIPOLES
        case('DIP_P_spinor')
          if (.not.allocated(DIP_P_spinor)) return
          YAMBO_FREE(DIP_P_spinor)
-       case('DIP_projected')
-         if (.not.allocated(DIP_projected)) return
-         YAMBO_FREE(DIP_projected)
        case('P_square')
          if (.not.allocated(P_square)) return
          YAMBO_FREE(P_square)
@@ -185,13 +177,12 @@ module DIPOLES
    end subroutine DIPOLES_duplicate
    !
    subroutine DIPOLES_reset(Dip) 
-     use electrons, ONLY:n_bands
      type(DIPOLE_t)::Dip
      Dip%iq=(/1,1/)
-     Dip%ib=(/1,n_bands/)
-     Dip%ib_lim=(/0,0/)
-     Dip%db_ib=(/0,0/)
-     Dip%db_ib_lim=(/0,0/)
+     Dip%ib=(/1,-1/)
+     Dip%ib_lim=(/1,-1/)
+     Dip%db_ib=(/1,-1/)
+     Dip%db_ib_lim=(/1,-1/)
      Dip%ng=0
      Dip%ehe=(/-1._SP,-1._SP/)/HA2EV
      Dip%q0=(/1._SP,0._SP,0._SP/)
@@ -205,5 +196,45 @@ module DIPOLES
      Dip%computed="R P"
    end subroutine DIPOLES_reset
    !
+   function DIP_rotated(ic,iv,ik_bz,i_sp_pol,what,kpt)
+     !
+     use pars,           ONLY:cZERO
+     use D_lattice,      ONLY:i_time_rev,dl_sop,sop_inv,nsym
+     use parallel_m,     ONLY:PAR_K_scheme
+     use R_lattice,      ONLY:bz_samp
+     !
+     implicit none
+     !
+     integer,       intent(in) :: ic,iv,ik_bz,i_sp_pol
+     character(*),  intent(in) :: what
+     type(bz_samp), intent(in) :: kpt
+     !
+     complex(SP), dimension(3) :: DIP_rotated
+     !
+     ! Work space
+     !
+     complex(SP) :: DIP_in(3)
+     integer :: ik,is,ik_mem
+     logical :: t_rev
+     !
+     ik=kpt%sstar(ik_bz,1)
+     is=kpt%sstar(ik_bz,2)
+     !
+     ik_mem    = PAR_K_scheme%ibz_index(ik)
+     !is = sop_inv( is )
+     !
+     DIP_in=cZERO
+     if(trim(what)=="DIP_P" ) DIP_in=DIP_P(:,ic,iv,ik_mem,i_sp_pol)
+     if(trim(what)=="DIP_v" ) DIP_in=DIP_v(:,ic,iv,ik_mem,i_sp_pol)
+     if(trim(what)=="DIP_iR") DIP_in=DIP_iR(:,ic,iv,ik_mem,i_sp_pol)
+     !
+     DIP_rotated = matmul( dl_sop(:,:,is) , DIP_in  )
+     !
+     if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
+     if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
+     !
+     if (t_rev) DIP_rotated = conjg( DIP_rotated )
+     !
+   end function DIP_rotated
+   !
 end module
-

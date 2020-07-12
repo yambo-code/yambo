@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -23,20 +23,20 @@
 !
 subroutine WF_map_perturbative_SOC(kpt,En)
  !
- use YPP,                 ONLY:perturbative_SOC_path,SOC_split,SOC_bands_to_map,&
+ use YPPm,                ONLY:perturbative_SOC_path,SOC_split,SOC_bands_to_map,&
 &                              SOC_bands_buffer
  use pars,                ONLY:lchlen,rZERO,cZERO,cI,SP
  use stderr,              ONLY:real2ch,intc
  use R_lattice,           ONLY:bz_samp
  use D_lattice,           ONLY:spin_sop,a,alat,x_cc
  use FFT_m,               ONLY:fft_size,fft_rot_r
- use com,                 ONLY:core_io_path,msg,warning,error
+ use com,                 ONLY:core_io_path,msg
  use vec_operate,         ONLY:degeneration_finder,sort,iku_v_norm,k2bz,c2a
  use zeros,               ONLY:k_iku_zero
  use wave_func,           ONLY:WAVEs
  use interfaces,          ONLY:WF_load,WF_free
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
- use electrons,           ONLY:levels,n_sp_pol,n_spinor,n_spin,E_SOC_table,E_SOC_nbands
+ use electrons,           ONLY:levels,n_sp_pol,n_spinor,n_spin
  use LIVE_t,              ONLY:live_timing
  use interfaces,          ONLY:io_DB1_selective_scan
  !
@@ -132,11 +132,11 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  n_spinor=n_spinor_save
  n_sp_pol=n_sp_pol_save
  !
- E_SOC_nbands=En_SOC%nb
- YAMBO_ALLOC(En%E_SOC,(E_SOC_nbands,kpt%nibz))
- YAMBO_ALLOC(E_SOC_table,(2,En%nb,kpt%nibz))
+ En%nb_SOC=En_SOC%nb
+ YAMBO_ALLOC(En%E_SOC,(En%nb_SOC,kpt%nibz))
+ YAMBO_ALLOC(En%table_SOC,(2,En%nb,kpt%nibz))
  En%E_SOC=0._SP
- E_SOC_table=0
+ En%table_SOC=0
  !
  mapping_tresh=0.95_SP
  !
@@ -169,7 +169,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
    !
    min_sq(i_k)=1._SP
    !
-   E_SOC_table(:,:,i_k)=0
+   En%table_SOC(:,:,i_k)=0
    !
    i_sorted=0
    NB_up=0
@@ -293,10 +293,10 @@ subroutine WF_map_perturbative_SOC(kpt,En)
          min_sq=min(min_sq,sqrt(sq2))
          !
          if(map_up) then
-           E_SOC_table(1,i_b_to_map(1),i_k)=i_b_SOC
+           En%table_SOC(1,i_b_to_map(1),i_k)=i_b_SOC
            mapped_in_group(1,i_grp)=mapped_in_group(1,i_grp)+1
          else if(map_dw) then
-           E_SOC_table(2,i_b_to_map(2),i_k)=i_b_SOC
+           En%table_SOC(2,i_b_to_map(2),i_k)=i_b_SOC
            mapped_in_group(2,i_grp)=mapped_in_group(2,i_grp)+1
          endif
          En%E_SOC(i_b_SOC,i_k)=En_SOC%E(i_b_SOC,i_k_SOC,1)
@@ -319,17 +319,17 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  call live_timing()
  !
- if(any(E_SOC_table(:,SOC_bands_to_map(1):SOC_bands_to_map(2)-SOC_bands_buffer,:)==0)) then
+ if(any(En%table_SOC(:,SOC_bands_to_map(1):SOC_bands_to_map(2)-SOC_bands_buffer,:)==0)) then
    !
-   n_tot =size (E_SOC_table(:,SOC_bands_to_map(1):SOC_bands_to_map(2)-SOC_bands_buffer,:)   )
-   n_miss=count(E_SOC_table(:,SOC_bands_to_map(1):SOC_bands_to_map(2)-SOC_bands_buffer,:)==0)
+   n_tot =size (En%table_SOC(:,SOC_bands_to_map(1):SOC_bands_to_map(2)-SOC_bands_buffer,:)   )
+   n_miss=count(En%table_SOC(:,SOC_bands_to_map(1):SOC_bands_to_map(2)-SOC_bands_buffer,:)==0)
    call warning(' With treshold '//trim(real2ch(mapping_tresh))//' '//trim(intc(n_miss))//'/'&
 &                //trim(intc(n_tot))//' WFs non mapped. Reducing it.' )
    !
    do i_k=1,kpt%nibz
-     kpoint_to_map(i_k)=any(E_SOC_table(:,SOC_bands_to_map(1):SOC_bands_to_map(2)-SOC_bands_buffer,i_k)==0)
+     kpoint_to_map(i_k)=any(En%table_SOC(:,SOC_bands_to_map(1):SOC_bands_to_map(2)-SOC_bands_buffer,i_k)==0)
      !do i_b=SOC_bands_to_map(1),SOC_bands_to_map(2)
-     !  if(all(E_SOC_table(:,i_b,i_k)/=0)) cycle
+     !  if(all(En%table_SOC(:,i_b,i_k)/=0)) cycle
      !  call warning(' State ik= '//trim(intc(i_k))//', ib= '//trim(intc(i_b))//' not mapped.' )
      !enddo
    enddo
@@ -353,7 +353,6 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  YAMBO_FREE(WF_SOC_rot)
  YAMBO_FREE(E_vec)
- YAMBO_FREE(E_SOC_table)
  YAMBO_FREE(x_cc)
  !
 end subroutine WF_map_perturbative_SOC

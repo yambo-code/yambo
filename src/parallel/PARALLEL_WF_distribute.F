@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,7 +33,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  use hamiltonian,     ONLY:B_mat_index,H_ref_bands
 #endif
 #if defined _RT
- use parallel_m,      ONLY:PAR_IND_Q,PAR_Q_index
+ use parallel_m,      ONLY:PAR_IND_Q_bz,PAR_Q_bz_index
  use plasma,          ONLY:EH_gas
  use R_lattice,       ONLY:nkbz
  use collision_ext,   ONLY:GW_NEQ_collisions
@@ -176,8 +176,8 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
    ! 
    do iqbz=1,nkbz
      !
-     if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
-     i_q_mem=PAR_Q_index(iqbz)
+     if (.not.PAR_IND_Q_bz%element_1D(iqbz)) cycle
+     i_q_mem=PAR_Q_bz_index(iqbz)
      !
      do i_J=1,EH_gas%N_poles(iqbz)
        !

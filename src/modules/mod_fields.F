@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -80,6 +80,7 @@ module fields
 &                        trim(E_field%ef_name) == 'THETA' ,& 
 &                        trim(E_field%ef_name) == 'PULSE' ,& 
 &                        trim(E_field%ef_name) == 'QSSIN' ,&
+&                        trim(E_field%ef_name) == 'SPULSE',&
 &                        trim(E_field%ef_name) == 'QSFIELD' /)) .and. &
 &                 any((/ trim(E_field%ef_pol)  == 'linear' ,&
 &                        trim(E_field%ef_pol)  == 'circular' /))
@@ -138,6 +139,7 @@ module fields
      f_t=cZERO
      fr_shift(1)=0._SP
      fr_shift(2)=pi/2._SP
+     E_field%To=T_0
      !
      if(trim(E_field%ef_pol)=="linear"  ) n_fields=1
      if(trim(E_field%ef_pol)=="circular") n_fields=2
@@ -155,7 +157,7 @@ module fields
            WtimesT=W_field*T+fr_shift(i_field)
            if (order==0 ) f_t(i_field)=f_t(i_field)-    (cos(WtimesT)-1._SP)/W_field
            if (order==1 ) f_t(i_field)=f_t(i_field)+     sin(WtimesT)
-           if (order==2 ) f_t(i_field)=f_t(i_field)+W_0* cos(WtimesT)
+           if (order==2 ) f_t(i_field)=f_t(i_field)+W_field*cos(WtimesT)
          enddo 
        case('SOFTSIN')
          T_0=sigma
@@ -174,7 +176,7 @@ module fields
            !
            if (order==0 ) f_t(i_field)=f_t(i_field)- damp_func*(cos(WtimesT)-1._SP)/W_field
            if (order==1 ) f_t(i_field)=f_t(i_field)+ damp_func*sin(WtimesT)
-           if (order==2 ) f_t(i_field)=f_t(i_field)+ damp_func*W_0*cos(WtimesT)
+           if (order==2 ) f_t(i_field)=f_t(i_field)+ damp_func*W_field*cos(WtimesT)
            if (order==-1) f_t(i_field)=-2
            !
          enddo 
@@ -244,8 +246,6 @@ module fields
        case('QSFIELD')
          WtimesT=W_0*(T-T_0)+fr_shift(i_field)
          EXPf=exp(-(T-T_0)**2/(2._SP*sigma**2) )
-         cZ=(sigma**2*W_0-cI*(T-T_0))/(sigma*sqrt(2._SP))
-         cS=cmplx(W_0**2*sigma**2/2._SP,fr_shift(i_field),SP)
          !
          if (order==0 ) f_t(i_field)=      sin(WtimesT)                                 *EXPf
          if (order==1 ) f_t(i_field)=( W_0*cos(WtimesT)-(T-T_0)*sin(WtimesT)/sigma**2)*EXPf
@@ -258,6 +258,23 @@ module fields
            WtimesT=W_0*(T-T_0)+fr_shift(i_field)
            if (order==0 ) f_t(i_field)= 0._SP
            if (order==1 ) f_t(i_field)=       (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4      *cos(WtimesT)
+           if (order==2 ) f_t(i_field)=(2._SP*(T-T_0 + sigma)    *(T-T_0 -sigma)**2/sigma**4                 &
+&                                      +2._SP*(T-T_0 + sigma)**2 *(T-T_0 -sigma)   /sigma**4 )    *cos(WtimesT) &
+&                                      -      (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4  *W_0*sin(WtimesT)
+         endif
+         !
+       case('SPULSE')
+         T_0=sigma
+         f_t(i_field)= 0._SP
+         if(abs((T-T_0))< sigma) then
+           WtimesT=W_0*(T-T_0)+fr_shift(i_field)
+           if (order==0 ) f_t(i_field)=(4.0*W_0*(T-T_0)*cos(WtimesT)*(-sigma**2*W_0**2+W_0**2*(T-T_0)**2-6.0)   &
+&            +sin(WtimesT)*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*(T-T_0)**2-2.0)+W_0**4*(T-T_0)**4-12.0* &
+&             W_0**2*(T -T_0)**2+24))/W_0**5/sigma**4+                                                          &
+&             ((4.0*W_0*sigma*cos(W_0*sigma)*(-sigma**2*W_0**2+W_0**2*sigma**2-6.0)                             &
+&            +sin(W_0*sigma)*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*sigma**2-2.0)+W_0**4*sigma**4-12.0*   &
+&             W_0**2*sigma**2+24))/W_0**5/sigma**4)                                                             
+           if (order==1 ) f_t(i_field)=((T-T_0)**2 - sigma**2)**2/sigma**4*cos(WtimesT)
            if (order==2 ) f_t(i_field)=(2._SP*(T-T_0 + sigma)    *(T-T_0 -sigma)**2/sigma**4                 &
 &                                      +2._SP*(T-T_0 + sigma)**2 *(T-T_0 -sigma)   /sigma**4 )    *cos(WtimesT) &
 &                                      -      (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4  *W_0*sin(WtimesT)

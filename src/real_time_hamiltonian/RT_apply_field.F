@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -35,7 +35,6 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  use vec_operate,    ONLY:cross_product
  use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z
  use parallel_m,     ONLY:PAR_Xk_ibz_index
- use timing_m,       ONLY:timing
  !
  implicit none
  !
@@ -49,8 +48,6 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  complex(SP) :: A_dot_J,E_dot_P,&
 &               ExJs(3,n_spinor,n_spinor),A_vec_pot(3),E_vec_pot(3),&
 &               POL(3),Jtot(3),Jspinor(3,n_spinor,n_spinor),sigma_dot_ExJs
- !
- call timing('RT Apply Field',OPR='start')
  !
  select case(trim(global_gauge))
    !
@@ -159,7 +156,5 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    enddo
    !
  end select
- !
- call timing('RT Apply Field',OPR='stop')
  !
 end subroutine RT_apply_field

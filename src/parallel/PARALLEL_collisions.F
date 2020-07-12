@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -145,7 +145,7 @@ subroutine PARALLEL_collisions( k, COLL )
  use drivers,       ONLY:l_eval_collisions
  use interfaces,    ONLY:PARALLEL_live_message
  use collision_ext, ONLY:COLLISIONS_group,COLL_bands
- use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q,PAR_IND_QP,&
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q_bz,PAR_IND_QP,&
 &                        l_par_RT,l_par_SE,l_par_SC,l_par_NL
  use hamiltonian,   ONLY:B_mat_index
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
@@ -205,7 +205,7 @@ subroutine PARALLEL_collisions( k, COLL )
        !
        do i_q=1,nqbz
          !
-         if (.not.PAR_IND_Q%element_1D(i_q)) cycle
+         if (.not.PAR_IND_Q_bz%element_1D(i_q)) cycle
          !
          i_p_bz=qindx_S(i_k,i_q,1)
          i_p   =k%sstar(i_p_bz,1)
@@ -224,4 +224,18 @@ subroutine PARALLEL_collisions( k, COLL )
  !
  call PARALLEL_check_phase_space(COLL%PAR_N,MSG=trim(COLL%name)//" COLLISIONS")
  !
-end subroutine
+end subroutine PARALLEL_collisions
+!
+!
+subroutine PARALLEL_collisions_reset(COLL)
+ !
+ use collision_ext, ONLY:COLLISIONS_group
+ !
+#include<memory.h>
+ !
+ type(COLLISIONS_group), intent(inout) :: COLL
+ !
+ YAMBO_FREE(COLL%PAR_map)
+ YAMBO_FREE(COLL%PAR_IND%element_1D)
+ !
+end subroutine PARALLEL_collisions_reset

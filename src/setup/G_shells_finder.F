@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,6 +32,9 @@ subroutine G_shells_finder()
  use D_lattice,    ONLY:nsym,inv_index
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
 &                       g_vec,g_rot,E_of_shell,rl_sop,minus_G
+#ifdef _CUDA
+ use R_lattice,    ONLY:g_rot_d,minus_G_d
+#endif
  use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
  use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
  use zeros,        ONLY:G_iku_zero
@@ -66,15 +69,30 @@ subroutine G_shells_finder()
      YAMBO_FREE(minus_G)
      call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),MODE=VERIFY,ID=ID)
      io_err=io_GROT(ID)
+     !
    endif
+   !
+#ifdef _CUDA
+   if (allocated(g_rot_d)) deallocate(g_rot_d)
+   allocate(g_rot_d,source=g_rot)
+   if (allocated(minus_G_d)) deallocate(minus_G_d)
+   allocate(minus_G_d,source=minus_G)
+#endif
    return
+   !
  else
+   !
    if (allocated(g_rot)) then
      YAMBO_FREE(ng_in_shell)
      YAMBO_FREE(E_of_shell)
      YAMBO_FREE(g_rot)
      YAMBO_FREE(minus_G)
+#ifdef _CUDA
+     if (allocated(g_rot_d))   deallocate(g_rot_d)
+     if (allocated(minus_G_d)) deallocate(minus_G_d)
+#endif
    endif
+   !
  endif
  !
  ! Re-ordering by increasing module
@@ -113,9 +131,7 @@ subroutine G_shells_finder()
    !
    if (.not.px%element_1D(i_m)) cycle
    !
-#if defined _OPENMP
 !$omp parallel do default(shared), private(i_1,ig_1,i_s,g_rotated,i_2,ig_2)
-#endif
    do i_1=first_G_in_shell(i_m),first_G_in_shell(i_m)+ng_in_shell_TMP(i_m)-1
      !
      ig_1=G_mod_indx(i_1)
@@ -143,9 +159,7 @@ subroutine G_shells_finder()
      enddo
      !
    enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
    !
    call live_timing(steps=1)
    !
@@ -155,6 +169,10 @@ subroutine G_shells_finder()
  !
  call PP_redux_wait(g_rot)
  call PP_redux_wait(E_of_shell_TMP)
+ !
+#ifdef _CUDA
+ allocate(g_rot_d,source=g_rot)
+#endif
  !
  ! Redefine ng_in_shell_TMP witg actual position of the last element of the
  ! degenerate group
@@ -201,6 +219,10 @@ subroutine G_shells_finder()
      call eval_minus_G()
    enddo
    ng_in_shell(:n_g_shells)=ng_in_shell_TMP(:n_g_shells)
+#ifdef _CUDA
+   if (allocated(minus_G_d)) deallocate(minus_G_d)
+   allocate(minus_G_d,source=minus_G)
+#endif
  endif
  !
  E_of_shell(:n_g_shells)=E_of_shell_TMP(:n_g_shells)

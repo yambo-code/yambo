@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,6 +32,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
  use R_lattice,     ONLY:bz_samp
  use stderr,        ONLY:STRING_remove
  use vec_operate,   ONLY:sort
+ use interfaces,    ONLY:DESC_write
  !
  implicit none
  !
@@ -42,7 +43,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
  !
  ! Work Space
  !
- integer          ::i_spin,i_d,i_s
+ integer          ::i_spin,i_s
  real(SP)         ::db_scissor,fit_scissor,E(4),E_err(2),E_ref(2),W(6),W_err(2),W_dos(2),W_dos_err(2)
  character(lchlen)::ch
  complex(SP)      ::Z
@@ -90,41 +91,41 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    endif
    !
    if (db_scissor/=0._SP) then
-     call msg(' r',' Gap correction (database) [ev]:',db_scissor*HA2EV)
+     call msg(' r',' Gap correction (database) [ev]',db_scissor*HA2EV)
    endif
    !
    if (fit_scissor/=0._SP) then
-     call msg(' r','             (FIT, actual) [ev]:',fit_scissor*HA2EV)
+     call msg(' r','             (FIT, actual) [ev]',fit_scissor*HA2EV)
    endif
    !
    if (any(E/=(/0._SP,1._SP,0._SP,1._SP/))) then
-     call msg(' r',' Energies 0th order        [ev]:',(/E(1),E(3)/)*HA2EV)
-     call msg(' r',' Energies 1st order            :',(/E(2),E(4)/))
+     call msg(' r',' Energies 0th order        [ev]',(/E(1),E(3)/)*HA2EV)
+     call msg(' r',' Energies 1st order            ',(/E(2),E(4)/))
      if (any((/E_err/=0._SP/)))then
-       call msg(' r','                          Error:',E_err)
+       call msg(' r','                          Error',E_err)
      endif
      l_E=.TRUE.
    endif
    !
    if (any((/W/=0._SP/))) then
-     call msg(' r',' Widths 0th order          [ev]:',(/W(1),W(4)/)*HA2EV)
-     call msg(' r',' Widths 1st order              :',(/W(2),W(5)/)*HA2EV)
-     call msg(' r',' Widths 2st order        [1/eV]:',(/W(3),W(6)/)/HA2EV)
+     call msg(' r',' Widths 0th order          [ev]',(/W(1),W(4)/)*HA2EV)
+     call msg(' r',' Widths 1st order              ',(/W(2),W(5)/)*HA2EV)
+     call msg(' r',' Widths 2st order        [1/eV]',(/W(3),W(6)/)/HA2EV)
      if (any((/W_err(1:2)/=0._SP/))) then
-       call msg(' r','                          Error:',W_err(1:2)*HA2EV)
+       call msg(' r','                          Error',W_err(1:2)*HA2EV)
      endif
      l_W=.TRUE.
    endif
    if (any((/W_dos/=0._SP/))) then
-     call msg(' r',' Widths dos prop.          [eV]:',(/W_dos(1),W_dos(2)/)*HA2EV)
+     call msg(' r',' Widths dos prop.          [eV]',(/W_dos(1),W_dos(2)/)*HA2EV)
      if (any((/W_dos_err(1:2)/=0._SP/))) then
-       call msg(' r','                          Error:',W_dos_err(1:2)*HA2EV)
+       call msg(' r','                          Error',W_dos_err(1:2)*HA2EV)
      endif
      l_W=.TRUE.
    endif
    if (Z/=cONE) then
-     call msg(' r',  ' Renormalization           [Re]:',real(Z))
-     call msg(' r',  '                           [Im]:',aimag(Z))
+     call msg(' r',  ' Renormalization           [Re]',real(Z))
+     call msg(' r',  '                           [Im]',aimag(Z))
      l_Z=.TRUE.
    endif
    !
@@ -133,18 +134,17 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    ! Test output file
    !
    !
-   fname(2)=QP_action(i_ACTION)%CTL(1)%db
-   fname(1)=STRING_remove(fname(2),"/ndb.QP")
-   fname(2)=fname(1)
-   fname(1)=STRING_remove(fname(2),"/",replace="-")
-   fname(2)=fname(1)
-   fname(1)=STRING_remove(fname(2),".")
+   fname(1)=QP_action(i_ACTION)%CTL(1)%db
+   fname(1)=STRING_remove(fname(1),"/ndb.QP")
+   fname(1)=STRING_remove(fname(1),"./")
+   fname(1)=STRING_remove(fname(1),".")
+   fname(1)=STRING_remove(fname(1),"/",replace="-")
    !
    if (n_sp_pol>1) then 
-     if (i_spin==1) fname(2)=trim(fname(1))//"-spin-dn.fit"
-     if (i_spin==2) fname(2)=trim(fname(1))//"-spin-up.fit"
-     if (i_spin==1) fname(1)=trim(fname(1))//"-spin-dn.data"
-     if (i_spin==2) fname(1)=trim(fname(1))//"-spin-up.data"
+     if (i_spin==1) fname(2)=trim(fname(1))//"-spin-up.fit"
+     if (i_spin==2) fname(2)=trim(fname(1))//"-spin-dn.fit"
+     if (i_spin==1) fname(1)=trim(fname(1))//"-spin-up.data"
+     if (i_spin==2) fname(1)=trim(fname(1))//"-spin-dn.data"
    else
      fname(2)=trim(fname(1))//".fit"
      fname(1)=trim(fname(1))//".data"
@@ -152,9 +152,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    call of_open_close(fname(1),'ot')
    call of_open_close(fname(2),'ot')
    call msg('o .fit .data','#')
-   do i_d=1,qp%n_descs
-     call msg('o .fit .data','#'//trim(qp%description(i_d)))
-   enddo
+   call DESC_write('o .fit .data','#',qp%desc)
    !
    n_titles=1
    titles(1)="Eo [eV]"

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA MG
@@ -38,7 +38,7 @@ subroutine SC_add_efield(V_bands,E,k,Pol)
  !
  type(bz_samp), intent(in)  :: k
  type(levels),  intent(in)  :: E
- complex(SP),   intent(in)  :: V_bands(SC_bands(2),E%nbf,QP_nk,n_sp_pol)
+ complex(SP),   intent(in)  :: V_bands(SC_bands(2),QP_nk,n_sp_pol)
  complex(SP),   intent(out) :: Pol(3)
  !
  ! Working space

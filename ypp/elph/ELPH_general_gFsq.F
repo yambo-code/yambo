@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
+subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  !
  use pars,                ONLY:SP,schlen
  use units,               ONLY:HA2EV
@@ -29,6 +29,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
  use electrons,           ONLY:levels,n_sp_pol
  use R_lattice,           ONLY:bz_samp
  use frequency,           ONLY:w_samp,W_reset
+ use YPPm,                ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
  use YPP_ELPH,            ONLY:elph_steps,ph_broad
  use stderr,              ONLY:intc
  use ELPH,                ONLY:W_debye,elph_nDBs_used,ph_modes,elph_global_free,&
@@ -39,7 +40,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
  use BS,                  ONLY:BS_K_dim,BS_bands
  use QP_m,                ONLY:QP_n_states,QP_table,QP_state,QP_nb,QP_nk,QP_states_simmetrize
  use LIVE_t,              ONLY:live_timing
- use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid,PAR_nQ
+ use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid,PAR_nQ_bz
  use interfaces,          ONLY:PARALLEL_index
  use functions,           ONLY:Fermi_fnc_derivative
  !
@@ -48,8 +49,6 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
  type(levels) ::en,Xen
  type(bz_samp)::k,Xk,q
  integer,  optional      ::BS_E_degs(:)
- integer,  optional      ::lambda_s(:)
- integer,  optional      ::n_lambda
  !
  ! Work Space (electrons)
  !
@@ -118,7 +117,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
  !
  if (     elph_use_q_grid) nq_loop=q%nbz
  if (.not.elph_use_q_grid) nq_loop=elph_nDBs_used
- PAR_nQ=nq_loop
+ PAR_nQ_bz=nq_loop
  !
  call elph_global_alloc('gFsq')
  ! 
@@ -250,7 +249,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
  !
  if (gFsq_is_excitonic) then
    !
-   call msg('s',':: Building the correspondance map')
+   call msg('s',' Building the correspondance map')
    !
    YAMBO_FREE(QP_table_map)
    YAMBO_ALLOC(QP_table_map,(BS_K_dim,2))
@@ -269,20 +268,20 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
      !
    enddo
    !
-   call msg('s',':: Processing '//trim(intc(n_lambda))//' state(s)')
+   call msg('s',' Processing '//trim(intc(EXCITONS_n_user_states))//' state(s)')
    !
    call PARALLEL_index(px,(/BS_K_dim/))
    call PP_redux_wait
    !
-   do i_lambda=1,n_lambda
+   do i_lambda=1,EXCITONS_n_user_states
      !
      g_sq_F_exciton=0.
      !
-     lambda=lambda_s(i_lambda)
+     lambda=EXCITONS_user_indexes(i_lambda)
      !
      n_lambda_deg=count(BS_E_degs==BS_E_degs(lambda))
      !
-     if (n_lambda_deg>1) call msg('s',':: State '//trim(intc(lambda))//' Merged with states '//&
+     if (n_lambda_deg>1) call msg('s',' State '//trim(intc(lambda))//' Merged with states '//&
 &                                     trim(intc(BS_E_degs(lambda)))//' -> '//&
 &                                     trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
      !

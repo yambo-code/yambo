@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -49,7 +49,22 @@ if test "$enable_open_mp" = "yes" ; then OPENMP_check="X"; fi
 #
 # - LIBRARIES -
 #
-
+#
+YAML_str=" - "
+if test "$internal_yaml" = "yes" ; then
+  if test "$compile_yaml" = "yes" ; then YAML_str=" Ic"; fi
+  if test "$compile_yaml" = "no"  ; then YAML_str=" If"; fi
+elif test "$enable_yaml" = "yes" ; then
+  YAML_str=" E "
+fi
+#
+FUTILE_str=" - "
+if test "$internal_futile" = "yes" ; then
+  if test "$compile_futile" = "yes" ; then FUTILE_str=" Ic"; fi
+  if test "$compile_futile" = "no"  ; then FUTILE_str=" If"; fi
+elif test "$enable_futile" = "yes" ; then
+  FUTILE_str=" E "
+fi
 #
 IOTK_str=" - "
 if test "$compile_p2y" = "yes" ; then
@@ -187,6 +202,8 @@ AC_SUBST(MEM_profile_check)
 AC_SUBST(MPI_check)
 AC_SUBST(OPENMP_check)
 #
+AC_SUBST(YAML_str)
+AC_SUBST(FUTILE_str)
 AC_SUBST(IOTK_str)
 AC_SUBST(ETSF_str)
 AC_SUBST(NETCDF_str)

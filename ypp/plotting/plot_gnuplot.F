@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -26,9 +26,9 @@ subroutine plot_gnuplot(eval_only)
  use pars,        ONLY:SP,schlen
  use units,       ONLY:BO2ANG
  use com,         ONLY:msg
- use YPP,         ONLY:nr,v2plot,r_hole,v2plot2D,l_norm_to_one,WF_multiplier,plot_dim,&
+ use YPPm,        ONLY:nr,v2plot,r_hole,v2plot2D,l_norm_to_one,WF_multiplier,plot_dim,&
 &                      plot_title,output_string,l_wavefunction,l_current,use_xcrysden,&
-&                      plot_is_1D,plot_is_2D
+&                      plot_is_1D,plot_is_2D,l_free_hole
  use LIVE_t,      ONLY:live_timing
  !
 #include<memory.h>
@@ -38,7 +38,7 @@ subroutine plot_gnuplot(eval_only)
  !
  integer           :: i1,i2,i3,ir,nr2plot(2),dir2plot(2)
  character(schlen) :: titles(4)
- real(SP)          :: v_max
+ real(SP)          :: v_max,r_plot_center(3)
  !
  if (plot_dim==3) return
  !
@@ -57,6 +57,11 @@ subroutine plot_gnuplot(eval_only)
    if (l_current)      titles(4) = 'J [nAmpere]'
    !
  endif
+ !
+ ! SET CENTER OF THE PLOT
+ !
+ r_plot_center=0.
+ if (.not.l_free_hole) r_plot_center=r_hole
  !
  ! DIMENSIONs
  !
@@ -178,7 +183,7 @@ subroutine plot_gnuplot(eval_only)
      integer :: I,dir
      real(SP):: rv(3)
      !
-     rv(:)=I*a(dir,:)/fft_dim(dir)-r_hole(:)
+     rv(:)=I*a(dir,:)/fft_dim(dir)-r_plot_center(:) 
      projection_=dot_product(rv,a(dir,:))/v_norm(a(dir,:))*BO2ANG
      !
    end function

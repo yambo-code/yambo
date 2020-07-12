@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -31,11 +31,9 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,           ONLY:bz_samp
- use X_m,                 ONLY:X_t
  use DIPOLES,             ONLY:DIP_spin,DIPOLE_t
  use fft_m,               ONLY:fft_size
  use wave_func,           ONLY:WF
- use com,                 ONLY:error
  use wrapper,             ONLY:Vstar_dot_V
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
@@ -50,7 +48,7 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
  ! Work Space
  !
  integer                      :: ik,ic_wf,iv_wf,ic,iv,&
-&                                i_sp_pol,i_spinor,i_spin,n_LT_steps,ik_mem
+&                                i_sp_pol,n_LT_steps,ik_mem
  !
  ! Parallelization Mask 
  !======================
@@ -99,24 +97,24 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
            ! mz
            !
            DIP_spin(3,ic,iv,ik_mem,i_sp_pol)=real((-1)**(i_sp_pol-1),SP)*&
-&                                             Vstar_dot_V(fft_size,WF%c(:,1,ic_wf),WF%c(:,1,iv_wf))
+&                                             Vstar_dot_V(fft_size,WF%c(:,1,iv_wf),WF%c(:,1,ic_wf))
            !
          elseif (n_spinor==2) then
            !
            ! mx
            !
-           DIP_spin(1,ic,iv,ik_mem,i_sp_pol)= Vstar_dot_V(fft_size,WF%c(:,1,ic_wf),WF%c(:,2,iv_wf)) &
-&                                            +Vstar_dot_V(fft_size,WF%c(:,2,ic_wf),WF%c(:,1,iv_wf))
+           DIP_spin(1,ic,iv,ik_mem,i_sp_pol)= Vstar_dot_V(fft_size,WF%c(:,1,iv_wf),WF%c(:,2,ic_wf)) &
+&                                            +Vstar_dot_V(fft_size,WF%c(:,2,iv_wf),WF%c(:,1,ic_wf))
            !
            ! my
            !
-           DIP_spin(2,ic,iv,ik_mem,i_sp_pol)=-cI*Vstar_dot_V(fft_size,WF%c(:,1,ic_wf),WF%c(:,2,iv_wf)) &
-&                                            +cI*Vstar_dot_V(fft_size,WF%c(:,2,ic_wf),WF%c(:,1,iv_wf))
+           DIP_spin(2,ic,iv,ik_mem,i_sp_pol)=-cI*Vstar_dot_V(fft_size,WF%c(:,1,iv_wf),WF%c(:,2,ic_wf)) &
+&                                            +cI*Vstar_dot_V(fft_size,WF%c(:,2,iv_wf),WF%c(:,1,ic_wf))
            !
            ! mz
            !
-           DIP_spin(3,ic,iv,ik_mem,i_sp_pol)= Vstar_dot_V(fft_size,WF%c(:,1,ic_wf),WF%c(:,1,iv_wf)) &
-&                                            -Vstar_dot_V(fft_size,WF%c(:,2,ic_wf),WF%c(:,2,iv_wf))
+           DIP_spin(3,ic,iv,ik_mem,i_sp_pol)= Vstar_dot_V(fft_size,WF%c(:,1,iv_wf),WF%c(:,1,ic_wf)) &
+&                                            -Vstar_dot_V(fft_size,WF%c(:,2,iv_wf),WF%c(:,2,ic_wf))
            !
          endif
          !

@@ -113,7 +113,7 @@ module cube_m
      character(*), intent(in) :: filename
      character(*), intent(in) :: msg1,msg2
      integer,      intent(in) :: nr1,nr2,nr3,natom
-     integer       intent(in) :: Z_atoms(*)
+     integer,      intent(in) :: Z_atoms(*)
      real(SP),     intent(in) :: CH_atoms(*)
      real(SP),     intent(in) :: al1(3),al2(3),al3(3)
      real(SP),     intent(in) :: tau(3,*)

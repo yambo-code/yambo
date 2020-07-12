@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, DS
@@ -50,6 +50,7 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
   !
   integer       :: ic,ifft,is1,is2,is_xc
   real(SP)      :: Gv_drho(fft_size),v_drho(fft_size,3)
+  real(SP)      :: fac
   complex(DP)   :: Vr(fft_size), Vg(QP_ng_Vxc)
   !
   ! 0. define v_drho
@@ -58,8 +59,14 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
     v_drho = 0._SP 
     do is2 = 1,n_spin
       is_xc = max(is2*(is1+1)/2,is1*(is2+1)/2)
+      ! In the presence of spin 
+      ! vsigma(2,:) = vsigma_updw(2,:)+vsigma_dwup(2,:)
+      !             = 2*vsigma_updw(2,:)
+      ! thus I set fac to 2._SP to remove the extra 2
+      if (is_xc/=2) fac=1._SP
+      if (is_xc==2) fac=2._SP
       forall(ic=1:3,ifft=1:fft_size) v_drho(ifft,ic) = v_drho(ifft,ic) + &
-&                                         2._SP*real(v1sigma(is_xc,ifft),SP)*drho(ifft,is2,ic)
+&                                         2._SP/fac*real(v1sigma(is_xc,ifft),SP)*drho(ifft,is2,ic)
     end do
     !
     ! 1. this is done by FFTing, by doing the scalar

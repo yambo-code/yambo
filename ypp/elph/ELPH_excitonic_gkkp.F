@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,31 +21,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
+subroutine ELPH_excitonic_gkkp(Xk)
  !
  use pars,                ONLY:SP,schlen,cZERO
  use units,               ONLY:HA2EV,HA2FSm1
  use BS_solvers,          ONLY:BS_mat,BSS_eh_table
  use BS,                  ONLY:BS_K_dim,BS_nT_at_k
  use R_lattice,           ONLY:bz_samp
- use IO_m,                ONLY:io_control,OP_RD,DUMP,RD_CL_IF_END
+ use IO_m,                ONLY:io_control,manage_action,OP_RD,DUMP,RD_CL_IF_END
  use ELPH,                ONLY:elph_nDBS_used,ph_modes,elph_global_free,&
 &                              elph_use_q_grid,ph_freqs_sq,elph_gkkp
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid
  use interfaces,          ONLY:PARALLEL_index
  use LIVE_t,              ONLY:live_timing
- use functions,           ONLY:Fermi_fnc_derivative
  use com,                 ONLY:msg,of_open_close
  use stderr,              ONLY:intc
+ use YPPm,                ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
  !
 #include<memory.h>
  !
  type(bz_samp) :: Xk
- integer       :: lambda_s(n_lambda),n_lambda
  !
  ! Work Space
  !
- integer                   ::neh1,ic1,iv1,ik_bz1,ik_ibz,ID,io_err,iq,ikk,&
+ integer                   ::neh1,ic1,iv1,ik_bz1,ik_ibz,ID,IO_ACT,io_err,iq,ikk,&
 &                            neh2,ic2,iv2,ik_bz2,i_lambda,lambda,i_l
  complex(SP), allocatable  ::diagonal_xhi(:,:,:)
  real(SP),    allocatable  ::ph_freqs(:)
@@ -54,13 +53,13 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
  type(PP_indexes)          ::px
  character(schlen)         ::ch
  !
- call section("+","Excitonic gkkp factors")
+ call section("+","Excitonic GKKP factors")
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
  io_err=io_ELPH(ID,'gkkp')
  if (io_err/=0.or.elph_use_q_grid) return
  !
- YAMBO_ALLOC(diagonal_xhi,(elph_nDBS_used,ph_modes,n_lambda))
+ YAMBO_ALLOC(diagonal_xhi,(elph_nDBS_used,ph_modes,EXCITONS_n_user_states))
  YAMBO_ALLOC(ph_freqs,(ph_modes))
  diagonal_xhi = cZERO
  !
@@ -79,7 +78,8 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
  !
  do iq=1,elph_nDBS_used
    !
-   call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
+   IO_ACT=manage_action(RD_CL_IF_END,iq,1,elph_nDBS_used)
+   call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID)
    io_err=io_ELPH(ID,'gkkp')
    !
    if (iq==1) call live_timing('GKKP factors',px%n_of_elements(myid+1))
@@ -93,9 +93,9 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
      !
      ikk=sum(BS_nT_at_k(:ik_ibz-1))
      !
-     do i_lambda=1,n_lambda
+     do i_lambda=1,EXCITONS_n_user_states
        !
-       lambda=lambda_s(i_lambda)
+       lambda=EXCITONS_user_indexes(i_lambda)
        !
        do neh1=1,BS_nT_at_k(ik_ibz)
           !
@@ -148,7 +148,7 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
  call PP_redux_wait(diagonal_xhi)
  call PP_indexes_reset(px)
  !
- ch='gkkpF_'//trim(intc(lambda_s(1)))
+ ch='gkkpF_'//trim(intc(EXCITONS_user_indexes(1)))
  call of_open_close(trim(ch),'ot')
  call msg('o gkkp','#',(/'E      [meV]', '|gkkp| [meV]','|gkkp|  [fs]'/),INDENT=0,USE_TABS=.true.)  
  call msg('o gkkp','#')

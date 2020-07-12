@@ -1,1 +1,6 @@
-objs = k_grids.o k_special.o k_DbGd_grid_consistency_check.o k_random.o k_map_fine_to_coarse.o double_k_grid.o k_grid_printer.o
+objs = k_grids.o k_special.o \
+       k_map_fine_to_coarse_driver.o k_map_fine_to_coarse_init.o \
+       k_map_fine_to_coarse_ibz.o k_map_fine_to_coarse_bz.o \
+       k_circuit_driver.o k_circuit_made_of_special_points.o k_circuit_made_of_user_points.o \
+       k_FineGd_grid_consistency_check.o k_random.o \
+       double_k_grid.o k_grid_printer.o

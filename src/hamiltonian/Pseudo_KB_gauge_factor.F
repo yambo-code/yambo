@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -23,13 +23,11 @@
 !
 subroutine Pseudo_KB_gauge_factor(gauge_factor)
  !
- use pars,          ONLY:SP,DP,cI
+ use pars,          ONLY:SP
  use units,         ONLY:SPEED_OF_LIGHT
  use electrons,     ONLY:n_spinor
- use wave_func,     ONLY:wf_ng
- use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
+ use FFT_m,         ONLY:fft_size
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos,x_cc,a
- use com,           ONLY:warning
 #if defined _MAGNETIC
  use drivers,       ONLY:l_sc_magnetic
  use magnetic,      ONLY:Bz,phase_trick,MAG_radius,n_loops

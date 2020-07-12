@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DK CA
@@ -27,12 +27,10 @@ subroutine bxsf_read(Xk,Xen)
  use units,               ONLY:pi,HA2EV,BO2ANG
  use R_lattice,           ONLY:bz_samp,b,k_grid,k_the_nearest
  use parser_m,            ONLY:parser
- use YPP,                 ONLY:wannier_bands, ord_dgrid_ipol
- use electrons,           ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,&
-                               BZ_DbGd_max_filling,BZ_DbGd_nbands, &
-                               BZ_DbGd_tot_nk_levels,BZ_DbGd_weight,n_spin
+ use YPPm,                ONLY:wannier_bands, ord_dgrid_ipol
+ use electrons,           ONLY:levels,n_spin
  use LIVE_t,              ONLY:live_timing
- use com,                 ONLY:file_exists,msg,error
+ use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a,rlu_k2bz,k2bz,v_is_zero
  use IO_m,                ONLY:io_control,NONE,OP_WR_CL
  !
@@ -62,6 +60,8 @@ subroutine bxsf_read(Xk,Xen)
  character(lchlen) :: dummyline
 
  real(SP) :: efermitest
+ !
+ logical, external :: file_exists
 
  YAMBO_ALLOC(nkpoints_gengrid,(3))
  YAMBO_ALLOC(nkpoints,(3))
@@ -74,7 +74,7 @@ subroutine bxsf_read(Xk,Xen)
  call parser('w90_fname',filename)
  !
  if(.not. file_exists(trim(filename))) then
-    call msg("s",':: Do not find wannier90 file')
+    call msg("s",' Do not find wannier90 file')
     return
  endif
  !
@@ -178,10 +178,10 @@ subroutine bxsf_read(Xk,Xen)
     end do
  end do 
  !                 
- call msg('s',':: Wannier-interpolated K-points (BZ) : ',nkpoints)
- call msg('s',':: Internal (coarse) K-point grid (BZ): ',k_grid)
- call msg('s',':: Range of Wannier-interpolated bands: ',wannier_bands)
- call msg('s',':: Wannier-interpolated bands:          ',nbands)
+ call msg('s',' Wannier-interpolated K-points (BZ)  ',nkpoints)
+ call msg('s',' Internal (coarse) K-point grid (BZ) ',k_grid)
+ call msg('s',' Range of Wannier-interpolated bands ',wannier_bands)
+ call msg('s',' Wannier-interpolated bands:          ',nbands)
 
  !call io_disconnect(readunit)
  !
@@ -212,10 +212,10 @@ subroutine bxsf_read(Xk,Xen)
    call k2bz(v_in=DbGd_k%ptbz(ii,:))
  enddo
  !
- YAMBO_ALLOC(BZ_DbGd_nkpt,(Xk%nbz))
- BZ_DbGd_nkpt = 0
- BZ_DbGd_nbands=nbands
- BZ_DbGd_tot_nk_levels=DbGd_k%nbz
+ YAMBO_ALLOC(Xk%nbz_mapped,(Xk%nbz))
+ Xk%nbz_mapped = 0
+ Xen%nb_FineGd=nbands
+ Xk%nbz_FineGd=DbGd_k%nbz
  !
  if (ord_dgrid_ipol .eq. 0) then
    !
@@ -226,19 +226,18 @@ subroutine bxsf_read(Xk,Xen)
    ! have to go twice through all elements as BZ_DbGd_k cannot be
    ! allocated without knowing the number of maximum elements. 
    !
-   do while(.not.allocated(BZ_DbGd_table)) 
-     if (maxval(BZ_DbGd_nkpt)>0) then
-       YAMBO_ALLOC(BZ_DbGd_table,(Xk%nbz,maxval(BZ_DbGd_nkpt),2))
-       BZ_DbGd_table=0
+   do while(.not.allocated(Xk%bz_DbGd_map)) 
+     if (maxval(Xk%nbz_mapped)>0) then
+       allocate(Xk%bz_DbGd_map(Xk%nbz,maxval(Xk%nbz_mapped)))
+       Xk%bz_DbGd_map=0
      endif
-     BZ_DbGd_nkpt=0
+     Xk%nbz_mapped=0
      do ii=1,DbGd_k%nbz
        !
        ikbz=k_the_nearest(DbGd_k%ptbz(ii,:),Xk%ptbz(:,:),Xk%nbz)
-       BZ_DbGd_nkpt(ikbz)=BZ_DbGd_nkpt(ikbz)+1
+       Xk%nbz_mapped(ikbz)=Xk%nbz_mapped(ikbz)+1
        !
-       if (allocated(BZ_DbGd_table)) BZ_DbGd_table(ikbz,BZ_DbGd_nkpt(ikbz),1)= ii !DbGd_k%sstar(i1,1)
-       !if (allocated(BZ_DbGd_table)) BZ_DbGd_table(ikbz,BZ_DbGd_nkpt(ikbz),2)= ?? !i1
+       if (allocated(Xk%bz_DbGd_map)) Xk%bz_DbGd_map(ikbz,Xk%nbz_mapped(ikbz))= ii
        !   
        call live_timing(steps=1)
        !
@@ -246,48 +245,46 @@ subroutine bxsf_read(Xk,Xen)
    enddo
    call live_timing()
    ! 
-   BZ_DbGd_max_filling=maxval(BZ_DbGd_nkpt)
-   YAMBO_ALLOC(BZ_DbGd_weight,(BZ_DbGd_max_filling))
-   BZ_DbGd_weight = 1.0_SP
+   YAMBO_ALLOC(Xk%weights_ipol,(maxval(Xk%nbz_mapped)))
+   Xk%weights_ipol = 1.0_SP
  else
    call section('*','Employ double grid method' )
-   call msg('s',':: Perform polynomial interpolation of order :',ord_dgrid_ipol)
+   call msg('s',' Perform polynomial interpolation of order ',ord_dgrid_ipol)
    ! fill DbGd_k according to double grid technique
    err_dgrid=double_k_grid(Xk,nkpoints,ord_dgrid_ipol)
    if(err_dgrid.ne.0) then
-     call msg("s",':: ERROR while preparing double grid. Error:',err_dgrid) 
+     call msg("s",' ERROR while preparing double grid. Error',err_dgrid) 
      return
    endif
-   BZ_DbGd_max_filling=maxval(BZ_DbGd_nkpt)
  endif
  !
  !     
- call msg('s',':: Blocks filling range :',(/minval(BZ_DbGd_nkpt),BZ_DbGd_max_filling/))
- if(minval(BZ_DbGd_nkpt) .ne. BZ_DbGd_max_filling) then
-   call msg('s',':: DbGd_k blocks are not filled uniformly.')
+ call msg('s',' Blocks filling range ',(/minval(Xk%nbz_mapped),maxval(Xk%nbz_mapped)/))
+ if(minval(Xk%nbz_mapped) .ne. maxval(Xk%nbz_mapped)) then
+   call msg('s',' DbGd_k blocks are not filled uniformly.')
    if(ord_dgrid_ipol.gt.0)then
-     call msg('s',':: Error: For double grid must be filled uniformely.')
+     call msg('s',' Error: For double grid must be filled uniformely.')
      return
    endif
  endif
  !
  call section('*','Create & write BZ_DbGd')
  !
- YAMBO_ALLOC(Xen%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_spin))
- Xen%E_DbGd(:,:DbGd_k%nbz,1)=ene(:,:DbGd_k%nbz)/HA2EV+Xen%E_Fermi
+ YAMBO_ALLOC(Xen%E_FineGd,(Xen%nb_FineGd,Xen%nk,n_spin))
+ Xen%E_FineGd(:,:,1)=ene/HA2EV+Xen%E_Fermi
  ! align last (partly) filled band at gamma.
  nearest_to_g=k_the_nearest(DbGd_k%ptbz(1,:),Xk%ptbz(:,:),Xk%nbz) 
  if(sum((DbGd_k%ptbz(1,:)-Xk%ptbz(nearest_to_g,:))**2).gt. epsilon(1._SP)) then
-    call msg('s',':: Gamma is not part of your kgrid.')
-    call msg('s',':: Probably you use a shifted grid. You should not!')
-    call msg('s',':: Gamma :',DbGd_k%ptbz(1,:))
-    call msg('s',':: Nearest to Gamma :',Xk%ptbz(nearest_to_g,:))
+    call msg('s',' Gamma is not part of your kgrid.')
+    call msg('s',' Probably you use a shifted grid. You should not!')
+    call msg('s',' Gamma ',DbGd_k%ptbz(1,:))
+    call msg('s',' Nearest to Gamma ',Xk%ptbz(nearest_to_g,:))
  end if 
  !
  vband=minloc(Xen%f(:,nearest_to_g,1),1)-1
- call msg('s',':: Internal and wannier bands to align (at Gamma):',(/vband,vband+wannier_bands(1)-1/))
+ call msg('s',' Internal and wannier bands to align (at Gamma)',(/vband,vband+wannier_bands(1)-1/))
  deltaE=ene(vband,1)/HA2EV-Xen%E(vband,nearest_to_g,1)
- Xen%E_DbGd(:,:DbGd_k%nbz,1)=Xen%E_DbGd(:,:DbGd_k%nbz,1)-deltaE
+ Xen%E_FineGd(:,:DbGd_k%nbz,1)=Xen%E_FineGd(:,:DbGd_k%nbz,1)-deltaE
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=NONE,ID=ID)
  i_err=io_Double_Grid(Xen,Xk,ID)
@@ -301,8 +298,8 @@ subroutine bxsf_read(Xk,Xen)
  YAMBO_FREE(nkpoints_gengrid)
  YAMBO_FREE(startkpoint)
  YAMBO_FREE(recip_lattice)
- YAMBO_FREE(BZ_DbGd_nkpt)
- YAMBO_FREE(BZ_DbGd_table)
- YAMBO_FREE(BZ_DbGd_weight)
+ YAMBO_FREE(Xk%nbz_mapped)
+ YAMBO_FREE(Xk%bz_DbGd_map)
+ YAMBO_FREE(Xk%weights_ipol)
  !
 end subroutine

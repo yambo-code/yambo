@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -29,11 +29,11 @@ subroutine NL_current(k,E,V_input,NL_J)
  ! j(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
  ! p(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) r \psi_j(k)
  !
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP,cZERO
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp,k_map
  use D_lattice,      ONLY:DL_vol
- use electrons,      ONLY:nel,levels,n_spin,n_sp_pol
+ use electrons,      ONLY:nel,levels,n_sp_pol
  use fields,         ONLY:A_ext
  use X_m,            ONLY:global_gauge
  use DIPOLES,        ONLY:DIP_v
@@ -50,6 +50,8 @@ subroutine NL_current(k,E,V_input,NL_J)
  complex(SP),       intent(out) :: NL_J(6)
  !
  ! Work Space
+ !
+ NL_J=cZERO
  !
  ! A : Current
  !

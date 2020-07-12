@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): HM
@@ -26,10 +26,10 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  ! Interface with the K_multiply_by_V from the Haydock method
  ! This function has to take the same arguments as MatMult from PETSC
  !
- use pars,          ONLY : SP,DP,cZERO
+ use pars,          ONLY : SP
  use BS_solvers,    ONLY : Slepc_v
- use BS,            ONLY : BS_T_grp,BS_nT_grps,BS_blk,n_BS_blks,BS_H_dim
- use parallel_m,    ONLY : PP_redux_wait,PAR_IND_T_Haydock,PAR_COM_T_Haydock
+ use BS,            ONLY : BS_T_grp,BS_nT_grps
+ use parallel_m,    ONLY : PAR_IND_T_Haydock
  !
  implicit none
  !
@@ -49,7 +49,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  Vec                  :: vi,vo,x
  Mat                  :: slepc_mat
  !
- integer              :: n, i_g, i_c, start_index, low, high
+ integer              :: n, i_g, i_c, start_index
  !
  ! create scattering context vi (distributed) -> x (local)
  !

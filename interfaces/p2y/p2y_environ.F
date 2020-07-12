@@ -24,7 +24,6 @@
 subroutine p2y_environ(filename)
  !
  use pars,           ONLY:SP,DP,schlen
- use com,            ONLY:error,file_exists
  use vec_operate,    ONLY:c2a
  use IO_m,           ONLY:OP_WR_CL,OP_APP_CL,REP,io_control
  use pw_data,        ONLY:nr1_,nr2_,nr3_,a1_,a2_,a3_
@@ -39,6 +38,8 @@ subroutine p2y_environ(filename)
 #include<memory.h>
  !
  character(schlen), intent(in) :: filename
+ !
+ logical, external :: file_exists
 
  !
  ! Work space

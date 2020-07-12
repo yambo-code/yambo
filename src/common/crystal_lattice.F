@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,7 @@ subroutine crystal_lattice()
  use D_lattice,      ONLY:a,alat,lattice,dl_sop,nsym
  use vec_operate   , ONLY:v_norm
  use matrix_operate, ONLY:m3inv,m3det
- use com,            ONLY:warning
+ !
  implicit none
  !
  ! Work Space
@@ -116,7 +116,7 @@ subroutine crystal_lattice()
  enddo
  !
  if (  count (.not.lattice_test_failed)  > 1 ) then
-   call warning('Two or more crystal strcutures fit the given cell')
+   call warning('Two or more crystal structures fit the given cell')
  else if (  count (.not.lattice_test_failed) == 1 ) then
    do i_l=1,n_lattices
      if (any(.not.lattice_test_failed(i_l,:))) lattice=lattice_name(i_l)

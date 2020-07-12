@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -23,10 +23,13 @@
 !
 subroutine build_spin_sop()
  !
- use pars,           ONLY:SP,pi,cI,cONE,cZERO
+ use pars,           ONLY:SP,pi,cI,cONE
  use matrix_operate, ONLY:m3det
  use D_lattice,      ONLY:dl_sop,spin_sop,nsym,i_time_rev,&
 &                         sigma_0,sigma_x,sigma_y,sigma_z
+#if defined _CUDA
+ use D_lattice,      ONLY:spin_sop_d
+#endif
  use electrons,      ONLY:n_spinor
  !
 #include<memory.h>
@@ -35,6 +38,9 @@ subroutine build_spin_sop()
  complex(SP)    ::spin_RX_delta(2,2),spin_RY_beta(2,2),spin_RZ_alpha(2,2)
  real(SP)       ::alpha,beta,delta,tmp_sop(3,3)
  integer        ::is,i1,i2
+ !DEBUG <
+ !real(SP)       ::angles(3,nsym)
+ !DEBUG >
  !
  YAMBO_FREE(spin_sop)
  !
@@ -58,17 +64,17 @@ subroutine build_spin_sop()
    ! Spin is invariant under spatial inversion. I need only the rotations.
    tmp_sop= tmp_sop*m3det(tmp_sop)
    !
-   !           "Tait–Bryan angles"
+   !           "Tait-Bryan angles"
    if (abs(tmp_sop(3,1)+1._SP)<1.E-5_SP) then
      alpha=0._SP
-     beta= pi/2._SP
+     beta=-pi/2._SP
      delta=atan2(tmp_sop(1,2),tmp_sop(1,3))
    elseif (abs(tmp_sop(3,1)-1._SP)<1.E-5_SP) then
      alpha=0._SP
-     beta=-pi/2._SP
+     beta= pi/2._SP
      delta=atan2(-tmp_sop(1,2),-tmp_sop(1,3))
    else
-     beta=-asin(tmp_sop(3,1))
+     beta= asin(tmp_sop(3,1))
      alpha=atan2(tmp_sop(2,1)/cos(beta),tmp_sop(1,1)/cos(beta))
      delta=atan2(tmp_sop(3,2)/cos(beta),tmp_sop(3,3)/cos(beta))
    endif
@@ -76,6 +82,10 @@ subroutine build_spin_sop()
    alpha=alpha/2._SP
    beta= beta /2._SP
    delta=delta/2._SP
+   !
+   ! DEBUG <
+   !angles(:,is)=(/alpha,beta,delta/)/pi*180._SP
+   ! DEBUG >
    !
    ! Sakurai p.166, eq. 3.2.44 + pag 159 eq. 3.2.3
    spin_RX_delta=sigma_0*cos(delta)-cI*sigma_x*sin(delta)
@@ -93,5 +103,19 @@ subroutine build_spin_sop()
    enddo
    !
  enddo
+ !
+#if defined _CUDA
+ if (allocated(spin_sop_d)) deallocate(spin_sop_d)
+ allocate(spin_sop_d,source=spin_sop)
+#endif
+ !
+ ! DEBUG <
+ !do is=1,nsym
+ !  write(*,*) is, angles(:,is)
+ !  do i1=1,2
+ !    write(*,*) i1,spin_sop(:,i1,is)
+ !  enddo
+ !enddo
+ ! DEBUG >
  !
 end subroutine

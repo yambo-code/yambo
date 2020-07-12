@@ -1,3 +1,3 @@
 objs = excitons_driver.o excitons_sort_and_report.o excitons_find_degeneracies.o \
-       excitons_spin.o excitons_collinear.o excitons_non_collinear.o \
-       excitons_amplitudes.o excitons_WFs.o
+       excitons_spin.o excitons_read.o \
+       excitons_amplitudes.o excitons_WFs.o excitons_degeneracy_average.o excitons_kinematics.o

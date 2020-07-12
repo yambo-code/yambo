@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,7 +26,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  use pars,           ONLY:cZERO,rZERO
  use plasma,         ONLY:N_plasma_poles_global
  use R_lattice,      ONLY:nqbz,nkibz
- use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ
+ use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ_bz
  use collision_ext,  ONLY:COLLISIONS_element,COH_COLL_element,HXC_COLL_element,GW_NEQ_COLL_element,&
 &                         COLL_bands,&
 &                         GW_NEQ_collisions,COH_collisions,HXC_collisions,P_collisions,COLLISIONS_group
@@ -49,7 +49,9 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  ! What
  !
  l_COH     =index(what,"COH")     >0
- l_HXC     =index(what,"HXC")     >0.or.index(what,"SEX")>0.or.index(what,"FOCK")>0.or.index(what,"HARTREE")>0
+ l_HXC     =index(what,"HXC")     >0.or.index(what,"SEX")>0.or.&
+&           index(what,"FOCK")>0.or.index(what,"HARTREE")>0.or.&
+&           index(what,"GS_xc")>0
  l_GW_NEQ  =index(what,"GW_NEQ")  >0
  l_Momentum=index(what,"Momentum")>0
  !
@@ -143,7 +145,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    D(3,:)=(/1,nqbz/)
    if (l_distribute.and.(l_v3.or.l_table)) then
      D(1,:)=(/1,PAR_nPlasma/)
-     D(3,:)=(/1,PAR_nQ/)
+     D(3,:)=(/1,PAR_nQ_bz/)
    endif
    if (l_collision.and.l_alloc) then
      allocate(GW_NEQ_COLL_element(size_))
@@ -212,7 +214,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
        endif
        if (l_alloc.and.(l_table.or.l_all)) then
          YAMBO_ALLOC(COLL(J)%table,(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
-         COLL(J)%table=0
+         COLL(J)%table='f'
          COLL_grp%D=D
          mem_size(5)=mem_size(5)+size(COLL(J)%table)
        endif

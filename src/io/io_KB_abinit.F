@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 integer function io_KB_abinit(ID)
  !
- use pars,             ONLY:schlen,SP
+ use pars,             ONLY:SP
  use stderr,           ONLY:intc
  use D_lattice,        ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species,&
 &                           atom_pos
@@ -33,8 +33,7 @@ integer function io_KB_abinit(ID)
 &                           PP_alloc_abinit
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_fragment, &
 &                           io_elemental,io_bulk,io_header,&
-&                           read_is_on,write_is_on,ver_is_gt_or_eq,frag_WF
- use electrons,        ONLY:n_sp_pol
+&                           read_is_on,ver_is_gt_or_eq,frag_WF
  use timing_m,         ONLY:timing
 #include<memory.h>
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,14 +29,14 @@ integer function ELPH_databases(k,E,q)
  use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,elph_use_q_grid,&
 &                              elph_global_free,W_debye,elph_global_alloc,&
 &                              elph_nDBs,ph_qpt,ph_kpt_bz,elph_nk_bz
- use com,                 ONLY:msg,warning,file_exists,error
+ use com,                 ONLY:msg
  use R_lattice,           ONLY:bz_samp,qindx_B
  use D_lattice,           ONLY:nsym,n_atoms
  use parser_m,            ONLY:parser
  use YPP_ELPH,            ONLY:ph_freqs_file,ph_modes_file
  use IO_m,                ONLY:io_control,OP_APP_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
  use LIVE_t,              ONLY:live_timing 
- use YPP,                 ONLY:k_grid_printer,alat_used_for_output
+ use YPPm,                ONLY:k_grid_printer,alat_used_for_output
  !
 #include<memory.h>
  !
@@ -63,6 +63,8 @@ integer function ELPH_databases(k,E,q)
  integer,allocatable::ikbz_is_table(:,:)
  integer            ::iq,elph_nk,iq_db(q%nbz),iq_bz,iq_s,i1
  complex(DP), allocatable :: grad_at_gamma(:,:,:,:,:)
+ !
+ logical, external  ::file_exists
  !
  call section("*","== Electron-Phonon Interface: PW->Yambo Databases ==")
  !
@@ -261,13 +263,13 @@ integer function ELPH_databases(k,E,q)
  if (use_ext_ph_freqs) close(99)
  if (use_ext_ph_modes) close(98)
  !
- call msg("s",':: Modes           :',ph_modes)
- call msg("s",':: Bands range     :',elph_nb)
+ call msg("s",' Modes           ',ph_modes)
+ call msg("s",' Bands range     ',elph_nb)
  !
  ! Print the list of PW q-points (to be used with matdyn, for example)
  !
  call msg("s",'Databases Q-points PW-formatted')
- call k_grid_printer(elph_nDBs,ph_q_disk(:elph_nDBs,:),'iku',"PW",coo_out="alat")
+ call k_grid_printer(nDBs_disk,ph_q_disk(:nDBs_disk,:),'iku',"PW",coo_out="alat")
  !
  call elph_global_free()
  !

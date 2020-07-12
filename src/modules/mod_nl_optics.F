@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG AC
@@ -23,9 +23,10 @@
 !
 module nl_optics
  !
- use pars,       ONLY:SP,schlen,lchlen
- use electrons,  ONLY:levels
- use real_time,  ONLY:NE_steps
+ use descriptors,     ONLY:IO_desc
+ use pars,            ONLY:SP,schlen,lchlen
+ use electrons,       ONLY:levels
+ use real_time,       ONLY:NE_steps
  !
 #include<memory.h>
  !
@@ -36,14 +37,13 @@ module nl_optics
  ! Time steps and step length defined in module real_time.F
  ! --------------------------------------------------------
  !
- integer           :: NL_ng      ! number of G-vectors in the Hartree/TDDFT
- ! 
  ! Polarization 
  ! ------------
  ! Calculated from the string-averaged discretized geometric phase
  ! see ref. PRB 47, 1651 (1993), or from DIPOLES
  !
- complex(SP)    :: NL_initial_P(3) ! in principle it can be different from zero
+ complex(SP)    :: NL_P(6)  ! NL_P(1:3) Berry Pol, NL_P(4:6) Dip Pol
+ complex(SP)    :: NL_initial_P(6) ! in principle it can be different from zero
  !
  ! Current
  !
@@ -157,8 +157,7 @@ module nl_optics
  complex(SP),  allocatable :: E_tot_t(:,:),E_ext_t(:,:), E_ks_t(:,:),V_bands_t(:,:,:,:,:)
  complex(SP)               :: E_tot(3),E_ext(3),E_ks(3)
  logical,      allocatable :: freqs_done(:)
- integer                   :: n_NL_descriptions
- character(lchlen)         :: NL_description(100)
+ type(IO_desc)             :: NL_desc
  !
  contains
    !

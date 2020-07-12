@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM DS
@@ -27,12 +27,11 @@ subroutine COLLISIONS_compose_nl(G_in)
  ! 
  use pars,             ONLY:SP,cZERO,cI
  use drivers,          ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_sc_hartree!l_sc_hf,l_sc_cohsex,l_sc_exx
- use QP_m,             ONLY:QP_table,QP_nk,QP_n_states
  use collision_ext,        ONLY:HXC_COLL_element,COLL_bands,&
-&                           HXC_collisions,COLLISIONS_group,COLLISIONS_element
+&                           HXC_collisions
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
- use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu,PAR_COM_freqs_A2A
+ use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu,PAR_COM_Xk_ibz_INDEX
  use real_time,        ONLY:RT_Vnl_xc,RT_bands
 #if defined _TIMING
  use timing_m,         ONLY:timing
@@ -44,7 +43,6 @@ subroutine COLLISIONS_compose_nl(G_in)
  !
  ! Work Space
  !
- logical           :: l_expand
  integer           :: i_coll,ib,ibp,i_k,i_k_NL,i_kmq,i_comp,i_coll_mem,i_spin
  integer           :: i_n,i_m
  !
@@ -75,7 +73,7 @@ subroutine COLLISIONS_compose_nl(G_in)
       do ibp=COLL_bands(1),COLL_bands(2)
        do ib=COLL_bands(1),COLL_bands(2)
          !
-         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)/=0) then
+         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)=="t") then
            RT_Vnl_xc(i_n,i_m,i_k_NL,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_NL,i_spin) &
 &                                               -cI*HXC_COLL_element(i_coll_mem)%v_c(i_comp)*G_in(ib,ibp,i_kmq)
            i_comp=i_comp+1
@@ -101,7 +99,7 @@ subroutine COLLISIONS_compose_nl(G_in)
    ! 
  enddo
  !
- call PP_redux_wait(RT_Vnl_xc,COMM=PAR_COM_freqs_A2A%COMM)
+ call PP_redux_wait(RT_Vnl_xc,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
 #if defined _TIMING
  call timing('NL COLL_compose',OPR='stop')

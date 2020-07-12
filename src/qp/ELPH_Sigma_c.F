@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,20 +33,19 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,spin_occ
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg,error
+ use com,           ONLY:msg
  use drivers,       ONLY:l_elel_corr
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index,PAR_IND_QP,&
-&                        PAR_IND_Q_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q_bz,PAR_Q_bz_index,PAR_IND_QP,&
+&                        PAR_IND_Q_bz_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
                          PAR_COM_Q_A2A,PAR_COM_Q_INDEX,myid
- use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch,&
+ use IO_m,          ONLY:io_control,manage_action,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch,&
 &                        deliver_IO_error_message,OP_WR_CL,OP_APP_CL
  use QP_ctl_m,      ONLY:QP_apply
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
 &                        On_Mass_Shell_approx,QP_time_order_sign
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
- use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol
+ use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol,nqibz
  use ELPH,          ONLY:elph_nb,ph_freqs_sq,elph_gkkp,&
 &                        elph_global_free,QP_PH_n_G_bands,W_debye,elph_DW,&
 &                        elph_nDBs,E_k_p_q,elph_use_q_grid,&
@@ -54,7 +53,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
 &                        elph_global_alloc,gsqF_energy_steps,eval_G_using_KK,ph_qpt,&
 &                        elph_branches,E_k_plus_q,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold,DW_deltaE_treshold
- use interfaces,    ONLY:PARALLEL_global_indexes,QP_state_extract_print
+ use interfaces,    ONLY:PARALLEL_global_indexes,QP_state_print
  use functions,     ONLY:Fermi_fnc_derivative
  use timing_m,      ONLY:timing
  !
@@ -68,8 +67,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  integer          ::iq_db,iq_bz,iq_loop,iq_db_ref,iq_s,iq_ibz,ik,ok,ik_bz,okbz,ib,ob,is,il,i_qp,i2,&
 &                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,live_timing_steps,iq_range(2)
  type(w_samp)     ::Sc_W(qp%n_states)
- integer          ::io_err,ID
- integer, external::io_ELPH,QP_state_extract
+ integer          ::io_err,ID,IO_ACT
+ integer, external::io_ELPH
  character(schlen)::ch
  real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,factor,&
 &                   E_k_plus_q_at_gamma(elph_nb,k%nbz),elph_gkkp_sq,gsqF_damping,E_random_shift
@@ -112,13 +111,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  if (QP_PH_n_G_bands<=0.or.QP_PH_n_G_bands>elph_nb) QP_PH_n_G_bands=elph_nb
  !
- call msg('r', '[GW/El-Ph] Bands range       :',(/1,QP_PH_n_G_bands/))
+ call msg('r', '[GW/El-Ph] Bands range       ',(/1,QP_PH_n_G_bands/))
  if (trim(QP_solver)=='n') &
-&  call msg('r', '[GW/El-Ph] G damping     [ev]:',QP_G_damp*HA2EV)
+&  call msg('r', '[GW/El-Ph] G damping     [ev]',QP_G_damp*HA2EV)
  !
  ! QP_table -> report
  !
- call QP_state_extract_print( )
+ call QP_state_print( )
  !
  ! ELPH DB
  !
@@ -143,7 +142,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    if (.not.l_elel_corr) QP_Sc=cZERO
    !
-   call msg('nr', '[GW/El-Ph] gsqF E range  [ev]:',Sc_W(1)%er*HA2EV)
+   call msg('nr', '[GW/El-Ph] gsqF E range  [ev]',Sc_W(1)%er*HA2EV)
    !
  else if (trim(QP_solver)=='n') then
    !
@@ -201,7 +200,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! Timing steps
  !--------------
  live_timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
-&                  PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&
+&                  PAR_IND_Q_bz%n_of_elements(PAR_IND_Q_bz_ID+1)*&
 &                  PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1)
  !
  call PP_redux_wait
@@ -227,12 +226,14 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    ! DB I/O can be skipped except at the gamma point which is used to define E_k_plus_q_at_gamma array
    !
-   if (.not.PAR_IND_Q%element_1D(iq_loop).and.iq_db>1) cycle
-   iq_mem=PAR_Q_index(iq_loop)
+   if (.not.PAR_IND_Q_bz%element_1D(iq_loop).and.iq_db>1) cycle
+   iq_mem=PAR_Q_bz_index(iq_loop)
    !
    if (iq_db/=iabs(iq_db_ref)) then
      !
-     call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_db+1/),ID=ID)
+     if (elph_use_q_grid)      IO_ACT=manage_action(RD_CL_IF_END,iq_ibz,1,nqibz)
+     if (.not.elph_use_q_grid) IO_ACT=manage_action(RD_CL_IF_END,iq_db,1,nq_to_sum)
+     call io_control(ACTION=IO_ACT,SEC=(/iq_db+1/),ID=ID)
      io_err=io_ELPH(ID,'gkkp')
      if (io_err<0) call error('Missing Q-database')
      !
@@ -261,7 +262,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      !
    endif
    !
-   if (.not.PAR_IND_Q%element_1D(iq_loop)) cycle
+   if (.not.PAR_IND_Q_bz%element_1D(iq_loop)) cycle
    !
    do i_qp=1,QP_n_states
      !
@@ -417,7 +418,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! Debye energy
  !
- call msg('nr','[Ph] Debye energy [ev/ThZ]:',(/W_debye*HA2EV,W_debye*HA2THZ/))
+ call msg('nr','[Ph] Debye energy [ev/ThZ]',(/W_debye*HA2EV,W_debye*HA2THZ/))
  !
  ! Here I use the Cardona-Allen g^2 F functions to evaluate their integrated value.
  ! I also calculate the full frequency dependent self-energy
@@ -443,10 +444,11 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    ! that cpu
    !
    if (elph_use_q_grid) then
+     !
      q_each_cpu=0
      do iq_ibz=2,q%nibz
        do iq_s=1,q%nstar(iq_ibz)
-         if ( PAR_IND_Q%element_1D(sum(q%nstar(:iq_ibz-1))+iq_s) ) q_each_cpu(iq_ibz)=1
+         if ( PAR_IND_Q_bz%element_1D(sum(q%nstar(:iq_ibz-1))+iq_s) ) q_each_cpu(iq_ibz)=1
        enddo
      enddo
      !
@@ -462,7 +464,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    iq_range=(/nq_to_sum,1/)
    do iq_loop=1,nq_to_sum
-     if (PAR_Q_index(iq_loop)>0) then
+     if (PAR_Q_bz_index(iq_loop)>0) then
        iq_range(1)=min(iq_range(1),iq_loop)
        iq_range(2)=max(iq_range(2),iq_loop)
      endif

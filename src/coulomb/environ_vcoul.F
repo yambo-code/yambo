@@ -35,7 +35,6 @@ subroutine environ_vcoul(q,v_environ)
  ! A (parallel) matrix inversion is then performed
  ! 
  use pars,          ONLY:SP,pi,cONE,cZERO
- use com,           ONLY:error
  use vec_operate,   ONLY:iku_v_norm,c2a
  use matrix,        ONLY:PAR_matrix
  use linear_algebra,ONLY:INV

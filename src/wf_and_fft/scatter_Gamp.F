@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine scatter_Gamp(isc,mode)
+subroutine DEV_SUB(scatter_Gamp)(isc,mode)
+ !
+ ! INCLUDED in: scatter_Gamp_incl.F
+ !
  !
  ! isc%gamp(G,G') = \int_p (region around q) 1/|p+G|/|p+G'|/(2*pi)**3
  !
@@ -34,15 +37,31 @@ subroutine scatter_Gamp(isc,mode)
  use collision_el,  ONLY:elemental_collision
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&
 &                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts
- implicit none
- type(elemental_collision)::isc
- character(1)             ::mode
+ use R_lattice,     ONLY:RIM_qpg_d,bare_qpg_d
+ use cuda_m,        ONLY:have_cuda
+ use deviceXlib_m
+ use timing_m
+ !
+#include<memory.h>
+ !
+ type(elemental_collision), target::isc
+ character(1) ::mode
  !
  !Working Space
  !
  integer :: ng(2),ig1,ig2,iq,i1,i2
  logical :: l_RIM
  real(SP):: reg_q_m2,q_weight,R_sphere
+
+ complex(SP), pointer DEV_ATTR :: gamp_p(:,:)
+ integer :: ng1, ng2
+#ifdef _CUDA_LOC
+ character(32) :: subname="scatter_Gamp_gpu"
+#else
+ character(32) :: subname="scatter_Gamp"
+#endif
+
+ call timing(subname,opr="start")
  !
  ! q_weight = 1./(DL_vol*q%nbz)
  !
@@ -50,7 +69,7 @@ subroutine scatter_Gamp(isc,mode)
  !
  ! Note that
  !
- ! \int_q (region) 1/q^2 /(2*pi)**3 = CONSTANT / (2 pi)**3 (Omega_RL/NQBZ)^1/3 
+ ! \int_q (region) 1/q^2 /(2*pi)**3 = CONSTANT / (2 pi)**3 (Omega_RL/NQBZ)^1/3
  !                                  = CONSTANT / (2 pi)**3 d3q_factor^1/3
  ! where
  !
@@ -76,36 +95,52 @@ subroutine scatter_Gamp(isc,mode)
  else
    reg_q_m2=RIM_qpg(iq,1,1)/2._SP
  endif
+
+#ifdef _CUDA_LOC
+ if (allocated(RIM_qpg).and..not.allocated(RIM_qpg_d)) then
+   YAMBO_ALLOC_SOURCE(RIM_qpg_d,RIM_qpg)
+ endif
+ if (.not.allocated(bare_qpg_d)) then
+   YAMBO_ALLOC_SOURCE(bare_qpg_d,bare_qpg)
+ endif
+#endif
  !
  ng=shape(isc%gamp)
+ ng1=ng(1)
+ ng2=ng(2)
+
+ gamp_p => DEV_VAR(isc%gamp)
  !
-#if defined _OPENMP
-!$omp parallel do default(shared), private(i1,i2,ig1,ig2,l_RIM)
+#ifdef _CUDA_LOC
+ !$cuf kernel do(2)
+#else
+ !$omp parallel do default(shared), private(i1,i2,ig1,ig2,l_RIM), collapse(2)
 #endif
- do i1=1,ng(1)
-   do i2=1,ng(2)
+ !
+ do i1=1,ng1
+   do i2=1,ng2
      ig1=i1
      ig2=i2
-     if (ng(1)==1) ig1=ig2
-     if (ng(2)==1) ig2=ig1
+     if (ng1==1) ig1=ig2
+     if (ng2==1) ig2=ig1
      !
      ! RIM support (Both components)
      !
-     l_RIM=all((/ig1<=RIM_ng,ig2<=RIM_ng/))
+     l_RIM=(ig1<=RIM_ng .and. ig2<=RIM_ng)
      if (RIM_is_diagonal.and.l_RIM) l_RIM=(ig1==ig2)
      !
      if (l_RIM.and..not.l_col_cut) then
-       isc%gamp(i1,i2)=RIM_qpg(iq,ig1,ig2)/2._SP
+       gamp_p(i1,i2)=DEV_VAR(RIM_qpg)(iq,ig1,ig2)/2._SP
        cycle
      else
-       isc%gamp(i1,i2)=q_weight/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+       gamp_p(i1,i2)=q_weight/DEV_VAR(bare_qpg)(iq,ig1)/DEV_VAR(bare_qpg)(iq,ig2)
      endif
      !
      ! Head and wings point special treatment (with no RIM only Gamma is possible)
      !
      if ( (RIM_ng==0.and.iq>1) ) cycle
      !
-     ! When using the CUTOFF all the components of the Col potential are 
+     ! When using the CUTOFF all the components of the Col potential are
      ! already regolarized.
      !
      if (l_col_cut) cycle
@@ -113,51 +148,50 @@ subroutine scatter_Gamp(isc,mode)
      ! Wings (0,G) & (G,0) components using the Sphere approx for the region around Gamma
      ! and the square root approx for other components:
      !
-     ! \int_q (region) 1/q /(2*pi)**3 = R_sphere/2. * reg_q_m2 
+     ! \int_q (region) 1/q /(2*pi)**3 = R_sphere/2. * reg_q_m2
      ! 
-     ! for q = 0 
+     ! for q = 0
      ! 
-     ! \int_q (region) 1/q /(2*pi)**3 \sim 
-     !                 sqrt(\int_q (region) 1/q^2 /(2*pi)**3 ) / 
+     ! \int_q (region) 1/q /(2*pi)**3 \sim
+     !                 sqrt(\int_q (region) 1/q^2 /(2*pi)**3 ) /
      ! 
-     ! for q != 0 
+     ! for q != 0
      !
      if (ig1==1.and.(ig2>RIM_ng.or.(RIM_is_diagonal.and.ig2>1))) then
        !
-       if (iq==1) then 
-         isc%gamp(i1,i2)=R_sphere/2._SP*reg_q_m2/bare_qpg(iq,ig2)
+       if (iq==1) then
+         gamp_p(i1,i2)=R_sphere/2._SP*reg_q_m2/DEV_VAR(bare_qpg)(iq,ig2)
        else
          !
          ! the sqrt(q_weight) is needed as the sqrt(reg_q_m2) contains
          ! implicitly the q_weight
          ! 
-         isc%gamp(i1,i2)=isc%gamp(i1,i2)*& 
-&                         bare_qpg(iq,ig1)*sqrt(reg_q_m2)/sqrt(q_weight)
+         gamp_p(i1,i2)=gamp_p(i1,i2)*&
+&                      DEV_VAR(bare_qpg)(iq,ig1)*sqrt(reg_q_m2)/sqrt(q_weight)
        endif
      endif
      if (ig2==1.and.(ig1>RIM_ng.or.(RIM_is_diagonal.and.ig1>1))) then
        if (iq==1) then
-         isc%gamp(i1,i2)=R_sphere/2._SP*reg_q_m2/bare_qpg(iq,ig1)
-       else 
-         isc%gamp(i1,i2)=isc%gamp(i1,i2)*& 
-&                         bare_qpg(iq,ig2)*sqrt(reg_q_m2)/sqrt(q_weight)
+         gamp_p(i1,i2)=R_sphere/2._SP*reg_q_m2/DEV_VAR(bare_qpg)(iq,ig1)
+       else
+         gamp_p(i1,i2)=gamp_p(i1,i2)*&
+&                         DEV_VAR(bare_qpg)(iq,ig2)*sqrt(reg_q_m2)/sqrt(q_weight)
        endif
      endif
      !
      ! head component.
      !
-     if (ig1==1.and.ig2==1) isc%gamp(i1,i2)=reg_q_m2
+     if (ig1==1.and.ig2==1) gamp_p(i1,i2)=reg_q_m2
      !
    enddo
  enddo
-#if defined _OPENMP
-!$omp end parallel do
-#endif
  !
  ! Anisotropy correction
  !
  if (.not.l_col_cut) then
-   if (all((/iq==1,RIM_ng>0,mode=='c',RIM_anisotropy/=0._SP/))) isc%gamp(1,1)=RIM_anisotropy/2._SP
+   if (all((/iq==1,RIM_ng>0,mode=='c',RIM_anisotropy/=0._SP/))) gamp_p(1,1)=RIM_anisotropy/2._SP
  endif
  !
+ call timing(subname,opr="stop")
 end subroutine
+

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,26 +23,24 @@
 !
 integer function io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
  !
- use pars,             ONLY:schlen,SP
+ use pars,             ONLY:SP
  use stderr,           ONLY:intc
- use R_lattice,        ONLY:ng_vec,nkibz
+ use R_lattice,        ONLY:nkibz
  use electrons,        ONLY:n_spinor
- use FFT_m,            ONLY:FFT_size
- use pseudo,           ONLY:pp_kbv_dim
+ use pseudo,           ONLY:pp_kbv_dim_yambo
+ use FFT_m,            ONLY:fft_size
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_fragment, &
-&                           io_elemental,io_bulk,io_header,&
-&                           read_is_on,write_is_on,frag_WF
- use electrons,        ONLY:n_sp_pol
+&                           io_elemental,io_bulk,io_header,frag_WF
  !
 #include<memory.h>
  !
  integer,       intent(in)    :: ID
- integer,       intent(inout) :: kbv_real_space_table(pp_kbv_dim)
- complex(SP),   intent(inout) :: kbv_real_space(fft_size,n_spinor,pp_kbv_dim)
+ integer,       intent(inout) :: kbv_real_space_table(pp_kbv_dim_yambo)
+ complex(SP),   intent(inout) :: kbv_real_space(fft_size,n_spinor,pp_kbv_dim_yambo)
  !
  ! Workspace
  !
- integer :: ik,ifrag,i1,i_sp_pol
+ integer :: ik,ifrag,i_sp_pol
  !
  ifrag=maxval(io_sec(ID,:))-1
  if(ifrag<=nkibz) then
@@ -64,12 +62,11 @@ integer function io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
    if (io_KB_real_space/=0) goto 1
    !
    call io_elemental(ID,VAR="PP_KBV_DIM",VAR_SZ=1,MENU=0)
-   call io_elemental(ID,I0=pp_kbv_dim)
+   call io_elemental(ID,I0=pp_kbv_dim_yambo)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
-   call io_bulk(ID,VAR="PP_KBV_TABLE",VAR_SZ=(/pp_kbv_dim/))
+   call io_bulk(ID,VAR="PP_KBV_TABLE",VAR_SZ=(/pp_kbv_dim_yambo/))
    call io_bulk(ID,I1=kbv_real_space_table)
-
    !
    if (io_KB_real_space/=0) goto 1
    !
@@ -79,7 +76,8 @@ integer function io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
  !
  call io_fragment(ID,i_fragment=ifrag)
  !
- call io_bulk(ID,VAR='PP_KB_RSPACE_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),VAR_SZ=(/2,fft_size,n_spinor,pp_kbv_dim/))
+ call io_bulk(ID,VAR='PP_KB_RSPACE_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),&
+ &               VAR_SZ=(/2,fft_size,n_spinor,pp_kbv_dim_yambo/))
  call io_bulk(ID,C3=kbv_real_space(:,:,:))
  ! 
 1 call io_disconnect(ID=ID)

@@ -1,4 +1,4 @@
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG DS
@@ -22,16 +22,16 @@
 !
 subroutine K_Haydock(iq,W)
  !
- use pars,           ONLY:SP,schlen,cI,cZERO,cONE
- use com,            ONLY:error
+ use pars,           ONLY:SP,schlen,cI,cZERO,cONE,pi
  use functions,      ONLY:NAN
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use X_m,            ONLY:Epsilon_ii,Epsilon_ij,X_drude_term,global_gauge,skip_cond_sum_rule
  use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
- use BS_solvers,     ONLY:BSS_n_descs,Haydock_threshold,BSS_description,io_BSS_Haydock,Co_factor,diam_term_exact,&
-&                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod,Haydock_iterIO
+ use BS_solvers,     ONLY:BSS_desc,Haydock_threshold,io_BSS_Haydock,Co_factor,diam_term_exact,&
+&                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod,Haydock_iterIO,&
+&                         BSS_eels_to_eps
  use BS,             ONLY:BS_K_Coupling,BSE_mode,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,BS_K_dim
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
@@ -44,6 +44,7 @@ subroutine K_Haydock(iq,W)
  use KERR,           ONLY:B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
+ use descriptors,    ONLY:IO_desc_add
  !
 #include<memory.h>
  !
@@ -52,7 +53,7 @@ subroutine K_Haydock(iq,W)
  !
  ! Work Space
  !
- integer            ::it,it_on_disk,i_g,ID,io_err
+ integer            ::it,it_on_disk,i_g,ID,io_err,i_desc_acc,i_desc_iter
  integer, parameter ::Max_iterations=1000
  type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:),V0(:),V_tmp(:)
  complex(SP),allocatable :: Cf(:)
@@ -70,6 +71,7 @@ subroutine K_Haydock(iq,W)
  character(schlen)  ::dumb_ch
  logical            ::use_cpl_scheme
  logical, external  ::STOP_now
+ character(1)       ::sec
  !
  ! I/O
  !
@@ -79,11 +81,9 @@ subroutine K_Haydock(iq,W)
  !
  call timing('Haydock Solver',OPR='start')
  !
- if (isec(2)/=0) then
-   call section('=','Haydock solver')
- else if (isec(2)==0) then
-   call section('+','Haydock solver')
- endif
+ if (isec(2)/=0) sec="="
+ if (isec(2)==0) sec="+"
+ call section(sec,'Haydock Solver @q'//trim(intc(iq)))
  !
  call BS_Blocks_symmetrize_K()
  !
@@ -205,17 +205,15 @@ subroutine K_Haydock(iq,W)
  !
  ! Update Descriptions
  !=====================
- BSS_n_descs=BSS_n_descs+2
- BSS_description(BSS_n_descs-1)=' '
- BSS_description(BSS_n_descs)=' Haydock|Accuracy (requested) [o/o]:'&
-      &// trim(real2ch(Haydock_threshold))
- BSS_n_descs=BSS_n_descs+1
- BSS_description(BSS_n_descs)='        |Accuracy (reached)   [o/o]:'&
-      &// trim(real2ch(0._SP))
- BSS_n_descs=BSS_n_descs+1
- BSS_description(BSS_n_descs)='        |Iteration            [o/o]: 0'
+ call IO_desc_add(BSS_desc,kind="s",str=" ",S=" ")
  !
- call msg('r','Accuracy (requested) [o/o]:',Haydock_threshold)
+ call IO_desc_add(BSS_desc,kind="r",str='[Haydock] Accuracy (requested)',term='o/o',R=(/Haydock_threshold/))
+ call IO_desc_add(BSS_desc,kind="r",str='[Haydock] Accuracy (reached)',term='o/o',R=(/0._SP/))
+ i_desc_acc=BSS_desc%n
+ call IO_desc_add(BSS_desc,kind="i",str='[Haydock] Iterations',I=(/0/))
+ i_desc_iter=BSS_desc%n
+ !
+ call msg('r','Accuracy (requested) [o/o]',Haydock_threshold)
  !
  ! Initialization of Haydock vectors and tridiagonal matrix elements
  !
@@ -465,12 +463,11 @@ subroutine K_Haydock(iq,W)
      if(l_kerr) call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,2,Cf_kerr(:it))
 #endif
      !
-     BSS_description(BSS_n_descs-1)='        |Accuracy (reached)   [o/o]:'//&
-&                                    trim(real2ch(reached_threshold))
-     BSS_description(BSS_n_descs)='        |Iteration                 :'//trim(intc(it))
+     BSS_desc%rval(1,i_desc_acc) =reached_threshold
+     BSS_desc%ival(1,i_desc_iter)=it
      !
      call K_output_file(iq,"Haydock")
-     dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy :'//&
+     dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy '//&
 &            trim(real2ch(reached_threshold))//'|'//trim(real2ch(Haydock_threshold))
      if (tty_size>0.and.it_on_disk==0) call LIVE_message(dumb_ch,"r","","%s")
      if (tty_size>0.and.it_on_disk> 0) call LIVE_message(dumb_ch,"n","","%s")
@@ -522,8 +519,8 @@ subroutine K_Haydock(iq,W)
    !
    if ( (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
 &       STOP_now(.FALSE.)) then
-     call msg('r','Accuracy (reached)   [o/o]:',reached_threshold)
-     call msg('r','Iterations                :',it)
+     call msg('r','Accuracy (reached)   [o/o]',reached_threshold)
+     call msg('r','Iterations                ',it)
      exit
    endif
    !
@@ -547,6 +544,11 @@ subroutine K_Haydock(iq,W)
 #endif
    !
  end if
+ !
+ call PARALLEL_Haydock_VEC_COMMs('reset')
+ !
+ ! This is allocated in K_Transitions setup
+ YAMBO_FREE(PAR_IND_T_Haydock%element_1D)
  !
  call timing('Haydock Solver',OPR='stop')
  !
@@ -594,7 +596,7 @@ subroutine K_Haydock(iq,W)
      para_term_w0  =cZERO
      diam_term_used=cZERO
      !
-     if(trim(global_gauge)=='length'  ) gauge_factor=cONE*Co/bare_qpg(1,1)**2
+     if(trim(global_gauge)=='length'  ) gauge_factor=cONE*Co/bare_qpg(iq,1)**2
      !
      if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
      if (coupling) allocate(X_i(2,it))
@@ -692,7 +694,10 @@ subroutine K_Haydock(iq,W)
        if (ii==1) Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor
        if (ii==2) Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+diam_term_used(:))*gauge_factor
        !
-       if (ii==1) Epsilon_ii(iw,i_eps(:))=1._SP+Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*gauge_factor
+       if (ii==1) then
+         if(BSS_eels_to_eps) Epsilon_ii(iw,i_eps(:))=(1._SP-Epsilon_ii(iw,i_eps(:)))**(-1)-1._SP
+         Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*4._SP*pi/bare_qpg(iq,1)**2
+       endif
        !
 #if defined _KERR
        !
@@ -701,7 +706,7 @@ subroutine K_Haydock(iq,W)
        !
        if (l_anomalous_Hall) then
          if (trim(global_gauge)=='length') then
-           B_Hall(2)=B_Hall(2)*Co/bare_qpg(1,1)**2
+           B_Hall(2)=B_Hall(2)*Co/bare_qpg(iq,1)**2
            Epsilon_ij(iw,2)=Epsilon_ij(iw,2)+B_Hall(2)/W%p(iw)
          else if (trim(global_gauge)=='velocity') then
            B_Hall(2)=B_Hall(2)*Co

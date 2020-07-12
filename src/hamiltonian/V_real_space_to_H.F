@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -24,7 +24,6 @@
 subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
  !
  use electrons,      ONLY:n_spin,n_spinor,spin
- use com,            ONLY:error
  use pars,           ONLY:SP,cZERO
  use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_table,QP_n_states
@@ -53,7 +52,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
  !
  ! Work Space
  !
- integer     :: ir,i_qp,ib,ibp,i_wf,i_wfp,i_spinor,j_spinor,i_spin,j_spin
+ integer     :: i_qp,ib,ibp,i_wf,i_wfp,i_spinor,j_spinor,i_spin,j_spin
  complex(SP) :: c_ws(fft_size,n_spinor)
  complex(SP) :: V_mat(fft_size,n_spin,n_spin)
  logical     :: PAR_IND_local(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))

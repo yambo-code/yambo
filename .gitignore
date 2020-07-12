@@ -7,6 +7,7 @@
 *.a
 *.so
 *.mod
+modfiles.list
 *.dep
 *.f90
 *.s
@@ -16,17 +17,29 @@
 
 # source #
 ##########
+driver/include/editor.h
+driver/include/version.h
+include/driver.h
+include/editor.h
+include/fortran_arguments.h
+include/fortran_driver.h
+include/kind.h
+include/tool.h
+include/version.h
+include/branch.inc
+src/tools/.objects
 config.status
 config/report
 config/setup
 config/msg_ydb
 driver/codever.h
 driver/editor.h
+include/branch.inc
 include/netcdf.h
 include/netcdf_*.h
 include/netcdf.inc
 include/xc*.h
-include/c_defs.h
+include/headers/common/have_malloc.h
 include/system/*
 lib/archive/keep-extlibs-stamp
 lib/install/make_iotk.inc
@@ -34,6 +47,7 @@ lib/iotk/make.sys
 lib/iotk/make_iotk.inc
 lib/*/package-installed
 lib/*/*stamp
+lib/*/package-installed
 lib/*/lib
 lib/*/bin
 lib/*/tmp
@@ -45,9 +59,12 @@ lib/*/lapack-*
 lib/*/fftw-*
 lib/*/blacs*
 lib/*/scalapack-*
+lib/*/futile*
+lib/*/yaml*
 lib/hdf5/hdf5*
 lib/external/*
 compile.sh
+gfortran_*
 sbin/make_makefile.sh
 sbin/objects_store.sh
 sbin/generate_gpl.sh
@@ -58,6 +75,7 @@ lib/bin/*
 # source #
 ##########
 src/external_c/.objects
+.check_configure
 *__lock*
 Makefile.locks
 Makefile.archive

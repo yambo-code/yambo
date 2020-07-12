@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,13 +25,13 @@ subroutine ELPH_atomic_amplitude(q)
  !
  use pars,                ONLY:SP
  use units,               ONLY:BO2ANG,pi
- use com,                 ONLY:msg,warning
+ use com,                 ONLY:msg
  use R_lattice,           ONLY:bz_samp,RL_vol,RIM_n_rand_pts
  use D_lattice,           ONLY:n_atoms
  use ELPH,                ONLY:ph_modes,ph_freqs_sq,&
 &                              elph_nDBs,elph_use_q_grid,&
 &                              elph_global_free,pol_vector,ph_qpt
- use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
+ use IO_m,                ONLY:io_control,manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use stderr,              ONLY:intc
  use functions,           ONLY:bose_f
  use interfaces,          ONLY:LINEAR_ALGEBRA_driver
@@ -52,7 +52,7 @@ subroutine ELPH_atomic_amplitude(q)
  !
  !I/O
  !
- integer           ::io_err,ID
+ integer           ::io_err,ID,IO_ACT
  integer, external ::io_ELPH
  !
  call section("*","== Electron-Phonon Interface: mean atomic amplitudes ==")
@@ -61,7 +61,7 @@ subroutine ELPH_atomic_amplitude(q)
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
  io_err=io_ELPH(ID,'no_matrix_elements')
  !
- call msg('s',':: Checking database ...')
+ call msg('s',' Checking database ...')
  if (io_err<0) then
    call msg('s','not found')
    return
@@ -93,7 +93,8 @@ subroutine ELPH_atomic_amplitude(q)
    !
    ! I/O
    !
-   call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
+   IO_ACT=manage_action(RD_CL_IF_END,iq,1,nq_to_sum)
+   call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID)
    io_err=io_ELPH(ID,'no_matrix_elements')  
    !
    if (.not.allocated(pol_vector)) then
@@ -128,12 +129,12 @@ subroutine ELPH_atomic_amplitude(q)
    call LINEAR_ALGEBRA_driver(DIAGO,M=mean_ui_uj(is,:,:),lib_in=USE_LK,E_real=U_eigenvalues)
    !
    call msg('s','Atom '//trim(atom_name(is)))
-   call msg('s','Displacement  [a.u.]/A #1: ',sqrt(U_eigenvalues(1))*(/1._SP,BO2ANG/) )
-   call msg('s','Normalized direction   #1: ',real(mean_ui_uj(is,:,1)))
-   call msg('s','                       #2: ', sqrt(U_eigenvalues(2))*(/1._SP,BO2ANG/) )
-   call msg('s','                       #2: ',real(mean_ui_uj(is,:,2)))
-   call msg('s','                       #3: ', sqrt(U_eigenvalues(3))*(/1._SP,BO2ANG/) )
-   call msg('s','                       #3: ',real(mean_ui_uj(is,:,3)))
+   call msg('s','Displacement  [a.u.]/A #1 ',sqrt(U_eigenvalues(1))*(/1._SP,BO2ANG/) )
+   call msg('s','Normalized direction   #1 ',real(mean_ui_uj(is,:,1)))
+   call msg('s','                       #2 ', sqrt(U_eigenvalues(2))*(/1._SP,BO2ANG/) )
+   call msg('s','                       #2 ',real(mean_ui_uj(is,:,2)))
+   call msg('s','                       #3 ', sqrt(U_eigenvalues(3))*(/1._SP,BO2ANG/) )
+   call msg('s','                       #3 ',real(mean_ui_uj(is,:,3)))
    !
  enddo
  !

@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,28 +21,25 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
+integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
  use pars,          ONLY:SP,cZERO
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
-#if defined _PL
- use drivers,       ONLY:l_photolum
-#endif
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
- use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,&
+ use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,l_recalculate_X,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index, PAR_nq, &
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD,&
 &                        PAR_COM_X_WORLD_RL_resolved
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
- use com,           ONLY:depth,error
+ use com,           ONLY:depth
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                        PARALLEL_WF_index,WF_load,WF_free
@@ -52,12 +49,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  !
 #include<memory.h>
  !
- type(levels) ::Xen 
- type(bz_samp)::Xk,q
- type(X_t)    ::X
+ type(levels)  ::Xen 
+ type(bz_samp) ::Xk,q
+ type(X_t)     ::X
  type(DIPOLE_t)::Dip
- type(w_samp) ::Xw
- logical      ::APPEND_NO_VERIFY
+ type(w_samp)  ::Xw
+ logical       ::SILENT_MODE
  !
  ! Work Space
  !
@@ -103,11 +100,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  X_dielectric_matrix=-1
  !
  if (X%whoami==2) then
-   if (.not.APPEND_NO_VERIFY) call section(sec_mode,'Static Dielectric Matrix')
+   if (.not.SILENT_MODE) call section(sec_mode,'Static Dielectric Matrix')
    Xw%n_freqs    =1
    X_MEM_n_freqs =1
  else if (X%whoami==3) then
-   if (.not.APPEND_NO_VERIFY) call section(sec_mode,'Dynamical Dielectric Matrix')
+   if (.not.SILENT_MODE) call section(sec_mode,'Dynamical Dielectric Matrix')
    if (l_gw0) self_detect_E_range=.true.
    !
    ! X_n_freqs defines the size of each q-block loaded in memory when io_RESPONSE=.FALSE.
@@ -117,7 +114,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
    if (l_life) X_MEM_n_freqs = QP_n_W_freqs_redux
    !
  else if (X%whoami==4) then
-   if (.not.APPEND_NO_VERIFY) call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
+   if (.not.SILENT_MODE) call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
    Xw%n_freqs    =2
    X_MEM_n_freqs =2
    Xw%er=(/epsilon(1._SP),0._SP/)
@@ -125,7 +122,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
    X%ordering='R'
  endif
  !
- call X_pre_setup(Xen,X)
+ call X_pre_setup(Xen,Xk,X)
  !
  ! Build frequency range only if Xw%p was not already allocated
  ! like in LifeTimes calculations or when self_detect_E_range=.TRUE. (real axis GW)
@@ -135,10 +132,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  ! Prepare the IO (and check if q has been already done)
  !
  io_X_done=-1
+ i_err=-1
  !
  if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
  !
- if (io_RESPONSE) then
+ if (io_RESPONSE.and..not.l_recalculate_X) then
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
@@ -180,7 +178,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  !=======================
  if (.not.(l_life.and.X%iq(1)>1)) then
    call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
-   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
+   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_and_IO",X=X) 
  endif
  call X_half_mat_check(Xen,Xk,Xw)
  !
@@ -192,8 +190,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
      call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
 #endif
    else
-     allocate(X_par(PAR_nq))
-     call X_alloc('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nq/))
+     allocate(X_par(PAR_nQ_ibz))
+     call X_alloc('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nQ_ibz/))
    endif
    !
  endif
@@ -215,8 +213,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
    !
  endif
  !
+ call PP_redux_wait()
  !
  do iq=X%iq(1),X%iq(2)
+   !
+   if (     io_X_done(iq) > 0       ) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
    !
    ! TDDFT setup
    !
@@ -236,17 +238,14 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
      !
    endif
    !
-   if (     io_X_done(iq) > 0       ) cycle
-   if (.not.PAR_IND_Q%element_1D(iq)) cycle
-   !
-   if(iq==1) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
+   if (iq==1) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb)
      i_err=io_X(X,Xw,Xdb)
    endif
    !
    ! Allocation
    !
-   iq_mem=PAR_Q_index(iq)
+   iq_mem=PAR_Q_ibz_index(iq)
    if (io_RESPONSE) iq_mem=1
    call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
    !
@@ -259,27 +258,27 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
 #if defined _PAR_IO
    if(.not.io_RESPONSE) then
 #endif
-   !
-   ! PAR => SER for I/O or for cases where I/O is not done
-   !
-   do iw=1,Xw%n_freqs
      !
-     X_par(iq_mem)%I=iw
+     ! PAR => SER for I/O or for cases where I/O is not done
      !
-     if (     io_RESPONSE) iw_X_mat=iw
-     if (.not.io_RESPONSE) iw_X_mat=(iq_mem-1)*X_MEM_n_freqs+iw
+     do iw=1,Xw%n_freqs
+       !
+       X_par(iq_mem)%I=iw
+       !
+       if (     io_RESPONSE) iw_X_mat=iw
+       if (.not.io_RESPONSE) iw_X_mat=(iq_mem-1)*X_MEM_n_freqs+iw
+       !
+       X_mat(:,:,iw_X_mat)=cZERO
+       !
+       if (PAR_COM_X_WORLD_RL_resolved%CPU_id==0) then
+         X_mat(X_par(iq_mem)%rows(1):X_par(iq_mem)%rows(2),&
+&              X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)=X_par(iq_mem)%blc(:,:,iw)
+       endif
+       !
+       call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
+       !
+     enddo
      !
-     X_mat(:,:,iw_X_mat)=cZERO
-     !
-     if (PAR_COM_X_WORLD_RL_resolved%CPU_id==0) then
-       X_mat(X_par(iq_mem)%rows(1):X_par(iq_mem)%rows(2),&
-&            X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)=X_par(iq_mem)%blc(:,:,iw)
-     endif
-     !
-     call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
-     !
-   enddo
-   !
 #if defined _PAR_IO
    endif
 #endif
@@ -289,7 +288,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
    !
    X%ng_db=X%ng
    !
-   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),  ID=Xdb)
+   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
    !
    ! CLEAN (1)
@@ -328,10 +327,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  if (allocated(FXC)) then
    YAMBO_FREE(FXC)
  endif
- call DIP_alloc('DIP_projected')
-#if defined _PL
- if (l_photolum) call DIP_alloc('DIP_P')
-#endif
- if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free(WF)
+ call DIP_alloc('DIP_iR')
+ call DIP_alloc('DIP_P')
+ call DIP_alloc('DIP_v')
+ if (.not.SILENT_MODE.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
 end function

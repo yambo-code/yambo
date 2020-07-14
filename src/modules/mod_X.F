@@ -116,6 +116,7 @@ module X_m
  integer                       :: X_rows(2) = 0
  integer                       :: X_cols(2) = 0
  complex(SP),      allocatable :: X_mat(:,:,:)
+ complex(SP),      allocatable DEV_ATTR :: X_mat_d(:,:,:)
  !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp

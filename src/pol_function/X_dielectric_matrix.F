@@ -234,7 +234,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    ! Allocation
    !
    iq_mem=PAR_Q_ibz_index(iq)
-   print*,'iq_mem= ',iq_mem
    if (io_RESPONSE) iq_mem=1
    call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
    !

@@ -59,7 +59,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:myid,ncpu,PP_redux_wait,PAR_K_scheme,l_BSE_PAR_incomplete
+ use parallel_m,    ONLY:myid,ncpu,PP_redux_wait,PAR_K_scheme
  !
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free
@@ -178,17 +178,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if( l_BSE_kernel_complete ) return
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) then
-   if (l_BSE_PAR_incomplete) then
-     ! qindx_B is allocated and loaded again at each q-point
-     if(iq/=1) call PARALLEL_SETUP_K_scheme("K") ! at q=1 distribution is done in DIPOLE_IO
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=qindx_ID)
-     io_qindx_err=io_QINDX(Xk,q,qindx_ID)
-   endif
-   !
-   qindx_tmp=qindx_B_init(qindx_ID)
-   !
- endif
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) qindx_tmp=qindx_B_init(qindx_ID)
  !
  ! Screened interaction
  !======================
@@ -588,10 +578,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    YAMBO_FREE(F_xc)
  endif
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) then
-   if(l_BSE_PAR_incomplete) call qindx_free('B')
-   qindx_tmp=qindx_B_close(qindx_ID)
- endif
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) qindx_tmp=qindx_B_close(qindx_ID)
  !
  YAMBO_FREE(BS_W)
  call WF_free(WF)

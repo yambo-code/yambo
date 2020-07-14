@@ -40,7 +40,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
 &                         BS_perturbative_SOC
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss,l_col_cut
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k,PARALLEL_default_mode,PAR_K_scheme,l_BSE_PAR_incomplete
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k,PARALLEL_default_mode,PAR_K_scheme
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free
  use D_lattice,      ONLY:l_0D,l_1D,l_2D
@@ -226,8 +226,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    qindx_B_max=maxval(qindx_B_max_CPU)
    YAMBO_FREE(qindx_B_max_CPU)
    !
-   if(l_BSE_PAR_incomplete) call qindx_free('B')
-   !
  endif
  !
  ! Tranferred momentum
@@ -357,6 +355,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators,RESET=.TRUE.)
  !
  YAMBO_FREE(BSqpts)
- if(.not.l_BSE_PAR_incomplete) call qindx_free('B')
+ call qindx_free('B')
  !
 end subroutine

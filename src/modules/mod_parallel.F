@@ -84,10 +84,6 @@ module parallel_m
  !
  logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_BZINDX,l_par_SE,l_par_RT,l_par_SC,l_par_NL
  !
- ! BSE specific
- !
- logical           :: l_BSE_PAR_incomplete=.FALSE.
- !
  ! In a parallel runs, when some loops not involving all CPU's are parallelized it is usefull to keep 
  ! the operations local in the cpu world
  !

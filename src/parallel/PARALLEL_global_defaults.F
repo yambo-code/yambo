@@ -23,7 +23,7 @@
 !
 subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
- use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used,l_BSE_PAR_incomplete, &
+ use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used, &
 &                        ncpu,CPU_structure,i_PAR_structure,PARALLEL_ENV_uses_default,PARALLEL_CPU_role
  use interfaces,    ONLY:PARALLEL_live_message
  use stderr,        ONLY:intc
@@ -85,7 +85,6 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
    case("Self_Energy") 
       call GIMME_a_parallel_proposal(3,(/" b","qp"," q"/))
    case("Response_T_space") 
-      l_BSE_PAR_incomplete=.TRUE.
       call GIMME_a_parallel_proposal(2,(/"eh"," k"/))
    case("BZ_Indexes")
      CPU_structure(i_PAR_structure)%ROLE(1)="k"

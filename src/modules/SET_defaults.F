@@ -74,7 +74,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use BS_solvers, ONLY:BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol, BSS_target_E, Slepc_shell
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,MAX_BSK_LIN_size,&
-&                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
+&                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,l_BSE_kernel_complete,&
 &                     BS_K_is_ALDA,BSE_mode,L_kind,BS_K_cutoff,BS_perturbative_SOC,BSK_IO_mode
  use TDDFT,      ONLY:FXC_type,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
@@ -443,6 +443,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSE_mode='retarded'
  BSK_mode=' '
  BSK_IO_mode='2D_standard'
+ l_BSE_kernel_complete=.false.
  TDDFT_mode=' '
  BSS_add_antiresonant=.FALSE.
  BSS_Wd=cZERO

@@ -25,10 +25,10 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  use pars,                ONLY:SP
  use stderr,              ONLY:intc
- use R_lattice,           ONLY:bz_samp,nkibz
+ use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset
  use com,                 ONLY:msg
  use YPPm,                ONLY:n_FineGd_DBs
- use electrons,           ONLY:levels
+ use electrons,           ONLY:levels,E_reset
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  !
 #include<memory.h>
@@ -101,9 +101,11 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  ! CLEAN
  !========
- deallocate(FineGd_E%E)
- deallocate(FineGd_k%pt,FineGd_k%ptbz)
- deallocate(Xen%E_FineGd)
- deallocate(Xk%pt,Xk%ptbz,Xk%ibz_DbGd_map,Xk%bz_DbGd_map,Xk%weights_DbGd,Xk%nibz_mapped,Xk%nbz_mapped)
+ !
+ call E_reset(FineGd_E)
+ call bz_samp_reset(FineGd_k)
+ call k_ibz2bz(Xk,'d',.true.)
+ !...Xk/Xen FineGd components
+ deallocate(Xen%E_FineGd,Xk%ibz_DbGd_map,Xk%bz_DbGd_map,Xk%weights_DbGd,Xk%nibz_mapped,Xk%nbz_mapped)
  !
 end subroutine

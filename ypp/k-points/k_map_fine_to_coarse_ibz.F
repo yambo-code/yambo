@@ -159,7 +159,6 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
      call live_timing(steps=1)
    enddo
    !
-   !Xk%weights_DbGd(ikibz)=Xk%weights(ikibz)*real(Xk%nbz,SP)/real(Xk%nbz+Xk%nbz_FineGd-Xk%nbz_duplicate,SP)
    Xk%ibz_DbGd_map(1,ikibz)=ikibz_FineGd+1
    do i1=1,Xk%nibz_mapped(ikibz)
      ikibz_FineGd=ikibz_FineGd+1
@@ -168,8 +167,6 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
      Xk%weights_FineGd(ikibz_FineGd)=FineGd_k%weights(TMP_table_mapped(ikibz,i1))
      Reordering_map(TMP_table_mapped(ikibz,i1))=ikibz_FineGd
      !
-!     Xk%weights_DbGd(ikibz)=Xk%weights_DbGd(ikibz)+Xk%weights_FineGd(ikibz_FineGd)* &
-!&                                             real(Xk%nbz_FineGd,SP)/real(Xk%nbz+Xk%nbz_FineGd-Xk%nbz_duplicate,SP)
      call live_timing(steps=1)
    enddo
    Xk%ibz_DbGd_map(2,ikibz)=ikibz_FineGd

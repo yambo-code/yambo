@@ -25,9 +25,8 @@ subroutine PARALLEL_global_Response_T_base(Xk)
  !
  use R_lattice,     ONLY:bz_samp,nXkbz,nXkibz
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_K,OPENMP_set_threads
- use parallel_m,    ONLY:master_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index
+ use parallel_m,    ONLY:COMM_copy,PAR_INDEX_copy,PAR_build_index
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX, &
                          PAR_COM_Xk_ibz_INDEX, &
@@ -85,12 +84,6 @@ subroutine PARALLEL_global_Response_T_base(Xk)
 &                                                       PAR_IND_Xk_bz, PAR_IND_Xk_bz_ID,&
 &                                                       PAR_Xk_bz_index,PAR_Xk_nbz)
  !
- ! I/O privileges
- !
- call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
- !
- call IO_and_Messaging_switch("+output",CONDITION=master_cpu)
- !
  call OPENMP_set_threads(n_threads_in=n_threads_K)
  !
 end subroutine PARALLEL_global_Response_T_base
@@ -100,8 +93,9 @@ subroutine PARALLEL_global_Response_T_transitions(Xk)
  !
  use R_lattice,     ONLY:bz_samp,nXkibz
  use BS,            ONLY:BS_nT_at_k,BS_nT_grps
+ use IO_m,          ONLY:IO_and_Messaging_switch
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
- use parallel_m,    ONLY:PAR_n_c_bands,PAR_n_v_bands,PP_indexes_reset
+ use parallel_m,    ONLY:PAR_n_c_bands,PAR_n_v_bands,PP_indexes_reset,master_cpu
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_T_INDEX, &
 &                        PAR_COM_CON_INDEX_DIP,PAR_COM_VAL_INDEX_DIP
@@ -121,6 +115,12 @@ subroutine PARALLEL_global_Response_T_transitions(Xk)
  !
  integer              :: i_k
  !
+ ! I/O privileges
+ !
+ call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+ !
+ call IO_and_Messaging_switch("+output",CONDITION=master_cpu)
+ !
  ! E/h pairs (k resolved)
  !
  ! In this part I distribute the eh transitions within each k. The COMM for this indexing is PAR_COM_eh_INDEX.
@@ -138,6 +138,7 @@ subroutine PARALLEL_global_Response_T_transitions(Xk)
  ! Now I find calculate the total (BS_nT_grps) and cpu-restricted (PAR_BS_nT_grps) number of Transition groups.
  ! In this case the PAR_BS_nT_grps groups belong only to the columns of the kernel.
  !
+ call PP_indexes_reset(PAR_IND_T_groups)
  call PARALLEL_Transitions_grouping(Xk)
  !
  call PARALLEL_live_message("(e/h) Groups",ENVIRONMENT="Response_T_space",LOADED=PAR_BS_nT_col_grps,TOTAL=BS_nT_grps,&

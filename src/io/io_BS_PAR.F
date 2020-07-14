@@ -336,7 +336,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  !
  complex(SP), allocatable :: TMP_IO_VAR(:)
  !
- if(.not.io_BS_K .and. trim(mode)=="full") return
+ if( (.not.io_BS_K) .and. trim(mode)=="full") return
  !
  call timing('io_BS',OPR='start')
  !

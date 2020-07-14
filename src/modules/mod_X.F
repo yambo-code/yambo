@@ -116,7 +116,6 @@ module X_m
  integer                       :: X_rows(2) = 0
  integer                       :: X_cols(2) = 0
  complex(SP),      allocatable :: X_mat(:,:,:)
- complex(SP),      allocatable DEV_ATTR :: X_mat_d(:,:,:)
  !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
@@ -173,9 +172,6 @@ module X_m
          if (allocated(X_mat)) return
          YAMBO_ALLOC(X_mat,(d(1),d(2),d(3)))
          X_mat=cZERO
-#ifdef _CUDA
-         allocate(X_mat_d, source=X_mat)
-#endif
        end select
      else
        select case(what)
@@ -192,7 +188,6 @@ module X_m
          ! and the matrix itself
          !
          YAMBO_FREE(X_mat)
-         YAMBO_FREE(X_mat_d)
          !
        end select
      endif

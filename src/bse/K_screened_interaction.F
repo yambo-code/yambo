@@ -144,6 +144,8 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      !
 #ifdef _CUDA
      ! device <- host transfer
+     allocate(X_mat_d, source=X_mat)
+     !
      X_mat_d=X_mat
      !
      ! CUDA Fortran workarounds

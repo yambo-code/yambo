@@ -292,12 +292,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    ! CLEAN (2)
    ! 
-   print*,iq, iq_mem
-   print*, X_par(iq_mem)%rows(1)
-   print*, X_par(iq_mem)%rows(2)
-   print*,' '
-   print*,' '
-
    if (io_RESPONSE) call X_PARALLEL_alloc(X_par(iq_mem),0,0,"CLEAN")
    YAMBO_FREE(X_par_lower_triangle%blc)
    call MATRIX_reset(X_par_lower_triangle)

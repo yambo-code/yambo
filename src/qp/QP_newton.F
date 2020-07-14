@@ -599,6 +599,8 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX)
          r1=iku_v_norm(q_sampl+g_vec(ig,:))
          if (r1 < 1.e-5) then
            W_sampl = f_coeff(1,1,1)*(2*pi*alat(iort))**2
+           write(out_unit_W_intp,"(I5, E15.6, E15.6, E15.6, E15.6, E15.6, E15.6)") &
+&                           iq, q_sampl(1),q_sampl(2),q_sampl(3), 0.0, 0.0, W_sampl
            cycle
          end if
          !

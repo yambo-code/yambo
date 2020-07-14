@@ -63,7 +63,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
  ! All points
  !
  i1min=1
- if (iq==1 .and. mode == "x") i1min=2
+ if (iq==1) i1min=2
  do i1=i1min,RIM_ng 
    i2max=RIM_ng 
    if (RIM_is_diagonal) i2max=i1
@@ -111,7 +111,6 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
          !
          !Evaluate func
          !
-         !call c2a(b_in=b,v_in=qr(i3,:),v_out=v1,mode='ki2a')
          call c2a(b,qr(i3,:),v1,'ki2a')
          !Typo: in func, I want to use dq instead of q+dq!!!!!!!!!!!!!!!!!!
          func = f_coeff(1,iq,i1)+v1(1)*f_coeff(2,iq,i1)+v1(1)*f_coeff(4,iq,i1)*v1(1)+&
@@ -138,13 +137,13 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
 
    enddo
  enddo
- if (iq>1 .or. mode == "c") return
+ if (iq>1) return
  !
  ! Gamma point (1,I) elements
  !
  RIM_acc=0._DP
  !
- if (cut_is_slab) then
+ if (cut_is_slab .and. mode == "x") then
    ! Here put the integral over the circle
    G_circ = .2_SP*k_grid_uc_vol/((2._SP*pi)/alat(iort))
    G_radii = sqrt(G_circ/pi)
@@ -166,49 +165,82 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
  i2max=RIM_ng 
  if (RIM_is_diagonal) i2max=1
  RIM_acc_anis=0._DP
- do i1=1,RIM_n_rand_pts
-   r1=iku_v_norm(qr(i1,:))
-   v1=4.*pi**2.*(/qr(i1,1)**2.,qr(i1,2)**2,qr(i1,3)**2/)
-   v1(:)=v1(:)/alat(:)**2./r1**4.
-   !
-   if(r1>=G_radii) then
+ !
+ if (mode == "x") then
+   do i1=1,RIM_n_rand_pts
+     r1=iku_v_norm(qr(i1,:))
+     v1=4.*pi**2.*(/qr(i1,1)**2.,qr(i1,2)**2,qr(i1,3)**2/)
+     v1(:)=v1(:)/alat(:)**2./r1**4.
      !
-     ! Integrate the Coulomb term outside the sphere of radius G_radii
-     !
-     N_out_G=N_out_G+1
-     if (cut_is_slab) then
-       !Evaluate v_slab
-       !kz
-       slab_vz=qr(i1,iort)*2.*pi/alat(iort)
-       !kxy
-       slab_vplane=sqrt((qr(i1,ipar1)*2.*pi/alat(ipar1))**2+&
+     if(r1>=G_radii) then
+       !
+       ! Integrate the Coulomb term outside the sphere of radius G_radii
+       !
+       N_out_G=N_out_G+1
+       if (cut_is_slab) then
+         !Evaluate v_slab
+         !kz
+         slab_vz=qr(i1,iort)*2.*pi/alat(iort)
+         !kxy
+         slab_vplane=sqrt((qr(i1,ipar1)*2.*pi/alat(ipar1))**2+&
 &                 (qr(i1,ipar2)*2.*pi/alat(ipar2))**2)
-       !     
-       pre_factor=1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)
-       if (abs(pre_factor)<1.E-5_SP) pre_factor=1.E-5_SP        
-       RIM_acc(1)=RIM_acc(1)+2._DP*pre_factor*rfac/(r1**2._DP)
-     else
-       RIM_acc(1)=RIM_acc(1)+2._DP*rfac/(r1**2._DP)
-       RIM_acc_anis=RIM_acc_anis+2._DP*rfac*dot_product(em1_anis,v1)
+         !     
+         pre_factor=1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)
+         if (abs(pre_factor)<1.E-5_SP) pre_factor=1.E-5_SP        
+         RIM_acc(1)=RIM_acc(1)+2._DP*pre_factor*rfac/(r1**2._DP)
+       else
+         RIM_acc(1)=RIM_acc(1)+2._DP*rfac/(r1**2._DP)
+         RIM_acc_anis=RIM_acc_anis+2._DP*rfac*dot_product(em1_anis,v1)
+       endif
+       !
+       ! Integrate the 1/|q||q+Go| term outside the sphere of radius G_radii as well
+       ! because the intergral in the sphere gose to zero as NQ->\infty
+       !
+       do i2=2,i2max,1
+         r1=r1*iku_v_norm(g_vec(i2,:)+qr(i1,:))
+         RIM_acc(i2)=RIM_acc(i2)+rfac/r1
+       enddo
+       !
      endif
      !
-     ! Integrate the 1/|q||q+Go| term outside the sphere of radius G_radii as well
-     ! because the intergral in the sphere gose to zero as NQ->\infty
-     !
-     do i2=2,i2max,1
-       r1=r1*iku_v_norm(g_vec(i2,:)+qr(i1,:))
-       RIM_acc(i2)=RIM_acc(i2)+rfac/r1
-     enddo
-     !
-   endif
+   enddo
    !
- enddo
- !
- RIM_qpg(1,1,:)=RIM_acc(:)
- RIM_anisotropy=RIM_acc_anis
- !
- do i1=2,i2max
-   RIM_qpg(1,i1,1)=RIM_qpg(1,1,i1)
- enddo
+   RIM_qpg(1,1,:)=RIM_acc(:)
+   RIM_anisotropy=RIM_acc_anis
+   !
+   do i1=2,i2max
+     RIM_qpg(1,i1,1)=RIM_qpg(1,1,i1)
+   enddo
+   !
+ else if (mode == "c") then
+   !
+   do i1=1,RIM_n_rand_pts
+     !
+     r1=iku_v_norm(qr(i1,:))
+     if (r1 < 1.e-5) then
+       RIM_acc(1) = RIM_acc(1) + rfac*f_coeff(1,1,1)*(4*pi*lcut)**2
+       cycle
+     end if
+     !
+     !Evaluate v_slab
+     !kz
+     slab_vz=qr(i1,iort)*2.*pi/alat(iort)
+     !kxy
+     slab_vplane=sqrt((qr(i1,ipar1)*2.*pi/alat(ipar1))**2+&
+&                 (qr(i1,ipar2)*2.*pi/alat(ipar2))**2)
+     !     
+     pre_factor=1.-exp(-slab_vplane*lcut)      
+     vslab=4._DP*pi*pre_factor
+     !
+     !Evaluate interpolation function
+     func = f_coeff(1,1,1)*exp(-f_coeff(2,1,1)*slab_vplane)
+     !Evaluate W
+     RIM_acc(1) = RIM_acc(1) + rfac*vslab*func*vslab/r1**2/(1-vslab*func)
+     !
+   enddo
+   !
+   RIM_W(1,1,1)=RIM_acc(1)
+   !
+ end if
  !
 end subroutine

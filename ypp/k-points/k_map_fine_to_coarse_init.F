@@ -170,7 +170,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
    deallocate(FineGd_E%E,FineGd_k%pt)
    allocate(FineGd_E%E(FineGd_E%nb,nkibz,n_sp_pol),FineGd_k%pt(nkibz,3))
    FineGd_E%E(:,:,:)=rand_E(:,:,:)
-   FineGd_k%pt(:,:)=rand_k(:,:)
+   FineGd_k%pt(:,:)=rand_k(:nkibz,:)
    deallocate(rand_E)
  endif
  !

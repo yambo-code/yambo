@@ -338,8 +338,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
     if (     io_RESPONSE) iw_X_mat=iw
     if (.not.io_RESPONSE) iw_X_mat=(iq_mem-1)*Xw%n_freqs+iw
     !
-    X_par(iq_mem)%blc(:,:,iw)=X_mat(X_par(iq_mem)%rows(1):X_par(iq_mem)%rows(2)+1,&
-&              X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2)+1,iw_X_mat)
+    X_par(iq_mem)%blc(:,:,iw)=X_mat(X_par(iq_mem)%rows(1):X_par(iq_mem)%rows(2),&
+&              X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)
    enddo
    !
    print*,'qp',iq_mem

@@ -338,10 +338,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
     if (     io_RESPONSE) iw_X_mat=iw
     if (.not.io_RESPONSE) iw_X_mat=(iq_mem-1)*Xw%n_freqs+iw
     !
-    X_par(iq_mem)%blc(:,:,iw)=X_mat(X_par(iq_mem)%rows(1):X_par(iq_mem)%rows(2),&
-&              X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)
+    X_par(iq_mem)%blc(:,:,iw)=X_mat(X_par(iq_mem)%rows(1):X_par(iq_mem)%rows(2)+1,&
+&              X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2)+1,iw_X_mat)
    enddo
    !
+   print*,'qp',iq_mem
+   print*, X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)+1
+   print*, X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)+1
    if (have_cuda) call dev_memcpy(X_par(iq_mem)%blc_d, X_par(iq_mem)%blc)
    !
    !
@@ -395,16 +398,16 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          if ( HEAD_QP_cpu ) then
            if (X_is_TR_rotated) then
               !$omp parallel do default(shared), private(ig1,ig2)
-              do ig2=1,X%ng
-                do ig1=1,X%ng
+            do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
+              do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
                   eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig2,ig1))
                 enddo
               enddo
               !$omp end parallel do
            else
               !$omp parallel do default(shared), private(ig1,ig2)
-              do ig2=1,X%ng
-                do ig1=1,X%ng
+            do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
+              do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
                   eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
                 enddo
               enddo
@@ -486,8 +489,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          if(l_GW_terminator) then
            !$omp parallel do default(shared), private(ig1,ig2)
-           do ig2=1,X%ng
-             do ig1=1,X%ng
+          do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
+            do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
                  eet_factor(ig1,ig2)=eet_factor(ig1,ig2)-isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))
              enddo
            enddo
@@ -585,7 +588,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          pre_factor=0.0_SP
          !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor)
-         do ig1=1,X%ng
+         do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
            pre_factor=pre_factor+isc%rhotw(ig1)*local_rhotw(ig1)
          enddo
          !$omp end parallel do

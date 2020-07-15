@@ -80,7 +80,7 @@ subroutine RT_PHEL_lifetimes(iq,E,k,q)
  ! ... BZ index ...
  integer               :: iqbz,ikbz,ik,ik_m_q,ik_mem,iq_mem,ik_rim,ip_rim
  ! ... lifetime related quantities ...
- real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,f_nkq,Hole_f_nkq,f_mk,Hole_f_mk,&
+ real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,f_mkq,Hole_f_mkq,f_nk,Hole_f_nk,&
 &            TMP_Res_lifetime,TMP_Ares_lifetime,TMP_eh_lifetime,N_q(2)
  !
  iq_mem=PAR_Q_ibz_index(iq)
@@ -122,13 +122,13 @@ subroutine RT_PHEL_lifetimes(iq,E,k,q)
      do i_n=RT_bands(1),RT_bands(2)
        !
        ! [NOTE] the m.e. in elph_gkkp DO NOT have indices order exchanged (unlike RT_ELPH case)
-       Gkkp_sq(i_n,i_n)=phel_gkkp_expanded_sq(il,i_n,i_n,iq_mem,ik_mem)
+       Gkkp_sq(i_n,i_n)=phel_gkkp_expanded_sq(il,i_n,i_n,iq_mem,ikbz)
        if(sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_n)=rZERO
        !
        do i_np=RT_bands(1),RT_bands(2)
          !
          if (i_n.ne.i_np) then
-           Gkkp_sq(i_n,i_np)=phel_gkkp_expanded_sq(il,i_n,i_np,iq_mem,ik_mem)
+           Gkkp_sq(i_n,i_np)=phel_gkkp_expanded_sq(il,i_n,i_np,iq_mem,ikbz)
            if (sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_np)=rZERO
          endif 
          !
@@ -171,6 +171,9 @@ subroutine RT_PHEL_lifetimes(iq,E,k,q)
            TMP_Ares_lifetime=rZero
            TMP_eh_lifetime=rZero
            !
+           ! [NOTE] FP: band indices exchanged (m<->n) with respect to my notes:
+           !            My notes: E_mk - E_nk-q  |  The code: E_nk - E_mk-q
+           !
            do ip_rim=RT_ibz_coo(ik_m_q,1),RT_ibz_coo(ik_m_q,2)
              !
              if (RT_occupations_locked(i_np,ip_rim)) cycle
@@ -189,23 +192,29 @@ subroutine RT_PHEL_lifetimes(iq,E,k,q)
              D_res =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,'EP')
              !
              if(l_initial_equilibrium) then
-               f_nkq      = RT_E_occupations_reference(i_np,ip_rim)/spin_occ
-               Hole_f_nkq = RT_H_occupations_reference(i_np,ip_rim)/spin_occ
-               f_mk       = RT_E_occupations_reference(i_n,ik_rim)/spin_occ
-               Hole_f_mk  = RT_H_occupations_reference(i_n,ik_rim)/spin_occ
+               f_mkq      =  RT_E_occupations_reference(i_np,ip_rim)/spin_occ
+               Hole_f_mkq =  RT_H_occupations_reference(i_np,ip_rim)/spin_occ
+               f_nk       =  RT_E_occupations_reference(i_n,ik_rim)/spin_occ
+               Hole_f_nk  =  RT_H_occupations_reference(i_n,ik_rim)/spin_occ
              else
-               f_nkq      =  RT_life_delta_occupations(i_np,ip_rim)/spin_occ
-               Hole_f_nkq = -RT_life_delta_occupations(i_np,ip_rim)/spin_occ
-               f_mk       =  RT_life_delta_occupations(i_n,ik_rim)/spin_occ
-               Hole_f_mk  = -RT_life_delta_occupations(i_n,ik_rim)/spin_occ
+               f_mkq      =  RT_life_delta_occupations(i_np,ip_rim)/spin_occ
+               Hole_f_mkq = -RT_life_delta_occupations(i_np,ip_rim)/spin_occ
+               f_nk       =  RT_life_delta_occupations(i_n,ik_rim)/spin_occ
+               Hole_f_nk  = -RT_life_delta_occupations(i_n,ik_rim)/spin_occ
              endif
              !
-             TMP_Res_lifetime=TMP_Res_lifetime+Hole_f_nkq*f_mk*D_res
-             TMP_Ares_lifetime=TMP_Ares_lifetime+f_nkq*Hole_f_mk*D_ares
+             TMP_Res_lifetime=TMP_Res_lifetime+Hole_f_mkq*f_nk*D_res
+             TMP_Ares_lifetime=TMP_Ares_lifetime+f_mkq*Hole_f_nk*D_ares
              !
-             if( abs(N_q(1))>zero_dfl ) then
-               TMP_eh_lifetime=TMP_eh_lifetime+(f_nkq-f_mk)*(D_ares-D_res)
-             endif
+             ! [NOTE] IF statement to be reactivated when time propagation is implemented
+             !if( abs(N_q(1))>zero_dfl ) then
+             TMP_eh_lifetime=TMP_eh_lifetime+(f_mkq-f_nk)*(D_ares-D_res)
+             !endif
+             !
+             ! [NOTE] The contribution to the phonon-electron equilibrium lifetime, 
+             ! i.e., minus the imaginary part of the phonon-electron self-energy, is given by:
+             !
+             !                            (f_mkq-f_nk)*D_res
              !
            enddo
            !
@@ -213,26 +222,27 @@ subroutine RT_PHEL_lifetimes(iq,E,k,q)
          !
          ! Spontaneous phonon emission (resonant and antiresonant)
          P_E_sp_res_lifetime(il,iq_mem)=P_E_sp_res_lifetime(il,iq_mem)+&
-    &                                    TMP_Res_lifetime*pre_factor
+&                                       TMP_Res_lifetime*pre_factor
          P_E_sp_ares_lifetime(il,iq_mem)=P_E_sp_ares_lifetime(il,iq_mem)+&
-    &                                    TMP_Ares_lifetime*pre_factor
+&                                        TMP_Ares_lifetime*pre_factor
          !
-         if(.not.abs(N_q(1))>zero_dfl) cycle
+         ![NOTE] IF statement to be reactivated when time propagation is implemented
+         !if(.not.abs(N_q(1))>zero_dfl) cycle
          !
          ! Stimulated Emission / absorption
          P_E_eh_lifetime(il,iq_mem)=P_E_eh_lifetime(il,iq_mem)+&
-    &                                    TMP_eh_lifetime*pre_factor
+&                                   TMP_eh_lifetime*pre_factor
          !
          ! Store equilibrium values
          if (l_initial_equilibrium) then
-           EQ_P_E_sp_res_lifetime(il,iq_mem)  = EQ_P_E_sp_res_lifetime(il,iq_mem)+P_E_sp_res_lifetime(il,iq_mem)
-           EQ_P_E_sp_ares_lifetime(il,iq_mem) = EQ_P_E_sp_ares_lifetime(il,iq_mem)+P_E_sp_ares_lifetime(il,iq_mem)
-           EQ_P_E_eh_lifetime(il,iq_mem)      = EQ_P_E_eh_lifetime(il,iq_mem)+ P_E_eh_lifetime(il,iq_mem)
+           EQ_P_E_sp_res_lifetime(il,iq_mem)  = P_E_sp_res_lifetime(il,iq_mem)
+           EQ_P_E_sp_ares_lifetime(il,iq_mem) = P_E_sp_ares_lifetime(il,iq_mem)
+           EQ_P_E_eh_lifetime(il,iq_mem)      = P_E_eh_lifetime(il,iq_mem)
          endif
          !
-       enddo ! i_np
+       enddo ! i_np i.e. (mk-q)
        !
-     enddo ! i_n
+     enddo ! i_n i.e. (nk)
      !
    enddo ! ph branch
    !

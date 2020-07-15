@@ -93,6 +93,11 @@ subroutine RT_relaxation(E,k,q,Time)
  ! Work Space
  !
  integer          :: ik,iq
+ !DEBUG> 
+#if defined _PHEL
+ integer, parameter :: out_file=20
+#endif
+ !DEBUG<
  !
  if ( (.not.RT_is_statically_dephased.and..not.l_elphoton_scatt) .or. &
 &     (.not.RT_is_dynamically_dephased)                          .or. &
@@ -156,8 +161,13 @@ subroutine RT_relaxation(E,k,q,Time)
    enddo
    !
    !DEBUG>
-   write(*,*) HA2EV*(EQ_P_E_sp_res_lifetime(2,6)+EQ_P_E_sp_ares_lifetime(2,6))
-   write(*,*) HA2EV*EQ_P_E_eh_lifetime(2,6)
+   if (l_initial_equilibrium) then
+     open(unit=out_file,file='test_lifetimes.dat',action="write",status="replace")
+     do iq=1,nqibz
+       write (out_file,*) HA2EV*EQ_P_E_sp_res_lifetime(6,iq),HA2EV*EQ_P_E_sp_ares_lifetime(6,iq),HA2EV*EQ_P_E_eh_lifetime(6,iq)
+     enddo
+     close(out_file)
+   endif   
    !DEBUG<
    !
    call timing('RT relaxation (p-e)',OPR='stop')

@@ -114,13 +114,14 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
      !
      N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
      !
+     ! This part is wrong: an error in RT_PH_occupations?
 #if defined _PHEL
-     iqibz = k%sstar(iqbz,1)
-     if (l_initial_equilibrium) then
-       N_q    = (RT_PH_occupations_reference(il,iqibz)+(/0._SP,spin_occ/))/spin_occ
-     else
-       N_q    = (RT_PH_occupations(il,iqibz)+(/0._SP,spin_occ/))/spin_occ
-     endif
+     !iqibz = k%sstar(iqbz,1)
+     !if (l_initial_equilibrium) then
+       !N_q    = (RT_PH_occupations_reference(il,iqibz)+(/0._SP,spin_occ/))/spin_occ
+     !else
+       !N_q    = (RT_PH_occupations(il,iqibz)+(/0._SP,spin_occ/))/spin_occ
+     !endif
 #endif
      !
      ! Note the m.e. in elph_gkkp_expanded_sq are stored with indexes order exchanged (see RT_ELPH_initialize)

@@ -63,7 +63,7 @@ module PH_real_time
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_phel_scatt
      use ELPH,           ONLY:elph_branches
-     use R_lattice,      ONLY:nqbz
+     use R_lattice,      ONLY:nqibz
      !
      implicit none
      !
@@ -76,12 +76,12 @@ module PH_real_time
      !
      if (l_phel_scatt) then
        !
-       YAMBO_ALLOC(P_E_sp_res_lifetime,(elph_branches(1):elph_branches(2),nqbz))
-       YAMBO_ALLOC(P_E_sp_ares_lifetime,(elph_branches(1):elph_branches(2),nqbz))
-       YAMBO_ALLOC(P_E_eh_lifetime,(elph_branches(1):elph_branches(2),nqbz))
-       YAMBO_ALLOC(EQ_P_E_sp_res_lifetime,(elph_branches(1):elph_branches(2),nqbz))
-       YAMBO_ALLOC(EQ_P_E_sp_ares_lifetime,(elph_branches(1):elph_branches(2),nqbz))
-       YAMBO_ALLOC(EQ_P_E_eh_lifetime,(elph_branches(1):elph_branches(2),nqbz))
+       YAMBO_ALLOC(P_E_sp_res_lifetime,(elph_branches(1):elph_branches(2),nqibz))
+       YAMBO_ALLOC(P_E_sp_ares_lifetime,(elph_branches(1):elph_branches(2),nqibz))
+       YAMBO_ALLOC(P_E_eh_lifetime,(elph_branches(1):elph_branches(2),nqibz))
+       YAMBO_ALLOC(EQ_P_E_sp_res_lifetime,(elph_branches(1):elph_branches(2),nqibz))
+       YAMBO_ALLOC(EQ_P_E_sp_ares_lifetime,(elph_branches(1):elph_branches(2),nqibz))
+       YAMBO_ALLOC(EQ_P_E_eh_lifetime,(elph_branches(1):elph_branches(2),nqibz))
        P_E_sp_res_lifetime=0._SP
        P_E_sp_ares_lifetime=0._SP
        P_E_eh_lifetime=0._SP
@@ -94,9 +94,9 @@ module PH_real_time
      if(l_all.or.l_phonons) then
        !
        ! Occ's ...
-       YAMBO_ALLOC(RT_PH_occupations,(elph_branches(1):elph_branches(2),nqbz))
-       YAMBO_ALLOC(RT_PH_occupations_reference,(elph_branches(1):elph_branches(2),nqbz))
-       YAMBO_ALLOC(RT_PH_delta_occupations,(elph_branches(1):elph_branches(2),nqbz))
+       YAMBO_ALLOC(RT_PH_occupations,(elph_branches(1):elph_branches(2),nqibz))
+       YAMBO_ALLOC(RT_PH_occupations_reference,(elph_branches(1):elph_branches(2),nqibz))
+       YAMBO_ALLOC(RT_PH_delta_occupations,(elph_branches(1):elph_branches(2),nqibz))
        RT_PH_occupations_reference=0._SP
        !
      endif

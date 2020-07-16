@@ -33,7 +33,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,l_rt_carriers_in_use
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,myid,&
 &                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,PAR_nQ_ibz,PAR_COM_SE_WORLD,&
 &                        PAR_Q_ibz_index,n_WF_bands_to_load,HEAD_QP_cpu,PAR_COM_SE_WORLD_RL_resolved
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
@@ -342,9 +342,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &              X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)
    enddo
    !
+   !MB!
    print*,'qp',iq_mem
+   print*,'id= ',myid
    print*, X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
    print*, X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
+   print*,'  '
    if (have_cuda) call dev_memcpy(X_par(iq_mem)%blc_d, X_par(iq_mem)%blc)
    !
    !
@@ -642,8 +645,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    enddo QP_loop
    !
  enddo Q_loop 
- !
- call PP_redux_wait(QP_Sc,COMM=PAR_COM_SE_WORLD%COMM)
  !
  call live_timing()
  !

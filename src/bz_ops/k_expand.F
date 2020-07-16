@@ -80,7 +80,6 @@ subroutine k_expand(k)
  YAMBO_FREE(k%star)
  YAMBO_FREE(k%nstar)
  YAMBO_FREE(k%weights)
- 
  !
  YAMBO_ALLOC(k%star,(k%nibz,nsym))
  YAMBO_ALLOC(k%nstar,(k%nibz))

@@ -24,11 +24,10 @@
 integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  use drivers,             ONLY:infile_editing
- use stderr,              ONLY:write_to_log
+ use stderr,              ONLY:write_to_log,STRING_same
  use parallel_m,          ONLY:ncpu,myid
  use electrons,           ONLY:levels,E_reset,n_bands,default_nel
- use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,&
-&                              nXkibz,nqibz,k_pt,q_pt
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,nXkibz,nqibz,k_pt,q_pt
  use D_lattice,           ONLY:input_GS_Tel,alat,nsym
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
  use com,                 ONLY:msg
@@ -38,7 +37,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use interfaces,          ONLY:PARALLEL_global_indexes
  use YPPm,                ONLY:l_bxsf,l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,&
-&                              l_fix_save,alat_used_for_output,l_QP_DB_expand
+&                              l_fix_save,alat_used_for_output,l_QP_DB_expand,coo_out,coo_in
 #if defined _YPP_RT
  use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs,l_NL_X,l_NL_exc
 #endif
@@ -158,7 +157,13 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call msg('s',':: Symmetries            :',nsym)
  call msg('s',':: RL vectors            :',ng_vec)
  !
- alat_used_for_output=alat(1)
+ if (STRING_same(trim(coo_out),"alat").or.STRING_same(trim(coo_in),"alat")) then
+   if (alat_used_for_output==0.) then
+     call warning("Input alat undefined. Using the DB value")
+     alat_used_for_output=alat(1)
+   endif
+   call msg('s',':: Lattice constant (used to define "alat" unit) [a.u.]:',alat_used_for_output)
+ endif
  !
  ! BZ sampling index 
  !

@@ -23,11 +23,9 @@
 !
 subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !
- use pars,                ONLY:SP
- use stderr,              ONLY:intc
  use com,                 ONLY:msg
  use electrons,           ONLY:levels
- use R_lattice,           ONLY:bz_samp,k_the_nearest,bz_samp_reset
+ use R_lattice,           ONLY:bz_samp,k_the_nearest
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,          ONLY:PARALLEL_index
  use LIVE_t,              ONLY:live_timing
@@ -144,14 +142,5 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !
  deallocate(TMP_table_mapped,N_bz_duplicate)
  if(allocated(TMP_table_duplicate)) deallocate(TMP_table_duplicate)
- !
- ! DEBUG <
- !do ikbz=1,Xk%nbz
- !  write(1100,*) Xk%ptbz(ikbz,:)
- !  do ikbz_FineGd=Xk%bz_DbGd_map(1,ikbz),Xk%bz_DbGd_map(2,ikbz)
- !    write(1100+ikbz,*) Xk%ptbz_fineGd(ikbz_FineGd,:)
- !  enddo
- !enddo
- ! DEBUG >
  !
 end subroutine

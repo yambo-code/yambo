@@ -205,29 +205,45 @@ subroutine k_special(LIST_only)
      SPECIAL_k_label(15)='A6'
      SPECIAL_k%pt(15,:)=SPECIAL_k%pt(11,:)+SPECIAL_k%pt(5,:)
      !
-     call k_add_special_regions( (/0.88_SP,0._SP  /),"XYR1" )
-     call k_add_special_regions( (/0.12_SP,0._SP  /),"XYR2" )
-     call k_add_special_regions( (/0.12_SP,0.26_SP/),"XYR3" )
+     ! X=+, Z=- quadrant
      !
-     call k_add_special_regions( (/0.62_SP,0.16_SP/),"YpR1" )
-     call k_add_special_regions( (/0.38_SP,0.16_SP/),"YpR2" )
-     call k_add_special_regions( (/0.38_SP,0.26_SP/),"YpR3" )
+     call k_add_special_regions( (/0.88_SP,0._SP  /),"XY1pm" )
+     call k_add_special_regions( (/0.88_SP,0.26_SP/),"XY2pm" )
+     call k_add_special_regions( (/0.72_SP,0.26_SP/),"Gpm" )
+     call k_add_special_regions( (/0.72_SP,0.50_SP/),"Gnm" )
+     call k_add_special_regions( (/0.62_SP,0.16_SP/),"Y1pm" )
+     call k_add_special_regions( (/0.62_SP,0.26_SP/),"Y2pm" )
+     call k_add_special_regions( (/0.50_SP,0._SP  /),"XYpn" )
+     call k_add_special_regions( (/0.50_SP,0.16_SP/),"Ypn" )
+     call k_add_special_regions( (/0.50_SP,0.26_SP/),"Gpn" )
      !
-     call k_add_special_regions( (/0.72_SP,0.26_SP/),"GR1" )
-     call k_add_special_regions( (/0.28_SP,0.26_SP/),"GR2" )
-     call k_add_special_regions( (/0.28_SP,0.50_SP/),"GR3" )
+     ! X=+, Z=+ quadrant
      !
-     call k_add_special_regions( (/0.72_SP,0.50_SP/),"GL1" )
-     call k_add_special_regions( (/0.28_SP,0.50_SP/),"GL2" )
-     call k_add_special_regions( (/0.28_SP,0.74_SP/),"GL3" )
+     call k_add_special_regions( (/0.12_SP,0._SP  /),"XY1pp" )
+     call k_add_special_regions( (/0.12_SP,0.26_SP/),"XY2pp" )
+     call k_add_special_regions( (/0.28_SP,0.26_SP/),"Gpp" )
+     call k_add_special_regions( (/0.28_SP,0.50_SP/),"Gnp" )
+     call k_add_special_regions( (/0.38_SP,0.16_SP/),"Y1pp" )
+     call k_add_special_regions( (/0.38_SP,0.26_SP/),"Y2pp" )
      !
-     call k_add_special_regions( (/0.88_SP,0.74_SP/),"XYL1" )
-     call k_add_special_regions( (/0.12_SP,0.74_SP/),"XYL2" )
-     call k_add_special_regions( (/0.12_SP,1._SP  /),"XYL3" )
+     ! X=-, Z=- quadrant
      !
-     call k_add_special_regions( (/0.62_SP,0.74_SP/),"YpL1" )
-     call k_add_special_regions( (/0.38_SP,0.74_SP/),"YpL2" )
-     call k_add_special_regions( (/0.38_SP,0.84_SP/),"YpL3" )
+     call k_add_special_regions( (/0.88_SP,1._SP  /),"XY1mm" )
+     call k_add_special_regions( (/0.88_SP,0.74_SP/),"XY2mm" )
+     call k_add_special_regions( (/0.72_SP,0.74_SP/),"Gmm" )
+     call k_add_special_regions( (/0.62_SP,0.84_SP/),"Y1mm" )
+     call k_add_special_regions( (/0.62_SP,0.74_SP/),"Y2mm" )
+     call k_add_special_regions( (/0.50_SP,1._SP  /),"XYmn" )
+     call k_add_special_regions( (/0.50_SP,0.84_SP/),"Ymn" )
+     call k_add_special_regions( (/0.50_SP,0.74_SP/),"Gmn" )
+     !
+     ! X=-, Z=+ quadrant
+     !
+     call k_add_special_regions( (/0.12_SP,1._SP  /),"XY1mp" )
+     call k_add_special_regions( (/0.12_SP,0.74_SP/),"XY2mp" )
+     call k_add_special_regions( (/0.28_SP,0.74_SP/),"Gmp" )
+     call k_add_special_regions( (/0.38_SP,0.84_SP/),"Y1mp" )
+     call k_add_special_regions( (/0.38_SP,0.74_SP/),"Y2mp" )
      !
    case('CUB')
      !

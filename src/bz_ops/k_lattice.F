@@ -123,8 +123,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    ! In any case the deep checks in bz_samp_indexes should prevent them.
    !
    ! Andrea (29/12/2011). The 2D surface of the tutorials still does not work. And this is due to 
-   ! the change introduced in 2010. Therefore I try to use the method that yields the smalles
-   ! norm
+   ! the change introduced in 2010. Therefore I try to use the method that yields the smallest
+   ! norm.
    !
    do i2=1,2
      !

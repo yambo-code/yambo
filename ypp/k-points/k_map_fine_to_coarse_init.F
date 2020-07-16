@@ -29,12 +29,11 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
  use parser_m,            ONLY:parser
  use interfaces,          ONLY:io_DB1_selective_scan
  use zeros,               ONLY:k_iku_zero,k_rlu_zero,define_zeros
- use R_lattice,           ONLY:bz_samp,nkibz,k_the_nearest,bz_samp_reset
+ use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
  use com,                 ONLY:msg
  use YPPm,                ONLY:BZ_FineGd_nkpts_to_use,FineGd_DB1_paths,MAX_FineGd_DBs,n_FineGd_DBs
  use electrons,           ONLY:levels,default_nel,n_bands,n_sp_pol,E_reset
- use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  !
  implicit none
  !

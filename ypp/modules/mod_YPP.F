@@ -42,7 +42,6 @@ module YPPm
  logical  :: l_high_sym_pts
  integer  :: n_path_pts
  integer  :: BZ_random_nkpts
- real(SP) :: gamma_radius
  real(SP) :: alat_used_for_output
  character(schlen) :: coo_in
  character(schlen) :: coo_out
@@ -309,6 +308,7 @@ module YPPm
    !
    subroutine K_transform(k,in_mode)
      !
+     use stderr,       ONLY:STRING_same
      use units,        ONLY:pi
      use vec_operate,  ONLY:c2a
      !
@@ -317,22 +317,22 @@ module YPPm
      !
      select case (in_mode)
        case ('cc')
-         if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="kc2i")
-         if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="kc2a")
-         if (trim(coo_out)=="alat") then
+         if (STRING_same(trim(coo_out),"iku"))  call c2a(v_in=k,mode="kc2i")
+         if (STRING_same(trim(coo_out),"rlu"))  call c2a(v_in=k,mode="kc2a")
+         if (STRING_same(trim(coo_out),"alat")) then
            k=k*alat_used_for_output/2./pi
          endif
        case ('iku')
-         if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ki2c")
-         if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="ki2a")
-         if (trim(coo_out)=="alat") then
+         if (STRING_same(trim(coo_out),"cc"))   call c2a(v_in=k,mode="ki2c")
+         if (STRING_same(trim(coo_out),"rlu"))  call c2a(v_in=k,mode="ki2a")
+         if (STRING_same(trim(coo_out),"alat")) then
            call c2a(v_in=k,mode="ki2c")
            k=k*alat_used_for_output/2./pi
          endif
        case ('rlu')
-         if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ka2c")
-         if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="ka2i")
-         if (trim(coo_out)=="alat") then
+         if (STRING_same(trim(coo_out),"cc"))   call c2a(v_in=k,mode="ka2c")
+         if (STRING_same(trim(coo_out),"iku"))  call c2a(v_in=k,mode="ka2i")
+         if (STRING_same(trim(coo_out),"alat")) then
            call c2a(v_in=k,mode="ka2c")
            k=k*alat_used_for_output/2./pi
          endif

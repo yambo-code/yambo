@@ -23,7 +23,6 @@
 !
 subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
- use pars,                ONLY:SP
  use stderr,              ONLY:intc
  use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset
  use com,                 ONLY:msg
@@ -65,6 +64,11 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  YAMBO_ALLOC(Reordering_map,(FineGd_k%nibz))
  !
+ ! Xk (IBZ->BZ)
+ !
+ call k_build_up_BZ_tables(Xk)
+ call k_ibz2bz(Xk,'i',.true.)
+ !
  ! First map IBZ to IBZ
  !=======================
  call section('=','Double Grid IBZ mapping')
@@ -73,11 +77,6 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  ! Expand to the BZ 
  !==================
  call section('=','Double Grid K-points expansion ...')
- !
- ! Xk (IBZ->BZ)
- !
- call k_build_up_BZ_tables(Xk)
- call k_ibz2bz(Xk,'i',.true.)
  !
  ! k_DbGd (IBZ->BZ)
  !

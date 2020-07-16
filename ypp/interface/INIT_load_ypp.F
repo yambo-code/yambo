@@ -36,7 +36,7 @@ subroutine INIT_ypp_load(defs)
 &                        BZ_FineGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
 &                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,PROJECT_path,QP_DB_to_expand,&
 &                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
-&                        gamma_radius,INTERP_grid,mag_dir,N_path_pts,ncell,ord_dgrid_ipol,p_dir,p_format,PDOS_atoms,&
+&                        INTERP_grid,mag_dir,N_path_pts,ncell,ord_dgrid_ipol,p_dir,p_format,PDOS_atoms,&
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
 &                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,w90_fname,wannier_bands,&
 &                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_depth,PROJECT_steps,PROJECT_threshold
@@ -328,7 +328,6 @@ subroutine INIT_ypp_load(defs)
  !
  ! GPL_EXCLUDE_START
  !
- call it(defs,'GammaRadius','[a.u.] Maximum distance from gamma',gamma_radius,verb_level=V_general)
  call it(defs,'OutputAlat','[a.u.] Lattice constant used for "alat" ouput format',alat_used_for_output)
  !
  ! GPL_EXCLUDE_END

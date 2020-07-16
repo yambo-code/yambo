@@ -24,11 +24,10 @@
 subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !
  use pars,                ONLY:SP
- use stderr,              ONLY:intc
  use com,                 ONLY:msg
  use vec_operate,         ONLY:k2bz
  use electrons,           ONLY:levels,n_sp_pol
- use R_lattice,           ONLY:bz_samp,k_the_nearest,bz_samp_reset,rl_sop
+ use R_lattice,           ONLY:bz_samp,k_the_nearest,rl_sop
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,          ONLY:PARALLEL_index
  use LIVE_t,              ONLY:live_timing
@@ -128,20 +127,15 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !
  ! Reordering and transfer Xen%E_FineGd and Xk%k_FineGd
  !======================================================
- Xen%nb_FineGd=FineGd_E%nb
- Xen%nk_FineGd=FineGd_E%nk
- allocate(Xen%E_FineGd(Xen%nb_FineGd,Xen%nk_FineGd,n_sp_pol))
- !
- ! Skipe these for the moment
- !  real(SP),   pointer :: W_FineGd(:,:,:)        => null()
- !  real(SP),   pointer :: f_FineGd(:,:,:)        => null()
- !  real(SP),   pointer :: df_FineGd(:,:,:)       => null()
- !
- allocate(Xk%pt_FineGd(Xk%nibz_FineGd,3))
- allocate(Xk%weights_FineGd(Xk%nibz_FineGd))
  !
  call k_expand(FineGd_k)
  !
+ !Xen%nb_FineGd=FineGd_E%nb
+ !Xen%nk_FineGd=FineGd_E%nk
+ !
+ allocate(Xen%E_FineGd(Xen%nb_FineGd,Xen%nk_FineGd,n_sp_pol))
+ allocate(Xk%pt_FineGd(Xk%nibz_FineGd,3))
+ allocate(Xk%weights_FineGd(Xk%nibz_FineGd))
  allocate(Xk%weights_DbGd(Xk%nibz))
  allocate(Xk%ibz_DbGd_map(2,Xk%nibz))
  !
@@ -177,14 +171,5 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !
  deallocate(TMP_table_mapped,N_ibz_duplicate)
  if(allocated(TMP_table_duplicate)) deallocate(TMP_table_duplicate)
- !
- ! DEBUG <
- !do ikibz=1,Xk%nibz
- !  write(*,*) ikibz,Xk%pt(ikibz,:)," CG"
- !  do ikibz_FineGd=Xk%ibz_DbGd_map(1,ikibz),Xk%ibz_DbGd_map(2,ikibz)
- !    write(*,*) ikibz_FineGd,Xk%pt_FineGd(ikibz_FineGd,:)
- !  enddo
- !enddo
- ! DEBUG >
  !
 end subroutine

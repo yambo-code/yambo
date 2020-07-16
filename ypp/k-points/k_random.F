@@ -108,13 +108,6 @@ subroutine k_random(Xk,No_Weight)
  bz_near_warning=.FALSE.
  !
  do i_count=1,BZ_random_nkpts
-   write (100,*) rand_k(i_count,:)
- enddo
- do i_count=1,Xk%nbz
-   write (200,*) Xk%ptbz(i_count,:)
- enddo
- !
- do i_count=1,BZ_random_nkpts
    !
    ik_bz=mod(i_count,Xk%nbz)
    if (ik_bz==0) ik_bz=Xk%nbz

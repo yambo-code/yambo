@@ -64,24 +64,31 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  YAMBO_ALLOC(Reordering_map,(FineGd_k%nibz))
  !
+ ! E Dimensions
+ !==============
+ Xen%nb_FineGd=FineGd_E%nb
+ Xen%nk_FineGd=FineGd_E%nk
+ !
+ ! Expand to the BZ 
+ !==================
+ !
  ! Xk (IBZ->BZ)
  !
  call k_build_up_BZ_tables(Xk)
  call k_ibz2bz(Xk,'i',.true.)
  !
+ ! k_DbGd (IBZ->BZ)
+ !
+ call section('=','Double Grid K-points expansion ...')
+ call k_ibz2bz(FineGd_k,'i',.true.)
+ call msg('l','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
+ !
  ! First map IBZ to IBZ
  !=======================
  call section('=','Double Grid IBZ mapping')
  call k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
- !
- ! Expand to the BZ 
- !==================
- call section('=','Double Grid K-points expansion ...')
- !
- ! k_DbGd (IBZ->BZ)
- !
- call k_ibz2bz(FineGd_k,'i',.true.)
- call msg('l','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
+ ! 
+ ! call k_map_fine_to_coarse(
  !
  ! Then map BZ to BZ
  !===================

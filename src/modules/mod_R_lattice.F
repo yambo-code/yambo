@@ -53,6 +53,14 @@ module R_lattice
  real(SP),allocatable :: q_norm(:)
  character(schlen)    :: q_source="User defined / from ndb.kindx."
  !
+ type bz_fine_grid
+   integer              :: N
+   integer              :: N_duplicate
+   real(SP), allocatable:: pt(:,:)
+   integer , allocatable:: N_mapped(:)
+   integer , allocatable:: map(:,:)
+ end type bz_fine_grid
+ !
  type bz_samp
    !
    ! Coarse grid
@@ -69,7 +77,10 @@ module R_lattice
    character(6)      :: description
    character(1)      :: units
    !
-   ! Fine grid
+   ! Fine grids(s)
+   !
+   type (bz_fine_grid) :: FGibz
+   type (bz_fine_grid) :: FGbz
    !
    integer           :: nibz_FineGd
    integer           :: nbz_FineGd                     

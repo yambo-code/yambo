@@ -29,10 +29,10 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
  ! All k-points must be in IKU coordinates
  !
  use pars,           ONLY:SP,zero_dfl
- use zeros,          ONLY:k_iku_zero
- use vec_operate,    ONLY:iku_v_norm,c2a,k2bz
+ use vec_operate,    ONLY:iku_v_norm,k2bz
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:rl_sop
+ !
  implicit none
  !
  integer :: n_k
@@ -45,61 +45,49 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
  !
  ! Work Space
  !
- integer :: i1,is
- real(SP):: v(3),k_distance_loc
- real(SP):: k_rotated(3,nsym)
- logical :: local_flag
+ integer :: ik,is,nsym_loop
+ real(SP):: v(3),k_distance_loc,k_rotated(3,nsym)
+ logical :: ROTATE_k_ref_
  !
  k_the_nearest=0
- if (present(i_err)) i_err=-1
+ if (present(i_err)) then
+   i_err=-1
+ endif
  k_distance_loc=10000._SP
  !
- local_flag=.FALSE.
+ ROTATE_k_ref_=.FALSE.
+ nsym_loop=nsym
  if (present(ROTATE_k_ref)) then
-   local_flag=ROTATE_k_ref
+   ROTATE_k_ref_=ROTATE_k_ref
  endif
  !
- if (.not.local_flag) then
-   do i1=1,n_k
-     v=k_ref-k(i1,:)
-     call k2bz(v)
-     if(present(k_dist)) k_dist(i1)=iku_v_norm(v)
-     if ( iku_v_norm(v)<abs(k_distance_loc-iku_v_norm(k_iku_zero)) ) then
-       k_distance_loc=iku_v_norm(v)
-       k_the_nearest=i1
-     endif
-     if (k_distance_loc<zero_dfl) then
-       if (present(i_err)) i_err=0
-       exit 
-     endif
-   enddo
-   return
- endif
- !
- do is=1,nsym
-   k_rotated(:,is)=matmul(rl_sop(:,:,is),k_ref)
- enddo
- ! 
- if(present(k_dist)) k_dist=10000.
- k_distance_loc=10000.
- do i1=1,n_k
-   !
+ if (ROTATE_k_ref_) then
+   nsym_loop=nsym
    do is=1,nsym
-     v=k_rotated(:,is)-k(i1,:)
-     !
-     if(.not.present(k_symm)) then
-       call c2a(v_in=v,mode='ki2a')
-       v(1)=v(1)-nint(v(1))     
-       v(2)=v(2)-nint(v(2))     
-       v(3)=v(3)-nint(v(3))   
-       call c2a(v_in=v,mode='ka2i')
+     k_rotated(:,is)=matmul(rl_sop(:,:,is),k_ref)
+   enddo
+ else
+   nsym_loop=1
+   k_rotated(:,1)=k_ref
+ endif
+ ! 
+ if(present(k_dist)) then
+   k_dist=10000.
+ endif
+ k_distance_loc=10000.
+ do ik=1,n_k
+   do is=1,nsym_loop
+     v=k_rotated(:,is)-k(ik,:)
+     call k2bz(v)
+     if (present(k_dist)) then
+       k_dist(ik)=min(k_dist(ik),iku_v_norm(v))
      endif
-     !
-     if(present(k_dist)) k_dist(i1)=min(k_dist(i1),iku_v_norm(v))
-     if ( iku_v_norm(v)<abs(k_distance_loc-iku_v_norm(k_iku_zero)) ) then
+     if ( iku_v_norm(v)<k_distance_loc) then
        k_distance_loc=iku_v_norm(v)
-       k_the_nearest=i1
-       if(present(k_symm)) k_symm=is
+       k_the_nearest=ik
+       if (present(k_symm)) then
+         k_symm=is
+       endif
      endif
      if (k_distance_loc<zero_dfl) then
        if (present(i_err)) i_err=0

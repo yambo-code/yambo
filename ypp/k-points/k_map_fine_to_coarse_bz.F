@@ -111,11 +111,11 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !=============================================================
  allocate(Xk%ptbz_FineGd(Xk%nbz_FineGd,3))
  allocate(Xk%sstar_FineGd(FineGd_k%nbz))
- Xk%sstar_FineGd=FineGd_k%sstar(:,1)
- !
  allocate(Xk%bz_DbGd_map(2,Xk%nbz))
  !
  call live_timing('BZ Double Grid Reordering',Xk%nbz_FineGd)
+ !
+ Xk%sstar_FineGd=FineGd_k%sstar(:,1)
  !
  ikbz_FineGd=0
  do ikbz=1,Xk%nbz

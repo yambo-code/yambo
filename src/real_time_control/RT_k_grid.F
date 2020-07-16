@@ -47,7 +47,7 @@ subroutine RT_k_grid(E,k,q)
  ! 
  ! GPL_EXCLUDE_START
  !
- l_RT_uses_E_FineGd=k%nibz_FineGd>0.and.E%nb_FineGd>=RT_bands(2)
+ l_RT_uses_E_FineGd=k%FGibz%N>0.and.E%nb_FineGd>=RT_bands(2)
  !
  ! GPL_EXCLUDE_END
  !

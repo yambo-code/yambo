@@ -60,7 +60,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  !
  n =INTERP_obj(ID)%nb
  nk1 =OUT_k%nibz
- nk2 =OUT_k%nibz_FineGd
+ nk2 =OUT_k%FGibz%N
  dimI=INTERP_obj(ID)%D
  !
  ! Needed for report
@@ -68,7 +68,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  NN_nk_exact=0
  !
  if(nk1>0) OUT_k_nk=OUT_k_nk+OUT_k%nibz
- if(nk2>0) OUT_k_nk=OUT_k_nk+OUT_k%nibz_FineGd
+ if(nk2>0) OUT_k_nk=OUT_k_nk+OUT_k%FGibz%N
  !
  if(nk1>0) then
    YAMBO_ALLOC(INTERP_obj(ID)%INTERP,(n(1):n(2),nk1,dimI))
@@ -82,7 +82,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  if (INTERP_obj(ID)%use_NN) then
    ! ... Using the Nearest point method
    if(nk1>0) call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%pt       ,INTERP_obj(ID)%INTERP)
-   if(nk2>0) call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%pt_FineGd,INTERP_obj(ID)%INTERP_FineGd)
+   if(nk2>0) call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%FGibz%pt,INTERP_obj(ID)%INTERP_FineGd)
    if (.not.INTERPOLATE_is_quiet) call INTERPOLATION_nearest_k_report(ID)
    !
  else
@@ -115,7 +115,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
      endif
    endif
    OUT_E%nk       =OUT_k%nibz
-   OUT_E%nk_FineGd=OUT_k%nibz_FineGd
+   OUT_E%nk_FineGd=OUT_k%FGibz%N
    OUT_E%nb=INTERP_obj(ID)%nb(2)
    if ((l_INTERP_E.or.l_INTERP_dE).and.nk1>0) OUT_E%E       =INTERP_obj(ID)%INTERP
    if ((l_INTERP_f               ).and.nk1>0) OUT_E%f       =INTERP_obj(ID)%INTERP

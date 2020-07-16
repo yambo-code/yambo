@@ -49,18 +49,18 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !
  ! Initial mapping
  !=================
- Xk%nibz_FineGd    =FineGd_k%nibz
+ Xk%FGibz%N    =FineGd_k%nibz
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/Xk%nibz_FineGd/))
+ call PARALLEL_index(px,(/Xk%FGibz%N/))
  call PP_redux_wait
  !
  call live_timing('IBZ Double Grid Map',px%n_of_elements(myid+1))
  !
- allocate(TMP_map(Xk%nibz_FineGd))
+ allocate(TMP_map(Xk%FGibz%N))
  TMP_map=0
  !
- do i1=1,Xk%nibz_FineGd
+ do i1=1,Xk%FGibz%N
    !
    call k2bz(FineGd_k%pt(i1,:))
    !
@@ -90,7 +90,7 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  allocate(Xk%nibz_mapped(Xk%nibz),N_ibz_duplicate(Xk%nibz))
  Xk%nibz_mapped=0
  N_ibz_duplicate=0
- do i1=1,Xk%nibz_FineGd
+ do i1=1,Xk%FGibz%N
    ik_near=abs(TMP_map(i1))
    if(TMP_map(i1)>0) Xk%nibz_mapped(ik_near) =Xk%nibz_mapped(ik_near)+1
    if(TMP_map(i1)<0) N_ibz_duplicate(ik_near)=N_ibz_duplicate(ik_near)+1
@@ -112,7 +112,7 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !
  Xk%nibz_mapped=0
  N_ibz_duplicate=0
- do i1=1,Xk%nibz_FineGd
+ do i1=1,Xk%FGibz%N
    ik_near=abs(TMP_map(i1))
    if(TMP_map(i1)>0) then
      Xk%nibz_mapped(ik_near)=Xk%nibz_mapped(ik_near)+1
@@ -134,12 +134,12 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !Xen%nk_FineGd=FineGd_E%nk
  !
  allocate(Xen%E_FineGd(Xen%nb_FineGd,Xen%nk_FineGd,n_sp_pol))
- allocate(Xk%pt_FineGd(Xk%nibz_FineGd,3))
- allocate(Xk%weights_FineGd(Xk%nibz_FineGd))
+ allocate(Xk%FGibz%pt(Xk%FGibz%N,3))
+ allocate(Xk%weights_FineGd(Xk%FGibz%N))
  allocate(Xk%weights_DbGd(Xk%nibz))
  allocate(Xk%ibz_DbGd_map(2,Xk%nibz))
  !
- call live_timing('IBZ Double Grid Reordering',Xk%nibz_FineGd)
+ call live_timing('IBZ Double Grid Reordering',Xk%FGibz%N)
  !
  ikibz_FineGd=0
  do ikibz=1,Xk%nibz
@@ -147,7 +147,7 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
    do i1=1,N_ibz_duplicate(ikibz)
      ikibz_FineGd=ikibz_FineGd+1
      Xen%E_FineGd(:,ikibz_FineGd,:) =FineGd_E%E(:,TMP_table_duplicate(ikibz,i1),:)
-     Xk%pt_FineGd(ikibz_FineGd,:)   =FineGd_k%pt(TMP_table_duplicate(ikibz,i1),:)
+     Xk%FGibz%pt(ikibz_FineGd,:)   =FineGd_k%pt(TMP_table_duplicate(ikibz,i1),:)
      Xk%weights_FineGd(ikibz_FineGd)=FineGd_k%weights(TMP_table_duplicate(ikibz,i1))
      Reordering_map(TMP_table_duplicate(ikibz,i1))=ikibz_FineGd
      call live_timing(steps=1)
@@ -157,7 +157,7 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
    do i1=1,Xk%nibz_mapped(ikibz)
      ikibz_FineGd=ikibz_FineGd+1
      Xen%E_FineGd(:,ikibz_FineGd,:) =FineGd_E%E(:,TMP_table_mapped(ikibz,i1),:)
-     Xk%pt_FineGd(ikibz_FineGd,:)   =FineGd_k%pt(TMP_table_mapped(ikibz,i1),:)
+     Xk%FGibz%pt(ikibz_FineGd,:)   =FineGd_k%pt(TMP_table_mapped(ikibz,i1),:)
      Xk%weights_FineGd(ikibz_FineGd)=FineGd_k%weights(TMP_table_mapped(ikibz,i1))
      Reordering_map(TMP_table_mapped(ikibz,i1))=ikibz_FineGd
      !

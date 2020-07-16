@@ -54,7 +54,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  !
  ! Setup
  !-------
- l_DbGd=K%nibz_FineGd>0     .and. .not.l_RT_abs_yambo
+ l_DbGd=K%FGibz%N>0     .and. .not.l_RT_abs_yambo
  l_integral_respect=.not.l_real_time.and..not.l_RT_abs_yambo
  NN_n_of_nearest=NN
  ID=0
@@ -150,7 +150,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
     logical      :: HAS_DBGD
     integer      :: ik,i_carr,nb_max,nb_max_FineGd
     !
-    HAS_DBGD=allocated(K%pt_FineGd)
+    HAS_DBGD=allocated(K%FGibz%pt)
     !
     nb_max=    nb(2)
     if (HAS_DBGD) nb_max_FineGd=min(nb(2),E%nb_FineGd)
@@ -175,7 +175,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
       !
       if (HAS_DBGD) then
         E%df_FineGd( nb(1):nb_max_FineGd,:,:)=INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,:,:)
-        do ik=1,K%nibz_FineGd
+        do ik=1,K%FGibz%N
           N_carriers(2)=N_carriers(2)+ &
           & sum(abs(INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,ik,:)))*K%weights_FineGd(ik)/2._SP
         enddo

@@ -384,7 +384,7 @@ subroutine RT_start_and_restart(E,k,q)
              !
              if (allocated(E%W))  E%W_FineGd(ib,ik_FineGd,1)     = abs(E%W(ib,ik,1))
              !
-             kpt       = k%pt_FineGd(ik_FineGd,:)
+             kpt       = k%FGibz%pt(ik_FineGd,:)
              Energy    = E%E_FineGd(ib,ik_FineGd,1)
              f_occ     = E%f_FineGd(ib,ik_FineGd,1)
              f_occ_ref = f_occ

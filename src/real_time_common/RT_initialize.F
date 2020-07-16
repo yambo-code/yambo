@@ -457,7 +457,7 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', 'Double Grid support          ',l_RT_uses_E_FineGd)
  if (l_RT_uses_E_FineGd) then
    call msg( 'r', 'K-pts  (Coarse grid IBZ/BZ)',(/k%nibz,k%nbz/))
-   call msg( 'r', 'K-pts    (Fine grid IBZ/BZ)',(/k%nibz_FineGd,k%nbz_FineGd/))
+   call msg( 'r', 'K-pts    (Fine grid IBZ/BZ)',(/k%FGibz%N,k%FGbz%N/))
    call msg( 'r', 'K-pts       (Common IBZ/BZ)',(/k%nibz_duplicate,k%nbz_duplicate/))
    call msg( 'r', 'K-pts  (Real-time IBZ only)',RT_nk)
    if (PAR_COM_Xk_ibz_INDEX%n_CPU>1) then
@@ -524,7 +524,7 @@ subroutine RT_initialize(E,k,q)
      endif
      !
      if (l_RT_uses_E_FineGd.and..not.allocated(E%df_FineGd)) then
-       YAMBO_ALLOC(E%df_FineGd,(E%nb,k%nibz_FineGd,n_sp_pol))
+       YAMBO_ALLOC(E%df_FineGd,(E%nb,k%FGibz%N,n_sp_pol))
        E%df_FineGd=0._SP
      endif
      !

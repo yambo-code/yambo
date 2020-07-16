@@ -93,10 +93,10 @@ subroutine X_Double_Grid_setup(iq,k)
      !
      do ikbz_FineGd=k%bz_DbGd_map(1,ikbz)-1,  k%bz_DbGd_map(2,ikbz)
        if(ikbz_FineGd< k%bz_DbGd_map(1,ikbz)) k_pt_loc=k%ptbz(ikbz,:)
-       if(ikbz_FineGd>=k%bz_DbGd_map(1,ikbz)) k_pt_loc=k%ptbz_FineGd(ikbz_FineGd,:)
+       if(ikbz_FineGd>=k%bz_DbGd_map(1,ikbz)) k_pt_loc=k%FGbz%pt(ikbz_FineGd,:)
        do ikpbz_FineGd=k%bz_DbGd_map(1,ikpbz)-1,k%bz_DbGd_map(2,ikpbz)
          if(ikpbz_FineGd< k%bz_DbGd_map(1,ikpbz)) kp_pt_loc=k%ptbz(ikpbz,:)
-         if(ikpbz_FineGd>=k%bz_DbGd_map(1,ikpbz)) kp_pt_loc=k%ptbz_FineGd(ikpbz_FineGd,:)
+         if(ikpbz_FineGd>=k%bz_DbGd_map(1,ikpbz)) kp_pt_loc=k%FGbz%pt(ikpbz_FineGd,:)
          !
          running_q(:)=(k_pt_loc-kp_pt_loc)
          !

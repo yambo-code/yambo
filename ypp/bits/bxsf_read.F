@@ -215,7 +215,7 @@ subroutine bxsf_read(Xk,Xen)
  YAMBO_ALLOC(Xk%nbz_mapped,(Xk%nbz))
  Xk%nbz_mapped = 0
  Xen%nb_FineGd=nbands
- Xk%nbz_FineGd=DbGd_k%nbz
+ Xk%FGbz%N=DbGd_k%nbz
  !
  if (ord_dgrid_ipol .eq. 0) then
    !

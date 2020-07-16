@@ -64,8 +64,8 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  call io_elemental(ID,I0=E%nb_FineGd,        VAR=' Bands                           ')
  call io_elemental(ID,I0=E%nk_FineGd,        VAR=' Number of points  in the IBZ (E)')
- call io_elemental(ID,I0=Xk%nibz_FineGd,     VAR=' Number of points  in the IBZ (k)')
- call io_elemental(ID,I0=Xk%nbz_FineGd,      VAR=' Number of points  in the  BZ (k)')
+ call io_elemental(ID,I0=Xk%FGibz%N,     VAR=' Number of points  in the IBZ (k)')
+ call io_elemental(ID,I0=Xk%FGbz%N,      VAR=' Number of points  in the  BZ (k)')
  call io_elemental(ID,I0=Xk%nibz_duplicate,  VAR=' Number of duplic. pts in the IBZ')
  call io_elemental(ID,I0=Xk%nbz_duplicate,   VAR=' Number of duplic. pts in the  BZ')
  ! 
@@ -85,22 +85,22 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Kpts
  !
  if (read_is_on(ID)) then
-   YAMBO_ALLOC(Xk%pt_FineGd,(Xk%nibz_FineGd,3))
-   YAMBO_ALLOC(Xk%weights_FineGd,(Xk%nibz_FineGd))
-   YAMBO_ALLOC(Xk%ptbz_FineGd,(Xk%nbz_FineGd,3))
-   YAMBO_ALLOC(Xk%sstar_FineGd,(Xk%nbz_FineGd))
+   YAMBO_ALLOC(Xk%FGibz%pt,(Xk%FGibz%N,3))
+   YAMBO_ALLOC(Xk%weights_FineGd,(Xk%FGibz%N))
+   YAMBO_ALLOC(Xk%FGbz%pt,(Xk%FGbz%N,3))
+   YAMBO_ALLOC(Xk%sstar_FineGd,(Xk%FGbz%N))
  endif
  !
- call io_bulk(ID, VAR="KPTS_IBZ", VAR_SZ=shape(Xk%pt_FineGd) ) 
- call io_bulk(ID, R2=Xk%pt_FineGd )
+ call io_bulk(ID, VAR="KPTS_IBZ", VAR_SZ=shape(Xk%FGibz%pt) ) 
+ call io_bulk(ID, R2=Xk%FGibz%pt )
  !
  call io_bulk(ID, VAR="KPTS_WEIGHTS", VAR_SZ=shape(Xk%weights_FineGd) ) 
  call io_bulk(ID, R1=Xk%weights_FineGd )
  !
- call io_bulk(ID, VAR="KPTS_BZ", VAR_SZ=shape(Xk%ptbz_FineGd) ) 
- call io_bulk(ID, R2=Xk%ptbz_FineGd )
+ call io_bulk(ID, VAR="KPTS_BZ", VAR_SZ=shape(Xk%FGbz%pt) ) 
+ call io_bulk(ID, R2=Xk%FGbz%pt )
  !
- call io_bulk(ID, VAR="IBZ_TO_BZ_MAP", VAR_SZ=(/Xk%nbz_FineGd/) )
+ call io_bulk(ID, VAR="IBZ_TO_BZ_MAP", VAR_SZ=(/Xk%FGbz%N/) )
  call io_bulk(ID, I1=Xk%sstar_FineGd )
  !
  ! Block filling

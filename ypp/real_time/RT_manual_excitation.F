@@ -55,7 +55,7 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
  ! Possibility to pump by hand one or more electrons up
  !======================================================
  do_kpt      =.FALSE.
- RT_uses_Fine_Grid=k%nbz_FineGd>0
+ RT_uses_Fine_Grid=k%FGbz%N>0
  !
  ! Shift energy with respect to VBM/CBm
  !

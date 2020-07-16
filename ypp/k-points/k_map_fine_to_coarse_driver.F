@@ -50,7 +50,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
    return
  endif
  !
- if (Xk%nbz_FineGd>0) then
+ if (Xk%FGbz%N>0) then
    call msg("s",'DbGd: database components already allocated. Nothing to do.')
    return
  endif

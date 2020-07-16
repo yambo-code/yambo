@@ -82,21 +82,18 @@ module R_lattice
    type (bz_fine_grid) :: FGibz
    type (bz_fine_grid) :: FGbz
    !
-   integer           :: nibz_FineGd
-   integer           :: nbz_FineGd                     
-   integer,  allocatable :: sstar_FineGd(:)
-   real(SP), allocatable :: pt_FineGd(:,:)
-   real(SP), allocatable :: ptbz_FineGd(:,:)
-   real(SP), allocatable :: weights_FineGd(:)
-   !
-   ! Double grid: Mapping Fine to Coarse grid
-   !
    integer           :: nibz_duplicate
    integer           :: nbz_duplicate
    integer,  allocatable :: nibz_mapped(:)            ! For each IBZ kpt in the Cg, n° of IBZ kpt_FineGd assoc.
    integer,  allocatable :: nbz_mapped(:)             ! For each  BZ kpt in the Cg, n° of  BZ kpt_FineGd assoc.
    integer,  allocatable :: ibz_DbGd_map(:,:)         ! For each IBZ kpt in the Cg, lower/upper range of kpts_FineGd in the IBZ Fg
    integer,  allocatable :: bz_DbGd_map(:,:)          ! For each  BZ kpt in the Cg, lower/upper range of kpts_FineGd in the  BZ Fg
+   !
+   integer,  allocatable :: sstar_FineGd(:)
+   real(SP), allocatable :: weights_FineGd(:)
+   !
+   ! Double grid: Mapping Fine to Coarse grid
+   !
    real(SP), allocatable :: weights_DbGd(:)
    real(SP), allocatable :: weights_ipol(:)           ! something used by mapping with wannier
    !                                               
@@ -260,12 +257,12 @@ module R_lattice
      !
      ! Double Grid
      !
-     k%nbz_FineGd=0
-     k%nibz_FineGd=0
+     k%FGbz%N=0
+     k%FGibz%N=0
      !
      YAMBO_FREE(k%sstar_FineGd)
-     YAMBO_FREE(k%pt_FineGd)
-     YAMBO_FREE(k%ptbz_FineGd)
+     YAMBO_FREE(k%FGibz%pt)
+     YAMBO_FREE(k%FGbz%pt)
      YAMBO_FREE(k%weights_FineGd)
      !
      YAMBO_FREE(k%nibz_mapped)
@@ -318,20 +315,20 @@ module R_lattice
      type(bz_samp), intent(in)    :: BZi
      type(bz_samp), intent(inout) :: BZo
      !
-     BZo%nbz_FineGd =BZi%nbz_FineGd
-     BZo%nibz_FineGd=BZi%nibz_FineGd
+     BZo%FGbz%N =BZi%FGbz%N
+     BZo%FGibz%N=BZi%FGibz%N
      !
      if (allocated( BZi%sstar_FineGd )) then
-       YAMBO_ALLOC(BZo%sstar_FineGd,(BZo%nbz_FineGd))
+       YAMBO_ALLOC(BZo%sstar_FineGd,(BZo%FGbz%N))
        BZo%sstar_FineGd=BZi%sstar_FineGd
      endif
-     if (allocated( BZi%pt_FineGd )) then
-       YAMBO_ALLOC(BZo%pt_FineGd,(BZo%nibz_FineGd,3))
-       BZo%pt_FineGd=BZi%pt_FineGd
+     if (allocated( BZi%FGibz%pt )) then
+       YAMBO_ALLOC(BZo%FGibz%pt,(BZo%FGibz%N,3))
+       BZo%FGibz%pt=BZi%FGibz%pt
      endif
-     if (allocated( BZi%ptbz_FineGd )) then
-       YAMBO_ALLOC(BZo%ptbz_FineGd,(BZo%nbz_FineGd,3))
-       BZo%ptbz_FineGd=BZi%ptbz_FineGd
+     if (allocated( BZi%FGbz%pt )) then
+       YAMBO_ALLOC(BZo%FGbz%pt,(BZo%FGbz%N,3))
+       BZo%FGbz%pt=BZi%FGbz%pt
      endif
      !
      BZo%nbz_duplicate =BZi%nbz_duplicate

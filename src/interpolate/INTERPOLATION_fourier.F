@@ -69,7 +69,7 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,NK,ID)
      if (.not.px%element_1D(ik)) cycle
    endif
    if(Nk==K%nibz)        call c2a(v_in=K%pt(ik,:),       v_out=v,mode='ki2a')
-   if(Nk==K%nibz_FineGd) call c2a(v_in=K%pt_FineGd(ik,:),v_out=v,mode='ki2a')
+   if(Nk==K%FGibz%N) call c2a(v_in=K%FGibz%pt(ik,:),v_out=v,mode='ki2a')
    do i_shell=1,nshells
      call make_star(lattice_vectors(:,i_shell),nsym,int_sop,nstar,star_vec)  
      do is=1,nstar

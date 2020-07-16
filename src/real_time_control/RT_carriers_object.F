@@ -51,7 +51,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  integer,       intent(in)   ,optional :: DB_id
  character(*),  intent(in)   ,optional :: WHAT
  !
- integer  :: i_RT,i_b,i_k,i_k_FineGd,i_k_RT,i_spin,i_dupl
+ integer  :: i_RT,i_b,i_k,i_k_FineGd,i_k_RT,i_spin
  real(SP) :: Hole_lifetime,Elec_lifetime,df_occ,f_occ
  !
  integer           :: VAR_SZ(2),IPOS(2),TMP_SIZE(2)
@@ -78,7 +78,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        RT%kpt(RT_ibz_coo(i_k,1),:)    = K%pt(i_k,:)
        RT%k_weight(RT_ibz_coo(i_k,1)) = K%weights(i_k)
        if(     l_RT_uses_E_FineGd) then
-         RT%kpt(RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),:)  = K%pt_FineGd(K%ibz_DbGd_map(1,i_k):K%ibz_DbGd_map(2,i_k),:)
+         RT%kpt(RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),:)  = K%FGibz%pt(K%ibz_DbGd_map(1,i_k):K%ibz_DbGd_map(2,i_k),:)
          RT%k_weight(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2)) = K%weights(i_k)/real(RT_Nk_ibz(i_k),SP)        
        endif
      enddo

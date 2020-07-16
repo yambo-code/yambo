@@ -258,8 +258,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! BZ Double Grid
    !
    if (use_X_DbGd) then
-     call msg('o eps_q eel_q fxc alpha','# DbGd| IBZ Energy points',Xk%nibz+Xk%nibz_FineGd,INDENT=0)
-     call msg('o eps_q eel_q fxc alpha','#        BZ Energy points',Xk%nbz+Xk%nbz_FineGd,INDENT=0)
+     call msg('o eps_q eel_q fxc alpha','# DbGd| IBZ Energy points',Xk%nibz+Xk%FGibz%N,INDENT=0)
+     call msg('o eps_q eel_q fxc alpha','#        BZ Energy points',Xk%nbz+Xk%FGbz%N,INDENT=0)
    endif
    !
    ! Titles 

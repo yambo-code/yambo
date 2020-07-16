@@ -343,8 +343,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    enddo
    !
    print*,'qp',iq_mem
-   print*, X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)+1
-   print*, X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)+1
+   print*, X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
+   print*, X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
    if (have_cuda) call dev_memcpy(X_par(iq_mem)%blc_d, X_par(iq_mem)%blc)
    !
    !
@@ -642,8 +642,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    enddo QP_loop
    !
  enddo Q_loop 
- !   
- call PP_redux_wait(QP_Sc(:,:),COMM=PAR_COM_SE_WORLD%COMM)
+ !
+ call PP_redux_wait(QP_Sc,COMM=PAR_COM_SE_WORLD%COMM)
  !
  call live_timing()
  !

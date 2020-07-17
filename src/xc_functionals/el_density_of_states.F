@@ -80,8 +80,8 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
        el_dos_tmp=0._SP
        f_occ=spin_occ
        !
-       if (.not.USE_the_DbGd_) weight=Xk%weights(ik)
-       if (     USE_the_DbGd_) weight=Xk%weights_DbGd(ik)
+       weight=Xk%weights(ik)
+       if (     USE_the_DbGd_) weight=weight/real(Xk%FGibz%N_mapped(ik)+1)
        !
        if (.not.USE_Eo_) E=Xen%E(ib,ik,i_sp_pol)
        if (     USE_Eo_) E=Xen%Eo(ib,ik,i_sp_pol)

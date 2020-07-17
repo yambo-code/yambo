@@ -57,7 +57,7 @@ module R_lattice
    integer              :: N
    integer              :: N_duplicate
    real(SP), allocatable:: pt(:,:)
-   integer , allocatable:: N_mapped(:) ! For each IBZ/BZ kpt in the Cg, n° of IBZ kpt_FineGd assoc.
+   integer , allocatable:: N_mapped(:) ! For each IBZ/BZ kpt in the Cg, n° of kpt_FineGd assoc.
    integer , allocatable:: map(:,:)    ! For each IBZ/BZ kpt in the Cg, lower/upper range of kpts_FineGd in the IBZ/BZ Fg
  end type bz_fine_grid
  !
@@ -84,7 +84,6 @@ module R_lattice
    !
    integer,  allocatable :: sstar_FineGd(:)
    real(SP), allocatable :: weights_FineGd(:)
-   real(SP), allocatable :: weights_DbGd(:)
    real(SP), allocatable :: weights_ipol(:)           ! something used by mapping with wannier
    !                                               
  end type bz_samp
@@ -259,7 +258,6 @@ module R_lattice
      YAMBO_FREE(k%FGbz%N_mapped)
      YAMBO_FREE(k%FGibz%map)
      YAMBO_FREE(k%FGbz%map)
-     YAMBO_FREE(k%weights_DbGd)
      YAMBO_FREE(k%weights_ipol)
      !
    end subroutine bz_samp_reset

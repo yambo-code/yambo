@@ -111,6 +111,6 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  call bz_samp_reset(FineGd_k)
  call k_ibz2bz(Xk,'d',.true.)
  !...Xk/Xen FineGd components
- deallocate(Xen%E_FineGd,Xk%FGibz%map,Xk%FGbz%map,Xk%weights_DbGd,Xk%FGibz%N_mapped,Xk%FGbz%N_mapped)
+ deallocate(Xen%E_FineGd,Xk%FGibz%map,Xk%FGbz%map,Xk%FGibz%N_mapped,Xk%FGbz%N_mapped)
  !
 end subroutine

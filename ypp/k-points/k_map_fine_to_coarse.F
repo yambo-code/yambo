@@ -136,8 +136,7 @@ subroutine k_map_fine_to_coarse(zone,Xk,Xen,N_coarse,k_coarse,FG,FineGd_k,FineGd
  allocate(FG%map(2,N_coarse))
  !
  if (zone=="IBZ") then
-   allocate(Xen%E_FineGd(Xen%nb_FineGd,Xen%nk_FineGd,n_sp_pol))
-   allocate(Xk%weights_FineGd(FG%N),Xk%weights_DbGd(N_coarse))
+   allocate(Xen%E_FineGd(Xen%nb_FineGd,Xen%nk_FineGd,n_sp_pol),Xk%weights_FineGd(FG%N))
  else
    allocate(Xk%sstar_FineGd(FG%N))
  endif

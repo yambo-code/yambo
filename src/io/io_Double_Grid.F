@@ -133,8 +133,12 @@ integer function io_Double_Grid(E,Xk,ID)
    YAMBO_ALLOC(Xk%weights_DbGd,(maxval(Xk%nibz_mapped)+1,Xk%nibz))
  endif
  !
- call io_bulk(ID, VAR="KPTS_WEIGHT", VAR_SZ=(/maxval(Xk%nibz_mapped)+1,Xk%nibz/) ) 
- call io_bulk(ID, R2=Xk%weights_DbGd)
+ if (ver_is_gt_or_eq(ID,revision=18576)) then
+   call io_bulk(ID, VAR="DBGD_WEIGHT", VAR_SZ=(/maxval(Xk%nibz_mapped)+1,Xk%nibz/) ) 
+   call io_bulk(ID, R2=Xk%weights_DbGd)
+ else if (read_is_on(ID)) then
+   Xk%weights_DbGd=-1
+ endif
  !
 1 call io_disconnect(ID=ID)
  !

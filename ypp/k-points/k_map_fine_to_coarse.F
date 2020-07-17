@@ -149,13 +149,14 @@ subroutine k_map_fine_to_coarse(zone,Xk,Xen,N_coarse,k_coarse,FG,FineGd_k,FineGd
    !
    do i1=1,N_duplicate(ik)
      i_fg=i_fg+1
-     FG%pt(i_fg,:)          =FineGd_k%pt(TMP_table_duplicate(ik,i1),:)
      if (zone=="IBZ") then
+       FG%pt(i_fg,:)          =FineGd_k%pt(TMP_table_duplicate(ik,i1),:)
        Xen%E_FineGd(:,i_fg,:) =FineGd_E%E(:,TMP_table_duplicate(ik,i1),:)
        Xk%weights_FineGd(i_fg)=FineGd_k%weights(TMP_table_duplicate(ik,i1))
        Reordering_map(TMP_table_duplicate(ik,i1))=i_fg
      else
-       Xk%sstar_FineGd(i_fg) =Reordering_map(FineGd_k%sstar(TMP_table_duplicate(ik,i_fg),1))
+       FG%pt(i_fg,:)          =FineGd_k%ptbz(TMP_table_duplicate(ik,i1),:)
+       Xk%sstar_FineGd(i_fg) =Reordering_map(FineGd_k%sstar(TMP_table_duplicate(ik,i1),1))
      endif
      call live_timing(steps=1)
    enddo
@@ -163,13 +164,14 @@ subroutine k_map_fine_to_coarse(zone,Xk,Xen,N_coarse,k_coarse,FG,FineGd_k,FineGd
    !
    do i1=1,FG%N_mapped(ik)
      i_fg=i_fg+1
-     FG%pt(i_fg,:)          =FineGd_k%pt(TMP_table_mapped(ik,i1),:)
      if (zone=="IBZ") then
+       FG%pt(i_fg,:)          =FineGd_k%pt(TMP_table_mapped(ik,i1),:)
        Xen%E_FineGd(:,i_fg,:) =FineGd_E%E(:,TMP_table_mapped(ik,i1),:)
        Xk%weights_FineGd(i_fg)=FineGd_k%weights(TMP_table_mapped(ik,i1))
        Reordering_map(TMP_table_mapped(ik,i1))=i_fg
      else
-       Xk%sstar_FineGd(i_fg) =Reordering_map(FineGd_k%sstar(TMP_table_mapped(ik,i_fg),1))
+       FG%pt(i_fg,:)          =FineGd_k%ptbz(TMP_table_mapped(ik,i1),:)
+       Xk%sstar_FineGd(i_fg) =Reordering_map(FineGd_k%sstar(TMP_table_mapped(ik,i1),1))
      endif
      call live_timing(steps=1)
    enddo

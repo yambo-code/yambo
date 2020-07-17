@@ -237,13 +237,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    if (io_RESPONSE) iq_mem=1
    call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
    !
-   !MB!
-   print*,'X',iq_mem
-   print*,'id= ',myid
-   print*, X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
-   print*, X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
-   print*,'  '
-   
    call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
    !
    ! When X%whoami == 1 X is Xo (ACFDT). 

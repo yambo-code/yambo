@@ -29,7 +29,7 @@ module wrapper
  ! TRANSA = 'T' or 't',  op( A ) = A'.
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
- use pars,   ONLY:SP,cI
+ use pars,   ONLY:SP,DP,cI
 #ifdef _CUDA
  use cublas
 #endif
@@ -391,29 +391,43 @@ module wrapper
    ! DOT PRODUCTS: Vstar_dot_VV
    !==============
    !
-   complex(SP) function Vstar_dot_VV_c1_cpu(N,CX,CY,CZ)
+   complex(SP) function Vstar_dot_VV_c1_cpu(N,CX,CY,CZ,bounds)
      implicit none
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(N),CY(N),CZ(N)
+     integer, optional, intent(in) :: bounds(2)
+     !
+     integer :: bounds_(2),N_
+     complex(DP), external :: zdotc
+     complex(SP), external :: cdotc
+     !
+     bounds_(:)=(/1,N/)
+     if (present(bounds)) bounds_=bounds
+     N_=bounds_(2)-bounds_(1)+1
+     !
 #if defined _DOUBLE
-     complex(SP)::zdotc
-     Vstar_dot_VV_c1_cpu=ZDOTC(N,CX,1,CY*CZ,1)
+     Vstar_dot_VV_c1_cpu=ZDOTC(N_,CX(bounds_(1):),1,CY(bounds_(1):)*CZ(bounds_(1):),1)
 #else
-     complex(SP)::cdotc
-     Vstar_dot_VV_c1_cpu=CDOTC(N,CX,1,CY*CZ,1)
+     Vstar_dot_VV_c1_cpu=CDOTC(N_,CX(bounds_(1):),1,CY(bounds_(1):)*CZ(bounds_(1):),1)
 #endif
    end function Vstar_dot_VV_c1_cpu
    !
 #ifdef _CUDA
-   complex(SP) function Vstar_dot_VV_c1_gpu(N,CX,CY,CZ)
+   complex(SP) function Vstar_dot_VV_c1_gpu(N,CX,CY,CZ,bounds)
      implicit none
      integer,             intent(in) :: N
      complex(SP), device, intent(in) :: CX(N),CY(N),CZ(N)
+     integer,   optional, intent(in) :: bounds(2)
+     !
+     integer :: bounds_(2)
      integer :: i
+     !
+     bounds_(:)=(/1,N/)
+     if (present(bounds)) bounds_=bounds
      !
      Vstar_dot_VV_c1_gpu=0.0_SP
      !$cuf kernel do(1) <<<*,*>>>
-     do i = 1, N
+     do i = bounds_(1),bounds_(2)
        Vstar_dot_VV_c1_gpu=Vstar_dot_VV_c1_gpu+conjg(CX(i))*CY(i)*CZ(i)
      enddo
    end function Vstar_dot_VV_c1_gpu

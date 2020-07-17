@@ -31,7 +31,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
  use electrons,     ONLY:levels,spin_occ,spin
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&
+ use parallel_m,    ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset,&
+&                        PAR_IND_Xk_ibz,PAR_IND_QP,PAR_COM_RL_INDEX,&
 &                        PAR_IND_QP_ID,PAR_IND_Q_ibz,PAR_IND_G_b,&
 &                        PAR_IND_Q_ibz_ID,n_WF_bands_to_load
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
@@ -44,7 +45,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use timing_m,      ONLY:timing
  use openmp,        ONLY:OPENMP_update,master_thread,n_threads_SE
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load,QP_state_print
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,&
+&                        WF_load,QP_state_print,PARALLEL_index
  use wrapper,       ONLY:Vstar_dot_VV
  use global_XC,     ONLY:WF_exx_screening
  use pseudo,        ONLY:becp, pp_is_uspp
@@ -60,15 +62,17 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  !Work Space
  !
- type(elemental_collision), target::isc,iscp
- integer                  ::iq,iq_ibz,is_ibz,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands,n_lt_steps
- complex(DP)              ::DP_Sx, DP_Sx_l
- complex(SP),allocatable  ::local_rhotw(:)
- character(schlen)        ::ch,mode_
+ type(elemental_collision), target :: isc,iscp
+ complex(SP),          allocatable :: local_rhotw(:)
+ integer           :: iq,iq_ibz,is_ibz,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands,n_lt_steps
+ integer           :: ig_first,ig_last
+ complex(DP)       :: DP_Sx, DP_Sx_l
+ character(schlen) :: ch,mode_
+ type(PP_indexes)  :: px
  !
  !QP list
  !
- integer              :: ikibz,i_sp_pol
+ integer           :: ikibz,i_sp_pol
 
  !
  ! Resets & basis setup
@@ -111,6 +115,13 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    call WF_load(WF,max(QP_ng_Sx,QP_ng_Vxc),maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
    !
  endif
+ !
+ ! G-parallelism
+ !
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/QP_ng_Sx/),COMM=PAR_COM_RL_INDEX,CONSECUTIVE=.true.)
+ ig_first=px%first_of_1D(PAR_COM_RL_INDEX%cpu_id+1)
+ ig_last=px%last_of_1D(PAR_COM_RL_INDEX%cpu_id+1)
  !
  call timing('HF',OPR='start')
  !
@@ -244,8 +255,11 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
          call dev_memcpy(DEV_VAR(iscp%rhotw),DEV_VAR(isc%rhotw))
        endif
        !
+       ! here isc%ngrho == QP_ng_Sx
+       !
        DP_Sx_l=Vstar_dot_VV(isc%ngrho,DEV_VAR(iscp%rhotw),&
-&                                     DEV_VAR(isc%rhotw),DEV_VAR(isc%gamp)(:,1))
+&                                     DEV_VAR(isc%rhotw),DEV_VAR(isc%gamp)(:,1),&
+&                                     BOUNDS=(/ig_first,ig_last/))
        DP_Sx=DP_Sx + DP_Sx_l * ( -4._SP/spin_occ*pi*E%f(jb,isc%os(2),isc%os(4)) )
        !
        if (master_thread.and.is_ibz==1.and.n_lt_steps>0) call live_timing(steps=1)
@@ -274,6 +288,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp) 
  YAMBO_FREE(local_rhotw)
+ call PP_indexes_reset(px)
  !
  call timing('HF',OPR='stop')
  call timing('HF(REDUX)',OPR='start')

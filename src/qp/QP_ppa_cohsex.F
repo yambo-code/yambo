@@ -342,12 +342,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &              X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)
    enddo
    !
-   !MB!
-   print*,'qp',iq_mem
-   print*,'id= ',myid
-   print*, X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
-   print*, X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
-   print*,'  '
    if (have_cuda) call dev_memcpy(X_par(iq_mem)%blc_d, X_par(iq_mem)%blc)
    !
    !

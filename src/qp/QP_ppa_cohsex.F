@@ -76,25 +76,28 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Work Space
  !
- integer                  ::i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
-&                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,IO_ACT,timing_steps
- integer                  ::iw,iw_X_mat
+ integer          :: i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
+&                    i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,IO_ACT,timing_steps
+ integer          :: iw,iw_X_mat
+ integer          :: X_rows1,X_rows2,X_cols1,X_cols2
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
- type(elemental_collision),target ::isc,iscp
- character(schlen)::ch,SECTION_name,W_name
- logical          ::X_is_TR_rotated,l_X_alloc
- real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
- complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor
- complex(DP)      ::dp_dummy,ctmp
+ type(elemental_collision),target :: isc,iscp
+ character(schlen):: ch,SECTION_name,W_name
+ logical          :: X_is_TR_rotated,l_X_alloc
+ real(SP)         :: eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
+ complex(SP)      :: PPA_R,local_rhotw(X%ng),pre_factor
+ complex(DP)      :: dp_dummy,ctmp
+ !
+ complex(SP), pointer DEV_ATTR :: isc_rhotw_p(:)
+ complex(SP), pointer DEV_ATTR :: iscp_rhotw_p(:)
+ complex(SP), pointer DEV_ATTR :: isc_gamp_p(:,:)
+ complex(SP), pointer DEV_ATTR :: X_blc_p(:,:,:)
  !
 #ifdef _CUDA
- integer                      :: Xng, Xr1, Xr2
- real(SP)                     :: XppaE, bose_PPA_E
- real(DP)                     :: dp_dummy_r, dp_dummy_i
- complex(SP)                  :: W_i_w
- complex(SP), pointer, device :: isc_rhotw_d(:)
- complex(SP), pointer, device :: iscp_rhotw_d(:)
- complex(SP), pointer, device :: isc_gamp_d(:,:)
+ integer          :: Xng, Xr1, Xr2
+ real(SP)         :: XppaE, bose_PPA_E
+ real(DP)         :: dp_dummy_r, dp_dummy_i
+ complex(SP)      :: W_i_w
 #endif
  integer,     external ::io_X
  complex(SP), external ::QP_ppa_EET_terminator
@@ -187,6 +190,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  isc%iqref=0
  call elemental_collision_alloc(isc,NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="GW")
  call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="GW")
+ !
+ isc_gamp_p => DEV_VAR(isc%gamp)
+ isc_rhotw_p => DEV_VAR(isc%rhotw)
+ iscp_rhotw_p => DEV_VAR(iscp%rhotw)
+
  !
  call timing('GW(ppa)',OPR='start')
  !
@@ -324,12 +332,18 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      X_is_TR_rotated=.true.
    endif
    !
-   !!if (have_cuda) call dev_memcpy(X_mat_d, X_mat)
    !
+   ! mapping of X_par from X_mat
    !
-   !mapping of X_par from X_mat
    if (io_RESPONSE) iq_mem=1
    call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"X")
+   !
+   X_blc_p=> DEV_VAR(X_par(iq_mem)%blc)
+   !
+   X_rows1=X_par(iq_mem)%rows(1)
+   X_rows2=X_par(iq_mem)%rows(2)
+   X_cols1=X_par(iq_mem)%cols(1)
+   X_cols2=X_par(iq_mem)%cols(2)
    !
    do iw=1,Xw%n_freqs
     !
@@ -338,8 +352,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
     if (     io_RESPONSE) iw_X_mat=iw
     if (.not.io_RESPONSE) iw_X_mat=(iq_mem-1)*Xw%n_freqs+iw
     !
-    X_par(iq_mem)%blc(:,:,iw)=X_mat(X_par(iq_mem)%rows(1):X_par(iq_mem)%rows(2),&
-&              X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)
+    X_par(iq_mem)%blc(:,:,iw)=X_mat(X_rows1:X_rows2,X_cols1:X_cols2,iw_X_mat)
    enddo
    !
    if (have_cuda) call dev_memcpy(X_par(iq_mem)%blc_d, X_par(iq_mem)%blc)
@@ -394,21 +407,21 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          if ( HEAD_QP_cpu ) then
            if (X_is_TR_rotated) then
-              !$omp parallel do default(shared), private(ig1,ig2)
-            do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
-              do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
-                  eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig2,ig1))
-                enddo
-              enddo
-              !$omp end parallel do
+             !$omp parallel do default(shared), private(ig1,ig2)
+             do ig2=X_cols1,X_cols2
+             do ig1=X_rows1,X_rows2
+               eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig2,ig1))
+             enddo
+             enddo
+             !
            else
-              !$omp parallel do default(shared), private(ig1,ig2)
-            do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
-              do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
-                  eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
-                enddo
-              enddo
-              !$omp end parallel do
+             !$omp parallel do default(shared), private(ig1,ig2)
+             do ig2=X_cols1,X_cols2
+             do ig1=X_rows1,X_rows2
+               eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
+             enddo
+             enddo
+             !
            endif
          endif
          !
@@ -418,20 +431,21 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          if (X_is_TR_rotated) then
            !$omp parallel do default(shared), private(ig1,ig2), reduction(+:dp_dummy)
-          do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
-            do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
-               dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*X_par(iq_mem)%blc(ig1,ig2,X_range(1)),kind=DP)
-             enddo
+           do ig2=X_cols1,X_cols2
+           do ig1=X_rows1,X_rows2
+               dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))* &
+&                                X_par(iq_mem)%blc(ig1,ig2,X_range(1)),kind=DP)
            enddo
-           !$omp end parallel do
+           enddo
          else
            !$omp parallel do default(shared), private(ig1,ig2), reduction(+:dp_dummy)
-          do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
-            do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
-               dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_par(iq_mem)%blc(ig1,ig2,X_range(1)),kind=DP)
-             enddo
+           do ig2=X_cols1,X_cols2
+           do ig1=X_rows1,X_rows2
+               dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*&
+&                       X_par(iq_mem)%blc(ig1,ig2,X_range(1)),kind=DP)
            enddo
-           !$omp end parallel do
+           enddo
+           !
          endif
          !
          dc(1) = cmplx(dp_dummy,kind=SP)
@@ -486,12 +500,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          if(l_GW_terminator) then
            !$omp parallel do default(shared), private(ig1,ig2)
-          do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
-            do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
-                 eet_factor(ig1,ig2)=eet_factor(ig1,ig2)-isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))
-             enddo
+           do ig2=X_cols1,X_cols2
+           do ig1=X_rows1,X_rows2
+              eet_factor(ig1,ig2)=eet_factor(ig1,ig2)-isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))
            enddo
-           !$omp end parallel do
+           enddo
+           !
          endif
          !
          forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
@@ -505,10 +519,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          Xr1 = X_range(1)
          Xr2 = X_range(2)
 
-         isc_gamp_d => isc%gamp_d
-         isc_rhotw_d => isc%rhotw_d
-         iscp_rhotw_d => iscp%rhotw_d
-
          do i_w=1,QP_dSc_steps
            W_i_w = W_(i_w)
            !
@@ -518,12 +528,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            dp_dummy_i = 0.0_DP
            !
            !$cuf kernel do(2)
-           do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
-            do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
+           do ig2=X_cols1,X_cols2
+            do ig1=X_rows1,X_rows2
                !
-               PPA_E= real(XppaE/X_par(iq_mem)%blc_d(ig1,ig2,Xr2),kind=SP)
-               PPA_R=-X_par(iq_mem)%blc_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
-
+               PPA_E= real(XppaE/X_blc_p(ig1,ig2,Xr2),kind=SP)
+               PPA_R=-X_blc_p(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_p(ig1,ig2)
+               !
                ! inline bose_f function
                bose_PPA_E=0.
                if (PPA_E<0.) bose_PPA_E=-spin_occ
@@ -536,7 +546,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                  endif
                endif
                !
-               ctmp = -4._SP/spin_occ*pi*isc_rhotw_d(ig1)*conjg(iscp_rhotw_d(ig2))*(-PPA_R)*&
+               ctmp = -4._SP/spin_occ*pi*isc_rhotw_p(ig1)*conjg(iscp_rhotw_p(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_i_w-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_i_w)-E_kmq+PPA_E))
                !
@@ -556,8 +566,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !
            dp_dummy = 0.0_DP
            !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:dp_dummy)
-           do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
-            do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
+           do ig2=X_cols1,X_cols2
+            do ig1=X_rows1,X_rows2
                !
                PPA_E= real(X%ppaE/X_par(iq_mem)%blc(ig1,ig2,X_range(2)),kind=SP)
                PPA_R=-X_par(iq_mem)%blc(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
@@ -585,7 +595,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          pre_factor=0.0_SP
          !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor)
-         do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
+         do ig1=X_rows1,X_rows2
            pre_factor=pre_factor+isc%rhotw(ig1)*local_rhotw(ig1)
          enddo
          !$omp end parallel do
@@ -616,8 +626,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          dp_dummy=0.0_DP
          !
          !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:dp_dummy)
-         do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
-          do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
+         do ig2=X_cols1,X_cols2
+          do ig1=X_rows1,X_rows2
              !
              PPA_E=X%ppaE/real(X_par(iq_mem)%blc(ig1,ig2,X_range(2)))
              PPA_R=-X_par(iq_mem)%blc(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)

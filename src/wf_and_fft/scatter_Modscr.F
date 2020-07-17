@@ -75,7 +75,7 @@ subroutine scatter_ModScr(isc,mu)
        if (i1==1) isc%gamp(i1,i2)=1._SP/(4._SP*mu**2)*d3q_factor/(2._SP*pi)**3
      endif
    enddo
- end do
+ enddo
  !
  contains
    !

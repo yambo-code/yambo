@@ -458,7 +458,7 @@ subroutine RT_initialize(E,k,q)
  if (l_RT_uses_E_FineGd) then
    call msg( 'r', 'K-pts  (Coarse grid IBZ/BZ)',(/k%nibz,k%nbz/))
    call msg( 'r', 'K-pts    (Fine grid IBZ/BZ)',(/k%FGibz%N,k%FGbz%N/))
-   call msg( 'r', 'K-pts       (Common IBZ/BZ)',(/k%nibz_duplicate,k%nbz_duplicate/))
+   call msg( 'r', 'K-pts       (Common IBZ/BZ)',(/k%FGibz%N_duplicate,k%FGbz%N_duplicate/))
    call msg( 'r', 'K-pts  (Real-time IBZ only)',RT_nk)
    if (PAR_COM_Xk_ibz_INDEX%n_CPU>1) then
      call msg( 'r',  '      (DISTRIBUTED min-MAX)',(/minval(NK_cpu),maxval(NK_cpu)/))

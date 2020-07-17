@@ -30,16 +30,13 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  ! because this routine is always called using the i_res \Omega. Indeed 
  !
  !  \Omega_{anti-res} = -\Omega_{res}
-
  !
  use pars,       ONLY:SP,cZERO,cONE
- use X_m,        ONLY:use_X_DbGd,X_t,X_terminator_E,X_term_E, &
-&                     X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
+ use X_m,        ONLY:use_X_DbGd,X_t,X_term_E,X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
  use BS_solvers, ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,spin_occ
- use R_lattice,  ONLY:qindx_X,bz_samp,nqibz
+ use R_lattice,  ONLY:qindx_X,bz_samp
  use frequency,  ONLY:w_samp
- use vec_operate,ONLY:iku_v_norm
  use parallel_m, ONLY:PAR_Xk_bz_index
  !
 #include<memory.h>
@@ -59,7 +56,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  logical      :: X_os_run,K_inv_run,use_DbGd
  integer      :: ikbz_ikpbz_FineGd_used,ikbz_FineGd,ikpbz_FineGd,iw,ikbz,ikpbz,iv,ic,i_spin,&
 &                ik_FineGd,ikp_FineGd,ik,ikp,ikbz_mem
- real(SP)     :: ffac,cg_ffac,f_e,f_h,weight,W_,q_pt_shift(3),q_norm_ref,qsize_fac,k_pt_loc(3),kp_pt_loc(3),En1,En2
+ real(SP)     :: ffac,cg_ffac,f_e,f_h,weight,W_,En1,En2
  complex(SP)  :: Z_,pole,pole_X_term
  !
  complex(SP),external      ::Lorentzian_FT
@@ -157,7 +154,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
    ikbz_FineGd=X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,1)
    ikpbz_FineGd=X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,2)
    !
-   if(ikbz_FineGd<Xk%bz_DbGd_map(1,ikbz)) then
+   if(ikbz_FineGd<Xk%FGbz%map(1,ikbz)) then
      En1       = Xen%E(ic,ik,i_spin)
      ffac      = Xen%f(ic,ik,i_spin)
    else
@@ -169,7 +166,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
    if( X_os_run  ) f_h = spin_occ-ffac
    if( K_inv_run ) f_h =          ffac
    !
-   if(ikpbz_FineGd<Xk%bz_DbGd_map(1,ikpbz)) then
+   if(ikpbz_FineGd<Xk%FGbz%map(1,ikpbz)) then
      En2       = Xen%E(iv,ikp,i_spin)
      f_e       = Xen%f(iv,ikp,i_spin)
    else

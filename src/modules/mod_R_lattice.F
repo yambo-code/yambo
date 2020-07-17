@@ -57,8 +57,8 @@ module R_lattice
    integer              :: N
    integer              :: N_duplicate
    real(SP), allocatable:: pt(:,:)
-   integer , allocatable:: N_mapped(:)
-   integer , allocatable:: map(:,:)
+   integer , allocatable:: N_mapped(:) ! For each IBZ/BZ kpt in the Cg, n° of IBZ kpt_FineGd assoc.
+   integer , allocatable:: map(:,:)    ! For each IBZ/BZ kpt in the Cg, lower/upper range of kpts_FineGd in the IBZ/BZ Fg
  end type bz_fine_grid
  !
  type bz_samp
@@ -82,18 +82,8 @@ module R_lattice
    type (bz_fine_grid) :: FGibz
    type (bz_fine_grid) :: FGbz
    !
-   integer           :: nibz_duplicate
-   integer           :: nbz_duplicate
-   integer,  allocatable :: nibz_mapped(:)            ! For each IBZ kpt in the Cg, n° of IBZ kpt_FineGd assoc.
-   integer,  allocatable :: nbz_mapped(:)             ! For each  BZ kpt in the Cg, n° of  BZ kpt_FineGd assoc.
-   integer,  allocatable :: ibz_DbGd_map(:,:)         ! For each IBZ kpt in the Cg, lower/upper range of kpts_FineGd in the IBZ Fg
-   integer,  allocatable :: bz_DbGd_map(:,:)          ! For each  BZ kpt in the Cg, lower/upper range of kpts_FineGd in the  BZ Fg
-   !
    integer,  allocatable :: sstar_FineGd(:)
    real(SP), allocatable :: weights_FineGd(:)
-   !
-   ! Double grid: Mapping Fine to Coarse grid
-   !
    real(SP), allocatable :: weights_DbGd(:)
    real(SP), allocatable :: weights_ipol(:)           ! something used by mapping with wannier
    !                                               
@@ -265,10 +255,10 @@ module R_lattice
      YAMBO_FREE(k%FGbz%pt)
      YAMBO_FREE(k%weights_FineGd)
      !
-     YAMBO_FREE(k%nibz_mapped)
-     YAMBO_FREE(k%nbz_mapped)
-     YAMBO_FREE(k%ibz_DbGd_map)
-     YAMBO_FREE(k%bz_DbGd_map)
+     YAMBO_FREE(k%FGibz%N_mapped)
+     YAMBO_FREE(k%FGbz%N_mapped)
+     YAMBO_FREE(k%FGibz%map)
+     YAMBO_FREE(k%FGbz%map)
      YAMBO_FREE(k%weights_DbGd)
      YAMBO_FREE(k%weights_ipol)
      !
@@ -331,24 +321,24 @@ module R_lattice
        BZo%FGbz%pt=BZi%FGbz%pt
      endif
      !
-     BZo%nbz_duplicate =BZi%nbz_duplicate
-     BZo%nibz_duplicate=BZi%nibz_duplicate
+     BZo%FGbz%N_duplicate =BZi%FGbz%N_duplicate
+     BZo%FGibz%N_duplicate=BZi%FGibz%N_duplicate
      !
-     if (allocated( BZi%nibz_mapped )) then
-       YAMBO_ALLOC(BZo%nibz_mapped,(BZo%nibz))
-       BZo%nibz_mapped(:BZo%nibz)=BZi%nibz_mapped(:BZo%nibz)
+     if (allocated( BZi%FGibz%N_mapped )) then
+       YAMBO_ALLOC(BZo%FGibz%N_mapped,(BZo%nibz))
+       BZo%FGibz%N_mapped(:BZo%nibz)=BZi%FGibz%N_mapped(:BZo%nibz)
      endif
-     if (allocated( BZi%nbz_mapped )) then
-       YAMBO_ALLOC(BZo%nbz_mapped,(BZo%nbz))
-       BZo%nbz_mapped(:BZo%nbz)=BZi%nbz_mapped(:BZo%nbz)
+     if (allocated( BZi%FGbz%N_mapped )) then
+       YAMBO_ALLOC(BZo%FGbz%N_mapped,(BZo%nbz))
+       BZo%FGbz%N_mapped(:BZo%nbz)=BZi%FGbz%N_mapped(:BZo%nbz)
      endif
-     if (allocated( BZi%ibz_DbGd_map )) then
-       YAMBO_ALLOC(BZo%ibz_DbGd_map,(2,BZo%nibz))
-       BZo%ibz_DbGd_map(:,:BZo%nibz)=BZi%ibz_DbGd_map(:,:BZo%nibz)
+     if (allocated( BZi%FGibz%map )) then
+       YAMBO_ALLOC(BZo%FGibz%map,(2,BZo%nibz))
+       BZo%FGibz%map(:,:BZo%nibz)=BZi%FGibz%map(:,:BZo%nibz)
      endif
-     if (allocated( BZi%bz_DbGd_map )) then
-       YAMBO_ALLOC(BZo%bz_DbGd_map,(2,BZo%nbz))
-       BZo%bz_DbGd_map(:,:BZo%nbz)=BZi%bz_DbGd_map(:,:BZo%nbz)
+     if (allocated( BZi%FGbz%map )) then
+       YAMBO_ALLOC(BZo%FGbz%map,(2,BZo%nbz))
+       BZo%FGbz%map(:,:BZo%nbz)=BZi%FGbz%map(:,:BZo%nbz)
      endif
      !
      ! To code the duplication of the Fine grid and DbGd structure

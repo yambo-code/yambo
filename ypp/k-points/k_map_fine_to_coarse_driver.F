@@ -82,18 +82,21 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  call section('=','Double Grid K-points expansion ...')
  call k_ibz2bz(FineGd_k,'i',.true.)
  call msg('l','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
+ call k_expand(FineGd_k)
  !
  ! First map IBZ to IBZ
  !=======================
  call section('=','Double Grid IBZ mapping')
- call k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
+ call k_map_fine_to_coarse_ibz("IBZ",Xk,Xen,Xk%nibz,Xk%pt,Xk%FGibz,FineGd_k,FineGd_E,Reordering_map)
+ !call k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  ! 
  ! call k_map_fine_to_coarse(
  !
  ! Then map BZ to BZ
  !===================
  call section('=','Double Grid BZ mapping')
- call k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
+ call k_map_fine_to_coarse_ibz("BZ",Xk,Xen,Xk%nbz,Xk%ptbz,Xk%FGbz,FineGd_k,FineGd_E,Reordering_map)
+ !call k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !
  YAMBO_FREE(Reordering_map)
  !
@@ -112,6 +115,6 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  call bz_samp_reset(FineGd_k)
  call k_ibz2bz(Xk,'d',.true.)
  !...Xk/Xen FineGd components
- deallocate(Xen%E_FineGd,Xk%ibz_DbGd_map,Xk%bz_DbGd_map,Xk%weights_DbGd,Xk%nibz_mapped,Xk%nbz_mapped)
+ deallocate(Xen%E_FineGd,Xk%FGibz%map,Xk%FGbz%map,Xk%weights_DbGd,Xk%FGibz%N_mapped,Xk%FGbz%N_mapped)
  !
 end subroutine

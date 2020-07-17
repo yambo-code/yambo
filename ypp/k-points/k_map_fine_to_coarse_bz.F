@@ -69,36 +69,36 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !
  ! Number of points in each sphere in the BZ
  !===========================================
- allocate(Xk%nbz_mapped(Xk%nbz),N_bz_duplicate(Xk%nbz))
- Xk%nbz_mapped=0
+ allocate(Xk%FGbz%N_mapped(Xk%nbz),N_bz_duplicate(Xk%nbz))
+ Xk%FGbz%N_mapped=0
  N_bz_duplicate=0
  do i1=1,Xk%FGbz%N
    ik_near=abs(TMP_map(i1))
-   if(TMP_map(i1)>0) Xk%nbz_mapped(ik_near) =Xk%nbz_mapped(ik_near)+1
+   if(TMP_map(i1)>0) Xk%FGbz%N_mapped(ik_near) =Xk%FGbz%N_mapped(ik_near)+1
    if(TMP_map(i1)<0) N_bz_duplicate(ik_near)=N_bz_duplicate(ik_near)+1
  enddo
  !
- Xk%nbz_duplicate=sum(N_bz_duplicate)
+ Xk%FGbz%N_duplicate=sum(N_bz_duplicate)
  !
- call msg('s','::  BZ Blocks dupicate       :',Xk%nbz_duplicate)
- call msg('s','::  BZ Blocks filling range  :',(/minval(Xk%nbz_mapped)+1,maxval(Xk%nbz_mapped)+1/))
+ call msg('s','::  BZ Blocks dupicate       :',Xk%FGbz%N_duplicate)
+ call msg('s','::  BZ Blocks filling range  :',(/minval(Xk%FGbz%N_mapped)+1,maxval(Xk%FGbz%N_mapped)+1/))
  !
  ! BZ table
  !==========
- allocate(TMP_table_mapped(Xk%nbz,maxval(Xk%nbz_mapped)))
+ allocate(TMP_table_mapped(Xk%nbz,maxval(Xk%FGbz%N_mapped)))
  TMP_table_mapped=0
- if(Xk%nbz_duplicate>0) then
+ if(Xk%FGbz%N_duplicate>0) then
    allocate(TMP_table_duplicate(Xk%nbz,maxval(N_bz_duplicate)))
    TMP_table_duplicate=0
  endif
  !
- Xk%nbz_mapped=0
+ Xk%FGbz%N_mapped=0
  N_bz_duplicate=0
  do i1=1,Xk%FGbz%N
    ik_near=abs(TMP_map(i1))
    if(TMP_map(i1)>0) then
-     Xk%nbz_mapped(ik_near)=Xk%nbz_mapped(ik_near)+1
-     TMP_table_mapped(ik_near,Xk%nbz_mapped(ik_near))=i1
+     Xk%FGbz%N_mapped(ik_near)=Xk%FGbz%N_mapped(ik_near)+1
+     TMP_table_mapped(ik_near,Xk%FGbz%N_mapped(ik_near))=i1
    else if(TMP_map(i1)<0) then
      N_bz_duplicate(ik_near)=N_bz_duplicate(ik_near)+1
      TMP_table_duplicate(ik_near,N_bz_duplicate(ik_near))=i1
@@ -111,7 +111,7 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !=============================================================
  allocate(Xk%FGbz%pt(Xk%FGbz%N,3))
  allocate(Xk%sstar_FineGd(FineGd_k%nbz))
- allocate(Xk%bz_DbGd_map(2,Xk%nbz))
+ allocate(Xk%FGbz%map(2,Xk%nbz))
  !
  call live_timing('BZ Double Grid Reordering',Xk%FGbz%N)
  !
@@ -127,14 +127,14 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
      call live_timing(steps=1)
    enddo
    !
-   Xk%bz_DbGd_map(1,ikbz)=ikbz_FineGd+1
-   do i1=1,Xk%nbz_mapped(ikbz)
+   Xk%FGbz%map(1,ikbz)=ikbz_FineGd+1
+   do i1=1,Xk%FGbz%N_mapped(ikbz)
      ikbz_FineGd=ikbz_FineGd+1
      Xk%FGbz%pt(ikbz_FineGd,:)=FineGd_k%ptbz(TMP_table_mapped(ikbz,i1),:)
      Xk%sstar_FineGd(ikbz_FineGd) =Reordering_map(FineGd_k%sstar(TMP_table_mapped(ikbz,i1),1))
      call live_timing(steps=1)
    enddo
-   Xk%bz_DbGd_map(2,ikbz)=ikbz_FineGd
+   Xk%FGbz%map(2,ikbz)=ikbz_FineGd
    !
  enddo
  !

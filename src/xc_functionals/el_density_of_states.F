@@ -45,7 +45,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  !
  ! Work space
  !
- integer   :: i_sp_pol,ik_bz,ik,ik_fg,ib
+ integer   :: i_sp_pol,ik,ik_fg,ib
  real(SP)  :: el_dos_tmp(n_sp_pol),weight,f_occ,E,proj_fac(n_spin)
  logical   :: ik_ibz_done(Xk%nibz),USE_Eo_,USE_the_DbGd_,USE_occ,USE_WFs,USE_PDOS
  !
@@ -92,10 +92,10 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
        !
        if (USE_the_DbGd_) then
          !
-         do ik_fg=Xk%ibz_DbGd_map(1,ik),Xk%ibz_DbGd_map(2,ik)
+         do ik_fg=Xk%FGibz%map(1,ik),Xk%FGibz%map(2,ik)
            if (USE_occ) f_occ=Xen%f_FineGd(ib,ik_fg,i_sp_pol)
            el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*weight*&
-           &                             Fermi_fnc_derivative(Xen%E_FineGd(ib,ik_fg,i_sp_pol)-dos_E,DOS_broadening)
+&                               Fermi_fnc_derivative(Xen%E_FineGd(ib,ik_fg,i_sp_pol)-dos_E,DOS_broadening)
          enddo
          ! 
        endif

@@ -278,8 +278,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call section('=','Double K-grid')
    !=======================================
    !
-   call msg('r', 'Kpts (IBZ): CG,FG,DUPL.    ',(/k%nibz,k%FGibz%N,k%nibz_duplicate/))
-   call msg('r', 'Kpts ( BZ): CG,FG,DUPL.    ',(/k%nbz, k%FGbz%N, k%nbz_duplicate/))
+   call msg('r', 'Kpts (IBZ): CG,FG,DUPL.    ',(/k%nibz,k%FGibz%N,k%FGibz%N_duplicate/))
+   call msg('r', 'Kpts ( BZ): CG,FG,DUPL.    ',(/k%nbz, k%FGbz%N, k%FGbz%N_duplicate/))
    call msg('r', 'Bands                      ',en%nb_FineGd)
    !
  endif

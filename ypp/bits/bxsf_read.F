@@ -212,8 +212,8 @@ subroutine bxsf_read(Xk,Xen)
    call k2bz(v_in=DbGd_k%ptbz(ii,:))
  enddo
  !
- YAMBO_ALLOC(Xk%nbz_mapped,(Xk%nbz))
- Xk%nbz_mapped = 0
+ YAMBO_ALLOC(Xk%FGbz%N_mapped,(Xk%nbz))
+ Xk%FGbz%N_mapped = 0
  Xen%nb_FineGd=nbands
  Xk%FGbz%N=DbGd_k%nbz
  !
@@ -226,18 +226,18 @@ subroutine bxsf_read(Xk,Xen)
    ! have to go twice through all elements as BZ_DbGd_k cannot be
    ! allocated without knowing the number of maximum elements. 
    !
-   do while(.not.allocated(Xk%bz_DbGd_map)) 
-     if (maxval(Xk%nbz_mapped)>0) then
-       allocate(Xk%bz_DbGd_map(Xk%nbz,maxval(Xk%nbz_mapped)))
-       Xk%bz_DbGd_map=0
+   do while(.not.allocated(Xk%FGbz%map)) 
+     if (maxval(Xk%FGbz%N_mapped)>0) then
+       allocate(Xk%FGbz%map(Xk%nbz,maxval(Xk%FGbz%N_mapped)))
+       Xk%FGbz%map=0
      endif
-     Xk%nbz_mapped=0
+     Xk%FGbz%N_mapped=0
      do ii=1,DbGd_k%nbz
        !
        ikbz=k_the_nearest(DbGd_k%ptbz(ii,:),Xk%ptbz(:,:),Xk%nbz)
-       Xk%nbz_mapped(ikbz)=Xk%nbz_mapped(ikbz)+1
+       Xk%FGbz%N_mapped(ikbz)=Xk%FGbz%N_mapped(ikbz)+1
        !
-       if (allocated(Xk%bz_DbGd_map)) Xk%bz_DbGd_map(ikbz,Xk%nbz_mapped(ikbz))= ii
+       if (allocated(Xk%FGbz%map)) Xk%FGbz%map(ikbz,Xk%FGbz%N_mapped(ikbz))= ii
        !   
        call live_timing(steps=1)
        !
@@ -245,7 +245,7 @@ subroutine bxsf_read(Xk,Xen)
    enddo
    call live_timing()
    ! 
-   YAMBO_ALLOC(Xk%weights_ipol,(maxval(Xk%nbz_mapped)))
+   YAMBO_ALLOC(Xk%weights_ipol,(maxval(Xk%FGbz%N_mapped)))
    Xk%weights_ipol = 1.0_SP
  else
    call section('*','Employ double grid method' )
@@ -259,8 +259,8 @@ subroutine bxsf_read(Xk,Xen)
  endif
  !
  !     
- call msg('s',' Blocks filling range ',(/minval(Xk%nbz_mapped),maxval(Xk%nbz_mapped)/))
- if(minval(Xk%nbz_mapped) .ne. maxval(Xk%nbz_mapped)) then
+ call msg('s',' Blocks filling range ',(/minval(Xk%FGbz%N_mapped),maxval(Xk%FGbz%N_mapped)/))
+ if(minval(Xk%FGbz%N_mapped) .ne. maxval(Xk%FGbz%N_mapped)) then
    call msg('s',' DbGd_k blocks are not filled uniformly.')
    if(ord_dgrid_ipol.gt.0)then
      call msg('s',' Error: For double grid must be filled uniformely.')
@@ -298,8 +298,8 @@ subroutine bxsf_read(Xk,Xen)
  YAMBO_FREE(nkpoints_gengrid)
  YAMBO_FREE(startkpoint)
  YAMBO_FREE(recip_lattice)
- YAMBO_FREE(Xk%nbz_mapped)
- YAMBO_FREE(Xk%bz_DbGd_map)
+ YAMBO_FREE(Xk%FGbz%N_mapped)
+ YAMBO_FREE(Xk%FGbz%map)
  YAMBO_FREE(Xk%weights_ipol)
  !
 end subroutine

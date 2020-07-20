@@ -69,7 +69,7 @@ subroutine RT_databases_IO(E)
    endif
    !
    n_OBS_cache=nint(CACHE_OBS_INTERVAL_time/RT_dyn_step)
-   force_OBS_IO=RT_do_it('deltaT').or.RT_Dynamics_is_over(.false.).or.NE_i_time==OBS_RT_IO_t%last_point
+   force_OBS_IO=RT_do_it('deltaT').or.RT_Dynamics_is_over().or.NE_i_time==OBS_RT_IO_t%last_point
    !
    if (RT_do_it('OBS_cache').or.force_OBS_IO) then
      !

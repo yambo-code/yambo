@@ -45,7 +45,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  !
  ! Work space
  !
- integer   :: i_sp_pol,ik_bz,ik,ik_fg,ib
+ integer   :: i_sp_pol,ib,ik_bz,ik,ik_fg,ik_weight
  real(SP)  :: el_dos_tmp(n_sp_pol),weight,f_occ,E,proj_fac(n_spin),DOS_Broadening_
  logical   :: ik_ibz_done(Xk%nibz),USE_Eo_,USE_the_DbGd_,USE_occ,USE_WFs,USE_PDOS
  !
@@ -83,7 +83,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
        f_occ=spin_occ
        !
        if (.not.USE_the_DbGd_) weight=Xk%weights(ik)
-       if (     USE_the_DbGd_) weight=Xk%weights_DbGd(ik)
+       if (     USE_the_DbGd_) weight=Xk%weights_DbGd(1,ik)
        !
        if (.not.USE_Eo_) E=Xen%E(ib,ik,i_sp_pol)
        if (     USE_Eo_) E=Xen%Eo(ib,ik,i_sp_pol)
@@ -96,12 +96,14 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
        if (USE_the_DbGd_) then
          !
          do ik_fg=Xk%ibz_DbGd_map(1,ik),Xk%ibz_DbGd_map(2,ik)
+           ik_weight=ik_fg-Xk%ibz_DbGd_map(1,ik)+2
+           weight=Xk%weights_DbGd(ik_weight,ik)
            if (USE_occ) f_occ=Xen%f_FineGd(ib,ik_fg,i_sp_pol)
            if (allocated(Xen%W_FineGd)) DOS_broadening_=DOS_broadening+abs(Xen%W_FineGd(ib,ik_fg,i_sp_pol))
            el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*weight*&
            &                             Fermi_fnc_derivative(Xen%E_FineGd(ib,ik_fg,i_sp_pol)-dos_E,DOS_broadening)
          enddo
-         ! 
+         !
        endif
        !
        ! Projections

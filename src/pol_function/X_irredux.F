@@ -304,12 +304,13 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    !
 #if defined _ELPH
    if(     allocated(Xen%GreenF)) call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
-   if(.not.allocated(Xen%GreenF)) call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.)
+   if(.not.allocated(Xen%GreenF)) & 
+&       call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.,l_X_terminator)
 #else
    !
    ! GPL_EXCLUDE_END
    !
-   call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.)
+   call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.,l_X_terminator)
    !
    ! GPL_EXCLUDE_START
    !

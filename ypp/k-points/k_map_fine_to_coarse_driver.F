@@ -87,12 +87,12 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  ! First map IBZ to IBZ
  !=======================
  call section('=','Double Grid IBZ mapping')
- call k_map_fine_to_coarse("IBZ",Xk,Xen,Xk%nibz,Xk%pt,Xk%FGibz,FineGd_k,FineGd_E,Reordering_map)
+ call k_map_fine_to_coarse("IBZ",Xk,Xen,Xk%FGibz,FineGd_k,FineGd_E,Reordering_map)
  ! 
  ! Then map BZ to BZ
  !===================
  call section('=','Double Grid BZ mapping')
- call k_map_fine_to_coarse("BZ",Xk,Xen,Xk%nbz,Xk%ptbz,Xk%FGbz,FineGd_k,FineGd_E,Reordering_map)
+ call k_map_fine_to_coarse("BZ",Xk,Xen,Xk%FGbz,FineGd_k,FineGd_E,Reordering_map)
  !
  YAMBO_FREE(Reordering_map)
  !

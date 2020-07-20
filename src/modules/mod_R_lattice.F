@@ -52,6 +52,7 @@ module R_lattice
  real(SP) :: q0_def_norm, q0_shift_norm, smallest_q_norm
  real(SP),allocatable :: q_norm(:)
  character(schlen)    :: q_source="User defined / from ndb.kindx."
+ character(schlen)    :: BZ_FineGd_mode="mixed" ! or "unexpanded"/"expanded"
  !
  type bz_fine_grid
    integer              :: N
@@ -173,13 +174,13 @@ module R_lattice
  !
  interface
    !
-   integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
+   integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err,border_point)
      use pars, ONLY: SP
      integer :: n_k
      real(SP):: k_ref(3)
      real(SP):: k(n_k,3)
      real(SP),optional :: k_dist(n_k)
-     logical, optional :: ROTATE_k_ref
+     logical, optional :: ROTATE_k_ref,border_point
      integer, optional :: k_symm
      integer, optional :: i_err
    end function 

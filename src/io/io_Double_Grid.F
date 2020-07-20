@@ -24,7 +24,7 @@
 integer function io_Double_Grid(E,Xk,ID)
  !
  use electrons,      ONLY:levels,n_sp_pol
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,BZ_FineGd_mode
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,ver_is_gt_or_eq,write_is_on,&
 &                         IO_OUTDATED_DB,variable_exist
@@ -58,14 +58,19 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  if (io_Double_Grid/=0) goto 1
  !
+ if (ver_is_gt_or_eq(ID,revision=18605)) then
+   call io_elemental(ID,VAR='FineGd_mode',CH0="",VAR_SZ=1,MENU=0)
+   call io_elemental(ID,CH0=BZ_FineGd_mode,   VAR=' Brillouin Symmetry mode         ')
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ endif
  call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
  !
- call io_elemental(ID,I0=E%nb_FineGd,        VAR=' Bands                           ')
- call io_elemental(ID,I0=E%nk_FineGd,        VAR=' Number of points  in the IBZ (E)')
- call io_elemental(ID,I0=Xk%FGibz%N,     VAR=' Number of points  in the IBZ (k)')
- call io_elemental(ID,I0=Xk%FGbz%N,      VAR=' Number of points  in the  BZ (k)')
- call io_elemental(ID,I0=Xk%FGibz%N_duplicate,  VAR=' Number of duplic. pts in the IBZ')
- call io_elemental(ID,I0=Xk%FGbz%N_duplicate,   VAR=' Number of duplic. pts in the  BZ')
+ call io_elemental(ID,I0=E%nb_FineGd,         VAR=' Bands                           ')
+ call io_elemental(ID,I0=E%nk_FineGd,         VAR=' Number of points  in the IBZ (E)')
+ call io_elemental(ID,I0=Xk%FGibz%N,          VAR=' Number of points  in the IBZ (k)')
+ call io_elemental(ID,I0=Xk%FGbz%N,           VAR=' Number of points  in the  BZ (k)')
+ call io_elemental(ID,I0=Xk%FGibz%N_duplicate,VAR=' Number of duplic. pts in the IBZ')
+ call io_elemental(ID,I0=Xk%FGbz%N_duplicate, VAR=' Number of duplic. pts in the  BZ')
  ! 
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !

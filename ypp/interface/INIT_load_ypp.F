@@ -30,6 +30,7 @@ subroutine INIT_ypp_load(defs)
  use wave_func,     ONLY:wf_ng
  use LIVE_t,        ONLY:nhash
  use D_lattice,     ONLY:Tel,Bose_Temp
+ use R_lattice,     ONLY:BZ_FineGd_mode
  use electrons,     ONLY:n_spinor
  use interpolate,   ONLY:INTERP_shell_factor,INTERP_mode,NN_n_of_nearest
  use YPPm,          ONLY:E_field,alat_used_for_output,B_field,B_psi,B_theta,BANDS_bands,BANDS_path,&
@@ -308,8 +309,9 @@ subroutine INIT_ypp_load(defs)
  !
 #endif
  !
- !BZ E Double Grid
+ !Fine Grid
  !
+ call it(defs,'FineGd_mode',    'Fine Grid mode. Symmetry expanded, unexpanded or mixed. ',BZ_FineGd_mode)
  call it(defs,'BZ_DbGd_Nk',     'BZ Number of points in the fine grid',BZ_FineGd_nkpts_to_use)
  call it('f',defs,'SkipCheck' , 'Skip internal consistency check on k-point grids')
  !

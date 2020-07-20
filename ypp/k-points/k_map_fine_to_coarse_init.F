@@ -181,7 +181,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
    endif
  enddo
  !
- call msg('s','::               [imposed]   :',BZ_FineGd_nkpts_to_use)
+ if (BZ_FineGd_nkpts_to_use>0) call msg('s','::               [imposed]   :',BZ_FineGd_nkpts_to_use)
  call msg('s',':: Bands                     :',n_bands)
  call msg('s',':: Symmetries                :',nsym_FineGd_DB)
  if(i_time_rev_DB==1)&

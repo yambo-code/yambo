@@ -21,22 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_map_fine_to_coarse(zone,Xk,Xen,N_coarse,k_coarse,FG,FineGd_k,FineGd_E,Reordering_map)
+subroutine k_map_fine_to_coarse(zone,Xk,Xen,FG,FineGd_k,FineGd_E,Reordering_map)
  !
- use pars,                ONLY:SP
  use com,                 ONLY:msg
- use vec_operate,         ONLY:k2bz
  use electrons,           ONLY:levels,n_sp_pol
- use R_lattice,           ONLY:bz_samp,k_the_nearest,rl_sop,bz_fine_grid
- use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,          ONLY:PARALLEL_index
+ use R_lattice,           ONLY:bz_samp,bz_fine_grid
  use LIVE_t,              ONLY:live_timing
  !
 #include<memory.h>
  !
  character(*)      , intent(in)    :: zone
- integer           , intent(in)    :: N_coarse
- real(SP)          , intent(in)    :: k_coarse(N_coarse,3)
  type(bz_fine_grid), intent(inout) :: FG
  type(bz_samp), intent(inout)      :: FineGd_k,Xk
  type(levels),  intent(in)         :: FineGd_E
@@ -45,50 +39,36 @@ subroutine k_map_fine_to_coarse(zone,Xk,Xen,N_coarse,k_coarse,FG,FineGd_k,FineGd
  !
  ! Work Space
  !
- integer              :: ik_near,is_near,ik,i_err,i_fg,i1
+ integer              :: ik_near,i_fg,i_c,N_coarse,is,ik
  integer, allocatable :: TMP_map(:),TMP_table_mapped(:,:),TMP_table_duplicate(:,:),N_duplicate(:)
- real(SP)             :: kpt_tmp(3)
- type(PP_indexes)     :: px
  !
  ! Initial mapping
  !=================
- if (zone=="IBZ") FG%N    =FineGd_k%nibz
- if (zone=="BZ" ) FG%N    =FineGd_k%nbz
- !
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/FG%N/))
- call PP_redux_wait
- !
- call live_timing(zone//' Double Grid Map',px%n_of_elements(myid+1))
- !
- allocate(TMP_map(FG%N))
- TMP_map=0
- !
- do i_fg=1,FG%N
+ if (zone=="IBZ") then
+   N_coarse=Xk%nibz
+   FG%N    =FineGd_k%nibz
+   !allocate(TMP_map(FineGd_k%nbz))
+   !call k_map_fine_to_coarse_engine("BZ",FineGd_k%ptbz,FineGd_k%nbz,Xk%ptbz,Xk%nbz,TMP_map)
+   allocate(TMP_map(FG%N))
+   call k_map_fine_to_coarse_engine(zone,FineGd_k%pt,FineGd_k%nibz,Xk%ptbz,Xk%nbz,TMP_map)
+   ! 
+   ! IBZ => BZ reduction
    !
-   if (zone=="IBZ") then
-     call k2bz(FineGd_k%pt(i_fg,:))
-     if (.not.px%element_1D(i_fg)) then
-       FineGd_k%pt(i_fg,:)=0._SP
-       cycle
-     endif
-     ik_near = k_the_nearest(FineGd_k%pt(i_fg,:),k_coarse(:,:),N_coarse,ROTATE_k_ref=.TRUE.,k_symm=is_near,i_err=i_err)
-     kpt_tmp=FineGd_k%pt(i_fg,:)
-     FineGd_k%pt(i_fg,:)=matmul(rl_sop(:,:,is_near),kpt_tmp)
-   else
-     if (.not.px%element_1D(i_fg)) cycle
-     ik_near=k_the_nearest(FineGd_k%ptbz(i_fg,:),k_coarse(:,:),N_coarse,i_err=i_err)
-   endif
+   do i_fg=1,FG%N
+     ik=Xk%sstar( iabs(TMP_map(i_fg)),1 )
+     is=Xk%sstar( iabs(TMP_map(i_fg)),2 )
+     if (is> 1) TMP_map(i_fg)=0
+     if (is==1.and.TMP_map(i_fg)>0) TMP_map(i_fg)=ik
+     if (is==1.and.TMP_map(i_fg)<0) TMP_map(i_fg)=-ik
+   enddo
    !
-   if(i_err==0) TMP_map(i_fg)=-ik_near
-   if(i_err/=0) TMP_map(i_fg)= ik_near
-   !
-   call live_timing(steps=1)
-   !
- enddo
- !
- call PP_redux_wait(TMP_map)
- if (zone=="IBZ") call PP_redux_wait(FineGd_k%pt)
+ endif
+ if (zone=="BZ" ) then
+   N_coarse=Xk%nbz
+   FG%N    =FineGd_k%nbz
+   allocate(TMP_map(FG%N))
+   call k_map_fine_to_coarse_engine(zone,FineGd_k%ptbz,FineGd_k%nbz,Xk%ptbz,Xk%nbz,TMP_map)
+ endif
  !
  ! Number of points in each zone 
  !===============================
@@ -96,15 +76,16 @@ subroutine k_map_fine_to_coarse(zone,Xk,Xen,N_coarse,k_coarse,FG,FineGd_k,FineGd
  FG%N_mapped=0
  N_duplicate=0
  do i_fg=1,FG%N
-   ik_near=abs(TMP_map(i_fg))
-   if(TMP_map(i_fg)>0) FG%N_mapped(ik_near)=FG%N_mapped(ik_near)+1
-   if(TMP_map(i_fg)<0) N_duplicate(ik_near)=N_duplicate(ik_near)+1
+   ik_near=iabs(TMP_map(i_fg))
+   if (ik_near==0) cycle
+   if (TMP_map(i_fg)>0) FG%N_mapped(ik_near)=FG%N_mapped(ik_near)+1
+   if (TMP_map(i_fg)<0) N_duplicate(ik_near)=N_duplicate(ik_near)+1
  enddo
  !
  FG%N_duplicate=sum(N_duplicate)
  !
- call msg('s',':: '//zone//' Duplicated points     :',FG%N_duplicate)
- call msg('s',':: '//zone//' Blocks filling range  :',(/minval(FG%N_mapped)+1,maxval(FG%N_mapped)+1/))
+ call msg('s',':: '//zone//' Duplicated points                   :',FG%N_duplicate)
+ call msg('s',':: '//zone//' Blocks filling (excl. coarse grid)  :',(/minval(FG%N_mapped),maxval(FG%N_mapped)/))
  !
  ! Table(s)
  !==========
@@ -146,31 +127,31 @@ subroutine k_map_fine_to_coarse(zone,Xk,Xen,N_coarse,k_coarse,FG,FineGd_k,FineGd
  i_fg=0
  do ik=1,N_coarse
    !
-   do i1=1,N_duplicate(ik)
+   do i_c=1,N_duplicate(ik)
      i_fg=i_fg+1
      if (zone=="IBZ") then
-       FG%pt(i_fg,:)          =FineGd_k%pt(TMP_table_duplicate(ik,i1),:)
-       Xen%E_FineGd(:,i_fg,:) =FineGd_E%E(:,TMP_table_duplicate(ik,i1),:)
-       Xk%weights_FineGd(i_fg)=FineGd_k%weights(TMP_table_duplicate(ik,i1))
-       Reordering_map(TMP_table_duplicate(ik,i1))=i_fg
+       FG%pt(i_fg,:)          =FineGd_k%pt(TMP_table_duplicate(ik,i_c),:)
+       Xen%E_FineGd(:,i_fg,:) =FineGd_E%E(:,TMP_table_duplicate(ik,i_c),:)
+       Xk%weights_FineGd(i_fg)=FineGd_k%weights(TMP_table_duplicate(ik,i_c))
+       Reordering_map(TMP_table_duplicate(ik,i_c))=i_fg
      else
-       FG%pt(i_fg,:)          =FineGd_k%ptbz(TMP_table_duplicate(ik,i1),:)
-       Xk%sstar_FineGd(i_fg) =Reordering_map(FineGd_k%sstar(TMP_table_duplicate(ik,i1),1))
+       FG%pt(i_fg,:)          =FineGd_k%ptbz(TMP_table_duplicate(ik,i_c),:)
+       Xk%sstar_FineGd(i_fg) =Reordering_map(FineGd_k%sstar(TMP_table_duplicate(ik,i_c),1))
      endif
      call live_timing(steps=1)
    enddo
    FG%map(1,ik)=i_fg+1
    !
-   do i1=1,FG%N_mapped(ik)
+   do i_c=1,FG%N_mapped(ik)
      i_fg=i_fg+1
      if (zone=="IBZ") then
-       FG%pt(i_fg,:)          =FineGd_k%pt(TMP_table_mapped(ik,i1),:)
-       Xen%E_FineGd(:,i_fg,:) =FineGd_E%E(:,TMP_table_mapped(ik,i1),:)
-       Xk%weights_FineGd(i_fg)=FineGd_k%weights(TMP_table_mapped(ik,i1))
-       Reordering_map(TMP_table_mapped(ik,i1))=i_fg
+       FG%pt(i_fg,:)          =FineGd_k%pt(TMP_table_mapped(ik,i_c),:)
+       Xen%E_FineGd(:,i_fg,:) =FineGd_E%E(:,TMP_table_mapped(ik,i_c),:)
+       Xk%weights_FineGd(i_fg)=FineGd_k%weights(TMP_table_mapped(ik,i_c))
+       Reordering_map(TMP_table_mapped(ik,i_c))=i_fg
      else
-       FG%pt(i_fg,:)          =FineGd_k%ptbz(TMP_table_mapped(ik,i1),:)
-       Xk%sstar_FineGd(i_fg) =Reordering_map(FineGd_k%sstar(TMP_table_mapped(ik,i1),1))
+       FG%pt(i_fg,:)          =FineGd_k%ptbz(TMP_table_mapped(ik,i_c),:)
+       Xk%sstar_FineGd(i_fg) =Reordering_map(FineGd_k%sstar(TMP_table_mapped(ik,i_c),1))
      endif
      call live_timing(steps=1)
    enddo

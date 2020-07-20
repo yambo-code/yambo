@@ -43,10 +43,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        io_RESPONSE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
-&                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind
+&                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind,QP_Sc_G
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF
- use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G, RIM_W, RIM_is_diagonal,RIM_ng
+ use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G, RIM_W, RIM_is_diagonal,RIM_ng,g_vec
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
@@ -79,6 +79,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,ctmp
  complex(DP)      ::dp_dummy
  logical          ::l_RIM_W
+ integer          ::out_unit_QP_Sc_G=1000
+ real(SP)         ::g1_mod_2D,g2_mod_2D
  !
  integer,     external ::io_X
  complex(SP), external ::QP_ppa_EET_terminator
@@ -89,11 +91,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Reset & checks
  !
+ open (unit=out_unit_QP_Sc_G,file="QP_Sc_G.dat",action="write",status="replace")
+ write(out_unit_QP_Sc_G,*) "band  kpoint  head  diag_Gz  diag_G  wing_Gz  wing_G  body_Gz body_G"
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp)
  i_qp_to_start=1
  iq_to_start  =1
  QP_Sc        =cZERO
+ QP_Sc_G      =cZERO
  !
  if (l_GW_terminator.and.trim(GW_terminator_Kind)/='BG'.and.&
 &    trim(GW_terminator_Kind)/='BRS') &
@@ -461,7 +466,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !
 !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:dp_dummy)
            do ig2=1,X%ng
+             !
+             g2_mod_2D = sqrt(g_vec(ig2,1)**2+g_vec(ig2,2)**2)
+             !        
              do ig1=1,X%ng
+               !
+               g1_mod_2D = sqrt(g_vec(ig1,1)**2+g_vec(ig1,2)**2)
                !
                PPA_E= real(X%ppaE/X_mat(ig1,ig2,X_range(2)))
                !
@@ -481,6 +491,47 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i_w))-E_kmq+PPA_E))
                !
                dp_dummy=dp_dummy+cmplx(ctmp,kind=DP)
+               !
+               !Collect the Sc in QP_Sc_G
+               !
+               if (i_w == 1) then
+                 ! Head at q = 0
+                 if (iqbz == 1 .and. ig1 == 1 .and. ig2 == 1) then
+                   !
+                   QP_Sc_G(i_qp,1,1) = QP_Sc_G(i_qp,1,1) + cmplx(ctmp,kind=SP)
+                   !
+                 ! Diagonal Gxy == 0
+                 else if (ig1 == ig2 .and. g2_mod_2D < 1.e-5) then
+                   !
+                   QP_Sc_G(i_qp,1,2) = QP_Sc_G(i_qp,1,2) + cmplx(ctmp,kind=SP)
+                   !
+                 ! Diagonal Gxy /= 0
+                 else if ( ig1 == ig2 .and. g2_mod_2D > 1.e-5) then
+                   !
+                   QP_Sc_G(i_qp,1,3) = QP_Sc_G(i_qp,1,3) + cmplx(ctmp,kind=SP)
+                   !
+                 ! Wing Gxy == 0
+                 else if ((ig1 == 1 .and. g2_mod_2D < 1.e-5).or.(ig2 == 1 .and. g1_mod_2D < 1.e-5)) then
+                   !
+                   QP_Sc_G(i_qp,1,4) = QP_Sc_G(i_qp,1,4) + cmplx(ctmp,kind=SP)
+                   !
+                 ! Wing Gxy /= 0
+                 else if ((ig1 == 1 .and. g2_mod_2D > 1.e-5).or.(ig2 == 1 .and. g1_mod_2D > 1.e-5)) then
+                   !
+                   QP_Sc_G(i_qp,1,5) = QP_Sc_G(i_qp,1,5) + cmplx(ctmp,kind=SP)
+                   !
+                 ! Body Gxy == 0
+                 else if (ig1 /= ig2 .and. g1_mod_2D < 1.e-5 .and. g2_mod_2D < 1.e-5) then
+                   !
+                   QP_Sc_G(i_qp,1,6) = QP_Sc_G(i_qp,1,6) + cmplx(ctmp,kind=SP)
+                   !
+                 ! Body Gxy /= 0
+                 else
+                   !
+                   QP_Sc_G(i_qp,1,7) = QP_Sc_G(i_qp,1,7) + cmplx(ctmp,kind=SP)
+                   !
+                 end if
+               end if
                !
              enddo
            enddo
@@ -605,6 +656,18 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call timing('GW(REDUX)',OPR='start')
  call PP_redux_wait(QP_Sc)
+ call PP_redux_wait(QP_Sc_G)
  call timing('GW(REDUX)',OPR='stop')
+ !
+ do i_qp=1,QP_n_states
+   write(out_unit_QP_Sc_G,"(I5, I5, F15.6, F15.6, F15.6, F15.6, F15.6, F15.6, F15.6, F15.6)") &
+&                       QP_table(i_qp,1), QP_table(i_qp,3),&
+&                       real(QP_Sc_G(i_qp,1,1))*HA2EV,real(QP_Sc_G(i_qp,1,2))*HA2EV,&
+&                       real(QP_Sc_G(i_qp,1,3))*HA2EV,real(QP_Sc_G(i_qp,1,4))*HA2EV,&
+&                       real(QP_Sc_G(i_qp,1,5))*HA2EV,real(QP_Sc_G(i_qp,1,6))*HA2EV,&
+&                       real(QP_Sc_G(i_qp,1,7))*HA2EV,real(QP_Sc(i_qp,1))*HA2EV
+ end do
+ !
+ close(out_unit_QP_Sc_G)
  !
 end subroutine

@@ -161,7 +161,7 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
    enddo
    !
    weight_fac=1._SP/real(Xk%nibz_mapped(ikibz)+1,SP)
-   Xk%weights_DbGd(1,ikibz)=1._SP/real(Xk%nstar(ikibz),SP)*weight_fac
+   Xk%weights_DbGd(1,ikibz)=1._SP*weight_fac
    !
    Xk%ibz_DbGd_map(1,ikibz)=ikibz_FineGd+1
    do i1=1,Xk%nibz_mapped(ikibz)

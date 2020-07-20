@@ -53,8 +53,8 @@ subroutine io_RT_components_OBS(ID,l_JP,l_M,what)
    endif
    !
    if(n_spin>1.and.l_M) then
-     VAR_SZ(1:3)    = (/2,3,3,NF90_UNLIMITED/)
-     dim_names(1:3) = [character(schlen) :: 'complex', 'xyz','tot_c_v','time']
+     VAR_SZ    = (/2,3,3,NF90_UNLIMITED/)
+     dim_names = [character(schlen) :: 'complex', 'xyz','tot_c_v','time']
      call def_variable_bulk(ID,"Spin_Magnetization",6,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
      !
      VAR_SZ    = (/2,3,2,NF90_UNLIMITED/)

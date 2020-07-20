@@ -76,12 +76,13 @@
 ! kxy
      slab_vplane=sqrt(((q%pt(iq,ipar1)+g_vec(ig,ipar1))*2.*pi/alat(ipar1))**2+&
 &                 ((q%pt(iq,ipar2)+g_vec(ig,ipar2))*2.*pi/alat(ipar2))**2)               
-
+     !Regularization of the potential
+     if(slab_vplane < q0_def_norm) slab_vplane = q0_def_norm
 ! k=0 case
      if (iq==1.and.ig==1) cycle
 ! all other
      pre_factor=sqrt(1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut))
-     if (abs(pre_factor)<1.E-5_SP) pre_factor=1.E-5_SP
+     !if (abs(pre_factor)<1.E-5_SP) pre_factor=1.E-5_SP
      bare_qpg(iq,ig)=bare_qpg(iq,ig)/pre_factor
    enddo
  enddo

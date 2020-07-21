@@ -38,7 +38,7 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,FineGd_E)
  !
  ! Work Space
  !
- integer              :: ik_near,i_fg,i_c,N_coarse,is,ik,i_fg_k,i_fg_E,i_cycle,N_to_loop,N_fine_max
+ integer              :: ik_near,i_fg,i_c,N_coarse,is,ik,i_fg_k,i_fg_E,N_fine_max
  integer, allocatable :: TMP_map(:),TMP_table_mapped(:,:),TMP_table_duplicate(:,:),N_duplicate(:)
  logical              :: l_BZ_FG,l_IBZ_FG,l_BZ_CG,l_IBZ_CG
  !
@@ -77,7 +77,7 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,FineGd_E)
  !
  ! Update the value of FG%N
  !
- FG%N=count(TMP_map/=0)
+ FG%N=count(TMP_map>0)
  !
  if (FG%N/=N_fine_max) then
    call msg('s',':: '//zone//' Fine Grid points used - read        :',(/FG%N,N_fine_max/))
@@ -85,6 +85,8 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,FineGd_E)
  !
  ! Allocation
  !============
+ FG%N=FG%N+N_coarse
+ !
  call bz_samp_FineGd_alloc(FG,N_coarse)
  !
  ! Number of points in each zone 
@@ -131,38 +133,51 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,FineGd_E)
  !=========================
  call live_timing(zone//' Double Grid Reordering',FG%N)
  !
+ ! Final FineGd structure. All FG%N+N_coarse points are splitted in ik-groups
+ !
+ ! ik: FG%k_map(1,ik) .. FG%k_map(2,1)
+ !
+ !  ik=FG%k_map(1,ik)                   -> COARSE grid
+ !  ik=FG%k_map(1,ik)+1...FG%k_map(2,1) -> FINE grid
+ !
+ ! i_fg = FG%k_map(1,ik) we have
+ !
+ !  - k%pt(ik,:)/k%ptbz(ik,:)
+ !  - E%E( <bands> ,ik, <spin> )
+ !
+ ! For each i_fg \in FG%k_map(1,ik)+1..FG%k_map(2,ik) we have
+ !
+ ! - FG%pt(i_fg,:)
+ ! - FG%weights(i_fg)
+ ! - E%E_FineGd( <bands> , FG%E_map(i_fg), <spin> )
+ !
  i_fg=0
  !
  do ik=1,N_coarse
    !
-   do i_cycle=1,2
+   i_fg=i_fg+1
+   FG%k_map(1,ik)=i_fg
+   !
+   do i_c=1,FG%N_mapped(ik)
      !
-     if (i_cycle==1) N_to_loop=N_duplicate(ik)
-     if (i_cycle==2) N_to_loop=FG%N_mapped(ik)
+     i_fg=i_fg+1
      !
-     do i_c=1,N_to_loop
-       !
-       i_fg=i_fg+1
-       !
-       if (i_cycle==1) i_fg_k=TMP_table_duplicate(ik,i_c)
-       if (i_cycle==2) i_fg_k=TMP_table_mapped(ik,i_c)
-       if (l_BZ_FG ) FG%pt(i_fg,:)   =FineGd_k%ptbz(i_fg_k,:)
-       if (l_IBZ_FG) FG%pt(i_fg,:)   =FineGd_k%pt(i_fg_k,:)
-       !
-       if (l_BZ_FG ) i_fg_E=FineGd_k%sstar(i_fg_k,1)
-       if (l_IBZ_FG) i_fg_E=i_fg_k
-       FG%E_map(i_fg)=i_fg_E
-       !
-       if (l_BZ_FG ) FG%weights(i_fg) =1./real(FG%N,SP)
-       if (l_IBZ_FG) FG%weights(i_fg)  =FineGd_k%weights(i_fg_E)
-       !
-       call live_timing(steps=1)
-     enddo
+     i_fg_k=TMP_table_mapped(ik,i_c)
+     if (l_BZ_FG ) FG%pt(i_fg,:)   =FineGd_k%ptbz(i_fg_k,:)
+     if (l_IBZ_FG) FG%pt(i_fg,:)   =FineGd_k%pt(i_fg_k,:)
      !
-     if (i_cycle==1) FG%k_map(i_cycle,ik)=i_fg+1
-     if (i_cycle==2) FG%k_map(i_cycle,ik)=i_fg
+     if (l_BZ_FG ) i_fg_E=FineGd_k%sstar(i_fg_k,1)
+     if (l_IBZ_FG) i_fg_E=i_fg_k
+     FG%E_map(i_fg)=i_fg_E
+     !
+     if (l_BZ_FG ) FG%weights(i_fg) =1./real(FG%N,SP)
+     if (l_IBZ_FG) FG%weights(i_fg)  =FineGd_k%weights(i_fg_E)
+     !
+     call live_timing(steps=1)
      !
    enddo
+   !
+   FG%k_map(2,ik)=i_fg
    !
  enddo
  !

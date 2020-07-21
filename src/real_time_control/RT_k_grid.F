@@ -100,8 +100,8 @@ subroutine RT_k_grid(E,k,q)
    RT_ibz_coo(ik,:)=(/RT_nk+1,RT_nk+1+k%FGibz%N_mapped(ik)/)
    RT_nk=RT_nk+1+k%FGibz%N_mapped(ik)
    RT_Nk_ibz(ik)=k%FGibz%N_mapped(ik)+1
-   if(ik==1) RT_ibz_dupl(ik)=k%FGibz%map(1,ik)-1
-   if(ik> 1) RT_ibz_dupl(ik)=k%FGibz%map(1,ik)-k%FGibz%map(2,ik-1)-1
+   if(ik==1) RT_ibz_dupl(ik)=k%FGibz%k_map(1,ik)-1
+   if(ik> 1) RT_ibz_dupl(ik)=k%FGibz%k_map(1,ik)-k%FGibz%k_map(2,ik-1)-1
    !
  enddo
  !

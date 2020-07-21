@@ -154,11 +154,11 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
    ikbz_FineGd=X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,1)
    ikpbz_FineGd=X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,2)
    !
-   if(ikbz_FineGd<Xk%FGbz%map(1,ikbz)) then
+   if(ikbz_FineGd==Xk%FGbz%k_map(1,ikbz)) then
      En1       = Xen%E(ic,ik,i_spin)
      ffac      = Xen%f(ic,ik,i_spin)
    else
-     ik_FineGd = Xk%sstar_FineGd(ikbz_FineGd)
+     ik_FineGd = Xk%FGbz%E_map(ikbz_FineGd)
      En1       = Xen%E_FineGd(ic,ik_FineGd,i_spin)
      ffac      = Xen%f_FineGd(ic,ik_FineGd,i_spin)
    endif
@@ -166,11 +166,11 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
    if( X_os_run  ) f_h = spin_occ-ffac
    if( K_inv_run ) f_h =          ffac
    !
-   if(ikpbz_FineGd<Xk%FGbz%map(1,ikpbz)) then
+   if(ikpbz_FineGd==Xk%FGbz%k_map(1,ikpbz)) then
      En2       = Xen%E(iv,ikp,i_spin)
      f_e       = Xen%f(iv,ikp,i_spin)
    else
-     ikp_FineGd= Xk%sstar_FineGd(ikpbz_FineGd)
+     ikp_FineGd= Xk%FGbz%E_map(ikpbz_FineGd)
      En2       = Xen%E_FineGd(iv,ikp_FineGd,i_spin)
      f_e       = Xen%f_FineGd(iv,ikp_FineGd,i_spin)
    endif

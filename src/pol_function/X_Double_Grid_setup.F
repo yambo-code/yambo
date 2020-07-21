@@ -64,8 +64,8 @@ subroutine X_Double_Grid_setup(iq,k)
  N_all_pairs=0
  do ikbz=1,nXkbz
    ikpbz      =qindx_X(iq,ikbz,1) 
-   N_all_pairs=N_all_pairs+ (k%FGbz%map(2,ikbz)-k%FGbz%map(1,ikbz)+1) &
-&                          *(k%FGbz%map(2,ikpbz)-k%FGbz%map(1,ikpbz)+1)
+   N_all_pairs=N_all_pairs+ (k%FGbz%k_map(2,ikbz)-k%FGbz%k_map(1,ikbz)+1) &
+&                          *(k%FGbz%k_map(2,ikpbz)-k%FGbz%k_map(1,ikpbz)+1)
  enddo
  !
  do while(PREC(1)<X_DbGd_percentual.or.FILL_it)
@@ -88,15 +88,15 @@ subroutine X_Double_Grid_setup(iq,k)
      !
      central_q=k%ptbz(ikbz,:)-k%ptbz(ikpbz,:)
      !
-     ! Coarse grid points are included for ikbz_FineGd= k%bz_DbGd_map(1,ikbz)-1
-     ! Fine   grid points are included for ikbz_FineGd>=k%bz_DbGd_map(1,ikbz)
+     ! Coarse grid points are included for ikbz_FineGd= k%bz_DbGd_map(1,ikbz)
+     ! Fine   grid points are included for ikbz_FineGd>k%bz_DbGd_map(1,ikbz)
      !
-     do ikbz_FineGd=k%FGbz%map(1,ikbz)-1,  k%FGbz%map(2,ikbz)
-       if(ikbz_FineGd< k%FGbz%map(1,ikbz)) k_pt_loc=k%ptbz(ikbz,:)
-       if(ikbz_FineGd>=k%FGbz%map(1,ikbz)) k_pt_loc=k%FGbz%pt(ikbz_FineGd,:)
-       do ikpbz_FineGd=k%FGbz%map(1,ikpbz)-1,k%FGbz%map(2,ikpbz)
-         if(ikpbz_FineGd< k%FGbz%map(1,ikpbz)) kp_pt_loc=k%ptbz(ikpbz,:)
-         if(ikpbz_FineGd>=k%FGbz%map(1,ikpbz)) kp_pt_loc=k%FGbz%pt(ikpbz_FineGd,:)
+     do ikbz_FineGd=k%FGbz%k_map(1,ikbz),  k%FGbz%k_map(2,ikbz)
+       if(ikbz_FineGd==k%FGbz%k_map(1,ikbz)) k_pt_loc=k%ptbz(ikbz,:)
+       if(ikbz_FineGd> k%FGbz%k_map(1,ikbz)) k_pt_loc=k%FGbz%pt(ikbz_FineGd,:)
+       do ikpbz_FineGd=k%FGbz%k_map(1,ikpbz),k%FGbz%k_map(2,ikpbz)
+         if(ikpbz_FineGd==k%FGbz%k_map(1,ikpbz)) kp_pt_loc=k%ptbz(ikpbz,:)
+         if(ikpbz_FineGd> k%FGbz%k_map(1,ikpbz)) kp_pt_loc=k%FGbz%pt(ikpbz_FineGd,:)
          !
          running_q(:)=(k_pt_loc-kp_pt_loc)
          !

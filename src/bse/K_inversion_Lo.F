@@ -264,8 +264,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  call IO_desc_add(BSS_desc,kind="s",str=" ",S=" ")
  !
- if (k%FGibz%N>0) then
-   call IO_desc_add(BSS_desc,kind="i",str="[INV] BZ Double Grid points",I=(/k%nibz+k%FGibz%N/))
+ if (k%FGbz%N>0) then
+   call IO_desc_add(BSS_desc,kind="i",str="[INV] BZ Fine + Coarse Grid points",I=(/k%nbz+k%FGbz%N/))
  endif
  !
 end subroutine K_inversion_Lo

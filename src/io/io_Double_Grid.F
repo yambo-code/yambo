@@ -24,7 +24,7 @@
 integer function io_Double_Grid(E,Xk,ID)
  !
  use electrons,      ONLY:levels,n_sp_pol
- use R_lattice,      ONLY:bz_samp,BZ_FineGd_mode
+ use R_lattice,      ONLY:bz_samp,BZ_FineGd_mode,bz_samp_FineGd_alloc
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,ver_is_gt_or_eq,write_is_on,&
 &                         IO_OUTDATED_DB,variable_exist
@@ -88,10 +88,8 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Kpts
  !
  if (read_is_on(ID)) then
-   YAMBO_ALLOC(Xk%FGibz%pt,(Xk%FGibz%N,3))
-   YAMBO_ALLOC(Xk%FGibz%weights,(Xk%FGibz%N))
-   YAMBO_ALLOC(Xk%FGbz%pt,(Xk%FGbz%N,3))
-   YAMBO_ALLOC(Xk%FGbz%E_map,(Xk%FGbz%N))
+   call bz_samp_FineGd_alloc(Xk%FGibz,Xk%nibz)
+   call bz_samp_FineGd_alloc(Xk%FGbz,Xk%nbz)
  endif
  !
  call io_bulk(ID, VAR="KPTS_IBZ", VAR_SZ=shape(Xk%FGibz%pt) ) 
@@ -114,11 +112,6 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Block filling
  !
- if (read_is_on(ID)) then
-   YAMBO_ALLOC(Xk%FGibz%N_mapped,(Xk%nibz))
-   YAMBO_ALLOC(Xk%FGbz%N_mapped,(Xk%nbz))
- endif
- !
  call io_bulk(ID, VAR="BLOCK_FILLING_IBZ", VAR_SZ=(/Xk%nibz/) ) 
  call io_bulk(ID, I1=Xk%FGibz%N_mapped )
  !
@@ -126,11 +119,6 @@ integer function io_Double_Grid(E,Xk,ID)
  call io_bulk(ID, I1=Xk%FGbz%N_mapped )
  !
  ! Block table
- !
- if (read_is_on(ID)) then
-   YAMBO_ALLOC(Xk%FGibz%k_map,(2,Xk%nibz))
-   YAMBO_ALLOC(Xk%FGbz%k_map,(2,Xk%nbz))
- endif
  !
  call io_bulk(ID, VAR="K_MAP_IBZ", VAR_SZ=shape(Xk%FGibz%k_map) ) 
  call io_bulk(ID, I2=Xk%FGibz%k_map )

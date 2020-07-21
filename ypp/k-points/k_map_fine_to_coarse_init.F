@@ -34,6 +34,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
  use com,                 ONLY:msg
  use YPPm,                ONLY:BZ_FineGd_nkpts_to_use,FineGd_DB1_paths,MAX_FineGd_DBs,n_FineGd_DBs
  use electrons,           ONLY:levels,default_nel,n_bands,n_sp_pol,E_reset
+ use IO_m,                ONLY:REP
  !
  implicit none
  !
@@ -73,7 +74,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
  i_err=0
  if (n_FineGd_DBs>0) then
    do i_db=1,n_FineGd_DBs
-     i_err(i_db)=io_DB1_selective_scan("all",trim(FineGd_DB1_paths(i_db,1)),FineGd_io_E(i_db),FineGd_io_k(i_db))
+     i_err(i_db)=io_DB1_selective_scan("all",trim(FineGd_DB1_paths(i_db,1)),FineGd_io_E(i_db),FineGd_io_k(i_db),COM_mode=REP)
      if (i_err(i_db)/=0) call msg("s",'FineGd database NOT FOUND @'//trim(FineGd_DB1_paths(i_db,1)))
      if (i_err(i_db)==0) call msg("s",'FineGd database FOUND @'//trim(FineGd_DB1_paths(i_db,1)))
      !

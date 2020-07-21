@@ -25,6 +25,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,pi,schlen
  use drivers,        ONLY:l_setup
+ use C_driver,       ONLY:code_bin
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:wf_ng,wf_ncx
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
@@ -264,14 +265,15 @@ subroutine setup(en,Xen,Ken,k,Xk)
    if (i_err/=0) call error('Impossible to determine the K-grid lattice')
  endif
  !
- if(l_setup.or.fat_log) call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'K',.TRUE.,.FALSE.)
+ if (l_setup.or.fat_log.or.index(code_bin,'ypp')>0) call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'K',.TRUE.,.FALSE.)
  ! 
  ! E_dbgd
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID)
  i_err=io_Double_Grid(en,k,ID)
  !
- call bz_samp_duplicate_Fg(k,Xk) 
+ call bz_samp_duplicate_Fg(k%FGibz,Xk%FGibz,k%nibz) 
+ call bz_samp_duplicate_Fg(k%FGbz,Xk%FGbz,k%nbz) 
  !
  if (En%nb_FineGd>0.and.allocated(en%E_FineGd)) then
    !
@@ -355,7 +357,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Energies report
  !
- if(l_setup.or.fat_log) call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.FALSE.,.TRUE.)
+ if (l_setup.or.fat_log.or.index(code_bin,'ypp')>0) call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.FALSE.,.TRUE.)
  !
  ! Once the occupations have been evaluated I dump Xen in Ken
  !

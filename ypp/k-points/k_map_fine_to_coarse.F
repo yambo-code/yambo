@@ -39,7 +39,7 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,FineGd_E)
  ! Work Space
  !
  integer              :: ik_near,i_fg,i_c,N_coarse,is,ik,i_fg_k,i_fg_E,N_fine_max
- integer, allocatable :: TMP_map(:),TMP_table_mapped(:,:),TMP_table_duplicate(:,:),N_duplicate(:)
+ integer, allocatable :: TMP_map(:),TMP_table_mapped(:,:),TMP_table_duplicate(:,:),N_duplicate(:),N_per_BZ_point(:)
  logical              :: l_BZ_FG,l_IBZ_FG,l_BZ_CG,l_IBZ_CG
  !
  ! Initial mapping
@@ -56,10 +56,14 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,FineGd_E)
  if (l_IBZ_CG) N_coarse = Xk%nibz
  !
  N_fine_max=FG%N
- allocate(TMP_map(N_fine_max))
+ allocate(TMP_map(N_fine_max),N_per_BZ_point(Xk%nbz))
  !
  if (l_BZ_FG ) call k_map_fine_to_coarse_engine(zone,FineGd_k%ptbz,FineGd_k%nbz, Xk%ptbz,Xk%nbz,TMP_map)
  if (l_IBZ_FG) call k_map_fine_to_coarse_engine(zone,FineGd_k%pt,  FineGd_k%nibz,Xk%ptbz,Xk%nbz,TMP_map)
+ !
+ do ik=1,Xk%nbz
+   N_per_BZ_point(ik)=count(TMP_map(:)==ik)+count(TMP_map(:)==-ik)
+ enddo
  !
  if (l_IBZ_CG) then
    ! 
@@ -79,6 +83,7 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,FineGd_E)
  !
  FG%N=count(TMP_map>0)
  !
+ call msg('s',':: '//zone//' Fine Grid pts per Coarse grid BZ pt :',(/minval(N_per_BZ_point),maxval(N_per_BZ_point)/))
  if (FG%N/=N_fine_max) then
    call msg('s',':: '//zone//' Fine Grid points used - read        :',(/FG%N,N_fine_max/))
  endif
@@ -183,7 +188,7 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,FineGd_E)
  !
  call live_timing()
  !
- deallocate(TMP_map,N_duplicate,TMP_table_mapped)
+ deallocate(TMP_map,N_duplicate,TMP_table_mapped,N_per_BZ_point)
  if (FG%N_duplicate>0) deallocate(TMP_table_duplicate)
  !
 end subroutine

@@ -309,56 +309,45 @@ module R_lattice
        BZo%ptbz=BZi%ptbz
      endif
      !
-     call bz_samp_duplicate_Fg(BZi, BZo)
+     call bz_samp_duplicate_Fg(BZi%FGibz, BZo%FGibz,BZi%nibz)
+     call bz_samp_duplicate_Fg(BZi%FGbz, BZo%FGbz,BZi%nbz)
      !
      return
      !
    end subroutine bz_samp_duplicate
      !
-   subroutine bz_samp_duplicate_Fg(BZi, BZo)
-     type(bz_samp), intent(in)    :: BZi
-     type(bz_samp), intent(inout) :: BZo
+   subroutine bz_samp_duplicate_Fg(FGi,FGo,N_coarse)
+     type(bz_fine_grid), intent(in)  ::FGi
+     type(bz_fine_grid), intent(out) ::FGo
+     integer,            intent(in)  ::N_coarse
      !
-     BZo%FGbz%N =BZi%FGbz%N
-     BZo%FGibz%N=BZi%FGibz%N
+     FGo%N =FGi%N
      !
-     if (allocated( BZi%FGbz%E_map )) then
-       YAMBO_ALLOC(BZo%FGbz%E_map,(BZo%FGbz%N))
-       BZo%FGbz%E_map=BZi%FGbz%E_map
+     if (allocated(FGi%pt)) then
+       YAMBO_ALLOC(FGo%pt,(FGo%N,3))
+       FGo%pt=FGi%pt
      endif
-     if (allocated( BZi%FGibz%pt )) then
-       YAMBO_ALLOC(BZo%FGibz%pt,(BZo%FGibz%N,3))
-       BZo%FGibz%pt=BZi%FGibz%pt
+     if (allocated(FGi%weights)) then
+       YAMBO_ALLOC(FGo%weights,(FGo%N))
+       FGo%weights=FGi%weights
      endif
-     if (allocated( BZi%FGbz%pt )) then
-       YAMBO_ALLOC(BZo%FGbz%pt,(BZo%FGbz%N,3))
-       BZo%FGbz%pt=BZi%FGbz%pt
+     if (allocated(FGi%E_map)) then
+       YAMBO_ALLOC(FGo%E_map,(FGo%N))
+       FGo%E_map=FGi%E_map
      endif
-     !
-     BZo%FGbz%N_duplicate =BZi%FGbz%N_duplicate
-     BZo%FGibz%N_duplicate=BZi%FGibz%N_duplicate
-     !
-     if (allocated( BZi%FGibz%N_mapped )) then
-       YAMBO_ALLOC(BZo%FGibz%N_mapped,(BZo%nibz))
-       BZo%FGibz%N_mapped(:BZo%nibz)=BZi%FGibz%N_mapped(:BZo%nibz)
+     if (allocated(FGi%k_map)) then
+       YAMBO_ALLOC(FGo%k_map,(2,N_coarse))
+       FGo%k_map=FGi%k_map
      endif
-     if (allocated( BZi%FGbz%N_mapped )) then
-       YAMBO_ALLOC(BZo%FGbz%N_mapped,(BZo%nbz))
-       BZo%FGbz%N_mapped(:BZo%nbz)=BZi%FGbz%N_mapped(:BZo%nbz)
-     endif
-     if (allocated( BZi%FGibz%k_map )) then
-       YAMBO_ALLOC(BZo%FGibz%k_map,(2,BZo%nibz))
-       BZo%FGibz%k_map(:,:BZo%nibz)=BZi%FGibz%k_map(:,:BZo%nibz)
-     endif
-     if (allocated( BZi%FGbz%k_map )) then
-       YAMBO_ALLOC(BZo%FGbz%k_map,(2,BZo%nbz))
-       BZo%FGbz%k_map(:,:BZo%nbz)=BZi%FGbz%k_map(:,:BZo%nbz)
+     if (allocated(FGi%N_mapped)) then
+       YAMBO_ALLOC(FGo%N_mapped,(N_coarse))
+       FGo%N_mapped=FGi%N_mapped
      endif
      !
-     ! To code the duplication of the Fine grid and DbGd structure
-     !
-     !real(SP), pointer :: weights_DbGd(:)   => null()
-     !real(SP), pointer :: weights_ipol(:)   => null()  ! something used by mapping with wannier
+     !DEBUG>
+     !To code 
+     ! real(SP), pointer :: weights_ipol(:)   => null()  ! something used by mapping with wannier
+     !DEBUG<
      !
      return
      !

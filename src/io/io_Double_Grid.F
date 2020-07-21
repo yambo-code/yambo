@@ -89,22 +89,28 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  if (read_is_on(ID)) then
    YAMBO_ALLOC(Xk%FGibz%pt,(Xk%FGibz%N,3))
-   YAMBO_ALLOC(Xk%weights_FineGd,(Xk%FGibz%N))
+   YAMBO_ALLOC(Xk%FGibz%weights,(Xk%FGibz%N))
    YAMBO_ALLOC(Xk%FGbz%pt,(Xk%FGbz%N,3))
-   YAMBO_ALLOC(Xk%sstar_FineGd,(Xk%FGbz%N))
+   YAMBO_ALLOC(Xk%FGbz%E_map,(Xk%FGbz%N))
  endif
  !
  call io_bulk(ID, VAR="KPTS_IBZ", VAR_SZ=shape(Xk%FGibz%pt) ) 
  call io_bulk(ID, R2=Xk%FGibz%pt )
  !
- call io_bulk(ID, VAR="KPTS_WEIGHTS", VAR_SZ=shape(Xk%weights_FineGd) ) 
- call io_bulk(ID, R1=Xk%weights_FineGd )
+ call io_bulk(ID, VAR="WEIGHTS_IBZ", VAR_SZ=shape(Xk%FGibz%weights) ) 
+ call io_bulk(ID, R1=Xk%FGibz%weights )
  !
  call io_bulk(ID, VAR="KPTS_BZ", VAR_SZ=shape(Xk%FGbz%pt) ) 
  call io_bulk(ID, R2=Xk%FGbz%pt )
  !
- call io_bulk(ID, VAR="IBZ_TO_BZ_MAP", VAR_SZ=(/Xk%FGbz%N/) )
- call io_bulk(ID, I1=Xk%sstar_FineGd )
+ call io_bulk(ID, VAR="WEIGHTS_BZ", VAR_SZ=shape(Xk%FGbz%weights) ) 
+ call io_bulk(ID, R1=Xk%FGbz%weights )
+ !
+ call io_bulk(ID, VAR="IBZ_E_MAP", VAR_SZ=(/Xk%FGibz%N/) )
+ call io_bulk(ID, I1=Xk%FGibz%E_map )
+ !
+ call io_bulk(ID, VAR="BZ_E_MAP", VAR_SZ=(/Xk%FGbz%N/) )
+ call io_bulk(ID, I1=Xk%FGbz%E_map )
  !
  ! Block filling
  !
@@ -122,15 +128,15 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Block table
  !
  if (read_is_on(ID)) then
-   YAMBO_ALLOC(Xk%FGibz%map,(2,Xk%nibz))
-   YAMBO_ALLOC(Xk%FGbz%map,(2,Xk%nbz))
+   YAMBO_ALLOC(Xk%FGibz%k_map,(2,Xk%nibz))
+   YAMBO_ALLOC(Xk%FGbz%k_map,(2,Xk%nbz))
  endif
  !
- call io_bulk(ID, VAR="BLOCK_TABLE_IBZ", VAR_SZ=shape(Xk%FGibz%map) ) 
- call io_bulk(ID, I2=Xk%FGibz%map )
+ call io_bulk(ID, VAR="K_MAP_IBZ", VAR_SZ=shape(Xk%FGibz%k_map) ) 
+ call io_bulk(ID, I2=Xk%FGibz%k_map )
  !
- call io_bulk(ID, VAR="BLOCK_TABLE_BZ", VAR_SZ=shape(Xk%FGbz%map) ) 
- call io_bulk(ID, I2=Xk%FGbz%map )
+ call io_bulk(ID, VAR="K_MAP_BZ", VAR_SZ=shape(Xk%FGbz%k_map) ) 
+ call io_bulk(ID, I2=Xk%FGbz%k_map )
  !
 1 call io_disconnect(ID=ID)
  !

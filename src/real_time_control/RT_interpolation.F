@@ -177,7 +177,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
         E%df_FineGd( nb(1):nb_max_FineGd,:,:)=INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,:,:)
         do ik=1,K%FGibz%N
           N_carriers(2)=N_carriers(2)+ &
-          & sum(abs(INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,ik,:)))*K%weights_FineGd(ik)/2._SP
+&                       sum(abs(INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,ik,:)))*K%FGibz%weights(ik)/2._SP
         enddo
       endif
       !

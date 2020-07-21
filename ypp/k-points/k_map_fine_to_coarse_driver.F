@@ -23,8 +23,9 @@
 !
 subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
- use stderr,              ONLY:intc
- use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset
+ use pars,                ONLY:SP,schlen
+ use stderr,              ONLY:intc,STRING_same
+ use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset,BZ_FineGd_mode
  use com,                 ONLY:msg
  use YPPm,                ONLY:n_FineGd_DBs
  use electrons,           ONLY:levels,E_reset
@@ -39,11 +40,10 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  type(levels)         :: FineGd_E
  type(bz_samp)        :: FineGd_k
- !
- integer, allocatable :: Reordering_map(:)
- !
- integer           :: i_err,ID
- integer, external :: io_Double_Grid
+ character(schlen)    :: FG_zone(2)
+ integer              :: i_err,ID,i_fg
+ integer, external    :: io_Double_Grid
+ logical              :: l_mix,l_expand,l_unexpand
  !
  if (n_FineGd_DBs==0) then
    call msg("s",'DbGd: no database secified. Nothing to do.')
@@ -57,17 +57,14 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  call section('*','Double Grid DB(s)')
  !
+ l_mix     =STRING_same(BZ_FineGd_mode,"mixed")
+ l_expand  =STRING_same(BZ_FineGd_mode,"expanded")
+ l_unexpand=STRING_same(BZ_FineGd_mode,"unexpanded")
+ !
  ! Initial checks
  !================
  call section('+','Double Grid initialization')
  call k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
- !
- YAMBO_ALLOC(Reordering_map,(FineGd_k%nibz))
- !
- ! E Dimensions
- !==============
- Xen%nb_FineGd=FineGd_E%nb
- Xen%nk_FineGd=FineGd_E%nk
  !
  ! Expand to the BZ 
  !==================
@@ -77,27 +74,63 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  call k_build_up_BZ_tables(Xk)
  call k_ibz2bz(Xk,'i',.true.)
  !
- ! k_DbGd (IBZ->BZ)
+ if (l_mix.or.l_expand) then
+   !
+   ! k_DbGd (IBZ->BZ)
+   !
+   call section('=','Double Grid K-points expansion ...')
+   call k_ibz2bz(FineGd_k,'i',.true.)
+   call msg('l','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
+   call k_expand(FineGd_k)
+   !
+   FG_zone(1)="IBZ"
+   FG_zone(2)="BZ"
+   !
+ endif
  !
- call section('=','Double Grid K-points expansion ...')
- call k_ibz2bz(FineGd_k,'i',.true.)
- call msg('l','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
- call k_expand(FineGd_k)
+ if (l_expand) then
+   !
+   ! BZ->IBZ
+   !
+   YAMBO_FREE(FineGd_k%pt)
+   YAMBO_ALLOC(FineGd_k%pt,(FineGd_k%nibz,3))
+   FineGd_k%nibz=FineGd_k%nbz
+   FineGd_k%pt=FineGd_k%ptbz
+   !
+   FG_zone="BZ"
+   !
+ endif
+ !
+ if (l_unexpand) then
+   !
+   ! IBZ->BZ
+   !
+   FineGd_k%nbz=FineGd_k%nibz
+   YAMBO_ALLOC(FineGd_k%ptbz,(FineGd_k%nbz,3))
+   YAMBO_ALLOC(FineGd_k%weights,(FineGd_k%nibz))
+   YAMBO_ALLOC(FineGd_k%sstar,(FineGd_k%nibz,2))
+   FineGd_k%ptbz=FineGd_k%pt
+   FineGd_k%weights=1./real(FineGd_k%nibz,SP)
+   do i_fg=1,FineGd_k%nibz
+     FineGd_k%sstar(i_fg,:)=(/i_fg,1/)
+   enddo
+   !
+   FG_zone="IBZ"
+   !
+ endif
  !
  ! First map IBZ to IBZ
  !=======================
- call section('=','Double Grid IBZ mapping')
- call k_map_fine_to_coarse("IBZ",Xk,Xen,Xk%FGibz,FineGd_k,FineGd_E,Reordering_map)
+ call section('=','Double Grid '//trim(FG_zone(1))//'-IBZ mapping')
+ call k_map_fine_to_coarse(trim(FG_zone(1))//'-IBZ',Xk,Xk%FGibz,FineGd_k,FineGd_E)
  ! 
  ! Then map BZ to BZ
  !===================
- call section('=','Double Grid BZ mapping')
- call k_map_fine_to_coarse("BZ",Xk,Xen,Xk%FGbz,FineGd_k,FineGd_E,Reordering_map)
- !
- YAMBO_FREE(Reordering_map)
+ call section('=','Double Grid '//trim(FG_zone(2))//'-BZ mapping')
+ call k_map_fine_to_coarse(trim(FG_zone(2))//'-BZ',Xk,Xk%FGbz,FineGd_k,FineGd_E)
  !
  ! Final I/O
- !============
+ !===========
  ! .. restoring of built-in value of nkibz to be used in io_header 
  nkibz=Xk%nibz
  !
@@ -111,6 +144,6 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  call bz_samp_reset(FineGd_k)
  call k_ibz2bz(Xk,'d',.true.)
  !...Xk/Xen FineGd components
- deallocate(Xen%E_FineGd,Xk%FGibz%map,Xk%FGbz%map,Xk%FGibz%N_mapped,Xk%FGbz%N_mapped)
+ deallocate(Xen%E_FineGd,Xk%FGibz%k_map,Xk%FGbz%k_map,Xk%FGibz%N_mapped,Xk%FGbz%N_mapped)
  !
 end subroutine

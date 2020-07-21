@@ -42,8 +42,8 @@ subroutine k_map_fine_to_coarse_engine(zone,pts_fg,N_pts_fg,pts_cg,N_pts_cg,MAP)
  ! Work Space
  !
  integer, parameter   :: MAX_n_near_border=8  ! I assume max 8 points with common border
- integer              :: ik_near,ik,i_err,i_fg,i_b,i_cg,Nb,k_dist_index(N_pts_cg)
- integer              :: BORDER(N_pts_fg,MAX_n_near_border),N(N_pts_cg)
+ integer              :: ik_near,ik,i_err,i_fg,i_b,i_cg,Nb,k_dist_index(N_pts_cg),&
+&                        BORDER(N_pts_fg,MAX_n_near_border),N(N_pts_cg),N_border
  real(SP)             :: k_dist(N_pts_cg)
  type(PP_indexes)     :: px
  logical              :: I_am_border
@@ -57,15 +57,9 @@ subroutine k_map_fine_to_coarse_engine(zone,pts_fg,N_pts_fg,pts_cg,N_pts_cg,MAP)
  MAP   =0
  BORDER=0
  !
- !do i_cg=1,N_pts_cg
- !  if (zone=="BZ") write (200,*) pts_cg(i_cg,:)
- !enddo
- !
  ! Step #1: define the MAP and label the FG points at the BORDER point
  !
  do i_fg=1,N_pts_fg
-   !
-   !if (zone=="BZ") write (100,*) pts_fg(i_fg,:)
    !
    if (.not.px%element_1D(i_fg)) cycle
    !
@@ -94,20 +88,17 @@ subroutine k_map_fine_to_coarse_engine(zone,pts_fg,N_pts_fg,pts_cg,N_pts_cg,MAP)
  !
  call live_timing( )
  !
- call msg('s',':: '//zone//' Border points                       :',count(BORDER(:,1)/=0))
+ N_border=count(BORDER(:,1)/=0)
+ if (N_border>0) call msg('s',':: '//zone//' Border points                       :',N_border)
  !
  ! Step #2: Assign the BORDER points
  !
- do i_cg=1,N_pts_cg
-   N(i_cg)=count(MAP==i_cg)
- enddo
- !write (*,*) N
+ call N_update( )
  !
  do i_fg=1,N_pts_fg
    !
    if ( BORDER(i_fg,1) == 0 ) then
      ik_near=MAP(i_fg)
-     if (zone=="BZ") write (100+iabs(ik_near),*) pts_fg(i_fg,:)
      cycle
    endif
    !
@@ -118,14 +109,17 @@ subroutine k_map_fine_to_coarse_engine(zone,pts_fg,N_pts_fg,pts_cg,N_pts_cg,MAP)
    enddo
    !
    MAP(i_fg)=ik_near
-   do i_cg=1,N_pts_cg
-     N(i_cg)=count(MAP==i_cg)
-   enddo
    !
-   !if (zone=="BZ") write (100+iabs(ik_near),*) pts_fg(i_fg,:)
+   call N_update( )
    !
  enddo
  !
- !write (*,*) "FINAL:",N
- !
+ contains
+   !
+   subroutine N_update
+     do i_cg=1,N_pts_cg
+       N(i_cg)=count(MAP==i_cg)
+     enddo
+   end subroutine
+   !
 end subroutine

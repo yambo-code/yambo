@@ -264,13 +264,17 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
        do ib=1,E%nb_FineGd
          E%f_FineGd(ib,ik_FineGd,is)=spin_occ*Fermi_fnc(E%E_FineGd(ib,ik_FineGd,is),Tel)
        enddo
-       !nel_DbGd=nel_DbGd+sum(E%f_FineGd(:,ik_FineGd,is))*K%weights_FineGd(ik_FineGd)
+       !DEBUG>
+       !nel_DbGd=nel_DbGd+sum(E%f_FineGd(:,ik_FineGd,is))*K%FGibz%weights(ik_FineGd)
+       !DEBUG<
      enddo
    enddo
+   !DEBUG>
    !nel_DbGd=nel_DbGd
    !
    !if (abs(nel-nel_DbGd)>1.E-2) call error(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
    !if (abs(nel-nel_DbGd)>1.E-5) call warning(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
+   !DEBUG<
    !
  endif
  !

@@ -59,7 +59,9 @@ module R_lattice
    integer              :: N_duplicate
    real(SP), allocatable:: pt(:,:)
    integer , allocatable:: N_mapped(:) ! For each IBZ/BZ kpt in the Cg, n° of kpt_FineGd assoc.
-   integer , allocatable:: map(:,:)    ! For each IBZ/BZ kpt in the Cg, lower/upper range of kpts_FineGd in the IBZ/BZ Fg
+   integer , allocatable:: k_map(:,:)  ! For each IBZ/BZ kpt in the Cg, lower/upper range of kpts_FineGd in the IBZ/BZ Fg
+   integer,  allocatable:: E_map(:)
+   real(SP), allocatable:: weights(:)
  end type bz_fine_grid
  !
  type bz_samp
@@ -83,8 +85,6 @@ module R_lattice
    type (bz_fine_grid) :: FGibz
    type (bz_fine_grid) :: FGbz
    !
-   integer,  allocatable :: sstar_FineGd(:)
-   real(SP), allocatable :: weights_FineGd(:)
    real(SP), allocatable :: weights_ipol(:)           ! something used by mapping with wannier
    !                                               
  end type bz_samp
@@ -229,6 +229,21 @@ module R_lattice
      endif
    end subroutine qindx_free
    !
+   subroutine bz_samp_FineGd_alloc(FG,N_coarse)
+     type(bz_fine_grid)::FG
+     integer           ::N_coarse
+     YAMBO_ALLOC(FG%pt,(FG%N,3))
+     YAMBO_ALLOC(FG%weights,(FG%N))
+     YAMBO_ALLOC(FG%E_map,(FG%N))
+     YAMBO_ALLOC(FG%k_map,(2,N_coarse))
+     YAMBO_ALLOC(FG%N_mapped,(N_coarse))
+     FG%pt=0._SP
+     FG%weights=0._SP
+     FG%E_map=0
+     FG%k_map=0
+     FG%N_mapped=0
+   end subroutine
+   !
    subroutine bz_samp_reset(k)
      type(bz_samp)::k
      k%nibz=0
@@ -250,15 +265,15 @@ module R_lattice
      k%FGbz%N=0
      k%FGibz%N=0
      !
-     YAMBO_FREE(k%sstar_FineGd)
+     YAMBO_FREE(k%FGbz%E_map)
      YAMBO_FREE(k%FGibz%pt)
      YAMBO_FREE(k%FGbz%pt)
-     YAMBO_FREE(k%weights_FineGd)
+     YAMBO_FREE(k%FGibz%weights)
      !
      YAMBO_FREE(k%FGibz%N_mapped)
      YAMBO_FREE(k%FGbz%N_mapped)
-     YAMBO_FREE(k%FGibz%map)
-     YAMBO_FREE(k%FGbz%map)
+     YAMBO_FREE(k%FGibz%k_map)
+     YAMBO_FREE(k%FGbz%k_map)
      YAMBO_FREE(k%weights_ipol)
      !
    end subroutine bz_samp_reset
@@ -307,9 +322,9 @@ module R_lattice
      BZo%FGbz%N =BZi%FGbz%N
      BZo%FGibz%N=BZi%FGibz%N
      !
-     if (allocated( BZi%sstar_FineGd )) then
-       YAMBO_ALLOC(BZo%sstar_FineGd,(BZo%FGbz%N))
-       BZo%sstar_FineGd=BZi%sstar_FineGd
+     if (allocated( BZi%FGbz%E_map )) then
+       YAMBO_ALLOC(BZo%FGbz%E_map,(BZo%FGbz%N))
+       BZo%FGbz%E_map=BZi%FGbz%E_map
      endif
      if (allocated( BZi%FGibz%pt )) then
        YAMBO_ALLOC(BZo%FGibz%pt,(BZo%FGibz%N,3))
@@ -331,13 +346,13 @@ module R_lattice
        YAMBO_ALLOC(BZo%FGbz%N_mapped,(BZo%nbz))
        BZo%FGbz%N_mapped(:BZo%nbz)=BZi%FGbz%N_mapped(:BZo%nbz)
      endif
-     if (allocated( BZi%FGibz%map )) then
-       YAMBO_ALLOC(BZo%FGibz%map,(2,BZo%nibz))
-       BZo%FGibz%map(:,:BZo%nibz)=BZi%FGibz%map(:,:BZo%nibz)
+     if (allocated( BZi%FGibz%k_map )) then
+       YAMBO_ALLOC(BZo%FGibz%k_map,(2,BZo%nibz))
+       BZo%FGibz%k_map(:,:BZo%nibz)=BZi%FGibz%k_map(:,:BZo%nibz)
      endif
-     if (allocated( BZi%FGbz%map )) then
-       YAMBO_ALLOC(BZo%FGbz%map,(2,BZo%nbz))
-       BZo%FGbz%map(:,:BZo%nbz)=BZi%FGbz%map(:,:BZo%nbz)
+     if (allocated( BZi%FGbz%k_map )) then
+       YAMBO_ALLOC(BZo%FGbz%k_map,(2,BZo%nbz))
+       BZo%FGbz%k_map(:,:BZo%nbz)=BZi%FGbz%k_map(:,:BZo%nbz)
      endif
      !
      ! To code the duplication of the Fine grid and DbGd structure

@@ -52,8 +52,8 @@ subroutine INTERPOLATION_integral_respect(ID,OUT_k,OUT,NK)
  do i1=INTERP_obj(ID)%nb(1),INTERP_obj(ID)%nb(2)
    do ik=1,NK
      do i3=1,INTERP_obj(ID)%D
-       if(NK==OUT_k%nibz)        INTERP_int(i3)=INTERP_int(i3)+OUT(i1,ik,i3)*OUT_k%weights(ik)
-       if(NK==OUT_k%FGibz%N) INTERP_int(i3)=INTERP_int(i3)+OUT(i1,ik,i3)*OUT_k%weights_FineGd(ik)
+       if(NK==OUT_k%nibz)    INTERP_int(i3)=INTERP_int(i3)+OUT(i1,ik,i3)*OUT_k%weights(ik)
+       if(NK==OUT_k%FGibz%N) INTERP_int(i3)=INTERP_int(i3)+OUT(i1,ik,i3)*OUT_k%FGibz%weights(ik)
      enddo
    enddo
  enddo

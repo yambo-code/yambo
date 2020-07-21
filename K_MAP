@@ -1,0 +1,8 @@
+./ypp/k-points/double_k_grid.F: YAMBO_ALLOC(Xk%FGbz%k_map,(Xk%nbz, npts_around_coarse))
+./ypp/bits/bxsf_read.F:   do while(.not.allocated(Xk%FGbz%k_map)) 
+./src/real_time_control/RT_carriers_object.F:         RT%kpt(RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),:)  = K%FGibz%pt(K%FGibz%k_map(1,i_k):K%FGibz%k_map(2,i_k),:)
+./src/real_time_control/RT_k_grid.F:   if(ik> 1) RT_ibz_dupl(ik)=k%FGibz%k_map(1,ik)-k%FGibz%k_map(2,ik-1)-1
+./src/interpolate/INTERPOLATION_coefficients.F:          &             E%E_FineGd(1:inpdim(1),k%FGibz%k_map(ik,1):k%FGibz%k_map(ik,2),i1)
+./src/xc_functionals/el_density_of_states.F:         do ik_fg=Xk%FGibz%k_map(1,ik),Xk%FGibz%k_map(2,ik)
+./src/qp_control/QP_apply_the_ACTION.F:         do ik_fg=k%FGibz%k_map(1,ik),k%FGibz%k_map(2,ik)
+./src/qp_control/QP_apply_interpolate_QP.F:           do ik_fg=k%FGibz%k_map(1,ik),k%FGibz%k_map(2,ik)

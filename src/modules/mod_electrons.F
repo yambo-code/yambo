@@ -67,8 +67,6 @@ module electrons
    real(SP), allocatable:: f(:,:,:)
    !real(SP), allocatable:: Z(:,:,:)
    real(SP), allocatable:: df(:,:,:)
-   integer , allocatable:: k_range(:,:)
-   integer,  allocatable:: k_map(:)
  end type E_fine_grid
  !
  type levels
@@ -189,13 +187,9 @@ module electrons
        YAMBO_ALLOC(Eo%FG%E,(Eo%FG%nb,Eo%FG%nk,n_sp_pol))
        YAMBO_ALLOC(Eo%FG%W,(Eo%FG%nb,Eo%FG%nk,n_sp_pol))
        YAMBO_ALLOC(Eo%FG%f,(Eo%FG%nb,Eo%FG%nk,n_sp_pol))
-       YAMBO_ALLOC(Eo%FG%k_range,(Eo%nk,2))
-       YAMBO_ALLOC(Eo%FG%k_map,(Eo%FG%nk))
        Eo%FG%E=Ei%FG%E
        Eo%FG%W=Ei%FG%W
        Eo%FG%f=Ei%FG%f
-       Eo%FG%k_map=Ei%FG%k_map
-       Eo%FG%k_range=Ei%FG%k_range
        if(allocated(Ei%FG%df)) then
          YAMBO_ALLOC(Eo%FG%df,(Eo%FG%nb,Eo%FG%nk,n_sp_pol))
          Eo%FG%df=Ei%FG%df
@@ -254,14 +248,10 @@ module electrons
      YAMBO_ALLOC(E%FG%W,(E%FG%nb,E%FG%nk,n_sp_pol))
      YAMBO_ALLOC(E%FG%f,(E%FG%nb,E%FG%nk,n_sp_pol))
      YAMBO_ALLOC(E%FG%df,(E%FG%nb,E%FG%nk,n_sp_pol))
-     YAMBO_ALLOC(E%FG%k_range,(E%nk,2))
-     YAMBO_ALLOC(E%FG%k_map,(E%FG%nk))
      E%FG%E=rZERO
      E%FG%W=rZERO
      E%FG%f=rZERO
      E%FG%df=rZERO
-     E%FG%k_range=0
-     E%FG%k_map=0
      !
    end subroutine
    !
@@ -275,8 +265,6 @@ module electrons
      !
      if (.not.FULL_RESET) return
      !
-     YAMBO_FREE(E%FG%k_range)
-     YAMBO_FREE(E%FG%k_map)
      YAMBO_FREE(E%FG%E)
      YAMBO_FREE(E%FG%W)
      YAMBO_FREE(E%FG%f)

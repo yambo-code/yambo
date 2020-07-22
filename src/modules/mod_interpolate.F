@@ -179,7 +179,7 @@ module interpolate
      logical,       intent(in),    optional :: SERIAL
    end subroutine INTERPOLATION_driver_seed
    !
-   subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
+   subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
      use pars,        ONLY:SP
      use real_time,   ONLY:RT_t
      use R_lattice,   ONLY:bz_samp
@@ -190,6 +190,7 @@ module interpolate
      integer,       intent(in)              :: ID
      type(bz_samp), intent(inout)           :: OUT_k
      type(levels),  intent(inout), optional :: OUT_E
+     character(*),  intent(in)   , optional :: FineGrid
    end subroutine INTERPOLATION_driver_do
    !
  end interface  

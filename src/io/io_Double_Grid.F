@@ -59,54 +59,55 @@ integer function io_Double_Grid(E,Xk,ID)
  if (io_Double_Grid/=0) goto 1
  !
  if (ver_is_gt_or_eq(ID,revision=18605)) then
-   call io_elemental(ID,VAR='FineGd_mode',CH0="",VAR_SZ=1,MENU=0)
-   call io_elemental(ID,CH0=BZ_FineGd_mode,   VAR=' Brillouin Symmetry mode         ')
+   call io_elemental(ID,VAR='MAPPING_mode',CH0="",VAR_SZ=1,MENU=0)
+   call io_elemental(ID,CH0=BZ_FineGd_mode,   VAR=' Brillouin Symmetry  mode        ')
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   call io_elemental(ID,VAR='FGbz_mode',CH0="",VAR_SZ=1,MENU=0)
+   call io_elemental(ID,CH0=Xk%FGbz%FG_mode,  VAR=' Fine Grid  BZ mapped mode       ')
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   call io_elemental(ID,VAR='FGibz_mode',CH0="",VAR_SZ=1,MENU=0)
+   call io_elemental(ID,CH0=Xk%FGibz%FG_mode, VAR=' Fine Grid IBZ mapped mode       ')
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
- call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
  !
+ call io_elemental(ID,VAR="PARS",VAR_SZ=7,MENU=0)
  call io_elemental(ID,I0=E%FG%nb,         VAR=' Bands                           ')
- call io_elemental(ID,I0=E%FG%nk,         VAR=' Number of points (fine+coarse)  in the IBZ (E)')
- call io_elemental(ID,I0=Xk%FGibz%N,          VAR=' Number                          in the IBZ (k)')
+ call io_elemental(ID,I0=E%FG%nk,         VAR=' Number of points (fine)         in the IBZ (E)')
+ call io_elemental(ID,I0=Xk%FGbare%N)
+ call io_elemental(ID,I0=Xk%FGibz%N,          VAR=' Number of points (fine+coarse)  in the IBZ (k)')
  call io_elemental(ID,I0=Xk%FGbz%N,           VAR=' Number                          in the  BZ (k)')
  call io_elemental(ID,I0=Xk%FGibz%N_duplicate,VAR=' Number of duplic. pts (fine)        in the IBZ')
  call io_elemental(ID,I0=Xk%FGbz%N_duplicate, VAR=' Number                              in the  BZ')
- ! 
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  ! Eigenvalues
  !
  if (read_is_on(ID)) then
    call FineGd_E_components_alloc(E)
+   call bz_samp_FineGd_alloc(Xk%FGbare,Xk%nibz)
+   call bz_samp_FineGd_alloc(Xk%FGibz,Xk%nibz)
+   call bz_samp_FineGd_alloc(Xk%FGbz,Xk%nbz)
  endif
  !
  call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%FG%E) ) 
  call io_bulk(ID, R3=E%FG%E )
  !
- call io_bulk(ID, VAR="E_K_MAP", VAR_SZ=shape(E%FG%k_map) ) 
- call io_bulk(ID, I1=E%FG%k_map )
+ ! K map
  !
- call io_bulk(ID, VAR="E_K_RANGE", VAR_SZ=shape(E%FG%k_range) ) 
- call io_bulk(ID, I2=E%FG%k_range )
+ call elemental_IO(Xk%FGbare,"K_MAP","BARE")
  !
- ! Kpts
+ ! KPTs
  !
- if (read_is_on(ID)) then
-   call bz_samp_FineGd_alloc(Xk%FGibz,Xk%nibz)
-   call bz_samp_FineGd_alloc(Xk%FGbz,Xk%nbz)
- endif
+ call elemental_IO(Xk%FGbare,"KPTS","BARE")
+ call elemental_IO(Xk%FGibz,"KPTS","IBZ")
+ call elemental_IO(Xk%FGbz,"KPTS","BZ")
  !
- call io_bulk(ID, VAR="KPTS_IBZ", VAR_SZ=shape(Xk%FGibz%pt) ) 
- call io_bulk(ID, R2=Xk%FGibz%pt )
+ ! Weights
  !
- call io_bulk(ID, VAR="WEIGHTS_IBZ", VAR_SZ=shape(Xk%FGibz%weights) ) 
- call io_bulk(ID, R1=Xk%FGibz%weights )
+ call elemental_IO(Xk%FGibz,"WEIGHTS","IBZ")
+ call elemental_IO(Xk%FGbz,"WEIGHTS","BZ")
  !
- call io_bulk(ID, VAR="KPTS_BZ", VAR_SZ=shape(Xk%FGbz%pt) ) 
- call io_bulk(ID, R2=Xk%FGbz%pt )
- !
- call io_bulk(ID, VAR="WEIGHTS_BZ", VAR_SZ=shape(Xk%FGbz%weights) ) 
- call io_bulk(ID, R1=Xk%FGbz%weights )
+ ! E map
  !
  call io_bulk(ID, VAR="IBZ_E_MAP", VAR_SZ=(/Xk%FGibz%N/) )
  call io_bulk(ID, I1=Xk%FGibz%E_map )
@@ -116,22 +117,56 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Block filling
  !
- call io_bulk(ID, VAR="BLOCK_FILLING_IBZ", VAR_SZ=(/Xk%nibz/) ) 
- call io_bulk(ID, I1=Xk%FGibz%N_mapped )
+ call elemental_IO(Xk%FGibz,"N_MAPPED","IBZ")
+ call elemental_IO(Xk%FGbz,"N_MAPPED","BZ")
  !
- call io_bulk(ID, VAR="BLOCK_FILLING_BZ", VAR_SZ=(/Xk%nbz/) ) 
- call io_bulk(ID, I1=Xk%FGbz%N_mapped )
+ ! K_RANGE
  !
- ! Block table
- !
- call io_bulk(ID, VAR="K_RANGE_IBZ", VAR_SZ=shape(Xk%FGibz%k_range) ) 
- call io_bulk(ID, I2=Xk%FGibz%k_range )
- !
- call io_bulk(ID, VAR="K_RANGE_BZ", VAR_SZ=shape(Xk%FGbz%k_range) ) 
- call io_bulk(ID, I2=Xk%FGbz%k_range )
+ call elemental_IO(Xk%FGbare,"K_RANGE","BARE")
+ call elemental_IO(Xk%FGibz,"K_RANGE","IBZ")
+ call elemental_IO(Xk%FGbz,"K_RANGE","BZ")
  !
 1 call io_disconnect(ID=ID)
  !
  call timing('io_Double_Grid',OPR='stop')
+ !
+ contains
+   !
+   subroutine elemental_IO(FG,what,kind)
+     !
+     use pars,       ONLY:schlen
+     use R_lattice,  ONLY:bz_fine_grid
+     !
+     character(*)       ::what,kind
+     character(schlen)  ::VAR_name
+     type(bz_fine_grid) ::FG
+     !
+     VAR_NAME=kind//"_"//what
+     !
+     if (what=="N_MAPPED") then
+       call io_bulk(ID, VAR=trim(VAR_NAME), VAR_SZ=shape(FG%N_mapped) )
+       call io_bulk(ID, I1=FG%N_mapped )
+     endif
+     if (what=="K_RANGE") then
+       call io_bulk(ID, VAR=trim(VAR_NAME), VAR_SZ=shape(FG%k_range) ) 
+       call io_bulk(ID, I2=FG%k_range )
+     endif
+     if (what=="K_MAP") then
+       call io_bulk(ID, VAR=trim(VAR_NAME), VAR_SZ=shape(FG%k_map))
+       call io_bulk(ID, I1=FG%k_map )
+     endif
+     if (what=="WEIGHTS") then
+       call io_bulk(ID, VAR=trim(VAR_NAME), VAR_SZ=shape(FG%weights))
+       call io_bulk(ID, R1=FG%weights )
+     endif
+     if (what=="KPTS") then
+       call io_bulk(ID, VAR=trim(VAR_NAME), VAR_SZ=shape(FG%pt))
+       call io_bulk(ID, R2=FG%pt )
+     endif
+     if (what=="E_MAP") then
+       call io_bulk(ID, VAR=trim(VAR_NAME), VAR_SZ=(/FG%N/))
+       call io_bulk(ID, I1=FG%E_map )
+     endif
+   end subroutine
  !
 end function

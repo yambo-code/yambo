@@ -274,6 +274,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call bz_samp_duplicate_Fg(k%FGibz,Xk%FGibz,k%nibz) 
  call bz_samp_duplicate_Fg(k%FGbz,Xk%FGbz,k%nbz) 
+ call bz_samp_duplicate_Fg(k%FGbare,Xk%FGbare,k%nibz) 
  !
  if (En%FG%nb>0.and.allocated(en%FG%E)) then
    !

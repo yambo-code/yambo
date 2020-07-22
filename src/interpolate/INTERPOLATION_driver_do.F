@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
+subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
  !
  ! INTREPOLATION_driver_do at present interpolates both to the Coarse grid and to the Fine grid
  !
@@ -34,6 +34,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  !  calls INTERPOLATION_Fourier
  !  From the values on the shells defines the values on the given k-grid
  !
+ use pars,                 ONLY:schlen
  use R_lattice,            ONLY:bz_samp
  use electrons,            ONLY:levels
  use interpolate_tools,    ONLY:INTERPOLATION_nearest_k_report
@@ -49,18 +50,24 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  integer,       intent(in)              :: ID
  type(bz_samp), intent(inout)           :: OUT_k
  type(levels),  intent(inout), optional :: OUT_E
+ character(*),  intent(in)   , optional :: FineGrid
  !
  ! Work Space
  !
- integer               :: n(2),nk1,nk2,dimI
+ integer            :: n(2),nk1,nk2,dimI
+ character(schlen)  :: FG_mode
  !
  if (operation/=trim(INTERP_obj(ID)%what)) call error(' Interopolation ID did not match operation name')
  !
- ! ... Allocation
+ ! ... FG mode
+ FG_mode="ibz"
+ if (present(FineGrid)) then
+   FG_mode=FineGrid
+ endif
  !
+ ! ... Allocation
  n =INTERP_obj(ID)%nb
  nk1 =OUT_k%nibz
- nk2 =OUT_k%FGibz%N
  dimI=INTERP_obj(ID)%D
  !
  ! Needed for report
@@ -68,7 +75,13 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  NN_nk_exact=0
  !
  if(nk1>0) OUT_k_nk=OUT_k_nk+OUT_k%nibz
- if(nk2>0) OUT_k_nk=OUT_k_nk+OUT_k%FGibz%N
+ nk2 = 0
+ if(OUT_k%FGibz%N>0) then
+   if (trim(FG_mode)=="ibz")  nk2=OUT_k%FGibz%N
+   if (trim(FG_mode)=="bz")   nk2=OUT_k%FGbz%N
+   if (trim(FG_mode)=="bare") nk2=OUT_k%FGbare%N
+   OUT_k_nk=OUT_k_nk+nk2
+ endif
  !
  if(nk1>0) then
    YAMBO_ALLOC(INTERP_obj(ID)%INTERP,(n(1):n(2),nk1,dimI))
@@ -81,8 +94,16 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
  !
  if (INTERP_obj(ID)%use_NN) then
    ! ... Using the Nearest point method
-   if(nk1>0) call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%pt       ,INTERP_obj(ID)%INTERP)
-   if(nk2>0) call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%FGibz%pt,INTERP_obj(ID)%INTERP_FineGd)
+   if(nk1>0) call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%pt      ,INTERP_obj(ID)%INTERP)
+   if(nk2>0) then
+     if (trim(FG_mode)=="ibz")  then
+       call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%FGibz%pt,INTERP_obj(ID)%INTERP_FineGd)
+     else if (trim(FG_mode)=="bz")  then
+       call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%FGbz%pt,INTERP_obj(ID)%INTERP_FineGd)
+     else
+       call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%FGbare%pt,INTERP_obj(ID)%INTERP_FineGd)
+     endif
+   endif
    if (.not.INTERPOLATE_is_quiet) call INTERPOLATION_nearest_k_report(ID)
    !
  else
@@ -115,7 +136,11 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
      endif
    endif
    OUT_E%nk       =OUT_k%nibz
-   OUT_E%FG%nk=OUT_k%FGibz%N
+   !
+   if (trim(FG_mode)=="ibz")  OUT_E%FG%nk=OUT_k%FGibz%N
+   if (trim(FG_mode)=="bz")   OUT_E%FG%nk=OUT_k%FGbz%N
+   if (trim(FG_mode)=="bare") OUT_E%FG%nk=OUT_k%FGbare%N
+   !
    OUT_E%nb=INTERP_obj(ID)%nb(2)
    if ((l_INTERP_E.or.l_INTERP_dE).and.nk1>0) OUT_E%E       =INTERP_obj(ID)%INTERP
    if ((l_INTERP_f               ).and.nk1>0) OUT_E%f       =INTERP_obj(ID)%INTERP

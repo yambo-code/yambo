@@ -55,12 +55,14 @@ module R_lattice
  character(schlen)    :: BZ_FineGd_mode="mixed" ! or "unexpanded"/"expanded"
  !
  type bz_fine_grid
+   character(schlen)    :: FG_mode  ! "expanded/unexpanded/bare"
    integer              :: N
    integer              :: N_duplicate
    real(SP), allocatable:: pt(:,:)
-   integer , allocatable:: N_mapped(:)  ! For each IBZ/BZ kpt in the Cg, n° of kpt_FineGd assoc.
-   integer , allocatable:: k_range(:,:) ! For each IBZ/BZ kpt in the Cg, lower/upper range of kpts_FineGd in the IBZ/BZ Fg
-   integer,  allocatable:: E_map(:)
+   integer , allocatable:: N_mapped(:)  ! For each IBZ/BZ kpt, n° of FG k associated
+   integer , allocatable:: k_range(:,:) ! For each IBZ/BZ kpt, lower/upper range of points associated in the FG
+   integer,  allocatable:: E_map(:)     ! For each FG k, corresponding point in the bare FG
+   integer,  allocatable:: k_map(:)     ! For each FG k, corresponding point in the IBZ/BZ
    real(SP), allocatable:: weights(:)
  end type bz_fine_grid
  !
@@ -83,6 +85,7 @@ module R_lattice
    !
    ! Fine grids(s)
    !
+   type (bz_fine_grid) :: FGbare
    type (bz_fine_grid) :: FGibz
    type (bz_fine_grid) :: FGbz
    !
@@ -236,8 +239,10 @@ module R_lattice
      YAMBO_ALLOC(FG%pt,(FG%N,3))
      YAMBO_ALLOC(FG%weights,(FG%N))
      YAMBO_ALLOC(FG%E_map,(FG%N))
+     YAMBO_ALLOC(FG%k_map,(FG%N))
      YAMBO_ALLOC(FG%k_range,(N_coarse,2))
      YAMBO_ALLOC(FG%N_mapped,(N_coarse))
+     FG%N_duplicate=0
      FG%pt=0._SP
      FG%weights=0._SP
      FG%E_map=0
@@ -247,6 +252,9 @@ module R_lattice
    !
    subroutine bz_samp_FineGd_reset(FG)
      type(bz_fine_grid)::FG
+     FG%N=0
+     FG%N_duplicate=0
+     FG%FG_mode="none"
      YAMBO_FREE(FG%pt)
      YAMBO_FREE(FG%weights)
      YAMBO_FREE(FG%E_map)
@@ -274,9 +282,11 @@ module R_lattice
      !
      k%FGbz%N=0
      k%FGibz%N=0
+     k%FGbare%N=0
      !
      call bz_samp_FineGd_reset(k%FGbz)
      call bz_samp_FineGd_reset(k%FGibz)
+     call bz_samp_FineGd_reset(k%FGbare)
      !
    end subroutine bz_samp_reset
    !
@@ -311,11 +321,6 @@ module R_lattice
        BZo%ptbz=BZi%ptbz
      endif
      !
-     call bz_samp_duplicate_Fg(BZi%FGibz, BZo%FGibz,BZi%nibz)
-     call bz_samp_duplicate_Fg(BZi%FGbz, BZo%FGbz,BZi%nbz)
-     !
-     return
-     !
    end subroutine bz_samp_duplicate
      !
    subroutine bz_samp_duplicate_Fg(FGi,FGo,N_coarse)
@@ -324,6 +329,8 @@ module R_lattice
      integer,            intent(in)  ::N_coarse
      !
      FGo%N =FGi%N
+     FGo%N_duplicate=FGi%N_duplicate
+     FGo%FG_mode=FGi%FG_mode
      !
      if (allocated(FGi%pt)) then
        YAMBO_ALLOC(FGo%pt,(FGo%N,3))
@@ -332,6 +339,10 @@ module R_lattice
      if (allocated(FGi%weights)) then
        YAMBO_ALLOC(FGo%weights,(FGo%N))
        FGo%weights=FGi%weights
+     endif
+     if (allocated(FGi%k_map)) then
+       YAMBO_ALLOC(FGo%k_map,(FGo%N))
+       FGo%k_map=FGi%k_map
      endif
      if (allocated(FGi%E_map)) then
        YAMBO_ALLOC(FGo%E_map,(FGo%N))

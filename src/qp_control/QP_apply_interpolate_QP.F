@@ -85,7 +85,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
    call k_expand(QP_k)
    !
    call INTERPOLATION_driver_seed(trim(what)//"_from_DB",ID,bands,QP_k,SEED_QP=qp,NEAREST=QP_action(i_ACTION)%plan(4))
-   call INTERPOLATION_driver_do(trim(what)//"_from_DB",ID,k)
+   call INTERPOLATION_driver_do(trim(what)//"_from_DB",ID,k,FineGrid="bare")
    !
    call QP_transfer('appl')
    !
@@ -121,7 +121,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
          call QP_transfer_nearest('Stnd_Gd')
          !
          if(allocated(en%FG%E)) then
-           do ik_fg=en%FG%k_range(ik,1),en%FG%k_range(ik,2)
+           do ik_fg=k%FGbare%k_range(ik,1),k%FGbare%k_range(ik,2)
              call INTERPOLATION_nearest_E(En%FG%E(iband,ik_fg,i_spin),qp,E_diff(i_spin),i_qp,i_spin)
              call QP_transfer_nearest('Fine_Gd')
            enddo
@@ -195,8 +195,8 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
                if(QP_action(i_ACTION)%plan(1)) then
                  en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+INTERP_obj(ID)%INTERP(iband,ik,i_ref(1)+i_spin)
                  if(allocated(en%FG%E)) then
-                   ik1=en%FG%k_range(ik,1)
-                   ik2=en%FG%k_range(ik,2)
+                   ik1=k%FGbare%k_range(ik,1)
+                   ik2=k%FGbare%k_range(ik,2)
                    en%FG%E(iband,ik1:ik2,i_spin)=en%FG%E(iband,ik1:ik2,i_spin)+&
 &                                                    INTERP_obj(ID)%INTERP_FineGd(iband,ik1:ik2,i_ref(1)+i_spin)
                  endif
@@ -213,8 +213,8 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
                  endif
                  en%W(iband,ik,i_spin)=wsign*INTERP_obj(ID)%INTERP(iband,ik,i_ref(2)+i_spin)
                  if(allocated(en%FG%W)) then
-                   ik1=en%FG%k_range(ik,1)
-                   ik2=en%FG%k_range(ik,2)
+                   ik1=k%FGbare%k_range(ik,1)
+                   ik2=k%FGbare%k_range(ik,2)
                    en%FG%W(iband,ik1:ik2,i_spin)=wsign*INTERP_obj(ID)%INTERP_FineGd(iband,ik1:ik2,i_ref(1)+i_spin)
                  endif
                  QP_action(i_ACTION)%STATES_done(iband,ik,i_spin)=1
@@ -232,7 +232,6 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
      !
    end subroutine
    !
-   !
    subroutine QP_transfer_nearest(action_kind)
      !
      character(7) :: action_kind
@@ -244,8 +243,8 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
      !
      if (QP_action(i_ACTION)%plan(1)) then
        if(action_kind=="Stnd_Gd") en%E(iband,ik,i_spin)=en%Eo(iband,ik,i_spin)+real(qp%E(i_qp),SP)-qp%E_bare(i_qp)
-       if(action_kind=="Fine_Gd") en%FG%E(iband,ik_fg,i_spin)=en%FG%E(iband,ik_fg,i_spin) &
-       &                                                                      +real(qp%E(i_qp),SP)-qp%E_bare(i_qp)
+       if(action_kind=="Fine_Gd") en%FG%E(iband,ik_fg,i_spin)=en%FG%E(iband,ik_fg,i_spin)+ &
+&                                                             real(qp%E(i_qp),SP)-qp%E_bare(i_qp)
        At_least_one_band_corrected=.TRUE.
        if(action_kind=="Stnd_Gd") QP_action(i_ACTION)%STATES_done(iband,ik,i_spin)=1
      endif

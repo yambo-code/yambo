@@ -63,6 +63,7 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,Xen)
  if (l_IBZ_FG.or.l_E_FG) call k_map_fine_to_coarse_engine(zone,FineGd_k%pt,FineGd_k%nibz,Xk%ptbz,Xk%nbz,TMP_map)
  !
  if (l_E_FG) then
+   call bz_samp_FineGd_alloc(FG,N_coarse)
    call k_map_E_fine(FineGd_k,Xen,Xk,TMP_map)
    deallocate(TMP_map)
    return

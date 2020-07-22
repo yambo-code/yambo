@@ -23,7 +23,7 @@
 !
 subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
- use pars,                ONLY:SP,schlen
+ use pars,                ONLY:SP
  use stderr,              ONLY:intc,STRING_same
  use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset,BZ_FineGd_mode,bz_samp_FineGd_reset
  use com,                 ONLY:msg
@@ -39,7 +39,6 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  ! Work Space
  !
  type(bz_samp)        :: FineGd_k
- character(schlen)    :: FG_zone(2)
  integer              :: i_err,ID,i_fg
  integer, external    :: io_Double_Grid
  logical              :: l_mix,l_expand,l_unexpand
@@ -73,7 +72,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  ! FineGd E to IBZ map
  !=======================
  call section('=','Double Grid Energies-IBZ mapping and Fine Grid re-ordering')
- call k_map_fine_to_coarse('Energies-IBZ',Xk,Xk%FGibz,FineGd_k,Xen)
+ call k_map_fine_to_coarse('Energies-IBZ',Xk,Xk%FGbare,FineGd_k,Xen)
  !
  ! Expand the Fine Grid 
  !========================
@@ -87,8 +86,8 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
    call msg('l','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
    call k_expand(FineGd_k)
    !
-   FG_zone(1)="IBZ"
-   FG_zone(2)="BZ"
+   Xk%FGibz%FG_mode="IBZ"
+   Xk%FGbz%FG_mode ="BZ"
    !
  endif
  !
@@ -101,7 +100,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
    FineGd_k%nibz=FineGd_k%nbz
    FineGd_k%pt=FineGd_k%ptbz
    !
-   FG_zone="BZ"
+   Xk%FGibz%FG_mode="BZ"
    !
  endif
  !
@@ -119,19 +118,19 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
      FineGd_k%sstar(i_fg,:)=(/i_fg,1/)
    enddo
    !
-   FG_zone="IBZ"
+   Xk%FGbz%FG_mode="IBZ"
    !
  endif
  !
- ! FG_zone(1) to IBZ map
- !=======================
- call section('=','Double Grid '//trim(FG_zone(1))//'-IBZ mapping')
- call k_map_fine_to_coarse(trim(FG_zone(1))//'-IBZ',Xk,Xk%FGibz,FineGd_k,Xen)
+ ! IBZ FG_mode to IBZ map
+ !========================
+ call section('=','Double Grid '//trim(Xk%FGibz%FG_mode)//'-IBZ mapping')
+ call k_map_fine_to_coarse(trim(Xk%FGibz%FG_mode)//'-IBZ',Xk,Xk%FGibz,FineGd_k,Xen)
  !
- ! FG_zone(2) to BZ map
+ ! BZ FG_mode to BZ map
  !======================
- call section('=','Double Grid '//trim(FG_zone(2))//'-BZ mapping')
- call k_map_fine_to_coarse(trim(FG_zone(2))//'-BZ',Xk,Xk%FGbz,FineGd_k,Xen)
+ call section('=','Double Grid '//trim(Xk%FGbz%FG_mode)//'-BZ mapping')
+ call k_map_fine_to_coarse(trim(Xk%FGbz%FG_mode)//'-BZ',Xk,Xk%FGbz,FineGd_k,Xen)
  !
  ! Final I/O
  !===========

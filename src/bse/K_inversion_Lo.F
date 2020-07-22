@@ -251,9 +251,6 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    if (skip_cond_sum_rule) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+(para_term_w0-diam_term_exact)*Co_factor/ W%p(:)**2
    !
  enddo
- do iw=1,W%n_freqs
-   write (100,*) real(W%p(iw))*27.21,aimag(Epsilon_ii(iw,3))
- enddo
  !
  if(.not.K_diago_in_BS_mat) then
    YAMBO_FREE(BS_diagonal)
@@ -271,6 +268,5 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  if (k%FGbz%N>0) then
    call IO_desc_add(BSS_desc,kind="i",str="[INV] BZ Fine + Coarse Grid points",I=(/k%nbz+k%FGbz%N/))
  endif
- stop
  !
 end subroutine K_inversion_Lo

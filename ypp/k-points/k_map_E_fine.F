@@ -30,7 +30,7 @@ subroutine k_map_E_fine(fg,E,k,MAP)
  implicit none
  !
  type(bz_samp), intent(inout)      :: fg ! In the IBZ
- type(bz_samp), intent(in)         :: k
+ type(bz_samp), intent(inout)      :: k
  type(levels),  intent(inout)      :: E
  integer    ,   intent(in)         :: MAP(fg%nibz)
  !
@@ -38,25 +38,25 @@ subroutine k_map_E_fine(fg,E,k,MAP)
  !
  integer              :: i_fg,ik_near,ik,i_k_fg
  real(SP)             :: E_fg_ordered(E%FG%nb,E%FG%nk,n_sp_pol)
- real(SP)             :: k_fg_ordered(E%FG%nk,3)
  !
  i_fg=0
+ !
  do ik=1,k%nibz
-   E%FG%k_range(ik,1)=i_fg+1
+   k%FGbare%k_range(ik,1)=i_fg+1
    do i_k_fg=1,fg%nibz
      ik_near=iabs(MAP(i_k_fg))
      if (ik==k%sstar(ik_near,1)) then 
        i_fg=i_fg+1
        E_fg_ordered(:,i_fg,:)=E%FG%E(:,i_k_fg,:)
-       k_fg_ordered(i_fg,:)  =fg%pt(i_k_fg,:)
-       E%FG%k_map(i_fg)=ik
+       k%FGbare%pt(i_fg,:)   =fg%pt(i_k_fg,:)
+       k%FGbare%k_map(i_fg)  =ik
      endif
    enddo
-   E%FG%k_range(ik,2)=i_fg
+   k%FGbare%k_range(ik,2)=i_fg
  enddo
  !
  E%FG%E=E_fg_ordered
- fg%pt     =k_fg_ordered
+ fg%pt =k%FGbare%pt
  !
  if (i_fg/=fg%nibz) call error("Not all Fine Grid points have been mapped in the Coarse Grid BZ")
  !

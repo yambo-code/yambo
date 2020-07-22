@@ -76,8 +76,8 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
    YAMBO_ALLOC(E%df,(E%nb,E%nk,n_sp_pol))
    E%df=0._SP
    if (l_DbGd) then
-     YAMBO_ALLOC(E%df_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
-     E%df_FineGd=0._SP
+     YAMBO_ALLOC(E%FG%df,(E%FG%nb,E%FG%nk,n_sp_pol))
+     E%FG%df=0._SP
    endif
    !
    call bz_samp_reset(RT_k)
@@ -86,7 +86,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
    call Interpolate_and_transfer("df",K)
    !
    E%f=E%fo+E%df
-   if (l_DbGd) E%f_FineGd=E%f_FineGd+E%df_FineGd
+   if (l_DbGd) E%FG%f=E%FG%f+E%FG%df
    !
  endif
  !
@@ -153,7 +153,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
     HAS_DBGD=allocated(K%FGibz%pt)
     !
     nb_max=    nb(2)
-    if (HAS_DBGD) nb_max_FineGd=min(nb(2),E%nb_FineGd)
+    if (HAS_DBGD) nb_max_FineGd=min(nb(2),E%FG%nb)
     !
     call INTERPOLATION_driver_seed(OBJ//"_from_DB",ID,nb,RT_k,SEED_RT=RT_carriers,NEAREST=.not.l_B)
     call INTERPOLATION_driver_do(OBJ//"_from_DB",ID,K)
@@ -174,7 +174,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
       enddo
       !
       if (HAS_DBGD) then
-        E%df_FineGd( nb(1):nb_max_FineGd,:,:)=INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,:,:)
+        E%FG%df( nb(1):nb_max_FineGd,:,:)=INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,:,:)
         do ik=1,K%FGibz%N
           N_carriers(2)=N_carriers(2)+ &
 &                       sum(abs(INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,ik,:)))*K%FGibz%weights(ik)/2._SP
@@ -186,8 +186,8 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
       E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)
       dE_Max=maxval(abs(INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)))
       !
-      if (HAS_DBGD) E%E_FineGd(nb(1):nb_max_FineGd,:,:)= &
-      & E%E_FineGd(nb(1):nb_max_FineGd,:,:)+INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,:,:)
+      if (HAS_DBGD) E%FG%E(nb(1):nb_max_FineGd,:,:)= &
+      & E%FG%E(nb(1):nb_max_FineGd,:,:)+INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,:,:)
       !
     endif
     !

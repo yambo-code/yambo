@@ -68,7 +68,8 @@ module R_lattice
    !
    ! Coarse grid
    !
-   integer           :: nibz,nbz
+   integer           :: nibz
+   integer           :: nbz
    integer,  allocatable :: nstar(:)      ! n° of points in the star
    integer,  allocatable :: star(:,:)     ! ik,ikstar --> is     is sends ik in ikstar
    integer,  allocatable :: sstar(:,:)    ! ik_bz     --> ik,is  is sends ik in ikbz
@@ -244,6 +245,15 @@ module R_lattice
      FG%N_mapped=0
    end subroutine
    !
+   subroutine bz_samp_FineGd_reset(FG)
+     type(bz_fine_grid)::FG
+     YAMBO_FREE(FG%pt)
+     YAMBO_FREE(FG%weights)
+     YAMBO_FREE(FG%E_map)
+     YAMBO_FREE(FG%k_range)
+     YAMBO_FREE(FG%N_mapped)
+   end subroutine
+   !
    subroutine bz_samp_reset(k)
      type(bz_samp)::k
      k%nibz=0
@@ -265,16 +275,8 @@ module R_lattice
      k%FGbz%N=0
      k%FGibz%N=0
      !
-     YAMBO_FREE(k%FGbz%E_map)
-     YAMBO_FREE(k%FGibz%pt)
-     YAMBO_FREE(k%FGbz%pt)
-     YAMBO_FREE(k%FGibz%weights)
-     !
-     YAMBO_FREE(k%FGibz%N_mapped)
-     YAMBO_FREE(k%FGbz%N_mapped)
-     YAMBO_FREE(k%FGibz%k_range)
-     YAMBO_FREE(k%FGbz%k_range)
-     YAMBO_FREE(k%weights_ipol)
+     call bz_samp_FineGd_reset(k%FGbz)
+     call bz_samp_FineGd_reset(k%FGibz)
      !
    end subroutine bz_samp_reset
    !

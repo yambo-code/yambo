@@ -106,12 +106,12 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  elseif(present(E)) then
    !
 #if defined _RT
-    if(allocated(E%E_FineGd)) then
+    if(allocated(E%FG%E)) then
       do i1=1,inpdim(2)
         do ik=1,k%nibz
           do ik_fg=k%FGibz%k_range(ik,1),k%FGibz%k_range(ik,2)
-            iE_fg=k%GFibz%E_map(ik_fg)
-            RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),ik_fg)=E%E_FineGd(1:inpdim(1),iE_fg,i1)
+            iE_fg=k%FGibz%E_map(ik_fg)
+            RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),ik_fg)=E%FG%E(1:inpdim(1),iE_fg,i1)
           enddo
         enddo
       enddo 

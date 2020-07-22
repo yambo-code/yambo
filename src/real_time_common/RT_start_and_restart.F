@@ -382,15 +382,15 @@ subroutine RT_start_and_restart(E,k,q)
              !
              ik_FineGd=ik_RT_DbGd-ik+sum(RT_ibz_dupl(:ik))
              !
-             if (allocated(E%W))  E%W_FineGd(ib,ik_FineGd,1)     = abs(E%W(ib,ik,1))
+             if (allocated(E%W))  E%FG%W(ib,ik_FineGd,1)     = abs(E%W(ib,ik,1))
              !
              kpt       = k%FGibz%pt(ik_FineGd,:)
-             Energy    = E%E_FineGd(ib,ik_FineGd,1)
-             f_occ     = E%f_FineGd(ib,ik_FineGd,1)
+             Energy    = E%FG%E(ib,ik_FineGd,1)
+             f_occ     = E%FG%f(ib,ik_FineGd,1)
              f_occ_ref = f_occ
              Width     = 0._SP
-             if (allocated(E%fo)) f_occ_ref = E%f_FineGd(ib,ik_FineGd,1)-E%df_FineGd(ib,ik_FineGd,1)
-             if (allocated(E%W))  Width     = abs(E%W_FineGd(ib,ik_FineGd,1))
+             if (allocated(E%fo)) f_occ_ref = E%FG%f(ib,ik_FineGd,1)-E%FG%df(ib,ik_FineGd,1)
+             if (allocated(E%W))  Width     = abs(E%FG%W(ib,ik_FineGd,1))
            else
              kpt       = k%pt(ik,:)
              Energy    = E%E(ib,ik,1)
@@ -454,7 +454,7 @@ subroutine RT_start_and_restart(E,k,q)
            do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
              if (ik_RT_DbGd/=RT_ibz_coo(ik,1)) then
                ik_FineGd=ik_RT_DbGd-ik+sum(RT_ibz_dupl(:ik))
-               En=E%E_FineGd(ib,ik_FineGd,1)
+               En=E%FG%E(ib,ik_FineGd,1)
              else 
                En=E%E(ib,ik,1)
              endif

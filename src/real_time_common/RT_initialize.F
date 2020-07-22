@@ -509,7 +509,7 @@ subroutine RT_initialize(E,k,q)
      use electrons,          ONLY:spin_occ,n_sp_pol
      use real_time,          ONLY:RT_ibz_coo,RT_ibz_dupl
      !
-     integer :: ik,ik_RT_DbGd,ik_E_FineGd,ib
+     integer :: ik,ik_RT_DbGd,ik_E_fg,ib
      !
      if(.not.l_RT_eq_is_zero_temp) return
      !
@@ -523,9 +523,9 @@ subroutine RT_initialize(E,k,q)
        E%df=0._SP
      endif
      !
-     if (l_RT_uses_E_FineGd.and..not.allocated(E%df_FineGd)) then
-       YAMBO_ALLOC(E%df_FineGd,(E%nb,k%FGibz%N,n_sp_pol))
-       E%df_FineGd=0._SP
+     if (l_RT_uses_E_FineGd.and..not.allocated(E%FG%df)) then
+       YAMBO_ALLOC(E%FG%df,(E%nb,k%FGibz%N,n_sp_pol))
+       E%FG%df=0._SP
      endif
      !
      ! Defined from occupations %f
@@ -537,11 +537,11 @@ subroutine RT_initialize(E,k,q)
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
            !
            if (l_RT_uses_E_FineGd) then
-             ik_E_FineGd=ik_RT_DbGd-ik+sum(RT_ibz_dupl(:ik))
-             if(E%E_FineGd(ib,ik_E_FineGd,1)<=E%E_Fermi) then
-               E%df_FineGd(ib,ik_E_FineGd,1)=(E%f_FineGd(ib,ik_E_FineGd,1)-spin_occ)
+             ik_E_fg=ik_RT_DbGd-ik+sum(RT_ibz_dupl(:ik))
+             if(E%FG%E(ib,ik_E_fg,1)<=E%E_Fermi) then
+               E%FG%df(ib,ik_E_fg,1)=(E%FG%f(ib,ik_E_fg,1)-spin_occ)
              else
-               E%df_FineGd(ib,ik_E_FineGd,1)= E%f_FineGd(ib,ik_E_FineGd,1)
+               E%FG%df(ib,ik_E_fg,1)= E%FG%f(ib,ik_E_fg,1)
              endif
            else
              if(E%E(ib,ik,1)<=E%E_Fermi) then

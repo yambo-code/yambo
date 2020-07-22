@@ -33,7 +33,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k)
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
  use com,                 ONLY:msg
  use YPPm,                ONLY:BZ_FineGd_nkpts_to_use,FineGd_DB1_paths,MAX_FineGd_DBs,n_FineGd_DBs
- use electrons,           ONLY:levels,default_nel,n_bands,n_sp_pol,E_reset,E_FineGd_components_alloc
+ use electrons,           ONLY:levels,default_nel,n_bands,n_sp_pol,E_reset,FineGd_E_components_alloc
  use IO_m,                ONLY:REP
  !
  implicit none
@@ -210,12 +210,12 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k)
  !
  ! Transfer to the Energy levels
  !
- Xen%nb_FineGd=FineGd_E%nb
- Xen%nk_FineGd=FineGd_E%nk
- call E_FineGd_components_alloc(Xen)
+ Xen%FG%nb=FineGd_E%nb
+ Xen%FG%nk=FineGd_E%nk
+ call FineGd_E_components_alloc(Xen)
  do ib=1,FineGd_E%nb
    do ik=1,FineGd_E%nk
-     Xen%E_FineGd(ib,ik,:) =FineGd_E%E(ib,ik,:)
+     Xen%FG%E(ib,ik,:) =FineGd_E%E(ib,ik,:)
    enddo
  enddo
  !

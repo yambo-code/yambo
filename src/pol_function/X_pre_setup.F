@@ -66,7 +66,7 @@ subroutine X_pre_setup(Xen,Xk,X)
  ! Here I set up the Double Grid flag to (for example) skip the coarse 
  ! grid generator in the Xo calculation
  !
- use_X_DbGd=Xen%nb_FineGd/=0.and.X%ib(1)<Xen%nb_FineGd.and.(.not.l_bs_fxc)
+ use_X_DbGd=Xen%FG%nb/=0.and.X%ib(1)<Xen%FG%nb.and.(.not.l_bs_fxc)
  !
  if (use_X_DbGd) X_DbGd_nkpts=Xk%nbz+Xk%FGbz%N
  !

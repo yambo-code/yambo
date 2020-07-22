@@ -37,25 +37,25 @@ subroutine k_map_E_fine(fg,E,k,MAP)
  ! Work Space
  !
  integer              :: i_fg,ik_near,ik,i_k_fg
- real(SP)             :: E_fg_ordered(E%nb_FineGd,E%nk_FineGd,n_sp_pol)
- real(SP)             :: k_fg_ordered(E%nk_FineGd,3)
+ real(SP)             :: E_fg_ordered(E%FG%nb,E%FG%nk,n_sp_pol)
+ real(SP)             :: k_fg_ordered(E%FG%nk,3)
  !
  i_fg=0
  do ik=1,k%nibz
-   E%k_range_FineGd(ik,1)=i_fg+1
+   E%FG%k_range(ik,1)=i_fg+1
    do i_k_fg=1,fg%nibz
      ik_near=iabs(MAP(i_k_fg))
      if (ik==k%sstar(ik_near,1)) then 
        i_fg=i_fg+1
-       E_fg_ordered(:,i_fg,:)=E%E_FineGd(:,i_k_fg,:)
+       E_fg_ordered(:,i_fg,:)=E%FG%E(:,i_k_fg,:)
        k_fg_ordered(i_fg,:)  =fg%pt(i_k_fg,:)
-       E%k_map_FineGd(i_fg)=ik
+       E%FG%k_map(i_fg)=ik
      endif
    enddo
-   E%k_range_FineGd(ik,2)=i_fg
+   E%FG%k_range(ik,2)=i_fg
  enddo
  !
- E%E_FineGd=E_fg_ordered
+ E%FG%E=E_fg_ordered
  fg%pt     =k_fg_ordered
  !
  if (i_fg/=fg%nibz) call error("Not all Fine Grid points have been mapped in the Coarse Grid BZ")

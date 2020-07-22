@@ -275,7 +275,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call bz_samp_duplicate_Fg(k%FGibz,Xk%FGibz,k%nibz) 
  call bz_samp_duplicate_Fg(k%FGbz,Xk%FGbz,k%nbz) 
  !
- if (En%nb_FineGd>0.and.allocated(en%E_FineGd)) then
+ if (En%FG%nb>0.and.allocated(en%FG%E)) then
    !
    call section('=','Double K-grid')
    !=======================================
@@ -283,7 +283,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call msg('r', 'Symmetry Mode                         ',BZ_FineGd_mode)
    call msg('r', 'Kpts (IBZ): Coarse,Fine,Duplicated    ',(/k%nibz,k%FGibz%N,k%FGibz%N_duplicate/))
    call msg('r', 'Kpts ( BZ): Coarse,Fine,Duplicated    ',(/k%nbz, k%FGbz%N, k%FGbz%N_duplicate/))
-   call msg('r', 'Bands                                 ',en%nb_FineGd)
+   call msg('r', 'Bands                                 ',en%FG%nb)
    !
  endif
  !

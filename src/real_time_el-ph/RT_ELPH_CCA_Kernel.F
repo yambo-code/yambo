@@ -26,7 +26,6 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
  use pars,           ONLY:SP,zero_dfl,rZero
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ
- use R_lattice,      ONLY:bz_samp
  use hamiltonian,    ONLY:B_mat_index
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&

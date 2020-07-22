@@ -23,7 +23,7 @@
 !
 integer function io_Double_Grid(E,Xk,ID)
  !
- use electrons,      ONLY:levels,E_FineGd_components_alloc
+ use electrons,      ONLY:levels,FineGd_E_components_alloc
  use R_lattice,      ONLY:bz_samp,BZ_FineGd_mode,bz_samp_FineGd_alloc
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,ver_is_gt_or_eq,write_is_on,&
@@ -65,8 +65,8 @@ integer function io_Double_Grid(E,Xk,ID)
  endif
  call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
  !
- call io_elemental(ID,I0=E%nb_FineGd,         VAR=' Bands                           ')
- call io_elemental(ID,I0=E%nk_FineGd,         VAR=' Number of points (fine+coarse)  in the IBZ (E)')
+ call io_elemental(ID,I0=E%FG%nb,         VAR=' Bands                           ')
+ call io_elemental(ID,I0=E%FG%nk,         VAR=' Number of points (fine+coarse)  in the IBZ (E)')
  call io_elemental(ID,I0=Xk%FGibz%N,          VAR=' Number                          in the IBZ (k)')
  call io_elemental(ID,I0=Xk%FGbz%N,           VAR=' Number                          in the  BZ (k)')
  call io_elemental(ID,I0=Xk%FGibz%N_duplicate,VAR=' Number of duplic. pts (fine)        in the IBZ')
@@ -77,17 +77,17 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Eigenvalues
  !
  if (read_is_on(ID)) then
-   call E_FineGd_components_alloc(E)
+   call FineGd_E_components_alloc(E)
  endif
  !
- call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%E_FineGd) ) 
- call io_bulk(ID, R3=E%E_FineGd )
+ call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%FG%E) ) 
+ call io_bulk(ID, R3=E%FG%E )
  !
- call io_bulk(ID, VAR="E_K_MAP", VAR_SZ=shape(E%k_map_FineGd) ) 
- call io_bulk(ID, I1=E%k_map_FineGd )
+ call io_bulk(ID, VAR="E_K_MAP", VAR_SZ=shape(E%FG%k_map) ) 
+ call io_bulk(ID, I1=E%FG%k_map )
  !
- call io_bulk(ID, VAR="E_K_RANGE", VAR_SZ=shape(E%k_range_FineGd) ) 
- call io_bulk(ID, I2=E%k_range_FineGd )
+ call io_bulk(ID, VAR="E_K_RANGE", VAR_SZ=shape(E%FG%k_range) ) 
+ call io_bulk(ID, I2=E%FG%k_range )
  !
  ! Kpts
  !

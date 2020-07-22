@@ -214,7 +214,7 @@ subroutine bxsf_read(Xk,Xen)
  !
  YAMBO_ALLOC(Xk%FGbz%N_mapped,(Xk%nbz))
  Xk%FGbz%N_mapped = 0
- Xen%nb_FineGd=nbands
+ Xen%FG%nb=nbands
  Xk%FGbz%N=DbGd_k%nbz
  !
  if (ord_dgrid_ipol .eq. 0) then
@@ -270,8 +270,8 @@ subroutine bxsf_read(Xk,Xen)
  !
  call section('*','Create & write BZ_DbGd')
  !
- YAMBO_ALLOC(Xen%E_FineGd,(Xen%nb_FineGd,Xen%nk,n_spin))
- Xen%E_FineGd(:,:,1)=ene/HA2EV+Xen%E_Fermi
+ YAMBO_ALLOC(Xen%FG%E,(Xen%FG%nb,Xen%nk,n_spin))
+ Xen%FG%E(:,:,1)=ene/HA2EV+Xen%E_Fermi
  ! align last (partly) filled band at gamma.
  nearest_to_g=k_the_nearest(DbGd_k%ptbz(1,:),Xk%ptbz(:,:),Xk%nbz) 
  if(sum((DbGd_k%ptbz(1,:)-Xk%ptbz(nearest_to_g,:))**2).gt. epsilon(1._SP)) then
@@ -284,7 +284,7 @@ subroutine bxsf_read(Xk,Xen)
  vband=minloc(Xen%f(:,nearest_to_g,1),1)-1
  call msg('s',' Internal and wannier bands to align (at Gamma)',(/vband,vband+wannier_bands(1)-1/))
  deltaE=ene(vband,1)/HA2EV-Xen%E(vband,nearest_to_g,1)
- Xen%E_FineGd(:,:DbGd_k%nbz,1)=Xen%E_FineGd(:,:DbGd_k%nbz,1)-deltaE
+ Xen%FG%E(:,:DbGd_k%nbz,1)=Xen%FG%E(:,:DbGd_k%nbz,1)-deltaE
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=NONE,ID=ID)
  i_err=io_Double_Grid(Xen,Xk,ID)

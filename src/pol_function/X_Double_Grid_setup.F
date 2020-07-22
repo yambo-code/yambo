@@ -47,7 +47,7 @@ subroutine X_Double_Grid_setup(iq,k)
  ! Work Space
  !
  integer   :: ikbz,ikpbz,ikbz_mem,ikbz_FineGd,ikpbz_FineGd,N_all_pairs
- real(SP)  :: central_q(3),running_q(3),k_pt_loc(3),kp_pt_loc(3),q_radius,PREC(1)
+ real(SP)  :: central_q(3),running_q(3),k_pt_loc(3),kp_pt_loc(3),q_radius,PERC(1)
  logical   :: FILL_it
  !
  if (.not.use_X_DbGd.and..not.BSS_uses_DbGd) return
@@ -58,7 +58,7 @@ subroutine X_Double_Grid_setup(iq,k)
  !
  q_radius=smallest_q_norm/100._SP
  !
- PREC=0._SP
+ PERC=0._SP
  FILL_it=.FALSE.
  !
  N_all_pairs=0
@@ -68,7 +68,7 @@ subroutine X_Double_Grid_setup(iq,k)
 &                          *(k%FGbz%k_range(ikpbz,2)-k%FGbz%k_range(ikpbz,1)+1)
  enddo
  !
- do while(PREC(1)<X_DbGd_percentual.or.FILL_it)
+ do while(PERC(1)<X_DbGd_percentual.or.FILL_it)
    !
    if (FILL_it) then
      YAMBO_ALLOC(X_DbGd_nkpt_at_q_table,(PAR_Xk_nbz, maxval(X_DbGd_nkpt_at_q) ,2))
@@ -112,16 +112,16 @@ subroutine X_Double_Grid_setup(iq,k)
      !
    enddo
    !
-   PREC=real(sum(X_DbGd_nkpt_at_q))/real(N_all_pairs)*100._SP
+   PERC=real(sum(X_DbGd_nkpt_at_q))/real(N_all_pairs)*100._SP
    !
-   call PP_redux_wait(PREC,COMM=PAR_COM_Xk_bz_INDEX%COMM)
+   call PP_redux_wait(PERC,COMM=PAR_COM_Xk_bz_INDEX%COMM)
    !
    if (FILL_it) exit
    !
-   if (PREC(1)>=X_DbGd_percentual) FILL_it=.TRUE.
+   if (PERC(1)>=X_DbGd_percentual) FILL_it=.TRUE.
    !
  enddo 
  !
- call msg('nrsn','DbGd@q['//trim(intc(iq))//'] k->k-q (trans %, q-rad %)]',(/PREC,q_radius/smallest_q_norm*100._SP/))
+ call msg('nrsn','DbGd@q['//trim(intc(iq))//'] k->k-q (trans %, q-rad %)]',(/PERC,q_radius/smallest_q_norm*100._SP/))
  !
 end subroutine

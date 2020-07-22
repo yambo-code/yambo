@@ -61,7 +61,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
  complex(SP)  :: H(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)),&
 &                H_field(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  real(SP)     :: Ed(RT_bands(1):RT_bands(2)),dE
- integer      :: ib,ik,ik_RT,ik_E_FineGd
+ integer      :: ib,ik,ik_RT,ik_E_fg
  logical      :: l_do_E,l_do_R
  logical, external        :: RT_do_it
  !
@@ -74,8 +74,8 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
  !
  call timing('RT H diago',OPR='start')
  !
-                         E%E       (RT_bands(1):RT_bands(2),:,:)=rZERO
- if (l_RT_uses_E_FineGd) E%E_FineGd(RT_bands(1):RT_bands(2),:,:)=rZERO
+                         E%E   (RT_bands(1):RT_bands(2),:,:)=rZERO
+ if (l_RT_uses_E_FineGd) E%FG%E(RT_bands(1):RT_bands(2),:,:)=rZERO
  !
  RT_E_and_K%E(RT_bands(1):RT_bands(2),:,:)=rZERO
  !
@@ -111,9 +111,9 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
        if(      l_RT_uses_E_FineGd .and.ik_RT/=RT_ibz_coo(ik,1)) then
-         ik_E_FineGd=ik_RT-ik+sum(RT_ibz_dupl(:ik))
-         E%E_FineGd(ib,ik_E_FineGd,1) = E_reference%E_FineGd(ib,ik_E_FineGd,1)+dE
-         if (ib>=RT_bands(1)) RT_E_and_k%E(ib,ik_RT,1) =E%E_FineGd(ib,ik_E_FineGd,1)
+         ik_E_fg=ik_RT-ik+sum(RT_ibz_dupl(:ik))
+         E%FG%E(ib,ik_E_fg,1) = E_reference%FG%E(ib,ik_E_fg,1)+dE
+         if (ib>=RT_bands(1)) RT_E_and_k%E(ib,ik_RT,1) =E%FG%E(ib,ik_E_fg,1)
        else
          E%E(ib,ik,1)             =E_reference%E(ib,ik,1)+dE
          if (ib>=RT_bands(1)) RT_E_and_k%E(ib,ik_RT,1) =E%E(ib,ik,1)
@@ -124,8 +124,8 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
    !    
  enddo
  !
-                         call PP_redux_wait(E%E,       COMM=PAR_COM_Xk_ibz_INDEX%COMM)
- if (l_RT_uses_E_FineGd) call PP_redux_wait(E%E_FineGd,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+                         call PP_redux_wait(E%E,   COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ if (l_RT_uses_E_FineGd) call PP_redux_wait(E%FG%E,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  call PP_redux_wait(RT_E_and_K%E(RT_bands(1):RT_bands(2),:,:),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !

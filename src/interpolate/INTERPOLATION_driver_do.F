@@ -106,21 +106,21 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
    if (l_INTERP_E.or.l_INTERP_dE) then
      YAMBO_ALLOC(OUT_E%E,(n(1):n(2),nk1,dimI))
      if(nk2>0) then
-       YAMBO_ALLOC(OUT_E%E_FineGd,(n(1):n(2),nk2,dimI))
+       YAMBO_ALLOC(OUT_E%FG%E,(n(1):n(2),nk2,dimI))
      endif
    else if (l_INTERP_f) then
      YAMBO_ALLOC(OUT_E%f,(n(1):n(2),nk1,dimI))
      if(nk2>0) then
-       YAMBO_ALLOC(OUT_E%f_FineGd,(n(1):n(2),nk2,dimI))
+       YAMBO_ALLOC(OUT_E%FG%f,(n(1):n(2),nk2,dimI))
      endif
    endif
    OUT_E%nk       =OUT_k%nibz
-   OUT_E%nk_FineGd=OUT_k%FGibz%N
+   OUT_E%FG%nk=OUT_k%FGibz%N
    OUT_E%nb=INTERP_obj(ID)%nb(2)
    if ((l_INTERP_E.or.l_INTERP_dE).and.nk1>0) OUT_E%E       =INTERP_obj(ID)%INTERP
    if ((l_INTERP_f               ).and.nk1>0) OUT_E%f       =INTERP_obj(ID)%INTERP
-   if ((l_INTERP_E.or.l_INTERP_dE).and.nk2>0) OUT_E%E_FineGd=INTERP_obj(ID)%INTERP_FineGd
-   if ((l_INTERP_f               ).and.nk2>0) OUT_E%f_FineGd=INTERP_obj(ID)%INTERP_FineGd
+   if ((l_INTERP_E.or.l_INTERP_dE).and.nk2>0) OUT_E%FG%E=INTERP_obj(ID)%INTERP_FineGd
+   if ((l_INTERP_f               ).and.nk2>0) OUT_E%FG%f=INTERP_obj(ID)%INTERP_FineGd
  endif
  !
  if (INTERPOLATE_is_quiet) call IO_and_Messaging_switch("+log")

@@ -94,9 +94,9 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        if(i_k_RT/=RT_ibz_coo(i_k,1)) then
          i_k_FineGd=i_k_RT-i_k+sum(RT_ibz_dupl(:i_k))
-         RT%E_bare(i_RT)=E_reference%E_FineGd(i_b,i_k_FineGd,i_spin)
-         if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%f_FineGd(i_b,i_k_FineGd,i_spin)
-         if(     allocated(E%fo)) RT%f_bare(i_RT)=E%f_FineGd(i_b,i_k_FineGd,i_spin)-E%df_FineGd(i_b,i_k_FineGd,i_spin)
+         RT%E_bare(i_RT)=E_reference%FG%E(i_b,i_k_FineGd,i_spin)
+         if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%FG%f(i_b,i_k_FineGd,i_spin)
+         if(     allocated(E%fo)) RT%f_bare(i_RT)=E%FG%f(i_b,i_k_FineGd,i_spin)-E%FG%df(i_b,i_k_FineGd,i_spin)
        else
          RT%E_bare(i_RT)=E_reference%E(i_b,i_k,i_spin)
          if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%f(i_b,i_k,i_spin)

@@ -94,9 +94,9 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
          do ik_fg=Xk%FGibz%k_range(ik,1),Xk%FGibz%k_range(ik,2)
            weight=Xk%FGibz%weights(ik_fg)
            iE_fg =Xk%FGibz%E_map(ik_fg)
-           if (USE_occ) f_occ=Xen%f_FineGd(ib,iE_fg,i_sp_pol)
+           if (USE_occ) f_occ=Xen%FG%f(ib,iE_fg,i_sp_pol)
            el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*weight*&
-&                               Fermi_fnc_derivative(Xen%E_FineGd(ib,iE_fg,i_sp_pol)-dos_E,DOS_broadening)
+&                               Fermi_fnc_derivative(Xen%FG%E(ib,iE_fg,i_sp_pol)-dos_E,DOS_broadening)
          enddo
          ! 
        endif

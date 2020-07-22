@@ -94,8 +94,8 @@ subroutine RT_k_grid(E,k,q)
  !=============
  !
  ! RT_nk            -> k%FGibz%N
- ! RT_ibz_coo(ik,:) -> k%FGibz%k_map(ik,:)
- ! RT_all2ibz(i_fg) -> k%FGibz%k_map_m1(i_fg)
+ ! RT_ibz_coo(ik,:) -> k%FGibz%k_range(ik,:)
+ ! RT_all2ibz(i_fg) -> k%FGibz%k_map(i_fg)
  ! RT_Nk_ibz(ik)    -> k%FGibz%N_mapped(ik)
  !
  RT_nk = 0
@@ -103,8 +103,8 @@ subroutine RT_k_grid(E,k,q)
    RT_ibz_coo(ik,:)=(/RT_nk+1,RT_nk+1+k%FGibz%N_mapped(ik)/)
    RT_nk=RT_nk+1+k%FGibz%N_mapped(ik)
    RT_Nk_ibz(ik)=k%FGibz%N_mapped(ik)+1
-   if(ik==1) RT_ibz_dupl(ik)=k%FGibz%k_map(1,ik)-1
-   if(ik> 1) RT_ibz_dupl(ik)=k%FGibz%k_map(1,ik)-k%FGibz%k_map(2,ik-1)-1
+   if(ik==1) RT_ibz_dupl(ik)=k%FGibz%k_range(ik,1)-1
+   if(ik> 1) RT_ibz_dupl(ik)=k%FGibz%k_range(ik,1)-k%FGibz%k_range(ik-1,2)-1
  enddo
  !
  ! Define K-weights to be used in the k-points distribution

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,FineGd_E)
+subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,Xen)
  !
  use pars,                ONLY:SP
  use com,                 ONLY:msg
@@ -34,33 +34,41 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,FineGd_E)
  character(*)      , intent(in)    :: zone
  type(bz_fine_grid), intent(inout) :: FG
  type(bz_samp), intent(inout)      :: FineGd_k,Xk
- type(levels),  intent(in)         :: FineGd_E
+ type(levels),  intent(inout)      :: Xen
  !
  ! Work Space
  !
  integer              :: ik_near,i_fg,i_c,N_coarse,is,ik,i_fg_k,i_fg_E,N_fine_max
- integer, allocatable :: TMP_map(:),TMP_table_mapped(:,:),TMP_table_duplicate(:,:),N_duplicate(:),N_per_BZ_point(:)
- logical              :: l_BZ_FG,l_IBZ_FG,l_BZ_CG,l_IBZ_CG
+ integer, allocatable :: TMP_map(:),TMP_table_mapped(:,:),N_duplicate(:),N_per_BZ_point(:)
+ logical              :: l_BZ_FG,l_IBZ_FG,l_BZ_CG,l_IBZ_CG,l_E_FG
  !
  ! Initial mapping
  !=================
  !
+ l_E_FG  =index(zone,"Energies-")>0
  l_IBZ_FG=index(zone,"IBZ-")>0
- l_BZ_FG =index(zone,"IBZ-")==0
+ l_BZ_FG =index(zone,"IBZ-")==0.and.index(zone,"Energies-")==0
  l_IBZ_CG=index(zone,"-IBZ")>0
  l_BZ_CG =index(zone,"-BZ")>0
  !
  if (l_BZ_FG ) FG%N = FineGd_k%nbz
- if (l_IBZ_FG) FG%N = FineGd_k%nibz
+ if (l_IBZ_FG.or.l_E_FG) FG%N = FineGd_k%nibz
  if (l_BZ_CG)  N_coarse = Xk%nbz
  if (l_IBZ_CG) N_coarse = Xk%nibz
  !
  N_fine_max=FG%N
- allocate(TMP_map(N_fine_max),N_per_BZ_point(Xk%nbz))
+ allocate(TMP_map(N_fine_max))
  !
  if (l_BZ_FG ) call k_map_fine_to_coarse_engine(zone,FineGd_k%ptbz,FineGd_k%nbz, Xk%ptbz,Xk%nbz,TMP_map)
- if (l_IBZ_FG) call k_map_fine_to_coarse_engine(zone,FineGd_k%pt,  FineGd_k%nibz,Xk%ptbz,Xk%nbz,TMP_map)
+ if (l_IBZ_FG.or.l_E_FG) call k_map_fine_to_coarse_engine(zone,FineGd_k%pt,FineGd_k%nibz,Xk%ptbz,Xk%nbz,TMP_map)
  !
+ if (l_E_FG) then
+   call k_map_E_fine(FineGd_k,Xen,Xk,TMP_map)
+   deallocate(TMP_map)
+   return
+ endif
+ !
+ allocate(N_per_BZ_point(Xk%nbz))
  do ik=1,Xk%nbz
    N_per_BZ_point(ik)=count(TMP_map(:)==ik)+count(TMP_map(:)==-ik)
  enddo
@@ -115,10 +123,6 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,FineGd_E)
  !==========
  allocate(TMP_table_mapped(N_coarse,maxval(FG%N_mapped)))
  TMP_table_mapped=0
- if (FG%N_duplicate>0) then
-   allocate(TMP_table_duplicate(N_coarse,maxval(N_duplicate)))
-   TMP_table_duplicate=0
- endif
  !
  FG%N_mapped=0
  N_duplicate=0
@@ -128,9 +132,6 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,FineGd_E)
    if(TMP_map(i_fg)>0) then
      FG%N_mapped(ik_near)=FG%N_mapped(ik_near)+1
      TMP_table_mapped(ik_near,FG%N_mapped(ik_near))=i_fg
-   else if(TMP_map(i_fg)<0) then
-     N_duplicate(ik_near)=N_duplicate(ik_near)+1
-     TMP_table_duplicate(ik_near,N_duplicate(ik_near))=i_fg
    endif
  enddo
  !
@@ -140,17 +141,17 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,FineGd_E)
  !
  ! Final FineGd structure. All FG%N+N_coarse points are splitted in ik-groups
  !
- ! ik: FG%k_map(1,ik) .. FG%k_map(2,1)
+ ! ik: FG%k_range(ik,1) .. FG%k_range(1,2)
  !
- !  ik=FG%k_map(1,ik)                   -> COARSE grid
- !  ik=FG%k_map(1,ik)+1...FG%k_map(2,1) -> FINE grid
+ !  ik=FG%k_range(ik,1)                     -> COARSE grid
+ !  ik=FG%k_range(ik,1)+1...FG%k_range(1,2) -> FINE grid
  !
- ! i_fg = FG%k_map(1,ik) we have
+ ! i_fg = FG%k_range(ik,1) we have
  !
  !  - k%pt(ik,:)/k%ptbz(ik,:)
  !  - E%E( <bands> ,ik, <spin> )
  !
- ! For each i_fg \in FG%k_map(1,ik)+1..FG%k_map(2,ik) we have
+ ! For each i_fg \in FG%k_range(ik,1)+1..FG%k_range(ik,2) we have
  !
  ! - FG%pt(i_fg,:)
  ! - FG%weights(i_fg)
@@ -161,7 +162,7 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,FineGd_E)
  do ik=1,N_coarse
    !
    i_fg=i_fg+1
-   FG%k_map(1,ik)=i_fg
+   FG%k_range(ik,1)=i_fg
    !
    do i_c=1,FG%N_mapped(ik)
      !
@@ -176,19 +177,18 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,FineGd_E)
      FG%E_map(i_fg)=i_fg_E
      !
      if (l_BZ_FG ) FG%weights(i_fg) =1./real(FG%N,SP)
-     if (l_IBZ_FG) FG%weights(i_fg)  =FineGd_k%weights(i_fg_E)
+     if (l_IBZ_FG) FG%weights(i_fg) =FineGd_k%weights(i_fg_E)
      !
      call live_timing(steps=1)
      !
    enddo
    !
-   FG%k_map(2,ik)=i_fg
+   FG%k_range(ik,2)=i_fg
    !
  enddo
  !
  call live_timing()
  !
  deallocate(TMP_map,N_duplicate,TMP_table_mapped,N_per_BZ_point)
- if (FG%N_duplicate>0) deallocate(TMP_table_duplicate)
  !
 end subroutine

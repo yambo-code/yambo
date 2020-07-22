@@ -1,0 +1,9 @@
+./ypp/k-points/k_map_fine_to_coarse_driver.F: deallocate(Xen%E_FineGd,Xk%FGibz%k_range,Xk%FGbz%k_range,Xk%FGibz%N_mapped,Xk%FGbz%N_mapped)
+./ypp/k-points/double_k_grid.F:               Xk%FGbz%k_range(ii_c,ii) = sub2ind(nkpoint_f, nx_period, ny_period, nz_period)
+./ypp/bits/bxsf_read.F: YAMBO_FREE(Xk%FGbz%k_range)
+./src/real_time_control/RT_carriers_object.F:         RT%kpt(RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),:)  = K%FGibz%pt(K%FGibz%k_range(1,i_k):K%FGibz%k_range(2,i_k),:)
+./src/real_time_control/RT_k_grid.F:   if(ik> 1) RT_ibz_dupl(ik)=k%FGibz%k_range(1,ik)-k%FGibz%k_range(2,ik-1)-1
+./src/interpolate/INTERPOLATION_coefficients.F:          &             E%E_FineGd(1:inpdim(1),k%FGibz%k_range(ik,1):k%FGibz%k_range(ik,2),i1)
+./src/pol_function/X_Double_Grid_setup.F:         if(ikpbz_FineGd> k%FGbz%k_range(1,ikpbz)) kp_pt_loc=k%FGbz%pt(ikpbz_FineGd,:)
+./src/pol_function/X_GreenF_analytical.F:   if(ikpbz_FineGd==Xk%FGbz%k_range(1,ikpbz)) then
+./src/xc_functionals/el_density_of_states.F:         do ik_fg=Xk%FGibz%k_range(1,ik),Xk%FGibz%k_range(2,ik)

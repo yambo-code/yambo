@@ -131,6 +131,8 @@ subroutine K_output_file(iq,mode)
  call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1)
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
  !
+ call msg('o eps_q refl eel_q fxc alpha off beta moke jdos','#')
+ !
  ! Description of the run and headers for output files:
  !
  call DESC_write('o eps_q refl eel_q fxc alpha off beta moke jdos','#',BSS_desc)
@@ -176,7 +178,7 @@ subroutine K_output_file(iq,mode)
  !
  call X_setup_headers('EPS')
  if (     l_print_col4) call msg("o eps",'#',headers,INDENT=0,USE_TABS=.TRUE.)
- if (.not.l_print_col4) call msg("o eps",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+ if (.not.l_print_col4.and..not.l_IP) call msg("o eps",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
  if (l_IP) call msg("o eps",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
  !
 #if defined _PL
@@ -190,21 +192,21 @@ subroutine K_output_file(iq,mode)
  if (eval_reflectivity) then 
    call X_setup_headers('REFL')
    if (     l_print_col4)  call msg("o refl",'#',headers(:4),INDENT=0,USE_TABS=.TRUE.)
-   if (.not.l_print_col4)  call msg("o refl",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+   if (.not.l_print_col4.and..not.l_IP)  call msg("o refl",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    if (l_IP) call msg("o refl",'#',headers(:2),INDENT=0,USE_TABS=.TRUE.)
  end if   
  !
  if (eval_eels) then 
    call X_setup_headers('EEL')
    if (     l_print_col4)  call msg("o eel",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (.not.l_print_col4)  call msg("o eel",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (.not.l_print_col4.and..not.l_IP)  call msg("o eel",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (l_IP) call msg("o eel",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
  end if   
  !
  if (eval_alpha) then 
    call X_setup_headers('ALPHA')
    if (     l_print_col4)  call msg("o alpha",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (.not.l_print_col4)  call msg("o alpha",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (.not.l_print_col4.and..not.l_IP)  call msg("o alpha",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (l_IP) call msg("o alpha",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
  endif
  !
@@ -237,20 +239,20 @@ subroutine K_output_file(iq,mode)
    !
    call X_setup_headers('off')
    if (     l_print_col4)  call msg("o off",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (.not.l_print_col4)  call msg("o off",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (.not.l_print_col4.and..not.l_IP)  call msg("o off",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (l_IP) call msg("o off",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    !
    if (eval_alpha) then 
      call X_setup_headers('beta')
      if (     l_print_col4)  call msg("o beta",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-     if (.not.l_print_col4)  call msg("o beta",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (.not.l_print_col4.and..not.l_IP)  call msg("o beta",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
      if (l_IP) call msg("o beta",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    endif
    !
    if (.not.eval_alpha)  then
      call X_setup_headers('moke')
      if (     l_print_col4)  call msg("o moke",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-     if (.not.l_print_col4)  call msg("o moke",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (.not.l_print_col4.and..not.l_IP)  call msg("o moke",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
      if (l_IP) call msg("o moke",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    endif
    !
@@ -260,7 +262,7 @@ subroutine K_output_file(iq,mode)
  if (.not.l_Haydock) then
    call X_setup_headers('jdos')
    if (     l_print_col4)  call msg("o jdos",'#',headers(:7),INDENT=0,USE_TABS=.TRUE.)
-   if (.not.l_print_col4)  call msg("o jdos",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (.not.l_print_col4.and..not.l_IP)  call msg("o jdos",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (l_IP) call msg("o jdos",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
  endif
  !

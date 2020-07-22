@@ -58,8 +58,8 @@ module R_lattice
    integer              :: N
    integer              :: N_duplicate
    real(SP), allocatable:: pt(:,:)
-   integer , allocatable:: N_mapped(:) ! For each IBZ/BZ kpt in the Cg, n° of kpt_FineGd assoc.
-   integer , allocatable:: k_map(:,:)  ! For each IBZ/BZ kpt in the Cg, lower/upper range of kpts_FineGd in the IBZ/BZ Fg
+   integer , allocatable:: N_mapped(:)  ! For each IBZ/BZ kpt in the Cg, n° of kpt_FineGd assoc.
+   integer , allocatable:: k_range(:,:) ! For each IBZ/BZ kpt in the Cg, lower/upper range of kpts_FineGd in the IBZ/BZ Fg
    integer,  allocatable:: E_map(:)
    real(SP), allocatable:: weights(:)
  end type bz_fine_grid
@@ -235,12 +235,12 @@ module R_lattice
      YAMBO_ALLOC(FG%pt,(FG%N,3))
      YAMBO_ALLOC(FG%weights,(FG%N))
      YAMBO_ALLOC(FG%E_map,(FG%N))
-     YAMBO_ALLOC(FG%k_map,(2,N_coarse))
+     YAMBO_ALLOC(FG%k_range,(N_coarse,2))
      YAMBO_ALLOC(FG%N_mapped,(N_coarse))
      FG%pt=0._SP
      FG%weights=0._SP
      FG%E_map=0
-     FG%k_map=0
+     FG%k_range=0
      FG%N_mapped=0
    end subroutine
    !
@@ -272,8 +272,8 @@ module R_lattice
      !
      YAMBO_FREE(k%FGibz%N_mapped)
      YAMBO_FREE(k%FGbz%N_mapped)
-     YAMBO_FREE(k%FGibz%k_map)
-     YAMBO_FREE(k%FGbz%k_map)
+     YAMBO_FREE(k%FGibz%k_range)
+     YAMBO_FREE(k%FGbz%k_range)
      YAMBO_FREE(k%weights_ipol)
      !
    end subroutine bz_samp_reset
@@ -335,9 +335,9 @@ module R_lattice
        YAMBO_ALLOC(FGo%E_map,(FGo%N))
        FGo%E_map=FGi%E_map
      endif
-     if (allocated(FGi%k_map)) then
-       YAMBO_ALLOC(FGo%k_map,(2,N_coarse))
-       FGo%k_map=FGi%k_map
+     if (allocated(FGi%k_range)) then
+       YAMBO_ALLOC(FGo%k_range,(N_coarse,2))
+       FGo%k_range=FGi%k_range
      endif
      if (allocated(FGi%N_mapped)) then
        YAMBO_ALLOC(FGo%N_mapped,(N_coarse))

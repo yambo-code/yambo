@@ -35,7 +35,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,&
-&                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed,bz_samp_duplicate_Fg
+&                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed,bz_samp_duplicate_Fg,BZ_FineGd_mode
  use com,            ONLY:msg,fat_log
  use stderr,         ONLY:intc
  use IO_m,           ONLY:REP,DUMP,NONE,io_control,OP_RD_CL
@@ -280,9 +280,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call section('=','Double K-grid')
    !=======================================
    !
-   call msg('r', 'Kpts (IBZ): CG,FG,DUPL.    ',(/k%nibz,k%FGibz%N,k%FGibz%N_duplicate/))
-   call msg('r', 'Kpts ( BZ): CG,FG,DUPL.    ',(/k%nbz, k%FGbz%N, k%FGbz%N_duplicate/))
-   call msg('r', 'Bands                      ',en%nb_FineGd)
+   call msg('r', 'Symmetry Mode                         ',BZ_FineGd_mode)
+   call msg('r', 'Kpts (IBZ): Coarse,Fine,Duplicated    ',(/k%nibz,k%FGibz%N,k%FGibz%N_duplicate/))
+   call msg('r', 'Kpts ( BZ): Coarse,Fine,Duplicated    ',(/k%nbz, k%FGbz%N, k%FGbz%N_duplicate/))
+   call msg('r', 'Bands                                 ',en%nb_FineGd)
    !
  endif
  !

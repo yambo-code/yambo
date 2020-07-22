@@ -226,10 +226,10 @@ subroutine bxsf_read(Xk,Xen)
    ! have to go twice through all elements as BZ_DbGd_k cannot be
    ! allocated without knowing the number of maximum elements. 
    !
-   do while(.not.allocated(Xk%FGbz%k_map)) 
+   do while(.not.allocated(Xk%FGbz%k_range)) 
      if (maxval(Xk%FGbz%N_mapped)>0) then
-       allocate(Xk%FGbz%k_map(Xk%nbz,maxval(Xk%FGbz%N_mapped)))
-       Xk%FGbz%k_map=0
+       allocate(Xk%FGbz%k_range(Xk%nbz,maxval(Xk%FGbz%N_mapped)))
+       Xk%FGbz%k_range=0
      endif
      Xk%FGbz%N_mapped=0
      do ii=1,DbGd_k%nbz
@@ -237,7 +237,7 @@ subroutine bxsf_read(Xk,Xen)
        ikbz=k_the_nearest(DbGd_k%ptbz(ii,:),Xk%ptbz(:,:),Xk%nbz)
        Xk%FGbz%N_mapped(ikbz)=Xk%FGbz%N_mapped(ikbz)+1
        !
-       if (allocated(Xk%FGbz%k_map)) Xk%FGbz%k_map(ikbz,Xk%FGbz%N_mapped(ikbz))= ii
+       if (allocated(Xk%FGbz%k_range)) Xk%FGbz%k_range(ikbz,Xk%FGbz%N_mapped(ikbz))= ii
        !   
        call live_timing(steps=1)
        !
@@ -299,7 +299,7 @@ subroutine bxsf_read(Xk,Xen)
  YAMBO_FREE(startkpoint)
  YAMBO_FREE(recip_lattice)
  YAMBO_FREE(Xk%FGbz%N_mapped)
- YAMBO_FREE(Xk%FGbz%k_map)
+ YAMBO_FREE(Xk%FGbz%k_range)
  YAMBO_FREE(Xk%weights_ipol)
  !
 end subroutine

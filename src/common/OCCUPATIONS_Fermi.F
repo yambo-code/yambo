@@ -260,7 +260,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
    !
    E%E_FineGd(:,:,:)=E%E_FineGd(:,:,:)-E%E_Fermi
    do is=1,n_sp_pol
-     do ik_FineGd=1,K%FGibz%N
+     do ik_FineGd=1,E%nk_FineGd
        do ib=1,E%nb_FineGd
          E%f_FineGd(ib,ik_FineGd,is)=spin_occ*Fermi_fnc(E%E_FineGd(ib,ik_FineGd,is),Tel)
        enddo

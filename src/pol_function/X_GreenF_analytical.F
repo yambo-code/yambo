@@ -85,7 +85,6 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  use_DbGd= (X_os_run .and.use_X_DbGd.and.ic<=Xen%nb_FineGd) .or. &
 &          (K_inv_run.and.BSS_uses_DbGd)
  !
- !
  ! Case without DbGd
  !===================
  !
@@ -94,9 +93,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !
  if ( .not.use_DbGd ) then
    !
-   !
    pole=cmplx(Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin),-W_,KIND=SP)
-   !
    !
    pole_X_term=0.0_SP
    if(X_terminator) pole_X_term= cmplx(X_term_E-Xen%E(iv,ikp,i_spin),-W_,KIND=SP)
@@ -154,7 +151,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
    ikbz_FineGd=X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,1)
    ikpbz_FineGd=X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,2)
    !
-   if(ikbz_FineGd==Xk%FGbz%k_map(1,ikbz)) then
+   if(ikbz_FineGd==Xk%FGbz%k_range(ikbz,1)) then
      En1       = Xen%E(ic,ik,i_spin)
      ffac      = Xen%f(ic,ik,i_spin)
    else
@@ -166,7 +163,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
    if( X_os_run  ) f_h = spin_occ-ffac
    if( K_inv_run ) f_h =          ffac
    !
-   if(ikpbz_FineGd==Xk%FGbz%k_map(1,ikpbz)) then
+   if(ikpbz_FineGd==Xk%FGbz%k_range(ikpbz,1)) then
      En2       = Xen%E(iv,ikp,i_spin)
      f_e       = Xen%f(iv,ikp,i_spin)
    else

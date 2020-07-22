@@ -28,8 +28,8 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset,BZ_FineGd_mode
  use com,                 ONLY:msg
  use YPPm,                ONLY:n_FineGd_DBs
- use electrons,           ONLY:levels,E_reset
- use IO_m,                ONLY:io_control,LOG,OP_WR_CL
+ use electrons,           ONLY:levels
+ use IO_m,                ONLY:io_control,REP,OP_WR_CL
  !
 #include<memory.h>
  !
@@ -38,7 +38,6 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  ! Work Space
  !
- type(levels)         :: FineGd_E
  type(bz_samp)        :: FineGd_k
  character(schlen)    :: FG_zone(2)
  integer              :: i_err,ID,i_fg
@@ -64,15 +63,20 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  ! Initial checks
  !================
  call section('+','Double Grid initialization')
- call k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
+ call k_map_fine_to_coarse_init(Xk,Xen,FineGd_k)
  !
- ! Expand to the BZ 
- !==================
- !
- ! Xk (IBZ->BZ)
- !
+ ! Expand the Coarse Grid 
+ !========================
  call k_build_up_BZ_tables(Xk)
  call k_ibz2bz(Xk,'i',.true.)
+ !
+ ! FineGd E to IBZ map
+ !=======================
+ call section('=','Double Grid Energies-IBZ mapping and Fine Grid re-ordering')
+ call k_map_fine_to_coarse('Energies-IBZ',Xk,Xk%FGibz,FineGd_k,Xen)
+ !
+ ! Expand the Fine Grid 
+ !========================
  !
  if (l_mix.or.l_expand) then
    !
@@ -119,31 +123,30 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
    !
  endif
  !
- ! First map IBZ to IBZ
+ ! FG_zone(1) to IBZ map
  !=======================
  call section('=','Double Grid '//trim(FG_zone(1))//'-IBZ mapping')
- call k_map_fine_to_coarse(trim(FG_zone(1))//'-IBZ',Xk,Xk%FGibz,FineGd_k,FineGd_E)
- ! 
- ! Then map BZ to BZ
- !===================
+ call k_map_fine_to_coarse(trim(FG_zone(1))//'-IBZ',Xk,Xk%FGibz,FineGd_k,Xen)
+ !
+ ! FG_zone(2) to BZ map
+ !======================
  call section('=','Double Grid '//trim(FG_zone(2))//'-BZ mapping')
- call k_map_fine_to_coarse(trim(FG_zone(2))//'-BZ',Xk,Xk%FGbz,FineGd_k,FineGd_E)
+ call k_map_fine_to_coarse(trim(FG_zone(2))//'-BZ',Xk,Xk%FGbz,FineGd_k,Xen)
  !
  ! Final I/O
  !===========
  ! .. restoring of built-in value of nkibz to be used in io_header 
  nkibz=Xk%nibz
  !
- call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=LOG,ID=ID)
+ call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=REP,ID=ID)
  i_err=io_Double_Grid(Xen,Xk,ID)
  !
  ! CLEAN
  !========
  !
- call E_reset(FineGd_E)
  call bz_samp_reset(FineGd_k)
  call k_ibz2bz(Xk,'d',.true.)
  !...Xk/Xen FineGd components
- deallocate(Xen%E_FineGd,Xk%FGibz%k_map,Xk%FGbz%k_map,Xk%FGibz%N_mapped,Xk%FGbz%N_mapped)
+ deallocate(Xen%E_FineGd,Xk%FGibz%k_range,Xk%FGbz%k_range,Xk%FGibz%N_mapped,Xk%FGbz%N_mapped)
  !
 end subroutine

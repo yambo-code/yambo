@@ -30,6 +30,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  use vec_operate,         ONLY:c2a
  !
 #include<memory.h>
+ !
  integer                     :: err
  type(bz_samp),intent(inout) :: Xk
  integer,      intent(in)    :: nkpoint_f(3)
@@ -112,8 +113,8 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  !
  ! prepare Double Grid quantities
  !
- YAMBO_ALLOC(Xk%FGbz%k_map,(Xk%nbz, npts_around_coarse))
- Xk%FGbz%k_map = 0
+ YAMBO_ALLOC(Xk%FGbz%k_range,(Xk%nbz, npts_around_coarse))
+ Xk%FGbz%k_range = 0
  YAMBO_ALLOC(Xk%weights_ipol,(npts_around_coarse))
  Xk%weights_ipol = 0.0_SP
  !
@@ -160,7 +161,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
                nz_period = (modulo(intvz-1, nkpoint_c(3)))* nstep_f(3) + nz
                ! 
                ii = ii + 1
-               Xk%FGbz%k_map(ii_c,ii) = sub2ind(nkpoint_f, nx_period, ny_period, nz_period)
+               Xk%FGbz%k_range(ii_c,ii) = sub2ind(nkpoint_f, nx_period, ny_period, nz_period)
                call live_timing(steps=1)
              end do
            end do

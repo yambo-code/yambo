@@ -23,7 +23,7 @@
 !
 module electrons
  !
- use pars,  ONLY:SP,IP
+ use pars,  ONLY:SP,IP,rZERO
  !
 #include<memory.h>
  !
@@ -59,6 +59,18 @@ module electrons
  real(SP)                 :: Orbital_magn(3)
  real(SP)                 :: Itinerant_magn(3)
  !
+ type E_fine_grid
+   integer              :: nk
+   integer              :: nb
+   real(SP), allocatable:: E(:,:,:)
+   real(SP), allocatable:: W(:,:,:)
+   real(SP), allocatable:: f(:,:,:)
+   real(SP), allocatable:: Z(:,:,:)
+   real(SP), allocatable:: df(:,:,:)
+   integer , allocatable:: k_range(:,:)
+   integer,  allocatable:: k_map(:)
+ end type E_fine_grid
+ !
  type levels
    !
    integer         :: nb
@@ -90,6 +102,8 @@ module electrons
    complex(SP),allocatable :: GreenF(:,:,:,:)     
    ! 
    ! Fine grid energy and k-points grid
+   !
+   type (E_fine_grid) :: FG_E
    !   
    integer             :: nb_FineGd
    integer             :: nk_FineGd
@@ -98,6 +112,8 @@ module electrons
    real(SP),   allocatable :: f_FineGd(:,:,:)        
    !real(SP),   allocatable :: Z_FineGd(:,:,:)
    real(SP),   allocatable :: df_FineGd(:,:,:)       
+   integer ,   allocatable :: k_range_FineGd(:,:)
+   integer,    allocatable :: k_map_FineGd(:)
    !
    ! Perturbative SOC
    !
@@ -183,9 +199,13 @@ module electrons
        YAMBO_ALLOC(Eo%E_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
        YAMBO_ALLOC(Eo%W_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
        YAMBO_ALLOC(Eo%f_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
+       YAMBO_ALLOC(Eo%k_range_FineGd,(Eo%nk,2))
+       YAMBO_ALLOC(Eo%k_map_FineGd,(Eo%nk_FineGd))
        Eo%E_FineGd=Ei%E_FineGd
        Eo%W_FineGd=Ei%W_FineGd
        Eo%f_FineGd=Ei%f_FineGd
+       Eo%k_map_FineGd=Ei%k_map_FineGd
+       Eo%k_range_FineGd=Ei%k_range_FineGd
        if(allocated(Ei%df_FineGd)) then
          YAMBO_ALLOC(Eo%df_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
          Eo%df_FineGd=Ei%df_FineGd
@@ -236,6 +256,25 @@ module electrons
      !
    end subroutine
    !
+   subroutine E_FineGd_components_alloc(E)
+     !
+     type(levels)::E
+     !
+     YAMBO_ALLOC(E%E_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
+     YAMBO_ALLOC(E%W_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
+     YAMBO_ALLOC(E%f_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
+     YAMBO_ALLOC(E%df_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
+     YAMBO_ALLOC(E%k_range_FineGd,(E%nk,2))
+     YAMBO_ALLOC(E%k_map_FineGd,(E%nk_FineGd))
+     E%E_FineGd=rZERO
+     E%W_FineGd=rZERO
+     E%f_FineGd=rZERO
+     E%df_FineGd=rZERO
+     E%k_range_FineGd=0
+     E%k_map_FineGd=0
+     !
+   end subroutine
+   !
    subroutine E_FineGd_components_reset(E,FULL_RESET)
      !
      type(levels)::E
@@ -246,6 +285,8 @@ module electrons
      !
      if (.not.FULL_RESET) return
      !
+     YAMBO_FREE(E%k_range_FineGd)
+     YAMBO_FREE(E%k_map_FineGd)
      YAMBO_FREE(E%E_FineGd)
      YAMBO_FREE(E%W_FineGd)
      YAMBO_FREE(E%f_FineGd)

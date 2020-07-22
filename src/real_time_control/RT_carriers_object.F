@@ -78,7 +78,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        RT%kpt(RT_ibz_coo(i_k,1),:)    = K%pt(i_k,:)
        RT%k_weight(RT_ibz_coo(i_k,1)) = K%weights(i_k)
        if(     l_RT_uses_E_FineGd) then
-         RT%kpt(RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),:)  = K%FGibz%pt(K%FGibz%k_map(1,i_k):K%FGibz%k_map(2,i_k),:)
+         RT%kpt(RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),:)  = K%FGibz%pt(K%FGibz%k_range(i_k,1):K%FGibz%k_range(i_k,2),:)
          RT%k_weight(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2)) = K%weights(i_k)/real(RT_Nk_ibz(i_k),SP)        
        endif
      enddo

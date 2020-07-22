@@ -32,9 +32,6 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  use electrons,         ONLY:levels
  use interpolate,       ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells
  use interpolate_tools, ONLY:get_ID
-#if defined _RT
- use real_time,         ONLY:RT_ibz_coo
-#endif
  !
 #include<memory.h>
  !
@@ -49,7 +46,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  ! Work Space
  !
  real(SP), allocatable :: RDATA(:,:)
- integer               :: inpdim(2),i1,i2,ik,Nk_local
+ integer               :: inpdim(2),i1,i2,ik,Nk_local,ik_fg,iE_fg
  !
  call get_ID(ID)
  !
@@ -112,8 +109,10 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
     if(allocated(E%E_FineGd)) then
       do i1=1,inpdim(2)
         do ik=1,k%nibz
-          RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) =&
-          &             E%E_FineGd(1:inpdim(1),k%FGibz%k_map(ik,1):k%FGibz%k_map(ik,2),i1)
+          do ik_fg=k%FGibz%k_range(ik,1),k%FGibz%k_range(ik,2)
+            iE_fg=k%GFibz%E_map(ik_fg)
+            RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),ik_fg)=E%E_FineGd(1:inpdim(1),iE_fg,i1)
+          enddo
         enddo
       enddo 
     else

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
+subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k)
  !
  use pars,                ONLY:SP
  use units,               ONLY:HA2EV
@@ -33,7 +33,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
  use com,                 ONLY:msg
  use YPPm,                ONLY:BZ_FineGd_nkpts_to_use,FineGd_DB1_paths,MAX_FineGd_DBs,n_FineGd_DBs
- use electrons,           ONLY:levels,default_nel,n_bands,n_sp_pol,E_reset
+ use electrons,           ONLY:levels,default_nel,n_bands,n_sp_pol,E_reset,E_FineGd_components_alloc
  use IO_m,                ONLY:REP
  !
  implicit none
@@ -41,14 +41,14 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
  type(bz_samp), intent(in)     :: Xk
  type(levels),  intent(inout)  :: Xen
  type(bz_samp), intent(out)    :: FineGd_k
- type(levels),  intent(out)    :: FineGd_E
  !
  ! Work Space
  !
  real(SP)     ::rand_k(BZ_FineGd_nkpts_to_use+1,3),a_save(3,3),alat_save(3),&
-&               gap(2),tmp_zero(3),ib,ik
- integer      ::i1,ik_now,ik_ref
+&               gap(2),tmp_zero(3)
+ integer      ::i1,ik_now,ik_ref,ib,ik
  logical      ::l_skip_check
+ type(levels)          :: FineGd_E
  real(SP), allocatable :: rand_E(:,:,:)
  !
  ! BZ DB1 I/O
@@ -208,15 +208,17 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
    if (.not.l_skip_check) call   error(" A consistent X grid k-point was not found among the Double Grid list")
  endif
  !
- ! Fill the Energy levels
+ ! Transfer to the Energy levels
  !
  Xen%nb_FineGd=FineGd_E%nb
  Xen%nk_FineGd=FineGd_E%nk
- allocate(Xen%E_FineGd(Xen%nb_FineGd,Xen%nk_FineGd,n_sp_pol))
+ call E_FineGd_components_alloc(Xen)
  do ib=1,FineGd_E%nb
    do ik=1,FineGd_E%nk
      Xen%E_FineGd(ib,ik,:) =FineGd_E%E(ib,ik,:)
    enddo
  enddo
+ !
+ call E_reset(FineGd_E)
  !
 end subroutine

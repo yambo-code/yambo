@@ -23,7 +23,7 @@
 !
 integer function io_Double_Grid(E,Xk,ID)
  !
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels,E_FineGd_components_alloc
  use R_lattice,      ONLY:bz_samp,BZ_FineGd_mode,bz_samp_FineGd_alloc
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,ver_is_gt_or_eq,write_is_on,&
@@ -77,13 +77,17 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Eigenvalues
  !
  if (read_is_on(ID)) then
-   YAMBO_ALLOC(E%E_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
-   YAMBO_ALLOC(E%W_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
-   YAMBO_ALLOC(E%f_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
+   call E_FineGd_components_alloc(E)
  endif
  !
  call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%E_FineGd) ) 
  call io_bulk(ID, R3=E%E_FineGd )
+ !
+ call io_bulk(ID, VAR="E_K_MAP", VAR_SZ=shape(E%k_map_FineGd) ) 
+ call io_bulk(ID, I1=E%k_map_FineGd )
+ !
+ call io_bulk(ID, VAR="E_K_RANGE", VAR_SZ=shape(E%k_range_FineGd) ) 
+ call io_bulk(ID, I2=E%k_range_FineGd )
  !
  ! Kpts
  !
@@ -120,11 +124,11 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Block table
  !
- call io_bulk(ID, VAR="K_MAP_IBZ", VAR_SZ=shape(Xk%FGibz%k_map) ) 
- call io_bulk(ID, I2=Xk%FGibz%k_map )
+ call io_bulk(ID, VAR="K_RANGE_IBZ", VAR_SZ=shape(Xk%FGibz%k_range) ) 
+ call io_bulk(ID, I2=Xk%FGibz%k_range )
  !
- call io_bulk(ID, VAR="K_MAP_BZ", VAR_SZ=shape(Xk%FGbz%k_map) ) 
- call io_bulk(ID, I2=Xk%FGbz%k_map )
+ call io_bulk(ID, VAR="K_RANGE_BZ", VAR_SZ=shape(Xk%FGbz%k_range) ) 
+ call io_bulk(ID, I2=Xk%FGbz%k_range )
  !
 1 call io_disconnect(ID=ID)
  !

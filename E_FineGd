@@ -3,22 +3,6 @@
 ./src/real_time_control/RT_interpolation.F:      if (HAS_DBGD) E%E_FineGd(nb(1):nb_max_FineGd,:,:)= &
 ./src/real_time_control/RT_k_grid.F:&                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_FineGd,RT_bands,RT_nk
 ./src/real_time_control/RT_average_operator.F: use real_time,      ONLY:RT_Nk_ibz,RT_ibz_coo,l_RT_uses_E_FineGd,&
-./src/setup/setup.F: if (En%nb_FineGd>0.and.allocated(en%E_FineGd)) then
-./src/common/OCCUPATIONS_Extend.F: ! Note that to check if the Double Grid is present the Xe%E_FineGd pointer
-./src/common/OCCUPATIONS_Fermi.F: ! If %E_FineGd is associated I simply extend the %E occupations to %E_FineGd
 ./src/real_time_lifetimes/RT_Coulomb_relaxation.F:&                          l_RT_uses_E_FineGd,RT_E_and_k,&
 ./src/real_time_common/RT_start_and_restart.F:             Energy    = E%E_FineGd(ib,ik_FineGd,1)
 ./src/real_time_common/RT_initialize.F:&                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_FineGd,DbGd_EE_Nk_table,    &
-./src/parallel/PARALLEL_global_Real_Time.F: use real_time,     ONLY:RT_bands,l_RT_uses_E_FineGd,RT_nk
-./src/interpolate/INTERPOLATION_coefficients.F:    if(allocated(E%E_FineGd)) then
-./src/interpolate/INTERPOLATION_driver_do.F:       YAMBO_ALLOC(OUT_E%E_FineGd,(n(1):n(2),nk2,dimI))
-./src/pol_function/X_GreenF_analytical.F:     En1       = Xen%E_FineGd(ic,ik_FineGd,i_spin)
-./src/xc_functionals/el_density_of_states.F:&                               Fermi_fnc_derivative(Xen%E_FineGd(ib,ik_fg,i_sp_pol)-dos_E,DOS_broadening)
-./src/real_time_el-ph/RT_ELPH_CCA_Kernel.F:&                         l_RT_uses_E_FineGd,RT_occupations_locked,RT_E_and_k,&
-./src/real_time_hamiltonian/RT_Hamiltonian_diagonalize.F:&                         l_RT_uses_E_FineGd,l_RT_update_Energies,l_RT_rotate_DM,&
-./src/modules/mod_electrons.F:   real(SP),   allocatable :: E_FineGd(:,:,:)        
-./src/io/variables_RT_static.F:&                         l_RT_uses_E_FineGd,RT_life_extrap_times_INPUT,&
-./src/io/io_Double_Grid.F:   YAMBO_ALLOC(E%E_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
-./src/qp_control/QP_apply_the_ACTION.F:       if(allocated(E%E_FineGd).and.ib<=E%nb_FineGd) then
-./src/qp_control/QP_apply.F:   if (allocated(en%E_FineGd)) call QP_apply_gap_report(en,"FineGd")
-./src/qp_control/QP_apply_interpolate_QP.F:         if(allocated(en%E_FineGd)) then

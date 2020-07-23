@@ -27,9 +27,9 @@ subroutine YPP_SET_defaults()
                           WF_multiplier,SOC_split,BANDS_bands,BANDS_steps,&
 &                         coo_in,coo_out,DOS_E_steps,INTERP_grid ,l_amplitude,l_bands,l_current,l_density  ,&
 &                         l_dos,l_exc_wf   ,l_mag,l_norm_to_one,l_sort,l_sp_wf,l_spin,l_wannier,mag_dir    ,&
-&                         N_path_pts,ncell ,ord_dgrid_ipol ,output_fname,p_dir,p_format   ,perturbative_SOC_path,&
+&                         N_path_pts,ncell ,output_fname,p_dir,p_format   ,perturbative_SOC_path,&
 &                         plot_title,PtsPath,seed_name,SOC_bands_buffer,SOC_bands_to_map,state_ctl ,V_value,&
-&                         w90_fname,wannier_bands,WF_ref,what_to_write,SP,HA2EV,E_field,Nel_fac,DOS_bands,  &
+&                         WF_ref,what_to_write,SP,HA2EV,E_field,Nel_fac,DOS_bands,  &
 &                         BSiq,l_PROJECT_atom,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,&
 &                         EXCITON_Res_treshold,EXCITON_E_treshold,l_PROJECT_line,l_PROJECT_plane
  use YPP_symm,       ONLY:wf_ng_cut
@@ -204,12 +204,6 @@ subroutine YPP_SET_defaults()
  SOC_bands_to_map=(/ 1, n_bands /)
  SOC_bands_buffer=1
  SOC_split=0.1_SP/HA2EV
- !
- ! BXSF interpolation
- !
- w90_fname="./w90.bxsf"
- wannier_bands=(/1,n_bands/)
- ord_dgrid_ipol = 0
  !
  ! GPL_EXCLUDE_START
  !

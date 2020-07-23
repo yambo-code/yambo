@@ -252,13 +252,6 @@ module YPPm
  !
  logical  :: l_mean_potential
  !
- ! Wannier bands
- !
- logical           :: l_bxsf
- character(lchlen) :: w90_fname
- integer           :: wannier_bands(2)   ! Bands Range
- integer           :: ord_dgrid_ipol     ! order of interpolation using double grid
- !
  ! Reduce Symmetries
  !
  logical     :: l_fix_syms

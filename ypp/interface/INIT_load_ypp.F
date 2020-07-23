@@ -37,9 +37,9 @@ subroutine INIT_ypp_load(defs)
 &                        BZ_FineGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
 &                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,PROJECT_path,QP_DB_to_expand,&
 &                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
-&                        INTERP_grid,mag_dir,N_path_pts,ncell,ord_dgrid_ipol,p_dir,p_format,PDOS_atoms,&
+&                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,&
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
-&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,w90_fname,wannier_bands,&
+&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,&
 &                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_depth,PROJECT_steps,PROJECT_threshold
  use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
@@ -321,12 +321,6 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'bands_to_map',"Number of bands to map",SOC_bands_to_map)
  call it(defs,'bands_buffer',"Bands to be used only as a buffer",SOC_bands_buffer)
  call it(defs,'SOC_splitting',"SOC splitting between the levels",SOC_split,E_unit) 
- !
- ! Wannier bands
- !
- call it(defs,'W90_fname','Name of w90 input file',w90_fname)
- call it(defs,'WannBnds','Range of interpolated bands, internally start from 1',wannier_bands)
- call it(defs,'DgridOrd','Order of interpolation with double grid',ord_dgrid_ipol)
  !
  ! GPL_EXCLUDE_START
  !

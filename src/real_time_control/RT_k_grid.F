@@ -73,7 +73,7 @@ subroutine RT_k_grid(E,k,q)
      DbGd_EE_Nk_table=1
    endif
    do ik=1,k%nibz
-     RTbz%p(ik,:)=k%pt(ik,:)
+     RTbz%pt(ik,:)=k%pt(ik,:)
      RTbz%k_range(ik,:)=ik
      RTbz%E_map(ik)=ik
      RTbz%k_map(ik)=ik

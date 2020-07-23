@@ -175,7 +175,7 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,Xen)
      FG%E_map(i_fg)=i_fg_E
      !
      if (l_BZ_FG ) FG%weights(i_fg) =1./real(FG%N,SP)
-     if (l_IBZ_FG) FG%weights(i_fg) =FineGd_k%weights(i_fg_E)
+     if (l_IBZ_FG) FG%weights(i_fg) =Xk%weights(ik)/real(FG%N_mapped(ik),SP)
      !
      call live_timing(steps=1)
      !

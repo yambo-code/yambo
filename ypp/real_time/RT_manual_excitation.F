@@ -55,7 +55,7 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
  ! Possibility to pump by hand one or more electrons up
  !======================================================
  do_kpt      =.FALSE.
- RT_uses_Fine_Grid=k%FGbz%N>0
+ RT_uses_Fine_Grid=k%FGibz%N>0
  !
  ! Shift energy with respect to VBM/CBm
  !
@@ -216,7 +216,7 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
    !
    if (Pump_level(ib,ik)>0) then
      RT_carriers%delta_f(i_RT)= spin_occ*occupation
-     delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*k_weights(ik)*2._SP/real(RTbz%N_mapped(ik_cgd),SP)
+     delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*2._SP*RTbz%weights(ik)
    else if (Pump_level(ib,ik)<0) then
      RT_carriers%delta_f(i_RT)=-spin_occ*occupation
    endif

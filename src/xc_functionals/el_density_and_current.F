@@ -143,9 +143,8 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
        if(present(bands)) then
          f_occ=0._SP
          do ik_RT=RTbz%k_range(ik,1),RTbz%k_range(ik,2)
-           f_occ=f_occ+RT_delta_occupations(ib,ik_RT)
+           f_occ=f_occ+RT_delta_occupations(ib,ik_RT)*RTbz%weights(ik_RT)
          enddo
-         f_occ=f_occ/real(RTbz%N_mapped(ik),SP)
        endif
 #endif
 !GPL_EXCLUDE_END

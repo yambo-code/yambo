@@ -39,7 +39,7 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,Xen)
  ! Work Space
  !
  integer              :: ik_near,i_fg,i_c,N_coarse,is,ik,i_fg_k,i_fg_E,N_fine_max
- integer, allocatable :: TMP_map(:),TMP_table_mapped(:,:),N_duplicate(:),N_per_BZ_point(:)
+ integer, allocatable :: TMP_map(:),TMP_table_mapped(:,:),N_duplicate,N_per_BZ_point(:)
  logical              :: l_BZ_FG,l_IBZ_FG,l_BZ_CG,l_IBZ_CG,l_E_FG
  !
  ! Initial mapping
@@ -105,19 +105,16 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,Xen)
  !
  ! Number of points in each zone 
  !===============================
- allocate(N_duplicate(N_coarse))
  FG%N_mapped=0
  N_duplicate=0
  do i_fg=1,N_fine_max
    if (TMP_map(i_fg)==0) cycle
    ik_near=iabs(TMP_map(i_fg))
    if (TMP_map(i_fg)>0) FG%N_mapped(ik_near)=FG%N_mapped(ik_near)+1
-   if (TMP_map(i_fg)<0) N_duplicate(ik_near)=N_duplicate(ik_near)+1
+   if (TMP_map(i_fg)<0) N_duplicate=N_duplicate+1
  enddo
  !
- FG%N_duplicate=sum(N_duplicate)
- !
- call msg('s',':: '//zone//' Duplicated points                   :',FG%N_duplicate)
+ call msg('s',':: '//zone//' Duplicated points                   :',N_duplicate)
  call msg('s',':: '//zone//' Blocks filling (excl. coarse grid)  :',(/minval(FG%N_mapped),maxval(FG%N_mapped)/))
  !
  ! Table(s)
@@ -126,7 +123,6 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,Xen)
  TMP_table_mapped=0
  !
  FG%N_mapped=0
- N_duplicate=0
  do i_fg=1,N_fine_max
    if (TMP_map(i_fg)==0) cycle
    ik_near=iabs(TMP_map(i_fg))
@@ -190,6 +186,6 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,Xen)
  !
  call live_timing()
  !
- deallocate(TMP_map,N_duplicate,TMP_table_mapped,N_per_BZ_point)
+ deallocate(TMP_map,TMP_table_mapped,N_per_BZ_point)
  !
 end subroutine

@@ -57,7 +57,6 @@ module R_lattice
  type bz_fine_grid
    character(schlen)    :: FG_mode  ! "expanded/unexpanded/bare"
    integer              :: N
-   integer              :: N_duplicate
    real(SP), allocatable:: pt(:,:)
    integer , allocatable:: N_mapped(:)  ! For each IBZ/BZ kpt, n° of FG k associated
    integer , allocatable:: k_range(:,:) ! For each IBZ/BZ kpt, lower/upper range of points associated in the FG
@@ -242,7 +241,6 @@ module R_lattice
      YAMBO_ALLOC(FG%k_map,(FG%N))
      YAMBO_ALLOC(FG%k_range,(N_coarse,2))
      YAMBO_ALLOC(FG%N_mapped,(N_coarse))
-     FG%N_duplicate=0
      FG%pt=0._SP
      FG%weights=0._SP
      FG%E_map=0
@@ -253,7 +251,6 @@ module R_lattice
    subroutine bz_samp_FineGd_reset(FG)
      type(bz_fine_grid)::FG
      FG%N=0
-     FG%N_duplicate=0
      FG%FG_mode="none"
      YAMBO_FREE(FG%pt)
      YAMBO_FREE(FG%weights)
@@ -329,7 +326,6 @@ module R_lattice
      integer,            intent(in)  ::N_coarse
      !
      FGo%N =FGi%N
-     FGo%N_duplicate=FGi%N_duplicate
      FGo%FG_mode=FGi%FG_mode
      !
      if (allocated(FGi%pt)) then

@@ -126,7 +126,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  elseif(present(R2D)) then
    !
    do i1=1,inpdim(2)
-     RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),1:Nk_local)            = R2D(1:inpdim(1),1:Nk_local,i1)
+     RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),1:Nk_local)   = R2D(1:inpdim(1),1:Nk_local,i1)
    enddo
    !
  elseif(present(C2D)) then

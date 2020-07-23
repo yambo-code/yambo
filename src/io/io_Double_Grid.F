@@ -70,14 +70,12 @@ integer function io_Double_Grid(E,Xk,ID)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
  !
- call io_elemental(ID,VAR="PARS",VAR_SZ=7,MENU=0)
+ call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
  call io_elemental(ID,I0=E%FG%nb,         VAR=' Bands                           ')
  call io_elemental(ID,I0=E%FG%nk,         VAR=' Number of points (fine)         in the IBZ (E)')
  call io_elemental(ID,I0=Xk%FGbare%N)
  call io_elemental(ID,I0=Xk%FGibz%N,          VAR=' Number of points (fine+coarse)  in the IBZ (k)')
  call io_elemental(ID,I0=Xk%FGbz%N,           VAR=' Number                          in the  BZ (k)')
- call io_elemental(ID,I0=Xk%FGibz%N_duplicate,VAR=' Number of duplic. pts (fine)        in the IBZ')
- call io_elemental(ID,I0=Xk%FGbz%N_duplicate, VAR=' Number                              in the  BZ')
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  ! Eigenvalues

@@ -281,10 +281,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call section('=','Double K-grid')
    !=======================================
    !
-   call msg('r', 'Symmetry Mode                         ',BZ_FineGd_mode)
-   call msg('r', 'Kpts (IBZ): Coarse,Fine,Duplicated    ',(/k%nibz,k%FGibz%N,k%FGibz%N_duplicate/))
-   call msg('r', 'Kpts ( BZ): Coarse,Fine,Duplicated    ',(/k%nbz, k%FGbz%N, k%FGbz%N_duplicate/))
-   call msg('r', 'Bands                                 ',en%FG%nb)
+   call msg('r', 'Symmetry Mode           ',BZ_FineGd_mode)
+   call msg('r', 'Kpts (IBZ): Coarse,Fine ',(/k%nibz,k%FGibz%N/))
+   call msg('r', 'Kpts ( BZ): Coarse,Fine ',(/k%nbz, k%FGbz%N/))
+   call msg('r', 'Bands                   ',en%FG%nb)
    !
  endif
  !

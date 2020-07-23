@@ -46,9 +46,9 @@ subroutine RT_start_and_restart(E,k,q)
 &                         CACHE_OBS_INTERVAL_time,RT_control_free,RT_control_alloc
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
-&                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,RT_E_and_k,&
+&                         l_NE_with_fields,XC0,HARTREE0,RT_k_FG,NE_time,RT_E_and_k,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
-&                         Gr_kind,l_RT_is_WFfree,RT_ibz_dupl,RT_TIME_status,&
+&                         Gr_kind,l_RT_is_WFfree,RT_TIME_status,&
 &                         RT_E_occupations_reference,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
 &                         RT_eh_en,G_MEM_steps,RT_bands,&
@@ -366,7 +366,7 @@ subroutine RT_start_and_restart(E,k,q)
      !
      implicit none
      !
-     integer :: ik_RT_DbGd,ik_FineGd,ib
+     integer :: ik_RT_DbGd,iE_k,ib
      real(SP):: Energy,f_occ,f_occ_ref,Width,kpt(3)
      !
      ! Defined from occupations %f
@@ -376,21 +376,20 @@ subroutine RT_start_and_restart(E,k,q)
      do ib=RT_bands(1),RT_bands(2)
        do ik=1,k%nibz
          !
-         do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+         do ik_RT_DbGd=RT_k_FG%k_range(ik,1),RT_k_FG%k_range(ik,2)
            !
-           if (ik_RT_DbGd/=RT_ibz_coo(ik,1)) then
+           if (ik_RT_DbGd/=RT_k_FG%k_range(ik,1)) then
+             iE_k=RT_k_FG%E_map(ik_RT_DbGd)
              !
-             ik_FineGd=ik_RT_DbGd-ik+sum(RT_ibz_dupl(:ik))
+             if (allocated(E%W))  E%FG%W(ib,iE_k,1)     = abs(E%W(ib,ik,1))
              !
-             if (allocated(E%W))  E%FG%W(ib,ik_FineGd,1)     = abs(E%W(ib,ik,1))
-             !
-             kpt       = k%FGibz%pt(ik_FineGd,:)
-             Energy    = E%FG%E(ib,ik_FineGd,1)
-             f_occ     = E%FG%f(ib,ik_FineGd,1)
+             kpt       = k%FGibz%pt(iE_k,:)
+             Energy    = E%FG%E(ib,iE_k,1)
+             f_occ     = E%FG%f(ib,iE_k,1)
              f_occ_ref = f_occ
              Width     = 0._SP
-             if (allocated(E%fo)) f_occ_ref = E%FG%f(ib,ik_FineGd,1)-E%FG%df(ib,ik_FineGd,1)
-             if (allocated(E%W))  Width     = abs(E%FG%W(ib,ik_FineGd,1))
+             if (allocated(E%fo)) f_occ_ref = E%FG%f(ib,iE_k,1)-E%FG%df(ib,iE_k,1)
+             if (allocated(E%W))  Width     = abs(E%FG%W(ib,iE_k,1))
            else
              kpt       = k%pt(ik,:)
              Energy    = E%E(ib,ik,1)
@@ -399,7 +398,6 @@ subroutine RT_start_and_restart(E,k,q)
              Width     = 0._SP
              if (allocated(E%fo)) f_occ_ref = E%fo(ib,ik,1)
              if (allocated(E%W))  Width     = abs(E%W(ib,ik,1))
-             !
            endif
            !
            RT_E_and_k%E(ib,ik_RT_DbGd,1) = Energy
@@ -431,7 +429,7 @@ subroutine RT_start_and_restart(E,k,q)
      implicit none
      !
      real(SP):: En
-     integer :: ik,ik_RT_DbGd,ik_FineGd,ib,Nk(2)
+     integer :: ik,ik_RT_DbGd,iE_k,ib,Nk(2)
      !
      ! Occupations are defined from G_lesser and G_lesser_reference
      !
@@ -451,10 +449,10 @@ subroutine RT_start_and_restart(E,k,q)
      if (l_RT_relax_time_approx) then
        do ib=RT_bands(1),RT_bands(2)
          do ik=1,k%nibz
-           do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-             if (ik_RT_DbGd/=RT_ibz_coo(ik,1)) then
-               ik_FineGd=ik_RT_DbGd-ik+sum(RT_ibz_dupl(:ik))
-               En=E%FG%E(ib,ik_FineGd,1)
+           do ik_RT_DbGd=RT_k_FG%k_range(ik,1),RT_k_FG%k_range(ik,2)
+             if (ik_RT_DbGd/=RT_k_FG%k_range(ik,1)) then
+               iE_k=RT_k_FG%E_map(ik_RT_DbGd)
+               En=E%FG%E(ib,iE_k,1)
              else 
                En=E%E(ib,ik,1)
              endif

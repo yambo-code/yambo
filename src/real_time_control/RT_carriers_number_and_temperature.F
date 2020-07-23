@@ -27,7 +27,7 @@ subroutine RT_carriers_number(en,k,Ncarr)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use RT_control,     ONLY:NE_i_start_time
- use real_time,      ONLY:RT_ibz_coo,RT_Nk_ibz,NE_i_time,RT_E_and_k,       &
+ use real_time,      ONLY:RT_k_FG,NE_i_time,RT_E_and_k,&
 &                         RT_E_occupations,RT_H_occupations,RT_bands,RT_delta_occupations
  !
  implicit none
@@ -38,8 +38,8 @@ subroutine RT_carriers_number(en,k,Ncarr)
  !
  ! Workspace
  !
- integer     :: ib,ik,ik_RT,ik_E
- real(SP)    :: tmp_E,VALUE_tmp(2)
+ integer     :: ib,ik,ik_RT
+ real(SP)    :: VALUE_tmp(2)
  !
  ! Electrons and holes number
  !
@@ -48,7 +48,7 @@ subroutine RT_carriers_number(en,k,Ncarr)
  do ik=1,en%nk
    do ib=RT_bands(1),RT_bands(2)
      VALUE_tmp=0._SP
-     do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+     do ik_RT=RT_k_FG%k_range(ik,1),RT_k_FG%k_range(ik,2)
        if ( RT_E_and_k%E(ib,ik_RT,1)<=0._SP ) then
          if(NE_i_time==NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib,ik_RT)
          if(NE_i_time/=NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)-RT_delta_occupations(ib,ik_RT)
@@ -56,8 +56,9 @@ subroutine RT_carriers_number(en,k,Ncarr)
          if(NE_i_time==NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib,ik_RT)
          if(NE_i_time/=NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_delta_occupations(ib,ik_RT)
        endif
+       VALUE_tmp=VALUE_tmp*RT_k_FG%weights(ik_RT)
      enddo
-     Ncarr(2:3)=Ncarr(2:3)+VALUE_tmp*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
+     Ncarr(2:3)=Ncarr(2:3)+VALUE_tmp
    enddo
  enddo
  !

@@ -25,8 +25,7 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
 &                              V_MATRIX,PV_MATRIX,G,k,en,TRANS,Double_Grid,nK_mem)
  !
  use pars,           ONLY:SP,cI,cZERO
- use real_time,      ONLY:RT_Nk_ibz,RT_ibz_coo,l_RT_uses_E_FineGd,&
-&                         RT_bands,RT_nbands,RT_ibz_dupl
+ use real_time,      ONLY:RT_k_FG,l_RT_uses_E_FineGd,RT_bands,RT_nbands
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_n_states
  use electrons,      ONLY:n_sp_pol,n_spin,levels
@@ -92,10 +91,10 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
      call make_Hk_matrix(ik_ibz,i_sp_pol)
      !
      do i_cmp=1,N_V
-       do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
+       do ik=RT_k_FG%k_range(ik_ibz,1),RT_k_FG%k_range(ik_ibz,2)
          !
-         if(l_DbGd_energy.and.RT_ibz_coo(ik_ibz,1)/=ik) then
-           iE_fg=ik-ik_ibz+sum(RT_ibz_dupl(:ik_ibz))
+         if(l_DbGd_energy.and.RT_k_FG%k_range(ik_ibz,1)/=ik) then
+           iE_fg=RT_k_FG%E_map(ik)
            do ib=RT_bands(1),RT_bands(2)
              Hk(1,ib,ib)=Hk_tmp(ib,ib)-en%E(ib,ik_ibz,i_sp_pol)+en%FG%E(ib,iE_fg,i_sp_pol)
              do ibp=ib+1,RT_bands(2)
@@ -103,8 +102,8 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
                Hk(1,ibp,ib)=Hk_tmp(ibp,ib)
              enddo
            enddo
-         else if(l_DbGd_dipole.and.RT_ibz_coo(ik_ibz,1)/=ik) then
-           iE_fg=ik-ik_ibz+sum(RT_ibz_dupl(:ik_ibz))
+         else if(l_DbGd_dipole.and.RT_k_FG%k_range(ik_ibz,1)/=ik) then
+           iE_fg=RT_k_FG%E_map(ik)
            do ib=RT_bands(1),RT_bands(2)
              Hk(i_cmp,ib,ib)=Hk_vec_tmp(i_cmp,ib,ib)
              do ibp=ib+1,RT_bands(2)
@@ -123,12 +122,12 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
            if(N_V> 1) Hk(i_cmp,:,:)=Hk_vec_tmp(i_cmp,:,:)
          endif 
          !
-         VALUE_tmp(i_cmp)=VALUE_tmp(i_cmp)-cI*Vstar_dot_V_omp(RT_bands2,Hk(i_cmp,:,:),G(:,:,ik))
+         VALUE_tmp(i_cmp)=VALUE_tmp(i_cmp)-cI*Vstar_dot_V_omp(RT_bands2,Hk(i_cmp,:,:),G(:,:,ik))*RT_k_FG%weights(ik)
          !
        enddo
        !
-       if (N_V==1) O_VALUE       =O_VALUE       +VALUE_tmp(i_cmp)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
-       if (N_V> 1) V_VALUE(i_cmp)=V_VALUE(i_cmp)+VALUE_tmp(i_cmp)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+       if (N_V==1) O_VALUE       =O_VALUE       +VALUE_tmp(i_cmp)
+       if (N_V> 1) V_VALUE(i_cmp)=V_VALUE(i_cmp)+VALUE_tmp(i_cmp)
        !
      enddo
      !

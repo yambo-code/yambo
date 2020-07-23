@@ -30,7 +30,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use real_time,      ONLY:RT_E_and_k,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
 &                         REF_lifetime,G_lesser_reference,&
 &                         l_initial_equilibrium,RT_delta_occupations,&
-&                         l_RT_impose_E,l_RT_impose_for_metals,RT_nk,RT_ibz_coo,RT_Nk_ibz,&
+&                         l_RT_impose_E,l_RT_impose_for_metals,RT_nk,RT_k_FG,&
 &                         l_RT_impose_N_dN,RT_bands,RAD_prefactor,l_RT_include_eq_scatt
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait
  !
@@ -48,7 +48,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !     It should be restored
  !real(DP), parameter :: cut_off=0.1_DP  ! 0.1 = 10%
  !
- integer      :: ib,ik,ik_rim,iE_rim,iref
+ integer      :: ib,ik,ik_rim,iref
  real(DP)     :: f0_E,f0_H,df,k_weight,En,Hole_fac,Elec_fac,Hole_fac0,Elec_fac0,GAMMA_h,GAMMA_e,&
 &                dN_dT_h_v,dN_dT_h_c,dN_dT_e_v,dN_dT_e_c,dE_dT_h_v,dE_dT_h_c,dE_dT_e_v,dE_dT_e_c,&
 &                dN0_dT_h_v,dN0_dT_h_c,dN0_dT_e_v,dN0_dT_e_c,dE0_dT_h_v,dE0_dT_h_c,dE0_dT_e_v,dE0_dT_e_c,&
@@ -118,9 +118,9 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     k_weight=real(k%weights(ik),DP)/real(RT_Nk_ibz(ik),DP)
-     !
-     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+     do ik_rim=RT_k_FG%k_range(ik,1),RT_k_FG%k_range(ik,2)
+       !
+       k_weight=RT_k_FG%weights(ik_rim)
        !
        f0_E=real(         aimag(G_lesser_reference(ib,ib,ik_rim)),DP)
        f0_H=real(spin_occ-aimag(G_lesser_reference(ib,ib,ik_rim)),DP)
@@ -279,7 +279,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    !
    if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
    !
-   do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+   do ik_rim=RT_k_FG%k_range(ik,1),RT_k_FG%k_range(ik,2)
      do ib=RT_bands(1),RT_bands(2)
        !
        En=real(RT_E_and_k%E(ib,ik_rim,1),DP)

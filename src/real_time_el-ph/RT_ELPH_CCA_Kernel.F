@@ -32,7 +32,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
 &                         l_RT_uses_E_FineGd,RT_occupations_locked,RT_E_and_k,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_life_delta_occupations,l_initial_equilibrium,q_weight_RT,&
-&                         RT_eh_en,RT_ibz_coo,RT_Nk_ibz,RT_bands
+&                         RT_eh_en,RT_k_FG,RT_bands
  use parallel_m,     ONLY:PAR_IND_B_mat
  !
  implicit none
@@ -74,11 +74,11 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
        !
      endif
      !
-     pre_factor=Gkkp_sq(i_np,i_n)/real(RT_Nk_ibz(ik_m_q))
+     pre_factor=Gkkp_sq(i_np,i_n)/real(RT_k_FG%N_mapped(ik_m_q))
      !
      if( pre_factor==0._SP ) cycle
      !
-     do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+     do ik_rim=RT_k_FG%k_range(ik,1),RT_k_FG%k_range(ik,2)
        !
        if (RT_occupations_locked(i_n,ik_rim)) cycle
        !
@@ -87,7 +87,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
        TMP_Hole_lifetime=rZero
        TMP_Electron_lifetime=rZero
        !
-       do ip_rim=RT_ibz_coo(ik_m_q,1),RT_ibz_coo(ik_m_q,2)
+       do ip_rim=RT_k_FG%k_range(ik_m_q,1),RT_k_FG%k_range(ik_m_q,2)
          !
          if (RT_occupations_locked(i_np,ip_rim)) cycle
          !

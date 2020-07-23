@@ -55,7 +55,7 @@ module R_lattice
  character(schlen)    :: BZ_FineGd_mode="mixed" ! or "unexpanded"/"expanded"
  !
  type bz_fine_grid
-   character(schlen)    :: FG_mode  ! "expanded/unexpanded/bare"
+   character(schlen)    :: FG_mode="none"  ! "expanded/unexpanded/bare"
    integer              :: N
    real(SP), allocatable:: pt(:,:)
    integer , allocatable:: N_mapped(:)  ! For each IBZ/BZ kpt, n° of FG k associated
@@ -235,15 +235,25 @@ module R_lattice
    subroutine bz_samp_FineGd_alloc(FG,N_coarse)
      type(bz_fine_grid)::FG
      integer           ::N_coarse
-     YAMBO_ALLOC(FG%pt,(FG%N,3))
-     YAMBO_ALLOC(FG%weights,(FG%N))
-     YAMBO_ALLOC(FG%E_map,(FG%N))
-     YAMBO_ALLOC(FG%k_map,(FG%N))
-     YAMBO_ALLOC(FG%k_range,(N_coarse,2))
-     YAMBO_ALLOC(FG%N_mapped,(N_coarse))
-     FG%pt=0._SP
+     !
+     if (allocated( FG%k_range )) return
+     !
+     if (FG%N>0) then
+       YAMBO_ALLOC(FG%pt,(FG%N,3))
+       YAMBO_ALLOC(FG%weights,(FG%N))
+       YAMBO_ALLOC(FG%E_map,(FG%N))
+       YAMBO_ALLOC(FG%k_map,(FG%N))
+       FG%pt=0._SP
+     else
+       YAMBO_ALLOC(FG%weights,(N_coarse))
+       YAMBO_ALLOC(FG%E_map,(N_coarse))
+       YAMBO_ALLOC(FG%k_map,(N_coarse))
+     endif
      FG%weights=0._SP
      FG%E_map=0
+     FG%k_map=0
+     YAMBO_ALLOC(FG%k_range,(N_coarse,2))
+     YAMBO_ALLOC(FG%N_mapped,(N_coarse))
      FG%k_range=0
      FG%N_mapped=0
    end subroutine

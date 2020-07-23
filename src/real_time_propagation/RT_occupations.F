@@ -25,7 +25,7 @@ subroutine RT_occupations(dG)
  !
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_G_k_range
- use real_time,      ONLY:RT_all2ibz,RT_E_occupations,&
+ use real_time,      ONLY:RT_k_FG,RT_E_occupations,&
 &                         RT_H_occupations,RT_delta_occupations,RT_bands,RT_nk,RT_nbands,&
 &                         G_lesser_reference,l_RT_rotate_DM
  use hamiltonian,    ONLY:H_rotation
@@ -54,7 +54,7 @@ subroutine RT_occupations(dG)
  !
  do ik=1,RT_nk
    !
-   if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+   if (.not.PAR_IND_Xk_ibz%element_1D(RT_k_FG%k_map(ik)) ) cycle
    !
    if (l_RT_rotate_DM.and.(RT_do_it('OUT').or.RT_do_it('OBS'))) then
      G_rot=G_lesser_reference(:,:,ik)+dG(:,:,ik)

@@ -34,8 +34,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  use RT_control,     ONLY:CARR_RT_IO_t
  use real_time,      ONLY:RT_t,REF_lifetime,E_E_Hole_lifetime,E_E_Electron_lifetime,   &
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Ho_abs_lifetime, &
-&                         E_P_El_abs_lifetime,l_RT_uses_E_FineGd,RT_ibz_coo,RT_ibz_dupl,&
-&                         RT_nk,RT_all2ibz,RT_delta_occupations,RT_Nk_ibz,RT_bands,&
+&                         E_P_El_abs_lifetime,RT_k_FG,&
+&                         RT_nk,RT_delta_occupations,RT_bands,&
 &                         RT_obj_alloc,RT_obj_free,RT_E_and_k,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime
  use hamiltonian,    ONLY:E_reference
@@ -51,7 +51,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  integer,       intent(in)   ,optional :: DB_id
  character(*),  intent(in)   ,optional :: WHAT
  !
- integer  :: i_RT,i_b,i_k,i_k_FineGd,i_k_RT,i_spin
+ integer  :: i_RT,i_b,i_k,iE_fg,i_k_RT,i_spin
  real(SP) :: Hole_lifetime,Elec_lifetime,df_occ,f_occ
  !
  integer           :: VAR_SZ(2),IPOS(2),TMP_SIZE(2)
@@ -75,12 +75,13 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      if (allocated(REF_lifetime)) RT%GAMMA_bare=0._SP
      !
      do i_k=1,K%nibz
-       RT%kpt(RT_ibz_coo(i_k,1),:)    = K%pt(i_k,:)
-       RT%k_weight(RT_ibz_coo(i_k,1)) = K%weights(i_k)
-       if(     l_RT_uses_E_FineGd) then
-         RT%kpt(RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),:)  = K%FGibz%pt(K%FGibz%k_range(i_k,1):K%FGibz%k_range(i_k,2),:)
-         RT%k_weight(RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2)) = K%weights(i_k)/real(RT_Nk_ibz(i_k),SP)        
-       endif
+       i_k_RT=RT_k_FG%k_range(i_k,1)
+       RT%kpt(i_k_RT,:)    = K%pt(i_k,:)
+       RT%k_weight(i_k_RT) = K%weights(i_k)
+       do i_k_RT=RT_k_FG%k_range(i_k,1)+1,RT_k_FG%k_range(i_k,2)
+         RT%kpt(i_k_RT,:)    = K%FGibz%pt(i_k_RT,:)
+         RT%k_weight(i_k_RT) = RT_k_FG%weights( i_k_RT)
+       enddo
      enddo
      !
      call build_RT_table()
@@ -92,11 +93,11 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        i_k_RT =RT%table(i_RT,3)
        i_spin =RT%table(i_RT,4)
        !
-       if(i_k_RT/=RT_ibz_coo(i_k,1)) then
-         i_k_FineGd=i_k_RT-i_k+sum(RT_ibz_dupl(:i_k))
-         RT%E_bare(i_RT)=E_reference%FG%E(i_b,i_k_FineGd,i_spin)
-         if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%FG%f(i_b,i_k_FineGd,i_spin)
-         if(     allocated(E%fo)) RT%f_bare(i_RT)=E%FG%f(i_b,i_k_FineGd,i_spin)-E%FG%df(i_b,i_k_FineGd,i_spin)
+       if(i_k_RT/=RT_k_FG%k_range(i_k,1)) then
+         iE_fg=RT_k_FG%E_map(i_k_RT)
+         RT%E_bare(i_RT)=E_reference%FG%E(i_b,iE_fg,i_spin)
+         if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%FG%f(i_b,iE_fg,i_spin)
+         if(     allocated(E%fo)) RT%f_bare(i_RT)=E%FG%f(i_b,iE_fg,i_spin)-E%FG%df(i_b,iE_fg,i_spin)
        else
          RT%E_bare(i_RT)=E_reference%E(i_b,i_k,i_spin)
          if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%f(i_b,i_k,i_spin)
@@ -354,7 +355,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
            !
            i_RT=i_RT+1
            RT%table(i_RT,1)=i_b
-           RT%table(i_RT,2)=RT_all2ibz(i_k_RT)
+           RT%table(i_RT,2)=RT_k_FG%k_map(i_k_RT)
            RT%table(i_RT,3)=i_k_RT
            RT%table(i_RT,4)=i_spin
            !

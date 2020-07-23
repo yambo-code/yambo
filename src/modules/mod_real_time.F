@@ -27,6 +27,7 @@ module real_time
  use pars,       ONLY:DP,SP,schlen,lchlen,LP
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:QP_SE_NONE
+ use R_lattice,  ONLY:bz_fine_grid
  !
 #include<memory.h>
  !
@@ -149,15 +150,11 @@ module real_time
  logical     :: RT_deph_cv_only
  logical     :: RT_is_statically_dephased=.FALSE.
  logical     :: RT_is_dynamically_dephased=.FALSE.
-
  !
  ! Table pointing to the position of the uniform grid points in the
  ! G_lesser structure
  !
- integer,     allocatable :: RT_ibz_coo(:,:)
- integer,     allocatable :: RT_ibz_dupl(:)
- integer,     allocatable :: RT_all2ibz(:)
- integer,     allocatable :: RT_Nk_ibz(:)
+ type(bz_fine_grid), SAVE :: RT_k_FG
  !
  ! K-points: In case I want to use the G_lesser to define the occupations
  ! of a post-run I need to keep here the number of k-points
@@ -355,6 +352,7 @@ module real_time
    integer  :: nb(2)
    integer  :: nstates
    character(schlen)  :: description
+   !
    integer,    allocatable:: table(:,:)      ! ib,ik_RT,ik,i_spin
    real(SP)   ,allocatable:: kpt(:,:)
    real(SP)   ,allocatable:: k_weight(:)
@@ -635,9 +633,6 @@ module real_time
      call DIP_alloc('P_square')
      call DIP_alloc('DIP_P_spinor')
      !
-     YAMBO_FREE(RT_ibz_coo)
-     YAMBO_FREE(RT_all2ibz)
-     YAMBO_FREE(RT_Nk_ibz)
      YAMBO_FREE(DbGd_EE_scatt_table)
      YAMBO_FREE(E_xc)
      YAMBO_FREE(RT_TIME_status)

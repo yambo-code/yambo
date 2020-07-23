@@ -23,7 +23,8 @@
 !
 module R_lattice
  !
- use pars, ONLY:SP,schlen, IP
+ use pars,        ONLY:SP,schlen, IP
+ use descriptors, ONLY:IO_desc
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -64,6 +65,8 @@ module R_lattice
    integer,  allocatable:: k_map(:)     ! For each FG k, corresponding point in the IBZ/BZ
    real(SP), allocatable:: weights(:)
  end type bz_fine_grid
+ !
+ type(IO_desc)       :: FineGd_desc
  !
  type bz_samp
    !

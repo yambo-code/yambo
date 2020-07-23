@@ -29,6 +29,7 @@ integer function variables_RT_static(ID,what,l_carriers)
  use stderr,         ONLY:intc
  use hamiltonian,    ONLY:H_ref_bands
  use descriptors,    ONLY:IO_desc_reset
+ use R_lattice,      ONLY:FineGd_desc
  use RT_output_m,    ONLY:RT_desc,Gr_desc,n_RT_desc_static
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_extrapolation, &
@@ -112,6 +113,10 @@ integer function variables_RT_static(ID,what,l_carriers)
  call def_variable_elemental(ID,VAR="E-PHOTON_vars",VAR_SZ=1,VAR_KIND=LP+100,MENU=0) 
  call io_variable_elemental(ID,L0=l_elphoton_scatt,&
 &     VAR=" [E-PHOTON] Scattering           ", CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
+ !
+ ! FineGrid descriptors
+ ! 
+ variables_RT_static=io_descriptors(FineGd_desc,"FineGd",ID,.FALSE.)
  !
  ! GPL_EXCLUDE_END
  !

@@ -26,7 +26,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use pars,           ONLY:SP,schlen,zero_dfl,rZERO
  use units,          ONLY:HA2EV,AUT2FS
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset,n_spin
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,FineGd_desc
  use D_lattice,      ONLY:lattice
  use com,            ONLY:msg,of_open_close
  use YPPm,           ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
@@ -218,6 +218,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    !
    call DESC_write('o '//trim(file_name_rt_save),'#',RT_desc)
    call DESC_write('o '//trim(file_name_rt_save),'#',Gr_desc)
+   call DESC_write('o '//trim(file_name_rt_save),'#',FineGd_desc)
    call DESC_write('o '//trim(file_name_rt_save),'#',TIME_STEP_desc)
    !
    call msg('o bands',"#"," ",INDENT=0)

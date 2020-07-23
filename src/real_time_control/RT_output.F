@@ -30,6 +30,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use QP_m,           ONLY:Time_of
  use fields,         ONLY:A_tot,A_ind,A_ext
  use electrons,      ONLY:n_spin,Spin_magn
+ use R_lattice,      ONLY:FineGd_desc
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:STRING_split
  use RT_output_m,    ONLY:N_MAX_RT_o_files,RT_descriptors_dumped,RT_o_file_is_open,&
@@ -142,6 +143,7 @@ subroutine RT_output(what,VALUES,TIME,E)
      !
      call DESC_write('o '//trim(RT_o_file_short(i_f)),'#',RT_desc)
      call DESC_write('o '//trim(RT_o_file_short(i_f)),'#',Gr_desc)
+     call DESC_write('o '//trim(RT_o_file_short(i_f)),'#',FineGd_desc)
      call DESC_write('o '//trim(RT_o_file_short(i_f)),'#',TIME_STEP_desc)
      !
      if (n_spin>1.and.trim(RT_o_file_short(i_f))=="magnetization") then

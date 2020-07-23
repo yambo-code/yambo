@@ -36,7 +36,6 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use LIVE_t,         ONLY:live_timing
- use descriptors,    ONLY:IO_desc_add
  !
 #if defined _ELPH
  use BS_solvers,     ONLY:BSS_uses_GreenF
@@ -262,11 +261,5 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  endif  
  !
  if (iq>BS_q(1)) return
- !
- call IO_desc_add(BSS_desc,kind="s",str=" ",S=" ")
- !
- if (k%FGbz%N>0) then
-   call IO_desc_add(BSS_desc,kind="i",str="[INV] BZ Fine + Coarse Grid points",I=(/k%nbz+k%FGbz%N/))
- endif
  !
 end subroutine K_inversion_Lo

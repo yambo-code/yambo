@@ -24,11 +24,15 @@
 integer function io_Double_Grid(E,Xk,ID)
  !
  use electrons,      ONLY:levels,FineGd_E_components_alloc
- use R_lattice,      ONLY:bz_samp,BZ_FineGd_mode,bz_samp_FineGd_alloc
- use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
-&                         io_bulk,io_header,ver_is_gt_or_eq,write_is_on,&
-&                         IO_OUTDATED_DB,variable_exist
+ use descriptors,    ONLY:IO_desc_reset
+ use R_lattice,      ONLY:bz_samp,BZ_FineGd_mode,bz_samp_FineGd_alloc,FineGd_desc
+ use IO_m,           ONLY:io_connect,io_disconnect,read_is_on,&
+&                         io_header,ver_is_gt_or_eq,write_is_on,&
+&                         IO_OUTDATED_DB,variable_exist,&
+&                         def_variable_elemental,io_variable_elemental,&
+&                         def_variable_bulk,io_variable_bulk
  use timing_m,       ONLY:timing
+ use pars,           ONLY:IP,SP
  !
 #include<memory.h>
  !
@@ -42,6 +46,8 @@ integer function io_Double_Grid(E,Xk,ID)
  integer :: VAR_SZ
  !
  call timing('io_Double_Grid',OPR='start')
+ !
+ call IO_desc_reset(FineGd_desc)
  !
  io_Double_Grid=-1
  !
@@ -58,25 +64,27 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  if (io_Double_Grid/=0) goto 1
  !
- if (ver_is_gt_or_eq(ID,revision=18605)) then
-   call io_elemental(ID,VAR='MAPPING_mode',CH0="",VAR_SZ=1,MENU=0)
-   call io_elemental(ID,CH0=BZ_FineGd_mode,   VAR=' Brillouin Symmetry  mode        ')
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   call io_elemental(ID,VAR='FGbz_mode',CH0="",VAR_SZ=1,MENU=0)
-   call io_elemental(ID,CH0=Xk%FGbz%FG_mode,  VAR=' Fine Grid  BZ mapped mode       ')
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   call io_elemental(ID,VAR='FGibz_mode',CH0="",VAR_SZ=1,MENU=0)
-   call io_elemental(ID,CH0=Xk%FGibz%FG_mode, VAR=' Fine Grid IBZ mapped mode       ')
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
- endif
+ call def_variable_elemental(ID,VAR="GLOBAL_SYMM_MODE",VAR_SZ=1,VAR_KIND=0,MENU=0) 
+ call io_variable_elemental(ID,CH0=BZ_FineGd_mode,VAR=' [FineGd] Brillouin Symmetry  mode'&
+&                             ,CHECK=.TRUE.,OP=(/"=="/),DESCRIPTOR=FineGd_desc)
+ call def_variable_elemental(ID,VAR="BZ_SYMM_MODE",VAR_SZ=1,VAR_KIND=0,MENU=0) 
+ call io_variable_elemental(ID,CH0=Xk%FGbz%FG_mode,VAR=' [FineGd] Fine Grid  BZ mapped mode'&
+&                             ,DESCRIPTOR=FineGd_desc)
+ call def_variable_elemental(ID,VAR="IBZ_SYMM_MODE",VAR_SZ=1,VAR_KIND=0,MENU=0) 
+ call io_variable_elemental(ID,CH0=Xk%FGibz%FG_mode,VAR=' [FineGd] Fine Grid IBZ mapped mode'&
+&                             ,DESCRIPTOR=FineGd_desc)
  !
- call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
- call io_elemental(ID,I0=E%FG%nb,         VAR=' Bands                           ')
- call io_elemental(ID,I0=E%FG%nk,         VAR=' Number of points (fine)         in the IBZ (E)')
- call io_elemental(ID,I0=Xk%FGbare%N)
- call io_elemental(ID,I0=Xk%FGibz%N,          VAR=' Number of points (fine+coarse)  in the IBZ (k)')
- call io_elemental(ID,I0=Xk%FGbz%N,           VAR=' Number                          in the  BZ (k)')
- call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+ call def_variable_elemental(ID,VAR="PARS",VAR_SZ=5,VAR_KIND=IP,MENU=0) 
+ call io_variable_elemental(ID,I0=E%FG%nb,VAR=' [FineGd] Bands',DESCRIPTOR=FineGd_desc)
+ call io_variable_elemental(ID,I0=E%FG%nk,VAR=' [FineGd] Number of pts (Energy grid)'&
+&                             ,DESCRIPTOR=FineGd_desc)
+ call io_variable_elemental(ID,I0=Xk%FGbare%N)
+ call io_variable_elemental(ID,I0=Xk%FGibz%N,VAR=' [FineGd] Number of pts (fine+coarse, IBZ-map)'&
+&                             ,DESCRIPTOR=FineGd_desc)
+ call io_variable_elemental(ID,I0=Xk%FGbz%N,VAR=' [FineGd] Number of pts (fine+coarse, BZ-map)'&
+&                             ,DESCRIPTOR=FineGd_desc)
+ !
+ call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=0,MENU=1) 
  !
  ! Eigenvalues
  !
@@ -87,8 +95,8 @@ integer function io_Double_Grid(E,Xk,ID)
    call bz_samp_FineGd_alloc(Xk%FGbz,Xk%nbz)
  endif
  !
- call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%FG%E) ) 
- call io_bulk(ID, R3=E%FG%E )
+ call def_variable_bulk(ID,"EIGENVALUES",1,VAR_SZ=shape(E%FG%E),VAR_KIND=SP,silent=.TRUE. ) 
+ call io_variable_bulk(ID,1,R3=E%FG%E)
  !
  ! K map
  !
@@ -109,11 +117,8 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! E map
  !
- call io_bulk(ID, VAR="IBZ_E_MAP", VAR_SZ=(/Xk%FGibz%N/) )
- call io_bulk(ID, I1=Xk%FGibz%E_map )
- !
- call io_bulk(ID, VAR="BZ_E_MAP", VAR_SZ=(/Xk%FGbz%N/) )
- call io_bulk(ID, I1=Xk%FGbz%E_map )
+ call elemental_IO(Xk%FGibz,"E_MAP","IBZ")
+ call elemental_IO(Xk%FGbz,"E_MAP","BZ")
  !
  ! Block filling
  !
@@ -144,28 +149,28 @@ integer function io_Double_Grid(E,Xk,ID)
      VAR_NAME=kind//"_"//what
      !
      if (what=="N_MAPPED") then
-       call io_bulk(ID, VAR=trim(VAR_NAME), VAR_SZ=shape(FG%N_mapped) )
-       call io_bulk(ID, I1=FG%N_mapped )
+       call def_variable_bulk(ID, trim(VAR_NAME),2, VAR_SZ=shape(FG%N_mapped),VAR_KIND=IP,silent=.TRUE. )
+       call io_variable_bulk(ID,2, I1=FG%N_mapped )
      endif
      if (what=="K_RANGE") then
-       call io_bulk(ID, VAR=trim(VAR_NAME), VAR_SZ=shape(FG%k_range) ) 
-       call io_bulk(ID, I2=FG%k_range )
+       call def_variable_bulk(ID, trim(VAR_NAME),3, VAR_SZ=shape(FG%k_range),VAR_KIND=IP,silent=.TRUE. )
+       call io_variable_bulk(ID,3, I2=FG%k_range )
      endif
      if (what=="K_MAP") then
-       call io_bulk(ID, VAR=trim(VAR_NAME), VAR_SZ=shape(FG%k_map))
-       call io_bulk(ID, I1=FG%k_map )
+       call def_variable_bulk(ID, trim(VAR_NAME),4, VAR_SZ=shape(FG%k_map),VAR_KIND=IP,silent=.TRUE. )
+       call io_variable_bulk(ID,4, I1=FG%k_map )
      endif
      if (what=="WEIGHTS") then
-       call io_bulk(ID, VAR=trim(VAR_NAME), VAR_SZ=shape(FG%weights))
-       call io_bulk(ID, R1=FG%weights )
+       call def_variable_bulk(ID, trim(VAR_NAME),5, VAR_SZ=shape(FG%weights),VAR_KIND=SP,silent=.TRUE. )
+       call io_variable_bulk(ID,5, R1=FG%weights )
      endif
      if (what=="KPTS") then
-       call io_bulk(ID, VAR=trim(VAR_NAME), VAR_SZ=shape(FG%pt))
-       call io_bulk(ID, R2=FG%pt )
+       call def_variable_bulk(ID, trim(VAR_NAME),6, VAR_SZ=shape(FG%pt),VAR_KIND=SP,silent=.TRUE. )
+       call io_variable_bulk(ID,6, R2=FG%pt )
      endif
      if (what=="E_MAP") then
-       call io_bulk(ID, VAR=trim(VAR_NAME), VAR_SZ=(/FG%N/))
-       call io_bulk(ID, I1=FG%E_map )
+       call def_variable_bulk(ID, trim(VAR_NAME),7, VAR_SZ=shape(FG%E_map),VAR_KIND=IP,silent=.TRUE. )
+       call io_variable_bulk(ID,7, I1=FG%E_map )
      endif
    end subroutine
  !

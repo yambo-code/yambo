@@ -100,6 +100,11 @@ subroutine RT_k_grid(E,k,q)
  YAMBO_ALLOC(PAR_IND_Xk_ibz%weight_1D,(k%nibz))
  PAR_IND_Xk_ibz%weight_1D=RTbz%N_mapped
  !
+ do ik=1,k%nibz
+   RTbz%k_map(RTbz%k_range(ik,1))  =ik
+   RTbz%weights(RTbz%k_range(ik,1))=k%weights(ik)/float(RTbz%N_mapped(ik))
+ enddo
+ !
  if( l_elel_scatt .and. (index(code_bin,'ypp')==0) ) then
    !
    if(.not.allocated(DbGd_EE_scatt_table)) then

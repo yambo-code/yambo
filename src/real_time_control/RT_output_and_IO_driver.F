@@ -58,9 +58,9 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    ! GPL_EXCLUDE_START
    !
    call RT_output(what=trim(what)//" carr magn")
-   if(eval_energy)  call RT_output(what=trim(what)//" energy")
-   if(eval_entropy) call RT_output(what=trim(what)//" therm")
-   if(l_RT_update_Energies)  call RT_output(what=trim(what)//" BGR")
+   if (eval_energy)  call RT_output(what=trim(what)//" energy")
+   if (eval_entropy) call RT_output(what=trim(what)//" therm")
+   if (l_RT_update_Energies) call RT_output(what=trim(what)//" BGR")
    if (l_elph_scatt)         call RT_output(trim(what)//' mean_EPlife')
    if (l_elel_scatt)         call RT_output(trim(what)//' mean_EElife')
    if (l_elphoton_scatt)     call RT_output(trim(what)//' mean_RADlife')

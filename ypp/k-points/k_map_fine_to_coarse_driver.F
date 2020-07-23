@@ -83,7 +83,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
    !
    call section('=','Double Grid K-points expansion ...')
    call k_ibz2bz(FineGd_k,'i',.true.)
-   call msg('l','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
+   call msg('lr','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
    call k_expand(FineGd_k)
    !
    Xk%FGibz%FG_mode="IBZ"
@@ -134,6 +134,8 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  ! Final I/O
  !===========
+ call section('=','Double Grid Database I/O')
+ !
  ! .. restoring of built-in value of nkibz to be used in io_header 
  nkibz=Xk%nibz
  !

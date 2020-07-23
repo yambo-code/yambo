@@ -209,6 +209,12 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
      report_Sc=.true.
      call QP_of(qp,en,-1,FILE_name)
      !
+     ! Restore k-points that are set to zero in QP_of
+     !
+     do i1=1,QP_n_states
+       qp%k(QP_table(i1,3),:)=k%pt(QP_table(i1,3),:)
+     enddo
+     !
      if(l_update_W) then
         !
         ! Copy quasi-particle in Xen

@@ -94,7 +94,7 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
        if (do_W(i_spin)) E%W(ib,ik,i_spin)=E%W(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),E_ref,bands,E,k,"W")
        if (do_Z(i_spin)) E%Z(ib,ik,i_spin)=QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),E_ref,bands,E,k,"Z")
        !
-       if(allocated(E%E_FineGd)) then
+       if(allocated(E%E_FineGd).and.ib<=E%nb_FineGd) then
          do ik_fg=k%ibz_DbGd_map(1,ik),k%ibz_DbGd_map(2,ik)
            if (do_E(i_spin)) E%E_FineGd(ib,ik_fg,i_spin)=E%E_FineGd(ib,ik_fg,i_spin)+&
            &                   QP_eval_the_FIT(i_ACTION,i_spin,E%E_FineGd(ib,ik_fg,i_spin),E_ref,bands,E,k,"E")

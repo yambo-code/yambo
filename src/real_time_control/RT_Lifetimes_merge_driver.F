@@ -27,7 +27,7 @@ subroutine RT_Lifetimes_merge_driver(what)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use real_time,      ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,E_P_El_abs_lifetime,E_P_Electron_lifetime,&
 &                         E_P_Ho_abs_lifetime,E_P_Hole_lifetime,E_PHOT_Electron_lifetime,E_PHOT_Hole_lifetime,&
-&                         REF_lifetime,RT_k_FG
+&                         REF_lifetime,RTbz
  use D_lattice,      ONLY:Bose_Temp
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use R_lattice,      ONLY:nkibz
@@ -93,7 +93,7 @@ subroutine RT_Lifetimes_merge_driver(what)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     k_range=RT_k_FG%k_range(ik,:)
+     k_range=RTbz%k_range(ik,:)
      !
      if (l_elel_scatt) then
        REF_lifetime(:,k_range(1):k_range(2),1)=E_E_Hole_lifetime(:,k_range(1):k_range(2))

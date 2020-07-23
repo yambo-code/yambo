@@ -29,10 +29,10 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
  use hamiltonian,    ONLY:B_mat_index
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         l_RT_uses_E_FineGd,RT_occupations_locked,RT_E_and_k,&
+&                         l_RT_uses_E_FineGd,RT_occupations_locked,RT_levels,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_life_delta_occupations,l_initial_equilibrium,q_weight_RT,&
-&                         RT_eh_en,RT_k_FG,RT_bands
+&                         RT_eh_en,RTbz,RT_bands
  use parallel_m,     ONLY:PAR_IND_B_mat
  !
  implicit none
@@ -66,19 +66,19 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
      !
      if (.not. l_RT_uses_E_FineGd) then
        !
-       if(RT_E_and_k%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
-       if(RT_E_and_k%E(i_n ,ik    ,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
+       if(RT_levels%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. RT_levels%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
+       if(RT_levels%E(i_n ,ik    ,1)<RT_eh_en(1) .or. RT_levels%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
        !
-       DELTA_E=RT_E_and_k%E(i_n,ik,1)-RT_E_and_k%E(i_np,ik_m_q,1)
-       DELTA_W=RT_E_and_k%W(i_n,ik,1)+RT_E_and_k%W(i_np,ik_m_q,1)
+       DELTA_E=RT_levels%E(i_n,ik,1)-RT_levels%E(i_np,ik_m_q,1)
+       DELTA_W=RT_levels%W(i_n,ik,1)+RT_levels%W(i_np,ik_m_q,1)
        !
      endif
      !
-     pre_factor=Gkkp_sq(i_np,i_n)/real(RT_k_FG%N_mapped(ik_m_q))
+     pre_factor=Gkkp_sq(i_np,i_n)/real(RTbz%N_mapped(ik_m_q))
      !
      if( pre_factor==0._SP ) cycle
      !
-     do ik_rim=RT_k_FG%k_range(ik,1),RT_k_FG%k_range(ik,2)
+     do ik_rim=RTbz%k_range(ik,1),RTbz%k_range(ik,2)
        !
        if (RT_occupations_locked(i_n,ik_rim)) cycle
        !
@@ -87,17 +87,17 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
        TMP_Hole_lifetime=rZero
        TMP_Electron_lifetime=rZero
        !
-       do ip_rim=RT_k_FG%k_range(ik_m_q,1),RT_k_FG%k_range(ik_m_q,2)
+       do ip_rim=RTbz%k_range(ik_m_q,1),RTbz%k_range(ik_m_q,2)
          !
          if (RT_occupations_locked(i_np,ip_rim)) cycle
          !
          if (l_RT_uses_E_FineGd) then
            !
-           if(RT_E_and_k%E(i_np,ip_rim,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
-           if(RT_E_and_k%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
+           if(RT_levels%E(i_np,ip_rim,1)<RT_eh_en(1) .or. RT_levels%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
+           if(RT_levels%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. RT_levels%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
            !
-           DELTA_E=RT_E_and_k%E(i_n,ik_rim,1)-RT_E_and_k%E(i_np,ip_rim,1)
-           DELTA_W=RT_E_and_k%W(i_n,ik_rim,1)+RT_E_and_k%W(i_np,ip_rim,1)
+           DELTA_E=RT_levels%E(i_n,ik_rim,1)-RT_levels%E(i_np,ip_rim,1)
+           DELTA_W=RT_levels%W(i_n,ik_rim,1)+RT_levels%W(i_np,ip_rim,1)
            !
          endif
          !

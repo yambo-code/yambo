@@ -42,7 +42,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
  use hamiltonian,    ONLY:H_rotation,E_reference
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
  !use interfaces,     ONLY:LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
- use real_time,      ONLY:RT_E_and_k,Ho_plus_Sigma,RT_k_FG,RT_bands,&
+ use real_time,      ONLY:RT_levels,Ho_plus_Sigma,RTbz,RT_bands,&
 &                         l_RT_uses_E_FineGd,l_RT_update_Energies,l_RT_rotate_DM,&
 &                         l_RT_eval_lifetimes,RT_nbands,l_NE_with_fields
  use R_lattice,      ONLY:bz_samp
@@ -77,13 +77,13 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
                          E%E   (RT_bands(1):RT_bands(2),:,:)=rZERO
  if (l_RT_uses_E_FineGd) E%FG%E(RT_bands(1):RT_bands(2),:,:)=rZERO
  !
- RT_E_and_K%E(RT_bands(1):RT_bands(2),:,:)=rZERO
+ RT_levels%E(RT_bands(1):RT_bands(2),:,:)=rZERO
  !
  do ik=1,nkibz
    !
    if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
    !
-   ik_RT=RT_k_FG%k_range(ik,1)
+   ik_RT=RTbz%k_range(ik,1)
    !
    H(:,:)=Ho_plus_Sigma(:,:,ik_RT,1)
    !
@@ -108,15 +108,15 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
      if (ib>=RT_bands(1)) dE=Ed(ib)-E_reference%E(ib,ik,1)
      if (ib< RT_bands(1)) dE=Ed(RT_bands(1))-E_reference%E(RT_bands(1),ik,1)
      !
-     do ik_RT=RT_k_FG%k_range(ik,1),RT_k_FG%k_range(ik,2)
+     do ik_RT=RTbz%k_range(ik,1),RTbz%k_range(ik,2)
        !
-       if(      l_RT_uses_E_FineGd .and.ik_RT/=RT_k_FG%k_range(ik,1)) then
-         ik_E_fg=RT_k_FG%E_map(ik_RT)
+       if(      l_RT_uses_E_FineGd .and.ik_RT/=RTbz%k_range(ik,1)) then
+         ik_E_fg=RTbz%E_map(ik_RT)
          E%FG%E(ib,ik_E_fg,1) = E_reference%FG%E(ib,ik_E_fg,1)+dE
-         if (ib>=RT_bands(1)) RT_E_and_k%E(ib,ik_RT,1) =E%FG%E(ib,ik_E_fg,1)
+         if (ib>=RT_bands(1)) RT_levels%E(ib,ik_RT,1) =E%FG%E(ib,ik_E_fg,1)
        else
          E%E(ib,ik,1)             =E_reference%E(ib,ik,1)+dE
-         if (ib>=RT_bands(1)) RT_E_and_k%E(ib,ik_RT,1) =E%E(ib,ik,1)
+         if (ib>=RT_bands(1)) RT_levels%E(ib,ik_RT,1) =E%E(ib,ik,1)
        endif
        !
      enddo
@@ -127,7 +127,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
                          call PP_redux_wait(E%E,   COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  if (l_RT_uses_E_FineGd) call PP_redux_wait(E%FG%E,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
- call PP_redux_wait(RT_E_and_K%E(RT_bands(1):RT_bands(2),:,:),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ call PP_redux_wait(RT_levels%E(RT_bands(1):RT_bands(2),:,:),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  ! Evaluation of the contribution to the minimal gap
  !

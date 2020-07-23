@@ -38,7 +38,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  use interfaces,     ONLY:WF_load,WF_free
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx
  use wave_func,      ONLY:WF,WAVEs
- use real_time,      ONLY:RT_k_FG,RT_bands
+ use real_time,      ONLY:RTbz,RT_bands
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear,PAR_G_k_range
  use matrix_operate, ONLY:UP_matrix_index,m3det
  use electrons,      ONLY:Spin_magn
@@ -137,10 +137,10 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
 #endif
        !
        f_occ=cZERO
-       do ik_RT=RT_k_FG%k_range(ik,1),RT_k_FG%k_range(ik,2)
+       do ik_RT=RTbz%k_range(ik,1),RTbz%k_range(ik,2)
          if (ib1==ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,1)
          if (ib1/=ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,1)*2._SP
-         f_occ=f_occ*RT_k_FG%weights(ik_RT)
+         f_occ=f_occ*RTbz%weights(ik_RT)
        enddo
        !
        i_wf1=WF%index(ib1,ik,1)

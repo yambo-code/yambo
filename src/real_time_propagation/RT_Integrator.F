@@ -179,7 +179,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
    subroutine RT_build_dG_new()
      !
      use parallel_m,     ONLY:PAR_IND_Xk_ibz
-     use real_time,      ONLY:RT_k_FG
+     use real_time,      ONLY:RTbz
      !
      ! Now I remove dG_old from dG_tmp and rescale to a_tableau
      !
@@ -187,7 +187,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
      !
      do ik=1,RT_nk
        !
-       if (.not.PAR_IND_Xk_ibz%element_1D(RT_k_FG%k_map(ik)) ) cycle
+       if (.not.PAR_IND_Xk_ibz%element_1D(RTbz%k_map(ik)) ) cycle
        !
        do i_step=1,Integrator_nsteps
          if (a_tableau(i_step)==0._SP) cycle 

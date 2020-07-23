@@ -26,7 +26,7 @@ subroutine RT_Lifetimes_merge_intra_k(what,LIFE)
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,PP_redux_wait,&
 &                         PAR_COM_Xk_ibz_A2A,PAR_IND_Xk_ibz
- use real_time,      ONLY:RT_nk,RT_bands,RT_k_FG
+ use real_time,      ONLY:RT_nk,RT_bands,RTbz
  use R_lattice,      ONLY:nkibz
  !
  implicit none
@@ -52,7 +52,7 @@ subroutine RT_Lifetimes_merge_intra_k(what,LIFE)
    !
    if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
    !
-   call PP_redux_wait(LIFE(:,RT_k_FG%k_range(ik,1):RT_k_FG%k_range(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+   call PP_redux_wait(LIFE(:,RTbz%k_range(ik,1):RTbz%k_range(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
    !
  enddo 
  !

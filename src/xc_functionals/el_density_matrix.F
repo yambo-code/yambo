@@ -34,7 +34,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  use D_lattice,      ONLY:nsym,i_time_rev
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:WF,WAVEs
- use real_time,      ONLY:RT_bands,RT_k_FG
+ use real_time,      ONLY:RT_bands,RTbz
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear,PAR_G_k_range
  use matrix_operate, ONLY:UP_matrix_index
  use timing_m,       ONLY:timing
@@ -104,10 +104,10 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
 #endif
          !
          f_occ=cZERO
-         do ik_RT=RT_k_FG%k_range(ik,1),RT_k_FG%k_range(ik,2)
+         do ik_RT=RTbz%k_range(ik,1),RTbz%k_range(ik,2)
            if (ib1==ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,i_sp_pol)
            if (ib1/=ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,i_sp_pol)*2._SP
-           f_occ=f_occ*RT_k_FG%weights(ik_RT)
+           f_occ=f_occ*RTbz%weights(ik_RT)
          enddo
          !
          i_wf1=WF%index(ib1,ik,i_sp_pol)

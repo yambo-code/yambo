@@ -151,10 +151,9 @@ module real_time
  logical     :: RT_is_statically_dephased=.FALSE.
  logical     :: RT_is_dynamically_dephased=.FALSE.
  !
- ! Table pointing to the position of the uniform grid points in the
- ! G_lesser structure
+ ! FineGd kind mapping the kpts grid (w and w/o FineGd database)
  !
- type(bz_fine_grid), SAVE :: RT_k_FG
+ type(bz_fine_grid), SAVE :: RTbz
  !
  ! K-points: In case I want to use the G_lesser to define the occupations
  ! of a post-run I need to keep here the number of k-points
@@ -211,13 +210,12 @@ module real_time
  !
  ! Energies
  !---------------------
- type RT_DbGd
+ type RT_levels_kind
    real(SP), allocatable :: E(:,:,:)
    real(SP), allocatable :: W(:,:,:)
-   real(SP), allocatable :: k(:,:)
  end type
  !
- type(RT_DbGd),save  :: RT_E_and_k
+ type(RT_levels_kind),save  :: RT_levels
  ! 
  ! Locks, reference & Logicals
  !-----------------------------
@@ -493,9 +491,8 @@ module real_time
      nk=PAR_G_k_range
      RT_nbands=RT_bands(2)-RT_bands(1)+1
      !
-     YAMBO_ALLOC(RT_E_and_k%E,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
-     YAMBO_ALLOC(RT_E_and_k%W,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
-     YAMBO_ALLOC(RT_E_and_k%k,(3,RT_nk))
+     YAMBO_ALLOC(RT_levels%E,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+     YAMBO_ALLOC(RT_levels%W,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      !
      if(l_RT_relax_time_approx) then
        YAMBO_ALLOC(RT_RTA_E_occ_infty,(RT_bands(1):RT_bands(2),RT_nk))
@@ -609,6 +606,7 @@ module real_time
    !
    subroutine RT_free(what)
      !
+     use R_lattice,      ONLY:bz_samp_FineGd_reset
      use DIPOLES,        ONLY:DIP_alloc
      use hamiltonian,    ONLY:H_free
      use xc_functionals, ONLY:E_xc
@@ -662,9 +660,8 @@ module real_time
      endif
      !
      YAMBO_FREE(REF_V_hartree_sc)
-     YAMBO_FREE(RT_E_and_k%E)
-     YAMBO_FREE(RT_E_and_k%W)
-     YAMBO_FREE(RT_E_and_k%k)
+     YAMBO_FREE(RT_levels%E)
+     YAMBO_FREE(RT_levels%W)
      !
      if(l_all .or. l_G_lesser) then
        !
@@ -692,6 +689,8 @@ module real_time
      YAMBO_FREE(RT_Deph_Matrix)
      YAMBO_FREE(Q_io_map)
      YAMBO_FREE(K_io_map)
+     !
+     call bz_samp_FineGd_reset(RTbz)
      !
    end subroutine RT_free
    !

@@ -35,7 +35,7 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,&
-&                         G_lesser_reference,RT_nk,RT_k_FG
+&                         G_lesser_reference,RT_nk,RTbz
  !
  implicit none
  !
@@ -71,7 +71,7 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
      !
      if (l_RT_relaxation_update_reference) then
        !
-       if (.not.PAR_IND_Xk_ibz%element_1D(RT_k_FG%k_map(ik)) ) cycle
+       if (.not.PAR_IND_Xk_ibz%element_1D(RTbz%k_map(ik)) ) cycle
        !
        ! _lifetime(ib,ik) are never used at different k-points. While occupations are
        !

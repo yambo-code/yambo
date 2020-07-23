@@ -28,7 +28,7 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes,  &
 &                         E_P_Ho_abs_lifetime,RT_Tfit_lifetimes,RT_Efit_lifetimes,    &
-&                         REF_lifetime,RT_k_FG,RT_nk,RT_bands,           &
+&                         REF_lifetime,RTbz,RT_nk,RT_bands,           &
 &                         E_PHOT_Hole_lifetime, E_PHOT_Electron_lifetime,             &
 &                         l_lftm_fit_temperatures
  use R_lattice,      ONLY:bz_samp
@@ -62,9 +62,9 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  !
  do ik=1,RT_nk
    !
-   if( .not.PAR_IND_Xk_ibz%element_1D(RT_k_FG%k_map(ik)) ) cycle
+   if( .not.PAR_IND_Xk_ibz%element_1D(RTbz%k_map(ik)) ) cycle
    !
-   pre_factor=RT_k_FG%weights(ik)
+   pre_factor=RTbz%weights(ik)
    !
    do ib=RT_bands(1),RT_bands(2)
      !

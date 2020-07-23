@@ -30,7 +30,7 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ,E_reset,E_duplicate,n_sp_pol
  use com,            ONLY:msg
- use real_time,      ONLY:RT_carriers,RT_bands,RT_k_FG
+ use real_time,      ONLY:RT_carriers,RT_bands,RTbz
  use YPPm,           ONLY:BANDS_path,CIRCUIT_k,CIRCUIT_k_label
  use YPP_interfaces, ONLY:k_special
  use YPP_real_time,  ONLY:Eh_pumped_pair_energy,Eh_pumped_pair_width,        &
@@ -216,7 +216,7 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
    !
    if (Pump_level(ib,ik)>0) then
      RT_carriers%delta_f(i_RT)= spin_occ*occupation
-     delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*k_weights(ik)*2._SP/real(RT_k_FG%N_mapped(ik_cgd),SP)
+     delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*k_weights(ik)*2._SP/real(RTbz%N_mapped(ik_cgd),SP)
    else if (Pump_level(ib,ik)<0) then
      RT_carriers%delta_f(i_RT)=-spin_occ*occupation
    endif

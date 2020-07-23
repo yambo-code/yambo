@@ -26,7 +26,7 @@ subroutine RT_Lifetimes_merge_inter_k(what,LIFE)
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,N_SND_RCV_operations,SND_RCV_op,&
 &                         PAR_COM_Xk_ibz_INDEX,PP_send_and_receive
- use real_time,      ONLY:RT_nk,RT_bands,RT_k_FG
+ use real_time,      ONLY:RT_nk,RT_bands,RTbz
  use R_lattice,      ONLY:nkibz
  !
  implicit none
@@ -83,10 +83,10 @@ subroutine RT_Lifetimes_merge_inter_k(what,LIFE)
      do i_el=1,NK_to_do(ic_snd)
        ik=IK_to_do(ic_snd,i_el)
        if (do_I_snd) then
-         call PP_send_and_receive("send",LIFE(:,RT_k_FG%k_range(ik,1):RT_k_FG%k_range(ik,2)),ic_rcv-1,COMM=COMM)
+         call PP_send_and_receive("send",LIFE(:,RTbz%k_range(ik,1):RTbz%k_range(ik,2)),ic_rcv-1,COMM=COMM)
        endif
        if (do_I_rcv) then
-         call PP_send_and_receive("receive",LIFE(:,RT_k_FG%k_range(ik,1):RT_k_FG%k_range(ik,2)),ic_snd-1,COMM=COMM)
+         call PP_send_and_receive("receive",LIFE(:,RTbz%k_range(ik,1):RTbz%k_range(ik,2)),ic_snd-1,COMM=COMM)
        endif
      enddo
      !

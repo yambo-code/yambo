@@ -234,21 +234,18 @@ module R_lattice
    !
    subroutine bz_samp_FineGd_alloc(FG,N_coarse)
      type(bz_fine_grid)::FG
-     integer           ::N_coarse
+     integer           ::N_coarse,N_alloc
      !
      if (allocated( FG%k_range )) return
      !
-     if (FG%N>0) then
-       YAMBO_ALLOC(FG%pt,(FG%N,3))
-       YAMBO_ALLOC(FG%weights,(FG%N))
-       YAMBO_ALLOC(FG%E_map,(FG%N))
-       YAMBO_ALLOC(FG%k_map,(FG%N))
-       FG%pt=0._SP
-     else
-       YAMBO_ALLOC(FG%weights,(N_coarse))
-       YAMBO_ALLOC(FG%E_map,(N_coarse))
-       YAMBO_ALLOC(FG%k_map,(N_coarse))
-     endif
+     if (FG%N>0 ) N_alloc=FG%N
+     if (FG%N==0) N_alloc=N_coarse
+     !
+     YAMBO_ALLOC(FG%pt,(N_alloc,3))
+     YAMBO_ALLOC(FG%weights,(N_alloc))
+     YAMBO_ALLOC(FG%E_map,(N_alloc))
+     YAMBO_ALLOC(FG%k_map,(N_alloc))
+     FG%pt=0._SP
      FG%weights=0._SP
      FG%E_map=0
      FG%k_map=0

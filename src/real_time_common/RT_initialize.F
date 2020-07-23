@@ -51,7 +51,7 @@ subroutine RT_initialize(E,k,q)
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,    &
 &                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,l_RT_impose_for_metals, &
-&                         l_P_integrating_J,l_RT_rotate_DM,RT_deph_cv_only,RT_k_FG
+&                         l_P_integrating_J,l_RT_rotate_DM,RT_deph_cv_only,RTbz
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -126,8 +126,8 @@ subroutine RT_initialize(E,k,q)
  ! DbGd PAR memory distribution index updated
  !============================================
  if (l_RT_uses_E_FineGd) then
-   PAR_G_k_range(1)=RT_k_FG%k_range(PAR_G_k_range(1),1)
-   PAR_G_k_range(2)=RT_k_FG%k_range(PAR_G_k_range(2),2)
+   PAR_G_k_range(1)=RTbz%k_range(PAR_G_k_range(1),1)
+   PAR_G_k_range(2)=RTbz%k_range(PAR_G_k_range(2),2)
  endif
  !
  ! Integrator FLAGS
@@ -293,7 +293,7 @@ subroutine RT_initialize(E,k,q)
  NK_cpu=0
  do ik=1,k%nibz
    if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
-   NK_cpu(PAR_COM_Xk_ibz_INDEX%CPU_id+1)= NK_cpu(PAR_COM_Xk_ibz_INDEX%CPU_id+1)+RT_k_FG%N_mapped(ik)
+   NK_cpu(PAR_COM_Xk_ibz_INDEX%CPU_id+1)= NK_cpu(PAR_COM_Xk_ibz_INDEX%CPU_id+1)+RTbz%N_mapped(ik)
  enddo
  call PP_redux_wait(NK_cpu,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
@@ -531,10 +531,10 @@ subroutine RT_initialize(E,k,q)
      !
      do ib=RT_bands(1),RT_bands(2)
        do ik=1,k%nibz
-         do ik_RT_DbGd=RT_k_FG%k_range(ik,1),RT_k_FG%k_range(ik,2)
+         do ik_RT_DbGd=RTbz%k_range(ik,1),RTbz%k_range(ik,2)
            !
            if (l_RT_uses_E_FineGd) then
-             ik_E_fg=RT_k_FG%E_map(ik_RT_DbGd)
+             ik_E_fg=RTbz%E_map(ik_RT_DbGd)
              if(E%FG%E(ib,ik_E_fg,1)<=E%E_Fermi) then
                E%FG%df(ib,ik_E_fg,1)=(E%FG%f(ib,ik_E_fg,1)-spin_occ)
              else

@@ -168,6 +168,7 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,Xen)
      i_fg_k=TMP_table_mapped(ik,i_c)
      if (l_BZ_FG ) FG%pt(i_fg,:)   =FineGd_k%ptbz(i_fg_k,:)
      if (l_IBZ_FG) FG%pt(i_fg,:)   =FineGd_k%pt(i_fg_k,:)
+     FG%k_map(i_fg)=ik
      !
      if (l_BZ_FG ) i_fg_E=FineGd_k%sstar(i_fg_k,1)
      if (l_IBZ_FG) i_fg_E=i_fg_k

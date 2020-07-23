@@ -93,6 +93,8 @@ integer function io_Double_Grid(E,Xk,ID)
  ! K map
  !
  call elemental_IO(Xk%FGbare,"K_MAP","BARE")
+ call elemental_IO(Xk%FGibz,"K_MAP","IBZ")
+ call elemental_IO(Xk%FGbz,"K_MAP","BZ")
  !
  ! KPTs
  !

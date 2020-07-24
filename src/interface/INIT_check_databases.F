@@ -62,7 +62,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
-&                     io_COL_CUT,io_E_SOC_map,io_ATMPROJ_pwscf
+&                     io_COL_CUT,io_E_SOC_map,io_ATMPROJ_pwscf, io_ENVIRON_pwscf
  !
  logical           :: OSTNTS_Vnl_included
  !
@@ -108,7 +108,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  ! epsilon (environ, PCM)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_ENVIRON_pwscf(ID)
+ io_err=io_ENVIRON_pwscf(io_ID)
  !
  ! gops
  !

@@ -56,6 +56,8 @@ integer function io_ENVIRON_pwscf(ID)
    !
  endif
  !
+ if (.not.any((/io_sec(ID,:)==2/))) goto 1
+ !
  if (read_is_on(ID)) call environ_alloc(ng_env)
  !
  call io_bulk(ID,VAR="EPS_ENV_GSPACE",VAR_SZ=(/2,ng_env/))

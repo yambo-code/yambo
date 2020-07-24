@@ -77,7 +77,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  ! ENVIRON
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),ID=ID)
  i_err=io_ENVIRON_pwscf(ID)
  l_environ=(i_err==0)
  !

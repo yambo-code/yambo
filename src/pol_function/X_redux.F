@@ -70,7 +70,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  integer          :: Xo_rows(2), Xo_cols(2)
  logical          :: compute_on_gpu
  type(PAR_matrix) :: K_FXC
- type(PAR_matrix) :: v_environ
+ type(PAR_matrix) :: v_environ, work
  type(PAR_matrix), target      :: BUFFER,KERNEL,Xo
  complex(SP), pointer DEV_ATTR :: BUFFER_blc_d(:,:,:)
  !
@@ -128,8 +128,11 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  if (l_environ) then
    call MATRIX_init( "SLK", v_environ , X%ng, 1 )
+   call MATRIX_init( "SLK", work ,      X%ng, 1 )
    YAMBO_ALLOC(v_environ%blc,(v_environ%BLCrows(1):v_environ%BLCrows(2),v_environ%BLCcols(1):v_environ%BLCcols(2),1))
+   YAMBO_ALLOC(work%blc,(work%BLCrows(1):work%BLCrows(2),work%BLCcols(1):work%BLCcols(2),1))
    v_environ%blc=cZERO
+   work%blc=cZERO
    call environ_vcoul(q_pt(iq,:),v_environ)
  endif
  !
@@ -282,8 +285,8 @@ subroutine X_redux(iq,X_par,Xw,X)
         !
         ! BUFFER = bare_qpg1 * v_environ * X * v_environ * bare_qpg2
         !
-        call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=BUFFER,B_slk=v_environ,C_slk=BUFFER)
-        call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=v_environ,B_slk=BUFFER,C_slk=BUFFER)
+        call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=BUFFER,B_slk=v_environ,C_slk=work)
+        call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=v_environ,B_slk=work,C_slk=BUFFER)
         !
         !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
         do ig2=Xo%cols(1),Xo%cols(2)
@@ -320,6 +323,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  call MATRIX_reset(KERNEL)
  call MATRIX_reset(Xo)
  if (l_environ) call MATRIX_reset(v_environ)
+ if (l_environ) call MATRIX_reset(work)
  if (l_alda_fxc.and.Xo%kind=="SLK") call MATRIX_reset(K_FXC)
  !
  call timing('X (procedure)',OPR='stop')

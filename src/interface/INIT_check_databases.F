@@ -105,6 +105,11 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
    if (INIT==0) call IO_make_directories("LOG")
  endif
  !
+ ! epsilon (environ, PCM)
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_err=io_ENVIRON_pwscf(ID)
+ !
  ! gops
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=io_ID)

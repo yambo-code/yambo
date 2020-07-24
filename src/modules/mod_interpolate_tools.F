@@ -25,7 +25,7 @@ module interpolate_tools
  !
  use pars,         ONLY:SP,schlen,rZERO
  use interpolate,  ONLY:interpls,INTERP_obj,l_INTERP_dE,l_INTERP_E,l_INTERP_f,max_interpls,INTERP_mode,&
-&                       l_INTERP_W,NN_nk_exact,NN_MAX_real_nearest,NN_n_of_nearest,l_INTERP_Z,&
+&                       l_INTERP_W,NN_nk_exact,NN_nk_border,NN_MAX_real_nearest,NN_n_of_nearest,l_INTERP_Z,&
 &                       INTERPOLATE_msg_fmt,OUT_k_nk,INTERP_FineGd
  use electrons,    ONLY:n_sp_pol
  !
@@ -56,6 +56,9 @@ module interpolate_tools
        !
        dummy=real(NN_nk_exact/real(OUT_k_nk))*100._SP
        call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Exact matches  [o/o]',dummy)
+       if (NN_nk_border>0) then
+          call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Border points       ',NN_nk_border)
+       endif
        if (NN_nk_exact<OUT_k_nk) then
          call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Neighbours    [user]',NN_n_of_nearest)
          call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//']               [real]',NN_MAX_real_nearest)
@@ -65,6 +68,7 @@ module interpolate_tools
        !
        OUT_k_nk=0
        NN_nk_exact=0
+       NN_nk_border=0
        !
      enddo
      !

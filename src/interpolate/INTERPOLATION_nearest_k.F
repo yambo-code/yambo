@@ -25,7 +25,7 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
  !
  use pars,              ONLY:SP,zero_dfl
  use R_lattice,         ONLY:k_the_nearest
- use interpolate,       ONLY:NN_nk_exact,NN_n_of_nearest,NN_MAX_real_nearest,INTERPOLATE_is_serial
+ use interpolate,       ONLY:NN_nk_exact,NN_n_of_nearest,NN_MAX_real_nearest,INTERPOLATE_is_serial,NN_nk_border
  use interfaces,        ONLY:PARALLEL_index
  use vec_operate,       ONLY:sort
  use parallel_m,        ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,ncpu,myid
@@ -72,6 +72,8 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
    Nk_to_average=1
    !
    k_near(1)=k_the_nearest(K_out(ik,:),K_in,Nk_in,k_dist=k_dist,ROTATE_k_ref=.TRUE.,i_err=i_err,border_point=border_point)
+   !
+   if (border_point) NN_nk_border=NN_nk_border+1
    !
    if (i_err==0) then
      NN_exact(myid+1)=NN_exact(myid+1)+1

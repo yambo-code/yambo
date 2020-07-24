@@ -38,7 +38,6 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
  use R_lattice,            ONLY:bz_samp
  use electrons,            ONLY:levels
  use interpolate_tools,    ONLY:INTERPOLATION_nearest_k_report
- use stderr,               ONLY:STRING_to_UPPER
  use interpolate,          ONLY:INTERP_obj,INTERPOLATE_is_quiet,&
 &                               INTERPOLATION_BZ,INTERPOLATION_nearest_k,&
 &                               l_INTERP_f,l_INTERP_E,l_INTERP_dE,INTERP_FineGd,&
@@ -63,7 +62,6 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
  ! ... FG mode
  INTERP_FineGd="BARE"
  if (present(FineGrid)) then
-   call STRING_to_UPPER(FineGrid)
    INTERP_FineGd=FineGrid
  endif
  INTERP_FineGd_save=INTERP_FineGd

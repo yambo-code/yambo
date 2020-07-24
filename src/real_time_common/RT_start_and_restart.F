@@ -366,7 +366,7 @@ subroutine RT_start_and_restart(E,k,q)
      !
      implicit none
      !
-     integer :: ik_RT_DbGd,iE_k,ib
+     integer :: ik_RT_DbGd,iE_fg,ib,ik_fg
      real(SP):: Energy,f_occ,f_occ_ref,Width,kpt(3)
      !
      ! Defined from occupations %f
@@ -380,17 +380,18 @@ subroutine RT_start_and_restart(E,k,q)
            !
            if (ik_RT_DbGd/=RTibz%k_range(ik,1)) then
              !
-             iE_k=RTibz%E_map(ik_RT_DbGd)
+             ik_fg=RTibz%k_map(ik_RT_DbGd)
+             iE_fg=RTibz%E_map(ik_RT_DbGd)
              !
-             if (allocated(E%W))  E%FG%W(ib,iE_k,1)     = abs(E%W(ib,ik,1))
+             if (allocated(E%W))  E%FG%W(ib,iE_fg,1)     = abs(E%W(ib,ik,1))
              !
-             kpt       = k%FGibz%pt(iE_k,:)
-             Energy    = E%FG%E(ib,iE_k,1)
-             f_occ     = E%FG%f(ib,iE_k,1)
+             kpt       = k%FGibz%pt(ik_fg,:)
+             Energy    = E%FG%E(ib,iE_fg,1)
+             f_occ     = E%FG%f(ib,iE_fg,1)
              f_occ_ref = f_occ
              Width     = 0._SP
-             if (allocated(E%fo)) f_occ_ref = E%FG%f(ib,iE_k,1)-E%FG%df(ib,iE_k,1)
-             if (allocated(E%W))  Width     = abs(E%FG%W(ib,iE_k,1))
+             if (allocated(E%fo)) f_occ_ref = E%FG%f(ib,iE_fg,1)-E%FG%df(ib,iE_fg,1)
+             if (allocated(E%W))  Width     = abs(E%FG%W(ib,iE_fg,1))
            else
              kpt       = k%pt(ik,:)
              Energy    = E%E(ib,ik,1)
@@ -430,7 +431,7 @@ subroutine RT_start_and_restart(E,k,q)
      implicit none
      !
      real(SP):: En
-     integer :: ik,ik_RT_DbGd,iE_k,ib,Nk(2)
+     integer :: ik,ik_RT_DbGd,iE_fg,ib,Nk(2)
      !
      ! Occupations are defined from G_lesser and G_lesser_reference
      !
@@ -452,8 +453,8 @@ subroutine RT_start_and_restart(E,k,q)
          do ik=1,k%nibz
            do ik_RT_DbGd=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
              if (ik_RT_DbGd/=RTibz%k_range(ik,1)) then
-               iE_k=RTibz%E_map(ik_RT_DbGd)
-               En=E%FG%E(ib,iE_k,1)
+               iE_fg=RTibz%E_map(ik_RT_DbGd)
+               En=E%FG%E(ib,iE_fg,1)
              else 
                En=E%E(ib,ik,1)
              endif

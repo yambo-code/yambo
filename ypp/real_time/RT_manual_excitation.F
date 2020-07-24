@@ -50,7 +50,7 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
  integer      :: i_pump_level,i_region,ib,ibp,iv,ic,ik,i_RT,Pump_level(E%nb,RT_carriers%nk),i_k_near,i_err
  real(SP)     :: local_E_window,delta_Nel,occupation,local_energy(2),local_k(3),&
 &                k_dist(RT_carriers%nk),k_weights(RT_carriers%nk)
- logical      :: Pumped_state(E%nb,RT_carriers%nk),do_kpt(RT_carriers%nk),RT_uses_Fine_Grid
+ logical      :: Pumped_state(E%nb,RT_carriers%nk),do_kpt(RT_carriers%nk),RT_uses_Fine_Grid,STOP_the_LOOP
  !
  ! Possibility to pump by hand one or more electrons up
  !======================================================
@@ -194,15 +194,20 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
  !
  RT_carriers%delta_f=0._SP
  ic=0
+ STOP_the_LOOP=.FALSE.
  !
- do while(delta_Nel<Eh_pumped_Nel) 
+ do while(.not.STOP_the_LOOP)
    delta_Nel=0._SP
    ic=ic+1
    do i_RT=1,RT_carriers%nstates
      ib = RT_carriers%table(i_RT,1)
      ik = RT_carriers%table(i_RT,3)
      if (.not.Pumped_state(ib,ik)) cycle
-     occupation=min(1._SP,1._SP/sqrt(real(iabs(Pump_level(ib,ik)),SP)))*real(ic)/50._SP
+     occupation=1._SP/sqrt(real(iabs(Pump_level(ib,ik)),SP))*real(ic)/50._SP
+     if (occupation>1.) then
+       STOP_the_LOOP=.TRUE.
+       occupation=1.
+     endif
      if (Pump_level(ib,ik)>0) then
        RT_carriers%delta_f(i_RT)= spin_occ*occupation
        delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*2._SP*RTibz%weights(ik)
@@ -210,7 +215,8 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
        RT_carriers%delta_f(i_RT)=-spin_occ*occupation
      endif
    enddo
- enddo
+   if (.not.STOP_the_LOOP) STOP_the_LOOP=delta_Nel>Eh_pumped_Nel
+ enddo 
  !
  call msg('sr','[RT] Carrier number  [USER]',Eh_pumped_Nel)
  call msg('sr','[RT]                 [GRID]',delta_Nel)

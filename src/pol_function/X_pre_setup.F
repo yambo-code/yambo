@@ -34,6 +34,7 @@ subroutine X_pre_setup(Xen,Xk,X)
  use interfaces,    ONLY:eval_G_minus_G
  use parallel_m,    ONLY:PAR_COM_WORLD
  use stderr,        ONLY:intc
+ use environ_m,     ONLY:l_environ
  use cuda_m,        ONLY:have_cuda
  !
  implicit none
@@ -74,7 +75,7 @@ subroutine X_pre_setup(Xen,Xk,X)
  ! response function is accessed in G-G' mode. Here I ensure that all G-G' are in the
  ! range provided externally
  !
- if ((l_cohsex.and..not.COHSEX_use_empties).or.l_X_terminator) then
+ if ((l_cohsex.and..not.COHSEX_use_empties).or.l_X_terminator.or.l_environ) then
      X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
      call warning(' Response block size reduced to '//intc(X%ng) &
 &     //'RL ('//intc(int(1000.*G2E(X%ng)))//'mHa)')

@@ -28,7 +28,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
 &                          RT_life_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
-&                          l_RT_uses_E_FineGd,RT_levels,RTbz,&
+&                          l_RT_uses_E_FineGd,RT_levels,RTibz,&
 &                          l_initial_equilibrium,DbGd_EE_scatt_table,DbGd_EE_Nk_table,RT_eh_en
  use plasma,          ONLY:EH_gas
  use collision_ext,   ONLY:GW_NEQ_COLL_element,GW_NEQ_collisions
@@ -59,7 +59,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  !
  real(SP), external    :: RT_G_retarded_convolution
  !
- ik_rim    =RTbz%k_range(ik,1)
+ ik_rim    =RTibz%k_range(ik,1)
  !
  do iqbz=1,q%nbz
    !
@@ -102,8 +102,8 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        i_pmq_bz = qindx_C(i_p_bz,iqbz,1)
        i_pmq    = k%sstar(i_pmq_bz,1)
        !
-       if (RT_occupations_locked(i_m ,RTbz%k_range(i_p,1)))   cycle
-       if (RT_occupations_locked(i_mp,RTbz%k_range(i_pmq,1))) cycle
+       if (RT_occupations_locked(i_m ,RTibz%k_range(i_p,1)))   cycle
+       if (RT_occupations_locked(i_mp,RTibz%k_range(i_pmq,1))) cycle
        !
        if(E%E(i_mp,i_pmq,1)<RT_eh_en(1) .or. E%E(i_mp,i_pmq,1)>RT_eh_en(2)) cycle
        if(E%E(i_m ,i_p  ,1)<RT_eh_en(1) .or. E%E(i_m ,i_p  ,1)>RT_eh_en(2)) cycle
@@ -113,13 +113,13 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        DELTA_E=    E%E(i_m,i_p,1) -    E%E(i_mp,i_pmq,1)
        DELTA_W=abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))
        !
-       f0_p   = RT_E_occupations_reference(i_m ,RTbz%k_range(i_p,1))
-       df_p   = RT_life_delta_occupations(i_m ,RTbz%k_range(i_p,1))
-       Hole_f0_p   = RT_H_occupations_reference(i_m ,RTbz%k_range(i_p,1))
+       f0_p   = RT_E_occupations_reference(i_m ,RTibz%k_range(i_p,1))
+       df_p   = RT_life_delta_occupations(i_m ,RTibz%k_range(i_p,1))
+       Hole_f0_p   = RT_H_occupations_reference(i_m ,RTibz%k_range(i_p,1))
        !
-       f0_pmq = RT_E_occupations_reference(i_mp ,RTbz%k_range(i_pmq,1))
-       df_pmq = RT_life_delta_occupations(i_mp ,RTbz%k_range(i_pmq,1))
-       Hole_f0_pmq  = RT_H_occupations_reference(i_mp ,RTbz%k_range(i_pmq,1))
+       f0_pmq = RT_E_occupations_reference(i_mp ,RTibz%k_range(i_pmq,1))
+       df_pmq = RT_life_delta_occupations(i_mp ,RTibz%k_range(i_pmq,1))
+       Hole_f0_pmq  = RT_H_occupations_reference(i_mp ,RTibz%k_range(i_pmq,1))
        !
        E_plasma=E_plasma+cmplx(delta_E,delta_W)
        !
@@ -170,7 +170,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        !
        pre_factor=(4._SP*pi)**2*GW_NEQ_COLL_element(i_coll_p_mem)%v3_r(i_J_mem,1,i_q_mem)
        !
-       do ik_rim=RTbz%k_range(ik,1),RTbz%k_range(ik,2)
+       do ik_rim=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
          !
          if (RT_occupations_locked(i_n ,ik_rim)) cycle
          !
@@ -181,7 +181,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
          ! Now that the double grid has the IBZ/BZ structure
          ! here we should loop in RT_bz_coo(ik_m_q_bz,1:2)
          !
-         do ik_m_q_rim=RTbz%k_range(ik_m_q,1),RTbz%k_range(ik_m_q,2)
+         do ik_m_q_rim=RTibz%k_range(ik_m_q,1),RTibz%k_range(ik_m_q,2)
            !
            if( .not.DbGd_EE_scatt_table(ik_m_q_rim,ik_rim) ) cycle
            !

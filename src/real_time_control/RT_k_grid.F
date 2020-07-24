@@ -28,7 +28,7 @@ subroutine RT_k_grid(E,k,q)
  use R_lattice,      ONLY:qindx_S
  use C_driver,       ONLY:code_bin
  use electrons,      ONLY:levels
- use real_time,      ONLY:DbGd_EE_scatt_table,DbGd_EE_percent,DbGd_EE_Nk_table,RTbz,&
+ use real_time,      ONLY:DbGd_EE_scatt_table,DbGd_EE_percent,DbGd_EE_Nk_table,RTibz,&
 &                         l_RT_uses_E_FineGd,RT_nk,RT_bands
  use R_lattice,      ONLY:bz_samp,bz_samp_FineGd_alloc,bz_samp_duplicate_Fg
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
@@ -60,10 +60,10 @@ subroutine RT_k_grid(E,k,q)
  !==============================
  if (.not.l_RT_uses_E_FineGd) then
    !
-   RTbz%N = 0
+   RTibz%N = 0
    RT_nk     = k%nibz
    !
-   call bz_samp_FineGd_alloc(RTbz,k%nibz)
+   call bz_samp_FineGd_alloc(RTibz,k%nibz)
    !
    DbGd_EE_percent=0._SP
    if(l_elel_scatt) then
@@ -73,12 +73,12 @@ subroutine RT_k_grid(E,k,q)
      DbGd_EE_Nk_table=1
    endif
    do ik=1,k%nibz
-     RTbz%pt(ik,:)=k%pt(ik,:)
-     RTbz%k_range(ik,:)=ik
-     RTbz%E_map(ik)=ik
-     RTbz%k_map(ik)=ik
-     RTbz%N_mapped(ik)=1
-     RTbz%weights(ik)=k%weights(ik)
+     RTibz%pt(ik,:)=k%pt(ik,:)
+     RTibz%k_range(ik,:)=ik
+     RTibz%E_map(ik)=ik
+     RTibz%k_map(ik)=ik
+     RTibz%N_mapped(ik)=1
+     RTibz%weights(ik)=k%weights(ik)
    enddo
    !
    return
@@ -92,17 +92,17 @@ subroutine RT_k_grid(E,k,q)
  !
  RT_nk = k%FGibz%N
  !
- call bz_samp_FineGd_alloc(RTbz,k%nibz)
- call bz_samp_duplicate_Fg(k%FGibz,RTbz,k%nibz)
+ call bz_samp_FineGd_alloc(RTibz,k%nibz)
+ call bz_samp_duplicate_Fg(k%FGibz,RTibz,k%nibz)
  !
  ! Define K-weights to be used in the k-points distribution
  !
  YAMBO_ALLOC(PAR_IND_Xk_ibz%weight_1D,(k%nibz))
- PAR_IND_Xk_ibz%weight_1D=RTbz%N_mapped
+ PAR_IND_Xk_ibz%weight_1D=RTibz%N_mapped
  !
  do ik=1,k%nibz
-   RTbz%k_map(RTbz%k_range(ik,1))  =ik
-   RTbz%weights(RTbz%k_range(ik,1))=k%weights(ik)/float(RTbz%N_mapped(ik))
+   RTibz%k_map(RTibz%k_range(ik,1))  =ik
+   RTibz%weights(RTibz%k_range(ik,1))=k%weights(ik)/float(RTibz%N_mapped(ik))
  enddo
  !
  if( l_elel_scatt .and. (index(code_bin,'ypp')==0) ) then
@@ -124,8 +124,8 @@ subroutine RT_k_grid(E,k,q)
        if(l_check(ik,ik_m_q)) cycle
        if(l_check(ik_m_q,ik)) cycle
        !
-       Nk_rim=RTbz%N_mapped(ik)
-       Nk_m_q_rim=RTbz%N_mapped(ik_m_q)
+       Nk_rim=RTibz%N_mapped(ik)
+       Nk_m_q_rim=RTibz%N_mapped(ik_m_q)
        !
        if( Nk_rim<Nk_m_q_rim ) cycle
        !
@@ -136,15 +136,15 @@ subroutine RT_k_grid(E,k,q)
        N_loops=max(1, (Nk_rim*N_pts-1)/(Nk_m_q_rim) )
        !
        i_loops=1
-       ik_m_q_rim=RTbz%k_range(ik_m_q,1)-1
+       ik_m_q_rim=RTibz%k_range(ik_m_q,1)-1
        !
        do while (i_loops< N_loops+1)
-         do ik_rim=RTbz%k_range(ik,1),RTbz%k_range(ik,2)
+         do ik_rim=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
            !
            do i1=1,N_pts
              ik_m_q_rim=ik_m_q_rim+1
-             if(ik_m_q_rim>RTbz%k_range(ik_m_q,2)) then
-               ik_m_q_rim=RTbz%k_range(ik_m_q,1)
+             if(ik_m_q_rim>RTibz%k_range(ik_m_q,2)) then
+               ik_m_q_rim=RTibz%k_range(ik_m_q,1)
                i_loops=i_loops+1
              endif
              !
@@ -156,7 +156,7 @@ subroutine RT_k_grid(E,k,q)
              !
            enddo
            !
-           if(ik_m_q_rim==RTbz%k_range(ik_m_q,2)) i_loops=i_loops+1
+           if(ik_m_q_rim==RTibz%k_range(ik_m_q,2)) i_loops=i_loops+1
            !
          enddo
          !

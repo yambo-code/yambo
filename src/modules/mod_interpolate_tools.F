@@ -26,7 +26,7 @@ module interpolate_tools
  use pars,         ONLY:SP,schlen,rZERO
  use interpolate,  ONLY:interpls,INTERP_obj,l_INTERP_dE,l_INTERP_E,l_INTERP_f,max_interpls,INTERP_mode,&
 &                       l_INTERP_W,NN_nk_exact,NN_MAX_real_nearest,NN_n_of_nearest,l_INTERP_Z,&
-&                       INTERPOLATE_msg_fmt,OUT_k_nk
+&                       INTERPOLATE_msg_fmt,OUT_k_nk,INTERP_FineGd
  use electrons,    ONLY:n_sp_pol
  !
 #include<memory.h>
@@ -37,23 +37,36 @@ module interpolate_tools
      !
      use com,   ONLY:msg
      !
-     integer, intent(in) :: ID
+     integer,      intent(in) :: ID
+     !
+     integer             :: IDs_todo(2),ID_
      real(SP)            :: dummy
      character(schlen)   :: title
      !
      if (ID==0) return
-     if (.not.INTERP_obj(ID)%in_use) return
+     if (ID< 0) IDs_todo=(/1,max_interpls/)
+     if (ID> 0) IDs_todo=ID
      !
-     title=trim(INTERP_obj(ID)%what)//"-Nearest K"
-     !
-     dummy=real(NN_nk_exact)/real(OUT_k_nk)*100._SP
-     call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Exact matches  [o/o]',dummy)
-     if (NN_nk_exact<OUT_k_nk) then
-       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Neighbours    [user]',NN_n_of_nearest)
-       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//']               [real]',NN_MAX_real_nearest)
-       dummy=real(OUT_k_nk-NN_nk_exact)/real(OUT_k_nk)*100._SP
-       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Interpolations [o/o]',dummy)
-     endif
+     do ID_=IDs_todo(1),IDs_todo(2)
+       !
+       if (.not.INTERP_obj(ID_)%in_use) return
+       !
+       title=trim(INTERP_obj(ID_)%what)//"-Nearest K"
+       if (trim(INTERP_FineGd)/="NONE") title=trim(title)//"-"//trim(INTERP_FineGd)//" FineGd"
+       !
+       dummy=real(NN_nk_exact/real(OUT_k_nk))*100._SP
+       call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Exact matches  [o/o]',dummy)
+       if (NN_nk_exact<OUT_k_nk) then
+         call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Neighbours    [user]',NN_n_of_nearest)
+         call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//']               [real]',NN_MAX_real_nearest)
+         dummy=real(OUT_k_nk-NN_nk_exact)/real(OUT_k_nk)*100._SP
+         call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Interpolations [o/o]',dummy)
+       endif
+       !
+       OUT_k_nk=0
+       NN_nk_exact=0
+       !
+     enddo
      !
    end subroutine
    !
@@ -72,6 +85,7 @@ module interpolate_tools
      INTERP_obj(ID)%in_use=.FALSE.
      INTERP_obj(ID)%seed_kind=" "
      INTERP_obj(ID)%what=" "
+     INTERP_FineGd="NONE"
      YAMBO_FREE(INTERP_obj(ID)%k)
      YAMBO_FREE(INTERP_obj(ID)%weights)
      YAMBO_FREE(INTERP_obj(ID)%SEED)

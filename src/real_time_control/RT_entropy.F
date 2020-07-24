@@ -28,7 +28,7 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  use units,          ONLY:HA2KEL
  use electrons,      ONLY:levels,spin_occ
  use real_time,      ONLY:RT_bands,eval_entropy,RT_levels, &
-&                         RT_E_occupations,RT_H_occupations,RTbz
+&                         RT_E_occupations,RT_H_occupations,RTibz
  use parallel_m,     ONLY:PAR_G_k_range
  !
  implicit none 
@@ -90,7 +90,7 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  do ik=1,en%nk
    do ib1=RT_bands(1),RT_bands(2)
      VALUE_tmp=0._SP
-     do ik_RT=RTbz%k_range(ik,1),RTbz%k_range(ik,2)
+     do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
        S_h=0._SP
        S_e=0._SP
        if(RT_H_occupations(ib1,ik_RT)>0._SP) S_h=-RT_H_occupations(ib1,ik_RT)*log(RT_H_occupations(ib1,ik_RT)/spin_occ)
@@ -98,7 +98,7 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
        VALUE_tmp(1)=VALUE_tmp(1)+S_e+S_h
        if ( RT_levels%E(ib1,ik_RT,1)<=0._SP ) VALUE_tmp(2)=VALUE_tmp(2)+S_h
        if ( RT_levels%E(ib1,ik_RT,1)> 0._SP ) VALUE_tmp(3)=VALUE_tmp(3)+S_e
-       VALUE_tmp=VALUE_tmp*RTbz%weights(ik_RT)
+       VALUE_tmp=VALUE_tmp*RTibz%weights(ik_RT)
      enddo
      Entr=Entr+VALUE_tmp
    enddo

@@ -153,7 +153,7 @@ module real_time
  !
  ! FineGd kind mapping the kpts grid (w and w/o FineGd database)
  !
- type(bz_fine_grid), SAVE :: RTbz
+ type(bz_fine_grid), SAVE :: RTibz
  !
  ! K-points: In case I want to use the G_lesser to define the occupations
  ! of a post-run I need to keep here the number of k-points
@@ -690,7 +690,7 @@ module real_time
      YAMBO_FREE(Q_io_map)
      YAMBO_FREE(K_io_map)
      !
-     call bz_samp_FineGd_reset(RTbz)
+     call bz_samp_FineGd_reset(RTibz)
      !
    end subroutine RT_free
    !

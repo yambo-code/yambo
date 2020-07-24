@@ -26,7 +26,7 @@ subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:RT_levels,RT_Deph_Matrix,RTbz,l_RT_EXP,RT_is_statically_dephased,RT_bands
+ use real_time,      ONLY:RT_levels,RT_Deph_Matrix,RTibz,l_RT_EXP,RT_is_statically_dephased,RT_bands
  !
  implicit none
  !
@@ -44,7 +44,7 @@ subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
  real(SP) :: deltaE,sumGAMMA,alpha,dec_exp
  complex(SP) :: phase
  !
- ik_ibz=RTbz%k_map(ik)
+ ik_ibz=RTibz%k_map(ik)
  !
  do i_n=RT_bands(1),RT_bands(2)
    do i_np=i_n,RT_bands(2)

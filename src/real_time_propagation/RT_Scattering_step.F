@@ -49,7 +49,7 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
  ! 
  use pars,           ONLY:SP,cI
  use electrons,      ONLY:spin_occ
- use real_time,      ONLY:RT_bands,RTbz,l_elel_scatt,l_elph_scatt,l_elphoton_scatt,          &
+ use real_time,      ONLY:RT_bands,RTibz,l_elel_scatt,l_elph_scatt,l_elphoton_scatt,          &
 &                         l_RT_relax_time_approx,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,    &
 &                         RT_E_occupations,RT_H_occupations,l_RT_CCA_Kernel, &
 &                         RT_delta_occupations,REF_lifetime,E_E_Electron_lifetime,E_E_Hole_lifetime,              &
@@ -107,7 +107,7 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
      endif
    endif
    !
-   if (RT_is_statically_dephased) GAMMA0(1)=GAMMA0(1)+RT_Deph_Matrix(ib,ib,RTbz%k_map(ik))
+   if (RT_is_statically_dephased) GAMMA0(1)=GAMMA0(1)+RT_Deph_Matrix(ib,ib,RTibz%k_map(ik))
    !
    GAMMA_(1)=GAMMA0(1)+dGAMMA(1)
    GAMMA_(2)=GAMMA0(2)+dGAMMA(2)
@@ -151,7 +151,7 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
      !
    else
      !
-     if (RT_is_statically_dephased) GAMMA0_TOT=GAMMA0_TOT+RT_Deph_Matrix(ib,ib,RTbz%k_map(ik))
+     if (RT_is_statically_dephased) GAMMA0_TOT=GAMMA0_TOT+RT_Deph_Matrix(ib,ib,RTibz%k_map(ik))
      !
      f_inf(1)= RT_RTA_E_occ_infty(ib,ik)
      f_inf(2)= RT_RTA_H_occ_infty(ib,ik)

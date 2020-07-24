@@ -75,8 +75,10 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
    !
    YAMBO_ALLOC(E%df,(E%nb,E%nk,n_sp_pol))
    E%df=0._SP
-   if (l_DbGd) then
-     YAMBO_ALLOC(E%FG%df,(E%FG%nb,E%FG%nk,n_sp_pol))
+   if (l_DbGd.and..not.allocated(E%FG%df)) then
+     if (.not.allocated(E%FG%df)) then
+       YAMBO_ALLOC(E%FG%df,(E%FG%nb,E%FG%nk,n_sp_pol))
+     endif
      E%FG%df=0._SP
    endif
    !
@@ -156,6 +158,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
     if (HAS_DBGD) nb_max_FineGd=min(nb(2),E%FG%nb)
     !
     call INTERPOLATION_driver_seed(OBJ//"_from_DB",ID,nb,RT_k,SEED_RT=RT_carriers,NEAREST=.not.l_B)
+    !
     call INTERPOLATION_driver_do(OBJ//"_from_DB",ID,K)
     !
     if (OBJ=="df") then
@@ -175,9 +178,8 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
       !
       if (HAS_DBGD) then
         E%FG%df( nb(1):nb_max_FineGd,:,:)=INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,:,:)
-        do ik=1,K%FGibz%N
-          N_carriers(2)=N_carriers(2)+ &
-&                       sum(abs(INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,ik,:)))*K%FGibz%weights(ik)/2._SP
+        do ik=1,K%FGbare%N
+          N_carriers(2)=N_carriers(2)+sum(abs(INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,ik,:)))*K%FGbare%weights(ik)/2._SP
         enddo
       endif
       !
@@ -186,8 +188,10 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
       E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)
       dE_Max=maxval(abs(INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)))
       !
-      if (HAS_DBGD) E%FG%E(nb(1):nb_max_FineGd,:,:)= &
-      & E%FG%E(nb(1):nb_max_FineGd,:,:)+INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,:,:)
+      if (HAS_DBGD) then
+        E%FG%E(nb(1):nb_max_FineGd,:,:)=E%FG%E(nb(1):nb_max_FineGd,:,:)+&
+&                                       INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,:,:)
+      endif
       !
     endif
     !

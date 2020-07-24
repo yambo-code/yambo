@@ -27,7 +27,7 @@ subroutine RT_carriers_number(en,k,Ncarr)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use RT_control,     ONLY:NE_i_start_time
- use real_time,      ONLY:RTbz,NE_i_time,RT_levels,&
+ use real_time,      ONLY:RTibz,NE_i_time,RT_levels,&
 &                         RT_E_occupations,RT_H_occupations,RT_bands,RT_delta_occupations
  !
  implicit none
@@ -48,7 +48,7 @@ subroutine RT_carriers_number(en,k,Ncarr)
  do ik=1,en%nk
    do ib=RT_bands(1),RT_bands(2)
      VALUE_tmp=0._SP
-     do ik_RT=RTbz%k_range(ik,1),RTbz%k_range(ik,2)
+     do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
        if ( RT_levels%E(ib,ik_RT,1)<=0._SP ) then
          if(NE_i_time==NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib,ik_RT)
          if(NE_i_time/=NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)-RT_delta_occupations(ib,ik_RT)
@@ -56,7 +56,7 @@ subroutine RT_carriers_number(en,k,Ncarr)
          if(NE_i_time==NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib,ik_RT)
          if(NE_i_time/=NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_delta_occupations(ib,ik_RT)
        endif
-       VALUE_tmp=VALUE_tmp*RTbz%weights(ik_RT)
+       VALUE_tmp=VALUE_tmp*RTibz%weights(ik_RT)
      enddo
      Ncarr(2:3)=Ncarr(2:3)+VALUE_tmp
    enddo

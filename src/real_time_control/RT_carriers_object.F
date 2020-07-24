@@ -34,7 +34,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  use RT_control,     ONLY:CARR_RT_IO_t
  use real_time,      ONLY:RT_t,REF_lifetime,E_E_Hole_lifetime,E_E_Electron_lifetime,   &
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Ho_abs_lifetime, &
-&                         E_P_El_abs_lifetime,RTbz,&
+&                         E_P_El_abs_lifetime,RTibz,&
 &                         RT_nk,RT_delta_occupations,RT_bands,&
 &                         RT_obj_alloc,RT_obj_free,RT_levels,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime
@@ -75,12 +75,9 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      if (allocated(REF_lifetime)) RT%GAMMA_bare=0._SP
      !
      do i_k=1,K%nibz
-       i_k_RT=RTbz%k_range(i_k,1)
-       RT%kpt(i_k_RT,:)    = K%pt(i_k,:)
-       RT%k_weight(i_k_RT) = K%weights(i_k)
-       do i_k_RT=RTbz%k_range(i_k,1)+1,RTbz%k_range(i_k,2)
-         RT%kpt(i_k_RT,:)    = RTbz%pt(i_k_RT,:)
-         RT%k_weight(i_k_RT) = RTbz%weights( i_k_RT)
+       do i_k_RT=RTibz%k_range(i_k,1),RTibz%k_range(i_k,2)
+         RT%kpt(i_k_RT,:)    = RTibz%pt(i_k_RT,:)
+         RT%k_weight(i_k_RT) = RTibz%weights( i_k_RT)
        enddo
      enddo
      !
@@ -93,8 +90,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        i_k_RT =RT%table(i_RT,3)
        i_spin =RT%table(i_RT,4)
        !
-       if(i_k_RT/=RTbz%k_range(i_k,1)) then
-         iE_fg=RTbz%E_map(i_k_RT)
+       if(i_k_RT/=RTibz%k_range(i_k,1)) then
+         iE_fg=RTibz%E_map(i_k_RT)
          RT%E_bare(i_RT)=E_reference%FG%E(i_b,iE_fg,i_spin)
          if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%FG%f(i_b,iE_fg,i_spin)
          if(     allocated(E%fo)) RT%f_bare(i_RT)=E%FG%f(i_b,iE_fg,i_spin)-E%FG%df(i_b,iE_fg,i_spin)
@@ -355,7 +352,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
            !
            i_RT=i_RT+1
            RT%table(i_RT,1)=i_b
-           RT%table(i_RT,2)=RTbz%k_map(i_k_RT)
+           RT%table(i_RT,2)=RTibz%k_map(i_k_RT)
            RT%table(i_RT,3)=i_k_RT
            RT%table(i_RT,4)=i_spin
            !

@@ -46,7 +46,7 @@ subroutine RT_start_and_restart(E,k,q)
 &                         CACHE_OBS_INTERVAL_time,RT_control_free,RT_control_alloc
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
-&                         l_NE_with_fields,XC0,HARTREE0,RTbz,NE_time,RT_levels,&
+&                         l_NE_with_fields,XC0,HARTREE0,RTibz,NE_time,RT_levels,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
 &                         Gr_kind,l_RT_is_WFfree,RT_TIME_status,&
 &                         RT_E_occupations_reference,RT_nk,G_lesser, &
@@ -376,10 +376,11 @@ subroutine RT_start_and_restart(E,k,q)
      do ib=RT_bands(1),RT_bands(2)
        do ik=1,k%nibz
          !
-         do ik_RT_DbGd=RTbz%k_range(ik,1),RTbz%k_range(ik,2)
+         do ik_RT_DbGd=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
            !
-           if (ik_RT_DbGd/=RTbz%k_range(ik,1)) then
-             iE_k=RTbz%E_map(ik_RT_DbGd)
+           if (ik_RT_DbGd/=RTibz%k_range(ik,1)) then
+             !
+             iE_k=RTibz%E_map(ik_RT_DbGd)
              !
              if (allocated(E%W))  E%FG%W(ib,iE_k,1)     = abs(E%W(ib,ik,1))
              !
@@ -402,7 +403,7 @@ subroutine RT_start_and_restart(E,k,q)
            !
            RT_levels%E(ib,ik_RT_DbGd,1) = Energy
            RT_levels%W(ib,ik_RT_DbGd,1) = Width 
-           RTbz%pt(ik_RT_DbGd,:)        = kpt
+           RTibz%pt(ik_RT_DbGd,:)        = kpt
            !
            G_lesser_reference(ib,ib,ik_RT_DbGd) = cmplx(0.,f_occ_ref,SP)
            !
@@ -449,9 +450,9 @@ subroutine RT_start_and_restart(E,k,q)
      if (l_RT_relax_time_approx) then
        do ib=RT_bands(1),RT_bands(2)
          do ik=1,k%nibz
-           do ik_RT_DbGd=RTbz%k_range(ik,1),RTbz%k_range(ik,2)
-             if (ik_RT_DbGd/=RTbz%k_range(ik,1)) then
-               iE_k=RTbz%E_map(ik_RT_DbGd)
+           do ik_RT_DbGd=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
+             if (ik_RT_DbGd/=RTibz%k_range(ik,1)) then
+               iE_k=RTibz%E_map(ik_RT_DbGd)
                En=E%FG%E(ib,iE_k,1)
              else 
                En=E%E(ib,ik,1)

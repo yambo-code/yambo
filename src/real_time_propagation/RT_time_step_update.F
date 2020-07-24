@@ -30,7 +30,7 @@ subroutine RT_time_step_update( E )
 &                         i_MEM_prev,i_MEM_now,RT_step,RT_dyn_step,&
 &                         RT_life_extrap_times,Life_MEM_steps,NE_time,&
 &                         NE_step_update_treshold,NE_i_time,NE_time_step_update_last_point,RT_MAX_step,&
-&                         NE_initial_time_step_update,RT_nk,RTbz
+&                         NE_initial_time_step_update,RT_nk,RTibz
  use RT_control,     ONLY:TIME_adjust
  use RT_output_m,    ONLY:TIME_STEP_desc
  use com,            ONLY:msg
@@ -67,7 +67,7 @@ subroutine RT_time_step_update( E )
  !
  do ik=1,RT_nk
    !
-   if( .not.PAR_IND_Xk_ibz%element_1D(RTbz%k_map(ik)) ) cycle
+   if( .not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
    !
    do ib=RT_bands(1),RT_bands(2)
      do ibp=RT_bands(1),RT_bands(2)

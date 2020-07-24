@@ -30,7 +30,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  use pars,              ONLY:SP
  use R_lattice,         ONLY:bz_samp
  use electrons,         ONLY:levels
- use interpolate,       ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells
+ use interpolate,       ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells,INTERP_FineGd
  use interpolate_tools, ONLY:get_ID
  !
 #include<memory.h>
@@ -106,16 +106,16 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  elseif(present(E)) then
    !
 #if defined _RT
-    if(allocated(E%FG%E)) then
-      do i1=1,inpdim(2)
-        do ik=1,k%nibz
-          do ik_fg=k%FGibz%k_range(ik,1),k%FGibz%k_range(ik,2)
-            iE_fg=k%FGibz%E_map(ik_fg)
-            RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),ik_fg)=E%FG%E(1:inpdim(1),iE_fg,i1)
-          enddo
-        enddo
-      enddo 
-    else
+   if (allocated(E%FG%E).and.trim(INTERP_FineGd)=="BARE") then
+     do i1=1,inpdim(2)
+       do ik=1,k%nibz
+         do ik_fg=k%FGbare%k_range(ik,1),k%FGbare%k_range(ik,2)
+           iE_fg=k%FGbare%E_map(ik_fg)
+           RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),ik_fg)=E%FG%E(1:inpdim(1),iE_fg,i1)
+         enddo
+       enddo
+     enddo 
+   else
 #endif
      do i1=1,inpdim(2)
        RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),1:Nk_local) = E%E(1:inpdim(1),1:Nk_local,i1)

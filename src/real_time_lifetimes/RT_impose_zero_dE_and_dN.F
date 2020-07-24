@@ -30,7 +30,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use real_time,      ONLY:RT_levels,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
 &                         REF_lifetime,G_lesser_reference,&
 &                         l_initial_equilibrium,RT_delta_occupations,&
-&                         l_RT_impose_E,l_RT_impose_for_metals,RT_nk,RTbz,&
+&                         l_RT_impose_E,l_RT_impose_for_metals,RT_nk,RTibz,&
 &                         l_RT_impose_N_dN,RT_bands,RAD_prefactor,l_RT_include_eq_scatt
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait
  !
@@ -118,9 +118,9 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     do ik_rim=RTbz%k_range(ik,1),RTbz%k_range(ik,2)
+     do ik_rim=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
        !
-       k_weight=RTbz%weights(ik_rim)
+       k_weight=RTibz%weights(ik_rim)
        !
        f0_E=real(         aimag(G_lesser_reference(ib,ib,ik_rim)),DP)
        f0_H=real(spin_occ-aimag(G_lesser_reference(ib,ib,ik_rim)),DP)
@@ -279,7 +279,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    !
    if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
    !
-   do ik_rim=RTbz%k_range(ik,1),RTbz%k_range(ik,2)
+   do ik_rim=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
      do ib=RT_bands(1),RT_bands(2)
        !
        En=real(RT_levels%E(ib,ik_rim,1),DP)

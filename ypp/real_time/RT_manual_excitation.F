@@ -30,7 +30,7 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ,E_reset,E_duplicate,n_sp_pol
  use com,            ONLY:msg
- use real_time,      ONLY:RT_carriers,RT_bands,RTbz
+ use real_time,      ONLY:RT_carriers,RT_bands,RTibz
  use YPPm,           ONLY:BANDS_path,CIRCUIT_k,CIRCUIT_k_label
  use YPP_interfaces, ONLY:k_special
  use YPP_real_time,  ONLY:Eh_pumped_pair_energy,Eh_pumped_pair_width,        &
@@ -47,8 +47,8 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
  ! Work Space
  !
  type(levels) :: E_local
- integer      :: i_pump_level,i_region,ib,ibp,iv,ic,ik,ik_cgd,i_RT,Pump_level(E%nb,RT_carriers%nk),i_k_near,i_err
- real(SP)     :: local_E_window,coeff,delta_Nel,occupation,local_energy(2),local_k(3),&
+ integer      :: i_pump_level,i_region,ib,ibp,iv,ic,ik,i_RT,Pump_level(E%nb,RT_carriers%nk),i_k_near,i_err
+ real(SP)     :: local_E_window,delta_Nel,occupation,local_energy(2),local_k(3),&
 &                k_dist(RT_carriers%nk),k_weights(RT_carriers%nk)
  logical      :: Pumped_state(E%nb,RT_carriers%nk),do_kpt(RT_carriers%nk),RT_uses_Fine_Grid
  !
@@ -77,9 +77,8 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
    YAMBO_ALLOC(E_local%E,(E_local%nb,E_local%nk,n_sp_pol))
    do i_RT=1,RT_carriers%nstates
      ib     = RT_carriers%table(i_RT,1)
-     ik_cgd = RT_carriers%table(i_RT,2)
      ik     = RT_carriers%table(i_RT,3)
-     k_weights(ik)=k%weights(ik_cgd)
+     k_weights(ik)     =RT_carriers%k_weight(ik)
      E_local%E(ib,ik,:)=RT_carriers%E_bare(i_RT)
    enddo
  else
@@ -119,7 +118,6 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
  endif
  !
  delta_Nel   =0._SP
- coeff       =0._SP
  Pumped_state=.FALSE.
  Pump_level  =0
  i_pump_level=1
@@ -182,12 +180,6 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
        enddo
      enddo
      !
-     do ib=RT_bands(1),RT_bands(2)
-       if (Pumped_state(ib,ik).and.Pump_level(ib,ik)==i_pump_level) then
-         coeff=coeff+spin_occ*k_weights(ik)/sqrt(abs(real(Pump_level(ib,ik),SP)))
-       endif
-     enddo
-     !
    enddo K_LOOP
    !
    i_pump_level=i_pump_level+1
@@ -196,34 +188,32 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
    !
  enddo
  !
- coeff=coeff/Eh_pumped_Nel
- !
  SUCCESS=any(Pumped_state)
  !
  if (.not.SUCCESS) return
  !
  RT_carriers%delta_f=0._SP
+ ic=0
  !
- do i_RT=1,RT_carriers%nstates
-   !
-   ib     = RT_carriers%table(i_RT,1)
-   ik_cgd = RT_carriers%table(i_RT,2)
-   ik     = RT_carriers%table(i_RT,3)
-   !
-   if (.not.Pumped_state(ib,ik)) cycle
-   !
-   occupation=min(1._SP,1._SP/sqrt(abs(real(Pump_level(ib,ik),SP)))/coeff)
-   !
-   if (Pump_level(ib,ik)>0) then
-     RT_carriers%delta_f(i_RT)= spin_occ*occupation
-     delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*2._SP*RTbz%weights(ik)
-   else if (Pump_level(ib,ik)<0) then
-     RT_carriers%delta_f(i_RT)=-spin_occ*occupation
-   endif
-   !
+ do while(delta_Nel<Eh_pumped_Nel) 
+   delta_Nel=0._SP
+   ic=ic+1
+   do i_RT=1,RT_carriers%nstates
+     ib = RT_carriers%table(i_RT,1)
+     ik = RT_carriers%table(i_RT,3)
+     if (.not.Pumped_state(ib,ik)) cycle
+     occupation=min(1._SP,1._SP/sqrt(real(iabs(Pump_level(ib,ik)),SP)))*real(ic)/50._SP
+     if (Pump_level(ib,ik)>0) then
+       RT_carriers%delta_f(i_RT)= spin_occ*occupation
+       delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*2._SP*RTibz%weights(ik)
+     else if (Pump_level(ib,ik)<0) then
+       RT_carriers%delta_f(i_RT)=-spin_occ*occupation
+     endif
+   enddo
  enddo
  !
- call msg('sr','[RT] Carrier number        ',delta_Nel)
+ call msg('sr','[RT] Carrier number  [USER]',Eh_pumped_Nel)
+ call msg('sr','[RT]                 [GRID]',delta_Nel)
  call msg('sr','[RT]         density [cm-3]',delta_Nel/(DL_vol*BO2ANG**3*1.E-24_SP))
  !
  call E_reset(E_local)

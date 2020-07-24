@@ -280,9 +280,18 @@ subroutine X_redux(iq,X_par,Xw,X)
       !
       if (l_environ) then
         !
-        ! Note: X * v is not symmetrized here (a flag is present in io_X)
-        ! BUFFER = X * v_environ
+        ! BUFFER = bare_qpg1 * v_environ * X * v_environ * bare_qpg2
+        !
         call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=BUFFER,B_slk=v_environ,C_slk=BUFFER)
+        call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=v_environ,B_slk=BUFFER,C_slk=BUFFER)
+        !
+        !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
+        do ig2=Xo%cols(1),Xo%cols(2)
+        do ig1=Xo%rows(1),Xo%rows(2)
+          BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*bare_qpg(iq,ig1)*bare_qpg(iq,ig2)
+        enddo
+        enddo
+        !$omp end parallel do
         !
       else
         !

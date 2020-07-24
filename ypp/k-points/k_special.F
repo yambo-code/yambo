@@ -82,20 +82,12 @@ subroutine k_special(LIST_only)
        trial_b(3,:)=(/ 1., 1.,-1./)*2.*pi/alat(1)
      endif
      !
-     SPECIAL_k%nbz=6
-     !
-     SPECIAL_k%pt(1,:)=(/0._SP,0._SP,0._SP/)
-     SPECIAL_k_label(1)='G'
-     SPECIAL_k%pt(2,:)=(/0.5_SP,0.5_SP,0._SP/)
-     SPECIAL_k_label(2)='X'
-     SPECIAL_k%pt(3,:)=(/0.5_SP,0.5_SP,0.5_SP/)
-     SPECIAL_k_label(3)='L'
-     SPECIAL_k%pt(4,:)=(/0.5_SP,0.75_SP,0.25_SP/)
-     SPECIAL_k_label(4)='W'
-     SPECIAL_k%pt(5,:)=(/0.375_SP,0.375_SP,0.750_SP/)
-     SPECIAL_k_label(5)='K'
-     SPECIAL_k%pt(6,:)=(/0.375_SP,0.375_SP,0.750_SP/)
-     SPECIAL_k_label(6)='U'
+     call k_add((/0._SP,0._SP,0._SP/),'G' )
+     call k_add((/0.5_SP,0.5_SP,0._SP/),'X' )
+     call k_add((/0.5_SP,0.5_SP,0.5_SP/),'L' )
+     call k_add((/0.5_SP,0.75_SP,0.25_SP/),'W' )
+     call k_add((/0.375_SP,0.375_SP,0.750_SP/),'K' )
+     call k_add((/0.375_SP,0.375_SP,0.750_SP/),'U' )
      !
      do ik=1,SPECIAL_k%nbz
        call c2a(b_in=trial_b,v_in=SPECIAL_k%pt(ik,:),mode='ka2c')
@@ -111,16 +103,10 @@ subroutine k_special(LIST_only)
        trial_b(3,:)=(/ 1._SP, 0._SP,-1._SP/)*2._SP*pi/alat(1)
      endif
      !
-     SPECIAL_k%nbz=4
-     !
-     SPECIAL_k%pt(1,:)=(/0._SP,0._SP,0._SP/)
-     SPECIAL_k_label(1)='G'
-     SPECIAL_k%pt(2,:)=(/0.5_SP,0.5_SP,0._SP/)
-     SPECIAL_k_label(2)='N'
-     SPECIAL_k%pt(3,:)=(/0.5_SP,0.5_SP,0.5_SP/)
-     SPECIAL_k_label(3)='P'
-     SPECIAL_k%pt(4,:)=(/0._SP ,1._SP  ,0._SP  /)
-     SPECIAL_k_label(4)='H'
+     call k_add((/0._SP,0._SP,0._SP/),'G' )
+     call k_add((/0.5_SP,0.5_SP,0._SP/),'N' )
+     call k_add((/0.5_SP,0.5_SP,0.5_SP/),'P' )
+     call k_add((/0._SP ,1._SP  ,0._SP  /),'H' )
      !
    case('FC-ORTHOROMBIC (b<a)')
      !
@@ -130,32 +116,20 @@ subroutine k_special(LIST_only)
      !
      call orthorombic_lengths(bp,ap)
      !
-     SPECIAL_k%nbz=10
+     call k_add((/0._SP,0._SP,0._SP/),'G' )
+     call k_add(SPECIAL_k%pt(1,:)+(/0._SP,0._SP,cp/),'Z' )
      !
-     SPECIAL_k%pt(1,:)=(/0._SP,0._SP,0._SP/)
-     SPECIAL_k_label(1)='G'
-     SPECIAL_k%pt(2,:)=SPECIAL_k%pt(1,:)+(/0._SP,0._SP,cp/)
-     SPECIAL_k_label(2)='Z'
+     call k_add((/ap,0._SP,0._SP/),'X' )
+     call k_add(SPECIAL_k%pt(3,:)+(/0._SP,0._SP,cp/),'A' )
      !
-     SPECIAL_k%pt(3,:)=(/ap,0._SP,0._SP/)
-     SPECIAL_k_label(3)='X'
-     SPECIAL_k%pt(4,:)=SPECIAL_k%pt(3,:)+(/0._SP,0._SP,cp/)
-     SPECIAL_k_label(4)='A'
+     call k_add((/0._SP,fp,0._SP/),'Y' )
+     call k_add(SPECIAL_k%pt(5,:)+(/0._SP,0._SP,cp/),'T' )
      !
-     SPECIAL_k_label(5)='Y'
-     SPECIAL_k%pt(5,:)=(/0._SP,fp,0._SP/)
-     SPECIAL_k_label(6)='T'
-     SPECIAL_k%pt(6,:)=SPECIAL_k%pt(5,:)+(/0._SP,0._SP,cp/)
+     call k_add((/ap/2._SP,bp/2._SP,0._SP/),'S' )
+     call k_add(SPECIAL_k%pt(7,:)+(/0._SP,0._SP,cp/),'R' )
      !
-     SPECIAL_k_label(7)='S'
-     SPECIAL_k%pt(7,:)=(/ap/2._SP,bp/2._SP,0._SP/)
-     SPECIAL_k_label(8)='R'
-     SPECIAL_k%pt(8,:)=SPECIAL_k%pt(7,:)+(/0._SP,0._SP,cp/)
-     !
-     SPECIAL_k_label(9)='X1'
-     SPECIAL_k%pt(9,:)=(/ap,ep,0._SP/)
-     SPECIAL_k_label(10)='A1'
-     SPECIAL_k%pt(10,:)=SPECIAL_k%pt(9,:)+(/0._SP,0._SP,cp/)
+     call k_add((/ap,ep,0._SP/),'X1')
+     call k_add(SPECIAL_k%pt(9,:)+(/0._SP,0._SP,cp/),'A1' )
      !
    case('FC-ORTHOROMBIC (b>a)')
      !
@@ -165,85 +139,67 @@ subroutine k_special(LIST_only)
      !
      call orthorombic_lengths(ap,bp)
      !
-     SPECIAL_k%nbz=15
+     call k_add((/0._SP,0._SP,0._SP/),'G' ) 
+     call k_add(SPECIAL_k%pt(1,:)+(/0._SP,0._SP,cp/),'Z' )
      !
-     SPECIAL_k%pt(1,:)=(/0._SP,0._SP,0._SP/)
-     SPECIAL_k_label(1)='G'
-     SPECIAL_k%pt(2,:)=SPECIAL_k%pt(1,:)+(/0._SP,0._SP,cp/)
-     SPECIAL_k_label(2)='Z'
+     call k_add((/fp,0._SP,0._SP/),'X' )
+     call k_add(SPECIAL_k%pt(3,:)+(/0._SP,0._SP,cp/),'A' )
      !
-     SPECIAL_k%pt(3,:)=(/fp,0._SP,0._SP/)
-     SPECIAL_k_label(3)='X'
-     SPECIAL_k%pt(4,:)=SPECIAL_k%pt(3,:)+(/0._SP,0._SP,cp/)
-     SPECIAL_k_label(4)='A'
+     call k_add((/0._SP,bp,0._SP/),'Y' )
+     call k_add(SPECIAL_k%pt(5,:)+(/0._SP,0._SP,cp/),'T' )
      !
-     SPECIAL_k_label(5)='Y'
-     SPECIAL_k%pt(5,:)=(/0._SP,bp,0._SP/)
-     SPECIAL_k_label(6)='T'
-     SPECIAL_k%pt(6,:)=SPECIAL_k%pt(5,:)+(/0._SP,0._SP,cp/)
+     call k_add((/ap/2._SP,bp/2._SP,0._SP/),'S' )
+     call k_add(SPECIAL_k%pt(7,:)+(/0._SP,0._SP,cp/),'R' )
      !
-     SPECIAL_k_label(7)='S'
-     SPECIAL_k%pt(7,:)=(/ap/2._SP,bp/2._SP,0._SP/)
-     SPECIAL_k_label(8)='R'
-     SPECIAL_k%pt(8,:)=SPECIAL_k%pt(7,:)+(/0._SP,0._SP,cp/)
+     call k_add((/ep,bp,0._SP/),'X1' )
+     call k_add(SPECIAL_k%pt(9,:)+(/0._SP,0._SP,cp/),'A1' )
      !
-     SPECIAL_k_label(9)='X1'
-     SPECIAL_k%pt(9,:)=(/ep,bp,0._SP/)
-     SPECIAL_k_label(10)='A1'
-     SPECIAL_k%pt(10,:)=SPECIAL_k%pt(9,:)+(/0._SP,0._SP,cp/)
-     !
-     SPECIAL_k_label(10)='X2'
-     SPECIAL_k%pt(10,:)=SPECIAL_k%pt(3,:)+SPECIAL_k%pt(5,:)
-     SPECIAL_k_label(11)='A2'
-     SPECIAL_k%pt(11,:)=SPECIAL_k%pt(4,:)-2.*SPECIAL_k%pt(3,:)
-     SPECIAL_k_label(12)='A3'
-     SPECIAL_k%pt(12,:)=SPECIAL_k%pt(4,:)-2.*SPECIAL_k%pt(2,:)
-     SPECIAL_k_label(13)='A4'
-     SPECIAL_k%pt(13,:)=SPECIAL_k%pt(4,:)+SPECIAL_k%pt(5,:)
-     SPECIAL_k_label(14)='A5'
-     SPECIAL_k%pt(14,:)=SPECIAL_k%pt(12,:)+SPECIAL_k%pt(5,:)
-     SPECIAL_k_label(15)='A6'
-     SPECIAL_k%pt(15,:)=SPECIAL_k%pt(11,:)+SPECIAL_k%pt(5,:)
+     call k_add(SPECIAL_k%pt(3,:)+SPECIAL_k%pt(5,:),'X2' )
+     call k_add(SPECIAL_k%pt(4,:)-2.*SPECIAL_k%pt(3,:),'A2' )
+     call k_add(SPECIAL_k%pt(4,:)-2.*SPECIAL_k%pt(2,:),'A3' )
+     call k_add(SPECIAL_k%pt(4,:)+SPECIAL_k%pt(5,:),'A4' )
+     call k_add(SPECIAL_k%pt(13,:)+SPECIAL_k%pt(5,:),'A5' )
+     call k_add(SPECIAL_k%pt(12,:)+SPECIAL_k%pt(5,:),'A6' )
      !
      ! X=+, Z=- quadrant
      !
-     call k_add_special_regions( (/0.88_SP,0._SP  /),"XY1pm" )
-     call k_add_special_regions( (/0.88_SP,0.26_SP/),"XY2pm" )
-     call k_add_special_regions( (/0.72_SP,0.26_SP/),"Gpm" )
-     call k_add_special_regions( (/0.72_SP,0.50_SP/),"Gnm" )
-     call k_add_special_regions( (/0.62_SP,0.16_SP/),"Y1pm" )
-     call k_add_special_regions( (/0.62_SP,0.26_SP/),"Y2pm" )
-     call k_add_special_regions( (/0.50_SP,0._SP  /),"XYpn" )
-     call k_add_special_regions( (/0.50_SP,0.16_SP/),"Ypn" )
-     call k_add_special_regions( (/0.50_SP,0.26_SP/),"Gpn" )
+     call k_ORTHO_add( (/0.88_SP,0._SP  /),"XY1pm" )
+     call k_ORTHO_add( (/0.88_SP,0.26_SP/),"XY2pm" )
+     call k_ORTHO_add( (/0.72_SP,0.26_SP/),"Gpm" )
+     call k_ORTHO_add( (/0.72_SP,0.50_SP/),"Gnm" )
+     call k_ORTHO_add( (/0.62_SP,0.16_SP/),"Y1pm" )
+     call k_ORTHO_add( (/0.62_SP,0.26_SP/),"Y2pm" )
+     call k_ORTHO_add( (/0.50_SP,0._SP  /),"XYpn" )
+     call k_ORTHO_add( (/0.50_SP,0.16_SP/),"Ypn" )
+     call k_ORTHO_add( (/0.50_SP,0.26_SP/),"Gpn" )
      !
      ! X=+, Z=+ quadrant
      !
-     call k_add_special_regions( (/0.12_SP,0._SP  /),"XY1pp" )
-     call k_add_special_regions( (/0.12_SP,0.26_SP/),"XY2pp" )
-     call k_add_special_regions( (/0.28_SP,0.26_SP/),"Gpp" )
-     call k_add_special_regions( (/0.28_SP,0.50_SP/),"Gnp" )
-     call k_add_special_regions( (/0.38_SP,0.16_SP/),"Y1pp" )
-     call k_add_special_regions( (/0.38_SP,0.26_SP/),"Y2pp" )
+     call k_ORTHO_add( (/0.12_SP,0._SP  /),"XY1pp" )
+     call k_ORTHO_add( (/0.12_SP,0.26_SP/),"XY2pp" )
+     call k_ORTHO_add( (/0.28_SP,0.26_SP/),"Gpp" )
+     call k_ORTHO_add( (/0.28_SP,0.50_SP/),"Gnp" )
+     call k_ORTHO_add( (/0.38_SP,0.16_SP/),"Y1pp" )
+     call k_ORTHO_add( (/0.38_SP,0.26_SP/),"Y2pp" )
      !
      ! X=-, Z=- quadrant
      !
-     call k_add_special_regions( (/0.88_SP,1._SP  /),"XY1mm" )
-     call k_add_special_regions( (/0.88_SP,0.74_SP/),"XY2mm" )
-     call k_add_special_regions( (/0.72_SP,0.74_SP/),"Gmm" )
-     call k_add_special_regions( (/0.62_SP,0.84_SP/),"Y1mm" )
-     call k_add_special_regions( (/0.62_SP,0.74_SP/),"Y2mm" )
-     call k_add_special_regions( (/0.50_SP,1._SP  /),"XYmn" )
-     call k_add_special_regions( (/0.50_SP,0.84_SP/),"Ymn" )
-     call k_add_special_regions( (/0.50_SP,0.74_SP/),"Gmn" )
+     call k_ORTHO_add( (/0.88_SP,1._SP  /),"XY1mm" )
+     call k_ORTHO_add( (/0.88_SP,0.74_SP/),"XY2mm" )
+     call k_ORTHO_add( (/0.72_SP,0.74_SP/),"Gmm" )
+     call k_ORTHO_add( (/0.62_SP,0.84_SP/),"Y1mm" )
+     call k_ORTHO_add( (/0.62_SP,0.74_SP/),"Y2mm" )
+     call k_ORTHO_add( (/0.50_SP,1._SP  /),"XYmn" )
+     call k_ORTHO_add( (/0.50_SP,0.84_SP/),"Ymn" )
+     call k_ORTHO_add( (/0.50_SP,0.74_SP/),"Gmn" )
      !
      ! X=-, Z=+ quadrant
      !
-     call k_add_special_regions( (/0.12_SP,1._SP  /),"XY1mp" )
-     call k_add_special_regions( (/0.12_SP,0.74_SP/),"XY2mp" )
-     call k_add_special_regions( (/0.28_SP,0.74_SP/),"Gmp" )
-     call k_add_special_regions( (/0.38_SP,0.84_SP/),"Y1mp" )
-     call k_add_special_regions( (/0.38_SP,0.74_SP/),"Y2mp" )
+     call k_ORTHO_add( (/0.12_SP,1._SP  /),"XY1mp" )
+     call k_ORTHO_add( (/0.12_SP,0.74_SP/),"XY2mp" )
+     call k_ORTHO_add( (/0.28_SP,0.74_SP/),"Gmp" )
+     call k_ORTHO_add( (/0.38_SP,0.84_SP/),"Y1mp" )
+     call k_ORTHO_add( (/0.38_SP,0.74_SP/),"Y2mp" )
      !
    case('CUB')
      !
@@ -255,16 +211,10 @@ subroutine k_special(LIST_only)
        trial_b(3,:)=(/ 0., 0., 1./)*2.*pi/alat(1)
      endif
      !
-     SPECIAL_k%nbz=4
-     !
-     SPECIAL_k%pt(1,:)=(/0.,0.,0./)
-     SPECIAL_k_label(1)='G'
-     SPECIAL_k%pt(2,:)=(/0.5,0.,0./)
-     SPECIAL_k_label(2)='X'
-     SPECIAL_k%pt(3,:)=(/0.5,0.5,0./)
-     SPECIAL_k_label(3)='M'
-     SPECIAL_k%pt(4,:)=(/0.5,0.5,0.5/)
-     SPECIAL_k_label(4)='R'
+     call k_add((/0.,0.,0./),'G' )
+     call k_add((/0.5,0.,0./),'X' )
+     call k_add((/0.5,0.5,0./),'M' )
+     call k_add((/0.5,0.5,0.5/),'R' )
      !
      do ik=1,SPECIAL_k%nbz
        call c2a(b_in=trial_b,v_in=SPECIAL_k%pt(ik,:),mode='ka2c')
@@ -282,21 +232,13 @@ subroutine k_special(LIST_only)
      !
      SPECIAL_k%nbz=7
      !
-     SPECIAL_k%pt(1,:)=(/0.,0.,0./)
-     SPECIAL_k_label(1)='G'
-     SPECIAL_k%pt(2,:)=(/0. ,0.5,0./)
-     SPECIAL_k_label(2)='M'
-     SPECIAL_k%pt(3,:)=(/2./3.,0.,0./)
-     SPECIAL_k%pt(3,:)=(/1./3.,1./3.,0./)
-     SPECIAL_k_label(3)='K'
-     SPECIAL_k%pt(4,:)=(/-1./3.,-1./3.,0./)
-     SPECIAL_k_label(4)='Kp'
-     SPECIAL_k%pt(5,:)=(/0. ,0.  ,0.5/)
-     SPECIAL_k_label(5)='A'
-     SPECIAL_k%pt(6,:)=(/0.,0.5,0.5/)
-     SPECIAL_k_label(6)='L'
-     SPECIAL_k%pt(7,:)=(/1./3.,1./3.,0.5/)
-     SPECIAL_k_label(7)='H'
+     call k_add((/0.,0.,0./),'G' )
+     call k_add((/0. ,0.5,0./),'M' )
+     call k_add((/1./3.,1./3.,0./),'K' )
+     call k_add((/-1./3.,-1./3.,0./),'Kp' )
+     call k_add((/0. ,0.  ,0.5/),'A' )
+     call k_add((/0.,0.5,0.5/),'L' )
+     call k_add((/1./3.,1./3.,0.5/),'H' )
      !
      do ik=1,SPECIAL_k%nbz
        call c2a(b_in=trial_b,v_in=SPECIAL_k%pt(ik,:),mode='ka2c')
@@ -317,7 +259,7 @@ subroutine k_special(LIST_only)
      do ik=1,SPECIAL_k%nbz
        k_l=SPECIAL_k%pt(ik,:)
        call K_transform(k_l,'cc')
-       write (dumb_ch,'(3f12.7,2x,a)') k_l,trim(SPECIAL_k_label(ik))
+       write (dumb_ch,'(i3,3f12.7,2x,a)') ik,k_l,trim(SPECIAL_k_label(ik))
        call msg("s",trim(dumb_ch))
      enddo
      live_timing_is_on=.true.
@@ -342,27 +284,57 @@ subroutine k_special(LIST_only)
     !
    end subroutine
    !
-end subroutine k_special
-!
-subroutine k_add_special_regions( coordinates,label )
- !
- use pars,                ONLY:SP
- use YPPm,                ONLY:SPECIAL_k,n_SPECIAL_k_MAX,SPECIAL_k_label
- !
- implicit none
- !
- real(SP)     :: coordinates(2)
- character(*) :: label
- !
- SPECIAL_k%nbz=SPECIAL_k%nbz+1
- SPECIAL_k%pt(SPECIAL_k%nbz,:)=K_el(coordinates(1),coordinates(2))
- SPECIAL_k_label(SPECIAL_k%nbz)=label
- !
- contains 
+   subroutine k_add( coordinates,labels_string )
+    !
+    use stderr,              ONLY:STRING_split
+    !
+    implicit none
+    !
+    integer           :: i_l
+    real(SP)          :: coordinates(3)
+    character(*)      :: labels_string
+    character(schlen) :: label(10)
+    !
+    call STRING_split(labels_string,label," ")
+    do i_l=1,10
+      if (len_trim(label(i_l))==0) cycle
+      SPECIAL_k%nbz=SPECIAL_k%nbz+1
+      SPECIAL_k%pt(SPECIAL_k%nbz,:)=coordinates
+      SPECIAL_k_label(SPECIAL_k%nbz)=trim(label(i_l))
+    enddo
+    !
+   end subroutine
    !
-   function K_el(alpha,beta)
-     real(SP) :: K_el(3),alpha,beta
-     K_el=(1.-alpha-beta)*SPECIAL_k%pt(13,:)+alpha*SPECIAL_k%pt(14,:)+beta*SPECIAL_k%pt(15,:)
+   subroutine k_ORTHO_add( coordinates,labels_string )
+    !
+    use stderr,              ONLY:STRING_split
+    !
+    implicit none
+    !
+    integer           :: i_l
+    real(SP)          :: coordinates(2)
+    character(*)      :: labels_string
+    character(schlen) :: label(10)
+    !
+    call STRING_split(labels_string,label," ")
+    do i_l=1,10
+      if (len_trim(label(i_l))==0) cycle
+      SPECIAL_k%nbz=SPECIAL_k%nbz+1
+      SPECIAL_k%pt(SPECIAL_k%nbz,:)=K_ORTHO_el(coordinates(1),coordinates(2))
+      SPECIAL_k_label(SPECIAL_k%nbz)=trim(label(i_l))
+    enddo
+    !
+   end subroutine
+   !
+   function K_ORTHO_el(alpha,beta)
+    real(SP) :: K_ORTHO_el(3),alpha,beta
+    integer           :: i_l,iA4,iA5,iA6
+    do i_l=1,SPECIAL_k%nbz
+      if (trim(SPECIAL_k_label(i_l))=="A4") iA4=i_l
+      if (trim(SPECIAL_k_label(i_l))=="A5") iA5=i_l
+      if (trim(SPECIAL_k_label(i_l))=="A6") iA6=i_l
+    enddo
+    K_ORTHO_el=(1.-alpha-beta)*SPECIAL_k%pt(iA4,:)+alpha*SPECIAL_k%pt(iA5,:)+beta*SPECIAL_k%pt(iA6,:)
    end function
- !
-end subroutine
+   !
+end subroutine k_special

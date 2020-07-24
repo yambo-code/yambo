@@ -92,7 +92,7 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
    !
    call k_special( )
    !
-   call k_circuit_driver( BANDS_path, 0 )
+   if (len_trim(BANDS_path)>0) call k_circuit_driver( BANDS_path, 0 )
    !
    do i_region=1,Eh_pumped_pair_n_BZ_regions
      local_k=Eh_pumped_pair_BZ_regions(i_region,:)

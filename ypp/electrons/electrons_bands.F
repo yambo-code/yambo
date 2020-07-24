@@ -74,7 +74,7 @@ subroutine electrons_bands(Xk,Xen)
  call E_reset(GRID_E)
  call E_reset(CIRCUIT_E)
  call E_reset(CIRCUIT_DE)
- !call E_reset(CIRCUIT_E_db)
+ call E_reset(CIRCUIT_E_db)
  !
  if (.not.file_exists(trim(CIRCUIT_E_DB_path)//"/SAVE/ns.db1")) CIRCUIT_E_DB_path="none"
  !

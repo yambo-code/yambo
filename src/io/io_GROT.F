@@ -24,14 +24,15 @@
 integer function io_GROT(io_db)
  !
  use D_lattice,      ONLY:nsym,inv_index
- use R_lattice,      ONLY:n_g_shells,ng_closed,ng_in_shell,E_of_shell,g_rot,minus_G
-#ifdef _CUDA
- use R_lattice,      ONLY:minus_G_d
-#endif
+ use R_lattice,      ONLY:n_g_shells,ng_closed,ng_in_shell,E_of_shell,g_rot,&
+&                         minus_G,minus_G_d
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_status,io_bulk,io_header,io_sec,ver_is_gt_or_eq
  use timing_m,       ONLY:timing
+ use cuda_m,         ONLY:have_cuda
+ !
 #include<memory.h>
+ !
  integer :: io_db,nsym_db
  !
  call timing('io_GROT',OPR='start')
@@ -79,12 +80,12 @@ integer function io_GROT(io_db)
    call io_bulk(io_db,VAR="minusG",VAR_SZ=(/ng_closed/))
    call io_bulk(io_db,I1=minus_G(:ng_closed))
  endif
-#ifdef _CUDA
- if (read_is_on(io_db).and.inv_index<0) then
-   YAMBO_FREE(minus_G_d)
-   allocate(minus_G_d,source=minus_G)
+ if (have_cuda) then
+   if (read_is_on(io_db).and.inv_index<0) then
+     YAMBO_FREE(minus_G_d)
+     YAMBO_ALLOC_SOURCE(minus_G_d,minus_G)
+   endif
  endif
-#endif
  !
  call initactivate(1,'Gmode')
  !

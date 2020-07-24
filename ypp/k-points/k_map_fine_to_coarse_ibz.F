@@ -27,6 +27,9 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  use stderr,              ONLY:intc
  use com,                 ONLY:msg
  use vec_operate,         ONLY:k2bz
+ ! DEBUG <
+ !use vec_operate,         ONLY:c2a
+ ! DEBUG >
  use electrons,           ONLY:levels,n_sp_pol
  use R_lattice,           ONLY:bz_samp,k_the_nearest,bz_samp_reset,rl_sop
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
@@ -186,9 +189,11 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !
  ! DEBUG <
  !do ikibz=1,Xk%nibz
- !  write(99+ikibz,*) Xk%pt(ikibz,:)
+ !  call c2a(v_in=Xk%pt(ikibz,:),v_out=kpt_tmp,mode='ki2c')
+ !  write(99+ikibz,*) kpt_tmp
  !  do ikibz_FineGd=Xk%ibz_DbGd_map(1,ikibz),Xk%ibz_DbGd_map(2,ikibz)
- !    write(1099+ikibz,*) Xk%pt_FineGd(ikibz_FineGd,:)
+ !    call c2a(v_in=Xk%pt_FineGd(ikibz_FineGd,:),v_out=kpt_tmp,mode='ki2c')
+ !    write(1099+ikibz,*) kpt_tmp
  !  enddo
  !enddo
  ! DEBUG >

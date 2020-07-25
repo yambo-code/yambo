@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AF, PDA
+! Authors (see AUTHORS file for details): AF
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -23,11 +23,11 @@
 !
 module cube_m
  !
- use pars, ONLY:DP
- ! 
-#include<memory.h>
+ private
  !
+ integer, parameter :: DP=kind(1.0d0)
  integer, parameter :: cube_strlen=256
+ integer, parameter :: iun=12345
  !
  type cube_t
     character(cube_strlen) :: filename 
@@ -40,8 +40,20 @@ module cube_m
     real(DP), allocatable :: charges(:)
     real(DP), allocatable :: tau(:,:)
     real(DP), allocatable :: dat(:,:,:)
+    real(DP), allocatable :: gindex(:,:,:)
+    real(DP), allocatable :: grid(:,:)
     logical     :: alloc=.false.
  end type
+ !
+ public :: cube_t
+ public :: cube_alloc
+ public :: cube_free
+ public :: cube_read
+ public :: cube_read_base
+ public :: cube_write
+ public :: cube_write_base
+ public :: cube_build_grid
+ public :: cube_setval
  !
  contains
    !
@@ -51,10 +63,10 @@ module cube_m
      type(cube_t) :: obj
      obj%nr=nr
      obj%natom=natom
-     YAMBO_ALLOC(obj%Z_atoms,(natom))
-     YAMBO_ALLOC(obj%tau,(3,natom))
-     YAMBO_ALLOC(obj%charges,(natom))
-     YAMBO_ALLOC(obj%dat,(nr(1),nr(2),nr(3)))
+     allocate(obj%Z_atoms(natom))
+     allocate(obj%tau(3,natom))
+     allocate(obj%charges(natom))
+     allocate(obj%dat(nr(1),nr(2),nr(3)))
      obj%alloc=.true. 
    end subroutine
    !
@@ -63,11 +75,89 @@ module cube_m
      type(cube_t) :: obj
      obj%nr=0
      obj%natom=0
-     YAMBO_FREE(obj%Z_atoms)
-     YAMBO_FREE(obj%tau)
-     YAMBO_FREE(obj%charges)
-     YAMBO_FREE(obj%dat)
+     if(allocated(obj%Z_atoms))  deallocate(obj%Z_atoms)
+     if(allocated(obj%tau))      deallocate(obj%tau)
+     if(allocated(obj%charges))  deallocate(obj%charges)
+     if(allocated(obj%dat))      deallocate(obj%dat)
+     if(allocated(obj%gindex))   deallocate(obj%gindex)
+     if(allocated(obj%grid))     deallocate(obj%grid)
      obj%alloc=.false. 
+   end subroutine
+   !
+   subroutine cube_build_grid(obj)
+     implicit none
+     type(cube_t) :: obj
+     integer :: i1,i2,i3,ind,nr(3)
+     real(DP):: vv(3)
+     
+     if (.not.obj%alloc) return
+     !
+     nr=obj%nr
+     if (allocated(obj%gindex)) deallocate(obj%gindex)
+     if (allocated(obj%grid))   deallocate(obj%grid)
+     allocate(obj%gindex(nr(1),nr(2),nr(3)))
+     allocate(obj%grid(3,product(nr))) 
+     !
+     do i3=1,nr(3)
+     do i2=1,nr(2)
+     do i1=1,nr(1)
+       !
+       ind=i3+(i2-1)*nr(3)+(i1-1)*nr(2)*nr(3)
+       obj%gindex(nr(1),nr(2),nr(3))=ind
+       !
+       vv = obj%orig + (i1-1)*obj%a1 + (i2-1)*obj%a2 + (i3-1)*obj%a3
+       obj%grid(:,ind)=vv(:)
+     enddo
+     enddo
+     enddo
+     !
+   end subroutine
+   !
+   subroutine cube_setval(obj,mode,val,radius,orig,ierr)
+     implicit none
+     type(cube_t) :: obj
+     character(*) :: mode
+     real(DP)     :: val(2)    ! val_in, val_out
+     real(DP)     :: radius(3) ! incl ellipsoid
+     real(DP)     :: orig(3)
+     integer, intent(out) :: ierr
+     !
+     real(DP) :: x(3),rtmp
+     integer  :: ind
+
+     ierr=1
+     if (.not.obj%alloc) return
+     if (.not.allocated(obj%grid)) call cube_build_grid(obj)
+     ierr=0
+     !
+     select case(trim(mode))
+       !
+     case ("constant")
+       obj%dat=val(1)
+       !
+     case ("sphere")
+       !
+       obj%dat=val(2)   ! outer value
+       do ind = 1, product(obj%nr)
+         x=obj%grid(:,ind)
+         rtmp=sum((x(:)-orig(:))**2/radius(1)**2)
+         if (rtmp<=1.0d0) obj%dat=val(1)   ! inner value
+       enddo
+       !
+     case ("ellipsoid")
+       !
+       obj%dat=val(2)   ! outer value
+       do ind = 1, product(obj%nr)
+         x=obj%grid(:,ind)
+         rtmp=sum((x(:)-orig(:))**2/radius(:)**2)
+         if (rtmp<=1.0d0) obj%dat=val(1)   ! inner value
+       enddo
+       !
+     case default
+       ierr=2
+       return
+     end select
+     !
    end subroutine
    !
    subroutine cube_write(obj)
@@ -118,7 +208,6 @@ module cube_m
      real(DP), allocatable:: data_tmp(:,:,:) 
      !
      integer :: ia,i,i1,i2,i3,ind
-     integer :: iun=12345
      !
      ierr=0
      open(iun,file=filename,iostat=ierr)
@@ -149,7 +238,7 @@ module cube_m
      !
      if (present(dat)) then
        !
-       YAMBO_ALLOC(data_tmp,(nr1_,nr2_,nr3_))
+       allocate(data_tmp(nr1_,nr2_,nr3_))
        read(iun,*,iostat=ierr) data_tmp(:,:,:)
        if (ierr/=0) return
        !
@@ -162,7 +251,7 @@ module cube_m
        enddo
        enddo
        !
-       YAMBO_FREE(data_tmp)
+       deallocate(data_tmp)
      endif
      !
      close(iun)
@@ -193,7 +282,6 @@ module cube_m
      real(DP),     intent(in) :: dat(nr1,nr2,nr3)
      real(DP),     intent(in) :: orig(3)
      !
-     integer :: iun=12345
      integer :: ia
      !
      open(iun,file=filename)

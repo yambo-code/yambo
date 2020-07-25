@@ -44,7 +44,8 @@ subroutine p2y_environ(filename)
  !
  ! Work space
  !
- real(SP) :: al1(3),al2(3),al3(3),r0(3),v1(3)
+ real(SP) :: v1(3)
+ real(DP) :: al1(3),al2(3),al3(3),r0(3)
  !
  ! I/O
  !
@@ -53,7 +54,7 @@ subroutine p2y_environ(filename)
  !
  ! Allocs
  !
- real(SP),    allocatable :: eps(:)
+ real(DP),    allocatable :: eps(:)
  complex(DP), allocatable :: eps_fft(:)
 #if defined _FFTQE
  integer, external :: fft_setmap
@@ -71,9 +72,9 @@ subroutine p2y_environ(filename)
  if (io_err/=0) call error(' [ENVIRON] reading dims from '//trim(filename))
  !
  if (nr1/=nr1_.or.nr2/=nr2_.or.nr3/=nr3_) call error(' [ENVIRON] inconsistent fft grid 1')
- if (any(abs(nr1*al1-a1_)>1.0d-6)) call error(' [ENVIRON] inconsistent a1')
- if (any(abs(nr2*al2-a2_)>1.0d-6)) call error(' [ENVIRON] inconsistent a2')
- if (any(abs(nr3*al3-a3_)>1.0d-6)) call error(' [ENVIRON] inconsistent a3')
+ if (any(abs(al1-a1_/nr1)>1.0d-5)) call error(' [ENVIRON] inconsistent a1')
+ if (any(abs(al2-a2_/nr2)>1.0d-5)) call error(' [ENVIRON] inconsistent a2')
+ if (any(abs(al3-a3_/nr3)>1.0d-5)) call error(' [ENVIRON] inconsistent a3')
  !
  fft_size=nr1*nr2*nr3
  ng_env=fft_size

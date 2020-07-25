@@ -33,7 +33,7 @@ subroutine p2y_environ(filename)
  use FFT_m,          ONLY:fftw_plan
 #endif
  use environ_m,      ONLY:nr1,nr2,nr3,ng_env,eps_env_g,environ_alloc,environ_free
- use cube_m,         ONLY:cube_read
+ use cube_m,         ONLY:cube_read_base
  !
 #include<memory.h>
  !
@@ -67,7 +67,7 @@ subroutine p2y_environ(filename)
  !
  ! (a) get dimensions
  !
- call cube_read(filename,NR1=nr1,NR2=nr2,NR3=nr3,AL1=al1,AL2=al2,AL3=al3,IERR=io_err)
+ call cube_read_base(filename,NR1=nr1,NR2=nr2,NR3=nr3,AL1=al1,AL2=al2,AL3=al3,IERR=io_err)
  if (io_err/=0) call error(' [ENVIRON] reading dims from '//trim(filename))
  !
  if (nr1/=nr1_.or.nr2/=nr2_.or.nr3/=nr3_) call error(' [ENVIRON] inconsistent fft grid 1')
@@ -110,7 +110,7 @@ subroutine p2y_environ(filename)
  YAMBO_ALLOC(eps_fft,(fft_size))
  call environ_alloc(ng_vec)
  !
- call cube_read(filename,dat=eps,orig=r0,IERR=io_err)
+ call cube_read_base(filename,dat=eps,orig=r0,IERR=io_err)
  if (io_err/=0) call error(' [ENVIRON] reading data from '//trim(filename))
  !
  if (any(r0/=0.0)) call error(' [ENVIRON] invalid r0 /= 0')

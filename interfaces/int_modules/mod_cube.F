@@ -48,6 +48,7 @@ module cube_m
  public :: cube_t
  public :: cube_alloc
  public :: cube_free
+ public :: cube_copy
  public :: cube_read
  public :: cube_read_base
  public :: cube_write
@@ -82,6 +83,31 @@ module cube_m
      if(allocated(obj%gindex))   deallocate(obj%gindex)
      if(allocated(obj%grid))     deallocate(obj%grid)
      obj%alloc=.false. 
+   end subroutine
+   !
+   subroutine cube_copy(obj_out,obj_in)
+     implicit none
+     type(cube_t) :: obj_out,obj_in
+     !
+     call cube_free(obj_out)
+     if (.not.obj_in%alloc) return
+     !
+     call cube_alloc(obj_in%nr,obj_in%natom,obj_out)
+     !
+     obj_out%filename=obj_in%filename
+     obj_out%msg=obj_in%msg
+     obj_out%a1=obj_in%a1
+     obj_out%a2=obj_in%a2
+     obj_out%a3=obj_in%a3
+     obj_out%orig=obj_in%orig
+     obj_out%Z_atoms=obj_in%Z_atoms
+     obj_out%charges=obj_in%charges
+     obj_out%tau=obj_in%tau
+     obj_out%dat=obj_in%dat
+     if (allocated(obj_in%gindex)) obj_out%gindex=obj_in%gindex
+     if (allocated(obj_in%grid))   obj_out%grid=obj_in%grid
+     obj_out%alloc=obj_in%alloc
+     !
    end subroutine
    !
    subroutine cube_build_grid(obj)
@@ -222,9 +248,10 @@ module cube_m
      character(256) :: msg1_,msg2_
      real(DP):: al1_(3),al2_(3),al3_(3),orig_(3)
      real(DP):: charge_at, tau_at(3)
-     real(DP), allocatable:: data_tmp(:,:,:) 
+     real(DP), allocatable:: data_tmp(:) 
      !
-     integer :: ia,i,i1,i2,i3,ind
+     integer :: ia,i,i1,i2,i3
+     integer :: ind,ind_for
      !
      ierr=0
      open(iun,file=filename,iostat=ierr)
@@ -255,15 +282,19 @@ module cube_m
      !
      if (present(dat)) then
        !
-       allocate(data_tmp(nr1_,nr2_,nr3_))
-       read(iun,*,iostat=ierr) data_tmp(:,:,:)
+       allocate(data_tmp(nr1_*nr2_*nr3_))
+       read(iun,*,iostat=ierr) data_tmp
        if (ierr/=0) return
+       !
+       ! data layout is C-like (i3 is the fastest index)
+       ! dat needs to have a FOR-layout (i1 fastest)
        !
        do i1=1,nr1_
        do i2=1,nr2_
        do i3=1,nr3_
-         ind=i3+(i2-1)*nr3_+(i1-1)*nr2_*nr3_
-         dat(ind)=data_tmp(i1,i2,i3)
+         ind    =i3+(i2-1)*nr3_+(i1-1)*nr2_*nr3_
+         ind_for=i1+(i2-1)*nr1_+(i3-1)*nr1_*nr2_
+         dat(ind_for)=data_tmp(ind)
        enddo
        enddo
        enddo
@@ -299,7 +330,19 @@ module cube_m
      real(DP),     intent(in) :: dat(nr1,nr2,nr3)
      real(DP),     intent(in) :: orig(3)
      !
-     integer :: ia
+     integer :: ia,i1,i2,i3,ind
+     real(DP), allocatable :: data_tmp(:)
+     !
+     allocate(data_tmp(nr1*nr2*nr3))
+     ind=0
+     do i1=1,nr1
+     do i2=1,nr2
+     do i3=1,nr3
+       ind=ind+1
+       data_tmp(ind)=dat(i1,i2,i3)
+     enddo
+     enddo
+     enddo
      !
      open(iun,file=filename)
      !
@@ -314,9 +357,10 @@ module cube_m
         write(iun,"(i4,4f15.9)") Z_atoms(ia), charges(ia), tau(:,ia)
      enddo
      !
-     write(iun,"(4f15.9)") dat(:,:,:)
-     !
+     write(iun,"(4f15.9)") data_tmp
      close(iun)
+     !
+     deallocate(data_tmp)
      !
    end subroutine cube_write_base
    !

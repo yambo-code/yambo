@@ -103,7 +103,7 @@ module cube_m
      do i1=1,nr(1)
        !
        ind=i3+(i2-1)*nr(3)+(i1-1)*nr(2)*nr(3)
-       obj%gindex(nr(1),nr(2),nr(3))=ind
+       obj%gindex(i1,i2,i3)=ind
        !
        vv = obj%orig + (i1-1)*obj%a1 + (i2-1)*obj%a2 + (i3-1)*obj%a3
        obj%grid(:,ind)=vv(:)
@@ -123,34 +123,51 @@ module cube_m
      integer, intent(out) :: ierr
      !
      real(DP) :: x(3),rtmp
-     integer  :: ind
+     integer  :: ind,i1,i2,i3
 
      ierr=1
      if (.not.obj%alloc) return
      if (.not.allocated(obj%grid)) call cube_build_grid(obj)
      ierr=0
      !
+     !
      select case(trim(mode))
        !
-     case ("constant")
+     case ("constant","uniform")
        obj%dat=val(1)
        !
      case ("sphere")
        !
        obj%dat=val(2)   ! outer value
-       do ind = 1, product(obj%nr)
+       !
+       do i3=1,obj%nr(3)
+       do i2=1,obj%nr(2)
+       do i1=1,obj%nr(1)
+         !
+         ind = obj%gindex(i1,i2,i3)
          x=obj%grid(:,ind)
-         rtmp=sum((x(:)-orig(:))**2/radius(1)**2)
-         if (rtmp<=1.0d0) obj%dat=val(1)   ! inner value
+         rtmp=sum( (x(:)-orig(:))**2 ) /radius(1)**2
+         if (rtmp<=1.0d0) obj%dat(i1,i2,i3)=val(1)   ! inner value
+         !
+       enddo
+       enddo
        enddo
        !
      case ("ellipsoid")
        !
        obj%dat=val(2)   ! outer value
-       do ind = 1, product(obj%nr)
+       !
+       do i3=1,obj%nr(3)
+       do i2=1,obj%nr(2)
+       do i1=1,obj%nr(1)
+         !
+         ind = obj%gindex(i1,i2,i3)
          x=obj%grid(:,ind)
          rtmp=sum((x(:)-orig(:))**2/radius(:)**2)
-         if (rtmp<=1.0d0) obj%dat=val(1)   ! inner value
+         if (rtmp<=1.0d0) obj%dat(i1,i2,i3)=val(1)   ! inner value
+         !
+       enddo
+       enddo
        enddo
        !
      case default
@@ -294,7 +311,7 @@ module cube_m
      write(iun,"(i4,3f15.9)") nr3, al3
      !
      do ia = 1, natom
-        write(iun,"(i4,3f15.9)") Z_atoms(ia), charges(ia), tau(:,ia)
+        write(iun,"(i4,4f15.9)") Z_atoms(ia), charges(ia), tau(:,ia)
      enddo
      !
      write(iun,"(4f15.9)") dat(:,:,:)

@@ -133,7 +133,7 @@ subroutine X_redux(iq,X_par,Xw,X)
    YAMBO_ALLOC(work%blc,(work%BLCrows(1):work%BLCrows(2),work%BLCcols(1):work%BLCcols(2),1))
    v_environ%blc=cZERO
    work%blc=cZERO
-   call environ_vcoul(q_pt(iq,:),v_environ)
+   call environ_vcoul(q_pt(iq,:),v_environ,.true.)
  endif
  !
  do iw_par=1,maxval(PAR_n_freqs_global)

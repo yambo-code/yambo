@@ -32,6 +32,12 @@ module environ_m
  integer  :: ng_env
  complex(SP), allocatable :: eps_env_g(:)
  !
+ ! asymptitic values (q->0)
+ ! v_env(q,G=G'=0) ~ 4pi/[q^2 (eps0+A0)]
+ !
+ complex(SP) :: eps0
+ complex(SP) :: A0
+ !
 contains
  !
  subroutine environ_alloc(ng_env_) 

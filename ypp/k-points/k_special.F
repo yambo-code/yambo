@@ -218,10 +218,10 @@ subroutine k_special(LIST_only)
        trial_b(3,:)=(/ 0., 0., 1./)*2.*pi/alat(1)
      endif
      !
-     call k_add((/0.,0.,0./),'G' )
-     call k_add((/0.5,0.,0./),'X' )
-     call k_add((/0.5,0.5,0./),'M' )
-     call k_add((/0.5,0.5,0.5/),'R' )
+     call k_add((/0._SP,0._SP,0._SP/),'G' )
+     call k_add((/0.5_SP,0._SP,0._SP/),'X' )
+     call k_add((/0.5_SP,0.5_SP,0._SP/),'M' )
+     call k_add((/0.5_SP,0.5_SP,0.5_SP/),'R' )
      !
      do ik=1,SPECIAL_k%nbz
        call c2a(b_in=trial_b,v_in=SPECIAL_k%pt(ik,:),mode='ka2c')
@@ -239,16 +239,16 @@ subroutine k_special(LIST_only)
      !
      SPECIAL_k%nbz=7
      !
-     call k_add((/0.,0.,0./),'G' )
-     call k_add((/0. ,0.5,0./),'M' )
+     call k_add((/0._SP,0._SP,0._SP/),'G' )
+     call k_add((/0._SP ,0.5_SP,0._SP/),'M' )
      !
      ! In the old version also the point (/1./3.,1./3.,0./) was assigned to K. To be checked.
      !
-     call k_add((/1./3.,1./3.,0./),'K' )
-     call k_add((/-1./3.,-1./3.,0./),'Kp' )
-     call k_add((/0. ,0.  ,0.5/),'A' )
-     call k_add((/0.,0.5,0.5/),'L' )
-     call k_add((/1./3.,1./3.,0.5/),'H' )
+     call k_add((/1._SP/3._SP,1._SP/3._SP,0._SP/),'K' )
+     call k_add((/-1._SP/3._SP,-1._SP/3._SP,0._SP/),'Kp' )
+     call k_add((/0._SP ,0._SP  ,0.5_SP/),'A' )
+     call k_add((/0._SP,0.5_SP,0.5_SP/),'L' )
+     call k_add((/1._SP/3._SP,1._SP/3._SP,0.5_SP/),'H' )
      !
      do ik=1,SPECIAL_k%nbz
        call c2a(b_in=trial_b,v_in=SPECIAL_k%pt(ik,:),mode='ka2c')

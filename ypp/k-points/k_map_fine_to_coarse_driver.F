@@ -118,6 +118,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
      FineGd_k%sstar(i_fg,:)=(/i_fg,1/)
    enddo
    !
+   Xk%FGibz%FG_mode="IBZ"
    Xk%FGbz%FG_mode="IBZ"
    !
  endif

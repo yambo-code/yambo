@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k)
+subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  !
  use pars,                ONLY:SP
  use units,               ONLY:HA2EV
@@ -36,11 +36,12 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k)
  use electrons,           ONLY:levels,default_nel,n_bands,n_sp_pol,E_reset,FineGd_E_components_alloc
  use IO_m,                ONLY:REP
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp), intent(in)     :: Xk
  type(levels),  intent(inout)  :: Xen
  type(bz_samp), intent(out)    :: FineGd_k
+ logical,       intent(out)    :: FineGd_is_expanded
  !
  ! Work Space
  !
@@ -68,6 +69,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k)
  nsym_save=nsym
  dl_sop_save(:,:,:nsym)=dl_sop
  i_time_rev_save=i_time_rev
+ FineGd_is_expanded=.FALSE.
  !
  ! DB1 reloading
  !
@@ -105,24 +107,6 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k)
      k_rlu_zero=min(k_rlu_zero,tmp_zero)
    endif
  enddo
- !
- ! Symmetry restoring
- !
- if (allocated(dl_sop)) then
-   deallocate(dl_sop)
-   nsym_FineGd_DB=nsym
-   nsym        =nsym_save
-   i_time_rev_DB=i_time_rev
-   i_time_rev   =i_time_rev_save
-   allocate(dl_sop(3,3,nsym))
-   dl_sop=dl_sop_SAVE(:,:,:nsym)
- endif
- !
- if (nsym_FineGd_DB/=nsym) then
-   call msg('s','Coarse grid and fine grid have different symmetries: '&
-&               //trim(intc(nsym))//' / '//trim(intc(nsym_FineGd_DB)))
-   call warning('If you are using regular grids this is a PROBLEM!. Fix the nscf run first!')
- endif
  !
  call parser('SkipCheck',l_skip_check)
  !
@@ -208,6 +192,26 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k)
    if (.not.l_skip_check) call   error(" A consistent X grid k-point was not found among the Double Grid list")
  endif
  !
+ if (nsym/=nsym_save) then
+   call msg('s','Coarse grid and fine grid have different symmetries: '&
+&               //trim(intc(nsym))//' [FineGd] / '//trim(intc(nsym_save))//' [CoarseGd]')
+   call warning(" Grid expansion with FineGd symmetries imposed")
+   !
+   ! k_DbGd (IBZ->BZ)
+   !
+   call section('=','Double Grid K-points expansion ...')
+   call k_ibz2bz(FineGd_k,'i',.true.)
+   call msg('lr','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
+   call k_expand(FineGd_k)
+   YAMBO_FREE(FineGd_k%pt)
+   YAMBO_ALLOC(FineGd_k%pt,(FineGd_k%nibz,3))
+   FineGd_k%nibz=FineGd_k%nbz
+   FineGd_k%pt=FineGd_k%ptbz
+   FineGd_is_expanded=.TRUE.
+   FineGd_E%nk=FineGd_k%nibz
+   !
+ endif
+ !
  ! Transfer to the Energy levels
  !
  Xen%FG%nb=FineGd_E%nb
@@ -215,10 +219,23 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k)
  call FineGd_E_components_alloc(Xen)
  do ib=1,FineGd_E%nb
    do ik=1,FineGd_E%nk
-     Xen%FG%E(ib,ik,:) =FineGd_E%E(ib,ik,:)
+     if (     FineGd_is_expanded) Xen%FG%E(ib,ik,:) =FineGd_E%E(ib,FineGd_k%sstar(ik,1),:)
+     if (.not.FineGd_is_expanded) Xen%FG%E(ib,ik,:) =FineGd_E%E(ib,ik,:)
    enddo
  enddo
  !
  call E_reset(FineGd_E)
+ !
+ ! Symmetry restoring
+ !
+ if (allocated(dl_sop)) then
+   nsym_FineGd_DB=nsym
+   deallocate(dl_sop)
+   nsym          =nsym_save
+   i_time_rev_DB =i_time_rev
+   i_time_rev    =i_time_rev_save
+   allocate(dl_sop(3,3,nsym))
+   dl_sop=dl_sop_SAVE(:,:,:nsym)
+ endif
  !
 end subroutine

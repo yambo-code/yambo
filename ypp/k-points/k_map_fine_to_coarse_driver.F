@@ -41,7 +41,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  type(bz_samp)        :: FineGd_k
  integer              :: i_err,ID,i_fg
  integer, external    :: io_Double_Grid
- logical              :: l_mix,l_expand,l_unexpand
+ logical              :: l_mix,l_expand,l_unexpand,FineGd_is_expanded
  !
  if (n_FineGd_DBs==0) then
    call msg("s",'DbGd: no database secified. Nothing to do.')
@@ -62,7 +62,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  ! Initial checks
  !================
  call section('+','Double Grid initialization')
- call k_map_fine_to_coarse_init(Xk,Xen,FineGd_k)
+ call k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  !
  ! Expand the Coarse Grid 
  !========================
@@ -79,12 +79,16 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  if (l_mix.or.l_expand) then
    !
-   ! k_DbGd (IBZ->BZ)
-   !
-   call section('=','Double Grid K-points expansion ...')
-   call k_ibz2bz(FineGd_k,'i',.true.)
-   call msg('lr','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
-   call k_expand(FineGd_k)
+   if (.not.FineGd_is_expanded) then
+     !
+     ! k_DbGd (IBZ->BZ)
+     !
+     call section('=','Double Grid K-points expansion ...')
+     call k_ibz2bz(FineGd_k,'i',.true.)
+     call msg('lr','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
+     call k_expand(FineGd_k)
+     !
+   endif
    !
    Xk%FGibz%FG_mode="IBZ"
    Xk%FGbz%FG_mode ="BZ"

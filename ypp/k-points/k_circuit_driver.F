@@ -30,6 +30,7 @@ subroutine k_circuit_driver(PATH,n_points)
  use com,            ONLY:msg
  use interfaces,     ONLY:io_DB1_selective_scan
  use vec_operate,    ONLY:c2a
+ use YPP_interfaces, ONLY:k_special
  use YPPm,           ONLY:BANDS_steps,&
 &                         CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
 &                         CIRCUIT_made_of_SPECIAL_k,BANDS_from_db,SPECIAL_k,&
@@ -84,7 +85,10 @@ subroutine k_circuit_driver(PATH,n_points)
  ! No circuit
  !============
  !
- if (.not. l_high_sym_pts) call error(' No BZ circuit defined in input')
+ if (.not. l_high_sym_pts) then
+   call k_special(.TRUE.)
+   call error(' No BZ circuit defined in input')
+ endif
  !
  contains
    !

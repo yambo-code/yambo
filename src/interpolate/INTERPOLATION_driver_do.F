@@ -60,7 +60,8 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
  if (operation/=trim(INTERP_obj(ID)%what)) call error(' Interpolation ID did not match operation name')
  !
  ! ... FG mode
- INTERP_FineGd="BARE"
+ INTERP_FineGd="NONE"
+ if (OUT_k%FGbare%N>0) INTERP_FineGd="BARE"
  if (present(FineGrid)) then
    INTERP_FineGd=FineGrid
  endif

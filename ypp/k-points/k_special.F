@@ -31,7 +31,7 @@ subroutine k_special(LIST_only)
  use D_lattice,           ONLY:alat,lattice,a
  use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a
- use YPPm,                ONLY:K_transform,SPECIAL_k,n_SPECIAL_k_MAX,SPECIAL_k_label
+ use YPPm,                ONLY:K_transform,SPECIAL_k,n_SPECIAL_k_MAX,SPECIAL_k_label,coo_out
  use LIVE_t,              ONLY:live_timing_is_on
  !
 #include<memory.h>
@@ -163,43 +163,50 @@ subroutine k_special(LIST_only)
      !
      ! X=+, Z=- quadrant
      !
-     call k_ORTHO_add( (/0.88_SP,0._SP  /),"XY1pm" )
-     call k_ORTHO_add( (/0.88_SP,0.26_SP/),"XY2pm" )
-     call k_ORTHO_add( (/0.72_SP,0.26_SP/),"Gpm" )
-     call k_ORTHO_add( (/0.72_SP,0.50_SP/),"Gnm" )
-     call k_ORTHO_add( (/0.62_SP,0.16_SP/),"Y1pm" )
-     call k_ORTHO_add( (/0.62_SP,0.26_SP/),"Y2pm" )
-     call k_ORTHO_add( (/0.50_SP,0._SP  /),"XYpn" )
-     call k_ORTHO_add( (/0.50_SP,0.16_SP/),"Ypn" )
-     call k_ORTHO_add( (/0.50_SP,0.26_SP/),"Gpn" )
+     call k_ORTHO_b_gt_a_add( (/0.88_SP,0._SP  /),"XYpm1" )
+     call k_ORTHO_b_gt_a_add( (/0.50_SP,0._SP  /),"XYpp1 XYpm2" )
+     call k_ORTHO_b_gt_a_add( (/0.50_SP,0.26_SP/),"XYpm3 Ypm3 Gpm2 Gpp1" )
+     call k_ORTHO_b_gt_a_add( (/0.88_SP,0.26_SP/),"XYpm4" )
+     !
+     call k_ORTHO_b_gt_a_add( (/0.72_SP,0.26_SP/),"Gpm1" )
+     call k_ORTHO_b_gt_a_add( (/0.50_SP,0.50_SP/),"Gpm3 Gmp1 Gmm2" )
+     !
+     call k_ORTHO_b_gt_a_add( (/0.62_SP,0.16_SP/),"Ypm1" )
+     call k_ORTHO_b_gt_a_add( (/0.50_SP,0.16_SP/),"Ypp1 Ypm2" )
+     call k_ORTHO_b_gt_a_add( (/0.62_SP,0.26_SP/),"Ypm4" )
      !
      ! X=+, Z=+ quadrant
      !
-     call k_ORTHO_add( (/0.12_SP,0._SP  /),"XY1pp" )
-     call k_ORTHO_add( (/0.12_SP,0.26_SP/),"XY2pp" )
-     call k_ORTHO_add( (/0.28_SP,0.26_SP/),"Gpp" )
-     call k_ORTHO_add( (/0.28_SP,0.50_SP/),"Gnp" )
-     call k_ORTHO_add( (/0.38_SP,0.16_SP/),"Y1pp" )
-     call k_ORTHO_add( (/0.38_SP,0.26_SP/),"Y2pp" )
+     call k_ORTHO_b_gt_a_add( (/0.12_SP,0._SP  /),"XYpp2" )
+     call k_ORTHO_b_gt_a_add( (/0.12_SP,0.26_SP/),"XYpp3" )
+     !
+     call k_ORTHO_b_gt_a_add( (/0.28_SP,0.26_SP/),"Gpp2" )
+     call k_ORTHO_b_gt_a_add( (/0.28_SP,0.50_SP/),"Gpp3 Gmp2" )
+     !
+     call k_ORTHO_b_gt_a_add( (/0.38_SP,0.16_SP/),"Ypp2" )
+     call k_ORTHO_b_gt_a_add( (/0.38_SP,0.26_SP/),"Ypp3" )
      !
      ! X=-, Z=- quadrant
      !
-     call k_ORTHO_add( (/0.88_SP,1._SP  /),"XY1mm" )
-     call k_ORTHO_add( (/0.88_SP,0.74_SP/),"XY2mm" )
-     call k_ORTHO_add( (/0.72_SP,0.74_SP/),"Gmm" )
-     call k_ORTHO_add( (/0.62_SP,0.84_SP/),"Y1mm" )
-     call k_ORTHO_add( (/0.62_SP,0.74_SP/),"Y2mm" )
-     call k_ORTHO_add( (/0.50_SP,1._SP  /),"XYmn" )
-     call k_ORTHO_add( (/0.50_SP,0.84_SP/),"Ymn" )
-     call k_ORTHO_add( (/0.50_SP,0.74_SP/),"Gmn" )
+     call k_ORTHO_b_gt_a_add( (/0.88_SP,0.74_SP/),"XYmm1" )
+     call k_ORTHO_b_gt_a_add( (/0.50_SP,0.74_SP/),"Gmm3 XYmp1 Ymp1 Ymm2 XYmm2" )
+     call k_ORTHO_b_gt_a_add( (/0.50_SP,1._SP  /),"XYmm3" )
+     call k_ORTHO_b_gt_a_add( (/0.88_SP,1._SP  /),"XYmm4" )
+     !
+     call k_ORTHO_b_gt_a_add( (/0.72_SP,0.50_SP/),"Gmm1" )
+     call k_ORTHO_b_gt_a_add( (/0.50_SP,0.84_SP/),"Ymm3" )
+     call k_ORTHO_b_gt_a_add( (/0.72_SP,0.74_SP/),"Gmm4" )
+     !
+     call k_ORTHO_b_gt_a_add( (/0.62_SP,0.74_SP/),"Ymm1" )
+     call k_ORTHO_b_gt_a_add( (/0.62_SP,0.84_SP/),"Ymm4" )
      !
      ! X=-, Z=+ quadrant
      !
-     call k_ORTHO_add( (/0.12_SP,1._SP  /),"XY1mp" )
-     call k_ORTHO_add( (/0.12_SP,0.74_SP/),"XY2mp" )
-     call k_ORTHO_add( (/0.28_SP,0.74_SP/),"Gmp" )
-     call k_ORTHO_add( (/0.38_SP,0.84_SP/),"Y1mp" )
-     call k_ORTHO_add( (/0.38_SP,0.74_SP/),"Y2mp" )
+     call k_ORTHO_b_gt_a_add( (/0.12_SP,1._SP  /),"XYmp3" )
+     call k_ORTHO_b_gt_a_add( (/0.12_SP,0.74_SP/),"XYmp2" )
+     call k_ORTHO_b_gt_a_add( (/0.28_SP,0.74_SP/),"Gmp3" )
+     call k_ORTHO_b_gt_a_add( (/0.38_SP,0.84_SP/),"Ymp3" )
+     call k_ORTHO_b_gt_a_add( (/0.38_SP,0.74_SP/),"Ymp2" )
      !
    case('CUB')
      !
@@ -234,6 +241,9 @@ subroutine k_special(LIST_only)
      !
      call k_add((/0.,0.,0./),'G' )
      call k_add((/0. ,0.5,0./),'M' )
+     !
+     ! In the old version also the point (/1./3.,1./3.,0./) was assigned to K. To be checked.
+     !
      call k_add((/1./3.,1./3.,0./),'K' )
      call k_add((/-1./3.,-1./3.,0./),'Kp' )
      call k_add((/0. ,0.  ,0.5/),'A' )
@@ -256,10 +266,11 @@ subroutine k_special(LIST_only)
  if (present(LIST_only)) then
    if (LIST_only) then
      live_timing_is_on=.false.
+     call msg("s","Special points ["//trim(coo_out)//"]")
      do ik=1,SPECIAL_k%nbz
        k_l=SPECIAL_k%pt(ik,:)
        call K_transform(k_l,'cc')
-       write (dumb_ch,'(i3,3f12.7,2x,a)') ik,k_l,trim(SPECIAL_k_label(ik))
+       write (dumb_ch,'(a,i3,3f12.7,2x,a)') "k#",ik,k_l,trim(SPECIAL_k_label(ik))
        call msg("s",trim(dumb_ch))
      enddo
      live_timing_is_on=.true.
@@ -305,7 +316,7 @@ subroutine k_special(LIST_only)
     !
    end subroutine
    !
-   subroutine k_ORTHO_add( coordinates,labels_string )
+   subroutine k_ORTHO_b_gt_a_add( coordinates,labels_string )
     !
     use stderr,              ONLY:STRING_split
     !

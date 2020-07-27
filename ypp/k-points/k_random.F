@@ -94,7 +94,7 @@ subroutine k_random(Xk,No_Weight)
  call live_timing( )
  !
  ! ... Expand
- !call rand_k_expand( )
+ call rand_k_expand( )
  !
  ! ... parallel setup
  call PP_indexes_reset(px)
@@ -171,17 +171,17 @@ subroutine k_random(Xk,No_Weight)
      N=BZ_random_nkpts*8
      YAMBO_ALLOC(rand_k,(N,3))
      ic=0
-     do i=1,-1,-2
-       do j=1,-1,-2
-         do k=1,-1,-2
-           do is=1,BZ_random_nkpts
+     do is=1,BZ_random_nkpts
+       do i=1,-1,-2
+         do j=1,-1,-2
+           do k=1,-1,-2
              ic=ic+1
              rand_k(ic,:)=(/i*r_save(is,1),j*r_save(is,2),k*r_save(is,3)/)
            enddo
          enddo
        enddo
      enddo
-     BZ_random_nkpts=N
+     BZ_random_nkpts=ic
      !
    end subroutine
    !

@@ -94,7 +94,7 @@ subroutine k_random(Xk,No_Weight)
  call live_timing( )
  !
  ! ... Expand
- call rand_k_expand( )
+ !call rand_k_expand( )
  !
  ! ... parallel setup
  call PP_indexes_reset(px)

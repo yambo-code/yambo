@@ -156,10 +156,11 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,Xen)
    i_fg=i_fg+1
    FG%k_range(ik,1)=i_fg
    FG%k_map(i_fg)=ik
-   if (l_BZ_FG ) FG%pt(i_fg,:)    =Xk%ptbz(ik,:)
-   if (l_IBZ_FG) FG%pt(i_fg,:)    =Xk%pt(ik,:)
-   if (l_BZ_FG ) FG%weights(i_fg) =1./real(FG%N,SP)
-   if (l_IBZ_FG) FG%weights(i_fg) =Xk%weights(ik)/real(FG%N_mapped(ik)+1,SP)
+   !
+   if (l_BZ_CG ) FG%pt(i_fg,:)    =Xk%ptbz(ik,:)
+   if (l_IBZ_CG) FG%pt(i_fg,:)    =Xk%pt(ik,:)
+   if (l_BZ_CG ) FG%weights(i_fg) =1./real(FG%N,SP)
+   if (l_IBZ_CG) FG%weights(i_fg) =Xk%weights(ik)/real(FG%N_mapped(ik)+1,SP)
    !
    do i_c=1,FG%N_mapped(ik)
      !
@@ -174,8 +175,8 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,Xen)
      if (l_IBZ_FG) i_fg_E=i_fg_k
      FG%E_map(i_fg)=i_fg_E
      !
-     if (l_BZ_FG ) FG%weights(i_fg) =1./real(FG%N,SP)
-     if (l_IBZ_FG) FG%weights(i_fg) =Xk%weights(ik)/real(FG%N_mapped(ik)+1,SP)
+     if (l_BZ_CG ) FG%weights(i_fg) =1./real(FG%N,SP)
+     if (l_IBZ_CG) FG%weights(i_fg) =Xk%weights(ik)/real(FG%N_mapped(ik)+1,SP)
      !
      call live_timing(steps=1)
      !

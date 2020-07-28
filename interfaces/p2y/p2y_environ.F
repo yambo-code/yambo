@@ -137,7 +137,7 @@ subroutine p2y_environ(filename)
    eps_env_g(ig)= cmplx(eps_fft(fft_g_table(ig,1)),kind=SP)
  enddo
  !
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
  io_err=io_ENVIRON_pwscf(ID)
  !
  YAMBO_FREE(eps)

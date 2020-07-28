@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AF
+! Authors (see AUTHORS file for details): AF, PDA
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -248,7 +248,7 @@ module cube_m
      character(256) :: msg1_,msg2_
      real(DP):: al1_(3),al2_(3),al3_(3),orig_(3)
      real(DP):: charge_at, tau_at(3)
-     real(DP), allocatable:: data_tmp(:) 
+     real(DP), allocatable:: data_tmp(:)
      !
      integer :: ia,i,i1,i2,i3
      integer :: ind,ind_for

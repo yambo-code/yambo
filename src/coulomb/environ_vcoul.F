@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AF
+! Authors (see AUTHORS file for details): AF, PDA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -73,7 +73,7 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
  ng_loc=min(ng_loc,v_environ%cols(2))
  ng_loc=min(ng_loc,v_environ%rows(2))
  !
- YAMBO_ALLOC(g_vec_loc,(ng_loc,3))
+ YAMBO_ALLOC(g_vec_loc,(3,ng_loc))
  do ig1=1,ng_loc
    call c2a(b,g_vec(ig1,:),g_vec_loc(:,ig1),'ki2c')
  enddo

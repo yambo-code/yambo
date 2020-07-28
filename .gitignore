@@ -19,14 +19,14 @@ modfiles.list
 ##########
 lib/yambo/driver/yambo/include/editor.h
 lib/yambo/driver/yambo/include/version.h
-include/version.h
+include/driver/version.h
+include/driver/editor.h
 include/branch.inc
 src/tools/.objects
 config.status
 config/report
 config/setup
 config/msg_ydb
-include/branch.inc
 include/netcdf.h
 include/netcdf_*.h
 include/netcdf.inc
@@ -37,6 +37,7 @@ lib/archive/keep-extlibs-stamp
 lib/install/make_iotk.inc
 lib/iotk/make.sys
 lib/iotk/make_iotk.inc
+lib/yambo
 lib/*/*stamp
 lib/*/package-installed
 lib/*/lib

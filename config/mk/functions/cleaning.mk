@@ -47,6 +47,9 @@ define lib_ext_clean
   $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp ; \
   cd ../.. ; \
  fi
+ @if test -d $(libbindir); then \
+  cd $(libbindir) ; rm -f * ; cd .. ; \
+ fi
 endef
 define sysincs_clean
  @if test -d $(prefix)/include; then rm -f $(prefix)/include/*.h ; fi 
@@ -72,9 +75,6 @@ endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | \
        grep -v hdf5 | grep -v netcdf | grep -v xc | grep -v yaml | grep -v futile | grep -v iotk | grep -v typesize | grep -v etsf_io | grep -v fftw | xargs rm -f 
- @if test -d $(libbindir); then \
-  cd $(libbindir) ; rm -f * ; cd .. ; \
- fi
  for folder in $(includedir)/modules__*; do \
   if test -d $$folder ; then \
    cd $$folder ; rm -f * ; cd .. ; rmdir $$folder; \

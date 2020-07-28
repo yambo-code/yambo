@@ -39,7 +39,7 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 #
 # Interfaces
 #
-2YLIBS       = tools modules memory matrices linear_algebra parallel parser communicate common timing Yio io setup interface stop_and_restart bz_ops
+2YLIBS       = driver tools modules memory matrices linear_algebra parallel parser communicate common timing Yio io setup interface stop_and_restart bz_ops
 2YLIBS_LD    = tools memory communicate modules matrices linear_algebra parallel parser communicate common timing Yio io setup interface stop_and_restart bz_ops
 #
 # YPP

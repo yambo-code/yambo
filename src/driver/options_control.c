@@ -33,9 +33,7 @@ void options_control(struct options_struct options[],int *i_opt)
  */
  desc="Input file & Directories";
  *i_opt=*i_opt+1;
-#if defined _yambo || defined _ypp || defined _c2y
  options[*i_opt].short_desc="Input file";
-#endif
 #if defined _a2y || defined _e2y
  options[*i_opt].short_desc="KSS or WFK file";
 #endif

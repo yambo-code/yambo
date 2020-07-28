@@ -278,6 +278,7 @@ subroutine INIT_activate()
    !
 #if defined _RT
    call initactivate(1,'EvalMagnons')
+   call initactivate(1,'EvalDichroism')
    call initactivate(1,'ForceEqTrans')
 #endif
    !

@@ -80,6 +80,7 @@ module drivers
  logical :: l_em1s               =.FALSE.
  logical :: l_dipoles            =.FALSE.
  logical :: l_magnons            =.FALSE.
+ logical :: l_dichroism          =.FALSE. 
  logical :: l_bse                =.FALSE.
  logical :: l_bss                =.FALSE.
  logical :: l_kerr               =.FALSE.

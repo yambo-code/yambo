@@ -44,7 +44,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X
  use D_lattice,      ONLY:l_0D,l_1D,l_2D
 #if defined _KERR
- use drivers,        ONLY:l_kerr,l_anomalous_Hall,l_magnons
+ use drivers,        ONLY:l_kerr,l_anomalous_Hall,l_magnons,l_dichroism
 #endif
 #if defined _RT
  use drivers,        ONLY:l_rt_carriers_in_use
@@ -163,6 +163,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  BS_K_is_ALDA=l_alda_fxc
 #if defined _KERR
  call parser('EvalMagnons',l_magnons)
+ call parser('EvalDichroism',l_dichroism)
  call parser('EvalKerr',   l_kerr)
  if(l_kerr) call parser('AnHall',l_anomalous_Hall)
 #endif

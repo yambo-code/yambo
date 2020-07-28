@@ -64,6 +64,7 @@
 #                   @LIBXC_INCS@
 # [@MPI_str@] MPI       : @MPI_LIBS@ @MPI_info@
 #                   @MPI_INCS@
+# [ Ic] Ydriver   : @YDRI_VERSION@.@YDRI_SUBVERSION@.@YDRI_PATCHLEVEL@
 #
 # - COMPILERS -
 #

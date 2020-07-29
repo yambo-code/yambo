@@ -109,9 +109,9 @@ subroutine RT_PHEL_lifetimes(iq,E,k,q)
      !
      !call RT_PHEL_TSQP_Kernel(ik,ik_m_q,iq_mem,il,E,ph_freq,Gkkp_sq)
      if (l_initial_equilibrium) then
-       N_q    = (RT_PH_occupations_reference(il,iq_mem)+(/0._SP,spin_occ/))/spin_occ
+       N_q    = RT_PH_occupations_reference(il,iq_mem)
      else
-       N_q    = (RT_PH_occupations(il,iq_mem)+(/0._SP,spin_occ/))/spin_occ
+       N_q    = RT_PH_occupations(il,iq_mem)
      endif
      !
      ! Kernel kind
@@ -153,7 +153,7 @@ subroutine RT_PHEL_lifetimes(iq,E,k,q)
          !
          !                    (2*spin_occ*pi)/(RT_Nk_ibz*2*ph_freq)
          !
-         ! 2 from KBE collision integral, spin_occ=2 from ph-el self-energy, pi from delta functions,
+         ! 2 from KBE collision integral, spin_occ=2 from ph-el self-energy (polarization bubble), pi from delta functions,
          ! 1/Nk from k-sum, (2*ph_freq)^-1 to correctly normalize Gkkp_sq.
          ! [NOTE] Variable pre_factor below is missing pi since it *should* come later from the hyperbolic secant FT
          !
@@ -214,7 +214,9 @@ subroutine RT_PHEL_lifetimes(iq,E,k,q)
              ! [NOTE] The contribution to the phonon-electron equilibrium lifetime, 
              ! i.e., minus the imaginary part of the phonon-electron self-energy, is given by:
              !
-             !                            (f_mkq-f_nk)*D_res
+             !             0.5*(f_mkq-f_nk)*(D_ares-D_res)= -(f_mkq-f_nk)*D_res
+             !
+             ! (origin of 0.5 factor is unclear)
              !
            enddo
            !

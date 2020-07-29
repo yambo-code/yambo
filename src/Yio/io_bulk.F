@@ -31,6 +31,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
  !
  use netcdf
  use pars,          ONLY:SP,DP,LP,nf90_SP
+ use com,           ONLY:fat_log
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use IO_m,          ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,&
 &                        netcdf_dim,read_is_on,io_file
@@ -80,9 +81,10 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
        allocate(var_dim_db(size(VAR_SZ)))
        nf_error=nf90_inquire_variable(io_unit(ID),io_netcdf_var(ID,1),ndims=dims_db,dimids=var_dim_db)
        call netcdf_call(nf_error,ID,VAR=VAR)
-       if(any((/var_dim(:)/=var_dim_db(:)/))) &
-&        call error(' Trying to owrite variable '//trim(VAR)//' in '//trim(io_file(ID))//' with wrong dimensions ')
-       call warning(' Overwriting variable '//trim(VAR)//' in file '//trim(io_file(ID)))
+       if(any((/var_dim(:)/=var_dim_db(:)/))) then
+         call error(' Trying to owrite variable '//trim(VAR)//' in '//trim(io_file(ID))//' with wrong dimensions ')
+       endif
+       if (fat_log) call warning(' Overwriting variable '//trim(VAR)//' in file '//trim(io_file(ID)))
        deallocate(var_dim_db)
      endif
      if (nf_error/=NF90_NOERR) nf_error=nf90_def_var(io_unit(ID),VAR,nf90_SP,var_dim,io_netcdf_var(ID,1)) 

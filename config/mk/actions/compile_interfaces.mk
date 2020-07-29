@@ -16,7 +16,7 @@ p2y: ext-libs
 	@+LIBS2DO="$(YLIBDRIVER)"; NAME="p2y_driver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/lib/yambo/driver/src"; ADF="-D_p2y"; $(mk_external_yambo_lib)
 	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; ADF="-D_p2y"; $(mk_src)
 	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mk_internal_lib)
-	@+X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; DRILIBS="$(YLIBDRIVER_LD)"; ADF="@PW_CPP@"; $(mk_yambo) ;
+	@+X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; DRILIBS="$(YLIBDRIVER_LD)"; ADF="$(p2ycpp)"; $(mk_yambo) ;
 endif
 ifeq ($(do_e2y),yes)
 e2y: ext-libs

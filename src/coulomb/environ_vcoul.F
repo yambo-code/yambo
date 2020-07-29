@@ -163,7 +163,7 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
    call PP_redux_wait(A0,COMM=Kbar%INTRA_comm%COMM)
    !
    call msg('r','[ENV] Asymptotic val: eps0, A0', &
-&           (/real(eps0),aimag(eps0),real(A0),aimag(A0)/) )
+&           (/real(eps0,SP),aimag(eps0),real(A0,SP),aimag(A0)/) )
    !
  endif
 

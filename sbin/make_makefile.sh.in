@@ -116,7 +116,7 @@ case $target in
    llibs="-lint_modules $llibs $llocal $lSLA $lIO $lextlibs -lm"
     ;;
   ypp*)
-   llibs="$llibs $llocal $lSLA $lIO $lextlibs -lm"
+   llibs="$llibs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   lib*)
     ;;

@@ -96,7 +96,6 @@ lf90include="@IFLAG@\$(includedir) @IFLAG@\$(modinclude) @IFLAG@\$(sysinclude) @
 #
 llocal="-lqe_pseudo -lmath77 -lslatec -llocal"
 lPLA="\$(lscalapack) \$(lslepc) \$(lpetsc) \$(llapack) \$(lblacs) \$(lblas)"
-lSLA="\$(llapack) \$(lblas)"
 lIO="\$(liotk) \$(lnetcdff) \$(lnetcdf) \$(lhdf5)"
 lextlibs="\$(llibxc) \$(lfft) \$(lfutile) \$(lyaml)"
 #
@@ -107,13 +106,13 @@ case $target in
    llibs="$llibs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs $llocal $lSLA $lIO $lextlibs -lm"
+   llibs="-lint_modules $llibs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs $llocal $lSLA $lIO $lextlibs -lm"
+   llibs="-lint_modules $llibs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   e2y)
-   llibs="-lint_modules $llibs $llocal $lSLA $lIO $lextlibs -lm"
+   llibs="-lint_modules $llibs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   ypp*)
    llibs="$llibs $llocal $lPLA $lIO $lextlibs -lm"

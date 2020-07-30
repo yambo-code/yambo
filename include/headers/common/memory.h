@@ -24,7 +24,10 @@
 */
  use memory, ONLY:MEM_err,MEM_msg,MEM_count,MEM_global_mesg,IPL
  implicit none
-
+ 
+ integer(IPL) :: Sz
+ integer      :: i
+ 
 #if defined _MPI
 
  /* MPI only part */
@@ -163,7 +166,8 @@
 
 #define YAMBO_FREE(x) \
   if (.not.allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \
-  if (     allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
+  if (     allocated(x)) then &NEWLINE& Sz=1 &NEWLINE& \
+  do i = 1,size(shape(x)); Sz = Sz*shape(i); enddo &NEWLINE& call MEM_free(QUOTES x QUOTES,Sz)NEWLINE \
   if (     allocated(x)) &NEWLINE& deallocate(x)
 #define YAMBO_FREE_P(x) \
   if (.not.associated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \

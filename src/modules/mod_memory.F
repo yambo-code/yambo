@@ -330,7 +330,9 @@ module memory
    subroutine MEM_c3(name,c)
      character(*)::name
      complex(SP) ::c(:,:,:)
-     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1)),HOST_)
+     integer(IPL) ::Sz 
+     Sz = size(c,1,KIND=IPL)*size(c,2,KIND=IPL)*size(c,3,KIND=IPL)
+     call MEM_manager_alloc(name,Sz,2*kind(c(1,1,1)),HOST_)
    end subroutine
    subroutine MEM_c4(name,c)
      character(*)::name

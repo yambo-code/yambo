@@ -112,16 +112,19 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Weights
  !
+ call elemental_IO(Xk%FGbare,"WEIGHTS","BARE")
  call elemental_IO(Xk%FGibz,"WEIGHTS","IBZ")
  call elemental_IO(Xk%FGbz,"WEIGHTS","BZ")
  !
  ! E map
  !
+ call elemental_IO(Xk%FGbare,"E_MAP","BARE")
  call elemental_IO(Xk%FGibz,"E_MAP","IBZ")
  call elemental_IO(Xk%FGbz,"E_MAP","BZ")
  !
  ! Block filling
  !
+ call elemental_IO(Xk%FGbare,"N_MAPPED","BARE")
  call elemental_IO(Xk%FGibz,"N_MAPPED","IBZ")
  call elemental_IO(Xk%FGbz,"N_MAPPED","BZ")
  !

@@ -90,10 +90,13 @@ subroutine RT_k_grid(E,k,q)
  ! DbGd support
  !=============
  !
- RT_nk = k%FGibz%N
- !
  call bz_samp_FineGd_alloc(RTibz,k%nibz)
- call bz_samp_duplicate_Fg(k%FGibz,RTibz,k%nibz)
+ !DEBUG-AM>
+ !RT_nk = k%FGibz%N
+ !call bz_samp_duplicate_Fg(k%FGibz,RTibz,k%nibz)
+ RT_nk = k%FGbare%N
+ call bz_samp_duplicate_Fg(k%FGbare,RTibz,k%nibz)
+ !DEBUG-AM<
  !
  ! Define K-weights to be used in the k-points distribution
  !

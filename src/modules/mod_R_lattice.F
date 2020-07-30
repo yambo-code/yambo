@@ -56,7 +56,7 @@ module R_lattice
  character(schlen)    :: BZ_FineGd_mode="mixed" ! or "unexpanded"/"expanded"
  !
  type bz_fine_grid
-   character(schlen)    :: FG_mode="none"  ! "expanded/unexpanded/bare"
+   character(schlen)    :: FG_mode="NONE"  ! "BZ/IBZ/BARE"
    integer              :: N
    real(SP), allocatable:: pt(:,:)
    integer , allocatable:: N_mapped(:)  ! For each IBZ/BZ kpt, n° of FG k associated

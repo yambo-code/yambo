@@ -50,13 +50,12 @@ subroutine RT_carriers_number(en,k,Ncarr)
      VALUE_tmp=0._SP
      do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
        if ( RT_levels%E(ib,ik_RT,1)<=0._SP ) then
-         if(NE_i_time==NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib,ik_RT)
-         if(NE_i_time/=NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)-RT_delta_occupations(ib,ik_RT)
+         if (NE_i_time==NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib,ik_RT)*RTibz%weights(ik_RT)
+         if (NE_i_time/=NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)-RT_delta_occupations(ib,ik_RT)*RTibz%weights(ik_RT)
        else
-         if(NE_i_time==NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib,ik_RT)
-         if(NE_i_time/=NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_delta_occupations(ib,ik_RT)
+         if (NE_i_time==NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib,ik_RT)*RTibz%weights(ik_RT)
+         if (NE_i_time/=NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_delta_occupations(ib,ik_RT)*RTibz%weights(ik_RT)
        endif
-       VALUE_tmp=VALUE_tmp*RTibz%weights(ik_RT)
      enddo
      Ncarr(2:3)=Ncarr(2:3)+VALUE_tmp
    enddo

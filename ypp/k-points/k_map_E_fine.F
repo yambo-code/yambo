@@ -44,9 +44,9 @@ subroutine k_map_E_fine(fg,E,k,MAP)
  k%FGbare%N_mapped=0
  !
  !DEBUG-AM>
- if (file_exists("DEVELOP_MAP")) then
+ if (file_exists("INPUTS_devel-andreaM/DEVELOP_MAP")) then
    call warning("Reading DEVELOP_MAP")
-   open(unit=100,file="DEVELOP_MAP",form='formatted')
+   open(unit=100,file="INPUTS_devel-andreaM/DEVELOP_MAP",form='formatted')
    do i_k_fg=1,fg%nibz
      read (100,*) ik,MAP(i_k_fg)
    enddo

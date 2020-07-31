@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
+subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
  !
  ! This routine returns <L>
  !
@@ -31,7 +31,7 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  use vec_operate,         ONLY:cross_product
  use R_lattice,           ONLY:bz_samp
- use DIPOLES,             ONLY:DIP_iR,DIP_orbital,DIPOLE_t
+ use DIPOLES,             ONLY:DIP_iR,DIP_orbital,DIPOLE_t,DIP_v
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
 &                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
@@ -90,19 +90,10 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
            if (ic< ib) DIP_pos(:,2)=conjg(-cI*DIP_iR(:,ib,ic,ik_mem,i_sp_pol))
            if (ic>=ib) DIP_pos(:,2)=      -cI*DIP_iR(:,ic,ib,ik_mem,i_sp_pol)
            !
-           ! Local part
+           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)+ &
+           & cross_product(DIP_pos(:,1),DIP_v(:,ic,iv,ik_mem,i_sp_pol))
            !
-           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1) &
-&                                                -cI*Eb*cross_product(DIP_pos(:,1),DIP_pos(:,2))
-
-            write(*,*) "[DIP] writing DIP_1(..,ic,iv,ik,,) values"
-           !
-           ! Itinerant part
-           !
-           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,2)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,2) &
-&                                                -cI*(Ev+Ec)/2._SP*cross_product(DIP_pos(:,1),DIP_pos(:,2))
-
-           write(*,*) "[DIP] writing DIP_2(..,ic,iv,ik,,) values"
+           write(*,*) "[DIP] writing DIP_orbital(..,ic,iv,ik,,) values"
            !
          enddo
          !
@@ -117,4 +108,4 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
  !
  call live_timing()
  !
-end subroutine Dipole_orbital_magnetization
+end subroutine Dipole_orb_magn_forCD

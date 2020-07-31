@@ -318,6 +318,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (l_magnons) call K_magnons_IP(iq,Xk,BSE_scatt,W_bss%p,Dip)
  !
+ ! FOR ELENA  TO FILL
+ !
 #endif
  !
  ! CLEAN

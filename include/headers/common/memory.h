@@ -166,8 +166,8 @@
 
 #define YAMBO_FREE(x) \
   if (.not.allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \
-  if (     allocated(x)) then &NEWLINE& Sz=1 &NEWLINE& \
-  do i = 1,size(shape(x)); Sz = Sz*shape(i); enddo &NEWLINE& call MEM_free(QUOTES x QUOTES,Sz)NEWLINE \
+  if (     allocated(x)) then NEWLINE Sz=1 NEWLINE \
+  do i = 1,size(shape(x)); Sz = Sz*size(x,i,KIND=IPL); enddo NEWLINE call MEM_free(QUOTES x QUOTES,Sz)NEWLINE endif NEWLINE \
   if (     allocated(x)) &NEWLINE& deallocate(x)
 #define YAMBO_FREE_P(x) \
   if (.not.associated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \

@@ -57,7 +57,7 @@ subroutine RT_occupations_driver(k,en)
  !===========================
  call QP_state_table_setup(en)
  !
- call QP_apply(RT_bands,en,k,'G',msg_fmt='s')
+ call QP_apply(RT_bands,en,k,'G',msg_fmt='rs')
  !
  ! Occupations energy plot 
  !=========================

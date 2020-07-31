@@ -61,7 +61,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  ! Apply QP corrections
  !====================== 
- call QP_apply(BANDS_bands,Xen,Xk,'G',msg_fmt='s')
+ call QP_apply(BANDS_bands,Xen,Xk,'G',msg_fmt='rs')
  !
  ! IBZ => BZ: need to be done here as QP_apply cleans the %ptbz allocation
  !

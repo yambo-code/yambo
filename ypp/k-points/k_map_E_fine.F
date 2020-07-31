@@ -26,6 +26,9 @@ subroutine k_map_E_fine(fg,E,k,MAP)
  use pars,                ONLY:SP
  use electrons,           ONLY:levels,n_sp_pol
  use R_lattice,           ONLY:bz_samp
+ !DEBUG-AM>
+ use com,            ONLY:jobstr
+ !DEBUG-AM<
  !
  implicit none
  !
@@ -38,15 +41,20 @@ subroutine k_map_E_fine(fg,E,k,MAP)
  !
  integer              :: i_fg,ik_near,ik,i_k_fg
  real(SP)             :: E_fg_ordered(E%FG%nb,E%FG%nk,n_sp_pol)
+ !DEBUG-AM>
+ logical              :: External_MAP
  logical,   external  :: file_exists
+ !DEBUG-AM<
  !
  k%FGbare%FG_mode ="BARE"
  k%FGbare%N_mapped=0
  !
  !DEBUG-AM>
- if (file_exists("INPUTS_devel-andreaM/DEVELOP_MAP")) then
+ External_MAP=.FALSE.
+ if (file_exists("INPUTS_devel-andreaM/"//trim(jobstr)//".Double_Grid_MAP")) then
+   External_MAP=.TRUE.
    call warning("Reading DEVELOP_MAP")
-   open(unit=100,file="INPUTS_devel-andreaM/DEVELOP_MAP",form='formatted')
+   open(unit=100,file="INPUTS_devel-andreaM/"//trim(jobstr)//".Double_Grid_MAP",form='formatted')
    do i_k_fg=1,fg%nibz
      read (100,*) ik,MAP(i_k_fg)
    enddo
@@ -65,6 +73,9 @@ subroutine k_map_E_fine(fg,E,k,MAP)
        E_fg_ordered(:,i_fg,:)=E%FG%E(:,i_k_fg,:)
        k%FGbare%pt(i_fg,:)   =fg%pt(i_k_fg,:)
        k%FGbare%E_map(i_fg)  =i_fg
+       !DEBUG-AM>
+       if (.not.External_MAP) k%FGbare%E_map(i_fg)=-k%FGbare%E_map(i_fg)
+       !DEBUG-AM<
        k%FGbare%k_map(i_fg)  =ik
      endif
    enddo

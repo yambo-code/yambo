@@ -92,21 +92,20 @@ subroutine RT_k_grid(E,k,q)
  !
  call bz_samp_FineGd_alloc(RTibz,k%nibz)
  !DEBUG-AM>
- !RT_nk = k%FGibz%N
- !call bz_samp_duplicate_Fg(k%FGibz,RTibz,k%nibz)
- RT_nk = k%FGbare%N
- call bz_samp_duplicate_Fg(k%FGbare,RTibz,k%nibz)
+ if (k%FGbare%E_map(1)>0) then
+   call warning("Using DEVELOP_MAP")
+   RT_nk = k%FGbare%N
+   call bz_samp_duplicate_Fg(k%FGbare,RTibz,k%nibz)
+ else
+   RT_nk = k%FGibz%N
+   call bz_samp_duplicate_Fg(k%FGibz,RTibz,k%nibz)
+ endif
  !DEBUG-AM<
  !
  ! Define K-weights to be used in the k-points distribution
  !
  YAMBO_ALLOC(PAR_IND_Xk_ibz%weight_1D,(k%nibz))
  PAR_IND_Xk_ibz%weight_1D=RTibz%N_mapped
- !
- do ik=1,k%nibz
-   RTibz%k_map(RTibz%k_range(ik,1))  =ik
-   RTibz%weights(RTibz%k_range(ik,1))=k%weights(ik)/float(RTibz%N_mapped(ik))
- enddo
  !
  if( l_elel_scatt .and. (index(code_bin,'ypp')==0) ) then
    !

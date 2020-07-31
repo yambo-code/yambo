@@ -46,7 +46,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  ! Work Space
  !
  real(SP), allocatable :: RDATA(:,:)
- integer               :: inpdim(2),i1,i2,ik,Nk_local,ik_fg,iE_fg
+ integer               :: inpdim(2),i1,i2,ik,Nk_local,ik_fg
  !
  call get_ID(ID)
  !
@@ -110,8 +110,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
      do i1=1,inpdim(2)
        do ik=1,k%nibz
          do ik_fg=k%FGbare%k_range(ik,1),k%FGbare%k_range(ik,2)
-           iE_fg=k%FGbare%E_map(ik_fg)
-           RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),ik_fg)=E%FG%E(1:inpdim(1),iE_fg,i1)
+           RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),ik_fg)=E%FG%E(1:inpdim(1),ik_fg,i1)
          enddo
        enddo
      enddo 

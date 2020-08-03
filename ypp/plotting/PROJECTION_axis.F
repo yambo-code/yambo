@@ -21,59 +21,87 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PROJECTION_axis( n_axis, axis, O )
+subroutine PROJECTION_axis( axis, O )
  !
  use pars,           ONLY:SP
- use vec_operate,    ONLY:cross_product,c2a,normalize_v,v_is_zero,iku_v_norm
- use YPPm,           ONLY:CIRCUIT_k,CIRCUIT_k_label
+ use stderr,         ONLY:intc
+ use com,            ONLY:msg
+ use vec_operate,    ONLY:cross_product,c2a,normalize_v,v_is_zero
+ use YPPm,           ONLY:CIRCUIT_k,CIRCUIT_k_label,coo_out,K_transform
  !
  implicit none
  !
- integer   :: n_axis
- real(SP)  :: axis(n_axis,3),O(3)
+ real(SP)  :: axis(3,3),O(3)
  !
  ! Work Space
  !
- integer  :: i_k,i_a,corners(n_axis),n_corners,n_axis_here
- real(SP) :: perp_vector(n_axis,3)
+ integer, parameter :: n_max_axis=20
+ integer  :: n_axis,i_k,i_a,corner(n_max_axis),n_perps
+ real(SP) :: axis_vector(n_max_axis,3),perp_vector(3),cross(3),try(3)
+ !
+ ! iku->cc
+ !=========
+ do i_k=1,CIRCUIT_k%nbz
+   call c2a(v_in= CIRCUIT_k%pt(i_k,:),mode='ki2c')
+ enddo
  !
  ! Find the circuit segments...
  !=============================
- corners=0
- n_corners=0
- do i_k=1,CIRCUIT_k%nbz
-   if (len_trim(CIRCUIT_k_label(i_k))>0) then
-     n_corners=n_corners+1
-     corners(n_corners)=i_k
+ n_axis=1
+ corner(1)=1
+ axis_vector(1,:)=normalize_v(CIRCUIT_k%pt(2,:)-CIRCUIT_k%pt(1,:))
+ K_LOOP: do i_k=2,CIRCUIT_k%nbz
+   try(:)=normalize_v(CIRCUIT_k%pt(i_k,:)-CIRCUIT_k%pt(corner(n_axis),:))
+   do i_a=1,n_axis
+     if (abs( dot_product(try,axis_vector(i_a,:))-1._SP) < 1.E-5 ) cycle K_LOOP
+   enddo
+   n_axis=n_axis+1
+   corner(n_axis)=i_k-1
+   axis_vector(n_axis,:)=normalize_v(CIRCUIT_k%pt(i_k,:)-CIRCUIT_k%pt(i_k-1,:))
+ enddo K_LOOP
+ if (corner(n_axis)/=CIRCUIT_k%nbz-1) then
+   n_axis=n_axis+1
+   corner(n_axis)=CIRCUIT_k%nbz
+ endif
+ do i_a=1,n_axis
+   try=axis_vector(i_a,:)
+   call K_transform(try,in_mode="cc")
+   if (len_trim(CIRCUIT_k_label(corner(i_a)))/=0) then
+     call msg('s','Corner #'//trim(intc(i_a))//'['//trim(coo_out)//']:',try,&
+&             after_msg='['//trim(CIRCUIT_k_label(corner(i_a)))//']')
+   else
+     call msg('s','Corner #'//trim(intc(i_a))//'['//trim(coo_out)//']:',try)
    endif
  enddo
  !
- if (n_corners==0) return
- !
- n_axis_here=n_corners
- !
- ! ...plane segments...
- do i_a=1,n_corners-1
-   axis(i_a,:)=CIRCUIT_k%pt(corners(i_a+1),:)-CIRCUIT_k%pt(corners(i_a),:)
-   if (i_a==1) axis(i_a,:)=-axis(i_a,:)
-   if (i_a==2) O=CIRCUIT_k%pt( corners(i_a) ,:)
- enddo 
+ if (n_axis==1) call error("[PROJECTION axis search] Only one axis found.")
  !
  ! ...perp versors...
- do i_a=1,n_corners-2
-   call c2a(v_in= axis(i_a,:),mode='ki2c')
-   perp_vector(i_a,:)=normalize_v( cross_product(axis(i_a+1,:),axis(i_a,:)))
-   call c2a(v_in= axis(i_a,:),mode='kc2i')
-   if (i_a==1) then
-     axis(n_axis_here,:)=perp_vector(1,:)
-   else
-     if (.not.v_is_zero( cross_product(axis(n_axis_here,:),perp_vector(i_a,:)) )) then
-       call error("More than one perpendicular direction found")
-     endif
+ n_perps=1
+ perp_vector(:)=normalize_v( cross_product(axis_vector(2,:),axis_vector(1,:)))
+ do i_a=3,n_axis
+   try(:)=normalize_v( cross_product(axis_vector(i_a,:),axis_vector(1,:)))
+   cross=cross_product(try,perp_vector(:))
+   if (.not.v_is_zero( cross )) then
+     call error("More than one perpendicular direction found")
    endif
  enddo
  !
- call c2a(v_in= axis(n_axis_here,:),mode='kc2i')
- axis(n_axis_here,:)=axis(n_axis_here,:)/iku_v_norm( axis(n_axis_here,:) )
+ ! Final transfer
+ !
+ axis(1,:)=-(CIRCUIT_k%pt(corner(2),:)-CIRCUIT_k%pt(corner(1),:))
+ axis(2,:)=CIRCUIT_k%pt(corner(3),:)-CIRCUIT_k%pt(corner(2),:)
+ axis(3,:)=perp_vector
+ O=CIRCUIT_k%pt(corner(2),:)
+ call c2a(v_in= O,mode='kc2i')
+ do i_a=1,3
+   call c2a(v_in= axis(i_a,:),mode='kc2i')
+ enddo
+ !
+ ! cc->iku
+ !=========
+ do i_k=1,CIRCUIT_k%nbz
+   call c2a(v_in= CIRCUIT_k%pt(i_k,:),mode='kc2i')
+ enddo
  !
 end subroutine

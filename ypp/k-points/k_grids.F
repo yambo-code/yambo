@@ -34,7 +34,7 @@ subroutine k_grids(en,k,Xk,q)
  use YPPm,                ONLY:coo_in,coo_out,l_k_grid,l_q_grid,&
 &                              l_shifted_grid,l_high_sym_pts,K_transform,&
 &                              n_u_k_pts,n_u_q_pts,l_random_grid,PtsPath,CIRCUIT_k,&
-&                              U_k_pts,U_q_pts,U_q_shifts,USER_k,k_grid_printer,n_path_pts,PtsPath
+&                              U_k_pts,U_q_pts,U_q_shifts,USER_k,k_grid_printer,N_path_pts,PtsPath
  use LIVE_t,              ONLY:live_timing_is_on
  use zeros,               ONLY:k_iku_zero
  use YPP_interfaces,      ONLY:k_special
@@ -268,7 +268,7 @@ subroutine k_grids(en,k,Xk,q)
    !
    call k_special( )
    !
-   call k_circuit_driver(PtsPath,n_path_pts)
+   call k_circuit_driver(PtsPath,N_path_pts)
    !
  endif
  !

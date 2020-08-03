@@ -40,7 +40,7 @@ module YPPm
  logical  :: l_shifted_grid
  logical  :: l_random_grid
  logical  :: l_high_sym_pts
- integer  :: n_path_pts
+ integer  :: N_path_pts
  integer  :: BZ_random_nkpts
  real(SP) :: alat_used_for_output
  character(schlen) :: coo_in

@@ -59,12 +59,9 @@ subroutine PROJECTION_axis( axis, O )
    corner(n_axis)=i_k-1
    axis_vector(n_axis,:)=normalize_v(CIRCUIT_k%pt(i_k,:)-CIRCUIT_k%pt(i_k-1,:))
  enddo K_LOOP
- if (corner(n_axis)/=CIRCUIT_k%nbz-1) then
-   n_axis=n_axis+1
-   corner(n_axis)=CIRCUIT_k%nbz
- endif
- do i_a=1,n_axis
-   try=axis_vector(i_a,:)
+ corner(n_axis+1)=CIRCUIT_k%nbz
+ do i_a=1,n_axis+1
+   try=CIRCUIT_k%pt(corner(i_a),:)
    call K_transform(try,in_mode="cc")
    if (len_trim(CIRCUIT_k_label(corner(i_a)))/=0) then
      call msg('s','Corner #'//trim(intc(i_a))//'['//trim(coo_out)//']:',try,&

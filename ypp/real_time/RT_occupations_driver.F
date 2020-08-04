@@ -72,7 +72,7 @@ subroutine RT_occupations_driver(k,en)
  if (l_RT_dos)    call RT_dos_time_plot(en,k,RT_conf%T_n_steps)
  !
  ! Occupations bands fit 
- !=========================
+ !=======================
  if (l_RT_bands) call RT_occ_bands_interpolation(en,k,RT_conf%T_n_steps)
  !
 end subroutine RT_occupations_driver

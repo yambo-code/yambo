@@ -55,14 +55,14 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  call section('*','Double Grid DB(s)')
  !
- l_mix     =STRING_same(BZ_FineGd_mode,"mixed")
- l_expand  =STRING_same(BZ_FineGd_mode,"expanded")
- l_unexpand=STRING_same(BZ_FineGd_mode,"unexpanded")
- !
  ! Initial checks
  !================
  call section('+','Double Grid initialization')
  call k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
+ !
+ l_mix     =STRING_same(BZ_FineGd_mode,"mixed")
+ l_expand  =STRING_same(BZ_FineGd_mode,"expanded")
+ l_unexpand=STRING_same(BZ_FineGd_mode,"unexpanded")
  !
  ! Expand the Coarse Grid 
  !========================
@@ -85,8 +85,8 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
      !
      call section('=','Double Grid K-points expansion ...')
      call k_ibz2bz(FineGd_k,'i',.true.)
+     call k_map_fine_to_coarse_reduce(FineGd_k)
      call msg('lr','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
-     call k_expand(FineGd_k)
      !
    endif
    !

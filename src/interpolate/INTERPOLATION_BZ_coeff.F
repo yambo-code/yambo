@@ -31,7 +31,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  ! https://www.imc.tuwien.ac.at//forschungsbereich_theoretische_chemie/forschungsgruppen/prof_dr_gkh_madsen_theoretical_materials_chemistry/boltztrap/
  !
  use pars,              ONLY:SP,DP,pi,cI,cZERO
- use interpolate,       ONLY:nshells,lattice_vectors,metric,int_sop,INTERP_obj,INTERPOLATE_is_quiet,INTERPOLATE_is_serial
+ use interpolate,       ONLY:nshells,lattice_vectors,metric,int_sop,INTERP_obj,INTERPOLATE_is_quiet,&
+&                            INTERPOLATE_is_serial,INTERP_FineGd
  use interpolate_tools, ONLY:make_star
  use D_lattice,         ONLY:nsym
  use R_lattice,         ONLY:bz_samp
@@ -129,11 +130,10 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
    !
    call make_star(lattice_vectors(:,i_shell),nsym,int_sop,nstar,star_vec) 
    do ik=1,Nk
-     ! Implementation to be finished.
-     ! OLD comment: Here I cannot use Xk%pt_DbGd bacuse also extra points in the BZ are included ...
-     ! In this new branch with Xk%pt_FineGd the problem maybe (?) overcome
-     if(Nk==Xk%nibz)        call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki2a')
-     !if(Nk==Xk%nibz_FineGd) call c2a(v_in=Xk%pt_FineGd(ik,:),v_out=v,mode='ki2a')
+     if (trim(INTERP_FineGd)=="NONE") call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki2a')
+     if (trim(INTERP_FineGd)=="IBZ")  call c2a(v_in=Xk%FGibz%pt(ik,:),v_out=v,mode='ki2a')
+     if (trim(INTERP_FineGd)=="BZ")   call c2a(v_in=Xk%FGbz%pt(ik,:),v_out=v,mode='ki2a')
+     if (trim(INTERP_FineGd)=="BARE") call c2a(v_in=Xk%FGbare%pt(ik,:),v_out=v,mode='ki2a')
      do i_star=1,nstar
        BZ_star(i_par_shell,ik)=BZ_star(i_par_shell,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,i_star)))
      enddo

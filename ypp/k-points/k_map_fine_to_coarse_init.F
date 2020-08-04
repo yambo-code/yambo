@@ -29,10 +29,11 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  use parser_m,            ONLY:parser
  use interfaces,          ONLY:io_DB1_selective_scan
  use zeros,               ONLY:k_iku_zero,k_rlu_zero,define_zeros
- use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset
+ use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset,BZ_FineGd_mode
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
  use com,                 ONLY:msg
- use YPPm,                ONLY:BZ_FineGd_nkpts_to_use,FineGd_DB1_paths,MAX_FineGd_DBs,n_FineGd_DBs
+ use YPPm,                ONLY:BZ_FineGd_nkpts_to_use,FineGd_DB1_paths,MAX_FineGd_DBs,&
+&                              n_FineGd_DBs
  use electrons,           ONLY:levels,default_nel,n_bands,n_sp_pol,E_reset,FineGd_E_components_alloc
  use IO_m,                ONLY:REP
  !
@@ -63,6 +64,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  ! Functions
  !
  integer, external :: k_FineGd_grid_consistency_check
+ logical, external :: k_map_fine_to_coarse_reduce
  !
  a_save=a
  alat_save=alat
@@ -201,14 +203,18 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
    !
    call section('=','Double Grid K-points expansion ...')
    call k_ibz2bz(FineGd_k,'i',.true.)
-   call msg('lr','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
-   call k_expand(FineGd_k)
-   YAMBO_FREE(FineGd_k%pt)
-   YAMBO_ALLOC(FineGd_k%pt,(FineGd_k%nibz,3))
-   FineGd_k%nibz=FineGd_k%nbz
-   FineGd_k%pt=FineGd_k%ptbz
-   FineGd_is_expanded=.TRUE.
-   FineGd_E%nk=FineGd_k%nibz
+   FineGd_is_expanded=k_map_fine_to_coarse_reduce(FineGd_k)
+   if (FineGd_is_expanded) then
+     call msg('lr','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
+     YAMBO_FREE(FineGd_k%pt)
+     YAMBO_ALLOC(FineGd_k%pt,(FineGd_k%nibz,3))
+     FineGd_k%nibz=FineGd_k%nbz
+     FineGd_k%pt=FineGd_k%ptbz
+     FineGd_E%nk=FineGd_k%nibz
+   else
+     call msg('lr','found duplicates. Expansion ignored. Switching to unexpanded mode')
+     BZ_FineGd_mode="unexpanded"
+   endif
    !
  endif
  !

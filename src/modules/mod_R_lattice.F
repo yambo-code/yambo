@@ -261,7 +261,7 @@ module R_lattice
    subroutine bz_samp_FineGd_reset(FG)
      type(bz_fine_grid)::FG
      FG%N=0
-     FG%FG_mode="none"
+     FG%FG_mode="NONE"
      YAMBO_FREE(FG%pt)
      YAMBO_FREE(FG%weights)
      YAMBO_FREE(FG%E_map)

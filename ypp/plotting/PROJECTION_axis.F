@@ -39,6 +39,8 @@ subroutine PROJECTION_axis( axis, O )
  integer  :: n_axis,i_k,i_a,corner(n_max_axis),n_perps
  real(SP) :: axis_vector(n_max_axis,3),perp_vector(3),cross(3),try(3)
  !
+ if (CIRCUIT_k%nbz==0) return
+ !
  ! iku->cc
  !=========
  do i_k=1,CIRCUIT_k%nbz

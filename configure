@@ -7675,7 +7675,7 @@ ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
- save="$LIBS"
+ save_LIBS="$LIBS"
  LIBS="ftest.$ac_objext"
  cat > conftest.$ac_ext <<_ACEOF
       program main
@@ -7687,7 +7687,7 @@ if ac_fn_fc_try_link "$LINENO"; then :
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
- LIBS="$save"
+ LIBS="$save_LIBS"
  ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -12108,6 +12108,8 @@ fi
 SCALAPACK_LIBS=""
 BLACS_LIBS=""
 
+reset_LIBS="$LIBS"
+
 enable_scalapack="no"
 enable_blacs="no"
 internal_slk="no"
@@ -12244,6 +12246,8 @@ else
   internal_blacs="no"
   internal_slk="no"
 fi
+#
+LIBS="$reset_LIBS"
 #
 
 

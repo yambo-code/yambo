@@ -30,6 +30,9 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  !
  use pars,          ONLY : SP,schlen
  use com,           ONLY : msg
+ !use slepceps
+ use slepcepsdef
+ use petscmatdef
  !
  implicit none
  !
@@ -38,7 +41,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>
+#include <petsc/finclude/petscvec.h>
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
  !
@@ -99,7 +102,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  !
  !Set operators. In this case, it is a standard eigenvalue problem
  !
- call EPSSetOperators(eps,A,PETSC_NULL_OBJECT,ierr)
+ call EPSSetOperators(eps,A,PETSC_NULL_MAT,ierr)
  call EPSSetProblemType(eps,EPS_HEP,ierr)
  !
  if (target_energy .ne. 0) then
@@ -159,7 +162,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  call msg( 'r', '[SLEPC] Stopping condition max iterations ', int(maxit) )
 
  !Set monitor
- call EPSMonitorSet(eps,MyEPSMonitor,PETSC_NULL_OBJECT, PETSC_NULL_FUNCTION,ierr)
+ call EPSMonitorSet(eps,MyEPSMonitor,PETSC_NULL_FUNCTION, PETSC_NULL_FUNCTION,ierr)
  !
 
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -196,7 +199,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
       !
      !Get converged eigenpairs: i-th eigenvalue is stored in kr
      !(real part) and ki (imaginary part)
-     call EPSGetEigenpair(eps,i,kr,PETSC_NULL_OBJECT,xr,PETSC_NULL_OBJECT,ierr)
+     call EPSGetEigenpair(eps,i,kr,PETSC_NULL_SCALAR,xr,PETSC_NULL_VEC,ierr)
      !
      !save the eigenvalues and eigenvectors in the matrix of the hamiltonian\
      !E_real(i+1) = PetscRealPart(kr)
@@ -234,13 +237,16 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
  ! 
  use com,           ONLY:msg
  use stderr,        ONLY:intc
+ !use slepceps
+ use slepcepsdef
+ use petscmatdef
  !
  implicit none
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>
+#include <petsc/finclude/petscvec.h>
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
  !

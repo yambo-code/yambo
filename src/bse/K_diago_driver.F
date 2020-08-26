@@ -44,6 +44,9 @@ subroutine K_diago_driver(iq,W,X_static)
  use timing_m,       ONLY:timing
 #if defined _SLEPC && !defined _SLEPC_OFF
  use interfaces,     ONLY:MATRIX_slepc
+ !use petscmatdef,    ONLY:tmat
+ use slepcepsdef
+ use petscmatdef
  use BS_solvers,     ONLY:BSS_slepc_extraction,Slepc_shell,BSS_slepc_ncv,&
 &                         BSS_slepc_tol,BSS_target_E,Slepc_v,BS_HAYVEC_free
 #endif
@@ -62,7 +65,7 @@ subroutine K_diago_driver(iq,W,X_static)
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>
+#include <petsc/finclude/petscvec.h>
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
 #endif

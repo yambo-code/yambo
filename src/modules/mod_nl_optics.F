@@ -181,8 +181,10 @@ module nl_optics
      !
      !
      YAMBO_ALLOC(V_bands,(NL_bands(2),en%nbf,QP_nk,n_sp_pol))
-     YAMBO_ALLOC(rho_reference,(fft_size))
-     YAMBO_ALLOC(full_rho,(fft_size))
+     if (fft_size>0) then
+       YAMBO_ALLOC(rho_reference,(fft_size))
+       YAMBO_ALLOC(full_rho,(fft_size))
+     endif
      !
      if(Correlation==TDDFT.or.Correlation==JGM) then
        YAMBO_ALLOC(V_xc_0,(fft_size,n_spin))
@@ -226,7 +228,9 @@ module nl_optics
      !
      ! Valence bands in fft space
      !
-     YAMBO_ALLOC(VAL_BANDS,(fft_size,en%nbf,PAR_Xk_nibz,n_sp_pol))
+     if(fft_size>0) then
+       YAMBO_ALLOC(VAL_BANDS,(fft_size,en%nbf,PAR_Xk_nibz,n_sp_pol))
+     endif
      YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),en%nbf,PAR_Xk_nibz,n_sp_pol))
      YAMBO_ALLOC(Ho_plus_Sigma,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),PAR_Xk_nibz,n_sp_pol))
      !

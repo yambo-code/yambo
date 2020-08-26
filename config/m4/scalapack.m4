@@ -31,6 +31,8 @@ AC_ARG_WITH(scalapack_libs,[AC_HELP_STRING([--with-scalapack-libs=<libs>],[Use S
 SCALAPACK_LIBS=""
 BLACS_LIBS=""
 
+reset_LIBS="$LIBS"
+
 enable_scalapack="no"
 enable_blacs="no"
 internal_slk="no"
@@ -141,6 +143,8 @@ else
   internal_blacs="no"
   internal_slk="no"
 fi
+#
+LIBS="$reset_LIBS"
 #
 AC_SUBST(BLACS_LIBS)
 AC_SUBST(SCALAPACK_LIBS)

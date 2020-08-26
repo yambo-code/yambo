@@ -135,6 +135,7 @@ module interfaces
    subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
      !
      use pars,           ONLY:SP,schlen
+     use petscmatdef,    ONLY:tmat
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscmat.h>
      !

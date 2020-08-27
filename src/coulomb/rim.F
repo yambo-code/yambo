@@ -39,7 +39,7 @@ subroutine rim(mode,cut_is_slab,is_cut,f_coeff)
  !
  character(1)                :: mode
  logical                     :: cut_is_slab,is_cut(3) 
- real, optional :: f_coeff(5,nqibz,RIM_ng)
+ real, optional :: f_coeff(5,nqibz,RIM_ng,RIM_ng)
  !
  ! Work Space
  !
@@ -224,6 +224,7 @@ subroutine rim(mode,cut_is_slab,is_cut,f_coeff)
      end if
    else
      !
+     call msg('r', "Evaluating integrals for q = ", iq)
      call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab,iort,ipar1,ipar2,mode,f_coeff)
      !
    end if

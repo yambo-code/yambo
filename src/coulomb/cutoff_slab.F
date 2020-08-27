@@ -71,18 +71,28 @@
  !
  do ig=1,wf_ng
    do iq=1,q%nibz
-! kz
+     !
+     ! kz
+     !
      slab_vz=(q%pt(iq,iort)+g_vec(ig,iort) )*2.*pi/alat(iort)
-! kxy
+     !
+     !kxy
+     !
      slab_vplane=sqrt(((q%pt(iq,ipar1)+g_vec(ig,ipar1))*2.*pi/alat(ipar1))**2+&
-&                 ((q%pt(iq,ipar2)+g_vec(ig,ipar2))*2.*pi/alat(ipar2))**2)               
+&                 ((q%pt(iq,ipar2)+g_vec(ig,ipar2))*2.*pi/alat(ipar2))**2)   
+     !            
      !Regularization of the potential
+     !
      if(slab_vplane < q0_def_norm) slab_vplane = q0_def_norm
-! k=0 case
-     if (iq==1.and.ig==1) cycle
-! all other
+     !
      pre_factor=sqrt(1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut))
-     !if (abs(pre_factor)<1.E-5_SP) pre_factor=1.E-5_SP
+     !
+     !if (iq == 1) then
+     !  call msg('nr', "G = ", ig)
+     !  call msg('r', 'pre_factor = ', pre_factor)
+     !  call msg('r', "Taylor expansion = ", sqrt(1-(1-slab_vplane*lcut)*cos(slab_vz*lcut)))
+     !  call msg('r', "Simplified Taylor expansion = ", sqrt(slab_vplane*lcut))
+     !end if
      bare_qpg(iq,ig)=bare_qpg(iq,ig)/pre_factor
    enddo
  enddo
@@ -102,11 +112,11 @@
    pre_factor = 2._SP*pi/Sup*pre_factor
    bare_qpg(1,1) = 1._SP/sqrt(pre_factor)
    !
- else
-   !
-   slab_vplane=q_norm(1)
-   pre_factor=sqrt(1._SP-exp(-slab_vplane*lcut))
-   bare_qpg(1,1)=bare_qpg(1,1)/pre_factor
-   !
+ !else
+ !  !
+ !  slab_vplane=q_norm(1)
+ !  pre_factor=sqrt(1._SP-exp(-slab_vplane*lcut))
+ !  bare_qpg(1,1)=bare_qpg(1,1)/pre_factor
+ !  !
  end if
 end subroutine

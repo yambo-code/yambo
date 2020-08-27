@@ -33,15 +33,15 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
  integer  :: iq,N_out,N_out_G
  real(SP) :: qr(RIM_n_rand_pts,3),em1_anis(3),G_radii
  character(1)                :: mode
- real, optional :: f_coeff(5,nqibz,RIM_ng)
+ real, optional :: f_coeff(5,nqibz,RIM_ng,RIM_ng)
  ! 
  ! Work Space
  !
  integer  :: i1,i1min,i2,i2max,i3,iort,ipar1,ipar2,n_idx,n_max
- real(SP) :: v1(3),v2(3),factorial,G_circ,vslab,func
+ real(SP) :: v1(3),v2(3),factorial,G_circ,vslab,func, g1_2D_mod, g2_2D_mod
  real(DP) :: r1,rfac,RIM_acc(RIM_ng),RIM_acc_anis
  logical  :: cut_is_slab
- real(SP) :: slab_vz,slab_vplane,lcut,pre_factor
+ real(SP) :: slab_vz,slab_vplane,slab_vz1,slab_vplane1,slab_vz2,slab_vplane2,lcut,pre_factor,v_2D_mod
  !
  if (cut_is_slab) then
    lcut=alat(iort)/2.
@@ -63,10 +63,10 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
  ! All points
  !
  i1min=1
- if (iq==1) i1min=2
+ if (iq==1 .and. mode == "x") i1min=2
  do i1=i1min,RIM_ng 
    i2max=RIM_ng 
-   if (RIM_is_diagonal) i2max=i1
+   if (RIM_is_diagonal .and. mode == "x") i2max=i1
    do i2=i1,i2max
      RIM_acc(1)=0._DP
      if (cut_is_slab .and. mode == 'x') then
@@ -91,7 +91,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
        RIM_qpg(iq,i1,i2)=RIM_acc(1)
        RIM_qpg(iq,i2,i1)=RIM_qpg(iq,i1,i2)
      else if (cut_is_slab .and. mode == 'c') then
-      
+       !
        do i3=1,RIM_n_rand_pts
          ! 
          v1(:)=g_vec(i1,:)+q_pt(iq,:)+qr(i3,:)
@@ -100,21 +100,43 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
          !
          !Evaluate v_slab
          !kz
-         slab_vz=(q_pt(iq,iort)+qr(i3,iort)+g_vec(i1,iort) )*2.*pi/alat(iort)
+         slab_vz1=(q_pt(iq,iort)+qr(i3,iort)+g_vec(i1,iort) )*2.*pi/alat(iort)
+         slab_vz2=(q_pt(iq,iort)+qr(i3,iort)+g_vec(i2,iort) )*2.*pi/alat(iort)
          !kxy
-         slab_vplane=sqrt(((q_pt(iq,ipar1)+qr(i3,ipar1)+g_vec(i1,ipar1))*2.*pi/alat(ipar1))**2+&
+         slab_vplane1=sqrt(((q_pt(iq,ipar1)+qr(i3,ipar1)+g_vec(i1,ipar1))*2.*pi/alat(ipar1))**2+&
 &                 ((q_pt(iq,ipar2)+qr(i3,ipar2)+g_vec(i1,ipar2))*2.*pi/alat(ipar2))**2)
+         slab_vplane2=sqrt(((q_pt(iq,ipar1)+qr(i3,ipar1)+g_vec(i2,ipar1))*2.*pi/alat(ipar1))**2+&
+&                 ((q_pt(iq,ipar2)+qr(i3,ipar2)+g_vec(i2,ipar2))*2.*pi/alat(ipar2))**2)
          !     
-         pre_factor=1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)
+         pre_factor=sqrt(1.-exp(-slab_vplane1*lcut)*cos(slab_vz1*lcut))*sqrt(1.-exp(-slab_vplane2*lcut)*cos(slab_vz2*lcut))
          if (abs(pre_factor)<1.E-5_SP) pre_factor=1.E-5_SP        
          vslab=4._DP*pi*pre_factor/r1
          !
          !Evaluate func
          !
          call c2a(b,qr(i3,:),v1,'ki2a')
-         !Typo: in func, I want to use dq instead of q+dq!!!!!!!!!!!!!!!!!!
-         func = f_coeff(1,iq,i1)+v1(1)*f_coeff(2,iq,i1)+v1(1)*f_coeff(4,iq,i1)*v1(1)+&
-&                               +v1(2)*f_coeff(3,iq,i1)+v1(2)*f_coeff(5,iq,i1)*v1(2)
+         !
+         if (iq == 1) then
+           g1_2D_mod = sqrt(g_vec(i1,1)**2+g_vec(i1,2)**2)
+           g2_2D_mod = sqrt(g_vec(i2,1)**2+g_vec(i2,2)**2)
+           v_2D_mod = sqrt(v1(1)**2+v1(2)**2)
+           !
+           if ((i1 == 1 .and. g2_2D_mod < 1.e-5) .or. (g1_2D_mod < 1.e-5 .and. i2 == 1)) then
+             !
+             func = f_coeff(2,iq,i1,i2)*v_2D_mod**2
+             !
+           else
+             !
+             func = f_coeff(1,iq,i1,i2)+f_coeff(2,iq,i1,i2)*v_2D_mod
+             !
+           end if
+           !
+         else
+           !
+           func = f_coeff(1,iq,i1,i2)+v1(1)*f_coeff(2,iq,i1,i2)+v1(1)*f_coeff(4,iq,i1,i2)*v1(1)+&
+&                                    +v1(2)*f_coeff(3,iq,i1,i2)+v1(2)*f_coeff(5,iq,i1,i2)*v1(2)
+           !
+         end if
          !
          !Evaluate W
          !
@@ -163,7 +185,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
  !
  N_out_G=0
  i2max=RIM_ng 
- if (RIM_is_diagonal) i2max=1
+ if (RIM_is_diagonal .and. mode == "x") i2max=1
  RIM_acc_anis=0._DP
  !
  if (mode == "x") then
@@ -218,7 +240,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
      !
      r1=iku_v_norm(qr(i1,:))
      if (r1 < 1.e-5) then
-       RIM_acc(1) = RIM_acc(1) + rfac*f_coeff(1,1,1)*(4*pi*lcut)**2
+       RIM_acc(1) = RIM_acc(1) + rfac*f_coeff(1,1,1,1)*(4*pi*lcut)**2
        cycle
      end if
      !
@@ -233,7 +255,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
      vslab=4._DP*pi*pre_factor
      !
      !Evaluate interpolation function
-     func = f_coeff(1,1,1)*exp(-f_coeff(2,1,1)*slab_vplane)
+     func = f_coeff(1,1,1,1)*exp(-f_coeff(2,1,1,1)*slab_vplane)
      !Evaluate W
      RIM_acc(1) = RIM_acc(1) + rfac*vslab*func*vslab/r1**2/(1-vslab*func)
      !

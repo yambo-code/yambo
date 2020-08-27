@@ -478,7 +478,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                ! RIM W support
                !
                l_RIM_W=all((/ig1<=RIM_ng,ig2<=RIM_ng/))
-               if (RIM_is_diagonal.and.l_RIM_W) l_RIM_W=(ig1==ig2)
+               !if (RIM_is_diagonal.and.l_RIM_W) l_RIM_W=(ig1==ig2)
                !
                if (l_RIM_W) then
                  PPA_R=-RIM_W(iqibz,ig1,ig2)/4._SP*PPA_E

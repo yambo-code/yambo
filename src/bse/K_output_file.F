@@ -48,8 +48,8 @@ subroutine K_output_file(iq,mode)
  use KERR,      ONLY:B_Hall,A_drude
 #endif
 #if defined _RT
- use drivers,   ONLY:l_magnons
- use X_m,       ONLY:X_magnons
+ use drivers,   ONLY:l_magnons, l_dichroism
+ use X_m,       ONLY:X_magnons, X_dichroism
  use X_output,  ONLY:magp_file_name,magm_file_name
 #endif
 #if defined _PL
@@ -525,6 +525,40 @@ subroutine K_output_file(iq,mode)
      output_data(1:5)=(/real(X_magnons(iw,2,1))*HA2EV,aimag(X_magnons(iw,2,2)),real(X_magnons(iw,2,2)),&
 &                  aimag(X_magnons(iw,2,3)),real(X_magnons(iw,2,3))/)
      if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(X_magnons(iw,2,4)),real(X_magnons(iw,2,4))/)
+     if (l_IP) output_data(2:3)=output_data(4:5)
+     call msg('o Smp','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+     !
+   enddo
+   !
+ endif
+ !
+ 
+ !
+ !  DICHROISM
+ !------
+ if(l_dichroism) then
+   !
+   ! dichroism Spm
+   !
+   n_output_data=5
+   if (l_Haydock.or.l_Inversion) n_output_data=7
+   if (l_IP) n_output_data=3
+   !
+   do iw=1,BSS_n_freqs 
+     output_data(1:5)=(/real(X_dichroism(iw,1,1))*HA2EV,aimag(X_dichroism(iw,1,2)),real(X_dichroism(iw,1,2)),&
+&                  aimag(X_dichroism(iw,1,3)),real(X_dichroism(iw,1,3))/)
+     if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(X_dichroism(iw,1,4)),real(X_dichroism(iw,1,4))/)
+     if (l_IP) output_data(2:3)=output_data(4:5)
+     call msg('o Spm','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+     !
+   enddo
+   !
+   ! dichroism Smp
+   !
+   do iw=1,BSS_n_freqs 
+     output_data(1:5)=(/real(X_dichroism(iw,2,1))*HA2EV,aimag(X_dichroism(iw,2,2)),real(X_dichroism(iw,2,2)),&
+&                  aimag(X_dichroism(iw,2,3)),real(X_dichroism(iw,2,3))/)
+     if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(X_dichroism(iw,2,4)),real(X_dichroism(iw,2,4))/)
      if (l_IP) output_data(2:3)=output_data(4:5)
      call msg('o Smp','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
      !

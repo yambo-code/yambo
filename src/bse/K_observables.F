@@ -31,7 +31,7 @@ subroutine K_observables(WHAT,W)
 #endif
  use BS_solvers,    ONLY:BSS_n_freqs
 #if defined _KERR
- use X_m,           ONLY:Epsilon_ij,X_magnons
+ use X_m,           ONLY:Epsilon_ij,X_magnons,X_dichroism
 #endif
  !
 #include<memory.h>
@@ -50,6 +50,11 @@ subroutine K_observables(WHAT,W)
    X_magnons=cZERO
    X_magnons(:,1,1)=W%p(:)
    X_magnons(:,2,1)=W%p(:)
+   !
+   YAMBO_ALLOC(X_dichroism,(BSS_n_freqs,2,4))
+   X_dichroism=cZERO
+   X_dichroism(:,1,1)=W%p(:)
+   X_dichroism(:,2,1)=W%p(:)   
 #endif
 #if defined _PL
    call PL_init( )
@@ -66,6 +71,8 @@ subroutine K_observables(WHAT,W)
    YAMBO_FREE(Epsilon_ij)
    !
    YAMBO_FREE(X_magnons)
+   !
+   YAMBO_FREE(X_dichroism)
 #endif
    !
 #if defined _PL

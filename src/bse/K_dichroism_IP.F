@@ -127,8 +127,10 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
      ! Residuals: (Smp) <v|S-|c>(i_sp_pol_c)<c|S+|v>(i_sp_pol_c) = dip_R_magn(1)*conjg(dip_R_magn(1))
      !            (Spm) <v|S+|c>(i_sp_pol_c)<c|S-|v>(i_sp_pol_c) = dip_R_magn(2)*conjg(dip_R_magn(2))
      !
-     res(1)=BS_T_grp(i_T_g)%dipoles_R_dichroism(1,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R_dichroism(1,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
-     res(2)=BS_T_grp(i_T_g)%dipoles_R_dichroism(2,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R_dichroism(2,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
+     res(1)=BS_T_grp(i_T_g)%dipoles_R_dichroism(1,i_T)*&  
+     conjg(BS_T_grp(i_T_g)%dipoles_R_dichroism(1,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
+     res(2)=BS_T_grp(i_T_g)%dipoles_R_dichroism(2,i_T)*&
+     conjg(BS_T_grp(i_T_g)%dipoles_R_dichroism(2,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
      if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)
      !
      do i_pert_SOC=1,n_SOC
@@ -149,8 +151,10 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
        !
        ! Both -1 factors appear explicitly in the code
        !
-       res(1)=BS_T_grp(i_T_g)%dipoles_A_dichroism(1,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_A_dichroism(1,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
-       res(2)=BS_T_grp(i_T_g)%dipoles_A_dichroism(2,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_A_dichroism(2,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
+       res(1)=BS_T_grp(i_T_g)%dipoles_A_dichroism(1,i_T)*&
+       conjg(BS_T_grp(i_T_g)%dipoles_A_dichroism(1,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
+       res(2)=BS_T_grp(i_T_g)%dipoles_A_dichroism(2,i_T)*&
+       conjg(BS_T_grp(i_T_g)%dipoles_A_dichroism(2,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
        if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)
        !
        do i_pert_SOC=1,n_SOC

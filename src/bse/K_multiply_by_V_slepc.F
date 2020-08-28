@@ -30,6 +30,8 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  use BS_solvers,    ONLY : Slepc_v
  use BS,            ONLY : BS_T_grp,BS_nT_grps
  use parallel_m,    ONLY : PAR_IND_T_Haydock
+ use petscmat
+ use slepcsys
  use petscmatdef
  use slepcsysdef
  !

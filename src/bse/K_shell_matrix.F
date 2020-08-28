@@ -32,6 +32,8 @@ subroutine K_shell_matrix(slepc_mat)
  !
  use BS,             ONLY:BS_H_dim, BS_nT_grps, BS_blk, n_BS_blks
  use BS_solvers,     ONLY:Slepc_v,BS_HAYVEC_alloc
+ use petscmat
+ use slepceps
  use petscmatdef
  use slepcepsdef
  !

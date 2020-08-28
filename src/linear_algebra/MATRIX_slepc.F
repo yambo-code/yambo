@@ -30,7 +30,8 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  !
  use pars,          ONLY : SP,schlen
  use com,           ONLY : msg
- !use slepceps
+ use petscmat
+ use slepceps
  use slepcepsdef
  use petscmatdef
  !
@@ -54,7 +55,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  real(SP),     optional      :: E_real(:)     ! real eigenvalues
  character(schlen)           :: extraction    ! extraction method for the eigenvalues
  !
- PetscReal                    :: target_energy
+ PetscComplex                 :: target_energy
  PetscReal                    :: slepc_tol
  PetscFortranInt              :: slepc_ncv
  ! 
@@ -105,7 +106,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  call EPSSetOperators(eps,A,PETSC_NULL_MAT,ierr)
  call EPSSetProblemType(eps,EPS_HEP,ierr)
  !
- if (target_energy .ne. 0) then
+ if (real(target_energy,SP) .ne. 0) then
    call msg( 'nr', '[SLEPC] Criterion is target energy       ', real(target_energy,SP) )
    call EPSSetTarget(eps,target_energy,ierr)
    call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
@@ -162,7 +163,9 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  call msg( 'r', '[SLEPC] Stopping condition max iterations ', int(maxit) )
 
  !Set monitor
- call EPSMonitorSet(eps,MyEPSMonitor,PETSC_NULL_FUNCTION, PETSC_NULL_FUNCTION,ierr)
+ call EPSMonitorSet(eps,MyEPSMonitor,ierr)
+ !&                   PETSC_NULL_INTEGER,&
+ !&                   PETSC_NULL_FUNCTION,ierr)
  !
 
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -203,7 +206,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
      !
      !save the eigenvalues and eigenvectors in the matrix of the hamiltonian\
      !E_real(i+1) = PetscRealPart(kr)
-     E_real(i+1) = kr
+     E_real(i+1) = real(kr,SP)
      !  
      ! this is to write the vector to hdf5 directly
      !call VecView(xr,hdf5v,ierr)
@@ -237,7 +240,8 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
  ! 
  use com,           ONLY:msg
  use stderr,        ONLY:intc
- !use slepceps
+ use petscmat
+ use slepceps
  use slepcepsdef
  use petscmatdef
  !

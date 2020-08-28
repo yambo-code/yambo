@@ -45,6 +45,8 @@ subroutine K_diago_driver(iq,W,X_static)
 #if defined _SLEPC && !defined _SLEPC_OFF
  use interfaces,     ONLY:MATRIX_slepc
  !use petscmatdef,    ONLY:tmat
+ use petscmat
+ use slepceps
  use slepcepsdef
  use petscmatdef
  use BS_solvers,     ONLY:BSS_slepc_extraction,Slepc_shell,BSS_slepc_ncv,&
@@ -86,7 +88,7 @@ subroutine K_diago_driver(iq,W,X_static)
  PetscErrorCode        :: ierr
  PetscFortranInt       :: slepc_ncv
  PetscReal             :: slepc_tol
- PetscReal             :: slepc_target_E
+ PetscComplex          :: slepc_target_E
 #endif
  !
  ! Residuals & Energies

@@ -141,13 +141,10 @@ module interfaces
      !
      Mat                         :: A            ! matrix to diagonalize of stype from slepc
      integer                     :: n_eig        ! number of eigenvalues to compute
-     !real(SP),                   :: target_energy! energy near where to find the eigenvalues
-     !real(SP),                   :: slepc_tol    ! tolerance of the iterative solver
      character(schlen)           :: extraction   ! extraction method for the eigenvalues
-     ! integer,optional            :: slepc_ncv    ! dimension of the subspace
-     PetscReal                   :: target_energy
-     PetscReal                   :: slepc_tol
-     PetscFortranInt             :: slepc_ncv
+     PetscComplex                :: target_energy! energy near where to find the eigenvalues
+     PetscReal                   :: slepc_tol    ! tolerance of the iterative solver
+     PetscFortranInt             :: slepc_ncv    ! dimension of the subspace
      complex(SP)                 :: V_right(:,:) ! right eigenvalues
      complex(SP),  optional      :: V_left(:,:)  ! left eigenvalues
      complex(SP),  optional      :: E_cmpl(:)    ! complex eigenvalues

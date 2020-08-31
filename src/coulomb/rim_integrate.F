@@ -25,7 +25,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
  !
  use pars,          ONLY:SP,DP,pi
  use vec_operate,   ONLY:iku_v_norm,c2a
- use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,RIM_qpg,&
+ use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,RIM_qpg,q0_def_norm,&
 &                        RIM_is_diagonal,RIM_ng,q_pt,RIM_anisotropy,nqibz,RIM_W,b
  use D_lattice,     ONLY:alat
  !
@@ -107,18 +107,20 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
 &                 ((q_pt(iq,ipar2)+qr(i3,ipar2)+g_vec(i1,ipar2))*2.*pi/alat(ipar2))**2)
          slab_vplane2=sqrt(((q_pt(iq,ipar1)+qr(i3,ipar1)+g_vec(i2,ipar1))*2.*pi/alat(ipar1))**2+&
 &                 ((q_pt(iq,ipar2)+qr(i3,ipar2)+g_vec(i2,ipar2))*2.*pi/alat(ipar2))**2)
+         !
+         if (slab_vplane1 < q0_def_norm) slab_vplane1 = q0_def_norm
+         if (slab_vplane2 < q0_def_norm) slab_vplane2 = q0_def_norm
          !     
          pre_factor=sqrt(1.-exp(-slab_vplane1*lcut)*cos(slab_vz1*lcut))*sqrt(1.-exp(-slab_vplane2*lcut)*cos(slab_vz2*lcut))
-         if (abs(pre_factor)<1.E-5_SP) pre_factor=1.E-5_SP        
+         !
          vslab=4._DP*pi*pre_factor/r1
          !
          !Evaluate func
          !
-         call c2a(b,qr(i3,:),v1,'ki2a')
-         !
          if (iq == 1) then
            g1_2D_mod = sqrt(g_vec(i1,1)**2+g_vec(i1,2)**2)
            g2_2D_mod = sqrt(g_vec(i2,1)**2+g_vec(i2,2)**2)
+           call c2a(b,qr(i3,:),v1,'ki2c')
            v_2D_mod = sqrt(v1(1)**2+v1(2)**2)
            !
            if ((i1 == 1 .and. g2_2D_mod < 1.e-5) .or. (g1_2D_mod < 1.e-5 .and. i2 == 1)) then
@@ -127,12 +129,16 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
              !
            else
              !
-             func = f_coeff(1,iq,i1,i2)+f_coeff(2,iq,i1,i2)*v_2D_mod
+             !func = f_coeff(1,iq,i1,i2)+f_coeff(2,iq,i1,i2)*v_2D_mod
              !
+             call c2a(b,qr(i3,:),v1,'ki2a')
+             func = f_coeff(1,iq,i1,i2)+v1(1)*f_coeff(2,iq,i1,i2)+v1(1)*f_coeff(4,iq,i1,i2)*v1(1)+&
+&                                    +v1(2)*f_coeff(3,iq,i1,i2)+v1(2)*f_coeff(5,iq,i1,i2)*v1(2)
            end if
            !
          else
            !
+           call c2a(b,qr(i3,:),v1,'ki2a')
            func = f_coeff(1,iq,i1,i2)+v1(1)*f_coeff(2,iq,i1,i2)+v1(1)*f_coeff(4,iq,i1,i2)*v1(1)+&
 &                                    +v1(2)*f_coeff(3,iq,i1,i2)+v1(2)*f_coeff(5,iq,i1,i2)*v1(2)
            !

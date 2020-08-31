@@ -241,8 +241,6 @@ subroutine interpolate_W(X,Xw,q)
  allocate(idx_q (5,q%nibz,RIM_ng),stat=MEM_err)
  allocate(idx_G (5,q%nibz,RIM_ng),stat=MEM_err)
  allocate(idx_is (5,q%nibz,RIM_ng),stat=MEM_err)
- !allocate(vX (5,q%nibz,RIM_ng),stat=MEM_err)
- !allocate(f_coeff (5,q%nibz,RIM_ng),stat=MEM_err)
  !
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !Calculation of the nearest neighbours indexes
@@ -295,7 +293,7 @@ subroutine interpolate_W(X,Xw,q)
      qpG(:,5) = qpG(:,1) - delta_q(:,1)
      !
      if (debug) then
-       !Print qpG and qpG into a file
+       !Print qpG into a file
        write(out_unit_qpG_in,"(I4,I4,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3)")&
 & iq1,ig1,qpG(1,1), qpG(2,1), qpG(3,1),qpG(1,2), qpG(2,2), qpG(3,2)&
 &,qpG(1,3), qpG(2,3), qpG(3,3),qpG(1,4), qpG(2,4), qpG(3,4)&
@@ -352,12 +350,12 @@ subroutine interpolate_W(X,Xw,q)
        qpG(:,4) = matmul(rl_sop(:,:,idx_is(4,iq1,ig1)),q%pt(idx_q(4,iq1,ig1),:)+g_vec(idx_G(4,iq1,ig1),:))
        qpG(:,5) = matmul(rl_sop(:,:,idx_is(5,iq1,ig1)),q%pt(idx_q(5,iq1,ig1),:)+g_vec(idx_G(5,iq1,ig1),:))
        !
-       !From iku to cc
-       call c2a(b_in=b,v_in=qpG(:,1),mode='ka2c')
-       call c2a(b_in=b,v_in=qpG(:,2),mode='ki2c')
-       call c2a(b_in=b,v_in=qpG(:,3),mode='ki2c')
-       call c2a(b_in=b,v_in=qpG(:,4),mode='ki2c')
-       call c2a(b_in=b,v_in=qpG(:,5),mode='ki2c')
+       !From iku to rlu
+       !call c2a(b_in=b,v_in=qpG(:,1),mode='ka2c')
+       call c2a(b_in=b,v_in=qpG(:,2),mode='ki2a')
+       call c2a(b_in=b,v_in=qpG(:,3),mode='ki2a')
+       call c2a(b_in=b,v_in=qpG(:,4),mode='ki2a')
+       call c2a(b_in=b,v_in=qpG(:,5),mode='ki2a')
        !Write qpG out into a file
        write(out_unit_qpG_out,"(I4,I4,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3,F7.3)")&
 & iq1,ig1,qpG(1,1), qpG(2,1), qpG(3,1),qpG(1,2), qpG(2,2), qpG(3,2)&
@@ -540,18 +538,28 @@ subroutine interpolate_W(X,Xw,q)
           !
         else if ((igr == 1 .and. gc_2D_mod < 1.e-5) .or. (gr_2D_mod < 1.e-5 .and. igc == 1)) then
           !
-          f_coeff (2,iq1,igr,igc) = f_func(2)/delta_q(2,2)**2                    !f2yy positive
-          f_coeff (3,iq1,igr,igc) = f_func(3)/delta_q(1,1)**2                    !f2xx positive
-          f_coeff (4,iq1,igr,igc) = f_func(4)/delta_q(2,2)**2                    !f2yy negative
-          f_coeff (5,iq1,igr,igc) = f_func(5)/delta_q(1,1)**2                    !f2xx negative
+          call c2a(b,delta_q(:,1),delta_q_cc,'ka2c')
+          f_coeff (3,iq1,igr,igc) = f_func(3)/v_norm(delta_q_cc)**2                    !f2xx positive
+          f_coeff (5,iq1,igr,igc) = f_func(5)/v_norm(delta_q_cc)**2                    !f2xx negative
+          call c2a(b,delta_q(:,2),delta_q_cc,'ka2c')
+          f_coeff (2,iq1,igr,igc) = f_func(2)/v_norm(delta_q_cc)**2                    !f2yy positive
+          f_coeff (4,iq1,igr,igc) = f_func(4)/v_norm(delta_q_cc)**2                    !f2yy negative
           !
         else
           !
-          f_coeff (1,iq1,igr,igc) = f_func(1)                                    !f0
-          f_coeff (2,iq1,igr,igc) = (f_func(2)-f_func(1))/delta_q(2,2)           !f1y positive
-          f_coeff (3,iq1,igr,igc) = (f_func(3)-f_func(1))/delta_q(1,1)           !f1x positive
-          f_coeff (4,iq1,igr,igc) = (f_func(4)-f_func(1))/delta_q(2,2)           !f1y negative
-          f_coeff (5,iq1,igr,igc) = (f_func(5)-f_func(1))/delta_q(1,1)           !f1x negative
+          !f_coeff (1,iq1,igr,igc) = f_func(1)                                    !f0
+          !call c2a(b,delta_q(:,1),delta_q_cc,'ka2c')
+          !f_coeff (3,iq1,igr,igc) = (f_func(3)-f_func(1))/v_norm(delta_q_cc)     !f1x positive
+          !f_coeff (5,iq1,igr,igc) = (f_func(5)-f_func(1))/v_norm(delta_q_cc)     !f1x negative
+          !call c2a(b,delta_q(:,2),delta_q_cc,'ka2c')
+          !f_coeff (2,iq1,igr,igc) = (f_func(2)-f_func(1))/v_norm(delta_q_cc)     !f1y positive
+          !f_coeff (4,iq1,igr,igc) = (f_func(4)-f_func(1))/v_norm(delta_q_cc)     !f1y negative
+          !
+          f_coeff (1,iq1,igr,igc) = f_func(1)                                             !f0
+          f_coeff (2,iq1,igr,igc) = (f_func(3)-f_func(5))/(2*delta_q(1,1))                !f1x
+          f_coeff (3,iq1,igr,igc) = (f_func(2)-f_func(4))/(2*delta_q(2,2))                !f1y
+          f_coeff (4,iq1,igr,igc) = (f_func(3)-2*f_func(1)+f_func(5))/(2*delta_q(1,1)**2) !f2xx
+          f_coeff (5,iq1,igr,igc) = (f_func(2)-2*f_func(1)+f_func(4))/(2*delta_q(2,2)**2) !f2yy
           !
         end if
       ! q /= 0 terms
@@ -631,8 +639,8 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX)
    !
    do ig2=1,gmax
      !
-     WRITE(str_piece1, '(I2.2)') ig1
-     WRITE(str_piece2, '(I2.2)') ig2 
+     write(str_piece1, '(I2.2)') ig1
+     write(str_piece2, '(I2.2)') ig2 
      open (unit=out_unit_W_intp,file="W_intp_g1"//trim(str_piece1)//"_g2"//trim(str_piece2)//".dat",action="write",status="replace")
      open (unit=out_unit_W_num,file="W_num_g1"//trim(str_piece1)//"_g2"//trim(str_piece2)//".dat",action="write",status="replace")
      !

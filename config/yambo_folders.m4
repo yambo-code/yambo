@@ -26,11 +26,13 @@ cp config/Makefile .
 #
 if ! test -d bin      ; then mkdir bin      ; fi
 if ! test -d include  ; then mkdir include  ; fi
+if ! test -d include/headers ; then mkdir include/headers ; fi
 if ! test -d lib      ; then mkdir lib      ; fi
 if ! test -d lib/bin  ; then mkdir lib/bin  ; fi
 #
 if   test -d include/system ; then rm -r include/system ; fi
 if ! test -d include/system ; then mkdir include/system ; fi
+#
 #
 # Copy system headers
 #
@@ -143,30 +145,18 @@ fi
 #
 if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$prefix/driver"     ; then mkdir "$prefix/driver"     ; fi
+
  if test ! -d "$prefix/ypp"        ; then mkdir "$prefix/ypp"        ; fi
  if test ! -d "$prefix/interfaces" ; then mkdir "$prefix/interfaces" ; fi
  if test ! -d "$prefix/lib"        ; then mkdir "$prefix/lib"        ; fi
- if test ! -d "$prefix/lib/local"  ; then mkdir "$prefix/lib/local"  ; fi
- if test ! -d "$prefix/lib/slatec" ; then mkdir "$prefix/lib/slatec" ; fi
- if test ! -d "$prefix/lib/math77" ; then mkdir "$prefix/lib/math77" ; fi
- cd "$srcdir/driver/" ;
- for file in `ls *.h` ; do
-  cp "$file" "$prefix/driver" ;
- done ;
- for file in `ls *.c` ; do
-  cp "$file" "$prefix/driver" ;
- done ;
- cd "../lib/local" ;
- for file in `ls *.f` ; do
-  cp "$file" "$prefix/lib/local" ;
- done ;
- cd "../slatec" ;
- for file in `ls *.f` ; do
-  cp "$file" "$prefix/lib/slatec" ;
- done ;
- cd "../math77" ;
- for file in `ls *.f` ; do
-  cp "$file" "$prefix/lib/math77" ;
- done ;
- cd "$prefix" ;
+
+ for folder in ["driver/include" "include/headers/common" "include/headers/parser" "src/common"] ; do
+   cd "$srcdir/$folder" ;
+   if test ! -d "$prefix/$folder"; then mkdir "$prefix/$folder"     ; fi
+   for file in `ls *.h*` ; do
+     cp "$file" "$prefix/$folder" ;
+   done ;
+   cd $prefix
+ done
+
 fi

@@ -30,21 +30,26 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  !
  use pars,          ONLY : SP,schlen
  use com,           ONLY : msg
- use petscmat
- use slepceps
- use slepcepsdef
- use petscmatdef
- !
- implicit none
  !
  ! headers
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h>
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
+ !
+ use petscsys
+ use petscmat
+ use petscsysdef
+ use petscmatdef
+ !
+ use slepcsys
+ use slepceps
+ use slepcsysdef
+ use slepcepsdef
+ !
+ implicit none
  !
  ! arguments
  !
@@ -55,9 +60,9 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  real(SP),     optional      :: E_real(:)     ! real eigenvalues
  character(schlen)           :: extraction    ! extraction method for the eigenvalues
  !
- PetscComplex                 :: target_energy
- PetscReal                    :: slepc_tol
- PetscFortranInt              :: slepc_ncv
+ PetscScalar                 :: target_energy
+ PetscReal                   :: slepc_tol
+ PetscFortranInt             :: slepc_ncv
  ! 
  ! internal variables
  !
@@ -163,9 +168,9 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  call msg( 'r', '[SLEPC] Stopping condition max iterations ', int(maxit) )
 
  !Set monitor
- call EPSMonitorSet(eps,MyEPSMonitor,ierr)
- !&                   PETSC_NULL_INTEGER,&
- !&                   PETSC_NULL_FUNCTION,ierr)
+ call EPSMonitorSet(eps,MyEPSMonitor,&
+ &                   PETSC_NULL_INTEGER,&
+ &                   PETSC_NULL_FUNCTION,ierr)
  !
 
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -202,11 +207,12 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
       !
      !Get converged eigenpairs: i-th eigenvalue is stored in kr
      !(real part) and ki (imaginary part)
+     !call EPSGetEigenpair(eps,i,kr,ki,xr,xi,ierr)
      call EPSGetEigenpair(eps,i,kr,PETSC_NULL_SCALAR,xr,PETSC_NULL_VEC,ierr)
      !
      !save the eigenvalues and eigenvectors in the matrix of the hamiltonian\
      !E_real(i+1) = PetscRealPart(kr)
-     E_real(i+1) = real(kr,SP)
+     if(present(E_real)) E_real(i+1) = real(kr,SP)
      !  
      ! this is to write the vector to hdf5 directly
      !call VecView(xr,hdf5v,ierr)
@@ -217,7 +223,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
      call VecScatterEnd(ctx,xr,vout,INSERT_VALUES,SCATTER_FORWARD,ierr);
      !  
      call VecGetArrayReadF90(vout,xsr,ierr)
-     V_right(:, i+1) = xsr
+     if(present(V_right)) V_right(:, i+1) = xsr
      call VecRestoreArrayReadF90(vout,xsr,ierr)
      !
      ! destroy scatter context and local vector when no longer needed
@@ -240,19 +246,24 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
  ! 
  use com,           ONLY:msg
  use stderr,        ONLY:intc
- use petscmat
- use slepceps
- use slepcepsdef
- use petscmatdef
  !
- implicit none
+ ! headers
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h>
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
+ !
+ use petscsys
+ use petscmat
+ use petscsysdef
+ use petscmatdef
+ !
+ use slepceps
+ use slepcepsdef
+ !
+ implicit none
  !
  EPS            :: eps
  Vec            :: x

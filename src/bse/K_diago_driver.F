@@ -44,11 +44,20 @@ subroutine K_diago_driver(iq,W,X_static)
  use timing_m,       ONLY:timing
 #if defined _SLEPC && !defined _SLEPC_OFF
  use interfaces,     ONLY:MATRIX_slepc
- !use petscmatdef,    ONLY:tmat
+ !
+ ! headers
+ !
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+ !
  use petscmat
  use slepceps
  use slepcepsdef
  use petscmatdef
+ !
  use BS_solvers,     ONLY:BSS_slepc_extraction,Slepc_shell,BSS_slepc_ncv,&
 &                         BSS_slepc_tol,BSS_target_E,Slepc_v,BS_HAYVEC_free
 #endif
@@ -63,15 +72,6 @@ subroutine K_diago_driver(iq,W,X_static)
  !
 #include<memory.h>
  ! 
-#if defined _SLEPC && !defined _SLEPC_OFF
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscvec.h>
-#include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h>
-#include <slepc/finclude/slepcsys.h>
-#include <slepc/finclude/slepceps.h>
-#endif
- !
  type(w_samp)  :: W
  integer       :: iq
  !
@@ -88,7 +88,7 @@ subroutine K_diago_driver(iq,W,X_static)
  PetscErrorCode        :: ierr
  PetscFortranInt       :: slepc_ncv
  PetscReal             :: slepc_tol
- PetscComplex          :: slepc_target_E
+ PetscScalar           :: slepc_target_E
 #endif
  !
  ! Residuals & Energies
@@ -217,7 +217,7 @@ subroutine K_diago_driver(iq,W,X_static)
      if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
 #if defined _SLEPC && !defined _SLEPC_OFF
      if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
-&                                  BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
+&                                  V_right=BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
 #endif
      !
      if (BSS_write_eig_2_db) BS_mat=BS_V_right
@@ -227,7 +227,7 @@ subroutine K_diago_driver(iq,W,X_static)
      if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
 #if defined _SLEPC && !defined _SLEPC_OFF
      if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
-&                                  BS_mat,E_real=BS_E_real)
+&                                  V_right=BS_mat,E_real=BS_E_real)
 #endif
      !
      BS_E=cmplx(BS_E_real,0._SP,SP)

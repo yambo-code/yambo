@@ -135,14 +135,14 @@ module interfaces
    subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
      !
      use pars,           ONLY:SP,schlen
-     use petscmatdef,    ONLY:tmat
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscmat.h>
-     !
+     use petscmatdef,    ONLY:tmat
+     implicit none
      Mat                         :: A            ! matrix to diagonalize of stype from slepc
      integer                     :: n_eig        ! number of eigenvalues to compute
      character(schlen)           :: extraction   ! extraction method for the eigenvalues
-     PetscComplex                :: target_energy! energy near where to find the eigenvalues
+     PetscScalar                 :: target_energy! energy near where to find the eigenvalues
      PetscReal                   :: slepc_tol    ! tolerance of the iterative solver
      PetscFortranInt             :: slepc_ncv    ! dimension of the subspace
      complex(SP)                 :: V_right(:,:) ! right eigenvalues

@@ -217,7 +217,7 @@ subroutine K_diago_driver(iq,W,X_static)
      if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
 #if defined _SLEPC && !defined _SLEPC_OFF
      if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
-&                                  V_right=BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
+&                                  BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
 #endif
      !
      if (BSS_write_eig_2_db) BS_mat=BS_V_right
@@ -227,7 +227,7 @@ subroutine K_diago_driver(iq,W,X_static)
      if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
 #if defined _SLEPC && !defined _SLEPC_OFF
      if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
-&                                  V_right=BS_mat,E_real=BS_E_real)
+&                                  BS_mat,E_real=BS_E_real)
 #endif
      !
      BS_E=cmplx(BS_E_real,0._SP,SP)

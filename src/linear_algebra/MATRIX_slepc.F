@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
+subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
  !
  ! 10/06/2016 HM
  ! Use slepc to obtain the first few eigenpairs of a large matrix
@@ -54,7 +54,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  ! arguments
  !
  integer                     :: n_eig         ! number of eigenvalues to compute
- complex(SP),  optional      :: V_right(:,:)  ! right eigenvalues
+ complex(SP)                 :: V_right(:,:)  ! right eigenvalues
  complex(SP),  optional      :: V_left(:,:)   ! left eigenvalues
  complex(SP),  optional      :: E_cmpl(:)     ! complex eigenvalues
  real(SP),     optional      :: E_real(:)     ! real eigenvalues
@@ -70,7 +70,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  !
  external :: MyEPSMonitor !function to monitor the convergence
  ! 
- Mat            :: A
+ Mat            :: M_slepc
  EPS            :: eps
  EPSExtraction  :: extr
  PetscReal      :: tol, ferror
@@ -93,11 +93,11 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
    call exit(0)
  endif
  !
- call MatGetSize(A,n,j,ierr)
+ call MatGetSize(M_slepc,n,j,ierr)
  call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
  call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
  !
- call MatCreateVecs(A,xr,xi,ierr)
+ call MatCreateVecs(M_slepc,xr,xi,ierr)
  !
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Create the eigensolver and display info
@@ -108,7 +108,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  !
  !Set operators. In this case, it is a standard eigenvalue problem
  !
- call EPSSetOperators(eps,A,PETSC_NULL_MAT,ierr)
+ call EPSSetOperators(eps,M_slepc,PETSC_NULL_MAT,ierr)
  call EPSSetProblemType(eps,EPS_HEP,ierr)
  !
  if (real(target_energy,SP) .ne. 0) then
@@ -168,9 +168,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  call msg( 'r', '[SLEPC] Stopping condition max iterations ', int(maxit) )
 
  !Set monitor
- call EPSMonitorSet(eps,MyEPSMonitor,&
- &                   PETSC_NULL_INTEGER,&
- &                   PETSC_NULL_FUNCTION,ierr)
+ call EPSMonitorSet(eps,MyEPSMonitor,0,PETSC_NULL_FUNCTION,ierr)
  !
 
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -194,8 +192,8 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
    n_eig = nconv
  endif
  !
- !free the A matrix
- call MatDestroy(A,ierr)
+ !free the M_slepc matrix
+ call MatDestroy(M_slepc,ierr)
  !
  !open file for output
  !call PetscViewerHDF5Open(PETSC_COMM_WORLD, 'hdb.BS_slepc', FILE_MODE_WRITE, hdf5v, ierr)
@@ -203,34 +201,35 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  !calculate eigenvalues and relative errors
  !
  if (nconv.gt.0) then
+   !
    do i=0,nev-1
-      !
      !Get converged eigenpairs: i-th eigenvalue is stored in kr
      !(real part) and ki (imaginary part)
      !call EPSGetEigenpair(eps,i,kr,ki,xr,xi,ierr)
      call EPSGetEigenpair(eps,i,kr,PETSC_NULL_SCALAR,xr,PETSC_NULL_VEC,ierr)
      !
-     !save the eigenvalues and eigenvectors in the matrix of the hamiltonian\
-     !E_real(i+1) = PetscRealPart(kr)
+     !save the eigenvalues and eigenvectors in the matrix of the hamiltonian
      if(present(E_real)) E_real(i+1) = real(kr,SP)
      !  
      ! this is to write the vector to hdf5 directly
      !call VecView(xr,hdf5v,ierr)
      !  
+     !save the eigenvectors
      call VecScatterCreateToAll(xr,ctx,vout,ierr);
      ! scatter as many times as you need
      call VecScatterBegin(ctx,xr,vout,INSERT_VALUES,SCATTER_FORWARD,ierr);
      call VecScatterEnd(ctx,xr,vout,INSERT_VALUES,SCATTER_FORWARD,ierr);
      !  
      call VecGetArrayReadF90(vout,xsr,ierr)
-     if(present(V_right)) V_right(:, i+1) = xsr
+     V_right(:, i+1) = xsr
      call VecRestoreArrayReadF90(vout,xsr,ierr)
      !
-     ! destroy scatter context and local vector when no longer needed
-     call VecScatterDestroy(ctx,ierr);
-     call VecDestroy(vout,ierr);
-     !
    enddo
+   !
+   ! destroy scatter context and local vector when no longer needed
+   call VecScatterDestroy(ctx,ierr);
+   call VecDestroy(vout,ierr);
+   !
  endif
  !
  call EPSDestroy(eps,ierr)

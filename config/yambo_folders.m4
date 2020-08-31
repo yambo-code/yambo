@@ -136,27 +136,27 @@ if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
  BIN_LIBRARIES=$extlibs_path/${FCKIND}/${FC}/bin/* ;
  BIN_NETCDF=$extlibs_path/${FCKIND}/${FC}/${NETCDF_VER}/${HDF5_VER}/bin/* ;
  BIN_SLEPC=$extlibs_path/${FCKIND}/${FC}/${build_precision}/bin/* ;
- for file in BIN_LIBRARIES $BIN_NETCDF $BIN_SLEPC; do
+ for file in $BIN_LIBRARIES $BIN_NETCDF $BIN_SLEPC; do
   if test -f $file; then 
-   cp $file $exec_prefix/lib/bin ;
+   cp $file $compdir/lib/bin ;
   fi
  done;
 fi
 #
-if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
- if test ! -d "$prefix/driver"     ; then mkdir "$prefix/driver"     ; fi
+if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
+ if test ! -d "$compdir/driver"     ; then mkdir "$compdir/driver"     ; fi
 
- if test ! -d "$prefix/ypp"        ; then mkdir "$prefix/ypp"        ; fi
- if test ! -d "$prefix/interfaces" ; then mkdir "$prefix/interfaces" ; fi
- if test ! -d "$prefix/lib"        ; then mkdir "$prefix/lib"        ; fi
+ if test ! -d "$compdir/ypp"        ; then mkdir "$compdir/ypp"        ; fi
+ if test ! -d "$compdir/interfaces" ; then mkdir "$compdir/interfaces" ; fi
+ if test ! -d "$compdir/lib"        ; then mkdir "$compdir/lib"        ; fi
 
  for folder in ["driver/include" "include/headers/common" "include/headers/parser" "src/common"] ; do
    cd "$srcdir/$folder" ;
-   if test ! -d "$prefix/$folder"; then mkdir "$prefix/$folder"     ; fi
+   if test ! -d "$compdir/$folder"; then mkdir "$compdir/$folder"     ; fi
    for file in `ls *.h*` ; do
-     cp "$file" "$prefix/$folder" ;
+     cp "$file" "$compdir/$folder" ;
    done ;
-   cd $prefix
+   cd $compdir
  done
 
 fi

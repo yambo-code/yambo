@@ -134,8 +134,7 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
      if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)
      !
      do i_pert_SOC=1,n_SOC
-       X_dichroism(:,1,3)=X_dichroism(:,1,3)-res(1)/(w(:)-E_plus_W(i_pert_SOC))
-       X_dichroism(:,2,3)=X_dichroism(:,2,3)-res(2)/(w(:)-E_plus_W(i_pert_SOC))
+       X_dichroism(:,3)=X_dichroism(:,3)-res/(w(:)-E_plus_W(i_pert_SOC))
      enddo
      !
      if (BSS_add_antiresonant.or.BS_K_coupling) then
@@ -158,8 +157,7 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
        if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)
        !
        do i_pert_SOC=1,n_SOC
-         X_dichroism(:,1,3)=X_dichroism(:,1,3)+res(1)/(w(:)+conjg(E_plus_W(i_pert_SOC)))
-         X_dichroism(:,2,3)=X_dichroism(:,2,3)+res(2)/(w(:)+conjg(E_plus_W(i_pert_SOC)))
+         X_dichroism(:,3)=X_dichroism(:,3)+res/(w(:)+conjg(E_plus_W(i_pert_SOC)))
        enddo
        !
      endif
@@ -174,9 +172,9 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
  !
  ! ALL 2 ALL
  !
- call PP_redux_wait( X_dichroism(:,:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
- call PP_redux_wait( X_dichroism(:,:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
+ call PP_redux_wait( X_dichroism(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait( X_dichroism(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
  !
- X_dichroism(:,:,3)=X_dichroism(:,:,3)*Co_factor/(4._SP*pi)
+ X_dichroism(:,3)=X_dichroism(:,3)*Co_factor/(4._SP*pi)
  !
 end subroutine

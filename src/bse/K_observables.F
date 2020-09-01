@@ -51,10 +51,9 @@ subroutine K_observables(WHAT,W)
    X_magnons(:,1,1)=W%p(:)
    X_magnons(:,2,1)=W%p(:)
    !
-   YAMBO_ALLOC(X_dichroism,(BSS_n_freqs,2,4))
+   YAMBO_ALLOC(X_dichroism,(BSS_n_freqs,4))
    X_dichroism=cZERO
-   X_dichroism(:,1,1)=W%p(:)
-   X_dichroism(:,2,1)=W%p(:)   
+   X_dichroism(:,1)=W%p(:)  
 #endif
 #if defined _PL
    call PL_init( )

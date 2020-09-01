@@ -538,29 +538,16 @@ subroutine K_output_file(iq,mode)
  !------
  if(l_dichroism) then
    !
-   ! dichroism Spm
-   !
    n_output_data=5
    if (l_Haydock.or.l_Inversion) n_output_data=7
    if (l_IP) n_output_data=3
    !
    do iw=1,BSS_n_freqs 
-     output_data(1:5)=(/real(X_dichroism(iw,1,1))*HA2EV,aimag(X_dichroism(iw,1,2)),real(X_dichroism(iw,1,2)),&
-&                  aimag(X_dichroism(iw,1,3)),real(X_dichroism(iw,1,3))/)
-     if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(X_dichroism(iw,1,4)),real(X_dichroism(iw,1,4))/)
+     output_data(1:5)=(/real(X_dichroism(iw,1))*HA2EV,aimag(X_dichroism(iw,2)),real(X_dichroism(iw,2)),&
+&                  aimag(X_dichroism(iw,3)),real(X_dichroism(iw,3))/)
+     if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(X_dichroism(iw,4)),real(X_dichroism(iw,4))/)
      if (l_IP) output_data(2:3)=output_data(4:5)
-     call msg('o Spm','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
-     !
-   enddo
-   !
-   ! dichroism Smp
-   !
-   do iw=1,BSS_n_freqs 
-     output_data(1:5)=(/real(X_dichroism(iw,2,1))*HA2EV,aimag(X_dichroism(iw,2,2)),real(X_dichroism(iw,2,2)),&
-&                  aimag(X_dichroism(iw,2,3)),real(X_dichroism(iw,2,3))/)
-     if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(X_dichroism(iw,2,4)),real(X_dichroism(iw,2,4))/)
-     if (l_IP) output_data(2:3)=output_data(4:5)
-     call msg('o Smp','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+     call msg('o CD','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
      !
    enddo
    !

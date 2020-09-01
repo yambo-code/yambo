@@ -29,7 +29,7 @@ cppflags="@CPPFLAGS_yambo@"
 ECHO_N="@ECHO_N@"
 PREFIX="@MKMF_PREFIX@"
 KEEPSRC="@enable_keep_src@"
-INCLUDEDIR="@prefix@/@includedir@"
+INCLUDEDIR="@compdir@/@includedir@"
 #
 if [ $# = 0 ] ; then
  echo $0 "dir target objectfile mode(l/x) Dflag1 Dflag2 Dflag3 ..."
@@ -88,8 +88,8 @@ comp_modules=`echo $comp_modules | sed "s/_DOUBLE//2"`;
 lock_file=`echo $lock_file  | sed "s/_DOUBLE//2"`;
 #
 llibs="-L\$(libdir) $llibs"
-lf90include="@IFLAG@\$(includedir) @IFLAG@\$(modinclude) @IFLAG@\$(sysinclude) @IFLAG@\$(includedir)/headers/common @IFLAG@\$(includedir)/headers/parser @IFLAG@\$(srcdir)/driver/include"
-linclude="-I\$(includedir) -I\$(modinclude) -I\$(sysinclude) -I\$(includedir)/headers/common -I\$(includedir)/headers/parser -I\$(srcdir)/driver/include"
+lf90include="@IFLAG@\$(includedir) @IFLAG@\$(modinclude) @IFLAG@\$(sysinclude) @IFLAG@\$(includedir)/headers/common @IFLAG@\$(includedir)/headers/parser @IFLAG@\$(compdir)/driver/include"
+linclude="-I\$(includedir) -I\$(modinclude) -I\$(sysinclude) -I\$(includedir)/headers/common -I\$(includedir)/headers/parser -I\$(compdir)/driver/include"
 lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ipetsc) \$(islepc)"
 #
 case $target in
@@ -159,11 +159,11 @@ cat << EOF >> $cdir/Makefile
 	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
 	touch \$(lock_file); rm -f \$(dep_file); rm -f \$(modlist_file); fi
 	${PREFIX}if test "\$(keep_objs)" = "yes"; \
-	then \$(prefix)/sbin/objects_store.sh \$(lock_file); rm -f \$(dep_file); rm -f \$(modlist_file); fi
+	then \$(compdir)/sbin/objects_store.sh \$(lock_file); rm -f \$(dep_file); rm -f \$(modlist_file); fi
 	${PREFIX}if test "\$(keep_objs)" = "no"; then rm -f \$(dep_file); rm -f \$(modlist_file); fi
 
 \$(dep_file): \$(lock_file)
-	cd \$(srcdir)/$cdir; \$(srcdir)/sbin/moduledep.sh \$(objs) > \$(prefix)/$cdir/\$(dep_file)
+	cd \$(srcdir)/$cdir; \$(srcdir)/sbin/moduledep.sh \$(objs) > \$(compdir)/$cdir/\$(dep_file)
 
 arcreate: \$(objs)
 	${PREFIX}(eval \$(ar) \$(arflags) \$(target) \$(objs)) > /dev/null
@@ -172,7 +172,7 @@ arcreate: \$(objs)
 # Functions
 #
 define driver
- ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -L\$(libdir) -ldriver -D_\$@ -c \$(prefix)/driver/driver.c > /dev/null)
+ ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -L\$(libdir) -ldriver -D_\$@ -c \$(srcdir)/driver/driver.c > /dev/null)
  @echo
 endef
 define link
@@ -185,6 +185,7 @@ define modmove
  ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 ||  mv *.mod $comp_modules
 endef
 define dircheck
+ ${PREFIX}if test ! -d \$(prefix);      then mkdir \$(prefix);fi
  ${PREFIX}if test ! -d \$(exec_prefix); then mkdir \$(exec_prefix);fi
 endef
 #
@@ -250,9 +251,9 @@ cat << EOF >> $cdir/Makefile
 EOF
 cat << EOF >> $cdir/Makefile
 .f.o:
-	${PREFIX}(eval \$(f77) -c \$(fflags) \$*.f) > /dev/null
+	${PREFIX}(eval \$(f77) -c \$(fflags) \$(srcdir)/$cdir/\$*.f) > /dev/null
 	@echo $ECHO_N \$*".f "
 .c.o:
-	${PREFIX}(eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$*.c) > /dev/null
+	${PREFIX}(eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$(srcdir)/$cdir/\$*.c) > /dev/null
 	@echo $ECHO_N \$*".c"
 EOF

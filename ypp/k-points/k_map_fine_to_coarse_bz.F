@@ -27,6 +27,9 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  use stderr,              ONLY:intc
  use com,                 ONLY:msg
  use electrons,           ONLY:levels
+ ! DEBUG <
+ !use vec_operate,         ONLY:c2a
+ ! DEBUG >
  use R_lattice,           ONLY:bz_samp,k_the_nearest,bz_samp_reset
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,          ONLY:PARALLEL_index
@@ -42,6 +45,10 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !
  ! Work Space
  !
+ ! DEBUG <
+ !integer              :: is,ikibz
+ !real(SP)             :: kpt_tmp(3)
+ ! DEBUG >
  integer              :: i1,ik_near,ikbz,ikbz_FineGd,i_err
  integer, allocatable :: TMP_map(:),TMP_table_mapped(:,:),TMP_table_duplicate(:,:),N_bz_duplicate(:)
  type(PP_indexes)     :: px
@@ -146,10 +153,15 @@ subroutine k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  if(allocated(TMP_table_duplicate)) deallocate(TMP_table_duplicate)
  !
  ! DEBUG <
- !do ikbz=1,Xk%nbz
- !  write(10099+ikbz,*) Xk%ptbz(ikbz,:)
- !  do ikbz_FineGd=Xk%bz_DbGd_map(1,ikbz),Xk%bz_DbGd_map(2,ikbz)
- !    write(20099+ikbz,*) Xk%ptbz_fineGd(ikbz_FineGd,:)
+ !do ikibz=1,Xk%nibz
+ !  do is=1,Xk%nstar(ikibz)
+ !    ikbz=Xk%k_table(ikibz,is)
+ !    call c2a(v_in=Xk%ptbz(ikbz,:),v_out=kpt_tmp,mode='ki2c')
+ !    write(10099+ikibz+Xk%nibz*(is-1),*) kpt_tmp
+ !    do ikbz_FineGd=Xk%bz_DbGd_map(1,ikbz),Xk%bz_DbGd_map(2,ikbz)
+ !      call c2a(v_in=Xk%ptbz_fineGd(ikbz_FineGd,:),v_out=kpt_tmp,mode='ki2c')
+ !      write(20099+ikibz+Xk%nibz*(is-1),*) kpt_tmp
+ !    enddo
  !  enddo
  !enddo
  ! DEBUG >

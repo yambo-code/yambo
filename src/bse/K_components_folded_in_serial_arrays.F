@@ -123,8 +123,8 @@ subroutine K_components_folded_in_serial_arrays(iq)
        endif
        
        if (l_dichroism) then
-         BSS_dipoles_dichroism(2,H_pos(1))=BS_T_grp(i_g)%dipoles_R_dichroism(2,i_c)
-         if (BS_K_coupling) BSS_dipoles_dichroism(2,H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_dichroism(2,i_c)
+         BSS_dipoles_dichroism(2,H_pos(1))=BS_T_grp(i_g)%dipoles_R_dichroism(i_c)
+         if (BS_K_coupling) BSS_dipoles_dichroism(2,H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_dichroism(i_c)
        endif
 #endif
        !

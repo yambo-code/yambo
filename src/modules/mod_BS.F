@@ -276,7 +276,7 @@ module BS
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_PL,(nT,3))
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_PL,(nT,3))
      endif
-     if(l_magnons) then
+     if(l_dichroism) then
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_dichroism,(nT))
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_dichroism,(nT))
      endif

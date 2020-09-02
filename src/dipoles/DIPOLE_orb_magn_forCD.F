@@ -46,7 +46,7 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
  !
  integer                      :: ik,ic,iv,ib,i_sp_pol,n_LT_steps,ik_mem
  real(SP)                     :: Eb,Ev,Ec
- complex(SP)                  :: DIP_pos(3,2)
+ complex(SP)                  :: DIP_x_loc(3),DIP_v_loc(3)
  !
  n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
@@ -85,15 +85,16 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
            Eb=Xen%E(ib,ik,i_sp_pol)
            if (allocated(Xen%Eo)) Eb=Xen%Eo(ib,ik,i_sp_pol)
            !
-           if (iv< ib) DIP_pos(:,1)=conjg(-cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol))
-           if (iv>=ib) DIP_pos(:,1)=      -cI*DIP_iR(:,iv,ib,ik_mem,i_sp_pol)
-           if (ic< ib) DIP_pos(:,2)=conjg(-cI*DIP_iR(:,ib,ic,ik_mem,i_sp_pol))
-           if (ic>=ib) DIP_pos(:,2)=      -cI*DIP_iR(:,ic,ib,ik_mem,i_sp_pol)
+           DIP_x_loc(:)=DIP_iR(:,ib,iv,ik_mem,i_sp_pol)
+           
+           DIP_v_loc(:)=DIP_v(:,ic,ib,ik_mem,i_sp_pol)
            !
            DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)+ &
-           & cross_product(DIP_pos(:,1),DIP_v(:,ic,iv,ik_mem,i_sp_pol))
+           & cross_product(DIP_x_loc,DIP_v_loc)
            !
-           write(*,*) "[DIP] writing DIP_orbital(..,ic,iv,ik,,) values"
+           ! DEBUG <
+           !write(*,*) "[DIP] writing DIP_orbital(..,ic,iv,ik,,) values"
+           ! DEBUG >
            !
          enddo
          !

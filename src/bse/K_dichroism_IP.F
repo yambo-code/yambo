@@ -48,7 +48,7 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
  ! Work Space
  !
  real(SP)          :: conjg_fac
- complex(SP)       :: E_plus_W0,res,E_plus_W(2/n_sp_pol),DIP_projected   !DIP_expanded(3)   
+ complex(SP)       :: E_plus_W0,res,E_plus_W(2/n_sp_pol),DIP_projected,field_dir(3)      
  integer           :: ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol,i_sp_pol_rev,i_T_g,i_T,n_SOC,i_pert_SOC,io_err
  !
  n_SOC=1
@@ -66,7 +66,7 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
    do i_T=1,BS_T_grp(i_T_g)%size    
      !    
      ik_bz    = BS_T_grp(i_T_g)%table(i_T,1)
-     iv       = BS_T_grp(i_T_g)%tableGij(ω) (i_T,2)
+     iv       = BS_T_grp(i_T_g)%table(i_T,2)
      ic       = BS_T_grp(i_T_g)%table(i_T,3)
      i_sp_pol = BS_T_grp(i_T_g)%table(i_T,4)  ! This is i_sp_pol_c
      !
@@ -98,12 +98,14 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
      do i_pert_SOC=1,n_SOC
        X_dichroism(:,3)=X_dichroism(:,3)-res/(w(:)-E_plus_W(i_pert_SOC))  ! EM: w(:) = omega
      enddo
+     write(*,*) i_T,1,X_dichroism(1,3)
+
      !
      if (BSS_add_antiresonant.or.BS_K_coupling) then
        !
        BS_T_grp(i_T_g)%dipoles_A_dichroism(i_T)=DIP_projected
        !
-       res=BS_T_grp(i_T_g)%dipoles_A(i_T))*&
+       res=BS_T_grp(i_T_g)%dipoles_A(i_T)*&
        conjg(BS_T_grp(i_T_g)%dipoles_A_dichroism(i_T))*BS_T_grp(i_T_g)%f(i_T)
        !
        if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)

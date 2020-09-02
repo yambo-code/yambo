@@ -48,7 +48,7 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
  ! Work Space
  !
  real(SP)          :: conjg_fac
- complex(SP)       :: E_plus_W0,res(2),E_plus_W(2/n_sp_pol),DIP_expanded(3),DIP_Splus,DIP_Smins
+ complex(SP)       :: E_plus_W0,res,E_plus_W(2/n_sp_pol),DIP_projected   !DIP_expanded(3)   
  integer           :: ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol,i_sp_pol_rev,i_T_g,i_T,n_SOC,i_pert_SOC,io_err
  !
  n_SOC=1
@@ -57,7 +57,7 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
  if( .not.BS_perturbative_SOC.or. n_sp_pol==2) n_SOC=1
  if(      BS_perturbative_SOC.and.n_sp_pol==1) n_SOC=2
  !
- if (l_rpa_IP) call live_timing('IP Magnons',PAR_BS_nT_col_grps)
+ if (l_rpa_IP) call live_timing('IP Dichroism',PAR_BS_nT_col_grps)   ! EM: writes run status in log file
  !
  do i_T_g=1,BS_nT_grps
    !    
@@ -66,94 +66,50 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
    do i_T=1,BS_T_grp(i_T_g)%size    
      !    
      ik_bz    = BS_T_grp(i_T_g)%table(i_T,1)
-     iv       = BS_T_grp(i_T_g)%table(i_T,2)
+     iv       = BS_T_grp(i_T_g)%tableGij(ω) (i_T,2)
      ic       = BS_T_grp(i_T_g)%table(i_T,3)
      i_sp_pol = BS_T_grp(i_T_g)%table(i_T,4)  ! This is i_sp_pol_c
      !
-     if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E_SFLIP(i_T)
-     if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E_SFLIP(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
+     if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
+     if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
      !
      if (.not.BS_perturbative_SOC) E_plus_W=E_plus_W0
      !
      if (     BS_perturbative_SOC) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
-     if(i_sp_pol==1.and.n_sp_pol==2) i_sp_pol_rev=2
-     if(i_sp_pol==2.and.n_sp_pol==2) i_sp_pol_rev=1
      !
-     ! notice:
-     ! In optics q=0 requires a special treatment due to the non analytic behaviour
-     ! This is not needed for magnons.
-     ! However to follow the same structure in K_IP.F fow WFs load / DIPOLE_IO here I keep it
-     !
-     if(iq==1) then
+     if(iq==1) then   ! EM: "iq==1":  kpt=Gamma (molecules)
        !
-       DIP_expanded   = DIP_rotated(ic,iv,ik_bz,i_sp_pol,"DIP_S",Xk)
+       DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ik_bz,i_sp_pol,"DIP_L",Xk))
        !
      else
        !
-       ok_bz=qindx_X(iq,ik_bz,1)
-       iGo  =qindx_X(iq,ik_bz,2)
-       !
-       ik   =Xk%sstar(ik_bz,1) 
-       isymm=Xk%sstar(ik_bz,2) 
-       !
-       ok   =Xk%sstar(ok_bz,1)
-       osymm=Xk%sstar(ok_bz,2)
-       !
-       BSE_scatt%is=(/ic,ik,isymm,i_sp_pol/)
-       BSE_scatt%os=(/iv,ok,osymm,i_sp_pol_rev/)
-       BSE_scatt%qs=(/iGo,iq,1/)
-       !
-       call scatter_Bamp_spin(BSE_scatt,'x')
-       DIP_expanded(1)=-BSE_scatt%rhotw(1)
-       call scatter_Bamp_spin(BSE_scatt,'y')
-       DIP_expanded(2)=-BSE_scatt%rhotw(1)
-       !The following is commented because it is not used at present
-       !BSE_scatt%os(4)=(i_sp_pol)
-       !call scatter_Bamp_spin(BSE_scatt,'z')
-       !DIP_expanded(3)=-BSE_scatt%rhotw(1)
+       call error(' finite q not implemented for dichroism')
        !
      endif
      !
-     BS_T_grp(i_T_g)%dipoles_R_dichroism(i_T)=
-     !
-     ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_c) while I need  <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_v))
-     ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_c) while I need  <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_v))
-     !
-     ! Residuals: (Smp) <v|S-|c>(i_sp_pol_c)<c|S+|v>(i_sp_pol_c) = dip_R_magn(1)*conjg(dip_R_magn(1))
-     !            (Spm) <v|S+|c>(i_sp_pol_c)<c|S-|v>(i_sp_pol_c) = dip_R_magn(2)*conjg(dip_R_magn(2))
-     !
-     res(1)=BS_T_grp(i_T_g)%dipoles_R_dichroism(1,i_T)*&  
-     conjg(BS_T_grp(i_T_g)%dipoles_R_dichroism(1,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
-     res(2)=BS_T_grp(i_T_g)%dipoles_R_dichroism(2,i_T)*&
-     conjg(BS_T_grp(i_T_g)%dipoles_R_dichroism(2,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
+     BS_T_grp(i_T_g)%dipoles_R_dichroism(i_T)=conjg(DIP_projected)    ! along field_dir  (then trace...)
+ 
+     res=BS_T_grp(i_T_g)%dipoles_R(i_T)*&  
+     conjg(BS_T_grp(i_T_g)%dipoles_R_dichroism(i_T))*BS_T_grp(i_T_g)%f(i_T)  ! EM:  x*L = DIP_x*DIP_orbital;  f(i_T) = occupations
+
      if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)
      !
      do i_pert_SOC=1,n_SOC
-       X_dichroism(:,3)=X_dichroism(:,3)-res/(w(:)-E_plus_W(i_pert_SOC))
+       X_dichroism(:,3)=X_dichroism(:,3)-res/(w(:)-E_plus_W(i_pert_SOC))  ! EM: w(:) = omega
      enddo
      !
      if (BSS_add_antiresonant.or.BS_K_coupling) then
        !
-       ! Residuals: (Smp) <c|S-|v>(i_sp_pol_c)<v|S+|c>(i_sp_pol_c) = dip_A_magn(1)*dip_A_magn(1)
-       !            (Spm) <c|S+|v>(i_sp_pol_c)<v|S-|c>(i_sp_pol_c) = dip_A_magn(2)*dip_A_magn(2)
+       BS_T_grp(i_T_g)%dipoles_A_dichroism(i_T)=DIP_projected
        !
-       BS_T_grp(i_T_g)%dipoles_A_dichroism(1,i_T)=DIP_Splus ! Here I'm using again <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_v))
-       BS_T_grp(i_T_g)%dipoles_A_dichroism(2,i_T)=DIP_Smins ! Here I'm using again <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_v))
+       res=BS_T_grp(i_T_g)%dipoles_A(i_T))*&
+       conjg(BS_T_grp(i_T_g)%dipoles_A_dichroism(i_T))*BS_T_grp(i_T_g)%f(i_T)
        !
-       ! I'm also using f_SFLIP(i_sp_pol_c)=-f_SFLIP(i_sp_pol_v)
-       !                E_SFLIP(i_sp_pol_c)=-E_SFLIP(i_sp_pol_v)
-       !
-       ! Both -1 factors appear explicitly in the code
-       !
-       res(1)=BS_T_grp(i_T_g)%dipoles_A_dichroism(1,i_T)*&
-       conjg(BS_T_grp(i_T_g)%dipoles_A_dichroism(1,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
-       res(2)=BS_T_grp(i_T_g)%dipoles_A_dichroism(2,i_T)*&
-       conjg(BS_T_grp(i_T_g)%dipoles_A_dichroism(2,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
        if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)
        !
        do i_pert_SOC=1,n_SOC
-         X_dichroism(:,3)=X_dichroism(:,3)+res/(w(:)+conjg(E_plus_W(i_pert_SOC)))
+         X_dichroism(:,3)=X_dichroism(:,3)+res/(w(:)+conjg(E_plus_W(i_pert_SOC)))  ! EM: w(:) = omega
        enddo
        !
      endif

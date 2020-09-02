@@ -19,11 +19,11 @@ SHELL = $(shell)
 #  should not compile LAPACK with flags such as -ffpe-trap=overflow.
 #
 FORTRAN  = $(f77)
-OPTS     = $(fflags)
+#OPTS     = $(fflags)
 DRVOPTS  = $(OPTS)
-NOOPT    = $(ufflags)
+#NOOPT    = $(ufflags)
 LOADER   = $(fc)
-LOADOPTS = $(fcflags)
+#LOADOPTS = $(fcflags)
 #
 #  Comment out the following line to include deprecated routines to the
 #  LAPACK library.
@@ -54,7 +54,7 @@ TIMER     = NONE
 # CC is the C compiler, normally invoked with options CFLAGS.
 #
 CC = $(cc)
-CFLAGS = $(cflags)
+#CFLAGS = $(cflags)
 #
 #  The archiver and the flag(s) to use when building archive (library)
 #  If you system has no ranlib, set RANLIB = echo.

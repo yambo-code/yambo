@@ -86,7 +86,7 @@ module R_lattice
    integer,  allocatable :: nbz_mapped(:)             ! For each  BZ kpt in the Cg, n° of  BZ kpt_FineGd assoc.
    integer,  allocatable :: ibz_DbGd_map(:,:)         ! For each IBZ kpt in the Cg, lower/upper range of kpts_FineGd in the IBZ Fg
    integer,  allocatable :: bz_DbGd_map(:,:)          ! For each  BZ kpt in the Cg, lower/upper range of kpts_FineGd in the  BZ Fg
-   real(SP), allocatable :: weights_DbGd(:)
+   real(SP), allocatable :: weights_DbGd(:,:)
    real(SP), allocatable :: weights_ipol(:)           ! something used by mapping with wannier
    !                                               
  end type bz_samp
@@ -94,8 +94,8 @@ module R_lattice
  type bz_map
    integer, allocatable :: k_map_inv(:,:)
    integer, allocatable :: k_map_dir(:,:,:)
-   integer      :: g0_idx(3,2)
-   integer      :: max_kdir(3)
+   integer      :: g0_idx(3,2) ! Index of the G-vectors to bring back k-points in the BZ, in the 3 directions
+   integer      :: max_kdir(3) ! Max k-points in each direction. If 1, the direction is not periodic
    real(SP)     :: g0_length(3)
    real(SP)     :: q_step(3)
  end type bz_map 
@@ -342,11 +342,14 @@ module R_lattice
        YAMBO_ALLOC(BZo%bz_DbGd_map,(2,BZo%nbz))
        BZo%bz_DbGd_map(:,:BZo%nbz)=BZi%bz_DbGd_map(:,:BZo%nbz)
      endif
+     if (allocated( BZi%weights_DbGd )) then
+       YAMBO_ALLOC(BZo%weights_DbGd,(maxval(BZo%nibz_mapped)+1,BZo%nibz))
+       BZo%weights_DbGd(:,:BZo%nibz)=BZi%weights_DbGd(:,:BZo%nibz)
+     endif
      !
      ! To code the duplication of the Fine grid and DbGd structure
      !
-     !real(SP), pointer :: weights_DbGd(:)   => null()
-     !real(SP), pointer :: weights_ipol(:)   => null()  ! something used by mapping with wannier
+     !real(SP) :: weights_ipol(:)   => null()  ! something used by mapping with wannier
      !
      return
      !

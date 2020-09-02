@@ -25,7 +25,7 @@ uncompress-stamp:
 
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	cat $(prefix)/config/setup $(srcdir)/lib/scalapack/SLmake.inc_lib > SLmake.inc ; \
+	cat $(compdir)/config/setup $(srcdir)/lib/scalapack/SLmake.inc_lib > SLmake.inc ; \
 	cp  $(srcdir)/lib/scalapack/Makefile.lib  Makefile );  \
 	fi
 	touch configure-stamp

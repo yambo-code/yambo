@@ -115,11 +115,7 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
        !
      endif
      !
-     DIP_Splus = 0.5_SP*(DIP_expanded(1)+cI*DIP_expanded(2))
-     DIP_Smins = 0.5_SP*(DIP_expanded(1)-cI*DIP_expanded(2))
-     !
-     BS_T_grp(i_T_g)%dipoles_R_dichroism(1,i_T)=conjg(DIP_Smins)
-     BS_T_grp(i_T_g)%dipoles_R_dichroism(2,i_T)=conjg(DIP_Splus)
+     BS_T_grp(i_T_g)%dipoles_R_dichroism(i_T)=
      !
      ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_c) while I need  <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_v))
      ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_c) while I need  <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_v))

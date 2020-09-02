@@ -25,9 +25,7 @@ module BS
  !
  use pars,          ONLY:IP,SP,schlen,lchlen
  use collision_el,  ONLY:elemental_collision
-
- use memory, ONLY:MEM_err,MEM_msg,MEM_count,MEM_global_mesg,IPL
- implicit none
+#include<memory.h>
  !
  ! Modes and logicals
  !====================
@@ -99,8 +97,8 @@ module BS
    complex(SP), allocatable      :: dipoles_A_mag(:,:)
    complex(SP), allocatable      :: dipoles_R_PL(:,:)
    complex(SP), allocatable      :: dipoles_A_PL(:,:)
-   complex(SP), allocatable      :: dipoles_R_dichroism(:,:)
-   complex(SP), allocatable      :: dipoles_A_dichroism(:,:)
+   complex(SP), allocatable      :: dipoles_R_dichroism(:)
+   complex(SP), allocatable      :: dipoles_A_dichroism(:)
    complex(SP), allocatable      :: Z(:)
    real(SP)   , allocatable      :: E(:)
    real(SP)   , allocatable      :: E_SFLIP(:)
@@ -114,6 +112,9 @@ module BS
    ! Exchange Oscillators
    !
    complex(SP), allocatable      :: O_x(:,:)
+#ifdef _CUDA
+   complex(SP), allocatable, device :: O_x_d(:,:)
+#endif
    !
  end type BS_T_group
  !
@@ -146,6 +147,9 @@ module BS
    integer,     allocatable      :: kp_table(:,:)           ! 2,nkibz @ k = (i_kmq,i_pmq)
    integer,     allocatable      :: O_table(:,:,:,:,:,:,:)  ! 2,sym,nkmq,npmq,n,n',spin @ k = (iOnn,i_block_ref)
    complex(SP), allocatable      :: O_c(:,:)
+#ifdef _CUDA
+   complex(SP), allocatable, device :: O_c_d(:,:)
+#endif
    !
  end type BS_block
  !
@@ -160,6 +164,9 @@ module BS
  ! Screened interaction
  !======================
  complex(SP),allocatable ::BS_W(:,:,:)
+#ifdef _CUDA
+ attributes(device)      ::BS_W
+#endif
  !
  contains
    !
@@ -188,23 +195,19 @@ module BS
      !
      if (EXCHANGE) then
        if (BS_T_grp(iG)%size==0) return
-       allocate(BS_T_grp(iG)%O_x (BS_n_g_exch,BS_T_grp(iG)%size),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iG)%O_x)) &
- & call MEM_count("BS_T_grp(iG)%O_x",BS_T_grp(iG)%O_x)
-    if (.not.allocated(BS_T_grp(iG)%O_x)) &
- & call MEM_error("BS_T_grp(iG)%O_x")
+       YAMBO_ALLOC(BS_T_grp(iG)%O_x,(BS_n_g_exch,BS_T_grp(iG)%size))
+#ifdef _CUDA
+       allocate(BS_T_grp(iG)%O_x_d,mold=BS_T_grp(iG)%O_x)
+#endif
 
      endif
      !
      if (CORRELATION) then
        if (BS_blk(iB)%N_oscillators==0) return
-       allocate(BS_blk(iB)%O_c (O_ng,BS_blk(iB)%N_oscillators),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_blk(iB)%O_c)) &
- & call MEM_count("BS_blk(iB)%O_c",BS_blk(iB)%O_c)
-    if (.not.allocated(BS_blk(iB)%O_c)) &
- & call MEM_error("BS_blk(iB)%O_c")
+       YAMBO_ALLOC(BS_blk(iB)%O_c,(O_ng,BS_blk(iB)%N_oscillators))
+#ifdef _CUDA
+       allocate(BS_blk(iB)%O_c_d,mold=BS_blk(iB)%O_c)
+#endif
      endif
      !
    end subroutine
@@ -214,12 +217,10 @@ module BS
      integer :: iG_ref,iB_ref
      integer :: iG,iB,ik_loop,ip_loop,ik_now,ip_now
      do iG=iG_ref,1,-1
-       if (.not.allocated(BS_T_grp(iG)%O_x)) &
- & call MEM_free("BS_T_grp(iG)%O_x",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iG)%O_x)) &
- & call MEM_free("BS_T_grp(iG)%O_x",size(BS_T_grp(iG)%O_x,KIND=IPL))
-    if (     allocated(BS_T_grp(iG)%O_x)) &
- & deallocate(BS_T_grp(iG)%O_x)
+       YAMBO_FREE(BS_T_grp(iG)%O_x)
+#ifdef _CUDA
+       if (allocated(BS_T_grp(iG)%O_x_d)) deallocate(BS_T_grp(iG)%O_x_d)
+#endif
      enddo
      if(iB_ref==0) return
      ik_now=BS_blk(iB_ref)%ik
@@ -234,24 +235,12 @@ module BS
        if ( ik_now==ik_loop .and. ip_now==ip_loop ) cycle
        if ( ik_now==ik_loop .and. ip_now==ip_loop .and. .not.l_BSE_minimize_memory ) cycle
        if (.not.allocated(BS_blk(iB)%O_c)) exit
-       if (.not.allocated(BS_blk(iB)%O_c)) &
- & call MEM_free("BS_blk(iB)%O_c",int(-1,KIND=IPL))
-    if (     allocated(BS_blk(iB)%O_c)) &
- & call MEM_free("BS_blk(iB)%O_c",size(BS_blk(iB)%O_c,KIND=IPL))
-    if (     allocated(BS_blk(iB)%O_c)) &
- & deallocate(BS_blk(iB)%O_c)
-       if (.not.allocated(BS_blk(iB)%O_table)) &
- & call MEM_free("BS_blk(iB)%O_table",int(-1,KIND=IPL))
-    if (     allocated(BS_blk(iB)%O_table)) &
- & call MEM_free("BS_blk(iB)%O_table",size(BS_blk(iB)%O_table,KIND=IPL))
-    if (     allocated(BS_blk(iB)%O_table)) &
- & deallocate(BS_blk(iB)%O_table)
-       if (.not.allocated(BS_blk(iB)%kp_table)) &
- & call MEM_free("BS_blk(iB)%kp_table",int(-1,KIND=IPL))
-    if (     allocated(BS_blk(iB)%kp_table)) &
- & call MEM_free("BS_blk(iB)%kp_table",size(BS_blk(iB)%kp_table,KIND=IPL))
-    if (     allocated(BS_blk(iB)%kp_table)) &
- & deallocate(BS_blk(iB)%kp_table)
+       YAMBO_FREE(BS_blk(iB)%O_c)
+       YAMBO_FREE(BS_blk(iB)%O_table)
+       YAMBO_FREE(BS_blk(iB)%kp_table)
+#ifdef _CUDA
+       if (allocated(BS_blk(iB)%O_c_d)) deallocate(BS_blk(iB)%O_c_d)
+#endif
      enddo
      !
    end subroutine
@@ -271,142 +260,41 @@ module BS
      !
      nT=BS_T_grp(iT)%size
      !
-     allocate(BS_T_grp(iT)%dipoles_R (nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%dipoles_R)) &
- & call MEM_count("BS_T_grp(iT)%dipoles_R",BS_T_grp(iT)%dipoles_R)
-    if (.not.allocated(BS_T_grp(iT)%dipoles_R)) &
- & call MEM_error("BS_T_grp(iT)%dipoles_R")
-     allocate(BS_T_grp(iT)%dipoles_A (nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%dipoles_A)) &
- & call MEM_count("BS_T_grp(iT)%dipoles_A",BS_T_grp(iT)%dipoles_A)
-    if (.not.allocated(BS_T_grp(iT)%dipoles_A)) &
- & call MEM_error("BS_T_grp(iT)%dipoles_A")
+     YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A,(nT))
      BS_T_grp(iT)%dipoles_R=cZERO
      BS_T_grp(iT)%dipoles_A=cZERO
      if(l_kerr) then
-       allocate(BS_T_grp(iT)%dipoles_R_kerr (nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%dipoles_R_kerr)) &
- & call MEM_count("BS_T_grp(iT)%dipoles_R_kerr",BS_T_grp(iT)%dipoles_R_kerr)
-    if (.not.allocated(BS_T_grp(iT)%dipoles_R_kerr)) &
- & call MEM_error("BS_T_grp(iT)%dipoles_R_kerr")
-       allocate(BS_T_grp(iT)%dipoles_A_kerr (nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%dipoles_A_kerr)) &
- & call MEM_count("BS_T_grp(iT)%dipoles_A_kerr",BS_T_grp(iT)%dipoles_A_kerr)
-    if (.not.allocated(BS_T_grp(iT)%dipoles_A_kerr)) &
- & call MEM_error("BS_T_grp(iT)%dipoles_A_kerr")
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_kerr,(nT))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_kerr,(nT))
      endif
      if(l_magnons) then
-       allocate(BS_T_grp(iT)%dipoles_R_mag (2,nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%dipoles_R_mag)) &
- & call MEM_count("BS_T_grp(iT)%dipoles_R_mag",BS_T_grp(iT)%dipoles_R_mag)
-    if (.not.allocated(BS_T_grp(iT)%dipoles_R_mag)) &
- & call MEM_error("BS_T_grp(iT)%dipoles_R_mag")
-       allocate(BS_T_grp(iT)%dipoles_A_mag (2,nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%dipoles_A_mag)) &
- & call MEM_count("BS_T_grp(iT)%dipoles_A_mag",BS_T_grp(iT)%dipoles_A_mag)
-    if (.not.allocated(BS_T_grp(iT)%dipoles_A_mag)) &
- & call MEM_error("BS_T_grp(iT)%dipoles_A_mag")
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_mag,(2,nT))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_mag,(2,nT))
      endif
      if(l_photolum) then
-       allocate(BS_T_grp(iT)%dipoles_R_PL (nT,3),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%dipoles_R_PL)) &
- & call MEM_count("BS_T_grp(iT)%dipoles_R_PL",BS_T_grp(iT)%dipoles_R_PL)
-    if (.not.allocated(BS_T_grp(iT)%dipoles_R_PL)) &
- & call MEM_error("BS_T_grp(iT)%dipoles_R_PL")
-       allocate(BS_T_grp(iT)%dipoles_A_PL (nT,3),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%dipoles_A_PL)) &
- & call MEM_count("BS_T_grp(iT)%dipoles_A_PL",BS_T_grp(iT)%dipoles_A_PL)
-    if (.not.allocated(BS_T_grp(iT)%dipoles_A_PL)) &
- & call MEM_error("BS_T_grp(iT)%dipoles_A_PL")
-     if(l_dichroism) then
-       allocate(BS_T_grp(iT)%dipoles_R_dichroism (2,nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%dipoles_R_dichroism)) &
- & call MEM_count("BS_T_grp(iT)%dipoles_R_dichroism",BS_T_grp(iT)%dipoles_R_dichroism)
-    if (.not.allocated(BS_T_grp(iT)%dipoles_R_dichroism)) &
- & call MEM_error("BS_T_grp(iT)%dipoles_R_dichroism")
-       allocate(BS_T_grp(iT)%dipoles_A_dichroism (2,nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%dipoles_A_dichroism)) &
- & call MEM_count("BS_T_grp(iT)%dipoles_A_dichroism",BS_T_grp(iT)%dipoles_A_dichroism)
-    if (.not.allocated(BS_T_grp(iT)%dipoles_A_dichroism)) &
- & call MEM_error("BS_T_grp(iT)%dipoles_A_dichroism")
-     endif      
-       
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_PL,(nT,3))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_PL,(nT,3))
      endif
-     allocate(BS_T_grp(iT)%table (nT,4),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%table)) &
- & call MEM_count("BS_T_grp(iT)%table",BS_T_grp(iT)%table)
-    if (.not.allocated(BS_T_grp(iT)%table)) &
- & call MEM_error("BS_T_grp(iT)%table")
-     allocate(BS_T_grp(iT)%E (nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%E)) &
- & call MEM_count("BS_T_grp(iT)%E",BS_T_grp(iT)%E)
-    if (.not.allocated(BS_T_grp(iT)%E)) &
- & call MEM_error("BS_T_grp(iT)%E")
-     allocate(BS_T_grp(iT)%E_SFLIP (nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%E_SFLIP)) &
- & call MEM_count("BS_T_grp(iT)%E_SFLIP",BS_T_grp(iT)%E_SFLIP)
-    if (.not.allocated(BS_T_grp(iT)%E_SFLIP)) &
- & call MEM_error("BS_T_grp(iT)%E_SFLIP")
-     allocate(BS_T_grp(iT)%f (nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%f)) &
- & call MEM_count("BS_T_grp(iT)%f",BS_T_grp(iT)%f)
-    if (.not.allocated(BS_T_grp(iT)%f)) &
- & call MEM_error("BS_T_grp(iT)%f")
-     allocate(BS_T_grp(iT)%f_RES (nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%f_RES)) &
- & call MEM_count("BS_T_grp(iT)%f_RES",BS_T_grp(iT)%f_RES)
-    if (.not.allocated(BS_T_grp(iT)%f_RES)) &
- & call MEM_error("BS_T_grp(iT)%f_RES")
-     allocate(BS_T_grp(iT)%f_SFLIP (nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%f_SFLIP)) &
- & call MEM_count("BS_T_grp(iT)%f_SFLIP",BS_T_grp(iT)%f_SFLIP)
-    if (.not.allocated(BS_T_grp(iT)%f_SFLIP)) &
- & call MEM_error("BS_T_grp(iT)%f_SFLIP")
-     allocate(BS_T_grp(iT)%f_PL (2,nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%f_PL)) &
- & call MEM_count("BS_T_grp(iT)%f_PL",BS_T_grp(iT)%f_PL)
-    if (.not.allocated(BS_T_grp(iT)%f_PL)) &
- & call MEM_error("BS_T_grp(iT)%f_PL")
+     if(l_magnons) then
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_dichroism,(nT))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_dichroism,(nT))
+     endif
+     YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,4))
+     YAMBO_ALLOC(BS_T_grp(iT)%E,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%E_SFLIP,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%f,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%f_RES,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%f_SFLIP,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%f_PL,(2,nT))
      if (allocated(E%Z)) then
-       allocate(BS_T_grp(iT)%Z (nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%Z)) &
- & call MEM_count("BS_T_grp(iT)%Z",BS_T_grp(iT)%Z)
-    if (.not.allocated(BS_T_grp(iT)%Z)) &
- & call MEM_error("BS_T_grp(iT)%Z")
+       YAMBO_ALLOC(BS_T_grp(iT)%Z,(nT))
      endif
      if (allocated(E%W)) then
-       allocate(BS_T_grp(iT)%W (nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%W)) &
- & call MEM_count("BS_T_grp(iT)%W",BS_T_grp(iT)%W)
-    if (.not.allocated(BS_T_grp(iT)%W)) &
- & call MEM_error("BS_T_grp(iT)%W")
+       YAMBO_ALLOC(BS_T_grp(iT)%W,(nT))
      endif
      if (allocated(E%E_SOC)) then
-       allocate(BS_T_grp(iT)%E_SOC_corr (2/n_sp_pol,nT),  &
- & stat=MEM_err,errmsg=MEM_msg)
-    if (     allocated(BS_T_grp(iT)%E_SOC_corr)) &
- & call MEM_count("BS_T_grp(iT)%E_SOC_corr",BS_T_grp(iT)%E_SOC_corr)
-    if (.not.allocated(BS_T_grp(iT)%E_SOC_corr)) &
- & call MEM_error("BS_T_grp(iT)%E_SOC_corr")
+       YAMBO_ALLOC(BS_T_grp(iT)%E_SOC_corr,(2/n_sp_pol,nT))
      endif
      !
    end subroutine
@@ -414,175 +302,50 @@ module BS
    subroutine BS_blks_free()
      integer :: iB
      do iB=1,n_BS_blks
-       if (.not.allocated(BS_blk(iB)%mat)) &
- & call MEM_free("BS_blk(iB)%mat",int(-1,KIND=IPL))
-    if (     allocated(BS_blk(iB)%mat)) &
- & call MEM_free("BS_blk(iB)%mat",size(BS_blk(iB)%mat,KIND=IPL))
-    if (     allocated(BS_blk(iB)%mat)) &
- & deallocate(BS_blk(iB)%mat)
+       YAMBO_FREE(BS_blk(iB)%mat)
        deallocate(BS_blk(iB)%done)
      enddo
    end subroutine
    !
    subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
-     use drivers,    ONLY:l_kerr,l_photolum,l_magnons,l_dichroism
+     use drivers,    ONLY:l_kerr,l_photolum,l_magnons
      use parallel_m, ONLY:PAR_BS_T_grps_index
      integer :: iT
      !
-     if (.not.allocated(BS_nT_at_k)) &
- & call MEM_free("BS_nT_at_k",int(-1,KIND=IPL))
-    if (     allocated(BS_nT_at_k)) &
- & call MEM_free("BS_nT_at_k",size(BS_nT_at_k,KIND=IPL))
-    if (     allocated(BS_nT_at_k)) &
- & deallocate(BS_nT_at_k)
-     if (.not.allocated(PAR_BS_T_grps_index)) &
- & call MEM_free("PAR_BS_T_grps_index",int(-1,KIND=IPL))
-    if (     allocated(PAR_BS_T_grps_index)) &
- & call MEM_free("PAR_BS_T_grps_index",size(PAR_BS_T_grps_index,KIND=IPL))
-    if (     allocated(PAR_BS_T_grps_index)) &
- & deallocate(PAR_BS_T_grps_index)
-     if (.not.allocated(BS_T_grp_1st_el)) &
- & call MEM_free("BS_T_grp_1st_el",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp_1st_el)) &
- & call MEM_free("BS_T_grp_1st_el",size(BS_T_grp_1st_el,KIND=IPL))
-    if (     allocated(BS_T_grp_1st_el)) &
- & deallocate(BS_T_grp_1st_el)
+     YAMBO_FREE(BS_nT_at_k)
+     YAMBO_FREE(PAR_BS_T_grps_index)
+     YAMBO_FREE(BS_T_grp_1st_el)
      !
      do iT=1,BS_nT_grps
        !
        if (.not.allocated(BS_T_grp(iT)%table)) cycle
        !
-       if (.not.allocated(BS_T_grp(iT)%dipoles_R)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_R",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_R)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_R",size(BS_T_grp(iT)%dipoles_R,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_R)) &
- & deallocate(BS_T_grp(iT)%dipoles_R)
-       if (.not.allocated(BS_T_grp(iT)%dipoles_A)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_A",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_A)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_A",size(BS_T_grp(iT)%dipoles_A,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_A)) &
- & deallocate(BS_T_grp(iT)%dipoles_A)
+       YAMBO_FREE(BS_T_grp(iT)%dipoles_R)
+       YAMBO_FREE(BS_T_grp(iT)%dipoles_A)
        if (l_kerr) then
-         if (.not.allocated(BS_T_grp(iT)%dipoles_R_kerr)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_R_kerr",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_R_kerr)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_R_kerr",size(BS_T_grp(iT)%dipoles_R_kerr,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_R_kerr)) &
- & deallocate(BS_T_grp(iT)%dipoles_R_kerr)
-         if (.not.allocated(BS_T_grp(iT)%dipoles_A_kerr)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_A_kerr",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_A_kerr)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_A_kerr",size(BS_T_grp(iT)%dipoles_A_kerr,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_A_kerr)) &
- & deallocate(BS_T_grp(iT)%dipoles_A_kerr)
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_R_kerr)
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_A_kerr)
        endif
        if (l_magnons) then
-         if (.not.allocated(BS_T_grp(iT)%dipoles_R_mag)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_R_mag",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_R_mag)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_R_mag",size(BS_T_grp(iT)%dipoles_R_mag,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_R_mag)) &
- & deallocate(BS_T_grp(iT)%dipoles_R_mag)
-         if (.not.allocated(BS_T_grp(iT)%dipoles_A_mag)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_A_mag",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_A_mag)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_A_mag",size(BS_T_grp(iT)%dipoles_A_mag,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_A_mag)) &
- & deallocate(BS_T_grp(iT)%dipoles_A_mag)
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_R_mag)
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_A_mag)
        endif
-       if (l_dichroism) then
-         if (.not.allocated(BS_T_grp(iT)%dipoles_R_dichroism)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_R_dichroism",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_R_dichroism)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_R_dichroism",size(BS_T_grp(iT)%dipoles_R_dichroism,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_R_dichroism)) &
- & deallocate(BS_T_grp(iT)%dipoles_R_dichroism)
-         if (.not.allocated(BS_T_grp(iT)%dipoles_A_dichroism)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_A_dichroism",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_A_dichroism)) &
- & call MEM_free("BS_T_grp(iT)%dipoles_A_dichroism",size(BS_T_grp(iT)%dipoles_A_dichroism,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%dipoles_A_dichroism)) &
- & deallocate(BS_T_grp(iT)%dipoles_A_dichroism)
-       endif
-         
-       if (.not.allocated(BS_T_grp(iT)%table)) &
- & call MEM_free("BS_T_grp(iT)%table",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%table)) &
- & call MEM_free("BS_T_grp(iT)%table",size(BS_T_grp(iT)%table,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%table)) &
- & deallocate(BS_T_grp(iT)%table)
-       if (.not.allocated(BS_T_grp(iT)%E)) &
- & call MEM_free("BS_T_grp(iT)%E",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%E)) &
- & call MEM_free("BS_T_grp(iT)%E",size(BS_T_grp(iT)%E,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%E)) &
- & deallocate(BS_T_grp(iT)%E)
-       if (.not.allocated(BS_T_grp(iT)%E_SFLIP)) &
- & call MEM_free("BS_T_grp(iT)%E_SFLIP",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%E_SFLIP)) &
- & call MEM_free("BS_T_grp(iT)%E_SFLIP",size(BS_T_grp(iT)%E_SFLIP,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%E_SFLIP)) &
- & deallocate(BS_T_grp(iT)%E_SFLIP)
-       if (.not.allocated(BS_T_grp(iT)%f)) &
- & call MEM_free("BS_T_grp(iT)%f",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%f)) &
- & call MEM_free("BS_T_grp(iT)%f",size(BS_T_grp(iT)%f,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%f)) &
- & deallocate(BS_T_grp(iT)%f)
-       if (.not.allocated(BS_T_grp(iT)%f_RES)) &
- & call MEM_free("BS_T_grp(iT)%f_RES",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%f_RES)) &
- & call MEM_free("BS_T_grp(iT)%f_RES",size(BS_T_grp(iT)%f_RES,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%f_RES)) &
- & deallocate(BS_T_grp(iT)%f_RES)
-       if (.not.allocated(BS_T_grp(iT)%f_SFLIP)) &
- & call MEM_free("BS_T_grp(iT)%f_SFLIP",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%f_SFLIP)) &
- & call MEM_free("BS_T_grp(iT)%f_SFLIP",size(BS_T_grp(iT)%f_SFLIP,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%f_SFLIP)) &
- & deallocate(BS_T_grp(iT)%f_SFLIP)
-       if (.not.allocated(BS_T_grp(iT)%f_PL)) &
- & call MEM_free("BS_T_grp(iT)%f_PL",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%f_PL)) &
- & call MEM_free("BS_T_grp(iT)%f_PL",size(BS_T_grp(iT)%f_PL,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%f_PL)) &
- & deallocate(BS_T_grp(iT)%f_PL)
-       if (.not.allocated(BS_T_grp(iT)%Z)) &
- & call MEM_free("BS_T_grp(iT)%Z",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%Z)) &
- & call MEM_free("BS_T_grp(iT)%Z",size(BS_T_grp(iT)%Z,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%Z)) &
- & deallocate(BS_T_grp(iT)%Z)
-       if (.not.allocated(BS_T_grp(iT)%W)) &
- & call MEM_free("BS_T_grp(iT)%W",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%W)) &
- & call MEM_free("BS_T_grp(iT)%W",size(BS_T_grp(iT)%W,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%W)) &
- & deallocate(BS_T_grp(iT)%W)
-       if (.not.allocated(BS_T_grp(iT)%E_SOC_corr)) &
- & call MEM_free("BS_T_grp(iT)%E_SOC_corr",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%E_SOC_corr)) &
- & call MEM_free("BS_T_grp(iT)%E_SOC_corr",size(BS_T_grp(iT)%E_SOC_corr,KIND=IPL))
-    if (     allocated(BS_T_grp(iT)%E_SOC_corr)) &
- & deallocate(BS_T_grp(iT)%E_SOC_corr)
+       YAMBO_FREE(BS_T_grp(iT)%table)
+       YAMBO_FREE(BS_T_grp(iT)%E)
+       YAMBO_FREE(BS_T_grp(iT)%E_SFLIP)
+       YAMBO_FREE(BS_T_grp(iT)%f)
+       YAMBO_FREE(BS_T_grp(iT)%f_RES)
+       YAMBO_FREE(BS_T_grp(iT)%f_SFLIP)
+       YAMBO_FREE(BS_T_grp(iT)%f_PL)
+       YAMBO_FREE(BS_T_grp(iT)%Z)
+       YAMBO_FREE(BS_T_grp(iT)%W)
+       YAMBO_FREE(BS_T_grp(iT)%E_SOC_corr)
        !
      enddo
      !
-     if (.not.allocated(BS_T_grp)) &
- & call MEM_free("BS_T_grp",int(-1,KIND=IPL))
-    if (     allocated(BS_T_grp)) &
- & call MEM_free("BS_T_grp",size(BS_T_grp,KIND=IPL))
-    if (     allocated(BS_T_grp)) &
- & deallocate(BS_T_grp)
-     if (.not.allocated(BS_blk)) &
- & call MEM_free("BS_blk",int(-1,KIND=IPL))
-    if (     allocated(BS_blk)) &
- & call MEM_free("BS_blk",size(BS_blk,KIND=IPL))
-    if (     allocated(BS_blk)) &
- & deallocate(BS_blk)
+     YAMBO_FREE(BS_T_grp)
+     YAMBO_FREE(BS_blk)
      !
    end subroutine
    !

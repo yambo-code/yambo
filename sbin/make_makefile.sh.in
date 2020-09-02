@@ -29,7 +29,7 @@ cppflags="@CPPFLAGS_yambo@"
 ECHO_N="@ECHO_N@"
 PREFIX="@MKMF_PREFIX@"
 KEEPSRC="@enable_keep_src@"
-INCLUDEDIR="@prefix@/@includedir@"
+INCLUDEDIR="@compdir@/@includedir@"
 #
 if [ $# = 0 ] ; then
  echo $0 "dir target objectfile mode(l/x) Dflag1 Dflag2 Dflag3 ..."
@@ -161,11 +161,11 @@ cat << EOF >> $cdir/Makefile
 	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
 	touch \$(lock_file); rm -f \$(dep_file); rm -f \$(modlist_file); fi
 	${PREFIX}if test "\$(keep_objs)" = "yes"; \
-	then \$(prefix)/sbin/objects_store.sh \$(lock_file); rm -f \$(dep_file); rm -f \$(modlist_file); fi
+	then \$(compdir)/sbin/objects_store.sh \$(lock_file); rm -f \$(dep_file); rm -f \$(modlist_file); fi
 	${PREFIX}if test "\$(keep_objs)" = "no"; then rm -f \$(dep_file); rm -f \$(modlist_file); fi
 
 \$(dep_file): \$(lock_file)
-	cd \$(srcdir)/$cdir; \$(srcdir)/sbin/moduledep.sh \$(objs) > \$(prefix)/$cdir/\$(dep_file)
+	cd \$(srcdir)/$cdir; \$(srcdir)/sbin/moduledep.sh \$(objs) > \$(compdir)/$cdir/\$(dep_file)
 
 arcreate: \$(objs)
 	${PREFIX}(eval \$(ar) \$(arflags) \$(target) \$(objs)) > /dev/null

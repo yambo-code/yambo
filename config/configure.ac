@@ -28,8 +28,12 @@ if ! test -d $CURRENT_DIR ; then
  AC_MSG_ERROR(Make cannot work using paths which include spaces)
 fi
 #
+compdir=`echo "$PWD"`
+AC_SUBST(compdir)
+#
 AC_PREFIX_DEFAULT($PWD)
-if test "$exec_prefix" = "NONE" ; then exec_prefix="$PWD" ; fi
+if test "$prefix" = "NONE" ;      then prefix="$PWD" ; fi
+if test "$exec_prefix" = "NONE" ; then exec_prefix="$prefix" ; fi
 #
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_SRCDIR([driver/yambo.F])

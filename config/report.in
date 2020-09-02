@@ -6,6 +6,7 @@
 # [SYS] @build_os@@@build_cpu@
 # [SRC] @abs_top_srcdir@
 # [BRN] @Y_BRANCH@
+# [CMP] @compdir@
 # [TGT] @prefix@
 # [BIN] @exec_prefix@/bin
 # [LIB] @extlibs_path@

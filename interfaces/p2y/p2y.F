@@ -118,7 +118,7 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  ! Open XML index files and units
  !
- call pw_init(instr,inf)
+ call pw_init(instr,ind)
  !
  ! Make db1 database
  !

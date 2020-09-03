@@ -37,13 +37,11 @@ void options_control(struct options_struct options[],int *i_opt)
 #if defined _a2y || defined _e2y
  options[*i_opt].short_desc="KSS or WFK file";
 #endif
-#if defined _p2y 
- options[*i_opt].short_desc="Index file";
-#endif
  options[*i_opt].short_opt='F';
  options[*i_opt].long_opt="Input"; 
  options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
+ options[*i_opt].bin="yambo ypp a2y e2y";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Input file variables verbosity";
  options[*i_opt].long_desc[0]="<string> can be RL,kpt,sc,qp,io,gen,resp/X,rt,nl,all";
@@ -110,7 +108,7 @@ void options_control(struct options_struct options[],int *i_opt)
  options[*i_opt].short_opt='I';
  options[*i_opt].long_opt="Idir"; 
  options[*i_opt].char_var=1;
- options[*i_opt].bin="yambo ypp";
+ options[*i_opt].bin="yambo ypp p2y";
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="I/O directory";

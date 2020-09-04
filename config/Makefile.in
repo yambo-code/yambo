@@ -53,6 +53,7 @@ exec_prefix = @exec_prefix@
 libs_prefix = @extlibs_path@
 bindir      = @bindir@
 topdir      = @abs_top_srcdir@
+compdir     = @compdir@
 libdir      = @compdir@/lib
 includedir  = @compdir@/include
 libbindir   = @compdir@/lib/bin

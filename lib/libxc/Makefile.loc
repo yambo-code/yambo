@@ -1,0 +1,66 @@
+#
+#===============================
+# Yambo package
+#===============================
+#
+include ../../config/setup
+include ../archive/package.list
+
+LIBNAME=libxc.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
+PACKAGE=$(pkgname_libxc)
+TARBALL=$(tarball_libxc)
+
+#
+# redefinitions
+#
+AUXFLAGS=--prefix=$(LIBPATH)
+
+#
+# MAIN target
+#
+all: $(LIBRARY)
+
+uncompress-stamp:
+	( cd ../archive ; if ! test -e $(TARBALL) ; then \
+	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
+	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
+	touch uncompress-stamp
+
+configure-stamp: uncompress-stamp
+	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
+	        ./configure $(AUXFLAGS) \
+	        CC="$(cc)" \
+	        FC="$(fc)" \
+	        CPP="$(cpp)" \
+		FCCPP="$(fpp)" ); \
+	fi
+	touch configure-stamp
+	
+package-ready-stamp: uncompress-stamp configure-stamp
+	if test -d $(PACKAGE) ; then \
+	( cd $(PACKAGE);  $(make) ) ; fi
+	touch package-ready-stamp
+
+package-installed: uncompress-stamp configure-stamp package-ready-stamp
+	if ! test -e package-installed ; then ($(install)); fi
+	touch package-installed
+
+$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
+
+#
+# cleaning
+#
+clean:
+	@if test -d $(PACKAGE) && test -e configure-stamp ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
+	@- rm -rf package-ready-stamp configure-stamp package-installed
+
+clean_all: clean
+	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
+	@- rm -rf uncompress-stamp 
+	
+define install
+ cd $(PACKAGE);  $(make) install; chmod u+x $(LIBPATH)/lib/*xc*.a
+endef 

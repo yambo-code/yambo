@@ -1,0 +1,79 @@
+#
+#===============================
+# Yambo package
+#===============================
+#
+include ../../config/setup
+include ../archive/package.list
+
+LIBNAME=libslepc.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${yprecision}
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
+PACKAGE=$(pkgname_slepc)
+TARBALL=$(tarball_slepc)
+
+#
+# redefinitions
+#
+AUXFLAGS=--prefix="$(LIBPATH)"
+
+
+#
+# MAIN target
+#
+all: $(LIBRARY)
+#
+uncompress-stamp:
+	( cd ../archive ; if ! test -e $(TARBALL) ; then \
+	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
+	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
+	touch uncompress-stamp
+
+configure-stamp: uncompress-stamp
+	if test -d $(PACKAGE) ; then \
+	  unset PETSC_DIR; \
+	  unset PETSC_ARCH; \
+	  cd $(PACKAGE); \
+	  PETSC_DIR=$(LIBPATH) \
+	  SLEPC_DIR=$(PWD)/$(PACKAGE) \
+	  python2 ./configure $(AUXFLAGS) ; \
+	fi
+	touch configure-stamp
+	
+package-ready-stamp: uncompress-stamp configure-stamp
+	if test -d $(PACKAGE) ; then \
+	  unset PETSC_ARCH; \
+	  cd $(PACKAGE); \
+	  $(make) -j1 \
+	  SLEPC_DIR=$(PWD)/$(PACKAGE) \
+	  PETSC_DIR=$(LIBPATH) ; \
+	fi
+	touch package-ready-stamp
+
+package-installed: uncompress-stamp configure-stamp package-ready-stamp
+	if ! test -e package-installed ; then ($(install)); fi
+	touch package-installed
+
+$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
+
+#
+# cleaning
+#
+clean:
+	@- rm -rf package-ready-stamp configure-stamp package-installed
+
+clean_all: clean
+	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
+	@- rm -rf make.sys uncompress-stamp 
+	
+#
+define install
+ unset PETSC_ARCH; \
+ cd $(PACKAGE); \
+ $(make) -j1 \
+ SLEPC_DIR=$(PWD)/$(PACKAGE) \
+ PETSC_DIR=$(LIBPATH) \
+ install; \
+ chmod u+x $(LIBPATH)/lib/*slepc*.a     
+endef

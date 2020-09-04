@@ -1,0 +1,7 @@
+FFT_objects = 
+#if defined _FFTQE
+FFT_objects = mod_fft_aux.o mod_fft_types.o mod_fft_base.o mod_fft_scalar.o mod_fft_parallel.o \
+              mod_fft_interfaces.o mod_stick_base.o mod_stick_set.o \
+              fft_stick.o fft_setmap.o fft_hpsort.o fft_errore.o
+#endif
+objs = $(FFT_objects)

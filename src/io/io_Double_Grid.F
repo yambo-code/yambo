@@ -38,6 +38,7 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Work Space
  !
+ logical :: l_R_LATT
  integer :: VAR_SZ
  !
  call timing('io_Double_Grid',OPR='start')
@@ -48,11 +49,8 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  if (io_Double_Grid/=0) goto 1
  !
- if (write_is_on(ID).or.variable_exist(ID,"HEAD_R_LATT")) then
-   io_Double_Grid=io_header(ID,R_LATT=.TRUE.,IMPOSE=.TRUE.)
- else
-   io_Double_Grid=io_header(ID)
- endif
+ l_R_LATT=(write_is_on(ID).or.variable_exist(ID,"HEAD_R_LATT"))
+ io_Double_Grid=io_header(ID,R_LATT=l_R_LATT,IMPOSE=l_R_LATT,NOWARN_SER=.true.)
  !
  if (.not.ver_is_gt_or_eq(ID,revision=3560)) io_Double_Grid=IO_OUTDATED_DB
  !
@@ -132,11 +130,15 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Double grid weights
  !
  if (read_is_on(ID)) then
-   YAMBO_ALLOC(Xk%weights_DbGd,(Xk%nibz))
+   YAMBO_ALLOC(Xk%weights_DbGd,(maxval(Xk%nibz_mapped)+1,Xk%nibz))
  endif
  !
- call io_bulk(ID, VAR="KPTS_WEIGHT", VAR_SZ=(/Xk%nibz/) ) 
- call io_bulk(ID, R1=Xk%weights_DbGd)
+ if (ver_is_gt_or_eq(ID,revision=18576)) then
+   call io_bulk(ID, VAR="DBGD_WEIGHT", VAR_SZ=(/maxval(Xk%nibz_mapped)+1,Xk%nibz/) ) 
+   call io_bulk(ID, R2=Xk%weights_DbGd)
+ else if (read_is_on(ID)) then
+   Xk%weights_DbGd=-1
+ endif
  !
 1 call io_disconnect(ID=ID)
  !

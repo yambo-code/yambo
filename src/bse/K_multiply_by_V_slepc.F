@@ -31,14 +31,19 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  use BS,            ONLY : BS_T_grp,BS_nT_grps
  use parallel_m,    ONLY : PAR_IND_T_Haydock
  !
- implicit none
- !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>
+#include <petsc/finclude/petscvec.h>
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
+ !
+ use petscmat
+ use slepcsys
+ use petscmatdef
+ use slepcsysdef
+ !
+ implicit none
  !
  PetscFortranComplex  :: tmp_value(1)
  PetscFortranInt      :: H_pos(1)

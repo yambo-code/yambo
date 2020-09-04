@@ -25,10 +25,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  use pars,          ONLY:SP,pi,cONE,cZERO
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr
+ use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr,l_RIM_W
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:real2ch
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,RIM_W_is_diagonal,RIM_ng,RIM_W_ng
  use DIPOLES,       ONLY:DIPOLE_t
  use frequency,     ONLY:w_samp
  use com,           ONLY:msg,warning
@@ -79,6 +79,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
  !
  l_GW_terminator=GW_terminator_Kind/='none'
+ !
+ !
+ call parser('RIM_W',l_RIM_W)
+ call parser('RIM_W_diag',RIM_W_is_diagonal)
+ RIM_W_ng = RIM_ng
  !
  ! S_x/Vxc are always need if not l_life or el. correlations is
  ! skipped

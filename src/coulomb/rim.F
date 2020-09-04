@@ -32,7 +32,7 @@ subroutine rim(mode,cut_is_slab,is_cut,f_coeff)
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
-&                        RIM_n_rand_pts,RIM_ng,RIM_qpg,&
+&                        RIM_n_rand_pts,RIM_ng,RIM_qpg,RIM_W_is_diagonal,&
 &                        RIM_id_epsm1_reference,RIM_anisotropy,q_pt,RIM_W
  use timing_m,      ONLY:timing
 #include<memory.h>
@@ -95,14 +95,16 @@ subroutine rim(mode,cut_is_slab,is_cut,f_coeff)
  !===========================================
  !
  if (mode == "x") then
+   !
+   if (RIM_is_diagonal) call msg('r','* Diagonal components only detected *')
    call section('+','RIM initialization')
+   call msg('nr','8 x (sBL volume)    [au]:',8.*k_grid_uc_vol)
+   call msg('r', 'sBZ random points       :',RIM_n_rand_pts)
+   !
  else 
    call section('+','RIM-W initialization')
+   if (RIM_W_is_diagonal) call msg('r','* Diagonal components only detected *')
  end if  
- if (RIM_is_diagonal) call msg('r','* Diagonal components only detected *')
- !
- call msg('nr','8 x (sBL volume)    [au]:',8.*k_grid_uc_vol)
- call msg('r', 'sBZ random points       :',RIM_n_rand_pts)
  !
  ! Random generator seed
  !

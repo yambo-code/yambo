@@ -33,7 +33,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use LIVE_t,        ONLY:live_timing
  use vec_operate,   ONLY:degeneration_finder
  use com,           ONLY:msg,error
- use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run
+ use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,l_RIM_W
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_IND_Q_ID,PAR_IND_QP_ID,&
 &                        PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu
@@ -46,7 +46,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind,QP_Sc_G
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF
- use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G, RIM_W, RIM_is_diagonal,RIM_ng,g_vec
+ use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G, RIM_W_is_diagonal, RIM_is_diagonal,RIM_W_ng,g_vec,RIM_W
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
@@ -78,7 +78,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
  complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,ctmp
  complex(DP)      ::dp_dummy
- logical          ::l_RIM_W
+ logical          ::l_RIM_W_g
  integer          ::out_unit_QP_Sc_G=1000
  real(SP)         ::g1_mod_2D,g2_mod_2D
  !
@@ -477,11 +477,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                !
                ! RIM W support
                !
-               l_RIM_W=all((/ig1<=RIM_ng,ig2<=RIM_ng/))
-               !if (RIM_is_diagonal.and.l_RIM_W) l_RIM_W=(ig1==ig2)
+               l_RIM_W_g=all((/l_RIM_W,ig1<=RIM_W_ng,ig2<=RIM_W_ng/))
+               if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
                !
-               if (l_RIM_W) then
-                 PPA_R=-RIM_W(iqibz,ig1,ig2)/4._SP*PPA_E
+               if (l_RIM_W_g) then
+                 PPA_R=-cmplx(RIM_W(iqibz,ig1,ig2)/2._SP,aimag(X_mat(ig1,ig2,X_range(1)))*real(isc%gamp(ig1,ig2)))/2._SP*PPA_E
                else
                  PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
                end if

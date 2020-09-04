@@ -116,8 +116,11 @@ module R_lattice
  real(SP):: RIM_anisotropy
  real(SP),   allocatable :: RIM_qpg(:,:,:)
  !
- ! RIM W
+ ! RIM_W
  !
+ integer :: RIM_W_ng
+ integer :: RIM_W_n_rand_pts
+ logical :: RIM_W_is_diagonal
  real(SP),   allocatable :: RIM_W(:,:,:) 
  !
  ! Coulomb (including Cutoff)

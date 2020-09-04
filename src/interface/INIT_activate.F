@@ -327,6 +327,7 @@ subroutine INIT_activate()
  !
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call INIT_QP_ctl_switch('X')
+   call initactivate(1,'RIM_W RIM_W_diag')
    !
    ! GPL_EXCLUDE_START
    !

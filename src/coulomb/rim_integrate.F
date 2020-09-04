@@ -26,7 +26,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
  use pars,          ONLY:SP,DP,pi
  use vec_operate,   ONLY:iku_v_norm,c2a
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,RIM_qpg,q0_def_norm,&
-&                        RIM_is_diagonal,RIM_ng,q_pt,RIM_anisotropy,nqibz,RIM_W,b
+&                        RIM_is_diagonal,RIM_ng,q_pt,RIM_anisotropy,nqibz,b,RIM_W_is_diagonal,RIM_W
  use D_lattice,     ONLY:alat
  !
  implicit none
@@ -43,13 +43,17 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
  logical  :: cut_is_slab
  real(SP) :: slab_vz,slab_vplane,slab_vz1,slab_vplane1,slab_vz2,slab_vplane2,lcut,pre_factor,v_2D_mod
  !
+ rfac=8.*k_grid_uc_vol/real(N_out)/(2.*pi)**3. 
+ !
  if (cut_is_slab) then
+   !
    lcut=alat(iort)/2.
-   rfac=4.*k_grid_uc_vol/real(N_out)/(2.*pi)**3.
- else
-   rfac=8.*k_grid_uc_vol/real(N_out)/(2.*pi)**3.
+   !
+   !The 2D sampling requires a different normalization
+   rfac=0.5*rfac
+   if (mode == "c") rfac = rfac/(2.*pi)
+   !
  endif
- if (mode == "c") rfac = rfac/(2.*pi)
  !
  !    ----------------
  !    MonteCarlo volume
@@ -67,6 +71,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
  do i1=i1min,RIM_ng 
    i2max=RIM_ng 
    if (RIM_is_diagonal .and. mode == "x") i2max=i1
+   if (RIM_W_is_diagonal .and. mode == "c") i2max=i1
    do i2=i1,i2max
      RIM_acc(1)=0._DP
      if (cut_is_slab .and. mode == 'x') then
@@ -96,7 +101,21 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
          ! 
          v1(:)=g_vec(i1,:)+q_pt(iq,:)+qr(i3,:)
          v2(:)=g_vec(i2,:)+q_pt(iq,:)+qr(i3,:)
-         r1=iku_v_norm(v1)*iku_v_norm(v2)
+         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+         !Test 
+         r1 = 1.        
+         if (iku_v_norm(v1) < q0_def_norm) then
+           r1 = r1*q0_def_norm
+         else
+           r1 = r1*iku_v_norm(v1)
+         end if
+         if (iku_v_norm(v2) < q0_def_norm) then
+           r1 = r1*q0_def_norm
+         else
+           r1 = r1*iku_v_norm(v2)
+         end if
+         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+         !r1=iku_v_norm(v1)*iku_v_norm(v2)
          !
          !Evaluate v_slab
          !kz

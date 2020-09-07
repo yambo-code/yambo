@@ -84,7 +84,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! MPA variables
  !
  integer          :: i_np,pole_p,poles_f,ID2
- real(SP)         :: bose_PPA_E 
+ real(SP)         :: bose_PPA_E, edigits(2), rdigits 
  complex(SP), allocatable :: MPA_Xo(:)
  character(len=99):: str
  !
@@ -260,12 +260,12 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      write(10,*) 'number_of_poles = ', X%mpa_npoles
      write(10,*)
      write(10,*) 'rE_iE_rR_iR(size,size,npoles,4) ='
-!     open(11,file = 'mpa.err_fragment_'//trim(str))
-!     write(11,*) 'Errors of the MPA'
-!     write(11,*)
-!     write(11,*) 'matrix_size = ', X%ng
-!     write(11,*)
-!     write(11,*) 'err(size,size) ='
+     open(11,file = 'mpa.err_fragment_'//trim(str))
+     write(11,*) 'Errors of the MPA'
+     write(11,*)
+     write(11,*) 'matrix_size = ', X%ng
+     write(11,*)
+     write(11,*) 'err(size,size) ='
      !
      poles_f=0
      !
@@ -279,8 +279,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        do ig1=1,X%ng
          !
          MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)*isc%gamp(ig1,ig2) 
+         if (ig1==ig2) MPA_Xo(:) = real(MPA_Xo(:),SP)
          !
-         call mpa_RE_solver(X%mpa_npoles, MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,:), MPA_E_mat(ig1,ig2,:))
+         call mpa_RE_solver(X%mpa_npoles, MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,:), MPA_E_mat(ig1,ig2,:),edigits,rdigits)
+         !
+         if (ig1==ig2) MPA_R_mat(ig1,ig2,:) = real(MPA_R_mat(ig1,ig2,:),SP)
          !
          !if (real(X_mat(ig1,ig2,1)/X_mat(ig1,ig2,2))<=1._SP) then
          !  MPA_E_mat(ig1,ig2,:)= 1.0_SP-(0._SP,1._SP)*epsilon(1._SP)
@@ -289,7 +292,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !else
          !  call mpa_RE_solver(X%mpa_npoles, MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,:), MPA_E_mat(ig1,ig2,:))
          !endif
-         !
+         ! 
          !if (iqbz==1 .and. ig2==1 .and.(ig1==1 .or. ig1==2 ) ) then
            !write(*,*)
            !write(*,*) "G=",ig1
@@ -299,9 +302,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
            !                                 MPA_E_mat(ig1,ig2,:), MPA_freqs, MPA_Xo)
          !endif
          ! 
-         !write(11,*) err_func_np(X%mpa_npoles, MPA_R_mat(ig1,ig2,:), &
+         write(11,*) 'ER lost digits: ', edigits, rdigits
+         write(11,*) 'error: ', err_func_np(X%mpa_npoles, MPA_R_mat(ig1,ig2,:), &
          !                                      MPA_E_mat(ig1,ig2,:), MPA_freqs, X_mat(ig1,ig2,1:Xw%n_freqs)*isc%gamp(ig1,ig2))
-         !  
+                                       MPA_E_mat(ig1,ig2,:), MPA_freqs*(1._SP,0._SP), X_mat(ig1,ig2,1:Xw%n_freqs)*isc%gamp(ig1,ig2))
+         !    
          pole_p=0
          do i_np=1,X%mpa_npoles
            !
@@ -349,9 +354,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    if (iqs>nsym/(i_time_rev+1) .and. (i_space_inv==0.or.mag_syms) .and..not.X_is_TR_rotated) then
      !
      ! Note (AF) that $omp directives are inside mat_transpose
-     !
-     !call mat_transpose(X_mat(:,:,X_range(1)))
-     !call mat_transpose(X_mat(:,:,X_range(2)))
      !
      do i_np=1,X%mpa_npoles
        call mat_transpose(MPA_E_mat(:,:,i_np))

@@ -50,7 +50,7 @@
    complex(SP), intent(out)   :: w(2*np)
    !
    integer     :: i, a1, a2
-   complex(SP) :: ws, uni=(0._SP, 0.1_SP)
+   complex(SP) :: ws, uni=cmplx(0._SP, 0.1_SP), zero=cmplx(0._SP, 0.0_SP)
    real(SP), parameter :: log2=0.693147180560_SP
    !
    ws = w2-w1
@@ -71,7 +71,8 @@
        select case(ps)
          case ('h') !HPPS
            !w = (/w1, w1+0.25_SP*ws, w1+0.5_SP*ws, w1+0.75_SP*ws/)
-           w = (/w1, w2,real(w1,SP)+uni, real(w2,SP)+uni/)
+           w = (/real(w1,SP)+zero, real(w2,SP)+uni, w1, w2/)
+           !w = (/w1, w1+0.33_SP*ws, w1+0.66_SP*ws, w2/)
          case ('q') !QPPS
            w = (/w1, w1+0.0625_SP*ws, w1+0.25_SP*ws, w1+0.5625_SP*ws/)
          case ('c') !CPPS
@@ -83,7 +84,7 @@
        select case(ps)
          case ('h') !HPPS
            !w = (/w1, w1+0.25_SP*ws, w1+0.375_SP*ws, w1+0.5_SP*ws, w1+0.625_SP*ws, w1+0.75_SP*ws/)
-           w = (/w1, w1+0.33_SP*ws, w1+0.66_SP*ws, real(w1,SP)+uni, real(w1+0.33_SP*ws,SP)+uni, real(w1+0.66_SP*ws,SP)+uni/)
+           w = (/real(w1,SP)+zero, real(w1+0.5_SP*ws,SP)+uni, real(w2,SP)+uni, w1, w1+0.5_SP*ws, w2/)
          case ('q') !QPPS
            w = (/w1, w1+0.0625_SP*ws, w1+0.140625_SP*ws, w1+0.25_SP*ws, w1+0.390625_SP*ws, w1+0.5625_SP*ws/)
          case ('c') !CPPS
@@ -92,19 +93,31 @@
            ! error 
        end select
      case default 
-      w(1) = w1 
-      select case(ps)
-        case ('h') !HPPS
-          w(np+1) = w1+0.5_SP*ws 
-        case ('q') !QPPS
-          w(np+1) = w1+0.25_SP*ws 
-        case ('c') !CPPS
-          w(np+1) = w1+0.15_SP*ws 
-        case default
+!!      w(1) = w1 
+      !select case(ps)
+      !  case ('h') !HPPS
+      !    w(np+1) = w1+0.5_SP*ws 
+      !  case ('q') !QPPS
+      !    w(np+1) = w1+0.25_SP*ws 
+      !  case ('c') !CPPS
+      !    w(np+1) = w1+0.15_SP*ws 
+      !  case default
           ! error 
-      end select  
-      do i=2, 2*np 
-        w(i)=w1+ws*(i-1)/(2*np) 
+      !end select  
+!!      do i=2, 2*np 
+ !!       w(i)=w1+ws*(i-1)/(2*np-1) 
+      !enddo
+      w(np+1) = w1 !+ (0._SP,4._SP)
+      w(1) = real(w1,SP)+zero!+uni
+      !w(2) = w1 !+ (0._SP,4._SP)
+      !w(1) = real(w1,SP)!+uni
+      do i=2, np 
+      !do i=2, 2*np 
+        w(np+i)=w1+ws*(i-1)/(np-1) 
+        w(i)=real(w(np+i),SP)+uni
+       !! w(2*i)=w1+ws*(i-1)/(np-1) 
+       !! w(2*i-1)=real(w(2*i),SP)+uni
+        !w(i)=w1+ws*(i-1)/(2*np-1) 
       enddo
    end select 
    !

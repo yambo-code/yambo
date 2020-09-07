@@ -91,42 +91,15 @@ contains
   !     R=x(1)
   ! endif
    ! 
-!--------------------------------------------------------
-!   R =  x(1)*x(2)* (z(1)**2- z(2)**2 )  !/(x(1) - x(2))
-!   E = (x(1)*z(1)**2  -  x(2)*z(2)**2 ) !/(x(1) - x(2))
-!   !
-!   if(abs(x(1)-x(2))>epsilon(1._SP)) then
-!     E=E/(x(1) - x(2))
-!     R=R/(x(1) - x(2))
-!   endif
-!   E = sqrt(E)
-!   if(abs(E)>epsilon(1._SP)) R = -R/(2._SP*E)
-!--------------------------------------------------------
-!   if (real(x(1)/x(2))<=1._SP) then
-!      E = 1._SP
-!      R = x(1)/2._SP
-!   else
-!     R =  x(1)*x(2)* (z(1)**2- z(2)**2 )  !/(x(1) - x(2))
-!     E = (x(1)*z(1)**2  -  x(2)*z(2)**2 ) !/(x(1) - x(2))
-!     if(abs(x(1)-x(2))>epsilon(1._SP)) then
-!      E=E/(x(1) - x(2))
-!      R=R/(x(1) - x(2))
-!     endif
-!     E = sqrt(E)
-!     if(abs(E)>epsilon(1._SP)) R = -R/(2._SP*E)
-!     E = real(E)-(0._SP,0.000000000000001_SP)
-!   endif
-!   !
- !
-   if (real(x(1)/x(2))<=1._SP) then
-      E = 1._SP
-      R = -x(1)/2._SP
-   else
-     E =aimag(z(2))/real(sqrt(x(1)/x(2)-1._SP))
-     R = -x(1)/2._SP*E
-     !E = abs(real(E))-(0._SP,1._SP)*abs(aimag(E))
-     !E = E-(0._SP,0.000000000000001_SP)
+   R =  x(1)*x(2)* (z(1)**2- z(2)**2 )  !/(x(1) - x(2))
+   E = (x(1)*z(1)**2  -  x(2)*z(2)**2 ) !/(x(1) - x(2))
+   !
+   if(abs(x(1)-x(2))>epsilon(1._SP)) then
+     E=E/(x(1) - x(2))
+     R=R/(x(1) - x(2))
    endif
+   E = sqrt(E)
+   if(abs(E)>epsilon(1._SP)) R = -R/(2._SP*E)
    !
  end subroutine mpa_RE_1p_solver
  !
@@ -367,7 +340,7 @@ contains
    integer                         :: i, j, info, ind(np), ILO,IHI    
    real(SP)                        :: anorm, Wm
    ! 
-   Wm = maxval(abs(z),np)
+   Wm = maxval(abs(z),2*np)
    !    
    do j = 1, np
      ind(j) = j
@@ -501,6 +474,274 @@ contains
    enddo  
    err_func_np = sqrt(err_func_np)
  endfunction err_func_np
+ !
+ !
+!======================
+  function pole_interp_pade_cmplx_noLS(nx,xdata,ydata,npoles_fit,params,allow_offset) result(ierr)
+  !======================
+
+  type poly_t
+    integer :: order
+    complex(dp), allocatable :: c(:)
+    logical :: alloc=.false.
+  end type
+
+  implicit none
+  !
+  ! performs interpolation on input data using pade' approx
+  ! (equivalent to a sum over poles)
+  ! ierr /=0 indicates a numerical problem
+  !
+  integer     :: nx,npoles_fit
+  real(dp)    :: xdata(nx)
+  complex(dp) :: ydata(nx)
+  complex(dp) :: params(*)
+  integer     :: ierr
+  logical, optional :: allow_offset
+  !
+  character(25) :: subname="pole_interp_pade_cmplx_LS"
+  integer   :: ndim
+  integer   :: i,j,ind
+  logical  :: allow_offset_
+  complex(dp) :: res,ctmp(1)
+  complex(dp), allocatable :: ydata_fit(:)
+  complex(dp), allocatable :: aa(:), gg(:,:)
+  complex(dp), allocatable :: roots(:)
+  !
+  integer :: p_ndeg, q_ndeg
+  type(poly_t) :: p_pol, q_pol
+  type(poly_t) :: p1,p2
+  type(poly_t), allocatable :: A_pol(:),B_pol(:)
+
+  ierr=0
+  !
+  allow_offset_=.false.
+  if (present(allow_offset)) allow_offset_=allow_offset
+  if (allow_offset_) call errore(subname,"offset not implemented 1",10)
+  !
+  p_ndeg=npoles_fit-1
+  if (allow_offset_) p_ndeg=npoles_fit
+  q_ndeg=npoles_fit
+  !
+  ! the highest order coefficient of q is equal to 1
+  ! to get rid of a fictitious degree of freedom
+  ! due to the cancellation of a constant coeff in the
+  ! p/q ratio
+  !
+  ndim=p_ndeg+q_ndeg+1
+  !
+  if (nx/=ndim) then
+    ierr=-1
+    return
+  endif
+  !
+  allocate(A_pol(0:ndim))
+  allocate(B_pol(0:ndim))
+  allocate(aa(ndim))
+  allocate(gg(ndim,ndim))
+  allocate(ydata_fit(nx))
+  !
+  allocate(roots(q_ndeg))
+  !
+  ! build gg and aa
+  !
+  gg=0.0
+  gg(:,1) = ydata(:)
+  aa(1)=gg(1,1)
+  !
+  do j = 2, ndim
+    !
+    do i = j, nx
+      gg(i,j) = ( gg(j-1,j-1)-gg(i,j-1) ) / ( (xdata(i)-xdata(j-1)) * gg(i,j-1) )
+    enddo
+    aa(j) = gg(j,j)
+    !
+  enddo
+
+  !
+  ! evaluate the A_pol and B_pol coeff
+  !
+  call poly_reset(p1,1)
+  !
+  call poly_reset(A_pol(0),0)
+  call poly_reset(A_pol(1),0)
+  call poly_reset(B_pol(0),0)
+  call poly_reset(B_pol(1),0)
+  !
+  A_pol(0)%c=0.0
+  A_pol(1)%c=aa(1)
+  B_pol(0)%c=1.0
+  B_pol(1)%c=1.0
+  !
+  call poly_reset(p2)
+  !
+  do j = 2, ndim
+    p1%c(0:1) = aa(j)*(/-xdata(j-1),1.0_dp/)
+    call poly_mult(p2,  p1, A_pol(j-2))
+    call poly_sum(A_pol(j),   A_pol(j-1), p2 )
+    call poly_reset(p2)
+  enddo
+  !
+  do j = 2, ndim
+    p1%c(0:1) = aa(j)*(/-xdata(j-1),1.0_dp/)
+    call poly_mult(p2,  p1, B_pol(j-2))
+    call poly_sum(B_pol(j),   B_pol(j-1), p2 )
+    call poly_reset(p2)
+  enddo
+
+  !
+  ! eval residuals
+  !
+  call poly_reset(p_pol,p_ndeg)
+  call poly_reset(q_pol,q_ndeg)
+  !
+  p_pol=A_pol(ndim)
+  q_pol=B_pol(ndim)
+  p_pol%c=p_pol%c/q_pol%c(npoles_fit)
+  q_pol%c=q_pol%c/q_pol%c(npoles_fit)
+  !
+  ydata_fit(:) = poly_eval(xdata,nx,p_pol) / poly_eval(xdata,nx,q_pol)
+  res = dot_product(ydata(:)-ydata_fit(:),ydata(:)-ydata_fit(:))/real(nx,dp)
+
+  !
+  ! reshape data
+  !
+  call poly_roots(roots,q_pol)
+  !
+  params(1)=0.0d0
+  if (allow_offset_) params(1)=0.0  ! to be fixed
+  !
+  do j = 1, npoles_fit
+    !
+    ind = 2+(j-1)*3
+    params(ind+0)=real(roots(j),dp)
+    params(ind+1)=aimag(roots(j))
+    !
+    ctmp(1)=poly_eval(roots(j),p_pol)
+    do i = 1, npoles_fit
+      if (i==j) cycle
+      ctmp(1)=ctmp(1)/(roots(j)-roots(i))
+    enddo
+    params(ind+2)=ctmp(1)
+    !
+  enddo
+  !
+  params(2+3*npoles_fit) = res
+
+  !
+  ! cleanup
+  !
+  call cleanup_loc()
+  return
+
+contains
+
+  subroutine cleanup_loc()
+     do i = 1, size(A_pol)
+        call poly_reset(A_pol(i-1))
+     enddo
+     if (allocated(A_pol)) deallocate(A_pol)
+     do i = 1, size(B_pol)
+        call poly_reset(B_pol(i-1))
+     enddo
+     if (allocated(B_pol)) deallocate(B_pol)
+     call poly_reset(p1)
+     call poly_reset(p2)
+     !
+     if (allocated(ydata_fit)) deallocate(ydata_fit)
+     if (allocated(roots)) deallocate(roots)
+     call poly_reset(p_pol)
+     call poly_reset(q_pol)
+  end subroutine
+  !
+end function pole_interp_pade_cmplx_noLS
+ !
+ !**********************************************************
+   SUBROUTINE zmat_sv(n, nrhs, a, b, ierr)
+   !**********************************************************
+   !
+   !  Computes the solution of the complex system of linear equations
+   !     A * X = B,
+   !  where A is an N-by-N matrix and X and B are N-by-NRHS matrices.
+   !
+   !  The LU decomposition with partial pivoting and row interchanges is
+   !  used to factor A as
+   !     A = P * L * U,
+   !  where P is a permutation matrix, L is unit lower triangular, and U is
+   !  upper triangular.  The factored form of A is then used to solve the
+   !  system of equations A * X = B.
+   !
+   IMPLICIT NONE
+   INTEGER, INTENT(IN)         :: n, nrhs
+   COMPLEX(dbl), INTENT(IN)    :: a(:,:)
+   COMPLEX(dbl), INTENT(INOUT) :: b(:,:)
+   INTEGER, OPTIONAL, INTENT(out) :: ierr
+
+   INTEGER :: ierr_, info
+   INTEGER,      ALLOCATABLE :: ipiv(:)
+   COMPLEX(dbl), ALLOCATABLE :: atmp(:,:)
+
+   IF ( PRESENT(ierr) ) ierr=0
+   !
+   IF ( n > SIZE(a,1) .OR. n > SIZE(a,2) ) CALL errore('zmat_sv','matrix A too small',1)
+   IF ( n > SIZE(b,1) ) CALL errore('zmat_sv','matrix B too small (I)',1)
+   IF ( nrhs > SIZE(b,2) ) CALL errore('zmat_sv','matrix B too small (II)',1)
+
+   ALLOCATE( atmp(n,n), ipiv(n), STAT=ierr_ )
+     IF (ierr_/=0) CALL errore('zmat_sv','allocating atmp, ipiv',ABS(ierr_))
+   !
+   ! make a local copy of a
+   atmp(:,:) = a(1:n,1:n) 
+
+   ! use magma if possible
+   CALL ZGESV( n, nrhs, atmp, n, ipiv, b, SIZE(b,1), info)
+
+   IF ( PRESENT(ierr) ) THEN
+        IF (info/=0) ierr= info
+   ELSE
+        IF ( info < 0 ) CALL errore('zmat_sv', 'ZGESV: info illegal value', -info )
+        IF ( info > 0 ) CALL errore('zmat_sv', 'ZGESV: singular matrix', info )
+   ENDIF
+
+   DEALLOCATE( atmp, ipiv, STAT=ierr_)
+      IF(ierr_/=0) CALL errore('zmat_sv','deallocating atmp, ipiv',ABS(ierr_))
+
+   RETURN
+END SUBROUTINE zmat_sv
+ !
+  function poly_eval(x,obj) result(res)
+     implicit none
+     complex(dp)  :: x
+     type(poly_t) :: obj
+     complex(dp)  :: res
+     !
+     integer :: i
+
+     res=0.0
+     if (.not.obj%alloc) return
+     do i = obj%order, 0, -1
+       res = res + obj%c(i)*x**i
+     enddo
+     !
+  end function poly_eval
+  !
+  recursive subroutine poly_reset(obj,order)
+     implicit none
+     type(poly_t) :: obj
+     integer, optional :: order
+     !
+     if (present(order)) then
+        if (obj%alloc) call poly_reset(obj)
+        allocate(obj%c(0:order))
+        obj%order=order
+        obj%alloc=.true.
+     else
+        if (allocated(obj%c)) deallocate(obj%c) 
+        obj%order=0
+        obj%alloc=.false.
+     endif
+     !
+  end subroutine
  !
 end module mpa_m
 

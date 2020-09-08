@@ -24,11 +24,11 @@
 subroutine XCo_driver(E,k,Xk,q)
  !
  use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time
- use pars,          ONLY:schlen,rZERO,SP,cZERO
+ use pars,          ONLY:schlen,rZERO,cZERO
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use QP_m,          ONLY:QP_n_states,XCo_Hartree_Fock,QP_t,Vxc_kind,Vnlxc_kind,&
+ use QP_m,          ONLY:XCo_Hartree_Fock,QP_t,Vxc_kind,Vnlxc_kind,&
 &                        QP_Vxc,QP_Vnl_xc,QP_Vnl_sex,QP_XCo_alloc,QP_XCo_free
  use interfaces,    ONLY:WF_free
  use wave_func,     ONLY:WF

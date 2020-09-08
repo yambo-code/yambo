@@ -27,7 +27,7 @@ subroutine DEV_SUB_ALT(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
  !
  use pars,          ONLY:SP,cZERO
  use electrons,     ONLY:n_sp_pol,n_spinor
- use wave_func,     ONLY:WF,wf_ng,wf_ng_1st_bz
+ use wave_func,     ONLY:WF,wf_ng,wf_ng_1st_BZ
  use R_lattice,     ONLY:bz_samp,DEV_VAR(g_rot)
  use D_lattice,     ONLY:idt_index,DEV_VAR(spin_sop),i_time_rev,nsym
  use deviceXlib_m,  ONLY:dev_conjg,dev_memcpy

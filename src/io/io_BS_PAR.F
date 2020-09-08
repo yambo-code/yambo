@@ -201,7 +201,6 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
  use pars,          ONLY:IP,IPL
  use BS,            ONLY:BS_blk,l_BSK_IO_triangular,BS_IO_dim,n_BS_blks_min
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:myid
  use IO_m,          ONLY:io_variable_bulk,io_unit,netcdf_call,nf90_sync,&
 &                        write_is_on,io_BS_K
  !

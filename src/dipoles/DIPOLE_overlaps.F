@@ -36,7 +36,6 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use parallel_m,        ONLY:PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_COM_DIPk_ibz_A2A, &
 &                            PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,           &
 &                            PAR_IND_OVLPk_ibz,PAR_COM_DIPk_ibz_INDEX,PP_redux_wait
- use deviceXlib_m,      ONLY:dev_memcpy
  use interfaces,        ONLY:WF_shift_kpoint,WF_symm_kpoint,eval_G_minus_G
  !
 #include<dev_defs.h>

@@ -25,7 +25,7 @@ integer function io_SC_components(what,E_sc,ID)
  !
  ! what can be E WF V OBSERVABLES (J,P,D...) G
  !
- use pars,           ONLY:SP,lchlen
+ use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_run
  use R_lattice,      ONLY:nkibz
  use stderr,         ONLY:intc

@@ -279,7 +279,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
     !
     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPk_ibz_A2A
     !
-    integer  :: ic,iv,i_sp_pol,ik,ik_mem
+    integer  :: ic,iv,i_sp_pol,ik,ik_mem,id
     !
     do i_sp_pol=1,n_sp_pol
       do ik=1,Xk%nibz
@@ -288,9 +288,11 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
         !
         ik_mem=PAR_DIPk_ibz_index(ik)
         !
-        call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
-        call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
-        call PP_redux_wait( DIP_v(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+        do id=1,3
+          call PP_redux_wait(DIP_iR(id,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+          call PP_redux_wait( DIP_P(id,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+          call PP_redux_wait( DIP_v(id,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+        enddo
         !
         ! GPL_EXCLUDE_START 
         !

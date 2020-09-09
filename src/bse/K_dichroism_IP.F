@@ -31,11 +31,12 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
  use BS_solvers,     ONLY:BSS_add_antiresonant,BSS_n_freqs,Co_factor
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_coupling,BS_perturbative_SOC
  use electrons,      ONLY:n_sp_pol
- use R_lattice,      ONLY:bz_samp,qindx_X
+ use R_lattice,      ONLY:bz_samp,qindx_X,q0_def_norm
  use collision_el,   ONLY:elemental_collision
  use parallel_m,     ONLY:PAR_BS_nT_col_grps,PP_redux_wait,&
 &                         PAR_IND_T_groups,PAR_Xk_bz_index,&
 &                         PAR_COM_eh_INDEX,PAR_COM_Xk_ibz_INDEX
+ use vec_operate,    ONLY:v_norm
  !
 #include<memory.h>
  !
@@ -47,13 +48,14 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
  !
  ! Work Space
  !
- real(SP)          :: conjg_fac
  complex(SP)       :: E_plus_W0,res,E_plus_W(2/n_sp_pol),DIP_projected,field_dir(3)      
- integer           :: ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol,i_sp_pol_rev,i_T_g,i_T,n_SOC,i_pert_SOC,io_err
+ integer           ::  ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol,i_sp_pol_rev,i_T_g,i_T,n_SOC,i_pert_SOC,io_err
  !
  n_SOC=1
  i_sp_pol_rev=1
  !
+ if (trim(global_gauge)=='length'   ) field_dir=Dip%q0/v_norm(Dip%q0)
+ if (trim(global_gauge)=='velocity' ) call error(' velocity gauge not implemented for dichroism')
  if( .not.BS_perturbative_SOC.or. n_sp_pol==2) n_SOC=1
  if(      BS_perturbative_SOC.and.n_sp_pol==1) n_SOC=2
  !
@@ -89,17 +91,20 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
      endif
      !
      BS_T_grp(i_T_g)%dipoles_R_dichroism(i_T)=conjg(DIP_projected)    ! along field_dir  (then trace...)
- 
-     res=BS_T_grp(i_T_g)%dipoles_R(i_T)*&  
-     conjg(BS_T_grp(i_T_g)%dipoles_R_dichroism(i_T))*BS_T_grp(i_T_g)%f(i_T)  ! EM:  x*L = DIP_x*DIP_orbital;  f(i_T) = occupations
-
+     !
+     res=(BS_T_grp(i_T_g)%dipoles_R(i_T)/(q0_def_norm*cI))* &  
+       conjg(BS_T_grp(i_T_g)%dipoles_R_dichroism(i_T))*BS_T_grp(i_T_g)%f(i_T)  ! EM:  x*L = DIP_x*DIP_orbital;  f(i_T) = occupations
+     !
      if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)
      !
      do i_pert_SOC=1,n_SOC
-       X_dichroism(:,3)=X_dichroism(:,3)-res/(w(:)-E_plus_W(i_pert_SOC))  ! EM: w(:) = omega
+       X_dichroism(:,3)=X_dichroism(:,3)-(cI/w(:))*(res/(w(:)-E_plus_W(i_pert_SOC)))  ! EM: w(:) = omega; beta=(i/omega)G
      enddo
-     write(*,*) i_T,1,X_dichroism(1,3)
-
+    !
+    ! DEBUG <
+    ! write(*,*) i_T,1,'R',X_dichroism(1,3)
+    ! DEBUG > 
+    !
      !
      if (BSS_add_antiresonant.or.BS_K_coupling) then
        !
@@ -111,8 +116,13 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
        if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)
        !
        do i_pert_SOC=1,n_SOC
-         X_dichroism(:,3)=X_dichroism(:,3)+res/(w(:)+conjg(E_plus_W(i_pert_SOC)))  ! EM: w(:) = omega
+         X_dichroism(:,3)=X_dichroism(:,3)+(cI/w(:))*(res/(w(:)+conjg(E_plus_W(i_pert_SOC))))  ! EM: w(:) = omega; beta=(i/omega)G
        enddo
+     !
+     ! DEBUG <
+     ! write(*,*) i_T,1,'A',X_dichroism(1,3)
+     ! DEBUG >
+     !
        !
      endif
      !

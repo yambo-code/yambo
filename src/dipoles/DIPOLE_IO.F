@@ -31,7 +31,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use DIPOLES,    ONLY:DIPOLE_t,use_covariant_approach
  use IO_m,       ONLY:io_control,manage_action,VERIFY,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
 &                     OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
- use parallel_m, ONLY:master_cpu,PP_redux_wait,PAR_K_scheme
+ use parallel_m, ONLY:master_cpu,PP_redux_wait,PAR_K_scheme,PP_bcast
  !
  implicit none
  !
@@ -62,12 +62,14 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  ID=0
  ID_S=0
+ io_err=0
+ !
 #if defined _PAR_IO
  write_header  =       PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing
  read_header   =(.not.(PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing)).or.reading.or.check
 #else
  write_header  =(      master_cpu.and.writing )
- read_header   =(.not.(master_cpu.and.writing)).or.reading.or.check
+ read_header   =.not.writing.and.(reading.or.check)
 #endif
  write_header_ovlp  =write_header.and.use_covariant_approach
  read_header_ovlp   = read_header.and.use_covariant_approach
@@ -81,6 +83,15 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    call msg('s','[DIP] Writing overlaps header ')
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
    io_err=io_err+io_Overlaps(Dip,ID_S)
+ endif
+ !
+ ! Master node bcast matrix dimensions for the other cores
+ !
+ if(writing) then
+   call PP_bcast(Dip%ib,0)
+   call PP_bcast(Dip%db_ib,0)
+   call PP_bcast(Dip%ib_lim,0)
+   call PP_bcast(Dip%db_ib_lim,0) 
  endif
  !
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)

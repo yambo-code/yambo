@@ -85,7 +85,7 @@ subroutine io_RT_components_OBS(ID,l_JP,l_M,what)
    endif
    !
    if(n_spin>1.and.l_M) then
-     call io_variable_bulk(ID,6,C3=Ms_cache(:,:,1:CACHE_SZ),IPOS=(/1,1,IPOS/))
+     call io_variable_bulk(ID,6,C3=Ms_cache(:,:,1:CACHE_SZ),IPOS=(/1,1,1,IPOS/))
      call io_variable_bulk(ID,7,C3=Ml_cache(:,:,1:CACHE_SZ),IPOS=(/1,1,1,IPOS/))
    endif
    !

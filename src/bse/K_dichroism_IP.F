@@ -37,6 +37,7 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
 &                         PAR_IND_T_groups,PAR_Xk_bz_index,&
 &                         PAR_COM_eh_INDEX,PAR_COM_Xk_ibz_INDEX
  use vec_operate,    ONLY:v_norm
+ use units,          ONLY:SPEED_OF_LIGHT      !  c in a.u.
  !
 #include<memory.h>
  !
@@ -98,7 +99,7 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
      if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)
      !
      do i_pert_SOC=1,n_SOC
-       X_dichroism(:,3)=X_dichroism(:,3)-(cI/w(:))*(res/(w(:)-E_plus_W(i_pert_SOC)))  ! EM: w(:) = omega; beta=(i/omega)G
+       X_dichroism(:,3)=X_dichroism(:,3)-(cI*8*pi/3*SPEED_OF_LIGHT)*(res/(w(:)-E_plus_W(i_pert_SOC)))  ! EM: w(:) = omega;  beta_ij=-(i*hbar*me)/(omega*qe^2)*G_ij;  DeltaN=(8*pi*N*omega/3*c)*Tr(beta_ij);  N = molecular density = ??
      enddo
     !
     ! DEBUG <
@@ -110,13 +111,13 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
        !
        BS_T_grp(i_T_g)%dipoles_A_dichroism(i_T)=DIP_projected
        !
-       res=BS_T_grp(i_T_g)%dipoles_A(i_T)*&
+       res=(BS_T_grp(i_T_g)%dipoles_A(i_T)/(q0_def_norm*cI))*&
        conjg(BS_T_grp(i_T_g)%dipoles_A_dichroism(i_T))*BS_T_grp(i_T_g)%f(i_T)
        !
        if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)
        !
        do i_pert_SOC=1,n_SOC
-         X_dichroism(:,3)=X_dichroism(:,3)+(cI/w(:))*(res/(w(:)+conjg(E_plus_W(i_pert_SOC))))  ! EM: w(:) = omega; beta=(i/omega)G
+         X_dichroism(:,3)=X_dichroism(:,3)+(cI*8*pi/3*SPEED_OF_LIGHT)*(res/(w(:)+conjg(E_plus_W(i_pert_SOC))))  ! EM: w(:) = omega;  beta_ij=-(i*hbar*me)/(omega*qe^2)*G_ij;  DeltaN=(8*pi*N*omega/3*c)*Tr(beta_ij);  N = molecular density = ??
        enddo
      !
      ! DEBUG <

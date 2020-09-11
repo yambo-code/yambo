@@ -155,6 +155,7 @@ fi
 
 cat << EOF >> $cdir/Makefile
 \$(lock_file):
+	\$(modpath)
 	${PREFIX}if test ! -f \$(lock_file) && test "\$(keep_objs)" = "no" ; then \
 	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
 	touch \$(lock_file); rm -f \$(dep_file); rm -f \$(modlist_file); fi
@@ -178,10 +179,12 @@ endef
 define link
  ${PREFIX}(eval \$(fc) \$(fcflags) \$(lf90include) \$(lf90libinclude) -o \$@ driver.o \$(objs) \$(llibs) ) > /dev/null
 endef
-define modmove
- ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 || \$(mfiles) > \$(modlist_file)
+define modpath
  ${PREFIX}if test ! -d $comp_modules; then echo "creating folder $comp_modules" ; fi
  ${PREFIX}if test ! -d $comp_modules; then mkdir $comp_modules ; fi
+endef
+define modmove
+ ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 || \$(mfiles) > \$(modlist_file)
  ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 ||  mv *.mod $comp_modules
 endef
 define dircheck

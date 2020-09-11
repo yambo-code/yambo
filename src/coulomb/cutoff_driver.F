@@ -46,7 +46,8 @@ subroutine cutoff_driver(q)
  use pars,          ONLY:SP,schlen,lchlen
  use vec_operate,   ONLY:v_is_zero
  use com,           ONLY:msg
- use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp,cut_description,ws_cutoff
+ use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp,cut_description,ws_cutoff,&
+                         cut_is_slab
  use stderr,        ONLY:STRING_split,STRING_pack
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY,NONE
  use parser_m,      ONLY:parser
@@ -57,7 +58,7 @@ subroutine cutoff_driver(q)
  !
  ! Work Space
  !
- logical ::cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab,is_cut(3)
+ logical ::cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut(3)
  integer ::i1,i2,i3,i4
  real(SP)::length(3)
  logical ::l_col_test

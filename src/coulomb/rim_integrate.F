@@ -21,33 +21,33 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab,iort,ipar1,ipar2,mode,f_coeff)
+subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,mode)
  !
  use pars,          ONLY:SP,DP,pi
  use vec_operate,   ONLY:iku_v_norm,c2a
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,RIM_qpg,q0_def_norm,&
-&                        RIM_is_diagonal,RIM_ng,q_pt,RIM_anisotropy,nqibz,b,RIM_W_is_diagonal,RIM_W
+&                        RIM_is_diagonal,RIM_ng,q_pt,RIM_anisotropy,nqibz,b,RIM_W_is_diagonal,&
+&                        RIM_W,f_coeff,cut_is_slab,idir
  use D_lattice,     ONLY:alat
  !
  implicit none
  integer  :: iq,N_out,N_out_G
  real(SP) :: qr(RIM_n_rand_pts,3),em1_anis(3),G_radii
  character(1)                :: mode
- real, optional :: f_coeff(5,nqibz,RIM_ng,RIM_ng)
+ !real, optional :: f_coeff(5,nqibz,RIM_ng,RIM_ng)
  ! 
  ! Work Space
  !
- integer  :: i1,i1min,i2,i2max,i3,iort,ipar1,ipar2,n_idx,n_max
+ integer  :: i1,i1min,i2,i2max,i3,n_idx,n_max
  real(SP) :: v1(3),v2(3),factorial,G_circ,vslab,func, g1_2D_mod, g2_2D_mod
  real(DP) :: r1,rfac,RIM_acc(RIM_ng),RIM_acc_anis
- logical  :: cut_is_slab
  real(SP) :: slab_vz,slab_vplane,slab_vz1,slab_vplane1,slab_vz2,slab_vplane2,lcut,pre_factor,v_2D_mod
  !
  rfac=8.*k_grid_uc_vol/real(N_out)/(2.*pi)**3. 
  !
  if (cut_is_slab) then
    !
-   lcut=alat(iort)/2.
+   lcut=alat(idir(1))/2.
    !
    !The 2D sampling requires a different normalization
    rfac=0.5*rfac
@@ -83,10 +83,10 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
          !
          !Evaluate v_slab
          !kz
-         slab_vz=(q_pt(iq,iort)+qr(i3,iort)+g_vec(i1,iort) )*2.*pi/alat(iort)
+         slab_vz=(q_pt(iq,idir(1))+qr(i3,idir(1))+g_vec(i1,idir(1)) )*2.*pi/alat(idir(1))
          !kxy
-         slab_vplane=sqrt(((q_pt(iq,ipar1)+qr(i3,ipar1)+g_vec(i1,ipar1))*2.*pi/alat(ipar1))**2+&
-&                 ((q_pt(iq,ipar2)+qr(i3,ipar2)+g_vec(i1,ipar2))*2.*pi/alat(ipar2))**2)
+         slab_vplane=sqrt(((q_pt(iq,idir(2))+qr(i3,idir(2))+g_vec(i1,idir(2)))*2.*pi/alat(idir(2)))**2+&
+&                 ((q_pt(iq,idir(3))+qr(i3,idir(3))+g_vec(i1,idir(3)))*2.*pi/alat(idir(3)))**2)
          !     
          pre_factor=1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)
          if (abs(pre_factor)<1.E-5_SP) pre_factor=1.E-5_SP        
@@ -119,13 +119,13 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
          !
          !Evaluate v_slab
          !kz
-         slab_vz1=(q_pt(iq,iort)+qr(i3,iort)+g_vec(i1,iort) )*2.*pi/alat(iort)
-         slab_vz2=(q_pt(iq,iort)+qr(i3,iort)+g_vec(i2,iort) )*2.*pi/alat(iort)
+         slab_vz1=(q_pt(iq,idir(1))+qr(i3,idir(1))+g_vec(i1,idir(1)) )*2.*pi/alat(idir(1))
+         slab_vz2=(q_pt(iq,idir(1))+qr(i3,idir(1))+g_vec(i2,idir(1)) )*2.*pi/alat(idir(1))
          !kxy
-         slab_vplane1=sqrt(((q_pt(iq,ipar1)+qr(i3,ipar1)+g_vec(i1,ipar1))*2.*pi/alat(ipar1))**2+&
-&                 ((q_pt(iq,ipar2)+qr(i3,ipar2)+g_vec(i1,ipar2))*2.*pi/alat(ipar2))**2)
-         slab_vplane2=sqrt(((q_pt(iq,ipar1)+qr(i3,ipar1)+g_vec(i2,ipar1))*2.*pi/alat(ipar1))**2+&
-&                 ((q_pt(iq,ipar2)+qr(i3,ipar2)+g_vec(i2,ipar2))*2.*pi/alat(ipar2))**2)
+         slab_vplane1=sqrt(((q_pt(iq,idir(2))+qr(i3,idir(2))+g_vec(i1,idir(2)))*2.*pi/alat(idir(2)))**2+&
+&                 ((q_pt(iq,idir(3))+qr(i3,idir(3))+g_vec(i1,idir(3)))*2.*pi/alat(idir(3)))**2)
+         slab_vplane2=sqrt(((q_pt(iq,idir(2))+qr(i3,idir(2))+g_vec(i2,idir(2)))*2.*pi/alat(idir(2)))**2+&
+&                 ((q_pt(iq,idir(3))+qr(i3,idir(3))+g_vec(i2,idir(3)))*2.*pi/alat(idir(3)))**2)
          !
          if (slab_vplane1 < q0_def_norm) slab_vplane1 = q0_def_norm
          if (slab_vplane2 < q0_def_norm) slab_vplane2 = q0_def_norm
@@ -192,7 +192,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
  !
  if (cut_is_slab .and. mode == "x") then
    ! Here put the integral over the circle
-   G_circ = .2_SP*k_grid_uc_vol/((2._SP*pi)/alat(iort))
+   G_circ = .2_SP*k_grid_uc_vol/((2._SP*pi)/alat(idir(1)))
    G_radii = sqrt(G_circ/pi)
    n_max = 15
    factorial = 1._SP
@@ -227,10 +227,10 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
        if (cut_is_slab) then
          !Evaluate v_slab
          !kz
-         slab_vz=qr(i1,iort)*2.*pi/alat(iort)
+         slab_vz=qr(i1,idir(1))*2.*pi/alat(idir(1))
          !kxy
-         slab_vplane=sqrt((qr(i1,ipar1)*2.*pi/alat(ipar1))**2+&
-&                 (qr(i1,ipar2)*2.*pi/alat(ipar2))**2)
+         slab_vplane=sqrt((qr(i1,idir(2))*2.*pi/alat(idir(2)))**2+&
+&                 (qr(i1,idir(3))*2.*pi/alat(idir(3)))**2)
          !     
          pre_factor=1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)
          if (abs(pre_factor)<1.E-5_SP) pre_factor=1.E-5_SP        
@@ -271,10 +271,10 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab
      !
      !Evaluate v_slab
      !kz
-     slab_vz=qr(i1,iort)*2.*pi/alat(iort)
+     slab_vz=qr(i1,idir(1))*2.*pi/alat(idir(1))
      !kxy
-     slab_vplane=sqrt((qr(i1,ipar1)*2.*pi/alat(ipar1))**2+&
-&                 (qr(i1,ipar2)*2.*pi/alat(ipar2))**2)
+     slab_vplane=sqrt((qr(i1,idir(2))*2.*pi/alat(idir(2)))**2+&
+&                 (qr(i1,idir(3))*2.*pi/alat(idir(3)))**2)
      !     
      pre_factor=1.-exp(-slab_vplane*lcut)      
      vslab=4._DP*pi*pre_factor

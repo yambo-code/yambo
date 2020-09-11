@@ -26,7 +26,7 @@ subroutine interpolate_W(X,Xw,q)
  use pars,          ONLY:SP,pi,zero_dfl,schlen
  use com,           ONLY:msg, warning
  use R_lattice,     ONLY:bz_samp,RIM_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
-&                        cut_geometry,RIM_W_is_diagonal, RIM_W
+&                        RIM_W_is_diagonal,RIM_W,f_coeff,cut_is_slab,idir
  use memory,        ONLY:MEM_err
  use vec_operate,   ONLY:c2a,v_is_zero,v_norm
  use X_m,           ONLY:X_mat,X_t,X_alloc
@@ -44,14 +44,12 @@ subroutine interpolate_W(X,Xw,q)
  ! Work Space
  !
  integer     :: iq1,ig1,iq2,ig2,iq,ig,igr,igc,ig2max
- integer     :: iq_ibz,is,find,nn,i,iq_to_start,idm,ng_tmp,iort
+ integer     :: iq_ibz,is,find,nn,i,iq_to_start,idm,ng_tmp
  integer     :: idx_q(5,q%nibz,RIM_ng),idx_G(5,q%nibz,RIM_ng),idx_is(5,q%nibz,RIM_ng)
  real(SP)    :: G_max_ibz(q%nibz),f_func(5),lcut
  complex(SP) :: vX(5,q%nibz,RIM_ng,RIM_ng)
- real(SP)    :: f_coeff(5,q%nibz,RIM_ng,RIM_ng)
  real(SP)    :: qpG(3,5),delta_q(3,2),qpG_trial(3),v1(3),delta_q_cc(3),gr_2d_mod,gc_2d_mod
  integer     :: ID, io_err, ng_save
- logical     :: cut_is_slab,is_cut(3)
  character(schlen) :: str_piece(5)
  integer, external :: io_X
  integer, external :: io_RIM_W
@@ -65,6 +63,7 @@ subroutine interpolate_W(X,Xw,q)
  !
  debug = .true.
  call k_ibz2bz(q,'a',.true.)
+ allocate(f_coeff(5,q%nibz,RIM_ng,RIM_ng),stat=MEM_err)
  !
 !!! AG DBG
  if (debug) then
@@ -315,27 +314,6 @@ subroutine interpolate_W(X,Xw,q)
  !Calculation of the interpolation coefficients
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !
- !Here, we need to check if we want to perform the RIM
- !of bare_qpg or the RIM of cutoff_slab
- !
- call STRING_split(cut_geometry,str_piece)
- !
- cut_is_slab=trim(str_piece(1))=='slab'
- !
- ! Cutoffed directions
- !
- is_cut(1)=index(str_piece(2),'x')/=0.or.index(str_piece(2),'X')/=0
- is_cut(2)=index(str_piece(2),'y')/=0.or.index(str_piece(2),'Y')/=0
- is_cut(3)=index(str_piece(2),'z')/=0.or.index(str_piece(2),'Z')/=0
- !
- if(is_cut(1)) then
-   iort=1
- elseif(is_cut(2)) then
-   iort=2
- elseif(is_cut(3)) then
-   iort=3
- endif
- !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=io_RIM_W(ID)
  !
@@ -373,7 +351,7 @@ subroutine interpolate_W(X,Xw,q)
         if (igr == 1 .and. igc == 1) then
           call warning('The 4 nearest neighbours around q = 0 ASSUMED to be equivalent!')
           f_coeff(1,iq1,igr,igc) = vX(1,iq1,igr,igc)*(4*pi) / &
-&                                  ( bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2*pi*alat(iort))**2 )
+&                                  ( bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2*pi*alat(idir(1)))**2 )
           !
           do nn=2,5
             call c2a(b,delta_q(:,MOD(nn+1,2)+1),delta_q_cc,'ka2c')
@@ -430,7 +408,7 @@ subroutine interpolate_W(X,Xw,q)
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !
  if (io_err/=0) then
-   call rim('c',cut_is_slab,is_cut,f_coeff)
+   call rim('c')
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=io_RIM_W(ID)
  end if
@@ -444,7 +422,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  use pars,          ONLY:SP,pi,zero_dfl,schlen,DP
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,RIM_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
-&                        cut_geometry,RIM_W,q0_def_norm
+&                        RIM_W,q0_def_norm,cut_is_slab,idir
  use memory,        ONLY:MEM_err
  use vec_operate,   ONLY:c2a,v_is_zero,v_norm,iku_v_norm
  use X_m,           ONLY:X_mat,X_t,X_alloc
@@ -464,7 +442,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  ! Work Space
  !
  integer  :: out_unit_W_x_intp=200, out_unit_W_x_num=300,out_unit_W_y_intp=400, out_unit_W_y_num=500
- integer  :: Np=1001, i, ig1, ig2, iort, ipar1, ipar2, iqibz, is, gmax, nn, igr, igc, pos
+ integer  :: Np=1001, i, ig1, ig2, iqibz, is, gmax, nn, igr, igc, pos
  real(SP) :: dq, q_sampl(3), func, lcut,slab_vz1, slab_vplane1,slab_vz2, &
 &            slab_vplane2, W_sampl,pre_factor,r1,vslab
  real(SP) :: g1_2D_mod, g2_2D_mod, qpG1(3), qpG2(3), idx_q1, q_out(3)
@@ -473,10 +451,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  dq = 1./(Np-1)
  q_sampl = (/0.,0.,0./)
  gmax = 13
- iort = 3
- ipar1 = 1
- ipar2 = 2
- lcut=alat(iort)/2._SP
+ lcut=alat(idir(1))/2._SP
  !
  !Print to file interpolated W data
  do igr=1,gmax
@@ -510,13 +485,6 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
        !
        g1_2D_mod = sqrt(g_vec(ig1,1)**2+g_vec(ig1,2)**2)
        g2_2D_mod = sqrt(g_vec(ig2,1)**2+g_vec(ig2,2)**2)
-       !
-       call msg('r', 'iqibz = ', iqibz)
-       call msg('r', 'is = ', is)
-       call msg('r', 'ig1 = ', ig1)
-       call msg('r', 'ig2 = ', ig2)
-       call msg('r', "qpG1 = ", qpG1(:))
-       call msg('r', "qpG2 = ", qpG2(:))
        !
        !-----------------------------
        !Print to file numerical data-
@@ -561,14 +529,14 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
          end if
          !r1=iku_v_norm(qpG1+q_sampl)*iku_v_norm(qpG2+q_sampl)
          !kz
-         slab_vz1=(q_sampl(iort)+qpG1(iort))*2.*pi/alat(iort)
-         slab_vz2=(q_sampl(iort)+qpG2(iort))*2.*pi/alat(iort)
+         slab_vz1=(q_sampl(idir(1))+qpG1(idir(1)))*2.*pi/alat(idir(1))
+         slab_vz2=(q_sampl(idir(1))+qpG2(idir(1)))*2.*pi/alat(idir(1))
          !kxy
-         slab_vplane1=sqrt(((q_sampl(ipar1)+qpG1(ipar1))*2.*pi/alat(ipar1))**2+&
-&                          ((q_sampl(ipar2)+qpG1(ipar2))*2.*pi/alat(ipar2))**2)
+         slab_vplane1=sqrt(((q_sampl(idir(2))+qpG1(idir(2)))*2.*pi/alat(idir(2)))**2+&
+&                          ((q_sampl(idir(3))+qpG1(idir(3)))*2.*pi/alat(idir(3)))**2)
          !     
-         slab_vplane2=sqrt(((q_sampl(ipar1)+qpG2(ipar1))*2.*pi/alat(ipar1))**2+&
-&                          ((q_sampl(ipar2)+qpG2(ipar2))*2.*pi/alat(ipar2))**2)
+         slab_vplane2=sqrt(((q_sampl(idir(2))+qpG2(idir(2)))*2.*pi/alat(idir(2)))**2+&
+&                          ((q_sampl(idir(3))+qpG2(idir(3)))*2.*pi/alat(idir(3)))**2)
          !
          if (slab_vplane1 < q0_def_norm) slab_vplane1 = q0_def_norm
          if (slab_vplane2 < q0_def_norm) slab_vplane2 = q0_def_norm
@@ -583,7 +551,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
            if (ig1 == 1 .and. ig2 == 1) then
              !
              if (iku_v_norm(q_sampl) < 1.e-5) then
-               W_sampl = f_coeff(1,iqibz,ig1,ig2)*(2*pi*alat(iort))**2
+               W_sampl = f_coeff(1,iqibz,ig1,ig2)*(2*pi*alat(idir(1)))**2
                q_out = qpG1-g_vec(ig1,:)+q_sampl
                call c2a(b_in=b,v_in=q_out,mode='ki2c') 
                write(out_unit_W_y_intp,"(I5, E15.6, E15.6, E15.6, E15.6, E15.6, E15.6)") &

@@ -121,7 +121,8 @@ module R_lattice
  integer :: RIM_W_ng
  integer :: RIM_W_n_rand_pts
  logical :: RIM_W_is_diagonal
- real(SP),   allocatable :: RIM_W(:,:,:) 
+ real(SP),   allocatable :: RIM_W(:,:,:)
+ real(SP),   allocatable :: f_coeff(:,:,:,:)
  !
  ! Coulomb (including Cutoff)
  !
@@ -137,6 +138,8 @@ module R_lattice
  real(SP)                :: cyl_vr_save
  real(SP)                :: cyl_vz_save
  real(SP)                :: cyl_zz_save
+ logical                 :: cut_is_slab
+ integer                 :: idir(3)
  !
  ! BZ map by direction
  !

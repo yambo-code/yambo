@@ -54,7 +54,7 @@ subroutine col_driver(bare_NG,q)
  use D_lattice,     ONLY:DL_vol
  use R_lattice,     ONLY:d3q_factor,RIM_is_diagonal,RIM_qpg,bare_qpg,&
 &                        nqibz,g_vec,q_pt,nqbz,RIM_ng,RIM_n_rand_pts,&
-&                        bz_samp,q_norm,cutoff_presets,cut_geometry
+&                        bz_samp,q_norm,cutoff_presets,cut_geometry,cut_is_slab,idir
  use wave_func,     ONLY:wf_ng
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
 #include<memory.h>
@@ -63,7 +63,7 @@ subroutine col_driver(bare_NG,q)
  !
  ! Work Space
  !
- logical          :: l_RandQpts,cut_is_slab,is_cut(3)
+ logical          :: l_RandQpts,is_cut(3)
  integer          :: ig,iq,ID,io_err
  integer, external:: io_RIM
  !
@@ -116,6 +116,20 @@ subroutine col_driver(bare_NG,q)
  is_cut(2)=index(str_piece(2),'y')/=0.or.index(str_piece(2),'Y')/=0
  is_cut(3)=index(str_piece(2),'z')/=0.or.index(str_piece(2),'Z')/=0
  !
+ if(is_cut(1)) then
+   idir(1) = 1
+   idir(2) = 2
+   idir(3) = 3
+ elseif(is_cut(2)) then
+   idir(1) = 2
+   idir(2) = 1
+   idir(3) = 3
+ elseif(is_cut(3)) then
+   idir(1) = 3
+   idir(2) = 2
+   idir(3) = 1
+ endif
+ !
  if (l_rim) then
    !
    call section('*','Coloumb potential Random Integration (RIM)')
@@ -127,7 +141,7 @@ subroutine col_driver(bare_NG,q)
      if (cut_is_slab) then
        call msg('nr','Performing RIM of v_slab')
      endif
-     call rim("x",cut_is_slab,is_cut)
+     call rim("x")
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
      io_err=io_RIM(ID)
    endif

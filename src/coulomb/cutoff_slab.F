@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine cutoff_slab(q,is_cut)
+ subroutine cutoff_slab(q)
  !
  use com,           ONLY:msg,of_open_close
  use pars,          ONLY:SP,pi,schlen
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:bz_samp,g_vec,bare_qpg,q0_def_norm,k_grid_uc_vol,&
-&                        d3q_factor,RIM_qpg,q_norm
+&                        d3q_factor,RIM_qpg,q_norm,idir
  use com,           ONLY:error
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
@@ -38,34 +38,13 @@
  ! Work Space
  ! 
  type(bz_samp) :: q
- logical       :: is_cut(3)
- integer       :: ipar1,ipar2,iort
  integer       :: iq,ig,n_idx,n_max
  real(SP)      :: slab_vz,slab_vplane,lcut,pre_factor,R_circle,Sup,factorial
  type(PP_indexes) ::px
  !
  call PP_indexes_reset(px)
 
-
- if(is_cut(1).and.is_cut(2)) call error('Check slab normal direction')
- if(is_cut(2).and.is_cut(3)) call error('Check slab normal direction')
- if(is_cut(1).and.is_cut(3)) call error('Check slan normal direction')
- !
- if(is_cut(1)) then
-   iort=1
-   ipar1=2
-   ipar2=3
- elseif(is_cut(2)) then
-   iort=2
-   ipar1=1
-   ipar2=3
- elseif(is_cut(3)) then
-   iort=3
-   ipar1=2
-   ipar2=1
- endif
-
- lcut=alat(iort)/2.
+ lcut=alat(idir(1))/2.
 
  call PARALLEL_index(px,(/q%nibz,wf_ng/))
  !
@@ -74,12 +53,12 @@
      !
      ! kz
      !
-     slab_vz=(q%pt(iq,iort)+g_vec(ig,iort) )*2.*pi/alat(iort)
+     slab_vz=(q%pt(iq,idir(1))+g_vec(ig,idir(1)) )*2.*pi/alat(idir(1))
      !
      !kxy
      !
-     slab_vplane=sqrt(((q%pt(iq,ipar1)+g_vec(ig,ipar1))*2.*pi/alat(ipar1))**2+&
-&                 ((q%pt(iq,ipar2)+g_vec(ig,ipar2))*2.*pi/alat(ipar2))**2)   
+     slab_vplane=sqrt(((q%pt(iq,idir(2))+g_vec(ig,idir(2)))*2.*pi/alat(idir(2)))**2+&
+&                 ((q%pt(iq,idir(3))+g_vec(ig,idir(3)))*2.*pi/alat(idir(3)))**2)   
      !            
      !Regularization of the potential
      !
@@ -103,7 +82,7 @@
    n_max = 15
    factorial = 1._SP
    pre_factor = 0._SP
-   Sup = d3q_factor/((2._SP*pi)/alat(iort))
+   Sup = d3q_factor/((2._SP*pi)/alat(idir(1)))
    R_circle = sqrt(Sup/pi)
    do n_idx=1,n_max
      factorial = factorial*n_idx

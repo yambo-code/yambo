@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine rim(mode,cut_is_slab,is_cut,f_coeff)
+subroutine rim(mode)
  !
  use pars,          ONLY:SP,pi,DP,schlen
  use com,           ONLY:msg,error
@@ -33,13 +33,12 @@ subroutine rim(mode,cut_is_slab,is_cut,f_coeff)
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
 &                        RIM_n_rand_pts,RIM_ng,RIM_qpg,RIM_W_is_diagonal,&
-&                        RIM_id_epsm1_reference,RIM_anisotropy,q_pt,RIM_W
+&                        RIM_id_epsm1_reference,RIM_anisotropy,q_pt,RIM_W,&
+&                        cut_is_slab,idir
  use timing_m,      ONLY:timing
 #include<memory.h>
  !
  character(1)       :: mode
- logical            :: cut_is_slab,is_cut(3)
- real(SP), optional :: f_coeff(5,nqibz,RIM_ng,RIM_ng)
  !
  ! Work Space
  !
@@ -51,7 +50,6 @@ subroutine rim(mode,cut_is_slab,is_cut,f_coeff)
  !
  real(SP)  :: first_neighbour(26,3)
  integer   :: N_out,N_in,N_out_G,rep_factor,inn1,inn2,inn3,ic
- integer       :: ipar1,ipar2,iort
  real(SP)  :: v1(3),v2(3),qr(RIM_n_rand_pts,3),v1_norm(2)
  character(12)      :: ch(3)
  integer            :: iseed(8)
@@ -71,25 +69,6 @@ subroutine rim(mode,cut_is_slab,is_cut,f_coeff)
  if (RIM_id_epsm1_reference<0.or.RIM_id_epsm1_reference>3) RIM_id_epsm1_reference=0
  if (RIM_id_epsm1_reference==0) em1_anis=0.
  if (RIM_id_epsm1_reference>0 ) em1_anis=em1_anis/em1_anis(RIM_id_epsm1_reference)
- !
- !v_slab setup
- if(is_cut(1).and.is_cut(2)) call error('Check slab normal direction')
- if(is_cut(2).and.is_cut(3)) call error('Check slab normal direction')
- if(is_cut(1).and.is_cut(3)) call error('Check slan normal direction')
- !
- if(is_cut(1)) then
-   iort=1
-   ipar1=2
-   ipar2=3
- elseif(is_cut(2)) then
-   iort=2
-   ipar1=1
-   ipar2=3
- elseif(is_cut(3)) then
-   iort=3
-   ipar1=2
-   ipar2=1
- endif
  !
  ! Filling the small BZ with the random grid
  !===========================================
@@ -140,7 +119,7 @@ subroutine rim(mode,cut_is_slab,is_cut,f_coeff)
      !
      do ic=1,3
       !
-      if (ic == iort) then
+      if (ic == idir(1)) then
         v2(ic) = 0._SP
       else
         v2(ic) = 2.*dlaran(iseed(4:))-1
@@ -211,7 +190,7 @@ subroutine rim(mode,cut_is_slab,is_cut,f_coeff)
    if (.not.px%element_1D(iq)) cycle
    !
    if (mode == "x") then
-     call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab,iort,ipar1,ipar2,mode)
+     call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,mode)
      !
      if (iq==1) then
        call msg('r','Gamma point circle area         [au]:',G_circ)
@@ -227,7 +206,7 @@ subroutine rim(mode,cut_is_slab,is_cut,f_coeff)
    else
      !
      call msg('r', "Evaluating integrals for q = ", iq)
-     call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,cut_is_slab,iort,ipar1,ipar2,mode,f_coeff)
+     call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,mode)
      !
    end if
    call live_timing(steps=1)

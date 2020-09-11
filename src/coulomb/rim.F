@@ -37,9 +37,9 @@ subroutine rim(mode,cut_is_slab,is_cut,f_coeff)
  use timing_m,      ONLY:timing
 #include<memory.h>
  !
- character(1)                :: mode
- logical                     :: cut_is_slab,is_cut(3) 
- real, optional :: f_coeff(5,nqibz,RIM_ng,RIM_ng)
+ character(1)       :: mode
+ logical            :: cut_is_slab,is_cut(3)
+ real(SP), optional :: f_coeff(5,nqibz,RIM_ng,RIM_ng)
  !
  ! Work Space
  !

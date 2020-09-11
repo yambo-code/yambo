@@ -91,8 +91,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Reset & checks
  !
+!!! AG DBG
  open (unit=out_unit_QP_Sc_G,file="QP_Sc_G.dat",action="write",status="replace")
  write(out_unit_QP_Sc_G,*) "band  kpoint  head  diag_Gz  diag_G  wing_Gz  wing_G  body_Gz body_G"
+!!! AG DBG
+
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp)
  i_qp_to_start=1
@@ -464,7 +467,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !
            dp_dummy = 0.0_DP
            !
-!$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:dp_dummy)
+!$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp,g1_mod_2D,g2_mod_2D,l_RIM_W_g), reduction(+:dp_dummy)
            do ig2=1,X%ng
              !
              g2_mod_2D = sqrt(g_vec(ig2,1)**2+g_vec(ig2,2)**2)
@@ -477,7 +480,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                !
                ! RIM W support
                !
-               l_RIM_W_g=all((/l_RIM_W,ig1<=RIM_W_ng,ig2<=RIM_W_ng/))
+               l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
                if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
                !
                if (l_RIM_W_g) then
@@ -491,6 +494,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i_w))-E_kmq+PPA_E))
                !
                dp_dummy=dp_dummy+cmplx(ctmp,kind=DP)
+               !
+!!! AG DBG
+#define _DEBUG_RIM_W
+#ifdef _DEBUG_RIM_W
                !
                !Collect the Sc in QP_Sc_G
                !
@@ -513,25 +520,35 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                  ! Wing Gxy == 0
                  else if ((ig1 == 1 .and. g2_mod_2D < 1.e-5).or.(ig2 == 1 .and. g1_mod_2D < 1.e-5)) then
                    !
+                   !$omp critical
                    QP_Sc_G(i_qp,1,4) = QP_Sc_G(i_qp,1,4) + cmplx(ctmp,kind=SP)
+                   !$omp end critical
                    !
                  ! Wing Gxy /= 0
                  else if ((ig1 == 1 .and. g2_mod_2D > 1.e-5).or.(ig2 == 1 .and. g1_mod_2D > 1.e-5)) then
                    !
+                   !$omp critical
                    QP_Sc_G(i_qp,1,5) = QP_Sc_G(i_qp,1,5) + cmplx(ctmp,kind=SP)
+                   !$omp end critical
                    !
                  ! Body Gxy == 0
                  else if (ig1 /= ig2 .and. g1_mod_2D < 1.e-5 .and. g2_mod_2D < 1.e-5) then
                    !
+                   !$omp critical
                    QP_Sc_G(i_qp,1,6) = QP_Sc_G(i_qp,1,6) + cmplx(ctmp,kind=SP)
+                   !$omp end critical
                    !
                  ! Body Gxy /= 0
                  else
                    !
+                   !$omp critical
                    QP_Sc_G(i_qp,1,7) = QP_Sc_G(i_qp,1,7) + cmplx(ctmp,kind=SP)
+                   !$omp end critical
                    !
                  end if
                end if
+#endif
+!!! AG DBG
                !
              enddo
            enddo
@@ -659,6 +676,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call PP_redux_wait(QP_Sc_G)
  call timing('GW(REDUX)',OPR='stop')
  !
+!!! AG DBG
  do i_qp=1,QP_n_states
    write(out_unit_QP_Sc_G,"(I5, I5, F15.6, F15.6, F15.6, F15.6, F15.6, F15.6, F15.6, F15.6)") &
 &                       QP_table(i_qp,1), QP_table(i_qp,3),&
@@ -669,5 +687,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  end do
  !
  close(out_unit_QP_Sc_G)
+!!! AG DBG
  !
 end subroutine

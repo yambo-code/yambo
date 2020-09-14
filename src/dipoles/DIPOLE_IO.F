@@ -29,9 +29,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use R_lattice,  ONLY:bz_samp
  use electrons,  ONLY:levels,n_sp_pol
  use DIPOLES,    ONLY:DIPOLE_t,DIP_v,use_covariant_approach
- use IO_m,       ONLY:io_control,manage_action,VERIFY,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
+ use IO_m,       ONLY:io_control,manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
 &                     OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
- use parallel_m, ONLY:master_cpu,PP_redux_wait,PAR_K_scheme
+ use parallel_m, ONLY:master_cpu,PP_redux_wait,PAR_K_scheme,PP_bcast
  !
  implicit none
  !
@@ -46,7 +46,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  logical           :: write_header,     read_header,     check,reading,writing,&
 &                     write_header_ovlp,read_header_ovlp
- integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,ik_mem,ik,i_sp_pol,i_fragment,iv,ic
+ integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_READ_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps
  !
@@ -62,12 +62,14 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  ID=0
  ID_S=0
+ io_err=0
+ !
 #if defined _PAR_IO
  write_header  =       PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing
  read_header   =(.not.(PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing)).or.reading.or.check
 #else
  write_header  =(      master_cpu.and.writing )
- read_header   =(.not.(master_cpu.and.writing)).or.reading.or.check
+ read_header   =.not.writing.and.(reading.or.check)
 #endif
  write_header_ovlp  =write_header.and.use_covariant_approach
  read_header_ovlp   = read_header.and.use_covariant_approach
@@ -83,16 +85,28 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    io_err=io_err+io_Overlaps(Dip,ID_S)
  endif
  !
+ ! Master node bcast matrix dimensions for the other cores
+ !
+ if(writing) then
+   call PP_bcast(Dip%ib,0)
+   call PP_bcast(Dip%db_ib,0)
+   call PP_bcast(Dip%ib_lim,0)
+   call PP_bcast(Dip%db_ib_lim,0) 
+ endif
+ !
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
+ !
+ IO_MODE=VERIFY
+ if((read_header.or.read_header_ovlp).and.writing) IO_MODE=DUMP
  !
  if(read_header) then
    call msg('s','[DIP] Checking dipoles header ')
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=IO_MODE,ID=ID)
    io_err=io_DIPOLES(Dip,ID)
  endif
  if(read_header_ovlp) then
    call msg('s','[DIP] Checking overlaps header ')
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=IO_MODE,ID=ID_S)
    io_err=io_err+io_Overlaps(Dip,ID_S)
  endif
  !

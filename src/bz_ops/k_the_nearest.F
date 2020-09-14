@@ -53,7 +53,8 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
  k_the_nearest=0
  if (present(i_err)) i_err=-1
  k_distance_loc=10000._SP
- k_distance_min=iku_v_norm(k_iku_zero)
+ !k_distance_min=iku_v_norm(k_iku_zero)
+ k_distance_min=0._SP                    !to get the same mapping of devel-andreaM
  !
  local_flag=.FALSE.
  if (present(ROTATE_k_ref)) local_flag=ROTATE_k_ref
@@ -62,7 +63,7 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
    do i1=1,n_k
      v=k_ref-k(i1,:)
      call k2bz(v)
-     k_distance_tmp=iku_v_norm(v,inside_bz=.true.)
+     k_distance_tmp=iku_v_norm(v)
      if(present(k_dist)) k_dist(i1)=k_distance_tmp
      if ( k_distance_tmp<abs(k_distance_loc-k_distance_min) ) then
        k_distance_loc=k_distance_tmp
@@ -86,18 +87,8 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
    !
    do is=1,nsym
      v=k_rotated(:,is)-k(i1,:)
-     !
-     ! 2020/07/16: these lines should be replaced with call k2bz(v)
-     !
-     if(.not.present(k_symm)) then
-       call c2a(v_in=v,mode='ki2a')
-       v(1)=v(1)-nint(v(1))     
-       v(2)=v(2)-nint(v(2))     
-       v(3)=v(3)-nint(v(3))   
-       call c2a(v_in=v,mode='ka2i')
-     endif
-     !
-     k_distance_tmp=iku_v_norm(v,inside_bz=.true.)
+     call k2bz(v)
+     k_distance_tmp=iku_v_norm(v)
      if(present(k_dist)) k_dist(i1)=min(k_dist(i1),k_distance_tmp)
      if ( k_distance_tmp<abs(k_distance_loc-k_distance_min) ) then
        k_distance_loc=k_distance_tmp

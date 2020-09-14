@@ -73,6 +73,8 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  call LINEAR_ALGEBRA_WS_reset(WS)
  !
- call timing('SERIAL_HERMITIAN_diagonalization',OPR='stop')
+ if(.not.(l_nl_optics.or.l_real_time)) then
+   call timing('SERIAL_HERMITIAN_diagonalization',OPR='stop')
+ endif
  !
 end subroutine

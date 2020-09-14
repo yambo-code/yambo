@@ -28,8 +28,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use IO_m,       ONLY:io_DIP
  use R_lattice,  ONLY:bz_samp
  use electrons,  ONLY:levels,n_sp_pol
+ use DIPOLES,    ONLY:DIPOLE_t,DIP_v,use_covariant_approach
  use DIPOLES,    ONLY:DIPOLE_t,use_covariant_approach
- use IO_m,       ONLY:io_control,manage_action,VERIFY,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
+ use IO_m,       ONLY:io_control,manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
 &                     OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use parallel_m, ONLY:master_cpu,PP_redux_wait,PAR_K_scheme,PP_bcast
  !
@@ -46,7 +47,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  logical           :: write_header,     read_header,     check,reading,writing,&
 &                     write_header_ovlp,read_header_ovlp
- integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,ik_mem,ik,i_sp_pol,i_fragment,iv,ic
+ integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps
  !
@@ -96,14 +97,17 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  !
+ IO_MODE=VERIFY
+ if((read_header.or.read_header_ovlp).and.writing) IO_MODE=DUMP
+ !
  if(read_header) then
    call msg('s','[DIP] Checking dipoles header ')
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=IO_MODE,ID=ID)
    io_err=io_DIPOLES(Dip,ID)
  endif
  if(read_header_ovlp) then
    call msg('s','[DIP] Checking overlaps header ')
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=IO_MODE,ID=ID_S)
    io_err=io_err+io_Overlaps(Dip,ID_S)
  endif
  !

@@ -251,6 +251,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
 !       !
 !     endif
      !
+#define _DARIO
+ !
+#ifdef _DARIO
      write(str,*) iqibz
      str = adjustl(str)
      open(10,file = 'mpa.ER_fragment_'//trim(str))
@@ -266,6 +269,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      write(11,*) 'matrix_size = ', X%ng
      write(11,*)
      write(11,*) 'err(size,size) ='
+#endif
      !
      poles_f=0
      !
@@ -285,45 +289,21 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          if (ig1==ig2) MPA_R_mat(ig1,ig2,:) = real(MPA_R_mat(ig1,ig2,:),SP)
          !
-         !if (real(X_mat(ig1,ig2,1)/X_mat(ig1,ig2,2))<=1._SP) then
-         !  MPA_E_mat(ig1,ig2,:)= 1.0_SP-(0._SP,1._SP)*epsilon(1._SP)
-         !  MPA_R_mat(ig1,ig2,:)=0._SP
-         !  MPA_R_mat(ig1,ig2,1)=X_mat(ig1,ig2,1)/2._SP
-         !else
-         !  call mpa_RE_solver(X%mpa_npoles, MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,:), MPA_E_mat(ig1,ig2,:))
-         !endif
-         ! 
-         !if (iqbz==1 .and. ig2==1 .and.(ig1==1 .or. ig1==2 ) ) then
-           !write(*,*)
-           !write(*,*) "G=",ig1
-           !write(*,*) "mpaE=",MPA_E_mat(ig1,ig2,:) 
-           !write(*,*) "mpaR=",MPA_R_mat(ig1,ig2,:)
-           !write(*,*) "error=",  err_func_np(X%mpa_npoles, MPA_R_mat(ig1,ig2,:), &
-           !                                 MPA_E_mat(ig1,ig2,:), MPA_freqs, MPA_Xo)
-         !endif
-         ! 
+#ifdef _DARIO
          write(11,*) 'ER lost digits: ', edigits, rdigits
          write(11,*) 'error: ', err_func_np(X%mpa_npoles, MPA_R_mat(ig1,ig2,:), &
-         !                                      MPA_E_mat(ig1,ig2,:), MPA_freqs, X_mat(ig1,ig2,1:Xw%n_freqs)*isc%gamp(ig1,ig2))
-                                       MPA_E_mat(ig1,ig2,:), MPA_freqs*(1._SP,0._SP), X_mat(ig1,ig2,1:Xw%n_freqs)*isc%gamp(ig1,ig2))
+                                MPA_E_mat(ig1,ig2,:), MPA_freqs*(1._SP,0._SP), X_mat(ig1,ig2,1:Xw%n_freqs)*isc%gamp(ig1,ig2))
+#endif
          !    
          pole_p=0
          do i_np=1,X%mpa_npoles
            !
            if(aimag(MPA_E_mat(ig1,ig2,i_np)) > 0._SP ) pole_p=pole_p+1
-           !MPA_R_mat(ig1,ig2,i_np)=MPA_R_mat(ig1,ig2,i_np)*isc%gamp(ig1,ig2) 
-           !
-           !if( isnan(real(MPA_E_mat(ig1,ig2,i_np),SP)) .or. isnan(aimag(MPA_E_mat(ig1,ig2,i_np))) .or. &
-           !    isnan(real(MPA_R_mat(ig1,ig2,i_np),SP)) .or. isnan(aimag(MPA_R_mat(ig1,ig2,i_np))) ) then
-           !  write(*,*) "G=",ig1,"G'=",ig2, "i_p=",i_np
-           !  write(*,*) "mpaE= ", MPA_E_mat(ig1,ig2,i_np)
-           !  write(*,*) "mpaR= ", MPA_R_mat(ig1,ig2,i_np)
-           !  write(*,*)
-           !endif
            ! 
+#ifdef _DARIO
            write(10,*) real(MPA_E_mat(ig1,ig2,i_np),DP),aimag(MPA_E_mat(ig1,ig2,i_np)), &
                        real(MPA_R_mat(ig1,ig2,i_np)/isc%gamp(ig1,ig2),DP),aimag(MPA_R_mat(ig1,ig2,i_np)/isc%gamp(ig1,ig2)), ','  
-           !
+#endif
          enddo
          !
          if(pole_p>0) poles_f=poles_f+1

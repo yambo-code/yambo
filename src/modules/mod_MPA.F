@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DALV
+! Authors (see AUTHORS file for details): DALV, AF
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -71,7 +71,9 @@ contains
  end subroutine
 
  subroutine mpa_RE_1p_solver(z, x, R, E) 
+   !
    ! analytical form of the 1 pole solution
+   !
    implicit none
    !
    complex(SP),  intent(in)     :: z(2)
@@ -92,15 +94,21 @@ contains
   ! endif
    ! 
 !--------------------------------------------------------
-!   R =  x(1)*x(2)* (z(1)**2- z(2)**2 )  !/(x(1) - x(2))
-!   E = (x(1)*z(1)**2  -  x(2)*z(2)**2 ) !/(x(1) - x(2))
-!   !
-!   if(abs(x(1)-x(2))>epsilon(1._SP)) then
-!     E=E/(x(1) - x(2))
-!     R=R/(x(1) - x(2))
-!   endif
-!   E = sqrt(E)
-!   if(abs(E)>epsilon(1._SP)) R = -R/(2._SP*E)
+   !
+   R =  x(1)*x(2)* (z(1)**2- z(2)**2 )  !/(x(1) - x(2))
+   E = (x(1)*z(1)**2 -x(2)*z(2)**2 )    !/(x(1) - x(2))
+   !
+   if(abs(x(1)-x(2))>epsilon(1._SP)) then
+     E=E/(x(1) -x(2))
+     R=R/(x(1) -x(2))
+   else
+     !
+     ! XXX TODO: fall back to addressed here
+     !
+   endif
+   E = sqrt(E)
+   if(abs(E)>epsilon(1._SP)) R = -R/(2._SP*E)
+   !
 !--------------------------------------------------------
 !   if (real(x(1)/x(2))<=1._SP) then
 !      E = 1._SP
@@ -117,16 +125,17 @@ contains
 !     E = real(E)-(0._SP,0.000000000000001_SP)
 !   endif
 !   !
- !
-   if (real(x(1)/x(2))<=1._SP) then
-      E = 1._SP
-      R = -x(1)/2._SP
-   else
-     E =aimag(z(2))/real(sqrt(x(1)/x(2)-1._SP))
-     R = -x(1)/2._SP*E
-     !E = abs(real(E))-(0._SP,1._SP)*abs(aimag(E))
-     !E = E-(0._SP,0.000000000000001_SP)
-   endif
+!
+!--------------------------------------------------------
+!   if (real(x(1)/x(2))<=1._SP) then
+!      E = 1._SP
+!      R = -x(1)/2._SP
+!   else
+!     E =aimag(z(2))/real(sqrt(x(1)/x(2)-1._SP))
+!     R = -x(1)/2._SP*E
+!     !E = abs(real(E))-(0._SP,1._SP)*abs(aimag(E))
+!     !E = E-(0._SP,0.000000000000001_SP)
+!   endif
    !
  end subroutine mpa_RE_1p_solver
  !
@@ -332,13 +341,11 @@ contains
    integer                         :: i, k, info, ind(np)    
    complex(SP)                     :: rwork(2*np), work(2*np)
    ! 
-   !Wm=maxval(abs(w),np)
-   ! 
-   anorm=abs(2._SP*E(i)/(w(1)**2 - E(1)**2))
+   anorm=abs(2._SP*E(1)/(w(1)**2 -E(1)**2))
    do k = 1, np
      R(k) = xq(k)
      do i = 1, np
-       A(k,i) = 2._SP*E(i)/(w(k)**2 - E(i)**2)
+       A(k,i) = 2._SP*E(i)/(w(k)**2 -E(i)**2)
        if(abs(A(k,i))>anorm) anorm=abs(A(k,i))
      enddo
    enddo 
@@ -431,6 +438,15 @@ contains
      Companion(i,np)  = -b(i)/Wm**(i-1)
      Companion(i,i-1) = 1._SP
    enddo
+
+!! XXX
+!WRITE(0,*) "b", b
+!WRITE(0,*) "Wm", Wm
+!WRITE(0,*) "companion", np
+!do i = 1, np
+!  write(0,"(8f15.9)") Companion(:,i)
+!enddo
+
 #ifdef _DOUBLE
    call zgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
    !call zgeevx('N','N','N','N',np,Companion,np,Q,VL,1,VR,1,ILO,IHI,S,ABNRM,RCE,RCV,work,2*np,rwork,info)
@@ -440,6 +456,10 @@ contains
 #endif
    ! 
    do i=1,np
+     !
+     ! here we need to force real(E) to be positive.
+     ! This is because of the way the residue integral is performed, later.
+     !
      E(i) = sqrt(E(i))
      !if(real(E(i),SP)<0._SP) then 
      !  E(i) = -E(i)
@@ -465,8 +485,8 @@ contains
    integer      :: i
    !  
    select case(np)
-    ! case(1)
-    !   call mpa_RE_1p_solver(w, x, R(1), E(1))
+      case(1)
+       call mpa_RE_1p_solver(w, x, R(1), E(1))
      !case(2)
      !  call mpa_RQ_2p_solver(w, x, R, E)
      !case(3)

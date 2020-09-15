@@ -146,6 +146,7 @@ subroutine RT_databases_IO(E,DO_IT)
  if (io_GF) then
    !
    if(NE_i_time==NE_i_start_time) then
+     !
      if(.not.SAVE_G_history) IO_ACT=OP_WR_CL
      if(     SAVE_G_history) IO_ACT=OP_APP_CL
      call io_control(ACTION=IO_ACT,COM=REP, SEC=(/1/),ID=ID(5))
@@ -190,8 +191,8 @@ subroutine RT_databases_IO(E,DO_IT)
      !
      if(PAR_G_k_range(1)>0.and.HEAD_k_CPU) then
        IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
-       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/3/),ID=ID(5),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-       io_G=io_RT_components('G',ID(5))
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/3/),ID=ID(3),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+       io_G=io_RT_components('G',ID(3))
      endif
      !
 #else

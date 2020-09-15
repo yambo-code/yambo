@@ -68,7 +68,7 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_rest_info,unlim,l_G,TYP)
  call io_variable_elemental(ID,I0=TYP%N)
  !
  if (l_G .and. l_real_time) then
-   if(first_IO.or.read_is_on(ID)) then
+   if (first_IO.or.read_is_on(ID)) then
      dim_name="G_MEM_steps"
      call def_variable_bulk(ID,"MEMORY_TIME_POINTS",2,(/G_MEM_steps/),IP+100,dim_name,silent=.true.)
    endif

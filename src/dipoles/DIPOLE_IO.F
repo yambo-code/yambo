@@ -135,7 +135,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      if ( .not.PAR_K_scheme%IND_ibz%element_1D(ik)             ) cycle
      if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing ) cycle
 #if !defined _PAR_IO
-     IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol)
+     IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol,PAR_K_scheme%IND_ibz)
 #endif
      call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID)
      io_err=io_DIPOLES(Dip,ID)
@@ -160,7 +160,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
        if ((.not.PAR_K_scheme%IND_bz%element_1D(ik)).and.writing) cycle
        if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing) cycle
 #if !defined _PAR_IO
-       IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol)
+       IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol,PAR_K_scheme%IND_ibz)
 #endif
        call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID_S)
        io_err=io_err+io_Overlaps(Dip,ID_S)

@@ -424,6 +424,7 @@ contains
        if(abs(M2(j,i))>anorm) anorm=abs(M2(j,i))
      enddo
    enddo
+   !
 #ifdef _DOUBLE
    call zgecon('I', np, M2, np, anorm, rcond(2), work, rwork, info)
    call zgesv(np, 1, M2, np, ind, b, np, info)
@@ -438,15 +439,7 @@ contains
      Companion(i,np)  = -b(i)/Wm**(i-1)
      Companion(i,i-1) = 1._SP
    enddo
-
-!! XXX
-!WRITE(0,*) "b", b
-!WRITE(0,*) "Wm", Wm
-!WRITE(0,*) "companion", np
-!do i = 1, np
-!  write(0,"(8f15.9)") Companion(:,i)
-!enddo
-
+   !
 #ifdef _DOUBLE
    call zgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
    !call zgeevx('N','N','N','N',np,Companion,np,Q,VL,1,VR,1,ILO,IHI,S,ABNRM,RCE,RCV,work,2*np,rwork,info)
@@ -482,20 +475,20 @@ contains
    complex(SP),  intent(out)    :: R(np), E(np)
    real(SP),     intent(out)    :: edigits(2),rdigits
    ! 
-   integer      :: i
-   !  
    select case(np)
-      case(1)
-       call mpa_RE_1p_solver(w, x, R(1), E(1))
-     !case(2)
-     !  call mpa_RQ_2p_solver(w, x, R, E)
-     !case(3)
-     !  call mpa_RQ_3p_solver(w, x, R, E)
-     case default
-       call mpa_Q_solver(np, w**2, x, E, edigits)
-       call mpa_R_solver(np, w, x, R, E, rdigits)
-       edigits=log10(1._SP/edigits)
-       rdigits=log10(1._SP/rdigits)
+   case(1)
+     call mpa_RE_1p_solver(w, x, R(1), E(1))
+   !case(2)
+   !  call mpa_RQ_2p_solver(w, x, R, E)
+   !case(3)
+   !  call mpa_RQ_3p_solver(w, x, R, E)
+   case default
+     !
+     call mpa_Q_solver(np, w**2, x, E, edigits)
+     call mpa_R_solver(np, w, x, R, E, rdigits)
+     edigits=log10(1._SP/edigits)
+     rdigits=log10(1._SP/rdigits)
+     !
    end select
    ! 
  end subroutine mpa_RE_solver

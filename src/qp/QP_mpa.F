@@ -273,7 +273,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      poles_f=0
      !
-     !$omp parallel default(shared), private(ig1,ig2,pole_p,i_np,MPA_freqs,MPA_Xo), &
+     !$omp parallel default(shared), private(ig1,ig2,pole_p,i_np,MPA_Xo), &
      !$omp &        reduction(+:poles_f)
      !
      YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))

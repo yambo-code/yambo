@@ -44,10 +44,7 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_rest_info,unlim,l_G,TYP)
  character(schlen)            :: dim_name(1)
  logical                      :: first_IO
  !
- first_IO=TYP%first_IO(2)
-#if !defined _PAR_IO
- if (trim(TYP%name)=="GF") first_IO=.TRUE.
-#endif
+ first_IO=TYP%first_IO(2).or.trim(TYP%name)=="GF"
  !
  if (write_is_on(ID)) TYP%last_point=NE_i_time
  !

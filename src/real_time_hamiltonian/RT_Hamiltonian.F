@@ -242,9 +242,9 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
        ik_E_FineGd=ik_RT-ik+sum(RT_ibz_dupl(:ik))
        do ib=RT_bands(1),RT_bands(2)
          if(      l_RT_uses_E_FineGd.and.ik_RT/=RT_ibz_coo(ik,1)) then
-           Ho_plus_Sigma(ib,ib,ik_RT,1)=E_reference%E_FineGd(ib,ik_E_FineGd,1)
+           Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)+E_reference%E_FineGd(ib,ik_E_FineGd,1)
          else
-           Ho_plus_Sigma(ib,ib,ik_RT,1)=E_reference%E(ib,ik,1)
+           Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)+E_reference%E(ib,ik,1)
          endif
        enddo
      enddo

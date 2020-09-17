@@ -56,11 +56,11 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_use_Hxc_collisions
  use R_lattice,      ONLY:bz_samp,nXkibz
- use hamiltonian,    ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc
+ use hamiltonian,    ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc,E_reference
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,REF_V_xc_sc, &
 &                         rho_reference,magn_reference,RT_Vnl_xc,         &
 &                         l_RT_RWA,eval_HARTREE,eval_DFT,RTibz,RT_potential,      &
-&                         RT_bands,RT_nbands,RT_levels,    &
+&                         RT_bands,RT_nbands,    &
 &                         l_update_SOC,l_velocity_gauge_corr
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
@@ -80,7 +80,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! Work Space
  !
- integer                  :: ik,ik_RT,ib
+ integer                  :: ik,ik_RT,ib,iE_fg
  logical                  :: l_H_contains_Hartree
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: V_scf(:),V_scf_grad(:,:),V_xc_mat(:,:,:)
@@ -240,7 +240,12 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      !
      do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
        do ib=RT_bands(1),RT_bands(2)
-         Ho_plus_Sigma(ib,ib,ik_RT,1)=RT_levels%E(ib,ik_RT,1)
+         if (ik_RT/=RTibz%k_range(ik,1)) then
+           iE_fg=RTibz%E_map(ik_RT)
+           Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)+E_reference%FG%E(ib,iE_fg,1)
+         else
+           Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)+E_reference%E(ib,ik,1)
+         endif
        enddo
      enddo
      !

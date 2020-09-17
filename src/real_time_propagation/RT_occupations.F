@@ -56,14 +56,14 @@ subroutine RT_occupations(dG)
    !
    if (.not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
    !
-   if (l_RT_rotate_DM.and.(RT_do_it('OUT').or.RT_do_it('OBS'))) then
+   if (l_RT_rotate_DM.and.(RT_do_it('OUT').or.RT_do_it('CARR'))) then
      G_rot=G_lesser_reference(:,:,ik)+dG(:,:,ik)
      call OBS_rotate(H_rotation(:,:,ik,1),G_rot,RT_nbands,1)
      G_ref=G_lesser_reference(:,:,ik)
      call OBS_rotate(H_rotation(:,:,ik,1),G_ref,RT_nbands,1)
    endif
    !
-   if (l_RT_rotate_DM.and.(RT_do_it('OUT').or.RT_do_it('OBS'))) then
+   if (l_RT_rotate_DM.and.(RT_do_it('OUT').or.RT_do_it('CARR'))) then
      do ib=RT_bands(1),RT_bands(2)
        RT_E_occupations(ib,ik)= aimag(G_rot(ib,ib))
        RT_H_occupations(ib,ik)=-aimag(G_rot(ib,ib))+spin_occ

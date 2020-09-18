@@ -36,35 +36,31 @@ integer function io_MPA(X,Xw,ID)
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_MULTIPOLE,IO_NOT_ALLOWED,&
 &                        io_fragment,IO_OUTDATED_DB,frag_MULTIPOLE,&
-&                        IO_NO_DATABASE,io_mode,DUMP,&
+&                        IO_NO_DATABASE,io_mode,DUMP,io_extension,&
 &                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
  use mpa_m,         ONLY:MPA_E_mat,MPA_R_mat,MPA_freqs,MPA_alloc
-#if defined _PAR_IO
- use X_m,           ONLY:X_par
- use IO_m,          ONLY:io_unit,netcdf_call,close_is_on,io_resetable,io_MULTIPOLE,&
-&                        io_netcdf_var,io_action,OP_WR_CL
- use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_Q_index
-#endif
  !
 #include<memory.h>
+ !
  type(X_t)   :: X
  type(w_samp):: Xw
  integer     :: ID
  !
  !Work Space
  !
- integer             ::sec_size,i1,iq,i_err,io_com_save,io_err
- logical             ::different_db_RL_order,perform_IO
- character (schlen)  ::ch,db_desc
- character (2)       ::local_XC_KIND
+ integer           :: sec_size,i1,iq,i_err,io_com_save,io_err
+ logical           :: different_db_RL_order,perform_IO
+ character(schlen) :: ch,db_desc
+ character(2)      :: local_XC_KIND
  real(SP),   allocatable :: RL_vecs_disk(:,:)
  complex(SP),allocatable :: X_on_disk(:,:)
    !
- integer,    external    :: variables_MPA
+ integer, external :: variables_MPA
+
  !
- if (io_MULTIPOLE) call timing('io_MPA',OPR='start')
+ ! checks & return
  !
  if (.not.io_MULTIPOLE) then
    io_MPA=IO_NOT_ALLOWED
@@ -72,9 +68,11 @@ integer function io_MPA(X,Xw,ID)
    return
  endif
  !
+ call timing('io_MPA',OPR='start')
+ !
  different_db_RL_order=.false.
  !
- db_desc='mp' !I get an error when I use a name other than 'mp', for example "MPA_E-R_mat"
+ io_extension(ID)='mpa_ER'
  !
 #if defined _PAR_IO
  perform_IO=PAR_COM_X_WORLD%CPU_id==0.or.read_is_on(ID)
@@ -83,25 +81,17 @@ integer function io_MPA(X,Xw,ID)
 #endif
  !
  if(perform_IO) then
-   io_MPA=io_connect(desc=trim(db_desc),type=2,ID=ID) 
-   !if (io_MPA/=0) call error('it is here')
+   io_MPA=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID) 
    if (io_MPA/=0) goto 1
  endif
  !
-
  if (any((/io_sec(ID,:)==1/)).and.perform_IO) then
    !
    ! Header
    !
-   local_XC_KIND="ER"
-   io_MPA=io_header(ID,QPTS=.true.,R_LATT=.false.,WF=.false.,T_EL=.false.,XC_KIND=local_XC_KIND,&
-&                    CUTOFF=.false.,GAUGE=.false.,FRAG=frag_MULTIPOLE)
+   io_MPA=io_header(ID,QPTS=.true.,R_LATT=.false.,WF=.false.,&
+&                   FRAG=frag_MULTIPOLE)
    if (io_MPA/=0) goto 1
-   !
-   if (.not.ver_is_gt_or_eq(ID,revision=308)) then
-     io_MPA=IO_OUTDATED_DB
-     goto 1
-   endif
    !
    ! Global Descriptions
    !=====================
@@ -130,11 +120,8 @@ integer function io_MPA(X,Xw,ID)
  ! Manage OP_IF_START_and_RD_CL_IF_END
  !
  call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
-#if defined _PAR_IO
- call io_fragment(ID,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
-#else
+ !
  call io_fragment(ID,i_fragment=iq,ierr=io_err)
-#endif
  !
  !  type(X_t)    ::X(5)  x s d p m
  !
@@ -148,15 +135,11 @@ integer function io_MPA(X,Xw,ID)
    !            must go through the definitions of the variables although only one is writing
    !
    io_com_save=io_com(ID)
-#if defined _PAR_IO
-   call def_variable_elemental(ID,trim(ch),sec_size,SP,1,par_io_kind='independent')
-#else
    call def_variable_elemental(ID,trim(ch),sec_size,SP,1)
-#endif
    !
    if (perform_IO) then
-     call io_variable_elemental(ID,           VAR=" :: Current Q-pt index     :",I0=iq)
-     call io_variable_elemental(ID,           VAR=" :: Number of poles  :",I0=Xw%n_freqs/2,CHECK=.true.,OP=(/"=="/))
+     call io_variable_elemental(ID,  VAR=" :: Current Q-pt index     :",I0=iq)
+     call io_variable_elemental(ID,  VAR=" :: Number of poles  :",I0=Xw%n_freqs/2,CHECK=.true.,OP=(/"=="/))
      !
    endif
    !
@@ -194,41 +177,41 @@ integer function io_MPA(X,Xw,ID)
    !
    ch="MPA_E_Q_"//trim(intc(iq))
    !
-#if defined _PAR_IO
-   if(write_is_on(ID)) then
-     !
-     call def_variable_bulk(ID,trim(ch),1,shape(MPA_E_par(1)%blc(:,:,:)),SP,par_io_kind='collective')
-     call  io_variable_bulk(ID,1,C3=MPA_E_par(1)%blc(:,:,:),IPOS=(/1,MPA_E_par(1)%rows(1),MPA_E_par(1)%cols(1),1/))
-     !
-   else if(read_is_on(ID)) then
-#endif
+!#if defined _PAR_IO
+!   if(write_is_on(ID)) then
+!     !
+!     call def_variable_bulk(ID,trim(ch),1,shape(MPA_E_par(1)%blc(:,:,:)),SP,par_io_kind='collective')
+!     call  io_variable_bulk(ID,1,C3=MPA_E_par(1)%blc(:,:,:),IPOS=(/1,MPA_E_par(1)%rows(1),MPA_E_par(1)%cols(1),1/))
+!     !
+!   else if(read_is_on(ID)) then
+!#endif
      !
      call def_variable_bulk(ID,trim(ch),1,(/2,shape(MPA_E_mat)/),SP)
      call  io_variable_bulk(ID,1,C3=MPA_E_mat,IPOS=(/1,1,1,1/))
      !
-#if defined _PAR_IO
-   endif
-#endif
+!#if defined _PAR_IO
+!   endif
+!#endif
    !
    ! residues @iq
    !
    ch="MPA_R_Q_"//trim(intc(iq))
    !
-#if defined _PAR_IO
-   if(write_is_on(ID)) then
-     !
-     call def_variable_bulk(ID,trim(ch),1,shape(MPA_R_par(1)%blc(:,:,:)),SP,par_io_kind='collective')
-     call  io_variable_bulk(ID,1,C3=MPA_R_par(1)%blc(:,:,:),IPOS=(/1,MPA_R_par(1)%rows(1),MPA_R_par(1)%cols(1),1/))
-     !
-   else if(read_is_on(ID)) then
-#endif
+!#if defined _PAR_IO
+!   if(write_is_on(ID)) then
+!     !
+!     call def_variable_bulk(ID,trim(ch),1,shape(MPA_R_par(1)%blc(:,:,:)),SP,par_io_kind='collective')
+!     call  io_variable_bulk(ID,1,C3=MPA_R_par(1)%blc(:,:,:),IPOS=(/1,MPA_R_par(1)%rows(1),MPA_R_par(1)%cols(1),1/))
+!     !
+!   else if(read_is_on(ID)) then
+!#endif
      !
      call def_variable_bulk(ID,trim(ch),1,(/2,shape(MPA_R_mat)/),SP)
      call  io_variable_bulk(ID,1,C3=MPA_R_mat,IPOS=(/1,1,1,1/))
      !
-#if defined _PAR_IO
-   endif
-#endif
+!#if defined _PAR_IO
+!   endif
+!#endif
    !
    if (read_is_on(ID) .and. different_db_RL_order) then 
      call error('[io_MPA] different_db_RL_order    not implemented')
@@ -253,7 +236,7 @@ integer function io_MPA(X,Xw,ID)
  !
 1 call io_disconnect(ID)
  !
- if (io_MULTIPOLE) call timing('io_MPA',OPR='stop')
+ call timing('io_MPA',OPR='stop')
  !
 end function
 !
@@ -273,24 +256,20 @@ integer function variables_MPA(ID,local_description,X)
  ! Work Space
  !
  integer             ::i_local_desc,sec_size
- logical             ::local_long_gauge
  character(schlen)   ::X_label,MPA_label
  !
  i_local_desc=0
  local_description=' '
- MPA_label=' '
- if (ver_is_gt_or_eq(ID,revision=955)) MPA_label="MPA_"
+ MPA_label='MPA_'
  !
+ call io_elemental(ID,VAR=trim(MPA_label)//"PARS_1",VAR_SZ=2,MENU=0)
+ i_local_desc=i_local_desc+1
  call io_elemental(ID,DB_I0=X%ng_db,&
-&     VAR=" Matrix size          :",I0=X%ng,CHECK=.true.,OP=(/"<="/),&
+&     VAR="X matrix size         :",I0=X%ng,CHECK=.true.,OP=(/"<="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  i_local_desc=i_local_desc+1
- call io_elemental(ID,VAR=trim(MPA_label)//"npoles",I0=X%mpa_npoles,MENU=0)
- i_local_desc=i_local_desc+1
- call io_elemental(ID,VAR=trim(MPA_label)//"MPA_E_mat",I0=4)
- i_local_desc=i_local_desc+1
- call io_elemental(ID,VAR=trim(MPA_label)//"MPA_R_mat",I0=4)
- i_local_desc=i_local_desc+1
+ call io_elemental(ID,&
+&     VAR="MPA npoles            :",I0=X%mpa_npoles,MENU=0)
  !
  n_MPA_descs=i_local_desc
  !

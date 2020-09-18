@@ -38,7 +38,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
+ use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,OP_APP_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
  &                       io_RESPONSE,io_MULTIPOLE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
@@ -174,12 +174,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  allocate(W_(QP_dSc_steps))
  allocate(dc(QP_dSc_steps),stat=alloc_err)
  !
- ! MPA DB I/O
- !
-! call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID2)
-! io_err=io_MPA(X,Xw,ID2)
-! if (io_err<0.and.io_MULTIPOLE) call error('Incomplete and/or broken MPA/Poles and Residues database')
- !
  ! MPA workspace
  !
  if (io_MULTIPOLE) call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/)) 
@@ -233,26 +227,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Poles and Residues
      !
-     ! I/O MPA
      !
-!     if (io_MULTIPOLE) then
-!       !
-!       if (iqbz==iq_to_start) then
-!         call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID2)
-!       else if (q%nbz==1) then
-!         call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID2)
-!       else if (iqbz> iq_to_start) then
-!         call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2)
-!       endif
-!       !
-!       io_err=io_MPA(X,Xw,ID2)
-!       !
-!       call deliver_IO_error_message(io_err,'MPA/PolRes',STOP_it=.TRUE.)
-!       !
-!     endif
-     !
-#define _DARIO
- !
+!#define _DARIO
 #ifdef _DARIO
      write(str,*) iqibz
      str = adjustl(str)
@@ -319,6 +295,21 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !$omp end parallel
      !
      X_is_TR_rotated=.false.
+     !
+     !
+     ! I/O MPA
+     !
+     if (io_MULTIPOLE) then
+       !
+       if(iqibz==1) then
+         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=ID2)
+         io_err=io_MPA(X,Xw,ID2)
+       endif
+       !
+       call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),  ID=ID2)
+       io_err=io_MPA(X,Xw,ID2)
+       !
+     endif
      !
    endif
    !

@@ -30,8 +30,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use electrons,  ONLY:levels,n_sp_pol
  use DIPOLES,    ONLY:DIPOLE_t,DIP_v,use_covariant_approach
  use IO_m,       ONLY:io_control,manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
-&                     OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
- use parallel_m, ONLY:master_cpu,PP_redux_wait,PAR_K_scheme,PP_bcast
+&                     OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END,io_file
+ use parallel_m, ONLY:master_cpu,PP_redux_wait,PAR_K_scheme,PP_bcast,myid,ncpu
  !
  implicit none
  !
@@ -46,7 +46,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  logical           :: write_header,     read_header,     check,reading,writing,&
 &                     write_header_ovlp,read_header_ovlp
- integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic
+ integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic,i_cpu
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps
  !
@@ -136,9 +136,16 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing ) cycle
 #if !defined _PAR_IO
      IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol,PAR_K_scheme%IND_ibz)
+     do i_cpu=1,ncpu
+       if (i_cpu==myid+1) then
 #endif
-     call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID)
-     io_err=io_DIPOLES(Dip,ID)
+         call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID)
+         io_err=io_DIPOLES(Dip,ID)
+#if !defined _PAR_IO
+       endif
+       call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
+     enddo
+#endif
    enddo
  enddo
 #if defined _PAR_IO
@@ -161,9 +168,16 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
        if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing) cycle
 #if !defined _PAR_IO
        IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol,PAR_K_scheme%IND_ibz)
+       do i_cpu=1,ncpu
+         if (i_cpu==myid+1) then
 #endif
-       call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID_S)
-       io_err=io_err+io_Overlaps(Dip,ID_S)
+           call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID_S)
+           io_err=io_err+io_Overlaps(Dip,ID_S)
+#if !defined _PAR_IO
+       endif
+       call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
+     enddo
+#endif
      enddo
    enddo
 #if defined _PAR_IO

@@ -36,6 +36,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
 &                         k_grid_uc_vol,nkibz,nkbz,nXkibz,nXkbz,d3k_factor,&
 &                         bz_samp,g_vec,ng_in_shell,Xk_grid_new_mapping
  use zeros,          ONLY:k_rlu_zero
+ !
 #include<memory.h>
  !
  type(bz_samp)::k,Xk
@@ -123,8 +124,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    ! In any case the deep checks in bz_samp_indexes should prevent them.
    !
    ! Andrea (29/12/2011). The 2D surface of the tutorials still does not work. And this is due to 
-   ! the change introduced in 2010. Therefore I try to use the method that yields the smalles
-   ! norm
+   ! the change introduced in 2010. Therefore I try to use the method that yields the smallest
+   ! norm.
    !
    do i2=1,2
      !

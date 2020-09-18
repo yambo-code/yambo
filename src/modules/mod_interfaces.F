@@ -132,21 +132,19 @@ module interfaces
    end subroutine el_density_of_states
    !
 #if defined _SLEPC && !defined _SLEPC_OFF
-   subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
+   subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
      !
      use pars,           ONLY:SP,schlen
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscmat.h>
-     !
-     Mat                         :: A            ! matrix to diagonalize of stype from slepc
+     use petscmatdef,    ONLY:tmat
+     implicit none
+     Mat                         :: M_slepc      ! matrix to diagonalize of stype from slepc
      integer                     :: n_eig        ! number of eigenvalues to compute
-     !real(SP),                   :: target_energy! energy near where to find the eigenvalues
-     !real(SP),                   :: slepc_tol    ! tolerance of the iterative solver
      character(schlen)           :: extraction   ! extraction method for the eigenvalues
-     ! integer,optional            :: slepc_ncv    ! dimension of the subspace
-     PetscReal                   :: target_energy
-     PetscReal                   :: slepc_tol
-     PetscFortranInt             :: slepc_ncv
+     PetscScalar                 :: target_energy! energy near where to find the eigenvalues
+     PetscReal                   :: slepc_tol    ! tolerance of the iterative solver
+     PetscFortranInt             :: slepc_ncv    ! dimension of the subspace
      complex(SP)                 :: V_right(:,:) ! right eigenvalues
      complex(SP),  optional      :: V_left(:,:)  ! left eigenvalues
      complex(SP),  optional      :: E_cmpl(:)    ! complex eigenvalues
@@ -301,7 +299,7 @@ module interfaces
      integer     ,optional:: MAP(N)
    end subroutine QP_DBs_merge
    !
-   integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a)
+   integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode)
      use pars,       ONLY:SP
      use electrons,  ONLY:levels
      use R_lattice,  ONLY:bz_samp
@@ -310,6 +308,7 @@ module interfaces
      character(*)      :: DB1_path,what
      real(SP),optional :: db1_a(3,3)
      real(SP),optional :: db1_alat(3) 
+     integer ,optional :: COM_mode
    end function
    !
    subroutine QP_state_print(qp)

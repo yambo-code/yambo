@@ -3014,7 +3014,7 @@ CONTAINS
       IF ( PRESENT( nr3 ) )     nr3 = nr3_
       !
     END SUBROUTINE qexml_read_rho
-
+    !
     logical function fmt_is_qexml(dirname)
        implicit none
        character(len=*) :: dirname

@@ -79,7 +79,7 @@ subroutine RT_relaxation(E,k,q,Time)
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
 &                         REF_lifetime,FIRST_step,l_initial_equilibrium,RT_is_statically_dephased,&
-&                         RT_nk,RT_all2ibz,EE_prefactor,EP_prefactor,EP_abs_prefactor,&
+&                         RT_nk,EE_prefactor,EP_prefactor,EP_abs_prefactor,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,SAVED_times,ADD_to_saved_values,&
 &                         RT_is_dynamically_dephased,l_RT_relax_time_approx,l_RT_eval_lifetimes
  use timing_m,       ONLY:timing

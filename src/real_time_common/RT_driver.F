@@ -340,7 +340,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    !
    ! Time step update
    !=======================
-   call RT_time_step_update( )
+   call RT_time_step_update( E )
    !
    ! GPL_EXCLUDE_END
    !
@@ -414,7 +414,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
        !
        call PP_redux_wait()
        !
-       if (NE_i_time>=LT_pump_steps.and.LT_pump) then
+       if (NE_i_time>LT_pump_steps+1.and.LT_pump) then
          LT_pump=.FALSE.
          call live_timing( )
          call live_timing('[RT] Dynamics (pump-free region) ',NE_steps-LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP)

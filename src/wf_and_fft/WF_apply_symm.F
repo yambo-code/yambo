@@ -41,7 +41,7 @@ subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  !
  complex(SP), pointer     DEV_ATTR :: WF_p(:,:,:)
  integer  :: i_wf
- integer  :: ifft,i_spinor,isymm
+ integer  :: ifft,isymm
 
  i_wf=WF%index(isc(1),isc(2),isc(4))
  !

@@ -24,7 +24,7 @@
 subroutine rim(mode)
  !
  use pars,          ONLY:SP,pi,DP,schlen
- use com,           ONLY:msg,error
+ use com,           ONLY:msg
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
  use LIVE_t,        ONLY:live_timing
@@ -56,7 +56,11 @@ subroutine rim(mode)
  real(DP), external :: dlaran
  character(schlen) :: msg_dum(2)
  ! 
- call timing('RIM',OPR='start')
+ if (mode == "x") then
+   call timing('RIM',OPR='start')
+ else 
+   call timing('RIM-W',OPR='start')
+ end if
  !
  call PP_indexes_reset(px)
  !
@@ -115,22 +119,9 @@ subroutine rim(mode)
  call live_timing('Random points',RIM_n_rand_pts/rep_factor)
  loop: do while(.not.N_in==RIM_n_rand_pts+1)
    !
-   if (cut_is_slab) then
-     !
-     do ic=1,3
-      !
-      if (ic == idir(1)) then
-        v2(ic) = 0._SP
-      else
-        v2(ic) = 2.*dlaran(iseed(4:))-1
-      endif
-      !
-     enddo
-   else  
-     do ic=1,3
-       v2(ic)=2.*dlaran(iseed(4:))-1
-     enddo
-   endif
+   do ic=1,3
+     v2(ic)=2.*dlaran(iseed(4:))-1
+   enddo
    N_out=N_out+1
    !
    ! From rlu in the k_grid_b units (v2) to Cartesian (v1)
@@ -148,28 +139,20 @@ subroutine rim(mode)
    enddo
    qr(N_in,:)=v1*alat(:)/2./pi
    !
-   !Write the random number
-   !
-   !write(msg_dum(2) , *) N_in
-   !msg_dum(1) = "v2("//trim(msg_dum(2))//") = ("
-   !write(msg_dum(2) , *) v2(1)
-   !msg_dum(1) = trim(msg_dum(1))//","//trim(msg_dum(2))
-   !write(msg_dum(2) , *) v2(2)
-   !msg_dum(1) = trim(msg_dum(1))//","//trim(msg_dum(2))
-   !write(msg_dum(2) , *) v2(3)
-   !msg_dum(1) = trim(msg_dum(1))//","//trim(msg_dum(2)//")")
-   !call msg('r', msg_dum(1))
-   !
    N_in=N_in+1
    if (mod(N_in,rep_factor)==0) call live_timing(steps=1)
  enddo loop
+ !
+ !Only the 2D-BZ is sampled for 2D systems
+ if (cut_is_slab) qr(:,idir(1)) = 0._SP
+ !
  call live_timing()
  call msg('r','Points outside the sBZ  :',N_out)
  !  
  !Integrated RL VOLUME 
  !
  RIM_RL_vol=8.*k_grid_uc_vol*real(RIM_n_rand_pts)/real(N_out)*real(nqbz)
- if (cut_is_slab) RIM_RL_vol = RIM_RL_vol/2._SP
+ !if (cut_is_slab) RIM_RL_vol = RIM_RL_vol/2._SP
  call msg('r', 'RL volume           [au]:',RL_vol)
  call msg('rn','Integrated volume   [au]:',RIM_RL_vol)
  !
@@ -190,7 +173,7 @@ subroutine rim(mode)
    if (.not.px%element_1D(iq)) cycle
    !
    if (mode == "x") then
-     call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,mode)
+     call rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
      !
      if (iq==1) then
        call msg('r','Gamma point circle area         [au]:',G_circ)
@@ -206,7 +189,7 @@ subroutine rim(mode)
    else
      !
      call msg('r', "Evaluating integrals for q = ", iq)
-     call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ,mode)
+     call rim_integrate_w(iq,qr,N_out,N_out_G)
      !
    end if
    call live_timing(steps=1)
@@ -225,6 +208,10 @@ subroutine rim(mode)
  !
  call PP_indexes_reset(px)
  !
- call timing('RIM',OPR='stop')
+ if (mode == "x") then
+   call timing('RIM',OPR='stop')
+ else 
+   call timing('RIM-W',OPR='stop')
+ end if
  !
 end subroutine

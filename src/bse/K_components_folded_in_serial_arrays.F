@@ -106,25 +106,25 @@ subroutine K_components_folded_in_serial_arrays(iq)
        if (allocated(BS_T_grp(i_g)%Z)) BSS_eh_Z(H_pos(1))=BS_T_grp(i_g)%Z(i_c)
        if (allocated(BS_T_grp(i_g)%W)) BSS_eh_W(H_pos(1))=BS_T_grp(i_g)%W(i_c)
        !
-       BSS_dipoles(H_pos(1))=BS_T_grp(i_g)%dipoles_R(i_c)
-       if (BS_K_coupling) BSS_dipoles(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A(i_c)
+       BSS_dipoles(H_pos(1))=BS_T_grp(i_g)%dipoles_R(1,i_c)
+       if (BS_K_coupling) BSS_dipoles(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A(1,i_c)
        !
        if (BS_perturbative_SOC) BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_c)
        !
 #if defined _KERR
        if (l_kerr) then
-         BSS_dipoles_kerr(H_pos(1))=BS_T_grp(i_g)%dipoles_R_kerr(i_c)
-         if (BS_K_coupling) BSS_dipoles_kerr(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_kerr(i_c)
+         BSS_dipoles_kerr(H_pos(1))=BS_T_grp(i_g)%dipoles_R(2,i_c)
+         if (BS_K_coupling) BSS_dipoles_kerr(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A(2,i_c)
        endif
        !
        if (l_magnons) then
-         BSS_dipoles_magnons(2,H_pos(1))=BS_T_grp(i_g)%dipoles_R_mag(2,i_c)
-         if (BS_K_coupling) BSS_dipoles_magnons(2,H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_mag(2,i_c)
+         BSS_dipoles_magnons(:,H_pos(1))=BS_T_grp(i_g)%dipoles_R_mag(:,i_c)
+         if (BS_K_coupling) BSS_dipoles_magnons(:,H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_mag(:,i_c)
        endif
-       
+       !
        if (l_dichroism) then
-         BSS_dipoles_dichroism(2,H_pos(1))=BS_T_grp(i_g)%dipoles_R_dichroism(i_c)
-         if (BS_K_coupling) BSS_dipoles_dichroism(2,H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_dichroism(i_c)
+         BSS_dipoles_dichroism(:,H_pos(1))=BS_T_grp(i_g)%dipoles_R_dichroism(:,i_c)
+         if (BS_K_coupling) BSS_dipoles_dichroism(:,H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_dichroism(:,i_c)
        endif
 #endif
        !

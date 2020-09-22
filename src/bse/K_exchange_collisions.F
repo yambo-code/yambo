@@ -96,7 +96,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      ! G==0 term
      !
-     if(trim(L_kind)=="full") BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_R(i_T_el)
+     if(trim(L_kind)=="full") BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_R(1,i_T_el)
      if(trim(L_kind)=="Lbar") BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=cZERO
      !
      ! G/=0 terms

@@ -25,6 +25,7 @@ module DICHROISM
  !
  use drivers, ONLY:l_dichroism
  use pars,    ONLY:SP
+ use BS,      ONLY:BS_dip_size
  !
 #include<memory.h>
  !
@@ -36,7 +37,7 @@ module DICHROISM
      use pars,       ONLY:cZERO
      use BS,         ONLY:BS_H_dim,BS_K_dim
      if (.not.l_dichroism) return
-     YAMBO_ALLOC(BSS_dipoles_dichroism,(2,BS_H_dim))
+     YAMBO_ALLOC(BSS_dipoles_dichroism,(BS_dip_size,BS_H_dim))
      BSS_dipoles_dichroism = cZERO
    end subroutine
    !

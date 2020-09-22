@@ -43,8 +43,10 @@ module BS
  logical :: BS_not_const_eh_f
  logical :: BS_perturbative_SOC
  logical :: BS_K_has_been_calculated_loaded
+ logical :: l_BS_trace
  character(schlen) :: L_kind
  character(schlen) :: BSE_mode
+ character(schlen) :: BSE_prop
  character(schlen) :: BSK_mode
  character(schlen) :: BS_res_mode
  character(schlen) :: BS_cpl_mode
@@ -57,6 +59,7 @@ module BS
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier
+ integer :: BS_dip_size
  real(SP):: BS_K_cutoff
  real(SP):: BS_max_val
  real(SP),allocatable :: BSqpts(:,:)
@@ -89,16 +92,14 @@ module BS
    integer                       :: first_cv   ! Position in the cv transitions @ k
    integer                       :: size       
    integer,     allocatable      :: table(:,:) ! (/ikbz,iv,ic,i_sp/) (i_sp is spin, is is symmetry)
-   complex(SP), allocatable      :: dipoles_R(:)
-   complex(SP), allocatable      :: dipoles_A(:)
-   complex(SP), allocatable      :: dipoles_R_kerr(:)
-   complex(SP), allocatable      :: dipoles_A_kerr(:)
+   complex(SP), allocatable      :: dipoles_R(:,:)
+   complex(SP), allocatable      :: dipoles_A(:,:)
    complex(SP), allocatable      :: dipoles_R_mag(:,:)
    complex(SP), allocatable      :: dipoles_A_mag(:,:)
    complex(SP), allocatable      :: dipoles_R_PL(:,:)
    complex(SP), allocatable      :: dipoles_A_PL(:,:)
-   complex(SP), allocatable      :: dipoles_R_dichroism(:)
-   complex(SP), allocatable      :: dipoles_A_dichroism(:)
+   complex(SP), allocatable      :: dipoles_R_dichroism(:,:)
+   complex(SP), allocatable      :: dipoles_A_dichroism(:,:)
    complex(SP), allocatable      :: Z(:)
    real(SP)   , allocatable      :: E(:)
    real(SP)   , allocatable      :: E_SFLIP(:)
@@ -248,7 +249,7 @@ module BS
    subroutine BS_Blocks_and_Transitions_alloc(E,iT)
      !
      use pars,       ONLY:IP,cZERO
-     use drivers,    ONLY:l_kerr,l_photolum,l_magnons,l_dichroism
+     use drivers,    ONLY:l_photolum,l_magnons,l_dichroism
      use stderr,     ONLY:intc
      use electrons,  ONLY:levels,n_sp_pol
      integer      :: iT,nT
@@ -260,14 +261,10 @@ module BS
      !
      nT=BS_T_grp(iT)%size
      !
-     YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R,(nT))
-     YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R,(BS_dip_size,nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A,(BS_dip_size,nT))
      BS_T_grp(iT)%dipoles_R=cZERO
      BS_T_grp(iT)%dipoles_A=cZERO
-     if(l_kerr) then
-       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_kerr,(nT))
-       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_kerr,(nT))
-     endif
      if(l_magnons) then
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_mag,(2,nT))
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_mag,(2,nT))
@@ -277,8 +274,8 @@ module BS
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_PL,(nT,3))
      endif
      if(l_dichroism) then
-       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_dichroism,(nT))
-       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_dichroism,(nT))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_dichroism,(BS_dip_size,nT))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_dichroism,(BS_dip_size,nT))
      endif
      YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,4))
      YAMBO_ALLOC(BS_T_grp(iT)%E,(nT))
@@ -309,7 +306,7 @@ module BS
    !
    subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
-     use drivers,    ONLY:l_kerr,l_photolum,l_magnons
+     use drivers,    ONLY:l_photolum,l_magnons
      use parallel_m, ONLY:PAR_BS_T_grps_index
      integer :: iT
      !
@@ -323,10 +320,6 @@ module BS
        !
        YAMBO_FREE(BS_T_grp(iT)%dipoles_R)
        YAMBO_FREE(BS_T_grp(iT)%dipoles_A)
-       if (l_kerr) then
-         YAMBO_FREE(BS_T_grp(iT)%dipoles_R_kerr)
-         YAMBO_FREE(BS_T_grp(iT)%dipoles_A_kerr)
-       endif
        if (l_magnons) then
          YAMBO_FREE(BS_T_grp(iT)%dipoles_R_mag)
          YAMBO_FREE(BS_T_grp(iT)%dipoles_A_mag)

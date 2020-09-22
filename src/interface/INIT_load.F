@@ -47,7 +47,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
- use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
+ use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
 &                        BS_n_g_W,BS_n_g_exch,L_kind,BS_K_cutoff
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
@@ -354,19 +354,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
 #if defined _KERR
  !
- ! BSE: Kerr
+ ! BSE properties: kerr, magnons, absorption, ...
  !
- call it('f',defs,'EvalKerr', '[BSE] Compute the Kerr effect')
- call it('f',defs,'EvalDichroism', 'compute CD')
+ call it(defs,'BSEprop',  '[BSE] abs/kerr/magn/dichr trace',BSE_prop)
  call it('f',defs,'AnHall'  , '[BSE] Add the anomalous Hall effect to eps if using length gauge')
  !
 #endif
  !
 #if defined _RT
- !
- ! BSE: Magnons
- !
- call it('f',defs,'EvalMagnons', '[BSE] Compute the Kerr effect')
  !
  ! BSE: Real-Time
  !

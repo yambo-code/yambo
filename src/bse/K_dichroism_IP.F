@@ -37,7 +37,6 @@ subroutine K_dichroism_IP(iq,Xk,BSE_scatt,w,Dip)
 &                         PAR_IND_T_groups,PAR_Xk_bz_index,&
 &                         PAR_COM_eh_INDEX,PAR_COM_Xk_ibz_INDEX
  use vec_operate,    ONLY:v_norm
- use units,          ONLY:SPEED_OF_LIGHT      !  c in a.u.
  !
 #include<memory.h>
  !

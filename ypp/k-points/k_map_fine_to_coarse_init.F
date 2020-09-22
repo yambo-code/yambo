@@ -57,8 +57,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  !
  type(levels)         :: FineGd_io_E(MAX_FineGd_DBs)
  type(bz_samp)        :: FineGd_io_k(MAX_FineGd_DBs)
- integer              :: i_err(MAX_FineGd_DBs),nsym_save,nsym_FineGd_DB,i_time_rev_save,&
-&                        i_time_rev_DB,i_db
+ integer              :: i_err(MAX_FineGd_DBs),nsym_save,i_time_rev_save,i_db
  real(SP)             :: dl_sop_save(3,3,48)
  !
  ! Functions
@@ -170,11 +169,9 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  !
  if (BZ_FineGd_nkpts_to_use>0) call msg('s','::               [imposed]   :',BZ_FineGd_nkpts_to_use)
  call msg('s',':: Bands                     :',n_bands)
- call msg('s',':: Symmetries                :',nsym_FineGd_DB)
- if(i_time_rev_DB==1)&
-&   call msg('s',':: Time reversal included ')
- if(i_time_rev_DB==0)&
-&   call msg('s',':: Time reversal not included')
+ call msg('s',':: Symmetries                :',nsym)
+ if (i_time_rev==1) call msg('s',':: Time reversal included ')
+ if (i_time_rev==0) call msg('s',':: Time reversal not included')
  if (Xen%nbf==Xen%nbm) then
    call msg('s',':: Gap indirect      [ev]    :',gap(1)*HA2EV)
    call msg('s','::     direct        [ev]    :',gap(2)*HA2EV)
@@ -235,10 +232,8 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  ! Symmetry restoring
  !
  if (allocated(dl_sop)) then
-   nsym_FineGd_DB=nsym
    deallocate(dl_sop)
    nsym          =nsym_save
-   i_time_rev_DB =i_time_rev
    i_time_rev    =i_time_rev_save
    allocate(dl_sop(3,3,nsym))
    dl_sop=dl_sop_SAVE(:,:,:nsym)

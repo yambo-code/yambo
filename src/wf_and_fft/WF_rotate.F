@@ -75,14 +75,4 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
    !
  enddo
  !
- ! Deal with bands between 1 and H_ref_bands(1)-1 if present
- !
- do ib = 1, H_ref_bands(1)-1
-   !
-   i_wf = WFo%index(ib,ik,i_sp_pol)
-   !
-   if(i_wf/=0) WF%c(:,:,i_wf)=WFo%c(:,:,i_wf)
-   !
- endif
- !
 end subroutine

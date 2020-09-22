@@ -30,7 +30,7 @@ subroutine RT_k_grid(E,k,q)
  use electrons,      ONLY:levels
  use real_time,      ONLY:DbGd_EE_scatt_table,DbGd_EE_percent,DbGd_EE_Nk_table,RTibz,&
 &                         l_RT_uses_E_FineGd,RT_nk,RT_bands
- use R_lattice,      ONLY:bz_samp,bz_samp_FineGd_alloc
+ use R_lattice,      ONLY:bz_samp,bz_samp_FineGd_alloc,bz_samp_duplicate_Fg
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  !
 #include<memory.h>
@@ -91,6 +91,8 @@ subroutine RT_k_grid(E,k,q)
  !=============
  !
  call bz_samp_FineGd_alloc(RTibz,k%nibz)
+ call bz_samp_duplicate_Fg(k%FGibz,RTibz,k%nibz)
+ RT_nk=RTibz%N
  !
  ! Define K-weights to be used in the k-points distribution
  !

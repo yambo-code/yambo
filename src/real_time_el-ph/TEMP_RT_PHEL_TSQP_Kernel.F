@@ -31,7 +31,7 @@ subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,E,ph_freq,Gkkp_sq)
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ
  use hamiltonian,    ONLY:B_mat_index
- use real_time,      ONLY:l_RT_uses_E_FineGd,RT_occupations_locked,RT_E_and_k,&
+ use real_time,      ONLY:l_RT_uses_E_FineGd,RT_occupations_locked,RT_levels,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_life_delta_occupations,l_initial_equilibrium,&
 &                         RT_eh_en,RT_ibz_coo,RT_Nk_ibz,RT_bands
@@ -76,11 +76,11 @@ subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,E,ph_freq,Gkkp_sq)
      !
      if (.not. l_RT_uses_E_FineGd) then
        !
-       if(RT_E_and_k%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
-       if(RT_E_and_k%E(i_n ,ik    ,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
+       if(RT_levels%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. RT_levels%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
+       if(RT_levels%E(i_n ,ik    ,1)<RT_eh_en(1) .or. RT_levels%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
        !
-       DELTA_E=RT_E_and_k%E(i_n,ik,1)-RT_E_and_k%E(i_np,ik_m_q,1)
-       DELTA_W=RT_E_and_k%W(i_n,ik,1)+RT_E_and_k%W(i_np,ik_m_q,1)
+       DELTA_E=RT_levels%E(i_n,ik,1)-RT_levels%E(i_np,ik_m_q,1)
+       DELTA_W=RT_levels%W(i_n,ik,1)+RT_levels%W(i_np,ik_m_q,1)
        !
      endif
      !
@@ -112,11 +112,11 @@ subroutine RT_PHEL_TSQP_Kernel(ik,ik_m_q,i_q,i_l,E,ph_freq,Gkkp_sq)
          !
          if (l_RT_uses_E_FineGd) then
            !
-           if(RT_E_and_k%E(i_np,ip_rim,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
-           if(RT_E_and_k%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
+           if(RT_levels%E(i_np,ip_rim,1)<RT_eh_en(1) .or. RT_levels%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
+           if(RT_levels%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. RT_levels%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
            !
-           DELTA_E=RT_E_and_k%E(i_n,ik_rim,1)-RT_E_and_k%E(i_np,ip_rim,1)
-           DELTA_W=RT_E_and_k%W(i_n,ik_rim,1)+RT_E_and_k%W(i_np,ip_rim,1)
+           DELTA_E=RT_levels%E(i_n,ik_rim,1)-RT_levels%E(i_np,ip_rim,1)
+           DELTA_W=RT_levels%W(i_n,ik_rim,1)+RT_levels%W(i_np,ip_rim,1)
            !
          endif
          !

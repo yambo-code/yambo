@@ -46,15 +46,15 @@ subroutine RT_PHEL_lifetimes(iq,E,k,q)
  !
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !
- use pars,           ONLY:SP,rZERO,zero_dfl,pi
+ use pars,           ONLY:SP,rZERO,pi
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ
  use hamiltonian,    ONLY:B_mat_index
  use R_lattice,      ONLY:bz_samp,qindx_X
- use real_time,      ONLY:l_RT_uses_E_FineGd,RT_occupations_locked,RT_E_and_k,&
+ use real_time,      ONLY:l_RT_uses_E_FineGd,RT_occupations_locked,RT_levels,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_life_delta_occupations,l_initial_equilibrium,&
-&                         RT_eh_en,RT_ibz_coo,RT_Nk_ibz,RT_bands
+&                         RT_eh_en,RT_bands,RTibz
  use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
 &                         P_E_sp_res_lifetime,P_E_sp_ares_lifetime,P_E_eh_lifetime,&
 &                         EQ_P_E_sp_res_lifetime,EQ_P_E_sp_ares_lifetime,&
@@ -141,11 +141,11 @@ subroutine RT_PHEL_lifetimes(iq,E,k,q)
          !
          if (.not. l_RT_uses_E_FineGd) then
            !
-           if(RT_E_and_k%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
-           if(RT_E_and_k%E(i_n ,ik    ,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
+           if(RT_levels%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. RT_levels%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
+           if(RT_levels%E(i_n ,ik    ,1)<RT_eh_en(1) .or. RT_levels%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
            !
-           DELTA_E=RT_E_and_k%E(i_n,ik,1)-RT_E_and_k%E(i_np,ik_m_q,1)
-           DELTA_W=RT_E_and_k%W(i_n,ik,1)+RT_E_and_k%W(i_np,ik_m_q,1)
+           DELTA_E=RT_levels%E(i_n,ik,1)-RT_levels%E(i_np,ik_m_q,1)
+           DELTA_W=RT_levels%W(i_n,ik,1)+RT_levels%W(i_np,ik_m_q,1)
            !
          endif
          !
@@ -157,11 +157,11 @@ subroutine RT_PHEL_lifetimes(iq,E,k,q)
          ! 1/Nk from k-sum, (2*ph_freq)^-1 to correctly normalize Gkkp_sq.
          ! [NOTE] Variable pre_factor below is missing pi since it *should* come later from the hyperbolic secant FT
          !
-         pre_factor=spin_occ*Gkkp_sq(i_np,i_n)/(real(RT_Nk_ibz(ik))*ph_freq)
+         pre_factor=Gkkp_sq(i_np,i_n)/real(RTibz%N_mapped(ik_m_q))
          !
          if( pre_factor==0._SP ) cycle
          !
-         do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+        do ik_rim=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
            !
            if (RT_occupations_locked(i_n,ik_rim)) cycle
            !
@@ -174,17 +174,17 @@ subroutine RT_PHEL_lifetimes(iq,E,k,q)
            ! [NOTE] FP: band indices exchanged (m<->n) with respect to my notes:
            !            My notes: E_mk - E_nk-q  |  The code: E_nk - E_mk-q
            !
-           do ip_rim=RT_ibz_coo(ik_m_q,1),RT_ibz_coo(ik_m_q,2)
+           do ip_rim=RTibz%k_range(ik_m_q,1),RTibz%k_range(ik_m_q,2)
              !
              if (RT_occupations_locked(i_np,ip_rim)) cycle
              !
              if (l_RT_uses_E_FineGd) then
                !
-               if(RT_E_and_k%E(i_np,ip_rim,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
-               if(RT_E_and_k%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
+               if(RT_levels%E(i_np,ip_rim,1)<RT_eh_en(1) .or. RT_levels%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
+               if(RT_levels%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. RT_levels%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
                !
-               DELTA_E=RT_E_and_k%E(i_n,ik_rim,1)-RT_E_and_k%E(i_np,ip_rim,1)
-               DELTA_W=RT_E_and_k%W(i_n,ik_rim,1)+RT_E_and_k%W(i_np,ip_rim,1)
+               DELTA_E=RT_levels%E(i_n,ik_rim,1)-RT_levels%E(i_np,ip_rim,1)
+               DELTA_W=RT_levels%W(i_n,ik_rim,1)+RT_levels%W(i_np,ip_rim,1)
                !
              endif
              !

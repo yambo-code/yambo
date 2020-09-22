@@ -73,9 +73,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers, ONLY:BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol, BSS_target_E, Slepc_shell
 #endif
- use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
+ use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,l_BS_trace,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
-&                     BS_K_is_ALDA,BSE_mode,L_kind,BS_K_cutoff,BS_perturbative_SOC
+&                     BS_K_is_ALDA,BSE_mode,BSE_prop,L_kind,BS_K_cutoff,BS_perturbative_SOC
  use TDDFT,      ONLY:FXC_type,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
@@ -441,10 +441,12 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BS_cpl_mode='none'
  L_kind='Lbar'
  BSE_mode='retarded'
+ BSE_prop='alpha'
  BSK_mode=' '
  TDDFT_mode=' '
  BSS_add_antiresonant=.FALSE.
  BSS_Wd=cZERO
+ l_BS_trace=.false.
  l_drude=.false.
  BS_K_dim=0
  BS_K_cutoff=0.0000_SP

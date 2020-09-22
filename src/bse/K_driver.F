@@ -35,8 +35,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
 &                         BSS_uses_DbGd,BSS_q0,BSS_eval_JDOS,BSS_eels_to_eps
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BS_n_g_W,BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSE_mode,BS_Blocks_and_Transitions_free,l_BSE_minimize_memory,BSqpts,L_kind,&
-&                         BS_perturbative_SOC,l_BSK_IO_triangular
+&                         BSE_mode,BSE_prop,BS_Blocks_and_Transitions_free,l_BSE_minimize_memory,BSqpts,L_kind,&
+&                         BS_perturbative_SOC,l_BSK_IO_triangular,BS_dip_size,l_BS_trace
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss,l_col_cut
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k,PARALLEL_default_mode
@@ -162,10 +162,17 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  BSS_add_antiresonant=index(BSE_mode,'retarded')/=0
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  BS_K_is_ALDA=l_alda_fxc
+ BS_dip_size=1
+ !
 #if defined _KERR
- call parser('EvalMagnons',l_magnons)
- call parser('EvalKerr',   l_kerr)
- if(l_kerr) call parser('AnHall',l_anomalous_Hall)
+ l_magnons= (index(BSE_prop,'magn')/=0)
+ l_kerr=    (index(BSE_prop,'kerr')/=0)
+ l_BS_trace=(index(BSE_prop,'trace')/=0)
+ if(l_kerr) then
+   call parser('AnHall',l_anomalous_Hall)
+   BS_dip_size=2
+ endif
+ if(l_BS_trace) BS_dip_size=3
 #endif
  !
  ! Energy points

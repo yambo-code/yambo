@@ -264,7 +264,7 @@ subroutine INIT_activate()
 #endif
    !
 #if defined _KERR
-   call initactivate(1,'EvalKerr AnHall')
+   call initactivate(1,'BSEprop')
 #endif
    !
    call initactivate(1,'DrudeWBS Reflectivity')
@@ -277,7 +277,6 @@ subroutine INIT_activate()
    !GPL_INCLUDE_END
    !
 #if defined _RT
-   call initactivate(1,'EvalMagnons')
    call initactivate(1,'ForceEqTrans')
 #endif
    !

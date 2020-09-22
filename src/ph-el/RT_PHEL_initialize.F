@@ -76,7 +76,7 @@ subroutine RT_PHEL_initialize(k,q)
  !
  ! Q/K grid remapping
  !====================
- call RT_ELPH_gkkp_remap(k,q)
+ call ELPH_Q_databases_map(k,q)
  !
  ! Allocation
  !============

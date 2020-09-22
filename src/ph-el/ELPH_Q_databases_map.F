@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_gkkp_remap(k,q)
+subroutine ELPH_Q_databases_map(k,q)
  !
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp

@@ -24,23 +24,18 @@
 subroutine RT_ELPH_initialize(E,k,q)
  ! 
  use pars,           ONLY:SP,pi,cZERO
- use units,          ONLY:HA2EV
- use real_time,      ONLY:q_weight_RT,elph_gkkp_expanded_sq,THETA_matrix,&
-&                         THETA_matrix_index,Q_io_map,K_io_map,&
+ use real_time,      ONLY:q_weight_RT,THETA_matrix,&
+&                         THETA_matrix_index,&
 &                         l_RT_CCA_Kernel,RT_bands
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt
  use vec_operate,    ONLY:v_norm
  use D_lattice,      ONLY:Bose_Temp
- use R_lattice,      ONLY:RL_vol,bz_samp,qindx_S,nXkibz
- use IO_m,           ONLY:io_control,REP,OP_RD_CL,VERIFY,NONE
- use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,W_debye,elph_branches,MAX_gkkp
+ use R_lattice,      ONLY:RL_vol,bz_samp,nXkibz
+ use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,NONE
+ use ELPH,           ONLY:ph_freqs_sq,ph_modes,elph_branches
  use functions,      ONLY:bose_f
- use vec_operate,    ONLY:degeneration_finder
- use parser_m,       ONLY:parser
  use R_lattice,      ONLY:RIM_n_rand_pts
- use parallel_m,     ONLY:PAR_Q_bz_index,PAR_IND_Q_bz,PAR_nQ_bz,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
-&                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX
  !
 #include<memory.h>
  !
@@ -49,148 +44,31 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! Work Space
  !
- integer             ::iq,ID,io_err,ik,i_counter,iq_io,il,i_s,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
-&                      first_el(2,RT_bands(2)),n_of_el(2,RT_bands(2)),n_deg_grp(2),i1,i2,iq_mem,io_REF
- real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes),q_mod(q%nbz),q0_mod,&
-&                      q_weight_tmp(q%nbz,2),ph_mean_speed(3),ph_E,MAX_gkkp_expanded_at_kpq(k%nibz,q%nbz)
- real(SP)            ::gkkp_average(ph_modes)
- integer, external   ::io_ELPH,io_RT_components
- logical             ::l_use_Debye_E,SETUP_failure
+ integer             ::iq,ID,i_counter,il
+ real(SP)            ::RADIUS_sphere,q_weight_tmp(q%nbz,2),ph_mean_speed(3),ph_E
+ integer, external   ::io_RT_components
  !
  ! Restart
  !==========
- !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID) 
  io_REF=io_RT_components('REF',ID)
  !
  ! Logicals
  !==========
- !
  if (.not.l_elph_scatt) return
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
- io_err=io_ELPH(ID,'gkkp_expanded')
+ ! El-Ph databases I/O
+ !=====================
+ call ELPH_expanded_databases_map(E,k,q,RT_bands(2),i_err)
  !
- SETUP_failure=io_err/=0.or.elph_nb<RT_bands(2)
- !
- if (SETUP_failure) then
+ if (i_err<0) then
    l_elph_scatt   =.FALSE.
    l_RT_CCA_Kernel=.FALSE.
-   call warning('ELPH database not found and/or incompatible OR QP widths not provided. E-P scattering switched off')
    return
  endif
  !
- call parser('UseDebyeE'   , l_use_Debye_E)
- !
- ! Q/K grid remapping
- !====================
- call RT_ELPH_gkkp_remap(k,q)
- !
- ! Allocation
- !============
- !
- YAMBO_ALLOC(elph_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ_bz,PAR_Xk_nibz))
- !
- MAX_gkkp_expanded_at_kpq=0._SP
- !
- if (.not.l_RT_CCA_Kernel) then
-   YAMBO_ALLOC(THETA_matrix,(2*q%nbz*ph_modes,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1,nXkibz))
-   THETA_matrix=cZERO
-   YAMBO_ALLOC(THETA_matrix_index,(q%nbz,ph_modes,2))
- endif
- !
- ! Degeneration Finder & I/O
- !===========================
- !
- i_counter   =0
- ph_Esq_local=0._SP
- !
- do iq=1,q%nbz
-   !
-   if (.not.PAR_IND_Q_bz%element_1D(iq)) cycle
-   !
-   iq_io=Q_io_map(iq)
-   !
-   call io_control(ACTION=OP_RD_CL,SEC=(/iq_io+1/),ID=ID)
-   io_err=io_ELPH(ID,'gkkp_expanded')
-   !
-   ph_Esq_local(iq,:)=ph_freqs_sq(iq_io,:)
-   !
-   do ik=1,k%nibz
-     !
-     ik_bz    =sum(k%nstar(:ik-1))+1
-     ik_m_q   =k%sstar(qindx_S(ik,iq,1),1)
-     !
-     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
-     !
-     ik_mem = PAR_Xk_ibz_index(ik)
-     iq_mem = PAR_Q_bz_index(iq)
-     !
-     do i_n=1,elph_nb
-       do i_np=1,elph_nb
-         !
-         ! There has been a key error in the definition of the el-ph SE of the BKE (Eq. 30_9_11.18)
-         ! where the band indexes have been exchanged. Instead of doing a global change of the notes
-         ! and of the code I decided, here, to exchange the indexes:
-         !
-         elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)=abs(elph_gkkp(:,i_np,i_n,K_io_map(ik_bz)))**2
-         !
-       enddo
-     enddo
-     !
-     ! Feb 2014. Here I symmetrize the gkkp m.e. with respect to denerated bands. This procedure is not
-     ! needed in the case the Double Grid is not used. But when the Double Grid is used gkkp m.e. corresponding to transitions between degenerate
-     ! states can be exported to non-degenerate bands belonging to a k of the small grid. In this way
-     ! the detailled balance condition is not satisfied anymore.
-     !
-     ! Degeneration Finder
-     !====================
-     call degeneration_finder(E%E(:RT_bands(2),ik,1),    RT_bands(2),first_el(1,:),n_of_el(1,:),n_deg_grp(1),0.0001/HA2EV)
-     call degeneration_finder(E%E(:RT_bands(2),ik_m_q,1),RT_bands(2),first_el(2,:),n_of_el(2,:),n_deg_grp(2),0.0001/HA2EV)
-     !
-     do i1=1,n_deg_grp(1)
-       do i_np=RT_bands(1),RT_bands(2)
-         do i2=1,2
-           if (i2==1) gkkp_average=0._SP
-           do i_n=first_el(1,i1),first_el(1,i1)+n_of_el(1,i1)-1
-             if (i2==1) gkkp_average(:)=gkkp_average(:)+elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)
-             if (i2==2) elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)=gkkp_average(:)/real(n_of_el(1,i1))
-           enddo
-         enddo
-       enddo
-     enddo
-     do i1=1,n_deg_grp(2)
-       do i_n=RT_bands(1),RT_bands(2)
-         do i2=1,2
-           if (i2==1) gkkp_average=0._SP
-           do i_np=first_el(2,i1),first_el(2,i1)+n_of_el(2,i1)-1
-             if (i2==1) gkkp_average(:)=gkkp_average(:)+elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)
-             if (i2==2) elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)=gkkp_average(:)/real(n_of_el(2,i1))
-           enddo
-         enddo
-       enddo
-     enddo
-     !
-     MAX_gkkp_expanded_at_kpq(ik,iq)=maxval(sqrt(elph_gkkp_expanded_sq(:,:,:,iq_mem,ik_mem)))
-     !
-   enddo
-   !
- enddo
- !
- ph_freqs_sq=ph_Esq_local
- !
- call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
- call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Q_INDEX%COMM)
- call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
- !
- MAX_gkkp=maxval(MAX_gkkp_expanded_at_kpq)
- !
- if (any(ph_freqs_sq<0._SP)) call warning('Imaginary phonon frequencies found. Please check.')
- !
- ! Test of the effect of using a single optical mode
- !
- if (l_use_Debye_E) ph_freqs_sq=W_debye**2
- !
+ ! Q weights 
+ !===========
  ! q_weight_RT are written in section 2, thus here are not known
  ! since only section 1 of the REF DB is written
  !
@@ -264,8 +142,11 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! THETA matrix indexes
  !======================
- !
  if (l_RT_CCA_Kernel) return
+ !
+ YAMBO_ALLOC(THETA_matrix,(2*q%nbz*ph_modes,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1,nXkibz))
+ THETA_matrix=cZERO
+ YAMBO_ALLOC(THETA_matrix_index,(q%nbz,ph_modes,2))
  !
  i_counter=0
  !

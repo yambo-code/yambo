@@ -1,0 +1,3 @@
+#if defined _PHEL || defined _RT
+objs = RT_PHEL_lifetimes.o RT_PHEL_initialize.o ELPH_expanded_databases_map.o ELPH_Q_databases_map.o
+#endif

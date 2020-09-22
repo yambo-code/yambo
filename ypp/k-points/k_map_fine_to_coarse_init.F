@@ -29,7 +29,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  use parser_m,            ONLY:parser
  use interfaces,          ONLY:io_DB1_selective_scan
  use zeros,               ONLY:k_iku_zero,k_rlu_zero,define_zeros
- use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset,BZ_FineGd_mode
+ use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset,BZ_FineGd_mode,k_the_nearest
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
  use com,                 ONLY:msg
  use YPPm,                ONLY:BZ_FineGd_nkpts_to_use,FineGd_DB1_paths,MAX_FineGd_DBs,&
@@ -46,11 +46,11 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  !
  ! Work Space
  !
- real(SP)     ::rand_k(BZ_FineGd_nkpts_to_use+1,3),a_save(3,3),alat_save(3),&
-&               gap(2),tmp_zero(3)
- integer      ::i1,ik_now,ik_ref,ib,ik
- logical      ::l_skip_check
+ real(SP)     ::rand_k(BZ_FineGd_nkpts_to_use+1,3),a_save(3,3),alat_save(3),gap(2),tmp_zero(3)
+ integer      ::i1,ik_ref,ib,ik,ik_near,i_fg
+ logical      ::l_skip_check,l_skip_DbGd_border_points,l_I_am_border
  type(levels)          :: FineGd_E
+ integer,  allocatable :: I_am_border(:)
  real(SP), allocatable :: rand_E(:,:,:)
  !
  ! BZ DB1 I/O
@@ -64,6 +64,8 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  !
  integer, external :: k_FineGd_grid_consistency_check
  logical, external :: k_map_fine_to_coarse_reduce
+ !
+ call parser('SkipBorderPts',l_skip_DbGd_border_points)
  !
  a_save=a
  alat_save=alat
@@ -119,25 +121,51 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
    if (i_db> 1) call msg('s','::                [DB #'//trim(intc(i_db))//']    :',FineGd_io_E(i_db)%nk)
  enddo
  !
- ! Merge of ALL FineGd_io_E(:) and FineGd_io_k(:) into FineGd_E and FineGd_k
+ ! ...reset
  !
  call bz_samp_reset(FineGd_k)
  call E_reset(FineGd_E)
- FineGd_E%nk=sum(FineGd_io_E(:n_FineGd_DBs)%nk)
+ !
+ ! ...mark border points
+ !
+ if (l_skip_DbGd_border_points) then
+   allocate(I_am_border( sum(FineGd_io_E(:n_FineGd_DBs)%nk) ))
+   ik=0
+   do i_db=1,n_FineGd_DBs
+     do i1=1,FineGd_io_E(i_db)%nk
+       ik_near=k_the_nearest(FineGd_io_k(i_db)%pt(i1,:),Xk%ptbz,Xk%nbz,border_point=l_I_am_border)
+       ik=ik+1
+       I_am_border(ik)=0
+       if (l_I_am_border) I_am_border(ik)=1
+     enddo
+   enddo
+   FineGd_E%nk=count(I_am_border==0)
+   FineGd_k%nibz=count(I_am_border==0)
+ else
+   FineGd_E%nk=sum(FineGd_io_E(:n_FineGd_DBs)%nk)
+   FineGd_k%nibz=sum(FineGd_io_E(:n_FineGd_DBs)%nk)
+ endif
+ !
+ ! ...merge of ALL FineGd_io_E(:) and FineGd_io_k(:) into FineGd_E and FineGd_k
+ !
  FineGd_E%nb=FineGd_io_E(1)%nb
- FineGd_k%nibz=sum(FineGd_io_E(:n_FineGd_DBs)%nk)
  allocate(FineGd_E%E(FineGd_E%nb,FineGd_E%nk,n_sp_pol))
  allocate(FineGd_k%pt(FineGd_E%nk,3))
+ ik=0
+ i_fg=0
  do i_db=1,n_FineGd_DBs
-   if (i_db==1) ik_now=0
-   if (i_db> 1) ik_now=sum(FineGd_io_E(1:i_db-1)%nk)
    do i1=1,FineGd_io_E(i_db)%nk
-     FineGd_E%E(:,i1+ik_now,:)= FineGd_io_E(i_db)%E(:,i1,:)
-     FineGd_k%pt(i1+ik_now,:)= FineGd_io_k(i_db)%pt(i1,:)
+     i_fg=i_fg+1
+     if (l_skip_DbGd_border_points) then
+       if (I_am_border(i_fg)==1) cycle
+     endif
+     ik=ik+1
+     FineGd_E%E(:,ik,:)= FineGd_io_E(i_db)%E(:,i1,:)
+     FineGd_k%pt(ik,:)= FineGd_io_k(i_db)%pt(i1,:)
    enddo
  enddo
  !
- ! ...clean after the i_db loop due to ik_now definition [AM Jul 2020].
+ ! ...clean after the i_db loop due [AM Jul 2020].
  do i_db=1,n_FineGd_DBs
    call E_reset(FineGd_io_E(i_db))
    call bz_samp_reset(FineGd_io_k(i_db))
@@ -161,7 +189,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  !
  gap(1)=minval(FineGd_E%E(Xen%nbf+1,:,1))-maxval(FineGd_E%E(Xen%nbf,:,1)) 
  gap(2)=10000._SP
- do i1=1,nkibz
+ do i1=1,FineGd_E%nk
    if (FineGd_E%E(Xen%nbf+1,i1,1)-FineGd_E%E(Xen%nbf,i1,1)<gap(2)) then
      gap(2)=FineGd_E%E(Xen%nbf+1,i1,1)-FineGd_E%E(Xen%nbf,i1,1)
    endif
@@ -228,6 +256,10 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  enddo
  !
  call E_reset(FineGd_E)
+ if (l_skip_DbGd_border_points) then
+   call msg('sr','Removed '//trim(intc(count(I_am_border==1)))//' border points')
+   deallocate(I_am_border)
+ endif
  !
  ! Symmetry restoring
  !

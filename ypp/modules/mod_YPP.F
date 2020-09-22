@@ -196,7 +196,7 @@ module YPPm
  !
  ! BZ Double Grid
  !
- logical           :: l_map_kpts
+ logical            :: l_map_kpts
  integer, parameter :: MAX_FineGd_DBs=20
  integer            :: n_FineGd_DBs
  integer            :: BZ_FineGd_nkpts_to_use

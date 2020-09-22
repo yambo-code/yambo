@@ -106,7 +106,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! SC_bands(1)
  !=============
  !
- if (SC_bands(1)/= 1  ) call error(' Lower bound of band indexes must to be 1')
+! if (SC_bands(1)/= 1  ) call error(' Lower bound of band indexes must to be 1')
  if (SC_bands(2)> E%nb) call error(' Upper bound of band indexes cannot to be higher than '//trim(intc(E%nb)))
  !
  call H_QP_table_setup(E)

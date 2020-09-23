@@ -5,7 +5,7 @@ YAMBO_EXT_LIBS= Ydriver
 YLIBDRIVER    = interface main options 
 YLIBDRIVER_LD = _driver_options _driver_interface _driver_main 
 YLIBIO        = modules Yio
-YLIBIO_LD     = $(YLIBIO_LD)
+YLIBIO_LD     = $(YLIBIO)
 #
 # Source code
 #

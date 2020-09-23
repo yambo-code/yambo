@@ -5,7 +5,7 @@ YAMBO_EXT_LIBS= Ydriver
 YLIBDRIVER    = interface main options 
 YLIBDRIVER_LD = _driver_options _driver_interface _driver_main 
 YLIBIO        = modules Yio
-YLIBIO_LD     = $(YLIBIO_LD)
+YLIBIO_LD     = $(YLIBIO)
 #
 # Source code
 #
@@ -40,7 +40,7 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 # Interfaces
 #
 2YLIBS       = driver tools modules memory matrices linear_algebra parallel parser communicate common timing Yio io setup interface stop_and_restart bz_ops
-2YLIBS_LD    = tools memory communicate modules matrices linear_algebra parallel parser communicate common timing Yio io setup interface stop_and_restart bz_ops
+2YLIBS_LD    = tools memory Yio communicate modules matrices linear_algebra parallel parser communicate common timing Yio io setup interface stop_and_restart bz_ops
 #
 # YPP
 #

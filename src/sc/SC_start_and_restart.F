@@ -21,13 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_start_and_restart(X,E,Xk)
+subroutine SC_start_and_restart(X,E,Xk,Dip)
  !
  use pars,           ONLY:schlen
  use electrons,      ONLY:levels,n_spin
  use parser_m,       ONLY:parser 
  use com,            ONLY:msg
  use electrons,      ONLY:E_reset,E_duplicate
+ use dipoles,        ONLY:DIPOLE_t
  use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_use_Hxc_collisions,&
 &                         l_oep_exact,l_oep_kli,l_oep_slater, l_oep_ceda
  use units,          ONLY:HA2EV
@@ -54,6 +55,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  type(levels) ::E
  type(X_t)    ::X(2)  ! Xx Em1s
  type(bz_samp)::Xk
+ type(DIPOLE_t)::Dip
  !
  ! Workspace I/O
  !
@@ -88,9 +90,9 @@ subroutine SC_start_and_restart(X,E,Xk)
  !
 #if defined _ELECTRIC
  !
- call ELECTR_initial_check(Xk)
+ call ELECTR_initial_check(Xk,Dip)
  !
- if(.not.associated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
+ if(.not.allocated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
  !
 #endif
  !
@@ -107,7 +109,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! Dipoles & dimensions
  !======================
  ! 
- call WF_and_dipole_dimensions(X)
+ call WF_and_dipole_dimensions(X,Xk)
  !
  ! Before reading the SC energies save the KS one in E_reference
  !

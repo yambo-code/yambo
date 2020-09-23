@@ -33,7 +33,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics
+&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
@@ -344,6 +344,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC && !defined _RT
        l_sc_run=runlevel_is_on('scrun')
        l_sc_magnetic=runlevel_is_on('magnetic')
+       l_sc_electric=runlevel_is_on('electric')
 #endif
 #if defined _SC || defined _RT
        l_eval_collisions=runlevel_is_on('collisions')
@@ -480,6 +481,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        X(2)%ib=SC_X_bands
        X(2)%ng=SC_X_size
      endif
+#endif
+#if defined _ELECTRIC
+     if (l_sc_electric) call initactivate(1,'dipoles')
 #endif
 #if defined _OPENMP
      if (l_dipoles) then

@@ -21,12 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELECTR_initial_check(k)
+subroutine ELECTR_initial_check(k,Dip)
  !
  use pars,        ONLY:SP
  use units,       ONLY:AU2VMm1
  use com,         ONLY:error,msg,warning
- use X_m,         ONLY:Dipole_approach
+ use DIPOLES,     ONLY:DIPOLE_t
  use vec_operate, ONLY:normalize_v
  use SC,          ONLY:SC_potential
  use fields,      ONLY:Efield,Efield_strength
@@ -35,6 +35,7 @@ subroutine ELECTR_initial_check(k)
  implicit none
  !
  type(bz_samp) ::k
+ type(DIPOLE_t)::Dip
  !
  ! Workspace
  !
@@ -42,6 +43,7 @@ subroutine ELECTR_initial_check(k)
  !
  if(Efield(1)%intensity==0._SP) then
    call warning("Zero electric field. Turned off")
+   Efield(1)%ef_name="NONE"
    return
  endif
  !
@@ -66,7 +68,7 @@ subroutine ELECTR_initial_check(k)
  !
  call Check_symmetries(Efield(1)%versor)
  !
- Dipole_approach='Covariant'
+ Dip%approach='Covariant'
  !
  call k_map_nearest_by_dir(k,k_map) 
  !

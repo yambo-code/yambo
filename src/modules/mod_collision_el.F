@@ -30,6 +30,7 @@ module collision_el
  use pars,        ONLY:DP,SP,LP,schlen
  use parallel_m,  ONLY:PP_indexes
  use qe_pseudo_m, ONLY:bec_type,deallocate_bec_type
+ use cuda_m,      ONLY:have_cuda
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -69,13 +70,11 @@ module collision_el
    complex(SP), allocatable :: becprod(:,:,:,:)
    complex(SP), allocatable :: eiqtau(:)
    !
-   complex(SP), allocatable DEV_ATTRIBUTE :: rhotw_d(:)
-   complex(SP), allocatable DEV_ATTRIBUTE :: gamp_d(:,:)
-#if defined _CUDA
-   complex(DP), allocatable, device :: rho_tw_rs_d(:)
-   complex(SP), allocatable, device :: WF_symm_i_d(:,:)
-   complex(SP), allocatable, device :: WF_symm_o_d(:,:)
-#endif
+   complex(SP), allocatable DEV_ATTR :: rhotw_d(:)
+   complex(SP), allocatable DEV_ATTR :: gamp_d(:,:)
+   complex(DP), allocatable DEV_ATTR :: rho_tw_rs_d(:)
+   complex(SP), allocatable DEV_ATTR :: WF_symm_i_d(:,:)
+   complex(SP), allocatable DEV_ATTR :: WF_symm_o_d(:,:)
    !
  end type elemental_collision
  !
@@ -99,11 +98,10 @@ module collision_el
      ! 
      YAMBO_FREE(ggw%gamp_d)
      YAMBO_FREE(ggw%rhotw_d)
-#if defined _CUDA
+     !
      YAMBO_FREE(ggw%rho_tw_rs_d)
      YAMBO_FREE(ggw%WF_symm_i_d)
      YAMBO_FREE(ggw%WF_symm_o_d)
-#endif
      !
      ! USPP workspace
      call deallocate_bec_type(ggw%ibec)
@@ -135,30 +133,33 @@ module collision_el
        YAMBO_ALLOC(ggw%rho_tw_rs,(fft_size))
        YAMBO_ALLOC(ggw%WF_symm_i,(fft_size,n_spinor))
        YAMBO_ALLOC(ggw%WF_symm_o,(fft_size,n_spinor))
-#if defined _CUDA
-       YAMBO_ALLOC(ggw%rho_tw_rs_d,(fft_size))
-       YAMBO_ALLOC(ggw%WF_symm_i_d,(fft_size,n_spinor))
-       YAMBO_ALLOC(ggw%WF_symm_o_d,(fft_size,n_spinor))
-#endif
+       !
+       if (have_cuda) then
+         YAMBO_ALLOC(ggw%rho_tw_rs_d,(fft_size))
+         YAMBO_ALLOC(ggw%WF_symm_i_d,(fft_size,n_spinor))
+         YAMBO_ALLOC(ggw%WF_symm_o_d,(fft_size,n_spinor))
+       endif
      endif
      !
      if (present(NG)) then
        if (NG>0) then
+         !
          if (     present(GRADIENT)) RHOSIZE=3*NG
          if (.not.present(GRADIENT)) RHOSIZE=1*NG
          YAMBO_ALLOC(ggw%rhotw,(RHOSIZE))
-#ifdef _CUDA
-         YAMBO_ALLOC(ggw%rhotw_d,(RHOSIZE))
-#endif
+         if (have_cuda) then
+           YAMBO_ALLOC(ggw%rhotw_d,(RHOSIZE))
+         endif
+         !
        endif
        ggw%ngrho=NG
      endif
      if (present(NG_GAMP)) then
        if (all((/NG_GAMP>0/))) then
          YAMBO_ALLOC(ggw%gamp,(NG_GAMP(1),NG_GAMP(2)))
-#ifdef _CUDA
-         YAMBO_ALLOC(ggw%gamp_d,(NG_GAMP(1),NG_GAMP(2)))
-#endif
+         if (have_cuda) then
+           YAMBO_ALLOC(ggw%gamp_d,(NG_GAMP(1),NG_GAMP(2)))
+         endif
        endif
      endif
      !

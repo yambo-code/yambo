@@ -38,6 +38,7 @@ module X_m
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
  logical                  :: eval_alpha
  logical                  :: l_drude
+ integer                  :: drude_n_states
  !
  ! Main Gauge
  !
@@ -59,13 +60,13 @@ module X_m
  !
  integer              :: X_DbGd_nkpts
  logical              :: use_X_DbGd
- real(SP)             :: X_DbGd_percentual=0.5
+ real(SP)             :: X_DbGd_percentual
  integer ,allocatable :: X_DbGd_nkpt_at_q(:)
  integer ,allocatable :: X_DbGd_nkpt_at_q_table(:,:,:)
  !
  ! workspace for X_irredux_residuals on GPUs
  !
- complex(SP), allocatable DEV_ATTRIBUTE :: rhotw_save_d(:), rhotw_save2_d(:)
+ complex(SP), allocatable DEV_ATTR :: rhotw_save_d(:), rhotw_save2_d(:)
  !
  ! Absorption & Polarizability
  !
@@ -115,7 +116,7 @@ module X_m
  integer                       :: X_rows(2) = 0
  integer                       :: X_cols(2) = 0
  complex(SP),      allocatable :: X_mat(:,:,:)
- complex(SP),      allocatable DEV_ATTRIBUTE :: X_mat_d(:,:,:)
+ complex(SP),      allocatable DEV_ATTR :: X_mat_d(:,:,:)
  !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp

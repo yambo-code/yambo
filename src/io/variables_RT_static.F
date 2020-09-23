@@ -35,7 +35,7 @@ integer function variables_RT_static(ID,what)
 &                         RAD_LifeTime,Phase_LifeTime,&
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_steps,&
 &                         l_RT_CCA_Kernel,l_RT_impose_N_dN, &
-&                         l_RT_uses_E_DbGd,RT_life_extrap_times_SAVE,&
+&                         l_RT_uses_E_FineGd,RT_life_extrap_times_SAVE,&
 &                         DbGd_EE_percent,l_RT_impose_E,RT_DbGd_nk,&
 &                         RT_potential
 #if defined _ELPH
@@ -177,11 +177,9 @@ integer function variables_RT_static(ID,what)
    !
    ! Double Grid
    !======================
-   call def_variable_elemental(ID,VAR="Double_Grid_support",VAR_SZ=3,VAR_KIND=SP,MENU=0) 
-   call io_variable_elemental(ID,L0=l_RT_uses_E_DbGd,&
+   call def_variable_elemental(ID,VAR="Double_Grid_support",VAR_SZ=2,VAR_KIND=SP,MENU=0) 
+   call io_variable_elemental(ID,L0=l_RT_uses_E_FineGd,&
 &    VAR=' [DbGd] Double Grid support      ',  CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
-   call io_variable_elemental(ID,I0=RT_DbGd_nk,&
-&    VAR=' [DbGd] Number of k-points       ',  CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
    call io_variable_elemental(ID,R0=DbGd_EE_percent,&
 &    VAR=' [DbGd] Used for e-e        [o/o]',  CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
    !

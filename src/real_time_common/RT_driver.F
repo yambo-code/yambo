@@ -3,22 +3,22 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine RT_driver(E,X,k,q,Dip)
@@ -26,7 +26,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_use_collisions,l_use_Hxc_collisions,l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use stderr,         ONLY:real2ch
- use LIVE_t,         ONLY:live_timing 
+ use LIVE_t,         ONLY:live_timing
  use electrons,      ONLY:levels,n_spin,n_spinor
  use X_m,            ONLY:X_t
  use DIPOLES,        ONLY:DIPOLE_t
@@ -66,7 +66,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  type(bz_samp)     :: k,q
  type(X_t)         :: X(2)
  type(DIPOLE_t)    :: Dip
- ! 
+ !
  ! Work Space
  !
  integer           :: io_REF,io_err
@@ -89,7 +89,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  if (l_elel_scatt)                  sec_title(2)='+el-el'
  if (l_elphoton_scatt)              sec_title(3)='+el-photon'
  !
- ! Potential 
+ ! Potential
  !===========
  call XC_potentials(H_potential)
  call XC_additional_SC_potentials()
@@ -127,7 +127,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    call PARALLEL_SND_RCV_plan( PAR_COM_Xk_ibz_INDEX,  PAR_COM_Xk_ibz_INDEX%n_CPU)
  endif
  !
- ! QP & carriers corrections 
+ ! QP & carriers corrections
  !===========================
  !
  call QP_apply(RT_bands,E,k,     "G",msg_fmt='rs')
@@ -192,12 +192,12 @@ subroutine RT_driver(E,X,k,q,Dip)
  ! GPL_EXCLUDE_END
  !
  ! Restart from a previous RT run or from a SC calculation
- ! 
+ !
  call section('=','Start and Restart')
  !######################################
  call RT_start_and_restart(E,k,q)
  !
- ! If I loaded the WFs just to compute HARTREE0 and XC0 I can now free the WFs 
+ ! If I loaded the WFs just to compute HARTREE0 and XC0 I can now free the WFs
  !
  if( (l_use_Hxc_collisions.or.trim(RT_potential)=="IP").and. &
 &    .not.(eval_energy.or.l_velocity_gauge_corr)       .and. &
@@ -218,9 +218,9 @@ subroutine RT_driver(E,X,k,q,Dip)
  ! Calculation already done
  !
  if (NE_i_start_time>=NE_steps) then
-   !      
-   call CLOSE_and_clean( )      
-   !      
+   !
+   call CLOSE_and_clean( )
+   !
    return
    !
  endif
@@ -334,12 +334,12 @@ subroutine RT_driver(E,X,k,q,Dip)
    ! Memory maps for the step (to be done before the NE_time/NE_i_time update)
    !=========================
    call RT_MEMORY_index( )
-   !	
+   !
    ! Timing
    !========
    call RT_timing(nint(RT_dyn_step/RT_step))
    !
-   ! I (eventually) stop 
+   ! I (eventually) stop
    !=======================
    if (RT_Dynamics_is_over( )) exit
    !

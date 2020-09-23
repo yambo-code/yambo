@@ -69,8 +69,8 @@ subroutine X_redux(iq,X_par,Xw,X)
  integer          :: Xo_rows(2), Xo_cols(2)
  logical          :: compute_on_gpu
  type(PAR_matrix) :: K_FXC
- type(PAR_matrix), target :: BUFFER,KERNEL,Xo
- complex(SP), pointer DEV_ATTRIBUTE :: BUFFER_blc_d(:,:,:)
+ type(PAR_matrix), target      :: BUFFER,KERNEL,Xo
+ complex(SP), pointer DEV_ATTR :: BUFFER_blc_d(:,:,:)
  !
  ! Setup 
  !
@@ -249,14 +249,14 @@ subroutine X_redux(iq,X_par,Xw,X)
    if (compute_on_gpu) then
       !
 !      call dev_mat_upd_dMd(Xo_rows(2)-Xo_rows(1)+1,Xo_cols(2)-Xo_cols(1)+1,BUFFER%blc_d(:,:,iw_par),&
-!&                          bare_qpg_d(Xo_rows(1):,iq),"R",bare_qpg_d(Xo_cols(1):,iq),"R",scal=cmplx(4._SP*pi,kind=SP)) 
+!&                          bare_qpg_d(Xo_rows(1):,iq),"R",bare_qpg_d(iq,Xo_cols(1):),"R",scal=cmplx(4._SP*pi,kind=SP)) 
       !
       BUFFER_blc_d => BUFFER%blc_d
       !
       !$cuf kernel do(2)
       do ig2=Xo_cols(1),Xo_cols(2)
         do ig1=Xo_rows(1),Xo_rows(2)
-          BUFFER_blc_d(ig1,ig2,iw_par)=BUFFER_blc_d(ig1,ig2,iw_par)*4._SP*pi/bare_qpg_d(ig1,iq)/bare_qpg_d(ig2,iq)
+          BUFFER_blc_d(ig1,ig2,iw_par)=BUFFER_blc_d(ig1,ig2,iw_par)*4._SP*pi/bare_qpg_d(iq,ig1)/bare_qpg_d(iq,ig2)
         enddo
       enddo
       !
@@ -357,8 +357,8 @@ contains
      integer, intent(in)      :: Xo_rows(2),Xo_cols(2)
      integer :: ig1,ig2
      !
-     complex(SP), pointer DEV_ATTRIBUTE :: KERNEL_blc_d(:,:,:)
-     complex(SP), pointer DEV_ATTRIBUTE :: Xo_blc_d(:,:,:)
+     complex(SP), pointer DEV_ATTR :: KERNEL_blc_d(:,:,:)
+     complex(SP), pointer DEV_ATTR :: Xo_blc_d(:,:,:)
      !
      if (compute_on_gpu) then
        !
@@ -368,7 +368,7 @@ contains
        !$cuf kernel do(2) <<<*,*>>>
        do ig2=Xo_cols(1),Xo_cols(2)
        do ig1=Xo_rows(1),Xo_rows(2)
-         KERNEL_blc_d(ig1,ig2,1) =KERNEL_blc_d(ig1,ig2,1)-Xo_blc_d(ig1,ig2,1)*4._SP*pi/bare_qpg_d(ig2,iq)**2
+         KERNEL_blc_d(ig1,ig2,1) =KERNEL_blc_d(ig1,ig2,1)-Xo_blc_d(ig1,ig2,1)*4._SP*pi/bare_qpg_d(iq,ig2)**2
          if (ig1==ig2) KERNEL_blc_d(ig1,ig1,1)=KERNEL_blc_d(ig1,ig1,1)+cONE
        enddo
        enddo

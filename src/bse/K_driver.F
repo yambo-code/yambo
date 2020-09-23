@@ -27,7 +27,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use parser_m,       ONLY:parser
  use com,            ONLY:msg
  use stderr,         ONLY:STRING_remove,intc
- use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,E_SOC_table
+ use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
  use DIPOLES,        ONLY:DIPOLE_t
@@ -133,6 +133,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  if (.not.l_bs_fxc) call parser('bs_fxc',l_bs_fxc)
  !
+ if (Ken%nb_SOC/=0) BS_perturbative_SOC=.true.
+ !
  if (l_bs_fxc) then
    !==========
    !
@@ -165,7 +167,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  BSS_add_antiresonant=index(BSE_mode,'retarded')/=0
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  BS_K_is_ALDA=l_alda_fxc
- BS_perturbative_SOC=allocated(E_SOC_table)
 #if defined _KERR
  call parser('EvalKerr',l_kerr)
  if(l_kerr) call parser('AnHall',l_anomalous_Hall)
@@ -180,7 +181,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  ! Double Grid support
  !=====================
- BSS_uses_DbGd = (BZ_DbGd_nbands>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
+ BSS_uses_DbGd = (Ken%nb_FineGd>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
  !
  ! Frequencies 
  !=============

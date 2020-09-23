@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#include<dev_defs.h>
-!
 module interfaces
+ !
+#include<dev_defs.h>
  !
  implicit none
  !
@@ -321,7 +321,7 @@ module interfaces
  !
  interface WF_shift_kpoint
    !
-   subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
+   subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP
      use electrons,     ONLY:n_spinor,n_sp_pol
      use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
@@ -329,11 +329,10 @@ module interfaces
      implicit none
      integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2)
      type(bz_samp), intent(in) :: Xk
-     complex(SP), intent(in)   :: WF_k_in (wf_ng_1st_BZ,  n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
-     complex(SP), intent(out)  :: WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
-#ifdef _CUDA
-     attributes(device) :: WF_k_out,WF_k_in
-#endif
+     complex(SP), intent(in)  DEV_ATTR :: &
+&         WF_k_in (wf_ng_1st_BZ,  n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
+     complex(SP), intent(out) DEV_ATTR :: &
+&         WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
    end subroutine
  end interface 
  !
@@ -359,8 +358,8 @@ module interfaces
      implicit none
      integer,       intent(in)  :: ikbz,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
-     complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
-     attributes(device) :: WF_k_out
+     complex(SP),   intent(out) DEV_ATTR :: &
+&       WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
    end subroutine WF_symm_kpoint_gpu
 #endif
  end interface
@@ -382,8 +381,8 @@ module interfaces
      use FFT_m,         ONLY:fft_size
      use electrons,     ONLY:n_spinor
      implicit none
-     integer,             intent(in)  :: isc(4)
-     complex(SP), device, intent(out) :: WF_symm_d(fft_size,n_spinor)
+     integer,     intent(in)  :: isc(4)
+     complex(SP), intent(out) DEV_ATTR :: WF_symm_d(fft_size,n_spinor)
    end subroutine WF_apply_symm_gpu
 #endif
  end interface

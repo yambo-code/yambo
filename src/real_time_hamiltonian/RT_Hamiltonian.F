@@ -57,10 +57,11 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use drivers,        ONLY:l_use_Hxc_collisions
  use R_lattice,      ONLY:bz_samp,nXkibz
  use hamiltonian,    ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc
- use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,REF_V_xc_sc,                  &
-&                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,H_EQ,    &
+ use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,REF_V_xc_sc, &
+&                         rho_reference,magn_reference,RT_Vnl_xc,H_EQ,         &
 &                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_potential,      &
-&                         RT_bands,RT_nbands,l_update_SOC,l_velocity_gauge_corr
+&                         RT_bands,RT_nbands,RT_nk,RT_E_and_k,    &
+&                         l_update_SOC,l_velocity_gauge_corr
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A,PP_redux_wait,PAR_G_k_range
@@ -79,8 +80,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! Work Space
  !
- logical                  :: l_H_contains_Hartree
  integer                  :: ik,ik_RT,ib
+ logical                  :: l_H_contains_Hartree
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: V_scf(:),V_scf_grad(:,:),V_xc_mat(:,:,:)
  !

@@ -23,15 +23,13 @@
 !
 integer function io_Double_Grid(E,Xk,ID)
  !
- use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_max_filling,&
-&                         BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol,BZ_DbGd_weight,&
-&                         DbGd_is_symmetry_expanded,BZ_ASSOCIATED_nkpts,BZ_DbGd_kpts,&
-&                         BZ_DbGd_tot_nk
- use R_lattice,      ONLY:nXkbz,bz_samp
+ use electrons,      ONLY:levels,n_sp_pol
+ use R_lattice,      ONLY:bz_samp
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
-&                         io_bulk,io_header,ver_is_gt_or_eq,file_is_present,write_is_on,&
+&                         io_bulk,io_header,ver_is_gt_or_eq,write_is_on,&
 &                         IO_OUTDATED_DB,variable_exist
  use timing_m,       ONLY:timing
+ !
 #include<memory.h>
  !
  type(levels) :: E
@@ -40,116 +38,103 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  ! Work Space
  !
- integer :: DG_format,VAR_SZ
+ logical :: l_R_LATT
+ integer :: VAR_SZ
  !
  call timing('io_Double_Grid',OPR='start')
  !
  io_Double_Grid=-1
  !
- if (file_is_present('Double_Grid').or.write_is_on(ID)) then
-   io_Double_Grid=io_connect(desc='Double_Grid',type=2,ID=ID)
-   DG_format=3
- endif
- if (file_is_present('RIM_E_and_k').and.io_Double_Grid<0) then
-   io_Double_Grid=io_connect(desc='RIM_E_and_k',type=2,ID=ID)
-   DG_format=2
- endif
- if (file_is_present('E_RIM').and.io_Double_Grid<0) then
-   io_Double_Grid=io_connect(desc='E_RIM',type=2,ID=ID)
-   DG_format=1
- endif
+ io_Double_Grid=io_connect(desc='Double_Grid',type=2,ID=ID)
  !
  if (io_Double_Grid/=0) goto 1
  !
- if (write_is_on(ID).or.variable_exist(ID,"HEAD_R_LATT")) then
-   io_Double_Grid=io_header(ID,R_LATT=.TRUE.,IMPOSE=.TRUE.)
- else
-   io_Double_Grid=io_header(ID)
- endif
+ l_R_LATT=(write_is_on(ID).or.variable_exist(ID,"HEAD_R_LATT"))
+ io_Double_Grid=io_header(ID,R_LATT=l_R_LATT,IMPOSE=l_R_LATT,NOWARN_SER=.true.)
  !
  if (.not.ver_is_gt_or_eq(ID,revision=3560)) io_Double_Grid=IO_OUTDATED_DB
  !
+ if (variable_exist(ID,'KPTS'))              io_Double_Grid=IO_OUTDATED_DB 
+ !
  if (io_Double_Grid/=0) goto 1
  !
- VAR_SZ=6
- if (DG_format==1) VAR_SZ=4
- call io_elemental(ID,VAR="PARS",VAR_SZ=VAR_SZ,MENU=0)
+ call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
  !
- call io_elemental(ID,I0=BZ_DbGd_nbands,        VAR=' Bands                           ')
- call io_elemental(ID,I0=BZ_DbGd_tot_nk)
- call io_elemental(ID,I0=BZ_DbGd_tot_nk_levels, VAR=' Fine grid number of points      ')
+ call io_elemental(ID,I0=E%nb_FineGd,        VAR=' Bands                           ')
+ call io_elemental(ID,I0=E%nk_FineGd,        VAR=' Number of points  in the IBZ (E)')
+ call io_elemental(ID,I0=Xk%nibz_FineGd,     VAR=' Number of points  in the IBZ (k)')
+ call io_elemental(ID,I0=Xk%nbz_FineGd,      VAR=' Number of points  in the  BZ (k)')
+ call io_elemental(ID,I0=Xk%nibz_duplicate,  VAR=' Number of duplic. pts in the IBZ')
+ call io_elemental(ID,I0=Xk%nbz_duplicate,   VAR=' Number of duplic. pts in the  BZ')
  ! 
- if (DG_format==3) then
-   call io_elemental(ID,I0=BZ_ASSOCIATED_nkpts, VAR=' BZ ASSOCIATED k-points          ')
- else
-   BZ_ASSOCIATED_nkpts=nXkbz
- endif
- !
- call io_elemental(ID,I0=BZ_DbGd_max_filling,VAR=' BZ Blocks max filling           ')
- !
- if (DG_format==3) then
-   call io_elemental(ID,L0=DbGd_is_symmetry_expanded,VAR=' Points expanded in the BZ       ')
- else
-   DbGd_is_symmetry_expanded=.TRUE.
- endif
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
- !
- if (read_is_on(ID)) then
-   YAMBO_ALLOC(E%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
-   YAMBO_ALLOC(E%W_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
-   YAMBO_ALLOC(E%f_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
-   YAMBO_ALLOC(BZ_DbGd_kpts,(BZ_DbGd_tot_nk,3))
-   YAMBO_ALLOC(BZ_DbGd_nkpt,(BZ_ASSOCIATED_nkpts))
-   YAMBO_ALLOC(BZ_DbGd_table,(BZ_ASSOCIATED_nkpts,BZ_DbGd_max_filling,2))
-   YAMBO_ALLOC(BZ_DbGd_weight,(BZ_DbGd_max_filling))
- endif
  !
  ! Eigenvalues
  !
- if (DG_format==3) then
-   call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%E_DbGd) ) 
- else
-   call io_bulk(ID, VAR="RIM_EIGENVALUES", VAR_SZ=shape(E%E_DbGd) ) 
+ if (read_is_on(ID)) then
+   YAMBO_ALLOC(E%E_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
+   YAMBO_ALLOC(E%W_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
+   YAMBO_ALLOC(E%f_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
  endif
- call io_bulk(ID, R3=E%E_DbGd )
+ !
+ call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%E_FineGd) ) 
+ call io_bulk(ID, R3=E%E_FineGd )
  !
  ! Kpts
  !
- if (DG_format>1) then
-   if (DG_format==3) then
-     call io_bulk(ID, VAR="KPTS", VAR_SZ=shape(BZ_DbGd_kpts) ) 
-   else
-     call io_bulk(ID, VAR="RIM_KPTS", VAR_SZ=shape(BZ_DbGd_kpts) ) 
-   endif
-   call io_bulk(ID, R2=BZ_DbGd_kpts )
+ if (read_is_on(ID)) then
+   YAMBO_ALLOC(Xk%pt_FineGd,(Xk%nibz_FineGd,3))
+   YAMBO_ALLOC(Xk%weights_FineGd,(Xk%nibz_FineGd))
+   YAMBO_ALLOC(Xk%ptbz_FineGd,(Xk%nbz_FineGd,3))
+   YAMBO_ALLOC(Xk%sstar_FineGd,(Xk%nbz_FineGd))
  endif
+ !
+ call io_bulk(ID, VAR="KPTS_IBZ", VAR_SZ=shape(Xk%pt_FineGd) ) 
+ call io_bulk(ID, R2=Xk%pt_FineGd )
+ !
+ call io_bulk(ID, VAR="KPTS_WEIGHTS", VAR_SZ=shape(Xk%weights_FineGd) ) 
+ call io_bulk(ID, R1=Xk%weights_FineGd )
+ !
+ call io_bulk(ID, VAR="KPTS_BZ", VAR_SZ=shape(Xk%ptbz_FineGd) ) 
+ call io_bulk(ID, R2=Xk%ptbz_FineGd )
+ !
+ call io_bulk(ID, VAR="IBZ_TO_BZ_MAP", VAR_SZ=(/Xk%nbz_FineGd/) )
+ call io_bulk(ID, I1=Xk%sstar_FineGd )
  !
  ! Block filling
  !
- if (DG_format==3) then
-   call io_bulk(ID, VAR="BLOCK_FILLING", VAR_SZ=shape(BZ_DbGd_nkpt) ) 
- else
-   call io_bulk(ID, VAR="RIM_BLOCK_FILLING", VAR_SZ=shape(BZ_DbGd_nkpt) ) 
+ if (read_is_on(ID)) then
+   YAMBO_ALLOC(Xk%nibz_mapped,(Xk%nibz))
+   YAMBO_ALLOC(Xk%nbz_mapped,(Xk%nbz))
  endif
- call io_bulk(ID, I1=BZ_DbGd_nkpt )
+ !
+ call io_bulk(ID, VAR="BLOCK_FILLING_IBZ", VAR_SZ=(/Xk%nibz/) ) 
+ call io_bulk(ID, I1=Xk%nibz_mapped )
+ !
+ call io_bulk(ID, VAR="BLOCK_FILLING_BZ", VAR_SZ=(/Xk%nbz/) ) 
+ call io_bulk(ID, I1=Xk%nbz_mapped )
  !
  ! Block table
  !
- if (DG_format==3) then
-   call io_bulk(ID, VAR="BLOCK_TABLE", VAR_SZ=shape(BZ_DbGd_table) ) 
- else
-   call io_bulk(ID, VAR="RIM_BLOCK_TABLE", VAR_SZ=shape(BZ_DbGd_table) ) 
+ if (read_is_on(ID)) then
+   YAMBO_ALLOC(Xk%ibz_DbGd_map,(2,Xk%nibz))
+   YAMBO_ALLOC(Xk%bz_DbGd_map,(2,Xk%nbz))
  endif
- call io_bulk(ID, I3=BZ_DbGd_table )
  !
- ! Double grid interpolation weights of each element in table
+ call io_bulk(ID, VAR="BLOCK_TABLE_IBZ", VAR_SZ=shape(Xk%ibz_DbGd_map) ) 
+ call io_bulk(ID, I2=Xk%ibz_DbGd_map )
  !
- if (DG_format==3) then
-   call io_bulk(ID, VAR="INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_weight) ) 
- else
-   call io_bulk(ID, VAR="RIM_INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_weight) ) 
+ call io_bulk(ID, VAR="BLOCK_TABLE_BZ", VAR_SZ=shape(Xk%bz_DbGd_map) ) 
+ call io_bulk(ID, I2=Xk%bz_DbGd_map )
+ !
+ ! Double grid weights
+ !
+ if (read_is_on(ID)) then
+   YAMBO_ALLOC(Xk%weights_DbGd,(Xk%nibz))
  endif
- call io_bulk(ID, R1=BZ_DbGd_weight)
+ !
+ call io_bulk(ID, VAR="KPTS_WEIGHT", VAR_SZ=(/Xk%nibz/) ) 
+ call io_bulk(ID, R1=Xk%weights_DbGd)
  !
 1 call io_disconnect(ID=ID)
  !

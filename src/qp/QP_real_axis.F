@@ -36,8 +36,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
-&                        PAR_IND_Q,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,&
-&                        n_WF_bands_to_load,PAR_Q_index,PAR_nQP,&
+&                        PAR_IND_Q_ibz,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,&
+&                        n_WF_bands_to_load,PAR_Q_ibz_index,PAR_nQP,&
 &                        PAR_nG_bands,PAR_nQ_bz
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
 &                        PARALLEL_WF_distribute,QP_state_print
@@ -250,7 +250,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  ! Redefine i_q_to_start to be CPU-dependent
  !
  do iqbz=1,q%nbz
-   if (PAR_IND_Q%element_1D(q%sstar(iqbz,1))) then
+   if (PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) then
      i_q_to_start=iqbz
      exit
    endif
@@ -292,7 +292,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  !--------------
  timing_steps=0
  do iqbz=i_q_to_start,q%nbz
-   if (.not.PAR_IND_Q%element_1D( q%sstar(iqbz,1) )) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D( q%sstar(iqbz,1) )) cycle
    timing_steps=timing_steps+1
  enddo
  !
@@ -316,11 +316,11 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    !
    i_q_W_mem=PAR_Q_bz_index(iqbz)
    !
-   if (.not.PAR_IND_Q%element_1D(iqibz)) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D(iqibz)) cycle
    !
    if (iqibz/=scattering_main%iqref) then
      !
-     i_q_mem=PAR_Q_index(iqibz)
+     i_q_mem=PAR_Q_ibz_index(iqibz)
      X_range=(/1,QP_n_W_freqs_redux/)
      !
      if (.not.io_RESPONSE) X_range=(/QP_n_W_freqs_redux*(i_q_mem-1)+1,QP_n_W_freqs_redux*(i_q_mem-1)+X_life_W(iqibz)%n_freqs/)

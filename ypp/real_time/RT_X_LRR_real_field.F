@@ -28,13 +28,14 @@
 subroutine RT_X_LRR_real_field(en)
  !
  use YPP_real_time,  ONLY:RT_conf,Use_FFT,l_force_min_damp,RT_time,Pol,ElField,FT_free
- use pars,           ONLY:SP,pi,cI,cZERO
+ use pars,           ONLY:SP,pi,cI,cZERO,schlen
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use vec_operate,    ONLY:v_norm
  use RT_control,     ONLY:RT_output
  use real_time,      ONLY:l_RT_induced_field
  use fields,         ONLY:Efield,small_a_frequency,small_a
+ use com,            ONLY:of_open_close,msg
  use functions,      ONLY:theta_function
  use parser_m,       ONLY:parser
  !
@@ -49,6 +50,11 @@ subroutine RT_X_LRR_real_field(en)
  real(SP)     :: W_reached,Field_time,outdata(6),E_ver(3,3)
  complex(SP)  :: Pol_proj(3),E_w_SP(3),Field,E_of_t(2),A_of_t(2),theta,delta,Field_freq
  complex(SP), allocatable :: EELS(:,:),EPS(:,:)
+ !
+#if defined _YPP_NL
+ character(schlen)        :: headings(7)
+ real(SP)                 :: data_to_dump(7)
+#endif
  !
  call section("=",'Optics')
  !=========================
@@ -154,7 +160,24 @@ subroutine RT_X_LRR_real_field(en)
  !
  ! EPS=-1./EELS
  !
+#if defined _YPP_NL
+ call of_open_close("YPP-E_frequency" ,'ot')
+ headings=(/'E [eV]   ','E_x(w)/Re','E_y(w)/Re','E_z(w)/Re','E_x(w)/Im','E_y(w)/Im','E_z(w)/Im'/)
+ call msg('o frequency','#',headings,INDENT=0,USE_TABS=.TRUE.)
+ call msg('o frequency','#')
+ !
+ call of_open_close("YPP-eps_along_E" ,'ot')
+ headings=(/'E [eV]   ','Im/eps_d1','Im/eps_d2','Im/eps_d3','Re/eps_d1','Re/eps_d2','Re/eps_d3'/)
+ call msg('o eps','#',headings,INDENT=0,USE_TABS=.TRUE.)
+ call msg('o eps','#')
+ !
+ call of_open_close("YPP-eels_along_E",'ot')
+ headings=(/'E [eV]   ','Im/eel_d1','Im/eel_d2','Im/eel_d3','Re/eel_d1','Re/eel_d2','Re/eel_d3'/)
+ call msg('o eels','#',headings,INDENT=0,USE_TABS=.TRUE.)
+ call msg('o eels','#')
+#else
  call RT_output(what="open E_frequency eps_along_E eels_along_E")
+#endif
  !
  if(Efield(i_Probe)%ef_pol=="linear"  ) then
    E_ver(:,1) = Efield(i_Probe)%versor
@@ -217,18 +240,46 @@ subroutine RT_X_LRR_real_field(en)
    if(Efield(i_Probe)%ef_pol=="circular") E_w_SP=Efield(i_Probe)%versor     *cmplx(ElField%F_w(i_w,1),kind=SP) &
 &                                               +Efield(i_Probe)%versor_circ*cmplx(ElField%F_w(i_w,2),kind=SP)
    !
+#if defined _YPP_NL
+   data_to_dump(1)=W_reached
+#endif
+   !
+#if defined _YPP_NL
+   data_to_dump(2:4)=(/ real(E_w_SP(1) ),real(E_w_SP(2) ),real(E_w_SP(3) ) /)
+   data_to_dump(5:7)=(/ aimag(E_w_SP(1)),aimag(E_w_SP(2)),aimag(E_w_SP(3)) /)
+   call msg('o frequency','',data_to_dump,USE_TABS=.TRUE.)
+#else
    outdata(1:3)=(/ real(E_w_SP(1) ),real(E_w_SP(2) ),real(E_w_SP(3) ) /)
    outdata(4:6)=(/ aimag(E_w_SP(1)),aimag(E_w_SP(2)),aimag(E_w_SP(3)) /)
    call RT_output('E_frequency',VALUEs=outdata,E=W_reached)
+#endif
+#if defined _YPP_NL
+   data_to_dump(2:4)=(/ aimag(EPS(i_w,1) ),aimag(EPS(i_w,2) ),aimag(EPS(i_w,3) ) /)
+   data_to_dump(5:7)=(/ real( EPS(i_w,1) ),real( EPS(i_w,2) ),real( EPS(i_w,3) ) /)
+   call msg('o eps','',data_to_dump,USE_TABS=.TRUE.)
+#else
    outdata(1:3)=(/ aimag(EPS(i_w,1) ),aimag(EPS(i_w,2) ),aimag(EPS(i_w,3) ) /)
    outdata(4:6)=(/ real( EPS(i_w,1) ),real( EPS(i_w,2) ),real( EPS(i_w,3) ) /)
    call RT_output('eps_along_E' ,VALUEs=outdata ,E=W_reached)
+#endif
+#if defined _YPP_NL
+   data_to_dump(2:4)=(/ aimag(EELS(i_w,1) ),aimag(EELS(i_w,2) ),aimag(EELS(i_w,3) ) /)
+   data_to_dump(5:7)=(/ real( EELS(i_w,1) ),real( EELS(i_w,2) ),real( EELS(i_w,3) ) /)
+   call msg('o eels','',data_to_dump,USE_TABS=.TRUE.)
+#else
    outdata(1:3)=(/ aimag(EELS(i_w,1) ),aimag(EELS(i_w,2) ),aimag(EELS(i_w,3) ) /)
    outdata(4:6)=(/ real( EELS(i_w,1) ),real( EELS(i_w,2) ),real( EELS(i_w,3) ) /)
    call RT_output('eels_along_E',VALUEs=outdata ,E=W_reached)
+#endif
    !
  enddo
+#if defined _YPP_NL
+ call of_open_close("YPP-E_frequency")
+ call of_open_close("YPP-eps_along_E")
+ call of_open_close("YPP-eels_along_E")
+#else
  call RT_output(what="close E_frequency eps_along_E eels_along_E")
+#endif
  !
  ! Clean up
  !==========

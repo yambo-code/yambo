@@ -132,21 +132,19 @@ module interfaces
    end subroutine el_density_of_states
    !
 #if defined _SLEPC && !defined _SLEPC_OFF
-   subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
+   subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
      !
      use pars,           ONLY:SP,schlen
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscmat.h>
-     !
-     Mat                         :: A            ! matrix to diagonalize of stype from slepc
+     use petscmatdef,    ONLY:tmat
+     implicit none
+     Mat                         :: M_slepc      ! matrix to diagonalize of stype from slepc
      integer                     :: n_eig        ! number of eigenvalues to compute
-     !real(SP),                   :: target_energy! energy near where to find the eigenvalues
-     !real(SP),                   :: slepc_tol    ! tolerance of the iterative solver
      character(schlen)           :: extraction   ! extraction method for the eigenvalues
-     ! integer,optional            :: slepc_ncv    ! dimension of the subspace
-     PetscReal                   :: target_energy
-     PetscReal                   :: slepc_tol
-     PetscFortranInt             :: slepc_ncv
+     PetscScalar                 :: target_energy! energy near where to find the eigenvalues
+     PetscReal                   :: slepc_tol    ! tolerance of the iterative solver
+     PetscFortranInt             :: slepc_ncv    ! dimension of the subspace
      complex(SP)                 :: V_right(:,:) ! right eigenvalues
      complex(SP),  optional      :: V_left(:,:)  ! left eigenvalues
      complex(SP),  optional      :: E_cmpl(:)    ! complex eigenvalues
@@ -299,7 +297,7 @@ module interfaces
      integer     ,optional:: MAP(N)
    end subroutine QP_DBs_merge
    !
-   integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a)
+   integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode)
      use pars,       ONLY:SP
      use electrons,  ONLY:levels
      use R_lattice,  ONLY:bz_samp
@@ -308,6 +306,7 @@ module interfaces
      character(*)      :: DB1_path,what
      real(SP),optional :: db1_a(3,3)
      real(SP),optional :: db1_alat(3) 
+     integer ,optional :: COM_mode
    end function
    !
    subroutine QP_state_print(qp)
@@ -321,7 +320,7 @@ module interfaces
  !
  interface WF_shift_kpoint
    !
-   subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
+   subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP
      use electrons,     ONLY:n_spinor,n_sp_pol
      use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
@@ -329,9 +328,9 @@ module interfaces
      implicit none
      integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2)
      type(bz_samp), intent(in) :: Xk
-     complex(SP), intent(in)  DEV_ATTRIBUTE :: &
+     complex(SP), intent(in)  DEV_ATTR :: &
 &         WF_k_in (wf_ng_1st_BZ,  n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
-     complex(SP), intent(out) DEV_ATTRIBUTE :: &
+     complex(SP), intent(out) DEV_ATTR :: &
 &         WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
    end subroutine
  end interface 
@@ -358,7 +357,7 @@ module interfaces
      implicit none
      integer,       intent(in)  :: ikbz,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
-     complex(SP),   intent(out) DEV_ATTRIBUTE :: &
+     complex(SP),   intent(out) DEV_ATTR :: &
 &       WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
    end subroutine WF_symm_kpoint_gpu
 #endif
@@ -382,7 +381,7 @@ module interfaces
      use electrons,     ONLY:n_spinor
      implicit none
      integer,     intent(in)  :: isc(4)
-     complex(SP), intent(out) DEV_ATTRIBUTE :: WF_symm_d(fft_size,n_spinor)
+     complex(SP), intent(out) DEV_ATTR :: WF_symm_d(fft_size,n_spinor)
    end subroutine WF_apply_symm_gpu
 #endif
  end interface

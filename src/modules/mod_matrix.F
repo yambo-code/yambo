@@ -77,8 +77,8 @@ module matrix
    !
    integer :: Nb          ! # of Blocks
    !
-   complex(SP), allocatable DEV_PINNED    :: blc(:,:,:)         ! pinned host var if CUDA
-   complex(SP), allocatable DEV_ATTRIBUTE :: blc_d(:,:,:)       ! device var if CUDA
+   complex(SP), allocatable DEV_PINNED :: blc(:,:,:)         ! pinned host var if CUDA
+   complex(SP), allocatable DEV_ATTR   :: blc_d(:,:,:)       ! device var if CUDA
    !
  end type PAR_matrix 
  !

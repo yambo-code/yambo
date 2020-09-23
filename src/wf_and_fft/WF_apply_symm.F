@@ -21,127 +21,28 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_apply_symm_cpu(isc,WF_symm)
+subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
+ !
+ ! INCLUDED in: WF_apply_symm_incl.F 
  !
  use pars,          ONLY:SP
  use wave_func,     ONLY:WF
- use FFT_m,         ONLY:fft_rot_r,fft_size
+ use FFT_m,         ONLY:DEV_VAR(fft_rot_r),fft_size
  use stderr,        ONLY:intc
  use parallel_m,    ONLY:myid
  use electrons,     ONLY:n_spinor
- use D_lattice,     ONLY:nsym,spin_sop,i_time_rev,idt_index
+ use D_lattice,     ONLY:nsym,DEV_VAR(spin_sop),i_time_rev,idt_index
+ use deviceXlib_m
  !
  implicit none
  !
- integer, target, intent(in) :: isc(4)
- complex(SP),    intent(out) :: WF_symm(fft_size,n_spinor)
+ integer,     intent(in)  :: isc(4)
+ complex(SP), intent(out) DEV_ATTR :: WF_symm(fft_size,n_spinor)
  !
- integer     :: i_wf
-#if defined _OPENMP
- integer     :: ifft, i_spinor
-#endif
- !
- i_wf=WF%index(isc(1),isc(2),isc(4))
-#if defined _MPI
- if (i_wf==0) call error('EMPTY WF index @ b'//trim(intc(isc(1)))//' k'//&
-&                          trim(intc(isc(2)))//' spin'//trim(intc(isc(4)))//&
-&                          ' ID'//trim(intc(myid)))
-#endif
- !
-#if defined _OPENMP
- if(isc(3)==idt_index) then
-!$omp parallel do default(shared), private(ifft,i_spinor), collapse(2)
-   do i_spinor=1,n_spinor
-     do ifft = 1, fft_size
-       WF_symm(ifft,i_spinor)=WF%c(ifft,i_spinor,i_wf)
-     enddo
-   enddo
-!$omp end parallel do
-   return
- endif
- !
- if (n_spinor==1) then
-   !
-!$omp parallel do default(shared), private(ifft)
-   do ifft = 1, fft_size
-     WF_symm(ifft,1)=WF%c(fft_rot_r(ifft,isc(3)),1,i_wf)
-   enddo
-!$omp end parallel do
-   !
- endif
- !
- if (n_spinor==2) then
-!$omp parallel default(shared), private(ifft)
-!$omp do
-   do ifft = 1, fft_size
-     WF_symm(ifft,1)=spin_sop(1,1,isc(3))*WF%c(fft_rot_r(ifft,isc(3)),1,i_wf)+ &
-                     spin_sop(1,2,isc(3))*WF%c(fft_rot_r(ifft,isc(3)),2,i_wf)
-   enddo
-!$omp end do
-!$omp do
-   do ifft = 1, fft_size
-     WF_symm(ifft,2)=spin_sop(2,1,isc(3))*WF%c(fft_rot_r(ifft,isc(3)),1,i_wf)+ &
-                     spin_sop(2,2,isc(3))*WF%c(fft_rot_r(ifft,isc(3)),2,i_wf)
-   enddo
-!$omp end do
-!$omp end parallel
- endif
- !
- if(isc(3)>nsym/(i_time_rev+1)) then
-!$omp parallel do default(shared), private(ifft,i_spinor), collapse(2)
-   do i_spinor = 1, n_spinor
-     do ifft = 1, fft_size
-       WF_symm(ifft,i_spinor)=conjg(WF_symm(ifft,i_spinor))
-     enddo
-   enddo
-!$omp end parallel do
- endif
- !
- ! ELSE on if defined OPENMP
- !
-#else
- !
- if(isc(3)==idt_index) then
-   WF_symm(:,1)=WF%c(:,1,i_wf)
-   if(n_spinor==2) WF_symm(:,2)=WF%c(:,2,i_wf)
-   return
- endif
- if (n_spinor==1) WF_symm(:,1)=WF%c(fft_rot_r(:,isc(3)),1,i_wf)
- if (n_spinor==2) then
-   WF_symm(:,1)=spin_sop(1,1,isc(3))*WF%c(fft_rot_r(:,isc(3)),1,i_wf)+ &
-&                    spin_sop(1,2,isc(3))*WF%c(fft_rot_r(:,isc(3)),2,i_wf)
-   WF_symm(:,2)=spin_sop(2,1,isc(3))*WF%c(fft_rot_r(:,isc(3)),1,i_wf)+ &
-&                    spin_sop(2,2,isc(3))*WF%c(fft_rot_r(:,isc(3)),2,i_wf)
- endif
- !
- if(isc(3)>nsym/(i_time_rev+1)) WF_symm=conjg(WF_symm)
- !
-#endif
- !
-end subroutine WF_apply_symm_cpu
-
-#ifdef _CUDA
-subroutine WF_apply_symm_gpu(isc,WF_symm_d)
- !
- use pars,          ONLY:SP
- use wave_func,     ONLY:WF
- use FFT_m,         ONLY:fft_rot_r_d,fft_size
- use stderr,        ONLY:intc
- use parallel_m,    ONLY:myid
- use electrons,     ONLY:n_spinor
- use D_lattice,     ONLY:nsym,spin_sop_d,i_time_rev,idt_index
- use cudafor
- !
- implicit none
- !
- integer,             intent(in)  :: isc(4)
- complex(SP), device, intent(out) :: WF_symm_d(fft_size,n_spinor)
- !
- complex(SP), device, pointer :: WF_p(:,:,:)
+ complex(SP), pointer     DEV_ATTR :: WF_p(:,:,:)
  integer  :: i_wf
- integer  :: ifft,i_spinor,isymm
+ integer  :: ifft,isymm
 
- !
  i_wf=WF%index(isc(1),isc(2),isc(4))
  !
 #if defined _MPI
@@ -150,53 +51,47 @@ subroutine WF_apply_symm_gpu(isc,WF_symm_d)
 &                         ' ID'//trim(intc(myid)))
 #endif
  !
- WF_p => WF%c_d
+ WF_p => DEV_VAR(WF%c)
  isymm = isc(3)
  !
  if(isc(3)==idt_index) then
    !
-   !$cuf kernel do(2) <<<*,*>>>
-   do i_spinor=1,n_spinor
-     do ifft = 1, fft_size
-       WF_symm_d(ifft,i_spinor)=WF_p(ifft,i_spinor,i_wf)
-     enddo
-   enddo
-   return
+   call dev_memcpy(WF_symm,DEV_VAR(WF%c)(:,:,i_wf))
    !
  endif
  !
  if(n_spinor==1) then
    !
+#ifdef _CUDA_LOC   
    !$cuf kernel do(1) <<<*,*>>>
+#else
+   !$omp parallel do default(shared), private(ifft)
+#endif
    do ifft = 1, fft_size
-     WF_symm_d(ifft,1)=WF_p(fft_rot_r_d(ifft,isymm),1,i_wf)
+     WF_symm(ifft,1)=WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf)
    enddo
    !
  endif
  !
  if (n_spinor==2) then
    !
+#ifdef _CUDA_LOC   
    !$cuf kernel do(1) <<<*,*>>>
+#else
+   !$omp parallel do default(shared), private(ifft)
+#endif
    do ifft = 1, fft_size
-     WF_symm_d(ifft,1)=spin_sop_d(1,1,isymm)*WF_p(fft_rot_r_d(ifft,isymm),1,i_wf)+ &
-                       spin_sop_d(1,2,isymm)*WF_p(fft_rot_r_d(ifft,isymm),2,i_wf)
-     WF_symm_d(ifft,2)=spin_sop_d(2,1,isymm)*WF_p(fft_rot_r_d(ifft,isymm),1,i_wf)+ &
-                       spin_sop_d(2,2,isymm)*WF_p(fft_rot_r_d(ifft,isymm),2,i_wf)
+     WF_symm(ifft,1)=DEV_VAR(spin_sop)(1,1,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf)+ &
+                     DEV_VAR(spin_sop)(1,2,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),2,i_wf)
+     WF_symm(ifft,2)=DEV_VAR(spin_sop)(2,1,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf)+ &
+                     DEV_VAR(spin_sop)(2,2,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),2,i_wf)
    enddo
    !
  endif
  !
  ! take care of time reversal if needed
  !
- if(isc(3)>nsym/(i_time_rev+1)) then
-   !$cuf kernel do(2) <<<*,*>>>
-   do i_spinor = 1, n_spinor
-     do ifft = 1, fft_size
-       WF_symm_d(ifft,i_spinor)=conjg(WF_symm_d(ifft,i_spinor))
-     enddo
-   enddo
- endif
+ if(isc(3)>nsym/(i_time_rev+1)) call dev_conjg(WF_symm)
  !
-end subroutine WF_apply_symm_gpu
-#endif
+end subroutine DEV_SUB_ALT(WF_apply_symm)
 

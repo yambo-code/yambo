@@ -76,9 +76,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  complex(SP), allocatable :: wf_disk(:,:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
- complex(DP), allocatable DEV_ATTRIBUTE :: wf_DP_d(:)
- complex(SP), allocatable DEV_ATTRIBUTE :: wf_disk_d(:,:,:)
- complex(SP), pointer     DEV_ATTRIBUTE :: wfc_d(:,:,:)
+ complex(DP), allocatable DEV_ATTR :: wf_DP_d(:)
+ complex(SP), allocatable DEV_ATTR :: wf_disk_d(:,:,:)
+ complex(SP), pointer     DEV_ATTR :: wfc_d(:,:,:)
  integer :: WFN
  !
  ! I/O

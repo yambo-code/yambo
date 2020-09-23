@@ -39,7 +39,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
 &                         BS_perturbative_SOC,l_BSK_IO_triangular
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss,l_col_cut
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k,PARALLEL_default_mode
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X
  use D_lattice,      ONLY:l_0D,l_1D,l_2D
@@ -102,7 +102,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !==============================
  if (index(BSE_mode,'causal')/=0) BSE_mode='retarded'
  !
- l_BSE_minimize_memory=(Xk%nbz==1)
+ l_BSE_minimize_memory=((Xk%nbz==1).or.trim(PARALLEL_default_mode)=="memory")
+ if(l_BSE_minimize_memory) call warning(" BSE calculation with minimal memory utilization")
  !
  ! TDDFT setup and Resets
  !========================
@@ -175,7 +176,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  ! Double Grid support
  !=====================
- BSS_uses_DbGd = (Ken%nb_FineGd>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
+ BSS_uses_DbGd = (Ken%FG%nb>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
  !
  ! Frequencies 
  !=============

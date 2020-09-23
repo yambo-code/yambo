@@ -23,11 +23,11 @@
 !
 #include<dev_defs.h>
 !
-subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
+subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
  !
  use pars,          ONLY:SP,cZERO
  use electrons,     ONLY:n_spinor,n_sp_pol
- use R_lattice,     ONLY:G_m_G,G_m_G_d,k_map,bz_samp
+ use R_lattice,     ONLY:G_m_G,k_map,bz_samp
  use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
  use deviceXlib_m,  ONLY:dev_memcpy
  !
@@ -35,13 +35,13 @@ subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,
  !
  integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2)
  type(bz_samp), intent(in) :: Xk
- complex(SP), intent(in)  DEV_ATTRIBUTE :: WF_k_in (wf_ng_1st_BZ,  n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
- complex(SP), intent(out) DEV_ATTRIBUTE :: WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
+ complex(SP), intent(in)  DEV_ATTR :: WF_k_in (wf_ng_1st_BZ,  n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
+ complex(SP), intent(out) DEV_ATTR :: WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
  !
  ! Work space
  !
  integer :: id,ik,is
- complex(SP) DEV_ATTRIBUTE :: WF_tmp(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
+ complex(SP) DEV_ATTR :: WF_tmp(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
  integer :: ig,igp,i_b_ref
  integer :: g0_idx(3,2),g0_idx_val
  integer :: i_spinor,i_b,i_sp_pol
@@ -71,7 +71,7 @@ subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,
      do ig=1,wf_ng_1st_BZ
        !
        if(WF_tmp(ig,1,i_b_ref,1)==cZERO) cycle
-       igp=DEV_VARNAME(G_m_G)(ig,g0_idx_val)
+       igp=DEV_VAR(G_m_G)(ig,g0_idx_val)
        WF_k_out(igp,i_spinor,i_b,i_sp_pol)=WF_tmp(ig,i_spinor,i_b,i_sp_pol)
        !
      enddo
@@ -88,5 +88,5 @@ subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,
    !
  enddo
  !
-end subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)
+end subroutine DEV_SUB_ALT(WF_shift_kpoint)
 

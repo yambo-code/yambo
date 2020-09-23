@@ -65,6 +65,7 @@ subroutine INIT_report_and_log_files()
      logfile=jch
    endif
  enddo
+ if (all(rstatus==0)) repfile=trim(repfile)//'_ypp'
  if (ncpu>1.and.log_as_a_file) then
    jch=logfile
    logfile=trim(jch)//"_CPU_"//trim(intc(myid+1))

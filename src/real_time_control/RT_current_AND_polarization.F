@@ -47,7 +47,6 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use DIPOLES,        ONLY:DIP_iR,DIP_v,DIP_spin,DIP_orbital
  use parallel_m,     ONLY:PAR_DIPk_nibz,PAR_G_k_range
  use RT_interfaces,  ONLY:RT_average_operator
- use RT_control,     ONLY:RT_do_it
  !
  implicit none
  !
@@ -58,7 +57,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  ! Work Space
  !
- complex(SP)   :: RT_M_tmp(3)
+ complex(SP)         :: RT_M_tmp(3)
+ logical, external   :: RT_do_it
  !
  if ( .not. l_NE_dynamics ) return
  !

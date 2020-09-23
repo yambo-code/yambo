@@ -30,11 +30,8 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  use pars,              ONLY:SP
  use R_lattice,         ONLY:bz_samp
  use electrons,         ONLY:levels
- use interpolate,       ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells
+ use interpolate,       ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells,INTERP_FineGd
  use interpolate_tools, ONLY:get_ID
-#if defined _RT
- use real_time,         ONLY:RT_ibz_coo
-#endif
  !
 #include<memory.h>
  !
@@ -49,7 +46,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  ! Work Space
  !
  real(SP), allocatable :: RDATA(:,:)
- integer               :: inpdim(2),i1,i2,ik,Nk_local
+ integer               :: inpdim(2),i1,i2,ik,Nk_local,ik_fg
  !
  call get_ID(ID)
  !
@@ -109,14 +106,15 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  elseif(present(E)) then
    !
 #if defined _RT
-    if(allocated(E%E_FineGd)) then
-      do i1=1,inpdim(2)
-        do ik=1,k%nibz
-          RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) =&
-          &             E%E_FineGd(1:inpdim(1),k%ibz_DbGd_map(ik,1):k%ibz_DbGd_map(ik,2),i1)
-        enddo
-      enddo 
-    else
+   if (allocated(E%FG%E).and.trim(INTERP_FineGd)=="BARE") then
+     do i1=1,inpdim(2)
+       do ik=1,k%nibz
+         do ik_fg=k%FGbare%k_range(ik,1),k%FGbare%k_range(ik,2)
+           RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),ik_fg)=E%FG%E(1:inpdim(1),ik_fg,i1)
+         enddo
+       enddo
+     enddo 
+   else
 #endif
      do i1=1,inpdim(2)
        RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),1:Nk_local) = E%E(1:inpdim(1),1:Nk_local,i1)
@@ -127,7 +125,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  elseif(present(R2D)) then
    !
    do i1=1,inpdim(2)
-     RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),1:Nk_local)            = R2D(1:inpdim(1),1:Nk_local,i1)
+     RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),1:Nk_local)   = R2D(1:inpdim(1),1:Nk_local,i1)
    enddo
    !
  elseif(present(C2D)) then

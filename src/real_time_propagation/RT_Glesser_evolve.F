@@ -35,7 +35,7 @@ subroutine RT_Glesser_evolve(En,kpt,dG_old,dG_in,dG_out,dT,dTp)
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_G_k_range
  use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV, &
 &                         l_RT_RWA,l_RT_DIAG,l_RT_ACC,  &
-&                         G_lesser_reference,RT_bands,RT_nk,RT_all2ibz
+&                         G_lesser_reference,RT_bands,RT_nk,RTibz
  !
  implicit none
  !
@@ -58,7 +58,7 @@ subroutine RT_Glesser_evolve(En,kpt,dG_old,dG_in,dG_out,dT,dTp)
  !
  do ik=1,RT_nk
    !
-   if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+   if( .not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
    !
    if (l_RT_EXP.and.l_RT_ACC ) call RT_EXP_step_accurate(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    if (l_RT_EXP.and.l_RT_STD ) call RT_EXP_step_std(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)

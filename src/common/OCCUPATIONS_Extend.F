@@ -68,7 +68,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
    E%E=E%E-E%E_Fermi
    E%E_VBM =E%E_VBM-E%E_Fermi
    E%E_CBm =E%E_CBm-E%E_Fermi
-   if (allocated(E%E_FineGd)) E%E_FineGd =E%E_FineGd -E%E_Fermi
+   if (allocated(E%FG%E)) E%FG%E =E%FG%E -E%E_Fermi
    return
  endif
  !
@@ -90,7 +90,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  E%E=E%E-E%E_Fermi
  E%E_VBM =E%E_VBM-E%E_Fermi
  E%E_CBm =E%E_CBm-E%E_Fermi
- if (allocated(Xe%E_FineGd)) E%E_FineGd =E%E_FineGd -E%E_Fermi
+ if (allocated(Xe%FG%E)) E%FG%E =E%FG%E -E%E_Fermi
  !
  if (E%nbf/=Xe%nbf.or.E%nbm/=Xe%nbm) then
    call warning('Global and response function energy levels have different metallic character')
@@ -110,12 +110,12 @@ subroutine OCCUPATIONS_Extend(Xe,E)
          enddo
        enddo 
      enddo
-     if (allocated(E%E_FineGd)) then
-       do i1=1,E%nb_FineGd
-         do i2=1,E%nk_FineGd
+     if (allocated(E%FG%E)) then
+       do i1=1,E%FG%nb
+         do i2=1,E%FG%nk
            do is=1,n_sp_pol
-             E%f_FineGd(i1,i2,is) =spin_occ*Fermi_fnc(E%E_FineGd(i1,i2,is)-Ef,Tel)
-             Xe%f_FineGd(i1,i2,is)=E%f_FineGd(i1,i2,is)
+             E%FG%f(i1,i2,is) =spin_occ*Fermi_fnc(E%FG%E(i1,i2,is)-Ef,Tel)
+             Xe%FG%f(i1,i2,is)=E%FG%f(i1,i2,is)
            enddo
          enddo 
        enddo

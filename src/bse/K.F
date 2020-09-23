@@ -67,7 +67,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
 #if defined _PAR_IO
- use parallel_m,     ONLY:MPI_COMM_WORLD
 #endif
  !
 #include<memory.h>
@@ -109,7 +108,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Timing and restart
  !
  logical :: BS_blk_done(n_BS_blks)
- logical :: block_done
  integer :: n_steps,m_steps,i_steps
  !
  ! Constants & Setup

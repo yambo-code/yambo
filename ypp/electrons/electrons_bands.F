@@ -69,7 +69,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  ! Apply QP corrections
  !====================== 
- call QP_apply(BANDS_bands,Xen,Xk,'G',msg_fmt='s')
+ call QP_apply(BANDS_bands,Xen,Xk,'G',msg_fmt='rs')
  !
  ! IBZ => BZ: need to be done here as QP_apply cleans the %ptbz allocation
  !
@@ -82,7 +82,7 @@ subroutine electrons_bands(Xk,Xen)
  call E_reset(GRID_E)
  call E_reset(CIRCUIT_E)
  call E_reset(CIRCUIT_DE)
- !call E_reset(CIRCUIT_E_db)
+ call E_reset(CIRCUIT_E_db)
  !
  if (.not.file_exists(trim(CIRCUIT_E_DB_path)//"/SAVE/ns.db1")) CIRCUIT_E_DB_path="none"
  !

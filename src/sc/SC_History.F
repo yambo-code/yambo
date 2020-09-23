@@ -39,7 +39,7 @@ subroutine SC_History(it,E)
  !
  ! Work Space
  !
- integer  :: ik,ib,i_spin,n_headers,i_d,max_kpt,b_range(2)
+ integer  :: ik,ib,i_spin,n_headers,max_kpt,b_range(2)
  character(schlen), SAVE :: E_file_name(2)
  character(schlen)       :: headers(SC_nbands*nkibz)
  !

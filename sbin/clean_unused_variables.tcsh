@@ -218,7 +218,7 @@ set FILES = (  )
 if (-d $OBJ) then
  foreach kind ( "modified" "new" "renamed" )  
   git status -uno $OBJ | grep $kind | grep -v '\.pl' | grep  -v '\.pm'  | grep -v '\.c' |grep -v '\.m4' | grep -v '\.git' |grep -v '\.\.\/' > LIST
-  cat LIST | grep -v "mod_" | grep -v "Makefile" | grep -v "configure" | grep -v "\.h" | grep -v "\.object" | grep -v "\.tcsh" > LIST
+  cat LIST | grep -v "mod_" | grep -v "Makefile" | grep -v "configure" | grep -v "\.h" | grep -v "\.object" | grep -v "\.tcsh" | grep -v "lib/yambo" > LIST
   sed -i -e 's/new file/new_file/g' LIST
   if ($kind =~ "renamed") then
    set FILES=($FILES `awk '{print $4}' "LIST"`)
@@ -228,12 +228,12 @@ if (-d $OBJ) then
  end
 endif
 if ($filter =~ "all" && $OBJ =~ ".") then
- set FILES = `find src -name '*.F' |grep -v "SLK_test" `
+ set FILES = `find src -name '*.F' `
  set FILES = ($FILES `find ypp -name '*.F' `)
  set FILES = ($FILES `find interfaces -name '*.F' `)
 endif
 if ($filter =~ "all" && $OBJ !~ ".") then
- set FILES = `find $OBJ -name '*.F' |grep -v "SLK_test" `
+ set FILES = `find $OBJ -name '*.F'`
 endif
 
 if (-f $OBJ) then
@@ -241,8 +241,8 @@ if (-f $OBJ) then
 endif
 
 foreach file ($FILES)
- gawk -f AWK_split ${file}
  #echo "processing $file..."
+ gawk -f AWK_split ${file}
  @ N_unused=0
  foreach source (MODULE_*)
   #echo "$file $source..."

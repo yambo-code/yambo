@@ -182,7 +182,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  ! Double Grid support
  !=====================
- BSS_uses_DbGd = (Ken%nb_FineGd>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
+ BSS_uses_DbGd = (Ken%FG%nb>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
  !
  ! Frequencies 
  !=============

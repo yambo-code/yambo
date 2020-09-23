@@ -297,7 +297,7 @@ module interfaces
      integer     ,optional:: MAP(N)
    end subroutine QP_DBs_merge
    !
-   integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a)
+   integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode)
      use pars,       ONLY:SP
      use electrons,  ONLY:levels
      use R_lattice,  ONLY:bz_samp
@@ -306,6 +306,7 @@ module interfaces
      character(*)      :: DB1_path,what
      real(SP),optional :: db1_a(3,3)
      real(SP),optional :: db1_alat(3) 
+     integer ,optional :: COM_mode
    end function
    !
    subroutine QP_state_print(qp)

@@ -59,9 +59,9 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use hamiltonian,    ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc,E_reference
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,REF_V_xc_sc, &
 &                         rho_reference,magn_reference,RT_Vnl_xc,H_EQ,         &
-&                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_potential,      &
-&                         RT_bands,RT_nbands,RT_nk,RT_E_and_k,RT_ibz_dupl,    &
-&                         l_RT_uses_E_FineGd,l_update_SOC,l_velocity_gauge_corr
+&                         l_RT_RWA,eval_HARTREE,eval_DFT,RTibz,RT_potential,      &
+&                         RT_bands,RT_nbands,    &
+&                         l_update_SOC,l_velocity_gauge_corr
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A,PP_redux_wait,PAR_G_k_range
@@ -80,7 +80,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! Work Space
  !
- integer                  :: ik,ik_RT,ik_E_FineGd,ib
+ integer                  :: ik,ik_RT,ib,iE_fg
  logical                  :: l_H_contains_Hartree
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: V_scf(:),V_scf_grad(:,:),V_xc_mat(:,:,:)
@@ -175,7 +175,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      !
      call PP_redux_wait(H_nl_sc,COMM=PAR_COM_Xk_ibz_A2A%COMM)
      !
-     forall(ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=H_nl_sc
+     forall(ik_RT=RTibz%k_range(ik,1):RTibz%k_range(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=H_nl_sc
      !
    enddo
    !
@@ -195,11 +195,11 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    do ik=1,nXkibz 
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      if (l_H_contains_HARTREE) then
-       do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       do ik_RT =RTibz%k_range(ik,1),RTibz%k_range(ik,2)
          Ho_plus_Sigma(:,:,ik_RT,1)=Ho_plus_Sigma(:,:,ik_RT,1)+RT_Vnl_xc(:,:,ik,1)
        enddo
      else
-       do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+       do ik_RT =RTibz%k_range(ik,1),RTibz%k_range(ik,2)
          Ho_plus_Sigma(:,:,ik_RT,1)=RT_Vnl_xc(:,:,ik,1)
        enddo
      endif
@@ -218,7 +218,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      H_nl_sc=cZERO
      call RT_apply_field(ik,1,H_nl_sc,A_input)
-     do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+     do ik_RT =RTibz%k_range(ik,1),RTibz%k_range(ik,2)
        call V_by_V_plus_V_omp(RT_nbands,cONE,H_nl_sc,Ho_plus_sigma(:,:,ik_RT,1))
      enddo
    enddo

@@ -107,7 +107,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_o_file_is_open,&
 &                     RT_headings,YPP_append,Gr_desc,TIME_STEP_desc,RT_desc
  use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db,&
-&                     CACHE_OBS_last_point,CACHE_OBS_INTERVAL_time,CACHE_OBS_INTERVAL_time_SAVE,   &
+&                     CACHE_OBS_last_point,CACHE_OBS_INTERVAL_time,CACHE_OBS_INTERVAL_time_INPUT,   &
 &                     CACHE_OBS_steps,CACHE_OBS_steps_now,RT_NAN_found
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
@@ -119,7 +119,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     RAD_prefactor,i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,           &
 &                     RT_is_statically_dephased,RT_is_dynamically_dephased,               &
 &                     RT_deph_deg_thresh,RT_deph_cv_only,                                 &
-&                     NE_time_step_update_last_point,NE_time_step_update_jump,NE_time_step_update_jump_SAVE, &
+&                     NE_time_step_update_last_point,NE_time_step_update_jump,NE_time_step_update_jump_INPUT, &
 &                     NE_initial_time_step_update,NE_step_update_treshold
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_tot,A_ind,A_ext
@@ -591,15 +591,15 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  NE_time_step_update_last_point = 1
  NE_time_step_update_jump       = 0._SP
- NE_time_step_update_jump_SAVE  = 0._SP
+ NE_time_step_update_jump_INPUT  = 0._SP
  NE_initial_time_step_update    = 0._SP
  NE_step_update_treshold        = 0.1_SP
  !
- CACHE_OBS_steps      = 1
- CACHE_OBS_steps_now  = 1
- CACHE_OBS_last_point = 1
+ CACHE_OBS_steps      = 0
+ CACHE_OBS_steps_now  = 0
+ CACHE_OBS_last_point = 0
  CACHE_OBS_INTERVAL_time       = 0._SP
- CACHE_OBS_INTERVAL_time_SAVE  = 0._SP
+ CACHE_OBS_INTERVAL_time_INPUT  = 0._SP
  !
  G_MEM_steps = 2
  i_MEM_old   = 0
@@ -647,10 +647,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! RT_ctl
  !
- OBS_RT_IO_t%INTERVAL_time_SAVE   =2._SP*FS2AUT
- CARR_RT_IO_t%INTERVAL_time_SAVE  =2._SP*FS2AUT
- OUTPUT_RT_IO_t%INTERVAL_time_SAVE=5._SP*FS2AUT
- GF_RT_IO_t%INTERVAL_time_SAVE    =1._SP*FS2AUT
+ OBS_RT_IO_t%INTERVAL_time_INPUT   =2._SP*FS2AUT
+ CARR_RT_IO_t%INTERVAL_time_INPUT  =2._SP*FS2AUT
+ OUTPUT_RT_IO_t%INTERVAL_time_INPUT=5._SP*FS2AUT
+ GF_RT_IO_t%INTERVAL_time_INPUT    =1._SP*FS2AUT
  SAVE_G_history=.FALSE.
  RT_NAN_found  =.FALSE.
  !

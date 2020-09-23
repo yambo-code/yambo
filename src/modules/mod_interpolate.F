@@ -44,10 +44,13 @@ module interpolate
  logical           :: INTERPOLATE_is_serial=.FALSE.
  character(schlen) :: INTERPOLATE_msg_fmt="rs"
  !
+ integer, parameter :: max_interpls=10
+ !
  ! NN method
  !
  integer :: OUT_k_nk=0
  integer :: NN_nk_exact=0
+ integer :: NN_nk_border=0
  integer :: NN_n_of_nearest=1
  integer :: NN_MAX_real_nearest=0
  !
@@ -59,6 +62,7 @@ module interpolate
  logical :: l_INTERP_Z
  logical :: l_INTERP_W
  logical :: l_integral_respect=.TRUE. ! In the case of f/df keep the same integral of the SEED and of the interpolated
+ character(schlen) :: INTERP_FineGd   = "NONE"
  !
  ! ID's
  !
@@ -102,8 +106,6 @@ module interpolate
    real(SP),    allocatable :: INTERP(:,:,:)
    real(SP),    allocatable :: INTERP_FineGd(:,:,:)
  end type INTERP_element
- !
- integer, parameter :: max_interpls=10
  !
  type(INTERP_coeff)   :: interpls(max_interpls)
  type(INTERP_element) :: INTERP_obj(max_interpls)
@@ -179,7 +181,7 @@ module interpolate
      logical,       intent(in),    optional :: SERIAL
    end subroutine INTERPOLATION_driver_seed
    !
-   subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E)
+   subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
      use pars,        ONLY:SP
      use real_time,   ONLY:RT_t
      use R_lattice,   ONLY:bz_samp
@@ -190,6 +192,7 @@ module interpolate
      integer,       intent(in)              :: ID
      type(bz_samp), intent(inout)           :: OUT_k
      type(levels),  intent(inout), optional :: OUT_E
+     character(*),  intent(in)   , optional :: FineGrid
    end subroutine INTERPOLATION_driver_do
    !
  end interface  

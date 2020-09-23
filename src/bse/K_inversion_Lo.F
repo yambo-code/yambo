@@ -31,12 +31,11 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS_solvers,     ONLY:Co_factor,diam_term_exact,BSS_dipoles,BSS_uses_DbGd,&
 &                         BSS_eh_table,BSS_eh_E,BSS_eh_f,&
-&                         BSS_desc,BSS_eh_W,&
+&                         BSS_eh_W,&
 &                         BSS_add_antiresonant,K_diago_in_BS_mat,BS_diagonal
  use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use LIVE_t,         ONLY:live_timing
- use descriptors,    ONLY:IO_desc_add
  !
 #if defined _ELPH
  use BS_solvers,     ONLY:BSS_uses_GreenF
@@ -174,6 +173,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        if (BSS_add_antiresonant.or.BS_K_coupling) then
          !
          call X_GreenF_analytical(iq,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra","eh",.FALSE.,.FALSE.)
+         !
 #if defined _PL
          !
          ! The -1 coming from SF(:,2) and -abs(Lo)...compensate each other
@@ -261,11 +261,5 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  endif  
  !
  if (iq>BS_q(1)) return
- !
- call IO_desc_add(BSS_desc,kind="s",str=" ",S=" ")
- !
- if (k%nibz_FineGd>0) then
-   call IO_desc_add(BSS_desc,kind="i",str="[INV] BZ Double Grid points",I=(/k%nibz+k%nibz_FineGd/))
- endif
  !
 end subroutine K_inversion_Lo

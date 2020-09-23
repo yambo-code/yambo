@@ -25,7 +25,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  use pars,           ONLY:SP,pi
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
- use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,Co_factor,&
+ use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,&
 &                         K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
 &                         K_slk,K_inv_slk,BSS_eels_to_eps
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk

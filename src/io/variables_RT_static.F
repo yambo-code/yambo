@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function variables_RT_static(ID,what)
+integer function variables_RT_static(ID,what,l_carriers)
  !
  use pars,           ONLY:SP,LP,IP
  use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
@@ -29,15 +29,17 @@ integer function variables_RT_static(ID,what)
  use stderr,         ONLY:intc
  use hamiltonian,    ONLY:H_ref_bands
  use descriptors,    ONLY:IO_desc_reset
- use RT_output_m,    ONLY:RT_desc,Gr_desc,TIME_STEP_desc,n_RT_desc_static
+ use R_lattice,      ONLY:FineGd_desc
+ use RT_output_m,    ONLY:RT_desc,Gr_desc,n_RT_desc_static
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_extrapolation, &
 &                         RAD_LifeTime,Phase_LifeTime,&
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_steps,&
 &                         l_RT_CCA_Kernel,l_RT_impose_N_dN, &
-&                         l_RT_uses_E_FineGd,RT_life_extrap_times_SAVE,&
-&                         DbGd_EE_percent,l_RT_impose_E,RT_DbGd_nk,&
+&                         l_RT_uses_E_FineGd,RT_life_extrap_times_INPUT,&
+&                         DbGd_EE_percent,l_RT_impose_E,&
 &                         RT_potential
+ use IO_m,           ONLY:io_sec
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
 #endif
@@ -52,11 +54,12 @@ integer function variables_RT_static(ID,what)
  !
  integer            :: ID
  character(*)       :: what
+ logical            :: l_carriers
  !
  integer, external  ::io_descriptors
  !
- integer               :: i1
- logical               :: l_OBS,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic
+ integer               :: i1,MENU_
+ logical               :: l_OBS,l_G,l_carriers_,l_NE_with_fields_disk,l_RT_diamagnetic
  real(SP)              :: RT_life_extrap_decay_time
  !
  l_RT_diamagnetic          = .false.
@@ -64,7 +67,7 @@ integer function variables_RT_static(ID,what)
  !
  l_OBS         = what=="OBSERVABLES"
  l_G           = what=="G"
- l_carriers    = what=="carriers"
+ l_carriers_   = what=="carriers".or.l_carriers
  !
  call IO_desc_reset(RT_desc)
  !
@@ -111,9 +114,13 @@ integer function variables_RT_static(ID,what)
  call io_variable_elemental(ID,L0=l_elphoton_scatt,&
 &     VAR=" [E-PHOTON] Scattering           ", CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
  !
+ ! FineGrid descriptors
+ ! 
+ variables_RT_static=io_descriptors(FineGd_desc,"FineGd",ID,.FALSE.)
+ !
  ! GPL_EXCLUDE_END
  !
- if(any((/l_OBS,l_G,l_carriers/))) then
+ if(any((/l_OBS,l_G,l_carriers_/))) then
    !
    ! RT_DYNAMICS
    !
@@ -129,7 +136,7 @@ integer function variables_RT_static(ID,what)
    ! GPL_EXCLUDE_START
    !
    call io_variable_elemental(ID,&
-&    VAR=" [RT] Lif Extr Inte/Intr(sav)[fs]",R1=RT_life_extrap_times_SAVE,CHECK=.true.,OP=(/"==","=="/),&
+&    VAR=" [RT] Lif Extr Inte/Intr(sav)[fs]",R1=RT_life_extrap_times_INPUT,CHECK=.true.,OP=(/"==","=="/),&
 &    DESCRIPTOR=RT_desc,UNIT=AUT2FS)
    !
    ! Lifetimes Extrapolation
@@ -162,10 +169,6 @@ integer function variables_RT_static(ID,what)
 &    VAR=' [RT] Diamagnetic term           ',  CHECK=.false.,OP=(/"=="/),DESCRIPTOR=RT_desc)
    call io_variable_elemental(ID,L0=l_RT_induced_field,&
 &    VAR=' [RT] Induced field              ',  CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
-   !
-   ! Time-Steps configurations
-   !===========================
-   variables_RT_static=io_descriptors(TIME_STEP_desc,"TIME_STEP",ID,.FALSE.)
    !
    ! GPL_EXCLUDE_START
    !
@@ -238,7 +241,9 @@ integer function variables_RT_static(ID,what)
      enddo
      !
    endif
-   call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=0,MENU=1)
+   MENU_=1
+   if (any((/io_sec(ID,:)==2/))) MENU_=0
+   call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=0,MENU=MENU_)
  endif
  !
  n_RT_desc_static=RT_desc%n

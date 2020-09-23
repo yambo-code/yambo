@@ -86,6 +86,7 @@ integer function e2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call E_reset(en)
 #if defined _MEM_CHECK 
  call MEM_defaults( )
+ call MEM_treshold_estimate( )
 #endif
  !
  ! S/N

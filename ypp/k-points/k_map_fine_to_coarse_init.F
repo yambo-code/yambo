@@ -147,10 +147,13 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
      FineGd_E%E(:,i1+ik_now,:)= FineGd_io_E(i_db)%E(:,i1,:)
      FineGd_k%pt(i1+ik_now,:)= FineGd_io_k(i_db)%pt(i1,:)
    enddo
+ enddo
+ !
+ do i_db=1,n_FineGd_DBs
    call E_reset(FineGd_io_E(i_db))
    call bz_samp_reset(FineGd_io_k(i_db))
  enddo
- !
+ !  
  ! Use of less (only BZ_FineGd_nkpts, read from input) k-points
  !
  if (BZ_FineGd_nkpts_to_use<nkibz.and.BZ_FineGd_nkpts_to_use>0) then

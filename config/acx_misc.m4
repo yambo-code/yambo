@@ -135,11 +135,11 @@ AC_COMPILE_IFELSE(
  void F90_FUNC_(ftest, FTEST)(){})],[
  mv conftest.$ac_objext ftest.$ac_objext
  AC_LANG_PUSH(Fortran)
- save="$LIBS"
+ save_LIBS="$LIBS"
  LIBS="ftest.$ac_objext"
  AC_LINK_IFELSE([AC_LANG_CALL([], [ftest])],
                  [c_success="yes"; msg="test_"; save="$CFLAGS"; CFLAGS="$save -D_C_US"])
- LIBS="$save"
+ LIBS="$save_LIBS"
  AC_LANG_POP(Fortran)
  rm -f ftest.$ac_objext],[])
 if test "$c_success" = "no" ; then

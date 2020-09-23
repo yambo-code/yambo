@@ -53,9 +53,10 @@ exec_prefix = @exec_prefix@
 libs_prefix = @extlibs_path@
 bindir      = @bindir@
 topdir      = @abs_top_srcdir@
-libdir      = @prefix@/lib
-includedir  = @prefix@/include
-libbindir   = @prefix@/lib/bin
+compdir     = @compdir@
+libdir      = @compdir@/lib
+includedir  = @compdir@/include
+libbindir   = @compdir@/lib/bin
 STAMPS   = lib/archive/keep-extlibs-stamp
 CFGFILES = config/setup config/Makefile config/report config/msg_ydb \
            sbin/make_makefile.sh src/wf_and_fft/sgfft.F  \
@@ -241,7 +242,7 @@ slepc:
 #
 get_extlibs:
 	@+mkdir -p lib/archive; \
-	if [ $(topdir) != $(prefix) ] ; then \
+	if [ $(topdir) != $(compdir) ] ; then \
 	 cp $(topdir)/lib/archive/* lib/archive; \
 	 cp $(topdir)/config/missing config/ ; \
 	fi ; \
@@ -429,14 +430,14 @@ endef
 # SRC's and LIB's (needing the locks)
 #
 define mksrc
- if [ "$(topdir)" != "$(prefix)" ] ; then cp -r $(topdir)/include/* include/ ; fi ; \
+ if [ "$(topdir)" != "$(compdir)" ] ; then cp -r $(topdir)/include/* include/ ; fi ; \
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" || test "$(keep_objs)" = yes  ; then \
    rm -f "$(libdir)/lib$$ldir.a" ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
    if test ! -d "$$XPATH/$$ldir" ; then mkdir -p "$$XPATH/$$ldir" ; fi ; \
-   if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
+   if [ "$(topdir)" != "$(compdir)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
     cp $$VPATH/$$ldir/.objects $$XPATH/$$ldir ; \
    fi ; \
    ./sbin/make_makefile.sh $$XPATH/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
@@ -452,7 +453,7 @@ define mk_driver_src
    echo " " ; \
    echo ">>>[Making driver/$$ldir]<<<" ; \
    if test ! -d "$$XPATH/$$ldir" ; then mkdir -p "$$XPATH/$$ldir" ; fi ; \
-   if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
+   if [ "$(topdir)" != "$(compdir)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
     cp $$VPATH/$$ldir/.objects $$XPATH/$$ldir ; \
    fi ; \
    ./sbin/make_makefile.sh $$XPATH/$$ldir libdriver_$$ldir.a .objects l $(xcpp) $$ADF ; \
@@ -461,14 +462,14 @@ define mk_driver_src
  done
 endef
 define mk_ypp_src
- if test "$(topdir)" != "$(prefix)" ; then cp -r $(topdir)/include/* include/ ; fi ; \
+ if test "$(topdir)" != "$(compdir)" ; then cp -r $(topdir)/include/* include/ ; fi ; \
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib_ypp_$$ldir.a" || test "$(keep_objs)" = yes  ; then \
    rm -f "$(libdir)/lib_ypp_$$ldir.a" ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
    if test ! -d "$$XPATH/$$ldir" ; then mkdir -p "$$XPATH/$$ldir" ; fi ; \
-   if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
+   if [ "$(topdir)" != "$(compdir)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
     cp $$VPATH/$$ldir/.objects $$XPATH/$$ldir ; \
    fi ; \
    ./sbin/make_makefile.sh $$XPATH/$$ldir lib_ypp_$$ldir.a .objects l $(xcpp) $$ADF ; \
@@ -483,7 +484,7 @@ define mklib_internal
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
    if test ! -d "$$DIR2GO/$$ldir" ; then mkdir -p "$$DIR2GO/$$ldir" ; fi ; \
-   if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
+   if [ "$(topdir)" != "$(compdir)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
     cp $$VPATH/$$ldir/.objects $$DIR2GO/$$ldir ; \
    fi ; \
    ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
@@ -496,13 +497,13 @@ endef
 #
 define mklib_ext
  if test ! -d "lib/archive" ; then mkdir -p "lib/archive" ; fi ; \
- if [ "$(topdir)" != "$(prefix)" ] ; then \
+ if [ "$(topdir)" != "$(compdir)" ] ; then \
    cp $(topdir)/lib/archive/* lib/archive; \
    cp $(topdir)/config/missing config/ ; \
  fi ; \
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" ; then \
-   if [ "$(topdir)" != "$(prefix)" ] ; then \
+   if [ "$(topdir)" != "$(compdir)" ] ; then \
     if test ! -d "$$DIR2GO/$$ldir" ; then mkdir -p "$$DIR2GO/$$ldir" ; fi ; \
     if test -e $$VPATH/$$ldir/Makefile.loc; then cp $$VPATH/$$ldir/Makefile.loc $$DIR2GO/$$ldir/ ; fi ;\
     if test -e $$VPATH/$$ldir/Makefile.lib; then cp $$VPATH/$$ldir/Makefile.lib $$DIR2GO/$$ldir/ ; fi ;\
@@ -524,7 +525,7 @@ define mkx
   echo ">>>[Linking $$exe]<<<" ; \
   if test ! -f "$(bindir)/$$exe" || test "$(keep_objs)" = yes  ; then \
    if test ! -d $$XPATH ; then mkdir -p $$XPATH ; fi ; \
-   if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
+   if [ "$(topdir)" != "$(compdir)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
    fi ; \
    ./sbin/make_makefile.sh $$XPATH $$exe .objects x $$LLIBS $(xcpp) $$ADF ; \
@@ -540,7 +541,7 @@ define mk_ypp_x
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
   if test ! -f "$(bindir)/$$exe" || test "$(keep_objs)" = yes  ; then \
-   if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
+   if [ "$(topdir)" != "$(compdir)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
    fi ; \
    ./sbin/make_makefile.sh $$XPATH $$exe .objects x $$LLIBS $(xcpp) $$ADF ; \
@@ -593,7 +594,7 @@ define lib_ext_clean
    cd $(libdir)/$$libtoclean ; \
    $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp *.inc ; \
    cd ../.. ; \
-   if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
+   if [ "$(topdir)" != "$(compdir)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
   fi ; \
  done
  @if test -d $(libdir)/archive ; then \
@@ -603,9 +604,9 @@ define lib_ext_clean
  fi
 endef
 define sysincs_clean
- @if test -d $(prefix)/include; then rm -f $(prefix)/include/*.h ; fi 
- @if test -d $(prefix)/include/system/; then \
-   rm -rf $(prefix)/include/system ; \
+ @if test -d $(compdir)/include; then rm -f $(compdir)/include/*.h ; fi 
+ @if test -d $(compdir)/include/system/; then \
+   rm -rf $(compdir)/include/system ; \
    echo "[CLEAN] Libraries ... done"; \
  fi 
 endef
@@ -614,13 +615,13 @@ define lib_ext_remove
   echo "[CLEAN] Pre-compiled internal libraries ... done"; \
   rm -fr "$(libs_prefix)"; \
  fi
- @if test -f $(prefix)/include/system/../../driver/driver.c; then \
+ @if test -f $(compdir)/include/system/../../driver/driver.c; then \
   echo "[CLEAN] Local include directory ... done"; \
-  rm -fr "$(prefix)/include/system"; \
+  rm -fr "$(compdir)/include/system"; \
  fi
- @if test -f $(prefix)/scripts/../driver/driver.c; then \
+ @if test -f $(compdir)/scripts/../driver/driver.c; then \
   echo "[CLEAN] Local scripts directory ... done"; \
-  rm -fr "$(prefix)/scripts"; \
+  rm -fr "$(compdir)/scripts"; \
  fi
 endef
 define lib_mod_clean

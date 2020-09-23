@@ -81,19 +81,19 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
        !
        ! W(i,j) = \sum_m V*(m,i) * [\tilde Vp(m,j) - \tilde Vm(m,j) ]
        !
-!$omp parallel do default(shared), private(i2,i1)
+       !$omp parallel do default(shared), private(i2,i1)
        do i2=H_ref_bands(1),H_ref_bands(2)
          do i1=H_ref_bands(1),H_ref_bands(2)
            Wop(i1,i2,istep)=sum(conjg(V_bands(i2,1:en%nbf,ik,i_sp))*(V_tilde(1:en%nbf,i1,1)-V_tilde(1:en%nbf,i1,2)))
          enddo
        enddo
-!$omp end parallel do
+       !$omp end parallel do
        !
-!$omp parallel do default(shared), private(i1)
+       !$omp parallel do default(shared), private(i1)
        do i1=H_ref_bands(1),H_ref_bands(2)
          Wop(i1,H_ref_bands(1):,istep)=Wop(i1,H_ref_bands(1):,istep)*cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP))
        enddo
-!$omp end parallel do
+       !$omp end parallel do
        !
      enddo
      !
@@ -112,24 +112,24 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
      ! First order formula D(dk)      
      ! Eq. 96 of PRB 63, 155107(2001)
      !
-!$omp parallel do default(shared), private(id)
+     !$omp parallel do default(shared), private(id)
      do id=1,3
        Wk(id,H_ref_bands(1):,H_ref_bands(1):)=Wk(id,H_ref_bands(1):,H_ref_bands(1):)&
        &                                       +Wop(H_ref_bands(1):,H_ref_bands(1):,1)*a(id_red,id)
      enddo
-!$omp end parallel do
+     !$omp end parallel do
      !
    else
      !      
      ! Second order formula   ( 4*D(dk) - D(2*dk) ) / 3
      ! Eq. 97 of PRB 63, 155107(2001)
      !
-!$omp parallel do default(shared), private(id)
+     !$omp parallel do default(shared), private(id)
      do id=1,3
        Wk(id,H_ref_bands(1):,H_ref_bands(1):)=Wk(id,H_ref_bands(1):,H_ref_bands(1):)+&
 &               (4._SP*Wop(H_ref_bands(1):,H_ref_bands(1):,1)-Wop(H_ref_bands(1):,H_ref_bands(1):,2))/3._SP*a(id_red,id)
      enddo
-!$omp end parallel do
+     !$omp end parallel do
      !
    endif
    !
@@ -137,21 +137,21 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  !
  ! Make an Hermitian operator
  !
-!$omp parallel do default(shared), private(id)
+ !$omp parallel do default(shared), private(id)
  do id=1,3
    Wk(id,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))=                     &
    &     (Wk(id,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))               &
    &      +hermitian(Wk(id,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))))
  enddo
-!$omp end parallel do
+ !$omp end parallel do
  !
-!$omp parallel do default(shared), private(i1,id)
+ !$omp parallel do default(shared), private(i1,id)
  do i1=H_ref_bands(1),H_ref_bands(2)
    do id=1,3
      H_nl_sc(i1,H_ref_bands(1):H_ref_bands(2),i_sp)=H_nl_sc(i1,H_ref_bands(1):H_ref_bands(2),i_sp)-         &
      &                                               E_vec_pot(id)*Wk(id,i1,H_ref_bands(1):H_ref_bands(2))
    enddo
  enddo
-!$omp end parallel do
+ !$omp end parallel do
  !
 end subroutine Build_W_operator

@@ -31,6 +31,8 @@ subroutine scatter_ModScr(isc,mu)
  use R_lattice,     ONLY:bare_qpg,d3q_factor
  use global_XC,     ONLY:WF_xc_functional
  use xc_functionals,ONLY:XC_HYB_GGA_XC_GAUPBE,XC_FACTOR
+ use cuda_m,     ONLY:have_cuda
+ use deviceXlib_m,   ONLY:dev_memcpy 
 
  !
  implicit none
@@ -75,7 +77,9 @@ subroutine scatter_ModScr(isc,mu)
        if (i1==1) isc%gamp(i1,i2)=1._SP/(4._SP*mu**2)*d3q_factor/(2._SP*pi)**3
      endif
    enddo
- end do
+ enddo
+ !
+ if (have_cuda) call dev_memcpy(isc%gamp_d,isc%gamp)
  !
  contains
    !

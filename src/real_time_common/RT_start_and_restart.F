@@ -52,7 +52,7 @@ subroutine RT_start_and_restart(E,k,q)
 &                         Gr_kind,l_RT_is_WFfree,RT_ibz_dupl,H_EQ,&
 &                         RT_E_occupations_reference,RT_nk,G_lesser,l_RT_uses_E_FineGd, &
 &                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
-&                         RT_eh_en,G_MEM_steps,RT_bands,Ho_plus_Sigma,&
+&                         RT_eh_en,G_MEM_steps,RT_bands,&
 &                         NE_time_step_update_jump,RT_life_extrap_times,l_velocity_gauge_corr                  
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,E_reference
@@ -72,7 +72,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Work Space
  !
- integer :: i_mem,ib,i_sp_pol,ik,ik_DbGd,ik_RT,COM_,IO_ACT,&
+ integer :: i_mem,ib,i_sp_pol,ik,ik_FineGd,ik_RT,COM_,IO_ACT,&
 &           io_G,io_OBS,io_THETA,io_REF,io_OCCUPATIONS,nt
  !
  integer, external :: io_RT_components
@@ -103,9 +103,11 @@ subroutine RT_start_and_restart(E,k,q)
  H_EQ=cZERO
  do ik=1,nXkibz
    do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+     ik_FineGd=ik_RT-ik+sum(RT_ibz_dupl(:ik))
      if( ik_RT<PAR_G_k_range(1) .or. ik_RT>PAR_G_k_range(2) ) cycle
      do ib=RT_bands(1),RT_bands(2)
-       Ho_plus_Sigma(ib,ib,ik_RT,1)=RT_E_and_k%E(ib,ik_RT,1)
+       if(ik_RT/=RT_ibz_coo(ik,1)) H_EQ(ib,ib,ik_RT,1)=E_reference%E_FineGd(ib,ik_FineGd,1)
+       if(ik_RT==RT_ibz_coo(ik,1)) H_EQ(ib,ib,ik_RT,1)=E_reference%E(ib,ik,1)
      enddo
    enddo
  enddo
@@ -397,7 +399,7 @@ subroutine RT_start_and_restart(E,k,q)
      !
      implicit none
      !
-     integer :: ik_RT_DbGd,ik_FineGd,ib
+     integer :: ik_RT_DbGd,ib
      real(SP):: Energy,f_occ,f_occ_ref,Width,kpt(3)
      !
      ! Defined from occupations %f
@@ -462,7 +464,7 @@ subroutine RT_start_and_restart(E,k,q)
      implicit none
      !
      real(SP):: En
-     integer :: ik,ik_RT_DbGd,ik_FineGd,ib,Nk(2)
+     integer :: ik,ik_RT_DbGd,ib,Nk(2)
      !
      ! Occupations are defined from G_lesser and G_lesser_reference
      !

@@ -38,7 +38,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
  use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:K_diago_compute_epsilon,LINEAR_ALGEBRA_driver
+ use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
@@ -62,8 +62,9 @@ subroutine K_diago_driver(iq,W,X_static)
 &                         BSS_slepc_tol,BSS_target_E,Slepc_v,BS_HAYVEC_free
 #endif
 #if defined _KERR
- use drivers,        ONLY:l_kerr
+ use BS,             ONLY:l_BS_kerr,l_BS_magnons
  use KERR,           ONLY:BSS_KERR_free
+ use MAGNONS,        ONLY:BSS_MAGN_free
 #endif
 #if defined _PL
  use drivers,        ONLY:l_photolum
@@ -96,10 +97,16 @@ subroutine K_diago_driver(iq,W,X_static)
  complex(SP),allocatable :: BS_E(:)
  complex(SP),allocatable :: BS_R_left(:)       
  complex(SP),allocatable :: BS_R_right(:)      
- real(SP),   pointer     :: BS_R_PL(:,:) => null()
+ complex(SP),pointer     :: BS_overlap(:,:)    => null()
+ !
  real(SP)   ,pointer     :: BS_E_SOC_corr(:,:) => null()
+ !
+ real(SP),   pointer     :: BS_R_PL(:,:)       => null()
+ !
  complex(SP),pointer     :: BS_R_right_kerr(:) => null()
- complex(SP),pointer     :: BS_overlap(:,:) => null()
+ !
+ complex(SP),pointer     :: BS_R_left_magn(:,:)  => null()
+ complex(SP),pointer     :: BS_R_right_magn(:,:) => null()      
  !
  ! Resonant K
  !
@@ -250,7 +257,8 @@ subroutine K_diago_driver(iq,W,X_static)
      call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
      !
 #if defined _KERR
-     if(l_kerr         ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
+     if(l_BS_kerr         ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
+     if(l_BS_magnons      ) call error(" BSE with non hermitian magnons not implemented")
 #endif
      !
 #if defined _PL
@@ -261,12 +269,13 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      call K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
      !
-#if defined _PL
-     if(l_photolum     ) call PL_diago_residual(BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)
+#if defined _KERR
+     if(l_BS_kerr         ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
+     if(l_BS_magnons      ) call K_diago_hermitian_magnons_residual(BS_R_left_magn,BS_R_right_magn)
 #endif
      !
-#if defined _KERR
-     if(l_kerr         ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
+#if defined _PL
+     if(l_photolum     ) call PL_diago_residual(BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)
 #endif
      !
    endif
@@ -294,7 +303,9 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  ! Now I calculate epsilon
  !=========================
- call K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
+ call K_diago_response_functions(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
+ &                                  BS_R_left_magn,BS_R_right_magn,&
+ &                                  BS_R_right_kerr,BS_R_PL)
  !
  ! I write the output file 
  !
@@ -323,6 +334,7 @@ subroutine K_diago_driver(iq,W,X_static)
  !
 #if defined _KERR
  call BSS_KERR_free( )
+ call BSS_MAGN_free( )
 #endif
  !
  call timing(trim(Solver)//' Solver',OPR='stop')
@@ -345,11 +357,19 @@ subroutine K_diago_driver(iq,W,X_static)
        YAMBO_ALLOC(BS_R_right,(BSS_n_eig))
        !
 #if defined _KERR
-       YAMBO_ALLOC_P(BS_R_right_kerr,(BSS_n_eig))
+       if (l_BS_kerr) then
+         YAMBO_ALLOC_P(BS_R_right_kerr,(BSS_n_eig))
+       endif
+       if (l_BS_magnons) then
+         YAMBO_ALLOC_P(BS_R_left_magn,(BSS_n_eig,2))
+         YAMBO_ALLOC_P(BS_R_right_magn,(BSS_n_eig,2))
+       endif
 #endif
        !
 #if defined _PL
-       YAMBO_ALLOC_P(BS_R_PL,(2,BSS_n_eig))
+       if(l_photolum) then
+         YAMBO_ALLOC_P(BS_R_PL,(2,BSS_n_eig))
+       endif
 #endif
        !
      case("V")
@@ -387,6 +407,8 @@ subroutine K_diago_driver(iq,W,X_static)
      YAMBO_FREE_P(BS_E_SOC_corr)
 #if defined _KERR
      YAMBO_FREE_P(BS_R_right_kerr)
+     YAMBO_FREE_P(BS_R_right_magn)
+     YAMBO_FREE_P(BS_R_left_magn)
 #endif
 #if defined _PL
      YAMBO_FREE_P(BS_R_PL)

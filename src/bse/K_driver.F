@@ -32,11 +32,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
  use DIPOLES,        ONLY:DIPOLE_t
  use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_add_antiresonant,BSS_damp_reference,&
-&                         BSS_uses_DbGd,BSS_q0,BSS_eval_JDOS,BSS_eels_to_eps
+&                         BSS_uses_DbGd,BSS_q0,BSS_eels_to_eps
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BS_n_g_W,BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSE_mode,BSE_prop,BS_Blocks_and_Transitions_free,l_BSE_minimize_memory,BSqpts,L_kind,&
-&                         BS_perturbative_SOC,l_BSK_IO_triangular,BS_dip_size,l_BS_trace
+&                         BS_perturbative_SOC,l_BSK_IO_triangular,BS_dip_size,l_BS_abs,l_BS_jdos,l_BS_trace
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss,l_col_cut
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k,PARALLEL_default_mode
@@ -44,7 +44,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X
  use D_lattice,      ONLY:l_0D,l_1D,l_2D
 #if defined _KERR
- use drivers,        ONLY:l_kerr,l_anomalous_Hall,l_magnons
+ use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_anomalous_Hall
 #endif
 #if defined _RT
  use drivers,        ONLY:l_rt_carriers_in_use
@@ -85,10 +85,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  ! GPL_INCLUDE_START
  !BS_q=(/1,1/)
  ! GPL_INCLUDE_END
- !
- ! Joint DOS
- !===========
- BSS_eval_JDOS = index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP
  !
  ! Need to convert eels to epsilon ? (part A)
  !===========================================
@@ -165,11 +161,19 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  BS_dip_size=1
  !
 #if defined _KERR
- l_magnons= (index(BSE_prop,'magn')/=0)
- l_kerr=    (index(BSE_prop,'kerr')/=0)
- l_BS_trace=(index(BSE_prop,'trace')/=0)
- if(l_kerr) then
-   call parser('AnHall',l_anomalous_Hall)
+ l_BS_jdos   = index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP
+ l_BS_abs    = (index(BSE_prop,'abs')/=0)
+ l_BS_kerr   = (index(BSE_prop,'kerr')/=0)
+ l_BS_trace  = (index(BSE_prop,'trace')/=0)
+ l_BS_magnons= (index(BSE_prop,'magn')/=0)
+ if (l_BS_magnons.and.n_sp_pol==2) then
+   l_BS_abs    = .false.
+   l_BS_kerr   = .false.
+   l_BS_trace  = .false.
+   call warning(" n_sp_pol=2 and magnons requested. Spin flip BSE only is computed")
+ endif
+ if(l_BS_kerr) then
+   call parser('AnHall',l_BS_anomalous_Hall)
    BS_dip_size=2
  endif
  if(l_BS_trace) BS_dip_size=3

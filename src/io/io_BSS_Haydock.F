@@ -33,7 +33,7 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
- use drivers,       ONLY:l_kerr
+ use BS,            ONLY:l_BS_kerr
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -114,7 +114,7 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_
    ! GPL_EXCLUDE_START
    !
 #if defined _KERR
-   if(present(Cf_kerr).and.l_kerr) then
+   if(present(Cf_kerr).and.l_BS_kerr) then
      call io_bulk(ID,'C_factors_kerr',VAR_SZ=(/2,it+1/))
      call io_bulk(ID,C1=Cf_kerr)
    endif

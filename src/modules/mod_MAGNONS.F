@@ -23,26 +23,26 @@
 !
 module MAGNONS
  !
- use drivers, ONLY:l_magnons
- use pars,    ONLY:SP
+ use pars,       ONLY:SP
+ use BS,         ONLY:l_BS_magnons
  !
 #include<memory.h>
  !
- complex(SP), allocatable :: BSS_dipoles_magnons(:,:)
+ complex(SP), allocatable :: BSS_dipoles_magn(:,:)
  !
  contains
    !
-   subroutine BSS_MAGNONS_alloc( )
+   subroutine BSS_MAGN_alloc( )
      use pars,       ONLY:cZERO
      use BS,         ONLY:BS_H_dim,BS_K_dim
-     if (.not.l_magnons) return
-     YAMBO_ALLOC(BSS_dipoles_magnons,(2,BS_H_dim))
-     BSS_dipoles_magnons = cZERO
+     if (.not.l_BS_magnons) return
+     YAMBO_ALLOC(BSS_dipoles_magn,(2,BS_H_dim))
+     BSS_dipoles_magn = cZERO
    end subroutine
    !
-   subroutine BSS_MAGNONS_free( )
-     if (.not.l_magnons) return
-     YAMBO_FREE(BSS_dipoles_magnons)
+   subroutine BSS_MAGN_free( )
+     if (.not.l_BS_magnons) return
+     YAMBO_FREE(BSS_dipoles_magn)
    end subroutine
    !
 end module

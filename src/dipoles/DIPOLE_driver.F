@@ -38,7 +38,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
  !
- use drivers,        ONLY:l_optics,l_magnons
+ use drivers,        ONLY:l_optics
  use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:levels,n_sp_pol
  use X_m,            ONLY:X_t
@@ -66,6 +66,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use DIPOLES,        ONLY:P_square
  use electrons,      ONLY:n_spin
 #endif
+#if defined _KERR
+ use BS,             ONLY:BSE_prop,l_BS_magnons
+#endif
  use timing_m,       ONLY:timing
  !
  implicit none
@@ -92,9 +95,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  endif
  !
  l_magn_dipoles=.false.
-#if defined _SC  || defined _RT
- call parser('EvalMagnons'  ,   l_magnons)
- l_magn_dipoles=(l_real_time.or.l_magnons).and.n_spin>1
+#if defined _RT
+ l_BS_magnons= (index(BSE_prop,'magn')/=0)
+ l_magn_dipoles=(l_real_time.or.l_BS_magnons).and.n_spin>1
 #endif
  !
 #if defined _NL

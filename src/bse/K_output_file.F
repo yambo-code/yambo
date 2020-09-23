@@ -42,15 +42,11 @@ subroutine K_output_file(iq,mode)
  use electrons, ONLY:spin_occ
  use R_lattice, ONLY:nkbz
  use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,HBAR_SI
- use drivers,   ONLY:l_kerr
- use X_m,       ONLY:Epsilon_ij
- use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name
+ use BS,        ONLY:l_BS_kerr,l_BS_magnons
+ use X_m,       ONLY:Epsilon_ij,X_magnons
+ use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name,&
+ &                   magp_file_name,magm_file_name
  use KERR,      ONLY:B_Hall,A_drude
-#endif
-#if defined _RT
- use drivers,   ONLY:l_magnons
- use X_m,       ONLY:X_magnons
- use X_output,  ONLY:magp_file_name,magm_file_name
 #endif
 #if defined _PL
  use X_output,  ONLY:pl_file_name
@@ -129,14 +125,14 @@ subroutine K_output_file(iq,mode)
  if (eval_alpha)        call of_open_close(alpha_file_name,title_mode)
  !
 #if defined _KERR
- if(l_kerr) then
+ if(l_BS_kerr) then
    call of_open_close(off_file_name,title_mode)
    if (.not.eval_alpha) call of_open_close(moke_file_name,title_mode)
    if (     eval_alpha) call of_open_close(beta_file_name,title_mode)
  endif
 #endif
 #if defined _RT
- if(l_magnons) then
+ if(l_BS_magnons) then
    call of_open_close(magp_file_name,title_mode)
    call of_open_close(magm_file_name,title_mode)
  endif
@@ -179,7 +175,7 @@ subroutine K_output_file(iq,mode)
  call msg('o eps','#',output_data(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
  call msg('o eps','#')
  !
- if(l_kerr .and. eval_alpha) then
+ if(l_BS_kerr .and. eval_alpha) then
    ! Alpha units
    call msg('o beta','#','Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0,USE_TABS=.true.)
    call msg('o beta','#')
@@ -215,7 +211,7 @@ subroutine K_output_file(iq,mode)
  endif
  !
 #if defined _KERR
- if(l_kerr) then
+ if(l_BS_kerr) then
    !
    ! Hanomalous Hall term
    !
@@ -258,7 +254,7 @@ subroutine K_output_file(iq,mode)
 #endif
  !
 #if defined _RT
- if(l_magnons) then
+ if(l_BS_magnons) then
    !
    call X_setup_headers('Spm ')
    if (l_Haydock.or.l_Inversion) call msg("o Spm",'#',headers,INDENT=0,USE_TABS=.TRUE.)
@@ -403,7 +399,7 @@ subroutine K_output_file(iq,mode)
  !
  ! KERR 
  !------
- if(l_kerr) then
+ if(l_BS_kerr) then
    !
    ! eps_xy
    !
@@ -489,7 +485,7 @@ subroutine K_output_file(iq,mode)
  !
  ! MAGNONS
  !------
- if(l_magnons) then
+ if(l_BS_magnons) then
    !
    ! magnons Spm
    !
@@ -556,7 +552,7 @@ subroutine K_output_file(iq,mode)
      call of_open_close(alpha_file_name)
      !
 #if defined _KERR
-     if(l_kerr) then
+     if(l_BS_kerr) then
        call of_open_close(off_file_name)
        call of_open_close(beta_file_name)
        call of_open_close(moke_file_name)
@@ -564,7 +560,7 @@ subroutine K_output_file(iq,mode)
 #endif
      !
 #if defined _RT
-     if(l_magnons) then
+     if(l_BS_magnons) then
        call of_open_close(magp_file_name)
        call of_open_close(magm_file_name)
      endif

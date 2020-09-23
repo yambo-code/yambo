@@ -243,16 +243,19 @@ module interfaces
      integer , optional :: I_dir(2)
    end subroutine 
    !
-   subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
-     use BS,            ONLY:BS_H_dim
+   subroutine K_diago_response_functions(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
+     &                                  BS_R_left_magn,BS_R_right_magn,&
+     &                                  BS_R_right_kerr,BS_R_PL)
+     use BS_solvers,    ONLY:BSS_n_eig
      use pars,          ONLY:SP
      use frequency,     ONLY:w_samp
      type(w_samp),intent(in)  :: W
      integer,     intent(in)  :: iq
-     complex(SP), intent(in)  :: BS_E(BS_H_dim)
-     complex(SP), intent(in)  :: BS_R_left(BS_H_dim),BS_R_right(BS_H_dim)
+     complex(SP), intent(in)  :: BS_E(BSS_n_eig)
+     complex(SP), intent(in)  :: BS_R_left(BSS_n_eig),BS_R_right(BSS_n_eig)
      real(SP),    pointer     :: BS_E_SOC_corr(:,:)
-     complex(SP), pointer     :: BS_R_kerr(:)
+     complex(SP), pointer     :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
+     complex(SP), pointer     :: BS_R_right_kerr(:)
      real(SP),    pointer     :: BS_R_PL(:,:)
    end subroutine
    !

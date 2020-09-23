@@ -88,7 +88,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
 #if defined _KERR
- use drivers,    ONLY:l_kerr,l_anomalous_Hall
+ use BS,         ONLY:l_BS_kerr,l_BS_anomalous_Hall
 #endif
 #if defined _PL
  use PHOTOLUM,   ONLY:PL_weights
@@ -504,8 +504,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  GS_exx_SCREENING=0.0            ! no screening
  !
 #if defined _KERR
- l_kerr=.false.
- l_anomalous_Hall=.false.
+ l_BS_kerr=.false.
+ l_BS_anomalous_Hall=.false.
 #endif
  !
 #if defined _PL

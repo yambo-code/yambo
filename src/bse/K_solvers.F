@@ -28,12 +28,13 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t,Joint_DOS
- use BS_solvers,     ONLY:BSS_mode,BSS_desc,BSS_eval_JDOS,BSS_free,BS_mat,&
+ use BS_solvers,     ONLY:BSS_mode,BSS_desc,BSS_free,BS_mat,&
 &                         run_Haydock,run_inversion,run_Diago
 #if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers,     ONLY:run_Slepc
 #endif
- use BS,             ONLY:BS_not_const_eh_f,BSE_mode,BS_K_has_been_calculated_loaded,BS_blks_free
+ use BS,             ONLY:BS_not_const_eh_f,BSE_mode,BS_K_has_been_calculated_loaded,&
+ &                       BS_blks_free,l_BS_jdos
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_m,           ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO
@@ -43,6 +44,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #endif
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free
+ use MAGNONS,        ONLY:BSS_MAGN_free
 #endif
  !
 #include<memory.h>
@@ -115,7 +117,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! No JDOS in Inversion/Hadydock
  !
- if (BSS_eval_JDOS) then
+ if (l_BS_jdos) then
    YAMBO_FREE(Joint_DOS)
  endif
  !
@@ -159,6 +161,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
 #if defined _KERR
  call BSS_KERR_free( )
+ call BSS_MAGN_free( )
 #endif
  !
 #if defined _PL

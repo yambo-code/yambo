@@ -27,7 +27,7 @@ module X_output
  use stderr,    ONLY:intc
  use com,       ONLY:msg,com_compose_msg
  use X_m,       ONLY:alpha_dim,global_gauge
- use drivers,   ONLY:l_kerr,l_magnons
+ use BS,        ONLY:l_BS_kerr,l_BS_magnons
  !
  implicit none
  !
@@ -194,13 +194,13 @@ module X_output
        magm_file_name =  trim(magm_file_name)//'_'//equation
      endif
      !
-     if (.not.l_kerr) then
+     if (.not.l_BS_kerr) then
        off_file_name=' '
        beta_file_name=' '
        moke_file_name=' '
      endif
      !
-     if (.not.l_magnons) then
+     if (.not.l_BS_magnons) then
        magp_file_name=' '
        magm_file_name=' '
      endif

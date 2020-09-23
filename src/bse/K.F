@@ -62,6 +62,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free
+ use MAGNONS,        ONLY:BSS_MAGN_free
 #endif
 #if defined _PL
  use PHOTOLUM,       ONLY:BSS_PL_free
@@ -252,6 +253,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #endif
 #if defined _KERR
    call BSS_KERR_free( )
+   call BSS_MAGN_free( )
 #endif
    !
    YAMBO_FREE(BS_W)

@@ -58,7 +58,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
 #if defined _KERR
- use drivers,      ONLY:l_magnons
+ use BS,           ONLY:l_BS_magnons
 #endif
 #if defined _PL
  use drivers,      ONLY:l_photolum
@@ -85,13 +85,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  ! Work Space
  !
  character(1) :: sec
- integer :: ikbz,ikpbz,iv,ic,iv_SOC(2/n_sp_pol),ic_SOC(2/n_sp_pol),ik,ikp,i_sp,i_star,nb(2),&
+ integer :: ikbz,ikpbz,iv,ic,iv_SOC(2/n_sp_pol),ic_SOC(2/n_sp_pol),ik,ikp,i_sp,i_sp_flip,i_star,nb(2),&
 &           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp,pert_range(2/n_sp_pol,2)
  real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2/n_sp_pol),E_v_SOC(2/n_sp_pol),E_c_SOC(2/n_sp_pol),f_eh,f_eh_RES,f_eh_REF,f_e,f_h,f_check
  integer, allocatable :: i_T_at_k(:)
-#if defined _RT
- real(SP):: f_eh_SFLIP,E_eh_SFLIP
-#endif
 #if defined _PL
  real(SP):: f_eh_PL(2)
 #endif
@@ -223,9 +220,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
              ! Energies
              !
              BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
-#if defined _KERR
-             if(l_magnons) BS_T_grp(i_T_group_now)%E_SFLIP(i_T_in_the_grp)=E_eh_SFLIP
-#endif
              !
              ! Occupations
              !
@@ -234,9 +228,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
              if (l_photolum) BS_T_grp(i_T_group_now)%f_PL(:,i_T_in_the_grp) =f_eh_PL
 #endif
              BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
-#if defined _KERR
-             if(l_magnons) BS_T_grp(i_T_group_now)%f_SFLIP(i_T_in_the_grp)=f_eh_SFLIP
-#endif
              !
              if (allocated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
              !
@@ -287,17 +278,17 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      !
      T_is_ok=.TRUE.
      !
-     E_eh= Ken%E(ic,ik ,i_sp)-Ken%E(iv,ikp,i_sp)
-     if(     allocated(Ken%Eo)) Eo_eh= Ken%Eo(ic,ik ,i_sp)-Ken%Eo(iv,ikp,i_sp)
-     if(.not.allocated(Ken%Eo)) Eo_eh= E_eh
-     !
+     i_sp_flip=i_sp
 #if defined _KERR
-     E_eh_SFLIP=E_eh
-     if(l_magnons.and.n_sp_pol==2) then
-       if (i_sp==1) E_eh_SFLIP = Ken%E(ic,ikp,1)-Ken%E(iv,ik ,2)
-       if (i_sp==2) E_eh_SFLIP = Ken%E(ic,ikp,2)-Ken%E(iv,ik ,1)
-     endif
+     if(l_BS_magnons.and.n_sp_pol==2) then
+       if (i_sp==1) i_sp_flip=2
+       if (i_sp==2) i_sp_flip=1
+     endif   
 #endif
+     !
+     E_eh= Ken%E(ic,ik ,i_sp)-Ken%E(iv,ikp,i_sp_flip)
+     if (     allocated(Ken%Eo)) Eo_eh= Ken%Eo(ic,ik ,i_sp)-Ken%Eo(iv,ikp,i_sp_flip)
+     if (.not.allocated(Ken%Eo)) Eo_eh= E_eh
      !
      ! Small energy transitions. Dipoles in length gauge are not defined
      !if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length" .and. iq==1 ) T_is_ok=.FALSE.
@@ -317,19 +308,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      ! Occupations Factors
      !=====================
      !
-     f_eh_REF =(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik ,i_sp))/spin_occ
+     f_eh_REF =(Ken%f(iv,ikp,i_sp_flip)-Ken%f(ic,ik ,i_sp))/spin_occ
      f_eh     =f_eh_REF
      f_eh_RES =f_eh_REF
      f_check  =f_eh_REF
-     !
-#if defined _KERR
-     f_eh_SFLIP=f_eh_REF
-     if(l_magnons.and.n_sp_pol==2) then
-       if (i_sp==1) f_eh_SFLIP =(Ken%f(iv,ikp,2)-Ken%f(ic,ik ,1))/spin_occ
-       if (i_sp==2) f_eh_SFLIP =(Ken%f(iv,ikp,1)-Ken%f(ic,ik ,2))/spin_occ
-     endif
-     f_check  =f_eh_SFLIP
-#endif
      !
      ! f_eh  enter the excitonic Hamiltonian
      ! f_eh_RES enter the residual of the dielectric constant
@@ -338,25 +320,19 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      !
 #if defined _RT
      if (l_rt_carriers_in_use.and.allocated(Ken%fo)) then
-       if (     FORCE_EQ_trans) f_eh_REF=(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
-       if (.not.FORCE_EQ_trans) f_eh_REF=(Ken%f (iv,ikp,i_sp)-Ken%f (ic,ik ,i_sp))/spin_occ
-       if (     NEQ_Kernel    ) f_eh =(Ken%f (iv,ikp,i_sp)-Ken%f (ic,ik ,i_sp))/spin_occ
-       if (.not.NEQ_Kernel    ) f_eh =(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
-       if (     NEQ_Residuals ) f_eh_RES=(Ken%f (iv,ikp,i_sp)-Ken%f (ic,ik ,i_sp))/spin_occ
-       if (.not.NEQ_Residuals ) f_eh_RES=(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
+       if (     FORCE_EQ_trans) f_eh_REF=(Ken%fo(iv,ikp,i_sp_flip)-Ken%fo(ic,ik ,i_sp))/spin_occ
+       if (.not.FORCE_EQ_trans) f_eh_REF=(Ken%f (iv,ikp,i_sp_flip)-Ken%f (ic,ik ,i_sp))/spin_occ
+       if (     NEQ_Kernel    ) f_eh =(Ken%f (iv,ikp,i_sp_flip)-Ken%f (ic,ik ,i_sp))/spin_occ
+       if (.not.NEQ_Kernel    ) f_eh =(Ken%fo(iv,ikp,i_sp_flip)-Ken%fo(ic,ik ,i_sp))/spin_occ
+       if (     NEQ_Residuals ) f_eh_RES=(Ken%f (iv,ikp,i_sp_flip)-Ken%f (ic,ik ,i_sp))/spin_occ
+       if (.not.NEQ_Residuals ) f_eh_RES=(Ken%fo(iv,ikp,i_sp_flip)-Ken%fo(ic,ik ,i_sp))/spin_occ
      endif
 #endif
      !
      ! GPL_EXCLUDE_END
      !
-     f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
+     f_e = (         Ken%f(iv,ikp,i_sp_flip))/spin_occ
      f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
-#if defined _KERR
-     if(l_magnons.and.n_sp_pol==2) then
-       if (i_sp==1) f_e = Ken%f(iv,ikp,2)/spin_occ
-       if (i_sp==2) f_e = Ken%f(iv,ikp,1)/spin_occ
-     endif
-#endif
      !
 #if defined _PL
      !

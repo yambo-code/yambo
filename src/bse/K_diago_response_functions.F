@@ -21,12 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
+subroutine K_diago_response_functions(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
+ &                                  BS_R_left_magn,BS_R_right_magn,&
+ &                                  BS_R_right_kerr,BS_R_PL)
  !
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
  !
  use pars,           ONLY:cZERO,cONE,SP,pi,rZERO
- use X_m,            ONLY:Epsilon_ii,Epsilon_ij,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule
+ use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule
  use electrons,      ONLY:n_sp_pol
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset
@@ -38,7 +40,8 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !
 #if defined _KERR
  use KERR,           ONLY:B_Hall
- use drivers,        ONLY:l_kerr,l_anomalous_Hall
+ use X_m,            ONLY:Epsilon_ij,X_magnons
+ use BS,             ONLY:l_BS_kerr,l_BS_anomalous_Hall,l_BS_magnons
 #endif
  !
 #if defined _PL
@@ -53,6 +56,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  complex(SP), intent(in)  :: BS_E(BSS_n_eig)
  complex(SP), intent(in)  :: BS_R_left(BSS_n_eig),BS_R_right(BSS_n_eig)
  real(SP),    pointer     :: BS_E_SOC_corr(:,:)
+ complex(SP), pointer     :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
  complex(SP), pointer     :: BS_R_right_kerr(:)
  real(SP),    pointer     :: BS_R_PL(:,:)
  !
@@ -60,7 +64,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !
  type(PP_indexes)     ::px
  !
- integer              :: i1,i_pert_SOC,n_SOC
+ integer              :: i1,ic,i_pert_SOC,n_SOC
  complex(SP)          :: para_term_w0,diam_term_used,EXC_E(2/n_sp_pol)
  !
 #if defined _KERR
@@ -77,10 +81,11 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  para_term_w0=cZERO
  !
 #if defined _KERR
- if(l_kerr) then
+ if(l_BS_kerr) then
    Epsilon_ij(:,2)=cZERO
-   if(l_anomalous_Hall) B_Hall(2)=cZERO
+   if(l_BS_anomalous_Hall) B_Hall(2)=cZERO
  endif
+ if(l_BS_magnons) X_magnons(:,:,2)=cZERO
 #endif
  !
 #if defined _PL
@@ -103,7 +108,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
    if (.not.px%element_1D(i1)) cycle
    !
 #if defined _KERR
-   if (l_kerr.and.l_anomalous_Hall) then
+   if (l_BS_kerr.and.l_BS_anomalous_Hall) then
      if (trim(global_gauge)=='length'  ) gauge_factor=cONE
      if (trim(global_gauge)=='velocity') gauge_factor=BS_E(i1)
      B_Hall(2)=B_Hall(2)+   BS_R_left(i1)*BS_R_right_kerr(i1) / gauge_factor **2._SP
@@ -130,10 +135,17 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
      if (BSS_add_antiresonant) Joint_DOS(:,2)=Joint_DOS(:,2)+1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
      !
 #if defined _KERR
-     if(l_kerr) then
+     if(l_BS_kerr) then
        Epsilon_ij(:,2)=Epsilon_ij(:,2)-BS_R_left(i1)*BS_R_right_kerr(i1)/(W%p(:)-EXC_E(i_pert_SOC))
        if (BSS_add_antiresonant) Epsilon_ij(:,2)=Epsilon_ij(:,2)+&
 &        conjg(BS_R_left(i1)*BS_R_right_kerr(i1))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+     endif
+     if(l_BS_magnons) then
+       do ic=1,2
+         X_magnons(:,ic,2)=X_magnons(:,ic,2)-BS_R_left_magn(i1,ic)*BS_R_right_magn(i1,ic)/(W%p(:)-EXC_E(i_pert_SOC))
+         if (BSS_add_antiresonant) X_magnons(:,ic,2)=X_magnons(:,ic,2)+&
+&          conjg(BS_R_left_magn(i1,ic)*BS_R_right_magn(i1,ic))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+       enddo
      endif
 #endif
      !
@@ -160,9 +172,12 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
 #endif
  !
 #if defined _KERR
- if(l_kerr) then
+ if(l_BS_kerr) then
    call PP_redux_wait(Epsilon_ij(:,2))
-   if(l_anomalous_Hall) call PP_redux_wait(B_Hall(2))
+   if(l_BS_anomalous_Hall) call PP_redux_wait(B_Hall(2))
+ endif
+ if(l_BS_magnons) then
+   call PP_redux_wait(X_magnons(:,:,2))
  endif
 #endif
  !
@@ -182,17 +197,17 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !============
  if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W%p(:)**2
  !
- Joint_DOS(:,2)=Joint_DOS(:,2)*Co_factor !/(4._SP*pi) This factor is needed for the correct Jdos
+ Joint_DOS(:,2)=Joint_DOS(:,2)*Co_factor !/(4._SP*pi) is needed for the correct Jdos
  !                                       ! However it is commented for now since all test-suite
  !                                       ! references needs to be updated before insterting it
  !
 #if defined _KERR
  !
- if(l_kerr) then
+ if(l_BS_kerr) then
    if(trim(global_gauge)=='length'  ) Epsilon_ij(:,2)=Epsilon_ij(:,2)*Co_factor/bare_qpg(iq,1)**2
    if(trim(global_gauge)=='velocity') Epsilon_ij(:,2)=Epsilon_ij(:,2)*Co_factor/    W%p(:)    **2
    !
-   if(l_anomalous_Hall) then
+   if(l_BS_anomalous_Hall) then
      if(BSS_add_antiresonant) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
      if(trim(global_gauge)=='length'  ) B_Hall(2)=B_Hall(2)*Co_factor/bare_qpg(iq,1)**2
      if(trim(global_gauge)=='velocity') B_Hall(2)=B_Hall(2)*Co_factor
@@ -205,6 +220,8 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
    !
  endif
  !
+ if (l_BS_magnons) X_magnons(:,:,2)=X_magnons(:,:,2)*Co_factor/(4._SP*pi)
+ !
 #endif
  !
-end subroutine K_diago_compute_epsilon
+end subroutine K_diago_response_functions

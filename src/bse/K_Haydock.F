@@ -42,7 +42,7 @@ subroutine K_Haydock(iq,W)
  use timing_m,       ONLY:timing
 #if defined _KERR
  use KERR,           ONLY:B_Hall
- use drivers,        ONLY:l_kerr,l_anomalous_Hall
+ use BS,             ONLY:l_BS_kerr,l_BS_anomalous_Hall
 #endif
  use descriptors,    ONLY:IO_desc_add
  !
@@ -94,7 +94,7 @@ subroutine K_Haydock(iq,W)
  use_cpl_scheme=BS_K_Coupling !.or.allocated(BS_T_grp(1)%Z)
  !
 #if defined _KERR
- use_cpl_scheme=BS_K_Coupling.or.l_kerr
+ use_cpl_scheme=BS_K_Coupling.or.l_BS_kerr
 #endif
  !
  !
@@ -108,7 +108,7 @@ subroutine K_Haydock(iq,W)
  endif
  !
 #if defined _KERR
- if(l_kerr) then
+ if(l_BS_kerr) then
    allocate(V0_kerr(BS_nT_grps))
    call BS_HAYVEC_alloc(V0_kerr)
  endif
@@ -141,7 +141,7 @@ subroutine K_Haydock(iq,W)
    allocate(Vnp1_f(BS_K_dim))
  !
 #if defined _KERR
- !  if(l_kerr) then
+ !  if(l_BS_kerr) then
  !    io_err=io_BSS_Haydock(ID,1,reached_threshold,Af(1),Bf(:2),  &
  !    &                   Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:2),Cf_kerr=Cf_kerr(:2))
  !  else
@@ -168,7 +168,7 @@ subroutine K_Haydock(iq,W)
    if (use_cpl_scheme) then 
  !
 #if defined _KERR
- !    if(l_kerr) then
+ !    if(l_BS_kerr) then
  !      io_err=io_BSS_Haydock(ID,it_on_disk,reached_threshold,Af(:it_on_disk),Bf(:it_on_disk+1),&
  !      &                    Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1),Cf_kerr=Cf_kerr(:it_on_disk+1))
  !    else
@@ -231,7 +231,7 @@ subroutine K_Haydock(iq,W)
      if(trim(global_gauge)=="velocity") V_tmp(i_g)%fragment = cZERO
      !
 #if defined _KERR
-     if(l_kerr) V0_kerr(i_g)%fragment  = cZERO
+     if(l_BS_kerr) V0_kerr(i_g)%fragment  = cZERO
 #endif
      !
    enddo
@@ -258,7 +258,7 @@ subroutine K_Haydock(iq,W)
  if(trim(global_gauge)=="velocity") call K_multiply_by_V(V_tmp,V0,1)
  !
 #if defined _KERR
- if(l_kerr) then
+ if(l_BS_kerr) then
    !
    do i_g=1,BS_nT_grps
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
@@ -296,7 +296,7 @@ subroutine K_Haydock(iq,W)
       Cf= cZERO
       !
 #if defined _KERR
-      if(l_kerr) Cf_kerr= cZERO
+      if(l_BS_kerr) Cf_kerr= cZERO
 #endif
       !
       call K_multiply_by_V(V0,Vnp1,ItParity)
@@ -305,7 +305,7 @@ subroutine K_Haydock(iq,W)
       Cf(1) = cZERO
       !
 #if defined _KERR
-      if(l_kerr) then
+      if(l_BS_kerr) then
         call K_dot_product(v0_mod_,V0_kerr,Vnp1)
         Cf_kerr(1)= 2._SP*cI*aimag(v0_mod_)/Haydock_v0_mod**2._SP
       endif
@@ -443,7 +443,7 @@ subroutine K_Haydock(iq,W)
      Cf(it+1)= ((1._SP-real(ItParity,SP))*real(v0_mod_,SP))/Haydock_v0_mod
      !
 #if defined _KERR
-     if(l_kerr) then
+     if(l_BS_kerr) then
        call K_dot_product(v0_mod_,V0_kerr,Vn) 
        Cf_kerr(it+1)= ((1._SP+real(ItParity,SP))*cI*aimag(v0_mod_))/Haydock_v0_mod
      endif
@@ -460,7 +460,7 @@ subroutine K_Haydock(iq,W)
      end if
      !
 #if defined _KERR
-     if(l_kerr) call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,2,Cf_kerr(:it))
+     if(l_BS_kerr) call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,2,Cf_kerr(:it))
 #endif
      !
      BSS_desc%rval(1,i_desc_acc) =reached_threshold
@@ -498,7 +498,7 @@ subroutine K_Haydock(iq,W)
 !
 !       MG: DS to check        
 !
-!       if(l_kerr) then
+!       if(l_BS_kerr) then
 !         io_err=&
 !         io_BSS_Haydock(ID,it,reached_threshold,Cf=Cf(:it+1),Cf_kerr=Cf_kerr(:it+1))
 !       else 
@@ -704,7 +704,7 @@ subroutine K_Haydock(iq,W)
        ! I add the term describing the Anomalous Hall effect which is
        ! missing in the length gauge (this should be zero for systems with a gap)
        !
-       if (l_anomalous_Hall) then
+       if (l_BS_anomalous_Hall) then
          if (trim(global_gauge)=='length') then
            B_Hall(2)=B_Hall(2)*Co/bare_qpg(iq,1)**2
            Epsilon_ij(iw,2)=Epsilon_ij(iw,2)+B_Hall(2)/W%p(iw)

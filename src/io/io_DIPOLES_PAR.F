@@ -36,7 +36,8 @@ integer function io_DIPOLES(Dip,ID)
 #endif
 #if defined _SC || defined _RT
  use DIPOLES,       ONLY:P_square
- use drivers,       ONLY:l_real_time,l_sc_run,l_magnons
+ use drivers,       ONLY:l_real_time,l_sc_run
+ use BS,            ONLY:l_BS_magnons
 #endif
  use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
@@ -117,7 +118,7 @@ integer function io_DIPOLES(Dip,ID)
 #endif
  !
 #if defined _SC  || defined _RT
- l_magn_dipoles=(l_real_time.or.l_magnons).and.n_spin>1
+ l_magn_dipoles=(l_real_time.or.l_BS_magnons).and.n_spin>1
  l_real_time_magn_dipoles=l_real_time.and.n_spin>1
 #endif
  !

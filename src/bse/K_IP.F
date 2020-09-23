@@ -39,10 +39,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        X_drude_term,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
- use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
+ use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,&
 &                        Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind,BS_bands,&
- &                       l_BS_trace,BS_dip_size
+ &                       BS_dip_size,l_BS_jdos,l_BS_trace
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
@@ -54,7 +54,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 #endif
 #if defined _KERR
  use vec_operate,   ONLY:rot_v_xy_plane
- use drivers,       ONLY:l_kerr,l_magnons,l_anomalous_Hall
+ use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_anomalous_Hall
  use KERR,          ONLY:A_drude,B_Hall
  use X_m,           ONLY:X_magnons,Epsilon_ij
 #endif
@@ -78,7 +78,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
 #if defined _KERR
  complex(SP)       ::DIP_Splus,DIP_Smins
- complex(SP)       ::res_kerr,res_magn(2),E_plus_W_sflip(2/n_sp_pol)
+ complex(SP)       ::res_kerr,res_magn(2)
 #endif
  !
  character(6)             :: DIP_kind
@@ -147,7 +147,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
 #if defined _KERR
    !
-   if(l_kerr) then
+   if(l_BS_kerr) then
      B_Hall=cZERO
      call rot_v_xy_plane(-pi/2._SP,field_dir(:,1),v_out=field_dir(:,2))
    endif
@@ -222,19 +222,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      if (     BS_perturbative_SOC) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
-#if defined _KERR
-     !
-     if (l_magnons) then
-       !
-       if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W_sflip=BS_T_grp(i_T_g)%E_SFLIP(i_T)
-       if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W_sflip=BS_T_grp(i_T_g)%E_SFLIP(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
-       !
-       if (     BS_perturbative_SOC) E_plus_W_sflip(:)=E_plus_W_sflip(:)+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
-       !
-     endif
-     !
-#endif
-     !
      ! c1.Compute "dipoles"
      !=====================
      !
@@ -266,7 +253,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_c) while I need  <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_v))
      ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_c) while I need  <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_v))
      !
-     if (l_magnons) then
+     if (l_BS_magnons) then
        !
        ! notice:
        ! In optics q=0 requires a special treatment due to the non analytic behaviour
@@ -316,7 +303,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
 #if defined _KERR
      ! Magnons
-     if (l_magnons) then
+     if (l_BS_magnons) then
        BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)=conjg(DIP_Smins)
        BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)=conjg(DIP_Splus)
        if (BSS_add_antiresonant.or.BS_K_coupling) then
@@ -347,7 +334,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      res_abs=res_abs*f_*Z_*E_
      !
 #if defined _KERR
-     if (l_kerr) then
+     if (l_BS_kerr) then
        res_kerr=BS_T_grp(i_T_g)%dipoles_R(1,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R(2,i_T))
        res_kerr=res_kerr*Z_*E_*f_
      endif
@@ -370,8 +357,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !            (Spm) <v|S+|c>(i_sp_pol_c)<c|S-|v>(i_sp_pol_c) = dip_R_magn(2)*conjg(dip_R_magn(2))
      !
 #if defined _KERR
-     if (l_magnons) then
-       f_=BS_T_grp(i_T_g)%f_SFLIP(i_T)
+     if (l_BS_magnons) then
        res_magn(:)=BS_T_grp(i_T_g)%dipoles_R_mag(:,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R_mag(:,i_T))
        res_magn=res_magn*f_*Z_
      endif
@@ -393,10 +379,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      do i_pert_SOC=1,n_SOC
        !
        Epsilon_ii(:,3)=Epsilon_ii(:,3)-res_abs/(W_bss%p(:)-E_plus_W(i_pert_SOC))
-       if (BSS_eval_JDOS) Joint_DOS(:,3) =Joint_DOS(:,3) -1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC))
+       if (l_BS_jdos) Joint_DOS(:,3) =Joint_DOS(:,3) -1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC))
        if (BSS_add_antiresonant.or.BS_K_coupling) then
          Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res_abs)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
-         if (BSS_eval_JDOS) Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+         if (l_BS_jdos) Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
        endif
        !
        if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+res_abs*E_plus_W(i_pert_SOC)/bare_qpg(iq,1)**2
@@ -408,7 +394,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
 #if defined _KERR
        !
-       if (l_kerr) then
+       if (l_BS_kerr) then
          !
          Epsilon_ij(:,3)=Epsilon_ij(:,3)-  res_kerr/(W_bss%p(:)-E_plus_W(i_pert_SOC))
          if (BSS_add_antiresonant.or.BS_K_coupling) then
@@ -434,19 +420,16 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
 #if defined _KERR
        !
-       if (l_magnons) then
-         X_magnons(:,1,3)=X_magnons(:,1,3)-res_magn(1)/(W_bss%p(:)-E_plus_W_sflip(i_pert_SOC))
-         X_magnons(:,2,3)=X_magnons(:,2,3)-res_magn(2)/(W_bss%p(:)-E_plus_W_sflip(i_pert_SOC))
+       if (l_BS_magnons) then
+         X_magnons(:,1,3)=X_magnons(:,1,3)-res_magn(1)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
+         X_magnons(:,2,3)=X_magnons(:,2,3)-res_magn(2)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
          !
          if (BSS_add_antiresonant.or.BS_K_coupling) then
            !
-           ! I'm also using f_SFLIP(i_sp_pol_c)=-f_SFLIP(i_sp_pol_v)
-           !                E_SFLIP(i_sp_pol_c)=-E_SFLIP(i_sp_pol_v)
-           !
            ! Both -1 factors appear explicitly in the code
            !
-           X_magnons(:,1,3)=X_magnons(:,1,3)+conjg(res_magn(2))/(W_bss%p(:)+conjg(E_plus_W_sflip(i_pert_SOC)))
-           X_magnons(:,2,3)=X_magnons(:,2,3)+conjg(res_magn(1))/(W_bss%p(:)+conjg(E_plus_W_sflip(i_pert_SOC)))
+           X_magnons(:,1,3)=X_magnons(:,1,3)+conjg(res_magn(2))/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+           X_magnons(:,2,3)=X_magnons(:,2,3)+conjg(res_magn(1))/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
            !
          endif
        endif
@@ -469,14 +452,14 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
  !
- if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
- if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_eh_INDEX%COMM )
+ if (l_BS_jdos) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ if (l_BS_jdos) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_eh_INDEX%COMM )
  !
  call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_eh_INDEX%COMM )
  !
 #if defined _KERR
- if(l_kerr) then
+ if(l_BS_kerr) then
    call PP_redux_wait( Epsilon_ij(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( Epsilon_ij(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
    !
@@ -493,7 +476,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 #endif
  !
 #if defined _KERR
- if(l_magnons) then
+ if(l_BS_magnons) then
    call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
  endif
@@ -515,7 +498,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  ! DOS
  !
- if (BSS_eval_JDOS) Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor !/(4._SP*pi) This factor is needed for the correct Jdos
+ if (l_BS_jdos) Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor !/(4._SP*pi) This factor is needed for the correct Jdos
  !                                                          ! However it is commented for now since all test-suite
  !                                                          ! references needs to be updated before insterting it
  if (trim(global_gauge)=='velocity') then
@@ -539,7 +522,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  A_drude(1)=para_term_w0-diam_term_exact
  !
- if (l_kerr) then
+ if (l_BS_kerr) then
    !
    B_Hall(1)=B_Hall(1)*Co_factor
    if (BSS_add_antiresonant.or.BS_K_coupling) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
@@ -549,11 +532,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    ! I add the term describing the Anomalous Hall effect which is
    ! missing in the length gauge (this should be zero for systems with a gap)
-   if (l_anomalous_Hall.and.trim(global_gauge)=='length') Epsilon_ij(:,3)=Epsilon_ij(:,3)+B_Hall(1)/W_bss%p(:)
+   if (l_BS_anomalous_Hall.and.trim(global_gauge)=='length') Epsilon_ij(:,3)=Epsilon_ij(:,3)+B_Hall(1)/W_bss%p(:)
    !
  endif
  !
- if (l_magnons) X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)
+ if (l_BS_magnons) X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)
  !
 #endif
  !

@@ -43,13 +43,21 @@ module BS
  logical :: BS_not_const_eh_f
  logical :: BS_perturbative_SOC
  logical :: BS_K_has_been_calculated_loaded
- logical :: l_BS_trace
  character(schlen) :: L_kind
  character(schlen) :: BSE_mode
  character(schlen) :: BSE_prop
  character(schlen) :: BSK_mode
  character(schlen) :: BS_res_mode
  character(schlen) :: BS_cpl_mode
+ !
+ ! Kind of response function
+ !===========================
+ logical :: l_BS_jdos
+ logical :: l_BS_trace
+ logical :: l_BS_abs
+ logical :: l_BS_kerr
+ logical :: l_BS_magnons
+ logical :: l_BS_anomalous_hall
  !
  ! Dimensions
  !=============
@@ -100,10 +108,8 @@ module BS
    complex(SP), allocatable      :: dipoles_A_PL(:,:)
    complex(SP), allocatable      :: Z(:)
    real(SP)   , allocatable      :: E(:)
-   real(SP)   , allocatable      :: E_SFLIP(:)
    real(SP)   , allocatable      :: f(:)
    real(SP)   , allocatable      :: f_RES(:)
-   real(SP)   , allocatable      :: f_SFLIP(:)
    real(SP)   , allocatable      :: f_PL(:,:)
    real(SP)   , allocatable      :: W(:)
    real(SP)   , allocatable      :: E_SOC_corr(:,:)
@@ -247,7 +253,7 @@ module BS
    subroutine BS_Blocks_and_Transitions_alloc(E,iT)
      !
      use pars,       ONLY:IP,cZERO
-     use drivers,    ONLY:l_photolum,l_magnons
+     use drivers,    ONLY:l_photolum
      use stderr,     ONLY:intc
      use electrons,  ONLY:levels,n_sp_pol
      integer      :: iT,nT
@@ -263,7 +269,7 @@ module BS
      YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A,(BS_dip_size,nT))
      BS_T_grp(iT)%dipoles_R=cZERO
      BS_T_grp(iT)%dipoles_A=cZERO
-     if(l_magnons) then
+     if(l_BS_magnons) then
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_mag,(2,nT))
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_mag,(2,nT))
      endif
@@ -273,10 +279,8 @@ module BS
      endif
      YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,4))
      YAMBO_ALLOC(BS_T_grp(iT)%E,(nT))
-     YAMBO_ALLOC(BS_T_grp(iT)%E_SFLIP,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f_RES,(nT))
-     YAMBO_ALLOC(BS_T_grp(iT)%f_SFLIP,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f_PL,(2,nT))
      if (allocated(E%Z)) then
        YAMBO_ALLOC(BS_T_grp(iT)%Z,(nT))
@@ -300,7 +304,7 @@ module BS
    !
    subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
-     use drivers,    ONLY:l_photolum,l_magnons
+     use drivers,    ONLY:l_photolum
      use parallel_m, ONLY:PAR_BS_T_grps_index
      integer :: iT
      !
@@ -314,16 +318,14 @@ module BS
        !
        YAMBO_FREE(BS_T_grp(iT)%dipoles_R)
        YAMBO_FREE(BS_T_grp(iT)%dipoles_A)
-       if (l_magnons) then
+       if (l_BS_magnons) then
          YAMBO_FREE(BS_T_grp(iT)%dipoles_R_mag)
          YAMBO_FREE(BS_T_grp(iT)%dipoles_A_mag)
        endif
        YAMBO_FREE(BS_T_grp(iT)%table)
        YAMBO_FREE(BS_T_grp(iT)%E)
-       YAMBO_FREE(BS_T_grp(iT)%E_SFLIP)
        YAMBO_FREE(BS_T_grp(iT)%f)
        YAMBO_FREE(BS_T_grp(iT)%f_RES)
-       YAMBO_FREE(BS_T_grp(iT)%f_SFLIP)
        YAMBO_FREE(BS_T_grp(iT)%f_PL)
        YAMBO_FREE(BS_T_grp(iT)%Z)
        YAMBO_FREE(BS_T_grp(iT)%W)

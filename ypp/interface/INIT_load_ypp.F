@@ -311,9 +311,10 @@ subroutine INIT_ypp_load(defs)
  !
  !Fine Grid
  !
- call it(defs,'FineGd_mode',    'Fine Grid mode. Symmetry expanded, unexpanded or mixed. ',BZ_FineGd_mode)
- call it(defs,'BZ_DbGd_Nk',     'BZ Number of points in the fine grid',BZ_FineGd_nkpts_to_use)
- call it('f',defs,'SkipCheck' , 'Skip internal consistency check on k-point grids')
+ call it(defs,'FineGd_mode',       'Fine Grid mode. Symmetry expanded, unexpanded or mixed. ',BZ_FineGd_mode)
+ call it(defs,'BZ_DbGd_Nk',        'BZ Number of points in the fine grid',BZ_FineGd_nkpts_to_use)
+ call it('f',defs,'SkipCheck' ,    'Skip internal consistency check on k-point grids')
+ call it('f',defs,'SkipBorderPts' , 'Skip points in the Fine Grid that are on the surface of coarse gride smal BZ`s')
  !
  !WFs perturbative SOC mapping
  !

@@ -25,8 +25,7 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
 &                              V_MATRIX,PV_MATRIX,G,k,en,TRANS,Double_Grid,nK_mem)
  !
  use pars,           ONLY:SP,cI,cZERO
- use real_time,      ONLY:RT_Nk_ibz,RT_ibz_coo,l_RT_uses_E_FineGd,&
-&                         RT_bands,RT_nbands,RT_ibz_dupl
+ use real_time,      ONLY:RTibz,l_RT_uses_E_FineGd,RT_bands,RT_nbands
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_n_states
  use electrons,      ONLY:n_sp_pol,n_spin,levels
@@ -58,8 +57,8 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  !
  ! Work Space
  !
- integer     :: ib,ibp,ik,RT_bands2,ik_ibz,i_sp_pol,iE_FineGd,i_cmp
- real(SP)    :: deltaE,deltaE_FineGd
+ integer     :: ib,ibp,ik,RT_bands2,ik_ibz,i_sp_pol,iE_fg,i_cmp
+ real(SP)    :: deltaE,deltaE_fg
  complex(SP) :: Hk(N_V,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)),VALUE_tmp(N_V), &
 &               Hk_tmp(RT_bands(2),RT_bands(2)),                                    &
 &               Hk_vec_tmp(N_V,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -92,27 +91,27 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
      call make_Hk_matrix(ik_ibz,i_sp_pol)
      !
      do i_cmp=1,N_V
-       do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
+       do ik=RTibz%k_range(ik_ibz,1),RTibz%k_range(ik_ibz,2)
          !
-         if(l_DbGd_energy.and.RT_ibz_coo(ik_ibz,1)/=ik) then
-           iE_FineGd=ik-ik_ibz+sum(RT_ibz_dupl(:ik_ibz))
+         if(l_DbGd_energy.and.RTibz%k_range(ik_ibz,1)/=ik) then
+           iE_fg=RTibz%E_map(ik)
            do ib=RT_bands(1),RT_bands(2)
-             Hk(1,ib,ib)=Hk_tmp(ib,ib)-en%E(ib,ik_ibz,i_sp_pol)+en%E_FineGd(ib,iE_FineGd,i_sp_pol)
+             Hk(1,ib,ib)=Hk_tmp(ib,ib)-en%E(ib,ik_ibz,i_sp_pol)+en%FG%E(ib,iE_fg,i_sp_pol)
              do ibp=ib+1,RT_bands(2)
                Hk(1,ib,ibp)=Hk_tmp(ib,ibp)
                Hk(1,ibp,ib)=Hk_tmp(ibp,ib)
              enddo
            enddo
-         else if(l_DbGd_dipole.and.RT_ibz_coo(ik_ibz,1)/=ik) then
-           iE_FineGd=ik-ik_ibz+sum(RT_ibz_dupl(:ik_ibz))
+         else if(l_DbGd_dipole.and.RTibz%k_range(ik_ibz,1)/=ik) then
+           iE_fg=RTibz%E_map(ik)
            do ib=RT_bands(1),RT_bands(2)
              Hk(i_cmp,ib,ib)=Hk_vec_tmp(i_cmp,ib,ib)
              do ibp=ib+1,RT_bands(2)
-               deltaE       =en%E(ib,ik_ibz,i_sp_pol)          -en%E(ibp,ik_ibz,i_sp_pol)
-               deltaE_FineGd=en%E_FineGd(ib,iE_FineGd,i_sp_pol)-en%E_FineGd(ibp,iE_FineGd,i_sp_pol)
-               if(abs(deltaE)>1.E-5 .and. abs(deltaE_FineGd)>1.E-5) then
-                 Hk(i_cmp,ib,ibp)=Hk_vec_tmp(i_cmp,ib,ibp)*deltaE/deltaE_FineGd
-                 Hk(i_cmp,ibp,ib)=Hk_vec_tmp(i_cmp,ibp,ib)*deltaE/deltaE_FineGd
+               deltaE   =en%E(ib,ik_ibz,i_sp_pol)  -en%E(ibp,ik_ibz,i_sp_pol)
+               deltaE_fg=en%FG%E(ib,iE_fg,i_sp_pol)-en%FG%E(ibp,iE_fg,i_sp_pol)
+               if(abs(deltaE)>1.E-5 .and. abs(deltaE_Fg)>1.E-5) then
+                 Hk(i_cmp,ib,ibp)=Hk_vec_tmp(i_cmp,ib,ibp)*deltaE/deltaE_fg
+                 Hk(i_cmp,ibp,ib)=Hk_vec_tmp(i_cmp,ibp,ib)*deltaE/deltaE_fg
                else
                  Hk(i_cmp,ibp,ib)=Hk_vec_tmp(i_cmp,ibp,ib)
                endif
@@ -123,12 +122,12 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
            if(N_V> 1) Hk(i_cmp,:,:)=Hk_vec_tmp(i_cmp,:,:)
          endif 
          !
-         VALUE_tmp(i_cmp)=VALUE_tmp(i_cmp)-cI*Vstar_dot_V_omp(RT_bands2,Hk(i_cmp,:,:),G(:,:,ik))
+         VALUE_tmp(i_cmp)=VALUE_tmp(i_cmp)-cI*Vstar_dot_V_omp(RT_bands2,Hk(i_cmp,:,:),G(:,:,ik))*RTibz%weights(ik)
          !
        enddo
        !
-       if (N_V==1) O_VALUE       =O_VALUE       +VALUE_tmp(i_cmp)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
-       if (N_V> 1) V_VALUE(i_cmp)=V_VALUE(i_cmp)+VALUE_tmp(i_cmp)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+       if (N_V==1) O_VALUE       =O_VALUE       +VALUE_tmp(i_cmp)
+       if (N_V> 1) V_VALUE(i_cmp)=V_VALUE(i_cmp)+VALUE_tmp(i_cmp)
        !
      enddo
      !

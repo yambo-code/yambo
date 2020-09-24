@@ -87,41 +87,43 @@ done
 comp_modules=`echo $comp_modules | sed "s/_DOUBLE//2"`;
 lock_file=`echo $lock_file  | sed "s/_DOUBLE//2"`;
 #
+# Libraries & Includes
+#
 llibs="-L\$(libdir) $llibs"
-lf90include="@IFLAG@\$(includedir) @IFLAG@\$(modinclude) @IFLAG@\$(sysinclude) @IFLAG@\$(includedir)/headers/common @IFLAG@\$(includedir)/headers/parser @IFLAG@\$(compdir)/driver/include"
-linclude="-I\$(includedir) -I\$(modinclude) -I\$(sysinclude) -I\$(includedir)/headers/common -I\$(includedir)/headers/parser -I\$(compdir)/driver/include"
-lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ipetsc) \$(islepc)"
+#
+idriver="@IFLAG@\$(libdir)/yambo/driver/include @IFLAG@\$(includedir)/driver"
+lf90include="@IFLAG@\$(includedir) @IFLAG@\$(modinclude) @IFLAG@\$(sysinclude) @IFLAG@\$(includedir)/headers/common @IFLAG@\$(includedir)/headers/parser \$(idriver)"
+#
+llocal="-lqe_pseudo -lmath77 -lslatec -llocal"
+lPLA="\$(lscalapack) \$(lslepc) \$(lpetsc) \$(llapack) \$(lblacs) \$(lblas)"
+lIO="\$(liotk) \$(lnetcdff) \$(lnetcdf) \$(lhdf5)"
+lextlibs="\$(llibxc) \$(lfft) \$(lfutile) \$(lyaml)"
+#
+lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ifutile) \$(iyaml) \$(idriver)"
 #
 case $target in
   yambo*)
-   llibs="$llibs -lqe_pseudo -lmath77 -lslatec -llocal \$(lscalapack) \$(lslepc) \$(lpetsc) \$(llapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(liotk) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
-   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ifutile) \$(iyaml)"
+   llibs="$llibs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
-   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(iyaml)"
+   llibs="-lint_modules $llibs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(liotk) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
-   lf90libinclude="\$(iiotk) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(iyaml)"
+   llibs="-lint_modules $llibs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   e2y)
-   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(letsf) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
-   lf90libinclude="\$(ietsf) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(iyaml)"
+   llibs="-lint_modules $llibs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   ypp*)
-   llibs="$llibs -lqe_pseudo -llocal -lmath77 -lslatec \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) \$(lfutile) \$(lyaml) -lm"
-   lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)  \$(ifutile) \$(iyaml)"
+   llibs="$llibs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   lib*)
-   lf90libinclude="\$(iiotk) \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ilibxc) \$(iyaml)"
     ;;
 esac
 
 cat config/setup >>$cdir/Makefile
 echo "llibs=$llibs" >> $cdir/Makefile
-echo "linclude=$linclude" >> $cdir/Makefile
+echo "linclude=$lf90include" >> $cdir/Makefile
 echo "lf90libinclude=$lf90libinclude" >> $cdir/Makefile
 echo "lf90include=$lf90include" >> $cdir/Makefile
 echo "modinclude=$comp_modules" >> $cdir/Makefile
@@ -155,6 +157,7 @@ fi
 
 cat << EOF >> $cdir/Makefile
 \$(lock_file):
+	\$(modpath)
 	${PREFIX}if test ! -f \$(lock_file) && test "\$(keep_objs)" = "no" ; then \
 	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
 	touch \$(lock_file); rm -f \$(dep_file); rm -f \$(modlist_file); fi
@@ -172,20 +175,21 @@ arcreate: \$(objs)
 # Functions
 #
 define driver
- ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -L\$(libdir) -ldriver -D_\$@ -c \$(srcdir)/driver/driver.c > /dev/null)
+ ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -L\$(libdir) -D_\$@ -c \$(libdir)/yambo/driver/src/driver/driver.c > /dev/null)
  @echo
 endef
 define link
  ${PREFIX}(eval \$(fc) \$(fcflags) \$(lf90include) \$(lf90libinclude) -o \$@ driver.o \$(objs) \$(llibs) ) > /dev/null
 endef
-define modmove
- ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 || \$(mfiles) > \$(modlist_file)
+define modpath
  ${PREFIX}if test ! -d $comp_modules; then echo "creating folder $comp_modules" ; fi
  ${PREFIX}if test ! -d $comp_modules; then mkdir $comp_modules ; fi
+endef
+define modmove
+ ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 || \$(mfiles) > \$(modlist_file)
  ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 ||  mv *.mod $comp_modules
 endef
 define dircheck
- ${PREFIX}if test ! -d \$(prefix);      then mkdir \$(prefix);fi
  ${PREFIX}if test ! -d \$(exec_prefix); then mkdir \$(exec_prefix);fi
 endef
 #
@@ -251,9 +255,9 @@ cat << EOF >> $cdir/Makefile
 EOF
 cat << EOF >> $cdir/Makefile
 .f.o:
-	${PREFIX}(eval \$(f77) -c \$(fflags) \$(srcdir)/$cdir/\$*.f) > /dev/null
+	${PREFIX}(eval \$(f77) -c \$(fflags) \$*.f) > /dev/null
 	@echo $ECHO_N \$*".f "
 .c.o:
-	${PREFIX}(eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$(srcdir)/$cdir/\$*.c) > /dev/null
+	${PREFIX}(eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$*.c) > /dev/null
 	@echo $ECHO_N \$*".c"
 EOF

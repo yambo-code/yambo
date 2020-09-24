@@ -142,6 +142,8 @@ subroutine K_output_file(iq,mode)
  call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1)
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
  !
+ call msg('o eps_q refl eel_q fxc alpha off beta moke jdos','#')
+ !
  ! Description of the run and headers for output files:
  !
  call DESC_write('o eps_q refl eel_q fxc alpha off beta moke jdos','#',BSS_desc)

@@ -28,6 +28,8 @@ module X_output
  use com,       ONLY:msg,com_compose_msg
  use X_m,       ONLY:alpha_dim,global_gauge
  use BS,        ONLY:l_BS_kerr,l_BS_magnons
+ use interfaces,ONLY:DESC_write
+ use R_lattice, ONLY:FineGd_desc
  !
  implicit none
  !
@@ -71,6 +73,10 @@ module X_output
        call msg(trim(files),com_compose_msg(pre="# ",body="[GEN] Gauge"),trim(message),INDENT=0)
        call msg(trim(files),com_compose_msg(pre="# ",body="[GEN] [r,Vnl] included"),Vnl_included,INDENT=0)
      endif
+     !
+     ! Fine Grid
+     !
+     call DESC_write(trim(files),'#',FineGd_desc)
      !
    end subroutine
    !

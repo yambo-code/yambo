@@ -158,11 +158,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  BSS_add_antiresonant=index(BSE_mode,'retarded')/=0
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  BS_K_is_ALDA=l_alda_fxc
- BS_dip_size=1
  !
-#if defined _KERR
+ BS_dip_size=1
  l_BS_jdos   = index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP
  l_BS_abs    = (index(BSE_prop,'abs')/=0)
+#if defined _KERR
  l_BS_kerr   = (index(BSE_prop,'kerr')/=0)
  l_BS_trace  = (index(BSE_prop,'trace')/=0)
  l_BS_magnons= (index(BSE_prop,'magn')/=0)
@@ -188,7 +188,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  ! Double Grid support
  !=====================
- BSS_uses_DbGd = (Ken%nb_FineGd>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
+ BSS_uses_DbGd = (Ken%FG%nb>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
  !
  ! Frequencies 
  !=============

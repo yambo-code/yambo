@@ -25,7 +25,7 @@ subroutine INTERPOLATION_integral_respect(ID,OUT_k,OUT,NK)
  !
  use pars,         ONLY:SP
  use R_lattice,    ONLY:bz_samp
- use interpolate,  ONLY:INTERP_obj
+ use interpolate,  ONLY:INTERP_obj,INTERP_FineGd
  !
  implicit none
  !
@@ -52,8 +52,10 @@ subroutine INTERPOLATION_integral_respect(ID,OUT_k,OUT,NK)
  do i1=INTERP_obj(ID)%nb(1),INTERP_obj(ID)%nb(2)
    do ik=1,NK
      do i3=1,INTERP_obj(ID)%D
-       if(NK==OUT_k%nibz)        INTERP_int(i3)=INTERP_int(i3)+OUT(i1,ik,i3)*OUT_k%weights(ik)
-       if(NK==OUT_k%nibz_FineGd) INTERP_int(i3)=INTERP_int(i3)+OUT(i1,ik,i3)*OUT_k%weights_FineGd(ik)
+       if (trim(INTERP_FineGd)=="NONE") INTERP_int(i3)=INTERP_int(i3)+OUT(i1,ik,i3)*OUT_k%weights(ik)
+       if (trim(INTERP_FineGd)=="IBZ")  INTERP_int(i3)=INTERP_int(i3)+OUT(i1,ik,i3)*OUT_k%FGibz%weights(ik)
+       if (trim(INTERP_FineGd)=="BZ")   INTERP_int(i3)=INTERP_int(i3)+OUT(i1,ik,i3)*OUT_k%FGbz%weights(ik)
+       if (trim(INTERP_FineGd)=="BARE") INTERP_int(i3)=INTERP_int(i3)+OUT(i1,ik,i3)*OUT_k%FGbare%weights(ik)
      enddo
    enddo
  enddo

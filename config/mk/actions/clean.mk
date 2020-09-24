@@ -1,0 +1,21 @@
+clean_fast: 
+	@$(objects_clean)
+	@$(lib_mod_clean)
+	@$(xclean)
+clean:
+	@$(objects_clean)
+	@$(makefiles_clean)
+	@$(lib_mod_clean)
+	@$(sysincs_clean)
+	@$(xclean)
+clean_all:
+	@$(objects_clean)
+	@$(makefiles_clean)
+	@$(lib_mod_clean)
+	@$(lib_ext_clean)
+	@$(sysincs_clean)
+	@$(conf_clean)
+	@$(xclean)
+remove_ext_libs: 
+	@$(lib_ext_remove)
+distclean: clean_all remove_ext_libs

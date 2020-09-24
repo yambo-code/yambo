@@ -24,8 +24,7 @@
 subroutine RT_Glesser_rotate(dG)
  !
  use pars,           ONLY:SP
- use real_time,      ONLY:&
-&                         RT_bands,RT_nk
+ use real_time,      ONLY:RT_bands,RT_nk
  !
  implicit none
  !

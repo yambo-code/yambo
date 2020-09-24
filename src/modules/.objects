@@ -22,6 +22,10 @@ KERR_objects = mod_KERR.o mod_MAGNONS.o
 #if defined _PL 
 PL_objects = mod_PHOTOLUM.o
 #endif
+#if defined _io_lib
+objs = mod_pars.o mod_stderr.o mod_parallel.o  \
+       mod_com_interfcs.o mod_descriptors.o mod_com.o mod_IO.o
+#else
 ELPH_objects = mod_ELPH.o mod_ELPH_old.o
 DEV_objects = mod_cusolverdn_y.o mod_cuda.o
 objs = mod_pars.o mod_units.o mod_lexical_sort.o mod_stderr.o mod_memory.o mod_openmp.o mod_parallel.o mod_matrix.o mod_SLK.o  \
@@ -37,3 +41,4 @@ objs = mod_pars.o mod_units.o mod_lexical_sort.o mod_stderr.o mod_memory.o mod_o
        mod_pointers.o mod_IO.o $(ELPH_objects) mod_X_output.o mod_POL_FIT.o \
        mod_real_time.o mod_hamiltonian.o $(COMMON_objects) $(SC_objects) $(RT_objects) $(MAGNETIC_objects) $(NL_objects) $(ELECTRIC_objects) \
        mod_debug.o mod_interfaces.o mod_interpolate_tools.o mod_interpolate.o SET_logicals.o SET_defaults.o $(PL_objects) $(DEV_objects)
+#endif

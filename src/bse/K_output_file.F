@@ -131,7 +131,7 @@ subroutine K_output_file(iq,mode)
    if (     eval_alpha) call of_open_close(beta_file_name,title_mode)
  endif
 #endif
-#if defined _RT
+#if defined _KERR
  if(l_BS_magnons) then
    call of_open_close(magp_file_name,title_mode)
    call of_open_close(magm_file_name,title_mode)
@@ -255,7 +255,7 @@ subroutine K_output_file(iq,mode)
  endif
 #endif
  !
-#if defined _RT
+#if defined _KERR
  if(l_BS_magnons) then
    !
    call X_setup_headers('Spm ')
@@ -483,7 +483,7 @@ subroutine K_output_file(iq,mode)
  !
 #endif
  !
-#if defined _RT
+#if defined _KERR
  !
  ! MAGNONS
  !------
@@ -561,7 +561,7 @@ subroutine K_output_file(iq,mode)
      endif
 #endif
      !
-#if defined _RT
+#if defined _KERR
      if(l_BS_magnons) then
        call of_open_close(magp_file_name)
        call of_open_close(magm_file_name)

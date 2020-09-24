@@ -67,7 +67,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  ! Work space
  !
- integer           ::ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol,i_sp_pol_rev,i_T_g,i_T,n_SOC,i_pert_SOC,io_err
+ integer           ::ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol_c,i_sp_pol_v,i_T_g,i_T,n_SOC,i_pert_SOC,io_err
  real(SP)          ::conjg_fac,Z_,E_,f_
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
 &                    para_term_w0,diam_term_used
@@ -186,14 +186,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ik_bz = BS_T_grp(i_T_g)%table(i_T,1)
      iv    = BS_T_grp(i_T_g)%table(i_T,2)
      ic    = BS_T_grp(i_T_g)%table(i_T,3)
-     i_sp_pol = BS_T_grp(i_T_g)%table(i_T,4)
-     !
-#if defined _KERR
-     !
-     if(i_sp_pol==1.and.n_sp_pol==2) i_sp_pol_rev=2
-     if(i_sp_pol==2.and.n_sp_pol==2) i_sp_pol_rev=1
-     !
-#endif
+     i_sp_pol_c = BS_T_grp(i_T_g)%table(i_T,4)
+     i_sp_pol_v = BS_T_grp(i_T_g)%table(i_T,5)
      !
      if(iq/=1) then
        !
@@ -206,8 +200,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        ok   =Xk%sstar(ok_bz,1)
        osymm=Xk%sstar(ok_bz,2)
        !
-       BSE_scatt%is=(/ic,ik,isymm,i_sp_pol/)
-       BSE_scatt%os=(/iv,ok,osymm,i_sp_pol/)
+       BSE_scatt%is=(/ic,ik,isymm,i_sp_pol_c/)
+       BSE_scatt%os=(/iv,ok,osymm,i_sp_pol_v/)
        BSE_scatt%qs=(/iGo,iq,1/)
        !
      endif
@@ -233,7 +227,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      if(iq==1) then
        !
-       DIP_expanded=DIP_rotated(ic,iv,ik_bz,i_sp_pol,DIP_kind,Xk)
+       DIP_expanded=DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,DIP_kind,Xk)
        DIP_projected(1)=dot_product(field_dir(:,1),DIP_expanded)
        if(BS_dip_size>1) DIP_projected(2)=dot_product(field_dir(:,2),DIP_expanded)
        if(BS_dip_size>2) DIP_projected(3)=dot_product(field_dir(:,3),DIP_expanded)
@@ -262,11 +256,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
        if(iq==1) then
          !
-         DIP_expanded   = DIP_rotated(ic,iv,ik_bz,i_sp_pol,"DIP_S",Xk)
+         DIP_expanded   = DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,"DIP_S",Xk)
          !
        else
          !
-         BSE_scatt%os(4)=i_sp_pol_rev
          call scatter_Bamp_spin(BSE_scatt,'x')
          DIP_expanded(1)=-BSE_scatt%rhotw(1)
          call scatter_Bamp_spin(BSE_scatt,'y')
@@ -296,7 +289,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 #if defined _PL
      ! PL
      if (l_photolum) then
-       BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:)=conjg(DIP_rotated(ic,iv,ik_bz,i_sp_pol,"DIP_v",Xk))
+       BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:)=conjg(DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,"DIP_v",Xk))
        if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_PL(i_T,:)=conjg(BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:))
      endif
 #endif

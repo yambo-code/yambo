@@ -277,7 +277,7 @@ module BS
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_PL,(nT,3))
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_PL,(nT,3))
      endif
-     YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,4))
+     YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,5))
      YAMBO_ALLOC(BS_T_grp(iT)%E,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f_RES,(nT))

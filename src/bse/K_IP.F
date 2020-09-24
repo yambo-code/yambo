@@ -160,16 +160,16 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
 #endif
    !
-   if (trim(global_gauge)=='length'  ) then
-     conjg_fac=-1._SP
-     DIP_kind ="DIP_iR"
-     field_dir=field_dir*q0_def_norm
-   endif
-   if (trim(global_gauge)=='velocity') then
-     conjg_fac=+1._SP
-     DIP_kind ="DIP_v"
-   endif
-   !
+ endif
+ !
+ if (trim(global_gauge)=='length'  ) then
+   conjg_fac=-1._SP
+   DIP_kind ="DIP_iR"
+   field_dir=field_dir*q0_def_norm
+ endif
+ if (trim(global_gauge)=='velocity') then
+   conjg_fac=+1._SP
+   DIP_kind ="DIP_v"
  endif
  !
  if (l_rpa_IP.or.iq>1) call live_timing('IP absorption',PAR_BS_nT_col_grps)
@@ -242,7 +242,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
        if(trim(global_gauge)=="length")   call scatter_Bamp(BSE_scatt)
        if(trim(global_gauge)=="velocity") call scatter_Bamp_using_the_gradient(BSE_scatt,"o")
-       DIP_projected=-conjg(BSE_scatt%rhotw(1))
+       DIP_projected(1)=-conjg(BSE_scatt%rhotw(1))
        !
      endif
      !
@@ -315,8 +315,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      ! c.3 Residuals from "Dipoles"
      !==============================
-     !
-     ! To fix this ... DS
      !
      Z_=1._SP
      E_=1._SP

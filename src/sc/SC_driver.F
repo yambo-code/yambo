@@ -492,7 +492,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      ! Total Energy 
      !==============
      !
-     call SC_Energy(E_total,E_tot_bands,E_tot_zero,E_tot_Hartree,E_tot_xc,E,k,rho_n)
+     call SC_Energy(E_total,E_tot_bands,E_tot_zero,E_tot_Hartree,E_tot_xc,E_Fermi,E,k,rho_n)
      !
      ! Convergences
      !==============
@@ -634,6 +634,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
       call msg('r' ,'[SC] Polarization [Im]              ',aimag(Polarization)   )
    endif
 #endif
+   if (l_sc_hartree)   call msg('r' ,'[SC] Fermi shift part        [Ha/Ry]',E_Fermi*(/1._SP,2._SP/))
    if (l_sc_hartree)   call msg('r' ,'[SC] Bands Energy            [Ha/Ry]',E_tot_bands*(/1._SP,2._SP/))
    if (l_sc_hartree)   call msg('r' ,'[SC] T+V Energy              [Ha/Ry]',E_tot_zero*(/1._SP,2._SP/))
    if (l_sc_hartree)   call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]',E_tot_Hartree*(/1._SP,2._SP/))

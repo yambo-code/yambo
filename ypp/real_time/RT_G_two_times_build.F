@@ -35,7 +35,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,RT_nbands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
-&                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,H_EQ,I1_matrix,RT_all2ibz
+&                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,H_EQ,I1_matrix,RTibz
  use YPP_real_time,  ONLY:RT_time,RT_conf,GreenF_T_and_W,Rho_deph
  use LIVE_t,         ONLY:live_timing
  !
@@ -428,7 +428,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
  G_w=cZERO
  do ik_RT=1,RT_nk
-   ik=RT_all2ibz(ik_RT)
+   ik=RTibz%k_map(ik_RT)
    G_w(:)=G_w(:)+GreenF_T_and_W%F_W(:,ik_RT)*kpt%weights(ik)
  enddo
  !

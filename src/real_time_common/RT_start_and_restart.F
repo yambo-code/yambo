@@ -61,7 +61,7 @@ subroutine RT_start_and_restart(E,k,q)
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
  use H_interfaces,   ONLY:V_real_space_to_H
- use parallel_m,     ONLY:PP_redux_wait,PAR_G_k_range
+ use parallel_m,     ONLY:PP_redux_wait,PAR_G_k_range,PAR_IND_Xk_ibz
  use RT_output_m,    ONLY:RT_desc,TIME_STEP_desc,Gr_desc
  !
 #include<memory.h>

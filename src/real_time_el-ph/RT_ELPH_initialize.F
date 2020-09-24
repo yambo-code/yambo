@@ -63,6 +63,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  !=======================
  i_err=ELPH_expanded_databases_check(RT_bands(2))
  if (i_err<0) then
+   call warning('ELPH database not found and/or incompatible OR QP widths not provided. E-P scattering switched off')
    l_elph_scatt   =.FALSE.
    l_RT_CCA_Kernel=.FALSE.
    return

@@ -53,6 +53,7 @@ module drivers
  logical :: l_elphoton_corr      =.FALSE.
  logical :: l_elel_corr          =.FALSE.
  logical :: l_elph_corr          =.FALSE.
+ logical :: l_phel_corr          =.FALSE.
  !
  ! The non-eq. self-energy scattering "kind"
  !

@@ -1,6 +1,7 @@
-#if defined _PHEL || defined _RT
-ph_objs = RT_PHEL_lifetimes.o RT_PHEL_initialize.o 
+#if defined _RT 
+RT_objs = RT_PHEL_initialize.o 
 #endif
-#if defined _RT
-objs = RT_PHEL_lifetimes.o RT_PHEL_initialize.o ELPH_expanded_databases_map.o ELPH_expanded_databases_check.o ELPH_Q_databases_map.o ${ph_objs}
+#if defined _PHEL 
+PHEL_objs = PHEL_driver.o PHEL_lifetimes.o 
 #endif
+objs = ${RT_objs} ${PHEL_objs}

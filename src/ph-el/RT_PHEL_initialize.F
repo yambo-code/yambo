@@ -44,8 +44,7 @@ subroutine RT_PHEL_initialize(k,q)
  !
  ! Work Space
  !
- integer             ::iq,ID,io_err,ik,iq_io,i_n,i_np,ik_mem,&
-&                      iq_mem
+ integer             ::iq,ID,io_err,ik,iq_io,i_n,i_np,ik_mem,iq_mem
  real(SP)            ::MAX_gkkp_expanded_at_kpq(k%nibz,q%nbz)
  integer, external   ::io_ELPH
  logical             ::l_use_Debye_E,SETUP_failure

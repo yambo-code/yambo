@@ -36,6 +36,12 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
 #endif
+#if defined _ELPH
+ use drivers,       ONLY:l_elph_Hamiltonian
+#endif
+#if defined _PHEL
+ use drivers,       ONLY:l_phel_corr
+#endif
  use X_m,           ONLY:X_t
  use DIPOLES,       ONLY:DIPOLE_t
  use parallel_m,    ONLY:myid,ncpu
@@ -46,9 +52,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use electrons,     ONLY:levels,E_reset
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
-#if defined _ELPH
- use drivers,       ONLY:l_elph_Hamiltonian
-#endif
  !
  implicit none
  !
@@ -220,7 +223,10 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  driver_now=l_gw0.or.l_life
  !
- if (driver_now) call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
+ if (driver_now.and..not.l_phel_corr) call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
+#if defined _PHEL
+ if (driver_now.and.     l_phel_corr) call PHEL_driver(en,k,q)
+#endif
  if (driver_now) call mem_manager_report
  !
  ! BETHE-SALPETER

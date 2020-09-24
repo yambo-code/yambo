@@ -43,9 +43,4 @@ integer function ELPH_expanded_databases_check(n_bands)
  ELPH_expanded_databases_check=0
  if (io_err/=0.or.elph_nb<n_bands) ELPH_expanded_databases_check=-1
  !
- if (ELPH_expanded_databases_check<0) then
-   call warning('ELPH database not found and/or incompatible OR QP widths not provided. E-P scattering switched off')
-   return
- endif
- !
 end function ELPH_expanded_databases_check

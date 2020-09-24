@@ -30,7 +30,7 @@ subroutine INIT_activate()
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics
+&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
@@ -431,7 +431,7 @@ subroutine INIT_activate()
        !
      endif
      !
-     if (l_life) then
+     if (l_life.and..not.l_phel_corr) then
        call initactivate(1,'LifeTrCG')
        if (l_elel_corr) call X_activate('Xd',(/'BndsRn','NGsBlk',&
 &                                     'DmRnge','CGrdSp',&
@@ -439,6 +439,13 @@ subroutine INIT_activate()
      endif
    endif
    !
+#if defined  _PHEL 
+   !
+   if (l_phel_corr) then
+     call initactivate(1,'GphBRnge ElPhModes GDamping')
+   endif
+  !
+#endif
 #if defined  _ELPH 
    !
    if (l_elph_corr) then

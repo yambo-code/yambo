@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_PHEL_lifetimes(iq,E,k,q)
+subroutine PHEL_lifetimes(iq,E,k,q)
  !
  ! This routine computes the lifetimes in the phonon-electron (i.e., phonon dynamics) case. 
  ! Presently, only one approximation route to the kernel/collision integral is available:
@@ -188,8 +188,10 @@ subroutine RT_PHEL_lifetimes(iq,E,k,q)
                !
              endif
              !
+#if defined _RT
              D_ares  =RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,'EP')
              D_res =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,'EP')
+#endif
              !
              if(l_initial_equilibrium) then
                f_mkq      =  RT_E_occupations_reference(i_np,ip_rim)/spin_occ
@@ -250,4 +252,4 @@ subroutine RT_PHEL_lifetimes(iq,E,k,q)
    !
  enddo ! ikbz
  !
-end subroutine RT_PHEL_lifetimes
+end subroutine PHEL_lifetimes

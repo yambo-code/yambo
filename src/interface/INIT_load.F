@@ -175,6 +175,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',    '[R] Electron-Phonon Correlation')   
 #endif
+#if defined _PHEL 
+ call it('r',defs,'ph_el_corr',    '[R] Phonon-Electron Correlation')   
+#endif
 #if defined _SC
  call it('r',defs,'el_el_corr',    '[R] Electron-Electron Correlation') 
 #endif

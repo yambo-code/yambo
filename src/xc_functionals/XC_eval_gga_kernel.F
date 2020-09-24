@@ -45,6 +45,8 @@ subroutine XC_eval_gga_kernel(v2rho2,v2rhosigma,v2sigma2)
    enddo
  enddo
  !
+ ! ... TO DO ...
+ !
 end subroutine XC_eval_gga_kernel
 
 

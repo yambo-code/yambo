@@ -121,8 +121,11 @@ integer function io_DIPOLES(Dip,ID)
  P2_ipos(2:3)=DIP_ipos(3:4)
 #endif
  !
-#if defined _SC  || defined _RT
- l_magn_dipoles=(l_real_time.or.l_BS_magnons).and.n_spin>1
+#if defined _RT || _defined _KERR
+ l_magn_dipoles=(l_BS_magnons.and.n_spin>1)
+#endif
+#if defined _RT
+ l_magn_dipoles=l_magn_dipoles.or.(l_real_time.and.n_spin>1)
 #endif
  !
  if (read_is_on(ID)) then

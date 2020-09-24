@@ -198,70 +198,70 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  call fix_velocity(Dip,1)
  !
  contains
- !
- subroutine fix_velocity(Dip,dir)
    !
-   ! Now I need to correct DIP_v in case
-   ! (a) I'll use it    (dir=+1), since I'll need v_eff
-   ! (b) before writing (dir=-1), since I always write v and never v_eff
-   !     (at present this is not used since all approaces compute v.
-   !      However it maybe needed in the future when avoiding dipoles IO)
-   !
-   ! For a definition of v_eff see PRB 48, 11789 (1993)
-   !
-   integer,       intent(in)    :: dir
-   type(DIPOLE_t),intent(inout) :: Dip
-   !
-   real(SP)    :: Ev_m_Ec_KS,W_
-   complex(SP) :: Ev_m_Ec_QP,den,num
-   !
-   if(.not.(allocated(Xen%W).or.allocated(Xen%Eo))) return
-   !
-   if( (.not.Dip%v_eff) .and. dir==-1 )             return
-   !
-   W_=0._SP
-   !
-   do i_sp_pol=1,n_sp_pol
-     do ik=1,Xk%nibz
-       !
-       if (.not.PAR_K_scheme%IND_ibz%element_1D(ik)) cycle
-       ik_mem=PAR_K_scheme%ibz_index(ik)
-       !
-       do iv=Dip%ib(1),Dip%ib_lim(1) 
-         do ic=Dip%ib_lim(2),Dip%ib(2)
-           !
-           if (allocated(Xen%W )) W_=abs(Xen%W(iv,ik,i_sp_pol))+abs(Xen%W(ic,ik,i_sp_pol))
-           !
-           Ev_m_Ec_KS=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
-           Ev_m_Ec_QP=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)+cI*W_
-           !
-           if (allocated(Xen%Eo)) Ev_m_Ec_KS=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
-           !
-           if (dir== 1) then
-             ! Define v_eff, see
-             ! - Eq. (14-16) PRB 48, 11789 (1993)
-             ! - Eqs. (55)-(58) PRB 95, 155203 (2017)
-             num=Ev_m_Ec_QP
-             den=Ev_m_Ec_KS
-           endif
-           !
-           if (dir==-1) then
-             num=Ev_m_Ec_KS
-             den=Ev_m_Ec_QP
-           endif
-           !
-           if (abs(den)<=Dip%Energy_treshold) DIP_v(:,ic,iv,ik_mem,i_sp_pol)=cZERO
-           if (abs(den)> Dip%Energy_treshold) DIP_v(:,ic,iv,ik_mem,i_sp_pol)=DIP_v(:,ic,iv,ik_mem,i_sp_pol)*(num/den)
-           !
+   subroutine fix_velocity(Dip,dir)
+     !
+     ! Now I need to correct DIP_v in case
+     ! (a) I'll use it    (dir=+1), since I'll need v_eff
+     ! (b) before writing (dir=-1), since I always write v and never v_eff
+     !     (at present this is not used since all approaces compute v.
+     !      However it maybe needed in the future when avoiding dipoles IO)
+     !
+     ! For a definition of v_eff see PRB 48, 11789 (1993)
+     !
+     integer,       intent(in)    :: dir
+     type(DIPOLE_t),intent(inout) :: Dip
+     !
+     real(SP)    :: Ev_m_Ec_KS,W_
+     complex(SP) :: Ev_m_Ec_QP,den,num
+     !
+     if(.not.(allocated(Xen%W).or.allocated(Xen%Eo))) return
+     !
+     if( (.not.Dip%v_eff) .and. dir==-1 )             return
+     !
+     W_=0._SP
+     !
+     do i_sp_pol=1,n_sp_pol
+       do ik=1,Xk%nibz
+         !
+         if (.not.PAR_K_scheme%IND_ibz%element_1D(ik)) cycle
+         ik_mem=PAR_K_scheme%ibz_index(ik)
+         !
+         do iv=Dip%ib(1),Dip%ib_lim(1) 
+           do ic=Dip%ib_lim(2),Dip%ib(2)
+             !
+             if (allocated(Xen%W )) W_=abs(Xen%W(iv,ik,i_sp_pol))+abs(Xen%W(ic,ik,i_sp_pol))
+             !
+             Ev_m_Ec_KS=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
+             Ev_m_Ec_QP=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)+cI*W_
+             !
+             if (allocated(Xen%Eo)) Ev_m_Ec_KS=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
+             !
+             if (dir== 1) then
+               ! Define v_eff, see
+               ! - Eq. (14-16) PRB 48, 11789 (1993)
+               ! - Eqs. (55)-(58) PRB 95, 155203 (2017)
+               num=Ev_m_Ec_QP
+               den=Ev_m_Ec_KS
+             endif
+             !
+             if (dir==-1) then
+               num=Ev_m_Ec_KS
+               den=Ev_m_Ec_QP
+             endif
+             !
+             if (abs(den)<=Dip%Energy_treshold) DIP_v(:,ic,iv,ik_mem,i_sp_pol)=cZERO
+             if (abs(den)> Dip%Energy_treshold) DIP_v(:,ic,iv,ik_mem,i_sp_pol)=DIP_v(:,ic,iv,ik_mem,i_sp_pol)*(num/den)
+             !
+           enddo
          enddo
+         !
        enddo
-       !
      enddo
-   enddo
+     !
+     if( dir==-1) Dip%v_eff=.false.
+     if( dir==+1) Dip%v_eff=.true.
+     !
+   end subroutine
    !
-   if( dir==-1) Dip%v_eff=.false.
-   if( dir==+1) Dip%v_eff=.true.
-   !
- end subroutine
- !
 end subroutine DIPOLE_IO

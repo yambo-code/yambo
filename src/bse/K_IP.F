@@ -269,6 +269,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          DIP_projected_dich(1)=dot_product(field_dir(:,1),DIP_expanded)
          if(BS_dip_size>1) DIP_projected_dich(2)=dot_product(field_dir(:,2),DIP_expanded)
          if(BS_dip_size>2) DIP_projected_dich(3)=dot_product(field_dir(:,3),DIP_expanded)
+         if (trim(global_gauge)=='length'  ) DIP_projected_dich=DIP_projected_dich/q0_def_norm
        else
          call error(' finite q not implemented for dichroism')
        endif
@@ -591,11 +592,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  endif
  !
  if (l_dichroism) then
-  !  beta_ij=-(i*hbar*me)/(omega*qe^2)*G_ij;
-  !  DeltaN=(8*pi*N*omega/3*c)*Tr(beta_ij);
+  !  beta_ij=-((i*hbar*me)/(omega*qe^2))*G_ij;
+  !  DeltaN=((8*pi*N*omega/(3*c))*Tr(beta_ij);
   !  N = molecular density = ??
   !  SPEED_OF_LIGHT =  c in a.u.
-  X_dichroism(:,3)=X_dichroism(:,3)*(cI*8*pi/3*SPEED_OF_LIGHT)*Co_factor/(4._SP*pi)
+  X_dichroism(:,3)=X_dichroism(:,3)*(-1/SPEED_OF_LIGHT)*Co_factor/(4._SP*pi)   !!  this is (omega/c)*beta, with beta=-((i*hbar*me)/(omega*qe^2))*G_ij
  endif
  !
  if (l_magnons) X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)

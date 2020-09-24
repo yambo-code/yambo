@@ -66,6 +66,11 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use DIPOLES,        ONLY:P_square
  use electrons,      ONLY:n_spin
 #endif
+
+#if defined _KERR  
+ use BS,             ONLY:BSE_prop  
+#endif
+
  use timing_m,       ONLY:timing
  !
  implicit none
@@ -97,7 +102,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  l_magn_dipoles=(l_real_time.or.l_magnons).and.n_spin>1
 #endif
 #if defined _KERR
-call parser('EvalDichroism', l_dichroism)
+l_dichroism= (index(BSE_prop,'dich')/=0)
 #endif
  !
 #if defined _NL

@@ -496,8 +496,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                dp_dummy=dp_dummy+cmplx(ctmp,kind=DP)
                !
 !!! AG DBG
-#define _DEBUG_RIM_W
-#ifdef _DEBUG_RIM_W
                !
                !Collect the Sc in QP_Sc_G
                !
@@ -520,34 +518,25 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                  ! Wing Gxy == 0
                  else if ((ig1 == 1 .and. g2_mod_2D < 1.e-5).or.(ig2 == 1 .and. g1_mod_2D < 1.e-5)) then
                    !
-                   !$omp critical
                    QP_Sc_G(i_qp,1,4) = QP_Sc_G(i_qp,1,4) + cmplx(ctmp,kind=SP)
-                   !$omp end critical
                    !
                  ! Wing Gxy /= 0
                  else if ((ig1 == 1 .and. g2_mod_2D > 1.e-5).or.(ig2 == 1 .and. g1_mod_2D > 1.e-5)) then
                    !
-                   !$omp critical
                    QP_Sc_G(i_qp,1,5) = QP_Sc_G(i_qp,1,5) + cmplx(ctmp,kind=SP)
-                   !$omp end critical
                    !
                  ! Body Gxy == 0
                  else if (ig1 /= ig2 .and. g1_mod_2D < 1.e-5 .and. g2_mod_2D < 1.e-5) then
                    !
-                   !$omp critical
                    QP_Sc_G(i_qp,1,6) = QP_Sc_G(i_qp,1,6) + cmplx(ctmp,kind=SP)
-                   !$omp end critical
                    !
                  ! Body Gxy /= 0
                  else
                    !
-                   !$omp critical
                    QP_Sc_G(i_qp,1,7) = QP_Sc_G(i_qp,1,7) + cmplx(ctmp,kind=SP)
-                   !$omp end critical
                    !
                  end if
                end if
-#endif
 !!! AG DBG
                !
              enddo

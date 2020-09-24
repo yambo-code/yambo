@@ -34,7 +34,7 @@ subroutine interpolate_W(X,Xw,q)
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
 &                        deliver_IO_error_message,OP_WR_CL,REP,VERIFY
  use stderr,        ONLY:STRING_split
- use D_lattice,     ONLY:alat
+ use D_lattice,     ONLY:alat,a
  use timing_m,      ONLY:timing
  !
  implicit none
@@ -47,7 +47,7 @@ subroutine interpolate_W(X,Xw,q)
  integer     :: iq1,ig1,iq2,ig2,iq,ig,igr,igc,ig2max
  integer     :: iq_ibz,is,find,nn,i,iq_to_start,idm,ng_tmp
  integer     :: idx_q(RIM_ng,q%nibz,5),idx_G(RIM_ng,q%nibz,5),idx_is(RIM_ng,q%nibz,5)
- real(SP)    :: G_max_ibz(q%nibz),f_func(5),lcut
+ real(SP)    :: G_max_ibz(q%nibz),f_func(5),lcut, v(5), D_det
  complex(SP) :: vX(5,q%nibz,RIM_ng,RIM_ng)
  real(SP)    :: qpG(3,5),delta_q(3,2),qpG_trial(3),v1(3),delta_q_cc(3),gr_2d_mod,gc_2d_mod
  integer     :: ID, io_err, ng_save
@@ -65,7 +65,7 @@ subroutine interpolate_W(X,Xw,q)
  debug = .false.
  call timing('RIM-W-coeff',OPR='start')
  call k_ibz2bz(q,'a',.true.)
- allocate(f_coeff(RIM_ng,RIM_ng,q%nibz,5),stat=MEM_err)
+ allocate(f_coeff(RIM_ng,RIM_ng,q%nibz,6),stat=MEM_err)
  !
 !!! AG DBG
  if (debug) then
@@ -326,6 +326,8 @@ subroutine interpolate_W(X,Xw,q)
  !Calculation of the interpolation coefficients
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !
+ D_det = a(1,1)*a(2,2)-a(1,2)*a(2,1)
+ !
  do igr=1,RIM_ng
   !
   gr_2D_mod = sqrt(g_vec(igr,1)**2+g_vec(igr,2)**2)
@@ -362,9 +364,10 @@ subroutine interpolate_W(X,Xw,q)
           f_coeff(igr,igc,iq1,1) = vX(1,iq1,igr,igc)*(4*pi) / &
 &                                  ( bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2*pi*alat(idir(1)))**2 )
           !
-          do nn=2,5
-            call c2a(b,delta_q(:,MOD(nn+1,2)+1),delta_q_cc,'ka2c')
-            f_coeff(igr,igc,iq1,nn) = -1._SP/v_norm(delta_q_cc)*log(f_func(nn)/ &
+          do nn=2,3
+            idm = MOD(nn+1,2)+1
+            call c2a(b,delta_q(:,idm),delta_q_cc,'ka2c')
+            f_coeff(igr,igc,iq1,nn) = -1._SP/delta_q(idm,idm)*log(f_func(nn)/ &
 &                                   ( v_norm(delta_q_cc)**2*f_coeff(1,iq1,igr,igc)) )
           enddo
           !
@@ -372,31 +375,45 @@ subroutine interpolate_W(X,Xw,q)
           !
           call c2a(b,delta_q(:,1),delta_q_cc,'ka2c')
           f_coeff (igr,igc,iq1,3) = f_func(3)/v_norm(delta_q_cc)**2        !f2xx positive
-          f_coeff (igr,igc,iq1,5) = f_func(5)/v_norm(delta_q_cc)**2        !f2xx negative
           call c2a(b,delta_q(:,2),delta_q_cc,'ka2c')
           f_coeff (igr,igc,iq1,2) = f_func(2)/v_norm(delta_q_cc)**2        !f2yy positive
-          f_coeff (igr,igc,iq1,4) = f_func(4)/v_norm(delta_q_cc)**2        !f2yy negative
           !
         else
           !
-          f_coeff (igr,igc,iq1,1) = f_func(1)                                             !f0
-          f_coeff (igr,igc,iq1,2) = (f_func(3)-f_func(5))/(2*delta_q(1,1))                !f1x
-          f_coeff (igr,igc,iq1,3) = (f_func(2)-f_func(4))/(2*delta_q(2,2))                !f1y
-          f_coeff (igr,igc,iq1,4) = (f_func(3)-2*f_func(1)+f_func(5))/(2*delta_q(1,1)**2) !f2xx
-          f_coeff (igr,igc,iq1,5) = (f_func(2)-2*f_func(1)+f_func(4))/(2*delta_q(2,2)**2) !f2yy
+          !Coefficients in rlu
+          v(1) = f_func(1)                                             !f0
+          v(2) = (f_func(3)-f_func(5))/(2*delta_q(1,1))                !f1
+          v(3) = (f_func(2)-f_func(4))/(2*delta_q(2,2))                !f2
+          v(4) = (f_func(3)-2*f_func(1)+f_func(5))/(2*delta_q(1,1)**2) !f11
+          v(5) = (f_func(2)-2*f_func(1)+f_func(4))/(2*delta_q(2,2)**2) !f22
           !
+          !Coefficients in cc
+          f_coeff(igr,igc,iq1,1) =  v(1)                                                                       !f
+          f_coeff(igr,igc,iq1,2) =  (a(1,1)*v(2)*alat(2)+a(2,1)*v(3)*alat(1))/(D_det)                          !fx
+          f_coeff(igr,igc,iq1,3) =  (a(1,2)*v(2)*alat(2)+a(2,2)*v(3)*alat(1))/(D_det)                          !fy
+          f_coeff(igr,igc,iq1,4) =  (a(1,1)*a(1,1)*v(4)*alat(2)**2+a(2,1)*a(2,1)*v(5)*alat(1)**2)/(D_det)**2   !fxx
+          f_coeff(igr,igc,iq1,5) =  (a(1,1)*a(1,2)*v(4)*alat(2)**2+a(2,1)*a(2,2)*v(5)*alat(1)**2)/(D_det)**2   !fxy
+          f_coeff(igr,igc,iq1,6) =  (a(1,2)*a(1,2)*v(4)*alat(2)**2+a(2,2)*a(2,2)*v(5)*alat(1)**2)/(D_det)**2   !fyy
         end if
         !
         ! q /= 0 terms
         !
       else
-        !Store coefficients
-        f_coeff (igr,igc,iq1,1) = f_func(1)                                             !f0
-        f_coeff (igr,igc,iq1,2) = (f_func(3)-f_func(5))/(2*delta_q(1,1))                !f1x
-        f_coeff (igr,igc,iq1,3) = (f_func(2)-f_func(4))/(2*delta_q(2,2))                !f1y
-        f_coeff (igr,igc,iq1,4) = (f_func(3)-2*f_func(1)+f_func(5))/(2*delta_q(1,1)**2) !f2xx
-        f_coeff (igr,igc,iq1,5) = (f_func(2)-2*f_func(1)+f_func(4))/(2*delta_q(2,2)**2) !f2yy
         !
+        !Coefficients in rlu
+        v(1) = f_func(1)                                             !f0
+        v(2) = (f_func(3)-f_func(5))/(2*delta_q(1,1))                !f1
+        v(3) = (f_func(2)-f_func(4))/(2*delta_q(2,2))                !f2
+        v(4) = (f_func(3)-2*f_func(1)+f_func(5))/(2*delta_q(1,1)**2) !f11
+        v(5) = (f_func(2)-2*f_func(1)+f_func(4))/(2*delta_q(2,2)**2) !f22
+        !
+        !Coefficients in cc
+        f_coeff(igr,igc,iq1,1) =  v(1)                                                                       !f
+        f_coeff(igr,igc,iq1,2) =  (a(1,1)*v(2)*alat(2)+a(2,1)*v(3)*alat(1))/(D_det)                          !fx
+        f_coeff(igr,igc,iq1,3) =  (a(1,2)*v(2)*alat(2)+a(2,2)*v(3)*alat(1))/(D_det)                          !fy
+        f_coeff(igr,igc,iq1,4) =  (a(1,1)*a(1,1)*v(4)*alat(2)**2+a(2,1)*a(2,1)*v(5)*alat(1)**2)/(D_det)**2   !fxx
+        f_coeff(igr,igc,iq1,5) =  (a(1,1)*a(1,2)*v(4)*alat(2)**2+a(2,1)*a(2,2)*v(5)*alat(1)**2)/(D_det)**2   !fxy
+        f_coeff(igr,igc,iq1,6) =  (a(1,2)*a(1,2)*v(4)*alat(2)**2+a(2,2)*a(2,2)*v(5)*alat(1)**2)/(D_det)**2   !fyy
       endif
       !
 !!! AG DBG
@@ -413,6 +430,7 @@ subroutine interpolate_W(X,Xw,q)
  call timing('RIM-W-coeff',OPR='stop')
  !
  !if (debug) call check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
+ !
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !Calculation of RIM-W
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -442,7 +460,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  !
  implicit none
  type(bz_samp) :: q
- real(SP)      :: f_coeff(RIM_ng,RIM_ng,q%nibz,5)
+ real(SP)      :: f_coeff(RIM_ng,RIM_ng,q%nibz,6)
  real(SP)      :: delta_q(3,2)
  complex(SP)   :: vX(5,q%nibz,RIM_ng,RIM_ng)
  integer       :: idx_q(RIM_ng,q%nibz,5),idx_G(RIM_ng,q%nibz,5),idx_is(RIM_ng,q%nibz,5)

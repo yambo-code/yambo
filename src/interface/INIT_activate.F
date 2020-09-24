@@ -270,7 +270,7 @@ subroutine INIT_activate()
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
    !GPL_EXCLUDE_START
-   call initactivate(1,'BSEQptR BSEBands BSKCut BSEEhEny BSehWind')
+   call initactivate(1,'BSEQptR BSEBands BSKCut BSKIOmode BSEEhEny BSehWind')
    !GPL_EXCLUDE_END
    !GPL_INCLUDE_START
    !call initactivate(1,'BSEBands BSKCut BSEEhEny BSehWind')
@@ -587,6 +587,7 @@ subroutine INIT_activate()
  endif
  !
 #endif
+ !
  contains
    !
 #if defined _RT

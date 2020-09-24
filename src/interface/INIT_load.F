@@ -48,7 +48,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
-&                        BS_n_g_W,BS_n_g_exch,L_kind,BS_K_cutoff
+&                        BS_n_g_W,BS_n_g_exch,L_kind,BS_K_cutoff,BSK_IO_mode
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig
@@ -288,7 +288,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  call it(defs,'BSKCut',  '[BSK] Cutoff on the BSE Kernel, 0=full 1=none',BS_K_cutoff,verb_level=V_resp)
- call it('f',defs,'BSKTriangIO' ,'[BSK] Write only the upper part of the BSE matrix with parallel I/O',verb_level=V_resp)
+ call it(defs,'BSKIOmode','[BSK] ("1D_linear"/"2D_rescaled"/"2D_standard")',BSK_IO_mode,verb_level=V_resp)
  !
  !GPL_INCLUDE_START
  !
@@ -630,7 +630,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'ShiftedPaths',   '[DIP] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
  call it('f',defs,'DipPDirect', '[DIP] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
  call it('f',defs,'DipBandsALL','[DIP] Compute all bands range, not only valence and conduction',verb_level=V_resp)
-#if defined _NL
+#if defined _NL || defined _ELECTRIC
  call it('f',defs,'EvPolarization','[DIP] Evaluate Polarization (require DipApproach=Covariant)',verb_level=V_resp)
 #endif
  !
@@ -668,7 +668,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'Mean_Potential','[SC] Real-space Mean Potential',verb_level=V_sc)
  call it('f',defs,'SCnlMix','[SC] Use SC non-local mixing',verb_level=V_sc)
  call it('f',defs,'FrozeDensity','[NL] Do not update density (for testing purposes)',verb_level=V_sc)
- ! 
+ !
  ! SC [common with RT]
  !
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)

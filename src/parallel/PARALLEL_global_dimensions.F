@@ -64,6 +64,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  ! K-pts
  !-------
  PAR_K_range=Xk%nibz
+ if (ENVIRONMENT=="BZ_Indexes"               ) PAR_K_range=Xk%nibz
  if (ENVIRONMENT=="DIPOLES"                  ) PAR_K_range=Xk%nibz
  if (index(ENVIRONMENT, "Response_G_space")>0) PAR_K_range=Xk%nbz
  if (ENVIRONMENT=="Response_T_space"         ) PAR_K_range=Xk%nibz
@@ -116,7 +117,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
  ! EH-range
  !----------
- if (ENVIRONMENT=="Response_T_space"                ) then
+ if (ENVIRONMENT=="Response_T_space".and.allocated(BS_nT_at_k)) then
    PAR_EH_range=maxval( BS_nT_at_k )
    do i_k=1,Xk%nibz
      if (BS_nT_at_k(i_k)<PAR_EH_range.and.BS_nT_at_k(i_k)>0) PAR_EH_range=BS_nT_at_k(i_k)

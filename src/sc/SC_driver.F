@@ -23,7 +23,7 @@
 !
 subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
- use pars,           ONLY:SP,schlen,cZERO
+ use pars,           ONLY:SP,schlen,cZERO,rZERO
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_coh,l_sc_sex,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree,&
 &                         l_sc_exx,l_sc_electric,l_sc_fock,l_use_collisions
@@ -74,10 +74,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! Iterations
  !
  integer                  :: it
- real(SP)                 :: spread(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol),     &
+ real(SP)                 :: spread(1:SC_bands(2),k%nibz,n_sp_pol),     &
 &                            E_previous(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol), &
-&                            dE(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol),         &
-&                            max_overlap(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol),&
+&                            dE(1:SC_bands(2),k%nibz,n_sp_pol),         &
+&                            max_overlap(1:SC_bands(2),k%nibz,n_sp_pol),&
 &                            E_total,E_Fermi,E_tot_bands,E_tot_zero,E_tot_Hartree,E_tot_xc
  real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:),magn_nm1(:,:)
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
@@ -108,11 +108,15 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
  real(SP)                 :: WS_spread(SC_bands(1):SC_bands(2))
  integer                  :: first_el(SC_bands(2)-SC_bands(1)+1),n_of_el(SC_bands(2)-SC_bands(1)+1),n_deg_grp,&
-&                            b_of_max_proj(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol)
+&                            b_of_max_proj(1:SC_bands(2),k%nibz,n_sp_pol)
  !
  ! SC_bands(2)
  !=============
  if (SC_bands(2)> E%nb) call error(' Upper bound of band indexes cannot to be higher than '//trim(intc(E%nb)))
+ !
+ spread       =rZERO
+ max_overlap  =rZERO
+ b_of_max_proj=rZERO
  !
  call H_QP_table_setup(E)
  !
@@ -871,7 +875,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
          !
          ! end do SC_bands(2)
          !
-         dE(:,ik,i_sp_pol)=E%E(SC_bands(1):SC_bands(2),ik,i_sp_pol)-E_reference%E(SC_bands(1):SC_bands(2),ik,i_sp_pol)
+         dE(:,ik,i_sp_pol)=E%E(1:SC_bands(2),ik,i_sp_pol)-E_reference%E(1:SC_bands(2),ik,i_sp_pol)
          !
        enddo
        !
@@ -881,18 +885,18 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !====================
      if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,OBJ="E")
      !
-     dE(:,:,:)=E%E(SC_bands(1):SC_bands(2),:,:)-E_reference%E(SC_bands(1):SC_bands(2),:,:)
+     dE(:,:,:)=E%E(1:SC_bands(2),:,:)-E_reference%E(1:SC_bands(2),:,:)
      !
      call msg('r','Energy unit   ',' [eV]')
      !
      do ik=1,k%nibz
-       call REPORT_Energies(E%E(SC_bands(1):SC_bands(2),:,:),k,Xk,SC_nbands,(/ik,ik/),'E  ',.FALSE.,.TRUE.)
-       call REPORT_Energies(E%f(SC_bands(1):SC_bands(2),:,:)/HA2EV,k,Xk,SC_nbands,(/ik,ik/),'occ',.FALSE.,.TRUE.)
-       call REPORT_Energies(E_reference%E(SC_bands(1):SC_bands(2),:,:),k,Xk,SC_nbands,(/ik,ik/),'E_o',.FALSE.,.TRUE.)
-       call REPORT_Energies(dE,k,Xk,SC_nbands,(/ik,ik/),'d_E',.FALSE.,.TRUE.)
-       call REPORT_Energies(spread,k,Xk,SC_nbands,(/ik,ik/),'Spr',.FALSE.,.TRUE.)
-       call REPORT_Energies(max_overlap/HA2EV,k,Xk,SC_nbands,(/ik,ik/),'MxO',.FALSE.,.TRUE.)
-       call REPORT_Energies(real(b_of_max_proj)/HA2EV,k,Xk,SC_nbands,(/ik,ik/),'Bnd',.FALSE.,.TRUE.)
+       call REPORT_Energies(E%E(:SC_bands(2),:,:),k,Xk,SC_bands(2),(/ik,ik/),'E  ',.FALSE.,.TRUE.)
+       call REPORT_Energies(E%f(:SC_bands(2),:,:)/HA2EV,k,Xk,SC_bands(2),(/ik,ik/),'occ',.FALSE.,.TRUE.)
+       call REPORT_Energies(E_reference%E(:SC_bands(2),:,:),k,Xk,SC_bands(2),(/ik,ik/),'E_o',.FALSE.,.TRUE.)
+       call REPORT_Energies(dE,k,Xk,SC_bands(2),(/ik,ik/),'d_E',.FALSE.,.TRUE.)
+       call REPORT_Energies(spread,k,Xk,SC_bands(2),(/ik,ik/),'Spr',.FALSE.,.TRUE.)
+       call REPORT_Energies(max_overlap/HA2EV,k,Xk,SC_bands(2),(/ik,ik/),'MxO',.FALSE.,.TRUE.)
+       call REPORT_Energies(real(b_of_max_proj)/HA2EV,k,Xk,SC_bands(2),(/ik,ik/),'Bnd',.FALSE.,.TRUE.)
      enddo
      !
    end subroutine SC_report

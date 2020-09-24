@@ -7,7 +7,7 @@ SC_objects       = mod_SC.o
 #if defined _RT
 RT_objects       = mod_fields.o mod_RT_output.o mod_RT_control.o mod_RT_interfaces.o
 #endif
-#if defined _RT && defined _PHEL
+#if defined _RT || defined _PHEL
 PHEL_objects     =  mod_PH_real_time.o
 #endif
 #if defined _NL

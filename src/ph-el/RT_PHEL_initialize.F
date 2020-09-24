@@ -31,7 +31,7 @@ subroutine RT_PHEL_initialize(k,q)
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_phel_scatt
  use R_lattice,      ONLY:bz_samp
- use IO_m,           ONLY:io_control,REP,OP_RD_CL,VERIFY,NONE
+ use IO_m,           ONLY:io_control,REP,OP_RD_CL
  use ELPH,           ONLY:ph_freqs_sq,ph_modes,elph_gkkp,elph_nb,W_debye,MAX_gkkp
  use parser_m,       ONLY:parser
  use parallel_m,     ONLY:PAR_IND_Q_ibz,PAR_Xk_bz_index,PAR_IND_Xk_bz,PAR_Q_ibz_index,&
@@ -45,16 +45,10 @@ subroutine RT_PHEL_initialize(k,q)
  ! Work Space
  !
  integer             ::iq,ID,io_err,ik,iq_io,i_n,i_np,ik_mem,&
-&                      iq_mem,io_REF
+&                      iq_mem
  real(SP)            ::MAX_gkkp_expanded_at_kpq(k%nibz,q%nbz)
- integer, external   ::io_ELPH,io_RT_components
+ integer, external   ::io_ELPH
  logical             ::l_use_Debye_E,SETUP_failure
- !
- ! Restart
- !==========
- !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_REF=io_RT_components('REF',ID)
  !
  ! Logicals
  !==========

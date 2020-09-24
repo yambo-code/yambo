@@ -24,16 +24,15 @@
 subroutine RT_ELPH_initialize(E,k,q)
  ! 
  use pars,           ONLY:SP,pi,cZERO
- use real_time,      ONLY:q_weight_RT,THETA_matrix,&
-&                         THETA_matrix_index,&
-&                         l_RT_CCA_Kernel,RT_bands
+ use parser_m,       ONLY:parser
+ use real_time,      ONLY:q_weight_RT,THETA_matrix,THETA_matrix_index,l_RT_CCA_Kernel,RT_bands
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt
  use vec_operate,    ONLY:v_norm
  use D_lattice,      ONLY:Bose_Temp
  use R_lattice,      ONLY:RL_vol,bz_samp,nXkibz
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,NONE
- use ELPH,           ONLY:ph_freqs_sq,ph_modes,elph_branches
+ use ELPH,           ONLY:ph_freqs_sq,ph_modes,elph_branches,W_debye
  use functions,      ONLY:bose_f
  use R_lattice,      ONLY:RIM_n_rand_pts
  !
@@ -44,28 +43,43 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! Work Space
  !
- integer             ::iq,ID,i_counter,il
- real(SP)            ::RADIUS_sphere,q_weight_tmp(q%nbz,2),ph_mean_speed(3),ph_E
- integer, external   ::io_RT_components
+ integer             ::iq,ID,i_counter,il,i1,i_err,i_s
+ real(SP)            ::RADIUS_sphere,q_weight_tmp(q%nbz,2),ph_mean_speed(3),ph_E,q_mod(q%nbz),q0_mod
+ integer, external   ::io_RT_components,ELPH_expanded_databases_check
+ logical             ::l_use_Debye_E
  !
  ! Restart
  !==========
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID) 
- io_REF=io_RT_components('REF',ID)
+ i_err=io_RT_components('REF',ID)
  !
  ! Logicals
  !==========
  if (.not.l_elph_scatt) return
  !
- ! El-Ph databases I/O
- !=====================
- call ELPH_expanded_databases_map(E,k,q,RT_bands(2),i_err)
+ call parser('UseDebyeE'   , l_use_Debye_E)
  !
+ ! El-Ph databases check
+ !=======================
+ i_err=ELPH_expanded_databases_check(RT_bands(2))
  if (i_err<0) then
    l_elph_scatt   =.FALSE.
    l_RT_CCA_Kernel=.FALSE.
    return
  endif
+ !
+ ! Q/K grid remapping
+ !====================
+ call ELPH_Q_databases_map(k,q)
+ !
+ ! El-Ph databases I/O
+ !=====================
+ call ELPH_expanded_databases_map(E,k)
+ !
+ ! Test of the effect of using a single optical mode
+ !                               ===================
+ !
+ if (l_use_Debye_E) ph_freqs_sq=W_debye**2
  !
  ! Q weights 
  !===========
@@ -75,7 +89,6 @@ subroutine RT_ELPH_initialize(E,k,q)
  if (.not.allocated(q_weight_RT)) then
    !
    ! RIM support
-   !=============
    !
    ! Here It would be possible to have one different weight for each elph_mode.
    ! However in practice I assume there are two possibilities:

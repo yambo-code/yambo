@@ -21,57 +21,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_expanded_databases_map(E,k,q,n_bands,i_err)
+subroutine ELPH_expanded_databases_map(E,k)
  ! 
  use pars,           ONLY:SP
  use units,          ONLY:HA2EV
- use real_time,      ONLY:elph_gkkp_expanded_sq,&
-&                         Q_io_map,K_io_map,&
-&                         RT_bands
+ use real_time,      ONLY:elph_gkkp_expanded_sq,Q_io_map,K_io_map,RT_bands
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp,qindx_S
- use IO_m,           ONLY:io_control,REP,OP_RD_CL
- use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,W_debye,MAX_gkkp
+ use R_lattice,      ONLY:bz_samp,qindx_S,nqbz
+ use IO_m,           ONLY:io_control,OP_RD_CL
+ use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,MAX_gkkp
  use vec_operate,    ONLY:degeneration_finder
- use parser_m,       ONLY:parser
  use parallel_m,     ONLY:PAR_Q_bz_index,PAR_IND_Q_bz,PAR_nQ_bz,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
 &                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX
  !
 #include<memory.h>
  !
  type(levels)             :: E
- type(bz_samp),intent(in) :: k,q
- integer                  :: n_bands,i_err
+ type(bz_samp),intent(in) :: k
  !
  ! Work Space
  !
- integer             ::iq,ID,io_err,ik,i_counter,iq_io,il,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
+ integer             ::iq,ID,io_err,ik,i_counter,iq_io,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
 &                      first_el(2,RT_bands(2)),n_of_el(2,RT_bands(2)),n_deg_grp(2),i1,i2,iq_mem
- real(SP)            ::ph_Esq_local(q%nbz,ph_modes),q_mod(q%nbz),&
- real(SP)            ::gkkp_average(ph_modes)
+ real(SP)            ::ph_Esq_local(nqbz,ph_modes),gkkp_average(ph_modes),MAX_gkkp_expanded_at_kpq(k%nibz,nqbz)
  integer, external   ::io_ELPH
- logical             ::l_use_Debye_E,SETUP_failure
- !
- ! I/O check
- !===========
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
- io_err=io_ELPH(ID,'gkkp_expanded')
- !
- i_err=0
- if (io_err/=0.or.elph_nb<n_bands) i_err=-1
- !
- if (i_err<0) then
-   call warning('ELPH database not found and/or incompatible OR QP widths not provided. E-P scattering switched off')
-   return
- endif
- !
- ! Logicals
- !==========
- call parser('UseDebyeE'   , l_use_Debye_E)
- !
- ! Q/K grid remapping
- !====================
- call ELPH_Q_databases_map(k,q)
  !
  ! Allocation
  !============
@@ -86,7 +59,7 @@ subroutine ELPH_expanded_databases_map(E,k,q,n_bands,i_err)
  i_counter   =0
  ph_Esq_local=0._SP
  !
- do iq=1,q%nbz
+ do iq=1,nqbz
    !
    if (.not.PAR_IND_Q_bz%element_1D(iq)) cycle
    !
@@ -167,9 +140,5 @@ subroutine ELPH_expanded_databases_map(E,k,q,n_bands,i_err)
  MAX_gkkp=maxval(MAX_gkkp_expanded_at_kpq)
  !
  if (any(ph_freqs_sq<0._SP)) call warning('Imaginary phonon frequencies found. Please check.')
- !
- ! Test of the effect of using a single optical mode
- !
- if (l_use_Debye_E) ph_freqs_sq=W_debye**2
  !
 end subroutine ELPH_expanded_databases_map

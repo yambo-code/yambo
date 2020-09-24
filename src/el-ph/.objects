@@ -1,0 +1,6 @@
+objs =
+#if defined _ELPH 
+objs = ELPH_Sigma_c.o ELPH_Hamiltonian.o ELPH_simmetrize_and_distribute_gsqF.o \
+       ELPH_gsqF_to_Sigma.o
+#endif
+

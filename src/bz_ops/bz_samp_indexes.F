@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine bz_samp_indexes(en,k,Xk,q)
+subroutine bz_samp_indexes(k,Xk,q)
  !
  ! ikbz=(ik,is) --<--:--<-- okbz=(ok,os) = (IK-Q)
  !                   :
@@ -33,8 +33,8 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  ! qindx_X(iq,ikbz,1)=okbz
  ! qindx_X(iq,ikbz,2)=iGo
  !
- ! qindx_B(okbz,ikbz,1)=iqbz
- ! qindx_B(okbz,ikbz,2)=iGo
+ ! qindx_B(ikbz,okbz,1)=iqbz
+ ! qindx_B(ikbz,okbz,2)=iGo
  !
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo
@@ -45,29 +45,27 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  use pars,           ONLY:SP,lchlen,zero_dfl
  use drivers,        ONLY:l_bse,l_elel_scatt
  use com,            ONLY:msg
- use parallel_m,     ONLY:PP_redux_wait,PAR_K_scheme,master_cpu
+ use parallel_m,     ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
- use electrons,      ONLY:n_sp_pol,levels
+ use electrons,      ONLY:n_sp_pol
  use vec_operate,    ONLY:v_is_zero,c2a
  use BS,             ONLY:BS_res_mode,BS_cpl_mode
  use R_lattice,      ONLY:d3q_factor,RL_vol,nqibz,nqbz,QP_states_k,&
-&                         qindx_X,qindx_B,qindx_S,qindx_C,qindx_free,&
+&                         qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
 &                         q_sstar,coll_scattering,q_source,smallest_q_norm,&
 &                         Xk_grid_new_mapping
- use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,OP_APP_CL,VERIFY,REP
+ use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
- use interfaces,     ONLY:PARALLEL_global_indexes
  use openmp,         ONLY:n_threads,master_thread,OPENMP_update
 #if defined _ELPH
  use ELPH,           ONLY:elph_use_q_grid
 #endif
 #include<memory.h>
  !
- type(levels) ::en
  type(bz_samp)::k,Xk,q
  !
  !Work Space
@@ -76,10 +74,10 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  character(lchlen) :: string
  integer :: io_db,io_err
- integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,ikbz_mem,iqs,iks,id
+ integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,iqs,iks,id
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3),q_step(3)
  real(SP):: E_empty(1,q%nibz,n_sp_pol)
- logical :: connected_grids,user_defined_qpts,do_qindx_B
+ logical :: connected_grids,user_defined_qpts
 #if defined _ELPH
  logical :: bse_setup_scatt
 #endif
@@ -99,17 +97,9 @@ subroutine bz_samp_indexes(en,k,Xk,q)
 &                                          trim(q_source)=="Electron-Phonon databases"
 #endif
  !
- ! Parallelization
- !==================
- !
- if(bse_scattering) then
-   call PARALLEL_global_indexes(en,Xk,q,"BZ_Indexes")
-   call PARALLEL_SETUP_K_scheme("BZINDX")
- endif
- !
  q%description='q'
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3,4,6/),MODE=VERIFY,ID=io_db)
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=VERIFY,ID=io_db)
  io_err=io_QINDX(Xk,q,io_db)
  if (io_err==0) then
    call k_expand(q)
@@ -215,19 +205,21 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  endif
  !
  d3q_factor=RL_vol/real(q%nbz)
- do_qindx_B=.false.
  !
  ! Allocate
  !
  call qindx_alloc('XB')
+ !
+ qindx_X=0
+ if ( bse_scattering) qindx_B=0
  !
  ! X indexes
  !
  ! qindx_X(iq,ikbz,1)=okbz
  ! qindx_X(iq,ikbz,2)=iGo
  !
- ! qindx_B(okbz,ikbz,1)=iqbz
- ! qindx_B(okbz,ikbz,2)=iGo
+ ! qindx_B(ikbz,okbz,1)=iqbz
+ ! qindx_B(ikbz,okbz,2)=iGo
  !
  string=' Indices for polarization function'
  if ( bse_scattering) string=trim(string)//' + BSE'
@@ -243,11 +235,6 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  !$omp do
  do ikbz=1,Xk%nbz
-   !
-   if(bse_scattering) then
-     do_qindx_B=PAR_K_scheme%IND_bz%element_1D(ikbz)
-     ikbz_mem=PAR_K_scheme%bz_index(ikbz)
-   endif
    !
    do ikbz_p=1,Xk%nbz
      !
@@ -273,20 +260,18 @@ subroutine bz_samp_indexes(en,k,Xk,q)
        call k_grid_shift(iv1)
        !
      endif
-     ! 
+     !
      iqbz =q_map(iv1(1),iv1(2),iv1(3))
      iqibz=q%sstar(iqbz,1)
      iqs  =q%sstar(iqbz,2)
-     if (iqs/=1.and..not.do_qindx_B) cycle
-     !
-     if (iqs==1)     qindx_X(iqibz,ikbz,1)=ikbz_p
-     if (do_qindx_B) qindx_B(ikbz_p,ikbz_mem,1)=iqbz
-     !
+     if (iqs/=1.and..not.bse_scattering) cycle
+     if (iqs==1) qindx_X(iqibz,ikbz,1)=ikbz_p
+     if (bse_scattering) qindx_B(ikbz,ikbz_p,1)=iqbz
      v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)-q%ptbz(iqbz,:)
      call c2a(v_in=v1,mode='ka2i')
      !
-     if (iqs==1)     qindx_X(iqibz, ikbz    ,2)=G_index(v1,.true.)
-     if (do_qindx_B) qindx_B(ikbz_p,ikbz_mem,2)=G_index(v1,.false.)
+     if (iqs==1)         qindx_X(iqibz,ikbz  ,2)=G_index(v1,.true.)
+     if (bse_scattering) qindx_B(ikbz ,ikbz_p,2)=G_index(v1,.false.)
      !
      if ( iqs==1 .and. qindx_X(iqibz,ikbz,2)==0 ) exit
      !
@@ -320,6 +305,9 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  local_zero=1.E-4_SP
  !
  call qindx_alloc('SC')
+ !
+ qindx_S=0
+ if (coll_scattering) qindx_C=0
  !
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo
@@ -404,17 +392,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
 1 call PP_redux_wait()
  !
- if(master_cpu) then
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3,4,6/),ID=io_db)
-   io_err=io_QINDX(Xk,q,io_db)
- endif
- !
- ! Before writing section 5 (qindx_B) I need to wait that the master is done
- ! with writing all other sections
- !
- call PP_redux_wait()
- !
- call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/5/),ID=io_db)
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=io_db)
  io_err=io_QINDX(Xk,q,io_db)
  !
  !CLEAN
@@ -425,7 +403,6 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  if (Xk_grid_is_uniform) then
    YAMBO_FREE(q%ptbz)
  endif
- call qindx_free('B')
  call PP_redux_wait()
  !
  call timing('bz_samp_indexes',OPR='stop')
@@ -598,6 +575,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
    end subroutine q_shadows
    !
    subroutine bz_X_only_exit(message)
+     use R_lattice,      ONLY:qindx_free
      character(*), intent(in) :: message
      call qindx_free('ALL')
      nqibz=1

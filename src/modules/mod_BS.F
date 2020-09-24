@@ -32,6 +32,7 @@ module BS
  logical :: l_BSE_minimize_memory
  logical :: l_BSE_kernel_complete
  logical :: l_BSE_restart
+ logical :: l_BSK_IO_triangular
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
  logical :: BS_res_K_exchange
@@ -45,7 +46,6 @@ module BS
  character(schlen) :: L_kind
  character(schlen) :: BSE_mode
  character(schlen) :: BSK_mode
- character(schlen) :: BSK_IO_mode
  character(schlen) :: BS_res_mode
  character(schlen) :: BS_cpl_mode
  !
@@ -54,7 +54,6 @@ module BS
  integer :: BS_K_dim
  integer :: BS_H_dim
  integer :: BS_IO_dim(2)
- integer :: MAX_BSK_LIN_size
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier
@@ -353,15 +352,17 @@ module BS
        i_Tp  =BS_blk(i_B)%iT_p
        !
        ! Resonant part (mode ==R) is hermitian
-       ! Coupling part (mode ==C) is symmetric
+       ! Coupling part (mode ==A) is symmetric
        !
        if (i_Tk/=i_Tp) cycle
        !
        do i_r=1,BS_blk(i_B)%size(1)
-         BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
          do i_c=i_r+1,BS_blk(i_B)%size(2)
-           if (BS_blk(i_B)%mode=="R") BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
-           if (BS_blk(i_B)%mode=="C") BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)
+           if (BS_blk(i_B)%mode=="R") then
+             BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
+           else
+             BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)
+           endif
          enddo
        enddo
        !

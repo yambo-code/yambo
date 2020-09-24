@@ -84,11 +84,7 @@ module parallel_m
  !
  ! Logicals
  !
- logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_BZINDX,l_par_SE,l_par_RT,l_par_SC,l_par_NL
- !
- ! BSE specific
- !
- logical           :: l_BSE_PAR_incomplete=.FALSE.
+ logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_SE,l_par_RT,l_par_SC,l_par_NL
  !
  ! In a parallel runs, when some loops not involving all CPU's are parallelized it is usefull to keep 
  ! the operations local in the cpu world
@@ -229,10 +225,6 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_Xk_bz
  type(PP_indexes),SAVE :: PAR_IND_G_k
  !
- ! ... BZINDX
- type(PP_indexes),SAVE :: PAR_IND_BZINDXk_ibz
- type(PP_indexes),SAVE :: PAR_IND_BZINDXk_bz
- !
  ! ... DIPOLES
  type(PP_indexes),SAVE :: PAR_IND_DIPk_ibz
  type(PP_indexes),SAVE :: PAR_IND_DIPk_bz
@@ -301,10 +293,6 @@ module parallel_m
  integer            :: PAR_IND_Xk_ibz_ID
  integer            :: PAR_IND_Xk_bz_ID
  integer            :: PAR_IND_G_k_ID
- !
- ! ... BZINDX
- integer            :: PAR_IND_BZINDXk_bz_ID
- integer            :: PAR_IND_BZINDXk_ibz_ID
  !
  ! ... DIPOLES
  integer            :: PAR_IND_DIPk_bz_ID
@@ -382,10 +370,6 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_A2A
  !
- ! ... BZINDX
- type(MPI_comm),SAVE :: PAR_COM_BZINDXk_ibz_INDEX
- type(MPI_comm),SAVE :: PAR_COM_BZINDXk_bz_INDEX
- !
  ! ... DIPOLES
  type(MPI_comm),SAVE :: PAR_COM_DIPk_ibz_INDEX
  type(MPI_comm),SAVE :: PAR_COM_DIPk_ibz_A2A
@@ -458,10 +442,6 @@ module parallel_m
  integer,allocatable:: PAR_Xk_ibz_index(:)
  integer            :: PAR_Xk_nbz
  integer,allocatable:: PAR_Xk_bz_index(:)
- integer            :: PAR_BZINDXk_nibz
- integer,allocatable:: PAR_BZINDXk_ibz_index(:)
- integer            :: PAR_BZINDXk_nbz
- integer,allocatable:: PAR_BZINDXk_bz_index(:)
  integer            :: PAR_DIPk_nibz
  integer,allocatable:: PAR_DIPk_ibz_index(:)
  integer            :: PAR_DIPk_nbz
@@ -571,7 +551,7 @@ module parallel_m
    character(lchlen) function PARALLEL_message(i_s)
      use stderr, ONLY:intc
      use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K, &
-&                     n_threads_NL,n_threads_BZINDX,n_threads
+&                     n_threads_NL,n_threads
      integer :: i_s
      !
      PARALLEL_message=" "
@@ -585,14 +565,13 @@ module parallel_m
      !
      if (i_s==0) then
        PARALLEL_message=trim(intc(ncpu))//"(CPU)"
-       if (n_threads       >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads))//"(threads)"
-       if (n_threads_X     >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_X))//"(threads@X)"
-       if (n_threads_BZINDX>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_BZINDX))//"(threads@BZINDX)"
-       if (n_threads_DIP   >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_DIP))//"(threads@DIP)"
-       if (n_threads_SE    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_SE))//"(threads@SE)"
-       if (n_threads_RT    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_RT))//"(threads@RT)"
-       if (n_threads_K     >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_K))//"(threads@K)"
-       if (n_threads_NL    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_NL))//"(threads@NL)"
+       if (n_threads    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads))//"(threads)"
+       if (n_threads_X  >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_X))//"(threads@X)"
+       if (n_threads_DIP>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_DIP))//"(threads@DIP)"
+       if (n_threads_SE >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_SE))//"(threads@SE)"
+       if (n_threads_RT >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_RT))//"(threads@RT)"
+       if (n_threads_K  >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_K))//"(threads@K)"
+       if (n_threads_NL >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_NL))//"(threads@NL)"
      else
        PARALLEL_message=trim(CPU_structure(i_s)%Short_Description)//"(environment)-"//&
 &                       trim(CPU_structure(i_s)%CPU_string)//"(CPUs)-"//&
@@ -635,8 +614,6 @@ module parallel_m
      CPU_structure(7)%Short_Description="SLK"
      CPU_structure(8)%Long_Description="Non_Linear"
      CPU_structure(8)%Short_Description="NL"
-     CPU_structure(9)%Long_Description="BZ_Indexes"
-     CPU_structure(9)%Short_Description="BZINDX"
    end subroutine
    !
    subroutine COMM_reset(COMM)

@@ -37,7 +37,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
 &                        def_variable_elemental,io_variable_elemental
  use descriptors,   ONLY:IO_desc,IO_desc_reset
 #if defined _PAR_IO
- use BS,            ONLY:BSK_IO_mode
+ use BS,            ONLY:l_BSK_IO_triangular
 #endif
  !
  implicit none
@@ -190,11 +190,11 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  !
  ! Check if BSE kernel is written in triangular form
  !
- if (write_is_on(ID).or.variable_exist(ID,"BSE_KERNEL_IO_MODE")) then
-   call def_variable_elemental(ID,"BSE_KERNEL_IO_MODE",1,0,0)
-   call  io_variable_elemental(ID,VAR="[IO] Kernel IO mode",CH0=BSK_IO_mode)
+ if (write_is_on(ID).or.variable_exist(ID,"BSE_KERNEL_TRIANGULAR")) then
+   call def_variable_elemental(ID,"BSE_KERNEL_TRIANGULAR",1,LP+100,0)
+   call  io_variable_elemental(ID,VAR="[IO] Kernel triangular",L0=l_BSK_IO_triangular)
  else
-   BSK_IO_mode="2D_standard"
+   l_BSK_IO_triangular=.false.
  endif
  !
 #endif
@@ -215,7 +215,7 @@ integer function variables_BS_more(ID,mode)
  use parallel_m, ONLY:master_cpu
  use BS,         ONLY:BS_K_cutoff,BS_max_val,l_BSE_kernel_complete
  use IO_m,       ONLY:def_variable_elemental,io_variable_elemental,&
-&                     write_is_on,variable_exist,io_BS_K
+&                     write_is_on,variable_exist
  !
  implicit none
  !
@@ -236,7 +236,7 @@ integer function variables_BS_more(ID,mode)
  !
  ! Check if BSE kernel is complete in reading mode, set the variable to false in writing mode
  !
- if( (trim(mode)=="start".or.(trim(mode)=="end".and.l_BSE_kernel_complete.and.write_is_on(ID)) ) .and. io_BS_K ) then
+ if(trim(mode)=="start".or.(trim(mode)=="end".and.l_BSE_kernel_complete.and.write_is_on(ID))) then
    def_var=                write_is_on(ID) .or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
    io_var =(master_cpu.and.write_is_on(id)).or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
    if(def_var) call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0,par_io_kind="independent")

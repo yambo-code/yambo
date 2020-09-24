@@ -110,16 +110,6 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
 &                                                       PAR_IND_Xk_bz, PAR_IND_Xk_bz_ID,&
 &                                                       PAR_Xk_bz_index,PAR_Xk_nbz)
  !
- ! I/O privileges
- !
- call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
- !
- call IO_and_Messaging_switch("+output",CONDITION=master_cpu)
- !
- call OPENMP_set_threads(n_threads_in=n_threads_K)
- !
- if(.not.allocated(BS_nT_at_k)) return
- !
  ! E/h pairs (k resolved)
  !
  ! In this part I distribute the eh transitions within each k. The COMM for this indexing is PAR_COM_eh_INDEX.
@@ -175,5 +165,13 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
 &                           LOADED=PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_COM_VAL_INDEX_DIP%CPU_id+1),&
 &                           TOTAL=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1,&
 &                           NCPU=PAR_COM_VAL_INDEX_DIP%n_CPU)
+ !
+ ! I/O privileges
+ !
+ call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+ !
+ call IO_and_Messaging_switch("+output",CONDITION=master_cpu)
+ !
+ call OPENMP_set_threads(n_threads_in=n_threads_K)
  !  
 end subroutine PARALLEL_global_Response_T

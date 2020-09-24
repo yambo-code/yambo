@@ -53,7 +53,6 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  use parallel_m,    ONLY:PAR_B_mat_index,PAR_Bp_mat_index,PAR_QP_index,PAR_G_bands_index,PAR_PLASMA_index, &
 &                        PAR_Q_ibz_index,PAR_Q_bz_index,PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_DIPk_ibz_index,   &
 &                        PAR_BS_T_grps_index,PAR_RL_index,PAR_COM_DIPk_bz_INDEX,PAR_COM_DIPk_ibz_INDEX,    &
-&                        PAR_COM_BZINDXk_bz_INDEX,PAR_COM_BZINDXk_ibz_INDEX,PAR_BZINDXk_ibz_index,         &
 &                        PAR_freqs_index
  ! ID's
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
@@ -126,7 +125,6 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  YAMBO_FREE(PAR_Xk_bz_index)
  YAMBO_FREE(states_to_load)
  YAMBO_FREE(PAR_DIPk_ibz_index)
- YAMBO_FREE(PAR_BZINDXk_ibz_index)
  YAMBO_FREE(PAR_BS_T_grps_index)
  YAMBO_FREE(PAR_RL_index)
 #if defined _NL
@@ -181,8 +179,6 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call COMM_reset(PAR_COM_DIPk_bz_A2A)
  call COMM_reset(PAR_COM_DIPk_ibz_INDEX)
  call COMM_reset(PAR_COM_DIPk_ibz_A2A)
- call COMM_reset(PAR_COM_BZINDXk_bz_INDEX)
- call COMM_reset(PAR_COM_BZINDXk_ibz_INDEX)
  call COMM_reset(PAR_COM_X_WORLD_RL_resolved)
  call COMM_reset(PAR_COM_X_WORLD)
  call COMM_reset(PAR_COM_density)

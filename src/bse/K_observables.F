@@ -23,7 +23,7 @@
 !
 subroutine K_observables(WHAT,W)
  !
- use pars,          ONLY:cZERO
+ use pars,          ONLY:rZERO,cZERO
  use X_m,           ONLY:X_alloc,Epsilon_ii,Joint_DOS
  use frequency,     ONLY:w_samp
 #if defined _PL
@@ -31,6 +31,8 @@ subroutine K_observables(WHAT,W)
 #endif
  use BS_solvers,    ONLY:BSS_n_freqs
 #if defined _KERR
+ use KERR,          ONLY:B_Hall
+ use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_anomalous_Hall
  use X_m,           ONLY:Epsilon_ij,X_magnons
 #endif
  !
@@ -42,17 +44,23 @@ subroutine K_observables(WHAT,W)
  if (WHAT=="ALLOC") then
    !
 #if defined _KERR
-   YAMBO_ALLOC(Epsilon_ij,(BSS_n_freqs,4))
-   Epsilon_ij=cZERO
-   Epsilon_ij(:,1)=W%p(:)
+   if(l_BS_kerr) then
+     YAMBO_ALLOC(Epsilon_ij,(BSS_n_freqs,4))
+     Epsilon_ij=cZERO
+     Epsilon_ij(:,1)=W%p(:)
+   endif
+   if(l_BS_anomalous_Hall) B_Hall=cZERO
    !
-   YAMBO_ALLOC(X_magnons,(BSS_n_freqs,2,4))
-   X_magnons=cZERO
-   X_magnons(:,1,1)=W%p(:)
-   X_magnons(:,2,1)=W%p(:)
+   if(l_BS_magnons) then
+     YAMBO_ALLOC(X_magnons,(BSS_n_freqs,2,4))
+     X_magnons=cZERO
+     X_magnons(:,1,1)=W%p(:)
+     X_magnons(:,2,1)=W%p(:)
+   endif
 #endif
 #if defined _PL
    call PL_init( )
+   PL=rZERO
    PL(:,1) = W%p(:)  
 #endif
    !

@@ -41,7 +41,7 @@ subroutine K_diago_hermitian_magnons_residual(BS_R_left,BS_R_right)
  !
  implicit none
  !
- complex(SP),intent(out) :: BS_R_left(BSS_n_eig,2),BS_R_right(BSS_n_eig,2)
+ complex(SP),intent(out) :: BS_R_left(2,BSS_n_eig),BS_R_right(2,BSS_n_eig)
  !
  ! Workspace
  !
@@ -68,9 +68,9 @@ subroutine K_diago_hermitian_magnons_residual(BS_R_left,BS_R_right)
    !
    if (.not.px%element_1D(i_eh)) cycle
    !
-   BS_R_left(i_eh,1) =V_dot_V_omp(BS_K_dim,tmp_res(:,1),conjg(BS_mat(:,i_eh)))
-   BS_R_left(i_eh,2) =V_dot_V_omp(BS_K_dim,tmp_res(:,2),conjg(BS_mat(:,i_eh)))
-   BS_R_right(i_eh,:)=conjg(BS_R_left(i_eh,:))
+   BS_R_left(1,i_eh) =V_dot_V_omp(BS_K_dim,tmp_res(:,1),conjg(BS_mat(:,i_eh)))
+   BS_R_left(2,i_eh) =V_dot_V_omp(BS_K_dim,tmp_res(:,2),conjg(BS_mat(:,i_eh)))
+   BS_R_right(:,i_eh)=conjg(BS_R_left(:,i_eh))
    !
    call live_timing(steps=1)
    !

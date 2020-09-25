@@ -64,33 +64,18 @@ subroutine K_diago_response_functions(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_co
  !
  type(PP_indexes)     ::px
  !
- integer              :: i1,ic,i_pert_SOC,n_SOC
- complex(SP)          :: para_term_w0,diam_term_used,EXC_E(2/n_sp_pol)
+ integer              :: i1,i_pert_SOC,n_SOC
+ complex(SP)          :: para_term_w0,diam_term_used,EXC_E(2/n_sp_pol),res_abs
  !
 #if defined _KERR
- complex(SP)          :: gauge_factor
+ complex(SP)          :: gauge_factor,res_kerr,res_magn(2)
 #endif
  !
  n_SOC=1
  !
  if( BS_perturbative_SOC.and.n_sp_pol==1) n_SOC=2
  !
- Epsilon_ii(:,2)=cZERO
- Joint_DOS(:,2) =cZERO
- !
  para_term_w0=cZERO
- !
-#if defined _KERR
- if(l_BS_kerr) then
-   Epsilon_ij(:,2)=cZERO
-   if(l_BS_anomalous_Hall) B_Hall(2)=cZERO
- endif
- if(l_BS_magnons) X_magnons(:,:,2)=cZERO
-#endif
- !
-#if defined _PL
- if (l_photolum) PL(:,2) = rZERO
-#endif
  !
  ! If perturbative SOC energies are loaded compute the SOC energies
  !
@@ -124,28 +109,30 @@ subroutine K_diago_response_functions(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_co
      ! Note the use of a causal expression here needed to avoid any
      ! distinction between the resonant and antiresonant e/h Green's functions.
      !
-     Epsilon_ii(:,2)=Epsilon_ii(:,2)-BS_R_left(i1)*BS_R_right(i1)/(W%p(:)-EXC_E(i_pert_SOC))
-     if (BSS_add_antiresonant) Epsilon_ii(:,2)=Epsilon_ii(:,2)+&
-&      conjg(BS_R_left(i1)*BS_R_right(i1))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+     res_abs=BS_R_left(i1)*BS_R_right(i1)
+     Epsilon_ii(:,2)=Epsilon_ii(:,2)-res_abs/(W%p(:)-EXC_E(i_pert_SOC))
+     if (BSS_add_antiresonant) Epsilon_ii(:,2)=Epsilon_ii(:,2)+conjg(res_abs)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
      !
-     if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+BS_R_left(i1)*BS_R_right(i1)*EXC_E(i_pert_SOC)/bare_qpg(1,1)**2
-     if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+BS_R_left(i1)*BS_R_right(i1)/EXC_E(i_pert_SOC)
+     if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+res_abs*EXC_E(i_pert_SOC)/bare_qpg(1,1)**2
+     if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+res_abs/EXC_E(i_pert_SOC)
      !
      Joint_DOS(:,2)=Joint_DOS(:,2)-1._SP/(W%p(:)-EXC_E(i_pert_SOC))
      if (BSS_add_antiresonant) Joint_DOS(:,2)=Joint_DOS(:,2)+1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
      !
 #if defined _KERR
      if(l_BS_kerr) then
-       Epsilon_ij(:,2)=Epsilon_ij(:,2)-BS_R_left(i1)*BS_R_right_kerr(i1)/(W%p(:)-EXC_E(i_pert_SOC))
-       if (BSS_add_antiresonant) Epsilon_ij(:,2)=Epsilon_ij(:,2)+&
-&        conjg(BS_R_left(i1)*BS_R_right_kerr(i1))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+       res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)
+       Epsilon_ij(:,2)=Epsilon_ij(:,2)-res_kerr/(W%p(:)-EXC_E(i_pert_SOC))
+       if (BSS_add_antiresonant) Epsilon_ij(:,2)=Epsilon_ij(:,2)+conjg(res_kerr)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
      endif
      if(l_BS_magnons) then
-       do ic=1,2
-         X_magnons(:,ic,2)=X_magnons(:,ic,2)-BS_R_left_magn(i1,ic)*BS_R_right_magn(i1,ic)/(W%p(:)-EXC_E(i_pert_SOC))
-         if (BSS_add_antiresonant) X_magnons(:,ic,2)=X_magnons(:,ic,2)+&
-&          conjg(BS_R_left_magn(i1,ic)*BS_R_right_magn(i1,ic))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
-       enddo
+       res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)
+       X_magnons(:,1,2)=X_magnons(:,1,2)-res_magn(1)/(W%p(:)-EXC_E(i_pert_SOC))
+       X_magnons(:,2,2)=X_magnons(:,2,2)-res_magn(2)/(W%p(:)-EXC_E(i_pert_SOC))
+       if (BSS_add_antiresonant) then
+         X_magnons(:,1,2)=X_magnons(:,1,2)+conjg(res_magn(2))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+         X_magnons(:,2,2)=X_magnons(:,2,2)+conjg(res_magn(1))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+       endif
      endif
 #endif
      !

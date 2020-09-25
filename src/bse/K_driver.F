@@ -27,7 +27,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use parser_m,       ONLY:parser
  use com,            ONLY:msg
  use stderr,         ONLY:STRING_remove,intc
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels,n_sp_pol,n_spin
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
  use DIPOLES,        ONLY:DIPOLE_t
@@ -165,7 +165,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
 #if defined _KERR
  l_BS_kerr   = (index(BSE_prop,'kerr')/=0)
  l_BS_trace  = (index(BSE_prop,'trace')/=0)
- l_BS_magnons= (index(BSE_prop,'magn')/=0)
+ l_BS_magnons= (index(BSE_prop,'magn')/=0) .and.n_spin>1
  if (l_BS_magnons.and.n_sp_pol==2) then
    l_BS_abs    = .false.
    l_BS_kerr   = .false.

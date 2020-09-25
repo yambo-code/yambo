@@ -61,8 +61,8 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  !
  call timing('T_space ALDA scatt.',OPR='start')
  !
- if ((is(4)/=os(4).or.isp(4)/=osp(4)).and..not.l_BS_magnons) call error(" TDDFT_ALDA_R_space: wrong spin index")
- if ((is(4)==os(4).or.isp(4)==osp(4)).and.     l_BS_magnons) call error(" TDDFT_ALDA_R_space: wrong spin index")
+ if ((is(4)/=os(4).or.isp(4)/=osp(4)).and.((.not.l_BS_magnons).or. n_sp_pol==1)) call error(" TDDFT_ALDA_R_space: wrong spin index")
+ if ((is(4)==os(4).or.isp(4)==osp(4)).and.((     l_BS_magnons).and.n_sp_pol==2)) call error(" TDDFT_ALDA_R_space: wrong spin index")
  if (mode/="RES" .and. mode/="CPL" ) call error(" TDDFT_ALDA_R_space: unkown mode")
  !
  TDDFT_ALDA_R_space=cZERO

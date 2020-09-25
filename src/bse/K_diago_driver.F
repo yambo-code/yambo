@@ -361,8 +361,8 @@ subroutine K_diago_driver(iq,W,X_static)
          YAMBO_ALLOC_P(BS_R_right_kerr,(BSS_n_eig))
        endif
        if (l_BS_magnons) then
-         YAMBO_ALLOC_P(BS_R_left_magn,(BSS_n_eig,2))
-         YAMBO_ALLOC_P(BS_R_right_magn,(BSS_n_eig,2))
+         YAMBO_ALLOC_P(BS_R_left_magn,(2,BSS_n_eig))
+         YAMBO_ALLOC_P(BS_R_right_magn,(2,BSS_n_eig))
        endif
 #endif
        !

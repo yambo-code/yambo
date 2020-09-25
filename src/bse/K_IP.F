@@ -147,10 +147,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
 #if defined _KERR
    !
-   if(l_BS_kerr) then
-     B_Hall=cZERO
-     call rot_v_xy_plane(-pi/2._SP,field_dir(:,1),v_out=field_dir(:,2))
-   endif
+   if(l_BS_kerr) call rot_v_xy_plane(-pi/2._SP,field_dir(:,1),v_out=field_dir(:,2))
    !
    if (l_BS_trace) then
      field_dir(:,1)=(/1._SP,0._SP,0._SP/)

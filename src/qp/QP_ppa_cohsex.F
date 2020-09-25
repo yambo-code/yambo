@@ -77,7 +77,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  logical          ::X_is_TR_rotated,l_X_alloc
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
  complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,ctmp
- complex(DP)      ::dp_dummy
+ complex(DP)      ::dp_dummy, dp_vdummy(7)
  logical          ::l_RIM_W_g
  integer          ::out_unit_QP_Sc_G=1000
  real(SP)         ::g1_mod_2D,g2_mod_2D
@@ -93,7 +93,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
 !!! AG DBG
  open (unit=out_unit_QP_Sc_G,file="QP_Sc_G.dat",action="write",status="replace")
- write(out_unit_QP_Sc_G,*) "band  kpoint  head  diag_Gz  diag_G  wing_Gz  wing_G  body_Gz body_G"
+ write(out_unit_QP_Sc_G,*) "band  kpoint      head          diag_Gz        diag_G        wing_Gz"//&
+&"         wing_G         body_Gz        body_G          all"
 !!! AG DBG
 
  call elemental_collision_free(isc)
@@ -466,6 +467,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          do i_w=1,QP_dSc_steps
            !
            dp_dummy = 0.0_DP
+           dp_vdummy = 0.0_DP
            !
 !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp,g1_mod_2D,g2_mod_2D,l_RIM_W_g), reduction(+:dp_dummy)
            do ig2=1,X%ng
@@ -499,43 +501,41 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                !
                !Collect the Sc in QP_Sc_G
                !
-               if (i_w == 1) then
-                 ! Head at q = 0
-                 if (iqbz == 1 .and. ig1 == 1 .and. ig2 == 1) then
-                   !
-                   QP_Sc_G(i_qp,1,1) = QP_Sc_G(i_qp,1,1) + cmplx(ctmp,kind=SP)
-                   !
-                 ! Diagonal Gxy == 0
-                 else if (ig1 == ig2 .and. g2_mod_2D < 1.e-5) then
-                   !
-                   QP_Sc_G(i_qp,1,2) = QP_Sc_G(i_qp,1,2) + cmplx(ctmp,kind=SP)
-                   !
-                 ! Diagonal Gxy /= 0
-                 else if ( ig1 == ig2 .and. g2_mod_2D > 1.e-5) then
-                   !
-                   QP_Sc_G(i_qp,1,3) = QP_Sc_G(i_qp,1,3) + cmplx(ctmp,kind=SP)
-                   !
-                 ! Wing Gxy == 0
-                 else if ((ig1 == 1 .and. g2_mod_2D < 1.e-5).or.(ig2 == 1 .and. g1_mod_2D < 1.e-5)) then
-                   !
-                   QP_Sc_G(i_qp,1,4) = QP_Sc_G(i_qp,1,4) + cmplx(ctmp,kind=SP)
-                   !
-                 ! Wing Gxy /= 0
-                 else if ((ig1 == 1 .and. g2_mod_2D > 1.e-5).or.(ig2 == 1 .and. g1_mod_2D > 1.e-5)) then
-                   !
-                   QP_Sc_G(i_qp,1,5) = QP_Sc_G(i_qp,1,5) + cmplx(ctmp,kind=SP)
-                   !
-                 ! Body Gxy == 0
-                 else if (ig1 /= ig2 .and. g1_mod_2D < 1.e-5 .and. g2_mod_2D < 1.e-5) then
-                   !
-                   QP_Sc_G(i_qp,1,6) = QP_Sc_G(i_qp,1,6) + cmplx(ctmp,kind=SP)
-                   !
-                 ! Body Gxy /= 0
-                 else
-                   !
-                   QP_Sc_G(i_qp,1,7) = QP_Sc_G(i_qp,1,7) + cmplx(ctmp,kind=SP)
-                   !
-                 end if
+               ! Head at q = 0
+               if (ig1 == 1 .and. ig2 == 1) then
+                 !
+                 dp_vdummy(1)=dp_vdummy(1)+cmplx(ctmp,kind=DP)
+                 !
+               ! Diagonal Gxy == 0
+               else if (ig1 == ig2 .and. g2_mod_2D < 1.e-5) then
+                 !
+                 dp_vdummy(2)=dp_vdummy(2)+cmplx(ctmp,kind=DP)
+                 !
+               ! Diagonal Gxy /= 0
+               else if ( ig1 == ig2 .and. g2_mod_2D > 1.e-5) then
+                 !
+                 dp_vdummy(3)=dp_vdummy(3)+cmplx(ctmp,kind=DP)
+                 !
+               ! Wing Gxy == 0
+               else if ((ig1 == 1 .and. g2_mod_2D < 1.e-5).or.(ig2 == 1 .and. g1_mod_2D < 1.e-5)) then
+                 !
+                 dp_vdummy(4)=dp_vdummy(4)+cmplx(ctmp,kind=DP)
+                 !
+               ! Wing Gxy /= 0
+               else if ((ig1 == 1 .and. g2_mod_2D > 1.e-5).or.(ig2 == 1 .and. g1_mod_2D > 1.e-5)) then
+                 !
+                 dp_vdummy(5)=dp_vdummy(5)+cmplx(ctmp,kind=DP)
+                 !
+               ! Body Gxy == 0
+               else if (ig1 /= ig2 .and. g1_mod_2D < 1.e-5 .and. g2_mod_2D < 1.e-5) then
+                 !
+                 dp_vdummy(6)=dp_vdummy(6)+cmplx(ctmp,kind=DP)
+                 !
+               ! Body Gxy /= 0
+               else
+                 !
+                 dp_vdummy(7)=dp_vdummy(7)+cmplx(ctmp,kind=DP)
+                 !
                end if
 !!! AG DBG
                !
@@ -544,6 +544,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 !$omp end parallel do
            !
            dc(i_w) = cmplx(dp_dummy,kind=SP)
+           QP_Sc_G(i_qp,i_w,:) = QP_Sc_G(i_qp,i_w,:) + cmplx(dp_vdummy,kind=SP)
            !
          enddo
          !

@@ -81,13 +81,13 @@ subroutine rim(mode)
    !
    if (RIM_is_diagonal) call msg('r','* Diagonal components only detected *')
    call section('+','RIM initialization')
-   call msg('nr','8 x (sBL volume)    [au]:',8.*k_grid_uc_vol)
-   call msg('r', 'sBZ random points       :',RIM_n_rand_pts)
    !
  else 
    call section('+','RIM-W initialization')
    if (RIM_W_is_diagonal) call msg('r','* Diagonal components only detected *')
- end if  
+ end if
+ call msg('nr','8 x (sBL volume)    [au]:',8.*k_grid_uc_vol)
+ call msg('r', 'sBZ random points       :',RIM_n_rand_pts)
  !
  ! Random generator seed
  !

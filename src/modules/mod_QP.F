@@ -23,7 +23,7 @@
 !
 module QP_m
  !
- use pars,      ONLY:SP,schlen,max_qp_descs
+ use pars,      ONLY:SP,schlen,max_qp_descs,DP
  !
 #include<memory.h>
  !

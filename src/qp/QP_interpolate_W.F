@@ -47,10 +47,10 @@ subroutine interpolate_W(X,Xw,q)
  integer     :: iq1,ig1,iq2,ig2,iq,ig,igr,igc,ig2max
  integer     :: iq_ibz,is,find,nn,i,iq_to_start,idm,ng_tmp
  integer     :: idx_q(RIM_ng,q%nibz,5),idx_G(RIM_ng,q%nibz,5),idx_is(RIM_ng,q%nibz,5)
- real(SP)    :: G_max_ibz(q%nibz),f_func(5),lcut, v(5), D_det
+ real(SP)    :: f_func(5),lcut, v(5), D_det
  complex(SP) :: vX(5,q%nibz,RIM_ng,RIM_ng)
  real(SP)    :: qpG(3,5),delta_q(3,2),qpG_trial(3),v1(3),delta_q_cc(3),gr_2d_mod,gc_2d_mod
- integer     :: ID, io_err, ng_save
+ integer     :: ID, io_err, ng_save,G_max_ibz(q%nibz)
  character(schlen) :: str_piece(5)
  integer, external :: io_X
  integer, external :: io_RIM_W
@@ -353,50 +353,18 @@ subroutine interpolate_W(X,Xw,q)
       enddo
       !
       ! q == 0 terms must be tratened separately
-      if (iq1 == 1) then
+      if (iq1 == 1 .and. igr == 1 .and. igc == 1) then
         !
-        !Three different cases: (1) head
-        !                       (2) Gz wings
-        !                       (3) others
+        call warning('The 4 nearest neighbours around q = 0 ASSUMED to be equivalent!')
+        f_coeff(igr,igc,iq1,1) = vX(1,iq1,igr,igc)*(4*pi) / &
+&                                ( bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2*pi*alat(idir(1)))**2 )
         !
-        if (igr == 1 .and. igc == 1) then
-          call warning('The 4 nearest neighbours around q = 0 ASSUMED to be equivalent!')
-          f_coeff(igr,igc,iq1,1) = vX(1,iq1,igr,igc)*(4*pi) / &
-&                                  ( bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2*pi*alat(idir(1)))**2 )
-          !
-          do nn=2,3
-            idm = MOD(nn+1,2)+1
-            call c2a(b,delta_q(:,idm),delta_q_cc,'ka2c')
-            f_coeff(igr,igc,iq1,nn) = -1._SP/delta_q(idm,idm)*log(f_func(nn)/ &
-&                                   ( v_norm(delta_q_cc)**2*f_coeff(1,iq1,igr,igc)) )
-          enddo
-          !
-        else if ((igr == 1 .and. gc_2D_mod < 1.e-5) .or. (gr_2D_mod < 1.e-5 .and. igc == 1)) then
-          !
-          call c2a(b,delta_q(:,1),delta_q_cc,'ka2c')
-          f_coeff (igr,igc,iq1,3) = f_func(3)/v_norm(delta_q_cc)**2        !f2xx positive
-          call c2a(b,delta_q(:,2),delta_q_cc,'ka2c')
-          f_coeff (igr,igc,iq1,2) = f_func(2)/v_norm(delta_q_cc)**2        !f2yy positive
-          !
-        else
-          !
-          !Coefficients in rlu
-          v(1) = f_func(1)                                             !f0
-          v(2) = (f_func(3)-f_func(5))/(2*delta_q(1,1))                !f1
-          v(3) = (f_func(2)-f_func(4))/(2*delta_q(2,2))                !f2
-          v(4) = (f_func(3)-2*f_func(1)+f_func(5))/(2*delta_q(1,1)**2) !f11
-          v(5) = (f_func(2)-2*f_func(1)+f_func(4))/(2*delta_q(2,2)**2) !f22
-          !
-          !Coefficients in cc
-          f_coeff(igr,igc,iq1,1) =  v(1)                                                                       !f
-          f_coeff(igr,igc,iq1,2) =  (a(1,1)*v(2)*alat(2)+a(2,1)*v(3)*alat(1))/(D_det)                          !fx
-          f_coeff(igr,igc,iq1,3) =  (a(1,2)*v(2)*alat(2)+a(2,2)*v(3)*alat(1))/(D_det)                          !fy
-          f_coeff(igr,igc,iq1,4) =  (a(1,1)*a(1,1)*v(4)*alat(2)**2+a(2,1)*a(2,1)*v(5)*alat(1)**2)/(D_det)**2   !fxx
-          f_coeff(igr,igc,iq1,5) =  (a(1,1)*a(1,2)*v(4)*alat(2)**2+a(2,1)*a(2,2)*v(5)*alat(1)**2)/(D_det)**2   !fxy
-          f_coeff(igr,igc,iq1,6) =  (a(1,2)*a(1,2)*v(4)*alat(2)**2+a(2,2)*a(2,2)*v(5)*alat(1)**2)/(D_det)**2   !fyy
-        end if
-        !
-        ! q /= 0 terms
+        do nn=2,3
+          idm = MOD(nn+1,2)+1
+          call c2a(b,delta_q(:,idm),delta_q_cc,'ka2c')
+          f_coeff(igr,igc,iq1,nn) = -1._SP/delta_q(idm,idm)*log(f_func(nn)/ &
+&                                 ( v_norm(delta_q_cc)**2*f_coeff(1,iq1,igr,igc)) )
+        enddo
         !
       else
         !
@@ -407,7 +375,7 @@ subroutine interpolate_W(X,Xw,q)
         v(4) = (f_func(3)-2*f_func(1)+f_func(5))/(2*delta_q(1,1)**2) !f11
         v(5) = (f_func(2)-2*f_func(1)+f_func(4))/(2*delta_q(2,2)**2) !f22
         !
-        !Coefficients in cc
+        !Coefficients in iku
         f_coeff(igr,igc,iq1,1) =  v(1)                                                                       !f
         f_coeff(igr,igc,iq1,2) =  (a(1,1)*v(2)*alat(2)+a(2,1)*v(3)*alat(1))/(D_det)                          !fx
         f_coeff(igr,igc,iq1,3) =  (a(1,2)*v(2)*alat(2)+a(2,2)*v(3)*alat(1))/(D_det)                          !fy
@@ -419,8 +387,9 @@ subroutine interpolate_W(X,Xw,q)
 !!! AG DBG
       !Store coefficients into file
       if (debug) then
-        write(out_unit_f_coeff,"(I4,I4,I4,E15.6,E15.6,E15.6,E15.6,E15.6)") iq1, igr, igc &
-&,f_coeff (igr,igc,iq1,1),f_coeff (igr,igc,iq1,2),f_coeff (igr,igc,iq1,3),f_coeff (igr,igc,iq1,4),f_coeff (igr,igc,iq1,5)
+        write(out_unit_f_coeff,"(I4,I4,I4,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6)") iq1, igr, igc &
+&,f_coeff (igr,igc,iq1,1),f_coeff (igr,igc,iq1,2),f_coeff (igr,igc,iq1,3)&
+&,f_coeff (igr,igc,iq1,4),f_coeff (igr,igc,iq1,5),f_coeff (igr,igc,iq1,6)
       endif
 !!! AG DBG
       !
@@ -589,18 +558,10 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
              W_sampl = vslab*func*vslab/r1/(1-vslab*func)
              func = func*iku_v_norm(q_sampl)**2
              !
-             !Convert q_sampl to cc
-             !call c2a(b_in=b,v_in=q_sampl,mode='ki2c')
-             !
-             !
            else if ((ig1 == 1 .and. g2_2D_mod < 1.e-5) .or. (g1_2D_mod < 1.e-5 .and. ig2 == 1)) then
              !
              func = f_coeff(ig1,ig2,iqibz,2)*iku_v_norm(q_sampl)**2
              W_sampl = vslab/r1*func*vslab/r1/(1-vslab/r1*func)
-             !
-             !
-             !Convert q_sampl to cc
-             !call c2a(b_in=b,v_in=q_sampl,mode='ki2c')
              !
            else
              !

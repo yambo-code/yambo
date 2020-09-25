@@ -42,7 +42,7 @@
 !
 module mpa_m
  !
- use pars,          ONLY:SP,DP,cZERO
+ use pars,          ONLY:SP,DP,cZERO,cI
  !
 #include <memory.h>
 
@@ -80,62 +80,28 @@ contains
    complex(SP),  intent(in)     :: x(2)
    complex(SP),  intent(out)    :: R, E
    ! 
-  ! R =  (1._SP-z(1)**2/z(2)**2)/(1._SP-x(2)/x(1))
-  ! if( abs(x(1)-x(2))>1._SP*epsilon(1._SP) ) then 
- !  if( real(x(1)/x(2), SP)>1._SP ) then 
- !    E = sqrt( (x(1)*z(1)**2 - x(2)*z(2)**2 )/(x(1)-x(2)) )
- !    R = -R*x(2)*z(2)/2._SP
- !    if (abs(E)>0.1_SP) R =R*z(2)/E
- !    else
-       !E = abs(z(2)-z(1))-(0._SP,1._SP)*epsilon(1._SP)
-       !R = E*(x(1)+x(2))*0.625_SP
- !      E=(1._SP,-0.01_SP)
-  !     R=x(1)
-  ! endif
+   E = sqrt((x(1)*z(1)**2 -x(2)*z(2)**2 )/(x(1)-x(2)))
+   if(real(E)<0._SP) E=-E
+   if(real(E)<0.001_SP .or. real(1._SP/E)<0.0001_SP .or. isnan(real(E)) .or. isnan(real(1._SP/E)) ) then
+     E = abs(z(1)+z(2))*0.5_SP-cI*epsilon(1._SP)
+     R = x(2)*(z(2)**2-E**2)/(2._SP*E) 
+   else
+     if(aimag(E)>0._SP) E=real(E,SP)-cI*epsilon(1._SP)
+     R = x(1)*(z(1)**2-E**2)/(2._SP*E) 
+   endif
+   ! 
+!----PPA_cond------------------------------------------------
+ !  if(real(x(1)/x(2))>1._SP) then        
+ !    E = sqrt((x(1)*z(1)**2 -x(2)*z(2)**2 )/(x(1)-x(2)))
+ !    if(real(E)<0._SP) E=-E
+ !    E=real(E,SP)-cI*0.01_SP
+ !    R = x(1)*(z(1)**2-E**2)/(2._SP*E) 
+ !  else
+ !    E = abs(z(1)+z(2))/2-cI*0.01_SP
+ !    R = x(2)*(z(2)**2-E**2)/(2._SP*E) 
+ !  endif
    ! 
 !--------------------------------------------------------
-   !
-   R =  x(1)*x(2)* (z(1)**2- z(2)**2 )  !/(x(1) - x(2))
-   E = (x(1)*z(1)**2 -x(2)*z(2)**2 )    !/(x(1) - x(2))
-   !
-   if(abs(x(1)-x(2))>epsilon(1._SP)) then
-     E=E/(x(1) -x(2))
-     R=R/(x(1) -x(2))
-   else
-     !
-     ! XXX TODO: fall back to addressed here
-     !
-   endif
-   E = sqrt(E)
-   if(abs(E)>epsilon(1._SP)) R = -R/(2._SP*E)
-   !
-!--------------------------------------------------------
-!   if (real(x(1)/x(2))<=1._SP) then
-!      E = 1._SP
-!      R = x(1)/2._SP
-!   else
-!     R =  x(1)*x(2)* (z(1)**2- z(2)**2 )  !/(x(1) - x(2))
-!     E = (x(1)*z(1)**2  -  x(2)*z(2)**2 ) !/(x(1) - x(2))
-!     if(abs(x(1)-x(2))>epsilon(1._SP)) then
-!      E=E/(x(1) - x(2))
-!      R=R/(x(1) - x(2))
-!     endif
-!     E = sqrt(E)
-!     if(abs(E)>epsilon(1._SP)) R = -R/(2._SP*E)
-!     E = real(E)-(0._SP,0.000000000000001_SP)
-!   endif
-!   !
-!
-!--------------------------------------------------------
-!   if (real(x(1)/x(2))<=1._SP) then
-!      E = 1._SP
-!      R = -x(1)/2._SP
-!   else
-!     E =aimag(z(2))/real(sqrt(x(1)/x(2)-1._SP))
-!     R = -x(1)/2._SP*E
-!     !E = abs(real(E))-(0._SP,1._SP)*abs(aimag(E))
-!     !E = E-(0._SP,0.000000000000001_SP)
-!   endif
    !
  end subroutine mpa_RE_1p_solver
  !
@@ -360,7 +326,7 @@ contains
    ! 
  end subroutine mpa_R_solver
  ! 
- subroutine mpa_Q_solver(np, z, xq, E, rcond)
+ subroutine mpa_E_solver(np, z, xq, E, rcond)
    implicit none
    integer,      intent(in)        :: np
    complex(SP),  intent(in)        :: z(2*np)
@@ -464,7 +430,7 @@ contains
     ! 
    enddo
    ! 
- end subroutine mpa_Q_solver
+ end subroutine mpa_E_solver
  !
  !
  subroutine mpa_RE_solver(np, w, x, R, E,edigits,rdigits) ! version 2.1
@@ -484,7 +450,7 @@ contains
    !  call mpa_RQ_3p_solver(w, x, R, E)
    case default
      !
-     call mpa_Q_solver(np, w**2, x, E, edigits)
+     call mpa_E_solver(np, w**2, x, E, edigits)
      call mpa_R_solver(np, w, x, R, E, rdigits)
      edigits=log10(1._SP/edigits)
      rdigits=log10(1._SP/rdigits)

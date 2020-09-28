@@ -355,7 +355,6 @@ subroutine interpolate_W(X,Xw,q)
       ! q == 0 terms must be tratened separately
       if (iq1 == 1 .and. igr == 1 .and. igc == 1) then
         !
-        call warning('The 4 nearest neighbours around q = 0 ASSUMED to be equivalent!')
         f_coeff(igr,igc,iq1,1) = vX(1,iq1,igr,igc)*(4*pi) / &
 &                                ( bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2*pi*alat(idir(1)))**2 )
         !

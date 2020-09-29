@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine XC_eval_lda_kernel(tmp_vxc,tmp_fxc)
+subroutine XC_eval_lda_kernel(v1rho,v2rho2)
  !
  use pars,           ONLY:SP,DP
  use xc_functionals, ONLY:F_xc,magn,xc_spin,xc_spin_map1
@@ -33,13 +33,13 @@ subroutine XC_eval_lda_kernel(tmp_vxc,tmp_fxc)
  !
  implicit none
  !
- real(DP), intent(in) :: tmp_vxc(n_spin,fft_size),tmp_fxc(xc_spin(1),fft_size)
+ real(DP), intent(in) :: v1rho(n_spin,fft_size),v2rho2(xc_spin(1),fft_size)
  !
  integer :: is1,is2,is_xc,ifft
  real(SP):: one_over_magn,mod_mag
  !
  if (n_spin==1) then
-   forall(ifft=1:fft_size) F_xc(ifft,1,1) = F_xc(ifft,1,1) + real(tmp_fxc(1,ifft),SP)
+   forall(ifft=1:fft_size) F_xc(ifft,1,1) = F_xc(ifft,1,1) + real(v2rho2(1,ifft),SP)
  endif
  !
  if (n_sp_pol==2) then
@@ -48,7 +48,7 @@ subroutine XC_eval_lda_kernel(tmp_vxc,tmp_fxc)
      do is1 = 1,n_sp_pol
        do is2 = 1,n_sp_pol
          is_xc = xc_spin_map1(is1,is2)
-         forall(ifft=1:fft_size) F_xc(ifft,is1,is2) = F_xc(ifft,is1,is2) + real(tmp_fxc(is_xc,ifft),SP)
+         forall(ifft=1:fft_size) F_xc(ifft,is1,is2) = F_xc(ifft,is1,is2) + real(v2rho2(is_xc,ifft),SP)
        enddo
      enddo
 #if defined _KERR
@@ -58,7 +58,7 @@ subroutine XC_eval_lda_kernel(tmp_vxc,tmp_fxc)
        mod_mag=v_norm(magn(ifft,:))
        if(mod_mag==0._SP) one_over_magn=0._SP
        if(mod_mag/=0._SP) one_over_magn=1._SP/mod_mag
-       F_xc(ifft,1,2) = F_xc(ifft,1,2) + real(tmp_vxc(1,ifft)-tmp_vxc(2,ifft),SP)*one_over_magn/DL_vol !??
+       F_xc(ifft,1,2) = F_xc(ifft,1,2) + real(v1rho(1,ifft)-v1rho(2,ifft),SP)*one_over_magn
      enddo
      F_xc(:,2,1)=F_xc(:,1,2)
 #endif
@@ -71,7 +71,7 @@ subroutine XC_eval_lda_kernel(tmp_vxc,tmp_fxc)
    do is1 = 1,n_sp_pol
      do is2 = 1,n_sp_pol
        is_xc = xc_spin_map1(is1,is2)
-       forall(ifft=1:fft_size) F_xc(ifft,is1,is2) = F_xc(ifft,is1,is2) + real(tmp_fxc(is_xc,ifft),SP)
+       forall(ifft=1:fft_size) F_xc(ifft,is1,is2) = F_xc(ifft,is1,is2) + real(v2rho2(is_xc,ifft),SP)
      enddo
    enddo
  endif

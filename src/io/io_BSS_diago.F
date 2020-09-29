@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR_pl)
+integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsL_magn,bsR_magn,bsR_kerr,bsR_pl)
  !
  use pars,          ONLY:SP,schlen,IP
  use stderr,        ONLY:intc
@@ -38,9 +38,9 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
  !
  type(X_t),intent(inout)        :: X_static
  integer                        :: iq,ID
- complex(SP)        , optional  :: bsE(BSS_n_eig),bsRl(BSS_n_eig),bsRr(BSS_n_eig)
+ complex(SP)        , optional  :: bsE(:),bsRl(:),bsRr(:)
  real(SP)   ,pointer, optional  :: BsE_corr(:,:),bsR_pl(:,:)
- complex(SP),pointer, optional  :: bsR_kerr(:)
+ complex(SP),pointer, optional  :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:)
  !
  ! Work Space
  !
@@ -113,6 +113,20 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
    !
    ! GPL_EXCLUDE_START
    !
+   if(present(bsL_magn)) then
+     if(associated(bsL_magn)) then
+       call io_bulk(ID,'BS_L_magn_Residuals',VAR_SZ=(/2,2,BSS_n_eig/))
+       call io_bulk(ID,C2=bsL_magn)
+     endif
+   endif
+   !
+   if(present(bsR_magn)) then
+     if(associated(bsR_magn)) then
+       call io_bulk(ID,'BS_R_magn_Residuals',VAR_SZ=(/2,2,BSS_n_eig/))
+       call io_bulk(ID,C2=bsR_magn)
+     endif
+   endif
+   !
    if(present(bsR_kerr)) then
      if(associated(bsR_kerr)) then
        call io_bulk(ID,'BS_KERR_Residuals',VAR_SZ=(/2,BSS_n_eig/))
@@ -142,7 +156,7 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
    !
    ! BS_eh_table
    !
-   call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_K_dim,3+n_sp_pol-1/))
+   call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_K_dim,5/))
    call io_bulk(ID,I2=BSS_eh_table(:BS_K_dim,:))
    !
    ! Eigenstates (resonant only matrix)

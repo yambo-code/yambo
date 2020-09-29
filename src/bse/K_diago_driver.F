@@ -161,7 +161,9 @@ subroutine K_diago_driver(iq,W,X_static)
  ! Diagonalization DB (IN)
  !========================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=io_BSS_diago(iq,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
+ io_err=io_BSS_diago(iq,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
+ &                                  BS_R_left_magn,BS_R_right_magn,&
+ &                                  BS_R_right_kerr,BS_R_PL)
  !
  K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
  !
@@ -316,7 +318,9 @@ subroutine K_diago_driver(iq,W,X_static)
  if (io_err/=0) then
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-   io_err=io_BSS_diago(iq,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
+   io_err=io_BSS_diago(iq,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
+   &                                  BS_R_left_magn,BS_R_right_magn,&
+   &                                  BS_R_right_kerr,BS_R_PL)
    !
  endif
  !

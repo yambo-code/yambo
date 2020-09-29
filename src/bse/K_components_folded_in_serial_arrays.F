@@ -56,7 +56,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
  !
  ! Work Space
  !
- integer     :: i_c,H_pos(2),i_g,i_k_bz,i_v,i_cond,i_spin
+ integer     :: i_Tr,H_pos(2),i_g,i_k_bz,i_v,i_c,i_sp_c,i_sp_v
  !
  !========================
  ! BSS COMPONENTS SECTION
@@ -87,45 +87,45 @@ subroutine K_components_folded_in_serial_arrays(iq)
      !
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
      !
-     do i_c=1,BS_T_grp(i_g)%size
+     do i_Tr=1,BS_T_grp(i_g)%size
        !
-       i_k_bz=BS_T_grp(i_g)%table(i_c,1)
-       i_v   =BS_T_grp(i_g)%table(i_c,2)
-       i_cond=BS_T_grp(i_g)%table(i_c,3)
-       i_spin=BS_T_grp(i_g)%table(i_c,4)
+       i_k_bz=BS_T_grp(i_g)%table(i_Tr,1)
+       i_v   =BS_T_grp(i_g)%table(i_Tr,2)
+       i_c   =BS_T_grp(i_g)%table(i_Tr,3)
+       i_sp_c=BS_T_grp(i_g)%table(i_Tr,4)
+       i_sp_v=BS_T_grp(i_g)%table(i_Tr,4)
        !
-       H_pos(1)=sum(BS_T_grp(:I_g-1)%size)+i_c
+       H_pos(1)=sum(BS_T_grp(:I_g-1)%size)+i_Tr
        !
-       if (n_sp_pol==2) BSS_eh_table(H_pos(1),:)=(/i_k_bz,i_v,i_cond,i_spin/)
-       if (n_sp_pol==1) BSS_eh_table(H_pos(1),:)=(/i_k_bz,i_v,i_cond/)
+       BSS_eh_table(H_pos(1),:)=(/i_k_bz,i_v,i_c,i_sp_c,i_sp_v/)
        !
-       BSS_eh_E(H_pos(1))=BS_T_grp(i_g)%E(i_c)
-       BSS_eh_f(H_pos(1))=BS_T_grp(i_g)%f(i_c)
-       if (allocated(BS_T_grp(i_g)%Z)) BSS_eh_Z(H_pos(1))=BS_T_grp(i_g)%Z(i_c)
-       if (allocated(BS_T_grp(i_g)%W)) BSS_eh_W(H_pos(1))=BS_T_grp(i_g)%W(i_c)
+       BSS_eh_E(H_pos(1))=BS_T_grp(i_g)%E(i_Tr)
+       BSS_eh_f(H_pos(1))=BS_T_grp(i_g)%f(i_Tr)
+       if (allocated(BS_T_grp(i_g)%Z)) BSS_eh_Z(H_pos(1))=BS_T_grp(i_g)%Z(i_Tr)
+       if (allocated(BS_T_grp(i_g)%W)) BSS_eh_W(H_pos(1))=BS_T_grp(i_g)%W(i_Tr)
        !
-       BSS_dipoles(H_pos(1))=BS_T_grp(i_g)%dipoles_R(1,i_c)
-       if (BS_K_coupling) BSS_dipoles(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A(1,i_c)
+       BSS_dipoles(H_pos(1))=BS_T_grp(i_g)%dipoles_R(1,i_Tr)
+       if (BS_K_coupling) BSS_dipoles(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A(1,i_Tr)
        !
-       if (BS_perturbative_SOC) BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_c)
+       if (BS_perturbative_SOC) BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_Tr)
        !
 #if defined _KERR
        if (l_BS_kerr) then
-         BSS_dipoles_kerr(H_pos(1))=BS_T_grp(i_g)%dipoles_R(2,i_c)
-         if (BS_K_coupling) BSS_dipoles_kerr(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A(2,i_c)
+         BSS_dipoles_kerr(H_pos(1))=BS_T_grp(i_g)%dipoles_R(2,i_Tr)
+         if (BS_K_coupling) BSS_dipoles_kerr(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A(2,i_Tr)
        endif
        !
        if (l_BS_magnons) then
-         BSS_dipoles_magn(:,H_pos(1))=BS_T_grp(i_g)%dipoles_R_mag(:,i_c)
-         if (BS_K_coupling) BSS_dipoles_magn(:,H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_mag(:,i_c)
+         BSS_dipoles_magn(:,H_pos(1))=BS_T_grp(i_g)%dipoles_R_mag(:,i_Tr)
+         if (BS_K_coupling) BSS_dipoles_magn(:,H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_mag(:,i_Tr)
        endif
 #endif
        !
 #if defined _PL
        if (l_photolum) then
-         BSS_PL_f(:,H_pos(1))=BS_T_grp(i_g)%f_PL(:,i_c)
-         BSS_dipoles_PL(H_pos(1),:)=BS_T_grp(i_g)%dipoles_R_PL(i_c,:)*PL_weights(:)
-         if (BS_K_coupling) BSS_dipoles_PL(H_pos(1)+BS_K_dim,:)=BS_T_grp(i_g)%dipoles_A_PL(i_c,:)*PL_weights(:)
+         BSS_PL_f(:,H_pos(1))=BS_T_grp(i_g)%f_PL(:,i_Tr)
+         BSS_dipoles_PL(H_pos(1),:)=BS_T_grp(i_g)%dipoles_R_PL(i_Tr,:)*PL_weights(:)
+         if (BS_K_coupling) BSS_dipoles_PL(H_pos(1)+BS_K_dim,:)=BS_T_grp(i_g)%dipoles_A_PL(i_Tr,:)*PL_weights(:)
        endif
 #endif
        !

@@ -38,7 +38,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use electrons,      ONLY:levels,n_spin,n_spinor
  use FFT_m,          ONLY:fft_size
  use wrapper,        ONLY:V_dot_V
- use xc_functionals, ONLY:E_xc,E_xc_val,F_xc,magn,V_xc,xc_setup_hyb,&
+ use xc_functionals, ONLY:E_xc,E_xc_val,magn,F_xc,V_xc,xc_setup_hyb,&
 &                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl,    &
 &                         xc_spin,xc_spin_map1, &
 &                         XC_HYB_GGA_XC_GAUPBE,XC_FACTOR
@@ -161,7 +161,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    YAMBO_ALLOC(sigma,(xc_spin(1),fft_size))
    YAMBO_ALLOC(drho_cmplx,(fft_size,3))
    YAMBO_ALLOC(spin_rho_SP_cmplx,(fft_size))
-   if (ORDER==1) then
+   if (ORDER==1.or.ORDER==2) then
      YAMBO_ALLOC(v1rho,(n_spin,fft_size))
      YAMBO_ALLOC(v1sigma,(xc_spin(1),fft_size))
      v1rho=0._DP
@@ -244,13 +244,11 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          call xc_f90_lda_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_vxc(1,1))
          forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(tmp_vxc(i2,i1),SP)
        case(2)
+         !if ( (l_BS_magnons.and.n_sp_pol==2) .or. n_spinor==2) &
+         call xc_f90_lda_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_vxc(1,1))
          call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_fxc(1,1))
-         do is1 = 1,n_spin
-           do is2 = 1,n_spin
-             is_xc = xc_spin_map1(is1,is2)
-             forall(i1=1:fft_size) F_xc(i1,is1,is2) = F_xc(i1,is1,is2) + real(tmp_fxc(is_xc,i1),SP)
-           enddo
-         enddo
+         ! Yambo internal for Kxc
+         call XC_eval_lda_kernel(tmp_vxc,tmp_fxc)
      end select
    elseif (fnctl(ixc)%family==XC_FAMILY_GGA.or.fnctl(ixc)%family==XC_FAMILY_HYB_GGA) then
         !GAUPBE short range x-energy  and potentials part
@@ -271,9 +269,10 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          call XC_eval_gga_potential(v1rho,v1sigma,drho)
        case(2)
          if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) call error(' Fxc not coded for GAU-PBEP')
+         call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
          call xc_f90_gga_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), v2rho2, v2rhosigma, v2sigma2)
          ! Yambo internal for Kxc
-         call XC_eval_gga_kernel(v2rho2,v2rhosigma,v2sigma2)
+         call XC_eval_gga_kernel(v1rho,v1sigma,v2rho2,v2rhosigma,v2sigma2)
      end select
    end if
  enddo

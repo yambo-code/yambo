@@ -27,7 +27,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  use R_lattice,      ONLY:bz_samp,bare_qpg
  use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,l_drude,&
 &                         X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,skip_cond_sum_rule
- use electrons,      ONLY:levels,spin
+ use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS_solvers,     ONLY:Co_factor,diam_term_exact,BSS_dipoles,BSS_uses_DbGd,&
 &                         BSS_eh_table,BSS_eh_E,BSS_eh_f,&
@@ -57,7 +57,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  ! Work Space
  !
  type(w_samp)     :: W_mins,W_plus
- integer          :: iw_ref,i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4)
+ integer          :: iw_ref,i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp_c,i_sp_v,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4)
  complex(SP)      :: E_plus_W,residual,diam_term_used,para_term_w0
 #if defined _PL
  complex(SP)      :: SF(W%n_freqs,2)
@@ -133,13 +133,14 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
      ik_bz =BSS_eh_table(i_res,1)
      iv    =BSS_eh_table(i_res,2)
      ic    =BSS_eh_table(i_res,3)
-     i_sp  =spin(BSS_eh_table(i_res,:))
+     i_sp_c=BSS_eh_table(i_res,4)
+     i_sp_v=BSS_eh_table(i_res,5)
      !
      ik_ibz=k%sstar(ik_bz,1)   
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik_ibz)) cycle
      !
-     transition=(/ik_bz,iv,ic,i_sp/)
+     transition=(/ik_bz,iv,ic,i_sp_c/)
      !
      i_Lo_trans=i_res
      i_Lo      =1

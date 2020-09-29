@@ -156,15 +156,15 @@ module BS_solvers
      type(X_t), optional::X
    end function
    !
-   integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,BsRr,BsE_corr,bsR_kerr,bsR_pl)
+   integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,BsRr,BsE_corr,bsL_magn,bsR_magn,bsR_kerr,bsR_pl)
      use pars,          ONLY:SP
      use X_m,           ONLY:X_t
      implicit none
      type(X_t),intent(in)         :: X_static
      integer                      :: iq,ID
-     complex(SP)        ,optional :: bsE(*),bsRl(*),bsRr(*)
+     complex(SP)        ,optional :: bsE(:),bsRl(:),bsRr(:)
      real(SP),   pointer,optional :: BsE_corr(:,:),bsR_pl(:,:)
-     complex(SP),pointer,optional :: bsR_kerr(:)
+     complex(SP),pointer,optional :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:)
    end function
    !
    integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)
@@ -189,7 +189,7 @@ module BS_solvers
      logical :: W_is_allocated,Z_is_allocated,E_SOC_is_allocated
      YAMBO_ALLOC(BSS_dipoles,(BS_H_dim))
      BSS_dipoles = cZERO
-     YAMBO_ALLOC(BSS_eh_table,(BS_K_dim,3+n_sp_pol-1))
+     YAMBO_ALLOC(BSS_eh_table,(BS_K_dim,5))
      YAMBO_ALLOC(BSS_eh_E,(BS_K_dim))
      YAMBO_ALLOC(BSS_eh_f,(BS_K_dim))
      BSS_eh_table = 0

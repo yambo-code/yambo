@@ -85,6 +85,7 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  if(n_sp_pol==2) rhotwr2(:,1)=F_xc(:,is(4),isp(4))*WF_symm1(:,1)*conjg(WF_symm2(:,1))
  !
  if(n_spinor==2) then
+   ! This is only the optical part of the kernel
    rhotwr2(:,1)=F_xc(:,1,1)*WF_symm1(:,1)*conjg(WF_symm2(:,1))+&
                   F_xc(:,1,2)*WF_symm1(:,2)*conjg(WF_symm2(:,2))
    rhotwr2(:,2)=F_xc(:,2,1)*WF_symm1(:,1)*conjg(WF_symm2(:,1))+&

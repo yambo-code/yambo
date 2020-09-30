@@ -57,6 +57,7 @@ module BS
  logical :: l_BS_abs
  logical :: l_BS_kerr
  logical :: l_BS_magnons
+ logical :: l_BS_dichroism
  logical :: l_BS_anomalous_hall
  !
  ! Dimensions
@@ -106,6 +107,8 @@ module BS
    complex(SP), allocatable      :: dipoles_A_mag(:,:)
    complex(SP), allocatable      :: dipoles_R_PL(:,:)
    complex(SP), allocatable      :: dipoles_A_PL(:,:)
+   complex(SP), allocatable      :: dipoles_R_dichroism(:,:)
+   complex(SP), allocatable      :: dipoles_A_dichroism(:,:)
    complex(SP), allocatable      :: Z(:)
    real(SP)   , allocatable      :: E(:)
    real(SP)   , allocatable      :: f(:)
@@ -276,6 +279,10 @@ module BS
      if(l_photolum) then
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_PL,(nT,3))
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_PL,(nT,3))
+     endif
+     if(l_BS_dichroism) then
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_dichroism,(BS_dip_size,nT))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_dichroism,(BS_dip_size,nT))
      endif
      YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,5))
      YAMBO_ALLOC(BS_T_grp(iT)%E,(nT))

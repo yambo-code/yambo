@@ -356,7 +356,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! BSE properties: kerr, magnons, absorption, ...
  !
- call it(defs,'BSEprop',  '[BSE] abs/kerr/magn trace',BSE_prop)
+ call it(defs,'BSEprop',  '[BSE] abs/kerr/magn/dichr trace',BSE_prop)
  call it('f',defs,'AnHall'  , '[BSE] Add the anomalous Hall effect to eps if using length gauge')
  !
 #endif

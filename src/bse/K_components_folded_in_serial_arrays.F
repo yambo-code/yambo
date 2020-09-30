@@ -40,9 +40,10 @@ subroutine K_components_folded_in_serial_arrays(iq)
  use timing_m,       ONLY:timing
  !
 #if defined _KERR
- use BS,             ONLY:l_BS_kerr,l_BS_magnons
+ use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism
  use KERR,           ONLY:BSS_dipoles_kerr,BSS_KERR_alloc
  use MAGNONS,        ONLY:BSS_dipoles_magn,BSS_MAGN_alloc
+ use DICHROISM,      ONLY:BSS_dipoles_dichroism,BSS_DICHROISM_alloc
 #endif
  !
 #if defined _PL
@@ -74,6 +75,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
 #if defined _KERR
    call BSS_KERR_alloc( )
    call BSS_MAGN_alloc( )
+   call BSS_DICHROISM_alloc( )
 #endif
    !
 #if defined _PL
@@ -118,6 +120,11 @@ subroutine K_components_folded_in_serial_arrays(iq)
        if (l_BS_magnons) then
          BSS_dipoles_magn(:,H_pos(1))=BS_T_grp(i_g)%dipoles_R_mag(:,i_Tr)
          if (BS_K_coupling) BSS_dipoles_magn(:,H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_mag(:,i_Tr)
+       endif
+       !
+       if (l_BS_dichroism) then
+         BSS_dipoles_dichroism(:,H_pos(1))=BS_T_grp(i_g)%dipoles_R_dichroism(:,i_c)
+         if (BS_K_coupling) BSS_dipoles_dichroism(:,H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_dichroism(:,i_c)
        endif
 #endif
        !
@@ -164,6 +171,11 @@ subroutine K_components_folded_in_serial_arrays(iq)
    if (l_BS_magnons) then
      call PP_redux_wait(BSS_dipoles_magn,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
      call PP_redux_wait(BSS_dipoles_magn,COMM=PAR_COM_eh_INDEX%COMM)
+   endif
+   !
+   if (l_BS_dichroism) then
+     call PP_redux_wait(BSS_dipoles_dichroism,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+     call PP_redux_wait(BSS_dipoles_dichroism,COMM=PAR_COM_eh_INDEX%COMM)
    endif
 #endif
 #if defined _PL

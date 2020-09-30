@@ -78,6 +78,7 @@ module X_m
  complex(SP), allocatable :: X_drude_term(:)
  complex(SP), allocatable :: X_fxc(:)
  complex(SP), allocatable :: X_magnons(:,:,:)
+ complex(SP), allocatable :: X_dichroism(:,:)
  !
  ! Response function
  !

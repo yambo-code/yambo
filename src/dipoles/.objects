@@ -2,7 +2,7 @@
 SC_objects = DIPOLE_SC_rotate.o
 #endif
 #if defined _KERR
-MAGN_objects = DIPOLE_spin_magnetization.o
+MAGN_objects = DIPOLE_spin_magnetization.o DIPOLE_orb_magn_forCD.o
 #endif
 #if defined _RT
 MAGN_objects = DIPOLE_orbital_magnetization.o DIPOLE_spin_magnetization.o

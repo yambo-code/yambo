@@ -414,12 +414,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      call parser('DipBandsAll',all_bands)
      !
      Dip%bands_ordered=.not.all_bands
-#if defined _SC  || defined _RT || defined _NL
-     l_local=l_sc_run.or.l_real_time.or.l_nl_optics
+#if defined _SC  || defined _RT || defined _NL || defined _KERR
+     l_local=l_sc_run.or.l_real_time.or.l_nl_optics !.or.l_BS_dichroism
      if (l_local)         Dip%bands_ordered=.false.
 #endif
 #if defined _QED
-     if (l_elphoton_corr)                          Dip%bands_ordered=.false.
+     if (l_elphoton_corr) Dip%bands_ordered=.false.
 #endif
      !
    end subroutine Dip_check_ordered

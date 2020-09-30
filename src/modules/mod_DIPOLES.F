@@ -106,7 +106,7 @@ module DIPOLES
          DIP_S=cZERO
        case('DIP_orbital')
          if (allocated(DIP_orbital)) return
-         YAMBO_ALLOC(DIP_orbital,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol,2))
+         YAMBO_ALLOC(DIP_orbital,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol,d(7)))
          DIP_orbital=cZERO
        case('DIP_spin')
          if (allocated(DIP_spin)) return
@@ -238,11 +238,18 @@ module DIPOLES
        endif
      endif
      !
+     if(trim(what)=="DIP_L" ) then
+       ! pseudo vectors are invariant under inversion but reverse under t_rev
+       tmp_sop=tmp_sop*m3det(dl_sop(:,:,is))
+       if( t_rev ) tmp_sop=-tmp_sop
+     endif
+     !
      DIP_in=cZERO
      if(trim(what)=="DIP_P" ) DIP_in=DIP_P(:,ic,iv,ik_mem,i_sp_pol)
      if(trim(what)=="DIP_v" ) DIP_in=DIP_v(:,ic,iv,ik_mem,i_sp_pol)
      if(trim(what)=="DIP_iR") DIP_in=DIP_iR(:,ic,iv,ik_mem,i_sp_pol)
      if(trim(what)=="DIP_S" ) DIP_in=DIP_spin(:,ic,iv,ik_mem,i_sp_pol)
+     if(trim(what)=="DIP_L" ) DIP_in=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)  
      !
      DIP_rotated = matmul( tmp_sop , DIP_in  )
      !

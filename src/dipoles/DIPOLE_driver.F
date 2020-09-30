@@ -69,8 +69,13 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use DIPOLES,        ONLY:P_square
 #endif
 #if defined _KERR
- use BS,             ONLY:BSE_prop,l_BS_magnons
+ use BS,             ONLY:BSE_prop,l_BS_magnons,l_BS_dichroism
 #endif
+
+#if defined _KERR  
+ use BS,             ONLY:BSE_prop  
+#endif
+
  use timing_m,       ONLY:timing
  !
  implicit none
@@ -103,6 +108,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #endif
 #if defined _RT
  l_magn_dipoles=l_magn_dipoles.or.(l_real_time.and.n_spin>1)
+#endif
+#if defined _KERR
+ l_BS_dichroism= (index(BSE_prop,'dich')/=0)
+ if(l_BS_dichroism) Dip%bands_ordered=.false.
 #endif
  !
 #if defined _NL
@@ -147,6 +156,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #endif
 #if defined _RT || defined _KERR
  if (l_magn_dipoles) Dip%computed='R V P P2 Magn'
+#endif
+#if defined _KERR
+ if(l_BS_dichroism)  Dip%computed= "R V P L"
 #endif
  !
  if(use_covariant_approach)  eval_OVERLAPS=.true.
@@ -204,6 +216,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    if (l_magn_dipoles)             call DIPOLE_spin_magnetization(Xen,Xk,Dip)
 #endif
    !
+#if defined _KERR
+   if (l_BS_dichroism)             call DIPOLE_orb_magn_forCD(Xen,Xk,Dip)
+#endif
+   !
    ! GPL_EXCLUDE_END
    !
    call DIPOLES_ppredux_and_symmetrize()
@@ -248,6 +264,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  if(l_real_time.or.l_sc_run) call DIP_alloc('P_square') 
 #endif
  !
+#if defined _KERR
+ if(l_BS_dichroism) call DIP_alloc('DIP_orbital')
+#endif
+ !
  contains
    !
    subroutine DIPOLES_alloc()
@@ -284,6 +304,14 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
        P_square=cZERO
      endif
 #endif
+     !
+#if defined _KERR
+     if (l_BS_dichroism) then
+       call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz,1/))
+       DIP_orbital=cZERO
+     endif
+#endif
+     !
      if(use_covariant_approach) then
        call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,Xk%nbz/))
        DIP_S=cZERO
@@ -332,11 +360,14 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #endif
         !
 #if defined _SC || defined _RT
-        !
         if (l_sc_run.or.l_real_time) then
-          !
           call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
-          !
+        endif
+#endif
+        !
+#if defined _KERR
+        if(l_BS_dichroism) then
+          call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,1),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         endif
 #endif
         !
@@ -371,9 +402,16 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
             if (l_sc_run.or.l_real_time) &
 &             P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #endif
+#if defined _KERR
+           if(l_BS_dichroism) then
+             DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,1)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,1)),0. ,SP) 
+           endif
+#endif
+            !
             ! GPL_EXCLUDE_END  
             !
           endif
+          !
           do ic=iv+1,Dip%ib(2)
             if( iv>=Dip%ib_lim(2) .and. ic<=Dip%ib_lim(1) ) then
               DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
@@ -397,6 +435,12 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #if defined _SC || defined _RT
               if (l_sc_run.or.l_real_time) &
 &               P_square(iv,ic,ik_mem,i_sp_pol) =  conjg(P_square(ic,iv,ik_mem,i_sp_pol))
+#endif
+
+#if defined _KERR
+              if(l_BS_dichroism) then
+                DIP_orbital(:,iv,ic,ik_mem,i_sp_pol,1)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1))
+              endif
 #endif
               !
               ! GPL_EXCLUDE_END 

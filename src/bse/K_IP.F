@@ -54,9 +54,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 #endif
 #if defined _KERR
  use vec_operate,   ONLY:rot_v_xy_plane
- use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_anomalous_Hall
+ use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall
  use KERR,          ONLY:A_drude,B_Hall
- use X_m,           ONLY:X_magnons,Epsilon_ij
+ use X_m,           ONLY:X_magnons,Epsilon_ij,X_dichroism
+ use units,         ONLY:SPEED_OF_LIGHT
 #endif
 #include<memory.h>
  type(levels) ::Ken
@@ -78,7 +79,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
 #if defined _KERR
  complex(SP)       ::DIP_Splus,DIP_Smins
- complex(SP)       ::res_kerr,res_magn(2)
+ complex(SP)       ::res_kerr,res_magn(2),res_dich
+ complex(SP)       ::DIP_projected_dich(BS_dip_size)
 #endif
  !
  character(6)             :: DIP_kind
@@ -239,6 +241,18 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
 #if defined _KERR
      !
+     if (l_BS_dichroism) then
+       if(iq==1) then   ! EM: "iq==1":  kpt=Gamma (molecules)
+         DIP_expanded=DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,"DIP_L",Xk)
+         DIP_projected_dich(1)=dot_product(field_dir(:,1),DIP_expanded)
+         if(BS_dip_size>1) DIP_projected_dich(2)=dot_product(field_dir(:,2),DIP_expanded)
+         if(BS_dip_size>2) DIP_projected_dich(3)=dot_product(field_dir(:,3),DIP_expanded)
+         if (trim(global_gauge)=='length'  ) DIP_projected_dich=DIP_projected_dich/q0_def_norm
+       else
+         call error(' finite q not implemented for dichroism')
+       endif
+     endif
+     !
      ! Magnons
      !
      ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_c) while I need  <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_v))
@@ -292,6 +306,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 #endif
      !
 #if defined _KERR
+     ! Dichroism
+     if(l_BS_dichroism) then
+       BS_T_grp(i_T_g)%dipoles_R_dichroism(:BS_dip_size,i_T)=conjg(DIP_projected_dich(:BS_dip_size))
+       if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_dichroism(:BS_dip_size,i_T)=DIP_projected_dich(:BS_dip_size)
+     endif
      ! Magnons
      if (l_BS_magnons) then
        BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)=conjg(DIP_Smins)
@@ -339,12 +358,21 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      endif
 #endif
      !
+#if defined _KERR
+     !
+     ! Dichroism
+     !
+     if(l_BS_dichroism) then
+       res_dich=(BS_T_grp(i_T_g)%dipoles_R(1,i_T)/(q0_def_norm*cI))* &
+         conjg(BS_T_grp(i_T_g)%dipoles_R_dichroism(1,i_T))          ! EM:  x*L = DIP_x*DIP_orbital; 
+       res_dich=res_dich*f_*Z_                                      !       f_ = occupations
+     endif
+     !
      ! Magnons
      !
      ! Res (RES): (Smp) <v|S-|c>(i_sp_pol_c)<c|S+|v>(i_sp_pol_c) = dip_R_magn(1)*conjg(dip_R_magn(1))
      !            (Spm) <v|S+|c>(i_sp_pol_c)<c|S-|v>(i_sp_pol_c) = dip_R_magn(2)*conjg(dip_R_magn(2))
      !
-#if defined _KERR
      if (l_BS_magnons) then
        res_magn(:)=BS_T_grp(i_T_g)%dipoles_R_mag(:,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R_mag(:,i_T))
        res_magn=res_magn*f_*Z_
@@ -408,6 +436,13 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
 #if defined _KERR
        !
+       if (l_BS_dichroism) then
+         X_dichroism(:,3)=X_dichroism(:,3)-res_dich/(W_bss%p(:)-E_plus_W(i_pert_SOC))  ! EM: w(:) = omega;  
+         if (BSS_add_antiresonant.or.BS_K_coupling) then
+           X_dichroism(:,3)=X_dichroism(:,3)+res_dich/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))) ! DS to check congj factor
+         endif
+       endif
+       !
        if (l_BS_magnons) then
          X_magnons(:,1,3)=X_magnons(:,1,3)-res_magn(1)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
          X_magnons(:,2,3)=X_magnons(:,2,3)-res_magn(2)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
@@ -466,6 +501,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 #endif
  !
 #if defined _KERR
+ !
+ if(l_BS_dichroism) then
+   call PP_redux_wait( X_dichroism(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( X_dichroism(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
+ endif
+ !
  if(l_BS_magnons) then
    call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
@@ -524,6 +565,14 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    ! missing in the length gauge (this should be zero for systems with a gap)
    if (l_BS_anomalous_Hall.and.trim(global_gauge)=='length') Epsilon_ij(:,3)=Epsilon_ij(:,3)+B_Hall(1)/W_bss%p(:)
    !
+ endif
+ !
+ if (l_BS_dichroism) then
+  !  beta_ij=-((i*hbar*me)/(omega*qe^2))*G_ij;
+  !  DeltaN=((8*pi*N*omega/(3*c))*Tr(beta_ij);
+  !  N = molecular density = ??
+  !  SPEED_OF_LIGHT =  c in a.u.
+  X_dichroism(:,3)=X_dichroism(:,3)*(-1/SPEED_OF_LIGHT)*Co_factor/(4._SP*pi)   !!  this is (omega/c)*beta, with beta=-((i*hbar*me)/(omega*qe^2))*G_ij
  endif
  !
  if (l_BS_magnons) X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)

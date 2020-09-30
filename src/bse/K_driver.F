@@ -44,7 +44,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X
  use D_lattice,      ONLY:l_0D,l_1D,l_2D
 #if defined _KERR
- use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_anomalous_Hall
+ use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall
 #endif
 #if defined _RT
  use drivers,        ONLY:l_rt_carriers_in_use
@@ -163,6 +163,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  l_BS_jdos   = index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP
  l_BS_abs    = (index(BSE_prop,'abs')/=0)
 #if defined _KERR
+ l_BS_dichroism = (index(BSE_prop,'dich')/=0)
  l_BS_kerr   = (index(BSE_prop,'kerr')/=0)
  l_BS_trace  = (index(BSE_prop,'trace')/=0)
  l_BS_magnons= (index(BSE_prop,'magn')/=0) .and.n_spin>1

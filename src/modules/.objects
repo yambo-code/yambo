@@ -17,7 +17,7 @@ ELECTRIC_objects = mod_fields.o mod_electric.o
 MAGNETIC_objects = mod_magnetic.o
 #endif
 #if defined _KERR 
-KERR_objects = mod_KERR.o mod_MAGNONS.o
+KERR_objects = mod_KERR.o mod_MAGNONS.o mod_DICHROISM.o
 #endif
 #if defined _PL 
 PL_objects = mod_PHOTOLUM.o

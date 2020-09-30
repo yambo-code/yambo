@@ -27,7 +27,7 @@ module X_output
  use stderr,    ONLY:intc
  use com,       ONLY:msg,com_compose_msg
  use X_m,       ONLY:alpha_dim,global_gauge
- use BS,        ONLY:l_BS_kerr,l_BS_magnons
+ use BS,        ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism
  use interfaces,ONLY:DESC_write
  use R_lattice, ONLY:FineGd_desc
  !
@@ -36,6 +36,7 @@ module X_output
  character(15)     :: headers(7)
  character(schlen) :: eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,jdos_file_name,pl_file_name
  character(schlen) :: off_file_name,beta_file_name,moke_file_name,refl_file_name,magp_file_name,magm_file_name
+ character(schlen) :: dichr_file_name
  !
  contains
    !
@@ -50,7 +51,7 @@ module X_output
      !
      ! T-ordering
      !
-     files='o eps refl eel alpha off beta moke jdos Spm Smp'
+     files='o eps refl eel alpha off beta moke jdos Spm Smp CD'
      if (l_chi) files= 'o eps refl eel alpha'
      if (GreenF) then
        call msg(trim(files),com_compose_msg(pre="# ",body="[GEN] GF poles"),trim(X_E_xc_string(4)),INDENT=0)
@@ -125,7 +126,7 @@ module X_output
      call msg("o jdos",trim(message(9)),0._SP,INDENT=0)
      call msg("o Spm",trim(message(10)),0._SP,INDENT=0)
      call msg("o Smp",trim(message(11)),0._SP,INDENT=0)
-     call msg('o eps refl eel fxc alpha off moke Spm Smp','#')
+     call msg('o eps refl eel fxc alpha off moke Spm Smp CD','#')
      !
    end subroutine
    !
@@ -152,6 +153,8 @@ module X_output
      magp_file_name ='Spm_q'//trim(intc(iq))
      magm_file_name ='Smp_q'//trim(intc(iq))
      !
+     dichr_file_name ='CD_q'//trim(intc(iq))
+     !
      if (present(ig)) then
        if (ig>1) then
          eps_file_name  = trim(eps_file_name)//'_G'//trim(intc(ig))
@@ -172,6 +175,7 @@ module X_output
        jdos_file_name =  trim(jdos_file_name)//'_'//solver
        magp_file_name =  trim(magp_file_name)//'_'//solver
        magm_file_name =  trim(magm_file_name)//'_'//solver
+       dichr_file_name = trim(dichr_file_name)//'_'//solver
      endif
      !
      if (len_trim(approx)>0) then
@@ -185,6 +189,7 @@ module X_output
        jdos_file_name =  trim(jdos_file_name)//'_'//approx
        magp_file_name =  trim(magp_file_name)//'_'//approx
        magm_file_name =  trim(magm_file_name)//'_'//approx
+       dichr_file_name = trim(dichr_file_name)//'_'//approx
      endif
      !
      if (len_trim(equation)>0) then
@@ -198,6 +203,7 @@ module X_output
        jdos_file_name =  trim(jdos_file_name)//'_'//equation
        magp_file_name =  trim(magp_file_name)//'_'//equation
        magm_file_name =  trim(magm_file_name)//'_'//equation
+       dichr_file_name = trim(dichr_file_name)//'_'//equation
      endif
      !
      if (.not.l_BS_kerr) then
@@ -211,6 +217,10 @@ module X_output
        magm_file_name=' '
      endif
      !
+     if (.not.l_BS_dichroism) then
+       dichr_file_name=' '
+       dichr_file_name=' '
+     endif
    end subroutine
    !
    subroutine X_setup_headers(desc)

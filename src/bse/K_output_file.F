@@ -42,9 +42,9 @@ subroutine K_output_file(iq,mode)
  use electrons, ONLY:spin_occ
  use R_lattice, ONLY:nkbz
  use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,HBAR_SI
- use BS,        ONLY:l_BS_kerr,l_BS_magnons
- use X_m,       ONLY:Epsilon_ij,X_magnons
- use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name,&
+ use BS,        ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism
+ use X_m,       ONLY:Epsilon_ij,X_magnons,X_dichroism
+ use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name,dichr_file_name,&
  &                   magp_file_name,magm_file_name
  use KERR,      ONLY:B_Hall,A_drude
 #endif
@@ -130,6 +130,7 @@ subroutine K_output_file(iq,mode)
    if (.not.eval_alpha) call of_open_close(moke_file_name,title_mode)
    if (     eval_alpha) call of_open_close(beta_file_name,title_mode)
  endif
+   if(l_BS_dichroism) call of_open_close(dichr_file_name,title_mode)
 #endif
 #if defined _KERR
  if(l_BS_magnons) then
@@ -267,6 +268,17 @@ subroutine K_output_file(iq,mode)
    if (l_Haydock.or.l_Inversion) call msg("o Smp",'#',headers,INDENT=0,USE_TABS=.TRUE.)
    if (l_Diago.or.l_Slepc) call msg("o Smp",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (l_IP) call msg("o Smp",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+   !
+ endif
+#endif
+ !
+#if defined _KERR
+ if(l_BS_dichroism) then
+   !
+   call X_setup_headers('CD ')
+   if (l_Haydock.or.l_Inversion) call msg("o CD",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+   if (l_Diago.or.l_Slepc) call msg("o CD",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (l_IP) call msg("o CD",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    !
  endif
 #endif
@@ -519,6 +531,30 @@ subroutine K_output_file(iq,mode)
  !
 #endif
  !
+#if defined _KERR
+ !
+ !  DICHROISM
+ !------
+ if(l_BS_dichroism) then
+   !
+   n_output_data=5
+   if (l_Haydock.or.l_Inversion) n_output_data=7
+   if (l_IP) n_output_data=3
+   !
+   do iw=1,BSS_n_freqs 
+     write(*,*) iw,X_dichroism(iw,3)
+     output_data(1:5)=(/real(X_dichroism(iw,1))*HA2EV,aimag(X_dichroism(iw,2)),real(X_dichroism(iw,2)),&
+&                  aimag(X_dichroism(iw,3)),real(X_dichroism(iw,3))/)
+     if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(X_dichroism(iw,4)),real(X_dichroism(iw,4))/)
+     if (l_IP) output_data(2:3)=output_data(4:5)
+     call msg('o CD','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+     !
+   enddo
+   !
+ endif
+ !
+#endif
+ !
  ! JOINT DOS
  !------------
  !
@@ -567,6 +603,13 @@ subroutine K_output_file(iq,mode)
        call of_open_close(magm_file_name)
      endif
 #endif
+
+#if defined _KERR
+     if(l_BS_dichroism) then
+       call of_open_close(dichr_file_name)
+     endif
+#endif
+
      !
      if(l_print_jdos) call of_open_close(jdos_file_name)
      !

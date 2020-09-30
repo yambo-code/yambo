@@ -127,21 +127,19 @@ integer function io_DIPOLES(Dip,ID)
 #if defined _RT
    if (l_magn_dipoles) then
      call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz,2/))
-     if (n_spin==2)   call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+     if (n_spin==2)   call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz,2/))
      if (n_spinor==2) call DIP_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    endif
 #endif
 #if defined _SC || defined _RT
    if (l_sc_run.or.l_real_time)  call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
 #endif
-
 #if defined _KERR
    if(l_dichroism) then
      call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz,1/))
    endif  
 #endif
-
-!
+   !
    ! GPL_EXCLUDE_END
    !
  endif
@@ -220,21 +218,18 @@ integer function io_DIPOLES(Dip,ID)
    !
  endif
 #endif
-
-
+ !
 #if defined _KERR
-   if (l_dichroism) then
-      !   
-      ! Orbital magnetization
-      !   
-      write (VAR_name,'(3(a,i4.4))') 'DIP_orbital_k_',ik,'_spin_',i_sp_pol
-      call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
-      call io_bulk(ID,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol,1),IPOS=DIP_ipos)  
-   endif   
+ if (l_dichroism) then
+    !   
+    ! Orbital magnetization
+    !   
+    write (VAR_name,'(3(a,i4.4))') 'DIP_orbital_k_',ik,'_spin_',i_sp_pol
+    call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
+    call io_bulk(ID,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol,1),IPOS=DIP_ipos)  
+ endif   
 #endif
-
-
-!
+ !
  ! GPL_EXCLUDE_END
  !
 1 call io_disconnect(ID=ID)

@@ -191,7 +191,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
    if (i_Ef(1)/=i_Ef(2).or.i_Ef(1)/=i_Ef_fine(2)) then
      Tel=Tel+Tel_step
      i_Ef(1)=max(1,i_Ef(1)-2)
-     i_Ef(2)=min(i_Ef(2)+2,E%nb)
+     i_Ef(2)=min(i_Ef(2)+2,n_total_states)
    endif
    !
    ! 5. Use a secant-like procedure to converge to the final Level

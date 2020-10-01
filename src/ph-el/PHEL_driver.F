@@ -23,9 +23,10 @@
 !
 subroutine PHEL_driver(E,k,q)
  !
- use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp
- use ELPH,           ONLY:QP_PH_n_G_bands
+ use electrons,           ONLY:levels
+ use R_lattice,           ONLY:bz_samp,nqibz
+ use ELPH,                ONLY:QP_PH_n_G_bands
+ use interfaces,          ONLY:PARALLEL_global_indexes
  !
  implicit none
  !
@@ -34,10 +35,14 @@ subroutine PHEL_driver(E,k,q)
  !
  ! Work Space
  !
- integer             ::i_err
+ integer             ::i_err,iq
  integer, external   ::ELPH_expanded_databases_check
  !
  call section('*',"Phonon Lifetimes")
+ !
+ ! Parallel Setup
+ !===============
+ call PARALLEL_global_indexes(E,k,q,"Phonon_Self_Energy")
  !
  ! El-Ph databases check
  !=======================
@@ -52,10 +57,12 @@ subroutine PHEL_driver(E,k,q)
  !
  ! El-Ph databases I/O
  !=====================
- call ELPH_expanded_databases_map(E,k,(/1,QP_PH_n_G_bands/),.FALSE.)
+ call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ")
  !
- ! Phononic Lifetimes  (the initilize can switch-off the phel_corr in case of I/O problems)
+ ! Phononic Lifetimes  
  !====================
- call PHEL_lifetimes(1,E,k,q)
+ do iq=1,nqibz
+   call PHEL_lifetimes(iq,E,k,q)
+ enddo
  !
 end subroutine PHEL_driver

@@ -164,12 +164,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
 #if defined _SCALAPACK
  if (      ENVIRONMENT=="ScaLapacK")           call PARALLEL_global_ScaLapack( )
 #endif
+#if defined _ELPH
+ if (      ENVIRONMENT=="Phonon_Self_Energy")  call PARALLEL_global_Phonon_Self_Energy(E,Xk,q)
+#endif
  !
- !==========================================================================================================
+ !==============================================================================
  if ( ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_G_space_and_IO") then
-!.or.&
-!&    (ENVIRONMENT=="Self_Energy".and.l_life.and.l_elphoton_corr) ) then
-   !========================================================================================================
+   !============================================================================
    !
    ! Response functions conduction bands
    !

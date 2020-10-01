@@ -483,24 +483,6 @@ module parallel_m
    module procedure PP_snd_rcv_c2,PP_snd_rcv_c1,PP_snd_rcv_r2
  end interface PP_send_and_receive
  !
- !interface
- !  subroutine c_chsort(base, nmemb, elemsize, compar) bind(C,name='qsort')
- !    use iso_c_binding
- !    implicit none
- !    type(C_PTR), value :: base
- !    integer(C_SIZE_T), value :: nmemb, elemsize
- !    type(C_FUNPTR), value :: compar
- !  end subroutine c_chsort
- !  !
- !  pure function c_strcmp(a,b) result(strcmp_out) bind(C,name='strcmp')
- !    use iso_c_binding
- !    implicit none
- !    integer(C_int) :: strcmp_out
- !    !pgi$ ignore_tkr a,b
- !    type(C_PTR), value :: a, b
- !  end function c_strcmp
- !end interface
- !
  contains
    !
    subroutine PAR_build_index(PAR_ind,N_elements,V_ind,n_V_ind)
@@ -614,6 +596,8 @@ module parallel_m
      CPU_structure(7)%Short_Description="SLK"
      CPU_structure(8)%Long_Description="Non_Linear"
      CPU_structure(8)%Short_Description="NL"
+     CPU_structure(9)%Long_Description="Phonon_Self_Energy"
+     CPU_structure(9)%Short_Description="PH_SE"
    end subroutine
    !
    subroutine COMM_reset(COMM)

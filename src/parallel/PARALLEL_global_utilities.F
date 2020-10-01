@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _PHEL
 !
 subroutine G_b_to_B_mat(pCOMM,what,nb)
  !

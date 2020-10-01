@@ -93,7 +93,7 @@ subroutine INIT_activate()
    call CPU_activate("X_and_IO")  ! Required for finite E-field, l_sc_exx, SC_up_W_iter
  endif
  !
- if ( (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions) ) then
+ if ( (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions.or.l_phel_corr) ) then
    call CPU_activate("SE")
    call initactivate(1,'SE_Threads')
  endif
@@ -132,6 +132,12 @@ subroutine INIT_activate()
    call CPU_activate("DIP")
    call initactivate(1,'X_Threads DIP_Threads K_Threads')
  endif
+ !
+#if defined  _ELPH 
+ if (l_life.and.l_phel_corr) then
+   call CPU_activate("PH_SE")
+ endif
+#endif
  !
  !Setup
  !

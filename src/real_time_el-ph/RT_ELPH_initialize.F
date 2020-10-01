@@ -75,7 +75,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! El-Ph databases I/O
  !=====================
- call ELPH_expanded_databases_map(E,k,RT_bands,.TRUE.)
+ call ELPH_expanded_databases_load(E,k,q,RT_bands,"BZ")
  !
  ! Test of the effect of using a single optical mode
  !                               ===================

@@ -44,8 +44,6 @@ module PH_real_time
  real(SP),    allocatable :: EQ_P_E_sp_res_lifetime(:,:)
  real(SP),    allocatable :: EQ_P_E_sp_ares_lifetime(:,:)
  real(SP),    allocatable :: EQ_P_E_eh_lifetime(:,:)
- ! ... Q-parallelization  and GKKP
- real(SP),    allocatable :: phel_gkkp_expanded_sq(:,:,:,:,:)
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !
@@ -120,7 +118,6 @@ module PH_real_time
      YAMBO_FREE(EQ_P_E_sp_res_lifetime)
      YAMBO_FREE(EQ_P_E_sp_ares_lifetime)
      YAMBO_FREE(EQ_P_E_eh_lifetime)
-     YAMBO_FREE(phel_gkkp_expanded_sq)
      YAMBO_FREE(PHEL_Deph_Matrix)
      !
      if(l_all.or.l_phonons) then

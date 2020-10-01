@@ -136,7 +136,7 @@ subroutine INIT_barriers()
  ! GPL_EXCLUDE_END
  !
  if (l_life) then
-   call switch_off_runlevel('all',on_name='life em1d el_el_corr ph_el_corr el_photon_corr '//trim(always_on_runlevels))
+   call switch_off_runlevel('all',on_name='life dipoles em1d el_el_corr ph_el_corr el_photon_corr '//trim(always_on_runlevels))
    goto 1
  endif
  !

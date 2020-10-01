@@ -871,10 +871,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      !
      type(levels), intent(in) :: E_in
      !
-     logical :: is_def(10)
+     logical :: is_def(11)
      integer :: i1,bands(2),tmp_bands(2)
      !
-     if(initmode/=4) return
+     if (initmode/=4) return
      !
      is_def=.false.
      !
@@ -888,9 +888,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call parser('SCBands',  is_def(8))
      call parser('NLBands',  is_def(9))
      call parser('COLLBands',is_def(10))
+     call parser('el_photon_corr',is_def(11))
+     if (is_def(11)) call parser('life',is_def(11))
      !
      bands=-1
-     do i1=1,10
+     do i1=1,11
        if(.not.(is_def(i1))) cycle
        if(i1< 5) tmp_bands=X(i1)%ib
        if(i1==5) tmp_bands=Dip%ib
@@ -906,6 +908,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _RT || defined _SC || defined _NL
        if(i1==10) tmp_bands=COLL_bands
+#endif
+#if defined _QED
+       if(i1==11) tmp_bands=QP_n_G_bands
 #endif
        if(any((/bands==-1/))) then
          bands(1)=max(tmp_bands(1),   1   )

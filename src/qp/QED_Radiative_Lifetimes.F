@@ -23,19 +23,18 @@
 !
 subroutine QED_Radiative_Lifetimes(E,k,q,qp,X,Dip)
  !
- use drivers,             ONLY:l_elel_corr,l_elph_corr
  use units,               ONLY:HA2EV,SPEED_OF_LIGHT
  use pars,                ONLY:SP,rZERO,cI
  use QP_m,                ONLY:QP_time_order_sign,QP_table,QP_t,QP_n_G_bands,QP_Sc,QP_states_simmetrize
  use functions,           ONLY:theta_function
  use electrons,           ONLY:levels,spin,spin_occ
  use R_lattice,           ONLY:bz_samp
- use parallel_m,          ONLY:PAR_IND_QP,PAR_IND_G_b,PAR_IND_DIPk_ibz,PAR_nG_bands,PAR_nQP,PP_redux_wait,&
-&                              PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_DIPk_ibz_index
+ use parallel_m,          ONLY:PAR_IND_QP,PAR_IND_G_b,PAR_nG_bands,PAR_nQP,PP_redux_wait,&
+&                              PAR_DIPk_ibz_index
  use DIPOLES,             ONLY:DIP_P,DIPOLE_t
  use X_m,                 ONLY:X_t
  use LIVE_t,              ONLY:live_timing
- use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
+ use interfaces,          ONLY:PARALLEL_global_indexes
  use timing_m,            ONLY:timing
  !
  implicit none
@@ -51,11 +50,7 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X,Dip)
  integer     :: i_k,i_n,i_spin,i_m,i_qp,i_k_mem,io_err
  real(SP)    :: E_diff,f_m,Sc_im,P_square,pre_factor
  !
- if (l_elel_corr.or.l_elph_corr) then
-   call section('+','Correlation: Radiative Lifetimes')
- else
-   call section('=','Correlation: Radiative Lifetimes')
- endif
+ call section('+','Correlation: Radiative Lifetimes')
  !
  call timing('Radiative Lifetimes',OPR='start')
  !
@@ -63,10 +58,6 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X,Dip)
  !=======================
  !
  call PARALLEL_global_indexes(E,k,q,"Self_Energy",X=X)
- call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,&
-&                            B_index=PAR_IND_CON_BANDS_X(X%whoami),&
-&                            Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
-&                            CLEAN_UP=.TRUE.)
  !
  ! Dipoles
  !=========

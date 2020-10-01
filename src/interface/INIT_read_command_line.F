@@ -26,10 +26,7 @@ subroutine INIT_read_command_line(rstr,init_)
  use pars,           ONLY:schlen
  use drivers,        ONLY:infile_editing,l_bse,l_alda_fxc,l_chi,l_elel_corr,&
 &                         l_elel_scatt,l_elph_corr,l_elph_scatt,l_elphoton_corr,&
-&                         l_elphoton_scatt,l_em1s,l_em1d,l_ppa
-#if defined _PHEL
- use drivers,        ONLY:l_phel_scatt,l_phel_corr
-#endif
+&                         l_elphoton_scatt,l_em1s,l_em1d,l_ppa,l_phel_scatt,l_phel_corr,l_dipoles
  use BS,             ONLY:BSK_mode
  use BS_solvers,     ONLY:BSS_mode
  use X_m,            ONLY:Chi_mode
@@ -255,7 +252,7 @@ subroutine INIT_read_command_line(rstr,init_)
      ! Lifetimes
      !
      if ( i_cycle==2 .and. trim(rstr_piece(i1)) == 'life' )  then
-#if defined  _ELPH || defined _QED || defined _PHEL
+#if defined _ELPH || defined _QED || defined _PHEL
        if ( (.not.l_elph_corr.and..not.l_elphoton_corr.and..not.l_phel_corr) .or. l_elel_corr) then
          call initactivate(1,'em1d')
          call initactivate(1,'el_el_corr')
@@ -263,6 +260,12 @@ subroutine INIT_read_command_line(rstr,init_)
 #else
        call initactivate(1,'em1d')
        l_elel_corr=.true.
+#endif
+#if defined _QED
+       if (l_elphoton_corr) then
+         l_dipoles=.TRUE.
+         call initactivate(1,'dipoles')
+       endif
 #endif
      endif
      !

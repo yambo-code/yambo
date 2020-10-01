@@ -48,16 +48,15 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_bz
 #endif
 #if defined _SC || defined _RT || defined _QED
- use QP_m,          ONLY:QP_n_G_bands
  use drivers,       ONLY:l_elphoton_corr,l_life,l_real_time,l_sc_run
  use collision_ext, ONLY:COLL_bands,COH_collisions,HXC_collisions,P_collisions
- use parallel_m,    ONLY:PAR_n_c_bands,PAR_n_v_bands,COMM_copy
+ use parallel_m,    ONLY:COMM_copy
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_G_b_INDEX
  ! IND
  use parallel_m,    ONLY:PAR_IND_Bp_mat,PAR_IND_QP,PAR_IND_Q_ibz,PAR_IND_Q_bz
  ! INDEX
- use parallel_m,    ONLY:PAR_DIPk_ibz_index
+ use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_DIPk_bz_index
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_DIPk_nibz
  ! ID's
@@ -239,8 +238,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    !
    call PARALLEL_index(PAR_IND_G_k,(/QP_nk/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
    !
-   call PARALLEL_live_message("k-q",ENVIRONMENT="Self_Energy",&
-&                             LOADED=count( PAR_IND_G_k%element_1D ),&
+   call PARALLEL_live_message("k-q",ENVIRONMENT="Self_Energy",LOADED=count( PAR_IND_G_k%element_1D ),&
 &                             TOTAL=QP_nk)
    !
  endif
@@ -249,19 +247,22 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    !
    ! Oscillators needed to evaluate the Radiative Lifetimes
    !
-   PAR_n_c_bands=QP_n_G_bands
-   PAR_n_v_bands=QP_n_G_bands
-   !
+   YAMBO_FREE(PAR_DIPk_ibz_index)
+   YAMBO_FREE(PAR_DIPk_bz_index)
    YAMBO_ALLOC(PAR_DIPk_ibz_index,(nXkibz))
    do i_k=1,nXkibz
      PAR_DIPk_ibz_index(i_k)=i_k
    enddo
+   YAMBO_ALLOC(PAR_DIPk_bz_index,(nXkbz))
+   do i_k=1,nXkbz
+     PAR_DIPk_bz_index(i_k)=i_k
+   enddo
+   PAR_DIPk_nibz=nXkibz
    PAR_DIPk_nibz=nXkibz
    ! 
  endif
  !
 #endif
- !
  !
 #if defined _ELECTRIC
  !

@@ -295,7 +295,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    ! 1) First compute the residuals
    !================================
    call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt)
-
    !
    ! 2) Then the frequency dependent term
    !=======================================

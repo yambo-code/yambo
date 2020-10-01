@@ -45,7 +45,7 @@ subroutine DIPOLE_setup_PAR_K_scheme(PAR_K_scheme_kind)
  if (allocated(PAR_K_scheme%bz_index))  deallocate(PAR_K_scheme%bz_index)
  !
  select case(trim(PAR_K_scheme_kind))
- case ("DIP","RT","SC")
+ case ("DIP","RT","SC","QED")
    call COMM_copy(PAR_COM_DIPk_ibz_INDEX,PAR_K_scheme%COM_ibz_INDEX)
    call COMM_copy(PAR_COM_DIPk_ibz_A2A,  PAR_K_scheme%COM_ibz_A2A)
    call PAR_INDEX_copy(PAR_IND_DIPk_ibz,PAR_K_scheme%IND_ibz)
@@ -77,7 +77,7 @@ subroutine DIPOLE_setup_PAR_K_scheme(PAR_K_scheme_kind)
      PAR_K_scheme%bz_index=PAR_Xk_bz_index
    endif
    PAR_K_scheme%comm_world=PAR_COM_X_WORLD%COMM
- case ("K","QED")
+ case ("K")
    call COMM_copy(PAR_COM_Xk_ibz_INDEX,PAR_K_scheme%COM_ibz_INDEX)
    call COMM_copy(PAR_COM_Xk_ibz_A2A,  PAR_K_scheme%COM_ibz_A2A)
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_K_scheme%IND_ibz)

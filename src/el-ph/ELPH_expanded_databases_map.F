@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_expanded_databases_map(E,k)
+subroutine ELPH_expanded_databases_map(E,k,n_bands,PARALLEL)
  ! 
  use pars,           ONLY:SP
  use units,          ONLY:HA2EV
- use real_time,      ONLY:elph_gkkp_expanded_sq,Q_io_map,K_io_map,RT_bands
+ use real_time,      ONLY:elph_gkkp_expanded_sq,Q_io_map,K_io_map
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp,qindx_S,nqbz
+ use R_lattice,      ONLY:bz_samp,qindx_S,nqbz,nkibz
  use IO_m,           ONLY:io_control,OP_RD_CL
  use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,MAX_gkkp
  use vec_operate,    ONLY:degeneration_finder
@@ -35,20 +35,25 @@ subroutine ELPH_expanded_databases_map(E,k)
 &                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX
  !
 #include<memory.h>
- !
+ ! 
+ integer,      intent(in) :: n_bands(2)
+ logical,      intent(in) :: PARALLEL
  type(levels)             :: E
  type(bz_samp),intent(in) :: k
  !
  ! Work Space
  !
  integer             ::iq,ID,io_err,ik,i_counter,iq_io,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
-&                      first_el(2,RT_bands(2)),n_of_el(2,RT_bands(2)),n_deg_grp(2),i1,i2,iq_mem
+&                      first_el(2,n_bands(2)),n_of_el(2,n_bands(2)),n_deg_grp(2),i1,i2,iq_mem
  real(SP)            ::ph_Esq_local(nqbz,ph_modes),gkkp_average(ph_modes),MAX_gkkp_expanded_at_kpq(k%nibz,nqbz)
  integer, external   ::io_ELPH
  !
  ! Allocation
  !============
- !
+ if (.not.PARALLEL) then
+   PAR_nQ_bz=nqbz
+   PAR_Xk_nibz=nkibz
+ endif
  YAMBO_ALLOC(elph_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ_bz,PAR_Xk_nibz))
  !
  MAX_gkkp_expanded_at_kpq=0._SP
@@ -61,7 +66,9 @@ subroutine ELPH_expanded_databases_map(E,k)
  !
  do iq=1,nqbz
    !
-   if (.not.PAR_IND_Q_bz%element_1D(iq)) cycle
+   if (PARALLEL) then
+     if (.not.PAR_IND_Q_bz%element_1D(iq)) cycle
+   endif
    !
    iq_io=Q_io_map(iq)
    !
@@ -75,10 +82,14 @@ subroutine ELPH_expanded_databases_map(E,k)
      ik_bz    =sum(k%nstar(:ik-1))+1
      ik_m_q   =k%sstar(qindx_S(ik,iq,1),1)
      !
-     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
-     !
-     ik_mem = PAR_Xk_ibz_index(ik)
-     iq_mem = PAR_Q_bz_index(iq)
+     if (PARALLEL) then
+       if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+       ik_mem = PAR_Xk_ibz_index(ik)
+       iq_mem = PAR_Q_bz_index(iq)
+     else
+       ik_mem = ik
+       iq_mem = iq
+     endif
      !
      do i_n=1,elph_nb
        do i_np=1,elph_nb
@@ -99,11 +110,11 @@ subroutine ELPH_expanded_databases_map(E,k)
      !
      ! Degeneration Finder
      !====================
-     call degeneration_finder(E%E(:RT_bands(2),ik,1),    RT_bands(2),first_el(1,:),n_of_el(1,:),n_deg_grp(1),0.0001/HA2EV)
-     call degeneration_finder(E%E(:RT_bands(2),ik_m_q,1),RT_bands(2),first_el(2,:),n_of_el(2,:),n_deg_grp(2),0.0001/HA2EV)
+     call degeneration_finder(E%E(:n_bands(2),ik,1),    n_bands(2),first_el(1,:),n_of_el(1,:),n_deg_grp(1),0.0001/HA2EV)
+     call degeneration_finder(E%E(:n_bands(2),ik_m_q,1),n_bands(2),first_el(2,:),n_of_el(2,:),n_deg_grp(2),0.0001/HA2EV)
      !
      do i1=1,n_deg_grp(1)
-       do i_np=RT_bands(1),RT_bands(2)
+       do i_np=n_bands(1),n_bands(2)
          do i2=1,2
            if (i2==1) gkkp_average=0._SP
            do i_n=first_el(1,i1),first_el(1,i1)+n_of_el(1,i1)-1
@@ -114,7 +125,7 @@ subroutine ELPH_expanded_databases_map(E,k)
        enddo
      enddo
      do i1=1,n_deg_grp(2)
-       do i_n=RT_bands(1),RT_bands(2)
+       do i_n=n_bands(1),n_bands(2)
          do i2=1,2
            if (i2==1) gkkp_average=0._SP
            do i_np=first_el(2,i1),first_el(2,i1)+n_of_el(2,i1)-1
@@ -133,9 +144,11 @@ subroutine ELPH_expanded_databases_map(E,k)
  !
  ph_freqs_sq=ph_Esq_local
  !
- call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
- call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Q_INDEX%COMM)
- call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ if (PARALLEL) then
+   call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
+   call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Q_INDEX%COMM)
+   call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ endif
  !
  MAX_gkkp=maxval(MAX_gkkp_expanded_at_kpq)
  !

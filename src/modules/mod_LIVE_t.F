@@ -233,8 +233,7 @@ module LIVE_t
      !
      rfmt_=" "
      sfmt_="%s"
-     if (.not.log_as_a_file) lfmt_="r"
-     if (     log_as_a_file) lfmt_="n"
+     lfmt_="n"
      !
      if (present(lfmt)) lfmt_=trim(lfmt)
      if (present(rfmt)) rfmt_=trim(rfmt)

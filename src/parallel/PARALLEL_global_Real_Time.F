@@ -42,8 +42,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_B_mat,PAR_IND_WF_k, &
 &                        PAR_IND_Q_bz,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_DIPk_ibz
  ! INDEX
- use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_Xk_ibz_index,PAR_Q_bz_index,PAR_COM_VAL_INDEX_X,PAR_COM_QP_INDEX,&
-&                        PAR_COM_CON_INDEX_X
+ use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_Xk_ibz_index,PAR_Q_bz_index
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_nQ_bz,PAR_Xk_nibz,PAR_G_k_range
  ! ID's
@@ -51,7 +50,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
 &                        PAR_IND_DIPk_ibz_ID,PAR_IND_Q_bz_ID,PAR_IND_WF_b_ID
 #if defined _PHEL
  ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_Xk_bz_INDEX,PAR_COM_Xk_bz_A2A
+ use parallel_m,    ONLY:PAR_COM_Xk_bz_INDEX
  ! IND
  use parallel_m,    ONLY:PAR_IND_Xk_bz,PAR_IND_Q_ibz
  ! INDEX
@@ -96,8 +95,6 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  endif
  !
  call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_WF_b_INDEX)
- call COMM_copy(PAR_COM_QP_INDEX,PAR_COM_CON_INDEX_X(X_type))
- call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_VAL_INDEX_X(X_type))
  !
  ! K-points (IBZ)
  !

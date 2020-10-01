@@ -97,7 +97,6 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_DIP)
    !
-   !
    ! Dipoles conduction bands
    !
    call PARALLEL_index(PAR_IND_CON_BANDS_DIP,(/PAR_n_c_bands(2)/),low_range=(/PAR_n_c_bands(1)/),&

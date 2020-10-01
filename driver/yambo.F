@@ -32,15 +32,12 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_bss,l_bse,l_em1d,&
-&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics
+&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_phel_corr
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
 #endif
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
-#endif
-#if defined _PHEL
- use drivers,       ONLY:l_phel_corr
 #endif
  use X_m,           ONLY:X_t
  use DIPOLES,       ONLY:DIPOLE_t
@@ -167,7 +164,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! Logicals for \eps^-1
  !======================
  !
- l_dyn_X = l_em1d .or. (l_optics.and.l_chi) .or. l_life .or. l_ppa
+ l_dyn_X = l_em1d .or. (l_optics.and.l_chi) .or. (l_life.and.l_elel_corr) .or. l_ppa
  l_sta_X = l_em1s .or. (l_optics.and.l_bse)
  !
  i_X_kind=1

@@ -52,7 +52,7 @@ subroutine PHEL_driver(E,k,q)
  !
  ! El-Ph databases I/O
  !=====================
- call ELPH_expanded_databases_map(E,k)
+ call ELPH_expanded_databases_map(E,k,(/1,QP_PH_n_G_bands/),.FALSE.)
  !
  ! Phononic Lifetimes  (the initilize can switch-off the phel_corr in case of I/O problems)
  !====================

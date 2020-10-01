@@ -67,12 +67,12 @@ subroutine PHEL_lifetimes(iq,E,k,q)
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k,q
  integer,       intent(in) :: iq
- real(SP), external        :: RT_G_retarded_convolution
  !
  ! Work Space ...
  !
  real(SP)              :: ph_freq
  real(SP), parameter   :: cutoff= 5.E-3
+ real(SP), external    :: RT_G_retarded_convolution
  !
  real(SP)              :: Gkkp_sq(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  ! ... band/branch index ...
@@ -107,7 +107,6 @@ subroutine PHEL_lifetimes(iq,E,k,q)
      ! Time Scales separation (TS) and quasiparticle approximation (QP)
      !=======================================
      !
-     !call RT_PHEL_TSQP_Kernel(ik,ik_m_q,iq_mem,il,E,ph_freq,Gkkp_sq)
      if (l_initial_equilibrium) then
        N_q    = RT_PH_occupations_reference(il,iq_mem)
      else

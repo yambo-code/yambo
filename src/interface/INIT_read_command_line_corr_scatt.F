@@ -59,7 +59,7 @@ subroutine INIT_read_command_line_corr_scatt(KIND,STR,POS,l_ee,l_ep,l_pe,l_eh)
  if (l_ee)     call initactivate(1,'el_el_'//trim(suffix))
  if (l_ep)     call initactivate(1,'el_ph_'//trim(suffix))
  if (l_pe)     call initactivate(1,'ph_el_'//trim(suffix))
- if (l_eh)     call initactivate(1,'el_phtoton_'//trim(suffix))
+ if (l_eh)     call initactivate(1,'el_photon_'//trim(suffix))
  !
  !
 end subroutine

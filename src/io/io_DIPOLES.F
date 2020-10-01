@@ -121,7 +121,7 @@ integer function io_DIPOLES(Dip,ID)
  P2_ipos(2:3)=DIP_ipos(3:4)
 #endif
  !
-#if defined _RT || _defined _KERR
+#if defined _RT || defined _KERR
  l_magn_dipoles=(l_BS_magnons.and.n_spin>1)
 #endif
 #if defined _RT
@@ -207,9 +207,13 @@ integer function io_DIPOLES(Dip,ID)
      call io_bulk(ID,C3=DIP_spin(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
      !
    endif
-#endif
    !
+ endif
+#endif
+ !
 #if defined _RT
+ if (l_magn_dipoles) then
+   !
    if (n_spinor==2) then
      !
      ! P_Spinor
@@ -236,7 +240,7 @@ integer function io_DIPOLES(Dip,ID)
 #endif
  !
 #if defined _KERR
- if (l_BS_dichroism) then
+if (l_BS_dichroism) then
     !   
     ! Orbital magnetization
     !   

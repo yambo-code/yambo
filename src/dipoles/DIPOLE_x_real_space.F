@@ -135,7 +135,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
            if (allocated(Xen%Eo)) Ev_m_Ec_KS=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
            do idir=1,3
              if(.not.idir_todo(idir)) cycle
-             DIP_v(idir,ic,iv,ik_mem,i_sp_pol)=DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec_KS
+             DIP_v(idir,ic,iv,ik_mem,i_sp_pol)=DIP_tmp(idir,ic,iv)*Ev_m_Ec_KS
            enddo
          enddo
        enddo

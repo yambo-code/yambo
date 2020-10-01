@@ -542,7 +542,6 @@ subroutine K_output_file(iq,mode)
    if (l_IP) n_output_data=3
    !
    do iw=1,BSS_n_freqs 
-     write(*,*) iw,X_dichroism(iw,3)
      output_data(1:5)=(/real(X_dichroism(iw,1))*HA2EV,aimag(X_dichroism(iw,2)),real(X_dichroism(iw,2)),&
 &                  aimag(X_dichroism(iw,3)),real(X_dichroism(iw,3))/)
      if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(X_dichroism(iw,4)),real(X_dichroism(iw,4))/)

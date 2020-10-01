@@ -152,7 +152,6 @@ subroutine rim(mode)
  !Integrated RL VOLUME 
  !
  RIM_RL_vol=8.*k_grid_uc_vol*real(RIM_n_rand_pts)/real(N_out)*real(nqbz)
- !if (cut_is_slab) RIM_RL_vol = RIM_RL_vol/2._SP
  call msg('r', 'RL volume           [au]:',RL_vol)
  call msg('rn','Integrated volume   [au]:',RIM_RL_vol)
  !

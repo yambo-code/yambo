@@ -73,6 +73,7 @@ subroutine interpolate_W(X,Xw,q)
    open (unit=out_unit_qpG_in,file="qpG_in.dat",action="write",status="replace")
    open (unit=out_unit_qpG_out,file="qpG_out.dat",action="write",status="replace")
    open (unit=out_unit_idx,file="idx.dat",action="write",status="replace")
+   write(out_unit_idx,*) "# iq (iq, is, ig)(iq, is, ig)(iq, is, ig)(iq, is, ig)(iq, is, ig)"
    open (unit=out_unit_vX,file="vX.dat",action="write",status="replace")
    open (unit=out_unit_f_coeff,file="f_coeff.dat",action="write",status="replace")
  end if
@@ -390,6 +391,9 @@ subroutine interpolate_W(X,Xw,q)
 &,f_coeff (igr,igc,iq1,1),f_coeff (igr,igc,iq1,2),f_coeff (igr,igc,iq1,3)&
 &,f_coeff (igr,igc,iq1,4),f_coeff (igr,igc,iq1,5),f_coeff (igr,igc,iq1,6)
       endif
+      !Fill the vX and f_coeff for debugginf purposes
+      f_coeff(igc,igr,iq1,:) = f_coeff(igr,igc,iq1,:)
+      vX(:,iq1,igc,igr) = vX(:,iq1,igr,igc)
 !!! AG DBG
       !
     enddo
@@ -397,7 +401,10 @@ subroutine interpolate_W(X,Xw,q)
  enddo
  call timing('RIM-W-coeff',OPR='stop')
  !
- !if (debug) call check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
+!!! AG DBG
+ if (debug) call check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
+ if (debug) call check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
+!!! AG DBG
  !
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !Calculation of RIM-W
@@ -416,7 +423,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  use pars,          ONLY:SP,pi,zero_dfl,schlen,DP
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,RIM_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
-&                        RIM_W,q0_def_norm,cut_is_slab,idir
+&                        RIM_W,q0_def_norm,cut_is_slab,idir,k_grid
  use memory,        ONLY:MEM_err
  use vec_operate,   ONLY:c2a,v_is_zero,v_norm,iku_v_norm
  use X_m,           ONLY:X_mat,X_t,X_alloc
@@ -425,6 +432,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
 &                        deliver_IO_error_message,OP_WR_CL,REP,VERIFY
  use stderr,        ONLY:STRING_split
  use D_lattice,     ONLY:alat
+ use matrix_operate, ONLY:m3inv,mat_transpose
  !
  implicit none
  type(bz_samp) :: q
@@ -435,171 +443,519 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  !
  ! Work Space
  !
- integer  :: out_unit_W_x_intp=200, out_unit_W_x_num=300,out_unit_W_y_intp=400, out_unit_W_y_num=500
- integer  :: Np=1001, i, ig1, ig2, iqibz, is, gmax, nn, igr, igc, pos
- real(SP) :: dq, q_sampl(3), func, lcut,slab_vz1, slab_vplane1,slab_vz2, &
-&            slab_vplane2, W_sampl,pre_factor,r1,vslab
- real(SP) :: g1_2D_mod, g2_2D_mod, qpG1(3), qpG2(3), idx_q1, q_out(3)
+ integer  :: out_unit_W_fit(2), out_unit_W_num(2),npoints(2),find,iq,i2
+ integer  :: Np, i, ig1, ig2, iqibz, is, gmax, nn, igr, igc, pos, i_dir,vecsign1,vecsign2
+ real(SP) :: dq, q_sampl(3), func, lcut,slab_vz1, slab_vplane1,slab_vz2,symminv(3,3),&
+&            slab_vplane2, W_sampl,pre_factor,r1,vslab,q_num_norm,q_out_norm,f_coeff_loc(6)
+ real(SP) :: g1_2D_mod, g2_2D_mod, qpGr(3), qpGc(3), idx_q1, q_out(3),q_num(3),qpG_trial(3)
  character(schlen):: str_piece1, str_piece2
+ character(1) :: dir(2)
+ integer, allocatable :: indexes(:,:,:)
+ integer :: q_nn, Gr_nn, Gc_nn, n_indx_steps(2)
+ integer :: iq_trial,iq_ibz_trial,is_trial,ig_trial
  !
+ Np = 1001
  dq = 1./(Np-1)
  q_sampl = (/0.,0.,0./)
- gmax = 13
+ gmax = RIM_ng
  lcut=alat(idir(1))/2._SP
+ dir = (/"x","y"/)
+ out_unit_W_fit=(/200,300/)
+ out_unit_W_num=(/400,500/)
+ call k_ibz2bz(q,'i',.true.)
+ !
+ !Allocate indexes
+ n_indx_steps = k_grid(1:2)/2-1
+ npoints = (n_indx_steps)*2+1
+ allocate(indexes(max(npoints(1),npoints(2)),4,2))
+ call msg('r', "npoints_x = ", npoints(1))
+ call msg('r', "npoints_x = ", npoints(2))
+ !
+ !Print to file interpolated W data
+ do i_dir=1,2
+   !
+   do igr=1,gmax
+     !
+     do igc=igr,gmax
+       !
+       !Open output files
+       write(str_piece1, '(I2.2)') igr
+       write(str_piece2, '(I2.2)') igc 
+       open (unit=out_unit_W_fit(i_dir),file="./debug/W_"//dir(i_dir)//"_fit_g"//trim(str_piece1)//"_g"//trim(str_piece2)//".dat",&
+&          action="write",status="replace")
+       open (unit=out_unit_W_num(i_dir),file="./debug/W_"//dir(i_dir)//"_num_g"//trim(str_piece1)//"_g"//trim(str_piece2)//".dat",&
+&          action="write",status="replace")
+       !
+       !
+       !###################################
+       !# Get the indexes of the q points #
+       !###################################
+       !
+       do i=1,npoints(i_dir)
+         !
+         !First: get the (q+Gr,q+Gc) points
+         !
+         q_num = (/0.,0.,0./)
+         q_num(1:2) = delta_q(i_dir,:)*(i-1-n_indx_steps(i_dir))
+         call c2a(b_in=b,v_in=q_num,mode='ka2i')
+         !
+         qpGr  = q_num + g_vec(igr,:)
+         qpGc  = q_num + g_vec(igc,:)
+         !
+         vecsign1 = sign(1,i-n_indx_steps(i_dir)-1)
+
+         !Second: reduce (q+Gr,q+Gc) to the iBZ and store indexes
+         !
+         find = 0
+         !Find nn indexes
+         do ig_trial=1,ng_vec
+           !
+           do iq_trial=1,q%nbz
+             !
+             iq_ibz_trial = q%sstar(iq_trial,1)
+             is_trial = q%sstar(iq_trial,2)
+             !
+             qpG_trial = matmul(rl_sop(:,:,is_trial),q%pt(iq_ibz_trial,:)+g_vec(ig_trial,:))
+             !
+             if (v_is_zero(qpGr-qpG_trial)) then
+             !
+             indexes(i,1,i_dir) = iq_ibz_trial
+             indexes(i,2,i_dir) = is_trial
+             indexes(i,3,i_dir) = ig_trial
+             !
+             find = find+1
+             !
+             end if
+             !
+             if (v_is_zero(qpGc-qpG_trial)) then
+             !
+             !Select the indexes
+             indexes(i,4,i_dir) = ig_trial
+             find = find+1
+             !
+             end if
+             !
+             if (find == 2) exit
+             !
+           end do
+           !
+           if (find == 2) exit
+           !
+         end do
+         !Rename index variables
+         iq  = indexes(i,1,i_dir)
+         is  = indexes(i,2,i_dir)
+         ig1 = indexes(i,3,i_dir)
+         ig2 = indexes(i,4,i_dir)
+         !----------------------------------
+         !-Third: Evaluate numerical f,vc,W-
+         !----------------------------------
+         !Evaluate vslab
+         vslab = 4*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+         !Evaluate func
+         func = bare_qpg(iq,ig1)*bare_qpg(iq,ig2)/(4*pi)*vX(1,iq,ig1,ig2)/(vX(1,iq,ig1,ig2)+1)
+         !Evaluate W
+         W_sampl = -vX(1,iq,ig1,ig2)*vslab
+         !
+         !Get q output in cc
+         !
+         call c2a(b_in=b,v_in=q_num,mode='ki2c')
+         q_num_norm = v_norm(q_num)*vecsign1
+         !
+         !Write output
+         !   
+         write(out_unit_W_num(i_dir),"(I4, E15.6, E15.6,E15.6,E15.6, E15.6, E15.6, E15.6)") &
+&                         i, q_num(1),q_num(2),q_num(3),q_num_norm,vslab, func, W_sampl
+
+         !-------------------------------
+         !-Third: Evaluate fitted f,vc,W-
+         !-------------------------------
+         do i2=1,Np
+           !
+           if (i == n_indx_steps(i_dir)+1) then
+             vecsign2 = sign(1,i2-Np/2-1)
+           else
+             vecsign2=1
+           end if
+           !
+           !q_sampl in rlu
+           q_sampl = (/0.,0.,0./)
+           q_sampl(1:2) = (dq*(i2-1)-0.5)*abs(delta_q(i_dir,:))
+           !
+           !Convert q_sampl to iku
+           call c2a(b_in=b,v_in=q_sampl,mode='ka2i')
+           !
+           !Evaluate v_slab
+           r1 = 1.
+           if (iku_v_norm(qpGr+q_sampl) < q0_def_norm) then
+             r1 = r1*q0_def_norm
+           else
+             r1 = r1*iku_v_norm(qpGr+q_sampl)
+           end if
+           if (iku_v_norm(qpGc+q_sampl) < q0_def_norm) then
+             r1 = r1*q0_def_norm
+           else
+             r1 = r1*iku_v_norm(qpGc+q_sampl)
+           end if
+           !r1=iku_v_norm(qpGr+q_sampl)*iku_v_norm(qpGc+q_sampl)
+           !kz
+           slab_vz1=(q_sampl(idir(1))+qpGr(idir(1)))*2.*pi/alat(idir(1))
+           slab_vz2=(q_sampl(idir(1))+qpGc(idir(1)))*2.*pi/alat(idir(1))
+           !kxy
+           slab_vplane1=sqrt(((q_sampl(idir(2))+qpGr(idir(2)))*2.*pi/alat(idir(2)))**2+&
+&                            ((q_sampl(idir(3))+qpGr(idir(3)))*2.*pi/alat(idir(3)))**2)
+           !     
+           slab_vplane2=sqrt(((q_sampl(idir(2))+qpGc(idir(2)))*2.*pi/alat(idir(2)))**2+&
+&                            ((q_sampl(idir(3))+qpGc(idir(3)))*2.*pi/alat(idir(3)))**2)
+           !
+           if (slab_vplane1 < q0_def_norm) slab_vplane1 = q0_def_norm
+           if (slab_vplane2 < q0_def_norm) slab_vplane2 = q0_def_norm
+           !
+           pre_factor = sqrt(1.-exp(-slab_vplane1*lcut)*cos(slab_vz1*lcut))*&
+&                       sqrt(1.-exp(-slab_vplane2*lcut)*cos(slab_vz2*lcut))
+           !        
+           vslab=4._DP*pi*pre_factor
+           !
+           !Evaluate func and W
+           if (iq == 1 .and. ig1 == 1 .and. ig2 == 1) then
+             !
+             if (iku_v_norm(q_sampl) < 1.e-5) then
+               W_sampl = f_coeff(ig1,ig2,iq,1)*(2*pi*alat(idir(1)))**2
+               q_out = q_sampl
+               call c2a(b_in=b,v_in=q_out,mode='ki2c')
+               q_out_norm = v_norm(q_out)*vecsign1*vecsign2
+               write(out_unit_W_fit(i_dir),"(I5, E15.6, E15.6, E15.6,E15.6, E15.6, E15.6, E15.6)") &
+&                                     i, q_out(1),q_out(2),q_out(3), q_out_norm, 0.0, 0.0, W_sampl
+               cycle
+             end if
+             !
+             !func = f_coeff(1,1,1,1)*exp(-f_coeff(1,1,1,2)*iku_v_norm(q_sampl))
+             func = f_coeff(1,1,1,1)*exp(-sqrt(f_coeff(1,1,1,2)**2*q_sampl(1)**2+f_coeff(1,1,1,3)**2*q_sampl(2)**2))
+             W_sampl = vslab*func*vslab/r1/(1-vslab*func)
+             func = func*iku_v_norm(q_sampl)**2
+             !
+           else
+             !Transform f_coeff from iBZ to BZ
+             call m3inv(rl_sop(:,:,is),symminv)
+             f_coeff_loc(1) = f_coeff(ig1,ig2,iq,1)
+             f_coeff_loc(2) = symminv(1,1)*f_coeff(ig1,ig2,iq,2)+symminv(2,1)*f_coeff(ig1,ig2,iq,3)
+             f_coeff_loc(3) = symminv(1,2)*f_coeff(ig1,ig2,iq,2)+symminv(2,2)*f_coeff(ig1,ig2,iq,3)
+
+             f_coeff_loc(4) = symminv(1,1)*symminv(1,1)*f_coeff(ig1,ig2,iq,4)&
+                             +symminv(1,1)*symminv(2,1)*f_coeff(ig1,ig2,iq,5)*2&
+                             +symminv(2,1)*symminv(2,1)*f_coeff(ig1,ig2,iq,6)
+
+             f_coeff_loc(5) = symminv(1,1)*symminv(1,2)*f_coeff(ig1,ig2,iq,4)&
+                             +(symminv(1,1)*symminv(2,2)+symminv(1,2)*symminv(2,1))*f_coeff(ig1,ig2,iq,5)&
+                             +symminv(2,1)*symminv(2,2)*f_coeff(ig1,ig2,iq,6)
+
+             f_coeff_loc(6) = symminv(1,2)*symminv(1,2)*f_coeff(ig1,ig2,iq,4)&
+                             +symminv(1,2)*symminv(2,2)*f_coeff(ig1,ig2,iq,5)*2&
+                             +symminv(2,2)*symminv(2,2)*f_coeff(ig1,ig2,iq,6)
+             !
+             func = f_coeff_loc(1)+q_sampl(1)*(f_coeff_loc(2)+q_sampl(1)*f_coeff_loc(4))&
+&                                 +q_sampl(2)*(f_coeff_loc(3)+q_sampl(2)*f_coeff_loc(6)&
+&                                 +2_SP*q_sampl(1)*f_coeff_loc(5))
+             !
+             W_sampl = vslab/r1*func*vslab/r1/(1-vslab/r1*func)
+             !
+             !Convert q_sampl to iku
+             !call c2a(b_in=b,v_in=q_sampl,mode='ka2i')
+              !
+           end if
+           !
+           !
+           !Get the q output
+           call c2a(b_in=b,v_in=q_sampl,mode='ki2c') 
+           q_out = q_num+q_sampl  
+           q_out_norm = v_norm(q_out)*vecsign1*vecsign2   
+           write(out_unit_W_fit(i_dir),"(I5, E15.6,E15.6, E15.6, E15.6, E15.6, E15.6, E15.6)") &
+&                           i, q_out(1),q_out(2),q_out(3), q_out_norm, vslab/r1, func, -W_sampl
+         end do
+         !
+       end do
+       !
+       !Close output files
+       !
+       close(unit=out_unit_W_fit(i_dir))
+       close(unit=out_unit_W_num(i_dir))
+       !
+     end do
+   end do
+ end do
+end subroutine
+
+subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
+ !
+ use pars,          ONLY:SP,pi,zero_dfl,schlen,DP
+ use com,           ONLY:msg
+ use R_lattice,     ONLY:bz_samp,RIM_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
+&                        RIM_W,q0_def_norm,cut_is_slab,idir,k_grid
+ use memory,        ONLY:MEM_err
+ use vec_operate,   ONLY:c2a,v_is_zero,v_norm,iku_v_norm
+ use X_m,           ONLY:X_mat,X_t,X_alloc
+ use frequency,     ONLY:w_samp
+ use IO_m,          ONLY:io_control,OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
+&                        deliver_IO_error_message,OP_WR_CL,REP,VERIFY
+ use stderr,        ONLY:STRING_split
+ use D_lattice,     ONLY:alat
+ use matrix_operate, ONLY:m3inv,mat_transpose
+ !
+ implicit none
+ type(bz_samp) :: q
+ real(SP)      :: f_coeff(RIM_ng,RIM_ng,q%nibz,6)
+ real(SP)      :: delta_q(3,2)
+ complex(SP)   :: vX(5,q%nibz,RIM_ng,RIM_ng)
+ integer       :: idx_q(RIM_ng,q%nibz,5),idx_G(RIM_ng,q%nibz,5),idx_is(RIM_ng,q%nibz,5)
+ !
+ ! Work Space
+ !
+ integer  :: out_unit_W_fit, out_unit_W_num,npoints(2),find,iq,i3
+ integer  :: Np, i1,i2, ig1, ig2, iqibz, is, gmax, nn, igr, igc, pos, i_dir
+ real(SP) :: dq, q_sampl(3), func, lcut,slab_vz1, slab_vplane1,slab_vz2,symminv(3,3),&
+&            slab_vplane2, W_sampl,pre_factor,r1,vslab,q_num_norm,q_out_norm,f_coeff_loc(6)
+ real(SP) :: g1_2D_mod, g2_2D_mod, qpGr(3), qpGc(3), idx_q1, q_out(3),q_num(3),qpG_trial(3),q_point(3)
+ character(schlen):: str_piece1, str_piece2
+ character(1) :: dir(2)
+ integer, allocatable :: indexes(:,:,:)
+ integer :: q_nn, Gr_nn, Gc_nn, n_indx_steps(2)
+ integer :: iq_trial,iq_ibz_trial,is_trial,ig_trial
+ real(SP)  :: first_neighbour(26,3)
+ integer   :: inn1,inn2,inn3,ic
+ real(SP)  :: v1_norm(2)
+ !
+ Np = 21
+ dq = 1./(Np-1)
+ gmax = RIM_ng
+ lcut=alat(idir(1))/2._SP
+ out_unit_W_fit=6000
+ out_unit_W_num=7000
+ call k_ibz2bz(q,'i',.true.)
+ !
+ !Allocate indexes
+ n_indx_steps = k_grid(1:2)/2-1
+ npoints = (n_indx_steps)*2+1
+ !allocate(indexes(max(npoints(1),npoints(2)),4,2))
+ !call msg('r', "npoints_x = ", npoints(1))
+ !call msg('r', "npoints_x = ", npoints(2))
  !
  !Print to file interpolated W data
  do igr=1,gmax
    !
    do igc=igr,gmax
      !
+     !Open output files
      write(str_piece1, '(I2.2)') igr
      write(str_piece2, '(I2.2)') igc 
-     open (unit=out_unit_W_y_intp,file="W_y_intp_g"//trim(str_piece1)//"_g"//trim(str_piece2)//".dat",&
-&          action="write",status="replace")
-     open (unit=out_unit_W_y_num,file="W_y_num_g"//trim(str_piece1)//"_g"//trim(str_piece2)//".dat",&
-&          action="write",status="replace")
+     open (unit=out_unit_W_fit,file="./debug/W_2D_fit_g"//trim(str_piece1)//"_g"//trim(str_piece2)//".dat",&
+&        action="write",status="replace")
+     open (unit=out_unit_W_num,file="./debug/W_2D_num_g"//trim(str_piece1)//"_g"//trim(str_piece2)//".dat",&
+&        action="write",status="replace")
      !
-     !Evaluate W along y
-     do nn = 1,3
+     !
+     !###################################
+     !# Get the indexes of the q points #
+     !###################################
+     !
+     do i1=1,q%nbz
        !
-       !Map to the nn position
-       !pos = 3*nn**2-13*nn+15
-       !
-       pos = 2*nn**2-9*nn+11
-       call msg("r", "pos =", pos)
-       !
-       !Get the index that indentify the qpG(G') point
-       iqibz = idx_q(igr,1,pos)
-       is = idx_is(igr,1,pos)
-       ig1 = idx_G(igr,1,pos)
-       ig2 = idx_G(igc,1,pos)
-       !
-       qpG1 = matmul(rl_sop(:,:,is),q%pt(iqibz,:)+g_vec(ig1,:))
-       qpG2 = matmul(rl_sop(:,:,is),q%pt(iqibz,:)+g_vec(ig2,:))
-       !
-       g1_2D_mod = sqrt(g_vec(ig1,1)**2+g_vec(ig1,2)**2)
-       g2_2D_mod = sqrt(g_vec(ig2,1)**2+g_vec(ig2,2)**2)
-       !
-       !-----------------------------
-       !Print to file numerical data-
-       !-----------------------------
-       !Evaluate vslab
-       vslab = 4*pi/bare_qpg(iqibz,ig1)/bare_qpg(iqibz,ig2)
-       !Evaluate func
-       func = vX(pos,1,igr,igc)/vslab/(vX(pos,1,igr,igc)+1)
-       !Evaluate W
-       W_sampl = -vX(pos,1,igr,igc)*vslab
-       !Get q output
-       q_out = qpG1!-g_vec(ig1,:)
-       call c2a(b_in=b,v_in=q_out,mode='ki2c')      
-       write(out_unit_W_y_num,"(I5, E15.6, E15.6, E15.6, E15.6, E15.6, E15.6)") &
-&                         iqibz, q_out(1),q_out(2),q_out(3), func, vslab, W_sampl
+       !do i2=1,npoints(2)
+         !
+         !First: get the (q+Gr,q+Gc) points
+         !
+         !q_num = (/0.,0.,0./)
+         !q_num(1:2) = delta_q(1,:)*(i1-1-n_indx_steps(1))&
+!&                    +delta_q(2,:)*(i2-1-n_indx_steps(2))
+         !
+         !call c2a(b_in=b,v_in=q_num,mode='ka2i')
+         !
+         q_num = q%ptbz(i1,:)
+         qpGr  = q_num + g_vec(igr,:)
+         qpGc  = q_num + g_vec(igc,:)
+         !
+         !Second: reduce (q+Gr,q+Gc) to the iBZ and store indexes
+         !
+         find = 0
+         !Find nn indexes
+         do ig_trial=1,ng_vec
+           !
+           do iq_trial=1,q%nbz
+             !
+             iq_ibz_trial = q%sstar(iq_trial,1)
+             is_trial = q%sstar(iq_trial,2)
+             !
+             qpG_trial = matmul(rl_sop(:,:,is_trial),q%pt(iq_ibz_trial,:)+g_vec(ig_trial,:))
+             !
+             if (v_is_zero(qpGr-qpG_trial)) then
+             !
+             iq = iq_ibz_trial
+             is = is_trial
+             ig1 = ig_trial
+             !
+             find = find+1
+             !
+             end if
+             !
+             if (v_is_zero(qpGc-qpG_trial)) then
+             !
+             !Select the indexes
+             ig2 = ig_trial
+             find = find+1
+             !
+             end if
+             !
+             if (find == 2) exit
+             !
+           end do
+           !
+           if (find == 2) exit
+           !
+         end do
+         !
+         !----------------------------------
+         !- Evaluate numerical f,vc,W-
+         !----------------------------------
+         !Evaluate vslab
+         vslab = 4*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+         !Evaluate func
+         func = bare_qpg(iq,ig1)*bare_qpg(iq,ig2)/(4*pi)*vX(1,iq,ig1,ig2)/(vX(1,iq,ig1,ig2)+1)
+         !Evaluate W
+         W_sampl = -vX(1,iq,ig1,ig2)*vslab
+         !
+         !Write output
+         !
+         q_num = q_num*2*pi/alat
+         write(out_unit_W_num,"(I4, E15.6, E15.6,E15.6, E15.6, E15.6, E15.6)") &
+&                            i1,q_num(1),q_num(2),q_num(3),vslab,func,W_sampl
 
-
-       !--------------------------
-       !Print to file fitted data-
-       !--------------------------
-       if (pos == 4) cycle
-       do i=1,Np
-         !
-         !q_sampl in rlu
-         q_sampl = (/0.,0.,0./)
-         q_sampl(2) = 1.0*(dq*(i-1)-0.5)*abs(delta_q(2,2))
-         !
-         !Convert q_sampl to iku
-         call c2a(b_in=b,v_in=q_sampl,mode='ka2i')
-         !
-         !Evaluate v_slab
-         r1 = 1.
-         if (iku_v_norm(qpG1+q_sampl) < q0_def_norm) then
-           r1 = r1*q0_def_norm
-         else
-           r1 = r1*iku_v_norm(qpG1+q_sampl)
-         end if
-         if (iku_v_norm(qpG2+q_sampl) < q0_def_norm) then
-           r1 = r1*q0_def_norm
-         else
-           r1 = r1*iku_v_norm(qpG2+q_sampl)
-         end if
-         !r1=iku_v_norm(qpG1+q_sampl)*iku_v_norm(qpG2+q_sampl)
-         !kz
-         slab_vz1=(q_sampl(idir(1))+qpG1(idir(1)))*2.*pi/alat(idir(1))
-         slab_vz2=(q_sampl(idir(1))+qpG2(idir(1)))*2.*pi/alat(idir(1))
-         !kxy
-         slab_vplane1=sqrt(((q_sampl(idir(2))+qpG1(idir(2)))*2.*pi/alat(idir(2)))**2+&
-&                          ((q_sampl(idir(3))+qpG1(idir(3)))*2.*pi/alat(idir(3)))**2)
-         !     
-         slab_vplane2=sqrt(((q_sampl(idir(2))+qpG2(idir(2)))*2.*pi/alat(idir(2)))**2+&
-&                          ((q_sampl(idir(3))+qpG2(idir(3)))*2.*pi/alat(idir(3)))**2)
-         !
-         if (slab_vplane1 < q0_def_norm) slab_vplane1 = q0_def_norm
-         if (slab_vplane2 < q0_def_norm) slab_vplane2 = q0_def_norm
-         !
-         pre_factor = sqrt(1.-exp(-slab_vplane1*lcut)*cos(slab_vz1*lcut))*&
-&                     sqrt(1.-exp(-slab_vplane2*lcut)*cos(slab_vz2*lcut))
-         !        
-         vslab=4._DP*pi*pre_factor
-         !
-         !Evaluate func and W
-         if (iqibz == 1) then
-           if (ig1 == 1 .and. ig2 == 1) then
+         !-------------------------------
+         !-Third: Evaluate fitted f,vc,W-
+         !-------------------------------
+         do i2=1,Np
+         loop:do i3=1,Np
+           !
+           !q_sampl in rlu
+           q_sampl = (/0.,0.,0./)
+           q_sampl(1:2) = 2*(dq*(i2-1)-0.5)*abs(delta_q(1,:))&
+&                        +2*(dq*(i3-1)-0.5)*abs(delta_q(2,:))
+           !
+           !Convert q_sampl to cc
+           call c2a(b_in=b,v_in=q_sampl,mode='ka2c')
+           !
+           ic = 0
+           do inn1=-1,1
+             do inn2=-1,1
+               do inn3=-1,1
+                 if (all((/inn1,inn2,inn3/)==0)) cycle
+                 ic=ic+1
+                 first_neighbour(ic,:)=matmul(transpose(k_grid_b),(/inn1,inn2,inn3/))
+               enddo
+             enddo
+           enddo
+           v1_norm(1)=v_norm(q_sampl)
+           do inn1=1,26
+             v1_norm(2)=v_norm(q_sampl-first_neighbour(inn1,:))
+             if (v1_norm(2)<v1_norm(1)-1.E-5) cycle loop
+             ! 
+           enddo
+           call c2a(b_in=b,v_in=q_sampl,mode='kc2i')
+           !
+           !Evaluate v_slab
+           r1 = 1.
+           if (iku_v_norm(qpGr+q_sampl) < q0_def_norm) then
+             r1 = r1*q0_def_norm
+           else
+             r1 = r1*iku_v_norm(qpGr+q_sampl)
+           end if
+           if (iku_v_norm(qpGc+q_sampl) < q0_def_norm) then
+             r1 = r1*q0_def_norm
+           else
+             r1 = r1*iku_v_norm(qpGc+q_sampl)
+           end if
+           !r1=iku_v_norm(qpGr+q_sampl)*iku_v_norm(qpGc+q_sampl)
+           !kz
+           slab_vz1=(q_sampl(idir(1))+qpGr(idir(1)))*2.*pi/alat(idir(1))
+           slab_vz2=(q_sampl(idir(1))+qpGc(idir(1)))*2.*pi/alat(idir(1))
+           !kxy
+           slab_vplane1=sqrt(((q_sampl(idir(2))+qpGr(idir(2)))*2.*pi/alat(idir(2)))**2+&
+&                            ((q_sampl(idir(3))+qpGr(idir(3)))*2.*pi/alat(idir(3)))**2)
+           !     
+           slab_vplane2=sqrt(((q_sampl(idir(2))+qpGc(idir(2)))*2.*pi/alat(idir(2)))**2+&
+&                            ((q_sampl(idir(3))+qpGc(idir(3)))*2.*pi/alat(idir(3)))**2)
+           !
+           if (slab_vplane1 < q0_def_norm) slab_vplane1 = q0_def_norm
+           if (slab_vplane2 < q0_def_norm) slab_vplane2 = q0_def_norm
+           !
+           pre_factor = sqrt(1.-exp(-slab_vplane1*lcut)*cos(slab_vz1*lcut))*&
+&                       sqrt(1.-exp(-slab_vplane2*lcut)*cos(slab_vz2*lcut))
+           !        
+           vslab=4._DP*pi*pre_factor
+           !
+           !Evaluate func and W
+           if (iq == 1 .and. ig1 == 1 .and. ig2 == 1) then
              !
              if (iku_v_norm(q_sampl) < 1.e-5) then
-               W_sampl = f_coeff(ig1,ig2,iqibz,1)*(2*pi*alat(idir(1)))**2
-               q_out = qpG1-g_vec(ig1,:)+q_sampl
-               call c2a(b_in=b,v_in=q_out,mode='ki2c') 
-               write(out_unit_W_y_intp,"(I5, E15.6, E15.6, E15.6, E15.6, E15.6, E15.6)") &
-&                           iqibz, q_out(1),q_out(2),q_out(3), 0.0, 0.0, W_sampl
+               W_sampl = f_coeff(ig1,ig2,iq,1)*(2*pi*alat(idir(1)))**2
+               q_out = q_sampl
+               call c2a(b_in=b,v_in=q_out,mode='ki2c')
+               q_out_norm = v_norm(q_out)
+               write(out_unit_W_fit,"(I5, E15.6, E15.6, E15.6,E15.6, E15.6, E15.6, E15.6)") &
+&                                     i1, q_out(1),q_out(2),q_out(3), q_out_norm, 0.0, 0.0, -W_sampl
                cycle
              end if
              !
-             func = f_coeff(1,1,1,1)*exp(-f_coeff(1,1,1,2)*iku_v_norm(q_sampl))
+             !func = f_coeff(1,1,1,1)*exp(-f_coeff(1,1,1,2)*iku_v_norm(q_sampl))
+             func = f_coeff(1,1,1,1)*exp(-sqrt(f_coeff(1,1,1,2)**2*q_sampl(1)**2+f_coeff(1,1,1,3)**2*q_sampl(2)**2))
              W_sampl = vslab*func*vslab/r1/(1-vslab*func)
              func = func*iku_v_norm(q_sampl)**2
              !
-           else if ((ig1 == 1 .and. g2_2D_mod < 1.e-5) .or. (g1_2D_mod < 1.e-5 .and. ig2 == 1)) then
-             !
-             func = f_coeff(ig1,ig2,iqibz,2)*iku_v_norm(q_sampl)**2
-             W_sampl = vslab/r1*func*vslab/r1/(1-vslab/r1*func)
-             !
            else
+             !Transform f_coeff from iBZ to BZ
+             call m3inv(rl_sop(:,:,is),symminv)
+             f_coeff_loc(1) = f_coeff(ig1,ig2,iq,1)
+             f_coeff_loc(2) = symminv(1,1)*f_coeff(ig1,ig2,iq,2)+symminv(2,1)*f_coeff(ig1,ig2,iq,3)
+             f_coeff_loc(3) = symminv(1,2)*f_coeff(ig1,ig2,iq,2)+symminv(2,2)*f_coeff(ig1,ig2,iq,3)
+
+             f_coeff_loc(4) = symminv(1,1)*symminv(1,1)*f_coeff(ig1,ig2,iq,4)&
+                             +symminv(1,1)*symminv(2,1)*f_coeff(ig1,ig2,iq,5)*2&
+                             +symminv(2,1)*symminv(2,1)*f_coeff(ig1,ig2,iq,6)
+
+             f_coeff_loc(5) = symminv(1,1)*symminv(1,2)*f_coeff(ig1,ig2,iq,4)&
+                             +(symminv(1,1)*symminv(2,2)+symminv(1,2)*symminv(2,1))*f_coeff(ig1,ig2,iq,5)&
+                             +symminv(2,1)*symminv(2,2)*f_coeff(ig1,ig2,iq,6)
+
+             f_coeff_loc(6) = symminv(1,2)*symminv(1,2)*f_coeff(ig1,ig2,iq,4)&
+                             +symminv(1,2)*symminv(2,2)*f_coeff(ig1,ig2,iq,5)*2&
+                             +symminv(2,2)*symminv(2,2)*f_coeff(ig1,ig2,iq,6)
              !
-             !Convert q_sampl to rlu
-             call c2a(b_in=b,v_in=q_sampl,mode='ki2a')
-             func = f_coeff(ig1,ig2,iqibz,1)+q_sampl(1)*f_coeff(ig1,ig2,iqibz,2)+q_sampl(1)*f_coeff(ig1,ig2,iqibz,4)*q_sampl(1)&
-&                                           +q_sampl(2)*f_coeff(ig1,ig2,iqibz,3)+q_sampl(2)*f_coeff(ig1,ig2,iqibz,5)*q_sampl(2)
+             func = f_coeff_loc(1)+q_sampl(1)*(f_coeff_loc(2)+q_sampl(1)*f_coeff_loc(4))&
+&                                 +q_sampl(2)*(f_coeff_loc(3)+q_sampl(2)*f_coeff_loc(6)&
+&                                 +2_SP*q_sampl(1)*f_coeff_loc(5))
+             !
              W_sampl = vslab/r1*func*vslab/r1/(1-vslab/r1*func)
-             !
              !
              !Convert q_sampl to iku
-             call c2a(b_in=b,v_in=q_sampl,mode='ka2i')
-             !
+             !call c2a(b_in=b,v_in=q_sampl,mode='ka2i')
+              !
            end if
            !
-         else
            !
-           !Convert q_sampl to rlu
-           call c2a(b_in=b,v_in=q_sampl,mode='ki2a')
-           func = f_coeff(ig1,ig2,iqibz,1)+q_sampl(1)*f_coeff(ig1,ig2,iqibz,2)+q_sampl(1)*f_coeff(ig1,ig2,iqibz,4)*q_sampl(1)&
-&                                         +q_sampl(2)*f_coeff(ig1,ig2,iqibz,3)+q_sampl(2)*f_coeff(ig1,ig2,iqibz,5)*q_sampl(2)
-           W_sampl = vslab/r1*func*vslab/r1/(1-vslab/r1*func)
-           !
-           !Convert q_sampl to iku
-           call c2a(b_in=b,v_in=q_sampl,mode='ka2i')
-           !
-         end if
+           !Get the q output
+           call c2a(b_in=b,v_in=q_sampl,mode='ki2c') 
+           q_out = q_num+q_sampl  
+           q_out_norm = v_norm(q_out)
+           write(out_unit_W_fit,"(I5 E15.6,E15.6, E15.6, E15.6, E15.6, E15.6, E15.6)") &
+&                           i1, q_out(1),q_out(2),q_out(3), q_out_norm, vslab/r1, func, -W_sampl
+         end do loop
+         end do
          !
-         !Get the q output
-         q_out = qpG1+q_sampl!-g_vec(ig1,:)
-         call c2a(b_in=b,v_in=q_out,mode='ki2c')      
-         write(out_unit_W_y_intp,"(I5, E15.6, E15.6, E15.6, E15.6, E15.6, E15.6)") &
-&                           iqibz, q_out(1),q_out(2),q_out(3), func, vslab/r1, -W_sampl
-
-       enddo
-     enddo
-   enddo
- enddo
- close (unit=out_unit_W_y_num)
- close (unit=out_unit_W_y_intp)
+     end do
+     !
+     !Close output files
+     !
+     close(unit=out_unit_W_fit)
+     close(unit=out_unit_W_num)
+     !
+     end do
+ end do
 end subroutine
-

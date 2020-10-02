@@ -32,7 +32,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  use com,           ONLY:msg,of_open_close
  use electrons,     ONLY:spin,n_spinor
  use YPPm,          ONLY:v2plot,ncell,r_hole,l_free_hole,&
-&                        nr,nr_tot,output_fname,&
+&                        nr,nr_tot,output_fname,l_average_eh,&
 &                        use_xcrysden,use_gnuplot,use_cube,plot_dim,&
 &                        EXCITONS_user_indexes,EXCITONS_n_user_states
  use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_desc,BSS_n_eig
@@ -72,7 +72,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
  call section('+','Real-Space grid setup')
  !
- if (l_free_hole) ncell=1
+ if (l_free_hole.or.l_average_eh) ncell=1
  !
  call WF_load(WF,wf_ng,1,BS_bands,(/1,Xk%nibz/),space='R',title='-EXCWF')
  !
@@ -80,7 +80,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
  call k_ibz2bz(Xk,'i',.false.)
  !
- if (.not.l_free_hole) then
+ if (.not.l_free_hole.and..not.l_average_eh) then
    !
    ! Translation & location in the big grid of the hole...
    !======================================================

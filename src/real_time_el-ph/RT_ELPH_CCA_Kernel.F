@@ -47,7 +47,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
  !
  integer  :: i_n,i_np,ik_rim,ip_rim
  real(SP) :: P_ph_abs,P_ph_emit,DELTA_E,DELTA_W,pre_factor,&
-&            TMP_Hole_lifetime(2),TMP_Electron_lifetime(2),f_kmq,Hole_f_kmq
+&            f_times_abs,f_times_emit,one_m_f_times_abs,f_kmq,Hole_f_kmq,one_m_f_times_emit
  real(SP), external :: RT_G_retarded_convolution
  !
  ! Kernel kind
@@ -84,8 +84,10 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
        !
        ! Zeroing
        !=========
-       TMP_Hole_lifetime=rZero
-       TMP_Electron_lifetime=rZero
+       f_times_abs       =rZero
+       f_times_emit      =rZero
+       one_m_f_times_abs =rZero
+       one_m_f_times_emit=rZero
        !
        do ip_rim=RTibz%k_range(ik_m_q,1),RTibz%k_range(ik_m_q,2)
          !
@@ -114,37 +116,37 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
            Hole_f_kmq = -RT_life_delta_occupations(i_np,ip_rim)/spin_occ
          endif
          !
-         TMP_Hole_lifetime(1)=TMP_Hole_lifetime(1)+f_kmq*P_ph_abs
-         TMP_Electron_lifetime(1)=TMP_Electron_lifetime(1)+Hole_f_kmq*P_ph_emit
+         f_times_abs=f_times_abs+f_kmq*P_ph_abs
+         one_m_f_times_emit=one_m_f_times_emit+Hole_f_kmq*P_ph_emit
          !
          if( abs(N_q)>zero_dfl .and. .not.l_skip_ABS) then
-           TMP_Hole_lifetime(2)=TMP_Hole_lifetime(2)+f_kmq*P_ph_emit
-           TMP_Electron_lifetime(2)=TMP_Electron_lifetime(2)+Hole_f_kmq*P_ph_abs
+           f_times_emit=f_times_emit+f_kmq*P_ph_emit
+           one_m_f_times_abs=one_m_f_times_abs+Hole_f_kmq*P_ph_abs
          endif
          !
        enddo
        !
        ! Emission
        E_P_Hole_lifetime(i_n,ik_rim)=E_P_Hole_lifetime(i_n,ik_rim)+&
-&                                    TMP_Hole_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,1)
+&                                    f_times_abs*pre_factor*q_weight_RT(i_q,i_l,1)
        E_P_Electron_lifetime(i_n,ik_rim)=E_P_Electron_lifetime(i_n,ik_rim)+&
-&                                        TMP_Electron_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,1)
+&                                        one_m_f_times_emit*pre_factor*q_weight_RT(i_q,i_l,1)
        !
        if(.not.abs(N_q)>zero_dfl) cycle
        !
        ! Stimulated Emission
        E_P_Hole_lifetime(i_n,ik_rim)=E_P_Hole_lifetime(i_n,ik_rim)+&
-&                                    TMP_Hole_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,2)
+&                                    f_times_abs*pre_factor*q_weight_RT(i_q,i_l,2)
        E_P_Electron_lifetime(i_n,ik_rim)=E_P_Electron_lifetime(i_n,ik_rim)+&
-&                                        TMP_Electron_lifetime(1)*pre_factor*q_weight_RT(i_q,i_l,2)
+&                                        one_m_f_times_emit*pre_factor*q_weight_RT(i_q,i_l,2)
        !
-       if(l_skip_ABS) cycle
+       if (l_skip_ABS) cycle
        !
        ! Absorption
        E_P_Ho_abs_lifetime(i_n,ik_rim)=E_P_Ho_abs_lifetime(i_n,ik_rim)+&
-&                                      TMP_Hole_lifetime(2)*pre_factor*q_weight_RT(i_q,i_l,2)
+&                                      f_times_emit*pre_factor*q_weight_RT(i_q,i_l,2)
        E_P_El_abs_lifetime(i_n,ik_rim)=E_P_El_abs_lifetime(i_n,ik_rim)+&
-&                                      TMP_Electron_lifetime(2)*pre_factor*q_weight_RT(i_q,i_l,2)
+&                                      one_m_f_times_abs*pre_factor*q_weight_RT(i_q,i_l,2)
        !
      enddo
      !

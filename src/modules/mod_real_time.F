@@ -225,6 +225,9 @@ module real_time
  logical                  :: l_RT_eval_lifetimes
  logical                  :: l_initial_equilibrium
  !
+ ! Occupations
+ !-------------
+ !
  real(SP),    allocatable :: RT_E_occupations(:,:)
  real(SP),    allocatable :: RT_H_occupations(:,:)
  real(SP),    allocatable :: RT_delta_occupations(:,:)       ! Running values. Updated at each time step.
@@ -368,7 +371,7 @@ module real_time
    ! Lifetimes
    !
    real(SP)   ,allocatable:: GAMMA_bare(:,:) ! "initial equilibrium" lifetimes. In the code the "initial equilibrium"
-                                                   ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
+                                             ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
    real(SP)   ,allocatable:: NEQ_Lifetime(:) ! time dependent lifetime defined as for Silicon
    real(SP)   ,allocatable:: delta_GAMMA(:)  ! change with respect to the "initial equilibrium" lifetimes
    real(SP)   ,allocatable:: dGAMMA_E_P_Hole(:)

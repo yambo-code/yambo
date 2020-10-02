@@ -23,18 +23,14 @@
 !
 subroutine RT_ELPH_initialize(E,k,q)
  ! 
- use pars,           ONLY:SP,pi,cZERO
+ use pars,           ONLY:cZERO
  use parser_m,       ONLY:parser
- use real_time,      ONLY:q_weight_RT,THETA_matrix,THETA_matrix_index,l_RT_CCA_Kernel,RT_bands
- use electrons,      ONLY:levels,spin_occ
+ use real_time,      ONLY:THETA_matrix,THETA_matrix_index,l_RT_CCA_Kernel,RT_bands
+ use electrons,      ONLY:levels
  use drivers,        ONLY:l_elph_scatt
- use vec_operate,    ONLY:v_norm
- use D_lattice,      ONLY:Bose_Temp
- use R_lattice,      ONLY:RL_vol,bz_samp,nXkibz
+ use R_lattice,      ONLY:bz_samp,nXkibz
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,NONE
- use ELPH,           ONLY:ph_freqs_sq,ph_modes,elph_branches,W_debye
- use functions,      ONLY:bose_f
- use R_lattice,      ONLY:RIM_n_rand_pts
+ use ELPH,           ONLY:ph_freqs_sq,ph_modes,W_debye
  !
 #include<memory.h>
  !
@@ -43,8 +39,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! Work Space
  !
- integer             ::iq,ID,i_counter,il,i1,i_err,i_s
- real(SP)            ::RADIUS_sphere,q_weight_tmp(q%nbz,2),ph_mean_speed(3),ph_E,q_mod(q%nbz),q0_mod
+ integer             ::iq,ID,i_counter,il,i_err,i_s
  integer, external   ::io_RT_components,ELPH_expanded_databases_check
  logical             ::l_use_Debye_E
  !
@@ -84,75 +79,8 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! Q weights 
  !===========
- ! q_weight_RT are written in section 2, thus here are not known
- ! since only section 1 of the REF DB is written
  !
- if (.not.allocated(q_weight_RT)) then
-   !
-   ! RIM support
-   !
-   ! Here It would be possible to have one different weight for each elph_mode.
-   ! However in practice I assume there are two possibilities:
-   ! 1 - acustic phonons w_ph(i) ~ \alpha(i)*|q|
-   ! 2 - optical phonons w_ph(i) ~ const(i)
-   !
-   YAMBO_ALLOC(q_weight_RT,(q%nbz,elph_branches(1):elph_branches(2),2))
-   q0_mod=(3._SP*RL_vol/4._SP/4._SP/pi)**(1._SP/3._SP)
-   i1=0
-   ph_mean_speed=0._SP
-   q_mod=0._SP
-   q_weight_RT=0._SP
-   !
-   call k_ibz2bz(q,'c',.TRUE.)  
-   !
-   if (RIM_n_rand_pts>0) then
-     !
-     do iq=1,q%nbz
-       !
-       q_mod(iq)=v_norm(q%ptbz(iq,:))
-       !
-       if (q_mod(iq)>q0_mod.or.iq==1) cycle
-       !
-       i1=i1+1
-       !
-       do il=1,3
-         ph_mean_speed(il)=ph_mean_speed(il)+sqrt(ph_freqs_sq(iq,il))/q_mod(iq)
-       enddo
-       !
-     enddo
-     !
-     ph_mean_speed=ph_mean_speed/float(i1)
-     !
-   endif
-   !
-   call k_ibz2bz(q,'i',.TRUE.)  
-   !
-   RADIUS_sphere=(3._SP*RL_vol/q%nbz/4._SP/pi)**(1._SP/3._SP)
-   !
-   call rim_spherical(q%nbz,q%ptbz,q_weight_tmp(:,1),RADIUS_sphere,1,.FALSE.)
-   call rim_spherical(q%nbz,q%ptbz,q_weight_tmp(:,2),RADIUS_sphere,2,.FALSE.)
-   !
-   do iq=1,q%nbz
-     !
-     do il=elph_branches(1),elph_branches(2)
-       !
-       ph_E=sqrt(abs(ph_freqs_sq(iq,il)))
-       !
-       if (ph_E>0.) then
-         q_weight_RT(iq,il,1)=1._SP/ph_E/float(q%nbz)
-         q_weight_RT(iq,il,2)=bose_f(ph_E)/ph_E/float(q%nbz)/spin_occ
-       endif
-       !
-       if (RIM_n_rand_pts>0.and.q_mod(iq)<=q0_mod .and. il<=3) then
-         q_weight_RT(iq,il,1)=q_weight_tmp(iq,1)/ph_mean_speed(il)
-         q_weight_RT(iq,il,2)=Bose_Temp*q_weight_tmp(iq,2)/ph_mean_speed(il)**2/spin_occ
-       endif
-       !
-     enddo
-     !
-   enddo
-   !
- endif
+ call ELPH_Q_weight_times_Bose(q)
  !
  ! THETA matrix indexes
  !======================

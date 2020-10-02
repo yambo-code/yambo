@@ -157,6 +157,7 @@ module YPPm
  logical      ::l_amplitude
  logical      ::l_spin
  logical      ::l_free_hole
+ logical      ::l_average_eh
  logical      ::l_angular_momentum
  logical      ::l_position
  integer      ::ncell(3) 

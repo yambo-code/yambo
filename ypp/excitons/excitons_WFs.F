@@ -31,7 +31,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  use FFT_m,         ONLY:fft_dim
  use com,           ONLY:msg,of_open_close
  use electrons,     ONLY:spin,n_spinor
- use YPPm,          ONLY:v2plot,ncell,r_hole,l_free_hole,&
+ use YPPm,          ONLY:v2plot,ncell,r_hole,l_free_hole,AVE_exc,&
 &                        nr,nr_tot,output_fname,l_average_eh,&
 &                        use_xcrysden,use_gnuplot,use_cube,plot_dim,&
 &                        EXCITONS_user_indexes,EXCITONS_n_user_states
@@ -54,7 +54,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
  type(PP_indexes)  :: px
  integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_l,i_lambda,j_lambda,i_spin,ir,ir_hole,j1,&
-&                     n_lambda_deg
+&                     n_lambda_deg,ir_elec
  integer           :: ikpbz,ikp,isp
  real(SP)          :: r_hole_rlu(3),kp_dot_r_h,k_dot_r_e
  complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor),phase,WF_int(n_spinor)
@@ -183,25 +183,56 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
        ikp   = Xk%sstar(ikpbz,1)
        isp   = Xk%sstar(ikpbz,2)
        !
-       k_dot_r_e  = dot_product(r_cell_cc(:,ir),Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
-       kp_dot_r_h = dot_product(r_hole,Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
-       !
-       WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))   ! electron WF
-       WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))    ! hole WF
-       !
-       phase=cmplx(cos(k_dot_r_e-kp_dot_r_h),sin(k_dot_r_e-kp_dot_r_h),kind=SP)
-       !  
        if(l_average_eh) then
          !      
          WF_int=cZERO
-         do ir_hole=1,nr_tot
-           r_hole=r_cell_cc(:,ir)
-           kp_dot_r_h = dot_product(r_hole,Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
+         !
+         if(trim(AVE_exc)=='e') then 
+           !
+           ! Calculate the average electron-wf
+           ! \psi_e(r) = \int_{r_h} \psi (r_e, r_h)
+           !
+           do ir_hole=1,nr_tot
+             r_hole=r_cell_cc(:,ir)
+             kp_dot_r_h = dot_product(r_hole,Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
+             WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))    ! hole WF
+             WF_int=WF_int+cmplx(cos(-kp_dot_r_h),sin(-kp_dot_r_h),kind=SP)*WF1_ir
+           enddo
+           !
+           WF1_ir=WF_int/real(nr_tot,kind=SP)
+           WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))   ! electron WF
+           phase=cmplx(cos(k_dot_r_e),sin(k_dot_r_e),kind=SP)
+           !
+         elseif(trim(AVE_exc)=='h') then
+           !
+           ! Calculate the average hole-wf
+           ! \psi_h(r) = \int_{r_e} \psi (r_e, r_h)
+           !
+           ir_hole=ir
+           !
+           do ir_elec=1,nr_tot
+             k_dot_r_e  = dot_product(r_cell_cc(:,ir_elec),Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
+             WF2_ir=WF_symm(rindex(ir_elec),(/ic,ikibz,is,i_spin/))   ! electron WF
+             WF_int=WF_int+cmplx(cos(k_dot_r_e),sin(k_dot_r_e),kind=SP)*WF2_ir
+           enddo
+           !
+           WF2_ir=WF_int/real(nr_tot,kind=SP)
            WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))    ! hole WF
-           WF_int=WF_int+cmplx(cos(-kp_dot_r_h),sin(-kp_dot_r_h),kind=SP)*WF1_ir
-         enddo
-         WF1_ir=WF_int/real(nr_tot,kind=SP)
-         phase=cmplx(cos(k_dot_r_e),sin(k_dot_r_e),kind=SP)
+           phase=cmplx(cos(-kp_dot_r_h),sin(-kp_dot_r_h),kind=SP)
+           !
+         else
+           !
+           ! Normal case      
+           !
+           k_dot_r_e  = dot_product(r_cell_cc(:,ir),Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
+           kp_dot_r_h = dot_product(r_hole,Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
+           !
+           WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))   ! electron WF
+           WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))    ! hole WF
+           !
+           phase=cmplx(cos(k_dot_r_e-kp_dot_r_h),sin(k_dot_r_e-kp_dot_r_h),kind=SP)
+           !
+         endif
          !
        endif
        !

@@ -255,9 +255,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      ! Magnons
      !
-     ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_c) while I need  <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_v))
-     ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_c) while I need  <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_v))
-     !
      if (l_BS_magnons) then
        !
        ! notice:
@@ -282,25 +279,28 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          !
        endif
        !
+       ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_c), to get <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_v))
+       ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_c), to get <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_v))
+       !
        DIP_Splus = 0.5_SP*(DIP_expanded(1)+cI*DIP_expanded(2))
        DIP_Smins = 0.5_SP*(DIP_expanded(1)-cI*DIP_expanded(2))
        !
      endif
      !
-#endif   
+#endif
      !
      ! c.2 Store Dipoles
      !====================
      !
      ! Absorption, & KERR
      !
-     BS_T_grp(i_T_g)%dipoles_R(:BS_dip_size,i_T)=   conjg_fac*conjg(DIP_projected(:BS_dip_size))
-     if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(:BS_dip_size,i_T)=DIP_projected(:BS_dip_size)
+     BS_T_grp(i_T_g)%dipoles_R(:BS_dip_size,i_T)=   DIP_projected(:BS_dip_size)
+     if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(:BS_dip_size,i_T)=conjg_fac*conjg(DIP_projected(:BS_dip_size))
      !
 #if defined _PL
      ! PL
      if (l_photolum) then
-       BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:)=conjg(DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,"DIP_v",Xk))
+       BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:)=DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,"DIP_v",Xk)
        if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_PL(i_T,:)=conjg(BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:))
      endif
 #endif
@@ -308,16 +308,16 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 #if defined _KERR
      ! Dichroism
      if(l_BS_dichroism) then
-       BS_T_grp(i_T_g)%dipoles_R_dichroism(:BS_dip_size,i_T)=conjg(DIP_projected_dich(:BS_dip_size))
-       if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_dichroism(:BS_dip_size,i_T)=DIP_projected_dich(:BS_dip_size)
+       BS_T_grp(i_T_g)%dipoles_R_dichroism(:BS_dip_size,i_T)=DIP_projected_dich(:BS_dip_size)
+       if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_dichroism(:BS_dip_size,i_T)=conjg(DIP_projected_dich(:BS_dip_size))
      endif
      ! Magnons
      if (l_BS_magnons) then
-       BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)=conjg(DIP_Smins)
-       BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)=conjg(DIP_Splus)
+       BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)=DIP_Smins
+       BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)=DIP_Splus
        if (BSS_add_antiresonant.or.BS_K_coupling) then
-         BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)=DIP_Splus ! Here I'm using again <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_v))
-         BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)=DIP_Smins ! Here I'm using again <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_v))
+         BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)=conjg(DIP_Splus) ! Here I'm using again <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_v))
+         BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)=conjg(DIP_Smins) ! Here I'm using again <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_v))
        endif
      endif
 #endif

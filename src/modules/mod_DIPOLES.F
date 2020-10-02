@@ -234,7 +234,7 @@ module DIPOLES
        else
          ! in case n_sp_pol==2 the spin is assumed to be independent on symmetries
          tmp_sop=dl_sop(:,:,1)
-         t_rev=.false.
+         !t_rev=.false.
        endif
      endif
      !

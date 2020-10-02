@@ -31,7 +31,7 @@ subroutine RT_output_INIT( )
  use com,            ONLY:msg
  use drivers,        ONLY:l_use_Hxc_collisions,l_elel_scatt,l_elph_scatt
  use stderr,         ONLY:intc
- use real_time,      ONLY:l_lftm_fit_temperatures
+ use RT_lifetimes,   ONLY:l_lftm_fit_temperatures
  use C_driver,       ONLY:code_bin
  use timing_m,       ONLY:timing
  use D_lattice,      ONLY:Bose_Temp

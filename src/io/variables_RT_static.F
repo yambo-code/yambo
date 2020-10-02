@@ -31,14 +31,12 @@ integer function variables_RT_static(ID,what,l_carriers)
  use descriptors,    ONLY:IO_desc_reset
  use R_lattice,      ONLY:FineGd_desc
  use RT_output_m,    ONLY:RT_desc,Gr_desc,n_RT_desc_static
+ use RT_lifetimes,   ONLY:l_RT_lifetimes_extrapolation,RT_life_extrap_times_INPUT
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step, &
-&                         Integrator_name,RT_bands,l_RT_lifetimes_extrapolation, &
-&                         RAD_LifeTime,Phase_LifeTime,&
+&                         Integrator_name,RT_bands,RAD_LifeTime,Phase_LifeTime,&
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_steps,&
 &                         l_RT_CCA_Kernel,l_RT_impose_N_dN, &
-&                         l_RT_uses_E_FineGd,RT_life_extrap_times_INPUT,&
-&                         DbGd_EE_percent,l_RT_impose_E,&
-&                         RT_potential
+&                         l_RT_uses_E_FineGd,DbGd_EE_percent,l_RT_impose_E,RT_potential
  use IO_m,           ONLY:io_sec
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches

@@ -27,15 +27,10 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
  use electrons,      ONLY:spin_occ
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A
+ use RT_lifetimes,   ONLY:RT_EP_life,RT_EE_life,RT_EH_life,SAVED_lifetime,Life_MEM_steps,l_RT_relaxation_update_reference
  use real_time,      ONLY:RT_occupations_locked,RT_E_occupations_reference,RT_H_occupations_reference,&
-&                         RT_life_delta_occupations,l_RT_relaxation_update_reference,&
-&                         RT_H_occupations,RT_E_occupations,RT_delta_occupations,&
-&                         SAVED_lifetime,Life_MEM_steps,RT_bands,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,&
-&                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,&
-&                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
-&                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,&
-&                         G_lesser_reference,RT_nk,RTibz
+&                         RT_life_delta_occupations,RT_H_occupations,RT_E_occupations,RT_delta_occupations,&
+&                         RT_bands,G_lesser_reference,RT_nk,RTibz
  !
  implicit none
  !
@@ -81,20 +76,20 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
        !
        if (l_elphoton_scatt) then
          NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)/real(PAR_COM_PLASMA_INDEX%n_CPU*PAR_COM_Q_INDEX%n_CPU)
-         E_PHOT_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,7,Life_MEM_steps)/NC
-         E_PHOT_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,8,Life_MEM_steps)/NC
+         RT_EH_life%Ho_emit(ib,ik)     =SAVED_lifetime(ib,ik,7,Life_MEM_steps)/NC
+         RT_EH_life%El_abs(ib,ik) =SAVED_lifetime(ib,ik,8,Life_MEM_steps)/NC
        endif
        if (l_elel_scatt) then
          NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)
-         E_E_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,1,Life_MEM_steps)/NC
-         E_E_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,2,Life_MEM_steps)/NC
+         RT_EE_life%Ho_abs(ib,ik)     =SAVED_lifetime(ib,ik,1,Life_MEM_steps)/NC
+         RT_EE_life%El_emit(ib,ik) =SAVED_lifetime(ib,ik,2,Life_MEM_steps)/NC
        endif
        if (l_elph_scatt) then
          NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)/real(PAR_COM_PLASMA_INDEX%n_CPU)
-         E_P_Hole_lifetime(ib,ik)     =SAVED_lifetime(ib,ik,3,Life_MEM_steps)/NC
-         E_P_Electron_lifetime(ib,ik) =SAVED_lifetime(ib,ik,4,Life_MEM_steps)/NC
-         E_P_Ho_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,5,Life_MEM_steps)/NC
-         E_P_El_abs_lifetime(ib,ik)   =SAVED_lifetime(ib,ik,6,Life_MEM_steps)/NC
+         RT_EP_life%Ho_abs(ib,ik)     =SAVED_lifetime(ib,ik,3,Life_MEM_steps)/NC
+         RT_EP_life%El_emit(ib,ik) =SAVED_lifetime(ib,ik,4,Life_MEM_steps)/NC
+         RT_EP_life%Ho_emit(ib,ik)   =SAVED_lifetime(ib,ik,5,Life_MEM_steps)/NC
+         RT_EP_life%El_abs(ib,ik)   =SAVED_lifetime(ib,ik,6,Life_MEM_steps)/NC
        endif
        !
      else
@@ -104,18 +99,18 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
        RT_H_occupations_reference(ib,ik)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
        !
        if (l_elphoton_scatt) then
-         E_PHOT_Hole_lifetime(ib,ik)=    0._SP
-         E_PHOT_Electron_lifetime(ib,ik)=0._SP
+         RT_EH_life%Ho_emit(ib,ik)=    0._SP
+         RT_EH_life%El_abs(ib,ik)=0._SP
        endif
        if (l_elel_scatt) then
-         E_E_Hole_lifetime(ib,ik)=    0._SP
-         E_E_Electron_lifetime(ib,ik)=0._SP
+         RT_EE_life%Ho_abs(ib,ik)=    0._SP
+         RT_EE_life%El_emit(ib,ik)=0._SP
        endif
        if (l_elph_scatt) then
-         E_P_Hole_lifetime(ib,ik)=    0._SP
-         E_P_Electron_lifetime(ib,ik)=0._SP
-         E_P_Ho_abs_lifetime(ib,ik)=  0._SP
-         E_P_El_abs_lifetime(ib,ik)=  0._SP
+         RT_EP_life%Ho_abs(ib,ik)=    0._SP
+         RT_EP_life%El_emit(ib,ik)=0._SP
+         RT_EP_life%Ho_emit(ib,ik)=  0._SP
+         RT_EP_life%El_abs(ib,ik)=  0._SP
        endif
      endif
      !

@@ -37,9 +37,10 @@ subroutine RT_output(what,VALUES,TIME,E)
 &                         N_RT_o_files,RT_o_file_is_open,RT_o_file_short,RT_o_file_long,&
 &                         n_RT_headings,RT_headings,N_MAX_RT_headings,RT_desc,Gr_desc,TIME_STEP_desc
  use RT_control,     ONLY:RT_NAN_found,OUTPUT_RT_IO_t
- use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_spin_magn,l_lftm_fit_temperatures, &
+ use RT_lifetimes,   ONLY:RT_mean_lifetimes,l_lftm_fit_temperatures,&
 &                         EE_prefactor,EP_prefactor,EP_abs_prefactor,RAD_prefactor,    &
-&                         RT_Tfit_lifetimes,NE_i_time
+&                         RT_Tfit_lifetimes
+ use real_time,      ONLY:RT_ind_J,RT_P,RT_spin_magn,NE_i_time
  use timing_m,       ONLY:timing
  use C_driver,       ONLY:code_bin
  use functions,      ONLY:NAN

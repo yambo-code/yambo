@@ -27,11 +27,10 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ
  use hamiltonian,    ONLY:B_mat_index
- use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,&
-&                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         l_RT_uses_E_FineGd,RT_occupations_locked,RT_levels,&
+ use RT_lifetimes,   ONLY:RT_EP_life,l_initial_equilibrium 
+ use real_time,      ONLY:l_RT_uses_E_FineGd,RT_occupations_locked,RT_levels,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
-&                         RT_life_delta_occupations,l_initial_equilibrium,q_weight_RT,&
+&                         RT_life_delta_occupations,q_weight_RT,&
 &                         RT_eh_en,RTibz,RT_bands
  use parallel_m,     ONLY:PAR_IND_B_mat
  !
@@ -126,27 +125,25 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
          !
        enddo
        !
-       ! Emission
-       E_P_Hole_lifetime(i_n,ik_rim)=E_P_Hole_lifetime(i_n,ik_rim)+&
+       ! PH Emission/Ho absorption
+       RT_EP_life%Ho_abs(i_n,ik_rim)=RT_EP_life%Ho_abs(i_n,ik_rim)+&
 &                                    f_times_abs*pre_factor*q_weight_RT(i_q,i_l,1)
-       E_P_Electron_lifetime(i_n,ik_rim)=E_P_Electron_lifetime(i_n,ik_rim)+&
-&                                        one_m_f_times_emit*pre_factor*q_weight_RT(i_q,i_l,1)
+       RT_EP_life%El_emit(i_n,ik_rim)=RT_EP_life%El_emit(i_n,ik_rim)+&
+&                                     one_m_f_times_emit*pre_factor*q_weight_RT(i_q,i_l,1)
        !
        if(.not.abs(N_q)>zero_dfl) cycle
        !
-       ! Stimulated Emission
-       E_P_Hole_lifetime(i_n,ik_rim)=E_P_Hole_lifetime(i_n,ik_rim)+&
+       ! PH Emission/Ho absorption (stimulated)
+       RT_EP_life%Ho_abs(i_n,ik_rim)=RT_EP_life%Ho_abs(i_n,ik_rim)+&
 &                                    f_times_abs*pre_factor*q_weight_RT(i_q,i_l,2)
-       E_P_Electron_lifetime(i_n,ik_rim)=E_P_Electron_lifetime(i_n,ik_rim)+&
-&                                        one_m_f_times_emit*pre_factor*q_weight_RT(i_q,i_l,2)
+       RT_EP_life%El_emit(i_n,ik_rim)=RT_EP_life%El_emit(i_n,ik_rim)+&
+&                                     one_m_f_times_emit*pre_factor*q_weight_RT(i_q,i_l,2)
        !
-       if (l_skip_ABS) cycle
-       !
-       ! Absorption
-       E_P_Ho_abs_lifetime(i_n,ik_rim)=E_P_Ho_abs_lifetime(i_n,ik_rim)+&
-&                                      f_times_emit*pre_factor*q_weight_RT(i_q,i_l,2)
-       E_P_El_abs_lifetime(i_n,ik_rim)=E_P_El_abs_lifetime(i_n,ik_rim)+&
-&                                      one_m_f_times_abs*pre_factor*q_weight_RT(i_q,i_l,2)
+       ! PH absorption/Ho emission (spontaneous)
+       RT_EP_life%Ho_emit(i_n,ik_rim)=RT_EP_life%Ho_emit(i_n,ik_rim)+&
+&                                     f_times_emit*pre_factor*q_weight_RT(i_q,i_l,2)
+       RT_EP_life%El_abs(i_n,ik_rim)=RT_EP_life%El_abs(i_n,ik_rim)+&
+&                                    one_m_f_times_abs*pre_factor*q_weight_RT(i_q,i_l,2)
        !
      enddo
      !

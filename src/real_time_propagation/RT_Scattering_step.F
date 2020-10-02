@@ -49,12 +49,11 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
  ! 
  use pars,           ONLY:SP,cI
  use electrons,      ONLY:spin_occ
- use real_time,      ONLY:RT_bands,RTibz,l_elel_scatt,l_elph_scatt,l_elphoton_scatt,          &
-&                         l_RT_relax_time_approx,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,    &
+ use RT_lifetimes,   ONLY:RT_EP_life,RT_EE_life,RT_EH_life,REF_lifetime
+ use real_time,      ONLY:RT_bands,RTibz,l_elel_scatt,l_elph_scatt,l_elphoton_scatt,  &
+&                         l_RT_relax_time_approx,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,&
 &                         RT_E_occupations,RT_H_occupations,l_RT_CCA_Kernel, &
-&                         RT_delta_occupations,REF_lifetime,E_E_Electron_lifetime,E_E_Hole_lifetime,              &
-&                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,         &
-&                         E_PHOT_Electron_lifetime,E_PHOT_Hole_lifetime,l_RT_include_eq_scatt,                     &
+&                         RT_delta_occupations,l_RT_include_eq_scatt,&
 &                         RT_is_statically_dephased,RT_is_dynamically_dephased,RT_Deph_Matrix,G_lesser_reference
  !
  implicit none
@@ -94,16 +93,16 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
    dGAMMA(2)=0._SP
    if(.not.l_RT_relax_time_approx) then
      if (l_elel_scatt) then
-       dGAMMA(1)=E_E_Electron_lifetime(ib,ik)
-       dGAMMA(2)=E_E_Hole_lifetime(ib,ik)
+       dGAMMA(1)=RT_EE_life%El_emit(ib,ik)
+       dGAMMA(2)=RT_EE_life%Ho_abs(ib,ik)
      endif
      if (l_elphoton_scatt) then
-       dGAMMA(1)=dGAMMA(1)+E_PHOT_Electron_lifetime(ib,ik)
-       dGAMMA(2)=dGAMMA(2)+E_PHOT_Hole_lifetime(ib,ik)
+       dGAMMA(1)=dGAMMA(1)+RT_EH_life%El_abs(ib,ik)
+       dGAMMA(2)=dGAMMA(2)+RT_EH_life%Ho_emit(ib,ik)
      endif
      if (l_RT_CCA_Kernel.and.l_elph_scatt) then
-       dGAMMA(1)=dGAMMA(1)+ E_P_Electron_lifetime(ib,ik)+E_P_El_abs_lifetime(ib,ik)
-       dGAMMA(2)=dGAMMA(2)+ E_P_Hole_lifetime(ib,ik)    +E_P_Ho_abs_lifetime(ib,ik)
+       dGAMMA(1)=dGAMMA(1)+ RT_EP_life%El_emit(ib,ik)+RT_EP_life%El_abs(ib,ik)
+       dGAMMA(2)=dGAMMA(2)+ RT_EP_life%Ho_abs(ib,ik)    +RT_EP_life%Ho_emit(ib,ik)
      endif
    endif
    !

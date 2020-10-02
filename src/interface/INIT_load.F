@@ -79,8 +79,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,     &
 &                        CACHE_OBS_INTERVAL_time_INPUT
  use stderr,        ONLY:intc
+ use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
-&                        NE_tot_time,RT_life_extrap_times_INPUT,RT_bands,         &
+&                        NE_tot_time,RT_bands,         &
 &                        RT_ave_dephasing,RT_eh_en,RT_scatt_tresh,Gr_kind,       &
 &                        NE_MEM_treshold,NE_time_step_update_jump_INPUT,          &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
@@ -428,7 +429,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
- call it(defs,'RAD_prefactor','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
+ call it(defs,'RADmagnific','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
  call it(defs,'PhLifeTime', '[RT] Constant Dephasing Time',Phase_LifeTime,unit=Time_unit(1))
  call it(defs,'DephEThresh', '[RT] Threshold on the energy difference between two states to dephase them',&
          &   RT_deph_deg_thresh,unit=E_unit,Verb_level=V_real_time)

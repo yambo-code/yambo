@@ -52,7 +52,8 @@ subroutine RT_start_and_restart(E,k,q)
 &                         RT_E_occupations_reference,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
 &                         RT_eh_en,G_MEM_steps,RT_bands,&
-&                         NE_time_step_update_jump,RT_life_extrap_times,l_velocity_gauge_corr
+&                         NE_time_step_update_jump,l_velocity_gauge_corr
+ use RT_lifetimes,   ONLY:RT_life_extrap_times
 #if defined _PHEL
  use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_delta_occupations,RT_PH_occupations_reference
 #endif

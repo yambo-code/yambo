@@ -75,13 +75,12 @@ subroutine RT_relaxation(E,k,q,Time)
  !DEBUG<
 #endif
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
+ use RT_lifetimes,   ONLY:RT_EP_life,RT_EE_life,RT_EH_life,l_RT_eval_lifetimes,&
+&                         Life_MEM_steps,l_initial_equilibrium,EE_prefactor,EP_prefactor,EP_abs_prefactor,&
+&                         SAVED_times
  use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
-&                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
-&                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
-&                         REF_lifetime,FIRST_step,l_initial_equilibrium,RT_is_statically_dephased,&
-&                         RT_nk,EE_prefactor,EP_prefactor,EP_abs_prefactor,&
-&                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,SAVED_times,ADD_to_saved_values,&
-&                         RT_is_dynamically_dephased,l_RT_relax_time_approx,l_RT_eval_lifetimes
+&                         l_RT_CCA_Kernel,FIRST_step,RT_is_statically_dephased,&
+&                         RT_nk,ADD_to_saved_values,RT_is_dynamically_dephased,l_RT_relax_time_approx
  use timing_m,       ONLY:timing
  !
  implicit none
@@ -231,20 +230,20 @@ subroutine RT_relaxation(E,k,q,Time)
  if (l_RT_eval_lifetimes) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
  !
  if (l_elel_scatt) then
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_E_Hole_lifetime,1)
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_E_Electron_lifetime,2)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EE_life%Ho_abs,1)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EE_life%El_emit,2)
  endif
  if (l_elph_scatt) then
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_P_Hole_lifetime,3)
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_P_Electron_lifetime,4)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_life%Ho_abs,3)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_life%El_emit,4)
    if(Bose_Temp>0._SP) then
-     call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_P_Ho_abs_lifetime,5)
-     call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_P_El_abs_lifetime,6)
+     call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_life%Ho_emit,5)
+     call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_life%El_abs,6)
    endif
  endif
  if (l_elphoton_scatt) then
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_PHOT_Hole_lifetime,7)
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_PHOT_Electron_lifetime,8)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EH_life%Ho_emit,7)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EH_life%El_abs,8)
  endif
  !
  if (.not.l_RT_eval_lifetimes) call Impose_Conservations( )
@@ -261,11 +260,11 @@ subroutine RT_relaxation(E,k,q,Time)
      !
      ! Zero dN/dT & dE/dT & d(DeltaN)/dT
      !===================================
-     if (l_elel_scatt)     call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ')
-     if (l_elph_scatt)     call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
+     if (l_elel_scatt)     call RT_impose_zero_dE_and_dN(E,k,RT_EE_life%Ho_abs,RT_EE_life%El_emit,'elel ')
+     if (l_elph_scatt)     call RT_impose_zero_dE_and_dN(E,k,RT_EP_life%Ho_abs,RT_EP_life%El_emit,'elph1')
      if (l_elph_scatt.and.Bose_Temp>0._SP) &
-&                          call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
-     if (l_elphoton_scatt) call RT_impose_zero_dE_and_dN(E,k,E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,'radiative')
+&                          call RT_impose_zero_dE_and_dN(E,k,RT_EP_life%Ho_emit,RT_EP_life%El_abs,'elph2')
+     if (l_elphoton_scatt) call RT_impose_zero_dE_and_dN(E,k,RT_EH_life%Ho_emit,RT_EH_life%El_abs,'radiative')
      !
    end subroutine
    !

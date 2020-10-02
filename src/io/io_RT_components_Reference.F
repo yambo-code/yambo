@@ -27,7 +27,8 @@ subroutine io_RT_components_Reference(ID)
  use drivers,        ONLY:l_elph_scatt
  use R_lattice,      ONLY:nqbz
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,read_is_on
- use real_time,      ONLY:RT_init_occupation_reference,q_weight_RT,REF_lifetime,&
+ use RT_lifetimes,   ONLY:REF_lifetime
+ use real_time,      ONLY:RT_init_occupation_reference,q_weight_RT,&
 &                         G_lesser_reference,RT_nk,RT_nbands
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches

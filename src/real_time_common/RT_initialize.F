@@ -40,15 +40,16 @@ subroutine RT_initialize(E,k,q)
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,         &
 &                         TIME_adjust,SAVE_G_history,CACHE_OBS_INTERVAL_time
+ use RT_lifetimes,   ONLY:RT_life_extrap_times,RT_life_extrap_times_INPUT,l_RT_lifetimes_extrapolation,&
+&                         Life_MEM_steps,l_lftm_fit_temperatures
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
-&                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
-&                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
+&                         NE_steps,NE_tot_time,l_RT_induced_field,Gr_kind,       &
+&                         RAD_LifeTime,l_RT_CCA_Kernel,Phase_LifeTime,         &
 &                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_FineGd,DbGd_EE_Nk_table,    &
-&                         RT_life_extrap_times_INPUT,l_RT_lifetimes_extrapolation,Gr_kind,     &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
 &                         l_RT_update_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
 &                         NE_time_step_update_jump,NE_initial_time_step_update,NE_i_time,     &
-&                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
+&                         RAD_magnification,NE_step_update_treshold, &
 &                         NE_time_step_update_jump_INPUT,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,    &
@@ -85,7 +86,7 @@ subroutine RT_initialize(E,k,q)
  ! GPL_EXCLUDE_START
  !
  call parser('DephCVonly',           RT_deph_cv_only)
- call parser('RAD_prefactor',        RAD_magnification)
+ call parser('RADmagnific',          RAD_magnification)
  call parser('VelGaugeCorr',         l_velocity_gauge_corr)
  call parser('PfromJ',               l_P_integrating_J)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)

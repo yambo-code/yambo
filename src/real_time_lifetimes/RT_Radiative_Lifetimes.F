@@ -30,8 +30,8 @@ subroutine RT_Radiative_Lifetimes(i_k,E,k,q)
  use R_lattice,           ONLY:bz_samp
  use parallel_m,          ONLY:PAR_DIPk_ibz_index,PAR_IND_B_mat
  use DIPOLES,             ONLY:DIP_P
- use real_time,           ONLY:RT_bands,E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,l_initial_equilibrium,&
-&                              RT_life_delta_occupations,RTibz,RT_H_occupations_reference,&
+ use RT_lifetimes,        ONLY:RT_EH_life,l_initial_equilibrium
+ use real_time,           ONLY:RT_bands,RT_life_delta_occupations,RTibz,RT_H_occupations_reference,&
 &                              RT_E_occupations_reference,RAD_magnification
  use hamiltonian,         ONLY:B_mat_index
  !
@@ -72,9 +72,9 @@ subroutine RT_Radiative_Lifetimes(i_k,E,k,q)
      !
      pre_factor=P_square/3._SP/SPEED_OF_LIGHT**2*abs(E_diff)
      !
-     E_PHOT_Electron_lifetime(i_n,i_k)=E_PHOT_Electron_lifetime(i_n,i_k)+&
+     RT_EH_life%El_abs(i_n,i_k)=RT_EH_life%El_abs(i_n,i_k)+&
 &                                   pre_factor*Hole_f_m*theta_function( E_diff,0.01/HA2EV,0)*RAD_magnification
-     E_PHOT_Hole_lifetime(i_n,i_k)=E_PHOT_Hole_lifetime(i_n,i_k)+&
+     RT_EH_life%Ho_emit(i_n,i_k)=RT_EH_life%Ho_emit(i_n,i_k)+&
 &                                   pre_factor*     f_m*theta_function(-E_diff,0.01/HA2EV,0)*RAD_magnification
      !
    enddo Bp_loop

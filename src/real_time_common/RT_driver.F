@@ -46,9 +46,9 @@ subroutine RT_driver(E,X,k,q,Dip)
  use real_time,      ONLY:RT_potential,RT_kind,RT_xc_functional,RT_perturbation,&
 &                         NE_steps,RT_step,G_lesser,RT_bands,&
 &                         RT_alloc,RT_free,NE_i_time,eval_energy,&
-&                         rho_reference,magn_reference, &
+&                         rho_reference,magn_reference,RT_nk, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_RT_is_WFfree,&
-&                         dG_lesser,l_initial_equilibrium,NE_tot_time,&
+&                         dG_lesser,NE_tot_time,&
 &                         i_MEM_prev,i_MEM_now,RT_is_dynamically_dephased,&
 &                         l_RT_update_Energies,l_NE_with_fields,l_update_SOC,l_velocity_gauge_corr
 #if defined _PHEL
@@ -64,6 +64,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                          PAR_COM_Xk_ibz_INDEX
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  use units,           ONLY:FS2AUT
+ use RT_lifetimes,    ONLY:RT_ALL_lifetimes_alloc,RT_ALL_lifetimes_free,l_initial_equilibrium
  !
 #include<memory.h>
  !
@@ -191,6 +192,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  ! Core allocations
  !
  call RT_alloc(E,"all")
+ call RT_ALL_lifetimes_alloc( )
  call RT_control_alloc("all")
 #if defined _PHEL
  if (l_phel_scatt) call RT_PHEL_alloc("phonons")
@@ -378,6 +380,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
 #if defined _PHEL
      if (l_phel_scatt) call RT_PHEL_free("all")
 #endif
+     call RT_ALL_lifetimes_free()
      call WF_free(WF)
      !
      ! GPL_EXCLUDE_START

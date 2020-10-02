@@ -23,11 +23,11 @@
 !
 module real_time
  !
- use drivers,    ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
- use pars,       ONLY:DP,SP,schlen,lchlen,LP
- use units,      ONLY:FS2AUT
- use global_XC,  ONLY:QP_SE_NONE
- use R_lattice,  ONLY:bz_fine_grid
+ use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
+ use pars,           ONLY:DP,SP,schlen,lchlen,LP
+ use units,          ONLY:FS2AUT
+ use global_XC,      ONLY:QP_SE_NONE
+ use R_lattice,      ONLY:bz_fine_grid
  !
 #include<memory.h>
  !
@@ -87,14 +87,6 @@ module real_time
  integer  :: NE_i_time=1 ! = NE_time/RT_step+1
  integer  :: NE_steps    ! Still relative to RT_step
  !
- ! Here I control the way the time evolution is sampled for the e-p and e-e
- ! channels. I will see later if this can be somehow extended/duplicated
- ! for the static correlations
- !
- logical  :: l_RT_lifetimes_extrapolation = .FALSE.! If .TRUE. the lifetimes not calculated are extrapolated. Otherwise are kept constant
- real(SP) :: RT_life_extrap_times(2)               ! Lifetimes are evaluated at distance RT_life_extrap_times(2) and in groups long RT_life_extrap_times(1)
- real(SP) :: RT_life_extrap_times_INPUT(2)
- !
  logical  :: l_RT_relax_time_approx = .FALSE.
  real(SP) :: RT_RTA_temp(2)
  real(SP) :: RT_RTA_chem(2)
@@ -113,7 +105,6 @@ module real_time
  ! ... Memory ...
  !
  real(SP) :: NE_MEM_treshold
- integer  :: Life_MEM_steps
  integer  :: G_MEM_steps                ! By default only G_lesser@t and @t+1
  integer  :: i_MEM_prev                 ! Updated in RT_driver
  integer  :: i_MEM_now                  ! Updated in RT_driver
@@ -122,12 +113,11 @@ module real_time
  !
  ! ... Window on the k-points/bands allowed to follow the dynamics ...
  !
- real(SP)             :: RT_eh_en(2)
- real(SP)             :: RT_scatt_tresh
+ real(SP)    :: RT_eh_en(2)
+ real(SP)    :: RT_scatt_tresh
  !
  ! Macroscopic induced current ...
  !--------------------------------
- !
  complex(SP) :: RT_ind_J(3)
  complex(SP) :: RT_ind_J_prev(3)
  !
@@ -188,7 +178,6 @@ module real_time
  !
  ! ELPH kernel...
  !----------------
- !
  logical     :: l_RT_CCA_Kernel
  !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
@@ -216,74 +205,25 @@ module real_time
  end type
  !
  type(RT_levels_kind),save  :: RT_levels
- ! 
- ! Locks, reference & Logicals
- !-----------------------------
- logical                  :: l_RT_relaxation_update_reference
- logical                  :: l_RT_constant_lifetimes
- logical                  :: l_RT_extrapolate_lifetimes
- logical                  :: l_RT_eval_lifetimes
- logical                  :: l_initial_equilibrium
  !
  ! Occupations
  !-------------
- !
  real(SP),    allocatable :: RT_E_occupations(:,:)
  real(SP),    allocatable :: RT_H_occupations(:,:)
  real(SP),    allocatable :: RT_delta_occupations(:,:)       ! Running values. Updated at each time step.
  real(SP),    allocatable :: RT_life_delta_occupations(:,:)  ! Used in the Lifetimes definition. Defined in the Lifetimes procedure only.
  real(SP),    allocatable :: RT_E_occupations_reference(:,:)
  real(SP),    allocatable :: RT_H_occupations_reference(:,:)
- !
  logical,     allocatable :: RT_occupations_locked(:,:)
- !
- ! EL-PH RT life-times
- !-----------------------------------------
- real(SP),    allocatable :: E_P_Hole_lifetime(:,:)
- real(SP),    allocatable :: E_P_Electron_lifetime(:,:)
- real(SP),    allocatable :: E_P_El_abs_lifetime(:,:)
- real(SP),    allocatable :: E_P_Ho_abs_lifetime(:,:)
- !
- ! Coulomb RT life-times
- !-----------------------
- real(SP),    allocatable :: E_E_Hole_lifetime(:,:)
- real(SP),    allocatable :: E_E_Electron_lifetime(:,:)
- !
- ! EL-PHOT RT life-times
- !-----------------------
- real(SP),    allocatable :: E_PHOT_Hole_lifetime(:,:)
- real(SP),    allocatable :: E_PHOT_Electron_lifetime(:,:)
- !
- ! Saved RT life-times
- !-----------------------
- real(SP),    allocatable :: SAVED_times(:)
- real(SP),    allocatable :: REF_lifetime(:,:,:)
- real(SP),    allocatable :: SAVED_lifetime(:,:,:,:)
- !
- ! Ouput Lifetimes, ratio fit and temperatures
- !---------------------------------------------
- logical                  :: l_lftm_fit_stable(2)
- logical                  :: l_lftm_fit_temperatures
- integer                  :: Nfitted_lifetimes(2)
- real(SP)                 :: RT_mean_lifetimes(8) ! 1-2 (e-e), 3-6 (e-p), 7-8 (e-photon)
- real(SP)                 :: RT_Tfit_lifetimes(4)
- real(SP)                 :: RT_Efit_lifetimes(4)
- !
- real(SP)                 :: EE_prefactor(2)      ! 1=valence, 2=conduction
- real(SP)                 :: RAD_prefactor(2)
- real(SP)                 :: EP_prefactor(2)
- real(SP)                 :: EP_abs_prefactor(2)
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
- !
  real(SP)                 :: RT_ave_dephasing
  real(SP),    allocatable :: RT_INPUT_Deph_limits(:,:)
  real(SP),    allocatable :: RT_Deph_Matrix(:,:,:)
  !
  ! GFs (retarded)
  !----------------
- !
  integer           :: two_alpha
  real(SP)          :: Gr_QP_width
  character(schlen) :: Gr_kind
@@ -291,7 +231,6 @@ module real_time
  !
  ! GFs
  !-----
- !
  complex(SP), allocatable :: G_lesser(:,:,:,:)          ! Band, Band, K, Time
  complex(SP), allocatable :: dG_lesser(:,:,:,:)
  complex(SP), allocatable :: G_lesser_reference(:,:,:)  ! Band, Band, K
@@ -502,42 +441,6 @@ module real_time
        YAMBO_ALLOC(RT_RTA_H_occ_infty,(RT_bands(1):RT_bands(2),RT_nk))
      endif
      !
-     if (l_elphoton_scatt) then
-       YAMBO_ALLOC(E_PHOT_Hole_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
-       YAMBO_ALLOC(E_PHOT_Electron_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
-       E_PHOT_Hole_lifetime=0._SP
-       E_PHOT_Electron_lifetime=0._SP
-     endif
-     !
-     if (l_elel_scatt) then
-       YAMBO_ALLOC(E_E_Hole_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
-       YAMBO_ALLOC(E_E_Electron_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
-       E_E_Hole_lifetime=0._SP
-       E_E_Electron_lifetime=0._SP
-     endif
-     !
-     if (l_RT_CCA_Kernel.and.l_elph_scatt) then
-       YAMBO_ALLOC(E_P_Hole_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
-       YAMBO_ALLOC(E_P_Electron_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
-       YAMBO_ALLOC(E_P_El_abs_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
-       YAMBO_ALLOC(E_P_Ho_abs_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
-       E_P_Hole_lifetime=0._SP
-       E_P_Electron_lifetime=0._SP
-       E_P_El_abs_lifetime=0._SP
-       E_P_Ho_abs_lifetime=0._SP
-     endif
-     !
-     if (l_elel_scatt.or.(l_RT_CCA_Kernel.and.l_elph_scatt).or.l_elphoton_scatt) then
-       YAMBO_ALLOC(REF_lifetime,(RT_bands(1):RT_bands(2),RT_nk,8))
-       REF_lifetime=0._SP
-       if (Life_MEM_steps>0) then
-         YAMBO_ALLOC(SAVED_lifetime,(RT_bands(1):RT_bands(2),RT_nk,8,Life_MEM_steps))!e-eh,e-ee,e-ph,e-pe,e-ph(abs),e-pe(abs),e-gh,e-g)
-         YAMBO_ALLOC(SAVED_times,(Life_MEM_steps))
-         SAVED_lifetime=0._SP
-         SAVED_times=0._SP
-       endif
-     endif
-     !
      if(l_all.or.l_carriers) then
        !
        ! Occ's ...
@@ -637,17 +540,6 @@ module real_time
      YAMBO_FREE(DbGd_EE_scatt_table)
      YAMBO_FREE(E_xc)
      YAMBO_FREE(RT_TIME_status)
-     YAMBO_FREE(E_PHOT_Hole_lifetime)
-     YAMBO_FREE(E_PHOT_Electron_lifetime)
-     YAMBO_FREE(E_E_Hole_lifetime)
-     YAMBO_FREE(E_E_Electron_lifetime)
-     YAMBO_FREE(E_P_Hole_lifetime)
-     YAMBO_FREE(E_P_Electron_lifetime)
-     YAMBO_FREE(E_P_El_abs_lifetime)
-     YAMBO_FREE(E_P_Ho_abs_lifetime)
-     YAMBO_FREE(REF_lifetime)
-     YAMBO_FREE(SAVED_lifetime)
-     YAMBO_FREE(SAVED_times)
      YAMBO_FREE(REF_V_xc_sc)
      !
      if(l_all.or.l_carriers) then

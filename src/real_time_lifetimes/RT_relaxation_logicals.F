@@ -26,9 +26,9 @@ subroutine RT_relaxation_logicals( )
  ! Here I define the logicals the govermns the relaxation procedure
  !
  use RT_control,     ONLY:NE_i_start_time
- use real_time,      ONLY:l_RT_eval_lifetimes,l_RT_relaxation_update_reference,RT_TIME_status,&
-&                         NE_i_time,FIRST_step,NE_i_time,Life_MEM_steps,l_initial_equilibrium,&
-&                         l_RT_constant_lifetimes,l_RT_extrapolate_lifetimes,RT_is_dynamically_dephased
+ use RT_lifetimes,   ONLY:l_RT_eval_lifetimes,l_RT_relaxation_update_reference,Life_MEM_steps,&
+&                         l_initial_equilibrium,l_RT_constant_lifetimes,l_RT_extrapolate_lifetimes
+ use real_time,      ONLY:RT_TIME_status,NE_i_time,FIRST_step,NE_i_time,RT_is_dynamically_dephased
  !
  implicit none
  !

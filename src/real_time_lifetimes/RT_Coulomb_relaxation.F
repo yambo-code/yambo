@@ -26,10 +26,11 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use pars,            ONLY:SP,rZero,cZero,pi
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
- use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
+ use RT_lifetimes,    ONLY:RT_EE_life,l_initial_equilibrium 
+ use real_time,       ONLY:RT_occupations_locked,&
 &                          RT_life_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                          l_RT_uses_E_FineGd,RT_levels,RTibz,&
-&                          l_initial_equilibrium,DbGd_EE_scatt_table,DbGd_EE_Nk_table,RT_eh_en
+&                          DbGd_EE_scatt_table,DbGd_EE_Nk_table,RT_eh_en
  use plasma,          ONLY:EH_gas
  use collision_ext,   ONLY:GW_NEQ_COLL_element,GW_NEQ_collisions
  use parallel_m,      ONLY:PAR_Q_bz_index,PAR_IND_Q_bz,PAR_IND_Plasma,PAR_PLASMA_index
@@ -219,8 +220,8 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            !
          enddo
          !
-         E_E_Hole_lifetime(i_n,ik_rim)=E_E_Hole_lifetime(i_n,ik_rim)+TMP_Hole_lifetime*pre_factor
-         E_E_Electron_lifetime(i_n,ik_rim)=E_E_Electron_lifetime(i_n,ik_rim)+TMP_Electron_lifetime*pre_factor
+         RT_EE_life%Ho_abs(i_n,ik_rim)=RT_EE_life%Ho_abs(i_n,ik_rim)+TMP_Hole_lifetime*pre_factor
+         RT_EE_life%El_emit(i_n,ik_rim)=RT_EE_life%El_emit(i_n,ik_rim)+TMP_Electron_lifetime*pre_factor
          !
        enddo
        !

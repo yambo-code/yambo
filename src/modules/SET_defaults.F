@@ -109,16 +109,14 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db,&
 &                     CACHE_OBS_last_point,CACHE_OBS_INTERVAL_time,CACHE_OBS_INTERVAL_time_INPUT,   &
 &                     CACHE_OBS_steps,CACHE_OBS_steps_now,RT_NAN_found
- use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
-&                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
-&                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
-&                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,              &
-&                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
-&                     RT_Efit_lifetimes,l_update_SOC,                                     &
-&                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
-&                     RAD_prefactor,i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,           &
-&                     RT_is_statically_dephased,RT_is_dynamically_dephased,               &
-&                     RT_deph_deg_thresh,RT_deph_cv_only,                                 &
+ use RT_lifetimes,ONLY:RT_life_extrap_times
+ use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,&
+&                     Gr_kind,two_alpha,l_RT_CCA_Kernel,RAD_LifeTime,Phase_LifeTime,&
+&                     NE_tot_time,NE_MEM_treshold,RT_eh_en,l_update_SOC,&
+&                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,&
+&                     i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,&
+&                     RT_is_statically_dephased,RT_is_dynamically_dephased,&
+&                     RT_deph_deg_thresh,RT_deph_cv_only,&
 &                     NE_time_step_update_last_point,NE_time_step_update_jump,NE_time_step_update_jump_INPUT, &
 &                     NE_initial_time_step_update,NE_step_update_treshold
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
@@ -628,18 +626,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  Gr_kind="HS"
  two_alpha=1
- !
- ! FITs
- !
- l_lftm_fit_stable=.FALSE.
- l_lftm_fit_temperatures=.FALSE.
- Nfitted_lifetimes=0
- RT_Tfit_lifetimes=0._SP
- RT_Efit_lifetimes=0._SP
- RAD_prefactor=0._SP
- EE_prefactor=0._SP
- EP_prefactor=0._SP
- EP_abs_prefactor=0._SP
  !
  ! RT_ctl
  !

@@ -26,12 +26,10 @@ integer function variables_RT_dynamic(ID)
  use pars,           ONLY:SP,IP
  use units,          ONLY:AUT2FS
  use RT_output_m,    ONLY:RT_desc,n_RT_desc_static,TIME_STEP_desc
- use real_time,      ONLY:RT_dyn_step, &
-&                         NE_initial_time_step_update,NE_time_step_update_jump,&
-&                         NE_time,NE_i_time,&
-&                         NE_time_step_update_jump_INPUT, &
-&                         l_Update_Time_Step,&
-&                         NE_step_update_treshold,RT_MAX_step,RT_life_extrap_times
+ use RT_lifetimes,   ONLY:RT_life_extrap_times,RT_life_extrap_times
+ use real_time,      ONLY:RT_dyn_step,NE_initial_time_step_update,NE_time_step_update_jump,&
+&                         NE_time,NE_i_time,NE_time_step_update_jump_INPUT, &
+&                         l_Update_Time_Step,NE_step_update_treshold,RT_MAX_step
  use IO_m,           ONLY:io_variable_elemental,def_variable_elemental,io_status
  !
  implicit none

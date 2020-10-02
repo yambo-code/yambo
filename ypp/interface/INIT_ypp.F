@@ -511,7 +511,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_plot=l_plot .or. runlevel_is_on('RTdeltaRho')
 #endif
  l_free_hole =runlevel_is_on('freehole')
- l_average_eh=runlevel_is_on('average_eh')
+ l_average_eh=runlevel_is_on('avehole')
  l_amplitude=runlevel_is_on('amplitude')
  l_exc_wf   =runlevel_is_on('wavefunction').and.runlevel_is_on('excitons')
  l_sp_wf    =runlevel_is_on('wavefunction').and.runlevel_is_on('electrons')
@@ -685,7 +685,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      call initactivate(1,"DipWeight")
    endif
    if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step Weight_treshold")
-   if (l_exc_wf.and.(.not.l_free_hole.or..not.l_average_eh)) call initactivate(1,"Cells Hole Dimension") 
+   if (l_exc_wf.and.(.not.l_free_hole.and..not.l_average_eh)) call initactivate(1,"Cells Hole Dimension") 
    if (l_exc_wf.and.(l_free_hole.or.l_average_eh)) call initactivate(1,"WFMult") 
    if (l_spin) call initactivate(1,"Degen_Step")
 #if defined _YPP_ELPH

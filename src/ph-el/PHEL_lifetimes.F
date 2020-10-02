@@ -118,15 +118,14 @@ subroutine PHEL_lifetimes(iq,E,k,q)
      !
      do i_n=RT_bands(1),RT_bands(2)
        !
-       ! [NOTE] the m.e. in elph_gkkp DO NOT have indices order exchanged (unlike RT_ELPH case)
        Gkkp_sq(i_n,i_n)=phel_gkkp_expanded_sq(i_n,i_n,il,iq_mem,ikbz)
-       if(sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_n)=rZERO
+       if (sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) cycle
        !
        do i_np=RT_bands(1),RT_bands(2)
          !
          if (i_n.ne.i_np) then
-           Gkkp_sq(i_n,i_np)=phel_gkkp_expanded_sq(i_n,i_np,il,iq_mem,ikbz)
-           !if (sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_np)=rZERO
+           Gkkp_sq(i_n,i_np)=phel_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ikbz)
+           if (sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) cycle
          endif 
          !
          ! Extra condition: the EP scattering cannot cross the gap
@@ -158,7 +157,7 @@ subroutine PHEL_lifetimes(iq,E,k,q)
          !
          if( pre_factor==0._SP ) cycle
          !
-        do ik_rim=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
+         do ik_rim=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
            !
            if (RT_occupations_locked(i_n,ik_rim)) cycle
            !

@@ -262,7 +262,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'Weight_treshold', 'Print transitions above this weight treshold (max normalized to 1.)',&
 &              EXCITON_weight_treshold,verb_level=V_general)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
- call it(defs,'WfAverage', 'Average hole or electron wave-function ("h" or "e")',AVE_exc,case="a")
+ call it(defs,'WFAverage', 'Average hole or electron wave-function ("h" or "e")',AVE_exc,case="a")
  call it(defs,'Hole', '[cc] Hole position in unit cell (positive)',r_hole)
  !
  ! WFs

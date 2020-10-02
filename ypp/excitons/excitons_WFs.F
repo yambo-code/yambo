@@ -193,7 +193,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
            ! \psi_e(r) = \int_{r_h} \psi (r_e, r_h)
            !
            do ir_hole=1,nr_tot
-             r_hole=r_cell_cc(:,ir)
+             r_hole=r_cell_cc(:,ir_hole)
              kp_dot_r_h = dot_product(r_hole,Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
              WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))    ! hole WF
              WF_int=WF_int+cmplx(cos(-kp_dot_r_h),sin(-kp_dot_r_h),kind=SP)*WF1_ir

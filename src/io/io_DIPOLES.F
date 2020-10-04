@@ -31,7 +31,7 @@ integer function io_DIPOLES(Dip,ID)
 &                        io_bulk,read_is_on,io_header,io_extension,&
 &                        IO_NOT_ALLOWED,io_fragment
 #if defined _RT || defined _KERR
- use DIPOLES,       ONLY:DIP_spin,DIP_orbital,DIP_P_spinor,&
+ use DIPOLES,       ONLY:DIP_spin,DIP_orbital,&
 &                        compute_Orb_dipoles,compute_Spin_dipoles
  use electrons,     ONLY:n_spinor
 #endif
@@ -102,12 +102,10 @@ integer function io_DIPOLES(Dip,ID)
  DIP_size=(/2,3,Dip%db_ib(2)-Dip%db_ib_lim(2)+1,Dip%db_ib_lim(1)-Dip%db_ib(1)+1/)
  DIP_ipos=(/1,1,Dip%ib_lim(2)-Dip%db_ib_lim(2)+1,Dip%ib(1)-Dip%db_ib(1)+1/)
  !
-#if defined _RT || defined _KERR
+#if defined _RT
  Pspinor_size(1:4)=(/2,3,n_spinor,n_spinor/)
  Pspinor_ipos(1:4)=(/1,1,1,1/)
-#endif
  !
-#if defined _RT
  Pspinor_size(5:6)=DIP_size(3:4)
  Pspinor_ipos(5:6)=DIP_ipos(3:4)
 #endif

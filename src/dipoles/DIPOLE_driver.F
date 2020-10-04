@@ -191,14 +191,16 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    !
    ! GPL_EXCLUDE_START 
    !
-#if defined _RT || defined _KERR
+#if defined _RT
    if (compute_Orb_dipoles)        call DIPOLE_orbital_magnetization(Xen,Xk,Dip)
-   !
-   if (Compute_Spin_dipoles)       call DIPOLE_spin_magnetization(Xen,Xk,Dip)
 #endif
    !
 #if defined _KERR
    if (l_BS_dichroism)             call DIPOLE_orb_magn_forCD(Xen,Xk,Dip)
+#endif
+   !
+#if defined _RT || defined _KERR
+   if (Compute_Spin_dipoles)       call DIPOLE_spin_magnetization(Xen,Xk,Dip)
 #endif
    !
    ! GPL_EXCLUDE_END

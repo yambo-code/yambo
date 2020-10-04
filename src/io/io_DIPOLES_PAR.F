@@ -110,12 +110,10 @@ integer function io_DIPOLES(Dip,ID)
  DIP_size=(/2,3,Dip%db_ib(2)-Dip%db_ib_lim(2)+1,Dip%db_ib_lim(1)-Dip%db_ib(1)+1,nXkibz,n_sp_pol/)
  DIP_ipos=(/1,1,Dip%ib_lim(2)-Dip%db_ib_lim(2)+1,Dip%ib(1)-Dip%db_ib(1)+1,ik,i_sp_pol/)
  !
-#if defined _RT || defined _KERR
+#if defined _RT
  Pspinor_size(1:4)=(/2,3,n_spinor,n_spinor/)
  Pspinor_ipos(1:4)=(/1,1,1,1/)
-#endif
  !
-#if defined _RT
  Pspinor_size(5:7)=DIP_size(3:5)
  Pspinor_ipos(5:7)=DIP_ipos(3:5)
 #endif

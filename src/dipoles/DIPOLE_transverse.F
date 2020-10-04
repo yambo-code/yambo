@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
+subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  ! This routine returns <iR> and <P^2>.
  !
@@ -29,9 +29,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  use drivers,             ONLY:l_sc_run,l_nl_optics
 #if defined _PL
  use drivers,             ONLY:l_photolum
-#endif
-#if defined _RT
- use drivers,             ONLY:l_real_time
 #endif
  use interfaces,          ONLY:WF_load,WF_free
  use LIVE_t,              ONLY:live_timing
@@ -42,7 +39,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,pp_kbv_dim_yambo,pp_kbv_table,pp_factor
  use R_lattice,           ONLY:bz_samp
  use R_lattice,           ONLY:g_vec_d,g_vec
- use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach
+ use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach,&
+&                              compute_P2_dipoles,compute_Spin_dipoles
  use X_m,                 ONLY:l_X_terminator
  use IO_m,                ONLY:io_control,manage_action,RD_CL_IF_END,OP_RD
  use wave_func,           ONLY:wf_ng,WF
@@ -57,7 +55,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
  type(DIPOLE_t),intent(inout) :: Dip
- logical,       intent(in)    :: l_real_time_magn_dipoles
  !
  ! Work Space
  !
@@ -82,7 +79,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  !
  l_eval_DIP_iR=use_g_space_approach
  l_eval_DIP_V =use_g_space_approach.or.Dip%force_v_g_space
- l_eval_DIP_P2=.false.
+ l_eval_DIP_P2=compute_P2_dipoles
  !
 #if defined _PL
  l_eval_DIP_V =l_eval_DIP_V.or.l_photolum
@@ -90,17 +87,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
 #if defined _NL && !defined _PL
  l_eval_DIP_V =l_eval_DIP_V.or.l_nl_optics
 #endif
- !
- ! GPL_EXCLUDE_START
- !
-#if defined _SC
- l_eval_DIP_P2=l_sc_run
-#endif
-#if defined _RT
- l_eval_DIP_P2=l_real_time
-#endif
- !
- ! GPL_EXCLUDE_END
  !
  ! Synchronize some memory
  if (have_cuda) then
@@ -242,7 +228,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
          !============
          !
 #if defined _RT
-         if (l_real_time_magn_dipoles.and.n_spinor==2) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor
+         if (compute_Spin_dipoles.and.n_spinor==2) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor
 #endif
          !
          ! GPL_EXCLUDE_END

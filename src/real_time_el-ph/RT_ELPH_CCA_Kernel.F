@@ -126,23 +126,23 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
        enddo
        !
        ! PH Emission/Ho absorption
-       RT_EP_life%Ho_abs(i_n,ik_rim)=RT_EP_life%Ho_abs(i_n,ik_rim)+&
+       RT_EP_life%SPONT_abs(i_n,ik_rim)=RT_EP_life%SPONT_abs(i_n,ik_rim)+&
 &                                    f_times_abs*pre_factor*q_weight_RT(i_q,i_l,1)
-       RT_EP_life%El_emit(i_n,ik_rim)=RT_EP_life%El_emit(i_n,ik_rim)+&
+       RT_EP_life%SPONT_emit(i_n,ik_rim)=RT_EP_life%SPONT_emit(i_n,ik_rim)+&
 &                                     one_m_f_times_emit*pre_factor*q_weight_RT(i_q,i_l,1)
        !
        if(.not.abs(N_q)>zero_dfl) cycle
        !
        ! PH Emission/Ho absorption (stimulated)
-       RT_EP_life%Ho_abs(i_n,ik_rim)=RT_EP_life%Ho_abs(i_n,ik_rim)+&
+       RT_EP_life%SPONT_abs(i_n,ik_rim)=RT_EP_life%SPONT_abs(i_n,ik_rim)+&
 &                                    f_times_abs*pre_factor*q_weight_RT(i_q,i_l,2)
-       RT_EP_life%El_emit(i_n,ik_rim)=RT_EP_life%El_emit(i_n,ik_rim)+&
+       RT_EP_life%SPONT_emit(i_n,ik_rim)=RT_EP_life%SPONT_emit(i_n,ik_rim)+&
 &                                     one_m_f_times_emit*pre_factor*q_weight_RT(i_q,i_l,2)
        !
        ! PH absorption/Ho emission (spontaneous)
-       RT_EP_life%Ho_emit(i_n,ik_rim)=RT_EP_life%Ho_emit(i_n,ik_rim)+&
+       RT_EP_life%STIM_emit(i_n,ik_rim)=RT_EP_life%STIM_emit(i_n,ik_rim)+&
 &                                     f_times_emit*pre_factor*q_weight_RT(i_q,i_l,2)
-       RT_EP_life%El_abs(i_n,ik_rim)=RT_EP_life%El_abs(i_n,ik_rim)+&
+       RT_EP_life%STIM_abs(i_n,ik_rim)=RT_EP_life%STIM_abs(i_n,ik_rim)+&
 &                                    one_m_f_times_abs*pre_factor*q_weight_RT(i_q,i_l,2)
        !
      enddo

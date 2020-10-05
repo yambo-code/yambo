@@ -230,20 +230,20 @@ subroutine RT_relaxation(E,k,q,Time)
  if (l_RT_eval_lifetimes) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
  !
  if (l_elel_scatt) then
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EE_life%Ho_abs,1)
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EE_life%El_emit,2)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EE_life%SPONT_abs,1)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EE_life%SPONT_emit,2)
  endif
  if (l_elph_scatt) then
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_life%Ho_abs,3)
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_life%El_emit,4)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_life%SPONT_abs,3)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_life%SPONT_emit,4)
    if(Bose_Temp>0._SP) then
-     call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_life%Ho_emit,5)
-     call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_life%El_abs,6)
+     call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_life%STIM_emit,5)
+     call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_life%STIM_abs,6)
    endif
  endif
  if (l_elphoton_scatt) then
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EH_life%Ho_emit,7)
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EH_life%El_abs,8)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EH_life%SPONT_abs,7)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EH_life%SPONT_emit,8)
  endif
  !
  if (.not.l_RT_eval_lifetimes) call Impose_Conservations( )
@@ -260,11 +260,11 @@ subroutine RT_relaxation(E,k,q,Time)
      !
      ! Zero dN/dT & dE/dT & d(DeltaN)/dT
      !===================================
-     if (l_elel_scatt)     call RT_impose_zero_dE_and_dN(E,k,RT_EE_life%Ho_abs,RT_EE_life%El_emit,'elel ')
-     if (l_elph_scatt)     call RT_impose_zero_dE_and_dN(E,k,RT_EP_life%Ho_abs,RT_EP_life%El_emit,'elph1')
+     if (l_elel_scatt)     call RT_impose_zero_dE_and_dN(E,k,RT_EE_life%SPONT_abs,RT_EE_life%SPONT_emit,'elel ')
+     if (l_elph_scatt)     call RT_impose_zero_dE_and_dN(E,k,RT_EP_life%SPONT_abs,RT_EP_life%SPONT_emit,'elph1')
+     if (l_elphoton_scatt) call RT_impose_zero_dE_and_dN(E,k,RT_EH_life%SPONT_abs,RT_EH_life%SPONT_emit,'radiative')
      if (l_elph_scatt.and.Bose_Temp>0._SP) &
-&                          call RT_impose_zero_dE_and_dN(E,k,RT_EP_life%Ho_emit,RT_EP_life%El_abs,'elph2')
-     if (l_elphoton_scatt) call RT_impose_zero_dE_and_dN(E,k,RT_EH_life%Ho_emit,RT_EH_life%El_abs,'radiative')
+&                          call RT_impose_zero_dE_and_dN(E,k,RT_EP_life%STIM_emit,RT_EP_life%STIM_abs,'elph2')
      !
    end subroutine
    !

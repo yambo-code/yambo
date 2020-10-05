@@ -130,47 +130,47 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        if(l_elphoton_scatt) then
          if (what=="fill") then
-           RT%dGAMMA_E_PHOT_Hole(i_RT)=RT_EH_life%Ho_emit(i_b,i_k_RT)
-           RT%dGAMMA_E_PHOT_Electron(i_RT)=RT_EH_life%El_abs(i_b,i_k_RT)
-         else if (allocated(RT_EH_life%Ho_emit)) then
-           RT_EH_life%Ho_emit(i_b,i_k_RT)=RT%dGAMMA_E_PHOT_Hole(i_RT)
-           RT_EH_life%El_abs(i_b,i_k_RT)=RT%dGAMMA_E_PHOT_Electron(i_RT)
+           RT%dGAMMA_E_PHOT_Hole(i_RT)=RT_EH_life%SPONT_abs(i_b,i_k_RT)
+           RT%dGAMMA_E_PHOT_Electron(i_RT)=RT_EH_life%SPONT_emit(i_b,i_k_RT)
+         else if (allocated(RT_EH_life%STIM_emit)) then
+           RT_EH_life%SPONT_abs(i_b,i_k_RT)=RT%dGAMMA_E_PHOT_Hole(i_RT)
+           RT_EH_life%SPONT_emit(i_b,i_k_RT)=RT%dGAMMA_E_PHOT_Electron(i_RT)
          endif
-         if (allocated(RT_EH_life%Ho_emit)) then
-           Hole_lifetime=Hole_lifetime+RT_EH_life%Ho_emit(i_b,i_k_RT)
-           Elec_lifetime=Elec_lifetime+RT_EH_life%El_abs(i_b,i_k_RT)
+         if (allocated(RT_EH_life%STIM_emit)) then
+           Hole_lifetime=Hole_lifetime+RT_EH_life%SPONT_abs(i_b,i_k_RT)
+           Elec_lifetime=Elec_lifetime+RT_EH_life%SPONT_emit(i_b,i_k_RT)
          endif
        endif
        !
        if(l_elel_scatt) then
          if (what=="fill") then
-           RT%dGAMMA_E_E_Hole(i_RT)=RT_EE_life%Ho_abs(i_b,i_k_RT)
-           RT%dGAMMA_E_E_Electron(i_RT)=RT_EE_life%El_emit(i_b,i_k_RT)
-         else if (allocated(RT_EE_life%Ho_abs)) then
-           RT_EE_life%Ho_abs(i_b,i_k_RT)=RT%dGAMMA_E_E_Hole(i_RT)
-           RT_EE_life%El_emit(i_b,i_k_RT)=RT%dGAMMA_E_E_Electron(i_RT)
+           RT%dGAMMA_E_E_Hole(i_RT)=RT_EE_life%SPONT_abs(i_b,i_k_RT)
+           RT%dGAMMA_E_E_Electron(i_RT)=RT_EE_life%SPONT_emit(i_b,i_k_RT)
+         else if (allocated(RT_EE_life%SPONT_abs)) then
+           RT_EE_life%SPONT_abs(i_b,i_k_RT)=RT%dGAMMA_E_E_Hole(i_RT)
+           RT_EE_life%SPONT_emit(i_b,i_k_RT)=RT%dGAMMA_E_E_Electron(i_RT)
          endif
-         if (allocated(RT_EE_life%Ho_abs)) then
-           Hole_lifetime=Hole_lifetime+RT_EE_life%Ho_abs(i_b,i_k_RT)
-           Elec_lifetime=Elec_lifetime+RT_EE_life%El_emit(i_b,i_k_RT)
+         if (allocated(RT_EE_life%SPONT_abs)) then
+           Hole_lifetime=Hole_lifetime+RT_EE_life%SPONT_abs(i_b,i_k_RT)
+           Elec_lifetime=Elec_lifetime+RT_EE_life%SPONT_emit(i_b,i_k_RT)
          endif
        endif
        !
        if(l_elph_scatt) then
          if (what=="fill") then
-           RT%dGAMMA_E_P_Hole(i_RT)=RT_EP_life%Ho_abs(i_b,i_k_RT)
-           RT%dGAMMA_E_P_Electron(i_RT)=RT_EP_life%El_emit(i_b,i_k_RT)
-           RT%dGAMMA_E_P_Ho_abs(i_RT)=RT_EP_life%Ho_emit(i_b,i_k_RT)
-           RT%dGAMMA_E_P_El_abs(i_RT)=RT_EP_life%El_abs(i_b,i_k_RT)
-         else if (allocated(RT_EP_life%Ho_abs)) then
-           RT_EP_life%Ho_abs(i_b,i_k_RT)=RT%dGAMMA_E_P_Hole(i_RT) 
-           RT_EP_life%El_emit(i_b,i_k_RT)=RT%dGAMMA_E_P_Electron(i_RT) 
-           RT_EP_life%Ho_emit(i_b,i_k_RT)=RT%dGAMMA_E_P_Ho_abs(i_RT) 
-           RT_EP_life%El_abs(i_b,i_k_RT)=RT%dGAMMA_E_P_El_abs(i_RT) 
+           RT%dGAMMA_E_P_Hole(i_RT)=RT_EP_life%SPONT_abs(i_b,i_k_RT)
+           RT%dGAMMA_E_P_Electron(i_RT)=RT_EP_life%SPONT_emit(i_b,i_k_RT)
+           RT%dGAMMA_E_P_Ho_abs(i_RT)=RT_EP_life%STIM_emit(i_b,i_k_RT)
+           RT%dGAMMA_E_P_El_abs(i_RT)=RT_EP_life%STIM_abs(i_b,i_k_RT)
+         else if (allocated(RT_EP_life%SPONT_abs)) then
+           RT_EP_life%SPONT_abs(i_b,i_k_RT)=RT%dGAMMA_E_P_Hole(i_RT) 
+           RT_EP_life%SPONT_emit(i_b,i_k_RT)=RT%dGAMMA_E_P_Electron(i_RT) 
+           RT_EP_life%STIM_emit(i_b,i_k_RT)=RT%dGAMMA_E_P_Ho_abs(i_RT) 
+           RT_EP_life%STIM_abs(i_b,i_k_RT)=RT%dGAMMA_E_P_El_abs(i_RT) 
          endif
-         if (allocated(RT_EP_life%Ho_abs)) then
-           Hole_lifetime=Hole_lifetime+RT_EP_life%Ho_abs(i_b,i_k_RT)    +RT_EP_life%Ho_emit(i_b,i_k_RT)
-           Elec_lifetime=Elec_lifetime+RT_EP_life%El_emit(i_b,i_k_RT)+RT_EP_life%El_abs(i_b,i_k_RT)
+         if (allocated(RT_EP_life%SPONT_abs)) then
+           Hole_lifetime=Hole_lifetime+RT_EP_life%SPONT_abs(i_b,i_k_RT) +RT_EP_life%STIM_emit(i_b,i_k_RT)
+           Elec_lifetime=Elec_lifetime+RT_EP_life%SPONT_emit(i_b,i_k_RT)+RT_EP_life%STIM_abs(i_b,i_k_RT)
          endif
        endif
        !

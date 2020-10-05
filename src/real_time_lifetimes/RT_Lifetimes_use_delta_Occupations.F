@@ -76,20 +76,20 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
        !
        if (l_elphoton_scatt) then
          NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)/real(PAR_COM_PLASMA_INDEX%n_CPU*PAR_COM_Q_INDEX%n_CPU)
-         RT_EH_life%Ho_emit(ib,ik)     =SAVED_lifetime(ib,ik,7,Life_MEM_steps)/NC
-         RT_EH_life%El_abs(ib,ik) =SAVED_lifetime(ib,ik,8,Life_MEM_steps)/NC
+         RT_EH_life%SPONT_abs(ib,ik) =SAVED_lifetime(ib,ik,7,Life_MEM_steps)/NC
+         RT_EH_life%SPONT_emit(ib,ik)  =SAVED_lifetime(ib,ik,8,Life_MEM_steps)/NC
        endif
        if (l_elel_scatt) then
          NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)
-         RT_EE_life%Ho_abs(ib,ik)     =SAVED_lifetime(ib,ik,1,Life_MEM_steps)/NC
-         RT_EE_life%El_emit(ib,ik) =SAVED_lifetime(ib,ik,2,Life_MEM_steps)/NC
+         RT_EE_life%SPONT_abs(ib,ik)  =SAVED_lifetime(ib,ik,1,Life_MEM_steps)/NC
+         RT_EE_life%SPONT_emit(ib,ik) =SAVED_lifetime(ib,ik,2,Life_MEM_steps)/NC
        endif
        if (l_elph_scatt) then
          NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)/real(PAR_COM_PLASMA_INDEX%n_CPU)
-         RT_EP_life%Ho_abs(ib,ik)     =SAVED_lifetime(ib,ik,3,Life_MEM_steps)/NC
-         RT_EP_life%El_emit(ib,ik) =SAVED_lifetime(ib,ik,4,Life_MEM_steps)/NC
-         RT_EP_life%Ho_emit(ib,ik)   =SAVED_lifetime(ib,ik,5,Life_MEM_steps)/NC
-         RT_EP_life%El_abs(ib,ik)   =SAVED_lifetime(ib,ik,6,Life_MEM_steps)/NC
+         RT_EP_life%SPONT_abs(ib,ik)  =SAVED_lifetime(ib,ik,3,Life_MEM_steps)/NC
+         RT_EP_life%SPONT_emit(ib,ik) =SAVED_lifetime(ib,ik,4,Life_MEM_steps)/NC
+         RT_EP_life%STIM_emit(ib,ik) =SAVED_lifetime(ib,ik,5,Life_MEM_steps)/NC
+         RT_EP_life%STIM_abs(ib,ik)  =SAVED_lifetime(ib,ik,6,Life_MEM_steps)/NC
        endif
        !
      else
@@ -99,18 +99,18 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
        RT_H_occupations_reference(ib,ik)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
        !
        if (l_elphoton_scatt) then
-         RT_EH_life%Ho_emit(ib,ik)=    0._SP
-         RT_EH_life%El_abs(ib,ik)=0._SP
+         RT_EH_life%SPONT_abs(ib,ik)=    0._SP
+         RT_EH_life%SPONT_emit(ib,ik)=0._SP
        endif
        if (l_elel_scatt) then
-         RT_EE_life%Ho_abs(ib,ik)=    0._SP
-         RT_EE_life%El_emit(ib,ik)=0._SP
+         RT_EE_life%SPONT_abs(ib,ik)=    0._SP
+         RT_EE_life%SPONT_emit(ib,ik)=0._SP
        endif
        if (l_elph_scatt) then
-         RT_EP_life%Ho_abs(ib,ik)=    0._SP
-         RT_EP_life%El_emit(ib,ik)=0._SP
-         RT_EP_life%Ho_emit(ib,ik)=  0._SP
-         RT_EP_life%El_abs(ib,ik)=  0._SP
+         RT_EP_life%SPONT_abs(ib,ik)=    0._SP
+         RT_EP_life%SPONT_emit(ib,ik)=0._SP
+         RT_EP_life%STIM_emit(ib,ik)=  0._SP
+         RT_EP_life%STIM_abs(ib,ik)=  0._SP
        endif
      endif
      !

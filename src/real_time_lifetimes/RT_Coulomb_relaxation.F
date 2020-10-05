@@ -220,8 +220,8 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            !
          enddo
          !
-         RT_EE_life%Ho_abs(i_n,ik_rim)=RT_EE_life%Ho_abs(i_n,ik_rim)+TMP_Hole_lifetime*pre_factor
-         RT_EE_life%El_emit(i_n,ik_rim)=RT_EE_life%El_emit(i_n,ik_rim)+TMP_Electron_lifetime*pre_factor
+         RT_EE_life%SPONT_abs(i_n,ik_rim)=RT_EE_life%SPONT_abs(i_n,ik_rim)+TMP_Hole_lifetime*pre_factor
+         RT_EE_life%SPONT_emit(i_n,ik_rim)=RT_EE_life%SPONT_emit(i_n,ik_rim)+TMP_Electron_lifetime*pre_factor
          !
        enddo
        !

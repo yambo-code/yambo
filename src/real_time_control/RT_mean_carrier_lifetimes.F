@@ -46,12 +46,12 @@ subroutine RT_mean_carrier_lifetimes(E,k)
 &                      EP_occupations(RT_bands(1):RT_bands(2),RT_nk),&
 &                      LOCAL_Lifetime(RT_bands(1):RT_bands(2),RT_nk,6)
  !
- if (allocated(RT_EE_life%Ho_abs))     LOCAL_Lifetime(:,:,1)=REF_lifetime(:,:,1)+RT_EE_life%Ho_abs
- if (allocated(RT_EE_life%El_emit)) LOCAL_Lifetime(:,:,2)=REF_lifetime(:,:,2)+RT_EE_life%El_emit
- if (allocated(RT_EP_life%Ho_abs))     LOCAL_Lifetime(:,:,3)=REF_lifetime(:,:,3)+RT_EP_life%Ho_abs
- if (allocated(RT_EP_life%El_emit)) LOCAL_Lifetime(:,:,4)=REF_lifetime(:,:,4)+RT_EP_life%El_emit
- if (allocated(RT_EP_life%Ho_emit))   LOCAL_Lifetime(:,:,5)=REF_lifetime(:,:,5)+RT_EP_life%Ho_emit
- if (allocated(RT_EP_life%El_abs))   LOCAL_Lifetime(:,:,6)=REF_lifetime(:,:,6)+RT_EP_life%El_abs
+ if (allocated(RT_EE_life%SPONT_abs))  LOCAL_Lifetime(:,:,1)=REF_lifetime(:,:,1)+RT_EE_life%SPONT_abs
+ if (allocated(RT_EE_life%SPONT_emit)) LOCAL_Lifetime(:,:,2)=REF_lifetime(:,:,2)+RT_EE_life%SPONT_emit
+ if (allocated(RT_EP_life%SPONT_abs))  LOCAL_Lifetime(:,:,3)=REF_lifetime(:,:,3)+RT_EP_life%SPONT_abs
+ if (allocated(RT_EP_life%SPONT_emit)) LOCAL_Lifetime(:,:,4)=REF_lifetime(:,:,4)+RT_EP_life%SPONT_emit
+ if (allocated(RT_EP_life%STIM_emit)) LOCAL_Lifetime(:,:,5)=REF_lifetime(:,:,5)+RT_EP_life%STIM_emit
+ if (allocated(RT_EP_life%STIM_abs))  LOCAL_Lifetime(:,:,6)=REF_lifetime(:,:,6)+RT_EP_life%STIM_abs
  !
  n_states(1)      =0._SP
  RT_mean_lifetimes=0._SP
@@ -68,7 +68,7 @@ subroutine RT_mean_carrier_lifetimes(E,k)
      !
      n_states(1)=n_states(1)+pre_factor
      !
-     if (allocated(RT_EP_life%Ho_abs)) then
+     if (allocated(RT_EP_life%SPONT_abs)) then
        sum_lifetimes(1)= LOCAL_Lifetime(ib,ik,3)+LOCAL_Lifetime(ib,ik,5)
        sum_lifetimes(2)= LOCAL_Lifetime(ib,ik,4)+LOCAL_Lifetime(ib,ik,6)+sum_lifetimes(1)
        if(sum_lifetimes(2)>0._SP) then
@@ -77,13 +77,13 @@ subroutine RT_mean_carrier_lifetimes(E,k)
          if(ib<=E%nbf) EP_occupations(ib,ik)=spin_occ
          if(ib> E%nbf) EP_occupations(ib,ik)=0._SP
        endif
-       RT_mean_lifetimes(3)=RT_mean_lifetimes(3)+(RT_EP_life%Ho_abs(ib,ik)+REF_lifetime(ib,ik,3))*pre_factor
-       RT_mean_lifetimes(4)=RT_mean_lifetimes(4)+(RT_EP_life%El_emit(ib,ik)+REF_lifetime(ib,ik,4))*pre_factor
-       RT_mean_lifetimes(5)=RT_mean_lifetimes(5)+(RT_EP_life%Ho_emit(ib,ik)+REF_lifetime(ib,ik,5))*pre_factor
-       RT_mean_lifetimes(6)=RT_mean_lifetimes(6)+(RT_EP_life%El_abs(ib,ik)+REF_lifetime(ib,ik,6))*pre_factor
+       RT_mean_lifetimes(3)=RT_mean_lifetimes(3)+(RT_EP_life%SPONT_abs(ib,ik)+REF_lifetime(ib,ik,3))*pre_factor
+       RT_mean_lifetimes(4)=RT_mean_lifetimes(4)+(RT_EP_life%SPONT_emit(ib,ik)+REF_lifetime(ib,ik,4))*pre_factor
+       RT_mean_lifetimes(5)=RT_mean_lifetimes(5)+(RT_EP_life%STIM_emit(ib,ik)+REF_lifetime(ib,ik,5))*pre_factor
+       RT_mean_lifetimes(6)=RT_mean_lifetimes(6)+(RT_EP_life%STIM_abs(ib,ik)+REF_lifetime(ib,ik,6))*pre_factor
      endif
      !
-     if (allocated(RT_EE_life%Ho_abs)) then
+     if (allocated(RT_EE_life%SPONT_abs)) then
        sum_lifetimes(1)= LOCAL_Lifetime(ib,ik,1)
        sum_lifetimes(2)= LOCAL_Lifetime(ib,ik,1)+LOCAL_Lifetime(ib,ik,2)
        if(sum_lifetimes(2)>0._SP) then
@@ -92,13 +92,13 @@ subroutine RT_mean_carrier_lifetimes(E,k)
          if(ib<=E%nbf) EE_occupations(ib,ik)=spin_occ
          if(ib> E%nbf) EE_occupations(ib,ik)=0._SP
        endif
-       RT_mean_lifetimes(1)=RT_mean_lifetimes(1)+(RT_EE_life%Ho_abs(ib,ik)+REF_lifetime(ib,ik,1))*pre_factor
-       RT_mean_lifetimes(2)=RT_mean_lifetimes(2)+(RT_EE_life%El_emit(ib,ik)+REF_lifetime(ib,ik,2))*pre_factor
+       RT_mean_lifetimes(1)=RT_mean_lifetimes(1)+(RT_EE_life%SPONT_abs(ib,ik)+REF_lifetime(ib,ik,1))*pre_factor
+       RT_mean_lifetimes(2)=RT_mean_lifetimes(2)+(RT_EE_life%SPONT_emit(ib,ik)+REF_lifetime(ib,ik,2))*pre_factor
      endif
      !
-     if (allocated(RT_EH_life%Ho_emit)) then
-       RT_mean_lifetimes(7)=RT_mean_lifetimes(7)+(RT_EH_life%Ho_emit(ib,ik)+REF_lifetime(ib,ik,7))*pre_factor
-       RT_mean_lifetimes(8)=RT_mean_lifetimes(8)+(RT_EH_life%El_abs(ib,ik)+REF_lifetime(ib,ik,8))*pre_factor
+     if (allocated(RT_EH_life%SPONT_emit)) then
+       RT_mean_lifetimes(7)=RT_mean_lifetimes(7)+(RT_EH_life%SPONT_abs(ib,ik)+REF_lifetime(ib,ik,7))*pre_factor
+       RT_mean_lifetimes(8)=RT_mean_lifetimes(8)+(RT_EH_life%SPONT_emit(ib,ik)+REF_lifetime(ib,ik,8))*pre_factor
      endif
      !
    enddo
@@ -111,13 +111,13 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  call PP_redux_wait(n_states,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  RT_Tfit_lifetimes=0._SP
- if(allocated(RT_EP_life%Ho_abs).and.l_lftm_fit_temperatures) then
+ if(allocated(RT_EP_life%SPONT_abs).and.l_lftm_fit_temperatures) then
    call RT_occupations_FIT(RT_Tfit_lifetimes(1:2),RT_Efit_lifetimes(1:2),EP_occupations)
    if (RT_Tfit_lifetimes(1)>50000/HA2KEL.or.RT_Tfit_lifetimes(1)<0._SP) RT_Tfit_lifetimes(1)=0._SP
    if (RT_Tfit_lifetimes(2)>50000/HA2KEL.or.RT_Tfit_lifetimes(2)<0._SP) RT_Tfit_lifetimes(2)=0._SP
  endif
  !
- if(allocated(RT_EE_life%Ho_abs).and.l_lftm_fit_temperatures) then
+ if(allocated(RT_EE_life%SPONT_abs).and.l_lftm_fit_temperatures) then
    call RT_occupations_FIT(RT_Tfit_lifetimes(3:4),RT_Efit_lifetimes(3:4),EE_occupations)
    if (RT_Tfit_lifetimes(3)>50000/HA2KEL.or.RT_Tfit_lifetimes(3)<0._SP) RT_Tfit_lifetimes(3)=0._SP
    if (RT_Tfit_lifetimes(4)>50000/HA2KEL.or.RT_Tfit_lifetimes(4)<0._SP) RT_Tfit_lifetimes(4)=0._SP

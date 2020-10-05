@@ -72,9 +72,9 @@ subroutine RT_Radiative_Lifetimes(i_k,E,k,q)
      !
      pre_factor=P_square/3._SP/SPEED_OF_LIGHT**2*abs(E_diff)
      !
-     RT_EH_life%El_abs(i_n,i_k)=RT_EH_life%El_abs(i_n,i_k)+&
+     RT_EH_life%SPONT_emit(i_n,i_k)=RT_EH_life%SPONT_emit(i_n,i_k)+&
 &                                   pre_factor*Hole_f_m*theta_function( E_diff,0.01/HA2EV,0)*RAD_magnification
-     RT_EH_life%Ho_emit(i_n,i_k)=RT_EH_life%Ho_emit(i_n,i_k)+&
+     RT_EH_life%SPONT_abs(i_n,i_k)=RT_EH_life%SPONT_abs(i_n,i_k)+&
 &                                   pre_factor*     f_m*theta_function(-E_diff,0.01/HA2EV,0)*RAD_magnification
      !
    enddo Bp_loop

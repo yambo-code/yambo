@@ -23,34 +23,40 @@
 !
 module RT_lifetimes
  !
- use pars,           ONLY:SP,rZERO
+ use pars,           ONLY:SP,rZERO,schlen
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  !
 #include<memory.h>
  !
  type RT_lifetime
-   ! Zero and Finite temp
-   real(SP),    allocatable :: El_emit(:,:)
-   real(SP),    allocatable :: Ho_abs(:,:)
-   ! Finite temp
-   real(SP),    allocatable :: El_abs(:,:)
-   real(SP),    allocatable :: Ho_emit(:,:)
-   logical                  :: Finite_T_components
+   logical                  :: active
+   ! Spontaneous terms
+   real(SP),    allocatable :: SPONT_abs(:,:)
+   real(SP),    allocatable :: SPONT_emit(:,:)
+   ! Stimulated terms
+   logical                  :: STIMULATED_components
+   real(SP),    allocatable :: STIM_abs(:,:)
+   real(SP),    allocatable :: STIM_emit(:,:)
  end type RT_lifetime
  !
  type RT_obj_lifetime
+   character(schlen)        :: KIND
    real(SP),    allocatable :: bare(:)
-   real(SP),    allocatable :: El_abs(:)
-   real(SP),    allocatable :: Ho_abs(:)
-   real(SP),    allocatable :: El_emit(:)
-   real(SP),    allocatable :: Ho_emit(:)
-   logical                  :: Finite_T_components
+   real(SP),    allocatable :: SPONT_abs(:)
+   real(SP),    allocatable :: SPONT_emit(:)
+   logical                  :: STIMULATED_components
+   real(SP),    allocatable :: STIM_abs(:)
+   real(SP),    allocatable :: STIM_emit(:)
  end type RT_obj_lifetime
  !
- ! Lifetimes
+ ! Lifetimes (updated)
  !-----------
  type(RT_lifetime)     :: RT_EE_life,RT_EP_life,RT_EH_life,RT_PE_life
  type(RT_obj_lifetime) :: RT_obj_EE_life,RT_obj_EP_life,RT_obj_EH_life,RT_obj_PE_life
+ !
+ ! Lifetimes (REFERENCE)
+ !-----------
+ type(RT_lifetime)     :: RT_EE_REF_life,RT_EP_REF_life,RT_EH_REF_life,RT_PE_REF_life
  ! 
  ! Locks, reference & Logicals
  !-----------------------------
@@ -119,56 +125,56 @@ module RT_lifetimes
      YAMBO_FREE(SAVED_lifetime)
    end subroutine
    !
-   subroutine RT_lifetime_alloc(LIFE,Finite_T_components,Nb,Nk)
+   subroutine RT_lifetime_alloc(LIFE,STIMULATED_components,Nb,Nk)
      type(RT_lifetime) :: LIFE
      integer :: Nb(2),Nk
-     logical :: Finite_T_components
-     YAMBO_ALLOC(LIFE%El_emit,(Nb(1):Nb(2),Nk))
-     YAMBO_ALLOC(LIFE%Ho_abs,(Nb(1):Nb(2),Nk))
-     LIFE%Finite_T_components=Finite_T_components
-     LIFE%El_emit=rZERO
-     LIFE%Ho_abs =rZERO
-     if (.not.Finite_T_components) return
-     YAMBO_ALLOC(LIFE%El_abs,(Nb(1):Nb(2),Nk))
-     YAMBO_ALLOC(LIFE%Ho_emit,(Nb(1):Nb(2),Nk))
-     LIFE%El_abs =rZERO
-     LIFE%Ho_emit=rZERO
+     logical :: STIMULATED_components
+     YAMBO_ALLOC(LIFE%SPONT_emit,(Nb(1):Nb(2),Nk))
+     YAMBO_ALLOC(LIFE%SPONT_abs,(Nb(1):Nb(2),Nk))
+     LIFE%STIMULATED_components=STIMULATED_components
+     LIFE%SPONT_emit=rZERO
+     LIFE%SPONT_abs =rZERO
+     if (.not.STIMULATED_components) return
+     YAMBO_ALLOC(LIFE%STIM_abs,(Nb(1):Nb(2),Nk))
+     YAMBO_ALLOC(LIFE%STIM_emit,(Nb(1):Nb(2),Nk))
+     LIFE%STIM_abs =rZERO
+     LIFE%STIM_emit=rZERO
    end subroutine
    !
    subroutine RT_lifetime_free(LIFE)
      type(RT_lifetime) :: LIFE
-     LIFE%Finite_T_components=.FALSE.
-     YAMBO_FREE(LIFE%El_emit)
-     YAMBO_FREE(LIFE%Ho_emit)
-     YAMBO_FREE(LIFE%El_abs)
-     YAMBO_FREE(LIFE%Ho_abs)
+     LIFE%STIMULATED_components=.FALSE.
+     YAMBO_FREE(LIFE%SPONT_emit)
+     YAMBO_FREE(LIFE%STIM_emit)
+     YAMBO_FREE(LIFE%STIM_abs)
+     YAMBO_FREE(LIFE%SPONT_abs)
    end subroutine
    !
-   subroutine RT_obj_lifetime_alloc(LIFE,Finite_T_components,Ns)
+   subroutine RT_obj_lifetime_alloc(LIFE,STIMULATED_components,Ns)
      type(RT_obj_lifetime) :: LIFE
      integer :: Ns
-     logical :: Finite_T_components
-     YAMBO_ALLOC(LIFE%El_emit,(Ns))
-     YAMBO_ALLOC(LIFE%Ho_abs,(Ns))
+     logical :: STIMULATED_components
+     YAMBO_ALLOC(LIFE%SPONT_emit,(Ns))
+     YAMBO_ALLOC(LIFE%SPONT_abs,(Ns))
      YAMBO_ALLOC(LIFE%bare,(Ns))
-     LIFE%El_emit=rZERO
-     LIFE%Ho_abs =rZERO
+     LIFE%SPONT_emit=rZERO
+     LIFE%SPONT_abs =rZERO
      LIFE%bare   =rZERO
-     LIFE%Finite_T_components=Finite_T_components
-     if (.not.Finite_T_components) return
-     YAMBO_ALLOC(LIFE%El_abs,(Ns))
-     YAMBO_ALLOC(LIFE%Ho_emit,(Ns))
-     LIFE%El_abs =rZERO
-     LIFE%Ho_emit=rZERO
+     LIFE%STIMULATED_components=STIMULATED_components
+     if (.not.STIMULATED_components) return
+     YAMBO_ALLOC(LIFE%STIM_abs,(Ns))
+     YAMBO_ALLOC(LIFE%STIM_emit,(Ns))
+     LIFE%STIM_abs =rZERO
+     LIFE%STIM_emit=rZERO
    end subroutine
    !
    subroutine RT_obj_lifetime_free(LIFE)
      type(RT_obj_lifetime) :: LIFE
-     LIFE%Finite_T_components=.FALSE.
-     YAMBO_FREE(LIFE%El_emit)
-     YAMBO_FREE(LIFE%Ho_emit)
-     YAMBO_FREE(LIFE%El_abs)
-     YAMBO_FREE(LIFE%Ho_abs)
+     LIFE%STIMULATED_components=.FALSE.
+     YAMBO_FREE(LIFE%SPONT_emit)
+     YAMBO_FREE(LIFE%STIM_emit)
+     YAMBO_FREE(LIFE%STIM_abs)
+     YAMBO_FREE(LIFE%SPONT_abs)
      YAMBO_FREE(LIFE%bare)
    end subroutine
    !

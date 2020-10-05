@@ -120,7 +120,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use_shifted_grids_approach  = trim(Dip%approach)=='Shifted grids'
  !
  compute_P2_dipoles          = index(Dip%computed,"P2")  /=0 .or. l_sc_run .or. l_real_time
-#if defined _RT || defined_kerr
+#if defined _RT || defined _KERR
  compute_Spin_dipoles        = index(Dip%computed,"Spin")/=0 .or. ((l_real_time .or. l_BS_magnons) .and. n_spin>1)
  compute_Orb_dipoles         = index(Dip%computed,"Orb") /=0 .or. (l_real_time .and. n_spin>1)
 #endif
@@ -347,6 +347,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
         !
         ! GPL_EXCLUDE_END 
         !
+        !if(Dip%bands_ordered) cycle
         !
         ! Symmetrization 
         !================
@@ -363,7 +364,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #if defined _RT || defined _KERR
             if (compute_Orb_dipoles) &
             & DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)),0. ,SP)
-            if (compute_Spin_dipoles) &
+            ! Warning: if n_sp_pol==2 DIP_spin(iv,iv) is not the expectation value but <iv up |S | iv dn>
+            if (compute_Spin_dipoles.and.(.not.n_sp_pol==2) ) &
             & DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #endif
 #if defined _RT
@@ -395,8 +397,11 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #if defined _RT || defined _KERR
               if (compute_Orb_dipoles) &
               & DIP_orbital(:,iv,ic,ik_mem,i_sp_pol,:)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,:))
-              if (compute_Spin_dipoles) &
-              & DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
+              if (compute_Spin_dipoles) then
+                DIP_spin(1,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(1,ic,iv,ik_mem,i_sp_pol_inv))
+                DIP_spin(2,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(2,ic,iv,ik_mem,i_sp_pol_inv))
+                DIP_spin(3,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(3,ic,iv,ik_mem,i_sp_pol))
+              endif
 #endif
 #if defined _RT
               if (compute_Spin_dipoles.and.n_spinor==2) &

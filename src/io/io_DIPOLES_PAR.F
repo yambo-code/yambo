@@ -30,14 +30,9 @@ integer function io_DIPOLES(Dip,ID)
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,io_DIP,&
 &                        io_variable_bulk,def_variable_bulk,read_is_on,io_header,io_extension,&
 &                        IO_NOT_ALLOWED
-<<<<<<< HEAD
 #if defined _RT || defined _KERR
- use DIPOLES,       ONLY:DIP_spin,DIP_orbital
-=======
-#if defined _RT
- use DIPOLES,       ONLY:DIP_spin,DIP_orbital,DIP_P_spinor,&
+ use DIPOLES,       ONLY:DIP_spin,DIP_orbital,&
 &                        compute_Orb_dipoles,compute_Spin_dipoles
->>>>>>> bug-fixes
  use electrons,     ONLY:n_spinor
 #endif
 #if defined _RT

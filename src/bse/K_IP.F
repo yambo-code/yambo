@@ -313,11 +313,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      endif
      ! Magnons
      if (l_BS_magnons) then
-       BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)=conjg(DIP_Smins)
-       BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)=conjg(DIP_Splus)
+       BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)=conjg(DIP_Smins) ! Here I'm using again <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_v))
+       BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)=conjg(DIP_Splus) ! Here I'm using again <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_v))
        if (BSS_add_antiresonant.or.BS_K_coupling) then
-         BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)=DIP_Splus ! Here I'm using again <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_v))
-         BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)=DIP_Smins ! Here I'm using again <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_v))
+         BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)=DIP_Splus
+         BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)=DIP_Smins
        endif
      endif
 #endif
@@ -376,6 +376,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (l_BS_magnons) then
        res_magn(:)=BS_T_grp(i_T_g)%dipoles_R_mag(:,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R_mag(:,i_T))
        res_magn=res_magn*f_*Z_
+       !write(*,*) iv,ic,i_sp_pol_c,i_sp_pol_v,abs(DIP_Smins),abs(DIP_Splus),res_magn,real(E_plus_W(1))*27.261
      endif
 #endif
      !

@@ -92,15 +92,15 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
    dGAMMA(1)=0._SP
    dGAMMA(2)=0._SP
    if(.not.l_RT_relax_time_approx) then
-     if (l_elel_scatt) then
+     if (RT_EE_life%active) then
        dGAMMA(1)=RT_EE_life%SPONT_emit(ib,ik)
        dGAMMA(2)=RT_EE_life%SPONT_abs(ib,ik)
      endif
-     if (l_elphoton_scatt) then
+     if (RT_EH_life%active) then
        dGAMMA(1)=dGAMMA(1)+RT_EH_life%SPONT_emit(ib,ik)
        dGAMMA(2)=dGAMMA(2)+RT_EH_life%SPONT_abs(ib,ik)
      endif
-     if (l_RT_CCA_Kernel.and.l_elph_scatt) then
+     if (RT_EP_life%active) then
        dGAMMA(1)=dGAMMA(1)+ RT_EP_life%SPONT_emit(ib,ik)+RT_EP_life%STIM_abs(ib,ik)
        dGAMMA(2)=dGAMMA(2)+ RT_EP_life%SPONT_abs(ib,ik) +RT_EP_life%STIM_emit(ib,ik)
      endif

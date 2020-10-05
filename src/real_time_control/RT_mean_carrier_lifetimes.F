@@ -50,8 +50,8 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  if (allocated(RT_EE_life%SPONT_emit)) LOCAL_Lifetime(:,:,2)=REF_lifetime(:,:,2)+RT_EE_life%SPONT_emit
  if (allocated(RT_EP_life%SPONT_abs))  LOCAL_Lifetime(:,:,3)=REF_lifetime(:,:,3)+RT_EP_life%SPONT_abs
  if (allocated(RT_EP_life%SPONT_emit)) LOCAL_Lifetime(:,:,4)=REF_lifetime(:,:,4)+RT_EP_life%SPONT_emit
- if (allocated(RT_EP_life%STIM_emit)) LOCAL_Lifetime(:,:,5)=REF_lifetime(:,:,5)+RT_EP_life%STIM_emit
- if (allocated(RT_EP_life%STIM_abs))  LOCAL_Lifetime(:,:,6)=REF_lifetime(:,:,6)+RT_EP_life%STIM_abs
+ if (allocated(RT_EP_life%STIM_emit))  LOCAL_Lifetime(:,:,5)=REF_lifetime(:,:,5)+RT_EP_life%STIM_emit
+ if (allocated(RT_EP_life%STIM_abs))   LOCAL_Lifetime(:,:,6)=REF_lifetime(:,:,6)+RT_EP_life%STIM_abs
  !
  n_states(1)      =0._SP
  RT_mean_lifetimes=0._SP

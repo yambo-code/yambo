@@ -1565,92 +1565,101 @@ module parallel_m
    !
 #endif
    !
-   subroutine PP_snd_rcv_r2(mode,array,node,COMM)
+   subroutine PP_snd_rcv_r2(mode,array,node,COMM,TAG)
      character(*):: mode
      real(SP)    :: array(:,:)
      integer, intent(in) :: node
      integer, optional   :: COMM
+     integer, optional   :: TAG
 #if defined _MPI
      integer, dimension(MPI_STATUS_SIZE) :: MPI_status
-     integer::LOCAL_COMM,i_err! Work Space
+     integer::LOCAL_COMM,LOCAl_TAG,i_err! Work Space
      if (ncpu==1) return
      !
      local_type=MPI_REAL
      if (SP==DP) local_type=MPI_DOUBLE_PRECISION
      !
+     LOCAL_COMM=mpi_comm_world
      if (present(COMM)) then
        LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
+     endif
+     LOCAL_TAG=1
+     if (present(TAG)) then
+       LOCAL_TAG=TAG
      endif
      if (LOCAL_COMM==comm_default_value) return
      !
-     if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,1, LOCAL_COMM,i_err)
-     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,1, LOCAL_COMM, MPI_status, i_err)
+     if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM,i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MPI_status, i_err)
      !
 #endif
    end subroutine
    !
-   subroutine PP_snd_rcv_c2(mode,array,node,COMM)
+   subroutine PP_snd_rcv_c2(mode,array,node,COMM,TAG)
      character(*):: mode
      complex(SP) :: array(:,:)
      integer, intent(in) :: node
      integer, optional   :: COMM
+     integer, optional   :: TAG
 #if defined _MPI
      integer, dimension(MPI_STATUS_SIZE) :: MPI_status
-     integer::LOCAL_COMM,i_err! Work Space
+     integer::LOCAL_COMM,LOCAl_TAG,i_err! Work Space
      if (ncpu==1) return
      !
      local_type=MPI_COMPLEX
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
      !
+     LOCAL_COMM=mpi_comm_world
      if (present(COMM)) then
        LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
+     endif
+     LOCAL_TAG=1
+     if (present(TAG)) then
+       LOCAL_TAG=TAG
      endif
      if (LOCAL_COMM==comm_default_value) return
      !
-     if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,1, LOCAL_COMM,i_err)
-     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,1, LOCAL_COMM, MPI_status, i_err)
+     if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM,i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MPI_status, i_err)
      !
 #endif
    end subroutine
    !   
-   subroutine PP_snd_rcv_c1(mode,array,node,COMM)
+   subroutine PP_snd_rcv_c1(mode,array,node,COMM,TAG)
      character(*):: mode
      complex(SP) :: array(:)
      integer, intent(in) :: node
      integer, optional   :: COMM
+     integer, optional   :: TAG
 #if defined _MPI
      integer, dimension(MPI_STATUS_SIZE) :: MPI_status
-     integer::LOCAL_COMM,i_err! Work Space
+     integer::LOCAL_COMM,LOCAl_TAG,i_err! Work Space
      if (ncpu==1) return
      !
      local_type=MPI_COMPLEX
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
      !
+     LOCAL_COMM=mpi_comm_world
      if (present(COMM)) then
        LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
+     endif
+     LOCAL_TAG=1
+     if (present(TAG)) then
+       LOCAL_TAG=TAG
      endif
      if (LOCAL_COMM==comm_default_value) return
      !
-     if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,1, LOCAL_COMM,i_err)
-     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,1, LOCAL_COMM, MPI_status, i_err)
+     if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM,i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MPI_status, i_err)
      !
 #endif
    end subroutine
    !
    subroutine CREATE_hosts_COMM( )
 #if defined _MPI
-     !use pars,  ONLY:IPL
-     !use iso_c_binding
      use LexicalSort,  ONLY:ch_sort
      character (MPI_MAX_PROCESSOR_NAME), pointer :: tmp_hosts(:)
      integer :: i_err,i_cpu
-     !type(C_PTR) :: ptr_hosts
 #endif
      !
      if (ncpu==1) then
@@ -1669,8 +1678,6 @@ module parallel_m
        call MPI_BCAST(tmp_hosts(i_cpu),MPI_MAX_PROCESSOR_NAME,MPI_CHARACTER,i_cpu,MPI_COMM_WORLD,i_err)
      end do
      !
-     !call c_f_pointer(ptr_hosts,tmp_hosts,[ncpu])
-     !call c_chsort(ptr_hosts,int(ncpu,IPL),int(MPI_MAX_PROCESSOR_NAME,IPL),c_strcmp)
      call ch_sort(tmp_hosts)
      !
      ! assign the same color to the same node

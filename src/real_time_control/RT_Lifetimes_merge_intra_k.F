@@ -21,38 +21,52 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_merge_intra_k(what,LIFE)
+subroutine RT_Lifetimes_merge_intra_k(LIFE)
  !
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,PP_redux_wait,&
 &                         PAR_COM_Xk_ibz_A2A,PAR_IND_Xk_ibz
- use real_time,      ONLY:RT_nk,RT_bands,RTibz
+ use real_time,      ONLY:RTibz
  use R_lattice,      ONLY:nkibz
+ use RT_lifetimes,   ONLY:RT_lifetime
  !
  implicit none
  !
- character(*)            :: what
- real(SP), intent(inout) :: LIFE(RT_bands(1):RT_bands(2),RT_nk)
+ type(RT_lifetime), intent(inout) :: LIFE
  !
  ! Work Space
  !
  integer          :: NC,ik,COMM
  !
  if (PAR_COM_Xk_ibz_A2A%n_CPU==1) return
+ if (.not.LIFE%active           ) return
  !
  ! Prefactor
  !
  NC=1
- if (what=="elph".or.what=="bose") NC=PAR_COM_PLASMA_INDEX%n_CPU
- if (what=="elgm")                 NC=PAR_COM_Q_INDEX%n_CPU*PAR_COM_PLASMA_INDEX%n_CPU
+ if (LIFE%KIND=="El-Ph")      NC=PAR_COM_PLASMA_INDEX%n_CPU
+ if (LIFE%KIND=="El-Photon")  NC=PAR_COM_Q_INDEX%n_CPU*PAR_COM_PLASMA_INDEX%n_CPU
  !
- if (NC>1) LIFE=LIFE/NC
+ if (NC>1) then
+   LIFE%SPONT_emit=LIFE%SPONT_emit/NC
+   LIFE%SPONT_abs=LIFE%SPONT_abs/NC
+   if (LIFE%STIMULATED_components) then
+     LIFE%STIM_emit=LIFE%STIM_emit/NC
+     LIFE%STIM_abs=LIFE%STIM_abs/NC
+   endif
+ endif
  !
  do ik=1,nkibz
    !
    if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
    !
-   call PP_redux_wait(LIFE(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+   call PP_redux_wait(LIFE%SPONT_emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+   call PP_redux_wait(LIFE%SPONT_abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+   !
+   if (.not.LIFE%STIMULATED_components) cycle
+   !
+   call PP_redux_wait(LIFE%STIM_emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
+   call PP_redux_wait(LIFE%STIM_abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
    !
  enddo 
  !

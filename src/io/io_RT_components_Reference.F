@@ -93,4 +93,9 @@ subroutine io_RT_components_Reference(ID)
    !
  endif
  !
+ contains
+   !
+   !subroutine elemental_LIFE_IO(LIFE,VAR_ID)
+   !end subroutine
+   !
 end subroutine io_RT_components_Reference

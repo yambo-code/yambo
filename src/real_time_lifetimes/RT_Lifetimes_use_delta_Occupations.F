@@ -88,8 +88,10 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
          NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)/real(PAR_COM_PLASMA_INDEX%n_CPU)
          RT_EP_life%SPONT_abs(ib,ik)  =SAVED_lifetime(ib,ik,3,Life_MEM_steps)/NC
          RT_EP_life%SPONT_emit(ib,ik) =SAVED_lifetime(ib,ik,4,Life_MEM_steps)/NC
-         RT_EP_life%STIM_emit(ib,ik) =SAVED_lifetime(ib,ik,5,Life_MEM_steps)/NC
-         RT_EP_life%STIM_abs(ib,ik)  =SAVED_lifetime(ib,ik,6,Life_MEM_steps)/NC
+         if (RT_EP_life%STIMULATED_components) then
+           RT_EP_life%STIM_emit(ib,ik) =SAVED_lifetime(ib,ik,5,Life_MEM_steps)/NC
+           RT_EP_life%STIM_abs(ib,ik)  =SAVED_lifetime(ib,ik,6,Life_MEM_steps)/NC
+         endif
        endif
        !
      else
@@ -109,8 +111,10 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
        if (l_elph_scatt) then
          RT_EP_life%SPONT_abs(ib,ik)=    0._SP
          RT_EP_life%SPONT_emit(ib,ik)=0._SP
-         RT_EP_life%STIM_emit(ib,ik)=  0._SP
-         RT_EP_life%STIM_abs(ib,ik)=  0._SP
+         if (RT_EP_life%STIMULATED_components) then
+           RT_EP_life%STIM_emit(ib,ik)=  0._SP
+           RT_EP_life%STIM_abs(ib,ik)=  0._SP
+         endif
        endif
      endif
      !

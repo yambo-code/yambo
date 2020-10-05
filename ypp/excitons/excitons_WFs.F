@@ -57,9 +57,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
 &                     n_lambda_deg,neh1,iv1,ic1,ikbz1
  integer           :: ikpbz,ikp,isp
  real(SP)          :: r_hole_rlu(3),kp_dot_r_h,k_dot_r_e
- complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor),phase
- !
- complex(SP), allocatable :: B(:,:,:)
+ complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor),phase,B_coeff
  !
  integer,  allocatable :: rindex(:)
  real(SP), allocatable :: r_cell_cc(:,:)
@@ -152,15 +150,86 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    !
    call live_timing('ExcWF@'//trim(intc(j_lambda)),px%n_of_elements(myid+1))  
    !
+   v2plot  =0._SP
+   !
    if(l_average_eh) then
      !
-     YAMBO_ALLOC(B,(BS_bands(1):BS_bands(2), BS_bands(1):BS_bands(2), Xk%nbz))
+     do ir=1,nr_tot
+       !
+       if (.not.px%element_1D(ir)) cycle
+       !
+       do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
+         !
+         do neh = 1,BS_H_dim
+           !
+           ikbz  = BSS_eh_table(neh,1)
+           iv    = BSS_eh_table(neh,2)
+           ic    = BSS_eh_table(neh,3)
+           i_spin= spin(BSS_eh_table(neh,:))
+           !
+           ikibz = Xk%sstar(ikbz,1)
+           is    = Xk%sstar(ikbz,2)
+           !
+           do neh1 = 1,BS_H_dim
+             !
+             ikbz1  = BSS_eh_table(neh1,1)
+             iv1    = BSS_eh_table(neh1,2)
+             ic1    = BSS_eh_table(neh1,3)
+             !
+             if(ikbz==ikbz1) then
+               !      
+               ! Build the B_{vvk} (or B_{cck} ) matrix        
+               !
+               if (ic1==ic.and.trim(AVE_exc)=='e') then
+                 !      
+                 B_coeff =  BS_mat(neh, i_l)* conjg(BS_mat(neh1, i_l))   
+                 !
+                 WF1_ir=WF_symm(rindex(ir),(/iv, ikibz,is,i_spin/))
+                 WF2_ir=WF_symm(rindex(ir),(/iv1,ikibz,is,i_spin/))
+                 !
+                 v2plot(ir) = v2plot(ir)+B_coeff*WF1_ir(1)*conjg(WF2_ir(1))
+                 !
+               elseif(iv1==iv.and.trim(AVE_exc)=='e') then
+                 !      
+                 B_coeff =  conjg(BS_mat(neh, i_l))*BS_mat(neh1, i_l)   
+                 !
+                 WF1_ir=WF_symm(rindex(ir),(/ic, ikibz,is,i_spin/))
+                 WF2_ir=WF_symm(rindex(ir),(/ic1,ikibz,is,i_spin/))
+                 !
+                 v2plot(ir) = v2plot(ir)+B_coeff*conjg(WF1_ir(1))*WF2_ir(1)
+                 !
+               endif
+               !
+             endif
+             !
+           enddo ! loop on neh1
+           !
+         enddo ! loop on neh
+         !
+       enddo ! loop on degenerate excitons
+       !
+       if (master_thread) call live_timing(steps=1)
+       !
+     enddo ! loop on i_r 
      !
-     do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
+   else
+     !   
+     !$omp parallel default(shared), firstprivate(ir_hole,r_hole), &
+     !$omp private(wf_vc, ir,neh, ikbz,iv,ic,i_spin,ikibz,is, ikpbz,ikp,isp, &
+     !$omp &       k_dot_r_e,kp_dot_r_h, WF1_ir,WF2_ir,phase, i_l,wf_ )
+     !
+     call OPENMP_update(master_thread)
+     !
+     !$omp do schedule(dynamic)
+     do ir=1,nr_tot
        !
-       B=cZERO
+       if (.not.px%element_1D(ir)) cycle
+       wf_vc   =cZERO
        !
-       ! Build the B_{vvk} (or B_{cck} ) matrix        
+       if (l_free_hole) then
+         ir_hole=ir
+         r_hole=r_cell_cc(:,ir)
+       endif
        !
        do neh = 1,BS_H_dim
          !
@@ -169,95 +238,48 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
          ic    = BSS_eh_table(neh,3)
          i_spin= spin(BSS_eh_table(neh,:))
          !
-         do neh1 = 1,BS_H_dim
-           !
-           ikbz1  = BSS_eh_table(neh1,1)
-           iv1    = BSS_eh_table(neh1,2)
-           ic1    = BSS_eh_table(neh1,3)
-           !
-           if(ikbz==ikbz1) then
-             !      
-             if (ic1==ic) then
-               B(iv,iv1, ikbz)= B(iv,iv1, ikbz) +  BS_mat(neh, i_l)* conjg(BS_mat(neh1, i_l))   
-             elseif(iv1==iv) then
-               B(ic,ic1, ikbz)= B(ic,ic1, ikbz) +  BS_mat(neh, i_l)* conjg(BS_mat(neh1, i_l))      
-             endif
-             !
-           endif
-           !
-         enddo ! loop on neh1
+         ikibz = Xk%sstar(ikbz,1)
+         is    = Xk%sstar(ikbz,2)
          !
-       enddo ! loop on neh
+         ikpbz = qindx_X(iq,ikbz,1)
+         ikp   = Xk%sstar(ikpbz,1)
+         isp   = Xk%sstar(ikpbz,2)
+         !
+         k_dot_r_e  = dot_product(r_cell_cc(:,ir),Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
+         kp_dot_r_h = dot_product(r_hole,Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
+         !
+         WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))
+         WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))
+         !
+         wf_vc(neh) = conjg(WF1_ir(1))*WF2_ir(1)
+         if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF1_ir(2))*WF2_ir(2)
+         !
+         phase=cmplx(cos(k_dot_r_e-kp_dot_r_h),sin(k_dot_r_e-kp_dot_r_h),kind=SP)
+         wf_vc(neh) = wf_vc(neh)*phase
+         ! 
+       enddo  !Matrix elements
        !
-     enddo ! loop on degenerate excitons
+       do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
+         !
+         wf_ = V_dot_V(BS_H_dim,BS_mat(:,i_l),wf_vc)
+         !
+         v2plot(ir) = v2plot(ir)+abs(wf_)**2
+         !
+       enddo
+       !
+       if (master_thread) call live_timing(steps=1)
+       !
+     enddo   !grid points
+     !
+     !$omp end do
+     !$omp end parallel
      !
    endif
-   !   
-   v2plot  =0._SP
-   !
-   !$omp parallel default(shared), firstprivate(ir_hole,r_hole), &
-   !$omp private(wf_vc, ir,neh, ikbz,iv,ic,i_spin,ikibz,is, ikpbz,ikp,isp, &
-   !$omp &       k_dot_r_e,kp_dot_r_h, WF1_ir,WF2_ir,phase, i_l,wf_ )
-   !
-   call OPENMP_update(master_thread)
-   !
-   !$omp do schedule(dynamic)
-   do ir=1,nr_tot
-     !
-     if (.not.px%element_1D(ir)) cycle
-     wf_vc   =cZERO
-     !
-     if (l_free_hole) then
-       ir_hole=ir
-       r_hole=r_cell_cc(:,ir)
-     endif
-     !
-     do neh = 1,BS_H_dim
-       !
-       ikbz  = BSS_eh_table(neh,1)
-       iv    = BSS_eh_table(neh,2)
-       ic    = BSS_eh_table(neh,3)
-       i_spin= spin(BSS_eh_table(neh,:))
-       !
-       ikibz = Xk%sstar(ikbz,1)
-       is    = Xk%sstar(ikbz,2)
-       !
-       ikpbz = qindx_X(iq,ikbz,1)
-       ikp   = Xk%sstar(ikpbz,1)
-       isp   = Xk%sstar(ikpbz,2)
-       !
-       k_dot_r_e  = dot_product(r_cell_cc(:,ir),Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
-       kp_dot_r_h = dot_product(r_hole,Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
-       !
-       WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))
-       WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))
-       !
-       wf_vc(neh) = conjg(WF1_ir(1))*WF2_ir(1)
-       if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF1_ir(2))*WF2_ir(2)
-       !
-       phase=cmplx(cos(k_dot_r_e-kp_dot_r_h),sin(k_dot_r_e-kp_dot_r_h),kind=SP)
-       wf_vc(neh) = wf_vc(neh)*phase
-       ! 
-     enddo  !Matrix elements
-     !
-     do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
-       !
-       wf_ = V_dot_V(BS_H_dim,BS_mat(:,i_l),wf_vc)
-       !
-       v2plot(ir) = v2plot(ir)+abs(wf_)**2
-       !
-     enddo
-     !
-     if (master_thread) call live_timing(steps=1)
-     !
-   enddo   !grid points
-   !
-   !$omp end do
-   !$omp end parallel
    !
    call live_timing()
    !
    call PP_redux_wait(v2plot)
+   !
    !
    ! PLOT
    !

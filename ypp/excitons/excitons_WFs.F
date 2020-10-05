@@ -54,10 +54,12 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
  type(PP_indexes)  :: px
  integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_l,i_lambda,j_lambda,i_spin,ir,ir_hole,j1,&
-&                     n_lambda_deg,ir_elec
+&                     n_lambda_deg,neh1,iv1,ic1,ikbz1
  integer           :: ikpbz,ikp,isp
  real(SP)          :: r_hole_rlu(3),kp_dot_r_h,k_dot_r_e
- complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor),phase,WF_int(n_spinor)
+ complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor),phase
+ !
+ complex(SP), allocatable :: B(:,:,:)
  !
  integer,  allocatable :: rindex(:)
  real(SP), allocatable :: r_cell_cc(:,:)
@@ -150,11 +152,52 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    !
    call live_timing('ExcWF@'//trim(intc(j_lambda)),px%n_of_elements(myid+1))  
    !
+   if(l_average_eh) then
+     !
+     YAMBO_ALLOC(B,(BS_bands(1):BS_bands(2), BS_bands(1):BS_bands(2), Xk%nbz))
+     !
+     do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
+       !
+       B=cZERO
+       !
+       ! Build the B_{vvk} (or B_{cck} ) matrix        
+       !
+       do neh = 1,BS_H_dim
+         !
+         ikbz  = BSS_eh_table(neh,1)
+         iv    = BSS_eh_table(neh,2)
+         ic    = BSS_eh_table(neh,3)
+         i_spin= spin(BSS_eh_table(neh,:))
+         !
+         do neh1 = 1,BS_H_dim
+           !
+           ikbz1  = BSS_eh_table(neh1,1)
+           iv1    = BSS_eh_table(neh1,2)
+           ic1    = BSS_eh_table(neh1,3)
+           !
+           if(ikbz==ikbz1) then
+             !      
+             if (ic1==ic) then
+               B(iv,iv1, ikbz)= B(iv,iv1, ikbz) +  BS_mat(neh, i_l)* conjg(BS_mat(neh1, i_l))   
+             elseif(iv1==iv) then
+               B(ic,ic1, ikbz)= B(ic,ic1, ikbz) +  BS_mat(neh, i_l)* conjg(BS_mat(neh1, i_l))      
+             endif
+             !
+           endif
+           !
+         enddo ! loop on neh1
+         !
+       enddo ! loop on neh
+       !
+     enddo ! loop on degenerate excitons
+     !
+   endif
+   !   
    v2plot  =0._SP
    !
    !$omp parallel default(shared), firstprivate(ir_hole,r_hole), &
-   !$omp private(wf_vc, ir,neh, ikbz,iv,ic,i_spin,ikibz,is, ikpbz,ikp,isp, r_hole, &
-   !$omp &       k_dot_r_e,kp_dot_r_h, WF1_ir,WF2_ir,phase, i_l,wf_ , WF_int, ir_hole)
+   !$omp private(wf_vc, ir,neh, ikbz,iv,ic,i_spin,ikibz,is, ikpbz,ikp,isp, &
+   !$omp &       k_dot_r_e,kp_dot_r_h, WF1_ir,WF2_ir,phase, i_l,wf_ )
    !
    call OPENMP_update(master_thread)
    !
@@ -183,62 +226,16 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
        ikp   = Xk%sstar(ikpbz,1)
        isp   = Xk%sstar(ikpbz,2)
        !
-       if(l_average_eh) then
-         !      
-         WF_int=cZERO
-         !
-         if(trim(AVE_exc)=='e') then 
-           !
-           ! Calculate the average electron-wf
-           ! \psi_e(r) = \int_{r_h} \psi (r_e, r_h)
-           !
-           do ir_hole=1,nr_tot
-             r_hole=r_cell_cc(:,ir_hole)
-             kp_dot_r_h = dot_product(r_hole,Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
-             WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))    ! hole WF
-             WF_int=WF_int+cmplx(cos(-kp_dot_r_h),sin(-kp_dot_r_h),kind=SP)*WF1_ir
-           enddo
-           !
-           WF1_ir=WF_int/real(nr_tot,kind=SP)
-           WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))   ! electron WF
-           phase=cmplx(cos(k_dot_r_e),sin(k_dot_r_e),kind=SP)
-           !
-         elseif(trim(AVE_exc)=='h') then
-           !
-           ! Calculate the average hole-wf
-           ! \psi_h(r) = \int_{r_e} \psi (r_e, r_h)
-           !
-           ir_hole=ir
-           !
-           do ir_elec=1,nr_tot
-             k_dot_r_e  = dot_product(r_cell_cc(:,ir_elec),Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
-             WF2_ir=WF_symm(rindex(ir_elec),(/ic,ikibz,is,i_spin/))   ! electron WF
-             WF_int=WF_int+cmplx(cos(k_dot_r_e),sin(k_dot_r_e),kind=SP)*WF2_ir
-           enddo
-           !
-           WF2_ir=WF_int/real(nr_tot,kind=SP)
-           WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))    ! hole WF
-           phase=cmplx(cos(-kp_dot_r_h),sin(-kp_dot_r_h),kind=SP)
-           !
-         else
-           !
-           ! Normal case      
-           !
-           k_dot_r_e  = dot_product(r_cell_cc(:,ir),Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
-           kp_dot_r_h = dot_product(r_hole,Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
-           !
-           WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))   ! electron WF
-           WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))    ! hole WF
-           !
-           phase=cmplx(cos(k_dot_r_e-kp_dot_r_h),sin(k_dot_r_e-kp_dot_r_h),kind=SP)
-           !
-         endif
-         !
-       endif
+       k_dot_r_e  = dot_product(r_cell_cc(:,ir),Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
+       kp_dot_r_h = dot_product(r_hole,Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
+       !
+       WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))
+       WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))
        !
        wf_vc(neh) = conjg(WF1_ir(1))*WF2_ir(1)
        if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF1_ir(2))*WF2_ir(2)
        !
+       phase=cmplx(cos(k_dot_r_e-kp_dot_r_h),sin(k_dot_r_e-kp_dot_r_h),kind=SP)
        wf_vc(neh) = wf_vc(neh)*phase
        ! 
      enddo  !Matrix elements

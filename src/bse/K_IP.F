@@ -337,6 +337,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if(l_BS_trace) then
        res_abs=res_abs+BS_T_grp(i_T_g)%dipoles_R(2,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R(2,i_T))
        res_abs=res_abs+BS_T_grp(i_T_g)%dipoles_R(3,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R(3,i_T))
+       res_abs=res_abs/3._SP
      endif
      res_abs=res_abs*f_*Z_*E_
      !
@@ -363,9 +364,13 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! Dichroism
      !
      if(l_BS_dichroism) then
-       res_dich=(BS_T_grp(i_T_g)%dipoles_R(1,i_T)/(q0_def_norm*cI))* &
-         conjg(BS_T_grp(i_T_g)%dipoles_R_dichroism(1,i_T))          ! EM:  x*L = DIP_x*DIP_orbital; 
-       res_dich=res_dich*f_*Z_                                      !       f_ = occupations
+       res_dich=BS_T_grp(i_T_g)%dipoles_R(1,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R_dichroism(1,i_T))          ! EM:  x*L = DIP_x*DIP_orbital;
+       if(l_BS_trace) then
+         res_dich=res_dich+BS_T_grp(i_T_g)%dipoles_R(2,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R_dichroism(2,i_T))
+         res_dich=res_dich+BS_T_grp(i_T_g)%dipoles_R(3,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R_dichroism(3,i_T))
+         res_dich=res_dich/3._SP
+       endif
+       res_dich=res_dich*f_*Z_/(q0_def_norm*cI)                    !       f_ = occupations
      endif
      !
      ! Magnons

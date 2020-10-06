@@ -106,7 +106,9 @@ subroutine K_diago_driver(iq,W,X_static)
  complex(SP),pointer     :: BS_R_right_kerr(:) => null()
  !
  complex(SP),pointer     :: BS_R_left_magn(:,:)  => null()
- complex(SP),pointer     :: BS_R_right_magn(:,:) => null()      
+ complex(SP),pointer     :: BS_R_right_magn(:,:) => null()
+ complex(SP),pointer     :: BS_A_left_magn(:,:)  => null()
+ complex(SP),pointer     :: BS_A_right_magn(:,:) => null()
  !
  ! Resonant K
  !
@@ -162,7 +164,7 @@ subroutine K_diago_driver(iq,W,X_static)
  !========================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=io_BSS_diago(iq,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
- &                                  BS_R_left_magn,BS_R_right_magn,&
+ &                                  BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn,&
  &                                  BS_R_right_kerr,BS_R_PL)
  !
  K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
@@ -273,7 +275,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
 #if defined _KERR
      if(l_BS_kerr         ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
-     if(l_BS_magnons      ) call K_diago_hermitian_magnons_residual(BS_R_left_magn,BS_R_right_magn)
+     if(l_BS_magnons      ) call K_diago_hermitian_magnons_residual(BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn)
 #endif
      !
 #if defined _PL
@@ -306,7 +308,7 @@ subroutine K_diago_driver(iq,W,X_static)
  ! Now I calculate epsilon
  !=========================
  call K_diago_response_functions(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
- &                                  BS_R_left_magn,BS_R_right_magn,&
+ &                                  BS_R_left_magn,BS_R_right_magn,BS_R_left_magn,BS_R_right_magn,&
  &                                  BS_R_right_kerr,BS_R_PL)
  !
  ! I write the output file 
@@ -319,7 +321,7 @@ subroutine K_diago_driver(iq,W,X_static)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
    io_err=io_BSS_diago(iq,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
-   &                                  BS_R_left_magn,BS_R_right_magn,&
+   &                                  BS_R_left_magn,BS_R_right_magn,BS_R_left_magn,BS_R_right_magn,&
    &                                  BS_R_right_kerr,BS_R_PL)
    !
  endif
@@ -367,6 +369,8 @@ subroutine K_diago_driver(iq,W,X_static)
        if (l_BS_magnons) then
          YAMBO_ALLOC_P(BS_R_left_magn,(2,BSS_n_eig))
          YAMBO_ALLOC_P(BS_R_right_magn,(2,BSS_n_eig))
+         YAMBO_ALLOC_P(BS_A_left_magn,(2,BSS_n_eig))
+         YAMBO_ALLOC_P(BS_A_right_magn,(2,BSS_n_eig))
        endif
 #endif
        !
@@ -413,6 +417,8 @@ subroutine K_diago_driver(iq,W,X_static)
      YAMBO_FREE_P(BS_R_right_kerr)
      YAMBO_FREE_P(BS_R_right_magn)
      YAMBO_FREE_P(BS_R_left_magn)
+     YAMBO_FREE_P(BS_A_right_magn)
+     YAMBO_FREE_P(BS_A_left_magn)
 #endif
 #if defined _PL
      YAMBO_FREE_P(BS_R_PL)

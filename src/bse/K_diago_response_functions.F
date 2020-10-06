@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_diago_response_functions(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
- &                                  BS_R_left_magn,BS_R_right_magn,&
+ &                                  BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn,&
  &                                  BS_R_right_kerr,BS_R_PL)
  !
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
@@ -57,6 +57,7 @@ subroutine K_diago_response_functions(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_co
  complex(SP), intent(in)  :: BS_R_left(BSS_n_eig),BS_R_right(BSS_n_eig)
  real(SP),    pointer     :: BS_E_SOC_corr(:,:)
  complex(SP), pointer     :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
+ complex(SP), pointer     :: BS_A_left_magn(:,:),BS_A_right_magn(:,:)
  complex(SP), pointer     :: BS_R_right_kerr(:)
  real(SP),    pointer     :: BS_R_PL(:,:)
  !
@@ -130,8 +131,9 @@ subroutine K_diago_response_functions(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_co
        X_magnons(:,1,2)=X_magnons(:,1,2)-res_magn(1)/(W%p(:)-EXC_E(i_pert_SOC))
        X_magnons(:,2,2)=X_magnons(:,2,2)-res_magn(2)/(W%p(:)-EXC_E(i_pert_SOC))
        if (BSS_add_antiresonant) then
-         X_magnons(:,1,2)=X_magnons(:,1,2)+conjg(res_magn(2))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
-         X_magnons(:,2,2)=X_magnons(:,2,2)+conjg(res_magn(1))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+         res_magn(:)=BS_A_left_magn(:,i1)*BS_A_right_magn(:,i1)
+         X_magnons(:,1,2)=X_magnons(:,1,2)+res_magn(1)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+         X_magnons(:,2,2)=X_magnons(:,2,2)+res_magn(2)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
      endif
 #endif

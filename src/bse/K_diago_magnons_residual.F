@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_diago_hermitian_magnons_residual(BS_R_left,BS_R_right) 
+subroutine K_diago_hermitian_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A_right) 
  !
  ! Resonant Residuals
  !====================
@@ -42,6 +42,7 @@ subroutine K_diago_hermitian_magnons_residual(BS_R_left,BS_R_right)
  implicit none
  !
  complex(SP),intent(out) :: BS_R_left(2,BSS_n_eig),BS_R_right(2,BSS_n_eig)
+ complex(SP),intent(out) :: BS_A_left(2,BSS_n_eig),BS_A_right(2,BSS_n_eig)
  !
  ! Workspace
  !
@@ -54,10 +55,10 @@ subroutine K_diago_hermitian_magnons_residual(BS_R_left,BS_R_right)
  !
  BS_R_left =cZERO
  BS_R_right=cZERO
- call live_timing('EPS   residuals',px%n_of_elements(myid+1))
+ call live_timing('MAG Res residuals',px%n_of_elements(myid+1))
  !
- tmp_res(:,1) = BSS_dipoles_magn(1,:)*sqrt(BSS_eh_f(:))
- tmp_res(:,2) = BSS_dipoles_magn(2,:)*sqrt(BSS_eh_f(:))
+ tmp_res(:,1) = BSS_dipoles_magn(1,:) *sqrt(BSS_eh_f(:))
+ tmp_res(:,2) = BSS_dipoles_magn(2,:) *sqrt(BSS_eh_f(:))
  !
  if (allocated(BSS_eh_Z)) then
    tmp_res(:,1)=tmp_res(:,1)*sqrt(BSS_eh_Z(:))
@@ -79,6 +80,36 @@ subroutine K_diago_hermitian_magnons_residual(BS_R_left,BS_R_right)
  !
  call PP_redux_wait(BS_R_left)
  call PP_redux_wait(BS_R_right)
+ !
+ ! Anti-Resonant part
+ !
+ BS_A_left =cZERO
+ BS_A_right=cZERO
+ call live_timing('MAG Ares residuals',px%n_of_elements(myid+1))
+ !
+ tmp_res(:,1) = conjg(BSS_dipoles_magn(2,:))*sqrt(BSS_eh_f(:))
+ tmp_res(:,2) = conjg(BSS_dipoles_magn(1,:))*sqrt(BSS_eh_f(:))
+ !
+ if (allocated(BSS_eh_Z)) then
+   tmp_res(:,1)=tmp_res(:,1)*sqrt(BSS_eh_Z(:))
+   tmp_res(:,2)=tmp_res(:,2)*sqrt(BSS_eh_Z(:))
+ endif
+ !
+ do i_eh=1,BSS_n_eig
+   !
+   if (.not.px%element_1D(i_eh)) cycle
+   !
+   BS_A_left(1,i_eh) =V_dot_V_omp(BS_K_dim,tmp_res(:,1),conjg(BS_mat(:,i_eh)))
+   BS_A_left(2,i_eh) =V_dot_V_omp(BS_K_dim,tmp_res(:,2),conjg(BS_mat(:,i_eh)))
+   BS_A_right(:,i_eh)=conjg(BS_A_left(:,i_eh))
+   !
+   call live_timing(steps=1)
+   !
+ enddo
+ call live_timing()
+ !
+ call PP_redux_wait(BS_A_left)
+ call PP_redux_wait(BS_A_right)
  !
  call PP_indexes_reset(px)
  !

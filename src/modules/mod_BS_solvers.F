@@ -156,7 +156,7 @@ module BS_solvers
      type(X_t), optional::X
    end function
    !
-   integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,BsRr,BsE_corr,bsL_magn,bsR_magn,bsR_kerr,bsR_pl)
+   integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,BsRr,BsE_corr,bsL_magn,bsR_magn,baL_magn,baR_magn,bsR_kerr,bsR_pl)
      use pars,          ONLY:SP
      use X_m,           ONLY:X_t
      implicit none
@@ -164,7 +164,7 @@ module BS_solvers
      integer                      :: iq,ID
      complex(SP)        ,optional :: bsE(:),bsRl(:),bsRr(:)
      real(SP),   pointer,optional :: BsE_corr(:,:),bsR_pl(:,:)
-     complex(SP),pointer,optional :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:)
+     complex(SP),pointer,optional :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:),baL_magn(:,:),baR_magn(:,:)
    end function
    !
    integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)

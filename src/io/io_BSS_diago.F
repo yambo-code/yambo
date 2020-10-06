@@ -21,7 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsL_magn,bsR_magn,bsR_kerr,bsR_pl)
+integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
+&                             bsL_magn,bsR_magn,baL_magn,baR_magn,bsR_kerr,bsR_pl)
  !
  use pars,          ONLY:SP,schlen,IP
  use stderr,        ONLY:intc
@@ -40,7 +41,7 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsL_magn,bsR
  integer                        :: iq,ID
  complex(SP)        , optional  :: bsE(:),bsRl(:),bsRr(:)
  real(SP)   ,pointer, optional  :: BsE_corr(:,:),bsR_pl(:,:)
- complex(SP),pointer, optional  :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:)
+ complex(SP),pointer, optional  :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:),baL_magn(:,:),baR_magn(:,:)
  !
  ! Work Space
  !
@@ -124,6 +125,20 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsL_magn,bsR
      if(associated(bsR_magn)) then
        call io_bulk(ID,'BS_R_magn_Residuals',VAR_SZ=(/2,2,BSS_n_eig/))
        call io_bulk(ID,C2=bsR_magn)
+     endif
+   endif
+   !
+   if(present(baL_magn)) then
+     if(associated(baL_magn)) then
+       call io_bulk(ID,'BS_L_magn_Antiresid',VAR_SZ=(/2,2,BSS_n_eig/))
+       call io_bulk(ID,C2=baL_magn)
+     endif
+   endif
+   !
+   if(present(baR_magn)) then
+     if(associated(baR_magn)) then
+       call io_bulk(ID,'BS_R_magn_Antiresid',VAR_SZ=(/2,2,BSS_n_eig/))
+       call io_bulk(ID,C2=baR_magn)
      endif
    endif
    !

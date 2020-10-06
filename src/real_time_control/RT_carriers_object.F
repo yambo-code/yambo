@@ -32,9 +32,11 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  use electrons,      ONLY:n_sp_pol,spin_occ,levels
  use R_lattice,      ONLY:bz_samp
  use RT_control,     ONLY:CARR_RT_IO_t
- use RT_lifetimes,   ONLY:RT_EP_life,RT_EE_life,RT_EH_life,REF_lifetime 
+ use RT_lifetimes,   ONLY:RT_EP_life,RT_EE_life,RT_EH_life,RT_EP_REF_life,&
+&                         RT_EE_REF_life,RT_EH_REF_life
+ use RT_lifetimes_DO,ONLY:EMIT_RT_life_REF,ABS_RT_life_REF
  use real_time,      ONLY:RT_t,RTibz,RT_nk,RT_delta_occupations,RT_bands,&
-&                         RT_obj_alloc,RT_obj_free,RT_levels
+&                         RT_obj_alloc,RT_obj_free,RT_levels,RT_is_dynamically_dephased
  use hamiltonian,    ONLY:E_reference
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,NF90_unlimited
  !
@@ -69,7 +71,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
      RT%E_bare=0._SP
      RT%f_bare=0._SP
-     if (allocated(REF_lifetime)) RT%GAMMA_bare=0._SP
+     !
+     if (RT_is_dynamically_dephased) RT%GAMMA_bare=0._SP
      !
      do i_k=1,K%nibz
        do i_k_RT=RTibz%k_range(i_k,1),RTibz%k_range(i_k,2)
@@ -180,11 +183,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
          df_occ=RT%delta_f(i_RT)/spin_occ
          if(l_elel_scatt.or.l_elph_scatt) then
            RT%delta_GAMMA(i_RT)=  Hole_lifetime+Elec_lifetime
-           Hole_lifetime=Hole_lifetime+REF_lifetime(i_b,i_k_RT,1)+REF_lifetime(i_b,i_k_RT,3)+&
-&                                      REF_lifetime(i_b,i_k_RT,5)+REF_lifetime(i_b,i_k_RT,7)
-           Elec_lifetime=Elec_lifetime+REF_lifetime(i_b,i_k_RT,2)+REF_lifetime(i_b,i_k_RT,4)+&
-&                                      REF_lifetime(i_b,i_k_RT,6)+REF_lifetime(i_b,i_k_RT,8)
-           !
+           Elec_lifetime=Elec_lifetime+EMIT_RT_life_REF(i_b,i_k_RT)
+           Hole_lifetime=Hole_lifetime+ ABS_RT_life_REF(i_b,i_k_RT)
            RT%NEQ_Lifetime(i_RT)=  (Hole_lifetime+Elec_lifetime)
            if(RT%E_bare(i_RT)> 0._SP) then
              if ((      f_occ)>0._SP) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Hole_lifetime/       f_occ
@@ -204,19 +204,30 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
      ! Reference Lifetimes
      !
-     if(.not.allocated(REF_lifetime)) return
+     if (.not.RT_is_dynamically_dephased) return
      !
      do i_RT=1,RT%nstates
        !
-       Hole_lifetime=0._SP
-       Elec_lifetime=0._SP
-       !
        i_b    =RT%table(i_RT,1)
-       i_k    =RT%table(i_RT,2)
        i_k_RT =RT%table(i_RT,3)
        i_spin =RT%table(i_RT,4)
        !
-       RT%GAMMA_bare(i_RT,:)=REF_lifetime(i_b,i_k_RT,:)
+       if (RT_EE_REF_life%active) then
+         RT%GAMMA_bare(i_RT,1)=RT_EE_REF_life%SPONT_abs(i_b,i_k_RT)
+         RT%GAMMA_bare(i_RT,2)=RT_EE_REF_life%SPONT_emit(i_b,i_k_RT)
+       endif
+       if (RT_EP_REF_life%active) then
+         RT%GAMMA_bare(i_RT,3)=RT_EP_REF_life%SPONT_abs(i_b,i_k_RT)
+         RT%GAMMA_bare(i_RT,4)=RT_EP_REF_life%SPONT_emit(i_b,i_k_RT)
+         if (RT_EP_REF_life%STIMULATED_components) then
+           RT%GAMMA_bare(i_RT,5)=RT_EP_REF_life%STIM_emit(i_b,i_k_RT)
+           RT%GAMMA_bare(i_RT,6)=RT_EP_REF_life%STIM_abs(i_b,i_k_RT)
+         endif
+       endif
+       if (RT_EH_REF_life%active) then
+         RT%GAMMA_bare(i_RT,7)=RT_EH_REF_life%SPONT_abs(i_b,i_k_RT)
+         RT%GAMMA_bare(i_RT,8)=RT_EH_REF_life%SPONT_emit(i_b,i_k_RT)
+       endif
        !
      enddo
      !

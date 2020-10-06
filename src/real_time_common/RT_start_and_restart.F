@@ -220,7 +220,6 @@ subroutine RT_start_and_restart(E,k,q)
    !
    ! Last thing to do is to update the planned time sampling time (if needed)
    !
-   !
    nt=RT_Lifetimes_evaluation_plan( )
    !
    ! Update occupations after loading from DB

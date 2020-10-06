@@ -5,7 +5,7 @@ COMMON_objects = mod_collision_ext.o mod_plasma.o mod_COLL_interfaces.o mod_H_in
 SC_objects       = mod_SC.o
 #endif
 #if defined _RT
-RT_objects       = mod_fields.o mod_RT_output.o mod_RT_control.o mod_RT_interfaces.o mod_RT_lifetimes.o mod_RT_occupations.o
+RT_objects       = mod_fields.o mod_RT_output.o mod_RT_control.o mod_RT_interfaces.o mod_RT_lifetimes.o mod_RT_occupations.o mod_RT_lifetimes_DO.o
 #endif
 #if defined _RT || defined _PHEL
 PHEL_objects     =  mod_PH_real_time.o 

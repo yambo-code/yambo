@@ -47,14 +47,14 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
  ! Only after the G lesser has been propagated, the occupations are updated
  ! Here remember that the occupations stored in the module are always equal to dG_inp
  ! 
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP,cI,rZERO
  use electrons,      ONLY:spin_occ
- use RT_lifetimes,   ONLY:RT_EP_life,RT_EE_life,RT_EH_life,REF_lifetime
  use real_time,      ONLY:RT_bands,RTibz,l_elel_scatt,l_elph_scatt,l_elphoton_scatt,  &
 &                         l_RT_relax_time_approx,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,&
 &                         RT_E_occupations,RT_H_occupations,l_RT_CCA_Kernel, &
 &                         RT_delta_occupations,l_RT_include_eq_scatt,&
 &                         RT_is_statically_dephased,RT_is_dynamically_dephased,RT_Deph_Matrix,G_lesser_reference
+ use RT_lifetimes_DO,ONLY:ABS_RT_life_REF,EMIT_RT_life_REF,ABS_RT_life_dGAMMA,EMIT_RT_life_dGAMMA
  !
  implicit none
  !
@@ -86,24 +86,15 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
    ! The GAMMA0 term could be moved inside RT_apply_RWA.F
    ! For the moment I keep it here, together with the rest of the relaxation term
    !
-   GAMMA0(1)=REF_lifetime(ib,ik,2)+REF_lifetime(ib,ik,4)+REF_lifetime(ib,ik,6)+REF_lifetime(ib,ik,8)
-   GAMMA0(2)=REF_lifetime(ib,ik,1)+REF_lifetime(ib,ik,3)+REF_lifetime(ib,ik,5)+REF_lifetime(ib,ik,7)
+   GAMMA0(1)=EMIT_RT_life_REF(ib,ik)
+   GAMMA0(2)= ABS_RT_life_REF(ib,ik)
    !
-   dGAMMA(1)=0._SP
-   dGAMMA(2)=0._SP
+   dGAMMA(1)=rZERO
+   dGAMMA(2)=rZERO
+   !
    if(.not.l_RT_relax_time_approx) then
-     if (RT_EE_life%active) then
-       dGAMMA(1)=RT_EE_life%SPONT_emit(ib,ik)
-       dGAMMA(2)=RT_EE_life%SPONT_abs(ib,ik)
-     endif
-     if (RT_EH_life%active) then
-       dGAMMA(1)=dGAMMA(1)+RT_EH_life%SPONT_emit(ib,ik)
-       dGAMMA(2)=dGAMMA(2)+RT_EH_life%SPONT_abs(ib,ik)
-     endif
-     if (RT_EP_life%active) then
-       dGAMMA(1)=dGAMMA(1)+ RT_EP_life%SPONT_emit(ib,ik)+RT_EP_life%STIM_abs(ib,ik)
-       dGAMMA(2)=dGAMMA(2)+ RT_EP_life%SPONT_abs(ib,ik) +RT_EP_life%STIM_emit(ib,ik)
-     endif
+     dGAMMA(1)=EMIT_RT_life_dGAMMA(ib,ik)
+     dGAMMA(2)= ABS_RT_life_dGAMMA(ib,ik)
    endif
    !
    if (RT_is_statically_dephased) GAMMA0(1)=GAMMA0(1)+RT_Deph_Matrix(ib,ib,RTibz%k_map(ik))

@@ -31,7 +31,7 @@ subroutine RT_output_INIT( )
  use com,            ONLY:msg
  use drivers,        ONLY:l_use_Hxc_collisions,l_elel_scatt,l_elph_scatt
  use stderr,         ONLY:intc
- use RT_lifetimes,   ONLY:l_lftm_fit_temperatures
+ use RT_lifetimes,   ONLY:l_lftm_fit_temperatures,RT_EP_life
  use C_driver,       ONLY:code_bin
  use timing_m,       ONLY:timing
  use D_lattice,      ONLY:Bose_Temp
@@ -93,15 +93,15 @@ subroutine RT_output_INIT( )
  !
  ! GPL_EXCLUDE_START 
  ! 
- call RT_FILE_add('mean_EPlifetimes',TITLES=(/"Time[fs]     ","Ho.(em) [meV]","El.(em) [meV]"/))
- if(Bose_Temp>0._SP ) then
-   call RT_FILE_add(TITLES=(/"Ho.(abs)[meV]","El.(abs)[meV]"/))
+ call RT_FILE_add('mean_EPlifetimes',TITLES=(/"Time [fs]       ","Spont Abs  [meV]","Spont Emit [meV]"/))
+ if(RT_EP_life%STIMULATED_components) then
+   call RT_FILE_add(TITLES=(/"Stim Emit [meV]","Stim abs  [meV]"/))
  endif
  if(l_lftm_fit_temperatures) then
    call RT_FILE_add(TITLES=(/" T Hole  [K] "," T Elec  [K] "/))
  endif
  !
- call RT_FILE_add('mean_EElifetimes',TITLES=(/"Time[fs]  ","Hole [meV]","Elec [meV]"/))
+ call RT_FILE_add('mean_EElifetimes',TITLES=(/"Time [fs]       ","Spont Abs  [meV]","Spont Emit [meV]"/))
  if(l_lftm_fit_temperatures) then
    call RT_FILE_add(TITLES=(/" T Hole  [K] "," T Elec  [K] "/))
  endif

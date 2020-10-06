@@ -26,9 +26,8 @@ subroutine RT_Lifetimes_merge_driver(what)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use RT_lifetimes,   ONLY:RT_EP_life,RT_EE_life,RT_EH_life,&
-&                         RT_EP_REF_life,RT_EE_REF_life,RT_EH_REF_life,REF_lifetime
+&                         RT_EP_REF_life,RT_EE_REF_life,RT_EH_REF_life
  use real_time,      ONLY:RTibz
- use D_lattice,      ONLY:Bose_Temp
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use R_lattice,      ONLY:nkibz
  use timing_m,       ONLY:timing
@@ -74,33 +73,12 @@ subroutine RT_Lifetimes_merge_driver(what)
      !call ADD_to_REF(RT_PE_life,RT_PE_REF_life)
      call ADD_to_REF(RT_EH_life,RT_EH_REF_life)
      !
-     if (l_elel_scatt) then
-       REF_lifetime(:,k_range(1):k_range(2),1)=RT_EE_life%SPONT_abs(:,k_range(1):k_range(2))
-       REF_lifetime(:,k_range(1):k_range(2),2)=RT_EE_life%SPONT_emit(:,k_range(1):k_range(2))
-     endif
-     !
-     if (l_elph_scatt) then
-       REF_lifetime(:,k_range(1):k_range(2),3)=RT_EP_life%SPONT_abs(:,k_range(1):k_range(2))
-       REF_lifetime(:,k_range(1):k_range(2),4)=RT_EP_life%SPONT_emit(:,k_range(1):k_range(2))
-       if (Bose_Temp>0._SP) then
-         REF_lifetime(:,k_range(1):k_range(2),5)=RT_EP_life%STIM_emit(:,k_range(1):k_range(2))
-         REF_lifetime(:,k_range(1):k_range(2),6)=RT_EP_life%STIM_abs(:,k_range(1):k_range(2))
-       endif
-     endif
-     !
-     if (l_elphoton_scatt) then
-       REF_lifetime(:,k_range(1):k_range(2),7)=RT_EH_life%SPONT_abs(:,k_range(1):k_range(2))
-       REF_lifetime(:,k_range(1):k_range(2),8)=RT_EH_life%SPONT_emit(:,k_range(1):k_range(2))
-     endif
-     !
    enddo
    !
    call REDUX(RT_EE_REF_life)
    call REDUX(RT_EP_REF_life)
    !call REDUX(RT_PE_REF_life)
    call REDUX(RT_EH_REF_life)
-   !
-   call PP_redux_wait(REF_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    !
  endif
  !

@@ -24,7 +24,7 @@
 subroutine RT_initialize(E,k,q)
  !
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_hartree,l_use_Hxc_collisions,&
-&                         l_sc_is_libDFT,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_rt_carriers_in_use
+&                         l_sc_is_libDFT,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_rt_carriers_in_use,l_phel_scatt
 #if defined _PHEL
  use drivers,        ONLY:l_phel_scatt
 #endif
@@ -368,7 +368,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! GPL_EXCLUDE_START
  !
- RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt
+ RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt.or.l_phel_scatt
  !
  if (     RT_is_dynamically_dephased) N_T_samplings = RT_Lifetimes_evaluation_plan( )
  if (.not.RT_is_dynamically_dephased) N_T_samplings = 0

@@ -75,8 +75,9 @@ subroutine RT_relaxation(E,k,q,Time)
  !DEBUG<
 #endif
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
- use RT_lifetimes,   ONLY:RT_EP_life,RT_EE_life,RT_EH_life,l_RT_eval_lifetimes,&
-&                         Life_MEM_steps,l_initial_equilibrium,EE_prefactor,EP_prefactor,EP_abs_prefactor,&
+ use RT_lifetimes,   ONLY:RT_EP_life,RT_EE_life,RT_EH_life,l_RT_eval_lifetimes,& 
+&                         RT_EP_ref_life,RT_EE_ref_life,RT_EH_ref_life,&
+&                         Life_MEM_steps,l_initial_equilibrium,&
 &                         SAVED_times
  use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
 &                         l_RT_CCA_Kernel,FIRST_step,RT_is_statically_dephased,&
@@ -254,17 +255,28 @@ subroutine RT_relaxation(E,k,q,Time)
    !
    subroutine Impose_Conservations( )
      !
-     EE_prefactor    =0._SP
-     EP_prefactor    =0._SP
-     EP_abs_prefactor=0._SP
-     !
      ! Zero dN/dT & dE/dT & d(DeltaN)/dT
      !===================================
-     if (l_elel_scatt)     call RT_impose_zero_dE_and_dN(E,k,RT_EE_life%SPONT_abs,RT_EE_life%SPONT_emit,'elel ')
-     if (l_elph_scatt)     call RT_impose_zero_dE_and_dN(E,k,RT_EP_life%SPONT_abs,RT_EP_life%SPONT_emit,'elph1')
-     if (l_elphoton_scatt) call RT_impose_zero_dE_and_dN(E,k,RT_EH_life%SPONT_abs,RT_EH_life%SPONT_emit,'radiative')
-     if (l_elph_scatt.and.Bose_Temp>0._SP) &
-&                          call RT_impose_zero_dE_and_dN(E,k,RT_EP_life%STIM_emit,RT_EP_life%STIM_abs,'elph2')
+     if (RT_EP_life%active) then
+       call RT_impose_zero_dE_and_dN(E,RT_EP_life,RT_EP_life%SPONT_emit,    RT_EP_life%SPONT_abs,&
+&                                                 RT_EP_ref_life%SPONT_emit,RT_EP_ref_life%SPONT_abs,&
+&                                                 RT_EP_life%SPONT_prefactor)
+       if (RT_EP_life%STIMULATED_components) then
+         call RT_impose_zero_dE_and_dN(E,RT_EP_life,RT_EP_life%STIM_abs,    RT_EP_life%STIM_emit,&
+&                                                   RT_EP_ref_life%STIM_abs,RT_EP_ref_life%STIM_emit,&
+&                                                   RT_EP_life%STIM_prefactor)
+       endif
+     endif
+     if (RT_EE_life%active) then
+       call RT_impose_zero_dE_and_dN(E,RT_EE_life,RT_EE_life%SPONT_emit,    RT_EE_life%SPONT_abs,&
+&                                                 RT_EE_ref_life%SPONT_emit,RT_EE_ref_life%SPONT_abs,&
+&                                                 RT_EE_life%SPONT_prefactor)
+     endif
+     if (RT_EH_life%active) then
+       call RT_impose_zero_dE_and_dN(E,RT_EH_life,RT_EH_life%SPONT_emit,    RT_EH_life%SPONT_abs,&
+&                                                 RT_EH_ref_life%SPONT_emit,RT_EH_ref_life%SPONT_abs,&
+&                                                 RT_EH_life%SPONT_prefactor)
+     endif
      !
    end subroutine
    !

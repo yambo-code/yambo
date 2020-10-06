@@ -51,10 +51,10 @@ subroutine PHEL_lifetimes(iq,E,k,q)
  use electrons,      ONLY:levels,n_full_bands,spin_occ
  use hamiltonian,    ONLY:B_mat_index
  use R_lattice,      ONLY:bz_samp,qindx_X
+ use RT_lifetimes,   ONLY:l_initial_equilibrium
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_occupations_locked,RT_levels,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
-&                         RT_life_delta_occupations,l_initial_equilibrium,&
-&                         RT_eh_en,RT_bands,RTibz
+&                         RT_life_delta_occupations,RT_eh_en,RT_bands,RTibz
 ! use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
 !&                         P_E_sp_res_lifetime,P_E_sp_ares_lifetime,P_E_eh_lifetime,&
 !&                         EQ_P_E_sp_res_lifetime,EQ_P_E_sp_ares_lifetime,&

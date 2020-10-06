@@ -68,13 +68,13 @@ subroutine RT_mean_carrier_lifetimes( LIFE, LIFE_ref )
        if(ib> n_full_bands) EP_occupations(ib,ik)=0._SP
      endif
      !
-     LIFE%SPONT_mean(1)=LIFE%SPONT_mean(1)+(LIFE%SPONT_abs(ib,ik)+LIFE%SPONT_abs(ib,ik))*pre_factor
-     LIFE%SPONT_mean(2)=LIFE%SPONT_mean(2)+(LIFE%SPONT_emit(ib,ik)+LIFE%SPONT_emit(ib,ik))*pre_factor
+     LIFE%SPONT_mean(1)=LIFE%SPONT_mean(1)+(LIFE%SPONT_abs(ib,ik)+LIFE_ref%SPONT_abs(ib,ik))*pre_factor
+     LIFE%SPONT_mean(2)=LIFE%SPONT_mean(2)+(LIFE%SPONT_emit(ib,ik)+LIFE_ref%SPONT_emit(ib,ik))*pre_factor
      !
      if (.not.LIFE%STIMULATED_components) cycle
      !
-     LIFE%STIM_mean(1)=LIFE%STIM_mean(2)+(LIFE%STIM_emit(ib,ik)+LIFE%STIM_emit(ib,ik))*pre_factor
-     LIFE%STIM_mean(2)=LIFE%STIM_mean(1)+(LIFE%STIM_abs(ib,ik)+LIFE%STIM_abs(ib,ik))*pre_factor
+     LIFE%STIM_mean(1)=LIFE%STIM_mean(1)+(LIFE%STIM_emit(ib,ik)+LIFE_ref%STIM_emit(ib,ik))*pre_factor
+     LIFE%STIM_mean(2)=LIFE%STIM_mean(2)+(LIFE%STIM_abs(ib,ik)+LIFE_ref%STIM_abs(ib,ik))*pre_factor
      !
    enddo
    !

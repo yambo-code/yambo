@@ -198,7 +198,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
                  B_coeff =  conjg(BS_mat(neh, i_l))*BS_mat(neh1, i_l)   
                  !
                  WF1_ir=WF_symm(rindex(ir),(/ic, ikibz,is,i_spin/))
-                 WF2_ir=WF_symm(rindex(ir),(/ic1,ikibz,is,i_spin/))
+                 WF2_ir=WF_symm(rindex(ir),(/ic1,ikibz1,is1,i_spin1/))
                  !
                  v2plot(ir) = v2plot(ir)+B_coeff*conjg(WF1_ir(1))*WF2_ir(1)
                  !

@@ -23,9 +23,8 @@
 !
 subroutine RT_Lifetimes_merge_driver(what)
  !
- use pars,           ONLY:SP
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
- use RT_lifetimes,   ONLY:RT_EP_life,RT_EE_life,RT_EH_life,&
+ use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,&
 &                         RT_EP_REF_life,RT_EE_REF_life,RT_EH_REF_life
  use real_time,      ONLY:RTibz
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
@@ -49,8 +48,8 @@ subroutine RT_Lifetimes_merge_driver(what)
    if (what=="INTER_k".or.what=="REF") call RT_Lifetimes_merge_inter_k(RT_EE_life)
  endif
  if (l_elph_scatt) then
-   if (what=="INTRA_k")                call RT_Lifetimes_merge_intra_k(RT_EP_life)
-   if (what=="INTER_k".or.what=="REF") call RT_Lifetimes_merge_inter_k(RT_EP_life)
+   if (what=="INTRA_k")                call RT_Lifetimes_merge_intra_k(RT_EP_emit_life)
+   if (what=="INTER_k".or.what=="REF") call RT_Lifetimes_merge_inter_k(RT_EP_emit_life)
  endif
  if (l_elphoton_scatt) then
    if (what=="INTRA_k")                call RT_Lifetimes_merge_intra_k(RT_EH_life)
@@ -69,7 +68,7 @@ subroutine RT_Lifetimes_merge_driver(what)
      k_range=RTibz%k_range(ik,:)
      !
      call ADD_to_REF(RT_EE_life,RT_EE_REF_life)
-     call ADD_to_REF(RT_EP_life,RT_EP_REF_life)
+     call ADD_to_REF(RT_EP_emit_life,RT_EP_REF_life)
      !call ADD_to_REF(RT_PE_life,RT_PE_REF_life)
      call ADD_to_REF(RT_EH_life,RT_EH_REF_life)
      !
@@ -90,8 +89,8 @@ subroutine RT_Lifetimes_merge_driver(what)
      use RT_lifetimes,   ONLY:RT_lifetime
      type(RT_lifetime)      ::LIFE
      if (.not.LIFE%active) return
-     call PP_redux_wait(LIFE%SPONT_abs,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     call PP_redux_wait(LIFE%SPONT_emit,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     call PP_redux_wait(LIFE%abs,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     call PP_redux_wait(LIFE%emit,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
      if (.not.LIFE%STIMULATED_components) return
      call PP_redux_wait(LIFE%STIM_abs,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
      call PP_redux_wait(LIFE%STIM_emit,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
@@ -101,8 +100,8 @@ subroutine RT_Lifetimes_merge_driver(what)
      use RT_lifetimes,   ONLY:RT_lifetime
      type(RT_lifetime)      ::LIFE,LIFE_ref
      if (.not.LIFE%active) return
-     LIFE_ref%SPONT_abs(:,k_range(1):k_range(2))=LIFE%SPONT_abs(:,k_range(1):k_range(2))
-     LIFE_ref%SPONT_emit(:,k_range(1):k_range(2))=LIFE%SPONT_emit(:,k_range(1):k_range(2))
+     LIFE_ref%abs(:,k_range(1):k_range(2))=LIFE%abs(:,k_range(1):k_range(2))
+     LIFE_ref%emit(:,k_range(1):k_range(2))=LIFE%emit(:,k_range(1):k_range(2))
      if (.not.LIFE%STIMULATED_components) return
      LIFE_ref%STIM_abs(:,k_range(1):k_range(2))=LIFE%STIM_abs(:,k_range(1):k_range(2))
      LIFE_ref%STIM_emit(:,k_range(1):k_range(2))=LIFE%STIM_emit(:,k_range(1):k_range(2))

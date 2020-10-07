@@ -44,7 +44,7 @@ subroutine RT_mean_carrier_lifetimes( LIFE, LIFE_ref )
  if (.not.LIFE%active) return
  !
  n_states(1)     =0._SP
- LIFE%SPONT_mean =0._SP
+ LIFE%mean =0._SP
  LIFE%STIM_mean  =0._SP
  EE_occupations  =0._SP
  EP_occupations  =0._SP
@@ -68,8 +68,8 @@ subroutine RT_mean_carrier_lifetimes( LIFE, LIFE_ref )
        if(ib> n_full_bands) EP_occupations(ib,ik)=0._SP
      endif
      !
-     LIFE%SPONT_mean(1)=LIFE%SPONT_mean(1)+(LIFE%SPONT_abs(ib,ik)+LIFE_ref%SPONT_abs(ib,ik))*pre_factor
-     LIFE%SPONT_mean(2)=LIFE%SPONT_mean(2)+(LIFE%SPONT_emit(ib,ik)+LIFE_ref%SPONT_emit(ib,ik))*pre_factor
+     LIFE%mean(1)=LIFE%mean(1)+(LIFE%abs(ib,ik)+LIFE_ref%abs(ib,ik))*pre_factor
+     LIFE%mean(2)=LIFE%mean(2)+(LIFE%emit(ib,ik)+LIFE_ref%emit(ib,ik))*pre_factor
      !
      if (.not.LIFE%STIMULATED_components) cycle
      !
@@ -80,13 +80,13 @@ subroutine RT_mean_carrier_lifetimes( LIFE, LIFE_ref )
    !
  enddo
  !
- call PP_redux_wait(LIFE%SPONT_mean,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ call PP_redux_wait(LIFE%mean,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  call PP_redux_wait(LIFE%STIM_mean, COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  call PP_redux_wait(EE_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  call PP_redux_wait(EP_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  call PP_redux_wait(n_states,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
- LIFE%SPONT_mean=LIFE%SPONT_mean/n_states(1)
+ LIFE%mean=LIFE%mean/n_states(1)
  LIFE%STIM_mean =LIFE%STIM_mean/n_states(1)
  !
 ! RT_Tfit_lifetimes=0._SP

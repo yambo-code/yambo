@@ -37,7 +37,7 @@ subroutine RT_output(what,VALUES,TIME,E)
 &                         n_RT_headings,RT_headings,N_MAX_RT_headings,RT_desc,Gr_desc,TIME_STEP_desc
  use RT_control,     ONLY:RT_NAN_found,OUTPUT_RT_IO_t
  use RT_lifetimes,   ONLY:l_lftm_fit_temperatures,&
-&                         RT_EP_life,RT_EE_life,RT_EH_life,RT_Tfit_lifetimes
+&                         RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_Tfit_lifetimes
  use real_time,      ONLY:RT_ind_J,RT_P,RT_spin_magn,NE_i_time
  use timing_m,       ONLY:timing
  use C_driver,       ONLY:code_bin
@@ -234,10 +234,10 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(3:n_RT_headings(i_f)) = VALUES(1:n_RT_headings(i_f)-2)
      case('mean_EPlifetimes')
        N=2
-       data_to_dump(2:3) = RT_EP_life%SPONT_mean*HA2EV*1000._SP
-       if(RT_EP_life%active) then
+       data_to_dump(2:3) = RT_EP_emit_life%mean*HA2EV*1000._SP
+       if(RT_EP_emit_life%active) then
          N=N+2
-         data_to_dump(N:N+1)=RT_EP_life%STIM_mean*HA2EV*1000._SP
+         data_to_dump(N:N+1)=RT_EP_emit_life%STIM_mean*HA2EV*1000._SP
        endif
        if(l_lftm_fit_temperatures) then
          N=N+2
@@ -245,30 +245,30 @@ subroutine RT_output(what,VALUES,TIME,E)
        endif
      case('mean_EElifetimes')
        N=2
-       data_to_dump(2:3) = RT_EE_life%SPONT_mean*HA2EV*1000._SP
+       data_to_dump(2:3) = RT_EE_life%mean*HA2EV*1000._SP
        if(l_lftm_fit_temperatures) then
          N=N+2
          data_to_dump(N:N+1) = RT_Tfit_lifetimes(3:4)*HA2KEL
        endif
      case('mean_RADlifetimes')
-       data_to_dump(2) = Time_of(RT_EH_life%SPONT_mean(1),"ps")
-       data_to_dump(3) = Time_of(RT_EH_life%SPONT_mean(2),"ps")
+       data_to_dump(2) = Time_of(RT_EH_life%mean(1),"ps")
+       data_to_dump(3) = Time_of(RT_EH_life%mean(2),"ps")
      case('N_dN_E_conservation_factors')
        N=1
-       if(RT_EP_life%active) then
-         data_to_dump(2:3)  =RT_EP_life%SPONT_prefactor
+       if(RT_EP_emit_life%active) then
+         data_to_dump(2:3)  =RT_EP_emit_life%prefactor
          N=3
          if(RT_EE_life%STIMULATED_components) then
-           data_to_dump(4:5)=RT_EP_life%STIM_prefactor
+           data_to_dump(4:5)=RT_EP_emit_life%STIM_prefactor
            N=5
          endif
        endif
        if(RT_EE_life%active) then
-         data_to_dump(N+1:N+2)=RT_EE_life%SPONT_prefactor
+         data_to_dump(N+1:N+2)=RT_EE_life%prefactor
          N=N+2
        endif
        if(RT_EH_life%active) then
-         data_to_dump(N+1:N+2)=RT_EH_life%SPONT_prefactor
+         data_to_dump(N+1:N+2)=RT_EH_life%prefactor
          N=N+2
        endif
        !

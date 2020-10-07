@@ -31,7 +31,7 @@ subroutine RT_output_INIT( )
  use com,            ONLY:msg
  use drivers,        ONLY:l_use_Hxc_collisions,l_elel_scatt,l_elph_scatt
  use stderr,         ONLY:intc
- use RT_lifetimes,   ONLY:l_lftm_fit_temperatures,RT_EP_life
+ use RT_lifetimes,   ONLY:l_lftm_fit_temperatures,RT_EP_emit_life
  use C_driver,       ONLY:code_bin
  use timing_m,       ONLY:timing
  use D_lattice,      ONLY:Bose_Temp
@@ -94,7 +94,7 @@ subroutine RT_output_INIT( )
  ! GPL_EXCLUDE_START 
  ! 
  call RT_FILE_add('mean_EPlifetimes',TITLES=(/"Time [fs]       ","Spont Abs  [meV]","Spont Emit [meV]"/))
- if(RT_EP_life%STIMULATED_components) then
+ if(RT_EP_emit_life%STIMULATED_components) then
    call RT_FILE_add(TITLES=(/"Stim Emit [meV]","Stim abs  [meV]"/))
  endif
  if(l_lftm_fit_temperatures) then

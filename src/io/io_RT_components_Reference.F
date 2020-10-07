@@ -87,11 +87,11 @@ subroutine io_RT_components_Reference(ID)
    subroutine elemental_LIFE_IO(LIFE)
      type(RT_lifetime) :: LIFE
      if (LIFE%active) then
-       call def_variable_bulk(ID,trim(LIFE%kind)//"_SPONT_ABS",VAR_ID,(/RT_nbands,RT_nk/),SP)
-       call  io_variable_bulk(ID,VAR_ID,R2=LIFE%SPONT_abs)
+       call def_variable_bulk(ID,trim(LIFE%kind)//"_ABS",VAR_ID,(/RT_nbands,RT_nk/),SP)
+       call  io_variable_bulk(ID,VAR_ID,R2=LIFE%abs)
        VAR_ID=VAR_ID+1
-       call def_variable_bulk(ID,trim(LIFE%kind)//"_SPONT_EMIT",VAR_ID,(/RT_nbands,RT_nk/),SP)
-       call  io_variable_bulk(ID,VAR_ID,R2=LIFE%SPONT_emit)
+       call def_variable_bulk(ID,trim(LIFE%kind)//"_EMIT",VAR_ID,(/RT_nbands,RT_nk/),SP)
+       call  io_variable_bulk(ID,VAR_ID,R2=LIFE%emit)
        if (LIFE%STIMULATED_components) then
          VAR_ID=VAR_ID+1
          call def_variable_bulk(ID,trim(LIFE%kind)//"_STIM_EMIT",VAR_ID,(/RT_nbands,RT_nk/),SP)

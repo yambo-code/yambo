@@ -30,7 +30,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  use R_lattice,      ONLY:bz_samp
  use IO_m,           ONLY:IO_and_Messaging_switch,io_control,io_disconnect,WR_CL
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
- use RT_lifetimes,   ONLY:RT_EP_life,RT_EE_life,RT_EH_life,RT_EP_REF_life,RT_EE_REF_life,RT_EH_REF_life
+ use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_REF_life,RT_EE_REF_life,RT_EH_REF_life
  use real_time,      ONLY:eval_energy,eval_entropy,l_RT_update_Energies,l_NE_with_fields,NE_time, &
 &                         l_RT_induced_field,l_RT_impose_N_dN,l_RT_impose_E,RT_is_dynamically_dephased,NE_i_time
  use D_lattice,      ONLY:Bose_Temp
@@ -131,8 +131,8 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !========================
    if (RT_is_dynamically_dephased) then
      !
-     call RT_mean_carrier_lifetimes( RT_EP_life, RT_EP_REF_life )
-     if (RT_EP_life%active) call RT_output('mean_EPlife', TIME=NE_time*AUT2FS)
+     call RT_mean_carrier_lifetimes( RT_EP_emit_life, RT_EP_REF_life )
+     if (RT_EP_emit_life%active) call RT_output('mean_EPlife', TIME=NE_time*AUT2FS)
      call RT_mean_carrier_lifetimes( RT_EE_life, RT_EE_REF_life )
      if (RT_EH_life%active) call RT_output('mean_EElife', TIME=NE_time*AUT2FS)
      call RT_mean_carrier_lifetimes( RT_EH_life, RT_EH_REF_life )

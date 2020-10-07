@@ -23,7 +23,6 @@
 !
 subroutine RT_Lifetimes_merge_inter_k(LIFE)
  !
- use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,N_SND_RCV_operations,SND_RCV_op,&
 &                         PAR_COM_Xk_ibz_INDEX,PP_send_and_receive
  use real_time,      ONLY:RTibz
@@ -82,16 +81,16 @@ subroutine RT_Lifetimes_merge_inter_k(LIFE)
      do i_el=1,NK_to_do(ic_snd)
        ik=IK_to_do(ic_snd,i_el)
        if (do_I_snd) then
-         call PP_send_and_receive("send",LIFE%SPONT_emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_rcv-1,COMM=COMM,TAG=1)
-         call PP_send_and_receive("send",LIFE%SPONT_abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_rcv-1,COMM=COMM,TAG=2)
+         call PP_send_and_receive("send",LIFE%emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_rcv-1,COMM=COMM,TAG=1)
+         call PP_send_and_receive("send",LIFE%abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_rcv-1,COMM=COMM,TAG=2)
          if (LIFE%STIMULATED_components) then
            call PP_send_and_receive("send",LIFE%STIM_emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_rcv-1,COMM=COMM,TAG=3)
            call PP_send_and_receive("send",LIFE%STIM_abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_rcv-1,COMM=COMM,TAG=4)
          endif
        endif
        if (do_I_rcv) then
-         call PP_send_and_receive("receive",LIFE%SPONT_emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_snd-1,COMM=COMM,TAG=1)
-         call PP_send_and_receive("receive",LIFE%SPONT_abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_snd-1,COMM=COMM,TAG=2)
+         call PP_send_and_receive("receive",LIFE%emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_snd-1,COMM=COMM,TAG=1)
+         call PP_send_and_receive("receive",LIFE%abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_snd-1,COMM=COMM,TAG=2)
          if (LIFE%STIMULATED_components) then
            call PP_send_and_receive("receive",LIFE%STIM_emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_snd-1,COMM=COMM,TAG=3)
            call PP_send_and_receive("receive",LIFE%STIM_abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_snd-1,COMM=COMM,TAG=4)

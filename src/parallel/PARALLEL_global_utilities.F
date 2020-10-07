@@ -21,8 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _SC || defined _RT || defined _PHEL || defined _ELPH
-!
 subroutine G_b_to_B_mat(pCOMM,what,nb)
  !
  use parallel_m,    ONLY:MPI_comm
@@ -84,8 +82,6 @@ subroutine G_b_to_B_mat(pCOMM,what,nb)
  endif
  !
 end subroutine
-!
-#endif
 !
 subroutine distribute_BZk_using_IBZk(COMM,K,IND_ibz,IBZ_id,IND_out,BZ_id,BZ_index,PAR_n_bz)
  !

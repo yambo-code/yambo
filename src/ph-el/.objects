@@ -2,6 +2,6 @@
 #RT_objs = RT_PHEL_initialize.o 
 #endif
 #if defined _PHEL 
-PHEL_objs = PHEL_driver.o PHEL_lifetimes.o 
+#PHEL_objs = PHEL_driver.o PHEL_lifetimes.o 
 #endif
 objs = ${RT_objs} ${PHEL_objs}

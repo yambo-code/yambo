@@ -202,8 +202,6 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
                  !
                  v2plot(ir) = v2plot(ir)+B_coeff*conjg(WF1_ir(1))*WF2_ir(1)
                  !
-               else
-                 call error("Unknown average particle! ")
                endif
                !
              endif

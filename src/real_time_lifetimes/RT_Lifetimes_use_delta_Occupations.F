@@ -28,7 +28,7 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
  use parallel_m,     ONLY:PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A
  use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,Life_MEM_steps,&
 &                         l_RT_relaxation_update_reference,RT_EP_abs_life,RT_lifetime
- use real_time,      ONLY:RT_occupations_locked,RT_E_occupations_reference,RT_H_occupations_reference,&
+ use real_time,      ONLY:RT_E_occupations_reference,RT_H_occupations_reference,&
 &                         RT_life_delta_occupations,RT_H_occupations,RT_E_occupations,RT_delta_occupations,&
 &                         RT_bands,G_lesser_reference,RT_nk,RTibz
  !
@@ -61,8 +61,6 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
  do ik=1,RT_nk
    !
    do ib=RT_bands(1),RT_bands(2)
-     !
-     RT_occupations_locked(ib,ik)=.FALSE. 
      !
      if (l_RT_relaxation_update_reference) then
        !

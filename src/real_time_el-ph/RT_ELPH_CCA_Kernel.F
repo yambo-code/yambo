@@ -28,7 +28,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
  use electrons,      ONLY:levels,n_full_bands,spin_occ
  use hamiltonian,    ONLY:B_mat_index
  use RT_lifetimes,   ONLY:RT_EP_emit_life,l_initial_equilibrium,RT_EP_abs_life
- use real_time,      ONLY:l_RT_uses_E_FineGd,RT_occupations_locked,RT_levels,&
+ use real_time,      ONLY:l_RT_uses_E_FineGd,RT_levels,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_life_delta_occupations,q_weight_RT,&
 &                         RT_eh_en,RTibz,RT_bands
@@ -79,8 +79,6 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
      !
      do ik_rim=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
        !
-       if (RT_occupations_locked(i_n,ik_rim)) cycle
-       !
        ! Zeroing
        !=========
        f_times_abs       =rZero
@@ -89,8 +87,6 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
        one_m_f_times_emit=rZero
        !
        do ip_rim=RTibz%k_range(ik_m_q,1),RTibz%k_range(ik_m_q,2)
-         !
-         if (RT_occupations_locked(i_np,ip_rim)) cycle
          !
          if (l_RT_uses_E_FineGd) then
            !

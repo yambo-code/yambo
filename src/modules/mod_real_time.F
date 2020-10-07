@@ -214,7 +214,6 @@ module real_time
  real(SP),    allocatable :: RT_life_delta_occupations(:,:)  ! Used in the Lifetimes definition. Defined in the Lifetimes procedure only.
  real(SP),    allocatable :: RT_E_occupations_reference(:,:)
  real(SP),    allocatable :: RT_H_occupations_reference(:,:)
- logical,     allocatable :: RT_occupations_locked(:,:)
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
@@ -447,8 +446,6 @@ module real_time
        RT_E_occupations_reference=0._SP
        YAMBO_ALLOC(RT_H_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
        RT_H_occupations_reference=0._SP
-       YAMBO_ALLOC(RT_occupations_locked,(RT_bands(1):RT_bands(2),RT_nk))
-       RT_occupations_locked=.false.
        YAMBO_ALLOC(RT_E_occupations,(RT_bands(1):RT_bands(2),RT_nk))
        !
      endif
@@ -546,7 +543,6 @@ module real_time
        YAMBO_FREE(RT_life_delta_occupations)
        YAMBO_FREE(RT_E_occupations_reference)
        YAMBO_FREE(RT_H_occupations_reference)
-       YAMBO_FREE(RT_occupations_locked)
        !
      endif
      !

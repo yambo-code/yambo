@@ -27,8 +27,7 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
  use RT_lifetimes,    ONLY:RT_EE_life,l_initial_equilibrium 
- use real_time,       ONLY:RT_occupations_locked,&
-&                          RT_life_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
+ use real_time,       ONLY:RT_life_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
 &                          l_RT_uses_E_FineGd,RT_levels,RTibz,&
 &                          DbGd_EE_scatt_table,DbGd_EE_Nk_table,RT_eh_en
  use plasma,          ONLY:EH_gas
@@ -103,9 +102,6 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        i_pmq_bz = qindx_C(i_p_bz,iqbz,1)
        i_pmq    = k%sstar(i_pmq_bz,1)
        !
-       if (RT_occupations_locked(i_m ,RTibz%k_range(i_p,1)))   cycle
-       if (RT_occupations_locked(i_mp,RTibz%k_range(i_pmq,1))) cycle
-       !
        if(E%E(i_mp,i_pmq,1)<RT_eh_en(1) .or. E%E(i_mp,i_pmq,1)>RT_eh_en(2)) cycle
        if(E%E(i_m ,i_p  ,1)<RT_eh_en(1) .or. E%E(i_m ,i_p  ,1)>RT_eh_en(2)) cycle
        !
@@ -173,8 +169,6 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        !
        do ik_rim=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
          !
-         if (RT_occupations_locked(i_n ,ik_rim)) cycle
-         !
          TMP_Hole_lifetime=rZero
          TMP_Electron_lifetime=rZero
          !
@@ -185,8 +179,6 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
          do ik_m_q_rim=RTibz%k_range(ik_m_q,1),RTibz%k_range(ik_m_q,2)
            !
            if( .not.DbGd_EE_scatt_table(ik_m_q_rim,ik_rim) ) cycle
-           !
-           if (RT_occupations_locked(i_np ,ik_m_q_rim)) cycle
            !
            if (l_RT_uses_E_FineGd) then
              !

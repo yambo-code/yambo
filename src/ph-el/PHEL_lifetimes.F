@@ -52,7 +52,7 @@ subroutine PHEL_lifetimes(iq,E,k,q)
  use hamiltonian,    ONLY:B_mat_index
  use R_lattice,      ONLY:bz_samp,qindx_X
  use RT_lifetimes,   ONLY:l_initial_equilibrium
- use real_time,      ONLY:l_RT_uses_E_FineGd,RT_occupations_locked,RT_levels,&
+ use real_time,      ONLY:l_RT_uses_E_FineGd,RT_levels,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
 &                         RT_life_delta_occupations,RT_eh_en,RT_bands,RTibz
 ! use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
@@ -159,8 +159,6 @@ subroutine PHEL_lifetimes(iq,E,k,q)
          !
          do ik_rim=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
            !
-           if (RT_occupations_locked(i_n,ik_rim)) cycle
-           !
            ! Zeroing
            !=========
            TMP_Res_lifetime=rZero
@@ -171,8 +169,6 @@ subroutine PHEL_lifetimes(iq,E,k,q)
            !            My notes: E_mk - E_nk-q  |  The code: E_nk - E_mk-q
            !
            do ip_rim=RTibz%k_range(ik_m_q,1),RTibz%k_range(ik_m_q,2)
-             !
-             !if (RT_occupations_locked(i_np,ip_rim)) cycle
              !
              if (l_RT_uses_E_FineGd) then
                !

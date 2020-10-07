@@ -24,99 +24,101 @@
 module RT_lifetimes_DO
  !
  use pars,           ONLY:SP,rZERO
- use RT_lifetimes,   ONLY:RT_lifetime,RT_EP_emit_life,RT_EE_life,RT_EH_life,&
-&                         RT_EP_REF_life,RT_EE_REF_life,RT_EH_REF_life
+ use RT_lifetimes,   ONLY:RT_lifetime,RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_abs_life,&
+&                         RT_EP_emit_REF_life,RT_EE_REF_life,RT_EH_REF_life,RT_EP_abs_REF_life
  !
 #include<memory.h>
  !
  contains
    !
-   real(SP) function ABS_RT_life_REF(ib,ik)
-     integer                       :: ib,ik
+   real(SP) function ABS_RT_life_REF(i1,i2)
+     integer                       :: i1,i2
      ABS_RT_life_REF=rZERO
      if (RT_EP_emit_life%active) then
-       ABS_RT_life_REF=RT_EP_REF_life%abs(ib,ik)
-       if (RT_EP_emit_life%STIMULATED_components) then
-         ABS_RT_life_REF=ABS_RT_life_REF+RT_EP_REF_life%STIM_emit(ib,ik)
-       endif
+       ABS_RT_life_REF=RT_EP_emit_REF_life%abs(i1,i2)
+     endif
+     if (RT_EP_abs_life%active) then
+       ABS_RT_life_REF=ABS_RT_life_REF+RT_EP_abs_REF_life%emit(i1,i2)
      endif
      if (RT_EE_life%active) then
-       ABS_RT_life_REF=ABS_RT_life_REF+RT_EE_REF_life%abs(ib,ik)
+       ABS_RT_life_REF=ABS_RT_life_REF+RT_EE_REF_life%abs(i1,i2)
      endif
      if (RT_EH_life%active) then
-       ABS_RT_life_REF=ABS_RT_life_REF+RT_EH_REF_life%abs(ib,ik)
+       ABS_RT_life_REF=ABS_RT_life_REF+RT_EH_REF_life%abs(i1,i2)
      endif
    end function
    !
-   real(SP) function EMIT_RT_life_REF(ib,ik)
-     integer                       :: ib,ik
+   real(SP) function EMIT_RT_life_REF(i1,i2)
+     integer                       :: i1,i2
      EMIT_RT_life_REF=rZERO
      if (RT_EP_emit_life%active) then
-       EMIT_RT_life_REF=EMIT_RT_life_REF+RT_EP_REF_life%emit(ib,ik)
-       if (RT_EP_emit_life%STIMULATED_components) then
-         EMIT_RT_life_REF=EMIT_RT_life_REF+RT_EP_REF_life%STIM_abs(ib,ik)
-       endif
+       EMIT_RT_life_REF=EMIT_RT_life_REF+RT_EP_emit_REF_life%emit(i1,i2)
+     endif
+     if (RT_EP_abs_life%active) then
+       EMIT_RT_life_REF=EMIT_RT_life_REF+RT_EP_abs_REF_life%abs(i1,i2)
      endif
      if (RT_EE_life%active) then
-       EMIT_RT_life_REF=EMIT_RT_life_REF+RT_EE_REF_life%emit(ib,ik)
+       EMIT_RT_life_REF=EMIT_RT_life_REF+RT_EE_REF_life%emit(i1,i2)
      endif
      if (RT_EH_life%active) then
-       EMIT_RT_life_REF=EMIT_RT_life_REF+RT_EH_REF_life%emit(ib,ik)
+       EMIT_RT_life_REF=EMIT_RT_life_REF+RT_EH_REF_life%emit(i1,i2)
      endif
    end function
    !
-   real(SP) function ABS_RT_life_dGAMMA(ib,ik)
-     integer                       :: ib,ik
+   real(SP) function ABS_RT_life_dGAMMA(i1,i2)
+     integer                       :: i1,i2
      ABS_RT_life_dGAMMA=rZERO
      if (RT_EP_emit_life%active) then
-       ABS_RT_life_dGAMMA=ABS_RT_life_dGAMMA+RT_EP_emit_life%abs(ib,ik)
-       if (RT_EP_emit_life%STIMULATED_components) then
-         ABS_RT_life_dGAMMA=ABS_RT_life_dGAMMA+RT_EP_emit_life%STIM_emit(ib,ik)
-       endif
+       ABS_RT_life_dGAMMA=ABS_RT_life_dGAMMA+RT_EP_emit_life%abs(i1,i2)
+     endif
+     if (RT_EP_abs_life%active) then
+       ABS_RT_life_dGAMMA=ABS_RT_life_dGAMMA+RT_EP_abs_life%emit(i1,i2)
      endif
      if (RT_EE_life%active) then
-       ABS_RT_life_dGAMMA=ABS_RT_life_dGAMMA+RT_EE_life%abs(ib,ik)
+       ABS_RT_life_dGAMMA=ABS_RT_life_dGAMMA+RT_EE_life%abs(i1,i2)
      endif
      if (RT_EH_life%active) then
-       ABS_RT_life_dGAMMA=ABS_RT_life_dGAMMA+RT_EH_life%abs(ib,ik)
+       ABS_RT_life_dGAMMA=ABS_RT_life_dGAMMA+RT_EH_life%abs(i1,i2)
      endif
    end function
    !
-   real(SP) function EMIT_RT_life_dGAMMA(ib,ik)
-     integer                       :: ib,ik
+   real(SP) function EMIT_RT_life_dGAMMA(i1,i2)
+     integer                       :: i1,i2
      EMIT_RT_life_dGAMMA=rZERO
      if (RT_EP_emit_life%active) then
-       EMIT_RT_life_dGAMMA=RT_EP_emit_life%emit(ib,ik)
-       if (RT_EP_emit_life%STIMULATED_components) then
-         EMIT_RT_life_dGAMMA=EMIT_RT_life_dGAMMA+RT_EP_emit_life%STIM_abs(ib,ik)
-       endif
+       EMIT_RT_life_dGAMMA=RT_EP_emit_life%emit(i1,i2)
+     endif
+     if (RT_EP_abs_life%active) then
+       EMIT_RT_life_dGAMMA=EMIT_RT_life_dGAMMA+RT_EP_abs_life%abs(i1,i2)
      endif
      if (RT_EE_life%active) then
-       EMIT_RT_life_dGAMMA=EMIT_RT_life_dGAMMA+RT_EE_life%emit(ib,ik)
+       EMIT_RT_life_dGAMMA=EMIT_RT_life_dGAMMA+RT_EE_life%emit(i1,i2)
      endif
      if (RT_EH_life%active) then
-       EMIT_RT_life_dGAMMA=EMIT_RT_life_dGAMMA+RT_EH_life%emit(ib,ik)
+       EMIT_RT_life_dGAMMA=EMIT_RT_life_dGAMMA+RT_EH_life%emit(i1,i2)
      endif
    end function
    !
-   real(SP) function ABS_RT_life_one_KIND(LIFE,LIFE_ref,ib,ik)
+   real(SP) function ABS_RT_life_one_KIND(LIFE,LIFE_ref,i1,i2)
      type(RT_lifetime), intent(in) :: LIFE,LIFE_ref
-     integer                       :: ib,ik
+     integer                       :: i1,i2
      ABS_RT_life_one_KIND=rZERO
      if (.not.LIFE%active) return
-     ABS_RT_life_one_KIND=LIFE%abs(ib,ik)+LIFE_ref%abs(ib,ik)
-     if (.not.LIFE%STIMULATED_components) return
-     ABS_RT_life_one_KIND=ABS_RT_life_one_KIND+LIFE%STIM_emit(ib,ik)+LIFE_ref%STIM_emit(ib,ik)
+     ABS_RT_life_one_KIND=LIFE%abs(i1,i2)+LIFE_ref%abs(i1,i2)
+     if (LIFE%kind=="el-ph_emit".and.RT_EP_abs_life%active) then
+       ABS_RT_life_one_KIND=ABS_RT_life_one_KIND+RT_EP_abs_life%emit(i1,i2)+RT_EP_abs_REF_life%emit(i1,i2)
+     endif
    end function
    !
-   real(SP) function EMIT_RT_life_one_KIND(LIFE,LIFE_ref,ib,ik)
+   real(SP) function EMIT_RT_life_one_KIND(LIFE,LIFE_ref,i1,i2)
      type(RT_lifetime), intent(in) :: LIFE,LIFE_ref
-     integer                       :: ib,ik
+     integer                       :: i1,i2
      EMIT_RT_life_one_KIND=rZERO
      if (.not.LIFE%active) return
-     EMIT_RT_life_one_KIND=LIFE%emit(ib,ik)+LIFE_ref%emit(ib,ik)
-     if (.not.LIFE%STIMULATED_components) return
-     EMIT_RT_life_one_KIND=EMIT_RT_life_one_KIND+LIFE%STIM_abs(ib,ik)+LIFE_ref%STIM_abs(ib,ik)
+     EMIT_RT_life_one_KIND=LIFE%emit(i1,i2)+LIFE_ref%emit(i1,i2)
+     if (LIFE%kind=="el-ph_emit".and.RT_EP_abs_life%active) then
+       EMIT_RT_life_one_KIND=EMIT_RT_life_one_KIND+RT_EP_abs_life%abs(i1,i2)+RT_EP_abs_REF_life%abs(i1,i2)
+     endif
    end function
    !
 end module

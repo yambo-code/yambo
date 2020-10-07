@@ -49,8 +49,7 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
  ! 
  use pars,           ONLY:SP,cI,rZERO
  use electrons,      ONLY:spin_occ
- use real_time,      ONLY:RT_bands,RTibz,l_elel_scatt,l_elph_scatt,l_elphoton_scatt,  &
-&                         l_RT_relax_time_approx,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,&
+ use real_time,      ONLY:RT_bands,RTibz,l_RT_relax_time_approx,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,&
 &                         RT_E_occupations,RT_H_occupations,l_RT_CCA_Kernel, &
 &                         RT_delta_occupations,l_RT_include_eq_scatt,&
 &                         RT_is_statically_dephased,RT_is_dynamically_dephased,RT_Deph_Matrix,G_lesser_reference

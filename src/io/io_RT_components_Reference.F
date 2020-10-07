@@ -27,7 +27,8 @@ subroutine io_RT_components_Reference(ID)
  use drivers,        ONLY:l_elph_scatt
  use R_lattice,      ONLY:nqbz
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,read_is_on
- use RT_lifetimes,   ONLY:RT_lifetime,RT_EE_REF_life,RT_EP_REF_life,RT_PE_REF_life,RT_EH_REF_life
+ use RT_lifetimes,   ONLY:RT_lifetime,RT_EE_REF_life,RT_EP_emit_REF_life,RT_EP_abs_REF_life,&
+&                         RT_PE_REF_life,RT_EH_REF_life
  use real_time,      ONLY:RT_init_occupation_reference,q_weight_RT,&
 &                         G_lesser_reference,RT_nk,RT_nbands,RT_is_dynamically_dephased
 #if defined _ELPH
@@ -63,7 +64,9 @@ subroutine io_RT_components_Reference(ID)
    VAR_ID=10
    call elemental_LIFE_IO(RT_EE_REF_life)
    VAR_ID=12
-   call elemental_LIFE_IO(RT_EP_REF_life)
+   call elemental_LIFE_IO(RT_EP_emit_REF_life)
+   VAR_ID=14
+   call elemental_LIFE_IO(RT_EP_abs_REF_life)
    VAR_ID=16
    call elemental_LIFE_IO(RT_EH_REF_life)
    VAR_ID=18
@@ -92,14 +95,6 @@ subroutine io_RT_components_Reference(ID)
        VAR_ID=VAR_ID+1
        call def_variable_bulk(ID,trim(LIFE%kind)//"_EMIT",VAR_ID,(/RT_nbands,RT_nk/),SP)
        call  io_variable_bulk(ID,VAR_ID,R2=LIFE%emit)
-       if (LIFE%STIMULATED_components) then
-         VAR_ID=VAR_ID+1
-         call def_variable_bulk(ID,trim(LIFE%kind)//"_STIM_EMIT",VAR_ID,(/RT_nbands,RT_nk/),SP)
-         call  io_variable_bulk(ID,VAR_ID,R2=LIFE%STIM_emit)
-         VAR_ID=VAR_ID+1
-         call def_variable_bulk(ID,trim(LIFE%kind)//"_STIM_ABS",VAR_ID,(/RT_nbands,RT_nk/),SP)
-         call  io_variable_bulk(ID,VAR_ID,R2=LIFE%STIM_abs)
-       endif
      endif
    end subroutine
    !

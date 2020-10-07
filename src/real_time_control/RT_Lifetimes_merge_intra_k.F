@@ -43,16 +43,14 @@ subroutine RT_Lifetimes_merge_intra_k(LIFE)
  ! Prefactor
  !
  NC=1
- if (LIFE%KIND=="El-Ph")      NC=PAR_COM_PLASMA_INDEX%n_CPU
- if (LIFE%KIND=="El-Photon")  NC=PAR_COM_Q_INDEX%n_CPU*PAR_COM_PLASMA_INDEX%n_CPU
+ if (LIFE%KIND=="el-ph_abs".or.LIFE%KIND=="el-ph_emit") then
+    NC=PAR_COM_PLASMA_INDEX%n_CPU
+ endif
+ if (LIFE%KIND=="el-photon")  NC=PAR_COM_Q_INDEX%n_CPU*PAR_COM_PLASMA_INDEX%n_CPU
  !
  if (NC>1) then
    LIFE%emit=LIFE%emit/NC
    LIFE%abs=LIFE%abs/NC
-   if (LIFE%STIMULATED_components) then
-     LIFE%STIM_emit=LIFE%STIM_emit/NC
-     LIFE%STIM_abs=LIFE%STIM_abs/NC
-   endif
  endif
  !
  do ik=1,nkibz
@@ -61,11 +59,6 @@ subroutine RT_Lifetimes_merge_intra_k(LIFE)
    !
    call PP_redux_wait(LIFE%emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
    call PP_redux_wait(LIFE%abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
-   !
-   if (.not.LIFE%STIMULATED_components) cycle
-   !
-   call PP_redux_wait(LIFE%STIM_emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
-   call PP_redux_wait(LIFE%STIM_abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),COMM=PAR_COM_Xk_ibz_A2A%COMM)
    !
  enddo 
  !

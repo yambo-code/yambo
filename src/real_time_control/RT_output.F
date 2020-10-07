@@ -26,7 +26,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use units,          ONLY:HA2EV,HA2KEL,SPEED_OF_LIGHT,AU2KWCMm2,PS2AUT,AU2VMm1
  use pars,           ONLY:SP,schlen
  use com,            ONLY:msg,of_open_close,com_compose_msg
- use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
+ use drivers,        ONLY:l_use_Hxc_collisions
  use QP_m,           ONLY:Time_of
  use fields,         ONLY:A_tot,A_ind,A_ext
  use electrons,      ONLY:n_spin,Spin_magn
@@ -36,8 +36,8 @@ subroutine RT_output(what,VALUES,TIME,E)
 &                         N_RT_o_files,RT_o_file_is_open,RT_o_file_short,RT_o_file_long,&
 &                         n_RT_headings,RT_headings,N_MAX_RT_headings,RT_desc,Gr_desc,TIME_STEP_desc
  use RT_control,     ONLY:RT_NAN_found,OUTPUT_RT_IO_t
- use RT_lifetimes,   ONLY:l_lftm_fit_temperatures,&
-&                         RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_Tfit_lifetimes
+ use RT_lifetimes,   ONLY:l_RT_lifetimes_Tfit,&
+&                         RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_abs_life
  use real_time,      ONLY:RT_ind_J,RT_P,RT_spin_magn,NE_i_time
  use timing_m,       ONLY:timing
  use C_driver,       ONLY:code_bin
@@ -200,7 +200,7 @@ subroutine RT_output(what,VALUES,TIME,E)
        if(.not.l_use_Hxc_collisions) data_to_dump(2:6) = VALUES(1:5)
      case('carriers')
        data_to_dump(2:4) = VALUES(1:3)
-       if(l_elel_scatt.or.l_elph_scatt) data_to_dump(5:6) = VALUES(4:5)
+       if(RT_EE_life%active.or.RT_EP_emit_life%active) data_to_dump(5:6) = VALUES(4:5)
      case('thermodynamics')
        data_to_dump(2: 4) = VALUES(1:3)*HA2EV
        data_to_dump(5: 7) = VALUES(4:6)*HA2EV/HA2KEL
@@ -235,20 +235,21 @@ subroutine RT_output(what,VALUES,TIME,E)
      case('mean_EPlifetimes')
        N=2
        data_to_dump(2:3) = RT_EP_emit_life%mean*HA2EV*1000._SP
-       if(RT_EP_emit_life%active) then
+       if(RT_EP_abs_life%active) then
          N=N+2
-         data_to_dump(N:N+1)=RT_EP_emit_life%STIM_mean*HA2EV*1000._SP
+         data_to_dump(N)  =RT_EP_abs_life%mean(2)*HA2EV*1000._SP
+         data_to_dump(N+1)=RT_EP_abs_life%mean(1)*HA2EV*1000._SP
        endif
-       if(l_lftm_fit_temperatures) then
+       if(l_RT_lifetimes_Tfit) then
          N=N+2
-         data_to_dump(N:N+1) = RT_Tfit_lifetimes(1:2)*HA2KEL
+         data_to_dump(N:N+1) = RT_EP_emit_life%Tfit*HA2KEL
        endif
      case('mean_EElifetimes')
        N=2
        data_to_dump(2:3) = RT_EE_life%mean*HA2EV*1000._SP
-       if(l_lftm_fit_temperatures) then
+       if(l_RT_lifetimes_Tfit) then
          N=N+2
-         data_to_dump(N:N+1) = RT_Tfit_lifetimes(3:4)*HA2KEL
+         data_to_dump(N:N+1) = RT_EE_life%Tfit*HA2KEL
        endif
      case('mean_RADlifetimes')
        data_to_dump(2) = Time_of(RT_EH_life%mean(1),"ps")
@@ -256,12 +257,12 @@ subroutine RT_output(what,VALUES,TIME,E)
      case('N_dN_E_conservation_factors')
        N=1
        if(RT_EP_emit_life%active) then
-         data_to_dump(2:3)  =RT_EP_emit_life%prefactor
+         data_to_dump(2:3)=RT_EP_emit_life%prefactor
          N=3
-         if(RT_EE_life%STIMULATED_components) then
-           data_to_dump(4:5)=RT_EP_emit_life%STIM_prefactor
-           N=5
-         endif
+       endif
+       if(RT_EP_abs_life%active) then
+         data_to_dump(4:5)=RT_EP_abs_life%prefactor
+         N=5
        endif
        if(RT_EE_life%active) then
          data_to_dump(N+1:N+2)=RT_EE_life%prefactor

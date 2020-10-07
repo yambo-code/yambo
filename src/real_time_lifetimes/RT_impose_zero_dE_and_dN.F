@@ -66,19 +66,21 @@ subroutine RT_impose_zero_dE_and_dN(E,LIFE,Ge,Gh,Ge_ref,Gh_ref,G_prefactor)
  !
  G_prefactor=rZERO
  !
- if(trim(LIFE%kind)=="El-El") then
+ if (.not.LIFE%active) return
+ !
+ if(trim(LIFE%kind)=="el-el") then
    l_energy      =l_RT_impose_E
    l_n_electrons =l_RT_impose_N_dN
    l_n_carriers  =.false.
  endif
  !
- if(trim(LIFE%kind)=="El-Ph") then
+ if(trim(LIFE%kind)=="el-ph_emit".or.trim(LIFE%kind)=="el-ph_abs") then
    l_energy      =.false.
    l_n_electrons =l_RT_impose_N_dN
    l_n_carriers  =l_RT_impose_N_dN .and. (E%E_ind_gap(1)>0.1/HA2EV)
  endif
  !
- if(trim(LIFE%kind)=="El-Photon") then
+ if(trim(LIFE%kind)=="el-photon") then
    l_energy      =.false.
    l_n_electrons =l_RT_impose_N_dN
    l_n_carriers  =.false.

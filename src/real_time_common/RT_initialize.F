@@ -41,7 +41,7 @@ subroutine RT_initialize(E,k,q)
  use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,         &
 &                         TIME_adjust,SAVE_G_history,CACHE_OBS_INTERVAL_time
  use RT_lifetimes,   ONLY:RT_life_extrap_times,RT_life_extrap_times_INPUT,l_RT_lifetimes_extrapolation,&
-&                         Life_MEM_steps,l_lftm_fit_temperatures
+&                         Life_MEM_steps,l_RT_lifetimes_Tfit
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,Gr_kind,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Phase_LifeTime,         &
@@ -105,7 +105,7 @@ subroutine RT_initialize(E,k,q)
  !
  !..lifetimes
  call parser('LifeExtrapolation',    l_RT_lifetimes_extrapolation)
- call parser('LifeFitTemp',          l_lftm_fit_temperatures)
+ call parser('LifeFitTemp',          l_RT_lifetimes_Tfit)
  !
  call parser('RelaxTimeApprox',      l_RT_relax_time_approx)
  call parser('RTzeroTempRef',        l_RT_eq_is_zero_temp)

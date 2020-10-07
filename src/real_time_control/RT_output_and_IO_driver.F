@@ -29,8 +29,8 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use IO_m,           ONLY:IO_and_Messaging_switch,io_control,io_disconnect,WR_CL
- use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
- use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_REF_life,RT_EE_REF_life,RT_EH_REF_life
+ use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_abs_life,&
+&                         RT_EP_emit_REF_life,RT_EE_REF_life,RT_EH_REF_life,RT_EP_abs_REF_life
  use real_time,      ONLY:eval_energy,eval_entropy,l_RT_update_Energies,l_NE_with_fields,NE_time, &
 &                         l_RT_induced_field,l_RT_impose_N_dN,l_RT_impose_E,RT_is_dynamically_dephased,NE_i_time
  use D_lattice,      ONLY:Bose_Temp
@@ -62,10 +62,10 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    if (eval_energy)  call RT_output(what=trim(what)//" energy")
    if (eval_entropy) call RT_output(what=trim(what)//" therm")
    if (l_RT_update_Energies) call RT_output(what=trim(what)//" BGR")
-   if (l_elph_scatt)         call RT_output(trim(what)//' mean_EPlife')
-   if (l_elel_scatt)         call RT_output(trim(what)//' mean_EElife')
-   if (l_elphoton_scatt)     call RT_output(trim(what)//' mean_RADlife')
-   if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output(trim(what)//' N_dN_E')
+   if (RT_EP_emit_life%active) call RT_output(trim(what)//' mean_EPlife')
+   if (RT_EE_life%active     ) call RT_output(trim(what)//' mean_EElife')
+   if (RT_EH_life%active     ) call RT_output(trim(what)//' mean_RADlife')
+   if ((RT_EP_emit_life%active.or.RT_EE_life%active).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output(trim(what)//' N_dN_E')
    !
    ! GPL_EXCLUDE_END
    !
@@ -131,11 +131,12 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !========================
    if (RT_is_dynamically_dephased) then
      !
-     call RT_mean_carrier_lifetimes( RT_EP_emit_life, RT_EP_REF_life )
+     call RT_mean_lifetimes_and_temperatures( RT_EP_emit_life, RT_EP_emit_REF_life )
+     call RT_mean_lifetimes_and_temperatures( RT_EP_abs_life , RT_EP_abs_REF_life )
      if (RT_EP_emit_life%active) call RT_output('mean_EPlife', TIME=NE_time*AUT2FS)
-     call RT_mean_carrier_lifetimes( RT_EE_life, RT_EE_REF_life )
-     if (RT_EH_life%active) call RT_output('mean_EElife', TIME=NE_time*AUT2FS)
-     call RT_mean_carrier_lifetimes( RT_EH_life, RT_EH_REF_life )
+     call RT_mean_lifetimes_and_temperatures( RT_EE_life, RT_EE_REF_life )
+     if (RT_EE_life%active) call RT_output('mean_EElife', TIME=NE_time*AUT2FS)
+     call RT_mean_lifetimes_and_temperatures( RT_EH_life, RT_EH_REF_life )
      if (RT_EH_life%active) call RT_output('mean_RADlife', TIME=NE_time*AUT2FS)
      !
      if (l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('N_dN_E',TIME=NE_time*AUT2FS)

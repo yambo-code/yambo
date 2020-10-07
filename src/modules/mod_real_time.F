@@ -312,7 +312,6 @@ module real_time
    real(SP)   ,allocatable:: GAMMA_bare(:,:) ! "initial equilibrium" lifetimes. In the code the "initial equilibrium"
                                              ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
    real(SP)   ,allocatable:: NEQ_Lifetime(:) ! time dependent lifetime defined as for Silicon
-   real(SP)   ,allocatable:: delta_GAMMA(:)  ! change with respect to the "initial equilibrium" lifetimes
    real(SP)   ,allocatable:: dGAMMA_E_P_Hole(:)
    real(SP)   ,allocatable:: dGAMMA_E_P_Electron(:)
    real(SP)   ,allocatable:: dGAMMA_E_P_Ho_abs(:)
@@ -365,10 +364,8 @@ module real_time
      endif
      if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
        YAMBO_ALLOC(RT%GAMMA_bare,(RT%nstates,8))
-       YAMBO_ALLOC(RT%delta_GAMMA,(RT%nstates))
        YAMBO_ALLOC(RT%NEQ_Lifetime,(RT%nstates))
        RT%GAMMA_bare  =0._SP
-       RT%delta_GAMMA =0._SP
        RT%NEQ_Lifetime=0._SP
      endif
      YAMBO_ALLOC(RT%delta_E,(RT%nstates))
@@ -395,7 +392,6 @@ module real_time
      YAMBO_FREE(RT%GAMMA_bare)
      YAMBO_FREE(RT%delta_E)
      YAMBO_FREE(RT%delta_f)
-     YAMBO_FREE(RT%delta_GAMMA)
      YAMBO_FREE(RT%NEQ_Lifetime)
      YAMBO_FREE(RT%kpt)
      YAMBO_FREE(RT%k_weight)

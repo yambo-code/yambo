@@ -62,7 +62,6 @@ subroutine RT_relaxation(E,k,q,Time)
  !    dF                       X       X
  !
  use pars,           ONLY:SP
- use D_lattice,      ONLY:Bose_Temp
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -76,9 +75,9 @@ subroutine RT_relaxation(E,k,q,Time)
 #endif
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,l_RT_eval_lifetimes,& 
-&                         RT_EP_ref_life,RT_EE_ref_life,RT_EH_ref_life,&
-&                         Life_MEM_steps,l_initial_equilibrium,&
-&                         SAVED_times
+&                         RT_EP_emit_REF_life,RT_EE_REF_life,RT_EH_REF_life,&
+&                         Life_MEM_steps,l_initial_equilibrium,RT_EP_abs_REF_life,&
+&                         SAVED_times,RT_EP_abs_life
  use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
 &                         l_RT_CCA_Kernel,FIRST_step,RT_is_statically_dephased,&
 &                         RT_nk,ADD_to_saved_values,RT_is_dynamically_dephased,l_RT_relax_time_approx
@@ -230,22 +229,10 @@ subroutine RT_relaxation(E,k,q,Time)
  !
  if (l_RT_eval_lifetimes) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
  !
- if (l_elel_scatt) then
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EE_life%abs,1)
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EE_life%emit,2)
- endif
- if (l_elph_scatt) then
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_emit_life%abs,3)
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_emit_life%emit,4)
-   if(Bose_Temp>0._SP) then
-     call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_emit_life%STIM_emit,5)
-     call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EP_emit_life%STIM_abs,6)
-   endif
- endif
- if (l_elphoton_scatt) then
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EH_life%abs,7)
-   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,RT_EH_life%emit,8)
- endif
+ call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,RT_EE_life)
+ call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,RT_EP_emit_life)
+ call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,RT_EP_abs_life)
+ call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,RT_EH_life)
  !
  if (.not.l_RT_eval_lifetimes) call Impose_Conservations( )
  !
@@ -257,27 +244,18 @@ subroutine RT_relaxation(E,k,q,Time)
      !
      ! Zero dN/dT & dE/dT & d(DeltaN)/dT
      !===================================
-     if (RT_EP_emit_life%active) then
-       call RT_impose_zero_dE_and_dN(E,RT_EP_emit_life,RT_EP_emit_life%emit,    RT_EP_emit_life%abs,&
-&                                                 RT_EP_ref_life%emit,RT_EP_ref_life%abs,&
-&                                                 RT_EP_emit_life%prefactor)
-       if (RT_EP_emit_life%STIMULATED_components) then
-         call RT_impose_zero_dE_and_dN(E,RT_EP_emit_life,RT_EP_emit_life%STIM_abs,    RT_EP_emit_life%STIM_emit,&
-&                                                   RT_EP_ref_life%STIM_abs,RT_EP_ref_life%STIM_emit,&
-&                                                   RT_EP_emit_life%STIM_prefactor)
-       endif
-     endif
-     if (RT_EE_life%active) then
-       call RT_impose_zero_dE_and_dN(E,RT_EE_life,RT_EE_life%emit,    RT_EE_life%abs,&
-&                                                 RT_EE_ref_life%emit,RT_EE_ref_life%abs,&
-&                                                 RT_EE_life%prefactor)
-     endif
-     if (RT_EH_life%active) then
-       call RT_impose_zero_dE_and_dN(E,RT_EH_life,RT_EH_life%emit,    RT_EH_life%abs,&
-&                                                 RT_EH_ref_life%emit,RT_EH_ref_life%abs,&
-&                                                 RT_EH_life%prefactor)
-     endif
-     !
+     call RT_impose_zero_dE_and_dN(E,RT_EP_emit_life,RT_EP_emit_life%emit,RT_EP_emit_life%abs,&
+&                                    RT_EP_emit_REF_life%emit, RT_EP_emit_REF_life%abs,&
+&                                    RT_EP_emit_life%prefactor)
+     call RT_impose_zero_dE_and_dN(E,RT_EP_abs_life,RT_EP_abs_life%abs,RT_EP_abs_life%emit,&
+&                                    RT_EP_abs_REF_life%abs,RT_EP_abs_REF_life%emit,&
+&                                    RT_EP_abs_life%prefactor)
+     call RT_impose_zero_dE_and_dN(E,RT_EE_life,RT_EE_life%emit,RT_EE_life%abs,&
+&                                    RT_EE_REF_life%emit,RT_EE_REF_life%abs,&
+&                                    RT_EE_life%prefactor)
+     call RT_impose_zero_dE_and_dN(E,RT_EH_life,RT_EH_life%emit,RT_EH_life%abs,&
+&                                    RT_EH_REF_life%emit,RT_EH_REF_life%abs,&
+&                                    RT_EH_life%prefactor)
    end subroutine
    !
 end subroutine RT_relaxation

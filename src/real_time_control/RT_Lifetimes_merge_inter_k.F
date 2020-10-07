@@ -83,18 +83,10 @@ subroutine RT_Lifetimes_merge_inter_k(LIFE)
        if (do_I_snd) then
          call PP_send_and_receive("send",LIFE%emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_rcv-1,COMM=COMM,TAG=1)
          call PP_send_and_receive("send",LIFE%abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_rcv-1,COMM=COMM,TAG=2)
-         if (LIFE%STIMULATED_components) then
-           call PP_send_and_receive("send",LIFE%STIM_emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_rcv-1,COMM=COMM,TAG=3)
-           call PP_send_and_receive("send",LIFE%STIM_abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_rcv-1,COMM=COMM,TAG=4)
-         endif
        endif
        if (do_I_rcv) then
          call PP_send_and_receive("receive",LIFE%emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_snd-1,COMM=COMM,TAG=1)
          call PP_send_and_receive("receive",LIFE%abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_snd-1,COMM=COMM,TAG=2)
-         if (LIFE%STIMULATED_components) then
-           call PP_send_and_receive("receive",LIFE%STIM_emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_snd-1,COMM=COMM,TAG=3)
-           call PP_send_and_receive("receive",LIFE%STIM_abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_snd-1,COMM=COMM,TAG=4)
-         endif
        endif
      enddo
      !

@@ -54,7 +54,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
  type(PP_indexes)  :: px
  integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_l,i_lambda,j_lambda,i_spin,ir,ir_hole,j1,&
-&                     n_lambda_deg,neh1,iv1,ic1,ikbz1
+&                     n_lambda_deg,neh1,iv1,ic1,ikbz1,ikibz1,i_spin1,is1
  integer           :: ikpbz,ikp,isp
  real(SP)          :: r_hole_rlu(3),kp_dot_r_h,k_dot_r_e
  complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor),phase,B_coeff
@@ -175,17 +175,21 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
              ikbz1  = BSS_eh_table(neh1,1)
              iv1    = BSS_eh_table(neh1,2)
              ic1    = BSS_eh_table(neh1,3)
+             i_spin1= spin(BSS_eh_table(neh1,:))
+             !
+             ikibz1 = Xk%sstar(ikbz1,1)
+             is1    = Xk%sstar(ikbz1,2)
              !
              if(ikbz==ikbz1) then
                !      
                ! Build the B_{vvk} (or B_{cck} ) matrix        
                !
-               if (ic1==ic.and.trim(AVE_exc)=='e') then
+               if (ic1==ic.and.trim(AVE_exc)=='h') then
                  !      
                  B_coeff =  BS_mat(neh, i_l)* conjg(BS_mat(neh1, i_l))   
                  !
                  WF1_ir=WF_symm(rindex(ir),(/iv, ikibz,is,i_spin/))
-                 WF2_ir=WF_symm(rindex(ir),(/iv1,ikibz,is,i_spin/))
+                 WF2_ir=WF_symm(rindex(ir),(/iv1,ikibz1,is1,i_spin1/))
                  !
                  v2plot(ir) = v2plot(ir)+B_coeff*WF1_ir(1)*conjg(WF2_ir(1))
                  !
@@ -198,6 +202,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
                  !
                  v2plot(ir) = v2plot(ir)+B_coeff*conjg(WF1_ir(1))*WF2_ir(1)
                  !
+               else
+                 call error("Unknown average particle! ")
                endif
                !
              endif

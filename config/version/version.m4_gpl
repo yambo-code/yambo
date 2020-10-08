@@ -1,10 +1,10 @@
-AC_INIT(Yambo, 4.4.0 r.108 (based on r.18789 h.dc6f45fd9), yambo@yambo-code.org)
+AC_INIT(Yambo, 4.4.0 r.108 (based on r.18856 h.b81f02a46), yambo@yambo-code.org)
 SVERSION="5"
 SSUBVERSION="0"
 SPATCHLEVEL="0"
 SREVISION="108"
-BASE_REV="18789"
-SHASH="dc6f45fd9"
+BASE_REV="18856"
+SHASH="b81f02a46"
 AC_SUBST(SVERSION)
 AC_SUBST(SSUBVERSION)
 AC_SUBST(SPATCHLEVEL)

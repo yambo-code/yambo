@@ -113,7 +113,8 @@ subroutine INIT_q_points( )
      real(DP)          :: alat_DP
      !
      call io_control(ACTION=OP_RD_CL,ID=ID)
-     write (db_name,'(a,i6.6)') 's.dbph_',iabs(i_q)
+     !write (db_name,'(a,i6.6)') 's.dbph_',iabs(i_q)
+     write (db_name,'(a,i6.6)') 's.dbph_bare_',iabs(i_q)
      io_err=io_connect(desc=trim(db_name),type=-4,ID=ID)
      get_e_p_q_point=io_err
      !

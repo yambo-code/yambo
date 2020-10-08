@@ -336,7 +336,8 @@ integer function ELPH_databases(k,E,q)
    !
    call io_control(ACTION=OP_RD,ID=ID)
    !
-   write (db_name,'(a,i6.6)') 's.dbph_',iabs(idb_)
+   !write (db_name,'(a,i6.6)') 's.dbph_',iabs(idb_)
+   write (db_name,'(a,i6.6)') 's.dbph_bare_',iabs(idb_)
    io_err=io_connect(desc=trim(elph_dbs_path)//"/"//trim(db_name),type=-2,ID=ID)
    !
    ELPH_databases_io=io_err

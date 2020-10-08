@@ -944,7 +944,7 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
            call c2a(b_in=b,v_in=q_sampl,mode='ki2c') 
            q_out = q_num+q_sampl  
            q_out_norm = v_norm(q_out)
-           write(out_unit_W_fit,"(I5 E15.6,E15.6, E15.6, E15.6, E15.6, E15.6, E15.6)") &
+           write(out_unit_W_fit,"(I5, E15.6,E15.6, E15.6, E15.6, E15.6, E15.6, E15.6)") &
 &                           i1, q_out(1),q_out(2),q_out(3), q_out_norm, vslab/r1, func, -W_sampl
          end do loop
          end do

@@ -24,13 +24,15 @@
 subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  use pars,          ONLY:SP,schlen
+ use units,         ONLY:HA2KEL
  use electrons,     ONLY:levels
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use R_lattice,     ONLY:bz_samp
+ use D_lattice,     ONLY:Bose_Temp
  use RT_control,    ONLY:CARR_RT_IO_t
  use parallel_m,    ONLY:PAR_G_k_range
  use real_time,     ONLY:RT_carriers,NE_i_time,l_elel_scatt,l_elph_scatt,&
-&                        l_elphoton_scatt,l_RT_CCA_Kernel,RT_alloc,RT_free,RT_potential
+&                        l_elphoton_scatt,l_RT_CCA_Kernel,RT_potential
  use YPP_real_time, ONLY:l_RTpump_energy,l_RTpump_kspace,l_RTpump_Fermi
  !
  implicit none
@@ -50,6 +52,10 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  if (l_RTpump_Fermi)  sec_ch="Fermi function"
  !
  call section('*','Manual carriers excitation via '//trim(sec_ch))
+ !
+ ! Force a tiny temperature to allocate EP_abs components
+ !
+ Bose_Temp=1/HA2KEL
  !
  NE_i_time   =1
  PAR_G_k_range=(/1,kpt%nibz/)

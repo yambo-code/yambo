@@ -247,6 +247,7 @@ integer function io_RT_components(what,ID)
  ! Carrier components
  !====================
  if ( l_carriers) then
+   !
    if (CARR_RT_IO_t%first_IO(3).or.read_is_on(ID)) then
      call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="def_io_variables")
    endif

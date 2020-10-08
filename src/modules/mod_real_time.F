@@ -328,7 +328,8 @@ module real_time
    !
    subroutine RT_obj_alloc(RT)
      !
-     type(RT_t)::RT
+     use D_lattice, ONLY:Bose_Temp
+     type(RT_t)        ::RT
      !
      if (allocated(RT%kpt)) return
      !
@@ -347,8 +348,10 @@ module real_time
      if (l_elph_scatt) then
        RT%GAMMA_EP_emit%active=.TRUE.
        call RT_obj_lifetime_alloc("el-ep_emit",RT%GAMMA_EP_emit,RT%nstates)
-       RT%GAMMA_EP_emit%active=.TRUE.
-       call RT_obj_lifetime_alloc("el-ep_emit",RT%GAMMA_EP_emit,RT%nstates)
+       if (Bose_Temp>0._SP.or.l_phel_scatt) then
+         RT%GAMMA_EP_abs%active=.TRUE.
+         call RT_obj_lifetime_alloc("el-ep_abs",RT%GAMMA_EP_abs,RT%nstates)
+       endif
      endif
      if (l_elphoton_scatt) then
        RT%GAMMA_EH%active=.TRUE.

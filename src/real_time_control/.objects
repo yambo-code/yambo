@@ -1,5 +1,5 @@
 !debug_objs= RT_message.o
-objs = RT_Dynamics_is_over.o RT_RESTART_database_copy.o $(debug_objs) RT_do_it.o RT_current_AND_polarization.o \
+objs = RT_alloc.o RT_free.o RT_Dynamics_is_over.o RT_RESTART_database_copy.o $(debug_objs) RT_do_it.o RT_current_AND_polarization.o \
        RT_Lifetimes_merge_intra_k.o RT_Lifetimes_merge_inter_k.o RT_Lifetimes_merge_driver.o \
        RT_output_INIT.o RT_output.o RT_databases_IO.o \
        RT_Observables.o RT_mean_lifetimes_and_temperatures.o RT_average_operator.o RT_occupations_FIT.o \

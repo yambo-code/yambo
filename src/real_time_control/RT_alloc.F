@@ -23,7 +23,7 @@
 !
 subroutine RT_alloc(en,what)
  !
- use pars,           ONLY:SP,LP,cZERO
+ use pars,           ONLY:SP,cZERO
  use parallel_m,     ONLY:PAR_G_k_range
  use drivers,        ONLY:l_use_Hxc_collisions
  use hamiltonian,    ONLY:H_alloc,H_QP_table_setup

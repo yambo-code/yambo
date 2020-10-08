@@ -115,7 +115,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     NE_tot_time,NE_MEM_treshold,RT_eh_en,l_update_SOC,&
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,&
 &                     i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,&
-&                     RT_is_statically_dephased,RT_is_dynamically_dephased,&
 &                     RT_deph_deg_thresh,RT_deph_cv_only,&
 &                     NE_time_step_update_last_point,NE_time_step_update_jump,NE_time_step_update_jump_INPUT, &
 &                     NE_initial_time_step_update,NE_step_update_treshold
@@ -607,8 +606,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Phase_LifeTime = 0._SP
  RT_deph_deg_thresh = 1.E-5_SP
  RT_deph_cv_only =.FALSE.
- RT_is_statically_dephased=.FALSE.
- RT_is_dynamically_dephased=.FALSE.
  !
  NE_MEM_treshold=0._SP
  RT_nk=0

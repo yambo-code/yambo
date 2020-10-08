@@ -60,40 +60,39 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
  !
  do ik=1,RT_nk
    !
-   do ib=RT_bands(1),RT_bands(2)
+   if (l_RT_relaxation_update_reference) then
      !
-     if (l_RT_relaxation_update_reference) then
-       !
-       if (.not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
-       !
-       ! _lifetime(ib,ik) are never used at different k-points. While occupations are
-       !
-       ! April 2020. AndreaM. The additional NC prefactor here is because the Lifetimes go trough
-       ! an ALL2ALL in the PAR_COM_Xk_ibz_A2A WORLD in RT_Lifetimes_merge. 
-       ! BUT the e-p lifetimes, for example, do not use the PLASMA communicator
-       !
-       NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)/real(PAR_COM_PLASMA_INDEX%n_CPU*PAR_COM_Q_INDEX%n_CPU)
-       call LOCAL_use_save(RT_EH_life)
-       NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)
-       call LOCAL_use_save(RT_EE_life)
-       NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)/real(PAR_COM_PLASMA_INDEX%n_CPU)
-       call LOCAL_use_save(RT_EP_abs_life)
-       call LOCAL_use_save(RT_EP_emit_life)
-       !
-     else
+     if (.not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
+     !
+     ! _lifetime(ib,ik) are never used at different k-points. While occupations are
+     !
+     ! April 2020. AndreaM. The additional NC prefactor here is because the Lifetimes go trough
+     ! an ALL2ALL in the PAR_COM_Xk_ibz_A2A WORLD in RT_Lifetimes_merge. 
+     ! BUT the e-p lifetimes, for example, do not use the PLASMA communicator
+     !
+     NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)/real(PAR_COM_PLASMA_INDEX%n_CPU*PAR_COM_Q_INDEX%n_CPU)
+     call LOCAL_use_save(RT_EH_life)
+     NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)
+     call LOCAL_use_save(RT_EE_life)
+     NC=real(PAR_COM_Xk_ibz_A2A%n_CPU)/real(PAR_COM_PLASMA_INDEX%n_CPU)
+     call LOCAL_use_save(RT_EP_abs_life)
+     call LOCAL_use_save(RT_EP_emit_life)
+     !
+   else
+     !
+     do ib=RT_bands(1),RT_bands(2)
        !
        RT_life_delta_occupations(ib,ik) =RT_delta_occupations(ib,ik)
        RT_E_occupations_reference(ib,ik)=         aimag(G_lesser_reference(ib,ib,ik))
        RT_H_occupations_reference(ib,ik)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
-       !
-       call LOCAL_zero(RT_EH_life)
-       call LOCAL_zero(RT_EE_life)
-       call LOCAL_zero(RT_EP_emit_life)
-       call LOCAL_zero(RT_EP_abs_life)
-       !
-     endif
+     enddo
      !
-   enddo
+     call LOCAL_zero(RT_EH_life)
+     call LOCAL_zero(RT_EE_life)
+     call LOCAL_zero(RT_EP_emit_life)
+     call LOCAL_zero(RT_EP_abs_life)
+     !
+   endif
  enddo
  !
  contains
@@ -101,15 +100,15 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
    subroutine LOCAL_zero(LIFE)
      type(RT_lifetime) :: LIFE
      if (.not.LIFE%active) return
-     LIFE%abs(ib,ik) =rZERO
-     LIFE%emit(ib,ik)=rZERO
+     LIFE%abs =rZERO
+     LIFE%emit=rZERO
    end subroutine
    !
    subroutine LOCAL_use_save(LIFE)
      type(RT_lifetime) :: LIFE
      if (.not.LIFE%active) return
-     LIFE%abs(ib,ik)  =LIFE%abs_save(ib,ik,Life_MEM_steps)/NC
-     LIFE%emit(ib,ik) =LIFE%emit_save(ib,ik,Life_MEM_steps)/NC
+     LIFE%abs  =LIFE%abs_save(:,:,Life_MEM_steps)/NC
+     LIFE%emit =LIFE%emit_save(:,:,Life_MEM_steps)/NC
    end subroutine
    !
 end subroutine RT_Lifetimes_use_delta_Occupations

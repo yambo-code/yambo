@@ -42,19 +42,17 @@ subroutine RT_Lifetimes_merge_driver(what)
  !
  ! INTRA-k/INTER-k parallel merging
  !==================================
- if (RT_EE_life%active) then
-   if (what=="INTRA_k")                call RT_Lifetimes_merge_intra_k(RT_EE_life)
-   if (what=="INTER_k".or.what=="REF") call RT_Lifetimes_merge_inter_k(RT_EE_life)
+ if (what=="INTRA_k") then
+   call RT_Lifetimes_merge_intra_k(RT_EE_life)
+   call RT_Lifetimes_merge_intra_k(RT_EP_emit_life)
+   call RT_Lifetimes_merge_intra_k(RT_EP_abs_life)
+   call RT_Lifetimes_merge_intra_k(RT_EH_life)
  endif
- if (RT_EP_emit_life%active) then
-   if (what=="INTRA_k")                call RT_Lifetimes_merge_intra_k(RT_EP_emit_life)
-   if (what=="INTER_k".or.what=="REF") call RT_Lifetimes_merge_inter_k(RT_EP_emit_life)
-   if (what=="INTRA_k")                call RT_Lifetimes_merge_intra_k(RT_EP_abs_life)
-   if (what=="INTER_k".or.what=="REF") call RT_Lifetimes_merge_inter_k(RT_EP_abs_life)
- endif
- if (RT_EH_life%active) then
-   if (what=="INTRA_k")                call RT_Lifetimes_merge_intra_k(RT_EH_life)
-   if (what=="INTER_k".or.what=="REF") call RT_Lifetimes_merge_inter_k(RT_EH_life)
+ if (what=="INTER_k".or.what=="REF") then
+   call RT_Lifetimes_merge_inter_k(RT_EE_life)
+   call RT_Lifetimes_merge_inter_k(RT_EP_emit_life)
+   call RT_Lifetimes_merge_inter_k(RT_EP_abs_life)
+   call RT_Lifetimes_merge_inter_k(RT_EH_life)
  endif
  !
  ! REF lifetimes PARALLEL merging

@@ -40,6 +40,7 @@ subroutine RT_Lifetimes_merge_inter_k(LIFE)
  logical          :: do_I_rcv,do_I_snd
  !
  if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) return
+ if (.not.LIFE%active             ) return
  !
  myid=PAR_COM_Xk_ibz_INDEX%CPU_id+1
  COMM=PAR_COM_Xk_ibz_INDEX%COMM

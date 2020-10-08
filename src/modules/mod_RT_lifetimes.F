@@ -131,16 +131,16 @@ module RT_lifetimes
      YAMBO_FREE(SAVED_times)
    end subroutine
    !
-   subroutine RT_lifetime_alloc(KIND,LIFE,Nb,Nk)
+   subroutine RT_lifetime_alloc(KIND,LIFE,D1,D2)
      character(*)      :: KIND
      type(RT_lifetime) :: LIFE
-     integer :: Nb(2),Nk
-     LIFE%D1=Nb
-     LIFE%D2=Nk
-     YAMBO_ALLOC(LIFE%emit,(Nb(1):Nb(2),Nk))
-     YAMBO_ALLOC(LIFE%abs,(Nb(1):Nb(2),Nk))
-     YAMBO_ALLOC(LIFE%emit_save,(Nb(1):Nb(2),Nk,Life_MEM_steps))
-     YAMBO_ALLOC(LIFE%abs_save,(Nb(1):Nb(2),Nk,Life_MEM_steps))
+     integer :: D1(2),D2
+     LIFE%D1=D1
+     LIFE%D2=D2
+     YAMBO_ALLOC(LIFE%emit,(D1(1):D1(2),D2))
+     YAMBO_ALLOC(LIFE%abs,(D1(1):D1(2),D2))
+     YAMBO_ALLOC(LIFE%emit_save,(D1(1):D1(2),D2,Life_MEM_steps))
+     YAMBO_ALLOC(LIFE%abs_save,(D1(1):D1(2),D2,Life_MEM_steps))
      LIFE%KIND=KIND
      LIFE%active=.true.
      LIFE%emit=rZERO

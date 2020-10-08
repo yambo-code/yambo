@@ -204,7 +204,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  ! Compute qindx_B_max
  ! =====================
- if (BS_res_K_corr.or.BS_cpl_K_corr) then
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) then
    !
    ! Here I need the distribution over k
    ! The distribution over k is later recomputed for each k-point inside the iq loop
@@ -253,7 +253,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !===================
    call K_observables("ALLOC",W_bss)
    !
-   if (BS_res_K_corr.or.BS_cpl_K_corr) then
+   if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) then
      !
      ! W/X RL size setup looking at the max index of G-G' 
      ! =========

@@ -40,6 +40,7 @@
  integer       :: iq,ig,n_idx,n_max
  real(SP)      :: slab_vz,slab_vplane,lcut,pre_factor,R_circle,Sup,factorial
  type(PP_indexes) ::px
+ character(schlen)  :: of_name
  
  lcut=alat(idir(1))/2.0_SP
  call PP_indexes_reset(px)

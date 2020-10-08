@@ -24,9 +24,9 @@
 subroutine interpolate_W(X,Xw,q)
  !
  use pars,          ONLY:SP,pi,zero_dfl,schlen
- use com,           ONLY:msg, warning
+ use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,RIM_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
-&                        RIM_W_is_diagonal,RIM_W,f_coeff,cut_is_slab,idir
+&                        RIM_W_is_diagonal,RIM_W,RIM_W_d,f_coeff,cut_is_slab,idir
  use memory,        ONLY:MEM_err
  use vec_operate,   ONLY:c2a,v_is_zero,v_norm
  use X_m,           ONLY:X_mat,X_t,X_alloc

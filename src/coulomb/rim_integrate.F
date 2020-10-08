@@ -185,7 +185,6 @@ subroutine rim_integrate_w(iq,qr,N_out)
 &                        RIM_ng,q_pt,nqibz,b,RIM_W_is_diagonal,&
 &                        RIM_W,f_coeff,cut_is_slab,idir
  use D_lattice,     ONLY:alat
- use com,           ONLY:error
  !
  implicit none
  integer  :: iq,N_out

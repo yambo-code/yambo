@@ -53,7 +53,7 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
 &                         RT_E_occupations,RT_H_occupations,l_RT_CCA_Kernel, &
 &                         RT_delta_occupations,l_RT_include_eq_scatt,&
 &                         RT_is_statically_dephased,RT_is_dynamically_dephased,RT_Deph_Matrix,G_lesser_reference
- use RT_lifetimes_DO,ONLY:ABS_RT_life_REF,EMIT_RT_life_REF,ABS_RT_life_dGAMMA,EMIT_RT_life_dGAMMA
+ use RT_operations,  ONLY:ABS_RT_life_REF,EMIT_RT_life_REF,ABS_RT_life_dGAMMA,EMIT_RT_life_dGAMMA
  !
  implicit none
  !

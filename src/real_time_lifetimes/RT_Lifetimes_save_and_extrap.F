@@ -25,7 +25,8 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,LIFE)
  !
  use pars,           ONLY:SP
  use RT_lifetimes,   ONLY:SAVED_times,Life_MEM_steps,l_RT_extrapolate_lifetimes,l_RT_constant_lifetimes,RT_lifetime
- use real_time,      ONLY:RT_nk,ADD_to_saved_values,RT_E_occupations,RT_E_occupations_reference,&
+ use RT_operations,  ONLY:ADD_to_saved_values
+ use real_time,      ONLY:RT_nk,RT_E_occupations,RT_E_occupations_reference,&
 &                         RT_H_occupations,RT_H_occupations_reference,RT_bands,RTibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  !

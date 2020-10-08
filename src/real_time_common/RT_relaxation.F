@@ -78,9 +78,10 @@ subroutine RT_relaxation(E,k,q,Time)
 &                         RT_EP_emit_REF_life,RT_EE_REF_life,RT_EH_REF_life,&
 &                         Life_MEM_steps,l_initial_equilibrium,RT_EP_abs_REF_life,&
 &                         SAVED_times,RT_EP_abs_life
+ use RT_operations,  ONLY:ADD_to_saved_values,FIRST_step
  use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
-&                         l_RT_CCA_Kernel,FIRST_step,RT_is_statically_dephased,&
-&                         RT_nk,ADD_to_saved_values,RT_is_dynamically_dephased,l_RT_relax_time_approx
+&                         l_RT_CCA_Kernel,RT_is_statically_dephased,&
+&                         RT_nk,RT_is_dynamically_dephased,l_RT_relax_time_approx
  use timing_m,       ONLY:timing
  !
  implicit none

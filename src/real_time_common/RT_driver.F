@@ -45,8 +45,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                         NE_i_start_time,RT_carriers_object,RT_apply
  use real_time,      ONLY:RT_potential,RT_kind,RT_xc_functional,RT_perturbation,&
 &                         NE_steps,RT_step,G_lesser,RT_bands,&
-&                         RT_alloc,RT_free,NE_i_time,eval_energy,&
-&                         rho_reference,magn_reference,RT_nk, &
+&                         NE_i_time,eval_energy,rho_reference,magn_reference,RT_nk, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_RT_is_WFfree,&
 &                         dG_lesser,NE_tot_time,&
 &                         i_MEM_prev,i_MEM_now,RT_is_dynamically_dephased,&
@@ -375,7 +374,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  contains
    !
    subroutine CLOSE_and_clean( )
-     call RT_free("all")
+     call RT_free( )
      call RT_control_free("all")
 #if defined _PHEL
      if (l_phel_scatt) call RT_PHEL_free("all")

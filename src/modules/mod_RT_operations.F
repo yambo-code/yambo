@@ -23,6 +23,12 @@
 !
 module RT_operations
  !
+ use pars,           ONLY:SP,rZERO
+ use RT_lifetimes,   ONLY:RT_lifetime,RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_abs_life,&
+&                         RT_EP_emit_REF_life,RT_EE_REF_life,RT_EH_REF_life,RT_EP_abs_REF_life
+ use real_time,      ONLY:RT_E_occupations_reference,G_lesser_reference,RT_H_occupations_reference,&
+&                         integrator_step,RT_bands
+ !
  implicit none
  !
  interface
@@ -67,4 +73,123 @@ module RT_operations
    !
  end interface
  !
+ contains
+   !
+   !-----------
+   ! LIFETIMES
+   !-----------
+   !
+   real(SP) function ABS_RT_life_REF(i1,i2)
+     integer                       :: i1,i2
+     ABS_RT_life_REF=rZERO
+     if (RT_EP_emit_life%active) then
+       ABS_RT_life_REF=RT_EP_emit_REF_life%abs(i1,i2)
+     endif
+     if (RT_EP_abs_life%active) then
+       ABS_RT_life_REF=ABS_RT_life_REF+RT_EP_abs_REF_life%emit(i1,i2)
+     endif
+     if (RT_EE_life%active) then
+       ABS_RT_life_REF=ABS_RT_life_REF+RT_EE_REF_life%abs(i1,i2)
+     endif
+     if (RT_EH_life%active) then
+       ABS_RT_life_REF=ABS_RT_life_REF+RT_EH_REF_life%abs(i1,i2)
+     endif
+   end function
+   !
+   real(SP) function EMIT_RT_life_REF(i1,i2)
+     integer                       :: i1,i2
+     EMIT_RT_life_REF=rZERO
+     if (RT_EP_emit_life%active) then
+       EMIT_RT_life_REF=EMIT_RT_life_REF+RT_EP_emit_REF_life%emit(i1,i2)
+     endif
+     if (RT_EP_abs_life%active) then
+       EMIT_RT_life_REF=EMIT_RT_life_REF+RT_EP_abs_REF_life%abs(i1,i2)
+     endif
+     if (RT_EE_life%active) then
+       EMIT_RT_life_REF=EMIT_RT_life_REF+RT_EE_REF_life%emit(i1,i2)
+     endif
+     if (RT_EH_life%active) then
+       EMIT_RT_life_REF=EMIT_RT_life_REF+RT_EH_REF_life%emit(i1,i2)
+     endif
+   end function
+   !
+   real(SP) function ABS_RT_life_dGAMMA(i1,i2)
+     integer                       :: i1,i2
+     ABS_RT_life_dGAMMA=rZERO
+     if (RT_EP_emit_life%active) then
+       ABS_RT_life_dGAMMA=ABS_RT_life_dGAMMA+RT_EP_emit_life%abs(i1,i2)
+     endif
+     if (RT_EP_abs_life%active) then
+       ABS_RT_life_dGAMMA=ABS_RT_life_dGAMMA+RT_EP_abs_life%emit(i1,i2)
+     endif
+     if (RT_EE_life%active) then
+       ABS_RT_life_dGAMMA=ABS_RT_life_dGAMMA+RT_EE_life%abs(i1,i2)
+     endif
+     if (RT_EH_life%active) then
+       ABS_RT_life_dGAMMA=ABS_RT_life_dGAMMA+RT_EH_life%abs(i1,i2)
+     endif
+   end function
+   !
+   real(SP) function EMIT_RT_life_dGAMMA(i1,i2)
+     integer                       :: i1,i2
+     EMIT_RT_life_dGAMMA=rZERO
+     if (RT_EP_emit_life%active) then
+       EMIT_RT_life_dGAMMA=RT_EP_emit_life%emit(i1,i2)
+     endif
+     if (RT_EP_abs_life%active) then
+       EMIT_RT_life_dGAMMA=EMIT_RT_life_dGAMMA+RT_EP_abs_life%abs(i1,i2)
+     endif
+     if (RT_EE_life%active) then
+       EMIT_RT_life_dGAMMA=EMIT_RT_life_dGAMMA+RT_EE_life%emit(i1,i2)
+     endif
+     if (RT_EH_life%active) then
+       EMIT_RT_life_dGAMMA=EMIT_RT_life_dGAMMA+RT_EH_life%emit(i1,i2)
+     endif
+   end function
+   !
+   real(SP) function ABS_RT_life_one_KIND(LIFE,LIFE_ref,i1,i2)
+     type(RT_lifetime), intent(in) :: LIFE,LIFE_ref
+     integer                       :: i1,i2
+     ABS_RT_life_one_KIND=rZERO
+     if (.not.LIFE%active) return
+     ABS_RT_life_one_KIND=LIFE%abs(i1,i2)+LIFE_ref%abs(i1,i2)
+     if (LIFE%kind=="el-ph_emit".and.RT_EP_abs_life%active) then
+       ABS_RT_life_one_KIND=ABS_RT_life_one_KIND+RT_EP_abs_life%emit(i1,i2)+RT_EP_abs_REF_life%emit(i1,i2)
+     endif
+   end function
+   !
+   real(SP) function EMIT_RT_life_one_KIND(LIFE,LIFE_ref,i1,i2)
+     type(RT_lifetime), intent(in) :: LIFE,LIFE_ref
+     integer                       :: i1,i2
+     EMIT_RT_life_one_KIND=rZERO
+     if (.not.LIFE%active) return
+     EMIT_RT_life_one_KIND=LIFE%emit(i1,i2)+LIFE_ref%emit(i1,i2)
+     if (LIFE%kind=="el-ph_emit".and.RT_EP_abs_life%active) then
+       EMIT_RT_life_one_KIND=EMIT_RT_life_one_KIND+RT_EP_abs_life%abs(i1,i2)+RT_EP_abs_REF_life%abs(i1,i2)
+     endif
+   end function
+   !
+   logical function FIRST_step( )
+     FIRST_step=integrator_step==1
+   end function
+   !
+   subroutine ADD_to_saved_values(VAL,ARRAY,STEPS)
+     integer  :: STEPS
+     real(SP) :: VAL,ARRAY(STEPS)
+     integer  :: i1
+     do i1=1,STEPS-1
+       ARRAY(i1)=ARRAY(i1+1)
+     enddo
+     ARRAY(STEPS)=VAL
+   end subroutine
+   !
+   subroutine RT_init_occupation_reference( )
+     use electrons,     ONLY:spin_occ
+     integer               :: ib
+     do ib=RT_bands(1),RT_bands(2)
+       RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
+       RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
+     enddo
+   end subroutine
+   !
 end module

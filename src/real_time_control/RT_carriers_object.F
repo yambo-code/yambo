@@ -34,7 +34,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  use RT_control,     ONLY:CARR_RT_IO_t
  use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_emit_REF_life,&
 &                         RT_EE_REF_life,RT_EH_REF_life,RT_EP_abs_life,RT_EP_abs_REF_life
- use RT_lifetimes_DO,ONLY:EMIT_RT_life_REF,ABS_RT_life_REF,ABS_RT_life_dGAMMA,EMIT_RT_life_dGAMMA
+ use RT_operations,  ONLY:EMIT_RT_life_REF,ABS_RT_life_REF,ABS_RT_life_dGAMMA,EMIT_RT_life_dGAMMA
  use real_time,      ONLY:RT_t,RTibz,RT_nk,RT_delta_occupations,RT_bands,&
 &                         RT_obj_alloc,RT_obj_free,RT_levels,RT_is_dynamically_dephased
  use hamiltonian,    ONLY:E_reference

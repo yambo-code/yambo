@@ -24,7 +24,7 @@
 subroutine RT_mean_lifetimes_and_temperatures( LIFE, LIFE_ref )
  ! 
  use pars,           ONLY:SP,rZERO
- use RT_lifetimes_DO,ONLY:ABS_RT_life_one_KIND,EMIT_RT_life_one_KIND
+ use RT_operations,  ONLY:ABS_RT_life_one_KIND,EMIT_RT_life_one_KIND
  use RT_lifetimes,   ONLY:RT_lifetime,l_RT_lifetimes_Tfit
  use real_time,      ONLY:RTibz,RT_nk,RT_bands
  use electrons,      ONLY:spin_occ,n_full_bands

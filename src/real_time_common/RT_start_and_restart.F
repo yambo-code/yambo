@@ -42,10 +42,11 @@ subroutine RT_start_and_restart(E,k,q)
  use QP_CTL_m,       ONLY:QP_ctl_user
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
+ use RT_operations,  ONLY:RT_init_occupation_reference
  use RT_control,     ONLY:ID,NE_i_start_time,CARR_RT_IO_t,OBS_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,&
 &                         CACHE_OBS_INTERVAL_time,RT_control_free,RT_control_alloc
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
-&                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
+&                         G_lesser_reference,rho_reference,magn_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RTibz,NE_time,RT_levels,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
 &                         Gr_kind,l_RT_is_WFfree,RT_TIME_status,&

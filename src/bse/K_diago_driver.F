@@ -308,7 +308,7 @@ subroutine K_diago_driver(iq,W,X_static)
  ! Now I calculate epsilon
  !=========================
  call K_diago_response_functions(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
- &                                  BS_R_left_magn,BS_R_right_magn,BS_R_left_magn,BS_R_right_magn,&
+ &                                  BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn,&
  &                                  BS_R_right_kerr,BS_R_PL)
  !
  ! I write the output file 
@@ -321,7 +321,7 @@ subroutine K_diago_driver(iq,W,X_static)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
    io_err=io_BSS_diago(iq,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
-   &                                  BS_R_left_magn,BS_R_right_magn,BS_R_left_magn,BS_R_right_magn,&
+   &                                  BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn,&
    &                                  BS_R_right_kerr,BS_R_PL)
    !
  endif

@@ -28,6 +28,7 @@ module real_time
  use units,          ONLY:FS2AUT
  use global_XC,      ONLY:QP_SE_NONE
  use R_lattice,      ONLY:bz_fine_grid
+ !use RT_lifetimes,   ONLY:RT_obj_lifetime
  !
 #include<memory.h>
  !
@@ -320,6 +321,11 @@ module real_time
    real(SP)   ,allocatable:: dGAMMA_E_PHOT_Hole(:)
    real(SP)   ,allocatable:: dGAMMA_E_PHOT_Electron(:)
    !
+   !type(RT_obj_lifetime)  :: GAMMA_EP_abs
+   !type(RT_obj_lifetime)  :: GAMMA_EP_emit
+   !type(RT_obj_lifetime)  :: GAMMA_EE
+   !type(RT_obj_lifetime)  :: GAMMA_EH
+   !
  end type RT_t
  !
  type(RT_t),save  :: RT_carriers
@@ -327,6 +333,7 @@ module real_time
  contains
    !
    subroutine RT_obj_alloc(RT)
+     !
      type(RT_t)::RT
      !
      if (allocated(RT%kpt)) return

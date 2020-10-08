@@ -128,6 +128,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
          RT_levels%E(i_b,i_k_RT,i_spin)=RT%delta_E(i_RT)+RT%E_bare(i_RT)
        endif
        !
+       ! Lifetimes
+       !
        if(l_elphoton_scatt) then
          if (what=="fill") then
            RT%dGAMMA_E_PHOT_Hole(i_RT)=RT_EH_life%abs(i_b,i_k_RT)

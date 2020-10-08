@@ -58,8 +58,11 @@ subroutine XC_eval_lda_kernel(v1rho,v2rho2)
        mod_mag=v_norm(magn(ifft,:))
        if(mod_mag==0._SP) one_over_magn=0._SP
        if(mod_mag/=0._SP) one_over_magn=1._SP/mod_mag
-       F_xc(ifft,1,2) = F_xc(ifft,1,2) + real(v1rho(1,ifft)-v1rho(2,ifft),SP)*one_over_magn
+       ! Here 1,1 means +- and 22 -+ (or viceversa, to be checked)
+       F_xc(ifft,1,1) = F_xc(ifft,1,1) + real(v1rho(1,ifft)-v1rho(2,ifft),SP)*one_over_magn
+       F_xc(ifft,2,2) = F_xc(ifft,2,2) + real(v1rho(1,ifft)-v1rho(2,ifft),SP)*one_over_magn
      enddo
+     ! Here 2,1 means -- and 12 ++ (or viceversa, to be checked)
      F_xc(:,2,1)=F_xc(:,1,2)
 #endif
    endif

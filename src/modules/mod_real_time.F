@@ -23,12 +23,12 @@
 !
 module real_time
  !
- use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
+ use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt,l_phel_scatt
  use pars,           ONLY:DP,SP,schlen,lchlen,LP
  use units,          ONLY:FS2AUT
  use global_XC,      ONLY:QP_SE_NONE
  use R_lattice,      ONLY:bz_fine_grid
- !use RT_lifetimes,   ONLY:RT_obj_lifetime
+ use RT_lifetimes,   ONLY:RT_obj_lifetime,RT_obj_lifetime_alloc,RT_obj_lifetime_free
  !
 #include<memory.h>
  !
@@ -309,22 +309,12 @@ module real_time
    !
    ! Lifetimes
    !
-   real(SP)   ,allocatable:: GAMMA_bare(:,:) ! "initial equilibrium" lifetimes. In the code the "initial equilibrium"
-                                             ! e-e h, e-e e, e-p h, e-p e, e-p h(abs), e-p e(abs)
    real(SP)   ,allocatable:: NEQ_Lifetime(:) ! time dependent lifetime defined as for Silicon
-   real(SP)   ,allocatable:: dGAMMA_E_P_Hole(:)
-   real(SP)   ,allocatable:: dGAMMA_E_P_Electron(:)
-   real(SP)   ,allocatable:: dGAMMA_E_P_Ho_abs(:)
-   real(SP)   ,allocatable:: dGAMMA_E_P_El_abs(:)
-   real(SP)   ,allocatable:: dGAMMA_E_E_Hole(:)
-   real(SP)   ,allocatable:: dGAMMA_E_E_Electron(:)
-   real(SP)   ,allocatable:: dGAMMA_E_PHOT_Hole(:)
-   real(SP)   ,allocatable:: dGAMMA_E_PHOT_Electron(:)
-   !
-   !type(RT_obj_lifetime)  :: GAMMA_EP_abs
-   !type(RT_obj_lifetime)  :: GAMMA_EP_emit
-   !type(RT_obj_lifetime)  :: GAMMA_EE
-   !type(RT_obj_lifetime)  :: GAMMA_EH
+   type(RT_obj_lifetime)  :: GAMMA_EP_abs
+   type(RT_obj_lifetime)  :: GAMMA_EP_emit
+   type(RT_obj_lifetime)  :: GAMMA_EE
+   type(RT_obj_lifetime)  :: GAMMA_EH
+   type(RT_obj_lifetime)  :: GAMMA_PE
    !
  end type RT_t
  !
@@ -351,31 +341,25 @@ module real_time
      RT%E_bare        =0._SP
      RT%f_bare        =0._SP
      if (l_elel_scatt) then
-       YAMBO_ALLOC(RT%dGAMMA_E_E_Hole,(RT%nstates))
-       YAMBO_ALLOC(RT%dGAMMA_E_E_Electron,(RT%nstates))
-       RT%dGAMMA_E_E_Hole    =0._SP
-       RT%dGAMMA_E_E_Electron=0._SP
+       RT%GAMMA_EE%active=.TRUE.
+       call RT_obj_lifetime_alloc("el-el",RT%GAMMA_EE,RT%nstates)
      endif
      if (l_elph_scatt) then
-       YAMBO_ALLOC(RT%dGAMMA_E_P_Hole,(RT%nstates))
-       YAMBO_ALLOC(RT%dGAMMA_E_P_Electron,(RT%nstates))
-       YAMBO_ALLOC(RT%dGAMMA_E_P_Ho_abs,(RT%nstates))
-       YAMBO_ALLOC(RT%dGAMMA_E_P_El_abs,(RT%nstates))
-       RT%dGAMMA_E_P_Hole    =0._SP
-       RT%dGAMMA_E_P_Electron=0._SP
-       RT%dGAMMA_E_P_Ho_abs  =0._SP
-       RT%dGAMMA_E_P_El_abs  =0._SP
+       RT%GAMMA_EP_emit%active=.TRUE.
+       call RT_obj_lifetime_alloc("el-ep_emit",RT%GAMMA_EP_emit,RT%nstates)
+       RT%GAMMA_EP_emit%active=.TRUE.
+       call RT_obj_lifetime_alloc("el-ep_emit",RT%GAMMA_EP_emit,RT%nstates)
      endif
      if (l_elphoton_scatt) then
-       YAMBO_ALLOC(RT%dGAMMA_E_PHOT_Hole,(RT%nstates))
-       YAMBO_ALLOC(RT%dGAMMA_E_PHOT_Electron,(RT%nstates))
-       RT%dGAMMA_E_PHOT_Hole    =0._SP
-       RT%dGAMMA_E_PHOT_Electron=0._SP
+       RT%GAMMA_EH%active=.TRUE.
+       call RT_obj_lifetime_alloc("el-photon",RT%GAMMA_EH,RT%nstates)
+     endif
+     if (l_phel_scatt) then
+       RT%GAMMA_PE%active=.TRUE.
+       call RT_obj_lifetime_alloc("pe-el",RT%GAMMA_PE,RT%nstates)
      endif
      if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
-       YAMBO_ALLOC(RT%GAMMA_bare,(RT%nstates,8))
        YAMBO_ALLOC(RT%NEQ_Lifetime,(RT%nstates))
-       RT%GAMMA_bare  =0._SP
        RT%NEQ_Lifetime=0._SP
      endif
      YAMBO_ALLOC(RT%delta_E,(RT%nstates))
@@ -389,23 +373,19 @@ module real_time
      RT%nk=0
      RT%nb=0
      RT%nstates=0
-     YAMBO_FREE(RT%dGAMMA_E_E_Hole)
-     YAMBO_FREE(RT%dGAMMA_E_E_Electron)
-     YAMBO_FREE(RT%dGAMMA_E_P_Hole)
-     YAMBO_FREE(RT%dGAMMA_E_P_Electron)
-     YAMBO_FREE(RT%dGAMMA_E_P_Ho_abs)
-     YAMBO_FREE(RT%dGAMMA_E_P_El_abs)
-     YAMBO_FREE(RT%dGAMMA_E_PHOT_Hole)
-     YAMBO_FREE(RT%dGAMMA_E_PHOT_Electron)
      YAMBO_FREE(RT%E_bare)
      YAMBO_FREE(RT%f_bare)
-     YAMBO_FREE(RT%GAMMA_bare)
      YAMBO_FREE(RT%delta_E)
      YAMBO_FREE(RT%delta_f)
      YAMBO_FREE(RT%NEQ_Lifetime)
      YAMBO_FREE(RT%kpt)
      YAMBO_FREE(RT%k_weight)
      YAMBO_FREE(RT%table)
+     call RT_obj_lifetime_free(RT%GAMMA_EE)
+     call RT_obj_lifetime_free(RT%GAMMA_EP_abs)
+     call RT_obj_lifetime_free(RT%GAMMA_EP_emit)
+     call RT_obj_lifetime_free(RT%GAMMA_EH)
+     call RT_obj_lifetime_free(RT%GAMMA_PE)
    end subroutine
    !
 end module

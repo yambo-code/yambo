@@ -46,9 +46,10 @@ module RT_lifetimes
    logical                  :: active=.FALSE.
    character(schlen)        :: KIND="none"
    integer                  :: N=0
-   real(SP),    allocatable :: bare(:)
    real(SP),    allocatable :: abs(:)
    real(SP),    allocatable :: emit(:)
+   real(SP),    allocatable :: abs_bare(:)
+   real(SP),    allocatable :: emit_bare(:)
  end type RT_obj_lifetime
  !
  ! Lifetimes (updated)
@@ -90,30 +91,31 @@ module RT_lifetimes
  !
  contains
    !
-   subroutine RT_ALL_lifetimes_alloc( )
+   subroutine RT_ALL_lifetimes_alloc(NB,NK)
      !
      use D_lattice, ONLY:Bose_Temp
-     use real_time, ONLY:RT_bands,RT_nk
+     !
+     integer :: NB(2),NK
      !
      if (l_elph_scatt) then
-       call RT_lifetime_alloc("el-ph_emit",RT_EP_emit_life,RT_bands,RT_nk)
-       call RT_lifetime_alloc("el-ph_emit-REF",RT_EP_emit_REF_life,RT_bands,RT_nk)
+       call RT_lifetime_alloc("el-ph_emit",RT_EP_emit_life,NB,NK)
+       call RT_lifetime_alloc("el-ph_emit-REF",RT_EP_emit_REF_life,NB,NK)
        if (Bose_Temp>0._SP.or.l_phel_scatt) then
-         call RT_lifetime_alloc("el-ph_abs",RT_EP_abs_life,RT_bands,RT_nk)
-         call RT_lifetime_alloc("el-ph_abs-REF",RT_EP_abs_REF_life,RT_bands,RT_nk)
+         call RT_lifetime_alloc("el-ph_abs",RT_EP_abs_life,NB,NK)
+         call RT_lifetime_alloc("el-ph_abs-REF",RT_EP_abs_REF_life,NB,NK)
        endif
      endif
      if (l_phel_scatt) then
-       call RT_lifetime_alloc("ph-el",RT_PE_life,RT_bands,RT_nk)
-       call RT_lifetime_alloc("ph-el-REF",RT_PE_REF_life,RT_bands,RT_nk)
+       call RT_lifetime_alloc("ph-el",RT_PE_life,NB,NK)
+       call RT_lifetime_alloc("ph-el-REF",RT_PE_REF_life,NB,NK)
      endif
      if (l_elel_scatt) then
-       call RT_lifetime_alloc("el-el",RT_EE_life,RT_bands,RT_nk)
-       call RT_lifetime_alloc("el-el-REF",RT_EE_REF_life,RT_bands,RT_nk)
+       call RT_lifetime_alloc("el-el",RT_EE_life,NB,NK)
+       call RT_lifetime_alloc("el-el-REF",RT_EE_REF_life,NB,NK)
      endif
      if (l_elphoton_scatt) then
-       call RT_lifetime_alloc("el-photon",RT_EH_life,RT_bands,RT_nk)
-       call RT_lifetime_alloc("el-photon-REF",RT_EH_REF_life,RT_bands,RT_nk)
+       call RT_lifetime_alloc("el-photon",RT_EH_life,NB,NK)
+       call RT_lifetime_alloc("el-photon-REF",RT_EH_REF_life,NB,NK)
      endif
      YAMBO_ALLOC(SAVED_times,(Life_MEM_steps))
      SAVED_times=rZERO
@@ -166,23 +168,30 @@ module RT_lifetimes
      character(*)          :: KIND
      type(RT_obj_lifetime) :: LIFE
      integer :: Ns
+     if (.not.LIFE%active) return
      YAMBO_ALLOC(LIFE%emit,(Ns))
      YAMBO_ALLOC(LIFE%abs,(Ns))
-     YAMBO_ALLOC(LIFE%bare,(Ns))
-     LIFE%emit=rZERO
-     LIFE%abs =rZERO
-     LIFE%bare   =rZERO
-     LIFE%KIND=kind
-     LIFE%active=.TRUE.
+     YAMBO_ALLOC(LIFE%abs_bare,(Ns))
+     YAMBO_ALLOC(LIFE%emit_bare,(Ns))
+     LIFE%N        =Ns
+     LIFE%emit     =rZERO
+     LIFE%abs      =rZERO
+     LIFE%abs_bare =rZERO
+     LIFE%emit_bare=rZERO
+     LIFE%KIND     =kind
+     LIFE%active   =.TRUE.
    end subroutine
    !
    subroutine RT_obj_lifetime_free(LIFE)
      type(RT_obj_lifetime) :: LIFE
+     if (.not.LIFE%active) return
      LIFE%KIND="none"
      LIFE%active=.FALSE.
+     LIFE%N=0
      YAMBO_FREE(LIFE%emit)
      YAMBO_FREE(LIFE%abs)
-     YAMBO_FREE(LIFE%bare)
+     YAMBO_FREE(LIFE%abs_bare)
+     YAMBO_FREE(LIFE%emit_bare)
    end subroutine
    !
 end module

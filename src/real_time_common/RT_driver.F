@@ -191,7 +191,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  ! Core allocations
  !
  call RT_alloc(E,"all")
- call RT_ALL_lifetimes_alloc( )
+ call RT_ALL_lifetimes_alloc(RT_bands,RT_nk)
  call RT_control_alloc("all")
 #if defined _PHEL
  if (l_phel_scatt) call RT_PHEL_alloc("phonons")

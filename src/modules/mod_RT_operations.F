@@ -27,7 +27,7 @@ module RT_operations
  use RT_lifetimes,   ONLY:RT_lifetime,RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_abs_life,&
 &                         RT_EP_emit_REF_life,RT_EE_REF_life,RT_EH_REF_life,RT_EP_abs_REF_life
  use real_time,      ONLY:RT_E_occupations_reference,G_lesser_reference,RT_H_occupations_reference,&
-&                         integrator_step,RT_bands
+&                         integrator_step,RT_bands,RT_t
  !
  implicit none
  !
@@ -190,6 +190,29 @@ module RT_operations
        RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
        RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
      enddo
+   end subroutine
+   !
+   subroutine RT_lifetime_to_RT_obj(action,i1,i2,J,LIFE,LIFE_ref,LIFE_obj)
+     use RT_lifetimes,   ONLY:RT_obj_lifetime
+     use real_time,      ONLY:RT_levels
+     character(*)          :: action
+     integer               :: i1,i2,J
+     type(RT_lifetime)     :: LIFE,LIFE_ref
+     type(RT_obj_lifetime) :: LIFE_obj
+     if (.not.LIFE%active) return
+     if (.not.LIFE_obj%active) return
+     if (action=="fill_ref") then
+       LIFE_obj%abs_bare(J) =LIFE_ref%abs(i1,i2)
+       LIFE_obj%emit_bare(J)=LIFE_ref%emit(i1,i2)
+     endif
+     if (action=="fill") then
+       LIFE_obj%abs(J) =LIFE%abs(i1,i2)
+       LIFE_obj%emit(J)=LIFE%emit(i1,i2)
+     endif
+     if (action=="dump".and.allocated(RT_levels%E)) then
+       LIFE%abs(i1,i2) =LIFE_obj%abs(J) 
+       LIFE%emit(i1,i2)=LIFE_obj%emit(J)
+     endif
    end subroutine
    !
 end module

@@ -54,7 +54,7 @@ subroutine io_RT_components_header(ID,what,loading_carr_before_neq,l_carriers,l_
    io_RT_components=io_header(ID,IMPOSE_SN=(.not.l_carriers),CUTOFF=.true.,T_EL=.true.,FRAG=frag_RT)
    if (io_RT_components/=0) return
    !
-   io_RT_components=variables_RT_static(ID,trim(what_))
+   io_RT_components=variables_RT_static(ID,trim(what_),l_carriers)
    if (io_RT_components/=0) return
    !
  endif
@@ -74,7 +74,6 @@ subroutine io_RT_components_header(ID,what,loading_carr_before_neq,l_carriers,l_
    call  io_variable_elemental(ID,I0=RT_carriers%nk)
    call  io_variable_elemental(ID,I1=RT_carriers%nb)
    call  io_variable_elemental(ID,I0=RT_carriers%nstates)
-   !call  io_variable_elemental(ID,"",0,0)
    !
    if (read_is_on(ID)) call RT_obj_alloc(RT_carriers)
    !
@@ -92,7 +91,6 @@ subroutine io_RT_components_header(ID,what,loading_carr_before_neq,l_carriers,l_
  if (l_G) then
    call def_variable_elemental(ID,"Save_G_history",1,LP+100,0) 
    call  io_variable_elemental(ID,L0=SAVE_G_history)
-   !call io_variable_elemental(ID,"",0,0)
  endif
  !
  io_RT_components=io_status(ID)

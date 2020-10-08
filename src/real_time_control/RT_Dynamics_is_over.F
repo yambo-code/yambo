@@ -23,18 +23,42 @@
 !
 logical function RT_Dynamics_is_over()
  !
+ use pars,           ONLY:SP
  use parser_m,       ONLY:parser
- use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_dyn_step
+ use real_time,      ONLY:NE_steps,NE_i_time,RT_dyn_step,NE_time,NE_tot_time
  use RT_control,     ONLY:RT_NAN_found
  use it_tools,       ONLY:it_reset
  !
  implicit none
  !
- logical              ::STOP_now
+ logical    ::STOP_now
+ real(SP)   ::delta_T_left,delta_T_right      
  !
  call it_reset(0)
  call parser('STOP_NOW',STOP_now)
  !
- RT_Dynamics_is_over=NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now.or.RT_NAN_found
+ RT_Dynamics_is_over=.FALSE.
+ !
+ if (STOP_now.or.RT_NAN_found.or.NE_i_time==NE_steps) then
+   RT_Dynamics_is_over=.TRUE.
+   return
+ endif
+ !
+ !-------------t----------T-----t'------------------
+ !             |--------->|<----|
+ !
+ ! T =NE_tot_time
+ ! t =NE_time
+ ! t'=NE_time+RT_dyn_step
+ !
+ delta_T_left =NE_tot_time-NE_time
+ delta_T_right=NE_tot_time-NE_time-RT_dyn_step
+ !
+ if (delta_T_left>0._SP.and.delta_T_right>0._SP) return
+ !
+ if (delta_T_left<-delta_T_right.or.delta_T_left<0.) then
+   RT_Dynamics_is_over=.TRUE.
+   return
+ endif
  !
 end function

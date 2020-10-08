@@ -54,7 +54,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_APP,OP_APP_CL,DUMP,&
 &                       deliver_IO_error_message,manage_action
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
- use xc_functionals,ONLY:F_xc,XC_potential_driver
+ use xc_functionals,ONLY:F_xc,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
@@ -68,7 +68,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
 #if defined _PAR_IO
- use parallel_m,     ONLY:MPI_COMM_WORLD
 #endif
  !
 #include<memory.h>
@@ -250,7 +249,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !======
  if (BS_K_is_ALDA) then
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
+   if(n_spin>1) then
+     YAMBO_ALLOC(magn,(fft_size,3))
+   endif
    call XC_potential_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
+   if(n_spin>1) then
+     YAMBO_FREE(magn)
+   endif
  endif
  !
  ! DB identifier 
@@ -385,8 +390,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Transition Loops
    !------------------
    !
+#if !defined _OPENMP
    i_p_bz_last=0   ; i_k_bz_last=0
    i_pmq_bz_last=0 ; i_kmq_bz_last=0
+#endif
    !
 #if defined _OPENMP && ! defined _CUDA
    !$omp parallel default(shared), &
@@ -396,8 +403,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
    !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t, &
    !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
-   !$omp &       i_k_bz_mem,i_kmq_bz_mem,i_k_bz_last,i_p_bz_last,i_kmq_bz_last,i_pmq_bz_last,qindx_tmp,&
-   !$omp &       iq_W_bz_last,iq_W_last,iq_W_bz_mq_last,iq_W_mq_last )
+   !$omp &       i_k_bz_mem,i_kmq_bz_mem,qindx_tmp )
 #endif
    !
    call OPENMP_update(master_thread)   

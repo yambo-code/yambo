@@ -29,9 +29,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,n_sp_pol,filled_tresh
  use R_lattice,     ONLY:bz_samp,q_norm
- use D_lattice,     ONLY:DL_vol
  use X_m,           ONLY:use_X_DbGd,l_drude,drude_n_states
- use stderr,        ONLY:intc,real2ch
  use parser_m,      ONLY:parser
  !
  implicit none
@@ -44,7 +42,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  complex(SP)  ,intent(inout):: Wd
  complex(SP)  ,intent(out)  :: drude_GreenF(Xw%n_freqs)
  !
- real(SP)             :: drude_factor,f_eh,f_occ
+ real(SP)             :: f_eh,f_occ
  logical              :: Drude_term(4),l_Jellium,l_Classical
  integer              :: iw,ik,ib,is
  !

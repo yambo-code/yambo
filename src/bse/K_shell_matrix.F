@@ -33,14 +33,19 @@ subroutine K_shell_matrix(slepc_mat)
  use BS,             ONLY:BS_H_dim,BS_nT_grps,BS_blocks_symmetrize_K
  use BS_solvers,     ONLY:Slepc_v,BS_HAYVEC_alloc
  !
-#include <memory.h>
- !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>
+#include <petsc/finclude/petscvec.h>
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
+ !
+ use petscmat
+ use slepceps
+ use petscmatdef
+ use slepcepsdef
+ !
+#include <memory.h>
  !
  integer          :: i_B, i_r, i_c, i_Tk, i_Tp
  PetscFortranInt  :: SL_H_dim,SL_K_dim

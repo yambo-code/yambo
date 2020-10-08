@@ -28,10 +28,9 @@ subroutine RT_k_grid(E,k,q)
  use R_lattice,      ONLY:qindx_S
  use C_driver,       ONLY:code_bin
  use electrons,      ONLY:levels
- use real_time,      ONLY:DbGd_EE_scatt_table,&
-&                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,RT_ibz_dupl,&
-&                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_FineGd,RT_bands,RT_nk
- use R_lattice,      ONLY:bz_samp
+ use real_time,      ONLY:DbGd_EE_scatt_table,DbGd_EE_percent,DbGd_EE_Nk_table,RTibz,&
+&                         l_RT_uses_E_FineGd,RT_nk,RT_bands
+ use R_lattice,      ONLY:bz_samp,bz_samp_FineGd_alloc,bz_samp_duplicate_Fg
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  !
 #include<memory.h>
@@ -47,7 +46,7 @@ subroutine RT_k_grid(E,k,q)
  ! 
  ! GPL_EXCLUDE_START
  !
- l_RT_uses_E_FineGd=k%nibz_FineGd>0.and.E%nb_FineGd>=RT_bands(2)
+ l_RT_uses_E_FineGd=k%FGibz%N>0.and.E%FG%nb>=RT_bands(2)
  !
  ! GPL_EXCLUDE_END
  !
@@ -57,22 +56,16 @@ subroutine RT_k_grid(E,k,q)
  !
  ! GPL_INCLUDE_END
  !
- if (.not.allocated(RT_ibz_coo)) then
-   YAMBO_ALLOC(RT_ibz_coo,(k%nibz,2))
-   YAMBO_ALLOC(RT_ibz_dupl,(k%nibz))
-   YAMBO_ALLOC(RT_Nk_ibz,(k%nibz))
- endif
- !
  ! No DbGd, trivial definitions
  !==============================
  if (.not.l_RT_uses_E_FineGd) then
    !
-   RT_nk    =k%nibz
+   RTibz%N = 0
+   RT_nk     = k%nibz
    !
-   RT_ibz_dupl=0
-   RT_Nk_ibz=1
+   call bz_samp_FineGd_alloc(RTibz,k%nibz)
+   !
    DbGd_EE_percent=0._SP
-   YAMBO_ALLOC(RT_all2ibz,(k%nibz))
    if(l_elel_scatt) then
      YAMBO_ALLOC(DbGd_EE_scatt_table,(k%nibz,q%nbz))
      YAMBO_ALLOC(DbGd_EE_Nk_table,(k%nibz,k%nibz))
@@ -80,8 +73,12 @@ subroutine RT_k_grid(E,k,q)
      DbGd_EE_Nk_table=1
    endif
    do ik=1,k%nibz
-     RT_ibz_coo(ik,:)=ik
-     RT_all2ibz(ik)=ik
+     RTibz%pt(ik,:)=k%pt(ik,:)
+     RTibz%k_range(ik,:)=ik
+     RTibz%E_map(ik)=ik
+     RTibz%k_map(ik)=ik
+     RTibz%N_mapped(ik)=1
+     RTibz%weights(ik)=k%weights(ik)
    enddo
    !
    return
@@ -93,29 +90,14 @@ subroutine RT_k_grid(E,k,q)
  ! DbGd support
  !=============
  !
- RT_nk    =0
- !
- do ik=1,k%nibz
-   !
-   RT_ibz_coo(ik,:)=(/RT_nk+1,RT_nk+1+k%nibz_mapped(ik)/)
-   RT_nk=RT_nk+1+k%nibz_mapped(ik)
-   RT_Nk_ibz(ik)=k%nibz_mapped(ik)+1
-   if(ik==1) RT_ibz_dupl(ik)=k%ibz_DbGd_map(1,ik)-1
-   if(ik> 1) RT_ibz_dupl(ik)=k%ibz_DbGd_map(1,ik)-k%ibz_DbGd_map(2,ik-1)-1
-   !
- enddo
+ call bz_samp_FineGd_alloc(RTibz,k%nibz)
+ call bz_samp_duplicate_Fg(k%FGibz,RTibz,k%nibz)
+ RT_nk=RTibz%N
  !
  ! Define K-weights to be used in the k-points distribution
  !
  YAMBO_ALLOC(PAR_IND_Xk_ibz%weight_1D,(k%nibz))
- PAR_IND_Xk_ibz%weight_1D=RT_Nk_ibz
- !
- YAMBO_ALLOC(RT_all2ibz,(RT_nk))
- do ik=1,k%nibz
-   do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     RT_all2ibz(ik_rim)    =ik
-   enddo
- enddo
+ PAR_IND_Xk_ibz%weight_1D=RTibz%N_mapped
  !
  if( l_elel_scatt .and. (index(code_bin,'ypp')==0) ) then
    !
@@ -136,8 +118,8 @@ subroutine RT_k_grid(E,k,q)
        if(l_check(ik,ik_m_q)) cycle
        if(l_check(ik_m_q,ik)) cycle
        !
-       Nk_rim=RT_Nk_ibz(ik)
-       Nk_m_q_rim=RT_Nk_ibz(ik_m_q)
+       Nk_rim=RTibz%N_mapped(ik)
+       Nk_m_q_rim=RTibz%N_mapped(ik_m_q)
        !
        if( Nk_rim<Nk_m_q_rim ) cycle
        !
@@ -148,15 +130,15 @@ subroutine RT_k_grid(E,k,q)
        N_loops=max(1, (Nk_rim*N_pts-1)/(Nk_m_q_rim) )
        !
        i_loops=1
-       ik_m_q_rim=RT_ibz_coo(ik_m_q,1)-1
+       ik_m_q_rim=RTibz%k_range(ik_m_q,1)-1
        !
        do while (i_loops< N_loops+1)
-         do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+         do ik_rim=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
            !
            do i1=1,N_pts
              ik_m_q_rim=ik_m_q_rim+1
-             if(ik_m_q_rim>RT_ibz_coo(ik_m_q,2)) then
-               ik_m_q_rim=RT_ibz_coo(ik_m_q,1)
+             if(ik_m_q_rim>RTibz%k_range(ik_m_q,2)) then
+               ik_m_q_rim=RTibz%k_range(ik_m_q,1)
                i_loops=i_loops+1
              endif
              !
@@ -168,7 +150,7 @@ subroutine RT_k_grid(E,k,q)
              !
            enddo
            !
-           if(ik_m_q_rim==RT_ibz_coo(ik_m_q,2)) i_loops=i_loops+1
+           if(ik_m_q_rim==RTibz%k_range(ik_m_q,2)) i_loops=i_loops+1
            !
          enddo
          !

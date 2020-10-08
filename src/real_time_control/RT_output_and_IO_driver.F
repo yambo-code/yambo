@@ -33,7 +33,6 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  use real_time,      ONLY:eval_energy,eval_entropy,l_RT_update_Energies,l_NE_with_fields,NE_time, &
 &                         l_RT_induced_field,l_RT_impose_N_dN,l_RT_impose_E,RT_is_dynamically_dephased,NE_i_time
  use D_lattice,      ONLY:Bose_Temp
- use RT_control,     ONLY:RT_do_it
  !
  implicit none
  !
@@ -46,6 +45,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  !
  integer  :: i_ID
  real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),BGR(4)
+ logical, external   :: RT_do_it
  !
  select case(trim(what))
    !
@@ -58,9 +58,9 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    ! GPL_EXCLUDE_START
    !
    call RT_output(what=trim(what)//" carr magn")
-   if(eval_energy)  call RT_output(what=trim(what)//" energy")
-   if(eval_entropy) call RT_output(what=trim(what)//" therm")
-   if(l_RT_update_Energies)  call RT_output(what=trim(what)//" BGR")
+   if (eval_energy)  call RT_output(what=trim(what)//" energy")
+   if (eval_entropy) call RT_output(what=trim(what)//" therm")
+   if (l_RT_update_Energies) call RT_output(what=trim(what)//" BGR")
    if (l_elph_scatt)         call RT_output(trim(what)//' mean_EPlife')
    if (l_elel_scatt)         call RT_output(trim(what)//' mean_EElife')
    if (l_elphoton_scatt)     call RT_output(trim(what)//' mean_RADlife')
@@ -105,7 +105,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    ! GPL_EXCLUDE_END
    !
    call IO_and_Messaging_switch("-fragments_IO_log")
-   call RT_databases_IO(E)
+   call RT_databases_IO(E,.FALSE.)
    call IO_and_Messaging_switch("+fragments_IO_log")
    !
    ! OUTPUT(s)

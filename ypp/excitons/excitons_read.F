@@ -86,7 +86,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    !
    ! Apply quasi-particle correction if presents
    ! 
-   call QP_apply(BS_bands,Xen,Xk,'G',msg_fmt='s')
+   call QP_apply(BS_bands,Xen,Xk,'G',msg_fmt='rs')
    !
    if (BS_cpl_K_exchange)                   BS_cpl_mode='x'
    if (BS_cpl_K_corr)                       BS_cpl_mode='c'

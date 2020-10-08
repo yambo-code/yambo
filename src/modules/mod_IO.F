@@ -24,9 +24,8 @@
 module IO_m
  !
  use pars,       ONLY:SP,DP,lchlen,schlen,max_io_units,max_io_vars_open,max_active_sections
+#if !defined _io_lib
  use C_driver,   ONLY:code_version,code_revision,code_GPL_revision
-#if defined _MPI
- use parallel_m, ONLY:myid,MPI_INFO_NULL
 #endif
  use netcdf
  !
@@ -289,6 +288,7 @@ module IO_m
      !
    end subroutine io_variable_bulk
    !
+#if !defined _io_lib
    integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,&
 &                             IMPOSE_GAUGE,PARALLEL_STRUCTURE,FRAG,IMPOSE,NOWARN_SER)
      integer               :: ID
@@ -310,6 +310,7 @@ module IO_m
      integer           :: ID
      integer, optional :: i_fragment,j_fragment,ierr,COMM,cpu_id
    end subroutine
+#endif
    !
    character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING,ALT_JOB_DIR)
      use pars,       ONLY:lchlen
@@ -463,6 +464,7 @@ module IO_m
      !
    end subroutine
    !
+#if !defined _io_lib
    integer function manage_action(IO_ACTION,NOW,FIRST,LAST,PAR_index)
      !
      use parallel_m, ONLY:PP_indexes
@@ -507,6 +509,7 @@ module IO_m
      if (IO_ACTION==OP_IF_START_APP_CL_IF_END.and.NOW==start_.and.NOW==end_) manage_action=OP_APP_CL
      !
    end function manage_action
+#endif
    !
    subroutine io_reset(ID)
      integer :: ID
@@ -524,8 +527,10 @@ module IO_m
      io_extension(ID)=' ' 
      io_rec_pos(ID)=1
      io_restart_point(ID)=1
+#if !defined _io_lib
      io_code_version(ID,:)=code_version
      io_code_revision(ID,:)=(/code_revision,code_GPL_revision/)
+#endif
      io_serial_number(ID)=serial_number
      io_resetable(ID)=.true.
    end subroutine
@@ -653,9 +658,9 @@ module IO_m
        endif
        if(present(VAR)) VARNAME=VAR
        if( read_is_on(ID)) write (msg,'(6a)') ' Reading File ',trim(FILENAME),'; Variable ',&
-       &                                      trim(VARNAME),'; ',trim(nf90_strerror(status))
+&                                             trim(VARNAME),'; ',trim(nf90_strerror(status))
        if(write_is_on(ID)) write (msg,'(6a)') ' Writing File ',trim(FILENAME),'; Variable ',&
-       &                                      trim(VARNAME),'; ',trim(nf90_strerror(status))
+&                                             trim(VARNAME),'; ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if
    end subroutine

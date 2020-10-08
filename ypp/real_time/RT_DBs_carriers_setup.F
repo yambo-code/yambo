@@ -25,7 +25,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  use pars,          ONLY:SP,schlen
  use electrons,     ONLY:levels
- use IO_m,          ONLY:io_control,OP_WR,WR_CL,REP
+ use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use R_lattice,     ONLY:bz_samp
  use RT_control,    ONLY:CARR_RT_IO_t
  use parallel_m,    ONLY:PAR_G_k_range
@@ -79,10 +79,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  allocate(CARR_RT_IO_t%Time(1))
  CARR_RT_IO_t%Time(CARR_RT_IO_t%N)=0._SP
  !
- call io_control(ACTION=OP_WR,SEC=(/1,2/),COM=REP,ID=ID)
- io_RT_err=io_RT_components("carriers",ID)
- !
- call io_control(ACTION=WR_CL,SEC=(/3/),COM=REP,ID=ID)
+ call io_control(ACTION=OP_WR_CL,SEC=(/1,2,3/),COM=REP,ID=ID)
  io_RT_err=io_RT_components("carriers",ID)
  !
  call RT_carriers_object(RT_carriers,en,kpt,ID,"free")

@@ -23,7 +23,7 @@
 !
 module electrons
  !
- use pars,  ONLY:SP,IP
+ use pars,  ONLY:SP,IP,rZERO
  !
 #include<memory.h>
  !
@@ -59,6 +59,16 @@ module electrons
  real(SP)                 :: Orbital_magn(3)
  real(SP)                 :: Itinerant_magn(3)
  !
+ type E_fine_grid
+   integer              :: nk
+   integer              :: nb
+   real(SP), allocatable:: E(:,:,:)
+   real(SP), allocatable:: W(:,:,:)
+   real(SP), allocatable:: f(:,:,:)
+   !real(SP), allocatable:: Z(:,:,:)
+   real(SP), allocatable:: df(:,:,:)
+ end type E_fine_grid
+ !
  type levels
    !
    integer         :: nb
@@ -90,15 +100,9 @@ module electrons
    complex(SP),allocatable :: GreenF(:,:,:,:)     
    ! 
    ! Fine grid energy and k-points grid
-   !   
-   integer             :: nb_FineGd
-   integer             :: nk_FineGd
-   real(SP),   allocatable :: E_FineGd(:,:,:)        
-   real(SP),   allocatable :: W_FineGd(:,:,:)        
-   real(SP),   allocatable :: f_FineGd(:,:,:)        
-   !real(SP),   allocatable :: Z_FineGd(:,:,:)
-   real(SP),   allocatable :: df_FineGd(:,:,:)       
    !
+   type (E_fine_grid) :: FG
+   !   
    ! Perturbative SOC
    !
    integer              :: nb_SOC
@@ -118,7 +122,7 @@ module electrons
      naive=Eo%nk==0
      Eo%nb=Ei%nb
      Eo%nb_SOC=Ei%nb_SOC
-     Eo%nb_FineGd=Ei%nb_FineGd
+     Eo%FG%nb=Ei%FG%nb
      if (naive) then
        Eo%nk=Ei%nk
        Eo%nbf=Ei%nbf
@@ -178,17 +182,17 @@ module electrons
      !
      ! E Double Grid
      !
-     if (Eo%nb_FineGd/=0.and.Ei%nk==Eo%nk) then
-       Eo%nk_FineGd=Ei%nk_FineGd
-       YAMBO_ALLOC(Eo%E_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
-       YAMBO_ALLOC(Eo%W_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
-       YAMBO_ALLOC(Eo%f_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
-       Eo%E_FineGd=Ei%E_FineGd
-       Eo%W_FineGd=Ei%W_FineGd
-       Eo%f_FineGd=Ei%f_FineGd
-       if(allocated(Ei%df_FineGd)) then
-         YAMBO_ALLOC(Eo%df_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
-         Eo%df_FineGd=Ei%df_FineGd
+     if (Eo%FG%nb/=0.and.Ei%nk==Eo%nk) then
+       Eo%FG%nk=Ei%FG%nk
+       YAMBO_ALLOC(Eo%FG%E,(Eo%FG%nb,Eo%FG%nk,n_sp_pol))
+       YAMBO_ALLOC(Eo%FG%W,(Eo%FG%nb,Eo%FG%nk,n_sp_pol))
+       YAMBO_ALLOC(Eo%FG%f,(Eo%FG%nb,Eo%FG%nk,n_sp_pol))
+       Eo%FG%E=Ei%FG%E
+       Eo%FG%W=Ei%FG%W
+       Eo%FG%f=Ei%FG%f
+       if(allocated(Ei%FG%df)) then
+         YAMBO_ALLOC(Eo%FG%df,(Eo%FG%nb,Eo%FG%nk,n_sp_pol))
+         Eo%FG%df=Ei%FG%df
        endif
      endif
      !
@@ -228,7 +232,7 @@ module electrons
      YAMBO_FREE(E%GreenF)
      YAMBO_FREE(E%GreenF_W)
      !
-     call E_FineGd_components_reset(E,.FALSE.)
+     call FineGd_E_components_reset(E,.FALSE.)
      !
      E%nb_SOC=0
      YAMBO_FREE(E%E_SOC)
@@ -236,20 +240,35 @@ module electrons
      !
    end subroutine
    !
-   subroutine E_FineGd_components_reset(E,FULL_RESET)
+   subroutine FineGd_E_components_alloc(E)
+     !
+     type(levels)::E
+     !
+     YAMBO_ALLOC(E%FG%E,(E%FG%nb,E%FG%nk,n_sp_pol))
+     YAMBO_ALLOC(E%FG%W,(E%FG%nb,E%FG%nk,n_sp_pol))
+     YAMBO_ALLOC(E%FG%f,(E%FG%nb,E%FG%nk,n_sp_pol))
+     YAMBO_ALLOC(E%FG%df,(E%FG%nb,E%FG%nk,n_sp_pol))
+     E%FG%E=rZERO
+     E%FG%W=rZERO
+     E%FG%f=rZERO
+     E%FG%df=rZERO
+     !
+   end subroutine
+   !
+   subroutine FineGd_E_components_reset(E,FULL_RESET)
      !
      type(levels)::E
      logical     ::FULL_RESET
      !
-     E%nb_FineGd=0
-     E%nk_FineGd=0
+     E%FG%nb=0
+     E%FG%nk=0
      !
      if (.not.FULL_RESET) return
      !
-     YAMBO_FREE(E%E_FineGd)
-     YAMBO_FREE(E%W_FineGd)
-     YAMBO_FREE(E%f_FineGd)
-     YAMBO_FREE(E%df_FineGd)
+     YAMBO_FREE(E%FG%E)
+     YAMBO_FREE(E%FG%W)
+     YAMBO_FREE(E%FG%f)
+     YAMBO_FREE(E%FG%df)
      !
    end subroutine
    !

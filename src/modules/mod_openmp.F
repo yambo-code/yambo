@@ -56,7 +56,6 @@ module openmp
  integer, external :: omp_get_thread_num
  integer, external :: omp_get_thread_limit
  integer, external :: omp_get_max_threads
- logical, external :: omp_get_nested
  !
 #endif
  !
@@ -120,7 +119,7 @@ module openmp
      !
      !call openblas_set_num_threads(1)
      call omp_set_dynamic(.false.)
-     call omp_set_nested(.false.)
+     call omp_set_max_active_levels(1)
 #endif
      !
    end subroutine
@@ -165,7 +164,6 @@ module openmp
        !
        if (use_nested_) then
           call omp_set_dynamic(.true.)
-          call omp_set_nested(.true.)
           call omp_set_max_active_levels(2)
           !     
           call getenv("YAMBO_OUTER_THREADS",s_outthr)

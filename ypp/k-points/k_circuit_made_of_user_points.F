@@ -26,15 +26,15 @@ subroutine k_circuit_made_of_user_points( )
  use pars,           ONLY:SP,schlen
  use com,            ONLY:msg
  use vec_operate,    ONLY:c2a,v_norm
- use parser_m,       ONLY:parser
- use YPPm,           ONLY:BANDS_steps,USER_k,CIRCUIT_k,coo_in,coo_out,K_transform
+ use parser_m,       ONLY:PARSER_array
+ use YPPm,           ONLY:BANDS_steps,USER_k,CIRCUIT_k,coo_in,coo_out,K_transform,PROJECT_mode
  !
 #include<memory.h>
  !
  ! Work space
  !
  character(schlen)     :: coo_out_
- real(SP)              :: max_dist,v(3),real_ctl
+ real(SP)              :: max_dist,v(3)
  real(SP), allocatable :: distances(:)
  integer               :: ik,ic,i1
  integer,  allocatable :: int_distances(:)
@@ -42,17 +42,11 @@ subroutine k_circuit_made_of_user_points( )
  ! Read the kpts from input (extrema from the path)
  ! 
  USER_k%nbz=1
- !
- kgrid_main_loop: do while(real_ctl/=999._SP)
-   YAMBO_FREE(USER_k%pt)
+ call PARSER_array(mode="REAL dimensions",VAR="BANDS_kpts",N=USER_k%nbz,M=3)
+ if (USER_k%nbz>0) then
    YAMBO_ALLOC(USER_k%pt,(USER_k%nbz,3))
-   USER_k%pt(USER_k%nbz,:)=(/0._SP,0._SP,999._SP/)
-   call parser('BANDS_kpts',USER_k%pt)
-   real_ctl=USER_k%pt(USER_k%nbz,3)
-   if (real_ctl/=999._SP) USER_k%nbz=USER_k%nbz+1
- enddo kgrid_main_loop
- !
- USER_k%nbz =USER_k%nbz-1
+   call PARSER_array(mode="read",VAR="BANDS_kpts",N=USER_k%nbz,M=3,R_v=USER_k%pt)
+ endif
  USER_k%nibz=USER_k%nbz
  !
  if (USER_k%nbz==0) return
@@ -77,9 +71,12 @@ subroutine k_circuit_made_of_user_points( )
  !
  max_dist=maxval(distances)
  !
- do ik=1,USER_k%nbz-1
-   int_distances(ik)=maxval((/nint(BANDS_steps*distances(ik)/max_dist),1/))
- enddo
+ int_distances=BANDS_steps
+ if (trim(PROJECT_mode)=="none") then
+   do ik=1,USER_k%nbz-1
+     int_distances(ik)=maxval((/nint(BANDS_steps*distances(ik)/max_dist),1/))
+   enddo
+ endif
  !
  CIRCUIT_k%nbz =sum(int_distances)+1
  CIRCUIT_k%nibz=CIRCUIT_k%nbz

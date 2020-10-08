@@ -25,6 +25,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,pi,schlen
  use drivers,        ONLY:l_setup
+ use C_driver,       ONLY:code_bin
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:wf_ng,wf_ncx
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
@@ -33,14 +34,14 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
- use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,&
+ use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,FineGd_desc,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed,bz_samp_duplicate_Fg
  use com,            ONLY:msg,fat_log
  use stderr,         ONLY:intc
  use IO_m,           ONLY:REP,DUMP,NONE,io_control,OP_RD_CL
  use vec_operate,    ONLY:c2a,define_b_and_DL_vol
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
- use interfaces,     ONLY:OCCUPATIONS_Fermi
+ use interfaces,     ONLY:OCCUPATIONS_Fermi,DESC_write
  use wave_func,      ONLY:wf_ng,wf_ng_1st_BZ
 #if defined _SC
  use wave_func,      ONLY:WF_buffered_IO 
@@ -264,23 +265,23 @@ subroutine setup(en,Xen,Ken,k,Xk)
    if (i_err/=0) call error('Impossible to determine the K-grid lattice')
  endif
  !
- if(l_setup.or.fat_log) call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'K',.TRUE.,.FALSE.)
+ if (l_setup.or.fat_log.or.index(code_bin,'ypp')>0) call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'K',.TRUE.,.FALSE.)
  ! 
  ! E_dbgd
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  i_err=io_Double_Grid(en,k,ID)
  !
- call bz_samp_duplicate_Fg(k,Xk) 
+ call bz_samp_duplicate_Fg(k%FGibz,Xk%FGibz,k%nibz) 
+ call bz_samp_duplicate_Fg(k%FGbz,Xk%FGbz,k%nbz) 
+ call bz_samp_duplicate_Fg(k%FGbare,Xk%FGbare,k%nibz) 
  !
- if (En%nb_FineGd>0.and.allocated(en%E_FineGd)) then
+ if (En%FG%nb>0.and.allocated(en%FG%E)) then
    !
    call section('=','Double K-grid')
    !=======================================
    !
-   call msg('r', 'Kpts (IBZ): CG,FG,DUPL.    ',(/k%nibz,k%nibz_FineGd,k%nibz_duplicate/))
-   call msg('r', 'Kpts ( BZ): CG,FG,DUPL.    ',(/k%nbz, k%nbz_FineGd, k%nbz_duplicate/))
-   call msg('r', 'Bands                      ',en%nb_FineGd)
+   call DESC_write("r","  ",FineGd_desc)
    !
  endif
  !
@@ -355,7 +356,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Energies report
  !
- if(l_setup.or.fat_log) call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.FALSE.,.TRUE.)
+ if (l_setup.or.fat_log.or.index(code_bin,'ypp')>0) call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.FALSE.,.TRUE.)
  !
  ! Once the occupations have been evaluated I dump Xen in Ken
  !

@@ -44,6 +44,20 @@ subroutine K_diago_driver(iq,W,X_static)
  use timing_m,       ONLY:timing
 #if defined _SLEPC && !defined _SLEPC_OFF
  use interfaces,     ONLY:MATRIX_slepc
+ !
+ ! headers
+ !
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+ !
+ use petscmat
+ use slepceps
+ use slepcepsdef
+ use petscmatdef
+ !
  use BS_solvers,     ONLY:BSS_slepc_extraction,Slepc_shell,BSS_slepc_ncv,&
 &                         BSS_slepc_tol,BSS_target_E,Slepc_v,BS_HAYVEC_free
 #endif
@@ -58,15 +72,6 @@ subroutine K_diago_driver(iq,W,X_static)
  !
 #include<memory.h>
  ! 
-#if defined _SLEPC && !defined _SLEPC_OFF
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscvec.h>
-#include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>
-#include <slepc/finclude/slepcsys.h>
-#include <slepc/finclude/slepceps.h>
-#endif
- !
  type(w_samp)  :: W
  integer       :: iq
  !
@@ -83,7 +88,7 @@ subroutine K_diago_driver(iq,W,X_static)
  PetscErrorCode        :: ierr
  PetscFortranInt       :: slepc_ncv
  PetscReal             :: slepc_tol
- PetscReal             :: slepc_target_E
+ PetscScalar           :: slepc_target_E
 #endif
  !
  ! Residuals & Energies

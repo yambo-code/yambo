@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DV
@@ -102,7 +102,7 @@ subroutine cutoff_driver(q)
  if(any(is_cut)) call check_periodic_directions(is_cut)
  !
  if (io_err==0) then
-   call section('*','Coloumb potential CutOff :'//trim(cut_geometry))
+   call section('*','Coloumb potential CutOff '//trim(cut_geometry))
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
    io_err=io_COL_CUT(ID)
    return
@@ -143,10 +143,10 @@ subroutine cutoff_driver(q)
    return
  endif
  !
- ch1=STRING_pack('Coloumb potential CutOff :',str_piece(1))
+ ch1=STRING_pack('Coloumb potential CutOff ',str_piece(1))
  call section('*',trim(ch1))
  !
- ch1=           'Cut directions       :'
+ ch1=           'Cut directions       '
  ch2=' '
  if (is_cut(1)) ch1=STRING_pack(ch1,'X')
  if (is_cut(1)) ch2=STRING_pack(ch2,'x')
@@ -160,11 +160,11 @@ subroutine cutoff_driver(q)
  !lengths
  !
  if (cut_is_sphere) then 
-   call msg('r','Sphere radius   [au]:',cyl_ph_radius)
+   call msg('r','Sphere radius   [au]',cyl_ph_radius)
    write (cut_description,'(a,f6.3)') trim(cut_geometry)//' ', cyl_ph_radius
  endif
  if (cut_is_ws) then
-   call msg('r','WS Cutoff   [units to be defined]:',ws_cutoff)
+   call msg('r','WS Cutoff   [units to be defined]',ws_cutoff)
    write (cut_description,'(a,f6.3)') trim(cut_geometry)//' ', ws_cutoff
  endif
  if (cut_is_slab) then
@@ -183,15 +183,15 @@ subroutine cutoff_driver(q)
    if (is_cut(2)) length(i1)=box_length(2)
    if (is_cut(3)) i1=i1+1
    if (is_cut(3)) length(i1)=box_length(3)
-   call msg('r','Box sides        [au]:',length(:i1))
+   call msg('r','Box sides        [au]',length(:i1))
    write (cut_description,'(a,3f6.3)') trim(cut_geometry)//' ', length(:i1)
  else if (cut_is_cyl) then
    if (cyl_length > 0.) then
-     call msg('r','Cyl. length      [au]:',cyl_length)
+     call msg('r','Cyl. length      [au]',cyl_length)
    else
      call msg('r','Cyl. length          : infinite')
    endif
-   call msg('r',  'Cyl. radius      [au]:',cyl_ph_radius)
+   call msg('r',  'Cyl. radius      [au]',cyl_ph_radius)
    if (cyl_length > 0.) then
      write (cut_description,'(a,f6.3,a,f6.3)') trim(cut_geometry)//' ',cyl_length,' ',cyl_ph_radius 
    else
@@ -228,7 +228,7 @@ subroutine cutoff_driver(q)
    if (.not.is_cut(2)) sym_points(:,2)=0.
    if (.not.is_cut(3)) sym_points(:,3)=0.
  endif
- call msg('rn','Symmetry test passed :',geometry_sym_is_ok())
+ call msg('rn','Symmetry test passed ',geometry_sym_is_ok())
  if (.not.geometry_sym_is_ok()) return
  !
  ! timing is started here after all the return conditions
@@ -253,14 +253,12 @@ subroutine cutoff_driver(q)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=io_COL_CUT(ID)
    !
-   ! Test
+   ! Real-Space Test
    !
    call parser('CUTCol_test',l_col_test)
    if (l_col_test) call cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab,is_cut,q)
+   !
  endif
- !
- ! Real-Space Test 
- !
  call timing('Coulomb Cutoff',OPR='stop')
  !
  contains

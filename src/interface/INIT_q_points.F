@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -71,6 +71,8 @@ subroutine INIT_q_points( )
 #endif
  !
  ! Now check the input file
+ !
+ l_write_the_q_field=.FALSE.
  !
  if (nqibz==0) then
    call PARSER_array(mode="REAL dimensions",VAR="QptCoord",N=nq_input,M=3)

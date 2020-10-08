@@ -36,8 +36,10 @@ subroutine interpolate_W(X,Xw,q)
  use stderr,        ONLY:STRING_split
  use D_lattice,     ONLY:alat,a
  use timing_m,      ONLY:timing
+ use cuda_m,        ONLY:have_cuda
  !
- implicit none
+#include<memory.h>
+ !
  type(X_t)    ::X
  type(w_samp) ::Xw
  type(bz_samp):: q
@@ -321,7 +323,7 @@ subroutine interpolate_W(X,Xw,q)
  if (io_err==0) then
    call timing('RIM-W-coeff',OPR='stop')
    return
- end if
+ endif
  !
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !Calculation of the interpolation coefficients
@@ -413,6 +415,11 @@ subroutine interpolate_W(X,Xw,q)
  call rim('c')
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
  io_err=io_RIM_W(ID)
+ !
+ if (have_cuda) then
+   YAMBO_ALLOC_SOURCE(RIM_W_d,RIM_W)
+ endif
+ !
  call msg('r', "shape(RIM_W) =", shape(RIM_W))
  call msg('r', "RIM_W =", RIM_W(:,1,1))
  !

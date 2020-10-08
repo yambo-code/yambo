@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,21 +23,25 @@
 !
 subroutine INIT_ypp_load(defs)
  !
+ use units
  use it_tools,      ONLY:it
- use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,&
-&                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics
+ use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,V_RL,&
+&                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics,V_io
  use wave_func,     ONLY:wf_ng
+ use LIVE_t,        ONLY:nhash
  use D_lattice,     ONLY:Tel,Bose_Temp
+ use R_lattice,     ONLY:BZ_FineGd_mode
  use electrons,     ONLY:n_spinor
  use interpolate,   ONLY:INTERP_shell_factor,INTERP_mode,NN_n_of_nearest
  use YPPm,          ONLY:E_field,alat_used_for_output,B_field,B_psi,B_theta,BANDS_bands,BANDS_path,&
-&                        BZ_DbGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
-&                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,&
-                         DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
-                         gamma_radius,INTERP_grid,mag_dir,N_path_pts,ncell,ord_dgrid_ipol,p_dir,p_format,PDOS_atoms,&
-                         PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
-                         SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,w90_fname,wannier_bands,&
-&                        WF_multiplier,WF_ref,what_to_write,BSiq
+&                        BZ_FineGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
+&                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,PROJECT_path,QP_DB_to_expand,&
+&                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
+&                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,&
+&                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
+&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,&
+&                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_depth,PROJECT_steps,PROJECT_threshold
+ use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
  use YPPm,          ONLY:Nel_fac
  use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
@@ -97,8 +101,9 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'spin',         '[R] Spin')
  call it('r',defs,'magnetization','[R] Magnetization')
  call it('r',defs,'WFs_map',      '[R] Creat a SOC/WFs <-> noSOC/WFs map')
- call it('r',defs,'QPDB_edit', '[R] Generation/editing')
- call it('r',defs,'QPDB_merge','[R] Mergering')
+ call it('r',defs,'QPDB_edit',    '[R] Generation/editing')
+ call it('r',defs,'QPDB_merge',   '[R] Mergering')
+ call it('r',defs,'QPDB_expand',  '[R] Symmetry expand')
  call it('r',defs,'fixsave', '[R] Convert WFs to new format')
  !
 #if defined _YPP_RT
@@ -135,6 +140,7 @@ subroutine INIT_ypp_load(defs)
  !
  ! Variables...
  !==============
+ call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
  !
 #if defined _YPP_NL
  call it('f',defs,'PrtPwrSpec','Print power spectrum',verb_level=V_nl_optics)
@@ -153,7 +159,6 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'DOSESteps', 'Energy steps',DOS_E_steps) 
  call it('f',defs,'DOSUsesOcc', 'Weight the DOS with the occupation factors') 
  !
- call it('f',defs,'Proj_DOS', 'Print the projected DOS')
  call it(defs,'PDOS_atoms', 'Select atom number range',PDOS_atoms,verb_level=V_general)
  call it(defs,'PDOS_kinds', 'Select atom kind   range',PDOS_kinds,verb_level=V_general)
  call it(defs,'PDOS_wfcs',  'Select projector   range',PDOS_wfcs, verb_level=V_general)
@@ -177,7 +182,7 @@ subroutine INIT_ypp_load(defs)
 &                            Eh_pumped_pair_energy,unit=E_unit)
  ! Method 2
  call it(defs,'RTpumpDE',   '[RT] Energy difference to be matched',Eh_pumped_pair_deltaE,unit=E_unit)
- call it(defs,'RTpumpBZWd', '[RT] Size if the K reagion width',Eh_pumped_pair_BZ_width)
+ call it(defs,'RTpumpBZWd', '[RT][iku] K region size',Eh_pumped_pair_BZ_width)
  !
  ! The idea for Fermi occupations is to start from the 'end' of a carrier relaxation run
  call it(defs,'RTmuEh', '[RT] Chemical potentials hole | electron',Eh_mu,unit=E_unit)
@@ -207,7 +212,13 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'BANDS_bands',     'Number of bands',BANDS_bands) 
  call it(defs,'BANDS_steps',     'Number of divisions',BANDS_steps) 
  call it(defs,'CIRCUIT_E_DB_path',   'SAVE obtained from the QE `bands` run (alternative to %BANDS_kpts)',CIRCUIT_E_DB_path) 
- call it(defs,'BANDS_path',      'BANDS path points labels (G,M,K,L...)',BANDS_path)
+ call it(defs,'BANDS_path',      'High-Symmetry points labels (G,M,K,L...) also using composed positions (0.5xY+0.5xL).',BANDS_path)
+ call it(defs,'PROJECT_mode',    'Instruct ypp how to project the DOS. ATOM, LINE, PLANE.',PROJECT_mode)
+ call it(defs,'PROJECT_path',    'Project path. PLANE mode: 3 points in the plane. LINE mode: any series of points.',PROJECT_path)
+ call it(defs,'PROJECT_steps',    'Project LINE/PLANE-axis steps.',PROJECT_steps)
+ call it(defs,'PROJECT_depth',    'Project perpendicular direction divisions.',PROJECT_depth)
+ call it(defs,'PROJECT_threshold','[o/o] Project threshold above which the project DOS is printed.',&
+&        PROJECT_threshold,verb_level=V_general)
  call it('f',defs,'BANDS_built_in', 'Print the bands of the generating points of the circuit using the nearest internal point')
  call it(defs,'INTERP_mode',     'Interpolation mode (NN=nearest point, BOLTZ=boltztrap aproach)',INTERP_mode)
  call it(defs,'INTERP_NofNN',    'Number of Nearest sites in the NN method',NN_n_of_nearest)
@@ -251,6 +262,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'Weight_treshold', 'Print transitions above this weight treshold (max normalized to 1.)',&
 &              EXCITON_weight_treshold,verb_level=V_general)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
+ call it(defs,'WFAverage', 'Average hole or electron wave-function ("h" or "e")',AVE_exc,case="a")
  call it(defs,'Cells', 'Number of cell repetitions in each direction (odd or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell (positive)',r_hole)
  !
@@ -298,11 +310,12 @@ subroutine INIT_ypp_load(defs)
  !
 #endif
  !
- !BZ E Double Grid
+ !Fine Grid
  !
- call it(defs,'BZ_DbGd_Nk','BZ Number of points in the double grid',BZ_DbGd_nkpts_to_use)
- call it('f',defs,'SkipCheck' , 'Skip internal consistency check on k-point grids')
- call it('f',defs,'noBZExpand' , 'Keep the Double Grid k-points in the IBZ without using the symmetries')
+ call it(defs,'FineGd_mode',       'Fine Grid mode. Symmetry expanded, unexpanded or mixed. ',BZ_FineGd_mode)
+ call it(defs,'BZ_DbGd_Nk',        'BZ Number of points in the fine grid',BZ_FineGd_nkpts_to_use)
+ call it('f',defs,'SkipCheck' ,    'Skip internal consistency check on k-point grids')
+ call it('f',defs,'SkipBorderPts' , 'Skip points in the Fine Grid that are on the surface of coarse gride smal BZ`s')
  !
  !WFs perturbative SOC mapping
  !
@@ -311,18 +324,15 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'bands_buffer',"Bands to be used only as a buffer",SOC_bands_buffer)
  call it(defs,'SOC_splitting',"SOC splitting between the levels",SOC_split,E_unit) 
  !
- ! Wannier bands
- !
- call it(defs,'W90_fname','Name of w90 input file',w90_fname)
- call it(defs,'WannBnds','Range of interpolated bands, internally start from 1',wannier_bands)
- call it(defs,'DgridOrd','Order of interpolation with double grid',ord_dgrid_ipol)
- !
  ! GPL_EXCLUDE_START
  !
- call it(defs,'GammaRadius','[a.u.] Maximum distance from gamma',gamma_radius,verb_level=V_general)
  call it(defs,'OutputAlat','[a.u.] Lattice constant used for "alat" ouput format',alat_used_for_output)
  !
  ! GPL_EXCLUDE_END
+ !
+ ! QP DB rotation and expanstion
+ !
+ call it(defs,'QPDB_file','QP database to rotate',QP_DB_to_expand) 
  !
  ! Remove Simmetries
  !
@@ -331,6 +341,7 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'RmTimeRev' , 'Remove Time Reversal')
  !
  call it(defs,'Efield1','First external Electric Field',E_field(1,:))
+ call it(defs,'GvecsCut','Max number of G-vectors in the new wave-function',wf_ng_cut,unit=G_unit,verb_level=V_RL)
  !
  ! GPL_EXCLUDE_START
  !
@@ -347,7 +358,8 @@ subroutine INIT_ypp_load(defs)
  ! RT Post-Processing
  !
  call it(defs,'Xorder','Max order of the response/exc functions',X_order)
- call it(defs,'EnRngeRt','Energy range',RT_conf%W_range,unit=E_unit)
+ call it(defs,'EnRngeRt','Energy range',RT_conf%X_W_range,unit=E_unit)
+ call it(defs,'CarrEnRnge','Carriers Energy range',RT_conf%Carriers_W_range,unit=E_unit,verb_level=V_real_time)
  call it(defs,'ETStpsRt','Total Energy steps',RT_conf%W_n_steps)
  call it(defs,'TimeRange','Time-window where processing is done',RT_conf%T_range,unit=Time_unit(1))
  call it(defs,'TimeStep','Time step',RT_conf%delta_T,unit=Time_unit(1))

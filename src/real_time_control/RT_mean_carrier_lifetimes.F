@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -28,9 +28,9 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  use real_time,      ONLY:E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_El_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,RT_mean_lifetimes,  &
 &                         E_P_Ho_abs_lifetime,RT_Tfit_lifetimes,RT_Efit_lifetimes,    &
-&                         REF_lifetime,RT_all2ibz,RT_Nk_ibz,RT_nk,RT_bands,           &
+&                         REF_lifetime,RTibz,RT_nk,RT_bands,           &
 &                         E_PHOT_Hole_lifetime, E_PHOT_Electron_lifetime,             &
-&                         l_lftm_fit_temperatures,RT_all2ibz
+&                         l_lftm_fit_temperatures
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin_occ
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
@@ -62,9 +62,9 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  !
  do ik=1,RT_nk
    !
-   if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+   if( .not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
    !
-   pre_factor=k%weights(RT_all2ibz(ik))/real(RT_Nk_ibz(RT_all2ibz(ik)))
+   pre_factor=RTibz%weights(ik)
    !
    do ib=RT_bands(1),RT_bands(2)
      !

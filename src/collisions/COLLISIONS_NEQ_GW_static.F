@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -29,10 +29,9 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:error
  use parallel_m,    ONLY:PP_redux_wait,PAR_PLASMA_index,&
-&                        PAR_IND_Q,PAR_Q_index,PAR_COM_QP_A2A,PAR_IND_Plasma,&
-&                        PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_INDEX
+&                        PAR_IND_Q_bz,PAR_Q_bz_index,PAR_COM_QP_A2A,PAR_IND_Plasma,&
+&                        PAR_nQ_bz,PAR_COM_G_b_A2A,PAR_COM_Q_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,&
 &                        GW_NEQ_COLL_element,COLL_bands,GW_NEQ_collisions
@@ -125,7 +124,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  PAR_nPLASMA_step =max(1,count(PAR_IND_Plasma%element_1D(:))/100)
  !
- call live_timing("Collisions",PAR_NC_local*PAR_nQ)
+ call live_timing("Collisions",PAR_NC_local*PAR_nQ_bz)
  !
  ! Write Database Header 
  !
@@ -185,8 +184,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
        !
      endif
      !
-     if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
-     i_q_mem=PAR_Q_index(iqbz)
+     if (.not.PAR_IND_Q_bz%element_1D(iqbz)) cycle
+     i_q_mem=PAR_Q_bz_index(iqbz)
      !
      ! Scattering geometry (I)
      !=========================

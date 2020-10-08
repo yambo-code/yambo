@@ -34,8 +34,6 @@ configure-stamp: uncompress-stamp
 	      ./configure $(AUXFLAGS) \
 	      CC="$(cc)" \
 	      CPP="$(cpp)" \
-	      CFLAGS="$(cflags)" \
-	      FFLAGS="$(fflags)" \
 	      F77="$(f77)" ); \
 	fi
 	touch configure-stamp

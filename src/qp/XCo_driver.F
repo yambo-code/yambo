@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,45 +23,34 @@
 !
 subroutine XCo_driver(E,k,Xk,q)
  !
- use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time,l_gw0
- use pars,          ONLY:schlen,rZERO,SP,cZERO
- use com,           ONLY:msg
- use units,         ONLY:HA2EV
- use electrons,     ONLY:levels,n_sp_pol,spin,E_reset,E_duplicate
- use stderr,        ONLY:intc,real2ch
+ use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time
+ use pars,          ONLY:schlen,rZERO,cZERO
+ use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
- use parallel_m,    ONLY:PP_redux_wait
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind,&
-&                        XCo_Hartree_Fock,QP_t,QP_nb,QP_nk,QP_reset,&
-&                        report_Vnlxc,report_Sc,report_dSc
+ use QP_m,          ONLY:XCo_Hartree_Fock,QP_t,Vxc_kind,Vnlxc_kind,&
+&                        QP_Vxc,QP_Vnl_xc,QP_Vnl_sex,QP_XCo_alloc,QP_XCo_free
  use interfaces,    ONLY:WF_free
  use wave_func,     ONLY:WF
- use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening
- use xc_functionals,ONLY:E_xc_val
+ use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening,EXT_NONE,WF_kind,&
+&                        global_XC_string,WF_perturbation,WF_xc_functional
  use pseudo,        ONLY:PP_nlcc_free
 #if defined _SC
- use global_XC,     ONLY:WF_kind,H_SE_FOCK,H_SE_HARTREE,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXX,H_SE_EXXC,H_SE_SRPA
+ use hamiltonian,   ONLY:l_sc_V_is_local
+ use global_XC,     ONLY:H_SE_FOCK,H_SE_HARTREE,H_SE_COH,H_SE_SEX
 #endif
  !
 #include<memory.h>
+ !
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
  !
- ! WorkSpace
- !
- type(levels) ::E_dummy
- !
- ! Screened Hybrids
- !
- logical                :: l_screen_hyb
- complex(SP),allocatable:: QP_Vnl_sex(:)
- !
  ! Reporting
  !
- integer           ::i_qp,ib,ik,ibp,ikp,i_s
- character(schlen) ::sec_mode_and_message(2),ch,ch_spin,nloc_fmt,loc_fmt
- logical           ::l_local
+ character(schlen) ::sec_mode_and_message(2),ch
+ integer           ::WF_kind_no_H
+ logical           ::l_section,l_load_SC_V
+ logical           ::l_Vxc,l_Vnl_xc,l_screen_hyb
  type(QP_t)        ::qp
  !
  ! IO
@@ -69,43 +58,73 @@ subroutine XCo_driver(E,k,Xk,q)
  integer           :: ID,io_err
  integer, external :: io_HF_and_locXC
  !
+ ! Decide what to do
+ !===================
+#if defined _SC
+ !
+ ! The point here is that dependening on the kind of XCo I do/don't need HF
+ !
+ ! Eqp=Eo+QP_Sc+QP_Vnl_xc-QP_Vxc 
+ !
+ ! F=FOCK
+ !
+ ! XCo=any local => QP_Vnl_xc=F             & QP_Vxc=any local
+ ! XCo=COH       => QP_Vnl_xc=F-SC_COH      & QP_Vxc= 0.
+ ! XCo=SEX       => QP_Vnl_xc=F-SC_SEX      & QP_Vxc= 0.
+ ! XCo=COHSEX    => QP_Vnl_xc=F-SC_COHSEX   & QP_Vxc= 0.
+ ! XCo=HF        => QP_Vnl_xc=0             & QP_Vxc= 0.  (BUT COULD PRINT FOR INTERNAL CHECK THE <FOCK>)
+ ! XCo=EXX       => QP_Vnl_xc=F             & QP_Vxc= EXX
+ ! XCo=EXXC      => QP_Vnl_xc=F             & QP_Vxc= EXXc
+ ! XCo=SRPA      => QP_Vnl_xc=F             & QP_Vxc= SRPA
+ !
+#endif
+ !
+ !
+ ! Logicals setup
+ !
+ l_Vxc   =.not.l_sc_run.and..not.l_real_time
+ l_Vnl_xc=.TRUE.
+ l_screen_hyb=(WF_exx_screening > rZERO) 
+ !
+#if defined _SC
+ WF_kind_no_H=WF_kind
+ if (WF_kind>H_SE_HARTREE) WF_kind_no_H=WF_kind-H_SE_HARTREE
+ !
+ if (WF_kind_no_H==H_SE_FOCK)         l_Vxc   =.FALSE.
+ if (WF_kind_no_H==H_SE_COH)          l_Vxc   =.FALSE.
+ if (WF_kind_no_H==H_SE_SEX)          l_Vxc   =.FALSE.
+ if (WF_kind_no_H==H_SE_SEX+H_SE_COH) l_Vxc   =.FALSE.
+ !
+ if (WF_kind_no_H==H_SE_FOCK)      l_Vnl_xc   =.FALSE.
+ !
+#endif
+ !
+ if (.not.l_Vxc.and..not.l_Vnl_xc) then
+  if (l_sc_run) call QP_XCo_alloc(l_Vxc,l_Vnl_xc,l_screen_hyb)
+  return
+ endif
+ !
  ! Section
  !
  sec_mode_and_message(1)='*'
- sec_mode_and_message(2)='Bare local and non-local Exchange-Correlation'
+ if (l_Vxc     .and.l_Vnl_xc) sec_mode_and_message(2)='Local Exchange-Correlation + Non-Local Fock'
+ if (.not.l_Vxc.and.l_Vnl_xc) sec_mode_and_message(2)='Non-Local Fock'
+ if (l_Vxc.and..not.l_Vnl_xc) sec_mode_and_message(2)='Local Exchange-Correlation'
  if (l_acfdt)   sec_mode_and_message(1)='p'
- l_local=.true.
+ !
+ l_section=.TRUE.
 #if defined _SC
- l_local=.not.l_sc_run.and.(WF_kind/=H_SE_FOCK.and.WF_kind/=H_SE_FOCK+H_SE_HARTREE)
+ l_section=.not.l_sc_run.and.(WF_kind/=H_SE_FOCK.and.WF_kind/=H_SE_FOCK+H_SE_HARTREE)
 #endif
- if(l_local) call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
+ if (l_section) call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
  !
  ! QP states setup
  !
  call QP_state_table_setup(E)
  !
- ! Logicals setup
- !
- l_screen_hyb=(WF_exx_screening.gt.rZERO) 
- !
  ! Allocation
  !
- if (.not.allocated(QP_Vnl_xc)) then
-   YAMBO_ALLOC(QP_Vnl_xc,(QP_n_states))
- endif
- if (.not.allocated(QP_Vxc)) then
-   YAMBO_ALLOC(QP_Vxc,(QP_n_states))
- endif
- if (.not.allocated(QP_Vnl_sex).and.l_screen_hyb) then
-   YAMBO_ALLOC(QP_Vnl_sex,(QP_n_states))
- endif
- QP_Vnl_xc=cZERO
- QP_Vxc=cZERO
- if (l_screen_hyb) QP_Vnl_sex=cZERO
- !
-#if defined _SC
- if (l_sc_run .and. (WF_kind==H_SE_FOCK.or.WF_kind==H_SE_HARTREE+H_SE_FOCK)) return
-#endif
+ call QP_XCo_alloc(l_Vxc,l_Vnl_xc,l_screen_hyb)
  !
  ! Main DB I/O
  !
@@ -115,191 +134,92 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  if (io_err==0) then
    !
-   call XCo_report_and_IO()
+   Vxc_kind=trim(global_XC_string(WF_kind,WF_xc_functional,EXT_NONE))
+   Vnlxc_kind="Hartree-Fock"
+   !
+   call XCo_report(qp,E,k)
    !
    return
    !
- else
+ endif
+ !
+ ! Hartree-Fock 
+ !==============
+ !
+ if (l_Vnl_xc) then
+   !
+   ! ... hybrids
    !
    if (l_screen_hyb) then                           
-     call XCo_Hartree_Fock(E,k,xk,q,mode='hyb')    ! For screened hybrids calculate the  model nonlocal screened exchange part
+     ! For screened hybrids calculate the  model nonlocal screened exchange part
+     call XCo_Hartree_Fock(E,k,xk,q,mode='hyb')
      QP_Vnl_sex=QP_Vnl_xc                        
      QP_Vnl_xc=cZERO                                
    end if
    !
+   ! ... pure HF
+   !
    call XCo_Hartree_Fock(E,k,xk,q)
-   !
-#if defined _SC
-   !
-   ! The point here is that dependening on the kind of XCo I do/don't need HF
-   !
-   ! Eqp=Eo+QP_Sc+QP_Vnl_xc-QP_Vxc 
-   !
-   ! XCo=any local => QP_Vnl_xc=HF           & QP_Vxc=any local
-   ! XCo=COH       => QP_Vnl_xc=HF-QP_COH    & QP_Vxc= 0.
-   ! XCo=SEX       => QP_Vnl_xc=HF-QP_SEX    & QP_Vxc= 0.
-   ! XCo=COHSEX    => QP_Vnl_xc=HF-QP_COHSEX & QP_Vxc= 0.
-   ! XCo=HF        => QP_Vnl_xc=0.           & QP_Vxc= 0.
-   ! XCo=EXX       => QP_Vnl_xc=HF           & QP_Vxc= EXX
-   ! XCo=EXXC      => QP_Vnl_xc=HF           & QP_Vxc= EXXc
-   ! XCo=SRPA      => QP_Vnl_xc=HF-QP_COHSEX & QP_Vxc= SRPA
-   !
-   if (WF_kind==H_SE_COHSEX.or.WF_kind==H_SE_COH.or.WF_kind==H_SE_SEX) call QP_load_SC_xc()
-   !
-#endif
    !
  endif
  !
  ! Vxc
+ !=====
  !
- if (.not.l_sc_run.and..not.l_real_time) then
+ if (l_Vxc) then
    !
    ! non-linear core corrections (NLCC)
    !
    call XC_nlcc_setup()
    !
-#if defined _SC
-   if( WF_kind/=H_SE_COHSEX .and. WF_kind/=H_SE_COH .and. WF_kind/=H_SE_SEX ) call XCo_local(E,Xk)
-#else
    call XCo_local(E,Xk)
-!
+   !
    if (.not.l_screen_hyb) then
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...
    else
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_sex 
-     YAMBO_FREE(QP_Vnl_sex)
+     call QP_XCo_free(l_screen_hyb=.true.)
    endif
-#endif
    !
    call PP_nlcc_free()
    !
  endif
  !
- if (.not.l_sc_run)  then
-   call WF_free(WF)
-   call XCo_report_and_IO()
+ ! Kind transfer
+ !===============
+ !
+ Vxc_kind=trim(global_XC_string(WF_kind,WF_xc_functional,EXT_NONE))
+ Vnlxc_kind="Hartree-Fock"
+ !
+#if defined _SC
+ !
+ if (.not.l_sc_V_is_local) then
+   Vnlxc_kind="Hartree-Fock-("//trim(global_XC_string(WF_kind,WF_xc_functional,WF_perturbation))//")"
  endif
  !
- contains
-   !
-   subroutine XCo_report_and_IO()
-     !
-#if defined _SC
-     if (WF_kind < 100) then
-       Vxc_kind='LDA'
-     elseif  (WF_kind < 200) then
-       Vxc_kind='GGA'
-     elseif  (WF_kind == H_SE_EXX) then
-       Vxc_kind='OEP-EXX'
-     elseif  (WF_kind == H_SE_EXXC) then
-       Vxc_kind='OEP-EXX+C'
-     elseif  (WF_kind == H_SE_SRPA) then
-       Vxc_kind='OEP-SRPA'
-     else
-       Vxc_kind='none'
-     endif
-     if (WF_kind == H_SE_COHSEX) then 
-       Vnlxc_kind='HF-QP_COHSEX'
-     else if (WF_kind == H_SE_COH) then 
-       Vnlxc_kind='HF-QP_COH'
-     else if (WF_kind == H_SE_SEX) then 
-       Vnlxc_kind='HF-QP_SEX'
-     else
-       Vnlxc_kind='HF'
-     endif
-#else
-     Vxc_kind='DFT'
+ ! Non-local part of SC xc must be subtracted from V_nlxc
+ !========================================================
+ !
+ l_load_SC_V=.FALSE.
+ if (WF_kind_no_H==H_SE_FOCK)         l_load_SC_V   =.TRUE.
+ if (WF_kind_no_H==H_SE_COH)          l_load_SC_V   =.TRUE.
+ if (WF_kind_no_H==H_SE_SEX)          l_load_SC_V   =.TRUE.
+ if (WF_kind_no_H==H_SE_SEX+H_SE_COH) l_load_SC_V   =.TRUE.
+ if (l_load_SC_V) call QP_load_SC_xc( )
+ !
 #endif
-     !
-     call msg('nr','[xc] E_xc :  '//trim(real2ch(E_xc_val))//' [Ha]')
-     call msg( 'r','     E_xc :  '//trim(real2ch(E_xc_val*2.0))//' [Ry]')
-     !
-     call QP_reset(qp)
-     call E_reset(E_dummy)
-     call E_duplicate(E,E_dummy)
-     !
-     qp%nk=QP_nk
-     qp%nb=QP_nb
-     qp%n_states=QP_n_states
-     qp%n_descs=0
-     !
-     report_Sc=.FALSE.
-     report_Vnlxc=.TRUE.
-     report_dSc=.FALSE.
-     !
-     YAMBO_ALLOC(qp%E,(qp%n_states))
-     YAMBO_ALLOC(qp%E_bare,(qp%n_states))
-     !
-     ik=QP_table(1,3)
-     call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
-     !
-     do i_qp=1,QP_n_states
-       !
-       ib =QP_table(i_qp,1)
-       ibp=QP_table(i_qp,2)
-       ikp=QP_table(i_qp,3)
-       i_s=spin(QP_table(i_qp,:))
-       !
-       if (ib==ibp) then
-         E_dummy%E(ib,ikp,i_s)=E%E(ib,ikp,i_s)+real(QP_Vnl_xc(i_qp)-QP_Vxc(i_qp),SP)
-         qp%E(i_qp)           =E_dummy%E(ib,ikp,i_s)
-         qp%E_bare(i_qp)      =E%E(ib,ikp,i_s)
-       endif
-       !
-       if (ikp/=ik) then
-         ik=ikp
-         call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
-       endif
-       !
-       ch_spin=' '
-       !
-       if (n_sp_pol==2.and.i_s==1) ch_spin='(up)'
-       if (n_sp_pol==2.and.i_s==2) ch_spin='(dn)'
-       ! 
-       nloc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|'//trim(Vnlxc_kind)//'|'//trim(intc(ibp))&
-&         //trim(ch_spin)//'> ='
-       loc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|'//trim(Vxc_kind)//'|'//trim(intc(ibp))&
-&         //trim(ch_spin)//'> ='
-       !
-       ch=trim(nloc_fmt)//' '//&
-&        trim(real2ch(real(QP_Vnl_xc(i_qp)*HA2EV)))//' '//&
-&        trim(real2ch(aimag(QP_Vnl_xc(i_qp)*HA2EV)))//' '//&
-&        trim(loc_fmt)//' '//&
-&        trim(real2ch(real(QP_Vxc(i_qp)*HA2EV)))//' '//&
-&        trim(real2ch(aimag(QP_Vxc(i_qp)*HA2EV)))
-       !
-       if (i_qp/=QP_n_states) call msg('r',trim(ch))
-       if (i_qp==QP_n_states) call msg('rn',trim(ch))
-       !
-     enddo
-     !
-     ! I/O
-     !
-     if (io_err/=0) then
-       call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-       io_err=io_HF_and_locXC(ID)
-     endif
-     !
-     ! Direct GAP
-     !
-     call section('+',trim(Vnlxc_kind)//' occupations report')
-     call REPORT_Occupations(trim(Vnlxc_kind),E_dummy)
-     !
-     ! Output 
-     !
-     if (.not.l_gw0.and..not.l_real_time) call QP_of(qp,E,-1,'hf')
-     !
-     ! MPI barrier
-     !
-     call PP_redux_wait
-     !
-     ! Clean up
-     !
-     YAMBO_FREE(qp%E)
-     YAMBO_FREE(qp%E_bare)
-     call E_reset(E_dummy)
-     call QP_reset(qp)
-     !
-   end subroutine
+ !
+ ! I/O
+ !=====
+ !
+ if (.not.l_sc_run)  then
    !
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+   io_err=io_HF_and_locXC(ID)
+   !
+   call WF_free(WF)
+   call XCo_report(qp,E,k)
+   !
+ endif
+ !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -42,8 +42,8 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  use xc_functionals, ONLY:F_xc
  use wrapper_omp,    ONLY:V_dot_V_omp
  use electrons,      ONLY:n_spinor,n_sp_pol,n_spin
- use com,            ONLY:error
  use timing_m,       ONLY:timing
+ use interfaces,     ONLY:WF_apply_symm
  !
  implicit none
  !

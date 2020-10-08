@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,9 +25,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  use pars,           ONLY:IP
  use parser_m,       ONLY:parser
- use com,            ONLY:msg,warning,error
+ use com,            ONLY:msg
  use stderr,         ONLY:STRING_remove,intc
- use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin,E_SOC_table
+ use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
  use DIPOLES,        ONLY:DIPOLE_t
@@ -36,10 +36,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BS_n_g_W,BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSE_mode,BS_Blocks_and_Transitions_free,l_BSE_minimize_memory,BSqpts,L_kind,&
-&                         BS_perturbative_SOC
+&                         BS_perturbative_SOC,l_BSK_IO_triangular
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss,l_col_cut
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k,PARALLEL_default_mode
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X
  use D_lattice,      ONLY:l_0D,l_1D,l_2D
@@ -71,15 +71,20 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
 #endif
  !
- ! GPL_EXCLUDE_END
- !
  call parser('BSEQptR',l_bs_q)
+ call parser('BSKTriangIO',l_BSK_IO_triangular)
  !
  if (.not.l_bs_q) BS_q=(/1,1/)
  !
  if ( (.not.(BS_q(1)==1.and.BS_q(2)==1)) .and. (trim(BSE_mode)=='coupling') ) then
    call error(' Finite q and coupling not implemented')
  endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! GPL_INCLUDE_START
+ !BS_q=(/1,1/)
+ ! GPL_INCLUDE_END
  !
  ! Joint DOS
  !===========
@@ -97,7 +102,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !==============================
  if (index(BSE_mode,'causal')/=0) BSE_mode='retarded'
  !
- l_BSE_minimize_memory=(Xk%nbz==1)
+ l_BSE_minimize_memory=((Xk%nbz==1).or.trim(PARALLEL_default_mode)=="memory")
+ if(l_BSE_minimize_memory) call warning(" BSE calculation with minimal memory utilization")
  !
  ! TDDFT setup and Resets
  !========================
@@ -121,6 +127,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  ! l_bs_fxc has been provided
  !
  if (.not.l_bs_fxc) call parser('bs_fxc',l_bs_fxc)
+ !
+ if (Ken%nb_SOC/=0) BS_perturbative_SOC=.true.
  !
  if (l_bs_fxc) then
    !==========
@@ -153,9 +161,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
  BSS_add_antiresonant=index(BSE_mode,'retarded')/=0
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
- BS_K_is_ALDA=l_alda_fxc.and.n_spin==1
- BS_perturbative_SOC=allocated(E_SOC_table)
- if (n_spin>1.and.l_alda_fxc) call warning('TDDFT/ALDA not implemented for n_spin>1. Switched off')
+ BS_K_is_ALDA=l_alda_fxc
 #if defined _KERR
  call parser('EvalKerr',l_kerr)
  if(l_kerr) call parser('AnHall',l_anomalous_Hall)
@@ -170,7 +176,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  ! Double Grid support
  !=====================
- BSS_uses_DbGd = (BZ_DbGd_nbands>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
+ BSS_uses_DbGd = (Ken%FG%nb>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
  !
  ! Frequencies 
  !=============
@@ -181,12 +187,19 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  ! W RL size setup looking at the max index of G-G' 
  ! ==================================================
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
+   !
+   if(BS_n_g_W<0) then
+     BS_n_g_W=X_static_pp%ng
+     call msg('s','[BSE-W] Use all G-vectors of W ',BS_n_g_W)
+   endif
+   !
    Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
    if (BS_n_g_W> Max_G_m_G ) then
      call warning (' W size reduced from '//trim(intc(BS_n_g_W))//' to '//trim(intc(Max_G_m_G))//' due to symmetry constraints')
      BS_n_g_W= Max_G_m_G
-     call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
+     call msg('s','[BSE-W] W size forced by symmetry to be ',BS_n_g_W)
    endif
+   !
  endif
  !
  !
@@ -240,14 +253,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
        if (BS_n_g_exch> Max_G_m_G ) then
          BS_n_g_exch= Max_G_m_G
          call warning (' Exch size reduced due to symmetry constraints')
-         call msg('s','[BSE-exch] Exch size forced by symmetry to be :',BS_n_g_exch)
+         call msg('s','[BSE-exch] Exch size forced by symmetry to be ',BS_n_g_exch)
        endif
      endif
      !
      if (BS_n_g_W> Max_G_m_G ) then
        BS_n_g_W= Max_G_m_G
        call warning (' W size reduced due to symmetry constraints')
-       call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
+       call msg('s','[BSE-W] W size forced by symmetry to be ',BS_n_g_W)
      endif
      !
    endif
@@ -266,14 +279,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !... Blocks build-up
    if (.not.l_rpa_IP) call K_blocks(iq)
    !
-   ! 1. The IP Part
-   ! ===============
-   call K_IP(iq,Ken,Xk,Dip,W_bss)
-   !
    ! Wave Functions distribution 
    !=============================
    call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.FALSE.)
    call PARALLEL_WF_index( )
+   !
+   ! 1. The IP Part
+   ! ===============
+   call K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    ! 2. The KERNEL
    ! ================

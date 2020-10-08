@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,11 +23,13 @@
 !
 module TDDFT
  !
- use pars,     ONLY:SP,lchlen,schlen
+ use descriptors,ONLY:IO_desc
+ use pars,       ONLY:SP,lchlen,schlen
+ !
  implicit none
  !
  character(schlen):: TDDFT_mode
- character(lchlen):: FXC_description(100)
+ type(IO_desc)    :: FXC_desc
  character(10)    :: FXC_type
  integer          :: FXC_n_descs
  integer          :: FXC_n_g_corr

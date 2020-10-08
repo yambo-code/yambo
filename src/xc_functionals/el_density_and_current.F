@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -45,7 +45,7 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  ! Same procedure for the current
  !
  use pars,          ONLY:SP,DP
- use com,           ONLY:warning,error,msg
+ use com,           ONLY:msg
  use stderr,        ONLY:real2ch
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,     ONLY:bz_samp,b
@@ -63,7 +63,7 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  use timing_m,      ONLY:timing
 #endif
 #if defined _YPP_RT
- use real_time,     ONLY:RT_delta_occupations,RT_ibz_coo,RT_Nk_ibz
+ use real_time,     ONLY:RT_delta_occupations,RTibz
 #endif
  !
 #include<memory.h>
@@ -142,10 +142,9 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
 #if defined _YPP_RT
        if(present(bands)) then
          f_occ=0._SP
-         do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-           f_occ=f_occ+RT_delta_occupations(ib,ik_RT)
+         do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
+           f_occ=f_occ+RT_delta_occupations(ib,ik_RT)*RTibz%weights(ik_RT)
          enddo
-         f_occ=f_occ/real(RT_Nk_ibz(ik),SP)
        endif
 #endif
 !GPL_EXCLUDE_END

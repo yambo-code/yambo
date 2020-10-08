@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -976,8 +976,7 @@ CONTAINS
       INTEGER,                INTENT(OUT) :: ierr
       !
       INTEGER        :: iunit_aux
-      CHARACTER(256) :: filename, str_tmp
-      
+      CHARACTER(256) :: str_tmp
       ierr = 0
       !
       call iotk_scan_begin( iunit, "basis_set", IERR=ierr )
@@ -1332,33 +1331,39 @@ CONTAINS
       endiF
       !
       if (present(ecutfock)) then
-         call iotk_scan_dat(iunit, "ecutfock", ecutfock, IERR=ierr )
+         call iotk_scan_dat(iunit, "ecutfock", ecutfock, FOUND=lfound, IERR=ierr )
          if ( ierr/=0 ) return
+         if ( .not.lfound ) ecutfock=-1.0
       endif
       !
       if (present(exx_fraction)) then
-         call iotk_scan_dat(iunit, "exx_fraction", exx_fraction, IERR=ierr )
+         call iotk_scan_dat(iunit, "exx_fraction", exx_fraction, FOUND=lfound, IERR=ierr )
          if ( ierr/=0 ) return
+         if ( .not.lfound ) exx_fraction=-1.0
       endif
       !
       if (present(screening_parameter)) then
-         call iotk_scan_dat(iunit, "screening_parameter", screening_parameter, IERR=ierr )
+         call iotk_scan_dat(iunit, "screening_parameter", screening_parameter, FOUND=lfound, IERR=ierr )
          if ( ierr/=0 ) return
+         if ( .not.lfound ) screening_parameter=-1.0
       endif
       !
       if (present(exxdiv_treatment)) then
-         call iotk_scan_dat(iunit, "exxdiv_treatment", exxdiv_treatment, IERR=ierr )
+         call iotk_scan_dat(iunit, "exxdiv_treatment", exxdiv_treatment, FOUND=lfound, IERR=ierr )
          if ( ierr/=0 ) return
+         if ( .not.lfound ) exxdiv_treatment="NOT_FOUND"
       endif
       !
       if (present(x_gamma_extrapolation)) then
-         call iotk_scan_dat(iunit, "x_gamma_extrapolation", x_gamma_extrapolation, IERR=ierr )
+         call iotk_scan_dat(iunit, "x_gamma_extrapolation", x_gamma_extrapolation, FOUND=lfound, IERR=ierr )
          if ( ierr/=0 ) return
+         if ( .not.lfound ) x_gamma_extrapolation=.false.
       endif
       !
       if (present(ecutvcut)) then
-         call iotk_scan_dat(iunit, "ecutvcut", ecutvcut, IERR=ierr )
+         call iotk_scan_dat(iunit, "ecutvcut", ecutvcut, FOUND=lfound, IERR=ierr )
          if ( ierr/=0 ) return
+         if ( .not.lfound ) ecutvcut=-1.0
       endif
       !
       if (lfound) then
@@ -1449,7 +1454,6 @@ CONTAINS
       !
     end subroutine qexsd_read_bands_info
     !
-    !
     !------------------------------------------------------------------------
     SUBROUTINE qexsd_read_band_structure( nspin, lsda, noncolin, spinorbit, nbnd, nbnd_up, nbnd_dw, &
                                           nelec, natomwfc, fermi_energy, homo_energy, fermi_energy_updw, &
@@ -1472,7 +1476,7 @@ CONTAINS
       real(dbl) :: rvec(3)
       real(dbl), allocatable :: eig_(:), occ_(:)
       character(256) :: chval
- 
+      !
       ierr = 0
       !
       call iotk_scan_begin( iunit, "band_structure", IERR=ierr )
@@ -1904,7 +1908,6 @@ CONTAINS
       type(qeh5_dataset) :: h5dset_wfc, h5dset_mill
       character(len=8)   :: char_buf 
 #endif  
-
       !
       ! defs
       !
@@ -1918,7 +1921,6 @@ CONTAINS
          ierr=71
          return
       endif
-
       !
       ! set filename
       !
@@ -1937,8 +1939,8 @@ CONTAINS
       if (file_is_hdf5) then 
          ierr=42; return
       endif
-#endif
-
+#endif 
+      !
 #if defined(_QE_HDF5)
       if (file_is_hdf5) then
          call qeh5_openfile( h5file, TRIM(filename)//'hdf5', ACTION = 'read', ERROR = ierr)

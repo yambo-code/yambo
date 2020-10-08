@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,12 +30,13 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  use pars,           ONLY:SP,schlen,zero_dfl
  use vec_operate,    ONLY:v_norm,v_is_zero,cross_product,&
 &                         c2a,sort,rlu_v_norm
- use com,            ONLY:msg,warning
+ use com,            ONLY:msg
  use matrix_operate, ONLY:m3det,m3inv
  use R_lattice,      ONLY:b,k_grid_b,k_grid_dim,k_grid,RL_vol,&
 &                         k_grid_uc_vol,nkibz,nkbz,nXkibz,nXkbz,d3k_factor,&
 &                         bz_samp,g_vec,ng_in_shell,Xk_grid_new_mapping
  use zeros,          ONLY:k_rlu_zero
+ !
 #include<memory.h>
  !
  type(bz_samp)::k,Xk
@@ -123,8 +124,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    ! In any case the deep checks in bz_samp_indexes should prevent them.
    !
    ! Andrea (29/12/2011). The 2D surface of the tutorials still does not work. And this is due to 
-   ! the change introduced in 2010. Therefore I try to use the method that yields the smalles
-   ! norm
+   ! the change introduced in 2010. Therefore I try to use the method that yields the smallest
+   ! norm.
    !
    do i2=1,2
      !
@@ -309,33 +310,37 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  !
  ! ################  END  NEW MAPPING ##################
  !
- !
  ! Reporting
  !
  write (ch,'(i1,a)') k_grid_dim,'D'
- call msg('r','Compatible Grid is ',trim(ch))
- if (k_grid_dim>0) call msg('r','B1 [rlu]=',k_grid_b(1,:))
- if (k_grid_dim>1) call msg('r','B2      =',k_grid_b(2,:))
- if (k_grid_dim>2) call msg('r','B3      =',k_grid_b(3,:))
+ call msg('r','Compatible Grid is   ',trim(ch))
+ !
+ if (k_grid_dim>0) then
+   call msg('r','Base K vectors       ',(/' K_min[ 1 ]  ',' K_min[ 2 ]  ',' K_min[ 3 ]  '/))
+   call msg('r','K_min[ 1 ] ',k_grid_b(1,:),"[rlu]")
+ endif
+ if (k_grid_dim>1) call msg('r','K_min[ 2 ] ',k_grid_b(2,:),"[rlu]")
+ if (k_grid_dim>2) call msg('r','K_min[ 3 ] ',k_grid_b(3,:),"[rlu]")
  !
  ! Note that k_grid_b are Cartesian.
  !
  call c2a(b_in=b,v_in=k_grid_b(1,:),mode='ka2c')
  call c2a(b_in=b,v_in=k_grid_b(2,:),mode='ka2c')
  call c2a(b_in=b,v_in=k_grid_b(3,:),mode='ka2c')
- k_grid_uc_vol=0.
+ k_grid_uc_vol=0._SP
  v0=cross_product(k_grid_b(2,:),k_grid_b(3,:))
  do i1=1,3
    k_grid_uc_vol=k_grid_uc_vol+k_grid_b(1,i1)*v0(i1)
  enddo
  k_grid_uc_vol=abs(k_grid_uc_vol)
  !
- if (k_grid_dim>0) call msg('rs','Grid dimensions               :',k_grid(:k_grid_dim))
- call msg('r',                  'K lattice UC volume       [au]:',k_grid_uc_vol)
+ if (k_grid_dim>0) call msg('rs','Grid dimensions      ',k_grid(:k_grid_dim))
+ call msg('r',                   'K lattice UC volume  ',k_grid_uc_vol,"[a.u.]")
  !
  ! CLEAN
  !
  call k_ibz2bz(Xk,"d",.false.)
+ call k_ibz2bz(Xk,'i',.true.)
  return
  !
 1 continue
@@ -345,6 +350,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    k_lattice=-1
  endif
  call k_ibz2bz(Xk,"d",.false.)
+ !
+ call k_ibz2bz(Xk,'i',.true.)
  !
  contains
    !

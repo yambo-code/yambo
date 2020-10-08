@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,8 +24,7 @@
 subroutine RT_Glesser_rotate(dG)
  !
  use pars,           ONLY:SP
- use real_time,      ONLY:&
-&                         RT_bands,RT_nk
+ use real_time,      ONLY:RT_bands,RT_nk
  !
  implicit none
  !

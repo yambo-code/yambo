@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -51,21 +51,21 @@ integer function io_RIM(ID)
    call io_elemental(ID,VAR="PARS",VAR_SZ=10,MENU=0)
    !
    call io_elemental(ID,I0=RIM_ng,DB_I0=RIM_ng_disk,&
-&       VAR=' Coulombian RL components        :',CHECK=.true.,OP=(/"<="/))
+&       VAR=' Coulombian RL components        ',CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,L0=RIM_is_diagonal,&
-&       VAR=' Coulombian diagonal components  :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' Coulombian diagonal components  ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=RIM_n_rand_pts,&
-&       VAR=' RIM random points               :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' RIM random points               ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,R0=RIM_RL_vol,&
-&       VAR=' RIM  RL volume             [a.u.]:')
+&       VAR=' RIM  RL volume             [a.u.]')
    call io_elemental(ID,R0=RL_vol_disk,&
-&       VAR=' Real RL volume             [a.u.]:')
+&       VAR=' Real RL volume             [a.u.]')
    call io_elemental(ID,I0=RIM_id_epsm1_reference,&
-&       VAR=' Eps^-1 reference component       :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' Eps^-1 reference component       ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,R1=RIM_epsm1,&
-&       VAR=' Eps^-1 components                :',CHECK=.true.,OP=(/"==","==","=="/))
+&       VAR=' Eps^-1 components                ',CHECK=.true.,OP=(/"==","==","=="/))
    call io_elemental(ID,R0=RIM_anisotropy,&
-&       VAR=' RIM anysotropy factor            :')
+&       VAR=' RIM anysotropy factor            ')
    !
    call io_elemental(ID,VAR="",VAR_SZ=0)
    io_RIM=io_status(ID)
@@ -91,10 +91,12 @@ integer function io_RIM_W(ID)
  !
  use pars,           ONLY:SP
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,RIM_is_diagonal,RL_vol,RIM_RL_vol,&
-&                         RIM_W,nqibz
+&                         RIM_W,RIM_W_d,nqibz
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on
+ use cuda_m,         ONLY:have_cuda
 #include <memory.h>
+ !
  integer :: ID
  ! 
  ! Work Space
@@ -140,6 +142,9 @@ integer function io_RIM_W(ID)
    call io_bulk(ID,VAR="RIM_W",VAR_SZ=(/shape(RIM_W)/))
    call io_bulk(ID,R3=RIM_W)
    !
+   if (read_is_on(ID).and.have_cuda) then
+     YAMBO_ALLOC_SOURCE(RIM_W_d,RIM_W)
+   endif
  endif
  !
 1 call io_disconnect(ID=ID)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -87,7 +87,8 @@ module global_XC
    QP_SE_GWo           = 405, &
    QP_SE_POLARON       = 406, &
    QP_SE_COH           = 409, &
-   QP_SE_SEX           = 410 
+   QP_SE_SEX           = 410, & 
+   QP_SE_GW_PPA        = 411
  !
  ! Perturbations
  integer, public, parameter :: &

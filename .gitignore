@@ -7,6 +7,7 @@
 *.a
 *.so
 *.mod
+modfiles.list
 *.dep
 *.f90
 *.s
@@ -16,24 +17,16 @@
 
 # source #
 ##########
-driver/include/editor.h
-driver/include/version.h
-include/driver.h
-include/editor.h
-include/fortran_arguments.h
-include/fortran_driver.h
-include/kind.h
-include/tool.h
-include/version.h
+lib/yambo/driver/yambo/include/editor.h
+lib/yambo/driver/yambo/include/version.h
+include/driver/version.h
+include/driver/editor.h
 include/branch.inc
 src/tools/.objects
 config.status
 config/report
 config/setup
 config/msg_ydb
-driver/codever.h
-driver/editor.h
-include/branch.inc
 include/netcdf.h
 include/netcdf_*.h
 include/netcdf.inc
@@ -44,6 +37,7 @@ lib/archive/keep-extlibs-stamp
 lib/install/make_iotk.inc
 lib/iotk/make.sys
 lib/iotk/make_iotk.inc
+lib/yambo
 lib/*/*stamp
 lib/*/package-installed
 lib/*/lib
@@ -57,11 +51,12 @@ lib/*/lapack-*
 lib/*/fftw-*
 lib/*/blacs*
 lib/*/scalapack-*
+lib/*/futile*
+lib/*/yaml*
 lib/hdf5/hdf5*
 lib/external/*
 compile.sh
-gfortran_internal*
-gfortran_ubuntu*
+gfortran_*
 sbin/make_makefile.sh
 sbin/objects_store.sh
 sbin/generate_gpl.sh
@@ -73,10 +68,11 @@ lib/bin/*
 ##########
 src/external_c/.objects
 .check_configure
+config/mk/defs.mk
 *__lock*
 Makefile.locks
 Makefile.archive
-Makefile
+*Makefile
 make.dep
 commit.msg
 

@@ -1,7 +1,7 @@
 !
 ! Copyright (C) 2003 M. Marques, A. Castro, A. Rubio, G. Bertsch
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DV
@@ -78,7 +78,7 @@ module xc_functionals
      use pars,          ONLY:SP,DP,RZERO
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
-     use com,           ONLY:msg,warning
+     use com,           ONLY:msg
      use libxc_funcs_m, ONLY: XC_LDA_X, XC_LDA_C_PW
      implicit none
      type(levels),  intent(in)       :: en

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -23,7 +23,9 @@
 !
 module SC
  !
+ use descriptors,     ONLY:IO_desc
  use pars,            ONLY:SP,schlen,lchlen
+ !
 #include<memory.h>
  !
  integer           :: SC_bands(2)
@@ -35,7 +37,6 @@ module SC
  integer           :: SC_X_bands(2)
  integer           :: SC_X_size
  integer           :: SC_up_W_iters
- integer           :: n_SC_descriptions = 0
  real(SP)          :: rho_convergence
  real(SP)          :: magn_convergence
  real(SP)          :: E_convergence
@@ -44,7 +45,6 @@ module SC
  !
  character(schlen) :: SC_preconditioning="simple"
  character(schlen) :: SC_potential
- character(lchlen) :: SC_description(100)
  logical           :: compatible_SC_DB
  logical           :: found_SC_DB
  !
@@ -76,6 +76,10 @@ module SC
  ! xc potential
  !
  complex(SP), allocatable :: V_mean(:,:)
+ !
+ ! Descriptor
+ !
+ type(IO_desc)        :: SC_desc
  !
  interface
    !

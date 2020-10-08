@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,DV
@@ -66,9 +66,9 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab
  !
  if (cut_is_sphere) dummy=2._SP*plot_factor*cyl_ph_radius
  if (cut_is_ws.or.cut_is_slab) then 
-!
-! build the superperiodicity direct lattice
-!
+   !
+   ! build the superperiodicity direct lattice
+   !
    nq=1
    rdum=1000
    do iqibz=1,nqibz
@@ -81,12 +81,12 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab
      if (nq(i1)==0) nq(i1)=1
    enddo
    dummy=2._SP*plot_factor*dummy*nq
- !
+   !
    do i1=1,3
      atws(:,i1) = a(i1,:)
      atws(:,i1) = atws(:,i1) * nq(i1)
    enddo
-!
+   !
  endif
  !
  if (cut_is_cyl) then
@@ -172,8 +172,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab
    call live_timing(steps=1)
    !
  enddo
-!
-!
+ !
  call PP_redux_wait(v_xy(:,2))
  call PP_redux_wait(v_yz(:,2))
  call PP_redux_wait(v_xz(:,2))
@@ -240,6 +239,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab
  call of_open_close(of_name(4))
  !
  call k_ibz2bz(q,'d',.false.)
+ call PP_indexes_reset(px)
  !
  contains
    !
@@ -279,5 +279,5 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab
 &         (.not.is_cut(2).or.abs(r(2))<atws(2,2)/2.).and.&
 &         (.not.is_cut(3).or.abs(r(3))<atws(3,3)/2.)) V_in_ws=1./v_norm(r)
    end function
- !
+   !
 end subroutine

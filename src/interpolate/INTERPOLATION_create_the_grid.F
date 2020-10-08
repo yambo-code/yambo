@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -21,19 +21,34 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+subroutine INTERPOLATION_driver_create_grid(GRID)
+ !
+ use interpolate,          ONLY:GRID_k
+ use R_lattice,            ONLY:bz_samp_reset
+ !
+ implicit none
+ !
+ integer, intent(in) :: GRID(3)
+ !
+ call bz_samp_reset(GRID_k)
+ GRID_k%description="INTERP"
+ call INTERPOLATION_create_the_grid(GRID_k,'i',GRID)
+ !
+end subroutine INTERPOLATION_driver_create_grid
+!
 subroutine INTERPOLATION_create_the_grid(K,units,grid_dim)
  !
  ! Generate an uniform k-point grid k[grid_dim(:)] in the BZ
  !
  use pars,           ONLY:SP,schlen
  use R_lattice,      ONLY:bz_samp
- use com,            ONLY:error,msg
+ use com,            ONLY:msg
  use vec_operate,    ONLY:c2a
  implicit none
  !
- integer, intent(in)        :: grid_dim(3)
- type(bz_samp), intent(out) :: K
- character(1), intent(in)   :: units
+ integer,       intent(in)    :: grid_dim(3)
+ type(bz_samp), intent(inout) :: K
+ character(1),  intent(in)    :: units
  !
  ! Work Space
  !
@@ -73,9 +88,9 @@ subroutine INTERPOLATION_create_the_grid(K,units,grid_dim)
   K%units='i'
   !
   call k_reduce(K,.TRUE.)
-  call msg('s','[GRID_INTERP] Points (IBZ) : ',K%nibz)
+  call msg('s','[GRID_INTERP] Points (IBZ)  ',K%nibz)
   call k_expand(K)
-  call msg('s','                      (BZ) : ',K%nbz)
+  call msg('s','                      (BZ)  ',K%nbz)
   call k_ibz2bz(K,'d',.TRUE.)
   call k_ibz2bz(K,'a',.TRUE.)
   !

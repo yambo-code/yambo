@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,6 +29,9 @@ subroutine eval_minus_G()
  !
  use D_lattice,    ONLY:inv_index
  use R_lattice,    ONLY:ng_closed,g_rot,minus_G
+#ifdef _CUDA
+ use R_lattice,    ONLY:minus_G_d
+#endif
  !
 #include<memory.h>
  !
@@ -49,5 +52,10 @@ subroutine eval_minus_G()
    minus_G(1)=1
    if (ng_closed>1) call G_rot_grid(-1,'set_table')
  endif
+ !
+#ifdef _CUDA
+ YAMBO_FREE(minus_G_d)
+ allocate(minus_G_d,source=minus_G)
+#endif
  !
 end subroutine

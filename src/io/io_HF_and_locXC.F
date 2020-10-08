@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -73,21 +73,21 @@ integer function io_HF_and_locXC(ID)
    call io_elemental(ID,I0=QP_nb,      DB_I0=QP_nb_disk,CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,I0=QP_nk,      DB_I0=QP_nk_disk,CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,I0=QP_n_states,DB_I0=QP_n_states_disk,&
-&       VAR=' Total number of QP states       :',CHECK=.true.,OP=(/"<="/))
+&       VAR=' Total number of QP states       ',CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,I0=QP_ng_Sx,&
-&       VAR=' Exchange RL vectors             :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' Exchange RL vectors             ',CHECK=.true.,OP=(/"=="/))
    !
    if (ver_is_gt_or_eq(ID,revision=498)) then
-     call io_elemental(ID,I0=n_met_bands,VAR=' Exchange summation bands        :',CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,I0=n_met_bands,VAR=' Exchange summation bands        ',CHECK=.true.,OP=(/"=="/))
    else
      call io_elemental(ID,I1=bands,&
-&         VAR=' Exchange summation bands        :',CHECK=.true.,OP=(/"==","=="/))
+&         VAR=' Exchange summation bands        ',CHECK=.true.,OP=(/"==","=="/))
    endif
    !
    call io_elemental(ID,I0=RIM_ng,&
-&       VAR=' RIM RL components               :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' RIM RL components               ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=RIM_n_rand_pts,&
-&       VAR=' RIM random points               :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' RIM random points               ',CHECK=.true.,OP=(/"=="/))
    !
    if (ver_is_gt_or_eq(ID,(/3,0,15/))) then
      call io_elemental(ID,VAR="",VAR_SZ=0)
@@ -98,7 +98,7 @@ integer function io_HF_and_locXC(ID)
      !
      call io_elemental(ID,VAR='XC_FUNCTIONAL',CH0="",VAR_SZ=1,MENU=0)
      call io_elemental(ID,CH0=QP_xc_FUNCTIONAL,&
-&         VAR=' xc Functional                   :',CHECK=.true.,OP=(/"=="/))
+&         VAR=' xc Functional                   ',CHECK=.true.,OP=(/"=="/))
      !
      call io_elemental(ID,VAR="",VAR_SZ=0)
    endif
@@ -153,15 +153,19 @@ integer function io_HF_and_locXC(ID)
    !
    allocate(QP_disk(QP_n_states_disk))
    !
-   if(write_is_on(ID)) QP_disk=QP_Vnl_xc
-   call io_bulk(ID,VAR="Sx",VAR_SZ=(/2,QP_n_states_disk/))
-   call io_bulk(ID,C1=QP_disk)
-   if(read_is_on(ID)) QP_Vnl_xc(:)=QP_disk(MAP(:))
+   if (allocated(QP_Vnl_xc)) then
+     if(write_is_on(ID)) QP_disk=QP_Vnl_xc
+     call io_bulk(ID,VAR="Sx",VAR_SZ=(/2,QP_n_states_disk/))
+     call io_bulk(ID,C1=QP_disk)
+     if(read_is_on(ID)) QP_Vnl_xc(:)=QP_disk(MAP(:))
+   endif
    !
-   if(write_is_on(ID)) QP_disk=QP_Vxc
-   call io_bulk(ID,VAR="Vxc",VAR_SZ=(/2,QP_n_states_disk/))
-   call io_bulk(ID,C1=QP_disk)
-   if(read_is_on(ID)) QP_Vxc(:)=QP_disk(MAP(:))
+   if (allocated(QP_Vxc)) then
+     if(write_is_on(ID)) QP_disk=QP_Vxc
+     call io_bulk(ID,VAR="Vxc",VAR_SZ=(/2,QP_n_states_disk/))
+     call io_bulk(ID,C1=QP_disk)
+     if(read_is_on(ID)) QP_Vxc(:)=QP_disk(MAP(:))
+   endif
    !
    deallocate(QP_disk)
    !

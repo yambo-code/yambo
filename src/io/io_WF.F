@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -21,10 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_WF(ID,wf)
+integer function io_WF(ID,wf,wf_d)
  !
  use pars,             ONLY:SP,schlen
- use com,              ONLY:error
  use electrons,        ONLY:n_spinor
  use stderr,           ONLY:intc
  use R_lattice,        ONLY:nkibz
@@ -35,6 +34,10 @@ integer function io_WF(ID,wf)
  implicit none
  integer,       intent(in) :: ID
  complex(SP),   optional   :: wf(:,:,:)
+ complex(SP),   optional   :: wf_d(:,:,:)
+#ifdef _CUDA
+ attributes(device) :: wf_d
+#endif
  !
  integer                   :: nb_io,i_sp_pol,ik,ifrag,ib_grp,ib_block,n_blocks,ib,ib_io,ib_prev,ib_lim(3,wf_nb_io),head_io
  character(schlen)         :: VAR_NAME
@@ -70,7 +73,7 @@ integer function io_WF(ID,wf)
    i_sp_pol=2
  endif
  !
- io_WF=io_connect(desc="wf",type=0,ID=ID)
+ io_WF=io_connect(desc="wf",type=0,ID=ID,FORCE_READ_MODE=(head_io/=1).and.frag_WF)
  if (io_WF/=0) goto 1
  !
  ! S/N
@@ -80,8 +83,8 @@ integer function io_WF(ID,wf)
    io_WF=io_header(ID,IMPOSE_SN=.true.,FRAG=frag_WF)
    !
    call io_elemental(ID, VAR="BAND_GROUPS",VAR_SZ=2,MENU=0)
-   call io_elemental(ID, VAR=" Bands in each block             :",I0=wf_nb_io)
-   call io_elemental(ID, VAR=" Blocks                          :",I0=wf_nb_io_groups)
+   call io_elemental(ID, VAR=" Bands in each block              ",I0=wf_nb_io)
+   call io_elemental(ID, VAR=" Blocks                           ",I0=wf_nb_io_groups)
    call io_elemental(ID, VAR="",VAR_SZ=0)
    !
    if (io_WF/=0) goto 1
@@ -149,6 +152,11 @@ integer function io_WF(ID,wf)
  do ib_block=1,n_blocks
    if(ib_grp>1) ib_lim(1,ib_block)=mod(ib_lim(1,ib_block)-1,wf_nb_io)+1
    call io_bulk(ID,C3=wf(:,:,ib_lim(2,ib_block):ib_lim(3,ib_block)),IPOS=(/1,1,1,ib_lim(1,ib_block)/))
+#ifdef _CUDA
+   if(present(wf_d)) then
+      wf_d(:,:,ib_lim(2,ib_block):ib_lim(3,ib_block)) = wf(:,:,ib_lim(2,ib_block):ib_lim(3,ib_block))
+   endif
+#endif
  enddo
  !
 1 call io_disconnect(ID=ID)

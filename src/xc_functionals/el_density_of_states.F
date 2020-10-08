@@ -1,8 +1,8 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DS
+! Authors (see AUTHORS file for details): DS AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -29,8 +29,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use functions,      ONLY:Fermi_fnc_derivative
- use electrons,      ONLY:spin,n_sp_pol,n_spinor,n_spin,spin_occ, &
-&                         BZ_DbGd_nkpt,BZ_DbGd_table
+ use electrons,      ONLY:spin,n_sp_pol,n_spinor,n_spin,spin_occ
  !
  implicit none
  !
@@ -46,8 +45,8 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  !
  ! Work space
  !
- integer   :: i_sp_pol,ik_bz,ik,ik_rand,i1,ib
- real(SP)  :: el_dos_tmp(n_sp_pol),f_occ,dos_norm,E,proj_fac(n_spin)
+ integer   :: i_sp_pol,ik,ik_fg,ib,iE_fg
+ real(SP)  :: el_dos_tmp(n_sp_pol),f_occ,E,proj_fac(n_spin)
  logical   :: ik_ibz_done(Xk%nibz),USE_Eo_,USE_the_DbGd_,USE_occ,USE_WFs,USE_PDOS
  !
  dos_value=0._SP
@@ -67,43 +66,36 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  USE_PDOS=.FALSE.
  if (present(PDOS_fac))        USE_PDOS=associated(PDOS_fac)
  !
+ if(.not.allocated(Xen%Eo)) USE_Eo_=.FALSE.
+ if (USE_the_DbGd)          USE_Eo_=.FALSE.
+ !
  do i_sp_pol=1,n_sp_pol
    !
    ik_ibz_done=.false.
    !
-   do ik_bz=1,Xk%nbz
-     !
-     ik=Xk%sstar(ik_bz,1)
-     if (.not.USE_the_DbGd_) then
-       if (ik_ibz_done(ik)) cycle
-       ik_ibz_done(ik)=.true.
-     endif
-     !
+   do ik=1,Xk%nibz
      !
      do ib=DOS_bands(1),DOS_bands(2)
        !
        el_dos_tmp=0._SP
        f_occ=spin_occ
        !
+       if (.not.USE_Eo_) E=Xen%E(ib,ik,i_sp_pol)
+       if (     USE_Eo_) E=Xen%Eo(ib,ik,i_sp_pol)
+       !
+       if ( abs(E-dos_E)>20._SP*DOS_broadening ) cycle
+       if (USE_occ) f_occ=Xen%f(ib,ik,i_sp_pol)
+       el_dos_tmp(i_sp_pol)=f_occ*Xk%weights(ik)*Fermi_fnc_derivative(E-dos_E,DOS_broadening)
+       !
        if (USE_the_DbGd_) then
          !
-         do i1=1,BZ_DbGd_nkpt(ik_bz)
-           ik_rand=BZ_DbGd_table(ik_bz,i1,1)
-           if (USE_occ) f_occ=Xen%f_DbGd(ib,ik_rand,i_sp_pol)
-           el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*&
-&                      Fermi_fnc_derivative(Xen%E_DbGd(ib,ik_rand,i_sp_pol)-dos_E,DOS_broadening)
+         do ik_fg=Xk%FGibz%k_range(ik,1)+1,Xk%FGibz%k_range(ik,2)
+           iE_fg =Xk%FGibz%E_map(ik_fg)
+           if (USE_occ) f_occ=Xen%FG%f(ib,iE_fg,i_sp_pol)
+           el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*Xk%FGibz%weights(ik_fg)*&
+&                               Fermi_fnc_derivative(Xen%FG%E(ib,iE_fg,i_sp_pol)-dos_E,DOS_broadening)
          enddo
          ! 
-       else
-         !
-         E=Xen%E(ib,ik,i_sp_pol)
-         if (USE_Eo_.and.allocated(Xen%Eo)) then
-           E=Xen%Eo(ib,ik,i_sp_pol)
-         endif
-         !
-         if (USE_occ ) f_occ=Xen%f(ib,ik,i_sp_pol)
-         el_dos_tmp(i_sp_pol)=f_occ*Xk%weights(ik)*Fermi_fnc_derivative(E-dos_E,DOS_broadening)
-         !
        endif
        !
        ! Projections
@@ -134,9 +126,6 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
    enddo    ! ik
  enddo      ! i_sp_pol
  !
- dos_norm=1._SP/DL_vol
- if (USE_the_DbGd_) dos_norm=dos_norm/real(sum(BZ_DbGd_nkpt))
- !
- dos_value=dos_value*dos_norm
+ dos_value=dos_value/DL_vol
  !
 end subroutine el_density_of_states

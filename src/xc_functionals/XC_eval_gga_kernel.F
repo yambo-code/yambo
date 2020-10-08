@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -25,17 +25,25 @@ subroutine XC_eval_gga_kernel(v2rho2,v2rhosigma,v2sigma2)
  !
  ! Expression to be derived ...
  ! 
- use pars,           ONLY:SP
- use com,            ONLY:error
+ use pars,           ONLY:DP,SP
  use electrons,      ONLY:n_spin
- use xc_functionals, ONLY:xc_spin
  use FFT_m,          ONLY:fft_size
+ use xc_functionals, ONLY:F_xc,xc_spin,xc_spin_map1
  !
  implicit none
  !
- real(SP),intent(in) :: v2rho2(xc_spin(1),fft_size),v2rhosigma(xc_spin(1)*n_spin,fft_size),v2sigma2(xc_spin(1)*n_spin,fft_size)
+ real(DP),intent(in) :: v2rho2(xc_spin(1),fft_size),v2rhosigma(xc_spin(1)*n_spin,fft_size),v2sigma2(xc_spin(1)*n_spin,fft_size)
  !
- call error(' Fxc not coded for GGA')
+ integer :: i1,is1,is2,is_xc
+ !
+ call warning(' Fxc not coded for GGA. Using LDA part only of the functional ')
+ !
+ do is1 = 1,n_spin
+   do is2 = 1,n_spin
+     is_xc = xc_spin_map1(is1,is2)
+     forall(i1=1:fft_size) F_xc(i1,is1,is2) = F_xc(i1,is1,is2) + real(v2rho2(is_xc,i1),SP)
+   enddo
+ enddo
  !
 end subroutine XC_eval_gga_kernel
 

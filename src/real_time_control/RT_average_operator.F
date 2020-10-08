@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -25,25 +25,23 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
 &                              V_MATRIX,PV_MATRIX,G,k,en,TRANS,Double_Grid,nK_mem)
  !
  use pars,           ONLY:SP,cI,cZERO
- use real_time,      ONLY:DbGd_ibz_coo,RT_Nk_ibz,RT_nk,RT_ibz_coo,l_RT_uses_E_DbGd,&
-&                         RT_bands,RT_nbands
- use com,            ONLY:error
+ use real_time,      ONLY:RTibz,l_RT_uses_E_FineGd,RT_bands,RT_nbands
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_n_states
  use electrons,      ONLY:n_sp_pol,n_spin,levels
  use FFT_m,          ONLY:fft_size
- !use DIPOLES,        ONLY:Dipole_Energy_treshold
  use H_interfaces,   ONLY:V_real_space_to_H
  use wave_func,      ONLY:WF
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,&
+&                         PAR_COM_Xk_ibz_INDEX,PAR_G_k_range
  use timing_m,       ONLY:timing
  !
  implicit none
  !
  type(bz_samp), intent(in) :: k
  type(levels),  intent(in) :: en
- complex(SP),   intent(in) :: G(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP),   intent(in) :: G(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
  integer,       intent(in) :: nK_mem,N_V
  !
  ! Optionals
@@ -59,20 +57,20 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  !
  ! Work Space
  !
- integer     :: ib,ibp,ik,RT_bands2,ik_ibz,i_sp_pol,iE_rim,i_cmp
- real(SP)    :: deltaE,deltaE_DbGd
+ integer     :: ib,ibp,ik,RT_bands2,ik_ibz,i_sp_pol,iE_fg,i_cmp
+ real(SP)    :: deltaE,deltaE_fg
  complex(SP) :: Hk(N_V,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)),VALUE_tmp(N_V), &
 &               Hk_tmp(RT_bands(2),RT_bands(2)),                                    &
 &               Hk_vec_tmp(N_V,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- logical     :: l_rim_energy,l_rim_dipole
+ logical     :: l_DbGd_energy,l_DbGd_dipole
  !
  call timing('RT average Op',OPR='start')
  !
- l_rim_energy=.false.
- l_rim_dipole=.false.
- if(present(Double_Grid).and.l_RT_uses_E_DbGd) then
-   if(trim(Double_Grid)=='ENERGY') l_rim_energy=.true.
-   if(trim(Double_Grid)=='DIPOLE') l_rim_dipole=.true.
+ l_DbGd_energy=.false.
+ l_DbGd_dipole=.false.
+ if(present(Double_Grid).and.l_RT_uses_E_FineGd) then
+   if(trim(Double_Grid)=='ENERGY') l_DbGd_energy=.true.
+   if(trim(Double_Grid)=='DIPOLE') l_DbGd_dipole=.true.
  endif
  !
  if (N_V==0) call error('RT_average_operator: not a valid call')
@@ -93,28 +91,27 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
      call make_Hk_matrix(ik_ibz,i_sp_pol)
      !
      do i_cmp=1,N_V
-       !
-       do ik=RT_ibz_coo(ik_ibz,1),RT_ibz_coo(ik_ibz,2)
+       do ik=RTibz%k_range(ik_ibz,1),RTibz%k_range(ik_ibz,2)
          !
-         if(l_rim_energy) then
-           iE_rim=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
+         if(l_DbGd_energy.and.RTibz%k_range(ik_ibz,1)/=ik) then
+           iE_fg=RTibz%E_map(ik)
            do ib=RT_bands(1),RT_bands(2)
-             Hk(1,ib,ib)=Hk_tmp(ib,ib)-en%E(ib,ik_ibz,i_sp_pol)+en%E_DbGd(ib,iE_rim,i_sp_pol)
+             Hk(1,ib,ib)=Hk_tmp(ib,ib)-en%E(ib,ik_ibz,i_sp_pol)+en%FG%E(ib,iE_fg,i_sp_pol)
              do ibp=ib+1,RT_bands(2)
                Hk(1,ib,ibp)=Hk_tmp(ib,ibp)
                Hk(1,ibp,ib)=Hk_tmp(ibp,ib)
              enddo
            enddo
-         else if(l_rim_dipole) then
-           iE_rim=ik-RT_ibz_coo(ik_ibz,1)+DbGd_ibz_coo(ik_ibz,1)
+         else if(l_DbGd_dipole.and.RTibz%k_range(ik_ibz,1)/=ik) then
+           iE_fg=RTibz%E_map(ik)
            do ib=RT_bands(1),RT_bands(2)
              Hk(i_cmp,ib,ib)=Hk_vec_tmp(i_cmp,ib,ib)
              do ibp=ib+1,RT_bands(2)
-               deltaE     =en%E(ib,ik_ibz,i_sp_pol)     -en%E(ibp,ik_ibz,i_sp_pol)
-               deltaE_DbGd=en%E_DbGd(ib,iE_rim,i_sp_pol)-en%E_DbGd(ibp,iE_rim,i_sp_pol)
-               if(abs(deltaE)>1.E-5_SP .and. abs(deltaE_DbGd)>1.E-5_SP) then
-                 Hk(i_cmp,ib,ibp)=Hk_vec_tmp(i_cmp,ib,ibp)*deltaE/deltaE_DbGd
-                 Hk(i_cmp,ibp,ib)=Hk_vec_tmp(i_cmp,ibp,ib)*deltaE/deltaE_DbGd
+               deltaE   =en%E(ib,ik_ibz,i_sp_pol)  -en%E(ibp,ik_ibz,i_sp_pol)
+               deltaE_fg=en%FG%E(ib,iE_fg,i_sp_pol)-en%FG%E(ibp,iE_fg,i_sp_pol)
+               if(abs(deltaE)>1.E-5 .and. abs(deltaE_Fg)>1.E-5) then
+                 Hk(i_cmp,ib,ibp)=Hk_vec_tmp(i_cmp,ib,ibp)*deltaE/deltaE_fg
+                 Hk(i_cmp,ibp,ib)=Hk_vec_tmp(i_cmp,ibp,ib)*deltaE/deltaE_fg
                else
                  Hk(i_cmp,ibp,ib)=Hk_vec_tmp(i_cmp,ibp,ib)
                endif
@@ -125,12 +122,12 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
            if(N_V> 1) Hk(i_cmp,:,:)=Hk_vec_tmp(i_cmp,:,:)
          endif 
          !
-         VALUE_tmp(i_cmp)=VALUE_tmp(i_cmp)-cI*Vstar_dot_V_omp(RT_bands2,Hk(i_cmp,:,:),G(:,:,ik))
+         VALUE_tmp(i_cmp)=VALUE_tmp(i_cmp)-cI*Vstar_dot_V_omp(RT_bands2,Hk(i_cmp,:,:),G(:,:,ik))*RTibz%weights(ik)
          !
        enddo
        !
-       if (N_V==1) O_VALUE       =O_VALUE       +VALUE_tmp(i_cmp)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
-       if (N_V> 1) V_VALUE(i_cmp)=V_VALUE(i_cmp)+VALUE_tmp(i_cmp)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+       if (N_V==1) O_VALUE       =O_VALUE       +VALUE_tmp(i_cmp)
+       if (N_V> 1) V_VALUE(i_cmp)=V_VALUE(i_cmp)+VALUE_tmp(i_cmp)
        !
      enddo
      !

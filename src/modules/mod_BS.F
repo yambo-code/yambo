@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG
@@ -30,7 +30,9 @@ module BS
  ! Modes and logicals
  !====================
  logical :: l_BSE_minimize_memory
- logical :: l_restart_bse = .true.
+ logical :: l_BSE_kernel_complete
+ logical :: l_BSE_restart
+ logical :: l_BSK_IO_triangular
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
  logical :: BS_res_K_exchange
@@ -39,8 +41,8 @@ module BS
  logical :: BS_cpl_K_corr
  logical :: BS_K_is_ALDA
  logical :: BS_not_const_eh_f
- logical :: BS_perturbative_SOC=.FALSE.
- logical :: BS_K_has_been_calculated_loaded=.FALSE.
+ logical :: BS_perturbative_SOC
+ logical :: BS_K_has_been_calculated_loaded
  character(schlen) :: L_kind
  character(schlen) :: BSE_mode
  character(schlen) :: BSK_mode
@@ -51,9 +53,12 @@ module BS
  !=============
  integer :: BS_K_dim
  integer :: BS_H_dim
+ integer :: BS_IO_dim(2)
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier
+ real(SP):: BS_K_cutoff
+ real(SP):: BS_max_val
  real(SP),allocatable :: BSqpts(:,:)
  !
  ! Live Timing
@@ -101,10 +106,13 @@ module BS
    ! Exchange Oscillators
    !
    complex(SP), allocatable      :: O_x(:,:)
+#ifdef _CUDA
+   complex(SP), allocatable, device :: O_x_d(:,:)
+#endif
    !
  end type BS_T_group
  !
- type(BS_T_group), allocatable  :: BS_T_grp(:)
+ type(BS_T_group), allocatable, target :: BS_T_grp(:)
  integer         , allocatable  :: BS_T_grp_1st_el(:)
  integer         , allocatable  :: BS_nT_at_k(:)
  integer                        :: BS_nT_grps
@@ -133,11 +141,15 @@ module BS
    integer,     allocatable      :: kp_table(:,:)           ! 2,nkibz @ k = (i_kmq,i_pmq)
    integer,     allocatable      :: O_table(:,:,:,:,:,:,:)  ! 2,sym,nkmq,npmq,n,n',spin @ k = (iOnn,i_block_ref)
    complex(SP), allocatable      :: O_c(:,:)
+#ifdef _CUDA
+   complex(SP), allocatable, device :: O_c_d(:,:)
+#endif
    !
  end type BS_block
  !
- integer                    :: n_BS_blks = 0
- type(BS_block), allocatable:: BS_blk(:)
+ integer                    :: n_BS_blks
+ integer                    :: n_BS_blks_min
+ type(BS_block), allocatable, target :: BS_blk(:)
  !
  ! WF phases
  !===========
@@ -146,6 +158,9 @@ module BS
  ! Screened interaction
  !======================
  complex(SP),allocatable ::BS_W(:,:,:)
+#ifdef _CUDA
+ attributes(device)      ::BS_W
+#endif
  !
  contains
    !
@@ -175,11 +190,18 @@ module BS
      if (EXCHANGE) then
        if (BS_T_grp(iG)%size==0) return
        YAMBO_ALLOC(BS_T_grp(iG)%O_x,(BS_n_g_exch,BS_T_grp(iG)%size))
+#ifdef _CUDA
+       allocate(BS_T_grp(iG)%O_x_d,mold=BS_T_grp(iG)%O_x)
+#endif
+
      endif
      !
      if (CORRELATION) then
        if (BS_blk(iB)%N_oscillators==0) return
        YAMBO_ALLOC(BS_blk(iB)%O_c,(O_ng,BS_blk(iB)%N_oscillators))
+#ifdef _CUDA
+       allocate(BS_blk(iB)%O_c_d,mold=BS_blk(iB)%O_c)
+#endif
      endif
      !
    end subroutine
@@ -190,6 +212,9 @@ module BS
      integer :: iG,iB,ik_loop,ip_loop,ik_now,ip_now
      do iG=iG_ref,1,-1
        YAMBO_FREE(BS_T_grp(iG)%O_x)
+#ifdef _CUDA
+       if (allocated(BS_T_grp(iG)%O_x_d)) deallocate(BS_T_grp(iG)%O_x_d)
+#endif
      enddo
      if(iB_ref==0) return
      ik_now=BS_blk(iB_ref)%ik
@@ -207,6 +232,9 @@ module BS
        YAMBO_FREE(BS_blk(iB)%O_c)
        YAMBO_FREE(BS_blk(iB)%O_table)
        YAMBO_FREE(BS_blk(iB)%kp_table)
+#ifdef _CUDA
+       if (allocated(BS_blk(iB)%O_c_d)) deallocate(BS_blk(iB)%O_c_d)
+#endif
      enddo
      !
    end subroutine
@@ -216,7 +244,7 @@ module BS
      use pars,       ONLY:IP,cZERO
      use drivers,    ONLY:l_kerr,l_photolum
      use stderr,     ONLY:intc
-     use electrons,  ONLY:levels,E_SOC_nbands,n_sp_pol
+     use electrons,  ONLY:levels,n_sp_pol
      integer      :: iT,nT
      type(levels) :: E
      !
@@ -249,7 +277,7 @@ module BS
      if (allocated(E%W)) then
        YAMBO_ALLOC(BS_T_grp(iT)%W,(nT))
      endif
-     if (E_SOC_nbands/=0) then
+     if (allocated(E%E_SOC)) then
        YAMBO_ALLOC(BS_T_grp(iT)%E_SOC_corr,(2/n_sp_pol,nT))
      endif
      !
@@ -267,7 +295,6 @@ module BS
      use stderr,     ONLY:intc
      use drivers,    ONLY:l_kerr,l_photolum
      use parallel_m, ONLY:PAR_BS_T_grps_index
-     use electrons,  ONLY:E_SOC_nbands
      integer :: iT
      !
      YAMBO_FREE(BS_nT_at_k)

@@ -22,10 +22,13 @@ WF_rot_object = WF_rotate.o
 #if defined _MAGNETIC || defined _RT
 WF_der_objects = WF_derivative.o
 #endif
-objs = fft_setup.o fft_free.o $(FFT_object) $(FFT_more) scatter_Bamp_using_the_gradient.o \
-       fft_check_size.o WF_free.o WF_alloc.o WF_shift_kpoint.o WF_symm_kpoint.o  \
-       scatter_Bamp.o scatter_Gamp.o WF_spatial_inversion.o \
-       WF_load.o WF_symm.o WF_apply_symm.o $(WF_rot_object) \
+#if defined _CUDA
+FFT_cuda = fft_3d_cuda.o
+#endif
+objs = fft_setup.o fft_free.o $(FFT_object) $(FFT_more) $(FFT_cuda) scatter_Bamp_using_the_gradient.o \
+       fft_check_size.o WF_free.o WF_alloc.o WF_shift_kpoint.o WF_symm_kpoint_incl.o  \
+       scatter_Bamp_incl.o scatter_Gamp_incl.o WF_spatial_inversion.o \
+       WF_load.o WF_symm.o WF_apply_symm_incl.o $(WF_rot_object) \
        $(WF_der_objects) eval_R_minus_R.o scatter_Modscr.o load_cc.o \
        PP_uspp_init.o PP_addus_vloc_aug.o PP_vloc_augment.o PP_compute_becp.o \
        PP_becprod_calc.o PP_scatterBamp_init.o PP_rotate_becp.o PP_addus_rhotw_aug.o

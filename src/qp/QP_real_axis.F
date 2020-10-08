@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -36,22 +36,22 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
-&                        PAR_IND_Q,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,&
-&                        n_WF_bands_to_load,PAR_Q_index,PAR_nQP,&
+&                        PAR_IND_Q_ibz,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,&
+&                        n_WF_bands_to_load,PAR_Q_ibz_index,PAR_nQP,&
 &                        PAR_nG_bands,PAR_nQ_bz
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
 &                        PARALLEL_WF_distribute,QP_state_print
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use wave_func,     ONLY:WF
  use DIPOLES,       ONLY:DIPOLE_t
- use IO_m,          ONLY:io_control,REP,VERIFY,DUMP,NONE,RD,RD_CL,OP_RD,&
-&                        OP_WR_CL,OP_APP_CL,RD_CL_IF_END,OP_RD_CL,io_RESPONSE,io_SCREEN
+ use IO_m,          ONLY:io_control,manage_action,REP,VERIFY,DUMP,NONE,io_RESPONSE,io_SCREEN,&
+&                        OP_WR_CL,OP_APP_CL,RD_CL_IF_END,OP_RD,OP_RD_CL
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,QP_Sc_steps,&
 &                        QP_n_W_freqs_redux,e2et,h2ht
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use functions,     ONLY:bose_decay
- use R_lattice,     ONLY:qindx_S,bz_samp
+ use R_lattice,     ONLY:qindx_S,bz_samp,nqibz
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev,mag_syms
  use stderr,        ONLY:intc
  use wrapper,       ONLY:Vstar_dot_V,V_dot_V
@@ -72,7 +72,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  type(elemental_collision) ::scattering_main,scattering_prime
  type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
  integer          ::i1,i2,i3,i4,i_or,iqbz,iqibz,ib,i_err,i_q_to_start,iqs,&
-&                   io_err,X_id,WID,timing_steps,i_q_mem,X_range(2),i_qp,i_qp_mem,i_q_W_mem,i_b_mem
+&                   io_err,X_id,WID,IO_ACT,timing_steps,i_q_mem,X_range(2),i_qp,i_qp_mem,i_q_W_mem,i_b_mem
  complex(SP)      :: lrhotw(X%ng),X_mat_ws(X%ng,X%ng),W_dummy
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
@@ -136,8 +136,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  if (GW_iter==0) call section('+',trim(Sc_name)//"W0 on the real axis")
  if (GW_iter> 0) call section('=',trim(Sc_name)//"W0 on the real axis")
  !
- if (.not.l_life) call msg('r', '[GW] Bands range     :',QP_n_G_bands)
- call msg('r', '[GW] G damping   [ev]:',QP_G_damp*HA2EV)
+ if (.not.l_life) call msg('r', '[GW] Bands range     ',QP_n_G_bands)
+ call msg('r', '[GW] G damping   [ev]',QP_G_damp*HA2EV)
  !
  call QP_state_print( )
  !
@@ -168,8 +168,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
        QP_Sc=cZERO
        call live_timing(trim(Sc_name)//'W0',q%nbz)
        do iqbz=1,q%nbz
-         if (iqbz< q%nbz) call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=WID)
-         if (iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=WID)
+         IO_ACT=manage_action(RD_CL_IF_END,iqbz,1,q%nbz)
+         call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2+iqbz/),ID=WID)
          io_err=io_QP_and_GF('W',qp,WID)
          !
          ! Xw%p is stored in ioX, not in ioW !
@@ -250,7 +250,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  ! Redefine i_q_to_start to be CPU-dependent
  !
  do iqbz=1,q%nbz
-   if (PAR_IND_Q%element_1D(q%sstar(iqbz,1))) then
+   if (PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) then
      i_q_to_start=iqbz
      exit
    endif
@@ -292,7 +292,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  !--------------
  timing_steps=0
  do iqbz=i_q_to_start,q%nbz
-   if (.not.PAR_IND_Q%element_1D( q%sstar(iqbz,1) )) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D( q%sstar(iqbz,1) )) cycle
    timing_steps=timing_steps+1
  enddo
  !
@@ -300,6 +300,11 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  !
  if (.not.l_life) call live_timing(trim(Sc_name)//'W0',timing_steps)
  if (l_life)      call live_timing('Lifetimes',timing_steps)
+ !
+ if (io_RESPONSE) then
+   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=X_id)
+   io_err=io_X(X,Xw,X_id)
+ endif
  !
  do iqbz=i_q_to_start,q%nbz
    !
@@ -311,11 +316,11 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    !
    i_q_W_mem=PAR_Q_bz_index(iqbz)
    !
-   if (.not.PAR_IND_Q%element_1D(iqibz)) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D(iqibz)) cycle
    !
    if (iqibz/=scattering_main%iqref) then
      !
-     i_q_mem=PAR_Q_index(iqibz)
+     i_q_mem=PAR_Q_ibz_index(iqibz)
      X_range=(/1,QP_n_W_freqs_redux/)
      !
      if (.not.io_RESPONSE) X_range=(/QP_n_W_freqs_redux*(i_q_mem-1)+1,QP_n_W_freqs_redux*(i_q_mem-1)+X_life_W(iqibz)%n_freqs/)
@@ -326,9 +331,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
      !
      if (io_RESPONSE) then
        !
-       if (iqbz ==i_q_to_start) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=X_id)
-       if (q%nbz==1           ) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=X_id)
-       if (iqbz > i_q_to_start) call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=X_id)
+       IO_ACT=manage_action(RD_CL_IF_END,iqbz,i_q_to_start,nqibz)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=X_id)
        !
        if (l_life) then
          !
@@ -432,7 +436,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
          i2=life_W_table(iqibz,QP_n_W_freqs)
          !
          do i3=1,X%ng
-           lrhotw(i3)=V_dot_V_omp(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
+           lrhotw(i3)=V_dot_V_omp(X%ng,scattering_main%rhotw,X_mat(:,i3,i2+X_range(1)-1))
          enddo
          !
          ! To compensate the Tel/w divergence of the Bose function at finite
@@ -464,7 +468,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
          do i2=1,QP_n_W_freqs
            !
            do i3=1,X%ng
-             lrhotw(i3)=V_dot_V(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
+             lrhotw(i3)=V_dot_V(X%ng,scattering_main%rhotw,X_mat(:,i3,i2+X_range(1)-1))
            enddo
            !
            W_dummy=Vstar_dot_V_omp(X%ng,scattering_prime%rhotw,lrhotw)

@@ -143,13 +143,15 @@ if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
 fi
 #
 if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
+ cp     $srcdir/Makefile $compdir/
+ cp -r  $srcdir/config   $compdir/ 
  if test ! -d "$compdir/driver"     ; then mkdir "$compdir/driver"     ; fi
 
  if test ! -d "$compdir/ypp"        ; then mkdir "$compdir/ypp"        ; fi
  if test ! -d "$compdir/interfaces" ; then mkdir "$compdir/interfaces" ; fi
  if test ! -d "$compdir/lib"        ; then mkdir "$compdir/lib"        ; fi
 
- for folder in ["driver/include" "include/headers/common" "include/headers/parser" "src/common"] ; do
+ for folder in ["include/driver" "include/headers/common" "include/headers/parser" "src/common"] ; do
    cd "$srcdir/$folder" ;
    if test ! -d "$compdir/$folder"; then mkdir "$compdir/$folder"     ; fi
    for file in `ls *.h*` ; do

@@ -31,7 +31,6 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  use YPP_real_time,  ONLY:RT_time
  use RT_control,     ONLY:RT_apply
  use RT_output_m,    ONLY:RT_desc,Gr_desc,TIME_STEP_desc
- use D_lattice,      ONLY:Bose_Temp
  use R_lattice,      ONLY:bz_samp,FineGd_desc
  use electrons,      ONLY:levels,spin,spin_occ,filled_tresh,n_spinor,n_sp_pol
  use vec_operate,    ONLY:sort
@@ -531,7 +530,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
          TYP%n_files=2
          TYP%file(1)='YPP-RT_EP_Hole_linewidths'
          TYP%file(2)='YPP-RT_EP_Elec_linewidths'
-         if (Bose_Temp > 0._SP) then
+         if (RT_carriers%GAMMA_EP_abs%active ) then
            TYP%n_files=4
            TYP%file(3)='YPP-RT_EP_Hole_abs_linewidths'
            TYP%file(4)='YPP-RT_EP_Elec_abs_linewidths'
@@ -567,7 +566,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      !
      GAMMA_holes=TYP%data(i_RT,1,i_T)
      GAMMA_elecs=TYP%data(i_RT,2,i_T)
-     if (trim(TYP%kind)=="e-p".and.Bose_Temp > 0._SP) then
+     if (trim(TYP%kind)=="e-p".and.RT_carriers%GAMMA_EP_abs%active) then
        GAMMA_holes=GAMMA_holes+TYP%data(i_RT,3,i_T)
        GAMMA_elecs=GAMMA_elecs+TYP%data(i_RT,4,i_T)
      endif

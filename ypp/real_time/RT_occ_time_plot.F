@@ -209,16 +209,16 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      if (n_gamma>0) then
         tmp_lifetimes=0._SP
        if (l_elph_lifetimes) then
-         tmp_lifetimes(1)=RT_carriers%GAMMA_EP_emit%emit(i_RT)+RT_carriers%GAMMA_EP_emit%emit_bare(i_RT)
-         tmp_lifetimes(2)=RT_carriers%GAMMA_EP_emit%abs(i_RT)+RT_carriers%GAMMA_EP_emit%abs_bare(i_RT)
+         tmp_lifetimes(1)=RT_carriers%GAMMA_EP_emit%abs(i_RT)+RT_carriers%GAMMA_EP_emit%abs_bare(i_RT)
+         tmp_lifetimes(2)=RT_carriers%GAMMA_EP_emit%emit(i_RT)+RT_carriers%GAMMA_EP_emit%emit_bare(i_RT)
          if (RT_carriers%GAMMA_EP_abs%active ) then
-           tmp_lifetimes(3)=RT_carriers%GAMMA_EP_abs%abs(i_RT)+RT_carriers%GAMMA_EP_abs%abs_bare(i_RT)
-           tmp_lifetimes(4)=RT_carriers%GAMMA_EP_abs%emit(i_RT)+RT_carriers%GAMMA_EP_abs%emit_bare(i_RT)
+           tmp_lifetimes(3)=RT_carriers%GAMMA_EP_abs%emit(i_RT)+RT_carriers%GAMMA_EP_abs%emit_bare(i_RT)
+           tmp_lifetimes(4)=RT_carriers%GAMMA_EP_abs%abs(i_RT)+RT_carriers%GAMMA_EP_abs%abs_bare(i_RT)
          endif
        endif
        if (l_elel_scatt) then
-         tmp_lifetimes(n_gamma-1)=RT_carriers%GAMMA_EE%emit(i_RT)+RT_carriers%GAMMA_EE%emit_bare(i_RT)
-         tmp_lifetimes(n_gamma  )=RT_carriers%GAMMA_EE%abs(i_RT)+RT_carriers%GAMMA_EE%abs_bare(i_RT)
+         tmp_lifetimes(n_gamma-1)=RT_carriers%GAMMA_EE%abs(i_RT)+RT_carriers%GAMMA_EE%abs_bare(i_RT)
+         tmp_lifetimes(n_gamma  )=RT_carriers%GAMMA_EE%emit(i_RT)+RT_carriers%GAMMA_EE%emit_bare(i_RT)
        endif
        if (.not.l_OCCgroup_path) then
          data_to_plot(3:n_gamma+2)=  tmp_lifetimes(1:n_gamma)    *HA2EV*1000._SP

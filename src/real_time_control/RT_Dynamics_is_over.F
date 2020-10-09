@@ -39,7 +39,7 @@ logical function RT_Dynamics_is_over()
  !
  RT_Dynamics_is_over=.FALSE.
  !
- if (STOP_now.or.RT_NAN_found.or.NE_i_time==NE_steps) then
+ if (STOP_now.or.RT_NAN_found.or.NE_i_time>=NE_steps) then
    RT_Dynamics_is_over=.TRUE.
    return
  endif
@@ -53,6 +53,7 @@ logical function RT_Dynamics_is_over()
  !
  delta_T_left =NE_tot_time-NE_time
  delta_T_right=NE_tot_time-NE_time-RT_dyn_step
+ write (*,*) NE_i_time,delta_T_left,delta_T_right,NE_time,NE_tot_time,RT_dyn_step
  !
  if (delta_T_left>0._SP.and.delta_T_right>0._SP) return
  !

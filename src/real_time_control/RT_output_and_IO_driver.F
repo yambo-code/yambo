@@ -86,11 +86,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
  case('write')
    !
-   if (RT_is_dynamically_dephased) then
-     !
-     call RT_Lifetimes_merge_driver("INTER_k")
-     !
-   endif
+   if (RT_is_dynamically_dephased) call RT_Lifetimes_merge_driver("INTER_k")
    !
    ! GPL_EXCLUDE_START
    !

@@ -228,7 +228,6 @@ module real_time
  real(SP)          :: Gr_QP_width
  character(schlen) :: Gr_kind
  !
- !
  ! GFs
  !-----
  complex(SP), allocatable :: G_lesser(:,:,:,:)          ! Band, Band, K, Time

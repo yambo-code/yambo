@@ -81,26 +81,26 @@ contains
    complex(SP),  intent(in)     :: x(2)
    complex(SP),  intent(out)    :: R, E
    ! 
-   E = sqrt((x(1)*z(1)**2 -x(2)*z(2)**2 )/(x(1)-x(2)))
-   if(real(E)<0._SP) E=-E
-   if(real(E)<0.001_SP .or. real(1._SP/E)<0.0001_SP .or. NAN(real(E)) .or. NAN(real(1._SP/E)) ) then
-     E = abs(z(1)+z(2))*0.5_SP-cI*epsilon(1._SP)
-     R = x(2)*(z(2)**2-E**2)/(2._SP*E) 
-   else
-     if(aimag(E)>0._SP) E=real(E,SP)-cI*epsilon(1._SP)
-     R = x(1)*(z(1)**2-E**2)/(2._SP*E) 
-   endif
+!   E = sqrt((x(1)*z(1)**2 -x(2)*z(2)**2 )/(x(1)-x(2)))
+!   if(real(E)<0._SP) E=-E
+!   if(real(E)<0.001_SP .or. real(1._SP/E)<0.001_SP .or. NAN(real(E)) .or. NAN(real(1._SP/E)) ) then
+!     E = abs(z(1)+z(2))*0.5_SP-cI*epsilon(1._SP)
+!     R = x(2)*(z(2)**2-E**2)/(2._SP*E) 
+!   else
+!     if(aimag(E)>0._SP) E=real(E,SP)-cI*epsilon(1._SP)
+!     R = x(1)*(z(1)**2-E**2)/(2._SP*E) 
+!   endif
    ! 
 !----PPA_cond------------------------------------------------
- !  if(real(x(1)/x(2))>1._SP) then        
- !    E = sqrt((x(1)*z(1)**2 -x(2)*z(2)**2 )/(x(1)-x(2)))
- !    if(real(E)<0._SP) E=-E
- !    E=real(E,SP)-cI*0.01_SP
- !    R = x(1)*(z(1)**2-E**2)/(2._SP*E) 
- !  else
- !    E = abs(z(1)+z(2))/2-cI*0.01_SP
- !    R = x(2)*(z(2)**2-E**2)/(2._SP*E) 
- !  endif
+   if(real(x(1)/x(2))>1._SP) then        
+     E = sqrt((x(1)*z(1)**2 -x(2)*z(2)**2 )/(x(1)-x(2)))
+     if(real(E)<0._SP) E=-E
+     if(aimag(E)>0._SP) E=real(E,SP)-cI*epsilon(1._SP)
+     R = x(1)*(z(1)**2-E**2)/(2._SP*E) 
+   else
+     E = abs(z(1)+z(2))*0.5_SP-cI*epsilon(1._SP)
+     R = x(2)*(z(2)**2-E**2)/(2._SP*E) 
+   endif
    ! 
 !--------------------------------------------------------
    !

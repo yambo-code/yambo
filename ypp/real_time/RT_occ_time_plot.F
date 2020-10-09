@@ -210,7 +210,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        if (l_elph_lifetimes) then
          tmp_lifetimes(1)=RT_carriers%dGAMMA_E_P_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,3)
          tmp_lifetimes(2)=RT_carriers%dGAMMA_E_P_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,4)
-         tmp_lifetimes(3)=RT_carriers%dGAMMA_E_P_El_Abs(i_RT)  +RT_carriers%GAMMA_bare(i_RT,5)
+         tmp_lifetimes(3)=RT_carriers%dGAMMA_E_P_Ho_Abs(i_RT)  +RT_carriers%GAMMA_bare(i_RT,5)
          tmp_lifetimes(4)=RT_carriers%dGAMMA_E_P_El_Abs(i_RT)  +RT_carriers%GAMMA_bare(i_RT,6)
        endif
        if (l_elel_scatt) then

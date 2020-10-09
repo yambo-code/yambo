@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS,AM
@@ -24,19 +24,21 @@
 subroutine YPP_SET_defaults()
  !
  use YPPm,           ONLY:DOS_broadening,DOS_E_range,r_hole,deg_energy ,EXCITON_weight_treshold,&
-                          WF_multiplier,gamma_radius,SOC_split,alat_used_for_output,BANDS_bands,BANDS_steps,&
+                          WF_multiplier,SOC_split,BANDS_bands,BANDS_steps,&
 &                         coo_in,coo_out,DOS_E_steps,INTERP_grid ,l_amplitude,l_bands,l_current,l_density  ,&
 &                         l_dos,l_exc_wf   ,l_mag,l_norm_to_one,l_sort,l_sp_wf,l_spin,l_wannier,mag_dir    ,&
-&                         N_path_pts,ncell ,ord_dgrid_ipol ,output_fname,p_dir,p_format   ,perturbative_SOC_path,&
+&                         N_path_pts,ncell ,output_fname,p_dir,p_format   ,perturbative_SOC_path,&
 &                         plot_title,PtsPath,seed_name,SOC_bands_buffer,SOC_bands_to_map,state_ctl ,V_value,&
-&                         w90_fname,wannier_bands,WF_ref,what_to_write,SP,HA2EV,E_field,Nel_fac,DOS_bands,  &
-&                         BSiq,l_pdos,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,EXCITON_Res_treshold,EXCITON_E_treshold
+&                         WF_ref,what_to_write,SP,HA2EV,E_field,Nel_fac,DOS_bands,AVE_exc,  &
+&                         BSiq,l_PROJECT_atom,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,&
+&                         EXCITON_Res_treshold,EXCITON_E_treshold,l_PROJECT_line,l_PROJECT_plane
+ use YPP_symm,       ONLY:wf_ng_cut
  use units,          ONLY:FS2AUT
- use D_lattice,      ONLY:alat
  use interpolate,    ONLY:INTERP_shell_factor,interpls,max_interpls
  use electrons,      ONLY:n_bands
  use com,            ONLY:write_to_report
  use stderr,         ONLY:write_to_log  
+ use wave_func,      ONLY:wf_ng
  use LIVE_t,         ONLY:live_timing_is_on
 #if defined _YPP_SC
  use YPPm,           ONLY:l_mean_potential
@@ -45,7 +47,7 @@ subroutine YPP_SET_defaults()
  use YPPm,           ONLY:B_field,B_psi,B_theta,l_angular_momentum,l_position
 #endif
 #if defined _YPP_RT
- use YPP_real_time,  ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_BZ_regions,Eh_pumped_pair_BZ_width,&
+ use YPP_real_time,  ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_BZ_width,&
 &                         Eh_pumped_pair_deltaE,Eh_pumped_pair_energy,Eh_pumped_pair_width,l_RealTime,l_RT_dos,&
 &                         l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,l_RT_energy,l_RT_lifetimes   ,l_RT_occupations,&
 &                         l_RT_time  ,l_RT_X,Eh_pumped_pair_n_BZ_regions,Probe_Keyword ,Pump_Keyword,X_order,&
@@ -66,6 +68,12 @@ subroutine YPP_SET_defaults()
  live_timing_is_on =.FALSE.   
  write_to_log      =.FALSE.   
  !
+ ! Projections
+ !
+ l_PROJECT_atom  =.false.
+ l_PROJECT_line  =.false.
+ l_PROJECT_plane =.false.
+ !
  ! DOS
  !
  l_dos=.false.
@@ -75,13 +83,16 @@ subroutine YPP_SET_defaults()
  DOS_bands=(/1,n_bands/)
  WF_ref=0
  !
- l_pdos=.false.
  PDOS_atoms=-1
  PDOS_kinds=-1
  PDOS_wfcs =-1
  PDOS_l=-1
  PDOS_j=-1._SP
  PDOS_m=-10
+ !
+ ! SYMMETRIES
+ !
+ wf_ng_cut=0
  !
  ! RT OCCUPATIONS
  !
@@ -154,6 +165,7 @@ subroutine YPP_SET_defaults()
  EXCITON_weight_treshold =0.05_SP
  WF_multiplier=1._SP
  BSiq=1
+ AVE_exc='h'
  !
 #if defined _YPP_ELPH
  !
@@ -186,11 +198,6 @@ subroutine YPP_SET_defaults()
  coo_out="rlu"
  PtsPath= ' '
  N_path_pts=0
- alat_used_for_output=alat(1)
- !
- ! BZ RIM
- !
- gamma_radius=0._SP
  !
  ! WFs perturbative SOC
  !
@@ -198,12 +205,6 @@ subroutine YPP_SET_defaults()
  SOC_bands_to_map=(/ 1, n_bands /)
  SOC_bands_buffer=1
  SOC_split=0.1_SP/HA2EV
- !
- ! BXSF interpolation
- !
- w90_fname="./w90.bxsf"
- wannier_bands=(/1,n_bands/)
- ord_dgrid_ipol = 0
  !
  ! GPL_EXCLUDE_START
  !
@@ -217,7 +218,8 @@ subroutine YPP_SET_defaults()
  !
  RT_conf%T_range(:)  =real((/-FS2AUT,-FS2AUT/),SP)
  RT_conf%W_n_steps   =200
- RT_conf%W_range(:)  =(/0._SP,20./HA2EV/)
+ RT_conf%Carriers_W_range(:)  =(/0._SP,20./HA2EV/)
+ RT_conf%X_W_range(:)  =(/0._SP,20./HA2EV/)
  Probe_Keyword ="none"
  Pump_Keyword  ="none"
  X_order       =1
@@ -225,12 +227,11 @@ subroutine YPP_SET_defaults()
  !
  !MANUAL PUMP
  !
- Eh_pumped_pair_n_BZ_regions=1
+ Eh_pumped_pair_n_BZ_regions=0
  Eh_pumped_pair_deltaE=-1._SP/HA2EV
  Eh_pumped_pair_energy=-1._SP/HA2EV
  Eh_pumped_pair_width=0.1_SP/HA2EV
  Eh_pumped_pair_BZ_width=0.1_SP
- Eh_pumped_pair_BZ_regions=-1.0_SP
  Eh_pumped_Nel=1._SP
  !
  !FERMI FUNCTION PUMP

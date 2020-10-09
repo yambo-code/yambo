@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH
@@ -26,7 +26,7 @@ subroutine p2y_db1(en,k)
  use P2Ym,                  ONLY : get_dimensions,get_cell,get_atoms,get_symmetries,get_xc,get_k_points,get_more,get_energies,&
 &                                  get_R_vectors,get_IGK
  use electrons,             ONLY : levels
- use com,                   ONLY : msg,warning
+ use com,                   ONLY : msg
  use mod_com2y,             ONLY : print_interface_dimensions
  use xc_functionals,        ONLY : xc_string,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
  use R_lattice,             ONLY : ng_vec,g_vec,bz_samp

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -28,8 +28,8 @@ subroutine PARALLEL_structure(n_elements,ROLE)
  use parallel_m,  ONLY:ncpu,myid,INTER_CHAIN,nchains_group,n_groups,INTRA_CHAIN,&
 &                      PARALLEL_CPU_role,PARALLEL_CPU_used,PARALLEL_n_structures_active,&
 &                      ncpu_chain,mpi_comm_world,CREATE_the_COMM
- use parallel_m,  ONLY:PAR_Q_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,PAR_K_range,PAR_n_bands,&
-&                      PAR_EH_range,PAR_n_G_vectors,PAR_n_freqs,mycuda_dev
+ use parallel_m,  ONLY:PAR_Q_ibz_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,PAR_K_range,PAR_n_bands,&
+&                      PAR_EH_range,PAR_n_G_vectors,PAR_n_freqs
  use interfaces,  ONLY:PARALLEL_check_phase_space
 !#ifdef _CUDA
 ! use mpiDeviceUtil
@@ -78,7 +78,7 @@ subroutine PARALLEL_structure(n_elements,ROLE)
      if ( trim(PARALLEL_CPU_role(i_structure)) == trim(ROLE(i_order)) ) then
        if (trim(ROLE(i_order))=="g" ) PHASE_space=PAR_n_G_vectors
        if (trim(ROLE(i_order))=="k" ) PHASE_space=PAR_K_range
-       if (trim(ROLE(i_order))=="q" ) PHASE_space=PAR_Q_range(2)-PAR_Q_range(1)+1
+       if (trim(ROLE(i_order))=="q" ) PHASE_space=PAR_Q_ibz_range(2)-PAR_Q_ibz_range(1)+1
        if (trim(ROLE(i_order))=="qp") PHASE_space=PAR_QP_range
        if (trim(ROLE(i_order))=="eh") PHASE_space=PAR_EH_range
        if (trim(ROLE(i_order))=="b" ) PHASE_space=PAR_n_bands(2)-PAR_n_bands(1)+1

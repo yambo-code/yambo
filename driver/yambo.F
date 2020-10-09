@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -116,7 +116,10 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! iinf=0 => No error message from driver.c 
  !
- if (iinf/=0) return
+ if (iinf/=0) then
+   yambo=iinf
+   return
+ endif
  !
  ! PARALLEL and I/O Setup 
  !=======================
@@ -164,6 +167,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  l_dyn_X = l_em1d .or. (l_optics.and.l_chi) .or. l_life .or. l_ppa .or. l_mpa
  l_sta_X = l_em1s .or. (l_optics.and.l_bse)
  !
+ i_X_kind=1
  if ( l_real_time .or. l_sc_run) i_X_kind=1
  if ( l_sta_X .and..not.l_ppa .and..not.l_mpa) i_X_kind=2
  if ( l_dyn_X .and..not.l_ppa .and..not.l_mpa) i_X_kind=3

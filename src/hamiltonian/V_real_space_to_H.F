@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -24,7 +24,6 @@
 subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
  !
  use electrons,      ONLY:n_spin,n_spinor,spin
- use com,            ONLY:error
  use pars,           ONLY:SP,cZERO
  use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_table,QP_n_states

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -47,7 +47,7 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
 &                        PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID,&
 &                        PAR_IND_CON_BANDS_OVLP_ID,PAR_IND_VAL_BANDS_OVLP_ID
  use DIPOLES,       ONLY:eval_OVERLAPS
- use parallel_m,    ONLY:PAR_Q_range,PAR_IND_Q
+ use parallel_m,    ONLY:PAR_Q_bz_range,PAR_IND_Q_bz
  !
  implicit none
  !
@@ -125,7 +125,7 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
      ! Add the neighboars k-points
      !
      call PARALLEL_add_Q_to_K_list("overlaps",PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_IND_OVLPk_ibz,PAR_IND_OVLPk_ibz_ID,&
-&                                  PAR_IND_Q,PAR_COM_DIPk_ibz_INDEX,PAR_Q_range,Xk,q)
+&                                  PAR_IND_Q_bz,PAR_COM_DIPk_ibz_INDEX,PAR_Q_bz_range,Xk,q)
    
      ! Overlaps conduction bands
      !

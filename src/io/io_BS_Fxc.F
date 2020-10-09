@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,19 +23,21 @@
 !
 integer function io_BS_Fxc(iq,FXC_W,ID,X)
  !
- use pars,           ONLY:schlen,lchlen
+ use pars,           ONLY:schlen,IP
  use units,          ONLY:HA2EV
  use stderr,         ONLY:intc
  use BS,             ONLY:BS_K_dim
  use BS_solvers,     ONLY:BSS_q0,variables_BS
- use TDDFT,          ONLY:FXC_n_g_corr,FXC_n_descs,FXC_description,&
+ use TDDFT,          ONLY:FXC_n_g_corr,FXC_desc,&
 &                         FXC_K_diagonal,FXC_n_mem_freqs,FXC,FXC_is_retarded
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
-&                         io_elemental,io_status,io_bulk,io_mode,&
+&                         io_elemental,def_variable_elemental,io_variable_elemental,&
+&                         io_status,io_bulk,io_mode,&
 &                         read_is_on,io_header,DUMP,&
 &                         close_is_on,RD_CL,io_action
+ use descriptors,    ONLY:IO_desc,IO_desc_duplicate,IO_desc_reset
 #include<memory.h>
  type(w_samp)        ::FXC_W
  integer             ::ID,iq
@@ -45,7 +47,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  !
  integer             ::i1,FXC_n_g_db,w_group
  character (schlen)  ::db_name,ch
- character (lchlen)  ::local_description(100)
+ type(IO_desc)       ::local_desc
  type(X_t)           ::X_dummy
  !
  w_group=1
@@ -70,58 +72,42 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
    !
    if (io_BS_Fxc/=0) goto 1
    !
-   call io_elemental(ID,VAR="FXC_parameters",VAR_SZ=11,MENU=0)
+   call def_variable_elemental(ID,"FXC_parameters",11,IP+100,0)
    !
-   call io_elemental(ID,DB_I0=FXC_n_g_db,&
-&       VAR=" FXC|Matrix size             :",I0=FXC_n_g_corr,CHECK=.true.,OP=(/"<="/),&
-&       DESCRIPTION=FXC_description(1))
-   call io_elemental(ID,&
-&       VAR="    |Kernel is causal        :",L0=FXC_is_retarded,CHECK=.true.,OP=(/"=="/),&
-&       DESCRIPTION=FXC_description(2))
-   call io_elemental(ID,UNIT=HA2EV,&
-&       VAR="    |Energy range        [ev]:",R1=FXC_W%er,CHECK=.true.,OP=(/"==","=="/),&
-&       DESCRIPTION=FXC_description(3))
-   call io_elemental(ID,UNIT=HA2EV,&
-&       VAR="    |Damping range       [ev]:",R1=FXC_W%dr,CHECK=.true.,OP=(/"==","=="/),&
-&       DESCRIPTION=FXC_description(4))
-   call io_elemental(ID,&
-&       VAR="    |Total Energy steps      :",I0=FXC_W%n_freqs,CHECK=.true.,OP=(/"=="/),&
-&       DESCRIPTION=FXC_description(5))
-   call io_elemental(ID,&
-&       VAR="    |Memory Energy steps     :",I0=FXC_n_mem_freqs,CHECK=.true.,OP=(/"=="/),&
-&       DESCRIPTION=FXC_description(6))
-   call io_elemental(ID,&
-&       VAR="    |Field direction         :",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/),&
-&       DESCRIPTION=FXC_description(7))
-   !
-   FXC_n_descs=7
+   call io_variable_elemental(ID,DB_I0=FXC_n_g_db,&
+&       VAR=" FXC|Matrix size              ",I0=FXC_n_g_corr,CHECK=.true.,OP=(/"<="/),DESCRIPTOR=FXC_desc)
+   call io_variable_elemental(ID,&
+&       VAR="    |Kernel is causal         ",L0=FXC_is_retarded,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=FXC_desc)
+   call io_variable_elemental(ID,UNIT=HA2EV,&
+&       VAR="    |Energy range        [ev] ",R1=FXC_W%er,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=FXC_desc)
+   call io_variable_elemental(ID,UNIT=HA2EV,&
+&       VAR="    |Damping range       [ev] ",R1=FXC_W%dr,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=FXC_desc)
+   call io_variable_elemental(ID,&
+&       VAR="    |Total Energy steps       ",I0=FXC_W%n_freqs,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=FXC_desc)
+   call io_variable_elemental(ID,&
+&       VAR="    |Memory Energy steps      ",I0=FXC_n_mem_freqs,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=FXC_desc)
+   call io_variable_elemental(ID,&
+&       VAR="    |Field direction          ",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/),DESCRIPTOR=FXC_desc)
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    io_BS_Fxc=io_status(ID)
    !
    ! Add BS variables
    !
-   local_description(:)=' '
-   !
    if (io_BS_Fxc==0) then
      if (present(X)) then
-       io_BS_Fxc=variables_BS(ID,iq,local_description,.TRUE.,X=X) 
+       io_BS_Fxc=variables_BS(ID,iq,local_desc,.TRUE.,X=X) 
      else
        i1=io_mode(ID)
        io_mode(ID)=DUMP
-       io_BS_Fxc=variables_BS(ID,iq,local_description,.TRUE.,X=X_dummy) 
+       io_BS_Fxc=variables_BS(ID,iq,local_desc,.TRUE.,X=X_dummy) 
        io_mode(ID)=i1
      endif
    endif
    !
    ! Create FXC description fields
    !
-   do i1=1,100
-     if (len_trim(local_description(i1))>0) then
-       FXC_n_descs=FXC_n_descs+1
-       FXC_description(FXC_n_descs)=local_description(i1)
-     endif
-   enddo
+   call IO_desc_duplicate(local_desc,FXC_desc)
    !
    ! Parameters check failed in section 1. In case both secs 1 and 2
    ! were planned to be read, we need to switch the action to RD_CL
@@ -129,7 +115,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
    !
    if (io_BS_Fxc/=0) then
       call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
-      FXC_n_descs=0
+      call IO_desc_reset(FXC_desc)
       if (.not.close_is_on(ID)) io_action(ID)=RD_CL
       goto 1
    endif

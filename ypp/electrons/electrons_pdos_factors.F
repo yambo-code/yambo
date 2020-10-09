@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -26,7 +26,6 @@ subroutine electrons_pdos_factors(kpts,bands,PDOS_fac)
  use pars,           ONLY:SP
  use electrons,      ONLY:n_sp_pol
  use R_lattice,      ONLY:nkibz
- use com,            ONLY:error
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control
  use YPPm,           ONLY:PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j
  use atom_proj,      ONLY:n_atom_wfc,n_proj_bands,atomic_table,atomic_projections

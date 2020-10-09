@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -26,7 +26,6 @@ subroutine FREQUENCIES_setup(W)
  ! %er %dr %n_freqs -> %p
  !
  use pars,          ONLY:SP,cI
- use com,           ONLY:error
  use frequency,     ONLY:w_samp
  use parser_m,      ONLY:parser
 #include<memory.h>

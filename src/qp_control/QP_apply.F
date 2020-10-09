@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
+subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_section)
  !
  ! This routine manages the external qp corrections.
  ! The task is tricky, as YAMBO has three different energy
@@ -45,13 +45,13 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  use units,         ONLY:HA2EV
  use QP_m,          ONLY:QP_t
  use interfaces,    ONLY:OCCUPATIONS_Fermi
- use com,           ONLY:msg,depth
- use electrons,     ONLY:levels,n_sp_pol,E_duplicate,E_reset,&
-&                        BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels
+ use com,           ONLY:msg
+ use electrons,     ONLY:levels,n_sp_pol
  use D_lattice,     ONLY:input_Tel_is_negative
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,nkibz,nXkibz
  use QP_CTL_m,      ONLY:QP_actions_reset,n_QP_actions,QP_action,QP_CTL_copy,&
-&                        QP_ctl_ID,QP_ctl_t,QP_ctl_msg_fmt,QP_ctl_xc_STRING,QP_ctl_what
+&                        QP_ctl_ID,QP_ctl_t,QP_ctl_msg_fmt,QP_ctl_xc_STRING,QP_ctl_what,&
+&                        At_least_one_band_corrected
  use global_XC,     ONLY:QP_SE_NONE,setup_global_XC
  !
 #include<memory.h>
@@ -61,22 +61,21 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  type(bz_samp) ::k
  character(*)  ::msg_fmt
  character(1)  ::object
+ logical,        optional::main_section
  type(QP_t),     optional::qp_impose
  type(QP_ctl_t), optional::QP_ctl_impose(n_sp_pol)
  !
  ! Work Space
  !
- type(levels)     ::Fermi_en
- integer          ::ik_bz,ik_ibz,ib,i1,ik_r,i_spin,nbf_m_SAVE(2),i_a
- logical          ::l_E_done
- integer, allocatable :: DbGd_k_done(:)
+ integer          ::i_spin,nbf_m_SAVE(2),i_a
+ character(2)     ::sec_mode
  !
  ! Resets
  !========
  call QP_actions_reset( )
- call E_reset(Fermi_en)
  QP_ctl_msg_fmt=msg_fmt
  QP_ctl_xc_STRING=" "
+ At_least_one_band_corrected=.FALSE.
  !
  ! CTLs
  !======
@@ -106,8 +105,11 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  ! Sectioning
  !=============
- if (depth>0 ) call section('=',"External/Internal QP corrections")
- if (depth==0) call section('+',"External/Internal QP corrections")
+ sec_mode="+P"
+ if (present(main_section)) then
+   if (main_section) sec_mode="*"
+ endif
+ call section(trim(sec_mode),"External/Internal QP corrections")
  !
  !==============
  ! QP's section
@@ -118,136 +120,133 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! Actions
  !=========
  !
- l_E_done=.FALSE.
- !
  do i_a=1,n_QP_actions
    !
    if (.not.QP_action(i_a)%active) cycle
+   !
+   ! QP_load_DB
+   ! |
+   ! .- loads the QP db
+   ! .- calls QP_apply_QP
+   !    |
+   !    . INTERPOLATES
+   !    . Fit
    !
    if (len_trim(QP_action(i_a)%CTL(1)%db)>0.and.&
 &          trim(QP_action(i_a)%CTL(1)%db)/="none") call QP_load_DB(i_a,bands,en,k)
    !
    if (.not.QP_action(i_a)%active) cycle
    !
-   call QP_apply_the_ACTION(i_a,bands,en,k,l_E_done)
+   call msg("sr","[QP_apply] Action to be applied",trim(QP_action(i_a)%desc))
+   !
+   ! QP_apply_the_ACTION
+   ! |
+   ! .- applies just the fit
+   !
+   call QP_apply_the_ACTION(i_a,bands,en,k)
    !
  enddo
  !
- if ( .not.any( QP_action(:)%active ) ) return
- !
- call setup_global_XC(trim(QP_ctl_what),QP_SE_NONE,STRING=QP_ctl_xc_STRING)
- !
- ! Energy corrected?
- !
- if (.not.l_E_done) then
+ if ( .not.any( QP_action(:)%active ) ) then 
    !
-   call E_reset(Fermi_en)
-   YAMBO_FREE(DbGd_k_done)
-   call QP_actions_reset( )
+   call section('-P'," ")
    !
    return
    !
  endif
  !
- ! Extend the QP corrections to the RIM energies
- !========
- if (allocated(en%E_DbGd).and.allocated(en%Eo)) then
+ call setup_global_XC(trim(QP_ctl_what),QP_SE_NONE,STRING=QP_ctl_xc_STRING)
+ !
+ ! Energy corrected?
+ !
+ if (.not.At_least_one_band_corrected) then
    !
-   YAMBO_ALLOC(DbGd_k_done,(BZ_DbGd_tot_nk_levels))
-   DbGd_k_done=0
+   call QP_actions_reset( )
    !
-   do ik_bz=1,k%nbz
-     !
-     ik_ibz=k%sstar(ik_bz,1)
-     !
-     do i1=1,BZ_DbGd_nkpt(ik_bz)
-       !
-       ik_r=BZ_DbGd_table(ik_bz,i1,1)
-       !
-       if (DbGd_k_done(ik_r)==1) cycle
-       !
-       do ib=1,BZ_DbGd_nbands
-         do i_spin=1,n_sp_pol
-           en%E_DbGd(ib,ik_r,1)=en%E_DbGd(ib,ik_r,1)+ (en%E(ib,ik_ibz,i_spin)-en%Eo(ib,ik_ibz,i_spin))
-         enddo
-       enddo
-       DbGd_k_done(ik_r)=1
-     enddo
-     !
-   enddo
+   call section('-P'," ")
    !
-   YAMBO_FREE(DbGd_k_done)
+   return
    !
  endif
+ !
+ ! The extension to the Fine Grid has been removed from here and 
+ ! included in QP_transfer, inside QP_apply_interpolate_QP
+ !
+ call section('p'," QP corrections report")
+ !==========================================
  !
  ! Fermi Level Updates
  !=====================
  !
- ! X/K -> Fermi Level Update
+ if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
  !
- if ((QP_ctl_ID<3.and.allocated(en%Eo).and..not.allocated(en%GreenF)).or.allocated(en%E_DbGd)) then
-   !
-   if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
-   !
-   if (.not.allocated(en%fo) .and. .not. l_sc_run) then
-     if (QP_ctl_ID==1) call OCCUPATIONS_Fermi(en,k,OBJ="X")
-     if (QP_ctl_ID==2) call OCCUPATIONS_Fermi(en,k,OBJ="K")
+ if (.not.allocated(en%fo) .and. .not. l_sc_run) then
+   if (QP_ctl_ID==1) call OCCUPATIONS_Fermi(en,k,OBJ="X+QP")
+   if (QP_ctl_ID==2) call OCCUPATIONS_Fermi(en,k,OBJ="K+QP")
+   if (QP_ctl_ID==3) then
+     call OCCUPATIONS_Fermi(en,k,OBJ="G+QP")
+     if (nkibz/=nXkibz) call warning("G and X k-grids have different number of k-points. G Fermi level potentially not alligned")
    endif
-   !
-   if (input_Tel_is_negative) then
-     en%nbf=nbf_m_SAVE(1)
-     en%nbm=nbf_m_SAVE(2)
-   endif
-   !
  endif
  !
- ! G -> Fermi Level Update... but using the levels cooresponding to
- ! the K-points of the X grid !
- !
- if (QP_ctl_ID==3.and.allocated(en%Eo).and..not.allocated(en%GreenF).and..not.allocated(en%E_DbGd)) then
-   !
-   call E_duplicate(en,Fermi_en)
-   !
-   call OCCUPATIONS_Fermi(Fermi_en,k,mode="OCCUPATIONS")
-   !
-   ! In OCCUPATIONS_Fermi the Fermi_en the %E and CBm and VMB are coherent. 
-   ! Instead the en%E are out-of-date and are not shifted in OCCUPATIONS_Extend.
-   ! This line is to prevent that CBm and VMB are not the same as en%E
-   !
-   en%E(:,:,:)=en%E(:,:,:)-Fermi_en%E_Fermi
-   !
-   call OCCUPATIONS_Extend(Fermi_en,en)
-   !
-   YAMBO_FREE(Fermi_en%E)
-   !
+ if (input_Tel_is_negative) then
+   en%nbf=nbf_m_SAVE(1)
+   en%nbm=nbf_m_SAVE(2)
  endif
  !
- ! CLEAN
- !
- call E_reset(Fermi_en)
- YAMBO_FREE(DbGd_k_done)
- call QP_actions_reset( )
+ ! Energies report
+ !-----------------
  !
  if (en%nbf==en%nbm) then
    !
-   if (n_sp_pol==1) then
-     !
-     call msg('r','[QP apply] Ind. Gap Correction   [ev]:',&
-&                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
-&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
-     !
-   else
-     !
-     call msg('r','[QP apply] Ind. Gap Correction  (up) [ev]:',&
-&                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
-&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
-     !
-     call msg('r','                              (down) [ev]:',&
-&                  (minval(en%E(en%nbf+1,:,2))-maxval(en%E(en%nbf,:,2)) &
-&                  -minval(en%Eo(en%nbf+1,:,2))+maxval(en%Eo(en%nbf,:,2)) )*HA2EV)
-     !
-   endif
+   call QP_apply_gap_report(en,"coarse-grid")
+   if (allocated(en%FG%E)) call QP_apply_gap_report(en,"FineGd")
+   call msg('r','')
    !
  endif
  !
+ call REPORT_Energies(en%E,k,k,en%nb,(/1,k%nibz/),'Eqp',.FALSE.,.TRUE.)
+ !
+ ! CLEAN
+ !
+ call QP_actions_reset( )
+ !
+ call section('-P'," ")
+ !
+ contains
+   !
+   subroutine QP_apply_gap_report(E,title)
+    use pars, ONLY:SP
+    character(*)  ::title
+    type(levels)  ::E
+    ! Work space
+    real(SP)      ::Ego(2),Eg(2)
+    integer       ::i_spin
+    character(100)::space,msg_ch
+    space(1:100)=" "
+    do i_spin=1,n_sp_pol
+      Ego(i_spin)=minval(E%Eo(E%nbf+1,:,i_spin))-maxval(E%Eo(E%nbf,:,i_spin))
+      if (title=="FineGd") then
+        Eg(i_spin)=minval(E%FG%E(E%nbf+1,:,i_spin))-maxval(E%FG%E(E%nbf,:,i_spin))
+      else
+        Eg(i_spin)=minval(E%E(E%nbf+1,:,i_spin))-maxval(E%E(E%nbf,:,i_spin))
+      endif
+      !
+      msg_ch='['//title//'] Minimum Bare Gap        [ev]'
+      if (n_sp_pol==2) then
+        if (i_spin==1) msg_ch='['//title//'] Minimum Bare Gap         (up)[ev]'
+        if (i_spin==2) msg_ch='['//title//']                        (down)[ev]'
+      endif
+      call msg('r',trim(msg_ch),Ego(i_spin)*HA2EV)
+      !
+      msg_ch='['//title//'] Minimum Gap Correction  [ev]'
+      if (n_sp_pol==2) then
+        if (i_spin==1) msg_ch='['//title//'] Minimum Gap Correction   (up)[ev]'
+        if (i_spin==2) msg_ch='['//title//']                        (down)[ev]'
+      endif
+      call msg('r',trim(msg_ch),(Eg(i_spin)-Ego(i_spin))*HA2EV)
+      !
+    enddo
+   end subroutine
+   !
  end subroutine

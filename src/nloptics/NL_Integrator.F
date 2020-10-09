@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AC MG 
@@ -42,7 +42,6 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
  ! ------------------------------------------------------------
  !
  use pars,           ONLY:SP,cZERO
- use com,            ONLY:error
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:RK2,EULEREXP,RK2EXP,INVINT,RK4,RK4EXP,HEUN,CRANK_NICOLSON,I_relax,&
 &                         NL_bands 

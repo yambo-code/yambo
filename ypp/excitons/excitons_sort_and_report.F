@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -25,20 +25,21 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  !
  use pars,          ONLY:SP,schlen,pi
  use units,         ONLY:HA2EV
- use electrons,     ONLY:spin_occ,spin,E_SOC_nbands,n_sp_pol,n_spinor
- use stderr,        ONLY:intc,set_real_printed_length
- use BS_solvers,    ONLY:BSS_description,BSS_n_descs,BSS_n_eig
+ use electrons,     ONLY:spin_occ,spin,n_sp_pol,n_spinor
+ use stderr,        ONLY:intc
+ use BS_solvers,    ONLY:BSS_desc,BSS_n_eig
  use com,           ONLY:msg,of_open_close
  use R_lattice,     ONLY:d3k_factor,q0_def_norm
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,atom_pos,Z_species
  use vec_operate,   ONLY:sort
  use YPPm,          ONLY:EXCITONS_user_indexes,EXCITON_spin
+ use interfaces,    ONLY:DESC_write
  !
  implicit none 
  !
  integer                      :: iq
  complex(SP)                  :: BS_R(BSS_n_eig),BS_E(BSS_n_eig)
- real(SP),pointer             :: BS_E_SOC_corr(:,:)
+ real(SP), optional, pointer  :: BS_E_SOC_corr(:,:)
  type(EXCITON_spin),optional  :: EXC_spin
  !
  ! Work Space
@@ -52,11 +53,10 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  !
  character(3), parameter:: R_normalize="yes"
  !
- call set_real_printed_length(f_length=15,g_length=15)
- !
  write_spin    = present(EXC_spin)
  write_widths  = any(abs(aimag(BS_E))>1.E-5)
- write_soc_corr= (E_SOC_nbands/=0)
+ write_soc_corr= .false.
+ if(present(BS_E_SOC_corr)) write_soc_corr=associated(BS_E_SOC_corr)
  !
  dump_ch=" "
  if (write_spin)     dump_ch=trim(dump_ch)//" Spin"
@@ -81,9 +81,8 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
    !
    call of_open_close(ch_dummy,'ot')
    !
-   do j1=1,BSS_n_descs
-     call msg('o sort',"#",trim(BSS_description(j1)),INDENT=0)
-   enddo
+   call DESC_write('o sort','#',BSS_desc)
+   !
    call msg('o sort',"#")
    do is=1,n_atomic_species
      do ia=1,n_atoms_species(is)
@@ -200,7 +199,5 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
    call of_open_close(ch_dummy)
    !
  enddo
- !
- call set_real_printed_length( )
  !
 end subroutine

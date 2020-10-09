@@ -1,5 +1,5 @@
 objs = RT_Coulomb_relaxation.o RT_Radiative_Lifetimes.o \
        RT_Lifetimes_evaluation_plan.o RT_Lifetimes_Extrapolation.o \
-       RT_Lifetimes_merge.o RT_Lifetimes_save_and_extrap.o \
+       RT_Lifetimes_save_and_extrap.o \
        RT_Lifetimes_use_delta_Occupations.o \
        RT_impose_zero_dE_and_dN.o RT_relaxation_logicals.o

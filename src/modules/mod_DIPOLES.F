@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -34,6 +34,9 @@ module DIPOLES
  logical                  :: use_shifted_grids_approach
  logical                  :: use_g_space_approach
  logical                  :: use_real_space_approach
+ logical                  :: compute_P2_dipoles
+ logical                  :: compute_Spin_dipoles
+ logical                  :: compute_Orb_dipoles
  logical                  :: Vnl_commutator_warning
  ! 
  ! other
@@ -193,7 +196,7 @@ module DIPOLES
      Dip%bands_ordered=.true.
      Dip%force_v_g_space=.false.
      Dip%approach="G-space v"
-     Dip%computed="R P"
+     Dip%computed="R P V"
    end subroutine DIPOLES_reset
    !
    function DIP_rotated(ic,iv,ik_bz,i_sp_pol,what,kpt)

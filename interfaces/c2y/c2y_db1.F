@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DV
@@ -24,7 +24,7 @@
 subroutine c2y_db1(en,k,file_name_)
  !
  use pars,                  ONLY: DP,pi
- use com,                   ONLY: msg,warning
+ use com,                   ONLY: msg
  use electrons,             ONLY: levels, default_nel,n_bands,n_spin,n_sp_pol,&
 &                                 n_spinor 
  use vec_operate,           ONLY: define_b_and_DL_vol
@@ -243,7 +243,7 @@ subroutine c2y_db1(en,k,file_name_)
  read(11) irecord
  if(irecord/=0) then
 ! Here read the KS eigenvalues
-   call msg('s',':: Energies...')
+   call msg('s',' Energies...')
    read(11) rdum
    i_spin = 1 
    YAMBO_ALLOC(rstr,(en%nb))
@@ -338,7 +338,7 @@ subroutine c2y_db1(en,k,file_name_)
  !
  call msg('l','done')
  !
- call msg('s','Report:')
+ call msg('s','Report')
  !======================
  !
  call print_interface_dimensions(en,k)

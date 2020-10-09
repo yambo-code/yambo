@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -55,7 +55,9 @@ module parallel_m
  !
  use pars,       ONLY:SP,DP,schlen,lchlen,max_n_of_cpus,MAX_N_GROUPS,MAX_N_OF_CHAINS,n_CPU_str_max
  !
+#if !defined _io_lib
 #include<memory.h>
+#endif
  !
 #if defined _MPI
  include 'mpif.h'
@@ -185,6 +187,15 @@ module parallel_m
  !
  type(PARk_str),SAVE   :: PAR_K_scheme
  !
+ ! SND & RCV plan
+ !
+ type SND_RCV_geometry
+   integer,allocatable :: SND_to_id(:)
+   integer,allocatable :: RCV_from_id(:)
+ end type
+ integer               :: N_SND_RCV_operations
+ type(SND_RCV_geometry), allocatable :: SND_RCV_op(:)
+ !
  ! Number of Bands to load
  !=========================
  !
@@ -207,7 +218,7 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_SLK
  !
  ! ... BZ sampling
- type(PP_indexes),SAVE :: PAR_IND_Q
+ type(PP_indexes),SAVE :: PAR_IND_Q_ibz
  type(PP_indexes),SAVE :: PAR_IND_Q_bz
  type(PP_indexes),SAVE :: PAR_IND_Kk_ibz
  type(PP_indexes),SAVE :: PAR_IND_Xk_ibz
@@ -276,7 +287,8 @@ module parallel_m
  integer            :: PAR_IND_WF_k_ID
  !
  ! ... BZ
- integer            :: PAR_IND_Q_ID
+ integer            :: PAR_IND_Q_ibz_ID
+ integer            :: PAR_IND_Q_bz_ID
  integer            :: PAR_IND_Kk_ibz_ID
  integer            :: PAR_IND_Xk_ibz_ID
  integer            :: PAR_IND_Xk_bz_ID
@@ -322,6 +334,8 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_WORLD
  ! ... Serial
  type(MPI_comm),SAVE :: PAR_COM_NULL
+ ! ... HOST
+ type(MPI_comm),SAVE :: PAR_COM_HOST
  !
  ! ... linear algebra
  type(MPI_comm),SAVE :: PAR_COM_SLK
@@ -392,18 +406,20 @@ module parallel_m
  !
  ! ... and dimensions (used for automatic cpu distribution)
  !=========================================================
- integer            :: PAR_K_range      = 0
- integer            :: PAR_EH_range     = 0
- integer            :: PAR_QP_range     = 0
- integer            :: PAR_Q_range(2)   = 0
- integer            :: PAR_Dip_ib(2)    = 0
- integer            :: PAR_Dip_ib_lim(2)= 0
- integer            :: PAR_X_ib(2)      = 0
- integer            :: PAR_X_iq(2)      = 0
- integer            :: PAR_n_bands(2)   = 0
- integer            :: PAR_n_c_bands(2) = 0
- integer            :: PAR_n_v_bands(2) = 0
- integer            :: PAR_n_G_vectors  = 0
+ integer            :: PAR_K_range       = 0
+ integer            :: PAR_EH_range      = 0
+ integer            :: PAR_QP_range      = 0
+ integer            :: PAR_Q_ibz_range(2)= 0
+ integer            :: PAR_Q_bz_range(2) = 0
+ integer            :: PAR_Dip_ib(2)     = 0
+ integer            :: PAR_Dip_ib_lim(2) = 0
+ integer            :: PAR_X_ib(2)       = 0
+ integer            :: PAR_X_iq(2)       = 0
+ integer            :: PAR_n_bands(2)    = 0
+ integer            :: PAR_n_c_bands(2)  = 0
+ integer            :: PAR_n_v_bands(2)  = 0
+ integer            :: PAR_n_G_vectors   = 0
+ integer            :: PAR_G_k_range(2)  = 0  ! For parallel I/O of G
  !
  ! ... and derived variables
  !==========================
@@ -417,8 +433,8 @@ module parallel_m
  integer,allocatable:: PAR_B_mat_index(:,:)
  integer            :: PAR_n_Bp_mat_elements
  integer,allocatable:: PAR_Bp_mat_index(:,:)
- integer            :: PAR_nQ
- integer,allocatable:: PAR_Q_index(:)
+ integer            :: PAR_nQ_ibz
+ integer,allocatable:: PAR_Q_ibz_index(:)
  integer            :: PAR_nQ_bz
  integer,allocatable:: PAR_Q_bz_index(:)
  integer            :: PAR_Kk_nibz
@@ -444,13 +460,14 @@ module parallel_m
  integer, private   :: local_type
  !
  interface PP_redux_wait
-   module procedure l1share,                                         &
-&                   i1share,i2share,i3share,                         &
-&                   i81share,                                        &
-&                   r0share,r1share,r2share,r3share,                 &
-&                   c0share,c1share,c2share,c3share,c4share,c5share, &
+   module procedure l1share,                                           &
+&                   i1share, i2share, i3share,                         &
+&                   i81share,                                          &
+&                   r0share, r1share, r2share,r3share,                 &
+&                   c0share, c1share, c2share,c3share,c4share,c5share, &
 #if ! defined _DOUBLE
-                    d0share,d1share,d2share,d3share,                 &
+&                   d0share, d1share, d2share,d3share,                 &
+&                   dc0share,dc1share,dc2share,                        &
 #endif
 &                   PARALLEL_wait
  end interface PP_redux_wait
@@ -463,15 +480,35 @@ module parallel_m
  end interface PP_bcast
  !
  interface PP_send_and_receive
-   module procedure PP_snd_rcv_c2,PP_snd_rcv_c1
+   module procedure PP_snd_rcv_c2,PP_snd_rcv_c1,PP_snd_rcv_r2
  end interface PP_send_and_receive
+ !
+ !interface
+ !  subroutine c_chsort(base, nmemb, elemsize, compar) bind(C,name='qsort')
+ !    use iso_c_binding
+ !    implicit none
+ !    type(C_PTR), value :: base
+ !    integer(C_SIZE_T), value :: nmemb, elemsize
+ !    type(C_FUNPTR), value :: compar
+ !  end subroutine c_chsort
+ !  !
+ !  pure function c_strcmp(a,b) result(strcmp_out) bind(C,name='strcmp')
+ !    use iso_c_binding
+ !    implicit none
+ !    integer(C_int) :: strcmp_out
+ !    !pgi$ ignore_tkr a,b
+ !    type(C_PTR), value :: a, b
+ !  end function c_strcmp
+ !end interface
  !
  contains
    !
    subroutine PAR_build_index(PAR_ind,N_elements,V_ind,n_V_ind)
      !
-     integer           ::N_elements,n_V_ind,V_ind(N_elements),i_p
-     type(PP_indexes)  ::PAR_ind
+     type(PP_indexes), intent(in)   :: PAR_ind
+     integer,          intent(in)   :: N_elements
+     integer,          intent(out)  :: n_V_ind,V_ind(N_elements)
+     integer                        :: i_p
      !
      V_ind  =0
      n_V_ind=0
@@ -510,6 +547,7 @@ module parallel_m
      i_INTER_CHAIN=(myid/N_father)*(N_father/N_child)+mod(myid,N_father/N_child)
    end function
    !
+#if !defined _io_lib
    character(lchlen) function PARALLEL_message(i_s)
      use stderr, ONLY:intc
      use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K, &
@@ -541,6 +579,7 @@ module parallel_m
      endif
      !
    end function
+#endif
    !
    subroutine CPU_and_ROLE_strings_save()
      implicit none
@@ -561,8 +600,8 @@ module parallel_m
    subroutine CPU_str_reset()
      CPU_structure(1)%Long_Description="DIPOLES"
      CPU_structure(1)%Short_Description="DIP"
-     CPU_structure(2)%Long_Description="Response_G_space_Finite_Momentum"
-     CPU_structure(2)%Short_Description="X_finite_q"
+     CPU_structure(2)%Long_Description="Response_G_space_and_IO"
+     CPU_structure(2)%Short_Description="X_and_IO"
      CPU_structure(3)%Long_Description="Response_G_space"
      CPU_structure(3)%Short_Description="X"
      CPU_structure(4)%Long_Description="Response_T_space"
@@ -595,6 +634,7 @@ module parallel_m
      COMM_out%CPU_ID     =COMM_in%CPU_ID
    end subroutine
    !
+#if !defined _io_lib
    subroutine PAR_INDEX_copy(IND_in,IND_out)
      type(PP_indexes):: IND_in,IND_out
      integer :: dim_
@@ -634,6 +674,7 @@ module parallel_m
      YAMBO_FREE(IND_out%first_of_1D)
      YAMBO_FREE(IND_out%last_of_1D)
    end subroutine
+#endif
    !
    subroutine PARALLEL_wait(COMM)
      integer, optional :: COMM
@@ -642,9 +683,7 @@ module parallel_m
      if (ncpu==1) return
      !
      local_COMM=mpi_comm_world
-     if (present(COMM)) then
-       local_COMM=COMM
-     endif
+     if (present(COMM)) local_COMM=COMM
      if (local_COMM==comm_default_value) return
      call mpi_barrier(local_COMM,i_err)
 #endif
@@ -1241,6 +1280,97 @@ module parallel_m
 #endif
    end subroutine
    !
+   subroutine dc0share(cval,imode,COMM)
+     complex(DP)       :: cval
+     integer, optional :: imode,COMM
+#if defined _MPI
+     integer :: omode,LOCAL_COMM  ! Work Space
+     complex(DP):: local_cval  ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     local_type=MPI_DOUBLE_COMPLEX
+     !
+     call mpi_barrier(LOCAL_COMM,i_err)
+     if (present(imode)) then
+       if (imode==1) omode=mpi_sum
+       if (imode==2) omode=mpi_prod
+     else
+       omode=mpi_sum
+     endif
+     local_cval=0.
+     call mpi_allreduce(cval,local_cval,1,local_type,omode,LOCAL_COMM,i_err)
+     cval=local_cval
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
+   subroutine dc1share(array,COMM)
+     complex(DP):: array(:)
+     integer, optional :: COMM
+#if defined _MPI
+     integer::dimensions(1),dimension,LOCAL_COMM  ! Work Space
+     complex(DP),allocatable::larray(:)  ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     local_type=MPI_DOUBLE_COMPLEX
+     !
+     call mpi_barrier(LOCAL_COMM,i_err)
+     dimensions=shape(array)
+     if( any(dimensions<1) ) return
+     dimension=product(dimensions)
+     allocate(larray(dimension))
+     larray=(0.,0.)
+     call mpi_allreduce(array(1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
+     array=larray
+     deallocate(larray)
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
+   subroutine dc2share(array,COMM)
+     complex(DP):: array(:,:)
+     integer, optional :: COMM
+#if defined _MPI
+     integer::dimensions(2),dimension,LOCAL_COMM  ! Work Space
+     complex(DP),allocatable::larray(:)  ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     local_type=MPI_DOUBLE_COMPLEX
+     !
+     call mpi_barrier(LOCAL_COMM,i_err)
+     dimensions=shape(array)
+     if( any(dimensions<1) ) return
+     dimension=product(dimensions)
+     allocate(larray(dimension))
+     larray=(0.,0.)
+     call mpi_allreduce(array(1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
+     array=reshape(larray,dimensions)
+     deallocate(larray)
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
    subroutine i0bcast(ival,node,COMM)
      integer  :: ival
      integer, intent(in) :: node
@@ -1451,6 +1581,32 @@ module parallel_m
    !
 #endif
    !
+   subroutine PP_snd_rcv_r2(mode,array,node,COMM)
+     character(*):: mode
+     real(SP)    :: array(:,:)
+     integer, intent(in) :: node
+     integer, optional   :: COMM
+#if defined _MPI
+     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
+     integer::LOCAL_COMM,i_err! Work Space
+     if (ncpu==1) return
+     !
+     local_type=MPI_REAL
+     if (SP==DP) local_type=MPI_DOUBLE_PRECISION
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,1, LOCAL_COMM,i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,1, LOCAL_COMM, MPI_status, i_err)
+     !
+#endif
+   end subroutine
+   !
    subroutine PP_snd_rcv_c2(mode,array,node,COMM)
      character(*):: mode
      complex(SP) :: array(:,:)
@@ -1503,19 +1659,49 @@ module parallel_m
 #endif
    end subroutine
    !
-   subroutine PARALLEL_host_name
+   subroutine CREATE_hosts_COMM( )
 #if defined _MPI
-     character(MPI_MAX_PROCESSOR_NAME) :: machine_name
-     integer :: i_err
-     if (ncpu>1) then
-       call MPI_GET_PROCESSOR_NAME(machine_name,host_name_length,i_err)
-       host_name=machine_name
-     else
-       call igethname(host_name,host_name_length)
-     endif
-#else
-     call igethname(host_name,host_name_length)
+     !use pars,  ONLY:IPL
+     !use iso_c_binding
+     use LexicalSort,  ONLY:ch_sort
+     character (MPI_MAX_PROCESSOR_NAME), pointer :: tmp_hosts(:)
+     integer :: i_err,i_cpu
+     !type(C_PTR) :: ptr_hosts
 #endif
-   end subroutine
+     !
+     if (ncpu==1) then
+       call igethname(host_name,host_name_length)
+       return
+     endif
+     !
+#if defined _MPI
+     !
+     allocate(tmp_hosts(0:ncpu-1))
+     !
+     call MPI_GET_PROCESSOR_NAME(tmp_hosts(myid),host_name_length,i_err)
+     host_name=tmp_hosts(myid)
+     !
+     do i_cpu=0,ncpu-1
+       call MPI_BCAST(tmp_hosts(i_cpu),MPI_MAX_PROCESSOR_NAME,MPI_CHARACTER,i_cpu,MPI_COMM_WORLD,i_err)
+     end do
+     !
+     !call c_f_pointer(ptr_hosts,tmp_hosts,[ncpu])
+     !call c_chsort(ptr_hosts,int(ncpu,IPL),int(MPI_MAX_PROCESSOR_NAME,IPL),c_strcmp)
+     call ch_sort(tmp_hosts)
+     !
+     ! assign the same color to the same node
+     PAR_COM_HOST%my_CHAIN=0
+     do i_cpu=1,ncpu-1
+       if ( trim(tmp_hosts(i_cpu-1))/=trim(tmp_hosts(i_cpu)) ) PAR_COM_HOST%my_CHAIN=PAR_COM_HOST%my_CHAIN+1
+       if ( trim(host_name)==tmp_hosts(i_cpu) ) exit
+    end do
+    !
+    call MPI_COMM_SPLIT(MPI_COMM_WORLD,PAR_COM_HOST%my_CHAIN,myid,PAR_COM_HOST%COMM,i_err)
+    call MPI_COMM_RANK(PAR_COM_HOST%COMM,PAR_COM_HOST%CPU_id,i_err)
+    call MPI_COMM_SIZE(PAR_COM_HOST%COMM,PAR_COM_HOST%n_CPU ,i_err)
+    !
+    deallocate(tmp_hosts)
+#endif
+   end subroutine CREATE_hosts_COMM
    !
 end module parallel_m

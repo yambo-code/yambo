@@ -24,15 +24,13 @@
 integer function io_MPA(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen
- use com,           ONLY:error
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:nqibz,g_vec
- use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,MPA_description,X_alloc
+ use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,MPA_desc,X_alloc
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
 &                        io_elemental,io_status,io_bulk,&
 &                        read_is_on,write_is_on,io_header,&
-&                        manage_OP_IF_START_and_CL_IF_END,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_MULTIPOLE,IO_NOT_ALLOWED,&
 &                        io_fragment,IO_OUTDATED_DB,frag_MULTIPOLE,&
@@ -96,7 +94,7 @@ integer function io_MPA(X,Xw,ID)
    ! Global Descriptions
    !=====================
    !
-   io_MPA=variables_MPA(ID,MPA_description,X)
+   io_MPA=variables_MPA(ID,MPA_desc,X)
    if (io_MPA/=0) goto 1
    !
    ! Close & Menu lower line
@@ -116,10 +114,6 @@ integer function io_MPA(X,Xw,ID)
  enddo
  !
  if (iq==0) goto 1
- !
- ! Manage OP_IF_START_and_RD_CL_IF_END
- !
- call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
  !
  call io_fragment(ID,i_fragment=iq,ierr=io_err)
  !
@@ -241,16 +235,17 @@ integer function io_MPA(X,Xw,ID)
 end function
 !
 !
-integer function variables_MPA(ID,local_description,X)
+integer function variables_MPA(ID,local_desc,X)
  !
  use pars,          ONLY:schlen,lchlen
  use units,         ONLY:HA2EV
- use X_m,           ONLY:X_t,n_MPA_descs
+ use descriptors,   ONLY:IO_desc,IO_desc_reset
+ use X_m,           ONLY:X_t
  use IO_m,          ONLY:io_elemental,io_status,ver_is_gt_or_eq,read_is_on
  implicit none
  !
  integer            ::ID
- character(lchlen)  ::local_description(100)
+ type(IO_desc)      ::local_desc
  type(X_t)          ::X
  !
  ! Work Space
@@ -258,20 +253,14 @@ integer function variables_MPA(ID,local_description,X)
  integer             ::i_local_desc,sec_size
  character(schlen)   ::X_label,MPA_label
  !
- i_local_desc=0
- local_description=' '
+ call IO_desc_reset(local_desc)
  MPA_label='MPA_'
  !
  call io_elemental(ID,VAR=trim(MPA_label)//"PARS_1",VAR_SZ=2,MENU=0)
- i_local_desc=i_local_desc+1
  call io_elemental(ID,DB_I0=X%ng_db,&
-&     VAR="X matrix size         :",I0=X%ng,CHECK=.true.,OP=(/"<="/),&
-&     DESCRIPTION=local_description(i_local_desc))
- i_local_desc=i_local_desc+1
+&     VAR="X matrix size         :",I0=X%ng,CHECK=.true.,OP=(/"<="/),DESCRIPTOR=local_desc)
  call io_elemental(ID,&
-&     VAR="MPA npoles            :",I0=X%mpa_npoles,MENU=0)
- !
- n_MPA_descs=i_local_desc
+&     VAR="MPA npoles            :",I0=X%mpa_npoles,MENU=0,DESCRIPTOR=local_desc)
  !
  variables_MPA=io_status(ID)
  !

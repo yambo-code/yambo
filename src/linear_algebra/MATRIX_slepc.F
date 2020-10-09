@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): HM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
+subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
  !
  ! 10/06/2016 HM
  ! Use slepc to obtain the first few eigenpairs of a large matrix
@@ -29,31 +29,40 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  ! a separate source file for clarity.
  !
  use pars,          ONLY : SP,schlen
- use com,           ONLY : error,msg
- !
- implicit none
+ use com,           ONLY : msg
  !
  ! headers
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
+ !
+ use petscsys
+ use petscmat
+ use petscsysdef
+ use petscmatdef
+ !
+ use slepcsys
+ use slepceps
+ use slepcsysdef
+ use slepcepsdef
+ !
+ implicit none
  !
  ! arguments
  !
  integer                     :: n_eig         ! number of eigenvalues to compute
- complex(SP),  optional      :: V_right(:,:)  ! right eigenvalues
+ complex(SP)                 :: V_right(:,:)  ! right eigenvalues
  complex(SP),  optional      :: V_left(:,:)   ! left eigenvalues
  complex(SP),  optional      :: E_cmpl(:)     ! complex eigenvalues
  real(SP),     optional      :: E_real(:)     ! real eigenvalues
  character(schlen)           :: extraction    ! extraction method for the eigenvalues
  !
- PetscReal                    :: target_energy
- PetscReal                    :: slepc_tol
- PetscFortranInt              :: slepc_ncv
+ PetscScalar                 :: target_energy
+ PetscReal                   :: slepc_tol
+ PetscFortranInt             :: slepc_ncv
  ! 
  ! internal variables
  !
@@ -61,7 +70,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  !
  external :: MyEPSMonitor !function to monitor the convergence
  ! 
- Mat            :: A
+ Mat            :: M_slepc
  EPS            :: eps
  EPSExtraction  :: extr
  PetscReal      :: tol, ferror
@@ -84,11 +93,11 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
    call exit(0)
  endif
  !
- call MatGetSize(A,n,j,ierr)
+ call MatGetSize(M_slepc,n,j,ierr)
  call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
  call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
  !
- call MatCreateVecs(A,xr,xi,ierr)
+ call MatCreateVecs(M_slepc,xr,xi,ierr)
  !
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Create the eigensolver and display info
@@ -99,11 +108,11 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  !
  !Set operators. In this case, it is a standard eigenvalue problem
  !
- call EPSSetOperators(eps,A,PETSC_NULL_OBJECT,ierr)
+ call EPSSetOperators(eps,M_slepc,PETSC_NULL_MAT,ierr)
  call EPSSetProblemType(eps,EPS_HEP,ierr)
  !
- if (target_energy .ne. 0) then
-   call msg( 'nr', '[SLEPC] Criterion is target energy       :', real(target_energy,SP) )
+ if (real(target_energy,SP) .ne. 0) then
+   call msg( 'nr', '[SLEPC] Criterion is target energy       ', real(target_energy,SP) )
    call EPSSetTarget(eps,target_energy,ierr)
    call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
  else
@@ -126,7 +135,7 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  else if (extraction == 'refined_harmonic')  then
    extr = EPS_REFINED_HARMONIC
  endif
- call msg( 'r', '[SLEPC] Extraction method                :', extraction)
+ call msg( 'r', '[SLEPC] Extraction method                ', extraction)
  !
  call EPSSetExtraction(eps, extr, ierr)
  !
@@ -154,12 +163,12 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  !call EPSGetType(eps,tname,ierr)
  call EPSGetTolerances(eps,tol,maxit,ierr)
  !
- call msg( 'r', '[SLEPC] Number of requested eigenvalues  : ', int(nev) )
- call msg( 'r', '[SLEPC] Stopping condition tolerance     : ', real(tol,SP) )
- call msg( 'r', '[SLEPC] Stopping condition max iterations: ', int(maxit) )
+ call msg( 'r', '[SLEPC] Number of requested eigenvalues   ', int(nev) )
+ call msg( 'r', '[SLEPC] Stopping condition tolerance      ', real(tol,SP) )
+ call msg( 'r', '[SLEPC] Stopping condition max iterations ', int(maxit) )
 
  !Set monitor
- call EPSMonitorSet(eps,MyEPSMonitor,PETSC_NULL_OBJECT, PETSC_NULL_FUNCTION,ierr)
+ call EPSMonitorSet(eps,MyEPSMonitor,0,PETSC_NULL_FUNCTION,ierr)
  !
 
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -167,24 +176,24 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  call EPSSolve(eps,ierr)
  call EPSGetIterationNumber(eps,its,ierr)
- call msg( 'r', '[SLEPC] Number of iterations              :', int(its) )
+ call msg( 'r', '[SLEPC] Number of iterations              ', int(its) )
  call EPSGetDimensions(eps,nev,ncv,mpd,ierr)
- call msg( 'r', '[SLEPC] Number of eigenvalues        [NEV]:', int(nev) )
- call msg( 'r', '[SLEPC]                              [NCV]:', int(ncv) )
- call msg( 'r', '[SLEPC]                              [MPD]:', int(mpd) )
+ call msg( 'r', '[SLEPC] Number of eigenvalues        [NEV]', int(nev) )
+ call msg( 'r', '[SLEPC]                              [NCV]', int(ncv) )
+ call msg( 'r', '[SLEPC]                              [MPD]', int(mpd) )
 
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Display solution and clean up
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !
  call EPSGetConverged(eps,nconv,ierr)
- call msg( 'rn', '[SLEPC] Number of converged states       : ', int(nconv))
+ call msg( 'rn', '[SLEPC] Number of converged states        ', int(nconv))
  if ( nconv < n_eig ) then
    n_eig = nconv
  endif
  !
- !free the A matrix
- call MatDestroy(A,ierr)
+ !free the M_slepc matrix
+ call MatDestroy(M_slepc,ierr)
  !
  !open file for output
  !call PetscViewerHDF5Open(PETSC_COMM_WORLD, 'hdb.BS_slepc', FILE_MODE_WRITE, hdf5v, ierr)
@@ -192,19 +201,20 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
  !calculate eigenvalues and relative errors
  !
  if (nconv.gt.0) then
+   !
    do i=0,nev-1
-      !
      !Get converged eigenpairs: i-th eigenvalue is stored in kr
      !(real part) and ki (imaginary part)
-     call EPSGetEigenpair(eps,i,kr,PETSC_NULL_OBJECT,xr,PETSC_NULL_OBJECT,ierr)
+     !call EPSGetEigenpair(eps,i,kr,ki,xr,xi,ierr)
+     call EPSGetEigenpair(eps,i,kr,PETSC_NULL_SCALAR,xr,PETSC_NULL_VEC,ierr)
      !
-     !save the eigenvalues and eigenvectors in the matrix of the hamiltonian\
-     !E_real(i+1) = PetscRealPart(kr)
-     E_real(i+1) = kr
+     !save the eigenvalues and eigenvectors in the matrix of the hamiltonian
+     if(present(E_real)) E_real(i+1) = real(kr,SP)
      !  
      ! this is to write the vector to hdf5 directly
      !call VecView(xr,hdf5v,ierr)
      !  
+     !save the eigenvectors
      call VecScatterCreateToAll(xr,ctx,vout,ierr);
      ! scatter as many times as you need
      call VecScatterBegin(ctx,xr,vout,INSERT_VALUES,SCATTER_FORWARD,ierr);
@@ -214,11 +224,12 @@ subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_r
      V_right(:, i+1) = xsr
      call VecRestoreArrayReadF90(vout,xsr,ierr)
      !
-     ! destroy scatter context and local vector when no longer needed
-     call VecScatterDestroy(ctx,ierr);
-     call VecDestroy(vout,ierr);
-     !
    enddo
+   !
+   ! destroy scatter context and local vector when no longer needed
+   call VecScatterDestroy(ctx,ierr);
+   call VecDestroy(vout,ierr);
+   !
  endif
  !
  call EPSDestroy(eps,ierr)
@@ -235,14 +246,23 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  !
- implicit none
+ ! headers
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
+ !
+ use petscsys
+ use petscmat
+ use petscsysdef
+ use petscmatdef
+ !
+ use slepceps
+ use slepcepsdef
+ !
+ implicit none
  !
  EPS            :: eps
  Vec            :: x
@@ -253,8 +273,8 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
  PetscMPIInt    :: rank
  !
  ! write the number of converged eigenvalues
- call msg('s', '[SLEPC] Iteration #'// trim(intc(its))// ' - converged States: '&
-&           // trim(intc(nconv)) //' - error: ', errest(nconv+1))
+ call msg('s', '[SLEPC] Iteration #'// trim(intc(its))// ' - converged States '&
+&           // trim(intc(nconv)) //' - error ', errest(nconv+1))
 
  ierr = 0
  !

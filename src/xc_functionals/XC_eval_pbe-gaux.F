@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DV
@@ -41,6 +41,7 @@ real(DP), parameter :: epsg= 1.0d-10
 integer  :: ir
 !
  exsr=0.0_DP
+ sxsr=0.0_DP
  v1xsr=0.0_DP
  v2xsr=0.0_DP
  RHO=0.0_DP
@@ -63,7 +64,7 @@ integer  :: ir
  exsr=exsr*real(DL_vol,DP)/real(fft_size,DP)
 !Then consider the EXX fraction outside the subs
 !
- contains
+ end subroutine XC_eval_pbegaux
 !this comes from QE
 !-----------------------------------------------------------------------
       subroutine pbexgau_lsd(RHOA,RHOB,GRHOAA,GRHOBB,sx, &
@@ -99,7 +100,7 @@ integer  :: ir
 subroutine pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
 !-----------------------------------------------------------------------
 !
-!      use kinds, ONLY : DP
+      use pars,          ONLY:DP
 
       IMPLICIT REAL*8 (A-H,O-Z)
 
@@ -222,7 +223,6 @@ subroutine pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
 
       RETURN
       end subroutine pbe_gauscheme
-end subroutine XC_eval_pbegaux
 
       FUNCTION TayExp(X)
       Real*8 TAYEXP,X

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CH DS
@@ -29,7 +29,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  !
  use pars,                ONLY: SP,cZERO,lchlen,schlen
  use drivers,             ONLY: l_sc_run
- use com,                 ONLY: warning,msg,core_io_path,error,grid_paths
+ use com,                 ONLY: msg,core_io_path,grid_paths
  use stderr,              ONLY: intc,STRING_split
  use LIVE_t,              ONLY: live_timing
  use electrons,           ONLY: levels,n_spinor,n_sp_pol
@@ -129,7 +129,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
    !
  enddo
  !
- call msg('r','Shifted grids found: '//trim(intc(num_shifted_grids)))
+ call msg('r','Shifted grids found '//trim(intc(num_shifted_grids)))
  !
  if(num_shifted_grids<3) call warning(' Shifted grids are '//trim(intc(num_shifted_grids))//'. Assuming non periodic system.')
  !
@@ -137,7 +137,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)*num_shifted_grids
  !
- call live_timing('Dipoles shifted grids   :',n_LT_steps)
+ call live_timing('Dipoles shifted grids   ',n_LT_steps)
  !
  do i_sp_pol = 1,n_sp_pol
    !
@@ -149,8 +149,8 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
      !
      ! Load WFs first at k and then at k+q_iq
      ! 
-     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',title='-Oscillators/G space',&
-&           force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',&
+&           title='-Oscillators/G space/Shifted',force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      !
      do iq = 1, num_shifted_grids
        !
@@ -194,8 +194,8 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
            !
            do i_spinor=1,n_spinor
              !
-             rho = rho + Vstar_dot_V(wf_ng_eff,DEV_VARNAME(WF_shifted%c)(1:wf_ng_eff,i_spinor,iv_wf), &
-&                                              DEV_VARNAME(WF%c)(1:wf_ng_eff,i_spinor,ic_wf))
+             rho = rho + Vstar_dot_V(wf_ng_eff,DEV_VAR(WF_shifted%c)(1:wf_ng_eff,i_spinor,iv_wf), &
+&                                              DEV_VAR(WF%c)(1:wf_ng_eff,i_spinor,ic_wf))
              !
            enddo
            !

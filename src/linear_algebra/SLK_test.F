@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, AF
@@ -33,8 +33,7 @@ subroutine SLK_test(E,k,q)
  ! simple program to check parallel linear algebra
  !
  use pars,           ONLY:SP
- use com,            ONLY:msg
- use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_test_H_dim,SLK_COM_A2A
+ use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_test_H_dim
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use interfaces,     ONLY:PARALLEL_global_indexes,LINEAR_ALGEBRA_driver
@@ -48,7 +47,7 @@ subroutine SLK_test(E,k,q)
  !
  ! Work Space
  !
- integer                    :: ndim,ierr
+ integer                    :: ndim
  complex(SP),   allocatable :: A_in(:,:),A_out(:,:),A_out_par(:,:)
  complex(SP),   allocatable :: B_in(:,:),M_mat(:,:)
  real(SP),      allocatable :: W(:), W_par(:)
@@ -159,7 +158,6 @@ end subroutine SLK_test
  use pars,       ONLY:SP,DP
  use parallel_m, ONLY:PP_redux_wait
  use SLK_m,      ONLY:SLK_COM_A2A
- use com,        ONLY:msg
  !
  implicit none
  !
@@ -168,7 +166,7 @@ end subroutine SLK_test
  character(12)     :: ch(3)
  real(DP),external :: dlaran
  !
- integer   :: i, j, ierr
+ integer   :: i, j
  real(SP) :: scal=0.2_SP 
  !
  call date_and_time(ch(1),ch(2),ch(3),iseed)
@@ -201,7 +199,7 @@ end subroutine build_matrix
  subroutine inverse_check( ndim, Amat, Ainv )
  !===========================================
  use pars,       ONLY:SP
- use com,        ONLY:error,msg
+ use com,        ONLY:msg
  use parallel_m, ONLY:mpi_comm_world
  use wrapper,    ONLY:M_by_M
 #include<memory.h>
@@ -253,8 +251,7 @@ end subroutine inverse_check
  subroutine matrix_check( label, ndim1, ndim2, Amat, Bmat)
  !========================================================
  use pars,       ONLY:SP
- use com,        ONLY:error,msg
- use parallel_m, ONLY:mpi_comm_world
+ use com,        ONLY:msg
  implicit none
  !
  integer     :: ndim1,ndim2

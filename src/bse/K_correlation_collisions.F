@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS, HM
@@ -273,8 +273,8 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
      !
      iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,ikit,ikot,ibi,ibo,i_sp_pol_i)
      !
-     call DEV_SUBNAME(scatter_Bamp)(isc)
-     call dev_memcpy( DEV_VARNAME(BS_blk(iB)%O_c)(:,iB_oscillator), DEV_VARNAME(isc%rhotw) )
+     call DEV_SUB(scatter_Bamp)(isc)
+     call dev_memcpy( DEV_VAR(BS_blk(iB)%O_c)(:,iB_oscillator), DEV_VAR(isc%rhotw) )
      !
      O_todo_table(i_s_collision,ikit,ikot,ibi,ibo,i_sp_pol_i) = .false.
    end subroutine

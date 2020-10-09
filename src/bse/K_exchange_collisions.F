@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -96,8 +96,8 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      ! G==0 term
      !
-     if(trim(L_kind)=="full") BS_T_grp(i_T_grp)%DEV_VARNAME(O_x)(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_R(i_T_el)
-     if(trim(L_kind)=="Lbar") BS_T_grp(i_T_grp)%DEV_VARNAME(O_x)(1,i_T_el)=cZERO
+     if(trim(L_kind)=="full") BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_R(i_T_el)
+     if(trim(L_kind)=="Lbar") BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=cZERO
      !
      ! G/=0 terms
      !
@@ -121,7 +121,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      if  (i_s==1.or.i_T_grp_last_with_identity_sym<0) then
        !
-       call DEV_SUBNAME(scatter_Bamp)(K_EXCH_collision)
+       call DEV_SUB(scatter_Bamp)(K_EXCH_collision)
        !
 #ifdef _CUDA
        call dev_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d,range1=(/2,BS_n_g_exch/) )
@@ -152,15 +152,15 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        !$omp end parallel do
        !
 #endif
-       if (i_s>nsym/(i_time_rev+1)) call dev_conjg(BS_T_grp(i_T_grp)%DEV_VARNAME(O_x)(:,i_T_el))
+       if (i_s>nsym/(i_time_rev+1)) call dev_conjg(BS_T_grp(i_T_grp)%DEV_VAR(O_x)(:,i_T_el))
        !
      endif
      !
    else
      !
-     call DEV_SUBNAME(scatter_Bamp)(K_EXCH_collision)
+     call DEV_SUB(scatter_Bamp)(K_EXCH_collision)
      !
-     BS_T_grp(i_T_grp)%DEV_VARNAME(O_x)(1,i_T_el)=cZERO
+     BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=cZERO
      if(trim(L_kind)=="full") i_g0=1
      if(trim(L_kind)=="Lbar") i_g0=2
      !

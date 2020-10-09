@@ -1,5 +1,5 @@
 /*
-        Copyright (C) 2000-2019 the YAMBO team
+        Copyright (C) 2000-2020 the YAMBO team
               http://www.yambo-code.org
 
  Authors (see AUTHORS file for details): AF
@@ -43,4 +43,18 @@
 #  define DEV_ATTRIBUTE
 #  define DEV_PINNED
 #endif
+
+#define DEV_SUB(x)          DEV_SUBNAME(x)
+#define DEV_SUB_ALT(x)      DEV_SUBNAME_ALT(x)
+#define DEV_VAR(x)          DEV_VARNAME(x)
+#define DEV_ATTR            DEV_ATTRIBUTE
+#define DEV_PIN             DEV_PINNED
+
+!#ifdef CUDA
+!  #define YAMBO_CUDA_OR_OMP(priv_list,nloop)  !$cuf kernel do(nloop) <<<*,*>>>
+!  #define YAMBO_CUDA_OR_OMP_END
+!#else 
+!  #define YAMBO_CUDA_OR_OMP(priv_list,nloop)  !$omp parallel do default(shared), private(private_list), collapse(nloop)
+!  #define YAMBO_CUDA_OR_OMP_END               !$omp end parallel do
+!#endif
 

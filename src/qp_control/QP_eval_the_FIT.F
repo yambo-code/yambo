@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -46,7 +46,7 @@ complex(SP) function QP_eval_the_FIT(i_ACTION,i_sp_pol,Energy,E_ref_in,bands,E,k
  !
  ! Valence or conduction
  !-----------------------
- is_valence=Energy<=1.E-5
+ is_valence=Energy<=E%E_VBM(i_sp_pol)+1.E-5
  iref=0
  jref=0
  QP_eval_the_FIT=cZERO

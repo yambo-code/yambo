@@ -19,6 +19,13 @@ TARBALL=$(tarball_netcdff)
 AUXFLAGS=--prefix=$(LIBPATH) \
          --without-pic --enable-static --disable-shared
 
+# DEBUG <
+# This option is useful for debugging netcdf4 problems
+# --enable-logging
+# See also the connected call in src/setup/setup.F
+# call netcdf_call(nf90_set_log_level(3),1)
+# DEBUG >
+
 #
 # MAIN target
 #
@@ -35,12 +42,9 @@ configure-stamp: uncompress-stamp
 	      ./configure $(AUXFLAGS) \
 	      CC="$(cc)" \
 	      CPP="$(cpp)" \
-	      CFLAGS="$(cflags)" \
 	      CXX="$(cc)" \
 	      CXXCPP="$(cpp)" \
 	      FC="$(fc)" \
-	      FCFLAGS="$(fcflags)" \
-	      FFLAGS="$(fflags)" \
 	      CPPFLAGS="$(netcdf_flag) $(ihdf5) $(inetcdf)" \
 	      LIBS="$(lnetcdf) $(lhdf5)" \
 	      F77="$(f77)" ); \

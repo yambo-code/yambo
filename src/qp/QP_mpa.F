@@ -31,11 +31,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use frequency,     ONLY:w_samp 
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg,error
+ use com,           ONLY:msg
  use drivers,       ONLY:l_sc_run
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
-&                        PAR_IND_Q,PAR_IND_Q_ID,PAR_IND_QP_ID,&
-&                        PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu
+&                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,&
+&                        PAR_Q_ibz_index,n_WF_bands_to_load,HEAD_QP_cpu
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,OP_APP_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
@@ -129,7 +129,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Redefine iq_to_start to be CPU-dependent
  !
  do iqbz=1,q%nbz 
-   if (PAR_IND_Q%element_1D(q%sstar(iqbz,1))) then
+   if (PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) then
      iq_to_start=iqbz
      exit
    endif
@@ -181,7 +181,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  call PP_redux_wait
  !
  timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
-&             PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&
+&             PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)*&
 &             count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
  !
  ch=trim(SECTION_name)
@@ -189,7 +189,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  Q_loop: do iqbz=iq_to_start,q%nbz 
    !
-   if (.not.PAR_IND_Q%element_1D(q%sstar(iqbz,1))) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) cycle
    !
    isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
    iqibz=isc%qs(2)
@@ -197,7 +197,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    if (iqibz/=isc%iqref) then
      !
-     iq_mem=PAR_Q_index(iqibz)
+     iq_mem=PAR_Q_ibz_index(iqibz)
      X_range=(/1,Xw%n_freqs/)
      if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !

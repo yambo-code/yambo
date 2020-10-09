@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -75,7 +75,7 @@ module ELPH
  contains
    !
    subroutine elph_global_alloc(what)
-     use parallel_m,ONLY:PAR_nQ
+     use parallel_m,ONLY:PAR_nQ_bz
      use QP_m,      ONLY:QP_n_states
      use R_lattice, ONLY:nkbz,nqibz
      character(*)      ::what
@@ -86,14 +86,14 @@ module ELPH
          !
          if (.not.allocated(gsqF_fan)) then
            if (.not.eval_G_using_KK) then
-             YAMBO_ALLOC(gsqF_fan,(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
-             YAMBO_ALLOC(gsqF_ca_corr,(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
+             YAMBO_ALLOC(gsqF_fan,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
+             YAMBO_ALLOC(gsqF_ca_corr,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
              gsqF_fan=0.
              gsqF_ca_corr=0.
            endif
-           YAMBO_ALLOC(gsqF_dw,(QP_n_states,PAR_nQ,ph_modes))
-           YAMBO_ALLOC(gsqF_life_bose,(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
-           YAMBO_ALLOC(gsqF_life_f,(QP_n_states,PAR_nQ,ph_modes,gsqF_energy_steps))
+           YAMBO_ALLOC(gsqF_dw,(QP_n_states,PAR_nQ_bz,ph_modes))
+           YAMBO_ALLOC(gsqF_life_bose,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
+           YAMBO_ALLOC(gsqF_life_f,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
            gsqF_dw=0.
            gsqF_life_bose=0.
            gsqF_life_f=0.

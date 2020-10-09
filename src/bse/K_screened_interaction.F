@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -27,17 +27,15 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use stderr,       ONLY:intc
  use frequency,    ONLY:w_samp
  use drivers,      ONLY:l_td_hf
- use com,          ONLY:warning
  use collision_el, ONLY:elemental_collision,elemental_collision_free
  use R_lattice,    ONLY:bz_samp,RIM_qpg,RIM_anisotropy
  use D_lattice,    ONLY:i_time_rev,i_space_inv
- use X_m,          ONLY:X_alloc,X_t,X_mat
-#ifdef _CUDA
- use X_m,          ONLY:X_mat_d
-#endif
+ use X_m,          ONLY:X_alloc,X_t,X_mat,X_mat_d
  use BS,           ONLY:BS_n_g_W,BS_W_is_diagonal,BS_W
- use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD,RD_CL,RD_CL_IF_END
+ use IO_m,         ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,&
+&                       OP_RD,RD,RD_CL,RD_CL_IF_END
  use deviceXlib_m, ONLY:dev_memcpy
+ use cuda_m,       ONLY:have_cuda
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -49,18 +47,16 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  integer,     intent(out) :: io_X_err
  !
  type(elemental_collision), target ::isc
-#ifdef _CUDA
- complex(SP), pointer, device :: gamp_d(:,:)
+ complex(SP), pointer DEV_ATTR :: gamp_d(:,:)
  real(SP)   :: rtmp
  integer    :: nibz
-#endif
  !
  integer    :: BS_W_size2,i_g2,i_g3,iq_W
  logical    :: W_is_em1s,W_is_pp
  !
  ! I/O
  !
- integer           :: XID
+ integer           :: XID,IO_ACT
  integer, external :: io_X
  ! 
  if (l_td_hf) then
@@ -116,9 +112,9 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  endif
  !
  YAMBO_ALLOC(isc%gamp,(BS_n_g_W,BS_W_size2))
-#ifdef _CUDA
+ if (have_cuda) then
    YAMBO_ALLOC(isc%gamp_d,(BS_n_g_W,BS_W_size2))
-#endif
+ endif
  !
  if (.not.l_td_hf) then
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
@@ -132,11 +128,12 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  do iq_W=1,q%nibz
    !
    isc%qs(2)=iq_W
-   call DEV_SUBNAME(scatter_Gamp)(isc,'c')
+   call DEV_SUB(scatter_Gamp)(isc,'c')
    !
    if (.not.l_td_hf) then
      !
-     call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
+     IO_ACT=manage_action(RD_CL_IF_END,iq_W,1,q%nibz)
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
      io_X_err=io_X(X,Xw,XID)
      if (io_X_err<0) then
        call warning('Reading of io_X for iq='//trim(intc(iq_W))//' failed despite previous check.')
@@ -182,7 +179,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      !
    else
      !
-     call dev_memcpy(BS_W(:,1,iq_W),DEV_VARNAME(isc%gamp)(:,1))
+     call dev_memcpy(BS_W(:,1,iq_W),DEV_VAR(isc%gamp)(:,1))
      !
    endif
    ! 
@@ -191,15 +188,15 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  ! Anisotropy correction. Note that isc%gamp(1,1)=RIM_anisotropy while
  ! the \delta(G,G') term must be multiplied by the standard RIM_qpg(1,1)
  !
-#ifdef _CUDA
  if (RIM_anisotropy/=0.) then
-    rtmp=BS_W(1,1,1)
-    rtmp=rtmp+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
-    BS_W(1,1,1)=rtmp
- endif
+#ifdef _CUDA
+     rtmp=BS_W(1,1,1)
+     rtmp=rtmp+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
+     BS_W(1,1,1)=rtmp
 #else
- if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
+     BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
 #endif
+ endif
  !
  call elemental_collision_free(isc)
  !

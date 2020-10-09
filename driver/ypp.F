@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,20 +24,20 @@
 integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  use drivers,             ONLY:infile_editing
- use stderr,              ONLY:write_to_log
+ use stderr,              ONLY:write_to_log,STRING_same
  use parallel_m,          ONLY:ncpu,myid
  use electrons,           ONLY:levels,E_reset,n_bands,default_nel
- use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,&
-&                              nXkibz,nqibz,k_pt,q_pt
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,nXkibz,nqibz,k_pt,q_pt
  use D_lattice,           ONLY:input_GS_Tel,alat,nsym
- use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP,mk_dir
- use com,                 ONLY:msg,more_io_path,com_path
+ use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
+ use com,                 ONLY:msg
  use it_tools,            ONLY:it_reset
  use it_m,                ONLY:infile
  use wave_func,           ONLY:io_WF
  use interfaces,          ONLY:PARALLEL_global_indexes
- use YPPm,                ONLY:l_bxsf,l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
-&                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,l_fix_save
+ use YPPm,                ONLY:l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
+&                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,&
+&                              l_fix_save,alat_used_for_output,l_QP_DB_expand,coo_out,coo_in
 #if defined _YPP_RT
  use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs,l_NL_X,l_NL_exc
 #endif
@@ -106,9 +106,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
    call ypp_finalize("Where is the SAVE?",instr)
    return
  else
-   call mk_dir(more_io_path)
-   call mk_dir(com_path)
-   if (ncpu>1) call mk_dir(trim(com_path)//"/LOG")
+   call IO_make_directories("MORE LOG")
  endif
  !
 #if defined _MEM_CHECK
@@ -159,6 +157,14 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call msg('s',':: Symmetries            :',nsym)
  call msg('s',':: RL vectors            :',ng_vec)
  !
+ if (STRING_same(trim(coo_out),"alat").or.STRING_same(trim(coo_in),"alat")) then
+   if (alat_used_for_output==0.) then
+     call warning("Input alat undefined. Using the DB value")
+     alat_used_for_output=alat(1)
+   endif
+   call msg('s',':: Lattice constant (used to define "alat" unit) [a.u.]:',alat_used_for_output)
+ endif
+ !
  ! BZ sampling index 
  !
  call section('*','K-point grid')
@@ -168,7 +174,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! Rim energies and kpts
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,ID=ID)
- i_err_DbGd=io_Double_Grid(en,Xk,ID) 
+ i_err_DbGd=io_Double_Grid(en,k,ID)
  ! 
  ! Allocate and fill the k_pt/q_pt array for the DBs header
  !
@@ -197,15 +203,14 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !===================
  !
  if (l_bz_grids) call k_grids(en,k,Xk,q)
- !   =========
  !
- if (l_map_kpts) call k_map_fine_to_coarse(Xk,Xen)
+ if (l_map_kpts) call k_map_fine_to_coarse_driver(Xk,Xen)
  !
  if (l_map_WFs) call WF_map_perturbative_SOC(Xk,Xen)
  !
- if (l_bxsf)  call bxsf_read(Xk,Xen)
- !
  if (l_QP_DBs_create_and_modify)  call QP_DBs_create_and_modify(en,k)
+ !
+ if (l_QP_DB_expand)  call QP_DB_expand( k )
  !
  if (l_QP_DBs_manipulate)  call QP_DBs_manipulate( en )
  !
@@ -265,7 +270,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! CLOSING
  !=========
  !
- call CLOSE_the_run(.TRUE.,.FALSE.,.FALSE.)
+ call CLOSE_the_run(.TRUE.,.TRUE.,.FALSE.)
  !
  call INIT_ypp(en,instr,.TRUE.)
  !

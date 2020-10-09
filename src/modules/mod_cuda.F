@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MF, AF
@@ -33,9 +33,9 @@ module cuda_m
   public
 
 #ifdef _CUDA
-  logical:: have_cuda=.true.
+  logical, parameter:: have_cuda=.true.
 #else
-  logical:: have_cuda=.false.
+  logical, parameter:: have_cuda=.false.
 #endif
   !
   logical:: have_cuda_devices=.false.
@@ -69,6 +69,7 @@ module cuda_m
   public :: cuda_linalg_init
   public :: cuda_linalg_setup
   public :: cuda_getstat
+  public :: cuda_devsync
   !
   public :: stream_kind
   public :: stream_default
@@ -88,7 +89,7 @@ contains
     !
     stream_default=cudaforGetDefaultStream()
     ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
-    ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
+    ierr = CudaStreamCreateWithFlags(stream_d2h,cudaStreamNonBlocking)
 #else
     have_cuda_devices=.false.
 #endif
@@ -96,7 +97,6 @@ contains
   end subroutine cuda_setup
   !
   subroutine cuda_linalg_setup()
-    use com,  ONLY:error
     implicit none
 #ifdef _CUDA
     integer :: istat 
@@ -116,6 +116,16 @@ contains
     ierr = CudaDeviceSynchronize()
     ierr = CudaGetLastError()
     !write(*,*) CudaGetLastMessage(ierr)
+#endif
+    return
+  end function
+
+  function cuda_devsync() result(ierr)
+    implicit none
+    integer :: ierr
+    ierr = 0 
+#ifdef _CUDA
+    ierr = CudaDeviceSynchronize()
 #endif
     return
   end function

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): PM AM
@@ -41,9 +41,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use LIVE_t,              ONLY:live_timing
  use vec_operate,         ONLY:v_norm
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
-&                              PAR_IND_Q,PAR_nQ,PAR_nQP
+&                              PAR_IND_Q_ibz,PAR_nQ_ibz,PAR_nQP
  use functions,           ONLY:theta_function
- use com,                 ONLY:warning
  use timing_m,            ONLY:timing
  !
 #include<memory.h>
@@ -144,7 +143,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  PAR_bands(1)=count(PAR_IND_G_b%element_1D(:n_met_bands  ))
  PAR_bands(2)=count(PAR_IND_G_b%element_1D(n_met_bands+1:))
  !
- n_lt_steps=PAR_nQP*PAR_bands(1)*PAR_nQ
+ n_lt_steps=PAR_nQP*PAR_bands(1)*PAR_nQ_ibz
  !
  if (n_lt_steps>0) call live_timing('Sigma_c [FILLED bands]',n_lt_steps)
  !
@@ -161,7 +160,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
      !
      call LOCAL_WF_and_COLLISIONS_allocation( 1 , QP_n_G_bands(2))
      !
-     call live_timing('Sigma_c  [EMPTY bands]',PAR_nQP*PAR_bands(2)*PAR_nQ)
+     call live_timing('Sigma_c  [EMPTY bands]',PAR_nQP*PAR_bands(2)*PAR_nQ_ibz)
      !
    endif
    !
@@ -170,7 +169,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
      i_q  =q%sstar(i_q_bz,1)
      i_q_s=q%sstar(i_q_bz,2)
      !
-     if (.not.PAR_IND_Q%element_1D(i_q)) cycle
+     if (.not.PAR_IND_Q_ibz%element_1D(i_q)) cycle
      !
      Photon_E      =0._SP
      Photon_Gamma_E=SPEED_OF_LIGHT*v_norm(q%ptbz(i_q_bz,:))
@@ -249,7 +248,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! Symmetrize
  !
- call QP_states_simmetrize(E,V_complex=QP_Sc(:,1))
+ call QP_states_simmetrize(E,what="QED Sigma_c",V_complex=QP_Sc(:,1),warn_me=.TRUE.)
  call QP_states_simmetrize(E,V_complex=QP_dSc(:,1))
  !
  ! Clean-UP

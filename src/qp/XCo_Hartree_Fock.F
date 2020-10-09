@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,8 +32,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use stderr,        ONLY:intc
  use electrons,     ONLY:levels,spin_occ,spin
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&
-&                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_G_b,&
-&                        PAR_IND_Q_ID,n_WF_bands_to_load
+&                        PAR_IND_QP_ID,PAR_IND_Q_ibz,PAR_IND_G_b,&
+&                        PAR_IND_Q_ibz_ID,n_WF_bands_to_load
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_ng_Vxc,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
@@ -68,7 +68,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  !QP list
  !
- integer              :: ig
  integer              :: ikibz,i_sp_pol
 
  !
@@ -83,8 +82,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  mode_=""
  if (present(mode)) mode_=trim(mode)
  !
- call msg('r', '[VXC] Plane waves :',QP_ng_Vxc)
- call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
+ call msg('r', '[VXC] Plane waves ',QP_ng_Vxc)
+ call msg('r', '[EXS] Plane waves ',QP_ng_Sx)
  !
  ! QP_table -> report
  !
@@ -128,7 +127,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
 ! endif
 !
  n_lt_bands=count( PAR_IND_G_b%element_1D(:Sx_upper_band) )
- n_lt_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands/n_threads_SE
+ n_lt_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)*n_lt_bands/n_threads_SE
  if (n_lt_steps>0) call live_timing(trim(ch),n_lt_steps)
  !
  do i_qp=1,QP_n_states
@@ -153,7 +152,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
 #if !defined _CUDA
    !  !!! num_threads(n_outthr)
    !$omp parallel default(shared), &
-   !$omp          private(isc,iscp,local_rhotw,iq,iq_ibz,is_ibz,ikibz,i_sp_pol,jb,ig), reduction(+:DP_sx)
+   !$omp          private(isc,iscp,local_rhotw,iq,iq_ibz,is_ibz,ikibz,i_sp_pol,jb), reduction(+:DP_sx)
 #endif
    !
    call OPENMP_update(master_thread)
@@ -169,7 +168,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    YAMBO_ALLOC(local_rhotw,(QP_ng_Sx))
    isc%qs    =1
    !
-   call DEV_SUBNAME(scatter_Gamp)(isc,'x')
+   call DEV_SUB(scatter_Gamp)(isc,'x')
    !
    if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
    !
@@ -180,12 +179,12 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      iq_ibz=q%sstar(iq,1)
      is_ibz=q%sstar(iq,2)
      !
-     if (.not.PAR_IND_Q%element_1D(iq_ibz)) cycle
+     if (.not.PAR_IND_Q_ibz%element_1D(iq_ibz)) cycle
      !
      isc%qs(2:)=(/iq_ibz,is_ibz/)
      !
      if (isc%qs(2)/=isc%iqref) then 
-       call DEV_SUBNAME(scatter_Gamp)(isc,'x')
+       call DEV_SUB(scatter_Gamp)(isc,'x')
        if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
      endif
      !
@@ -234,19 +233,19 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        isc%os(1)=jb
        iscp%os=isc%os
        !
-       call DEV_SUBNAME(scatter_Bamp)(isc)
+       call DEV_SUB(scatter_Bamp)(isc)
        !
        ! Normal case, the density matrix is diagonal
        !
        if (isc%is(1)/=iscp%is(1)) then
-         call DEV_SUBNAME(scatter_Bamp)(iscp)
+         call DEV_SUB(scatter_Bamp)(iscp)
        else
          ! iscp%rhotw = isc%rhotw
-         call dev_memcpy(DEV_VARNAME(iscp%rhotw),DEV_VARNAME(isc%rhotw))
+         call dev_memcpy(DEV_VAR(iscp%rhotw),DEV_VAR(isc%rhotw))
        endif
        !
-       DP_Sx_l=Vstar_dot_VV(isc%ngrho,DEV_VARNAME(iscp%rhotw),&
-&                                     DEV_VARNAME(isc%rhotw),DEV_VARNAME(isc%gamp)(:,1))
+       DP_Sx_l=Vstar_dot_VV(isc%ngrho,DEV_VAR(iscp%rhotw),&
+&                                     DEV_VAR(isc%rhotw),DEV_VAR(isc%gamp)(:,1))
        DP_Sx=DP_Sx + DP_Sx_l * ( -4._SP/spin_occ*pi*E%f(jb,isc%os(2),isc%os(4)) )
        !
        if (master_thread.and.is_ibz==1.and.n_lt_steps>0) call live_timing(steps=1)

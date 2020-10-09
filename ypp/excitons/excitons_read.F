@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV DS
@@ -23,13 +23,12 @@
 !
 subroutine excitons_read(k,Xk,en,Xen,iq,what)
  !
- use pars,          ONLY:SP,pi,schlen
+ use pars,          ONLY:pi
  use R_lattice,     ONLY:bz_samp
- use com,           ONLY:error
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_reset
+ use X_m,           ONLY:X_reset
  use QP_CTL_m,      ONLY:QP_apply
- use electrons,     ONLY:levels,n_spin,n_sp_pol,spin,E_SOC_nbands
+ use electrons,     ONLY:levels,n_spin,n_sp_pol,spin
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY,io_disconnect
  use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
  use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_K_coupling,BS_cpl_mode,&
@@ -45,7 +44,6 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  !
  ! Work Space
  !
- integer ,allocatable :: BS_E_degs(:)
  !
  !... I/0
  !
@@ -88,7 +86,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    !
    ! Apply quasi-particle correction if presents
    ! 
-   call QP_apply(BS_bands,Xen,Xk,'G',msg_fmt='s')
+   call QP_apply(BS_bands,Xen,Xk,'G',msg_fmt='rs')
    !
    if (BS_cpl_K_exchange)                   BS_cpl_mode='x'
    if (BS_cpl_K_corr)                       BS_cpl_mode='c'
@@ -106,7 +104,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    YAMBO_ALLOC(BS_R_right,(BSS_n_eig))
    YAMBO_ALLOC(BS_R_left,(BSS_n_eig))
    YAMBO_ALLOC(BS_E,(BSS_n_eig))
-   if(E_SOC_nbands/=0) then
+   if(en%nb_SOC/=0) then
      YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
    endif
    !

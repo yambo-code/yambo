@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -28,7 +28,7 @@ subroutine plot_gnuplot(eval_only)
  use com,         ONLY:msg
  use YPPm,        ONLY:nr,v2plot,r_hole,v2plot2D,l_norm_to_one,WF_multiplier,plot_dim,&
 &                      plot_title,output_string,l_wavefunction,l_current,use_xcrysden,&
-&                      plot_is_1D,plot_is_2D,l_free_hole
+&                      plot_is_1D,plot_is_2D,l_free_hole,l_average_eh
  use LIVE_t,      ONLY:live_timing
  !
 #include<memory.h>
@@ -61,7 +61,7 @@ subroutine plot_gnuplot(eval_only)
  ! SET CENTER OF THE PLOT
  !
  r_plot_center=0.
- if (.not.l_free_hole) r_plot_center=r_hole
+ if (.not.l_free_hole.and..not.l_average_eh) r_plot_center=r_hole
  !
  ! DIMENSIONs
  !

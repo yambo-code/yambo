@@ -1,1 +1,0 @@
-objs = defs_datatypes.o hdr_io.o a2y_KSS_file_name.o a2y.o a2y_db1.o a2y_wf.o

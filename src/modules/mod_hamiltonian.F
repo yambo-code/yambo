@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -29,6 +29,7 @@ module hamiltonian
 #include<memory.h>
  !
  integer           :: H_ref_bands(2)
+ integer           :: H_ref_nbands
  !
  character(schlen) :: H_potential
  !
@@ -60,6 +61,7 @@ module hamiltonian
  ! Rotation matrix which diagonalize the hamiltonian
  !
  complex(SP), allocatable :: H_rotation(:,:,:,:)
+ complex(SP), allocatable :: H_rotation_ref(:,:,:,:)
  !
  ! Wavefunction indexes
  !
@@ -116,6 +118,8 @@ module hamiltonian
        call E_reset(E_reference)
        call E_duplicate(E,E_reference)
      endif
+     !
+     H_ref_nbands=H_ref_bands(2)-H_ref_bands(1)+1
      !
      YAMBO_ALLOC(Hzero,(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
      !

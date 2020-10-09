@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -28,8 +28,10 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  !  where A is a n-x-n matrix and B is n-x-nrhs
  !
  use pars,           ONLY:SP
+ use drivers,        ONLY:l_nl_optics,l_real_time
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
+ !
 #include<memory.h>
  !
  integer     :: n,nrhs
@@ -39,11 +41,16 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  character(64)     :: subname="SERIAL_lin_system"
  type(LALGEBRA_WS) :: WS
  !
- call timing(trim(subname),OPR='start')
- !
  WS%dim=n
- YAMBO_FREE(WS%v_int)
- YAMBO_ALLOC(WS%v_int,(WS%dim))
+ !
+ if(.not.(l_nl_optics.or.l_real_time)) then
+   call timing(trim(subname),OPR='start')
+   YAMBO_FREE(WS%v_int)
+   YAMBO_ALLOC(WS%v_int,(WS%dim))
+ else
+   if(allocated(WS%v_int)) deallocate(WS%v_int)
+   allocate(WS%v_int(WS%dim))
+ endif
  !
 #if defined _DOUBLE
  CALL ZGESV(n,nrhs,A,n,WS%v_int,B,n,WS%i_fail)
@@ -55,7 +62,7 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  !
  call LINEAR_ALGEBRA_WS_reset(WS)
  !
- call timing(trim(subname),OPR='stop')
+ if(.not.(l_nl_optics.or.l_real_time)) call timing(trim(subname),OPR='stop')
  !
 end subroutine SERIAL_lin_system
 
@@ -67,6 +74,7 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  !  where A is a n-x-n matrix and B is n-x-nrhs
  !
  use pars,           ONLY:SP
+ use drivers,        ONLY:l_nl_optics,l_real_time
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
  use cuda_m
@@ -80,9 +88,8 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  character(64)     :: subname="SERIAL_lin_system_gpu"
  type(LALGEBRA_WS) :: WS
  integer :: lwork
- integer, device:: i_fail_d
  !
- call timing(trim(subname),OPR='start')
+ if(.not.(l_nl_optics.or.l_real_time)) call timing(trim(subname),OPR='start')
  !
  call LINEAR_ALGEBRA_WS_reset(WS)
  WS%dim=n
@@ -122,7 +129,7 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  !
  call LINEAR_ALGEBRA_WS_reset(WS)
  !
- call timing(trim(subname),OPR='stop')
+ if(.not.(l_nl_optics.or.l_real_time)) call timing(trim(subname),OPR='stop')
  !
 end subroutine SERIAL_lin_system_gpu
 #endif

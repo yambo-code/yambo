@@ -288,13 +288,13 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      enddo
      !$omp end do
      !     
-     call msg('r',' MPA time ordering fail [iqibz,count]: ', (/iqibz,poles_f/) )
-     !
      YAMBO_FREE(MPA_Xo)
      !
      !$omp end parallel
      !
      X_is_TR_rotated=.false.
+     !
+     call msg('r',' MPA time ordering fail [iqibz,count]: ', (/iqibz,poles_f/) )
      !
      !
      ! I/O MPA

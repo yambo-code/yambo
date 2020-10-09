@@ -40,7 +40,6 @@ srcdir      = @abs_top_srcdir@
 compdir     = @compdir@
 libdir      = @compdir@/lib
 includedir  = @compdir@/include
-sysinclude  = @compdir@/include/system
 lblas       = @BLAS_LIBS@
 llapack     = @LAPACK_LIBS@
 lblacs      = @BLACS_LIBS@

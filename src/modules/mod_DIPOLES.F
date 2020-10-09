@@ -86,10 +86,6 @@ module DIPOLES
      character(*)      :: what
      integer, optional :: d(:)
      !
-     ! Work Space
-     !
-     integer :: err
-     !
      if (present(d)) then
        select case(what)
        case('DIP_iR')
@@ -199,7 +195,7 @@ module DIPOLES
    function DIP_rotated(ic,iv,ik_bz,i_sp_pol,what,kpt)
      !
      use pars,           ONLY:cZERO
-     use D_lattice,      ONLY:i_time_rev,dl_sop,sop_inv,nsym
+     use D_lattice,      ONLY:i_time_rev,dl_sop,nsym
      use parallel_m,     ONLY:PAR_K_scheme
      use R_lattice,      ONLY:bz_samp
      !
@@ -221,7 +217,6 @@ module DIPOLES
      is=kpt%sstar(ik_bz,2)
      !
      ik_mem    = PAR_K_scheme%ibz_index(ik)
-     !is = sop_inv( is )
      !
      DIP_in=cZERO
      if(trim(what)=="DIP_P" ) DIP_in=DIP_P(:,ic,iv,ik_mem,i_sp_pol)

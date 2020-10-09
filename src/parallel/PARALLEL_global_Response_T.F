@@ -111,7 +111,7 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  ! Now I find calculate the total (BS_nT_grps) and cpu-restricted (PAR_BS_nT_grps) number of Transition groups.
  ! In this case the PAR_BS_nT_grps groups belong only to the columns of the kernel.
  !
- call PARALLEL_Transitions_grouping(Xk)
+ call PARALLEL_Transitions_grouping( )
  !
  call PARALLEL_live_message("(e/h) Groups",ENVIRONMENT="Response_T_space",LOADED=PAR_BS_nT_col_grps,TOTAL=BS_nT_grps,&
 &                           NCPU=PAR_COM_eh_INDEX%n_CPU)

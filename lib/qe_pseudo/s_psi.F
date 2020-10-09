@@ -89,26 +89,12 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
   !
   IF ( nkb == 0 .OR. .NOT. okvan ) RETURN
   !
-!  CALL start_clock( 's_psi' )  
   !
   ! ... The product with the beta functions
   !
   IF ( gamma_only ) THEN
      !
-!     IF (real_space ) THEN
-!        !
-!        DO ibnd = 1, m, 2
-!           !   transform the orbital to real space
-!           CALL invfft_orbital_gamma(psi,ibnd,m) 
-!           CALL s_psir_gamma(ibnd,m)
-!           CALL fwfft_orbital_gamma(spsi,ibnd,m)
-!        END DO
-!        !
-!     ELSE
-        !
-        CALL s_psi_gamma()
-        !
-!     END IF
+     CALL s_psi_gamma()
      !
   ELSE IF ( noncolin ) THEN
      !

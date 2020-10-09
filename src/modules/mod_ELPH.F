@@ -77,7 +77,7 @@ module ELPH
    subroutine elph_global_alloc(what)
      use parallel_m,ONLY:PAR_nQ_bz
      use QP_m,      ONLY:QP_n_states
-     use R_lattice, ONLY:nkbz,nqibz
+     use R_lattice, ONLY:nkbz
      character(*)      ::what
      !
      select case (trim(what))

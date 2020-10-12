@@ -25,14 +25,14 @@ logical function RT_Dynamics_is_over()
  !
  use pars,           ONLY:SP
  use parser_m,       ONLY:parser
- use real_time,      ONLY:NE_steps,NE_i_time,RT_dyn_step,NE_time,NE_tot_time
+ use real_time,      ONLY:NE_steps,NE_i_time,RT_dyn_step,NE_time,NE_tot_time,RT_step
  use RT_control,     ONLY:RT_NAN_found
  use it_tools,       ONLY:it_reset
  !
  implicit none
  !
  logical    ::STOP_now
- real(SP)   ::delta_T_left,delta_T_right      
+ real(SP)   ::dT_left,dT_right      
  !
  call it_reset(0)
  call parser('STOP_NOW',STOP_now)
@@ -44,20 +44,32 @@ logical function RT_Dynamics_is_over()
    return
  endif
  !
- !-------------t----------T-----t'------------------
- !             |--------->|<----|
+ !-------------t---------T---------t'------------------
+ !             | dT_left | dT_right|
  !
  ! T =NE_tot_time
  ! t =NE_time
  ! t'=NE_time+RT_dyn_step
  !
- delta_T_left =NE_tot_time-NE_time
- delta_T_right=NE_tot_time-NE_time-RT_dyn_step
- write (*,*) NE_i_time,delta_T_left,delta_T_right,NE_time,NE_tot_time,RT_dyn_step
+ dT_right=NE_time+RT_dyn_step-NE_tot_time
+ dT_left =NE_tot_time-NE_time
  !
- if (delta_T_left>0._SP.and.delta_T_right>0._SP) return
+ !-------------t'------------T--
+ !             | dT_right <0 | 
  !
- if (delta_T_left<-delta_T_right.or.delta_T_left<0.) then
+ if (dT_right<0._SP) return
+ !
+ ! t' beyond NE_steps
+ !
+ if ( NE_i_time+nint(RT_dyn_step/RT_step) > NE_steps) then
+   RT_Dynamics_is_over=.TRUE.
+   return
+ endif
+ !
+ !-------------t---------T-------------t'------------------
+ !             | dT_left < dT_right    |
+ !
+ if (abs(dT_left)<dT_right) then
    RT_Dynamics_is_over=.TRUE.
    return
  endif

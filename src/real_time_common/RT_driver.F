@@ -353,13 +353,13 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    !========
    call RT_timing(nint(RT_dyn_step/RT_step))
    !
-   ! Integration
-   !=============
-   call RT_Integrator(G_lesser(:,:,:,i_MEM_now),dG_lesser(:,:,:,i_MEM_now),dG_lesser(:,:,:,i_MEM_prev),A_tot,A_tot,E,k,q)
-   !
    ! I (eventually) stop
    !=======================
    if (RT_Dynamics_is_over( )) exit
+   !
+   ! Integration
+   !=============
+   call RT_Integrator(G_lesser(:,:,:,i_MEM_now),dG_lesser(:,:,:,i_MEM_now),dG_lesser(:,:,:,i_MEM_prev),A_tot,A_tot,E,k,q)
    !
  enddo
  !

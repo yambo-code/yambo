@@ -27,10 +27,9 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ
  use hamiltonian,    ONLY:B_mat_index
+ use RT_occupations, ONLY:RT_el_occ,RT_life_occ,RT_ho_occ
  use RT_lifetimes,   ONLY:RT_EP_emit_life,l_initial_equilibrium,RT_EP_abs_life
- use real_time,      ONLY:l_RT_uses_E_FineGd,RT_levels,&
-&                         RT_H_occupations_reference,RT_E_occupations_reference,&
-&                         RT_life_delta_occupations,q_weight_RT,&
+ use real_time,      ONLY:l_RT_uses_E_FineGd,RT_levels,q_weight_RT,&
 &                         RT_eh_en,RTibz,RT_bands
  use parallel_m,     ONLY:PAR_IND_B_mat
  !
@@ -104,11 +103,11 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
          if ( abs(P_ph_abs)<1.E-7 .and. abs(P_ph_emit)<1.E-7 ) cycle
          !
          if(l_initial_equilibrium) then
-           f_kmq      = RT_E_occupations_reference(i_np,ip_rim)/spin_occ
-           Hole_f_kmq = RT_H_occupations_reference(i_np,ip_rim)/spin_occ
+           f_kmq      = RT_el_occ%N_ref(i_np,ip_rim)/spin_occ
+           Hole_f_kmq = RT_ho_occ%N_ref(i_np,ip_rim)/spin_occ
          else
-           f_kmq      =  RT_life_delta_occupations(i_np,ip_rim)/spin_occ
-           Hole_f_kmq = -RT_life_delta_occupations(i_np,ip_rim)/spin_occ
+           f_kmq      =  RT_life_occ%dN(i_np,ip_rim)/spin_occ
+           Hole_f_kmq = -RT_life_occ%dN(i_np,ip_rim)/spin_occ
          endif
          !
          f_times_abs=f_times_abs+f_kmq*P_ph_abs

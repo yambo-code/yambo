@@ -46,15 +46,15 @@ subroutine PHEL_lifetimes(iq,E,k,q)
  !
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !
- use pars,           ONLY:SP,rZERO,pi
+ use pars,           ONLY:SP,rZERO
  use units,          ONLY:HA2EV
- use electrons,      ONLY:levels,n_full_bands,spin_occ
+ use electrons,      ONLY:levels,n_full_bands
  use hamiltonian,    ONLY:B_mat_index
  use R_lattice,      ONLY:bz_samp,qindx_X
  use RT_lifetimes,   ONLY:l_initial_equilibrium
- use real_time,      ONLY:l_RT_uses_E_FineGd,RT_levels,&
-&                         RT_H_occupations_reference,RT_E_occupations_reference,&
-&                         RT_life_delta_occupations,RT_eh_en,RT_bands,RTibz
+ use real_time,      ONLY:l_RT_uses_E_FineGd,&
+&                         RT_ho_occ%N_ref,RT_el_occ%N_ref,&
+&                         RT_life_occ%dN,RT_bands,RTibz
 ! use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
 !&                         P_E_sp_res_lifetime,P_E_sp_ares_lifetime,P_E_eh_lifetime,&
 !&                         EQ_P_E_sp_res_lifetime,EQ_P_E_sp_ares_lifetime,&
@@ -81,8 +81,8 @@ subroutine PHEL_lifetimes(iq,E,k,q)
  ! ... BZ index ...
  integer               :: ikbz,ik,ik_m_q,ik_mem,iq_mem,ik_rim,ip_rim
  ! ... lifetime related quantities ...
- real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,f_mkq,Hole_f_mkq,f_nk,Hole_f_nk,&
-&            TMP_Res_lifetime,TMP_Ares_lifetime,TMP_eh_lifetime,N_q(2)
+ real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor&
+&            TMP_Res_lifetime,TMP_Ares_lifetime,TMP_eh_lifetime
  !
  iq_mem=PAR_Q_ibz_index(iq)
  !

@@ -26,11 +26,10 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
  use electrons,      ONLY:spin_occ
  use pars,           ONLY:SP,rZERO
  use parallel_m,     ONLY:PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A
+ use RT_occupations, ONLY:RT_el_occ,RT_ho_occ,RT_life_occ
  use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,Life_MEM_steps,&
 &                         l_RT_relaxation_update_reference,RT_EP_abs_life,RT_lifetime
- use real_time,      ONLY:RT_E_occupations_reference,RT_H_occupations_reference,&
-&                         RT_life_delta_occupations,RT_H_occupations,RT_E_occupations,RT_delta_occupations,&
-&                         RT_bands,G_lesser_reference,RT_nk,RTibz
+ use real_time,      ONLY:RT_bands,G_lesser_reference,RT_nk,RTibz
  !
  implicit none
  !
@@ -45,13 +44,13 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
      !
      do ib=RT_bands(1),RT_bands(2)
        !
-       f_E_occ=RT_E_occupations(ib,ik)
-       f_H_occ=RT_H_occupations(ib,ik)
-       f_E_occ_reference=RT_E_occupations_reference(ib,ik)
-       f_H_occ_reference=RT_H_occupations_reference(ib,ik)
+       f_E_occ=RT_el_occ%N(ib,ik)
+       f_H_occ=RT_ho_occ%N(ib,ik)
+       f_E_occ_reference=RT_el_occ%N_ref(ib,ik)
+       f_H_occ_reference=RT_ho_occ%N_ref(ib,ik)
        !
-       if(f_E_occ<=0.5*spin_occ) RT_life_delta_occupations(ib,ik) =   f_E_occ-f_E_occ_reference
-       if(f_E_occ> 0.5*spin_occ) RT_life_delta_occupations(ib,ik) = -(f_H_occ-f_H_occ_reference)
+       if(f_E_occ<=0.5*spin_occ) RT_life_occ%dN(ib,ik) =   f_E_occ-f_E_occ_reference
+       if(f_E_occ> 0.5*spin_occ) RT_life_occ%dN(ib,ik) = -(f_H_occ-f_H_occ_reference)
        !
      enddo
    enddo
@@ -82,9 +81,9 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
      !
      do ib=RT_bands(1),RT_bands(2)
        !
-       RT_life_delta_occupations(ib,ik) =RT_delta_occupations(ib,ik)
-       RT_E_occupations_reference(ib,ik)=         aimag(G_lesser_reference(ib,ib,ik))
-       RT_H_occupations_reference(ib,ik)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
+       RT_life_occ%dN(ib,ik) =RT_el_occ%dN(ib,ik)
+       RT_el_occ%N_ref(ib,ik)=         aimag(G_lesser_reference(ib,ib,ik))
+       RT_ho_occ%N_ref(ib,ik)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
      enddo
      !
      call LOCAL_zero(RT_EH_life)

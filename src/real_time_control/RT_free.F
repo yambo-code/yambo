@@ -28,12 +28,13 @@ subroutine RT_free( )
  use hamiltonian,    ONLY:H_free
  use xc_functionals, ONLY:E_xc
  use real_time,      ONLY:DbGd_EE_scatt_table,RT_TIME_status,REF_V_xc_sc,&
-&                         RT_life_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
-&                         RT_E_occupations,Ho_plus_Sigma,H_pseudo_eq,RT_Vnl_xc,HARTREE0,XC0,G_lesser_reference,&
+&                         Ho_plus_Sigma,H_pseudo_eq,RT_Vnl_xc,HARTREE0,XC0,G_lesser_reference,&
 &                         dG_lesser,G_lesser,MEM_pointer,REF_V_xc_sc,REF_V_hartree_sc,rho_reference,&
-&                         magn_reference,DbGd_EE_scatt_table,RT_TIME_status,REF_V_xc_sc,RT_E_occupations,&
-&                         RT_H_occupations,RT_delta_occupations,RT_levels,q_weight_RT,THETA_matrix,THETA_matrix_index,&
+&                         magn_reference,DbGd_EE_scatt_table,RT_TIME_status,REF_V_xc_sc,&
+&                         RT_levels,q_weight_RT,THETA_matrix,THETA_matrix_index,&
 &                         elph_gkkp_expanded_sq,I1_matrix,RT_Deph_Matrix,Q_io_map,K_io_map,RTibz
+ use RT_occupations, ONLY:RT_ALL_occupations_free
+ use RT_lifetimes,   ONLY:RT_ALL_lifetimes_free
  !
 #include<memory.h>
  !
@@ -47,17 +48,13 @@ subroutine RT_free( )
  call DIP_alloc('P_square')
  call DIP_alloc('DIP_P_spinor')
  !
+ call RT_ALL_lifetimes_free()
+ call RT_ALL_occupations_free()
+ !
  YAMBO_FREE(DbGd_EE_scatt_table)
  YAMBO_FREE(E_xc)
  YAMBO_FREE(RT_TIME_status)
  YAMBO_FREE(REF_V_xc_sc)
- !
- YAMBO_FREE(RT_E_occupations)
- YAMBO_FREE(RT_H_occupations)
- YAMBO_FREE(RT_delta_occupations)
- YAMBO_FREE(RT_life_delta_occupations)
- YAMBO_FREE(RT_E_occupations_reference)
- YAMBO_FREE(RT_H_occupations_reference)
  !
  YAMBO_FREE(REF_V_hartree_sc)
  YAMBO_FREE(RT_levels%E)

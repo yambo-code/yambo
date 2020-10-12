@@ -28,7 +28,8 @@ subroutine RT_impose_zero_dE_and_dN(E,LIFE,Ge,Gh,Ge_ref,Gh_ref,G_prefactor)
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:nkibz
  use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_lifetime
- use real_time,      ONLY:RT_levels,G_lesser_reference,RT_delta_occupations,&
+ use RT_occupations, ONLY:RT_el_occ
+ use real_time,      ONLY:RT_levels,G_lesser_reference,&
 &                         l_RT_impose_E,l_RT_impose_for_metals,RT_nk,RTibz,&
 &                         l_RT_impose_N_dN,RT_bands,l_RT_include_eq_scatt
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait
@@ -124,7 +125,7 @@ subroutine RT_impose_zero_dE_and_dN(E,LIFE,Ge,Gh,Ge_ref,Gh_ref,G_prefactor)
        f0_E=real(         aimag(G_lesser_reference(ib,ib,ik_rim)),DP)
        f0_H=real(spin_occ-aimag(G_lesser_reference(ib,ib,ik_rim)),DP)
        !
-       df=real(RT_delta_occupations(ib,ik_rim),DP)
+       df=real(RT_el_occ%dN(ib,ik_rim),DP)
        !
        if (l_initial_equilibrium) df=0._DP
        !

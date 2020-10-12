@@ -24,10 +24,10 @@
 module RT_operations
  !
  use pars,           ONLY:SP,rZERO
+ use RT_occupations, ONLY:RT_el_occ,RT_ho_occ
  use RT_lifetimes,   ONLY:RT_lifetime,RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_abs_life,&
 &                         RT_EP_emit_REF_life,RT_EE_REF_life,RT_EH_REF_life,RT_EP_abs_REF_life
- use real_time,      ONLY:RT_E_occupations_reference,G_lesser_reference,RT_H_occupations_reference,&
-&                         integrator_step,RT_bands,RT_t
+ use real_time,      ONLY:G_lesser_reference,integrator_step,RT_bands,RT_t
  !
  implicit none
  !
@@ -187,8 +187,8 @@ module RT_operations
      use electrons,     ONLY:spin_occ
      integer               :: ib
      do ib=RT_bands(1),RT_bands(2)
-       RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
-       RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
+       RT_el_occ%N_ref(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
+       RT_ho_occ%N_ref(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
      enddo
    end subroutine
    !

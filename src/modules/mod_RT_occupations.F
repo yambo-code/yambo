@@ -23,50 +23,65 @@
 !
 module RT_occupations
  !
- use pars,       ONLY:SP,rZERO,schlen
+ use pars,           ONLY:SP,rZERO,schlen
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,&
+&                         l_phel_scatt
  !
 #include<memory.h>
  !
- type RT_occ
-   logical                  :: active=.FALSE.
-   character(schlen)        :: KIND="none"
+ type RT_occupation
+   character(schlen)        :: KIND
+   logical                  :: active
    integer                  :: D1(2)
    integer                  :: D2
    real(SP),    allocatable :: N(:,:)
    real(SP),    allocatable :: N_ref(:,:)
    real(SP),    allocatable :: dN(:,:)
- end type RT_occ
+ end type RT_occupation
  !
- type(RT_occ) :: RT_el_occ,RT_ho_occ,RT_ph_occ
+ type(RT_occupation) :: RT_el_occ,RT_ho_occ,RT_ph_occ,RT_life_occ
  !
  contains
    !
-   subroutine RT_occ_alloc(KIND,OCC,D1,D2)
-     character(*) :: KIND
-     type(RT_occ) :: OCC
+   subroutine RT_ALL_occupations_alloc(NB,NK)
+     integer :: NB(2),NK
+     call RT_occupation_alloc("electrons",RT_el_occ,NB,NK)
+     call RT_occupation_alloc("holes",RT_ho_occ,NB,NK)
+     if (l_phel_scatt) call RT_occupation_alloc("phonons",RT_ph_occ,NB,NK)
+     if (l_elph_scatt.or.l_elel_scatt) call RT_occupation_alloc("life",RT_life_occ,NB,NK)
+   end subroutine
+   !
+   subroutine RT_ALL_occupations_free( )
+     call RT_occupation_free(RT_el_occ)
+     call RT_occupation_free(RT_ho_occ)
+     if (l_phel_scatt) call RT_occupation_free(RT_ph_occ)
+     if (l_elph_scatt.or.l_elel_scatt) call RT_occupation_free(RT_life_occ)
+   end subroutine
+   !
+   subroutine RT_occupation_alloc(KIND,OCC,D1,D2)
+     character(*)        :: KIND
+     type(RT_occupation) :: OCC
      integer :: D1(2),D2
      OCC%D1=D1
      OCC%D2=D2
+     if (KIND=="electrons".or.KIND=="life") then
+       YAMBO_ALLOC(OCC%dN,(D1(1):D1(2),D2))
+     endif
+     if (KIND=="electrons".or.KIND=="holes".or.KIND=="phonons") then
+       YAMBO_ALLOC(OCC%N,(D1(1):D1(2),D2))
+       YAMBO_ALLOC(OCC%N_ref,(D1(1):D1(2),D2))
+     endif
      OCC%KIND=KIND
      OCC%active=.true.
-     YAMBO_ALLOC(OCC%N,(D1(1):D1(2),D2))
-     OCC%N=rZERO
-     if (.not.KIND=="El") return
-     YAMBO_ALLOC(OCC%dN,(D1(1):D1(2),D2))
-     OCC%dN =rZERO
-     YAMBO_ALLOC(OCC%N_ref,(D1(1):D1(2),D2))
-     OCC%N_ref=rZERO
    end subroutine
    !
-   subroutine RT_alloc_free(OCC)
-     type(RT_occ) :: OCC
-     OCC%D1=0
-     OCC%D2=0
+   subroutine RT_occupation_free(OCC)
+     type(RT_occupation) :: OCC
      OCC%KIND="none"
      OCC%active=.FALSE.
      YAMBO_FREE(OCC%N)
      YAMBO_FREE(OCC%dN)
      YAMBO_FREE(OCC%N_ref)
    end subroutine
- !
+   !
 end module

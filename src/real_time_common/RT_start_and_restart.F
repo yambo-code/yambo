@@ -43,16 +43,15 @@ subroutine RT_start_and_restart(E,k,q)
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
  use RT_operations,  ONLY:RT_init_occupation_reference
+ use RT_occupations, ONLY:RT_el_occ,RT_ho_occ,RT_life_occ
  use RT_control,     ONLY:ID,NE_i_start_time,CARR_RT_IO_t,OBS_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,&
 &                         CACHE_OBS_INTERVAL_time,RT_control_free,RT_control_alloc
- use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
+ use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,&
 &                         G_lesser_reference,rho_reference,magn_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RTibz,NE_time,RT_levels,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
 &                         Gr_kind,l_RT_is_WFfree,RT_TIME_status,&
-&                         RT_E_occupations_reference,RT_nk,G_lesser, &
-&                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
-&                         RT_eh_en,G_MEM_steps,RT_bands,&
+&                         RT_nk,G_lesser,RT_eh_en,G_MEM_steps,RT_bands,&
 &                         NE_time_step_update_jump,l_velocity_gauge_corr
  use RT_lifetimes,   ONLY:RT_life_extrap_times
 #if defined _PHEL
@@ -353,12 +352,12 @@ subroutine RT_start_and_restart(E,k,q)
      !
      ! Set to zero occupations
      !
-     RT_E_occupations          =rzero
-     RT_H_occupations          =rzero
-     RT_E_occupations_reference=rzero
-     RT_H_occupations_reference=rzero
-     RT_delta_occupations      =rzero
-     RT_life_delta_occupations =rzero
+     RT_el_occ%N          =rzero
+     RT_ho_occ%N          =rzero
+     RT_el_occ%N_ref=rzero
+     RT_ho_occ%N_ref=rzero
+     RT_el_occ%dN   =rzero
+     RT_life_occ%dN =rzero
      !
      ! GPL_EXCLUDE_END
      !
@@ -443,12 +442,12 @@ subroutine RT_start_and_restart(E,k,q)
      Nk=PAR_G_k_range
      !
      do ib=RT_bands(1),RT_bands(2)
-       RT_E_occupations_reference(ib,:) =          aimag(G_lesser_reference(ib,ib,:))
-       RT_H_occupations_reference(ib,:) = spin_occ-aimag(G_lesser_reference(ib,ib,:))
-       RT_delta_occupations(ib,Nk(1):Nk(2))      = aimag(dG_lesser(ib,ib,Nk(1):Nk(2),1))
-       RT_life_delta_occupations(ib,Nk(1):Nk(2)) = aimag(dG_lesser(ib,ib,Nk(1):Nk(2),1))
-       RT_E_occupations(ib,Nk(1):Nk(2)) = RT_E_occupations_reference(ib,Nk(1):Nk(2))+RT_delta_occupations(ib,Nk(1):Nk(2))
-       RT_H_occupations(ib,Nk(1):Nk(2)) = RT_H_occupations_reference(ib,Nk(1):Nk(2))-RT_delta_occupations(ib,Nk(1):Nk(2))
+       RT_el_occ%N_ref(ib,:) =          aimag(G_lesser_reference(ib,ib,:))
+       RT_ho_occ%N_ref(ib,:) = spin_occ-aimag(G_lesser_reference(ib,ib,:))
+       RT_el_occ%dN(ib,Nk(1):Nk(2))      = aimag(dG_lesser(ib,ib,Nk(1):Nk(2),1))
+       RT_life_occ%dN(ib,Nk(1):Nk(2)) = aimag(dG_lesser(ib,ib,Nk(1):Nk(2),1))
+       RT_el_occ%N(ib,Nk(1):Nk(2)) = RT_el_occ%N_ref(ib,Nk(1):Nk(2))+RT_el_occ%dN(ib,Nk(1):Nk(2))
+       RT_ho_occ%N(ib,Nk(1):Nk(2)) = RT_ho_occ%N_ref(ib,Nk(1):Nk(2))-RT_el_occ%dN(ib,Nk(1):Nk(2))
      enddo
      !
      ! RTA infinity ditributions
@@ -470,10 +469,10 @@ subroutine RT_start_and_restart(E,k,q)
        enddo
      endif
      !
-     call PP_redux_wait(RT_E_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     call PP_redux_wait(RT_H_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     call PP_redux_wait(RT_delta_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     call PP_redux_wait(RT_life_delta_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     call PP_redux_wait(RT_el_occ%N,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     call PP_redux_wait(RT_ho_occ%N,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     call PP_redux_wait(RT_el_occ%dN,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     call PP_redux_wait(RT_life_occ%dN,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
      !
    end subroutine RT_set_occupations
    !

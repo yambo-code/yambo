@@ -207,7 +207,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      endif
      !
      if (n_gamma>0) then
-        tmp_lifetimes=0._SP
+       tmp_lifetimes=0._SP
        if (l_elph_lifetimes) then
          tmp_lifetimes(1)=RT_carriers%GAMMA_EP_emit%abs(i_RT)+RT_carriers%GAMMA_EP_emit%abs_bare(i_RT)
          tmp_lifetimes(2)=RT_carriers%GAMMA_EP_emit%emit(i_RT)+RT_carriers%GAMMA_EP_emit%emit_bare(i_RT)

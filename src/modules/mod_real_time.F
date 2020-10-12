@@ -207,15 +207,6 @@ module real_time
  !
  type(RT_levels_kind),save  :: RT_levels
  !
- ! Occupations
- !-------------
- real(SP),    allocatable :: RT_E_occupations(:,:)
- real(SP),    allocatable :: RT_H_occupations(:,:)
- real(SP),    allocatable :: RT_delta_occupations(:,:)       ! Running values. Updated at each time step.
- real(SP),    allocatable :: RT_life_delta_occupations(:,:)  ! Used in the Lifetimes definition. Defined in the Lifetimes procedure only.
- real(SP),    allocatable :: RT_E_occupations_reference(:,:)
- real(SP),    allocatable :: RT_H_occupations_reference(:,:)
- !
  ! Relaxation: Dephasing Matrix
  !------------------------------
  real(SP)                 :: RT_ave_dephasing

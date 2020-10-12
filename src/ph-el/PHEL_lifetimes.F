@@ -51,14 +51,9 @@ subroutine PHEL_lifetimes(iq,E,k,q)
  use electrons,      ONLY:levels,n_full_bands
  use hamiltonian,    ONLY:B_mat_index
  use R_lattice,      ONLY:bz_samp,qindx_X
+ use RT_occupations, ONLY:RT_ph_occ
  use RT_lifetimes,   ONLY:l_initial_equilibrium
- use real_time,      ONLY:l_RT_uses_E_FineGd,&
-&                         RT_ho_occ%N_ref,RT_el_occ%N_ref,&
-&                         RT_life_occ%dN,RT_bands,RTibz
-! use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_occupations_reference,&
-!&                         P_E_sp_res_lifetime,P_E_sp_ares_lifetime,P_E_eh_lifetime,&
-!&                         EQ_P_E_sp_res_lifetime,EQ_P_E_sp_ares_lifetime,&
-!&                         EQ_P_E_eh_lifetime,phel_gkkp_expanded_sq
+ use real_time,      ONLY:l_RT_uses_E_FineGd,RT_bands,RTibz
  use PHEL,           ONLY:phel_gkkp_expanded_sq
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
  use parallel_m,     ONLY:PAR_Q_ibz_index,PAR_Xk_ibz_index,PAR_IND_B_mat
@@ -81,8 +76,8 @@ subroutine PHEL_lifetimes(iq,E,k,q)
  ! ... BZ index ...
  integer               :: ikbz,ik,ik_m_q,ik_mem,iq_mem,ik_rim,ip_rim
  ! ... lifetime related quantities ...
- real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor&
-&            TMP_Res_lifetime,TMP_Ares_lifetime,TMP_eh_lifetime
+ real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,&
+&            TMP_Res_lifetime,TMP_Ares_lifetime,TMP_eh_lifetime,N_q
  !
  iq_mem=PAR_Q_ibz_index(iq)
  !
@@ -106,9 +101,9 @@ subroutine PHEL_lifetimes(iq,E,k,q)
      !=======================================
      !
      if (l_initial_equilibrium) then
-       !N_q    = RT_PH_occupations_reference(il,iq_mem)
+       N_q    = RT_ph_occ%N_ref(il,iq_mem)
      else
-       !N_q    = RT_PH_occupations(il,iq_mem)
+       N_q    = RT_ph_occ%N(il,iq_mem)
      endif
      !
      ! Kernel kind

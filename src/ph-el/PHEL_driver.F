@@ -25,8 +25,9 @@ subroutine PHEL_driver(E,k,q)
  !
  use electrons,           ONLY:levels
  use R_lattice,           ONLY:bz_samp,nqibz
- use ELPH,                ONLY:QP_PH_n_G_bands
+ use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches
  use interfaces,          ONLY:PARALLEL_global_indexes
+ use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc
  !
  implicit none
  !
@@ -61,6 +62,8 @@ subroutine PHEL_driver(E,k,q)
  !
  ! Phononic Lifetimes  
  !====================
+ call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)
+ !
  do iq=1,nqibz
    call PHEL_lifetimes(iq,E,k,q)
  enddo

@@ -28,7 +28,7 @@ subroutine RT_driver(en,k,q)
  use YPP_real_time,  ONLY:l_RT_X,l_RT_occupations,l_RT_lifetimes,l_RT_density,&
 &                         l_skip_OBS_IO,l_force_min_damp
  use YPPm,           ONLY:PROJECT_mode,l_PROJECT_atom,l_PROJECT_line,l_PROJECT_plane,&
-&                          l_add_EQ_occ,l_separate_eh,l_skip_occ
+&                         l_add_EQ_occ,l_separate_eh,l_skip_occ
  use interpolate,    ONLY:l_integral_respect
  use parser_m,       ONLY:parser
  use parallel_m,     ONLY:PAR_G_k_range

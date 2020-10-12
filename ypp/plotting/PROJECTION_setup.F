@@ -30,7 +30,7 @@ subroutine PROJECTION_setup( what ,bands )
  use vec_operate,    ONLY:c2a
  use com,            ONLY:msg,of_open_close
  use YPPm,           ONLY:PROJECT_mode,PROJECT_path,CIRCUIT_k,PROJECT_steps,PROJECT_depth,&
-&                         l_PROJECT_line,CIRCUIT_k_label,l_PROJECT_plane,SLICE_k,SLICE_E,BANDS_steps,&
+&                         l_PROJECT_line,l_PROJECT_plane,SLICE_k,SLICE_E,BANDS_steps,&
 &                         PROJECT_plane_X,PROJECT_plane_Y,l_PROJECT_atom,output_fname
  use YPP_interfaces, ONLY:k_special
  use interpolate,    ONLY:GRID_k
@@ -42,8 +42,8 @@ subroutine PROJECTION_setup( what ,bands )
  !
  ! Work Space
  !
- integer  :: i_k,n_axis,i_p1,i_p2
- real(SP) :: axis(10,3),O(3),k_trial(3)
+ integer  :: i_k,i_p1,i_p2
+ real(SP) :: axis(3,3),O(3),k_trial(3)
  type(bz_samp) :: PLANE_k
  !
  if (trim(PROJECT_mode)=="none") return
@@ -74,23 +74,21 @@ subroutine PROJECTION_setup( what ,bands )
  !
  ! Find the axis
  !===============
- n_axis=count(len_trim(CIRCUIT_k_label(:))>0)
- !
- call PROJECTION_axis( n_axis, axis(:n_axis,:), O )
+ call PROJECTION_axis( axis, O )
  !
  ! GRID creation
  !===============
  !
  if (l_PROJECT_line) then
-   call PROJECTION_perpendicular_sampling(CIRCUIT_k,axis(n_axis,:))
+   call PROJECTION_perpendicular_sampling(CIRCUIT_k,axis(3,:))
  endif
  !
  if (l_PROJECT_plane) then
    !
-   if (n_axis>3) call error("Too many axis found to define a plane")
-   !
    call msg("sr","[PROJECT] Direction#1 // plane [iku]",axis(1,:))
    call msg("sr","          Direction#2 // plane [iku]",axis(2,:))
+   call msg("sr","          Direction  _|_ plane [iku]",axis(3,:))
+   call msg("sr","          Plane Origin         [iku]",O)
    !
    output_fname="plane_points"
    !

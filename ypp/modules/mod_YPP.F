@@ -40,9 +40,8 @@ module YPPm
  logical  :: l_shifted_grid
  logical  :: l_random_grid
  logical  :: l_high_sym_pts
- integer  :: n_path_pts
+ integer  :: N_path_pts
  integer  :: BZ_random_nkpts
- real(SP) :: gamma_radius
  real(SP) :: alat_used_for_output
  character(schlen) :: coo_in
  character(schlen) :: coo_out
@@ -60,7 +59,7 @@ module YPPm
  ! 
  ! DOS/BANDS/SPECIAL-K/INTERP grids
  !
- integer, parameter        :: n_SPECIAL_k_MAX=50
+ integer, parameter        :: n_SPECIAL_k_MAX=100
  real(SP),          allocatable :: CIRCUIT_k_norm(:)
  character(schlen), allocatable :: CIRCUIT_k_label(:)
  character(schlen) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
@@ -158,6 +157,7 @@ module YPPm
  logical      ::l_amplitude
  logical      ::l_spin
  logical      ::l_free_hole
+ logical      ::l_average_eh
  logical      ::l_angular_momentum
  logical      ::l_position
  integer      ::ncell(3) 
@@ -168,7 +168,8 @@ module YPPm
  real(SP)     ::EXCITON_Res_treshold
  real(SP)     ::EXCITON_weight_treshold   
  real(SP)     ::WF_multiplier   
- character(schlen)    ::state_ctl 
+ character(schlen)    :: AVE_exc
+ character(schlen)    :: state_ctl 
  integer              :: EXCITONS_n_user_states=0
  integer, allocatable :: EXCITONS_user_indexes(:)
  type EXCITON_spin
@@ -197,7 +198,7 @@ module YPPm
  !
  ! BZ Double Grid
  !
- logical           :: l_map_kpts
+ logical            :: l_map_kpts
  integer, parameter :: MAX_FineGd_DBs=20
  integer            :: n_FineGd_DBs
  integer            :: BZ_FineGd_nkpts_to_use
@@ -253,13 +254,6 @@ module YPPm
  !
  logical  :: l_mean_potential
  !
- ! Wannier bands
- !
- logical           :: l_bxsf
- character(lchlen) :: w90_fname
- integer           :: wannier_bands(2)   ! Bands Range
- integer           :: ord_dgrid_ipol     ! order of interpolation using double grid
- !
  ! Reduce Symmetries
  !
  logical     :: l_fix_syms
@@ -309,6 +303,7 @@ module YPPm
    !
    subroutine K_transform(k,in_mode)
      !
+     use stderr,       ONLY:STRING_same
      use units,        ONLY:pi
      use vec_operate,  ONLY:c2a
      !
@@ -317,22 +312,22 @@ module YPPm
      !
      select case (in_mode)
        case ('cc')
-         if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="kc2i")
-         if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="kc2a")
-         if (trim(coo_out)=="alat") then
+         if (STRING_same(trim(coo_out),"iku"))  call c2a(v_in=k,mode="kc2i")
+         if (STRING_same(trim(coo_out),"rlu"))  call c2a(v_in=k,mode="kc2a")
+         if (STRING_same(trim(coo_out),"alat")) then
            k=k*alat_used_for_output/2./pi
          endif
        case ('iku')
-         if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ki2c")
-         if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="ki2a")
-         if (trim(coo_out)=="alat") then
+         if (STRING_same(trim(coo_out),"cc"))   call c2a(v_in=k,mode="ki2c")
+         if (STRING_same(trim(coo_out),"rlu"))  call c2a(v_in=k,mode="ki2a")
+         if (STRING_same(trim(coo_out),"alat")) then
            call c2a(v_in=k,mode="ki2c")
            k=k*alat_used_for_output/2./pi
          endif
        case ('rlu')
-         if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ka2c")
-         if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="ka2i")
-         if (trim(coo_out)=="alat") then
+         if (STRING_same(trim(coo_out),"cc"))   call c2a(v_in=k,mode="ka2c")
+         if (STRING_same(trim(coo_out),"iku"))  call c2a(v_in=k,mode="ka2i")
+         if (STRING_same(trim(coo_out),"alat")) then
            call c2a(v_in=k,mode="ka2c")
            k=k*alat_used_for_output/2./pi
          endif

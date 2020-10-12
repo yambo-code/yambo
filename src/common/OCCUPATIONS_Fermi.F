@@ -39,10 +39,9 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  use units,         ONLY:HA2KEL
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Tel,T_elecs,T_holes,Bose_Temp
- use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
+ use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,&
 &                        n_spinor,n_spin
  use R_lattice,     ONLY:bz_samp
- use stderr,        ONLY:real2ch
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
  use interfaces,    ONLY:OCCUPATIONS_Gaps
@@ -55,7 +54,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  !
  ! Work Space
  !
- integer :: i1,is,ib,ik,ikbz,ik_FineGd,i_trials(2),n_b_full_guess,i_Ef(2),i_Ef_fine(2),n_total_states,group_size,nb_here
+ integer :: i1,is,ib,ik,ik_FineGd,i_trials(2),n_b_full_guess,i_Ef(2),i_Ef_fine(2),n_total_states,group_size,nb_here
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
  real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),nel_DbGd,nel_diff_zero,n_elecs,n_holes,balance
  logical :: Fermi_is_converged
@@ -128,7 +127,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  ! a very small temperature is imposed forcing the Fermi level to fall within the
  ! gap.
  !
- if (E%nb_FineGd>0) Tel=Tel_step
+ if (E%FG%nb>0) Tel=Tel_step
  !
  FERMI_LOOP: do while (.not.Fermi_is_converged)
    !
@@ -191,8 +190,8 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
    enddo
    if (i_Ef(1)/=i_Ef(2).or.i_Ef(1)/=i_Ef_fine(2)) then
      Tel=Tel+Tel_step
-     i_Ef(1)=i_Ef(1)-2
-     i_Ef(2)=i_Ef(2)+2
+     i_Ef(1)=max(1,i_Ef(1)-2)
+     i_Ef(2)=min(i_Ef(2)+2,n_total_states)
    endif
    !
    ! 5. Use a secant-like procedure to converge to the final Level
@@ -275,24 +274,28 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  !
  ! If %E_FineGd is associated I simply extend the %E occupations to %E_FineGd
  !
- if (E%nb_FineGd>0.and.allocated(E%E_FineGd)) then
+ if (E%FG%nb>0.and.allocated(E%FG%E)) then
    ! 
    !nel_DbGd=0._SP 
    !
-   E%E_FineGd(:,:,:)=E%E_FineGd(:,:,:)-E%E_Fermi
+   E%FG%E(:,:,:)=E%FG%E(:,:,:)-E%E_Fermi
    do is=1,n_sp_pol
-     do ik_FineGd=1,K%nibz_FineGd
-       do ib=1,E%nb_FineGd
-         if(E%E_FineGd(ib,ik_FineGd,is)<=0._SP) E%f_FineGd(ib,ik_FineGd,is)=spin_occ*Fermi_fnc(E%E_FineGd(ib,ik_FineGd,is),T_holes)
-         if(E%E_FineGd(ib,ik_FineGd,is)> 0._SP) E%f_FineGd(ib,ik_FineGd,is)=spin_occ*Fermi_fnc(E%E_FineGd(ib,ik_FineGd,is),T_elecs)
+     do ik_FineGd=1,E%FG%nk
+       do ib=1,E%FG%nb
+         if(E%FG%E(ib,ik_FineGd,is)<=0._SP) E%FG%f(ib,ik_FineGd,is)=spin_occ*Fermi_fnc(E%FG%E(ib,ik_FineGd,is),T_holes)
+         if(E%FG%E(ib,ik_FineGd,is)> 0._SP) E%FG%f(ib,ik_FineGd,is)=spin_occ*Fermi_fnc(E%FG%E(ib,ik_FineGd,is),T_elecs)
        enddo
-       !nel_DbGd=nel_DbGd+sum(E%f_FineGd(:,ik_FineGd,is))*K%weights_FineGd(ik_FineGd)
+       !DEBUG>
+       !nel_DbGd=nel_DbGd+sum(E%f_FineGd(:,ik_FineGd,is))*K%FGibz%weights(ik_FineGd)
+       !DEBUG<
      enddo
    enddo
+   !DEBUG>
    !nel_DbGd=nel_DbGd
    !
    !if (abs(nel-nel_DbGd)>1.E-2) call error(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
    !if (abs(nel-nel_DbGd)>1.E-5) call warning(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
+   !DEBUG<
    !
  endif
  !

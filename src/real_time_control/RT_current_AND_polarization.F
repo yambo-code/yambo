@@ -58,7 +58,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
  !
  ! Work Space
  !
- complex(SP)   :: RT_M_tmp(3)
+ complex(SP)         :: RT_M_tmp(3)
+ logical, external   :: RT_do_it
  !
  if ( .not. l_NE_dynamics ) return
  !

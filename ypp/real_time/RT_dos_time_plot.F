@@ -251,7 +251,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  enddo
  !
  do i_f=1,N_files
-   call RT_output(trim(file_n(i_f)))
+   call RT_output("close "//trim(file_n(i_f)))
  enddo
  !
  call               msg('s','DOS max value            [RT grid]',el_dos_max(1))

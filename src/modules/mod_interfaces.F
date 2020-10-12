@@ -232,7 +232,7 @@ module interfaces
      !
    end subroutine 
    !
-   subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,N_f,N_m,I_dir)
+   subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,N_f,N_m,I_dir,E_k_dir,E_k_ind)
      use pars,          ONLY: SP
      use electrons,     ONLY:levels,n_sp_pol
      type(levels)       :: E
@@ -241,6 +241,8 @@ module interfaces
      integer , optional :: N_f(n_sp_pol)
      integer , optional :: N_m(n_sp_pol)
      integer , optional :: I_dir(2)
+     integer , optional :: E_k_dir(n_sp_pol)    ! k-point of the direct gap
+     integer , optional :: E_k_ind(n_sp_pol,2)  ! k->k'   of the indirect gap
    end subroutine 
    !
    subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
@@ -297,7 +299,7 @@ module interfaces
      integer     ,optional:: MAP(N)
    end subroutine QP_DBs_merge
    !
-   integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a)
+   integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode)
      use pars,       ONLY:SP
      use electrons,  ONLY:levels
      use R_lattice,  ONLY:bz_samp
@@ -306,6 +308,7 @@ module interfaces
      character(*)      :: DB1_path,what
      real(SP),optional :: db1_a(3,3)
      real(SP),optional :: db1_alat(3) 
+     integer ,optional :: COM_mode
    end function
    !
    subroutine QP_state_print(qp)

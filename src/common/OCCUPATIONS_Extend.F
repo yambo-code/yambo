@@ -23,15 +23,12 @@
 !
 subroutine OCCUPATIONS_Extend(Xe,E)
  !
- ! The occupation of E levels are decided using 
- ! the Fermi "Levels" of Xe.
+ ! The occupation of E levels are decided using the Fermi "Levels" of Xe.
  !
- ! Also the Double Grid levels/occ.s are shifted/defined accordingly.
- ! Note that to check if the Double Grid is present the Xe%E_FineGd pointer
- ! is checked. 
+ ! The Double Grid levels/occ.s are shifted/defined accordingly.
+ ! To check if the Double Grid is present the Xe%FG%E pointer is checked. 
  !
- ! This s.r. takes care that E keeps the same electronic character
- ! if the Xe grid.
+ ! This s.r. takes care that E keeps the same electronic character if the Xe grid.
  ! If this is not possible a warning message is reported. 
  !
  use pars,       ONLY:SP
@@ -68,7 +65,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
    E%E=E%E-E%E_Fermi
    E%E_VBM =E%E_VBM-E%E_Fermi
    E%E_CBm =E%E_CBm-E%E_Fermi
-   if (allocated(E%E_FineGd)) E%E_FineGd =E%E_FineGd -E%E_Fermi
+   if (allocated(E%FG%E)) E%FG%E =E%FG%E -E%E_Fermi
    return
  endif
  !
@@ -90,7 +87,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  E%E=E%E-E%E_Fermi
  E%E_VBM =E%E_VBM-E%E_Fermi
  E%E_CBm =E%E_CBm-E%E_Fermi
- if (allocated(Xe%E_FineGd)) E%E_FineGd =E%E_FineGd -E%E_Fermi
+ if (allocated(Xe%FG%E)) E%FG%E =E%FG%E -E%E_Fermi
  !
  if (E%nbf/=Xe%nbf.or.E%nbm/=Xe%nbm) then
    call warning('Global and response function energy levels have different metallic character')
@@ -111,13 +108,13 @@ subroutine OCCUPATIONS_Extend(Xe,E)
          enddo
        enddo 
      enddo
-     if (allocated(E%E_FineGd)) then
-       do i1=1,E%nb_FineGd
-         do i2=1,E%nk_FineGd
+     if (allocated(E%FG%E)) then
+       do i1=1,E%FG%nb
+         do i2=1,E%FG%nk
            do is=1,n_sp_pol
-             if( (E%E_FineGd(i1,i2,is)-Ef)<=0._SP) E%f_FineGd(i1,i2,is) =spin_occ*Fermi_fnc(E%E_FineGd(i1,i2,is)-Ef,T_holes)
-             if( (E%E_FineGd(i1,i2,is)-Ef)> 0._SP) E%f_FineGd(i1,i2,is) =spin_occ*Fermi_fnc(E%E_FineGd(i1,i2,is)-Ef,T_elecs)
-             Xe%f_FineGd(i1,i2,is)=E%f_FineGd(i1,i2,is)
+             if( (E%FG%E(i1,i2,is)-Ef)<=0._SP) E%FG%f(i1,i2,is) =spin_occ*Fermi_fnc(E%FG%E(i1,i2,is)-Ef,T_holes)
+             if( (E%FG%E(i1,i2,is)-Ef)> 0._SP) E%FG%f(i1,i2,is) =spin_occ*Fermi_fnc(E%FG%E(i1,i2,is)-Ef,T_elecs)
+             Xe%FG%f(i1,i2,is)=E%FG%f(i1,i2,is)
            enddo
          enddo 
        enddo

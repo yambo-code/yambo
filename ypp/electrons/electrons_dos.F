@@ -64,9 +64,9 @@ subroutine electrons_dos(Xk,Xen)
  ! E Double Grid
  !===============
  !
- l_DbGD=Xen%nb_FineGd>0
+ l_DbGD=Xen%FG%nb>0
  !
- if (l_DbGd) DOS_bands(2)=min(DOS_bands(2),Xen%nb_FineGd)
+ if (l_DbGd) DOS_bands(2)=min(DOS_bands(2),Xen%FG%nb)
  !
  call QP_state_table_setup(Xen)
  call QP_apply(DOS_bands,Xen,Xk,'G',msg_fmt='rs')

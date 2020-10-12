@@ -469,8 +469,7 @@ contains
 
     return
   end subroutine pw_kpoints
-
-
+  !
   logical function fmt_is_pwexport(dirname)
      implicit none
      character(len=*)  :: dirname

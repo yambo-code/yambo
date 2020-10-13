@@ -43,6 +43,7 @@ subroutine REPORT_Occupations(what,E)
  real(SP)          ::N_met,f_met,val(10,2,1+(n_sp_pol-1)*2)
  real(SP)          ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min gap - max gap
  real(SP)          ::E_g_ind(1+(n_sp_pol-1)*2,3) ! min - val. band width - cond. band width
+ integer           ::E_k_dir(n_sp_pol), E_k_ind(n_sp_pol,2),I_dir(2)
  !
  ! Title
  !
@@ -55,7 +56,7 @@ subroutine REPORT_Occupations(what,E)
  !
  ! Gaps, VBM/CBM
  !
- call OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
+ call OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir,E_k_dir,E_k_ind)
  !
  ! Initial Report
  !
@@ -92,8 +93,10 @@ subroutine REPORT_Occupations(what,E)
    !
    if (Nbf(i_sp_pol)==Nbm(i_sp_pol).and.Nbf(i_sp_pol)>0) then
      call msg('r',COMPOSE_msg('Direct Gap',i_sp_pol),E_g_dir(i_sp_pol,1)*HA2EV,'[eV]')
+     call msg('r',COMPOSE_msg('Direct Gap localized at k-point ',i_sp_pol),E_k_dir(i_sp_pol))
      if (E%nk>1) then
        call msg('r',COMPOSE_msg('Indirect Gap',i_sp_pol),E_g_ind(i_sp_pol,1)*HA2EV,'[eV]')
+       call msg('r',COMPOSE_msg('Indirect Gap between k-points ',i_sp_pol),E_k_ind(i_sp_pol,:))
        call msg('r',COMPOSE_msg('Last valence band width',i_sp_pol),E_g_ind(i_sp_pol,2)*HA2EV,'[eV]')
        call msg('r',COMPOSE_msg('1st conduction band width',i_sp_pol),E_g_ind(i_sp_pol,3)*HA2EV,'[eV]')
      endif

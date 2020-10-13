@@ -273,7 +273,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) call error(' Fxc not coded for GAU-PBEP')
          call xc_f90_gga_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), v2rho2, v2rhosigma, v2sigma2)
          ! Yambo internal for Kxc
-         call XC_eval_gga_kernel()
+         call XC_eval_gga_kernel(v2rho2,v2rhosigma,v2sigma2)
      end select
    end if
  enddo

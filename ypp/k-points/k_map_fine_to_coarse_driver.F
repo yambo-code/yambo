@@ -103,7 +103,6 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
    YAMBO_ALLOC(FineGd_k%pt,(FineGd_k%nibz,3))
    FineGd_k%nibz=FineGd_k%nbz
    FineGd_k%pt=FineGd_k%ptbz
-   !
    Xk%FGibz%FG_mode="BZ"
    !
  endif

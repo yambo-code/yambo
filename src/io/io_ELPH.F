@@ -29,7 +29,7 @@ integer function io_ELPH(ID,what)
 &                         read_is_on,write_is_on,&
 &                         io_mode,DUMP,io_fragment,frag_ELPH,IO_INCOMPATIBLE_VAR
  use ELPH,           ONLY:ph_modes,elph_nb,elph_global_alloc,ph_freqs_sq,elph_gkkp,&
-&                         QP_PH_n_G_bands,W_debye,elph_DW,elph_nDBs,&
+&                         elph_gkkp_bare,QP_PH_n_G_bands,W_debye,elph_DW,elph_nDBs,&
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt,ph_kpt_bz,elph_nDBs_used,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
 &                         pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz,E_k_p_q,elph_grids_are_expanded
@@ -53,13 +53,14 @@ integer function io_ELPH(ID,what)
  integer                ::iq,ierr,iq_mem
  real(SP)               ::v(3)
  character(schlen)      ::db_name
- logical                ::l_no_matrix_elements,l_gFsq,l_gkkp
+ logical                ::l_no_matrix_elements,l_gFsq,l_gkkp,l_gkkp_bare
  !
  call timing('io_ELPH',OPR='start')
  !
  l_no_matrix_elements=.FALSE.
  l_gFsq              =.FALSE.
  l_gkkp              =.FALSE.
+ l_gkkp_bare         =.FALSE.
  !
  ! DB name
  !
@@ -70,6 +71,7 @@ integer function io_ELPH(ID,what)
  else 
    db_name='elph_gkkp'
    l_gkkp=.TRUE.
+   if (index(what,'gkkp_plus_bare')>0) l_gkkp_bare=.TRUE.
  endif
  !
  elph_grids_are_expanded=index(what,'gkkp_expanded')>0
@@ -103,6 +105,9 @@ integer function io_ELPH(ID,what)
 &       VAR=" El-PH bands             ",I0=elph_nb,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,&
 &       VAR=" Using the Q-grid        ",L0=elph_use_q_grid,CHECK=.true.,OP=(/"=="/))
+   !
+   call io_elemental(ID,&
+&       VAR=" Bare couplings          ",L0=l_gkkp_bare,CHECK=.true.,OP=(/"=="/))
    !
    if (l_gFsq) then
      call io_elemental(ID,VAR="QP_nb_nk_n_states",VAR_SZ=3,MENU=0)
@@ -243,6 +248,15 @@ integer function io_ELPH(ID,what)
  !
  call io_bulk(ID,VAR="ELPH_GKKP_Q"//trim(intc(iq)),VAR_SZ=(/2,ph_modes,elph_nb,elph_nb,nkbz/) )
  call io_bulk(ID,C4=elph_gkkp)
+ !
+ if (l_gkkp_bare) then
+   ! 
+   ! ELPH_gkkp_bare 
+   !
+   call io_bulk(ID,VAR="ELPH_GKKP_BARE_Q"//trim(intc(iq)),VAR_SZ=(/2,ph_modes,elph_nb,elph_nb,nkbz/) )
+   call io_bulk(ID,C4=elph_gkkp_bare)
+   !
+ endif
  !
  ! ELPH_DW 
  !

@@ -304,6 +304,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'PhBroad','Phonon broadening (Eliashberg & DOS)',ph_broad,E_unit)
  call it(defs,'EE_Fermi','External Fermi Level (Eliashberg)',elph_Ef,E_unit)
  call it(defs,'PhStps', 'Energy steps',elph_steps)
+ call it('f',defs,'GkkpReadBare','Read the bare gkkp')
  call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
  call it('f',defs,'GkkpConvert','Convert the gkkp to new I/O format')
  !

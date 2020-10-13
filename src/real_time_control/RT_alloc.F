@@ -31,12 +31,12 @@ subroutine RT_alloc(en,what)
  use electrons,      ONLY:levels,n_spin,n_sp_pol
  use xc_functionals, ONLY:E_xc
  use R_lattice,      ONLY:nXkibz
- use RT_occupations, ONLY:RT_ALL_occupations_alloc
+ use RT_occupations, ONLY:RT_ALL_occupations_alloc,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,l_RT_relax_time_approx
  use RT_lifetimes,   ONLY:RT_ALL_lifetimes_alloc
- use real_time,      ONLY:RT_levels,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,RT_is_dynamically_dephased,&
+ use real_time,      ONLY:RT_levels,RT_is_dynamically_dephased,&
 &                         Ho_plus_Sigma,H_pseudo_eq,RT_Vnl_xc,HARTREE0,XC0,G_lesser_reference,&
 &                         dG_lesser,G_lesser,MEM_pointer,G_MEM_steps,REF_V_xc_sc,REF_V_hartree_sc,rho_reference,&
-&                         magn_reference,RT_bands,RT_nk,l_RT_is_WFfree,l_RT_rotate_DM,l_RT_relax_time_approx,&
+&                         magn_reference,RT_bands,RT_nk,l_RT_is_WFfree,l_RT_rotate_DM,&
 &                         l_velocity_gauge_corr,RT_nbands
  !
 #include<memory.h>

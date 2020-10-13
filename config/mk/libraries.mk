@@ -20,19 +20,22 @@ MAIN_LIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_f
 PJ_SCLIBS    = $(MAIN_LIBS) collisions hamiltonian sc
 PJ_SCLIBS_LD = $(MAIN_LIBS_LD) hamiltonian collisions sc
 
-PJ_RTLIBS    = $(BASIC_LIBS) interpolate real_time_control qp_control setup \
-               tddft dipoles pol_function el-ph ph-el qp acfdt bse collisions hamiltonian \
-               real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
+PJ_RTLIBS    = $(BASIC_LIBS) interpolate qp_control setup \
+               tddft dipoles pol_function el-ph qp acfdt bse collisions hamiltonian \
+               real_time_control real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes \
+               real_time_initialize ph-el real_time_drivers
 PJ_RTLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
-               tddft dipoles pol_function el-ph ph-el qp acfdt bse hamiltonian collisions \
-               real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
-
+               tddft dipoles pol_function el-ph qp acfdt bse hamiltonian collisions \
+               real_time_control real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes \
+               real_time_initialize ph-el real_time_drivers
 PJ_PLLIBS    = $(BASIC_LIBS) interpolate real_time_control qp_control setup \
-               tddft dipoles pol_function el-ph ph-el qp acfdt bse collisions hamiltonian sc \
-               real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
+               tddft dipoles pol_function el-ph qp acfdt bse collisions hamiltonian sc \
+               real_time_control real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes \
+               real_time_initialize ph-el real_time_drivers
 PJ_PLLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
-               tddft dipoles pol_function el-ph ph-el qp acfdt bse hamiltonian collisions sc \
-               real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
+               tddft dipoles pol_function el-ph qp acfdt bse hamiltonian collisions sc \
+               real_time_control real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes \
+               real_time_initialize ph-el real_time_drivers
 
 PJ_NLLIBS    = $(PJ_RTLIBS) nloptics
 PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics

@@ -40,23 +40,18 @@ subroutine RT_start_and_restart(E,k,q)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use com,            ONLY:msg
  use QP_CTL_m,       ONLY:QP_ctl_user
- use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
+ use electrons,      ONLY:levels,n_sp_pol,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
- use RT_operations,  ONLY:RT_init_occupation_reference
- use RT_occupations, ONLY:RT_el_occ,RT_ho_occ,RT_life_occ
  use RT_control,     ONLY:ID,NE_i_start_time,CARR_RT_IO_t,OBS_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,&
 &                         CACHE_OBS_INTERVAL_time,RT_control_free,RT_control_alloc
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,&
 &                         G_lesser_reference,rho_reference,magn_reference,  &
-&                         l_NE_with_fields,XC0,HARTREE0,RTibz,NE_time,RT_levels,&
+&                         l_NE_with_fields,XC0,HARTREE0,NE_time,RT_levels,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
 &                         Gr_kind,l_RT_is_WFfree,RT_TIME_status,&
 &                         RT_nk,G_lesser,RT_eh_en,G_MEM_steps,RT_bands,&
 &                         NE_time_step_update_jump,l_velocity_gauge_corr
  use RT_lifetimes,   ONLY:RT_life_extrap_times
-#if defined _PHEL
- use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_delta_occupations,RT_PH_occupations_reference
-#endif
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,&
@@ -87,17 +82,11 @@ subroutine RT_start_and_restart(E,k,q)
  !
  logical :: RESTART
  !
- ! Initialize the Gf and potentials
- !====================================
- call RT_initialize_local_more()
- call RT_set_G_lesser()
- !
- ! GPL_EXCLUDE_START
- !
- call RT_initialize_local_occupations()
- call RT_set_occupations()
- !
- ! GPL_EXCLUDE_END
+ ! Initialize the Gf, potentials, levels and occupations
+ !=======================================================
+ call RT_local_init()
+ call RT_occupations_and_levels_init(E,k,q)
+ call RT_G_lesser_init()
  !
  if(.not.l_RT_is_WFfree) then
    !
@@ -212,10 +201,6 @@ subroutine RT_start_and_restart(E,k,q)
      enddo
    endif
    !
-   ! Define RT_E/H_occupations_reference
-   !
-   call RT_init_occupation_reference( )
-   !
    if(.not.l_RT_CCA_Kernel) call RT_ELPH_zeroing()
    !
    ! Last thing to do is to update the planned time sampling time (if needed)
@@ -224,9 +209,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
    ! Update occupations after loading from DB
    !==========================================
-   !
-   call RT_initialize_local_occupations()
-   call RT_set_occupations()
+   call RT_occupations_update(E,q)
    !
    call RT_IO_type_time_steps("RESTART")
    !
@@ -316,7 +299,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  contains
    !
-   subroutine RT_initialize_local_more()
+   subroutine RT_local_init()
      !
      implicit none
      !
@@ -344,167 +327,5 @@ subroutine RT_start_and_restart(E,k,q)
      RT_ind_J          =cZERO
      !
    end subroutine
-   !
-   ! GPL_EXCLUDE_START
-   !
-   !
-   subroutine RT_initialize_local_occupations()
-     !
-     ! Set to zero occupations
-     !
-     RT_el_occ%N          =rzero
-     RT_ho_occ%N          =rzero
-     RT_el_occ%N_ref=rzero
-     RT_ho_occ%N_ref=rzero
-     RT_el_occ%dN   =rzero
-     RT_life_occ%dN =rzero
-     !
-     ! GPL_EXCLUDE_END
-     !
-   end subroutine
-   !
-   ! GPL_EXCLUDE_END
-   !
-   subroutine RT_set_G_lesser()
-     !
-     implicit none
-     !
-     integer :: ik_RT_DbGd,iE_fg,ib,ik_fg
-     real(SP):: Energy,f_occ,f_occ_ref,Width,kpt(3)
-     !
-     ! Defined from occupations %f
-     ! In case RT_apply has been used the reference is
-     ! defined from the %fo occupations
-     !
-     do ib=RT_bands(1),RT_bands(2)
-       do ik=1,k%nibz
-         !
-         do ik_RT_DbGd=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
-           !
-           if (ik_RT_DbGd/=RTibz%k_range(ik,1)) then
-             !
-             ik_fg=RTibz%k_map(ik_RT_DbGd)
-             iE_fg=RTibz%E_map(ik_RT_DbGd)
-             !
-             if (allocated(E%W))  E%FG%W(ib,iE_fg,1)     = abs(E%W(ib,ik,1))
-             !
-             kpt       = k%FGibz%pt(ik_fg,:)
-             Energy    = E%FG%E(ib,iE_fg,1)
-             f_occ     = E%FG%f(ib,iE_fg,1)
-             f_occ_ref = f_occ
-             Width     = 0._SP
-             if (allocated(E%fo)) f_occ_ref = E%FG%f(ib,iE_fg,1)-E%FG%df(ib,iE_fg,1)
-             if (allocated(E%W))  Width     = abs(E%FG%W(ib,iE_fg,1))
-           else
-             kpt       = k%pt(ik,:)
-             Energy    = E%E(ib,ik,1)
-             f_occ     = E%f(ib,ik,1)
-             f_occ_ref = f_occ
-             Width     = 0._SP
-             if (allocated(E%fo)) f_occ_ref = E%fo(ib,ik,1)
-             if (allocated(E%W))  Width     = abs(E%W(ib,ik,1))
-             !
-           endif
-           !
-           RT_levels%E(ib,ik_RT_DbGd,1) = Energy
-           RT_levels%W(ib,ik_RT_DbGd,1) = Width 
-           RTibz%pt(ik_RT_DbGd,:)        = kpt
-           !
-           G_lesser_reference(ib,ib,ik_RT_DbGd) = cmplx(0.,f_occ_ref,SP)
-           !
-           if( ik_RT_DbGd<PAR_G_k_range(1) .or. ik_RT_DbGd>PAR_G_k_range(2) ) cycle
-           !
-           G_lesser(ib,ib,ik_RT_DbGd,1)         = cmplx(0.,f_occ    ,SP)
-           dG_lesser(ib,ib,ik_RT_DbGd,1)        = G_lesser(ib,ib,ik_RT_DbGd,1)-G_lesser_reference(ib,ib,ik_RT_DbGd)
-           !
-         enddo
-       enddo
-     enddo
-     !
-   end subroutine RT_set_G_lesser
-   !
-   ! GPL_EXCLUDE_START
-   !
-   subroutine RT_set_occupations()
-     !
-     use parallel_m, ONLY:PAR_COM_Xk_ibz_INDEX
-     use functions,  ONLY:Fermi_fnc
-     use real_time,  ONLY:l_RT_relax_time_approx,RT_RTA_chem,RT_RTA_temp, &
-&                         RT_RTA_E_occ_infty,RT_RTA_H_occ_infty
-     !
-     implicit none
-     !
-     real(SP):: En
-     integer :: ik,ik_RT_DbGd,iE_fg,ib,Nk(2)
-     !
-     ! Occupations are defined from G_lesser and G_lesser_reference
-     !
-     Nk=PAR_G_k_range
-     !
-     do ib=RT_bands(1),RT_bands(2)
-       RT_el_occ%N_ref(ib,:) =          aimag(G_lesser_reference(ib,ib,:))
-       RT_ho_occ%N_ref(ib,:) = spin_occ-aimag(G_lesser_reference(ib,ib,:))
-       RT_el_occ%dN(ib,Nk(1):Nk(2))      = aimag(dG_lesser(ib,ib,Nk(1):Nk(2),1))
-       RT_life_occ%dN(ib,Nk(1):Nk(2)) = aimag(dG_lesser(ib,ib,Nk(1):Nk(2),1))
-       RT_el_occ%N(ib,Nk(1):Nk(2)) = RT_el_occ%N_ref(ib,Nk(1):Nk(2))+RT_el_occ%dN(ib,Nk(1):Nk(2))
-       RT_ho_occ%N(ib,Nk(1):Nk(2)) = RT_ho_occ%N_ref(ib,Nk(1):Nk(2))-RT_el_occ%dN(ib,Nk(1):Nk(2))
-     enddo
-     !
-     ! RTA infinity ditributions
-     !
-     if (l_RT_relax_time_approx) then
-       do ib=RT_bands(1),RT_bands(2)
-         do ik=1,k%nibz
-           do ik_RT_DbGd=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
-             if (ik_RT_DbGd/=RTibz%k_range(ik,1)) then
-               iE_fg=RTibz%E_map(ik_RT_DbGd)
-               En=E%FG%E(ib,iE_fg,1)
-             else 
-               En=E%E(ib,ik,1)
-             endif
-             RT_RTA_E_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(  En-E%E_CBm(1)-RT_RTA_chem(1) ,RT_RTA_temp(1))*spin_occ
-             RT_RTA_H_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(-(En-E%E_VBM(1)-RT_RTA_chem(2)),RT_RTA_temp(2))*spin_occ
-           enddo
-         enddo
-       enddo
-     endif
-     !
-     call PP_redux_wait(RT_el_occ%N,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     call PP_redux_wait(RT_ho_occ%N,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     call PP_redux_wait(RT_el_occ%dN,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     call PP_redux_wait(RT_life_occ%dN,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     !
-   end subroutine RT_set_occupations
-   !
-#if defined _PHEL
-   subroutine RT_set_phonon_occupations()
-     !
-     use parallel_m, ONLY:PAR_COM_Xk_ibz_INDEX
-     use functions,  ONLY:bose_f
-     use ELPH,       ONLY:ph_freqs_sq,ph_modes,elph_branches
-     use real_time,  ONLY:l_RT_relax_time_approx,RT_RTA_chem,RT_RTA_temp, &
-&                         RT_RTA_E_occ_infty,RT_RTA_H_occ_infty
-     use R_lattice,  ONLY:bz_samp,nqibz
-     !
-     real(SP):: ph_freq
-     integer :: iq,iqbz,il
-     !
-     do iq=1,nqibz
-       !
-       do il=elph_branches(1),elph_branches(2)
-         !
-         iqbz = q%k_table(iq,1)
-         ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
-         !
-         RT_PH_occupations_reference(il,iq) = bose_f(ph_freq)
-         RT_PH_occupations(il,iq) = RT_PH_occupations_reference(il,iq)+RT_PH_delta_occupations(il,iq)
-       enddo
-       !
-     enddo
-     !
-   end subroutine RT_set_phonon_occupations
-#endif
-   !
-   ! GPL_EXCLUDE_END
    !
 end subroutine RT_start_and_restart

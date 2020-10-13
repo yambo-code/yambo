@@ -88,12 +88,6 @@ module real_time
  integer  :: NE_i_time=1 ! = NE_time/RT_step+1
  integer  :: NE_steps    ! Still relative to RT_step
  !
- logical  :: l_RT_relax_time_approx = .FALSE.
- real(SP) :: RT_RTA_temp(2)
- real(SP) :: RT_RTA_chem(2)
- real(SP), allocatable :: RT_RTA_E_occ_infty(:,:)
- real(SP), allocatable :: RT_RTA_H_occ_infty(:,:)
- !
  ! Lifetimes Extrapolation Time status
  !
  integer(LP), allocatable :: RT_TIME_status(:)

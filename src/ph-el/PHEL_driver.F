@@ -23,13 +23,15 @@
 !
 subroutine PHEL_driver(E,k,q)
  !
- use electrons,           ONLY:levels
- use R_lattice,           ONLY:bz_samp,nqibz
+ use pars,                ONLY:rZERO
+ use electrons,           ONLY:levels,n_sp_pol
+ use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches
  use interfaces,          ONLY:PARALLEL_global_indexes
- use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc
+ use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps
+ use real_time,           ONLY:RT_levels,l_RT_uses_E_FineGd
  !
- implicit none
+#include<memory.h>
  !
  type(levels) ,intent(in) :: E
  type(bz_samp),intent(in) :: k,q
@@ -62,10 +64,32 @@ subroutine PHEL_driver(E,k,q)
  !
  ! Phononic Lifetimes  
  !====================
+ Life_MEM_steps=1
  call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)
  !
+ ! Maps into the RT kinds
+ !========================
+ ! ... levels
+ YAMBO_ALLOC(RT_levels%E,(QP_PH_n_G_bands,k%nibz,n_sp_pol))
+ YAMBO_ALLOC(RT_levels%W,(QP_PH_n_G_bands,k%nibz,n_sp_pol))
+ RT_levels%E=E%E(:QP_PH_n_G_bands,:,:)
+ RT_levels%W=rZERO
+ if (allocated(E%W)) then
+   RT_levels%W=E%W(:QP_PH_n_G_bands,:,:)
+ endif
+ ! ... grid
+ l_RT_uses_E_FineGd=k%FGibz%N>0
+ if (.not.l_RT_uses_E_FineGd) then
+   call bz_samp_FineGd_alloc(k%FGibz,k%nibz)
+   call bz_samp_FineGd_default(k%FGibz,k)
+ endif
+ ! ... occupations
+ call RT_occupations_and_levels_init(E,k,q)
+ !
+ ! Loop
+ !======
  do iq=1,nqibz
-   call PHEL_lifetimes(iq,E,k,q)
+   call PHEL_lifetimes(iq,E,k,(/1,QP_PH_n_G_bands/),k%FGibz)
  enddo
  !
 end subroutine PHEL_driver

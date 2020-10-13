@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_eval_occupations(dG)
+subroutine RT_occupations_eval(dG)
  !
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_G_k_range
@@ -92,4 +92,4 @@ subroutine RT_eval_occupations(dG)
  call PP_redux_wait(RT_ho_occ%N,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  call PP_redux_wait(RT_el_occ%dN,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
-end subroutine RT_eval_occupations
+end subroutine RT_occupations_eval

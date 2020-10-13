@@ -49,10 +49,9 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
  ! 
  use pars,           ONLY:SP,cI,rZERO
  use electrons,      ONLY:spin_occ
- use real_time,      ONLY:RT_bands,RTibz,l_RT_relax_time_approx,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,&
-&                         l_RT_CCA_Kernel,l_RT_include_eq_scatt,RT_is_statically_dephased,&
+ use real_time,      ONLY:RT_bands,RTibz,l_RT_CCA_Kernel,l_RT_include_eq_scatt,RT_is_statically_dephased,&
 &                         RT_is_dynamically_dephased,RT_Deph_Matrix,G_lesser_reference
- use RT_occupations, ONLY:RT_el_occ,RT_ho_occ
+ use RT_occupations, ONLY:RT_el_occ,RT_ho_occ,l_RT_relax_time_approx,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty
  use RT_operations,  ONLY:ABS_RT_life_REF,EMIT_RT_life_REF,ABS_RT_life_dGAMMA,EMIT_RT_life_dGAMMA
  !
  implicit none

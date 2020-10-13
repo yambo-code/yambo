@@ -41,6 +41,14 @@ module RT_occupations
  !
  type(RT_occupation) :: RT_el_occ,RT_ho_occ,RT_ph_occ,RT_life_occ
  !
+ ! Relaxation Time Approx
+ !
+ logical  :: l_RT_relax_time_approx = .FALSE.
+ real(SP) :: RT_RTA_temp(2)
+ real(SP) :: RT_RTA_chem(2)
+ real(SP), allocatable :: RT_RTA_E_occ_infty(:,:)
+ real(SP), allocatable :: RT_RTA_H_occ_infty(:,:)
+ !
  contains
    !
    subroutine RT_ALL_occupations_alloc(NB,NK)
@@ -66,10 +74,13 @@ module RT_occupations
      OCC%D2=D2
      if (KIND=="electrons".or.KIND=="life") then
        YAMBO_ALLOC(OCC%dN,(D1(1):D1(2),D2))
+       OCC%dN=rZERO
      endif
      if (KIND=="electrons".or.KIND=="holes".or.KIND=="phonons") then
        YAMBO_ALLOC(OCC%N,(D1(1):D1(2),D2))
        YAMBO_ALLOC(OCC%N_ref,(D1(1):D1(2),D2))
+       OCC%N=rZERO
+       OCC%N_ref=rZERO
      endif
      OCC%KIND=KIND
      OCC%active=.true.

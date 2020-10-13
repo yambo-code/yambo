@@ -183,15 +183,6 @@ module RT_operations
      ARRAY(STEPS)=VAL
    end subroutine
    !
-   subroutine RT_init_occupation_reference( )
-     use electrons,     ONLY:spin_occ
-     integer               :: ib
-     do ib=RT_bands(1),RT_bands(2)
-       RT_el_occ%N_ref(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
-       RT_ho_occ%N_ref(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
-     enddo
-   end subroutine
-   !
    subroutine RT_lifetime_to_RT_obj(action,i1,i2,J,LIFE,LIFE_ref,LIFE_obj)
      use RT_lifetimes,   ONLY:RT_obj_lifetime
      use real_time,      ONLY:RT_levels

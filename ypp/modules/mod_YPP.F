@@ -157,6 +157,7 @@ module YPPm
  logical      ::l_amplitude
  logical      ::l_spin
  logical      ::l_free_hole
+ logical      ::l_average_eh
  logical      ::l_angular_momentum
  logical      ::l_position
  integer      ::ncell(3) 
@@ -167,7 +168,8 @@ module YPPm
  real(SP)     ::EXCITON_Res_treshold
  real(SP)     ::EXCITON_weight_treshold   
  real(SP)     ::WF_multiplier   
- character(schlen)    ::state_ctl 
+ character(schlen)    :: AVE_exc
+ character(schlen)    :: state_ctl 
  integer              :: EXCITONS_n_user_states=0
  integer, allocatable :: EXCITONS_user_indexes(:)
  type EXCITON_spin

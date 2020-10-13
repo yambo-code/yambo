@@ -80,12 +80,6 @@ module ELPH
      use QP_m,      ONLY:QP_n_states
      use R_lattice, ONLY:nkbz,nqibz
      character(*)      ::what
-     logical           ::l_gkkp_bare=.FALSE.
-     !
-     if (trim(what)=='gkkp_plus_bare') then
-       what='gkkp'
-       l_gkkp_bare=.TRUE.
-     endif
      !
      select case (trim(what))
        !
@@ -112,7 +106,15 @@ module ELPH
            YAMBO_ALLOC(elph_gkkp,(ph_modes,elph_nb,elph_nb,nkbz))
            YAMBO_ALLOC(elph_DW,(ph_modes,elph_nb,elph_nb,nkbz))
            YAMBO_ALLOC(f_k_plus_q,(elph_nb,nkbz,1))
-           if (l_gkkp_bare) YAMBO_ALLOC(elph_gkkp_bare,(ph_modes,elph_nb,elph_nb,nkbz))
+         endif
+         !
+       case ('gkkp_plus_bare')
+         !
+         if (.not.allocated(elph_gkkp)) then
+           YAMBO_ALLOC(elph_gkkp,(ph_modes,elph_nb,elph_nb,nkbz))
+           YAMBO_ALLOC(elph_DW,(ph_modes,elph_nb,elph_nb,nkbz))
+           YAMBO_ALLOC(f_k_plus_q,(elph_nb,nkbz,1))
+           YAMBO_ALLOC(elph_gkkp_bare,(ph_modes,elph_nb,elph_nb,nkbz))
          endif
          !
      end select

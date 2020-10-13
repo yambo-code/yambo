@@ -87,7 +87,7 @@ integer function io_ELPH(ID,what)
    if (     elph_grids_are_expanded) io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.false.,IMPOSE_SN=.FALSE.,FRAG=frag_ELPH)
    if (io_ELPH/=0) goto 1
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
+   call io_elemental(ID,VAR="PARS",VAR_SZ=7,MENU=0)
    !
    call io_elemental(ID,&
 &       VAR=" Phonon modes            ",I0=ph_modes,CHECK=.true.,OP=(/"=="/))

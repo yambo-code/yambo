@@ -61,7 +61,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,X_lower_triangle_matrix_in_use,&
 &                        self_detect_E_range,X_FILL_UP_matrix_only,use_X_DbGd,&
-&                        l_X_terminator,X_terminator_E,X_term_E,X_par_lower_triangle
+&                        l_X_terminator,X_terminator_E,X_term_E,X_par_lower_triangle,drude_n_states
  use X_m,           ONLY:rhotw_save_d
  use cuda_m,        ONLY:have_cuda
 #if defined _SC 
@@ -253,7 +253,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Drude term
  !
- if (iq==1.and.master_thread) then
+ if (iq==1.and.master_thread.and.drude_n_states>0) then
    do i_cg = 1,coarse_grid_N
      Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
      if(.not.Drude_pole) cycle

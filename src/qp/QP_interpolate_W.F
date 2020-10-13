@@ -64,10 +64,10 @@ subroutine interpolate_W(X,Xw,q)
 !!! AG DBG
  !
  !
- debug = .false.
+ debug = .true.
  call timing('RIM-W-coeff',OPR='start')
  call k_ibz2bz(q,'a',.true.)
- allocate(f_coeff(RIM_ng,RIM_ng,q%nibz,6),stat=MEM_err)
+ allocate(f_coeff(6,RIM_ng,RIM_ng,q%nibz),stat=MEM_err)
  !
 !!! AG DBG
  if (debug) then
@@ -358,14 +358,14 @@ subroutine interpolate_W(X,Xw,q)
       ! q == 0 terms must be tratened separately
       if (iq1 == 1 .and. igr == 1 .and. igc == 1) then
         !
-        f_coeff(igr,igc,iq1,1) = vX(1,iq1,igr,igc)*(4*pi) / &
+        f_coeff(1,igr,igc,iq1) = vX(1,iq1,igr,igc)*(4*pi) / &
 &                                ( bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2*pi*alat(idir(1)))**2 )
         !
         do nn=2,3
           idm = MOD(nn+1,2)+1
           call c2a(b,delta_q(:,idm),delta_q_cc,'ka2c')
-          f_coeff(igr,igc,iq1,nn) = -1._SP/delta_q(idm,idm)*log(f_func(nn)/ &
-&                                 ( v_norm(delta_q_cc)**2*f_coeff(1,iq1,igr,igc)) )
+          f_coeff(1,igr,igc,iq1) = -1._SP/delta_q(idm,idm)*log(f_func(nn)/ &
+&                                 ( v_norm(delta_q_cc)**2*f_coeff(1,iq1,igc,iq1)) )
         enddo
         !
       else
@@ -378,23 +378,23 @@ subroutine interpolate_W(X,Xw,q)
         v(5) = (f_func(2)-2*f_func(1)+f_func(4))/(2*delta_q(2,2)**2) !f22
         !
         !Coefficients in iku
-        f_coeff(igr,igc,iq1,1) =  v(1)                                                                       !f
-        f_coeff(igr,igc,iq1,2) =  (a(1,1)*v(2)*alat(2)+a(2,1)*v(3)*alat(1))/(D_det)                          !fx
-        f_coeff(igr,igc,iq1,3) =  (a(1,2)*v(2)*alat(2)+a(2,2)*v(3)*alat(1))/(D_det)                          !fy
-        f_coeff(igr,igc,iq1,4) =  (a(1,1)*a(1,1)*v(4)*alat(2)**2+a(2,1)*a(2,1)*v(5)*alat(1)**2)/(D_det)**2   !fxx
-        f_coeff(igr,igc,iq1,5) =  (a(1,1)*a(1,2)*v(4)*alat(2)**2+a(2,1)*a(2,2)*v(5)*alat(1)**2)/(D_det)**2   !fxy
-        f_coeff(igr,igc,iq1,6) =  (a(1,2)*a(1,2)*v(4)*alat(2)**2+a(2,2)*a(2,2)*v(5)*alat(1)**2)/(D_det)**2   !fyy
+        f_coeff(1,igr,igc,iq1) =  v(1)                                                                       !f
+        f_coeff(2,igr,igc,iq1) =  (a(1,1)*v(2)*alat(2)+a(2,1)*v(3)*alat(1))/(D_det)                          !fx
+        f_coeff(3,igr,igc,iq1) =  (a(1,2)*v(2)*alat(2)+a(2,2)*v(3)*alat(1))/(D_det)                          !fy
+        f_coeff(4,igr,igc,iq1) =  (a(1,1)*a(1,1)*v(4)*alat(2)**2+a(2,1)*a(2,1)*v(5)*alat(1)**2)/(D_det)**2   !fxx
+        f_coeff(5,igr,igc,iq1) =  (a(1,1)*a(1,2)*v(4)*alat(2)**2+a(2,1)*a(2,2)*v(5)*alat(1)**2)/(D_det)**2   !fxy
+        f_coeff(6,igr,igc,iq1) =  (a(1,2)*a(1,2)*v(4)*alat(2)**2+a(2,2)*a(2,2)*v(5)*alat(1)**2)/(D_det)**2   !fyy
       endif
       !
 !!! AG DBG
       !Store coefficients into file
       if (debug) then
         write(out_unit_f_coeff,"(I4,I4,I4,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6)") iq1, igr, igc &
-&,f_coeff (igr,igc,iq1,1),f_coeff (igr,igc,iq1,2),f_coeff (igr,igc,iq1,3)&
-&,f_coeff (igr,igc,iq1,4),f_coeff (igr,igc,iq1,5),f_coeff (igr,igc,iq1,6)
+&,f_coeff(1,igr,igc,iq1),f_coeff(2,igr,igc,iq1),f_coeff(3,igr,igc,iq1)&
+&,f_coeff(4,igr,igc,iq1),f_coeff(5,igr,igc,iq1),f_coeff(6,igr,igc,iq1)
       endif
       !Fill the vX and f_coeff for debugginf purposes
-      f_coeff(igc,igr,iq1,:) = f_coeff(igr,igc,iq1,:)
+      f_coeff(:,igc,igr,iq1) = f_coeff(:,igr,igc,iq1)
       vX(:,iq1,igc,igr) = vX(:,iq1,igr,igc)
 !!! AG DBG
       !
@@ -443,7 +443,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  !
  implicit none
  type(bz_samp) :: q
- real(SP)      :: f_coeff(RIM_ng,RIM_ng,q%nibz,6)
+ real(SP)      :: f_coeff(6,RIM_ng,RIM_ng,q%nibz)
  real(SP)      :: delta_q(3,2)
  complex(SP)   :: vX(5,q%nibz,RIM_ng,RIM_ng)
  integer       :: idx_q(RIM_ng,q%nibz,5),idx_G(RIM_ng,q%nibz,5),idx_is(RIM_ng,q%nibz,5)
@@ -627,7 +627,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
            if (iq == 1 .and. ig1 == 1 .and. ig2 == 1) then
              !
              if (iku_v_norm(q_sampl) < 1.e-5) then
-               W_sampl = f_coeff(ig1,ig2,iq,1)*(2*pi*alat(idir(1)))**2
+               W_sampl = f_coeff(1,ig1,ig2,iq)*(2*pi*alat(idir(1)))**2
                q_out = q_sampl
                call c2a(b_in=b,v_in=q_out,mode='ki2c')
                q_out_norm = v_norm(q_out)*vecsign1*vecsign2
@@ -636,29 +636,29 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
                cycle
              end if
              !
-             !func = f_coeff(1,1,1,1)*exp(-f_coeff(1,1,1,2)*iku_v_norm(q_sampl))
-             func = f_coeff(1,1,1,1)*exp(-sqrt(f_coeff(1,1,1,2)**2*q_sampl(1)**2+f_coeff(1,1,1,3)**2*q_sampl(2)**2))
+             !func = f_coeff(1,1,1,1)*exp(-f_coeff(2,1,1,1)*iku_v_norm(q_sampl))
+             func = f_coeff(1,1,1,1)*exp(-sqrt(f_coeff(2,1,1,1)**2*q_sampl(1)**2+f_coeff(3,1,1,1)**2*q_sampl(2)**2))
              W_sampl = vslab*func*vslab/r1/(1-vslab*func)
              func = func*iku_v_norm(q_sampl)**2
              !
            else
              !Transform f_coeff from iBZ to BZ
              call m3inv(rl_sop(:,:,is),symminv)
-             f_coeff_loc(1) = f_coeff(ig1,ig2,iq,1)
-             f_coeff_loc(2) = symminv(1,1)*f_coeff(ig1,ig2,iq,2)+symminv(2,1)*f_coeff(ig1,ig2,iq,3)
-             f_coeff_loc(3) = symminv(1,2)*f_coeff(ig1,ig2,iq,2)+symminv(2,2)*f_coeff(ig1,ig2,iq,3)
+             f_coeff_loc(1) = f_coeff(1,ig1,ig2,iq)
+             f_coeff_loc(2) = symminv(1,1)*f_coeff(2,ig1,ig2,iq)+symminv(2,1)*f_coeff(3,ig1,ig2,iq)
+             f_coeff_loc(3) = symminv(1,2)*f_coeff(2,ig1,ig2,iq)+symminv(2,2)*f_coeff(3,ig1,ig2,iq)
 
-             f_coeff_loc(4) = symminv(1,1)*symminv(1,1)*f_coeff(ig1,ig2,iq,4)&
-                             +symminv(1,1)*symminv(2,1)*f_coeff(ig1,ig2,iq,5)*2&
-                             +symminv(2,1)*symminv(2,1)*f_coeff(ig1,ig2,iq,6)
+             f_coeff_loc(4) = symminv(1,1)*symminv(1,1)*f_coeff(4,ig1,ig2,iq)&
+                             +symminv(1,1)*symminv(2,1)*f_coeff(5,ig1,ig2,iq)*2&
+                             +symminv(2,1)*symminv(2,1)*f_coeff(6,ig1,ig2,iq)
 
-             f_coeff_loc(5) = symminv(1,1)*symminv(1,2)*f_coeff(ig1,ig2,iq,4)&
-                             +(symminv(1,1)*symminv(2,2)+symminv(1,2)*symminv(2,1))*f_coeff(ig1,ig2,iq,5)&
-                             +symminv(2,1)*symminv(2,2)*f_coeff(ig1,ig2,iq,6)
+             f_coeff_loc(5) = symminv(1,1)*symminv(1,2)*f_coeff(4,ig1,ig2,iq)&
+                             +(symminv(1,1)*symminv(2,2)+symminv(1,2)*symminv(2,1))*f_coeff(5,ig1,ig2,iq)&
+                             +symminv(2,1)*symminv(2,2)*f_coeff(6,ig1,ig2,iq)
 
-             f_coeff_loc(6) = symminv(1,2)*symminv(1,2)*f_coeff(ig1,ig2,iq,4)&
-                             +symminv(1,2)*symminv(2,2)*f_coeff(ig1,ig2,iq,5)*2&
-                             +symminv(2,2)*symminv(2,2)*f_coeff(ig1,ig2,iq,6)
+             f_coeff_loc(6) = symminv(1,2)*symminv(1,2)*f_coeff(4,ig1,ig2,iq)&
+                             +symminv(1,2)*symminv(2,2)*f_coeff(5,ig1,ig2,iq)*2&
+                             +symminv(2,2)*symminv(2,2)*f_coeff(6,ig1,ig2,iq)
              !
              func = f_coeff_loc(1)+q_sampl(1)*(f_coeff_loc(2)+q_sampl(1)*f_coeff_loc(4))&
 &                                 +q_sampl(2)*(f_coeff_loc(3)+q_sampl(2)*f_coeff_loc(6)&
@@ -710,7 +710,7 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  !
  implicit none
  type(bz_samp) :: q
- real(SP)      :: f_coeff(RIM_ng,RIM_ng,q%nibz,6)
+ real(SP)      :: f_coeff(6,RIM_ng,RIM_ng,q%nibz)
  real(SP)      :: delta_q(3,2)
  complex(SP)   :: vX(5,q%nibz,RIM_ng,RIM_ng)
  integer       :: idx_q(RIM_ng,q%nibz,5),idx_G(RIM_ng,q%nibz,5),idx_is(RIM_ng,q%nibz,5)
@@ -902,7 +902,7 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
            if (iq == 1 .and. ig1 == 1 .and. ig2 == 1) then
              !
              if (iku_v_norm(q_sampl) < 1.e-5) then
-               W_sampl = f_coeff(ig1,ig2,iq,1)*(2*pi*alat(idir(1)))**2
+               W_sampl = f_coeff(1,ig1,ig2,iq)*(2*pi*alat(idir(1)))**2
                q_out = q_sampl
                call c2a(b_in=b,v_in=q_out,mode='ki2c')
                q_out_norm = v_norm(q_out)
@@ -911,29 +911,29 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
                cycle
              end if
              !
-             !func = f_coeff(1,1,1,1)*exp(-f_coeff(1,1,1,2)*iku_v_norm(q_sampl))
-             func = f_coeff(1,1,1,1)*exp(-sqrt(f_coeff(1,1,1,2)**2*q_sampl(1)**2+f_coeff(1,1,1,3)**2*q_sampl(2)**2))
+             !func = f_coeff(1,1,1,1)*exp(-f_coeff(2,1,1,1)*iku_v_norm(q_sampl))
+             func = f_coeff(1,1,1,1)*exp(-sqrt(f_coeff(2,1,1,1)**2*q_sampl(1)**2+f_coeff(3,1,1,1)**2*q_sampl(2)**2))
              W_sampl = vslab*func*vslab/r1/(1-vslab*func)
              func = func*iku_v_norm(q_sampl)**2
              !
            else
              !Transform f_coeff from iBZ to BZ
              call m3inv(rl_sop(:,:,is),symminv)
-             f_coeff_loc(1) = f_coeff(ig1,ig2,iq,1)
-             f_coeff_loc(2) = symminv(1,1)*f_coeff(ig1,ig2,iq,2)+symminv(2,1)*f_coeff(ig1,ig2,iq,3)
-             f_coeff_loc(3) = symminv(1,2)*f_coeff(ig1,ig2,iq,2)+symminv(2,2)*f_coeff(ig1,ig2,iq,3)
+             f_coeff_loc(1) = f_coeff(1,ig1,ig2,iq)
+             f_coeff_loc(2) = symminv(1,1)*f_coeff(2,ig1,ig2,iq)+symminv(2,1)*f_coeff(3,ig1,ig2,iq)
+             f_coeff_loc(3) = symminv(1,2)*f_coeff(2,ig1,ig2,iq)+symminv(2,2)*f_coeff(3,ig1,ig2,iq)
 
-             f_coeff_loc(4) = symminv(1,1)*symminv(1,1)*f_coeff(ig1,ig2,iq,4)&
-                             +symminv(1,1)*symminv(2,1)*f_coeff(ig1,ig2,iq,5)*2&
-                             +symminv(2,1)*symminv(2,1)*f_coeff(ig1,ig2,iq,6)
+             f_coeff_loc(4) = symminv(1,1)*symminv(1,1)*f_coeff(4,ig1,ig2,iq)&
+                             +symminv(1,1)*symminv(2,1)*f_coeff(5,ig1,ig2,iq)*2&
+                             +symminv(2,1)*symminv(2,1)*f_coeff(6,ig1,ig2,iq)
 
-             f_coeff_loc(5) = symminv(1,1)*symminv(1,2)*f_coeff(ig1,ig2,iq,4)&
-                             +(symminv(1,1)*symminv(2,2)+symminv(1,2)*symminv(2,1))*f_coeff(ig1,ig2,iq,5)&
-                             +symminv(2,1)*symminv(2,2)*f_coeff(ig1,ig2,iq,6)
+             f_coeff_loc(5) = symminv(1,1)*symminv(1,2)*f_coeff(4,ig1,ig2,iq)&
+                             +(symminv(1,1)*symminv(2,2)+symminv(1,2)*symminv(2,1))*f_coeff(5,ig1,ig2,iq)&
+                             +symminv(2,1)*symminv(2,2)*f_coeff(6,ig1,ig2,iq)
 
-             f_coeff_loc(6) = symminv(1,2)*symminv(1,2)*f_coeff(ig1,ig2,iq,4)&
-                             +symminv(1,2)*symminv(2,2)*f_coeff(ig1,ig2,iq,5)*2&
-                             +symminv(2,2)*symminv(2,2)*f_coeff(ig1,ig2,iq,6)
+             f_coeff_loc(6) = symminv(1,2)*symminv(1,2)*f_coeff(4,ig1,ig2,iq)&
+                             +symminv(1,2)*symminv(2,2)*f_coeff(5,ig1,ig2,iq)*2&
+                             +symminv(2,2)*symminv(2,2)*f_coeff(6,ig1,ig2,iq)
              !
              func = f_coeff_loc(1)+q_sampl(1)*(f_coeff_loc(2)+q_sampl(1)*f_coeff_loc(4))&
 &                                 +q_sampl(2)*(f_coeff_loc(3)+q_sampl(2)*f_coeff_loc(6)&

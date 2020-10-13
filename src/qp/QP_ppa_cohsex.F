@@ -590,37 +590,37 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                ! Head at q = 0
                if (ig1 == 1 .and. ig2 == 1) then
                  !
-                 dp_vdummy(1)=dp_vdummy(1)+cmplx(ctmp,kind=DP)
+                 dp_vdummy(1)=dp_vdummy(1)+ctmp
                  !
                ! Diagonal Gxy == 0
                else if (ig1 == ig2 .and. g2_mod_2D < 1.e-5) then
                  !
-                 dp_vdummy(2)=dp_vdummy(2)+cmplx(ctmp,kind=DP)
+                 dp_vdummy(2)=dp_vdummy(2)+ctmp
                  !
                ! Diagonal Gxy /= 0
                else if ( ig1 == ig2 .and. g2_mod_2D > 1.e-5) then
                  !
-                 dp_vdummy(3)=dp_vdummy(3)+cmplx(ctmp,kind=DP)
+                 dp_vdummy(3)=dp_vdummy(3)+ctmp
                  !
                ! Wing Gxy == 0
                else if ((ig1 == 1 .and. g2_mod_2D < 1.e-5).or.(ig2 == 1 .and. g1_mod_2D < 1.e-5)) then
                  !
-                 dp_vdummy(4)=dp_vdummy(4)+cmplx(ctmp,kind=DP)
+                 dp_vdummy(4)=dp_vdummy(4)+ctmp
                  !
                ! Wing Gxy /= 0
                else if ((ig1 == 1 .and. g2_mod_2D > 1.e-5).or.(ig2 == 1 .and. g1_mod_2D > 1.e-5)) then
                  !
-                 dp_vdummy(5)=dp_vdummy(5)+cmplx(ctmp,kind=DP)
+                 dp_vdummy(5)=dp_vdummy(5)+ctmp
                  !
                ! Body Gxy == 0
                else if (ig1 /= ig2 .and. g1_mod_2D < 1.e-5 .and. g2_mod_2D < 1.e-5) then
                  !
-                 dp_vdummy(6)=dp_vdummy(6)+cmplx(ctmp,kind=DP)
+                 dp_vdummy(6)=dp_vdummy(6)+ctmp
                  !
                ! Body Gxy /= 0
                else
                  !
-                 dp_vdummy(7)=dp_vdummy(7)+cmplx(ctmp,kind=DP)
+                 dp_vdummy(7)=dp_vdummy(7)+ctmp
                  !
                end if
 !!! AG DBG

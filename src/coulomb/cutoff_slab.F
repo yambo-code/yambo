@@ -62,7 +62,7 @@
      !
      if(slab_vplane < q0_def_norm) slab_vplane = q0_def_norm
      !
-     pre_factor=sqrt(1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut))
+     pre_factor=sqrt(1._SP-exp(-slab_vplane*lcut)*cos(slab_vz*lcut))
      !
      !if (iq == 1) then
      !  call msg('nr', "G = ", ig)

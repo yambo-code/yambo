@@ -21,15 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
+subroutine ELPH_gkkp_expand(iq_bz,iq_s,k,l_gkkp_bare)
  !
  use pars,                ONLY:SP
  use R_lattice,           ONLY:bz_samp,qindx_B
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
- use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp
+ use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,elph_gkkp_bare
  implicit none
  type(bz_samp) ::k
  integer       ::iq_bz,iq_s
+ logical       ::l_gkkp_bare
  !
  ! Work Space 
  !
@@ -68,7 +69,11 @@ subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
          !                                 -------------------- --
          ik_bz_gkkp=k%k_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
          !
-         elph_gkkp_expanded(:,ob,ib,ik_bz)=conjg(elph_gkkp(:,ib,ob,ik_bz_gkkp))
+         if (.not.l_gkkp_bare) then
+           elph_gkkp_expanded(:,ob,ib,ik_bz)=conjg(elph_gkkp(:,ib,ob,ik_bz_gkkp))
+         else
+           elph_gkkp_expanded(:,ob,ib,ik_bz)=conjg(elph_gkkp_bare(:,ib,ob,ik_bz_gkkp))
+         endif
          !
        else
          ! 
@@ -78,7 +83,11 @@ subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
          !
          ik_bz_gkkp=k%k_table(ik,sop_tab(sop_inv(iq_s),is))
          !
-         elph_gkkp_expanded(:,ib,ob,ik_bz)=elph_gkkp(:,ib,ob,ik_bz_gkkp)
+         if (.not.l_gkkp_bare) then
+           elph_gkkp_expanded(:,ib,ob,ik_bz)=elph_gkkp(:,ib,ob,ik_bz_gkkp)
+         else
+           elph_gkkp_expanded(:,ib,ob,ik_bz)=elph_gkkp_bare(:,ib,ob,ik_bz_gkkp)
+         endif
          !
        endif
        !
@@ -86,6 +95,10 @@ subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
    enddo
  enddo
  !
- elph_gkkp=elph_gkkp_expanded
+ if (.not.l_gkkp_bare) then
+   elph_gkkp=elph_gkkp_expanded
+ else
+   elph_gkkp_bare=elph_gkkp_expanded
+ endif
  !
 end subroutine

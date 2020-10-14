@@ -66,6 +66,7 @@ integer function io_ELPH(ID,what)
  !
  if (index(what,'gkkp_expanded')>0) then
    db_name='elph_gkkp_expanded'
+   if (index(what,'gkkp_expanded_plus_bare')>0) l_gkkp_bare=.TRUE.
  else if (index(what,'gFsq')>0) then
    db_name='elph_gFsq'
  else 

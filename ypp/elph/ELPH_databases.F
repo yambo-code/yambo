@@ -130,7 +130,7 @@ integer function ELPH_databases(k,E,q)
      !
      elph_nDBs=q%nbz
      db_name='gkkp_expanded'
-     !TODO: Expand bare couplings
+     if (l_gkkp_bare) db_name='gkkp_expanded_plus_bare'
      !
      call msg("s",'Database expanded to the whole '//trim(intc(elph_nDBs))//' BZ Q-grid')
      !
@@ -234,9 +234,15 @@ integer function ELPH_databases(k,E,q)
      do i1=1,q%nstar(iq)
        !
        iq_bz=iq_bz+1
-       !TODO: Add expansion of bare couplings
+       !
        iq_s=q%star(iq,i1)
-       io_err=ELPH_databases_io(idb)
+       !
+       if (.not.l_gkkp_bare) then
+         io_err=ELPH_databases_io(idb)
+       else
+         io_err=ELPH_databases_io(idb) ! Obtain elph_gkkp
+         io_err=ELPH_databases_io(idb) ! Obtain elph_gkkp_bare
+       endif
        !
        ph_freqs_sq(iq_bz,:)=ph_freqs_sq(iq,:)
        !
@@ -245,7 +251,8 @@ integer function ELPH_databases(k,E,q)
          io_elph_err=io_ELPH(ID,trim(db_name))
        endif
        !
-       call ELPH_gkkp_expand(iq_bz,iq_s,k)
+       call ELPH_gkkp_expand(iq_bz,iq_s,k,.FALSE.) ! Expand elph_gkkp
+       if (l_gkkp_bare) call ELPH_gkkp_expand(iq_bz,iq_s,k,.TRUE.) ! Expand elph_gkkp_bare
        !
        call io_control(ACTION=OP_APP_CL,SEC=(/iq_bz+1/),ID=ID)
        io_elph_err=io_ELPH(ID,trim(db_name))

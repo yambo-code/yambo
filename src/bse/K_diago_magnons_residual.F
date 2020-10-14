@@ -100,8 +100,8 @@ subroutine K_diago_herm_magnons_residual(BS_E,BS_R_left,BS_R_right,BS_A_left,BS_
    !
    if (.not.px%element_1D(i_lambda)) cycle
    !
-   BS_A_left(1,i_lambda) =V_dot_V_omp(BS_K_dim,tmp_res(:,1),conjg(BS_mat(:,i_lambda)))
-   BS_A_left(2,i_lambda) =V_dot_V_omp(BS_K_dim,tmp_res(:,2),conjg(BS_mat(:,i_lambda)))
+   BS_A_left(1,i_lambda) =V_dot_V_omp(BS_K_dim,tmp_res(:,1),BS_mat(:,i_lambda))
+   BS_A_left(2,i_lambda) =V_dot_V_omp(BS_K_dim,tmp_res(:,2),BS_mat(:,i_lambda))
    BS_A_right(:,i_lambda)=conjg(BS_A_left(:,i_lambda))
    !
    call live_timing(steps=1)

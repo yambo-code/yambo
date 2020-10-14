@@ -24,11 +24,12 @@
 subroutine RT_occupations_and_levels_init(E,k,q)
  !
  use pars,           ONLY:SP
+ use drivers,        ONLY:l_phel_scatt
  use functions,      ONLY:Fermi_fnc,bose_f
- use RT_occupations, ONLY:l_RT_relax_time_approx,RT_RTA_chem,RT_RTA_temp, &
+ use RT_occupations, ONLY:l_RT_relax_time_approx,RT_RTA_chem,RT_RTA_temp,RT_occupation_clean, &
 &                         RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,RT_el_occ,RT_ho_occ,RT_life_occ,RT_ph_occ
- use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,PAR_G_k_range,PAR_COM_Xk_ibz_INDEX,PP_redux_wait 
- use real_time,      ONLY:RTibz,RT_bands,RT_levels
+ use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz,PP_redux_wait 
+ use real_time,      ONLY:RTibz,RT_bands,RT_levels,RT_is_dynamically_dephased,RT_nk
  use ELPH,           ONLY:ph_freqs_sq
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin_occ
@@ -42,6 +43,11 @@ subroutine RT_occupations_and_levels_init(E,k,q)
  !
  real(SP):: Energy,kpt(3),f_occ,f_occ_ref,ph_freq,Width
  integer :: ik,ik_FG,iE_FG,ib,ik_RT,il,iq,iqbz
+ !
+ call RT_occupation_clean(RT_el_occ)
+ call RT_occupation_clean(RT_ph_occ)
+ call RT_occupation_clean(RT_ho_occ)
+ call RT_occupation_clean(RT_life_occ)
  !
  ! El/Ho Occupations 
  !===================
@@ -91,12 +97,15 @@ subroutine RT_occupations_and_levels_init(E,k,q)
          RT_RTA_H_occ_infty(ib,ik_FG)= Fermi_fnc(-(Energy-E%E_VBM(1)-RT_RTA_chem(2)),RT_RTA_temp(2))*spin_occ
        endif
        !
-       if( ik_RT<PAR_G_k_range(1) .or. ik_RT>PAR_G_k_range(2) ) cycle
+       if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
        !
        RT_el_occ%dN(ib,ik_RT)   = f_occ-f_occ_ref
-       RT_life_occ%dN(ib,ik_RT) = f_occ-f_occ_ref
        RT_el_occ%N(ib,ik_RT)    = f_occ
        RT_ho_occ%N(ib,ik_RT)    = spin_occ-f_occ
+       !
+       if (.not.RT_is_dynamically_dephased) cycle
+       !
+       RT_life_occ%dN(ib,ik_RT) = f_occ-f_occ_ref
        !
      enddo
    enddo
@@ -104,18 +113,23 @@ subroutine RT_occupations_and_levels_init(E,k,q)
  !
  ! Ph Occupations 
  !================
- do il=RT_ph_occ%D1(1),RT_ph_occ%D1(2)
-   do iq=1,RT_ph_occ%D2
-     iqbz = q%k_table(iq,1)
-     ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
-     RT_ph_occ%N(il,iq)     = bose_f(ph_freq)
-     RT_ph_occ%N_ref(il,iq) = RT_ph_occ%N(il,iq)+RT_ph_occ%dN(il,iq)
+ if (l_phel_scatt) then
+   do il=RT_ph_occ%D1(1),RT_ph_occ%D1(2)
+     do iq=1,RT_ph_occ%D2
+       iqbz = q%k_table(iq,1)
+       ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
+       RT_ph_occ%N(il,iq)     = bose_f(ph_freq)
+       RT_ph_occ%N_ref(il,iq) = RT_ph_occ%N(il,iq)+RT_ph_occ%dN(il,iq)
+     enddo
    enddo
- enddo
+ endif
  !
  call PP_redux_wait(RT_el_occ%N,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  call PP_redux_wait(RT_ho_occ%N,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  call PP_redux_wait(RT_el_occ%dN,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ !
+ if (.not.RT_is_dynamically_dephased) return
+ !
  call PP_redux_wait(RT_life_occ%dN,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
 end subroutine RT_occupations_and_levels_init

@@ -56,14 +56,27 @@ module RT_occupations
      call RT_occupation_alloc("electrons",RT_el_occ,NB,NK)
      call RT_occupation_alloc("holes",RT_ho_occ,NB,NK)
      if (l_phel_scatt) call RT_occupation_alloc("phonons",RT_ph_occ,NB,NK)
-     if (l_elph_scatt.or.l_elel_scatt) call RT_occupation_alloc("life",RT_life_occ,NB,NK)
+     if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) call RT_occupation_alloc("life",RT_life_occ,NB,NK)
    end subroutine
    !
    subroutine RT_ALL_occupations_free( )
      call RT_occupation_free(RT_el_occ)
      call RT_occupation_free(RT_ho_occ)
      if (l_phel_scatt) call RT_occupation_free(RT_ph_occ)
-     if (l_elph_scatt.or.l_elel_scatt) call RT_occupation_free(RT_life_occ)
+     if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) call RT_occupation_free(RT_life_occ)
+   end subroutine
+   !
+   subroutine RT_occupation_clean(OCC)
+     type(RT_occupation) :: OCC
+     if (allocated(OCC%dN)) then
+       OCC%dN=rZERO
+     endif
+     if (allocated(OCC%N)) then
+       OCC%N=rZERO
+     endif
+     if (allocated(OCC%N_ref)) then
+       OCC%N_ref=rZERO
+     endif
    end subroutine
    !
    subroutine RT_occupation_alloc(KIND,OCC,D1,D2)

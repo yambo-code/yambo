@@ -25,9 +25,11 @@ subroutine RT_G_lesser_init( )
  !
  use pars,           ONLY:SP,rZERO
  use RT_occupations, ONLY:RT_el_occ
- use parallel_m,     ONLY:PAR_G_k_range
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use real_time,      ONLY:dG_lesser,G_lesser_reference,RTibz,RT_bands,G_lesser
  use R_lattice,      ONLY:nkibz
+ !
+ implicit none
  !
  ! Work Space
  !
@@ -39,7 +41,7 @@ subroutine RT_G_lesser_init( )
        !
        G_lesser_reference(ib,ib,ik_RT) = cmplx(rZERO,RT_el_occ%N_ref(ib,ik_RT),SP)
        !
-       if( ik_RT_DbGd<PAR_G_k_range(1) .or. ik_RT_DbGd>PAR_G_k_range(2) ) cycle
+       if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
        !
        G_lesser(ib,ib,ik_RT,1)  = cmplx(rZERO,RT_el_occ%N(ib,ik_RT),SP)
        dG_lesser(ib,ib,ik_RT,1) = cmplx(rZERO,RT_el_occ%N(ib,ik_RT)-RT_el_occ%N_ref(ib,ik_RT),SP)

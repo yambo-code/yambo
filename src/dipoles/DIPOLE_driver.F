@@ -119,10 +119,19 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use_covariant_approach      = trim(Dip%approach)=='Covariant'
  use_shifted_grids_approach  = trim(Dip%approach)=='Shifted grids'
  !
- compute_P2_dipoles          = index(Dip%computed,"P2")  /=0 .or. l_sc_run .or. l_real_time
-#if defined _RT || defined _KERR
- compute_Spin_dipoles        = index(Dip%computed,"Spin")/=0 .or. ((l_real_time .or. l_BS_magnons) .and. n_spin>1)
- compute_Orb_dipoles         = index(Dip%computed,"Orb") /=0 .or. (l_real_time .and. n_spin>1)
+ compute_P2_dipoles          = index(Dip%computed,"P2")  /=0
+ compute_Spin_dipoles        = index(Dip%computed,"Spin")/=0
+ compute_Orb_dipoles         = index(Dip%computed,"Orb") /=0
+#if defined _SC
+ compute_P2_dipoles          = compute_P2_dipoles .or. l_sc_run
+#endif
+#if defined _RT
+ compute_P2_dipoles          = compute_P2_dipoles   .or. l_real_time
+ compute_Spin_dipoles        = compute_Spin_dipoles .or. (l_real_time .and. n_spin>1)
+ compute_Orb_dipoles         = compute_Orb_dipoles  .or. (l_real_time .and. n_spin>1)
+#endif
+#if defined _KERR
+ compute_Spin_dipoles        = compute_Spin_dipoles .or. (l_BS_magnons .and. n_spin>1)
 #endif
  !
  if(.not.any((/use_g_space_approach,use_real_space_approach,use_covariant_approach,use_shifted_grids_approach/))) then
@@ -236,7 +245,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  if (use_covariant_approach) call DIP_alloc('DIP_S')
  if (compute_P2_dipoles)     call DIP_alloc('P_square') 
 #if defined _RT || defined _KERR
- if (compute_Orb_dipoles.or.l_BS_dichroism) call DIP_alloc('DIP_orbital')
+ if (compute_Orb_dipoles) call DIP_alloc('DIP_orbital')
  if (compute_Spin_dipoles) then
    call DIP_alloc('DIP_spin')
    if(n_spinor==2) call DIP_alloc('DIP_P_spinor')

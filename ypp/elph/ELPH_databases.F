@@ -59,7 +59,8 @@ integer function ELPH_databases(k,E,q)
  !
  !... dummies 
  !
- logical            ::l_gkkp_expand,l_gkkp_bare
+ logical            ::l_gkkp_expand
+ logical            ::l_gkkp_bare=.FALSE.
  logical            ::l_are_bare_there=.FALSE.
  integer,allocatable::ikbz_is_table(:,:)
  integer            ::iq,elph_nk,iq_db(q%nbz),iq_bz,iq_s,i1
@@ -68,14 +69,6 @@ integer function ELPH_databases(k,E,q)
  logical, external  ::file_exists
  !
  call section("*","== Electron-Phonon Interface: PW->Yambo Databases ==")
- !
- !NOTE: The bare databases are copies of the screened ones in all variables
- !      except elph_gkkp. This depends on how elphondb.f90 in QE/PHonon was modified.
- !      Therefore such redundant variables are overwritten when l_gkkp_bare is on,
- !      including io_err at the function call of ELPH_databases_io. 
- !
- call parser('GkkpReadBare',l_gkkp_bare)
- if (l_gkkp_bare)    call msg('s','Reading also bare couplings')       
  !
  call k_ibz2bz(k,'i',.false.)
  !
@@ -112,6 +105,16 @@ integer function ELPH_databases(k,E,q)
    call msg("l","not found")
    return
  endif
+ !
+ !NOTE: The bare databases are copies of the screened ones in all variables
+ !      except elph_gkkp. This depends on how elphondb.f90 in QE/PHonon was
+ !      modified.
+ !      Therefore such redundant variables are overwritten when l_gkkp_bare is
+ !      on,
+ !      including io_err at the function call of ELPH_databases_io.
+ !
+ call parser('GkkpReadBare',l_gkkp_bare)
+ if (l_gkkp_bare)    call msg('s','Reading also bare couplings')
  !
  db_name='gkkp'
  if (l_gkkp_bare) db_name='gkkp_plus_bare'
@@ -329,7 +332,6 @@ integer function ELPH_databases(k,E,q)
    use electrons,      ONLY:n_bands
 #include<memory.h>
    integer           :: idb_
-   logical           :: l_are_bare_there
    !
    !Work Space
    !

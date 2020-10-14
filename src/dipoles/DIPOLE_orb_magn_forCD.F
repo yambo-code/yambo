@@ -45,7 +45,6 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
  ! Work Space
  !
  integer                      :: ik,ic,iv,ib,i_sp_pol,n_LT_steps,ik_mem
- real(SP)                     :: Eb,Ev,Ec
  complex(SP)                  :: DIP_x_loc(3),DIP_v_loc(3)
  !
  n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
@@ -70,22 +69,13 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
        !
        if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
        !
-       Ev=Xen%E(iv,ik,i_sp_pol)
-       if (allocated(Xen%Eo)) Ev=Xen%Eo(iv,ik,i_sp_pol)
-       !
        do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
          !
          if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          !
-         Ec=Xen%E(ic,ik,i_sp_pol)
-         if (allocated(Xen%Eo)) Ec=Xen%Eo(ic,ik,i_sp_pol)
-         !
          do ib=Dip%ib(1),Dip%ib(2)
            !
-           Eb=Xen%E(ib,ik,i_sp_pol)
-           if (allocated(Xen%Eo)) Eb=Xen%Eo(ib,ik,i_sp_pol)
-           !
-           DIP_x_loc(:)=DIP_iR(:,ib,iv,ik_mem,i_sp_pol)
+           DIP_x_loc(:)=-cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol)
            
            DIP_v_loc(:)=DIP_v(:,ic,ib,ik_mem,i_sp_pol)
            !

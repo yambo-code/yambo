@@ -74,7 +74,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                    para_term_w0,diam_term_used
 #if defined _PL
  complex(SP)       ::P_weighted(3)
- real(SP)          ::res_PL(2)
+ real(SP)          ::f_PL(2),res_PL(2)
 #endif
  !
 #if defined _KERR
@@ -353,9 +353,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
        ! Note that res_PL is always positive as f_PL>0
        !
-       f_PL=BS_T_grp(i_T_g)%f_PL(:,i_T)
+       f_PL(:)=BS_T_grp(i_T_g)%f_PL(:,i_T)
        P_weighted(:)=BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:)*PL_weights(:)
-       res_PL=dot_product(P_weighted,P_weighted)*f_*Z_*E_
+       res_PL(:)=dot_product(P_weighted,P_weighted)*f_PL(:)*Z_*E_
      endif
 #endif
      !

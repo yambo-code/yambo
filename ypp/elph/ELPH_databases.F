@@ -114,7 +114,7 @@ integer function ELPH_databases(k,E,q)
  !      including io_err at the function call of ELPH_databases_io.
  !
  call parser('GkkpReadBare',l_gkkp_bare)
- if (l_gkkp_bare)    call msg('s','Reading also bare couplings')
+ if (l_gkkp_bare)    call msg('l','Reading also bare couplings')
  !
  db_name='gkkp'
  if (l_gkkp_bare) db_name='gkkp_plus_bare'

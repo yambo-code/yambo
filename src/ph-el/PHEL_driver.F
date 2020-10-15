@@ -25,10 +25,11 @@ subroutine PHEL_driver(E,k,q)
  !
  use electrons,           ONLY:levels,n_sp_pol,E_fine_grid
  use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc
- use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches
+ use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,elph_global_free
+ use PHEL,                ONLY:phel_gkkp_expanded_sq
  use interfaces,          ONLY:PARALLEL_global_indexes
- use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium
- use RT_occupations,      ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc
+ use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free
+ use RT_occupations,      ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_ALL_occupations_free
  use real_time,           ONLY:l_RT_uses_E_FineGd
  !
 #include<memory.h>
@@ -90,5 +91,17 @@ subroutine PHEL_driver(E,k,q)
  do iq=1,nqibz
    call PHEL_lifetimes(iq,E,k,(/1,QP_PH_n_G_bands/),k%FGibz,E_FG)
  enddo
+ !
+ ! Output
+ !========
+ ! 
+ call PH_of( )
+ !
+ ! Clean
+ !=======
+ call RT_ALL_lifetimes_free(  )
+ call RT_ALL_occupations_free(  )
+ call elph_global_free( )
+ YAMBO_FREE(phel_gkkp_expanded_sq)
  !
 end subroutine PHEL_driver

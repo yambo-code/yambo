@@ -23,17 +23,18 @@
 !
 subroutine QP_of(qp,en,QPdb_read_err,what)
  !
- use pars,      ONLY:SP,lchlen,schlen
- use units,     ONLY:HA2EV,HA2GHZ
- use drivers,   ONLY:l_life,l_elph_corr
- use com,       ONLY:msg,of_open_close
- use electrons, ONLY:levels,spin,n_sp_pol
- use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Vnl_xc,QP_table,&
-&                    QP_solver,QP_n_states,l_extended_output,Vxc_kind,&
-&                    use_GreenF_to_eval_QP,Vnlxc_kind,report_Vxc,&
-&                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral,&
-&                    QP_states_simmetrize,QP_G_info,Time_of
- use interfaces,ONLY:DESC_write
+ use pars,          ONLY:SP,lchlen,schlen
+ use units,         ONLY:HA2EV,HA2GHZ
+ use drivers,       ONLY:l_life
+ use com,           ONLY:msg,of_open_close
+ use electrons,     ONLY:levels,spin,n_sp_pol
+ use QP_m,          ONLY:QP_t,QP_Vxc,QP_Sc,QP_Vnl_xc,QP_table,&
+&                        QP_solver,QP_n_states,l_extended_output,Vxc_kind,&
+&                        use_GreenF_to_eval_QP,Vnlxc_kind,report_Vxc,&
+&                        report_Vnlxc,QP_G_amplitude_integral,&
+&                        QP_states_simmetrize,QP_G_info,Time_of
+ use OUTPUT_simple, ONLY:OUTPUT_add_column
+ use interfaces,    ONLY:DESC_write
  !
  implicit none
  !
@@ -44,9 +45,10 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  ! Work Space
  !
- integer           ::i1,i2,qp_b,qp_k,qp_isp
- character(lchlen) ::file_name,G_Sc_name
+ integer           ::i_qp,i_w
+ character(lchlen) ::G_Sc_name
  logical           ::state_is_2do(QP_n_states)
+ real(SP)          ::qp_spin
  !
  !o.qp titles
  !
@@ -87,45 +89,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  titles(30) = 'Width[ns]'
  titles(31) = 'dV/V[%]' 
  !
-#if defined _QED
- ntitles=11
- titles_order(:ntitles)=(/9,10,4,25,29,27,6,12,28,30,31/)
-#else
- ntitles=5
- titles_order(:ntitles)=(/9,10,4,8,2/)
-#endif
- if (.not.report_Sc)   then
-   ntitles=6
-   titles_order(4:6)=(/5,8,6/)
- endif
- if (trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP) then
-   ntitles=14
-   titles_order(:14)=(/9,10,5,8,12,15,16,17,18,19,20,21,22,23/)
- else if (l_elph_corr) then
-   ntitles=ntitles+1
-   titles_order(ntitles)=12
- endif
- if (l_life) then
-#if defined _QED
-   ntitles=7
-   titles_order(:ntitles)=(/9,10,4,12,13,28,30/)
-#else
-   ntitles=5
-   titles_order(:ntitles)=(/9,10,4,12,13/)
-#endif
- endif
- if (what=='hf') then
-   ntitles=4
-   titles_order(:ntitles)=(/9,10,4,26/)
-   if (report_Vxc) then
-     ntitles=ntitles+1
-     titles_order(ntitles)=1
-   endif 
-   if (report_Vnlxc) then
-     ntitles=ntitles+1
-     titles_order(ntitles)=11
-   endif 
- endif
+ call OUTPUT_add_column(what="reset",name=what)
+ call OUTPUT_add_column(what="open",name=what)
  !
  if (l_extended_output) then
    !
@@ -150,100 +115,135 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
 &    (trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP).or.&
 &    trim(QP_solver)=='mixed'.or.what=='hf') then
    !
-   file_name=what
-   call of_open_close(file_name,'ot')
+   if (index(what,"qp")>0) qp%k=0.
    !
-   if (what== 'hf') call msg('o '//what,'# Hartree-Fock Components and Corrections')
-   !
-   call DESC_write('o '//what,'#',qp%desc)
-   !
-   call msg('o '//what,'#')
-   call msg('o '//what,'#',titles(titles_order(:ntitles)),INDENT=0,USE_TABS=.TRUE.)
-   call msg('o '//what,'#')
-   !
-   if (index(what,"qp")>0) then
-     qp%k=0.
-   endif
-   !
-   do i1=1,QP_n_states
+   do i_qp=1,QP_n_states
      !
-     values=0.
-     qp_b  =QP_table(i1,1)
-     qp_k  =QP_table(i1,3)
-     qp_isp=spin(QP_table(i1,:))
+     ! Fill the COL type with values
+     !===============================
+     call OUTPUT_add_column(TITLES=(/"K-point","Band   "/),VALUES=(/real(QP_table(i_qp,3)),real(QP_table(i_qp,1))/))
+     if (allocated(qp%E)) then
+       call OUTPUT_add_column(TITLES=(/"Eo","E "/),VALUES=(/qp%E_bare(i_qp)*HA2EV,real(qp%E(i_qp)*HA2EV)/))
+       call OUTPUT_add_column(TITLES=(/"E-Eo"/),VALUES=(/real((qp%E(i_qp)-qp%E_bare(i_qp))*HA2EV)/))
+       call OUTPUT_add_column(TITLES=(/"Ehf"/),VALUES=(/real(qp%E(i_qp)*HA2EV)/))
+     endif
+     if (allocated(QP_sc)) then
+       call OUTPUT_add_column(TITLES=(/"Sc|Eo"/),VALUES=(/real(QP_Sc(i_qp,1))*HA2EV/))
+     endif
+     if (allocated(QP_Vxc))    call OUTPUT_add_column(TITLES=(/"Vxc"/),VALUES=(/real(QP_Vxc(i_qp))*HA2EV/))
+     if (allocated(QP_Vnl_xc)) call OUTPUT_add_column(TITLES=(/"Vnlxc"/),VALUES=(/real(QP_Vnl_xc(i_qp))*HA2EV/))
+     if (n_sp_pol==2) then
+       if (spin(QP_table(i_qp,:))==1) qp_spin= 1._SP
+       if (spin(QP_table(i_qp,:))==2) qp_spin=-1._SP
+       call OUTPUT_add_column(TITLES=(/"Spin_Pol"/),VALUES=(/qp_spin/))
+     endif
+     !
+     ! Select the colummns to print
+     !==============================
+     call OUTPUT_add_column(ORDER=(/"K-point","Band   ","Eo     "/))
      !
      if (index(what,"qp")>0) then
+
+!#if defined _QED
+! ntitles=11
+! titles_order(:ntitles)=(/9,10,4,25,29,27,6,12,28,30,31/)
+!#else
+! ntitles=5
+! titles_order(:ntitles)=(/9,10,4,8,2/)
+!#endif
+! if (.not.report_Sc)   then
+!   ntitles=6
+!   titles_order(:)=(/9,10,4,5,8,6/)
+! endif
+! if (trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP) then
+!   ntitles=14
+!   titles_order(:14)=(/9,10,5,8,12,15,16,17,18,19,20,21,22,23/)
+! else if (l_elph_corr) then
+!   ntitles=ntitles+1
+!   titles_order(ntitles)=12
+! endif
        !
        if (.not.l_life) then
-           if (report_Sc) values(2)=real(QP_Sc(i1,1))*HA2EV
-           if (report_dSc) then
-             values(7:8)=(/real(QP_dSc(i1,1)),real((qp%E(i1)-qp%E_bare(i1))*HA2EV)/) 
-             values(3  )=real(QP_Sc(i1,1)+QP_dSc(i1,1)*(qp%E(i1)-qp%E_bare(i1)))*HA2EV
-           else
-             values(8)=real(qp%E(i1)-qp%E_bare(i1))*HA2EV
-           endif
-         if (report_Vxc)     values(1) =real(QP_Vxc(i1))*HA2EV
-         if (report_Vnlxc)   values(11)=real(QP_Vnl_xc(i1))*HA2EV
+         call OUTPUT_add_column(ORDER=(/"E-Eo ","Sc|Eo"/))
+         !if (report_Sc) call OUTPUT_add_column(TITLES=(/"Sc|Eo"/),VALUES=(/real(QP_Sc(i_qp,1))*HA2EV/))
+         !if (report_dSc) then
+         !  values(7:8)=(/real(QP_dSc(i_qp,1)),real((qp%E(i_qp)-qp%E_bare(i_qp))*HA2EV)/) 
+         !  values(3  )=real(QP_Sc(i_qp,1)+QP_dSc(i_qp,1)*(qp%E(i_qp)-qp%E_bare(i_qp)))*HA2EV
+         !else
+         !  values(8)=real(qp%E(i_qp)-qp%E_bare(i_qp))*HA2EV
+         !endif
+         !if (report_Vxc)     values(1) =real(QP_Vxc(i_qp))*HA2EV
+         !if (report_Vnlxc)   values(11)=real(QP_Vnl_xc(i_qp))*HA2EV
+         if (report_Vxc)   call OUTPUT_add_column(ORDER=(/"Vxc"/))
+         if (report_Vnlxc) call OUTPUT_add_column(ORDER=(/"Vnlxc"/))
        endif
+! !
+! if (l_life) then
+!#if defined _QED
+!   ntitles=7
+!   titles_order(:ntitles)=(/9,10,4,12,13,28,30/)
+!#else
+!   ntitles=5
+!   titles_order(:ntitles)=(/9,10,4,12,13/)
+!   call OUTPUT_add_column(ORDER=(/"K-point","Band   "/))
+!#endif
+! endif
        !
-       values(4:6)  =(/qp%E_bare(i1)*HA2EV,real(qp%E(i1)*HA2EV),real(qp%Z(i1))/)
-       values(9:10) =(/real(qp_k),real(qp_b)/)
-       values(12:13)=(/aimag(qp%E(i1))*HA2EV/1.E-3,Time_of(aimag(qp%E(i1)),"fs")/)
-       values(28)   =Time_of(aimag(qp%E(i1)),"ps")
-       values(15:16)=(/real(qp%Z(i1)),aimag(qp%Z(i1))/)
+       values(4:6)  =(/qp%E_bare(i_qp)*HA2EV,real(qp%E(i_qp)*HA2EV),real(qp%Z(i_qp))/)
+       values(12:13)=(/aimag(qp%E(i_qp))*HA2EV/1.E-3,Time_of(aimag(qp%E(i_qp)),"fs")/)
+       values(28)   =Time_of(aimag(qp%E(i_qp)),"ps")
+       values(15:16)=(/real(qp%Z(i_qp)),aimag(qp%Z(i_qp))/)
        !
        if (allocated(QP_G_amplitude_integral)) then
-         values(23)=QP_G_amplitude_integral(i1)
+         values(23)=QP_G_amplitude_integral(i_qp)
        endif
 #if defined _QED
-       values(30)=Time_of(aimag(qp%E(i1)),"ns")
+       values(30)=Time_of(aimag(qp%E(i_qp)),"ns")
        if (.not.l_life) then
-         values(29)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ
-         values(24)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ*1000._SP
-         values(25)=real(qp%E(i1)-qp%E_bare(i1))*1000._SP*HA2EV
-         values(27)=real(QP_Sc(i1,1))*1000._SP*HA2EV
-         values(31)=real(QP_dSC(i1,1))*100
+         values(29)=real(qp%E(i_qp)-qp%E_bare(i_qp))*HA2GHZ
+         values(24)=real(qp%E(i_qp)-qp%E_bare(i_qp))*HA2GHZ*1000._SP
+         values(25)=real(qp%E(i_qp)-qp%E_bare(i_qp))*1000._SP*HA2EV
+         values(27)=real(QP_Sc(i_qp,1))*1000._SP*HA2EV
+         values(31)=real(QP_dSC(i_qp,1))*100
        endif
 #endif
        if (allocated(QP_G_info)) then
-         values(17:18)=QP_G_info(i1,1,:)*HA2EV
-         values(19:20)=QP_G_info(i1,2,:)*HA2EV
-         values(21:22)=QP_G_info(i1,3,:)*HA2EV
+         values(17:18)=QP_G_info(i_qp,1,:)*HA2EV
+         values(19:20)=QP_G_info(i_qp,2,:)*HA2EV
+         values(21:22)=QP_G_info(i_qp,3,:)*HA2EV
        endif
        !
-     else if (what=="hf") then
-       values(4:5)  =(/qp%E_bare(i1)*HA2EV,real(qp%E(i1)*HA2EV)/)
-       values(8)=real(qp%E(i1)-qp%E_bare(i1))*HA2EV
-       values(9:10) =(/real(qp_k),real(qp_b)/)
-       if (report_Vxc)   values(1)=real(QP_Vxc(i1))*HA2EV
-       if (report_Vnlxc) values(11)=real(QP_Vnl_xc(i1))*HA2EV
-       values(26)=values(5)
      endif
      !
-     if (qp_isp==1) values(14)= 1._SP
-     if (qp_isp==2) values(14)=-1._SP
+     ! HF
+     !----
+     if (what=="hf") then
+       call OUTPUT_add_column(ORDER=(/"Ehf"/))
+       if (report_Vxc)   call OUTPUT_add_column(ORDER=(/"Vxc"/))
+       if (report_Vnlxc) call OUTPUT_add_column(ORDER=(/"Vnlxc"/))
+     endif
      !
-     call msg('o '//what,'',values(titles_order(:ntitles)),INDENT=-2,USE_TABS=.TRUE.)
+     call OUTPUT_add_column(what="write")
      !
    enddo
    !
-   call of_open_close(file_name)
+   call OUTPUT_add_column(what="close")
    !
  else if (trim(QP_solver)=='g') then
    !
    call QP_states_simmetrize(en,state_is_2do=state_is_2do)
    !
-   do  i1=1,QP_n_states
+   do  i_qp=1,QP_n_states
      !
-     if (spin(QP_table(i1,:))==1) write (G_Sc_name,'(2(a,i3.3),a)') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3),'_s1'
-     if (spin(QP_table(i1,:))==2) write (G_Sc_name,'(2(a,i3.3),a)') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3),'_s2'
-     if (n_sp_pol==1) write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3)
+     if (spin(QP_table(i_qp,:))==1) write (G_Sc_name,'(2(a,i3.3),a)') 'G_Sc_band_',QP_table(i_qp,1),'_k_',QP_table(i_qp,3),'_s1'
+     if (spin(QP_table(i_qp,:))==2) write (G_Sc_name,'(2(a,i3.3),a)') 'G_Sc_band_',QP_table(i_qp,1),'_k_',QP_table(i_qp,3),'_s2'
+     if (n_sp_pol==1) write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i_qp,1),'_k_',QP_table(i_qp,3)
      call of_open_close(G_Sc_name,'ot')
      !call msg('o G_Sc','# GW [Green`s function & Self-Energy]')
      call DESC_write('o G_Sc','#',qp%desc)
      if (allocated(QP_G_amplitude_integral)) then
        call msg('o G_Sc','#')
-       call msg('o G_Sc','# Spectral function at this point integrates to',QP_G_amplitude_integral(i1),&
+       call msg('o G_Sc','# Spectral function at this point integrates to',QP_G_amplitude_integral(i_qp),&
 &               INDENT=0)
        call msg('o G_Sc','#')
      endif
@@ -257,14 +257,14 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        call msg('o G_Sc','#',titles(:5),INDENT=0,USE_TABS=.TRUE.)
      endif
      call msg('o G_Sc','#')
-     do i2=1,qp%GreenF_n_steps
+     do i_w=1,qp%GreenF_n_steps
        values=0._SP
-       values(1)  =real(qp%GreenF_W(i1,i2))*HA2EV
-       values(2:3)=(/real(qp%GreenF(i1,i2)),aimag(qp%GreenF(i1,i2))/)/HA2EV
-       values(4:5)=(/real(qp%S_total(i1,i2)),aimag(qp%S_total(i1,i2))/)*HA2EV
+       values(1)  =real(qp%GreenF_W(i_qp,i_w))*HA2EV
+       values(2:3)=(/real(qp%GreenF(i_qp,i_w)),aimag(qp%GreenF(i_qp,i_w))/)/HA2EV
+       values(4:5)=(/real(qp%S_total(i_qp,i_w)),aimag(qp%S_total(i_qp,i_w))/)*HA2EV
        values(6)=values(4)
        if (report_Vnlxc) then
-         values(6)=values(6)-real(QP_Vnl_xc(i1)-QP_Vxc(i1))*HA2EV
+         values(6)=values(6)-real(QP_Vnl_xc(i_qp)-QP_Vxc(i_qp))*HA2EV
          call msg('o G_Sc','',values(:6),INDENT=-2,USE_TABS=.TRUE.)
        else
          call msg('o G_Sc','',values(:5),INDENT=-2,USE_TABS=.TRUE.)

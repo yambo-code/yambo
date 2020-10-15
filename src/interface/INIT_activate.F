@@ -215,7 +215,7 @@ subroutine INIT_activate()
    !
  endif
  !
- if (l_optics.or.l_life) then
+ if (l_optics.or.(l_life.and.l_elel_corr)) then
    !
    ! Double Grid
    !

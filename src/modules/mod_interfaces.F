@@ -319,7 +319,6 @@ module interfaces
    !
  end interface
  !
- !
  interface WF_shift_kpoint
    !
    subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)

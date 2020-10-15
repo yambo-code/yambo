@@ -21,16 +21,37 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_message(what)
+module OUTPUT_simple
  !
- use real_time
- use RT_control
- use units
+ use pars,  ONLY:SP,schlen,lchlen,rZERO
  !
- implicit none
+ integer, parameter       :: N_MAX_columns=100
  !
- character(*) :: what
+ type COLt
+   integer            :: POS=0
+   character(schlen)  :: title= " "
+   real(SP)           :: value=rZERO
+ end type
  !
- write (*,*) NE_i_time,"(I_TIME)",NE_time*AUT2FS,"(TIME)",what
+ logical              :: TITLES_ordered=.FALSE.
+ logical              :: TITLES_dumped=.FALSE.
+ integer              :: N_columns = 0
+ integer              :: N_columns_ordered = 0
+ character(lchlen)    :: filename = " "
+ character(schlen)    :: filename_short= " "
+ type(COLt)           :: COL(N_MAX_columns)
  !
-end subroutine
+ interface
+   !
+   subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,VALUES,ORDER)
+     use pars,  ONLY:SP
+     character(*) , OPTIONAL :: what
+     character(*) , OPTIONAL :: name
+     character(*) , OPTIONAL :: TITLES(:)
+     character(*) , OPTIONAL :: VAL_TITLES(:)
+     real(SP)     , OPTIONAL :: VALUES(:)
+     character(*) , OPTIONAL :: ORDER(:)
+   end subroutine
+ end interface
+ !
+end module

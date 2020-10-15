@@ -33,7 +33,8 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  use PHEL,           ONLY:phel_gkkp_expanded_sq
  use vec_operate,    ONLY:degeneration_finder
  use parallel_m,     ONLY:PAR_Q_bz_index,PAR_IND_Q_bz,PAR_nQ_bz,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
-&                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX,PAR_Q_ibz_index,PAR_nQ_ibz,PAR_IND_Q_ibz
+&                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX,PAR_Q_ibz_index,PAR_nQ_ibz,&
+&                         PAR_IND_Q_ibz
  !
 #include<memory.h>
  ! 
@@ -60,11 +61,11 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
    YAMBO_ALLOC(ph_Esq_local,(nqbz,ph_modes))
    YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nibz,nqbz))
    YAMBO_ALLOC(elph_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ,PAR_Xk_nibz))
- else
+ else if (l_IBZ) then
    PAR_nQ=PAR_nQ_ibz
    YAMBO_ALLOC(ph_Esq_local,(nqibz,ph_modes))
    YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nibz,nqibz))
-   YAMBO_ALLOC(phel_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ,PAR_Xk_nibz))
+   YAMBO_ALLOC(phel_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ,k%nbz))
  endif
  !
  MAX_gkkp_expanded_at_kpq=0._SP
@@ -97,9 +98,13 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
      ik_m_q   =k%sstar(qindx_S(ik,iq,1),1)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
-     ik_mem = PAR_Xk_ibz_index(ik)
-     if (l_BZ)  iq_mem = PAR_Q_bz_index(iq)
-     if (l_IBZ) iq_mem = PAR_Q_ibz_index(iq)
+     if (l_BZ ) then
+       iq_mem = PAR_Q_bz_index(iq)
+       ik_mem = PAR_Xk_ibz_index(ik)
+     else if (l_IBZ) then
+       iq_mem = PAR_Q_ibz_index(iq)
+       ik_mem = PAR_Xk_ibz_index(ik)
+     endif
      !
      do i_n=1,elph_nb
        do i_np=1,elph_nb

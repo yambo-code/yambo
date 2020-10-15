@@ -25,7 +25,7 @@ module RT_occupations
  !
  use pars,           ONLY:SP,rZERO,schlen
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,&
-&                         l_phel_scatt
+&                         l_phel_scatt,l_phel_corr
  !
 #include<memory.h>
  !
@@ -51,18 +51,22 @@ module RT_occupations
  !
  contains
    !
-   subroutine RT_ALL_occupations_alloc(NB,NK)
-     integer :: NB(2),NK
-     call RT_occupation_alloc("electrons",RT_el_occ,NB,NK)
-     call RT_occupation_alloc("holes",RT_ho_occ,NB,NK)
-     if (l_phel_scatt) call RT_occupation_alloc("phonons",RT_ph_occ,NB,NK)
-     if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) call RT_occupation_alloc("life",RT_life_occ,NB,NK)
+   subroutine RT_EL_occupations_alloc(D1,D2)
+     integer :: D1(2),D2
+     call RT_occupation_alloc("electrons",RT_el_occ,D1,D2)
+     call RT_occupation_alloc("holes",RT_ho_occ,D1,D2)
+     if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) call RT_occupation_alloc("life",RT_life_occ,D1,D2)
+   end subroutine
+   !
+   subroutine RT_PH_occupations_alloc(D1,D2)
+     integer :: D1(2),D2
+     if (l_phel_scatt.or.l_phel_corr) call RT_occupation_alloc("phonons",RT_ph_occ,D1,D2)
    end subroutine
    !
    subroutine RT_ALL_occupations_free( )
      call RT_occupation_free(RT_el_occ)
      call RT_occupation_free(RT_ho_occ)
-     if (l_phel_scatt) call RT_occupation_free(RT_ph_occ)
+     if (l_phel_scatt.or.l_phel_corr) call RT_occupation_free(RT_ph_occ)
      if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) call RT_occupation_free(RT_life_occ)
    end subroutine
    !

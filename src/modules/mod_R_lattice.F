@@ -262,6 +262,7 @@ module R_lattice
      type(bz_fine_grid)::FG
      type(bz_samp)     ::k
      integer           ::ik
+     FG%N=k%nibz
      do ik=1,k%nibz
        FG%pt(ik,:)=k%pt(ik,:)
        FG%k_range(ik,:)=ik

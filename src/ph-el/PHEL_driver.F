@@ -23,13 +23,13 @@
 !
 subroutine PHEL_driver(E,k,q)
  !
- use pars,                ONLY:rZERO
- use electrons,           ONLY:levels,n_sp_pol
+ use electrons,           ONLY:levels,n_sp_pol,E_fine_grid
  use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches
  use interfaces,          ONLY:PARALLEL_global_indexes
- use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps
- use real_time,           ONLY:RT_levels,l_RT_uses_E_FineGd
+ use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium
+ use RT_occupations,      ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc
+ use real_time,           ONLY:l_RT_uses_E_FineGd
  !
 #include<memory.h>
  !
@@ -40,6 +40,7 @@ subroutine PHEL_driver(E,k,q)
  !
  integer             ::i_err,iq
  integer, external   ::ELPH_expanded_databases_check
+ type(E_fine_grid)   ::E_FG
  !
  call section('*',"Phonon Lifetimes")
  !
@@ -62,34 +63,32 @@ subroutine PHEL_driver(E,k,q)
  !=====================
  call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ")
  !
- ! Phononic Lifetimes  
- !====================
- Life_MEM_steps=1
- call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)
- !
  ! Maps into the RT kinds
  !========================
- ! ... levels
- YAMBO_ALLOC(RT_levels%E,(QP_PH_n_G_bands,k%nibz,n_sp_pol))
- YAMBO_ALLOC(RT_levels%W,(QP_PH_n_G_bands,k%nibz,n_sp_pol))
- RT_levels%E=E%E(:QP_PH_n_G_bands,:,:)
- RT_levels%W=rZERO
- if (allocated(E%W)) then
-   RT_levels%W=E%W(:QP_PH_n_G_bands,:,:)
- endif
+ !
  ! ... grid
  l_RT_uses_E_FineGd=k%FGibz%N>0
  if (.not.l_RT_uses_E_FineGd) then
    call bz_samp_FineGd_alloc(k%FGibz,k%nibz)
    call bz_samp_FineGd_default(k%FGibz,k)
  endif
- ! ... occupations
- call RT_occupations_and_levels_init(E,k,q)
+ !
+ ! ... allocs
+ Life_MEM_steps=1
+ call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)
+ call RT_EL_occupations_alloc((/1,QP_PH_n_G_bands/),k%FGibz%N)
+ call RT_PH_occupations_alloc(elph_branches,nqibz)
+ YAMBO_ALLOC(E_FG%E,(QP_PH_n_G_bands,k%nibz,n_sp_pol))
+ YAMBO_ALLOC(E_FG%W,(QP_PH_n_G_bands,k%nibz,n_sp_pol))
+ !
+ ! ... occupations & levels
+ call RT_occupations_and_levels_init((/1,QP_PH_n_G_bands/),E,k,q,k%FGibz,E_FG)
  !
  ! Loop
  !======
+ l_initial_equilibrium=.TRUE.
  do iq=1,nqibz
-   call PHEL_lifetimes(iq,E,k,(/1,QP_PH_n_G_bands/),k%FGibz)
+   call PHEL_lifetimes(iq,E,k,(/1,QP_PH_n_G_bands/),k%FGibz,E_FG)
  enddo
  !
 end subroutine PHEL_driver

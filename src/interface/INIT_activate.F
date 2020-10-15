@@ -452,9 +452,7 @@ subroutine INIT_activate()
    !
 #if defined  _PHEL 
    !
-   if (l_phel_corr) then
-     call initactivate(1,'GphBRnge ElPhModes GDamping')
-   endif
+   if (l_phel_corr) call initactivate(1,'GphBRnge GDamping ElPhModes')
   !
 #endif
 #if defined  _ELPH 

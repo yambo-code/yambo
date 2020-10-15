@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_and_levels_init(E,k,q)
+subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_phel_scatt
@@ -29,19 +29,22 @@ subroutine RT_occupations_and_levels_init(E,k,q)
  use RT_occupations, ONLY:l_RT_relax_time_approx,RT_RTA_chem,RT_RTA_temp,RT_occupation_clean, &
 &                         RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,RT_el_occ,RT_ho_occ,RT_life_occ,RT_ph_occ
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz,PP_redux_wait 
- use real_time,      ONLY:RTibz,RT_bands,RT_levels,RT_is_dynamically_dephased,RT_nk
+ use real_time,      ONLY:RT_bands,RT_levels,RT_is_dynamically_dephased,RT_nk
  use ELPH,           ONLY:ph_freqs_sq
- use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels,spin_occ
+ use R_lattice,      ONLY:bz_samp,bz_fine_grid
+ use electrons,      ONLY:levels,spin_occ,E_fine_grid,n_sp_pol
  !
  implicit none
  !
- type(levels)      :: E
- type(bz_samp)     :: k,q
+ integer           ,intent(inout):: bands(2)
+ type(levels)      ,intent(inout):: E
+ type(bz_samp)     ,intent(in)   :: k,q
+ type(bz_fine_grid),intent(inout):: k_FG
+ type(E_fine_grid) ,intent(inout):: E_FG
  !
  ! Work Space
  !
- real(SP):: Energy,kpt(3),f_occ,f_occ_ref,ph_freq,Width
+ real(SP):: Energy(n_sp_pol),kpt(3),f_occ(n_sp_pol),f_occ_ref(n_sp_pol),ph_freq,Width(n_sp_pol)
  integer :: ik,ik_FG,iE_FG,ib,ik_RT,il,iq,iqbz
  !
  call RT_occupation_clean(RT_el_occ)
@@ -51,61 +54,61 @@ subroutine RT_occupations_and_levels_init(E,k,q)
  !
  ! El/Ho Occupations 
  !===================
- do ib=RT_bands(1),RT_bands(2)
+ do ib=bands(1),bands(2)
    do ik=1,k%nibz
      !
-     do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
+     do ik_RT=k_FG%k_range(ik,1),k_FG%k_range(ik,2)
        !
-       if (ik_RT/=RTibz%k_range(ik,1)) then
+       if (ik_RT/=k_FG%k_range(ik,1)) then
          !
-         ik_FG=RTibz%k_map(ik_RT)
-         iE_FG=RTibz%E_map(ik_RT)
+         ik_FG=k_FG%k_map(ik_RT)
+         iE_FG=k_FG%E_map(ik_RT)
          !
-         if (allocated(E%W))  E%FG%W(ib,iE_FG,1)     = abs(E%W(ib,ik,1))
+         if (allocated(E%W))  E%FG%W(ib,iE_FG,:)     = abs(E%W(ib,ik,:))
          !
          kpt       = k%FGibz%pt(ik_FG,:)
-         Energy    = E%FG%E(ib,iE_FG,1)
-         f_occ     = E%FG%f(ib,iE_FG,1)
+         Energy    = E%FG%E(ib,iE_FG,:)
+         f_occ     = E%FG%f(ib,iE_FG,:)
          f_occ_ref = f_occ
          Width     = 0._SP
-         if (allocated(E%fo)) f_occ_ref = E%FG%f(ib,iE_FG,1)-E%FG%df(ib,iE_FG,1)
-         if (allocated(E%W))  Width     = abs(E%FG%W(ib,iE_FG,1))
+         if (allocated(E%fo)) f_occ_ref = E%FG%f(ib,iE_FG,:)-E%FG%df(ib,iE_FG,:)
+         if (allocated(E%W))  Width     = abs(E%FG%W(ib,iE_FG,:))
        else
          kpt       = k%pt(ik,:)
-         Energy    = E%E(ib,ik,1)
-         f_occ     = E%f(ib,ik,1)
+         Energy    = E%E(ib,ik,:)
+         f_occ     = E%f(ib,ik,:)
          f_occ_ref = f_occ
          Width     = 0._SP
-         if (allocated(E%fo)) f_occ_ref = E%fo(ib,ik,1)
-         if (allocated(E%W))  Width     = abs(E%W(ib,ik,1))
+         if (allocated(E%fo)) f_occ_ref = E%fo(ib,ik,:)
+         if (allocated(E%W))  Width     = abs(E%W(ib,ik,:))
          !
        endif
        !
        ! .. levels
-       RT_levels%E(ib,ik_RT,1) = Energy
-       RT_levels%W(ib,ik_RT,1) = Width 
+       E_FG%E(ib,ik_RT,:) = Energy
+       E_FG%W(ib,ik_RT,:) = Width 
        !
        ! .. kpt
-       RTibz%pt(ik_RT,:)       = kpt
+       k_FG%pt(ik_RT,:)       = kpt
        !
        ! .. occ
-       RT_el_occ%N_ref(ib,ik_RT) = f_occ_ref
-       RT_ho_occ%N_ref(ib,ik_RT) = spin_occ-f_occ_ref
+       RT_el_occ%N_ref(ib,ik_RT) = f_occ_ref(1)
+       RT_ho_occ%N_ref(ib,ik_RT) = spin_occ-f_occ_ref(1)
        !
        if (l_RT_relax_time_approx) then
-         RT_RTA_E_occ_infty(ib,ik_FG)= Fermi_fnc(  Energy-E%E_CBm(1)-RT_RTA_chem(1) ,RT_RTA_temp(1))*spin_occ
-         RT_RTA_H_occ_infty(ib,ik_FG)= Fermi_fnc(-(Energy-E%E_VBM(1)-RT_RTA_chem(2)),RT_RTA_temp(2))*spin_occ
+         RT_RTA_E_occ_infty(ib,ik_FG)= Fermi_fnc(  Energy(1)-E%E_CBm(1)-RT_RTA_chem(1) ,RT_RTA_temp(1))*spin_occ
+         RT_RTA_H_occ_infty(ib,ik_FG)= Fermi_fnc(-(Energy(1)-E%E_VBM(1)-RT_RTA_chem(2)),RT_RTA_temp(2))*spin_occ
        endif
        !
        if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
        !
-       RT_el_occ%dN(ib,ik_RT)   = f_occ-f_occ_ref
-       RT_el_occ%N(ib,ik_RT)    = f_occ
-       RT_ho_occ%N(ib,ik_RT)    = spin_occ-f_occ
+       RT_el_occ%dN(ib,ik_RT)   = f_occ(1)-f_occ_ref(1)
+       RT_el_occ%N(ib,ik_RT)    = f_occ(1)
+       RT_ho_occ%N(ib,ik_RT)    = spin_occ-f_occ(1)
        !
        if (.not.RT_is_dynamically_dephased) cycle
        !
-       RT_life_occ%dN(ib,ik_RT) = f_occ-f_occ_ref
+       RT_life_occ%dN(ib,ik_RT) = f_occ(1)-f_occ_ref(1)
        !
      enddo
    enddo

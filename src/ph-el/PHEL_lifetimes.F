@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PHEL_lifetimes(iq,E,k,Nb,FG)
+subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
  !
  ! This routine computes the lifetimes in the phonon-electron (i.e., phonon dynamics) case. 
  ! Presently, only one approximation route to the kernel/collision integral is available:
@@ -46,32 +46,35 @@ subroutine PHEL_lifetimes(iq,E,k,Nb,FG)
  !
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !
- use pars,           ONLY:SP,rZERO
+ use pars,           ONLY:SP,rZERO,cI,pi
  use units,          ONLY:HA2EV
- use electrons,      ONLY:levels,n_full_bands,spin_occ
+ use electrons,      ONLY:levels,n_full_bands,spin_occ,E_fine_grid
  use hamiltonian,    ONLY:B_mat_index
  use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid
  use RT_occupations, ONLY:RT_ph_occ,RT_el_occ,RT_ho_occ,RT_life_occ
  use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life
- use real_time,      ONLY:l_RT_uses_E_FineGd,RT_levels,RT_eh_en
+ use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
  use PHEL,           ONLY:phel_gkkp_expanded_sq
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
  use parallel_m,     ONLY:PAR_Q_ibz_index,PAR_Xk_ibz_index,PAR_IND_B_mat
+ use QP_m,           ONLY:QP_G_damp
  !
  implicit none
  !
  type(levels),      intent(in) :: E
  type(bz_samp),     intent(in) :: k
- integer,           intent(in) :: iq,Nb(2)
- type(bz_fine_grid),intent(in) :: FG
+ integer,           intent(in) :: iq,bands(2)
+ type(bz_fine_grid),intent(in) :: k_FG
+ type(E_fine_grid) ,intent(in) :: E_FG
  !
  ! Work Space ...
  !
  real(SP)              :: ph_freq
- real(SP), parameter   :: cutoff= 5.E-3
- real(SP), external    :: RT_G_retarded_convolution
+ real(SP),   parameter :: cutoff= 5.E-3
+ real(SP),   external  :: RT_G_retarded_convolution
+ complex(SP),external  :: Lorentzian_FT
  !
- real(SP)              :: Gkkp_sq(Nb(1):Nb(2),Nb(1):Nb(2))
+ real(SP)              :: Gkkp_sq(bands(1):bands(2),bands(1):bands(2))
  ! ... band/branch index ...
  integer               :: il,i_n,i_np
  ! ... BZ index ...
@@ -113,12 +116,12 @@ subroutine PHEL_lifetimes(iq,E,k,Nb,FG)
      !
      Gkkp_sq=rZERO
      !
-     do i_n=Nb(1),Nb(2)
+     do i_n=bands(1),bands(2)
        !
        Gkkp_sq(i_n,i_n)=phel_gkkp_expanded_sq(i_n,i_n,il,iq_mem,ikbz)
        if (sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) cycle
        !
-       do i_np=Nb(1),Nb(2)
+       do i_np=bands(1),bands(2)
          !
          if (i_n.ne.i_np) then
            Gkkp_sq(i_n,i_np)=phel_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ikbz)
@@ -130,15 +133,15 @@ subroutine PHEL_lifetimes(iq,E,k,Nb,FG)
          if ((i_n<=n_full_bands.and.i_np>  n_full_bands).and.(E%E_ind_gap(1)>0.1/HA2EV)) cycle
          if ((i_n> n_full_bands.and.i_np<= n_full_bands).and.(E%E_ind_gap(1)>0.1/HA2EV)) cycle
          !
-         if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n,i_np,Nb) ) ) cycle
+         if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n,i_np,bands) ) ) cycle
          !
          if (.not. l_RT_uses_E_FineGd) then
            !
-           if(RT_levels%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. RT_levels%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
-           if(RT_levels%E(i_n ,ik    ,1)<RT_eh_en(1) .or. RT_levels%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
+           if(E_FG%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. E_FG%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
+           if(E_FG%E(i_n ,ik    ,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
            !
-           DELTA_E=RT_levels%E(i_n,ik,1)-RT_levels%E(i_np,ik_m_q,1)
-           DELTA_W=RT_levels%W(i_n,ik,1)+RT_levels%W(i_np,ik_m_q,1)
+           DELTA_E=E_FG%E(i_n,ik,1)-E_FG%E(i_np,ik_m_q,1)
+           DELTA_W=E_FG%W(i_n,ik,1)+E_FG%W(i_np,ik_m_q,1)
            !
          endif
          !
@@ -150,11 +153,11 @@ subroutine PHEL_lifetimes(iq,E,k,Nb,FG)
          ! 1/Nk from k-sum, (2*ph_freq)^-1 to correctly normalize Gkkp_sq.
          ! [NOTE] Variable pre_factor below is missing pi since it *should* come later from the hyperbolic secant FT
          !
-         pre_factor=Gkkp_sq(i_np,i_n)/real(FG%N_mapped(ik_m_q))
+         pre_factor=Gkkp_sq(i_np,i_n)/real(k_FG%N_mapped(ik_m_q))
          !
          if( pre_factor==0._SP ) cycle
          !
-         do ik_rim=FG%k_range(ik,1),FG%k_range(ik,2)
+         do ik_rim=k_FG%k_range(ik,1),k_FG%k_range(ik,2)
            !
            ! Zeroing
            !=========
@@ -165,15 +168,15 @@ subroutine PHEL_lifetimes(iq,E,k,Nb,FG)
            ! [NOTE] FP: band indices exchanged (m<->n) with respect to my notes:
            !            My notes: E_mk - E_nk-q  |  The code: E_nk - E_mk-q
            !
-           do ip_rim=FG%k_range(ik_m_q,1),FG%k_range(ik_m_q,2)
+           do ip_rim=k_FG%k_range(ik_m_q,1),k_FG%k_range(ik_m_q,2)
              !
              if (l_RT_uses_E_FineGd) then
                !
-               if(RT_levels%E(i_np,ip_rim,1)<RT_eh_en(1) .or. RT_levels%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
-               if(RT_levels%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. RT_levels%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
+               if(E_FG%E(i_np,ip_rim,1)<RT_eh_en(1) .or. E_FG%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
+               if(E_FG%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
                !
-               DELTA_E=RT_levels%E(i_n,ik_rim,1)-RT_levels%E(i_np,ip_rim,1)
-               DELTA_W=RT_levels%W(i_n,ik_rim,1)+RT_levels%W(i_np,ip_rim,1)
+               DELTA_E=E_FG%E(i_n,ik_rim,1)-E_FG%E(i_np,ip_rim,1)
+               DELTA_W=E_FG%W(i_n,ik_rim,1)+E_FG%W(i_np,ip_rim,1)
                !
              endif
              !
@@ -181,8 +184,8 @@ subroutine PHEL_lifetimes(iq,E,k,Nb,FG)
              D_ares=RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,'EP')
              D_res =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,'EP')
 #else
-             D_ares=0.
-             D_res =0.
+             D_ares=1./pi*aimag( Lorentzian_FT(DELTA_E+cI*QP_G_damp,ph_freq-DELTA_W,"r") )
+             D_res =1./pi*aimag( Lorentzian_FT(DELTA_E+cI*QP_G_damp,-ph_freq-DELTA_W,"r") )
 #endif
              !
              if(l_initial_equilibrium) then
@@ -197,8 +200,8 @@ subroutine PHEL_lifetimes(iq,E,k,Nb,FG)
                Hole_f_nk  = -RT_life_occ%dN(i_n,ik_rim)/spin_occ
              endif
              !
-             !TMP_Res_lifetime=TMP_Res_lifetime+Hole_f_mkq*f_nk*D_res
-             !TMP_Ares_lifetime=TMP_Ares_lifetime+f_mkq*Hole_f_nk*D_ares
+             TMP_Res_lifetime=TMP_Res_lifetime+Hole_f_mkq*f_nk*D_res
+             TMP_Ares_lifetime=TMP_Ares_lifetime+f_mkq*Hole_f_nk*D_ares
              !
              ! [NOTE] IF statement to be reactivated when time propagation is implemented
              !if( abs(N_q(1))>zero_dfl ) then

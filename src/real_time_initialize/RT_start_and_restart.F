@@ -48,7 +48,7 @@ subroutine RT_start_and_restart(E,k,q)
 &                         G_lesser_reference,rho_reference,magn_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,NE_time,RT_levels,&
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
-&                         Gr_kind,l_RT_is_WFfree,RT_TIME_status,&
+&                         Gr_kind,l_RT_is_WFfree,RT_TIME_status,RTibz,&
 &                         RT_nk,G_lesser,RT_eh_en,G_MEM_steps,RT_bands,&
 &                         NE_time_step_update_jump,l_velocity_gauge_corr
  use RT_lifetimes,   ONLY:RT_life_extrap_times
@@ -85,7 +85,7 @@ subroutine RT_start_and_restart(E,k,q)
  ! Initialize the Gf, potentials, levels and occupations
  !=======================================================
  call RT_local_init()
- call RT_occupations_and_levels_init(E,k,q)
+ call RT_occupations_and_levels_init(RT_bands,E,k,q,RTibz,RT_levels)
  call RT_G_lesser_init()
  !
  if(.not.l_RT_is_WFfree) then

@@ -25,14 +25,16 @@ subroutine RT_alloc(en,what)
  !
  use pars,           ONLY:SP,cZERO
  use parallel_m,     ONLY:PAR_G_k_range
+ use ELPH,           ONLY:elph_branches
  use drivers,        ONLY:l_use_Hxc_collisions
  use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:levels,n_spin,n_sp_pol
  use xc_functionals, ONLY:E_xc
- use R_lattice,      ONLY:nXkibz
- use RT_occupations, ONLY:RT_ALL_occupations_alloc,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,l_RT_relax_time_approx
- use RT_lifetimes,   ONLY:RT_ALL_lifetimes_alloc
+ use R_lattice,      ONLY:nXkibz,nqibz
+ use RT_occupations, ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_RTA_E_occ_infty,&
+&                         RT_RTA_H_occ_infty,l_RT_relax_time_approx
+ use RT_lifetimes,   ONLY:RT_EL_lifetimes_alloc,RT_PH_lifetimes_alloc
  use real_time,      ONLY:RT_levels,RT_is_dynamically_dephased,&
 &                         Ho_plus_Sigma,H_pseudo_eq,RT_Vnl_xc,HARTREE0,XC0,G_lesser_reference,&
 &                         dG_lesser,G_lesser,MEM_pointer,G_MEM_steps,REF_V_xc_sc,REF_V_hartree_sc,rho_reference,&
@@ -55,7 +57,8 @@ subroutine RT_alloc(en,what)
  call H_QP_table_setup(en)
  !
  if (RT_is_dynamically_dephased) then
-   call RT_ALL_lifetimes_alloc(RT_bands,RT_nk)
+   call RT_EL_lifetimes_alloc(RT_bands,RT_nk)
+   call RT_PH_lifetimes_alloc(elph_branches,nqibz)
  endif
  !
  nk=PAR_G_k_range
@@ -70,7 +73,8 @@ subroutine RT_alloc(en,what)
  endif
  !
  if( l_all .or. l_carriers) then
-   call RT_ALL_occupations_alloc(RT_bands,RT_nk)
+   call RT_EL_occupations_alloc(RT_bands,RT_nk)
+   call RT_PH_occupations_alloc(elph_branches,nqibz)
  endif
  !
  if (l_all) then

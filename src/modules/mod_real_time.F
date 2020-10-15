@@ -29,6 +29,7 @@ module real_time
  use global_XC,      ONLY:QP_SE_NONE
  use R_lattice,      ONLY:bz_fine_grid
  use RT_lifetimes,   ONLY:RT_obj_lifetime,RT_obj_lifetime_alloc,RT_obj_lifetime_free
+ use electrons,      ONLY:E_fine_grid
  !
 #include<memory.h>
  !
@@ -194,12 +195,7 @@ module real_time
  !
  ! Energies
  !---------------------
- type RT_levels_kind
-   real(SP), allocatable :: E(:,:,:)
-   real(SP), allocatable :: W(:,:,:)
- end type
- !
- type(RT_levels_kind),save  :: RT_levels
+ type(E_fine_grid)       :: RT_levels
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------

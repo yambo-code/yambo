@@ -87,11 +87,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  logical          ::X_is_TR_rotated,l_X_alloc
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
- complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor
+ complex(SP)      ::local_rhotw(X%ng),pre_factor,PPA_R
  complex(DP)      ::dp_dummy,ctmp,dp_vdummy(7)
  !
- logical          ::l_RIM_W_g
- integer          ::out_unit_QP_Sc_G=1000
+ logical          ::l_RIM_W_g,tmp
+ integer          ::out_unit_QP_Sc_G=1000,out_unit_PPA=771
  real(SP)         ::g1_mod_2D,g2_mod_2D
  !
 #ifdef _CUDA
@@ -111,8 +111,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
 !!! AG DBG
  open (unit=out_unit_QP_Sc_G,file="QP_Sc_G.dat",action="write",status="replace")
- write(out_unit_QP_Sc_G,*) "band  kpoint      head          diag_Gz        diag_G        wing_Gz"//&
+ write(out_unit_QP_Sc_G,*) "#band  kpoint      head          diag_Gz        diag_G        wing_Gz"//&
 &"         wing_G         body_Gz        body_G          all"
+ open (unit=out_unit_PPA,file="PPA.dat",action="write",status="replace")
+ write(out_unit_PPA,*) "#iq  G1  G2  PPA_E  PPA_R"
 !!! AG DBG
 
  call elemental_collision_free(isc)
@@ -247,7 +249,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    io_err=io_X(X,Xw,ID)
  endif
  !
- Q_loop: do iqbz=iq_to_start,q%nbz 
+ Q_loop: do iqbz=iq_to_start,q%nbz
+   tmp=.false.
    !
    if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) cycle
    !
@@ -255,7 +258,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    iqibz=isc%qs(2)
    iqs  =isc%qs(3)
    !
+   call msg("r", "RIM-W =", RIM_W(iqibz,1,:)/2._SP)
+   call msg("r", "RIM-W =", RIM_W(iqibz,:,1)/2._SP)
+   !
    if (iqibz/=isc%iqref) then
+     tmp=.true.
      !
      iq_mem=PAR_Q_ibz_index(iqibz)
      X_range=(/1,Xw%n_freqs/)
@@ -518,9 +525,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                if (l_RIM_W_g) then
                  PPA_R=-cmplx(RIM_W_d(iqibz,ig1,ig2)/2._SP, &
 &                             aimag(X_mat_d(ig1,ig2,Xr1))*real(isc_gamp_d(ig1,ig2)),kind=SP)/2._SP*PPA_E
+!                 if(i_qp == i_qp_to_start.and.ib==QP_n_G_bands(1).and.i_w==1) then
+!                   write(out_unit_PPA,"(I5, I5, I5, e15.6, e15.6, e15.6)") &
+!&                         iqbz, ig1, ig2, PPA_E, real(PPA_R), aimag(PPA_R)
+!                 end if
                else
                  PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
                endif
+               !
+
                !
                ! inline bose_f function
                bose_PPA_E=0.
@@ -572,10 +585,16 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                !
                if (l_RIM_W_g) then
                  PPA_R=-cmplx(RIM_W(iqibz,ig1,ig2)/2._SP, &
-&                             aimag(X_mat(ig1,ig2,X_range(1)))*real(isc%gamp(ig1,ig2)),kind=SP)/2._SP*PPA_E
+&                       aimag(X_mat(ig1,ig2,X_range(1)))*real(isc%gamp(ig1,ig2),kind=SP),kind=SP)/2._SP*PPA_E
+                 if(i_qp == i_qp_to_start.and.ib==QP_n_G_bands(1).and.i_w==1.and.tmp) then
+                   write(out_unit_PPA,"(I5, I5, I5, e15.6, e15.6, e15.6)") &
+&                         iqibz, ig1, ig2, PPA_E, real(PPA_R), aimag(PPA_R)
+                 end if
                else
                  PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
                end if
+               !
+
                !
                ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
@@ -602,7 +621,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                  !
                  dp_vdummy(3)=dp_vdummy(3)+ctmp
                  !
-               ! Wing Gxy == 0
+                ! Wing Gxy == 0
                else if ((ig1 == 1 .and. g2_mod_2D < 1.e-5).or.(ig2 == 1 .and. g1_mod_2D < 1.e-5)) then
                  !
                  dp_vdummy(4)=dp_vdummy(4)+ctmp

@@ -364,7 +364,7 @@ subroutine interpolate_W(X,Xw,q)
         do nn=2,3
           idm = MOD(nn+1,2)+1
           call c2a(b,delta_q(:,idm),delta_q_cc,'ka2c')
-          f_coeff(1,igr,igc,iq1) = -1._SP/delta_q(idm,idm)*log(f_func(nn)/ &
+          f_coeff(nn,igr,igc,iq1) = -1._SP/delta_q(idm,idm)*log(f_func(nn)/ &
 &                                 ( v_norm(delta_q_cc)**2*f_coeff(1,iq1,igc,iq1)) )
         enddo
         !

@@ -228,6 +228,7 @@ subroutine rim_integrate_w(iq,qr,N_out)
  !
  ! q /= 0 all terms
  !
+ !$omp parallel do default(shared), private(i1,i2,i3,func,RIM_acc)
  do i1=i1min,RIM_ng 
    i2max=RIM_ng
    if (RIM_W_is_diagonal) i2max=i1
@@ -249,6 +250,7 @@ subroutine rim_integrate_w(iq,qr,N_out)
      !
    enddo
  enddo
+ !$omp end parallel do
  if (iq>1) return
  !
  ! head q == 0

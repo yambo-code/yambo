@@ -224,6 +224,7 @@ subroutine INIT_activate()
    !
    if(l_td_hf.or.l_W_eh) call initactivate(1,'BSENGBlk')
    if(l_W_eh)            call initactivate(1,'WehDiag WehCpl')
+   if(l_alda_fxc)        call initactivate(1,'BSENGfxc')
    !
    ! BSE + TDDFT = no BS db, Fxc + LF on-fly
    ! Special case: The BSE equation is used to build up the BSE_Fxc kernel.
@@ -292,7 +293,7 @@ subroutine INIT_activate()
    !               Thus I move to g-space to solve the Dyson equation
    !
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGexx ALLGexx')
-   if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk')
+   if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk BSENGfxc')
    !
    if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSEPSInvTrs BSSInvPFratio BSSInvKdiag')
    if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF BSSPertWidth')

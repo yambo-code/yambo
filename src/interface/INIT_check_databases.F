@@ -30,7 +30,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  use X_m,            ONLY:X_t
  use DIPOLES,        ONLY:DIPOLE_t
  use frequency,      ONLY:w_samp
- use BS,             ONLY:BS_n_g_exch,BS_q
+ use BS,             ONLY:BS_n_g_exch,BS_n_g_fxc,BS_q
  use R_lattice,      ONLY:ng_closed,nqibz,bz_samp
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_ng_Vxc
  use wave_func,      ONLY:io_WF
@@ -117,6 +117,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  QP_ng_SH   =ng_closed
  QP_ng_Vxc  =ng_closed
  BS_n_g_exch=ng_closed
+ BS_n_g_fxc =ng_closed
  !
  ! kindx
  !

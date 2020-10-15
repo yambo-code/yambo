@@ -34,14 +34,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X
+ use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,ng_closed
  use com,          ONLY:msg
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_t
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,BS_Block_size,&
-&                       O_ng,BS_n_g_exch,BS_identifier,BS_LiveTiming_steps,&
+&                       O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
@@ -310,6 +310,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call XC_potential_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
    if(n_spin>1) then
      YAMBO_FREE(magn)
+   endif
+   if ( BS_n_g_fxc/=ng_closed) then
+     FXC_n_g_corr=BS_n_g_fxc
+     call TDDFT_ALDA_lower_cutoff()
+     BS_n_g_fxc=FXC_n_g_corr
+     call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
    endif
  endif
  !

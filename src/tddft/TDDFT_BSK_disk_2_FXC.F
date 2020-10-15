@@ -38,7 +38,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use wave_func,     ONLY:WF
  use X_m,           ONLY:X_t
  use IO_m,          ONLY:io_control,OP_RD,RD,NONE,RD_CL,VERIFY,OP_RD_CL,REP
- use TDDFT,         ONLY:FXC,FXC_n_g_corr,FXC_K_diagonal,io_BS_Fxc
+ use TDDFT,         ONLY:F_xc_gspace,FXC_n_g_corr,FXC_K_diagonal,io_BS_Fxc
 #include<memory.h>
  type(bz_samp) ::Xk
  type(w_samp)  ::W
@@ -90,10 +90,10 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  ! Kernel 2 FXC
  !
  YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim))
- YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,W%n_freqs))
+ YAMBO_ALLOC(F_xc_gspace,(FXC_n_g_corr,FXC_n_g_corr,W%n_freqs))
  O_x_dim=maxval(BS_nT_at_k)
  FXC_K_diagonal=0._SP
- FXC=(0._SP,0._SP)
+ F_xc_gspace=(0._SP,0._SP)
  !
  ! Memory usage estimation  in BS K 2 Fxc procedure
  !
@@ -150,6 +150,6 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  YAMBO_FREE(O2x)
  call WF_free(WF)
  YAMBO_FREE(FXC_K_diagonal)
- YAMBO_FREE(FXC)
+ YAMBO_FREE(F_xc_gspace)
  !
 end subroutine

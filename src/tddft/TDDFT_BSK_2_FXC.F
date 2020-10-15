@@ -28,7 +28,7 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_nT_at_k
  use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_eh_E,BSS_eh_W
- use TDDFT,         ONLY:FXC_n_g_corr,FXC_K_diagonal,FXC,&
+ use TDDFT,         ONLY:FXC_n_g_corr,FXC_K_diagonal,F_xc_gspace,&
 &                        FXC_is_retarded,io_BS_Fxc
  use DIPOLES,       ONLY:DIP_rotated
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
@@ -217,11 +217,11 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
      ioFxc_err=io_BS_Fxc(iq,W,ID,X=X_static)
    endif
    !
-   if (ioFxc_err/=0) FXC=(0._SP,0._SP)
+   if (ioFxc_err/=0) F_xc_gspace=(0._SP,0._SP)
    !
    !
    if (.not.p1%element_1D(iw)) then
-     FXC(:,:,iw)=(0._SP,0._SP)
+     F_xc_gspace(:,:,iw)=(0._SP,0._SP)
      cycle
    endif
    !
@@ -237,7 +237,7 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
      forall(i2=1:BS_nT_at_k(ik2)) wk2(:,i2)= left_R(:,i2)/(W%p(iw)-blk_Eo(2,i2))
    endif
    !
-   FXC(:,:,iw)=FXC(:,:,iw)+Co*(matmul(conjg_O1x_qpg,wk1)+matmul(wk2,O2x_qpg))
+   F_xc_gspace(:,:,iw)=F_xc_gspace(:,:,iw)+Co*(matmul(conjg_O1x_qpg,wk1)+matmul(wk2,O2x_qpg))
    !
    ! Lower diagonal block contribution
    !
@@ -254,10 +254,10 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
      !
      FXC_temp=Co*(matmul(conjg_O1x_qpg,wk1)+matmul(wk2,O2x_qpg))
      !
-     forall(i1=1:FXC_n_g_corr,i2=1:FXC_n_g_corr) FXC(i1,i2,iw)=FXC(i1,i2,iw)+conjg(FXC_temp(i2,i1))
+     forall(i1=1:FXC_n_g_corr,i2=1:FXC_n_g_corr) F_xc_gspace(i1,i2,iw)=F_xc_gspace(i1,i2,iw)+conjg(FXC_temp(i2,i1))
    endif
    !
-   call PP_redux_wait(FXC(:,:,iw))
+   call PP_redux_wait(F_xc_gspace(:,:,iw))
    !
    ! [IO] WRITE FXC & FXC_K_diagonal for this block of frequencies
    !

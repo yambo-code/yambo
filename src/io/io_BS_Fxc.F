@@ -29,7 +29,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  use BS,             ONLY:BS_K_dim
  use BS_solvers,     ONLY:BSS_q0,variables_BS
  use TDDFT,          ONLY:FXC_n_g_corr,FXC_desc,&
-&                         FXC_K_diagonal,FXC_n_mem_freqs,FXC,FXC_is_retarded
+&                         FXC_K_diagonal,FXC_n_mem_freqs,F_xc_gspace,FXC_is_retarded
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
@@ -148,7 +148,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  write (ch,'(a,i3.3)') "FXC_W_GROUP_",w_group
  !
  call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,FXC_n_g_corr,FXC_n_g_corr,FXC_n_mem_freqs/))
- call io_bulk(ID,C3=FXC)
+ call io_bulk(ID,C3=F_xc_gspace)
  !
 1 call io_disconnect(ID)
  !

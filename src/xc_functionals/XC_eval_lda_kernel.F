@@ -27,7 +27,7 @@ subroutine XC_eval_lda_kernel(v1rho,v2rho2)
  use xc_functionals, ONLY:F_xc,magn,xc_spin,xc_spin_map1
  use electrons,      ONLY:n_spin,n_spinor,n_sp_pol
  use FFT_m,          ONLY:fft_size
- use BS,             ONLY:l_BS_magnons
+ !use BS,             ONLY:l_BS_magnons
  use D_lattice,      ONLY:DL_vol
  use vec_operate,    ONLY:v_norm
  !
@@ -35,6 +35,7 @@ subroutine XC_eval_lda_kernel(v1rho,v2rho2)
  !
  real(DP), intent(in) :: v1rho(n_spin,fft_size),v2rho2(xc_spin(1),fft_size)
  !
+ logical :: l_BS_magnons=.false.
  integer :: is1,is2,is_xc,ifft
  real(SP):: one_over_magn,mod_mag
  !

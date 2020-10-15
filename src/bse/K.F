@@ -52,7 +52,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_WR,OP_APP_CL,DUMP,&
 &                       deliver_IO_error_message,manage_action
- use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
+ use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind
  use wave_func,     ONLY:WF
@@ -272,9 +272,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Allocation
    !-----------
    YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim))
-   YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
+   YAMBO_ALLOC(F_xc_gspace,(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
    FXC_K_diagonal=0._SP
-   FXC=cZERO
+   F_xc_gspace=cZERO
    !
  endif
  !
@@ -607,7 +607,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_START
    !
-   YAMBO_FREE(FXC)
+   YAMBO_FREE(F_xc_gspace)
    YAMBO_FREE(FXC_K_diagonal)
    !
    ! GPL_EXCLUDE_END

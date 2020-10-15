@@ -42,7 +42,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use TDDFT,         ONLY:FXC_desc,FXC_type,&
-&                        FXC,FXC_K_diagonal,FXC_n_g_corr
+&                        F_xc_gspace,FXC_K_diagonal,FXC_n_g_corr
  use X_output,      ONLY:X_setup_file_names,eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,&
 &                        X_write_q_plus_G,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
@@ -104,7 +104,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! ALDA (only once) 
    !
-   if (l_alda_fxc.and..not.allocated(FXC)) then
+   if (l_alda_fxc.and..not.allocated(F_xc_gspace)) then
      !
      call TDDFT_ALDA_G_space(Xen,Xk)
      !
@@ -371,11 +371,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  deallocate(X_par)
  call WF_free(WF)
  call PP_redux_wait
- if (allocated(FXC)) then
-   YAMBO_FREE(FXC)
+ if (allocated(F_xc_gspace)) then
+   YAMBO_FREE(F_xc_gspace)
  endif
  if (l_bs_fxc) then
-   YAMBO_FREE(FXC)
    YAMBO_FREE(FXC_K_diagonal)
  endif
  !

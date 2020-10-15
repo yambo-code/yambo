@@ -25,6 +25,7 @@ subroutine TDDFT_ALDA_lower_cutoff()
  !
  use pars,          ONLY:DP,SP,cZERO
  use TDDFT,         ONLY:FXC_n_g_corr
+ use BS,            ONLY:BS_n_g_fxc
  use com,           ONLY:msg
  use FFT_m,         ONLY:fft_size,fftw_plan,fft_dim,fft_g_table
  use electrons,     ONLY:levels,n_spin
@@ -36,18 +37,12 @@ subroutine TDDFT_ALDA_lower_cutoff()
  ! 
  ! Work Space
  !
- integer     :: i1,i2,ig_fxc,isp1,isp2
+ integer     :: i1,i2,ig_fxc,isp1,isp2,n_holes
  complex(DP) :: F_xc_DP(fft_size),F_xc_DP_reduced(fft_size)
+ logical     :: procedure1=.false., procedure2=.true.
  !
- ! DEBUG <
- !! PROCEDURE 1: Fxc RL size setup looking at the max index of G-G'
- !if (FXC_n_g_corr/= eval_G_minus_G(FXC_n_g_corr,0) ) then
- !  FXC_n_g_corr   = eval_G_minus_G(FXC_n_g_corr,0)
- !  call msg('s','[TDDFT] ALDA Fxc cutoff is forced by symmetry to be ',FXC_n_g_corr)
- !endif
- !
- !write(*,*) F_xc(1:10,1,1)
- ! DEBUG >
+ BS_n_g_fxc=maxval(G_m_G(:FXC_n_g_corr,:FXC_n_g_corr))
+ call PARSER_close_G(BS_n_g_fxc,'tRL')
  !
  do isp1=1,n_spin
    do isp2=1,n_spin
@@ -65,30 +60,46 @@ subroutine TDDFT_ALDA_lower_cutoff()
      !
      ! Lower cutoff
      !
-     ! DEBUG <
-     !! PROCEDURE 1:
+     ! PROCEDURE 1:
      !! I need FXC_n_g_corr up to wf_ng to arrive up to ng_closed
      !! This is consistent with what done in G-space TDDFT
-     !F_xc_DP_reduced=cZERO
-     !do i1=1,FXC_n_g_corr
-     !  do i2=1,FXC_n_g_corr
-     !    ig_fxc=fft_g_table( G_m_G(i1,i2),1)
-     !    F_xc_DP_reduced(ig_fxc)=F_xc_DP(ig_fxc)/real(fft_size,DP)
-     !  enddo
-     !enddo
+     ! DEBUG <
+     if (procedure1) then
+       F_xc_DP_reduced=cZERO
+       do i1=1,FXC_n_g_corr
+         do i2=1,FXC_n_g_corr
+           ig_fxc=fft_g_table( G_m_G(i1,i2),1)
+           if(abs(F_xc_DP_reduced(ig_fxc))>0._SP) cycle
+           !write(*,*) i1,i2,G_m_G(i1,i2)
+           F_xc_DP_reduced(ig_fxc)=F_xc_DP(ig_fxc)/real(fft_size,DP)
+         enddo
+       enddo
+       !
+       n_holes=0
+       do i1=1,BS_n_g_fxc
+         ig_fxc=fft_g_table(i1,1)
+         if(abs(F_xc_DP_reduced(ig_fxc))>0._SP) cycle
+         n_holes=n_holes+1
+       enddo
+     endif
      ! DEBUG >
      !
      ! PROCEDURE 2: I need FXC_n_g_corr up to ng_closed
-     F_xc_DP_reduced=cZERO
-     do i1=1,FXC_n_g_corr
-       ig_fxc=fft_g_table( i1,1)
-       F_xc_DP_reduced(ig_fxc)=F_xc_DP(ig_fxc)/real(fft_size,DP)
-     enddo
+     if (procedure2) then
+       n_holes=0
+       F_xc_DP_reduced=cZERO
+       do i1=1,BS_n_g_fxc
+         ig_fxc=fft_g_table(i1,1)
+         F_xc_DP_reduced(ig_fxc)=F_xc_DP(ig_fxc)/real(fft_size,DP)
+       enddo
+     endif
      !
      ! DEBUG <
      ! PROCEDURE 3: no lowering here
-     !F_xc_DP_reduced(ig_fxc)=F_xc_DP(ig_fxc)/real(fft_size,DP)
-     !
+     ! In both previous procedures I can use up to ng_closed vectors max
+     ! However Fxc is not smooth and may need more, up to fft_size, in principle
+     ! With this direct procedure all g-vectors are used
+     !F_xc_DP_reduced=F_xc_DP/real(fft_size,DP)
      ! DEBUG >
      !
      ! FFT call: FORWARD (G->R)
@@ -106,8 +117,10 @@ subroutine TDDFT_ALDA_lower_cutoff()
    enddo
  enddo
  !
+ call msg('s','[TDDFT] while lowering the cutoff F_xc is not defined on n_points in the last shells ',n_holes)
+ !
  ! DEBUG <
- !write(*,*) "F_xc= ",F_xc(1:10,1,1)
+ ! write(*,*) "F_xc= ",F_xc(1:10,1,1)
  ! DEBUG >
  !
 end subroutine

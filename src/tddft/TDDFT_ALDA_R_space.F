@@ -93,10 +93,13 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  !=====
  TDDFT_ALDA_R_space=V_dot_V_omp(fft_size*n_spinor,rhotwr1,rhotwr2)
  !
- ! tddft_alda_r_space'd be 2*cdotc/u*real(fft_size,SP)/DL_vol/Nq 
+ ! tddft_alda_r_space'd be spin_occ*cdotc/u*real(fft_size,SP)/DL_vol/Nq 
  ! but it is multiplied by Co
  !
- !  Co=8._SP*pi/DL_vol/real(q%nbz,SP)
+ !  Co_factor=spin_occ/(2._SP*pi)**3*d3k_factor*4._SP*pi
+ !    d3K_factor=RL_vol/real(Xk%nbz)
+ !    DL_vol=(2._SP*pi)**3/RL_vol
+ !  --> Co=spin_occ*4._SP*pi/DL_vol/real(Xk%nbz,SP)  !! WARNING, K or Q ??
  !
  ! in K
  !

@@ -205,18 +205,18 @@ subroutine X_redux(iq,X_par,Xw,X)
        call error("[LA] SLK library required but not available")
 #endif
      else
-       call M_by_M('N','N',X%ng,FXC_n_g_corr,FXC_n_g_corr,cONE,-Xo%blc(:,:FXC_n_g_corr,1),X%ng,&
-&                  F_xc_gspace(:,:,1),FXC_n_g_corr,cZERO,KERNEL%blc(:,:FXC_n_g_corr,1),X%ng)
+       call M_by_M('N','N',X%ng,FXC_n_g_corr,FXC_n_g_corr,-cONE,Xo%blc(:FXC_n_g_corr,:FXC_n_g_corr,1),X%ng,&
+&                  F_xc_gspace(:,:,1),FXC_n_g_corr,cZERO,KERNEL%blc(:FXC_n_g_corr,:FXC_n_g_corr,1),X%ng)
      endif
      !
    endif
-   !
-   ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
    if (compute_on_gpu) then
       if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) call dev_memcpy(KERNEL%blc_d,KERNEL%blc)
       call dev_memcpy(Xo%blc_d,Xo%blc)
    endif
+   !
+   ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
    call X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
    !
@@ -242,7 +242,6 @@ subroutine X_redux(iq,X_par,Xw,X)
      call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=KERNEL,B_slk=Xo,C_slk=BUFFER)
      !
    endif
-
    !
    ! update X by multiplying left and right for v_coul^1/2 (diagonal in reciprocal space)
    !

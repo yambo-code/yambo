@@ -91,7 +91,7 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
      nf_error=nf90_inquire_variable(io_unit(ID),io_netcdf_var(ID,VAR_ID),ndims=dims_db,dimids=var_dim_db)
      call netcdf_call(nf_error,ID,VAR=VAR)
      if(any((/var_dim(:)/=var_dim_db(:)/))) &
-&        call error(' Trying to owrite variable '//trim(VAR)//' in '//trim(io_file(ID))//' with wrong dimensions ')
+&        call error(' Trying to overwrite variable '//trim(VAR)//' in '//trim(io_file(ID))//' with wrong dimensions ')
      if(.not.silent_) call warning(' Overwriting variable '//trim(VAR)//' in file '//trim(io_file(ID)))
      deallocate(var_dim_db)
    endif

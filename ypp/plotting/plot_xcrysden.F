@@ -27,7 +27,7 @@ subroutine plot_xcrysden()
  use units,       ONLY:BO2ANG
  use C_driver,    ONLY:code_version
  use com,         ONLY:msg
- use YPPm,        ONLY:nr,v2plot,ncell,v2plot2D,r_hole,plot_dim,l_free_hole,&
+ use YPPm,        ONLY:nr,v2plot,ncell,v2plot2D,r_hole,plot_dim,l_free_hole,l_average_eh,&
 &                      l_norm_to_one,WF_multiplier,l_exc_wf,plot_title,output_string,plot_is_2D
  use D_lattice,   ONLY:n_atomic_species,n_atoms_species,a,atom_pos,Z_species,n_atoms
  use LIVE_t,      ONLY:live_timing
@@ -55,7 +55,7 @@ subroutine plot_xcrysden()
  call msg(output_string,'',ncell(2)*a_angs(2,:))
  call msg(output_string,'',ncell(3)*a_angs(3,:))
  call msg(output_string,'PRIMCOORD')
- if (.not.l_free_hole.and.l_exc_wf) then
+ if ((.not.l_free_hole.and..not.l_average_eh).and.l_exc_wf) then
    call msg('o exc','',(/n_atoms*ncell(1)*ncell(2)*ncell(3)+1,1/))
    !
    ! write Hole position

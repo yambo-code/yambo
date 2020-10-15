@@ -23,7 +23,8 @@
 !
 module R_lattice
  !
- use pars, ONLY:SP,schlen, IP
+ use pars,        ONLY:SP,schlen, IP
+ use descriptors, ONLY:IO_desc
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -52,12 +53,27 @@ module R_lattice
  real(SP) :: q0_def_norm, q0_shift_norm, smallest_q_norm
  real(SP),allocatable :: q_norm(:)
  character(schlen)    :: q_source="User defined / from ndb.kindx."
+ character(schlen)    :: BZ_FineGd_mode="mixed" ! or "unexpanded"/"expanded"
+ !
+ type bz_fine_grid
+   character(schlen)    :: FG_mode="NONE"  ! "BZ/IBZ/BARE"
+   integer              :: N
+   real(SP), allocatable:: pt(:,:)
+   integer , allocatable:: N_mapped(:)  ! For each IBZ/BZ kpt, n° of FG k associated
+   integer , allocatable:: k_range(:,:) ! For each IBZ/BZ kpt, lower/upper range of points associated in the FG
+   integer,  allocatable:: E_map(:)     ! For each FG k, corresponding point in the bare FG
+   integer,  allocatable:: k_map(:)     ! For each FG k, corresponding point in the IBZ/BZ
+   real(SP), allocatable:: weights(:)
+ end type bz_fine_grid
+ !
+ type(IO_desc)       :: FineGd_desc
  !
  type bz_samp
    !
    ! Coarse grid
    !
-   integer           :: nibz,nbz
+   integer           :: nibz
+   integer           :: nbz
    integer,  allocatable :: nstar(:)      ! n° of points in the star
    integer,  allocatable :: star(:,:)     ! ik,ikstar --> is     is sends ik in ikstar
    integer,  allocatable :: sstar(:,:)    ! ik_bz     --> ik,is  is sends ik in ikbz
@@ -69,24 +85,12 @@ module R_lattice
    character(6)      :: description
    character(1)      :: units
    !
-   ! Fine grid
+   ! Fine grids(s)
    !
-   integer           :: nibz_FineGd
-   integer           :: nbz_FineGd                     
-   integer,  allocatable :: sstar_FineGd(:)
-   real(SP), allocatable :: pt_FineGd(:,:)
-   real(SP), allocatable :: ptbz_FineGd(:,:)
-   real(SP), allocatable :: weights_FineGd(:)
+   type (bz_fine_grid) :: FGbare
+   type (bz_fine_grid) :: FGibz
+   type (bz_fine_grid) :: FGbz
    !
-   ! Double grid: Mapping Fine to Coarse grid
-   !
-   integer           :: nibz_duplicate
-   integer           :: nbz_duplicate
-   integer,  allocatable :: nibz_mapped(:)            ! For each IBZ kpt in the Cg, n° of IBZ kpt_FineGd assoc.
-   integer,  allocatable :: nbz_mapped(:)             ! For each  BZ kpt in the Cg, n° of  BZ kpt_FineGd assoc.
-   integer,  allocatable :: ibz_DbGd_map(:,:)         ! For each IBZ kpt in the Cg, lower/upper range of kpts_FineGd in the IBZ Fg
-   integer,  allocatable :: bz_DbGd_map(:,:)          ! For each  BZ kpt in the Cg, lower/upper range of kpts_FineGd in the  BZ Fg
-   real(SP), allocatable :: weights_DbGd(:)
    real(SP), allocatable :: weights_ipol(:)           ! something used by mapping with wannier
    !                                               
  end type bz_samp
@@ -94,8 +98,8 @@ module R_lattice
  type bz_map
    integer, allocatable :: k_map_inv(:,:)
    integer, allocatable :: k_map_dir(:,:,:)
-   integer      :: g0_idx(3,2)
-   integer      :: max_kdir(3)
+   integer      :: g0_idx(3,2) ! Index of the G-vectors to bring back k-points in the BZ, in the 3 directions
+   integer      :: max_kdir(3) ! Max k-points in each direction. If 1, the direction is not periodic
    real(SP)     :: g0_length(3)
    real(SP)     :: q_step(3)
  end type bz_map 
@@ -176,13 +180,13 @@ module R_lattice
  !
  interface
    !
-   integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
+   integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err,border_point)
      use pars, ONLY: SP
      integer :: n_k
      real(SP):: k_ref(3)
      real(SP):: k(n_k,3)
      real(SP),optional :: k_dist(n_k)
-     logical, optional :: ROTATE_k_ref
+     logical, optional :: ROTATE_k_ref,border_point
      integer, optional :: k_symm
      integer, optional :: i_err
    end function 
@@ -231,6 +235,40 @@ module R_lattice
      endif
    end subroutine qindx_free
    !
+   subroutine bz_samp_FineGd_alloc(FG,N_coarse)
+     type(bz_fine_grid)::FG
+     integer           ::N_coarse,N_alloc
+     !
+     if (allocated( FG%k_range )) return
+     !
+     if (FG%N>0 ) N_alloc=FG%N
+     if (FG%N==0) N_alloc=N_coarse
+     !
+     YAMBO_ALLOC(FG%pt,(N_alloc,3))
+     YAMBO_ALLOC(FG%weights,(N_alloc))
+     YAMBO_ALLOC(FG%E_map,(N_alloc))
+     YAMBO_ALLOC(FG%k_map,(N_alloc))
+     FG%pt=0._SP
+     FG%weights=0._SP
+     FG%E_map=0
+     FG%k_map=0
+     YAMBO_ALLOC(FG%k_range,(N_coarse,2))
+     YAMBO_ALLOC(FG%N_mapped,(N_coarse))
+     FG%k_range=0
+     FG%N_mapped=0
+   end subroutine
+   !
+   subroutine bz_samp_FineGd_reset(FG)
+     type(bz_fine_grid)::FG
+     FG%N=0
+     FG%FG_mode="NONE"
+     YAMBO_FREE(FG%pt)
+     YAMBO_FREE(FG%weights)
+     YAMBO_FREE(FG%E_map)
+     YAMBO_FREE(FG%k_range)
+     YAMBO_FREE(FG%N_mapped)
+   end subroutine
+   !
    subroutine bz_samp_reset(k)
      type(bz_samp)::k
      k%nibz=0
@@ -249,20 +287,13 @@ module R_lattice
      !
      ! Double Grid
      !
-     k%nbz_FineGd=0
-     k%nibz_FineGd=0
+     k%FGbz%N=0
+     k%FGibz%N=0
+     k%FGbare%N=0
      !
-     YAMBO_FREE(k%sstar_FineGd)
-     YAMBO_FREE(k%pt_FineGd)
-     YAMBO_FREE(k%ptbz_FineGd)
-     YAMBO_FREE(k%weights_FineGd)
-     !
-     YAMBO_FREE(k%nibz_mapped)
-     YAMBO_FREE(k%nbz_mapped)
-     YAMBO_FREE(k%ibz_DbGd_map)
-     YAMBO_FREE(k%bz_DbGd_map)
-     YAMBO_FREE(k%weights_DbGd)
-     YAMBO_FREE(k%weights_ipol)
+     call bz_samp_FineGd_reset(k%FGbz)
+     call bz_samp_FineGd_reset(k%FGibz)
+     call bz_samp_FineGd_reset(k%FGbare)
      !
    end subroutine bz_samp_reset
    !
@@ -297,56 +328,45 @@ module R_lattice
        BZo%ptbz=BZi%ptbz
      endif
      !
-     call bz_samp_duplicate_Fg(BZi, BZo)
-     !
-     return
-     !
    end subroutine bz_samp_duplicate
      !
-   subroutine bz_samp_duplicate_Fg(BZi, BZo)
-     type(bz_samp), intent(in)    :: BZi
-     type(bz_samp), intent(inout) :: BZo
+   subroutine bz_samp_duplicate_Fg(FGi,FGo,N_coarse)
+     type(bz_fine_grid), intent(in)  ::FGi
+     type(bz_fine_grid), intent(out) ::FGo
+     integer,            intent(in)  ::N_coarse
      !
-     BZo%nbz_FineGd =BZi%nbz_FineGd
-     BZo%nibz_FineGd=BZi%nibz_FineGd
+     FGo%N =FGi%N
+     FGo%FG_mode=FGi%FG_mode
      !
-     if (allocated( BZi%sstar_FineGd )) then
-       YAMBO_ALLOC(BZo%sstar_FineGd,(BZo%nbz_FineGd))
-       BZo%sstar_FineGd=BZi%sstar_FineGd
+     if (allocated(FGi%pt)) then
+       YAMBO_ALLOC(FGo%pt,(FGo%N,3))
+       FGo%pt=FGi%pt
      endif
-     if (allocated( BZi%pt_FineGd )) then
-       YAMBO_ALLOC(BZo%pt_FineGd,(BZo%nibz_FineGd,3))
-       BZo%pt_FineGd=BZi%pt_FineGd
+     if (allocated(FGi%weights)) then
+       YAMBO_ALLOC(FGo%weights,(FGo%N))
+       FGo%weights=FGi%weights
      endif
-     if (allocated( BZi%ptbz_FineGd )) then
-       YAMBO_ALLOC(BZo%ptbz_FineGd,(BZo%nbz_FineGd,3))
-       BZo%ptbz_FineGd=BZi%ptbz_FineGd
+     if (allocated(FGi%k_map)) then
+       YAMBO_ALLOC(FGo%k_map,(FGo%N))
+       FGo%k_map=FGi%k_map
      endif
-     !
-     BZo%nbz_duplicate =BZi%nbz_duplicate
-     BZo%nibz_duplicate=BZi%nibz_duplicate
-     !
-     if (allocated( BZi%nibz_mapped )) then
-       YAMBO_ALLOC(BZo%nibz_mapped,(BZo%nibz))
-       BZo%nibz_mapped(:BZo%nibz)=BZi%nibz_mapped(:BZo%nibz)
+     if (allocated(FGi%E_map)) then
+       YAMBO_ALLOC(FGo%E_map,(FGo%N))
+       FGo%E_map=FGi%E_map
      endif
-     if (allocated( BZi%nbz_mapped )) then
-       YAMBO_ALLOC(BZo%nbz_mapped,(BZo%nbz))
-       BZo%nbz_mapped(:BZo%nbz)=BZi%nbz_mapped(:BZo%nbz)
+     if (allocated(FGi%k_range)) then
+       YAMBO_ALLOC(FGo%k_range,(N_coarse,2))
+       FGo%k_range=FGi%k_range
      endif
-     if (allocated( BZi%ibz_DbGd_map )) then
-       YAMBO_ALLOC(BZo%ibz_DbGd_map,(2,BZo%nibz))
-       BZo%ibz_DbGd_map(:,:BZo%nibz)=BZi%ibz_DbGd_map(:,:BZo%nibz)
-     endif
-     if (allocated( BZi%bz_DbGd_map )) then
-       YAMBO_ALLOC(BZo%bz_DbGd_map,(2,BZo%nbz))
-       BZo%bz_DbGd_map(:,:BZo%nbz)=BZi%bz_DbGd_map(:,:BZo%nbz)
+     if (allocated(FGi%N_mapped)) then
+       YAMBO_ALLOC(FGo%N_mapped,(N_coarse))
+       FGo%N_mapped=FGi%N_mapped
      endif
      !
-     ! To code the duplication of the Fine grid and DbGd structure
-     !
-     !real(SP), pointer :: weights_DbGd(:)   => null()
-     !real(SP), pointer :: weights_ipol(:)   => null()  ! something used by mapping with wannier
+     !DEBUG>
+     !To code 
+     ! real(SP), pointer :: weights_ipol(:)   => null()  ! something used by mapping with wannier
+     !DEBUG<
      !
      return
      !

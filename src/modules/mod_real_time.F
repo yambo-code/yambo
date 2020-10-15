@@ -27,6 +27,7 @@ module real_time
  use pars,       ONLY:DP,SP,schlen,lchlen,LP
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:QP_SE_NONE
+ use R_lattice,  ONLY:bz_fine_grid
  !
 #include<memory.h>
  !
@@ -79,11 +80,11 @@ module real_time
  !
  integer  :: NE_time_step_update_last_point      ! Last time-point of the dT update
  real(SP) :: NE_time_step_update_jump            ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
- real(SP) :: NE_time_step_update_jump_SAVE
+ real(SP) :: NE_time_step_update_jump_INPUT
  real(SP) :: NE_initial_time_step_update         ! Time above which the time-step is dynamically updated (0. means no update)
  real(SP) :: NE_step_update_treshold             ! Time-step update treshold
  !
- integer  :: NE_i_time=1 ! = (NE_time+1)/RT_step
+ integer  :: NE_i_time=1 ! = NE_time/RT_step+1
  integer  :: NE_steps    ! Still relative to RT_step
  !
  ! Here I control the way the time evolution is sampled for the e-p and e-e
@@ -92,7 +93,7 @@ module real_time
  !
  logical  :: l_RT_lifetimes_extrapolation = .FALSE.! If .TRUE. the lifetimes not calculated are extrapolated. Otherwise are kept constant
  real(SP) :: RT_life_extrap_times(2)               ! Lifetimes are evaluated at distance RT_life_extrap_times(2) and in groups long RT_life_extrap_times(1)
- real(SP) :: RT_life_extrap_times_SAVE(2)
+ real(SP) :: RT_life_extrap_times_INPUT(2)
  !
  logical  :: l_RT_relax_time_approx = .FALSE.
  real(SP) :: RT_RTA_temp(2)
@@ -149,21 +150,15 @@ module real_time
  logical     :: RT_deph_cv_only
  logical     :: RT_is_statically_dephased=.FALSE.
  logical     :: RT_is_dynamically_dephased=.FALSE.
-
  !
- ! Table pointing to the position of the uniform grid points in the
- ! G_lesser structure
+ ! FineGd kind mapping the kpts grid (w and w/o FineGd database)
  !
- integer,     allocatable :: RT_ibz_coo(:,:)
- integer,     allocatable :: RT_ibz_dupl(:)
- integer,     allocatable :: RT_all2ibz(:)
- integer,     allocatable :: RT_Nk_ibz(:)
+ type(bz_fine_grid), SAVE :: RTibz
  !
  ! K-points: In case I want to use the G_lesser to define the occupations
  ! of a post-run I need to keep here the number of k-points
  !
  integer                 :: RT_nk
- integer                 :: RT_DbGd_nk
  integer                 :: RT_bands(2)
  integer                 :: RT_nbands
  !
@@ -215,13 +210,12 @@ module real_time
  !
  ! Energies
  !---------------------
- type RT_DbGd
+ type RT_levels_kind
    real(SP), allocatable :: E(:,:,:)
    real(SP), allocatable :: W(:,:,:)
-   real(SP), allocatable :: k(:,:)
  end type
  !
- type(RT_DbGd),save  :: RT_E_and_k
+ type(RT_levels_kind),save  :: RT_levels
  ! 
  ! Locks, reference & Logicals
  !-----------------------------
@@ -356,6 +350,7 @@ module real_time
    integer  :: nb(2)
    integer  :: nstates
    character(schlen)  :: description
+   !
    integer,    allocatable:: table(:,:)      ! ib,ik_RT,ik,i_spin
    real(SP)   ,allocatable:: kpt(:,:)
    real(SP)   ,allocatable:: k_weight(:)
@@ -496,9 +491,8 @@ module real_time
      nk=PAR_G_k_range
      RT_nbands=RT_bands(2)-RT_bands(1)+1
      !
-     YAMBO_ALLOC(RT_E_and_k%E,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
-     YAMBO_ALLOC(RT_E_and_k%W,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
-     YAMBO_ALLOC(RT_E_and_k%k,(3,RT_nk))
+     YAMBO_ALLOC(RT_levels%E,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+     YAMBO_ALLOC(RT_levels%W,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      !
      if(l_RT_relax_time_approx) then
        YAMBO_ALLOC(RT_RTA_E_occ_infty,(RT_bands(1):RT_bands(2),RT_nk))
@@ -612,6 +606,7 @@ module real_time
    !
    subroutine RT_free(what)
      !
+     use R_lattice,      ONLY:bz_samp_FineGd_reset
      use DIPOLES,        ONLY:DIP_alloc
      use hamiltonian,    ONLY:H_free
      use xc_functionals, ONLY:E_xc
@@ -636,9 +631,6 @@ module real_time
      call DIP_alloc('P_square')
      call DIP_alloc('DIP_P_spinor')
      !
-     YAMBO_FREE(RT_ibz_coo)
-     YAMBO_FREE(RT_all2ibz)
-     YAMBO_FREE(RT_Nk_ibz)
      YAMBO_FREE(DbGd_EE_scatt_table)
      YAMBO_FREE(E_xc)
      YAMBO_FREE(RT_TIME_status)
@@ -668,9 +660,8 @@ module real_time
      endif
      !
      YAMBO_FREE(REF_V_hartree_sc)
-     YAMBO_FREE(RT_E_and_k%E)
-     YAMBO_FREE(RT_E_and_k%W)
-     YAMBO_FREE(RT_E_and_k%k)
+     YAMBO_FREE(RT_levels%E)
+     YAMBO_FREE(RT_levels%W)
      !
      if(l_all .or. l_G_lesser) then
        !
@@ -698,6 +689,8 @@ module real_time
      YAMBO_FREE(RT_Deph_Matrix)
      YAMBO_FREE(Q_io_map)
      YAMBO_FREE(K_io_map)
+     !
+     call bz_samp_FineGd_reset(RTibz)
      !
    end subroutine RT_free
    !

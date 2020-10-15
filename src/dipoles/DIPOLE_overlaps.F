@@ -36,7 +36,6 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use parallel_m,        ONLY:PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_COM_DIPk_ibz_A2A, &
 &                            PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,           &
 &                            PAR_IND_OVLPk_ibz,PAR_COM_DIPk_ibz_INDEX,PP_redux_wait
- use deviceXlib_m,      ONLY:dev_memcpy
  use interfaces,        ONLY:WF_shift_kpoint,WF_symm_kpoint,eval_G_minus_G
  !
 #include<dev_defs.h>
@@ -108,29 +107,31 @@ subroutine DIPOLE_overlaps(Xk,Dip)
      !  
      call WF_shift_kpoint((/1,Dip%ib(2)/),ikbz,WF_shifts(ikbz,:),Xk,WF_symm,WF_ik)
      !
-     do id=1,3
+     do id=1,3  ! Loop on the three crystal directions in the BZ
        !
-       if(k_map%max_kdir(id)==1) cycle
+       if(k_map%max_kdir(id)==1) cycle ! Non-periodic direction, skip calculation
        !
-       max_step=1
-       if(k_map%max_kdir(id)>=6) max_step=2
+       max_step=1 ! Only the first neighbor
+       if(k_map%max_kdir(id)>=6) max_step=2  ! First and second neighbors
        !
        do istep=1,max_step
          !
          idx_kp=idx_k
-         idx_kp(id)=idx_kp(id)+istep
+         idx_kp(id)=idx_kp(id)+istep   ! Neighbor on the right
          !
          USE_shifted_wf=.false.
-         if(idx_kp(id)>k_map%max_kdir(id)) USE_shifted_wf=.true.
+         if(idx_kp(id)>k_map%max_kdir(id)) USE_shifted_wf=.true. ! Check if the neighbor is out of the BZ
          !
-         idx_kp=k_periodic_idx(idx_kp,k_map)
-         ikbzp=k_map%k_map_dir(idx_kp(1),idx_kp(2),idx_kp(3)) 
+         idx_kp=k_periodic_idx(idx_kp,k_map)  ! Bring it back by periodicity
+         ikbzp=k_map%k_map_dir(idx_kp(1),idx_kp(2),idx_kp(3))  ! Find the corresponding index in the BZ
          !
+         ! ! Find the index in the IBZ and the symmetry
          ikp = Xk%sstar(ikbzp,1)
          isp = Xk%sstar(ikbzp,2)
          !
          call WF_symm_kpoint((/1,Dip%ib(2)/),ikbzp,Xk,WF_symm)
          !
+         ! Shift the wave-function by a G-vector if the neighbor is out of the BZ (USE_shifed_wf=.true.)
          shift=WF_shifts(ikbzp,:)
          if(USE_shifted_wf) then
            if(WF_shifts(ikbzp,id)==1) shift(id)=1

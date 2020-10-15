@@ -121,7 +121,7 @@ module QP_CTL_m
  ! "ACTION" type (can be a fit/interpolation/QP/...)
  !===============
  type QP_action_t
-   logical              :: plan(6) ! E W Z ukI ueI ubI
+   logical              :: plan(7) ! E W Z ukI ueI ubI fit
    logical              :: active
    character(schlen)    :: what 
    character(lchlen)    :: desc 

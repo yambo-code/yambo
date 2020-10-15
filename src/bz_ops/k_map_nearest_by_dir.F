@@ -100,6 +100,14 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
    YAMBO_FREE(k_map%k_map_dir)
    YAMBO_FREE(k_map%k_map_inv)
  endif
+ !
+ !
+ !+ ! K-points are mapped in a regular grid
+ ! 
+ ! ikbz=k_map%k_map_dir(ix,iy,iz)
+ !
+ ! (ix,iy,iz)=k_map_inv(ikbz)
+ !
  YAMBO_ALLOC(k_map%k_map_dir,(k_map%max_kdir(1),k_map%max_kdir(2),k_map%max_kdir(3)))
  YAMBO_ALLOC(k_map%k_map_inv,(Xk%nbz,3))
  ! 

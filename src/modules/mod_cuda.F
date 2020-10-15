@@ -29,7 +29,6 @@ module cuda_m
   use cublas
   use cusolverdn_y
 #endif
-  use parallel_m,   ONLY:myid,host_name,PAR_COM_HOST
   implicit none
   public
 
@@ -84,7 +83,6 @@ contains
 
   subroutine cuda_setup()
     implicit none
-    integer :: ndev,myid_host_loc
     integer :: ierr
     !
     cuda_gpu_subscription=1
@@ -146,7 +144,9 @@ contains
 #ifdef _CUDA
     ierr = CudaDeviceSynchronize()
     ierr = CudaGetLastError()
+    !<debug>
     !write(*,*) CudaGetLastMessage(ierr)
+    !</debug>
 #endif
     return
   end function

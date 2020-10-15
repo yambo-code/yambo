@@ -24,7 +24,8 @@
 subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,NK,ID)
  !
  use pars,              ONLY:SP,pi,cI,cZERO,DP,rZERO
- use interpolate,       ONLY:nshells,lattice_vectors,int_sop,INTERPOLATE_is_serial,INTERPOLATE_is_quiet,INTERP_obj
+ use interpolate,       ONLY:nshells,lattice_vectors,int_sop,INTERPOLATE_is_serial,INTERPOLATE_is_quiet,&
+&                            INTERP_obj,INTERP_FineGd
  use interpolate_tools, ONLY:make_star
  use interfaces,        ONLY:PARALLEL_index
  use R_lattice,         ONLY:bz_samp
@@ -68,8 +69,12 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,NK,ID)
    if (.not.INTERPOLATE_is_serial) then
      if (.not.px%element_1D(ik)) cycle
    endif
-   if(Nk==K%nibz)        call c2a(v_in=K%pt(ik,:),       v_out=v,mode='ki2a')
-   if(Nk==K%nibz_FineGd) call c2a(v_in=K%pt_FineGd(ik,:),v_out=v,mode='ki2a')
+   !
+   if (trim(INTERP_FineGd)=="NONE") call c2a(v_in=K%pt(ik,:),       v_out=v,mode='ki2a')
+   if (trim(INTERP_FineGd)=="IBZ")  call c2a(v_in=K%FGibz%pt(ik,:), v_out=v,mode='ki2a')
+   if (trim(INTERP_FineGd)=="BZ")   call c2a(v_in=K%FGbz%pt(ik,:),  v_out=v,mode='ki2a')
+   if (trim(INTERP_FineGd)=="BARE") call c2a(v_in=K%FGbare%pt(ik,:),v_out=v,mode='ki2a')
+   !
    do i_shell=1,nshells
      call make_star(lattice_vectors(:,i_shell),nsym,int_sop,nstar,star_vec)  
      do is=1,nstar

@@ -146,15 +146,12 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
              call OUTPUT_add_column(ORDER=(/"Eo"/))
              call OUTPUT_add_column(ORDER=(/"E [eV"/))
              call OUTPUT_add_column(ORDER=(/"E-Eo [eV"/))
-             call OUTPUT_add_column(ORDER=(/"Vxc"/))
-             call OUTPUT_add_column(ORDER=(/"Vnlxc"/))
+             call OUTPUT_add_column(ORDER=(/"Vxc  ","Vnlxc"/))
              call OUTPUT_add_column(ORDER=(/"Sc|Eo"/))
              call OUTPUT_add_column(ORDER=(/"Sc|E [e"/))
              call OUTPUT_add_column(ORDER=(/"dSc/dw"/))
-             call OUTPUT_add_column(ORDER=(/"Re(Z)"/))
-             call OUTPUT_add_column(ORDER=(/"Im(Z)"/))
-             call OUTPUT_add_column(ORDER=(/"Width [me"/))
-             call OUTPUT_add_column(ORDER=(/"Width [fs"/))
+             call OUTPUT_add_column(ORDER=(/"Re(Z)","Im(Z)"/))
+             call OUTPUT_add_column(ORDER=(/"Width [me","Width [fs"/))
            else 
              call OUTPUT_add_column(ORDER=(/"Eo"/))
              if (.not.report_Sc) call OUTPUT_add_column(ORDER=(/"E [eV"/))
@@ -169,12 +166,9 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
            call OUTPUT_add_column(ORDER=(/"Eo"/))
            call OUTPUT_add_column(ORDER=(/"E [eV"/))
            call OUTPUT_add_column(ORDER=(/"E-Eo [eV"/))
-           call OUTPUT_add_column(ORDER=(/"Vxc"/))
-           call OUTPUT_add_column(ORDER=(/"Vnlxc"/))
-           call OUTPUT_add_column(ORDER=(/"Re(Z)"/))
-           call OUTPUT_add_column(ORDER=(/"Im(Z)"/))
-           call OUTPUT_add_column(ORDER=(/"Width [me"/))
-           call OUTPUT_add_column(ORDER=(/"Width [fs"/))
+           call OUTPUT_add_column(ORDER=(/"Vxc  ","Vnlxc"/))
+           call OUTPUT_add_column(ORDER=(/"Re(Z)","Im(Z)"/))
+           call OUTPUT_add_column(ORDER=(/"Width [me","Width [fs"/))
          endif
 #endif
        endif
@@ -184,7 +178,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      ! HF
      !----
      if (what=="hf") then
-       call OUTPUT_add_column(ORDER=(/"Ehf"/))
+       call OUTPUT_add_column(ORDER=(/"Eo ","Ehf"/))
        if (report_Vxc)   call OUTPUT_add_column(ORDER=(/"Vxc"/))
        if (report_Vnlxc) call OUTPUT_add_column(ORDER=(/"Vnlxc"/))
      endif

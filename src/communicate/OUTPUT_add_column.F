@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,VALUES,ORDER)
+subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,VALUES,ORDER,UNIT,KIND)
  !
  use pars,                ONLY:SP,schlen
- use OUTPUT_simple,       ONLY:COL,N_columns,filename,filename_short,&
+ use OUTPUT_simple,       ONLY:COL,N_columns,filename,filename_short,OUTPUT_unit_conversion,&
 &                              TITLES_dumped,N_MAX_columns,TITLES_ordered,N_columns_ordered
  use com,                 ONLY:msg,of_open_close
  use stderr,              ONLY:STRING_same
@@ -37,6 +37,8 @@ subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,VALUES,ORDER)
  character(*) , OPTIONAL :: VAL_TITLES(:)
  real(SP)     , OPTIONAL :: VALUES(:)
  character(*) , OPTIONAL :: ORDER(:)
+ character(*) , OPTIONAL :: UNIT
+ character(*) , OPTIONAL :: KIND
  !
  ! Work Space
  !
@@ -68,6 +70,14 @@ subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,VALUES,ORDER)
      COL(N_columns)%title=TITLES(i_t)
      COL(N_columns)%POS=N_columns
      if (present(VALUES)) then
+       if (present(UNIT)) then
+         COL(N_columns)%title=trim(COL(N_columns)%title)//" ["//UNIT//"]"
+         if (present(KIND)) then
+           call OUTPUT_unit_conversion(rVAR=VALUES(i_t),DESC=UNIT,KIND=KIND)
+         else
+           call OUTPUT_unit_conversion(rVAR=VALUES(i_t),DESC=UNIT)
+         endif
+       endif
        COL(N_columns)%value=VALUES(i_t)
      endif
    enddo
@@ -78,6 +88,13 @@ subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,VALUES,ORDER)
    do i_t=1,N
      do i_o=1,N
        if (STRING_same(trim(VAL_TITLES(i_t)),trim(COL(i_o)%title))) then
+         if (present(UNIT)) then
+           if (present(KIND)) then
+             call OUTPUT_unit_conversion(rVAR=VALUES(i_t),DESC=UNIT,KIND=KIND)
+           else
+             call OUTPUT_unit_conversion(rVAR=VALUES(i_t),DESC=UNIT)
+           endif
+         endif
          COL(i_o)%value=VALUES(i_t)
        endif
      enddo
@@ -92,7 +109,7 @@ subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,VALUES,ORDER)
    endif
    do i_t=1,N_columns
      do i_o=1,N
-       if (STRING_same(trim(ORDER(i_o)),trim(COL(i_t)%title))) COL(i_t)%POS=i_o+N_columns_ordered
+       if (index(COL(i_t)%title,trim(ORDER(i_o)))==1) COL(i_t)%POS=i_o+N_columns_ordered
      enddo
    enddo
    N_columns_ordered=N_columns_ordered+N

@@ -43,7 +43,16 @@ module OUTPUT_simple
  !
  interface
    !
-   subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,VALUES,ORDER)
+   subroutine OUTPUT_unit_conversion(Ivar,Rvar,DESC,KIND,PARSER_call)
+     use pars,  ONLY:SP
+     real(SP)    ,optional :: Rvar
+     integer     ,optional :: Ivar
+     character(*),optional :: DESC
+     character(*),optional :: KIND
+     logical     ,optional :: PARSER_call
+   end subroutine
+   !
+   subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,VALUES,ORDER,UNIT,KIND)
      use pars,  ONLY:SP
      character(*) , OPTIONAL :: what
      character(*) , OPTIONAL :: name
@@ -51,7 +60,10 @@ module OUTPUT_simple
      character(*) , OPTIONAL :: VAL_TITLES(:)
      real(SP)     , OPTIONAL :: VALUES(:)
      character(*) , OPTIONAL :: ORDER(:)
+     character(*) , OPTIONAL :: UNIT
+     character(*) , OPTIONAL :: KIND
    end subroutine
+   !
  end interface
  !
 end module

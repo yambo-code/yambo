@@ -25,12 +25,14 @@ module OUTPUT_simple
  !
  use pars,  ONLY:SP,schlen,lchlen,rZERO
  !
- integer, parameter       :: N_MAX_columns=100
+ integer, parameter       :: N_MAX_columns=30
  !
  type COLt
    integer            :: POS=0
-   character(schlen)  :: title= " "
-   real(SP)           :: value=rZERO
+   character(schlen)  :: title= " " 
+   character(1)       :: KIND= " " 
+   real(SP)           :: R_value=rZERO
+   real(SP)           :: I_value=0
  end type
  !
  logical              :: TITLES_ordered=.FALSE.
@@ -52,13 +54,14 @@ module OUTPUT_simple
      logical     ,optional :: PARSER_call
    end subroutine
    !
-   subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,VALUES,ORDER,UNIT,KIND)
+   subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
      use pars,  ONLY:SP
      character(*) , OPTIONAL :: what
      character(*) , OPTIONAL :: name
      character(*) , OPTIONAL :: TITLES(:)
      character(*) , OPTIONAL :: VAL_TITLES(:)
-     real(SP)     , OPTIONAL :: VALUES(:)
+     integer      , OPTIONAL :: I_VALUES(:)
+     real(SP)     , OPTIONAL :: R_VALUES(:)
      character(*) , OPTIONAL :: ORDER(:)
      character(*) , OPTIONAL :: UNIT
      character(*) , OPTIONAL :: KIND

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
+subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,MSG_string)
  !
  use pars,         ONLY:lchlen,schlen,max_open_ofs,repfile_index
  use stderr,       ONLY:gen_fmt,STRING_remove
@@ -36,12 +36,13 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  !
  implicit none
  !
- character(*)     :: mesg
- character(*)     :: how
- integer          :: val(:)
- character(*), optional :: after_msg
- integer,optional :: INDENT
- logical,optional :: USE_TABS
+ character(*)                :: how
+ character(*)                :: mesg
+ integer                     :: val(:)
+ character(*),      optional :: after_msg
+ logical,           optional :: USE_TABS
+ integer,           optional :: INDENT
+ character(lchlen), optional :: MSG_string
  ! 
  ! Work Space
  !
@@ -75,6 +76,13 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
  i1_limits=(/1,-1/)
  if(OUT_msg) i1_limits=(/1,max_open_ofs/)
  if(REP_msg) i1_limits=(/repfile_index,repfile_index/)
+
+ if (present(MSG_string)) then
+   call add_the_semi_column(mesg,nm,mesg_plus)
+   if (len_trim(after_msg_)==0) write (MSG_string,trim(msgfmt)) mesg_plus(1:nm),val
+   if (len_trim(after_msg_)> 0) write (MSG_string,trim(msgfmt)) mesg_plus(1:nm),val,trim(after_msg_)
+   return
+ endif
  !
  do i1=i1_limits(1),i1_limits(2)
    !

@@ -151,7 +151,9 @@ subroutine OUTPUT_unit_conversion(Ivar,Rvar,DESC,KIND,PARSER_call)
    ! REALS (ENERGY)
    !
    if (index(v_line,'eV')/=0.or.index(v_line,'ev')/=0) then
-    if (index(v_line,'meV')/=0.or.index(v_line,'mev')/=0) then
+    if (index(v_line,'eVm1')/=0) then
+      Rvar_tmp=Rvar_tmp*HA2EV
+    else if (index(v_line,'meV')/=0.or.index(v_line,'mev')/=0) then
       Rvar_tmp=Rvar_tmp/HA2EV/1000.
       call set_itp_unit('meV',1)
     else

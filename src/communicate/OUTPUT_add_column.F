@@ -43,7 +43,7 @@ subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,I_VALUES,R_VALUES,ORDER
  !
  ! Work Space
  !
- integer           :: N,i_t,i_o
+ integer           :: N,M,i_t,i_o
  real(SP)          :: o_R_values(N_MAX_columns)
  integer           :: o_I_values(N_MAX_columns)
  character(1)      :: o_KINDS(N_MAX_columns)
@@ -117,17 +117,21 @@ subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,I_VALUES,R_VALUES,ORDER
  endif
  !
  if (present(ORDER)) then
-   N=size(ORDER)
+   N=size(ORDER) 
+   M=0
    if (.not.TITLES_ordered) then
      COL(:)%POS=0
      N_columns_ordered=0
    endif
    do i_t=1,N_columns
      do i_o=1,N
-       if (index(COL(i_t)%title,trim(ORDER(i_o)))==1) COL(i_t)%POS=i_o+N_columns_ordered
+       if (index(COL(i_t)%title,trim(ORDER(i_o)))==1) then
+         M=M+1
+         COL(i_t)%POS=i_o+N_columns_ordered
+       endif
      enddo
    enddo
-   N_columns_ordered=N_columns_ordered+N
+   N_columns_ordered=N_columns_ordered+M
    TITLES_ordered=.TRUE.
  endif
  !

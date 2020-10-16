@@ -23,6 +23,34 @@
 !
 subroutine PH_of( )
  !
+ use OUTPUT_simple,  ONLY:OUTPUT_add_column
+ use RT_lifetimes,   ONLY:RT_PE_life
+ use ELPH,           ONLY:ph_freqs_sq,elph_branches
+ use R_lattice,      ONLY:nqibz
+ !
+ implicit none
+ !
  ! Work Space
+ !
+ integer :: iq,il
+ !
+ call OUTPUT_add_column(what="reset",name="ph")
+ call OUTPUT_add_column(what="open",name="ph")
+ !
+ !call DESC_write('o ph','#',PH_desc)
+ !
+ do iq=1,nqibz
+   do il=elph_branches(1),elph_branches(2)
+     call OUTPUT_add_column(TITLES=(/"Q-point","Branch "/),I_VALUES=(/iq,il/))
+     call OUTPUT_add_column(TITLES=(/"Energy"/),R_VALUES=(/sqrt(abs(ph_freqs_sq(iq,il)))/),UNIT="meV")
+     call OUTPUT_add_column(TITLES=(/"Width(emit)"/),R_VALUES=(/RT_PE_life%emit(il,iq)/),UNIT="meV")
+     call OUTPUT_add_column(TITLES=(/"Width(abs)"/),R_VALUES=(/RT_PE_life%abs(il,iq)/),UNIT="meV")
+     call OUTPUT_add_column(ORDER=(/"Q-point","Branch ","Energy "/))
+     call OUTPUT_add_column(ORDER=(/"Width(emit)","Width(abs) "/))
+     call OUTPUT_add_column(what="write")
+   enddo
+ enddo
+ !
+ call OUTPUT_add_column(what="close")
  !
 end subroutine

@@ -235,11 +235,13 @@ subroutine OUTPUT_unit_conversion(Ivar,Rvar,DESC,KIND,PARSER_call)
      Rvar_tmp=Rvar_tmp*AS2AUT
      call set_itp_unit('as',1)
      !
+   else
+     !
+     ! If nothing has been done and the real has a unit I assume it is in eV!
+     !
+     Rvar_tmp=Rvar_tmp/HA2EV
+     !
    endif
-   !
-   ! If nothing has been done and the real has a unit I assume it is in eV!
-   !
-   Rvar_tmp=Rvar_tmp/HA2EV
    !
  else if (var_is_B) then
    !

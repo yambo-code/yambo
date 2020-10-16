@@ -91,7 +91,7 @@ integer function io_RIM_W(ID)
  !
  use pars,           ONLY:SP
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,RIM_is_diagonal,RL_vol,RIM_RL_vol,&
-&                         RIM_W,RIM_W_d,nqibz
+&                         RIM_W,RIM_W_d,nqibz,RIM_W_E
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on
  use cuda_m,         ONLY:have_cuda
@@ -137,10 +137,14 @@ integer function io_RIM_W(ID)
    !
    if (read_is_on(ID)) then
      YAMBO_ALLOC(RIM_W,(nqibz,RIM_ng,RIM_ng))
+     YAMBO_ALLOC(RIM_W_E,(RIM_ng,RIM_ng))
    endif
    !
    call io_bulk(ID,VAR="RIM_W",VAR_SZ=(/shape(RIM_W)/))
    call io_bulk(ID,R3=RIM_W)
+   !
+   call io_bulk(ID,VAR="RIM_W_E",VAR_SZ=(/shape(RIM_W_E)/))
+   call io_bulk(ID,R2=RIM_W_E)
    !
    if (read_is_on(ID).and.have_cuda) then
      YAMBO_ALLOC_SOURCE(RIM_W_d,RIM_W)

@@ -39,7 +39,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_SET_temperature_pre_factor,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
 &                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,l_update_W,&
-&                        l_GW_terminator,GW_terminator_Kind,l_QP_Expand,QP_G_info,GW_iterations,QP_Sc_G
+&                        l_GW_terminator,GW_terminator_Kind,l_QP_Expand,QP_G_info,GW_iterations
 #if defined _ELPH
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
@@ -429,7 +429,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
      if (trim(QP_solver)/='g')        QP_Sc_steps=QP_dSc_steps
      !
      YAMBO_ALLOC(QP_Sc,(QP_n_states,QP_Sc_steps))
-     YAMBO_ALLOC(QP_Sc_G,(QP_n_states,QP_Sc_steps,7))
      !
 #if defined _ELPH
      if (l_elph_corr) then
@@ -465,7 +464,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
      YAMBO_FREE(QP_OMS_Fan)
 #endif
      YAMBO_FREE(QP_Sc)
-     YAMBO_FREE(QP_Sc_G)
      YAMBO_FREE(QP_dSc)
      YAMBO_FREE(QP_Vnl_xc)
      YAMBO_FREE(QP_Vxc)

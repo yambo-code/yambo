@@ -193,7 +193,7 @@ subroutine rim_integrate_w(iq,qr,N_out)
  ! Work Space
  !
  integer  :: i1,i1min,i2,i2max,i3
- real(SP) :: func,vslab(RIM_n_rand_pts,RIM_ng)
+ real(DP) :: func,vslab(RIM_n_rand_pts,RIM_ng)
  real(DP) :: r1,rfac,RIM_acc
  real(SP) :: slab_vz1,slab_vplane1,slab_vz2,slab_vplane2,lcut,pre_factor
  !
@@ -238,9 +238,9 @@ subroutine rim_integrate_w(iq,qr,N_out)
      !
      do i3=1,RIM_n_rand_pts
        !
-       func = f_coeff(1,i1,i2,iq)+qr(1,i3)*(f_coeff(2,i1,i2,iq)+qr(1,i3)*f_coeff(4,i1,i2,iq))&
-&                                    +qr(2,i3)*(f_coeff(3,i1,i2,iq)+qr(2,i3)*f_coeff(6,i1,i2,iq)&
-&                                    +2_SP*qr(1,i3)*f_coeff(5,i1,i2,iq))
+       func = f_coeff(1,i1,i2,iq,1)+qr(1,i3)*(f_coeff(2,i1,i2,iq,1)+qr(1,i3)*f_coeff(4,i1,i2,iq,1))&
+&                                    +qr(2,i3)*(f_coeff(3,i1,i2,iq,1)+qr(2,i3)*f_coeff(6,i1,i2,iq,1)&
+&                                    +2_SP*qr(1,i3)*f_coeff(5,i1,i2,iq,1))
        ! Accumulate W
        RIM_acc = RIM_acc + rfac*vslab(i3,i1)**2*func*vslab(i3,i2)**2/(1-vslab(i3,i1)*func*vslab(i3,i2))
      enddo
@@ -264,7 +264,7 @@ subroutine rim_integrate_w(iq,qr,N_out)
    !Regularization
    if (slab_vplane1 < 1.e-5) then
      vslab(i1,1) = sqrt(4._DP*pi*(1.-exp(-q0_def_norm*lcut))/q0_def_norm**2)
-     RIM_acc = RIM_acc + rfac*f_coeff(1,1,1,1)*(4*pi*lcut)**2
+     RIM_acc = RIM_acc + rfac*f_coeff(1,1,1,1,1)*(4*pi*lcut)**2
      cycle
    end if
    !
@@ -275,7 +275,7 @@ subroutine rim_integrate_w(iq,qr,N_out)
    vslab(i1,1)=4._DP*pi*(1.-exp(-slab_vplane1*lcut))
    !
    !Evaluate interpolation function
-   func = f_coeff(1,1,1,1)*exp(-sqrt(f_coeff(2,1,1,1)**2*qr(1,i1)**2+f_coeff(3,1,1,1)**2*qr(2,i1)**2))
+   func = f_coeff(1,1,1,1,1)*exp(-sqrt(f_coeff(2,1,1,1,1)**2*qr(1,i1)**2+f_coeff(3,1,1,1,1)**2*qr(2,i1)**2))
    !Evaluate W
    RIM_acc = RIM_acc + rfac*vslab(i1,1)*func*vslab(i1,1)/(r1**2*(1-vslab(i1,1)*func))
    !
@@ -295,9 +295,9 @@ subroutine rim_integrate_w(iq,qr,N_out)
      !
      !Evaluate func
      !
-     func = f_coeff(1,1,i2,iq)+qr(1,i3)*(f_coeff(2,1,i2,iq)+qr(1,i3)*f_coeff(4,1,i2,iq))&
-&                             +qr(2,i3)*(f_coeff(3,1,i2,iq)+qr(2,i3)*f_coeff(6,1,i2,iq)&
-&                        +2_SP*qr(1,i3)*f_coeff(5,1,i2,iq))
+     func = f_coeff(1,1,i2,iq,1)+qr(1,i3)*(f_coeff(2,1,i2,iq,1)+qr(1,i3)*f_coeff(4,1,i2,iq,1))&
+&                             +qr(2,i3)*(f_coeff(3,1,i2,iq,1)+qr(2,i3)*f_coeff(6,1,i2,iq,1)&
+&                        +2_SP*qr(1,i3)*f_coeff(5,1,i2,iq,1))
      !
      RIM_acc = RIM_acc + rfac*vslab(i3,1)**2*func*vslab(i3,i2)**2/(1-vslab(i3,1)*func*vslab(i3,i2))
    enddo

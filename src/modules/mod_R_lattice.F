@@ -23,7 +23,7 @@
 !
 module R_lattice
  !
- use pars,        ONLY:SP,schlen, IP
+ use pars,        ONLY:SP,DP,schlen, IP
  use descriptors, ONLY:IO_desc
  !
 #include<dev_defs.h>
@@ -156,9 +156,9 @@ module R_lattice
  integer :: RIM_W_ng
  integer :: RIM_W_n_rand_pts
  logical :: RIM_W_is_diagonal
- real(SP),   allocatable          :: RIM_W(:,:,:)
+ real(SP),   allocatable          :: RIM_W(:,:,:),RIM_W_E(:,:)
  real(SP),   allocatable DEV_ATTR :: RIM_W_d(:,:,:)
- real(SP),   allocatable :: f_coeff(:,:,:,:)
+ real(DP),   allocatable :: f_coeff(:,:,:,:,:)
  !
  ! Coulomb (including Cutoff)
  !

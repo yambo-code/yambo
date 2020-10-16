@@ -42,12 +42,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use IO_m,          ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD_CL_IF_END,&
 &                        io_RESPONSE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_table,l_update_W,&
-&                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,QP_Sc_G,&
+&                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind,QP_states_simmetrize
  use X_m,           ONLY:X_alloc,X_mat,X_mat_d,X_t
  use wave_func,     ONLY:WF
- use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,nqibz,&
-&                        RIM_W_is_diagonal,RIM_is_diagonal,RIM_W_ng,g_vec,RIM_W,RIM_W_d
+ use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,nqibz,bare_qpg,q0_def_norm,RIM_W_E,&
+&                        RIM_W_is_diagonal,RIM_is_diagonal,RIM_W_ng,g_vec,RIM_W,RIM_W_d,f_coeff
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
@@ -85,14 +85,16 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  type(elemental_collision),target ::isc,iscp
  character(schlen)::ch,SECTION_name,W_name
  !
- logical          ::X_is_TR_rotated,l_X_alloc
+ logical          ::X_is_TR_rotated,l_X_alloc,l_RIM_W_g
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
  complex(SP)      ::local_rhotw(X%ng),pre_factor,PPA_R
- complex(DP)      ::dp_dummy,ctmp,dp_vdummy(7)
- !
- logical          ::l_RIM_W_g,tmp
- integer          ::out_unit_QP_Sc_G=1000,out_unit_PPA=771
+ complex(DP)      ::dp_dummy,ctmp
+#if 0
+ complex(DP)      ::dp_vdummy(7)
+ complex(SP)      :: QP_Sc_G(QP_n_states,QP_Sc_steps,7)
+ integer          ::out_unit_QP_Sc_G=1000
  real(SP)         ::g1_mod_2D,g2_mod_2D
+#endif
  !
 #ifdef _CUDA
  integer                      :: Xng, Xr1, Xr2
@@ -109,20 +111,23 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Reset & checks
  !
+#if 0
 !!! AG DBG
+ debug = .false.
+ if(debug) then
  open (unit=out_unit_QP_Sc_G,file="QP_Sc_G.dat",action="write",status="replace")
  write(out_unit_QP_Sc_G,*) "#band  kpoint      head          diag_Gz        diag_G        wing_Gz"//&
 &"         wing_G         body_Gz        body_G          all"
- open (unit=out_unit_PPA,file="PPA.dat",action="write",status="replace")
- write(out_unit_PPA,*) "#iq  G1  G2  PPA_E  PPA_R"
+ endif
 !!! AG DBG
-
+#endif
+ !
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp)
  i_qp_to_start=1
  iq_to_start  =1
  QP_Sc        =cZERO
- QP_Sc_G      =cZERO
+ !QP_Sc_G      =cZERO
  !
  if (l_GW_terminator.and.trim(GW_terminator_Kind)/='BG'.and.&
 &    trim(GW_terminator_Kind)/='BRS') &
@@ -250,7 +255,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  endif
  !
  Q_loop: do iqbz=iq_to_start,q%nbz
-   tmp=.false.
    !
    if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) cycle
    !
@@ -258,11 +262,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    iqibz=isc%qs(2)
    iqs  =isc%qs(3)
    !
-   call msg("r", "RIM-W =", RIM_W(iqibz,1,:)/2._SP)
-   call msg("r", "RIM-W =", RIM_W(iqibz,:,1)/2._SP)
-   !
    if (iqibz/=isc%iqref) then
-     tmp=.true.
      !
      iq_mem=PAR_Q_ibz_index(iqibz)
      X_range=(/1,Xw%n_freqs/)
@@ -273,7 +273,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! I/O
      !
-     call msg('r', "iq_to_start =", iq_to_start)
      if (io_RESPONSE) then
        !
        IO_ACT=manage_action(RD_CL_IF_END,iqibz,iq_to_start,nqibz)
@@ -299,10 +298,21 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        do ig2=1,X%ng
          do ig1=1,X%ng
            if (l_ppa) then
-             if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
-               X_mat(ig1,ig2,X_range(2))=X%ppaE
+             !
+             ! RIM W support
+             !
+             l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng.and.iqibz==1)
+             if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
+             !
+             if (l_RIM_W_g) then
+               X_mat(ig1,ig2,X_range(2))=RIM_W_E(ig1,ig2)
+               !
              else
-               X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
+               if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
+                 X_mat(ig1,ig2,X_range(2))=X%ppaE
+               else
+                 X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
+               endif
              endif
            else
              X_mat(ig1,ig2,X_range(1))=X_mat(ig1,ig2,X_range(1))*isc%gamp(ig1,ig2)
@@ -525,10 +535,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                if (l_RIM_W_g) then
                  PPA_R=-cmplx(RIM_W_d(iqibz,ig1,ig2)/2._SP, &
 &                             aimag(X_mat_d(ig1,ig2,Xr1))*real(isc_gamp_d(ig1,ig2)),kind=SP)/2._SP*PPA_E
-!                 if(i_qp == i_qp_to_start.and.ib==QP_n_G_bands(1).and.i_w==1) then
-!                   write(out_unit_PPA,"(I5, I5, I5, e15.6, e15.6, e15.6)") &
-!&                         iqbz, ig1, ig2, PPA_E, real(PPA_R), aimag(PPA_R)
-!                 end if
                else
                  PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
                endif
@@ -566,15 +572,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          do i_w=1,QP_dSc_steps
            !
            dp_dummy = 0.0_DP
-           dp_vdummy = 0.0_DP
+           !dp_vdummy = 0.0_DP
            !
            !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp, &
-           !$omp &           g1_mod_2D,g2_mod_2D,l_RIM_W_g), reduction(+:dp_dummy)
+           !$omp &           l_RIM_W_g), reduction(+:dp_dummy)
            do ig2=1,X%ng
-             g2_mod_2D = sqrt(g_vec(ig2,1)**2+g_vec(ig2,2)**2)
+             !g2_mod_2D = sqrt(g_vec(ig2,1)**2+g_vec(ig2,2)**2)
              !        
              do ig1=1,X%ng
-               g1_mod_2D = sqrt(g_vec(ig1,1)**2+g_vec(ig1,2)**2)
+               !g1_mod_2D = sqrt(g_vec(ig1,1)**2+g_vec(ig1,2)**2)
                !
                PPA_E= real(X%ppaE/X_mat(ig1,ig2,X_range(2)),kind=SP)
                !
@@ -586,10 +592,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                if (l_RIM_W_g) then
                  PPA_R=-cmplx(RIM_W(iqibz,ig1,ig2)/2._SP, &
 &                       aimag(X_mat(ig1,ig2,X_range(1)))*real(isc%gamp(ig1,ig2),kind=SP),kind=SP)/2._SP*PPA_E
-                 if(i_qp == i_qp_to_start.and.ib==QP_n_G_bands(1).and.i_w==1.and.tmp) then
-                   write(out_unit_PPA,"(I5, I5, I5, e15.6, e15.6, e15.6)") &
-&                         iqibz, ig1, ig2, PPA_E, real(PPA_R), aimag(PPA_R)
-                 end if
                else
                  PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
                end if
@@ -602,6 +604,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                !
                dp_dummy=dp_dummy+ctmp
                !
+#if 0
 !!! AG DBG
                !
                !Collect the Sc in QP_Sc_G
@@ -643,13 +646,16 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                  !
                end if
 !!! AG DBG
+#endif
                !
              enddo
            enddo
            !$omp end parallel do
            !
            dc(i_w) = cmplx(dp_dummy,kind=SP)
+#if 0
            QP_Sc_G(i_qp,i_w,:) = QP_Sc_G(i_qp,i_w,:) + cmplx(dp_vdummy,kind=SP)
+#endif
            !
          enddo
 #endif
@@ -745,7 +751,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call timing('GW(REDUX)',OPR='start')
  call PP_redux_wait(QP_Sc)
- call PP_redux_wait(QP_Sc_G)
+ !call PP_redux_wait(QP_Sc_G)
  call timing('GW(REDUX)',OPR='stop')
  !
  ! AM, Sept 2019. The COH potential seems to break (in some case of a large amount) the
@@ -758,6 +764,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    enddo
  endif
  !
+#if 0
 !!! AG DBG
  do i_qp=1,QP_n_states
    write(out_unit_QP_Sc_G,"(I5, I5, F15.6, F15.6, F15.6, F15.6, F15.6, F15.6, F15.6, F15.6)") &
@@ -770,5 +777,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  close(out_unit_QP_Sc_G)
 !!! AG DBG
+#endif
  !
 end subroutine

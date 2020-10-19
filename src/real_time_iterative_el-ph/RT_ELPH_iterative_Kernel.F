@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
+subroutine RT_ELPH_iterative_Kernel(ik,E,k,q,TIME)
  !
  ! In this routine I do not perform a time step. I calculate
  ! the el-ph Kernel at time TIME using an approximate iterative scheme (light but approximated).
@@ -44,7 +44,7 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
  use functions,      ONLY:bose_f
  use R_lattice,      ONLY:bz_samp,qindx_S
  use real_time,      ONLY:RT_bands
- use RT_lifetimes,   ONLY:elph_gkkp_expanded_sq,l_RT_iterative_ELPH_lifetimes
+ use RT_lifetimes,   ONLY:elph_gkkp_expanded_sq
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
  use parallel_m,     ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_Xk_ibz_index
  !
@@ -119,44 +119,33 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
        !
      enddo
      !
-     if (.not.l_RT_iterative_ELPH_lifetimes) then
-       !
-       ! Complete Collision Approximation (CCA)
-       !=======================================
-       !
-       call RT_ELPH_CCA_Kernel(ik,ik_m_q,iqbz,il,E,ph_freq,Gkkp_sq)
-       !
-     else
-       !
-       N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
-       !
-       ! EQUILIBRIUM Kernel
-       !=====================
-       !
-       call RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp_sq,S_mat_eq)
-       !
-       ! OUT-OF-EQUILIBRIUM Kernel
-       !===========================
-       !
-       call RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp_sq,S_mat_out_of_eq)
-       !
-       ! SUM-UP
-       !========
-       !
-       do i_s=-1,1,2
-         do i_n=RT_bands(1),RT_bands(2)
-           do i_np=RT_bands(1),RT_bands(2)
-             S_mat_sum(i_n,i_np)=S_mat_sum(i_n,i_np)+&
-&                                ( S_mat_out_of_eq(i_map( i_s),i_n,i_np)+conjg(S_mat_out_of_eq(i_map(-i_s),i_np,i_n))+&
-&                                  S_mat_eq(i_map( i_s),i_n,i_np)+conjg(S_mat_eq(i_map(-i_s),i_np,i_n)) )
-           enddo
+     N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
+     !
+     ! EQUILIBRIUM Kernel
+     !=====================
+     !
+     call RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp_sq,S_mat_eq)
+     !
+     ! OUT-OF-EQUILIBRIUM Kernel
+     !===========================
+     !
+     call RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp_sq,S_mat_out_of_eq)
+     !
+     ! SUM-UP
+     !========
+     !
+     do i_s=-1,1,2
+       do i_n=RT_bands(1),RT_bands(2)
+         do i_np=RT_bands(1),RT_bands(2)
+           S_mat_sum(i_n,i_np)=S_mat_sum(i_n,i_np)+&
+&                              ( S_mat_out_of_eq(i_map( i_s),i_n,i_np)+conjg(S_mat_out_of_eq(i_map(-i_s),i_np,i_n))+&
+&                                S_mat_eq(i_map( i_s),i_n,i_np)+conjg(S_mat_eq(i_map(-i_s),i_np,i_n)) )
          enddo
-       enddo ! i_s
-       !
-     endif
+       enddo
+     enddo ! i_s
      !
    enddo ! ph branch
    !
  enddo ! iqbz
  !
-end subroutine RT_ELPH_total_kernel
+end subroutine RT_ELPH_iterative_kernel

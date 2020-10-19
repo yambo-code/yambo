@@ -124,7 +124,11 @@ subroutine RT_initialize(E,k,q)
  !
  !...drivers
  !
+#if defined _ELPH_ITERATIVE
  l_RT_iterative_ELPH_lifetimes  =l_Full_RT_T_evolution.and.l_elph_scatt
+#else
+ l_RT_iterative_ELPH_lifetimes  = .FALSE.
+#endif
  !
  ! GPL_EXCLUDE_END
  !

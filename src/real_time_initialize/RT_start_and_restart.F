@@ -201,7 +201,9 @@ subroutine RT_start_and_restart(E,k,q)
      enddo
    endif
    !
-   if(l_RT_iterative_ELPH_lifetimes) call RT_ELPH_zeroing()
+#if defined _ELPH_ITERATIVE
+   if( l_RT_iterative_ELPH_lifetimes) call RT_ELPH_zeroing()
+#endif
    !
    ! Last thing to do is to update the planned time sampling time (if needed)
    !

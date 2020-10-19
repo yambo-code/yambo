@@ -218,8 +218,7 @@ subroutine RT_databases_IO(E,DO_IT)
      !
      call IO_and_Messaging_switch("RESTORE")
      !
-#if defined _ELPH
-     !
+#if defined _ELPH_ITERATIVE
      if (l_RT_iterative_ELPH_lifetimes) then
        !
        do ik = 1, RT_nk
@@ -241,7 +240,6 @@ subroutine RT_databases_IO(E,DO_IT)
        enddo
        !
      endif
-     !
 #endif
    !
    endif

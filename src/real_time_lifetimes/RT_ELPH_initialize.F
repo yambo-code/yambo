@@ -85,6 +85,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  !===========
  call ELPH_Q_weight_times_Bose(q)
  !
+#if defined _ELPH_ITERATIVE
  ! THETA matrix indexes
  !======================
  if (.not.l_RT_iterative_ELPH_lifetimes) return
@@ -102,5 +103,6 @@ subroutine RT_ELPH_initialize(E,k,q)
      enddo
    enddo
  enddo
+#endif
  !
 end subroutine RT_ELPH_initialize

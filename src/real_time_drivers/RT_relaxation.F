@@ -75,7 +75,7 @@ subroutine RT_relaxation(E,k,q,Time)
  use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,l_RT_eval_lifetimes,& 
 &                         RT_EP_emit_REF_life,RT_EE_REF_life,RT_EH_REF_life,&
 &                         Life_MEM_steps,l_initial_equilibrium,RT_EP_abs_REF_life,&
-&                         SAVED_times,RT_EP_abs_life
+&                         SAVED_times,RT_EP_abs_life,l_RT_iterative_ELPH_lifetimes
  use RT_operations,  ONLY:ADD_to_saved_values
  use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
 &                         RT_is_statically_dephased,&
@@ -135,7 +135,15 @@ subroutine RT_relaxation(E,k,q,Time)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     call RT_ELPH_total_Kernel(ik,E,k,q,Time)
+#if defined _ELPH_ITERATIVE
+     if (l_RT_iterative_ELPH_lifetimes) then
+       call RT_ELPH_iterative_Kernel(ik,E,k,q,Time)
+     else
+#endif
+       call RT_ELPH_Lifetimes(ik,E,k)
+#if defined _ELPH_ITERATIVE
+     endif
+#endif
      !
    enddo
    !

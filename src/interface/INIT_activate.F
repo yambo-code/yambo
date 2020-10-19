@@ -560,7 +560,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'RTskipImposeN RTeeImposeE InducedField')
    call initactivate(1,'Gauge VelGaugeCorr VelGaugeDiam PfromJ RTUpdateSOC RTUpdateE SaveGhistory')
-   call initactivate(1,'RTEqScatt RTImpForMet RTzeroTempRef RTEvalEnergy RTEvalEntropy')
+   call initactivate(1,'RTEqScatt RTImpForMet RTzeroTempRef RTskipPHabs RTEvalEnergy RTEvalEntropy')
    call initactivate(1,'dTupdateTime dTupdateJump dTupdateTresh dT_MAX')
    if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) &
 &    call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp RelaxTimeApprox RTAtemp RTAchem LifeFitTemp')

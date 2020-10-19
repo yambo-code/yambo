@@ -25,9 +25,10 @@ subroutine RT_ELPH_initialize(E,k,q)
  ! 
  use pars,           ONLY:cZERO
  use parser_m,       ONLY:parser
- use real_time,      ONLY:THETA_matrix,THETA_matrix_index,l_RT_CCA_Kernel,RT_bands
+ use real_time,      ONLY:RT_bands
  use electrons,      ONLY:levels
- use drivers,        ONLY:l_elph_scatt
+ use drivers,        ONLY:l_elph_scatt,l_phel_scatt
+ use RT_lifetimes,   ONLY:l_RT_iterative_ELPH_lifetimes,THETA_matrix,THETA_matrix_index
  use R_lattice,      ONLY:bz_samp,nXkibz
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,NONE
  use ELPH,           ONLY:ph_freqs_sq,ph_modes,W_debye
@@ -50,7 +51,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! Logicals
  !==========
- if (.not.l_elph_scatt) return
+ if (.not.l_elph_scatt.and..not.l_phel_scatt) return
  !
  call parser('UseDebyeE'   , l_use_Debye_E)
  !
@@ -60,7 +61,6 @@ subroutine RT_ELPH_initialize(E,k,q)
  if (i_err<0) then
    call warning('ELPH database not found and/or incompatible OR QP widths not provided. E-P scattering switched off')
    l_elph_scatt   =.FALSE.
-   l_RT_CCA_Kernel=.FALSE.
    return
  endif
  !
@@ -70,7 +70,11 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! El-Ph databases I/O
  !=====================
- call ELPH_expanded_databases_load(E,k,q,RT_bands,"BZ")
+ if (l_elph_scatt) call ELPH_expanded_databases_load(E,k,q,RT_bands,"BZ")
+ !
+ ! Pj-El databases I/O
+ !=====================
+ if (l_phel_scatt) call ELPH_expanded_databases_load(E,k,q,RT_bands,"IBZ")
  !
  ! Test of the effect of using a single optical mode
  !                               ===================
@@ -79,27 +83,22 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! Q weights 
  !===========
- !
  call ELPH_Q_weight_times_Bose(q)
  !
  ! THETA matrix indexes
  !======================
- if (l_RT_CCA_Kernel) return
+ if (.not.l_RT_iterative_ELPH_lifetimes) return
  !
  YAMBO_ALLOC(THETA_matrix,(2*q%nbz*ph_modes,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1,nXkibz))
  THETA_matrix=cZERO
  YAMBO_ALLOC(THETA_matrix_index,(q%nbz,ph_modes,2))
  !
  i_counter=0
- !
  do iq=1,q%nbz
    do il=1,ph_modes
      do i_s=1,2
-       !
        i_counter=i_counter+1
-       !
        THETA_matrix_index(iq,il,i_s)=i_counter
-       !
      enddo
    enddo
  enddo

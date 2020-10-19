@@ -68,6 +68,7 @@ subroutine RT_relaxation(E,k,q,Time)
 #if defined _PHEL
  use drivers,        ONLY:l_phel_scatt
  use R_lattice,      ONLY:nqibz
+ use real_time,      ONLY:RTibz,RT_levels
 #endif
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use RT_occupations, ONLY:l_RT_relax_time_approx 
@@ -77,7 +78,7 @@ subroutine RT_relaxation(E,k,q,Time)
 &                         SAVED_times,RT_EP_abs_life
  use RT_operations,  ONLY:ADD_to_saved_values
  use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
-&                         l_RT_CCA_Kernel,RT_is_statically_dephased,&
+&                         RT_is_statically_dephased,&
 &                         RT_nk,RT_is_dynamically_dephased
  use timing_m,       ONLY:timing
  !
@@ -116,7 +117,7 @@ subroutine RT_relaxation(E,k,q,Time)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     call RT_Coulomb_relaxation(ik,E,k,q)
+     call RT_Coulomb_Lifetimes(ik,E,k,q)
      !
    enddo
    !
@@ -141,11 +142,12 @@ subroutine RT_relaxation(E,k,q,Time)
    call timing('RT relaxation (e-p)',OPR='stop')
    !
  endif
+ !
 #if defined _PHEL
  !
  ! Ph-El (phonon dynamics)
  !=======
- if(l_phel_scatt.and.l_elph_scatt.and.l_RT_eval_lifetimes) then
+ if(l_phel_scatt.and.l_RT_eval_lifetimes) then
    !
    call timing('RT relaxation (p-e)',OPR='start')
    !
@@ -153,13 +155,14 @@ subroutine RT_relaxation(E,k,q,Time)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(iq)) cycle
      !
-     call RT_PHEL_lifetimes(iq,E,k,q)
+     call PHEL_lifetimes(iq,E,k,RT_bands,RTibz,RT_levels)
      !
    enddo
    !
    call timing('RT relaxation (p-e)',OPR='stop')
    !
  endif
+ !
 #endif
  !
  ! El-Photon

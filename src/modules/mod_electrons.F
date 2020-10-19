@@ -65,7 +65,6 @@ module electrons
    real(SP), allocatable:: E(:,:,:)
    real(SP), allocatable:: W(:,:,:)
    real(SP), allocatable:: f(:,:,:)
-   !real(SP), allocatable:: Z(:,:,:)
    real(SP), allocatable:: df(:,:,:)
  end type E_fine_grid
  !

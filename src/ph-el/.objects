@@ -1,7 +1,3 @@
-#if defined _RT 
-RT_objs = RT_PHEL_initialize.o 
-#endif
 #if defined _PHEL 
-PHEL_objs = PHEL_driver.o PHEL_lifetimes.o PH_of.o
+objs = PHEL_driver.o PHEL_lifetimes.o PH_of.o
 #endif
-objs = ${RT_objs} ${PHEL_objs}

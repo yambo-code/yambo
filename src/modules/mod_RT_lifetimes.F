@@ -45,7 +45,7 @@ module RT_lifetimes
  type RT_obj_lifetime
    logical                  :: active=.FALSE.
    character(schlen)        :: KIND="none"
-   integer                  :: N=0
+   integer                  :: D=0
    real(SP),    allocatable :: abs(:)
    real(SP),    allocatable :: emit(:)
    real(SP),    allocatable :: abs_bare(:)
@@ -87,7 +87,26 @@ module RT_lifetimes
  !
  ! Ouput Lifetimes, ratio fit and temperatures
  !---------------------------------------------
- logical                  :: l_RT_lifetimes_Tfit=.FALSE.
+ logical  :: l_RT_lifetimes_Tfit=.FALSE.
+ !
+ ! Skip Finite (prop to N_ph) components
+ !---------------------------------------
+ logical  :: l_RT_skip_ph_abs_lifetimes = .FALSE.
+ !
+ ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
+ real(SP),    allocatable :: q_weight_RT(:,:,:)
+ ! ... Q-parallelization  and GKKP
+ real(SP),    allocatable :: elph_gkkp_expanded_sq(:,:,:,:,:)
+ integer,     allocatable :: Q_io_map(:)
+ integer,     allocatable :: K_io_map(:)
+ !
+ ! Complete Collision Approx and beyond
+ !--------------------------------------
+ logical     :: l_RT_iterative_ELPH_lifetimes=.FALSE.
+ ! ... THETA matrix
+ complex(SP), allocatable :: THETA_matrix(:,:,:,:)
+ ! ... indexes ...
+ integer,     allocatable :: THETA_matrix_index(:,:,:)
  !
  contains
    !
@@ -174,7 +193,7 @@ module RT_lifetimes
      YAMBO_ALLOC(LIFE%abs,(Ns))
      YAMBO_ALLOC(LIFE%abs_bare,(Ns))
      YAMBO_ALLOC(LIFE%emit_bare,(Ns))
-     LIFE%N        =Ns
+     LIFE%D        =Ns
      LIFE%emit     =rZERO
      LIFE%abs      =rZERO
      LIFE%abs_bare =rZERO
@@ -188,7 +207,7 @@ module RT_lifetimes
      if (.not.LIFE%active) return
      LIFE%KIND="none"
      LIFE%active=.FALSE.
-     LIFE%N=0
+     LIFE%D=0
      YAMBO_FREE(LIFE%emit)
      YAMBO_FREE(LIFE%abs)
      YAMBO_FREE(LIFE%abs_bare)

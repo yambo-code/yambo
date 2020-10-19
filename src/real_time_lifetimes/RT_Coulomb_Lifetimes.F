@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Coulomb_relaxation(ik,E,k,q)
+subroutine RT_Coulomb_Lifetimes(ik,E,k,q)
  !  
  use pars,            ONLY:SP,rZero,cZero,pi
  use electrons,       ONLY:levels,spin_occ
@@ -223,4 +223,4 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
    !
  enddo
  !
-end subroutine RT_Coulomb_relaxation
+end subroutine RT_Coulomb_Lifetimes

@@ -220,7 +220,7 @@ module interpolate_tools
       !
       ik   =SEED_RT%table(i_RT,3)
       i_s  =SEED_RT%table(i_RT,4)
-      if (l_INTERP_f ) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%delta_f(i_RT) 
+      if (l_INTERP_f ) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%OCC_el%dN(i_RT) 
       if (l_INTERP_W ) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%NEQ_Lifetime(i_RT) 
       if (l_INTERP_dE) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%delta_E(i_RT) 
       !

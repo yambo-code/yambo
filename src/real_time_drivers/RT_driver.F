@@ -50,9 +50,6 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                         dG_lesser,NE_tot_time,&
 &                         i_MEM_prev,i_MEM_now,RT_is_dynamically_dephased,&
 &                         l_RT_update_Energies,l_NE_with_fields,l_update_SOC,l_velocity_gauge_corr
-#if defined _PHEL
- use PH_real_time,    ONLY:RT_PHEL_alloc,RT_PHEL_free
-#endif
  use plasma,          ONLY:PLASMA_free,EH_gas
  use com,             ONLY:msg
  use fields,          ONLY:A_tot,Efield
@@ -192,9 +189,6 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  call RT_alloc(E,"all")
  call RT_control_alloc("all")
-#if defined _PHEL
- if (l_phel_scatt) call RT_PHEL_alloc("phonons")
-#endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -375,9 +369,6 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    subroutine CLOSE_and_clean( )
      call RT_free( )
      call RT_control_free("all")
-#if defined _PHEL
-     if (l_phel_scatt) call RT_PHEL_free("all")
-#endif
      call WF_free(WF)
      !
      ! GPL_EXCLUDE_START

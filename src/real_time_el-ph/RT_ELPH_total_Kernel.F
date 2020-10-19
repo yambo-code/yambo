@@ -41,16 +41,12 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
  !
  use pars,           ONLY:SP,rZERO,cZERO
  use electrons,      ONLY:levels,spin_occ
- use R_lattice,      ONLY:bz_samp,qindx_S
- use real_time,      ONLY:elph_gkkp_expanded_sq,l_RT_CCA_Kernel,RT_bands
-#if defined _PHEL
- use real_time,      ONLY:l_initial_equilibrium
- use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_occupations_reference
-#endif
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
  use functions,      ONLY:bose_f
+ use R_lattice,      ONLY:bz_samp,qindx_S
+ use real_time,      ONLY:RT_bands
+ use RT_lifetimes,   ONLY:elph_gkkp_expanded_sq,l_RT_iterative_ELPH_lifetimes
+ use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
  use parallel_m,     ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_Xk_ibz_index
- use parser_m,       ONLY:parser
  !
  implicit none
  !
@@ -61,7 +57,7 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
  !
  ! Work Space ...
  !
- integer               :: i_s,i_map(-1:1),il
+ integer               :: i_map(-1:1),il,i_s
  real(SP)              :: ph_freq,N_q(2)
  real(SP), parameter   :: cutoff= 5.E-3
  !
@@ -71,19 +67,12 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
  complex(SP)           :: S_mat_eq(2,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP)           :: S_mat_sum(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
- logical :: l_skip_ABS
- !
  ! ... band index ...
  integer               :: i_n,i_np
  ! ... BZ index ...
  integer               :: iqbz,ik_m_q,ik_mem,iq_mem
-#if defined _PHEL
- integer               :: iqibz
-#endif
  !
  ik_mem=PAR_Xk_ibz_index(ik)
- !
- call parser('NOABS',l_skip_ABS)
  !
  i_map(-1)=1
  i_map( 0)=1
@@ -112,18 +101,6 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
      if ( (iqbz==1 .and. il<=3) ) cycle
      if ( abs(ph_freq)<3.E-5)     cycle
      !
-     N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
-     !
-     ! This part is wrong: an error in RT_PH_occupations?
-#if defined _PHEL
-     !iqibz = k%sstar(iqbz,1)
-     !if (l_initial_equilibrium) then
-       !N_q    = (RT_PH_occupations_reference(il,iqibz)+(/0._SP,spin_occ/))/spin_occ
-     !else
-       !N_q    = (RT_PH_occupations(il,iqibz)+(/0._SP,spin_occ/))/spin_occ
-     !endif
-#endif
-     !
      ! Note the m.e. in elph_gkkp_expanded_sq are stored with indexes order exchanged (see RT_ELPH_initialize)
      !
      Gkkp_sq=rZERO
@@ -142,14 +119,16 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
        !
      enddo
      !
-     if (l_RT_CCA_Kernel) then
+     if (.not.l_RT_iterative_ELPH_lifetimes) then
        !
        ! Complete Collision Approximation (CCA)
        !=======================================
        !
-       call RT_ELPH_CCA_Kernel(ik,ik_m_q,iqbz,il,N_q(1),E,ph_freq,Gkkp_sq,l_skip_ABS)
+       call RT_ELPH_CCA_Kernel(ik,ik_m_q,iqbz,il,E,ph_freq,Gkkp_sq)
        !
      else
+       !
+       N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
        !
        ! EQUILIBRIUM Kernel
        !=====================

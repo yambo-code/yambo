@@ -42,10 +42,11 @@ subroutine RT_initialize(E,k,q)
 &                         TIME_adjust,SAVE_G_history,CACHE_OBS_INTERVAL_time
  use RT_occupations, ONLY:l_RT_relax_time_approx
  use RT_lifetimes,   ONLY:RT_life_extrap_times,RT_life_extrap_times_INPUT,l_RT_lifetimes_extrapolation,&
-&                         Life_MEM_steps,l_RT_lifetimes_Tfit
+&                         Life_MEM_steps,l_RT_lifetimes_Tfit,l_RT_skip_ph_abs_lifetimes,&
+&                         l_RT_iterative_ELPH_lifetimes
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,Gr_kind,       &
-&                         RAD_LifeTime,l_RT_CCA_Kernel,Phase_LifeTime,         &
+&                         RAD_LifeTime,Phase_LifeTime,         &
 &                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_FineGd,DbGd_EE_Nk_table,    &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
 &                         l_RT_update_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
@@ -59,6 +60,7 @@ subroutine RT_initialize(E,k,q)
 &                         l_P_integrating_J,l_RT_rotate_DM,RT_deph_cv_only,RTibz
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:Bose_Temp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
  use parser_m,       ONLY:parser
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait,PAR_G_k_range
@@ -107,11 +109,12 @@ subroutine RT_initialize(E,k,q)
  !..lifetimes
  call parser('LifeExtrapolation',    l_RT_lifetimes_extrapolation)
  call parser('LifeFitTemp',          l_RT_lifetimes_Tfit)
- !
  call parser('RelaxTimeApprox',      l_RT_relax_time_approx)
  call parser('RTzeroTempRef',        l_RT_eq_is_zero_temp)
  call parser('RTEqScatt',            l_RT_include_eq_scatt)
+ call parser('RTskipPHabs',          l_RT_skip_ph_abs_lifetimes)
  !
+ if (.not.l_RT_skip_ph_abs_lifetimes) l_RT_skip_ph_abs_lifetimes=.not.(Bose_Temp>0..or.l_phel_scatt)
  !
  !...evals
  call parser('RTEvalEnergy',         eval_energy)
@@ -121,7 +124,7 @@ subroutine RT_initialize(E,k,q)
  !
  !...drivers
  !
- l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
+ l_RT_iterative_ELPH_lifetimes  =l_Full_RT_T_evolution.and.l_elph_scatt
  !
  ! GPL_EXCLUDE_END
  !
@@ -348,16 +351,6 @@ subroutine RT_initialize(E,k,q)
    call RT_ELPH_initialize(E,k,q)
    !
  endif
- !
-#if defined _PHEL
- if (l_phel_scatt) then
-   !
-   call section('=','Ph-El matrix elements loading and setup')
-   !                 =======================================
-   call RT_PHEL_initialize(k,q)
-   !
- endif
-#endif
  !
 #endif
  !

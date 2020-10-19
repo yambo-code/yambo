@@ -47,11 +47,11 @@ subroutine RT_start_and_restart(E,k,q)
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,&
 &                         G_lesser_reference,rho_reference,magn_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,NE_time,RT_levels,&
-&                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
+&                         RT_P,RT_step,dG_lesser,NE_i_time,RT_dyn_step,&
 &                         Gr_kind,l_RT_is_WFfree,RT_TIME_status,RTibz,&
 &                         RT_nk,G_lesser,RT_eh_en,G_MEM_steps,RT_bands,&
 &                         NE_time_step_update_jump,l_velocity_gauge_corr
- use RT_lifetimes,   ONLY:RT_life_extrap_times
+ use RT_lifetimes,   ONLY:RT_life_extrap_times,l_RT_iterative_ELPH_lifetimes
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,&
@@ -145,7 +145,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  !  4. The THETA (no CCA mode)
  !
- if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = RESTART.and.(io_err(7)==0)
+ if (l_RT_iterative_ELPH_lifetimes) RESTART = RESTART.and.(io_err(7)==0)
  !
  ! In case I restart I need to copy the databases in the WD
  !
@@ -193,7 +193,7 @@ subroutine RT_start_and_restart(E,k,q)
      G_lesser(:,:,:,i_mem)=G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2))+dG_lesser(:,:,:,i_mem)
    enddo
    !
-   if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
+   if (l_RT_iterative_ELPH_lifetimes) then
      do ik=1,RT_nk
        IO_ACT=manage_action(RD_CL_IF_END,ik,FIRST=1,LAST=RT_nk)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),MODE=VERIFY,ID=ID(7))
@@ -201,7 +201,7 @@ subroutine RT_start_and_restart(E,k,q)
      enddo
    endif
    !
-   if(.not.l_RT_CCA_Kernel) call RT_ELPH_zeroing()
+   if(l_RT_iterative_ELPH_lifetimes) call RT_ELPH_zeroing()
    !
    ! Last thing to do is to update the planned time sampling time (if needed)
    !

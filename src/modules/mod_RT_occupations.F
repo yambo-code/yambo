@@ -41,6 +41,16 @@ module RT_occupations
  !
  type(RT_occupation) :: RT_el_occ,RT_ho_occ,RT_ph_occ,RT_life_occ
  !
+ type RT_obj_occupation
+   logical                  :: active=.FALSE.
+   character(schlen)        :: KIND="none"
+   integer                  :: D=0
+   real(SP),    allocatable :: N_ref(:)
+   real(SP),    allocatable :: dN(:)
+ end type RT_obj_occupation
+ !
+ type(RT_obj_occupation) :: RT_obj_el_occ,RT_obj_ph_occ
+ !
  ! Relaxation Time Approx
  !
  logical  :: l_RT_relax_time_approx = .FALSE.
@@ -110,6 +120,30 @@ module RT_occupations
      YAMBO_FREE(OCC%N)
      YAMBO_FREE(OCC%dN)
      YAMBO_FREE(OCC%N_ref)
+   end subroutine
+   !
+   subroutine RT_obj_occupation_alloc(KIND,OCC,Ns)
+     character(*)            :: KIND
+     type(RT_obj_occupation) :: OCC
+     integer :: Ns
+     if (.not.OCC%active) return
+     YAMBO_ALLOC(OCC%N_ref,(Ns))
+     YAMBO_ALLOC(OCC%dN,(Ns))
+     OCC%D        =Ns
+     OCC%N_ref    =rZERO
+     OCC%dN       =rZERO
+     OCC%KIND     =kind
+     OCC%active   =.TRUE.
+   end subroutine
+   !
+   subroutine RT_obj_occupation_free(OCC)
+     type(RT_obj_occupation) :: OCC
+     if (.not.OCC%active) return
+     OCC%KIND="none"
+     OCC%active=.FALSE.
+     OCC%D=0
+     YAMBO_FREE(OCC%N_ref)
+     YAMBO_FREE(OCC%dN)
    end subroutine
    !
 end module

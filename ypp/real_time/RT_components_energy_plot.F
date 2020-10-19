@@ -37,7 +37,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  use functions,      ONLY:Fermi_fnc
  use com,            ONLY:msg,of_open_close
  use stderr,         ONLY:intc,real2ch
- use real_time,      ONLY:RT_carriers,l_RT_CCA_Kernel,RT_bands
+ use real_time,      ONLY:RT_carriers,RT_bands
  use QP_m,           ONLY:QP_table,QP_n_states
  use interfaces,     ONLY:DESC_write
  !
@@ -52,7 +52,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  integer, parameter    :: fit_dim=1000,N_max_files=8
  integer               :: n_groups,i_g,i_g_ep,i_g_ee,i_T,i_RT,ib,ik,ik_ibz,i_f,i_fit,i_qp,i_spin,i_RT_s
  integer               :: E_sort_index(RT_carriers%nstates)
- logical               :: l_ep_lifetimes,l_sum_equilibrium,l_skip_fit,&
+ logical               :: l_sum_equilibrium,l_skip_fit,&
 &                         do_state(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol)
  real(SP)              :: RT_E_sorted(RT_carriers%nstates)
  real(SP),allocatable  :: spin_factors(:,:,:)
@@ -133,16 +133,15 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    call Load_and_Fit_alloc(DATA_grp(n_groups),2,"e-photon")
  endif
  !
- l_ep_lifetimes = l_elph_scatt.and.l_RT_CCA_Kernel
  i_g_ep=0
- if (l_ep_lifetimes) then
+ if (l_elph_scatt) then
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),4,"e-p")
    i_g_ep=n_groups
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),1,"e-p-ratio")
  endif
- if (l_elel_scatt.or.l_ep_lifetimes) then
+ if (l_elel_scatt.or.l_elph_scatt) then
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),1,"neq")
  endif
@@ -163,9 +162,9 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      !
      ! Occupations
      !============
-     DATA_grp(1)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)
+     DATA_grp(1)%data(i_RT,1,i_T)=RT_carriers%OCC_el%dN(i_RT)
      !
-     if (l_sum_equilibrium) DATA_grp(1)%data(i_RT,1,i_T)=DATA_grp(1)%data(i_RT,1,i_T)+RT_carriers%f_bare(i_RT)
+     if (l_sum_equilibrium) DATA_grp(1)%data(i_RT,1,i_T)=DATA_grp(1)%data(i_RT,1,i_T)+RT_carriers%OCC_el%N_ref(i_RT)
      !
      ! Spin occupations
      !==================

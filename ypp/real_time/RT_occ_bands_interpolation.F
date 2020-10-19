@@ -160,10 +160,10 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    do i_RT=1,RT_carriers%nstates
      ib      =RT_carriers%table(i_RT,1)
      ik      =RT_carriers%table(i_RT,3)
-     if (ib<=RT_E%nbf) integrated_Nhole(i_T,1)=integrated_Nhole(i_T,1)-RT_carriers%delta_f(i_RT)*RT_k%weights(ik)
-     if (ib> RT_E%nbf) integrated_Nel(i_T,1)  =integrated_Nel(i_T,1)+RT_carriers%delta_f(i_RT)*RT_k%weights(ik)
+     if (ib<=RT_E%nbf) integrated_Nhole(i_T,1)=integrated_Nhole(i_T,1)-RT_carriers%OCC_el%dN(i_RT)*RT_k%weights(ik)
+     if (ib> RT_E%nbf) integrated_Nel(i_T,1)  =integrated_Nel(i_T,1)+RT_carriers%OCC_el%dN(i_RT)*RT_k%weights(ik)
    enddo
-   Max_occ=maxval(abs(RT_carriers%delta_f))
+   Max_occ=maxval(abs(RT_carriers%OCC_el%dN))
    !
    if (l_RT_occupations) operation="df_on_circuit"
    if (l_RT_lifetimes)   operation="W_on_circuit"

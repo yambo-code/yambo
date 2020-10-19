@@ -38,7 +38,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use com,            ONLY:msg,of_open_close
  use vec_operate,    ONLY:c2a,v_norm
  use RT_control,     ONLY:RT_apply
- use real_time,      ONLY:l_RT_CCA_Kernel,RT_carriers,RT_bands
+ use real_time,      ONLY:RT_carriers,RT_bands
  !
 #include<memory.h>
  !
@@ -54,7 +54,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  character(schlen)     :: titles(9),specs(9,2),dumb_ch(2)
  character(lchlen)     :: output_fname_short(2),output_fname(2,RT_carriers%nstates)
  character(3)          :: ch3_dummy
- logical               :: l_elph_lifetimes,do_state(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol),&
+ logical               :: do_state(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol),&
 &                         l_OCCgroup_k_and_b,l_OCCgroup_path,l_OCCgroup,l_E_select
  !
  real(SP),allocatable  :: spin_factors(:,:,:),magn_factors(:,:,:)
@@ -76,8 +76,6 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    YAMBO_ALLOC(magn_factors,(bands_range(1):bands_range(2),k_range(1):k_range(2),3))
    call electrons_magn_factors(k_range,bands_range,magn_factors)
  endif
- !
- l_elph_lifetimes=l_elph_scatt.and.l_RT_CCA_Kernel
  !
  ! Select the states by using a circuit
  !======================================
@@ -103,7 +101,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  titles(1)='T[fs]'
  titles(2)='Delta Occ.'
  !
- if (l_elel_scatt.and.l_ELPH_lifetimes) then
+ if (l_elel_scatt.and.l_elph_scatt) then
    n_output=9
    titles(3:6) =(/'Hole[meV]','El. [meV]','Hole[meV]','El. [meV]'/)
    titles(7:9) =(/'Hole[meV]','El. [meV]','  [meV]  '/)
@@ -113,14 +111,14 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    specs(1:2,2)=(/'         ','         '/)
    specs(3:6,2)=(/'   (emis ','sion)    ','   (absor','ption)   '/)
    specs(7:9,2)=(/'         ','         ','         '/)
- else if (l_elel_scatt.and..not.l_ELPH_lifetimes) then
+ else if (l_elel_scatt.and..not.l_elph_scatt) then
    n_output=5
    titles(3:5) =(/'Hole[meV]','El. [meV]','  [meV]  '/)
    specs(1:2,1)=(/'         ','         '/)
    specs(3:5,1)=(/'|-----El-','El------|','|--NEQ--|'/)
    specs(1:2,2)=(/'         ','         '/)
    specs(3:5,2)=(/'         ','         ','         '/)
- else if (.not.l_elel_scatt.and.l_ELPH_lifetimes) then
+ else if (.not.l_elel_scatt.and.l_elph_scatt) then
    n_output=7
    titles(3:7) =(/'Hole[meV]','El. [meV]','Hole[meV]','El. [meV]','  [meV]  '/)
    specs(1:2,1)=(/'         ','         '/)
@@ -163,9 +161,9 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    !
    l_OCCgroup_k_and_b=l_OCCgroup.and.RT_carriers%nk>kpt%nibz.and.CIRCUIT_k%nbz==0
    !
-   if (l_elel_scatt    .and.i_T==1) n_gamma=n_gamma+2
+   if (l_elel_scatt.and.i_T==1) n_gamma=n_gamma+2
    !
-   if (l_elph_lifetimes.and.i_T==1) n_gamma=n_gamma+4
+   if (l_elph_scatt.and.i_T==1) n_gamma=n_gamma+4
    !
    data_to_plot(1)               =io_TIME/FS2AUT
    data_to_plot_cumulative(:,:,1)=io_TIME/FS2AUT
@@ -208,7 +206,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      !
      if (n_gamma>0) then
        tmp_lifetimes=0._SP
-       if (l_elph_lifetimes) then
+       if (l_elph_scatt) then
          tmp_lifetimes(1)=RT_carriers%GAMMA_EP_emit%abs(i_RT)+RT_carriers%GAMMA_EP_emit%abs_bare(i_RT)
          tmp_lifetimes(2)=RT_carriers%GAMMA_EP_emit%emit(i_RT)+RT_carriers%GAMMA_EP_emit%emit_bare(i_RT)
          if (RT_carriers%GAMMA_EP_abs%active ) then
@@ -236,12 +234,12 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
          Nk_path=Nk_path+1
        endif
        if (RT_carriers%E_bare(i_RT)+RT_carriers%delta_E(i_RT)<=0.) then
-         data_to_plot(2)=data_to_plot(2)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
+         data_to_plot(2)=data_to_plot(2)+RT_carriers%OCC_el%dN(i_RT)*RT_carriers%k_weight(ik_RT)
        else
-         data_to_plot(3)=data_to_plot(3)+RT_carriers%delta_f(i_RT)*RT_carriers%k_weight(ik_RT)
+         data_to_plot(3)=data_to_plot(3)+RT_carriers%OCC_el%dN(i_RT)*RT_carriers%k_weight(ik_RT)
        endif
      else
-       data_to_plot(2)=RT_carriers%delta_f(i_RT)
+       data_to_plot(2)=RT_carriers%OCC_el%dN(i_RT)
        call msg('o '//trim(output_fname_short(1)),'',data_to_plot(:n_gamma+3),INDENT=-2,USE_TABS=.true.)
        call of_open_close(output_fname(1,i_RT))
      endif
@@ -362,7 +360,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        call msg('o '//trim(fname_short),"#")
      endif
      !
-     if ((l_elel_scatt.or.l_elph_lifetimes).and..not.l_OCCgroup_path) then
+     if ((l_elel_scatt.or.l_elph_scatt).and..not.l_OCCgroup_path) then
        call msg('o '//trim(fname_short),'#',specs(:n_output,1),INDENT=0,USE_TABS=.TRUE.)
        call msg('o '//trim(fname_short),'#',specs(:n_output,2),INDENT=0,USE_TABS=.TRUE.)
      endif

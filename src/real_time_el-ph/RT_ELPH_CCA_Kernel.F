@@ -21,25 +21,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS)
+subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,E,ph_freq,Gkkp_sq)
  !  
- use pars,           ONLY:SP,zero_dfl,rZero
+ use pars,           ONLY:SP,rZero
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ
  use hamiltonian,    ONLY:B_mat_index
  use RT_occupations, ONLY:RT_el_occ,RT_life_occ,RT_ho_occ
- use RT_lifetimes,   ONLY:RT_EP_emit_life,l_initial_equilibrium,RT_EP_abs_life
- use real_time,      ONLY:l_RT_uses_E_FineGd,RT_levels,q_weight_RT,&
-&                         RT_eh_en,RTibz,RT_bands
+ use RT_lifetimes,   ONLY:RT_EP_emit_life,l_initial_equilibrium,RT_EP_abs_life,&
+&                         l_RT_skip_ph_abs_lifetimes,q_weight_RT
+ use real_time,      ONLY:l_RT_uses_E_FineGd,RT_levels,RT_eh_en,RTibz,RT_bands
  use parallel_m,     ONLY:PAR_IND_B_mat
  !
  implicit none
  !
  type(levels),  intent(in) :: E
  integer,       intent(in) :: ik,ik_m_q,i_q,i_l
- real(SP),      intent(in) :: ph_freq,N_q
+ real(SP),      intent(in) :: ph_freq
  real(SP),      intent(in) :: Gkkp_sq(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- logical,       intent(in) :: l_skip_ABS
  !
  ! Work Space ...
  !
@@ -113,28 +112,27 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
          f_times_abs=f_times_abs+f_kmq*P_ph_abs
          one_m_f_times_emit=one_m_f_times_emit+Hole_f_kmq*P_ph_emit
          !
-         if( abs(N_q)>zero_dfl .and. .not.l_skip_ABS) then
+         if( .not.l_RT_skip_ph_abs_lifetimes) then
            f_times_emit=f_times_emit+f_kmq*P_ph_emit
            one_m_f_times_abs=one_m_f_times_abs+Hole_f_kmq*P_ph_abs
          endif
          !
        enddo
        !
-       ! PH Emission/Ho absorption
+       ! PH Emission by El/Ho jumps down/up
        RT_EP_emit_life%abs(i_n,ik_rim)=RT_EP_emit_life%abs(i_n,ik_rim)+&
 &                                      f_times_abs*pre_factor*q_weight_RT(i_q,i_l,1)
        RT_EP_emit_life%emit(i_n,ik_rim)=RT_EP_emit_life%emit(i_n,ik_rim)+&
 &                                       one_m_f_times_emit*pre_factor*q_weight_RT(i_q,i_l,1)
        !
-       if(.not.abs(N_q)>zero_dfl) cycle
+       ! T>0 or PH dyn
        !
-       ! PH Emission/Ho absorption (T>0 temp)
+       if (l_RT_skip_ph_abs_lifetimes) cycle
+       !
        RT_EP_emit_life%abs(i_n,ik_rim)=RT_EP_emit_life%abs(i_n,ik_rim)+&
 &                                      f_times_abs*pre_factor*q_weight_RT(i_q,i_l,2)
        RT_EP_emit_life%emit(i_n,ik_rim)=RT_EP_emit_life%emit(i_n,ik_rim)+&
 &                                       one_m_f_times_emit*pre_factor*q_weight_RT(i_q,i_l,2)
-       !
-       ! PH absorption/Ho emission (T>0 temp)
        RT_EP_abs_life%emit(i_n,ik_rim)=RT_EP_abs_life%emit(i_n,ik_rim)+&
 &                                      f_times_emit*pre_factor*q_weight_RT(i_q,i_l,2)
        RT_EP_abs_life%abs(i_n,ik_rim)=RT_EP_abs_life%abs(i_n,ik_rim)+&

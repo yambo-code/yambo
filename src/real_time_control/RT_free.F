@@ -31,10 +31,10 @@ subroutine RT_free( )
 &                         Ho_plus_Sigma,H_pseudo_eq,RT_Vnl_xc,HARTREE0,XC0,G_lesser_reference,&
 &                         dG_lesser,G_lesser,MEM_pointer,REF_V_xc_sc,REF_V_hartree_sc,rho_reference,&
 &                         magn_reference,DbGd_EE_scatt_table,RT_TIME_status,REF_V_xc_sc,&
-&                         RT_levels,q_weight_RT,THETA_matrix,THETA_matrix_index,&
-&                         elph_gkkp_expanded_sq,I1_matrix,RT_Deph_Matrix,Q_io_map,K_io_map,RTibz
+&                         RT_levels,I1_matrix,RT_Deph_Matrix,RTibz
  use RT_occupations, ONLY:RT_ALL_occupations_free
- use RT_lifetimes,   ONLY:RT_ALL_lifetimes_free
+ use RT_lifetimes,   ONLY:RT_ALL_lifetimes_free,q_weight_RT,THETA_matrix,THETA_matrix_index,&
+&                         Q_io_map,K_io_map,elph_gkkp_expanded_sq
  !
 #include<memory.h>
  !

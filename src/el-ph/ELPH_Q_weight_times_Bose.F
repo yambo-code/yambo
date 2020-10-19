@@ -30,7 +30,7 @@ subroutine ELPH_Q_weight_times_Bose(q)
  use R_lattice,      ONLY:RL_vol,bz_samp
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
- use real_time,      ONLY:q_weight_RT
+ use RT_lifetimes,   ONLY:q_weight_RT
  use R_lattice,      ONLY:RIM_n_rand_pts
  !
 #include<memory.h>

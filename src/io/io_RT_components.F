@@ -77,7 +77,7 @@ integer function io_RT_components(what,ID)
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
 #endif
 #if defined _ELPH
- use real_time,      ONLY:THETA_matrix
+ use RT_lifetimes,   ONLY:THETA_matrix
  use ELPH,           ONLY:ph_modes
 #endif
  !

@@ -25,7 +25,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  ! 
  use pars,           ONLY:SP
  use units,          ONLY:HA2EV
- use real_time,      ONLY:elph_gkkp_expanded_sq,Q_io_map,K_io_map
+ use RT_lifetimes,   ONLY:elph_gkkp_expanded_sq,Q_io_map,K_io_map
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,qindx_S,nqbz,nqibz
  use IO_m,           ONLY:io_control,OP_RD_CL

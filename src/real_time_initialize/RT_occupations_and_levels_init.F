@@ -121,8 +121,8 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
      do iq=1,RT_ph_occ%D2
        iqbz = q%k_table(iq,1)
        ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
-       RT_ph_occ%N(il,iq)     = bose_f(ph_freq)
-       RT_ph_occ%N_ref(il,iq) = RT_ph_occ%N(il,iq)+RT_ph_occ%dN(il,iq)
+       RT_ph_occ%N_ref(il,iq) = bose_f(ph_freq)
+       RT_ph_occ%N(il,iq)     = RT_ph_occ%N_ref(il,iq)
      enddo
    enddo
  endif

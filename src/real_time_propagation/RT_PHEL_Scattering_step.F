@@ -41,10 +41,6 @@ subroutine RT_PHEL_Scattering_step(iq,deltaT)
  !
  use pars,           ONLY:SP
  use ELPH,           ONLY:elph_branches
- use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_occupations_reference,RT_PH_delta_occupations,&
- &                        P_E_sp_res_lifetime,P_E_sp_ares_lifetime,P_E_eh_lifetime,PHEL_Deph_Matrix,&
- &                        EQ_P_E_sp_res_lifetime,EQ_P_E_sp_ares_lifetime,EQ_P_E_eh_lifetime,&
- &                        RT_PHEL_is_statically_dephased,RT_PHEL_is_dynamically_dephased
  !
  implicit none
  !
@@ -52,37 +48,37 @@ subroutine RT_PHEL_Scattering_step(iq,deltaT)
  real(SP),    intent(in)    :: deltaT
  !
  integer     :: il
- real(SP)    :: N_lq,dN_lq_out,GAMMA_(2),dGAMMA(2),GAMMA0(2)!,N0_lq,dN_lq
  !
- if( .not. RT_PHEL_is_dynamically_dephased) return
+ !if( .not. RT_PHEL_is_dynamically_dephased) return
  !
  do il=elph_branches(1),elph_branches(2)
    !
-   N_lq  = RT_PH_occupations(il,iq)
+   !N_lq  = RT_PH_occupations(il,iq)
    !
    !N0_lq = RT_PH_occupations_reference(il,iq)
    !dN_lq = RT_PH_delta_occupations(il,iq)
    !
    ![NOTE] Is this right??
-   GAMMA0(1)=EQ_P_E_eh_lifetime(il,iq)
-   GAMMA0(2)=EQ_P_E_sp_res_lifetime(il,iq)+EQ_P_E_sp_ares_lifetime(il,iq)
    !
-   dGAMMA(1)=0._SP
-   dGAMMA(2)=0._SP
-   dGAMMA(1)=dGAMMA(1)+ P_E_eh_lifetime(il,iq)
-   dGAMMA(2)=dGAMMA(2)+ P_E_sp_res_lifetime(il,iq)+ P_E_sp_ares_lifetime(il,iq)
+   !GAMMA0(1)=EQ_P_E_eh_lifetime(il,iq)
+   !GAMMA0(2)=EQ_P_E_sp_res_lifetime(il,iq)+EQ_P_E_sp_ares_lifetime(il,iq)
    !
-   if (RT_PHEL_is_statically_dephased) GAMMA0(1)=GAMMA0(1)+PHEL_Deph_Matrix(il,iq)
+   !dGAMMA(1)=0._SP
+   !dGAMMA(2)=0._SP
+   !dGAMMA(1)=dGAMMA(1)+ P_E_eh_lifetime(il,iq)
+   !dGAMMA(2)=dGAMMA(2)+ P_E_sp_res_lifetime(il,iq)+ P_E_sp_ares_lifetime(il,iq)
    !
-   GAMMA_(1)=GAMMA0(1)+dGAMMA(1)
-   GAMMA_(2)=GAMMA0(2)+dGAMMA(2)
+   !if (RT_PHEL_is_statically_dephased) GAMMA0(1)=GAMMA0(1)+PHEL_Deph_Matrix(il,iq)
    !
-   dN_lq_out = -deltaT*(GAMMA_(1)*N_lq+GAMMA_(2))
+   !GAMMA_(1)=GAMMA0(1)+dGAMMA(1)
+   !GAMMA_(2)=GAMMA0(2)+dGAMMA(2)
+   !
+   !dN_lq_out = -deltaT*(GAMMA_(1)*N_lq+GAMMA_(2))
    !
    ! UPDATE OCCUPATIONS HERE
    !---------------------------------------------
-   RT_PH_occupations(il,iq)      = dN_lq_out + RT_PH_occupations_reference(il,iq)
-   RT_PH_delta_occupations(il,iq)= dN_lq_out
+   !RT_PH_occupations(il,iq)      = dN_lq_out + RT_PH_occupations_reference(il,iq)
+   !RT_PH_delta_occupations(il,iq)= dN_lq_out
    !
  enddo
  !

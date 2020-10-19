@@ -340,9 +340,9 @@ module RT_control
        i_sp_pol=RT_carriers%table(i_RT,4)
        if (what=="Eo") E%E(ib,ik_RT,i_sp_pol)=RT_carriers%E_bare(i_RT)
        if (what=="E" ) E%E(ib,ik_RT,i_sp_pol)=RT_carriers%E_bare(i_RT)+RT_carriers%delta_E(i_RT)
-       if (what=="fo") E%f(ib,ik_RT,i_sp_pol)=RT_carriers%f_bare(i_RT)
-       if (what=="f" ) E%f(ib,ik_RT,i_sp_pol)=RT_carriers%f_bare(i_RT)+RT_carriers%delta_f(i_RT)
-       if (what=="df") E%f(ib,ik_RT,i_sp_pol)=RT_carriers%delta_f(i_RT)
+       if (what=="fo") E%f(ib,ik_RT,i_sp_pol)=RT_carriers%OCC_el%N_ref(i_RT)
+       if (what=="f" ) E%f(ib,ik_RT,i_sp_pol)=RT_carriers%OCC_el%N_ref(i_RT)+RT_carriers%OCC_el%dN(i_RT)
+       if (what=="df") E%f(ib,ik_RT,i_sp_pol)=RT_carriers%OCC_el%dN(i_RT)
      enddo
    end subroutine
    !

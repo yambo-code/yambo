@@ -475,6 +475,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'RTEqScatt',     '[RT] Include Gamma0f0 term in scattering',Verb_level=V_real_time)
  call it('f',defs,'RTImpForMet',   '[RT] Impose structure optimized for metals',Verb_level=V_real_time)
  call it('f',defs,'RTzeroTempRef', '[RT] Use zero temperature Fermi districution as reference',Verb_level=V_real_time)
+ call it('f',defs,'RTskipPHabs',   '[RT] Skip e-p Lifetimes due to phonon absorption',Verb_level=V_real_time)
  !
  ! Scattering
  !

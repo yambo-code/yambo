@@ -32,7 +32,7 @@ subroutine RT_ELPH_zeroing()
  use drivers,        ONLY:l_elph_scatt
  use pars,           ONLY:cZERO
  use R_lattice,      ONLY:nqbz
- use real_time,      ONLY:THETA_matrix,THETA_matrix_index,l_RT_CCA_Kernel
+ use RT_lifetimes,   ONLY:THETA_matrix,THETA_matrix_index
  use ELPH,           ONLY:ph_modes
  use parallel_m,     ONLY:ncpu
  implicit none
@@ -41,7 +41,6 @@ subroutine RT_ELPH_zeroing()
  !
  integer :: iq,il,i_s
  !
- if (l_RT_CCA_Kernel) return
  if (.not.l_elph_scatt.or.ncpu==1) return
  !
  do iq=1,nqbz

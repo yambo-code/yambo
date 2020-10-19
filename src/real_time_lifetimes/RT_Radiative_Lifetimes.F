@@ -30,9 +30,9 @@ subroutine RT_Radiative_Lifetimes(i_k,E,k,q)
  use R_lattice,           ONLY:bz_samp
  use parallel_m,          ONLY:PAR_DIPk_ibz_index,PAR_IND_B_mat
  use DIPOLES,             ONLY:DIP_P
+ use RT_occupations,      ONLY:RT_life_occ,RT_ho_occ,RT_el_occ
  use RT_lifetimes,        ONLY:RT_EH_life,l_initial_equilibrium
- use real_time,           ONLY:RT_bands,RT_life_delta_occupations,RTibz,RT_H_occupations_reference,&
-&                              RT_E_occupations_reference,RAD_magnification
+ use real_time,           ONLY:RT_bands,RTibz,RAD_magnification
  use hamiltonian,         ONLY:B_mat_index
  !
  implicit none
@@ -59,11 +59,11 @@ subroutine RT_Radiative_Lifetimes(i_k,E,k,q)
      E_diff =E%E(i_n,i_k,i_spin)-E%E(i_m,i_k,i_spin)
      !
      if(l_initial_equilibrium) then
-       f_m      = RT_E_occupations_reference(i_m,i_k_rim)/spin_occ
-       Hole_f_m = RT_H_occupations_reference(i_m,i_k_rim)/spin_occ
+       f_m      = RT_el_occ%N_ref(i_m,i_k_rim)/spin_occ
+       Hole_f_m = RT_ho_occ%N_ref(i_m,i_k_rim)/spin_occ
      else
-       f_m      =  RT_life_delta_occupations(i_m,i_k_rim)/spin_occ
-       Hole_f_m = -RT_life_delta_occupations(i_m,i_k_rim)/spin_occ
+       f_m      =  RT_life_occ%dN(i_m,i_k_rim)/spin_occ
+       Hole_f_m = -RT_life_occ%dN(i_m,i_k_rim)/spin_occ
      endif
      !
      P_square=2.*(abs(DIP_P(1,i_m,i_n,i_k_mem,i_spin))**2.+&

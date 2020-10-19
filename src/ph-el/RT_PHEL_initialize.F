@@ -27,7 +27,7 @@ subroutine RT_PHEL_initialize(k,q)
  !
  use pars,           ONLY:SP
  use real_time,      ONLY:Q_io_map,K_io_map,RT_bands
- use PH_real_time,   ONLY:phel_gkkp_expanded_sq
+ use PHEL,           ONLY:phel_gkkp_expanded_sq
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_phel_scatt
  use R_lattice,      ONLY:bz_samp

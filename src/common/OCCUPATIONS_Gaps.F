@@ -23,7 +23,6 @@
 !
 subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir,E_k_dir,E_k_ind)
  !
- use units
  use pars,          ONLY:SP
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
  !

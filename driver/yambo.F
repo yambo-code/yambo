@@ -222,7 +222,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (driver_now.and..not.l_phel_corr) call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
 #if defined _PHEL
- !if (driver_now.and.     l_phel_corr) call PHEL_driver(en,k,q)
+ if (driver_now.and.     l_phel_corr) call PHEL_driver(en,k,q)
 #endif
  if (driver_now) call mem_manager_report
  !

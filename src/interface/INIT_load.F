@@ -79,6 +79,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,     &
 &                        CACHE_OBS_INTERVAL_time_INPUT
  use stderr,        ONLY:intc
+ use RT_occupations,ONLY:RT_RTA_temp,RT_RTA_chem
  use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
 &                        NE_tot_time,RT_bands,         &
@@ -86,8 +87,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        NE_MEM_treshold,NE_time_step_update_jump_INPUT,          &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
-&                        RT_MAX_step,RT_RTA_temp,RT_RTA_chem,RAD_magnification,  &
-&                        RT_deph_deg_thresh
+&                        RT_MAX_step,RAD_magnification,RT_deph_deg_thresh
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif

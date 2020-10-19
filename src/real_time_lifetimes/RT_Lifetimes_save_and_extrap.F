@@ -26,8 +26,8 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,LIFE)
  use pars,           ONLY:SP
  use RT_lifetimes,   ONLY:SAVED_times,Life_MEM_steps,l_RT_extrapolate_lifetimes,l_RT_constant_lifetimes,RT_lifetime
  use RT_operations,  ONLY:ADD_to_saved_values
- use real_time,      ONLY:RT_nk,RT_E_occupations,RT_E_occupations_reference,&
-&                         RT_H_occupations,RT_H_occupations_reference,RT_bands,RTibz
+ use RT_occupations, ONLY:RT_el_occ,RT_ho_occ
+ use real_time,      ONLY:RT_nk,RT_bands,RTibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  !
  implicit none
@@ -65,8 +65,8 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,LIFE)
    ! Store the occupations related to the last saved lifetimes
    !-----------------------------------------------------------
    if (.not.trim(LIFE%kind)=="el-ph_abs") then
-     RT_E_occupations_reference=RT_E_occupations
-     RT_H_occupations_reference=RT_H_occupations
+     RT_el_occ%N_ref=RT_el_occ%N
+     RT_ho_occ%N_ref=RT_ho_occ%N
    endif
    !
  else if (l_RT_extrapolate_lifetimes.or.l_RT_constant_lifetimes) then 

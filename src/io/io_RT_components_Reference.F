@@ -29,7 +29,6 @@ subroutine io_RT_components_Reference(ID)
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,read_is_on
  use RT_lifetimes,   ONLY:RT_lifetime,RT_EE_REF_life,RT_EP_emit_REF_life,RT_EP_abs_REF_life,&
 &                         RT_PE_REF_life,RT_EH_REF_life
- use RT_operations,  ONLY:RT_init_occupation_reference
  use real_time,      ONLY:q_weight_RT,G_lesser_reference,RT_nk,RT_nbands,RT_is_dynamically_dephased
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
@@ -78,10 +77,6 @@ subroutine io_RT_components_Reference(ID)
    !
    call def_variable_bulk(ID,"G_lesser_reference",4,(/2,RT_nbands,RT_nbands,RT_nk/),SP)
    call  io_variable_bulk(ID,4,C3=G_lesser_reference)
-   !
-#if !defined _YPP_RT
-   if (read_is_on(ID)) call RT_init_occupation_reference( )
-#endif
    !
  endif
  !

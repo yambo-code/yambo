@@ -32,13 +32,14 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  use electrons,      ONLY:n_sp_pol,spin_occ,levels
  use R_lattice,      ONLY:bz_samp
  use RT_control,     ONLY:CARR_RT_IO_t
+ use RT_occupations, ONLY:RT_el_occ
  use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_abs_life,&
 &                         RT_EP_emit_ref_life,RT_EE_ref_life,RT_EH_ref_life,RT_EP_abs_ref_life,&
 &                         RT_obj_lifetime
  use RT_operations,  ONLY:EMIT_RT_life_REF,ABS_RT_life_REF,ABS_RT_life_dGAMMA,&
 &                         EMIT_RT_life_dGAMMA,RT_lifetime_to_RT_obj
- use real_time,      ONLY:RT_t,RTibz,RT_nk,RT_delta_occupations,RT_bands,&
-&                         RT_obj_alloc,RT_obj_free,RT_levels,RT_is_dynamically_dephased
+ use real_time,      ONLY:RT_t,RTibz,RT_nk,RT_bands,RT_obj_alloc,RT_obj_free,&
+&                         RT_levels,RT_is_dynamically_dephased
  use hamiltonian,    ONLY:E_reference
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,NF90_unlimited
  !
@@ -130,9 +131,9 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        ! Occupations
        !
        if (WHAT=="fill") then
-         RT%delta_f(i_RT)=RT_delta_occupations(i_b,i_k_RT)
-       else if (WHAT=="dump".and.allocated(RT_delta_occupations)) then
-         RT_delta_occupations(i_b,i_k_RT)=RT%delta_f(i_RT)
+         RT%delta_f(i_RT)=RT_el_occ%dN(i_b,i_k_RT)
+       else if (WHAT=="dump".and.allocated(RT_el_occ%dN)) then
+         RT_el_occ%dN(i_b,i_k_RT)=RT%delta_f(i_RT)
        endif
        !
        ! Energies

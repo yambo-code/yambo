@@ -29,6 +29,7 @@ module real_time
  use global_XC,      ONLY:QP_SE_NONE
  use R_lattice,      ONLY:bz_fine_grid
  use RT_lifetimes,   ONLY:RT_obj_lifetime,RT_obj_lifetime_alloc,RT_obj_lifetime_free
+ use electrons,      ONLY:E_fine_grid
  !
 #include<memory.h>
  !
@@ -87,12 +88,6 @@ module real_time
  !
  integer  :: NE_i_time=1 ! = NE_time/RT_step+1
  integer  :: NE_steps    ! Still relative to RT_step
- !
- logical  :: l_RT_relax_time_approx = .FALSE.
- real(SP) :: RT_RTA_temp(2)
- real(SP) :: RT_RTA_chem(2)
- real(SP), allocatable :: RT_RTA_E_occ_infty(:,:)
- real(SP), allocatable :: RT_RTA_H_occ_infty(:,:)
  !
  ! Lifetimes Extrapolation Time status
  !
@@ -200,21 +195,7 @@ module real_time
  !
  ! Energies
  !---------------------
- type RT_levels_kind
-   real(SP), allocatable :: E(:,:,:)
-   real(SP), allocatable :: W(:,:,:)
- end type
- !
- type(RT_levels_kind),save  :: RT_levels
- !
- ! Occupations
- !-------------
- real(SP),    allocatable :: RT_E_occupations(:,:)
- real(SP),    allocatable :: RT_H_occupations(:,:)
- real(SP),    allocatable :: RT_delta_occupations(:,:)       ! Running values. Updated at each time step.
- real(SP),    allocatable :: RT_life_delta_occupations(:,:)  ! Used in the Lifetimes definition. Defined in the Lifetimes procedure only.
- real(SP),    allocatable :: RT_E_occupations_reference(:,:)
- real(SP),    allocatable :: RT_H_occupations_reference(:,:)
+ type(E_fine_grid)       :: RT_levels
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------

@@ -68,20 +68,17 @@ subroutine RT_relaxation(E,k,q,Time)
 #if defined _PHEL
  use drivers,        ONLY:l_phel_scatt
  use R_lattice,      ONLY:nqibz
- !DEBUG>
- use units,        ONLY:HA2EV
- use PH_real_time, ONLY:EQ_P_E_sp_res_lifetime,EQ_P_E_sp_ares_lifetime,EQ_P_E_eh_lifetime
- !DEBUG<
 #endif
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
+ use RT_occupations, ONLY:l_RT_relax_time_approx 
  use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,l_RT_eval_lifetimes,& 
 &                         RT_EP_emit_REF_life,RT_EE_REF_life,RT_EH_REF_life,&
 &                         Life_MEM_steps,l_initial_equilibrium,RT_EP_abs_REF_life,&
 &                         SAVED_times,RT_EP_abs_life
- use RT_operations,  ONLY:ADD_to_saved_values,FIRST_step
+ use RT_operations,  ONLY:ADD_to_saved_values
  use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
 &                         l_RT_CCA_Kernel,RT_is_statically_dephased,&
-&                         RT_nk,RT_is_dynamically_dephased,l_RT_relax_time_approx
+&                         RT_nk,RT_is_dynamically_dephased
  use timing_m,       ONLY:timing
  !
  implicit none
@@ -159,16 +156,6 @@ subroutine RT_relaxation(E,k,q,Time)
      call RT_PHEL_lifetimes(iq,E,k,q)
      !
    enddo
-   !
-   !DEBUG>
-   if (l_initial_equilibrium) then
-     open(unit=out_file,file='test_lifetimes.dat',action="write",status="replace")
-     do iq=1,nqibz
-       write (out_file,*) HA2EV*EQ_P_E_sp_res_lifetime(6,iq),HA2EV*EQ_P_E_sp_ares_lifetime(6,iq),HA2EV*EQ_P_E_eh_lifetime(6,iq)
-     enddo
-     close(out_file)
-   endif   
-   !DEBUG<
    !
    call timing('RT relaxation (p-e)',OPR='stop')
    !

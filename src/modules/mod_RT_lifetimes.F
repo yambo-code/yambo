@@ -91,34 +91,35 @@ module RT_lifetimes
  !
  contains
    !
-   subroutine RT_ALL_lifetimes_alloc(NB,NK)
-     !
+   subroutine RT_EL_lifetimes_alloc(D1,D2)
      use D_lattice, ONLY:Bose_Temp
-     !
-     integer :: NB(2),NK
-     !
+     integer :: D1(2),D2
      if (l_elph_scatt) then
-       call RT_lifetime_alloc("el-ph_emit",RT_EP_emit_life,NB,NK)
-       call RT_lifetime_alloc("el-ph_emit-REF",RT_EP_emit_REF_life,NB,NK)
+       call RT_lifetime_alloc("el-ph_emit",RT_EP_emit_life,D1,D2)
+       call RT_lifetime_alloc("el-ph_emit-REF",RT_EP_emit_REF_life,D1,D2)
        if (Bose_Temp>0._SP.or.l_phel_scatt) then
-         call RT_lifetime_alloc("el-ph_abs",RT_EP_abs_life,NB,NK)
-         call RT_lifetime_alloc("el-ph_abs-REF",RT_EP_abs_REF_life,NB,NK)
+         call RT_lifetime_alloc("el-ph_abs",RT_EP_abs_life,D1,D2)
+         call RT_lifetime_alloc("el-ph_abs-REF",RT_EP_abs_REF_life,D1,D2)
        endif
      endif
-     if (l_phel_scatt) then
-       call RT_lifetime_alloc("ph-el",RT_PE_life,NB,NK)
-       call RT_lifetime_alloc("ph-el-REF",RT_PE_REF_life,NB,NK)
-     endif
      if (l_elel_scatt) then
-       call RT_lifetime_alloc("el-el",RT_EE_life,NB,NK)
-       call RT_lifetime_alloc("el-el-REF",RT_EE_REF_life,NB,NK)
+       call RT_lifetime_alloc("el-el",RT_EE_life,D1,D2)
+       call RT_lifetime_alloc("el-el-REF",RT_EE_REF_life,D1,D2)
      endif
      if (l_elphoton_scatt) then
-       call RT_lifetime_alloc("el-photon",RT_EH_life,NB,NK)
-       call RT_lifetime_alloc("el-photon-REF",RT_EH_REF_life,NB,NK)
+       call RT_lifetime_alloc("el-photon",RT_EH_life,D1,D2)
+       call RT_lifetime_alloc("el-photon-REF",RT_EH_REF_life,D1,D2)
      endif
      YAMBO_ALLOC(SAVED_times,(Life_MEM_steps))
      SAVED_times=rZERO
+   end subroutine
+   !
+   subroutine RT_PH_lifetimes_alloc(D1,D2)
+     integer :: D1(2),D2
+     if (l_phel_scatt) then
+       call RT_lifetime_alloc("ph-el",RT_PE_life,D1,D2)
+       call RT_lifetime_alloc("ph-el-REF",RT_PE_REF_life,D1,D2)
+     endif
    end subroutine
    !
    subroutine RT_ALL_lifetimes_free( )

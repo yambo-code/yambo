@@ -63,7 +63,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                          PAR_COM_Xk_ibz_INDEX
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  use units,           ONLY:FS2AUT
- use RT_lifetimes,    ONLY:RT_ALL_lifetimes_alloc,RT_ALL_lifetimes_free,l_initial_equilibrium
+ use RT_lifetimes,    ONLY:l_initial_equilibrium
  !
 #include<memory.h>
  !
@@ -191,7 +191,6 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  ! Core allocations
  !
  call RT_alloc(E,"all")
- call RT_ALL_lifetimes_alloc(RT_bands,RT_nk)
  call RT_control_alloc("all")
 #if defined _PHEL
  if (l_phel_scatt) call RT_PHEL_alloc("phonons")
@@ -379,7 +378,6 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
 #if defined _PHEL
      if (l_phel_scatt) call RT_PHEL_free("all")
 #endif
-     call RT_ALL_lifetimes_free()
      call WF_free(WF)
      !
      ! GPL_EXCLUDE_START

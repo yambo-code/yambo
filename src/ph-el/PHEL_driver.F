@@ -23,12 +23,16 @@
 !
 subroutine PHEL_driver(E,k,q)
  !
- use electrons,           ONLY:levels
- use R_lattice,           ONLY:bz_samp,nqibz
- use ELPH,                ONLY:QP_PH_n_G_bands
+ use electrons,           ONLY:levels,n_sp_pol,E_fine_grid
+ use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc
+ use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,elph_global_free
+ use PHEL,                ONLY:phel_gkkp_expanded_sq
  use interfaces,          ONLY:PARALLEL_global_indexes
+ use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free
+ use RT_occupations,      ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_ALL_occupations_free
+ use real_time,           ONLY:l_RT_uses_E_FineGd
  !
- implicit none
+#include<memory.h>
  !
  type(levels) ,intent(in) :: E
  type(bz_samp),intent(in) :: k,q
@@ -37,6 +41,7 @@ subroutine PHEL_driver(E,k,q)
  !
  integer             ::i_err,iq
  integer, external   ::ELPH_expanded_databases_check
+ type(E_fine_grid)   ::E_FG
  !
  call section('*',"Phonon Lifetimes")
  !
@@ -59,10 +64,44 @@ subroutine PHEL_driver(E,k,q)
  !=====================
  call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ")
  !
- ! Phononic Lifetimes  
- !====================
+ ! Maps into the RT kinds
+ !========================
+ !
+ ! ... grid
+ l_RT_uses_E_FineGd=k%FGibz%N>0
+ if (.not.l_RT_uses_E_FineGd) then
+   call bz_samp_FineGd_alloc(k%FGibz,k%nibz)
+   call bz_samp_FineGd_default(k%FGibz,k)
+ endif
+ !
+ ! ... allocs
+ Life_MEM_steps=1
+ call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)
+ call RT_EL_occupations_alloc((/1,QP_PH_n_G_bands/),k%FGibz%N)
+ call RT_PH_occupations_alloc(elph_branches,nqibz)
+ YAMBO_ALLOC(E_FG%E,(QP_PH_n_G_bands,k%nibz,n_sp_pol))
+ YAMBO_ALLOC(E_FG%W,(QP_PH_n_G_bands,k%nibz,n_sp_pol))
+ !
+ ! ... occupations & levels
+ call RT_occupations_and_levels_init((/1,QP_PH_n_G_bands/),E,k,q,k%FGibz,E_FG)
+ !
+ ! Loop
+ !======
+ l_initial_equilibrium=.TRUE.
  do iq=1,nqibz
-   call PHEL_lifetimes(iq,E,k,q)
+   call PHEL_lifetimes(iq,E,k,(/1,QP_PH_n_G_bands/),k%FGibz,E_FG)
  enddo
+ !
+ ! Output
+ !========
+ ! 
+ call PH_of( )
+ !
+ ! Clean
+ !=======
+ call RT_ALL_lifetimes_free(  )
+ call RT_ALL_occupations_free(  )
+ call elph_global_free( )
+ YAMBO_FREE(phel_gkkp_expanded_sq)
  !
 end subroutine PHEL_driver

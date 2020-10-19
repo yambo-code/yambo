@@ -81,7 +81,7 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
      !
      ph_freq=abs(sqrt(ph_freqs_sq(iq_mem,il)))
      !
-     ! Avoiding acoustic phonons at Gamma and vanishing phonon energies
+     ! Avoiding acoustic phonons at Gamma and vanishing (< 1 meV) phonon energies
      if ( (iq_mem==1 .and. il<=3) ) cycle
      if ( abs(ph_freq)<3.E-5)     cycle
      !
@@ -170,8 +170,8 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
              D_ares=RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,'EP')
              D_res =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,'EP')
 #else
-             D_ares=1./pi*aimag( Lorentzian_FT(ph_freq-cI*QP_G_damp,DELTA_E,"Ta") )
-             D_res =1./pi*aimag( Lorentzian_FT(ph_freq-cI*QP_G_damp,DELTA_E,"r" ) )
+             D_ares=1./pi*aimag( Lorentzian_FT(ph_freq-cI*QP_G_damp,DELTA_E+cI*delta_W,"Ta") )
+             D_res =1./pi*aimag( Lorentzian_FT(ph_freq-cI*QP_G_damp,DELTA_E+cI*delta_W,"r" ) )
              !D_ares=-1./pi*aimag( Lorentzian_FT(DELTA_E+cI*QP_G_damp,-ph_freq-DELTA_W,"r") )
              !D_res =-1./pi*aimag( Lorentzian_FT(DELTA_E+cI*QP_G_damp,+ph_freq-DELTA_W,"r") )
 #endif

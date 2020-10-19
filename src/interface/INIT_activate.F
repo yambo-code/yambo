@@ -136,6 +136,7 @@ subroutine INIT_activate()
 #if defined  _ELPH 
  if (l_life.and.l_phel_corr) then
    call CPU_activate("PH_SE")
+   call initactivate(1,'ElecTemp BoseTemp GDamping')
  endif
 #endif
  !

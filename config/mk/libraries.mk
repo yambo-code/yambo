@@ -20,6 +20,15 @@ MAIN_LIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_f
 PJ_SCLIBS    = $(MAIN_LIBS) collisions hamiltonian sc
 PJ_SCLIBS_LD = $(MAIN_LIBS_LD) hamiltonian collisions sc
 
+PJ_RTITLIBS    = $(BASIC_LIBS) interpolate qp_control setup \
+               tddft dipoles pol_function el-ph qp acfdt bse collisions hamiltonian \
+               real_time_control real_time_hamiltonian real_time_propagation real_time_lifetimes real_time_iterative_el-ph \
+               real_time_initialize ph-el real_time_drivers
+PJ_RTITLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
+               tddft dipoles pol_function el-ph qp acfdt bse hamiltonian collisions \
+               real_time_control real_time_hamiltonian real_time_propagation real_time_lifetimes real_time_iterative_el-ph \
+               real_time_initialize ph-el real_time_drivers
+
 PJ_RTLIBS    = $(BASIC_LIBS) interpolate qp_control setup \
                tddft dipoles pol_function el-ph qp acfdt bse collisions hamiltonian \
                real_time_control real_time_hamiltonian real_time_propagation real_time_lifetimes \

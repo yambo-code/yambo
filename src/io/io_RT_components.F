@@ -76,8 +76,10 @@ integer function io_RT_components(what,ID)
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
 #endif
+#if defined _ELPH_ITERATIVE
+ use RT_iterative,   ONLY:THETA_matrix
+#endif
 #if defined _ELPH
- use RT_lifetimes,   ONLY:THETA_matrix
  use ELPH,           ONLY:ph_modes
 #endif
  !
@@ -226,7 +228,7 @@ integer function io_RT_components(what,ID)
  !
 #endif
  !
-#if defined _ELPH
+#if defined _ELPH_ITERATIVE
  !
  ! ELPH Kernel THETA Matrix 
  !==========================

@@ -33,7 +33,10 @@ subroutine RT_free( )
 &                         magn_reference,DbGd_EE_scatt_table,RT_TIME_status,REF_V_xc_sc,&
 &                         RT_levels,I1_matrix,RT_Deph_Matrix,RTibz
  use RT_occupations, ONLY:RT_ALL_occupations_free
- use RT_lifetimes,   ONLY:RT_ALL_lifetimes_free,q_weight_RT,THETA_matrix,THETA_matrix_index,&
+#if defined _ELPH_ITERATIVE
+ use RT_iterative,   ONLY:THETA_matrix,THETA_matrix_index
+#endif
+ use RT_lifetimes,   ONLY:RT_ALL_lifetimes_free,q_weight_RT,&
 &                         Q_io_map,K_io_map,elph_gkkp_expanded_sq
  !
 #include<memory.h>
@@ -73,8 +76,10 @@ subroutine RT_free( )
  YAMBO_FREE(MEM_pointer)
  !
  YAMBO_FREE(q_weight_RT)
+#if defined _ELPH_ITERATIVE
  YAMBO_FREE(THETA_matrix)
  YAMBO_FREE(THETA_matrix_index)
+#endif
  YAMBO_FREE(elph_gkkp_expanded_sq)
  YAMBO_FREE(I1_matrix)
  YAMBO_FREE(rho_reference)

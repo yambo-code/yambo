@@ -23,15 +23,13 @@
 !
 subroutine RT_ELPH_initialize(E,k,q)
  ! 
- use pars,           ONLY:cZERO
  use parser_m,       ONLY:parser
  use real_time,      ONLY:RT_bands
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_elph_scatt,l_phel_scatt
- use RT_lifetimes,   ONLY:l_RT_iterative_ELPH_lifetimes,THETA_matrix,THETA_matrix_index
- use R_lattice,      ONLY:bz_samp,nXkibz
+ use R_lattice,      ONLY:bz_samp
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,NONE
- use ELPH,           ONLY:ph_freqs_sq,ph_modes,W_debye
+ use ELPH,           ONLY:ph_freqs_sq,W_debye
  !
 #include<memory.h>
  !
@@ -40,7 +38,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! Work Space
  !
- integer             ::iq,ID,i_counter,il,i_err,i_s
+ integer             ::ID,i_err
  integer, external   ::io_RT_components,ELPH_expanded_databases_check
  logical             ::l_use_Debye_E
  !
@@ -85,24 +83,10 @@ subroutine RT_ELPH_initialize(E,k,q)
  !===========
  call ELPH_Q_weight_times_Bose(q)
  !
-#if defined _ELPH_ITERATIVE
  ! THETA matrix indexes
  !======================
- if (.not.l_RT_iterative_ELPH_lifetimes) return
- !
- YAMBO_ALLOC(THETA_matrix,(2*q%nbz*ph_modes,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1,nXkibz))
- THETA_matrix=cZERO
- YAMBO_ALLOC(THETA_matrix_index,(q%nbz,ph_modes,2))
- !
- i_counter=0
- do iq=1,q%nbz
-   do il=1,ph_modes
-     do i_s=1,2
-       i_counter=i_counter+1
-       THETA_matrix_index(iq,il,i_s)=i_counter
-     enddo
-   enddo
- enddo
+#if defined _ELPH_ITERATIVE
+ call RT_ELPH_iterative_init( )
 #endif
  !
 end subroutine RT_ELPH_initialize

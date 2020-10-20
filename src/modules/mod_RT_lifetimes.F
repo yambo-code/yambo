@@ -100,13 +100,9 @@ module RT_lifetimes
  integer,     allocatable :: Q_io_map(:)
  integer,     allocatable :: K_io_map(:)
  !
- ! Complete Collision Approx and beyond
- !--------------------------------------
+ ! Beyond Complete Collision Approx 
+ !----------------------------------
  logical     :: l_RT_iterative_ELPH_lifetimes=.FALSE.
- ! ... THETA matrix
- complex(SP), allocatable :: THETA_matrix(:,:,:,:)
- ! ... indexes ...
- integer,     allocatable :: THETA_matrix_index(:,:,:)
  !
  contains
    !

@@ -42,8 +42,7 @@ subroutine RT_initialize(E,k,q)
 &                         TIME_adjust,SAVE_G_history,CACHE_OBS_INTERVAL_time
  use RT_occupations, ONLY:l_RT_relax_time_approx
  use RT_lifetimes,   ONLY:RT_life_extrap_times,RT_life_extrap_times_INPUT,l_RT_lifetimes_extrapolation,&
-&                         Life_MEM_steps,l_RT_lifetimes_Tfit,l_RT_skip_ph_abs_lifetimes,&
-&                         l_RT_iterative_ELPH_lifetimes
+&                         Life_MEM_steps,l_RT_lifetimes_Tfit,l_RT_skip_ph_abs_lifetimes,l_RT_iterative_ELPH_lifetimes
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,Gr_kind,       &
 &                         RAD_LifeTime,Phase_LifeTime,         &

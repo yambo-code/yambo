@@ -27,7 +27,10 @@ subroutine RT_databases_IO(E,DO_IT)
  use RT_control,     ONLY:ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
 &                         GF_RT_IO_t,CARR_RT_IO_t,CACHE_OBS_steps_now,CACHE_OBS_steps,    &
 &                         SAVE_G_history,NE_i_start_time,CACHE_OBS_last_point
- use RT_lifetimes,   ONLY:THETA_matrix,l_RT_iterative_ELPH_lifetimes
+#if defined _ELPH_ITERATIVE
+ use RT_iterative,   ONLY:THETA_matrix
+ use RT_lifetimes,   ONLY:l_RT_iterative_ELPH_lifetimes
+#endif
  use real_time,      ONLY:NE_i_time,NE_steps,RT_nk,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,&
 &                         l_NE_with_fields,RT_step,RT_dyn_step,NE_time,RT_carriers,G_MEM_steps
  use IO_m,           ONLY:io_control,manage_action,NONE,REP, &
@@ -151,10 +154,12 @@ subroutine RT_databases_IO(E,DO_IT)
      call io_control(ACTION=IO_ACT,COM=REP, SEC=(/1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
      !
+#if defined _ELPH_ITERATIVE
      if (l_RT_iterative_ELPH_lifetimes) then
        call io_control(ACTION=OP_APP_CL,COM=NONE, SEC=(/1/),ID=ID(7))
        io_THETA=io_RT_components('THETA',ID(7))
      endif
+#endif
      !
    endif
    !

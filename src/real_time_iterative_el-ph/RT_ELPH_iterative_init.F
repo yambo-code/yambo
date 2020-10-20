@@ -21,34 +21,35 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_zeroing()
+subroutine RT_ELPH_iterative_init()
  !
- ! The use of the THETA matrix is tricky when the run is parallel.
- ! The point is that every CPU evolves a certain group of q-points.
- ! If I do an all-to-all or a global loading from the DB 
- ! each CPU will have non-zero values for q-points that it will not evolve. During the run,
- ! therefore, values relative to different times will be wrongly merged.
- !
- use drivers,        ONLY:l_elph_scatt
  use pars,           ONLY:cZERO
- use R_lattice,      ONLY:nqbz
+ use RT_lifetimes,   ONLY:l_RT_iterative_ELPH_lifetimes
  use RT_iterative,   ONLY:THETA_matrix,THETA_matrix_index
+ use R_lattice,      ONLY:nqbz,nXkibz
+ use real_time,      ONLY:RT_bands
  use ELPH,           ONLY:ph_modes
- use parallel_m,     ONLY:ncpu
- implicit none
+ !
+#include<memory.h>
  !
  ! Work Space
  !
- integer :: iq,il,i_s
+ integer             ::iq,i_counter,il,i_s
  !
- if (.not.l_elph_scatt.or.ncpu==1) return
+ if (.not.l_RT_iterative_ELPH_lifetimes) return
  !
+ YAMBO_ALLOC(THETA_matrix,(2*nqbz*ph_modes,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1,nXkibz))
+ THETA_matrix=cZERO
+ YAMBO_ALLOC(THETA_matrix_index,(nqbz,ph_modes,2))
+ !
+ i_counter=0
  do iq=1,nqbz
    do il=1,ph_modes
      do i_s=1,2
-       THETA_matrix(THETA_matrix_index(iq,il,i_s),:,:,:) = cZERO
+       i_counter=i_counter+1
+       THETA_matrix_index(iq,il,i_s)=i_counter
      enddo
    enddo
  enddo
  !
-end subroutine RT_ELPH_zeroing
+end subroutine RT_ELPH_iterative_init

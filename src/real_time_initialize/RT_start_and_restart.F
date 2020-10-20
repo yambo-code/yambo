@@ -143,9 +143,11 @@ subroutine RT_start_and_restart(E,k,q)
  !
  RESTART = io_err(4)==0.and.io_err(5)==0.and.io_err(8)==0
  !
+#if defined _ELPH_ITERATIVE
  !  4. The THETA (no CCA mode)
  !
  if (l_RT_iterative_ELPH_lifetimes) RESTART = RESTART.and.(io_err(7)==0)
+#endif
  !
  ! In case I restart I need to copy the databases in the WD
  !
@@ -193,6 +195,7 @@ subroutine RT_start_and_restart(E,k,q)
      G_lesser(:,:,:,i_mem)=G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2))+dG_lesser(:,:,:,i_mem)
    enddo
    !
+#if defined _ELPH_ITERATIVE
    if (l_RT_iterative_ELPH_lifetimes) then
      do ik=1,RT_nk
        IO_ACT=manage_action(RD_CL_IF_END,ik,FIRST=1,LAST=RT_nk)
@@ -201,7 +204,6 @@ subroutine RT_start_and_restart(E,k,q)
      enddo
    endif
    !
-#if defined _ELPH_ITERATIVE
    if( l_RT_iterative_ELPH_lifetimes) call RT_ELPH_zeroing()
 #endif
    !

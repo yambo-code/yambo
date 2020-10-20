@@ -25,7 +25,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  ! 
  use pars,           ONLY:SP
  use units,          ONLY:HA2EV
- use real_time,      ONLY:elph_gkkp_expanded_sq,Q_io_map,K_io_map
+ use RT_lifetimes,   ONLY:elph_gkkp_expanded_sq,Q_io_map,K_io_map
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,qindx_S,nqbz,nqibz
  use IO_m,           ONLY:io_control,OP_RD_CL
@@ -45,7 +45,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  !
  ! Work Space
  !
- integer             ::iq,ID,io_err,ik,i_counter,iq_io,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
+ integer             ::iq_bz,ID,io_err,ik,i_counter,iq_io,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
 &                      first_el(2,n_bands(2)),n_of_el(2,n_bands(2)),n_deg_grp(2),i1,i2,iq_mem,PAR_nQ
  real(SP)            ::gkkp_average(ph_modes),gkkp_expanded_sq(elph_nb,elph_nb,ph_modes)
  real(SP),allocatable::ph_Esq_local(:,:),MAX_gkkp_expanded_at_kpq(:,:)
@@ -56,18 +56,16 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  !============
  l_BZ =mode=="BZ"
  l_IBZ=mode=="IBZ"
+ YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nbz,nqbz))
  if (l_BZ ) then
    PAR_nQ=PAR_nQ_bz
    YAMBO_ALLOC(ph_Esq_local,(nqbz,ph_modes))
-   YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nibz,nqbz))
    YAMBO_ALLOC(elph_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ,PAR_Xk_nibz))
  else if (l_IBZ) then
    PAR_nQ=PAR_nQ_ibz
    YAMBO_ALLOC(ph_Esq_local,(nqibz,ph_modes))
-   YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nbz,nqibz))
    YAMBO_ALLOC(phel_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ,k%nbz))
  endif
- !
  MAX_gkkp_expanded_at_kpq=0._SP
  !
  ! Degeneration Finder & I/O
@@ -75,34 +73,40 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  i_counter   =0
  ph_Esq_local=0._SP
  !
- do iq=1,nqbz
+ do iq_bz=1,nqbz
    !
    if (l_BZ) then
-     if (.not.PAR_IND_Q_bz%element_1D(iq)) cycle
+     if (.not.PAR_IND_Q_bz%element_1D(iq_bz)) cycle
    else
-     !if (q%sstar(iq,1)/=2) cycle
-     if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iq,2))) cycle
+     if (q%sstar(iq_bz,2)/=1) cycle
+     !if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iq_bz,1))) cycle
    endif
    !
-   iq_io=Q_io_map(iq)
+   iq_io=Q_io_map(iq_bz)
    !
    call io_control(ACTION=OP_RD_CL,SEC=(/iq_io+1/),ID=ID)
    io_err=io_ELPH(ID,'gkkp_expanded')
    !
-   do ik=1,k%nibz
+   if (l_BZ ) ph_Esq_local(iq_bz,:)=ph_freqs_sq(iq_io,:)
+   if (l_IBZ) ph_Esq_local(q%sstar(iq_bz,1),:)=ph_freqs_sq(iq_io,:)
+   !
+   do ik_bz=1,k%nbz
      !
-     ik_bz    =sum(k%nstar(:ik-1))+1
-     ik_m_q   =k%sstar(qindx_S(ik,iq,1),1)
+     if (l_BZ.and.k%sstar(ik_bz,2)/=1) cycle
      !
-     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+     ik       =k%sstar(ik_bz,1)
+     ik_m_q   =k%sstar(qindx_S(ik,iq_bz,1),1)
+     !
      if (l_BZ ) then
-       iq_mem = PAR_Q_bz_index(iq)
+       if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+       iq_mem = PAR_Q_bz_index(iq_bz)
        ik_mem = PAR_Xk_ibz_index(ik)
      else if (l_IBZ) then
-       !iq_mem = PAR_Q_ibz_index(iq)
-       !ik_mem = PAR_Xk_ibz_index(ik)
-       iq_mem = q%sstar(iq,1)
+       !if (.not.PAR_IND_Xk_bz%element_1D(ik)) cycle
+       iq_mem = q%sstar(iq_bz,1)
        ik_mem = ik_bz
+       !iq_mem = PAR_Q_ibz_index(iq_bz)
+       !ik_mem = PAR_Xk_ibz_index(ik)
      endif
      !
      do i_n=1,elph_nb
@@ -120,7 +124,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
      ! Feb 2014. Here I symmetrize the gkkp m.e. with respect to denerated bands. This procedure is not
      ! needed in the case the Double Grid is not used. But when the Double Grid is used gkkp m.e. corresponding to transitions between degenerate
      ! states can be exported to non-degenerate bands belonging to a k of the small grid. In this way
-     ! the detailled balance condition is not satisfied anymore.
+     ! the detailed balance condition is not satisfied anymore.
      !
      ! Degeneration Finder
      !====================
@@ -150,15 +154,12 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
        enddo
      enddo
      !
-     MAX_gkkp_expanded_at_kpq(ik_mem,iq_mem)=maxval(sqrt(gkkp_expanded_sq(:,:,:)))
+     MAX_gkkp_expanded_at_kpq(ik_bz,iq_bz)=maxval(sqrt(gkkp_expanded_sq(:,:,:)))
      !
      if (l_BZ ) elph_gkkp_expanded_sq(:,:,:,iq_mem,ik_mem)=gkkp_expanded_sq(:,:,:)
      if (l_IBZ) phel_gkkp_expanded_sq(:,:,:,iq_mem,ik_mem)=gkkp_expanded_sq(:,:,:)
      !
    enddo
-   !
-   if (l_BZ ) ph_Esq_local(iq           ,:)=ph_freqs_sq(iq_io,:)
-   if (l_IBZ) ph_Esq_local(q%sstar(iq,1),:)=ph_freqs_sq(iq_io,:)
    !
  enddo
  !

@@ -88,33 +88,52 @@ SUBROUTINE atmproj_read_ext ( filein, nbnd, nkpt, nspin, natomwfc, nelec, &
    CALL iotk_open_read( iunit, FILE=TRIM(filein), IERR=ierr )
    IF ( ierr/=0 ) RETURN
    !
-   !
    CALL iotk_scan_begin( iunit, "HEADER", IERR=ierr) 
-   IF ( ierr/=0 ) RETURN
    !
-   CALL iotk_scan_dat( iunit, "NUMBER_OF_BANDS", nbnd_, IERR=ierr) 
-   IF ( ierr/=0 ) RETURN
-   CALL iotk_scan_dat( iunit, "NUMBER_OF_K-POINTS", nkpt_, IERR=ierr) 
-   IF ( ierr/=0 ) RETURN
-   CALL iotk_scan_dat( iunit, "NUMBER_OF_SPIN_COMPONENTS", nspin_, IERR=ierr) 
-   IF ( ierr/=0 ) RETURN
-   CALL iotk_scan_dat( iunit, "NUMBER_OF_ATOMIC_WFC", natomwfc_, IERR=ierr) 
-   IF ( ierr/=0 ) RETURN
-   CALL iotk_scan_dat( iunit, "NUMBER_OF_ELECTRONS", nelec_, IERR=ierr) 
-   IF ( ierr/=0 ) RETURN
+   IF ( ierr/=0 ) then 
+     CALL iotk_scan_empty( iunit, "HEADER", ATTR=attr, IERR=ierr)  
+     IF ( ierr/=0 ) RETURN
+     !
+     CALL iotk_scan_attr( attr, "NUMBER_OF_BANDS", nbnd_, IERR=ierr)
+     IF ( ierr/=0 ) RETURN
+     CALL iotk_scan_attr( attr, "NUMBER_OF_K-POINTS", nkpt_, IERR=ierr)
+     IF ( ierr/=0 ) RETURN
+     CALL iotk_scan_attr( attr, "NUMBER_OF_SPIN_COMPONENTS", nspin_, IERR=ierr)
+     IF ( ierr/=0 ) RETURN
+     CALL iotk_scan_attr( attr, "NUMBER_OF_ATOMIC_WFC", natomwfc_, IERR=ierr)
+     IF ( ierr/=0 ) RETURN
+     CALL iotk_scan_attr( attr, "NUMBER_OF_ELECTRONS", nelec_, IERR=ierr)
+     IF ( ierr/=0 ) RETURN
+     energy_units_="Rydberg"
+     !
+     CALL iotk_scan_attr( attr, "FERMI_ENERGY", efermi_, IERR=ierr)
+     IF ( ierr/=0 ) RETURN
    !
-   CALL iotk_scan_empty( iunit, "UNITS_FOR_ENERGY", ATTR=attr, IERR=ierr) 
-   IF ( ierr/=0 ) RETURN
-   CALL iotk_scan_attr( attr, "UNITS", energy_units_, IERR=ierr) 
-   IF ( ierr/=0 ) RETURN
+   ELSE
    !
-   CALL iotk_scan_dat( iunit, "FERMI_ENERGY", efermi_, IERR=ierr) 
-   IF ( ierr/=0 ) RETURN
+     CALL iotk_scan_dat( iunit, "NUMBER_OF_BANDS", nbnd_, IERR=ierr) 
+     IF ( ierr/=0 ) RETURN
+     CALL iotk_scan_dat( iunit, "NUMBER_OF_K-POINTS", nkpt_, IERR=ierr) 
+     IF ( ierr/=0 ) RETURN
+     CALL iotk_scan_dat( iunit, "NUMBER_OF_SPIN_COMPONENTS", nspin_, IERR=ierr) 
+     IF ( ierr/=0 ) RETURN
+     CALL iotk_scan_dat( iunit, "NUMBER_OF_ATOMIC_WFC", natomwfc_, IERR=ierr) 
+     IF ( ierr/=0 ) RETURN
+     CALL iotk_scan_dat( iunit, "NUMBER_OF_ELECTRONS", nelec_, IERR=ierr) 
+     IF ( ierr/=0 ) RETURN
+     !
+     CALL iotk_scan_empty( iunit, "UNITS_FOR_ENERGY", ATTR=attr, IERR=ierr) 
+     IF ( ierr/=0 ) RETURN
+     CALL iotk_scan_attr( attr, "UNITS", energy_units_, IERR=ierr) 
+     IF ( ierr/=0 ) RETURN
+     !
+     CALL iotk_scan_dat( iunit, "FERMI_ENERGY", efermi_, IERR=ierr) 
+     IF ( ierr/=0 ) RETURN
+     !
+     CALL iotk_scan_end( iunit, "HEADER", IERR=ierr) 
+     IF ( ierr/=0 ) RETURN
+   ENDIF
    !
-   CALL iotk_scan_end( iunit, "HEADER", IERR=ierr) 
-   IF ( ierr/=0 ) RETURN
-   
-   ! 
    ! reading kpoints and weights 
    ! 
    IF ( PRESENT( vkpt ) ) THEN

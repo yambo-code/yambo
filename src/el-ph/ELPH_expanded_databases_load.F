@@ -64,7 +64,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  else if (l_IBZ) then
    PAR_nQ=PAR_nQ_ibz
    YAMBO_ALLOC(ph_Esq_local,(nqibz,ph_modes))
-   YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nibz,nqibz))
+   YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nbz,nqibz))
    YAMBO_ALLOC(phel_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ,k%nbz))
  endif
  !
@@ -80,7 +80,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
    if (l_BZ) then
      if (.not.PAR_IND_Q_bz%element_1D(iq)) cycle
    else
-     if (q%sstar(iq,1)/=2) cycle
+     !if (q%sstar(iq,1)/=2) cycle
      if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iq,2))) cycle
    endif
    !
@@ -88,9 +88,6 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
    !
    call io_control(ACTION=OP_RD_CL,SEC=(/iq_io+1/),ID=ID)
    io_err=io_ELPH(ID,'gkkp_expanded')
-   !
-   if (l_BZ ) ph_Esq_local(iq,:)=ph_freqs_sq(iq_io,:)
-   if (l_IBZ) ph_Esq_local(q%sstar(iq,1),:)=ph_freqs_sq(iq_io,:)
    !
    do ik=1,k%nibz
      !
@@ -102,8 +99,10 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
        iq_mem = PAR_Q_bz_index(iq)
        ik_mem = PAR_Xk_ibz_index(ik)
      else if (l_IBZ) then
-       iq_mem = PAR_Q_ibz_index(iq)
-       ik_mem = PAR_Xk_ibz_index(ik)
+       !iq_mem = PAR_Q_ibz_index(iq)
+       !ik_mem = PAR_Xk_ibz_index(ik)
+       iq_mem = q%sstar(iq,1)
+       ik_mem = ik_bz
      endif
      !
      do i_n=1,elph_nb
@@ -151,7 +150,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
        enddo
      enddo
      !
-     MAX_gkkp_expanded_at_kpq(ik,iq)=maxval(sqrt(gkkp_expanded_sq(:,:,:)))
+     MAX_gkkp_expanded_at_kpq(ik_mem,iq_mem)=maxval(sqrt(gkkp_expanded_sq(:,:,:)))
      !
      if (l_BZ ) elph_gkkp_expanded_sq(:,:,:,iq_mem,ik_mem)=gkkp_expanded_sq(:,:,:)
      if (l_IBZ) phel_gkkp_expanded_sq(:,:,:,iq_mem,ik_mem)=gkkp_expanded_sq(:,:,:)

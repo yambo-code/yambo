@@ -38,6 +38,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  use com,            ONLY:msg
  use D_lattice,      ONLY:a
  use parser_m,       ONLY:parser
+ use timing_m,       ONLY:timing
 
  !
  implicit none
@@ -58,6 +59,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  complex(SP) :: S_det(6)
  complex(SP) :: Wop(Dip%ib(2),Dip%ib(2),2),DIP_tmp(6,Dip%ib(2),Dip%ib(2))
  complex(SP) :: S_tmp(Dip%ib(2),Dip%ib(2),2)
+ !
+ call timing("DIPOLE_buil_covariants",OPR="start")
  !
  if (Xen%nbf/=Xen%nbm) call error(' Covariant dipoles not implemented for metals')
  !
@@ -206,6 +209,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
  !
+ call timing("DIPOLE_buil_covariants",OPR="stop")
  return
  !
 end subroutine DIPOLE_build_covariants

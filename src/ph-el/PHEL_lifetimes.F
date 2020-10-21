@@ -174,8 +174,6 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
 #else
              D_ares=1./pi*aimag( Lorentzian_FT(ph_freq-cI*QP_G_damp,DELTA_E+cI*delta_W,"Ta") )
              D_res =1./pi*aimag( Lorentzian_FT(ph_freq-cI*QP_G_damp,DELTA_E+cI*delta_W,"r" ) )
-             !D_ares=-1./pi*aimag( Lorentzian_FT(DELTA_E+cI*QP_G_damp,-ph_freq-DELTA_W,"r") )
-             !D_res =-1./pi*aimag( Lorentzian_FT(DELTA_E+cI*QP_G_damp,+ph_freq-DELTA_W,"r") )
 #endif
              !
              ! Electron and hole occupations
@@ -191,10 +189,12 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
                f_nk       =  RT_life_occ%dN(i_n,ik_rim)/spin_occ
                Hole_f_nk  = -RT_life_occ%dN(i_n,ik_rim)/spin_occ
              endif
-             ! NB: at equilibrium this quantity is just: (f_mkq - f_nk)
-             TMP_Emit_lifetime=TMP_Emit_lifetime+(Hole_f_nk*f_mkq - f_nk*Hole_f_mkq)*D_ares
-             ! NB: at equilibrium this quantity is just: (f_nk - f_mkq)
-             TMP_Abs_lifetime=TMP_Abs_lifetime+(f_nk*Hole_f_mkq-Hole_f_nk*f_mkq)*D_res
+             !DEBUG
+             !TMP_Emit_lifetime=TMP_Emit_lifetime+(Hole_f_nk*f_mkq - f_nk*Hole_f_mkq)*D_ares
+             TMP_Emit_lifetime=TMP_Emit_lifetime+f_nk*Hole_f_mkq*D_ares+Hole_f_nk*f_mkq*D_res
+             !DEBUG
+             !TMP_Abs_lifetime=TMP_Abs_lifetime+(f_nk*Hole_f_mkq-Hole_f_nk*f_mkq)*D_res
+             TMP_Abs_lifetime=TMP_Abs_lifetime  +f_nk*Hole_f_mkq*D_res +Hole_f_nk*f_mkq*D_ares
              !
            enddo
            !
@@ -204,26 +204,15 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
          RT_PE_life%emit(il,iq_mem)=RT_PE_life%emit(il,iq_mem)+TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
          ! Phonon absorption
          RT_PE_life%abs(il,iq_mem) =RT_PE_life%abs(il,iq_mem)+TMP_Abs_lifetime*pre_factor*N_q
+         !
          !DEBUG>
          !if (f_mkq-f_nk<0._SP) then
          !  write (*,*) "______________"
          !  write (*,*) "in=",i_n, "ik=",ik,"f_nk=",f_nk,"e_nk=",E_FG%E(i_n,ik,1),";"
-         !  write (*,*) "im", i_np,"ik_q=",ik_m_q,"f_mkq=",f_mkq,"e_mkq=",E_FG%E(i_np,ik_m_q,1),";"
+         !  write (*,*) "im=", i_np,"ik_q=",ik_m_q,"f_mkq=",f_mkq,"e_mkq=",E_FG%E(i_np,ik_m_q,1),";"
          !  write (*,*) "delta_occ=",f_mkq-f_nk,"delta_en=",D_ares
          !endif
          !DEBUG<
-         ! [NOTE] At equilibrium at zero lattice temperature the sum of the two is just:
-         ! 
-         !                        pre_factor*(f_mkq - f_nk)*D_ares 
-         !
-         !       This corresponds to twice the imaginary part of the phonon-electron 
-         !       the self-energy Pi = g_squared*GG  (see Mahan p. 136), with the 
-         !       additional 2 coming from the KBE. This represents the LINEWIDTH
-         !       (i.e., FWHM) of the phonon spectrum.
-         !
-         !       At BoseTemp>0, the following additional term appears:
-         !
-         !              pre_factor*(f_mkq - f_nk)*N_q(BoseTemp)*(D_ares - D_res)
          !
        enddo ! i_np i.e. (mk-q)
        !

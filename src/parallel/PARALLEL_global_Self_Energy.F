@@ -143,7 +143,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  if (trim(WHAT)=="ibz") then
    YAMBO_ALLOC(PAR_Q_bz_index,(nqbz))
-   call distribute_BZk_using_IBZk(PAR_COM_Q_INDEX,q,PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,&
+   call PARALLEL_distribute_BZk_using_IBZk(PAR_COM_Q_INDEX,q,PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,&
 &                                                   PAR_IND_Q_bz, PAR_IND_Q_ibz_ID,&
 &                                                   PAR_Q_bz_index,PAR_nQ_bz)
    call PAR_build_index(PAR_IND_Q_bz,nqbz,PAR_Q_bz_index,PAR_nQ_bz)
@@ -231,7 +231,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    call PARALLEL_collisions( Xk, HXC_collisions )
    !
    nb_mat=(COLL_bands(2)-COLL_bands(1)+1)**2
-   call G_b_to_B_mat(PAR_COM_G_b_INDEX,'Bp',COLL_bands)
+   call PARALLEL_MATRIX_distribute(PAR_COM_G_b_INDEX,'Bp',COLL_bands)
    call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT="Self_Energy",&
 &                             LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
 &                             TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)

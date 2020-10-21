@@ -84,7 +84,7 @@ module parallel_m
  !
  ! Logicals
  !
- logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_SE,l_par_RT,l_par_SC,l_par_NL
+ logical            :: l_par_X_G,l_par_X_G_finite_q,l_par_SE,l_par_RT,l_par_SC,l_par_NL
  !
  ! In a parallel runs, when some loops not involving all CPU's are parallelized it is usefull to keep 
  ! the operations local in the cpu world
@@ -217,7 +217,11 @@ module parallel_m
  ! ... linear algebra
  type(PP_indexes),SAVE :: PAR_IND_SLK
  !
- ! ... BZ sampling
+ ! ... BZ sampling (Phonons)
+ type(PP_indexes),SAVE :: PAR_PH_IND_Q_ibz
+ type(PP_indexes),SAVE :: PAR_PH_IND_Xk_bz
+ !
+ ! ... BZ sampling (Electrons)
  type(PP_indexes),SAVE :: PAR_IND_Q_ibz
  type(PP_indexes),SAVE :: PAR_IND_Q_bz
  type(PP_indexes),SAVE :: PAR_IND_Kk_ibz
@@ -267,7 +271,7 @@ module parallel_m
  type(PP_indexes)            ,SAVE :: PAR_IND_T_Haydock
  type(PP_indexes)            ,SAVE :: PAR_IND_T_ordered
  !
- ! .... Frequencies non-linear optics
+ ! .... Frequencies 
  type(PP_indexes),SAVE :: PAR_IND_freqs
  !
  ! Specific MPI ID's ...
@@ -286,7 +290,12 @@ module parallel_m
  integer            :: PAR_IND_WF_b_ID
  integer            :: PAR_IND_WF_k_ID
  !
- ! ... BZ
+ ! ... BZ & Eh pairs (Phonons)
+ integer            :: PAR_PH_IND_Q_ibz_ID
+ integer            :: PAR_PH_IND_Xk_bz_ID
+ integer            :: PAR_PH_IND_eh_bands_ID
+ !
+ ! ... BZ (Electrons)
  integer            :: PAR_IND_Q_ibz_ID
  integer            :: PAR_IND_Q_bz_ID
  integer            :: PAR_IND_Kk_ibz_ID
@@ -362,7 +371,17 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_WF_k_INDEX
  type(MPI_comm),SAVE :: PAR_COM_WF_b_INDEX
  !
- ! ... BZ
+ ! ... BZ (Phonons)
+ type(MPI_comm),SAVE :: PAR_PH_COM_Q_ibz_INDEX
+ type(MPI_comm),SAVE :: PAR_PH_COM_Q_ibz_A2A
+ type(MPI_comm),SAVE :: PAR_PH_COM_Xk_bz_INDEX
+ type(MPI_comm),SAVE :: PAR_PH_COM_Xk_bz_A2A
+ !
+ ! ... EH pairs (Phonons) 
+ type(MPI_comm),SAVE :: PAR_PH_COM_eh_bands_INDEX
+ type(MPI_comm),SAVE :: PAR_PH_COM_eh_bands_A2A
+ !
+ ! ... BZ (Electrons)
  type(MPI_comm),SAVE :: PAR_COM_Q_INDEX
  type(MPI_comm),SAVE :: PAR_COM_Q_A2A
  type(MPI_comm),SAVE :: PAR_COM_Xk_ibz_INDEX
@@ -435,6 +454,8 @@ module parallel_m
  integer,allocatable:: PAR_Bp_mat_index(:,:)
  integer            :: PAR_nQ_ibz
  integer,allocatable:: PAR_Q_ibz_index(:)
+ integer            :: PAR_PH_nQ_ibz
+ integer,allocatable:: PAR_PH_Q_ibz_index(:)
  integer            :: PAR_nQ_bz
  integer,allocatable:: PAR_Q_bz_index(:)
  integer            :: PAR_Kk_nibz

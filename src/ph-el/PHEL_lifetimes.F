@@ -35,9 +35,9 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
  use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid
  use RT_occupations, ONLY:RT_ph_occ,RT_el_occ,RT_ho_occ,RT_life_occ
  use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life
- use real_time,      ONLY:l_RT_uses_E_FineGd
+ use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
  use PHEL,           ONLY:phel_gkkp_expanded_sq
- use ELPH,           ONLY:ph_freqs_sq,elph_branches
+ use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch
  use parallel_m,     ONLY:PAR_Q_ibz_index,PAR_Xk_ibz_index,PAR_IND_B_mat
  use QP_m,           ONLY:QP_G_damp
  !
@@ -52,7 +52,7 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
  ! Work Space ...
  !
  real(SP)              :: ph_freq
- !real(SP),   parameter :: cutoff= 5.E-3
+ real(SP),   parameter :: cutoff= 5.E-3
  real(SP),   external  :: RT_G_retarded_convolution
  complex(SP),external  :: Lorentzian_FT
  !
@@ -81,12 +81,7 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
      !
      ph_freq=abs(sqrt(ph_freqs_sq(iq_mem,il)))
      !
-     ! Avoiding acoustic phonons at Gamma and vanishing (< 1 meV) phonon energies
-     if ( (iq_mem==1 .and. il<=3) ) cycle
-     if ( abs(ph_freq)<3.E-5)     cycle
-     !
-     ! Time Scales separation (TS) and quasiparticle approximation (QP)
-     !=======================================
+     if (iq_mem==1 .and. PH_acoustic_branch(il)) cycle
      !
      if (l_initial_equilibrium) then
        N_q    = RT_ph_occ%N_ref(il,iq_mem)
@@ -94,21 +89,18 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
        N_q    = RT_ph_occ%N(il,iq_mem)
      endif
      !
-     ! Kernel kind
-     !=============
-     !
      Gkkp_sq=rZERO
      !
      do i_n=bands(1),bands(2)
        !
        Gkkp_sq(i_n,i_n)=phel_gkkp_expanded_sq(i_n,i_n,il,iq_mem,ikbz)
-       !if (sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) cycle
+       if (sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) cycle
        !
        do i_np=bands(1),bands(2)
          !
          if (i_n.ne.i_np) then
            Gkkp_sq(i_n,i_np)=phel_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ikbz)
-           !if (sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) cycle
+           if (sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) cycle
          endif 
          !
          ! At equilibrium, only metals or band gaps < E_debye can give non-zero ph lifetimes
@@ -126,9 +118,10 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
          !
          if (.not. l_RT_uses_E_FineGd) then
            !
-           ! [NOTE] What is this???????????????
-           !if(E_FG%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. E_FG%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
-           !if(E_FG%E(i_n ,ik    ,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
+#if defined _RT
+           if(E_FG%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. E_FG%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
+           if(E_FG%E(i_n ,ik    ,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
+#endif
            !
            DELTA_E=E_FG%E(i_n,ik,1)-E_FG%E(i_np,ik_m_q,1)
            DELTA_W=E_FG%W(i_n,ik,1)+E_FG%W(i_np,ik_m_q,1)
@@ -159,9 +152,11 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
            do ip_rim=k_FG%k_range(ik_m_q,1),k_FG%k_range(ik_m_q,2)
              !
              if (l_RT_uses_E_FineGd) then
-               ! [NOTE] What is this???????????
-               !if(E_FG%E(i_np,ip_rim,1)<RT_eh_en(1) .or. E_FG%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
-               !if(E_FG%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
+               ! 
+#if defined _RT
+               if(E_FG%E(i_np,ip_rim,1)<RT_eh_en(1) .or. E_FG%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
+               if(E_FG%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
+#endif
                !
                DELTA_E=E_FG%E(i_n,ik_rim,1)-E_FG%E(i_np,ip_rim,1)
                DELTA_W=E_FG%W(i_n,ik_rim,1)+E_FG%W(i_np,ip_rim,1)
@@ -174,8 +169,6 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
 #else
              D_ares=1./pi*aimag( Lorentzian_FT(ph_freq-cI*QP_G_damp,DELTA_E+cI*delta_W,"Ta") )
              D_res =1./pi*aimag( Lorentzian_FT(ph_freq-cI*QP_G_damp,DELTA_E+cI*delta_W,"r" ) )
-             !D_ares=-1./pi*aimag( Lorentzian_FT(DELTA_E+cI*QP_G_damp,-ph_freq-DELTA_W,"r") )
-             !D_res =-1./pi*aimag( Lorentzian_FT(DELTA_E+cI*QP_G_damp,+ph_freq-DELTA_W,"r") )
 #endif
              !
              ! Electron and hole occupations

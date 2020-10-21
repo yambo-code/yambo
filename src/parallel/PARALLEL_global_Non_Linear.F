@@ -98,7 +98,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    ! Define the Xk_bz indeces for BZ parallelization
    ! 
    allocate(PAR_Xk_bz_index(Xk%nbz))
-   call distribute_BZk_using_IBZk(PAR_COM_Xk_ibz_INDEX,Xk,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
+   call PARALLEL_distribute_BZk_using_IBZk(PAR_COM_Xk_ibz_INDEX,Xk,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
 &                                                         PAR_IND_Xk_bz, PAR_IND_Xk_bz_ID,&
 &                                                         PAR_Xk_bz_index,PAR_Xk_nbz)
 

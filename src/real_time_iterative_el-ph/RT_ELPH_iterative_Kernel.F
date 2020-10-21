@@ -94,13 +94,6 @@ subroutine RT_ELPH_iterative_Kernel(ik,E,k,q,TIME)
      !
      ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
      !
-     !  This frequency, which in principle should not be included, describes the region
-     !  around q=0, which is taken into account by the integral embodied in the q_qeights
-     !  Thus I do not cycle
-     !
-     if ( (iqbz==1 .and. il<=3) ) cycle
-     if ( abs(ph_freq)<3.E-5)     cycle
-     !
      ! Note the m.e. in elph_gkkp_expanded_sq are stored with indexes order exchanged (see RT_ELPH_initialize)
      !
      Gkkp_sq=rZERO

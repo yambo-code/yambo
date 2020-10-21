@@ -24,7 +24,7 @@
 subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !
  ! LOGICALS
- use parallel_m,    ONLY:l_par_X_T,l_par_RT,l_par_SE,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_NL
+ use parallel_m,    ONLY:l_par_RT,l_par_SE,l_par_X_G,l_par_X_G_finite_q,l_par_NL
 #if defined _QED
  use parallel_m,    ONLY:l_par_SC
 #endif
@@ -90,8 +90,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !==========
  ! Logicals
  !==========
- l_par_DIP          =ENVIRONMENT=="DIPOLES"
- l_par_X_T          =ENVIRONMENT=="Response_T_space"
  l_par_X_G_finite_q =ENVIRONMENT=="Response_G_space_and_IO"
  l_par_X_G          =ENVIRONMENT=="Response_G_space"
  l_par_SE           =ENVIRONMENT=="Self_Energy"

@@ -91,13 +91,6 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
      !
      ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
      !
-     !  This frequency, which in principle should not be included, describes the region
-     !  around q=0, which is taken into account by the integral embodied in the q_qeights
-     !  Thus I do not cycle
-     !
-     if ( (iqbz==1 .and. il<=3) ) cycle
-     if ( abs(ph_freq)<3.E-5    ) cycle
-     !
      do i_n=RT_bands(1),RT_bands(2)
        !
        do i_np=RT_bands(1),RT_bands(2)

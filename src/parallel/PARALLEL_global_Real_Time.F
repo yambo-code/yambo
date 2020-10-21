@@ -162,7 +162,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
    call PP_indexes_reset(PAR_IND_DIPk_ibz)
    !
  endif
- call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',RT_bands)
+ call PARALLEL_MATRIX_distribute(PAR_COM_G_b_INDEX,'B',RT_bands)
  call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
  PAR_IND_DIPk_ibz_ID=PAR_IND_Xk_ibz_ID
  YAMBO_ALLOC(PAR_DIPk_ibz_index,(Xk%nibz))
@@ -298,7 +298,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !   "qp"  -> Bp_mat (m,m')
  !.........................................................................
  !
- call G_b_to_B_mat(PAR_COM_Plasma_INDEX,'Bp',RT_bands)
+ call PARALLEL_MATRIX_distribute(PAR_COM_Plasma_INDEX,'Bp',RT_bands)
  !
  ! Messaging...
  !

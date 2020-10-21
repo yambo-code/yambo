@@ -120,29 +120,31 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
            if ((i_n<=n_full_bands.and.i_np>  n_full_bands).and.(E%E_ind_gap(1)>0.1/HA2EV)) cycle
            if ((i_n> n_full_bands.and.i_np<= n_full_bands).and.(E%E_ind_gap(1)>0.1/HA2EV)) cycle
            !
-           if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n,i_np,bands) ) ) cycle
+         endif
+         !
+         if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n,i_np,bands) ) ) cycle
+         !
+         if (.not. l_RT_uses_E_FineGd) then
            !
-           if (.not. l_RT_uses_E_FineGd) then
-             !
-             if(E_FG%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. E_FG%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
-             if(E_FG%E(i_n ,ik    ,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
-             !
-             DELTA_E=E_FG%E(i_n,ik,1)-E_FG%E(i_np,ik_m_q,1)
-             DELTA_W=E_FG%W(i_n,ik,1)+E_FG%W(i_np,ik_m_q,1)
-             !
-           endif
+           ! [NOTE] What is this???????????????
+           !if(E_FG%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. E_FG%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
+           !if(E_FG%E(i_n ,ik    ,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
+           !
+           DELTA_E=E_FG%E(i_n,ik,1)-E_FG%E(i_np,ik_m_q,1)
+           DELTA_W=E_FG%W(i_n,ik,1)+E_FG%W(i_np,ik_m_q,1)
            !
          endif
          !
          ! [NOTE] The weight here is
          !
-         !                    (2*spin_occ*pi)/(RT_Nk_ibz*2*ph_freq)
+         !                    (2*spin_occ*pi)/(k%nbz*2* ph_freq)
          !
          ! 2 from KBE collision integral, spin_occ=2 from ph-el self-energy (polarization bubble), pi from delta functions,
          ! 1/Nk from k-sum, (2*ph_freq)^-1 to correctly normalize Gkkp_sq.
-         ! [NOTE] Variable pre_factor below contains pi since it *shouldn't* come later from the hyperbolic secant FT
+         ! [NOTE]  Variable pre_factor below contains pi since it *shouldn't* come later from the hyperbolic secant FT.
+         ! [NOTE2] Variable pre_factor below contains 1/(Nk_bz*N_FG_k) accounting for the double grid at each bz point.
          !
-         pre_factor=spin_occ*Gkkp_sq(i_np,i_n)*pi/(real(k_FG%N_mapped(ik_m_q))*ph_freq)
+         pre_factor=spin_occ*Gkkp_sq(i_np,i_n)*pi/(k%nbz*k_FG%N_mapped(ik)*ph_freq)
          !
          if( pre_factor==0._SP ) cycle
          !
@@ -157,9 +159,9 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
            do ip_rim=k_FG%k_range(ik_m_q,1),k_FG%k_range(ik_m_q,2)
              !
              if (l_RT_uses_E_FineGd) then
-               !
-               if(E_FG%E(i_np,ip_rim,1)<RT_eh_en(1) .or. E_FG%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
-               if(E_FG%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
+               ! [NOTE] What is this???????????
+               !if(E_FG%E(i_np,ip_rim,1)<RT_eh_en(1) .or. E_FG%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
+               !if(E_FG%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
                !
                DELTA_E=E_FG%E(i_n,ik_rim,1)-E_FG%E(i_np,ip_rim,1)
                DELTA_W=E_FG%W(i_n,ik_rim,1)+E_FG%W(i_np,ip_rim,1)
@@ -189,7 +191,6 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
                f_nk       =  RT_life_occ%dN(i_n,ik_rim)/spin_occ
                Hole_f_nk  = -RT_life_occ%dN(i_n,ik_rim)/spin_occ
              endif
-             !
              ! NB: at equilibrium this quantity is just: (f_mkq - f_nk)
              TMP_Emit_lifetime=TMP_Emit_lifetime+(Hole_f_nk*f_mkq - f_nk*Hole_f_mkq)*D_ares
              ! NB: at equilibrium this quantity is just: (f_nk - f_mkq)
@@ -203,16 +204,22 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
          RT_PE_life%emit(il,iq_mem)=RT_PE_life%emit(il,iq_mem)+TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
          ! Phonon absorption
          RT_PE_life%abs(il,iq_mem) =RT_PE_life%abs(il,iq_mem)+TMP_Abs_lifetime*pre_factor*N_q
-         !
-         ! [NOTE] At equilibrium at zero lattice temperature the sum of the two 
-         !        (i.e., the imaginary part of the self-energy) is just:
+         !DEBUG>
+         !if (f_mkq-f_nk<0._SP) then
+         !  write (*,*) "______________"
+         !  write (*,*) "in=",i_n, "ik=",ik,"f_nk=",f_nk,"e_nk=",E_FG%E(i_n,ik,1),";"
+         !  write (*,*) "im", i_np,"ik_q=",ik_m_q,"f_mkq=",f_mkq,"e_mkq=",E_FG%E(i_np,ik_m_q,1),";"
+         !  write (*,*) "delta_occ=",f_mkq-f_nk,"delta_en=",D_ares
+         !endif
+         !DEBUG<
+         ! [NOTE] At equilibrium at zero lattice temperature the sum of the two is just:
          ! 
          !                        pre_factor*(f_mkq - f_nk)*D_ares 
          !
-         !       This corresponds to 2 times a Matsubara calculation of 
-         !       the self-energy Pi = g_squared*GG  (see Mahan p. 136),
-         !       with the additional 2 coming from the KBE.
-         !       Should this 2 factor cancel out?
+         !       This corresponds to twice the imaginary part of the phonon-electron 
+         !       the self-energy Pi = g_squared*GG  (see Mahan p. 136), with the 
+         !       additional 2 coming from the KBE. This represents the LINEWIDTH
+         !       (i.e., FWHM) of the phonon spectrum.
          !
          !       At BoseTemp>0, the following additional term appears:
          !

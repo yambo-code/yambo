@@ -76,7 +76,7 @@ subroutine rim()
  call section('+','RIM initialization')
  if (RIM_is_diagonal) call msg('r','* Diagonal components only detected *')
  !
- call msg('nr','8 x (sBL volume)    [au]',8._SP*k_grid_uc_vol)
+ call msg('nr','8 x (sBL volume)        ',8._SP*k_grid_uc_vol,"[a.u.]")
  call msg('r', 'sBZ random points       ',RIM_n_rand_pts)
  !
  ! Random generator seed
@@ -151,8 +151,8 @@ subroutine rim()
  !Integrated RL VOLUME 
  !
  RIM_RL_vol=8._SP*k_grid_uc_vol*real(RIM_n_rand_pts)/real(N_out)*real(nqbz)
- call msg('r', 'RL volume           [au]',RL_vol)
- call msg('rn','Integrated volume   [au]',RIM_RL_vol)
+ call msg('r', 'RL volume               ',RL_vol,"[a.u.]")
+ call msg('rn','Integrated volume       ',RIM_RL_vol,"[a.u.]")
  !
  call section('=','RIM integrals')
  !
@@ -167,7 +167,7 @@ subroutine rim()
    call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
    !
    if (iq==1) then
-     call msg('r','Gamma point sphere radius         [au]',G_sph_radii)
+     call msg('r','Gamma point sphere radius             ',G_sph_radii,"[a.u.]")
      call msg('r','Points outside the sphere             ',n_out_G)
      call msg('r','[Int_sBZ(q=0) 1/q^2]*(Vol_sBZ)^(-1/3) =',&
 &                     4.*pi**3.*RIM_qpg(1,1,1)*k_grid_uc_vol**(-1./3.))

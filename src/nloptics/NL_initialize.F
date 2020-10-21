@@ -176,15 +176,15 @@ subroutine NL_initialize(E,k,q)
      !
      NE_tot_time=NE_tot_time+EtoT(E=NL_er(1))+5._SP*RT_step
      !
-     call msg('sr','Dephasing Time          [fs]',5._SP*Phase_LifeTime*AUT2FS)
-     call msg('sr','Sampling  Time          [fs]',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS)
+     call msg('sr','Dephasing Time              ',5._SP*Phase_LifeTime*AUT2FS,"[fs]")
+     call msg('sr','Sampling  Time              ',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS,"[fs]")
      !
    elseif(Efield(1)%ef_name=='PULSE'.or.Efield(1)%ef_name=='QSSIN' &
 &     .or.Efield(1)%ef_name=='QSFIELD'.or.Efield(1)%ef_name=='SPULSE') then
      !
      NE_tot_time=3*T_0
-     call msg('sr','Time T_0                [fs]',T_0*AUT2FS)
-     call msg('sr','Dephasing               [fs]',Phase_LifeTime*AUT2FS)
+     call msg('sr','Time T_0                    ',T_0*AUT2FS,"[fs]")
+     call msg('sr','Dephasing                   ',Phase_LifeTime*AUT2FS,"[fs]")
      !
    else
      call error("Negative total simulation time! ")
@@ -194,7 +194,7 @@ subroutine NL_initialize(E,k,q)
    call msg('s',' Total simulation time read from input') 
  endif
  !
- call msg('sr','Total simulation time   [fs]',NE_tot_time*AUT2FS)
+ call msg('sr','Total simulation time       ',NE_tot_time*AUT2FS,"[fs]")
  !
  NE_steps=int(NE_tot_time/RT_step)+1
  !
@@ -309,15 +309,15 @@ subroutine NL_initialize(E,k,q)
  !
  call msg( 'r','---General---')
  call msg( 'r', 'Integrator                 ',trim(Integrator_name))
- call msg( 'r', 'Simulation time        [fs]',real(NE_steps-1)*RT_step*AUT2FS)
- call msg( 'r', 'Step length            [fs]',RT_step*AUT2FS)
+ call msg( 'r', 'Simulation time            ',real(NE_steps-1)*RT_step*AUT2FS,"[fs]")
+ call msg( 'r', 'Step length                ',RT_step*AUT2FS,"[fs]")
  call msg( 'r', 'NE Steps                   ',NE_steps)
  call msg( 'r', 'Correlation                '//trim(NL_correlation))
- call msg( 'r', 'Damping                [eV]',NL_damping*HA2EV)
- call msg( 'r', 'Dephasing              [fs]',Phase_LifeTime*AUT2FS)
+ call msg( 'r', 'Damping                    ',NL_damping*HA2EV,"[eV]")
+ call msg( 'r', 'Dephasing                  ',Phase_LifeTime*AUT2FS,"[fs]")
  call msg( 'r', 'Efield                     '//trim(Efield(1)%ef_name))
- call msg( 'r', 'Efield width           [fs]',Efield(1)%width*AUT2FS)
- call msg( 'r', 'Efield T_0             [fs]',T_0)
+ call msg( 'r', 'Efield width               ',Efield(1)%width*AUT2FS,"[fs]")
+ call msg( 'r', 'Efield T_0                 ',T_0,"[fs]")
  call msg( 'r', 'Efield Amplitude      [V/m]',Efield(1)%amplitude*AU2VMm1)
  call msg( 'r', 'Frequencies range          ',NL_er*HA2EV)
  call msg( 'sr','Frequencies steps          ',n_frequencies)

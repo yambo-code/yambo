@@ -86,41 +86,44 @@ module X_output
      integer,optional   :: ig
      real(SP)           :: Q_plus_G_pt(3)
      character(msg_len) :: message(9)
+     character(schlen)  :: unit_msg
      !
      if (iq==1.and.ig==1) then
-       message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')',post='q->0 direction')
+       message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//')')
+       message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')')
        message(3) = com_compose_msg(pre='# ',&
-&                   body='Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(5) = com_compose_msg(pre='# ',body='Off-diagonal Absorption @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(6) = com_compose_msg(pre='# ',body='Off-diagonal Polarizability @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(7) = com_compose_msg(pre='# ',body='moke parameters @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(8) = com_compose_msg(pre='# ',body='Reflectivity @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(9) = com_compose_msg(pre='# ',body='Joint density of states @ Q('//trim(intc(iq))//')',post='q->0 direction')
+&                   body='Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//')')
+       message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')')
+       message(5) = com_compose_msg(pre='# ',body='Off-diagonal Absorption @ Q('//trim(intc(iq))//')')
+       message(6) = com_compose_msg(pre='# ',body='Off-diagonal Polarizability @ Q('//trim(intc(iq))//')')
+       message(7) = com_compose_msg(pre='# ',body='moke parameters @ Q('//trim(intc(iq))//')')
+       message(8) = com_compose_msg(pre='# ',body='Reflectivity @ Q('//trim(intc(iq))//')')
+       message(9) = com_compose_msg(pre='# ',body='Joint density of states @ Q('//trim(intc(iq))//')')
+       unit_msg="[q->0 direction]"
      else  if (iq/=1.and.ig==1) then
-       message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//')',post='iku')
-       message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')',post='iku')
-       message(3) = com_compose_msg(pre='# ',body='Polarizability ( -<<X>> ) ['//trim(alpha_dim)//&
-&                                   ' @ Q('//trim(intc(iq))//')',post='iku')
-       message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')',post='iku')
-       message(9) = com_compose_msg(pre='# ',body='Joint density of states @ Q('//trim(intc(iq))//')',post='iku')
+       message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//')')
+       message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')')
+       message(3) = com_compose_msg(pre='# ',body='Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//')')
+       message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')')
+       message(9) = com_compose_msg(pre='# ',body='Joint density of states @ Q('//trim(intc(iq))//')')
+       unit_msg="[iku]"
      else  if (ig/=1) then
-       message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//') + G('//trim(intc(ig))//')',post='iku')
-       message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//'',post='iku')
+       message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//') + G('//trim(intc(ig))//')')
+       message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//'')
        message(3) = com_compose_msg(pre='# ',body='Polarizability ( -<<X>> ) ['//trim(alpha_dim)//&
-&                                   ' @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//')',post='iku')
-       message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')',post='iku')
+&                                   ' @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//')')
+       message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')')
+       unit_msg="[iku]"
      endif
-     call msg("o eps_q",trim(message(1)),Q_plus_G_pt,INDENT=0)
-     call msg("o eel_q",trim(message(2)),Q_plus_G_pt,INDENT=0)
-     call msg("o alpha",trim(message(3)),Q_plus_G_pt,INDENT=0)
-     call msg("o fxc",trim(message(4)),Q_plus_G_pt,INDENT=0)
-     call msg("o off",trim(message(5)),Q_plus_G_pt,INDENT=0)
-     call msg("o beta",trim(message(6)),Q_plus_G_pt,INDENT=0)
-     call msg("o moke",trim(message(7)),Q_plus_G_pt,INDENT=0)
-     call msg("o refl",trim(message(8)),Q_plus_G_pt,INDENT=0)
-     call msg("o jdos_q",trim(message(9)),Q_plus_G_pt,INDENT=0)
+     call msg("o eps_q",trim(message(1)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     call msg("o eel_q",trim(message(2)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     call msg("o alpha",trim(message(3)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     call msg("o fxc",trim(message(4)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     call msg("o off",trim(message(5)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     call msg("o beta",trim(message(6)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     call msg("o moke",trim(message(7)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     call msg("o refl",trim(message(8)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     call msg("o jdos_q",trim(message(9)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
      call msg('o eps refl eel fxc alpha off moke','#')    
      !
    end subroutine

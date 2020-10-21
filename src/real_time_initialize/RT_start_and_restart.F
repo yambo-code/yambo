@@ -219,18 +219,18 @@ subroutine RT_start_and_restart(E,k,q)
    !
    call msg( 'nr','---RESTART report---')
    !
-   call msg('s','[RESTART] Number of steps done    [o/o]',real(NE_i_time)/real(NE_steps)*100._SP)
-   call msg('r','Number of steps done         [o/o]',real(NE_i_time)/real(NE_steps)*100._SP)
-   call msg('r','Time reached                  [fs]',real(NE_i_time-1)*RT_step*AUT2FS)
-   call msg('r','Time step                     [fs]',RT_dyn_step*AUT2FS)
+   call msg('s','[RESTART] Number of steps done         ',real(NE_i_time)/real(NE_steps)*100._SP,"[o/o]")
+   call msg('r','Number of steps done              ',real(NE_i_time)/real(NE_steps)*100._SP,"[o/o]")
+   call msg('r','Time reached                      ',real(NE_i_time-1)*RT_step*AUT2FS,"[fs]")
+   call msg('r','Time step                         ',RT_dyn_step*AUT2FS,"[fs]")
    !
-   call msg('r',  'dT Update Interval            [fs]',NE_time_step_update_jump*AUT2FS)
-   call msg('r',  'Lifetimes inter/intr times    [fs]',RT_life_extrap_times*AUT2FS)
-   call msg('r',  'T cache step  of J,P,M        [fs]',CACHE_OBS_INTERVAL_time*AUT2FS)
-   call msg('r',  'T between I/O of J,P,M        [fs]',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
-   call msg('r',  '          I/O of carriers     [fs]',CARR_RT_IO_t%INTERVAL_time*AUT2FS)
-   call msg('r',  '          I/O of   GFs        [fs]',GF_RT_IO_t%INTERVAL_time*AUT2FS)
-   call msg('r',  '               outputs        [fs]',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  'dT Update Interval                ',NE_time_step_update_jump*AUT2FS,"[fs]")
+   call msg('r',  'Lifetimes inter/intr times        ',RT_life_extrap_times*AUT2FS,"[fs]")
+   call msg('r',  'T cache step  of J,P,M            ',CACHE_OBS_INTERVAL_time*AUT2FS,"[fs]")
+   call msg('r',  'T between I/O of J,P,M            ',OBS_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
+   call msg('r',  '          I/O of carriers         ',CARR_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
+   call msg('r',  '          I/O of   GFs            ',GF_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
+   call msg('r',  '               outputs            ',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
    !
  endif
  !

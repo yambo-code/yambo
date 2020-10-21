@@ -181,8 +181,8 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
 #endif
      endif
      call msg('o '//trim(of_name),'#')
-     call msg('o '//trim(of_name),'# Plane X versor [cc]:',PROJECT_plane_X,INDENT=0)
-     call msg('o '//trim(of_name),'# Plane Y versor [cc]:',PROJECT_plane_Y,INDENT=0)
+     call msg('o '//trim(of_name),'# Plane X versor     :',PROJECT_plane_X,INDENT=0,after_msg="[c.c.]")
+     call msg('o '//trim(of_name),'# Plane Y versor     :',PROJECT_plane_Y,INDENT=0,after_msg="[c.c.]")
      call msg('o '//trim(of_name),'#')
      titles(1:2)=(/"K_proj_X","K_proj_Y"/)
      if (l_BANDS) then

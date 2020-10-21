@@ -176,9 +176,9 @@ subroutine RT_X_effective(en)
  !
  if (trim(Efield_probe%ef_name)=='ANTIRES'.and.one_P_many_W) then
    if (N_pumps==1) then
-     call msg('s',' Pump  frequency range   [eV]',(/minval(Pump_Frequency), maxval(Pump_Frequency)/)*HA2EV)
+     call msg('s',' Pump  frequency range       ',(/minval(Pump_Frequency), maxval(Pump_Frequency)/)*HA2EV,"[eV]")
    else
-     call msg('s',' Probe                   [eV]',(/minval(Probe_Frequency),maxval(Probe_Frequency)/)*HA2EV)
+     call msg('s',' Probe                       ',(/minval(Probe_Frequency),maxval(Probe_Frequency)/)*HA2EV,"[eV]")
    endif
  endif
  !
@@ -219,9 +219,9 @@ subroutine RT_X_effective(en)
  if (N_pumps==1.or.N_pumps==0) then
    !
    if (one_P_one_W) then
-     call msg('s',' Harmonic frequencies    [eV]',(/Harmonic_Frequency(0:,1)/)*HA2EV)
+     call msg('s',' Harmonic frequencies        ',(/Harmonic_Frequency(0:,1)/)*HA2EV,"[eV]")
    else
-     call msg('s',' Harmonic frequencies    [eV]',(/minval(Harmonic_Frequency),maxval(Harmonic_Frequency)/)*HA2EV)
+     call msg('s',' Harmonic frequencies        ',(/minval(Harmonic_Frequency),maxval(Harmonic_Frequency)/)*HA2EV,"[eV]")
    endif
    !
  endif
@@ -298,7 +298,7 @@ subroutine RT_X_effective(en)
  !call RT_initialize()
  !DEBUG<
  !
- if (one_P_many_W) call msg('s','[RT] Energy step[eV]',Efield_Probe%W_step*HA2EV)
+ if (one_P_many_W) call msg('s','[RT] Energy step    ',Efield_Probe%W_step*HA2EV,"[eV]")
  !
  do i_order=min_X_order,X_order,1
    !

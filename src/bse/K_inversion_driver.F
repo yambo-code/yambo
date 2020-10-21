@@ -351,7 +351,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      !
      nw_conv=count(TYP%err==0)
      call msg('rs','[FULL INV@'//TYP%what//'] Frequencies DONE      ',nw_conv)
-     call msg('rs','[FULL INV@'//TYP%what//']                  [o/o]',real(nw_conv)/real(W%n_freqs)*100._SP)
+     call msg('rs','[FULL INV@'//TYP%what//']                       ',real(nw_conv)/real(W%n_freqs)*100._SP,"[o/o]")
      !
    end subroutine
    !

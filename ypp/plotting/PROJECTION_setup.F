@@ -85,10 +85,10 @@ subroutine PROJECTION_setup( what ,bands )
  !
  if (l_PROJECT_plane) then
    !
-   call msg("sr","[PROJECT] Direction#1 // plane [iku]",axis(1,:))
-   call msg("sr","          Direction#2 // plane [iku]",axis(2,:))
-   call msg("sr","          Direction  _|_ plane [iku]",axis(3,:))
-   call msg("sr","          Plane Origin         [iku]",O)
+   call msg("sr","[PROJECT] Direction#1 // plane      ",axis(1,:),"[iku]")
+   call msg("sr","          Direction#2 // plane      ",axis(2,:),"[iku]")
+   call msg("sr","          Direction  _|_ plane      ",axis(3,:),"[iku]")
+   call msg("sr","          Plane Origin              ",O,"[iku]")
    !
    output_fname="plane_points"
    !

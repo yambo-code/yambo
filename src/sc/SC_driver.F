@@ -612,11 +612,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    call msg('nr','[SC] Iterations               ',it_now)
    call msg('r' ,'[SC] Accuracy on density      ',rho_convergence)
    if(n_spin>1) call msg('r' ,'[SC] Accuracy on magnetization',magn_convergence)
-   call msg('r' ,'[SC]          on energies [ev]',E_convergence*HA2EV)
-   if (     l_sc_V_is_local)  call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]',E_total*(/1._SP,2._SP/))
+   call msg('r' ,'[SC]          on energies     ',E_convergence*HA2EV,"[eV]")
+   if (     l_sc_V_is_local)  call msg('r' ,'[SC] Total Energy (no Ewald)        ',E_total*(/1._SP,2._SP/),"[Ha/Ry]")
    if (.not.l_sc_V_is_local)  call msg('r','')
-   if (l_sc_hartree)   call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]',E_tot_Hartree*(/1._SP,2._SP/))
-   if (l_sc_is_libDFT) call msg('rn','[SC] xc Energy               [Ha/Ry]',E_tot_xc*(/1._SP,2._SP/))
+   if (l_sc_hartree)   call msg('r' ,'[SC] Hartree Energy                 ',E_tot_Hartree*(/1._SP,2._SP/),"[Ha/Ry]")
+   if (l_sc_is_libDFT) call msg('rn','[SC] xc Energy                      ',E_tot_xc*(/1._SP,2._SP/),"[Ha/Ry]")
    !
  else
    call msg('r','')
@@ -802,7 +802,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      dE(:,:,:)=E%E(:SC_bands(2),:,:)-E_reference%E(:SC_bands(2),:,:)
      !
-     call msg('r','Energy unit   ',' [eV]')
+     call msg('r','Energy unit   [eV]')
      !
      do ik=1,k%nibz
        call REPORT_Energies(E%E(:SC_bands(2),:,:),k,Xk,SC_bands(2),(/ik,ik/),'E  ',.FALSE.,.TRUE.)

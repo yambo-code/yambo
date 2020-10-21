@@ -167,10 +167,10 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
    ! Report
    !
    sug_E_rng=(nel/DL_vol)**(2./3.)*HA2EV
-   call msg('r','[E] Energy borders [ev][suggested]',(/25.*sug_E_rng,250*sug_E_rng/))
+   call msg('r','[E] Energy borders     [suggested]',(/25.*sug_E_rng,250*sug_E_rng/),"[eV]")
    call msg('r','                            [used]',(/ACFDT_E_range*HA2EV/))
    call msg('r','    Energy points                 ',(/(ACFDT_n_freqs-1)/2+1,ACFDT_n_freqs/))
-   call msg('r','    First point               [ev]',(/freq(1)*HA2EV/))
+   call msg('r','    First point                   ',(/freq(1)*HA2EV/),"[eV]")
    call msg('nr','[L] Pts(1-5)',(/lambda(1:min(5,ACFDT_n_lambda))/))
    call msg(' r','    Wgs(1-5)',(/lambda_weight(1:min(5,ACFDT_n_lambda))/))
    call msg(' r','    Points  ',(/ACFDT_n_lambda/))

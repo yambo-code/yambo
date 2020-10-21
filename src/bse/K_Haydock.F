@@ -213,7 +213,7 @@ subroutine K_Haydock(iq,W)
  call IO_desc_add(BSS_desc,kind="i",str='[Haydock] Iterations',I=(/0/))
  i_desc_iter=BSS_desc%n
  !
- call msg('r','Accuracy (requested) [o/o]',Haydock_threshold)
+ call msg('r','Accuracy (requested)      ',Haydock_threshold,"[o/o]")
  !
  ! Initialization of Haydock vectors and tridiagonal matrix elements
  !
@@ -519,7 +519,7 @@ subroutine K_Haydock(iq,W)
    !
    if ( (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
 &       STOP_now(.FALSE.)) then
-     call msg('r','Accuracy (reached)   [o/o]',reached_threshold)
+     call msg('r','Accuracy (reached)        ',reached_threshold,"[o/o]")
      call msg('r','Iterations                ',it)
      exit
    endif

@@ -55,7 +55,7 @@ module interpolate_tools
        if (trim(INTERP_FineGd)/="NONE") title=trim(title)//"-"//trim(INTERP_FineGd)//" FineGd"
        !
        dummy=real(NN_nk_exact/real(OUT_k_nk))*100._SP
-       call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Exact matches  [o/o]',dummy)
+       call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Exact matches       ',dummy,"[o/o]")
        if (NN_nk_border>0) then
           call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Border points       ',NN_nk_border)
        endif
@@ -63,7 +63,7 @@ module interpolate_tools
          call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Neighbours    [user]',NN_n_of_nearest)
          call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//']               [real]',NN_MAX_real_nearest)
          dummy=real(OUT_k_nk-NN_nk_exact)/real(OUT_k_nk)*100._SP
-         call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Interpolations [o/o]',dummy)
+         call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Interpolations      ',dummy,"[o/o]")
        endif
        !
        OUT_k_nk=0

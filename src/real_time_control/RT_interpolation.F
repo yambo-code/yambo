@@ -122,7 +122,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  !
  call msg('nr',   'Updated Carrier components')
  call msg('rn',   '==========================')
- call msg('r',    '['//trim(title)//'] Reference Time           [fs] ',Time*AUT2FS)
+ call msg('r',    '['//trim(title)//'] Reference Time                ',Time*AUT2FS,"[fs]")
  call msg('r',    '['//trim(title)//'] Bands range                   ', (/nb(1),nb(2)/)) 
  !
  if (l_f) then
@@ -132,7 +132,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  endif
  !
  if (l_E) then
-   call msg('r',  '['//trim(title)//'] Max energy levels change [ev] ',dE_Max*HA2EV)
+   call msg('r',  '['//trim(title)//'] Max energy levels change      ',dE_Max*HA2EV,"[eV]")
  endif
  !
  call msg('rn',  '['//trim(title)//'] Full and metallic bands        ', (/E%nbf,E%nbm/)) 

@@ -68,14 +68,14 @@ subroutine Dipole_check_shifted_grids( Xk_shift, Xk, iq, num_shifted_grid,q_mod,
  !
  q_long_tmp(:) = q_init(:)
  call c2a(v_in=q_long_tmp(:), v_out=qtemp, mode="ki2c")
- call msg('s','Grid '//trim(intc(iq))//' has shift vector [c.c.] ',qtemp )
+ call msg('s','Grid '//trim(intc(iq))//' has shift vector        ',qtemp ,"[c.c.]")
  !
  if( qtemp(1)>=1.E-6 .and. qtemp(2)< 1.E-6 .and. qtemp(3)< 1.E-6) grid_order(iq)=1
  if( qtemp(1)< 1.E-6 .and. qtemp(2)>=1.E-6 .and. qtemp(3)< 1.E-6) grid_order(iq)=2
  if( qtemp(1)< 1.E-6 .and. qtemp(2)< 1.E-6 .and. qtemp(3)>=1.E-6) grid_order(iq)=3
  !
  q_mod(iq) = iku_v_norm(q_long_tmp(:))
- call msg('r','            and modulus [a.u.] ',q_mod(iq))
+ call msg('r','            and modulus        ',q_mod(iq),"[a.u.]")
  if (iq==num_shifted_grid) call msg('r','')
  !
  ! Check the lengths are compatible (not abolutely required)

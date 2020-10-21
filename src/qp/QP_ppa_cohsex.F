@@ -138,7 +138,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (GW_iter==0) then
    call msg('r', '[  GW  ] Bands range     ',QP_n_G_bands)
    if (l_ppa) then
-     call msg('r', '[GW/PPA] G damping   [ev]',QP_G_damp*HA2EV)
+     call msg('r', '[GW/PPA] G damping       ',QP_G_damp*HA2EV,"[eV]")
      call msg('r','')
    endif
    ch=trim(SECTION_name)

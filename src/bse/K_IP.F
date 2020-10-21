@@ -89,7 +89,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Polarizability ?
  !==================
  if (trim(alpha_dim)/='adim') then
-   call msg('r', 'Optical renormalization   [au]',eps_2_alpha)
+   call msg('r', 'Optical renormalization       ',eps_2_alpha,"[a.u.]")
    call msg('rn','Polarizability dimension      ',trim(alpha_dim))
  endif
  !

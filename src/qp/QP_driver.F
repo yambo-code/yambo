@@ -138,8 +138,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  else if (trim(QP_solver)=='g') then
    call section('*','Dyson equation: full Green`s function')
    call msg('r', '[Green] Sc steps                                         ',QP_Sc_steps)
-   call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]',QP_G_er*HA2EV)
-   call msg('rn','[Green] Sc damping range                             [ev]',QP_G_dr*HA2EV)
+   call msg('r', '[Green] Sc energy range (centered in the bare value)     ',QP_G_er*HA2EV,"[eV]")
+   call msg('rn','[Green] Sc damping range                                 ',QP_G_dr*HA2EV,"[eV]")
    !
    call IO_desc_add(qp%desc,kind="s",str='GW solver',S="Full Green`s function",check=.TRUE.,ops=(/"=="/))
    !

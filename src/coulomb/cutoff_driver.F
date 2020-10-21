@@ -157,7 +157,7 @@ subroutine cutoff_driver(q)
  !lengths
  !
  if (cut_is_sphere) then 
-   call msg('r','Sphere radius   [au]',cyl_ph_radius)
+   call msg('r','Sphere radius       ',cyl_ph_radius,"[a.u.]")
    write (cut_description,'(a,f6.3)') trim(cut_geometry)//' ', cyl_ph_radius
  endif
  if (cut_is_ws) then
@@ -172,15 +172,15 @@ subroutine cutoff_driver(q)
    if (is_cut(2)) length(i1)=box_length(2)
    if (is_cut(3)) i1=i1+1
    if (is_cut(3)) length(i1)=box_length(3)
-   call msg('r','Box sides        [au]',length(:i1))
+   call msg('r','Box sides            ',length(:i1),"[a.u.]")
    write (cut_description,'(a,3f6.3)') trim(cut_geometry)//' ', length(:i1)
  else if (cut_is_cyl) then
    if (cyl_length > 0.) then
-     call msg('r','Cyl. length      [au]',cyl_length)
+     call msg('r','Cyl. length          ',cyl_length,"[a.u.]")
    else
      call msg('r','Cyl. length          : infinite')
    endif
-   call msg('r',  'Cyl. radius      [au]',cyl_ph_radius)
+   call msg('r',  'Cyl. radius          ',cyl_ph_radius,"[a.u.]")
    if (cyl_length > 0.) then
      write (cut_description,'(a,f6.3,a,f6.3)') trim(cut_geometry)//' ',cyl_length,' ',cyl_ph_radius 
    else

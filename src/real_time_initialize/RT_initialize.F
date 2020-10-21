@@ -171,7 +171,7 @@ subroutine RT_initialize(E,k,q)
  !==================
  ! radiative/phase, polaronic based
  !
- call section('=','Dephasing matrix setup')
+ call section('+P','Dephasing matrix setup')
  !
  call RT_Dephasing_Matrix(E)
  !
@@ -347,13 +347,7 @@ subroutine RT_initialize(E,k,q)
  ! Electron-phonon
  ! ===============
  !
- if (l_elph_scatt) then
-   !
-   call section('=','El-Ph matrix elements loading and setup')
-   !                 =======================================
-   call RT_ELPH_initialize(E,k,q)
-   !
- endif
+ if (l_elph_scatt) call RT_ELPH_initialize(E,k,q)
  !
 #endif
  !
@@ -513,6 +507,8 @@ subroutine RT_initialize(E,k,q)
    enddo
    !
  endif
+ !
+ call section('-P',' ')
  !
  contains
    !

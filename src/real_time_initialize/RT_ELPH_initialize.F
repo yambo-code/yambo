@@ -42,6 +42,8 @@ subroutine RT_ELPH_initialize(E,k,q)
  integer, external   ::io_RT_components,ELPH_expanded_databases_check
  logical             ::l_use_Debye_E
  !
+ call section('=','El-Ph matrix elements')
+ !                 ---------------------
  ! Restart
  !==========
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID) 
@@ -81,7 +83,11 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! Q weights 
  !===========
- call ELPH_Q_weight_times_Bose(q)
+ call section('=','El-Ph BZ integrals')
+ !                 -------------------
+ call ELPH_acoustic_phonon_properties(q)
+ !
+ call RT_ELPH_Q_weights(q)
  !
  ! THETA matrix indexes
  !======================

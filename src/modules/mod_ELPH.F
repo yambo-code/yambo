@@ -23,9 +23,10 @@
 !
 module ELPH
  !
- use pars,       ONLY:SP
+ use pars,       ONLY:SP,rZERO
  use electrons,  ONLY:levels
  use D_lattice,  ONLY:n_atoms_species
+ !
 #include<memory.h>
  !
  integer   :: ph_modes
@@ -49,6 +50,12 @@ module ELPH
  complex(SP), allocatable :: pol_vector(:,:,:)
  type(levels), SAVE       :: E_k_p_q
  !
+ ! Phonon properties
+ !
+ real(SP),    allocatable :: PH_Q_modulus(:)
+ real(SP),    allocatable :: PH_acoustic_speed(:,:)
+ logical,     allocatable :: PH_acoustic_branch(:)
+ !
  ! El_h Hamiltonian
  !
  integer   :: elph_Ham_bands(2)
@@ -70,7 +77,7 @@ module ELPH
  logical   :: eval_G_using_KK ! Perform KK of the spectral function
  real(SP)  :: FAN_deltaE_treshold
  real(SP)  :: DW_deltaE_treshold
- real(SP)  :: MAX_gkkp=0._SP
+ real(SP)  :: MAX_gkkp=rZERO
  !
  contains
    !
@@ -88,15 +95,15 @@ module ELPH
            if (.not.eval_G_using_KK) then
              YAMBO_ALLOC(gsqF_fan,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
              YAMBO_ALLOC(gsqF_ca_corr,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
-             gsqF_fan=0.
-             gsqF_ca_corr=0.
+             gsqF_fan=rZERO
+             gsqF_ca_corr=rZERO
            endif
            YAMBO_ALLOC(gsqF_dw,(QP_n_states,PAR_nQ_bz,ph_modes))
            YAMBO_ALLOC(gsqF_life_bose,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
            YAMBO_ALLOC(gsqF_life_f,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
-           gsqF_dw=0.
-           gsqF_life_bose=0.
-           gsqF_life_f=0.
+           gsqF_dw=rZERO
+           gsqF_life_bose=rZERO
+           gsqF_life_f=rZERO
          endif
          !
        case ('gkkp')
@@ -111,11 +118,15 @@ module ELPH
      !
      if (.not.allocated(ph_freqs_sq)) then
        YAMBO_ALLOC(ph_freqs_sq,(elph_nDBs,ph_modes))
-       ph_freqs_sq=0._SP
+       ph_freqs_sq=rZERO
        YAMBO_ALLOC(E_k_plus_q,(elph_nb,nkbz,1))
-       !
+       YAMBO_ALLOC(PH_Q_modulus,(elph_nDBs))
+       YAMBO_ALLOC(PH_acoustic_speed,(elph_nDBs,ph_modes))
+       YAMBO_ALLOC(PH_acoustic_branch,(ph_modes))
        YAMBO_ALLOC(pol_vector,(ph_modes,sum(n_atoms_species),3))
-       !
+       PH_Q_modulus=rZERO
+       PH_acoustic_speed=rZERO
+       PH_acoustic_branch=.FALSE.
      endif
      !
      if (.not.allocated(ph_qpt)) then
@@ -139,6 +150,9 @@ module ELPH
      YAMBO_FREE(pol_vector)
      YAMBO_FREE(ph_qpt)
      YAMBO_FREE(ph_kpt_bz)
+     YAMBO_FREE(PH_Q_modulus)
+     YAMBO_FREE(PH_acoustic_speed)
+     YAMBO_FREE(PH_acoustic_branch)
    end subroutine
    !
    subroutine setup_k_plus_q_levels(E)

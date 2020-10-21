@@ -41,7 +41,7 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
  !
  use pars,           ONLY:SP,rZERO
  use electrons,      ONLY:levels,spin_occ,n_full_bands
- use R_lattice,      ONLY:bz_samp,qindx_S,nqbz
+ use R_lattice,      ONLY:bz_samp,qindx_S,nqbz,q_sstar
  use real_time,      ONLY:RT_bands
  use RT_lifetimes,   ONLY:elph_gkkp_expanded_sq
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
@@ -49,7 +49,7 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
  use units,          ONLY:HA2EV
 
  use hamiltonian,    ONLY:B_mat_index
- use RT_occupations, ONLY:RT_el_occ,RT_life_occ,RT_ho_occ
+ use RT_occupations, ONLY:RT_el_occ,RT_life_occ,RT_ho_occ,RT_ph_occ
  use RT_lifetimes,   ONLY:RT_EP_emit_life,l_initial_equilibrium,RT_EP_abs_life,&
 &                         l_RT_skip_ph_abs_lifetimes,q_weight_RT
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_levels,RT_eh_en,RTibz
@@ -67,7 +67,7 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
  real(SP), parameter   :: cutoff= 5.E-3
  !
  ! ... band/k index ...
- integer               :: i_n,i_np,ik_rim,ip_rim,iqbz,ik_m_q,ik_mem,iq_mem,il
+ integer               :: i_n,i_np,ik_rim,ip_rim,iqbz,ik_m_q,ik_mem,iq_mem,il,iq_ibz
  !
  ! ... Gamma components ...
  real(SP) :: P_ph_abs,P_ph_emit,DELTA_E,DELTA_W,pre_factor,&
@@ -83,6 +83,7 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
    if (.not.PAR_IND_Q_bz%element_1D(iqbz)) cycle
    !
    ik_m_q =k%sstar(qindx_S(ik,iqbz,1),1)
+   iq_ibz =q_sstar(iqbz,1)
    !
    iq_mem=PAR_Q_bz_index(iqbz)
    !
@@ -167,23 +168,19 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
            enddo
            !
            ! PH Emission by El/Ho jumps down/up
-           RT_EP_emit_life%abs(i_n,ik_rim)=RT_EP_emit_life%abs(i_n,ik_rim)+&
-&                                          f_times_abs*pre_factor*q_weight_RT(iqbz,il,1)
-           RT_EP_emit_life%emit(i_n,ik_rim)=RT_EP_emit_life%emit(i_n,ik_rim)+&
-&                                           one_m_f_times_emit*pre_factor*q_weight_RT(iqbz,il,1)
+           RT_EP_emit_life%abs(i_n,ik_rim)=RT_EP_emit_life%abs(i_n,ik_rim)+f_times_abs*pre_factor*&
+&                                          (q_weight_RT(iqbz,il,1)+q_weight_RT(iqbz,il,2)*RT_ph_occ%N(il,iq_ibz))
+           RT_EP_emit_life%emit(i_n,ik_rim)=RT_EP_emit_life%emit(i_n,ik_rim)+one_m_f_times_emit*pre_factor*&
+&                                          (q_weight_RT(iqbz,il,1)+q_weight_RT(iqbz,il,2)*RT_ph_occ%N(il,iq_ibz))
            !
            ! T>0 or PH dyn
            !
            if (l_RT_skip_ph_abs_lifetimes) cycle
            !
-           RT_EP_emit_life%abs(i_n,ik_rim)=RT_EP_emit_life%abs(i_n,ik_rim)+&
-&                                          f_times_abs*pre_factor*q_weight_RT(iqbz,il,2)
-           RT_EP_emit_life%emit(i_n,ik_rim)=RT_EP_emit_life%emit(i_n,ik_rim)+&
-&                                           one_m_f_times_emit*pre_factor*q_weight_RT(iqbz,il,2)
            RT_EP_abs_life%emit(i_n,ik_rim)=RT_EP_abs_life%emit(i_n,ik_rim)+&
-&                                          f_times_emit*pre_factor*q_weight_RT(iqbz,il,2)
+&                                          f_times_emit*pre_factor*q_weight_RT(iqbz,il,2)*RT_ph_occ%N(il,iq_ibz)
            RT_EP_abs_life%abs(i_n,ik_rim)=RT_EP_abs_life%abs(i_n,ik_rim)+&
-&                                         one_m_f_times_abs*pre_factor*q_weight_RT(iqbz,il,2)
+&                                         one_m_f_times_abs*pre_factor*q_weight_RT(iqbz,il,2)*RT_ph_occ%N(il,iq_ibz)
            !
          enddo
          !

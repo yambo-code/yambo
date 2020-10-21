@@ -70,7 +70,7 @@ module RT_occupations
    !
    subroutine RT_PH_occupations_alloc(D1,D2)
      integer :: D1(2),D2
-     if (l_phel_scatt.or.l_phel_corr) call RT_occupation_alloc("phonons",RT_ph_occ,D1,D2)
+     if (l_phel_scatt.or.l_phel_corr.or.l_elph_scatt) call RT_occupation_alloc("phonons",RT_ph_occ,D1,D2)
    end subroutine
    !
    subroutine RT_ALL_occupations_free( )

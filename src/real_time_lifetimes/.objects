@@ -1,4 +1,5 @@
-objs = RT_Coulomb_Lifetimes.o RT_Radiative_Lifetimes.o RT_ELPH_Lifetimes.o  \
+objs = RT_Coulomb_Lifetimes.o RT_Radiative_Lifetimes.o \ 
+       RT_ELPH_Lifetimes.o RT_ELPH_Q_weights.o \
        RT_Lifetimes_evaluation_plan.o RT_Lifetimes_Extrapolation.o \
        RT_Lifetimes_save_and_extrap.o RT_Lifetimes_use_delta_Occupations.o \
-       RT_impose_zero_dE_and_dN.o RT_relaxation_logicals.o RT_G_retarded_convolution.o
+       RT_impose_zero_dE_and_dN.o RT_relaxation_logicals.o RT_G_retarded_convolution.o  

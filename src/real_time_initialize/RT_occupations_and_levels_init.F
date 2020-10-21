@@ -24,13 +24,12 @@
 subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_phel_scatt
  use functions,      ONLY:Fermi_fnc,bose_f
  use RT_occupations, ONLY:l_RT_relax_time_approx,RT_RTA_chem,RT_RTA_temp,RT_occupation_clean, &
 &                         RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,RT_el_occ,RT_ho_occ,RT_life_occ,RT_ph_occ
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz,PP_redux_wait 
  use real_time,      ONLY:RT_bands,RT_levels,RT_is_dynamically_dephased,RT_nk
- use ELPH,           ONLY:ph_freqs_sq
+ use ELPH,           ONLY:ph_freqs_sq,PH_Q_modulus,PH_acoustic_branch
  use R_lattice,      ONLY:bz_samp,bz_fine_grid
  use electrons,      ONLY:levels,spin_occ,E_fine_grid,n_sp_pol
  !
@@ -116,12 +115,17 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
  !
  ! Ph Occupations 
  !================
- if (l_phel_scatt) then
+ if (RT_ph_occ%active) then
    do il=RT_ph_occ%D1(1),RT_ph_occ%D1(2)
      do iq=1,RT_ph_occ%D2
-       iqbz = q%k_table(iq,1)
+       iqbz = 1
+       if (iq>1) iqbz = sum(q%nstar(:iq-1))+1
        ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
-       RT_ph_occ%N_ref(il,iq) = bose_f(ph_freq)
+       if (PH_acoustic_branch(il)) then
+         RT_ph_occ%N_ref(il,iq) = PH_Q_modulus(iqbz)*bose_f(ph_freq)/spin_occ
+       else
+         RT_ph_occ%N_ref(il,iq) = bose_f(ph_freq)/spin_occ
+       endif
        RT_ph_occ%N(il,iq)     = RT_ph_occ%N_ref(il,iq)
      enddo
    enddo

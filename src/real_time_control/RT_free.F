@@ -25,6 +25,7 @@ subroutine RT_free( )
  !
  use R_lattice,      ONLY:bz_samp_FineGd_reset
  use DIPOLES,        ONLY:DIP_alloc
+ use ELPH,           ONLY:elph_global_free
  use hamiltonian,    ONLY:H_free
  use xc_functionals, ONLY:E_xc
  use real_time,      ONLY:DbGd_EE_scatt_table,RT_TIME_status,REF_V_xc_sc,&
@@ -87,6 +88,7 @@ subroutine RT_free( )
  YAMBO_FREE(RT_Deph_Matrix)
  YAMBO_FREE(Q_io_map)
  YAMBO_FREE(K_io_map)
+ call elph_global_free( )
  !
  call bz_samp_FineGd_reset(RTibz)
  !

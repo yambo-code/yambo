@@ -628,6 +628,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'DipoleEtresh',   '[DIP] Treshold in the definition of R=P/deltaE',Dip%Energy_treshold,&
 &                                                                               verb_level=V_resp,unit=E_unit)
  call it(defs,'DipApproach',    '[DIP] [G-space v/R-space x/Covariant/Shifted grids]',Dip%approach,verb_level=V_resp)
+ call it(defs,'DipComputed',    '[DIP] [default R P V; extra P2 Spin Orb]',Dip%computed,verb_level=V_resp)
  call it(defs,'ShiftedPaths',   '[DIP] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
  call it('f',defs,'DipPDirect', '[DIP] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
  call it('f',defs,'DipBandsALL','[DIP] Compute all bands range, not only valence and conduction',verb_level=V_resp)

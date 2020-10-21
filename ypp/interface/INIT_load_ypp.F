@@ -39,7 +39,7 @@ subroutine INIT_ypp_load(defs)
 &                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
 &                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,&
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
-&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,&
+&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,&
 &                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_depth,PROJECT_steps,PROJECT_threshold
  use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
@@ -267,6 +267,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'Weight_treshold', 'Print transitions above this weight treshold (max normalized to 1.)',&
 &              EXCITON_weight_treshold,verb_level=V_general)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
+ call it(defs,'WFAverage', 'Average hole or electron wave-function ("h" or "e")',AVE_exc,case="a")
  call it(defs,'Cells', 'Number of cell repetitions in each direction (odd or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell (positive)',r_hole)
  !

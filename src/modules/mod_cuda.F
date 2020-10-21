@@ -29,6 +29,7 @@ module cuda_m
   use cublas
   use cusolverdn_y
 #endif
+  use parallel_m,   ONLY:myid,host_name,PAR_COM_HOST
   implicit none
   public
 
@@ -40,6 +41,7 @@ module cuda_m
   !
   logical:: have_cuda_devices=.false.
   character(256) :: cuda_visible_devices=" "
+  integer:: cuda_gpu_subscription
 
   logical:: cuda_linalg_init=.false.
 #ifdef _CUDA
@@ -71,6 +73,8 @@ module cuda_m
   public :: cuda_getstat
   public :: cuda_devsync
   !
+  public :: cuda_gpu_subscription
+  !
   public :: stream_kind
   public :: stream_default
   public :: stream_h2d
@@ -80,9 +84,35 @@ contains
 
   subroutine cuda_setup()
     implicit none
+    integer :: ndev,myid_host_loc
     integer :: ierr
     !
+    cuda_gpu_subscription=1
+    !
+    ! GPU assignment
+    ! This needs to be done first
+    !
+#if defined _CUDA && defined _MPI
+    !
+    myid_host_loc=PAR_COM_HOST%CPU_id
+    !
+    ierr = cudaGetDeviceCount( ndev )
+    if (ierr/=0) call error("[GPU] cannot get DeviceCount")
+    ierr = cudaSetDevice(mod(myid_host_loc, ndev))
+    if (ierr/=0) call error("[GPU] cannot set device")
+    ierr = cudaDeviceSynchronize()
+    if (ierr/=0) call error("[GPU] cannot device-sync")
+    !
+    cuda_gpu_subscription=PAR_COM_HOST%n_CPU / ndev
+    !
+    !<debug>
+    !write(*,*) "MPI ", myid, " on node ", trim(host_name), " is using GPU: ", mod(myid_host_loc, ndev)
+    !</debug>
+    !
+#endif
+    !
 #if defined _CUDA
+    !
     have_cuda_devices=.false. 
     call get_environment_variable("CUDA_VISIBLE_DEVICES",cuda_visible_devices)
     if (len_trim(cuda_visible_devices) >0) have_cuda_devices=.true.
@@ -90,6 +120,7 @@ contains
     stream_default=cudaforGetDefaultStream()
     ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
     ierr = CudaStreamCreateWithFlags(stream_d2h,cudaStreamNonBlocking)
+    !
 #else
     have_cuda_devices=.false.
 #endif
@@ -115,7 +146,9 @@ contains
 #ifdef _CUDA
     ierr = CudaDeviceSynchronize()
     ierr = CudaGetLastError()
+    !<debug>
     !write(*,*) CudaGetLastMessage(ierr)
+    !</debug>
 #endif
     return
   end function

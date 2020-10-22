@@ -155,6 +155,9 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
            TMP_Emit_lifetime=rZero
            TMP_Abs_lifetime=rZero
            TMP_eh_lifetime=rZero
+           !DEBUG> (FP)
+           TMP_linewidth=rZero
+           !DEBUG< 
            !
            do ip_rim=k_FG%k_range(ik_m_q,1),k_FG%k_range(ik_m_q,2)
              !

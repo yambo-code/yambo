@@ -90,7 +90,7 @@ subroutine PHEL_driver(E,k,q)
  !======
  l_initial_equilibrium=.TRUE.
  !DEBUG> (FP)
- YAMBO_ALLOC(PE_linewidth,(elph_branches,nqibz))
+ YAMBO_ALLOC(PE_linewidth, (elph_branches(1):elph_branches(2),nqibz))
  !DEBUG<
  do iq=1,nqibz
    call PHEL_lifetimes(iq,E,k,(/1,QP_PH_n_G_bands/),k%FGibz,E_FG)

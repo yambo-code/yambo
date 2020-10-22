@@ -47,7 +47,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use X_m,           ONLY:X_alloc,X_mat,X_mat_d,X_t
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,nqibz,bare_qpg,q0_def_norm,RIM_W_E,&
-&                        RIM_W_is_diagonal,RIM_is_diagonal,RIM_W_ng,g_vec,RIM_W,RIM_W_d,f_coeff
+&                        RIM_W_is_diagonal,RIM_W_ng,g_vec,RIM_W,RIM_W_d,f_coeff
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&

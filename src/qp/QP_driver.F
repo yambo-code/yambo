@@ -86,7 +86,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  call parser('RIM_W',l_RIM_W)
  call parser('RIM_W_diag',RIM_W_is_diagonal)
- RIM_W_ng = RIM_ng
+ if(l_RIM_W .and. RIM_W_ng == 0) RIM_W_ng = RIM_ng
  !
  ! The non-local (Vnl) and local (Vxc) part of the xc potentials are not always needed
  ! 

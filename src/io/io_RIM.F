@@ -90,7 +90,7 @@ end function
 integer function io_RIM_W(ID)
  !
  use pars,           ONLY:SP
- use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,RIM_is_diagonal,RL_vol,RIM_RL_vol,&
+ use R_lattice,      ONLY:RIM_W_ng,RIM_n_rand_pts,RIM_is_diagonal,RL_vol,RIM_RL_vol,&
 &                         RIM_W,RIM_W_d,nqibz,RIM_W_E
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on
@@ -102,7 +102,7 @@ integer function io_RIM_W(ID)
  ! Work Space
  !
  real(SP)            ::RL_vol_disk
- integer             ::RIM_ng_disk
+ integer             ::RIM_W_ng_disk
  !
  io_RIM_W=io_connect(desc="RIM_W",type=2,ID=ID)
  !
@@ -117,7 +117,7 @@ integer function io_RIM_W(ID)
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=10,MENU=0)
    !
-   call io_elemental(ID,I0=RIM_ng,DB_I0=RIM_ng_disk,&
+   call io_elemental(ID,I0=RIM_W_ng,DB_I0=RIM_W_ng_disk,&
 &       VAR=' Coulombian RL components        :',CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,L0=RIM_is_diagonal,&
 &       VAR=' Coulombian diagonal components  :',CHECK=.true.,OP=(/"=="/))
@@ -136,8 +136,8 @@ integer function io_RIM_W(ID)
  if (any((/io_sec(ID,:)==2/))) then
    !
    if (read_is_on(ID)) then
-     YAMBO_ALLOC(RIM_W,(nqibz,RIM_ng,RIM_ng))
-     YAMBO_ALLOC(RIM_W_E,(RIM_ng,RIM_ng))
+     YAMBO_ALLOC(RIM_W,(nqibz,RIM_W_ng,RIM_W_ng))
+     YAMBO_ALLOC(RIM_W_E,(RIM_W_ng,RIM_W_ng))
    endif
    !
    call io_bulk(ID,VAR="RIM_W",VAR_SZ=(/shape(RIM_W)/))

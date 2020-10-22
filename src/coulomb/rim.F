@@ -32,7 +32,7 @@ subroutine rim(mode)
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
-&                        RIM_n_rand_pts,RIM_ng,RIM_qpg,RIM_W_is_diagonal,&
+&                        RIM_n_rand_pts,RIM_ng,RIM_W_ng,RIM_qpg,RIM_W_is_diagonal,&
 &                        RIM_id_epsm1_reference,RIM_anisotropy,q_pt,RIM_W,&
 &                        cut_is_slab,idir
  use timing_m,      ONLY:timing
@@ -179,8 +179,8 @@ subroutine rim(mode)
    YAMBO_ALLOC(RIM_qpg,(nqibz,RIM_ng,RIM_ng))
    RIM_qpg=0._SP
  else if (mode == "c") then
-   YAMBO_ALLOC(RIM_W,(nqibz,RIM_ng,RIM_ng))
-   RIM_W=0._SP  
+   YAMBO_ALLOC(RIM_W,(nqibz,RIM_W_ng,RIM_W_ng))
+   RIM_W=0._SP
  end if
  !
  call PARALLEL_index(px,(/nqibz/))
@@ -229,7 +229,7 @@ subroutine rim(mode)
  !
  if (mode == "x") then
    call timing('RIM',OPR='stop')
- else 
+ else
    call timing('RIM-W',OPR='stop')
  end if
  !

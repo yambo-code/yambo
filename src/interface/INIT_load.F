@@ -23,6 +23,7 @@
 !
 subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
+ use com,           ONLY:msg !To be removed
  use drivers,       ONLY:infile_editing
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
@@ -45,7 +46,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,&
-&                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
+&                        bz_samp,RIM_ng,RIM_W_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
 &                        BS_n_g_W,BS_n_g_exch,L_kind,BS_K_cutoff
@@ -382,6 +383,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'RandQpts','[RIM] Number of random q-points in the BZ',RIM_n_rand_pts)
  call it(defs,'RandGvec','[RIM] Coulomb interaction RS components',RIM_ng,G_unit)
  call it('f',defs,'QpgFull', '[F RIM] Coulomb interaction: Full matrix',verb_level=V_RL)
+ !
+ ! RIM-W
+ call it(defs,'RandGvecW','[RIM-W] Screened interaction RS components',RIM_W_ng,G_unit,verb_level=V_RL)
+ call msg('r', 'I understood RandGvecW =', RIM_W_ng)
  !
  ! CUTOFF
  !

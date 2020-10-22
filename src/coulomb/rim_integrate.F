@@ -40,7 +40,7 @@ subroutine rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
  real(DP) :: r1,rfac,RIM_acc(RIM_ng),RIM_acc_anis
  real(SP) :: slab_vz,slab_vplane,lcut,pre_factor
  !
- rfac=8.*k_grid_uc_vol/real(N_out)/(2.*pi)**3. 
+ rfac=8.*k_grid_uc_vol/real(N_out)/(2.*pi)**3.
  !
  if (cut_is_slab) lcut=alat(idir(1))/2.
  !
@@ -69,9 +69,9 @@ subroutine rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
          !kxy
          slab_vplane=sqrt(((q_pt(iq,idir(2))+qr(idir(2),i3)+g_vec(i1,idir(2)))*2.*pi/alat(idir(2)))**2+&
 &                         ((q_pt(iq,idir(3))+qr(idir(3),i3)+g_vec(i1,idir(3)))*2.*pi/alat(idir(3)))**2)
-         !    
-         r1 = (slab_vplane**2+slab_vz**2) 
-         pre_factor=1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)       
+         !
+         r1 = (slab_vplane**2+slab_vz**2)
+         pre_factor=1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)
          RIM_acc(1)=RIM_acc(1)+2._DP*pre_factor*rfac/r1
          !
        end do
@@ -79,7 +79,7 @@ subroutine rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
        RIM_qpg(iq,i2,i1)=RIM_qpg(iq,i1,i2)
      else
        do i3=1,RIM_n_rand_pts
-         ! 
+         !
          v1(:)=g_vec(i1,:)+q_pt(iq,:)+qr(:,i3)
          v2(:)=g_vec(i2,:)+q_pt(iq,:)+qr(:,i3)
          r1=iku_v_norm(v1)*iku_v_norm(v2)
@@ -122,7 +122,6 @@ subroutine rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
  N_out_G=0
  i2max=RIM_ng 
  if (RIM_is_diagonal) i2max=1
- RIM_acc_anis=0._DP
  !
  do i1=1,RIM_n_rand_pts
    !
@@ -182,7 +181,7 @@ subroutine rim_integrate_w(iq,qr,N_out)
  use pars,          ONLY:SP,DP,pi
  use vec_operate,   ONLY:iku_v_norm
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,q0_def_norm,&
-&                        RIM_ng,q_pt,nqibz,b,RIM_W_is_diagonal,&
+&                        RIM_W_ng,q_pt,nqibz,b,RIM_W_is_diagonal,&
 &                        RIM_W,f_coeff,cut_is_slab,idir
  use D_lattice,     ONLY:alat
  !
@@ -193,7 +192,7 @@ subroutine rim_integrate_w(iq,qr,N_out)
  ! Work Space
  !
  integer  :: i1,i1min,i2,i2max,i3
- real(DP) :: func,vslab(RIM_n_rand_pts,RIM_ng)
+ real(DP) :: func,vslab(RIM_n_rand_pts,RIM_W_ng)
  real(DP) :: r1,rfac,RIM_acc
  real(SP) :: slab_vz1,slab_vplane1,slab_vz2,slab_vplane2,lcut,pre_factor
  !
@@ -211,7 +210,7 @@ subroutine rim_integrate_w(iq,qr,N_out)
  !
  i1min=1
  if (iq==1) i1min=2
- do i1=i1min,RIM_ng
+ do i1=i1min,RIM_W_ng
    !
    do i2=1,RIM_n_rand_pts
      !
@@ -229,8 +228,8 @@ subroutine rim_integrate_w(iq,qr,N_out)
  ! q /= 0 all terms
  !
  !$omp parallel do default(shared), private(i1,i2,i3,func,RIM_acc)
- do i1=i1min,RIM_ng 
-   i2max=RIM_ng
+ do i1=i1min,RIM_W_ng 
+   i2max=RIM_W_ng
    if (RIM_W_is_diagonal) i2max=i1
    do i2=i1,i2max
      !
@@ -288,7 +287,7 @@ subroutine rim_integrate_w(iq,qr,N_out)
  ! wings q == 0
  !
  if (RIM_W_is_diagonal) return
- do i2=2,RIM_ng
+ do i2=2,RIM_W_ng
    RIM_acc=0._DP
    !
    do i3=1,RIM_n_rand_pts

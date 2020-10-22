@@ -25,7 +25,7 @@ subroutine interpolate_W(X,Xw,q)
  !
  use pars,          ONLY:SP,pi,zero_dfl,schlen
  use com,           ONLY:msg
- use R_lattice,     ONLY:bz_samp,RIM_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
+ use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
 &                        RIM_W_is_diagonal,RIM_W,RIM_W_d,f_coeff,cut_is_slab,idir,RIM_W_E
  use memory,        ONLY:MEM_err
  use vec_operate,   ONLY:c2a,v_is_zero,v_norm
@@ -48,9 +48,9 @@ subroutine interpolate_W(X,Xw,q)
  !
  integer     :: iq1,ig1,iq2,ig2,iq,ig,igr,igc,ig2max,iomega
  integer     :: iq_ibz,is,find,nn,i,iq_to_start,idm,ng_tmp
- integer     :: idx_q(RIM_ng,q%nibz,5),idx_G(RIM_ng,q%nibz,5),idx_is(RIM_ng,q%nibz,5)
+ integer     :: idx_q(RIM_W_ng,q%nibz,5),idx_G(RIM_W_ng,q%nibz,5),idx_is(RIM_W_ng,q%nibz,5)
  real(SP)    :: f_func(5),lcut, v(5), D_det,PPA_E_RIM,dummy(2)
- complex(SP) :: vX(5,q%nibz,RIM_ng,RIM_ng,2)
+ complex(SP) :: vX(5,q%nibz,RIM_W_ng,RIM_W_ng,2)
  real(SP)    :: qpG(3,5),delta_q(3,2),qpG_trial(3),v1(3),delta_q_cc(3),gr_2d_mod,gc_2d_mod
  integer     :: ID, io_err, ng_save,G_max_ibz(q%nibz)
  character(schlen) :: str_piece(5)
@@ -67,8 +67,8 @@ subroutine interpolate_W(X,Xw,q)
  debug = .false.
  call timing('RIM-W-coeff',OPR='start')
  call k_ibz2bz(q,'a',.true.)
- allocate(f_coeff(6,RIM_ng,RIM_ng,q%nibz,2),stat=MEM_err)
- allocate(RIM_W_E(RIM_ng,RIM_ng),stat=MEM_err)
+ allocate(f_coeff(6,RIM_W_ng,RIM_W_ng,q%nibz,2),stat=MEM_err)
+ allocate(RIM_W_E(RIM_W_ng,RIM_W_ng),stat=MEM_err)
  !
 !!! AG DBG
  if (debug) then
@@ -107,7 +107,7 @@ subroutine interpolate_W(X,Xw,q)
  !Cycles over qpG points
  do iq1=1,q%nibz
    !
-   do ig1=1,RIM_ng
+   do ig1=1,RIM_W_ng
      !
      find = 0
      !
@@ -223,12 +223,12 @@ subroutine interpolate_W(X,Xw,q)
  ! This variable will be used in the future to parallelize the code
  iq_to_start = 1 
  !
- !Initialize G_max_ibz to RIM_ng
- G_max_ibz(1:q%nibz) = RIM_ng
+ !Initialize G_max_ibz to RIM_W_ng
+ G_max_ibz(1:q%nibz) = RIM_W_ng
  !
  !Look if G_max_ibz must be increased
  do iq=1,q%nibz
-   do ig=1,RIM_ng
+   do ig=1,RIM_W_ng
      do nn=2,5
        if (G_max_ibz(idx_q(ig,iq,nn)) < idx_G(ig,iq,nn)) then
          G_max_ibz(idx_q(ig,iq,nn)) = idx_G(ig,iq,nn)
@@ -271,9 +271,9 @@ subroutine interpolate_W(X,Xw,q)
    !
    !Assign X
    do iomega=1,2
-   do ig1=1,RIM_ng
+   do ig1=1,RIM_W_ng
      !
-     ig2max = RIM_ng
+     ig2max = RIM_W_ng
      if (RIM_W_is_diagonal) ig2max=ig1
      do iq1=1,q%nibz
      do ig2=ig1,ig2max 
@@ -297,9 +297,9 @@ subroutine interpolate_W(X,Xw,q)
 !!! AG DBG
  !Print vX into a file
  if (debug) then
-   do ig1=1,RIM_ng
+   do ig1=1,RIM_W_ng
      !
-     ig2max = RIM_ng
+     ig2max = RIM_W_ng
      if (RIM_W_is_diagonal) ig2max=ig1
      do ig2=ig1,ig2max
        !
@@ -335,11 +335,11 @@ subroutine interpolate_W(X,Xw,q)
  D_det = a(1,1)*a(2,2)-a(1,2)*a(2,1)
  !
  do iomega=1,2
- do igr=1,RIM_ng
+ do igr=1,RIM_W_ng
   !
   gr_2D_mod = sqrt(g_vec(igr,1)**2+g_vec(igr,2)**2)
   !
-  ig2max = RIM_ng
+  ig2max = RIM_W_ng
   if (RIM_W_is_diagonal) ig2max=igr
   do igc=igr,ig2max
     !
@@ -433,8 +433,8 @@ subroutine interpolate_W(X,Xw,q)
  !Calculation of RIM-W energies
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !
- do ig2=1,RIM_ng
-   do ig1=1,RIM_ng
+ do ig2=1,RIM_W_ng
+   do ig1=1,RIM_W_ng
      !
      if(ig1==1.and.ig2==1) then
        dummy(:) = f_coeff(1,1,1,1,:)
@@ -468,7 +468,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  !
  use pars,          ONLY:SP,pi,zero_dfl,schlen,DP
  use com,           ONLY:msg
- use R_lattice,     ONLY:bz_samp,RIM_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
+ use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
 &                        RIM_W,q0_def_norm,cut_is_slab,idir,k_grid
  use memory,        ONLY:MEM_err
  use vec_operate,   ONLY:c2a,v_is_zero,v_norm,iku_v_norm
@@ -482,10 +482,10 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  !
  implicit none
  type(bz_samp) :: q
- real(SP)      :: f_coeff(6,RIM_ng,RIM_ng,q%nibz,2)
+ real(SP)      :: f_coeff(6,RIM_W_ng,RIM_W_ng,q%nibz,2)
  real(SP)      :: delta_q(3,2)
- complex(SP)   :: vX(5,q%nibz,RIM_ng,RIM_ng,2)
- integer       :: idx_q(RIM_ng,q%nibz,5),idx_G(RIM_ng,q%nibz,5),idx_is(RIM_ng,q%nibz,5)
+ complex(SP)   :: vX(5,q%nibz,RIM_W_ng,RIM_W_ng,2)
+ integer       :: idx_q(RIM_W_ng,q%nibz,5),idx_G(RIM_W_ng,q%nibz,5),idx_is(RIM_W_ng,q%nibz,5)
  !
  ! Work Space
  !
@@ -503,7 +503,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  Np = 1001
  dq = 1./(Np-1)
  q_sampl = (/0.,0.,0./)
- gmax = RIM_ng
+ gmax = RIM_W_ng
  lcut=alat(idir(1))/2._SP
  dir = (/"x","y"/)
  omega_str = (/"s","d"/)
@@ -741,7 +741,7 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  !
  use pars,          ONLY:SP,pi,zero_dfl,schlen,DP
  use com,           ONLY:msg
- use R_lattice,     ONLY:bz_samp,RIM_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
+ use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
 &                        RIM_W,q0_def_norm,cut_is_slab,idir,k_grid
  use memory,        ONLY:MEM_err
  use vec_operate,   ONLY:c2a,v_is_zero,v_norm,iku_v_norm
@@ -755,10 +755,10 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  !
  implicit none
  type(bz_samp) :: q
- real(SP)      :: f_coeff(6,RIM_ng,RIM_ng,q%nibz)
+ real(SP)      :: f_coeff(6,RIM_W_ng,RIM_W_ng,q%nibz)
  real(SP)      :: delta_q(3,2)
- complex(SP)   :: vX(5,q%nibz,RIM_ng,RIM_ng)
- integer       :: idx_q(RIM_ng,q%nibz,5),idx_G(RIM_ng,q%nibz,5),idx_is(RIM_ng,q%nibz,5)
+ complex(SP)   :: vX(5,q%nibz,RIM_W_ng,RIM_W_ng)
+ integer       :: idx_q(RIM_W_ng,q%nibz,5),idx_G(RIM_W_ng,q%nibz,5),idx_is(RIM_W_ng,q%nibz,5)
  !
  ! Work Space
  !
@@ -778,7 +778,7 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  !
  Np = 21
  dq = 1./(Np-1)
- gmax = RIM_ng
+ gmax = RIM_W_ng
  lcut=alat(idir(1))/2._SP
  out_unit_W_fit=6000
  out_unit_W_num=7000

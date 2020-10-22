@@ -102,13 +102,13 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
      do i_n=bands(1),bands(2)
        !
        Gkkp_sq(i_n,i_n)=phel_gkkp_expanded_sq(i_n,i_n,il,iq_mem,ikbz)
-       !if (sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) cycle
        !
        do i_np=bands(1),bands(2)
          !
          if (i_n.ne.i_np) then
+           !
            Gkkp_sq(i_n,i_np)=phel_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ikbz)
-           !if (sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) cycle
+           !
          endif 
          !
          ! At equilibrium, only metals or band gaps < E_debye can give non-zero ph lifetimes
@@ -189,30 +189,21 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
                f_nk       =  RT_life_occ%dN(i_n,ik_rim)/spin_occ
                Hole_f_nk  = -RT_life_occ%dN(i_n,ik_rim)/spin_occ
              endif
-             !DEBUG
+             !DEBUG 
              !TMP_Emit_lifetime=TMP_Emit_lifetime+(Hole_f_nk*f_mkq - f_nk*Hole_f_mkq)*D_ares
              TMP_Emit_lifetime=TMP_Emit_lifetime+f_nk*Hole_f_mkq*D_ares+Hole_f_nk*f_mkq*D_res
              !DEBUG
              !TMP_Abs_lifetime=TMP_Abs_lifetime+(f_nk*Hole_f_mkq-Hole_f_nk*f_mkq)*D_res
              TMP_Abs_lifetime=TMP_Abs_lifetime  +f_nk*Hole_f_mkq*D_res +Hole_f_nk*f_mkq*D_ares
              !
-           enddo
+           enddo ! ip_rim i.e. (mk-q)
            !
-         enddo
+         enddo ! ik_rim i.e. (nk)
          !
          ! Phonon emission (stimulated and spontaneous)
          RT_PE_life%emit(il,iq_mem)=RT_PE_life%emit(il,iq_mem)+TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
          ! Phonon absorption
          RT_PE_life%abs(il,iq_mem) =RT_PE_life%abs(il,iq_mem)+TMP_Abs_lifetime*pre_factor*N_q
-         !
-         !DEBUG>
-         !if (f_mkq-f_nk<0._SP) then
-         !  write (*,*) "______________"
-         !  write (*,*) "in=",i_n, "ik=",ik,"f_nk=",f_nk,"e_nk=",E_FG%E(i_n,ik,1),";"
-         !  write (*,*) "im=", i_np,"ik_q=",ik_m_q,"f_mkq=",f_mkq,"e_mkq=",E_FG%E(i_np,ik_m_q,1),";"
-         !  write (*,*) "delta_occ=",f_mkq-f_nk,"delta_en=",D_ares
-         !endif
-         !DEBUG<
          !
        enddo ! i_np i.e. (mk-q)
        !

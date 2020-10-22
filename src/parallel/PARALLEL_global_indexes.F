@@ -41,7 +41,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,l_X_terminator
- use drivers,       ONLY:l_life,l_elphoton_corr
 #if defined _QED
  use parallel_m,    ONLY:l_par_SC
 #endif
@@ -91,7 +90,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !==========
  ! Logicals
  !==========
- !
  l_par_DIP          =ENVIRONMENT=="DIPOLES"
  l_par_X_T          =ENVIRONMENT=="Response_T_space"
  l_par_X_G_finite_q =ENVIRONMENT=="Response_G_space_and_IO"
@@ -166,12 +164,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
 #if defined _SCALAPACK
  if (      ENVIRONMENT=="ScaLapacK")           call PARALLEL_global_ScaLapack( )
 #endif
+#if defined _ELPH
+ if (      ENVIRONMENT=="Phonon_Self_Energy")  call PARALLEL_global_Phonon_Self_Energy(E,Xk,q)
+#endif
  !
- !
- !==========================================================================================================
- if ( ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_G_space_and_IO".or.&
-&    (ENVIRONMENT=="Self_Energy".and.l_life.and.l_elphoton_corr) ) then
-   !========================================================================================================
+ !==============================================================================
+ if ( ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_G_space_and_IO") then
+   !============================================================================
    !
    ! Response functions conduction bands
    !

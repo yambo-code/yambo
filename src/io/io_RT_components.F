@@ -26,30 +26,40 @@ integer function io_RT_components(what,ID)
  ! What can be E WF V OBSERV(J,P,M,...) G
  !
  ! def/io_variable_bulk VAR_ID table
- ! VAR__ID=1 is used by io_bulk and should never be used by def/io_variable_bulk
+ ! VAR_ID=1 is used by io_bulk and should never be used by def/io_variable_bulk
  !
  ! ndb.RT_References
- ! 3 Q_WEIGHTS
- ! 4 G_lesser_reference
- ! 10 - 17 REF_lifetimes
+ !  3 Q_WEIGHTS,
+ !  4 G_lesser_reference,
+ !  10 - [..] REF_lifetimes
  !
  ! ndb.RT_carriers
- ! 3 IO_TIME_points
- ! 4 RT_kpt,  5 RT_k_weight,  6 RT_table
- ! 7 - 9 ref_io 
- ! 10 - 21 RT_carriers_objects
+ !  3 IO_TIME_points
+ !  4 RT_kpt,  
+ !  5 RT_k_weight,  
+ !  6 RT_table,
+ !  7 - 9 ref_io,
+ !  10 - [..] RT_carriers_objects,
  !
  ! ndb.RT_G
- ! 3 IO_TIME_points,  2 MEMORY_TIME_POINTs,
- ! 4 dG_lesser, 6 H_rotation
+ !  2 MEMORY_TIME_POINTs,
+ !  3 IO_TIME_points,  
+ !  4 dG_lesser, 
+ !  6 H_rotation
  !
  ! ndb.RT_Obs
- ! 3 IO_TIME_points
- ! 4 Current,  5 Polarization,  6 Spin_magnetization,  7 Orbital Magnetization,  8 A_tot
+ !  3 IO_TIME_points,
+ !  4 Current,  
+ !  5 Polarization,  
+ !  6 Spin_magnetization,  
+ !  7 Orbital Magnetization,  
+ !  8 A_tot
  !
  ! ndb.RT_THETA
- ! 3 IO_TIME_points,  2 MEMORY_TIME_POINTs,
- ! 3 Q_weight,  4 THETA
+ !  3 IO_TIME_points,  
+ !  2 MEMORY_TIME_POINTs,
+ !  3 Q_weight,  
+ !  4 THETA
  !
  !
  use pars,           ONLY:SP,lchlen
@@ -237,6 +247,7 @@ integer function io_RT_components(what,ID)
  ! Carrier components
  !====================
  if ( l_carriers) then
+   !
    if (CARR_RT_IO_t%first_IO(3).or.read_is_on(ID)) then
      call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="def_io_variables")
    endif

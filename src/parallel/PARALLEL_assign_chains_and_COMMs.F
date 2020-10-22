@@ -22,8 +22,8 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2,COMM_index_3,&
-&                                           COMM_index_4,COMM_index_5,&
-&                                           COMM_A2A_1,COMM_A2A_2,COMM_A2A_3,COMM_A2A_4)
+&                                           COMM_index_4,COMM_index_5,COMM_A2A_1,COMM_A2A_2,&
+                                            COMM_A2A_3,COMM_A2A_4)
  !
  use parallel_m,    ONLY:MPI_comm,INTRA_CHAIN,INTER_CHAIN,ncpu,COMM_copy,&
 &                        nchains_group,ncpu_chain,n_groups

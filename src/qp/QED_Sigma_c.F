@@ -353,7 +353,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
        Sc_im=Sc_im+P_square_times_tau(1)/3._SP/SPEED_OF_LIGHT**2*abs(E_diff)*&
 &                  ( QP_time_order_sign*(1._SP-f_k_m_q)*theta_function( E_diff,0.01/HA2EV,0) +&
 &                                              f_k_m_q *theta_function(-E_diff,0.01/HA2EV,0) )
-  
        !
      enddo G_loop
      !

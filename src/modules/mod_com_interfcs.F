@@ -25,32 +25,37 @@ module com_interfcs
  !
  interface
    !
-   subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
-     character(*)     :: mesg
-     character(*)     :: how
-     character(*)     :: val(:)
-     integer,optional :: INDENT
-     logical,optional :: USE_TABS
+   subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
+     use pars,     ONLY:lchlen
+     character(*)                :: how
+     character(*)                :: mesg
+     character(*)                :: val(:)
+     logical,           optional :: USE_TABS
+     integer,           optional :: INDENT
+     character(lchlen), optional :: MSG_string
    end subroutine
    !
-   subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT)
-     character(*)     :: mesg
-     character(*)     :: how
-     integer          :: val(:)
-     character(*), optional :: after_msg
-     integer,optional :: INDENT
-     logical,optional :: USE_TABS
+   subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,MSG_string)
+     use pars,     ONLY:lchlen
+     character(*)                :: how
+     character(*)                :: mesg
+     integer                     :: val(:)
+     character(*),      optional :: after_msg
+     logical,           optional :: USE_TABS
+     integer,           optional :: INDENT
+     character(lchlen), optional :: MSG_string
    end subroutine
    !
-   subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT)
-     use pars,     ONLY:SP,schlen
-     character(*)     :: mesg
-     character(*)     :: how
-     real(SP)         :: val(:)
-     character(*), optional :: after_msg
-     integer,optional :: INDENT
-     logical,optional :: USE_TABS
-     logical,optional :: EXT_FORMAT
+   subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT,MSG_string)
+     use pars,     ONLY:SP,lchlen
+     character(*)                :: how
+     character(*)                :: mesg
+     real(SP)                    :: val(:)
+     character(*),      optional :: after_msg
+     logical,           optional :: USE_TABS
+     integer,           optional :: INDENT
+     logical,           optional :: EXT_FORMAT
+     character(lchlen), optional :: MSG_string
    end subroutine
    !
    function composed_fmt(basic_fmt,n,USE_TABS,INDENT)

@@ -33,7 +33,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics
+&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_scatt,l_phel_corr
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
@@ -238,7 +238,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !If qp limits are requested they are added at the end of the input file
  !
- QP_field=any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run
+ QP_field=any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_phel_corr
  !
  if (QP_field) then
    !
@@ -338,6 +338,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! GPL_EXCLUDE_START
        l_elel_scatt =runlevel_is_on('el_el_scatt')
        l_elph_scatt=runlevel_is_on('el_ph_scatt')
+       l_phel_scatt=runlevel_is_on('ph_el_scatt')
        l_elphoton_scatt=runlevel_is_on('el_photon_scatt')
        ! GPL_EXCLUDE_END
 #endif
@@ -351,16 +352,18 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _NL
        l_nl_optics=runlevel_is_on('nloptics')
 #endif
-#if defined  _ELPH
+#if defined  _ELPH || defined _PHEL
        if (.not.CLOSE_Gs) then
          !
          ! Only in this case ioELPH_err is defined
          !
          if (io_ELPH_err==0.or.l_real_time) then
            l_elph_corr=runlevel_is_on('el_ph_corr')
+           l_phel_corr=runlevel_is_on('ph_el_corr')
          else
            l_elph_corr=.FALSE.
-           call switch_off_runlevel('el_ph_corr',on_name=' ')
+           l_phel_corr=.FALSE.
+           call switch_off_runlevel('el_ph_corr ph_el_corr',on_name=' ')
          endif
          !
          ! GPL_EXCLUDE_START
@@ -368,6 +371,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
          ! GPL_EXCLUDE_END
        else
          l_elph_corr=runlevel_is_on('el_ph_corr')
+         l_phel_corr=runlevel_is_on('ph_el_corr')
          ! GPL_EXCLUDE_START
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
          ! GPL_EXCLUDE_END
@@ -382,7 +386,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! In some cases l_elel_corr is switched on by default
        !
        if (.not.l_elel_corr) then
-         l_elel_corr=(l_gw0.or.l_life).and.(.not.l_elph_corr.and..not.l_elphoton_corr)
+         l_elel_corr=(l_gw0.or.l_life).and.(.not.l_elph_corr.and..not.l_elphoton_corr.and..not.l_phel_corr)
        endif
        !
        ! Check if this runlevel is allowed in the
@@ -437,7 +441,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        call W_duplicate(Xxcw,Xw(3))
        call initactivate(2,'XfnQP_E')
      endif
-     if (.not.l_elel_corr.and..not.l_elph_corr.and..not.l_elphoton_corr) l_elel_corr=.true.
+     if (.not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) l_elel_corr=.true.
 #if defined  _ELPH
      elph_nDBs_used=elph_nDBs
 #endif
@@ -447,9 +451,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_em1d)   call initactivate(1,'dipoles')
      if (l_optics) call initactivate(1,'dipoles')
      if (l_ppa)    call initactivate(1,'em1d dipoles')
-     if (l_gw0.and..not.l_ppa.and..not.l_cohsex.and..not.&
-&        l_HF_and_locXC.and..not.l_elph_corr.and..not.l_elphoton_corr)  &
-&                  call initactivate(1,'em1d dipoles')
+     if (l_gw0.and..not.any((/l_ppa,l_cohsex,l_HF_and_locXC,&
+&                             l_elph_corr,l_phel_corr,l_elphoton_corr/))) call initactivate(1,'em1d dipoles')
      if (l_cohsex) call initactivate(1,'em1s dipoles')
      if (l_bss)    call initactivate(1,'optics dipoles bse')
      if (l_bs_fxc) BSS_mode="t"
@@ -552,7 +555,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
        !
      endif
-#if !defined _ELPH  && !defined _QED
+#if !defined _ELPH  && !defined _QED && !defined _PHEL
      if (l_gw0) l_elel_corr=.true.
 #endif
      !

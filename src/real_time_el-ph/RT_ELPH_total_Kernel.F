@@ -43,6 +43,10 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
  use real_time,      ONLY:elph_gkkp_expanded_sq,l_RT_CCA_Kernel,RT_bands
+#if defined _PHEL
+ use real_time,      ONLY:l_initial_equilibrium
+ use PH_real_time,   ONLY:RT_PH_occupations,RT_PH_occupations_reference
+#endif
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_Xk_ibz_index
@@ -73,6 +77,9 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
  integer               :: i_n,i_np
  ! ... BZ index ...
  integer               :: iqbz,ik_m_q,ik_mem,iq_mem
+#if defined _PHEL
+ integer               :: iqibz
+#endif
  !
  ik_mem=PAR_Xk_ibz_index(ik)
  !
@@ -105,9 +112,17 @@ subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
      if ( (iqbz==1 .and. il<=3) ) cycle
      if ( abs(ph_freq)<3.E-5)     cycle
      !
-     ! N+/-
-     !
      N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
+     !
+     ! This part is wrong: an error in RT_PH_occupations?
+#if defined _PHEL
+     !iqibz = k%sstar(iqbz,1)
+     !if (l_initial_equilibrium) then
+       !N_q    = (RT_PH_occupations_reference(il,iqibz)+(/0._SP,spin_occ/))/spin_occ
+     !else
+       !N_q    = (RT_PH_occupations(il,iqibz)+(/0._SP,spin_occ/))/spin_occ
+     !endif
+#endif
      !
      ! Note the m.e. in elph_gkkp_expanded_sq are stored with indexes order exchanged (see RT_ELPH_initialize)
      !

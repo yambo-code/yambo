@@ -21,27 +21,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_merge_inter_k(what,LIFE)
+subroutine RT_Lifetimes_merge_inter_k(LIFE)
  !
- use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,N_SND_RCV_operations,SND_RCV_op,&
 &                         PAR_COM_Xk_ibz_INDEX,PP_send_and_receive
- use real_time,      ONLY:RT_nk,RT_bands,RTibz
+ use real_time,      ONLY:RTibz
  use R_lattice,      ONLY:nkibz
+ use RT_lifetimes,   ONLY:RT_lifetime
  !
  implicit none
  !
- character(*)            :: what
- real(SP), intent(inout) :: LIFE(RT_bands(1):RT_bands(2),RT_nk)
+ type(RT_lifetime), intent(inout) :: LIFE
  !
  ! Work Space
  !
- integer          :: ik,i_op,myid,i_el,i_cycle,COMM
- integer          :: ic_snd,ic_rcv
- integer          :: NK_to_do(PAR_COM_Xk_ibz_INDEX%n_CPU),IK_to_do(PAR_COM_Xk_ibz_INDEX%n_CPU,nkibz)
+ integer          :: ik,i_op,myid,i_el,i_cycle,COMM,ic_snd,ic_rcv,TAG,&
+&                    NK_to_do(PAR_COM_Xk_ibz_INDEX%n_CPU),IK_to_do(PAR_COM_Xk_ibz_INDEX%n_CPU,nkibz)
  logical          :: do_I_rcv,do_I_snd
  !
  if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) return
+ if (.not.LIFE%active             ) return
  !
  myid=PAR_COM_Xk_ibz_INDEX%CPU_id+1
  COMM=PAR_COM_Xk_ibz_INDEX%COMM
@@ -83,10 +82,12 @@ subroutine RT_Lifetimes_merge_inter_k(what,LIFE)
      do i_el=1,NK_to_do(ic_snd)
        ik=IK_to_do(ic_snd,i_el)
        if (do_I_snd) then
-         call PP_send_and_receive("send",LIFE(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_rcv-1,COMM=COMM)
+         call PP_send_and_receive("send",LIFE%emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_rcv-1,COMM=COMM,TAG=1)
+         call PP_send_and_receive("send",LIFE%abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_rcv-1,COMM=COMM,TAG=2)
        endif
        if (do_I_rcv) then
-         call PP_send_and_receive("receive",LIFE(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_snd-1,COMM=COMM)
+         call PP_send_and_receive("receive",LIFE%emit(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_snd-1,COMM=COMM,TAG=1)
+         call PP_send_and_receive("receive",LIFE%abs(:,RTibz%k_range(ik,1):RTibz%k_range(ik,2)),ic_snd-1,COMM=COMM,TAG=2)
        endif
      enddo
      !

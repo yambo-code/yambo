@@ -32,12 +32,14 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  use electrons,      ONLY:n_sp_pol,spin_occ,levels
  use R_lattice,      ONLY:bz_samp
  use RT_control,     ONLY:CARR_RT_IO_t
- use real_time,      ONLY:RT_t,REF_lifetime,E_E_Hole_lifetime,E_E_Electron_lifetime,   &
-&                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Ho_abs_lifetime, &
-&                         E_P_El_abs_lifetime,RTibz,&
-&                         RT_nk,RT_delta_occupations,RT_bands,&
-&                         RT_obj_alloc,RT_obj_free,RT_levels,&
-&                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime
+ use RT_occupations, ONLY:RT_el_occ
+ use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_abs_life,&
+&                         RT_EP_emit_ref_life,RT_EE_ref_life,RT_EH_ref_life,RT_EP_abs_ref_life,&
+&                         RT_obj_lifetime
+ use RT_operations,  ONLY:EMIT_RT_life_REF,ABS_RT_life_REF,ABS_RT_life_dGAMMA,&
+&                         EMIT_RT_life_dGAMMA,RT_lifetime_to_RT_obj
+ use real_time,      ONLY:RT_t,RTibz,RT_nk,RT_bands,RT_obj_alloc,RT_obj_free,&
+&                         RT_levels,RT_is_dynamically_dephased
  use hamiltonian,    ONLY:E_reference
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,NF90_unlimited
  !
@@ -58,6 +60,21 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  real(SP), pointer :: TMP_VAR(:,:)
  character(schlen) :: dim_names(2)
  !
+ ! LIFETIMES
+ !===========
+ !
+ if ((WHAT=='fill'.or.WHAT=='dump'.or.WHAT=="fill_ref").and.RT_is_dynamically_dephased) then
+   do i_RT=1,RT%nstates
+     i_b    =RT%table(i_RT,1)
+     i_k    =RT%table(i_RT,2)
+     i_k_RT =RT%table(i_RT,3)
+     call RT_lifetime_to_RT_obj(WHAT,i_b,i_k_RT,i_RT,RT_EH_life,RT_EH_ref_life,RT%GAMMA_EH)
+     call RT_lifetime_to_RT_obj(WHAT,i_b,i_k_RT,i_RT,RT_EE_life,RT_EE_ref_life,RT%GAMMA_EE)
+     call RT_lifetime_to_RT_obj(WHAT,i_b,i_k_RT,i_RT,RT_EP_emit_life,RT_EP_emit_ref_life,RT%GAMMA_EP_emit)
+     call RT_lifetime_to_RT_obj(WHAT,i_b,i_k_RT,i_RT,RT_EP_abs_life,RT_EP_abs_ref_life,RT%GAMMA_EP_abs) 
+   enddo
+ endif
+ !
  select case(WHAT)
    !
    case('allocate')
@@ -72,7 +89,6 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
      RT%E_bare=0._SP
      RT%f_bare=0._SP
-     if (allocated(REF_lifetime)) RT%GAMMA_bare=0._SP
      !
      do i_k=1,K%nibz
        do i_k_RT=RTibz%k_range(i_k,1),RTibz%k_range(i_k,2)
@@ -107,9 +123,6 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
      do i_RT=1,RT%nstates
        !
-       Hole_lifetime=0._SP
-       Elec_lifetime=0._SP
-       !
        i_b    =RT%table(i_RT,1)
        i_k    =RT%table(i_RT,2)
        i_k_RT =RT%table(i_RT,3)
@@ -117,77 +130,27 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        ! Occupations
        !
-       if (what=="fill") then
-         RT%delta_f(i_RT)=RT_delta_occupations(i_b,i_k_RT)
-       else if (what=="dump".and.allocated(RT_delta_occupations)) then
-         RT_delta_occupations(i_b,i_k_RT)=RT%delta_f(i_RT)
+       if (WHAT=="fill") then
+         RT%delta_f(i_RT)=RT_el_occ%dN(i_b,i_k_RT)
+       else if (WHAT=="dump".and.allocated(RT_el_occ%dN)) then
+         RT_el_occ%dN(i_b,i_k_RT)=RT%delta_f(i_RT)
        endif
        !
        ! Energies
        !
-       if (what=="fill") then
+       if (WHAT=="fill") then
          RT%delta_E(i_RT)=RT_levels%E(i_b,i_k_RT,i_spin)-RT%E_bare(i_RT)
-       else if (what=="dump".and.allocated(RT_levels%E)) then
+       else if (WHAT=="dump".and.allocated(RT_levels%E)) then
          RT_levels%E(i_b,i_k_RT,i_spin)=RT%delta_E(i_RT)+RT%E_bare(i_RT)
        endif
        !
-       if(l_elphoton_scatt) then
-         if (what=="fill") then
-           RT%dGAMMA_E_PHOT_Hole(i_RT)=E_PHOT_Hole_lifetime(i_b,i_k_RT)
-           RT%dGAMMA_E_PHOT_Electron(i_RT)=E_PHOT_Electron_lifetime(i_b,i_k_RT)
-         else if (allocated(E_PHOT_Hole_lifetime)) then
-           E_PHOT_Hole_lifetime(i_b,i_k_RT)=RT%dGAMMA_E_PHOT_Hole(i_RT)
-           E_PHOT_Electron_lifetime(i_b,i_k_RT)=RT%dGAMMA_E_PHOT_Electron(i_RT)
-         endif
-         if (allocated(E_PHOT_Hole_lifetime)) then
-           Hole_lifetime=Hole_lifetime+E_PHOT_Hole_lifetime(i_b,i_k_RT)
-           Elec_lifetime=Elec_lifetime+E_PHOT_Electron_lifetime(i_b,i_k_RT)
-         endif
-       endif
-       !
-       if(l_elel_scatt) then
-         if (what=="fill") then
-           RT%dGAMMA_E_E_Hole(i_RT)=E_E_Hole_lifetime(i_b,i_k_RT)
-           RT%dGAMMA_E_E_Electron(i_RT)=E_E_Electron_lifetime(i_b,i_k_RT)
-         else if (allocated(E_E_Hole_lifetime)) then
-           E_E_Hole_lifetime(i_b,i_k_RT)=RT%dGAMMA_E_E_Hole(i_RT)
-           E_E_Electron_lifetime(i_b,i_k_RT)=RT%dGAMMA_E_E_Electron(i_RT)
-         endif
-         if (allocated(E_E_Hole_lifetime)) then
-           Hole_lifetime=Hole_lifetime+E_E_Hole_lifetime(i_b,i_k_RT)
-           Elec_lifetime=Elec_lifetime+E_E_Electron_lifetime(i_b,i_k_RT)
-         endif
-       endif
-       !
-       if(l_elph_scatt) then
-         if (what=="fill") then
-           RT%dGAMMA_E_P_Hole(i_RT)=E_P_Hole_lifetime(i_b,i_k_RT)
-           RT%dGAMMA_E_P_Electron(i_RT)=E_P_Electron_lifetime(i_b,i_k_RT)
-           RT%dGAMMA_E_P_Ho_abs(i_RT)=E_P_Ho_abs_lifetime(i_b,i_k_RT)
-           RT%dGAMMA_E_P_El_abs(i_RT)=E_P_El_abs_lifetime(i_b,i_k_RT)
-         else if (allocated(E_P_Hole_lifetime)) then
-           E_P_Hole_lifetime(i_b,i_k_RT)=RT%dGAMMA_E_P_Hole(i_RT) 
-           E_P_Electron_lifetime(i_b,i_k_RT)=RT%dGAMMA_E_P_Electron(i_RT) 
-           E_P_Ho_abs_lifetime(i_b,i_k_RT)=RT%dGAMMA_E_P_Ho_abs(i_RT) 
-           E_P_El_abs_lifetime(i_b,i_k_RT)=RT%dGAMMA_E_P_El_abs(i_RT) 
-         endif
-         if (allocated(E_P_Hole_lifetime)) then
-           Hole_lifetime=Hole_lifetime+E_P_Hole_lifetime(i_b,i_k_RT)    +E_P_Ho_abs_lifetime(i_b,i_k_RT)
-           Elec_lifetime=Elec_lifetime+E_P_Electron_lifetime(i_b,i_k_RT)+E_P_El_abs_lifetime(i_b,i_k_RT)
-         endif
-       endif
-       !
-       if (what=="fill") then
+       if (WHAT=="fill") then
          !
          f_occ =RT%f_bare(i_RT)/spin_occ
          df_occ=RT%delta_f(i_RT)/spin_occ
-         if(l_elel_scatt.or.l_elph_scatt) then
-           RT%delta_GAMMA(i_RT)=  Hole_lifetime+Elec_lifetime
-           Hole_lifetime=Hole_lifetime+REF_lifetime(i_b,i_k_RT,1)+REF_lifetime(i_b,i_k_RT,3)+&
-&                                      REF_lifetime(i_b,i_k_RT,5)+REF_lifetime(i_b,i_k_RT,7)
-           Elec_lifetime=Elec_lifetime+REF_lifetime(i_b,i_k_RT,2)+REF_lifetime(i_b,i_k_RT,4)+&
-&                                      REF_lifetime(i_b,i_k_RT,6)+REF_lifetime(i_b,i_k_RT,8)
-           !
+         if(any((/RT_EP_emit_life%active,RT_EE_life%active,RT_EH_life%active/))) then
+           Elec_lifetime=EMIT_RT_life_REF(i_b,i_k_RT)+EMIT_RT_life_dGAMMA(i_b,i_k_RT)
+           Hole_lifetime=ABS_RT_life_REF(i_b,i_k_RT) +ABS_RT_life_dGAMMA(i_b,i_k_RT)
            RT%NEQ_Lifetime(i_RT)=  (Hole_lifetime+Elec_lifetime)
            if(RT%E_bare(i_RT)> 0._SP) then
              if ((      f_occ)>0._SP) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Hole_lifetime/       f_occ
@@ -203,26 +166,6 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
      enddo
      !
-   case('fill_ref')
-     !
-     ! Reference Lifetimes
-     !
-     if(.not.allocated(REF_lifetime)) return
-     !
-     do i_RT=1,RT%nstates
-       !
-       Hole_lifetime=0._SP
-       Elec_lifetime=0._SP
-       !
-       i_b    =RT%table(i_RT,1)
-       i_k    =RT%table(i_RT,2)
-       i_k_RT =RT%table(i_RT,3)
-       i_spin =RT%table(i_RT,4)
-       !
-       RT%GAMMA_bare(i_RT,:)=REF_lifetime(i_b,i_k_RT,:)
-       !
-     enddo
-     !
    case('ref_io')
      !
      call def_variable_bulk(DB_id,"RT_carriers_E_bare",7,(/RT%nstates/),SP)
@@ -230,10 +173,10 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      call def_variable_bulk(DB_id,"RT_carriers_f_bare",8,(/RT%nstates/),SP)
      call  io_variable_bulk(DB_id,8,R1=RT%f_bare)
      !
-     if (allocated(RT%GAMMA_bare)) then
-       call def_variable_bulk(DB_id,"RT_carriers_GAMMA_bare",9,(/RT%nstates,8/),SP)
-       call  io_variable_bulk(DB_id,9,R2=RT%GAMMA_bare)
-     endif
+     call LOCAL_GAMMA_IO("bare",RT%GAMMA_EH,9)
+     call LOCAL_GAMMA_IO("bare",RT%GAMMA_EE,11)
+     call LOCAL_GAMMA_IO("bare",RT%GAMMA_EP_abs,13)
+     call LOCAL_GAMMA_IO("bare",RT%GAMMA_EP_emit,15)
      !
    case('def_io_variables')
      !
@@ -242,32 +185,22 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
      ! Energies
      !
-     call def_variable_bulk(DB_id,"RT_carriers_delta_E",10,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
+     call def_variable_bulk(DB_id,"RT_carriers_delta_E",17,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
      !
      ! Occupations
      !
-     call def_variable_bulk(DB_id,"RT_carriers_delta_f",11,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
+     call def_variable_bulk(DB_id,"RT_carriers_delta_f",18,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
      !
      ! Lifetimes
      !
      if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
-       call def_variable_bulk(DB_id,"RT_carriers_delta_GAMMA",12,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
-       call def_variable_bulk(DB_id,"RT_NEQ_Lifetime",        13,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
+       call def_variable_bulk(DB_id,"RT_NEQ_Lifetime",19,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
      endif
-     if (l_elel_scatt) then
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_E_Hole",    14,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_E_Electron",15,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
-     endif
-     if (l_elphoton_scatt) then
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_PHOT_Hole",    16,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_PHOT_Electron",17,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
-     endif
-     if (l_elph_scatt) then
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_P_Hole",    18,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_P_Electron",19,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_P_Ho_abs",  20,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
-       call def_variable_bulk(DB_id,"RT_dGAMMA_E_P_El_abs",  21,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
-     endif
+     !
+     call LOCAL_GAMMA_IO("def",RT%GAMMA_EE,20)
+     call LOCAL_GAMMA_IO("def",RT%GAMMA_EH,22)
+     call LOCAL_GAMMA_IO("def",RT%GAMMA_EP_emit,24)
+     call LOCAL_GAMMA_IO("def",RT%GAMMA_EP_abs,26)
      !
    case('do_io_variables')
      !
@@ -277,60 +210,26 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      ! Energies
      !
      call C_F_POINTER(C_LOC(RT%delta_E), TMP_VAR, TMP_SIZE)
-     call io_variable_bulk(DB_id,10,R2=TMP_VAR,IPOS=IPOS)
+     call io_variable_bulk(DB_id,17,R2=TMP_VAR,IPOS=IPOS)
      !
      ! Occupations
      !
      call C_F_POINTER(C_LOC(RT%delta_f), TMP_VAR, TMP_SIZE)
-     call io_variable_bulk(DB_id,11,R2=TMP_VAR,IPOS=IPOS)
+     call io_variable_bulk(DB_id,18,R2=TMP_VAR,IPOS=IPOS)
      !
      ! Lifetimes
      !
      if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
        !
-       call C_F_POINTER(C_LOC(RT%delta_GAMMA), TMP_VAR, TMP_SIZE)
-       call io_variable_bulk(DB_id,12,R2=TMP_VAR,IPOS=IPOS)
-       !
        call C_F_POINTER(C_LOC(RT%NEQ_Lifetime), TMP_VAR, TMP_SIZE)
-       call io_variable_bulk(DB_id,13,R2=TMP_VAR,IPOS=IPOS)
-       !
-     endif
-     !
-     if (l_elel_scatt) then
-       !
-       call C_F_POINTER(C_LOC(RT%dGAMMA_E_E_Hole), TMP_VAR, TMP_SIZE)
-       call io_variable_bulk(DB_id,14,R2=TMP_VAR,IPOS=IPOS)
-       !
-       call C_F_POINTER(C_LOC(RT%dGAMMA_E_E_Electron), TMP_VAR, TMP_SIZE)
-       call io_variable_bulk(DB_id,15,R2=TMP_VAR,IPOS=IPOS)
-       !
-     endif
-     !
-     if (l_elphoton_scatt) then
-       !
-       call C_F_POINTER(C_LOC(RT%dGAMMA_E_PHOT_Hole), TMP_VAR, TMP_SIZE)
-       call io_variable_bulk(DB_id,16,R2=TMP_VAR,IPOS=IPOS)
-       !
-       call C_F_POINTER(C_LOC(RT%dGAMMA_E_PHOT_Electron), TMP_VAR, TMP_SIZE)
-       call io_variable_bulk(DB_id,17,R2=TMP_VAR,IPOS=IPOS)
-       !
-     endif
-     !
-     if (l_elph_scatt) then
-       !
-       call C_F_POINTER(C_LOC(RT%dGAMMA_E_P_Hole), TMP_VAR, TMP_SIZE)
-       call io_variable_bulk(DB_id,18,R2=TMP_VAR,IPOS=IPOS)
-       !
-       call C_F_POINTER(C_LOC(RT%dGAMMA_E_P_Electron), TMP_VAR, TMP_SIZE)
        call io_variable_bulk(DB_id,19,R2=TMP_VAR,IPOS=IPOS)
        !
-       call C_F_POINTER(C_LOC(RT%dGAMMA_E_P_Ho_abs), TMP_VAR, TMP_SIZE)
-       call io_variable_bulk(DB_id,20,R2=TMP_VAR,IPOS=IPOS)
-       !
-       call C_F_POINTER(C_LOC(RT%dGAMMA_E_P_El_abs), TMP_VAR, TMP_SIZE)
-       call io_variable_bulk(DB_id,21,R2=TMP_VAR,IPOS=IPOS)
-       !
      endif
+     !
+     call LOCAL_GAMMA_IO("IO",RT%GAMMA_EE,20)
+     call LOCAL_GAMMA_IO("IO",RT%GAMMA_EH,22)
+     call LOCAL_GAMMA_IO("IO",RT%GAMMA_EP_emit,24)
+     call LOCAL_GAMMA_IO("IO",RT%GAMMA_EP_abs,26)
      !
    case('free')
      !
@@ -360,6 +259,29 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        enddo
      enddo
      !
+   end subroutine
+   !
+   subroutine LOCAL_GAMMA_IO(what,LIFE,N)
+     type(RT_obj_lifetime), target:: LIFE
+     character(*)                 :: what
+     integer                      :: N
+     if (.not.LIFE%active) return
+     if (what=="bare") then
+       call def_variable_bulk(DB_id,trim(LIFE%kind)//"_GAMMA_emit_bare",N,(/RT%nstates/),SP)
+       call  io_variable_bulk(DB_id,N,R1=LIFE%emit_bare)
+       call def_variable_bulk(DB_id,trim(LIFE%kind)//"_GAMMA_abs_bare",N+1,(/RT%nstates/),SP)
+       call  io_variable_bulk(DB_id,N+1,R1=LIFE%abs_bare)
+     endif
+     if (what=="def") then
+       call def_variable_bulk(DB_id,trim(LIFE%kind)//"_GAMMA_emit",N,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
+       call def_variable_bulk(DB_id,trim(LIFE%kind)//"_GAMMA_abs",N+1,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
+     endif
+     if (what=="IO") then
+       call C_F_POINTER(C_LOC(LIFE%emit), TMP_VAR, TMP_SIZE)
+       call io_variable_bulk(DB_id,N,R2=TMP_VAR,IPOS=IPOS)
+       call C_F_POINTER(C_LOC(LIFE%abs), TMP_VAR, TMP_SIZE)
+       call io_variable_bulk(DB_id,N+1,R2=TMP_VAR,IPOS=IPOS)
+     endif
    end subroutine
    !
 end subroutine RT_carriers_object

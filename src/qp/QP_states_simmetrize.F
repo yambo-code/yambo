@@ -95,13 +95,13 @@ subroutine QP_states_simmetrize(en,what,V_real,V_complex,state_is_2do,warn_me)
      if (i2<first_el(i1)+n_of_el(i1)-1) states_ch=trim(states_ch)//"-"
      !
      if (present(V_real)) then
-       if (check_the_diffs) then 
+       if (check_the_diffs.and.abs(V_real(inx_first))>0._SP) then 
          DIFF=(V_real(inx)-V_real(inx_first))/real( n_of_el(i1) )/V_real(inx_first)
        endif
        r_sum=r_sum+V_real(inx)/real( n_of_el(i1) )
      endif
      if (present(V_complex)) then
-       if (check_the_diffs) then
+       if (check_the_diffs.and.abs(V_complex(inx_first))>0._SP) then 
          DIFF=abs(V_complex(inx)-V_complex(inx_first))/real( n_of_el(i1) )/abs(V_complex(inx_first))
        endif
        c_sum=c_sum+V_complex(inx)/real( n_of_el(i1) )

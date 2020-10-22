@@ -206,6 +206,9 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
    return
  endif
  !
+ ! TIMES...
+ !----------
+ !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID)
  io_err=io_RT_components(trim(db_name),ID)
  !
@@ -220,6 +223,8 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
    endif
  enddo
  !
+ ! Occupations...
+ !----------------
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=DUMP,ID=ID)
  io_err=io_RT_components(trim(db_name),ID)
  !

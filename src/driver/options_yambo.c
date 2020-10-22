@@ -28,6 +28,7 @@
 void options_yambo(struct options_struct options[],int *i_opt)
 { 
  char *desc;
+ int i_desc=0;
  desc="Self-Energy";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Hartree-Fock";
@@ -38,9 +39,14 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="GW approximation";
- options[*i_opt].long_desc[0]="<string>=(p)PA/(c)HOSEX/(r)eal-axis";
+ options[*i_opt].long_desc[i_desc]="<string>=(p)PA/(c)HOSEX/(r)eal-axis";
 #if defined _ELPH
- options[*i_opt].long_desc[1]="<string>=fan";
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="<string>=fan";
+#endif
+#if defined _ELPH
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="<string>=X";
 #endif
  options[*i_opt].long_opt="gw0";
  options[*i_opt].short_opt='p';

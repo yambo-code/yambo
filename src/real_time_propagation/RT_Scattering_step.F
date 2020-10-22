@@ -47,15 +47,12 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
  ! Only after the G lesser has been propagated, the occupations are updated
  ! Here remember that the occupations stored in the module are always equal to dG_inp
  ! 
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP,cI,rZERO
  use electrons,      ONLY:spin_occ
- use real_time,      ONLY:RT_bands,RTibz,l_elel_scatt,l_elph_scatt,l_elphoton_scatt,          &
-&                         l_RT_relax_time_approx,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,    &
-&                         RT_E_occupations,RT_H_occupations,l_RT_CCA_Kernel, &
-&                         RT_delta_occupations,REF_lifetime,E_E_Electron_lifetime,E_E_Hole_lifetime,              &
-&                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,         &
-&                         E_PHOT_Electron_lifetime,E_PHOT_Hole_lifetime,l_RT_include_eq_scatt,                     &
-&                         RT_is_statically_dephased,RT_is_dynamically_dephased,RT_Deph_Matrix,G_lesser_reference
+ use real_time,      ONLY:RT_bands,RTibz,l_RT_CCA_Kernel,l_RT_include_eq_scatt,RT_is_statically_dephased,&
+&                         RT_is_dynamically_dephased,RT_Deph_Matrix,G_lesser_reference
+ use RT_occupations, ONLY:RT_el_occ,RT_ho_occ,l_RT_relax_time_approx,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty
+ use RT_operations,  ONLY:ABS_RT_life_REF,EMIT_RT_life_REF,ABS_RT_life_dGAMMA,EMIT_RT_life_dGAMMA
  !
  implicit none
  !
@@ -76,35 +73,26 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
    ! 1=electrons
    ! 2=holes
    !
-   f_(1)=RT_E_occupations(ib,ik)
-   f_(2)=RT_H_occupations(ib,ik)
+   f_(1)=RT_el_occ%N(ib,ik)
+   f_(2)=RT_ho_occ%N(ib,ik)
    !
    f0(1)=         aimag(G_lesser_reference(ib,ib,ik))
    f0(2)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
-   df(1)= RT_delta_occupations(ib,ik)
-   df(2)=-RT_delta_occupations(ib,ik)
+   df(1)= RT_el_occ%dN(ib,ik)
+   df(2)=-RT_el_occ%dN(ib,ik)
    !
    ! The GAMMA0 term could be moved inside RT_apply_RWA.F
    ! For the moment I keep it here, together with the rest of the relaxation term
    !
-   GAMMA0(1)=REF_lifetime(ib,ik,2)+REF_lifetime(ib,ik,4)+REF_lifetime(ib,ik,6)+REF_lifetime(ib,ik,8)
-   GAMMA0(2)=REF_lifetime(ib,ik,1)+REF_lifetime(ib,ik,3)+REF_lifetime(ib,ik,5)+REF_lifetime(ib,ik,7)
+   GAMMA0(1)=EMIT_RT_life_REF(ib,ik)
+   GAMMA0(2)= ABS_RT_life_REF(ib,ik)
    !
-   dGAMMA(1)=0._SP
-   dGAMMA(2)=0._SP
+   dGAMMA(1)=rZERO
+   dGAMMA(2)=rZERO
+   !
    if(.not.l_RT_relax_time_approx) then
-     if (l_elel_scatt) then
-       dGAMMA(1)=E_E_Electron_lifetime(ib,ik)
-       dGAMMA(2)=E_E_Hole_lifetime(ib,ik)
-     endif
-     if (l_elphoton_scatt) then
-       dGAMMA(1)=dGAMMA(1)+E_PHOT_Electron_lifetime(ib,ik)
-       dGAMMA(2)=dGAMMA(2)+E_PHOT_Hole_lifetime(ib,ik)
-     endif
-     if (l_RT_CCA_Kernel.and.l_elph_scatt) then
-       dGAMMA(1)=dGAMMA(1)+ E_P_Electron_lifetime(ib,ik)+E_P_El_abs_lifetime(ib,ik)
-       dGAMMA(2)=dGAMMA(2)+ E_P_Hole_lifetime(ib,ik)    +E_P_Ho_abs_lifetime(ib,ik)
-     endif
+     dGAMMA(1)=EMIT_RT_life_dGAMMA(ib,ik)
+     dGAMMA(2)= ABS_RT_life_dGAMMA(ib,ik)
    endif
    !
    if (RT_is_statically_dephased) GAMMA0(1)=GAMMA0(1)+RT_Deph_Matrix(ib,ib,RTibz%k_map(ik))

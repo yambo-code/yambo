@@ -21,9 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
+subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir,E_k_dir,E_k_ind)
  !
- use units
  use pars,          ONLY:SP
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
  !
@@ -35,6 +34,8 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  integer , optional ::Nbf(n_sp_pol)
  integer , optional ::Nbm(n_sp_pol)
  integer , optional ::I_dir(2)
+ integer , optional ::E_k_dir(n_sp_pol)
+ integer , optional ::E_k_ind(n_sp_pol,2)
  ! 
  ! Work Space
  ! 
@@ -51,6 +52,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  real(SP) ::E_g_dir_(1+(n_sp_pol-1)*2,2)
  real(SP) ::E_g_ind_(1+(n_sp_pol-1)*2,3) 
  integer  ::Nbf_(n_sp_pol),I_dir_(2),Nbm_(n_sp_pol)
+ integer  ::E_k_dir_(n_sp_pol),E_k_ind_(n_sp_pol,2)
  !
  if(sum(E%f(:,:,:))<1._SP-filled_tresh) call error('The system contains less than 1 electron')
  !
@@ -58,6 +60,8 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  !
  E_g_dir_=0
  E_g_ind_=0
+ E_k_dir_=0
+ E_k_ind_=0
  Nbm_=0
  Nbf_=0
  !
@@ -102,11 +106,13 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  E_cb_max=0._SP
  do i_sp_pol=1,n_sp_pol
    if(Nbf_(i_sp_pol)>0) then
-     E_vb_min(i_sp_pol)=minval(E%E(Nbf_(i_sp_pol),:,i_sp_pol))
-     E_vb_max(i_sp_pol)=maxval(E%E(Nbf_(i_sp_pol),:,i_sp_pol))
+     E_vb_min(i_sp_pol)  =minval(E%E(Nbf_(i_sp_pol),:,i_sp_pol))
+     E_vb_max(i_sp_pol)  =maxval(E%E(Nbf_(i_sp_pol),:,i_sp_pol))
+     E_k_ind_(i_sp_pol,1)=maxloc(E%E(Nbf_(i_sp_pol),:,i_sp_pol), DIM=1)
    endif
-   E_cb_min(i_sp_pol)=minval(E%E(Nbf_(i_sp_pol)+1,:,i_sp_pol))
-   E_cb_max(i_sp_pol)=maxval(E%E(Nbf_(i_sp_pol)+1,:,i_sp_pol))
+   E_cb_min(i_sp_pol)  =minval(E%E(Nbf_(i_sp_pol)+1,:,i_sp_pol))
+   E_k_ind_(i_sp_pol,2)=minloc(E%E(Nbf_(i_sp_pol)+1,:,i_sp_pol), DIM=1)
+   E_cb_max(i_sp_pol)  =maxval(E%E(Nbf_(i_sp_pol)+1,:,i_sp_pol))
  enddo
  !
  E%E_VBM(:n_sp_pol)=E_vb_max
@@ -150,6 +156,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
            i_sp_ref=i_sp_pol
            j_sp_ref=j_sp_pol
            I_dir_=(/Nbf_(i_sp_pol),ik/)
+           E_k_dir_(i_sp_pol)=ik
          endif
        enddo
      enddo
@@ -165,8 +172,10 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
      !
      E_g_dir_(i_sp_pol+1,:)=(/100._SP,-100._SP/)
      do ik=1,E%nk
-       E_g_dir_(i_sp_pol+1,1)=min(E_g_dir_(i_sp_pol+1,1),&
-&                      E%E(Nbf_(i_sp_pol)+1,ik,i_sp_pol)-E%E(Nbf_(i_sp_pol),ik,i_sp_pol) )
+       if(E%E(Nbf_(i_sp_pol)+1,ik,i_sp_pol)-E%E(Nbf_(i_sp_pol),ik,i_sp_pol)<E_g_dir_(i_sp_pol+1,1)) then
+          E_g_dir_(i_sp_pol+1,1)= E%E(Nbf_(i_sp_pol)+1,ik,i_sp_pol)-E%E(Nbf_(i_sp_pol),ik,i_sp_pol) 
+          E_k_dir_(i_sp_pol)    = ik
+       endif
        E_g_dir_(i_sp_pol+1,2)=max(E_g_dir_(i_sp_pol+1,2),&
 &                      E%E(Nbf_(i_sp_pol)+1,ik,i_sp_pol)-E%E(Nbf_(i_sp_pol),ik,i_sp_pol) )
      enddo
@@ -184,12 +193,14 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
    endif
  enddo
  !
- if (n_sp_pol==1) E%E_dir_gap(1)=E_g_dir_(1,1)
+ if (n_sp_pol==1) E%E_dir_gap(1)  =E_g_dir_(1,1)
  if (n_sp_pol==2) E%E_dir_gap(1:2)=E_g_dir_(2:3,1)
  !
  ! From Shadow variables to optional variables
  !
  if (present(I_dir))   I_dir=I_dir_
+ if (present(E_k_dir)) E_k_dir=E_k_dir_
+ if (present(E_k_ind)) E_k_ind=E_k_ind_
  if (present(E_g_dir)) E_g_dir=E_g_dir_
  if (present(E_g_ind)) E_g_ind=E_g_ind_
  if (present(Nbf))     Nbf=Nbf_

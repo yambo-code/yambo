@@ -25,16 +25,15 @@ subroutine RT_output_INIT( )
  !
  ! RT File Names & HEADERS
  ! 
- use pars,           ONLY:schlen,SP
+ use pars,           ONLY:schlen
  use RT_output_m,    ONLY:RT_FILE_add,YPP_append,N_MAX_RT_X_order
  use electrons,      ONLY:n_spin
  use com,            ONLY:msg
  use drivers,        ONLY:l_use_Hxc_collisions,l_elel_scatt,l_elph_scatt
  use stderr,         ONLY:intc
- use real_time,      ONLY:l_lftm_fit_temperatures
+ use RT_lifetimes,   ONLY:l_RT_lifetimes_Tfit,RT_EP_abs_life
  use C_driver,       ONLY:code_bin
  use timing_m,       ONLY:timing
- use D_lattice,      ONLY:Bose_Temp
  !
  implicit none
  !
@@ -93,31 +92,19 @@ subroutine RT_output_INIT( )
  !
  ! GPL_EXCLUDE_START 
  ! 
- call RT_FILE_add('mean_EPlifetimes',TITLES=(/"Time[fs]     ","Ho.(em) [meV]","El.(em) [meV]"/))
- if(Bose_Temp>0._SP ) then
-   call RT_FILE_add(TITLES=(/"Ho.(abs)[meV]","El.(abs)[meV]"/))
- endif
- if(l_lftm_fit_temperatures) then
-   call RT_FILE_add(TITLES=(/" T Hole  [K] "," T Elec  [K] "/))
- endif
+ call RT_FILE_add('mean_EPlifetimes',TITLES=(/"Time [fs]       ","Hole  Abs  [meV]","Elec  Emit [meV]"/))
+ if(RT_EP_abs_life%active) call RT_FILE_add(TITLES=(/"Hole Emit [meV]","Elec Abs  [meV]"/))
+ if(l_RT_lifetimes_Tfit) call RT_FILE_add(TITLES=(/" T Hole  [K] "," T Elec  [K] "/))
  !
- call RT_FILE_add('mean_EElifetimes',TITLES=(/"Time[fs]  ","Hole [meV]","Elec [meV]"/))
- if(l_lftm_fit_temperatures) then
-   call RT_FILE_add(TITLES=(/" T Hole  [K] "," T Elec  [K] "/))
- endif
+ call RT_FILE_add('mean_EElifetimes',TITLES=(/"Time [fs]       ","Hole  Abs  [meV]","Elec  Emit [meV]"/))
+ if(l_RT_lifetimes_Tfit) call RT_FILE_add(TITLES=(/" T Hole  [K] "," T Elec  [K] "/))
  !
  call RT_FILE_add('mean_RADlifetimes',(/"Time[fs] ","Hole [ps]","Elec [ps]"/))
  !
  call RT_FILE_add('N_dN_E_conservation_factors',(/"Time[fs] "/))
- if(l_elph_scatt) then
-   call RT_FILE_add(TITLES=(/"e-p val","e-p con"/))
-   if(Bose_Temp>0._SP) then
-     call RT_FILE_add(TITLES=(/"e-p (abs) val","e-p (abs) con"/))
-   endif
- endif
- if(l_elel_scatt) then
-   call RT_FILE_add(TITLES=(/"e-e val","e-e con"/))
- endif
+ if(l_elph_scatt) call RT_FILE_add(TITLES=(/"e-p Hole Abs ","e-p Elec Emit"/))
+ if (RT_EP_abs_life%active) call RT_FILE_add(TITLES=(/"e-p Elec Abs ","e-p Hole Emit"/))
+ if(l_elel_scatt) call RT_FILE_add(TITLES=(/"e-e Hole","e-e Elec"/))
  !
  call RT_FILE_add('BGR',(/"Time[fs]  "/))
  call RT_FILE_add(TITLES=(/"DirGap [meV]","IndGap [meV]"/))

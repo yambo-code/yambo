@@ -50,10 +50,6 @@ subroutine PARSER_convert_INT(ivar,v_descr,force_RL)
  else if (index(v_descr,'eV')/=0) then
    if (force_RL     ) call PARSER_close_G(ivar,'tRL')
    if (.not.force_RL) call PARSER_close_G(ivar,'teV')
- !else if (index(v_descr,'Mb')/=0) then
- !  ivar=ivar*Kilobyte/Megabyte
- !else if (index(v_descr,'Gb')/=0) then
- !  ivar=ivar*Kilobyte/Gigabyte
  endif
  !
 end subroutine

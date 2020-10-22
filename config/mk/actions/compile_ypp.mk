@@ -13,7 +13,7 @@ ypp_ph: ext-libs
 	@+LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELPH"; $(mk_src)
 	@+LIBS2DO="$(YPPPH_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp";  ADF="-D_YPP_ELPH"; $(mk_ypp_src)
 	@+X2DO="ypp_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPP_MAIN_LIBS_LD)"; \
-	X_ypp_LIBS="$(YPPPH_LIBS_LD) elph"; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_YPP_ELPH"; $(mk_ypp)
+	X_ypp_LIBS="$(YPPPH_LIBS_LD) el-ph"; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_YPP_ELPH"; $(mk_ypp)
 ypp_rt: ext-libs
 	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
 	@+LIBS2DO="$(YLIBDRIVER)"; NAME="ypp_rt_driver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/lib/yambo/driver/src"; ADF="-D_RT -D_ELPH -D_YPP_RT -D_ypp"; $(mk_external_yambo_lib)

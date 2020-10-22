@@ -28,6 +28,7 @@
 void options_projects(struct options_struct options[],int *i_opt)
 {
  char *desc;
+ int i_desc=0;
  desc="Hamiltonians & Potentials";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Self-Consistent Single-Particle Calculations";
@@ -114,7 +115,26 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="NEQ scattering kind";
- options[*i_opt].long_desc[0]="<string>=(e)lectrons/(p)honons/p(h)otons/(a)ll";
+ i_desc=0;
+ options[*i_opt].long_desc[i_desc]="<string>=(ee):electron-electron interaction";
+#if defined _QED 
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="<string>=(eh):electron-photon interaction";
+#endif
+#if defined _ELPH 
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="<string>=(ep):electron-phonon interaction";
+#endif
+#if defined _ELPH 
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="<string>=(pe):phonon-electron interaction";
+#endif
+#if defined _PHEL || defined _PHEL
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]=" ";
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="Use -scattering ee+ep/ee+pe to activate more than one kind simultaneously";
+#endif
  options[*i_opt].long_opt="scattering";
  options[*i_opt].short_opt='s';
  options[*i_opt].bin="yambo_rt";
@@ -123,14 +143,19 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Correlation kind";
-#if defined _QED && defined _ELPH
- options[*i_opt].long_desc[0]="<string>=(e)lectrons/p(h)otons/(p)honons/(a)ll";
+ i_desc=0;
+ options[*i_opt].long_desc[i_desc]="<string>=(ee):electron-electron interaction";
+#if defined _QED 
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="<string>=(eh):electron-photon interaction";
 #endif
-#if defined _QED && !defined _ELPH
- options[*i_opt].long_desc[0]="<string>=(e)lectrons/p(h)otons/(a)ll";
+#if defined _ELPH 
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="<string>=(ep):electron-phonon interaction";
 #endif
-#if !defined _QED && defined _ELPH
- options[*i_opt].long_desc[0]="<string>=(e)lectrons/(p)honons/(a)ll";
+#if defined _ELPH 
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="<string>=(pe):phonon-electron interaction";
 #endif
  options[*i_opt].long_opt="correlation";
  options[*i_opt].short_opt='c';

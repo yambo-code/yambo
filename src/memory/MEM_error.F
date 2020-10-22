@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,16 +21,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_message(what)
+subroutine MEM_error(what)
  !
- use real_time
- use RT_control
- use units
+ use memory,       ONLY:MEM_err,MEM_msg
+ use LIVE_t,       ONLY:LIVE_message
+ use stderr,       ONLY:intc
  !
  implicit none
  !
- character(*) :: what
+ character(*), intent(in) :: what
  !
- write (*,*) NE_i_time,"(I_TIME)",NE_time*AUT2FS,"(TIME)",what
+ ! Error Message
+ !===============
+ if (MEM_err/=0) then
+   call LIVE_message("[ERROR] Allocation of "//what//" failed with code "//trim(intc(MEM_err)))
+   call error(trim(MEM_msg))
+ endif
  !
-end subroutine
+end subroutine MEM_error

@@ -27,8 +27,9 @@ subroutine io_RT_components_Reference(ID)
  use drivers,        ONLY:l_elph_scatt
  use R_lattice,      ONLY:nqbz
  use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,read_is_on
- use real_time,      ONLY:RT_init_occupation_reference,q_weight_RT,REF_lifetime,&
-&                         G_lesser_reference,RT_nk,RT_nbands
+ use RT_lifetimes,   ONLY:RT_lifetime,RT_EE_REF_life,RT_EP_emit_REF_life,RT_EP_abs_REF_life,&
+&                         RT_PE_REF_life,RT_EH_REF_life
+ use real_time,      ONLY:q_weight_RT,G_lesser_reference,RT_nk,RT_nbands,RT_is_dynamically_dephased
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
 #endif
@@ -36,6 +37,10 @@ subroutine io_RT_components_Reference(ID)
 #include<memory.h>
  !
  integer, intent(in)  :: ID
+ !
+ ! Work Space
+ !
+ integer              :: VAR_ID
  !
 #if defined _ELPH
  !
@@ -53,31 +58,18 @@ subroutine io_RT_components_Reference(ID)
  !
 #endif
  !
- if (allocated(REF_lifetime)) then
+ if (RT_is_dynamically_dephased) then
    !
-   call def_variable_bulk(ID,"RT_E_E_REF_Hole_lifetime",10,(/RT_nbands,RT_nk/),SP)
-   call  io_variable_bulk(ID,10,R2=REF_lifetime(:,:,1))
-   !
-   call def_variable_bulk(ID,"RT_E_E_REF_Electron_lifetime",11,(/RT_nbands,RT_nk/),SP)
-   call  io_variable_bulk(ID,11,R2=REF_lifetime(:,:,2))
-   !
-   call def_variable_bulk(ID,"RT_E_P_REF_Hole_lifetime",12,(/RT_nbands,RT_nk/),SP)
-   call  io_variable_bulk(ID,12,R2=REF_lifetime(:,:,3))
-   !
-   call def_variable_bulk(ID,"RT_E_P_REF_Electron_lifetime",13,(/RT_nbands,RT_nk/),SP)
-   call  io_variable_bulk(ID,13,R2=REF_lifetime(:,:,4))
-   !
-   call def_variable_bulk(ID,"RT_E_P_REF_Ho_abs_lifetime",14,(/RT_nbands,RT_nk/),SP)
-   call  io_variable_bulk(ID,14,R2=REF_lifetime(:,:,5))
-   !
-   call def_variable_bulk(ID,"RT_E_P_REF_El_abs_lifetime",15,(/RT_nbands,RT_nk/),SP)
-   call  io_variable_bulk(ID,15,R2=REF_lifetime(:,:,6))
-   !
-   call def_variable_bulk(ID,"RT_E_PHOT_REF_Hole_abs_lifetime",16,(/RT_nbands,RT_nk/),SP)
-   call  io_variable_bulk(ID,16,R2=REF_lifetime(:,:,7))
-   !
-   call def_variable_bulk(ID,"RT_E_PHOT_REF_El_abs_lifetime",17,(/RT_nbands,RT_nk/),SP)
-   call  io_variable_bulk(ID,17,R2=REF_lifetime(:,:,8))
+   VAR_ID=10
+   call elemental_LIFE_IO(RT_EE_REF_life)
+   VAR_ID=12
+   call elemental_LIFE_IO(RT_EP_emit_REF_life)
+   VAR_ID=14
+   call elemental_LIFE_IO(RT_EP_abs_REF_life)
+   VAR_ID=16
+   call elemental_LIFE_IO(RT_EH_REF_life)
+   VAR_ID=18
+   call elemental_LIFE_IO(RT_PE_REF_life)
    !
  endif
  !
@@ -86,10 +78,19 @@ subroutine io_RT_components_Reference(ID)
    call def_variable_bulk(ID,"G_lesser_reference",4,(/2,RT_nbands,RT_nbands,RT_nk/),SP)
    call  io_variable_bulk(ID,4,C3=G_lesser_reference)
    !
-#if !defined _YPP_RT
-   if (read_is_on(ID)) call RT_init_occupation_reference( )
-#endif
-   !
  endif
  !
+ contains
+   !
+   subroutine elemental_LIFE_IO(LIFE)
+     type(RT_lifetime) :: LIFE
+     if (LIFE%active) then
+       call def_variable_bulk(ID,trim(LIFE%kind)//"_ABS",VAR_ID,(/RT_nbands,RT_nk/),SP)
+       call  io_variable_bulk(ID,VAR_ID,R2=LIFE%abs)
+       VAR_ID=VAR_ID+1
+       call def_variable_bulk(ID,trim(LIFE%kind)//"_EMIT",VAR_ID,(/RT_nbands,RT_nk/),SP)
+       call  io_variable_bulk(ID,VAR_ID,R2=LIFE%emit)
+     endif
+   end subroutine
+   !
 end subroutine io_RT_components_Reference

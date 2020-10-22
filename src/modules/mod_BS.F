@@ -293,7 +293,7 @@ module BS
    !
    subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
-     use drivers,    ONLY:l_kerr,l_photolum
+     use drivers,    ONLY:l_kerr
      use parallel_m, ONLY:PAR_BS_T_grps_index
      integer :: iT
      !

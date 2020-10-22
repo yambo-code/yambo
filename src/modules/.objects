@@ -5,7 +5,11 @@ COMMON_objects = mod_collision_ext.o mod_plasma.o mod_COLL_interfaces.o mod_H_in
 SC_objects       = mod_SC.o
 #endif
 #if defined _RT
-RT_objects       = mod_fields.o mod_RT_output.o mod_RT_control.o mod_RT_interfaces.o
+RT_objects_post  = mod_fields.o mod_RT_output.o mod_RT_control.o mod_RT_operations.o
+#endif
+RT_objects_pre   = mod_RT_lifetimes.o mod_RT_occupations.o mod_real_time.o
+#if defined _RT || defined _PHEL
+PHEL_objects     =  mod_PH_real_time.o 
 #endif
 #if defined _NL
 NL_objects       = mod_fields.o mod_electric.o mod_nl_optics.o mod_NL_interfaces.o
@@ -26,7 +30,7 @@ PL_objects = mod_PHOTOLUM.o
 objs = mod_pars.o mod_stderr.o mod_parallel.o  \
        mod_com_interfcs.o mod_descriptors.o mod_com.o mod_IO.o
 #else
-ELPH_objects = mod_ELPH.o mod_ELPH_old.o
+ELPH_objects = mod_ELPH.o mod_ELPH_old.o mod_PHEL.o
 DEV_objects = mod_cusolverdn_y.o mod_cuda.o
 objs = mod_pars.o mod_units.o mod_lexical_sort.o mod_stderr.o mod_memory.o mod_openmp.o mod_parallel.o mod_matrix.o mod_SLK.o  \
        mod_linear_algebra.o mod_wrapper.o mod_wrapper_omp.o mod_drivers.o mod_FFT.o\
@@ -38,7 +42,7 @@ objs = mod_pars.o mod_units.o mod_lexical_sort.o mod_stderr.o mod_memory.o mod_o
        mod_functions.o  mod_zeros.o mod_atom_proj.o mod_pseudo.o \
        mod_QP.o mod_collision_el.o \
        mod_BS.o mod_BS_solvers.o mod_QP_CTL.o mod_TDDFT.o mod_ACFDT.o $(KERR_objects) \
-       mod_pointers.o mod_IO.o $(ELPH_objects) mod_X_output.o mod_POL_FIT.o \
-       mod_real_time.o mod_hamiltonian.o $(COMMON_objects) $(SC_objects) $(RT_objects) $(MAGNETIC_objects) $(NL_objects) $(ELECTRIC_objects) \
+       mod_pointers.o mod_IO.o $(ELPH_objects) mod_X_output.o mod_OUTPUT_simple.o mod_POL_FIT.o  $(RT_objects_pre) \
+       mod_hamiltonian.o $(COMMON_objects) $(SC_objects) $(PHEL_objects) $(RT_objects_post) $(MAGNETIC_objects) $(NL_objects) $(ELECTRIC_objects) \
        mod_debug.o mod_interfaces.o mod_interpolate_tools.o mod_interpolate.o SET_logicals.o SET_defaults.o $(PL_objects) $(DEV_objects)
 #endif

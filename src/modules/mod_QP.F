@@ -333,7 +333,6 @@ module QP_m
      !
      use functions,   ONLY:bose_f
      use electrons,   ONLY:levels
-     use drivers,     ONLY:Finite_Tel
      use electrons,   ONLY:spin_occ
      integer      ::is(3),os(3),e2et
      type(levels) ::E

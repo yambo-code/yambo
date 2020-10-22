@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
+subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
  !
  use pars,         ONLY:lchlen,max_open_ofs,repfile_index
  use stderr,       ONLY:c_print,write_to_log,log_as_a_file,logfile_unit,STRING_remove
@@ -35,11 +35,12 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  !
  implicit none
  !
- character(*)     :: mesg
- character(*)     :: how
- character(*)     :: val(:)
- integer,optional :: INDENT
- logical,optional :: USE_TABS
+ character(*)                :: how
+ character(*)                :: mesg
+ character(*)                :: val(:)
+ logical,           optional :: USE_TABS
+ integer,           optional :: INDENT
+ character(lchlen), optional :: MSG_string
  ! 
  ! Work Space
  !
@@ -75,6 +76,16 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  i1_limits=(/1,-1/)
  if(OUT_msg) i1_limits=(/1,max_open_ofs/)
  if(REP_msg) i1_limits=(/repfile_index,repfile_index/)
+ !
+ if (present(MSG_string)) then
+   if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then
+     write (MSG_string,trim(msgfmt)) mesg//": ",(trim(val(i2)),i2=1,size(val))
+   else
+     write (MSG_string,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
+   endif
+   return
+ endif
+ !
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
    if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then

@@ -31,7 +31,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,n_FineGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,FineGd_DB1_paths,l_angular_momentum,l_position,&
-&                         l_QP_DB_expand
+&                         l_QP_DB_expand,l_average_eh
  use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev
  use it_tools,       ONLY:ofiles_append,infile_dump,runlevel_is_on,&
@@ -510,7 +510,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_RT
  l_plot=l_plot .or. runlevel_is_on('RTdeltaRho')
 #endif
- l_free_hole=runlevel_is_on('freehole')
+ l_free_hole =runlevel_is_on('freehole')
+ l_average_eh=runlevel_is_on('avehole')
  l_amplitude=runlevel_is_on('amplitude')
  l_exc_wf   =runlevel_is_on('wavefunction').and.runlevel_is_on('excitons')
  l_sp_wf    =runlevel_is_on('wavefunction').and.runlevel_is_on('electrons')
@@ -521,7 +522,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_spin     =runlevel_is_on('spin')
  l_map_WFs  =runlevel_is_on('WFs_map')
  !
- if (.not.l_exc_wf) l_free_hole=.false.
+ if (.not.l_exc_wf) then
+    l_free_hole =.false.
+    l_average_eh=.false.
+ endif
  !
  if (l_bz_grids) then
    call initactivate(1,"OutputAlat")
@@ -683,8 +687,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      call initactivate(1,"DipWeight")
    endif
    if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step Weight_treshold")
-   if (l_exc_wf.and..not.l_free_hole) call initactivate(1,"Cells Hole Dimension") 
-   if (l_exc_wf.and.l_free_hole) call initactivate(1,"WFMult") 
+   if (l_exc_wf.and.(.not.l_free_hole.and..not.l_average_eh)) call initactivate(1,"Cells Hole Dimension") 
+   if (l_exc_wf.and.(l_free_hole.or.l_average_eh)) call initactivate(1,"WFMult") 
+   if (l_exc_wf.and.l_average_eh) call initactivate(1,"WFAverage")
    if (l_spin) call initactivate(1,"Degen_Step")
 #if defined _YPP_ELPH
    if (l_eliashberg)  call initactivate(1,"Degen_Step") 

@@ -27,8 +27,8 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2KEL
  use electrons,      ONLY:levels,spin_occ
- use real_time,      ONLY:RT_bands,eval_entropy,RT_levels, &
-&                         RT_E_occupations,RT_H_occupations,RTibz
+ use RT_occupations, ONLY:RT_el_occ,RT_ho_occ
+ use real_time,      ONLY:RT_bands,eval_entropy,RT_levels,RTibz
  use parallel_m,     ONLY:PAR_G_k_range
  !
  implicit none 
@@ -93,8 +93,8 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
      do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
        S_h=0._SP
        S_e=0._SP
-       if(RT_H_occupations(ib1,ik_RT)>0._SP) S_h=-RT_H_occupations(ib1,ik_RT)*log(RT_H_occupations(ib1,ik_RT)/spin_occ)
-       if(RT_E_occupations(ib1,ik_RT)>0._SP) S_e=-RT_E_occupations(ib1,ik_RT)*log(RT_E_occupations(ib1,ik_RT)/spin_occ)
+       if(RT_ho_occ%N(ib1,ik_RT)>0._SP) S_h=-RT_ho_occ%N(ib1,ik_RT)*log(RT_ho_occ%N(ib1,ik_RT)/spin_occ)
+       if(RT_el_occ%N(ib1,ik_RT)>0._SP) S_e=-RT_el_occ%N(ib1,ik_RT)*log(RT_el_occ%N(ib1,ik_RT)/spin_occ)
        VALUE_tmp(1)=VALUE_tmp(1)+S_e+S_h
        if ( RT_levels%E(ib1,ik_RT,1)<=0._SP ) VALUE_tmp(2)=VALUE_tmp(2)+S_h
        if ( RT_levels%E(ib1,ik_RT,1)> 0._SP ) VALUE_tmp(3)=VALUE_tmp(3)+S_e

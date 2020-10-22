@@ -21,26 +21,28 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_kind)
+subroutine RT_impose_zero_dE_and_dN(E,LIFE,Ge,Gh,Ge_ref,Gh_ref,G_prefactor)
  !
- use pars,           ONLY:SP,DP
+ use pars,           ONLY:SP,DP,rZERO
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,spin_occ
- use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:RT_levels,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
-&                         REF_lifetime,G_lesser_reference,&
-&                         l_initial_equilibrium,RT_delta_occupations,&
+ use R_lattice,      ONLY:nkibz
+ use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_lifetime
+ use RT_occupations, ONLY:RT_el_occ
+ use real_time,      ONLY:RT_levels,G_lesser_reference,&
 &                         l_RT_impose_E,l_RT_impose_for_metals,RT_nk,RTibz,&
-&                         l_RT_impose_N_dN,RT_bands,RAD_prefactor,l_RT_include_eq_scatt
+&                         l_RT_impose_N_dN,RT_bands,l_RT_include_eq_scatt
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait
  !
  implicit none
  !
  type(levels),  intent(in)    :: E
- type(bz_samp), intent(in)    :: k
- real(SP),      intent(inout) :: Hole_lifetime(RT_bands(1):RT_bands(2),RT_nk)
- real(SP),      intent(inout) :: Electron_lifetime(RT_bands(1):RT_bands(2),RT_nk)
- character(*),  intent(in)    :: Scatt_kind
+ type(RT_lifetime),intent(in) :: LIFE
+ real(SP),      intent(inout) :: Gh(RT_bands(1):RT_bands(2),RT_nk)
+ real(SP),      intent(inout) :: Ge(RT_bands(1):RT_bands(2),RT_nk)
+ real(SP),      intent(inout) :: Gh_ref(RT_bands(1):RT_bands(2),RT_nk)
+ real(SP),      intent(inout) :: Ge_ref(RT_bands(1):RT_bands(2),RT_nk)
+ real(SP),      intent(inout) :: G_prefactor(2)
  !
  ! Work Space
  !
@@ -48,7 +50,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !     It should be restored
  !real(DP), parameter :: cut_off=0.1_DP  ! 0.1 = 10%
  !
- integer      :: ib,ik,ik_rim,iref
+ integer      :: ib,ik,ik_rim
  real(DP)     :: f0_E,f0_H,df,k_weight,En,Hole_fac,Elec_fac,Hole_fac0,Elec_fac0,GAMMA_h,GAMMA_e,&
 &                dN_dT_h_v,dN_dT_h_c,dN_dT_e_v,dN_dT_e_c,dE_dT_h_v,dE_dT_h_c,dE_dT_e_v,dE_dT_e_c,&
 &                dN0_dT_h_v,dN0_dT_h_c,dN0_dT_e_v,dN0_dT_e_c,dE0_dT_h_v,dE0_dT_h_c,dE0_dT_e_v,dE0_dT_e_c,&
@@ -63,37 +65,35 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  if (l_initial_equilibrium.and.l_RT_include_eq_scatt) return
  !
- if(index(Scatt_kind,'elel')/=0) then
+ G_prefactor=rZERO
+ !
+ if (.not.LIFE%active) return
+ !
+ if(trim(LIFE%kind)=="el-el") then
    l_energy      =l_RT_impose_E
    l_n_electrons =l_RT_impose_N_dN
    l_n_carriers  =.false.
  endif
  !
- if(index(Scatt_kind,'elph')/=0) then
+ if(trim(LIFE%kind)=="el-ph_emit".or.trim(LIFE%kind)=="el-ph_abs") then
    l_energy      =.false.
    l_n_electrons =l_RT_impose_N_dN
    l_n_carriers  =l_RT_impose_N_dN .and. (E%E_ind_gap(1)>0.1/HA2EV)
  endif
  !
- if(index(Scatt_kind,'radiative')/=0) then
+ if(trim(LIFE%kind)=="el-photon") then
    l_energy      =.false.
    l_n_electrons =l_RT_impose_N_dN
    l_n_carriers  =.false.
  endif
  !
- if (trim(Scatt_kind)=="elel" )     iref=1
- if (trim(Scatt_kind)=="elph1")     iref=3
- if (trim(Scatt_kind)=="elph2")     iref=5
- if (trim(Scatt_kind)=="radiative") iref=7
- !
  if(l_initial_equilibrium) then
-   REF_lifetime(:,:,iref)  =0._SP 
-   REF_lifetime(:,:,iref+1)=0._SP
+   Ge_ref = rZERO
+   Gh_ref = rZERO
  endif
  !
  ! Calculate partial contributions of dN/dT and dE/dT
  !====================================================
- !
  dN_dT_h_v=0._DP
  dE_dT_h_v=0._DP
  dN_dT_e_v=0._DP
@@ -114,7 +114,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  do ib=RT_bands(1),RT_bands(2)
    !
-   do ik=1,k%nibz
+   do ik=1,nkibz
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
@@ -125,20 +125,20 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
        f0_E=real(         aimag(G_lesser_reference(ib,ib,ik_rim)),DP)
        f0_H=real(spin_occ-aimag(G_lesser_reference(ib,ib,ik_rim)),DP)
        !
-       df=real(RT_delta_occupations(ib,ik_rim),DP)
+       df=real(RT_el_occ%dN(ib,ik_rim),DP)
        !
        if (l_initial_equilibrium) df=0._DP
        !
-       Hole_fac =real(Hole_lifetime(ib,ik_rim)      ,DP)*(f0_H-df)
-       Elec_fac =real(Electron_lifetime(ib,ik_rim)  ,DP)*(f0_E+df)
+       Hole_fac =real(Gh(ib,ik_rim)  ,DP)*(f0_H-df)
+       Elec_fac =real(Ge(ib,ik_rim)  ,DP)*(f0_E+df)
        !
        if(.not.l_RT_include_eq_scatt) then
          f0_E=0._DP
          f0_H=0._DP
        endif
        !
-       Hole_fac0=real(REF_lifetime(ib,ik_rim,iref  ),DP)*(f0_H-df)  
-       Elec_fac0=real(REF_lifetime(ib,ik_rim,iref+1),DP)*(f0_E+df)
+       Hole_fac0=real(Gh_ref(ib,ik_rim),DP)*(f0_H-df)  
+       Elec_fac0=real(Ge_ref(ib,ik_rim),DP)*(f0_E+df)
        !
        if(.not.l_RT_impose_for_metals) then
          Hole_fac=Hole_fac+Hole_fac0
@@ -275,7 +275,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  ! Pre-factors transfer to internal variables and application to the lifetimes
  !==============================================================================
  !
- do ik=1,k%nibz
+ do ik=1,nkibz
    !
    if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
    !
@@ -288,25 +288,25 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
        if (En> 0._DP) prefactor_to_use=prefactor(2)
        !
        if(l_RT_impose_for_metals) then
-         GAMMA_h=real(Hole_lifetime(ib,ik_rim)    ,DP)
-         GAMMA_e=real(Electron_lifetime(ib,ik_rim),DP)
+         GAMMA_h=real(Gh(ib,ik_rim),DP)
+         GAMMA_e=real(Ge(ib,ik_rim),DP)
        else
-         GAMMA_e=real(Electron_lifetime(ib,ik_rim),DP)+real(REF_lifetime(ib,ik_rim,iref+1),DP)
-         GAMMA_h=real(Hole_lifetime(ib,ik_rim)    ,DP)+real(REF_lifetime(ib,ik_rim,iref)  ,DP)
+         GAMMA_e=real(Ge(ib,ik_rim),DP)+real(Ge_ref(ib,ik_rim),DP)
+         GAMMA_h=real(Gh(ib,ik_rim),DP)+real(Gh_ref(ib,ik_rim),DP)
        endif
        !
        GAMMA_h=GAMMA_h*(1._DP+prefactor_to_use)
        GAMMA_e=GAMMA_e*(1._DP-prefactor_to_use)
        !
        if(l_initial_equilibrium) then
-         REF_lifetime(ib,ik_rim,iref  )= real(GAMMA_h,SP)
-         REF_lifetime(ib,ik_rim,iref+1)= real(GAMMA_e,SP)
+         Gh_ref(ib,ik_rim)= real(GAMMA_h,SP)
+         Ge_ref(ib,ik_rim)= real(GAMMA_e,SP)
        else if(l_RT_impose_for_metals) then
-         Hole_lifetime(ib,ik_rim)    =real(GAMMA_h,SP)
-         Electron_lifetime(ib,ik_rim)=real(GAMMA_e,SP)
+         Gh(ib,ik_rim) =real(GAMMA_h,SP)
+         Ge(ib,ik_rim) =real(GAMMA_e,SP)
        else
-         Hole_lifetime(ib,ik_rim)    =real(GAMMA_h,SP)-REF_lifetime(ib,ik_rim,iref)
-         Electron_lifetime(ib,ik_rim)=real(GAMMA_e,SP)-REF_lifetime(ib,ik_rim,iref+1)
+         Gh(ib,ik_rim) =real(GAMMA_h,SP)-Gh_ref(ib,ik_rim)
+         Ge(ib,ik_rim) =real(GAMMA_e,SP)-Ge_ref(ib,ik_rim)
        endif
        !
      enddo
@@ -315,10 +315,6 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  ! Save values for RT_output
  !===========================
- !
- if(trim(Scatt_kind)=="elel" )     EE_prefactor    =real(prefactor,SP)
- if(trim(Scatt_kind)=="elph1")     EP_prefactor    =real(prefactor,SP)
- if(trim(Scatt_kind)=="elph2")     EP_abs_prefactor=real(prefactor,SP)
- if(trim(Scatt_kind)=="radiative") RAD_prefactor   =real(prefactor,SP)
+ G_prefactor=real(prefactor,SP)
  !
 end subroutine RT_impose_zero_dE_and_dN

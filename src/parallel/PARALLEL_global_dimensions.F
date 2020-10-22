@@ -74,8 +74,8 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !------------
  if (ENVIRONMENT=="DIPOLES"                  ) PAR_n_c_bands= (/PAR_Dip_ib_lim(2),PAR_Dip_ib(2)/)
  if (index(ENVIRONMENT, "Response_G_space")>0) PAR_n_c_bands= (/E%nbf+1,PAR_X_ib(2)/)
- if (ENVIRONMENT=="Response_G_space"         )                 PAR_n_c_bands= (/E%nbf+1,PAR_X_ib(2)/)
- if (ENVIRONMENT=="Response_T_space"         )                 PAR_n_c_bands= (/E%nbf+1,BS_bands(2)/)
+ if (ENVIRONMENT=="Response_G_space"         ) PAR_n_c_bands= (/E%nbf+1,PAR_X_ib(2)/)
+ if (ENVIRONMENT=="Response_T_space"         ) PAR_n_c_bands= (/E%nbf+1,BS_bands(2)/)
  !
  ! VAL bands
  !-----------
@@ -88,7 +88,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
 #endif
  if (ENVIRONMENT=="Response_T_space")                 PAR_n_v_bands= (/BS_bands(1),E%nbm/)
  !
- ! # G vectors 
+ ! # G vectors
  !-------------
  if (index(ENVIRONMENT, "Response_G_space")>0) PAR_n_G_vectors= X_ng
  !

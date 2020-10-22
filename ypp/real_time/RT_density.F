@@ -34,8 +34,8 @@ subroutine RT_density(en,kpt,qpt)
  use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG,&
 &                         manage_action
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t,CARR_RT_IO_t
- use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step,&
-&                         G_MEM_steps,RT_delta_occupations
+ use RT_occupations, ONLY:RT_el_occ,RT_occupation_alloc,RT_occupation_free
+ use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step,G_MEM_steps
  use YPPm,           ONLY:v2plot,output_fname,plot_dim,plot_title,&
 &                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot,l_norm_to_one
  use YPP_real_time,  ONLY:RT_time,RT_conf
@@ -97,7 +97,7 @@ subroutine RT_density(en,kpt,qpt)
  else
    ch_ws(1)="Computing the density from the occupations"
    call RT_apply(RT_bands,En,kpt,IO_COM=LOG,TIMES_ONLY=.TRUE.)
-   YAMBO_ALLOC(RT_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+   call RT_occupation_alloc("electrons",RT_el_occ,RT_bands,RT_nk)
    call msg('s',trim(ch_ws(1)))
    call RT_time_configuration_setup("f-DENSITY",CARR_RT_IO_t)
  endif
@@ -232,7 +232,7 @@ subroutine RT_density(en,kpt,qpt)
    YAMBO_FREE(G_lesser_reference)
    YAMBO_FREE(G_loc)
  else
-   YAMBO_FREE(RT_delta_occupations)
+   call RT_occupation_free(RT_el_occ)
  endif
  YAMBO_FREE(drho)
  !

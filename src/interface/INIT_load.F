@@ -79,14 +79,15 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,     &
 &                        CACHE_OBS_INTERVAL_time_INPUT
  use stderr,        ONLY:intc
+ use RT_occupations,ONLY:RT_RTA_temp,RT_RTA_chem
+ use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
-&                        NE_tot_time,RT_life_extrap_times_INPUT,RT_bands,         &
+&                        NE_tot_time,RT_bands,         &
 &                        RT_ave_dephasing,RT_eh_en,RT_scatt_tresh,Gr_kind,       &
 &                        NE_MEM_treshold,NE_time_step_update_jump_INPUT,          &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
-&                        RT_MAX_step,RT_RTA_temp,RT_RTA_chem,RAD_magnification,  &
-&                        RT_deph_deg_thresh
+&                        RT_MAX_step,RAD_magnification,RT_deph_deg_thresh
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
@@ -162,6 +163,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! GPL_EXCLUDE_END
  !
+#if defined _PHEL
+ call it('r',defs,'ph_el_scatt','[R] Phonon-Electron Scattering')   
+#endif
 #if defined _RT
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
@@ -171,6 +175,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',    '[R] Electron-Phonon Correlation')   
+#endif
+#if defined _PHEL 
+ call it('r',defs,'ph_el_corr',    '[R] Phonon-Electron Correlation')   
 #endif
 #if defined _SC
  call it('r',defs,'el_el_corr',    '[R] Electron-Electron Correlation') 
@@ -422,7 +429,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
- call it(defs,'RAD_prefactor','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
+ call it(defs,'RADmagnific','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
  call it(defs,'PhLifeTime', '[RT] Constant Dephasing Time',Phase_LifeTime,unit=Time_unit(1))
  call it(defs,'DephEThresh', '[RT] Threshold on the energy difference between two states to dephase them',&
          &   RT_deph_deg_thresh,unit=E_unit,Verb_level=V_real_time)
@@ -772,6 +779,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        if (i_s==6) possible_fields='(k,b,q,qp)'  ! RT
        if (i_s==7) possible_fields='(p,d) '      ! SLK
        if (i_s==8) possible_fields='(w,k) '      ! NL
+       if (i_s==9) possible_fields='(k,b,q) '    ! PH_SE
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"
@@ -866,10 +874,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      !
      type(levels), intent(in) :: E_in
      !
-     logical :: is_def(10)
+     logical :: is_def(11)
      integer :: i1,bands(2),tmp_bands(2)
      !
-     if(initmode/=4) return
+     if (initmode/=4) return
      !
      is_def=.false.
      !
@@ -883,9 +891,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call parser('SCBands',  is_def(8))
      call parser('NLBands',  is_def(9))
      call parser('COLLBands',is_def(10))
+     call parser('el_photon_corr',is_def(11))
+     if (is_def(11)) call parser('life',is_def(11))
      !
      bands=-1
-     do i1=1,10
+     do i1=1,11
        if(.not.(is_def(i1))) cycle
        if(i1< 5) tmp_bands=X(i1)%ib
        if(i1==5) tmp_bands=Dip%ib
@@ -901,6 +911,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _RT || defined _SC || defined _NL
        if(i1==10) tmp_bands=COLL_bands
+#endif
+#if defined _QED
+       if(i1==11) tmp_bands=QP_n_G_bands
 #endif
        if(any((/bands==-1/))) then
          bands(1)=max(tmp_bands(1),   1   )

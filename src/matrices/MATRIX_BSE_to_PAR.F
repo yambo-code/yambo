@@ -40,7 +40,7 @@ subroutine MATRIX_BSE_to_PAR( M_bse , M_slk )
  !
  integer :: i_B,i_c1,i_c2,GLOBAL_n_BS_blks(ncpu),&
 &           SLK_coordinates(SLK_POOL%n_CPU,4),K_coo(4),MAX_n_BS_blks,i_r,i_c,&
-&           i_r_,i_c_,SLK_cpu_id_in_the_world(SLK_POOL%n_CPU),i_pool
+&           SLK_cpu_id_in_the_world(SLK_POOL%n_CPU),i_pool
  integer, allocatable  :: BSE_components(:,:,:)
  !
  ! SLK

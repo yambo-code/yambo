@@ -63,7 +63,8 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  use timing_m,      ONLY:timing
 #endif
 #if defined _YPP_RT
- use real_time,     ONLY:RT_delta_occupations,RTibz
+ use RT_occupations,ONLY:RT_el_occ
+ use real_time,     ONLY:RTibz
 #endif
  !
 #include<memory.h>
@@ -143,7 +144,7 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
        if(present(bands)) then
          f_occ=0._SP
          do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
-           f_occ=f_occ+RT_delta_occupations(ib,ik_RT)*RTibz%weights(ik_RT)
+           f_occ=f_occ+RT_el_occ%dN(ib,ik_RT)*RTibz%weights(ik_RT)
          enddo
        endif
 #endif

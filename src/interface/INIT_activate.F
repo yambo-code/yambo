@@ -30,7 +30,7 @@ subroutine INIT_activate()
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics
+&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
@@ -75,20 +75,25 @@ subroutine INIT_activate()
  ! CPU structure
  !
  if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa.or.l_life) then
-   if (l_em1s.or.l_em1d.or.l_ppa.or.l_life) then
-     call CPU_activate("X_and_IO")
-   else
-     call CPU_activate("X")
+   if (l_elel_corr) then
+     if (l_em1s.or.l_em1d.or.l_ppa.or.l_life) then
+       call CPU_activate("X_and_IO")
+     else
+       call CPU_activate("X")
+     endif
+     call initactivate(1,'X_Threads')
    endif
-   call CPU_activate("DIP")
-   call initactivate(1,'X_Threads DIP_Threads')
+   if (l_elel_corr.or.l_elphoton_corr) then
+     call CPU_activate("DIP")
+     call initactivate(1,'X_Threads DIP_Threads')
+   endif
  endif
  !
  if(l_sc_run) then
    call CPU_activate("X_and_IO")  ! Required for finite E-field, l_sc_exx, SC_up_W_iter
  endif
  !
- if ( (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions) ) then
+ if ( (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions.or.l_phel_corr) ) then
    call CPU_activate("SE")
    call initactivate(1,'SE_Threads')
  endif
@@ -127,6 +132,12 @@ subroutine INIT_activate()
    call CPU_activate("DIP")
    call initactivate(1,'X_Threads DIP_Threads K_Threads')
  endif
+ !
+#if defined  _ELPH 
+ if (l_life.and.l_phel_corr) then
+   call CPU_activate("PH_SE")
+ endif
+#endif
  !
  !Setup
  !
@@ -204,7 +215,7 @@ subroutine INIT_activate()
    !
  endif
  !
- if (l_optics.or.l_life) then
+ if (l_optics.or.(l_life.and.l_elel_corr)) then
    !
    ! Double Grid
    !
@@ -431,7 +442,7 @@ subroutine INIT_activate()
        !
      endif
      !
-     if (l_life) then
+     if (l_life.and..not.l_phel_corr) then
        call initactivate(1,'LifeTrCG')
        if (l_elel_corr) call X_activate('Xd',(/'BndsRn','NGsBlk',&
 &                                     'DmRnge','CGrdSp',&
@@ -439,6 +450,11 @@ subroutine INIT_activate()
      endif
    endif
    !
+#if defined  _PHEL 
+   !
+   if (l_phel_corr) call initactivate(1,'GphBRnge GDamping ElPhModes')
+  !
+#endif
 #if defined  _ELPH 
    !
    if (l_elph_corr) then
@@ -553,7 +569,7 @@ subroutine INIT_activate()
    !
    ! GPL_EXCLUDE_END
    !
-   call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime RAD_prefactor PhLifeTime RTehEny ScattTresh') 
+   call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime RADmagnific PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
    call initactivate(1,'IOtime IOCachetime')
    !

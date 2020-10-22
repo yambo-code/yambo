@@ -43,7 +43,8 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
  use real_time,      ONLY:RT_levels,Ho_plus_Sigma,RTibz,RT_bands,&
 &                         l_RT_uses_E_FineGd,l_RT_update_Energies,l_RT_rotate_DM,&
-&                         l_RT_eval_lifetimes,RT_nbands,l_NE_with_fields
+&                         RT_nbands,l_NE_with_fields
+ use RT_lifetimes,   ONLY:l_RT_eval_lifetimes
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:gauge_field
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp

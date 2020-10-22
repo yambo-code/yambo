@@ -232,7 +232,7 @@ module interfaces
      !
    end subroutine 
    !
-   subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,N_f,N_m,I_dir)
+   subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,N_f,N_m,I_dir,E_k_dir,E_k_ind)
      use pars,          ONLY: SP
      use electrons,     ONLY:levels,n_sp_pol
      type(levels)       :: E
@@ -241,6 +241,8 @@ module interfaces
      integer , optional :: N_f(n_sp_pol)
      integer , optional :: N_m(n_sp_pol)
      integer , optional :: I_dir(2)
+     integer , optional :: E_k_dir(n_sp_pol)    ! k-point of the direct gap
+     integer , optional :: E_k_ind(n_sp_pol,2)  ! k->k'   of the indirect gap
    end subroutine 
    !
    subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
@@ -316,7 +318,6 @@ module interfaces
    end subroutine
    !
  end interface
- !
  !
  interface WF_shift_kpoint
    !

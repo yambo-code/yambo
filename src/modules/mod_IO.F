@@ -647,7 +647,7 @@ module IO_m
        if(present(VAR)) VARNAME=VAR
        if( read_is_on(ID)) write (msg,'(6a)') ' Reading File ',trim(FILENAME),'; Variable ',&
 &                                             trim(VARNAME),'; ',trim(nf90_strerror(status))
-       if(write_is_on(ID)) write (msg,'(6a)') ' Writing File ',trim(FILENAME),'; Variable ',&
+       if (write_is_on(ID)) write (msg,'(6a)') ' Writing File ',trim(FILENAME),'; Variable ',&
 &                                             trim(VARNAME),'; ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if

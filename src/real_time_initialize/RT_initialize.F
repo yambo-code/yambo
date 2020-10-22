@@ -24,7 +24,10 @@
 subroutine RT_initialize(E,k,q)
  !
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_hartree,l_use_Hxc_collisions,&
-&                         l_sc_is_libDFT,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_rt_carriers_in_use
+&                         l_sc_is_libDFT,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_rt_carriers_in_use,l_phel_scatt
+#if defined _PHEL
+ use drivers,        ONLY:l_phel_scatt
+#endif
  use pars,           ONLY:SP,pi,schlen
  use units,          ONLY:HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,AUT2FS
  use stderr,         ONLY:intc
@@ -37,19 +40,21 @@ subroutine RT_initialize(E,k,q)
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,         &
 &                         TIME_adjust,SAVE_G_history,CACHE_OBS_INTERVAL_time
+ use RT_occupations, ONLY:l_RT_relax_time_approx
+ use RT_lifetimes,   ONLY:RT_life_extrap_times,RT_life_extrap_times_INPUT,l_RT_lifetimes_extrapolation,&
+&                         Life_MEM_steps,l_RT_lifetimes_Tfit
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
-&                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
-&                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
+&                         NE_steps,NE_tot_time,l_RT_induced_field,Gr_kind,       &
+&                         RAD_LifeTime,l_RT_CCA_Kernel,Phase_LifeTime,         &
 &                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_FineGd,DbGd_EE_Nk_table,    &
-&                         RT_life_extrap_times_INPUT,l_RT_lifetimes_extrapolation,Gr_kind,     &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
 &                         l_RT_update_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
 &                         NE_time_step_update_jump,NE_initial_time_step_update,NE_i_time,     &
-&                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
+&                         RAD_magnification,NE_step_update_treshold, &
 &                         NE_time_step_update_jump_INPUT,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,    &
-&                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
+&                         l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,l_RT_impose_for_metals, &
 &                         l_P_integrating_J,l_RT_rotate_DM,RT_deph_cv_only,RTibz
  use IO_m,           ONLY:io_COLLs
@@ -82,7 +87,7 @@ subroutine RT_initialize(E,k,q)
  ! GPL_EXCLUDE_START
  !
  call parser('DephCVonly',           RT_deph_cv_only)
- call parser('RAD_prefactor',        RAD_magnification)
+ call parser('RADmagnific',          RAD_magnification)
  call parser('VelGaugeCorr',         l_velocity_gauge_corr)
  call parser('PfromJ',               l_P_integrating_J)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
@@ -101,7 +106,7 @@ subroutine RT_initialize(E,k,q)
  !
  !..lifetimes
  call parser('LifeExtrapolation',    l_RT_lifetimes_extrapolation)
- call parser('LifeFitTemp',          l_lftm_fit_temperatures)
+ call parser('LifeFitTemp',          l_RT_lifetimes_Tfit)
  !
  call parser('RelaxTimeApprox',      l_RT_relax_time_approx)
  call parser('RTzeroTempRef',        l_RT_eq_is_zero_temp)
@@ -344,6 +349,16 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
+#if defined _PHEL
+ if (l_phel_scatt) then
+   !
+   call section('=','Ph-El matrix elements loading and setup')
+   !                 =======================================
+   call RT_PHEL_initialize(k,q)
+   !
+ endif
+#endif
+ !
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -354,7 +369,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! GPL_EXCLUDE_START
  !
- RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt
+ RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt.or.l_phel_scatt
  !
  if (     RT_is_dynamically_dephased) N_T_samplings = RT_Lifetimes_evaluation_plan( )
  if (.not.RT_is_dynamically_dephased) N_T_samplings = 0
@@ -412,6 +427,9 @@ subroutine RT_initialize(E,k,q)
  ! GPL_EXCLUDE_START
  !
  if (l_elph_scatt)         call msg( 'r','El-Ph         scattering   ',l_elph_scatt)
+#if defined _PHEL
+ if (l_phel_scatt)         call msg( 'r','Ph-El         scattering   ',l_phel_scatt)
+#endif
  if (l_elel_scatt)         call msg( 'r','El-El         scattering   ',l_elel_scatt)
  if (l_elphoton_scatt)     call msg( 'r','El-Photon     scattering   ',l_elphoton_scatt)
  if (l_RT_update_Energies) then

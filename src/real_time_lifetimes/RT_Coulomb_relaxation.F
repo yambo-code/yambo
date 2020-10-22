@@ -26,10 +26,10 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use pars,            ONLY:SP,rZero,cZero,pi
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
- use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
-&                          RT_life_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
-&                          l_RT_uses_E_FineGd,RT_levels,RTibz,&
-&                          l_initial_equilibrium,DbGd_EE_scatt_table,DbGd_EE_Nk_table,RT_eh_en
+ use RT_lifetimes,    ONLY:RT_EE_life,l_initial_equilibrium 
+ use RT_occupations,  ONLY:RT_el_occ,RT_ho_occ,RT_life_occ
+ use real_time,       ONLY:l_RT_uses_E_FineGd,RT_levels,RTibz,&
+&                          DbGd_EE_scatt_table,DbGd_EE_Nk_table,RT_eh_en
  use plasma,          ONLY:EH_gas
  use collision_ext,   ONLY:GW_NEQ_COLL_element,GW_NEQ_collisions
  use parallel_m,      ONLY:PAR_Q_bz_index,PAR_IND_Q_bz,PAR_IND_Plasma,PAR_PLASMA_index
@@ -102,9 +102,6 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        i_pmq_bz = qindx_C(i_p_bz,iqbz,1)
        i_pmq    = k%sstar(i_pmq_bz,1)
        !
-       if (RT_occupations_locked(i_m ,RTibz%k_range(i_p,1)))   cycle
-       if (RT_occupations_locked(i_mp,RTibz%k_range(i_pmq,1))) cycle
-       !
        if(E%E(i_mp,i_pmq,1)<RT_eh_en(1) .or. E%E(i_mp,i_pmq,1)>RT_eh_en(2)) cycle
        if(E%E(i_m ,i_p  ,1)<RT_eh_en(1) .or. E%E(i_m ,i_p  ,1)>RT_eh_en(2)) cycle
        !
@@ -113,13 +110,13 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        DELTA_E=    E%E(i_m,i_p,1) -    E%E(i_mp,i_pmq,1)
        DELTA_W=abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))
        !
-       f0_p   = RT_E_occupations_reference(i_m ,RTibz%k_range(i_p,1))
-       df_p   = RT_life_delta_occupations(i_m ,RTibz%k_range(i_p,1))
-       Hole_f0_p   = RT_H_occupations_reference(i_m ,RTibz%k_range(i_p,1))
+       f0_p   = RT_el_occ%N_ref(i_m ,RTibz%k_range(i_p,1))
+       df_p   = RT_life_occ%dN(i_m ,RTibz%k_range(i_p,1))
+       Hole_f0_p   = RT_ho_occ%N_ref(i_m ,RTibz%k_range(i_p,1))
        !
-       f0_pmq = RT_E_occupations_reference(i_mp ,RTibz%k_range(i_pmq,1))
-       df_pmq = RT_life_delta_occupations(i_mp ,RTibz%k_range(i_pmq,1))
-       Hole_f0_pmq  = RT_H_occupations_reference(i_mp ,RTibz%k_range(i_pmq,1))
+       f0_pmq = RT_el_occ%N_ref(i_mp ,RTibz%k_range(i_pmq,1))
+       df_pmq = RT_life_occ%dN(i_mp ,RTibz%k_range(i_pmq,1))
+       Hole_f0_pmq  = RT_ho_occ%N_ref(i_mp ,RTibz%k_range(i_pmq,1))
        !
        E_plasma=E_plasma+cmplx(delta_E,delta_W)
        !
@@ -172,8 +169,6 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        !
        do ik_rim=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
          !
-         if (RT_occupations_locked(i_n ,ik_rim)) cycle
-         !
          TMP_Hole_lifetime=rZero
          TMP_Electron_lifetime=rZero
          !
@@ -184,8 +179,6 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
          do ik_m_q_rim=RTibz%k_range(ik_m_q,1),RTibz%k_range(ik_m_q,2)
            !
            if( .not.DbGd_EE_scatt_table(ik_m_q_rim,ik_rim) ) cycle
-           !
-           if (RT_occupations_locked(i_np ,ik_m_q_rim)) cycle
            !
            if (l_RT_uses_E_FineGd) then
              !
@@ -202,9 +195,9 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            !
            if(abs(P_pl_abs)<1.E-7) cycle
            !
-           f0_kmq           = RT_E_occupations_reference(i_np,ik_m_q_rim)/spin_occ
-           Hole_f0_kmq      = RT_H_occupations_reference(i_np,ik_m_q_rim)/spin_occ
-           df_kmq           = RT_life_delta_occupations(i_np,ik_m_q_rim)/spin_occ
+           f0_kmq           = RT_el_occ%N_ref(i_np,ik_m_q_rim)/spin_occ
+           Hole_f0_kmq      = RT_ho_occ%N_ref(i_np,ik_m_q_rim)/spin_occ
+           df_kmq           = RT_life_occ%dN(i_np,ik_m_q_rim)/spin_occ
            !
            if(l_initial_equilibrium) then
              Hole_occupation     = N0_h_plasma*f0_kmq     
@@ -219,8 +212,8 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            !
          enddo
          !
-         E_E_Hole_lifetime(i_n,ik_rim)=E_E_Hole_lifetime(i_n,ik_rim)+TMP_Hole_lifetime*pre_factor
-         E_E_Electron_lifetime(i_n,ik_rim)=E_E_Electron_lifetime(i_n,ik_rim)+TMP_Electron_lifetime*pre_factor
+         RT_EE_life%abs(i_n,ik_rim)=RT_EE_life%abs(i_n,ik_rim)+TMP_Hole_lifetime*pre_factor
+         RT_EE_life%emit(i_n,ik_rim)=RT_EE_life%emit(i_n,ik_rim)+TMP_Electron_lifetime*pre_factor
          !
        enddo
        !

@@ -32,7 +32,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use collision_ext, ONLY:COH_collisions,HXC_collisions,GW_NEQ_collisions
  use matrix_operate,ONLY:UP_matrix_index
  use hamiltonian,   ONLY:B_mat_index
- use real_time,     ONLY:RT_bands,l_RT_uses_E_FineGd,RT_nk
+ use real_time,     ONLY:RT_bands,l_RT_uses_E_FineGd
  use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,HEAD_q_cpu,COMM_copy,PAR_INDEX_copy,&
 &                        PAR_build_index,PP_indexes_reset
  ! COMMUNICATORS
@@ -42,13 +42,24 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_B_mat,PAR_IND_WF_k, &
 &                        PAR_IND_Q_bz,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_DIPk_ibz
  ! INDEX
- use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_Xk_ibz_index,PAR_Q_bz_index,PAR_COM_VAL_INDEX_X,PAR_COM_QP_INDEX,&
-&                        PAR_COM_CON_INDEX_X
+ use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_Xk_ibz_index,PAR_Q_bz_index
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_nQ_bz,PAR_Xk_nibz,PAR_G_k_range
  ! ID's
  use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Bp_mat_ID,PAR_IND_Xk_ibz_ID,      &
 &                        PAR_IND_DIPk_ibz_ID,PAR_IND_Q_bz_ID,PAR_IND_WF_b_ID
+#if defined _PHEL
+ ! COMMUNICATORS
+ use parallel_m,    ONLY:PAR_COM_Xk_bz_INDEX
+ ! IND
+ use parallel_m,    ONLY:PAR_IND_Xk_bz,PAR_IND_Q_ibz
+ ! INDEX
+ use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Q_ibz_index
+ ! DIMENSIONS
+ use parallel_m,    ONLY:PAR_nQ_ibz,PAR_Xk_nbz
+ ! ID's
+ use parallel_m,    ONLY:PAR_IND_Xk_bz_ID,PAR_IND_Q_ibz_ID
+#endif
  !
 #include<memory.h>
  !
@@ -58,7 +69,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  ! Work space
  !
- integer              :: ib1,ib2,ik,nk_G_IO,TOTAL_Nk
+ integer              :: ib1,ib2,ik,nk_G_IO
  logical              :: CONSECUTIVE
  !
  CALL PARALLEL_structure(4,(/"k ","b ","q ","qp"/))
@@ -84,25 +95,19 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  endif
  !
  call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_WF_b_INDEX)
- call COMM_copy(PAR_COM_QP_INDEX,PAR_COM_CON_INDEX_X(X_type))
- call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_VAL_INDEX_X(X_type))
  !
  ! K-points (IBZ)
  !
  CONSECUTIVE=.not.l_RT_uses_E_FineGd
 #if defined _PAR_IO
  CONSECUTIVE=.TRUE.
- TOTAL_Nk   =Xk%nibz
-#else
- CONSECUTIVE=.not.l_RT_uses_E_FineGd
- TOTAL_Nk   =RT_nk
 #endif
  call PARALLEL_index(PAR_IND_Xk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=CONSECUTIVE,NO_EMPTIES=.TRUE.)
  PAR_IND_Xk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
  !
  call PARALLEL_live_message("K(ibz)",ENVIRONMENT="Real_Time",&
-&         LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=TOTAL_Nk,&
-&         NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
+&                           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz,&
+&                           NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
  !
  !.........................................................................
  ! Wave Functions (derived from PAR_COM_Xk_ibz_INDEX and PAR_COM_G_b_INDEX)
@@ -178,12 +183,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  do ik = 1, Xk%nibz
    if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
    if (nk_G_IO==0) PAR_G_k_range=ik
-   if (nk_G_IO >0) then
-#if defined _PAR_IO
-     if (ik/=PAR_G_k_range(2)+1) call error(" Non contiguous G distr is not allowed")
-#endif
-     PAR_G_k_range(2)=ik
-   endif
+   if (nk_G_IO >0) PAR_G_k_range(2)=ik
    nk_G_IO=nk_G_IO+1
  enddo
  !
@@ -246,6 +246,37 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  call PARALLEL_live_message("Q(bz)",ENVIRONMENT="Real_Time",&
 &                           LOADED=PAR_IND_Q_bz%n_of_elements(PAR_IND_Q_bz_ID+1),TOTAL=q%nbz,&
 &                           NCPU=PAR_COM_Q_INDEX%n_CPU)
+ !
+
+#if defined _PHEL
+ !
+ ! K-points (BZ)
+ !
+ call PARALLEL_index(PAR_IND_Xk_bz,(/Xk%nbz/),COMM=PAR_COM_Xk_bz_INDEX,CONSECUTIVE=CONSECUTIVE,NO_EMPTIES=.TRUE.)
+ PAR_IND_Xk_bz_ID=PAR_COM_Xk_bz_INDEX%CPU_id
+ !
+ YAMBO_ALLOC(PAR_Xk_bz_index,(Xk%nbz))
+ call PAR_build_index(PAR_IND_Xk_bz,Xk%nbz,PAR_Xk_bz_index,PAR_Xk_nbz)
+ !
+ call PARALLEL_live_message("K(bz)",ENVIRONMENT="Real_Time",&
+&         LOADED=PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1),TOTAL=Xk%nbz,&
+&         NCPU=PAR_COM_Xk_bz_INDEX%n_CPU)
+ !
+ !.........................................................................
+ !   "q" -> Q-points (IBZ)
+ !.........................................................................
+ !
+ call PARALLEL_index(PAR_IND_Q_ibz,(/q%nibz/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+ PAR_IND_Q_ibz_ID=PAR_COM_Q_INDEX%CPU_id
+ PAR_nQ_ibz=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)
+ !
+ YAMBO_ALLOC(PAR_Q_ibz_index,(q%nibz))
+ call PAR_build_index(PAR_IND_Q_ibz,q%nibz,PAR_Q_ibz_index,PAR_nQ_ibz)
+ !
+ call PARALLEL_live_message("Q(ibz)",ENVIRONMENT="Real_Time",&
+&                           LOADED=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1),TOTAL=q%nibz,&
+&                           NCPU=PAR_COM_Q_INDEX%n_CPU)
+#endif
  !
  !.........................................................................
  !   "COLLISIONS" & "q" -> k-q

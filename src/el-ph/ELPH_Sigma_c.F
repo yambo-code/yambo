@@ -332,6 +332,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          elph_gkkp_sq=conjg(elph_gkkp(il,ob_gkkp,ib_gkkp,ik_bz_gkkp))*&
 &                           elph_gkkp(il,ob_gkkp,ib_gkkp,ik_bz_gkkp)/2._SP/ph_E
+         if (i_qp<2 .and. ob<2) write (*,*) elph_gkkp_sq
          !
          ! Frequency Loop
          !

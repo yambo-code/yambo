@@ -34,7 +34,7 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
  use hamiltonian,    ONLY:B_mat_index
  use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid
  use RT_occupations, ONLY:RT_ph_occ,RT_el_occ,RT_ho_occ,RT_life_occ
- use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life
+ use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life,PE_linewidth
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
  use PHEL,           ONLY:phel_gkkp_expanded_sq
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
@@ -64,7 +64,7 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
  ! ... lifetime related quantities ...
  real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,&
 &            TMP_Emit_lifetime,TMP_Abs_lifetime,TMP_eh_lifetime,N_q,f_mkq,f_nk,&
-&            Hole_f_mkq,Hole_f_nk
+&            Hole_f_mkq,Hole_f_nk,TMP_linewidth
  !
  iq_mem=PAR_Q_ibz_index(iq)
  !
@@ -188,14 +188,15 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
                Hole_f_mkq = -RT_life_occ%dN(i_np,ip_rim)/spin_occ
                f_nk       =  RT_life_occ%dN(i_n,ik_rim)/spin_occ
                Hole_f_nk  = -RT_life_occ%dN(i_n,ik_rim)/spin_occ
-             endif
-             !DEBUG 
-             !TMP_Emit_lifetime=TMP_Emit_lifetime+(Hole_f_nk*f_mkq - f_nk*Hole_f_mkq)*D_ares
+             endif 
+             !
              TMP_Emit_lifetime=TMP_Emit_lifetime+f_nk*Hole_f_mkq*D_ares+Hole_f_nk*f_mkq*D_res
-             !DEBUG
-             !TMP_Abs_lifetime=TMP_Abs_lifetime+(f_nk*Hole_f_mkq-Hole_f_nk*f_mkq)*D_res
+             ! 
              TMP_Abs_lifetime=TMP_Abs_lifetime  +f_nk*Hole_f_mkq*D_res +Hole_f_nk*f_mkq*D_ares
              !
+             !DEBUG> (FP) This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
+             TMP_linewidth=TMP_linewidth +(f_mkq-f_nk)*D_res
+             !DEBUG<
            enddo ! ip_rim i.e. (mk-q)
            !
          enddo ! ik_rim i.e. (nk)
@@ -205,6 +206,10 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
          ! Phonon absorption
          RT_PE_life%abs(il,iq_mem) =RT_PE_life%abs(il,iq_mem)+TMP_Abs_lifetime*pre_factor*N_q
          !
+         !DEBUG> (FP)
+         PE_linewidth(il,iq_mem)=PE_linewidth(il,iq_mem) +TMP_linewidth*pre_factor
+         !DEBUG<
+         !        
        enddo ! i_np i.e. (mk-q)
        !
      enddo ! i_n i.e. (nk)

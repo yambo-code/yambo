@@ -24,7 +24,7 @@
 subroutine PH_of( )
  !
  use OUTPUT_simple,  ONLY:OUTPUT_add_column
- use RT_lifetimes,   ONLY:RT_PE_life
+ use RT_lifetimes,   ONLY:RT_PE_life,PE_linewidth
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use R_lattice,      ONLY:nqibz
  !
@@ -45,8 +45,14 @@ subroutine PH_of( )
      call OUTPUT_add_column(TITLES=(/"Energy"/),R_VALUES=(/sqrt(abs(ph_freqs_sq(iq,il)))/),UNIT="meV")
      call OUTPUT_add_column(TITLES=(/"Width(emit)"/),R_VALUES=(/RT_PE_life%emit(il,iq)/),UNIT="meV")
      call OUTPUT_add_column(TITLES=(/"Width(abs)"/),R_VALUES=(/RT_PE_life%abs(il,iq)/),UNIT="meV")
+     !DEBUG> (FP)
+     call OUTPUT_add_column(TITLES=(/"Width(retarded)"/),R_VALUES=(/PE_linewidth(il,iq)/),UNIT="meV")
+     !DEBUG<
      call OUTPUT_add_column(ORDER=(/"Q-point","Branch ","Energy "/))
      call OUTPUT_add_column(ORDER=(/"Width(emit)","Width(abs) "/))
+     !DEBUG> (FP)
+     call OUTPUT_add_column(ORDER=(/"Width(retarded)"/))
+     !DEBUG< (FP)
      call OUTPUT_add_column(what="write")
    enddo
  enddo

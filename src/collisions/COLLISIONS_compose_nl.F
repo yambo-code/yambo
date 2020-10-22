@@ -27,12 +27,11 @@ subroutine COLLISIONS_compose_nl(G_in)
  ! 
  use pars,             ONLY:SP,cZERO,cI
  use drivers,          ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_sc_hartree!l_sc_hf,l_sc_cohsex,l_sc_exx
- use QP_m,             ONLY:QP_table,QP_nk,QP_n_states
  use collision_ext,        ONLY:HXC_COLL_element,COLL_bands,&
-&                           HXC_collisions,COLLISIONS_group,COLLISIONS_element
+&                           HXC_collisions
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
- use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu,PAR_COM_freqs_A2A
+ use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu,PAR_COM_Xk_ibz_INDEX
  use real_time,        ONLY:RT_Vnl_xc,RT_bands
 #if defined _TIMING
  use timing_m,         ONLY:timing
@@ -44,7 +43,6 @@ subroutine COLLISIONS_compose_nl(G_in)
  !
  ! Work Space
  !
- logical           :: l_expand
  integer           :: i_coll,ib,ibp,i_k,i_k_NL,i_kmq,i_comp,i_coll_mem,i_spin
  integer           :: i_n,i_m
  !
@@ -101,7 +99,7 @@ subroutine COLLISIONS_compose_nl(G_in)
    ! 
  enddo
  !
- call PP_redux_wait(RT_Vnl_xc,COMM=PAR_COM_freqs_A2A%COMM)
+ call PP_redux_wait(RT_Vnl_xc,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
 #if defined _TIMING
  call timing('NL COLL_compose',OPR='stop')

@@ -3,49 +3,49 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
- !  
+subroutine RT_ELPH_total_Kernel(ik,E,k,q,TIME)
+ !
  ! In this routine I do not perform a time step. I calculate
  ! the el-ph Kernel at time TIME using an approximate iterative scheme (light but approximated).
- !  
- ! EULER: 
- !  
- !  In the EULER scheme everything is extremely easy. G_lesser is G(TIME) and  
+ !
+ ! EULER:
+ !
+ !  In the EULER scheme everything is extremely easy. G_lesser is G(TIME) and
  !  I use the saved THETA_matrix (that in EULER is saved at TIME-RT_step) and the newly calculated
  !  DELTA matrix to get the new THETA_matrix.
- !  
- ! RK2:  
- !  
+ !
+ ! RK2:
+ !
  !  In RK2 everything is much more complicated because RT_elph_kernel is called at NE_time and
  !  at NE_time+RT_step/2 and in the two cases a different strategy ***should*** be applied.
- !  
+ !
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
- !  
+ !
  use pars,           ONLY:SP,rZERO,cZERO
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
  use real_time,      ONLY:elph_gkkp_expanded_sq,l_RT_CCA_Kernel,RT_bands
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
  use functions,      ONLY:bose_f
- use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_ibz_index
+ use parallel_m,     ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_Xk_ibz_index
  use parser_m,       ONLY:parser
  !
  implicit none
@@ -88,17 +88,17 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !
  do iqbz=1,q%nbz
    !
-   if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
+   if (.not.PAR_IND_Q_bz%element_1D(iqbz)) cycle
    !
    ik_m_q =k%sstar(qindx_S(ik,iqbz,1),1)
    !
-   iq_mem=PAR_Q_index(iqbz)
+   iq_mem=PAR_Q_bz_index(iqbz)
    !
    do il=elph_branches(1),elph_branches(2)
      !
      ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
      !
-     !  This freuqency, which in principle should not be included, describes the region
+     !  This frequency, which in principle should not be included, describes the region
      !  around q=0, which is taken into account by the integral embodied in the q_qeights
      !  Thus I do not cycle
      !

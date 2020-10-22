@@ -28,17 +28,18 @@
 !
 integer function io_BS(iq,X,ID)
  !
- use pars,          ONLY:SP,schlen,lchlen
+ use pars,          ONLY:SP,schlen
  use X_m,           ONLY:X_t
  use stderr,        ONLY:intc
  use parallel_m,    ONLY:myid
  use pointers,      ONLY:linkM2V
- use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded,BS_K_coupling
- use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
+ use BS,            ONLY:BS_blk,BS_K_has_been_calculated_loaded,BS_K_coupling
+ use BS_solvers,    ONLY:BSS_desc,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,&
 &                        def_variable_bulk,io_variable_bulk,frag_BS_K,&
 &                        write_is_on,io_header,io_mode,VERIFY, &
-&                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
+&                        io_fragment,IO_NOT_ALLOWED,io_BS_K
+ use descriptors,   ONLY:IO_desc,IO_desc_reset,IO_desc_duplicate
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
@@ -49,9 +50,9 @@ integer function io_BS(iq,X,ID)
  ! Work Space
  !
  complex(SP),pointer ::tmp_link(:)
- integer             ::i_block,i1,n1,n2,block_pos,VAR_ID,n_blocks
+ integer             ::i_block,n1,n2,block_pos,VAR_ID,n_blocks
  character(schlen)   ::ch,db_name,PARALLEL_STRUCTURE
- character(lchlen)   ::local_description(100)
+ type(IO_desc)       ::local_desc
  !
  if (.not.io_BS_K.and.maxval(io_sec(ID,:))>1) then
    io_BS=IO_NOT_ALLOWED
@@ -79,13 +80,13 @@ integer function io_BS(iq,X,ID)
      goto 1
    endif
    !
-   io_BS=variables_BS(ID,iq,local_description,.TRUE.,X=X)
+   io_BS=variables_BS(ID,iq,local_desc,.TRUE.,X=X)
    !
    if (io_BS/=0) then
      !
      ! reset the descriptions...
      !
-     BSS_n_descs=0
+     call IO_desc_reset(BSS_desc)
      !
      goto 1
      !
@@ -93,22 +94,13 @@ integer function io_BS(iq,X,ID)
    !
    ! Descriptions transfer
    !
-   if (BSS_n_descs==0) then
-     do i1=1,100
-       if (len_trim(local_description(i1))>0) then
-         BSS_n_descs=BSS_n_descs+1
-         BSS_description(BSS_n_descs)=local_description(i1)
-       endif
-     enddo
-   endif
+   call IO_desc_duplicate(local_desc,BSS_desc)
    !
  endif
  !
  i_block=maxval(io_sec(ID,:))-1
  !
  if (i_block==0) goto 1
- !
- call manage_OP_IF_START_and_CL_IF_END(ID,NOW=i_block,LAST=n_BS_blks)
  !
  call io_fragment(ID,i_fragment=i_block)
  !
@@ -129,7 +121,7 @@ integer function io_BS(iq,X,ID)
    if (BS_blk(i_block)%mode=="C") VAR_ID=2
    if (BS_blk(i_block)%mode=="A") VAR_ID=3
    if (BS_blk(i_block)%mode=="Q") VAR_ID=4
-   if(i_block<=n_blocks) call def_variable_bulk(ID,trim(ch),VAR_ID,(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/),SP)
+   if (i_block<=n_blocks) call def_variable_bulk(ID,trim(ch),VAR_ID,(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/),SP)
    n1=BS_blk(i_block)%size(1)
    n2=BS_blk(i_block)%size(2)
    block_pos=sum(BS_blk(:i_block-1)%size(1)*BS_blk(:i_block-1)%size(2))+1

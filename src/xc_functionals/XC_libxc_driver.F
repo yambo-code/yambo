@@ -29,7 +29,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! (21/11/13: for HYB_GGA the GGA part calculated => TO TEST) 
  !
  use pars,           ONLY:SP,DP,pi,RZERO
- use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol,alat
 #if defined _RT
@@ -42,12 +41,11 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use xc_functionals, ONLY:E_xc,E_xc_val,F_xc,magn,V_xc,xc_setup_hyb,&
 &                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl,    &
 &                         xc_spin,xc_spin_map1, &
-&                         XC_HYB_GGA_XC_GAUPBE,XC_FACTOR,XC_HYB_GGA_XC_PBEH
+&                         XC_HYB_GGA_XC_GAUPBE,XC_FACTOR
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  use libxc_funcs_m,  ONLY:XC_GGA_X_PBE, XC_GGA_C_PBE
  use interfaces,     ONLY:el_density_and_current
  use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc
- use IO_m,           ONLY:io_control,OP_RD_CL,REP
  !
 #include<memory.h>
  !
@@ -58,8 +56,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ! Work Space
  !
- integer  :: i1,i2,i3,is_xc,ic,is1,is2,ixc,ifft
- integer  :: io_err,ID
+ integer  :: i1,i2,is_xc,ic,is1,is2,ixc,ifft
  real(SP) :: mod_magn
  real(SP) :: local_exx_fraction 
  real(DP) :: exsr
@@ -245,8 +242,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          E_xc = E_xc + real(tmp_exc,SP)    
        case(1)
          call xc_f90_lda_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_vxc(1,1))
-         forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(tmp_vxc(i2,i1),SP)         
-       case(2) 
+         forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(tmp_vxc(i2,i1),SP)
+       case(2)
          call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_fxc(1,1))
          do is1 = 1,n_spin
            do is2 = 1,n_spin
@@ -276,7 +273,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) call error(' Fxc not coded for GAU-PBEP')
          call xc_f90_gga_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), v2rho2, v2rhosigma, v2sigma2)
          ! Yambo internal for Kxc
-         call XC_eval_gga_kernel()
+         call XC_eval_gga_kernel(v2rho2,v2rhosigma,v2sigma2)
      end select
    end if
  enddo

@@ -52,9 +52,8 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
  use SC,              ONLY:it_now
- use IO_m,            ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END
+ use IO_m,            ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_IF_START_RD_CL_IF_END
  use X_m,             ONLY:X_alloc,X_mat,X_t
- use com,             ONLY:error
  !
  ! I/O
  !
@@ -70,7 +69,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  type(elemental_collision) ::isc
  type(PP_indexes)          ::px
  integer          ::iv1,iv2,i1,i2,ik,iq,ifft,offt,os,is,iGo
- integer          ::io_err,ID,iqs,iqibz
+ integer          ::io_err,ID,IO_ACT,iqs,iqibz
  character(schlen)::ch
  logical          ::lostr, PPaR_is_TR_rotated     
  complex(DP),allocatable  ::u(:),rhotw_rs(:),u_rs(:),local_u(:),Vcoh(:),Vcoh_rs(:)
@@ -115,9 +114,8 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
    if (iqibz/=isc%iqref) then
      call scatter_Gamp(isc,'c')
      !
-     if (iq==1   ) call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID)    !
-     if (q%nbz==1) call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)            ! I/O 
-     if (iq>1    ) call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)!
+     IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,iq,1,q%nbz)
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
      io_err=io_X(X,Xw,ID)
      !
      forall(i1=1:X%ng,i2=1:X%ng) PPaR(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2) ! Poles and Residuals

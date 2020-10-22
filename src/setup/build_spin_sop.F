@@ -23,7 +23,7 @@
 !
 subroutine build_spin_sop()
  !
- use pars,           ONLY:SP,pi,cI,cONE,cZERO
+ use pars,           ONLY:SP,pi,cI,cONE
  use matrix_operate, ONLY:m3det
  use D_lattice,      ONLY:dl_sop,spin_sop,nsym,i_time_rev,&
 &                         sigma_0,sigma_x,sigma_y,sigma_z
@@ -39,7 +39,7 @@ subroutine build_spin_sop()
  real(SP)       ::alpha,beta,delta,tmp_sop(3,3)
  integer        ::is,i1,i2
  !DEBUG <
- real(SP)       :: angles(3,nsym)
+ !real(SP)       ::angles(3,nsym)
  !DEBUG >
  !
  YAMBO_FREE(spin_sop)

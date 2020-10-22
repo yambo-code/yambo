@@ -23,10 +23,11 @@
 !
 integer function io_E_SOC_map(En,kpt,ID)
  !
- use electrons,      ONLY:levels,E_SOC_table,E_SOC_nbands
+ use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,file_is_present,write_is_on
+ !
 #include<memory.h>
  !
  type(levels) :: En
@@ -46,14 +47,14 @@ integer function io_E_SOC_map(En,kpt,ID)
  if (io_E_SOC_map/=0) goto 1
  !
  call io_elemental(ID,VAR="PARS",VAR_SZ=3,MENU=1)
- call io_elemental(ID,I0=E_SOC_nbands, VAR=' Number of SOC bands       :')
- call io_elemental(ID,I0=En%nb,        VAR=' Number of bands           :')
- call io_elemental(ID,I0=kpt%nibz,     VAR=' Number of points          :')
+ call io_elemental(ID,I0=En%nb_SOC,    VAR=' Number of SOC bands       ')
+ call io_elemental(ID,I0=En%nb,        VAR=' Number of bands           ')
+ call io_elemental(ID,I0=En%nk,        VAR=' Number of k-points        ')
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  if (read_is_on(ID)) then
-   YAMBO_ALLOC(En%E_SOC,(E_SOC_nbands,kpt%nibz))
-   YAMBO_ALLOC(E_SOC_table,(2,En%nb,kpt%nibz))
+   YAMBO_ALLOC(En%E_SOC,(En%nb_SOC,En%nk))
+   YAMBO_ALLOC(En%table_SOC,(2,En%nb,En%nk))
  endif
  !
  ! Eigenvalues
@@ -61,8 +62,8 @@ integer function io_E_SOC_map(En,kpt,ID)
  call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(En%E_SOC) ) 
  call io_bulk(ID, R2=En%E_SOC )
  !
- call io_bulk(ID, VAR="BLOCK_TABLE", VAR_SZ=shape(E_SOC_table) ) 
- call io_bulk(ID, I3=E_SOC_table )
+ call io_bulk(ID, VAR="BLOCK_TABLE", VAR_SZ=shape(En%table_SOC) ) 
+ call io_bulk(ID, I3=En%table_SOC )
  !
 1 call io_disconnect(ID=ID)
  !

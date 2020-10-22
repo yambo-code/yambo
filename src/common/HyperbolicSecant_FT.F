@@ -30,7 +30,6 @@ real(SP) function HyperbolicSecant_FT(E_center,Gamma_HS,alpha)
  ! evaluated at E_center
  !
  use pars,        ONLY:SP,pi,zero_dfl
- use com,         ONLY:error
  !
  implicit none
  !

@@ -40,7 +40,6 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
  ! where |k2 ib s1^{-1} x s2 > = PHASE * |k2 ib is_in_the_star_of_k2>
  !
  use pars,          ONLY:SP
- use parallel_m,    ONLY:myid
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
  use R_lattice,     ONLY:qindx_B,qindx_X,bz_samp
  use BS,            ONLY:O_ng,WF_phase,BS_bands,BS_res_K_corr,BS_cpl_K_corr,BS_blk,&
@@ -222,7 +221,6 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
 #endif
  !
  call elemental_collision_free(K_CORR_collision)
- !
 #if !defined _CUDA
  !$omp end parallel
 #endif
@@ -274,10 +272,9 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
      isc%qs=(/1,iq_W,1/)
      !
      iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,ikit,ikot,ibi,ibo,i_sp_pol_i)
-     BS_blk(iB)%O_c(:,iB_oscillator)=isc%rhotw(:)
      !
-     call DEV_SUBNAME(scatter_Bamp)(isc)
-     call dev_memcpy( DEV_VARNAME(BS_blk(iB)%O_c)(:,iB_oscillator), DEV_VARNAME(isc%rhotw) )
+     call DEV_SUB(scatter_Bamp)(isc)
+     call dev_memcpy( DEV_VAR(BS_blk(iB)%O_c)(:,iB_oscillator), DEV_VAR(isc%rhotw) )
      !
      O_todo_table(i_s_collision,ikit,ikot,ibi,ibo,i_sp_pol_i) = .false.
    end subroutine

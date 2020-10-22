@@ -166,14 +166,15 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERA
  contains 
    !
    subroutine ADD_descs(STATES,qp_in)
+     use descriptors,  ONLY:IO_desc_element_duplicate
      logical    :: STATES
      type(QP_t) :: qp_in
-     do i_d=1,qp_in%n_descs
-       if (     STATES.and.index(qp_in%description(i_d),"QP @ K") == 0) cycle
-       if (.not.STATES.and.index(qp_in%description(i_d),"QP @ K") >  0) cycle
-       if (len_trim(qp_in%description(i_d)) == 0) cycle
-       qp%n_descs=qp%n_descs+1
-       qp%description(qp%n_descs)=qp_in%description(i_d)
+     do i_d=1,qp_in%desc%n
+       if (     STATES.and.index(qp_in%desc%str(i_d),"QP @ state") == 0) cycle
+       if (.not.STATES.and.index(qp_in%desc%str(i_d),"QP @ state") >  0) cycle
+       if (len_trim(qp_in%desc%str(i_d)) == 0) cycle
+       qp%desc%n=qp%desc%n+1
+       call IO_desc_element_duplicate(qp_in%desc,qp%desc,i_d,qp%desc%n)
      enddo
    end subroutine
 end subroutine

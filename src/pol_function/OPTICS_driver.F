@@ -29,25 +29,25 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
  use pars,          ONLY:pi,SP,cZERO
  use units,         ONLY:HA2EV
- use stderr,        ONLY:intc,set_real_printed_length
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,BZ_DbGd_tot_nk_levels
+ use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
+ use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q_ibz,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
- use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
+ use TDDFT,         ONLY:FXC_desc,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
  use X_output,      ONLY:X_setup_file_names,eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,&
-&                        X_write_q_plus_G,X_write_descriptions,X_write_messages_before_headers,headers,&
+&                        X_write_q_plus_G,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load,WF_free
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load,&
+&                        WF_free,DESC_write
  use matrix,        ONLY:MATRIX_reset
  !
 #include<memory.h>
@@ -55,7 +55,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  type(levels)  :: Xen
  type(bz_samp) :: Xk,q
  type(X_t)     :: X
- type(DIPOLE_T):: Dip
+ type(DIPOLE_t):: Dip
  type(w_samp)  :: wv 
  ! 
  ! Work Space
@@ -71,9 +71,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  ! Basical Checks
  !
- call X_pre_setup(Xen,X)
- !
- call set_real_printed_length(f_length=10,g_length=10)
+ call X_pre_setup(Xen,Xk,X)
  !
  allocate(X_par(1))
  !
@@ -82,7 +80,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! PARALLEL indexes
    !==================
    !
-   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
+   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X)
    !
    ! WF distribution 
    !=================
@@ -114,11 +112,11 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! workaround for possible compiler bug
 #ifdef _PGI
-   if (iq>1.and.size(PAR_IND_Q%n_of_elements)>1) then
+   if (iq>1.and.size(PAR_IND_Q_ibz%n_of_elements)>1) then
 #else
    if (iq>1) then
 #endif
-     if (.not.PAR_IND_Q%element_1D(iq)) cycle
+     if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
    endif
    !
    ! Check if this q is compatible with the user defined direction in chartesian coordinates
@@ -183,22 +181,16 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Fxc descriptions
    !
    if (l_bs_fxc) then
-     call X_write_descriptions(FXC_n_descs,FXC_description)
-     call msg('o eps_q eel_q alpha','#',' TDDFT|Fxc size             :'//trim(intc(FXC_n_g_corr)),INDENT=0)    
-     call msg('o eps_q eel_q alpha','#','      |Hartree size         :'//trim(intc(X%ng)),INDENT=0)    
-     call msg('o eps_q eel_q alpha','#','      |Ordering             :'//trim(X%ordering),INDENT=0)    
+     call DESC_write('o eps_q refl eel_q fxc alpha off beta moke jdos','#',FXC_desc)
+     call msg('o eps_q eel_q alpha','# TDDFT|Fxc size             ',FXC_n_g_corr,INDENT=0)    
+     call msg('o eps_q eel_q alpha','#      |Hartree size         ',X%ng        ,INDENT=0)    
+     call msg('o eps_q eel_q alpha','#      |Ordering             ',X%ordering  ,INDENT=0)    
      !
      ! Fxc file titles
      !
      call X_setup_headers('q^2Fxc')
      call msg('o fxc','#',(/headers(1),headers(3),headers(2)/),INDENT=0,USE_TABS=.true.)    
      call msg('o fxc','#')
-   endif
-   !
-   ! BZ Double Grid
-   !
-   if (use_X_DbGd) then
-     call msg('o eps_q eel_q fxc alpha','# BZ Energy DbGd points:',BZ_DbGd_tot_nk_levels,INDENT=0)
    endif
    !
    if (iq==1) call PP_redux_wait
@@ -234,9 +226,12 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
        Alpha(:,2)=Alpha(:,1)
      else
        if(.not.l_col_cut) Alpha(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)-1._SP
-       ! Here I assume X_par is small and I use 1/(1+x)~1-x
+       ! Here I assume X_par is small and I use 1/(1+x)~1-x 
        if(     l_col_cut) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
      endif
+     !
+!    Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
+!&                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
      !
      Epsilon_ii(:,1:2)=1._SP+Alpha(:,1:2)
      !
@@ -284,8 +279,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    enddo
    !
    call of_open_close(eps_file_name)
-   call of_open_close(eel_file_name)
-   call of_open_close(alpha_file_name)
    !
    ! EEL
    !
@@ -321,8 +314,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      if(l_col_cut) then
        alpha_factor=eps_2_alpha/4._SP/pi
        Alpha(:,1)=Alpha(:,1)*alpha_factor
-       if(     l_rpa_IP) Alpha(:,2)=Alpha(:,1)
-       if(.not.l_rpa_IP) Alpha(:,2)=Alpha(:,2)*alpha_factor*bare_qpg(1,1)**2/q_norm(1)**2 
+       if(     l_rpa_IP) Alpha(:,2)=Alpha(:,2)*alpha_factor
+       if(.not.l_rpa_IP) Alpha(:,2)=Alpha(:,2)*alpha_factor*bare_qpg(1,1)**2/q_norm(1)**2
      else
        alpha_factor=eps_2_alpha/4._SP/pi
        Alpha(:,1)=(1._SP+EEL(:,1))*alpha_factor
@@ -376,10 +369,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  call MATRIX_reset(X_par(1))
  call MATRIX_reset(X_par_lower_triangle)
  deallocate(X_par)
- call DIP_alloc('DIP_projected')
  call WF_free(WF)
  call PP_redux_wait
- call set_real_printed_length()
  if (allocated(FXC)) then
    YAMBO_FREE(FXC)
  endif

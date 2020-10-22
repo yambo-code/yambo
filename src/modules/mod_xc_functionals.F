@@ -78,7 +78,7 @@ module xc_functionals
      use pars,          ONLY:SP,DP,RZERO
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
-     use com,           ONLY:msg,warning
+     use com,           ONLY:msg
      use libxc_funcs_m, ONLY: XC_LDA_X, XC_LDA_C_PW
      implicit none
      type(levels),  intent(in)       :: en

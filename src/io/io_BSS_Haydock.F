@@ -63,14 +63,14 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
    call io_elemental(ID,VAR=&
-&       " BSK Identifier                  :",I0=BS_identifier,CHECK=.TRUE.,OP=(/"=="/))
+&       " BSK Identifier                   ",I0=BS_identifier,CHECK=.TRUE.,OP=(/"=="/))
    call io_elemental(ID,VAR=&
-&       " Haydock Iteration               :",I0=it,DB_I0=it_on_disk)
+&       " Haydock Iteration                ",I0=it,DB_I0=it_on_disk)
    call io_elemental(ID,VAR=&
-&       " Haydock reached Treshold        :",R0=reached_treshold,&
+&       " Haydock reached Treshold         ",R0=reached_treshold,&
 &                                            DB_R0=reached_treshold)
    call io_elemental(ID,VAR=&
-&       " Field direction                 :",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
+&       " Field direction                  ",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !

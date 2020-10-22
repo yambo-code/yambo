@@ -40,11 +40,17 @@ module interpolate
  character(schlen) :: INTERP_mode = "NN" ! NN/BOLTZ
  character(schlen) :: INTERPOLATION_name = " "
  logical           :: INTERPOLATE_initialized=.FALSE.
+ logical           :: INTERPOLATE_is_quiet=.FALSE.
+ logical           :: INTERPOLATE_is_serial=.FALSE.
  character(schlen) :: INTERPOLATE_msg_fmt="rs"
+ !
+ integer, parameter :: max_interpls=10
  !
  ! NN method
  !
+ integer :: OUT_k_nk=0
  integer :: NN_nk_exact=0
+ integer :: NN_nk_border=0
  integer :: NN_n_of_nearest=1
  integer :: NN_MAX_real_nearest=0
  !
@@ -56,6 +62,7 @@ module interpolate
  logical :: l_INTERP_Z
  logical :: l_INTERP_W
  logical :: l_integral_respect=.TRUE. ! In the case of f/df keep the same integral of the SEED and of the interpolated
+ character(schlen) :: INTERP_FineGd   = "NONE"
  !
  ! ID's
  !
@@ -88,14 +95,17 @@ module interpolate
    integer                  :: ID=0
    logical                  :: in_use=.FALSE.
    logical                  :: use_NN=.FALSE.
+   logical                  :: has_fineGd=.FALSE.
+   character(schlen)        :: seed_kind=" "
    character(schlen)        :: what=" "
-   real(SP),    allocatable :: weights(:)
-   real(SP),    allocatable :: k(:,:)
+   !
    real(SP),    allocatable :: SEED(:,:,:)
+   real(SP),    allocatable :: k(:,:)
+   real(SP),    allocatable :: weights(:)
+   !
    real(SP),    allocatable :: INTERP(:,:,:)
+   real(SP),    allocatable :: INTERP_FineGd(:,:,:)
  end type INTERP_element
- !
- integer, parameter :: max_interpls=10
  !
  type(INTERP_coeff)   :: interpls(max_interpls)
  type(INTERP_element) :: INTERP_obj(max_interpls)
@@ -124,52 +134,66 @@ module interpolate
      integer,       intent(out)          :: ID
    end subroutine  INTERPOLATION_coefficients
    !
-   subroutine INTERPOLATION_BZ(R1D,R2D,C1D,C2D,E,K,ID)
+   subroutine INTERPOLATION_BZ(K,NK,ID,R1D,R2D,C1D,C2D,E)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      use electrons,  ONLY:levels
      implicit none
      type(bz_samp), intent(in)            :: K
+     integer,       intent(in)            :: ID,NK
      real(SP),      intent(out), optional :: R1D(:,:),R2D(:,:,:)
      complex(SP),   intent(out), optional :: C1D(:,:),C2D(:,:,:)
      type(levels),  intent(out), optional :: E
-     integer,       intent(in)            :: ID
    end subroutine INTERPOLATION_BZ
    !
-   subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCUIT_dE)
+   subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRID_E,CIRCUIT_dE)
      use pars,       ONLY:SP
      use electrons,  ONLY:levels
      use R_lattice,  ONLY:bz_samp
      implicit none
      type(bz_samp), intent(in)  :: Xk
      type(levels),  intent(in)  :: Xen
-     integer      , intent(in)  :: BANDS_range(2)
+     integer     ,  intent(in)  :: BANDS_range(2)
+     integer     ,  intent(out) :: ID_bands(2)
      type(levels),  intent(out) :: CIRCUIT_E
      type(levels),  intent(out), optional  :: GRID_E
      type(levels),  intent(out), optional  :: CIRCUIT_dE
    end subroutine electrons_bands_interpolate
    !
-   subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,OUT_k,&
-&                                  OUT_E,operation,QUIET,ID_op,NEAREST,GRID)
+   subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
+&                                       NEAREST,QUIET,SERIAL)
      use pars,        ONLY:SP
      use real_time,   ONLY:RT_t
      use R_lattice,   ONLY:bz_samp
      use electrons,   ONLY:levels
      use QP_m,        ONLY:QP_t
      implicit none
-     integer,       intent(in),    optional :: bands(2)
-     type(bz_samp), intent(in),    optional :: SEED_k
-     type(bz_samp), intent(inout), optional :: OUT_k
-     real(SP),      intent(in)   , optional :: SEED_R3(:,:,:)
-     type(RT_t),    intent(in)   , optional :: SEED_RT
-     type(QP_t),    intent(in)   , optional :: SEED_QP
-     type(levels),  intent(in)   , optional :: SEED_E
-     type(levels),  intent(inout), optional :: OUT_E
      character(*),  intent(in)              :: operation
-     logical,       intent(in)   , optional :: QUIET,NEAREST
-     integer,       intent(in)   , optional :: GRID(3)
-     integer,       intent(inout), optional :: ID_op
-   end subroutine INTERPOLATION_driver
+     integer,       intent(out)             :: ID
+     integer,       intent(in)              :: dims(2)
+     type(bz_samp), intent(in)              :: SEED_k
+     real(SP),      intent(in),    optional :: SEED_R3(:,:,:)
+     type(RT_t),    intent(in),    optional :: SEED_RT
+     type(QP_t),    intent(in),    optional :: SEED_QP
+     type(levels),  intent(in),    optional :: SEED_E
+     logical,       intent(in),    optional :: NEAREST
+     logical,       intent(in),    optional :: QUIET
+     logical,       intent(in),    optional :: SERIAL
+   end subroutine INTERPOLATION_driver_seed
+   !
+   subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
+     use pars,        ONLY:SP
+     use real_time,   ONLY:RT_t
+     use R_lattice,   ONLY:bz_samp
+     use electrons,   ONLY:levels
+     use QP_m,        ONLY:QP_t
+     implicit none
+     character(*),  intent(in)              :: operation
+     integer,       intent(in)              :: ID
+     type(bz_samp), intent(inout)           :: OUT_k
+     type(levels),  intent(inout), optional :: OUT_E
+     character(*),  intent(in)   , optional :: FineGrid
+   end subroutine INTERPOLATION_driver_do
    !
  end interface  
  !

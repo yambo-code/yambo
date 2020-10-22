@@ -31,7 +31,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  use QP_m,          ONLY:QP_t,QP_dSc,QP_Sc,QP_Vnl_xc,QP_Vxc,QP_table,&
 &                        QP_n_states,QP_dSc_steps,use_GreenF_to_eval_QP,On_Mass_Shell_approx,&
 &                        QP_solver,report_Vnlxc,report_Sc,report_dSc,Vxc_kind,Vnlxc_kind,&
-&                        l_QP_Expand,QP_reset,Time_of
+&                        l_QP_Expand,QP_reset,Time_of,report_Vxc
 #if defined _ELPH
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
@@ -74,7 +74,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !============================================================
  !
  report_Sc=.not.QPdb_read_err==0.and..not.On_Mass_Shell_approx.and..not.use_GreenF_to_eval_QP
- report_Vnlxc=l_elel_corr.and..not.l_life
+ report_Vnlxc=l_elel_corr.and..not.l_life.and.allocated(QP_Vnl_xc)
+ report_Vxc  =allocated(QP_Vxc)
  report_dSc=.not.On_Mass_Shell_approx.and..not.trim(QP_solver)=='g'.and..not.use_GreenF_to_eval_QP.and..not.l_cohsex
  do_IO=.TRUE.
  if (l_life.or.QPdb_read_err==0) then
@@ -87,7 +88,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
  if (trim(QP_solver)/='g'.or.use_GreenF_to_eval_QP) then
    call section('=','QP properties and I/O')
-   call msg(' r','Legend (energies in eV):')
+   call msg(' r','Legend (energies in eV)')
    call msg(' r','- B  : Band       - Eo  : bare energy')
  else
    !
@@ -112,8 +113,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    if (l_elph_corr) call msg('r', '- F  : Fan [eV]  - DW  : DW [eV]')
    if (report_dSc) call msg('rn','- dSp: Sc derivative precision')
    if (report_Vnlxc) then
-     call msg('r','- lXC: Starting Local XC ('//trim(Vxc_kind)//')')
-     call msg('r','-nlXC: Starting non-Local XC ('//trim(Vnlxc_kind)//')')
+     call msg('r','- lXC: Local XC ('//trim(Vxc_kind)//')')
+     call msg('r','-nlXC: non-Local XC ('//trim(Vnlxc_kind)//')')
    endif
  endif 
  !
@@ -152,6 +153,9 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' nlXC='
      shadow(n_shadows)=real(QP_Vnl_xc(iqp))*HA2EV
+   endif
+   !
+   if (report_Vxc) then
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' lXC='
      shadow(n_shadows)=real(QP_Vxc(iqp))*HA2EV
@@ -244,9 +248,9 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !  
    if(print_title) then 
      if (l_life) then
-       call msg('nr','Lifetimes @ K ['//trim(intc(i_k(iqp)))//'] (iku):',k%pt(i_k(iqp),:))
+       call msg('nr','Lifetimes @ K ['//trim(intc(i_k(iqp)))//'] (iku)',k%pt(i_k(iqp),:))
      else
-       call msg('nr','QP [eV] @ K ['//trim(intc(i_k(iqp)))//'] (iku):',k%pt(i_k(iqp),:))
+       call msg('nr','QP [eV] @ K ['//trim(intc(i_k(iqp)))//'] (iku)',k%pt(i_k(iqp),:))
      endif
    endif
    !

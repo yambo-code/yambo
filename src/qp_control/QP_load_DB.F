@@ -27,7 +27,6 @@ subroutine QP_load_DB(i_ACTION,bands,en,k)
  use QP_m,          ONLY:QP_t,QP_reset
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
- use com,           ONLY:warning
  use QP_CTL_m,      ONLY:QP_action
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,REP
  !
@@ -39,7 +38,7 @@ subroutine QP_load_DB(i_ACTION,bands,en,k)
  !
  ! Work Space
  !
- type(QP_t)        :: qp
+ type(QP_t)        ::qp
  integer           ::io_err,ID
  integer, external ::io_QP_and_GF
  !
@@ -49,7 +48,7 @@ subroutine QP_load_DB(i_ACTION,bands,en,k)
  io_err=io_QP_and_GF(trim(QP_action(i_ACTION)%CTL(1)%db),qp,ID)
  !
  if (io_err/=0) then
-   call warning("I/O problems from QP database "//trim(QP_action(i_ACTION)%CTL(1)%db))
+   call warning("I/O problems in reading QP database "//trim(QP_action(i_ACTION)%CTL(1)%db))
    QP_action(i_ACTION)%active=.FALSE.
    return
  endif

@@ -28,7 +28,7 @@ subroutine electrons_density(Xk,Xen)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use FFT_m,          ONLY:fft_size
- use YPP,            ONLY:v2plot,output_fname,plot_dim,use_xcrysden,&
+ use YPPm,           ONLY:v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,plot_title
  use com,            ONLY:msg,of_open_close
  use interfaces,     ONLY:el_density_and_current

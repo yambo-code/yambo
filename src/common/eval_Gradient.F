@@ -32,7 +32,6 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  ! \sum f'(G) exp(iGr)       => FFT^-1
  !
  use pars,          ONLY:SP,DP,cI,cZERO,cZERO_DP
- use com,           ONLY:error
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan

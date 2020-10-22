@@ -27,25 +27,26 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2KEL
  use electrons,      ONLY:levels,spin_occ
- use real_time,      ONLY:RT_nk,RT_bands,RT_Nk_ibz,RT_ibz_coo,eval_entropy,DbGd_ibz_coo, &
-&                         l_RT_uses_E_DbGd,RT_E_occupations,RT_H_occupations
+ use real_time,      ONLY:RT_bands,eval_entropy,RT_levels, &
+&                         RT_E_occupations,RT_H_occupations,RTibz
+ use parallel_m,     ONLY:PAR_G_k_range
  !
  implicit none 
  !
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
- complex(SP),   intent(in) :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP),   intent(in) :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
  real(SP),      intent(in) :: E_IP
  real(SP),     intent(out) :: TEntr(3)
  real(SP),   intent(inout) :: Entr(3),EnEntr(3)
  !
  ! Workspace
  !
- integer     :: ib1,ib2,ik,ik_RT,ik_E,i1
+ integer     :: ib1,ib2,ik,ik_RT,i1
  real(SP)    :: Energies_e(5),Energies_h(5),tmp_E(2),Entr_prev(3),EnEntr_prev(3),   &
 &               S_e,S_h,VALUE_tmp(3),one_over_T
- complex(SP) :: dG_lesser_h(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk), &
-&               dG_lesser_e(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP) :: dG_lesser_h(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2)), &
+&               dG_lesser_e(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
  !
  TEntr=rZERO
  Entr=rZERO
@@ -63,21 +64,14 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  dG_lesser_h=cZERO
  dG_lesser_e=cZERO
  !
- do ik=1,en%nk
-   do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     if (l_RT_uses_E_DbGd) ik_E=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-     do ib1=RT_bands(1),RT_bands(2)
-       do ib2=RT_bands(1),RT_bands(2)
-         if (l_RT_uses_E_DbGd) then
-           tmp_E(1)=en%E_DbGd(ib1,ik_E,1)
-           tmp_E(2)=en%E_DbGd(ib2,ik_E,1)
-         else
-           tmp_E(1)=en%E(ib1,ik,1)
-           tmp_E(2)=en%E(ib2,ik,1)
-         endif
-         if ( tmp_E(1)<=0._SP .and. tmp_E(2)<=0._SP ) dG_lesser_h(ib1,ib2,ik_RT)=dG_lesser(ib1,ib2,ik_RT)
-         if ( tmp_E(1)> 0._SP .and. tmp_E(2)> 0._SP ) dG_lesser_e(ib1,ib2,ik_RT)=dG_lesser(ib1,ib2,ik_RT)
-       enddo
+ do ik_RT=PAR_G_k_range(1),PAR_G_k_range(2)
+   do ib1=RT_bands(1),RT_bands(2)
+     do ib2=RT_bands(1),RT_bands(2)
+       if ( RT_levels%E(ib1,ik_RT,1)<=0._SP .and. RT_levels%E(ib2,ik_RT,1)<=0._SP ) then
+         dG_lesser_h(ib1,ib2,ik_RT)=dG_lesser(ib1,ib2,ik_RT)
+       else if ( RT_levels%E(ib1,ik_RT,1)> 0._SP .and. RT_levels%E(ib2,ik_RT,1)> 0._SP ) then
+         dG_lesser_e(ib1,ib2,ik_RT)=dG_lesser(ib1,ib2,ik_RT)
+       endif
      enddo
    enddo
  enddo
@@ -96,19 +90,17 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  do ik=1,en%nk
    do ib1=RT_bands(1),RT_bands(2)
      VALUE_tmp=0._SP
-     do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       ik_E=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-       if (     l_RT_uses_E_DbGd) tmp_E(1)=en%E_DbGd(ib1,ik_E,1)
-       if (.not.l_RT_uses_E_DbGd) tmp_E(1)=en%E(ib1,ik,1)
+     do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
        S_h=0._SP
        S_e=0._SP
        if(RT_H_occupations(ib1,ik_RT)>0._SP) S_h=-RT_H_occupations(ib1,ik_RT)*log(RT_H_occupations(ib1,ik_RT)/spin_occ)
        if(RT_E_occupations(ib1,ik_RT)>0._SP) S_e=-RT_E_occupations(ib1,ik_RT)*log(RT_E_occupations(ib1,ik_RT)/spin_occ)
        VALUE_tmp(1)=VALUE_tmp(1)+S_e+S_h
-       if ( tmp_E(1)<=0._SP ) VALUE_tmp(2)=VALUE_tmp(2)+S_h
-       if ( tmp_E(1)> 0._SP ) VALUE_tmp(3)=VALUE_tmp(3)+S_e
+       if ( RT_levels%E(ib1,ik_RT,1)<=0._SP ) VALUE_tmp(2)=VALUE_tmp(2)+S_h
+       if ( RT_levels%E(ib1,ik_RT,1)> 0._SP ) VALUE_tmp(3)=VALUE_tmp(3)+S_e
+       VALUE_tmp=VALUE_tmp*RTibz%weights(ik_RT)
      enddo
-     Entr=Entr+VALUE_tmp*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
+     Entr=Entr+VALUE_tmp
    enddo
  enddo
  !

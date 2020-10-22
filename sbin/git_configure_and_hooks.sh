@@ -30,9 +30,8 @@ cat <<EOF > .git/hooks/pre-commit
 #!/bin/bash
 sbin/yambo_versions_update.tcsh r
 git add configure
-git add include/version.inc
-if [ -e config/version.m4 ]     ; then  git add config/version.m4 ;     fi
-if [ -e config/version.m4_gpl ] ; then  git add config/version.m4_gpl ; fi
+if [ -e config/version/version.m4 ]     ; then  git add config/version/version.m4 ;     fi
+if [ -e config/version/version.m4_gpl ] ; then  git add config/version/version.m4_gpl ; fi
 EOF
 chmod +x .git/hooks/pre-commit
 #

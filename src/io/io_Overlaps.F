@@ -28,9 +28,8 @@ integer function io_Overlaps(Dip,ID)
  use R_lattice,     ONLY:nXkbz
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,&
 &                        io_bulk,read_is_on,io_header,io_extension,&
-&                        RD_CL_IF_END,RD_CL,io_action,&
+&                        &
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment
- use parallel_m,    ONLY:PAR_DIPk_bz_index,PAR_DIPk_nbz,PAR_IND_DIPk_bz
  use timing_m,      ONLY:timing
  !
  implicit none
@@ -39,7 +38,7 @@ integer function io_Overlaps(Dip,ID)
  !
  ! Work Space
  !
- integer :: ik,ik_mem,i_fragment,ixyz,i_sp_pol,shift(2),io_err
+ integer :: ik,ik_mem,i_fragment,i_sp_pol,io_err
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
  !
@@ -90,10 +89,6 @@ integer function io_Overlaps(Dip,ID)
    io_Overlaps=io_err
    goto 1
  endif
- !
- ! Manage RD_CL_IF_END
- !
- if (io_action(ID)==RD_CL_IF_END.and.ik==nXkbz) io_action(ID)=RD_CL
  !
  ! DIP_S
  !

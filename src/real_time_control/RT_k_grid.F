@@ -23,28 +23,15 @@
 !
 subroutine RT_k_grid(E,k,q)
  !
- !       K(BZ)                                                    K(IBZ)
- !               E_DbGd(DbGd_bz_coo(ikbz,:)=DbGd_ibz_coo(ik,:))
- !        ____                                                       ____
- !ikbz1  | 1  | DbGd_bz_coo(ikbz1,:) = DbGd_ibz_coo(ik1,:)      ik1 | 1  | RT_ibz_coo(ik1,:)     
- !       |____|                       <----------------------       |____|   
- !        ____                                                       ____
- !ikbz2  | 2  | DbGd_bz_coo(ikbz2,:) = 1                        ik2 | 2  | RT_ibz_coo(ik2,:)     
- !       |____|                                               /     |____|   
- !        ____                                               /
- !ikbz3  | 3  | DbGd_bz_coo(ikbz3,:) = DbGd_ibz_coo(ik2,:)  /            
- !       |____|                        <-------------------/        
- ! 
- !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:qindx_S
- use LIVE_t,         ONLY:what_is_running
- use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,DbGd_is_symmetry_expanded
- use real_time,      ONLY:DbGd_bz_coo,DbGd_ibz_coo,DbGd_EE_scatt_table,&
-&                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
-&                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_DbGd,RT_bands,RT_DbGd_nk,RT_nk
- use R_lattice,      ONLY:bz_samp
+ use C_driver,       ONLY:code_bin
+ use electrons,      ONLY:levels
+ use real_time,      ONLY:DbGd_EE_scatt_table,DbGd_EE_percent,DbGd_EE_Nk_table,RTibz,&
+&                         l_RT_uses_E_FineGd,RT_nk,RT_bands
+ use R_lattice,      ONLY:bz_samp,bz_samp_FineGd_alloc,bz_samp_duplicate_Fg
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz
  !
 #include<memory.h>
  !
@@ -55,31 +42,30 @@ subroutine RT_k_grid(E,k,q)
  ! Work space
  !
  logical :: l_check(k%nibz,k%nibz)
- integer :: ik,ik_bz,ik_rim,iqbz,ik_m_q,ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
+ integer :: ik,ik_rim,iqbz,ik_m_q,ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
  ! 
  ! GPL_EXCLUDE_START
- l_RT_uses_E_DbGd=BZ_DbGd_tot_nk_levels>0.and.BZ_DbGd_nbands>=RT_bands(2).and..not.DbGd_is_symmetry_expanded
- ! GPL_EXCLUDE_END
- ! GPL_INCLUDE_START
- !l_RT_uses_E_DbGd=.FALSE.
- ! GPL_INCLUDE_END
  !
- if (.not.allocated(DbGd_ibz_coo)) then
-   YAMBO_ALLOC(DbGd_ibz_coo,(k%nibz,2))
-   YAMBO_ALLOC(DbGd_bz_coo,(k%nbz,2))
-   YAMBO_ALLOC(RT_ibz_coo,(k%nibz,2))
-   YAMBO_ALLOC(RT_Nk_ibz,(k%nibz))
- endif
+ l_RT_uses_E_FineGd=k%FGibz%N>0.and.E%FG%nb>=RT_bands(2)
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! GPL_INCLUDE_START
+ !
+ !l_RT_uses_E_DbGd=.FALSE.
+ !
+ ! GPL_INCLUDE_END
  !
  ! No DbGd, trivial definitions
  !==============================
- if (.not.l_RT_uses_E_DbGd) then
+ if (.not.l_RT_uses_E_FineGd) then
    !
-   RT_nk    =k%nibz
+   RTibz%N = 0
+   RT_nk     = k%nibz
    !
-   RT_Nk_ibz=1
+   call bz_samp_FineGd_alloc(RTibz,k%nibz)
+   !
    DbGd_EE_percent=0._SP
-   YAMBO_ALLOC(RT_all2ibz,(k%nibz))
    if(l_elel_scatt) then
      YAMBO_ALLOC(DbGd_EE_scatt_table,(k%nibz,q%nbz))
      YAMBO_ALLOC(DbGd_EE_Nk_table,(k%nibz,k%nibz))
@@ -87,9 +73,12 @@ subroutine RT_k_grid(E,k,q)
      DbGd_EE_Nk_table=1
    endif
    do ik=1,k%nibz
-     DbGd_ibz_coo(ik,:)=ik
-     RT_ibz_coo(ik,:)=ik
-     RT_all2ibz(ik)=ik
+     RTibz%pt(ik,:)=k%pt(ik,:)
+     RTibz%k_range(ik,:)=ik
+     RTibz%E_map(ik)=ik
+     RTibz%k_map(ik)=ik
+     RTibz%N_mapped(ik)=1
+     RTibz%weights(ik)=k%weights(ik)
    enddo
    !
    return
@@ -101,32 +90,16 @@ subroutine RT_k_grid(E,k,q)
  ! DbGd support
  !=============
  !
- RT_DbGd_nk=BZ_DbGd_tot_nk_levels
+ call bz_samp_FineGd_alloc(RTibz,k%nibz)
+ call bz_samp_duplicate_Fg(k%FGibz,RTibz,k%nibz)
+ RT_nk=RTibz%N
  !
- RT_nk    =0
+ ! Define K-weights to be used in the k-points distribution
  !
- do ik=1,k%nibz
-   !
-   ik_bz=1+sum(k%nstar(:ik-1))
-   DbGd_ibz_coo(ik,:)=(/sum(BZ_DbGd_nkpt(:ik_bz-1))+1,sum(BZ_DbGd_nkpt(:ik_bz))/)
-   RT_ibz_coo(ik,:)=(/RT_nk+1,RT_nk+BZ_DbGd_nkpt(ik_bz)/)
-   RT_Nk_ibz(ik)=BZ_DbGd_nkpt(ik_bz)
-   RT_nk=RT_nk+BZ_DbGd_nkpt(ik_bz)
-   !
- enddo
+ YAMBO_ALLOC(PAR_IND_Xk_ibz%weight_1D,(k%nibz))
+ PAR_IND_Xk_ibz%weight_1D=RTibz%N_mapped
  !
- do ik=1,k%nbz
-   DbGd_bz_coo(ik,:)=(/sum(BZ_DbGd_nkpt(:ik-1))+1,sum(BZ_DbGd_nkpt(:ik))/)
- enddo
- !
- YAMBO_ALLOC(RT_all2ibz,(RT_nk))
- do ik=1,k%nibz
-   do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     RT_all2ibz(ik_rim)    =ik
-   enddo
- enddo
- !
- if( l_elel_scatt .and. (index(what_is_running,'YPP')==0) ) then
+ if( l_elel_scatt .and. (index(code_bin,'ypp')==0) ) then
    !
    if(.not.allocated(DbGd_EE_scatt_table)) then
      YAMBO_ALLOC(DbGd_EE_scatt_table,(RT_nk,RT_nk))
@@ -145,8 +118,8 @@ subroutine RT_k_grid(E,k,q)
        if(l_check(ik,ik_m_q)) cycle
        if(l_check(ik_m_q,ik)) cycle
        !
-       Nk_rim=RT_Nk_ibz(ik)
-       Nk_m_q_rim=RT_Nk_ibz(ik_m_q)
+       Nk_rim=RTibz%N_mapped(ik)
+       Nk_m_q_rim=RTibz%N_mapped(ik_m_q)
        !
        if( Nk_rim<Nk_m_q_rim ) cycle
        !
@@ -157,15 +130,15 @@ subroutine RT_k_grid(E,k,q)
        N_loops=max(1, (Nk_rim*N_pts-1)/(Nk_m_q_rim) )
        !
        i_loops=1
-       ik_m_q_rim=RT_ibz_coo(ik_m_q,1)-1
+       ik_m_q_rim=RTibz%k_range(ik_m_q,1)-1
        !
        do while (i_loops< N_loops+1)
-         do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+         do ik_rim=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
            !
            do i1=1,N_pts
              ik_m_q_rim=ik_m_q_rim+1
-             if(ik_m_q_rim>RT_ibz_coo(ik_m_q,2)) then
-               ik_m_q_rim=RT_ibz_coo(ik_m_q,1)
+             if(ik_m_q_rim>RTibz%k_range(ik_m_q,2)) then
+               ik_m_q_rim=RTibz%k_range(ik_m_q,1)
                i_loops=i_loops+1
              endif
              !
@@ -177,7 +150,7 @@ subroutine RT_k_grid(E,k,q)
              !
            enddo
            !
-           if(ik_m_q_rim==RT_ibz_coo(ik_m_q,2)) i_loops=i_loops+1
+           if(ik_m_q_rim==RTibz%k_range(ik_m_q,2)) i_loops=i_loops+1
            !
          enddo
          !

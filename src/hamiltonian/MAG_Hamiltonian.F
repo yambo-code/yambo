@@ -53,7 +53,7 @@ subroutine MAG_Hamiltonian()
  ! Ax =  0              Ay=  MAG_B x        Az=0    
  ! *******************************************************************************************
  !
- use pars,           ONLY:SP,cZERO,cI,cONE
+ use pars,           ONLY:SP,cZERO
  use units,          ONLY:SPEED_OF_LIGHT
  use hamiltonian,    ONLY:Hzero
  use FFT_m,          ONLY:fft_size

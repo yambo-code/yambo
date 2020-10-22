@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,7 +30,9 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  use pars,           ONLY:SP,schlen
  use vec_operate,    ONLY:c2a,k2bz
  use R_lattice,      ONLY:rl_sop,bz_samp
+ !
 #include<memory.h>
+ !
  type(bz_samp)::k
  character(1) ::units
  logical      ::FORCE_BZ

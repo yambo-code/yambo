@@ -25,12 +25,10 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
- use linear_algebra,ONLY:INV
- use com,           ONLY:warning
  use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_DIP,OPENMP_set_threads
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use parallel_m,    ONLY:ncpu,PARALLEL_n_structures_active,COMM_copy,PAR_index_copy,PAR_build_index,&
+ use parallel_m,    ONLY:PARALLEL_n_structures_active,COMM_copy,PAR_build_index,&
 &                        PAR_n_c_bands,PAR_n_v_bands
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_DIPk_ibz_A2A,PAR_COM_DIPk_ibz_INDEX, &
@@ -49,7 +47,7 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
 &                        PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID,&
 &                        PAR_IND_CON_BANDS_OVLP_ID,PAR_IND_VAL_BANDS_OVLP_ID
  use DIPOLES,       ONLY:eval_OVERLAPS
- use parallel_m,    ONLY:PAR_Q_range,PAR_IND_Q
+ use parallel_m,    ONLY:PAR_Q_bz_range,PAR_IND_Q_bz
  !
  implicit none
  !
@@ -127,7 +125,7 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
      ! Add the neighboars k-points
      !
      call PARALLEL_add_Q_to_K_list("overlaps",PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_IND_OVLPk_ibz,PAR_IND_OVLPk_ibz_ID,&
-&                                  PAR_IND_Q,PAR_COM_DIPk_ibz_INDEX,PAR_Q_range,Xk,q)
+&                                  PAR_IND_Q_bz,PAR_COM_DIPk_ibz_INDEX,PAR_Q_bz_range,Xk,q)
    
      ! Overlaps conduction bands
      !

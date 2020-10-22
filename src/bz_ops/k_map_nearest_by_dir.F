@@ -25,10 +25,9 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  !
  ! Map k-points on a regular grid along the b directions
  !  
- use pars,           ONLY:SP,IP,zero_dfl,schlen
- use vec_operate,    ONLY:c2a
+ use pars,           ONLY:SP,zero_dfl,schlen
  use R_lattice,      ONLY:bz_samp,bz_map,WF_shifts
- use com,            ONLY:msg,error
+ use com,            ONLY:msg
  use pars,           ONLY:zero_dfl
  !
 #include<memory.h>
@@ -101,6 +100,14 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
    YAMBO_FREE(k_map%k_map_dir)
    YAMBO_FREE(k_map%k_map_inv)
  endif
+ !
+ !
+ !+ ! K-points are mapped in a regular grid
+ ! 
+ ! ikbz=k_map%k_map_dir(ix,iy,iz)
+ !
+ ! (ix,iy,iz)=k_map_inv(ikbz)
+ !
  YAMBO_ALLOC(k_map%k_map_dir,(k_map%max_kdir(1),k_map%max_kdir(2),k_map%max_kdir(3)))
  YAMBO_ALLOC(k_map%k_map_inv,(Xk%nbz,3))
  ! 
@@ -124,8 +131,7 @@ subroutine k_find_smallest_q(ptbz,q_step,nbz)
  !
  ! Find the smallest q in the 3 direction 
  !
- use pars,           ONLY:SP,IP,zero_dfl,schlen
- use R_lattice,      ONLY:bz_samp
+ use pars,           ONLY:SP,zero_dfl,schlen
  use com,            ONLY:msg
  !
  implicit none
@@ -222,7 +228,7 @@ end subroutine k_find_smallest_g0
 
 subroutine check_shifts(Xk,WF_shifts)
  !
- use pars,                ONLY:SP,lchlen
+ use pars,                ONLY:SP
  use R_lattice,           ONLY:bz_samp
  !
  implicit none

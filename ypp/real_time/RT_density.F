@@ -30,12 +30,13 @@ subroutine RT_density(en,kpt,qpt)
  use electrons,      ONLY:levels,n_spin
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,real2ch
- use com,            ONLY:msg,of_open_close,warning
- use IO_m,           ONLY:DUMP,OP_RD_CL,OP_RD_CL_IF_END,RD_CL_IF_END,NONE,io_control,LOG
- use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
- use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
-&                         RT_dyn_step,G_MEM_steps,RT_delta_occupations
- use YPP,            ONLY:v2plot,output_fname,plot_dim,plot_title,&
+ use com,            ONLY:msg,of_open_close
+ use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG,&
+&                         manage_action
+ use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t,CARR_RT_IO_t
+ use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step,&
+&                         G_MEM_steps,RT_delta_occupations
+ use YPPm,           ONLY:v2plot,output_fname,plot_dim,plot_title,&
 &                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot,l_norm_to_one
  use YPP_real_time,  ONLY:RT_time,RT_conf
  use interfaces,     ONLY:WF_load,WF_free,el_density_and_current
@@ -49,7 +50,8 @@ subroutine RT_density(en,kpt,qpt)
  !
  ! Workspace
  !
- integer               :: ID,ik,io_err,i_t,i_dir
+ integer               :: ID,ik,io_err,i_t,i_t_tmp,i_dir,Nt,IO_ACT
+ real(SP)              :: TIME_diff,REF_diff
  character(schlen)     :: ch_ws(3)
  logical               :: load_G_history,include_eq_occ
  !
@@ -70,7 +72,7 @@ subroutine RT_density(en,kpt,qpt)
  ! I/O
  !=====
  if(load_G_history) then
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) 
+   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID) 
    io_err=io_RT_components('G',ID)
    if(.not.SAVE_G_history) then
      call warning(" History of G_lesser not found. Density will be computed using the occupations")
@@ -82,7 +84,7 @@ subroutine RT_density(en,kpt,qpt)
    ch_ws(1)="Computing the density from the G lesser"
    YAMBO_ALLOC(G_loc,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
    G_loc=cZERO
-   YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
+   YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,1))
    dG_lesser=cZERO
    if(include_eq_occ) then
      YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
@@ -90,16 +92,16 @@ subroutine RT_density(en,kpt,qpt)
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),ID=ID) 
      io_err=io_RT_components('REF',ID)
    endif
+   call msg('s',trim(ch_ws(1)))
+   call RT_time_configuration_setup("G-DENSITY",GF_RT_IO_t)
  else
    ch_ws(1)="Computing the density from the occupations"
-   call RT_apply(RT_bands,En,kpt,IO_COM=LOG,keep_RT_carriers=.TRUE.)
+   call RT_apply(RT_bands,En,kpt,IO_COM=LOG,TIMES_ONLY=.TRUE.)
    YAMBO_ALLOC(RT_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+   call msg('s',trim(ch_ws(1)))
+   call RT_time_configuration_setup("f-DENSITY",CARR_RT_IO_t)
  endif
  !
- call msg('s',trim(ch_ws(1)))
- !
- RT_dyn_step=RT_step
- call RT_time_configuration_setup("DENSITY",GF_RT_IO_t)
  !
  ! Parallel Setups & WF_load
  !===========================
@@ -125,22 +127,30 @@ subroutine RT_density(en,kpt,qpt)
  !
  call plot_check_and_launch(.true.)
  !
+ Nt=GF_RT_IO_t%N
+ !
  do i_T=1,RT_conf%T_n_steps
    !
-   NE_time=RT_time(i_T)
-   NE_i_time=nint(NE_time/RT_step)+1
-   !
-   call msg('s','RT density at time '//trim(real2ch(real(NE_time/FS2AUT,SP)))//' fs')
+   call msg('s','RT density at time '//trim(real2ch(real(RT_time(i_T)/FS2AUT,SP)))//' fs')
    !
    if (load_G_history) then
      !
+     REF_diff=GF_RT_IO_t%Time(Nt)-GF_RT_IO_t%Time(Nt-G_MEM_steps)
+     do i_t_tmp=1,Nt
+       TIME_diff= abs ( GF_RT_IO_t%Time(i_t_tmp) - RT_time(i_T) )
+       if (abs(TIME_diff)<REF_diff ) then 
+         REF_diff=TIME_diff
+         GF_RT_IO_t%N=i_t_tmp
+       endif
+     enddo
+     !
 #if defined _PAR_IO
-     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2,RT_nk+1/),ID=ID)
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),ID=ID)
      io_err=io_RT_components('G',ID)
 #else
      do ik = 1, RT_nk 
-       if(ik==1) call io_control(ACTION=OP_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
-       if(ik> 1) call io_control(ACTION=   RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
+       IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,1,RT_nk)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID)
        io_err=io_RT_components('G',ID)
      enddo
 #endif
@@ -154,7 +164,7 @@ subroutine RT_density(en,kpt,qpt)
      !
    else
      !
-     call RT_apply(RT_bands,en,kpt,Time=NE_time,keep_RT_carriers=.TRUE.)
+     call RT_apply(RT_bands,en,kpt,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
      !
      call el_density_and_current(en,kpt,rho=drho,bands=RT_bands)
      !
@@ -165,7 +175,7 @@ subroutine RT_density(en,kpt,qpt)
    !
    v2plot=drho
    !
-   ch_ws(2)='RT_density_'//trim(intc(plot_dim))//'d@t'//trim(TIME_string( (NE_i_time-1)*RT_step ))
+   ch_ws(2)='RT_density_'//trim(intc(plot_dim))//'d@t'//trim(TIME_string( RT_time(i_T) ))
    if (use_cube)     output_fname=trim(ch_ws(2))//'.cube'
    if (use_xcrysden) output_fname=trim(ch_ws(2))//'.xsf'
    if (use_gnuplot)  output_fname=trim(ch_ws(2))//''

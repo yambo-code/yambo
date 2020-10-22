@@ -43,14 +43,11 @@ subroutine el_density_vbands(en,Xk,rho,VAL_BANDS)
  ! w_k = nsym/(nkibz * rank(k))
  !
  !
- use pars,          ONLY:SP,cZERO,rZERO
- use electrons,     ONLY:levels,n_sp_pol,spin_occ,n_spin
+ use pars,          ONLY:SP,rZERO
+ use electrons,     ONLY:levels,n_sp_pol,spin_occ
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:nsym,i_time_rev
  use FFT_m,         ONLY:fft_size,fft_rot_r
- use wave_func,     ONLY:WF
- use QP_m,          ONLY:QP_nk
- use nl_optics,     ONLY:NL_bands
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,PAR_Xk_nibz
  !
  implicit none
@@ -61,7 +58,7 @@ subroutine el_density_vbands(en,Xk,rho,VAL_BANDS)
  !
  ! Work Space 
  !
- integer     :: i1,iv,ik,is,rho_syms,ir,ik_mem
+ integer     :: i1,ik,is,rho_syms,ir,ik_mem
  real(SP)    :: rho_no_sym(fft_size)
  !
  rho=rZERO

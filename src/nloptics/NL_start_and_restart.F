@@ -34,7 +34,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  ! [5] Initialize the fields
  !
  use pars,           ONLY:cZERO,rZERO,cONE
- use com,            ONLY:msg,error
+ use com,            ONLY:msg
  use electrons,      ONLY:levels,n_sp_pol
  use real_time,      ONLY:rho_reference
  use R_lattice,      ONLY:bz_samp
@@ -44,7 +44,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  use X_m,            ONLY:X_t 
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use QP_m,           ONLY:QP_nk
- use global_XC,      ONLY:WF_kind,WF_xc_functional
+ use global_XC,      ONLY:WF_xc_functional,WF_kind
  use fields,         ONLY:A_tot,A_ext,A_vecpot_reset
  use parallel_m,     ONLY:master_cpu
  use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_freqs_todo,NL_LRC_alpha,NL_bands, &
@@ -53,7 +53,6 @@ subroutine NL_start_and_restart(E,k,Dip)
  use IO_m,           ONLY:OP_RD_CL,io_control,NONE,file_is_present,VERIFY
  use parallel_m,     ONLY:PP_redux_wait
  use stderr,         ONLY:intc
- use IO_m,           ONLY:IO_and_Messaging_switch
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
 #include<memory.h>
@@ -72,7 +71,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  !
  ! Initialize the Gf and potentials
  !==================================
- rho_reference     =rZERO
+ if(allocated(rho_reference))   rho_reference=rZERO
  if(allocated(full_rho))        full_rho    =rZERO
  if(allocated(V_xc_sc))         V_xc_sc     =rZERO
  if(allocated(V_hartree_sc))    V_hartree_sc=rZERO
@@ -106,9 +105,7 @@ subroutine NL_start_and_restart(E,k,Dip)
    !
    ! Calculate V_xc
    !
-   call IO_and_Messaging_switch("-report -log -io_in -io_out",CONDITION=master_cpu)
-   call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
-   call IO_and_Messaging_switch("+report +log +io_in +io_out")
+   call XC_potential_driver(E,k,WF_kind,WF_xc_functional,1)
    V_xc_0=V_xc
    !       
  endif
@@ -116,7 +113,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  if(Correlation==JGM) then
    NL_P=cZERO
    call EXC_macroscopic_JGM(E,NL_P(1:3),rho_n,E_xc_0,V_xc_0)
-   call msg('sr',' JGM initial alpha :',NL_LRC_alpha)
+   call msg('sr',' JGM initial alpha ',NL_LRC_alpha)
  endif
  !
  ! Apply QP Corrections
@@ -153,11 +150,11 @@ subroutine NL_start_and_restart(E,k,Dip)
  call msg('r','')
  call msg('r',' * * * Non-linear dynamics parameters * * * ')
  call msg('r','============================================')
- call msg('r ',' Initial Polarization      :',real(NL_initial_P(1:3)))
- call msg('r ',' Initial <Dip_x/y/z>       :',real(NL_initial_P(4:6)))
+ call msg('r ',' Initial Polarization      ',real(NL_initial_P(1:3)))
+ call msg('r ',' Initial <Dip_x/y/z>       ',real(NL_initial_P(4:6)))
  if(l_eval_CURRENT) then
-   call msg('r ',' Initial Current         :',real(NL_initial_J(1:3)))
-   call msg('r ',' Initial <v>=<[Hloc,r]>  :',real(NL_initial_J(4:6)))
+   call msg('r ',' Initial Current         ',real(NL_initial_J(1:3)))
+   call msg('r ',' Initial <v>=<[Hloc,r]>  ',real(NL_initial_J(4:6)))
  endif
  !
  ! Restart
@@ -182,7 +179,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  call PP_redux_wait(freqs_done,imode=3)
  !
  n_freqs_todo=n_frequencies-count(freqs_done)
- if(n_freqs_todo/=n_frequencies) call msg('s','RESTART, remaining frequencies: ',n_freqs_todo)
+ if(n_freqs_todo/=n_frequencies) call msg('s','RESTART, remaining frequencies ',n_freqs_todo)
  !
 end subroutine NL_start_and_restart
 

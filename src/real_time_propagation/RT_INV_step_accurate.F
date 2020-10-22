@@ -42,8 +42,8 @@ subroutine RT_INV_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  !use linear_algebra, ONLY:LIN_SYS
  !use interfaces,     ONLY:LINEAR_ALGEBRA_driver
  use pointers,       ONLY:linkM2V
- use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nk,RT_nbands,&
-&                         integrator_exp_order,G_lesser_reference,I1_matrix
+ use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nbands,&
+&                         G_lesser_reference,I1_matrix
  !
  implicit none
  !
@@ -56,9 +56,7 @@ subroutine RT_INV_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  ! Work space
  !
  integer     :: ib1,ib2,ib3,ib4,ibb1,ibb2,i_fail,v_tmp(RT_nbands**2)
- real(SP)    :: En(RT_bands(1):RT_bands(2))
  complex(SP) :: AdA_k(RT_nbands**2,RT_nbands**2)
- complex(SP) :: U_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: H1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: H2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: M1_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))

@@ -112,7 +112,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
        titles(4:5)=(/'re(L_x)','im(L_x)'/)
        call msg('o Lx','#',titles,INDENT=0,USE_TABS=.true.)    
        if(MAG_landau) then
-         titles(4)='MAG_gauge:'
+         titles(4)='MAG_gauge'
          titles(5)=MAG_gauge
          call msg('o Lx','#',titles(4:5),INDENT=0,USE_TABS=.true.)    
          titles(4:5)=(/'re(M_x)','im(M_x)'/)
@@ -122,7 +122,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
        titles(4:5)=(/'re(L_y)','im(L_y)'/)
        call msg('o Ly','#',titles,INDENT=0,USE_TABS=.true.)    
        if(MAG_landau) then
-         titles(4)='MAG_gauge:'
+         titles(4)='MAG_gauge'
          titles(5)=MAG_gauge
          call msg('o Ly','#',titles(4:5),INDENT=0,USE_TABS=.true.)    
          titles(4:5)=(/'re(M_y)','im(M_y)'/)
@@ -132,7 +132,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
        titles(4:5)=(/'re(L_z)','im(L_z)'/)
        call msg('o Lz','#',titles,INDENT=0,USE_TABS=.true.)    
        if(MAG_landau) then
-         titles(4)='MAG_gauge:'
+         titles(4)='MAG_gauge'
          titles(5)=MAG_gauge
          call msg('o Lz','#',titles(4:5),INDENT=0,USE_TABS=.true.)    
          titles(4:5)=(/'re(M_z)','im(M_z)'/)

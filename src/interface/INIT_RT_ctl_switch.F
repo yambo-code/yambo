@@ -23,8 +23,6 @@
 !
 subroutine INIT_RT_ctl_switch(what)
  !
- use it_m,       ONLY:initactivate
- !
  implicit none
  !
  character(1), intent(in) :: what

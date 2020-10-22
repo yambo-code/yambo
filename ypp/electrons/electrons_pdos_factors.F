@@ -26,9 +26,8 @@ subroutine electrons_pdos_factors(kpts,bands,PDOS_fac)
  use pars,           ONLY:SP
  use electrons,      ONLY:n_sp_pol
  use R_lattice,      ONLY:nkibz
- use com,            ONLY:error
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control
- use YPP,            ONLY:PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j
+ use YPPm,           ONLY:PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j
  use atom_proj,      ONLY:n_atom_wfc,n_proj_bands,atomic_table,atomic_projections
  !
  implicit none

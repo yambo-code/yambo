@@ -30,7 +30,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
  use hamiltonian, ONLY:H_nl_sc,H_rotation
  use electrons,   ONLY:levels,E_reset,n_sp_pol
  use R_lattice,   ONLY:nkibz
- use IO_m,        ONLY:io_control,OP_RD_CL,RD_CL_IF_END,OP_RD,RD_CL,&
+ use IO_m,        ONLY:io_control,manage_action,OP_RD_CL,RD_CL_IF_END,OP_RD,RD_CL,&
 &                      DUMP,OP_RD_CL,NONE,IO_NO_DATABASE
 #include<memory.h>
  !
@@ -47,7 +47,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
  ! Work Space
  !
  type(levels)      :: E_dummy
- integer           :: ID,ip,ip_sp_pol,io_err
+ integer           :: ID,ip,ip_sp_pol,i_frag,io_err,IO_ACT
  integer, external :: io_SC_components
  !
  compatible_SC_DB=.false.
@@ -87,7 +87,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
        if (ik==1.and.i_sp_pol==1) then
          YAMBO_ALLOC(H_nl_sc,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)))
        endif
-       call io_control(ACTION=RD_CL,SEC=(/ip+1+(ip_sp_pol-1)*nkibz/),ID=ID)
+       call io_control(ACTION=RD_CL,SEC=(/ik+1+(i_sp_pol-1)*nkibz/),ID=ID)
        io_err=io_SC_components('V',E_dummy,ID)
      endif
      !
@@ -97,7 +97,9 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
        YAMBO_ALLOC(H_rotation,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),nkibz,n_sp_pol))
        do ip_sp_pol=1,n_sp_pol
          do ip=1,nkibz
-           call io_control(ACTION=RD_CL_IF_END,SEC=(/ip+1+(ip_sp_pol-1)*nkibz/),ID=ID)
+           i_frag=ip+(ip_sp_pol-1)*nkibz
+           IO_ACT=manage_action(RD_CL_IF_END,i_frag,1,nkibz*n_sp_pol)
+           call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID)
            io_err=io_SC_components('WF',E_dummy,ID)
          enddo
        enddo
@@ -121,8 +123,6 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
  !
  found_SC_DB      = .not.(io_err==IO_NO_DATABASE)
  compatible_SC_DB = io_err == 0
- !
- if (what=="check_WF_DB")  compatible_SC_DB = n_bands<= SC_bands(2)
  !
  if (io_err==0.and.present(kind)) then
    kind=SC_kind

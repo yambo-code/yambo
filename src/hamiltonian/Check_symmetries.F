@@ -26,7 +26,7 @@ subroutine Check_symmetries(field_dir)
   use pars,          ONLY:SP
   use vec_operate,   ONLY:v_norm
   use matrix_operate,ONLY:m3det
-  use com,           ONLY:msg,error
+  use com,           ONLY:msg
   use R_lattice,     ONLY:rl_sop
   use D_lattice,     ONLY:nsym
   use stderr,        ONLY:intc

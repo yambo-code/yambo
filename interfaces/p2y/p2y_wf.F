@@ -26,7 +26,7 @@
  ! Reads the WFs for single k-point ikibz and group of bands
  ! associated with group ib_grp
  !
- use P2Y
+ use P2Ym,                  ONLY: dftdata_fmt
  use pars,                  ONLY: SP,DP,cZERO
  use electrons,             ONLY: n_bands,n_spinor
  use wave_func,             ONLY: wf_ncx,wf_nc_k, wf_igk, wf_nb_io

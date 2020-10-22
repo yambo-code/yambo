@@ -29,9 +29,7 @@ subroutine ELECTR_initial_check(k)
  use X_m,         ONLY:Dipole_approach
  use vec_operate, ONLY:normalize_v
  use SC,          ONLY:SC_potential
- use parser_m,    ONLY:parser
- use fields,      ONLY:Efield,Efield_strength,EtoT
- use vec_operate, ONLY:v_norm
+ use fields,      ONLY:Efield,Efield_strength
  use R_lattice,   ONLY:k_map,bz_samp
  !
  implicit none
@@ -76,7 +74,7 @@ subroutine ELECTR_initial_check(k)
  ! ===
  !
  call msg( 'sr', 'Static Electric Field ')
- call msg( 'sr', 'Efield                     :'//trim(Efield(1)%ef_name))
- call msg( 'sr', 'Efield Amplitude    [kV/cm]:',Efield(1)%amplitude*AU2VMm1/100._SP/1000._SP)
+ call msg( 'sr', 'Efield                     '//trim(Efield(1)%ef_name))
+ call msg( 'sr', 'Efield Amplitude    [kV/cm]',Efield(1)%amplitude*AU2VMm1/100._SP/1000._SP)
  !
 end subroutine

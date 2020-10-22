@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the Yambo team
+!        Copyright (C) 2000-2019 the Yambo team
 !              http://www.yambo-code.org/ 
 !
 ! Authors (see AUTHORS file for details): CA
@@ -26,16 +26,14 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  ! Evalute current using Eq. D1 of Souza et al. 
  ! PRB 69, 085106 (2004) 
  !
- use pars,           ONLY:DP,SP,cI,cZERO,pi,cONE
- use electrons,      ONLY:n_sp_pol,levels,spin_occ,n_spin
+ use pars,           ONLY:SP,cZERO,pi
+ use electrons,      ONLY:n_sp_pol,levels,spin_occ
  use R_lattice,      ONLY:bz_samp,bz_map,nXkbz
- use D_lattice,      ONLY:a,DL_vol
+ use D_lattice,      ONLY:a
  use vec_operate,    ONLY:get_id_perpendicular
- use electric,       ONLY:l_force_SndOrd
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_bz,PAR_COM_Xk_bz_INDEX
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands
- use wrapper_omp,    ONLY:V_dot_V_omp
  !
  implicit none           
  !
@@ -47,10 +45,10 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  !
  ! Work Space
  !
- integer       :: ik,i1,i2,i3,iv,isp,ikbz,Nperpend,id,id2,id3
- integer       :: idx(3),id_red,istep,max_step
+ integer       :: ik,i1,iv,isp,ikbz,Nperpend,id,id2,id3,is
+ integer       :: id_red,istep,max_step
  complex(SP)   :: NL_J_red(3)
- complex(SP)   :: VH_bands(NL_bands(2),en%nbf,nXkbz,n_sp_pol)
+ complex(SP)   :: VH_bands(NL_bands(2),en%nbf,Xk%nibz,n_sp_pol)
  complex(SP)   :: V_tilde(en%nbf,NL_bands(2),2)
  complex(SP)   :: delta_V_tilde(en%nbf,NL_bands(2),2)
  !
@@ -58,20 +56,18 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  !
  VH_bands=cZERO
  do isp=1,n_sp_pol
-   do ikbz=1,nXkbz
+   do ik=1,Xk%nibz
      !
-     if(.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
-     !
-     ik = Xk%sstar(ikbz,1)
+     if(.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
      do i1=1,NL_bands(2)
-       VH_bands(i1,:,ikbz,isp)=en%E(i1,ik,isp)*conjg(V_bands(i1,:,ik,isp))
+       VH_bands(i1,:,ik,isp)=en%E(i1,ik,isp)*conjg(V_bands(i1,:,ik,isp))
      enddo
      !
    enddo
  enddo
  !
- call PP_redux_wait(VH_bands,COMM=PAR_COM_Xk_bz_INDEX%COMM)
+ call PP_redux_wait(VH_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  NL_J     = cZERO
  NL_J_red = cZERO
@@ -91,6 +87,8 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
      !
      do ikbz=1,nXkbz
        !
+!       if(.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
+       !
        do istep=1,max_step
          call Build_tilde_vbands(V_bands,en,Xk,ikbz,isp,istep,id_red,V_tilde)
          delta_V_tilde(:,:,istep)=(V_tilde(:,:,1)-V_tilde(:,:,2))/dble(istep)
@@ -100,11 +98,11 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
        !
        if(max_step==1) then
          do iv=1,en%nbf
-           NL_J_red(id_red)=NL_J_red(id_red)+sum(VH_bands(:,iv,ikbz,isp)*delta_V_tilde(iv,:,1))
+           NL_J_red(id_red)=NL_J_red(id_red)+sum(VH_bands(:,iv,ik,isp)*delta_V_tilde(iv,:,1))
          enddo
        elseif(max_step==2) then
          do iv=1,en%nbf
-           NL_J_red(id_red)=NL_J_red(id_red)+sum(VH_bands(:,iv,ikbz,isp)*(4._SP*delta_V_tilde(iv,:,1)-delta_V_tilde(iv,:,2)))/3._SP
+           NL_J_red(id_red)=NL_J_red(id_red)+sum(VH_bands(:,iv,ik,isp)*(4._SP*delta_V_tilde(iv,:,1)-delta_V_tilde(iv,:,2)))/3._SP
          enddo
        endif
        !
@@ -123,5 +121,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  do id=1,3
    NL_J(id)=-sum(NL_J_red(:)*a(:,id))/(4.0*pi)
  enddo
+ !
+! call PP_redux_wait(NL_J,COMM=PAR_COM_Xk_bz_INDEX%COMM)
  !
 end subroutine NL_Berry_current

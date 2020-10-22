@@ -30,7 +30,8 @@ subroutine INIT_RT_ctl_load(defs,i_type)
  ! because the code does not know if there is
  ! spin unless the DB1 is read. 
  !
- use it_m,          ONLY:it,initdefs,V_real_time
+ use it_tools,      ONLY:it
+ use it_m,          ONLY:initdefs,V_real_time
  use RT_control,    ONLY:RT_ctl_db,RT_ctl_interp_neigh
  !
  implicit none

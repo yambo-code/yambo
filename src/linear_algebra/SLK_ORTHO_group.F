@@ -10,9 +10,8 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-SUBROUTINE SLK_ORTHO_group( ORTHO, POOL, nproc_try_in, comm_all )
+subroutine SLK_ORTHO_group( ORTHO, POOL, nproc_try_in, comm_all )
  !
- use com,        ONLY:error
  use SLK_m,      ONLY:ORTHO_group,POOL_group,n_pools
  use parallel_m, ONLY:MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD
  !
@@ -193,4 +192,4 @@ SUBROUTINE SLK_ORTHO_group( ORTHO, POOL, nproc_try_in, comm_all )
  !
  RETURN
  !
-END SUBROUTINE SLK_ORTHO_group
+end subroutine SLK_ORTHO_group

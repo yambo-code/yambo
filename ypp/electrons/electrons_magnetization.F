@@ -28,7 +28,7 @@ subroutine electrons_magnetization(Xk,Xen)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_sp_pol
  use FFT_m,          ONLY:fft_size
- use YPP,            ONLY:v2plot,output_fname,plot_dim,use_xcrysden,&
+ use YPPm,           ONLY:v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,plot_title,l_density,l_norm_to_one,mag_dir
  use com,            ONLY:msg,of_open_close
  use xc_functionals, ONLY:magn

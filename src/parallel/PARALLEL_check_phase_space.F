@@ -26,7 +26,6 @@ subroutine PARALLEL_check_phase_space(N_PAR_elements,WORLD,WORLD_size,MSG)
  use pars,        ONLY:schlen
  use parallel_m,  ONLY:ncpu,mpi_comm_world,PP_redux_wait,myid
  use stderr,      ONLY:intc
- use com,         ONLY:error
  use LIVE_t,      ONLY:LIVE_message
  !
  implicit none

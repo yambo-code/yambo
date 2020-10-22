@@ -27,7 +27,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  ! the Fermi "Levels" of Xe.
  !
  ! Also the Double Grid levels/occ.s are shifted/defined accordingly.
- ! Note that to check if the Double Grid is present the Xe%E_DbGd pointer
+ ! Note that to check if the Double Grid is present the Xe%E_FineGd pointer
  ! is checked. 
  !
  ! This s.r. takes care that E keeps the same electronic character
@@ -36,19 +36,18 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  !
  use pars,       ONLY:SP
  use units,      ONLY:HA2EV
- use electrons,  ONLY:levels,n_sp_pol,spin_occ,BZ_DbGd_nbands,&
-&                     BZ_DbGd_tot_nk_levels
- use com,        ONLY:warning
+ use electrons,  ONLY:levels,n_sp_pol,spin_occ
  use D_lattice,  ONLY:Tel
  use functions,  ONLY:Fermi_fnc
  use interfaces, ONLY:OCCUPATIONS_Gaps
+ !
 #include<memory.h>
  !
  type(levels)::Xe,E
  !
  !Work Space
  !
- real(SP) :: Ef_test
+ real(SP)           :: Ef_test
  real(SP),parameter :: Ef_step=0.1/HA2EV
  !
   if (.not.allocated(E%f)) then
@@ -69,7 +68,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
    E%E=E%E-E%E_Fermi
    E%E_VBM =E%E_VBM-E%E_Fermi
    E%E_CBm =E%E_CBm-E%E_Fermi
-   if (allocated(E%E_DbGd)) E%E_DbGd =E%E_DbGd -E%E_Fermi
+   if (allocated(E%FG%E)) E%FG%E =E%FG%E -E%E_Fermi
    return
  endif
  !
@@ -91,7 +90,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  E%E=E%E-E%E_Fermi
  E%E_VBM =E%E_VBM-E%E_Fermi
  E%E_CBm =E%E_CBm-E%E_Fermi
- if (allocated(Xe%E_DbGd)) E%E_DbGd =E%E_DbGd -E%E_Fermi
+ if (allocated(Xe%FG%E)) E%FG%E =E%FG%E -E%E_Fermi
  !
  if (E%nbf/=Xe%nbf.or.E%nbm/=Xe%nbm) then
    call warning('Global and response function energy levels have different metallic character')
@@ -111,12 +110,12 @@ subroutine OCCUPATIONS_Extend(Xe,E)
          enddo
        enddo 
      enddo
-     if (allocated(E%E_DbGd)) then
-       do i1=1,BZ_DbGd_nbands
-         do i2=1,BZ_DbGd_tot_nk_levels
+     if (allocated(E%FG%E)) then
+       do i1=1,E%FG%nb
+         do i2=1,E%FG%nk
            do is=1,n_sp_pol
-             E%f_DbGd(i1,i2,is) =spin_occ*Fermi_fnc(E%E_DbGd(i1,i2,is)-Ef,Tel)
-             Xe%f_DbGd(i1,i2,is)=E%f_DbGd(i1,i2,is)
+             E%FG%f(i1,i2,is) =spin_occ*Fermi_fnc(E%FG%E(i1,i2,is)-Ef,Tel)
+             Xe%FG%f(i1,i2,is)=E%FG%f(i1,i2,is)
            enddo
          enddo 
        enddo

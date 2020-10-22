@@ -41,8 +41,9 @@ module pseudo
  ! max number of angular momentum channel times number of projectors
 
  integer :: pp_kbv_dim
-
- integer,  allocatable:: pp_table(:,:,:)  
+ integer :: pp_kbv_dim_yambo
+ integer,  allocatable:: pp_kbv_table(:)
+ integer,  allocatable:: pp_table(:,:,:)
  ! (3,n_atomic_species,pp_n_l_times_proj_max)
  ! the first dimension contains (angular_momentum,nprojectors,spin)
 

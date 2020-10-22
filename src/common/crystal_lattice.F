@@ -27,7 +27,7 @@ subroutine crystal_lattice()
  use D_lattice,      ONLY:a,alat,lattice,dl_sop,nsym
  use vec_operate   , ONLY:v_norm
  use matrix_operate, ONLY:m3inv,m3det
- use com,            ONLY:warning
+ !
  implicit none
  !
  ! Work Space

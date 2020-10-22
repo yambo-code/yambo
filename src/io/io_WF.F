@@ -24,12 +24,11 @@
 integer function io_WF(ID,wf,wf_d)
  !
  use pars,             ONLY:SP,schlen
- use com,              ONLY:error
- use electrons,        ONLY:n_sp_pol,n_spinor
+ use electrons,        ONLY:n_spinor
  use stderr,           ONLY:intc
  use R_lattice,        ONLY:nkibz
  use wave_func,        ONLY:wf_ncx,wf_nb_io,wf_nb_to_load,wf_b_indx,wf_nb_io_groups
- use IO_m,             ONLY:io_connect, io_disconnect, io_sec,io_bulk,io_header,ver_is_gt_or_eq,&
+ use IO_m,             ONLY:io_connect, io_disconnect, io_sec,io_bulk,io_header,&
 &                           io_fragment,io_elemental,io_resetable,frag_WF
  use timing_m,         ONLY:timing
  implicit none
@@ -45,6 +44,7 @@ integer function io_WF(ID,wf,wf_d)
  !
  call timing('io_WF',OPR='start')
  !
+ io_WF=0
  head_io=0
  select case ( count((/io_sec(ID,:)/=0/)) )
    case(0)
@@ -73,7 +73,7 @@ integer function io_WF(ID,wf,wf_d)
    i_sp_pol=2
  endif
  !
- io_WF=io_connect(desc="wf",type=0,ID=ID)
+ io_WF=io_connect(desc="wf",type=0,ID=ID,FORCE_READ_MODE=(head_io/=1).and.frag_WF)
  if (io_WF/=0) goto 1
  !
  ! S/N
@@ -83,8 +83,8 @@ integer function io_WF(ID,wf,wf_d)
    io_WF=io_header(ID,IMPOSE_SN=.true.,FRAG=frag_WF)
    !
    call io_elemental(ID, VAR="BAND_GROUPS",VAR_SZ=2,MENU=0)
-   call io_elemental(ID, VAR=" Bands in each block             :",I0=wf_nb_io)
-   call io_elemental(ID, VAR=" Blocks                          :",I0=wf_nb_io_groups)
+   call io_elemental(ID, VAR=" Bands in each block              ",I0=wf_nb_io)
+   call io_elemental(ID, VAR=" Blocks                           ",I0=wf_nb_io_groups)
    call io_elemental(ID, VAR="",VAR_SZ=0)
    !
    if (io_WF/=0) goto 1

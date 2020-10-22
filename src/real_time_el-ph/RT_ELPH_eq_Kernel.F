@@ -38,7 +38,7 @@ subroutine RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp_sq,S_mat)
  ! Work Space ...
  !
  integer  :: i_n,i_np,i_e,i_s
- real(SP) :: DELTA,GAMMA_,OCCUPATIONS,f_k(RT_bands(1):RT_bands(2)),f_k_m_q(RT_bands(1):RT_bands(2))
+ real(SP) :: DELTA,GAMMA_,OCCUPATIONS
  !
  S_mat=cZERO
  !

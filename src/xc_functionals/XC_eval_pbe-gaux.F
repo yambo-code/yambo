@@ -38,9 +38,10 @@ real(DP) :: RHO(n_spin),GRHO(n_spin),sxsr,v1xsr(n_spin), v2xsr(n_spin),rh
 !parameter 
 real(DP), parameter :: alpha_gau= 0.150_DP
 real(DP), parameter :: epsg= 1.0d-10
-integer  :: ir,is1,is2,is_xc
+integer  :: ir
 !
  exsr=0.0_DP
+ sxsr=0.0_DP
  v1xsr=0.0_DP
  v2xsr=0.0_DP
  RHO=0.0_DP
@@ -63,10 +64,10 @@ integer  :: ir,is1,is2,is_xc
  exsr=exsr*real(DL_vol,DP)/real(fft_size,DP)
 !Then consider the EXX fraction outside the subs
 !
- contains
+ end subroutine XC_eval_pbegaux
 !this comes from QE
 !-----------------------------------------------------------------------
-      SUBROUTINE pbexgau_lsd(RHOA,RHOB,GRHOAA,GRHOBB,sx, &
+      subroutine pbexgau_lsd(RHOA,RHOB,GRHOAA,GRHOBB,sx, &
                             V1XA,V2XA,V1XB,V2XB,alpha_gau)
 !     ==--------------------------------------------------------------==
 !     ==--------------------------------------------------------------==
@@ -93,13 +94,13 @@ integer  :: ir,is1,is2,is_xc
 
 !     ==--------------------------------------------------------------==
       RETURN
-      END SUBROUTINE pbexgau_lsd
+      end subroutine pbexgau_lsd
 !
 
-SUBROUTINE pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
+subroutine pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
 !-----------------------------------------------------------------------
 !
-!      use kinds, ONLY : DP
+      use pars,          ONLY:DP
 
       IMPLICIT REAL*8 (A-H,O-Z)
 
@@ -133,11 +134,11 @@ SUBROUTINE pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
 
 !     ==--------------------------------------------------------------==
       RETURN
-      END SUBROUTINE pbexgau
+      end subroutine pbexgau
 
 !
 !-----------------------------------------------------------------------
-      SUBROUTINE pbe_gauscheme(rho,s,alpha_gau,Fx,dFxdr,dFxds)
+      subroutine pbe_gauscheme(rho,s,alpha_gau,Fx,dFxdr,dFxds)
 !--------------------------------------------------------------------
 
       Implicit None
@@ -221,8 +222,7 @@ SUBROUTINE pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
       dFxds = d1Kxds * Nx + Kx * d1Nxds
 
       RETURN
-      END SUBROUTINE pbe_gauscheme
-end subroutine XC_eval_pbegaux
+      end subroutine pbe_gauscheme
 
       FUNCTION TayExp(X)
       Real*8 TAYEXP,X

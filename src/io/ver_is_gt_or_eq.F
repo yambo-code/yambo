@@ -23,8 +23,9 @@
 !
 logical function ver_is_gt_or_eq(ID,version,revision)
  !
- use IO_m,    ONLY:io_code_version,io_code_revision
- use LOGO,    ONLY:code_version,code_revision
+ use IO_m,        ONLY:io_code_version,io_code_revision
+ use C_driver,    ONLY:code_version,code_revision
+ !
  implicit none
  !
  integer, intent(in), optional     :: revision,version(3)

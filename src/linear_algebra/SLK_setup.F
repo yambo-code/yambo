@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE SLK_setup( idriver, ncpu_in_use, ORTHO, POOL, COMM, INDEX_comm, slk_error)
+subroutine SLK_setup( idriver, ncpu_in_use, ORTHO, POOL, COMM, INDEX_comm, slk_error)
  !
  use SLK_m,          ONLY:n_pools,ORTHO_group,POOL_group,SLK_POOL_init
  use parallel_m,     ONLY:MPI_comm
@@ -65,7 +65,7 @@ SUBROUTINE SLK_setup( idriver, ncpu_in_use, ORTHO, POOL, COMM, INDEX_comm, slk_e
  if (idriver==LIN_SYS) ch="LinearSystem"
  if (idriver==MAT_MUL) ch="MatrixMult."
  !
- call msg("lr" ,'[SLK-'//trim(ch)//']  Pools        :',n_pools)
- call msg("lrn",'[SLK-'//trim(ch)//']  BLACS grid   :',ORTHO%grid)
+ call msg("lr" ,'[SLK-'//trim(ch)//']  Pools        ',n_pools)
+ call msg("lrn",'[SLK-'//trim(ch)//']  BLACS grid   ',ORTHO%grid)
  !
-END SUBROUTINE SLK_setup
+end subroutine SLK_setup

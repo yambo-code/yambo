@@ -23,9 +23,8 @@
 !
 integer function io_NLCC_pwscf(ID)
  !
- use pars,             ONLY:SP,IP
- use stderr,           ONLY:intc
- use D_lattice,        ONLY:n_atomic_species, n_atoms_species_max
+ use pars,             ONLY:SP
+ use D_lattice,        ONLY:n_atomic_species
  use R_lattice,        ONLY:ng_vec
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
 &                           io_elemental,io_bulk,io_header,&
@@ -36,9 +35,6 @@ integer function io_NLCC_pwscf(ID)
  !
  integer,intent(in) :: ID
  ! 
- ! Work Space
- !
- 
  io_nlcc_pwscf=io_connect(desc="nlcc_pp_pwscf",type=0,ID=ID)
  if (io_nlcc_pwscf/=0) goto 1
  !

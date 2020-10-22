@@ -25,12 +25,11 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  ! 
  ! Print the intrisic Polarization of the system
  !
- use pars,          ONLY:SP,lchlen,schlen
+ use pars,          ONLY:SP,lchlen
  use units,         ONLY:e_SI,AU2M
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:bz_samp,k_map
  use com,           ONLY:msg
- use X_m,           ONLY:X_t
  use D_lattice,     ONLY:DL_vol,a,n_atomic_species,Z_species
  use DIPOLES,       ONLY:DIPOLE_t
  use vec_operate,   ONLY:get_id_perpendicular
@@ -51,7 +50,6 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  complex(SP) :: Sm1_plus (Xen%nbm,Xen%nbm,6)
  complex(SP) :: Sm1_minus(Xen%nbm,Xen%nbm,6)
  character(lchlen) :: dumb_ch
- character(schlen) :: berry_file_name
  integer           :: id,Nperpend,id2,id3,ia,mod_tot,ikbz,i_sp_pol
  logical           :: l_odd
  !
@@ -89,7 +87,7 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  call msg('r',' * * * Polarization * * * ')
  call msg('r','==========================')
  !
- write(dumb_ch,'(a,f16.8,a)') ' Volume : ',DL_vol,' bohr^3 '
+ write(dumb_ch,'(a,f16.8,a)') ' Volume  ',DL_vol,' bohr^3 '
  call msg('r',dumb_ch)
  ! 
  do id=1,3
@@ -99,25 +97,25 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
    if(k_map%max_kdir(id)==1) cycle
    call get_id_perpendicular(id,id2,id3)
    Nperpend=k_map%max_kdir(id2)*k_map%max_kdir(id3)
-   call msg('r',' Direction: '//intc(id))
-   call msg('r',' Numer of k-points per string : '//intc(k_map%max_kdir(id)))
-   call msg('r',' Numer of different strings   : '//intc(k_map%max_kdir(id2)*k_map%max_kdir(id3)))
-   write(dumb_ch,'(a,f16.8,a,i1.1,a)') ' Electronic Phase : ',real(P_Berry_RED(id),SP),'   mod(',2,')'
+   call msg('r',' Direction '//intc(id))
+   call msg('r',' Numer of k-points per string  '//intc(k_map%max_kdir(id)))
+   call msg('r',' Numer of different strings    '//intc(k_map%max_kdir(id2)*k_map%max_kdir(id3)))
+   write(dumb_ch,'(a,f16.8,a,i1.1,a)') ' Electronic Phase  ',real(P_Berry_RED(id),SP),'   mod(',2,')'
    call msg('r',dumb_ch)
-   write(dumb_ch,'(a,f16.8,a,i1.1,a)') ' Ionic      Phase : ',I_Berry_RED(id)  ,'   mod(',mod_tot,')'
+   write(dumb_ch,'(a,f16.8,a,i1.1,a)') ' Ionic      Phase  ',I_Berry_RED(id)  ,'   mod(',mod_tot,')'
    call msg('r',dumb_ch)
-   write(dumb_ch,'(a,f16.8,a,i1.1,a)') ' Total      Phase : ',Tot_Berry_RED(id),'   mod(',mod_tot,')'
+   write(dumb_ch,'(a,f16.8,a,i1.1,a)') ' Total      Phase  ',Tot_Berry_RED(id),'   mod(',mod_tot,')'
    call msg('r',dumb_ch)
    modfac=rmod
-   write(dumb_ch,'(a,f16.8,a,f11.8,a)') ' Polarization : ',Tot_Berry_RED(id)*modfac,& 
+   write(dumb_ch,'(a,f16.8,a,f11.8,a)') ' Polarization  ',Tot_Berry_RED(id)*modfac,& 
 &       '  mod(',real(mod_tot)*modfac,') (e/Volume).bohr'
    call msg('r',dumb_ch)
    modfac=rmod/DL_vol
-   write(dumb_ch,'(a,f16.8,a,f11.8,a)') ' Polarization : ',Tot_Berry_RED(id)*modfac,&
+   write(dumb_ch,'(a,f16.8,a,f11.8,a)') ' Polarization  ',Tot_Berry_RED(id)*modfac,&
 &       '  mod(',real(mod_tot)*modfac,') e/bohr^2'
    call msg('r',dumb_ch)
    modfac=(rmod/DL_vol)*(e_SI/AU2M**2)
-   write(dumb_ch,'(a,f16.8,a,f11.8,a)') ' Polarization : ',Tot_Berry_RED(id)*modfac,&
+   write(dumb_ch,'(a,f16.8,a,f11.8,a)') ' Polarization  ',Tot_Berry_RED(id)*modfac,&
 &       '  mod(',real(mod_tot)*modfac,') C/m^2'
    call msg('r',dumb_ch)
    call msg('r','')

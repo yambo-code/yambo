@@ -58,6 +58,7 @@ subroutine col_driver(bare_NG,q)
 &                        bare_qpg_d
  use wave_func,     ONLY:wf_ng
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
+ use cuda_m,        ONLY:have_cuda
 #include<memory.h>
  !
  integer       :: bare_NG
@@ -117,7 +118,7 @@ subroutine col_driver(bare_NG,q)
      io_err=io_RIM(ID)
    endif
    !
-   call msg('nr','Summary of Coulomb integrals for non-metallic bands |Q|[au] RIM/Bare:')
+   call msg('nr','Summary of Coulomb integrals for non-metallic bands |Q|[au] RIM/Bare')
    call sort(arrin=q_norm,arrout=q_norm_s,indx=q_norm_i)
    do i1=1,nqibz,2
      !
@@ -126,8 +127,8 @@ subroutine col_driver(bare_NG,q)
      do i2=i1,min(i1+1,nqibz)
        !
        iq=q_norm_i(i2)
-       ch_dum='Q ['//trim(intc(iq))//']:'
-       if (i1/=i2) ch_dum=' * Q ['//trim(intc(iq))//']:'
+       ch_dum='Q ['//trim(intc(iq))//']'
+       if (i1/=i2) ch_dum=' * Q ['//trim(intc(iq))//']'
        !
        r_dum(1)=q_norm(iq)
        r_dum(2)=2./(abs(bare_qpg(iq,1))**2.*DL_vol*real(nqbz))
@@ -147,13 +148,14 @@ subroutine col_driver(bare_NG,q)
  !
  if (.not.l_col_cut) then
    call cutoff_presets()
-#ifdef _CUDA
-   YAMBO_FREE(bare_qpg_d)
-   if (size(bare_qpg)>0) then
-     YAMBO_ALLOC(bare_qpg_d,(size(bare_qpg,2),size(bare_qpg,1)))
-     bare_qpg_d=transpose(bare_qpg)
+   !
+   if (have_cuda) then
+     YAMBO_FREE(bare_qpg_d)
+     if (size(bare_qpg)>0) then
+       YAMBO_ALLOC_SOURCE(bare_qpg_d,bare_qpg)
+     endif
    endif
-#endif
+   !
    return
  endif
  !
@@ -162,12 +164,11 @@ subroutine col_driver(bare_NG,q)
  ! copy again,
  ! bare_qpg is modified by cutff_driver
  !
-#ifdef _CUDA
- YAMBO_FREE(bare_qpg_d)
- if (size(bare_qpg)>0) then
-   YAMBO_ALLOC(bare_qpg_d,(size(bare_qpg,2),size(bare_qpg,1)))
-   bare_qpg_d=transpose(bare_qpg)
+ if (have_cuda) then
+   YAMBO_FREE(bare_qpg_d)
+   if (size(bare_qpg)>0) then
+     YAMBO_ALLOC_SOURCE(bare_qpg_d,bare_qpg)
+   endif
  endif
-#endif
  !
 end subroutine

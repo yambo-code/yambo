@@ -30,8 +30,6 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  !
  ! wf(:,n')= sum_m WFo(:,m) SC_R(m,n')
  !
- ! Extended only to collinear case
- !
  use pars,           ONLY:cZERO
  use electrons,      ONLY:n_spinor
  use pars,           ONLY:SP
@@ -45,7 +43,7 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  !
  ! Work Space
  !
- integer     :: ib,ibp,i_wf,i_wfp,i_spinor,ig
+ integer     :: ib,ibp,i_wf,i_wfp,i_spinor,i_c
  complex(SP) :: WS_wf(wf_size,n_spinor,H_ref_bands(1):H_ref_bands(2))
  !
  WS_wf=cZERO
@@ -67,10 +65,10 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
    !
    i_wf = WFo%index(ib,ik,i_sp_pol)
    !
-   !$omp parallel do default(shared), private(ig,i_spinor)
+   !$omp parallel do default(shared), private(i_c,i_spinor)
    do i_spinor=1,n_spinor
-     do ig=1,wf_size
-       WF%c(ig,i_spinor,i_wf)=WS_wf(ig,i_spinor,ib)
+     do i_c=1,wf_size
+       WF%c(i_c,i_spinor,i_wf)=WS_wf(i_c,i_spinor,ib)
      enddo
    enddo
    !$omp end parallel do

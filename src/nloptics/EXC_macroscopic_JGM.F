@@ -35,9 +35,9 @@ subroutine EXC_macroscopic_JGM(en,Pmac,rho,Exc,V_xc)
  use wave_func,     ONLY: wf_ng
  !
  implicit none
- real(SP),intent(in)  :: rho(fft_size)
- real(SP),intent(out) :: V_xc(fft_size,n_spin)
- complex(SP),intent(in) :: Pmac(3)
+ real(SP),intent(in)     :: rho(fft_size)
+ real(SP),intent(out)    :: V_xc(fft_size,n_spin)
+ complex(SP),intent(in)  :: Pmac(3)
  complex(SP),intent(out) :: Exc(3)
  type(levels),intent(in) ::en 
  !
@@ -45,7 +45,7 @@ subroutine EXC_macroscopic_JGM(en,Pmac,rho,Exc,V_xc)
  !
  complex(DP) :: rhog(fft_size),alpha(fft_size),Vxc_tmp(fft_size)
  complex(DP) :: E_g(3)
- integer     :: ir, ig, igp
+ integer     :: ir, ig
  !
  !
  ! Calculate alpha from the JGM in DL

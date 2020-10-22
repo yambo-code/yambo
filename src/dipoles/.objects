@@ -1,5 +1,5 @@
 #if defined _SC
-SC_objects = DIPOLE_rotate.o
+SC_objects = DIPOLE_SC_rotate.o
 #endif
 #if defined _RT
 RT_objects = DIPOLE_orbital_magnetization.o DIPOLE_spin_magnetization.o
@@ -8,8 +8,7 @@ RT_objects = DIPOLE_orbital_magnetization.o DIPOLE_spin_magnetization.o
 NL_objects = Berry_polarization_EQ.o Ionic_polarization.o POLARIZATION_output.o           
 #endif
 objs = Build_Overlaps_Det_EQ.o $(SC_objects) $(RT_objects) $(NL_objects) \
-       DIPOLE_expand_and_project.o DIPOLE_IO.o DIPOLE_driver.o DIPOLE_build_covariants.o DIPOLE_x_real_space.o \
-       DIPOLE_kb_abinit_comp.o DIPOLE_kb_sum.o DIPOLE_kb_Ylm.o DIPOLE_dimensions.o \
-       DIPOLE_kb_pwscf_comp.o DIPOLE_kb_init.o DIPOLE_p_matrix_elements.o DIPOLE_overlaps.o \
-       DIPOLE_transverse.o DIPOLE_shifted_grids.o DIPOLE_check_shifted_grids.o \
-       DIPOLE_gspace_finiteq.o DIPOLE_real_space_finiteq.o
+       DIPOLE_IO.o DIPOLE_driver.o DIPOLE_build_covariants.o DIPOLE_x_real_space.o \
+       DIPOLE_kb_abinit_def_dim.o DIPOLE_kb_abinit_comp.o DIPOLE_kb_sum.o DIPOLE_kb_Ylm.o DIPOLE_dimensions.o \
+       DIPOLE_kb_pwscf_def_dim.o DIPOLE_kb_pwscf_comp.o DIPOLE_kb_init.o DIPOLE_p_matrix_elements.o DIPOLE_overlaps.o \
+       DIPOLE_transverse.o DIPOLE_shifted_grids.o DIPOLE_check_shifted_grids.o DIPOLE_setup_PAR_K_scheme.o

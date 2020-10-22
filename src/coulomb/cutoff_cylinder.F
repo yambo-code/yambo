@@ -31,7 +31,7 @@ subroutine cutoff_cylinder(q,is_cut)
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg,error
+ use com,           ONLY:msg
  !
 #include<memory.h>
  type(bz_samp) ::q
@@ -81,7 +81,7 @@ subroutine cutoff_cylinder(q,is_cut)
  cyl_cut=cyl_length
  if (infcyl) then
   cyl_cut=abs(1/(q%pt(2,ipar))*alat(ipar))-1.
-  call msg('r','Infinite cylinder: Length set to 1/dq [au]:',cyl_cut)
+  call msg('r','Infinite cylinder: Length set to 1/dq [au]',cyl_cut)
  endif
  !
  cyl_cut2 = cyl_cut**2

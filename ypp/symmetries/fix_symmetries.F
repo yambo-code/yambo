@@ -24,11 +24,11 @@
 subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !
  use pars,                ONLY:SP
- use com,                 ONLY:msg,warning
+ use com,                 ONLY:msg
  use parser_m,            ONLY:parser
  use matrix_operate,      ONLY:m3det
- use stderr,              ONLY:intc,set_real_printed_length
- use YPP,                 ONLY:E_field,B_theta,B_psi,B_field
+ use stderr,              ONLY:intc
+ use YPPm,                ONLY:E_field,B_theta,B_psi,B_field
  use electrons,           ONLY:n_spinor,Spin_magn
  use R_lattice,           ONLY:rl_sop
  use vec_operate,         ONLY:v_norm
@@ -176,7 +176,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
    if(Rm_inv.and..not.(inv_index>spatial_nsym)) then
      nsym=nsym/2
      spatial_nsym=spatial_nsym/2
-     call msg('s','Removed inversion. Symmetries are now: '//trim(intc(spatial_nsym)))
+     call msg('s','Removed inversion. Symmetries are now '//trim(intc(spatial_nsym)))
    endif
    !
    ! Then remove other symmetries according to input
@@ -351,23 +351,20 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
    mag_syms=.false.
  endif
  !
- if(i_time_rev==1)&
-& call msg('s',trim(intc(old_trev_nsym))//' T-rev symmetries reduced/increased to ...'//trim(intc(nsym-spatial_nsym)))
+ if(i_time_rev==1) then
+   call msg('s',trim(intc(old_trev_nsym))//' T-rev symmetries reduced/increased to ...'//trim(intc(nsym-spatial_nsym)))
+ endif
  !
- call set_real_printed_length(f_length=7,g_length=8)
- !
- call msg('s','[Symm] Spatial simmetries now are:')  
+ call msg('s','[Symm] Spatial simmetries now are')  
  do is=1,spatial_nsym
    call msg('s','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))
  enddo
  if (i_time_rev==1) then
-   call msg('s','[Symm] T-rev derived simmetries now are:')  
+   call msg('s','[Symm] T-rev derived simmetries now are')  
    do is=spatial_nsym+1,nsym
      call msg('s','[S*'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
    enddo
  endif
- !
- call set_real_printed_length()
  !
  ! Remap Inversion symmetry index
  !
@@ -401,8 +398,8 @@ subroutine atoms_check_symm(symm_to_check,n_syms_to_check,found_symm)
  !
  implicit none
  !
- real(SP) :: symm_to_check(3,3,n_syms_to_check)
  integer  :: n_syms_to_check
+ real(SP) :: symm_to_check(3,3,n_syms_to_check)
  logical  :: found_symm
  !
  ! Work Space

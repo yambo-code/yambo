@@ -29,9 +29,9 @@ subroutine NL_initialize(E,k,q)
  use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
- use com,            ONLY:msg,warning,error
+ use com,            ONLY:msg
  use zeros,          ONLY:zero_dfl
- use R_lattice,      ONLY:bz_samp,bare_qpg,k_map
+ use R_lattice,      ONLY:bz_samp,k_map
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential
@@ -176,15 +176,15 @@ subroutine NL_initialize(E,k,q)
      !
      NE_tot_time=NE_tot_time+EtoT(E=NL_er(1))+5._SP*RT_step
      !
-     call msg('sr','Dephasing Time          [fs]:',5._SP*Phase_LifeTime*AUT2FS)
-     call msg('sr','Sampling  Time          [fs]:',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS)
+     call msg('sr','Dephasing Time          [fs]',5._SP*Phase_LifeTime*AUT2FS)
+     call msg('sr','Sampling  Time          [fs]',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS)
      !
    elseif(Efield(1)%ef_name=='PULSE'.or.Efield(1)%ef_name=='QSSIN' &
 &     .or.Efield(1)%ef_name=='QSFIELD'.or.Efield(1)%ef_name=='SPULSE') then
      !
      NE_tot_time=3*T_0
-     call msg('sr','Time T_0                [fs]:',T_0*AUT2FS)
-     call msg('sr','Dephasing               [fs]:',Phase_LifeTime*AUT2FS)
+     call msg('sr','Time T_0                [fs]',T_0*AUT2FS)
+     call msg('sr','Dephasing               [fs]',Phase_LifeTime*AUT2FS)
      !
    else
      call error("Negative total simulation time! ")
@@ -194,7 +194,7 @@ subroutine NL_initialize(E,k,q)
    call msg('s',' Total simulation time read from input') 
  endif
  !
- call msg('sr','Total simulation time   [fs]:',NE_tot_time*AUT2FS)
+ call msg('sr','Total simulation time   [fs]',NE_tot_time*AUT2FS)
  !
  NE_steps=int(NE_tot_time/RT_step)+1
  !
@@ -262,9 +262,14 @@ subroutine NL_initialize(E,k,q)
  !
  ! Deallocate bare_qpg if not required
  !=============================
- if(.not.eval_HARTREE.and.CORRELATION/=JGM) then
-   YAMBO_FREE(bare_qpg)
- endif
+ ! DS 2019/06/18:
+ ! bare_qpg is used by DIPOLE_dimensions
+ ! The dependency maybe likey removed in the future
+ ! For now I'm commenting the following lines
+ !  
+ !if(.not.eval_HARTREE.and.CORRELATION/=JGM) then
+ !  YAMBOX_FREE(bare_qpg)
+ !endif
  !
  ! Frequencies range
  ! =========================
@@ -277,8 +282,8 @@ subroutine NL_initialize(E,k,q)
  !
  RT_dyn_step=RT_step
  OBS_RT_IO_t%INTERVAL_time     =RT_step
- OBS_RT_IO_t%INTERVAL_time_SAVE=RT_step
- call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
+ OBS_RT_IO_t%INTERVAL_time_INPUT=RT_step
+ call SETUP_RT_IO_type(OBS_RT_IO_t,who="OBS",what="INIT")
  YAMBO_ALLOC(OBS_RT_IO_t%Time,(NE_steps))
  do NE_i_time=1,NE_steps
    Time=real(NE_i_time-1,SP)*RT_step
@@ -303,24 +308,24 @@ subroutine NL_initialize(E,k,q)
  call section('=','Messaging')
  !
  call msg( 'r','---General---')
- call msg( 'r', 'Integrator                 :',trim(Integrator_name))
- call msg( 'r', 'Simulation time        [fs]:',real(NE_steps-1)*RT_step*AUT2FS)
- call msg( 'r', 'Step length            [fs]:',RT_step*AUT2FS)
- call msg( 'r', 'NE Steps                   :',NE_steps)
- call msg( 'r', 'Correlation                :'//trim(NL_correlation))
- call msg( 'r', 'Damping                [eV]:',NL_damping*HA2EV)
- call msg( 'r', 'Dephasing              [fs]:',Phase_LifeTime*AUT2FS)
- call msg( 'r', 'Efield                     :'//trim(Efield(1)%ef_name))
- call msg( 'r', 'Efield width           [fs]:',Efield(1)%width*AUT2FS)
- call msg( 'r', 'Efield T_0             [fs]:',T_0)
- call msg( 'r', 'Efield Amplitude      [V/m]:',Efield(1)%amplitude*AU2VMm1)
- call msg( 'r', 'Frequencies range          :',NL_er*HA2EV)
- call msg( 'sr','Frequencies steps          :',n_frequencies)
- call msg( 'r', 'Frequency   step           :',NL_estep*HA2EV)
- call msg( 'r', 'Use Dipoles                :',l_use_DIPOLES)
- call msg( 'r', 'Induced Field              :',l_RT_induced_field)
- call msg( 'r', 'Force Snd Order Dipoles    :',l_force_SndOrd)
- call msg( 'r', 'Evaluate Current           :',l_eval_CURRENT)
- call msg( 'r', 'WF sampling                :',WF_sample%ison) 
+ call msg( 'r', 'Integrator                 ',trim(Integrator_name))
+ call msg( 'r', 'Simulation time        [fs]',real(NE_steps-1)*RT_step*AUT2FS)
+ call msg( 'r', 'Step length            [fs]',RT_step*AUT2FS)
+ call msg( 'r', 'NE Steps                   ',NE_steps)
+ call msg( 'r', 'Correlation                '//trim(NL_correlation))
+ call msg( 'r', 'Damping                [eV]',NL_damping*HA2EV)
+ call msg( 'r', 'Dephasing              [fs]',Phase_LifeTime*AUT2FS)
+ call msg( 'r', 'Efield                     '//trim(Efield(1)%ef_name))
+ call msg( 'r', 'Efield width           [fs]',Efield(1)%width*AUT2FS)
+ call msg( 'r', 'Efield T_0             [fs]',T_0)
+ call msg( 'r', 'Efield Amplitude      [V/m]',Efield(1)%amplitude*AU2VMm1)
+ call msg( 'r', 'Frequencies range          ',NL_er*HA2EV)
+ call msg( 'sr','Frequencies steps          ',n_frequencies)
+ call msg( 'r', 'Frequency   step           ',NL_estep*HA2EV)
+ call msg( 'r', 'Use Dipoles                ',l_use_DIPOLES)
+ call msg( 'r', 'Induced Field              ',l_RT_induced_field)
+ call msg( 'r', 'Force Snd Order Dipoles    ',l_force_SndOrd)
+ call msg( 'r', 'Evaluate Current           ',l_eval_CURRENT)
+ call msg( 'r', 'WF sampling                ',WF_sample%ison) 
  !
 end subroutine NL_initialize

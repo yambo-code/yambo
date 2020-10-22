@@ -28,11 +28,10 @@ subroutine p2y_pseudo(k)
  use pw_basis_module
  use pw_wfc_module
  !
- use pars,                  ONLY:SP,DP
- use com,                   ONLY:error
+ use pars,                  ONLY:SP
  use R_lattice,             ONLY:bz_samp,ng_vec
  use D_lattice,             ONLY:n_atomic_species
- use wave_func,             ONLY:wf_nc_k, wf_ncx, wf_igk, wf_ng
+ use wave_func,             ONLY:wf_ng
  use pseudo,                ONLY:PP_alloc_PWscf,PP_free,pp_n_l_comp,     &
 &                                pp_n_l_times_proj_max,pp_n_l_max,pp_table,&
 &                                PP_nlcc_alloc,PP_nlcc_free
@@ -49,9 +48,9 @@ subroutine p2y_pseudo(k)
  !
  ! Work space
  !
- integer :: ik, ngmax,io_err,ID
- integer :: ibeta,itype
+ integer        :: ngmax,ID,ibeta,ik,io_err,itype
  character(64)  :: input_dft="none"
+ !
  integer, external :: io_KB_pwscf
  integer, external :: io_NLCC_pwscf
  integer, external :: io_USPP_pwscf
@@ -173,7 +172,6 @@ end subroutine p2y_pseudo
 !
 subroutine fill_struct(struct)
  use pw_struct_module
- use pars,                  only : pi
  use R_lattice,             ONLY : b
  use D_lattice,             ONLY : DL_vol, a
  implicit none
@@ -200,12 +198,12 @@ subroutine fill_atoms(atoms,struct)
  !  integer,          pointer :: type_map(:)
  !  real                      :: cutoff_vloc
  !end type pw_atoms
- use pw_data,           ONLY: psfile, nbeta, nmesh, nat_, atm_, tau_, ityp_
+ use pw_data,           ONLY: psfile,   nat_,   ityp_
  use pw_struct_module
  use pw_atoms_module
  use pw_pseudo_module
- use D_lattice,         ONLY: n_atoms_species_max,n_atomic_species,n_atoms_species, &
-&                             atom_pos, Z_species,atomic_number
+ use D_lattice,         ONLY: n_atomic_species, &
+&                              atomic_number
  implicit none
  type(pw_struct), intent(in) :: struct
  type(pw_atoms) :: atoms
@@ -259,7 +257,7 @@ subroutine fill_basis(basis,struct,ik,ngmax)
  use pw_struct_module
  use pw_basis_module
  use pw_data,               ONLY : igv_, xk_,alat_
- use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng
+ use wave_func,             ONLY : wf_nc_k,  wf_igk
  implicit none
  type(pw_struct), target :: struct
  type(pw_basis)  :: basis   

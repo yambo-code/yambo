@@ -38,13 +38,13 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use X_m,            ONLY:global_gauge,X_t
  use fields,         ONLY:A_ext,A_tot,Efield
  use real_time,      ONLY:eval_DFT,eval_HARTREE,l_RT_induced_Field,rho_reference,&
-&                         Ho_plus_Sigma,RT_P,Phase_LifeTime,RT_Vnl_xc,RT_nbands         
+&                         Ho_plus_Sigma,Phase_LifeTime,RT_Vnl_xc,RT_nbands         
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
 &                         NL_bands,VAL_BANDS,NL_P
- use global_XC,      ONLY:WF_kind,WF_xc_functional 
+ use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
@@ -59,7 +59,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
  type(X_t),     intent(in)    :: X
- complex(SP),   intent(in)    :: V_bands(NL_bands(2),E%nbf,QP_nk,n_sp_pol)
+ complex(SP),   intent(in)    :: V_bands(NL_bands(2),QP_nk,n_sp_pol)
  integer,       intent(in)    :: i_time
  !
  ! Working Space
@@ -93,7 +93,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
      !
      ! Reconstruct the full density
      !
-     call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
+     call XC_potential_driver(E,k,WF_kind,WF_xc_functional,1)
      V_xc_sc=V_xc-V_xc_0
      !
    endif

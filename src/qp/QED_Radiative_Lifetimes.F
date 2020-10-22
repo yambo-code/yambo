@@ -27,7 +27,6 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X,Dip)
  use units,               ONLY:HA2EV,SPEED_OF_LIGHT
  use pars,                ONLY:SP,rZERO,cI
  use QP_m,                ONLY:QP_time_order_sign,QP_table,QP_t,QP_n_G_bands,QP_Sc,QP_states_simmetrize
- use IO_m,                ONLY:io_DIP
  use functions,           ONLY:theta_function
  use electrons,           ONLY:levels,spin,spin_occ
  use R_lattice,           ONLY:bz_samp
@@ -35,7 +34,6 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X,Dip)
 &                              PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_DIPk_ibz_index
  use DIPOLES,             ONLY:DIP_P,DIPOLE_t
  use X_m,                 ONLY:X_t
- use wave_func,           ONLY:wf_ng
  use LIVE_t,              ONLY:live_timing
  use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
  use timing_m,            ONLY:timing
@@ -130,7 +128,7 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X,Dip)
  !
  ! Symmetrize
  !
- call QP_states_simmetrize(E,V_complex=QP_Sc(:,1))
+ call QP_states_simmetrize(E,what="QED Sc",V_complex=QP_Sc(:,1),warn_me=.TRUE.)
  !
  ! Transfer to qp% components (assuming OMS approximation)
  !

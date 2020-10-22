@@ -41,11 +41,16 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  character(64)     :: subname="SERIAL_lin_system"
  type(LALGEBRA_WS) :: WS
  !
- if(.not.(l_nl_optics.or.l_real_time)) call timing(trim(subname),OPR='start')
- !
  WS%dim=n
- YAMBO_FREE(WS%v_int)
- YAMBO_ALLOC(WS%v_int,(WS%dim))
+ !
+ if(.not.(l_nl_optics.or.l_real_time)) then
+   call timing(trim(subname),OPR='start')
+   YAMBO_FREE(WS%v_int)
+   YAMBO_ALLOC(WS%v_int,(WS%dim))
+ else
+   if(allocated(WS%v_int)) deallocate(WS%v_int)
+   allocate(WS%v_int(WS%dim))
+ endif
  !
 #if defined _DOUBLE
  CALL ZGESV(n,nrhs,A,n,WS%v_int,B,n,WS%i_fail)
@@ -83,7 +88,6 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  character(64)     :: subname="SERIAL_lin_system_gpu"
  type(LALGEBRA_WS) :: WS
  integer :: lwork
- integer, device:: i_fail_d
  !
  if(.not.(l_nl_optics.or.l_real_time)) call timing(trim(subname),OPR='start')
  !

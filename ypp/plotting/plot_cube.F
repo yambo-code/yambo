@@ -25,9 +25,9 @@ subroutine plot_cube()
  !
  use pars,        ONLY:SP,schlen
  use FFT_m,       ONLY:fft_dim 
- use LOGO,        ONLY:code_version
+ use C_driver,    ONLY:code_version
  use com,         ONLY:msg
- use YPP,         ONLY:nr,v2plot,ncell,r_hole,l_free_hole,&
+ use YPPm,        ONLY:nr,v2plot,ncell,r_hole,l_free_hole,l_average_eh,&
 &                      l_norm_to_one,WF_multiplier,l_exc_wf,plot_title,output_string
  use D_lattice,   ONLY:n_atomic_species,n_atoms_species,a,atom_pos,Z_species,n_atoms
  use LIVE_t,      ONLY:live_timing
@@ -42,7 +42,7 @@ subroutine plot_cube()
  !
  call msg(output_string,'CUBE FILE')
  call msg(output_string,'Generated with YPP',code_version)
- if (.not.l_free_hole.and.l_exc_wf) then
+ if ((.not.l_free_hole.and..not.l_average_eh).and.l_exc_wf) then
    write(ch,'(i5,3f10.5)') n_atoms*ncell(1)*ncell(2)*ncell(3)+1,0._SP,0._SP,0._SP
  else 
   write(ch,'(i5,3f10.5)') n_atoms*ncell(1)*ncell(2)*ncell(3),0._SP,0._SP,0._SP
@@ -55,7 +55,7 @@ subroutine plot_cube()
  !
  ! write the atoms position 
  !
- if (.not.l_free_hole.and.l_exc_wf) then
+ if ((.not.l_free_hole.and..not.l_average_eh).and.l_exc_wf) then
    write(ch,'(2i5,3f10.5)') -1,-1,r_hole
    call msg(output_string,'',ch,INDENT=0,USE_TABS=.FALSE.)
  endif 

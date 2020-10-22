@@ -26,7 +26,6 @@ subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
  !
  use pars,           ONLY:SP,cZERO,cONE
  use nl_optics,      ONLY:NL_bands,NL_nbands
- use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_nk
  use electrons,      ONLY:n_sp_pol,n_spin,levels,spin_occ

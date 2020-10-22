@@ -32,18 +32,21 @@ subroutine K_stored_in_a_slepc_matrix(slepc_mat)
  !
  use pars,           ONLY:SP,cI,cONE
  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
- use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,&
-&                         BSS_perturbative_width
- use com,            ONLY:error
- !
- implicit none
+ use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>
+#include <petsc/finclude/petscvec.h>
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
+ !
+ use petscmat
+ use slepceps
+ use slepcepsdef
+ use petscmatdef
+ !
+ implicit none
  !
  complex(SP) :: E_plus_W
  integer     :: i_c,i_r,i_Tk,i_Tp,i_B

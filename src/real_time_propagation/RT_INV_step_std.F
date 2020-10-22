@@ -23,12 +23,12 @@
 !
 subroutine RT_INV_step_std(dG_old,dG_inp,dG_out,ik,deltaT)
  !
- use pars,           ONLY:DP,SP,cI,cZERO
+ use pars,           ONLY:SP,cI
  use wrapper_omp,    ONLY:M_by_M_omp
  !use linear_algebra, ONLY:INV,LIN_SYS,MAT_MUL
  !use interfaces,     ONLY:LINEAR_ALGEBRA_driver 
- use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nk,RT_nbands,&
-&                         integrator_exp_order,G_lesser_reference,I1_matrix
+ use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nbands,&
+&                         G_lesser_reference,I1_matrix
  !
  implicit none
  !
@@ -40,7 +40,6 @@ subroutine RT_INV_step_std(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  ! Work space
  !
- integer     :: ib
  complex(SP) :: det_tmp
  !
  complex(SP) :: T1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))

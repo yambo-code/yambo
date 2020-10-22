@@ -30,8 +30,8 @@ subroutine RT_EXP_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  use pars,           ONLY:SP,cI,cZERO
  use wrapper_omp,    ONLY:M_by_M_omp
- use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nk,RT_nbands,&
-&                         integrator_exp_order,G_lesser_reference,I1_matrix
+ use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nbands,&
+&                         G_lesser_reference,Integrator_exp_order
  !
  implicit none
  !

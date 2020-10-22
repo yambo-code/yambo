@@ -27,7 +27,7 @@
 !
 subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P2)
  !
- use pars,          ONLY:SP,cZERO,cONE,pi
+ use pars,          ONLY:SP,cZERO,pi
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
  use D_lattice,     ONLY:alat
  use wave_func,     ONLY:WF,wf_ng
@@ -37,7 +37,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  use R_lattice,     ONLY:g_vec_d
 #endif
 #if defined _RT
- use drivers,       ONLY:l_real_time
+ use dipoles,       ONLY:compute_spin_dipoles
  use real_time,     ONLY:l_update_SOC
 #endif
  !
@@ -50,7 +50,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  ! 
  ! Work Space
  !
- integer      :: ig,ierr
+ integer      :: ig
  logical      :: eval_spinor_matrix
  integer      :: i_spinor,j_spinor,i1
  complex(SP)  :: wf_grad(wf_ng,n_spinor),wf_der_sq(wf_ng,n_spinor)
@@ -67,7 +67,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  ! 
  eval_spinor_matrix=.false.
 #if defined _RT
- eval_spinor_matrix=l_real_time.and.n_spinor==2.and.l_update_SOC
+ eval_spinor_matrix=compute_spin_dipoles.and.n_spinor==2.and.l_update_SOC
 #endif
  !
  do i1=1,3

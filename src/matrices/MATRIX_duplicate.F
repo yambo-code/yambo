@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
+subroutine MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  !
  ! operation can be "none/free/+1/-1/-C/+T/+TC"
  !
@@ -127,4 +127,4 @@ SUBROUTINE MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  !$omp end parallel
 #endif
  !
-end SUBROUTINE
+end subroutine

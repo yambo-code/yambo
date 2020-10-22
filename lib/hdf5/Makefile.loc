@@ -35,12 +35,9 @@ configure-stamp: uncompress-stamp
 	      ./configure $(AUXFLAGS) \
 	      CC="$(cc)" \
 	      CPP="$(cpp)" \
-	      CFLAGS="$(cflags)" \
 	      CXX="$(cc)" \
 	      CXXCPP="$(cpp)" \
-	      CXXFLAGS="$(cflags)" \
 	      FC="$(fc)" \
-	      FCFLAGS="$(fcflags)" \
 	      CPPFLAGS="$(netcdf_aux)" ); \
 	fi
 	touch configure-stamp

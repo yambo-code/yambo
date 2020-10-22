@@ -26,10 +26,10 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  use pars,                ONLY:SP,lchlen
  use drivers,             ONLY:l_sc_run
  use com,                 ONLY:core_io_path,more_io_path
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_WR,OP_RD,VERIFY,&
+ use IO_m,                ONLY:io_control,manage_action,OP_WR_CL,NONE,OP_WR,OP_RD,VERIFY,&
 &                              OP_RD_CL,DUMP,RD_CL_IF_END,WR_CL_IF_END
  use SC,                  ONLY:SC_bands
- use hamiltonian,         ONLY:H_rotation,H_nl_sc,l_sc_V_is_local
+ use hamiltonian,         ONLY:H_rotation,H_nl_sc,l_sc_V_is_local,H_potential
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp,nkibz
  !
@@ -48,8 +48,8 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  character(lchlen)     :: core_io_path_save
  !
  integer               :: ID
- integer               :: io_SC_E_err,io_SC_V_err,io_SC_WF_err
- integer               :: ik,i_sp_pol
+ integer               :: io_SC_E_err,io_SC_V_err,io_SC_WF_err,IO_ACT
+ integer               :: ik,i_sp_pol,i_frag
  !
  complex(SP), allocatable :: full_H(:,:,:,:)
  !
@@ -109,9 +109,13 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
  io_SC_WF_err=io_SC_components('WF',en_sc,ID)
  !
- do ik=1,k_save%nibz
-   call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1+(i_sp_pol-1)*k_save%nibz/),ID=ID)
-   io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+ do i_sp_pol=1,n_sp_pol
+   do ik=1,k_save%nibz
+     i_frag=ik+(i_sp_pol-1)*k_save%nibz
+     IO_ACT=manage_action(RD_CL_IF_END,i_frag,1,k_save%nibz*n_sp_pol)
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID)
+     io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+   enddo
  enddo
  !
  nkibz=k%nibz
@@ -120,22 +124,32 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID)
  io_SC_WF_err=io_SC_components('WF',en_sc,ID)
  !
- do ik=1,k_save%nibz
-   call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k%nibz/),ID=ID)
-   io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+ do i_sp_pol=1,n_sp_pol
+   do ik=1,k_save%nibz
+     i_frag=ik+(i_sp_pol-1)*k_save%nibz
+     IO_ACT=manage_action(WR_CL_IF_END,i_frag,1,k_save%nibz*n_sp_pol)
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID)
+     io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+   enddo
  enddo
  !
- do ik=k_save%nibz+1,k%nibz
-   H_rotation(:,:,ik,:)=H_rotation(:,:,kpoints_map(1,ik),:)
-   call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k%nibz/),ID=ID)
-   io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+ do i_sp_pol=1,n_sp_pol
+   do ik=k_save%nibz+1,k%nibz
+     H_rotation(:,:,ik,i_sp_pol)=H_rotation(:,:,kpoints_map(1,ik),i_sp_pol)
+     i_frag=ik+(i_sp_pol-1)*k_save%nibz
+     IO_ACT=manage_action(WR_CL_IF_END,i_frag,1,k_save%nibz*n_sp_pol)
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID)
+     io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+   enddo
  enddo
  !
  YAMBO_FREE(H_rotation)
  !
  ! Copy the potential
  !
- call XC_switch()
+ call XC_potentials(H_potential)
+ call XC_additional_SC_potentials()
+ !
  if(.not.l_sc_V_is_local) then
    !
    YAMBO_ALLOC(H_nl_sc,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)))
@@ -149,11 +163,13 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
    io_SC_V_err=io_SC_components('V',en_sc,ID)
    !
    do i_sp_pol=1,n_sp_pol
-   do ik=1,k_save%nibz
-     call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k_save%nibz/),ID=ID)
-     io_SC_V_err=io_SC_components('V',en_sc,ID)
-     full_H(:,:,ik,i_sp_pol)=H_nl_sc(:,:)
-   enddo
+     do ik=1,k_save%nibz
+       i_frag=ik+(i_sp_pol-1)*k_save%nibz
+       IO_ACT=manage_action(RD_CL_IF_END,i_frag,1,k_save%nibz*n_sp_pol)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID)
+       io_SC_V_err=io_SC_components('V',en_sc,ID)
+       full_H(:,:,ik,i_sp_pol)=H_nl_sc(:,:)
+     enddo
    enddo
    !
    nkibz=k%nibz
@@ -163,19 +179,23 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
    io_SC_V_err=io_SC_components('V',en_sc,ID)
    !
    do i_sp_pol=1,n_sp_pol
-   do ik=1,k_save%nibz
-     H_nl_sc(:,:)=full_H(:,:,ik,i_sp_pol)
-     call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k%nibz/),ID=ID)
-     io_SC_V_err=io_SC_components('V',en_sc,ID)
-   enddo
+     do ik=1,k_save%nibz
+       H_nl_sc(:,:)=full_H(:,:,ik,i_sp_pol)
+       i_frag=ik+(i_sp_pol-1)*k_save%nibz
+       IO_ACT=manage_action(WR_CL_IF_END,i_frag,1,k_save%nibz*n_sp_pol)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID)
+       io_SC_V_err=io_SC_components('V',en_sc,ID)
+     enddo
    enddo
    !
    do i_sp_pol=1,n_sp_pol
-   do ik=k_save%nibz+1,k%nibz
-     H_nl_sc(:,:)=full_H(:,:,kpoints_map(1,ik),i_sp_pol)
-     call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k%nibz/),ID=ID)
-     io_SC_V_err=io_SC_components('V',en_sc,ID)
-   enddo    
+     do ik=k_save%nibz+1,k%nibz
+       H_nl_sc(:,:)=full_H(:,:,kpoints_map(1,ik),i_sp_pol)
+       i_frag=ik+(i_sp_pol-1)*k_save%nibz
+       IO_ACT=manage_action(WR_CL_IF_END,i_frag,1,k_save%nibz*n_sp_pol)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID)
+       io_SC_V_err=io_SC_components('V',en_sc,ID)
+     enddo    
    enddo    
    !
    YAMBO_FREE(H_nl_sc)

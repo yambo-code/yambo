@@ -70,7 +70,7 @@ module mod_wf2y
      !
      array_sz = real(2*wf_nb_io*wf_ncx*n_spin*SP,SP)/Megabyte
      !
-     call msg('s',':: WF splitter Blocks/bands/block size(Mb):',(/real(wf_nb_io_groups,SP),real(wf_nb_io,SP),array_sz/))
+     call msg('s',' WF splitter Blocks/bands/block size(Mb)',(/real(wf_nb_io_groups,SP),real(wf_nb_io,SP),array_sz/))
      !
    end subroutine
    !
@@ -78,7 +78,6 @@ module mod_wf2y
      !
      use pars,      ONLY:SP
      use stderr,    ONLY:intc
-     use com,       ONLY:warning
      integer     :: ib,ik,nc
      real (SP)   :: wf_(2,nc)
      !

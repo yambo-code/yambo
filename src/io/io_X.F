@@ -25,13 +25,12 @@ integer function io_X(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
- use R_lattice,     ONLY:nqibz,g_vec
- use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_description,X_alloc
+ use R_lattice,     ONLY:g_vec
+ use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_desc,X_alloc
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
 &                        io_elemental,io_status,io_bulk,&
 &                        read_is_on,write_is_on,io_header,&
-&                        manage_OP_IF_START_and_CL_IF_END,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED,&
 &                        io_fragment,IO_OUTDATED_DB,frag_RESPONSE,&
@@ -39,14 +38,13 @@ integer function io_X(X,Xw,ID)
 &                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
+ use parallel_m,    ONLY:PAR_COM_X_WORLD
 #if defined _PAR_IO
  use X_m,           ONLY:X_par
- use IO_m,          ONLY:io_unit,netcdf_call,io_file,close_is_on,io_resetable,io_RESPONSE,&
-&                        io_netcdf_var,io_action,OP_WR_CL
- use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_Q_index
 #endif
  !
 #include<memory.h>
+ !
  type(X_t)   :: X
  type(w_samp):: Xw
  integer     :: ID
@@ -86,7 +84,7 @@ integer function io_X(X,Xw,ID)
 #endif
  !
  if(perform_IO) then
-   io_X=io_connect(desc=trim(db_desc),type=2,ID=ID) 
+   io_X=io_connect(desc=trim(db_desc),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_RESPONSE)
    if (io_X/=0) goto 1
  endif
  !
@@ -110,7 +108,7 @@ integer function io_X(X,Xw,ID)
    ! Global Descriptions
    !=====================
    !
-   io_X=variables_X(ID,X_description,X)
+   io_X=variables_X(ID,X_desc,X)
    if (io_X/=0) goto 1
    !
    ! When the SN is different and I am importing this DB 
@@ -150,14 +148,7 @@ integer function io_X(X,Xw,ID)
  !
  if (iq==0) goto 1
  !
- ! Manage OP_IF_START_and_RD_CL_IF_END
- !
- call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
-#if defined _PAR_IO
  call io_fragment(ID,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
-#else
- call io_fragment(ID,i_fragment=iq,ierr=io_err)
-#endif
  !
  !  type(X_t)    ::X(4)  x s d p
  !
@@ -173,21 +164,17 @@ integer function io_X(X,Xw,ID)
    !
    io_com_save=io_com(ID)
    if (iq>2 .and. trim(db_desc)/="em1d") io_com(ID)=NONE
-#if defined _PAR_IO
    call def_variable_elemental(ID,trim(ch),sec_size,SP,1,par_io_kind='independent')
-#else
-   call def_variable_elemental(ID,trim(ch),sec_size,SP,1)
-#endif
    !
    if (perform_IO) then
      if (X%whoami==4) then
-       call io_variable_elemental(ID,UNIT=HA2EV,VAR=" PPA Im  energy     [ev]:",   R0=X%ppaE,    CHECK=.true.,OP=(/"=="/))
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR="PPA Im  energy",TERMINATOR="ev",   R0=X%ppaE,    CHECK=.true.,OP=(/"=="/))
      endif
      if (X%whoami/=4) then
-       call io_variable_elemental(ID,           VAR=" :: Current Q-pt index     :",I0=iq)
-       call io_variable_elemental(ID,UNIT=HA2EV,VAR=" :: X energy range     [ev]:",R1=Xw%er,     WARN =.true.,OP=(/"==","=="/))
-       call io_variable_elemental(ID,UNIT=HA2EV,VAR=" :: X damping range    [ev]:",R1=Xw%dr,     CHECK=.true.,OP=(/"==","=="/))
-       call io_variable_elemental(ID,           VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
+       call io_variable_elemental(ID,           VAR="Current Q-pt index      ",I0=iq)
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR="X energy range",TERMINATOR="ev ",R1=Xw%er,WARN =.true.,OP=(/"==","=="/))
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR="X damping range",TERMINATOR="ev",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
+       call io_variable_elemental(ID,           VAR="Number of frequencies   ",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
      endif
      !
    endif
@@ -211,11 +198,7 @@ integer function io_X(X,Xw,ID)
    endif
    !
    ch="FREQ_sec_iq"//trim(intc(iq))
-#if defined _PAR_IO
    call def_variable_bulk(ID,trim(ch),1,(/2,Xw%n_freqs/),SP,par_io_kind='independent')
-#else
-   call def_variable_bulk(ID,trim(ch),1,(/2,Xw%n_freqs/),SP)
-#endif
    if(perform_IO) call io_variable_bulk(ID,1,C1=Xw%p)
    !
    ! X_mat @iq

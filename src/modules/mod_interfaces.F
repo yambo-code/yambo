@@ -21,15 +21,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#include<dev_defs.h>
-!
 module interfaces
+ !
+#include<dev_defs.h>
  !
  implicit none
  !
  interface
    !
-  subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
+   subroutine DESC_write(dest,prefix,desc,range,skip_patt)
+     use descriptors,ONLY:IO_desc
+     character(*),           intent(in) :: dest
+     character(*),           intent(in) :: prefix
+     type(IO_desc),          intent(in) :: desc
+     integer, optional,      intent(in) :: range(2)
+     character(*), optional, intent(in) :: skip_patt
+   end subroutine
+   !
+   subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
      type(levels)  ::E
@@ -122,22 +131,20 @@ module interfaces
      real(SP), optional, pointer, intent(in) :: PDOS_fac(:,:,:)
    end subroutine el_density_of_states
    !
-#if defined _SLEPC
-   subroutine MATRIX_slepc(A,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
+#if defined _SLEPC && !defined _SLEPC_OFF
+   subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
      !
      use pars,           ONLY:SP,schlen
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscmat.h>
-     !
-     Mat                         :: A            ! matrix to diagonalize of stype from slepc
+     use petscmatdef,    ONLY:tmat
+     implicit none
+     Mat                         :: M_slepc      ! matrix to diagonalize of stype from slepc
      integer                     :: n_eig        ! number of eigenvalues to compute
-     !real(SP),                   :: target_energy! energy near where to find the eigenvalues
-     !real(SP),                   :: slepc_tol    ! tolerance of the iterative solver
      character(schlen)           :: extraction   ! extraction method for the eigenvalues
-     ! integer,optional            :: slepc_ncv    ! dimension of the subspace
-     PetscReal                   :: target_energy
-     PetscReal                   :: slepc_tol
-     PetscFortranInt             :: slepc_ncv
+     PetscScalar                 :: target_energy! energy near where to find the eigenvalues
+     PetscReal                   :: slepc_tol    ! tolerance of the iterative solver
+     PetscFortranInt             :: slepc_ncv    ! dimension of the subspace
      complex(SP)                 :: V_right(:,:) ! right eigenvalues
      complex(SP),  optional      :: V_left(:,:)  ! left eigenvalues
      complex(SP),  optional      :: E_cmpl(:)    ! complex eigenvalues
@@ -225,7 +232,7 @@ module interfaces
      !
    end subroutine 
    !
-   subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,N_f,N_m,I_dir)
+   subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,N_f,N_m,I_dir,E_k_dir,E_k_ind)
      use pars,          ONLY: SP
      use electrons,     ONLY:levels,n_sp_pol
      type(levels)       :: E
@@ -234,6 +241,8 @@ module interfaces
      integer , optional :: N_f(n_sp_pol)
      integer , optional :: N_m(n_sp_pol)
      integer , optional :: I_dir(2)
+     integer , optional :: E_k_dir(n_sp_pol)    ! k-point of the direct gap
+     integer , optional :: E_k_ind(n_sp_pol,2)  ! k->k'   of the indirect gap
    end subroutine 
    !
    subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
@@ -290,7 +299,7 @@ module interfaces
      integer     ,optional:: MAP(N)
    end subroutine QP_DBs_merge
    !
-   integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a)
+   integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode)
      use pars,       ONLY:SP
      use electrons,  ONLY:levels
      use R_lattice,  ONLY:bz_samp
@@ -299,9 +308,10 @@ module interfaces
      character(*)      :: DB1_path,what
      real(SP),optional :: db1_a(3,3)
      real(SP),optional :: db1_alat(3) 
+     integer ,optional :: COM_mode
    end function
    !
-   subroutine QP_state_extract_print(qp)
+   subroutine QP_state_print(qp)
      use QP_m,          ONLY:QP_t
      implicit none
      type(QP_t),optional ::qp              
@@ -312,19 +322,18 @@ module interfaces
  !
  interface WF_shift_kpoint
    !
-   subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
+   subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP
      use electrons,     ONLY:n_spinor,n_sp_pol
-     use wave_func,     ONLY:wf_ng
+     use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
      use R_lattice,     ONLY:bz_samp
      implicit none
      integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2)
      type(bz_samp), intent(in) :: Xk
-     complex(SP), intent(out)  :: WF_k_out(wf_ng,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
-     complex(SP), intent(in)   :: WF_k_in (wf_ng,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
-#ifdef _CUDA
-     attributes(device) :: WF_k_out,WF_k_in
-#endif
+     complex(SP), intent(in)  DEV_ATTR :: &
+&         WF_k_in (wf_ng_1st_BZ,  n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
+     complex(SP), intent(out) DEV_ATTR :: &
+&         WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
    end subroutine
  end interface 
  !
@@ -333,25 +342,25 @@ module interfaces
    subroutine WF_symm_kpoint_cpu(b_to_load,ikbz,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
-     use wave_func,     ONLY:wf_ng
+     use wave_func,     ONLY:wf_ng_1st_BZ
      use electrons,     ONLY:n_spinor,n_sp_pol
      implicit none
      integer,       intent(in)  :: ikbz,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
-     complex(SP),   intent(out) :: WF_k_out(wf_ng,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
+     complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
    end subroutine WF_symm_kpoint_cpu
    !
 #ifdef _CUDA
    subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
-     use wave_func,     ONLY:wf_ng
+     use wave_func,     ONLY:wf_ng_1st_BZ
      use electrons,     ONLY:n_spinor,n_sp_pol
      implicit none
      integer,       intent(in)  :: ikbz,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
-     complex(SP),   intent(out) :: WF_k_out(wf_ng,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
-     attributes(device) :: WF_k_out
+     complex(SP),   intent(out) DEV_ATTR :: &
+&       WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
    end subroutine WF_symm_kpoint_gpu
 #endif
  end interface
@@ -373,8 +382,8 @@ module interfaces
      use FFT_m,         ONLY:fft_size
      use electrons,     ONLY:n_spinor
      implicit none
-     integer,             intent(in)  :: isc(4)
-     complex(SP), device, intent(out) :: WF_symm_d(fft_size,n_spinor)
+     integer,     intent(in)  :: isc(4)
+     complex(SP), intent(out) DEV_ATTR :: WF_symm_d(fft_size,n_spinor)
    end subroutine WF_apply_symm_gpu
 #endif
  end interface

@@ -29,7 +29,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  use electrons,           ONLY:levels,n_sp_pol
  use R_lattice,           ONLY:bz_samp
  use frequency,           ONLY:w_samp,W_reset
- use YPP,                 ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
+ use YPPm,                ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
  use YPP_ELPH,            ONLY:elph_steps,ph_broad
  use stderr,              ONLY:intc
  use ELPH,                ONLY:W_debye,elph_nDBs_used,ph_modes,elph_global_free,&
@@ -40,7 +40,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  use BS,                  ONLY:BS_K_dim,BS_bands
  use QP_m,                ONLY:QP_n_states,QP_table,QP_state,QP_nb,QP_nk,QP_states_simmetrize
  use LIVE_t,              ONLY:live_timing
- use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid,PAR_nQ
+ use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid,PAR_nQ_bz
  use interfaces,          ONLY:PARALLEL_index
  use functions,           ONLY:Fermi_fnc_derivative
  !
@@ -117,7 +117,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  !
  if (     elph_use_q_grid) nq_loop=q%nbz
  if (.not.elph_use_q_grid) nq_loop=elph_nDBs_used
- PAR_nQ=nq_loop
+ PAR_nQ_bz=nq_loop
  !
  call elph_global_alloc('gFsq')
  ! 
@@ -249,7 +249,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  !
  if (gFsq_is_excitonic) then
    !
-   call msg('s',':: Building the correspondance map')
+   call msg('s',' Building the correspondance map')
    !
    YAMBO_FREE(QP_table_map)
    YAMBO_ALLOC(QP_table_map,(BS_K_dim,2))
@@ -268,7 +268,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
      !
    enddo
    !
-   call msg('s',':: Processing '//trim(intc(EXCITONS_n_user_states))//' state(s)')
+   call msg('s',' Processing '//trim(intc(EXCITONS_n_user_states))//' state(s)')
    !
    call PARALLEL_index(px,(/BS_K_dim/))
    call PP_redux_wait
@@ -281,7 +281,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
      !
      n_lambda_deg=count(BS_E_degs==BS_E_degs(lambda))
      !
-     if (n_lambda_deg>1) call msg('s',':: State '//trim(intc(lambda))//' Merged with states '//&
+     if (n_lambda_deg>1) call msg('s',' State '//trim(intc(lambda))//' Merged with states '//&
 &                                     trim(intc(BS_E_degs(lambda)))//' -> '//&
 &                                     trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
      !

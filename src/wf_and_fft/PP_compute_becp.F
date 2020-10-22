@@ -26,13 +26,12 @@ subroutine PP_compute_becp(becp, npwk, wf_nb, wf_c, wf_b_indx)
  ! Compute becp = < beta_j | wfc_n > matrix elements
  ! assuming init_us_2 has already been called for the given kpt.
  !
- use pars,          ONLY:SP,DP
- use com,           ONLY:error
+ use pars,          ONLY:SP
  use electrons,     ONLY:n_spinor
  use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc
  use wave_func,     ONLY:wf_ncx
  use qe_pseudo_m,   ONLY:nkb,vkb,bec_type,is_allocated_bec_type,&
-&                        allocate_bec_type,deallocate_bec_type,calbec
+&                        allocate_bec_type,calbec
  use timing_m,      ONLY:timing
  !
 #include<memory.h>

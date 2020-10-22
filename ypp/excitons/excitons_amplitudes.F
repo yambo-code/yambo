@@ -28,11 +28,12 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
  use R_lattice,     ONLY:bz_samp,qindx_X
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:intc,real2ch
- use YPP,           ONLY:EXCITON_weight_treshold,EXCITONS_user_indexes,EXCITONS_n_user_states
- use BS_solvers,    ONLY:BS_mat,BSS_eh_table,BSS_n_descs,BSS_description,BSS_n_eig
+ use YPPm,          ONLY:EXCITON_weight_treshold,EXCITONS_user_indexes,EXCITONS_n_user_states
+ use BS_solvers,    ONLY:BS_mat,BSS_eh_table,BSS_desc,BSS_n_eig
  use BS,            ONLY:BS_H_dim
  use com,           ONLY:msg,of_open_close
  use vec_operate,   ONLY:sort
+ use interfaces,    ONLY:DESC_write
  !
  implicit none
  !
@@ -70,7 +71,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
    !
    n_lambda_deg=count(BS_E_degs==BS_E_degs(i_l_grp))
    !
-   if (n_lambda_deg>1) call msg('s',':: State '//trim(intc(i_l_grp))//' Merged with states '//&
+   if (n_lambda_deg>1) call msg('s',' State '//trim(intc(i_l_grp))//' Merged with states '//&
 &                                     trim(intc(BS_E_degs(i_l_grp)))//' -> '//&
 &                                     trim(intc(BS_E_degs(i_l_grp)+n_lambda_deg-1)))
    !
@@ -112,12 +113,13 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
 !
 !Note that BSS_description is empty as io_BS it is not called anymore 
 !
-   do j1=1,BSS_n_descs
-     call msg('o weight amp',"#",trim(BSS_description(j1)),INDENT=0)
-   enddo
+   !
+   call DESC_write('o weight amp','#',BSS_desc)
+   
+
    call msg('o weight amp',"#")
    call msg('o weight amp',&
-&   '# Electron-Hole pairs that contributes to Excitonic State '//&
+&   '# Electron-Hole pairs that contribute to Excitonic State '//&
 &   trim(intc(i_l_grp))//' for iq='//trim(intc(iq))//' more than '// trim(real2ch(EXCITON_weight_treshold*100)) //'%')
    call msg('o weight amp','#')
    !

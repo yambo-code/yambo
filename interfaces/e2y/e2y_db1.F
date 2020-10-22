@@ -43,8 +43,8 @@ subroutine e2y_db1(en,k,ncid)
  use etsf_io
  use etsf_io_low_level
  use etsf_data
- use pars,                 only : SP, DP, PI, schlen
- use com,                  only : msg, error, warning
+ use pars,                 only : SP,   schlen
+ use com,                  only : msg
  use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, l_spin_orbit
  use wave_func,            only : wf_ncx
  use R_lattice,            only : bz_samp, nkibz
@@ -59,7 +59,7 @@ subroutine e2y_db1(en,k,ncid)
  ! 
  ! Work Space
  !
- integer                       :: i1,i2,ik,ib,is
+ integer                       :: i1,ik,ib,is
  !ETSF library stuff
  logical                       :: lstat ! to get informed on error
  type(etsf_io_low_error)       :: error_data ! to store informations about errors
@@ -87,11 +87,11 @@ subroutine e2y_db1(en,k,ncid)
  n_bands = en%nb
  call msg("l","done")
  !>>>DEBUG
- ! call msg('s',':: K-points              :',k%nibz)
- ! call msg('s',':: Bands                 :',en%nb)
- ! call msg('s',':: Spin  [components/pol]:',(/n_spinor,n_sp_pol/))
- ! call msg('s',':: Max WF components     :',wf_ncx) 
- ! call msg('s',':: Atomic species        :',n_atom_species)
+ ! call msg('s',' K-points              ',k%nibz)
+ ! call msg('s',' Bands                 ',en%nb)
+ ! call msg('s',' Spin  [components/pol]',(/n_spinor,n_sp_pol/))
+ ! call msg('s',' Max WF components     ',wf_ncx) 
+ ! call msg('s',' Atomic species        ',n_atom_species)
  !<<<DEBUG
  !
  ! Geometry (must appear first, in order to define alat)
@@ -188,7 +188,7 @@ contains
     alat(1) = alat_mult_factor*maxval( abs( a(1,:) ))
     alat(2) = alat_mult_factor*maxval( abs( a(2,:) ))
     alat(3) = alat_mult_factor*maxval( abs( a(3,:) ))
-!   call msg('s',':: Lattice factors [a.u.]:',alat)
+!   call msg('s',' Lattice factors [a.u.]',alat)
     call define_b_and_DL_vol()
     !
     ! Atomic position data
@@ -268,6 +268,7 @@ contains
   !===========================================================
   subroutine import_basisdata_group
     !
+    use pars,                 only : pi
     use vec_operate,          only : sort, iku_v_norm
     use R_lattice,            only : g_vec, b, ng_vec
     use D_lattice,            only : alat, i_space_inv, i_time_rev
@@ -309,7 +310,7 @@ contains
         call msg('s','Closing shells against inversion...')
         call G_rot_grid(-1,'extend_grid')
         call msg('l','done')
-        if(ng_vec/=ng_vec_abinit) call msg('s',':: ng_vec was increased to close the G-shells')
+        if(ng_vec/=ng_vec_abinit) call msg('s',' ng_vec was increased to close the G-shells')
       endif
       !
       call e2y_wf_components(ncid)
@@ -370,7 +371,7 @@ contains
           call G_rot_grid(is,'extend_grid')
         enddo
         call msg('l','done')
-        if(ng_vec/=ng_vec_abinit) call msg('s',':: ng_vec was increased to close the G-shells')
+        if(ng_vec/=ng_vec_abinit) call msg('s',' ng_vec was increased to close the G-shells')
       endif
       !
       ! Re-ordering by increasing module
@@ -410,6 +411,7 @@ contains
   ! K-points (convert to new units)
   !===========================================================
   subroutine import_kpoints_group
+    use pars,                 only : pi
     use R_lattice,            only : b
     use D_lattice,            only : alat
     implicit none

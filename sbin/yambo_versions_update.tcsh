@@ -30,22 +30,33 @@ if ( $#argv < 1 ) goto HELP
 if ( $#argv > 1 ) goto HELP
 #
 if ( "$argv[1]" != "r" && "$argv[1]" != "v" && "$argv[1]" != "s" && "$argv[1]" != "p" && "$argv[1]" != "save" ) then
-  echo "Argoument '"$argv"' not recognised. Options are:"
+  echo "Argument '"$argv"' not recognised. Options are:"
   goto HELP
 endif
 #
 # Get current version & revision
 #
-set repo=`git remote -v | grep push | head -c -7`
+set repo=`git remote -v | grep push`
 set gpl="yes"
 if ( "$repo" =~ *yambo-devel* ) set gpl="no"
+#
+set dummy="SVERSION="
+set version_old=`cat config/version/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
+set dummy="SSUBVERSION="
+set subver_old=`cat config/version/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
+set dummy="SPATCHLEVEL="
+set patch_old=`cat config/version/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
+set dummy="SREVISION="
+set revision_old=`cat config/version/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
+set dummy="SHASH="
+set hash_old=`cat config/version/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
+set GPL_revision_old=$revision_old
 #
 if ( "$gpl" == "no" ) then
   set dummy1=`git rev-list --count HEAD`
   @ dummy1= $dummy1 + 10000 
-  set dummy2=`cat include/version.inc | grep code_revision | tail -c 6`
-  if ( "$dummy1" >= "$dummy2" ) set revision_HEAD=`echo $dummy1`
-  if ( "$dummy1" <  "$dummy2" ) set revision_HEAD=`echo $dummy2`
+  if ( "$dummy1" >= "$revision_old" ) set revision_HEAD=`echo $dummy1`
+  if ( "$dummy1" <  "$revision_old" ) set revision_HEAD=`echo $revision_old`
 else
   set dummy=`git rev-list --all --count HEAD`
   set revision_HEAD=`echo $dummy`
@@ -53,20 +64,7 @@ else
 endif
 set hash_HEAD=`git rev-parse --short HEAD`
 #
-set dummy=`cat include/version.inc | grep 'code_version(1)'`
-set version_old=`echo $dummy | $awk '{gsub("code_version\\(1\\)=","");print $0}'`
-set dummy=`cat include/version.inc | grep 'code_version(2)'`
-set subver_old=`echo $dummy | $awk '{gsub("code_version\\(2\\)=","");print $0}'`
-set dummy=`cat include/version.inc | grep 'code_version(3)'`
-set patch_old=`echo $dummy | $awk '{gsub("code_version\\(3\\)=","");print $0}'`
-set dummy=`cat include/version.inc | grep 'code_revision'`
-set revision_old=`echo $dummy | $awk '{gsub("code_revision=","");print $0}'`
-set dummy=`cat include/version.inc | grep 'code_GPL_revision'`
-set GPL_revision_old=`echo $dummy | $awk '{gsub("code_GPL_revision=","");print $0}'`
-set dummy=`cat include/version.inc | grep 'code_hash'`
-set hash_old=`echo $dummy | $awk '{gsub("code_hash=","");print $0}'`
-set dummy=$hash_old
-set hash_old=`echo $dummy | sed -e "s/'//g" `
+echo "Detected version" $version_old"."$subver_old"."$patch_old "Rev.(CURRENT)" $revision_old "(HEAD)" $revision_HEAD "Hash" $hash_old
 #
 # Increase counters
 #
@@ -122,27 +120,6 @@ if ( "$argv[1]" == "v" || "$argv[1]" == "s" || "$argv[1]" == "p" ) then
   endif
 endif
 #
-if( "$update" == "0" ) then
-  #
-  # Version strings
-  #
-  echo 'code_version(1)='$version_new  >  include/version.inc
-  echo 'code_version(2)='$subver_new   >> include/version.inc
-  echo 'code_version(3)='$patch_new    >> include/version.inc
-  if ( "$gpl" == "no"  )  echo "code_hash='"$hash_new"'"  >> include/version.inc
-  if ( "$gpl" == "yes" )  echo "code_hash='"$hash_old"'"  >> include/version.inc
-  #
-  # Revision strings
-  #
-  if ( "$gpl" == "yes" ) then
-    echo 'code_revision='$revision_old     >> include/version.inc
-    echo 'code_GPL_revision='$revision_new >> include/version.inc
-  else
-    echo 'code_revision='$revision_new         >> include/version.inc
-    echo 'code_GPL_revision='$GPL_revision_old >> include/version.inc
-  endif
-endif
-#
 # Prepare new configure script
 #
 set use_rev_old=$revision_old
@@ -152,12 +129,13 @@ if ( "$gpl" == "yes" ) then
   set use_rev_new=$revision_new
 endif
 #
-if ( "$gpl" == "no" ) then
 cat << EOF > ss.awk
 {
- gsub("$version_old.$subver_old.$patch_old r.$use_rev_old h.$hash_old",
-      "$version_new.$subver_new.$patch_new r.$use_rev_new h.$hash_new",\$0)
- gsub("based on r.$use_rev_old h.$hash_old","based on r.$use_rev_new h.$hash_new",\$0)
+ gsub("$version_old.$subver_old.$patch_old",
+      "$version_new.$subver_new.$patch_new",\$0)
+ gsub("h.$hash_old","h.$hash_new",\$0)
+ gsub("r.$revision_old","r.$revision_new",\$0)
+ gsub("r.$use_rev_old","r.$use_rev_new",\$0)
  #version
  gsub("SVERSION=\"$version_old\""  ,"SVERSION=\"$version_new\""  ,\$0)
  gsub("SSUBVERSION=\"$subver_old\"","SSUBVERSION=\"$subver_new\""   ,\$0)
@@ -169,29 +147,14 @@ cat << EOF > ss.awk
  print \$0 > "NEW"
 }
 EOF
-else
-cat << EOF > ss.awk
-{
- gsub("$version_old.$subver_old.$patch_old r.$use_rev_old h.$hash_old",
-      "$version_new.$subver_new.$patch_new r.$use_rev_new h.$hash_new",\$0)
- #version
- gsub("SVERSION=\"$version_old\""  ,"SVERSION=\"$version_new\""  ,\$0)
- gsub("SSUBVERSION=\"$subver_old\"","SSUBVERSION=\"$subver_new\""   ,\$0)
- gsub("SPATCHLEVEL=\"$patch_old\"","SPATCHLEVEL=\"$patch_new\"",\$0)
- #revision
- gsub("SREVISION=\"$use_rev_old\"" ,"SREVISION=\"$use_rev_new\"" ,\$0)
- print \$0 > "NEW"
-}
-EOF
-endif
 #
 #
 if ( "$argv[1]" != "save" ) then
-  $awk -f ss.awk ./config/version.m4
-  mv NEW ./config/version.m4
+  $awk -f ss.awk ./config/version/version.m4
+  mv NEW ./config/version/version.m4
   if ( "$gpl" == "no" ) then
-    $awk -f ss.awk ./config/version.m4_gpl
-    mv NEW ./config/version.m4_gpl
+    $awk -f ss.awk ./config/version/version.m4_gpl
+    mv NEW ./config/version/version.m4_gpl
   endif
   $awk -f ss.awk configure
   mv NEW configure
@@ -201,15 +164,15 @@ rm -fr ss.awk
 #
 # Backup
 #
-if ( "$argv[1]" == "save" ) then
- cd ..
- echo -n " Tar ..."
- ln -s trunk $source_dir
- tar -chf $file_name $source_dir
- echo " done"
- gzip $file_name
- rm -f $source_dir
-endif
+#if ( "$argv[1]" == "save" ) then
+# cd ..
+# echo -n " Tar ..."
+# ln -s trunk $source_dir
+# tar -chf $file_name $source_dir
+# echo " done"
+# gzip $file_name
+# rm -f $source_dir
+#endif
 
 exit 0
 

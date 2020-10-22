@@ -28,13 +28,12 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt)
  use electrons,     ONLY:n_spinor
  use wave_func,     ONLY:wf_ng
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
- use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table
+ use pseudo,        ONLY:pp_kbv_dim_yambo,pp_n_l_times_proj_max,pp_table,pp_kbv_table
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos,x_cc,a
- use com,           ONLY:warning
  !
 #include<memory.h>
  !
- complex(SP)             :: kbv(wf_ng,pp_kbv_dim,4,n_spinor),kbv_real_space(fft_size,n_spinor,pp_kbv_dim)
+ complex(SP)             :: kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo),kbv_real_space(fft_size,n_spinor,pp_kbv_dim_yambo)
  real(SP)                :: kpt(3)
  !
  ! Work Space
@@ -45,7 +44,7 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt)
  !
  ! Dummies
  !
- integer                 :: i1,is,ia,i_atom,il,im,i_pp,pp_spin,i_spinor
+ integer                 :: i1,i2,is,ia,i_atom,il,im,i_pp,pp_spin,i_spinor
  !
  if (n_spinor>1) call warning('new kb implementation to be tested for the case n_spinor>1')
  !
@@ -85,9 +84,12 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt)
          do i_spinor=1,n_spinor
            !
            i1=i1+2-i_spinor
+           i2=pp_kbv_table(i1)
+           !
+           if(i2==0) cycle
            !
            kbv_DP=(0._DP,0._DP)
-           kbv_DP(fft_g_table(1:wf_ng,1))=conjg(kbv(1:wf_ng,i1,1,i_spinor))*fft_norm
+           kbv_DP(fft_g_table(1:wf_ng,1))=conjg(kbv(1:wf_ng,i_spinor,1,i2))*fft_norm
            !
            ! Here I need to fourier tranform kbv(G,i1,1)
 #if defined _FFTW
@@ -97,7 +99,7 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt)
            call fft_3d(kbv_DP,fft_dim,1)
 #endif
            !
-           kbv_real_space(:,i_spinor,i1)=conjg(cmplx(kbv_DP(:),kind=SP))*kpt_factor(:)
+           kbv_real_space(:,i_spinor,i2)=conjg(cmplx(kbv_DP(:),kind=SP))*kpt_factor(:)
            !
          enddo   ! i_spinor
        enddo   ! im

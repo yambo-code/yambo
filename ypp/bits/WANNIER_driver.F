@@ -31,7 +31,7 @@ subroutine WANNIER_driver(k,E)
  use units,          ONLY:HA2EV
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use YPP,            ONLY:seed_name
+ use YPPm,           ONLY:seed_name
  use com,            ONLY:msg
  use vec_operate,    ONLY:rlu_v_is_zero
  use zeros,          ONLY:k_rlu_zero

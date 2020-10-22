@@ -26,9 +26,9 @@ subroutine RT_EXP_step_std(dG_old,dG_inp,dG_out,ik,deltaT)
  ! The EXP integrator is better than the EULER integrator if Ho_plus_Sigma
  ! changes in time more slowly that G
  !
- use pars,           ONLY:SP,cI,cZERO
+ use pars,           ONLY:SP,cI
  use wrapper_omp,    ONLY:M_by_M_omp
- use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nk,RT_nbands,&
+ use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nbands,&
 &                         integrator_exp_order,G_lesser_reference,I1_matrix
  !
  implicit none

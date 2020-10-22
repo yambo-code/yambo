@@ -25,15 +25,13 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
  !
  ! This routine returns <L>
  !
- use pars,                ONLY:SP,cZERO,cI,pi
- use units,               ONLY:SPEED_OF_LIGHT
+ use pars,                ONLY:SP,cI
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_sp_pol
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  use vec_operate,         ONLY:cross_product
  use R_lattice,           ONLY:bz_samp
  use DIPOLES,             ONLY:DIP_iR,DIP_orbital,DIPOLE_t
- use com,                 ONLY:error
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
 &                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
@@ -46,7 +44,7 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
  !
  ! Work Space
  !
- integer                      :: ik,ic,iv,ib,i_sp_pol,i_spin,n_LT_steps,ik_mem
+ integer                      :: ik,ic,iv,ib,i_sp_pol,n_LT_steps,ik_mem
  real(SP)                     :: Eb,Ev,Ec
  complex(SP)                  :: DIP_pos(3,2)
  !

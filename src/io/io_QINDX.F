@@ -27,15 +27,15 @@ integer function io_QINDX(Xk,q,io_db)
  use R_lattice,      ONLY:nqibz,nqbz,qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,QP_states_k,nXkibz,qindx_alloc,&
 &                         Xk_grid_is_uniform,bz_samp,nXkbz,coll_scattering,q_pt
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,frag_QINDX,write_is_on,         &
-&                         io_elemental,io_status,read_is_on,write_is_on,io_header,&
+ use IO_m,           ONLY:io_connect,io_disconnect,io_sec,frag_QINDX,         &
+&                         io_elemental,io_status,read_is_on,io_header,&
 &                         ver_is_gt_or_eq,io_extension,io_fragment,IO_OUTDATED_DB,        &
 &                         def_variable_bulk,io_variable_bulk
  use timing_m,       ONLY:timing
  !
 #include<memory.h>
  type(bz_samp)::q,Xk
- integer      ::io_db
+ integer      ::io_db,i3,i2,i2_up,i2_step
  !
  ! Work Space
  !
@@ -60,15 +60,15 @@ integer function io_QINDX(Xk,q,io_db)
    call io_elemental(io_db,VAR="PARS",VAR_SZ=9,MENU=0)
    !
    call io_elemental(io_db,I0=nXkbz)
-   call io_elemental(io_db,VAR=" Polarization last K   :",I0=nXkibz)
-   call io_elemental(io_db,VAR=" QP states             :",I1=QP_states_k,CHECK=.true.,OP=(/">=","<="/))
+   call io_elemental(io_db,VAR=" Polarization last K    ",I0=nXkibz)
+   call io_elemental(io_db,VAR=" QP states              ",I1=QP_states_k,CHECK=.true.,OP=(/">=","<="/))
    call io_elemental(io_db,I0=q%nibz)
    call io_elemental(io_db,I0=q%nbz)
-   call io_elemental(io_db,VAR=" X grid is uniform     :",L0=Xk_grid_is_uniform)
+   call io_elemental(io_db,VAR=" X grid is uniform      ",L0=Xk_grid_is_uniform)
    io_QINDX=io_status(io_db)
    !
-   call io_elemental(io_db,VAR=" BS scattering         :",L0=bse_scattering,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(io_db,VAR=" COLL scattering       :",L0=coll_scattering,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(io_db,VAR=" BS scattering          ",L0=bse_scattering,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(io_db,VAR=" COLL scattering        ",L0=coll_scattering,CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(io_db,VAR="",VAR_SZ=0)
    ioScatt=io_status(io_db)
@@ -108,7 +108,7 @@ integer function io_QINDX(Xk,q,io_db)
  ! (coll_scattering) -> qindx_C(nXkbz,nXkbz,2)
  !
  if (any((/io_sec(io_db,:)==3/))) then
-   if (read_is_on(io_db)) call qindx_alloc()
+   if (read_is_on(io_db)) call qindx_alloc('ALL')
    !
    ! Fragmentation (1): eXchange indx
    !
@@ -134,7 +134,16 @@ integer function io_QINDX(Xk,q,io_db)
      io_extension(io_db)='kindx'
      call io_fragment(io_db,i_fragment=3)
      call def_variable_bulk(io_db,"Bindx",3,shape(qindx_B),IP+100)
-     call  io_variable_bulk(io_db,3,I3=qindx_B)
+     ! 46341 is the sqare root of the maximum integer 2147483647
+     ! qindx_B is size nXkbz*nXkbz
+     ! NETCDF has problems in reading when this number overcomes 2147483647
+     i2_step=nXkbz/(nXkbz/46341+1)
+     do i3=1,2
+       do i2=1,nXkbz,i2_step
+         i2_up=min(i2-1+i2_step,nXkbz)
+         call  io_variable_bulk(io_db,3,I3=qindx_B(:,i2:i2_up,i3:i3),IPOS=(/1,i2,i3/))
+       enddo
+     enddo
    endif
    if (coll_scattering.and.ver_is_gt_or_eq(io_db,revision=3085)) then
      !

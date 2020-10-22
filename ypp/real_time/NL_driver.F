@@ -23,18 +23,18 @@
 !
 subroutine NL_driver(en,k)
  !
- use YPP_real_time,  ONLY:X_order,RT_conf,RT_time,Probe_Keyword,Pol,&
+ use YPP_real_time,  ONLY:X_order,RT_conf,RT_time,Pol,&
 &                         l_skip_OBS_IO
- use pars,           ONLY:SP,pi,cZERO,lchlen
+ use pars,           ONLY:SP,pi,lchlen
  use units,          ONLY:HA2EV,AUT2FS
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
- use nl_optics,      ONLY:n_frequencies,NL_P_t,NL_damping
+ use nl_optics,      ONLY:n_frequencies,NL_P_t
  use fields,         ONLY:Efield,EtoT,Divide_by_Field,ext_field,Efield_duplicate,Efield_strength
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
- use com,            ONLY:msg,error,warning
- use real_time,      ONLY:NE_steps,RT_step,NE_time,NE_steps
+ use com,            ONLY:msg
+ use real_time,      ONLY:NE_steps,RT_step,NE_steps
  use stderr,         ONLY:intc,real2ch
  use RT_control,     ONLY:OBS_RT_IO_t
  use LIVE_t,         ONLY:live_timing
@@ -47,8 +47,8 @@ subroutine NL_driver(en,k)
  ! Working Space
  !
  integer, external::io_NL
- integer  :: io_NonLinear,ID,i_Probe
- integer  :: i_f,i_d,i_order,i_t_field_range(2)!,i_t_start,i_t_end,it
+ integer  :: io_Nonlinear,ID,i_Probe
+ integer  :: i_f,i_d,i_order
  real(SP) :: W_step,T_period,time_range_save(2)
  real(SP),    allocatable  :: RT_P_probe(:,:,:),Harmonic_Frequency(:,:),Probe_frequency(:)
  complex(SP), allocatable  :: X_effective(:,:,:),Susceptibility(:,:,:)
@@ -133,7 +133,7 @@ subroutine NL_driver(en,k)
  if((RT_conf%T_range(2) - RT_conf%T_range(1))<T_period) &
 &   call warning('Simulation time not long enough. Period is'//trim(real2ch(T_period*AUT2FS))//' fs')
  !
- call msg('s',':: Field type    :', trim(Efield_probe%ef_name))
+ call msg('s',' Field type    ', trim(Efield_probe%ef_name))
  !
  select case (trim(Efield_probe%ef_name))
    !
@@ -149,13 +149,13 @@ subroutine NL_driver(en,k)
        Harmonic_Frequency(i_order,:)=real(i_order,SP)*Probe_Frequency(:)
      enddo
      !
-     call msg('s',':: Harmonic frequencies    [eV]:',(/minval(Harmonic_Frequency),maxval(Harmonic_Frequency)/)*HA2EV)
+     call msg('s',' Harmonic frequencies    [eV]',(/minval(Harmonic_Frequency),maxval(Harmonic_Frequency)/)*HA2EV)
      !
      ! Find the Fourier coefficients by inversion
      !
-     call msg('s','[RT] Effective max time period [fs]:',T_period*AUT2FS)
+     call msg('s','[RT] Effective max time period [fs]',T_period*AUT2FS)
      !
-     call live_timing('X effective :', n_frequencies)
+     call live_timing('X effective ', n_frequencies)
      !
      time_range_save=RT_conf%T_range
      !
@@ -208,7 +208,7 @@ subroutine NL_driver(en,k)
     !
     YAMBO_ALLOC(Pol%F_t,(RT_conf%T_n_steps,3))
     Pol%F_t(:,:) =RT_P_probe(:,i_Probe,:)
-    if(trim(RT_conf%damping) /= "NONE") call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,Pol%F_t,3)
+    call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,Pol%F_t,3)
     call RT_X_LRR_real_field(en)
     YAMBO_FREE(Pol%F_t)
      !
@@ -232,8 +232,8 @@ contains
      use RT_control,     ONLY:RT_output
      use com,            ONLY:msg,of_open_close
      use vec_operate,    ONLY:sort
-     use stderr,         ONLY:set_real_printed_length
-     use nl_optics,      ONLY:n_NL_descriptions,NL_description
+     use interfaces,     ONLY:DESC_write
+     use nl_optics,      ONLY:NL_desc
      !
      ! Working Space
      !
@@ -259,13 +259,9 @@ contains
        !
        X_file_name="YPP-X_probe_order_"//trim(intc(i_order))
        !
-       call set_real_printed_length(f_length=15,g_length=15)
-       !
        call of_open_close(trim(X_file_name),'ot')
        !
-       do i_dsc=1,n_NL_descriptions
-         call msg('o '//trim(X_file_name),'#',trim(NL_description(i_dsc)),INDENT=0)
-       enddo
+       call DESC_write('o '//trim(X_file_name),'#',NL_desc)
        !
        call msg('o '//trim(X_file_name),'#')
        call msg('o '//trim(X_file_name),'#',headings(1:n_headings),INDENT=0,USE_TABS=.TRUE.)
@@ -295,8 +291,6 @@ contains
        enddo 
        !
        call of_open_close(trim(X_file_name))
-       !
-       call set_real_printed_length()
        !
      enddo
      !

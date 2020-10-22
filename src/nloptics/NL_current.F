@@ -29,7 +29,7 @@ subroutine NL_current(k,E,V_input,NL_J)
  ! j(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
  ! p(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) r \psi_j(k)
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cZERO
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp,k_map
  use D_lattice,      ONLY:DL_vol
@@ -50,6 +50,8 @@ subroutine NL_current(k,E,V_input,NL_J)
  complex(SP),       intent(out) :: NL_J(6)
  !
  ! Work Space
+ !
+ NL_J=cZERO
  !
  ! A : Current
  !

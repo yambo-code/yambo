@@ -87,7 +87,8 @@ module global_XC
    QP_SE_GWo           = 405, &
    QP_SE_POLARON       = 406, &
    QP_SE_COH           = 409, &
-   QP_SE_SEX           = 410 
+   QP_SE_SEX           = 410, & 
+   QP_SE_GW_PPA        = 411
  !
  ! Perturbations
  integer, public, parameter :: &

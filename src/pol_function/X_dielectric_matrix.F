@@ -45,6 +45,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 &                        PARALLEL_WF_index,WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset
+ use cuda_m
  !
 #include<memory.h>
  !
@@ -57,7 +58,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  ! Work Space
  !
- integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles,iw_X_mat
+ integer              :: n,iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles,iw_X_mat
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X,X_eh_setup
  character(1)         :: sec_mode
@@ -263,8 +264,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 &              X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)=X_par(iq_mem)%blc(:,:,iw)
        endif
        !
-       call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
-       !
+       do n = 1,X%ng
+        call PP_redux_wait(X_mat(:,n,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
+       enddo
+     !
      enddo
      !
 #if defined _PAR_IO

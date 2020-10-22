@@ -115,7 +115,6 @@ contains
 #ifdef _CUDA
     ierr = CudaDeviceSynchronize()
     ierr = CudaGetLastError()
-    !write(*,*) CudaGetLastMessage(ierr)
 #endif
     return
   end function

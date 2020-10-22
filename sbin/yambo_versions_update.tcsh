@@ -41,15 +41,15 @@ set gpl="yes"
 if ( "$repo" =~ *yambo-devel* ) set gpl="no"
 #
 set dummy="SVERSION="
-set version_old=`cat config/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
+set version_old=`cat config/version/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
 set dummy="SSUBVERSION="
-set subver_old=`cat config/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
+set subver_old=`cat config/version/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
 set dummy="SPATCHLEVEL="
-set patch_old=`cat config/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
+set patch_old=`cat config/version/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
 set dummy="SREVISION="
-set revision_old=`cat config/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
+set revision_old=`cat config/version/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
 set dummy="SHASH="
-set hash_old=`cat config/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
+set hash_old=`cat config/version/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
 set GPL_revision_old=$revision_old
 #
 if ( "$gpl" == "no" ) then
@@ -150,11 +150,11 @@ EOF
 #
 #
 if ( "$argv[1]" != "save" ) then
-  $awk -f ss.awk ./config/version.m4
-  mv NEW ./config/version.m4
+  $awk -f ss.awk ./config/version/version.m4
+  mv NEW ./config/version/version.m4
   if ( "$gpl" == "no" ) then
-    $awk -f ss.awk ./config/version.m4_gpl
-    mv NEW ./config/version.m4_gpl
+    $awk -f ss.awk ./config/version/version.m4_gpl
+    mv NEW ./config/version/version.m4_gpl
   endif
   $awk -f ss.awk configure
   mv NEW configure

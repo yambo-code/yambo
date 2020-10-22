@@ -155,7 +155,6 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  dE_xc  = dE_xc  +dE_xc_sc
  dE_hxc = dE_hxc +dE_hxc_sc
  !
- !
  ! Transfer the shadow variables
  !
  if(.not.l_use_Hxc_collisions) Energies=real((/dE_kin,dE_ion,dE_h, dE_xc, dE_tot/))*HA2EV

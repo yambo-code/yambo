@@ -255,13 +255,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    call X_write_messages_before_headers(iq,allocated(Xen%GreenF),X%Vnl_included,X%ordering)
    !
-   ! BZ Double Grid
-   !
-   if (use_X_DbGd) then
-     call msg('o eps_q eel_q fxc alpha','# DbGd| IBZ Energy points',Xk%nibz+Xk%nibz_FineGd,INDENT=0)
-     call msg('o eps_q eel_q fxc alpha','#        BZ Energy points',Xk%nbz+Xk%nbz_FineGd,INDENT=0)
-   endif
-   !
    ! Titles 
    !
    n_output=5

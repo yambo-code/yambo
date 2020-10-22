@@ -35,7 +35,7 @@ use Getopt::Long;
 # 
 # ... modified
 #
-$gitcommand = "git status | sed -n '/not staged/q;p' | grep 'modified' | awk \'{printf\" %s \",\$2 }\' |";
+$gitcommand = "git status | sed -n '/not staged/q;p' | grep 'modified' | awk \'{printf\" %s \",\$2 }\'|";
 open(GIT, $gitcommand);
 $changedfiles = <GIT>;
 close(GIT);
@@ -92,7 +92,7 @@ print "RENAMED files: $rinamefiles\n\n";
 #
 # Versions
 #
-open(VER,"<","config/version.m4");
+open(VER,"<","config/version/version.m4");
 while($line = <VER>) {
   chomp $line;
   #$ID  = substr $line, 13, 1;

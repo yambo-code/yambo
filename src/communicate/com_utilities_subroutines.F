@@ -147,6 +147,8 @@ subroutine of_open_close(of_name_extension,mode)
  !
 end subroutine of_open_close
 !
+!
+#if !defined _io_lib
 subroutine write_the_logo(unit_,comment_)
  !
  use LIVE_t,       ONLY:LIVE_message
@@ -182,6 +184,7 @@ subroutine write_the_logo(unit_,comment_)
  if (unit_/=6.and.trim(comment_)=='#') write (unit_,'(a)') '#'
  !
 end subroutine write_the_logo
+#endif
 !
 subroutine rename_file(name)
  !
@@ -208,7 +211,9 @@ end subroutine rename_file
 !
 subroutine warning(mesg)
  !
+#if !defined _io_lib
  use LIVE_t,     ONLY:LIVE_message
+#endif
  use stderr,     ONLY:STRING_pack
  use com,        ONLY:msg
  !
@@ -216,13 +221,17 @@ subroutine warning(mesg)
  !
  character(*) :: mesg
  call msg('nr',STRING_pack('[WARNING] ',trim(mesg)))
+#if !defined _io_lib
  call LIVE_message(STRING_pack('[WARNING] ',trim(mesg)),"n","","%s")
+#endif
  !
 end subroutine warning
 !
 subroutine error(mesg)
  !
+#if !defined _io_lib
  use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
+#endif
  use stderr,     ONLY:STRING_pack,logfile_unit,log_as_a_file
  use com,        ONLY:secnm,msg
 #if defined _MPI
@@ -240,11 +249,15 @@ subroutine error(mesg)
  !
  if (len_trim(secnm)>0) then
    call msg('nr',STRING_pack('[ERROR] STOP signal received while in ',trim(secnm)))
+#if !defined _io_lib
    call LIVE_message(STRING_pack('[ERROR] STOP signal received while in ',trim(secnm)),"nn","","%s")
+#endif
  endif
  call msg('nr',STRING_pack('[ERROR] ',trim(mesg)))
+#if !defined _io_lib
  call LIVE_message(STRING_pack('[ERROR] ',trim(mesg)),"n","","%s")
  call LIVE_message("","n","","%s")
+#endif
  if(log_as_a_file) call yambo_flush(logfile_unit)
  !
 #if defined _MPI
@@ -257,12 +270,10 @@ end subroutine error
 !
 subroutine yambo_flush(unit)
   !
-  !use com_interfcs,  ONLY:fsync
   !
   implicit none
   !
   integer, intent(in) :: unit
-  !integer :: ierr
   !
   flush(unit)
   !

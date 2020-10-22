@@ -38,7 +38,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     l_X_terminator,X_terminator_E,global_gauge,&
 &                     Chi_linalg_mode,X_use_lin_sys,X_use_gpu,X_DbGd_percentual
  use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
-&                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach
+&                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
+&                     compute_P2_dipoles,compute_Spin_dipoles,compute_Orb_dipoles
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
@@ -107,7 +108,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_o_file_is_open,&
 &                     RT_headings,YPP_append,Gr_desc,TIME_STEP_desc,RT_desc
  use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db,&
-&                     CACHE_OBS_last_point,CACHE_OBS_INTERVAL_time,CACHE_OBS_INTERVAL_time_SAVE,   &
+&                     CACHE_OBS_last_point,CACHE_OBS_INTERVAL_time,CACHE_OBS_INTERVAL_time_INPUT,   &
 &                     CACHE_OBS_steps,CACHE_OBS_steps_now,RT_NAN_found
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
@@ -119,7 +120,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     RAD_prefactor,i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,           &
 &                     RT_is_statically_dephased,RT_is_dynamically_dephased,               &
 &                     RT_deph_deg_thresh,RT_deph_cv_only,                                 &
-&                     NE_time_step_update_last_point,NE_time_step_update_jump,NE_time_step_update_jump_SAVE, &
+&                     NE_time_step_update_last_point,NE_time_step_update_jump,NE_time_step_update_jump_INPUT, &
 &                     NE_initial_time_step_update,NE_step_update_treshold
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_tot,A_ind,A_ext
@@ -139,7 +140,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use timing_m,    ONLY:timing_allocate,nclockx
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
- use cuda_m,      ONLY:have_cuda
+ use cuda_m,      ONLY:cuda_setup,have_cuda
  !
  implicit none
  !
@@ -154,6 +155,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ! GPL_EXCLUDE_START
  include 'branch.inc'
  ! GPL_EXCLUDE_END
+ !
  !
  call set_real_printed_length()
  !
@@ -178,6 +180,14 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  call OPENMP_initialize( )
  call OPENMP_update(master_thread)
  !
+ ! Node name
+ !
+ call CREATE_hosts_COMM( )
+ !
+ ! CUDA environment defs
+ !
+ call cuda_setup()
+ !
  ! Stack Size 
  !
  call remove_stack_limit()
@@ -194,10 +204,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  call MEM_element_init(MEMs,N_MEM_max)
  call MEM_element_init(LARGE_MEMs,N_MEM_SAVE_max)
- !
- ! Node name
- !
- call CREATE_hosts_COMM( )
  !
  ! ZEROs 
  !
@@ -362,6 +368,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use_covariant_approach     = .FALSE.
  use_real_space_approach    = .FALSE.
  use_g_space_approach       = .TRUE.
+ compute_P2_dipoles         = .FALSE.
+ compute_Spin_dipoles       = .FALSE.
+ compute_Orb_dipoles        = .FALSE.
  use_X_DbGd=.FALSE.
  X_DbGd_percentual=1.
  eps_2_alpha=1._SP
@@ -587,15 +596,15 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  NE_time_step_update_last_point = 1
  NE_time_step_update_jump       = 0._SP
- NE_time_step_update_jump_SAVE  = 0._SP
+ NE_time_step_update_jump_INPUT  = 0._SP
  NE_initial_time_step_update    = 0._SP
  NE_step_update_treshold        = 0.1_SP
  !
- CACHE_OBS_steps      = 1
- CACHE_OBS_steps_now  = 1
- CACHE_OBS_last_point = 1
+ CACHE_OBS_steps      = 0
+ CACHE_OBS_steps_now  = 0
+ CACHE_OBS_last_point = 0
  CACHE_OBS_INTERVAL_time       = 0._SP
- CACHE_OBS_INTERVAL_time_SAVE  = 0._SP
+ CACHE_OBS_INTERVAL_time_INPUT  = 0._SP
  !
  G_MEM_steps = 2
  i_MEM_old   = 0
@@ -643,10 +652,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! RT_ctl
  !
- OBS_RT_IO_t%INTERVAL_time_SAVE   =2._SP*FS2AUT
- CARR_RT_IO_t%INTERVAL_time_SAVE  =2._SP*FS2AUT
- OUTPUT_RT_IO_t%INTERVAL_time_SAVE=5._SP*FS2AUT
- GF_RT_IO_t%INTERVAL_time_SAVE    =1._SP*FS2AUT
+ OBS_RT_IO_t%INTERVAL_time_INPUT   =2._SP*FS2AUT
+ CARR_RT_IO_t%INTERVAL_time_INPUT  =2._SP*FS2AUT
+ OUTPUT_RT_IO_t%INTERVAL_time_INPUT=5._SP*FS2AUT
+ GF_RT_IO_t%INTERVAL_time_INPUT    =1._SP*FS2AUT
  SAVE_G_history=.FALSE.
  RT_NAN_found  =.FALSE.
  !

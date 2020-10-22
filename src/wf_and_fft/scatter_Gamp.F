@@ -38,7 +38,6 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&
 &                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts
  use R_lattice,     ONLY:RIM_qpg_d,bare_qpg_d
- use cuda_m,        ONLY:have_cuda
  use deviceXlib_m
  use timing_m
  !

@@ -57,7 +57,7 @@ subroutine RT_occupations_driver(k,en)
  !===========================
  call QP_state_table_setup(en)
  !
- call QP_apply(RT_bands,en,k,'G',msg_fmt='s')
+ call QP_apply(RT_bands,en,k,'G',msg_fmt='rs')
  !
  ! Occupations energy plot 
  !=========================
@@ -72,7 +72,7 @@ subroutine RT_occupations_driver(k,en)
  if (l_RT_dos)    call RT_dos_time_plot(en,k,RT_conf%T_n_steps)
  !
  ! Occupations bands fit 
- !=========================
+ !=======================
  if (l_RT_bands) call RT_occ_bands_interpolation(en,k,RT_conf%T_n_steps)
  !
 end subroutine RT_occupations_driver

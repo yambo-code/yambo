@@ -85,8 +85,13 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  titles(30) = 'Width[ns]'
  titles(31) = 'dV/V[%]' 
  !
+#if defined _QED
+ ntitles=11
+ titles_order(:ntitles)=(/9,10,4,25,29,27,6,12,28,30,31/)
+#else
  ntitles=5
  titles_order(:ntitles)=(/9,10,4,8,2/)
+#endif
  if (.not.report_Sc)   then
    ntitles=6
    titles_order(4:6)=(/5,8,6/)
@@ -99,8 +104,13 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    titles_order(ntitles)=12
  endif
  if (l_life) then
+#if defined _QED
+   ntitles=7
+   titles_order(:ntitles)=(/9,10,4,12,13,28,30/)
+#else
    ntitles=5
    titles_order(:ntitles)=(/9,10,4,12,13/)
+#endif
  endif
  if (what=='hf') then
    ntitles=6
@@ -194,6 +204,16 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        if (allocated(QP_G_amplitude_integral)) then
          values(23)=QP_G_amplitude_integral(i1)
        endif
+#if defined _QED
+       values(30)=Time_of(aimag(qp%E(i1)),"ns")
+       if (.not.l_life) then
+         values(29)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ
+         values(24)=real(qp%E(i1)-qp%E_bare(i1))*HA2GHZ*1000._SP
+         values(25)=real(qp%E(i1)-qp%E_bare(i1))*1000._SP*HA2EV
+         values(27)=real(QP_Sc(i1,1))*1000._SP*HA2EV
+         values(31)=real(QP_dSC(i1,1))*100
+       endif
+#endif
        if (allocated(QP_G_info)) then
          values(17:18)=QP_G_info(i1,1,:)*HA2EV
          values(19:20)=QP_G_info(i1,2,:)*HA2EV

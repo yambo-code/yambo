@@ -34,6 +34,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics
+#if defined _PL
+ use drivers,        ONLY:l_photolum
+#endif
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
@@ -59,6 +62,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use BS_solvers,     ONLY:BSS_mode,BSS_q0
 #if defined  _ELPH 
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used
+#endif
+#if defined _SC
+ use QP_m,           ONLY:QP_ng_Sx
+ use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
 #if defined _OPENMP
  use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K,n_threads_NL
@@ -94,14 +101,26 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _ELPH 
  what_is_running='YAMBO_PH'
 #endif
+#if defined _SC
+ what_is_running='YAMBO_SC'
+#endif
 #if defined _RT
  what_is_running='YAMBO_RT'
 #endif
 #if defined _NL
  what_is_running='YAMBO_NL'
 #endif
+#if defined _MAGNETIC
+ what_is_running='YAMBO_MAGNETIC'
+#endif
 #if defined _ELECTRIC
  what_is_running='YAMBO_ELECTRIC'
+#endif
+#if defined _QED
+ what_is_running='YAMBO_QED'
+#endif
+#if defined _PL
+ what_is_running='YAMBO_PL'
 #endif
  !
  ! Presets
@@ -115,6 +134,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call SET_logicals()
    !
    call E_reset(en)
+#if defined _SC
+   call E_reset(en_sc)
+#endif
    call bz_samp_reset(k)
    call bz_samp_reset(q)
    call W_reset(Xw(1))
@@ -303,6 +325,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_chi=runlevel_is_on('chi')
        l_bse=runlevel_is_on('bse')
        l_bss=runlevel_is_on('bss')
+#if defined _PL
+       l_photolum=runlevel_is_on('photolum')
+#endif
        l_tddft=runlevel_is_on('tddft')
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
@@ -315,6 +340,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_col_cut=runlevel_is_on('rim_cut')
        l_cohsex=runlevel_is_on('cohsex')
        !
+       ! GPL_EXCLUDE_START
+       ! 
+       l_acfdt=runlevel_is_on('acfdt')
+       !
+       ! GPL_EXCLUDE_END
        ! 
 #if defined _SCALAPACK
        l_slk_test =runlevel_is_on('slktest')
@@ -322,6 +352,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _RT
        !
        l_real_time=runlevel_is_on('negf')
+       ! GPL_EXCLUDE_START
+       l_elel_scatt =runlevel_is_on('el_el_scatt')
+       l_elph_scatt=runlevel_is_on('el_ph_scatt')
+       l_elphoton_scatt=runlevel_is_on('el_photon_scatt')
+       ! GPL_EXCLUDE_END
 #endif
 #if defined _SC && !defined _RT
        l_sc_run=runlevel_is_on('scrun')
@@ -345,10 +380,20 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
            call switch_off_runlevel('el_ph_corr',on_name=' ')
          endif
          !
+         ! GPL_EXCLUDE_START
+         l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.io_ELPH_err==0
+         ! GPL_EXCLUDE_END
        else
          l_elph_corr=runlevel_is_on('el_ph_corr')
+         ! GPL_EXCLUDE_START
+         l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
+         ! GPL_EXCLUDE_END
        endif
        l_elel_corr=runlevel_is_on('el_el_corr')
+#endif
+#if defined  _QED  
+       l_elel_corr    =runlevel_is_on('el_el_corr')
+       l_elphoton_corr=runlevel_is_on('el_photon_corr')
 #endif
        !
        ! In some cases l_elel_corr is switched on by default
@@ -388,6 +433,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      Dip%bands_ordered=.not.all_bands
 #if defined _SC  || defined _RT || defined _NL
      if ( l_sc_run.or.l_real_time.or.l_nl_optics ) Dip%bands_ordered=.false.
+#endif
+#if defined _QED 
+     if (l_elphoton_corr)                          Dip%bands_ordered=.false.
 #endif
      !
    end subroutine Dip_check_ordered
@@ -438,7 +486,18 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_gw0.and.l_cohsex) call parser('UseEbands',COHSEX_use_empties)
      !
+#if defined _PL
+     if (l_photolum) call initactivate(1,'bse optics dipoles')
+#endif
      !
+#if defined _SC
+     if (l_sc_magnetic) call initactivate(1,'potential')
+     if (l_sc_run.and.io_SC_E_err==0) then
+       QP_ng_Sx=SC_ng_Sx
+       X(2)%ib=SC_X_bands
+       X(2)%ng=SC_X_size
+     endif
+#endif
 #if defined _OPENMP
      if (l_dipoles) then
        n_threads_DIP=0
@@ -457,6 +516,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _OPENMP && defined _SC && defined _RT
      if (l_eval_collisions)    n_threads_RT=0
+#endif
+#if defined _OPENMP && defined _SC && defined _NL
+     if (l_eval_collisions)    n_threads_NL=0
 #endif
      !
    end subroutine before_infile_write_setup 

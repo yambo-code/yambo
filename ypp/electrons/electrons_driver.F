@@ -112,6 +112,21 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  if (l_mag) call electrons_magnetization(Xk,Xen)
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _YPP_MAGNETIC
+ !
+ ! Angular momentum 
+ !==================
+ if (l_angular_momentum) call electrons_angular_momentum(NK,NB)
+ !
+ ! <Mean> position
+ !=================
+ if (l_position)         call electrons_position(NK,NB,1.,'cylindrical','2d')
+ !
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! CURRENT
  !=========

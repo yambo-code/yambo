@@ -45,6 +45,10 @@ subroutine K_components_folded_in_serial_arrays(iq)
  use KERR,           ONLY:BSS_dipoles_kerr,BSS_KERR_alloc
 #endif
  !
+#if defined _PL
+ use drivers,        ONLY:l_photolum
+ use PHOTOLUM,       ONLY:BSS_dipoles_PL,BSS_PL_alloc,BSS_PL_f,PL_weights
+#endif
  !
  implicit none
  !
@@ -71,6 +75,9 @@ subroutine K_components_folded_in_serial_arrays(iq)
    call BSS_KERR_alloc( )
 #endif
    !
+#if defined _PL
+   call BSS_PL_alloc( )
+#endif
    !
    ! FILLING BSS_eh_* and BSS_dipoles
    !==================================
@@ -108,6 +115,13 @@ subroutine K_components_folded_in_serial_arrays(iq)
        endif
 #endif
        !
+#if defined _PL
+       if (l_photolum) then
+         BSS_PL_f(:,H_pos(1))=BS_T_grp(i_g)%f_PL(:,i_c)
+         BSS_dipoles_PL(H_pos(1),:)=BS_T_grp(i_g)%dipoles_R_PL(i_c,:)*PL_weights(:)
+         if (BS_K_coupling) BSS_dipoles_PL(H_pos(1)+BS_K_dim,:)=BS_T_grp(i_g)%dipoles_A_PL(i_c,:)*PL_weights(:)
+       endif
+#endif
        !
      enddo
    enddo
@@ -138,6 +152,12 @@ subroutine K_components_folded_in_serial_arrays(iq)
 #if defined _KERR
    call PP_redux_wait(BSS_dipoles_kerr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait(BSS_dipoles_kerr,COMM=PAR_COM_eh_INDEX%COMM)
+#endif
+#if defined _PL
+   call PP_redux_wait(BSS_dipoles_PL,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait(BSS_dipoles_PL,COMM=PAR_COM_eh_INDEX%COMM)
+   call PP_redux_wait(BSS_PL_f,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait(BSS_PL_f,COMM=PAR_COM_eh_INDEX%COMM)
 #endif
    if (E_SOC_nbands/=0) then
      call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )

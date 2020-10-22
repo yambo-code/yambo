@@ -23,6 +23,9 @@
 !
 subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
+ ! GPL_EXCLUDE_START
+ use debug,      ONLY:dbg
+ ! GPL_EXCLUDE_END
  use pars,       ONLY:SP,cZERO
  use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
  use LOGO,       ONLY:ID_logo,ID_logo_stderr,code_branch
@@ -86,6 +89,15 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _KERR
  use drivers,    ONLY:l_kerr,l_anomalous_Hall
 #endif
+#if defined _PL
+ use PHOTOLUM,   ONLY:PL_weights
+#endif
+#if defined _SC 
+ use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
+&                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
+&                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
+&                     l_SC_nl_mix
+#endif
 #if defined _SC || defined _RT || defined _QED || defined _NL
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
  use hamiltonian,    ONLY:H_potential
@@ -110,6 +122,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     NL_verb_name,NL_bands,n_order
  use fields,     ONLY:Efield,Efield_reset
 #endif
+#if defined _MAGNETIC
+ use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
+&                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
+#endif
  use timing_m,    ONLY:timing_allocate,nclockx
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
  !
@@ -123,6 +139,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! Printed reals format lengths 
  !
+ ! GPL_EXCLUDE_START
+ include 'branch.inc'
+ ! GPL_EXCLUDE_END
  !
  call set_real_printed_length()
  !
@@ -147,6 +166,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  call remove_stack_limit()
  !
+ ! GPL_EXCLUDE_START
+ ! Debug
+ !
+ call dbg('reset')
+ ! GPL_EXCLUDE_END
  !
  ! Clocks
  !
@@ -468,6 +492,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  l_anomalous_Hall=.false.
 #endif
  !
+#if defined _PL
+ PL_weights=(/1._SP,1._SP,1._SP/)
+#endif
  !
 #if defined _ELPH 
  !
@@ -496,6 +523,24 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
 #endif
  !
+#if defined _SC
+ ! SC
+ !
+ SC_fft_size=0
+ SC_iterations=100
+ SC_cycle_mixing=0.5_SP
+ SC_rho_threshold=1.E-5_SP
+ SC_up_W_iters=0
+ SC_potential='NONE'
+ OEP_approx='n'
+ compatible_SC_DB=.FALSE.
+ found_SC_DB=.FALSE.
+ l_Mean_Potential=.FALSE.
+ l_SC_diagonal=.FALSE.
+ l_SC_nl_mix =.FALSE.
+ l_NSC_shot  =.FALSE.
+ !
+#endif
  !
 #if defined _RT
  !
@@ -592,5 +637,20 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
 #endif
  !
+#if defined _MAGNETIC
+ !
+ ! Magnetic
+ !
+ MAG_B=0._SP
+ MAG_radius=0._SP
+ MAG_hamiltonian_type=' '
+ MAG_pauli=.FALSE.
+ MAG_landau=.FALSE.
+ MAG_gauge='SYMM'
+ MAG_psi=0._SP
+ MAG_theta=0._SP
+ phase_trick=.FALSE.
+ !
+#endif
  !
 end subroutine

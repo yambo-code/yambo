@@ -38,6 +38,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_m,           ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO
+#if defined _PL
+ use drivers,        ONLY:l_photolum
+ use PHOTOLUM,       ONLY:BSS_PL_free
+#endif
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free
 #endif
@@ -59,6 +63,16 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  call section('-','BSE solver(s) @q'//trim(intc(iq)))
  !
+ ! GPL_EXCLUDE_START
+ !
+ ! The TDDFT way 
+ !
+! if (index(BSS_mode,'t')/=0) then
+!   call tddft_BSK_disk_2_FXC(iq,Xk,W_bss,X_static) 
+!   l_bs_fxc=.true.
+! endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Solvers
  !
@@ -69,6 +83,13 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  run_Slepc     = index(BSS_mode,'s')/=0
 #endif
  !
+#if defined _PL
+ !
+ if (l_photolum.and.run_Haydock) then
+   call warning('PL currently implemented only using the diagonalization/inversion solver')
+   run_Haydock  =.false.
+ endif
+#endif
  !
  ! I/O. All read. Only master writes.
  ! 
@@ -138,6 +159,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  call BSS_KERR_free( )
 #endif
  !
+#if defined _PL
+ call BSS_PL_free( )
+#endif
  call BS_blks_free( )
  !
 end subroutine

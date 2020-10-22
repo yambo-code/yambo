@@ -34,6 +34,9 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  use xc_functionals, ONLY:XC_EXCHANGE_CORRELATION,xc_string,XC_libxc_driver,&
 &                         XC_NOT_AVAILABLE,XC_FACTOR,current_xc_string,LIBXC_message_done,XC_HYB_GGA_XC_GAUPBE
  use IO_m,           ONLY:IO_and_Messaging_switch
+#if defined _SC
+ use drivers,        ONLY:l_sc_run
+#endif
 #if defined _RT
  use drivers,        ONLY:l_real_time
 #endif
@@ -59,6 +62,9 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  !
 #if defined _RT
  if (l_real_time) call IO_and_Messaging_switch("SAVE MUTE")
+#endif
+#if defined _SC
+ if (l_sc_run)    call IO_and_Messaging_switch("SAVE MUTE")
 #endif
 #if defined _NL
  if (l_nl_optics) call IO_and_Messaging_switch("SAVE MUTE")
@@ -110,6 +116,9 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  !
 #if defined _RT
  if (l_real_time) call IO_and_Messaging_switch("RESTORE")
+#endif
+#if defined _SC
+ if (l_sc_run)    call IO_and_Messaging_switch("RESTORE")
 #endif
 #if defined _NL
  if (l_nl_optics) call IO_and_Messaging_switch("RESTORE")

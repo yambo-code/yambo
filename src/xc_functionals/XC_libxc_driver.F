@@ -217,6 +217,24 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  if (order==1) V_xc=0._SP
  if (order==2) F_xc=0._SP
  !
+ ! GPL_EXCLUDE_START
+ !
+ if (FUNCTIONAL == XC_LDA_C_KP) then ! Special case, XC_LDA_C_KP not available from libxc
+   select case(ORDER)
+     case(0)
+       forall (i1=1:fft_size) rspts(i1)=(3._DP/4._DP/pi/spin_rho_SP(i1,1)/DL_vol)**(1._DP/3._DP)
+       call xc_rpa_kp(rspts,tmp_exc)
+       E_xc = real(tmp_exc,SP) 
+       E_xc_val = V_dot_V(fft_size,rho,E_xc(:))
+     case(1)
+       call error(' Vxc not coded for LDA C KP')
+     case(2)
+       call error(' Fxc not coded for LDA C KP')
+   end select
+   return
+ end if
+ !
+ ! GPL_EXCLUDE_END
  !
  do ixc = 1,2
    if (fnctl(ixc)%id == 0) cycle

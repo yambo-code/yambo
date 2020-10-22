@@ -73,6 +73,11 @@ subroutine RT_start_and_restart(E,k,q)
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  integer, external :: io_RT_components
  !
+ ! GPL_EXCLUDE_START
+ !
+ integer, external :: RT_Lifetimes_evaluation_plan
+ !
+ ! GPL_EXCLUDE_END
  !
  logical :: RESTART
  !
@@ -84,6 +89,11 @@ subroutine RT_start_and_restart(E,k,q)
  !====================================
  call RT_set_G_lesser()
  !
+ ! GPL_EXCLUDE_START
+ !
+ call RT_set_occupations()
+ !
+ ! GPL_EXCLUDE_END
  !
  if(.not.l_RT_is_WFfree) then
    !
@@ -118,6 +128,131 @@ subroutine RT_start_and_restart(E,k,q)
  !
  RESTART=.FALSE.
  !
+ ! GPL_EXCLUDE_START
+ !
+ COM_=REP
+ call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
+ io_OBS=io_RT_components('OBSERVABLES',ID(4))
+ if (io_OBS==0) COM_=NONE
+ call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
+ io_G=io_RT_components('G',ID(5))
+ !
+ ! Reference G_lesser and Lifetimes
+ !
+ call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(8)) ! Reference
+ io_REF=io_RT_components('REF',ID(8))
+ !
+ ! ELPH Theta matrix
+ !
+ call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(7)) ! THETA matrix
+ io_THETA=io_RT_components('THETA',ID(7))
+ !
+ ! To restart from RT only the G_lesser is necessary (latest and reference)
+ !
+ RESTART = (io_G ==0).and.(io_REF==0)
+ !
+ if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = RESTART.and.(io_THETA==0)
+ !
+ ! Starting point 
+ !================
+ !
+ if (RESTART) then
+   !
+   ! I use G_lesser(:,:,:) to reconstruct everything
+   ! and I read NE_i_time from the databases. 
+   !
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=VERIFY,ID=ID(8))
+   io_REF=io_RT_components('REF',ID(8))
+   !
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5))
+   io_G=io_RT_components('G',ID(5))
+   !
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
+   io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
+   !
+   if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
+     call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(7))
+     io_THETA=io_RT_components('THETA',ID(7))
+   endif
+   !
+   ! Note that the databases must be loaded at the RESTART time (NE_time)
+   !
+   NE_i_time=nint(NE_time/RT_step)+1
+   !
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
+   io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
+   !
+#if defined _PAR_IO
+   !
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2,RT_nk+1/),ID=ID(5))
+   io_G=io_RT_components('G',ID(5))
+   !
+#else
+   !
+   do ik=1,RT_nk
+     if(ik==1) call io_control(ACTION=OP_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
+     if(ik> 1) call io_control(ACTION=   RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
+     io_G=io_RT_components('G',ID(5))
+   enddo
+   !
+#endif
+   !
+   ! The G_lesser must be now rebuild from the reference (T=0) and latest dG components
+   !
+   do i_memory=1,G_MEM_steps
+     G_lesser(:,:,:,i_memory)=G_lesser_reference(:,:,:)+dG_lesser(:,:,:,i_memory)
+     if (MEM_pointer(i_memory)==NE_i_time  ) i_MEM_now=i_memory
+     if (MEM_pointer(i_memory)==NE_i_time-1) i_MEM_previous=i_memory
+   enddo
+   !
+   if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
+     do ik=1,RT_nk
+       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(7))
+       io_THETA=io_RT_components('THETA',ID(7))
+       enddo
+   endif
+   !
+   ! Define RT_E/H_occupations_reference
+   !
+   call RT_init_occupation_reference( )
+   !
+   ! To be used in the first part of the RT_driver main loop
+   !
+   i_MEM_collision = i_MEM_now
+   !
+   if(.not.l_RT_CCA_Kernel) call RT_ELPH_zeroing()
+   !
+   NE_i_start_time=NE_i_time
+   !
+   ! Last thing to do is to update the planned time sampling time (if needed)
+   !
+   nt=RT_Lifetimes_evaluation_plan( )
+   !
+   ! Update occupations after loading from DB 
+   !==========================================
+   !
+   call RT_set_occupations()
+   !
+   call msg( 'nr','---RESTART report---')
+   !
+   call msg('s','[RESTART] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
+   call msg('r',  'Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
+   call msg('r',  'Time step                     [fs]:',RT_dyn_step*AUT2FS)
+   !
+   call msg('r',  'dT Update Interval            [fs]:',NE_time_step_update_jump*AUT2FS)
+   call msg('r',  'Lifetimes inter/intr times    [fs]:',RT_life_extrap_times*AUT2FS)
+   call msg('r',  'T between I/O of J,P,f        [fs]:',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  '          I/O of   GFs        [fs]:',GF_RT_IO_t%INTERVAL_time*AUT2FS)
+   !
+   OUTPUT_RT_IO_t%INTERVAL_time  = max(TIME_adjust(OUTPUT_RT_IO_t%INTERVAL_time,RT_dyn_step),RT_dyn_step)
+   OUTPUT_RT_IO_t%INTERVAL_steps = nint(OUTPUT_RT_IO_t%INTERVAL_time/RT_step)
+   OUTPUT_RT_IO_t%last_point     = NE_i_time - OUTPUT_RT_IO_t%INTERVAL_steps
+   !
+   call msg('r',  '               outputs        [fs]:',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
+   !
+ endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (.not.RESTART) NE_time=0._SP
  !
@@ -131,6 +266,12 @@ subroutine RT_start_and_restart(E,k,q)
  ! Pseudo potential terms needed for velocity gauge
  !==================================================
  !
+ ! GPL_EXCLUDE_START
+ if (l_velocity_gauge_corr) then
+   call Pseudo_KB_G_to_R_space(k,E)
+   call Pseudo_Hamiltonian(k,E,.true.)
+ endif
+ ! GPL_EXCLUDE_END
  !
  call msg('r','')
  !
@@ -157,6 +298,30 @@ subroutine RT_start_and_restart(E,k,q)
  N_Gr_descs=1
  Gr_description(1)=' [Gr] Retarded Green`s function  : none'
  !
+ ! GPL_EXCLUDE_START
+ !
+ if (l_elph_scatt.or.l_elel_scatt) then
+   !
+   call k_build_up_BZ_tables(q)
+   call k_build_up_BZ_tables(k)
+   !
+   N_Gr_descs=5
+   !
+   Gr_description(1)=' [Gr] Retarded Green`s function  : '//trim(Gr_kind)
+   Gr_description(2)=' [Gr] Damping (c) Energy ref [eV]: '//trim(real2ch(QP_ctl_user(3,1)%Wc_E_ref*HA2EV))
+   Gr_description(3)=' [Gr] Damping (c) [eV,adim,eV^-1]: '//&
+&                    trim(real2ch(QP_ctl_user(3,1)%Wc(1)))//' '//&
+&                    trim(real2ch(QP_ctl_user(3,1)%Wc(2)))//' '//&
+&                    trim(real2ch(QP_ctl_user(3,1)%Wc(3)))
+   Gr_description(4)=' [Gr] Damping (v) Energy ref [eV]: '//trim(real2ch(QP_ctl_user(3,1)%Wv_E_ref*HA2EV))
+   Gr_description(5)=' [Gr] Damping (v) [eV,adim,eV^-1]: '//&
+&                    trim(real2ch(QP_ctl_user(3,1)%Wv(1)))//' '//&
+&                    trim(real2ch(QP_ctl_user(3,1)%Wv(2)))//' '//&
+&                    trim(real2ch(QP_ctl_user(3,1)%Wv(3)))
+   !
+ endif
+ !
+ ! GPL_EXCLUDE_END
  !
  call PP_redux_wait()
  !
@@ -182,6 +347,18 @@ subroutine RT_start_and_restart(E,k,q)
        !
      endif
      !
+     ! GPL_EXCLUDE_START
+     !
+     ! Set to zero occupations
+     !
+     RT_E_occupations          =rzero
+     RT_H_occupations          =rzero
+     RT_E_occupations_reference=rzero
+     RT_H_occupations_reference=rzero
+     RT_delta_occupations      =rzero
+     RT_life_delta_occupations =rzero
+     !
+     ! GPL_EXCLUDE_END
      !
      ! Set to zero current and fields
      !
@@ -241,5 +418,46 @@ subroutine RT_start_and_restart(E,k,q)
      !
    end subroutine RT_set_G_lesser
    !
+   ! GPL_EXCLUDE_START
+   !
+   subroutine RT_set_occupations()
+     !
+     use functions,  ONLY:Fermi_fnc
+     use real_time,  ONLY:l_RT_relax_time_approx,RT_RTA_chem,RT_RTA_temp, &
+&                         RT_RTA_E_occ_infty,RT_RTA_H_occ_infty
+     !
+     real(SP):: En
+     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib
+     !
+     ! Occupations are defined from G_lesser and G_lesser_reference
+     !
+     do ib=RT_bands(1),RT_bands(2)
+       RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
+       RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
+       RT_delta_occupations(ib,:)      =         aimag(dG_lesser(ib,ib,:,1))
+       RT_life_delta_occupations(ib,:) =         aimag(dG_lesser(ib,ib,:,1))
+       RT_E_occupations(ib,:) = RT_E_occupations_reference(ib,:)+RT_delta_occupations(ib,:)
+       RT_H_occupations(ib,:) = RT_H_occupations_reference(ib,:)-RT_delta_occupations(ib,:)
+     enddo
+     !
+     ! RTA infinity ditributions
+     !
+     if (l_RT_relax_time_approx) then
+       do ib=RT_bands(1),RT_bands(2)
+         do ik=1,k%nibz
+           do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+             ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+             if (     l_RT_uses_E_DbGd) En=E%E_DbGd(ib,ik_E_DbGd,1)
+             if (.not.l_RT_uses_E_DbGd) En=E%E(ib,ik,1)
+             RT_RTA_E_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(  En-E%E_CBm(1)-RT_RTA_chem(1) ,RT_RTA_temp(1))*spin_occ
+             RT_RTA_H_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(-(En-E%E_VBM(1)-RT_RTA_chem(2)),RT_RTA_temp(2))*spin_occ
+           enddo
+         enddo
+       enddo
+     endif
+     !
+   end subroutine RT_set_occupations
+   !
+   ! GPL_EXCLUDE_END
    !
 end subroutine RT_start_and_restart

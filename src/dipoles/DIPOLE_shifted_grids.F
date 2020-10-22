@@ -42,6 +42,9 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  use DIPOLES,             ONLY: DIPOLE_t,DIP_iR,DIP_v,num_shifted_grids
  use wrapper,             ONLY: Vstar_dot_V
  use wave_func,           ONLY: wf_ng,wf_igk,WF,wf_ncx,WAVEs
+#if defined _SC           
+ use SC,                  ONLY: SC_bands
+#endif
 #if defined _RT
  use real_time,           ONLY: RT_bands
 #endif
@@ -59,6 +62,9 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  character(lchlen)            :: core_io_path_save
  integer                      :: nkibz_save, wf_ncx_save, wf_ncx_shifted, nkibz_shifted
  integer                      :: wf_ng_eff, wf_ng_shifted
+#if defined _SC
+ integer                      :: SC_bands_save(2)
+#endif
 #if defined _RT
  integer                      :: RT_bands_save(2)
 #endif
@@ -252,6 +258,9 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
        wf_ncx_save  = wf_ncx
        wf_ng_save   = wf_ng
        core_io_path_save = core_io_path
+#if defined _SC       
+       SC_bands_save     = SC_bands
+#endif 
 #if defined _RT
        RT_bands_save     = RT_bands
 #endif 
@@ -262,6 +271,9 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
      else if( grid.eq.'  local'.and. command.eq.'  reset') then
        core_io_path = core_io_path_save
        wf_ng        = wf_ng_save
+#if defined _SC       
+       SC_bands = SC_bands_save
+#endif
 #if defined _RT
        RT_bands = RT_bands_save
 #endif

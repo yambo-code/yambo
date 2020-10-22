@@ -35,6 +35,9 @@ subroutine WF_and_dipole_dimensions(X)
 #if defined _RT || defined _NL
  use real_time,    ONLY:eval_HARTREE,eval_DFT,eval_energy,l_velocity_gauge_corr
 #endif
+#if defined _SC
+ use SC,           ONLY:SC_X_bands,SC_ng_Sx,SC_X_size,SC_up_W_iters
+#endif
  !
  implicit none
  !
@@ -90,9 +93,33 @@ subroutine WF_and_dipole_dimensions(X)
  if (eval_DFT    .or.eval_energy.or.l_velocity_gauge_corr) WF_G_max=maxval((/QP_ng_Vxc,WF_G_max/))
 #endif
  !
+#if defined _SC
+ if (l_sc_hartree    ) WF_G_max=maxval((/QP_ng_SH, WF_G_max/))
+ if (l_sc_XC_is_local) WF_G_max=maxval((/QP_ng_Vxc,WF_G_max/))
+#endif
  !
  ! SC shadow variables
  !====================
  !
+#if defined _SC
+ SC_ng_Sx  =QP_ng_Sx
+ SC_X_bands=X(2)%ib
+ SC_X_size =X(2)%ng
+ !
+ if(SC_up_W_iters/=0) then
+   call msg('nr','[SC] Updating W each                   :',SC_up_W_iters)
+   !
+   if(l_use_Hxc_collisions) then
+     SC_up_W_iters=0
+     call warning(' Collisions not compatible with W updating, turned off ')
+   endif
+   !
+   if(.not.(l_sc_coh.and.l_sc_sex)) then
+     SC_up_W_iters=0
+     call warning(' Dipoles update implemented only for COHSEX self-energy ')
+   endif
+   !
+ endif    
+#endif
  !
 end subroutine

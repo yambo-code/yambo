@@ -101,6 +101,11 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  call section('*',trim(RT_potential)//' Real-Time Dynamics')
  !
+ ! GPL_EXCLUDE_START
+ !
+ call msg('s','Scattering(s):'//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
+ !
+ ! GPL_EXCLUDE_END
  !
  call section('+','Initialization')
  !#################################
@@ -126,6 +131,11 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  call IO_and_Messaging_switch("RESET")
  !
+ ! GPL_EXCLUDE_START
+ !
+ call RT_apply(RT_bands,E,k,what="G",VERBOSE=.true.)
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Core initialization
  !
@@ -143,6 +153,9 @@ subroutine RT_driver(E,X,k,q,Dip)
    call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
    call PARALLEL_WF_index( )
    !
+   ! GPL_EXCLUDE_START
+   if(n_spinor==2.and.l_update_SOC) call WF_derivative((/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),(/.true.,.true.,.true./))
+   ! GPL_EXCLUDE_END
    !
    call WF_load(WF,WF_G_max,WF_Go_indx,(/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),space='R',title='-RT',keep_states_to_load=.true.)
    !
@@ -159,6 +172,13 @@ subroutine RT_driver(E,X,k,q,Dip)
  call RT_alloc(E)
  call RT_control_alloc(.FALSE.)
  !
+ ! GPL_EXCLUDE_START
+ !
+ ! Initial allocation and basic definitions of the RT_carriers object
+ !
+ call RT_carriers_object(RT_carriers,E,k,WHAT='allocate')
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Restart from a previous RT run or from a SC calculation
  ! 
@@ -199,6 +219,29 @@ subroutine RT_driver(E,X,k,q,Dip)
  !
  if(l_use_collisions .and. io_COLLs)  call COLLISIONS_load(.FALSE.)
  !
+ ! GPL_EXCLUDE_START
+ !
+ ! Reference lifetimes and/or G_lesser
+ !=====================================
+ !
+ if (NE_i_start_time==1) then
+   !
+   call msg('s','Reference Lifetimes, GF, Self-Energy ...')
+   !
+   l_initial_equilibrium=.TRUE.
+   !
+   call RT_relaxation(E,k,q,0._SP)
+   !
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
+   io_REF=io_RT_components('REF',ID(8))
+   !
+   call msg('l','done')
+   !
+ endif
+ !
+ l_initial_equilibrium=.FALSE.
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Qindx_X and Qindx_S not needed in real-time they are used only in dipoles and collisions calculations
  !
@@ -246,16 +289,37 @@ subroutine RT_driver(E,X,k,q,Dip)
    !============================================
    call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_tot,E,k)
    !
+   ! GPL_EXCLUDE_START
+   !
+   ! Rotation in the Coherent Hamiltonian basis
+   !============================================
+   call RT_Hamiltonian_diagonalize(E,k,OBSERVABLES(22:25),A_tot)
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),OBSERVABLES)
    !
+   ! GPL_EXCLUDE_START
+   !
+   ! Calculate all relaxation and dissipation terms
+   !===============================================
+   call RT_relaxation(E,k,q,NE_time)
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Write DBs and output
    !=====================
    call RT_output_and_IO_driver('write',E,k,OBSERVABLES)
    !
+   ! GPL_EXCLUDE_START
+   !
+   ! Time step update
+   !=======================
+   call RT_time_step_update( )
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Memory maps for the step (to be done before the NE_time/NE_i_time update)
    !=========================
@@ -288,6 +352,13 @@ subroutine RT_driver(E,X,k,q,Dip)
      call RT_control_free()
      call WF_free(WF)
      !
+     ! GPL_EXCLUDE_START
+     !
+     call PLASMA_free(EH_gas)
+     call RT_carriers_object(RT_carriers,WHAT='free')
+     if (allocated(GW_NEQ_COLL_element)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
+     !
+     ! GPL_EXCLUDE_END
      !
      if (allocated(HXC_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
      call set_real_printed_length()

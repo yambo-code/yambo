@@ -41,6 +41,10 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  use BS_solvers,     ONLY:BSS_uses_GreenF
  use BS,             ONLY:BS_bands
 #endif
+#if defined _PL
+ use drivers,        ONLY:l_photolum
+ use PHOTOLUM,       ONLY:BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor,PL_init
+#endif
  !
 #include<memory.h>
  !
@@ -55,8 +59,19 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  type(w_samp)     :: W_mins,W_plus
  integer          :: iw_ref,i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4)
  complex(SP)      :: E_plus_W,residual,diam_term_used,para_term_w0
+#if defined _PL
+ complex(SP)      :: SF(W%n_freqs,2)
+#endif
  character(schlen):: LT_title
  !
+#if defined _PL
+ !
+ ! PL_0
+ !=======
+ call PL_init( )
+ PL(:,3) = rZERO
+ !
+#endif
  !
  Epsilon_ii(:,3:4) = cZERO
  !
@@ -68,6 +83,21 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !==================================
  call FREQUENCIES_set_reference_point(W%p,W%n_freqs,iw_ref)
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _ELPH
+ !
+ ! Green Functions must be all mapped to the Xw range
+ ! to be easily convoluted
+ !
+ if (allocated(E%GreenF)) then
+   call X_GreenF_remap(BS_bands,E,W)
+   BSS_uses_GreenF=.TRUE.
+ endif
+ !
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (     K_diago_in_BS_mat) n_loop=1
  if (.not.K_diago_in_BS_mat) n_loop=2
@@ -77,8 +107,13 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    i_eps=2+i_loop
    !
    if(n_loop==2) then
+#if defined _PL
+     if(i_loop==1) LT_title='IP PL'
+     if(i_loop==2) LT_title='Shifted GF and PL'
+#else
      if(i_loop==1) LT_title='IP Absorption'
      if(i_loop==2) LT_title='Shifted GF and Absorption'
+#endif
    else
      LT_title='IP GF and Absorption'
    endif
@@ -130,15 +165,39 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        ! Analytical GFs
        !================
        call X_GreenF_analytical(iq,transition,W_mins,E,k,Lo(i_res,:,1),"r","eh",.FALSE.)
+#if defined _PL
+       call X_GreenF_analytical(iq,transition,W,E,k,SF(:,1),"r","eh",.TRUE.)
+       Lo(i_res,:,1+Lo_n_loop)=BSS_PL_f(1,i_res)/BSS_eh_f(i_res)**2*aimag(W%p(1))/pi
+#endif
        !
        if (BSS_add_antiresonant.or.BS_K_coupling) then
          !
          call X_GreenF_analytical(iq,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra","eh",.FALSE.)
+#if defined _PL
+         !
+         ! The -1 coming from SF(:,2) and -abs(Lo)...compensate each other
+         !
+         call X_GreenF_analytical(iq,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.)
+         Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(2,i_res)/BSS_eh_f(i_res)**2*aimag(W%p(1))/pi
+#endif
          !
        endif
        !
      else 
        !
+       ! GPL_EXCLUDE_START
+       !
+       ! Convoluted GFs
+       !================
+       call X_GreenF_convoluted(iq,transition,W_mins,E,k,Lo(i_res,:,1),"r")
+       !
+       if (BSS_add_antiresonant.or.BS_K_coupling) then
+         !
+         call X_GreenF_convoluted(iq,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra")
+         !
+       endif
+       !
+       ! GPL_EXCLUDE_END
        !
      endif
      !
@@ -153,6 +212,18 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
      endif
      !
+#if defined _PL
+     if (l_photolum.and.i_loop==1) then
+       !
+       residual=dot_product(BSS_dipoles_PL(i_res,:),BSS_dipoles_PL(i_res,:))
+       !
+       PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(1,i_res)
+       if (BSS_add_antiresonant.or.BS_K_coupling) then
+         PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(2,i_res)
+       endif
+       !
+     endif
+#endif
      !
      if (k%sstar(ik_bz,2)==1) call live_timing(steps=1)
      !
@@ -164,6 +235,9 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    !
    call PP_redux_wait(Epsilon_ii(:,i_eps),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    call PP_redux_wait(para_term_w0,       COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+#if defined _PL
+   if (l_photolum.and.i_loop==1) call PP_redux_wait(PL(:,i_eps),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+#endif
    !
    if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
    if (     skip_cond_sum_rule) diam_term_used=diam_term_exact

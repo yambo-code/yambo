@@ -38,6 +38,12 @@ subroutine YPP_SET_defaults()
  use com,            ONLY:write_to_report
  use stderr,         ONLY:write_to_log  
  use LIVE_t,         ONLY:live_timing_is_on
+#if defined _YPP_SC
+ use YPP,            ONLY:l_mean_potential
+#endif
+#if defined _YPP_MAGNETIC
+ use YPP,            ONLY:B_field,B_psi,B_theta,l_angular_momentum,l_position
+#endif
 #if defined _YPP_RT
  use YPP_real_time,  ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_BZ_regions,Eh_pumped_pair_BZ_width,&
 &                         Eh_pumped_pair_deltaE,Eh_pumped_pair_energy,Eh_pumped_pair_width,l_RealTime,l_RT_dos,&
@@ -127,6 +133,9 @@ subroutine YPP_SET_defaults()
  V_value    ='RE'
  l_mag=.false.
  l_sp_wf=.false.
+#if defined _YPP_SC
+ l_mean_potential=.false.
+#endif
  l_norm_to_one=.true.
  output_fname=' '
  plot_title=' '
@@ -196,5 +205,62 @@ subroutine YPP_SET_defaults()
  wannier_bands=(/1,n_bands/)
  ord_dgrid_ipol = 0
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _YPP_RT
+ !
+ !REMOVE SYMMETRIES
+ !
+ E_field=0._SP
+ !
+ !ANALIZE RESPONSE
+ !
+ RT_conf%T_range(:)  =real((/-FS2AUT,-FS2AUT/),SP)
+ RT_conf%W_n_steps   =200
+ RT_conf%W_range(:)  =(/0._SP,20./HA2EV/)
+ Probe_Keyword ="none"
+ Pump_Keyword  ="none"
+ X_order       =1
+ n_ext_fields  =1
+ !
+ !MANUAL PUMP
+ !
+ Eh_pumped_pair_n_BZ_regions=1
+ Eh_pumped_pair_deltaE=-1._SP/HA2EV
+ Eh_pumped_pair_energy=-1._SP/HA2EV
+ Eh_pumped_pair_width=0.1_SP/HA2EV
+ Eh_pumped_pair_BZ_width=0.1_SP
+ Eh_pumped_pair_BZ_regions=-1.0_SP
+ Eh_pumped_Nel=1._SP
+ !
+ !FERMI FUNCTION PUMP
+ !
+ Eh_mu   =(/-0.001_SP/HA2EV,0.001_SP/HA2EV/)
+ Eh_temp =(/0._SP/HA2EV,0._SP/HA2EV/)
+ h_mu_autotune_thr = 0._SP
+ !
+ !TR abs
+ !
+ RT_p_format="3col" 
+ !
+#endif
+ !
+ ! ANGULAR MOMENTUM & ELECTRON DISPLACEMENT
+ !
+#if defined _YPP_MAGNETIC
+ !
+ l_angular_momentum=.false.
+ l_position=.false.
+ !
+ !REMOVE SYMMETRIES
+ !
+ E_field=0._SP
+ B_field=0._SP
+ B_theta=0._SP
+ B_psi=0._SP
+ !
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
 end subroutine YPP_SET_defaults

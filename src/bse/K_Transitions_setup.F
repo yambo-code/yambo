@@ -56,7 +56,19 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,E_SOC_nbands,E_SOC_table
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
+#if defined _PL
+ use drivers,      ONLY:l_photolum
+#endif
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _RT
+ use parser_m,     ONLY:parser
+ use drivers,      ONLY:l_rt_carriers_in_use
+ use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
 #include<memory.h>
  !
@@ -73,7 +85,20 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
 &           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp,pert_range(2/n_sp_pol,2)
  real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2/n_sp_pol),E_v_SOC(2/n_sp_pol),E_c_SOC(2/n_sp_pol),f_eh,f_eh_RES,f_eh_REF,f_e,f_h
  integer, allocatable :: i_T_at_k(:)
+#if defined _PL
+ real(SP):: f_eh_PL(2)
+#endif
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _RT
+ logical :: FORCE_EQ_trans
+ !
+ call parser('ForceEqTrans',FORCE_EQ_trans)
+ ! 
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (FILL_the_groups) then
    !
@@ -187,6 +212,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
              !
              BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
              BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
+#if defined _PL
+             if (l_photolum) BS_T_grp(i_T_group_now)%f_PL(:,i_T_in_the_grp) =f_eh_PL
+#endif
              BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
              !
              if (allocated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
@@ -267,10 +295,33 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      ! f_eh  enter the excitonic Hamiltonian
      ! f_eh_RES enter the residual of the dielectric constant
      !
+     ! GPL_EXCLUDE_START
+     !
+#if defined _RT
+     if (l_rt_carriers_in_use.and.allocated(Ken%fo)) then
+       if (     FORCE_EQ_trans) f_eh_REF=(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
+       if (.not.FORCE_EQ_trans) f_eh_REF=(Ken%f (iv,ikp,i_sp)-Ken%f (ic,ik ,i_sp))/spin_occ
+       if (     NEQ_Kernel    ) f_eh =(Ken%f (iv,ikp,i_sp)-Ken%f (ic,ik ,i_sp))/spin_occ
+       if (.not.NEQ_Kernel    ) f_eh =(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
+       if (     NEQ_Residuals ) f_eh_RES=(Ken%f (iv,ikp,i_sp)-Ken%f (ic,ik ,i_sp))/spin_occ
+       if (.not.NEQ_Residuals ) f_eh_RES=(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
+     endif
+#endif
+     !
+     ! GPL_EXCLUDE_END
      !
      f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
      f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
      !
+#if defined _PL
+     !
+     ! Resonant
+     f_eh_PL(1) = Ken%f(ic,ikp,i_sp)*(spin_occ-Ken%f(iv,ik ,i_sp))/spin_occ/spin_occ
+     !
+     ! Anti-Resonant
+     f_eh_PL(2) = Ken%f(iv,ik ,i_sp)*(spin_occ-Ken%f(ic,ikp,i_sp))/spin_occ/spin_occ
+     !
+#endif
      !
      ! A 0.001 % fractional occupation swiches on the particular treatment of finite temp. BSE 
      if ( abs(abs(f_eh_REF)-1._SP)> filled_tresh ) BS_not_const_eh_f=.TRUE.
@@ -279,11 +330,34 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      ! f_eh=0 transitions give no contribution to absorption and are not considered
      if ( f_eh_REF<=0._SP ) T_is_ok=.FALSE.
      !
+     ! GPL_EXCLUDE_START
+     !
+#if defined _RT
+     !
+     ! In case of population inversion, it may be problematic if f_eh>0. and f_eh_RES<0.
+     if ( f_eh_REF*f_eh<0._SP .or. f_eh_REF*f_eh_RES<0._SP ) &
+&      call error(' I cannot split the R and K BSE contribution.'//&
+&                 ' ACTION: Use the same occupations in K and R.')
+     !
+#endif
+     !
+#if defined _RT
+     if (.not.l_rt_carriers_in_use) then
+#endif
+       !
+       ! GPL_EXCLUDE_END
        !
        ! If I've included in valence states that are almost empty
        ! or in conduction states that are almost full, those are neglected
        if ( (f_e<=filled_tresh) .or. (f_h<=filled_tresh) ) T_is_ok=.FALSE.
        !
+       ! GPL_EXCLUDE_START
+       !
+#if defined _RT
+     endif
+#endif
+     !
+     ! GPL_EXCLUDE_END
      !
      if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0._SP,&
 &              abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0._SP/))) T_is_ok=.FALSE.

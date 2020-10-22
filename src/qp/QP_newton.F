@@ -39,6 +39,9 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
 #endif
+#if defined _QED
+ use drivers,       ONLY:l_elphoton_corr
+#endif
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
@@ -67,6 +70,11 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  iter=0
  SC_corr_prev=1._SP
  !
+ ! GPL_EXCLUDE_START
+ !
+ do while((iter<=GWo_iterations.or.GWo_iterations<0).and..not.GWo_SC_done) 
+   !
+   ! GPL_EXCLUDE_END
    !
    if (l_elel_corr) then
      if (l_ppa.or.l_cohsex) then
@@ -88,11 +96,28 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    !
 #endif
    !
+# if defined _QED 
+   !
+   if (l_elphoton_corr) then
+     !
+     QP_dSc=cZERO
+     !
+     call QED_Sigma_c(en,k,q,qp)
+     !
+   endif
+   !
+#endif
    !
    do i1=1,QP_n_states
      !
      if(.not.l_cohsex) then
        !     
+# if defined _QED 
+       !
+       ! In the e-gamma case the derivative is calculated analitically
+       !     
+       if (.not.l_elphoton_corr) then
+#endif
          !
          QP_dSc(i1,1)=cZERO
          !     
@@ -102,6 +127,9 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
            enddo
          endif
          !
+# if defined _QED 
+       endif
+#endif
        !
        do i2=1,QP_dSc_steps-1
          !
@@ -130,6 +158,28 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    SC_corr_now= maxval(real(qp%E(:)-qp%E_bare(:)))
    GWo_SC_done=abs( SC_corr_prev-SC_corr_now )<SC_E_threshold.or.iter==GWo_iterations
    !
+   ! GPL_EXCLUDE_START
+   !
+   if (iter>0) call msg('rs','[SC] Max corrections at prev/current cycle [ev]',&
+&                      (/SC_corr_prev,SC_corr_now/)*HA2EV)
+   SC_corr_prev=SC_corr_now
+   !
+   if (.not.GWo_SC_done.and.GWo_iterations/=0) then
+     !
+     ! Now I need to transfer the calculated QP corrections to the "en" type
+     ! and to the qp%Eo array
+     !
+     call QP_apply(QP_n_G_bands,en,k,'G',msg_fmt='rs',qp_impose=qp)
+     !
+   endif
+   !
+   ! Increase the counter
+   !
+   iter=iter+1
+   !
+ enddo
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Update GWo_iterations
  !

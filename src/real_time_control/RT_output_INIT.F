@@ -68,6 +68,22 @@ subroutine RT_output_INIT( )
    if (i_fp==1) call RT_FILE_add(TITLES=(/"Int. [kW/cm^2]  ","Fluence[nJ/cm^2]"/))
  enddo
  !
+ ! GPL_EXCLUDE_START 
+ ! 
+ call RT_FILE_add('energy',TITLES=(/"Time[fs]  ","dE_kin[eV]","dE_ion[eV]"/))
+ if(     l_use_Hxc_collisions) call RT_FILE_add(TITLES=(/"dE_Hxc[eV]","dE_tot[eV]"/))
+ if(.not.l_use_Hxc_collisions) call RT_FILE_add(TITLES=(/"dE_Har[eV]","dE_xc [eV]","dE_tot[eV]"/))
+! !
+ call RT_FILE_add('carriers',TITLES=(/"Time[fs]"/))
+ call RT_FILE_add(TITLES=(/"d(N_hole-N_elec)"/))
+ call RT_FILE_add(TITLES=(/"dN_hole","dN_elec"/))
+ if (l_elel_scatt.or.l_elph_scatt) call RT_FILE_add(TITLES=(/"T_hole [K]","T_elec [K]"/))
+ !
+ call RT_FILE_add('thermodynamics',&
+&  TITLES=(/"Time[fs]   ","dE   [eV]  ","dE(h)[eV]  ","dE(e)[eV]  ","dS   [eV/K]",&
+&           "dS(h)[eV/K]","dS(e)[eV/K]","T    [K]   ","T(h) [K]   ","T(e) [K]   "/))
+ !
+ ! GPL_EXCLUDE_END
  !
  do i_order=0,N_MAX_RT_X_order,1
    call RT_FILE_add('dP_order_'//trim(intc(i_order)),TITLES=(/"Time[fs]","dPol_x  ","dPol_y  ","dPol_z  "/))
@@ -75,6 +91,39 @@ subroutine RT_output_INIT( )
  !
  call RT_FILE_add('P_minus_P_pump',TITLES=(/"Time[fs]","dPol_x  ","dPol_y  ","dPol_z  "/))
  !
+ ! GPL_EXCLUDE_START 
+ ! 
+ call RT_FILE_add('mean_EPlifetimes',TITLES=(/"Time[fs]     ","Ho.(em) [meV]","El.(em) [meV]"/))
+ if(Bose_Temp>0._SP ) then
+   call RT_FILE_add(TITLES=(/"Ho.(abs)[meV]","El.(abs)[meV]"/))
+ endif
+ if(l_lftm_fit_temperatures) then
+   call RT_FILE_add(TITLES=(/" T Hole  [K] "," T Elec  [K] "/))
+ endif
+ !
+ call RT_FILE_add('mean_EElifetimes',TITLES=(/"Time[fs]  ","Hole [meV]","Elec [meV]"/))
+ if(l_lftm_fit_temperatures) then
+   call RT_FILE_add(TITLES=(/" T Hole  [K] "," T Elec  [K] "/))
+ endif
+ !
+ call RT_FILE_add('mean_RADlifetimes',(/"Time[fs] ","Hole [ps]","Elec [ps]"/))
+ !
+ call RT_FILE_add('N_dN_E_conservation_factors',(/"Time[fs] "/))
+ if(l_elph_scatt) then
+   call RT_FILE_add(TITLES=(/"e-p val","e-p con"/))
+   if(Bose_Temp>0._SP) then
+     call RT_FILE_add(TITLES=(/"e-p (abs) val","e-p (abs) con"/))
+   endif
+ endif
+ if(l_elel_scatt) then
+   call RT_FILE_add(TITLES=(/"e-e val","e-e con"/))
+ endif
+ !
+ call RT_FILE_add('BGR',(/"Time[fs]  "/))
+ call RT_FILE_add(TITLES=(/"DirGap [meV]","IndGap [meV]"/))
+ call RT_FILE_add(TITLES=(/"DeltaDirGap [meV]","DeltaIndGap [meV]"/))
+ !
+ ! GPL_EXCLUDE_END
  !
  ! ... energy resolved ...
  !=========================
@@ -114,6 +163,56 @@ subroutine RT_output_INIT( )
  !
  call RT_FILE_add('X_effective',TITLES=(/'T [fs]','E [eV]','X/Im  ','X/Re  '/))
  !
+ ! GPL_EXCLUDE_START 
+ ! 
+ call RT_FILE_add('single_time_dos',TITLES=(/'E [eV]','DOS   '/))
+ if (n_spin==2) call RT_FILE_add(TITLES=(/'up','dn'/))
+ !
+ call RT_FILE_add('single_time_INTERPOLATED_dos',TITLES=(/'E [eV]','DOS   '/))
+ if (n_spin==2) call RT_FILE_add(TITLES=(/'up','dn'/))
+ !
+ call RT_FILE_add('TD_dos',TITLES=(/'T [fs]','E [eV]','DOS   '/))
+ if (n_spin==2) call RT_FILE_add(TITLES=(/'up','dn'/))
+ !
+ call RT_FILE_add('TD_INTERPOLATED_dos',TITLES=(/'T [fs]','E [eV]','DOS   '/))
+ if (n_spin==2) call RT_FILE_add(TITLES=(/'up','dn'/))
+ !
+ if (n_spin>1) then
+   call RT_FILE_add('magnetization',TITLES=(/'T [fs]',"Ms_x  ","Ms_y  ","Ms_z  "/))
+ endif
+ !
+ call RT_FILE_add('trans_residual',TITLES=(/'T [fs]','E [eV]'/))
+ call RT_FILE_add(TITLES=(/'Residual'/))
+ !
+ do i_f=1,3
+   if (i_f==1) dumb_ch='trans_eps_real'
+   if (i_f==2) dumb_ch='trans_eps_imag'
+   if (i_f==3) dumb_ch='eps_eq'
+   if(i_f<3) then
+    call RT_FILE_add(trim(dumb_ch),TITLES=(/'T [fs]','E [eV]','Eps   '/))
+   else
+    call RT_FILE_add(trim(dumb_ch),TITLES=(/'E [eV]','EPS-Im','EPS-Re'/))
+   endif
+ enddo
+ !
+ do i_fp=1,2
+   if (i_fp==1) dumb_ch2="refl"
+   if (i_fp==2) dumb_ch2="transm"
+   do i_f=1,3
+     if (i_f==1) dumb_ch='trans_'//trim(dumb_ch2)//'_rel'
+     if (i_f==2) dumb_ch='trans_'//trim(dumb_ch2)//'_abs'
+     if (i_f==3) dumb_ch=trim(dumb_ch2)//'_eq'
+     if(i_f<3) then
+       call RT_FILE_add(trim(dumb_ch),TITLES=(/'T [fs]','E [eV]'/))
+     else
+       call RT_FILE_add(trim(dumb_ch),TITLES=(/'E [eV]'/))
+     endif
+     if (i_fp==1) call RT_FILE_add(TITLES=(/'Reflectivity'/))
+     if (i_fp==2) call RT_FILE_add(TITLES=(/'Transmission'/))
+   enddo
+ enddo
+ !
+ ! GPL_EXCLUDE_END 
  ! 
  call msg('l','done')
  !

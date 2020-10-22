@@ -40,6 +40,10 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
  !
+#if defined _PL
+ use PHOTOLUM,       ONLY:PL,PL_prefactor
+ use drivers,        ONLY:l_photolum
+#endif
  !
  implicit none
  !
@@ -78,13 +82,20 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  endif
 #endif
  !
+#if defined _PL
+ if (l_photolum) PL(:,2) = rZERO
+#endif
  !
  ! If perturbative SOC energies are loaded compute the SOC energies
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BSS_n_eig/))
  !
+#if defined _PL
+ call live_timing('BSK  EPS and PL',px%n_of_elements(myid+1))
+#else
  call live_timing('BSK     epsilon',px%n_of_elements(myid+1))
+#endif
  !
  do i1=1,BSS_n_eig
    !
@@ -125,6 +136,12 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
      endif
 #endif
      !
+#if defined _PL
+     if(l_photolum) then
+       PL(:,2)=PL(:,2)+PL_prefactor*BS_R_PL(1,i1)*aimag(-1._SP/(W%p(:)-EXC_E(i_pert_SOC)))/pi
+       if (BSS_add_antiresonant) PL(:,2)=PL(:,2)+PL_prefactor*BS_R_PL(2,i1)*aimag(-1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC))))/pi
+     endif
+#endif
      !
    enddo
    !
@@ -137,6 +154,9 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  call PP_redux_wait(para_term_w0)
  if (BSS_add_antiresonant) para_term_w0=para_term_w0+conjg(para_term_w0)
  !
+#if defined _PL
+ call PP_redux_wait(PL(:,2))
+#endif
  !
 #if defined _KERR
  if(l_kerr) then

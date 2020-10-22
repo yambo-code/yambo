@@ -52,6 +52,10 @@ subroutine K_diago_driver(iq,W,X_static)
  use drivers,        ONLY:l_kerr
  use KERR,           ONLY:BSS_KERR_free
 #endif
+#if defined _PL
+ use drivers,        ONLY:l_photolum
+ use PHOTOLUM,       ONLY:BSS_PL_free
+#endif
  !
 #include<memory.h>
  ! 
@@ -245,11 +249,17 @@ subroutine K_diago_driver(iq,W,X_static)
      if(l_kerr         ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
 #endif
      !
+#if defined _PL
+     if(l_photolum     ) call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap)
+#endif
      !
    else
      !
      call K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
      !
+#if defined _PL
+     if(l_photolum     ) call PL_diago_residual(BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)
+#endif
      !
 #if defined _KERR
      if(l_kerr         ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
@@ -303,6 +313,9 @@ subroutine K_diago_driver(iq,W,X_static)
  if(l_slepc) call K_slepc_local_free()
 #endif
  !
+#if defined _PL
+ call BSS_PL_free( )
+#endif
  !
 #if defined _KERR
  call BSS_KERR_free( )
@@ -331,6 +344,9 @@ subroutine K_diago_driver(iq,W,X_static)
        YAMBO_ALLOC_P(BS_R_right_kerr,(BSS_n_eig))
 #endif
        !
+#if defined _PL
+       YAMBO_ALLOC_P(BS_R_PL,(2,BSS_n_eig))
+#endif
        !
      case("V")
        !
@@ -367,6 +383,9 @@ subroutine K_diago_driver(iq,W,X_static)
      YAMBO_FREE_P(BS_E_SOC_corr)
 #if defined _KERR
      YAMBO_FREE_P(BS_R_right_kerr)
+#endif
+#if defined _PL
+     YAMBO_FREE_P(BS_R_PL)
 #endif
      !
      ! BS_mat must be cleaned as it contains the eigenvectors. 

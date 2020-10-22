@@ -47,9 +47,25 @@ subroutine Check_symmetries(field_dir)
     !      
     v(:) = matmul( rl_sop(:,:,is), field_dir )
     !
+#if defined _MAGNETIC
+    !
+    i_wrong=0
+    !
+    if( all( abs(v(:)-field_dir(:))<1E-5 )) i_wrong=+1
+    if( all( abs(v(:)+field_dir(:))<1E-5 )) i_wrong=-1
+    !
+    if(i_wrong==0) then
+      nsym_wrong=nsym_wrong+1
+      cycle
+    else
+      if( m3det(rl_sop(:,:,is))/i_wrong-1>1E-5 ) nsym_wrong=nsym_wrong+1
+    endif
+    !
+#else
     !
     if( v_norm(v(:)-field_dir(:))>1.E-5) nsym_wrong=nsym_wrong+1
     !
+#endif
     !
   enddo
   !

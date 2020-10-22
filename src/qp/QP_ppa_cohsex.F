@@ -52,6 +52,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        PARALLEL_WF_distribute,QP_state_extract_print
  use matrix_operate,ONLY:mat_transpose
  use timing_m,      ONLY:timing
+#if defined _SC
+ use parallel_m,    ONLY:PAR_COM_QP_A2A
+ use SC,            ONLY:it_now,it_to_start
+#endif
  use deviceXlib_m,  ONLY:dev_memcpy
  use cuda_m,        ONLY:have_cuda
 #ifdef _CUDA
@@ -117,6 +121,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Section
  !
  SECTION_name=''
+#if defined _SC
+ if (l_sc_coh) SECTION_name=trim(SECTION_name)//'COH'
+ if (l_sc_sex) SECTION_name=trim(SECTION_name)//'SEX'
+#endif
  if (.not.l_sc_run) then
    SECTION_name='G'//trim(intc(GW_iter))
    if (                    l_cohsex) SECTION_name=trim(SECTION_name)//'W0 (COHSEX)'
@@ -162,6 +170,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  endif
  !
  ch='-GW'
+#if defined _SC
+ if(l_sc_run) ch='-SC'
+#endif
  !
  ! wf and collisions dimension
  !-----------------------------
@@ -210,6 +221,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &             count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
  !
  ch=trim(SECTION_name)
+#if defined _SC
+ if (l_sc_run) ch=trim(SECTION_name)//'@it'//trim(intc(it_now))
+#endif
  call live_timing(trim(ch),timing_steps)
  !
  Q_loop: do iqbz=iq_to_start,q%nbz 
@@ -254,6 +268,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! Because of qpg can be imaginary, also are some component of X_mat, I'm not sure
      ! that the definition here below of X_mat(ig1,ig2,:) is correct.
      !
+#if defined _SC
+     if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
+#endif
        !
        !$omp parallel do default(shared), private(ig1,ig2)
        do ig2=1,X%ng
@@ -271,6 +288,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        enddo
        !$omp end parallel do
        !
+#if defined _SC
+     endif
+#endif
      !
      X_is_TR_rotated=.false.
      !
@@ -305,6 +325,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if (i_qp==QP_n_states) i_qp_to_start=1
      !
+!#if defined _SC  
+!     !
+!     ! In OEP only vc matrix elements so ... no cc' no vv' 
+!     ! (cv is not permitted by the order in QP_table)
+!     !                       (c)         (v)
+!     if (l_sc_srpa.and.(QP_table(i_qp,1)>E%nbf.or.QP_table(i_qp,2)<=E%nbf)) cycle
+!#endif
      !
      isc%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
      isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),spin(QP_table(i_qp,:))/)
@@ -385,7 +412,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          ! in cases where no band loops are done (like here). In _SC instead 
          ! it is needed for a different purpose. This is why I use PAR_COM_QP_A2A%CPU_id in this case.
          !
+#if defined _SC
+         if (l_sc_run) then
+           if (PAR_COM_QP_A2A%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+         else
+#endif
            if (HEAD_QP_cpu)              QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+#if defined _SC
+         endif
+#endif
          !
          dc=cZERO
          !
@@ -588,6 +623,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    endif
  endif
  l_X_alloc=.true.
+#if defined _SC
+ l_X_alloc=l_sc_run.and.io_RESPONSE
+#endif
  if(l_X_alloc) call X_alloc('X')
  !
  call timing('GW(ppa)',OPR='stop')

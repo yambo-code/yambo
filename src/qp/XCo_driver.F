@@ -40,6 +40,9 @@ subroutine XCo_driver(E,k,Xk,q)
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening
  use xc_functionals,ONLY:E_xc_val
  use pseudo,        ONLY:PP_nlcc_free
+#if defined _SC
+ use global_XC,     ONLY:WF_kind,H_SE_FOCK,H_SE_HARTREE,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXX,H_SE_EXXC,H_SE_SRPA
+#endif
  !
 #include<memory.h>
  type(levels) ::E       
@@ -72,6 +75,9 @@ subroutine XCo_driver(E,k,Xk,q)
  sec_mode_and_message(2)='Bare local and non-local Exchange-Correlation'
  if (l_acfdt)   sec_mode_and_message(1)='p'
  l_local=.true.
+#if defined _SC
+ l_local=.not.l_sc_run.and.(WF_kind/=H_SE_FOCK.and.WF_kind/=H_SE_FOCK+H_SE_HARTREE)
+#endif
  if(l_local) call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
  !
  ! QP states setup
@@ -97,6 +103,9 @@ subroutine XCo_driver(E,k,Xk,q)
  QP_Vxc=cZERO
  if (l_screen_hyb) QP_Vnl_sex=cZERO
  !
+#if defined _SC
+ if (l_sc_run .and. (WF_kind==H_SE_FOCK.or.WF_kind==H_SE_HARTREE+H_SE_FOCK)) return
+#endif
  !
  ! Main DB I/O
  !
@@ -120,6 +129,24 @@ subroutine XCo_driver(E,k,Xk,q)
    !
    call XCo_Hartree_Fock(E,k,xk,q)
    !
+#if defined _SC
+   !
+   ! The point here is that dependening on the kind of XCo I do/don't need HF
+   !
+   ! Eqp=Eo+QP_Sc+QP_Vnl_xc-QP_Vxc 
+   !
+   ! XCo=any local => QP_Vnl_xc=HF           & QP_Vxc=any local
+   ! XCo=COH       => QP_Vnl_xc=HF-QP_COH    & QP_Vxc= 0.
+   ! XCo=SEX       => QP_Vnl_xc=HF-QP_SEX    & QP_Vxc= 0.
+   ! XCo=COHSEX    => QP_Vnl_xc=HF-QP_COHSEX & QP_Vxc= 0.
+   ! XCo=HF        => QP_Vnl_xc=0.           & QP_Vxc= 0.
+   ! XCo=EXX       => QP_Vnl_xc=HF           & QP_Vxc= EXX
+   ! XCo=EXXC      => QP_Vnl_xc=HF           & QP_Vxc= EXXc
+   ! XCo=SRPA      => QP_Vnl_xc=HF-QP_COHSEX & QP_Vxc= SRPA
+   !
+   if (WF_kind==H_SE_COHSEX.or.WF_kind==H_SE_COH.or.WF_kind==H_SE_SEX) call QP_load_SC_xc()
+   !
+#endif
    !
  endif
  !
@@ -131,6 +158,9 @@ subroutine XCo_driver(E,k,Xk,q)
    !
    call XC_nlcc_setup()
    !
+#if defined _SC
+   if( WF_kind/=H_SE_COHSEX .and. WF_kind/=H_SE_COH .and. WF_kind/=H_SE_SEX ) call XCo_local(E,Xk)
+#else
    call XCo_local(E,Xk)
 !
    if (.not.l_screen_hyb) then
@@ -139,6 +169,7 @@ subroutine XCo_driver(E,k,Xk,q)
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_sex 
      YAMBO_FREE(QP_Vnl_sex)
    endif
+#endif
    !
    call PP_nlcc_free()
    !
@@ -153,7 +184,32 @@ subroutine XCo_driver(E,k,Xk,q)
    !
    subroutine XCo_report_and_IO()
      !
+#if defined _SC
+     if (WF_kind < 100) then
+       Vxc_kind='LDA'
+     elseif  (WF_kind < 200) then
+       Vxc_kind='GGA'
+     elseif  (WF_kind == H_SE_EXX) then
+       Vxc_kind='OEP-EXX'
+     elseif  (WF_kind == H_SE_EXXC) then
+       Vxc_kind='OEP-EXX+C'
+     elseif  (WF_kind == H_SE_SRPA) then
+       Vxc_kind='OEP-SRPA'
+     else
+       Vxc_kind='none'
+     endif
+     if (WF_kind == H_SE_COHSEX) then 
+       Vnlxc_kind='HF-QP_COHSEX'
+     else if (WF_kind == H_SE_COH) then 
+       Vnlxc_kind='HF-QP_COH'
+     else if (WF_kind == H_SE_SEX) then 
+       Vnlxc_kind='HF-QP_SEX'
+     else
+       Vnlxc_kind='HF'
+     endif
+#else
      Vxc_kind='DFT'
+#endif
      !
      call msg('nr','[xc] E_xc :  '//trim(real2ch(E_xc_val))//' [Ha]')
      call msg( 'r','     E_xc :  '//trim(real2ch(E_xc_val*2.0))//' [Ry]')

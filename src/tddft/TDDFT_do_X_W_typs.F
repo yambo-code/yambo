@@ -77,5 +77,50 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  !
  if (iq<0) return
  !
+ ! GPL_EXCLUDE_START
+ !
+ ! Fxc DB
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
+ ioFxc_err=io_BS_Fxc(iq,wv,ID)
+ if (ioFxc_err/=0) then
+   FXC_type='rpa'
+   l_bs_fxc=.FALSE.
+   return
+ endif
+ !
+ ! FXC_K_diagonal has been allocated in ioFxc_err
+ !
+ YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,FXC_n_mem_freqs))
+ !
+ !
+ ! As wv%p is read from DB %n_freqs is not setup in freqs_setup.
+ ! Note that wv%n_freqs MUST respect the FXC_n_mem_freqs value.
+ ! Tnis means that wv%n_freqs CANNOT assume generic values.
+ ! It can be either wv%n_freqs OR FXC_n_mem_freqs.
+ ! 
+ if (.not.l_bss.and.wv%per_memstps/=100.) then
+   wv%n_freqs=FXC_n_mem_freqs
+   wv%per_memstps=FXC_per_memstps
+ endif
+ !
+ X%ng=max(X%ng,FXC_n_g_corr)
+ !
+ ! Note that independently of the lbss value (TRUE/FALSE)
+ ! the BS/BSS and FXC components are read from the FXC file
+ !
+ FXC_type='BSFxc'
+ X%f_xc='BS'
+ !
+ X%ib= BS_bands
+ X%ehe=BS_eh_en
+ X%q0= BSS_q0
+ X%ordering="R"
+ if (.not.FXC_is_retarded) X%ordering="r"
+ !
+ YAMBO_ALLOC(X_poles,(BS_K_dim))
+ X_poles=FXC_K_diagonal
+ !
+ ! GPL_EXCLUDE_END
  !
 end subroutine

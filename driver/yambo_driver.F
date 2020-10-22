@@ -220,6 +220,29 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  if (driver_now) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
  if (driver_now) call mem_manager_report
  !
+ ! GPL_EXCLUDE_START
+ !
+ ! ACFDT
+ !=======
+ !
+ driver_now=l_acfdt
+ !
+ if (driver_now) call acfdt_tot_energy(Xen,Xk,En,k,q,X(1),Dip)
+ if (driver_now) call mem_manager_report
+ !
+#if defined _SC
+ !
+ ! SC
+ !====
+ !
+ driver_now=l_sc_run
+ !
+ if (driver_now) call SC_driver(X(:2),Xw(:2),Xk,en,k,q,Dip)
+ if (driver_now) call mem_manager_report
+ !
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
 #if defined _RT
  !
@@ -245,6 +268,21 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
 #endif
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _ELPH
+ !
+ ! Electron-Phonon Hamiltonian
+ !=============================
+ !
+ driver_now=l_elph_Hamiltonian
+ !
+ if (driver_now) call ELPH_Hamiltonian(en,k,q)
+ if (driver_now) call mem_manager_report
+ !
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
 #if defined _SCALAPACK 
  !

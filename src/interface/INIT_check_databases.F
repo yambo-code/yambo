@@ -71,6 +71,9 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  logical           :: OSTNTS_Vnl_included
  !
+#if defined _SC
+ integer           :: io_SC_V_err
+#endif
 #if defined _RT
  integer           :: io_G,io_OBS
 #endif
@@ -261,6 +264,14 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  if (io_X_err(4)>=0) Xbsk%ppaE=X(4)%ppaE
  !
+ ! GPL_EXCLUDE_START
+ !
+ ! bs_fxc
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_BS_Fxc_err=io_BS_Fxc(1,Xxcw,io_ID,X=Xbsk)
+ !
+ ! GPL_EXCLUDE_END
  !
  ! ELPH 
  !
@@ -286,6 +297,13 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  ! SC 
  !
+#if defined _SC
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_SC_V_err=io_SC_components('V',en_sc,io_ID)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_SC_E_err=io_SC_components('E',en_sc,io_ID)
+ if (io_SC_E_err==0.and.io_SC_V_err/=0) io_SC_E_err=-1
+#endif
  !
  ! COLLISIONS 
  !

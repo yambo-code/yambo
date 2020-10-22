@@ -57,7 +57,12 @@ subroutine RT_k_grid(E,k,q)
  logical :: l_check(k%nibz,k%nibz)
  integer :: ik,ik_bz,ik_rim,iqbz,ik_m_q,ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
  ! 
- l_RT_uses_E_DbGd=.FALSE.
+ ! GPL_EXCLUDE_START
+ l_RT_uses_E_DbGd=BZ_DbGd_tot_nk_levels>0.and.BZ_DbGd_nbands>=RT_bands(2).and..not.DbGd_is_symmetry_expanded
+ ! GPL_EXCLUDE_END
+ ! GPL_INCLUDE_START
+ !l_RT_uses_E_DbGd=.FALSE.
+ ! GPL_INCLUDE_END
  !
  if (.not.allocated(DbGd_ibz_coo)) then
    YAMBO_ALLOC(DbGd_ibz_coo,(k%nibz,2))
@@ -91,5 +96,98 @@ subroutine RT_k_grid(E,k,q)
    !
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
+ ! DbGd support
+ !=============
+ !
+ RT_DbGd_nk=BZ_DbGd_tot_nk_levels
+ !
+ RT_nk    =0
+ !
+ do ik=1,k%nibz
+   !
+   ik_bz=1+sum(k%nstar(:ik-1))
+   DbGd_ibz_coo(ik,:)=(/sum(BZ_DbGd_nkpt(:ik_bz-1))+1,sum(BZ_DbGd_nkpt(:ik_bz))/)
+   RT_ibz_coo(ik,:)=(/RT_nk+1,RT_nk+BZ_DbGd_nkpt(ik_bz)/)
+   RT_Nk_ibz(ik)=BZ_DbGd_nkpt(ik_bz)
+   RT_nk=RT_nk+BZ_DbGd_nkpt(ik_bz)
+   !
+ enddo
+ !
+ do ik=1,k%nbz
+   DbGd_bz_coo(ik,:)=(/sum(BZ_DbGd_nkpt(:ik-1))+1,sum(BZ_DbGd_nkpt(:ik))/)
+ enddo
+ !
+ YAMBO_ALLOC(RT_all2ibz,(RT_nk))
+ do ik=1,k%nibz
+   do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+     RT_all2ibz(ik_rim)    =ik
+   enddo
+ enddo
+ !
+ if( l_elel_scatt .and. (index(what_is_running,'YPP')==0) ) then
+   !
+   if(.not.allocated(DbGd_EE_scatt_table)) then
+     YAMBO_ALLOC(DbGd_EE_scatt_table,(RT_nk,RT_nk))
+     YAMBO_ALLOC(DbGd_EE_Nk_table,(RT_nk,k%nibz))
+   endif
+   !
+   l_check=.false.
+   DbGd_EE_scatt_table=.false.
+   DbGd_EE_Nk_table=0
+   !
+   do ik=1,k%nibz
+     do iqbz=1,q%nbz
+       !
+       ik_m_q= k%sstar(qindx_S(ik,iqbz,1),1)
+       !
+       if(l_check(ik,ik_m_q)) cycle
+       if(l_check(ik_m_q,ik)) cycle
+       !
+       Nk_rim=RT_Nk_ibz(ik)
+       Nk_m_q_rim=RT_Nk_ibz(ik_m_q)
+       !
+       if( Nk_rim<Nk_m_q_rim ) cycle
+       !
+       l_check(ik,ik_m_q)=.true.
+       l_check(ik_m_q,ik)=.true.
+       !
+       N_pts=max(1,int(real(Nk_m_q_rim)*DbGd_EE_percent/100._SP))
+       N_loops=max(1, (Nk_rim*N_pts-1)/(Nk_m_q_rim) )
+       !
+       i_loops=1
+       ik_m_q_rim=RT_ibz_coo(ik_m_q,1)-1
+       !
+       do while (i_loops< N_loops+1)
+         do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+           !
+           do i1=1,N_pts
+             ik_m_q_rim=ik_m_q_rim+1
+             if(ik_m_q_rim>RT_ibz_coo(ik_m_q,2)) then
+               ik_m_q_rim=RT_ibz_coo(ik_m_q,1)
+               i_loops=i_loops+1
+             endif
+             !
+             DbGd_EE_scatt_table(ik_m_q_rim,ik_rim)=.true.
+             DbGd_EE_Nk_table(ik_rim,ik_m_q)=DbGd_EE_Nk_table(ik_rim,ik_m_q)+1
+             !
+             DbGd_EE_scatt_table(ik_rim,ik_m_q_rim)=.true.
+             DbGd_EE_Nk_table(ik_m_q_rim,ik)=DbGd_EE_Nk_table(ik_m_q_rim,ik)+1
+             !
+           enddo
+           !
+           if(ik_m_q_rim==RT_ibz_coo(ik_m_q,2)) i_loops=i_loops+1
+           !
+         enddo
+         !
+       enddo
+       !
+     enddo
+   enddo
+   !
+ endif
+ !
+ ! GPL_EXCLUDE_END
  !
 end subroutine RT_k_grid

@@ -33,6 +33,10 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
  use matrix_operate, ONLY:UP_matrix_index
  use hamiltonian,    ONLY:H_ref_bands
  use timing_m,       ONLY:timing
+#if defined _SC
+ use drivers,        ONLY:l_sc_run
+ use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
+#endif
 #if defined _RT
  use drivers,        ONLY:l_real_time
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k
@@ -72,6 +76,27 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
  !
  PAR_IND_local=.true.
  !
+#if defined _SC
+ if (l_sc_run) then
+   !
+   PAR_IND_local=.false.
+   !
+   do i_qp=1,QP_n_states
+     !
+     if (.not.HEAD_QP_cpu)                 cycle
+     if (     QP_table(i_qp,3) /=ik      ) cycle
+     if (spin(QP_table(i_qp,:))/=i_sp_pol) cycle
+     if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+     !
+     ib =QP_table(i_qp,1)
+     ibp=QP_table(i_qp,2)
+     !
+     PAR_IND_local(ib,ibp)=.TRUE.
+     !
+   enddo 
+   !
+ endif
+#endif
  !
 #if defined _RT
  if (l_real_time) then

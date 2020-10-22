@@ -112,6 +112,23 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
      call io_bulk(ID,C1=bsRr)
    endif
    !
+   ! GPL_EXCLUDE_START
+   !
+   if(present(bsR_kerr)) then
+     if(associated(bsR_kerr)) then
+       call io_bulk(ID,'BS_KERR_Residuals',VAR_SZ=(/2,BSS_n_eig/))
+       call io_bulk(ID,C1=bsR_kerr)
+     endif
+   endif
+   !
+   if(present(bsR_pl)) then
+     if(associated(bsR_pl)) then
+       call io_bulk(ID,'BS_PL_Residuals',VAR_SZ=(/2,BSS_n_eig/))
+       call io_bulk(ID,R2=bsR_pl)
+     endif
+   endif
+   !
+   ! GPL_EXCLUDE_END
    !
  endif
  !

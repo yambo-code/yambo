@@ -45,6 +45,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use LIVE_t,         ONLY:what_is_running,live_timing_is_on
  use parser_m,       ONLY:PARSER_array
  use IO_m,           ONLY:rm_file,OP_RD_CL,DUMP,io_control,NONE
+#if defined _YPP_SC
+ use YPP,            ONLY:l_mean_potential
+ use SC,             ONLY:SC_bands
+#endif
 #if defined _YPP_RT || defined _YPP_SC
  use QP_m,           ONLY:QP_nb
  use electrons,      ONLY:levels,E_reset
@@ -78,6 +82,11 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  integer          ::i1,i2,ID,io_err
  character(schlen)::rstr_piece(60) 
  !
+#if defined _YPP_SC
+ type(levels)     ::E_dummy
+ integer, external::io_SC_components
+ integer          ::io_SC_err
+#endif
 #if defined _YPP_RT
  integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit
  integer          ::io_RT_G_err,io_RT_OBS_err,io_KB_pwscf_err,io_KB_abinit_err
@@ -90,6 +99,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  ! What is running ?
  !
  what_is_running='YPP'
+#if defined _YPP_MAGNETIC
+ what_is_running='YPP_MAGNETIC'
+#endif
 #if defined _YPP_ELPH
  what_is_running='YPP_PH'
 #endif
@@ -112,9 +124,25 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  ! DATABASES 
  !===========
  !
+#if defined _YPP_SC
+ ! 
+ call E_reset(E_dummy) 
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
+ io_SC_err=io_SC_components('WF' ,E_dummy,ID)
+ if (io_SC_err==0) QP_nb=SC_bands(2)
+ !
+#endif
  !
 #if defined _YPP_RT
  !
+ ! GPL_EXCLUDE_START
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! GF
+ io_RT_G_err=io_RT_components('G' ,ID)
+ if (io_RT_G_err==0) QP_nb=RT_bands(2)
+ !
+ ! GPL_EXCLUDE_END
  ! 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
  io_RT_OBS_err=io_RT_components('OBSERVABLES' ,ID)
@@ -202,6 +230,11 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      l_shifted_grid=trim(rstr_piece(i1+1))=='s'
      l_random_grid=trim(rstr_piece(i1+1))=='r'
      !
+     ! GPL_EXCLUDE_START 
+     !
+     l_high_sym_pts=trim(rstr_piece(i1+1))=='h'
+     !
+     ! GPL_EXCLUDE_END
      !
      if (l_k_grid) call initactivate(1,"K_grid")
      if (l_q_grid) call initactivate(1,"Q_grid")
@@ -246,6 +279,12 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      l_spin  =trim(rstr_piece(i1+1))=='sp'.and.n_spin>1
      l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
      !
+     ! GPL_EXCLUDE_START
+     !
+#if defined _YPP_ELPH
+     l_eliashberg      =trim(rstr_piece(i1+1))=='e'
+#endif
+     ! GPL_EXCLUDE_END
      !
    endif
    if ( trim(rstr_piece(i1)) == 'electrons') then
@@ -261,16 +300,43 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      l_eliashberg       =trim(rstr_piece(i1+1))=='e'
 #endif
      !
+#if defined _YPP_MAGNETIC
+     l_angular_momentum =trim(rstr_piece(i1+1))=='l'
+     l_position         =trim(rstr_piece(i1+1))=='p'
+#endif
      !
    endif
    !
 #if defined _YPP_RT
    !
+   ! GPL_EXCLUDE_START
+   !
+   if ( trim(rstr_piece(i1)) == 'RTDBs') then
+     l_RTpump_energy=trim(rstr_piece(i1+1))=='e'
+     l_RTpump_kspace=trim(rstr_piece(i1+1))=='k'
+     l_RTpump_Fermi =trim(rstr_piece(i1+1))=='f'
+   endif
+   !
+   ! GPL_EXCLUDE_END
    !
    if ( trim(rstr_piece(i1)) == 'RealTime') then
      !
      l_RT_X           =trim(rstr_piece(i1+1))=='X'
      !
+     ! GPL_EXCLUDE_START
+     !
+     l_RT_abs         =trim(rstr_piece(i1+1))=='a'
+     !
+     l_RT_occupations =index(rstr_piece(i1+1),'o')>0
+     l_RT_lifetimes   =index(rstr_piece(i1+1),'l')>0
+     l_RT_density     =trim(rstr_piece(i1+1))=='d'
+     !
+     l_RT_bands       =trim(rstr_piece(i1+2))=='b'
+     l_RT_time        =trim(rstr_piece(i1+2))=='t'
+     l_RT_energy      =trim(rstr_piece(i1+2))=='e'
+     l_RT_dos         =trim(rstr_piece(i1+2))=='d'
+     !
+     ! GPL_EXCLUDE_END
      !
    endif
 #endif
@@ -288,6 +354,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      if (l_eliashberg)       call initactivate(1,'eliashberg')
      if (l_gkkp)             call initactivate(1,'gkkp')
 #endif
+#if defined _YPP_MAGNETIC
+     if (l_angular_momentum) call initactivate(1,'angular_m')
+     if (l_position)         call initactivate(1,'position')
+#endif
      if (l_current)        call initactivate(1,'current')
      if (l_density)        call initactivate(1,'density')
      if (l_sort)           infile_editing=.false.
@@ -300,10 +370,30 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    endif
 #if defined _YPP_RT
    !
+   ! GPL_EXCLUDE_START
+   !
+   if ( trim(rstr_piece(i1)) == 'RTDBs') then
+     if (l_RTpump_energy) call initactivate(1,'Select_energy')
+     if (l_RTpump_kspace) call initactivate(1,'Select_kspace')
+   endif
+   !
+   ! GPL_EXCLUDE_END
    !
    if ( trim(rstr_piece(i1)) == 'RealTime') then
      if (l_RT_X)           call initactivate(1,'RT_X')
      !
+     ! GPL_EXCLUDE_START
+     !
+     if (l_RT_abs)         call initactivate(1,'RTabs')
+     if (l_RT_occupations) call initactivate(1,'RToccupations')
+     if (l_RT_lifetimes)   call initactivate(1,'RTlifetimes')
+     if (l_RT_density)     call initactivate(1,'RTdeltaRho')
+     if (l_RT_bands)       call initactivate(1,'RTfitbands')
+     if (l_RT_time)        call initactivate(1,'RTtime')
+     if (l_RT_energy)      call initactivate(1,'RTenergy')
+     if (l_RT_dos)         call initactivate(1,'RTdos')
+     !
+     ! GPL_EXCLUDE_END
      !
    endif
 #endif
@@ -328,6 +418,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_dos       =runlevel_is_on('dos')
  l_bands     =runlevel_is_on('bnds')
  l_fix_syms  =runlevel_is_on('fixsyms')
+#if defined _YPP_SC
+ l_mean_potential=runlevel_is_on('MeanPot')
+ if (l_mean_potential) then
+   call initactivate(1,'plot')
+   call initactivate(1,'electrons')
+ endif
+#endif
 #if defined _YPP_ELPH
  l_eliashberg=runlevel_is_on('eliashberg')
  l_phonons   =runlevel_is_on('phonons')
@@ -339,15 +436,41 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  l_RT_X             = runlevel_is_on('RT_X')
  !
+ ! GPL_EXCLUDE_START
+ !
+ l_RT_DBs           = runlevel_is_on('RTDBs')
+ !
+ l_RTpump_energy    = runlevel_is_on('Select_energy')
+ l_RTpump_kspace    = runlevel_is_on('Select_kspace')
+ l_RTpump_Fermi     = runlevel_is_on('Select_Fermi')
+ !
+ l_RT_abs           = runlevel_is_on('RTabs')
+ l_RT_occupations   = runlevel_is_on('RToccupations')
+ l_RT_lifetimes     = runlevel_is_on('RTlifetimes')
+ l_RT_density       = runlevel_is_on('RTdeltaRho')
+ !
+ l_RT_bands         = runlevel_is_on('RTfitbands')
+ l_RT_time          = runlevel_is_on('RTtime')
+ l_RT_energy        = runlevel_is_on('RTenergy')
+ l_RT_dos           = runlevel_is_on('RTdos')
+ !
+ ! GPL_EXCLUDE_END
  !
 #endif
 #if defined _YPP_NL
  l_NL_X   =runlevel_is_on('nonlinear')
 #endif
+#if defined _YPP_MAGNETIC
+ l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')
+ l_position         = runlevel_is_on('position').and.runlevel_is_on('electrons')
+#endif
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
  l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
 &             runlevel_is_on('density'),runlevel_is_on('current')/))
+#if defined _YPP_SC
+ l_plot=l_plot .or. runlevel_is_on('MeanPot')
+#endif
 #if defined _YPP_RT
  l_plot=l_plot .or. runlevel_is_on('RTdeltaRho')
 #endif
@@ -399,6 +522,15 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_QP_DBs_create_and_modify = runlevel_is_on('QPDB_edit')
  l_QP_DBs_manipulate = runlevel_is_on('QPDB_merge')
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _YPP_SC
+ if (l_mean_potential) then
+   call initactivate(1,"PotValue")
+ endif
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (l_fix_syms.and.n_spinor==2.and.i_time_rev==0) call initactivate(1,"ExpandSymm")
  !
@@ -415,6 +547,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
 #endif
  !
+ ! GPL_EXCLUDE_START
+ !
+ ! Wannier 90 interface
+ !
+ if (l_wannier) call initactivate(1,"Seed WriteAMU QPdbPath")
+ !
+ ! GPL_EXCLUDE_END
  !
  if (l_map_kpts) call initactivate(1,"BZ_DbGd_Nk SkipCheck noBZExpand NoWeights")
  !
@@ -452,6 +591,26 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  endif
  if (l_RealTime) then
    !
+   ! GPL_EXCLUDE_START
+   !
+   l_flag=l_RT_occupations.or.l_RT_abs
+   if (l_flag)      call init_RT_ctl_switch('G')
+   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes.or.l_RT_abs
+   if (l_flag)      call initactivate(1,"TimeStep TimeRange")
+   !
+   l_flag=l_RT_time.and.l_RT_occupations
+   if (l_flag)           call initactivate(1,"OCCgroup")
+   if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
+   if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
+   if (l_RT_dos)  then
+     call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc NoOcc")
+     call initactivate(1,"Proj_DOS PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
+     call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
+     call INIT_QP_ctl_switch('G')
+   endif
+   if ((l_RT_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
+   !
+   ! GPL_EXCLUDE_END
    !
    if (l_RT_abs)    call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP RTformat")
    !
@@ -463,6 +622,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if(l_NL_exc) call initactivate(1,"Xorder PrintExc")!  MaxContr")
 #endif
  !
+#if defined _YPP_MAGNETIC
+ if (l_angular_momentum.or.l_position) call initactivate(1,"FFTGvecs")
+ if (l_current) call initactivate(1,'PhaseTrick')
+#endif
  !
  if (l_plot) then
    call initactivate(1,"Format Direction FFTGvecs") 
@@ -514,13 +677,37 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_ELPH
  if (.not.l_init_QP) l_init_QP=l_electrons.and.l_eliashberg
 #endif
+#if defined _YPP_SC
+ if (.not.l_init_QP) l_init_QP=l_electrons.and.l_mean_potential
+#endif
+#if defined _YPP_MAGNETIC
+ if (.not.l_init_QP) l_init_QP=l_angular_momentum.or.l_position
+#endif
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _YPP_RT
+ if (.not.l_init_QP) l_init_QP=(l_RT_occupations.or.l_RT_lifetimes).and..not.l_RT_bands.and..not.l_RT_dos
+ if (     l_init_QP) call INIT_QP(" ")
+#else
+ ! GPL_EXCLUDE_END
  if (l_init_QP) call INIT_QP(" ")
+ ! GPL_EXCLUDE_START
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Check and fill all possible vectorial USER fields
  !
  l_flag=l_bands
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _YPP_RT
+ l_flag=l_flag.or.l_RT_bands
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (l_flag) call USER_vector_handle("BANDS_kpts")
  !

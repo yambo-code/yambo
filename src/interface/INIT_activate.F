@@ -32,8 +32,14 @@ subroutine INIT_activate()
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics
+#if defined _PL
+ use drivers,        ONLY:l_photolum
+#endif
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:H_potential
+#endif
+#if defined _MAGNETIC
+ use magnetic,       ONLY:MAG_landau
 #endif
 #if defined _RT
  use fields,         ONLY:n_ext_fields
@@ -92,6 +98,12 @@ subroutine INIT_activate()
  endif
 #endif
  !
+#if defined _SC
+ if (l_eval_collisions .or. l_sc_run) then
+   call CPU_activate("SE")
+   call initactivate(1,'SE_Threads')
+ endif
+#endif
  !
 #if defined _RT 
  if (l_eval_collisions .or. l_real_time) then
@@ -152,6 +164,12 @@ subroutine INIT_activate()
  !
  if (l_optics.and.l_chi) then
    !
+   ! GPL_EXCLUDE_START
+   !
+   ! BS based TDDFT (BS fxc is only of q=0 0 0). BS_fxc db exist
+   if(l_bs_fxc) call initactivate(1,'FxcGRLc FxcSVdig FxcRetarded')
+   !
+   ! GPL_EXCLUDE_END
    !
    ! ALDA/LRC Tddft
    if (l_alda_fxc) call initactivate(1,'FxcGRLc')
@@ -173,6 +191,14 @@ subroutine INIT_activate()
    !
    call INIT_QP_ctl_switch('X')
    !
+   ! GPL_EXCLUDE_START
+   !
+#if defined _RT
+   call INIT_RT_ctl_switch('X')
+#endif
+   call initactivate(1,'Qdirection QShiftOrder')
+   !
+   ! GPL_EXCLUDE_END
    !
  endif
  !
@@ -202,6 +228,13 @@ subroutine INIT_activate()
    !
  endif
  !
+#if defined _PL
+ !
+ ! PL
+ !
+ if (l_photolum) call initactivate(1,'PL_weights')
+ !
+#endif
  !
  ! BSE
  !
@@ -209,6 +242,14 @@ subroutine INIT_activate()
    !
    call INIT_QP_ctl_switch('K')
    !
+   ! GPL_EXCLUDE_START
+   !
+#if defined _RT
+   call INIT_RT_ctl_switch('K')
+   call INIT_RT_ctl_switch('R')
+#endif
+   !
+   ! GPL_EXCLUDE_END
    !
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')
    !
@@ -222,7 +263,12 @@ subroutine INIT_activate()
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
-   call initactivate(1,'BSEBands BSEEhEny BSehWind')
+   !GPL_EXCLUDE_START
+   call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')
+   !GPL_EXCLUDE_END
+   !GPL_INCLUDE_START
+   !call initactivate(1,'BSEBands BSEEhEny BSehWind')
+   !GPL_INCLUDE_END
    !
 #if defined _RT
    call initactivate(1,'ForceEqTrans')
@@ -255,6 +301,9 @@ subroutine INIT_activate()
    !
    ! Special project dependent variables
    !
+#if defined _PL 
+   if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSPLInvTrs')
+#endif
 #if defined _ELPH 
    if (l_elph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
 #endif
@@ -265,6 +314,13 @@ subroutine INIT_activate()
  if (l_em1s) then
    call INIT_QP_ctl_switch('X')
    !
+   ! GPL_EXCLUDE_START
+   !
+#if defined _RT
+   call INIT_RT_ctl_switch('X')
+#endif
+   !
+   ! GPL_EXCLUDE_END
    !
    call initactivate(1,'ShiftedPaths')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','GrFnTp','DmRnge','CGrdSp','EhEngy','LongDr','DrudeW'/))
@@ -277,6 +333,13 @@ subroutine INIT_activate()
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call INIT_QP_ctl_switch('X')
    !
+   ! GPL_EXCLUDE_START
+   !
+#if defined _RT
+   call INIT_RT_ctl_switch('X')
+#endif
+   !
+   ! GPL_EXCLUDE_END
    !
    call initactivate(1,'ShiftedPaths')
    if (l_ppa) then
@@ -295,6 +358,13 @@ subroutine INIT_activate()
  if (l_acfdt) then
    call INIT_QP_ctl_switch('X')
    !
+   ! GPL_EXCLUDE_START
+   !
+#if defined _RT
+   call INIT_RT_ctl_switch('X')
+#endif
+   !
+   ! GPL_EXCLUDE_END
    !
    call initactivate(1,'ShiftedPaths')
    call initactivate(1,'EXXRLvcs VXCRKvcs AC_n_LAM AC_n_FR AC_E_Rng')
@@ -305,12 +375,35 @@ subroutine INIT_activate()
  !
  if (l_gw0.or.l_life) then
    !
+#if defined _QED
+   if (l_elphoton_corr) then
+     if (l_gw0) then
+       call initactivate(1,'FFTGvecs RandQpts QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
+       if (trim(QP_solver)=="g") then
+         call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
+       else
+         call initactivate(1,'GWoIter')
+         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
+       endif
+     else if (l_life) then
+       call initactivate(1,'GbndRnge') 
+     endif
+   endif
+#endif
    !
    if (l_elel_corr) then
      !
      call INIT_QP_ctl_switch('X')
      call INIT_QP_ctl_switch('G')
      !
+     ! GPL_EXCLUDE_START
+     !
+#if defined _RT
+     call INIT_RT_ctl_switch('X')
+     call INIT_RT_ctl_switch('G')
+#endif
+     !
+     ! GPL_EXCLUDE_END
      !
      call initactivate(1,'BoseCut ShiftedPaths')
      !
@@ -365,6 +458,17 @@ subroutine INIT_activate()
  !
  ! El-Ph: Frohlich Hamiltonian
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _ELPH 
+ !
+ if (l_elph_Hamiltonian) then
+   call initactivate(1,'ElPhHBRnge ElPhModes ElPhHKpt GDamping REStresh')
+ endif
+ !
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
 #if defined _SC || defined _RT
  !
@@ -394,12 +498,43 @@ subroutine INIT_activate()
  !
  ! GPL_EXCLUDE_END
  !
+#if defined _SC 
+ !
+ ! Self-Consistency
+ !
+ if (l_sc_run) then
+   !
+   call initactivate( 1,'SCBands')
+   !
+   if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0  ) call initactivate(1,'UseEbands SCUpWIter')
+   !
+   if( index(H_potential,"EXX")>0.or.index(H_potential,"SRPA")>0 ) call initactivate(1,'OEPapprox OEPItSolver') 
+   !
+   call initactivate(1,'SCIter SCEtresh SCRhoTresh SC_precondition')
+   call initactivate(1,'SCmixing SClwBand SCnlMix BandMix')
+   call initactivate(1,'SCdiag Mean_Potential')
+   !
+ endif
+ !
+#endif
  !
 #if defined _RT
  !
  if (l_real_time) then
    call INIT_QP_ctl_switch('G')
    !
+   ! GPL_EXCLUDE_START
+   !
+   call INIT_RT_ctl_switch('G')
+   call initactivate(1,'RTskipImposeN RTeeImposeE InducedField VelGaugeCorr VelGaugeDiam PfromJ RTUpdateSOC RTUpdateE SaveGhistory')
+   call initactivate(1,'RTEqScatt RTImpForMet RTzeroTempRef RTEvalEnergy RTEvalEntropy')
+   call initactivate(1,'dTupdateTime dTupdateJump dTupdateTresh dT_MAX')
+   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) &
+&    call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp RelaxTimeApprox RTAtemp RTAchem LifeFitTemp')
+   if (l_elph_scatt) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
+   if (l_elel_scatt) call initactivate( 1,'EERimPerc')
+   !
+   ! GPL_EXCLUDE_END
    !
    call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
@@ -425,6 +560,16 @@ subroutine INIT_activate()
  endif
 #endif
  !
+#if defined _MAGNETIC
+ !
+ ! Magnetic
+ !
+ if (l_sc_magnetic) then
+   call initactivate(1,'Hamiltonian B_Field B_psi B_theta B_Gauge PhaseTrick')
+   if (MAG_landau) call initactivate(1,'B_radius')
+ endif
+ !
+#endif
  contains
    !
 #if defined _RT

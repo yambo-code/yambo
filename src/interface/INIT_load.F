@@ -60,9 +60,18 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use functions,     ONLY:bose_E_cut
  use parallel_m,    ONLY:n_log_CPUs
  use IO_m,          ONLY:DBs_IO_control_string,DBs_FRAG_control_string
+#if defined _QED
+ use QP_m,          ONLY:QP_QED_ng
+#endif
 #if defined _SC || defined _RT || defined _QED
  use hamiltonian,   ONLY:H_ref_bands,H_potential
  use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands
+#endif
+#if defined _SC
+ use QP_m,          ONLY:SC_band_mixing,SC_E_threshold
+ use SC,            ONLY:SC_iterations,SC_up_W_iters,&
+&                        SC_rho_threshold,SC_cycle_mixing,&
+&                        SC_bands,SC_preconditioning,OEP_approx
 #endif
 #if defined _RT
  use RT_control,    ONLY:OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
@@ -84,6 +93,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _NL | defined _ELECTRIC
  use fields,        ONLY:Efield
 #endif 
+#if defined _MAGNETIC
+ use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
+#endif
 #if defined _ELPH 
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
@@ -93,6 +105,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_test_H_dim
+#endif
+#if defined _PL
+ use PHOTOLUM,      ONLY:PL_weights
 #endif
 #if defined _MEM_CHECK
  use memory,        ONLY:MEM_treshold
@@ -133,12 +148,26 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb potential')
  call it('r',defs,'cohsex',  '[R Xp] COlumb Hole Screened EXchange')
  !
+ ! GPL_EXCLUDE_START
+ !
+ !===================
+ ! NON GPL RUNLEVELS
+ !===================
+ call it('r',defs,'acfdt',   '[R ETOT] ACFDT Total Energy')
+#if defined _ELPH 
+ call it('r',defs,'ElPhHam', '[R] Frohlich Hamiltonian') 
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
 #if defined _SC && !defined _RT
  call it('r',defs,'scrun',      '[R] Self-Consistent single-particle calculation') 
 #endif
 #if defined _SC || defined _RT
  call it('r',defs,'collisions', '[R] Eval the extended Collisions')
+#endif
+#if defined _PL
+ call it('r',defs,'photolum',   '[R] Photo-Luminescence') 
 #endif
 #if defined _RT
  call it('r',defs,'negf',       '[R] Real-Time dynamics') 
@@ -151,11 +180,20 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _RT 
  call it('r',defs,'el_photon_scatt','[R] Electron-Photon   Scattering')   
 #endif
+#if defined _MAGNETIC
+ call it('r',defs,'magnetic','[R] Magnetic fields')
+#endif
 #if defined _ELECTRIC
  call it('r',defs,'electric','[R] Static Electric Field')
 #endif
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',    '[R] Electron-Phonon Correlation')   
+#endif
+#if defined _SC
+ call it('r',defs,'el_el_corr',    '[R] Electron-Electron Correlation') 
+#endif
+#if defined _QED
+ call it('r',defs,'el_photon_corr','[R] Electron-Photon Correlation') 
 #endif
 #if defined _SCALAPACK
  call it('r',defs,'slktest','[R] ScaLapacK test') 
@@ -224,8 +262,18 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'UseNLCC',  '[XC] If present, add NLCC contributions to the charge density ',verb_level=V_qp)
  call it(defs,'VXCRLvcs', '[XC] XCpotential RL components',QP_ng_Vxc,G_unit)
  call it(defs,'CORRLvcs', '[GW] Correlation RL components',QP_ng_Sc,G_unit)
+#if defined _QED
+ call it(defs,'QEDRLvcs', '[QED] Vector-Potential G-vectors components',QP_QED_ng,G_unit)
+#endif
+#if defined _SC
+ call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands,verb_level=V_sc)
+ call it('f',defs,'UseEbands', '[GW] Force COHSEX to use empty bands',verb_level=V_sc)
+ call it('f',defs,'ALLGexx', '[XX] Force the use use all RL vectors for the exchange part',verb_level=V_sc)
+ call it('f',defs,'ALLGHAR', '[HA] Force the use use all RL vectors for the Hartree potential',verb_level=V_sc)
+#else
  call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
  call it('f',defs,'UseEbands', '[GW] Force COHSEX to use empty bands',verb_level=V_qp)
+#endif
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
  call it(defs,'dScStep',  '[GW] Energy step to evaluate Z factors',QP_dSc_delta,E_unit)
@@ -259,10 +307,17 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  !
- 
- call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX',BSK_mode,protect=.FALSE.)
- 
+ !GPL_INCLUDE_START
  !
+ !call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX',BSK_mode,protect=.FALSE.)
+ !
+ ! GPL_INCLUDE_END
+ !
+ ! GPL_EXCLUDE_START
+ !
+ call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX/BSfxc',BSK_mode,protect=.FALSE.,case="A")
+ !
+ ! GPL_EXCLUDE_END
  !
  call it(defs,'Gauge' ,  '[BSE] Gauge (length|velocity)',global_gauge,verb_level=V_resp)
  call it('f',defs,'NoCondSumRule' ,'[BSE] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
@@ -290,7 +345,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSSSlepcNCV', '[SLEPC] Dimension of the subspace',BSS_slepc_ncv,verb_level=V_resp)
  call it(defs,'BSSSlepcTol', '[SLEPC] Tolerance for the iterative solver',BSS_slepc_tol,verb_level=V_resp)
 #endif
+#if !defined _SC
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)
+#endif
  call it('f',defs,'BSHayTer','[BSS] Terminate Haydock continuos fraction',verb_level=V_resp)
  call it('f',defs,'Reflectivity', '[BSS] Compute reflectivity at normal incidence',verb_level=V_resp)
  call it('f',defs,'BSSPertWidth', '[BSS] Include QPs lifetime in a perturbative way',verb_level=V_resp)
@@ -308,6 +365,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'Qdirection', '[Xd] Transferred momentum direction (iku)',q_plus_G_direction,verb_level=V_resp)
  call it(defs,'QShiftOrder','[Xd] Pick-up the (QShiftOrder)th q+G vector',Q_Shift_Order,verb_level=V_resp)
  !
+#if defined _PL
+ call it(defs,'PL_weights','[PL] [cc] Weights of the carthesian components of the emitted radiation',PL_weights)
+#endif
  !
 #if defined _KERR
  !
@@ -350,6 +410,20 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'CUTwsGvec','[CUT] WS cutoff: number of G to be modified',ws_cutoff)
  call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_RL)
  !
+ ! GPL_EXCLUDE_START
+ !
+ !===================
+ ! NON GPL VARIABLES
+ !===================
+ !
+ ! S_xc
+ !
+ call it(defs,'GWoIter',    '[GW] GWo SC iterations',GWo_iterations,verb_level=V_qp)
+ call it(defs,'GreenFTresh','[GW] [o/o] Treshold to define the new zoomed energy range',QP_G_Zoom_treshold,verb_level=V_qp)
+ call it('f',defs,'QPExpand',   '[F GW] The QP corrections are expanded all over the BZ',verb_level=V_qp)
+ call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
+ !
+ ! GPL_EXCLUDE_END
  !
  call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
  !
@@ -485,6 +559,15 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'SLKdim',  '[SLK] Matrix Dimension',SLK_test_H_dim)
 #endif
  !
+#if defined _MAGNETIC
+ call it(defs,'Hamiltonian',   '[MAG] Hamiltonian kind [pauli,landau,all]',MAG_hamiltonian_type,protect=.FALSE.)
+ call it(defs,'B_Field',       '[MAG] Magnetic field modulus',MAG_B,unit=Bfield_unit)
+ call it(defs,'B_psi',         '[MAG] Magnetic field psi angle',MAG_psi,unit=Angle_unit(1),verb_level=V_sc)
+ call it(defs,'B_theta',       '[MAG] Magnetic field theta angle',MAG_theta,unit=Angle_unit(1),verb_level=V_sc)
+ call it(defs,'B_Gauge',       '[MAG] Gauge ("SYMM"etric, "X_ASYMM", "Y_ASYMM" or "Z_ASYMM"etric)',MAG_gauge,verb_level=V_sc)
+ call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization',verb_level=V_sc)
+ call it(defs,'B_radius',      '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
+#endif
  !
 #if defined _MEM_CHECK
  !
@@ -501,6 +584,33 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call INIT_QP_ctl_load(defs,2)
  call INIT_QP_ctl_load(defs,3)
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _RT
+ !
+ ! RT ctl 
+ !
+ call INIT_RT_ctl_load(defs,1)
+ call INIT_RT_ctl_load(defs,2)
+ call INIT_RT_ctl_load(defs,3)
+ call INIT_RT_ctl_load(defs,4)
+ !
+#endif
+ !
+ ! F_xc
+ !
+ call it(defs,'FxcMEStps','[TDDFT] [o/o] Memory energy steps',&
+&                         FXC_per_memstps,verb_level=V_resp)
+ call it(defs,'FxcSVdig','[TDDFT] Keep SV that are within FxcSVdig digits',&
+&                         FXC_SVD_digits,verb_level=V_resp)
+ call it('f',defs,'FxcRetarded', '[TDDFT] Retarded TDDFT kernel',verb_level=V_resp)
+ !
+ ! BSE
+ !
+ call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',BS_eh_win,verb_level=V_resp)
+ !GPL_EXCLUDE_START
+ call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=0)
+ !GPL_EXCLUDE_END
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,E_unit,verb_level=V_resp)
  !
  ! Xx
@@ -537,12 +647,41 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'FANdEtresh','[ELPH] Energy treshold for Fan denominator',FAN_deltaE_treshold,verb_level=V_qp,unit=E_unit)
  call it(defs,'DWdEtresh', '[ELPH] Energy treshold for DW denominator',DW_deltaE_treshold,verb_level=V_qp,unit=E_unit)
  !
+ ! GPL_EXCLUDE_START
+ !
+ call it(defs,'ElPhHBRnge','[ELPH] Hamiltonian bands range',elph_Ham_bands)
+ call it(defs,'ElPhHKpt',  '[ELPH] Hamiltonian k-point',elph_Ham_ik)
+ call it(defs,'REStresh',  '[ELPH] Residual treshold to report in output files',RES_tresh)
+ !
+ ! GPL_EXCLUDE_END
  !
  call it('f',defs,'WRgFsq','[ELPH] Dump on file gFsq coefficients')
 #endif
  ! 
  ! SC
  !
+#if defined _SC
+ !
+ call it(defs,'SCBands',   '[SC] Bands',SC_bands)
+ !
+ call TMP_mirror_bands( )
+ !
+ call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
+ call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
+ call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
+ call it(defs,'SC_precondition','[SC] Kind of preconditionin: thomas-fermi, simple, none',SC_preconditioning,verb_level=V_sc)
+ call it(defs,'SCUpWIter', "[SC] Update W(q,G,G') every SCUpWIter iteractions",SC_up_W_iters,verb_level=V_qp) 
+ call it('f',defs,'Mean_Potential','[SC] Real-space Mean Potential',verb_level=V_sc)
+ call it('f',defs,'SCnlMix','[SC] Use SC non-local mixing',verb_level=V_sc)
+ call it('f',defs,'FrozeDensity','[NL] Do not update density (for testing purposes)',verb_level=V_sc)
+ ! 
+ ! SC [common with RT]
+ !
+ call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
+ call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
+ call it('f',defs,'SCdiag','[SC] Diagonal approximation for the self-energy(WF unchaged)',verb_level=V_sc)
+ !
+#endif
  ! 
 #if defined _SC || defined _RT || defined _QED
  !
@@ -561,6 +700,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call TMP_mirror_bands( )
 #endif
  !
+#if defined _SC
+ call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
+ call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
+#endif
  !
  call DIP_mirror_bands(en)
  ! 
@@ -749,6 +892,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _RT || defined _NL
        if(i1==7) tmp_bands=RT_bands
 #endif
+#if defined _SC
+       if(i1==8) tmp_bands=SC_bands
+#endif
 #if defined _NL
        if(i1==9) tmp_bands=NL_bands
 #endif
@@ -783,6 +929,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call parser('NLbands',  is_def(4))
 #endif
      !
+#if defined _SC 
+     if (is_def(1)) bands_=SC_bands
+#endif
 #if defined _RT || defined _QED
      if (is_def(2)) bands_=RT_bands
 #endif
@@ -793,6 +942,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      if (is_def(4)) bands_=NL_bands
 #endif
      !
+#if defined _SC 
+     SC_bands  =bands_
+#endif
 #if defined _RT || defined _QED
      RT_bands  =bands_
 #endif

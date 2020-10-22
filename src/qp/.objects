@@ -1,11 +1,19 @@
 ELPH_objects =
 #if defined _ELPH 
-ELPH_objects = ELPH_Sigma_c.o ELPH_simmetrize_and_distribute_gsqF.o \
+ELPH_objects = ELPH_Sigma_c.o ELPH_Hamiltonian.o ELPH_simmetrize_and_distribute_gsqF.o \
                ELPH_gsqF_to_Sigma.o
+#endif
+SC_objects =
+#if defined _SC
+SC_objects = QP_load_SC_xc.o
+#endif
+QED_objects =
+#if defined _QED
+QED_objects = QED_Radiative_Lifetimes.o QED_Sigma_c.o 
 #endif
 objs = QP_driver.o QP_newton.o QP_ppa_cohsex.o QP_ppa_EET_terminator.o \
        QP_secant_driver.o QP_real_axis.o QP_W2Sc.o QP_life_transitions.o QP_secant.o QP_bracket.o \
        $(ELPH_objects) \
        QP_expand.o QP_descriptions.o QP_report_and_write.o  \
        QP_Green_Function.o QP_of.o \
-       XCo_driver.o XCo_Hartree_Fock.o XCo_local.o
+       XCo_driver.o XCo_Hartree_Fock.o XCo_local.o $(SC_objects) $(QED_objects)

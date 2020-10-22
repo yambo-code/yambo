@@ -39,6 +39,9 @@ subroutine INIT_read_command_line(rstr,init_)
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:H_potential
 #endif
+#if defined _MAGNETIC
+ use magnetic,       ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
+#endif
 #if defined _RT
  use fields,         ONLY:n_ext_fields,n_ext_fields_max
  use stderr,         ONLY:intc
@@ -282,6 +285,49 @@ subroutine INIT_read_command_line(rstr,init_)
        !
      endif
      !
+#if defined _SC
+     !
+     ! SC
+     !
+     if ( trim(rstr_piece(i1)) == 'potential' )  then
+       !
+       H_potential=""
+       if ( index(trim(rstr_piece(i1+1)),'exx')>0 ) then
+         H_potential='EXX'
+         if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
+       else if ( index(trim(rstr_piece(i1+1)),'exxc')>0 ) then
+         H_potential='EXXC'
+       else if ( index(trim(rstr_piece(i1+1)),'srpa')>0 ) then
+         H_potential='SRPA'
+       else if ( index(trim(rstr_piece(i1+1)),'cohsex')>0 ) then
+         H_potential='COH+SEX'
+         if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
+       else if ( index(trim(rstr_piece(i1+1)),'coh')>0 ) then
+         H_potential='COH'
+         if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
+       else if ( index(trim(rstr_piece(i1+1)),'sex')>0 ) then
+         H_potential='SEX'
+         if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
+       else if ( index(trim(rstr_piece(i1+1)),'f')>0) then
+         H_potential='FOCK'
+       endif
+       !
+       if ( index(trim(rstr_piece(i1+1)),'h')==1 ) then
+         if(trim(H_potential)/="") H_potential='HARTREE+'//trim(H_potential)
+         if(trim(H_potential)=="") H_potential='HARTREE'
+       endif
+       !
+       if ( trim(rstr_piece(i1+1)) == 'd') then
+         H_potential='DEFAULT'
+       endif
+       !
+       if ( trim(rstr_piece(i1+1)) == 'ip') then
+         H_potential='IP'
+       endif
+       !
+       !
+     endif
+#endif
      !
 #if defined _RT
      !
@@ -318,6 +364,21 @@ subroutine INIT_read_command_line(rstr,init_)
      endif
 #endif
      !
+#if defined _MAGNETIC
+     if ( trim(rstr_piece(i1)) == 'magnetic' )  then
+       if ( trim(rstr_piece(i1+1)) == 'p' ) then
+         MAG_hamiltonian_type='pauli'
+         MAG_pauli=.true.
+       else if ( trim(rstr_piece(i1+1)) == 'l' ) then
+         MAG_hamiltonian_type='landau'
+         MAG_landau=.true.
+       else if ( trim(rstr_piece(i1+1)) == 'a') then
+         MAG_hamiltonian_type='all'
+         MAG_landau=.true.
+         MAG_pauli=.true.
+       endif
+     endif
+#endif
      !
 #if defined  _ELPH || defined _QED
      !

@@ -33,6 +33,9 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
 #if defined _ELPH
  use ELPH,          ONLY:elph_nDBs_used,QP_PH_n_G_bands,elph_use_q_grid
 #endif
+#if defined _SC
+ use SC,            ONLY:SC_bands
+#endif
 #if defined _NL
  use nl_optics,     ONLY:n_frequencies,NL_bands
 #endif
@@ -79,7 +82,11 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  ! VAL bands
  !-----------
  if (ENVIRONMENT=="DIPOLES")                          PAR_n_v_bands= (/PAR_Dip_ib(1),PAR_Dip_ib_lim(1)/)
+#if defined _NL | defined _SC
+ if (ENVIRONMENT=="Response_G_space"                ) PAR_n_v_bands= (/1,PAR_X_ib(2)/)
+#else
  if (ENVIRONMENT=="Response_G_space"                ) PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
+#endif
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum") PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
  if (ENVIRONMENT=="Response_G_space")                 PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
  if (ENVIRONMENT=="Response_T_space")                 PAR_n_v_bands= (/BS_bands(1),E%nbm/)
@@ -95,6 +102,11 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum") PAR_Q_range=(/PAR_X_iq(1),PAR_X_iq(2)/)
  if (ENVIRONMENT=="Real_Time"       )                 PAR_Q_range=(/1,nqbz/)
  if (ENVIRONMENT=="Self_Energy"     ) then
+#if defined _SC
+   if (l_sc_run.and.&
+&      any( (/P_collisions%N,COH_collisions%N,HXC_collisions%N/)> 0))  &
+&                                               PAR_Q_range=(/1,nqbz/)
+#endif
 #if defined _SC || defined _RT
    if (l_eval_collisions)                       PAR_Q_range=(/1,nqbz/)
 #endif
@@ -122,6 +134,9 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
    if (.not.computing_Fock)                          PAR_n_bands(1)=QP_n_G_bands(1)
 #if defined _SC || defined _RT
    if (l_eval_collisions)  PAR_n_bands=COLL_bands
+#endif
+#if defined _SC
+   if (l_sc_run)           PAR_n_bands=SC_bands
 #endif
 #if defined _ELPH
    if (l_elph_corr)        PAR_n_bands=(/1,QP_PH_n_G_bands/)

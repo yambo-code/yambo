@@ -63,6 +63,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free
 #endif
+#if defined _PL
+ use PHOTOLUM,       ONLY:BSS_PL_free
+#endif
  !
 #include<memory.h>
 #include<yambo_bse.h>
@@ -162,6 +165,20 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if(iq/=1) O_ng_shift=max(maxval(qindx_B(:,:,2)),O_ng_shift)
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
+ ! BS/FXC DB I/O
+ !===============
+ !
+ if (l_bs_fxc) then
+   !
+   !call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
+   !
+   !io_BS_Fxc_err=io_BS_Fxc(iq,W_bss,ID,X=X)
+   !
+ else
+   !
+   ! GPL_EXCLUDE_END
    !
 #if defined _PAR_IO
    !
@@ -183,6 +200,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (io_BS_err==0) goto 1
    !
+   ! GPL_EXCLUDE_START
+   !
+ endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Screened interaction
  !======================
@@ -195,6 +217,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    n_BS_blks=0
    call BS_blks_free()
    !
+#if defined _PL
+   call BSS_PL_free( )
+#endif
 #if defined _KERR
    call BSS_KERR_free( )
 #endif
@@ -203,6 +228,25 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
+ ! TDDFT xc-kernel Setup
+ !======================
+ if (l_bs_fxc) then
+   !  
+   !if (iq==1) here put dipoles I/O
+   if (iq==1) stop
+   !
+   ! Allocation
+   !-----------
+   YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim))
+   YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
+   FXC_K_diagonal=0._SP
+   FXC=cZERO
+   !
+ endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Wave Functions
  !================
@@ -210,6 +254,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
  !
  section_title='-BSK'
+ ! GPL_EXCLUDE_START
+ if (l_bs_fxc) section_title='-BSK->Fxc'
+ ! GPL_EXCLUDE_END
  !
  call WF_load(WF,max(O_ng,BS_n_g_exch),O_ng_shift,bands_to_load,(/1,Xk%nibz/),space='R',title=trim(section_title))
  !
@@ -458,6 +505,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (l_bs_fxc) then
    !
+   ! GPL_EXCLUDE_START
+   !
+   YAMBO_FREE(FXC)
+   YAMBO_FREE(FXC_K_diagonal)
+   !
+   ! GPL_EXCLUDE_END
    !
  else if (BS_K_is_ALDA) then
    YAMBO_FREE(F_xc)

@@ -54,6 +54,18 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    call RT_output(what="open curr pol")
    !
+   ! GPL_EXCLUDE_START
+   !
+   call RT_output(what="open carr magn")
+   if(eval_energy)  call RT_output(what="open energy")
+   if(eval_entropy) call RT_output(what="open therm")
+   if(l_RT_update_Energies)  call RT_output(what="open BGR")
+   if (l_elph_scatt)         call RT_output('open mean_EPlife')
+   if (l_elel_scatt)         call RT_output('open mean_EElife')
+   if (l_elphoton_scatt)     call RT_output('open mean_RADlife')
+   if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open N_dN_E')
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Field(s)
    !==========
@@ -64,6 +76,18 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
  case('write')
    !
+   ! GPL_EXCLUDE_START
+   !
+   NCarr =OBSERVABLES( 1: 3)
+   TFit  =OBSERVABLES( 4: 5)
+   EfFit =OBSERVABLES( 6: 7)
+   Ener  =OBSERVABLES( 8:12)
+   Entr  =OBSERVABLES(13:15)
+   TEntr =OBSERVABLES(16:18)
+   EnEntr=OBSERVABLES(19:21)
+   BGR   =OBSERVABLES(22:25)
+   !
+   ! GPL_EXCLUDE_END
    !
    call set_real_printed_length()
    call IO_and_Messaging_switch("-fragments_IO_log")
@@ -78,6 +102,28 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    call RT_output('curr pol',TIME=NE_time*AUT2FS)
    !
+   ! GPL_EXCLUDE_START
+   !
+   ! Energetics and BGR
+   !====================
+   !
+   call RT_output('magn',TIME=NE_time*AUT2FS)
+   call RT_output('carr',VALUES=(/NCarr(:),TFit(:),EfFit(:)/),TIME=NE_time*AUT2FS)
+   if(eval_energy)          call RT_output('energy',VALUES=Ener,                          TIME=NE_time*AUT2FS)
+   if(eval_entropy)         call RT_output('therm ',VALUES=(/EnEntr(:),Entr(:),TEntr(:)/),TIME=NE_time*AUT2FS)
+   if(l_RT_update_Energies) call RT_output('BGR',   VALUES=BGR,                           TIME=NE_time*AUT2FS)
+   !
+   ! Mean Carrier Lifetimes
+   !========================
+   if (RT_is_dynamically_dephased) then
+     call RT_mean_carrier_lifetimes(E,k)
+     if(l_elph_scatt)                      call RT_output('mean_EPlife', TIME=NE_time*AUT2FS)
+     if(l_elel_scatt)                      call RT_output('mean_EElife', TIME=NE_time*AUT2FS)
+     if(l_elphoton_scatt)                  call RT_output('mean_RADlife',TIME=NE_time*AUT2FS)
+     if(l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('N_dN_E',TIME=NE_time*AUT2FS)
+   endif
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Field(s)
    !==========

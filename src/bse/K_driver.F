@@ -64,8 +64,25 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  type(w_samp)      :: W_bss 
  logical           :: l_bs_q
  !
+ ! GPL_EXCLUDE_START
  !
- BS_q=(/1,1/)
+#if defined _RT 
+ if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
+#endif
+ !
+ call parser('BSEQptR',l_bs_q)
+ !
+ if (.not.l_bs_q) BS_q=(/1,1/)
+ !
+ if ( (.not.(BS_q(1)==1.and.BS_q(2)==1)) .and. (trim(BSE_mode)=='coupling') ) then
+   call error(' Finite q and coupling not implemented')
+ endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! GPL_INCLUDE_START
+ !BS_q=(/1,1/)
+ ! GPL_INCLUDE_END
  !
  ! Joint DOS
  !===========
@@ -98,6 +115,35 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    global_gauge="length"
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
+ ! If the em1s DB has been calculated in the same run
+ ! of a BS-Fxc kernel construction that l_bs_fxc is set .FALSE.
+ !      =============
+ ! in tddft_do_X_W_typs. So here we need to check again if
+ ! l_bs_fxc has been provided
+ !
+ if (.not.l_bs_fxc) call parser('bs_fxc',l_bs_fxc)
+ !
+ if (l_bs_fxc) then
+   !==========
+   !
+   BS_n_g_exch=FXC_n_g_corr
+   !
+   if (index(BSS_mode,'t')/=0) then
+     !
+     ! Remove the exchange from the BS_mode
+     ! if TDDFT Fxc is obtained from K
+     !
+     if (index(BSS_mode,'t')==0) BS_res_mode=trim( STRING_remove(BS_res_mode,'x') )
+     BSE_mode='retarded'
+     call parser('FxcRetarded',FXC_is_retarded)
+     !
+   endif
+   !
+ endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Logicals (Drivers)
  !====================
@@ -239,6 +285,33 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    ! =================
    if (l_bss.and..not.l_rpa_IP) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
    !
+   ! GPL_EXCLUDE_START
+   !
+   ! `TDDFT` SOLVER
+   !
+   if (index(BSS_mode,'t')/=0) then
+     !
+     call X_duplicate(X_static_pp,X_tddft) ! initialize X_tddft to X_static_pp
+     !
+     X_tddft%ordering='Tr'
+     if (FXC_is_retarded) X_tddft%ordering='R'
+     !
+     ! If the kernel contains QP corrections I have to equally correct Xen
+     !
+     if (allocated(Ken%Eo)) then
+       YAMBO_ALLOC(Xen%Eo,(Xen%nb,Xen%nk,n_sp_pol))
+       Xen%Eo=Xen%E
+       Xen%E =Ken%E
+     endif
+     !
+     call PP_redux_wait
+     X_tddft%iq=iq
+     X_tddft%ng=BS_n_g_exch
+     call OPTICS_driver(Xen,Xk,q,W_bss,X_tddft,Dip) 
+     !
+   endif
+   !
+   ! GPL_EXCLUDE_END
    !
    ! CLEAN (OBSs)
    call K_observables("FREE",W_bss)

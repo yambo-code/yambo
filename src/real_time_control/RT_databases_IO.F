@@ -80,9 +80,108 @@ subroutine RT_databases_IO(E)
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
    endif
    !
+   ! GPL_EXCLUDE_START
+   !
+   if (io_CARRIERs) then
+     !
+     call RT_carriers_object(RT_carriers,E,WHAT='fill')
+     !
+     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
+     io_carr=io_RT_components('carriers',ID(6))
+     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(6))
+     io_carr=io_RT_components('carriers',ID(6))
+   endif
+   !
+   ! GPL_EXCLUDE_END
    !
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
+ ! G_lesser and THETA
+ !====================
+ if (io_GF.and.RT_do_it('G')) then
+   !
+   GF_RT_IO_t%N=GF_RT_IO_t%N+1
+   GF_RT_IO_t%Time(GF_RT_IO_t%N)=NE_time
+   GF_RT_IO_t%last_point=NE_i_time
+   !
+   call io_control(ACTION=OP_WR_CL,COM=NONE, SEC=(/1/),ID=ID(5))
+   io_G=io_RT_components('G',ID(5))
+   !
+   call IO_and_Messaging_switch("SAVE")
+   call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_k_cpu)
+   !
+#if defined _PAR_IO
+   !
+   n_sec=0
+   do ik = 1, RT_nk
+     if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+     if (n_sec==0) secs=ik+1
+     if (n_sec >0) then
+       if (ik/=secs(2)) call error(" Non contiguous G distr does not work with PAR-IO")
+       secs(2)=ik+1
+     endif
+     n_sec=n_sec+1
+   enddo
+   !
+   if(n_sec>0) then
+     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=secs,ID=ID(5))
+     io_G=io_RT_components('G',ID(5))
+   endif
+   !
+#else
+   !
+   l_start=.true.
+   do ik = 1, RT_nk
+     !
+     if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+     !
+     if (l_start) then
+       call io_control(ACTION=OP_APP_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
+       l_start=.false.
+     else
+       call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
+     endif
+     io_G=io_RT_components('G',ID(5))
+     !
+   enddo 
+   !
+   call PP_redux_wait( )
+   !
+#endif
+   !
+   call IO_and_Messaging_switch("RESTORE")
+   !
+#if defined _ELPH
+   if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
+     !
+     call io_control(ACTION=OP_WR,COM=NONE, SEC=(/1/),ID=ID(7))
+     io_THETA=io_RT_components('THETA',ID(7))
+     !
+     do ik = 1, RT_nk
+       !
+       ! The I/O of the THETA matrix is tricky when the run is parallel.
+       ! The point is that every CPU evolves a certain group of q-points.
+       ! If I do here a all-to-all each CPU will have non-zero values for 
+       ! q-points that it will not evolve. At the next call of this routine
+       ! therefore, values relative to different times will be wrongly merged.
+       !
+       call PP_redux_wait(THETA_matrix(:,:,:,ik))
+       !
+       call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(7))
+       io_THETA=io_RT_components('THETA',ID(7))
+       !
+       call RT_ELPH_zeroing()
+       !
+     enddo
+     !
+   endif
+#endif
+   !
+ endif
+ !
+ ! GPL_EXCLUDE_END
  !
  call timing('RT databases IO',OPR='stop')
  !

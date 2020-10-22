@@ -36,6 +36,14 @@ subroutine electrons_WFs(Xen)
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
+#if defined _YPP_SC
+ use YPP,            ONLY:V_value,l_mean_potential
+ use QP_m,           ONLY:QP_nk
+ use wave_func,      ONLY:wf_ng
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,io_control,DUMP
+ use SC,             ONLY:V_mean,SC_bands,SC_fft_size
+ use R_lattice,      ONLY:qindx_S
+#endif
 #if defined _YPP_ELPH
  use interfaces,     ONLY:WF_apply_symm
  use YPP_ELPH,       ONLY:elph_residual_treshold
@@ -56,6 +64,10 @@ subroutine electrons_WFs(Xen)
 #if defined _YPP_ELPH
  integer               :: iq_s,iq_ibz
  logical               :: l_polaronic_wf
+#endif
+#if defined _YPP_SC
+ integer               :: ID,io_V
+ integer, external     :: io_SC_components
 #endif
  !
 #if defined _YPP_ELPH
@@ -86,6 +98,27 @@ subroutine electrons_WFs(Xen)
  YAMBO_ALLOC(wf_rot,(fft_size,n_spinor))
 #endif
  !
+#if defined _YPP_SC 
+ !
+ if (l_mean_potential) then
+   !
+   call io_control(ACTION=OP_RD,COM=LOG,MODE=DUMP, SEC=(/1/),ID=ID)
+   io_V=io_SC_components('MP',Xen,ID)
+   !
+   ! The SC FFT size is decided in SC_WF_and_dipole_dimensions. I dunno why
+   ! QP_ng_Sx is not used there.
+   !
+   call msg("s",'FFT size evaluation...')
+   call fft_setup(wf_ng,maxval(qindx_S(:,:,2)),.true.)
+   if (SC_fft_size/=fft_size) call error('Mismatch in FFT size')
+   call msg("l",'done')
+   nr=fft_dim
+   YAMBO_ALLOC(V_mean,(fft_size,SC_bands(2)))
+   YAMBO_ALLOC(v2plot,(fft_size))
+   !
+ endif
+ !
+#endif
  !
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)
  !==============================================================================
@@ -184,8 +217,17 @@ subroutine electrons_WFs(Xen)
  !
  ik_ref=-1
  ch_ws(2)='sp_wf'
+#if defined _YPP_SC
+ if (l_mean_potential) then
+   if (trim(V_value)=="RE".or.trim(V_value)=="re") ch_ws(2)='V_re'
+   if (trim(V_value)=="IM".or.trim(V_value)=="im") ch_ws(2)='V_im'
+ endif
+#endif
  !
  if (l_sp_wf &
+#if defined _YPP_SC
+&    .or.l_mean_potential &
+#endif
 #if defined _YPP_ELPH
 &    .and..not.l_polaronic_wf &
 #endif
@@ -194,7 +236,16 @@ subroutine electrons_WFs(Xen)
    v2plot=0.
    !
    if (l_sp_wf)          call section('*','Single Particle wavefunction Plot')
+#if defined _YPP_SC
+   if (l_mean_potential) call section('*','Mean Potential Plot')
+#endif
    !
+#if defined _YPP_SC
+   if (n_spinor==2.and.l_mean_potential) then
+     call warning ('Non collinear spin support still not implemented')
+     return
+   endif
+#endif
    !
    i_qp=1
    !
@@ -210,11 +261,37 @@ subroutine electrons_WFs(Xen)
      !
      i_qp=i_qp+1
      !
+#if defined _YPP_SC
+     if (l_mean_potential.and.ik/=ik_ref) then
+       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1+(i_sp_pol-1)*QP_nk/),ID=ID)
+       io_V=io_SC_components('MP',Xen,ID)
+       ik_ref=ik
+     endif
+#endif
      !
+#if defined _YPP_SC
+     if (.not.l_mean_potential) then
+#endif
        i_wf=WF%index(ib,ik,i_sp_pol)
+#if defined _YPP_SC
+     endif
+#endif
      !
+#if defined _YPP_SC
+     if (l_mean_potential) then
+       v2plot=0._SP
+       if (trim(V_value)=="RE".or.trim(V_value)=="re") forall(ir=1:fft_size) v2plot(ir)=real ( V_mean(ir,ib) )
+       if (trim(V_value)=="IM".or.trim(V_value)=="im") forall(ir=1:fft_size) v2plot(ir)=aimag( V_mean(ir,ib) )
+     endif
+#endif
+#if defined _YPP_SC
+     if (.not.l_mean_potential) then 
+#endif
        forall(ir=1:fft_size) v2plot(ir)=real( WF%c(ir,1,i_wf)*conjg( WF%c(ir,1,i_wf) ) )
        if (n_spinor==2) forall(ir=1:fft_size) v2plot(ir)=v2plot(ir) + real( WF%c(ir,2,i_wf)*conjg( WF%c(ir,2,i_wf) ) )
+#if defined _YPP_SC
+     endif
+#endif
      !
      ibp=ib+1
      if (ib==Xen%nb) ibp=ib
@@ -252,6 +329,9 @@ subroutine electrons_WFs(Xen)
     !
  endif
  !
+#if defined _YPP_SC 
+ YAMBO_FREE(V_mean)
+#endif
 #if defined _YPP_ELPH 
  YAMBO_FREE(v2plot_c)
 #endif

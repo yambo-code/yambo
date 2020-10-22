@@ -1,0 +1,8 @@
+objs =
+#if defined _SC
+objs = SC_driver.o V_Hartree.o V_real_space_to_H.o V_qp_basis_to_H.o \
+       SC_add_XC.o           SC_driver.o  SC_precondition.o SC_WF_and_dipole_dimensions.o \
+       SC_bare_Hamiltonian.o SC_Energy.o  SC_start_and_restart.o  \
+       SC_check_symmetries.o SC_History.o SC_update_dipoles.o \
+       XC_switch.o
+#endif

@@ -93,6 +93,56 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
+ ! ELPH_vars
+ !
+#if defined _ELPH
+ call io_elemental(ID,VAR="ELPH_vars",VAR_SZ=5,MENU=0) 
+ i_desc=i_desc+1
+ call io_elemental(ID,L0=l_elph_scatt,&
+&   VAR=" [E-P] Electron-phonon           :", CHECK=.true.,OP=(/"=="/),&
+&   DESCRIPTION=local_description(i_desc))
+ i_desc=i_desc+1
+ call io_elemental(ID,L0=l_RT_CCA_Kernel,&
+&   VAR=" [E-P] Completed Collision(CCA)  :", CHECK=.true.,OP=(/"=="/),&
+&   DESCRIPTION=local_description(i_desc))
+ i_desc=i_desc+1
+ call io_elemental(ID, &
+&   VAR=" [E-P] Branches                  :",I1=elph_branches,CHECK=.true.,OP=(/"==","=="/),&
+&   DESCRIPTION=local_description(i_desc))
+ i_desc=i_desc+1
+ call io_elemental(ID, &
+&   VAR=" [E-P] GF`s Memory steps         :",I0=G_MEM_steps,CHECK=.true.,OP=(/"=="/),&
+&   DESCRIPTION=local_description(i_desc))
+ call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+#endif
+ !
+ ! E-E_vars
+ !
+ call io_elemental(ID,VAR="E-E_vars",VAR_SZ=2,MENU=0) 
+ i_desc=i_desc+1
+ call io_elemental(ID,L0=l_elel_scatt,&
+&   VAR=" [E-E] Coulomb scattering        :", CHECK=.true.,OP=(/"=="/),&
+&   DESCRIPTION=local_description(i_desc))
+ i_desc=i_desc+1
+ call io_elemental(ID,L0=l_elel_corr,&
+&  VAR=" [E-E] Coulomb correlation       :", CHECK=.true.,OP=(/"=="/),&
+&  DESCRIPTION=local_description(i_desc))
+ call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ !
+ ! E-PHOTON_vars
+ !
+ if (ver_is_gt_or_eq(ID,revision=14112)) then
+   call io_elemental(ID,VAR="E-PHOTON_vars",VAR_SZ=1,MENU=0) 
+   i_desc=i_desc+1
+   call io_elemental(ID,L0=l_elphoton_scatt,&
+&     VAR=" [E-PHOTON] Scattering           :", CHECK=.true.,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if(.not.any((/l_OBS,l_G,l_carriers/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
@@ -119,6 +169,17 @@ integer function variables_RT(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    !
+   ! GPL_EXCLUDE_START
+   !
+   call io_elemental(ID,&
+&    VAR=" [RT] Lifetimes Inter/Intra  [fs]:",R1=RT_life_extrap_times_SAVE,CHECK=.true.,OP=(/"==","==","=="/),&
+&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&    VAR=" [RT]                   (now)[fs]:",R1=RT_life_extrap_times,DB_R1=RT_life_extrap_times,&
+&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+   !
+   ! GPL_EXCLUDE_END
    !
    if (l_OBS.or.l_carriers) call LOCAL_IO_variables(OBS_RT_IO_t)
    if (l_G)                 call LOCAL_IO_variables(GF_RT_IO_t)
@@ -130,6 +191,45 @@ integer function variables_RT(ID,local_description,what)
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
+   ! GPL_EXCLUDE_START
+   !
+   !
+   ! Lifetimes Extrapolation
+   !
+   call io_elemental(ID,VAR='RT_life_extrapolation',VAR_SZ=1,MENU=0)
+   i_desc=i_desc+1
+   call io_elemental(ID,L0=l_RT_lifetimes_extrapolation, &
+&        VAR=" [RT] Lifetimes extrapolation    :",WARN=.true.,OP=(/"=="/),&
+&        DESCRIPTION=local_description(i_desc))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   ! Delta T Update
+   !   
+   call io_elemental(ID,VAR="DELTA_T_UPDATE",VAR_SZ=6,MENU=0) 
+   i_desc=i_desc+1
+   call io_elemental(ID,L0=l_Update_Time_Step,DB_L0=l_disk_flag,VAR=' [dT] Time-Dependent Time step   :',CHECK=.true.,OP=(/"=="/),&
+&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+   if (l_disk_flag) then
+     i_desc=i_desc+1
+     call io_elemental(ID,R0=NE_initial_time_step_update,VAR=' [dT] Starting Time          [fs]:',CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+     i_desc=i_desc+1
+     call io_elemental(ID,R0=NE_time_step_update_jump_SAVE, VAR=' [dT] Update interval        [fs]:',CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+     i_desc=i_desc+1
+     call io_elemental(ID,R0=NE_step_update_treshold,    VAR=' [dT] Update interval tresh [o/o]:',CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc))
+     if (ver_is_gt_or_eq(ID,revision=14112)) then
+       i_desc=i_desc+1
+       call io_elemental(ID,R0=RT_MAX_step,              VAR=' [dT] Max step in dynamics   [fs]:',CHECK=.true.,OP=(/"=="/),&
+&        DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+     endif
+   endif
+   ! ... for RESTART purposes...
+   call io_elemental(ID,R0=NE_time_step_update_jump, DB_R0=NE_time_step_update_jump,CHECK=.FALSE.)
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   ! GPL_EXCLUDE_END
    !
    ! INTEGRATOR
    !   
@@ -181,6 +281,22 @@ integer function variables_RT(ID,local_description,what)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    enddo
    !
+   ! GPL_EXCLUDE_START
+   !
+   ! G retarded variables
+   !======================
+   call io_elemental(ID,VAR="G_retarded_BASE",VAR_SZ=1,MENU=0) 
+   call io_elemental(ID,I0=N_Gr_descs)
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   do i1=1,N_Gr_descs
+     write (ch,'(a,i5.5)') 'G_ret_DESC_strings_',i1
+     call io_elemental(ID,VAR=trim(ch),CH0="",VAR_SZ=1,MENU=0)
+     i_desc=i_desc+1
+     call io_elemental(ID,CH0=Gr_description(i1),VAR='',DESCRIPTION=local_description(i_desc))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   enddo
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Double Grid
    !======================
@@ -199,6 +315,22 @@ integer function variables_RT(ID,local_description,what)
 &     DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
+   ! GPL_EXCLUDE_START
+   !
+   ! CONSTRAINS
+   !======================
+   call io_elemental(ID,VAR="CONSTRAINS",VAR_SZ=2,MENU=0) 
+   i_desc=i_desc+1
+   call io_elemental(ID,L0=l_RT_impose_N_dN,&
+&      VAR=' [CONSTRAINS] N (ee+ep) & dN (ep):',  CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,L0=l_RT_impose_E,&
+&      VAR=' [CONSTRAINS] IP Energy      (ee):',  CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   ! GPL_EXCLUDE_END
    !
    ! FIELDS
    !======================

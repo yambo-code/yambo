@@ -170,6 +170,28 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      shadow(n_shadows)=100._SP-int(dSc_diff*100._SP)
    endif
    !
+   ! GPL_EXCLUDE_START
+   !
+#if defined _ELPH
+   if (l_elph_corr) then
+     n_shadows=n_shadows+1
+     shadow_string(n_shadows)=' F ='
+     shadow(n_shadows)=QP_OMS_Fan(iqp)*HA2EV
+     n_shadows=n_shadows+1
+     shadow_string(n_shadows)=' DW='
+     shadow(n_shadows)=QP_DW(iqp)*HA2EV
+     n_shadows=n_shadows+1
+     shadow_string(n_shadows)=' Gm='
+     shadow(n_shadows)=aimag(qp%E(iqp))*HA2EV/1.E-3
+     if (shadow(n_shadows)>0.) then
+       n_shadows=n_shadows+1
+       shadow_string(n_shadows)=' Gf='
+       shadow(n_shadows)=Time_of(aimag(qp%E(iqp)),"fs")
+     endif
+   endif 
+#endif
+   !
+   ! GPL_EXCLUDE_END
    !
    if (l_life) then
      !
@@ -246,6 +268,9 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
  call QP_reset(qp_expanded)
  !
+ ! GPL_EXCLUDE_START
+ if (l_QP_Expand) call QP_expand(k,qp,qp_expanded)
+ ! GPL_EXCLUDE_END
  !
  ! QP DATABASE i/o
  !=================

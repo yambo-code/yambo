@@ -46,6 +46,12 @@ subroutine XCo_local(E,Xk)
  use parallel_m,    ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k 
  use matrix_operate,ONLY:UP_matrix_index,matrix_index
 #endif
+#if defined _SC
+ use hamiltonian,   ONLY:V_xc_sc,V_hartree_sc
+ use com,           ONLY:error
+ use IO_m,          ONLY:REP,VERIFY
+ use SC,            ONLY:load_SC_components,SC_fft_size,compatible_SC_DB
+#endif
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
@@ -82,6 +88,12 @@ subroutine XCo_local(E,Xk)
  !
  ! Precompiler options in case a non-DFT potential is required
  !
+#if defined _SC
+ if (mod(WF_KIND,1000)< 300) then
+   !
+   ! ...LDA (and more) Vxc
+   !
+#endif
    !
 #if defined _RT
    if (l_real_time) then
@@ -98,6 +110,25 @@ subroutine XCo_local(E,Xk)
    endif
 #endif
    !
+#if defined _SC
+ else
+   !
+   ! ...SC EXX and EXX+LDA_C
+   !
+   YAMBO_ALLOC(V_xc_sc,(fft_size,n_spin))
+   YAMBO_ALLOC(V_hartree_sc,(fft_size,n_spin))
+   SC_fft_size=fft_size
+   call load_SC_components('V',COM_=REP,MODE_=VERIFY)
+   !
+   if (.not.compatible_SC_DB) call error('Incompatible potential database')
+   !
+   V_xc=V_xc_sc
+   !
+   YAMBO_FREE(V_xc_sc)
+   YAMBO_FREE(V_hartree_sc)
+   !
+ endif
+#endif
  !
  if (n_spin==1) then
    ! 

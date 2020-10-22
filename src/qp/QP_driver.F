@@ -70,6 +70,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  call parser('OnMassShell',On_Mass_Shell_approx)
  call parser('QPExpand'   ,l_QP_Expand)
  call parser('UseEbands',  COHSEX_use_empties)
+ ! GPL_EXCLUDE_START
+ call parser('GreenF2QP',  use_GreenF_to_eval_QP)
+ use_GreenF_Zoom=QP_G_Zoom_treshold>0._SP
+ ! GPL_EXCLUDE_END
  call parser('ExtendOut',  l_extended_output)
  !
  if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
@@ -133,6 +137,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    QP_DB_kind=QP_SE_GoWo_PPA
    !
+   ! GPL_EXCLUDE_START
+   !
+   if ( GWo_iterations > 0 ) QP_DB_kind=QP_SE_GWo_PPA
+   !
+   ! GPL_EXCLUDE_END
    !
  else if (l_cohsex) then
    !
@@ -161,6 +170,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    if (l_elphoton_corr) QP_DB_kind=QP_SE_GW_QED
    !
+   ! GPL_EXCLUDE_START
+   !
+   if ( GWo_iterations > 0 ) QP_DB_kind=QP_SE_GWo_PPA
+   !
+   ! GPL_EXCLUDE_END
    !
  endif
  !
@@ -321,6 +335,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    if (l_elel_corr)     call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
    !
+#if defined _QED
+   !
+   ! Radiative Lifetimes (Using <p>)
+   !=================================
+   !
+   if (l_elphoton_corr) call QED_Radiative_Lifetimes(en,k,q,qp,X,Dip)
+   !
+#endif
    !
    qp%Z=cONE
    !

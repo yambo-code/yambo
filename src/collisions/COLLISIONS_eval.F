@@ -100,6 +100,12 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if (l_use_COH_collisions) call COLLISIONS_basic_operations( "alloc",    COH_collisions )
  if (l_use_Hxc_collisions) call COLLISIONS_basic_operations( "alloc",    HXC_collisions )
  !
+ ! GPL_EXCLUDE_START
+ !
+ if (l_elphoton_scatt)     call COLLISIONS_basic_operations( "alloc",      P_collisions )
+ if (l_elel_scatt)         call COLLISIONS_basic_operations( "alloc", GW_NEQ_collisions )
+ !
+ ! GPL_EXCLUDE_END
  !
  ! PARALLEL Setup
  !================
@@ -152,6 +158,63 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _QED
+ !
+ if (l_elphoton_scatt) then
+   !
+   if (     l_use_Hxc_collisions) call section('=','Electron-Photon (P)') 
+   if (.not.l_use_Hxc_collisions) call section('+','Electron-Photon (P)')
+   !=====================================================================
+   !
+   call CHECK_and_ALLOC(P_collisions)
+   !
+   if (IO_err/=0) then
+     !
+     call COLLISIONS_momentum(E,k,q)
+     !
+     ! Clean
+     !-------
+     if (io_COLLs) call COLLISIONS_alloc_and_free("Momentum","v3 table","clean",1)
+     !
+   endif
+   !
+ endif
+ !
+#endif
+ !
+ if (l_elel_scatt) then
+   !
+   if (     l_use_Hxc_collisions) call section('=','NEQ GW (e-e scattering)')
+   if (.not.l_use_Hxc_collisions) call section('+','NEQ GW (e-e scattering)')
+   !=========================================================================
+   !
+   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
+   call PARALLEL_global_indexes(E,k,q,"Real_Time")
+   !
+   call PLASMA_build_up(E,k,q)
+   call PLASMA_parallel_setup(EH_gas)
+   !
+   call PARALLEL_WF_distribute(PLASMA_index=PAR_IND_Plasma,CLEAN_UP=.TRUE.)
+   call COLLISIONS_basic_operations( "WF_distribute", GW_NEQ_collisions )
+   call PARALLEL_WF_index( )
+   !
+   call CHECK_and_ALLOC(GW_NEQ_collisions)
+   !
+   if (IO_err/=0) then 
+     !
+     call COLLISIONS_NEQ_GW_static(X(2),Xk,E,k,q,Xw(2)) 
+     !
+     ! GW_NEQ clean
+     !--------------
+     if (io_COLLs) call COLLISIONS_alloc_and_free("GW_NEQ","v3 table","clean",1)
+     !
+   endif
+   !
+ endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! CLEAN
  !=======
@@ -171,6 +234,12 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      call COLLISIONS_basic_operations( "clean",    HXC_collisions )
      call COLLISIONS_basic_operations( "clean",    COH_collisions )
      !
+     ! GPL_EXCLUDE_START
+     !
+     call COLLISIONS_basic_operations( "clean",      P_collisions )
+     call COLLISIONS_basic_operations( "clean", GW_NEQ_collisions )
+     !
+     ! GPL_EXCLUDE_END
      !
    endif
    !
@@ -183,6 +252,12 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if (l_use_COH_collisions) call COLLISIONS_alloc_and_free("COH"      ,trim(FREE_ch),"clean",1)
  if (l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC"      ,trim(FREE_ch),"clean",1)
  !
+ ! GPL_EXCLUDE_START
+ !
+ if (l_elel_scatt)         call COLLISIONS_alloc_and_free("GW_NEQ"   ,trim(FREE_ch),"clean",1)
+ if (l_elphoton_scatt)     call COLLISIONS_alloc_and_free("Momentum" ,trim(FREE_ch),"clean",1)
+ !
+ ! GPL_EXCLUDE_END
  !
  call timing('COLLISIONS_eval',OPR='stop')
  !
@@ -213,8 +288,16 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        call COLLISIONS_alloc_and_free(trim(COLL%name),"v3 table","alloc",1)
      else
        call COLLISIONS_alloc_and_free(trim(COLL%name),"collision","alloc",0)
+       ! GPL_EXCLUDE_START
+       if (COLL%kind==QP_SE_GW_NEQ.or.COLL%kind==QP_SE_GW_QED) then
+         call COLLISIONS_alloc_and_free(trim(COLL%name),"v3","alloc distribute",0)
+       else
+       ! GPL_EXCLUDE_END
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v3","alloc",1)
          call COLLISIONS_alloc_and_free(trim(COLL%name),"table","alloc",0)
+       ! GPL_EXCLUDE_START
+       endif
+       ! GPL_EXCLUDE_END
      endif
      !
    end subroutine

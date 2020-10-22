@@ -44,6 +44,9 @@ subroutine ypp_INIT_load(defs)
 &                        Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr
  use real_time,     ONLY:RT_bands
 #endif
+#if defined _YPP_SC
+ use YPP,           ONLY:V_value
+#endif
 #if defined _YPP_ELPH
  use YPP_ELPH,      ONLY:elph_dbs_path,elph_Ef,elph_gamma_broad,elph_residual_treshold,elph_steps,&
 &                        ph_broad,ph_freqs_file,ph_modes_file
@@ -60,6 +63,11 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'Q_grid',    '[R] Q-grid analysis') 
  call it('r',defs,'dos',       '[R] DOS')
  !
+ ! GPL_EXCLUDE_START
+ !
+ call it('r',defs,'Shifted_Grid','[R] Shifted grids') 
+ !
+ ! GPL_EXCLUDE_END
  !
  call it('r',defs,'Random_Grid','[R] Random grids')
  call it('r',defs,'High_Symm',  '[R] High_Symmetry points and paths') 
@@ -78,6 +86,10 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'eliashberg',   '[R] Eliashberg')
  call it('r',defs,'phonons',      '[R] Phonons')
  call it('r',defs,'gkkp',         '[R] Electron-Phonon databases')
+#endif
+#if defined _YPP_MAGNETIC
+ call it('r',defs,'angular_m',    '[R] Canonical angular momentum')
+ call it('r',defs,'position',     '[R] Average <r^n>, n given in the input')
 #endif
  call INIT_QP_ctl_load(defs,3)
  call it('r',defs,'spin',         '[R] Spin')
@@ -102,6 +114,34 @@ subroutine ypp_INIT_load(defs)
  !
 #endif
  !
+ ! GPL_EXCLUDE_START 
+ !
+#if defined _YPP_RT
+ !
+ call it('r',defs,'RTDBs',        '[R] Real-Time databases')
+ !
+ call it('r',defs,'Select_energy','[R] NEQ DBs from input energy window')
+ call it('r',defs,'Select_kspace','[R] NEQ DBs from input energy and kspace')
+ call it('r',defs,'Select_manual','[R] NEQ DBs manually created')
+ call it('r',defs,'Select_Fermi', '[R] NEQ DBs according to Fermi distribution')
+ !
+ call it('r',defs,'RTabs',        '[R] Transient absorption')
+ call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
+ call it('r',defs,'RTlifetimes',  '[R] Analize time-dependent lifetimes')
+ call it('r',defs,'RTdeltaRho',   '[R] Analize the density')
+ !
+ call it('r',defs,'RTfitbands',   '[R] Post-Processing kind: fit on bands')
+ call it('r',defs,'RTtime',       '[R] Post-Processing kind: function of time')
+ call it('r',defs,'RTenergy',     '[R] Post-Processing kind: function of energy')
+ call it('r',defs,'RTdos',        '[R] Post-Processing kind: 2D DOS, function of time and energy')
+ !
+#endif
+!
+#if defined _YPP_SC
+ call it('r',defs,'MeanPot', '[R] Mean Potential')
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
 #if defined _YPP_NL
  call it('r',defs,'nonlinear',     '[R] NonLinear Optics Post-Processing')
@@ -133,6 +173,44 @@ subroutine ypp_INIT_load(defs)
  !
  call it(defs,'WFReference', 'band and kpt index of reference WF for spin direction',WF_ref,verb_level=V_general)
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _YPP_RT
+ !
+ ! RT DBs create
+ !
+ call it(defs,'RTpumpNel',  '[RT] Number of electrons excited by hand per unit cell',Eh_pumped_Nel)
+ call it(defs,'RTBands',    '[RT] Bands range',RT_bands)
+ call it(defs,'RTpumpEhWd', '[RT] Max Energy window used in the levels pick-up',Eh_pumped_pair_width,unit=E_unit)
+ ! Method 1
+ call it(defs,'RTpumpEhEn', '[RT] Energy (relative to VBM/CBM) of the levels to be inverted by hand',&
+&                            Eh_pumped_pair_energy,unit=E_unit)
+ ! Method 2
+ call it(defs,'RTpumpDE',   '[RT] Energy difference to be matched',Eh_pumped_pair_deltaE,unit=E_unit)
+ call it(defs,'RTpumpBZWd', '[RT] Size if the K reagion width',Eh_pumped_pair_BZ_width)
+ !
+ ! The idea for Fermi occupations is to start from the 'end' of a carrier relaxation run
+ call it(defs,'RTmuEh', '[RT] Chemical potentials hole | electron',Eh_mu,unit=E_unit)
+ call it(defs,'RTtempEh', '[RT] Effective temperature hole | electron',Eh_temp,unit=E_unit)
+ call it(defs,'RTautotuneThr', '[RT] Threshold to match no. of pumped holes and electrons.',h_mu_autotune_thr)
+ !
+ call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
+ call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')
+ call it('f',defs,'IncludeEQocc','[NEGF] Include also equilibrium occupations')
+ call it('f',defs,'NoOcc',       '[NEGF] Consider only the changes in the energy')
+ call it('f',defs,'SkipFermiFIT','[NEGF] Do a Fermi Fit of occupations (and lifetimes ratio)')
+ call it('f',defs,'SeparateEH',  '[NEGF] Separate electrons from holes in the data file') 
+ !
+ ! TRANSIENT ABSORPTION
+ !
+ call it(defs,'RTFfrmat', 'Output format [3col/2col]',p_format)
+ call it('f',defs,'Transmission','Compute the transient transmissions')
+ call it('f',defs,'Reflectivity','Compute the transient reflectivity')
+ call it('f',defs,'IncludeIP'   ,'Include the v-v and c-c contribution at IP level')
+ !
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! BANDS
  !
@@ -146,6 +224,14 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'INTERP_Grid',     'Interpolation BZ Grid',INTERP_grid)
  call it(defs,'INTERP_Shell_Fac','The bigger it is a higher number of shells is used',INTERP_shell_factor)
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _YPP_RT
+ call it('f',defs,'NormN','Nel on the bands is renormalized to Nel in the IBZ')
+ call it(defs,'NelFac'   ,'Rescale the total number of electrons',Nel_fac)
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Wannier interface
  !
@@ -188,6 +274,9 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
  call it(defs,'Qpts','Index q of the BS state(s)',BSiq)
  !
+#if defined _YPP_MAGNETIC
+ call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')
+#endif
  ! 
  ! PLOT
  !
@@ -200,6 +289,9 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'MagDir', 'Magnetization component',mag_dir)
  call it(defs,'CurrentDir', '[cc] Carthesian direction (used to average in 2D/3D plots or to plot in 1D)',current_dir)
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')
+#if defined _YPP_SC
+ call it(defs,'PotValue',  'REal/IMaginary part of the mean potential',V_value)
+#endif
 #if defined _YPP_ELPH
  !
  !EL-PH
@@ -235,6 +327,12 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'WannBnds','Range of interpolated bands, internally start from 1',wannier_bands)
  call it(defs,'DgridOrd','Order of interpolation with double grid',ord_dgrid_ipol)
  !
+ ! GPL_EXCLUDE_START
+ !
+ call it(defs,'GammaRadius','[a.u.] Maximum distance from gamma',gamma_radius,verb_level=V_general)
+ call it(defs,'OutputAlat','[a.u.] Lattice constant used for "alat" ouput format',alat_used_for_output)
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Remove Simmetries
  !
@@ -244,6 +342,15 @@ subroutine ypp_INIT_load(defs)
  !
  call it(defs,'Efield1','First external Electric Field',E_field(1,:))
  !
+ ! GPL_EXCLUDE_START
+ !
+ call it('f',defs,'RmSpaceInv' , 'Remove Spatial Inversion')
+ call it(defs,'Efield2','Additional external Electric Field',E_field(2,:))
+ call it(defs,'BField',    '[MAG] Magnetic field modulus',B_field,unit=Bfield_unit)
+ call it(defs,'Bpsi',      '[MAG] Magnetic field psi angle [degree]',B_psi,unit='deg')
+ call it(defs,'Btheta',    '[MAG] Magnetic field theta angle [degree]',B_theta,unit='deg')
+ !
+ ! GPL_EXCLUDE_END
  !
 #if defined _YPP_RT
  !
@@ -260,6 +367,17 @@ subroutine ypp_INIT_load(defs)
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
  call it('f',defs,'PrintExc','Print excited states functions')
  !
+ ! GPL_EXCLUDE_START
+ !
+ call it(defs,'ProbeKey','Keyword to select groups of PROBE databases',Probe_Keyword,verb_level=V_real_time)
+ call it(defs,'PumpKey','Keyword to select groups of PUMP databases',Pump_Keyword,verb_level=V_real_time)
+ !
+ call it('f',defs,'FrMinDamp','Force minimal damping',verb_level=V_real_time)
+ call it('f',defs,'SkipOBS_IO','Do not dump on file the RT observables (P(t),J(t),D(t)...)')
+ call it('f',defs,'RmAsymLim','Remove Asymptotic limit from P or J',verb_level=V_real_time) 
+ call it('f',defs,'CheckPaths','Check inside all the paths present in the current folder',verb_level=V_real_time)
+ !
+ ! GPL_EXCLUDE_END
  !
 #endif
  !

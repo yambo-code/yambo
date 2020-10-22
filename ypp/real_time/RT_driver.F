@@ -48,6 +48,17 @@ subroutine RT_driver(en,k,q)
  !
  call RT_output_INIT( )
  !
+ ! GPL_EXCLUDE_START
+ !
+ ! Real-Time occupations and lifetimes
+ !=====================================
+ if ( l_RT_occupations.or.l_RT_lifetimes ) call RT_occupations_driver(k,en)
+ !
+ ! Plotting 
+ !===========
+ if (l_RT_density)                         call RT_density(en,k,q)
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Response Functions
  !====================

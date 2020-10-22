@@ -30,6 +30,10 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  use collision_ext,  ONLY:COLLISIONS_element,COH_COLL_element,HXC_COLL_element,GW_NEQ_COLL_element,&
 &                         COLL_bands,&
 &                         GW_NEQ_collisions,COH_collisions,HXC_collisions,P_collisions,COLLISIONS_group
+#if defined _QED
+ use QP_m,           ONLY:QP_QED_ng
+ use collision_ext,  ONLY:P_COLL_element
+#endif
  !
 #include<memory.h>
  !
@@ -112,6 +116,26 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    endif
  endif
  !
+#if defined _QED
+ !
+ if (l_Momentum) then
+   D(1,:)=(/1,QP_QED_ng/)
+   D(2,:)=COLL_bands
+   D(3,:)=(/1,nqbz/)
+   if (l_collision.and.l_alloc) then
+     allocate(P_COLL_element(size_))
+     P_COLL_element%N=size_
+   endif
+   call local_alloc_and_free(P_COLL_element,P_collisions)
+   if ((l_collision.or.l_all).and.l_clean) then
+     if (allocated(P_COLL_element)) then
+       call local_alloc_and_free(P_COLL_element,P_collisions)
+       deallocate(P_COLL_element)
+     endif
+   endif
+ endif
+ !
+#endif
  !
  if (l_GW_NEQ) then
    D(1,:)=(/1,N_plasma_poles_global/)

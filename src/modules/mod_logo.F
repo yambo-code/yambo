@@ -76,11 +76,20 @@ module LOGO
      !
      include 'version.inc'
      !
+     ! GPL_EXCLUDE_START
      !
-     comment(1)='GPL Version '//&
+     comment(1)='Version '//&
 &                trim(intc(code_version(1)))//'.'//trim(intc(code_version(2)))//&
-&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_GPL_revision))//&
-&                '.'//' (Based on r.'//trim(intc(code_revision))//' h.'//trim(code_hash)//')'
+&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_revision))//' Hash '//trim(code_hash)
+     !
+     ! GPL_EXCLUDE_END
+     !
+     ! GPL_INCLUDE_START
+!     comment(1)='GPL Version '//&
+!&                trim(intc(code_version(1)))//'.'//trim(intc(code_version(2)))//&
+!&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_GPL_revision))//&
+!&                '.'//' (Based on r.'//trim(intc(code_revision))//' h.'//trim(code_hash)//')'
+     ! GPL_INCLUDE_END
      !
      MPI_string="Serial"
 #if defined _MPI
@@ -94,8 +103,13 @@ module LOGO
      OMP_string="+OpenMP"
 #endif
      !
+     ! GPL_EXCLUDE_START
+     comment(2)="Branch is "//trim(code_branch)
+     ! GPL_EXCLUDE_END
      !
-     comment(2)=""
+     ! GPL_INCLUDE_START
+     !comment(2)=""
+     ! GPL_INCLUDE_END
      !
      comment(3)=trim(MPI_string)//trim(OMP_string)//" Build"
      !

@@ -27,6 +27,9 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  !
  use pars,                ONLY:SP,schlen,cZERO
  use drivers,             ONLY:l_sc_run,l_nl_optics
+#if defined _PL
+ use drivers,             ONLY:l_photolum
+#endif
  use interfaces,          ONLY:WF_load,WF_free
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol
@@ -83,7 +86,23 @@ integer :: ierr
  l_eval_DIP_V =use_g_space_approach.or.Dip%force_v_g_space
  l_eval_DIP_P2=.false.
  !
+#if defined _PL
+ l_eval_DIP_V =l_eval_DIP_V.or.l_photolum
+#endif
+#if defined _NL && !defined _PL
+ l_eval_DIP_V =l_eval_DIP_V.or.l_nl_optics
+#endif
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _SC
+ l_eval_DIP_P2=l_sc_run
+#endif
+#if defined _RT
+ l_eval_DIP_P2=l_real_time
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
 #ifdef _CUDA
  allocate(g_vec_d,source=g_vec)
@@ -196,6 +215,23 @@ integer :: ierr
          !
          DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho
          !
+         ! GPL_EXCLUDE_START
+         !
+         !======
+         ! <P^2>
+         !======
+         !
+         if (l_eval_DIP_P2) P_square(ic,iv,ik_mem,i_sp_pol)= P2
+         !
+         !============
+         ! <P_spinor>
+         !============
+         !
+#if defined _RT
+         if (l_real_time_magn_dipoles) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor
+#endif
+         !
+         ! GPL_EXCLUDE_END
          !
          if(.not.(l_eval_dip_V.or.l_eval_dip_iR)) then
            cycle

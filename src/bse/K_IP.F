@@ -43,6 +43,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
  use parser_m,      ONLY:parser
  use timing_m,      ONLY:timing
+#if defined _PL
+ use drivers,       ONLY:l_photolum
+ use DIPOLES,       ONLY:DIP_P
+ use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
+#endif
 #if defined _KERR
  use drivers,       ONLY:l_kerr
  use KERR,          ONLY:A_drude
@@ -60,6 +65,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  real(SP)          ::conjg_fac,Z_
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2/n_sp_pol),&
 &                    para_term_w0,diam_term_used
+#if defined _PL
+ complex(SP)       ::rotated_P(3),P_weighted(3)
+ real(SP)          ::res_PL(2)
+#endif
  !
  if (l_bs_fxc) return
  !
@@ -104,8 +113,18 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    ! These are trivial to compute at finite q, instead they are 
    ! obtained via the dipoles in the q->0 limit and stored to disk
    !
+   ! GPL_EXCLUDE_START
+   if (iq==1) then
+   ! GPL_EXCLUDE_END
      call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err,'K')
      call DIPOLE_expand_and_project(Xk,Dip)
+   ! GPL_EXCLUDE_START
+   else
+     ! Alternative form presently not working since uGo shift of the WFs is missing
+     !call DIPOLE_real_space_finiteq(Xen,Xk,Dip,iq)
+     call DIPOLE_gspace_finiteq(Ken,Xk,Dip,iq)
+   endif
+   ! GPL_EXCLUDE_END
    !
    BSS_Vnl_included=Dip%Vnl_included
    !
@@ -142,6 +161,18 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
        BS_T_grp(i_T_g)%dipoles_R(i_T)=conjg_fac*conjg(DIP_projected(ic,iv,ik_bz_mem,i_sp_pol))
        if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected(ic,iv,ik_bz_mem,i_sp_pol)
+#if defined _PL
+       if (l_photolum) then
+         !
+         call GET_the_rotated_P( )
+         !
+         BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:)=conjg(rotated_P(:))
+         if (BS_K_coupling) then
+           BS_T_grp(i_T_g)%dipoles_A_PL(i_T,:)=rotated_P(:)
+         endif
+         !
+       endif
+#endif
        !
        if ( abs(real(E_plus_W0)) < Dip%Energy_treshold .and. iq==1 ) cycle
        !
@@ -153,6 +184,17 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        res=BS_T_grp(i_T_g)%dipoles_R(i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R(i_T))*BS_T_grp(i_T_g)%f_RES(i_T)*Z_
        if (allocated(BS_T_grp(i_T_g)%W) .and. trim(global_gauge)=="velocity") res=res*E_plus_W0/conjg(E_plus_W0)
        !
+#if defined _PL
+       if (l_photolum) then
+         do ic=1,3
+           P_weighted(ic)=BS_T_grp(i_T_g)%dipoles_R_PL(i_T,ic)*PL_weights(ic)
+         enddo
+         !
+         ! Note that res_PL is always positive as f_PL>0
+         !
+         res_PL=Z_*dot_product(P_weighted,P_weighted)*BS_T_grp(i_T_g)%f_PL(:,i_T)
+       endif
+#endif
        !
        do i_pert_SOC=1,n_SOC
          !
@@ -170,6 +212,14 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
            if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+conjg(res/E_plus_W(i_pert_SOC))
          endif
          !
+#if defined _PL
+         if (l_photolum) then
+           PL(:,3)=PL(:,3)  +PL_prefactor*res_PL(1)*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))/pi
+           if (BSS_add_antiresonant.or.BS_K_coupling) then
+             PL(:,3)=PL(:,3)+PL_prefactor*res_PL(2)*aimag(-1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))))/pi
+           endif
+         endif
+#endif
          !
        enddo
        !
@@ -192,6 +242,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_eh_INDEX%COMM )
    !
+#if defined _PL
+   if (l_photolum) then
+     call PP_redux_wait(PL(:,3)        ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+     call PP_redux_wait(PL(:,3)        ,COMM=PAR_COM_eh_INDEX%COMM )
+   endif
+#endif
    !
    if (trim(L_kind)=="full") then
      do i_T_g=1,BS_nT_grps
@@ -258,6 +314,34 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  call timing('T_space IP',OPR='stop')
  !
+#if defined _PL
+ !
+ contains
+   !
+   subroutine GET_the_rotated_P( )
+     !
+     use D_lattice,      ONLY:i_time_rev,dl_sop,sop_inv,nsym
+     use parallel_m,     ONLY:PAR_DIPk_ibz_index
+     !
+     integer :: ik,is,ik_mem
+     logical :: t_rev
+     !
+     ik=Xk%sstar(ik_bz,1)
+     is=Xk%sstar(ik_bz,2)
+     !
+     if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
+     if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
+     !
+     is = sop_inv( is )
+     !      
+     ik_mem    = PAR_DIPk_ibz_index(ik)
+     rotated_P = matmul( dl_sop(:,:,is) , DIP_P(:,ic,iv,ik_mem,i_sp_pol) )
+     !
+     if (t_rev) rotated_P = conjg( rotated_P )
+     !
+   end subroutine
+   !
+#endif
    !
    !
 end subroutine

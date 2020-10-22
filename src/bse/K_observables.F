@@ -26,6 +26,9 @@ subroutine K_observables(WHAT,W)
  use pars,          ONLY:cZERO
  use X_m,           ONLY:X_alloc,Epsilon_ij,Epsilon_ii,Joint_DOS
  use frequency,     ONLY:w_samp
+#if defined _PL
+ use PHOTOLUM,      ONLY:PL,PL_init
+#endif
  use BS_solvers,    ONLY:BSS_n_freqs
  !
 #include<memory.h>
@@ -40,6 +43,10 @@ subroutine K_observables(WHAT,W)
    Epsilon_ij=cZERO
    Epsilon_ij(:,1)=W%p(:)
 #endif
+#if defined _PL
+   call PL_init( )
+   PL(:,1) = W%p(:)  
+#endif
    !
    call X_alloc("EPS",(/BSS_n_freqs,4/))
    Epsilon_ii(:,1)   =W%p(:)
@@ -51,6 +58,9 @@ subroutine K_observables(WHAT,W)
    YAMBO_FREE(Epsilon_ij)
 #endif
    !
+#if defined _PL
+   YAMBO_FREE(PL)
+#endif
    !
    call X_alloc("EPS")
    !

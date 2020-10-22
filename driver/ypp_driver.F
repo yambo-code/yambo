@@ -205,6 +205,11 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
 #if defined _YPP_RT
  !
+ ! GPL_EXCLUDE_START
+ !
+ if (l_RT_DBs)   call RT_DBs_carriers_setup(en,k,q)
+ !
+ ! GPL_EXCLUDE_END
  !
  if (l_RealTime) call RT_driver(en,k,q)
  !
@@ -236,6 +241,9 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
    ! =====     ========
    if (l_gkkp)                i_err=ELPH_databases(k,en,q)
    if (l_eliashberg.or.l_dos) call ELPH_eliashberg_dos(k,en,q)
+   ! GPL_EXCLUDE_START
+   if (l_atomic_amplitude)    call ELPH_atomic_amplitude(q)
+   ! GPL_EXCLUDE_END
  endif
  !
  if (l_electrons.and.l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q)

@@ -1,0 +1,5 @@
+#if defined _YPP_ELPH || _YPP_RT
+ELPH_objects = ELPH_databases.o ELPH_eliashberg_dos.o \
+               ELPH_general_gFsq.o ELPH_gkkp_expand.o
+#endif
+objs = $(ELPH_objects)

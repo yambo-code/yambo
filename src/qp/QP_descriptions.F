@@ -45,6 +45,10 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_branches,elph_nDBs_used,&
 &                        FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
+#if defined _QED
+ use QP_m,          ONLY:QP_QED_ng
+ use drivers,       ONLY:l_elphoton_corr
+#endif
  implicit none
  !
  type(QP_t)  ::qp
@@ -190,6 +194,18 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    !
  endif
  !
+#if defined _QED 
+ if (l_elphoton_corr) then
+   qp%n_descs=qp%n_descs+1
+   qp%description(qp%n_descs)=' El-Photon correlation  : yes'
+   if (.not.l_life) then
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),trim(&
+&         STRING_pack('(a,',gen_fmt( (/QP_QED_ng /) ),')'))) &
+&         ' QED RL components      :',QP_QED_ng
+   endif
+ endif
+#endif
  !
 #if defined _ELPH 
  !

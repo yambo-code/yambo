@@ -106,6 +106,13 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  endif
 #endif
  !
+#if defined _QED
+ if (l_elphoton_scatt.or.l_elphoton_corr) then
+   call COLLISIONS_basic_operations( "alloc", P_collisions )
+   call io_control(ACTION=OP_RD_CL,COM=COM_,MODE=VERIFY,SEC=(/1/),ID=ID)
+   io_err(4)=io_COLLISIONS(ID,P_collisions)
+ endif
+#endif
  !
  if (CHECK_EXISTENCE_ONLY) then
    !
@@ -146,6 +153,9 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  if (l_elel_scatt)                         call local_IO( GW_NEQ_collisions )
 #endif
  !
+#if defined _QED
+ if (l_elphoton_scatt.or.l_elphoton_corr)  call local_IO( P_collisions )
+#endif
  !
  call timing('COLLISIONS_load',OPR='stop')
  !
@@ -165,6 +175,12 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        call COLLISIONS_alloc_and_free(trim(COLL%name),"collision","alloc",0)
      endif
      !
+#if defined _QED
+     if (COLL%kind==QP_SE_GW_QED) then
+       call COLLISIONS_alloc_and_free("Momentum","collision","alloc",0)
+       call COLLISIONS_alloc_and_free("Momentum","v3","alloc ",0)
+     endif
+#endif
      !
 #if defined _RT
      if (COLL%kind==QP_SE_GW_NEQ) then
@@ -197,6 +213,14 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
          endif
        endif
 #endif
+#if defined _QED
+       if (COLL%kind==QP_SE_GW_QED) then
+         if(.not.allocated(P_COLL_element(1)%v_r)) then
+           io_err(1)=io_COLLISIONS(ID,COLL,P_COLL_element(1),i_coll=i_coll)
+           call COLLISIONS_alloc_and_free("Momentum","v1 table","alloc",1)
+         endif
+       endif
+#endif
        !
        call io_control(ACTION=RD_CL,SEC=(/3/),ID=ID)
        !
@@ -205,6 +229,9 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 &                                io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(i_coll_mem))
 #if defined _RT
        if (COLL%kind==QP_SE_GW_NEQ) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)
+#endif
+#if defined _QED
+       if (COLL%kind==QP_SE_GW_QED) io_err(1)=io_COLLISIONS(ID,COLL,P_COLL_element(1),i_coll=i_coll)
 #endif
        !
        ! Now the transfer %v_r => %v3_r
@@ -251,6 +278,9 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
 #if defined _RT
      if (COLL%kind==QP_SE_GW_NEQ) call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","clean",1)
+#endif
+#if defined _QED
+     if (COLL%kind==QP_SE_GW_QED) call COLLISIONS_alloc_and_free("Momentum","v1 table","clean",1)
 #endif
      !
      call live_timing()

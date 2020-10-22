@@ -1,12 +1,21 @@
+QED_objs = 
 RT_objs =
 NL_objs =
+SC_objs =
+#if defined _QED
+QED_objs=SCATTERING_GW_kinematics.o SCATTERING_QED_transverse_matrix.o COLLISIONS_momentum.o
+#endif
+#if defined _SC
+SC_objs = COLLISIONS_compose_sc.o
+#endif
 #if defined _RT
 RT_objs = COLLISIONS_compose_rt.o
 #endif
 #if defined _NL
 NL_objs = COLLISIONS_compose_nl.o
 #endif
-objs= COLLISIONS_basic_operations.o \
+objs= PLASMA_parallel_setup.o COLLISIONS_basic_operations.o \
+       PLASMA_build_up.o PLASMA_tables_and_dimensions.o \
        COLLISIONS_alloc_and_free.o COLLISIONS_eval.o COLLISIONS_load.o \
        COLLISIONS_linearize_and_IO.o COLLISIONS_map_to_QP_table.o \
-       COLLISIONS_HXC.o  $(RT_objs) $(NL_objs)
+       COLLISIONS_NEQ_GW_static.o COLLISIONS_HXC.o $(SC_objs) $(QED_objs)  $(RT_objs) $(NL_objs)

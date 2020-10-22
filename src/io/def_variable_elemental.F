@@ -116,10 +116,19 @@ subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
      ch=STRING_pack(MODE,trim(io_file(ID)),"]",repeat('-',max( 60-len_trim(io_file(ID))-4,1) ))
    else
      !
+     ! GPL_EXCLUDE_START
      !
      write (ch,'(a,i6.6,2a,3(a,i2.2),a,i5.5,a)')  '- S/N ',io_serial_number(ID),' ',&
-&          repeat('-',25),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
-&          '.',io_code_version(ID,3),' r.',io_code_revision(ID,2),' -'
+&            repeat('-',25),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
+&            '.',io_code_version(ID,3),' r.',io_code_revision(ID,1),' -'
+     !
+     ! GPL_EXCLUDE_END
+     !
+     ! GPL_INCLUDE_START
+!     write (ch,'(a,i6.6,2a,3(a,i2.2),a,i5.5,a)')  '- S/N ',io_serial_number(ID),' ',&
+!&          repeat('-',25),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
+!&          '.',io_code_version(ID,3),' r.',io_code_revision(ID,2),' -'
+     ! GPL_INCLUDE_END
      !
    endif
    !

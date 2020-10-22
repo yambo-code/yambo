@@ -32,6 +32,10 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
  use BS,             ONLY:BS_H_dim
  use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles,Co_factor,K_inv_slk,K_slk
+#if defined _PL
+ use BS_solvers,     ONLY:K_INV_PL
+ use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL
+#endif
  !
 #include<memory.h>
  !
@@ -48,6 +52,9 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  character(1) :: Gr
  complex(SP)              :: gauge_factor
  complex(SP), allocatable :: Mm1(:,:)
+#if defined _PL
+ integer,        external :: PL_via_perturbative_inversion
+#endif
  integer,        external :: EPS_via_perturbative_inversion
  !
  if (do_it_full.and..not.K_slk%kind=="SLK") then
@@ -69,6 +76,9 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
      !
      if(.not.px%element_1D(iw)) then
        K_INV_EPS%err(iw)=0
+#if defined _PL
+       K_INV_PL%err(iw)=0
+#endif
        cycle
      endif
      !
@@ -77,6 +87,14 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
 &                                                       Epsilon_ii(iw,2),Lo(:,iw,:))
      endif
      !
+#if defined _PL
+     !
+     if (K_INV_PL%err(iw)/=0) then
+       K_INV_PL%err(iw)=PL_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_PL,PL_prefactor,&
+&                                                     PL(iw,2),Lo(:,iw,:))
+     endif
+     !
+#endif
    else
      !
      do i_L=1,Lo_n_loop
@@ -94,6 +112,14 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
          K_INV_EPS%err(iw)=0
        endif
        !
+#if defined _PL
+       !
+       if (what=="PLS".or.what=="any") then
+         call PL_compose(i_L)
+         K_INV_PL%err(iw)=0
+       endif
+       !
+#endif
        !
      enddo
      !
@@ -111,6 +137,27 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  !
  contains
    !
+#if defined _PL
+   subroutine PL_compose(i_L_)
+     complex(SP) :: Vp(BS_H_dim),V(BS_H_dim)
+     integer     :: i_L_,i_c,i_cv,i1,i2
+     do i_c=1,3
+       if (K_slk%kind=="SLK") then
+#if defined _SCALAPACK
+         if(i_L_==1) call PARALLEL_M_by_V('c',BS_H_dim,K_inv_slk,BSS_dipoles_PL(:,i_c),V)
+         if(i_L_==2) call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,conjg(BSS_dipoles_PL(:,i_c)),V)
+#endif
+       else
+         if(i_L_==1) call M_by_V('c',BS_H_dim,Mm1,BSS_dipoles_PL(:,i_c),V)
+         if(i_L_==2) call M_by_V('n',BS_H_dim,Mm1,conjg(BSS_dipoles_PL(:,i_c)),V)
+       endif
+       do i_cv=1,BS_H_dim
+         Vp(i_cv)=V(i_cv)*Lo(i_cv,iw,i_L_+Lo_n_loop)
+       enddo
+       PL(iw,2)=PL(iw,2)+PL_prefactor*Vstar_dot_V(BS_H_dim,V,Vp)
+    enddo
+   end subroutine
+#endif
    !
    subroutine EPS_compose(i_L_)
      integer     :: i_L_

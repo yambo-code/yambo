@@ -74,6 +74,16 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  call section('*','Excitonic Properties')
  !
+ ! GPL_EXCLUDE_START
+ !
+ ! E SOC perturbative
+ ! 
+ if(n_spin==1) then
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
+   io_err=io_E_SOC_map(en,k,io_ID)
+ endif
+ !
+ ! GPL_EXCLUDE_END
  !
  iq = BSiq
  YAMBO_ALLOC(BSqpts,(3,iq))
@@ -186,6 +196,27 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  if (l_exc_wf)     call exciton_WFs(Xk,BS_E_degs,iq)
  !
  !
+ !GPL_EXCLUDE_START
+ !
+ ! Excitonic Eliashberg function 
+ !================================
+#if defined _YPP_ELPH
+ !
+ if (l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
+ !
+ if (l_gkkp)       call ELPH_excitonic_gkkp(Xk)
+ !
+#endif
+ !
+#if defined _YPP_RT
+ !
+ ! Transient absorption 
+ !======================
+ if(l_RT_abs)      call RT_transient_absorption(Xen,Xk,q,BS_H_dim,BS_E,BS_R_right)
+ !
+#endif
+ !
+ !GPL_EXCLUDE_END
  !
  !
  ! CLEAN

@@ -122,6 +122,20 @@ integer function io_DIPOLES(Dip,ID)
    call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    call DIP_alloc('DIP_v' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    !
+   ! GPL_EXCLUDE_START
+   !
+#if defined _RT
+   if (l_real_time_magn_dipoles) then
+     call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+     call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+     if (n_spinor==2) call DIP_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+   endif
+#endif
+#if defined _SC || defined _RT
+   if (l_sc_run.or.l_real_time)  call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+#endif
+   !
+   ! GPL_EXCLUDE_END
    !
  endif
  !
@@ -151,6 +165,56 @@ integer function io_DIPOLES(Dip,ID)
  call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
  call io_bulk(ID,C3=DIP_v(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _RT
+ if (l_real_time_magn_dipoles) then
+   !
+   ! Itinerant magnetization
+   !
+   write (VAR_name,'(3(a,i4.4))') 'DIP_itinerant_k_',ik,'_spin_',i_sp_pol
+   call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
+   call io_bulk(ID,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol,2),IPOS=DIP_ipos)
+   !
+   ! Orbital magnetization
+   !
+   write (VAR_name,'(3(a,i4.4))') 'DIP_orbital_k_',ik,'_spin_',i_sp_pol
+   call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
+   call io_bulk(ID,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol,1),IPOS=DIP_ipos)
+   !
+   ! Spin magntization
+   !
+   write (VAR_name,'(3(a,i4.4))') 'DIP_spin_k_',ik,'_spin_',i_sp_pol
+   call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
+   call io_bulk(ID,C3=DIP_spin(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
+   !
+   if (n_spinor==2) then
+     !
+     ! P_Spinor
+     !
+     write (VAR_name,'(a,i4.4)') 'DIP_P_spinor_k_',ik
+     call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=Pspinor_size)
+     call io_bulk(ID,C5=DIP_P_spinor(:,:,:,:,:,ik_mem),IPOS=Pspinor_ipos)
+     !
+   endif
+   !
+ endif
+ !
+#endif
+ !
+#if defined _SC || defined _RT
+ if (l_sc_run.or.l_real_time) then
+   !
+   ! P2
+   !
+   write (VAR_name,'(3(a,i4.4))') 'P_square_k_',ik,'_spin_',i_sp_pol
+   call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=P2_size)
+   call io_bulk(ID,C2=P_square(:,:,ik_mem,i_sp_pol),IPOS=P2_ipos )
+   !
+ endif
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
 1 call io_disconnect(ID=ID)
  !

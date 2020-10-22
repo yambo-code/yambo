@@ -65,6 +65,10 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
 #ifdef _CUDA
  use X_m,           ONLY:rhotw_save_d,rhotw_save2_d
 #endif
+#if defined _SC 
+ use drivers,       ONLY:l_sc_run,l_eval_collisions
+ use SC,            ONLY:it_now
+#endif
  use timing_m,      ONLY:timing
  !
 #include<dev_defs.h>
@@ -168,6 +172,17 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    !
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
+#if defined _ELPH
+ !
+ ! Green Functions must be all mapped to the Xw range so to be easily convoluted
+ !
+ if (allocated(Xen%GreenF).and.current_iq==0) call X_GreenF_remap(X%ib,Xen,Xw)
+ !
+#endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Time-Rev is Spatial Inv => only half X is eval
  !                            ===================
@@ -198,6 +213,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !========
  live_t_string='Xo@q['//trim(intc(iq))//'] '
  !
+#if defined _SC 
+ if (l_sc_run.and..not.l_eval_collisions) live_t_string='Xo @it['//trim(intc(it_now))//'] '
+#endif
  !
  if (coarse_grid_N>=n_out_threads) call live_timing(trim(live_t_string),coarse_grid_N/n_out_threads)
  !
@@ -269,9 +287,22 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    ! 2) Then the frequency dependent term
    !=======================================
    !
+   ! GPL_EXCLUDE_START
+   !
+#if defined _ELPH
+   if(     allocated(Xen%GreenF)) call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
+   if(.not.allocated(Xen%GreenF)) call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.)
+#else
+   !
+   ! GPL_EXCLUDE_END
    !
    call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.)
    !
+   ! GPL_EXCLUDE_START
+   !
+#endif
+   !
+   ! GPL_EXCLUDE_END
    !
    ! 3) Finally multiply residual and frequency dependent term
    !===========================================================

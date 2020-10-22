@@ -1,0 +1,3 @@
+objs =	TDDFT_do_X_W_typs.o \
+        TDDFT_ALDA_G_space.o TDDFT_ALDA_R_space.o \
+	TDDFT_PF_coefficient.o

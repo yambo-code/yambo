@@ -46,6 +46,11 @@ subroutine K_output_file(iq,mode)
  use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name
  use KERR,      ONLY:B_Hall,A_drude
 #endif
+#if defined _PL
+ use X_output,  ONLY:pl_file_name
+ use PHOTOLUM,  ONLY:PL
+ use drivers,   ONLY:l_photolum
+#endif
  !
  implicit none
  integer      :: iq
@@ -106,6 +111,9 @@ subroutine K_output_file(iq,mode)
  if (l_INIT) title_mode='ot'
  !
  call of_open_close(eps_file_name,title_mode)
+#if defined _PL
+ call of_open_close(pl_file_name,title_mode)
+#endif
  if (eval_reflectivity) call of_open_close(refl_file_name,title_mode)
  if (eval_eels)         call of_open_close(eel_file_name,title_mode)
  if (eval_alpha)        call of_open_close(alpha_file_name,title_mode)
@@ -170,6 +178,13 @@ subroutine K_output_file(iq,mode)
  if (.not.l_print_col4) call msg("o eps",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
  if (l_IP) call msg("o eps",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
  !
+#if defined _PL
+ if (l_photolum) then
+   call X_setup_headers('PL')
+   if (     l_IP) call msg("o pl_",'#',headers(:2),INDENT=0,USE_TABS=.TRUE.)
+   if (.not.l_IP) call msg("o pl_",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+ endif
+#endif
  !
  if (eval_reflectivity) then 
    call X_setup_headers('REFL')
@@ -250,6 +265,26 @@ subroutine K_output_file(iq,mode)
  !
  call msg("o eps refl eel alpha off beta moke jdos pl_",'#')
  !
+#if defined _PL
+ !
+ if (l_photolum) then
+   !
+   ! PHOTOLUMINESCENCE
+   !--------------------
+   !
+   do iw=1,BSS_n_freqs
+     !
+     ! PL: 2 (int) 3 (non int) 
+     !
+     if (     l_IP) n_output_data=2 ; output_data(1:2)=(/real(PL(iw,1))*HA2EV,PL(iw,3)/)
+     if (.not.l_IP) n_output_data=3 ; output_data(1:3)=(/real(PL(iw,1))*HA2EV,PL(iw,2),PL(iw,3)/)
+     call msg("o pl_",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
+     !
+   enddo
+   !
+ endif
+ !
+#endif
  !
  ! ABSORPTION
  !------------
@@ -461,6 +496,9 @@ subroutine K_output_file(iq,mode)
    !
    subroutine CLOSE_the_files( )
      !
+#if defined _PL
+     call of_open_close(pl_file_name)
+#endif
      call of_open_close(eps_file_name)
      call of_open_close(refl_file_name)
      call of_open_close(eel_file_name)

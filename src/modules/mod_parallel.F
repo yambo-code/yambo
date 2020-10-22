@@ -252,6 +252,7 @@ module parallel_m
  !
  ! ... G bands
  type(PP_indexes),SAVE :: PAR_IND_G_b
+ type(PP_indexes),SAVE :: PAR_PH_IND_eh_bands
  type(PP_indexes),SAVE :: PAR_IND_B_mat
  type(PP_indexes),SAVE :: PAR_IND_Bp_mat
  type(PP_indexes),SAVE :: PAR_IND_B_mat_ordered
@@ -276,7 +277,6 @@ module parallel_m
  !
  ! Specific MPI ID's ...
  !======================
- !
  ! ... QP
  integer            :: PAR_IND_QP_ID
  !
@@ -317,10 +317,6 @@ module parallel_m
  ! ... linear response & BSK
  integer            :: PAR_IND_VAL_BANDS_X_ID(n_parallel_X_types)
  integer            :: PAR_IND_CON_BANDS_X_ID(n_parallel_X_types)
- !
- ! ... RT
- integer            :: PAR_IND_B_mat_ID
- integer            :: PAR_IND_Bp_mat_ID
  !
  ! ... BSK
  integer            :: PAR_IND_eh_ID
@@ -448,10 +444,6 @@ module parallel_m
  integer,allocatable:: PAR_PLASMA_index(:)
  integer            :: PAR_nQP
  integer,allocatable:: PAR_QP_index(:)
- integer            :: PAR_n_B_mat_elements
- integer,allocatable:: PAR_B_mat_index(:,:)
- integer            :: PAR_n_Bp_mat_elements
- integer,allocatable:: PAR_Bp_mat_index(:,:)
  integer            :: PAR_nQ_ibz
  integer,allocatable:: PAR_Q_ibz_index(:)
  integer            :: PAR_PH_nQ_ibz
@@ -473,6 +465,7 @@ module parallel_m
  integer,allocatable:: PAR_G_bands_index(:)
  integer            :: PAR_n_freqs 
  integer,allocatable:: PAR_FREQS_index(:)
+ integer            :: PAR_n_Bp_mat_elements 
  !
  ! WorkSpace
  !

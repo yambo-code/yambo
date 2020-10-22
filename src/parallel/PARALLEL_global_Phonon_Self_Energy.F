@@ -25,13 +25,15 @@ subroutine PARALLEL_global_Phonon_Self_Energy(E,Xk,q)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
+ use ELPH,          ONLY:QP_PH_n_G_bands
+ use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,&
+&                        PARALLEL_live_message,PARALLEL_MATRIX_distribute
  use parallel_m,    ONLY:COMM_copy,PAR_build_index
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_PH_COM_eh_bands_INDEX,PAR_PH_COM_Q_ibz_INDEX,PAR_PH_COM_Xk_bz_INDEX,    &
 &                        PAR_PH_COM_Xk_bz_A2A,PAR_PH_COM_Q_ibz_A2A
  ! IND
- use parallel_m,    ONLY:PAR_PH_IND_Xk_bz,PAR_PH_IND_Q_ibz
+ use parallel_m,    ONLY:PAR_PH_IND_Xk_bz,PAR_PH_IND_Q_ibz,PAR_PH_IND_eh_bands
  ! INDEX
  use parallel_m,    ONLY:PAR_PH_Q_ibz_index
  ! DIMENSIONS
@@ -45,6 +47,7 @@ subroutine PARALLEL_global_Phonon_Self_Energy(E,Xk,q)
  !
  ! Work space
  !
+ integer :: ID
  !
  CALL PARALLEL_structure(3,(/"q","k","b"/))
  !
@@ -78,12 +81,14 @@ subroutine PARALLEL_global_Phonon_Self_Energy(E,Xk,q)
  !.........................................................................
  ! Eh bands loop
  !.........................................................................
- !call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',(/1,QP_PH_n_G_bands/))
- !
+ call PARALLEL_MATRIX_distribute(PAR_PH_COM_eh_bands_INDEX,PAR_PH_IND_eh_bands,(/1,QP_PH_n_G_bands/),PAR_ID=ID)
+ call PARALLEL_live_message("eh-bands",ENVIRONMENT="Phonon_Self_Energy",&
+&         LOADED=PAR_PH_IND_eh_bands%n_of_elements(ID+1),TOTAL=QP_PH_n_G_bands**2,&
+&         NCPU=PAR_PH_COM_eh_bands_INDEX%n_CPU)
  !.........................................................................
  ! K-points (BZ) for e-h pairs
  !.........................................................................
- call PARALLEL_index(PAR_PH_IND_Xk_bz,(/Xk%nibz/),COMM=PAR_PH_COM_Xk_bz_INDEX)
+ call PARALLEL_index(PAR_PH_IND_Xk_bz,(/Xk%nbz/),COMM=PAR_PH_COM_Xk_bz_INDEX)
  PAR_PH_IND_Xk_bz_ID=PAR_PH_COM_Xk_bz_INDEX%CPU_id
  !
  call PARALLEL_live_message("K(bz)",ENVIRONMENT="Phonon_Self_Energy",&

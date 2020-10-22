@@ -70,7 +70,7 @@ subroutine RT_relaxation(E,k,q,Time)
  use R_lattice,      ONLY:nqibz
  use real_time,      ONLY:RTibz,RT_levels
 #endif
- use parallel_m,     ONLY:PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_PH_IND_Q_ibz
  use RT_occupations, ONLY:l_RT_relax_time_approx 
  use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,l_RT_eval_lifetimes,& 
 &                         RT_EP_emit_REF_life,RT_EE_REF_life,RT_EH_REF_life,&
@@ -161,9 +161,9 @@ subroutine RT_relaxation(E,k,q,Time)
    !
    do iq=1,nqibz
      !
-     !if (.not.PAR_IND_Xk_ibz%element_1D(iq)) cycle
+     if (.not.PAR_PH_IND_Q_ibz%element_1D(iq)) cycle
      !
-     call PHEL_lifetimes(iq,E,k,RT_bands,RTibz,RT_levels)
+     call PHEL_lifetimes(iq,E,k,q,RT_bands,RTibz,RT_levels)
      !
    enddo
    !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
+subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  !
  ! This routine computes the phonon lifetimes. 
  ! Presently, only one approximation route from the phononic KBE to 
@@ -38,13 +38,13 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
  use PHEL,           ONLY:phel_gkkp_expanded_sq
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch
- use parallel_m,     ONLY:PAR_Q_ibz_index,PAR_Xk_ibz_index,PAR_IND_B_mat
+ use parallel_m,     ONLY:PAR_PH_IND_Xk_bz,PAR_PH_IND_eh_bands,PAR_PH_Q_ibz_index
  use QP_m,           ONLY:QP_G_damp
  !
  implicit none
  !
  type(levels),      intent(in) :: E
- type(bz_samp),     intent(in) :: k
+ type(bz_samp),     intent(in) :: k,q
  integer,           intent(in) :: iq,bands(2)
  type(bz_fine_grid),intent(in) :: k_FG
  type(E_fine_grid) ,intent(in) :: E_FG
@@ -60,26 +60,26 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
  ! ... band/branch index ...
  integer               :: il,i_n,i_np
  ! ... BZ index ...
- integer               :: ikbz,ik,ik_m_q,ik_mem,iq_mem,ik_rim,ip_rim
+ integer               :: ikbz,ik,ik_m_q,iq_mem,ik_rim,ip_rim
  ! ... lifetime related quantities ...
  real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,&
 &            TMP_Emit_lifetime,TMP_Abs_lifetime,TMP_eh_lifetime,N_q,f_mkq,f_nk,&
 &            Hole_f_mkq,Hole_f_nk
  !
- iq_mem=PAR_Q_ibz_index(iq)
+ iq_mem=PAR_PH_Q_ibz_index(iq)
  !
  do ikbz=1,k%nbz
+   !
+   if (.not.PAR_PH_IND_Xk_bz%element_1D(ikbz)) cycle
    !
    ! Obtain k-q in the ibz from k in the bz and q in the ibz
    ik_m_q =k%sstar(qindx_X(iq_mem,ikbz,1),1)
    ! Obtain k in the ibz from k in the bz
    ik = k%sstar(ikbz,1)
    !
-   ik_mem=PAR_Xk_ibz_index(ik)
-   !
    do il=elph_branches(1),elph_branches(2)
      !
-     ph_freq=abs(sqrt(ph_freqs_sq(iq_mem,il)))
+     ph_freq=abs(sqrt(ph_freqs_sq(q%k_table(iq,1),il)))
      !
      if (iq_mem==1 .and. PH_acoustic_branch(il)) cycle
      !
@@ -98,6 +98,8 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
        !
        do i_np=bands(1),bands(2)
          !
+         if ( .not. PAR_PH_IND_eh_bands%element_1D( B_mat_index(i_n,i_np,bands) ) ) cycle
+         !
          if (i_n.ne.i_np) then
            Gkkp_sq(i_n,i_np)=phel_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ikbz)
            if (sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) cycle
@@ -113,8 +115,6 @@ subroutine PHEL_lifetimes(iq,E,k,bands,k_FG,E_FG)
            if ((i_n> n_full_bands.and.i_np<= n_full_bands).and.(E%E_ind_gap(1)>0.1/HA2EV)) cycle
            !
          endif
-         !
-         if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n,i_np,bands) ) ) cycle
          !
          if (.not. l_RT_uses_E_FineGd) then
            !

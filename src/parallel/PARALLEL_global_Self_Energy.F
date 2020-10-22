@@ -26,7 +26,8 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nqbz,nXkibz,nXkbz
  use drivers,       ONLY:l_eval_collisions
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
+ use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,&
+&                        PARALLEL_live_message,PARALLEL_MATRIX_distribute
  use IO_m,          ONLY:io_COLLs,IO_and_Messaging_switch
  use QP_m,          ONLY:QP_n_states,QP_nk
  use openmp,        ONLY:n_threads_SE,OPENMP_set_threads
@@ -38,12 +39,11 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  ! IND
  use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q_ibz,PAR_IND_G_b,PAR_IND_Q_bz,PAR_IND_Xk_ibz,PAR_IND_G_k
  ! INDEX
- use parallel_m,    ONLY:PAR_QP_index,PAR_Q_ibz_index,PAR_Q_bz_index,PAR_G_bands_index
+ use parallel_m,    ONLY:PAR_QP_index,PAR_Q_ibz_index,PAR_Q_bz_index,PAR_G_bands_index,PAR_IND_Bp_mat
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_nG_bands,PAR_nQ_ibz,PAR_nQ_bz,PAR_nQP
+ use parallel_m,    ONLY:PAR_nG_bands,PAR_nQ_ibz,PAR_nQ_bz,PAR_nQP,PAR_n_Bp_mat_elements
  ! ID's
- use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_G_b_ID,PAR_IND_QP_ID,&
-&                        PAR_IND_Q_ibz_ID,PAR_IND_Q_bz_ID
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_G_b_ID,PAR_IND_QP_ID,PAR_IND_Q_ibz_ID,PAR_IND_Q_bz_ID
 #if defined _ELECTRIC
  use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_bz
 #endif
@@ -54,13 +54,11 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_G_b_INDEX
  ! IND
- use parallel_m,    ONLY:PAR_IND_Bp_mat,PAR_IND_QP,PAR_IND_Q_ibz,PAR_IND_Q_bz
+ use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q_ibz,PAR_IND_Q_bz
  ! INDEX
  use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_DIPk_bz_index
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_DIPk_nibz
- ! ID's
- use parallel_m,    ONLY:PAR_IND_Bp_mat_ID
 #endif
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
@@ -219,7 +217,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    call PARALLEL_collisions( Xk,   P_collisions )
  endif
  !
- ! To eval/use the COLLISIONS I need the PAR_Bp_mat_index, built here.
+ ! To eval/use the COLLISIONS I need the PAR_IND_Bp_mat, built here.
  !
  if (l_sc_run.or.l_real_time.or.l_eval_collisions) then
    !
@@ -231,10 +229,10 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    call PARALLEL_collisions( Xk, HXC_collisions )
    !
    nb_mat=(COLL_bands(2)-COLL_bands(1)+1)**2
-   call PARALLEL_MATRIX_distribute(PAR_COM_G_b_INDEX,'Bp',COLL_bands)
+   call PARALLEL_MATRIX_distribute(PAR_COM_G_b_INDEX,PAR_IND_Bp_mat,COLL_bands,PAR_n_elements=PAR_n_Bp_mat_elements)
+   !
    call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT="Self_Energy",&
-&                             LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
-&                             TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
+&                             LOADED=PAR_n_Bp_mat_elements,TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
    !
    call PARALLEL_index(PAR_IND_G_k,(/QP_nk/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
    !

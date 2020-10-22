@@ -21,64 +21,48 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_MATRIX_distribute(pCOMM,what,nb)
+subroutine PARALLEL_MATRIX_distribute(COMM,PAR_IND,nb,PAR_index,PAR_ID,PAR_n_elements)
  !
- use parallel_m,    ONLY:MPI_comm
+ use parallel_m,    ONLY:MPI_comm,PP_indexes
  use interfaces,    ONLY:PARALLEL_index
  use hamiltonian,   ONLY:B_mat_index
- ! IND
- use parallel_m,    ONLY:PAR_IND_B_mat,PAR_IND_Bp_mat
- ! INDEX
- use parallel_m,    ONLY:PAR_B_mat_index,PAR_Bp_mat_index
- ! DIMENSIONS
- use parallel_m,    ONLY:PAR_n_B_mat_elements,PAR_n_Bp_mat_elements
- ! ID's
- use parallel_m,    ONLY:PAR_IND_B_mat_ID,PAR_IND_Bp_mat_ID
  !
-#include <memory.h>
+ implicit none
  !
- type(MPI_comm) :: pCOMM
- character(*)   :: what
- integer        :: nb(2)
+ type(MPI_comm)   :: COMM
+ type(PP_indexes) :: PAR_IND
+ integer          :: nb(2)
+ !
+ integer, optional:: PAR_index(:,:)
+ integer, optional:: PAR_ID
+ integer, optional:: PAR_n_elements
  !
  ! Work space
  !
- integer        :: ib1,ib2
+ integer        :: ib1,ib2,Nel
  !
- if (what=="B") then
-   call PARALLEL_index(PAR_IND_B_mat,(/ (nb(2)-nb(1)+1)**2 /),COMM=pCOMM,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
-   PAR_IND_B_mat_ID=pCOMM%CPU_id
- else
-   call PARALLEL_index(PAR_IND_Bp_mat,(/ (nb(2)-nb(1)+1)**2 /),COMM=pCOMM,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
-   PAR_IND_Bp_mat_ID=pCOMM%CPU_id
+ call PARALLEL_index(PAR_IND,(/ (nb(2)-nb(1)+1)**2 /),COMM=COMM,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+ !
+ if (present(PAR_ID)) then
+   PAR_ID=COMM%CPU_id
  endif
  !
- if (what=="B") then
-   YAMBO_ALLOC(PAR_B_mat_index,(nb(1):nb(2),nb(1):nb(2)))
-   PAR_n_B_mat_elements=PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1)
-   PAR_B_mat_index=0
-   PAR_n_B_mat_elements=0
+ if (present(PAR_index)) then
+   Nel=PAR_IND%n_of_elements(COMM%CPU_id+1)
+   PAR_index=0
+   Nel=0
    do ib1=nb(1),nb(2)
      do ib2=nb(1),nb(2)
-       if (PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,nb) ) ) then
-         PAR_n_B_mat_elements=PAR_n_B_mat_elements+1
-         PAR_B_mat_index(ib1,ib2)=PAR_n_B_mat_elements
+       if (PAR_IND%element_1D( B_mat_index(ib1,ib2,nb) ) ) then
+         Nel=Nel+1
+         PAR_index(ib1,ib2)=Nel
        endif
      enddo
    enddo
- else
-   YAMBO_ALLOC(PAR_Bp_mat_index,(nb(1):nb(2),nb(1):nb(2)))
-   PAR_n_Bp_mat_elements=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1)
-   PAR_Bp_mat_index=0
-   PAR_n_Bp_mat_elements=0
-   do ib1=nb(1),nb(2)
-     do ib2=nb(1),nb(2)
-       if (PAR_IND_Bp_mat%element_1D( B_mat_index(ib1,ib2,nb) ) ) then
-         PAR_n_Bp_mat_elements=PAR_n_Bp_mat_elements+1
-         PAR_Bp_mat_index(ib1,ib2)=PAR_n_Bp_mat_elements
-       endif
-     enddo
-   enddo
+ endif
+ !
+ if (present(PAR_n_elements)) then
+   PAR_n_elements=PAR_IND%n_of_elements(COMM%CPU_id+1)
  endif
  !
 end subroutine

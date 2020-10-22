@@ -66,18 +66,12 @@ subroutine ELPH_acoustic_phonon_properties(q)
  call k_ibz2bz(q,'c',.TRUE.)  
  !
  do iq=2,q%nbz
-   !
    do il=1,ph_modes
-     !
      PH_acoustic_speed(iq,il)=rZERO
      PH_Q_modulus(iq)=v_norm(q%ptbz(iq,:))
-     !
      if (.not.PH_acoustic_branch(il)) cycle
-     !
      PH_acoustic_speed(iq,il)=sqrt(ph_freqs_sq(iq,il))/PH_Q_modulus(iq)
-     !
    enddo
-   !
  enddo 
  !
  call msg("r","Phonon acoustic branches",trim(aco_string))

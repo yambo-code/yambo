@@ -28,7 +28,8 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use R_lattice,     ONLY:bz_samp
  use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_RT,OPENMP_set_threads
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
+ use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,&
+&                        PARALLEL_live_message,PARALLEL_MATRIX_distribute
  use collision_ext, ONLY:COH_collisions,HXC_collisions,GW_NEQ_collisions
  use matrix_operate,ONLY:UP_matrix_index
  use hamiltonian,   ONLY:B_mat_index
@@ -44,9 +45,9 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! INDEX
  use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_Xk_ibz_index,PAR_Q_bz_index
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_nQ_bz,PAR_Xk_nibz,PAR_G_k_range
+ use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_nQ_bz,PAR_Xk_nibz,PAR_G_k_range,PAR_n_Bp_mat_elements
  ! ID's
- use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Bp_mat_ID,PAR_IND_Xk_ibz_ID,      &
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,      &
 &                        PAR_IND_DIPk_ibz_ID,PAR_IND_Q_bz_ID,PAR_IND_WF_b_ID
 #if defined _PHEL
  ! COMMUNICATORS
@@ -162,7 +163,9 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
    call PP_indexes_reset(PAR_IND_DIPk_ibz)
    !
  endif
- call PARALLEL_MATRIX_distribute(PAR_COM_G_b_INDEX,'B',RT_bands)
+ !
+ call PARALLEL_MATRIX_distribute(PAR_COM_G_b_INDEX,PAR_IND_B_mat,RT_bands)
+ !
  call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
  PAR_IND_DIPk_ibz_ID=PAR_IND_Xk_ibz_ID
  YAMBO_ALLOC(PAR_DIPk_ibz_index,(Xk%nibz))
@@ -298,7 +301,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !   "qp"  -> Bp_mat (m,m')
  !.........................................................................
  !
- call PARALLEL_MATRIX_distribute(PAR_COM_Plasma_INDEX,'Bp',RT_bands)
+ call PARALLEL_MATRIX_distribute(PAR_COM_Plasma_INDEX,PAR_IND_Bp_mat,RT_bands,PAR_n_elements=PAR_n_Bp_mat_elements)
  !
  ! Messaging...
  !
@@ -309,7 +312,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  endif
  !
  call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT="Real_Time",&
-&                           LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
+&                           LOADED=PAR_n_Bp_mat_elements,&
 &                           TOTAL=(RT_bands(2)-RT_bands(1)+1)**2,NCPU=PAR_COM_Plasma_INDEX%n_CPU)
  !
  ! When the collisons are note evaluated the I/O is dictated by Response_G_space

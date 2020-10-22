@@ -181,6 +181,16 @@ module interfaces
      logical     ,optional :: keep_fft
    end subroutine
    !
+   subroutine PARALLEL_MATRIX_distribute(COMM,PAR_IND,nb,PAR_index,PAR_ID,PAR_n_elements)
+     use parallel_m,    ONLY:MPI_comm,PP_indexes
+     type(MPI_comm)   :: COMM
+     type(PP_indexes) :: PAR_IND
+     integer          :: nb(2)
+     integer, optional:: PAR_index(:,:)
+     integer, optional:: PAR_ID
+     integer, optional:: PAR_n_elements
+   end subroutine
+   !
    subroutine PARALLEL_WF_index(COMM)
      use parallel_m,      ONLY:MPI_comm
      type(MPI_comm), optional :: COMM

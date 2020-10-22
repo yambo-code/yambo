@@ -23,7 +23,7 @@
 !
 subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  ! 
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,rZERO
  use units,          ONLY:HA2EV
  use RT_lifetimes,   ONLY:elph_gkkp_expanded_sq,Q_io_map,K_io_map
  use electrons,      ONLY:levels
@@ -33,8 +33,8 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  use PHEL,           ONLY:phel_gkkp_expanded_sq
  use vec_operate,    ONLY:degeneration_finder
  use parallel_m,     ONLY:PAR_Q_bz_index,PAR_IND_Q_bz,PAR_nQ_bz,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
-&                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX,PAR_nQ_ibz,&
-&                         PAR_IND_Q_ibz
+&                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX,&
+&                         PAR_PH_IND_Q_ibz,PAR_PH_Q_ibz_index,PAR_PH_nQ_ibz
  !
 #include<memory.h>
  ! 
@@ -46,9 +46,9 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  ! Work Space
  !
  integer             ::iq_bz,ID,io_err,ik,i_counter,iq_io,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
-&                      first_el(2,n_bands(2)),n_of_el(2,n_bands(2)),n_deg_grp(2),i1,i2,iq_mem,PAR_nQ
- real(SP)            ::gkkp_average(ph_modes),gkkp_expanded_sq(elph_nb,elph_nb,ph_modes)
- real(SP),allocatable::ph_Esq_local(:,:),MAX_gkkp_expanded_at_kpq(:,:)
+&                      first_el(2,n_bands(2)),n_of_el(2,n_bands(2)),n_deg_grp(2),i_g,i_c,iq_mem
+ real(SP)            ::gkkp_average(ph_modes),gkkp_expanded_sq(elph_nb,elph_nb,ph_modes),ph_Esq_local(q%nbz,ph_modes)
+ real(SP),allocatable::MAX_gkkp_expanded_at_kpq(:,:)
  logical             ::l_BZ,l_IBZ
  integer, external   ::io_ELPH
  !
@@ -58,28 +58,21 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  l_IBZ=mode=="IBZ"
  YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nbz,nqbz))
  if (l_BZ ) then
-   PAR_nQ=PAR_nQ_bz
-   YAMBO_ALLOC(ph_Esq_local,(nqbz,ph_modes))
-   YAMBO_ALLOC(elph_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ,PAR_Xk_nibz))
+   YAMBO_ALLOC(elph_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ_bz,PAR_Xk_nibz))
  else if (l_IBZ) then
-   PAR_nQ=PAR_nQ_ibz
-   YAMBO_ALLOC(ph_Esq_local,(nqibz,ph_modes))
-   YAMBO_ALLOC(phel_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ,k%nbz))
+   YAMBO_ALLOC(phel_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_PH_nQ_ibz,k%nbz))
  endif
- MAX_gkkp_expanded_at_kpq=0._SP
+ MAX_gkkp_expanded_at_kpq=rZERO
+ ph_Esq_local=rZERO
  !
  ! Degeneration Finder & I/O
  !===========================
  i_counter   =0
- ph_Esq_local=0._SP
  !
  do iq_bz=1,nqbz
    !
    if (l_BZ) then
      if (.not.PAR_IND_Q_bz%element_1D(iq_bz)) cycle
-   else
-     if (q%sstar(iq_bz,2)/=1) cycle
-     !if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iq_bz,1))) cycle
    endif
    !
    iq_io=Q_io_map(iq_bz)
@@ -87,8 +80,12 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
    call io_control(ACTION=OP_RD_CL,SEC=(/iq_io+1/),ID=ID)
    io_err=io_ELPH(ID,'gkkp_expanded')
    !
-   if (l_BZ ) ph_Esq_local(iq_bz,:)=ph_freqs_sq(iq_io,:)
-   if (l_IBZ) ph_Esq_local(q%sstar(iq_bz,1),:)=ph_freqs_sq(iq_io,:)
+   ph_Esq_local(iq_bz,:)=ph_freqs_sq(iq_io,:)
+   !
+   if (l_IBZ) then
+     if (q%sstar(iq_bz,2)/=1) cycle
+     if (.not.PAR_PH_IND_Q_ibz%element_1D(q%sstar(iq_bz,1))) cycle
+   endif
    !
    do ik_bz=1,k%nbz
      !
@@ -102,10 +99,9 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
        iq_mem = PAR_Q_bz_index(iq_bz)
        ik_mem = PAR_Xk_ibz_index(ik)
      else if (l_IBZ) then
-       !if (.not.PAR_IND_Xk_bz%element_1D(ik)) cycle
-       iq_mem = q%sstar(iq_bz,1)
        ik_mem = ik_bz
-       !iq_mem = PAR_Q_ibz_index(iq_bz)
+       iq_mem = PAR_PH_Q_ibz_index( q%sstar(iq_bz,1))
+       !if (.not.PAR_IND_Xk_bz%element_1D(ik)) cycle
        !ik_mem = PAR_Xk_ibz_index(ik)
      endif
      !
@@ -131,24 +127,24 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
      call degeneration_finder(E%E(:n_bands(2),ik,1),    n_bands(2),first_el(1,:),n_of_el(1,:),n_deg_grp(1),0.0001/HA2EV)
      call degeneration_finder(E%E(:n_bands(2),ik_m_q,1),n_bands(2),first_el(2,:),n_of_el(2,:),n_deg_grp(2),0.0001/HA2EV)
      !
-     do i1=1,n_deg_grp(1)
+     do i_g=1,n_deg_grp(1)
        do i_np=n_bands(1),n_bands(2)
-         do i2=1,2
-           if (i2==1) gkkp_average=0._SP
-           do i_n=first_el(1,i1),first_el(1,i1)+n_of_el(1,i1)-1
-             if (i2==1) gkkp_average(:)=gkkp_average(:)+gkkp_expanded_sq(i_n,i_np,:)
-             if (i2==2) gkkp_expanded_sq(i_n,i_np,:)=gkkp_average(:)/real(n_of_el(1,i1))
+         do i_c=1,2
+           if (i_c==1) gkkp_average=0._SP
+           do i_n=first_el(1,i_g),first_el(1,i_g)+n_of_el(1,i_g)-1
+             if (i_c==1) gkkp_average(:)=gkkp_average(:)+gkkp_expanded_sq(i_n,i_np,:)
+             if (i_c==2) gkkp_expanded_sq(i_n,i_np,:)=gkkp_average(:)/real(n_of_el(1,i_g))
            enddo
          enddo
        enddo
      enddo
-     do i1=1,n_deg_grp(2)
+     do i_g=1,n_deg_grp(2)
        do i_n=n_bands(1),n_bands(2)
-         do i2=1,2
-           if (i2==1) gkkp_average=0._SP
-           do i_np=first_el(2,i1),first_el(2,i1)+n_of_el(2,i1)-1
-             if (i2==1) gkkp_average(:)=gkkp_average(:)+gkkp_expanded_sq(i_n,i_np,:)
-             if (i2==2) gkkp_expanded_sq(i_n,i_np,:)=gkkp_average(:)/real(n_of_el(2,i1))
+         do i_c=1,2
+           if (i_c==1) gkkp_average=0._SP
+           do i_np=first_el(2,i_g),first_el(2,i_g)+n_of_el(2,i_g)-1
+             if (i_c==1) gkkp_average(:)=gkkp_average(:)+gkkp_expanded_sq(i_n,i_np,:)
+             if (i_c==2) gkkp_expanded_sq(i_n,i_np,:)=gkkp_average(:)/real(n_of_el(2,i_g))
            enddo
          enddo
        enddo
@@ -173,7 +169,6 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  !
  if (any(ph_freqs_sq<0._SP)) call warning('Imaginary phonon frequencies found. Please check.')
  !
- YAMBO_FREE(ph_Esq_local)
  YAMBO_FREE(MAX_gkkp_expanded_at_kpq)
  !
 end subroutine ELPH_expanded_databases_load

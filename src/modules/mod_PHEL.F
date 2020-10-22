@@ -23,61 +23,11 @@
 !
 module PHEL
  !
- use pars,       ONLY:DP,SP,schlen,lchlen,LP
- use units,      ONLY:FS2AUT
- use global_XC,  ONLY:QP_SE_NONE
+ use pars,       ONLY:SP
  !
 #include<memory.h>
  !
- ! LOGICALS
- !
-! real(SP),    allocatable :: RT_PH_occupations(:,:)
-! real(SP),    allocatable :: RT_PH_delta_occupations(:,:)    ! Running values. Updated at each time step.
-! real(SP),    allocatable :: RT_PH_occupations_reference(:,:)
- !
- ! PH-EL RT life-times
- !-----------------------------------------
-! real(SP),    allocatable :: P_E_sp_res_lifetime(:,:)
-! real(SP),    allocatable :: P_E_sp_ares_lifetime(:,:)
-! real(SP),    allocatable :: P_E_eh_lifetime(:,:)
-! real(SP),    allocatable :: EQ_P_E_sp_res_lifetime(:,:)
-! real(SP),    allocatable :: EQ_P_E_sp_ares_lifetime(:,:)
-! real(SP),    allocatable :: EQ_P_E_eh_lifetime(:,:)
- ! ... Q-parallelization  and GKKP
+ ! ... GKKP
  real(SP),    allocatable :: phel_gkkp_expanded_sq(:,:,:,:,:)
  !
- ! Diagonal (QP) and off-diagonal (Phase) relaxation time
- !
-! logical     :: RT_PHEL_is_statically_dephased=.FALSE.
-! logical     :: RT_PHEL_is_dynamically_dephased=.FALSE.
- !
- ! Relaxation: Dephasing Matrix
- !------------------------------
-! real(SP),    allocatable :: PHEL_Deph_Matrix(:,:)
- !
- contains
-   !
-   subroutine PHEL_alloc(what)
-     !
-     use pars,           ONLY:SP,LP,schlen,cZERO
-     use drivers,        ONLY:l_phel_scatt
-     use ELPH,           ONLY:elph_branches
-     use R_lattice,      ONLY:nqibz
-     !
-     implicit none
-     !
-     character(*), intent(in) :: what
-     !
-   end subroutine PHEL_alloc
-   !
-   subroutine PHEL_free(what)
-     !
-     implicit none
-     !
-     character(*), intent(in) :: what
-     !
-     YAMBO_FREE(phel_gkkp_expanded_sq)
-     !
-   end subroutine PHEL_free
-   !
 end module

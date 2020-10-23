@@ -64,6 +64,16 @@ module parallel_int
  !
  interface 
    !
+   subroutine PARALLEL_scheme_initialize(WHAT,ENVIRONMENT,PARs,N,TABLE,MATRIX)
+     use parallel_m,   ONLY:PAR_scheme
+     character(*)               :: WHAT
+     character(*)               :: ENVIRONMENT
+     type(PAR_scheme)           :: PARs
+     integer                    :: N(:)
+     logical, optional          :: TABLE
+     logical, optional          :: MATRIX
+   end subroutine
+   !
    subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2,COMM_index_3,&
 &                                              COMM_index_4,COMM_index_5,COMM_A2A_1,COMM_A2A_2,&
 &                                              COMM_A2A_3,COMM_A2A_4)
@@ -1158,6 +1168,5 @@ module parallel_int
      !
 #endif
    end subroutine
-   !
    !
 end module parallel_int

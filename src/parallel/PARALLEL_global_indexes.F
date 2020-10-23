@@ -163,7 +163,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  if (      ENVIRONMENT=="ScaLapacK")           call PARALLEL_global_ScaLapack( )
 #endif
 #if defined _ELPH
- if (      ENVIRONMENT=="Phonon_Self_Energy")  call PARALLEL_global_Phonon_Self_Energy(E,Xk,q)
+ if (      ENVIRONMENT=="Phonon_Self_Energy")  call PARALLEL_global_Phonon_Self_Energy( )
 #endif
  !
  !==============================================================================

@@ -38,7 +38,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
- use parallel_int,  ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -47,8 +47,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use X_output,      ONLY:X_setup_file_names,eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,&
 &                        X_write_q_plus_G,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load,&
-&                        WF_free,DESC_write
+ use interfaces,    ONLY:WF_load,WF_free,DESC_write,WF_load
  use matrix,        ONLY:MATRIX_reset
  !
 #include<memory.h>

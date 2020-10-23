@@ -36,13 +36,12 @@ subroutine QED_Sigma_c(E,k,q,qp)
 &                              elemental_collision_copy
  use collision_ext,       ONLY:P_COLL_element,COLL_bands,P_collisions
  use wave_func,           ONLY:WF
- use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,PARALLEL_WF_distribute
  use COLL_interfaces,     ONLY:SCATTERING_GW_kinematics
  use LIVE_t,              ONLY:live_timing
  use vec_operate,         ONLY:v_norm
- use parallel_int,        ONLY:PP_redux_wait
- use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
-&                              PAR_IND_Q_ibz,PAR_nQ_ibz,PAR_nQP
+ use interfaces,          ONLY:WF_load,WF_free
+ use parallel_int,        ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
+ use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_IND_Q_ibz,PAR_nQ_ibz,PAR_nQP
  use functions,           ONLY:theta_function
  use timing_m,            ONLY:timing
  !

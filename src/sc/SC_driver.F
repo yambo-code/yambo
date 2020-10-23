@@ -41,8 +41,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use FFT_m,          ONLY:fft_size
  use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,WF_free, &
-&                         PARALLEL_WF_distribute,PARALLEL_WF_index,LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
+ use interfaces,     ONLY:el_density_and_current,WF_load,WF_free,OCCUPATIONS_Fermi,LINEAR_ALGEBRA_driver
  use H_interfaces,   ONLY:V_real_space_to_H
  use com,            ONLY:msg
  use X_m,            ONLY:X_t,current_iq,X_alloc
@@ -52,7 +51,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use xc_functionals, ONLY:E_xc
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,CPU_structure
- use parallel_int,   ONLY:PP_redux_wait
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,&
+&                         PARALLEL_WF_index
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,manage_action,REP,VERIFY,io_COLLs,io_RESPONSE,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder,v_norm

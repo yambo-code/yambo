@@ -38,9 +38,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  use R_lattice,         ONLY:bz_samp
  use vec_operate,       ONLY:c2a
  use LIVE_t,            ONLY:live_timing
- use interfaces,        ONLY:PARALLEL_index
  use parallel_m,        ONLY:PP_indexes,PP_indexes_reset,myid,PAR_build_index,ncpu
- use parallel_int,      ONLY:PP_redux_wait
+ use parallel_int,      ONLY:PP_redux_wait,PARALLEL_index 
  !
 #include<memory.h>
  !

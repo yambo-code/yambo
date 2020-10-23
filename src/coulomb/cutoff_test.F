@@ -32,8 +32,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
  use com,           ONLY:msg,of_open_close
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,  ONLY:PP_redux_wait
- use interfaces,    ONLY:PARALLEL_index
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index 
  implicit none
  type(bz_samp):: q
  logical      :: cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut(3)

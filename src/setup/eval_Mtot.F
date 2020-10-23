@@ -30,8 +30,8 @@ subroutine eval_Mtot(en,k,q)
  use electrons,      ONLY:levels
  use com,            ONLY:msg
  use electrons,      ONLY:eval_magn
- use interfaces,     ONLY:WF_load,&
-&                         PARALLEL_global_indexes,PARALLEL_WF_distribute,&
+ use interfaces,     ONLY:WF_load
+ use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                         PARALLEL_WF_index
  !
 #include <memory.h>

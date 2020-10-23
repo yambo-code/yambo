@@ -40,8 +40,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss,l_col_cut
  use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PARALLEL_default_mode
- use parallel_int,   ONLY:PP_redux_wait
- use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,eval_G_minus_G
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use interfaces,     ONLY:eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X
  use D_lattice,      ONLY:l_0D,l_1D,l_2D
 #if defined _KERR

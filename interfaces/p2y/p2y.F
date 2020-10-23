@@ -30,7 +30,7 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use it_m,                ONLY:nrnlvls,rnlvls,rstatus
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:ncpu,myid,PP_indexes,PP_indexes_reset
- use parallel_int,        ONLY:PARALLEL_wait
+ use parallel_int,        ONLY:PARALLEL_wait,PARALLEL_index,PARALLEL_live_message
  use electrons,           ONLY:levels,E_reset,n_bands,n_sp_pol,n_spinor
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,io_WF, wf_nb_io_groups,wf_nb_io
@@ -39,7 +39,6 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
 &                              IO_and_Messaging_switch,IO_write,IO_read
  use mod_com2y,           ONLY:interface_presets,force_noWFs,verboseIO
  use stderr,              ONLY:intc
- use interfaces,          ONLY:PARALLEL_index,PARALLEL_live_message
  use qexml_module
  !
 #include<memory.h>

@@ -37,11 +37,10 @@ subroutine K_blocks(iq)
  !
  use pars,         ONLY:cZERO,SP,IP,IPL
  use parallel_m,   ONLY:PAR_IND_T_ordered,myid,ncpu,PAR_COM_HOST
- use parallel_int, ONLY:PP_redux_wait
+ use parallel_int, ONLY:PP_redux_wait,PARALLEL_live_message
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim,n_BS_blks_min
  use com,          ONLY:msg
- use interfaces,   ONLY:PARALLEL_live_message
  !
 #include<memory.h>
  !

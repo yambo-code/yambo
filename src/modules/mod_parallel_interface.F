@@ -63,7 +63,9 @@ module parallel_int
  end interface PP_send_and_receive
  !
  contains
-   !
+   !==========
+   ! PP_redux
+   !==========
    subroutine l1share(array,imode,COMM)
      logical   :: array(:)
      integer, optional :: imode,COMM
@@ -745,7 +747,9 @@ module parallel_int
      call mpi_barrier(LOCAL_COMM,i_err)
 #endif
    end subroutine
-   !
+   !==========
+   ! PP_bcast
+   !==========
    subroutine i0bcast(ival,node,COMM)
      integer  :: ival
      integer, intent(in) :: node
@@ -955,7 +959,9 @@ module parallel_int
    end subroutine z3bcast
    !
 #endif
-   !
+   !============
+   ! PP_snd_rcv
+   !============
    subroutine PP_snd_rcv_r2(mode,array,node,COMM,TAG)
      character(*):: mode
      real(SP)    :: array(:,:)
@@ -1046,6 +1052,9 @@ module parallel_int
 #endif
    end subroutine
    !
+   !================
+   ! Other routines
+   !================
    subroutine PARALLEL_wait(COMM)
      integer, optional :: COMM
 #if defined _MPI
@@ -1058,5 +1067,95 @@ module parallel_int
      call mpi_barrier(local_COMM,i_err)
 #endif
    end subroutine
+   !
+   subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2,COMM_index_3,&
+&                                              COMM_index_4,COMM_index_5,COMM_A2A_1,COMM_A2A_2,&
+&                                              COMM_A2A_3,COMM_A2A_4)
+     use parallel_m,    ONLY:MPI_comm
+     integer                 :: n_elements
+     type(MPI_comm)          :: COMM_index_1
+     type(MPI_comm),optional :: COMM_index_2
+     type(MPI_comm),optional :: COMM_index_3
+     type(MPI_comm),optional :: COMM_index_4
+     type(MPI_comm),optional :: COMM_index_5
+     type(MPI_comm),optional :: COMM_A2A_1
+     type(MPI_comm),optional :: COMM_A2A_2
+     type(MPI_comm),optional :: COMM_A2A_3
+     type(MPI_comm),optional :: COMM_A2A_4
+   end subroutine
+   !
+   subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)
+     use parallel_m, ONLY:PP_indexes,MPI_COMM
+     type(PP_indexes)       ::px
+     integer                ::uplim(:)
+     integer, optional      ::low_range(:)
+     type(MPI_COMM),optional::COMM
+     logical,       optional::CONSECUTIVE
+     logical,       optional::ORDERED
+     logical,       optional::NO_EMPTIES
+     logical,       optional::MASK(:)
+   end subroutine
+   !
+   subroutine PARALLEL_MATRIX_distribute(COMM,PAR_IND,nb,PAR_index,PAR_ID,PAR_n_elements)
+     use parallel_m,    ONLY:MPI_comm,PP_indexes
+     type(MPI_comm)   :: COMM
+     type(PP_indexes) :: PAR_IND
+     integer          :: nb(2)
+     integer, optional:: PAR_index(:,:)
+     integer, optional:: PAR_ID
+     integer, optional:: PAR_n_elements
+   end subroutine
+   !
+   subroutine PARALLEL_WF_index(COMM)
+     use parallel_m,      ONLY:MPI_comm
+     type(MPI_comm), optional :: COMM
+   end subroutine
+   !
+   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
+     use X_m,           ONLY:X_t
+     use DIPOLES,       ONLY:DIPOLE_t
+     use electrons,     ONLY:levels
+     use R_lattice,     ONLY:bz_samp
+     implicit none
+     type(levels)             ::E
+     type(bz_samp)            ::Xk,q
+     character(*)             ::ENVIRONMENT
+     type(X_t),       optional::X
+     type(DIPOLE_t),  optional::Dip
+     logical,         optional::RESET
+   end subroutine
+   !
+   subroutine PARALLEL_check_phase_space( N_PAR_elements,WORLD,WORLD_size,MSG )
+     integer               :: N_par_elements
+     integer,     optional :: WORLD,WORLD_size
+     character(*),optional :: MSG
+   end subroutine
+   !
+   subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,LOADED_r,TOTAL_r,NCPU)
+     use pars,           ONLY:SP
+     character(*)          :: WHAT
+     character(*),optional :: ENVIRONMENT
+     integer,     optional :: LOADED,TOTAL,NCPU
+     real(SP),    optional :: LOADED_r,TOTAL_r
+   end subroutine
+   !
+   subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
+&                                    QP_index,PLASMA_index,Bm_index,CLEAN_UP)
+     !
+     use parallel_m,      ONLY:PP_indexes
+     !
+     implicit none
+     !
+     type(PP_indexes),    optional :: K_index
+     type(PP_indexes),    optional :: B_index
+     type(PP_indexes),    optional :: Bp_index
+     type(PP_indexes),    optional :: B_and_K_index
+     type(PP_indexes),    optional :: QP_index
+     type(PP_indexes),    optional :: PLASMA_index
+     type(PP_indexes),    optional :: Bm_index
+     logical, intent(in), optional :: CLEAN_UP
+     !
+   end subroutine 
+   !
    !
 end module parallel_int

@@ -24,7 +24,7 @@
 subroutine PARALLEL_global_Response_T(Xk,X_type)
  !
  use R_lattice,     ONLY:bz_samp,nXkbz,nXkibz
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
+ use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use IO_m,          ONLY:IO_and_Messaging_switch
  use BS,            ONLY:BS_nT_at_k,BS_nT_grps
  use openmp,        ONLY:n_threads_K,OPENMP_set_threads

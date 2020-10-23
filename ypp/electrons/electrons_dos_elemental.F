@@ -28,10 +28,10 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,&
  use electrons,      ONLY:levels,n_spin
  use R_lattice,      ONLY:bz_samp 
  use YPPm,           ONLY:DOS_broadening,DOS_E_steps
- use interfaces,     ONLY:PARALLEL_index,el_density_of_states
+ use interfaces,     ONLY:el_density_of_states
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,   ONLY:PP_redux_wait
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use IO_m,           ONLY:IO_and_Messaging_switch
  use parser_m,       ONLY:parser
  !

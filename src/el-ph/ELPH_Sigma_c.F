@@ -35,7 +35,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:l_elel_corr
- use parallel_int,  ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes
  use parallel_m,    ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_IND_QP,&
 &                        PAR_IND_Q_bz_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
                          PAR_COM_Q_A2A,PAR_COM_Q_INDEX,myid
@@ -54,7 +54,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
 &                        elph_global_alloc,gsqF_energy_steps,eval_G_using_KK,ph_qpt,&
 &                        elph_branches,E_k_plus_q,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold,DW_deltaE_treshold
- use interfaces,    ONLY:PARALLEL_global_indexes,QP_state_print
+ use interfaces,    ONLY:QP_state_print
  use functions,     ONLY:Fermi_fnc_derivative
  use timing_m,      ONLY:timing
  !

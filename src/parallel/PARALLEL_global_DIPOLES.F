@@ -27,7 +27,7 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
  use R_lattice,     ONLY:bz_samp
  use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_DIP,OPENMP_set_threads
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
+ use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use parallel_m,    ONLY:PARALLEL_n_structures_active,COMM_copy,PAR_build_index,&
 &                        PAR_n_c_bands,PAR_n_v_bands
  ! COMMUNICATORS

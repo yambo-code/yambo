@@ -26,7 +26,6 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use pars,              ONLY:SP,cZERO,pi
  use LIVE_t,            ONLY:live_timing
  use R_lattice,         ONLY:k_map,bz_samp,WF_shifts,G_m_G
- use interfaces,        ONLY:WF_load,WF_free,PARALLEL_WF_index,PARALLEL_WF_distribute
  use wave_func,         ONLY:WF
  use vec_operate,       ONLY:k_periodic_idx
  use DIPOLES,           ONLY:DIPOLE_t,DIP_S
@@ -36,8 +35,8 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use parallel_m,        ONLY:PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_COM_DIPk_ibz_A2A, &
 &                            PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,           &
 &                            PAR_IND_OVLPk_ibz,PAR_COM_DIPk_ibz_INDEX
- use parallel_int,      ONLY:PP_redux_wait
- use interfaces,        ONLY:WF_shift_kpoint,WF_symm_kpoint,eval_G_minus_G
+ use parallel_int,      ONLY:PP_redux_wait,PARALLEL_WF_index,PARALLEL_WF_distribute
+ use interfaces,        ONLY:WF_shift_kpoint,WF_symm_kpoint,eval_G_minus_G,WF_load,WF_free
  use timing_m,          ONLY:timing
  !
 #include<dev_defs.h>

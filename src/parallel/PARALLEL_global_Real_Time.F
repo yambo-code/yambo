@@ -28,7 +28,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use R_lattice,     ONLY:bz_samp
  use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_RT,OPENMP_set_threads
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,&
+ use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,&
 &                        PARALLEL_live_message,PARALLEL_MATRIX_distribute
  use collision_ext, ONLY:COH_collisions,HXC_collisions,GW_NEQ_collisions
  use matrix_operate,ONLY:UP_matrix_index

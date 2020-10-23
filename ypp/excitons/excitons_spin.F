@@ -32,14 +32,14 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  use electrons,     ONLY:n_spinor,n_sp_pol,n_spin
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
- use interfaces,    ONLY:WF_load,WF_free,WF_apply_symm,PARALLEL_index
+ use interfaces,    ONLY:WF_load,WF_free,WF_apply_symm
  use wave_func,     ONLY:WF,wf_ng
  use wrapper,       ONLY:Vstar_dot_V
  use YPP_interfaces,ONLY:excitons_sort_and_report
  use YPPm,          ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,&
 &                        EXCITON_kin,excitons_degeneracy_average,EXCITON_spin,BSiq
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,  ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
  !
 #include<memory.h>
  !

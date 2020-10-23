@@ -29,8 +29,7 @@ subroutine cutoff_cylinder(q,is_cut)
  use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,cyl_length,cyl_cut,g_vec,&
 &                        bz_samp,cyl_vr_save,cyl_vz_save
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,  ONLY:PP_redux_wait
- use interfaces,    ONLY:PARALLEL_index
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  !

@@ -31,8 +31,7 @@ subroutine k_random(Xk,No_Weight)
  use LIVE_t,              ONLY:live_timing
  use stderr,              ONLY:intc
  use parallel_m,          ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,        ONLY:PP_redux_wait
- use interfaces,          ONLY:PARALLEL_index
+ use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
  !
 #include<memory.h>
  !

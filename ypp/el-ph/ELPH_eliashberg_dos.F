@@ -37,8 +37,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use IO_m,                ONLY:io_control,manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_indexes,myid
- use parallel_int,        ONLY:PP_redux_wait
- use interfaces,          ONLY:PARALLEL_index
+ use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
  use functions,           ONLY:Fermi_fnc_derivative
  !
 #include<memory.h>

@@ -41,7 +41,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use BS,              ONLY:BS_bands
  use BS_solvers,      ONLY:BSS_eh_table,BS_mat
  use frequency,       ONLY:w_samp
- use interfaces,      ONLY:PARALLEL_global_indexes
+ use parallel_int,    ONLY:PARALLEL_global_indexes
  use real_time,       ONLY:RT_bands,l_RT_abs_YAMBO
  use parser_m,        ONLY:parser
  !

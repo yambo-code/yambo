@@ -44,7 +44,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_DIP
  use R_lattice,      ONLY:bz_samp
- use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use DIPOLES,        ONLY:DIP_alloc,DIPOLE_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,&
 &                         use_shifted_grids_approach,DIP_P,DIP_v,DIP_S,eval_OVERLAPS,&
@@ -52,7 +51,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use IO_m,           ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_A2A,&
 &                         PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
- use parallel_int,   ONLY:PP_redux_wait
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parser_m,       ONLY:parser
 #if defined _RT
  use DIPOLES,        ONLY:DIP_spin,DIP_orbital,DIP_P_spinor

@@ -39,9 +39,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
 &                        PAR_IND_Q_ibz,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,&
 &                        n_WF_bands_to_load,PAR_Q_ibz_index,PAR_nQP,&
 &                        PAR_nG_bands,PAR_nQ_bz
- use parallel_int,  ONLY:PP_redux_wait
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
-&                        PARALLEL_WF_distribute,QP_state_print
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
+&                        PARALLEL_WF_distribute
+ use interfaces,    ONLY:QP_state_print,WF_load,WF_free
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use wave_func,     ONLY:WF
  use DIPOLES,       ONLY:DIPOLE_t

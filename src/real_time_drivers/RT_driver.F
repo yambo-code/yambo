@@ -55,8 +55,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  use fields,          ONLY:A_tot,Efield
  use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element,COLLISIONS_have_HARTREE
  use QP_CTL_m,        ONLY:QP_apply
- use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_int,    ONLY:PP_bcast,PP_redux_wait
+ use parallel_int,    ONLY:PP_bcast,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PAR_COM_Xk_ibz_INDEX
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  use units,           ONLY:FS2AUT

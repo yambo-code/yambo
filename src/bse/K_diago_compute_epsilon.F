@@ -30,11 +30,10 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  use electrons,      ONLY:n_sp_pol
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:myid,PP_indexes,PP_indexes_reset
- use parallel_int,   ONLY:PP_redux_wait
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,         ONLY:live_timing
  use BS,             ONLY:BS_perturbative_SOC
  use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor,diam_term_exact,BSS_eels_to_eps
- use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:bare_qpg
  !
 #if defined _KERR

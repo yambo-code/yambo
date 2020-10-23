@@ -32,8 +32,7 @@ subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  use pars,           ONLY:SP,cZERO
  use wrapper_omp,    ONLY:V_dot_V_omp
  use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,   ONLY:PP_redux_wait
- use interfaces,     ONLY:PARALLEL_index
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
  use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_E,BSS_eh_Z,BSS_eh_f,BS_mat,BSS_n_eig

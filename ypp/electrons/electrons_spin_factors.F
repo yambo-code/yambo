@@ -29,9 +29,9 @@ subroutine electrons_spin_factors(kpts,bands,spin_factors)
  use YPPm,           ONLY:WF_ref
  use FFT_m,          ONLY:fft_size
  use LIVE_t,         ONLY:live_timing
- use interfaces,     ONLY:PARALLEL_index,WF_load,WF_free
+ use interfaces,     ONLY:WF_load,WF_free
  use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,   ONLY:PP_redux_wait
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
  !
  implicit none

@@ -24,7 +24,7 @@
 subroutine PARALLEL_MATRIX_distribute(COMM,PAR_IND,nb,PAR_index,PAR_ID,PAR_n_elements)
  !
  use parallel_m,    ONLY:MPI_comm,PP_indexes
- use interfaces,    ONLY:PARALLEL_index
+ use parallel_int,  ONLY:PARALLEL_index
  use hamiltonian,   ONLY:B_mat_index
  !
  implicit none

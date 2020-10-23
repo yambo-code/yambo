@@ -28,8 +28,7 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_
  use pars,           ONLY:SP,rZERO,cZERO,cI
  use wrapper_omp,    ONLY:V_dot_V_omp,Vstar_dot_V_omp
  use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,   ONLY:PP_redux_wait
- use interfaces,     ONLY:PARALLEL_index
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,         ONLY:live_timing
  use BS,             ONLY:BS_H_dim,BS_K_dim
  use BS_solvers,     ONLY:BSS_eh_f

@@ -38,9 +38,8 @@ subroutine G_shells_finder()
  use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
  use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
  use zeros,        ONLY:G_iku_zero
- use interfaces,   ONLY:PARALLEL_index
  use parallel_m,   ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int, ONLY:PP_redux_wait
+ use parallel_int, ONLY:PP_redux_wait,PARALLEL_index 
  !
 #include<memory.h>
  !

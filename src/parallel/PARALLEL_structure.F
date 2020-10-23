@@ -30,7 +30,7 @@ subroutine PARALLEL_structure(n_elements,ROLE)
 &                      ncpu_chain,mpi_comm_world,CREATE_the_COMM
  use parallel_m,  ONLY:PAR_Q_ibz_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,PAR_K_range,PAR_n_bands,&
 &                      PAR_EH_range,PAR_n_G_vectors,PAR_n_freqs
- use interfaces,  ONLY:PARALLEL_check_phase_space
+ use parallel_int,ONLY:PARALLEL_check_phase_space
  !
  implicit none
  !

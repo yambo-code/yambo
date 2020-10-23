@@ -26,7 +26,7 @@ subroutine PARALLEL_global_Phonon_Self_Energy(E,Xk,q)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use ELPH,          ONLY:QP_PH_n_G_bands
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,&
+ use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,&
 &                        PARALLEL_live_message,PARALLEL_MATRIX_distribute
  use parallel_m,    ONLY:COMM_copy,PAR_build_index
  ! COMMUNICATORS

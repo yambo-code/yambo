@@ -34,7 +34,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use it_tools,            ONLY:it_reset
  use it_m,                ONLY:infile
  use wave_func,           ONLY:io_WF
- use interfaces,          ONLY:PARALLEL_global_indexes
+ use parallel_int,        ONLY:PARALLEL_global_indexes
  use YPPm,                ONLY:l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,&
 &                              l_fix_save,alat_used_for_output,l_QP_DB_expand,coo_out,coo_in

@@ -40,7 +40,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  use parallel_int,ONLY:PP_bcast,PP_redux_wait
  use parallel_m,  ONLY:ncpu
 #if ! defined _io_lib
- use interfaces,  ONLY:PARALLEL_live_message
+ use parallel_int,ONLY:PARALLEL_live_message
  use timing_m,    ONLY:timing
 #endif
  !

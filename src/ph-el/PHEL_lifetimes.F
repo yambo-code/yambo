@@ -34,7 +34,7 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  use hamiltonian,    ONLY:B_mat_index
  use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid
  use RT_occupations, ONLY:RT_ph_occ,RT_el_occ,RT_ho_occ,RT_life_occ
- use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life
+ use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life,PE_linewidth
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch,phel_gkkp_expanded_sq
  use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_eh_bands,PARs_PH_Q_ibz
@@ -62,7 +62,7 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  ! ... lifetime related quantities ...
  real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,&
 &            TMP_Emit_lifetime,TMP_Abs_lifetime,TMP_eh_lifetime,N_q,f_mkq,f_nk,&
-&            Hole_f_mkq,Hole_f_nk
+&            Hole_f_mkq,Hole_f_nk,TMP_linewidth
  !
  iq_mem =PARs_PH_Q_ibz%table(iq)
  iq_life=iq
@@ -94,7 +94,7 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
          !
          if ( .not. PARs_PH_eh_bands%IND%element_1D( B_mat_index(i_n,i_np,bands) ) ) cycle
          !
-         if (sqrt(phel_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ikbz))<MAX_gkkp*cutoff) cycle
+         !if (sqrt(phel_gkkp_expanded_sq(i_n,i_np,il,iq_mem,ikbz))<MAX_gkkp*cutoff) cycle
          !
          ! At equilibrium, only metals or band gaps < E_debye can give non-zero ph lifetimes
          !
@@ -128,7 +128,7 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
          ! [NOTE]  Variable pre_factor below contains pi since it *shouldn't* come later from the hyperbolic secant FT.
          ! [NOTE2] Variable pre_factor below contains 1/(Nk_bz*N_FG_k) accounting for the double grid at each bz point.
          !
-         pre_factor=spin_occ*phel_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ikbz)*pi/(k%nbz*k_FG%N_mapped(ik)*ph_freq)
+         pre_factor=spin_occ*phel_gkkp_expanded_sq(i_n,i_np,il,iq_mem,ikbz)*pi/(k%nbz*k_FG%N_mapped(ik)*ph_freq)
          !
          do ik_rim=k_FG%k_range(ik,1),k_FG%k_range(ik,2)
            !
@@ -137,6 +137,9 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
            TMP_Emit_lifetime=rZERO
            TMP_Abs_lifetime=rZERO
            TMP_eh_lifetime=rZERO
+           !DEBUG> (FP)
+           TMP_linewidth=rZERO
+           !DEBUG<
            !
            do ip_rim=k_FG%k_range(ik_m_q,1),k_FG%k_range(ik_m_q,2)
              !
@@ -178,6 +181,9 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
              ! 
              TMP_Abs_lifetime=TMP_Abs_lifetime+f_nk*Hole_f_mkq*D_res +Hole_f_nk*f_mkq*D_ares
              !
+             !DEBUG> (FP) This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
+             TMP_linewidth=TMP_linewidth +(f_mkq-f_nk)*D_res
+             !DEBUG<
            enddo ! ip_rim i.e. (mk-q)
            !
          enddo ! ik_rim i.e. (nk)
@@ -187,6 +193,9 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
          ! Phonon absorption
          RT_PE_life%abs(il,iq_life) =RT_PE_life%abs(il,iq_life)+TMP_Abs_lifetime*pre_factor*N_q
          !       
+         !DEBUG> (FP)
+         PE_linewidth(il,iq_life)=PE_linewidth(il,iq_life) +TMP_linewidth*pre_factor
+         !DEBUG<
        enddo ! i_np i.e. (mk-q)
        !
      enddo ! i_n i.e. (nk)

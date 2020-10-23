@@ -23,12 +23,16 @@
 !
 subroutine PHEL_driver(E,k,q)
  !
+ !DEBUG> (FP)
+ use PARS,                ONLY:rZERO
+ !DEBUG<
  use electrons,           ONLY:levels,n_sp_pol,E_fine_grid
  use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,elph_global_free,phel_gkkp_expanded_sq
  use parallel_m,          ONLY:PARs_PH_Q_ibz
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_global_indexes
- use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free
+ use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free,&
+&                              PE_linewidth
  use RT_occupations,      ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_ALL_occupations_free
  use real_time,           ONLY:l_RT_uses_E_FineGd
  !
@@ -94,7 +98,11 @@ subroutine PHEL_driver(E,k,q)
  !
  ! Loop
  !======
- l_initial_equilibrium=.TRUE.
+ l_initial_equilibrium=.TRUE. 
+ !DEBUG> (FP)
+ YAMBO_ALLOC(PE_linewidth, (elph_branches(1):elph_branches(2),nqibz))
+ PE_linewidth=rZERO
+ !DEBUG<
  do iq=1,nqibz
    if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
    call PHEL_lifetimes(iq,E,k,q,(/1,QP_PH_n_G_bands/),k%FGibz,E_FG)
@@ -115,5 +123,8 @@ subroutine PHEL_driver(E,k,q)
  call RT_ALL_occupations_free(  )
  call elph_global_free( )
  YAMBO_FREE(phel_gkkp_expanded_sq)
+ !DEBUG> (FP)
+ YAMBO_FREE(PE_linewidth)
+ !DEBUG<
  !
 end subroutine PHEL_driver

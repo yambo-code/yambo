@@ -25,7 +25,7 @@ subroutine RT_free( )
  !
  use R_lattice,      ONLY:bz_samp_FineGd_reset
  use DIPOLES,        ONLY:DIP_alloc
- use ELPH,           ONLY:elph_global_free
+ use ELPH,           ONLY:elph_global_free,Q_io_map,K_io_map,elph_gkkp_expanded_sq
  use hamiltonian,    ONLY:H_free
  use xc_functionals, ONLY:E_xc
  use real_time,      ONLY:DbGd_EE_scatt_table,RT_TIME_status,REF_V_xc_sc,&
@@ -37,8 +37,7 @@ subroutine RT_free( )
 #if defined _ELPH_ITERATIVE
  use RT_iterative,   ONLY:THETA_matrix,THETA_matrix_index
 #endif
- use RT_lifetimes,   ONLY:RT_ALL_lifetimes_free,q_weight_RT,&
-&                         Q_io_map,K_io_map,elph_gkkp_expanded_sq
+ use RT_lifetimes,   ONLY:RT_ALL_lifetimes_free,q_weight_RT
  !
 #include<memory.h>
  !

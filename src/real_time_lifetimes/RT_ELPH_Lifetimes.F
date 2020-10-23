@@ -43,8 +43,7 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
  use electrons,      ONLY:levels,spin_occ,n_full_bands
  use R_lattice,      ONLY:bz_samp,qindx_S,nqbz,q_sstar
  use real_time,      ONLY:RT_bands
- use RT_lifetimes,   ONLY:elph_gkkp_expanded_sq
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
+ use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp,elph_gkkp_expanded_sq 
  use parallel_m,     ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_Xk_ibz_index
  use units,          ONLY:HA2EV
 

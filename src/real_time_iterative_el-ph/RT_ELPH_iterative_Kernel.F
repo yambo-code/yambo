@@ -44,8 +44,7 @@ subroutine RT_ELPH_iterative_Kernel(ik,E,k,q,TIME)
  use functions,      ONLY:bose_f
  use R_lattice,      ONLY:bz_samp,qindx_S
  use real_time,      ONLY:RT_bands
- use RT_lifetimes,   ONLY:elph_gkkp_expanded_sq
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
+ use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp,elph_gkkp_expanded_sq 
  use parallel_m,     ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_Xk_ibz_index
  !
  implicit none

@@ -123,6 +123,14 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
    enddo
  endif
  !
+ ! EH Bands 
+ !----------
+#if defined _ELPH
+ if (ENVIRONMENT=="Phonon_Self_Energy"              ) then
+    PAR_n_bands=(/1,QP_PH_n_G_bands**2/)
+ endif
+#endif
+ !
  ! Generic Bands
  !---------------
  if (ENVIRONMENT=="Self_Energy"                     ) then

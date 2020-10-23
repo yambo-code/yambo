@@ -25,16 +25,15 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  ! 
  use pars,           ONLY:SP,rZERO
  use units,          ONLY:HA2EV
- use RT_lifetimes,   ONLY:elph_gkkp_expanded_sq,Q_io_map,K_io_map
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp,qindx_S,nqbz,nqibz
+ use R_lattice,      ONLY:bz_samp,qindx_S,nqbz
  use IO_m,           ONLY:io_control,OP_RD_CL
- use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,MAX_gkkp
- use PHEL,           ONLY:phel_gkkp_expanded_sq
+ use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,MAX_gkkp,elph_gkkp_expanded_sq,&
+&                         Q_io_map,K_io_map,phel_gkkp_expanded_sq
  use vec_operate,    ONLY:degeneration_finder
  use parallel_m,     ONLY:PAR_Q_bz_index,PAR_IND_Q_bz,PAR_nQ_bz,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
 &                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX,&
-&                         PAR_PH_IND_Q_ibz,PAR_PH_Q_ibz_index,PAR_PH_nQ_ibz
+&                         PAR_PH_IND_Q_ibz,PAR_PH_Q_ibz_index,PAR_PH_nQ_ibz,PAR_PH_COM_Q_ibz_INDEX
  !
 #include<memory.h>
  ! 
@@ -161,9 +160,14 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  !
  ph_freqs_sq=ph_Esq_local
  !
- call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
- call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Q_INDEX%COMM)
- call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ if (l_BZ ) then
+   call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
+   call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Q_INDEX%COMM)
+   call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ else
+   call PP_redux_wait(ph_freqs_sq,COMM=PAR_PH_COM_Q_ibz_INDEX%COMM)
+   call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_PH_COM_Q_ibz_INDEX%COMM)
+ endif
  !
  MAX_gkkp=maxval(MAX_gkkp_expanded_at_kpq)
  !

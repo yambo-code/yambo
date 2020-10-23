@@ -73,7 +73,6 @@ subroutine PARALLEL_global_Phonon_Self_Energy(E,Xk,q)
  !
  YAMBO_ALLOC(PAR_PH_Q_ibz_index,(q%nibz))
  call PAR_build_index(PAR_PH_IND_Q_ibz,q%nibz,PAR_PH_Q_ibz_index,PAR_PH_nQ_ibz)
- !
  call PARALLEL_live_message("Q(ibz)",ENVIRONMENT="Phonon_Self_Energy",&
 &                           LOADED=PAR_PH_IND_Q_ibz%n_of_elements(PAR_PH_IND_Q_ibz_ID+1),TOTAL=q%nibz,&
 &                           NCPU=PAR_PH_COM_Q_ibz_INDEX%n_CPU)

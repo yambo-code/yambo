@@ -95,10 +95,6 @@ module RT_lifetimes
  !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
  real(SP),    allocatable :: q_weight_RT(:,:,:)
- ! ... Q-parallelization  and GKKP
- real(SP),    allocatable :: elph_gkkp_expanded_sq(:,:,:,:,:)
- integer,     allocatable :: Q_io_map(:)
- integer,     allocatable :: K_io_map(:)
  !
  ! Beyond Complete Collision Approx 
  !----------------------------------

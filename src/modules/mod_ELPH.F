@@ -43,12 +43,25 @@ module ELPH
  real(SP),    allocatable :: ph_kpt_bz(:,:)
  real(SP),    allocatable :: ph_qpt(:,:)
  real(SP),    allocatable :: ph_freqs_sq(:,:)
- real(SP),    allocatable :: elph_DW(:,:,:,:)
+ complex(SP), allocatable :: pol_vector(:,:,:)
+ !
+ ! Phonon assisted energy levels
+ !
  real(SP),    allocatable :: E_k_plus_q(:,:,:)
  real(SP),    allocatable :: f_k_plus_q(:,:,:)
- complex(SP), allocatable :: elph_gkkp(:,:,:,:)
- complex(SP), allocatable :: pol_vector(:,:,:)
  type(levels), SAVE       :: E_k_p_q
+ !
+ ! Matrix Elements
+ !
+ real(SP),    allocatable :: elph_DW(:,:,:,:)
+ complex(SP), allocatable :: elph_gkkp(:,:,:,:)
+ complex(SP), allocatable :: elph_gkkp_bare(:,:,:,:)
+ !
+ ! ... Q-parallelization  and GKKP
+ real(SP),    allocatable :: elph_gkkp_expanded_sq(:,:,:,:,:)
+ real(SP),    allocatable :: phel_gkkp_expanded_sq(:,:,:,:,:)
+ integer,     allocatable :: Q_io_map(:)
+ integer,     allocatable :: K_io_map(:)
  !
  ! Phonon properties
  !
@@ -114,6 +127,15 @@ module ELPH
            YAMBO_ALLOC(f_k_plus_q,(elph_nb,nkbz,1))
          endif
          !
+       case ('gkkp_plus_bare')
+         !
+         if (.not.allocated(elph_gkkp)) then
+           YAMBO_ALLOC(elph_gkkp,(ph_modes,elph_nb,elph_nb,nkbz))
+           YAMBO_ALLOC(elph_DW,(ph_modes,elph_nb,elph_nb,nkbz))
+           YAMBO_ALLOC(f_k_plus_q,(elph_nb,nkbz,1))
+           YAMBO_ALLOC(elph_gkkp_bare,(ph_modes,elph_nb,elph_nb,nkbz))
+         endif
+         !
      end select
      !
      if (.not.allocated(ph_freqs_sq)) then
@@ -143,6 +165,7 @@ module ELPH
      YAMBO_FREE(gsqF_life_bose)
      YAMBO_FREE(gsqF_life_f)
      YAMBO_FREE(elph_gkkp)
+     YAMBO_FREE(elph_gkkp_bare)
      YAMBO_FREE(elph_DW)
      YAMBO_FREE(f_k_plus_q)
      YAMBO_FREE(ph_freqs_sq)

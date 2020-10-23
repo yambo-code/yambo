@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, FP
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -60,6 +60,8 @@ integer function ELPH_databases(k,E,q)
  !... dummies 
  !
  logical            ::l_gkkp_expand
+ logical            ::l_gkkp_bare=.FALSE.
+ logical            ::l_are_bare_there=.FALSE.
  integer,allocatable::ikbz_is_table(:,:)
  integer            ::iq,elph_nk,iq_db(q%nbz),iq_bz,iq_s,i1
  complex(DP), allocatable :: grad_at_gamma(:,:,:,:,:)
@@ -104,7 +106,18 @@ integer function ELPH_databases(k,E,q)
    return
  endif
  !
+ !NOTE: The bare databases are copies of the screened ones in all variables
+ !      except elph_gkkp. This depends on how elphondb.f90 in QE/PHonon was
+ !      modified.
+ !      Therefore such redundant variables are overwritten when l_gkkp_bare is
+ !      on,
+ !      including io_err at the function call of ELPH_databases_io.
+ !
+ call parser('GkkpReadBare',l_gkkp_bare)
+ if (l_gkkp_bare)    call msg('l','Reading also bare couplings')
+ !
  db_name='gkkp'
+ if (l_gkkp_bare) db_name='gkkp_plus_bare'
  nDBs_disk=elph_nDBs
  !
  if (elph_use_q_grid) then
@@ -117,6 +130,7 @@ integer function ELPH_databases(k,E,q)
      !
      elph_nDBs=q%nbz
      db_name='gkkp_expanded'
+     if (l_gkkp_bare) db_name='gkkp_expanded_plus_bare'
      !
      call msg("s",'Database expanded to the whole '//trim(intc(elph_nDBs))//' BZ Q-grid')
      !
@@ -165,7 +179,11 @@ integer function ELPH_databases(k,E,q)
  !
  ! Allocation...
  !
- call elph_global_alloc('gkkp')
+ if (.not.l_gkkp_bare) then
+   call elph_global_alloc('gkkp')
+ else
+   call elph_global_alloc('gkkp_plus_bare')
+ endif
  !
  ! Keep a copy of k-points to be used by _RT to rotate the unperturbed gkkp m.e.
  !
@@ -218,7 +236,13 @@ integer function ELPH_databases(k,E,q)
        iq_bz=iq_bz+1
        !
        iq_s=q%star(iq,i1)
-       io_err=ELPH_databases_io(idb)
+       !
+       if (.not.l_gkkp_bare) then
+         io_err=ELPH_databases_io(idb)
+       else
+         io_err=ELPH_databases_io(idb) ! Obtain elph_gkkp
+         io_err=ELPH_databases_io(idb) ! Obtain elph_gkkp_bare
+       endif
        !
        ph_freqs_sq(iq_bz,:)=ph_freqs_sq(iq,:)
        !
@@ -227,7 +251,8 @@ integer function ELPH_databases(k,E,q)
          io_elph_err=io_ELPH(ID,trim(db_name))
        endif
        !
-       call ELPH_gkkp_expand(iq_bz,iq_s,k)
+       call ELPH_gkkp_expand(iq_bz,iq_s,k,.FALSE.) ! Expand elph_gkkp
+       if (l_gkkp_bare) call ELPH_gkkp_expand(iq_bz,iq_s,k,.TRUE.) ! Expand elph_gkkp_bare
        !
        call io_control(ACTION=OP_APP_CL,SEC=(/iq_bz+1/),ID=ID)
        io_elph_err=io_ELPH(ID,trim(db_name))
@@ -236,7 +261,12 @@ integer function ELPH_databases(k,E,q)
      !
    else
      !
-     io_err=ELPH_databases_io(idb)
+     if (.not.l_gkkp_bare) then
+       io_err=ELPH_databases_io(idb)
+     else
+       io_err=ELPH_databases_io(idb) ! Obtain elph_gkkp
+       io_err=ELPH_databases_io(idb) ! Obtain elph_gkkp_bare
+     endif
      !
      if (io_err==-1) then
        call live_timing(steps=1)
@@ -302,7 +332,7 @@ integer function ELPH_databases(k,E,q)
    use IO_m,           ONLY:io_control,OP_RD,RD_CL,io_connect,io_unit,&
 &                           io_disconnect,io_file
    use ELPH,           ONLY:ph_modes,elph_nb,E_k_plus_q,&
-&                           ph_freqs_sq,elph_gkkp,elph_DW,pol_vector
+&                           ph_freqs_sq,elph_gkkp,elph_gkkp_bare,elph_DW,pol_vector
    use YPP_ELPH,       ONLY:elph_dbs_path
    use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
    use zeros,          ONLY:k_iku_zero,k_rlu_zero
@@ -319,7 +349,7 @@ integer function ELPH_databases(k,E,q)
    !I/O
    !
    integer           :: ID,io_err,type_
-   character(schlen) :: db_name
+   character(schlen) :: dbph_name
    character(1)      :: ws_ch(2)
    real(SP)          :: dVRY2Ha,h_q_disk(max_nq_in_db,3),ph_q(3),K_(3,k%nbz),w_vec_pot(6),pol_vec_norm
    real(DP)          :: K_DP(3,k%nbz),alat_DP,Q_DP(3),Ek(n_bands),&
@@ -336,11 +366,16 @@ integer function ELPH_databases(k,E,q)
    !
    call io_control(ACTION=OP_RD,ID=ID)
    !
-   write (db_name,'(a,i6.6)') 's.dbph_',iabs(idb_)
-   io_err=io_connect(desc=trim(elph_dbs_path)//"/"//trim(db_name),type=-2,ID=ID)
+   if (.not.l_are_bare_there) then
+     write (dbph_name,'(a,i6.6)') 's.dbph_',iabs(idb_)
+   else
+     write (dbph_name,'(a,i6.6)') 's.dbph_bare_',iabs(idb_)
+   endif
+   !
+   io_err=io_connect(desc=trim(elph_dbs_path)//"/"//trim(dbph_name),type=-2,ID=ID)
    !
    ELPH_databases_io=io_err
-   if (io_err/=0) return  
+   if (io_err/=0) return
    !
    ! HEADER 
    !
@@ -481,7 +516,11 @@ integer function ELPH_databases(k,E,q)
      read(98,*)
    endif
    !
-   elph_gkkp=(0._SP,0._SP)
+   if (.not.l_are_bare_there) then
+     elph_gkkp=(0._SP,0._SP)
+   else
+     elph_gkkp_bare=(0._SP,0._SP)
+   endif
    elph_DW  =(0._SP,0._SP)
    ! 
    ! ELPH_gkkp 
@@ -570,7 +609,11 @@ integer function ELPH_databases(k,E,q)
          dVRY2Ha=2._DP**(-3._DP/2._DP)
          if (abinit_DB) dVRY2Ha=1._DP
          !
-         elph_gkkp(:,ib1,ib2,k2k_tab(ik))=gkkp_disk(ib1,ib2,:)*dVRY2Ha
+         if (.not.l_are_bare_there) then
+           elph_gkkp(:,ib1,ib2,k2k_tab(ik))=gkkp_disk(ib1,ib2,:)*dVRY2Ha
+         else
+           elph_gkkp_bare(:,ib1,ib2,k2k_tab(ik))=gkkp_disk(ib1,ib2,:)*dVRY2Ha
+         endif
          !
          ! Debye Waller Term
          !
@@ -610,7 +653,11 @@ integer function ELPH_databases(k,E,q)
      do i1=1,nsmall
        ikbz_rot=ikbz_is_table(ik,sop_inv(small(i1)))
        if (k_found(ikbz_rot)/=0) cycle
-       elph_gkkp(:,:,:,ikbz_rot)=elph_gkkp(:,:,:,ik)
+       if (.not.l_are_bare_there) then
+         elph_gkkp(:,:,:,ikbz_rot)=elph_gkkp(:,:,:,ik)
+       else
+         elph_gkkp_bare(:,:,:,ikbz_rot)=elph_gkkp_bare(:,:,:,ik)
+       endif
        elph_DW(:,:,:,ikbz_rot)=elph_DW(:,:,:,ik)
        E_k_plus_q(:,ikbz_rot,1)=E_k_plus_q(:,ik,1)
        k_found(ikbz_rot)=-1
@@ -627,6 +674,10 @@ integer function ELPH_databases(k,E,q)
    !
 1  call io_control(ACTION=RD_CL,ID=ID)
    call io_disconnect(ID,FORCE=.TRUE.)
+   !
+   ! Set to read other elph_gkkp type at the next function call
+   !
+   if (l_gkkp_bare) l_are_bare_there = (.not.l_are_bare_there)
    !
    end function
    !

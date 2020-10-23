@@ -28,7 +28,7 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  ! the kernel/collision integral is available:
  !   - Time Scales Separation + QuasiParticle Approximation (TSQP)
  !
- use pars,           ONLY:SP,rZERO,cI,pi
+ use pars,           ONLY:SP,cI,pi,rZERO
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ,E_fine_grid
  use hamiltonian,    ONLY:B_mat_index
@@ -36,8 +36,7 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  use RT_occupations, ONLY:RT_ph_occ,RT_el_occ,RT_ho_occ,RT_life_occ
  use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
- use PHEL,           ONLY:phel_gkkp_expanded_sq
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch
+ use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch,phel_gkkp_expanded_sq
  use parallel_m,     ONLY:PAR_PH_IND_Xk_bz,PAR_PH_IND_eh_bands,PAR_PH_Q_ibz_index
  use QP_m,           ONLY:QP_G_damp
  !
@@ -56,24 +55,27 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  real(SP),   external  :: RT_G_retarded_convolution
  complex(SP),external  :: Lorentzian_FT
  !
- real(SP)              :: Gkkp_sq(bands(1):bands(2),bands(1):bands(2))
  ! ... band/branch index ...
  integer               :: il,i_n,i_np
  ! ... BZ index ...
- integer               :: ikbz,ik,ik_m_q,iq_mem,ik_rim,ip_rim
+ integer               :: ikbz,ik,ik_m_q,iq_mem,ik_rim,ip_rim,iq_life
  ! ... lifetime related quantities ...
  real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,&
 &            TMP_Emit_lifetime,TMP_Abs_lifetime,TMP_eh_lifetime,N_q,f_mkq,f_nk,&
 &            Hole_f_mkq,Hole_f_nk
  !
- iq_mem=PAR_PH_Q_ibz_index(iq)
+ iq_mem =PAR_PH_Q_ibz_index(iq)
+ iq_life=iq
+#if defined _RT
+ iq_life=iq_mem
+#endif
  !
  do ikbz=1,k%nbz
    !
    if (.not.PAR_PH_IND_Xk_bz%element_1D(ikbz)) cycle
    !
    ! Obtain k-q in the ibz from k in the bz and q in the ibz
-   ik_m_q =k%sstar(qindx_X(iq_mem,ikbz,1),1)
+   ik_m_q =k%sstar(qindx_X(iq,ikbz,1),1)
    ! Obtain k in the ibz from k in the bz
    ik = k%sstar(ikbz,1)
    !
@@ -81,29 +83,18 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
      !
      ph_freq=abs(sqrt(ph_freqs_sq(q%k_table(iq,1),il)))
      !
-     if (iq_mem==1 .and. PH_acoustic_branch(il)) cycle
+     if (iq==1 .and. PH_acoustic_branch(il)) cycle
      !
-     if (l_initial_equilibrium) then
-       N_q    = RT_ph_occ%N_ref(il,iq_mem)
-     else
-       N_q    = RT_ph_occ%N(il,iq_mem)
-     endif
-     !
-     Gkkp_sq=rZERO
+     if (     l_initial_equilibrium) N_q = RT_ph_occ%N_ref(il,iq)
+     if (.not.l_initial_equilibrium) N_q = RT_ph_occ%N(il,iq)
      !
      do i_n=bands(1),bands(2)
-       !
-       Gkkp_sq(i_n,i_n)=phel_gkkp_expanded_sq(i_n,i_n,il,iq_mem,ikbz)
-       if (sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) cycle
        !
        do i_np=bands(1),bands(2)
          !
          if ( .not. PAR_PH_IND_eh_bands%element_1D( B_mat_index(i_n,i_np,bands) ) ) cycle
          !
-         if (i_n.ne.i_np) then
-           Gkkp_sq(i_n,i_np)=phel_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ikbz)
-           if (sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) cycle
-         endif 
+         if (sqrt(phel_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ikbz))<MAX_gkkp*cutoff) cycle
          !
          ! At equilibrium, only metals or band gaps < E_debye can give non-zero ph lifetimes
          !
@@ -137,17 +128,15 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
          ! [NOTE]  Variable pre_factor below contains pi since it *shouldn't* come later from the hyperbolic secant FT.
          ! [NOTE2] Variable pre_factor below contains 1/(Nk_bz*N_FG_k) accounting for the double grid at each bz point.
          !
-         pre_factor=spin_occ*Gkkp_sq(i_np,i_n)*pi/(k%nbz*k_FG%N_mapped(ik)*ph_freq)
-         !
-         if( pre_factor==0._SP ) cycle
+         pre_factor=spin_occ*phel_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ikbz)*pi/(k%nbz*k_FG%N_mapped(ik)*ph_freq)
          !
          do ik_rim=k_FG%k_range(ik,1),k_FG%k_range(ik,2)
            !
            ! Zeroing
            !=========
-           TMP_Emit_lifetime=rZero
-           TMP_Abs_lifetime=rZero
-           TMP_eh_lifetime=rZero
+           TMP_Emit_lifetime=rZERO
+           TMP_Abs_lifetime=rZERO
+           TMP_eh_lifetime=rZERO
            !
            do ip_rim=k_FG%k_range(ik_m_q,1),k_FG%k_range(ik_m_q,2)
              !
@@ -183,41 +172,21 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
                Hole_f_mkq = -RT_life_occ%dN(i_np,ip_rim)/spin_occ
                f_nk       =  RT_life_occ%dN(i_n,ik_rim)/spin_occ
                Hole_f_nk  = -RT_life_occ%dN(i_n,ik_rim)/spin_occ
-             endif
-             ! NB: at equilibrium this quantity is just: (f_mkq - f_nk)
-             TMP_Emit_lifetime=TMP_Emit_lifetime+(Hole_f_nk*f_mkq - f_nk*Hole_f_mkq)*D_ares
-             ! NB: at equilibrium this quantity is just: (f_nk - f_mkq)
-             TMP_Abs_lifetime=TMP_Abs_lifetime+(f_nk*Hole_f_mkq-Hole_f_nk*f_mkq)*D_res
+             endif 
              !
-           enddo
+             TMP_Emit_lifetime=TMP_Emit_lifetime+f_nk*Hole_f_mkq*D_ares+Hole_f_nk*f_mkq*D_res
+             ! 
+             TMP_Abs_lifetime=TMP_Abs_lifetime+f_nk*Hole_f_mkq*D_res +Hole_f_nk*f_mkq*D_ares
+             !
+           enddo ! ip_rim i.e. (mk-q)
            !
-         enddo
+         enddo ! ik_rim i.e. (nk)
          !
          ! Phonon emission (stimulated and spontaneous)
-         RT_PE_life%emit(il,iq_mem)=RT_PE_life%emit(il,iq_mem)+TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
+         RT_PE_life%emit(il,iq_life)=RT_PE_life%emit(il,iq_life)+TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
          ! Phonon absorption
-         RT_PE_life%abs(il,iq_mem) =RT_PE_life%abs(il,iq_mem)+TMP_Abs_lifetime*pre_factor*N_q
-         !DEBUG>
-         !if (f_mkq-f_nk<0._SP) then
-         !  write (*,*) "______________"
-         !  write (*,*) "in=",i_n, "ik=",ik,"f_nk=",f_nk,"e_nk=",E_FG%E(i_n,ik,1),";"
-         !  write (*,*) "im", i_np,"ik_q=",ik_m_q,"f_mkq=",f_mkq,"e_mkq=",E_FG%E(i_np,ik_m_q,1),";"
-         !  write (*,*) "delta_occ=",f_mkq-f_nk,"delta_en=",D_ares
-         !endif
-         !DEBUG<
-         ! [NOTE] At equilibrium at zero lattice temperature the sum of the two is just:
-         ! 
-         !                        pre_factor*(f_mkq - f_nk)*D_ares 
-         !
-         !       This corresponds to twice the imaginary part of the phonon-electron 
-         !       the self-energy Pi = g_squared*GG  (see Mahan p. 136), with the 
-         !       additional 2 coming from the KBE. This represents the LINEWIDTH
-         !       (i.e., FWHM) of the phonon spectrum.
-         !
-         !       At BoseTemp>0, the following additional term appears:
-         !
-         !              pre_factor*(f_mkq - f_nk)*N_q(BoseTemp)*(D_ares - D_res)
-         !
+         RT_PE_life%abs(il,iq_life) =RT_PE_life%abs(il,iq_life)+TMP_Abs_lifetime*pre_factor*N_q
+         !       
        enddo ! i_np i.e. (mk-q)
        !
      enddo ! i_n i.e. (nk)

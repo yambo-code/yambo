@@ -25,8 +25,7 @@ subroutine ELPH_Q_databases_map(k,q)
  !
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp
- use ELPH,           ONLY:ph_qpt,ph_kpt_bz,elph_nDBs,elph_nk_bz
- use RT_lifetimes,   ONLY:K_io_map,Q_io_map
+ use ELPH,           ONLY:ph_qpt,ph_kpt_bz,elph_nDBs,elph_nk_bz,K_io_map,Q_io_map
  use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
  !

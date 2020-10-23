@@ -72,6 +72,9 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
    !
    if (l_BZ) then
      if (.not.PAR_IND_Q_bz%element_1D(iq_bz)) cycle
+   else
+     if (q%sstar(iq_bz,2)/=1) cycle
+     if (.not.PAR_PH_IND_Q_ibz%element_1D(q%sstar(iq_bz,1))) cycle
    endif
    !
    iq_io=Q_io_map(iq_bz)
@@ -80,11 +83,6 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
    io_err=io_ELPH(ID,'gkkp_expanded')
    !
    ph_Esq_local(iq_bz,:)=ph_freqs_sq(iq_io,:)
-   !
-   if (l_IBZ) then
-     if (q%sstar(iq_bz,2)/=1) cycle
-     if (.not.PAR_PH_IND_Q_ibz%element_1D(q%sstar(iq_bz,1))) cycle
-   endif
    !
    do ik_bz=1,k%nbz
      !

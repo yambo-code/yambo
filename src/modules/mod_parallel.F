@@ -175,15 +175,20 @@ module parallel_m
  end type PP_indexes
  !
  type PAR_scheme
-   type(MPI_comm)      :: COMM
+   type(MPI_comm)      :: COMM_i
+   type(MPI_comm)      :: COMM_a2a
    type(PP_indexes)    :: IND
    integer             :: ID
    integer             :: N_ser
    integer             :: N_par
-   integer,allocatable :: index(:)
+   integer,allocatable :: table(:)
  end type
  !
+ ! PH Self Energy
+ !
  type(PAR_scheme),SAVE :: PARs_PH_Q_ibz
+ type(PAR_scheme),SAVE :: PARs_PH_K_bz
+ type(PAR_scheme),SAVE :: PARs_PH_eh_bands
  !
  type PARk_str
    type(MPI_comm)      :: COM_ibz_INDEX
@@ -229,10 +234,6 @@ module parallel_m
  ! ... linear algebra
  type(PP_indexes),SAVE :: PAR_IND_SLK
  !
- ! ... BZ sampling (Phonons)
- type(PP_indexes),SAVE :: PAR_PH_IND_Q_ibz
- type(PP_indexes),SAVE :: PAR_PH_IND_Xk_bz
- !
  ! ... BZ sampling (Electrons)
  type(PP_indexes),SAVE :: PAR_IND_Q_ibz
  type(PP_indexes),SAVE :: PAR_IND_Q_bz
@@ -264,7 +265,6 @@ module parallel_m
  !
  ! ... G bands
  type(PP_indexes),SAVE :: PAR_IND_G_b
- type(PP_indexes),SAVE :: PAR_PH_IND_eh_bands
  type(PP_indexes),SAVE :: PAR_IND_B_mat
  type(PP_indexes),SAVE :: PAR_IND_Bp_mat
  type(PP_indexes),SAVE :: PAR_IND_B_mat_ordered
@@ -301,11 +301,6 @@ module parallel_m
  ! ... WF
  integer            :: PAR_IND_WF_b_ID
  integer            :: PAR_IND_WF_k_ID
- !
- ! ... BZ & Eh pairs (Phonons)
- integer            :: PAR_PH_IND_Q_ibz_ID
- integer            :: PAR_PH_IND_Xk_bz_ID
- integer            :: PAR_PH_IND_eh_bands_ID
  !
  ! ... BZ (Electrons)
  integer            :: PAR_IND_Q_ibz_ID
@@ -379,16 +374,6 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_WF_k_INDEX
  type(MPI_comm),SAVE :: PAR_COM_WF_b_INDEX
  !
- ! ... BZ (Phonons)
- type(MPI_comm),SAVE :: PAR_PH_COM_Q_ibz_INDEX
- type(MPI_comm),SAVE :: PAR_PH_COM_Q_ibz_A2A
- type(MPI_comm),SAVE :: PAR_PH_COM_Xk_bz_INDEX
- type(MPI_comm),SAVE :: PAR_PH_COM_Xk_bz_A2A
- !
- ! ... EH pairs (Phonons) 
- type(MPI_comm),SAVE :: PAR_PH_COM_eh_bands_INDEX
- type(MPI_comm),SAVE :: PAR_PH_COM_eh_bands_A2A
- !
  ! ... BZ (Electrons)
  type(MPI_comm),SAVE :: PAR_COM_Q_INDEX
  type(MPI_comm),SAVE :: PAR_COM_Q_A2A
@@ -458,8 +443,8 @@ module parallel_m
  integer,allocatable:: PAR_QP_index(:)
  integer            :: PAR_nQ_ibz
  integer,allocatable:: PAR_Q_ibz_index(:)
- integer            :: PAR_PH_nQ_ibz
- integer,allocatable:: PAR_PH_Q_ibz_index(:)
+ !integer            :: PAR_PH_nQ_ibz
+ !integer,allocatable:: PAR_PH_Q_ibz_index(:)
  integer            :: PAR_nQ_bz
  integer,allocatable:: PAR_Q_bz_index(:)
  integer            :: PAR_Kk_nibz
@@ -596,8 +581,10 @@ module parallel_m
    !
    subroutine PAR_scheme_reset(PARs)
      type(PAR_scheme):: PARs
-     call COMM_reset(PARs%COMM)
+     call COMM_reset(PARs%COMM_i)
+     call COMM_reset(PARs%COMM_a2a)
      call PP_indexes_reset(PARs%IND)
+     YAMBO_FREE(PARs%table)
      PARs%N_ser= 0
      PARs%N_par= 0
      PARs%ID   = -1

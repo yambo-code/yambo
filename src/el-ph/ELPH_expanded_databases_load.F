@@ -33,8 +33,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  use vec_operate,    ONLY:degeneration_finder
  use parallel_int,   ONLY:PP_redux_wait
  use parallel_m,     ONLY:PAR_Q_bz_index,PAR_IND_Q_bz,PAR_nQ_bz,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
-&                         PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX,&
-&                         PAR_PH_IND_Q_ibz,PAR_PH_Q_ibz_index,PAR_PH_nQ_ibz,PAR_PH_COM_Q_ibz_INDEX
+&                         PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX,PARs_PH_Q_ibz,PARs_PH_Q_ibz
  !
 #include<memory.h>
  ! 
@@ -60,7 +59,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  if (l_BZ ) then
    YAMBO_ALLOC(elph_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ_bz,PAR_Xk_nibz))
  else if (l_IBZ) then
-   YAMBO_ALLOC(phel_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_PH_nQ_ibz,k%nbz))
+   YAMBO_ALLOC(phel_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PARs_PH_Q_ibz%N_par,k%nbz))
  endif
  MAX_gkkp_expanded_at_kpq=rZERO
  ph_Esq_local=rZERO
@@ -75,7 +74,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
      if (.not.PAR_IND_Q_bz%element_1D(iq_bz)) cycle
    else
      if (q%sstar(iq_bz,2)/=1) cycle
-     if (.not.PAR_PH_IND_Q_ibz%element_1D(q%sstar(iq_bz,1))) cycle
+     if (.not.PARs_PH_Q_ibz%IND%element_1D(q%sstar(iq_bz,1))) cycle
    endif
    !
    iq_io=Q_io_map(iq_bz)
@@ -98,7 +97,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
        ik_mem = PAR_Xk_ibz_index(ik)
      else if (l_IBZ) then
        ik_mem = ik_bz
-       iq_mem = PAR_PH_Q_ibz_index( q%sstar(iq_bz,1))
+       iq_mem = PARs_PH_Q_ibz%table( q%sstar(iq_bz,1))
        !if (.not.PAR_IND_Xk_bz%element_1D(ik)) cycle
        !ik_mem = PAR_Xk_ibz_index(ik)
      endif
@@ -164,8 +163,8 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
    call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Q_INDEX%COMM)
    call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  else
-   call PP_redux_wait(ph_freqs_sq,COMM=PAR_PH_COM_Q_ibz_INDEX%COMM)
-   call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_PH_COM_Q_ibz_INDEX%COMM)
+   call PP_redux_wait(ph_freqs_sq,COMM=PARs_PH_Q_ibz%COMM_i%COMM)
+   call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PARs_PH_Q_ibz%COMM_i%COMM)
  endif
  !
  MAX_gkkp=maxval(MAX_gkkp_expanded_at_kpq)

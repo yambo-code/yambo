@@ -37,7 +37,7 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch,phel_gkkp_expanded_sq
- use parallel_m,     ONLY:PAR_PH_IND_Xk_bz,PAR_PH_IND_eh_bands,PAR_PH_Q_ibz_index
+ use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_eh_bands,PARs_PH_Q_ibz
  use QP_m,           ONLY:QP_G_damp
  !
  implicit none
@@ -64,7 +64,7 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
 &            TMP_Emit_lifetime,TMP_Abs_lifetime,TMP_eh_lifetime,N_q,f_mkq,f_nk,&
 &            Hole_f_mkq,Hole_f_nk
  !
- iq_mem =PAR_PH_Q_ibz_index(iq)
+ iq_mem =PARs_PH_Q_ibz%table(iq)
  iq_life=iq
 #if defined _RT
  iq_life=iq_mem
@@ -72,7 +72,7 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  !
  do ikbz=1,k%nbz
    !
-   if (.not.PAR_PH_IND_Xk_bz%element_1D(ikbz)) cycle
+   if (.not.PARs_PH_K_bz%IND%element_1D(ikbz)) cycle
    !
    ! Obtain k-q in the ibz from k in the bz and q in the ibz
    ik_m_q =k%sstar(qindx_X(iq,ikbz,1),1)
@@ -92,7 +92,7 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
        !
        do i_np=bands(1),bands(2)
          !
-         if ( .not. PAR_PH_IND_eh_bands%element_1D( B_mat_index(i_n,i_np,bands) ) ) cycle
+         if ( .not. PARs_PH_eh_bands%IND%element_1D( B_mat_index(i_n,i_np,bands) ) ) cycle
          !
          if (sqrt(phel_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ikbz))<MAX_gkkp*cutoff) cycle
          !

@@ -1,7 +1,7 @@
 #
 # Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -81,14 +81,14 @@ case "${host}" in
    ;;
  powerpc64*linux* )
    build_os="linux"
-   TIMER="ct_etime.o"
-   if test -z "$F90SUFFIX"; then F90SUFFIX=".f"; fi
+   #TIMER="ct_etime.o"
+   if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
    ;;
  powerpc-ibm* )
    build_os="aix"  
    save=$AR_FLAGS
    AR_FLAGS="$save -X32_64"
-   if test -z "$F90SUFFIX"; then F90SUFFIX=".f"; fi
+   if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
    ;;
  mips-sgi-irix*)
    build_os="irix"  

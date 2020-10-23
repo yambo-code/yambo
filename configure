@@ -2837,7 +2837,7 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 # YAMBO SPECIFIC
 #
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): DS
@@ -4264,7 +4264,7 @@ fi
 #
 # Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -4320,7 +4320,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -4345,7 +4345,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -4429,7 +4429,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -4454,7 +4454,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -4479,7 +4479,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -4511,7 +4511,7 @@ fi
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -4563,7 +4563,7 @@ fi
 #  Report
 #
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -6261,14 +6261,14 @@ case "${host}" in
    ;;
  powerpc64*linux* )
    build_os="linux"
-   TIMER="ct_etime.o"
-   if test -z "$F90SUFFIX"; then F90SUFFIX=".f"; fi
+   #TIMER="ct_etime.o"
+   if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
    ;;
  powerpc-ibm* )
    build_os="aix"
    save=$AR_FLAGS
    AR_FLAGS="$save -X32_64"
-   if test -z "$F90SUFFIX"; then F90SUFFIX=".f"; fi
+   if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
    ;;
  mips-sgi-irix*)
    build_os="irix"
@@ -6810,11 +6810,23 @@ alphaev*)
   FCMFLAG="-nofor_main"
   ;;
 powerpc64*linux* )
-  CFLAGS="-q64 -O2 -g"
-  SYSFLAGS="-q64 -O2 -g -qnoescape -qnostrict -qarch=ppc970 -qtune=ppc970"
-  FUFLAGS="-q64 -O0 -g"
-  OMPFLAGS=""
-  def_compiler="-D_XLF"
+  case "${FC}" in
+  *pgf9* | *ftn* | *pgfortran* )
+    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    FUFLAGS="-O0 -g -Mbackslash"
+    FCMFLAG="-Mnomain"
+    OMPFLAGS="-mp"
+    def_compiler="-D_PGI"
+    NETCDFFLAGS="-DpgiFortran"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
+    ;;
+  *)
+    CFLAGS="-q64 -O2 -g"
+    SYSFLAGS="-q64 -O2 -g -qnoescape -qnostrict -qarch=ppc970 -qtune=ppc970"
+    FUFLAGS="-q64 -O0 -g"
+    OMPFLAGS=""
+    def_compiler="-D_XLF"
+  esac
   ;;
 powerpc-ibm* )
   CFLAGS="-O -q64"
@@ -8292,7 +8304,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -9274,7 +9286,7 @@ fi
 
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF, DS
@@ -9320,7 +9332,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF
@@ -9345,7 +9357,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AF
@@ -9370,7 +9382,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AF
@@ -9395,7 +9407,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -9421,7 +9433,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -14868,7 +14880,7 @@ fi
 # Folders
 #
 #
-#        Copyright (C) 2000-2019 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): DS AM

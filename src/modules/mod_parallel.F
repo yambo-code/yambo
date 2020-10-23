@@ -594,6 +594,15 @@ module parallel_m
      CPU_structure(9)%Short_Description="PH_SE"
    end subroutine
    !
+   subroutine PAR_scheme_reset(PARs)
+     type(PAR_scheme):: PARs
+     call COMM_reset(PARs%COMM)
+     call PP_indexes_reset(PARs%IND)
+     PARs%N_ser= 0
+     PARs%N_par= 0
+     PARs%ID   = -1
+   end subroutine
+   !
    subroutine COMM_reset(COMM)
      type(MPI_comm):: COMM
      COMM%n_CPU      =1

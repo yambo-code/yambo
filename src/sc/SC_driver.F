@@ -51,7 +51,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use stderr,         ONLY:intc,real2ch,log_as_a_file
  use xc_functionals, ONLY:E_xc
  use frequency,      ONLY:w_samp
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait,CPU_structure
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,CPU_structure
+ use parallel_int,   ONLY:PP_redux_wait
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,manage_action,REP,VERIFY,io_COLLs,io_RESPONSE,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder,v_norm

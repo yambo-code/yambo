@@ -36,7 +36,8 @@ subroutine RT_databases_IO(E,DO_IT)
  use IO_m,           ONLY:io_control,manage_action,NONE,REP, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
 &                         OP_IF_START_APP_CL_IF_END,WR_CL_IF_END,OP_APP,OP_APP_CL,OP_WR_CL
- use parallel_m,     ONLY:PP_redux_wait,PP_bcast,HEAD_k_cpu,PAR_G_k_range
+ use parallel_m,     ONLY:HEAD_k_cpu,PAR_G_k_range
+ use parallel_int,   ONLY:PP_redux_wait,PP_bcast
  use timing_m,       ONLY:timing
  use fields,         ONLY:A_tot
 #if defined _PAR_IO

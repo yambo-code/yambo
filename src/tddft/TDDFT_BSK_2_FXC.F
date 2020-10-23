@@ -31,7 +31,8 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_K_diagonal,FXC,&
 &                        FXC_is_retarded,io_BS_Fxc
  use DIPOLES,       ONLY:DIP_rotated
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
+ use parallel_m,    ONLY:PP_indexes,PP_indexes_reset
+ use parallel_int,  ONLY:PP_redux_wait
  use interfaces,    ONLY:PARALLEL_index
  use D_lattice,     ONLY:DL_vol
  use R_lattice,     ONLY:bare_qpg,nXkbz,bz_samp

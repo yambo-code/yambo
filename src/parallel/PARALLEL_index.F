@@ -23,11 +23,12 @@
 !
 subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)
  !
- use pars,       ONLY:SP
- use parallel_m, ONLY:PP_redux_wait,PP_indexes,ncpu,myid,p_prod,mpi_comm_world,&
-&                     MPI_comm,comm_default_value,PP_indexes_reset
- use stderr,     ONLY:intc
- use vec_operate,ONLY:sort
+ use pars,        ONLY:SP
+ use parallel_m,  ONLY:PP_indexes,ncpu,myid,p_prod,mpi_comm_world,&
+&                      MPI_comm,comm_default_value,PP_indexes_reset
+ use parallel_int,ONLY:PP_redux_wait
+ use stderr,      ONLY:intc
+ use vec_operate, ONLY:sort
  !
 #include<memory.h>
  !

@@ -47,7 +47,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use it_tools,       ONLY:it,infile_dump,ofiles_append,&
 &                         switch_off_runlevel,check_verbosity,runlevel_is_on
  use it_m,           ONLY:initdefs,rstatus,initmode,infile,nrnlvls,rnlvls
- use parallel_m,     ONLY:PP_redux_wait
+ use parallel_int,   ONLY:PP_redux_wait
  use com,            ONLY:msg,repfile_unit,inpfile_unit,com_path,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on

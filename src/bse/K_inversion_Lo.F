@@ -34,7 +34,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
 &                         BSS_eh_W,&
 &                         BSS_add_antiresonant,K_diago_in_BS_mat,BS_diagonal
  use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
  !
 #if defined _ELPH

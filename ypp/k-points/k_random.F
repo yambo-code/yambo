@@ -30,7 +30,8 @@ subroutine k_random(Xk,No_Weight)
  use YPPm,                ONLY:BZ_random_nkpts,K_transform
  use LIVE_t,              ONLY:live_timing
  use stderr,              ONLY:intc
- use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use parallel_m,          ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,        ONLY:PP_redux_wait
  use interfaces,          ONLY:PARALLEL_index
  !
 #include<memory.h>

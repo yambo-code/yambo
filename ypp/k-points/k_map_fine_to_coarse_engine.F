@@ -26,7 +26,8 @@ subroutine k_map_fine_to_coarse_engine(zone,pts_fg,N_pts_fg,pts_cg,N_pts_cg,MAP)
  use pars,                ONLY:SP,zero_dfl
  use R_lattice,           ONLY:k_the_nearest
  use vec_operate,         ONLY:sort
- use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use parallel_m,          ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,        ONLY:PP_redux_wait
  use interfaces,          ONLY:PARALLEL_index
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:msg

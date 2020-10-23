@@ -28,7 +28,8 @@ subroutine K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
  !
  use pars,           ONLY:SP,cZERO,cI
  use wrapper_omp,    ONLY:V_dot_V_omp
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,   ONLY:PP_redux_wait
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
  use KERR,           ONLY:BSS_dipoles_kerr

@@ -31,7 +31,8 @@ subroutine ELPH_excitonic_gkkp(Xk)
  use IO_m,                ONLY:io_control,manage_action,OP_RD,DUMP,RD_CL_IF_END
  use ELPH,                ONLY:elph_nDBS_used,ph_modes,elph_global_free,&
 &                              elph_use_q_grid,ph_freqs_sq,elph_gkkp
- use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid
+ use parallel_m,          ONLY:PP_indexes,PP_indexes_reset,myid
+ use parallel_int,        ONLY:PP_redux_wait
  use interfaces,          ONLY:PARALLEL_index
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:msg,of_open_close

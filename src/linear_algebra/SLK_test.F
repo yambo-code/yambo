@@ -155,9 +155,9 @@ end subroutine SLK_test
  ! build A = I + scal * randmat
  ! a small value of scal ensures A is invertible
  !
- use pars,       ONLY:SP,DP
- use parallel_m, ONLY:PP_redux_wait
- use SLK_m,      ONLY:SLK_COM_A2A
+ use pars,           ONLY:SP,DP
+ use parallel_int,   ONLY:PP_redux_wait
+ use SLK_m,          ONLY:SLK_COM_A2A
  !
  implicit none
  !

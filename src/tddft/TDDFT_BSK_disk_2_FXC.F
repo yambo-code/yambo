@@ -32,7 +32,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use matrix_operate,ONLY:UP_matrix_index
  use com,           ONLY:isec
  use LIVE_t,        ONLY:live_timing
- use parallel_m,    ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_redux_wait
  use D_lattice,     ONLY:DL_vol
  use interfaces,    ONLY:WF_load,WF_free
  use wave_func,     ONLY:WF

@@ -406,7 +406,8 @@ module IO_m
    !
    subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM)
      !
-     use parallel_m,    ONLY:master_cpu,PP_bcast,myid
+     use parallel_int,  ONLY:PP_bcast
+     use parallel_m,    ONLY:master_cpu,myid
      !
      integer,intent(in)    :: ACTION
      integer,intent(inout) :: ID

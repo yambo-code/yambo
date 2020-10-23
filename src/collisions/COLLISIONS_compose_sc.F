@@ -30,7 +30,8 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Sc,QP_Vnl_xc
  use collision_ext,    ONLY:COH_COLL_element,HXC_COLL_element,COLL_bands,HXC_collisions,&
 &                           COH_collisions,COLLISIONS_have_HARTREE
- use parallel_m,       ONLY:PAR_IND_QP,PP_redux_wait,HEAD_b_cpu,PAR_IND_G_k
+ use parallel_m,       ONLY:PAR_IND_QP,HEAD_b_cpu,PAR_IND_G_k
+ use parallel_int,     ONLY:PP_redux_wait
  use timing_m,         ONLY:timing
  implicit none
  !

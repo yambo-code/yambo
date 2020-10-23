@@ -34,7 +34,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,&
+ use parallel_int,  ONLY:PP_redux_wait
+ use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD,&
 &                        PAR_COM_X_WORLD_RL_resolved
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer

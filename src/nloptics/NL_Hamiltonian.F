@@ -45,7 +45,8 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
 &                         NL_bands,VAL_BANDS,NL_P
  use global_XC,      ONLY:WF_xc_functional,WF_kind
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
+ use parallel_int,   ONLY:PP_redux_wait
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use H_interfaces,   ONLY:V_real_space_to_H

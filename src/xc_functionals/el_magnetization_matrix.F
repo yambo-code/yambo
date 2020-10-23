@@ -39,7 +39,8 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx
  use wave_func,      ONLY:WF,WAVEs
  use real_time,      ONLY:RTibz,RT_bands
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear,PAR_G_k_range
+ use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear,PAR_G_k_range
+ use parallel_int,   ONLY:PP_redux_wait
  use matrix_operate, ONLY:UP_matrix_index,m3det
  use electrons,      ONLY:Spin_magn
  use timing_m,       ONLY:timing

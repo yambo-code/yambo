@@ -62,7 +62,8 @@ subroutine RT_initialize(E,k,q)
  use D_lattice,      ONLY:Bose_Temp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
  use parser_m,       ONLY:parser
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait,PAR_G_k_range
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_G_k_range
+ use parallel_int,   ONLY:PP_redux_wait
  !
 #include<memory.h>
  !

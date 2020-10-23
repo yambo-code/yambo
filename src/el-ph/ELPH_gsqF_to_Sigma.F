@@ -33,7 +33,8 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
 &                        elph_use_q_grid,ph_freqs_sq,QP_DW,QP_OMS_Fan,elph_use_q_grid
  use QP_m,          ONLY:QP_solver,QP_Sc_steps,QP_Sc_steps,QP_n_states,QP_Sc,On_Mass_Shell_approx,&
 &                        QP_table
- use parallel_m,    ONLY:PAR_nQ_bz,PAR_nQP,PAR_IND_QP,PAR_Q_bz_index,PAR_IND_Q_bz,PP_redux_wait,PAR_COM_G_b_INDEX
+ use parallel_m,    ONLY:PAR_nQ_bz,PAR_nQP,PAR_IND_QP,PAR_Q_bz_index,PAR_IND_Q_bz,PAR_COM_G_b_INDEX
+ use parallel_int,  ONLY:PP_redux_wait
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp,W_reset

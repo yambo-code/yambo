@@ -51,7 +51,7 @@ subroutine NL_start_and_restart(E,k,Dip)
 &                         V_xc_0,NL_initial_P,l_use_DIPOLES,n_frequencies,freqs_done,JGM,E_xc_0,I_relax,l_use_DIPOLES, &
 &                         VAL_BANDS,l_eval_CURRENT,NL_initial_J,NL_P
  use IO_m,           ONLY:OP_RD_CL,io_control,NONE,file_is_present,VERIFY
- use parallel_m,     ONLY:PP_redux_wait
+ use parallel_int,   ONLY:PP_redux_wait
  use stderr,         ONLY:intc
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !

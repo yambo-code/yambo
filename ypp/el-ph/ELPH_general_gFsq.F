@@ -40,7 +40,8 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  use BS,                  ONLY:BS_K_dim,BS_bands
  use QP_m,                ONLY:QP_n_states,QP_table,QP_state,QP_nb,QP_nk,QP_states_simmetrize
  use LIVE_t,              ONLY:live_timing
- use parallel_m,          ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid,PAR_nQ_bz
+ use parallel_m,          ONLY:PP_indexes,PP_indexes_reset,myid,PAR_nQ_bz
+ use parallel_int,        ONLY:PP_redux_wait
  use interfaces,          ONLY:PARALLEL_index
  use functions,           ONLY:Fermi_fnc_derivative
  !

@@ -30,17 +30,18 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  ! the properties of the DB that have been read previously 
  ! (like io_nectdf_support or io_code_version/revision).
  !
- use pars,       ONLY:schlen
- use IO_m,       ONLY:close_is_on,io_connect,io_resetable,io_file,&
-&                     io_sec,io_extension,io_action,read_is_on,write_is_on,&
-&                     OP_RD_CL,OP_APP_CL,io_type,io_disconnect,io_folder,io_raw_extension
- use IO_m,       ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,&
-                      frag_SC,frag_RT,frag_ELPH,frag_BS_K
- use stderr,     ONLY:intc,write_fragments_IO_log,logfile
- use parallel_m, ONLY:ncpu,PP_bcast,PP_redux_wait
+ use pars,        ONLY:schlen
+ use IO_m,        ONLY:close_is_on,io_connect,io_resetable,io_file,&
+&                      io_sec,io_extension,io_action,read_is_on,write_is_on,&
+&                      OP_RD_CL,OP_APP_CL,io_type,io_disconnect,io_folder,io_raw_extension
+ use IO_m,        ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,&
+                       frag_SC,frag_RT,frag_ELPH,frag_BS_K
+ use stderr,      ONLY:intc,write_fragments_IO_log,logfile
+ use parallel_int,ONLY:PP_bcast,PP_redux_wait
+ use parallel_m,  ONLY:ncpu
 #if ! defined _io_lib
- use interfaces, ONLY:PARALLEL_live_message
- use timing_m,   ONLY:timing
+ use interfaces,  ONLY:PARALLEL_live_message
+ use timing_m,    ONLY:timing
 #endif
  !
  implicit none

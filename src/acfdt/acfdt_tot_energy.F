@@ -30,7 +30,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
  use frequency,      ONLY:w_samp,W_reset
  use wave_func,      ONLY:WF
  use LIVE_t,         ONLY:live_timing
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,   ONLY:PP_redux_wait
  use linear_algebra, ONLY:INV,USE_LK
  use interfaces,     ONLY:PARALLEL_index,WF_load,WF_free,el_density_and_current,LINEAR_ALGEBRA_driver 
  use DIPOLES,        ONLY:DIPOLE_t

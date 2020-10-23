@@ -23,15 +23,16 @@
 !
 subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
- use pars,       ONLY:SP,cI,cZERO
- use com,        ONLY:msg
- use IO_m,       ONLY:io_DIP
- use R_lattice,  ONLY:bz_samp
- use electrons,  ONLY:levels,n_sp_pol
- use DIPOLES,    ONLY:DIPOLE_t,DIP_v,use_covariant_approach
- use IO_m,       ONLY:io_control,manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
-&                     OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
- use parallel_m, ONLY:master_cpu,PP_redux_wait,PAR_K_scheme,PP_bcast,PAR_COM_X_WORLD
+ use pars,        ONLY:SP,cI,cZERO
+ use com,         ONLY:msg
+ use IO_m,        ONLY:io_DIP
+ use R_lattice,   ONLY:bz_samp
+ use electrons,   ONLY:levels,n_sp_pol
+ use DIPOLES,     ONLY:DIPOLE_t,DIP_v,use_covariant_approach
+ use IO_m,        ONLY:io_control,manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
+&                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
+ use parallel_int,ONLY:PP_bcast,PP_redux_wait
+ use parallel_m,  ONLY:master_cpu,PAR_K_scheme,PAR_COM_X_WORLD
  !
  implicit none
  !

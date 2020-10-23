@@ -46,7 +46,8 @@ subroutine K_WF_phases(Xk)
  use R_lattice,     ONLY:bz_samp
  use BS,            ONLY:WF_phase,BS_res_K_corr,BS_bands
  use com,           ONLY:msg
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear
+ use parallel_m,    ONLY:PAR_IND_WF_linear
+ use parallel_int,  ONLY:PP_redux_wait
  use electrons,     ONLY:n_sp_pol,n_spinor
  use interfaces,    ONLY:WF_apply_symm
  use timing_m,      ONLY:timing

@@ -39,7 +39,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  use BS,            ONLY:BS_bands,BS_H_dim
  use interfaces,    ONLY:PARALLEL_index,WF_load,WF_free,DESC_write
  use wave_func,     ONLY:WF,WF_symm,wf_ng
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,  ONLY:PP_redux_wait
  use openmp,        ONLY:OPENMP_update,master_thread
  use LIVE_t,        ONLY:live_timing
  use wrapper,       ONLY:V_dot_V

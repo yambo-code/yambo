@@ -28,7 +28,8 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
  use interpolate,       ONLY:NN_nk_exact,NN_n_of_nearest,NN_MAX_real_nearest,INTERPOLATE_is_serial,NN_nk_border
  use interfaces,        ONLY:PARALLEL_index
  use vec_operate,       ONLY:sort
- use parallel_m,        ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,ncpu,myid
+ use parallel_m,        ONLY:PP_indexes,PP_indexes_reset,ncpu,myid
+ use parallel_int,      ONLY:PP_redux_wait
  !
 #include<memory.h>
  !

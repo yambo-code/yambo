@@ -38,7 +38,8 @@ subroutine X_redux(iq,X_par,Xw,X)
  use com,           ONLY:msg
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_X_WORLD_RL_resolved,PP_bcast,&
+ use parallel_int,  ONLY:PP_redux_wait,PP_bcast
+ use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_COM_X_WORLD_RL_resolved,&
 &                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
  use R_lattice,     ONLY:bare_qpg, bare_qpg_d
  use frequency,     ONLY:w_samp

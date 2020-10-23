@@ -40,7 +40,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use COLL_interfaces,     ONLY:SCATTERING_GW_kinematics
  use LIVE_t,              ONLY:live_timing
  use vec_operate,         ONLY:v_norm
- use parallel_m,          ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
+ use parallel_int,        ONLY:PP_redux_wait
+ use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                              PAR_IND_Q_ibz,PAR_nQ_ibz,PAR_nQP
  use functions,           ONLY:theta_function
  use timing_m,            ONLY:timing

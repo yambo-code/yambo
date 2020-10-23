@@ -16,7 +16,8 @@ subroutine vcut_init(vcut,a,cutoff)
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use openmp,        ONLY:OPENMP_update,n_threads,master_thread
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,  ONLY:PP_redux_wait
  use interfaces,    ONLY:PARALLEL_index
  implicit none
  type(vcut_type),   intent(out) :: vcut

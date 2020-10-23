@@ -51,7 +51,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 &                         compute_P2_dipoles,compute_Orb_dipoles,compute_Spin_dipoles
  use IO_m,           ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_A2A,&
-&                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
+&                         PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
+ use parallel_int,   ONLY:PP_redux_wait
  use parser_m,       ONLY:parser
 #if defined _RT
  use DIPOLES,        ONLY:DIP_spin,DIP_orbital,DIP_P_spinor

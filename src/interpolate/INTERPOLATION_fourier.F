@@ -33,7 +33,8 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,NK,ID)
  use vec_operate,       ONLY:c2a
  use timing_m,          ONLY:timing
  use LIVE_t,            ONLY:live_timing
- use parallel_m,        ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset
+ use parallel_m,        ONLY:PP_indexes,PP_indexes_reset
+ use parallel_int,      ONLY:PP_redux_wait
  !
  implicit none
  !

@@ -23,8 +23,9 @@
 !
 subroutine RT_Lifetimes_merge_intra_k(LIFE)
  !
- use parallel_m,     ONLY:PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,PP_redux_wait,&
+ use parallel_m,     ONLY:PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,&
 &                         PAR_COM_Xk_ibz_A2A,PAR_IND_Xk_ibz
+ use parallel_int,   ONLY:PP_redux_wait
  use real_time,      ONLY:RTibz
  use R_lattice,      ONLY:nkibz
  use RT_lifetimes,   ONLY:RT_lifetime

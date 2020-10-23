@@ -24,7 +24,8 @@
 subroutine RT_occupations_eval(dG)
  !
  use pars,           ONLY:SP
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_G_k_range
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_G_k_range
+ use parallel_int,   ONLY:PP_redux_wait
  use RT_occupations, ONLY:RT_el_occ,RT_ho_occ
  use real_time,      ONLY:RTibz,RT_bands,RT_nk,RT_nbands,G_lesser_reference,l_RT_rotate_DM
  use hamiltonian,    ONLY:H_rotation

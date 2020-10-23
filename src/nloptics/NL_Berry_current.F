@@ -31,7 +31,8 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  use R_lattice,      ONLY:bz_samp,bz_map,nXkbz
  use D_lattice,      ONLY:a
  use vec_operate,    ONLY:get_id_perpendicular
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_int,   ONLY:PP_redux_wait
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands
  !

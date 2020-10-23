@@ -26,7 +26,8 @@ subroutine RT_Lifetimes_merge_driver(what)
  use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_abs_life,&
 &                         RT_EP_emit_REF_life,RT_EE_REF_life,RT_EH_REF_life,RT_EP_abs_REF_life
  use real_time,      ONLY:RTibz
- use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_int,   ONLY:PP_redux_wait
  use R_lattice,      ONLY:nkibz
  use timing_m,       ONLY:timing
  !

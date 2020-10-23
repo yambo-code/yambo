@@ -58,7 +58,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:myid,ncpu,PP_redux_wait
+ use parallel_m,    ONLY:myid,ncpu
+ use parallel_int,  ONLY:PP_redux_wait
  !
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free

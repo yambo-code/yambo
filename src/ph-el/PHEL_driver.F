@@ -27,7 +27,8 @@ subroutine PHEL_driver(E,k,q)
  use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,elph_global_free,phel_gkkp_expanded_sq
  use interfaces,          ONLY:PARALLEL_global_indexes
- use parallel_m,          ONLY:PAR_PH_IND_Q_ibz,PP_redux_wait
+ use parallel_m,          ONLY:PAR_PH_IND_Q_ibz
+ use parallel_int,        ONLY:PP_redux_wait
  use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free
  use RT_occupations,      ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_ALL_occupations_free
  use real_time,           ONLY:l_RT_uses_E_FineGd

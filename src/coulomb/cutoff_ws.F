@@ -30,7 +30,8 @@ subroutine cutoff_ws(q)
  use cutoff_ws_m,   ONLY:vcut_type,e2
  use LIVE_t,        ONLY:live_timing
  use openmp,        ONLY:OPENMP_update,n_threads,master_thread
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,  ONLY:PP_redux_wait
  use interfaces,    ONLY:PARALLEL_index
  implicit none
  type(bz_samp)     ::q

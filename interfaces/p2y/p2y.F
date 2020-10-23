@@ -29,7 +29,8 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use com,                 ONLY:msg,core_io_path
  use it_m,                ONLY:nrnlvls,rnlvls,rstatus
  use LIVE_t,              ONLY:live_timing
- use parallel_m,          ONLY:ncpu,myid,PARALLEL_wait,PP_indexes,PP_indexes_reset
+ use parallel_m,          ONLY:ncpu,myid,PP_indexes,PP_indexes_reset
+ use parallel_int,        ONLY:PARALLEL_wait
  use electrons,           ONLY:levels,E_reset,n_bands,n_sp_pol,n_spinor
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,io_WF, wf_nb_io_groups,wf_nb_io

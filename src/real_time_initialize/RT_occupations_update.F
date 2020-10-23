@@ -23,7 +23,8 @@
 !
 subroutine RT_occupations_update( )
  !
- use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz,PP_redux_wait 
+ use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_int,   ONLY:PP_redux_wait
  use real_time,      ONLY:dG_lesser,G_lesser_reference,RT_bands,RT_is_dynamically_dephased,RTibz
  use RT_occupations, ONLY:RT_el_occ,RT_ho_occ,RT_life_occ,RT_occupation_clean
  use electrons,      ONLY:spin_occ

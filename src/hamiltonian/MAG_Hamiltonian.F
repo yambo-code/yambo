@@ -65,7 +65,8 @@ subroutine MAG_Hamiltonian()
  use SC,             ONLY:SC_bands
  use wave_func,      ONLY:WF,wf_x,wf_y,wf_z,WF_derivative_free
  use LIVE_t,         ONLY:live_timing
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,   ONLY:PP_redux_wait
  use interfaces,     ONLY:PARALLEL_index,WF_load,WF_free
  use wrapper,        ONLY:Vstar_dot_V
  !

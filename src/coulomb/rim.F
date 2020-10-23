@@ -25,7 +25,8 @@ subroutine rim()
  !
  use pars,          ONLY:SP,pi,DP
  use com,           ONLY:msg
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,  ONLY:PP_redux_wait
  use interfaces,    ONLY:PARALLEL_index
  use LIVE_t,        ONLY:live_timing
  use vec_operate,   ONLY:v_norm2

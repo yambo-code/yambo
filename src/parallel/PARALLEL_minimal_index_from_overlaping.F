@@ -23,7 +23,8 @@
 !
 subroutine PARALLEL_minimal_index_from_overlaping(IND_in,IND_out,PAR_COMM)
  !
- use parallel_m,     ONLY:PP_indexes,MPI_comm,PP_redux_wait,PAR_INDEX_copy
+ use parallel_m,     ONLY:PP_indexes,MPI_comm,PAR_INDEX_copy
+ use parallel_int,   ONLY:PP_redux_wait
  use vec_operate,    ONLY:sort
  !
  implicit none

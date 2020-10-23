@@ -34,7 +34,8 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
  ! Multiply K by Vi
  ! 
  use pars,           ONLY:SP,cONE,cZERO,cI
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_T_Haydock,PAR_COM_T_Haydock
+ use parallel_m,     ONLY:PAR_IND_T_Haydock,PAR_COM_T_Haydock
+ use parallel_int,   ONLY:PP_redux_wait
  use BS_solvers,     ONLY:Haydock_vector
  use BS,             ONLY:BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp
  use wrapper,        ONLY:M_by_V

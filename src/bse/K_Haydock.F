@@ -37,7 +37,8 @@ subroutine K_Haydock(iq,W)
  use stderr,         ONLY:tty_size,intc,real2ch
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
- use parallel_m,     ONLY:PAR_IND_T_groups,PP_bcast,PAR_IND_T_Haydock,PAR_COM_T_Haydock,master_cpu,PAR_COM_Xk_ibz_INDEX, &
+ use parallel_int,   ONLY:PP_bcast
+ use parallel_m,     ONLY:PAR_IND_T_groups,PAR_IND_T_Haydock,PAR_COM_T_Haydock,master_cpu,PAR_COM_Xk_ibz_INDEX, &
                              PAR_COM_eh_INDEX
  use timing_m,       ONLY:timing
 #if defined _KERR
@@ -744,8 +745,9 @@ subroutine K_Haydock(iq,W)
      ! large vector of full dimension  
      ! on the master for I/O 
      ! 
+     use parallel_int,  ONLY:PP_redux_wait
      use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_T_groups, &
-                             PAR_COM_eh_INDEX,PP_redux_wait
+                             PAR_COM_eh_INDEX
      type(Haydock_vector),intent(in) :: V(BS_nT_grps)
      complex(SP),allocatable,intent(out) :: fullV(:)
      ! ws: 

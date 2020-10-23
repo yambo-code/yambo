@@ -35,7 +35,8 @@ subroutine RT_time_step_update( E )
  use RT_output_m,    ONLY:TIME_STEP_desc
  use com,            ONLY:msg
  use electrons,      ONLY:levels
- use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_int,   ONLY:PP_redux_wait
  use interfaces,     ONLY:DESC_write
  use IO_m,           ONLY:IO_and_Messaging_switch
  !

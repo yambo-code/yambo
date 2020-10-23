@@ -35,7 +35,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:l_elel_corr
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q_bz,PAR_Q_bz_index,PAR_IND_QP,&
+ use parallel_int,  ONLY:PP_redux_wait
+ use parallel_m,    ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_IND_QP,&
 &                        PAR_IND_Q_bz_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
                          PAR_COM_Q_A2A,PAR_COM_Q_INDEX,myid
  use IO_m,          ONLY:io_control,manage_action,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch,&

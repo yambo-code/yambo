@@ -38,7 +38,8 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  use YPP_interfaces,ONLY:excitons_sort_and_report
  use YPPm,          ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,&
 &                        EXCITON_kin,excitons_degeneracy_average,EXCITON_spin,BSiq
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,  ONLY:PP_redux_wait
  !
 #include<memory.h>
  !

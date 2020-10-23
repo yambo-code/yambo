@@ -31,7 +31,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
  use electrons,     ONLY:levels,spin_occ,spin
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&
+ use parallel_int,  ONLY:PP_redux_wait
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_QP,&
 &                        PAR_IND_QP_ID,PAR_IND_Q_ibz,PAR_IND_G_b,&
 &                        PAR_IND_Q_ibz_ID,n_WF_bands_to_load
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc

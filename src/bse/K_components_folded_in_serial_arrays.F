@@ -32,7 +32,8 @@ subroutine K_components_folded_in_serial_arrays(iq)
  !
  !
  use electrons,      ONLY:n_sp_pol
- use parallel_m,     ONLY:PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
+ use parallel_int,   ONLY:PP_redux_wait
+ use parallel_m,     ONLY:PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                         PAR_COM_Xk_ibz_INDEX
  use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,&
 &                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BSS_alloc

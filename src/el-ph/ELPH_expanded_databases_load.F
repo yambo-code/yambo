@@ -31,8 +31,9 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,MAX_gkkp,elph_gkkp_expanded_sq,&
 &                         Q_io_map,K_io_map,phel_gkkp_expanded_sq
  use vec_operate,    ONLY:degeneration_finder
+ use parallel_int,   ONLY:PP_redux_wait
  use parallel_m,     ONLY:PAR_Q_bz_index,PAR_IND_Q_bz,PAR_nQ_bz,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
-&                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX,&
+&                         PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX,&
 &                         PAR_PH_IND_Q_ibz,PAR_PH_Q_ibz_index,PAR_PH_nQ_ibz,PAR_PH_COM_Q_ibz_INDEX
  !
 #include<memory.h>

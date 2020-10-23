@@ -31,7 +31,7 @@ subroutine K_stored_in_a_big_matrix(iq,what)
  !      | (-cI*K_c^*(-q))  (-K_r^*(-q) |
  !
  use pars,           ONLY:SP,cI,cZERO,cONE
- use parallel_m,     ONLY:PP_redux_wait
+ use parallel_int,   ONLY:PP_redux_wait
  use BS,             ONLY:BS_K_coupling,n_BS_blks
  use BS_solvers,     ONLY:BS_mat,BS_blk,BS_H_dim,BS_K_dim,&
 &                         BSS_perturbative_width,run_inversion,run_Haydock,&

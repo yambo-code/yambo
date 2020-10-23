@@ -33,8 +33,9 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  use H_interfaces,   ONLY:V_real_space_to_H
  use wave_func,      ONLY:WF
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,&
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index,&
 &                         PAR_COM_Xk_ibz_INDEX,PAR_G_k_range
+ use parallel_int,   ONLY:PP_redux_wait
  use timing_m,       ONLY:timing
  !
  implicit none

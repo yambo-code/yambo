@@ -29,7 +29,8 @@ subroutine TIMING_overview(list,main_name)
  use LIVE_t,        ONLY:LIVE_message
  use com,           ONLY:msg
  use stderr,        ONLY:log_as_a_file
- use parallel_m,    ONLY:ncpu,myid,master_cpu,PP_redux_wait,PP_bcast
+ use parallel_m,    ONLY:ncpu,myid,master_cpu
+ use parallel_int,  ONLY:PP_redux_wait,PP_bcast
  use vec_operate,   ONLY:sort
  !
  implicit none

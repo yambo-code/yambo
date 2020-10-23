@@ -30,7 +30,8 @@ subroutine COLLISIONS_compose_rt(dG_in)
  use collision_ext,    ONLY:HXC_COLL_element,COLL_bands,HXC_collisions
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
- use parallel_m,       ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_COM_Q_INDEX,&
+ use parallel_int,     ONLY:PP_redux_wait
+ use parallel_m,       ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_Q_INDEX,&
 &                           PAR_IND_Xk_ibz,PAR_IND_Bp_mat,PAR_G_k_range
  use hamiltonian,      ONLY:B_mat_index
  use real_time,        ONLY:RTibz,RT_Vnl_xc,RT_bands

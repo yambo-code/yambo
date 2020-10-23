@@ -24,7 +24,8 @@
 subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  !
  use pars,            ONLY:SP
- use parallel_m,      ONLY:master_cpu,PP_redux_wait
+ use parallel_m,      ONLY:master_cpu
+ use parallel_int,    ONLY:PP_redux_wait
  use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
  use IO_m,            ONLY:io_control,REP,OP_APP_CL,OP_WR_CL,io_COLLs
  use COLL_interfaces, ONLY:io_COLLISIONS

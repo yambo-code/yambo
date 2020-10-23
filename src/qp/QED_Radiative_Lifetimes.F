@@ -29,8 +29,8 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X,Dip)
  use functions,           ONLY:theta_function
  use electrons,           ONLY:levels,spin,spin_occ
  use R_lattice,           ONLY:bz_samp
- use parallel_m,          ONLY:PAR_IND_QP,PAR_IND_G_b,PAR_nG_bands,PAR_nQP,PP_redux_wait,&
-&                              PAR_DIPk_ibz_index
+ use parallel_int,        ONLY:PP_redux_wait
+ use parallel_m,          ONLY:PAR_IND_QP,PAR_IND_G_b,PAR_nG_bands,PAR_nQP,PAR_DIPk_ibz_index
  use DIPOLES,             ONLY:DIP_P,DIPOLE_t
  use X_m,                 ONLY:X_t
  use LIVE_t,              ONLY:live_timing

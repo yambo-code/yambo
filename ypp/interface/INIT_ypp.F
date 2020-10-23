@@ -42,7 +42,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use com,            ONLY:write_to_report,repfile,inpfile_unit,repfile_unit
  use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile,STRING_match,STRING_same,logfile_unit 
  use electrons,      ONLY:n_spin,n_spinor,levels
- use parallel_m,     ONLY:master_cpu,PP_redux_wait
+ use parallel_m,     ONLY:master_cpu
+ use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing_is_on
  use parser_m,       ONLY:PARSER_array
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE

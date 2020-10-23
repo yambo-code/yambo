@@ -46,7 +46,8 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use frequency,       ONLY:w_samp
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
  use collision_el,    ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,elemental_collision_free
- use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use parallel_m,      ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,    ONLY:PP_redux_wait
  use interfaces,      ONLY:PARALLEL_index
  use wave_func,       ONLY:WF
  use LIVE_t,          ONLY:live_timing

@@ -28,7 +28,7 @@ subroutine K_diagonal(iq,what)
  use BS_solvers,     ONLY:BS_mat,BSS_eh_f,BSS_eh_E,K_diago_in_BS_mat,BSS_eh_W,BS_diagonal,K_slk
  use BS,             ONLY:BS_K_dim,BSE_mode,BS_H_dim
  use SLK_m,          ONLY:SLK_POOL
- use parallel_m,     ONLY:PP_redux_wait
+ use parallel_int,   ONLY:PP_redux_wait
  !
 #include<memory.h>
  !

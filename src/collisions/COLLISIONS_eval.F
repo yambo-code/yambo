@@ -38,24 +38,25 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! In the \Sigma_s case also yambo_sc can evaluate
  !
- use drivers,       ONLY:l_elel_scatt,l_use_collisions,l_use_Hxc_collisions,&
-&                        l_use_COH_collisions,l_elphoton_scatt,l_real_time,l_sc_run
- use electrons,     ONLY:levels
- use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:i_time_rev
- use wave_func,     ONLY:WF
- use hamiltonian,   ONLY:H_potential,H_kind
- use global_XC,     ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED
- use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,&
+ use drivers,        ONLY:l_elel_scatt,l_use_collisions,l_use_Hxc_collisions,&
+&                         l_use_COH_collisions,l_elphoton_scatt,l_real_time,l_sc_run
+ use electrons,      ONLY:levels
+ use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:i_time_rev
+ use wave_func,      ONLY:WF
+ use hamiltonian,    ONLY:H_potential,H_kind
+ use global_XC,      ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED
+ use collision_ext,  ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,&
 &                        COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions,COLLISIONS_naming
- use X_m,           ONLY:X_t
- use plasma,        ONLY:EH_gas
- use frequency,     ONLY:w_samp
- use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_free
+ use X_m,            ONLY:X_t
+ use plasma,         ONLY:EH_gas
+ use frequency,      ONLY:w_samp
+ use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
+ use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_free
  use COLL_interfaces,ONLY:io_COLLISIONS
- use parallel_m,    ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma,PP_redux_wait
- use timing_m,      ONLY:timing
+ use parallel_m,     ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
+ use parallel_int,   ONLY:PP_redux_wait
+ use timing_m,       ONLY:timing
  !
  implicit none
  !

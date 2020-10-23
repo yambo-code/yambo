@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfiles,basename,int_kind)
+subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfiles,basename,int_kind,i_T)
  !
  use units,          ONLY:HA2EV
  use pars,           ONLY:SP,schlen
@@ -38,7 +38,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  type(bz_samp),    intent(in)  :: Xk,LOCAL_k
  type(levels),     intent(in)  :: Xen
  real(SP),         intent(in)  :: Ef
- integer,          intent(in)  :: IDs(nquantities),dims(2),nquantities,nfiles(nquantities)
+ integer,          intent(in)  :: IDs(nquantities),dims(2),nquantities,nfiles(nquantities),i_T
  character(*),     intent(in)  :: basename,int_kind 
  !
  ! Local variables
@@ -57,9 +57,9 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  real(SP), allocatable :: circuit_versor(:,:),circuit_dist(:,:)
  real(SP), allocatable :: auxiliary_var(:,:,:,:),tmp_k(:,:),tmp_k_dist(:,:)
  !
- PLOT_interpolated = trim(basename)=="interpolated"
- PLOT_built_in     = trim(basename)=="built_in"    
- PLOT_from_DB      = trim(basename)=="from_DB"
+ PLOT_interpolated = index(trim(basename),"interpolated")>0
+ PLOT_built_in     = index(trim(basename),"built_in")>0     
+ PLOT_from_DB      = index(trim(basename),"from_DB")>0
  !
  PLOT_BANDS       = trim(int_kind)=="bands"
  !
@@ -131,7 +131,16 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    enddo
  endif
  !
- if((PLOT_interpolated.or.PLOT_built_in).and.PLOT_BANDS.and.n_spinor==2) then
+ if (i_T>0 ) then
+   file_name(nfiles(1)+1:nfiles(1)+nfiles(2))="occupations_"//trim(basename)
+   do i_sp_pol=1,n_sp_pol
+     ifile=ifile+1
+     if (n_sp_pol>1.and.i_sp_pol==1) file_name(ifile)=trim(file_name(ifile))//"_spin-up"
+     if (n_sp_pol>1.and.i_sp_pol==2) file_name(ifile)=trim(file_name(ifile))//"_spin-dn"
+   enddo
+ endif
+ !
+ if((PLOT_interpolated.or.PLOT_built_in).and.PLOT_BANDS.and.n_spinor==2.and.i_T<2) then
    file_name(ifile+1)="spin_factors_UP_"//trim(basename)
    file_name(ifile+2)="spin_factors_DN_"//trim(basename)
    file_name(ifile+3)="magnetization_x_"//trim(basename)
@@ -139,6 +148,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    file_name(ifile+5)="magnetization_z_"//trim(basename)
    ifile=ifile+5
  endif
+ !
  !
  if(ifile /= sum(nfiles)) call error(" something went wrong")
  !

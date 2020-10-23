@@ -24,6 +24,7 @@
 subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  use pars,           ONLY:SP,schlen,rZERO
+ use units,          ONLY:AUT2FS
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset,n_spin
  use R_lattice,      ONLY:bz_samp
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
@@ -31,7 +32,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
 &                         l_PROJECT_line,l_PROJECT_plane,PROJECT_depth
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time,integrated_Nel,integrated_Nhole
  use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_k_on_the_path_or_plane,PROJECTION_plot,k_special
- use stderr,         ONLY:intc
+ use stderr,         ONLY:real2ch,intc,STRING_remove
+ !use stderr,         ONLY:intc
  use RT_control,     ONLY:RT_apply,RT_carriers_object,RT_carriers_to_RT_k,RT_carriers_to_RT_E
  use real_time,      ONLY:RT_carriers,RT_bands
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,electrons_bands_interpolate,&
@@ -50,15 +52,19 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  type(levels)          :: CIRCUIT_E,CIRCUIT_dE,RT_E
  real(SP)              :: Max_occ
  real(SP), allocatable :: integrated_dF_elecs(:,:,:),integrated_dF_holes(:,:,:)
- character(schlen)     :: operation
- logical               :: WARN_neg_elecs_df,WARN_pos_holes_df,is_PROJECTED,l_update_E,QUIET_interp
- integer               :: ib,ik,i_RT,i_T,ID_circuit,ID_spin,ID_magn,ID_bands(3),ID_grid,ik_path
+ character(schlen)     :: operation,basename
+ logical               :: WARN_neg_elecs_df,WARN_pos_holes_df,is_PROJECTED,QUIET_interp,&
+ &                        plot_STD_style,plot_RT_style,l_update_E
+ integer               :: ID_circuit,ID_spin,ID_magn,ID_bands(3),ID_grid,IDs(6)
+ integer               :: ib,ik,ik_path,i_RT,i_T,nfiles(5),nqnt
  logical, external     :: file_exists
  !
  call section('*','Interpolation tool')
  !=====================================
  !
- l_update_E=.false.
+ plot_STD_style=.true.
+ plot_RT_style =.false.
+ l_update_E    =.true.
  !
  if(all(INTERP_grid>0).or.BANDS_steps<=0) then
    call error(" Interpolation of occupations/lifetimes only on a band circuit")
@@ -119,7 +125,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  ! Perform interpolation of spinorial factors and magnetization
  !==============================================================
- if(n_spinor>1) call electrons_spin_and_magn_interpolate("S",k,CIRCUIT_k,RT_bands,ID_spin,ID_magn)
+ if(n_spinor>1) call electrons_spin_and_magn_interpolate("S M",k,CIRCUIT_k,RT_bands,ID_spin,ID_magn)
  !
  ! Perform the occupations interpolation
  !======================================
@@ -198,8 +204,27 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    !
    ! OUTPUT
    !=======
-   if (.not.is_PROJECTED) call RT_plot_interpolated_values(CIRCUIT_E,RT_E,CIRCUIT_dE,i_T,ID_circuit,ID_spin,&
-   &                                                             Max_occ,WARN_neg_elecs_df,WARN_pos_holes_df)
+   if (.not.is_PROJECTED) then
+     if (plot_RT_style ) call RT_plot_interpolated_values(CIRCUIT_E,RT_E,CIRCUIT_dE,i_T,ID_circuit,ID_spin,&
+     &                                         Max_occ,WARN_neg_elecs_df,WARN_pos_holes_df)
+     !
+     if (plot_STD_style) then
+       IDs=0
+       nqnt=2
+       nfiles(1:2)=n_sp_pol
+       IDs(1)=ID_bands(2)
+       IDs(2)=ID_circuit
+       if(n_spinor==2.and.i_T==1) then
+         nqnt=nqnt+2
+         nfiles(nqnt-1:nqnt)=(/2,3/)
+         IDs(nqnt-1:nqnt)=(/ID_spin,ID_magn/)
+       endif
+       !
+       basename="interpolated_"//STRING_remove(real2ch( RT_time(i_T)*AUT2FS )," ","")
+       call plot_interpolated_values(k,en,0._SP,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),basename,"bands",i_T)
+     endif
+     !
+   endif
    !
    if (     is_PROJECTED) call INTERPOLATION_driver_end(ID_grid)
    if (.not.is_PROJECTED) call INTERPOLATION_driver_end(ID_circuit)
@@ -211,7 +236,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  if (QUIET_interp) call live_timing()
  !
  if (WARN_neg_elecs_df) call warning("[INTERPOLATION] Found negative electron occupations")
- if (WARN_pos_holes_df)     call warning("[INTERPOLATION] Found positive hole occupations")
+ if (WARN_pos_holes_df) call warning("[INTERPOLATION] Found positive hole occupations")
  !
  ! Projection Output
  !===================

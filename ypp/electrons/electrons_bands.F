@@ -151,13 +151,13 @@ subroutine electrons_bands(Xk,Xen)
  endif
  !
  if (BANDS_built_in.and.USER_k%nbz>0     )  call plot_interpolated_values &
-&   (Xk,Xen,dEf,USER_k,   IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"built_in",    "bands")
+&   (Xk,Xen,dEf,USER_k,   IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"built_in",    "bands",0)
  !
  if (BANDS_interpolated.and.BANDS_from_db)  call plot_interpolated_values &
-&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:1),   BANDS_bands,1,   nfiles(1:1),   "from_DB",     "bands")
+&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:1),   BANDS_bands,1,   nfiles(1:1),   "from_DB",     "bands",0)
  !
  if(BANDS_interpolated                   )  call plot_interpolated_values &
-&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands")
+&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands",0)
  !
  if (l_PROJECT_plane) call PROJECTION_plot( "BANDS", 1, BANDS_bands, OBS_B=GRID_E%E ) 
  !

@@ -92,7 +92,7 @@ SUBROUTINE atmproj_read_ext ( filein, nbnd, nkpt, nspin, natomwfc, nelec, &
    ENDIF
 
    IF ( l_old_atmproj ) then
-     !WRITE(*,*) "Old atmproj format"
+!      WRITE(*,*) "Old atmproj format"
 !     CALL atmproj_read_ext_old ( filein, nbnd_, nkpt_, nspin_, natomwfc_, nelec_, &
 !                              efermi_, energy_units_, vkpt, wk, eig, proj, kovp, ierr, iunit )
      if (      present(proj) ) CALL atmproj_read_ext_old ( filein, nbnd_, nkpt_, nspin_, natomwfc_, nelec_, &
@@ -102,7 +102,7 @@ SUBROUTINE atmproj_read_ext ( filein, nbnd, nkpt, nspin, natomwfc, nelec, &
    ENDIF
                               
    IF ( l_new_atmproj ) THEN
-     !WRITE(*,*) "New atmproj format"
+!      WRITE(*,*) "New atmproj format",iunit
 !     CALL atmproj_read_ext_new ( filein, nbnd_, nkpt_, nspin_, natomwfc_, nelec_, &
 !                              efermi_, energy_units_, vkpt, wk, eig, proj, kovp, ierr, iunit, attr )
      if (      present(proj) ) CALL atmproj_read_ext_new ( filein, nbnd_, nkpt_, nspin_, natomwfc_, nelec_, &
@@ -113,10 +113,8 @@ SUBROUTINE atmproj_read_ext ( filein, nbnd, nkpt, nspin, natomwfc, nelec, &
    
    ! This gives error with new atmproj
    ! if iotk library is compiled with out of bound error check 
-   IF ( l_old_atmproj ) then
-     CALL iotk_close_read( iunit, IERR=ierr )
-     IF ( ierr/=0 ) RETURN
-   ENDIF
+   CALL iotk_close_read( iunit, IERR=ierr )
+   IF ( ierr/=0 ) RETURN
 
    IF ( PRESENT( nbnd ) )         nbnd = nbnd_
    IF ( PRESENT( nkpt ) )         nkpt = nkpt_

@@ -42,7 +42,8 @@ module fields
    real(SP) :: frequency(2)
    real(SP) :: width
    real(SP) :: FWHM
-   real(SP) :: fluence = 0._SP
+   real(SP) :: fluence
+   real(SP) :: pi_kind
    real(SP) :: intensity
    real(SP) :: amplitude
    real(SP) :: W_step
@@ -102,7 +103,7 @@ module fields
 &       (E_field%frequency(2)-E_field%frequency(1))/(E_field%n_frequencies-1)*(i_f-1)
    end function
    !
-   function small_a(T,E_field,order)
+   function small_a(T,E_field,order,envelop_only)
      !
      ! The vector potential is generally written as
      !
@@ -119,169 +120,175 @@ module fields
      use pars,      ONLY:cI,cONE,cZERO,pi
      use wrapper,   ONLY:FADEVA
      !
-     type(ext_field)   ::E_field
+     type(ext_field), intent(inout)   ::E_field
      !
-     real(SP)          ::T
-     integer           ::order
+     real(SP), intent(in)  ::T
+     integer,  intent(in)  ::order
+     logical,  intent(in), optional :: envelop_only
+     !
+     ! Workspace
      !
      real(SP)          ::damp_func,a,b,c
      complex(SP), dimension(2) :: small_a
      !
      integer           ::i_fr,i_field,n_fields
-     real(SP)          ::T_0,W_0,W_field,sigma,WtimesT,EXPf,fr_shift(2)
-     complex(SP)       ::f_t(2),cZ,cS
+     real(SP)          ::T_0,W_0,sigma,WtimesT,EXPf,fr_shift(2),W_field,cos_wt,sin_wt
+     complex(SP)       ::f_now,f_t(2),cZ,cS,exp_iwt,erfi_z
+     logical           ::envelop_only_
+     !
+     ! Zeroing
      !
      small_a=cZERO
-     !
-     W_0=E_field%frequency(1)
-     sigma=E_field%width
-     T_0=pi/W_0*(real(nint(W_0/pi*3._SP*sigma),SP))
      f_t=cZERO
-     fr_shift(1)=0._SP
-     fr_shift(2)=pi/2._SP
-     E_field%To=T_0
+     !
+     envelop_only_=.false.
+     if(present(envelop_only)) envelop_only_=envelop_only
      !
      if(trim(E_field%ef_pol)=="linear"  ) n_fields=1
      if(trim(E_field%ef_pol)=="circular") n_fields=2
      !
+     ! Field parameters
+     !
+     sigma=E_field%width
+     fr_shift(1)=0._SP
+     fr_shift(2)=pi/2._SP
+     !
+     select case( trim(E_field%ef_name) )
+       case('STATIC','SIN','ANTIRES','RES','DELTA')
+         ! Fields which do not need T_0
+         W_0=0._SP
+         T_0=0._SP
+       case('SOFTSIN','THETA')
+         ! Fields which do not need T_0
+         W_0=0._SP
+         T_0=0._SP
+         a =  3._SP/sigma**4 
+         b = -8._SP/sigma**3
+         c =  6._SP/sigma**2
+       case('GAUSS','QSSIN','QSFIELD','PULSE','SPULSE')
+         ! Fields which need T_0
+         W_0=field_frequency(E_field,1)
+         T_0=pi/W_0*(real(nint(W_0/pi*3._SP*sigma),SP))
+     end select
+     !
+     E_field%To=T_0
+     !
      do i_field=1,n_fields
-       !
-       select case( trim(E_field%ef_name) )
-       case('STATIC')
-         if (order==0 ) f_t(i_field)=T
-         if (order==1 ) f_t(i_field)=1._SP
-         if (order==2 ) f_t(i_field)=0._SP
-       case('SIN')
-         do i_fr=1,E_field%n_frequencies     
+       do i_fr=1,max(1,E_field%n_frequencies)
+         !
+         if (envelop_only_) then
+           W_field=0._SP
+           WtimesT=fr_shift(i_field)
+           cos_wt=1._SP ; sin_wt=1._SP ; exp_iwt=1._SP
+         else
            W_field=field_frequency(E_field,i_fr)
-           WtimesT=W_field*T+fr_shift(i_field)
-           if (order==0 ) f_t(i_field)=f_t(i_field)-    (cos(WtimesT)-1._SP)/W_field
-           if (order==1 ) f_t(i_field)=f_t(i_field)+     sin(WtimesT)
-           if (order==2 ) f_t(i_field)=f_t(i_field)+W_field*cos(WtimesT)
-         enddo 
-       case('SOFTSIN')
-         T_0=sigma
-         !
-         a =  3._SP/T_0**4 
-         b = -8._SP/T_0**3
-         c =  6._SP/T_0**2
-         !
-         damp_func=1._SP
-         if(real(T)<T_0.and.T_0>0._SP) damp_func=(a*T**4 + b*T**3 + c*T**2)       
-         !
-         do i_fr=1,E_field%n_frequencies     
-           !
-           W_field=field_frequency(E_field,i_fr)
-           WtimesT=W_field*T+fr_shift(i_field)
-           !
-           if (order==0 ) f_t(i_field)=f_t(i_field)- damp_func*(cos(WtimesT)-1._SP)/W_field
-           if (order==1 ) f_t(i_field)=f_t(i_field)+ damp_func*sin(WtimesT)
-           if (order==2 ) f_t(i_field)=f_t(i_field)+ damp_func*W_field*cos(WtimesT)
-           if (order==-1) f_t(i_field)=-2
-           !
-         enddo 
-         !
-       case('THETA')
-         !  
-         T_0=sigma
-         !
-         a =  3._SP/T_0**4 
-         b = -8._SP/T_0**3
-         c =  6._SP/T_0**2
-         !
-         damp_func=1._SP
-         if(real(T)<T_0.and.T_0>0._SP) damp_func=(a*T**4 + b*T**3 + c*T**2)       
-         !
-         if (order==0 ) f_t(i_field)=damp_func*T
-         if (order==1 ) f_t(i_field)=damp_func
-         if (order==2 ) f_t(i_field)=0._SP
-         !
-       case('ANTIRES')
-         do i_fr=1,E_field%n_frequencies
-           W_field=field_frequency(E_field,i_fr)
-           WtimesT=W_field*T+fr_shift(i_field)
-           if (order==0 ) f_t(i_field)=f_t(i_field)-cI*        exp(cI*WtimesT)/W_field
-           if (order==1 ) f_t(i_field)=f_t(i_field)+           exp(cI*WtimesT)
-           if (order==2 ) f_t(i_field)=f_t(i_field)+cI*W_field*exp(cI*WtimesT)
-         enddo
-         !
-       case('RES')
-         do i_fr=1,E_field%n_frequencies
-           W_field=field_frequency(E_field,i_fr)
-           WtimesT=W_field*T+fr_shift(i_field)
-           if (order==0 ) f_t(i_field)=f_t(i_field)+cI*        exp(-cI*WtimesT)/W_field
-           if (order==1 ) f_t(i_field)=f_t(i_field)-           exp(-cI*WtimesT)
-           if (order==2 ) f_t(i_field)=f_t(i_field)-cI*W_field*exp(-cI*WtimesT)
-         enddo
-         !
-       case('DELTA')
-         if (order==0 ) f_t(i_field)=1._SP
-         if (order> 0 ) f_t(i_field)=0._SP
-         if (order==-1) f_t(i_field)=1._SP
-         !
-       case('GAUSS')
-         if (order==0 ) f_t(i_field)= sigma*sqrt(pi/2._SP)* ( erf( (T-T_0)/(sigma*sqrt(2._SP)) )+1._SP )
-         if (order==1 ) f_t(i_field)= exp(-(T-T_0)**2/(2._SP*sigma**2) )
-         if (order==2 ) f_t(i_field)=-exp(-(T-T_0)**2/(2._SP*sigma**2) )*(T-T_0)/sigma**2
-         !
-       case('QSSIN')
-         WtimesT=W_0*(T-T_0)+fr_shift(i_field)
+           WtimesT=W_field*(T-T_0)+fr_shift(i_field)
+           cos_wt=cos(WtimesT) ; sin_wt=sin(WtimesT)
+           exp_iwt=cos_wt+cI*sin_wt
+         endif
          EXPf=exp(-(T-T_0)**2/(2._SP*sigma**2) )
-         cZ=(sigma**2*W_0-cI*(T-T_0))/(sigma*sqrt(2._SP))
-         cS=cmplx(W_0**2*sigma**2/2._SP,fr_shift(i_field),SP)
          !
-         ! W    =FADEVA function
-         ! W(-z)=exp(-z^2)*(1-  erf (i*z))
-         !      =exp(-z^2)*(1-i*erfi( z ))
-         !
-         ! ERFI(z)=i*(exp(z^2)*W(-z)-1)
-         !
-         if (order==0 .and. trim(global_gauge)=="velocity" ) f_t(i_field)=-sqrt(pi/2._SP)*sigma/2._SP*         &
+         select case( trim(E_field%ef_name) )
+         case('STATIC')
+           if (order==0 ) f_now=T
+           if (order==1 ) f_now=1._SP
+           if (order==2 ) f_now=0._SP
+           !
+         case('SIN')
+           if (order==0 ) f_now=      -(cos_wt-1._SP)/W_field
+           if (order==1 ) f_now=        sin_wt
+           if (order==2 ) f_now=W_field*cos_wt
+           !
+         case('SOFTSIN')
+           if (order==-1) f_now=-2
+           if (order== 0) f_now=-damp_func*(cos_wt-1._SP)/W_field
+           if (order== 1) f_now=+damp_func* sin_wt
+           if (order== 2) f_now=+damp_func*W_field*cos_wt
+           !
+         case('THETA')
+           damp_func=1._SP
+           if(real(T)<T_0.and.T_0>0._SP) damp_func=(a*T**4 + b*T**3 + c*T**2)       
+           !
+           if (order==0 ) f_now=damp_func*T
+           if (order==1 ) f_now=damp_func
+           if (order==2 ) f_now=0._SP
+           !
+         case('ANTIRES')
+           if (order==0 ) f_now=-cI*        exp_iwt/W_field
+           if (order==1 ) f_now=+           exp_iwt
+           if (order==2 ) f_now=+cI*W_field*exp_iwt
+           !
+         case('RES')
+           if (order==0 ) f_now=+cI*        conjg(exp_iwt)/W_field
+           if (order==1 ) f_now=-           conjg(exp_iwt)
+           if (order==2 ) f_now=-cI*W_field*conjg(exp_iwt)
+           !
+         case('DELTA')
+           if (order==0 ) f_now=1._SP
+           if (order> 0 ) f_now=0._SP
+           if (order==-1) f_now=1._SP
+           !
+         case('GAUSS')
+           if (order==0 ) f_now= sigma*sqrt(pi/2._SP)* ( erf( (T-T_0)/(sigma*sqrt(2._SP)) )+1._SP )
+           if (order==1 ) f_now= Expf
+           if (order==2 ) f_now=-Expf*(T-T_0)/sigma**2
+           !
+         case('QSSIN')
+           !
+           ! W    =FADEVA function
+           ! W(-z)=exp(-z^2)*(1-  erf (i*z))
+           !      =exp(-z^2)*(1-i*erfi( z ))
+           !
+           ! ERFI(z)=i*(exp(z^2)*W(-z)-1)
+           !
+           cZ=(sigma**2*W_field-cI*(T-T_0))/(sigma*sqrt(2._SP))
+           cS=cmplx(W_field**2*sigma**2/2._SP,fr_shift(i_field),SP)
+           !           
+           if (order==0 .and. trim(global_gauge)=="velocity" ) erfi_z=-sqrt(pi/2._SP)*sigma/2._SP*         &
 &                                      cI*( (exp(      cZ **2-      cS )*FADEVA(-      cZ )-exp(-      cS )) + &
 &                                           (exp(conjg(cZ)**2-conjg(cS))*FADEVA(-conjg(cZ))-exp(-conjg(cS))) )
-         if (order==0 .and. trim(global_gauge)=="length" ) f_t(i_field)=cZERO
-         if (order==1 ) f_t(i_field)=     sin(WtimesT)                                 *EXPf
-         if (order==2 ) f_t(i_field)=(W_0*cos(WtimesT)-(T-T_0)*sin(WtimesT)/sigma**2)*EXPf
+           if (order==0 .and. trim(global_gauge)=="length" )   erfi_z=cZERO
+           !
+           if (order==0 ) f_now= erfi_z
+           if (order==1 ) f_now=                        sin_wt          *EXPf
+           if (order==2 ) f_now=(W_field*cos_wt-(T-T_0)*sin_wt/sigma**2)*EXPf
+           !
+         case('QSFIELD')
+           !
+           if (order==0 ) f_now=                         sin_wt          *EXPf
+           if (order==1 ) f_now=( W_field*cos_wt-(T-T_0)*sin_wt/sigma**2)*EXPf
+           if (order==2 ) f_now=(-W_field*sin_wt-sin_wt/sigma**2                           &
+                          &             -W_field*(T-T_0)*sin_wt/sigma**2                    &
+                          &             -(T-T_0)*(W_field*cos_wt-(T-T_0)*sin_wt/sigma**2)/sigma**2)*EXPf
+           !
+         case('PULSE')
+           if(abs((T-T_0))< sigma) then
+             if (order==0 ) f_now= 0._SP
+             if (order==1 ) f_now=       (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4      *cos_wt
+             if (order==2 ) f_now=(4._SP*(T-T_0 + sigma)    *(T-T_0 -sigma)**2/sigma**4)*cos_wt &
+&                                       -(1._SP*(T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4)*W_field*sin_wt
+           endif
+           !
+         case('SPULSE')
+           T_0=sigma
+           W_0=W_field
+           if(abs((T-T_0))< sigma) then
+             if (order==0 ) f_now=(4.0*W_0*(T-T_0)*cos(WtimesT)*(-sigma**2*W_0**2+W_0**2*(T-T_0)**2-6.0)   &
+&              +sin(WtimesT)*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*(T-T_0)**2-2.0)+W_0**4*(T-T_0)**4-12.0* &
+&               W_0**2*(T -T_0)**2+24))/W_0**5/sigma**4+                                                          &
+&               ((4.0*W_0*sigma*cos(W_0*sigma)*(-sigma**2*W_0**2+W_0**2*sigma**2-6.0)                             &
+&              +sin(W_0*sigma)*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*sigma**2-2.0)+W_0**4*sigma**4-12.0*   &
+&               W_0**2*sigma**2+24))/W_0**5/sigma**4)                                                             
+             if (order==1 ) f_now=((T-T_0)**2 - sigma**2)**2/sigma**4*cos(WtimesT)
+             if (order==2 ) f_now=(2._SP*(T-T_0 + sigma)    *(T-T_0 -sigma)**2/sigma**4                 &
+&                                        +2._SP*(T-T_0 + sigma)**2 *(T-T_0 -sigma)   /sigma**4 )    *cos(WtimesT) &
+&                                        -      (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4  *W_0*sin(WtimesT)
+           endif
+         end select
          !
-       case('QSFIELD')
-         WtimesT=W_0*(T-T_0)+fr_shift(i_field)
-         EXPf=exp(-(T-T_0)**2/(2._SP*sigma**2) )
+         f_t(i_field)=f_t(i_field)+f_now
          !
-         if (order==0 ) f_t(i_field)=      sin(WtimesT)                                 *EXPf
-         if (order==1 ) f_t(i_field)=( W_0*cos(WtimesT)-(T-T_0)*sin(WtimesT)/sigma**2)*EXPf
-         if (order==2 ) f_t(i_field)=(-W_0*sin(WtimesT)-sin(WtimesT)/sigma**2-W_0*(T-T_0)*sin(WtimesT)/sigma**2 &
-&                                     -(T-T_0)*(W_0*cos(WtimesT)-(T-T_0)*sin(WtimesT)/sigma**2)/sigma**2)*EXPf
-         !
-       case('PULSE')
-         f_t(i_field)= 0._SP
-         if(abs((T-T_0))< sigma) then
-           WtimesT=W_0*(T-T_0)+fr_shift(i_field)
-           if (order==0 ) f_t(i_field)= 0._SP
-           if (order==1 ) f_t(i_field)=       (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4      *cos(WtimesT)
-           if (order==2 ) f_t(i_field)=(2._SP*(T-T_0 + sigma)    *(T-T_0 -sigma)**2/sigma**4                 &
-&                                      +2._SP*(T-T_0 + sigma)**2 *(T-T_0 -sigma)   /sigma**4 )    *cos(WtimesT) &
-&                                      -      (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4  *W_0*sin(WtimesT)
-         endif
-         !
-       case('SPULSE')
-         T_0=sigma
-         f_t(i_field)= 0._SP
-         if(abs((T-T_0))< sigma) then
-           WtimesT=W_0*(T-T_0)+fr_shift(i_field)
-           if (order==0 ) f_t(i_field)=(4.0*W_0*(T-T_0)*cos(WtimesT)*(-sigma**2*W_0**2+W_0**2*(T-T_0)**2-6.0)   &
-&            +sin(WtimesT)*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*(T-T_0)**2-2.0)+W_0**4*(T-T_0)**4-12.0* &
-&             W_0**2*(T -T_0)**2+24))/W_0**5/sigma**4+                                                          &
-&             ((4.0*W_0*sigma*cos(W_0*sigma)*(-sigma**2*W_0**2+W_0**2*sigma**2-6.0)                             &
-&            +sin(W_0*sigma)*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*sigma**2-2.0)+W_0**4*sigma**4-12.0*   &
-&             W_0**2*sigma**2+24))/W_0**5/sigma**4)                                                             
-           if (order==1 ) f_t(i_field)=((T-T_0)**2 - sigma**2)**2/sigma**4*cos(WtimesT)
-           if (order==2 ) f_t(i_field)=(2._SP*(T-T_0 + sigma)    *(T-T_0 -sigma)**2/sigma**4                 &
-&                                      +2._SP*(T-T_0 + sigma)**2 *(T-T_0 -sigma)   /sigma**4 )    *cos(WtimesT) &
-&                                      -      (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4  *W_0*sin(WtimesT)
-         endif
-         !
-       end select
-       !
+       enddo
      enddo
      !
      small_a=f_t
@@ -334,9 +341,11 @@ module fields
      E2%n_frequencies=E1%n_frequencies  
      E2%W_step=E1%W_step  
      E2%width=E1%width  
-     E2%FWHM=E1%FWHM  
-     E2%intensity=E1%intensity  
+     E2%FWHM=E1%FWHM
      E2%amplitude=E1%amplitude  
+     E2%intensity=E1%intensity  
+     E2%fluence=E1%fluence
+     E2%pi_kind=E1%pi_kind
      E2%versor=E1%versor
      E2%versor_circ=E1%versor_circ
      E2%ef_name=E1%ef_name
@@ -353,7 +362,10 @@ module fields
      E%frequency    =0._SP
      E%n_frequencies=1
      E%W_step       =0._SP
+     E%amplitude    =0._SP
      E%intensity    =0._SP
+     E%fluence      =0._SP
+     E%pi_kind      =0._SP
      E%width        =0._SP
      E%ef_name      ='none'
      E%ef_pol       ='none'
@@ -422,7 +434,7 @@ module fields
      ! 
      ! From Octopus ( http://www.tddft.org/programs/octopus )
      !
-     ! It is very common to describe the strength of a laser field by it intensity, 
+     ! It is very common to describe the strength of a laser field by its intensity, 
      ! rather than using the electric field amplitude. In atomic units, the relationship 
      ! between instantaneous electric field and intensity is:
      !

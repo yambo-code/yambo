@@ -51,7 +51,7 @@ subroutine RT_initialize(E,k,q)
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,    &
 &                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,l_RT_impose_for_metals, &
-&                         l_P_integrating_J,l_RT_rotate_DM,RT_deph_cv_only,RTibz
+&                         l_P_integrating_J,l_RT_rotate_DM,RT_deph_cv_only,RTibz,RT_nbands
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -122,6 +122,8 @@ subroutine RT_initialize(E,k,q)
  !
  eval_DFT     =  l_sc_is_libDFT
  eval_HARTREE =  l_sc_hartree
+ !
+ RT_nbands=RT_bands(2)-RT_bands(1)+1
  !
  ! DbGd PAR memory distribution index updated
  !============================================
@@ -265,8 +267,10 @@ subroutine RT_initialize(E,k,q)
      if ( Efield(i1)%ef_name=='DELTA' ) then
        Efield(i1)%t_final_indx=Efield(i1)%t_initial_indx+2
        Efield(i1)%t_final=RT_step*(Efield(i1)%t_final_indx-1)
-     else if ( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='PULSE') ) then
-       call RT_Fluence(i1)
+     else if ( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='QSFIEL') .or. &
+     &         (Efield(i1)%ef_name=='GAUSS') .or.                                     &
+     &         (Efield(i1)%ef_name=='PULSE') .or. (Efield(i1)%ef_name=='SPULSE')      ) then
+       call RT_Fluence_and_pikind(E,i1)
      else
        Efield(i1)%t_final_indx=    NE_steps
        Efield(i1)%t_final=RT_step*(NE_steps-1)
@@ -492,6 +496,7 @@ subroutine RT_initialize(E,k,q)
      !
      if( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='DELTA') ) then
        call msg('r', trim(MSG_ch)//' max fluence        [nJ/cm^2]',Efield(i1)%fluence )
+       call msg('r', trim(MSG_ch)//' area at selected Rabi trans.',Efield(i1)%pi_kind )
        call msg('r', trim(MSG_ch)//' final time              [fs]',Efield(i1)%t_final*AUT2FS)
        call msg('r', trim(MSG_ch)//' half maximum full width [fs]',Efield(i1)%width*2.*sqrt(2.*log(2.))*AUT2FS)
      endif

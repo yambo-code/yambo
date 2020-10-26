@@ -489,7 +489,6 @@ module real_time
      call H_QP_table_setup(en)
      !
      nk=PAR_G_k_range
-     RT_nbands=RT_bands(2)-RT_bands(1)+1
      !
      YAMBO_ALLOC(RT_levels%E,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      YAMBO_ALLOC(RT_levels%W,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))

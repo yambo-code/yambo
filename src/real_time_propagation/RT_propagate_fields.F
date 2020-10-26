@@ -69,13 +69,13 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
  !----------------------------------------
  !
  if (l_RT_induced_field) then
-   call RT_Ext_fields(A_ext,T)
+   call RT_Ext_fields_sum(A_ext,T)
    A_ind_old%vecpot    =A_old%vecpot    -A_ext%vecpot
    A_ind_old%vecpot_vel=A_old%vecpot_vel-A_ext%vecpot_vel
    A_ind_old%vecpot_acc=A_old%vecpot_acc-A_ext%vecpot_acc
  endif
  !
- call RT_Ext_fields(A_ext,T+T_step)
+ call RT_Ext_fields_sum(A_ext,T+T_step)
  !
  ! (See also by Yaban and co. PRB 2012)
  ! The approach which          includes the induced field is also called longitudinal gauge.

@@ -26,5 +26,7 @@ module PHEL
  use descriptors,    ONLY:IO_desc
  !
  type(IO_desc)    :: PH_desc
+ integer          :: PH_DbGd_points=0
+ logical          :: l_PH_uses_E_FineGd=.FALSE.
  !
 end module

@@ -39,6 +39,7 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch,phel_gkkp_expanded_sq
  use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_eh_bands,PARs_PH_Q_ibz
  use QP_m,           ONLY:QP_G_damp
+ use LIVE_t,         ONLY:live_timing
  !
  implicit none
  !
@@ -192,6 +193,8 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
      enddo ! i_n i.e. (nk)
      !
    enddo ! ph branch
+   !
+   call live_timing( steps=1 )
    !
  enddo ! ikbz
  !

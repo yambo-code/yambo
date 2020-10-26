@@ -25,8 +25,10 @@ subroutine PH_of(q)
  !
  use OUTPUT_simple,  ONLY:OUTPUT_add_column
  use RT_lifetimes,   ONLY:RT_PE_life
+ use PHEL,           ONLY:PH_desc
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use R_lattice,      ONLY:nqibz,bz_samp
+ use interfaces,     ONLY:DESC_write
  !
  implicit none
  !
@@ -39,7 +41,7 @@ subroutine PH_of(q)
  call OUTPUT_add_column(what="reset",name="ph")
  call OUTPUT_add_column(what="open",name="ph")
  !
- !call DESC_write('o ph','#',PH_desc)
+ call DESC_write('o ph','#',PH_desc)
  !
  do iq=1,nqibz
    do il=elph_branches(1),elph_branches(2)

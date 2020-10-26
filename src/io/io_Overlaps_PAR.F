@@ -69,7 +69,7 @@ integer function io_Overlaps(Dip,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_Overlaps=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,FRAG=frag_DIP)
+   io_Overlaps=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,TEMP=.true.,FRAG=frag_DIP)
    if (io_Overlaps/=0) goto 1
    !
    io_Overlaps=variables_DIPOLES(Dip,ID)

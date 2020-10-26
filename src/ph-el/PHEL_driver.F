@@ -31,6 +31,7 @@ subroutine PHEL_driver(E,k,q)
  use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free
  use RT_occupations,      ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_ALL_occupations_free
  use real_time,           ONLY:l_RT_uses_E_FineGd
+ use IO_m,                ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL
  !
 #include<memory.h>
  !
@@ -39,8 +40,8 @@ subroutine PHEL_driver(E,k,q)
  !
  ! Work Space
  !
- integer             ::i_err,iq
- integer, external   ::ELPH_expanded_databases_check
+ integer             ::i_err,iq,ID
+ integer, external   ::ELPH_expanded_databases_check,io_PH
  type(E_fine_grid)   ::E_FG
  !
  call section('*',"Phonon Lifetimes")
@@ -48,6 +49,18 @@ subroutine PHEL_driver(E,k,q)
  ! BZ Setup
  !==========
  call k_build_up_BZ_tables(q)
+ !
+ ! Already calculated?
+ !=====================
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+ i_err=io_PH(ID)
+ if (i_err==0) then
+   call io_control(ACTION=OP_RD_CL,SEC=(/2/),MODE=VERIFY,ID=ID)
+   i_err=io_PH(ID)
+   call PH_of(q)
+   call CLEAN()
+   return
+ endif
  !
  ! Parallel Setup
  !===============
@@ -100,6 +113,9 @@ subroutine PHEL_driver(E,k,q)
    call PHEL_lifetimes(iq,E,k,q,(/1,QP_PH_n_G_bands/),k%FGibz,E_FG)
  enddo
  !
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+ i_err=io_PH(ID)
+ !
  ! Redux
  !=======
  call PP_redux_wait(RT_PE_life%emit)
@@ -111,9 +127,15 @@ subroutine PHEL_driver(E,k,q)
  !
  ! Clean
  !=======
- call RT_ALL_lifetimes_free(  )
- call RT_ALL_occupations_free(  )
- call elph_global_free( )
- YAMBO_FREE(phel_gkkp_expanded_sq)
+ call CLEAN()
  !
+ contains
+   !
+   subroutine CLEAN()
+     call RT_ALL_lifetimes_free(  )
+     call RT_ALL_occupations_free(  )
+     call elph_global_free( )
+     YAMBO_FREE(phel_gkkp_expanded_sq)
+   end subroutine
+   !
 end subroutine PHEL_driver

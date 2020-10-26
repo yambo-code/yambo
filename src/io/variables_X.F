@@ -55,7 +55,7 @@ integer function variables_X(ID,local_desc,X)
  call io_variable_elemental(ID,&
 &     VAR="X band range            ",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=local_desc)
  call io_variable_elemental(ID,UNIT=HA2EV,&
-&     VAR="X e/h energy range ",TERMINATOR="ev",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),DESCRIPTOR=local_desc)
+&     VAR="X e/h energy range ",TERMINATOR="eV",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),DESCRIPTOR=local_desc)
  !call def_variable_elemental(ID,"",0,0,0)
  !
  ! PARS_2

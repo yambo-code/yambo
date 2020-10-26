@@ -23,6 +23,8 @@
 !
 module PHEL
  !
-#include<memory.h>
+ use descriptors,    ONLY:IO_desc
+ !
+ type(IO_desc)    :: PH_desc
  !
 end module

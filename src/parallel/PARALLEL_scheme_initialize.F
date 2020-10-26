@@ -59,7 +59,7 @@ subroutine PARALLEL_scheme_initialize(WHAT,ENVIRONMENT,PARs,N,TABLE,MATRIX)
    call PARALLEL_MATRIX_distribute(PARs%COMM_i,PARs%IND,PARs%D)
    PARs%N_ser=(PARs%D(2)-PARs%D(1)+1)**2
  else
-   call PARALLEL_index(PARs%IND,(/PARs%D(2)/),COMM=PARs%COMM_i,low_range=(/PARs%D(1)/))
+   call PARALLEL_index(PARs%IND,(/PARs%D(2)/),COMM=PARs%COMM_i,low_range=(/PARs%D(1)/),CONSECUTIVE=PARs%consecutive)
    PARs%N_ser=PARs%D(2)-PARs%D(1)+1
  endif
  !

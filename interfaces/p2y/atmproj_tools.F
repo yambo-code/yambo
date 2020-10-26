@@ -1,6 +1,6 @@
 !
 ! Copyright (C) 2012 WanT Group
-! Adapted for p2y by DS
+! Adapted for p2y by DS,DV
 !
 ! This file is distributed under the terms of the
 ! GNU General Public License. See the file `License\'
@@ -49,13 +49,10 @@ MODULE atmproj_tools_module
    PUBLIC :: atmproj_read_ext
 
 CONTAINS
-
-
-
 !*************************************************
 SUBROUTINE atmproj_read_ext ( filein, nbnd, nkpt, nspin, natomwfc, nelec, &
                               efermi, energy_units, vkpt, wk, eig, proj, kovp, ierr )
-   !*************************************************
+!*************************************************
    !
    USE iotk_module
    !
@@ -80,17 +77,19 @@ SUBROUTINE atmproj_read_ext ( filein, nbnd, nkpt, nspin, natomwfc, nelec, &
    CHARACTER(20)     :: energy_units_
    !
    COMPLEX(dbl), ALLOCATABLE :: ztmp(:,:)
+   REAL(dbl),    ALLOCATABLE :: rtmp(:,:,:)
 
 
    CALL iotk_free_unit( iunit )
    ierr = 0
-
    CALL iotk_open_read( iunit, FILE=TRIM(filein), IERR=ierr )
    IF ( ierr/=0 ) RETURN
    !
    CALL iotk_scan_begin( iunit, "HEADER", IERR=ierr) 
    !
    IF ( ierr/=0 ) then 
+     rewind(iunit)
+     read(iunit,*)
      CALL iotk_scan_empty( iunit, "HEADER", ATTR=attr, IERR=ierr)  
      IF ( ierr/=0 ) RETURN
      !
@@ -107,6 +106,56 @@ SUBROUTINE atmproj_read_ext ( filein, nbnd, nkpt, nspin, natomwfc, nelec, &
      energy_units_="Rydberg"
      !
      CALL iotk_scan_attr( attr, "FERMI_ENERGY", efermi_, IERR=ierr)
+     IF ( ierr/=0 ) RETURN
+   !
+   ! reading kpoints, weight, energies and proj
+!to be generalized with spin > 1
+   !
+     CALL iotk_scan_begin( iunit, "EIGENSTATES", IERR=ierr)
+     IF ( ierr/=0 ) RETURN
+!
+     DO isp=1,nspin_
+       DO ik = 1, nkpt_
+         IF ( PRESENT( vkpt ) ) THEN
+           CALL iotk_scan_dat( iunit, "K-POINT", vkpt(:,ik),IERR=ierr)
+           IF ( ierr/=0 ) RETURN
+           call iotk_scan_attr(attr , "Weight", wk(ik), IERR=ierr)
+           IF ( ierr/=0 ) RETURN
+         ENDIF
+         IF ( PRESENT( eig ) ) THEN
+            CALL iotk_scan_dat(iunit, "E" , eig(:,ik, isp ), IERR=ierr)    
+            IF ( ierr/=0 ) RETURN
+         ENDIF
+         !
+         IF ( PRESENT( proj ) ) THEN
+           !
+           ALLOCATE( rtmp(2,nbnd_, natomwfc_) )
+           ALLOCATE( ztmp(nbnd_, natomwfc_) )
+           !
+           CALL iotk_scan_begin( iunit, "PROJS", IERR=ierr )
+           IF ( ierr/=0 ) RETURN
+           !
+           DO ias = 1, natomwfc_
+             !
+             str= "ATOMIC_WFC"
+             !
+             CALL iotk_scan_dat(iunit, TRIM(str) , rtmp( :,:, ias ), IERR=ierr)
+             IF ( ierr /= 0 ) RETURN
+             !
+           ENDDO
+           !
+           ztmp(1:nbnd_,1:natomwfc_)=cmplx(rtmp(1,1:nbnd_,1:natomwfc_),rtmp(2,1:nbnd_,1:natomwfc_)) 
+           proj( 1:natomwfc_, 1:nbnd_, ik, isp ) = TRANSPOSE( ztmp(1:nbnd_,1:natomwfc_) )
+           CALL iotk_scan_end( iunit, "PROJS", IERR=ierr )
+           IF ( ierr/=0 ) RETURN
+           DEALLOCATE( rtmp )
+           DEALLOCATE( ztmp )
+           !
+         ENDIF
+       ENDDO
+     ENDDO
+     
+     CALL iotk_scan_end( iunit, "EIGENSTATES", IERR=ierr)
      IF ( ierr/=0 ) RETURN
    !
    ELSE
@@ -132,34 +181,33 @@ SUBROUTINE atmproj_read_ext ( filein, nbnd, nkpt, nspin, natomwfc, nelec, &
      !
      CALL iotk_scan_end( iunit, "HEADER", IERR=ierr) 
      IF ( ierr/=0 ) RETURN
-   ENDIF
    !
    ! reading kpoints and weights 
    ! 
-   IF ( PRESENT( vkpt ) ) THEN
+     IF ( PRESENT( vkpt ) ) THEN
        !
        CALL iotk_scan_dat( iunit, "K-POINTS", vkpt(:,:), IERR=ierr )
        IF ( ierr/=0 ) RETURN
        !
-   ENDIF
+     ENDIF
    !
-   IF ( PRESENT (wk) ) THEN
+     IF ( PRESENT (wk) ) THEN
        !
        CALL iotk_scan_dat( iunit, "WEIGHT_OF_K-POINTS", wk(:), IERR=ierr )
        IF ( ierr/=0 ) RETURN
        !
-   ENDIF
+     ENDIF
    
    !
    ! Added by Luis to take spinors into accout
    !
-   IF ( nspin_ == 4 ) nspin_ = 1
+     IF ( nspin_ == 4 ) nspin_ = 1
    
    ! 
    ! reading eigenvalues
    ! 
 
-   IF ( PRESENT( eig ) ) THEN
+     IF ( PRESENT( eig ) ) THEN
        ! 
        CALL iotk_scan_begin( iunit, "EIGENVALUES", IERR=ierr )
        IF ( ierr/=0 ) RETURN
@@ -199,13 +247,13 @@ SUBROUTINE atmproj_read_ext ( filein, nbnd, nkpt, nspin, natomwfc, nelec, &
        CALL iotk_scan_end( iunit, "EIGENVALUES", IERR=ierr )
        IF ( ierr/=0 ) RETURN
        !
-   ENDIF
+     ENDIF
 
 
    ! 
    ! reading projections
    ! 
-   IF ( PRESENT( proj ) ) THEN
+     IF ( PRESENT( proj ) ) THEN
        !
        ALLOCATE( ztmp(nbnd_, natomwfc_) )
        !
@@ -261,12 +309,11 @@ SUBROUTINE atmproj_read_ext ( filein, nbnd, nkpt, nspin, natomwfc, nelec, &
        CALL iotk_scan_end( iunit, "PROJECTIONS", IERR=ierr )
        IF ( ierr/=0 ) RETURN
        !
-   ENDIF
-
+     ENDIF
    ! 
    ! reading overlaps
    ! 
-   IF ( PRESENT( kovp ) ) THEN
+     IF ( PRESENT( kovp ) ) THEN
        !
        CALL iotk_scan_begin( iunit, "OVERLAPS", IERR=ierr )
        IF ( ierr/=0 ) THEN
@@ -292,6 +339,8 @@ SUBROUTINE atmproj_read_ext ( filein, nbnd, nkpt, nspin, natomwfc, nelec, &
        CALL iotk_scan_end( iunit, "OVERLAPS", IERR=ierr )
        IF ( ierr/=0 ) RETURN
        !
+     ENDIF
+!
    ENDIF
    !
    CALL iotk_close_read( iunit, IERR=ierr )

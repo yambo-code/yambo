@@ -179,6 +179,7 @@ module parallel_m
    type(MPI_comm)      :: COMM_a2a
    type(PP_indexes)    :: IND
    integer             :: ID
+   integer             :: D(2)
    integer             :: N_ser
    integer             :: N_par
    integer,allocatable :: table(:)
@@ -585,6 +586,7 @@ module parallel_m
      call COMM_reset(PARs%COMM_a2a)
      call PP_indexes_reset(PARs%IND)
      YAMBO_FREE(PARs%table)
+     PARs%D    = 0
      PARs%N_ser= 0
      PARs%N_par= 0
      PARs%ID   = -1

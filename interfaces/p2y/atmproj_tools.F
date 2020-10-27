@@ -235,6 +235,8 @@ SUBROUTINE atmproj_read_ext_new ( filein, nbnd, nkpt, nspin, natomwfc, nelec, &
 
 END SUBROUTINE atmproj_read_ext_new
 
+
+!*************************************************
 SUBROUTINE atmproj_read_ext_old ( filein, nbnd, nkpt, nspin, natomwfc, nelec, &
                               efermi, energy_units, vkpt, wk, eig, proj, kovp, ierr, iunit )
 !*************************************************

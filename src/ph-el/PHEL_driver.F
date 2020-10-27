@@ -87,7 +87,7 @@ subroutine PHEL_driver(E,k,q)
  !=====================
  if (trim(PH_Self_Energy_mode)=="dressed-dressed") then
    call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ square")
- else if (trim(PH_Self_Energy_mode)=="bare-bare") 
+ else if (trim(PH_Self_Energy_mode)=="bare-bare")  then
    call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ bare square")
  else
    call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ")

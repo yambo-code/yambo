@@ -117,6 +117,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _MEM_CHECK
  use memory,        ONLY:MEM_treshold
 #endif
+#if defined _PHEL
+ use PHEL,          ONLY:PH_Self_Energy_mode
+#endif
  !
  implicit none
  !
@@ -261,7 +264,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
  call it('f',defs,'UseEbands', '[GW] Force COHSEX to use empty bands',verb_level=V_qp)
 #endif
+#if defined _PHEL
+ call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
+#else
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit,verb_level=V_qp)
+#endif
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
  call it(defs,'dScStep',  '[GW] Energy step to evaluate Z factors',QP_dSc_delta,E_unit,verb_level=V_qp)
  call it(defs,'DysSolver','[GW] Dyson Equation solver ("n","s","g")',QP_solver,protect=.FALSE.,case="a")
@@ -588,6 +595,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call INIT_QP_ctl_load(defs,3)
  !
  ! GPL_EXCLUDE_START
+ !
+#if defined _PHEL 
+ call it(defs,'PH_SE_mode','[PHEL] Self-Energy scattering mode ("bare-bare","dressed-bare","dressed-dressed")',PH_Self_Energy_mode)
+#endif
  !
 #if defined _RT
  !

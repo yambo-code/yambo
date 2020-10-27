@@ -26,7 +26,7 @@ subroutine PHEL_driver(E,k,q)
  use electrons,           ONLY:levels,n_sp_pol,E_fine_grid
  use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,elph_global_free,phel_gkkp_expanded_sq
- use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd
+ use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode
  use parallel_m,          ONLY:PARs_PH_Q_ibz,PARs_PH_K_bz 
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_global_indexes
  use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free
@@ -85,7 +85,14 @@ subroutine PHEL_driver(E,k,q)
  !
  ! El-Ph databases I/O
  !=====================
- call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ")
+ if (trim(PH_Self_Energy_mode)=="dressed-dressed") then
+   call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ square")
+ else if (trim(PH_Self_Energy_mode)=="bare-bare") 
+   call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ bare square")
+ else
+   call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ")
+   call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ bare")
+ endif
  !
  !...acoustic branches
  !

@@ -23,7 +23,7 @@
 !
 module ELPH
  !
- use pars,       ONLY:SP,rZERO
+ use pars,       ONLY:SP,rZERO,schlen
  use electrons,  ONLY:levels
  use D_lattice,  ONLY:n_atoms_species
  !
@@ -51,7 +51,21 @@ module ELPH
  real(SP),    allocatable :: f_k_plus_q(:,:,:)
  type(levels), SAVE       :: E_k_p_q
  !
- ! Matrix Elements
+ ! GKKP Matrix Elements and derived quantities
+ !
+ type GKKP_me
+   !
+   character(schlen)        :: KIND="none" ! dV, dV_bare, dV_sq, DW, dV_bare_sq
+   !
+   ! dVr/c(Nb,Nb,Nmodes,Nk)
+   real(SP),    allocatable :: dVr(:,:,:,:)
+   complex(SP), allocatable :: dVc(:,:,:,:)
+   !
+   integer                  :: Nb=0
+   integer                  :: Nmodes=0
+   integer                  :: Nk=0
+   !
+ end type
  !
  real(SP),    allocatable :: elph_DW(:,:,:,:)
  complex(SP), allocatable :: elph_gkkp(:,:,:,:)
@@ -60,6 +74,7 @@ module ELPH
  ! ... Q-parallelization  and GKKP
  real(SP),    allocatable :: elph_gkkp_expanded_sq(:,:,:,:,:)
  real(SP),    allocatable :: phel_gkkp_expanded_sq(:,:,:,:,:)
+ !
  integer,     allocatable :: Q_io_map(:)
  integer,     allocatable :: K_io_map(:)
  !

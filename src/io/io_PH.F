@@ -27,7 +27,7 @@ integer function io_PH(ID)
  use pars,                ONLY:IP,SP,LP
  use R_lattice,           ONLY:nqibz,nqbz
  use QP_m,                ONLY:QP_G_damp
- use PHEL,                ONLY:PH_desc,PH_DbGd_points,l_PH_uses_E_FineGd
+ use PHEL,                ONLY:PH_desc,PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,ph_freqs_sq,ph_modes
  use IO_m,                ONLY:io_connect,io_disconnect,io_sec,io_header,io_status,read_is_on,def_variable_elemental,&
 &                              DB_is_OK,io_variable_elemental,def_variable_bulk,io_variable_bulk
@@ -49,6 +49,9 @@ integer function io_PH(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    call IO_desc_reset(PH_desc)
+   call def_variable_elemental(ID,"CH_PH_PARAMETERS",1,0,0)
+   call io_variable_elemental(ID,VAR="[PH] Self-Energy mode",CH0=PH_Self_Energy_mode,DESCRIPTOR=PH_desc,&
+&                                CHECK=.TRUE.,OP=(/"=="/))
    call def_variable_elemental(ID,"I_PH_PARAMETERS",3,IP,0)
    call io_variable_elemental(ID,VAR="[PH] Branches",I0=ph_modes,DESCRIPTOR=PH_desc,&
 &                                TERMINATOR="all",CHECK=.TRUE.,OP=(/"=="/))

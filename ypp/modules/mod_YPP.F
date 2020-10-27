@@ -206,7 +206,7 @@ module YPPm
  !
  ! Perturbative SOC
  !
- logical           :: l_map_WFs
+ logical           :: l_SOC_map
  integer           :: SOC_bands_to_map(2)
  integer           :: SOC_bands_buffer
  character(lchlen) :: perturbative_SOC_path
@@ -259,10 +259,6 @@ module YPPm
  logical     :: l_fix_syms
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
- !
- ! Convert wave--functions
- !
- logical     :: l_fix_save
  !
  ! BSE data
  !

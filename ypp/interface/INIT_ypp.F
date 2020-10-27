@@ -24,8 +24,8 @@
 subroutine INIT_ypp(E,instr,FINALIZE)
  !
  use units,          ONLY:FS2AUT
- use YPPm,           ONLY:l_plot,l_map_WFs,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,BSiq,&
-&                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,l_fix_save,&
+ use YPPm,           ONLY:l_plot,l_SOC_map,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,BSiq,&
+&                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,&
 &                         l_amplitude,l_bands,l_bz_grids,l_current,BANDS_bands,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
@@ -255,13 +255,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        if (l_high_sym_pts) call initactivate(1,"High_Symm")
      endif
      !
-     if ( trim(rstr_piece(i1)) == 'WFs') then
-       call initactivate(1,'WFs')
-       l_fix_save=STRING_match(rstr_piece(i1+1),'c')
-       l_map_WFs =STRING_match(rstr_piece(i1+1),'p')
-       if (l_map_WFs) call initactivate(1,'WFs_map')
-     endif
-     !
      if ( trim(rstr_piece(i1)) == 'QPDBs') then
        call initactivate(1,'QPDBs')
        l_QP_DBs_create_and_modify=STRING_match(rstr_piece(i1+1),'g')
@@ -441,7 +434,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_NL_X)         call initactivate(1,'nonlinear')
 #endif
  !
- l_flag=.not.(l_sort.or.l_fix_save)
+ l_flag=.not.l_sort
 #if defined _YPP_ELPH
  l_flag=.not.l_sort.and..not.l_atomic_amplitude
 #endif
@@ -520,8 +513,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_current  =runlevel_is_on('current').and.runlevel_is_on('electrons')
  l_mag      =runlevel_is_on('magnetization')
  l_wannier  =runlevel_is_on('wannier')
+ l_SOC_map  =runlevel_is_on('WFs_SOC_map')
  l_spin     =runlevel_is_on('spin')
- l_map_WFs  =runlevel_is_on('WFs_map')
  !
  if (.not.l_exc_wf) then
     l_free_hole =.false.
@@ -571,8 +564,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_fix_syms.and.n_spinor==2.and.i_time_rev==0) call initactivate(1,"ExpandSymm")
  !
- if (l_fix_save) infile_editing=.false.
- !
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv GvecsCut")
  !
 #if defined _YPP_RT
@@ -594,7 +585,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_map_kpts) call initactivate(1,"FineGd_mode BZ_DbGd_Nk BZ_FineGd_nkpts SkipCheck SkipBorderPts")
  !
- if (l_map_WFs)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map bands_buffer")
+ if (l_SOC_map)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map bands_buffer")
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call INIT_QP_ctl_switch('G')

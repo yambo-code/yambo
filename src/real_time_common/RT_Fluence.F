@@ -215,8 +215,8 @@ function Rabi_frequency(En,i_field)
              if (vel_gauge) POL_or_Jtot(1:3)=POL_or_Jtot(1:3)-DIP_v(1:3,ib2,ib1,ik_mem,i_sp_pol)
            enddo
          enddo
-         field_term=sum(EField(i_field)%versor(1:3)*POL_or_Jtot(1:3) )*Efield(i_field)%amplitude &
-         &                   /real(n_of_el(i_grp1)*n_of_el(i_grp2),SP) ! E_dot_P or A_dot_J
+         field_term=sum(EField(i_field)%versor(1:3)*POL_or_Jtot(1:3) )*Efield(i_field)%amplitude !&
+         !&                   /real(n_of_el(i_grp1)*n_of_el(i_grp2),SP) ! E_dot_P or A_dot_J
          if (Rabi_frequency>abs(field_term)) cycle
          Rabi_frequency=abs(field_term)
          i_sp_pol_ref=i_sp_pol
@@ -229,7 +229,7 @@ function Rabi_frequency(En,i_field)
    enddo
  enddo
  !
- Rabi_frequency=Rabi_frequency*real(PS2AUT,SP)*2._SP
+ Rabi_frequency=Rabi_frequency*real(PS2AUT,SP) !*2._SP
  !
  call msg("nr"," Rabi term transition indexes             ",(/ik_ref,ib1_ref,ib2_ref/),"(ik,iv,ic)" )
  call msg("r ","           degenerate states              ", n_deg_states,"(n_v,n_c)" )

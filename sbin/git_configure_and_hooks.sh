@@ -71,7 +71,7 @@ if [ -f .check_configure ]; then
   cp configure configure_save
   autoconf configure.ac > configure
   rm -fr autom4te.cache
-  if [ \$(diff configure configure_save | head -c 5) ]; then
+  if [ ! \$(cmp -s configure configure_save) ]; then
     echo "configure automatically updated after merge"
     rm configure_save
     git commit -m "Automatic commit: configure regenerated after merge"  --no-edit
@@ -94,7 +94,7 @@ if [ -f .check_configure ]; then
   cp configure configure_save
   autoconf configure.ac > configure
   rm -fr autom4te.cache
-  if [ \$(diff configure configure_save | head -c 5) ]; then
+  if [ ! \$(cmp -s configure configure_save) ]; then
     echo "configure automatically updated after merge"
     rm configure_save
     git add configure

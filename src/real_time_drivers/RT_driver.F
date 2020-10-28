@@ -328,7 +328,6 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    ! Write DBs and output
    !=====================
    call RT_output_and_IO_driver('write',E,k,OBSERVABLES)
- stop
    !
    ! GPL_EXCLUDE_START
    !

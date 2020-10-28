@@ -45,7 +45,7 @@ integer function variables_RT_dynamic(ID)
  !
  call def_variable_elemental(ID,VAR="RT_TIMEs_NOW",VAR_SZ=5,VAR_KIND=SP,MENU=0) 
  call io_variable_elemental(ID,&
-&    VAR=" [RT] Time step(now)",R0=RT_dyn_step,DB_R0=RT_dyn_step,WARN=.true.,OP=(/"=="/,TERMINATOR="[fs]"),UNIT=AUT2FS,&
+&    VAR=" [RT] Time step(now)",R0=RT_dyn_step,DB_R0=RT_dyn_step,WARN=.true.,OP=(/"=="/),TERMINATOR="[fs]",UNIT=AUT2FS,&
 &    DESCRIPTOR=RT_desc)
  call io_variable_elemental(ID,&
 &    VAR=" [RT] NE time(done)",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,DESCRIPTOR=RT_desc,TERMINATOR="[fs]")

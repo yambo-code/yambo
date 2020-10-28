@@ -26,7 +26,8 @@ subroutine PARALLEL_global_Phonon_Self_Energy( )
  use R_lattice,     ONLY:nqibz,nXkbz
  use ELPH,          ONLY:QP_PH_n_G_bands
  use parallel_int,  ONLY:PARALLEL_assign_chains_and_COMMs,PARALLEL_scheme_initialize
- use parallel_m,    ONLY:COMM_copy,PARs_PH_eh_bands,PARs_PH_Q_ibz,PARs_PH_K_bz 
+ use parallel_m,    ONLY:COMM_copy,PARs_PH_eh_bands,PARs_PH_Q_ibz,PARs_PH_K_bz,PAR_n_bands,&
+&                        PAR_K_range,PAR_Q_ibz_range
  !
 #include<memory.h>
  !
@@ -49,20 +50,17 @@ subroutine PARALLEL_global_Phonon_Self_Energy( )
  !   "q" -> Q-points (IBZ)
  !.........................................................................
  call PARALLEL_scheme_initialize("Q(ibz)","Phonon_Self_Energy",PARs_PH_Q_ibz,(/nqibz/),TABLE=.TRUE.)
+ PAR_Q_ibz_range=nqibz
  !.........................................................................
  ! Eh bands loop
  !.........................................................................
  call PARALLEL_scheme_initialize("eh-bands","Phonon_Self_Energy",PARs_PH_eh_bands,&
 &                                (/QP_PH_n_G_bands/),MATRIX=.TRUE.)
+ PAR_n_bands=(/1,QP_PH_n_G_bands**2/)
  !.........................................................................
  ! K-points (BZ) for e-h pairs
  !.........................................................................
  call PARALLEL_scheme_initialize("K(bz)","Phonon_Self_Energy",PARs_PH_K_bz,(/nXkbz/),TABLE=.TRUE.)
- !.........................................................................
- ! I/O
- !.........................................................................
- !
-! call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%my_CHAIN==1.or.&
-!&                                                 PAR_COM_Xk_ibz_INDEX%n_CPU==ncpu)
+ PAR_K_range=nXkbz
  !
 end subroutine Parallel_global_Phonon_Self_Energy

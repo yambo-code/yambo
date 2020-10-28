@@ -56,17 +56,18 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].yambo_string="wannier";
  options[*i_opt].section="Wannier";
  /* 
-  Convertions
+  SOC
  */
  *i_opt=*i_opt+1;
- options[*i_opt].short_desc="WFs";
- options[*i_opt].long_opt= "wf";
- options[*i_opt].long_desc[0]="<string>=(p)erturbative SOC mapping, (c)onversion";
+ options[*i_opt].short_desc="Perturbative SOC mapping";
+ options[*i_opt].long_opt="soc";
  options[*i_opt].short_opt='w';
  options[*i_opt].bin="ypp";
- options[*i_opt].char_var=1;
- options[*i_opt].yambo_string="WFs";
- options[*i_opt].section="Convertions";
+ options[*i_opt].yambo_string="WFs_SOC_map";
+ options[*i_opt].section="SOC";
+ /* 
+  Convertions
+ */
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Remove symmetries not consistent with an external perturbation";
  options[*i_opt].long_opt=  "fixsym";

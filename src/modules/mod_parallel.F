@@ -174,6 +174,8 @@ module parallel_m
    integer, allocatable :: last_of_1D(:)
  end type PP_indexes
  !
+ ! SCHEMEs ...
+ !========================
  type PAR_scheme
    type(MPI_comm)      :: COMM_i
    type(MPI_comm)      :: COMM_a2a
@@ -182,14 +184,30 @@ module parallel_m
    integer             :: D(2)
    integer             :: N_ser
    integer             :: N_par
+   logical             :: consecutive
    integer,allocatable :: table(:)
  end type
  !
- ! PH Self Energy
+ ! ... GENERAL 
+ !-------------
+ !type(PAR_scheme),SAVE :: PARs_K_ibz
+ !type(PAR_scheme),SAVE :: PARs_G_b
+ !type(PAR_scheme),SAVE :: PARs_Q_bz
  !
+ ! ... DIPOLES 
+ !-------------
+ !type(PAR_scheme),SAVE :: PARs_DIP_K_ibz
+ !type(PAR_scheme),SAVE :: PARs_DIP_K_bz
+ !
+ ! ... PH Self Energy
+ !--------------------
  type(PAR_scheme),SAVE :: PARs_PH_Q_ibz
  type(PAR_scheme),SAVE :: PARs_PH_K_bz
  type(PAR_scheme),SAVE :: PARs_PH_eh_bands
+ !
+ ! ... RT 
+ !--------
+ !type(PAR_scheme),SAVE :: PARs_RT_plasma
  !
  type PARk_str
    type(MPI_comm)      :: COM_ibz_INDEX
@@ -206,7 +224,7 @@ module parallel_m
  type(PARk_str),SAVE   :: PAR_K_scheme
  !
  ! SND & RCV plan
- !
+ !=================
  type SND_RCV_geometry
    integer,allocatable :: SND_to_id(:)
    integer,allocatable :: RCV_from_id(:)
@@ -590,6 +608,7 @@ module parallel_m
      PARs%N_ser= 0
      PARs%N_par= 0
      PARs%ID   = -1
+     PARs%consecutive= .FALSE.
    end subroutine
    !
    subroutine COMM_reset(COMM)

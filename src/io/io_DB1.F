@@ -141,7 +141,7 @@ integer function io_DB1(E,k,ID)
    !
    if (i_time_rev==1) then
      call io_elemental(ID,I0=nsym,CHECK=.true.,OP=(/"=="/),&
-&                      VAR=' Symmetries',TERMINATOR='spatial+T-rev')
+&                      VAR=' Symmetries',TERMINATOR='spatial+T-reV')
    else
      call io_elemental(ID,I0=nsym,CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' Symmetries',TERMINATOR='spatial')
@@ -157,7 +157,7 @@ integer function io_DB1(E,k,ID)
    n_spin=max(n_sp_pol,n_spinor,1)
    !
    call io_elemental(ID, UNIT=HA2EV,R0=input_GS_Tel,CHECK=.true.,OP=(/"=="/),&
-&                    VAR=' Temperature',TERMINATOR='ev')
+&                    VAR=' Temperature',TERMINATOR='eV')
    call io_elemental(ID, R0=default_nel,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' Electrons                       ')
    call io_elemental(ID, I0=GS_xc_KIND)

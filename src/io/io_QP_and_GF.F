@@ -108,18 +108,18 @@ integer function io_QP_and_GF(what,qp,ID)
  !
  select case (QP_DB_kind)
    case(0,QP_SE_NONE)
-     io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,CUTOFF=.true.)
+     io_QP_and_GF=io_header(ID,TEMP=.true.,D_LATT=.true.,CUTOFF=.true.)
    case(QP_SE_COHSEX)
-     io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs",CUTOFF=.true.)
+     io_QP_and_GF=io_header(ID,TEMP=.true.,D_LATT=.true.,XC_KIND="G_WF Xs",CUTOFF=.true.)
      i_X=2
    case(QP_SE_GoWo_PPA,QP_SE_GWo_PPA)
-     io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp",CUTOFF=.true.)
+     io_QP_and_GF=io_header(ID,TEMP=.true.,D_LATT=.true.,XC_KIND="G Xp",CUTOFF=.true.)
      i_X=3
    case(QP_SE_GoWo,QP_SE_GWo)
-     io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xd",CUTOFF=.true.)
+     io_QP_and_GF=io_header(ID,TEMP=.true.,D_LATT=.true.,XC_KIND="G Xd",CUTOFF=.true.)
      i_X=4
    case(QP_SE_POLARON,QP_SE_GW_QED)
-     io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=.true.)
+     io_QP_and_GF=io_header(ID,TEMP=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=.true.)
  end select
  !
  if (.not.QP_DB_kind==QP_SE_NONE) then

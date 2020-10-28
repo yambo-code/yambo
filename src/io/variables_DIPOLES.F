@@ -43,7 +43,7 @@ integer function variables_DIPOLES(Dip,ID)
  call io_variable_elemental(ID,DB_I1=Dip%db_ib_lim,&
 &     VAR="DIP band range limits    ",I1=Dip%ib_lim,CHECK=.true.,OP=(/"<=",">="/))
  call io_variable_elemental(ID,UNIT=HA2EV,&
-&     VAR="DIP e/h energy range ",TERMINATOR="ev",R1=Dip%ehe,CHECK=.true.,OP=(/">=","<="/))
+&     VAR="DIP e/h energy range ",TERMINATOR="eV",R1=Dip%ehe,CHECK=.true.,OP=(/">=","<="/))
  call io_variable_elemental(ID,&
 &     VAR="RL vectors in the sum  ",I0=Dip%ng,WARN=.true.,OP=(/"<="/))
  call io_variable_elemental(ID,&

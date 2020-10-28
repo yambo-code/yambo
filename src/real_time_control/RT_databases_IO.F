@@ -183,9 +183,9 @@ subroutine RT_databases_IO(E,DO_IT)
      !
 #if defined _PAR_IO
      IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
-     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2/),ID=ID(5))
+     call io_control(ACTION=IO_ACT,COM=REP,SEC=(/2/),ID=ID(5))
 #else
-     call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/2/),ID=ID(5))
+     call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2/),ID=ID(5))
 #endif
      io_G=io_RT_components('G',ID(5))
      !

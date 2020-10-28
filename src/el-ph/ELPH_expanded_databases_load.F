@@ -23,6 +23,10 @@
 !
 subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  ! 
+ ! mode can be combination of
+ !
+ !  BZ/IBZ + bare/dressed + square 
+ ! 
  use pars,           ONLY:SP,rZERO
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
@@ -43,18 +47,25 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  character(*), intent(in) :: mode
  !
  ! Work Space
- !
  integer             ::iq_bz,ID,io_err,ik,i_counter,iq_io,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
 &                      first_el(2,n_bands(2)),n_of_el(2,n_bands(2)),n_deg_grp(2),i_g,i_c,iq_mem
  real(SP)            ::gkkp_average(ph_modes),gkkp_expanded_sq(elph_nb,elph_nb,ph_modes),ph_Esq_local(q%nbz,ph_modes)
  real(SP),allocatable::MAX_gkkp_expanded_at_kpq(:,:)
- logical             ::l_BZ,l_IBZ
  integer, external   ::io_ELPH
+ !
+ ! Control
+ logical             ::l_BZ,l_IBZ,l_bare,l_dressed,l_square
+ !
+ ! What?
+ !=======
+ l_IBZ     = index(mode,"IBZ")>0
+ l_BZ      = .not.l_IBZ
+ l_bare    = index(mode,"bare")>0
+ l_dressed = index(mode,"dressed")>0.or..not.l_bare
+ l_square  = index(mode,"square")>0
  !
  ! Allocation
  !============
- l_BZ =mode=="BZ"
- l_IBZ=mode=="IBZ"
  YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nbz,nqbz))
  if (l_BZ ) then
    YAMBO_ALLOC(elph_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ_bz,PAR_Xk_nibz))

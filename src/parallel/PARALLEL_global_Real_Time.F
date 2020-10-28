@@ -37,30 +37,18 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,HEAD_q_cpu,COMM_copy,PAR_INDEX_copy,&
 &                        PAR_build_index,PP_indexes_reset
  ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_WF_b_INDEX,PAR_COM_Xk_ibz_INDEX,    &
+ use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_WF_b_INDEX,PAR_COM_Xk_ibz_INDEX,&
 &                        PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A
  ! IND
- use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_B_mat,PAR_IND_WF_k, &
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_B_mat,PAR_IND_WF_k,&
 &                        PAR_IND_Q_bz,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_DIPk_ibz
  ! INDEX
  use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_Xk_ibz_index,PAR_Q_bz_index
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_nQ_bz,PAR_Xk_nibz,PAR_G_k_range,PAR_n_Bp_mat_elements
  ! ID's
- use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,      &
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,&
 &                        PAR_IND_DIPk_ibz_ID,PAR_IND_Q_bz_ID,PAR_IND_WF_b_ID
-#if defined _PHEL
- ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_Xk_bz_INDEX
- ! IND
- use parallel_m,    ONLY:PAR_IND_Xk_bz,PAR_IND_Q_ibz
- ! INDEX
- use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Q_ibz_index
- ! DIMENSIONS
- use parallel_m,    ONLY:PAR_nQ_ibz,PAR_Xk_nbz
- ! ID's
- use parallel_m,    ONLY:PAR_IND_Xk_bz_ID,PAR_IND_Q_ibz_ID
-#endif
  !
 #include<memory.h>
  !
@@ -88,13 +76,8 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
  ! A2A when there is no internal distribution
  !
- if (PAR_COM_G_b_INDEX%n_CPU==1) then
-   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_A2A)
- endif
- if (PAR_COM_Q_INDEX%n_CPU==1) then
-   call COMM_copy(PAR_COM_G_b_A2A,PAR_COM_Q_A2A)
- endif
- !
+ if (PAR_COM_G_b_INDEX%n_CPU==1) call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_A2A)
+ if (PAR_COM_Q_INDEX%n_CPU==1)   call COMM_copy(PAR_COM_G_b_A2A,PAR_COM_Q_A2A)
  call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_WF_b_INDEX)
  !
  ! K-points (IBZ)
@@ -249,37 +232,6 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  call PARALLEL_live_message("Q(bz)",ENVIRONMENT="Real_Time",&
 &                           LOADED=PAR_IND_Q_bz%n_of_elements(PAR_IND_Q_bz_ID+1),TOTAL=q%nbz,&
 &                           NCPU=PAR_COM_Q_INDEX%n_CPU)
- !
-
-#if defined _PHEL
- !
- ! K-points (BZ)
- !
- call PARALLEL_index(PAR_IND_Xk_bz,(/Xk%nbz/),COMM=PAR_COM_Xk_bz_INDEX,CONSECUTIVE=CONSECUTIVE,NO_EMPTIES=.TRUE.)
- PAR_IND_Xk_bz_ID=PAR_COM_Xk_bz_INDEX%CPU_id
- !
- YAMBO_ALLOC(PAR_Xk_bz_index,(Xk%nbz))
- call PAR_build_index(PAR_IND_Xk_bz,Xk%nbz,PAR_Xk_bz_index,PAR_Xk_nbz)
- !
- call PARALLEL_live_message("K(bz)",ENVIRONMENT="Real_Time",&
-&         LOADED=PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1),TOTAL=Xk%nbz,&
-&         NCPU=PAR_COM_Xk_bz_INDEX%n_CPU)
- !
- !.........................................................................
- !   "q" -> Q-points (IBZ)
- !.........................................................................
- !
- call PARALLEL_index(PAR_IND_Q_ibz,(/q%nibz/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
- PAR_IND_Q_ibz_ID=PAR_COM_Q_INDEX%CPU_id
- PAR_nQ_ibz=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)
- !
- YAMBO_ALLOC(PAR_Q_ibz_index,(q%nibz))
- call PAR_build_index(PAR_IND_Q_ibz,q%nibz,PAR_Q_ibz_index,PAR_nQ_ibz)
- !
- call PARALLEL_live_message("Q(ibz)",ENVIRONMENT="Real_Time",&
-&                           LOADED=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1),TOTAL=q%nibz,&
-&                           NCPU=PAR_COM_Q_INDEX%n_CPU)
-#endif
  !
  !.........................................................................
  !   "COLLISIONS" & "q" -> k-q

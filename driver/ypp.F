@@ -35,9 +35,9 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use it_m,                ONLY:infile
  use wave_func,           ONLY:io_WF
  use parallel_int,        ONLY:PARALLEL_global_indexes
- use YPPm,                ONLY:l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
+ use YPPm,                ONLY:l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_SOC_map,&
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,&
-&                              l_fix_save,alat_used_for_output,l_QP_DB_expand,coo_out,coo_in
+&                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in
 #if defined _YPP_RT
  use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs,l_NL_X,l_NL_exc
 #endif
@@ -206,7 +206,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  if (l_map_kpts) call k_map_fine_to_coarse_driver(Xk,Xen)
  !
- if (l_map_WFs) call WF_map_perturbative_SOC(Xk,Xen)
+ if (l_SOC_map) call WF_map_perturbative_SOC(Xk,Xen)
  !
  if (l_QP_DBs_create_and_modify)  call QP_DBs_create_and_modify(en,k)
  !
@@ -217,8 +217,6 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  if (l_wannier) call WANNIER_driver(k,en)
  !
  if (l_fix_syms) call symmetries_driver(en,k)
- !
- if (l_fix_save) call WF_format_converter(en,k,q)
  !
 #if defined _YPP_RT
  !

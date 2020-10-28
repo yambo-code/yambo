@@ -183,7 +183,7 @@ function Rabi_frequency(En,i_field)
        do ib2=ib1+1,RT_bands(2)
          delta_E=En%E(ib2,ik,i_sp_pol)-En%E(ib1,ik,i_sp_pol)
          if (delta_E<1.E-5_SP) cycle
-         if (abs(delta_E-effective_frequency)>E_dist) cycle
+         if (abs(delta_E-effective_frequency)>abs(E_dist)) cycle
          E_dist=effective_frequency-delta_E
          E_trans=delta_E
        enddo

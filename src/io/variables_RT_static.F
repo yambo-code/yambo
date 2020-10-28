@@ -127,7 +127,7 @@ integer function variables_RT_static(ID,what,l_carriers)
    call io_variable_elemental(ID,&
 &    VAR=" [RT] NE time       (planned)[fs]",R0=NE_tot_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,DESCRIPTOR=RT_desc)
    call io_variable_elemental(ID,&
-&    VAR=" [RT] NE steps      (planned)[fs]",I0=NE_steps,WARN=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
+&    VAR=" [RT] NE steps      (planned)    ",I0=NE_steps,WARN=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
    !
    ! GPL_EXCLUDE_START
    !

@@ -266,7 +266,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !$omp end parallel
 #endif
    !
-   QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)+ DP_Sx
+   QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)+ cmplx(DP_Sx,kind=SP)
    !
  enddo
  !

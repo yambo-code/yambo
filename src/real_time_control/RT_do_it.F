@@ -76,7 +76,7 @@ logical function RT_do_it(what)
  !
  ! Do we STOP now ?
  !==================
- if (what=="OUT".and.RT_do_it) then
+ if (what=="G".and.RT_do_it) then
    call it_reset(0)
    call parser('STOP_NOW',STOP_the_dynamics_NOW)
  endif

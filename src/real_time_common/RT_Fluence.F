@@ -221,8 +221,8 @@ function Rabi_frequency(En,i_field)
          Rabi_frequency=abs(field_term)
          i_sp_pol_ref=i_sp_pol
          ik_ref=ik
-         ib1_ref=ib1
-         ib2_ref=ib2
+         ib1_ref=first_el(i_grp1)+RT_bands(1)-1
+         ib2_ref=first_el(i_grp2)+RT_bands(1)-1
          n_deg_states=(/n_of_el(i_grp1),n_of_el(i_grp2)/)
        enddo
      enddo

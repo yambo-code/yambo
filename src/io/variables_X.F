@@ -51,12 +51,11 @@ integer function variables_X(ID,local_desc,X)
  call def_variable_elemental(ID,trim(X_label)//"PARS_1",5,SP,0)
  !
  call io_variable_elemental(ID,DB_I0=X%ng_db,&
-&     VAR="X matrix size           ",I0=X%ng,CHECK=.true.,OP=(/"<="/),DESCRIPTOR=local_desc)
+&     VAR="X matrix size",I0=X%ng,CHECK=.true.,OP=(/"<="/),DESCRIPTOR=local_desc)
  call io_variable_elemental(ID,&
-&     VAR="X band range            ",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=local_desc)
+&     VAR="X band range",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=local_desc)
  call io_variable_elemental(ID,UNIT=HA2EV,&
-&     VAR="X e/h energy range ",TERMINATOR="eV",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),DESCRIPTOR=local_desc)
- !call def_variable_elemental(ID,"",0,0,0)
+&     VAR="X e/h energy range ",TERMINATOR="[eV]",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),DESCRIPTOR=local_desc)
  !
  ! PARS_2
  !
@@ -64,23 +63,19 @@ integer function variables_X(ID,local_desc,X)
  if (read_is_on(ID) .and. .not. variable_exist(ID,trim(VAR_NAME))) VAR_NAME=trim(X_label)//"PARS_2"
  call def_variable_elemental(ID,trim(VAR_NAME),1,0,0)
  call io_variable_elemental(ID,&
-&     VAR="X Time ordering         ",CH0=X%ordering,WARN=.true.,DESCRIPTOR=local_desc)
- !call def_variable_elemental(ID,"",0,0,0)
+&     VAR="X Time ordering",CH0=X%ordering,WARN=.true.,DESCRIPTOR=local_desc)
  if (ver_is_gt_or_eq(ID,(/3,0,5/))) then
    !
    ! TDDFT_KERNEL
    !
    call def_variable_elemental(ID,trim(X_label)//"TDDFT_KERNEL",1,0,0)
-   call io_variable_elemental(ID,&
-&     VAR="X xc-Kernel             ",CH0=X%f_xc,CHECK=.true.,DESCRIPTOR=local_desc)
-   !call def_variable_elemental(ID,"",0,0,0)
+   call io_variable_elemental(ID,VAR="X xc-Kernel",CH0=X%f_xc,CHECK=.true.,DESCRIPTOR=local_desc)
    !
    ! DRUDE
    !
    call def_variable_elemental(ID,trim(X_label)//"DRUDE",2,SP,0)
    call io_variable_elemental(ID,UNIT=HA2EV,&
-&     VAR="X Drude frequency       ",C0=X%Wd,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
-   !call def_variable_elemental(ID,"",0,0,0)
+&     VAR="X Drude frequency",C0=X%Wd,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
    !
  endif
  !
@@ -92,24 +87,24 @@ integer function variables_X(ID,local_desc,X)
  if (ver_is_gt_or_eq(ID,revision=15206)) sec_size=10
  call def_variable_elemental(ID,trim(X_label)//"PARS_3",sec_size,SP,0)
  call io_variable_elemental(ID,&
-&     VAR="X poles           ",TERMINATOR="o/o",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
+&     VAR="X poles",TERMINATOR="[o/o]",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
  call io_variable_elemental(ID,&
-&     VAR="RL vectors in the sum   ",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),DESCRIPTOR=local_desc)
+&     VAR="RL vectors in the sum",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),DESCRIPTOR=local_desc)
  call io_variable_elemental(ID,&
-&     VAR="[r,Vnl] included        ",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
+&     VAR="[r,Vnl] included",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
  !
  if (.not.ver_is_gt_or_eq(ID,(/3,0,9/)).and.read_is_on(ID)) then
-   call io_variable_elemental(ID,VAR="Longitudinal Gauge      ",L0=local_long_gauge,DESCRIPTOR=local_desc)
+   call io_variable_elemental(ID,VAR="Longitudinal Gauge",L0=local_long_gauge,DESCRIPTOR=local_desc)
  endif
  !
  call io_variable_elemental(ID,&
-&     VAR="Field direction         ",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/),DESCRIPTOR=local_desc)
+&     VAR="Field direction",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/),DESCRIPTOR=local_desc)
  !
  if (ver_is_gt_or_eq(ID,(/3,0,1/))) then
    call io_variable_elemental(ID,&
-&       VAR="BZ energy Double Grid   ",L0=use_X_DbGd,WARN=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
+&       VAR="BZ energy Double Grid",L0=use_X_DbGd,WARN=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
    call io_variable_elemental(ID,&
-&       VAR="BZ energy DbGd points   ",I0=X_DbGd_nkpts,WARN=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
+&       VAR="BZ energy DbGd points",I0=X_DbGd_nkpts,WARN=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
    if (ver_is_gt_or_eq(ID,revision=15206)) then
      call io_variable_elemental(ID,&
 &         VAR="BZ Q point size factor  ",R0=X_DbGd_percentual,WARN=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)

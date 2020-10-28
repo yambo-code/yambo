@@ -39,7 +39,7 @@ open($fin, '<', $file) ;
 while (my $row = <$fin>) {
  chomp $row;
  undef $ok;
- if ($row =~ /msg/ and $row =~ /call/) { $ok=1 };
+ if (($row =~ /msg/ and $row =~ /call/)  or $row =~ /VAR/) { $ok=1 };
  if (not $ok) {print $fout $row."\n";next};
  undef $ok;
  foreach $u (@units) {  
@@ -55,7 +55,7 @@ while (my $row = <$fin>) {
    }else{
     $space=" "x(length($u)+2);
     $row =~ s/\[$u\]/$space/g;
-    $row =~ s|(.+)\)|$1,"\[$u_new\]"\)|;
+    $row =~ s|(.+)\)|$1,TERMINATOR="\[$u_new\]"\)|;
    }
   }
  }

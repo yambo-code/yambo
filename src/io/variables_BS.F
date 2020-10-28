@@ -71,50 +71,49 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  call io_variable_elemental(ID,VAR="[K] Dimension",I0=BS_K_dim,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  call io_variable_elemental(ID,VAR="[K] Bands",I1=BS_bands,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)
  call io_variable_elemental(ID,DB_L0=res_exch_disk,VAR="[K] Exchange",&
-&                           TERMINATOR="res",L0=BS_res_K_exchange,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&                           TERMINATOR="[res]",L0=BS_res_K_exchange,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
 
  call io_variable_elemental(ID,DB_L0=res_corr_disk,&
-&     VAR="[K] Correlation",TERMINATOR="res",L0=BS_res_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&     VAR="[K] Correlation",TERMINATOR="[res]",L0=BS_res_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  call io_variable_elemental(ID,DB_L0=cpl_disk,&
-&     VAR="[K] Kernel`s coupling        ",L0=BS_K_coupling,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&     VAR="[K] Kernel`s coupling",L0=BS_K_coupling,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  call io_variable_elemental(ID,DB_L0=cpl_exch_disk,&
-&     VAR="[K] Exchange",TERMINATOR="cpl",L0=BS_cpl_K_exchange,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&     VAR="[K] Exchange",TERMINATOR="[cpl]",L0=BS_cpl_K_exchange,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  !
  if (ver_is_gt_or_eq(ID,revision=4888)) then
    call io_variable_elemental(ID,DB_L0=cpl_corr_disk,&
-&       VAR="[K] Correlation",TERMINATOR="cpl",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&       VAR="[K] Correlation",TERMINATOR="[cpl]",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
      call io_variable_elemental(ID,DB_L0=td_hf_disk,&
-&       VAR="[K] W interaction is bare    ",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&       VAR="[K] W interaction is bare",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  else
    call io_variable_elemental(ID,DB_L0=td_hf_disk,&
-&       VAR="[K] W interaction is bare    ",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&       VAR="[K] W interaction is bare",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
      call io_variable_elemental(ID,DB_L0=cpl_corr_disk,&
-&       VAR="[K] Correlation",TERMINATOR="cpl",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&       VAR="[K] Correlation",TERMINATOR="[cpl]",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  endif
  !
  call io_variable_elemental(ID,&
-&     VAR="[K] ALDA kernel in R-space   ",L0=BS_K_is_ALDA,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&     VAR="[K] ALDA kernel in R-space",L0=BS_K_is_ALDA,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  !
  if (res_exch_disk.or.cpl_exch_disk) then
      call io_variable_elemental(ID,&
-&      VAR="[K] RL vectors",TERMINATOR="exchange",I0=BS_n_g_exch,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&      VAR="[K] RL vectors",TERMINATOR="[exchange]",I0=BS_n_g_exch,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  endif
  if (res_corr_disk.or.cpl_corr_disk) then
      call io_variable_elemental(ID,&
-&     VAR="[K] RL vectors",TERMINATOR="correlation",I0=BS_n_g_W,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&     VAR="[K] RL vectors",TERMINATOR="[correlation]",I0=BS_n_g_W,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  endif
  call io_variable_elemental(ID,UNIT=HA2EV,&
-&     VAR="[K] E/h energy range",TERMINATOR="eV",R1=BS_eh_en,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)
+&     VAR="[K] E/h energy range",TERMINATOR="[eV]",R1=BS_eh_en,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)
  call io_variable_elemental(ID,&
-&     VAR="[K] Coupling range",TERMINATOR="o/o",R1=BS_eh_win,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)
+&     VAR="[K] Coupling range",TERMINATOR="[o/o]",R1=BS_eh_win,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)
  !
  ! Interaction
  !
  if (res_corr_disk.or.cpl_corr_disk) then
      call io_variable_elemental(ID,&
-&       VAR="[W] Interaction is diagonal  ",L0=BS_W_is_diagonal,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
-     call io_variable_elemental(ID,&
-&       VAR="[W] Matrix size              ",I0=X%ng,WARN=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&       VAR="[W] Interaction is diagonal",L0=BS_W_is_diagonal,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+     call io_variable_elemental(ID,VAR="[W] Matrix size",I0=X%ng,WARN=.true.,OP=(/"=="/),DESCRIPTOR=desc)
    !
    ! Only if full screened interaction is used
    !
@@ -123,9 +122,9 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
      call io_variable_elemental(ID,&
 &         VAR="[W] Bands",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)
      call io_variable_elemental(ID,UNIT=HA2EV,&
-&         VAR="[W] e/h energy range",TERMINATOR="eV",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),DESCRIPTOR=desc)
+&         VAR="[W] e/h energy range",TERMINATOR="[eV]",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),DESCRIPTOR=desc)
      call io_variable_elemental(ID,&
-&         VAR="[W] Poles",TERMINATOR="o/o",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+&         VAR="[W] Poles",TERMINATOR="[o/o]",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
      call io_variable_elemental(ID,&
 &         VAR="[W] RL vectors in the sum",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),DESCRIPTOR=desc)
      call io_variable_elemental(ID,&
@@ -167,9 +166,9 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
    !
    call def_variable_elemental(ID,"W_DbGd",2,IP+100,0)
      call io_variable_elemental(ID,I0=RIM_ng,&
-&     VAR='[RIM] RL components',TERMINATOR='col',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
+&     VAR='[RIM] RL components',TERMINATOR='[col]',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
      call io_variable_elemental(ID,I0=RIM_n_rand_pts,&
-&     VAR='[RIM] Random points',TERMINATOR='col',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
+&     VAR='[RIM] Random points',TERMINATOR='[col]',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
    !
    !
    ! Perturbative SOC

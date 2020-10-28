@@ -40,6 +40,8 @@ module RT_control
  integer                  :: NE_i_start_time    = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point
+ logical                  :: STOP_the_dynamics_NOW=.FALSE.
+ !
  type RT_IO_t
    character(schlen)     :: name
    integer               :: N

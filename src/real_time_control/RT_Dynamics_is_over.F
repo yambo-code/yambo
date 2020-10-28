@@ -24,22 +24,16 @@
 logical function RT_Dynamics_is_over()
  !
  use pars,           ONLY:SP
- use parser_m,       ONLY:parser
  use real_time,      ONLY:NE_steps,NE_i_time,RT_dyn_step,NE_time,NE_tot_time,RT_step
- use RT_control,     ONLY:RT_NAN_found
- use it_tools,       ONLY:it_reset
+ use RT_control,     ONLY:RT_NAN_found,STOP_the_dynamics_NOW
  !
  implicit none
  !
- logical    ::STOP_now
  real(SP)   ::dT_left,dT_right      
- !
- call it_reset(0)
- call parser('STOP_NOW',STOP_now)
  !
  RT_Dynamics_is_over=.FALSE.
  !
- if (STOP_now.or.RT_NAN_found.or.NE_i_time>=NE_steps) then
+ if (STOP_the_dynamics_NOW.or.RT_NAN_found.or.NE_i_time>=NE_steps) then
    RT_Dynamics_is_over=.TRUE.
    return
  endif

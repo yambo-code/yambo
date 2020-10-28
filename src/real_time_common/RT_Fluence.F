@@ -29,7 +29,6 @@ subroutine RT_Fluence_and_pikind(En,i_field)
  use fields,         ONLY:Efield,gauge_field
  use functions,      ONLY:theta_function
  use electrons,      ONLY:levels
- use X_m,            ONLY:global_gauge
  !
  implicit none
  !
@@ -40,8 +39,8 @@ subroutine RT_Fluence_and_pikind(En,i_field)
  !
  type(gauge_field) :: A
  integer      :: it0,it,last_it_evaluated,NE_i_time_save
- real(SP)     :: I(NE_steps),Omega(NE_steps),T(NE_steps),Field_time,E_coeff
- complex(SP)  :: E(3),A_of_t(2),E_of_t(2),theta,delta
+ real(SP)     :: I(NE_steps),Omega(NE_steps),T(NE_steps)
+ complex(SP)  :: E(3)
  !
  real(SP),external :: RIntegrate,Rabi_frequency
  !
@@ -113,6 +112,8 @@ subroutine RT_Fluence_and_pikind(En,i_field)
  ! I divide for |E| which is already accounted for in Raby frequency
  ! Rabi_frequency is in THz  
  !
+ call Rabi_frequency_all(En,i_field)
+ !
  Omega(:)=Omega(:)*Rabi_frequency(En,i_field)/SPEED_OF_LIGHT/Efield(i_field)%amplitude
  ! 
  ! To get the fluence in kJ/cm^2 I should translate T in sec.
@@ -136,7 +137,7 @@ function Rabi_frequency(En,i_field)
  ! To be fixed in parallel
  ! To be fixed for degenerate states 
  !
- use pars,           ONLY:SP,cZERO,cI
+ use pars,           ONLY:SP,rZERO,cZERO,cI
  use units,          ONLY:HA2EV,PS2AUT
  use R_lattice,      ONLY:nkibz
  use electrons,      ONLY:n_sp_pol,levels
@@ -172,7 +173,7 @@ function Rabi_frequency(En,i_field)
  enddo
  effective_frequency=effective_frequency/real(Efield(i_field)%n_frequencies,SP)
  !
- Rabi_frequency=cZERO
+ Rabi_frequency=rZERO
  E_dist=0.1_SP
  !
  do i_sp_pol=1,n_sp_pol
@@ -231,9 +232,92 @@ function Rabi_frequency(En,i_field)
  !
  Rabi_frequency=Rabi_frequency*real(PS2AUT,SP) !*2._SP
  !
- call msg("nr"," Rabi term transition indexes             ",(/ik_ref,ib1_ref,ib2_ref/),"(ik,iv,ic)" )
- call msg("r ","           degenerate states              ", n_deg_states,"(n_v,n_c)" )
- call msg("r ","           transition energy and detuning ",(/E_trans,E_dist/)*HA2EV,"[eV]" )
- call msg("rn","           coupling frequency             ",Rabi_frequency,"[THz]")
+ call msg("nr"," Main Rabi term transition indexes             ",(/ik_ref,ib1_ref,ib2_ref/),"(ik,iv,ic)" )
+ call msg("r ","                degenerate states              ", n_deg_states,"(n_v,n_c)" )
+ call msg("r ","                transition energy and detuning ",(/E_trans,E_dist/)*HA2EV,"[eV]" )
+ call msg("rn","                coupling frequency             ",Rabi_frequency,"[THz]")
  !
 end function Rabi_frequency
+!
+!
+subroutine Rabi_frequency_all(En,i_field)
+ !
+ ! To be fixed in parallel
+ ! To be fixed for degenerate states 
+ !
+ use pars,           ONLY:SP,rZERO,cZERO,cI
+ use units,          ONLY:HA2EV,PS2AUT
+ use R_lattice,      ONLY:nkibz
+ use electrons,      ONLY:n_sp_pol,levels
+ use X_m,            ONLY:global_gauge
+ use fields,         ONLY:Efield,field_frequency
+ use real_time,      ONLY:RT_bands,RT_nbands
+ use dipoles,        ONLY:DIP_iR,DIP_v
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index
+ use com,            ONLY:msg
+ use vec_operate,    ONLY:degeneration_finder
+ !
+ implicit none
+ !
+ type(levels), intent(in)  :: En
+ integer,      intent(in)  :: i_field
+ !
+ ! Workspace
+ !
+ real(SP)    :: Rabi_frequency
+ integer     :: i_fr,i_sp_pol,ik,ik_mem,ib1,ib2,i_grp1,i_grp2,i_sp_pol_ref,ik_ref,ib1_ref,ib2_ref, &
+ &              first_el(RT_nbands),n_of_el(RT_nbands),n_deg_grp,n_deg_states(2)
+ logical     :: vel_gauge,len_gauge
+ real(SP)    :: effective_frequency,E_trans,E_dist,delta_E
+ complex(SP) :: POL_or_Jtot(3),field_term
+ !
+ len_gauge=trim(global_gauge)=="length"
+ vel_gauge=trim(global_gauge)=="velocity"
+ !
+ effective_frequency=0._SP
+ do i_fr=1,Efield(i_field)%n_frequencies
+   effective_frequency=effective_frequency+field_frequency(Efield(i_field),i_fr)
+ enddo
+ effective_frequency=effective_frequency/real(Efield(i_field)%n_frequencies,SP)
+ !
+ do i_sp_pol=1,n_sp_pol
+   do ik=1,nkibz
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+     ik_mem=PAR_Xk_ibz_index(ik)
+     call degeneration_finder(En%E(RT_bands(1):RT_bands(2),ik,i_sp_pol),RT_nbands,first_el,n_of_el,n_deg_grp, &
+     &                        0.0001_SP/HA2EV,Include_single_values=.true.)
+     do i_grp1=1,n_deg_grp
+       ib1=first_el(i_grp1)+RT_bands(1)-1
+       do i_grp2=i_grp1+1,n_deg_grp
+         ib2=first_el(i_grp2)+RT_bands(1)-1
+         delta_E=En%E(ib2,ik,i_sp_pol)-En%E(ib1,ik,i_sp_pol)
+         if ( En%f(ib1,ik,i_sp_pol)*(1._SP-En%f(ib1,ik,i_sp_pol))==0._SP ) cycle
+         POL_or_Jtot=cZERO
+         do ib1=first_el(i_grp1)+RT_bands(1)-1,first_el(i_grp1)+n_of_el(i_grp1)-1+RT_bands(1)-1
+           do ib2=first_el(i_grp2)+RT_bands(1)-1,first_el(i_grp2)+n_of_el(i_grp2)-1+RT_bands(1)-1
+             if (len_gauge) POL_or_Jtot(1:3)=POL_or_Jtot(1:3)+cI*DIP_iR(1:3,ib2,ib1,ik_mem,i_sp_pol)
+             if (vel_gauge) POL_or_Jtot(1:3)=POL_or_Jtot(1:3)-DIP_v(1:3,ib2,ib1,ik_mem,i_sp_pol)
+           enddo
+         enddo
+         field_term=sum(EField(i_field)%versor(1:3)*POL_or_Jtot(1:3) )*Efield(i_field)%amplitude !&
+         !&                   /real(n_of_el(i_grp1)*n_of_el(i_grp2),SP) ! E_dot_P or A_dot_J
+         E_dist=effective_frequency-delta_E
+         E_trans=delta_E
+         Rabi_frequency=abs(field_term)*real(PS2AUT,SP)
+         i_sp_pol_ref=i_sp_pol
+         ik_ref=ik
+         ib1_ref=first_el(i_grp1)+RT_bands(1)-1
+         ib2_ref=first_el(i_grp2)+RT_bands(1)-1
+         n_deg_states=(/n_of_el(i_grp1),n_of_el(i_grp2)/)
+         !
+         call msg("nr"," Rabi term transition indexes             ",(/ik_ref,ib1_ref,ib2_ref/),"(ik,iv,ic)" )
+         call msg("r ","           degenerate states              ", n_deg_states,"(n_v,n_c)" )
+         call msg("r ","           transition energy and detuning ",(/E_trans,E_dist/)*HA2EV,"[eV]" )
+         call msg("rn","           coupling frequency             ",Rabi_frequency,"[THz]")
+         !
+       enddo
+     enddo
+   enddo
+ enddo
+ !
+end subroutine Rabi_frequency_all

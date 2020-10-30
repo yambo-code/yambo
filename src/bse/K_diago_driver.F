@@ -258,11 +258,14 @@ subroutine K_diago_driver(iq,W,X_static)
    !====================================
    if (K_is_not_hermitian) then
      !
+     call K_diago_overlap_matrix(BS_V_left,BS_V_right,BS_overlap)
+     !
      call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
      !
 #if defined _KERR
      if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
-     if(l_BS_magnons) call error(" BSE with non hermitian magnons not implemented")
+     if(l_BS_magnons) call K_diago_non_herm_magnons_residual(BS_R_left_magn,BS_R_right_magn, &
+     &                              BS_A_left_magn,BS_A_right_magn,BS_V_left,BS_V_right,BS_overlap)
 #endif
      !
 #if defined _PL
@@ -275,7 +278,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
 #if defined _KERR
      if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
-     if(l_BS_magnons) call K_diago_herm_magnons_residual(BS_E,BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn)
+     if(l_BS_magnons) call K_diago_herm_magnons_residual(BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn)
 #endif
      !
 #if defined _PL

@@ -97,10 +97,10 @@ module BS
  !=========================
  type BS_T_group
    !
-   integer                       :: ik         ! ik index (IBZ)
-   integer                       :: first_cv   ! Position in the cv transitions @ k
+   integer                       :: ik                           ! ik index (IBZ)
+   integer                       :: first_cv                     ! Position in the cv transitions @ k
    integer                       :: size       
-   integer,     allocatable      :: table(:,:) ! (/ikbz,iv,ic,i_sp/) (i_sp is spin, is is symmetry)
+   integer,     allocatable      :: table(:,:)                   ! (/ikbz,iv,ic,i_sp/) (i_sp is spin, is is symmetry)
    complex(SP), allocatable      :: dipoles_R(:,:)
    complex(SP), allocatable      :: dipoles_A(:,:)
    complex(SP), allocatable      :: dipoles_R_mag(:,:)

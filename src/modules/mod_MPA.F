@@ -96,7 +96,7 @@ contains
    if(real(E)>epsilon(1._SP)) then        
      E = sqrt(E)
      if(real(E)<0._SP) E=-E
-     if(aimag(E)>epsilon(1._SP)) E=real(E,SP)-cI*epsilon(1._SP)
+     if(aimag(E)>-epsilon(1._SP)) E=real(E,SP)-cI*epsilon(1._SP)
      R = x(1)*(z(1)**2-E**2)/(2._SP*E) 
    else
      E = abs(z(1)+z(2))*0.5_SP-cI*epsilon(1._SP)

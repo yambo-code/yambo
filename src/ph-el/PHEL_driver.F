@@ -25,7 +25,8 @@ subroutine PHEL_driver(E,k,q)
  !
  use electrons,           ONLY:levels,n_sp_pol,E_fine_grid
  use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc
- use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,elph_global_free,phel_gkkp_expanded_sq
+ use interfaces,          ONLY:ELPH_alloc
+ use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,phel_gkkp_expanded_sq
  use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode
  use parallel_m,          ONLY:PARs_PH_Q_ibz,PARs_PH_K_bz 
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_global_indexes
@@ -154,7 +155,7 @@ subroutine PHEL_driver(E,k,q)
    subroutine CLEAN()
      call RT_ALL_lifetimes_free(  )
      call RT_ALL_occupations_free(  )
-     call elph_global_free( )
+     call ELPH_alloc('FREE')
      YAMBO_FREE(phel_gkkp_expanded_sq)
    end subroutine
    !

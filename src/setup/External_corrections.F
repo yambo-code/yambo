@@ -41,7 +41,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
- use ELPH,          ONLY:E_k_p_q,elph_nb
+ use ELPH,          ONLY:GKKP
 #endif
  !
  implicit none
@@ -51,6 +51,8 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  type(bz_samp)::k,Xk
  !
  ! Work Space
+ ! 
+ integer  :: iq
  !
  ! GPL_EXCLUDE_START
  !
@@ -115,7 +117,11 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  if (l_gw0)                  call QP_apply(bands_to_correct,en,k,"G",msg_fmt='rs',main_section=.TRUE.)
 #if defined _ELPH
  !    Green's Function (k+q levels loaded for the _ELPH)
- if (l_gw0.and.l_elph_corr) call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt='rs',main_section=.TRUE.)
+ if (l_gw0.and.l_elph_corr) then
+   do iq=1,GKKP%Nq
+     call QP_apply(GKKP%Nb,GKKP%E_kpq(iq),k,"G",msg_fmt='rs',main_section=.TRUE.)
+   enddo
+ endif
 #endif
  !
  ! GPL_EXCLUDE_START

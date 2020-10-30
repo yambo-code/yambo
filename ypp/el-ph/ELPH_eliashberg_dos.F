@@ -32,8 +32,8 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use YPP_ELPH,            ONLY:elph_steps,elph_Ef,elph_gamma_broad,&
 &                              ph_broad,l_eliashberg
  use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,ph_freqs_sq,&
-&                              W_debye,elph_nDBs,elph_use_q_grid,&
-&                              E_k_plus_q,setup_k_plus_q_levels,elph_global_free
+&                              W_debye,elph_nQ,elph_use_q_grid,&
+&                              GKKP,setup_k_plus_q_levels
  use IO_m,                ONLY:io_control,manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_indexes,myid
@@ -108,7 +108,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    ph_energy(i2)=(i2-1)*e_step
  enddo
  !
- nq_todo=elph_nDBs
+ nq_todo=elph_nQ
  if (elph_use_q_grid) nq_todo=q%nibz
  !
  ! Eliashberg Function & DOS function
@@ -140,11 +140,11 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    if (l_dos)        io_err=io_ELPH(ID,'no_matrix_elements')
    if (l_eliashberg) io_err=io_ELPH(ID,'gkkp')
    !
-   if (.not.elph_use_q_grid.and.l_eliashberg) call setup_k_plus_q_levels(en%E_Fermi)
+   if (.not.elph_use_q_grid.and.l_eliashberg) call setup_k_plus_q_levels(iq,en%E_Fermi)
    !
    ! Q weight
    !
-   q_weight=1./real(elph_nDBs)
+   q_weight=1./real(elph_nQ)
    if (elph_use_q_grid) q_weight=q%weights(iq)
    !
    if (.not.px%element_1D(iq)) cycle
@@ -228,7 +228,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !CLEAN
  !
  YAMBO_FREE(gamma)
- call elph_global_free()
+ call ELPH_alloc('FREE')
  !
  contains
    !
@@ -274,7 +274,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
          Ek  =en%E(ib1,iibz1,1)+Ef_diff
          !
          if (elph_use_q_grid) Ekmq=en%E(ib2,iibz2,1)+Ef_diff
-         if (.not.elph_use_q_grid) Ekmq=E_k_plus_q(ib2,i1,1)+Ef_diff
+         if (.not.elph_use_q_grid) Ekmq=GKKP%E_kpq(iq)%E(ib2,i1,1)+Ef_diff
          !
          weight=Fermi_fnc_derivative(Ek,  elph_gamma_broad)*&
 &               Fermi_fnc_derivative(Ekmq,elph_gamma_broad)

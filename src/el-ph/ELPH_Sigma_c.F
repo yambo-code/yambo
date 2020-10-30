@@ -48,13 +48,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol,nqibz
  use ELPH,          ONLY:elph_nb,ph_freqs_sq,elph_gkkp,&
-&                        elph_global_free,QP_PH_n_G_bands,W_debye,elph_DW,&
-&                        elph_nDBs,E_k_p_q,elph_use_q_grid,&
-&                        setup_k_plus_q_levels,f_k_plus_q,elph_nDBs_used,&
+&                        QP_PH_n_G_bands,W_debye,elph_DW,&
+&                        elph_nQ,GKKP,elph_use_q_grid,&
+&                        setup_k_plus_q_levels,elph_nQ_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
-&                        elph_global_alloc,gsqF_energy_steps,eval_G_using_KK,ph_qpt,&
-&                        elph_branches,E_k_plus_q,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold,DW_deltaE_treshold
- use interfaces,    ONLY:QP_state_print
+&                        gsqF_energy_steps,eval_G_using_KK,ph_qpt,&
+&                        elph_branches,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold,DW_deltaE_treshold
+ use interfaces,    ONLY:QP_state_print,ELPH_alloc
  use functions,     ONLY:Fermi_fnc_derivative
  use timing_m,      ONLY:timing
  !
@@ -72,7 +72,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  integer, external::io_ELPH
  character(schlen)::ch
  real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,factor,&
-&                   E_k_plus_q_at_gamma(elph_nb,k%nbz),elph_gkkp_sq,gsqF_damping,E_random_shift
+&                   elph_gkkp_sq,gsqF_damping,E_random_shift
  complex(SP)      ::delta_E
  logical          ::l_WRgFsq,l_GF_from_CA
  integer , allocatable :: q_each_cpu(:)
@@ -173,14 +173,14 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !============================
  !
  !             / ypp_ph            elph_use_q_grid=F
- ! elph_nDBs = | 
+ ! elph_nQ = | 
  !             \ nqibz             elph_use_q_grid=T
  !
  !                  / <user defined>    elph_use_q_grid=F
- ! elph_nDBs_used = | 
+ ! elph_nQ_used = | 
  !                  \ nqibz             elph_use_q_grid=T
  !
- !              / elph_nDBs_used   elph_use_q_grid=F
+ !              / elph_nQ_used     elph_use_q_grid=F
  ! nq_to_sum = | 
  !              \ nqbz             elph_use_q_grid=T
  !
@@ -193,7 +193,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    call rim_spherical(nq_to_sum,q%ptbz,q_weight,factor/real(nq_to_sum,SP),2,.TRUE.)
    call k_ibz2bz(q,'d',.TRUE.)
  else
-   nq_to_sum=elph_nDBs_used
+   nq_to_sum=elph_nQ_used
    YAMBO_ALLOC(q_weight,(nq_to_sum))
    call rim_spherical(nq_to_sum,ph_qpt(:nq_to_sum,:),q_weight,factor/real(nq_to_sum,SP),2,.TRUE.)
  endif
@@ -208,7 +208,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! g^2F(w) residuals Allocation
  !
- call elph_global_alloc('gFsq')
+ call ELPH_alloc('gFsq')
  !
  iq_db_ref=0
  !
@@ -240,13 +240,11 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      !
      if (.not.elph_use_q_grid) then
        !
-       if (iq_bz==1) E_random_shift=E_k_p_q%E(en%nbf,1,1)-en%E(en%nbf,1,1)
+       if (iq_bz==1) E_random_shift=GKKP%E_kpq(iq_db)%E(en%nbf,1,1)-en%E(en%nbf,1,1)
        !
-       call setup_k_plus_q_levels(E_random_shift)
+       call setup_k_plus_q_levels(iq_db,E_random_shift)
        !
-       E_k_p_q%E(:,:,1)=E_k_plus_q(:,:,1)
-       !
-       call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt=' ')
+       call QP_apply((/1,elph_nb/),GKKP%E_kpq(iq_db),k,"G",msg_fmt=' ')
        !
      endif
      !
@@ -256,7 +254,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      !
      if (iq_db_ref==0) then
        call live_timing('El-Ph Sc [coeff]',live_timing_steps)
-       if (.not.elph_use_q_grid) E_k_plus_q_at_gamma(:,:)=E_k_p_q%E(:,:,1)
      endif
      !
      iq_db_ref=iq_db
@@ -346,9 +343,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
              f_occ=en%f(ob,ok,1)/spin_occ
              one_minus_2f_occ=(1._SP-2._SP*f_occ)
            else
-             delta_E         =Sc_W(i_qp)%p(iw)-E_k_p_q%E(ob,ik_bz,1)
-             delta_E_at_gamma=en%E(ib,ik,1)   -E_k_plus_q_at_gamma(ob,ik_bz)
-             f_occ=f_k_plus_q(ob,ik_bz,1)/spin_occ
+             delta_E         =Sc_W(i_qp)%p(iw)-GKKP%E_kpq(iq_db)%E(ob,ik_bz,1)
+             delta_E_at_gamma=en%E(ib,ik,1)   -GKKP%E_kpq(1)%E(ob,ik_bz,1)
+             f_occ=GKKP%E_kpq(iq_db)%f(ob,ik_bz,1)/spin_occ
              one_minus_2f_occ=(1._SP-2._SP*f_occ)
            endif
            !
@@ -491,7 +488,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! CLEAN
  !
- call elph_global_free()
+ call ELPH_alloc('FREE')
  YAMBO_FREE(q_each_cpu)
  YAMBO_FREE(q_weight)
  do i_qp=1,qp%n_states

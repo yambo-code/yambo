@@ -27,9 +27,10 @@ subroutine ELPH_excitonic_gkkp(Xk)
  use units,               ONLY:HA2EV,HA2FSm1
  use BS_solvers,          ONLY:BS_mat,BSS_eh_table
  use BS,                  ONLY:BS_K_dim,BS_nT_at_k
+ use interfaces,          ONLY:ELPH_alloc
  use R_lattice,           ONLY:bz_samp
  use IO_m,                ONLY:io_control,manage_action,OP_RD,DUMP,RD_CL_IF_END
- use ELPH,                ONLY:elph_nDBS_used,ph_modes,elph_global_free,&
+ use ELPH,                ONLY:elph_nQ,ph_modes,&
 &                              elph_use_q_grid,ph_freqs_sq,elph_gkkp
  use parallel_m,          ONLY:PP_indexes,PP_indexes_reset,myid
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
@@ -59,7 +60,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
  io_err=io_ELPH(ID,'gkkp')
  if (io_err/=0.or.elph_use_q_grid) return
  !
- YAMBO_ALLOC(diagonal_xhi,(elph_nDBS_used,ph_modes,EXCITONS_n_user_states))
+ YAMBO_ALLOC(diagonal_xhi,(elph_nQ,ph_modes,EXCITONS_n_user_states))
  YAMBO_ALLOC(ph_freqs,(ph_modes))
  diagonal_xhi = cZERO
  !
@@ -73,12 +74,12 @@ subroutine ELPH_excitonic_gkkp(Xk)
  enddo
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/elph_nDBS_used,Xk%nibz/))
+ call PARALLEL_index(px,(/elph_nQ,Xk%nibz/))
  call PP_redux_wait
  !
- do iq=1,elph_nDBS_used
+ do iq=1,elph_nQ
    !
-   IO_ACT=manage_action(RD_CL_IF_END,iq,1,elph_nDBS_used)
+   IO_ACT=manage_action(RD_CL_IF_END,iq,1,elph_nQ)
    call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID)
    io_err=io_ELPH(ID,'gkkp')
    !
@@ -153,7 +154,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
  call msg('o gkkp','#',(/'E      [meV]', '|gkkp| [meV]','|gkkp|  [fs]'/),INDENT=0,USE_TABS=.true.)  
  call msg('o gkkp','#')
  !
- do iq=1,elph_nDBS_used
+ do iq=1,elph_nQ
    !
    do i_l=1,ph_modes
      !
@@ -178,6 +179,6 @@ subroutine ELPH_excitonic_gkkp(Xk)
  YAMBO_FREE(diagonal_xhi)
  YAMBO_FREE(ph_freqs)
  YAMBO_FREE(BS_nT_at_k)
- call elph_global_free()
+ call ELPH_alloc('FREE')
  !
 end subroutine

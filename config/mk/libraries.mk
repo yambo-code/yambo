@@ -49,10 +49,12 @@ PJ_PLLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
 PJ_NLLIBS    = $(PJ_RTLIBS) nloptics
 PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 #
-# Interfaces
+# YAMBO sources needed by Interfaces
 #
-2YLIBS       = driver tools modules memory matrices linear_algebra parallel parser communicate common timing Yio io setup interface stop_and_restart bz_ops
-2YLIBS_LD    = tools memory Yio communicate modules matrices linear_algebra parallel parser communicate common timing Yio io setup interface stop_and_restart bz_ops
+2YLIBS       = driver tools modules memory matrices linear_algebra parallel parser communicate common timing Yio io \
+               setup interface stop_and_restart bz_ops 
+2YLIBS_LD    = tools memory Yio communicate modules matrices linear_algebra parallel parser communicate common timing Yio io \
+               setup interface stop_and_restart bz_ops 
 #
 # YPP
 #
@@ -65,8 +67,10 @@ YPPPH_LIBS_LD      = $(YPP_BASIC_LIBS_LD) el-ph excitons
 YPPRT_LIBS         = $(YPP_BASIC_LIBS) el-ph real_time excitons
 YPPRT_LIBS_LD      = $(YPP_BASIC_LIBS_LD) el-ph real_time excitons
 #
-YPP_MAIN_LIBS      = $(BASIC_LIBS) interpolate qp_control setup interface tddft dipoles pol_function qp bse
-YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) interpolate qp_control setup interface tddft dipoles pol_function qp bse
+# YAMBO sources needed by YPP
+#
+YPP_MAIN_LIBS      = $(BASIC_LIBS) interpolate qp_control setup interface tddft dipoles pol_function el-ph qp bse
+YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) interpolate qp_control setup interface tddft dipoles pol_function el-ph qp bse
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions hamiltonian sc
 YPPSC_MAIN_LIBS_LD = $(YPP_MAIN_LIBS_LD) collisions hamiltonian sc
 YPPRT_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setup interface \

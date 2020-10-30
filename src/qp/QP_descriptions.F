@@ -40,7 +40,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  use IO_m,          ONLY:ver_is_gt_or_eq
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr 
- use ELPH,          ONLY:QP_PH_n_G_bands,elph_branches,elph_nDBs_used,&
+ use ELPH,          ONLY:QP_PH_n_G_bands,elph_branches,elph_nQ_used,&
 &                        FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
 #if defined _QED
@@ -192,7 +192,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      endif
      !
      if (ver_is_gt_or_eq(-1,(/4,0,0/))) then
-       call IO_desc_add(qp%desc,str='El-Ph momenta used',kind='i',I=(/elph_nDBs_used/))
+       call IO_desc_add(qp%desc,str='El-Ph momenta used',kind='i',I=(/elph_nQ_used/))
      endif
      !
      if (ver_is_gt_or_eq(-1,revision=4400)) then

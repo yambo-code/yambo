@@ -28,13 +28,14 @@ integer function io_ELPH(ID,what)
 &                         io_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,&
 &                         io_mode,DUMP,io_fragment,frag_ELPH,IO_INCOMPATIBLE_VAR
- use ELPH,           ONLY:ph_modes,elph_nb,elph_global_alloc,ph_freqs_sq,elph_gkkp,&
-&                         elph_gkkp_bare,QP_PH_n_G_bands,W_debye,elph_DW,elph_nDBs,&
-&                         elph_use_q_grid,E_k_plus_q,ph_qpt,ph_kpt_bz,elph_nDBs_used,&
+ use ELPH,           ONLY:ph_modes,elph_nb,ph_freqs_sq,elph_gkkp,&
+&                         elph_gkkp_bare,QP_PH_n_G_bands,W_debye,elph_DW,elph_nQ,&
+&                         elph_use_q_grid,ph_qpt,ph_kpt_bz,elph_nQ_used,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
-&                         pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz,E_k_p_q,elph_grids_are_expanded
+&                         pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz,GKKP,elph_grids_are_expanded
  use stderr,         ONLY:intc
  use electrons,      ONLY:E_reset
+ use interfaces,     ONLY:ELPH_alloc
  use R_lattice,      ONLY:nkbz,nqibz,q_pt
  use D_lattice,      ONLY:n_atoms_species
  use electrons,      ONLY:n_sp_pol
@@ -96,11 +97,11 @@ integer function io_ELPH(ID,what)
    call io_elemental(ID,&
 &       VAR=" Phonon modes            ",I0=ph_modes,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,&
-&       VAR=" Q points        [avail] ",I0=elph_nDBs,CHECK=.true.,OP=(/"=="/))
+&       VAR=" Q points        [avail] ",I0=elph_nQ,CHECK=.true.,OP=(/"=="/))
    !
    if (l_gFsq) then
      call io_elemental(ID,&
-&       VAR="                  [used] ",I0=elph_nDBs_used,CHECK=.true.,OP=(/"=="/))
+&       VAR="                  [used] ",I0=elph_nQ_used,CHECK=.true.,OP=(/"=="/))
    endif
    call io_elemental(ID,&
 &       VAR=" K points (BZ)           ",I0=elph_nk_bz,CHECK=.true.,OP=(/"=="/))
@@ -141,12 +142,12 @@ integer function io_ELPH(ID,what)
    ! ... allocation
    !
    if (read_is_on(ID).and..not.allocated(ph_qpt)) then
-     YAMBO_ALLOC(ph_qpt,(elph_nDBs,3))
+     YAMBO_ALLOC(ph_qpt,(elph_nQ,3))
      YAMBO_ALLOC(ph_kpt_bz,(elph_nk_bz,3))
      ph_kpt_bz=0._SP
    endif
    !
-   call io_bulk(ID,VAR="PH_Q",VAR_SZ=(/elph_nDBs,3/) )
+   call io_bulk(ID,VAR="PH_Q",VAR_SZ=(/elph_nQ,3/) )
    call io_bulk(ID,R2=ph_qpt(:,:))
    !
    if (l_gkkp.and.allocated(q_pt).and.elph_use_q_grid) then
@@ -210,7 +211,7 @@ integer function io_ELPH(ID,what)
    ! PH frequencies
    !
    if (iq==1) then
-     call io_bulk(ID,VAR="PH_FREQS",VAR_SZ=(/elph_nDBs,ph_modes/))
+     call io_bulk(ID,VAR="PH_FREQS",VAR_SZ=(/elph_nQ,ph_modes/))
      call io_bulk(ID,R2=ph_freqs_sq)
    endif
    !
@@ -221,8 +222,8 @@ integer function io_ELPH(ID,what)
  ! Allocation
  !
  if (read_is_on(ID)) then
-   if (.not.l_no_matrix_elements) call elph_global_alloc('gkkp')
-   if (     l_no_matrix_elements) call elph_global_alloc('no_gkkp')
+   if (.not.l_no_matrix_elements) call ELPH_alloc('gkkp')
+   if (     l_no_matrix_elements) call ELPH_alloc('no_gkkp')
  endif
  !
  ! PH frequencies
@@ -239,16 +240,15 @@ integer function io_ELPH(ID,what)
  ! 
  ! Ek+q (to be used when  elph_use_q_grid=.FALSE.)
  !
- call io_bulk(ID,VAR="E_K_PLUS_Q"//trim(intc(iq)),VAR_SZ=(/elph_nb,nkbz,1/) )
- call io_bulk(ID,R3=E_k_plus_q)
- !
  if (read_is_on(ID)) then
-   call E_reset(E_k_p_q)
-   E_k_p_q%nb=elph_nb
-   E_k_p_q%nk=nkbz
-   YAMBO_ALLOC(E_k_p_q%E,(elph_nb,nkbz,1))
-   E_k_p_q%E=E_k_plus_q
+   call E_reset(GKKP%E_kpq(iq))
+   GKKP%E_kpq(iq)%nb=elph_nb
+   GKKP%E_kpq(iq)%nk=nkbz
+   YAMBO_ALLOC(GKKP%E_kpq(iq)%E,(elph_nb,nkbz,1))
  endif
+ !
+ call io_bulk(ID,VAR="E_K_PLUS_Q"//trim(intc(iq)),VAR_SZ=(/elph_nb,nkbz,1/) )
+ call io_bulk(ID,R3=GKKP%E_kpq(iq)%E)
  ! 
  ! ELPH_gkkp 
  !

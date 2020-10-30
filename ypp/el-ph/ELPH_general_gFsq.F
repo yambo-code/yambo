@@ -32,9 +32,10 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  use YPPm,                ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
  use YPP_ELPH,            ONLY:elph_steps,ph_broad
  use stderr,              ONLY:intc
- use ELPH,                ONLY:W_debye,elph_nDBs_used,ph_modes,elph_global_free,&
+ use interfaces,          ONLY:ELPH_alloc
+ use ELPH,                ONLY:W_debye,elph_nQ_used,ph_modes,&
 &                              gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,&
-&                              gsqF_life_f ,elph_use_q_grid,ph_freqs_sq,elph_global_alloc
+&                              gsqF_life_f ,elph_use_q_grid,ph_freqs_sq
  use IO_m,                ONLY:io_control,OP_RD,RD,DUMP,RD_CL
  use BS_solvers,          ONLY:BS_mat,BSS_eh_table
  use BS,                  ONLY:BS_K_dim,BS_bands
@@ -116,10 +117,10 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  YAMBO_ALLOC(QP_table,(QP_n_states,3+n_sp_pol-1)) ! Read from the gFsq DB 
  !
  if (     elph_use_q_grid) nq_loop=q%nbz
- if (.not.elph_use_q_grid) nq_loop=elph_nDBs_used
+ if (.not.elph_use_q_grid) nq_loop=elph_nQ_used
  PAR_nQ_bz=nq_loop
  !
- call elph_global_alloc('gFsq')
+ call ELPH_alloc('gFsq')
  ! 
  do iq=1,nq_loop
    if (iq==nq_loop) then
@@ -324,7 +325,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  endif
  !
  call W_reset(g_sq_F_E)
- call elph_global_free()
+ call ELPH_alloc('FREE')
  call PP_indexes_reset(px)
  YAMBO_FREE(QP_table)
  YAMBO_FREE(g_sq_F)

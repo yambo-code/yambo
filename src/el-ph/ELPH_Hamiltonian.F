@@ -25,7 +25,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  use pars,          ONLY:SP,lchlen,rZERO
  use units,         ONLY:HA2EV
- use ELPH,          ONLY:elph_global_alloc,elph_global_free,elph_Ham_bands,elph_Ham_ik,&
+ use ELPH,          ONLY:elph_Ham_bands,elph_Ham_ik,&
 &                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector,RES_tresh
  use IO_m,          ONLY:io_control,manage_action,OP_RD,REP,RD_CL_IF_END,mk_dir
  use com,           ONLY:msg,of_open_close,jobstr,jobdir,core_io_path
@@ -33,7 +33,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev,n_atoms
  use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing
- use interfaces,    ONLY:LINEAR_ALGEBRA_driver
+ use interfaces,    ONLY:LINEAR_ALGEBRA_driver,ELPH_alloc
  use linear_algebra,ONLY:DIAGO,USE_LK
  use stderr,        ONLY:intc
  use stderr,        ONLY:intc
@@ -143,7 +143,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  io_err=io_ELPH(ID,'gkkp')
  if (io_err/=0) call error('El-Ph database not found')
  !
- call elph_global_alloc('gkkp')
+ call ELPH_alloc('gkkp')
  !
  ! Hamiltonian Loop
  !==================
@@ -454,7 +454,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
 1 continue
  !
- call elph_global_free( )
+ call ELPH_alloc('FREE')
  YAMBO_FREE(elph_Ham_Table)
  YAMBO_FREE(elph_Mat)
  YAMBO_FREE(elph_E)

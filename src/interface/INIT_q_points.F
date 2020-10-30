@@ -34,7 +34,7 @@ subroutine INIT_q_points( )
  use it_tools,    ONLY:check_verbosity
  use R_lattice,   ONLY:nqibz,q_pt,bz_samp,q_source
 #if defined _ELPH
- use ELPH,        ONLY:ph_qpt,elph_use_q_grid,elph_nDBs,elph_grids_are_expanded
+ use ELPH,        ONLY:ph_qpt,elph_use_q_grid,elph_nQ,elph_grids_are_expanded
 #endif
  use parser_m,    ONLY:PARSER_array
  !
@@ -64,7 +64,7 @@ subroutine INIT_q_points( )
    enddo
  else if (allocated(ph_qpt).and.elph_use_q_grid.and..not.elph_grids_are_expanded) then
    q_source="Electron-Phonon databases"
-   nqibz=elph_nDBs
+   nqibz=elph_nQ
    YAMBO_ALLOC(q_pt,(nqibz,3))
    q_pt(:,:)=-real(ph_qpt(:,:),SP)
  endif

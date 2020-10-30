@@ -29,7 +29,7 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
  use LIVE_t,        ONLY:live_timing
  use R_lattice,     ONLY:nqbz
  use ELPH,          ONLY:gsqF_energy_steps,gsqF_energy_steps,gsqF_ca_corr,gsqF_fan,gsqF_life_f,&
-&                        gsqF_life_bose,gsqF_dw,elph_branches,elph_nDBs_used,&
+&                        gsqF_life_bose,gsqF_dw,elph_branches,elph_nQ_used,&
 &                        elph_use_q_grid,ph_freqs_sq,QP_DW,QP_OMS_Fan,elph_use_q_grid
  use QP_m,          ONLY:QP_solver,QP_Sc_steps,QP_Sc_steps,QP_n_states,QP_Sc,On_Mass_Shell_approx,&
 &                        QP_table
@@ -57,7 +57,7 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
  call ELPH_simmetrize_and_distribute_gsqF(en)
  !
  nq=nqbz
- if (.not.elph_use_q_grid) nq=elph_nDBs_used
+ if (.not.elph_use_q_grid) nq=elph_nQ_used
  !
  if (trim(QP_solver)=='n') call live_timing('El-Ph Sc   [sum]',PAR_nQ_bz*PAR_nQP)
  if (trim(QP_solver)=='g') call live_timing('El-Ph Sc[sum+KK]',PAR_nQ_bz*PAR_nQP+PAR_nQP)

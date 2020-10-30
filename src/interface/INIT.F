@@ -61,7 +61,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode,BSK_mode
  use BS_solvers,     ONLY:BSS_mode,BSS_q0
 #if defined  _ELPH
- use ELPH,           ONLY:elph_nDBs,elph_nDBs_used
+ use ELPH,           ONLY:elph_nQ,elph_nQ_used
 #endif
 #if defined _SC
  use QP_m,           ONLY:QP_ng_Sx
@@ -443,7 +443,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
      if (.not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) l_elel_corr=.true.
 #if defined  _ELPH
-     elph_nDBs_used=elph_nDBs
+     elph_nQ_used=elph_nQ
 #endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
      !

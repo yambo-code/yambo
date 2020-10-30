@@ -27,7 +27,9 @@ subroutine ELPH_gkkp_expand(iq_bz,iq_s,k,l_gkkp_bare)
  use R_lattice,           ONLY:bz_samp,qindx_B
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
  use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,elph_gkkp_bare
+ !
  implicit none
+ !
  type(bz_samp) ::k
  integer       ::iq_bz,iq_s
  logical       ::l_gkkp_bare

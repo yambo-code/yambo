@@ -23,11 +23,8 @@
 !
 module YPP_ELPH
  !
- use pars,     ONLY:SP,schlen
+ use pars,     ONLY:SP,schlen,DP
  !
- ! EL-PH
- !
- logical :: l_gkkp
  logical :: l_phonons
  logical :: l_eliashberg
  logical :: l_atomic_amplitude
@@ -37,9 +34,21 @@ module YPP_ELPH
  real(SP):: elph_Ef
  real(SP):: elph_E_max
  real(SP):: elph_residual_treshold = 0.
- character(schlen) :: elph_dbs_path
- character(schlen) :: ph_freqs_file
- character(schlen) :: ph_modes_file
+ !
+ ! ...GKKP I/O
+ logical :: l_gkkp
+ logical :: use_ext_ph_modes=.FALSE.
+ logical :: use_ext_ph_freqs=.FALSE.
+ character(schlen)    :: elph_dbs_path
+ character(schlen)    :: ph_freqs_file
+ character(schlen)    :: ph_modes_file
+ !
+ ! ... GKKP DB shadow objects
+ integer,     parameter   :: NQ_max=10000
+ integer,     allocatable :: ikbz_is_table(:,:)
+ real(SP),    allocatable :: DB_ph_qpt(:,:)
+ real(SP),    allocatable :: DB_ph_freq_sq(:,:)
+ complex(DP), allocatable :: grad_at_gamma(:,:,:,:,:)
  !
  interface
    !

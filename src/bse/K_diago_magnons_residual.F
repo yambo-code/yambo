@@ -57,7 +57,7 @@ subroutine K_diago_herm_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A_rig
  BS_A_left =cZERO
  BS_A_right=cZERO
  !
- call live_timing('MAGNETIC residuals',px%n_of_elements(myid+1))
+ call live_timing('MAG residuals',px%n_of_elements(myid+1))
  !
  tmp_res(:,1) =       BSS_dipoles_magn(1,:) *sqrt(BSS_eh_f(:))
  tmp_res(:,2) =       BSS_dipoles_magn(2,:) *sqrt(BSS_eh_f(:))
@@ -132,7 +132,7 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A
  BS_R_right=cZERO
  BS_A_right=cZERO
  !
- call live_timing('EPS R residuals',px%n_of_elements(myid+1))
+ call live_timing('MAG R residuals',px%n_of_elements(myid+1))
  !
  do i_eh=1,BS_K_dim
    i_he=i_eh+BS_K_dim
@@ -171,7 +171,7 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A
  !
  BS_R_tmp=cZERO
  !
- call live_timing('EPS L residuals',px%n_of_elements(myid+1))
+ call live_timing('MAG L residuals',px%n_of_elements(myid+1))
  !
  do i_eh=1,BS_K_dim
    i_he=i_eh+BS_K_dim
@@ -211,7 +211,7 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A
  BS_R_left=cZERO
  BS_A_left=cZERO
  !
- call live_timing('EPS L x overlap',px%n_of_elements(myid+1))
+ call live_timing('MAG L x overlap',px%n_of_elements(myid+1))
  do i_lambda=1,BSS_n_eig
    if (.not.px%element_1D(i_eh)) cycle
    !

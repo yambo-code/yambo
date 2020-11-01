@@ -153,9 +153,7 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
        FILL_BSK_COMMON_INDEXES
        FILL_BSK_CORR_INDEXES
        !
-       if(i_k_sp_pol_c/=i_p_sp_pol_c) cycle
-       !
-       ! COUPLING TO BE CHECKED FOR MAGNONS IN CASE n_sp_pol=2 
+       if(i_k_sp_pol_c/=i_p_sp_pol_v) cycle
        !
        ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
        !
@@ -231,7 +229,7 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
        FILL_BSK_COMMON_INDEXES
        FILL_BSK_CORR_INDEXES
        !
-       if(i_k_sp_pol_c/=i_p_sp_pol_c) cycle
+       if(i_k_sp_pol_c/=i_p_sp_pol_v) cycle
        !
        ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
        !

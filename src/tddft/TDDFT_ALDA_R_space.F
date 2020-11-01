@@ -48,12 +48,14 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  !
  implicit none
  !
- integer     :: is(4),os(4),isp(4),osp(4)
- character(3):: mode
  complex(SP) :: TDDFT_ALDA_R_space
+ !
+ integer,      intent(in) :: is(4),os(4),isp(4),osp(4)
+ character(3), intent(in) :: mode
  ! 
  ! Work Space
  !
+ integer     :: i_sp_fxc(2)
  complex(SP) :: rhotwr1(fft_size,n_spinor)
  complex(SP) :: rhotwr2(fft_size,n_spinor)
  complex(SP) :: WF_symm1(fft_size,n_spinor)
@@ -67,6 +69,7 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  !
  TDDFT_ALDA_R_space=cZERO
  !
+ i_sp_fxc(1)=is(4)
  call WF_apply_symm(is,WF_symm1) 
  call WF_apply_symm(os,WF_symm2)
  !
@@ -75,14 +78,16 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  if (mode=="RES") then
    call WF_apply_symm(isp,WF_symm1) 
    call WF_apply_symm(osp,WF_symm2)
+   i_sp_fxc(2)=isp(4)
  else if (mode=="CPL") then
    call WF_apply_symm(isp,WF_symm2)
    call WF_apply_symm(osp,WF_symm1)
+   i_sp_fxc(2)=osp(4)
  endif
  !
  if( n_spin==1 ) rhotwr2(:,1)=F_xc(:,  1  ,   1  )*WF_symm1(:,1)*conjg(WF_symm2(:,1))
  !
- if(n_sp_pol==2) rhotwr2(:,1)=F_xc(:,is(4),isp(4))*WF_symm1(:,1)*conjg(WF_symm2(:,1))
+ if(n_sp_pol==2) rhotwr2(:,1)=F_xc(:,i_sp_fxc(1),i_sp_fxc(2))*WF_symm1(:,1)*conjg(WF_symm2(:,1))
  !
  if(n_spinor==2) then
    ! This is only the optical part of the kernel

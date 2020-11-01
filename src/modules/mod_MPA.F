@@ -427,30 +427,35 @@ contains
    !call cgeevx('P','N','N','N',np,Companion,np,Q,VL,1,VR,1,ILO,IHI,S,10._SP,RCE,RCV,work,2*np,rwork,info)
 #endif
    ! 
-   do i=1,np
-     !
-     ! here we need to force real(E) to be positive.
-     ! This is because of the way the residue integral is performed, later.
-     !
+   ! here we need to force real(E) to be positive.
+   ! This is because of the way the residue integral is performed, later.
+   ! 
+   if(real(E(1),SP)>epsilon(1._SP)) then 
+     E(1) = sqrt(E(1))
+     if(real(E(1),SP)<0._SP) E(1)=-E(1)
+     if(aimag(E(1))>-epsilon(1._SP)) then 
+       E(1) = real(E(1),SP)-cI*epsilon(1._SP)
+     endif
+   else
+     E(1) = 0.5*abs(z(2))-cI*epsilon(1._SP)
+   endif
+   ! 
+   do i=2,np
      if(real(E(i),SP)>epsilon(1._SP)) then 
        E(i) = sqrt(E(i))
-     elseif(i==1) then 
-       E(i) = 0.5*abs(z(2))-cI*epsilon(1._SP)
+       if(real(E(i),SP)<0._SP) E(i)=-E(i)
+       if(aimag(E(i))>-epsilon(1._SP)) then 
+         E(i) = real(E(i),SP)-cI*epsilon(1._SP)
+       endif
      else
        E(i) = real(z(i),SP)-cI*epsilon(1._SP)
      endif
-     if(real(E(i),SP)<0._SP) then 
-       E(i) = -E(i)
+     if(abs(real(E(i),SP)-real(E(1),SP))<0.0001_SP) then
+       E(i)=0.5*real(E(1))-cI*epsilon(1._SP)
      endif
-     if(aimag(E(i))>0._SP) then 
-       E(i) = real(E(i),SP)-cI*epsilon(1._SP)
-     endif
-     if(abs(real(E(i),SP)-real(E(1),SP))<0.00005_SP) then
-       E(i)=real(E(j))/2._SP-cI*epsilon(1._SP)
-     endif
-     do j=2,i
-       if(abs(real(E(i),SP)-real(E(j),SP))<0.00005_SP) then
-         E(i)=(real(E(j))+real(E(j-1)))/2-cI*epsilon(1._SP)
+     do j=2,i-1
+       if(abs(real(E(i),SP)-real(E(j),SP))<0.0001_SP) then
+         E(i)=0.5*(real(E(j))+real(E(j-1)))-cI*epsilon(1._SP)
          !exit
        endif
      enddo

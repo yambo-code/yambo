@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_gkkp_expand(iq_bz,iq_s,k,l_gkkp_bare)
+subroutine ELPH_databases_IO_transfer_gkkp_expand(iq_bz,iq_s,k,l_gkkp_bare)
  !
  use pars,                ONLY:SP
  use R_lattice,           ONLY:bz_samp,qindx_B

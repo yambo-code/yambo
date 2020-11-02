@@ -23,10 +23,10 @@
 !
 integer function io_ELPH(ID,what)
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,IP,LP
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,ver_is_gt_or_eq,&
-&                         io_elemental,io_status,io_bulk,io_header,&
-&                         read_is_on,write_is_on,&
+&                         io_variable_elemental,io_status,io_bulk,io_header,&
+&                         read_is_on,write_is_on,def_variable_elemental,&
 &                         io_mode,DUMP,io_fragment,frag_ELPH,IO_INCOMPATIBLE_VAR
  use ELPH,           ONLY:ph_modes,elph_nb,ph_freqs_sq,elph_gkkp,&
 &                         elph_gkkp_bare,QP_PH_n_G_bands,W_debye,elph_DW,elph_nQ,&
@@ -52,7 +52,7 @@ integer function io_ELPH(ID,what)
  !
  !Work Space
  !
- integer                ::iq,ierr,iq_mem,VAR_SZ
+ integer                ::iq,ierr,iq_mem
  real(SP)               ::v(3)
  character(schlen)      ::db_name
  logical                ::l_no_matrix_elements,l_gFsq,l_gkkp,l_gkkp_bare
@@ -82,7 +82,6 @@ integer function io_ELPH(ID,what)
  l_no_matrix_elements   =index(what,'no_matrix_elements')>0
  !
  io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_ELPH)
- write (*,*) trim(db_name),io_ELPH
  if (io_ELPH/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -91,40 +90,28 @@ integer function io_ELPH(ID,what)
    if (     elph_grids_are_expanded) io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.false.,IMPOSE_SN=.FALSE.,FRAG=frag_ELPH)
    if (io_ELPH/=0) goto 1
    !
-   VAR_SZ=6
-   if (ver_is_gt_or_eq(ID,revision=18920)) VAR_SZ=7
-   call io_elemental(ID,VAR="PARS",VAR_SZ=VAR_SZ,MENU=0)
-   !
-   call io_elemental(ID,&
-&       VAR=" Phonon modes            ",I0=ph_modes,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,&
-&       VAR=" Q points        [avail] ",I0=elph_nQ,CHECK=.true.,OP=(/"=="/))
-   !
-   if (l_gFsq) then
-     call io_elemental(ID,&
-&       VAR="                  [used] ",I0=elph_nQ_used,CHECK=.true.,OP=(/"=="/))
-   endif
-   call io_elemental(ID,&
-&       VAR=" K points (BZ)           ",I0=elph_nk_bz,CHECK=.true.,OP=(/"=="/))
-   !
-   call io_elemental(ID,&
-&       VAR=" El-PH bands             ",I0=elph_nb,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,&
-&       VAR=" Using the Q-grid        ",L0=elph_use_q_grid,CHECK=.true.,OP=(/"=="/))
+   call def_variable_elemental(ID,"I_PARAMETERS",5,IP,0)
+   call io_variable_elemental(ID,VAR="Phonon modes",I0=ph_modes,CHECK=.true.,OP=(/"=="/))
+   call io_variable_elemental(ID,VAR="Q points",I0=elph_nQ,CHECK=.true.,OP=(/"=="/),TERMINATOR="[avail]")
+   if (l_gFsq) call io_variable_elemental(ID,VAR=" ",I0=elph_nQ_used,CHECK=.true.,OP=(/"=="/),TERMINATOR="[used]")
+   call io_variable_elemental(ID,VAR="K points (BZ)",I0=elph_nk_bz,CHECK=.true.,OP=(/"=="/))
+   call io_variable_elemental(ID,VAR="El-PH bands",I0=elph_nb,CHECK=.true.,OP=(/"=="/))
+   call def_variable_elemental(ID,"L_PARAMETERS",1,LP,0)
+   call io_variable_elemental(ID,VAR="Using the Q-grid",L0=elph_use_q_grid,CHECK=.true.,OP=(/"=="/))
    !
    if (ver_is_gt_or_eq(ID,revision=18920)) then
-     call io_elemental(ID,&
-&         VAR=" Bare couplings          ",L0=l_gkkp_bare,CHECK=.true.,OP=(/"=="/))
+     call def_variable_elemental(ID,"BARE",1,LP,0)
+     call io_variable_elemental(ID,VAR="Bare couplings",L0=l_gkkp_bare,CHECK=.true.,OP=(/"=="/))
    endif
    !
    if (l_gFsq) then
-     call io_elemental(ID,VAR="QP_nb_nk_n_states",VAR_SZ=3,MENU=0)
-     call io_elemental(ID,I0=QP_nb)
-     call io_elemental(ID,I0=QP_nk)
-     call io_elemental(ID,I0=QP_n_states,VAR=' QP tot states          ')
+     call def_variable_elemental(ID,"QP_nb_nk_n_states",3,IP,0)
+     call io_variable_elemental(ID,I0=QP_nb)
+     call io_variable_elemental(ID,I0=QP_nk)
+     call io_variable_elemental(ID,I0=QP_n_states,VAR='QP total states')
    endif
    !
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+   call def_variable_elemental(ID,"",0,0,1)
    !
    if (io_mode(ID)==DUMP.or.write_is_on(ID)) then
      QP_PH_n_G_bands=elph_nb
@@ -242,14 +229,14 @@ integer function io_ELPH(ID,what)
  ! Ek+q (to be used when  elph_use_q_grid=.FALSE.)
  !
  if (read_is_on(ID)) then
-   call E_reset(GKKP%E_kpq(1))
-   GKKP%E_kpq(1)%nb=elph_nb
-   GKKP%E_kpq(1)%nk=nkbz
-   YAMBO_ALLOC(GKKP%E_kpq(1)%E,(elph_nb,nkbz,1))
+   call E_reset(GKKP%E_kpq(iq))
+   GKKP%E_kpq(iq)%nb=elph_nb
+   GKKP%E_kpq(iq)%nk=nkbz
+   YAMBO_ALLOC(GKKP%E_kpq(iq)%E,(elph_nb,nkbz,1))
  endif
  !
  call io_bulk(ID,VAR="E_K_PLUS_Q"//trim(intc(iq)),VAR_SZ=(/elph_nb,nkbz,1/) )
- call io_bulk(ID,R3=GKKP%E_kpq(1)%E)
+ call io_bulk(ID,R3=GKKP%E_kpq(iq)%E)
  ! 
  ! ELPH_gkkp 
  !

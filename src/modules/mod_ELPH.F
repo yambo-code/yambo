@@ -34,7 +34,7 @@ module ELPH
  integer   :: elph_nQ=0
  integer   :: elph_nQ_used=0
  integer   :: elph_branches(2)=0
- real(SP)  :: W_debye
+ real(SP)  :: W_debye=rZERO
  logical   :: elph_use_q_grid=.TRUE.
  logical   :: elph_grids_are_expanded=.FALSE.
  real(SP),    allocatable :: QP_OMS_Fan(:)

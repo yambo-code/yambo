@@ -59,6 +59,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
+ !
  type(levels)  ::en
  type(bz_samp) ::k,q
  type(QP_t)    ::qp

@@ -65,9 +65,6 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  integer, external :: io_DB1,io_QINDX,io_GROT
  integer           :: i_err_DbGd
  integer, external :: io_Double_Grid
-#if defined _YPP_ELPH
- integer, external :: ELPH_databases
-#endif
  !
  ! Presets
  !
@@ -150,8 +147,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  call section('*','Core DB')
  call msg('s',':: Electrons             :',default_nel)
- call msg('s',':: Temperature       [ev]:',input_GS_Tel)
- call msg('s',':: Lattice factors [a.u.]:',alat)
+ call msg('s',':: Temperature           :',input_GS_Tel,"[eV]")
+ call msg('s',':: Lattice factors       :',alat,"[a.u.]")
  call msg('s',':: K points              :',nkibz)
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmetries            :',nsym)
@@ -254,7 +251,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  if ((l_gkkp.and..not.l_excitons).or.l_phonons) then
    ! =====     ========
-   if (l_gkkp)                i_err=ELPH_databases(k,en,q)
+   if (l_gkkp)                call ELPH_databases(k,en,q)
    if (l_eliashberg.or.l_dos) call ELPH_eliashberg_dos(k,en,q)
    ! GPL_EXCLUDE_START
    if (l_atomic_amplitude)    call ELPH_atomic_amplitude(q)

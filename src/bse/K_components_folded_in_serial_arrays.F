@@ -95,7 +95,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
        i_v   =BS_T_grp(i_g)%table(i_Tr,2)
        i_c   =BS_T_grp(i_g)%table(i_Tr,3)
        i_sp_c=BS_T_grp(i_g)%table(i_Tr,4)
-       i_sp_v=BS_T_grp(i_g)%table(i_Tr,4)
+       i_sp_v=BS_T_grp(i_g)%table(i_Tr,5)
        !
        H_pos(1)=sum(BS_T_grp(:I_g-1)%size)+i_Tr
        !

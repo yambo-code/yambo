@@ -115,7 +115,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
          if ( i_T_grp_p==i_T_grp ) N_T_el_p=i_T_el-1
          if ( i_T_grp_p/=i_T_grp ) N_T_el_p=BS_T_grp(i_T_grp_p)%size
          do i_T_el_p=N_T_el_p,1,-1
-           if ( all( BS_T_grp(i_T_grp_p)%table(i_T_el_p,:)==(/Xk%k_table(i_k,1),i_v,i_c,i_sp_c/)) ) then
+           if ( all( BS_T_grp(i_T_grp_p)%table(i_T_el_p,:)==(/Xk%k_table(i_k,1),i_v,i_c,i_sp_c,i_sp_v/)) ) then
              i_T_grp_last_with_identity_sym=i_T_grp_p
              i_T_el_last_with_identity_sym =i_T_el_p
              exit

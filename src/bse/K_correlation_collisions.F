@@ -66,10 +66,6 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
  !
  if (.not.BS_res_K_corr) return 
  !
- if (trim(BS_blk(i_block)%mode)=="C" .and. (l_BS_magnons.and.n_sp_pol==2)) then
-   call warning(" Magnons, coupling and n_sp_pol==2 to be checked")
- endif
- !
  call timing('T_space CORR Osc.',OPR='start')
  !
  ! Every block is at k (ibz) fixed

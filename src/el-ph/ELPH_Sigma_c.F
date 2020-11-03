@@ -47,12 +47,12 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        On_Mass_Shell_approx,QP_time_order_sign
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol,nqibz
- use ELPH,          ONLY:elph_nb,ph_freqs_sq,elph_gkkp,&
-&                        QP_PH_n_G_bands,W_debye,elph_DW,&
+ use ELPH,          ONLY:elph_nb,PH_freqs_sq,elph_gkkp,&
+&                        QP_PH_n_G_bands,PH_W_debye,elph_DW,&
 &                        elph_nQ,GKKP,elph_use_q_grid,&
 &                        setup_k_plus_q_levels,elph_nQ_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
-&                        gsqF_energy_steps,eval_G_using_KK,ph_qpt,&
+&                        gsqF_energy_steps,eval_G_using_KK,PH_qpt,&
 &                        elph_branches,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold,DW_deltaE_treshold
  use interfaces,    ONLY:QP_state_print,ELPH_alloc
  use functions,     ONLY:Fermi_fnc_derivative
@@ -196,7 +196,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  else
    nq_to_sum=elph_nQ_used
    YAMBO_ALLOC(q_weight,(nq_to_sum))
-   call rim_spherical(nq_to_sum,ph_qpt(:nq_to_sum,:),q_weight,factor/real(nq_to_sum,SP),2,.TRUE.)
+   call rim_spherical(nq_to_sum,PH_qpt(:nq_to_sum,:),q_weight,factor/real(nq_to_sum,SP),2,.TRUE.)
  endif
  !
  ! Timing steps
@@ -315,7 +315,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        !
        do il=elph_branches(1),elph_branches(2)
          !
-         ph_E=sqrt(abs(ph_freqs_sq(iq_ibz,il)))
+         ph_E=sqrt(abs(PH_freqs_sq(iq_ibz,il)))
          !
          ! Skip modes @ Gamma (1st point is always gamma, either with random
          ! or uniform grids, as it is needed to evaluate the DW factor) 
@@ -417,7 +417,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! Debye energy
  !
- call msg('nr','[Ph] Debye energy         ',(/W_debye*HA2EV,W_debye*HA2THZ/),"[ev/ThZ]")
+ call msg('nr','[Ph] Debye energy         ',(/PH_W_debye*HA2EV,PH_W_debye*HA2THZ/),"[ev/ThZ]")
  !
  ! Here I use the Cardona-Allen g^2 F functions to evaluate their integrated value.
  ! I also calculate the full frequency dependent self-energy
@@ -433,7 +433,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    ! In the iq_loop loop the q=1 is read by ALL cpu's. This is in order
    ! to get the DW elements written only for q=0. This means that all cpu's has the ph_freqs_sq(1,:)
    ! 
-   ph_freqs_sq(1,:)=ph_freqs_sq(1,:)/PAR_COM_Q_INDEX%n_CPU
+   PH_freqs_sq(1,:)=PH_freqs_sq(1,:)/PAR_COM_Q_INDEX%n_CPU
    !
    ! AndreaM, Feb 2017
    !
@@ -454,12 +454,12 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      call PP_redux_wait(q_each_cpu,COMM=PAR_COM_Q_INDEX%COMM)
      !
      do iq_ibz=2,q%nibz
-       if (q_each_cpu(iq_ibz)>0) ph_freqs_sq(iq_ibz,:)=ph_freqs_sq(iq_ibz,:)/q_each_cpu(iq_ibz)
+       if (q_each_cpu(iq_ibz)>0) PH_freqs_sq(iq_ibz,:)=PH_freqs_sq(iq_ibz,:)/q_each_cpu(iq_ibz)
      enddo
      !
    endif
    !
-   call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
+   call PP_redux_wait(PH_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
    !
    iq_range=(/nq_to_sum,1/)
    do iq_loop=1,nq_to_sum

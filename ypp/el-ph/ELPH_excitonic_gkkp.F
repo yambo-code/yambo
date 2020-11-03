@@ -31,7 +31,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
  use R_lattice,           ONLY:bz_samp
  use IO_m,                ONLY:io_control,manage_action,OP_RD,DUMP,RD_CL_IF_END
  use ELPH,                ONLY:elph_nQ,ph_modes,&
-&                              elph_use_q_grid,ph_freqs_sq,elph_gkkp
+&                              elph_use_q_grid,PH_freqs_sq,elph_gkkp
  use parallel_m,          ONLY:PP_indexes,PP_indexes_reset,myid
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,              ONLY:live_timing
@@ -87,7 +87,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
    if (iq==1) cycle
    !
    do i_l=1,ph_modes
-     ph_freqs(i_l)=sqrt(ph_freqs_sq(iq,i_l))
+     ph_freqs(i_l)=sqrt(PH_freqs_sq(iq,i_l))
    enddo
    !
    do ik_ibz=1,Xk%nibz
@@ -158,7 +158,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
    !
    do i_l=1,ph_modes
      !
-     ph_freqs(i_l)=sqrt(ph_freqs_sq(iq,i_l))
+     ph_freqs(i_l)=sqrt(PH_freqs_sq(iq,i_l))
      !
      gkkp_fs=0.
      if (abs(diagonal_xhi(iq,i_l,1))>0.) gkkp_fs=1./(abs(diagonal_xhi(iq,i_l,1))*HA2EV*HA2FSm1) 

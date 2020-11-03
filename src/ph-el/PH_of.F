@@ -26,7 +26,7 @@ subroutine PH_of(q)
  use OUTPUT_simple,  ONLY:OUTPUT_add_column
  use RT_lifetimes,   ONLY:RT_PE_life
  use PHEL,           ONLY:PH_desc
- use ELPH,           ONLY:ph_freqs_sq,elph_branches
+ use ELPH,           ONLY:PH_freqs_sq,elph_branches
  use R_lattice,      ONLY:nqibz,bz_samp
  use interfaces,     ONLY:DESC_write
  !
@@ -46,7 +46,7 @@ subroutine PH_of(q)
  do iq=1,nqibz
    do il=elph_branches(1),elph_branches(2)
      call OUTPUT_add_column(TITLES=(/"Q-point","Branch "/),I_VALUES=(/iq,il/))
-     call OUTPUT_add_column(TITLES=(/"Energy"/),R_VALUES=(/sqrt(abs(ph_freqs_sq(q%k_table(iq,1),il)))/),UNIT="meV")
+     call OUTPUT_add_column(TITLES=(/"Energy"/),R_VALUES=(/sqrt(abs(PH_freqs_sq(q%k_table(iq,1),il)))/),UNIT="meV")
      call OUTPUT_add_column(TITLES=(/"Width(emit)"/),R_VALUES=(/RT_PE_life%emit(il,iq)/),UNIT="meV")
      call OUTPUT_add_column(TITLES=(/"Width(abs)"/),R_VALUES=(/RT_PE_life%abs(il,iq)/),UNIT="meV")
      call OUTPUT_add_column(TITLES=(/"Width(full)"/),R_VALUES=(/RT_PE_life%abs(il,iq)+RT_PE_life%emit(il,iq)/),UNIT="meV")

@@ -26,7 +26,7 @@ subroutine ELPH_databases_IO_pol_and_freqs(IDB)
  use pars,           ONLY:SP 
  use D_lattice,      ONLY:n_atoms
  use units,          ONLY:HA2CMm1
- use YPP_ELPH,       ONLY:ph_freqs_file,ph_modes_file,DB_ph_modes,DB_ph_qpt,&
+ use YPP_ELPH,       ONLY:ph_freqs_file,ph_modes_file,DB_ph_modes,DB_PH_qpt,&
 &                         use_ext_ph_freqs,use_ext_ph_modes,DB_ph_freq_sq,DB_ph_pol_vec
  use vec_operate,    ONLY:v_is_zero
  use zeros,          ONLY:k_iku_zero
@@ -48,8 +48,8 @@ subroutine ELPH_databases_IO_pol_and_freqs(IDB)
      read(99,*) ph_q 
    enddo
    read(99,*) ph_q 
-   if (.not.v_is_zero(ph_q(:)-real(DB_ph_qpt(IDB,:)),zero_=k_iku_zero).and.&
-&      .not.v_is_zero(ph_q(:)+real(DB_ph_qpt(IDB,:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_freqs_file))
+   if (.not.v_is_zero(ph_q(:)-real(DB_PH_qpt(IDB,:)),zero_=k_iku_zero).and.&
+&      .not.v_is_zero(ph_q(:)+real(DB_PH_qpt(IDB,:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_freqs_file))
    do i1=1,DB_ph_modes,6
      read(99,*) DB_ph_freq_sq(IDB,i1:min(i1+5,DB_ph_modes))
    enddo
@@ -78,14 +78,14 @@ subroutine ELPH_databases_IO_pol_and_freqs(IDB)
    read(99,*)
    read(99,*)
    read(99, *) ws_ch(1),ws_ch(2),ph_q 
-   if (.not.v_is_zero(ph_q(:)-real(DB_ph_qpt(IDB,:)),zero_=k_iku_zero).and.&
-&      .not.v_is_zero(ph_q(:)+real(DB_ph_qpt(IDB,:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_modes_file))
+   if (.not.v_is_zero(ph_q(:)-real(DB_PH_qpt(IDB,:)),zero_=k_iku_zero).and.&
+&      .not.v_is_zero(ph_q(:)+real(DB_PH_qpt(IDB,:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_modes_file))
    read(99,*)
    do i1=1,DB_ph_modes
      read(99,*) 
      do ia=1,n_atoms
        read(99,*) ws_ch(1),w_vec_pot
-       forall(ic=1:3) DB_ph_pol_vec(i1,ia,ic)=cmplx(w_vec_pot(2*(ic-1)+1),w_vec_pot(2*ic),SP)
+       forall(ic=1:3) DB_ph_pol_vec(IDB,i1,ia,ic)=cmplx(w_vec_pot(2*(ic-1)+1),w_vec_pot(2*ic),SP)
      enddo
    enddo
    close(99)

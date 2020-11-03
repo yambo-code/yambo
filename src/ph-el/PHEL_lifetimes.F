@@ -36,7 +36,7 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  use RT_occupations, ONLY:RT_ph_occ,RT_el_occ,RT_ho_occ,RT_life_occ
  use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch,phel_gkkp_expanded_sq
+ use ELPH,           ONLY:PH_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch,phel_gkkp_expanded_sq
  use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_eh_bands,PARs_PH_Q_ibz
  use QP_m,           ONLY:QP_G_damp
  use LIVE_t,         ONLY:live_timing
@@ -82,7 +82,7 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
    !
    do il=elph_branches(1),elph_branches(2)
      !
-     ph_freq=abs(sqrt(ph_freqs_sq(q%k_table(iq,1),il)))
+     ph_freq=abs(sqrt(PH_freqs_sq(q%k_table(iq,1),il)))
      !
      if (iq==1 .and. PH_acoustic_branch(il)) cycle
      !

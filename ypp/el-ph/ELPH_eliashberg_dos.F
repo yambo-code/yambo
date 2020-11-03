@@ -31,8 +31,8 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use YPPm,                ONLY:l_dos
  use YPP_ELPH,            ONLY:elph_steps,elph_Ef,elph_gamma_broad,&
 &                              ph_broad,l_eliashberg
- use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,ph_freqs_sq,&
-&                              W_debye,elph_nQ,elph_use_q_grid,&
+ use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,PH_freqs_sq,&
+&                              PH_W_debye,elph_nQ,elph_use_q_grid,&
 &                              GKKP,setup_k_plus_q_levels
  use IO_m,                ONLY:io_control,manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use LIVE_t,              ONLY:live_timing
@@ -103,7 +103,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !
  ! Energy range
  !
- e_step=W_debye*1.10/(elph_steps-1)
+ e_step=PH_W_debye*1.10/(elph_steps-1)
  do i2=1,elph_steps
    ph_energy(i2)=(i2-1)*e_step
  enddo
@@ -164,7 +164,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    !
    do im=1,ph_modes
      !
-     omega = sqrt( MAX( ph_freqs_sq(iq,im),0. ) )
+     omega = sqrt( MAX( PH_freqs_sq(iq,im),0. ) )
      !
      if (omega<1.E-10) cycle
      !
@@ -299,7 +299,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    !
    ! Gamma factors symmetrization
    !
-   call degeneration_finder(abs(ph_freqs_sq(iq,:)),ph_modes,first_el,n_of_el,&
+   call degeneration_finder(abs(PH_freqs_sq(iq,:)),ph_modes,first_el,n_of_el,&
 &                           n_deg_grp,1.E-10_SP)
    do i1=1,n_deg_grp
      !

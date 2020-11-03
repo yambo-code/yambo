@@ -44,7 +44,7 @@ subroutine RT_ELPH_iterative_Kernel(ik,E,k,q,TIME)
  use functions,      ONLY:bose_f
  use R_lattice,      ONLY:bz_samp,qindx_S
  use real_time,      ONLY:RT_bands
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp,elph_gkkp_expanded_sq 
+ use ELPH,           ONLY:PH_freqs_sq,elph_branches,MAX_gkkp,elph_gkkp_expanded_sq 
  use parallel_m,     ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_Xk_ibz_index
  !
  implicit none
@@ -91,7 +91,7 @@ subroutine RT_ELPH_iterative_Kernel(ik,E,k,q,TIME)
    !
    do il=elph_branches(1),elph_branches(2)
      !
-     ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
+     ph_freq=abs(sqrt(PH_freqs_sq(iqbz,il)))
      !
      ! Note the m.e. in elph_gkkp_expanded_sq are stored with indexes order exchanged (see RT_ELPH_initialize)
      !

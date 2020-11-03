@@ -37,8 +37,8 @@ integer function ELPH_databases_IO_elemental(what,IDB)
  !   ENDDO
  !
  use pars,           ONLY:DP,schlen,SP
- use ELPH,           ONLY:W_debye
- use YPP_ELPH,       ONLY:DB_kind,DB_ph_modes,DB_nk,DB_nb,DB_ph_kpt,DB_ph_qpt,&
+ use ELPH,           ONLY:PH_W_debye
+ use YPP_ELPH,       ONLY:DB_kind,DB_ph_modes,DB_nk,DB_nb,DB_ph_kpt,DB_PH_qpt,&
 &                         DB_ph_pol_vec,DB_ph_freq_sq,DB_alat,DB_E_k,DB_E_k_plus_q,&
 &                         DB_grad_at_gamma,DB_gkkp,elph_dbs_path
  use IO_m,           ONLY:io_control,OP_RD,RD_CL,io_connect,io_unit,io_disconnect
@@ -83,8 +83,8 @@ integer function ELPH_databases_IO_elemental(what,IDB)
  endif
  !
  if (index(what,"KPT")>0) then
-   read (io_unit(ID)) DB_alat,DB_ph_qpt(IDB,:),DB_ph_kpt(:,:DB_nk)
-   DB_ph_qpt(IDB,:)=DB_ph_qpt(IDB,:)/DB_alat*alat(:)
+   read (io_unit(ID)) DB_alat,DB_PH_qpt(IDB,:),DB_ph_kpt(:,:DB_nk)
+   DB_PH_qpt(IDB,:)=DB_PH_qpt(IDB,:)/DB_alat*alat(:)
    do ik=1,DB_nk
      DB_ph_kpt(:,ik)=DB_ph_kpt(:,ik)/DB_alat*alat(:)
    enddo
@@ -98,7 +98,7 @@ integer function ELPH_databases_IO_elemental(what,IDB)
    read (io_unit(ID)) DB_ph_freq_sq(IDB,:)
    if (trim(DB_kind)=="PWscf") DB_ph_freq_sq(IDB,:)= DB_ph_freq_sq(IDB,:)/4._DP
    do il=1,DB_ph_modes
-     W_debye=max(W_debye,real(sqrt(abs(DB_ph_freq_sq(IDB,il))),SP))
+     PH_W_debye=max(PH_W_debye,real(sqrt(abs(DB_ph_freq_sq(IDB,il))),SP))
    enddo
  else
    read (io_unit(ID)) 
@@ -106,7 +106,7 @@ integer function ELPH_databases_IO_elemental(what,IDB)
  !
  if (index(what,"POL_VEC")>0) then
    read (io_unit(ID)) 
-   read (io_unit(ID)) DB_ph_pol_vec
+   read (io_unit(ID)) DB_ph_pol_vec(IDB,:,:,:)
  endif
  !
  ! External POL_VEC/FREQS files?

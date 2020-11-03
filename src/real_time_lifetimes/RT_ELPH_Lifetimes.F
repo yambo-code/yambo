@@ -43,7 +43,7 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
  use electrons,      ONLY:levels,spin_occ,n_full_bands
  use R_lattice,      ONLY:bz_samp,qindx_S,nqbz,q_sstar
  use real_time,      ONLY:RT_bands
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp,elph_gkkp_expanded_sq 
+ use ELPH,           ONLY:PH_freqs_sq,elph_branches,MAX_gkkp,elph_gkkp_expanded_sq 
  use parallel_m,     ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_Xk_ibz_index
  use units,          ONLY:HA2EV
 
@@ -88,7 +88,7 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
    !
    do il=elph_branches(1),elph_branches(2)
      !
-     ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
+     ph_freq=abs(sqrt(PH_freqs_sq(iqbz,il)))
      !
      do i_n=RT_bands(1),RT_bands(2)
        !

@@ -41,7 +41,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
- use ELPH,          ONLY:GKKP
+ use ELPH,          ONLY:GKKP,elph_nQ
 #endif
  !
  implicit none
@@ -118,7 +118,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
 #if defined _ELPH
  !    Green's Function (k+q levels loaded for the _ELPH)
  if (l_gw0.and.l_elph_corr) then
-   do iq=1,GKKP%Nq
+   do iq=1,elph_nQ
      call QP_apply(GKKP%Nb,GKKP%E_kpq(iq),k,"G",msg_fmt='rs',main_section=.TRUE.)
    enddo
  endif

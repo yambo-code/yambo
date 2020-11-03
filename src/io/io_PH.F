@@ -28,7 +28,7 @@ integer function io_PH(ID)
  use R_lattice,           ONLY:nqibz,nqbz
  use QP_m,                ONLY:QP_G_damp
  use PHEL,                ONLY:PH_desc,PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode
- use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,ph_freqs_sq,ph_modes
+ use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,PH_freqs_sq,ph_modes
  use IO_m,                ONLY:io_connect,io_disconnect,io_sec,io_header,io_status,read_is_on,def_variable_elemental,&
 &                              DB_is_OK,io_variable_elemental,def_variable_bulk,io_variable_bulk
  use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps
@@ -78,11 +78,11 @@ integer function io_PH(ID)
    if (read_is_on(ID)) then
      Life_MEM_steps=1
      call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)
-     YAMBO_ALLOC(ph_freqs_sq,(nqbz,ph_modes))
+     YAMBO_ALLOC(PH_freqs_sq,(nqbz,ph_modes))
    endif
    !
    call def_variable_bulk(ID,"PH_FREQ_SQ",1,(/nqbz,ph_modes/),SP)
-   call io_variable_bulk(ID,1,R2=ph_freqs_sq)
+   call io_variable_bulk(ID,1,R2=PH_freqs_sq)
    !
    call def_variable_bulk(ID,"PH_LIFE_EMIT",2,(/elph_branches(2)-elph_branches(1)+1,nqibz/),SP)
    call io_variable_bulk(ID,2,R2=RT_PE_life%emit(:,:))

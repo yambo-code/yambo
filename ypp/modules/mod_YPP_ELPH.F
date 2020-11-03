@@ -59,7 +59,7 @@ module YPP_ELPH
  logical,     allocatable :: YAMBO_K_found(:)
  real(DP),    allocatable :: DB_ph_kpt(:,:)
  real(DP),    allocatable :: DB_ph_qpt(:,:)
- complex(DP), allocatable :: DB_ph_pol_vec(:,:,:)
+ complex(DP), allocatable :: DB_ph_pol_vec(:,:,:,:)
  real(DP),    allocatable :: DB_ph_freq_sq(:,:)
  real(DP)                 :: DB_alat
  ! ... Q-selected
@@ -93,7 +93,7 @@ module YPP_ELPH
      YAMBO_ALLOC(DB_ph_kpt,(3,nkbz))
      YAMBO_ALLOC(DB_grad_at_gamma,(DB_nb,DB_nb,n_atoms,3,nkbz))
      YAMBO_ALLOC(DB_gkkp,(DB_nb,DB_nb,DB_ph_modes,nkbz))
-     YAMBO_ALLOC(DB_ph_pol_vec,(DB_ph_modes,n_atoms,3))
+     YAMBO_ALLOC(DB_ph_pol_vec,(DB_nq,DB_ph_modes,n_atoms,3))
      YAMBO_ALLOC(DB_ph_freq_sq,(DB_nq,DB_ph_modes))
      YAMBO_ALLOC(DB_E_k,(DB_nb,nkbz))
      YAMBO_ALLOC(DB_E_k_plus_q,(DB_nb,nkbz))

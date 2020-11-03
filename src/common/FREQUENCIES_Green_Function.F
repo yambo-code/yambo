@@ -29,7 +29,7 @@ subroutine FREQUENCIES_Green_Function(iqp,W,E,Spectral_Function)
  use frequency,  ONLY:w_samp
  use QP_m,       ONLY:QP_table,QP_G_dr,QP_G_er,QP_G_zoom_er,GF_energy_range_mode
 #if defined _ELPH
- use ELPH,       ONLY:W_debye,QP_PH_n_G_bands
+ use ELPH,       ONLY:PH_W_debye,QP_PH_n_G_bands
 #endif
  implicit none
  !
@@ -62,7 +62,7 @@ subroutine FREQUENCIES_Green_Function(iqp,W,E,Spectral_Function)
    ! 50% of the total points are concentrated in the small region around 
    ! the bare pole
    !
-   wide_range=(/minval(E(:,:,:))-2.*W_debye,maxval(E(:QP_PH_n_G_bands,:,:))+2.*W_debye/)
+   wide_range=(/minval(E(:,:,:))-2.*PH_W_debye,maxval(E(:QP_PH_n_G_bands,:,:))+2.*PH_W_debye/)
    W%er=wide_range
    call FREQUENCIES_setup(W)
    Eo=E(QP_table(iqp,1),QP_table(iqp,3),spin(QP_table(iqp,:)))

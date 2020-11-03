@@ -25,7 +25,7 @@ subroutine RT_ELPH_Q_weights(q)
  ! 
  use pars,           ONLY:SP,pi,rZERO
  use R_lattice,      ONLY:RL_vol,bz_samp
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,PH_acoustic_speed,PH_acoustic_branch,PH_Q_modulus
+ use ELPH,           ONLY:PH_freqs_sq,elph_branches,PH_acoustic_speed,PH_acoustic_branch,PH_Q_modulus
  use RT_lifetimes,   ONLY:q_weight_RT,l_RT_skip_ph_abs_lifetimes
  use R_lattice,      ONLY:RIM_n_rand_pts
  !
@@ -57,7 +57,7 @@ subroutine RT_ELPH_Q_weights(q)
      !
      q_weight_RT(iq,il,:)=rZERO
      !
-     ph_E=sqrt(abs(ph_freqs_sq(iq,il)))
+     ph_E=sqrt(abs(PH_freqs_sq(iq,il)))
      !
      if (PH_acoustic_branch(il).and.iq>1) then
        q_weight_RT(iq,il,1)=1._SP/ph_E/float(q%nbz)

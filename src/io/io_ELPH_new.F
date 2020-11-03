@@ -28,11 +28,11 @@ integer function io_ELPH(ID,what)
 &                         io_variable_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,def_variable_elemental,&
 &                         io_mode,DUMP,io_fragment,frag_ELPH,IO_INCOMPATIBLE_VAR
- use ELPH,           ONLY:ph_modes,elph_nb,ph_freqs_sq,elph_gkkp,&
-&                         elph_gkkp_bare,QP_PH_n_G_bands,W_debye,elph_DW,elph_nQ,&
-&                         elph_use_q_grid,ph_qpt,ph_kpt_bz,elph_nQ_used,&
+ use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,elph_gkkp,&
+&                         elph_gkkp_bare,QP_PH_n_G_bands,PH_W_debye,elph_DW,elph_nQ,&
+&                         elph_use_q_grid,PH_qpt,PH_kpt_bz,elph_nQ_used,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
-&                         pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz,GKKP,elph_grids_are_expanded
+&                         PH_pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz,GKKP,elph_grids_are_expanded
  use stderr,         ONLY:intc
  use electrons,      ONLY:E_reset
  use interfaces,     ONLY:ELPH_alloc
@@ -123,24 +123,24 @@ integer function io_ELPH(ID,what)
    if (io_ELPH/=0) goto 1
    !
    call io_bulk(ID,VAR="MAX_PH_FREQ",VAR_SZ=(/1/))
-   call io_bulk(ID,R0=W_debye)
+   call io_bulk(ID,R0=PH_W_debye)
    !
    ! Q point coordinates [iku]...
    !
    ! ... allocation
    !
-   if (read_is_on(ID).and..not.allocated(ph_qpt)) then
-     YAMBO_ALLOC(ph_qpt,(elph_nQ,3))
-     YAMBO_ALLOC(ph_kpt_bz,(elph_nk_bz,3))
-     ph_kpt_bz=0._SP
+   if (read_is_on(ID).and..not.allocated(PH_qpt)) then
+     YAMBO_ALLOC(PH_qpt,(elph_nQ,3))
+     YAMBO_ALLOC(PH_kpt_bz,(elph_nk_bz,3))
+     PH_kpt_bz=0._SP
    endif
    !
    call io_bulk(ID,VAR="PH_Q",VAR_SZ=(/elph_nQ,3/) )
-   call io_bulk(ID,R2=ph_qpt(:,:))
+   call io_bulk(ID,R2=PH_qpt(:,:))
    !
    if (l_gkkp.and.allocated(q_pt).and.elph_use_q_grid) then
      do iq=1,nqibz
-       call c2a(v_in=q_pt(iq,:)+ph_qpt(iq,:),v_out=v,mode="ki2a")
+       call c2a(v_in=q_pt(iq,:)+PH_qpt(iq,:),v_out=v,mode="ki2a")
        if (.not.rlu_v_is_zero(v,zero_=k_rlu_zero)) then
          io_ELPH=IO_INCOMPATIBLE_VAR
          goto 1
@@ -151,7 +151,7 @@ integer function io_ELPH(ID,what)
    if (elph_grids_are_expanded) then
      !
      call io_bulk(ID,VAR="PH_K",VAR_SZ=(/nkbz,3/) )
-     call io_bulk(ID,R2=ph_kpt_bz(:,:))
+     call io_bulk(ID,R2=PH_kpt_bz(:,:))
      !
    endif
    !
@@ -200,7 +200,7 @@ integer function io_ELPH(ID,what)
    !
    if (iq==1) then
      call io_bulk(ID,VAR="PH_FREQS",VAR_SZ=(/elph_nQ,ph_modes/))
-     call io_bulk(ID,R2=ph_freqs_sq)
+     call io_bulk(ID,R2=PH_freqs_sq)
    endif
    !
    goto 1
@@ -217,12 +217,12 @@ integer function io_ELPH(ID,what)
  ! PH frequencies
  !
  call io_bulk(ID,VAR="PH_FREQS"//trim(intc(iq)),VAR_SZ=(/ph_modes/))
- call io_bulk(ID,R1=ph_freqs_sq(iq,:))
+ call io_bulk(ID,R1=PH_freqs_sq(iq,:))
  !
  ! Polarization vectors
  ! 
  call io_bulk(ID,VAR="POLARIZATION_VECTORS",VAR_SZ=(/2,ph_modes,sum(n_atoms_species),3/))
- call io_bulk(ID,C3=pol_vector)
+ call io_bulk(ID,C3=PH_pol_vector)
  ! 
  if (l_no_matrix_elements) goto 1
  ! 

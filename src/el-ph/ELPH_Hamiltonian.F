@@ -25,8 +25,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  use pars,          ONLY:SP,lchlen,rZERO
  use units,         ONLY:HA2EV
- use ELPH,          ONLY:elph_Ham_bands,elph_Ham_ik,&
-&                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector,RES_tresh
+ use ELPH,          ONLY:elph_Ham_bands,elph_Ham_ik,ph_modes,&
+&                        PH_freqs_sq,elph_gkkp,elph_branches,PH_pol_vector,RES_tresh
  use IO_m,          ONLY:io_control,manage_action,OP_RD,REP,RD_CL_IF_END,mk_dir
  use com,           ONLY:msg,of_open_close,jobstr,jobdir,core_io_path
  use R_lattice,     ONLY:nqbz,nqibz,bz_samp,qindx_S
@@ -70,7 +70,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  ! Mean value of displacements
  !
  integer            :: ic,ia,Ham_Index
- real(SP)           :: ph_E_gamma,pol_vector_gamma(n_atoms*3,n_atoms,3)
+ real(SP)           :: ph_E_gamma,PH_pol_vector_gamma(ph_modes,n_atoms,3)
  complex(SP), allocatable :: mean_u(:,:,:)
  !
  !Mean value of Phonons Number
@@ -170,10 +170,10 @@ subroutine ELPH_Hamiltonian(en,k,q)
        call io_control(ACTION=IO_ACT,SEC=(/iq_ibz+1/),ID=ID)
        io_err=io_ELPH(ID,'gkkp')
        iq_ibz_db=iq_ibz
-       if (iq_ibz==1) pol_vector_gamma=pol_vector
+       if (iq_ibz==1) PH_pol_vector_gamma=PH_pol_vector(iq_ibz,:,:,:)
      endif
      !
-     ph_E=sqrt(abs(ph_freqs_sq(iq_ibz,il)))
+     ph_E=sqrt(abs(PH_freqs_sq(iq_ibz,il)))
      !
      if (iH==1) elph_Mat(iHp,iHp)=en%E(ibp,ok_ibz,1)+ph_E
      !
@@ -373,14 +373,14 @@ subroutine ELPH_Hamiltonian(en,k,q)
        Ham_Index=0
        do il=elph_branches(1),elph_branches(2)
          !
-         ph_E_gamma=sqrt( MAX ( ph_freqs_sq(1,il), 0.) )
+         ph_E_gamma=sqrt( MAX ( PH_freqs_sq(1,il), 0.) )
          if ( ph_E_gamma < epsilon(1._SP)) cycle
          !
          Ham_Index=Ham_Index+No_PH_basis_size
          !
          do ib=elph_Ham_bands(1),elph_Ham_bands(2)
            mean_u(ia,ic,iH)=mean_u(ia,ic,iH)+&
-&            1./sqrt(real(2*nqbz*ph_E_gamma))*pol_vector_gamma(il,ia,ic)*(conjg(elph_Mat(ib,iH))*elph_Mat(Ham_Index+ib,iH)+&
+&            1./sqrt(real(2*nqbz*ph_E_gamma))*PH_pol_vector_gamma(il,ia,ic)*(conjg(elph_Mat(ib,iH))*elph_Mat(Ham_Index+ib,iH)+&
 &                                                                         conjg(elph_Mat(Ham_Index+ib,iH))*elph_Mat(ib,iH))
            mean_u(ia,ic,iH)=real( mean_u(ia,ic,iH) )
          enddo
@@ -433,10 +433,11 @@ subroutine ELPH_Hamiltonian(en,k,q)
          !
          do il=elph_branches(1),elph_branches(2)
            !
-           ph_E=sqrt( MAX ( ph_freqs_sq(iq_ibz,il), 0.) )
+           ph_E=sqrt( MAX ( PH_freqs_sq(iq_ibz,il), 0.) )
            if ( ph_E < epsilon(1._SP) ) cycle
            !
-           mean_u_sq(ia,ic,iH) = mean_u_sq(ia,ic,iH)+1/(real(2*nqbz*ph_E))*conjg(pol_vector(il,ia,ic))*pol_vector(il,ia,ic)
+           mean_u_sq(ia,ic,iH) = mean_u_sq(ia,ic,iH)+1/(real(2*nqbz*ph_E))*&
+&                                conjg(PH_pol_vector(iq_ibz,il,ia,ic))*PH_pol_vector(iq_ibz,il,ia,ic)
            mean_u_sq(ia,ic,iH) = real( mean_u_sq(ia,ic,iH) )
          enddo  
        enddo

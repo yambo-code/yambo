@@ -32,7 +32,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,qindx_S,nqbz
  use IO_m,           ONLY:io_control,OP_RD_CL
- use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,MAX_gkkp,elph_gkkp_expanded_sq,&
+ use ELPH,           ONLY:PH_freqs_sq,elph_gkkp,ph_modes,elph_nb,MAX_gkkp,elph_gkkp_expanded_sq,&
 &                         Q_io_map,K_io_map,phel_gkkp_expanded_sq
  use vec_operate,    ONLY:degeneration_finder
  use parallel_int,   ONLY:PP_redux_wait
@@ -93,7 +93,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
    call io_control(ACTION=OP_RD_CL,SEC=(/iq_io+1/),ID=ID)
    io_err=io_ELPH(ID,'gkkp_expanded')
    !
-   ph_Esq_local(iq_bz,:)=ph_freqs_sq(iq_io,:)
+   ph_Esq_local(iq_bz,:)=PH_freqs_sq(iq_io,:)
    !
    do ik_bz=1,k%nbz
      !
@@ -167,20 +167,20 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
    !
  enddo
  !
- ph_freqs_sq=ph_Esq_local
+ PH_freqs_sq=ph_Esq_local
  !
  if (l_BZ ) then
-   call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
+   call PP_redux_wait(PH_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
    call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Q_INDEX%COMM)
    call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  else
-   call PP_redux_wait(ph_freqs_sq,COMM=PARs_PH_Q_ibz%COMM_i%COMM)
+   call PP_redux_wait(PH_freqs_sq,COMM=PARs_PH_Q_ibz%COMM_i%COMM)
    call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PARs_PH_Q_ibz%COMM_i%COMM)
  endif
  !
  MAX_gkkp=maxval(MAX_gkkp_expanded_at_kpq)
  !
- if (any(ph_freqs_sq<0._SP)) call warning('Imaginary phonon frequencies found. Please check.')
+ if (any(PH_freqs_sq<0._SP)) call warning('Imaginary phonon frequencies found. Please check.')
  !
  YAMBO_FREE(MAX_gkkp_expanded_at_kpq)
  !

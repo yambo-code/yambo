@@ -30,7 +30,7 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use real_time,      ONLY:RT_bands,RT_levels,RT_is_dynamically_dephased,RT_nk
- use ELPH,           ONLY:ph_freqs_sq,PH_Q_modulus,PH_acoustic_branch
+ use ELPH,           ONLY:PH_freqs_sq,PH_Q_modulus,PH_acoustic_branch
  use R_lattice,      ONLY:bz_samp,bz_fine_grid
  use electrons,      ONLY:levels,spin_occ,E_fine_grid,n_sp_pol
  !
@@ -123,7 +123,7 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
      do iq=1,RT_ph_occ%D2
        iqbz = 1
        if (iq>1) iqbz = sum(q%nstar(:iq-1))+1
-       ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
+       ph_freq=abs(sqrt(PH_freqs_sq(iqbz,il)))
        if (PH_acoustic_branch(il)) then
          RT_ph_occ%N_ref(il,iq) = PH_Q_modulus(iqbz)*bose_f(ph_freq)/spin_occ
        else

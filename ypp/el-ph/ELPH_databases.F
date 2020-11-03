@@ -27,8 +27,8 @@ subroutine ELPH_databases(k,E,q)
  use stderr,              ONLY:intc
  use electrons,           ONLY:levels
  use interfaces,          ONLY:ELPH_alloc
- use ELPH,                ONLY:elph_use_q_grid,ph_modes,elph_nb,elph_nQ,GKKP,GKKP_bare,W_debye,&
-&                              elph_nk_bz,ph_kpt_bz,ph_freqs_sq,ph_qpt,pol_vector
+ use ELPH,                ONLY:elph_use_q_grid,ph_modes,elph_nb,elph_nQ,GKKP,GKKP_bare,PH_W_debye,&
+&                              elph_nk_bz,PH_freqs_sq,PH_qpt,PH_pol_vector,GKKP_me
  use com,                 ONLY:msg
  use D_lattice,           ONLY:nsym,sop_tab
  use R_lattice,           ONLY:bz_samp,qindx_B,nqibz
@@ -38,7 +38,7 @@ subroutine ELPH_databases(k,E,q)
 ! use YPPm,                ONLY:k_grid_printer
  use YPP_ELPH,            ONLY:ELPH_DB_alloc,ELPH_DB_free,DB_kind,DB_nq,DB_ph_K_sym_table,DB_nb,&
 &                              ph_freqs_file,ph_modes_file,use_ext_ph_freqs,use_ext_ph_modes,DB_ph_modes,&
-&                              DB_ph_pol_vec,DB_Q_map,DB_ph_freq_sq,DB_ph_qpt
+&                              DB_PH_pol_vec,DB_Q_map,DB_ph_freq_sq,DB_PH_qpt
  use LIVE_t,              ONLY:live_timing 
  use IO_m,                ONLY:io_control,OP_APP_CL
  !
@@ -55,6 +55,7 @@ subroutine ELPH_databases(k,E,q)
  integer, external  ::ELPH_databases_IO_elemental,io_ELPH
  logical, external  ::file_exists
  real(SP)           ::v(3)
+ type(GKKP_me)      ::GKKP_expanded
  !
  call section("*","== Electron-Phonon Databases ==")
  !
@@ -125,18 +126,18 @@ subroutine ELPH_databases(k,E,q)
  !-------------------------
  use_ext_ph_freqs=.false.
  if (file_exists(trim(ph_freqs_file))) then
-   call msg('s',"Phonon frequencies (re)read from: "//trim(ph_freqs_file))
+   call msg('s',"Phonon frequencies read from: "//trim(ph_freqs_file))
    use_ext_ph_freqs=.true.
  endif
  use_ext_ph_modes=.false.
  if (file_exists(trim(ph_modes_file))) then
-   call msg('s',"Phonon modes (re)read from: "//trim(ph_modes_file))
+   call msg('s',"Phonon modes read from: "//trim(ph_modes_file))
    use_ext_ph_modes=.true.
  endif
  !
  ! ... Frequencies & Pol Vectors
  !-------------------------------
- call live_timing('ELPH databases: frequencies and  pol vectors',DB_nq)
+ call live_timing('ELPH databases: phonon frequencies and eigenvectors',DB_nq)
  do iq=1,DB_nq
    io_err(1)=ELPH_databases_IO_elemental("dV FREQS POL_VEC",iq)
    call live_timing(steps=1)
@@ -145,7 +146,7 @@ subroutine ELPH_databases(k,E,q)
  !
  ! ... Grids check 
  !-----------------
- call live_timing('ELPH databases:  K/Q-grids check',DB_nq)
+ call live_timing('ELPH databases: K+Q-grid check',DB_nq)
  do iq=1,DB_nq
    io_err(1)=ELPH_databases_IO_elemental("dV KPT",iq)
    call ELPH_databases_IO_grids_check(k)
@@ -157,7 +158,7 @@ subroutine ELPH_databases(k,E,q)
  !------------------------
  do idb=1,DB_nq
    do iq=1,nqibz
-     v=DB_ph_qpt(iabs(IDB),:)
+     v=DB_PH_qpt(iabs(IDB),:)
      if (v_is_zero(v+q%pt(iq,:),zero_=k_iku_zero)) DB_Q_map(iabs(IDB))=iq
    enddo
  enddo
@@ -169,7 +170,7 @@ subroutine ELPH_databases(k,E,q)
  call msg('s',':: Bands                 :',DB_nb)
  call msg('s',':: Branches              :',DB_ph_modes)
  call msg('s',':: Uniform sampling      :',elph_use_q_grid)
- call msg('s',':: Debye Energy          :',W_debye*1000.,"[meV]")
+ call msg('s',':: Debye Energy          :',PH_W_debye*1000.,"[meV]")
  !
  ! ... Transfer and write ...
  !----------------------------
@@ -177,15 +178,14 @@ subroutine ELPH_databases(k,E,q)
  elph_nb    =DB_nb
  elph_nQ    =DB_nq
  if (l_gkkp_expand) elph_nQ=q%nbz
- call ELPH_alloc("PHONONS")
  elph_nk_bz =k%nbz
- ph_kpt_bz  =k%ptbz
- call ELPH_alloc("dV",GKKP=GKKP,Nq=1)
- call ELPH_alloc("DW",GKKP=GKKP,Nq=1)
- if (l_gkkp_bare) call ELPH_alloc("dV_bare",GKKP=GKKP_bare,Nq=1)
+ call ELPH_alloc("PHONONS")
+ call ELPH_alloc("dV",GKKP=GKKP,Nq_mem=1)
+ call ELPH_alloc("DW",GKKP=GKKP,Nq_mem=1)
+ if (l_gkkp_bare) call ELPH_alloc("dV_bare",GKKP=GKKP_bare,Nq_mem=1)
  !
  !... Frequencies & pol vectors
- pol_vector=DB_ph_pol_vec
+ !
  do idb=1,DB_nq
    iq=DB_Q_map(idb)
    if (l_gkkp_expand) then
@@ -193,12 +193,14 @@ subroutine ELPH_databases(k,E,q)
      if (iq>1) iq_bz=sum(q%nstar(:iq-1))
      do i_star=1,q%nstar(iq)
        iq_bz=iq_bz+i_star
-       ph_freqs_sq(iq_bz,:)=DB_ph_freq_sq(idb,:)
-       ph_qpt(iq_bz,:)=q%ptbz(iq_bz,:)
+       PH_freqs_sq(iq_bz,:)      =abs(DB_ph_freq_sq(idb,:))
+       PH_qpt(iq_bz,:)           =q%ptbz(iq_bz,:)
+       PH_pol_vector(:,:,:,iq_bz)=DB_PH_pol_vec(idb,:,:,:)
      enddo
    else
-     ph_freqs_sq(:,:)=DB_ph_freq_sq(:,:)
-     ph_qpt(:,:)     =DB_ph_qpt(:,:)
+     PH_freqs_sq(iq,:)      =abs(DB_ph_freq_sq(idb,:))
+     PH_qpt(iq,:)           =DB_PH_qpt(idb,:)
+     PH_pol_vector(:,:,:,iq)=DB_PH_pol_vec(idb,:,:,:)
    endif
  enddo
  !
@@ -208,11 +210,13 @@ subroutine ELPH_databases(k,E,q)
    !
    io_err(1)=ELPH_databases_IO_elemental("dV KPT GKKP",idb)
    call ELPH_databases_IO_grids_check(k)
-   call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP,l_gkkp_expand)
+   call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP)
+   call ELPH_databases_IO_gkkp_expand("K",DB_Q_map(idb),1,k,GKKP,GKKP_expanded)
    !
    if (l_gkkp_bare) then 
      io_err(2)=ELPH_databases_IO_elemental("dV_bare GKKP",idb)
-     call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP_bare,l_gkkp_expand)
+     call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP_bare)
+     call ELPH_databases_IO_gkkp_expand("K",DB_Q_map(idb),1,k,GKKP_bare,GKKP_expanded)
    endif
    !
    call live_timing(steps=1)
@@ -223,8 +227,8 @@ subroutine ELPH_databases(k,E,q)
      if (iq>1) iq_bz=sum(q%nstar(:iq-1))
      do i_star=1,q%nstar(iq)
        iq_bz=iq_bz+i_star
-       !call ELPH_databases_IO_transfer_gkkp_expand(iq_bz,1,k,GKKP)
-       !if (l_gkkp_bare) call ELPH_databases_IO_transfer_gkkp_expand(iq_bz,1,k,GKKP_bare)
+       call ELPH_databases_IO_gkkp_expand("Q",iq,q%star(iq,i_star),k,GKKP,GKKP_expanded)
+       if (l_gkkp_bare) call ELPH_databases_IO_gkkp_expand("Q",iq,q%star(iq,i_star),k,GKKP,GKKP_expanded)
        if (iq_bz==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
        if (iq_bz> 1) call io_control(ACTION=OP_APP_CL,SEC=(/iq_bz+1/),ID=ID)
        io_err(3)=io_ELPH(ID,'gkkp_expanded')

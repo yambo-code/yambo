@@ -33,7 +33,7 @@ subroutine ELPH_acoustic_phonon_properties(q)
  use pars,           ONLY:schlen,rZERO,SP
  use vec_operate,    ONLY:v_norm
  use R_lattice,      ONLY:bz_samp
- use ELPH,           ONLY:ph_freqs_sq,ph_modes,PH_acoustic_branch,PH_acoustic_speed,PH_Q_modulus
+ use ELPH,           ONLY:PH_freqs_sq,ph_modes,PH_acoustic_branch,PH_acoustic_speed,PH_Q_modulus
  use stderr,         ONLY:intc
  use com,            ONLY:msg
  !
@@ -50,11 +50,11 @@ subroutine ELPH_acoustic_phonon_properties(q)
  ! Acoustic Branches
  !-------------------
  aco_string=" "
- GAMMA_E_ph=abs( sqrt(ph_freqs_sq(1,:)) )
+ GAMMA_E_ph=abs( sqrt(PH_freqs_sq(1,:)) )
  do il=1,ph_modes
    delta_E=GAMMA_E_ph(il)-minval(GAMMA_E_ph)
    if (delta_E<0.01/HA2EV) then
-     ph_freqs_sq(1,il)=rZERO
+     PH_freqs_sq(1,il)=rZERO
      if (.not.any(PH_acoustic_branch)) aco_string=trim(intc(il))
      if (     any(PH_acoustic_branch)) aco_string=trim(aco_string)//" - "//trim(intc(il))
      PH_acoustic_branch(il)=.TRUE.
@@ -70,7 +70,7 @@ subroutine ELPH_acoustic_phonon_properties(q)
      PH_acoustic_speed(iq,il)=rZERO
      PH_Q_modulus(iq)=v_norm(q%ptbz(iq,:))
      if (.not.PH_acoustic_branch(il)) cycle
-     PH_acoustic_speed(iq,il)=sqrt(ph_freqs_sq(iq,il))/PH_Q_modulus(iq)
+     PH_acoustic_speed(iq,il)=sqrt(PH_freqs_sq(iq,il))/PH_Q_modulus(iq)
    enddo
  enddo 
  !

@@ -33,9 +33,9 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  use YPP_ELPH,            ONLY:elph_steps,ph_broad
  use stderr,              ONLY:intc
  use interfaces,          ONLY:ELPH_alloc
- use ELPH,                ONLY:W_debye,elph_nQ_used,ph_modes,&
+ use ELPH,                ONLY:PH_W_debye,elph_nQ_used,ph_modes,&
 &                              gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,&
-&                              gsqF_life_f ,elph_use_q_grid,ph_freqs_sq
+&                              gsqF_life_f ,elph_use_q_grid,PH_freqs_sq
  use IO_m,                ONLY:io_control,OP_RD,RD,DUMP,RD_CL
  use BS_solvers,          ONLY:BS_mat,BSS_eh_table
  use BS,                  ONLY:BS_K_dim,BS_bands
@@ -135,7 +135,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  !
  call W_reset(g_sq_F_E)
  g_sq_F_E%n_freqs=elph_steps
- g_sq_F_E%er=(/0._SP,W_debye*1.1/)
+ g_sq_F_E%er=(/0._SP,PH_W_debye*1.1/)
  g_sq_F_E%dr=ph_broad
  call FREQUENCIES_setup(g_sq_F_E)
  call PP_indexes_reset(px)
@@ -179,8 +179,8 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
      !
      do il=1,ph_modes
        !
-       if (.not.elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq(iq,il))
-       if (     elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq( q%sstar(iq,1) ,il))
+       if (.not.elph_use_q_grid) ph_freq=sqrt(PH_freqs_sq(iq,il))
+       if (     elph_use_q_grid) ph_freq=sqrt(PH_freqs_sq( q%sstar(iq,1) ,il))
        !
        ! g^2 F function(s)
        !

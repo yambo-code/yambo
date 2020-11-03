@@ -30,7 +30,7 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
  use R_lattice,     ONLY:nqbz
  use ELPH,          ONLY:gsqF_energy_steps,gsqF_energy_steps,gsqF_ca_corr,gsqF_fan,gsqF_life_f,&
 &                        gsqF_life_bose,gsqF_dw,elph_branches,elph_nQ_used,&
-&                        elph_use_q_grid,ph_freqs_sq,QP_DW,QP_OMS_Fan,elph_use_q_grid
+&                        elph_use_q_grid,PH_freqs_sq,QP_DW,QP_OMS_Fan,elph_use_q_grid
  use QP_m,          ONLY:QP_solver,QP_Sc_steps,QP_Sc_steps,QP_n_states,QP_Sc,On_Mass_Shell_approx,&
 &                        QP_table
  use parallel_m,    ONLY:PAR_nQ_bz,PAR_nQP,PAR_IND_QP,PAR_Q_bz_index,PAR_IND_Q_bz,PAR_COM_G_b_INDEX
@@ -104,8 +104,8 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
      !
      do il=elph_branches(1),elph_branches(2)
        !
-       if (.not.elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq(iq_loop,il))
-       if (     elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq( q%sstar(iq_loop,1) ,il))
+       if (.not.elph_use_q_grid) ph_freq=sqrt(PH_freqs_sq(iq_loop,il))
+       if (     elph_use_q_grid) ph_freq=sqrt(PH_freqs_sq( q%sstar(iq_loop,1) ,il))
        !
        do iw=1,gsqF_energy_steps
          !

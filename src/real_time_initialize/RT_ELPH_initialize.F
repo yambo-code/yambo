@@ -29,7 +29,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  use drivers,        ONLY:l_elph_scatt,l_phel_scatt
  use R_lattice,      ONLY:bz_samp
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,NONE
- use ELPH,           ONLY:ph_freqs_sq,W_debye
+ use ELPH,           ONLY:PH_freqs_sq,PH_W_debye
  !
 #include<memory.h>
  !
@@ -79,7 +79,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  ! Test of the effect of using a single optical mode
  !                               ===================
  !
- if (l_use_Debye_E) ph_freqs_sq=W_debye**2
+ if (l_use_Debye_E) PH_freqs_sq=PH_W_debye**2
  !
  ! Q weights 
  !===========

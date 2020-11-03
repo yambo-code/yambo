@@ -28,36 +28,44 @@ module ELPH
  !
  implicit none
  !
+ ! Dumensions
  integer   :: ph_modes=0
  integer   :: elph_nb=0
  integer   :: elph_nk_bz=0
  integer   :: elph_nQ=0
  integer   :: elph_nQ_used=0
  integer   :: elph_branches(2)=0
- real(SP)  :: W_debye=rZERO
+ !
  logical   :: elph_use_q_grid=.TRUE.
  logical   :: elph_grids_are_expanded=.FALSE.
+ !
+ ! QP props
  real(SP),    allocatable :: QP_OMS_Fan(:)
  real(SP),    allocatable :: QP_DW(:)
- real(SP),    allocatable :: ph_kpt_bz(:,:)
- real(SP),    allocatable :: ph_qpt(:,:)
- real(SP),    allocatable :: ph_freqs_sq(:,:)
- complex(SP), allocatable :: pol_vector(:,:,:)
+ !
+ ! PHONON props 
+ real(SP)                 :: PH_W_debye=rZERO
+ real(SP),    allocatable :: PH_kpt_bz(:,:)
+ real(SP),    allocatable :: PH_qpt(:,:)
+ real(SP),    allocatable :: PH_freqs_sq(:,:)
+ complex(SP), allocatable :: PH_pol_vector(:,:,:,:)
+ real(SP),    allocatable :: PH_Q_modulus(:)
+ real(SP),    allocatable :: PH_acoustic_speed(:,:)
+ logical,     allocatable :: PH_acoustic_branch(:)
  !
  ! GKKP Matrix Elements and derived quantities
- !
  type GKKP_me
    !
    character(schlen)        :: KIND="none" ! dV, dV_bare, dV_sq, DW, dV_bare_sq
    !
-   ! dVr/c(Nb,Nb,Nmodes,Nk,Nq)
+   ! dVr/c(Nmodes,Nb,Nb,Nk,Nq)
    real(SP),    allocatable :: dVr(:,:,:,:,:)
    complex(SP), allocatable :: dVc(:,:,:,:,:)
    !
    ! Phonon assisted energy/occupation levels
    type(levels),allocatable :: E_kpq(:)
    !
-   integer                  :: Nq=0
+   integer                  :: Nq_mem=0
    integer                  :: Nb(2)=0
    integer                  :: Nmodes(2)=0
    integer                  :: Nk=0
@@ -77,12 +85,6 @@ module ELPH
  !
  integer,     allocatable :: Q_io_map(:)
  integer,     allocatable :: K_io_map(:)
- !
- ! Phonon properties
- !
- real(SP),    allocatable :: PH_Q_modulus(:)
- real(SP),    allocatable :: PH_acoustic_speed(:,:)
- logical,     allocatable :: PH_acoustic_branch(:)
  !
  ! El_h Hamiltonian
  !

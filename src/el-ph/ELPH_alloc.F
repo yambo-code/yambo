@@ -21,36 +21,36 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq)
+subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq_mem)
  !
  use pars,          ONLY:rZERO,cZERO
  use D_lattice,     ONLY:n_atoms
  use R_lattice,     ONLY:nkbz
  use electrons,     ONLY:E_reset
  use QP_m,          ONLY:QP_n_states
- use ELPH,          ONLY:GKKP_me,pol_vector,ph_modes,ph_kpt_bz,ph_freqs_sq,&
+ use ELPH,          ONLY:GKKP_me,PH_pol_vector,ph_modes,PH_kpt_bz,PH_freqs_sq,&
 &                        PH_acoustic_speed,PH_acoustic_branch,gsqF_life_f,gsqF_life_bose,gsqF_fan,&
-&                        gsqF_ca_corr,gsqF_dw,PH_Q_modulus,ph_qpt,elph_nb,elph_nQ,eval_G_using_KK,&
-&                        gsqF_energy_steps
+&                        gsqF_ca_corr,gsqF_dw,PH_Q_modulus,PH_qpt,elph_nb,elph_nQ,eval_G_using_KK,&
+&                        gsqF_energy_steps,elph_nk_bz
  use parallel_m,    ONLY:PAR_nQ_bz
  !
 #include<memory.h>
  !
  character(*)            ::what
  type(GKKP_me), optional ::GKKP
- integer,       optional ::Nq,Nb(2),Nk,Nm(2)
+ integer,       optional ::Nb(2),Nk,Nm(2),Nq_mem
  !
  ! Work Space
  !
  integer :: iq
  !
  if (present(GKKP)) then
-   GKKP%Nq=elph_nQ
+   GKKP%Nq_mem=1
    GKKP%Nb=(/1,elph_nb/)
    GKKP%Nmodes=(/1,ph_modes/)
    GKKP%Nk=nkbz
-   if (present(Nq)) then
-     GKKP%Nq=Nq
+   if (present(Nq_mem)) then
+     GKKP%Nq_mem=Nq_mem
    endif
    if (present(Nb)) then
      GKKP%Nb=Nb
@@ -67,12 +67,12 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq)
    !
    case ('DW')
      GKKP%KIND="DW"
-     YAMBO_ALLOC(GKKP%dVr,(GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nmodes(1):GKKP%Nmodes(2),GKKP%Nk,GKKP%Nq))
+     YAMBO_ALLOC(GKKP%dVr,(GKKP%Nmodes(1):GKKP%Nmodes(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk,GKKP%Nq_mem))
      GKKP%dVr=rZERO
      !
    case ('dV','dV_bare')
      GKKP%KIND=trim(what)
-     YAMBO_ALLOC(GKKP%dVc,(GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nmodes(1):GKKP%Nmodes(2),GKKP%Nk,GKKP%Nq))
+     YAMBO_ALLOC(GKKP%dVc,(GKKP%Nmodes(1):GKKP%Nmodes(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk,GKKP%Nq_mem))
      GKKP%dVc=cZERO
      allocate(GKKP%E_kpq(elph_nQ))
      do iq=1,elph_nQ
@@ -98,20 +98,22 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq)
      !
    case ('PHONONS')
      !
-     if (.not.allocated(ph_freqs_sq)) then
-       YAMBO_ALLOC(ph_freqs_sq,(elph_nQ,ph_modes))
-       ph_freqs_sq=rZERO
+     if (.not.allocated(PH_freqs_sq)) then
+       !
+       YAMBO_ALLOC(PH_freqs_sq,(elph_nQ,ph_modes))
+       YAMBO_ALLOC(PH_pol_vector,(ph_modes,n_atoms,3,elph_nQ))
+       YAMBO_ALLOC(PH_qpt,(elph_nQ,3))
+       YAMBO_ALLOC(PH_kpt_bz,(elph_nk_bz,3))
        YAMBO_ALLOC(PH_Q_modulus,(elph_nQ))
        YAMBO_ALLOC(PH_acoustic_speed,(elph_nQ,ph_modes))
        YAMBO_ALLOC(PH_acoustic_branch,(ph_modes))
-       YAMBO_ALLOC(pol_vector,(ph_modes,n_atoms,3))
+       PH_pol_vector=rZERO
+       PH_qpt=rZERO
+       PH_freqs_sq=rZERO
        PH_Q_modulus=rZERO
        PH_acoustic_speed=rZERO
        PH_acoustic_branch=.FALSE.
-     endif
-     if (.not.allocated(ph_qpt)) then
-       YAMBO_ALLOC(ph_qpt,(elph_nQ,3))
-       YAMBO_ALLOC(ph_kpt_bz,(nkbz,3))
+       !
      endif
      !
    case ('FREE')
@@ -121,18 +123,19 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq)
        YAMBO_FREE(gsqF_ca_corr)
        YAMBO_FREE(gsqF_life_bose)
        YAMBO_FREE(gsqF_life_f)
-       YAMBO_FREE(ph_freqs_sq)
-       YAMBO_FREE(pol_vector)
-       YAMBO_FREE(ph_qpt)
-       YAMBO_FREE(ph_kpt_bz)
+       !
        YAMBO_FREE(PH_Q_modulus)
        YAMBO_FREE(PH_acoustic_speed)
        YAMBO_FREE(PH_acoustic_branch)
+       !
+       YAMBO_FREE(PH_freqs_sq)
+       YAMBO_FREE(PH_pol_vector)
+       YAMBO_FREE(PH_qpt)
+       YAMBO_FREE(PH_kpt_bz)
+       !
      else
-       do iq=1,GKKP%Nq
-         YAMBO_FREE(GKKP%dVr)
-         YAMBO_FREE(GKKP%dVc)
-       enddo
+       YAMBO_FREE(GKKP%dVr)
+       YAMBO_FREE(GKKP%dVc)
        if (.not.allocated(GKKP%E_kpq)) return
        do iq=1,elph_nQ
          call E_reset( GKKP%E_kpq(iq) )

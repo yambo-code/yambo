@@ -25,7 +25,7 @@ subroutine ELPH_Q_databases_map(k,q)
  !
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp
- use ELPH,           ONLY:ph_qpt,ph_kpt_bz,elph_nQ,elph_nk_bz,K_io_map,Q_io_map
+ use ELPH,           ONLY:PH_qpt,PH_kpt_bz,elph_nQ,elph_nk_bz,K_io_map,Q_io_map
  use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
  !
@@ -52,7 +52,7 @@ subroutine ELPH_Q_databases_map(k,q)
  call k_ibz2bz(q,'i',.false.)
  do i1=1,q%nbz
    do i2=1,elph_nQ
-     call c2a(v_in=q%ptbz(i1,:)+ph_qpt(i2,:),v_out=v,mode="ki2a")
+     call c2a(v_in=q%ptbz(i1,:)+PH_qpt(i2,:),v_out=v,mode="ki2a")
      if (rlu_v_is_zero(v,zero_=k_rlu_zero)) Q_io_map(i1)=i2
    enddo
  enddo
@@ -65,7 +65,7 @@ subroutine ELPH_Q_databases_map(k,q)
  call k_ibz2bz(k,'i',.false.)
  do i1=1,k%nbz
    do i2=1,k%nbz
-     call c2a(v_in=k%ptbz(i1,:)-ph_kpt_bz(i2,:),v_out=v,mode="ki2a")
+     call c2a(v_in=k%ptbz(i1,:)-PH_kpt_bz(i2,:),v_out=v,mode="ki2a")
      if (rlu_v_is_zero(v,zero_=k_rlu_zero)) K_io_map(i1)=i2
    enddo
  enddo

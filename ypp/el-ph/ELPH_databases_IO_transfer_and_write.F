@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,q,GKKP,EXPAND)
+subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,q,GKKP)
  !
  use pars,                ONLY:SP,DP,rZERO
  use D_lattice,           ONLY:n_atoms
  use R_lattice,           ONLY:bz_samp
  use ELPH,                ONLY:GKKP_me
  use YPP_ELPH,            ONLY:DB_ph_pol_vec,DB_E_k,DB_kind,DB_K_map,DB_nk,DB_gkkp,&
-&                              DB_nb,DB_ph_modes,DB_grad_at_gamma,DB_E_k_plus_q
+&                              DB_nb,DB_ph_modes,DB_grad_at_gamma,DB_E_k_plus_q,DB_Q_map
  use electrons,           ONLY:levels
  !
  implicit none
@@ -37,13 +37,14 @@ subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,q,GKKP,EXPAND)
  type(bz_samp) :: k,q
  type(levels)  :: E
  type(GKKP_me) :: GKKP
- logical       :: EXPAND
  !
  ! Work Space
  !
- integer     :: ia,ja,i,j,ik_db,ik_bz,ib1,ib2,il
+ integer     :: ia,ja,i,j,ik_db,ik_bz,ib1,ib2,il,iq
  complex(DP) :: DW_ws_L(n_atoms),DW_ws_R(n_atoms)
  real(SP)    :: E_shift
+ !
+ iq=DB_Q_map(IDB)
  !
  ! GKKP & Levels
  !===============
@@ -72,7 +73,7 @@ subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,q,GKKP,EXPAND)
    ! where k_bz = DB_K_map(ik_db). Note that this procedure implies that YAMBO {q}'s
    ! are -{q}'s in GS (note the MinusQ flag).
    !
-   GKKP%E_kpq(1)%E(:,ik_bz,1)=rZERO
+   GKKP%E_kpq(iq)%E(:,ik_bz,1)=rZERO
    !
    if (trim(DB_kind)=="PWscf") then
      !
@@ -81,18 +82,20 @@ subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,q,GKKP,EXPAND)
      !
      E_shift=DB_E_k(1,ik_db)-(E%E(1,k%sstar(ik_bz,1),1)+E%E_Fermi)
      !
-     GKKP%E_kpq(1)%E(:,ik_bz,1)=DB_E_k_plus_q(:,ik_db)-E_shift
+     GKKP%E_kpq(iq)%E(:,ik_bz,1)=DB_E_k_plus_q(:,ik_db)-E_shift
      !
    endif
-   !
-   GKKP%dVc(:,:,:,ik_bz,1)=DB_gkkp(:,:,:,ik_db)
-   !
-   if (trim(GKKP%KIND)=="dV_bare") cycle
    !
    do ib1=1,DB_nb
      do ib2=1,DB_nb
        !
+       GKKP%dVc(:,ib1,ib2,ik_bz,1)=DB_gkkp(ib1,ib2,:,ik_db)
+       !
+       if (trim(GKKP%KIND)=="dV_bare") cycle
+       !
        ! Debye Waller Term
+       !
+       GKKP%dVr(:,ib1,ib2,ik_bz,1)=rZERO
        !
        do il=1,DB_ph_modes
          !
@@ -102,19 +105,19 @@ subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,q,GKKP,EXPAND)
          do ja=1,n_atoms
            do ia=1,n_atoms
              do i=1,3
-               DW_ws_L(ja)=DW_ws_L(ja)+DB_grad_at_gamma(ib1,ib2,ia,i,ik_db)*DB_ph_pol_vec(il,ia,i)
+               DW_ws_L(ja)=DW_ws_L(ja)+DB_grad_at_gamma(ib1,ib2,ia,i,ik_db)*DB_ph_pol_vec(IDB,il,ia,i)
             enddo
            enddo
          enddo
          !
          do ja=1,n_atoms
            do j=1,3
-             DW_ws_R(ja)=DW_ws_R(ja)+DB_grad_at_gamma(ib2,ib1,ja,j,ik_db)*conjg(DB_ph_pol_vec(il,ja,j))
+             DW_ws_R(ja)=DW_ws_R(ja)+DB_grad_at_gamma(ib2,ib1,ja,j,ik_db)*conjg(DB_ph_pol_vec(IDB,il,ja,j))
           enddo
          enddo
          !
          do ja=1,n_atoms
-           GKKP%dVr(ib1,ib2,il,ik_bz,1)=GKKP%dVr(ib1,ib2,il,ik_bz,1)+2._SP*real( DW_ws_L(ja)*DW_ws_R(ja) , SP )
+           GKKP%dVr(il,ib1,ib2,ik_bz,1)=GKKP%dVr(il,ib1,ib2,ik_bz,1)+2._SP*real( DW_ws_L(ja)*DW_ws_R(ja) , SP )
          enddo
        enddo
        !

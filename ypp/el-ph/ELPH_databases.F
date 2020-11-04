@@ -185,8 +185,7 @@ subroutine ELPH_databases(k,E,q)
  if (l_gkkp_expand) elph_nQ=q%nbz
  elph_nk_bz =k%nbz
  call ELPH_alloc("PHONONS")
- call ELPH_alloc("dV",GKKP=GKKP,Nq_mem=1)
- call ELPH_alloc("DW",GKKP=GKKP,Nq_mem=1)
+ call ELPH_alloc("dV DW",GKKP=GKKP,Nq_mem=1)
  if (l_gkkp_bare) call ELPH_alloc("dV_bare",GKKP=GKKP_bare,Nq_mem=1)
  !
  !... Frequencies & pol vectors
@@ -259,8 +258,10 @@ subroutine ELPH_databases(k,E,q)
  !=======
  call ELPH_DB_free( )
  call ELPH_alloc("FREE",GKKP=GKKP)
- call ELPH_alloc("FREE",GKKP=GKKP_bare_save)
  call ELPH_alloc("FREE",GKKP=GKKP_save)
- if (l_gkkp_bare) call ELPH_alloc("FREE",GKKP=GKKP_bare)
+ if (l_gkkp_bare) then
+   call ELPH_alloc("FREE",GKKP=GKKP_bare)
+   call ELPH_alloc("FREE",GKKP=GKKP_bare_save)
+ endif
  !
 end subroutine

@@ -23,7 +23,7 @@
 !
 subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq_mem)
  !
- use pars,          ONLY:rZERO,cZERO
+ use pars,          ONLY:rZERO,cZERO,schlen
  use D_lattice,     ONLY:n_atoms
  use R_lattice,     ONLY:nkbz
  use electrons,     ONLY:E_reset
@@ -33,6 +33,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq_mem)
 &                        gsqF_ca_corr,gsqF_dw,PH_Q_modulus,PH_qpt,elph_nb,elph_nQ,eval_G_using_KK,&
 &                        gsqF_energy_steps,elph_nk_bz
  use parallel_m,    ONLY:PAR_nQ_bz
+ use stderr,        ONLY:STRING_split
  !
 #include<memory.h>
  !
@@ -42,7 +43,10 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq_mem)
  !
  ! Work Space
  !
- integer :: iq
+ integer          ::iq,is,NS
+ character(schlen)::strings(10)
+ !
+ call STRING_split(what,strings,n_non_empty_strings=NS)
  !
  if (present(GKKP)) then
    GKKP%Nq_mem=1
@@ -63,85 +67,104 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq_mem)
    endif
  endif
  !
- select case (trim(what))
+ do is=1,NS
    !
-   case ('DW')
-     GKKP%KIND="DW"
-     YAMBO_ALLOC(GKKP%dVr,(GKKP%Nmodes(1):GKKP%Nmodes(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk,GKKP%Nq_mem))
-     GKKP%dVr=rZERO
+   select case (trim(strings(is)))
      !
-   case ('dV','dV_bare')
-     GKKP%KIND=trim(what)
-     YAMBO_ALLOC(GKKP%dVc,(GKKP%Nmodes(1):GKKP%Nmodes(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk,GKKP%Nq_mem))
-     GKKP%dVc=cZERO
-     allocate(GKKP%E_kpq(elph_nQ))
-     do iq=1,elph_nQ
-       YAMBO_ALLOC(GKKP%E_kpq(iq)%E,(elph_nb,nkbz,1))
-       YAMBO_ALLOC(GKKP%E_kpq(iq)%f,(elph_nb,nkbz,1))
-     enddo
-   case ('gFsq')
-     !
-     if (.not.allocated(gsqF_fan)) then
-       if (.not.eval_G_using_KK) then
-         YAMBO_ALLOC(gsqF_fan,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
-         YAMBO_ALLOC(gsqF_ca_corr,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
-         gsqF_fan=rZERO
-         gsqF_ca_corr=rZERO
+     case ('DW')
+       if (.not.allocated(GKKP%dVr)) then
+         GKKP%KIND=trim(strings(is))
+         YAMBO_ALLOC(GKKP%dVr,(GKKP%Nmodes(1):GKKP%Nmodes(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk,GKKP%Nq_mem))
+         GKKP%dVr=rZERO
        endif
-       YAMBO_ALLOC(gsqF_dw,(QP_n_states,PAR_nQ_bz,ph_modes))
-       YAMBO_ALLOC(gsqF_life_bose,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
-       YAMBO_ALLOC(gsqF_life_f,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
-       gsqF_dw=rZERO
-       gsqF_life_bose=rZERO
-       gsqF_life_f=rZERO
-     endif
-     !
-   case ('PHONONS')
-     !
-     if (.not.allocated(PH_freqs_sq)) then
        !
-       YAMBO_ALLOC(PH_freqs_sq,(elph_nQ,ph_modes))
-       YAMBO_ALLOC(PH_pol_vector,(ph_modes,n_atoms,3,elph_nQ))
-       YAMBO_ALLOC(PH_qpt,(elph_nQ,3))
-       YAMBO_ALLOC(PH_kpt_bz,(elph_nk_bz,3))
-       YAMBO_ALLOC(PH_Q_modulus,(elph_nQ))
-       YAMBO_ALLOC(PH_acoustic_speed,(elph_nQ,ph_modes))
-       YAMBO_ALLOC(PH_acoustic_branch,(ph_modes))
-       PH_pol_vector=rZERO
-       PH_qpt=rZERO
-       PH_freqs_sq=rZERO
-       PH_Q_modulus=rZERO
-       PH_acoustic_speed=rZERO
-       PH_acoustic_branch=.FALSE.
+     case ('dV','dV_bare')
+       if (.not.allocated(GKKP%dVc)) then
+         GKKP%KIND=trim(strings(is))
+         YAMBO_ALLOC(GKKP%dVc,(GKKP%Nmodes(1):GKKP%Nmodes(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk,GKKP%Nq_mem))
+         GKKP%dVc=cZERO
+       endif
        !
-     endif
-     !
-   case ('FREE')
-     if (.not.present(GKKP)) then
-       YAMBO_FREE(gsqF_fan)
-       YAMBO_FREE(gsqF_dw)
-       YAMBO_FREE(gsqF_ca_corr)
-       YAMBO_FREE(gsqF_life_bose)
-       YAMBO_FREE(gsqF_life_f)
+     case ('LEVELS')
+       if (.not.allocated(GKKP%E_kpq)) then
+         allocate(GKKP%E_kpq(elph_nQ))
+         do iq=1,elph_nQ
+           YAMBO_ALLOC(GKKP%E_kpq(iq)%E,(elph_nb,nkbz,1))
+           YAMBO_ALLOC(GKKP%E_kpq(iq)%f,(elph_nb,nkbz,1))
+         enddo
+       endif
+     case ('gFsq')
        !
-       YAMBO_FREE(PH_Q_modulus)
-       YAMBO_FREE(PH_acoustic_speed)
-       YAMBO_FREE(PH_acoustic_branch)
+       if (.not.allocated(gsqF_fan)) then
+         if (.not.eval_G_using_KK) then
+           YAMBO_ALLOC(gsqF_fan,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
+           YAMBO_ALLOC(gsqF_ca_corr,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
+           gsqF_fan=rZERO
+           gsqF_ca_corr=rZERO
+         endif
+         YAMBO_ALLOC(gsqF_dw,(QP_n_states,PAR_nQ_bz,ph_modes))
+         YAMBO_ALLOC(gsqF_life_bose,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
+         YAMBO_ALLOC(gsqF_life_f,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
+         gsqF_dw=rZERO
+         gsqF_life_bose=rZERO
+         gsqF_life_f=rZERO
+       endif
        !
-       YAMBO_FREE(PH_freqs_sq)
-       YAMBO_FREE(PH_pol_vector)
-       YAMBO_FREE(PH_qpt)
-       YAMBO_FREE(PH_kpt_bz)
+     case ('PHONONS')
        !
-     else
-       YAMBO_FREE(GKKP%dVr)
-       YAMBO_FREE(GKKP%dVc)
-       if (.not.allocated(GKKP%E_kpq)) return
-       do iq=1,elph_nQ
-         call E_reset( GKKP%E_kpq(iq) )
-       enddo
-     endif
-     !
- end select
+       if (.not.allocated(PH_freqs_sq)) then
+         !
+         YAMBO_ALLOC(PH_freqs_sq,(elph_nQ,ph_modes))
+         YAMBO_ALLOC(PH_pol_vector,(ph_modes,n_atoms,3,elph_nQ))
+         YAMBO_ALLOC(PH_qpt,(elph_nQ,3))
+         YAMBO_ALLOC(PH_kpt_bz,(elph_nk_bz,3))
+         YAMBO_ALLOC(PH_Q_modulus,(elph_nQ))
+         YAMBO_ALLOC(PH_acoustic_speed,(elph_nQ,ph_modes))
+         YAMBO_ALLOC(PH_acoustic_branch,(ph_modes))
+         PH_pol_vector=rZERO
+         PH_qpt=rZERO
+         PH_freqs_sq=rZERO
+         PH_Q_modulus=rZERO
+         PH_acoustic_speed=rZERO
+         PH_acoustic_branch=.FALSE.
+         !
+       endif
+       !
+     case ('FREE')
+       if (.not.present(GKKP)) then
+         !
+         YAMBO_FREE(gsqF_fan)
+         YAMBO_FREE(gsqF_dw)
+         YAMBO_FREE(gsqF_ca_corr)
+         YAMBO_FREE(gsqF_life_bose)
+         YAMBO_FREE(gsqF_life_f)
+         !
+         YAMBO_FREE(PH_Q_modulus)
+         YAMBO_FREE(PH_acoustic_speed)
+         YAMBO_FREE(PH_acoustic_branch)
+         !
+         YAMBO_FREE(PH_freqs_sq)
+         YAMBO_FREE(PH_pol_vector)
+         YAMBO_FREE(PH_qpt)
+         YAMBO_FREE(PH_kpt_bz)
+         !
+         YAMBO_FREE(gsqF_fan)
+         YAMBO_FREE(gsqF_ca_corr)
+         YAMBO_FREE(gsqF_dw)
+         YAMBO_FREE(gsqF_life_bose)
+         YAMBO_FREE(gsqF_life_f)
+         !
+       else
+         YAMBO_FREE(GKKP%dVr)
+         YAMBO_FREE(GKKP%dVc)
+         if (.not.allocated(GKKP%E_kpq)) return
+         do iq=1,elph_nQ
+           call E_reset( GKKP%E_kpq(iq) )
+         enddo
+       endif
+       !
+   end select
+   !
+ enddo
  !
 end subroutine

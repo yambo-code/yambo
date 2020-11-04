@@ -51,7 +51,7 @@ subroutine INIT_q_points( )
  !
 #if defined _ELPH
  if (get_e_p_q_point(1,q_pt_db)==0) then
-   q_source="Electron-Phonon databases"
+   q_source="is read from the PWscf El-Ph databases"
    do ic=1,2
      nqibz=0
      do while(get_e_p_q_point(nqibz+1,q_pt_db)==0) 
@@ -63,7 +63,7 @@ subroutine INIT_q_points( )
      endif
    enddo
  else if (allocated(PH_qpt).and.elph_use_q_grid.and..not.elph_grids_are_expanded) then
-   q_source="Electron-Phonon databases"
+   q_source="is read from the El-Ph databases"
    nqibz=elph_nQ
    YAMBO_ALLOC(q_pt,(nqibz,3))
    q_pt(:,:)=-real(PH_qpt(:,:),SP)

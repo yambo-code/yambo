@@ -169,7 +169,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      q%nibz=nqibz
      YAMBO_ALLOC(q%pt,(q%nibz,3))
      q%pt=q_pt(:q%nibz,:)
-     call msg('rsn','[RL indx] Q-grid'//trim(q_source))
+     call msg('rsn','[BZ sampling] Q-grid '//trim(q_source))
      user_defined_qpts=.true.
    endif
    !

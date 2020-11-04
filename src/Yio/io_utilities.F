@@ -135,7 +135,6 @@ function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING,ALT_
  !
 end function get_name
 !
-!
 function all_locations(desc,subfolder)
  !
  use pars,            ONLY:lchlen,num_of_alternative_locations
@@ -189,7 +188,6 @@ function all_locations(desc,subfolder)
  enddo
  !
 end function all_locations
-!
 !
 function desc_to_varname(desc)
  !

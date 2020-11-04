@@ -35,6 +35,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
 &                              PH_W_debye,elph_nQ,elph_use_q_grid,&
 &                              GKKP,setup_k_plus_q_levels
  use IO_m,                ONLY:io_control,manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
+ use interfaces,          ONLY:ELPH_alloc
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_indexes,myid
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
@@ -228,7 +229,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !CLEAN
  !
  YAMBO_FREE(gamma)
- call ELPH_alloc('FREE')
+ call ELPH_alloc('FREE',GKKP=GKKP)
  !
  contains
    !

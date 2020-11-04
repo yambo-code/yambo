@@ -143,7 +143,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  io_err=io_ELPH(ID,'gkkp')
  if (io_err/=0) call error('El-Ph database not found')
  !
- call ELPH_alloc('gkkp')
+ call ELPH_alloc('dV',GKKP=GKKP)
  !
  ! Hamiltonian Loop
  !==================

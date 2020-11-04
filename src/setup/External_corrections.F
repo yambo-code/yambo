@@ -40,6 +40,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  ! GPL_EXCLUDE_END
  !
 #if defined _ELPH
+ use IO_m,          ONLY:io_control,OP_IF_START_RD_CL_IF_END,manage_action,DUMP,NONE
  use drivers,       ONLY:l_elph_corr
  use ELPH,          ONLY:GKKP,elph_nQ
 #endif
@@ -57,7 +58,11 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  ! GPL_EXCLUDE_START
  !
 #if defined _RT
- logical       ::l_apply_RT_corrections
+ logical           :: l_apply_RT_corrections
+#endif
+#if defined _ELPH
+ integer           :: ID,io_err
+ integer, external :: io_ELPH
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -118,8 +123,10 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
 #if defined _ELPH
  !    Green's Function (k+q levels loaded for the _ELPH)
  if (l_gw0.and.l_elph_corr) then
-   do iq=1,elph_nQ
-     call QP_apply(GKKP%Nb,GKKP%E_kpq(iq),k,"G",msg_fmt='rs',main_section=.TRUE.)
+   do iq=0,elph_nQ
+     call io_control(ACTION=manage_action(OP_IF_START_RD_CL_IF_END,iq,0,elph_nQ),COM=NONE,MODE=DUMP,SEC=(/iq+1/),ID=ID)
+     io_err=io_ELPH(ID,'no_matrix_elements')
+     if (iq>0) call QP_apply(GKKP%Nb,GKKP%E_kpq(iq),k,"G",msg_fmt='rs',main_section=.TRUE.)
    enddo
  endif
 #endif

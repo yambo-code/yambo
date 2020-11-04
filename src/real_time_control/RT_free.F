@@ -87,6 +87,7 @@ subroutine RT_free( )
  YAMBO_FREE(RT_Deph_Matrix)
  YAMBO_FREE(Q_io_map)
  YAMBO_FREE(K_io_map)
+ !
  call ELPH_alloc('FREE')
  YAMBO_FREE(elph_gkkp_expanded_sq)
  !

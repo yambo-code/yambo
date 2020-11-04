@@ -39,7 +39,7 @@ subroutine INIT_ypp_load(defs)
 &                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
 &                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,&
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
-&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,&
+&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,K_grid,&
 &                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_depth,PROJECT_steps,PROJECT_threshold
  use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
@@ -252,6 +252,8 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'ListPts',      ' List the internal q/k points also in the parser format') 
  call it('f',defs,'ExpandPts',    ' Expand the internal q/k points in the BZ') 
  call it('f',defs,'DipWeight',    ' Weight the contribution to the exciton WFs with the dipoles') 
+ call it('f',defs,'Shift01',      ' Generate k-points between 0 and 1 (similar to EPW and QE)') 
+ call it(defs,'KGrid',     'K-points grid',K_grid)
  !
  ! Excitons
  !

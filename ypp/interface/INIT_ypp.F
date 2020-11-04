@@ -31,7 +31,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,n_FineGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,FineGd_DB1_paths,l_angular_momentum,l_position,&
-&                         l_QP_DB_expand,l_average_eh
+&                         l_QP_DB_expand,l_average_eh,l_regular_grid
  use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev
  use it_tools,       ONLY:ofiles_append,infile_dump,runlevel_is_on,&
@@ -240,6 +240,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_q_grid=STRING_match(rstr_piece(i1+1),'q')
        l_shifted_grid=STRING_match(rstr_piece(i1+1),'s')
        l_random_grid=STRING_match(rstr_piece(i1+1),'r')
+       l_regular_grid=STRING_match(rstr_piece(i1+1),'e')
        !
        ! GPL_EXCLUDE_START 
        !
@@ -251,6 +252,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        if (l_q_grid) call initactivate(1,"Q_grid")
        if (l_shifted_grid) call initactivate(1,"Shifted_Grid")
        if (l_random_grid)  call initactivate(1,"Random_Grid")
+       if (l_regular_grid)  call initactivate(1,"Regular_Grid")
        if (l_high_sym_pts) call initactivate(1,"High_Symm")
      endif
      !
@@ -451,6 +453,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_q_grid    = runlevel_is_on('Q_grid')
  l_shifted_grid = runlevel_is_on('Shifted_Grid')
  l_random_grid  = runlevel_is_on('Random_Grid')
+ l_regular_grid = runlevel_is_on('Regular_Grid')
  l_high_sym_pts = runlevel_is_on('High_Symm')
  l_dos       =runlevel_is_on('dos')
  l_bands     =runlevel_is_on('bnds')
@@ -534,6 +537,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    if (l_high_sym_pts)  call initactivate(1,"cooOut PtsPath NPtsPath")
    if (l_shifted_grid)  call initactivate(1,"NoWeights cooIn cooOut")
    if (l_random_grid)   call initactivate(1,"NoWeights cooOut BZ_random_Nk GammaRadius")
+   if (l_regular_grid)  call initactivate(1,"NoWeights cooOut Shift01")
  endif
  !
  if ((l_dos.or.l_bands).and.n_spinor==2) call initactivate(1,'WFReference')

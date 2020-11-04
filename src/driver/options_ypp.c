@@ -32,7 +32,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  */
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="BZ Grid generator";
- options[*i_opt].long_desc[0]="<string>=(k)pt,(q)pt,(s)hifted,(h)igh symmetry,(r)andom";
+ options[*i_opt].long_desc[0]="<string>=(k)pt,(q)pt,(s)hifted,(h)igh symmetry,(r)andom,r(e)gular";
  options[*i_opt].long_opt="grid";
  options[*i_opt].short_opt='k';
  options[*i_opt].bin="ypp";

@@ -125,7 +125,7 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
    coo_out =coo_out_
    !
    call bz_samp_reset(CIRCUIT_q)
-   call generate_circuit(USER_q,CIRCUIT_q,Q_steps)
+!   call generate_circuit(USER_q,CIRCUIT_q,Q_steps)
    !
  endif
  !

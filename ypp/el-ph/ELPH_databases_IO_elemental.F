@@ -36,11 +36,11 @@ integer function ELPH_databases_IO_elemental(what,IDB)
  !     read (99) Ek_plus_q
  !   ENDDO
  !
- use pars,           ONLY:DP,schlen,SP
+ use pars,           ONLY:DP,schlen,SP,cZERO
  use ELPH,           ONLY:PH_W_debye
  use YPP_ELPH,       ONLY:DB_kind,DB_ph_modes,DB_nk,DB_nb,DB_ph_kpt,DB_PH_qpt,&
 &                         DB_ph_pol_vec,DB_ph_freq_sq,DB_alat,DB_E_k,DB_E_k_plus_q,&
-&                         DB_grad_at_gamma,DB_gkkp,elph_dbs_path
+&                         DB_grad_at_gamma,DB_gkkp,elph_dbs_path,DB_K_map
  use IO_m,           ONLY:io_control,OP_RD,RD_CL,io_connect,io_unit,io_disconnect
  use D_lattice,      ONLY:alat
  !
@@ -53,7 +53,7 @@ integer function ELPH_databases_IO_elemental(what,IDB)
  !
  character(schlen) :: dbph_name
  real(DP)          :: dVRY2Ha
- integer           :: ID,ik,ib,il
+ integer           :: ID,ik,ib,il,ik_yambo
  !
  ELPH_databases_IO_elemental=-1
  !
@@ -134,15 +134,22 @@ integer function ELPH_databases_IO_elemental(what,IDB)
  !
  ! GKKP
  !
+ if (IDB==1) DB_grad_at_gamma=cZERO
+                      DB_gkkp=cZERO
+ !
  do ik=1,DB_nk
+   !
+   ik_yambo=DB_K_map(ik)
    !
    read (io_unit(ID)) DB_gkkp(:,:,:,ik)
    read (io_unit(ID)) 
    !
-   if (IDB==1) read (io_unit(ID)) DB_grad_at_gamma(:,:,:,:,ik)
-   !
    DB_gkkp(:,:,:,ik)=DB_gkkp(:,:,:,ik)*dVRY2Ha
-   DB_grad_at_gamma(:,:,:,:,ik)=DB_grad_at_gamma(:,:,:,:,ik)*dVRY2Ha
+   !
+   if (IDB==1) then
+     read (io_unit(ID)) DB_grad_at_gamma(:,:,:,:,ik_yambo)
+     DB_grad_at_gamma(:,:,:,:,ik_yambo)=DB_grad_at_gamma(:,:,:,:,ik_yambo)*dVRY2Ha
+   endif
    !
    if (trim(DB_kind)=="PWscf") then
      !

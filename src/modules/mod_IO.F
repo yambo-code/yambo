@@ -680,6 +680,14 @@ module IO_m
      endif
    end function
    !
+   subroutine IO_return(ID,timing_string)
+     use timing_m,       ONLY:timing
+     integer          :: ID
+     character(*)     :: timing_string
+     call io_disconnect(ID=ID)
+     call timing(timing_string,OPR='stop')
+   end subroutine
+   !
    subroutine deliver_IO_error_message(i_err,DB,STOP_it)
      !
      integer          :: i_err

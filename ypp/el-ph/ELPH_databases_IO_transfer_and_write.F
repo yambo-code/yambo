@@ -23,7 +23,7 @@
 !
 subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,q,GKKP)
  !
- use pars,                ONLY:SP,DP,rZERO
+ use pars,                ONLY:SP,DP,rZERO,cZERO
  use D_lattice,           ONLY:n_atoms
  use R_lattice,           ONLY:bz_samp
  use ELPH,                ONLY:GKKP_me
@@ -45,6 +45,9 @@ subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,q,GKKP)
  real(SP)    :: E_shift
  !
  iq=DB_Q_map(IDB)
+ !
+ GKKP%dVc=cZERO
+ if (allocated(GKKP%dVr)) GKKP%dVr=rZERO
  !
  ! GKKP & Levels
  !===============
@@ -95,8 +98,6 @@ subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,q,GKKP)
        !
        ! Debye Waller Term
        !
-       GKKP%dVr(:,ib1,ib2,ik_bz,1)=rZERO
-       !
        do il=1,DB_ph_modes
          !
          DW_ws_L=(0._DP,0._DP)
@@ -105,14 +106,14 @@ subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,q,GKKP)
          do ja=1,n_atoms
            do ia=1,n_atoms
              do i=1,3
-               DW_ws_L(ja)=DW_ws_L(ja)+DB_grad_at_gamma(ib1,ib2,ia,i,ik_db)*DB_ph_pol_vec(IDB,il,ia,i)
+               DW_ws_L(ja)=DW_ws_L(ja)+DB_grad_at_gamma(ib1,ib2,ia,i,ik_bz)*DB_ph_pol_vec(IDB,il,ja,i)
             enddo
            enddo
          enddo
          !
          do ja=1,n_atoms
            do j=1,3
-             DW_ws_R(ja)=DW_ws_R(ja)+DB_grad_at_gamma(ib2,ib1,ja,j,ik_db)*conjg(DB_ph_pol_vec(IDB,il,ja,j))
+             DW_ws_R(ja)=DW_ws_R(ja)+DB_grad_at_gamma(ib2,ib1,ja,j,ik_bz)*conjg(DB_ph_pol_vec(IDB,il,ja,j))
           enddo
          enddo
          !

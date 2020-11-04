@@ -31,7 +31,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use YPPm,                ONLY:l_dos
  use YPP_ELPH,            ONLY:elph_steps,elph_Ef,elph_gamma_broad,&
 &                              ph_broad,l_eliashberg
- use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,PH_freqs_sq,&
+ use ELPH,                ONLY:ph_modes,elph_nb,GKKP,PH_freqs_sq,&
 &                              PH_W_debye,elph_nQ,elph_use_q_grid,&
 &                              GKKP,setup_k_plus_q_levels
  use IO_m,                ONLY:io_control,manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
@@ -291,7 +291,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
          !
          do im=1,ph_modes
            gamma(iq,im)=gamma(iq,im)+&
-  &              conjg(elph_gkkp(im,ib2,ib1,i1))*elph_gkkp(im,ib2,ib1,i1)*weight
+&                       conjg(GKKP%dVc(im,ib2,ib1,i1,1))*GKKP%dVc(im,ib2,ib1,i1,1)*weight
          enddo
        enddo
      enddo

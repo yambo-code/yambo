@@ -216,7 +216,7 @@ EOF
 set FILES = (  )
 
 if (-d $OBJ) then
- foreach kind ( "modified" "new" "renamed" )  
+ foreach kind ( "modified:" "new:" "renamed:" )  
   git status -uno $OBJ | grep $kind | grep -v '\.pl' | grep  -v '\.pm'  | grep -v '\.c' |grep -v '\.m4' | grep -v '\.git' |grep -v '\.\.\/' > LIST
   cat LIST | grep -v "mod_" | grep -v "Makefile" | grep -v "configure" | grep -v "\.h" | grep -v "\.object" | grep -v "\.tcsh" | grep -v "lib/yambo" > LIST
   sed -i -e 's/new file/new_file/g' LIST

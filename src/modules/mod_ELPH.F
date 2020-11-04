@@ -75,10 +75,6 @@ module ELPH
  type(GKKP_me), SAVE :: GKKP
  type(GKKP_me), SAVE :: GKKP_bare
  !
- real(SP),    allocatable :: elph_DW(:,:,:,:)
- complex(SP), allocatable :: elph_gkkp(:,:,:,:)
- complex(SP), allocatable :: elph_gkkp_bare(:,:,:,:)
- !
  ! ... Q-parallelization  and GKKP
  real(SP),    allocatable :: elph_gkkp_expanded_sq(:,:,:,:,:)
  real(SP),    allocatable :: phel_gkkp_expanded_sq(:,:,:,:,:)

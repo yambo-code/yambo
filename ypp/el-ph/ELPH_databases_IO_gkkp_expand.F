@@ -21,10 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP,GKKP_expanded)
+subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP)
  !
  use pars,                ONLY:SP
  use R_lattice,           ONLY:bz_samp,qindx_B
+ use interfaces,          ONLY:ELPH_alloc
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
  use ELPH,                ONLY:elph_nb,GKKP_me,PH_qpt
  use YPP_ELPH,            ONLY:DB_ph_K_sym_table,YAMBO_K_found
@@ -34,16 +35,20 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP,GKKP_expanded)
  character(*)  ::mode
  integer       ::iq,iq_s
  type(bz_samp) ::k
- type(GKKP_me) ::GKKP,GKKP_expanded
+ type(GKKP_me) ::GKKP
  !
  ! Work Space 
  !
- integer  ::ik_bz,ib,ob,ok,ik_bz_gkkp,os,ik,ok_bz,is,nsmall,small(nsym)
+ integer       ::ik_bz,ib,ob,ok,ik_bz_gkkp,os,ik,ok_bz,is,nsmall,small(nsym)
+ logical       ::local_K_found(k%nbz),l_bands_reverted
+ type(GKKP_me) ::GKKP_expanded
  !
  ! "K" mode
  !==========
  !
  if (mode=="K") then
+   !
+   local_K_found=YAMBO_K_found
    !
    ! The small group of q
    call q_small( )
@@ -51,14 +56,14 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP,GKKP_expanded)
    ! The GS K-grid is reduced using the small group of q. 
    ! I need to expand the K-grid to define the missing elements of elph_dV
    do ik=1,k%nbz
-     if (.not.YAMBO_K_found(ik)) cycle
+     if (.not.local_K_found(ik)) cycle
      do is=1,nsmall
        ik_bz=DB_ph_K_sym_table(ik,sop_inv(small(is)))
-       if (YAMBO_K_found(ik_bz)) cycle
-       GKKP%dVc(:,:,:,ik_bz,1)=GKKP%dVc(:,:,:,ik_bz,1)
-       if (allocated(GKKP%dVr)) GKKP%dVr(:,:,:,ik_bz,1)=GKKP%dVr(:,:,:,ik_bz,1)
+       if (local_K_found(ik_bz)) cycle
+       GKKP%dVc(:,:,:,ik_bz,1)=GKKP%dVc(:,:,:,ik,1)
+       if (allocated(GKKP%dVr)) GKKP%dVr(:,:,:,ik_bz,1)=GKKP%dVr(:,:,:,ik,1)
        GKKP%E_kpq(iq)%E(:,ik_bz,1)=GKKP%E_kpq(iq)%E(:,ik,1)
-       YAMBO_K_found(ik_bz)=.TRUE.
+       local_K_found(ik_bz)=.TRUE.
      enddo
    enddo
    !
@@ -69,6 +74,8 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP,GKKP_expanded)
  ! "Q" mode
  !==========
  ! GKKP m.e. rotation. Procedure copied from ELPH_Sigma_c
+ !
+ call ELPH_alloc("dV",GKKP=GKKP_expanded,Nq_mem=1)
  !
  do ik_bz=1,k%nbz
    !
@@ -83,42 +90,49 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP,GKKP_expanded)
      endif
    enddo
    !
+   l_bands_reverted=.FALSE.
+   ! 
+   ! When using a uniform Q grid I cycle on the q symmetries 
+   ! as well. To rotate the gkkp m.e. I use:
+   !
+   if (iq_s>nsym/(i_time_rev+1)) then
+     ! 
+     ! gkkp_{I_need}= <Tk+IRq n'|dV_{SCF}/du^{IRq nu}|Tk n>=
+     !                [<(R^-1 S p)+q n|dV_{SCF}/du^{q nu}|(R^-1 S p) n'>]^*= 
+     !                [gkkp(ik_bz,nu,n,n')]^*
+     ! 
+     ! with Tk + IRq = Sp 
+     !                                 R^-1                 S
+     !                                 -------------------- --
+     ik_bz_gkkp=k%k_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
+     !
+     l_bands_reverted=.TRUE.
+     !
+   else
+     ! 
+     ! gkkp_{I_need}= <Tk+Rq n'|dV_{SCF}/du^{Rq nu}|Tk n>=
+     !                <(R^-1 T k)+q n'|dV_{SCF}/du^{q nu}|(R^-1 T k) n>= 
+     !                gkkp(ik_bz,nu,n',n)
+     !
+     ik_bz_gkkp=k%k_table(ik,sop_tab(sop_inv(iq_s),is))
+     !
+   endif
+   !
    do ib=1,elph_nb
      do ob=1,elph_nb
-       ! 
-       ! When using a uniform Q grid I cycle on the q symmetries 
-       ! as well. To rotate the gkkp m.e. I use:
-       !
-       if (iq_s>nsym/(i_time_rev+1)) then
-         ! 
-         ! gkkp_{I_need}= <Tk+IRq n'|dV_{SCF}/du^{IRq nu}|Tk n>=
-         !                [<(R^-1 S p)+q n|dV_{SCF}/du^{q nu}|(R^-1 S p) n'>]^*= 
-         !                [gkkp(ik_bz,nu,n,n')]^*
-         ! 
-         ! with Tk + IRq = Sp 
-         !                                 R^-1                 S
-         !                                 -------------------- --
-         ik_bz_gkkp=k%k_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
-         !
-         !elph_gkkp_expanded(:,ob,ib,ik_bz)=conjg(elph_gkkp(:,ib,ob,ik_bz_gkkp))
-         !
+       if (l_bands_reverted) then
+         GKKP_expanded%dVc(:,ob,ib,ik_bz,1)=conjg(GKKP%dVc(:,ib,ob,ik_bz_gkkp,1))
        else
-         ! 
-         ! gkkp_{I_need}= <Tk+Rq n'|dV_{SCF}/du^{Rq nu}|Tk n>=
-         !                <(R^-1 T k)+q n'|dV_{SCF}/du^{q nu}|(R^-1 T k) n>= 
-         !                gkkp(ik_bz,nu,n',n)
-         !
-         ik_bz_gkkp=k%k_table(ik,sop_tab(sop_inv(iq_s),is))
-         !
-         !elph_gkkp_expanded(:,ib,ob,ik_bz)=elph_gkkp(:,ib,ob,ik_bz_gkkp)
-         !
+         GKKP_expanded%dVc(:,ib,ob,ik_bz,1)=GKKP%dVc(:,ib,ob,ik_bz_gkkp,1)
        endif
        !
      enddo
    enddo
  enddo
  !
- !elph_gkkp=elph_gkkp_expanded
+ GKKP%dVc=GKKP_expanded%dVc
+ !
+ call ELPH_alloc("FREE",GKKP=GKKP_expanded)
  !
  contains
    !

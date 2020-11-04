@@ -32,7 +32,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,qindx_S,nqbz
  use IO_m,           ONLY:io_control,OP_RD_CL
- use ELPH,           ONLY:PH_freqs_sq,elph_gkkp,ph_modes,elph_nb,MAX_gkkp,elph_gkkp_expanded_sq,&
+ use ELPH,           ONLY:PH_freqs_sq,GKKP,ph_modes,elph_nb,MAX_gkkp,elph_gkkp_expanded_sq,&
 &                         Q_io_map,K_io_map,phel_gkkp_expanded_sq
  use vec_operate,    ONLY:degeneration_finder
  use parallel_int,   ONLY:PP_redux_wait
@@ -54,7 +54,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  integer, external   ::io_ELPH
  !
  ! Control
- logical             ::l_BZ,l_IBZ,l_bare,l_dressed,l_square
+ logical             ::l_BZ,l_IBZ,l_bare,l_dressed
  !
  ! What?
  !=======
@@ -62,7 +62,6 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  l_BZ      = .not.l_IBZ
  l_bare    = index(mode,"bare")>0
  l_dressed = index(mode,"dressed")>0.or..not.l_bare
- l_square  = index(mode,"square")>0
  !
  ! Allocation
  !============
@@ -120,7 +119,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
          ! where the band indexes have been exchanged. Instead of doing a global change of the notes
          ! and of the code I decided, here, to exchange the indexes:
          !
-         gkkp_expanded_sq(i_n,i_np,:)=abs(elph_gkkp(:,i_np,i_n,K_io_map(ik_bz)))**2
+         gkkp_expanded_sq(i_n,i_np,:)=abs(GKKP%dVc(:,i_np,i_n,K_io_map(ik_bz),1))**2
          !
        enddo
      enddo

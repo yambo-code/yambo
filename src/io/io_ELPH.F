@@ -24,11 +24,11 @@
 integer function io_ELPH(ID,what)
  !
  use pars,           ONLY:SP,schlen,IP,LP
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,ver_is_gt_or_eq,&
+ use IO_m,           ONLY:io_connect,io_sec,ver_is_gt_or_eq,&
 &                         io_variable_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,def_variable_elemental,&
-&                         io_mode,DUMP,io_fragment,frag_ELPH,IO_INCOMPATIBLE_VAR
- use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,elph_gkkp,&
+&                         io_mode,DUMP,io_fragment,frag_ELPH,IO_INCOMPATIBLE_VAR,IO_return
+ use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,&
 &                         QP_PH_n_G_bands,PH_W_debye,elph_nQ,&
 &                         elph_use_q_grid,PH_qpt,PH_kpt_bz,elph_nQ_used,GKKP,GKKP_bare,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
@@ -81,13 +81,19 @@ integer function io_ELPH(ID,what)
  l_no_matrix_elements   =index(what,'no_matrix_elements')>0
  !
  io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_ELPH)
- if (io_ELPH/=0) goto 1
+ if (io_ELPH/=0) then
+   call IO_return(ID,"io_ELPH")
+   return
+ endif
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
    if (.not.elph_grids_are_expanded) io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.true.,FRAG=frag_ELPH)
    if (     elph_grids_are_expanded) io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.false.,IMPOSE_SN=.FALSE.,FRAG=frag_ELPH)
-   if (io_ELPH/=0) goto 1
+   if (io_ELPH/=0) then
+     call IO_return(ID,"io_ELPH")
+     return
+   endif
    !
    call def_variable_elemental(ID,"I_PARAMETERS",5,IP,0)
    call io_variable_elemental(ID,VAR="Phonon modes",I0=ph_modes,CHECK=.true.,OP=(/"=="/))
@@ -119,7 +125,10 @@ integer function io_ELPH(ID,what)
    endif
    !
    io_ELPH=io_status(ID)
-   if (io_ELPH/=0) goto 1
+   if (io_ELPH/=0) then
+     call IO_return(ID,"io_ELPH")
+     return
+   endif
    !
    call io_bulk(ID,VAR="MAX_PH_FREQ",VAR_SZ=(/1/))
    call io_bulk(ID,R0=PH_W_debye)
@@ -142,7 +151,8 @@ integer function io_ELPH(ID,what)
        call c2a(v_in=q_pt(iq,:)+PH_qpt(iq,:),v_out=v,mode="ki2a")
        if (.not.rlu_v_is_zero(v,zero_=k_rlu_zero)) then
          io_ELPH=IO_INCOMPATIBLE_VAR
-         goto 1
+         call IO_return(ID,"io_ELPH")
+         return
        endif
      enddo
    endif
@@ -157,7 +167,10 @@ integer function io_ELPH(ID,what)
  endif
  !
  iq=maxval(io_sec(ID,:))-1
- if (iq<=0) goto 1
+ if (iq<=0) then
+   call IO_return(ID,"io_ELPH")
+   return
+ endif
  !
  ! Fragmentation
  !
@@ -169,7 +182,8 @@ integer function io_ELPH(ID,what)
  !
  if (ierr<0.and.read_is_on(ID)) then
    io_ELPH=-1
-   goto 1
+   call IO_return(ID,"io_ELPH")
+   return
  endif
  !
  if (l_gFsq) then
@@ -202,7 +216,8 @@ integer function io_ELPH(ID,what)
      call io_bulk(ID,R2=PH_freqs_sq)
    endif
    !
-   goto 1
+   call IO_return(ID,"io_ELPH")
+   return
    !
  endif
  !
@@ -223,7 +238,10 @@ integer function io_ELPH(ID,what)
  call io_bulk(ID,VAR="POLARIZATION_VECTORS"//trim(intc(iq)),VAR_SZ=(/2,ph_modes,n_atoms,3/))
  call io_bulk(ID,C3=PH_pol_vector(:,:,:,iq))
  ! 
- if (l_no_matrix_elements) goto 1
+ if (l_no_matrix_elements) then
+   call IO_return(ID,"io_ELPH")
+   return
+ endif
  ! 
  call io_bulk(ID,VAR="E_K_PLUS_Q"//trim(intc(iq)),VAR_SZ=(/elph_nb,nkbz,1/) )
  call io_bulk(ID,R3=GKKP%E_kpq(iq)%E)
@@ -247,8 +265,6 @@ integer function io_ELPH(ID,what)
  call io_bulk(ID,VAR="ELPH_DW_Q"//trim(intc(iq)),VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
  call io_bulk(ID,R4=GKKP%dVr(:,:,:,:,1))
  !
-1 call io_disconnect(ID=ID)
- !
- call timing('io_ELPH',OPR='stop')
+ call IO_return(ID,"io_ELPH")
  !
 end function

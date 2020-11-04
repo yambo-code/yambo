@@ -104,7 +104,6 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'QPDB_edit',    '[R] Generation/editing')
  call it('r',defs,'QPDB_merge',   '[R] Mergering')
  call it('r',defs,'QPDB_expand',  '[R] Symmetry expand')
- call it('r',defs,'fixsave', '[R] Convert WFs to new format')
  !
 #if defined _YPP_RT
  call it('r',defs,'RealTime',     '[R] TD Post-Processing')
@@ -307,7 +306,6 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'PhStps', 'Energy steps',elph_steps)
  call it('f',defs,'GkkpReadBare','Read the bare gkkp')
  call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
- call it('f',defs,'GkkpConvert','Convert the gkkp to new I/O format')
  !
 #endif
  !

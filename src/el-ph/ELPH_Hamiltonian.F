@@ -26,7 +26,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use pars,          ONLY:SP,lchlen,rZERO
  use units,         ONLY:HA2EV
  use ELPH,          ONLY:elph_Ham_bands,elph_Ham_ik,ph_modes,&
-&                        PH_freqs_sq,elph_gkkp,elph_branches,PH_pol_vector,RES_tresh
+&                        PH_freqs_sq,GKKP,elph_branches,PH_pol_vector,RES_tresh
  use IO_m,          ONLY:io_control,manage_action,OP_RD,REP,RD_CL_IF_END,mk_dir
  use com,           ONLY:msg,of_open_close,jobstr,jobdir,core_io_path
  use R_lattice,     ONLY:nqbz,nqibz,bz_samp,qindx_S
@@ -191,7 +191,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
        ik_bz_gkkp=k%k_table(ok_ibz,sop_tab(sop_inv(iq_s-nsym/2),ok_s))
      endif
      !
-     elph_Mat(iH,iHp)=q_weight*conjg(elph_gkkp(il,ibp_gkkp,ib_gkkp,ik_bz_gkkp))/sqrt(2._SP*ph_E)
+     elph_Mat(iH,iHp)=q_weight*conjg(GKKP%dVc(il,ibp_gkkp,ib_gkkp,ik_bz_gkkp,1))/sqrt(2._SP*ph_E)
      !
      elph_Mat(iHp,iH)=conjg( elph_Mat(iH,iHp) )
      !

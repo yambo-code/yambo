@@ -47,8 +47,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        On_Mass_Shell_approx,QP_time_order_sign
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol,nqibz
- use ELPH,          ONLY:elph_nb,PH_freqs_sq,elph_gkkp,&
-&                        QP_PH_n_G_bands,PH_W_debye,elph_DW,&
+ use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,&
+&                        QP_PH_n_G_bands,PH_W_debye,&
 &                        elph_nQ,GKKP,elph_use_q_grid,&
 &                        setup_k_plus_q_levels,elph_nQ_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
@@ -329,8 +329,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          ! with q_YAMBO = - q_PW
          !
-         elph_gkkp_sq=conjg(elph_gkkp(il,ob_gkkp,ib_gkkp,ik_bz_gkkp))*&
-&                           elph_gkkp(il,ob_gkkp,ib_gkkp,ik_bz_gkkp)/2._SP/ph_E
+         elph_gkkp_sq=conjg(GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1))*&
+&                           GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1)/2._SP/ph_E
          !
          ! Frequency Loop
          !
@@ -400,7 +400,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          ! (b) Debye Waller Term
          !
          gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)-1._SP/2._SP*&
-&                                    2._SP*elph_DW(il,ib,ob,ik_bz)/delta_E_at_gamma*q_weight(iq_loop)/2._SP/ph_E
+&                                    2._SP*GKKP%dVr(il,ib,ob,ik_bz,1)/delta_E_at_gamma*q_weight(iq_loop)/2._SP/ph_E
          !                          /\
          !                           |
          !                           this 2 is to be consistent with AC definition (see Eq. 5, PRB 31, 2163)

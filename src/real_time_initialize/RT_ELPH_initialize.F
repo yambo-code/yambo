@@ -70,7 +70,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! El-Ph databases I/O
  !=====================
- if (l_elph_scatt) call ELPH_expanded_databases_load(E,k,q,RT_bands,"BZ square")
+ if (l_elph_scatt) call ELPH_expanded_databases_load(E,k,q,RT_bands,"BZ")
  !
  ! Pj-El databases I/O
  !=====================

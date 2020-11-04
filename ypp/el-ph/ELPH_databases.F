@@ -35,7 +35,6 @@ subroutine ELPH_databases(k,E,q)
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:v_is_zero
  use zeros,               ONLY:k_iku_zero
-! use YPPm,                ONLY:k_grid_printer
  use YPP_ELPH,            ONLY:ELPH_DB_alloc,ELPH_DB_free,DB_kind,DB_nq,DB_ph_K_sym_table,DB_nb,&
 &                              ph_freqs_file,ph_modes_file,use_ext_ph_freqs,use_ext_ph_modes,DB_ph_modes,&
 &                              DB_PH_pol_vec,DB_Q_map,DB_ph_freq_sq,DB_PH_qpt
@@ -55,7 +54,7 @@ subroutine ELPH_databases(k,E,q)
  integer, external  ::ELPH_databases_IO_elemental,io_ELPH
  logical, external  ::file_exists
  real(SP)           ::v(3)
- type(GKKP_me)      ::GKKP_expanded
+ type(GKKP_me)      ::GKKP_save,GKKP_bare_save
  !
  call section("*","== Electron-Phonon Databases ==")
  !
@@ -78,8 +77,10 @@ subroutine ELPH_databases(k,E,q)
    return
  endif
  what="dressed"
- io_err(2)=ELPH_databases_IO_elemental("dV_bare EXIST",1)
- if (io_err(2)==0) what="dressed+bare"
+ if (l_gkkp_bare) then
+   io_err(2)=ELPH_databases_IO_elemental("dV_bare EXIST",1)
+   if (io_err(2)==0) what="dressed+bare"
+ endif
  call msg('l',trim(DB_kind)//" ("//trim(what)//')...')
  !
  ! Number of Q-points
@@ -110,7 +111,10 @@ subroutine ELPH_databases(k,E,q)
  ! where s_table(k_ibz,is) is a BZ index
  !
  call k_build_up_BZ_tables(k)
+ !
+ ! ... k/q expansion
  call k_ibz2bz(k,'i',.false.) ! in k_sym2sym there is the k_ibz2bz(k,'d',...) call
+ call k_ibz2bz(q,'i',.false.) 
  !
  ! To extend s_table to the BZ I simply have that
  !
@@ -166,6 +170,7 @@ subroutine ELPH_databases(k,E,q)
  !
  call msg('s',':: Code generator        :',DB_kind)
  call msg('s',':: DB Kind               :',what)
+ call msg('s',':: Expanded              :',l_gkkp_expand)
  call msg('s',':: Q-points              :',DB_nq)
  call msg('s',':: Bands                 :',DB_nb)
  call msg('s',':: Branches              :',DB_ph_modes)
@@ -189,10 +194,9 @@ subroutine ELPH_databases(k,E,q)
  do idb=1,DB_nq
    iq=DB_Q_map(idb)
    if (l_gkkp_expand) then
-     iq_bz=0
-     if (iq>1) iq_bz=sum(q%nstar(:iq-1))
      do i_star=1,q%nstar(iq)
-       iq_bz=iq_bz+i_star
+       iq_bz=i_star
+       if (iq>1) iq_bz=sum(q%nstar(:iq-1))+i_star
        PH_freqs_sq(iq_bz,:)      =abs(DB_ph_freq_sq(idb,:))
        PH_qpt(iq_bz,:)           =q%ptbz(iq_bz,:)
        PH_pol_vector(:,:,:,iq_bz)=DB_PH_pol_vec(idb,:,:,:)
@@ -211,32 +215,41 @@ subroutine ELPH_databases(k,E,q)
    io_err(1)=ELPH_databases_IO_elemental("dV KPT GKKP",idb)
    call ELPH_databases_IO_grids_check(k)
    call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP)
-   call ELPH_databases_IO_gkkp_expand("K",DB_Q_map(idb),1,k,GKKP,GKKP_expanded)
+   call ELPH_databases_IO_gkkp_expand("K",DB_Q_map(idb),1,k,GKKP)
    !
    if (l_gkkp_bare) then 
      io_err(2)=ELPH_databases_IO_elemental("dV_bare GKKP",idb)
      call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP_bare)
-     call ELPH_databases_IO_gkkp_expand("K",DB_Q_map(idb),1,k,GKKP_bare,GKKP_expanded)
+     call ELPH_databases_IO_gkkp_expand("K",DB_Q_map(idb),1,k,GKKP_bare)
    endif
    !
    call live_timing(steps=1)
    !
    if (l_gkkp_expand) then
+     if (.not.allocated(GKKP_save%dVc)) call ELPH_alloc("dV",GKKP=GKKP_save,Nq_mem=1)
+     if (.not.allocated(GKKP_bare_save%dVc).and.l_gkkp_bare) call ELPH_alloc("dV",GKKP=GKKP_bare_save,Nq_mem=1)
+     GKKP_save%dVc=GKKP%dVc
+     if (l_gkkp_bare) GKKP_bare_save%dVc=GKKP_bare%dVc
      iq=DB_Q_map(idb)
-     iq_bz=0
-     if (iq>1) iq_bz=sum(q%nstar(:iq-1))
      do i_star=1,q%nstar(iq)
-       iq_bz=iq_bz+i_star
-       call ELPH_databases_IO_gkkp_expand("Q",iq,q%star(iq,i_star),k,GKKP,GKKP_expanded)
-       if (l_gkkp_bare) call ELPH_databases_IO_gkkp_expand("Q",iq,q%star(iq,i_star),k,GKKP,GKKP_expanded)
+       iq_bz=i_star
+       if (iq>1) iq_bz=sum(q%nstar(:iq-1))+i_star
+       GKKP%dVc=GKKP_save%dVc
+       call ELPH_databases_IO_gkkp_expand("Q",iq_bz,q%star(iq,i_star),k,GKKP)
+       if (l_gkkp_bare) then
+         GKKP%dVc=GKKP_bare_save%dVc
+         call ELPH_databases_IO_gkkp_expand("Q",iq_bz,q%star(iq,i_star),k,GKKP_bare)
+       endif
        if (iq_bz==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
        if (iq_bz> 1) call io_control(ACTION=OP_APP_CL,SEC=(/iq_bz+1/),ID=ID)
-       io_err(3)=io_ELPH(ID,'gkkp_expanded')
+       if (     l_gkkp_bare) io_err(3)=io_ELPH(ID,'gkkp_expanded_plus_bare')
+       if (.not.l_gkkp_bare) io_err(3)=io_ELPH(ID,'gkkp_expanded')
      enddo
    else
      if (idb==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
      if (idb> 1) call io_control(ACTION=OP_APP_CL,SEC=(/idb+1/),ID=ID)
-     io_err(3)=io_ELPH(ID,'gkkp')
+     if (     l_gkkp_bare) io_err(3)=io_ELPH(ID,'gkkp_plus_bare')
+     if (.not.l_gkkp_bare) io_err(3)=io_ELPH(ID,'gkkp')
    endif
    !
  enddo
@@ -246,6 +259,8 @@ subroutine ELPH_databases(k,E,q)
  !=======
  call ELPH_DB_free( )
  call ELPH_alloc("FREE",GKKP=GKKP)
+ call ELPH_alloc("FREE",GKKP=GKKP_bare_save)
+ call ELPH_alloc("FREE",GKKP=GKKP_save)
  if (l_gkkp_bare) call ELPH_alloc("FREE",GKKP=GKKP_bare)
  !
 end subroutine

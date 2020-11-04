@@ -31,7 +31,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
  use R_lattice,           ONLY:bz_samp
  use IO_m,                ONLY:io_control,manage_action,OP_RD,DUMP,RD_CL_IF_END
  use ELPH,                ONLY:elph_nQ,ph_modes,&
-&                              elph_use_q_grid,PH_freqs_sq,elph_gkkp
+&                              elph_use_q_grid,PH_freqs_sq,GKKP
  use parallel_m,          ONLY:PP_indexes,PP_indexes_reset,myid
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,              ONLY:live_timing
@@ -117,7 +117,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
               do i_l=1,ph_modes
                 diagonal_xhi(iq,i_l,i_lambda)= diagonal_xhi(iq,i_l,i_lambda)- &
 &                           conjg(BS_mat(lambda,ikk+neh2))*BS_mat(lambda,ikk+neh1) * &
-&                           elph_gkkp(i_l,ic2,ic1,ik_bz1)/sqrt(2._SP*ph_freqs(i_l))
+&                           GKKP%dVc(i_l,ic2,ic1,ik_bz1,1)/sqrt(2._SP*ph_freqs(i_l))
               enddo
               !
             endif
@@ -127,7 +127,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
               do i_l=1,ph_modes
                 diagonal_xhi(iq,i_l,i_lambda)= diagonal_xhi(iq,i_l,i_lambda)+ &
 &                           conjg(BS_mat(lambda,ikk+neh2))*BS_mat(lambda,ikk+neh1) * &
-&                           elph_gkkp(i_l,iv2,iv1,ik_bz1)/sqrt(2._SP*ph_freqs(i_l))
+&                           GKKP%dVc(i_l,iv2,iv1,ik_bz1,1)/sqrt(2._SP*ph_freqs(i_l))
               enddo
               !
             endif

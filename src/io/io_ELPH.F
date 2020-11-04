@@ -28,11 +28,11 @@ integer function io_ELPH(ID,what)
 &                         io_variable_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,def_variable_elemental,&
 &                         io_mode,DUMP,io_fragment,frag_ELPH,IO_INCOMPATIBLE_VAR,IO_return
- use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,&
+ use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,elph_nk_bz,&
 &                         QP_PH_n_G_bands,PH_W_debye,elph_nQ,&
-&                         elph_use_q_grid,PH_qpt,PH_kpt_bz,elph_nQ_used,GKKP,GKKP_bare,&
+&                         elph_use_q_grid,PH_qpt,elph_nQ_used,GKKP,GKKP_bare,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
-&                         PH_pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz,GKKP,elph_grids_are_expanded
+&                         PH_pol_vector,elph_Ham_bands,elph_branches,GKKP,elph_grids_are_expanded
  use stderr,         ONLY:intc
  use interfaces,     ONLY:ELPH_alloc
  use R_lattice,      ONLY:nkbz,nqibz,q_pt
@@ -144,13 +144,6 @@ integer function io_ELPH(ID,what)
          return
        endif
      enddo
-   endif
-   !
-   if (elph_grids_are_expanded) then
-     !
-     call io_bulk(ID,VAR="PH_K",VAR_SZ=(/nkbz,3/) )
-     call io_bulk(ID,R2=PH_kpt_bz(:,:))
-     !
    endif
    !
  endif

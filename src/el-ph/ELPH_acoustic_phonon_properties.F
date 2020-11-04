@@ -54,23 +54,31 @@ subroutine ELPH_acoustic_phonon_properties(q)
  do il=1,ph_modes
    delta_E=GAMMA_E_ph(il)-minval(GAMMA_E_ph)
    if (delta_E<0.01/HA2EV) then
-     PH_freqs_sq(1,il)=rZERO
      if (.not.any(PH_acoustic_branch)) aco_string=trim(intc(il))
      if (     any(PH_acoustic_branch)) aco_string=trim(aco_string)//" - "//trim(intc(il))
      PH_acoustic_branch(il)=.TRUE.
    endif
  enddo
  !
+ ! DEBUG >
+ PH_acoustic_branch     =.FALSE.
+ PH_acoustic_branch(1:3)=.TRUE.
+ ! DEBUG <
+ !
+ do il=1,ph_modes
+   if (PH_acoustic_branch(il)) PH_freqs_sq(1,il)=rZERO
+ enddo
+ !
  ! PH speeds
  !-----------
  call k_ibz2bz(q,'c',.TRUE.)  
  !
+ PH_acoustic_speed=rZERO
  do iq=2,q%nbz
    do il=1,ph_modes
-     PH_acoustic_speed(iq,il)=rZERO
      PH_Q_modulus(iq)=v_norm(q%ptbz(iq,:))
      if (.not.PH_acoustic_branch(il)) cycle
-     PH_acoustic_speed(iq,il)=sqrt(PH_freqs_sq(iq,il))/PH_Q_modulus(iq)
+     PH_acoustic_speed(iq,il)=sqrt(abs(PH_freqs_sq(iq,il)))/PH_Q_modulus(iq)
    enddo
  enddo 
  !

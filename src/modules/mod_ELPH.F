@@ -45,7 +45,6 @@ module ELPH
  !
  ! PHONON props 
  real(SP)                 :: PH_W_debye=rZERO
- real(SP),    allocatable :: PH_kpt_bz(:,:)
  real(SP),    allocatable :: PH_qpt(:,:)
  real(SP),    allocatable :: PH_freqs_sq(:,:)
  complex(SP), allocatable :: PH_pol_vector(:,:,:,:)
@@ -66,21 +65,18 @@ module ELPH
    type(levels),allocatable :: E_kpq(:)
    !
    integer                  :: Nq_mem=0
+   integer                  :: Nk_mem=0
    integer                  :: Nb(2)=0
    integer                  :: Nmodes(2)=0
-   integer                  :: Nk=0
    !
  end type
  !
  type(GKKP_me), SAVE :: GKKP
  type(GKKP_me), SAVE :: GKKP_bare
- !
- ! ... Q-parallelization  and GKKP
- real(SP),    allocatable :: elph_gkkp_expanded_sq(:,:,:,:,:)
- real(SP),    allocatable :: phel_gkkp_expanded_sq(:,:,:,:,:)
+ type(GKKP_me), SAVE :: GKKP_sq
+ type(GKKP_me), SAVE :: GKKP_pe_sq
  !
  integer,     allocatable :: Q_io_map(:)
- integer,     allocatable :: K_io_map(:)
  !
  ! El_h Hamiltonian
  !
@@ -110,11 +106,12 @@ module ELPH
    subroutine setup_k_plus_q_levels(iq,E)
      use electrons,  ONLY:spin_occ
      use D_lattice,  ONLY:Tel
+     use R_lattice,  ONLY:nkbz
      use functions,  ONLY:Fermi_fnc
      real(SP)    ::E
      integer     ::iq,ib,ik
      do ib=GKKP%Nb(1),GKKP%Nb(2)
-       do ik=1,GKKP%Nk
+       do ik=1,nkbz
          GKKP%E_kpq(iq)%E(ib,ik,1)=GKKP%E_kpq(iq)%E(ib,ik,1)-E
          GKKP%E_kpq(iq)%f(ib,ik,1)=spin_occ*Fermi_fnc(GKKP%E_kpq(iq)%E(ib,ik,1),Tel)
        enddo 

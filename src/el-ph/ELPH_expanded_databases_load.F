@@ -32,9 +32,9 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,qindx_S,nqbz
  use IO_m,           ONLY:io_control,OP_RD_CL
- use ELPH,           ONLY:PH_freqs_sq,GKKP,ph_modes,elph_nb,MAX_gkkp,elph_gkkp_expanded_sq,&
-&                         Q_io_map,K_io_map,phel_gkkp_expanded_sq
+ use ELPH,           ONLY:PH_freqs_sq,GKKP,ph_modes,elph_nb,MAX_gkkp,GKKP_sq,GKKP_pe_sq,Q_io_map
  use vec_operate,    ONLY:degeneration_finder
+ use interfaces,     ONLY:ELPH_alloc
  use parallel_int,   ONLY:PP_redux_wait
  use parallel_m,     ONLY:PAR_Q_bz_index,PAR_IND_Q_bz,PAR_nQ_bz,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
 &                         PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX,PARs_PH_Q_ibz,PARs_PH_Q_ibz
@@ -49,7 +49,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  ! Work Space
  integer             ::iq_bz,ID,io_err,ik,i_counter,iq_io,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
 &                      first_el(2,n_bands(2)),n_of_el(2,n_bands(2)),n_deg_grp(2),i_g,i_c,iq_mem
- real(SP)            ::gkkp_average(ph_modes),gkkp_expanded_sq(elph_nb,elph_nb,ph_modes),ph_Esq_local(q%nbz,ph_modes)
+ real(SP)            ::gkkp_average(ph_modes),gkkp_expanded_sq(ph_modes,elph_nb,elph_nb),ph_Esq_local(q%nbz,ph_modes)
  real(SP),allocatable::MAX_gkkp_expanded_at_kpq(:,:)
  integer, external   ::io_ELPH
  !
@@ -66,11 +66,8 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
  ! Allocation
  !============
  YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nbz,nqbz))
- if (l_BZ ) then
-   YAMBO_ALLOC(elph_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ_bz,PAR_Xk_nibz))
- else if (l_IBZ) then
-   YAMBO_ALLOC(phel_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PARs_PH_Q_ibz%N_par,k%nbz))
- endif
+ if (l_BZ ) call ELPH_alloc("dV_sq",GKKP=GKKP_sq,Nk_mem=PAR_Xk_nibz,Nq_mem=PAR_nQ_bz)
+ if (l_IBZ) call ELPH_alloc("dV_sq",GKKP=GKKP_pe_sq,Nk_mem=k%nbz,Nq_mem=PARs_PH_Q_ibz%N_par)
  MAX_gkkp_expanded_at_kpq=rZERO
  ph_Esq_local=rZERO
  !
@@ -119,7 +116,7 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
          ! where the band indexes have been exchanged. Instead of doing a global change of the notes
          ! and of the code I decided, here, to exchange the indexes:
          !
-         gkkp_expanded_sq(i_n,i_np,:)=abs(GKKP%dVc(:,i_np,i_n,K_io_map(ik_bz),1))**2
+         gkkp_expanded_sq(:,i_n,i_np)=abs(GKKP%dVc(:,i_np,i_n,ik_bz,1))**2
          !
        enddo
      enddo
@@ -139,8 +136,8 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
          do i_c=1,2
            if (i_c==1) gkkp_average=0._SP
            do i_n=first_el(1,i_g),first_el(1,i_g)+n_of_el(1,i_g)-1
-             if (i_c==1) gkkp_average(:)=gkkp_average(:)+gkkp_expanded_sq(i_n,i_np,:)
-             if (i_c==2) gkkp_expanded_sq(i_n,i_np,:)=gkkp_average(:)/real(n_of_el(1,i_g))
+             if (i_c==1) gkkp_average(:)=gkkp_average(:)+gkkp_expanded_sq(:,i_n,i_np)
+             if (i_c==2) gkkp_expanded_sq(:,i_n,i_np)=gkkp_average(:)/real(n_of_el(1,i_g))
            enddo
          enddo
        enddo
@@ -150,8 +147,8 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
          do i_c=1,2
            if (i_c==1) gkkp_average=0._SP
            do i_np=first_el(2,i_g),first_el(2,i_g)+n_of_el(2,i_g)-1
-             if (i_c==1) gkkp_average(:)=gkkp_average(:)+gkkp_expanded_sq(i_n,i_np,:)
-             if (i_c==2) gkkp_expanded_sq(i_n,i_np,:)=gkkp_average(:)/real(n_of_el(2,i_g))
+             if (i_c==1) gkkp_average(:)=gkkp_average(:)+gkkp_expanded_sq(:,i_n,i_np)
+             if (i_c==2) gkkp_expanded_sq(:,i_n,i_np)=gkkp_average(:)/real(n_of_el(2,i_g))
            enddo
          enddo
        enddo
@@ -159,8 +156,8 @@ subroutine ELPH_expanded_databases_load(E,k,q,n_bands,mode)
      !
      MAX_gkkp_expanded_at_kpq(ik_bz,iq_bz)=maxval(sqrt(gkkp_expanded_sq(:,:,:)))
      !
-     if (l_BZ ) elph_gkkp_expanded_sq(:,:,:,iq_mem,ik_mem)=gkkp_expanded_sq(:,:,:)
-     if (l_IBZ) phel_gkkp_expanded_sq(:,:,:,iq_mem,ik_mem)=gkkp_expanded_sq(:,:,:)
+     if (l_BZ ) GKKP_sq%dVr(:,:,:,ik_mem,iq_mem)   =gkkp_expanded_sq(:,:,:)
+     if (l_IBZ) GKKP_pe_sq%dVr(:,:,:,ik_mem,iq_mem)=gkkp_expanded_sq(:,:,:)
      !
    enddo
    !

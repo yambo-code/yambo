@@ -28,7 +28,7 @@ subroutine ELPH_databases(k,E,q)
  use electrons,           ONLY:levels
  use interfaces,          ONLY:ELPH_alloc
  use ELPH,                ONLY:elph_use_q_grid,ph_modes,elph_nb,elph_nQ,GKKP,GKKP_bare,PH_W_debye,&
-&                              elph_nk_bz,PH_freqs_sq,PH_qpt,PH_pol_vector,GKKP_me
+&                              PH_freqs_sq,PH_qpt,PH_pol_vector,GKKP_me
  use com,                 ONLY:msg
  use D_lattice,           ONLY:nsym,sop_tab
  use R_lattice,           ONLY:bz_samp,qindx_B,nqibz
@@ -183,7 +183,6 @@ subroutine ELPH_databases(k,E,q)
  elph_nb    =DB_nb
  elph_nQ    =DB_nq
  if (l_gkkp_expand) elph_nQ=q%nbz
- elph_nk_bz =k%nbz
  call ELPH_alloc("PHONONS")
  call ELPH_alloc("dV DW",GKKP=GKKP,Nq_mem=1)
  if (l_gkkp_bare) call ELPH_alloc("dV_bare",GKKP=GKKP_bare,Nq_mem=1)

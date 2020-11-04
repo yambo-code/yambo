@@ -21,17 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq_mem)
+subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
  !
  use pars,          ONLY:rZERO,cZERO,schlen
  use D_lattice,     ONLY:n_atoms
  use R_lattice,     ONLY:nkbz
  use electrons,     ONLY:E_reset
  use QP_m,          ONLY:QP_n_states
- use ELPH,          ONLY:GKKP_me,PH_pol_vector,ph_modes,PH_kpt_bz,PH_freqs_sq,&
+ use ELPH,          ONLY:GKKP_me,PH_pol_vector,ph_modes,PH_freqs_sq,&
 &                        PH_acoustic_speed,PH_acoustic_branch,gsqF_life_f,gsqF_life_bose,gsqF_fan,&
 &                        gsqF_ca_corr,gsqF_dw,PH_Q_modulus,PH_qpt,elph_nb,elph_nQ,eval_G_using_KK,&
-&                        gsqF_energy_steps,elph_nk_bz
+&                        gsqF_energy_steps
  use parallel_m,    ONLY:PAR_nQ_bz
  use stderr,        ONLY:STRING_split
  !
@@ -39,7 +39,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq_mem)
  !
  character(*)            ::what
  type(GKKP_me), optional ::GKKP
- integer,       optional ::Nb(2),Nk,Nm(2),Nq_mem
+ integer,       optional ::Nb(2),Nk_mem,Nm(2),Nq_mem
  !
  ! Work Space
  !
@@ -52,7 +52,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq_mem)
    GKKP%Nq_mem=1
    GKKP%Nb=(/1,elph_nb/)
    GKKP%Nmodes=(/1,ph_modes/)
-   GKKP%Nk=nkbz
+   GKKP%Nk_mem=nkbz
    if (present(Nq_mem)) then
      GKKP%Nq_mem=Nq_mem
    endif
@@ -62,8 +62,8 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq_mem)
    if (present(Nm)) then
      GKKP%Nmodes=Nm
    endif
-   if (present(Nk)) then
-     GKKP%Nk=Nk
+   if (present(Nk_mem)) then
+     GKKP%Nk_mem=Nk_mem
    endif
  endif
  !
@@ -71,17 +71,17 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq_mem)
    !
    select case (trim(strings(is)))
      !
-     case ('DW')
+     case ('DW','dV_sq')
        if (.not.allocated(GKKP%dVr)) then
          GKKP%KIND=trim(strings(is))
-         YAMBO_ALLOC(GKKP%dVr,(GKKP%Nmodes(1):GKKP%Nmodes(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk,GKKP%Nq_mem))
+         YAMBO_ALLOC(GKKP%dVr,(GKKP%Nmodes(1):GKKP%Nmodes(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk_mem,GKKP%Nq_mem))
          GKKP%dVr=rZERO
        endif
        !
      case ('dV','dV_bare')
        if (.not.allocated(GKKP%dVc)) then
          GKKP%KIND=trim(strings(is))
-         YAMBO_ALLOC(GKKP%dVc,(GKKP%Nmodes(1):GKKP%Nmodes(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk,GKKP%Nq_mem))
+         YAMBO_ALLOC(GKKP%dVc,(GKKP%Nmodes(1):GKKP%Nmodes(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk_mem,GKKP%Nq_mem))
          GKKP%dVc=cZERO
        endif
        !
@@ -117,7 +117,6 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq_mem)
          YAMBO_ALLOC(PH_freqs_sq,(elph_nQ,ph_modes))
          YAMBO_ALLOC(PH_pol_vector,(ph_modes,n_atoms,3,elph_nQ))
          YAMBO_ALLOC(PH_qpt,(elph_nQ,3))
-         YAMBO_ALLOC(PH_kpt_bz,(elph_nk_bz,3))
          YAMBO_ALLOC(PH_Q_modulus,(elph_nQ))
          YAMBO_ALLOC(PH_acoustic_speed,(elph_nQ,ph_modes))
          YAMBO_ALLOC(PH_acoustic_branch,(ph_modes))
@@ -146,7 +145,6 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk,Nq_mem)
          YAMBO_FREE(PH_freqs_sq)
          YAMBO_FREE(PH_pol_vector)
          YAMBO_FREE(PH_qpt)
-         YAMBO_FREE(PH_kpt_bz)
          !
          YAMBO_FREE(gsqF_fan)
          YAMBO_FREE(gsqF_ca_corr)

@@ -64,7 +64,7 @@ subroutine DESC_write(dest,prefix,desc,range,skip_patt)
    n_val=desc%size(i_d)
    local_var=com_compose_msg(pre=prefix//space(1:i_space),body=trim(desc%str(i_d)))
    local_term=""
-   if (len_trim(desc%term(i_d))>0) then
+   if (len_trim(desc%term(i_d))>0.and.index(desc%term(i_d),"[")==0) then
      local_term="["//trim(desc%term(i_d))//"]"
    endif
    if (n_val==0) call msg(dest,local_var)

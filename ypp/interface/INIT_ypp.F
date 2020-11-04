@@ -31,7 +31,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,n_FineGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,FineGd_DB1_paths,l_angular_momentum,l_position,&
-&                         l_QP_DB_expand,l_average_eh,l_regular_grid
+&                         l_QP_DB_expand,l_average_eh,l_regular_grid,l_interp
  use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev
  use it_tools,       ONLY:ofiles_append,infile_dump,runlevel_is_on,&
@@ -300,6 +300,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        !
        l_spin  =STRING_match(rstr_piece(i1+1),'sp').and.n_spin>1
        l_mag   =STRING_match(rstr_piece(i1+1),'m').and.n_spin>1
+       l_interp=STRING_match(rstr_piece(i1+1),'i')
        !
        ! GPL_EXCLUDE_START
        !
@@ -517,6 +518,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_average_eh=runlevel_is_on('avehole')
  l_amplitude=runlevel_is_on('amplitude')
  l_exc_wf   =runlevel_is_on('wavefunction').and.runlevel_is_on('excitons')
+ l_interp   =runlevel_is_on('interpol').and.runlevel_is_on('excitons')
  l_sp_wf    =runlevel_is_on('wavefunction').and.runlevel_is_on('electrons')
  l_density  =runlevel_is_on('density').and.runlevel_is_on('electrons')
  l_current  =runlevel_is_on('current').and.runlevel_is_on('electrons')
@@ -686,6 +688,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_excitons) then
    call initactivate(1,"States En_treshold Res_treshold BSQindex")
+   if (l_interp) call initactivate(-1,"BSQindex")
    if (l_amplitude) then
      call INIT_QP_ctl_switch('G')
      call initactivate(1,"DipWeight")
@@ -698,6 +701,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_ELPH
    if (l_eliashberg)  call initactivate(1,"Degen_Step") 
 #endif
+   if (l_interp) call initactivate(1,"InterpDIP InterpWFC INTERP_Grid Q_steps")
  endif
  !
 #if defined _YPP_ELPH
@@ -765,6 +769,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    if (l_q_grid)       call USER_vector_handle("Qpts")
    if (l_shifted_grid) call USER_vector_handle("KShift")
  endif
+ if (l_interp)         call USER_vector_handle("Qpts")
  !
  if (l_map_kpts) then
    call PARSER_array(mode="CH dimensions",VAR="FineGd_DB1_paths",N=n_FineGd_DBs,M=1)

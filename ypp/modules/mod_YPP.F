@@ -164,6 +164,7 @@ module YPPm
  logical      ::l_position
  integer      ::ncell(3) 
  integer      ::BSiq    
+ integer      ::Q_steps
  real(SP)     ::r_hole(3)    
  real(SP)     ::deg_energy   
  real(SP)     ::EXCITON_E_treshold

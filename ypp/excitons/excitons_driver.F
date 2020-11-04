@@ -29,7 +29,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use electrons,     ONLY:levels,spin
  use YPP_interfaces,ONLY:excitons_sort_and_report
  use YPPm,          ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,EXCITONS_user_indexes,BSiq, &
-&                        BS_R_right,BS_E,BS_E_SOC_corr
+&                        BS_R_right,BS_E,BS_E_SOC_corr,l_interp
  use BS_solvers,    ONLY:BSS_n_eig
  use BS,            ONLY:BS_H_dim,&
 &                        BSqpts
@@ -52,7 +52,11 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !... I/0
  integer              :: iq
  !
- call section('*','Excitonic Properties @ Q-index #'//trim(intc(BSiq)))
+ if(.not.l_interp) then
+    call section('*','Excitonic Properties @ Q-index #'//trim(intc(BSiq)))
+ else
+    call section('*','Excitonic Properties')
+ endif
  !
  iq = BSiq
  !
@@ -82,6 +86,11 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! Define the USER set of excitonic states
  !=========================================
  if(.not.l_sort) call get_user_excitonic_states( )
+ !
+ if(l_interp) then
+   call excitons_interpolate(k,Xk,en,Xen,q)
+   return
+ endif
  !
  if(.not.l_sort) call excitons_read(k,Xk,en,Xen,BSiq,"eigenvectors")
  ! 

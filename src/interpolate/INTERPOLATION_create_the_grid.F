@@ -40,7 +40,7 @@ subroutine INTERPOLATION_create_the_grid(K,units,grid_dim)
  !
  ! Generate an uniform k-point grid k[grid_dim(:)] in the BZ
  !
- use pars,           ONLY:SP,DP,schlen
+ use pars,           ONLY:SP,schlen
  use R_lattice,      ONLY:bz_samp
  use com,            ONLY:msg
  use vec_operate,    ONLY:c2a

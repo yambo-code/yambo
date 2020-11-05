@@ -281,9 +281,9 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  call parser('ForceEqTrans',FORCE_EQ_trans)
 #endif
  !
- l_BS_ares_asymm=(iq/=1)
+ l_BS_ares_asymm=(iq/=1).and.trim(BSE_mode)/="resonant"
 #if defined _KERR
- l_BS_ares_asymm=l_BS_ares_asymm.or.l_BS_photolum.or.(l_BS_magnons.and.n_sp_pol==2) !.and.trim(BSE_mode)/="resonant"
+ l_BS_ares_asymm=l_BS_ares_asymm.or.l_BS_photolum.or.(l_BS_magnons.and.n_sp_pol==2)
 #endif
  !
  BS_K_dim_tmp=0

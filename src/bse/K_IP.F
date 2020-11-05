@@ -66,7 +66,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Work space
  !
  integer           ::ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol_c,i_sp_pol_v,i_T_g,i_T,&
- &                   n_SOC,i_pert_SOC,io_err
+ &                   n_SOC,i_pert_SOC,io_err,i_res_ares
  real(SP)          ::conjg_fac,Z_,E_,f_
  logical           ::dip_v,dip_r
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
@@ -176,6 +176,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  do i_T_g=1,BS_nT_grps
    !
    if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle
+   !
+   i_res_ares=1
+   if (BS_res_ares_dim==2.and.i_T_g>BS_nT_grps/2) i_res_ares=2
    !
    do i_T=1,BS_T_grp(i_T_g)%size
      !
@@ -309,12 +312,17 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        & BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,2)=DIP_projected_dich(:BS_dip_size)
      endif
      ! Magnons
-     if (l_BS_magnons) then                                             ! This is the right R residual associated to (eps_c\dn-eps_v\up)
-       BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus) ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
-       BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Smins) ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
-       if (BS_K_coupling.and..not.BS_res_ares_dim==2) then              ! This is the right A residual associated to (eps_v\dn-eps_v\up)
-         BS_T_grp(i_T_g)%dipoles_mag(1,i_T,2)=DIP_Smins               ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c)
-         BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Splus               ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
+     if (l_BS_magnons) then
+       if(i_res_ares==1) then                                    ! This is the right R residual associated to (eps_c\dn-eps_v\up)
+         BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
+         BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Smins)   ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
+         if (BS_K_coupling.and..not.BS_res_ares_dim==2) then     ! This is the right A residual associated to (eps_v\up-eps_c\dn)
+           BS_T_grp(i_T_g)%dipoles_mag(1,i_T,2)=DIP_Splus        ! S+ for |v\dn> trans: <v\up|S+|c\dn>(i_sp_pol_c)
+           BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Smins        ! S- for |v\up> trans: <v\dn|S-|c\up>(i_sp_pol_c)
+         endif
+       else if (i_res_ares==2) then                              ! This is the right R residual associated to (eps_c\dn-eps_v\up)
+         BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Smins)   ! S+ for |v\dn> trans: <v\up|S+|c\dn>(i_sp_pol_c) = conjg(<c\dn|S-|v\up>(i_sp_pol_v))
+         BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Splus)   ! S- for |v\up> trans: <v\dn|S-|c\up>(i_sp_pol_c) = conjg(<c\up|S+|v\dn>(i_sp_pol_v))
        endif
      endif
 #endif
@@ -436,14 +444,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        if (l_BS_magnons) then
          X_magnons(:,1,3)=X_magnons(:,1,3)-res_magn(1)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
          X_magnons(:,2,3)=X_magnons(:,2,3)-res_magn(2)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
-         !
          if ((BSS_add_antiresonant.or.BS_K_coupling).and..not.BS_res_ares_dim==2) then
-           !
-           ! Both -1 factors appear explicitly in the code
-           !
            X_magnons(:,1,3)=X_magnons(:,1,3)+conjg(res_magn(2))/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
            X_magnons(:,2,3)=X_magnons(:,2,3)+conjg(res_magn(1))/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
-           !
          endif
        endif
        !

@@ -74,7 +74,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  character(1) :: sec
  real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
  logical      :: l_trans_in_group,l_grp_to_grp,FORCE_EQ_trans
- integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,nb(2),ik1,ik2,ib1,ib2,isp1,isp2,  &
+ integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,nb(2),ib1,ib2,isp1,isp2,  &
  &               i_T_now,i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp,i_res_ares
  !
  FORCE_EQ_trans=.true.
@@ -138,8 +138,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
        !
 #if defined _KERR
        if (l_BS_magnons) then
-         if(i_sp_c==1.and.i_res_ares==1) cycle
-         if(i_sp_c==2.and.i_res_ares==2) cycle
+         if(i_sp_c==1) cycle
          i_sp_v=mod(i_sp_c,n_sp_pol)+1
        endif
 #endif
@@ -154,14 +153,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
          do iv=BS_bands(1),nb(2)
            do ic=nb(1),BS_bands(2)
              !
-             if(i_res_ares==1) then
-               ik1=ik; ik2=ikp; ib1=iv; ib2=ic; isp1=i_sp_c; isp2=i_sp_v
-             endif
-             if(i_res_ares==2) then
-               ik1=ik; ik2=ikp; ib1=ic; ib2=iv; isp1=i_sp_v; isp2=i_sp_c
-             endif
+             if(i_res_ares==1) then; ib1=iv; ib2=ic; isp1=i_sp_v; isp2=i_sp_c; endif
+             if(i_res_ares==2) then; ib1=ic; ib2=iv; isp1=i_sp_c; isp2=i_sp_v; endif
              !
-             if (.not.T_is_ok(Ken,Dip,iq,ik1,ik2,ib1,ib2,isp1,&
+             if (.not.T_is_ok(Ken,Dip,iq,ik,ikp,ib1,ib2,isp2,i_res_ares,&
              &                FORCE_EQ_trans,E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
              !
              i_T_now=i_T_now+1
@@ -196,7 +191,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
              !
              i_T_in_the_grp=i_T_in_the_grp+1
              !
-             BS_T_grp(i_T_group_now)%table(i_T_in_the_grp,:)=(/ikbz,ib1,ib2,isp1,isp2/)
+             BS_T_grp(i_T_group_now)%table(i_T_in_the_grp,:)=(/ikbz,ib1,ib2,isp2,isp1/)
              !
              PAR_IND_WF_b_and_k%element_2D(ic,ik )=.TRUE.
              PAR_IND_WF_b_and_k%element_2D(iv,ikp)=.TRUE.
@@ -277,7 +272,7 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  !
  real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
  logical      :: FORCE_EQ_trans
- integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,ik1,ik2,ib1,ib2,isp1,&
+ integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,ib1,ib2,isp1,&
  &               i_star,nb(2),BS_K_dim_tmp(2),BS_nT_at_k_tmp(Xk%nibz*2),i_res_ares,n_res_ares
  !
  FORCE_EQ_trans=.true.
@@ -288,7 +283,7 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  !
  l_BS_ares_asymm=(iq/=1)
 #if defined _KERR
- l_BS_ares_asymm=l_BS_ares_asymm.or.l_BS_photolum.or.(l_BS_magnons.and.n_sp_pol==2)
+ l_BS_ares_asymm=l_BS_ares_asymm.or.l_BS_photolum.or.(l_BS_magnons.and.n_sp_pol==2) !.and.trim(BSE_mode)/="resonant"
 #endif
  !
  BS_K_dim_tmp=0
@@ -309,8 +304,7 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
    i_sp_v=i_sp_c
 #if defined _KERR
    if (l_BS_magnons) then
-     if(i_sp_c==1.and.i_res_ares==1) cycle
-     if(i_sp_c==2.and.i_res_ares==2) cycle
+     if(i_sp_c==1) cycle
      i_sp_v=mod(i_sp_c,n_sp_pol)+1
    endif
 #endif
@@ -324,14 +318,10 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
        do iv=BS_bands(1),nb(2)
          do ic=nb(1),BS_bands(2)
            !
-           if(i_res_ares==1) then
-             ik1=ik ; ik2=ikp; ib1=iv; ib2=ic; isp1=i_sp_c
-           endif
-           if(i_res_ares==2) then
-             ik1=ikp; ik2=ik ; ib1=ic; ib2=iv; isp1=i_sp_v
-           endif
+           if(i_res_ares==1) then; ib1=iv; ib2=ic; isp1=i_sp_c ; endif
+           if(i_res_ares==2) then; ib1=ic; ib2=iv; isp1=i_sp_v ; endif
            !
-           if (.not.T_is_ok(Ken,Dip,iq,ik1,ik2,ib1,ib2,isp1,&
+           if (.not.T_is_ok(Ken,Dip,iq,ik,ikp,ib1,ib2,isp1,i_res_ares,&
            &                FORCE_EQ_trans,E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
            !
            BS_K_dim_tmp(i_res_ares)=BS_K_dim_tmp(i_res_ares)+1
@@ -353,7 +343,8 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  BS_K_dim=BS_K_dim_tmp(1)
  !
  if (.not.BSS_add_antiresonant.and.BS_not_const_eh_f.and..not.BS_K_coupling) then
-   call warning('Fractional e/h occupations but resonant only mode selected in input.')
+   if(.not.l_BS_ares_asymm) call warning('Fractional e/h occupations but resonant only mode selected in input.')
+   if(     l_BS_ares_asymm) call warning('Fractional e/h occupations but resonant only mode selected in input.')
    BSE_mode='retarded'
    BSS_add_antiresonant=.true.
  endif
@@ -379,7 +370,7 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
 end subroutine
 !
 !
-logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,FORCE_EQ_trans,E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)
+logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,FORCE_EQ_trans,E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)
  !
  use pars,         ONLY:SP 
  use X_m,          ONLY:global_gauge
@@ -398,7 +389,7 @@ logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,FORCE_EQ_trans,E_eh,E_eh
  !
  type(levels),   intent(in) :: Ken
  type(DIPOLE_t), intent(in) :: Dip
- integer,        intent(in) :: iq,ik,ikp,iv,ic,i_sp_c
+ integer,        intent(in) :: iq,ik,ikp,iv,ic,i_sp_c,i_res_ares
  logical,        intent(in) :: FORCE_EQ_trans
  real(SP),       intent(out):: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
  !
@@ -462,8 +453,13 @@ logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,FORCE_EQ_trans,E_eh,E_eh
  !
  ! GPL_EXCLUDE_END
  !
- f_e = (         Ken%f(iv,ikp,i_sp_v))/spin_occ
- f_h = (spin_occ-Ken%f(ic,ik ,i_sp_c))/spin_occ
+ if(i_res_ares==1) then
+   f_e = (         Ken%f(iv,ikp,i_sp_v))/spin_occ
+   f_h = (spin_occ-Ken%f(ic,ik ,i_sp_c))/spin_occ
+ else
+   f_e = (         Ken%f(ic,ikp,i_sp_c))/spin_occ
+   f_h = (spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ
+ endif
  !
 #if defined _KERR
  f_eh_PL = Ken%f(ic,ikp,i_sp_c)*(spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ/spin_occ
@@ -474,7 +470,7 @@ logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,FORCE_EQ_trans,E_eh,E_eh
  !
  ! f_eh<0 transitions are included in the anti-resonant part
  ! f_eh=0 transitions give no contribution to absorption and are not considered
- if ( f_eh_REF<=0._SP ) T_is_ok=.FALSE.
+ if ( f_eh_REF*(-1._SP)**(i_res_ares-1)<=0._SP ) T_is_ok=.FALSE.
  !
  ! GPL_EXCLUDE_START
  !

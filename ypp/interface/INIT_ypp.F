@@ -702,7 +702,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_ELPH
    if (l_eliashberg)  call initactivate(1,"Degen_Step") 
 #endif
-   if (l_interp) call initactivate(1,"InterpDIP InterpWFC INTERP_Grid Qsteps")
+   if (l_interp) call initactivate(1,"InterpDIP InterpWFC INTERP_Grid Qsteps cooIn cooOut")
  endif
  !
 #if defined _YPP_ELPH

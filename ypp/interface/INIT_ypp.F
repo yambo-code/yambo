@@ -404,6 +404,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_spin)           call initactivate(1,'spin')
  if (l_mag)            call initactivate(1,'magnetization')
  if (l_wavefunction)   call initactivate(1,'wavefunction')
+ if (l_interp)         call initactivate(1,'interpolate')
  !
 #if defined _YPP_ELPH
  !
@@ -518,7 +519,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_average_eh=runlevel_is_on('avehole')
  l_amplitude=runlevel_is_on('amplitude')
  l_exc_wf   =runlevel_is_on('wavefunction').and.runlevel_is_on('excitons')
- l_interp   =runlevel_is_on('interpol').and.runlevel_is_on('excitons')
+ l_interp   =runlevel_is_on('interpolate').and.runlevel_is_on('excitons')
  l_sp_wf    =runlevel_is_on('wavefunction').and.runlevel_is_on('electrons')
  l_density  =runlevel_is_on('density').and.runlevel_is_on('electrons')
  l_current  =runlevel_is_on('current').and.runlevel_is_on('electrons')
@@ -701,7 +702,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_ELPH
    if (l_eliashberg)  call initactivate(1,"Degen_Step") 
 #endif
-   if (l_interp) call initactivate(1,"InterpDIP InterpWFC INTERP_Grid Q_steps")
+   if (l_interp) call initactivate(1,"InterpDIP InterpWFC INTERP_Grid Qsteps")
  endif
  !
 #if defined _YPP_ELPH

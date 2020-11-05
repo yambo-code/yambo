@@ -109,7 +109,8 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
 #endif
  !
  if (ENVIRONMENT=="Response_T_space") then
-   if (.not.allocated(PAR_IND_eh)) allocate(PAR_IND_eh(nXkibz*BS_res_ares_dim))
+   if (allocated(PAR_IND_eh)) deallocate(PAR_IND_eh)
+   allocate(PAR_IND_eh(nXkibz*BS_res_ares_dim))
    do i_k=1,nXkibz*BS_res_ares_dim
      call PP_indexes_reset(PAR_IND_eh(i_k))
    enddo

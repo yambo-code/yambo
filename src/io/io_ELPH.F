@@ -29,7 +29,7 @@ integer function io_ELPH(ID,what)
 &                         read_is_on,write_is_on,def_variable_elemental,&
 &                         io_mode,DUMP,io_fragment,frag_ELPH,IO_INCOMPATIBLE_VAR,IO_return
  use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,elph_nk_bz,&
-&                         QP_PH_n_G_bands,PH_W_debye,elph_nQ,&
+&                         QP_PH_n_G_bands,PH_W_debye,elph_nQ,PH_kpt_bz,&
 &                         elph_use_q_grid,PH_qpt,elph_nQ_used,GKKP,GKKP_bare,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
 &                         PH_pol_vector,elph_Ham_bands,elph_branches,GKKP,elph_grids_are_expanded
@@ -101,7 +101,7 @@ integer function io_ELPH(ID,what)
    call io_variable_elemental(ID,VAR="Phonon modes",I0=ph_modes,CHECK=.true.,OP=(/"=="/))
    call io_variable_elemental(ID,VAR="Q points",I0=elph_nQ,CHECK=.true.,OP=(/"=="/),TERMINATOR="[avail]")
    if (l_gFsq) call io_variable_elemental(ID,VAR=" ",I0=elph_nQ_used,CHECK=.true.,OP=(/"=="/),TERMINATOR="[used]")
-   call io_variable_elemental(ID,VAR="K points (BZ)",I0=elph_nk_bz,CHECK=.true.,OP=(/"=="/))
+   call io_variable_elemental(ID,VAR="K points",I0=elph_nk_bz,CHECK=.true.,OP=(/"=="/))
    call io_variable_elemental(ID,VAR="El-PH bands",I0=elph_nb,CHECK=.true.,OP=(/"=="/))
    call io_variable_elemental(ID,VAR="Using the Q-grid",L0=elph_use_q_grid,CHECK=.true.,OP=(/"=="/))
    if (ver_is_gt_or_eq(ID,revision=18920)) then
@@ -144,6 +144,13 @@ integer function io_ELPH(ID,what)
          return
        endif
      enddo
+   endif
+   !
+   if (elph_grids_are_expanded) then
+     !
+     call io_bulk(ID,VAR="PH_K",VAR_SZ=(/nkbz,3/) )
+     call io_bulk(ID,R2=PH_kpt_bz(:,:))
+     !
    endif
    !
  endif

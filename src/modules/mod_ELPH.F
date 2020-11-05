@@ -45,6 +45,7 @@ module ELPH
  !
  ! PHONON props 
  real(SP)                 :: PH_W_debye=rZERO
+ real(SP),    allocatable :: PH_kpt_bz(:,:)
  real(SP),    allocatable :: PH_qpt(:,:)
  real(SP),    allocatable :: PH_freqs_sq(:,:)
  complex(SP), allocatable :: PH_pol_vector(:,:,:,:)
@@ -73,10 +74,11 @@ module ELPH
  !
  type(GKKP_me), SAVE :: GKKP
  type(GKKP_me), SAVE :: GKKP_bare
- type(GKKP_me), SAVE :: GKKP_sq
+ type(GKKP_me), SAVE :: GKKP_ep_sq
  type(GKKP_me), SAVE :: GKKP_pe_sq
  !
  integer,     allocatable :: Q_io_map(:)
+ integer,     allocatable :: K_io_map(:)
  !
  ! El_h Hamiltonian
  !

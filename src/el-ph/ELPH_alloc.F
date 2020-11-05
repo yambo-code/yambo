@@ -31,7 +31,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
  use ELPH,          ONLY:GKKP_me,PH_pol_vector,ph_modes,PH_freqs_sq,&
 &                        PH_acoustic_speed,PH_acoustic_branch,gsqF_life_f,gsqF_life_bose,gsqF_fan,&
 &                        gsqF_ca_corr,gsqF_dw,PH_Q_modulus,PH_qpt,elph_nb,elph_nQ,eval_G_using_KK,&
-&                        gsqF_energy_steps
+&                        gsqF_energy_steps,PH_kpt_bz,elph_nk_bz
  use parallel_m,    ONLY:PAR_nQ_bz
  use stderr,        ONLY:STRING_split
  !
@@ -117,11 +117,13 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
          YAMBO_ALLOC(PH_freqs_sq,(elph_nQ,ph_modes))
          YAMBO_ALLOC(PH_pol_vector,(ph_modes,n_atoms,3,elph_nQ))
          YAMBO_ALLOC(PH_qpt,(elph_nQ,3))
+         YAMBO_ALLOC(PH_kpt_bz,(elph_nk_bz,3))
          YAMBO_ALLOC(PH_Q_modulus,(elph_nQ))
          YAMBO_ALLOC(PH_acoustic_speed,(elph_nQ,ph_modes))
          YAMBO_ALLOC(PH_acoustic_branch,(ph_modes))
          PH_pol_vector=rZERO
          PH_qpt=rZERO
+         PH_kpt_bz=rZERO
          PH_freqs_sq=rZERO
          PH_Q_modulus=rZERO
          PH_acoustic_speed=rZERO
@@ -145,6 +147,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
          YAMBO_FREE(PH_freqs_sq)
          YAMBO_FREE(PH_pol_vector)
          YAMBO_FREE(PH_qpt)
+         YAMBO_FREE(PH_kpt_bz)
          !
          YAMBO_FREE(gsqF_fan)
          YAMBO_FREE(gsqF_ca_corr)

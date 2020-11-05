@@ -44,7 +44,7 @@ subroutine RT_ELPH_iterative_Kernel(ik,E,k,q,TIME)
  use functions,      ONLY:bose_f
  use R_lattice,      ONLY:bz_samp,qindx_S
  use real_time,      ONLY:RT_bands
- use ELPH,           ONLY:PH_freqs_sq,elph_branches,MAX_gkkp,GKKP_sq 
+ use ELPH,           ONLY:PH_freqs_sq,elph_branches,MAX_gkkp,GKKP_ep_sq 
  use parallel_m,     ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_Xk_ibz_index
  !
  implicit none
@@ -98,13 +98,13 @@ subroutine RT_ELPH_iterative_Kernel(ik,E,k,q,TIME)
      gkkp=rZERO
      do i_n=RT_bands(1),RT_bands(2)
        !
-       gkkp(i_n,i_n)=GKKP_sq%dVr(il,i_n,i_n,ik_mem,iq_mem)
+       gkkp(i_n,i_n)=GKKP_ep_sq%dVr(il,i_n,i_n,ik_mem,iq_mem)
        if(sqrt(gkkp(i_n,i_n))<MAX_gkkp*cutoff) gkkp(i_n,i_n)=rZERO
        !
        do i_np=RT_bands(1),RT_bands(2)
          !
          if (i_n==i_np) cycle
-         gkkp(i_n,i_np)=GKKP_sq%dVr(il,i_np,i_n,ik_mem,iq_mem)
+         gkkp(i_n,i_np)=GKKP_ep_sq%dVr(il,i_np,i_n,ik_mem,iq_mem)
          if (sqrt(gkkp(i_n,i_np))<MAX_gkkp*cutoff) gkkp(i_n,i_np)=rZERO
          !
        enddo

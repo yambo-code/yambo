@@ -43,7 +43,7 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
  use electrons,      ONLY:levels,spin_occ,n_full_bands
  use R_lattice,      ONLY:bz_samp,qindx_S,nqbz,q_sstar
  use real_time,      ONLY:RT_bands
- use ELPH,           ONLY:PH_freqs_sq,elph_branches,MAX_gkkp,GKKP_sq 
+ use ELPH,           ONLY:PH_freqs_sq,elph_branches,GKKP_ep_sq,MAX_gkkp
  use parallel_m,     ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_Xk_ibz_index
  use units,          ONLY:HA2EV
 
@@ -111,9 +111,9 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
            !
          endif
          !
-         if (sqrt(GKKP_sq%dVr(il,i_n,i_np,ik_mem,iq_mem))<MAX_gkkp*cutoff) cycle
+         if (sqrt(GKKP_ep_sq%dVr(il,i_n,i_np,ik_mem,iq_mem))<MAX_gkkp*cutoff) cycle
          !
-         pre_factor=GKKP_sq%dVr(il,i_n,i_np,ik_mem,iq_mem)/real(RTibz%N_mapped(ik_m_q))
+         pre_factor=GKKP_ep_sq%dVr(il,i_n,i_np,ik_mem,iq_mem)/real(RTibz%N_mapped(ik_m_q))
          !
          do ik_rim=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
            !

@@ -21,40 +21,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_Q_databases_map(k,q)
+integer function ELPH_databases_check(n_bands)
+ ! 
+ use IO_m,           ONLY:io_control,REP,OP_RD_CL
+ use ELPH,           ONLY:elph_nb
  !
- use pars,           ONLY:SP
- use R_lattice,      ONLY:bz_samp
- use ELPH,           ONLY:PH_qpt,elph_nQ,Q_io_map
- use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
- use zeros,          ONLY:k_rlu_zero
+ implicit none
  !
-#include<memory.h>
- !
- type(bz_samp) ::k,q
+ integer                  :: n_bands
  !
  ! Work Space
  !
- integer       ::i1,i2
- real(SP)      ::v(3)
+ integer             ::ID,io_err
+ integer, external   ::io_ELPH
  !
- if (elph_nQ /=q%nbz) call error('Number of q-points does not match')
+ ! I/O check
+ !===========
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
+ io_err=io_ELPH(ID,'gkkp_expanded')
  !
- if (.not.allocated(Q_io_map)) then
-   YAMBO_ALLOC(Q_io_map,(q%nbz))
- endif
+ ELPH_databases_check=0
+ if (io_err/=0.or.elph_nb<n_bands) ELPH_databases_check=-1
  !
- ! Q-points map
- !
- Q_io_map=0
- call k_ibz2bz(q,'i',.false.)
- do i1=1,q%nbz
-   do i2=1,elph_nQ
-     call c2a(v_in=q%ptbz(i1,:)+PH_qpt(i2,:),v_out=v,mode="ki2a")
-     if (rlu_v_is_zero(v,zero_=k_rlu_zero)) Q_io_map(i1)=i2
-   enddo
- enddo
- call k_ibz2bz(q,'d',.false.)
- if (any(Q_io_map==0)) call error('Q-points do not match')
- !
-end subroutine
+end function ELPH_databases_check

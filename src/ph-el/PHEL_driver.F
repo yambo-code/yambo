@@ -44,7 +44,7 @@ subroutine PHEL_driver(E,k,q)
  ! Work Space
  !
  integer             ::i_err,iq,ID
- integer, external   ::ELPH_expanded_databases_check,io_PH
+ integer, external   ::ELPH_databases_check,io_PH
  type(E_fine_grid)   ::E_FG
  !
  call section('*',"Phonon Lifetimes")
@@ -75,25 +75,18 @@ subroutine PHEL_driver(E,k,q)
  !
  ! El-Ph databases check
  !=======================
- i_err=ELPH_expanded_databases_check(QP_PH_n_G_bands)
+ i_err=ELPH_databases_check(QP_PH_n_G_bands)
  if (i_err<0) then
    call error("Extended GKKP databases absent or damaged")
  endif
  !
  ! Q/K grid remapping
  !====================
- call ELPH_Q_databases_map(k,q)
+ call ELPH_databases_grids_map(k,q)
  !
  ! El-Ph databases I/O
  !=====================
- if (trim(PH_Self_Energy_mode)=="dressed-dressed") then
-   call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ square")
- else if (trim(PH_Self_Energy_mode)=="bare-bare")  then
-   call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ bare square")
- else
-   call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ")
-   call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ bare")
- endif
+ call ELPH_databases_load(GKKP_pe_sq,E,k,q,(/1,QP_PH_n_G_bands/),"Q-sym Q-IBZ K-BZ "//trim(PH_Self_Energy_mode))
  !
  !...acoustic branches
  !

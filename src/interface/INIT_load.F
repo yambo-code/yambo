@@ -110,7 +110,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_test_H_dim
 #endif
-#if defined _PL
+#if defined _KERR
  use PHOTOLUM,      ONLY:PL_weights
 #endif
 #if defined _MEM_CHECK
@@ -348,16 +348,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'Qdirection', '[Xd] Transferred momentum direction (iku)',q_plus_G_direction,verb_level=V_resp)
  call it(defs,'QShiftOrder','[Xd] Pick-up the (QShiftOrder)th q+G vector',Q_Shift_Order,verb_level=V_resp)
  !
-#if defined _PL
- call it(defs,'PL_weights','[PL] [cc] Weights of the carthesian components of the emitted radiation',PL_weights)
-#endif
- !
 #if defined _KERR
  !
  ! BSE properties: kerr, magnons, absorption, ...
  !
  call it(defs,'BSEprop',  '[BSE] abs/kerr/magn/dichr trace',BSE_prop)
  call it('f',defs,'AnHall'  , '[BSE] Add the anomalous Hall effect to eps if using length gauge')
+ call it(defs,'PL_weights','[PL] [cc] Weights of the carthesian components of the emitted radiation',PL_weights)
  !
 #endif
  !

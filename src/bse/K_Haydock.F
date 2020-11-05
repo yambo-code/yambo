@@ -243,7 +243,7 @@ subroutine K_Haydock(iq,W)
  !
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-   V0(i_g)%fragment(:) =BS_T_grp(i_g)%dipoles_R(1,:)*sqrt(BS_T_grp(i_g)%f_RES(:))
+   V0(i_g)%fragment(:) =BS_T_grp(i_g)%dipoles_opt(1,:,1)*sqrt(BS_T_grp(i_g)%f_RES(:))
    if(trim(global_gauge)=="velocity") V_tmp(i_g)%fragment(:) = V0(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
  enddo
  ! 
@@ -262,7 +262,7 @@ subroutine K_Haydock(iq,W)
    !
    do i_g=1,BS_nT_grps
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     V0_kerr(i_g)%fragment  =BS_T_grp(i_g)%dipoles_R(2,:)*sqrt(BS_T_grp(i_g)%f_RES(:))
+     V0_kerr(i_g)%fragment  =BS_T_grp(i_g)%dipoles_opt(2,:,1)*sqrt(BS_T_grp(i_g)%f_RES(:))
      if(trim(global_gauge)=="velocity") V_tmp(i_g)%fragment(:) = V0_kerr(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
    enddo
    !

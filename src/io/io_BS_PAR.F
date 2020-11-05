@@ -31,7 +31,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_K_dim,BS_IO_dim,BS_K_coupling,l_BSE_restart,l_BSE_kernel_complete,&
-&                        l_BSK_IO_triangular
+&                        l_BSK_IO_triangular,l_BS_ares_asymm,BS_mat_res_ares_dim
  use BS_solvers,    ONLY:variables_BS,BSS_desc
  use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,&
 &                        io_connect,io_elemental,def_variable_bulk,&
@@ -47,7 +47,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  integer, external :: variables_BS_more
  !
  logical :: def_var
- integer :: io_BS,    VAR_IDs(8), n_vars, i1
+ integer :: io_BS,    VAR_IDs(8), n_vars, i1, i2
  type(IO_desc)     :: local_desc
  character(schlen) :: db_name
  character(lchlen) :: full_db_name,ch(4)
@@ -118,9 +118,9 @@ subroutine io_BS_PAR_init(iq,X,ID)
  ch(4)="BSE_ANTI-COUPLING"
  VAR_IDs=(/1,2,3,4,5,6,7,8/)
  !
- if (.not.BS_K_coupling)           n_vars=1
- if (     BS_K_coupling.and.iq==1) n_vars=2
- if (     BS_K_coupling.and.iq/=1) n_vars=4
+ if (.not.BS_K_coupling) n_vars=1
+ if (     BS_K_coupling) n_vars=2
+ if ( l_BS_ares_asymm  ) n_vars=n_vars*2
  !
  if(l_BSK_IO_triangular) then
    !
@@ -153,9 +153,11 @@ subroutine io_BS_PAR_init(iq,X,ID)
  endif
  !
  do i1=1,n_vars
-   call def_variable_bulk(ID,trim(ch(i1)),       VAR_IDs(2*i1-1),&
+   i2=i1
+   if(i1==2 .and. BS_mat_res_ares_dim==2) i2=3
+   call def_variable_bulk(ID,trim(ch(i2)),       VAR_IDs(2*i2-1),&
            &               [2,BS_IO_dim],SP,dim_names,     par_io_kind='independent')
-   call def_variable_bulk(ID,trim(ch(i1))//"_DONE",VAR_IDs(2*i1),&
+   call def_variable_bulk(ID,trim(ch(i2))//"_DONE",VAR_IDs(2*i2),&
            &                  BS_IO_dim , 0,dim_names_done,par_io_kind='independent')
  enddo
  !

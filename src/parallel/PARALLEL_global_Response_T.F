@@ -26,7 +26,7 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  use R_lattice,     ONLY:bz_samp,nXkbz,nXkibz
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use IO_m,          ONLY:IO_and_Messaging_switch
- use BS,            ONLY:BS_nT_at_k,BS_nT_grps
+ use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_res_ares_dim
  use openmp,        ONLY:n_threads_K,OPENMP_set_threads
  use parallel_m,    ONLY:master_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index, &
 &                        PAR_n_c_bands,PAR_n_v_bands
@@ -115,7 +115,7 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  ! In this part I distribute the eh transitions within each k. The COMM for this indexing is PAR_COM_eh_INDEX.
  ! I fill the PAR_IND_eh for all k in order to define the total number of Transition groups
  !
- do i_k=1,nXkibz
+ do i_k=1,nXkibz*BS_res_ares_dim
    !
    call PARALLEL_index(PAR_IND_eh(i_k),(/BS_nT_at_k(i_k)/),COMM=PAR_COM_eh_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.FALSE.)
    !

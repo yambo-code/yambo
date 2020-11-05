@@ -30,6 +30,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  ! SLK
  use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved
  use matrix,        ONLY:TRANSFER_world
+ use BS,            ONLY:BS_res_ares_dim
  ! COMMUNICATORS
  use parallel_m,    ONLY:COMM_reset,&  
 &                        PAR_COM_VAL_INDEX_X,PAR_COM_VAL_INDEX_DIP,PAR_COM_CON_INDEX_X,PAR_COM_CON_INDEX_DIP,&
@@ -108,8 +109,8 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
 #endif
  !
  if (ENVIRONMENT=="Response_T_space") then
-   if (.not.allocated(PAR_IND_eh)) allocate(PAR_IND_eh(nXkibz))
-   do i_k=1,nXkibz
+   if (.not.allocated(PAR_IND_eh)) allocate(PAR_IND_eh(nXkibz*BS_res_ares_dim))
+   do i_k=1,nXkibz*BS_res_ares_dim
      call PP_indexes_reset(PAR_IND_eh(i_k))
    enddo
  endif

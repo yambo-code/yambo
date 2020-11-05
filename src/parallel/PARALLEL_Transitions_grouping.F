@@ -24,7 +24,7 @@
 subroutine PARALLEL_Transitions_grouping(Xk)
  !
  use pars,          ONLY:SP
- use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_T_grp_1st_el
+ use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_T_grp_1st_el,BS_res_ares_dim
  use parallel_m,    ONLY:PAR_IND_eh,PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,&
 &                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_BS_T_grps_index,&
 &                        PAR_COM_Xk_ibz_INDEX
@@ -37,7 +37,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  ! Work Space
  !
  logical              :: l_check
- integer              :: i_k,i_t_at_k,n_GRP,i_Tgrp,it_ref,i_counter
+ integer              :: i_k,i_k_r,i_k_s,i_t_at_k,n_GRP,i_Tgrp,it_ref,i_counter,i_res_ares
  integer, allocatable :: GRP_data(:)
  integer, allocatable :: GRP_index(:)
  !
@@ -46,7 +46,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  ! In this subroutine I distribute the eh transitions within each k. The COMM for this indexing is PAR_COM_eh_INDEX.
  ! Once the group of transitions are build-up the goal is to map them in the total world of transitions groups.
  !
- n_GRP=nXkibz*PAR_COM_eh_INDEX%n_CPU
+ n_GRP=nXkibz*PAR_COM_eh_INDEX%n_CPU*BS_res_ares_dim
  !
  YAMBO_ALLOC(BS_T_grp_1st_el,(n_GRP))
  allocate(GRP_data(n_GRP),GRP_index(n_GRP))
@@ -54,17 +54,20 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  ! Here PAR_BS_nT_grps is the number of groups without taking into account the k-parallelization.
  ! This is done to define properly the BS_T_grp_1st_el array
  !
- BS_T_grp_1st_el=0
- PAR_BS_nT_col_grps =0
- i_counter=PAR_COM_eh_INDEX%CPU_id+1+PAR_COM_Xk_ibz_INDEX%CPU_id*PAR_COM_eh_INDEX%n_CPU
  !
+   BS_T_grp_1st_el=0
+   PAR_BS_nT_col_grps =0
+   i_counter=PAR_COM_eh_INDEX%CPU_id+1+PAR_COM_Xk_ibz_INDEX%CPU_id*PAR_COM_eh_INDEX%n_CPU
+ do i_res_ares=1,BS_res_ares_dim
  do i_k=1,nXkibz
+   i_k_s=1+(i_res_ares-1)*nXkibz
+   i_k_r=i_k+(i_res_ares-1)*nXkibz
    ! 
    if (.not.PAR_IND_Kk_ibz%element_1D(i_k) ) cycle
    !
-   do i_t_at_k=1,BS_nT_at_k(i_k)
+   do i_t_at_k=1,BS_nT_at_k(i_k_r)
      !
-     if (.not.PAR_IND_eh(i_k)%element_1D(i_t_at_k)) cycle
+     if (.not.PAR_IND_eh(i_k_r)%element_1D(i_t_at_k)) cycle
      !
      if ( i_t_at_k==1 ) l_check= .false.
      if ( i_t_at_k> 1 ) l_check= PAR_IND_eh(i_k)%element_1D(i_t_at_k-1)
@@ -73,11 +76,12 @@ subroutine PARALLEL_Transitions_grouping(Xk)
      !
      PAR_BS_nT_col_grps = PAR_BS_nT_col_grps +1
      !
-     BS_T_grp_1st_el(i_counter)=i_t_at_k+sum(BS_nT_at_k(:i_k-1))
+     BS_T_grp_1st_el(i_counter)=i_t_at_k+sum(BS_nT_at_k(:i_k_r-1))
      !
      i_counter=i_counter+PAR_COM_eh_INDEX%n_CPU*PAR_COM_Xk_ibz_INDEX%n_CPU
      !
    enddo
+ enddo
  enddo
  !
  call PP_redux_wait(BS_T_grp_1st_el,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
@@ -110,11 +114,14 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  PAR_BS_nT_col_grps = 0
  PAR_BS_T_grps_index = 0
  !
+ do i_res_ares=1,BS_res_ares_dim
  do i_k=1,nXkibz
+   i_k_s=1+(i_res_ares-1)*nXkibz
+   i_k_r=i_k+(i_res_ares-1)*nXkibz
    !
    if (.not.PAR_IND_Kk_ibz%element_1D(i_k)) cycle
    !
-   do i_t_at_k=1,BS_nT_at_k(i_k)
+   do i_t_at_k=1,BS_nT_at_k(i_k_r)
      !
      if (.not.PAR_IND_eh(i_k)%element_1D(i_t_at_k)) cycle
      !
@@ -125,7 +132,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
      !
      PAR_BS_nT_col_grps = PAR_BS_nT_col_grps + 1
      !
-     it_ref=i_t_at_k+sum(BS_nT_at_k(:i_k-1))
+     it_ref=i_t_at_k+sum(BS_nT_at_k(:i_k_r-1))
      !
      do i_Tgrp=1,BS_nT_grps
        if (BS_T_grp_1st_el(i_Tgrp)==it_ref) then
@@ -141,6 +148,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
      enddo
      !
    enddo
+ enddo
  enddo
  !
  ! CLEAN UP

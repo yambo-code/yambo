@@ -31,7 +31,7 @@ subroutine K_stored_in_a_slepc_matrix(slepc_mat)
  !      | (-cI*K_c^*)  (-K_r^*) |
  !
  use pars,           ONLY:SP,cI,cONE
- use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
+ use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling
  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
  !
 #include <petsc/finclude/petscsys.h>
@@ -74,7 +74,7 @@ subroutine K_stored_in_a_slepc_matrix(slepc_mat)
    !
    do i_r=1,BS_blk(i_B)%size(1)
      !
-     H_pos(1)=sum(BS_T_grp(:I_Tk-1)%size)+i_r-1
+     H_pos(1)=BS_blk(i_B)%coordinate(1)+i_r-1
      !
      ! First the diagonal
      !
@@ -109,7 +109,7 @@ subroutine K_stored_in_a_slepc_matrix(slepc_mat)
      !
      do i_c=1,BS_blk(i_B)%size(2)
        !
-       H_pos(2)=sum(BS_T_grp(:I_Tp-1)%size)+i_c-1
+       H_pos(2)=BS_blk(i_B)%coordinate(2)+i_c-1
        !
        if (H_pos(1)>=H_pos(2)) cycle
        !

@@ -80,7 +80,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    ! Here I read information from the BSS_diago database
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,Xbsk)
+   io_err=io_BSS_diago(iq,1,io_ID,Xbsk)
    !
    if (io_err/=0) call error(' ndb.BS_diago not found')
    !
@@ -111,7 +111,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    !
    do i_sec=1,2
      call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
-     io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,bsR_kerr=BS_R_kerr,bsR_pl=BS_R_PL)
+     io_err=io_BSS_diago(iq,1,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BsE_corr=BS_E_SOC_corr,bsR_kerr=BS_R_kerr,bsR_pl=BS_R_PL)
      if (io_err/=0) call error(' ndb.BSS_diago, SEC '//trim(intc(i_sec))//', not compatible with ypp input')
    enddo
    !
@@ -133,7 +133,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,bsR_kerr=BS_R_kerr,bsR_pl=BS_R_PL)
+   io_err=io_BSS_diago(iq,1,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BsE_corr=BS_E_SOC_corr,bsR_kerr=BS_R_kerr,bsR_pl=BS_R_PL)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC 3, not compatible with ypp input')
    !
    ! Create the anti-resonant part of the eh_table
@@ -154,9 +154,9 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  endif
  !
  if(l_clean) then
-   !         
-   ! ! CLEAN
-   ! !
+   !
+   ! CLEAN
+   !
    YAMBO_FREE(BS_R_left)
    YAMBO_FREE(BS_R_right)
    YAMBO_FREE(BS_E)

@@ -97,12 +97,7 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_
      !
      ! R_over_R_x_A = R<_j/R_j B^l_j
      !
-     do i_K=1,BS_H_dim
-       !
-       if (i_K<=BS_K_dim) R_over_R_x_A(1,i_K) = BSS_PL_f(1,i_K)*         B(i_K)/BSS_eh_f(i_K)
-       if (i_K> BS_K_dim) R_over_R_x_A(1,i_K) = BSS_PL_f(2,i_K-BS_K_dim)*B(i_K)/(-BSS_eh_f(i_K-BS_K_dim))
-       !
-     enddo
+     R_over_R_x_A(1,:) = BSS_PL_f(:)*B(:)/BSS_eh_f(:)
      !
      ! adA_x_R_over_R_x_A = B^l*_j    R<_j/R_j B^l_j
      !
@@ -143,8 +138,8 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_
      !                       
      ! R_over_R_x_A = R<_j/R_j A^l_j
      !
-     R_over_R_x_A(1,:) =  BSS_PL_f(1,:)*BS_V_right(:,i_l)/BSS_eh_f(:)
-     R_over_R_x_A(2,:) =  BSS_PL_f(2,:)*BS_V_right(:,i_l)/BSS_eh_f(:)
+     R_over_R_x_A(1,:) =  BSS_PL_f(1:BS_K_dim) *BS_V_right(:,i_l)/BSS_eh_f(:)
+     R_over_R_x_A(2,:) =  BSS_PL_f(BS_K_dim+1:)*BS_V_right(:,i_l)/BSS_eh_f(:)
      !
      ! adA_x_R_over_R_x_A = (A^l_j)* R<_j/R_j A^l_j
      !

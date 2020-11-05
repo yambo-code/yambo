@@ -31,8 +31,9 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  use R_lattice,      ONLY:bare_qpg
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
  use BS,             ONLY:BS_H_dim
- use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles,Co_factor,K_inv_slk,K_slk
-#if defined _PL
+ use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles_opt,Co_factor,K_inv_slk,K_slk
+#if defined _KERR
+ use BS,             ONLY:l_BS_photolum
  use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL
 #endif
@@ -52,7 +53,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  character(1) :: Gr
  complex(SP)              :: gauge_factor
  complex(SP), allocatable :: Mm1(:,:)
-#if defined _PL
+#if defined _KERR
  integer,        external :: PL_via_perturbative_inversion
 #endif
  integer,        external :: EPS_via_perturbative_inversion
@@ -76,22 +77,24 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
      !
      if(.not.px%element_1D(iw)) then
        K_INV_EPS%err(iw)=0
-#if defined _PL
-       K_INV_PL%err(iw)=0
+#if defined _KERR
+       if(l_BS_photolum) K_INV_PL%err(iw)=0
 #endif
        cycle
      endif
      !
      if (K_INV_EPS%err(iw)/=0) then
-       K_INV_EPS%err(iw)=EPS_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles,gauge_factor,&
+       K_INV_EPS%err(iw)=EPS_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_opt,gauge_factor,&
 &                                                       Epsilon_ii(iw,2),Lo(:,iw,:))
      endif
      !
-#if defined _PL
+#if defined _KERR
      !
-     if (K_INV_PL%err(iw)/=0) then
-       K_INV_PL%err(iw)=PL_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_PL,PL_prefactor,&
-&                                                     PL(iw,2),Lo(:,iw,:))
+     if(l_BS_photolum) then
+       if (K_INV_PL%err(iw)/=0) then
+         K_INV_PL%err(iw)=PL_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_PL,PL_prefactor,&
+&                                                       PL(iw,2),Lo(:,iw,:))
+       endif
      endif
      !
 #endif
@@ -112,11 +115,13 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
          K_INV_EPS%err(iw)=0
        endif
        !
-#if defined _PL
+#if defined _KERR
        !
-       if (what=="PLS".or.what=="any") then
-         call PL_compose(i_L)
-         K_INV_PL%err(iw)=0
+       if(l_BS_photolum) then
+         if (what=="PLS".or.what=="any") then
+           call PL_compose(i_L)
+           K_INV_PL%err(iw)=0
+         endif
        endif
        !
 #endif
@@ -137,7 +142,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  !
  contains
    !
-#if defined _PL
+#if defined _KERR
    subroutine PL_compose(i_L_)
      complex(SP) :: Vp(BS_H_dim),V(BS_H_dim)
      integer     :: i_L_,i_c,i_cv,i1,i2
@@ -165,21 +170,21 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
      if(i_L_==1) then
        if (K_slk%kind=="SLK") then
 #if defined _SCALAPACK
-         call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,BSS_dipoles,V)
+         call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,BSS_dipoles_opt,V)
 #endif
        else
-         call M_by_V('n',BS_H_dim,Mm1,BSS_dipoles,V)
+         call M_by_V('n',BS_H_dim,Mm1,BSS_dipoles_opt,V)
        endif
-       Epsilon_ii(iw,2)=gauge_factor*Vstar_dot_V(BS_H_dim,BSS_dipoles,V)
+       Epsilon_ii(iw,2)=gauge_factor*Vstar_dot_V(BS_H_dim,BSS_dipoles_opt,V)
      else if(i_L_==2) then
        if (K_slk%kind=="SLK") then
 #if defined _SCALAPACK
-         call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,conjg(BSS_dipoles),V)
+         call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,conjg(BSS_dipoles_opt),V)
 #endif
        else
-         call M_by_V('n',BS_H_dim,Mm1,conjg(BSS_dipoles),V)
+         call M_by_V('n',BS_H_dim,Mm1,conjg(BSS_dipoles_opt),V)
        endif
-       Epsilon_ii(iw,2)=Epsilon_ii(iw,2)+gauge_factor*Vstar_dot_V(BS_H_dim,conjg(BSS_dipoles),V)
+       Epsilon_ii(iw,2)=Epsilon_ii(iw,2)+gauge_factor*Vstar_dot_V(BS_H_dim,conjg(BSS_dipoles_opt),V)
      endif
    end subroutine
    !

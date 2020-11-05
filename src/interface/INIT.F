@@ -34,9 +34,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics
-#if defined _PL
- use drivers,        ONLY:l_photolum
-#endif
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
@@ -308,9 +305,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_chi=runlevel_is_on('chi')
        l_bse=runlevel_is_on('bse')
        l_bss=runlevel_is_on('bss')
-#if defined _PL
-       l_photolum=runlevel_is_on('photolum')
-#endif
        l_tddft=runlevel_is_on('tddft')
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
@@ -469,10 +463,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
      !
      if (l_gw0.and.l_cohsex) call parser('UseEbands',COHSEX_use_empties)
-     !
-#if defined _PL
-     if (l_photolum) call initactivate(1,'bse optics dipoles')
-#endif
      !
 #if defined _SC
      if (l_sc_magnetic) call initactivate(1,'potential')

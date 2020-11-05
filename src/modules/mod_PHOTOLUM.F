@@ -23,7 +23,7 @@
 !
 module PHOTOLUM
  !
- use drivers,    ONLY:l_photolum
+ use BS,         ONLY:l_BS_photolum
  use pars,       ONLY:SP
 #include<memory.h>
  !
@@ -40,7 +40,7 @@ module PHOTOLUM
  ! BS dipoles
  !
  complex(SP), allocatable :: BSS_dipoles_PL(:,:)
- complex(SP), allocatable :: BSS_PL_f(:,:)
+ complex(SP), allocatable :: BSS_PL_f(:)
  !
  contains
    !
@@ -65,31 +65,24 @@ module PHOTOLUM
    end subroutine
    !
    subroutine BSS_PL_alloc( )
-     !
      use pars,       ONLY:cZERO,rZERO
      use BS,         ONLY:BS_H_dim,BS_K_dim
-     !
-     if (.not.l_photolum) return
-     !
-     YAMBO_ALLOC(BSS_dipoles_PL,(BS_H_dim,3))
+     use BS_solvers, ONLY:BSS_size
+     if (.not.l_BS_photolum) return
+     YAMBO_ALLOC(BSS_dipoles_PL,(3,BSS_size))
      BSS_dipoles_PL = cZERO
-     !
-     YAMBO_ALLOC(BSS_PL_f,(2,BS_K_dim))
+     YAMBO_ALLOC(BSS_PL_f,(2*BS_K_dim))
      BSS_PL_f = rZERO
-     !
    end subroutine
    !
    subroutine BSS_PL_free( )
-     !
-     if (.not.l_photolum) return
-     !
+     if (.not.l_BS_photolum) return
      if (allocated(BSS_dipoles_PL)) then
        YAMBO_FREE(BSS_dipoles_PL)
      endif
      if (allocated(BSS_PL_f)) then
        YAMBO_FREE(BSS_PL_f)
      endif
-     !
    end subroutine
    !
 end module PHOTOLUM

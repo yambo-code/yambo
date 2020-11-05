@@ -42,16 +42,13 @@ subroutine K_output_file(iq,mode)
  use electrons, ONLY:spin_occ
  use R_lattice, ONLY:nkbz
  use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,HBAR_SI
- use BS,        ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism
+ use BS,        ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum
  use X_m,       ONLY:Epsilon_ij,X_magnons,X_dichroism
  use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name,dichr_file_name,&
  &                   magp_file_name,magm_file_name
  use KERR,      ONLY:B_Hall,A_drude
-#endif
-#if defined _PL
  use X_output,  ONLY:pl_file_name
  use PHOTOLUM,  ONLY:PL
- use drivers,   ONLY:l_photolum
 #endif
  !
  implicit none
@@ -117,9 +114,7 @@ subroutine K_output_file(iq,mode)
  if (l_INIT) title_mode='ot'
  !
  call of_open_close(eps_file_name,title_mode)
-#if defined _PL
- call of_open_close(pl_file_name,title_mode)
-#endif
+ !
  if (eval_reflectivity) call of_open_close(refl_file_name,title_mode)
  if (eval_eels)         call of_open_close(eel_file_name,title_mode)
  if (eval_alpha)        call of_open_close(alpha_file_name,title_mode)
@@ -130,9 +125,8 @@ subroutine K_output_file(iq,mode)
    if (.not.eval_alpha) call of_open_close(moke_file_name,title_mode)
    if (     eval_alpha) call of_open_close(beta_file_name,title_mode)
  endif
-   if(l_BS_dichroism) call of_open_close(dichr_file_name,title_mode)
-#endif
-#if defined _KERR
+ if(l_BS_dichroism) call of_open_close(dichr_file_name,title_mode)
+ if(l_BS_photolum)  call of_open_close(pl_file_name,title_mode)
  if(l_BS_magnons) then
    call of_open_close(magp_file_name,title_mode)
    call of_open_close(magm_file_name,title_mode)
@@ -184,36 +178,6 @@ subroutine K_output_file(iq,mode)
    call msg('o beta','#')
  endif
  !
-#endif
- !
- ! Headers
- !
- call X_setup_headers('EPS')
- call msg("o eps",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
- !
-#if defined _PL
- if (l_photolum) then
-   call X_setup_headers('PL')
-   call msg("o pl_",'#',headers(:(n_headers-1)/2+1),INDENT=0,USE_TABS=.TRUE.)
- endif
-#endif
- !
- if (eval_reflectivity) then 
-   call X_setup_headers('REFL')
-   call msg("o refl",'#',headers(:(n_headers-1)/2+1),INDENT=0,USE_TABS=.TRUE.)
- end if   
- !
- if (eval_eels) then 
-   call X_setup_headers('EEL')
-   call msg("o eel",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
- end if   
- !
- if (eval_alpha) then 
-   call X_setup_headers('ALPHA')
-   call msg("o alpha",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
- endif
- !
-#if defined _KERR
  if(l_BS_kerr) then
    !
    ! Hanomalous Hall term
@@ -240,6 +204,34 @@ subroutine K_output_file(iq,mode)
    call msg('o off','#',output_data(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
    call msg('o off','#')
    !
+  endif
+  !
+#endif
+ !
+ ! Headers
+ !
+ call X_setup_headers('EPS')
+ call msg("o eps",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
+ !
+ if (eval_reflectivity) then 
+   call X_setup_headers('REFL')
+   call msg("o refl",'#',headers(:(n_headers-1)/2+1),INDENT=0,USE_TABS=.TRUE.)
+ end if   
+ !
+ if (eval_eels) then 
+   call X_setup_headers('EEL')
+   call msg("o eel",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
+ end if   
+ !
+ if (eval_alpha) then 
+   call X_setup_headers('ALPHA')
+   call msg("o alpha",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
+ endif
+ !
+#if defined _KERR
+ !
+ if(l_BS_kerr) then
+   !
    call X_setup_headers('off')
    call msg("o off",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
    !
@@ -254,9 +246,12 @@ subroutine K_output_file(iq,mode)
    endif
    !
  endif
-#endif
  !
-#if defined _KERR
+ if (l_BS_photolum) then
+   call X_setup_headers('PL')
+   call msg("o pl_",'#',headers(:(n_headers-1)/2+1),INDENT=0,USE_TABS=.TRUE.)
+ endif
+ !
  if(l_BS_magnons) then
    !
    call X_setup_headers('Spm ')
@@ -270,9 +265,7 @@ subroutine K_output_file(iq,mode)
    if (l_IP) call msg("o Smp",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    !
  endif
-#endif
  !
-#if defined _KERR
  if(l_BS_dichroism) then
    !
    call X_setup_headers('CD ')
@@ -289,27 +282,6 @@ subroutine K_output_file(iq,mode)
  endif
  !
  call msg("o eps refl eel alpha off beta moke jdos pl_ Smp Spm",'#')
- !
-#if defined _PL
- !
- if (l_photolum) then
-   !
-   ! PHOTOLUMINESCENCE
-   !--------------------
-   !
-   do iw=1,BSS_n_freqs
-     !
-     ! PL: 2 (int) 3 (non int) 
-     !
-     if (     l_IP) n_output_data=2 ; output_data(1:2)=(/real(PL(iw,1))*HA2EV,PL(iw,3)/)
-     if (.not.l_IP) n_output_data=3 ; output_data(1:3)=(/real(PL(iw,1))*HA2EV,PL(iw,2),PL(iw,3)/)
-     call msg("o pl_",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
-     !
-   enddo
-   !
- endif
- !
-#endif
  !
  ! ABSORPTION
  !------------
@@ -411,6 +383,22 @@ subroutine K_output_file(iq,mode)
  !
 #if defined _KERR
  !
+ ! PHOTOLUMINESCENCE
+ !--------------------
+ if (l_BS_photolum) then
+   !
+   do iw=1,BSS_n_freqs
+     !
+     ! PL: 2 (int) 3 (non int) 
+     !
+     if (     l_IP) n_output_data=2 ; output_data(1:2)=(/real(PL(iw,1))*HA2EV,PL(iw,3)/)
+     if (.not.l_IP) n_output_data=3 ; output_data(1:3)=(/real(PL(iw,1))*HA2EV,PL(iw,2),PL(iw,3)/)
+     call msg("o pl_",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
+     !
+   enddo
+   !
+ endif
+ !
  ! KERR 
  !------
  if(l_BS_kerr) then
@@ -493,10 +481,6 @@ subroutine K_output_file(iq,mode)
    !
  endif
  !
-#endif
- !
-#if defined _KERR
- !
  ! MAGNONS
  !------
  if(l_BS_magnons) then
@@ -528,10 +512,6 @@ subroutine K_output_file(iq,mode)
    enddo
    !
  endif
- !
-#endif
- !
-#if defined _KERR
  !
  !  DICHROISM
  !------
@@ -580,30 +560,27 @@ subroutine K_output_file(iq,mode)
    !
    subroutine CLOSE_the_files( )
      !
-#if defined _PL
-     call of_open_close(pl_file_name)
-#endif
      call of_open_close(eps_file_name)
      call of_open_close(refl_file_name)
      call of_open_close(eel_file_name)
      call of_open_close(alpha_file_name)
      !
 #if defined _KERR
+     if(l_BS_photolum) then
+       call of_open_close(pl_file_name)
+     endif
+     !
      if(l_BS_kerr) then
        call of_open_close(off_file_name)
        call of_open_close(beta_file_name)
        call of_open_close(moke_file_name)
      endif
-#endif
      !
-#if defined _KERR
      if(l_BS_magnons) then
        call of_open_close(magp_file_name)
        call of_open_close(magm_file_name)
      endif
-#endif
-
-#if defined _KERR
+     !
      if(l_BS_dichroism) then
        call of_open_close(dichr_file_name)
      endif

@@ -68,6 +68,7 @@ module BS_solvers
  type(IO_desc)    :: BSS_desc
  character(schlen):: BSS_mode
  complex(SP) :: BSS_Wd
+ integer  :: BSS_size
  integer  :: BSS_n_freqs
  integer  :: BSS_n_eig            !number of eigenvalues to find
  real(SP) :: BSS_er(2)
@@ -140,7 +141,7 @@ module BS_solvers
  real(SP)   , allocatable :: BSS_eh_E_SOC_corr(:,:)
  complex(SP), allocatable :: BS_diagonal(:)
  complex(SP), allocatable :: BS_mat(:,:)
- complex(SP), allocatable :: BSS_dipoles(:)
+ complex(SP), allocatable :: BSS_dipoles_opt(:)
  complex(SP), allocatable :: BSS_eh_Z(:)
  !
  interface 
@@ -156,13 +157,15 @@ module BS_solvers
      type(X_t), optional::X
    end function
    !
-   integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,BsRr,BsE_corr,bsL_magn,bsR_magn,baL_magn,baR_magn,bsR_kerr,bsR_pl)
+   integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,BsRr,bsAl,BsAr,BsE_corr,&
+   &                                    bsL_magn,bsR_magn,baL_magn,baR_magn,bsR_kerr,bsR_pl)
      use pars,          ONLY:SP
      use X_m,           ONLY:X_t
      implicit none
      type(X_t),intent(in)         :: X_static
-     integer                      :: iq,ID
+     integer                      :: iq,ID,i_BS_mat
      complex(SP)        ,optional :: bsE(:),bsRl(:),bsRr(:)
+     complex(SP),pointer,optional :: bsAl(:),bsAr(:)
      real(SP),   pointer,optional :: BsE_corr(:,:),bsR_pl(:,:)
      complex(SP),pointer,optional :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:),baL_magn(:,:),baR_magn(:,:)
    end function
@@ -185,13 +188,13 @@ module BS_solvers
    subroutine BSS_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
-     integer :: i_g
+     integer :: i_g,i_size
      logical :: W_is_allocated,Z_is_allocated,E_SOC_is_allocated
-     YAMBO_ALLOC(BSS_dipoles,(BS_H_dim))
-     BSS_dipoles = cZERO
-     YAMBO_ALLOC(BSS_eh_table,(BS_K_dim,5))
-     YAMBO_ALLOC(BSS_eh_E,(BS_K_dim))
-     YAMBO_ALLOC(BSS_eh_f,(BS_K_dim))
+     YAMBO_ALLOC(BSS_dipoles_opt,(BSS_size))
+     BSS_dipoles_opt = cZERO
+     YAMBO_ALLOC(BSS_eh_table,(BSS_size,5))
+     YAMBO_ALLOC(BSS_eh_E,(BSS_size))
+     YAMBO_ALLOC(BSS_eh_f,(BSS_size))
      BSS_eh_table = 0
      BSS_eh_E     = rZERO
      BSS_eh_f     = rZERO
@@ -204,22 +207,22 @@ module BS_solvers
        if (.not.E_SOC_is_allocated) E_SOC_is_allocated = allocated(BS_T_grp(i_g)%E_SOC_corr)
      enddo
      if (W_is_allocated) then
-       YAMBO_ALLOC(BSS_eh_W,(BS_K_dim))
+       YAMBO_ALLOC(BSS_eh_W,(BSS_size))
        BSS_eh_W = rZERO
      endif
      if (Z_is_allocated) then
-       YAMBO_ALLOC(BSS_eh_Z,(BS_K_dim))
+       YAMBO_ALLOC(BSS_eh_Z,(BSS_size))
        BSS_eh_Z = cZERO
      endif
      if (E_SOC_is_allocated) then
-       YAMBO_ALLOC(BSS_eh_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
+       YAMBO_ALLOC(BSS_eh_E_SOC_corr,(2/n_sp_pol,BSS_size))
        BSS_eh_E_SOC_corr = rZERO
      endif
    end subroutine
    !
    subroutine BSS_free()
      YAMBO_FREE(BSS_eh_table)
-     YAMBO_FREE(BSS_dipoles)
+     YAMBO_FREE(BSS_dipoles_opt)
      YAMBO_FREE(BSS_eh_E)
      YAMBO_FREE(BSS_eh_W)
      YAMBO_FREE(BSS_eh_f)

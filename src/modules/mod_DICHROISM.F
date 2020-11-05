@@ -24,25 +24,26 @@
 module DICHROISM
  !
  use pars,    ONLY:SP
- use BS,      ONLY:l_BS_dichroism,BS_dip_size
+ use BS,      ONLY:l_BS_dichroism
  !
 #include<memory.h>
  !
- complex(SP), allocatable :: BSS_dipoles_dichroism(:,:)
+ complex(SP), allocatable :: BSS_dipoles_dich(:,:)
  !
  contains
    !
-   subroutine BSS_DICHROISM_alloc( )
+   subroutine BSS_DICH_alloc( )
      use pars,       ONLY:cZERO
-     use BS,         ONLY:BS_H_dim,BS_K_dim
+     use BS,         ONLY:BS_dip_size
+     use BS_solvers, ONLY:BSS_size
      if (.not.l_BS_dichroism) return
-     YAMBO_ALLOC(BSS_dipoles_dichroism,(BS_dip_size,BS_H_dim))
-     BSS_dipoles_dichroism = cZERO
+     YAMBO_ALLOC(BSS_dipoles_dich,(BS_dip_size,BSS_size))
+     BSS_dipoles_dich = cZERO
    end subroutine
    !
-   subroutine BSS_DICHROISM_free( )
+   subroutine BSS_DICH_free( )
      if (.not.l_BS_dichroism) return
-     YAMBO_FREE(BSS_dipoles_dichroism)
+     YAMBO_FREE(BSS_dipoles_dich)
    end subroutine
    !
 end module

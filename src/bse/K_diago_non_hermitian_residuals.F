@@ -40,7 +40,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
  use BS,             ONLY:BS_K_dim,BS_H_dim
- use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_n_eig
+ use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_n_eig
  !
  implicit none
  !
@@ -67,18 +67,10 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  call live_timing('EPS R residuals',px%n_of_elements(myid+1))
  !
- do i1=1,BS_K_dim
-   !
-   tmp_res(i1)          =   conjg(BSS_dipoles(i1))         *sqrt(BSS_eh_f(i1)) 
-   tmp_res(i1+BS_K_dim) =cI*conjg(BSS_dipoles(i1+BS_K_dim))*sqrt(BSS_eh_f(i1))
-   !
-   if (allocated(BSS_eh_Z)           ) tmp_res(i1)         =tmp_res(i1)*sqrt(BSS_eh_Z(i1))
-   if (allocated(BSS_eh_Z)           ) tmp_res(i1+BS_K_dim)=tmp_res(i1+BS_K_dim)*sqrt(BSS_eh_Z(i1))
-   !
-   if (trim(global_gauge)=="velocity") tmp_res(i1)         =tmp_res(i1)/BSS_eh_E(i1)
-   if (trim(global_gauge)=="velocity") tmp_res(i1+BS_K_dim)=tmp_res(i1+BS_K_dim)/BSS_eh_E(i1)
-   !
- enddo
+ tmp_res = conjg(BSS_dipoles_opt)*sqrt(BSS_eh_f)
+ !
+ if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z)
+ if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
  !
  do i1=1,BSS_n_eig
    if (.not.px%element_1D(i1)) cycle
@@ -98,18 +90,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  call live_timing('EPS L residuals',px%n_of_elements(myid+1))
  !
- do i1=1,BS_K_dim
-   !
-   tmp_res(i1)          =   BSS_dipoles(i1)         *sqrt(BSS_eh_f(i1)) 
-   tmp_res(i1+BS_K_dim) =cI*BSS_dipoles(i1+BS_K_dim)*sqrt(BSS_eh_f(i1))
-   !
-   if (allocated(BSS_eh_Z)           ) tmp_res(i1)         =tmp_res(i1)*sqrt(BSS_eh_Z(i1))
-   if (allocated(BSS_eh_Z)           ) tmp_res(i1+BS_K_dim)=tmp_res(i1+BS_K_dim)*sqrt(BSS_eh_Z(i1))
-   !
-   if (trim(global_gauge)=="velocity") tmp_res(i1)         =tmp_res(i1)/BSS_eh_E(i1)
-   if (trim(global_gauge)=="velocity") tmp_res(i1+BS_K_dim)=tmp_res(i1+BS_K_dim)/BSS_eh_E(i1)
-   !
- enddo
+ tmp_res = BSS_dipoles_opt*sqrt(BSS_eh_f)
  !
  do i1=1,BSS_n_eig
    !

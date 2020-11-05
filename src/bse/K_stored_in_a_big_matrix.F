@@ -32,7 +32,8 @@ subroutine K_stored_in_a_big_matrix(iq,what)
  !
  use pars,           ONLY:SP,cI,cZERO,cONE
  use parallel_m,     ONLY:PP_redux_wait
- use BS,             ONLY:BS_K_coupling,n_BS_blks
+ use BS,             ONLY:BS_K_coupling,n_BS_blks,BS_mat_res_ares_dim,&
+&                         l_BS_ares_asymm
  use BS_solvers,     ONLY:BS_mat,BS_blk,BS_H_dim,BS_K_dim,&
 &                         BSS_perturbative_width,run_inversion,run_Haydock,&
 &                         BS_blks_free,BSS_eh_E,BSS_eh_W
@@ -82,7 +83,11 @@ subroutine K_stored_in_a_big_matrix(iq,what)
          if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
            E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1))
          endif
-         BS_mat(H_pos(1)+BS_K_dim,H_pos(1)+BS_K_dim)=E_plus_W+real(BS_blk(i_B)%mat(i_r,i_r),SP) 
+         if(BS_mat_res_ares_dim==1) then
+           BS_mat(H_pos(1)+BS_K_dim,H_pos(1)+BS_K_dim)=E_plus_W+real(BS_blk(i_B)%mat(i_r,i_r),SP) 
+         else
+           BS_mat(H_pos(1),H_pos(1))=E_plus_W+real(BS_blk(i_B)%mat(i_r,i_r),SP) 
+         endif
        case("Q")
          BS_mat(H_pos(1)+BS_K_dim,H_pos(1))=BS_blk(i_B)%mat(i_r,i_r)
        end select
@@ -99,13 +104,17 @@ subroutine K_stored_in_a_big_matrix(iq,what)
        !
        select case(BS_blk(i_B)%mode)
        case("R")
-         BS_mat(H_pos(1)         ,H_pos(2)         )=BS_blk(i_B)%mat(i_r,i_c)
+           BS_mat(H_pos(1)         ,H_pos(2)         )=BS_blk(i_B)%mat(i_r,i_c)
        case("C")
-         BS_mat(H_pos(1)         ,H_pos(2)+BS_K_dim)=BS_blk(i_B)%mat(i_r,i_c)
+           BS_mat(H_pos(1)         ,H_pos(2)+BS_K_dim)=BS_blk(i_B)%mat(i_r,i_c)
        case("A")
-         BS_mat(H_pos(1)+BS_K_dim,H_pos(2)+BS_K_dim)=BS_blk(i_B)%mat(i_r,i_c)
+         if(BS_mat_res_ares_dim==1) then
+           BS_mat(H_pos(1)+BS_K_dim,H_pos(2)+BS_K_dim)=BS_blk(i_B)%mat(i_r,i_c)
+         else
+           BS_mat(H_pos(1)         ,H_pos(2)         )=BS_blk(i_B)%mat(i_r,i_c)
+         endif
        case("Q")
-         BS_mat(H_pos(1)+BS_K_dim,H_pos(2)         )=BS_blk(i_B)%mat(i_r,i_c)
+           BS_mat(H_pos(1)+BS_K_dim,H_pos(2)         )=BS_blk(i_B)%mat(i_r,i_c)
        end select
        !
      enddo
@@ -134,7 +143,7 @@ subroutine K_stored_in_a_big_matrix(iq,what)
    ! If Coupling the half lower part of K is empty
    ! Filling the anti-resonant and anti-coupling parts
    !
-   if(iq==1) then
+   if(.not.l_BS_ares_asymm) then
      forall(i_r=1:BS_K_dim,i_c=1:BS_K_dim)
        ! Anti-Coupling
        BS_mat(i_r+BS_K_dim,i_c)=-conjg(BS_mat(i_r,i_c+BS_K_dim))

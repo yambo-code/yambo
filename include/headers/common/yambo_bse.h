@@ -25,14 +25,14 @@
 #define DEFINE_BSK_COMMON_INDEXES \
 integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \
 &               i_kmq_s,i_kmq_s_m1,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,& NEWLINE \
-&               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,H_pos(2),& NEWLINE \
+&               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,I_Tgrp_k_st,I_Tgrp_p_st,H_pos(2),& NEWLINE \
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,iq_W_bz,iq_W_s,ig_W,& NEWLINE \
 &               i_kmq_t,i_pmq_t
 
 #define FILL_BSK_COMMON_INDEXES \
      NEWLINE \
-     H_pos(1) = sum(BS_T_grp(:I_Tgrp_k-1)%size)+i_Tk NEWLINE \
-     H_pos(2) = sum(BS_T_grp(:I_Tgrp_p-1)%size)+i_Tp NEWLINE \
+     H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk NEWLINE \
+     H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp NEWLINE \
      NEWLINE \
      if (H_pos(1)>H_pos(2)) cycle NEWLINE \
      NEWLINE \

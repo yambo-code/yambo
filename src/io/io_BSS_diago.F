@@ -21,12 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
+integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,bsAl,bsAr,BsE_corr,&
 &                             bsL_magn,bsR_magn,baL_magn,baR_magn,bsR_kerr,bsR_pl)
  !
  use pars,          ONLY:SP,schlen,IP
  use stderr,        ONLY:intc
- use BS,            ONLY:BS_K_dim,BS_H_dim,BSqpts,BS_perturbative_SOC
+ use BS,            ONLY:BS_K_dim,BS_H_dim,BSqpts,BS_perturbative_SOC,BS_mat_res_ares_dim
  use BS_solvers,    ONLY:BSS_q0,BSS_write_eig_2_db,BSS_eh_table,BS_mat,variables_BS,BSS_n_eig
  use X_m,           ONLY:X_t
  use descriptors,   ONLY:IO_desc
@@ -38,8 +38,9 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  implicit none
  !
  type(X_t),intent(inout)        :: X_static
- integer                        :: iq,ID
+ integer                        :: iq,ID,i_BS_mat
  complex(SP)        , optional  :: bsE(:),bsRl(:),bsRr(:)
+ complex(SP),pointer, optional  :: bsAl(:),bsAr(:)
  real(SP)   ,pointer, optional  :: BsE_corr(:,:),bsR_pl(:,:)
  complex(SP),pointer, optional  :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:),baL_magn(:,:),baR_magn(:,:)
  !
@@ -51,6 +52,7 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  call timing('io_BSS_diago',OPR='start')
  !
  db_name='BS_diago_Q'//trim(intc(iq))
+ if (i_BS_mat>1) db_name='BS_diago_Q'//trim(intc(iq))//' ares'
  !
  io_BSS_diago=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (io_BSS_diago/=0) goto 1
@@ -64,7 +66,7 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
    !
    io_BSS_diago=variables_BS(ID,iq,local_desc,.FALSE.,X=X_static)
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
+   call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
    !
    call io_elemental(ID,VAR=&
 &       " BSS|Eigenstates included     ",L0=BSS_write_eig_2_db,CHECK=.true.,OP=(/"=="/))
@@ -75,6 +77,8 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
    endif
    call io_elemental(ID,VAR=&
 &       "    |Eigenstates computed     ",I0=BSS_n_eig,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR=&
+&       "    |Number of BSE matricies  ",I0=BS_mat_res_ares_dim,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    ! header return
@@ -110,6 +114,16 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
    if (present(bsRr)) then
      call io_bulk(ID,'BS_right_Residuals',VAR_SZ=(/2,BSS_n_eig/))
      call io_bulk(ID,C1=bsRr)
+   endif
+   !
+   if (present(bsAl)) then
+     call io_bulk(ID,'BS_left_Antiresid',VAR_SZ=(/2,BSS_n_eig/))
+     call io_bulk(ID,C1=bsAl)
+   endif
+   !
+   if (present(bsRr)) then
+     call io_bulk(ID,'BS_right_Antiresid',VAR_SZ=(/2,BSS_n_eig/))
+     call io_bulk(ID,C1=bsAr)
    endif
    !
    ! GPL_EXCLUDE_START

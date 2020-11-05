@@ -31,7 +31,7 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
  use units,         ONLY:HA2EV
  use BS_solvers,    ONLY:BSS_n_eig,BS_mat,BSS_eh_table,BS_H_dim
  use YPPm,          ONLY:BS_E,EXCITONS_user_indexes,EXCITONS_n_user_states,coo_in,coo_out, &
-&                        Q_steps,INTERP_grid,K_transform         
+&                        BANDS_steps,INTERP_grid,K_transform,CIRCUIT_k     
  use interpolate,   ONLY:nshells
  use parser_m,      ONLY:parser
  use com,           ONLY:msg,of_open_close
@@ -52,7 +52,7 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
  real(SP), allocatable    :: BS_all_E(:,:),BSE_interp_E(:,:),values(:)
  real(SP)                 :: deltaQ
  complex(SP) ,allocatable :: BS_mat_all(:,:,:),BSS_eh_table_all(:,:,:),EXC_OVLP(:,:,:,:),V_tmp(:,:,:)
- type(bz_samp)            :: USER_q,CIRCUIT_q,GRID_q
+ type(bz_samp)            :: GRID_q
  character(schlen)        :: coo_out_,file_name
  character(schlen), allocatable :: headings(:)
  logical                  :: GRID_interpolate
@@ -71,12 +71,15 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
  ! Allocate arrays for all eigenvalues/eigenvectors
  ! 
  YAMBO_ALLOC(BS_all_E,(EXCITONS_n_user_states,q%nibz))
+ YAMBO_ALLOC(values,(EXCITONS_n_user_states+4))
+ allocate(headings(EXCITONS_n_user_states+4))
+ !
  !
  call section('*','Excitons Interpolation')
  !
  call excitons_read(k,Xk,en,Xen,1,"clean")
  !
- ! # Read all eigenvalues and eigenvectors
+ ! Read all eigenvalues and eigenvectors
  !
  do iq=1,q%nibz
    call msg('s','Reading excitons at @ Q-index #',iq)
@@ -87,9 +90,30 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
      BS_all_E(i_c,iq)=BS_E(i_l)
    enddo
    call excitons_read(k,Xk,en,Xen,iq,"clean")
+   !
  enddo
  !
- ! # Fourier interpolation of exciton dispersion
+ ! Write in the report the exciton energies
+ !
+ call msg('nr','Excitons Energies:')
+ headings(1:3)=(/"q_x (rlu)","q_y (rlu)","q_z (rlu)"/)
+ do i_c=1,EXCITONS_n_user_states
+    i_l=EXCITONS_user_indexes(i_c)
+    headings(i_c+3)=' e'//trim(intc(i_l))//' [eV]'
+ enddo
+ call msg('r',"#",headings(1:EXCITONS_n_user_states+3))
+ do iq=1,q%nibz
+   tmp_q=q%pt(iq,:3)
+   call K_transform(tmp_q,'iku')
+   values(1:3)=tmp_q
+   do i_c=1,EXCITONS_n_user_states
+      i_l=EXCITONS_user_indexes(i_c)
+      values(i_c+3)=BS_all_E(i_c,iq)*HA2EV
+   enddo
+   call msg('r',' ',values(1:EXCITONS_n_user_states+3))
+ enddo
+ !
+ ! Fourier interpolation of exciton dispersion
  !
  call INTERPOLATION_BZ_setup(q)
  ID_INTERP=1
@@ -98,47 +122,15 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
  !
  ! Excitons Interpolation on GRID or CIRCUIT
  !
- if(Q_steps>0) then
-   !     
-   call bz_samp_reset(USER_q)
-   USER_q%nbz=1
-   !   
-   qgrid_main_loop: do while(real_ctl/=999._SP)
-     YAMBO_FREE(USER_q%pt)
-     YAMBO_ALLOC(USER_q%pt,(USER_q%nbz,3))
-     USER_q%pt(USER_q%nbz,:)=(/0._SP,0._SP,999._SP/)
-     call parser('Qpts',USER_q%pt)
-     real_ctl=USER_q%pt(USER_q%nbz,3)
-     if (real_ctl/=999._SP) USER_q%nbz=USER_q%nbz+1
-   enddo qgrid_main_loop
-   !
-   USER_q%nbz =USER_q%nbz-1
-   USER_q%nibz=USER_q%nbz
-   !
-   if (USER_q%nbz==0) call error("No points given in input")
-   !
-   coo_out_=coo_out
-   coo_out ="iku"
-   do ik=1,USER_q%nbz
-     call K_transform(USER_q%pt(ik,:),coo_in)
-   enddo
-   coo_out =coo_out_
-   !
-   call bz_samp_reset(CIRCUIT_q)
-!   call generate_circuit(USER_q,CIRCUIT_q,Q_steps)
-   !
- endif
+ if(BANDS_steps>0) call k_circuit_made_of_user_points( )
  !
  GRID_interpolate    = all(INTERP_grid>0)
  !
  ! Interpolate and write on disk
  !
- if(Q_steps>0)  then
-   YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,CIRCUIT_q%nibz))      
-   call INTERPOLATION_BZ(K=CIRCUIT_q,NK=CIRCUIT_q%nbz,R1D=BSE_interp_E,ID=ID_INTERP)
-   !
-   allocate(headings(EXCITONS_n_user_states+4))
-   YAMBO_ALLOC(values,(EXCITONS_n_user_states+4))
+ if(BANDS_steps>0)  then
+   YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,CIRCUIT_k%nibz))      
+   call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=BSE_interp_E,ID=ID_INTERP)
    !
    headings(1)=" |q| (a.u.) "
    do i_c=1,EXCITONS_n_user_states
@@ -155,11 +147,11 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
    !
    values=0._SP
    !
-   do iq=1,CIRCUIT_q%nbz
+   do iq=1,CIRCUIT_k%nibz
      !
-     if (iq>1) values(1)=values(1)+iku_v_norm(CIRCUIT_q%pt(iq,:3)-CIRCUIT_q%pt(iq-1,:3))
+     if (iq>1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(iq,:3)-CIRCUIT_k%pt(iq-1,:3))
      !
-     tmp_q=CIRCUIT_q%pt(iq,:3)
+     tmp_q=CIRCUIT_k%pt(iq,:3)
      !
      call K_transform(tmp_q,'iku')
      values(1+1:EXCITONS_n_user_states+1)=BSE_interp_E(:,iq)*HA2EV
@@ -167,9 +159,11 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
      call msg('o '//trim(file_name),' ',values,INDENT=0,USE_TABS=.true.)
    enddo
    call of_open_close(trim(file_name))
-   deallocate(headings)
  endif
  !
+ YAMBO_FREE(values)
+ deallocate(headings)
+ !  
  ! Interpolate and write on database
  !
  if(GRID_interpolate) then

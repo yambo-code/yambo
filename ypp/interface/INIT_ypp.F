@@ -702,7 +702,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_ELPH
    if (l_eliashberg)  call initactivate(1,"Degen_Step") 
 #endif
-   if (l_interp) call initactivate(1,"InterpDIP InterpWFC INTERP_Grid Qsteps cooIn cooOut")
+   if (l_interp) call initactivate(1,"INTERP_mode INTERP_Grid BANDS_steps cooIn cooOut")
  endif
  !
 #if defined _YPP_ELPH
@@ -770,7 +770,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    if (l_q_grid)       call USER_vector_handle("Qpts")
    if (l_shifted_grid) call USER_vector_handle("KShift")
  endif
- if (l_interp)         call USER_vector_handle("Qpts")
+ if (l_interp)         call USER_vector_handle("BANDS_kpts")
  !
  if (l_map_kpts) then
    call PARSER_array(mode="CH dimensions",VAR="FineGd_DB1_paths",N=n_FineGd_DBs,M=1)

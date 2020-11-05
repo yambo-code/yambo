@@ -39,7 +39,7 @@ subroutine INIT_ypp_load(defs)
 &                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
 &                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,&
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
-&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,K_grid,Q_steps,&
+&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,K_grid,&
 &                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_depth,PROJECT_steps,PROJECT_threshold
  use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
@@ -272,7 +272,6 @@ subroutine INIT_ypp_load(defs)
  ! WFs
  !
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit)
- call it(defs,'Qsteps','Number of q-steps along each segment of the path',Q_steps)
  call it(defs,'Degen_Step', 'Maximum energy separation of two degenerate states',deg_energy,E_unit)
 #if defined _YPP_ELPH
  call it(defs,'ResTresh', '[o/o] Treshold on processed polaronic residuals',elph_residual_treshold)

@@ -57,7 +57,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  ! Work Space
  !
  type(w_samp)     :: W_mins,W_plus
- integer          :: iw_ref,i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp_c,i_sp_v,ik_ibz,&
+ integer          :: iw_ref,i_bsk,i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp_c,i_sp_v,ik_ibz,&
  &                   i_res_ares,i_loop,n_loop,i_eps,i_Lo,transition(4)
  complex(SP)      :: E_plus_W,residual,diam_term_used,para_term_w0
 #if defined _KERR
@@ -132,25 +132,29 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    call W_duplicate(W,W_plus)
    !
    do i_res_ares=1,BS_res_ares_dim
-   do i_res=1,BS_K_dim
+   do i_bsk=1,BS_K_dim
      !
-     i_cpl=i_res+BS_K_dim*(i_res_ares-1)
+     i_res=i_bsk
+     i_cpl=i_res+BS_K_dim
+     if(BS_res_ares_dim==2) i_res=i_res+BS_K_dim*(i_res_ares-1)
      !
-     ik_bz =BSS_eh_table(i_cpl,1)
-     iv    =BSS_eh_table(i_cpl,2)
-     ic    =BSS_eh_table(i_cpl,3)
-     i_sp_c=BSS_eh_table(i_cpl,4)
-     i_sp_v=BSS_eh_table(i_cpl,5)
+     ik_bz =BSS_eh_table(i_res,1)
+     iv    =BSS_eh_table(i_res,2)
+     ic    =BSS_eh_table(i_res,3)
+     i_sp_c=BSS_eh_table(i_res,4)
+     i_sp_v=BSS_eh_table(i_res,5)
      !
      ik_ibz=k%sstar(ik_bz,1)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik_ibz)) cycle
      !
+     i_Lo_trans=i_res
+     i_Lo      =1
      transition=(/ik_bz,iv,ic,i_sp_c/)
      !
-     if (i_res_ares==1) then
-       i_Lo_trans=i_res
-       i_Lo      =1
+     if (BS_res_ares_dim==2) then
+       if ( i_res_ares==1) i_Lo      =1
+       if ( i_res_ares==2) i_Lo      =2
      else
        if ( trim(BSE_mode)=='retarded') then
          i_Lo_trans=i_res
@@ -161,25 +165,29 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        endif
      endif
      !
-     if (.not.allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_cpl)
-     if (     allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_cpl)-cI*BSS_eh_W(i_cpl)
+     if (.not.allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_res)
+     if (     allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_res)-cI*BSS_eh_W(i_res)
      !
      if(i_loop==2) then
-       forall(iw=1:W%n_freqs) W_mins%p(iw)=W%p(iw)-BS_diagonal(i_cpl)*BSS_eh_f(i_cpl)
-       !forall(iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)+BS_diagonal(i_cpl)*BSS_eh_f(i_cpl)
+       forall(iw=1:W%n_freqs) W_mins%p(iw)=W%p(iw)-BS_diagonal(i_res)*BSS_eh_f(i_res)
+       forall(iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)+BS_diagonal(i_res)*BSS_eh_f(i_res)
      endif
      !
      if ( .not.allocated(E%GreenF) ) then
        !
        ! Analytical GFs
        !================
-       if(i_res_ares==1) call X_GreenF_analytical(iq,transition,W_mins,E,k,Lo(i_Lo_trans,:,i_Lo),"r" ,"eh",.FALSE.,.FALSE.)
-       if(i_res_ares==2) call X_GreenF_analytical(iq,transition,W_mins,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra","eh",.FALSE.,.FALSE.)
+       if(i_res_ares==1) call X_GreenF_analytical(iq,transition,W_mins,E,k,Lo(i_res,:,1),"r" ,"eh",.FALSE.,.FALSE.)
+       if(i_res_ares==2) call X_GreenF_analytical(iq,transition,W_mins,E,k,Lo(i_res,:,i_Lo),"Ra","eh",.FALSE.,.FALSE.)
+       if (BSS_add_antiresonant.or.BS_K_coupling) &
+       &                 call X_GreenF_analytical(iq,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra","eh",.FALSE.,.FALSE.)
 #if defined _KERR
        if (l_BS_photolum) then
          if(i_res_ares==1) call X_GreenF_analytical(iq,transition,W,E,k,SF(:,1),"r" ,"eh",.TRUE.,.FALSE.)
-         if(i_res_ares==2) call X_GreenF_analytical(iq,transition,W,E,k,SF(:,1),"Ra","eh",.TRUE.,.FALSE.)
-         Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(i_cpl)/BSS_eh_f(i_cpl)**2*aimag(W%p(1))/pi
+         if(i_res_ares==2) call X_GreenF_analytical(iq,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.,.FALSE.)
+         if (BSS_add_antiresonant.or.BS_K_coupling) &
+         &                 call X_GreenF_analytical(iq,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.,.FALSE.)
+         Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(i_res)/BSS_eh_f(i_res)**2*aimag(W%p(1))/pi
        endif
 #endif
        !
@@ -187,20 +195,33 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        !
        ! Convoluted GFs
        !================
-       if(i_res_ares==1) call X_GreenF_convoluted(iq,transition,W_mins,E,k,Lo(i_Lo_trans,:,i_Lo),"r" )
-       if(i_res_ares==2) call X_GreenF_convoluted(iq,transition,W_mins,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra")
+       if(i_res_ares==1) call X_GreenF_convoluted(iq,transition,W_mins,E,k,Lo(i_res,:, 1  ),"r" )
+       if(i_res_ares==2) call X_GreenF_convoluted(iq,transition,W_mins,E,k,Lo(i_res,:,i_Lo),"Ra")
+       if (BSS_add_antiresonant.or.BS_K_coupling) &
+       &                 call X_GreenF_convoluted(iq,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra")
        !
      endif
      !
-     residual=BSS_dipoles_opt(i_cpl)*conjg(BSS_dipoles_opt(i_cpl))
-     if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
-     if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_Lo_trans,iw_ref,i_Lo)
-     Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i_Lo_trans,iw_ref,i_Lo)
+     if(i_res_ares==1) then
+       residual=BSS_dipoles_opt(i_res)*conjg(BSS_dipoles_opt(i_res))
+       if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
+       if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_res,iw_ref,1)
+       Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i_res,:,1)
+     endif     
+     !
+     if (BSS_add_antiresonant.or.BS_K_coupling.or.i_res_ares==1) then
+       residual=conjg(BSS_dipoles_opt(i_Lo_trans))*BSS_dipoles_opt(i_Lo_trans)
+       if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_Lo_trans,iw_ref,i_Lo)
+       Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
+     endif
      !
 #if defined _KERR
      if (l_BS_photolum.and.i_loop==1) then
-       residual=dot_product(BSS_dipoles_PL(:,i_cpl),BSS_dipoles_PL(:,i_cpl))
-       PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(i_cpl)
+       residual=dot_product(BSS_dipoles_PL(:,i_res),BSS_dipoles_PL(:,i_res))
+       PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(i_res)
+       if (BSS_add_antiresonant.or.BS_K_coupling.or.i_res_ares==1) then
+         PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(i_cpl)
+       endif
      endif
 #endif
      !

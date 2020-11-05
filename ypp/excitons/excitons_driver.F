@@ -62,7 +62,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  call excitons_read(k,Xk,en,Xen,BSiq,"check")
  !
- l_flag=l_sort .or. l_exc_wf .or.l_amplitude .or. l_spin
+ l_flag=l_sort .or. l_exc_wf .or.l_amplitude .or. l_spin .or. l_interp
 #if defined _YPP_ELPH
  l_flag=l_flag .or. l_eliashberg .or. l_gkkp
 #endif

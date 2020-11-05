@@ -83,6 +83,7 @@ subroutine INIT_ypp_load(defs)
  !
  call it('r',defs,'Random_Grid','[R] Random grids')
  call it('r',defs,'High_Symm',  '[R] High_Symmetry points and paths') 
+ call it('r',defs,'Regular_Grid','[R] Regular grid')
  !
  call it('r',defs,'amplitude', '[R] Amplitude')
  call it('r',defs,'plot',         '[R] Plot')

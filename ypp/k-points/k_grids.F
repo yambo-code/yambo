@@ -23,7 +23,7 @@
 !
 subroutine k_grids(en,k,Xk,q)
  !
- use pars,                ONLY:SP,schlen
+ use pars,                ONLY:SP,schlen,zero_dfl
  use electrons,           ONLY:levels
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nXkibz,k_the_nearest
  use D_lattice,           ONLY:nsym,lattice
@@ -31,9 +31,9 @@ subroutine k_grids(en,k,Xk,q)
  use com,                 ONLY:msg
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:c2a,rlu_v_is_zero,v_is_zero,v_norm
- use YPPm,                ONLY:coo_in,coo_out,l_k_grid,l_q_grid,&
+ use YPPm,                ONLY:coo_in,coo_out,l_k_grid,l_q_grid,l_regular_grid,&
 &                              l_shifted_grid,l_high_sym_pts,K_transform,&
-&                              n_u_k_pts,n_u_q_pts,l_random_grid,PtsPath,CIRCUIT_k,&
+&                              n_u_k_pts,n_u_q_pts,l_random_grid,PtsPath,CIRCUIT_k,INTERP_grid,&
 &                              U_k_pts,U_q_pts,U_q_shifts,USER_k,k_grid_printer,N_path_pts,PtsPath
  use LIVE_t,              ONLY:live_timing_is_on
  use zeros,               ONLY:k_iku_zero
@@ -52,7 +52,7 @@ subroutine k_grids(en,k,Xk,q)
  integer,  allocatable :: int_ctl(:)
  real(SP), allocatable :: BZ_weights(:),K_dist(:)
  character(schlen)     :: ch
- logical               :: No_Weight,Force_User_points,List_internal_points,Expand_internal_points,l_new_gw_point
+ logical               :: No_Weight,Force_User_points,List_internal_points,Expand_internal_points,l_new_gw_point,l_shift01
  !
  call bz_samp_reset(USER_k)
  call bz_samp_reset(Q_user)
@@ -77,6 +77,7 @@ subroutine k_grids(en,k,Xk,q)
  call parser('ForceUserPts',Force_User_points)
  call parser('ListPts'     ,List_internal_points)
  call parser('ExpandPts'   ,Expand_internal_points)
+ call parser('Shift01'     ,l_shift01)
  !
  if (l_random_grid) then
    call k_random(Xk,No_Weight)
@@ -270,6 +271,27 @@ subroutine k_grids(en,k,Xk,q)
    !
    call k_circuit_driver(PtsPath,N_path_pts)
    !
+ endif
+ !
+ if(l_regular_grid) then
+   if(product(INTERP_grid)<=0) call error("Nk_x Nk_y Nk_z must be positive ")
+   call INTERPOLATION_create_the_grid(USER_k,'i',INTERP_grid)
+   call k_ibz2bz(USER_k,'a',.false.)
+   USER_k%ptbz(:,:)=USER_k%ptbz(:,:)-nint(USER_k%ptbz(:,:)) ! Bring in the BZ
+   USER_k%pt(:,:)  =USER_k%pt(:,:)  -nint(USER_k%pt(:,:)) ! Bring in the BZ
+   if(l_shift01) then
+     where(USER_k%ptbz(:,:)<-zero_dfl)
+       USER_k%ptbz(:,:)=1._SP+USER_k%ptbz(:,:)
+     end where
+     where(USER_k%pt(:,:)<-zero_dfl)
+       USER_k%pt(:,:)=1._SP+USER_k%pt(:,:)
+     end where
+   endif
+   !
+   call msg("s",'K-points (BZ) PW-formatted')
+   call k_grid_printer(USER_k%nbz,USER_k%ptbz,'rlu',"PW")
+   call msg("s",'K-points (IBZ) PW-formatted')
+   call k_grid_printer(USER_k%nibz,USER_k%pt,'rlu',"PW")
  endif
  !
  if (List_internal_points) then

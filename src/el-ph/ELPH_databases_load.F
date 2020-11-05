@@ -48,7 +48,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,mode)
  ! Work Space
  integer             ::iq_bz,ID,io_err,ik,iq_io,i_n,i_np,ik_bz,ik_mem,iq_mem,NK,NQ
  real(SP)            ::ph_Esq_local(nqbz,ph_modes)
- real(SP),allocatable::MAX_gkkp_expanded_at_kpq(:,:)
+ real(SP),allocatable::MAX_gkkp_expanded_at_kpq(:,:),GKKP_to_sym(:,:,:)
  integer, external   ::io_ELPH
  character(1)        ::sym_mode
  logical             ::l_K_BZ,l_K_IBZ,l_Q_BZ,l_Q_IBZ,l_bare,l_dressed,l_mixed
@@ -68,11 +68,12 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,mode)
  ! Allocation
  !============
  YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nbz,nqbz))
+ YAMBO_ALLOC(GKKP_to_sym,(ph_modes,n_bands(2),n_bands(2)))
  if (l_Q_IBZ) NQ=PARs_PH_Q_ibz%N_par
  if (l_Q_BZ ) NQ=PAR_nQ_bz
  if (l_K_IBZ) NK=PAR_Xk_nibz
  if (l_K_BZ ) NK=k%nbz
- call ELPH_alloc("dV_sq",GKKP=GKKP_sq,Nk_mem=NK,Nq_mem=NQ)!,NB=NB)
+ call ELPH_alloc("dV_sq",GKKP=GKKP_sq,Nk_mem=NK,Nq_mem=NQ,NB=n_bands)
  MAX_gkkp_expanded_at_kpq=rZERO
  ph_Esq_local=rZERO
  !
@@ -110,19 +111,21 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,mode)
        !ik_mem = PAR_Xk_ibz_index(ik)
      endif
      !
-     do i_n=n_bands(1),n_bands(2)
-       do i_np=n_bands(1),n_bands(2)
+     do i_n=1,n_bands(2)
+       do i_np=1,n_bands(2)
          !
          ! There has been a key error in the definition of the el-ph SE of the BKE (Eq. 30_9_11.18)
          ! where the band indexes have been exchanged. Instead of doing a global change of the notes
          ! and of the code I decided, here, to exchange the indexes:
          !
-         GKKP_sq%dVr(:,i_n,i_np,ik_mem,iq_mem)=abs(GKKP%dVc(:,i_np,i_n,K_io_map(ik_bz),1))**2
+         GKKP_to_sym(:,i_n,i_np)=abs(GKKP%dVc(:,i_np,i_n,K_io_map(ik_bz),1))**2
          !
        enddo
      enddo
      !
-     call ELPH_databases_symmetrize(sym_mode,k,E,ik_bz,iq_bz,n_bands,GKKP_sq%dVr(:,:,:,ik_mem,iq_mem))
+     call ELPH_databases_symmetrize(sym_mode,k,E,ik_bz,iq_bz,n_bands,GKKP_to_sym)
+     !
+     GKKP_sq%dVr(:,:,:,ik_mem,iq_mem)=GKKP_to_sym(:,n_bands(1):n_bands(2),n_bands(1):n_bands(2))
      !
      MAX_gkkp_expanded_at_kpq(ik_bz,iq_bz)=maxval(sqrt(GKKP_sq%dVr(:,:,:,ik_mem,iq_mem)))
      !

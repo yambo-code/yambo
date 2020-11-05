@@ -27,15 +27,14 @@ subroutine ELPH_databases_symmetrize(mode,k,E,ik_bz,iq_bz,n_bands,GKKP)
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:qindx_S,bz_samp
- use ELPH,           ONLY:ph_modes,elph_nb
+ use ELPH,           ONLY:ph_modes
  use vec_operate,    ONLY:degeneration_finder
  !
  implicit none
  ! 
  character(1), intent(in)    :: mode
  integer,      intent(in)    :: ik_bz,iq_bz,n_bands(2)
- real(SP),     intent(inout) :: GKKP(ph_modes,elph_nb,elph_nb)
- !real(SP),     intent(inout) :: GKKP(ph_modes,n_bands(1):n_bands(2),n_bands(1):n_bands(2))
+ real(SP),     intent(inout) :: GKKP(ph_modes,n_bands(2),n_bands(2))
  type(bz_samp),intent(in)    :: k
  type(levels), intent(in)    :: E
  !
@@ -63,7 +62,6 @@ subroutine ELPH_databases_symmetrize(mode,k,E,ik_bz,iq_bz,n_bands,GKKP)
        do i_c=1,2
          if (i_c==1) K_average=0._SP
          do i_n=first_el(1,i_g),first_el(1,i_g)+n_of_el(1,i_g)-1
-           !if (i_n<n_bands(1)) cycle
            if (i_c==1) K_average(:)=K_average(:)+GKKP(:,i_n,i_np)
            if (i_c==2) GKKP(:,i_n,i_np)=K_average(:)/real(n_of_el(1,i_g))
          enddo
@@ -75,7 +73,6 @@ subroutine ELPH_databases_symmetrize(mode,k,E,ik_bz,iq_bz,n_bands,GKKP)
        do i_c=1,2
          if (i_c==1) K_average=0._SP
          do i_np=first_el(2,i_g),first_el(2,i_g)+n_of_el(2,i_g)-1
-           !if (i_np<n_bands(1)) cycle
            if (i_c==1) K_average(:)=K_average(:)+GKKP(:,i_n,i_np)
            if (i_c==2) GKKP(:,i_n,i_np)=K_average(:)/real(n_of_el(2,i_g))
          enddo

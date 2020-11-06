@@ -47,11 +47,11 @@ subroutine io_BS_PAR_init(iq,X,ID)
  integer, external :: variables_BS_more
  !
  logical :: def_var
- integer :: io_BS,    VAR_IDs(8), n_vars, i1, i2
+ integer :: io_BS,    VAR_IDs(8),n_vars,i1,i2,i3
  type(IO_desc)     :: local_desc
  character(schlen) :: db_name
  character(lchlen) :: full_db_name,ch(4)
- character(schlen) :: dim_names(3),dim_names_done(2)
+ character(schlen) :: dim_names(3,2)
  !
  ! Connect to parallel netCDF file.
  !
@@ -126,15 +126,14 @@ subroutine io_BS_PAR_init(iq,X,ID)
    !
    ! This is the upper triangular mode
    !
-   dim_names  =     [character(schlen) :: 'complex', 'BS_IO_dim1','BS_IO_dim2']
-   dim_names_done = [character(schlen) :: 'BS_IO_dim1','BS_IO_dim2']
+   dim_names(:,1) = [character(schlen) :: 'complex', 'BS_IO_dim1','BS_IO_dim2']
    !
-   if(mod(BS_K_dim,2)==0) then
-     BS_IO_dim(1) = BS_K_dim+1
-     BS_IO_dim(2) = BS_K_dim/2
+   if(mod(BS_K_dim(1),2)==0) then
+     BS_IO_dim(1,1) = BS_K_dim(1)+1
+     BS_IO_dim(2,1) = BS_K_dim(1)/2
    else
-     BS_IO_dim(1) = BS_K_dim
-     BS_IO_dim(2) = (BS_K_dim+1)/2
+     BS_IO_dim(1,1) = BS_K_dim(1)
+     BS_IO_dim(2,1) = (BS_K_dim(1)+1)/2
    endif
    !
    do i1=1,n_vars
@@ -145,20 +144,24 @@ subroutine io_BS_PAR_init(iq,X,ID)
    !
    ! Here is the 2D mode
    !
-   dim_names =      [character(schlen) :: 'complex', 'BS_K_dim', 'BS_K_dim']
-   dim_names_done = [character(schlen) :: 'BS_K_dim', 'BS_K_dim']
+   dim_names(:,1) = [character(schlen) :: 'complex', 'BS_K_dim1', 'BS_K_dim1']
+   BS_IO_dim(:,1) = BS_K_dim(1)
    !
-   BS_IO_dim = BS_K_dim
+   if(BS_mat_res_ares_dim==2) then
+     dim_names(:,2) = [character(schlen) :: 'complex', 'BS_K_dim2', 'BS_K_dim2']
+     BS_IO_dim(:,2) = BS_K_dim(2)
+   endif
    !
  endif
  !
+ i3=1
  do i1=1,n_vars
    i2=i1
-   if(i1==2 .and. BS_mat_res_ares_dim==2) i2=3
+   if(i1==2 .and. BS_mat_res_ares_dim==2) then; i2=3; i3=2; endif
    call def_variable_bulk(ID,trim(ch(i2)),       VAR_IDs(2*i2-1),&
-           &               [2,BS_IO_dim],SP,dim_names,     par_io_kind='independent')
+           &               [2,BS_IO_dim(:,i3)],SP,dim_names(:,i3),par_io_kind='independent')
    call def_variable_bulk(ID,trim(ch(i2))//"_DONE",VAR_IDs(2*i2),&
-           &                  BS_IO_dim , 0,dim_names_done,par_io_kind='independent')
+           &                  BS_IO_dim(:,i3), 0,dim_names(2:3,i3),par_io_kind='independent')
  enddo
  !
 end subroutine
@@ -254,8 +257,8 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
      ! Write element by element in a reduced 2D matrix
      !
      do i1=1,imax
-       idx1=int(mod(idx+int(i1-2,kind=IPL),int(BS_IO_dim(1),kind=IPL)),kind=IP)+1
-       idx2=int((idx+int(i1-2,kind=IPL))/int(BS_IO_dim(1),kind=IPL),kind=IP)+1
+       idx1=int(mod(idx+int(i1-2,kind=IPL),int(BS_IO_dim(1,1),kind=IPL)),kind=IP)+1
+       idx2=int((idx+int(i1-2,kind=IPL))/int(BS_IO_dim(1,1),kind=IPL),kind=IP)+1
        call io_variable_bulk(ID, VAR_IDs(1),  C2=BS_blk(i_block)%mat(i1:i1,i2:i2),  IPOS=[1,idx1,idx2] )
        call io_variable_bulk(ID, VAR_IDs(2), CH2=BS_blk(i_block)%done(i1:i1,i2:i2), IPOS=[  idx1,idx2] )
      enddo

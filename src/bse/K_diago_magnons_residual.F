@@ -48,7 +48,7 @@ subroutine K_diago_herm_magnons_residual(i_BS_mat,BS_R_left,BS_R_right,BS_A_left
  !
  type(PP_indexes)     ::px
  integer              ::i_lambda,i_res
- complex(SP)          ::tmp_res(BS_K_dim,4)
+ complex(SP)          ::tmp_res_R(BS_K_dim(1),2),tmp_res_A(BS_K_dim(2),2)
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BSS_n_eig/))
@@ -61,34 +61,37 @@ subroutine K_diago_herm_magnons_residual(i_BS_mat,BS_R_left,BS_R_right,BS_A_left
  call live_timing('MAG residuals',px%n_of_elements(myid+1))
  !
  if (BS_mat_res_ares_dim==1 .or. i_BS_mat==1) then
-   tmp_res(:,1) = BSS_dipoles_magn(1,:BS_K_dim)   *sqrt(BSS_eh_f(:BS_K_dim))
-   tmp_res(:,2) = BSS_dipoles_magn(2,:BS_K_dim)   *sqrt(BSS_eh_f(:BS_K_dim))
+   tmp_res_R(:,1) = BSS_dipoles_magn(1,:BS_K_dim(1))   *sqrt(BSS_eh_f(:BS_K_dim(1)))
+   tmp_res_R(:,2) = BSS_dipoles_magn(2,:BS_K_dim(1))   *sqrt(BSS_eh_f(:BS_K_dim(1)))
+   if (allocated(BSS_eh_Z)) then
+     tmp_res_R(:,1)=tmp_res_R(:,1)*sqrt(BSS_eh_Z(:BS_K_dim(1)))
+     tmp_res_R(:,2)=tmp_res_R(:,2)*sqrt(BSS_eh_Z(:BS_K_dim(1)))
+   endif
  endif
  !
  if (BSS_add_antiresonant.and.(BS_mat_res_ares_dim==1.or.i_BS_mat==2)) then
-   tmp_res(:,3) = BSS_dipoles_magn(1,BS_K_dim+1:)*sqrt(BSS_eh_f(BS_K_dim+1:))
-   tmp_res(:,4) = BSS_dipoles_magn(2,BS_K_dim+1:)*sqrt(BSS_eh_f(BS_K_dim+1:))
+   tmp_res_A(:,1) = BSS_dipoles_magn(1,BS_K_dim(1)+1:)*sqrt(BSS_eh_f(BS_K_dim(1)+1:))
+   tmp_res_A(:,2) = BSS_dipoles_magn(2,BS_K_dim(1)+1:)*sqrt(BSS_eh_f(BS_K_dim(1)+1:))
+   if (allocated(BSS_eh_Z)) then
+     tmp_res_A(:,1)=tmp_res_A(:,1)*sqrt(BSS_eh_Z(BS_K_dim(1)+1:))
+     tmp_res_A(:,2)=tmp_res_A(:,2)*sqrt(BSS_eh_Z(BS_K_dim(1)+1:))
+   endif
  endif
  !
- if (allocated(BSS_eh_Z)) then
-   do i_res=1,4
-     tmp_res(:BS_K_dim,i_res)=tmp_res(:BS_K_dim,i_res)*sqrt(BSS_eh_Z(:BS_K_dim))
-   enddo
- endif
  !
  do i_lambda=1,BSS_n_eig
    !
    if (.not.px%element_1D(i_lambda)) cycle
    !
    if (BS_mat_res_ares_dim==1 .or. i_BS_mat==1) then
-     BS_R_left(1,i_lambda) =V_dot_V_omp(BS_K_dim,tmp_res(:,1),conjg(BS_mat(:,i_lambda)))
-     BS_R_left(2,i_lambda) =V_dot_V_omp(BS_K_dim,tmp_res(:,2),conjg(BS_mat(:,i_lambda)))
+     BS_R_left(1,i_lambda) =V_dot_V_omp(BS_K_dim(1),tmp_res_R(:,1),conjg(BS_mat(:,i_lambda)))
+     BS_R_left(2,i_lambda) =V_dot_V_omp(BS_K_dim(1),tmp_res_R(:,2),conjg(BS_mat(:,i_lambda)))
      BS_R_right(:,i_lambda)=conjg(BS_R_left(:,i_lambda))
    endif
    !
    if (BSS_add_antiresonant.and.(BS_mat_res_ares_dim==1.or.i_BS_mat==2)) then
-     BS_A_left(1,i_lambda) =V_dot_V_omp(BS_K_dim,tmp_res(:,3),BS_mat(:,i_lambda))
-     BS_A_left(2,i_lambda) =V_dot_V_omp(BS_K_dim,tmp_res(:,4),BS_mat(:,i_lambda))
+     BS_A_left(1,i_lambda) =V_dot_V_omp(BS_K_dim(1),tmp_res_A(:,1),BS_mat(:,i_lambda))
+     BS_A_left(2,i_lambda) =V_dot_V_omp(BS_K_dim(1),tmp_res_A(:,2),BS_mat(:,i_lambda))
      BS_A_right(:,i_lambda)=conjg(BS_A_left(:,i_lambda))
    endif
    !

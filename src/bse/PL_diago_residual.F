@@ -74,13 +74,13 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_
    ! 2=> right
    !
    do i_c=1,3
-     do i_K=1,BS_K_dim
+     do i_K=1,BS_K_dim(1)
        P_x_fZ(1,i_K,i_c)=conjg(BSS_dipoles_PL(i_K,i_c))*sqrt(BSS_eh_f(i_K))
        P_x_fZ(2,i_K,i_c)=      BSS_dipoles_PL(i_K,i_c) *sqrt(BSS_eh_f(i_K))
      enddo
-     do i_K=BS_K_dim+1,BS_H_dim
-       P_x_fZ(1,i_K,i_c)=cI*conjg(BSS_dipoles_PL(i_K,i_c))*sqrt(BSS_eh_f(i_K-BS_K_dim))
-       P_x_fZ(2,i_K,i_c)=cI*      BSS_dipoles_PL(i_K,i_c) *sqrt(BSS_eh_f(i_K-BS_K_dim))
+     do i_K=BS_K_dim(1)+1,BS_H_dim
+       P_x_fZ(1,i_K,i_c)=cI*conjg(BSS_dipoles_PL(i_K,i_c))*sqrt(BSS_eh_f(i_K-BS_K_dim(1)))
+       P_x_fZ(2,i_K,i_c)=cI*      BSS_dipoles_PL(i_K,i_c) *sqrt(BSS_eh_f(i_K-BS_K_dim(1)))
      enddo
    enddo
    !
@@ -132,25 +132,25 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_
      P_x_fZ(1,:,i_c)=BSS_dipoles_PL(:,i_c)*sqrt(BSS_eh_f(:))
    enddo
    !
-   do i_l=1,BS_K_dim
+   do i_l=1,BS_K_dim(1)
      !
      if (.not.px%element_1D(i_l)) cycle
      !                       
      ! R_over_R_x_A = R<_j/R_j A^l_j
      !
-     R_over_R_x_A(1,:) =  BSS_PL_f(1:BS_K_dim) *BS_V_right(:,i_l)/BSS_eh_f(:)
-     R_over_R_x_A(2,:) =  BSS_PL_f(BS_K_dim+1:)*BS_V_right(:,i_l)/BSS_eh_f(:)
+     R_over_R_x_A(1,:) =  BSS_PL_f(1:BS_K_dim(1)) *BS_V_right(:,i_l)/BSS_eh_f(:)
+     R_over_R_x_A(2,:) =  BSS_PL_f(BS_K_dim(1)+1:)*BS_V_right(:,i_l)/BSS_eh_f(:)
      !
      ! adA_x_R_over_R_x_A = (A^l_j)* R<_j/R_j A^l_j
      !
-     adA_x_R_over_R_x_A(1)=V_dot_V_omp(BS_K_dim,conjg(BS_V_right(:,i_l)),R_over_R_x_A(1,:))
-     adA_x_R_over_R_x_A(2)=V_dot_V_omp(BS_K_dim,conjg(BS_V_right(:,i_l)),R_over_R_x_A(2,:))
+     adA_x_R_over_R_x_A(1)=V_dot_V_omp(BS_K_dim(1),conjg(BS_V_right(:,i_l)),R_over_R_x_A(1,:))
+     adA_x_R_over_R_x_A(2)=V_dot_V_omp(BS_K_dim(1),conjg(BS_V_right(:,i_l)),R_over_R_x_A(2,:))
      !
      do i_c=1,3
        !                                   
        ! Pi_x_R_x_adA_right =   Pi sqrt(R)  A^l_i
        !
-       Pi_x_R_x_adA_right(i_c)=V_dot_V_omp(BS_K_dim,BS_V_right(:,i_l),P_x_fZ(1,:,i_c))
+       Pi_x_R_x_adA_right(i_c)=V_dot_V_omp(BS_K_dim(1),BS_V_right(:,i_l),P_x_fZ(1,:,i_c))
        !
      enddo
      !

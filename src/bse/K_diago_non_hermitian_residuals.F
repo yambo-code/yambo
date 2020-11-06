@@ -39,7 +39,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
- use BS,             ONLY:BS_K_dim,BS_H_dim
+ use BS,             ONLY:BS_H_dim
  use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_n_eig
  !
  implicit none

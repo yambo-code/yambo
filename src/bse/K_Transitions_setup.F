@@ -75,7 +75,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
  logical      :: l_trans_in_group,l_grp_to_grp,FORCE_EQ_trans
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,nb(2),ib1,ib2,isp1,isp2,  &
- &               i_T_now,i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp,i_res_ares
+ &               i_T_now,i_T_group_now,i_T_group_last,i_T_group_start,i_g,n_loops,i_loop,i_T_in_the_grp,i_res_ares
  !
  FORCE_EQ_trans=.true.
  !
@@ -127,105 +127,111 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
    ! I cannot revert ik and i_sp_pol loop here ...
    !
    do i_res_ares=1,BS_res_ares_dim
-   do ik=1,Xk%nibz
+   i_T_group_start=i_T_group_now+1
      !
-     ! Here I cannot invert the ik and the i_sp loop since 
-     ! BS_T_grp and BS_nT_at_k are defined according to kpts while they
-     ! should be defined according to both i_sp_pol and kpts
-     !
-     do i_sp_c=1,n_sp_pol
-       i_sp_v=i_sp_c
+     do ik=1,Xk%nibz
        !
+       ! Here I cannot invert the ik and the i_sp loop since 
+       ! BS_T_grp and BS_nT_at_k are defined according to kpts while they
+       ! should be defined according to both i_sp_pol and kpts
+       !
+       do i_sp_c=1,n_sp_pol
+         i_sp_v=i_sp_c
+         !
 #if defined _KERR
-       if (l_BS_magnons) then
-         if(i_sp_c==1) cycle
-         i_sp_v=mod(i_sp_c,n_sp_pol)+1
-       endif
+         if (l_BS_magnons) then
+           if(i_res_ares==1.and.i_sp_c==1) cycle
+           if(i_res_ares==2.and.i_sp_c==2) cycle
+           i_sp_v=mod(i_sp_c,n_sp_pol)+1
+         endif
 #endif
-       !
-       do i_star=1,Xk%nstar(ik)
          !
-         ikbz=Xk%k_table(ik,Xk%star(ik,i_star))
-         !
-         ikpbz=qindx_X(iq,ikbz,1)
-         ikp  =Xk%sstar(ikpbz,1)
-         !
-         do iv=BS_bands(1),nb(2)
-           do ic=nb(1),BS_bands(2)
-             !
-             if(i_res_ares==1) then; ib1=iv; ib2=ic; isp1=i_sp_v; isp2=i_sp_c; endif
-             if(i_res_ares==2) then; ib1=ic; ib2=iv; isp1=i_sp_c; isp2=i_sp_v; endif
-             !
-             if (.not.T_is_ok(Ken,Dip,iq,ik,ikp,ib1,ib2,isp2,i_res_ares,&
-             &                FORCE_EQ_trans,E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
-             !
-             i_T_now=i_T_now+1
-             i_T_group_now=T_group(i_T_now)
-             !
-             if (i_loop==1) BS_T_grp(i_T_group_now)%size=BS_T_grp(i_T_group_now)%size+1
-             !
-             l_trans_in_group=PAR_IND_T_groups%element_1D(i_T_group_now)
-             !
-             l_grp_to_grp= any( PAR_IND_T_ordered%element_2D(i_T_group_now,:)) .or. &
-&                          any( PAR_IND_T_ordered%element_2D(:,i_T_group_now))
-             !
-             if ( .not. (l_trans_in_group .or. l_grp_to_grp) ) cycle
-             !
-             if (i_T_group_now/=i_T_group_last) then
+         do i_star=1,Xk%nstar(ik)
+           !
+           ikbz=Xk%k_table(ik,Xk%star(ik,i_star))
+           !
+           ikpbz=qindx_X(iq,ikbz,1)
+           ikp  =Xk%sstar(ikpbz,1)
+           !
+           do iv=BS_bands(1),nb(2)
+             do ic=nb(1),BS_bands(2)
                !
-               i_T_group_last=i_T_group_now
-               i_T_in_the_grp=0
+               if(i_res_ares==1) then; ib1=iv; ib2=ic; isp1=i_sp_v; isp2=i_sp_c; endif
+               if(i_res_ares==2) then; ib1=ic; ib2=iv; isp1=i_sp_c; isp2=i_sp_v; endif
                !
-               if (i_loop==2) then
+               if (.not.T_is_ok(Ken,Dip,iq,ik,ikp,ib1,ib2,isp2,i_res_ares,&
+               &                FORCE_EQ_trans,E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
+               !
+               i_T_now=i_T_now+1
+               i_T_group_now=T_group(i_T_now)
+               !
+               if (i_loop==1) BS_T_grp(i_T_group_now)%size=BS_T_grp(i_T_group_now)%size+1
+               !
+               l_trans_in_group=PAR_IND_T_groups%element_1D(i_T_group_now)
+               !
+               l_grp_to_grp= any( PAR_IND_T_ordered%element_2D(i_T_group_now,:)) .or. &
+  &                          any( PAR_IND_T_ordered%element_2D(:,i_T_group_now))
+               !
+               if ( .not. (l_trans_in_group .or. l_grp_to_grp) ) cycle
+               !
+               if (i_T_group_now/=i_T_group_last) then
                  !
-                 call BS_Blocks_and_Transitions_alloc(Ken,i_T_group_now)
+                 i_T_group_last=i_T_group_now
+                 i_T_in_the_grp=0
                  !
-                 BS_T_grp(i_T_group_now)%ik      =ik
-                 BS_T_grp(i_T_group_now)%first_cv=i_T_now
+                 if (i_loop==2) then
+                   !
+                   call BS_Blocks_and_Transitions_alloc(Ken,i_T_group_now)
+                   !
+                   BS_T_grp(i_T_group_now)%i_T_ref   =i_T_group_start 
+                   BS_T_grp(i_T_group_now)%i_res_ares=i_res_ares
+                   BS_T_grp(i_T_group_now)%ik        =ik
+                   BS_T_grp(i_T_group_now)%first_cv  =i_T_now
+                   !
+                 endif
                  !
                endif
                !
-             endif
-             !
-             if (i_loop==1) cycle
-             !
-             i_T_in_the_grp=i_T_in_the_grp+1
-             !
-             BS_T_grp(i_T_group_now)%table(i_T_in_the_grp,:)=(/ikbz,ib1,ib2,isp2,isp1/)
-             !
-             PAR_IND_WF_b_and_k%element_2D(ic,ik )=.TRUE.
-             PAR_IND_WF_b_and_k%element_2D(iv,ikp)=.TRUE.
-             !
-             if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
-                PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
-             endif
-             !
-             BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
-             BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
+               if (i_loop==1) cycle
+               !
+               i_T_in_the_grp=i_T_in_the_grp+1
+               !
+               BS_T_grp(i_T_group_now)%table(i_T_in_the_grp,:)=(/ikbz,ib1,ib2,isp2,isp1/)
+               !
+               PAR_IND_WF_b_and_k%element_2D(ic,ik )=.TRUE.
+               PAR_IND_WF_b_and_k%element_2D(iv,ikp)=.TRUE.
+               !
+               if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
+                  PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
+               endif
+               !
+               BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
+               BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
 #if defined _KERR
-             ! To be fixed
-             if (l_BS_photolum) BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp,1) =f_eh_PL
+               ! To be fixed
+               if (l_BS_photolum) BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp,1) =f_eh_PL
 #endif
-             BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
-             !
-             if (allocated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=&
-             &                                           Ken%Z(ic,ik,i_sp_c)*Ken%Z(iv,ikp,i_sp_v)
-             !
-             ! Note that W is negative as the linewidth is negative(positive) above(below) the Fermi level.
-             ! Presently there is the abs value here and a minus in K_IP.F
-             !
-             if (allocated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)= &
-             &                        (-1._SP)**(i_res_ares-1)*(abs(Ken%W(ic,ik,i_sp_c))+abs(Ken%W(iv,ikp,i_sp_c)))
-             !
-             if ( BS_perturbative_SOC ) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
-             !
-           enddo ! conduction 
-         enddo ! valence
-         !
-       enddo ! symmetries
-     enddo ! spin 
-   enddo ! k (ibz)
-   enddo
+               BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
+               !
+               if (allocated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=&
+               &                                           Ken%Z(ic,ik,i_sp_c)*Ken%Z(iv,ikp,i_sp_v)
+               !
+               ! Note that W is negative as the linewidth is negative(positive) above(below) the Fermi level.
+               ! Presently there is the abs value here and a minus in K_IP.F
+               !
+               if (allocated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)= &
+               &                        (-1._SP)**(i_res_ares-1)*(abs(Ken%W(ic,ik,i_sp_c))+abs(Ken%W(iv,ikp,i_sp_c)))
+               !
+               if ( BS_perturbative_SOC ) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
+               !
+             enddo ! conduction 
+           enddo ! valence
+           !
+         enddo ! symmetries
+       enddo ! spin 
+     enddo ! k (ibz)
+     !
+   enddo ! i_res_ares
    !
  enddo ! loop
  !
@@ -240,7 +246,7 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  !
  ! Out: 
  !
- !   BS_K_dim
+ !   BS_K_dim(1)
  !   BS_H_dim
  !   BS_nT_at_k
  !
@@ -273,7 +279,7 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
  logical      :: FORCE_EQ_trans
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,ib1,ib2,isp1,&
- &               i_star,nb(2),BS_K_dim_tmp(2),BS_nT_at_k_tmp(Xk%nibz*2),i_res_ares,n_res_ares
+ &               i_star,nb(2),BS_nT_at_k_tmp(Xk%nibz*2),i_res_ares
  !
  FORCE_EQ_trans=.true.
  !
@@ -281,12 +287,12 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  call parser('ForceEqTrans',FORCE_EQ_trans)
 #endif
  !
- l_BS_ares_asymm=(iq/=1).and.trim(BSE_mode)/="resonant"
+ l_BS_ares_asymm=(iq/=1)
 #if defined _KERR
- l_BS_ares_asymm=l_BS_ares_asymm.or.l_BS_photolum.or.(l_BS_magnons.and.n_sp_pol==2)
+ l_BS_ares_asymm=(l_BS_ares_asymm.or.l_BS_photolum.or.(l_BS_magnons.and.n_sp_pol==2))
 #endif
  !
- BS_K_dim_tmp=0
+ BS_K_dim=0
  BS_nT_at_k_tmp=0
  !
  call k_build_up_BZ_tables(Xk)
@@ -297,57 +303,51 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
 ! if(all(Ken%nbc/=0)) nb=Ken%nbc
 !#endif
  !
- n_res_ares=1
- if (l_BS_ares_asymm) n_res_ares=2
- do i_res_ares=1,n_res_ares
- do i_sp_c=1,n_sp_pol
-   i_sp_v=i_sp_c
+ do i_res_ares=1,2
+   do i_sp_c=1,n_sp_pol
+     i_sp_v=i_sp_c
 #if defined _KERR
-   if (l_BS_magnons) then
-     if(i_sp_c==1) cycle
-     i_sp_v=mod(i_sp_c,n_sp_pol)+1
-   endif
+     if (l_BS_magnons) then
+       if(i_res_ares==1.and.i_sp_c==1) cycle
+       if(i_res_ares==2.and.i_sp_c==2) cycle
+       i_sp_v=mod(i_sp_c,n_sp_pol)+1
+     endif
 #endif
-   do ik=1,Xk%nibz
-     do i_star=1,Xk%nstar(ik)
-       !
-       ikbz=Xk%k_table(ik,Xk%star(ik,i_star))
-       ikpbz=qindx_X(iq,ikbz,1)
-       ikp  =Xk%sstar(ikpbz,1)
-       !
-       do iv=BS_bands(1),nb(2)
-         do ic=nb(1),BS_bands(2)
-           !
-           if(i_res_ares==1) then; ib1=iv; ib2=ic; isp1=i_sp_c ; endif
-           if(i_res_ares==2) then; ib1=ic; ib2=iv; isp1=i_sp_v ; endif
-           !
-           if (.not.T_is_ok(Ken,Dip,iq,ik,ikp,ib1,ib2,isp1,i_res_ares,&
-           &                FORCE_EQ_trans,E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
-           !
-           BS_K_dim_tmp(i_res_ares)=BS_K_dim_tmp(i_res_ares)+1
-           !
-           BS_nT_at_k_tmp(ik+(i_res_ares-1)*Xk%nibz)=BS_nT_at_k_tmp(ik+(i_res_ares-1)*Xk%nibz)+1
-           !
-         enddo ! conduction 
-       enddo ! valence
-       !
-     enddo ! symmetries
-   enddo ! k (ibz) 
- enddo ! spin
+     do ik=1,Xk%nibz
+       do i_star=1,Xk%nstar(ik)
+         !
+         ikbz=Xk%k_table(ik,Xk%star(ik,i_star))
+         ikpbz=qindx_X(iq,ikbz,1)
+         ikp  =Xk%sstar(ikpbz,1)
+         !
+         do iv=BS_bands(1),nb(2)
+           do ic=nb(1),BS_bands(2)
+             !
+             if(i_res_ares==1) then; ib1=iv; ib2=ic; isp1=i_sp_c ; endif
+             if(i_res_ares==2) then; ib1=ic; ib2=iv; isp1=i_sp_v ; endif
+             !
+             if (.not.T_is_ok(Ken,Dip,iq,ik,ikp,ib1,ib2,isp1,i_res_ares,&
+             &                FORCE_EQ_trans,E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
+             !
+             BS_K_dim(i_res_ares)=BS_K_dim(i_res_ares)+1
+             !
+             BS_nT_at_k_tmp(ik+(i_res_ares-1)*Xk%nibz)=BS_nT_at_k_tmp(ik+(i_res_ares-1)*Xk%nibz)+1
+             !
+           enddo ! conduction 
+         enddo ! valence
+         !
+       enddo ! symmetries
+     enddo ! k (ibz) 
+   enddo ! spin
  enddo ! i_res_ares
  !
- !if (any(BS_nT_at_k_tmp(:,1)/=BS_nT_at_k_tmp(:,2))) call error("Resonant and Anti-resonant blocks of different sizes not coded")
- if (l_BS_ares_asymm.and.(BS_K_dim_tmp(1)/=BS_K_dim_tmp(2))) &
- &  call error("Resonant and Anti-resonant kernel of different sizes not coded")
- !
- BS_K_dim=BS_K_dim_tmp(1)
- !
  if (.not.BSS_add_antiresonant.and.BS_not_const_eh_f.and..not.BS_K_coupling) then
-   if(.not.l_BS_ares_asymm) call warning('Fractional e/h occupations but resonant only mode selected in input.')
-   if(     l_BS_ares_asymm) call warning('Fractional e/h occupations but resonant only mode selected in input.')
+   call warning('Fractional e/h occupations but resonant only mode selected in input.')
    BSE_mode='retarded'
    BSS_add_antiresonant=.true.
  endif
+ !
+ l_BS_ares_asymm=l_BS_ares_asymm.and.trim(BSE_mode)/="resonant"
  !
  BS_res_ares_dim=1
  BS_mat_res_ares_dim=1
@@ -362,10 +362,11 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
  if (sum(BS_nT_at_k)==0) call   error(' The whole BSE has zero dimension !')
  !
- BS_H_dim=BS_K_dim
- if (BS_K_coupling) BS_H_dim=2*BS_K_dim
+ BS_H_dim=BS_K_dim(1)
+ if (BS_mat_res_ares_dim==2.or.BS_K_coupling) BS_H_dim=BS_K_dim(1)+BS_K_dim(2)
  !
- BSS_size=max(BS_H_dim,BS_K_dim*BS_res_ares_dim)
+ if (     BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) BSS_size=BS_K_dim(1)*BS_res_ares_dim
+ if (.not.BSS_add_antiresonant .or.BS_mat_res_ares_dim==2) BSS_size=BS_H_dim
  !
 end subroutine
 !
@@ -470,7 +471,7 @@ logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,FORCE_EQ_tran
  !
  ! f_eh<0 transitions are included in the anti-resonant part
  ! f_eh=0 transitions give no contribution to absorption and are not considered
- if ( f_eh_REF*(-1._SP)**(i_res_ares-1)<=0._SP ) T_is_ok=.FALSE.
+ if ( f_eh_REF*(-1._SP)**(i_res_ares-1)<0._SP ) T_is_ok=.FALSE.
  !
  ! GPL_EXCLUDE_START
  !

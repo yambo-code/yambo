@@ -162,6 +162,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  call BSS_PL_free( )
 #endif
  !
- call BS_blks_free( )
+ call BS_blks_free(1)
  !
 end subroutine

@@ -29,7 +29,7 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  use pars,           ONLY:SP
  use stderr,         ONLY:intc
- use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_perturbative_SOC,&
+ use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
 &                         BS_mat_res_ares_dim,l_BS_ares_asymm !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig
@@ -132,8 +132,6 @@ subroutine K_diago_driver(iq,W,X_static)
  l_slepc     = index(BSS_mode,'s')/=0
 #endif
  !
- if(l_diago) BSS_n_eig = BS_H_dim
- !
  if(l_diago) Solver="Diago"
 #if defined _SLEPC && !defined _SLEPC_OFF
  if(l_slepc) Solver="Slepc"
@@ -157,166 +155,170 @@ subroutine K_diago_driver(iq,W,X_static)
  call parser('BSSPertWidth',BSS_perturbative_width)
  !
  do i_BS_mat=1,BS_mat_res_ares_dim
- !
- ! Allocation (BS_R and BS_E)
- !===========================
- call local_alloc("E")
- !
- ! Diagonalization DB (IN)
- !========================
- call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_A_left,BS_A_right,BS_E_SOC_corr,&
-&                                BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn,&
-&                                BS_R_right_kerr,BS_R_PL)
- !
- K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
- !
- ! Kernel and/or BSS components loading
- !======================================
- if (io_err<0) then
    !
-   call K_components_folded_in_serial_arrays(iq)
+   if(l_diago) BSS_n_eig = BS_K_dim(i_BS_mat)
    !
-   ! Below two operations:
-   ! - The blocks are sent  either to a big matrix or
-   !   to a distributed (SLEPC shells / or eventually BLACS) matrix
-   ! - The resulting matrix is symmetrized
+   ! Allocation (BS_R and BS_E)
+   !===========================
+   call local_alloc("E")
    !
-   if (l_diago) then
-     !
-     call K_stored_in_a_big_matrix(iq,"DIAGO")
-     !
-     ! These line will be needed when the BS kernel will not be folded in BS_mat. But in order to do so
-     ! also linear_algebra_is_parallel must be swiched off when K is not hermitian.
-     !=========================
-     !
-     !if (.not.linear_algebra_is_parallel) call K_stored_in_a_big_matrix(iq,"DIAGO")
-     !
-#if defined _SCALAPACK
-     ! Here maybe the name "K_blacs_matrix(iq)" would probably be more appropiate
-     !if (     linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
-#endif
-     !
-   endif
-   !
-#if defined _SLEPC && !defined _SLEPC_OFF
-   if(l_slepc) then
-     ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
-     ! using the K_multiply_by_V function used in the Haydock method
-     if (     Slepc_shell) call K_shell_matrix(slepc_mat)
-     ! 2. Here we create a distributed PETSC matrix from the BS_blks
-     if (.not.Slepc_shell) call K_stored_in_a_slepc_matrix(slepc_mat)
-   endif
-#endif
-   !
- endif
- !
- ! Allocation (BS_E_real or BS_V)
- !===============================
- call local_alloc("V")
- !
- if (io_err<0) then
-   !
-   ! Diagonalization of the excitonic hamiltonian
-   !==============================================
-   if(l_diago) call live_timing('BSK diagonalize',1)
-   !
-   if (K_is_not_hermitian) then
-     !
-     if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
-#if defined _SLEPC && !defined _SLEPC_OFF
-     if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
-&                                  BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
-#endif
-     !
-     if (BSS_write_eig_2_db) BS_mat=BS_V_right
-     !
-   else
-     !
-     if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
-#if defined _SLEPC && !defined _SLEPC_OFF
-     if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
-&                                  BS_mat,E_real=BS_E_real)
-#endif
-     !
-     BS_E=cmplx(BS_E_real,0._SP,SP)
-     !
-   endif
-   !
-#if defined _SLEPC && !defined _SLEPC_OFF
-   !
-   ! Destroy the matrix
-   !============================
-   if(l_slepc) call MatDestroy(slepc_mat,ierr)
-#endif
-   !
-   if(l_diago) call live_timing( )
-   !
-   ! Construct the residuals of epsilon
-   !====================================
-   if (K_is_not_hermitian) then
-     !
-     call K_diago_overlap_matrix(BS_V_left,BS_V_right,BS_overlap)
-     !
-     call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
-     !
-#if defined _KERR
-     if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
-     if(l_BS_magnons) call K_diago_non_herm_magnons_residual(BS_R_left_magn,BS_R_right_magn, &
-     &                              BS_A_left_magn,BS_A_right_magn,BS_V_left,BS_V_right,BS_overlap)
-     if(l_BS_photolum)call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap)
-#endif
-     !
-   else
-     !
-     call K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right,BS_A_left,BS_A_right)
-     !
-#if defined _KERR
-     if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
-     if(l_BS_magnons) call K_diago_herm_magnons_residual(i_BS_mat,BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn)
-     if(l_BS_photolum)call PL_diago_residual(BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)
-#endif
-     !
-   endif
-   !
- endif
- !
- ! Define perturbative corrections
- !=================================
- if( BS_perturbative_SOC ) then
-   !
-   ! To check if the expression for the non hermitian case is correct
-   if (     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections,2/n_sp_pol,'SOC')
-   if (.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections,2/n_sp_pol,'SOC')
-   BS_E_SOC_corr=real(BS_corrections)
-   !
- endif
- !
- if(BSS_perturbative_width) then
-   !
-   if(     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections(1,:),1,'WID')
-   if(.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections(1,:),1,'WID')
-   BS_E=BS_E-aimag(BS_corrections(1,:))
-   !
- endif
- !
- ! Now I calculate epsilon
- !=========================
- call K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_A_left,BS_A_right,BS_E_SOC_corr,&
- &                                  BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn,&
- &                                  BS_R_right_kerr,BS_R_PL)
- !
- ! Diagonalization DB (OUT)
- !==========================
- if (io_err/=0) then
-   !
-   call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
+   ! Diagonalization DB (IN)
+   !========================
+   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
    io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_A_left,BS_A_right,BS_E_SOC_corr,&
+  &                                BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn,&
+  &                                BS_R_right_kerr,BS_R_PL)
+   !
+   K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
+   !
+   ! Kernel and/or BSS components loading
+   !======================================
+   if (io_err<0) then
+     !
+     call K_components_folded_in_serial_arrays(iq)
+     !
+     ! Below two operations:
+     ! - The blocks are sent  either to a big matrix or
+     !   to a distributed (SLEPC shells / or eventually BLACS) matrix
+     ! - The resulting matrix is symmetrized
+     !
+     if (l_diago) then
+       !
+       call K_stored_in_a_big_matrix(i_BS_mat,iq,"DIAGO")
+       !
+       ! These line will be needed when the BS kernel will not be folded in BS_mat. But in order to do so
+       ! also linear_algebra_is_parallel must be swiched off when K is not hermitian.
+       !=========================
+       !
+       !if (.not.linear_algebra_is_parallel) call K_stored_in_a_big_matrix(iq,"DIAGO")
+       !
+#if defined _SCALAPACK
+       ! Here maybe the name "K_blacs_matrix(iq)" would probably be more appropiate
+       !if (     linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
+#endif
+       !
+     endif
+     !
+#if defined _SLEPC && !defined _SLEPC_OFF
+     if(l_slepc) then
+       ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
+       ! using the K_multiply_by_V function used in the Haydock method
+       if (     Slepc_shell) call K_shell_matrix(slepc_mat)
+       ! 2. Here we create a distributed PETSC matrix from the BS_blks
+       if (.not.Slepc_shell) call K_stored_in_a_slepc_matrix(slepc_mat)
+     endif
+#endif
+     !
+   endif
+   !
+   ! Allocation (BS_E_real or BS_V)
+   !===============================
+   call local_alloc("V")
+   !
+   if (io_err<0) then
+     !
+     ! Diagonalization of the excitonic hamiltonian
+     !==============================================
+     if(l_diago) call live_timing('BSK diagonalize',1)
+     !
+     if (K_is_not_hermitian) then
+       !
+       if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
+#if defined _SLEPC && !defined _SLEPC_OFF
+       if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
+  &                                  BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
+#endif
+       !
+       if (BSS_write_eig_2_db) BS_mat=BS_V_right
+       !
+     else
+       !
+       if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
+#if defined _SLEPC && !defined _SLEPC_OFF
+       if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
+  &                                  BS_mat,E_real=BS_E_real)
+#endif
+       !
+       BS_E=cmplx(BS_E_real,0._SP,SP)
+       !
+     endif
+     !
+#if defined _SLEPC && !defined _SLEPC_OFF
+     !
+     ! Destroy the matrix
+     !============================
+     if(l_slepc) call MatDestroy(slepc_mat,ierr)
+#endif
+     !
+     if(l_diago) call live_timing( )
+     !
+     ! Construct the residuals of epsilon
+     !====================================
+     if (K_is_not_hermitian) then
+       !
+       call K_diago_overlap_matrix(BS_V_left,BS_V_right,BS_overlap)
+       !
+       call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
+       !
+#if defined _KERR
+       if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
+       if(l_BS_magnons) call K_diago_non_herm_magnons_residual(BS_R_left_magn,BS_R_right_magn, &
+       &                              BS_A_left_magn,BS_A_right_magn,BS_V_left,BS_V_right,BS_overlap)
+       if(l_BS_photolum)call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap)
+#endif
+       !
+     else
+       !
+       call K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right,BS_A_left,BS_A_right)
+       !
+#if defined _KERR
+       if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
+       if(l_BS_magnons) call K_diago_herm_magnons_residual(i_BS_mat,BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn)
+       if(l_BS_photolum)call PL_diago_residual(BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)
+#endif
+       !
+     endif
+     !
+   endif
+   !
+   ! Define perturbative corrections
+   !=================================
+   if( BS_perturbative_SOC ) then
+     !
+     ! To check if the expression for the non hermitian case is correct
+     if (     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections,2/n_sp_pol,'SOC')
+     if (.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections,2/n_sp_pol,'SOC')
+     BS_E_SOC_corr=real(BS_corrections)
+     !
+   endif
+   !
+   if(BSS_perturbative_width) then
+     !
+     if(     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections(1,:),1,'WID')
+     if(.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections(1,:),1,'WID')
+     BS_E=BS_E-aimag(BS_corrections(1,:))
+     !
+   endif
+   !
+   ! Now I calculate epsilon
+   !=========================
+   call K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_A_left,BS_A_right,BS_E_SOC_corr,&
    &                                  BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn,&
    &                                  BS_R_right_kerr,BS_R_PL)
    !
- endif
- !
+   ! Diagonalization DB (OUT)
+   !==========================
+   if (io_err/=0) then
+     !
+     call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
+     io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_A_left,BS_A_right,BS_E_SOC_corr,&
+     &                                  BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn,&
+     &                                  BS_R_right_kerr,BS_R_PL)
+     !
+   endif
+   !
+   call local_free( )
+   !
  enddo
  !
  ! Initialize & write the output file 
@@ -325,8 +327,6 @@ subroutine K_diago_driver(iq,W,X_static)
  call K_output_file(iq,trim(Solver))
  !
  ! CLEAN
- !=======
- call local_free( )
  !
 #if defined _SLEPC && !defined _SLEPC_OFF
  if(l_slepc) call K_slepc_local_free()

@@ -242,7 +242,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call deliver_IO_error_message(io_X_err,'PP/Em1s')
    call warning('Bethe Salpter section skipped. Impossible to build the kernel.')
    n_BS_blks=0
-   call BS_blks_free()
+   call BS_blks_free(1)
    !
 #if defined _KERR
    call BSS_KERR_free( )
@@ -269,7 +269,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! Allocation
    !-----------
-   YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim))
+   YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim(1)))
    YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
    FXC_K_diagonal=0._SP
    FXC=cZERO
@@ -509,8 +509,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        ! We have to add a new mode in addition to resonant and coupling for finiteq,
        ! where the kernel is recomputed in the antiresonant case
        !
-       sqrt_f_itk=sqrt(BS_T_grp(i_Tgrp_k)%f(i_Tk))
-       sqrt_f_itp=sqrt(BS_T_grp(i_Tgrp_p)%f(i_Tp))
+       sqrt_f_itk=sqrt(cmplx(BS_T_grp(i_Tgrp_k)%f(i_Tk),kind=SP))
+       sqrt_f_itp=sqrt(cmplx(BS_T_grp(i_Tgrp_p)%f(i_Tp),kind=SP))
        !
        if (l_BS_ares_asymm) then
          BS_blk(i_block)%mat(i_Tk,i_Tp)=    sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp

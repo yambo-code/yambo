@@ -92,8 +92,8 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    if (BS_cpl_K_corr)                       BS_cpl_mode='c'
    if (BS_cpl_K_exchange.and.BS_cpl_K_corr) BS_cpl_mode='xc'
    !
-   BS_H_dim=BS_K_dim
-   if (BS_K_coupling) BS_H_dim=2*BS_K_dim
+   BS_H_dim=BS_K_dim(1)
+   if (BS_K_coupling) BS_H_dim=2*BS_K_dim(1)
    !
  endif
  !
@@ -139,14 +139,14 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    ! Create the anti-resonant part of the eh_table
    !
    if (BS_K_coupling) then
-     do neh=BS_K_dim+1,BS_H_dim
+     do neh=BS_K_dim(1)+1,BS_H_dim
        !
-       BSS_eh_table(neh,:)=BSS_eh_table(neh-BS_K_dim,:)
+       BSS_eh_table(neh,:)=BSS_eh_table(neh-BS_K_dim(1),:)
        !
        ! invert conduction <-> valence order
        !
-       BSS_eh_table(neh,2)=BSS_eh_table(neh-BS_K_dim,3)
-       BSS_eh_table(neh,3)=BSS_eh_table(neh-BS_K_dim,2)
+       BSS_eh_table(neh,2)=BSS_eh_table(neh-BS_K_dim(1),3)
+       BSS_eh_table(neh,3)=BSS_eh_table(neh-BS_K_dim(1),2)
        !
      enddo
    endif

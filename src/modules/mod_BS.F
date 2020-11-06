@@ -68,11 +68,11 @@ module BS
  !
  ! Dimensions
  !=============
- integer :: BS_K_dim
+ integer :: BS_K_dim(2)
  integer :: BS_H_dim
  integer :: BS_mat_res_ares_dim ! If resonant and non-resonant part are not related
  integer :: BS_res_ares_dim     ! If resonant and non-resonant part are not related
- integer :: BS_IO_dim(2)
+ integer :: BS_IO_dim(2,2)
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier
@@ -104,9 +104,9 @@ module BS
  ! Dimensions tables
  ! 
  !  R/A symm    TDA/CPL   BSS_f/BSS_E     BSS_dip   BS_mats_to_solve    single BS_mat_size    
- !    S          TDA          1             1           1                 BS_K_dim
+ !    S          TDA          1             1           1                 BS_K_dim(1)
  !    S          CPL          2*            2           1                 BS_H_dim
- !    A          TDA          2             2           2                 BS_K_dim
+ !    A          TDA          2             2           2                 BS_K_dim(1),BS_K_dim(2)
  !    A          CPL          2             2           1                 BS_H_dim
  !
  !   * not needed, changed for easier implementation
@@ -115,9 +115,11 @@ module BS
  !=========================
  type BS_T_group
    !
-   integer                       :: ik                           ! ik index (IBZ)
-   integer                       :: first_cv                     ! Position in the cv transitions @ k
-   integer                       :: size       
+   integer                       :: i_T_ref                    ! first group of the res or ares block
+   integer                       :: i_res_ares                 ! if it is a resonant or an anti-resonant transition
+   integer                       :: ik                         ! ik index (IBZ)
+   integer                       :: first_cv                   ! Position in the cv transitions @ k
+   integer                       :: size
    integer,     allocatable      :: table(:,:)                 ! (/ i_Tr;5/) 5->(/ikbz,iv,ic,i_sp_v,i_sp_c/)
    real(SP)   , allocatable      :: E(:)                       ! (/ i_Tr  /)
    real(SP)   , allocatable      :: f(:)
@@ -154,6 +156,8 @@ module BS
    integer                       :: iT_p          ! Index (among n_BS_T_grps) of the cv transitions @ p
    integer                       :: iT_k_st       ! Index to start counting for H_pos @ k
    integer                       :: iT_p_st       ! Index to start counting for H_pos @ p
+   integer                       :: ira_k         ! Index if transition is resonant or aresonant @ k
+   integer                       :: ira_p         ! Index if transition is resonant or aresonant @ p
    integer                       :: size(2)       ! rows x columns
    integer                       :: coordinate(2) ! Position of the left-bottom corner in the whole matrix
    character(1)                  :: mode          ! "R"esonant/"A"ntiresonant
@@ -306,9 +310,12 @@ module BS
      !
    end subroutine
    !
-   subroutine BS_blks_free()
+   subroutine BS_blks_free(i_BS_mat)
+     integer, intent(in) :: i_BS_mat
      integer :: iB
      do iB=1,n_BS_blks
+       if(i_BS_mat/=BS_blk(iB)%ira_k) cycle
+       if(.not.allocated(BS_blk(iB)%mat)) cycle
        YAMBO_FREE(BS_blk(iB)%mat)
        deallocate(BS_blk(iB)%done)
      enddo

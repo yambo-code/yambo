@@ -91,8 +91,8 @@ subroutine K_components_folded_in_serial_arrays(iq)
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
      !
      if(BS_res_ares_dim==2) then
-       i_res_ares=(i_g-1)/(BS_nT_grps/BS_res_ares_dim)+1
-       i_g_start=1+(i_res_ares-1)*BS_nT_grps/BS_res_ares_dim
+       i_res_ares=BS_T_grp(i_g)%i_res_ares
+       i_g_start =BS_T_grp(i_g)%i_T_ref
      endif
      !
      do i_Tr=1,BS_T_grp(i_g)%size
@@ -105,7 +105,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
        !
        do i_res_ares_solver=1,BS_res_ares_dim_solver
          !
-         H_pos=sum(BS_T_grp(i_g_start:I_g-1)%size)+i_Tr+(i_res_ares_solver-1)*BS_K_dim
+         H_pos=sum(BS_T_grp(i_g_start:I_g-1)%size)+i_Tr+(i_res_ares_solver-1)*BS_K_dim(1)
          cpl_fac=(-1)**(i_res_ares_solver-1)
          !
          BSS_eh_table(H_pos,:)=(/i_k_bz,i_v,i_c,i_sp_c,i_sp_v/)
@@ -120,7 +120,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
 #if defined _KERR
          if (l_BS_photolum) then
            BSS_PL_f(H_pos)=BS_T_grp(i_g)%f_PL(i_Tr,i_res_ares_solver)
-           if (BS_res_ares_dim==1.and.BS_res_ares_dim_solver==1) BSS_PL_f(H_pos+BS_K_dim)=BS_T_grp(i_g)%f_PL(i_Tr,2)
+           if (BS_res_ares_dim==1.and.BS_res_ares_dim_solver==1) BSS_PL_f(H_pos+BS_K_dim(1))=BS_T_grp(i_g)%f_PL(i_Tr,2)
          endif
 #endif
          !

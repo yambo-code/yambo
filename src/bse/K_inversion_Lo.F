@@ -132,11 +132,11 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    call W_duplicate(W,W_plus)
    !
    do i_res_ares=1,BS_res_ares_dim
-   do i_bsk=1,BS_K_dim
+   do i_bsk=1,BS_K_dim(i_res_ares)
      !
      i_res=i_bsk
-     i_cpl=i_res+BS_K_dim
-     if(BS_res_ares_dim==2) i_res=i_res+BS_K_dim*(i_res_ares-1)
+     i_cpl=i_res+BS_K_dim(1)
+     if(BS_res_ares_dim==2) i_res=i_res+BS_K_dim(1)*(i_res_ares-1)
      !
      ik_bz =BSS_eh_table(i_res,1)
      iv    =BSS_eh_table(i_res,2)

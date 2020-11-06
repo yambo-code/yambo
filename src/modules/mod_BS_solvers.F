@@ -25,7 +25,7 @@ module BS_solvers
  !
  use descriptors,    ONLY:IO_desc
  use pars,           ONLY:SP,schlen,lchlen
- use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block,n_BS_blks,BS_blk
+ use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_dim,BS_H_dim,BS_block,n_BS_blks,BS_blk
  use matrix,         ONLY:PAR_matrix
 #include <memory.h>
  !
@@ -228,13 +228,6 @@ module BS_solvers
      YAMBO_FREE(BSS_eh_f)
      YAMBO_FREE(BSS_eh_Z)
      YAMBO_FREE(BSS_eh_E_SOC_corr)
-   end subroutine
-   !
-   subroutine BS_blks_free()
-     integer :: iB
-     do iB=1,n_BS_blks
-       YAMBO_FREE(BS_blk(iB)%mat)
-     enddo
    end subroutine
    !
    subroutine BS_HAYVEC_alloc(V)

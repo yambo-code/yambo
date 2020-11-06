@@ -185,8 +185,8 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,bsAl,bsAr,Bs
    !
    ! BS_eh_table
    !
-   call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_K_dim,5/))
-   call io_bulk(ID,I2=BSS_eh_table(:BS_K_dim,:))
+   call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_K_dim(1),5/))
+   call io_bulk(ID,I2=BSS_eh_table(:BS_K_dim(1),:))
    !
    ! Eigenstates (resonant only matrix)
    !

@@ -135,10 +135,10 @@ subroutine K_Haydock(iq,W)
  !=================================================
  it_on_disk=0
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
- allocate(Vn_f(BS_K_dim),Vnm1_f(BS_K_dim))
+ allocate(Vn_f(BS_K_dim(1)),Vnm1_f(BS_K_dim(1)))
  !
  if (use_cpl_scheme) then
-   allocate(Vnp1_f(BS_K_dim))
+   allocate(Vnp1_f(BS_K_dim(1)))
  !
 #if defined _KERR
  !  if(l_BS_kerr) then
@@ -751,7 +751,7 @@ subroutine K_Haydock(iq,W)
      ! ws: 
      integer                 :: istart_g,istop_g
      !
-     YAMBO_ALLOC(fullV,(BS_K_dim))
+     YAMBO_ALLOC(fullV,(BS_K_dim(1)))
      fullV = cZERO
      istop_g = 0
      !
@@ -777,7 +777,7 @@ subroutine K_Haydock(iq,W)
      ! 
      use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX, &
                              PAR_COM_eh_INDEX
-     complex(SP),intent(in) :: fullV(BS_K_dim)
+     complex(SP),intent(in) :: fullV(BS_K_dim(1))
      type(Haydock_vector),intent(inout) :: V(BS_nT_grps)
      ! ws: 
      integer                 :: istart_g,istop_g

@@ -51,7 +51,7 @@ subroutine K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right,B
  !
  type(PP_indexes)     ::px
  integer              ::i_eh
- complex(SP)          ::tmp_res(BS_K_dim)
+ complex(SP)          ::tmp_res(BS_K_dim(i_BS_mat))
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BSS_n_eig/))
@@ -62,16 +62,16 @@ subroutine K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right,B
    BS_R_right=cZERO
    call live_timing('EPS R residuals',px%n_of_elements(myid+1))
    !
-   tmp_res = BSS_dipoles_opt(:BS_K_dim)*sqrt(BSS_eh_f(:BS_K_dim))
+   tmp_res = BSS_dipoles_opt(:BS_K_dim(1))*sqrt(BSS_eh_f(:BS_K_dim(1)))
    !
-   if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E(:BS_K_dim)
-   if (allocated(BSS_eh_Z))            tmp_res=tmp_res*sqrt(BSS_eh_Z(:BS_K_dim))
+   if (trim(global_gauge)=="velocity") tmp_res =tmp_res/BSS_eh_E(:BS_K_dim(1))
+   if (allocated(BSS_eh_Z))            tmp_res =tmp_res*sqrt(BSS_eh_Z(:BS_K_dim(1)))
    !
    do i_eh=1,BSS_n_eig
      !
      if (.not.px%element_1D(i_eh)) cycle
      !
-     BS_R_left(i_eh) =V_dot_V_omp(BS_K_dim,tmp_res,conjg(BS_mat(:,i_eh)))
+     BS_R_left(i_eh) =V_dot_V_omp(BS_K_dim(1),tmp_res,conjg(BS_mat(:,i_eh)))
      BS_R_right(i_eh)=conjg(BS_R_left(i_eh))
      !
      if (trim(global_gauge)=="velocity") then
@@ -97,16 +97,16 @@ subroutine K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right,B
    BS_A_right=cZERO
    call live_timing('EPS A residuals',px%n_of_elements(myid+1))
    !
-   tmp_res = BSS_dipoles_opt(BS_K_dim+1:)*sqrt(BSS_eh_f(BS_K_dim+1:))
+   tmp_res = BSS_dipoles_opt(BS_K_dim(1)+1:)*sqrt(cmplx(BSS_eh_f(BS_K_dim(1)+1:),kind=SP))
    !
-   if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E(BS_K_dim+1:)
-   if (allocated(BSS_eh_Z))            tmp_res=tmp_res*sqrt(BSS_eh_Z(BS_K_dim+1:))
+   if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E(BS_K_dim(1)+1:)
+   if (allocated(BSS_eh_Z))            tmp_res=tmp_res*sqrt(BSS_eh_Z(BS_K_dim(1)+1:))
    !
    do i_eh=1,BSS_n_eig
      !
      if (.not.px%element_1D(i_eh)) cycle
      !
-     BS_A_left(i_eh) =V_dot_V_omp(BS_K_dim,tmp_res,conjg(BS_mat(:,i_eh)))
+     BS_A_left(i_eh) =V_dot_V_omp(BS_K_dim(i_BS_mat),tmp_res,conjg(BS_mat(:,i_eh)))
      BS_A_right(i_eh)=conjg(BS_A_left(i_eh))
      !
      if (trim(global_gauge)=="velocity") then

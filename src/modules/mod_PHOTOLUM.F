@@ -71,7 +71,7 @@ module PHOTOLUM
      if (.not.l_BS_photolum) return
      YAMBO_ALLOC(BSS_dipoles_PL,(3,BSS_size))
      BSS_dipoles_PL = cZERO
-     YAMBO_ALLOC(BSS_PL_f,(2*BS_K_dim))
+     YAMBO_ALLOC(BSS_PL_f,(2*BS_K_dim(1)))
      BSS_PL_f = rZERO
    end subroutine
    !

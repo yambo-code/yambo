@@ -301,7 +301,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! RIM-W
  !
- !RIM_W_ng=0
+ RIM_W_ng=0
  !
  ! CUTOFF
  !

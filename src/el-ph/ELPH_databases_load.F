@@ -31,7 +31,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,mode)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,nqbz
  use IO_m,           ONLY:io_control,OP_RD_CL
- use ELPH,           ONLY:PH_freqs_sq,GKKP,ph_modes,MAX_gkkp,Q_io_map,GKKP_me,K_io_map
+ use ELPH,           ONLY:PH_freqs_sq,GKKP,ph_modes,MAX_gkkp,Q_io_map,GKKP_me,K_io_map,elph_nb
  use interfaces,     ONLY:ELPH_alloc
  use parallel_int,   ONLY:PP_redux_wait
  use parallel_m,     ONLY:PAR_Q_bz_index,PAR_IND_Q_bz,PAR_nQ_bz,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&

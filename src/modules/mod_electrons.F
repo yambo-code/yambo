@@ -23,7 +23,7 @@
 !
 module electrons
  !
- use pars,  ONLY:SP,IP,rZERO
+ use pars,  ONLY:SP,rZERO
  !
 #include<memory.h>
  !

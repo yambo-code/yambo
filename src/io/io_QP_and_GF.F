@@ -35,9 +35,13 @@ integer function io_QP_and_GF(what,qp,ID)
 &                         QP_SE_POLARON,QP_SE_GW_QED,G_E_xc_string,X_E_xc_string,&
 &                         G_WF_xc_string,X_WF_xc_string
  use timing_m,       ONLY:timing
- use descriptors,    ONLY:IO_desc_add
+ use descriptors,    ONLY:IO_desc_add,IO_desc_append
+#if _ELPH
+ use ELPH,           ONLY:ELPH_desc
+#endif
  !
 #include<memory.h>
+ !
  type(QP_t)  ::qp
  character(*)::what ! 'QP'/'G'/filename
  integer     ::ID
@@ -131,6 +135,12 @@ integer function io_QP_and_GF(what,qp,ID)
      call IO_desc_add(qp%desc,kind="s",str='Xs energies kind',S=trim(X_E_xc_string(i_X)))
      call IO_desc_add(qp%desc,kind="s",str='Xs WF`s kind',S=trim(X_WF_xc_string(i_X)))
    endif
+#if _ELPH
+   if (QP_DB_kind==QP_SE_POLARON) then
+     call IO_desc_add(qp%desc,kind="s",str=" ",S=" ")
+     call IO_desc_append(ELPH_desc,qp%desc)
+   endif
+#endif
  endif
  !
  if (io_QP_and_GF/=0) then

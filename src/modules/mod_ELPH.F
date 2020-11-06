@@ -23,8 +23,9 @@
 !
 module ELPH
  !
- use pars,       ONLY:SP,rZERO,schlen
- use electrons,  ONLY:levels,E_reset
+ use pars,           ONLY:SP,rZERO,schlen
+ use electrons,      ONLY:levels,E_reset
+ use descriptors,    ONLY:IO_desc
  !
  implicit none
  !
@@ -102,6 +103,11 @@ module ELPH
  real(SP)  :: FAN_deltaE_treshold
  real(SP)  :: DW_deltaE_treshold
  real(SP)  :: MAX_gkkp=rZERO
+ !
+ ! Descriptors
+ !
+ type(IO_desc) :: ELPH_desc
+ type(IO_desc) :: PHEL_desc
  !
  contains
    !

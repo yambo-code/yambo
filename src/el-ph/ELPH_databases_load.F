@@ -49,6 +49,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  ! Work Space
  !
  integer             ::iq_bz,ID,io_err,ik,iq_io,i_n,i_np,ik_bz,ik_mem,iq_mem,NK,NQ,NB2sym(2)
+ real(SP)            ::ph_Esq_local(nqbz,ph_modes)
  real(SP),allocatable::MAX_gkkp_expanded_at_kpq(:,:),GKKP_to_sym(:,:,:)
  integer, external   ::io_ELPH
  character(1)        ::sym_mode
@@ -80,8 +81,9 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  if (l_K_BZ ) NK=k%nbz
  call ELPH_alloc("dV_sq",GKKP=GKKP_sq,Nk_mem=NK,Nq_mem=NQ,NB=n_bands)
  MAX_gkkp_expanded_at_kpq=rZERO
+ ph_Esq_local=rZERO
  !
- call live_timing('El-Ph matrix-elements I/O ('//trim(SCATT_mode)//'and'//trim(K_mode)//')',NQ)
+ call live_timing('El-Ph matrix-elements I/O ('//trim(SCATT_mode)//' and '//trim(K_mode)//')',NQ)
  !
  do iq_bz=1,nqbz
    !
@@ -96,6 +98,8 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
    !...IO
    call io_control(ACTION=OP_RD_CL,SEC=(/iq_io+1/),ID=ID)
    io_err=io_ELPH(ID,'gkkp_expanded')
+   !
+   ph_Esq_local(iq_bz,:)=PH_freqs_sq(iq_io,:)
    !
    do ik_bz=1,k%nbz
      !
@@ -112,7 +116,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
      else if (l_K_BZ) then
        ik_mem = ik_bz
        iq_mem = PARs_PH_Q_ibz%table( q%sstar(iq_bz,1))
-       !ik_mem = PAR_Xk_ibz_index(ik)
+       !ik_mem = PAR_Xk_ibz_index(ik)! TO CODE
      endif
      !
      do i_n=1,NB2sym(2)
@@ -139,12 +143,14 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
    !
  enddo
  !
- call live_timing()
+ PH_freqs_sq=ph_Esq_local
  !
  if (l_Q_BZ ) then
+   call PP_redux_wait(PH_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
    call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Q_INDEX%COMM)
    call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  else
+   call PP_redux_wait(PH_freqs_sq,COMM=PARs_PH_Q_ibz%COMM_i%COMM)
    call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PARs_PH_Q_ibz%COMM_i%COMM)
  endif
  !

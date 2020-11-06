@@ -39,8 +39,8 @@ subroutine ELPH_databases_symmetrize(mode,E,k,q,ik_bz,iq_bz,n_bands,GKKP)
  type(bz_samp),intent(in)    :: k,q
  !
  ! Work Space
- integer             ::ik,i_n,i_np,ik_m_q,first_el(2,n_bands(2)),n_of_el(2,n_bands(2)),n_deg_grp(2),i_g,i_c,iq
- real(SP)            ::K_average(ph_modes)
+ integer  ::ik,i_n,i_np,ik_m_q,first_el(2,n_bands(2)),n_of_el(2,n_bands(2)),n_deg_grp(2),i_g,i_c,iq
+ real(SP) ::K_average(ph_modes)
  !
  if (mode=="K") then
    !

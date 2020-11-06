@@ -198,7 +198,7 @@ integer function io_ELPH(ID,what)
    call io_bulk(ID,VAR="ELPH_GFSQ_life_f_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
    call io_bulk(ID,R2=gsqF_life_f(:,iq_mem,:,1))
    !
-   ! PH frequencies
+   ! PH frequencies (again)
    !
    if (iq==1) then
      call io_bulk(ID,VAR="PH_FREQS",VAR_SZ=(/elph_nQ,ph_modes/))

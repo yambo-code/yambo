@@ -67,7 +67,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! WorkSpace  
  !
  integer          ::iq_db,iq_bz,iq_loop,iq_db_ref,iq_s,iq_ibz,ik,ok,ik_bz,okbz,ib,ob,is,il,i_qp,i2,&
-&                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,live_timing_steps,iq_range(2)
+&                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,live_timing_steps
  type(w_samp)     ::Sc_W(qp%n_states)
  integer          ::io_err,ID,IO_ACT
  integer, external::io_ELPH
@@ -233,7 +233,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    if (iq_db/=iabs(iq_db_ref)) then
      !
-     if (elph_use_q_grid)      IO_ACT=manage_action(RD_CL_IF_END,iq_ibz,1,nqibz)
+     if (     elph_use_q_grid) IO_ACT=manage_action(RD_CL_IF_END,iq_ibz,1,nqibz)
      if (.not.elph_use_q_grid) IO_ACT=manage_action(RD_CL_IF_END,iq_db,1,nq_to_sum)
      call io_control(ACTION=IO_ACT,SEC=(/iq_db+1/),ID=ID)
      io_err=io_ELPH(ID,'gkkp')
@@ -428,61 +428,17 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  if (l_WRgFsq) then
    !
-   ! AndreaM, March 2015.
-   !
-   ! In the iq_loop loop the q=1 is read by ALL cpu's. This is in order
-   ! to get the DW elements written only for q=0. This means that all cpu's has the ph_freqs_sq(1,:)
-   ! 
-   PH_freqs_sq(1,:)=PH_freqs_sq(1,:)/PAR_COM_Q_INDEX%n_CPU
-   !
-   ! AndreaM, Feb 2017
-   !
-   ! In addition to the gamma point also other points can be read by 2 cpu's in the case of uniform grids
-   ! as the BZ points are distributed.
-   ! The only case where the Q is read only by one cpu (of the PAR_COM_Q_A2A comm) is when all the star is assigned to 
-   ! that cpu
-   !
-   if (elph_use_q_grid) then
-     !
-     q_each_cpu=0
-     do iq_ibz=2,q%nibz
-       do iq_s=1,q%nstar(iq_ibz)
-         if ( PAR_IND_Q_bz%element_1D(sum(q%nstar(:iq_ibz-1))+iq_s) ) q_each_cpu(iq_ibz)=1
-       enddo
-     enddo
-     !
-     call PP_redux_wait(q_each_cpu,COMM=PAR_COM_Q_INDEX%COMM)
-     !
-     do iq_ibz=2,q%nibz
-       if (q_each_cpu(iq_ibz)>0) PH_freqs_sq(iq_ibz,:)=PH_freqs_sq(iq_ibz,:)/q_each_cpu(iq_ibz)
-     enddo
-     !
+   if (master_cpu) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+     io_err=io_ELPH(ID,'gFsq')
    endif
-   !
-   call PP_redux_wait(PH_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
-   !
-   iq_range=(/nq_to_sum,1/)
-   do iq_loop=1,nq_to_sum
-     if (PAR_Q_bz_index(iq_loop)>0) then
-       iq_range(1)=min(iq_range(1),iq_loop)
-       iq_range(2)=max(iq_range(2),iq_loop)
-     endif
-   enddo
-   !
-   call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
-   !
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-   io_err=io_ELPH(ID,'gFsq')
-   !
    call PP_redux_wait
-   !
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
-   !
-   do iq_loop=iq_range(1),iq_range(2)
+   do iq_loop=1,nq_to_sum
+     if (.not.PAR_IND_Q_bz%element_1D(iq_loop)) cycle
      call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/iq_loop+1/),ID=ID)
      io_err=io_ELPH(ID,'gFsq')
    enddo
-   !
    call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
    !
  endif

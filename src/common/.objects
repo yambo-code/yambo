@@ -1,4 +1,3 @@
-RT_objects=
 #if defined _RT
 RT_objects= HyperbolicSecant_FT.o Fermi_fnc_fit.o
 #endif
@@ -10,5 +9,6 @@ objs = eval_G_minus_G.o G_rot_grid.o G_index.o G_index_energy_factor.o eval_Grad
        Kramers_Kronig.o Convolve.o RIntegrate.o Laplace_transform.o \
        CIntegrate.o QPartilize.o Lorentzian_FT.o \
        OCCUPATIONS_Fermi.o OCCUPATIONS_Extend.o OCCUPATIONS_Gaps.o \
+       LEVELS_respect_degenerations.o \
        crystal_lattice.o QP_state_print.o QP_state_group.o \
        spline_fit.o OBS_rotate.o $(RT_objects) $(DEV_objects)

@@ -46,7 +46,8 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,mode)
  type(GKKP_me),intent(inout) :: GKKP_sq
  !
  ! Work Space
- integer             ::iq_bz,ID,io_err,ik,iq_io,i_n,i_np,ik_bz,ik_mem,iq_mem,NK,NQ
+ !
+ integer             ::iq_bz,ID,io_err,ik,iq_io,i_n,i_np,ik_bz,ik_mem,iq_mem,NK,NQ,NB2sym(2)
  real(SP)            ::ph_Esq_local(nqbz,ph_modes)
  real(SP),allocatable::MAX_gkkp_expanded_at_kpq(:,:),GKKP_to_sym(:,:,:)
  integer, external   ::io_ELPH
@@ -67,8 +68,12 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,mode)
  !
  ! Allocation
  !============
+ NB2sym=(/1,elph_nb/)
+ !DEBUG_AM>
+ NB2sym=n_bands
+ !DEBUG_AM<
  YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nbz,nqbz))
- YAMBO_ALLOC(GKKP_to_sym,(ph_modes,n_bands(2),n_bands(2)))
+ YAMBO_ALLOC(GKKP_to_sym,(ph_modes,NB2sym(2),NB2sym(2)))
  if (l_Q_IBZ) NQ=PARs_PH_Q_ibz%N_par
  if (l_Q_BZ ) NQ=PAR_nQ_bz
  if (l_K_IBZ) NK=PAR_Xk_nibz
@@ -111,8 +116,8 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,mode)
        !ik_mem = PAR_Xk_ibz_index(ik)
      endif
      !
-     do i_n=1,n_bands(2)
-       do i_np=1,n_bands(2)
+     do i_n=1,NB2sym(2)
+       do i_np=1,NB2sym(2)
          !
          ! There has been a key error in the definition of the el-ph SE of the BKE (Eq. 30_9_11.18)
          ! where the band indexes have been exchanged. Instead of doing a global change of the notes
@@ -123,7 +128,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,mode)
        enddo
      enddo
      !
-     call ELPH_databases_symmetrize(sym_mode,k,E,ik_bz,iq_bz,n_bands,GKKP_to_sym)
+     call ELPH_databases_symmetrize(sym_mode,k,E,ik_bz,iq_bz,NB2sym,GKKP_to_sym)
      !
      GKKP_sq%dVr(:,:,:,ik_mem,iq_mem)=GKKP_to_sym(:,n_bands(1):n_bands(2),n_bands(1):n_bands(2))
      !
@@ -147,5 +152,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,mode)
  if (any(PH_freqs_sq<0._SP)) call warning('Imaginary phonon frequencies found. Please check.')
  !
  MAX_gkkp=maxval(MAX_gkkp_expanded_at_kpq)
+ !
+ call ELPH_alloc("FREE",GKKP=GKKP)
  !
 end subroutine ELPH_databases_load

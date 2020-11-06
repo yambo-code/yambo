@@ -116,18 +116,18 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  call section('+','Initialization')
  !#################################
  !
- ! Parallel reset...
+ ! Check if RT_bands respect levels degeneracy...
+ call LEVELS_respect_degenerations(RT_bands,E,.FALSE.)
  !
+ ! Parallel reset...
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
  !
  ! The K-grid must be defined at the very beginning to provide PARALLEL_global_indexes with the right k-weights
  !============
- !
  call RT_k_grid(E,k,q)
  !
  ! Parallel Setups
  !=================
- !
  call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
  if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) then
    call PARALLEL_SND_RCV_plan( PAR_COM_Xk_ibz_INDEX,  PAR_COM_Xk_ibz_INDEX%n_CPU)
@@ -135,12 +135,10 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  ! QP & carriers corrections
  !===========================
- !
  call QP_apply(RT_bands,E,k,     "G",msg_fmt='rs')
  !
  ! Dipoles
  !=========
- !
  call DIPOLE_dimensions(E,Dip,RT_bands,(/0._SP,0._SP,0._SP/))
  call DIPOLE_IO(k,E,Dip,'read ',io_err,'RT')
  !
@@ -160,7 +158,6 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  ! Dipoles & WF dimensions
  !=========================
- !
  call WF_and_dipole_dimensions(X)
  !
  ! WFs loading

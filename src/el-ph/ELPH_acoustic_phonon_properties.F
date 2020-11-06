@@ -57,16 +57,16 @@ subroutine ELPH_acoustic_phonon_properties(q)
      if (.not.any(PH_acoustic_branch)) aco_string=trim(intc(il))
      if (     any(PH_acoustic_branch)) aco_string=trim(aco_string)//" - "//trim(intc(il))
      PH_acoustic_branch(il)=.TRUE.
-     !DEBUG>
+     !DEBUG_AM>
      !PH_freqs_sq(1,il)=rZERO
-     !DEBUG<
+     !DEBUG_AM<
    endif
  enddo
  !
- !DEBUG>
+ !DEBUG_AM>
  PH_acoustic_branch     =.FALSE.
  PH_acoustic_branch(1:3)=.TRUE.
- !DEBUG<
+ !DEBUG_AM<
  !
  ! PH speeds
  !-----------

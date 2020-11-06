@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ELPH_databases_check(n_bands)
+subroutine ELPH_databases_check(n_bands)
  ! 
  use IO_m,           ONLY:io_control,REP,OP_RD_CL
- use ELPH,           ONLY:elph_nb
+ use ELPH,           ONLY:l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,elph_nb
  !
  implicit none
  !
- integer                  :: n_bands
+ integer :: n_bands
  !
  ! Work Space
  !
@@ -38,9 +38,13 @@ integer function ELPH_databases_check(n_bands)
  ! I/O check
  !===========
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
+ io_err=io_ELPH(ID,'gkkp')
+ if (io_err==0) l_GKKP_DB_exists=n_bands<=elph_nb
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
  io_err=io_ELPH(ID,'gkkp_expanded')
+ if (io_err==0) l_GKKP_expanded_DB_exists=n_bands<=elph_nb
  !
- ELPH_databases_check=0
- if (io_err/=0.or.elph_nb<n_bands) ELPH_databases_check=-1
+ if (all((/l_GKKP_DB_exists,l_GKKP_expanded_DB_exists/))) call error("Both expanded and un-expandend GKKP database found")
  !
-end function ELPH_databases_check
+end subroutine ELPH_databases_check

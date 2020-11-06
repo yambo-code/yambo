@@ -23,12 +23,13 @@
 !
 subroutine ELPH_databases(k,E,q)
  !
+ use units,               ONLY:HA2EV
  use pars,                ONLY:schlen,SP
  use stderr,              ONLY:intc
  use electrons,           ONLY:levels
  use interfaces,          ONLY:ELPH_alloc
  use ELPH,                ONLY:elph_use_q_grid,ph_modes,elph_nb,elph_nQ,GKKP,GKKP_bare,PH_W_debye,&
-&                              PH_freqs_sq,PH_qpt,PH_pol_vector,GKKP_me
+&                              PH_freqs_sq,PH_qpt,PH_pol_vector,GKKP_me,elph_nk_bz,PH_kpt_bz,l_GKKP_hosts_bare_dV
  use com,                 ONLY:msg
  use D_lattice,           ONLY:nsym,sop_tab
  use R_lattice,           ONLY:bz_samp,qindx_B,nqibz
@@ -37,7 +38,7 @@ subroutine ELPH_databases(k,E,q)
  use zeros,               ONLY:k_iku_zero
  use YPP_ELPH,            ONLY:ELPH_DB_alloc,ELPH_DB_free,DB_kind,DB_nq,DB_ph_K_sym_table,DB_nb,&
 &                              ph_freqs_file,ph_modes_file,use_ext_ph_freqs,use_ext_ph_modes,DB_ph_modes,&
-&                              DB_PH_pol_vec,DB_Q_map,DB_ph_freq_sq,DB_PH_qpt
+&                              DB_PH_pol_vec,DB_Q_map,DB_ph_freq_sq,DB_PH_qpt,DB_nk
  use LIVE_t,              ONLY:live_timing 
  use IO_m,                ONLY:io_control,OP_APP_CL
  !
@@ -48,7 +49,7 @@ subroutine ELPH_databases(k,E,q)
  !
  ! Work Space...
  !
- logical            ::l_gkkp_expand,l_gkkp_bare
+ logical            ::l_gkkp_expand
  integer            ::io_err(3),iq,ik,is,idb,i_star,iq_bz,ID
  character(schlen)  ::what
  integer, external  ::ELPH_databases_IO_elemental,io_ELPH
@@ -60,7 +61,7 @@ subroutine ELPH_databases(k,E,q)
  !
  ! Logicals & Init
  !=================
- call parser('GkkpReadBare',l_gkkp_bare)
+ call parser('GkkpReadBare',l_GKKP_hosts_bare_dV)
  call parser('GkkpExpand',l_gkkp_expand)
  !
  if (l_gkkp_expand.and..not.allocated(qindx_B)) then
@@ -77,9 +78,13 @@ subroutine ELPH_databases(k,E,q)
    return
  endif
  what="dressed"
- if (l_gkkp_bare) then
+ if (l_GKKP_hosts_bare_dV) then
    io_err(2)=ELPH_databases_IO_elemental("dV_bare EXIST",1)
-   if (io_err(2)==0) what="dressed+bare"
+   if (io_err(2)==0) then
+     what="dressed+bare"
+   else
+     l_GKKP_hosts_bare_dV=.FALSE.
+   endif
  endif
  call msg('l',trim(DB_kind)//" ("//trim(what)//')...')
  !
@@ -88,7 +93,7 @@ subroutine ELPH_databases(k,E,q)
  DB_nq=1
  do while (io_err(1)==0) 
    io_err(1)=ELPH_databases_IO_elemental("dV EXIST",DB_nq+1)
-   if (l_gkkp_bare) then 
+   if (l_GKKP_hosts_bare_dV) then 
      io_err(2)=ELPH_databases_IO_elemental("dV_bare EXIST",DB_nq+1)
      if (io_err(1)==0.and.io_err(2)/=0) call error("dV_bare is damaged/non existing")
    endif
@@ -168,26 +173,35 @@ subroutine ELPH_databases(k,E,q)
  enddo
  elph_use_q_grid=all((/DB_Q_map/=0/))
  !
- call msg('s',':: Code generator        :',DB_kind)
- call msg('s',':: DB Kind               :',what)
- call msg('s',':: Expanded              :',l_gkkp_expand)
- call msg('s',':: Q-points              :',DB_nq)
- call msg('s',':: Bands                 :',DB_nb)
- call msg('s',':: Branches              :',DB_ph_modes)
- call msg('s',':: Uniform sampling      :',elph_use_q_grid)
- call msg('s',':: Debye Energy          :',PH_W_debye*1000.,"[meV]")
- !
  ! ... Transfer and write ...
  !----------------------------
  ph_modes   =DB_ph_modes
  elph_nb    =DB_nb
  elph_nQ    =DB_nq
+ elph_nk_bz =k%nbz
  if (l_gkkp_expand) elph_nQ=q%nbz
- call ELPH_alloc("PHONONS")
- call ELPH_alloc("dV DW",GKKP=GKKP,Nq_mem=1)
- if (l_gkkp_bare) call ELPH_alloc("dV_bare",GKKP=GKKP_bare,Nq_mem=1)
  !
- !... Frequencies & pol vectors
+ !...report...
+ call msg('s',':: Code generator        :',DB_kind)
+ call msg('s',':: DB Kind               :',what)
+ call msg('s',':: Expanded              :',l_gkkp_expand)
+ call msg('s',':: Q-points(read)        :',DB_nq)
+ call msg('s',':: Q-points(written)     :',elph_nQ)
+ call msg('s',':: K-points              :',DB_nk)
+ call msg('s',':: Bands                 :',DB_nb)
+ call msg('s',':: Branches              :',DB_ph_modes)
+ call msg('s',':: Uniform sampling      :',elph_use_q_grid)
+ call msg('s',':: Symmetry expanded     :',l_gkkp_expand)
+ call msg('s',':: Debye Energy          :',PH_W_debye*HA2EV*1000.,"[meV]")
+ !
+ !...alloc...
+ call ELPH_alloc("PHONONS")
+ call ELPH_alloc("LEVELS dV DW",GKKP=GKKP,Nq_mem=1)
+ if (l_GKKP_hosts_bare_dV) call ELPH_alloc("LEVELS dV_bare",GKKP=GKKP_bare,Nq_mem=1)
+ !
+ !...Frequencies & pol vectors
+ !
+ PH_kpt_bz=k%ptbz
  !
  do idb=1,DB_nq
    iq=DB_Q_map(idb)
@@ -215,7 +229,7 @@ subroutine ELPH_databases(k,E,q)
    call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP)
    call ELPH_databases_IO_gkkp_expand("K",DB_Q_map(idb),1,k,GKKP)
    !
-   if (l_gkkp_bare) then 
+   if (l_GKKP_hosts_bare_dV) then 
      io_err(2)=ELPH_databases_IO_elemental("dV_bare GKKP",idb)
      call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP_bare)
      call ELPH_databases_IO_gkkp_expand("K",DB_Q_map(idb),1,k,GKKP_bare)
@@ -225,29 +239,27 @@ subroutine ELPH_databases(k,E,q)
    !
    if (l_gkkp_expand) then
      if (.not.allocated(GKKP_save%dVc)) call ELPH_alloc("dV",GKKP=GKKP_save,Nq_mem=1)
-     if (.not.allocated(GKKP_bare_save%dVc).and.l_gkkp_bare) call ELPH_alloc("dV",GKKP=GKKP_bare_save,Nq_mem=1)
+     if (.not.allocated(GKKP_bare_save%dVc).and.l_GKKP_hosts_bare_dV) call ELPH_alloc("dV",GKKP=GKKP_bare_save,Nq_mem=1)
      GKKP_save%dVc=GKKP%dVc
-     if (l_gkkp_bare) GKKP_bare_save%dVc=GKKP_bare%dVc
+     if (l_GKKP_hosts_bare_dV) GKKP_bare_save%dVc=GKKP_bare%dVc
      iq=DB_Q_map(idb)
      do i_star=1,q%nstar(iq)
        iq_bz=i_star
        if (iq>1) iq_bz=sum(q%nstar(:iq-1))+i_star
        GKKP%dVc=GKKP_save%dVc
        call ELPH_databases_IO_gkkp_expand("Q",iq_bz,q%star(iq,i_star),k,GKKP)
-       if (l_gkkp_bare) then
+       if (l_GKKP_hosts_bare_dV) then
          GKKP%dVc=GKKP_bare_save%dVc
          call ELPH_databases_IO_gkkp_expand("Q",iq_bz,q%star(iq,i_star),k,GKKP_bare)
        endif
        if (iq_bz==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
        if (iq_bz> 1) call io_control(ACTION=OP_APP_CL,SEC=(/iq_bz+1/),ID=ID)
-       if (     l_gkkp_bare) io_err(3)=io_ELPH(ID,'gkkp_expanded_plus_bare')
-       if (.not.l_gkkp_bare) io_err(3)=io_ELPH(ID,'gkkp_expanded')
+       io_err(3)=io_ELPH(ID,'gkkp_expanded')
      enddo
    else
      if (idb==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
      if (idb> 1) call io_control(ACTION=OP_APP_CL,SEC=(/idb+1/),ID=ID)
-     if (     l_gkkp_bare) io_err(3)=io_ELPH(ID,'gkkp_plus_bare')
-     if (.not.l_gkkp_bare) io_err(3)=io_ELPH(ID,'gkkp')
+     io_err(3)=io_ELPH(ID,'gkkp')
    endif
    !
  enddo
@@ -258,7 +270,7 @@ subroutine ELPH_databases(k,E,q)
  call ELPH_DB_free( )
  call ELPH_alloc("FREE",GKKP=GKKP)
  call ELPH_alloc("FREE",GKKP=GKKP_save)
- if (l_gkkp_bare) then
+ if (l_GKKP_hosts_bare_dV) then
    call ELPH_alloc("FREE",GKKP=GKKP_bare)
    call ELPH_alloc("FREE",GKKP=GKKP_bare_save)
  endif

@@ -36,7 +36,8 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  use RT_occupations, ONLY:RT_ph_occ,RT_el_occ,RT_ho_occ,RT_life_occ
  use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
- use ELPH,           ONLY:PH_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch,GKKP_pe_sq
+ use ELPH,           ONLY:PH_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch,GKKP_pe_sq,&
+&                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_eh_bands,PARs_PH_Q_ibz
  use QP_m,           ONLY:QP_G_damp
  use LIVE_t,         ONLY:live_timing
@@ -82,7 +83,8 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
    !
    do il=elph_branches(1),elph_branches(2)
      !
-     ph_freq=abs(sqrt(PH_freqs_sq(q%k_table(iq,1),il)))
+     if (l_GKKP_expanded_DB_exists) ph_freq=abs(sqrt(PH_freqs_sq(q%k_table(iq,1),il)))
+     if (l_GKKP_DB_exists         ) ph_freq=abs(sqrt(PH_freqs_sq(iq,il)))
      !
      if (iq==1 .and. PH_acoustic_branch(il)) cycle
      !
@@ -129,7 +131,7 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
          ! [NOTE]  Variable pre_factor below contains pi since it *shouldn't* come later from the hyperbolic secant FT.
          ! [NOTE2] Variable pre_factor below contains 1/(Nk_bz*N_FG_k) accounting for the double grid at each bz point.
          !
-         pre_factor=spin_occ*GKKP_pe_sq%dVr(ik,i_np,i_n,ikbz,iq_mem)*pi/(k%nbz*k_FG%N_mapped(ik)*ph_freq)
+         pre_factor=spin_occ*GKKP_pe_sq%dVr(il,i_np,i_n,ikbz,iq_mem)*pi/(k%nbz*k_FG%N_mapped(ik)*ph_freq)
          !
          do ik_rim=k_FG%k_range(ik,1),k_FG%k_range(ik,2)
            !

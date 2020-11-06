@@ -29,7 +29,7 @@ integer function io_ELPH(ID,what)
 &                         read_is_on,write_is_on,def_variable_elemental,&
 &                         io_mode,DUMP,io_fragment,frag_ELPH,IO_INCOMPATIBLE_VAR,IO_return
  use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,elph_nk_bz,ELPH_desc,&
-&                         QP_PH_n_G_bands,PH_W_debye,elph_nQ,PH_kpt_bz,&
+&                         QP_PH_n_G_bands,PH_W_debye,elph_nQ,PH_kpt_bz,l_GKKP_hosts_bare_dV,&
 &                         elph_use_q_grid,PH_qpt,elph_nQ_used,GKKP,GKKP_bare,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
 &                         PH_pol_vector,elph_Ham_bands,elph_branches,GKKP,elph_grids_are_expanded
@@ -55,26 +55,23 @@ integer function io_ELPH(ID,what)
  integer                ::iq,ierr,iq_mem
  real(SP)               ::v(3)
  character(schlen)      ::db_name
- logical                ::l_no_matrix_elements,l_gFsq,l_gkkp,l_gkkp_bare
+ logical                ::l_no_matrix_elements,l_gFsq,l_gkkp
  !
  call timing('io_ELPH',OPR='start')
  !
  l_no_matrix_elements=.FALSE.
  l_gFsq              =.FALSE.
  l_gkkp              =.FALSE.
- l_gkkp_bare         =.FALSE.
  !
  ! DB name
  !
  if (index(what,'gkkp_expanded')>0) then
    db_name='elph_gkkp_expanded'
-   if (index(what,'gkkp_expanded_plus_bare')>0) l_gkkp_bare=.TRUE.
  else if (index(what,'gFsq')>0) then
    db_name='elph_gFsq'
  else 
    db_name='elph_gkkp'
    l_gkkp=.TRUE.
-   if (index(what,'gkkp_plus_bare')>0) l_gkkp_bare=.TRUE.
  endif
  !
  elph_grids_are_expanded=index(what,'gkkp_expanded')>0
@@ -110,7 +107,8 @@ integer function io_ELPH(ID,what)
    call io_variable_elemental(ID,VAR="[ELPH] El-PH bands",I0=elph_nb,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
    call io_variable_elemental(ID,VAR="[ELPH] Using the Q-grid",L0=elph_use_q_grid,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
    if (ver_is_gt_or_eq(ID,revision=18920)) then
-     call io_variable_elemental(ID,VAR="[ELPH]  Bare couplings",L0=l_gkkp_bare,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
+     call io_variable_elemental(ID,VAR="[ELPH] Bare interaction",L0=l_GKKP_hosts_bare_dV,&
+&                               CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
    endif
    if (l_gFsq) then
      call def_variable_elemental(ID,"QP_nb_nk_n_states",3,SP,0)
@@ -220,7 +218,7 @@ integer function io_ELPH(ID,what)
  if (read_is_on(ID)) then
    if (.not.l_no_matrix_elements) then
      call ELPH_alloc("LEVELS dV DW",GKKP=GKKP)
-     if (l_gkkp_bare) call ELPH_alloc("dV_bare",GKKP=GKKP_bare)
+     if (l_GKKP_hosts_bare_dV) call ELPH_alloc("dV_bare",GKKP=GKKP_bare)
    else
      call ELPH_alloc("LEVELS",GKKP=GKKP)
    endif
@@ -249,7 +247,7 @@ integer function io_ELPH(ID,what)
  call io_bulk(ID,VAR="ELPH_GKKP_Q"//trim(intc(iq)),VAR_SZ=(/2,ph_modes,elph_nb,elph_nb,nkbz/) )
  call io_bulk(ID,C4=GKKP%dVc(:,:,:,:,1))
  !
- if (l_gkkp_bare) then
+ if (l_GKKP_hosts_bare_dV) then
    ! 
    ! ELPH_gkkp_bare 
    !

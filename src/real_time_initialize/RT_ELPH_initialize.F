@@ -29,7 +29,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  use drivers,        ONLY:l_elph_scatt,l_phel_scatt
  use R_lattice,      ONLY:bz_samp
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,NONE
- use ELPH,           ONLY:PH_freqs_sq,PH_W_debye,GKKP_ep_sq,GKKP_pe_sq
+ use ELPH,           ONLY:PH_freqs_sq,PH_W_debye,GKKP_ep_sq,GKKP_pe_sq,l_GKKP_expanded_DB_exists
  !
 #include<memory.h>
  !
@@ -39,7 +39,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  ! Work Space
  !
  integer             ::ID,i_err
- integer, external   ::io_RT_components,ELPH_databases_check
+ integer, external   ::io_RT_components
  logical             ::l_use_Debye_E
  !
  call section('=','El-Ph matrix elements')
@@ -57,9 +57,9 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! El-Ph databases check
  !=======================
- i_err=ELPH_databases_check(RT_bands(2))
- if (i_err<0) then
-   call warning('ELPH database not found and/or incompatible OR QP widths not provided. E-P scattering switched off')
+ call ELPH_databases_check(RT_bands(2))
+ if (.not.l_GKKP_expanded_DB_exists) then
+   call warning('ELPH (expanded) database not found and/or incompatible OR QP widths not provided. E-P scattering switched off')
    l_elph_scatt   =.FALSE.
    return
  endif

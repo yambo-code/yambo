@@ -27,11 +27,12 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  !
  !  BZ/IBZ + bare/dressed + square 
  ! 
- use pars,           ONLY:SP,rZERO
+ use pars,           ONLY:SP,rZERO,schlen
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp,nqbz
+ use R_lattice,      ONLY:bz_samp
  use IO_m,           ONLY:io_control,OP_RD_CL
- use ELPH,           ONLY:PH_freqs_sq,GKKP,ph_modes,MAX_gkkp,Q_io_map,GKKP_me,K_io_map,elph_nb
+ use ELPH,           ONLY:PH_freqs_sq,GKKP,ph_modes,MAX_gkkp,Q_io_map,GKKP_me,K_io_map,elph_nb,&
+&                         l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,elph_nQ,GKKP_bare
  use interfaces,     ONLY:ELPH_alloc
  use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
@@ -48,11 +49,12 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  !
  ! Work Space
  !
- integer             ::iq_bz,ID,io_err,ik,iq_io,i_n,i_np,ik_bz,ik_mem,iq_mem,NK,NQ,NB2sym(2)
- real(SP)            ::ph_Esq_local(nqbz,ph_modes)
+ integer             ::iq,ID,io_err,ik,i_n,i_np,ik_bz,ik_mem,iq_mem,NK,NQ,NB2sym(2),iq_s,idb,iq_ibz
+ real(SP)            ::ph_Esq_local(elph_nQ,ph_modes)
  real(SP),allocatable::MAX_gkkp_expanded_at_kpq(:,:),GKKP_to_sym(:,:,:)
  integer, external   ::io_ELPH
  character(1)        ::sym_mode
+ character(schlen)   ::db_name
  logical             ::l_K_BZ,l_K_IBZ,l_Q_BZ,l_Q_IBZ,l_bare,l_dressed,l_mixed,l_cycle
  !
  ! What?
@@ -67,13 +69,21 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  l_dressed = index(SCATT_mode,"dressed-dressed")>0
  l_mixed   = index(SCATT_mode,"dressed-bare")>0.or.index(SCATT_mode,"bare-dressed")>0
  !
+ ! DB name
+ !=========
+ if (l_Q_IBZ) then
+   if (l_GKKP_DB_exists         ) db_name="gkkp"
+   if (l_GKKP_expanded_DB_exists) db_name="gkkp_expanded"
+ endif
+ if (l_Q_BZ) db_name="gkkp_expanded"
+ !
  ! Allocation
  !============
  NB2sym=(/1,elph_nb/)
  !DEBUG_AM>
  NB2sym=n_bands
  !DEBUG_AM<
- YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nbz,nqbz))
+ YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nbz,elph_nQ))
  YAMBO_ALLOC(GKKP_to_sym,(ph_modes,NB2sym(2),NB2sym(2)))
  if (l_Q_IBZ) NQ=PARs_PH_Q_ibz%N_par
  if (l_Q_BZ ) NQ=PAR_nQ_bz
@@ -85,21 +95,28 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  !
  call live_timing('El-Ph matrix-elements I/O ('//trim(SCATT_mode)//' and '//trim(K_mode)//')',NQ)
  !
- do iq_bz=1,nqbz
-   !
-   !... cycle?
-   if (l_Q_BZ ) l_cycle=.not.PAR_IND_Q_bz%element_1D(iq_bz)
-   if (l_Q_IBZ) l_cycle=q%sstar(iq_bz,2)/=1.or..not.PARs_PH_Q_ibz%IND%element_1D(q%sstar(iq_bz,1))
-   if (l_cycle) cycle
+ do iq=1,elph_nQ
    !
    !...map
-   iq_io=Q_io_map(iq_bz)
+   idb=Q_io_map(iq)
+   !
+   iq_ibz=iq
+   iq_s  =1
+   if (l_GKKP_expanded_DB_exists) then
+     iq_ibz=q%sstar(iq,1)
+     iq_s  =q%sstar(iq,2)
+   endif
+   !
+   !... cycle?
+   if (l_Q_BZ ) l_cycle=.not.PAR_IND_Q_bz%element_1D(iq)
+   if (l_Q_IBZ) l_cycle=iq_s/=1.or..not.PARs_PH_Q_ibz%IND%element_1D(iq)
+   if (l_cycle) cycle
    !
    !...IO
-   call io_control(ACTION=OP_RD_CL,SEC=(/iq_io+1/),ID=ID)
-   io_err=io_ELPH(ID,'gkkp_expanded')
+   call io_control(ACTION=OP_RD_CL,SEC=(/idb+1/),ID=ID)
+   io_err=io_ELPH(ID,trim(db_name))
    !
-   ph_Esq_local(iq_bz,:)=PH_freqs_sq(iq_io,:)
+   ph_Esq_local(iq,:)=PH_freqs_sq(idb,:)
    !
    do ik_bz=1,k%nbz
      !
@@ -110,14 +127,10 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
      if (l_K_IBZ) l_cycle=k%sstar(ik_bz,2)/=1.or..not.PAR_IND_Xk_ibz%element_1D(ik)
      if (l_cycle) cycle
      !
-     if (l_K_IBZ) then
-       iq_mem = PAR_Q_bz_index(iq_bz)
-       ik_mem = PAR_Xk_ibz_index(ik)
-     else if (l_K_BZ) then
-       ik_mem = ik_bz
-       iq_mem = PARs_PH_Q_ibz%table( q%sstar(iq_bz,1))
-       !ik_mem = PAR_Xk_ibz_index(ik)! TO CODE
-     endif
+     if (l_Q_IBZ) iq_mem = PARs_PH_Q_ibz%table(iq)
+     if (l_Q_BZ ) iq_mem = PAR_Q_bz_index(iq)
+     if (l_K_IBZ) ik_mem = PAR_Xk_ibz_index(ik)
+     if (l_K_BZ)  ik_mem = ik_bz ! PAR_Xk_ibz_index(ik_bz)! TO CODE
      !
      do i_n=1,NB2sym(2)
        do i_np=1,NB2sym(2)
@@ -126,16 +139,25 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
          ! where the band indexes have been exchanged. Instead of doing a global change of the notes
          ! and of the code I decided, here, to exchange the indexes:
          !
-         GKKP_to_sym(:,i_n,i_np)=abs(GKKP%dVc(:,i_np,i_n,K_io_map(ik_bz),1))**2
+         !  <i_n ik|g(q_YAMBO l r)|i_np ik-q_YAMBO> = [<i_np ik+q_PW|g(q_PW l r)|i_n ik>]^* = 
+         !                                             elph_gkkp(il,i_np_gkkp,i_n_gkkp,ik_bz_gkkp)^*
+         !
+         if (l_dressed) then
+           GKKP_to_sym(:,i_n,i_np)=abs(GKKP%dVc(:,i_np,i_n,K_io_map(ik_bz),1))**2
+         elseif (l_bare) then
+           GKKP_to_sym(:,i_n,i_np)=abs(GKKP_bare%dVc(:,i_np,i_n,K_io_map(ik_bz),1))**2
+         elseif (l_mixed) then
+           GKKP_to_sym(:,i_n,i_np)=abs(GKKP%dVc(:,i_np,i_n,K_io_map(ik_bz),1)*GKKP_bare%dVc(:,i_np,i_n,K_io_map(ik_bz),1))
+         endif
          !
        enddo
      enddo
      !
-     call ELPH_databases_symmetrize(sym_mode,E,k,q,ik_bz,iq_bz,NB2sym,GKKP_to_sym)
+     call ELPH_databases_symmetrize(sym_mode,E,k,q,ik_bz,iq,NB2sym,GKKP_to_sym)
      !
      GKKP_sq%dVr(:,:,:,ik_mem,iq_mem)=GKKP_to_sym(:,n_bands(1):n_bands(2),n_bands(1):n_bands(2))
      !
-     MAX_gkkp_expanded_at_kpq(ik_bz,iq_bz)=maxval(sqrt(GKKP_sq%dVr(:,:,:,ik_mem,iq_mem)))
+     MAX_gkkp_expanded_at_kpq(ik_bz,iq)=maxval(sqrt(GKKP_sq%dVr(:,:,:,ik_mem,iq_mem)))
      !
    enddo
    !
@@ -159,5 +181,6 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  MAX_gkkp=maxval(MAX_gkkp_expanded_at_kpq)
  !
  call ELPH_alloc("FREE",GKKP=GKKP)
+ call ELPH_alloc("FREE",GKKP=GKKP_bare)
  !
 end subroutine ELPH_databases_load

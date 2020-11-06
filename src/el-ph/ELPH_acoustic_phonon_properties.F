@@ -33,7 +33,8 @@ subroutine ELPH_acoustic_phonon_properties(q)
  use pars,           ONLY:schlen,rZERO,SP
  use vec_operate,    ONLY:v_norm
  use R_lattice,      ONLY:bz_samp
- use ELPH,           ONLY:PH_freqs_sq,ph_modes,PH_acoustic_branch,PH_acoustic_speed,PH_Q_modulus
+ use ELPH,           ONLY:PH_freqs_sq,ph_modes,PH_acoustic_branch,PH_acoustic_speed,PH_Q_modulus,&
+&                         elph_nQ,l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use stderr,         ONLY:intc
  use com,            ONLY:msg
  !
@@ -73,9 +74,10 @@ subroutine ELPH_acoustic_phonon_properties(q)
  call k_ibz2bz(q,'c',.TRUE.)  
  !
  PH_acoustic_speed=rZERO
- do iq=2,q%nbz
+ do iq=2,elph_nQ
    do il=1,ph_modes
-     PH_Q_modulus(iq)=v_norm(q%ptbz(iq,:))
+     if (l_GKKP_expanded_DB_exists) PH_Q_modulus(iq)=v_norm(q%ptbz(iq,:))
+     if (l_GKKP_DB_exists         ) PH_Q_modulus(iq)=v_norm(q%ptbz(iq,:))
      if (.not.PH_acoustic_branch(il)) cycle
      PH_acoustic_speed(iq,il)=sqrt(abs(PH_freqs_sq(iq,il)))/PH_Q_modulus(iq)
    enddo

@@ -26,7 +26,8 @@ subroutine PHEL_driver(E,k,q)
  use electrons,           ONLY:levels,n_sp_pol,E_fine_grid
  use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc
  use interfaces,          ONLY:ELPH_alloc
- use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq
+ use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,&
+&                              l_GKKP_hosts_bare_dV
  use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode
  use parallel_m,          ONLY:PARs_PH_Q_ibz,PARs_PH_K_bz 
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_global_indexes
@@ -44,7 +45,7 @@ subroutine PHEL_driver(E,k,q)
  ! Work Space
  !
  integer             ::i_err,iq,ID
- integer, external   ::ELPH_databases_check,io_PH
+ integer, external   ::io_PH
  type(E_fine_grid)   ::E_FG
  !
  call section('*',"Phonon Lifetimes")
@@ -54,6 +55,7 @@ subroutine PHEL_driver(E,k,q)
  ! ...DbGd
  PH_DbGd_points    =k%FGibz%N
  l_PH_uses_E_FineGd=PH_DbGd_points>0
+ l_GKKP_hosts_bare_dV=index(PH_Self_Energy_mode,"bare")>0
  !
  ! ... BZ Setup
  call k_build_up_BZ_tables(q)
@@ -75,10 +77,9 @@ subroutine PHEL_driver(E,k,q)
  !
  ! El-Ph databases check
  !=======================
- i_err=ELPH_databases_check(QP_PH_n_G_bands)
- if (i_err<0) then
-   call error("Extended GKKP databases absent or damaged")
- endif
+ call ELPH_databases_check(QP_PH_n_G_bands)
+ !
+ if (.not.any((/l_GKKP_DB_exists,l_GKKP_expanded_DB_exists/))) call error("GKKP databases absent or damaged")
  !
  ! Q/K grid remapping
  !====================

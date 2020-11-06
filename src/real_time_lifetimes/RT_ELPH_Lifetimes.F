@@ -46,7 +46,6 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
  use ELPH,           ONLY:PH_freqs_sq,elph_branches,GKKP_ep_sq,MAX_gkkp
  use parallel_m,     ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_Xk_ibz_index
  use units,          ONLY:HA2EV
-
  use hamiltonian,    ONLY:B_mat_index
  use RT_occupations, ONLY:RT_el_occ,RT_life_occ,RT_ho_occ,RT_ph_occ
  use RT_lifetimes,   ONLY:RT_EP_emit_life,l_initial_equilibrium,RT_EP_abs_life,&

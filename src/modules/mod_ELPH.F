@@ -82,13 +82,11 @@ module ELPH
  integer,     allocatable :: K_io_map(:)
  !
  ! El_h Hamiltonian
- !
  integer   :: elph_Ham_bands(2)
  integer   :: elph_Ham_ik
  real(SP)  :: RES_tresh
  ! 
  ! gFsq matrices
- !
  integer              :: gsqF_energy_steps
  real(SP),allocatable :: gsqF_fan(:,:,:,:)
  real(SP),allocatable :: gsqF_dw(:,:,:)
@@ -97,7 +95,6 @@ module ELPH
  real(SP),allocatable :: gsqF_life_f(:,:,:,:)
  !
  ! el-ph Self-Energy
- !
  integer   :: QP_PH_n_G_bands
  logical   :: eval_G_using_KK ! Perform KK of the spectral function
  real(SP)  :: FAN_deltaE_treshold
@@ -105,9 +102,13 @@ module ELPH
  real(SP)  :: MAX_gkkp=rZERO
  !
  ! Descriptors
- !
  type(IO_desc) :: ELPH_desc
  type(IO_desc) :: PHEL_desc
+ !
+ ! Databases
+ logical :: l_GKKP_hosts_bare_dV=.FALSE.
+ logical :: l_GKKP_DB_exists=.FALSE.
+ logical :: l_GKKP_expanded_DB_exists=.FALSE.
  !
  contains
    !

@@ -209,7 +209,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i_res,:,1)
      endif     
      !
-     if (BSS_add_antiresonant.or.BS_K_coupling.or.i_res_ares==1) then
+     if ((BSS_add_antiresonant.or.BS_K_coupling).and.BS_res_ares_dim==1) then
        residual=conjg(BSS_dipoles_opt(i_Lo_trans))*BSS_dipoles_opt(i_Lo_trans)
        if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_Lo_trans,iw_ref,i_Lo)
        Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
@@ -219,7 +219,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
      if (l_BS_photolum.and.i_loop==1) then
        residual=dot_product(BSS_dipoles_PL(:,i_res),BSS_dipoles_PL(:,i_res))
        PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(i_res)
-       if (BSS_add_antiresonant.or.BS_K_coupling.or.i_res_ares==1) then
+       if ((BSS_add_antiresonant.or.BS_K_coupling).and.BS_res_ares_dim==1) then
          PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(i_cpl)
        endif
      endif

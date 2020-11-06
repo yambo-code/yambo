@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_symmetrize(mode,k,E,ik_bz,iq_bz,n_bands,GKKP)
+subroutine ELPH_databases_symmetrize(mode,E,k,q,ik_bz,iq_bz,n_bands,GKKP)
  ! 
  use pars,           ONLY:SP
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:qindx_S,bz_samp
- use ELPH,           ONLY:ph_modes
+ use ELPH,           ONLY:ph_modes,PH_freqs_sq
  use vec_operate,    ONLY:degeneration_finder
  !
  implicit none
@@ -35,11 +35,11 @@ subroutine ELPH_databases_symmetrize(mode,k,E,ik_bz,iq_bz,n_bands,GKKP)
  character(1), intent(in)    :: mode
  integer,      intent(in)    :: ik_bz,iq_bz,n_bands(2)
  real(SP),     intent(inout) :: GKKP(ph_modes,n_bands(2),n_bands(2))
- type(bz_samp),intent(in)    :: k
  type(levels), intent(in)    :: E
+ type(bz_samp),intent(in)    :: k,q
  !
  ! Work Space
- integer             ::ik,i_n,i_np,ik_m_q,first_el(2,n_bands(2)),n_of_el(2,n_bands(2)),n_deg_grp(2),i_g,i_c
+ integer             ::ik,i_n,i_np,ik_m_q,first_el(2,n_bands(2)),n_of_el(2,n_bands(2)),n_deg_grp(2),i_g,i_c,iq
  real(SP)            ::K_average(ph_modes)
  !
  if (mode=="K") then
@@ -79,6 +79,14 @@ subroutine ELPH_databases_symmetrize(mode,k,E,ik_bz,iq_bz,n_bands,GKKP)
        enddo
      enddo
    enddo
+   !
+ endif
+ !
+ if (mode=="Q") then
+   !
+   iq=q%sstar(iq_bz,1)
+   !
+   call degeneration_finder(PH_freqs_sq(iq,:),ph_modes,first_el(1,:ph_modes),n_of_el(1,:ph_modes),n_deg_grp(1),0.0001/HA2EV)
    !
  endif
  !

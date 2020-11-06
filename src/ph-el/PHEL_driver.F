@@ -86,7 +86,7 @@ subroutine PHEL_driver(E,k,q)
  !
  ! El-Ph databases I/O
  !=====================
- call ELPH_databases_load(GKKP_pe_sq,E,k,q,(/1,QP_PH_n_G_bands/),"Q-sym Q-IBZ K-BZ "//trim(PH_Self_Energy_mode))
+ call ELPH_databases_load(GKKP_pe_sq,E,k,q,(/1,QP_PH_n_G_bands/),"Q-sym Q-IBZ K-BZ",PH_Self_Energy_mode)
  !
  !...acoustic branches
  !

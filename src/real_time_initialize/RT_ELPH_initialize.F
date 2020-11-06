@@ -70,11 +70,11 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! El-Ph databases I/O
  !=====================
- if (l_elph_scatt) call ELPH_databases_load(GKKP_ep_sq,E,k,q,RT_bands,"Q-BZ K-IBZ K-sym dressed-dressed")
+ if (l_elph_scatt) call ELPH_databases_load(GKKP_ep_sq,E,k,q,RT_bands,"Q-BZ K-IBZ K-sym","dressed-dressed")
  !
  ! Pj-El databases I/O
  !=====================
- if (l_phel_scatt) call ELPH_databases_load(GKKP_pe_sq,E,k,q,RT_bands,"Q-IBZ K-BZ Q-sym dressed-dressed")
+ if (l_phel_scatt) call ELPH_databases_load(GKKP_pe_sq,E,k,q,RT_bands,"Q-IBZ K-BZ Q-sym","dressed-dressed")
  !
  ! Test of the effect of using a single optical mode
  !                               ===================

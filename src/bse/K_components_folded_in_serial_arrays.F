@@ -55,7 +55,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
  ! Work Space
  !
  integer     :: i_Tr,H_pos,i_g,i_g_start,i_k_bz,i_v,i_c,i_sp_c,i_sp_v,&
- &              BS_res_ares_dim_solver,i_res_ares,i_res_ares_solver
+ &              BS_res_ares_dim_solver,i_res_ares,i_res_ares_solver,cpl_fac
  !
  !========================
  ! BSS COMPONENTS SECTION
@@ -85,6 +85,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
    !==================================
    !
    i_g_start=1
+   i_res_ares=1
    do i_g=1,BS_nT_grps
      !
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
@@ -101,18 +102,20 @@ subroutine K_components_folded_in_serial_arrays(iq)
        i_c   =BS_T_grp(i_g)%table(i_Tr,3)
        i_sp_c=BS_T_grp(i_g)%table(i_Tr,4)
        i_sp_v=BS_T_grp(i_g)%table(i_Tr,5)
-       H_pos=sum(BS_T_grp(i_g_start:I_g-1)%size)+i_Tr
-       !
-       BSS_eh_table(H_pos,:)=(/i_k_bz,i_v,i_c,i_sp_c,i_sp_v/)
-       !
-       BSS_eh_E(H_pos)=BS_T_grp(i_g)%E(i_Tr)
-       BSS_eh_f(H_pos)=BS_T_grp(i_g)%f(i_Tr)
-       if (allocated(BS_T_grp(i_g)%Z)) BSS_eh_Z(H_pos)=BS_T_grp(i_g)%Z(i_Tr)
-       if (allocated(BS_T_grp(i_g)%W)) BSS_eh_W(H_pos)=BS_T_grp(i_g)%W(i_Tr)
-       !
-       if (BS_perturbative_SOC) BSS_eh_E_SOC_corr(:,H_pos)=BS_T_grp(i_g)%E_SOC_corr(:,i_Tr)
        !
        do i_res_ares_solver=1,BS_res_ares_dim_solver
+         !
+         H_pos=sum(BS_T_grp(i_g_start:I_g-1)%size)+i_Tr+(i_res_ares_solver-1)*BS_K_dim
+         cpl_fac=(-1)**(i_res_ares_solver-1)
+         !
+         BSS_eh_table(H_pos,:)=(/i_k_bz,i_v,i_c,i_sp_c,i_sp_v/)
+         !
+         BSS_eh_E(H_pos)=BS_T_grp(i_g)%E(i_Tr)*cpl_fac
+         BSS_eh_f(H_pos)=BS_T_grp(i_g)%f(i_Tr)*cpl_fac
+         if (allocated(BS_T_grp(i_g)%Z)) BSS_eh_Z(H_pos)=BS_T_grp(i_g)%Z(i_Tr)*cpl_fac
+         if (allocated(BS_T_grp(i_g)%W)) BSS_eh_W(H_pos)=BS_T_grp(i_g)%W(i_Tr)*cpl_fac
+         !
+         if (BS_perturbative_SOC) BSS_eh_E_SOC_corr(:,H_pos)=BS_T_grp(i_g)%E_SOC_corr(:,i_Tr)*cpl_fac
          !
 #if defined _KERR
          if (l_BS_photolum) then

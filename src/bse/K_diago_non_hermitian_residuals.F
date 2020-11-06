@@ -67,7 +67,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  call live_timing('EPS R residuals',px%n_of_elements(myid+1))
  !
- tmp_res = conjg(BSS_dipoles_opt)*sqrt(BSS_eh_f)
+ tmp_res = conjg(BSS_dipoles_opt)*sqrt(cmplx(BSS_eh_f,kind=SP))
  !
  if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z)
  if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
@@ -90,7 +90,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  call live_timing('EPS L residuals',px%n_of_elements(myid+1))
  !
- tmp_res = BSS_dipoles_opt*sqrt(BSS_eh_f)
+ tmp_res = BSS_dipoles_opt*sqrt(cmplx(BSS_eh_f,kind=SP))
  !
  do i1=1,BSS_n_eig
    !

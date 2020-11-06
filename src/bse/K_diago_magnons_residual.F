@@ -143,11 +143,11 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A
  !
  call live_timing('MAG R residuals',px%n_of_elements(myid+1))
  !
- tmp_res(:,1) = conjg(BSS_dipoles_magn(1,:))*sqrt(BSS_eh_f(:)) 
- tmp_res(:,2) = conjg(BSS_dipoles_magn(2,:))*sqrt(BSS_eh_f(:)) 
+ tmp_res(:,1) = conjg(BSS_dipoles_magn(1,:))*sqrt(cmplx(BSS_eh_f(:),SP)) 
+ tmp_res(:,2) = conjg(BSS_dipoles_magn(2,:))*sqrt(cmplx(BSS_eh_f(:),SP)) 
  !
- tmp_res(:,3) =       BSS_dipoles_magn(2,:) *sqrt(BSS_eh_f(:)) 
- tmp_res(:,4) =       BSS_dipoles_magn(1,:) *sqrt(BSS_eh_f(:)) 
+ tmp_res(:,3) =       BSS_dipoles_magn(2,:) *sqrt(cmplx(BSS_eh_f(:),SP)) 
+ tmp_res(:,4) =       BSS_dipoles_magn(1,:) *sqrt(cmplx(BSS_eh_f(:),SP)) 
  !
  do i_eh=1,BS_H_dim
    if (allocated(BSS_eh_Z)) tmp_res(i_eh,:)=tmp_res(i_eh,:)*sqrt(BSS_eh_Z(i_eh))
@@ -174,11 +174,11 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A
  !
  call live_timing('MAG L residuals',px%n_of_elements(myid+1))
  !
- tmp_res(:,1) =       BSS_dipoles_magn(1,:) *sqrt(BSS_eh_f(:)) 
- tmp_res(:,2) =       BSS_dipoles_magn(2,:) *sqrt(BSS_eh_f(:)) 
+ tmp_res(:,1) =       BSS_dipoles_magn(1,:) *sqrt(cmplx(BSS_eh_f(:),SP)) 
+ tmp_res(:,2) =       BSS_dipoles_magn(2,:) *sqrt(cmplx(BSS_eh_f(:),SP)) 
  !
- tmp_res(:,3) = conjg(BSS_dipoles_magn(2,:))*sqrt(BSS_eh_f(:)) 
- tmp_res(:,4) = conjg(BSS_dipoles_magn(1,:))*sqrt(BSS_eh_f(:)) 
+ tmp_res(:,3) = conjg(BSS_dipoles_magn(2,:))*sqrt(cmplx(BSS_eh_f(:),SP)) 
+ tmp_res(:,4) = conjg(BSS_dipoles_magn(1,:))*sqrt(cmplx(BSS_eh_f(:),SP)) 
  !
  do i_eh=1,BS_H_dim
    if (allocated(BSS_eh_Z)) tmp_res(i_eh,:)=tmp_res(i_eh,:)*sqrt(BSS_eh_Z(i_eh))

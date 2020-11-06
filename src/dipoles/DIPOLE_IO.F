@@ -30,9 +30,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use electrons,   ONLY:levels,n_sp_pol
  use DIPOLES,     ONLY:DIPOLE_t,DIP_v,use_covariant_approach
  use IO_m,        ONLY:io_control,manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
-&                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
+&                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END,io_type
  use parallel_int,ONLY:PP_bcast,PP_redux_wait
- use parallel_m,  ONLY:master_cpu,PAR_K_scheme,PAR_COM_X_WORLD
+ use parallel_m,  ONLY:master_cpu,PAR_K_scheme,PAR_COM_X_WORLD,myid
  !
  implicit none
  !
@@ -177,7 +177,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
          if ((.not.PAR_K_scheme%IND_bz%element_1D(ik)).and.writing) cycle
          if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing) cycle
 #if !defined _PAR_IO
-         IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol,PAR_K_scheme%IND_ibz)
+         IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol,PAR_K_scheme%IND_bz)
 #endif
          call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID_S)
          io_err=io_err+io_Overlaps(Dip,ID_S)

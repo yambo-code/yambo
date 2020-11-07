@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right,BS_A_left,BS_A_right) 
+subroutine K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right) 
  !
  ! Resonant Residuals
  !====================
@@ -45,84 +45,44 @@ subroutine K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right,B
  integer,    intent(in)  :: i_BS_mat
  real(SP)   ,intent(in)  :: BS_E_real(BSS_n_eig)
  complex(SP),intent(out) :: BS_R_left(BSS_n_eig),BS_R_right(BSS_n_eig)
- complex(SP),pointer,intent(out) :: BS_A_left(:),BS_A_right(:)
  !
  ! Workspace
  !
  type(PP_indexes)     ::px
- integer              ::i_eh
+ integer              ::i_lambda,i_range(2)
  complex(SP)          ::tmp_res(BS_K_dim(i_BS_mat))
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BSS_n_eig/))
  !
- if (BS_res_ares_dim==1.or.i_BS_mat==1) then
-   !
-   BS_R_left =cZERO
-   BS_R_right=cZERO
-   call live_timing('EPS R residuals',px%n_of_elements(myid+1))
-   !
-   tmp_res = BSS_dipoles_opt(:BS_K_dim(1))*sqrt(BSS_eh_f(:BS_K_dim(1)))
-   !
-   if (trim(global_gauge)=="velocity") tmp_res =tmp_res/BSS_eh_E(:BS_K_dim(1))
-   if (allocated(BSS_eh_Z))            tmp_res =tmp_res*sqrt(BSS_eh_Z(:BS_K_dim(1)))
-   !
-   do i_eh=1,BSS_n_eig
-     !
-     if (.not.px%element_1D(i_eh)) cycle
-     !
-     BS_R_left(i_eh) =V_dot_V_omp(BS_K_dim(1),tmp_res,conjg(BS_mat(:,i_eh)))
-     BS_R_right(i_eh)=conjg(BS_R_left(i_eh))
-     !
-     if (trim(global_gauge)=="velocity") then
-       BS_R_left(i_eh) = BS_R_left(i_eh) *BS_E_real(i_eh)
-       BS_R_right(i_eh)= BS_R_right(i_eh)*BS_E_real(i_eh)
-     endif
-     !
-     call live_timing(steps=1)
-     !
-   enddo
-   call live_timing()
-   !
-   call PP_redux_wait(BS_R_left)
-   call PP_redux_wait(BS_R_right)
-   !
- endif
+ i_range=(/1,BS_K_dim(i_BS_mat)/)+BS_K_dim(1)*(i_BS_mat-1)
  !
- if (l_BS_ares_asymm.and.(BSS_add_antiresonant.or.BS_K_coupling).and.(BS_res_ares_dim==1.or.i_BS_mat==2)) then
+ BS_R_left =cZERO
+ BS_R_right=cZERO
+ call live_timing('EPS R residuals',px%n_of_elements(myid+1))
+ !
+ tmp_res = BSS_dipoles_opt(i_range(1):i_range(2))*sqrt(cmplx(BSS_eh_f(i_range(1):i_range(2)),kind=SP))
+ !
+ if (trim(global_gauge)=="velocity") tmp_res =tmp_res/BSS_eh_E(i_range(1):i_range(2))
+ if (allocated(BSS_eh_Z))            tmp_res =tmp_res*sqrt(BSS_eh_Z(i_range(1):i_range(2)))
+ !
+ do i_lambda=1,BSS_n_eig
    !
-   ! Anti resonant residuals
+   if (.not.px%element_1D(i_lambda)) cycle
    !
-   BS_A_left =cZERO
-   BS_A_right=cZERO
-   call live_timing('EPS A residuals',px%n_of_elements(myid+1))
+   BS_R_left(i_lambda) =V_dot_V_omp(BS_K_dim(i_BS_mat),tmp_res,conjg(BS_mat(:,i_lambda)))
+   if (trim(global_gauge)=="velocity") &
+   & BS_R_left(i_lambda) = BS_R_left(i_lambda)*BS_E_real(i_lambda)
    !
-   tmp_res = BSS_dipoles_opt(BS_K_dim(1)+1:)*sqrt(cmplx(BSS_eh_f(BS_K_dim(1)+1:),kind=SP))
+   BS_R_right(i_lambda)=conjg(BS_R_left(i_lambda))
    !
-   if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E(BS_K_dim(1)+1:)
-   if (allocated(BSS_eh_Z))            tmp_res=tmp_res*sqrt(BSS_eh_Z(BS_K_dim(1)+1:))
+   call live_timing(steps=1)
    !
-   do i_eh=1,BSS_n_eig
-     !
-     if (.not.px%element_1D(i_eh)) cycle
-     !
-     BS_A_left(i_eh) =V_dot_V_omp(BS_K_dim(i_BS_mat),tmp_res,conjg(BS_mat(:,i_eh)))
-     BS_A_right(i_eh)=conjg(BS_A_left(i_eh))
-     !
-     if (trim(global_gauge)=="velocity") then
-       BS_A_left(i_eh) = BS_A_left(i_eh) *BS_E_real(i_eh)
-       BS_A_right(i_eh)= BS_A_right(i_eh)*BS_E_real(i_eh)
-     endif
-     !
-     call live_timing(steps=1)
-     !
-   enddo
-   call live_timing()
-   !
-   call PP_redux_wait(BS_A_left)
-   call PP_redux_wait(BS_A_right)
-   !
- endif
+ enddo
+ call live_timing()
+ !
+ call PP_redux_wait(BS_R_left)
+ call PP_redux_wait(BS_R_right)
  !
  call PP_indexes_reset(px)
  !

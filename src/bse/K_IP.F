@@ -177,8 +177,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle
    !
-   i_res_ares=1
-   if (BS_res_ares_dim==2.and.i_T_g>BS_nT_grps/2) i_res_ares=2
+   i_res_ares=BS_T_grp(i_T_g)%i_res_ares
    !
    do i_T=1,BS_T_grp(i_T_g)%size
      !
@@ -312,18 +311,16 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        & BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,2)=DIP_projected_dich(:BS_dip_size)
      endif
      ! Magnons
-     if (l_BS_magnons) then
-       if(i_res_ares==1) then                                    ! This is the right R residual associated to (eps_c\dn-eps_v\up)
+     if (l_BS_magnons) then                                      ! This is the right R residual associated to (eps_c\dn-eps_v\up)
          BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
          BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Smins)   ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
+                                                                 !      or the right R residual associated to (eps_c\dn-eps_v\up)
+                                                                 ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c) = conjg(<c\up|S+|v\dn>(i_sp_pol_v))
+                                                                 ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c) = conjg(<c\dn|S-|v\up>(i_sp_pol_v))
          if (BS_K_coupling.and..not.BS_res_ares_dim==2) then     ! This is the right A residual associated to (eps_v\up-eps_c\dn)
-           BS_T_grp(i_T_g)%dipoles_mag(1,i_T,2)=DIP_Splus        ! S+ for |v\dn> trans: <v\up|S+|c\dn>(i_sp_pol_c)
-           BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Smins        ! S- for |v\up> trans: <v\dn|S-|c\up>(i_sp_pol_c)
+           BS_T_grp(i_T_g)%dipoles_mag(1,i_T,2)=DIP_Smins        ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c)
+           BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Splus        ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
          endif
-       else if (i_res_ares==2) then                              ! This is the right R residual associated to (eps_c\dn-eps_v\up)
-         BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus)   ! S+ for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c) = conjg(<c\up|S+|v\dn>(i_sp_pol_v))
-         BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Smins)   ! S- for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c) = conjg(<c\dn|S-|v\up>(i_sp_pol_v))
-       endif
      endif
 #endif
      !

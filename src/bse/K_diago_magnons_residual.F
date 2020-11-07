@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, MG, DS
+! Authors (see AUTHORS file for details): DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_diago_herm_magnons_residual(i_BS_mat,BS_R_left,BS_R_right,BS_A_left,BS_A_right) 
+subroutine K_diago_herm_magnons_residual(i_BS_mat,BS_R_left,BS_R_right) 
  !
  ! Resonant Residuals
  !====================
@@ -35,82 +35,60 @@ subroutine K_diago_herm_magnons_residual(i_BS_mat,BS_R_left,BS_R_right,BS_A_left
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
  use BS_solvers,     ONLY:BSS_eh_Z,BSS_eh_f,BS_mat,BSS_n_eig,BSS_add_antiresonant
- use BS,             ONLY:BS_K_dim,BS_mat_res_ares_dim
+ use BS,             ONLY:BS_K_dim,BS_K_coupling,BS_res_ares_dim,l_BS_ares_asymm
  use MAGNONS,        ONLY:BSS_dipoles_magn
  !
  implicit none
  !
- integer,    intent(in)  ::i_BS_mat
+ integer,    intent(in)  :: i_BS_mat
  complex(SP),intent(out) :: BS_R_left(2,BSS_n_eig),BS_R_right(2,BSS_n_eig)
- complex(SP),intent(out) :: BS_A_left(2,BSS_n_eig),BS_A_right(2,BSS_n_eig)
  !
  ! Workspace
  !
  type(PP_indexes)     ::px
- integer              ::i_lambda,i_res
- complex(SP)          ::tmp_res_R(BS_K_dim(1),2),tmp_res_A(BS_K_dim(2),2)
+ integer              ::i_lambda,i_range(2)
+ complex(SP)          ::tmp_res_R(BS_K_dim(i_BS_mat),2),tmp_res_A(BS_K_dim(i_BS_mat),2)
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BSS_n_eig/))
  !
+ i_range=(/1,BS_K_dim(i_BS_mat)/)+BS_K_dim(1)*(i_BS_mat-1)
+ !
  BS_R_left =cZERO
  BS_R_right=cZERO
- BS_A_left =cZERO
- BS_A_right=cZERO
  !
  call live_timing('MAG residuals',px%n_of_elements(myid+1))
  !
- if (BS_mat_res_ares_dim==1 .or. i_BS_mat==1) then
-   tmp_res_R(:,1) = BSS_dipoles_magn(1,:BS_K_dim(1))   *sqrt(BSS_eh_f(:BS_K_dim(1)))
-   tmp_res_R(:,2) = BSS_dipoles_magn(2,:BS_K_dim(1))   *sqrt(BSS_eh_f(:BS_K_dim(1)))
-   if (allocated(BSS_eh_Z)) then
-     tmp_res_R(:,1)=tmp_res_R(:,1)*sqrt(BSS_eh_Z(:BS_K_dim(1)))
-     tmp_res_R(:,2)=tmp_res_R(:,2)*sqrt(BSS_eh_Z(:BS_K_dim(1)))
-   endif
+ tmp_res_R(:,1) = BSS_dipoles_magn(1,i_range(1):i_range(2))*sqrt(cmplx(BSS_eh_f(i_range(1):i_range(2)),kind=SP))
+ tmp_res_R(:,2) = BSS_dipoles_magn(2,i_range(1):i_range(2))*sqrt(cmplx(BSS_eh_f(i_range(1):i_range(2)),kind=SP))
+ if (allocated(BSS_eh_Z)) then
+   tmp_res_R(:,1)=tmp_res_R(:,1)*sqrt(BSS_eh_Z(i_range(1):i_range(2)))
+   tmp_res_R(:,2)=tmp_res_R(:,2)*sqrt(BSS_eh_Z(i_range(1):i_range(2)))
  endif
- !
- if (BSS_add_antiresonant.and.(BS_mat_res_ares_dim==1.or.i_BS_mat==2)) then
-   tmp_res_A(:,1) = BSS_dipoles_magn(1,BS_K_dim(1)+1:)*sqrt(BSS_eh_f(BS_K_dim(1)+1:))
-   tmp_res_A(:,2) = BSS_dipoles_magn(2,BS_K_dim(1)+1:)*sqrt(BSS_eh_f(BS_K_dim(1)+1:))
-   if (allocated(BSS_eh_Z)) then
-     tmp_res_A(:,1)=tmp_res_A(:,1)*sqrt(BSS_eh_Z(BS_K_dim(1)+1:))
-     tmp_res_A(:,2)=tmp_res_A(:,2)*sqrt(BSS_eh_Z(BS_K_dim(1)+1:))
-   endif
- endif
- !
  !
  do i_lambda=1,BSS_n_eig
    !
    if (.not.px%element_1D(i_lambda)) cycle
    !
-   if (BS_mat_res_ares_dim==1 .or. i_BS_mat==1) then
-     BS_R_left(1,i_lambda) =V_dot_V_omp(BS_K_dim(1),tmp_res_R(:,1),conjg(BS_mat(:,i_lambda)))
-     BS_R_left(2,i_lambda) =V_dot_V_omp(BS_K_dim(1),tmp_res_R(:,2),conjg(BS_mat(:,i_lambda)))
-     BS_R_right(:,i_lambda)=conjg(BS_R_left(:,i_lambda))
-   endif
-   !
-   if (BSS_add_antiresonant.and.(BS_mat_res_ares_dim==1.or.i_BS_mat==2)) then
-     BS_A_left(1,i_lambda) =V_dot_V_omp(BS_K_dim(1),tmp_res_A(:,1),BS_mat(:,i_lambda))
-     BS_A_left(2,i_lambda) =V_dot_V_omp(BS_K_dim(1),tmp_res_A(:,2),BS_mat(:,i_lambda))
-     BS_A_right(:,i_lambda)=conjg(BS_A_left(:,i_lambda))
-   endif
+   BS_R_left(1,i_lambda) =V_dot_V_omp(BS_K_dim(i_BS_mat),tmp_res_R(:,1),conjg(BS_mat(:,i_lambda)))
+   BS_R_left(2,i_lambda) =V_dot_V_omp(BS_K_dim(i_BS_mat),tmp_res_R(:,2),conjg(BS_mat(:,i_lambda)))
+   BS_R_right(:,i_lambda)=conjg(BS_R_left(:,i_lambda))
    !
    call live_timing(steps=1)
    !
  enddo
+ !
  call live_timing()
  !
  call PP_redux_wait(BS_R_left)
  call PP_redux_wait(BS_R_right)
- call PP_redux_wait(BS_A_left)
- call PP_redux_wait(BS_A_right)
  !
  call PP_indexes_reset(px)
  !
 end subroutine K_diago_herm_magnons_residual
 !
 !
-subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A_right,BS_V_left,BS_V_right,BS_overlap) 
+subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap) 
  !
  use pars,           ONLY:SP,cZERO,cI
  use wrapper_omp,    ONLY:V_dot_V_omp,Vstar_dot_V_omp
@@ -124,7 +102,6 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A
  implicit none
  !
  complex(SP),intent(out) :: BS_R_left(2,BSS_n_eig),BS_R_right(2,BSS_n_eig)
- complex(SP),intent(out) :: BS_A_left(2,BSS_n_eig),BS_A_right(2,BSS_n_eig)
  complex(SP),intent(in)  :: BS_V_left(BS_H_dim,BSS_n_eig),BS_V_right(BS_H_dim,BSS_n_eig)
  complex(SP),intent(in)  :: BS_overlap(BSS_n_eig,BSS_n_eig)
  !
@@ -132,8 +109,8 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A
  !
  type(PP_indexes)     ::px
  integer              ::i_lambda,i_eh,i_he
- complex(SP)          ::tmp_res(BS_H_dim,4)
- complex(SP)          ::BS_R_tmp(4,BSS_n_eig)       
+ complex(SP)          ::tmp_res(BS_H_dim,2)
+ complex(SP)          ::BS_R_tmp(2,BSS_n_eig)       
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BSS_n_eig/))
@@ -142,15 +119,11 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A
  !                  =conjg(BSS_dipoles(j))*BS_V_right(j,i)
  !
  BS_R_right=cZERO
- BS_A_right=cZERO
  !
  call live_timing('MAG R residuals',px%n_of_elements(myid+1))
  !
  tmp_res(:,1) = conjg(BSS_dipoles_magn(1,:))*sqrt(cmplx(BSS_eh_f(:),SP)) 
  tmp_res(:,2) = conjg(BSS_dipoles_magn(2,:))*sqrt(cmplx(BSS_eh_f(:),SP)) 
- !
- tmp_res(:,3) =       BSS_dipoles_magn(2,:) *sqrt(cmplx(BSS_eh_f(:),SP)) 
- tmp_res(:,4) =       BSS_dipoles_magn(1,:) *sqrt(cmplx(BSS_eh_f(:),SP)) 
  !
  do i_eh=1,BS_H_dim
    if (allocated(BSS_eh_Z)) tmp_res(i_eh,:)=tmp_res(i_eh,:)*sqrt(BSS_eh_Z(i_eh))
@@ -161,13 +134,10 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A
    !
    BS_R_right(1,i_lambda)=V_dot_V_omp(BS_H_dim,tmp_res(:,1),BS_V_right(:,i_lambda))
    BS_R_right(2,i_lambda)=V_dot_V_omp(BS_H_dim,tmp_res(:,2),BS_V_right(:,i_lambda))
-   BS_A_right(1,i_lambda)=V_dot_V_omp(BS_H_dim,tmp_res(:,3),BS_V_right(:,i_lambda))
-   BS_A_right(2,i_lambda)=V_dot_V_omp(BS_H_dim,tmp_res(:,4),BS_V_right(:,i_lambda))
    !
    call live_timing(steps=1)
  enddo
  call PP_redux_wait(BS_R_right)
- call PP_redux_wait(BS_A_right)
  call live_timing
  !
  ! [2] BS_R_tmp(i)= <i_K|j><j|q0> 
@@ -180,9 +150,6 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A
  tmp_res(:,1) =       BSS_dipoles_magn(1,:) *sqrt(cmplx(BSS_eh_f(:),SP)) 
  tmp_res(:,2) =       BSS_dipoles_magn(2,:) *sqrt(cmplx(BSS_eh_f(:),SP)) 
  !
- tmp_res(:,3) = conjg(BSS_dipoles_magn(2,:))*sqrt(cmplx(BSS_eh_f(:),SP)) 
- tmp_res(:,4) = conjg(BSS_dipoles_magn(1,:))*sqrt(cmplx(BSS_eh_f(:),SP)) 
- !
  do i_eh=1,BS_H_dim
    if (allocated(BSS_eh_Z)) tmp_res(i_eh,:)=tmp_res(i_eh,:)*sqrt(BSS_eh_Z(i_eh))
  enddo
@@ -193,8 +160,6 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A
    !
    BS_R_tmp(1,i_lambda)=Vstar_dot_V_omp(BS_H_dim,BS_V_left(:,i_lambda),tmp_res(:,1))
    BS_R_tmp(2,i_lambda)=Vstar_dot_V_omp(BS_H_dim,BS_V_left(:,i_lambda),tmp_res(:,2))
-   BS_R_tmp(3,i_lambda)=Vstar_dot_V_omp(BS_H_dim,BS_V_left(:,i_lambda),tmp_res(:,3))
-   BS_R_tmp(4,i_lambda)=Vstar_dot_V_omp(BS_H_dim,BS_V_left(:,i_lambda),tmp_res(:,4))
    !
    call live_timing(steps=1)
    !
@@ -206,7 +171,6 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A
  ! [3] BS_R_left(i)=BS_overlap(i,j)BS_R_tmp(j)
  !
  BS_R_left=cZERO
- BS_A_left=cZERO
  !
  call live_timing('MAG L x overlap',px%n_of_elements(myid+1))
  do i_lambda=1,BSS_n_eig
@@ -214,13 +178,10 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_A_left,BS_A
    !
    BS_R_left(1,i_lambda)=V_dot_V_omp(BSS_n_eig,BS_overlap(i_lambda,:),BS_R_tmp(1,:))
    BS_R_left(2,i_lambda)=V_dot_V_omp(BSS_n_eig,BS_overlap(i_lambda,:),BS_R_tmp(2,:))
-   BS_A_left(1,i_lambda)=V_dot_V_omp(BSS_n_eig,BS_overlap(i_lambda,:),BS_R_tmp(3,:))
-   BS_A_left(2,i_lambda)=V_dot_V_omp(BSS_n_eig,BS_overlap(i_lambda,:),BS_R_tmp(4,:))
    !
    call live_timing(steps=1)
  enddo
  call PP_redux_wait(BS_R_left)
- call PP_redux_wait(BS_A_left)
  call live_timing
  !
  call PP_indexes_reset(px)

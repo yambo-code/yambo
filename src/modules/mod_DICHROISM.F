@@ -34,10 +34,9 @@ module DICHROISM
    !
    subroutine BSS_DICH_alloc( )
      use pars,       ONLY:cZERO
-     use BS,         ONLY:BS_dip_size
-     use BS_solvers, ONLY:BSS_size
+     use BS,         ONLY:BS_dip_size,BS_H_dim
      if (.not.l_BS_dichroism) return
-     YAMBO_ALLOC(BSS_dipoles_dich,(BS_dip_size,BSS_size))
+     YAMBO_ALLOC(BSS_dipoles_dich,(BS_dip_size,BS_H_dim))
      BSS_dipoles_dich = cZERO
    end subroutine
    !

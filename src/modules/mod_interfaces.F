@@ -245,18 +245,8 @@ module interfaces
      integer , optional :: E_k_ind(n_sp_pol,2)  ! k->k'   of the indirect gap
    end subroutine 
    !
-   subroutine K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right,BS_A_left,BS_A_right) 
-     use pars,          ONLY:SP
-     use BS_solvers,    ONLY:BSS_n_eig
-     integer,    intent(in)  :: i_BS_mat
-     real(SP),   intent(in)  :: BS_E_real(BSS_n_eig)
-     complex(SP),intent(out) :: BS_R_left(BSS_n_eig),BS_R_right(BSS_n_eig)
-     complex(SP),pointer,intent(out) :: BS_A_left(:),BS_A_right(:)
-   end subroutine
-   !
-   subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_A_left,BS_A_right,BS_E_SOC_corr,&
-     &                                  BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn,&
-     &                                  BS_R_right_kerr,BS_R_PL)
+   subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
+     &                                  BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL)
      use BS_solvers,    ONLY:BSS_n_eig
      use pars,          ONLY:SP
      use frequency,     ONLY:w_samp
@@ -264,10 +254,8 @@ module interfaces
      integer,     intent(in)  :: iq,i_BS_mat
      complex(SP), intent(in)  :: BS_E(BSS_n_eig)
      complex(SP), intent(in)  :: BS_R_left(BSS_n_eig),BS_R_right(BSS_n_eig)
-     complex(SP), pointer, intent(in) :: BS_A_left(:),BS_A_right(:)
      real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
      complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
-     complex(SP), pointer, intent(in) :: BS_A_left_magn(:,:),BS_A_right_magn(:,:)
      complex(SP), pointer, intent(in) :: BS_R_right_kerr(:)
      real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
    end subroutine

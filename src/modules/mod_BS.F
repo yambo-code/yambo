@@ -103,13 +103,19 @@ module BS
  !
  ! Dimensions tables
  ! 
- !  R/A symm    TDA/CPL   BSS_f/BSS_E     BSS_dip   BS_mats_to_solve    single BS_mat_size    
- !    S          TDA          1             1           1                 BS_K_dim(1)
- !    S          CPL          2*            2           1                 BS_H_dim
- !    A          TDA          2             2           2                 BS_K_dim(1),BS_K_dim(2)
- !    A          CPL          2             2           1                 BS_H_dim
+ ! R/A Asymmetry: finite q BSE & magnons with n_sp_pol=2
+ ! In the asymmetric case also the anti-resonant residuals are in the groups
  !
- !   * not needed, changed for easier implementation
+ !  R/A symm    RES/RET/CPL   BSS_f/BSS_E/BSS_dip   res_ares_dim    BS_mats_to_solve     BS_mat_size    
+ !
+ !    S          RES             BS_K_dim(1)              1              1                 BS_K_dim(1)
+ !
+ !    S          RET             BS_K_dim(1)              1              1                 BS_K_dim(1)
+ !    S          CPL             BS_H_dim                 1              1                 BS_H_dim
+ !
+ !    A          RET          BS_K_dim(1)+BS_K_dim(2)     2              2                 BS_K_dim(1),BS_K_dim(2)
+ !    A          CPL             BS_H_dim                 2              1                 BS_H_dim
+ !
  !
  ! CV transitions space ...
  !=========================

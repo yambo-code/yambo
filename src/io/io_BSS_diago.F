@@ -21,8 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,bsAl,bsAr,BsE_corr,&
-&                             bsL_magn,bsR_magn,baL_magn,baR_magn,bsR_kerr,bsR_pl)
+integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
+&                             bsL_magn,bsR_magn,bsR_kerr,bsR_pl)
  !
  use pars,          ONLY:SP,schlen,IP
  use stderr,        ONLY:intc
@@ -40,9 +40,8 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,bsAl,bsAr,Bs
  type(X_t),intent(inout)        :: X_static
  integer                        :: iq,ID,i_BS_mat
  complex(SP)        , optional  :: bsE(:),bsRl(:),bsRr(:)
- complex(SP),pointer, optional  :: bsAl(:),bsAr(:)
  real(SP)   ,pointer, optional  :: BsE_corr(:,:),bsR_pl(:,:)
- complex(SP),pointer, optional  :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:),baL_magn(:,:),baR_magn(:,:)
+ complex(SP),pointer, optional  :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:)
  !
  ! Work Space
  !
@@ -51,8 +50,12 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,bsAl,bsAr,Bs
  !
  call timing('io_BSS_diago',OPR='start')
  !
- db_name='BS_diago_Q'//trim(intc(iq))
- if (i_BS_mat>1) db_name='BS_diago_Q'//trim(intc(iq))//' ares'
+ if (BS_mat_res_ares_dim>1) then
+   if(i_BS_mat==1) db_name='BS_diago_Q'//trim(intc(iq))//'_res'
+   if(i_BS_mat==2) db_name='BS_diago_Q'//trim(intc(iq))//'_ares'
+ else
+   db_name='BS_diago_Q'//trim(intc(iq))
+ endif
  !
  io_BSS_diago=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (io_BSS_diago/=0) goto 1
@@ -116,16 +119,6 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,bsAl,bsAr,Bs
      call io_bulk(ID,C1=bsRr)
    endif
    !
-   if (present(bsAl)) then
-     call io_bulk(ID,'BS_left_Antiresid',VAR_SZ=(/2,BSS_n_eig/))
-     call io_bulk(ID,C1=bsAl)
-   endif
-   !
-   if (present(bsRr)) then
-     call io_bulk(ID,'BS_right_Antiresid',VAR_SZ=(/2,BSS_n_eig/))
-     call io_bulk(ID,C1=bsAr)
-   endif
-   !
    ! GPL_EXCLUDE_START
    !
    if(present(bsL_magn)) then
@@ -139,20 +132,6 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,bsAl,bsAr,Bs
      if(associated(bsR_magn)) then
        call io_bulk(ID,'BS_R_magn_Residuals',VAR_SZ=(/2,2,BSS_n_eig/))
        call io_bulk(ID,C2=bsR_magn)
-     endif
-   endif
-   !
-   if(present(baL_magn)) then
-     if(associated(baL_magn)) then
-       call io_bulk(ID,'BS_L_magn_Antiresid',VAR_SZ=(/2,2,BSS_n_eig/))
-       call io_bulk(ID,C2=baL_magn)
-     endif
-   endif
-   !
-   if(present(baR_magn)) then
-     if(associated(baR_magn)) then
-       call io_bulk(ID,'BS_R_magn_Antiresid',VAR_SZ=(/2,2,BSS_n_eig/))
-       call io_bulk(ID,C2=baR_magn)
      endif
    endif
    !

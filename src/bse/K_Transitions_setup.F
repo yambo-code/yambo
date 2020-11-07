@@ -127,7 +127,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
    ! I cannot revert ik and i_sp_pol loop here ...
    !
    do i_res_ares=1,BS_res_ares_dim
-   i_T_group_start=i_T_group_now+1
+     !
+     i_T_group_start=i_T_group_now+1
      !
      do ik=1,Xk%nibz
        !
@@ -139,7 +140,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
          i_sp_v=i_sp_c
          !
 #if defined _KERR
-         if (l_BS_magnons) then
+         if (l_BS_magnons.and.n_sp_pol==2) then
            if(i_res_ares==1.and.i_sp_c==1) cycle
            if(i_res_ares==2.and.i_sp_c==2) cycle
            i_sp_v=mod(i_sp_c,n_sp_pol)+1
@@ -254,7 +255,7 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  use R_lattice,    ONLY:qindx_X,bz_samp
  use electrons,    ONLY:levels,n_sp_pol
  use DIPOLES,      ONLY:DIPOLE_t
- use BS_solvers,   ONLY:BSS_add_antiresonant,BSS_size
+ use BS_solvers,   ONLY:BSS_add_antiresonant
  use BS,           ONLY:BS_K_dim,BS_H_dim,BS_nT_at_k,BSE_mode,    &
 &                       BS_K_coupling,BS_bands,BS_not_const_eh_f,            &
 &                       l_BS_ares_asymm,BS_res_ares_dim,BS_mat_res_ares_dim
@@ -307,7 +308,7 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
    do i_sp_c=1,n_sp_pol
      i_sp_v=i_sp_c
 #if defined _KERR
-     if (l_BS_magnons) then
+     if (l_BS_magnons.and.n_sp_pol==2) then
        if(i_res_ares==1.and.i_sp_c==1) cycle
        if(i_res_ares==2.and.i_sp_c==2) cycle
        i_sp_v=mod(i_sp_c,n_sp_pol)+1
@@ -352,8 +353,8 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  BS_res_ares_dim=1
  BS_mat_res_ares_dim=1
  if (l_BS_ares_asymm) then
-   if (BSS_add_antiresonant.or.BS_K_coupling) BS_res_ares_dim=2
-   if (BSS_add_antiresonant                 ) BS_mat_res_ares_dim=2
+   BS_res_ares_dim=2
+   if (.not.BS_K_coupling) BS_mat_res_ares_dim=2
  endif
  !
  YAMBO_ALLOC(BS_nT_at_k,(Xk%nibz*BS_res_ares_dim))
@@ -364,9 +365,6 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  !
  BS_H_dim=BS_K_dim(1)
  if (BS_mat_res_ares_dim==2.or.BS_K_coupling) BS_H_dim=BS_K_dim(1)+BS_K_dim(2)
- !
- if (     BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) BSS_size=BS_K_dim(1)*BS_res_ares_dim
- if (.not.BSS_add_antiresonant .or.BS_mat_res_ares_dim==2) BSS_size=BS_H_dim
  !
 end subroutine
 !

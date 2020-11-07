@@ -36,9 +36,9 @@ module KERR
    !
    subroutine BSS_KERR_alloc( )
      use pars,       ONLY:cZERO
-     use BS_solvers, ONLY:BSS_size
+     use BS,         ONLY:BS_H_dim
      if (.not.l_BS_kerr) return
-     YAMBO_ALLOC(BSS_dipoles_kerr,(BSS_size))
+     YAMBO_ALLOC(BSS_dipoles_kerr,(BS_H_dim))
      BSS_dipoles_kerr = cZERO
    end subroutine
    !

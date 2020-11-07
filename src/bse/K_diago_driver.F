@@ -39,7 +39,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
  use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:K_diago_response_functions,K_diago_hermitian_residuals,LINEAR_ALGEBRA_driver
+ use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
@@ -110,8 +110,6 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  complex(SP),allocatable :: BS_R_left(:)   
  complex(SP),allocatable :: BS_R_right(:)
- complex(SP),pointer     :: BS_A_left(:)         => null()
- complex(SP),pointer     :: BS_A_right(:)        => null()
  !
  real(SP),   pointer     :: BS_R_PL(:,:)         => null()
  !
@@ -119,8 +117,6 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  complex(SP),pointer     :: BS_R_left_magn(:,:)  => null()
  complex(SP),pointer     :: BS_R_right_magn(:,:) => null()
- complex(SP),pointer     :: BS_A_left_magn(:,:)  => null()
- complex(SP),pointer     :: BS_A_right_magn(:,:) => null()
  !
  ! I/O
  !
@@ -165,9 +161,8 @@ subroutine K_diago_driver(iq,W,X_static)
    ! Diagonalization DB (IN)
    !========================
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
-   io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_A_left,BS_A_right,BS_E_SOC_corr,&
-  &                                BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn,&
-  &                                BS_R_right_kerr,BS_R_PL)
+   io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
+  &                                BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL)
    !
    K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
    !
@@ -262,18 +257,17 @@ subroutine K_diago_driver(iq,W,X_static)
        !
 #if defined _KERR
        if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
-       if(l_BS_magnons) call K_diago_non_herm_magnons_residual(BS_R_left_magn,BS_R_right_magn, &
-       &                              BS_A_left_magn,BS_A_right_magn,BS_V_left,BS_V_right,BS_overlap)
+       if(l_BS_magnons) call K_diago_non_herm_magnons_residual(BS_R_left_magn,BS_R_right_magn,BS_V_left,BS_V_right,BS_overlap)
        if(l_BS_photolum)call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap)
 #endif
        !
      else
        !
-       call K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right,BS_A_left,BS_A_right)
+       call K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right)
        !
 #if defined _KERR
        if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
-       if(l_BS_magnons) call K_diago_herm_magnons_residual(i_BS_mat,BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn)
+       if(l_BS_magnons) call K_diago_herm_magnons_residual(i_BS_mat,BS_R_left_magn,BS_R_right_magn)
        if(l_BS_photolum)call PL_diago_residual(BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)
 #endif
        !
@@ -302,18 +296,16 @@ subroutine K_diago_driver(iq,W,X_static)
    !
    ! Now I calculate epsilon
    !=========================
-   call K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_A_left,BS_A_right,BS_E_SOC_corr,&
-   &                                  BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn,&
-   &                                  BS_R_right_kerr,BS_R_PL)
+   call K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
+   &                                  BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL)
    !
    ! Diagonalization DB (OUT)
    !==========================
    if (io_err/=0) then
      !
      call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-     io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_A_left,BS_A_right,BS_E_SOC_corr,&
-     &                                  BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn,&
-     &                                  BS_R_right_kerr,BS_R_PL)
+     io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
+     &                                  BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL)
      !
    endif
    !
@@ -356,10 +348,6 @@ subroutine K_diago_driver(iq,W,X_static)
        endif
        YAMBO_ALLOC(BS_R_left,(BSS_n_eig))
        YAMBO_ALLOC(BS_R_right,(BSS_n_eig))
-       if (l_BS_ares_asymm) then
-         YAMBO_ALLOC_P(BS_A_left,(BSS_n_eig))
-         YAMBO_ALLOC_P(BS_A_right,(BSS_n_eig))
-       endif
        !
 #if defined _KERR
        if (l_BS_kerr) then
@@ -368,8 +356,6 @@ subroutine K_diago_driver(iq,W,X_static)
        if (l_BS_magnons) then
          YAMBO_ALLOC_P(BS_R_left_magn,(2,BSS_n_eig))
          YAMBO_ALLOC_P(BS_R_right_magn,(2,BSS_n_eig))
-         YAMBO_ALLOC_P(BS_A_left_magn,(2,BSS_n_eig))
-         YAMBO_ALLOC_P(BS_A_right_magn,(2,BSS_n_eig))
        endif
        if(l_BS_photolum) then
          YAMBO_ALLOC_P(BS_R_PL,(2,BSS_n_eig))
@@ -405,8 +391,6 @@ subroutine K_diago_driver(iq,W,X_static)
      YAMBO_FREE(BS_corrections)
      YAMBO_FREE(BS_R_right)
      YAMBO_FREE(BS_R_left)
-     YAMBO_FREE_P(BS_A_right)
-     YAMBO_FREE_P(BS_A_left)
      YAMBO_FREE(BS_V_right)
      YAMBO_FREE(BS_V_left)
      YAMBO_FREE_P(BS_overlap)
@@ -415,8 +399,6 @@ subroutine K_diago_driver(iq,W,X_static)
      YAMBO_FREE_P(BS_R_right_kerr)
      YAMBO_FREE_P(BS_R_right_magn)
      YAMBO_FREE_P(BS_R_left_magn)
-     YAMBO_FREE_P(BS_A_right_magn)
-     YAMBO_FREE_P(BS_A_left_magn)
      YAMBO_FREE_P(BS_R_PL)
 #endif
      !

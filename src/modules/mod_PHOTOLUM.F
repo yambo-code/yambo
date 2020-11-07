@@ -67,11 +67,13 @@ module PHOTOLUM
    subroutine BSS_PL_alloc( )
      use pars,       ONLY:cZERO,rZERO
      use BS,         ONLY:BS_H_dim,BS_K_dim
-     use BS_solvers, ONLY:BSS_size
+     integer :: f_PL_dim
      if (.not.l_BS_photolum) return
-     YAMBO_ALLOC(BSS_dipoles_PL,(3,BSS_size))
+     YAMBO_ALLOC(BSS_dipoles_PL,(3,BS_H_dim))
      BSS_dipoles_PL = cZERO
-     YAMBO_ALLOC(BSS_PL_f,(2*BS_K_dim(1)))
+     f_PL_dim=BS_H_dim
+     if(BS_H_dim==BS_K_dim(1)) f_PL_dim=2*BS_K_dim(1)
+     YAMBO_ALLOC(BSS_PL_f,(BS_H_dim))
      BSS_PL_f = rZERO
    end subroutine
    !

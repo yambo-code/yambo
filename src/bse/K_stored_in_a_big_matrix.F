@@ -85,10 +85,9 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
        case("C")
          BS_mat(H_pos(1),H_pos(1)+BS_K_dim(1))=BS_blk(i_B)%mat(i_r,i_r)
        case("A")
-         ! To be fixed
-         E_plus_W=BSS_eh_E(H_pos(1))*cONE
+         E_plus_W=BSS_eh_E(H_pos(1)+BS_K_dim(1)*(i_BS_mat-1))*cONE
          if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
-           E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1))
+           E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1)+BS_K_dim(1)*(i_BS_mat-1))
          endif
          if(BS_mat_res_ares_dim==1) then
            BS_mat(H_pos(1)+BS_K_dim(1),H_pos(1)+BS_K_dim(1))=E_plus_W+real(BS_blk(i_B)%mat(i_r,i_r),SP) 
@@ -159,12 +158,11 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
      end forall
    else
      ! Anti-Coupling
-     ! No idea if they are symmetric ... ??
-     !do i_r=1,BS_K_dim(1)
-     !  do i_c=i_r+1,BS_K_dim(1)
-     !    BS_mat(i_c+BS_K_dim(1),i_r)=BS_mat(i_r+BS_K_dim(1),i_c)
-     !  enddo
-     !enddo
+     do i_r=1,BS_K_dim(1)
+       do i_c=i_r+1,BS_K_dim(1)
+         BS_mat(i_c+BS_K_dim(1),i_r)=BS_mat(i_r+BS_K_dim(1),i_c)
+       enddo
+     enddo
      ! Anti-resonant
      do i_r=BS_K_dim(1)+1,BS_K_dim(1)+BS_K_dim(2)
        do i_c=i_r+1,BS_K_dim(1)+BS_K_dim(2)

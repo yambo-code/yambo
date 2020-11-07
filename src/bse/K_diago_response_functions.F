@@ -21,9 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_A_left,BS_A_right,BS_E_SOC_corr,&
- &                                  BS_R_left_magn,BS_R_right_magn,BS_A_left_magn,BS_A_right_magn,&
- &                                  BS_R_right_kerr,BS_R_PL)
+subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
+ &                                  BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL)
  !
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
  !
@@ -33,7 +32,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
- use BS,             ONLY:BS_perturbative_SOC,BS_res_ares_dim
+ use BS,             ONLY:BS_perturbative_SOC,BS_mat_res_ares_dim
  use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor,diam_term_exact,BSS_eels_to_eps
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:bare_qpg
@@ -51,10 +50,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  integer,     intent(in)  :: iq,i_BS_mat
  complex(SP), intent(in)  :: BS_E(BSS_n_eig)
  complex(SP), intent(in)  :: BS_R_left(BSS_n_eig),BS_R_right(BSS_n_eig)
- complex(SP), pointer, intent(in) :: BS_A_left(:),BS_A_right(:)
  real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
  complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
- complex(SP), pointer, intent(in) :: BS_A_left_magn(:,:),BS_A_right_magn(:,:)
  complex(SP), pointer, intent(in) :: BS_R_right_kerr(:)
  real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
  !
@@ -62,7 +59,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  type(PP_indexes)     ::px
  !
- integer              :: i1,i_pert_SOC,n_SOC
+ integer              :: i1,i_pert_SOC,n_SOC,ares_fac
  complex(SP)          :: para_term_w0,diam_term_used,EXC_E(2/n_sp_pol),res_abs
  !
 #if defined _KERR
@@ -70,6 +67,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
 #endif
  !
  n_SOC=1
+ ares_fac=(-1)**(i_BS_mat-1)
  !
  if( BS_perturbative_SOC.and.n_sp_pol==1) n_SOC=2
  !
@@ -103,39 +101,40 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
      ! Note the use of a causal expression here needed to avoid any
      ! distinction between the resonant and antiresonant e/h Green's functions.
      !
-     res_abs=BS_R_left(i1)*BS_R_right(i1)
+     res_abs=BS_R_left(i1)*BS_R_right(i1)*ares_fac
      Epsilon_ii(:,2)=Epsilon_ii(:,2)-res_abs/(W%p(:)-EXC_E(i_pert_SOC))
-     if (BSS_add_antiresonant) Epsilon_ii(:,2)=Epsilon_ii(:,2)+conjg(res_abs)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+     if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
+       Epsilon_ii(:,2)=Epsilon_ii(:,2)+conjg(res_abs)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+     endif
      !
      if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+res_abs*EXC_E(i_pert_SOC)/bare_qpg(1,1)**2
      if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+res_abs/EXC_E(i_pert_SOC)
      !
-     Joint_DOS(:,2)=Joint_DOS(:,2)-1._SP/(W%p(:)-EXC_E(i_pert_SOC))
-     if (BSS_add_antiresonant.and.(BS_res_ares_dim==1.or.i_BS_mat==2)) then
+     Joint_DOS(:,2)=Joint_DOS(:,2)-ares_fac/(W%p(:)-EXC_E(i_pert_SOC))
+     if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
        Joint_DOS(:,2)=Joint_DOS(:,2)+1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
      endif
      !
 #if defined _KERR
      if(l_BS_kerr) then
-       res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)
+       res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)*ares_fac
        Epsilon_ij(:,2)=Epsilon_ij(:,2)-res_kerr/(W%p(:)-EXC_E(i_pert_SOC))
-       if (BSS_add_antiresonant.and.(BS_res_ares_dim==1.or.i_BS_mat==2)) then
+       if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
          Epsilon_ij(:,2)=Epsilon_ij(:,2)+conjg(res_kerr)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
      endif
      if(l_BS_magnons) then
-       res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)
+       res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
        X_magnons(:,1,2)=X_magnons(:,1,2)-res_magn(1)/(W%p(:)-EXC_E(i_pert_SOC))
        X_magnons(:,2,2)=X_magnons(:,2,2)-res_magn(2)/(W%p(:)-EXC_E(i_pert_SOC))
-       if (BSS_add_antiresonant.and.(BS_res_ares_dim==1.or.i_BS_mat==2)) then
-         res_magn(:)=BS_A_left_magn(:,i1)*BS_A_right_magn(:,i1)
-         X_magnons(:,1,2)=X_magnons(:,1,2)+res_magn(1)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
-         X_magnons(:,2,2)=X_magnons(:,2,2)+res_magn(2)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+       if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
+         X_magnons(:,1,2)=X_magnons(:,1,2)+conjg(res_magn(2))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+         X_magnons(:,2,2)=X_magnons(:,2,2)+conjg(res_magn(1))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
      endif
      if(l_BS_photolum) then
-       PL(:,2)=PL(:,2)+PL_prefactor*BS_R_PL(1,i1)*aimag(-1._SP/(W%p(:)-EXC_E(i_pert_SOC)))/pi
-       if (BSS_add_antiresonant.and.(BS_res_ares_dim==1.or.i_BS_mat==2)) then
+       PL(:,2)=PL(:,2)+PL_prefactor*ares_fac*BS_R_PL(1,i1)*aimag(-1._SP/(W%p(:)-EXC_E(i_pert_SOC)))/pi
+       if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
          PL(:,2)=PL(:,2)+PL_prefactor*BS_R_PL(2,i1)*aimag(-1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC))))/pi
        endif
      endif
@@ -166,6 +165,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
 #endif
  !
  call PP_indexes_reset(px)
+ !
+ if (BS_mat_res_ares_dim/=i_BS_mat) return
  !
  if (trim(global_gauge)=='velocity') then
    if (     skip_cond_sum_rule) diam_term_used=diam_term_exact

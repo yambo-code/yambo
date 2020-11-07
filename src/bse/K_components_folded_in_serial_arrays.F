@@ -55,7 +55,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
  ! Work Space
  !
  integer     :: i_Tr,H_pos,i_g,i_g_start,i_k_bz,i_v,i_c,i_sp_c,i_sp_v,&
- &              BS_res_ares_dim_solver,i_res_ares,i_res_ares_solver,cpl_fac
+ &              BS_res_ares_dim_solver,i_res_ares,i_res_ares_solver,ares_fac
  !
  !========================
  ! BSS COMPONENTS SECTION
@@ -103,19 +103,24 @@ subroutine K_components_folded_in_serial_arrays(iq)
        i_sp_c=BS_T_grp(i_g)%table(i_Tr,4)
        i_sp_v=BS_T_grp(i_g)%table(i_Tr,5)
        !
+       !  This loop is for the case
+       !  R/A symm    RES/RET/CPL   BSS_f/BSS_E/BSS_dip   res_ares_dim    BS_mats_to_solve     BS_mat_size    
+       !    S          CPL             BS_H_dim                 1              1                 BS_H_dim
+       !  where the antiresonant transitions are not in the groups
+       !
        do i_res_ares_solver=1,BS_res_ares_dim_solver
          !
-         H_pos=sum(BS_T_grp(i_g_start:I_g-1)%size)+i_Tr+(i_res_ares_solver-1)*BS_K_dim(1)
-         cpl_fac=(-1)**(i_res_ares_solver-1)
+         H_pos=sum(BS_T_grp(i_g_start:I_g-1)%size)+i_Tr+(max(i_res_ares_solver,i_res_ares)-1)*BS_K_dim(1)
+         ares_fac=(-1)**(i_res_ares_solver-1)
          !
          BSS_eh_table(H_pos,:)=(/i_k_bz,i_v,i_c,i_sp_c,i_sp_v/)
          !
-         BSS_eh_E(H_pos)=BS_T_grp(i_g)%E(i_Tr)*cpl_fac
-         BSS_eh_f(H_pos)=BS_T_grp(i_g)%f(i_Tr)*cpl_fac
-         if (allocated(BS_T_grp(i_g)%Z)) BSS_eh_Z(H_pos)=BS_T_grp(i_g)%Z(i_Tr)*cpl_fac
-         if (allocated(BS_T_grp(i_g)%W)) BSS_eh_W(H_pos)=BS_T_grp(i_g)%W(i_Tr)*cpl_fac
+         BSS_eh_E(H_pos)=BS_T_grp(i_g)%E(i_Tr)*ares_fac
+         BSS_eh_f(H_pos)=BS_T_grp(i_g)%f(i_Tr)*ares_fac
+         if (allocated(BS_T_grp(i_g)%Z)) BSS_eh_Z(H_pos)=BS_T_grp(i_g)%Z(i_Tr)*ares_fac
+         if (allocated(BS_T_grp(i_g)%W)) BSS_eh_W(H_pos)=BS_T_grp(i_g)%W(i_Tr)*ares_fac
          !
-         if (BS_perturbative_SOC) BSS_eh_E_SOC_corr(:,H_pos)=BS_T_grp(i_g)%E_SOC_corr(:,i_Tr)*cpl_fac
+         if (BS_perturbative_SOC) BSS_eh_E_SOC_corr(:,H_pos)=BS_T_grp(i_g)%E_SOC_corr(:,i_Tr)*ares_fac
          !
 #if defined _KERR
          if (l_BS_photolum) then
@@ -127,7 +132,6 @@ subroutine K_components_folded_in_serial_arrays(iq)
          BSS_dipoles_opt(H_pos)=BS_T_grp(i_g)%dipoles_opt(1,i_Tr,i_res_ares_solver)
          !
 #if defined _KERR
-         ! Dipoles always have the anti resonant part
          if (l_BS_kerr) BSS_dipoles_kerr(H_pos)=BS_T_grp(i_g)%dipoles_opt(2,i_Tr,i_res_ares_solver)
          !
          if (l_BS_magnons) BSS_dipoles_magn(:,H_pos)=BS_T_grp(i_g)%dipoles_mag(:,i_Tr,i_res_ares_solver)

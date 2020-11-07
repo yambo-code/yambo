@@ -34,9 +34,9 @@ module MAGNONS
    !
    subroutine BSS_MAGN_alloc( )
      use pars,       ONLY:cZERO
-     use BS_solvers, ONLY:BSS_size
+     use BS,         ONLY:BS_H_dim
      if (.not.l_BS_magnons) return
-     YAMBO_ALLOC(BSS_dipoles_magn,(2,BSS_size))
+     YAMBO_ALLOC(BSS_dipoles_magn,(2,BS_H_dim))
      BSS_dipoles_magn = cZERO
    end subroutine
    !

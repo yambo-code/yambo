@@ -113,7 +113,7 @@ module BS
  !    S          RET             BS_K_dim(1)              1              1                 BS_K_dim(1)
  !    S          CPL             BS_H_dim                 1              1                 BS_H_dim
  !
- !    A          RET          BS_K_dim(1)+BS_K_dim(2)     2              2                 BS_K_dim(1),BS_K_dim(2)
+ !    A          RET      BS_H_dim=BS_K(1)+BS_K(2)        2              2                 BS_K_dim(1),BS_K_dim(2)
  !    A          CPL             BS_H_dim                 2              1                 BS_H_dim
  !
  !

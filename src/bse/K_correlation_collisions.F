@@ -124,7 +124,7 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
  O_todo_table=.false.
  !
  select case (BS_blk(i_block)%mode)
- case("R")
+ case("R","A")
    !
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
@@ -147,7 +147,7 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
      enddo
    enddo
    !
- case("C")
+ case("C","Q")
    !
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size

@@ -402,11 +402,13 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          if (l_BS_jdos) Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
        endif
        !
-       if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+res_abs*E_plus_W(i_pert_SOC)/bare_qpg(iq,1)**2
-       if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+res_abs/E_plus_W(i_pert_SOC)
-       if ((BSS_add_antiresonant.or.BS_K_coupling).and..not.BS_res_ares_dim==2) then
-         if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+conjg(res_abs*E_plus_W(i_pert_SOC))/bare_qpg(iq,1)**2
-         if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+conjg(res_abs/E_plus_W(i_pert_SOC))
+       if(abs(E_plus_W(i_pert_SOC))>0._SP) then
+         if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+res_abs*E_plus_W(i_pert_SOC)/bare_qpg(iq,1)**2
+         if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+res_abs/E_plus_W(i_pert_SOC)
+         if ((BSS_add_antiresonant.or.BS_K_coupling).and..not.BS_res_ares_dim==2) then
+           if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+conjg(res_abs*E_plus_W(i_pert_SOC))/bare_qpg(iq,1)**2
+           if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+conjg(res_abs/E_plus_W(i_pert_SOC))
+         endif
        endif
        !
 #if defined _KERR

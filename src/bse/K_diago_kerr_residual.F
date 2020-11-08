@@ -56,8 +56,8 @@ subroutine K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
  !
  call live_timing('KERR residuals ',px%n_of_elements(myid+1))
  !
- forall(i1=1:BS_K_dim(1))          tmp_res(i1) =    conjg(BSS_dipoles_kerr(i1))*sqrt(BSS_eh_f(i1)         ) 
- forall(i1=BS_K_dim(1)+1:BS_H_dim) tmp_res(i1) = cI*conjg(BSS_dipoles_kerr(i1))*sqrt(BSS_eh_f(i1-BS_K_dim(1)))
+ forall(i1=1:BS_K_dim(1))          tmp_res(i1) = conjg(BSS_dipoles_kerr(i1))*sqrt(BSS_eh_f(i1)) 
+ forall(i1=BS_K_dim(1)+1:BS_H_dim) tmp_res(i1) = conjg(BSS_dipoles_kerr(i1))*sqrt(cmplx(BSS_eh_f(i1),SP))
  if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z)
  if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
  !

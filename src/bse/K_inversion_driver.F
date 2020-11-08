@@ -168,7 +168,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
  else
    !
-   call K_stored_in_a_big_matrix(iq,"INV")
+   call K_stored_in_a_big_matrix(1,iq,"INV")
    !
    ! Diagonal removal
    !==================

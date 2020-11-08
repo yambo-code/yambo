@@ -327,6 +327,14 @@ powerpc64*linux* )
     NETCDFFLAGS="-DpgiFortran"
     DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
+  *gfortran*)
+    SYSFLAGS="-O3 -g -mtune=native"
+    FUFLAGS="-O0 -g -mtune=native"
+    FCMFLAG=""
+    OMPFLAGS="-fopenmp"
+    NETCDFFLAGS="-DgFortran"
+    DEBUG_FLAGS="-g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
+    ;;
   *)
     CFLAGS="-q64 -O2 -g"
     SYSFLAGS="-q64 -O2 -g -qnoescape -qnostrict -qarch=ppc970 -qtune=ppc970"

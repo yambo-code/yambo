@@ -292,6 +292,9 @@ subroutine k_grids(en,k,Xk,q)
    call k_grid_printer(USER_k%nbz,USER_k%ptbz,'rlu',"PW")
    call msg("s",'K-points (IBZ) PW-formatted')
    call k_grid_printer(USER_k%nibz,USER_k%pt,'rlu',"PW")
+   !
+   goto 1
+   !
  endif
  !
  if (List_internal_points) then

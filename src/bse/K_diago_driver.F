@@ -152,7 +152,10 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  do i_BS_mat=1,BS_mat_res_ares_dim
    !
-   if(l_diago) BSS_n_eig = BS_K_dim(i_BS_mat)
+   if(l_diago) then
+     if(.not.BS_K_coupling) BSS_n_eig = BS_K_dim(i_BS_mat)
+     if(     BS_K_coupling) BSS_n_eig = BS_H_dim
+   endif
    !
    ! Allocation (BS_R and BS_E)
    !===========================
@@ -367,7 +370,7 @@ subroutine K_diago_driver(iq,W,X_static)
        if(K_is_not_hermitian) then
          YAMBO_ALLOC(BS_V_left,(BS_H_dim,BSS_n_eig))
          YAMBO_ALLOC(BS_V_right,(BS_H_dim,BSS_n_eig))
-         YAMBO_ALLOC_P(BS_overlap,(BS_H_dim,BSS_n_eig))
+         YAMBO_ALLOC_P(BS_overlap,(BSS_n_eig,BSS_n_eig))
        else
          YAMBO_ALLOC(BS_E_real,(BSS_n_eig))
 #if defined _SLEPC && !defined _SLEPC_OFF

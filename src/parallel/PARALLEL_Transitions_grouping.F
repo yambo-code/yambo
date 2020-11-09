@@ -70,7 +70,7 @@ subroutine PARALLEL_Transitions_grouping(Xk)
      if (.not.PAR_IND_eh(i_k_r)%element_1D(i_t_at_k)) cycle
      !
      if ( i_t_at_k==1 ) l_check= .false.
-     if ( i_t_at_k> 1 ) l_check= PAR_IND_eh(i_k)%element_1D(i_t_at_k-1)
+     if ( i_t_at_k> 1 ) l_check= PAR_IND_eh(i_k_r)%element_1D(i_t_at_k-1)
      !
      if ( l_check ) cycle
      !

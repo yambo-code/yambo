@@ -146,6 +146,10 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  enddo
  call live_timing
  !
+ call PP_indexes_reset(px)
+ !
+ if (BS_mat_res_ares_dim/=i_BS_mat) return
+ !
  call PP_redux_wait(Epsilon_ii(:,2))
  call PP_redux_wait(Joint_DOS(:,2) )
  call PP_redux_wait(para_term_w0)
@@ -163,10 +167,6 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    call PP_redux_wait(X_magnons(:,:,2))
  endif
 #endif
- !
- call PP_indexes_reset(px)
- !
- if (BS_mat_res_ares_dim/=i_BS_mat) return
  !
  if (trim(global_gauge)=='velocity') then
    if (     skip_cond_sum_rule) diam_term_used=diam_term_exact

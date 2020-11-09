@@ -28,7 +28,7 @@ subroutine REPORT_Occupations(what,E)
  use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
  use drivers,       ONLY:Finite_Tel
  use com,           ONLY:msg
- use electrons,     ONLY:levels,n_sp_pol,nel,spin_string
+ use electrons,     ONLY:levels,n_sp_pol,nel,spin_string,spin_occ
  use interfaces,    ONLY:OCCUPATIONS_Gaps
  !
  implicit none
@@ -110,6 +110,13 @@ subroutine REPORT_Occupations(what,E)
  if (.not.all(Nbf==Nbm)) then
    !
    call msg('r',title(1:title_len)//"=== Metallic Characters ===")
+   !
+   N_met=0
+   f_met=0
+   do i_sp_pol=1,n_sp_pol
+     f_met=f_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/sum(spin_occ*real(E%nk*(Nbm(:)-Nbf(:))))
+     N_met=N_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk)
+   enddo
    !
    call msg('r',COMPOSE_msg('N of el / N of met el',0),(/nel,N_met/))
    call msg('r',COMPOSE_msg('Average metallic occ.',0),(/f_met/))

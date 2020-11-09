@@ -323,7 +323,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
     !
     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPk_ibz_A2A
     !
-    integer  :: ic,iv,i_sp_pol,i_sp_pol_inv,ik,ik_mem
+    integer  :: ic,iv,i_sp_pol,i_sp_pol_inv,i_sp_pol_tmp,ik,ik_mem
     !
     i_sp_pol_inv=1
     !
@@ -345,8 +345,11 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
         ! GPL_EXCLUDE_START 
         !
 #if defined _RT || defined _KERR
-        if (compute_Spin_dipoles) &
-        & call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+        if (compute_Spin_dipoles.and.i_sp_pol==1) then
+          do i_sp_pol_tmp=1,n_sp_pol
+            call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol_tmp),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+          enddo
+        endif
 #endif
 #if defined _RT
         if (compute_Spin_dipoles.and.n_spinor==2) &

@@ -70,7 +70,63 @@ contains
    YAMBO_FREE(MPA_R_mat)
    YAMBO_FREE(MPA_freqs)
  end subroutine
-
+ !
+ subroutine mpa_cond1(z, E)
+   !
+   complex(SP),  intent(in)     :: z(2)
+   complex(SP),  intent(inout)  :: E
+   ! 
+   if(abs(E)<10*epsilon(1._SP)) then
+     E=abs(z(2))-cI*epsilon(1._SP)   
+   elseif(real(E)>0._SP) then     
+     E = sqrt(E)
+   else
+     E = sqrt(-E)
+   endif
+   if(real(E)<0._SP) E=-E
+   if(aimag(E)>-epsilon(1._SP)) E=real(E,SP)-cI*epsilon(1._SP)
+   !
+ end subroutine mpa_cond1
+ !
+ subroutine mpa_cond(np, z, E)
+   !
+   integer,  intent(in)         :: np
+   complex(SP),  intent(in)     :: z(2*np)
+   complex(SP),  intent(inout)  :: E(np)
+   !
+   integer     :: i, j
+   ! 
+   if(abs(E(1))<10*epsilon(1._SP)) then 
+     E(1) = 0.5*abs(z(2))-cI*epsilon(1._SP)
+   elseif(real(E(1))>0._SP) then
+     E(1) = sqrt(E(1))
+   else
+     E(1) = sqrt(-E(1))
+   endif
+   if(real(E(1))<0._SP) E(1)=-E(1)
+   if(aimag(E(1))>-epsilon(1._SP)) E(1)=real(E(1),SP)-cI*epsilon(1._SP)
+   !
+   do i=2,np
+     if(abs(E(i))<10*epsilon(1._SP)) then 
+       E(i) = abs(z(i))-cI*epsilon(1._SP)
+     elseif(real(E(i))>0._SP) then
+       E(i) = sqrt(E(i))
+     else
+       E(i) = sqrt(-E(i))
+     endif
+     if(real(E(i))<0._SP) E(i)=-E(i)
+     if(aimag(E(i))>-epsilon(1._SP)) E(i)=real(E(i),SP)-cI*epsilon(1._SP)
+     !
+     do j=2,i-1
+       if(abs(real(E(i),SP)-real(E(j),SP))<0.0001_SP) then
+         E(i)=0.5*(real(E(j))+real(E(j-1)))-cI*epsilon(1._SP)
+         !exit
+       endif
+     enddo
+   enddo
+   !
+ end subroutine mpa_cond
+ !
  subroutine mpa_RE_1p_solver(z, x, R, E) 
    !
    ! analytical form of the 1 pole solution
@@ -81,27 +137,20 @@ contains
    complex(SP),  intent(in)     :: x(2)
    complex(SP),  intent(out)    :: R, E
    ! 
-!   E = sqrt((x(1)*z(1)**2 -x(2)*z(2)**2 )/(x(1)-x(2)))
-!   if(real(E)<0._SP) E=-E
-!   if(real(E)<0.001_SP .or. real(1._SP/E)<0.001_SP .or. NAN(real(E)) .or. NAN(real(1._SP/E)) ) then
-!     E = abs(z(1)+z(2))*0.5_SP-cI*epsilon(1._SP)
-!     R = x(2)*(z(2)**2-E**2)/(2._SP*E) 
-!   else
-!     if(aimag(E)>0._SP) E=real(E,SP)-cI*epsilon(1._SP)
-!     R = x(1)*(z(1)**2-E**2)/(2._SP*E) 
-!   endif
-   ! 
 !----General cond------------------------------------------------
    E = (x(1)*z(1)**2 -x(2)*z(2)**2 )/(x(1)-x(2))
-   if(real(E)>epsilon(1._SP)) then        
-     E = sqrt(E)
-     if(real(E)<0._SP) E=-E
-     if(aimag(E)>-epsilon(1._SP)) E=real(E,SP)-cI*epsilon(1._SP)
-     R = x(1)*(z(1)**2-E**2)/(2._SP*E) 
-   else
-     E = abs(z(1)+z(2))*0.5_SP-cI*epsilon(1._SP)
-     R = x(2)*(z(2)**2-E**2)/(2._SP*E) 
-   endif
+!   if(abs(E)<10*epsilon(1._SP)) then
+!     E=1._SP-cI*epsilon(1._SP)   
+!   elseif(real(E)>0._SP) then     
+!     E = sqrt(E)
+!   else
+!     E = sqrt(-E)
+!   endif
+!   if(real(E)<0._SP) E=-E
+!   if(aimag(E)>-epsilon(1._SP)) E=real(E,SP)-cI*epsilon(1._SP)
+   call mpa_cond1(z, E)
+   !R = x(1)*(z(1)**2-E**2)/(2._SP*E) 
+   R = x(2)*(z(2)**2-E**2)/(2._SP*E) 
    ! 
 !----PPA_cond------------------------------------------------
 !   if(real(x(1)/x(2))>1._SP) then        
@@ -430,41 +479,7 @@ contains
    ! here we need to force real(E) to be positive.
    ! This is because of the way the residue integral is performed, later.
    ! 
-   if(real(E(1),SP)>epsilon(1._SP)) then 
-     E(1) = sqrt(E(1))
-     if(real(E(1),SP)<0._SP) E(1)=-E(1)
-     if(aimag(E(1))>-epsilon(1._SP)) then 
-       E(1) = real(E(1),SP)-cI*epsilon(1._SP)
-     endif
-   else
-     E(1) = 0.5*abs(z(2))-cI*epsilon(1._SP)
-   endif
-   ! 
-   do i=2,np
-     if(real(E(i),SP)>epsilon(1._SP)) then 
-       E(i) = sqrt(E(i))
-       if(real(E(i),SP)<0._SP) E(i)=-E(i)
-       if(aimag(E(i))>-epsilon(1._SP)) then 
-         E(i) = real(E(i),SP)-cI*epsilon(1._SP)
-       endif
-     else
-       E(i) = real(z(i),SP)-cI*epsilon(1._SP)
-     endif
-     if(abs(real(E(i),SP)-real(E(1),SP))<0.0001_SP) then
-       E(i)=0.5*real(E(1))-cI*epsilon(1._SP)
-     endif
-     do j=2,i-1
-       if(abs(real(E(i),SP)-real(E(j),SP))<0.0001_SP) then
-         E(i)=0.5*(real(E(j))+real(E(j-1)))-cI*epsilon(1._SP)
-         !exit
-       endif
-     enddo
-!    Dario: to be tested later
-   ! if(real(E(i),SP)*aimag(E(i))>0._SP) then 
-   !   E(i) = cmplx( abs(real(E(i),SP)), -abs(aimag(E(i))), SP  )
-   ! endif
-    ! 
-   enddo
+   call mpa_cond(np, z, E)
    ! 
  end subroutine mpa_E_solver
  !

@@ -61,7 +61,7 @@ subroutine FREQUENCIES_setup(W)
    YAMBO_ALLOC(W%p,(W%n_freqs))
    !
    w_tmp2(1:2)=cmplx(W%er(1:2),W%dr(1:2),kind=SP)
-   call FREQUENCIES_mpa_sampling(W%n_freqs/2,w_tmp2(1),w_tmp2(2),'h',W%p)
+   call FREQUENCIES_mpa_sampling(W%n_freqs/2,w_tmp2(1),w_tmp2(2),'2l','lP',W%p)
    !
    return
  endif

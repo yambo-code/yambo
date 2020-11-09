@@ -185,10 +185,12 @@ subroutine K_components_folded_in_serial_arrays(iq)
      call PP_redux_wait(BSS_dipoles_dich,COMM=PAR_COM_eh_INDEX%COMM)
    endif
    !
-   call PP_redux_wait(BSS_dipoles_PL,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait(BSS_dipoles_PL,COMM=PAR_COM_eh_INDEX%COMM)
-   call PP_redux_wait(BSS_PL_f,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait(BSS_PL_f,COMM=PAR_COM_eh_INDEX%COMM)
+   if (l_BS_photolum) then
+     call PP_redux_wait(BSS_dipoles_PL,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+     call PP_redux_wait(BSS_dipoles_PL,COMM=PAR_COM_eh_INDEX%COMM)
+     call PP_redux_wait(BSS_PL_f,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+     call PP_redux_wait(BSS_PL_f,COMM=PAR_COM_eh_INDEX%COMM)
+   endif
 #endif
    if ( BS_perturbative_SOC ) then
      call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )

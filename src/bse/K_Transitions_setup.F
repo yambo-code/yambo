@@ -136,26 +136,29 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
        ! BS_T_grp and BS_nT_at_k are defined according to kpts while they
        ! should be defined according to both i_sp_pol and kpts
        !
-       do i_sp_c=1,n_sp_pol
-         i_sp_v=i_sp_c
-         !
+       ! Moreover I cannot move iv,ic loops insiede i_sp_pol and i_star loops
+       ! Otherwise runs with parallelization over eh fail
+       !
+       do iv=BS_bands(1),nb(2)
+         do ic=nb(1),BS_bands(2)
+           !
+           do i_sp_c=1,n_sp_pol
+             i_sp_v=i_sp_c
+             !
 #if defined _KERR
-         if (l_BS_magnons.and.n_sp_pol==2) then
-           if(i_res_ares==1.and.i_sp_c==1) cycle
-           if(i_res_ares==2.and.i_sp_c==2) cycle
-           i_sp_v=mod(i_sp_c,n_sp_pol)+1
-         endif
+             if (l_BS_magnons.and.n_sp_pol==2) then
+               if(i_res_ares==1.and.i_sp_c==1) cycle
+               if(i_res_ares==2.and.i_sp_c==2) cycle
+               i_sp_v=mod(i_sp_c,n_sp_pol)+1
+             endif
 #endif
-         !
-         do i_star=1,Xk%nstar(ik)
-           !
-           ikbz=Xk%k_table(ik,Xk%star(ik,i_star))
-           !
-           ikpbz=qindx_X(iq,ikbz,1)
-           ikp  =Xk%sstar(ikpbz,1)
-           !
-           do iv=BS_bands(1),nb(2)
-             do ic=nb(1),BS_bands(2)
+             !
+             do i_star=1,Xk%nstar(ik)
+               !
+               ikbz=Xk%k_table(ik,Xk%star(ik,i_star))
+               !
+               ikpbz=qindx_X(iq,ikbz,1)
+               ikp  =Xk%sstar(ikpbz,1)
                !
                if(i_res_ares==1) then; ib1=iv; ib2=ic; isp1=i_sp_v; isp2=i_sp_c; endif
                if(i_res_ares==2) then; ib1=ic; ib2=iv; isp1=i_sp_c; isp2=i_sp_v; endif

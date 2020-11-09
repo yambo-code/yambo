@@ -54,10 +54,10 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  ! Here PAR_BS_nT_grps is the number of groups without taking into account the k-parallelization.
  ! This is done to define properly the BS_T_grp_1st_el array
  !
+ BS_T_grp_1st_el=0
+ PAR_BS_nT_col_grps =0
+ i_counter=PAR_COM_eh_INDEX%CPU_id+1+PAR_COM_Xk_ibz_INDEX%CPU_id*PAR_COM_eh_INDEX%n_CPU
  !
-   BS_T_grp_1st_el=0
-   PAR_BS_nT_col_grps =0
-   i_counter=PAR_COM_eh_INDEX%CPU_id+1+PAR_COM_Xk_ibz_INDEX%CPU_id*PAR_COM_eh_INDEX%n_CPU
  do i_res_ares=1,BS_res_ares_dim
  do i_k=1,nXkibz
    i_k_s=1+(i_res_ares-1)*nXkibz
@@ -123,10 +123,10 @@ subroutine PARALLEL_Transitions_grouping(Xk)
    !
    do i_t_at_k=1,BS_nT_at_k(i_k_r)
      !
-     if (.not.PAR_IND_eh(i_k)%element_1D(i_t_at_k)) cycle
+     if (.not.PAR_IND_eh(i_k_r)%element_1D(i_t_at_k)) cycle
      !
      if ( i_t_at_k==1 ) l_check= .false.
-     if ( i_t_at_k> 1 ) l_check= PAR_IND_eh(i_k)%element_1D(i_t_at_k-1)
+     if ( i_t_at_k> 1 ) l_check= PAR_IND_eh(i_k_r)%element_1D(i_t_at_k-1)
      !
      if ( l_check ) cycle
      !

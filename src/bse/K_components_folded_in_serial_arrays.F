@@ -61,7 +61,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
  ! BSS COMPONENTS SECTION
  !========================
  ! 
- if (.not.allocated(BSS_dipoles_opt)) then
+ if (allocated(BSS_dipoles_opt)) return
    !
    call timing('BSE components folding',OPR='start')
    !
@@ -197,6 +197,5 @@ subroutine K_components_folded_in_serial_arrays(iq)
    !
    call timing('BSE components folding',OPR='stop')
    !
- endif
  !
 end subroutine K_components_folded_in_serial_arrays

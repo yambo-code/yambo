@@ -188,7 +188,7 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
  call elemental_collision_alloc(K_CORR_collision,NG=O_ng, TITLE="CORR_COLL")
  !
  select case (BS_blk(i_block)%mode)
- case("R")
+ case("R","A")
    !
 #if !defined _CUDA
    !$omp do collapse(2), schedule(dynamic)
@@ -220,7 +220,7 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
    !$omp end do
 #endif
    !
- case("C")
+ case("C","Q")
    !
 #if !defined _CUDA
    !$omp do collapse(2), schedule(dynamic)

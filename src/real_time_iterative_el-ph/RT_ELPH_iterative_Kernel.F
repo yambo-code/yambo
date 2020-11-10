@@ -44,7 +44,7 @@ subroutine RT_ELPH_iterative_Kernel(ik,E,k,q,TIME)
  use functions,      ONLY:bose_f
  use R_lattice,      ONLY:bz_samp,qindx_S
  use real_time,      ONLY:RT_bands
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp,elph_gkkp_expanded_sq 
+ use ELPH,           ONLY:PH_freqs_sq,elph_branches,MAX_gkkp,GKKP_ep_sq 
  use parallel_m,     ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_Xk_ibz_index
  !
  implicit none
@@ -60,7 +60,7 @@ subroutine RT_ELPH_iterative_Kernel(ik,E,k,q,TIME)
  real(SP)              :: ph_freq,N_q(2)
  real(SP), parameter   :: cutoff= 5.E-3
  !
- real(SP)              :: Gkkp_sq(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ real(SP)              :: gkkp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
  complex(SP)           :: S_mat_out_of_eq(2,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP)           :: S_mat_eq(2,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -91,21 +91,21 @@ subroutine RT_ELPH_iterative_Kernel(ik,E,k,q,TIME)
    !
    do il=elph_branches(1),elph_branches(2)
      !
-     ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
+     ph_freq=abs(sqrt(PH_freqs_sq(iqbz,il)))
      !
-     ! Note the m.e. in elph_gkkp_expanded_sq are stored with indexes order exchanged (see RT_ELPH_initialize)
+     ! Note the m.e. in GKKP_sq are stored with indexes order exchanged (see RT_ELPH_initialize)
      !
-     Gkkp_sq=rZERO
+     gkkp=rZERO
      do i_n=RT_bands(1),RT_bands(2)
        !
-       Gkkp_sq(i_n,i_n)=elph_gkkp_expanded_sq(i_n,i_n,il,iq_mem,ik_mem)
-       if(sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_n)=rZERO
+       gkkp(i_n,i_n)=GKKP_ep_sq%dVr(il,i_n,i_n,ik_mem,iq_mem)
+       if(sqrt(gkkp(i_n,i_n))<MAX_gkkp*cutoff) gkkp(i_n,i_n)=rZERO
        !
        do i_np=RT_bands(1),RT_bands(2)
          !
          if (i_n==i_np) cycle
-         Gkkp_sq(i_n,i_np)=elph_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ik_mem)
-         if (sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_np)=rZERO
+         gkkp(i_n,i_np)=GKKP_ep_sq%dVr(il,i_np,i_n,ik_mem,iq_mem)
+         if (sqrt(gkkp(i_n,i_np))<MAX_gkkp*cutoff) gkkp(i_n,i_np)=rZERO
          !
        enddo
        !
@@ -116,12 +116,12 @@ subroutine RT_ELPH_iterative_Kernel(ik,E,k,q,TIME)
      ! EQUILIBRIUM Kernel
      !=====================
      !
-     call RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp_sq,S_mat_eq)
+     call RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,gkkp,S_mat_eq)
      !
      ! OUT-OF-EQUILIBRIUM Kernel
      !===========================
      !
-     call RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp_sq,S_mat_out_of_eq)
+     call RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,gkkp,S_mat_out_of_eq)
      !
      ! SUM-UP
      !========

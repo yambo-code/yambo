@@ -25,15 +25,15 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  use pars,          ONLY:SP,lchlen,rZERO
  use units,         ONLY:HA2EV
- use ELPH,          ONLY:elph_global_alloc,elph_global_free,elph_Ham_bands,elph_Ham_ik,&
-&                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector,RES_tresh
+ use ELPH,          ONLY:elph_Ham_bands,elph_Ham_ik,ph_modes,&
+&                        PH_freqs_sq,GKKP,elph_branches,PH_pol_vector,RES_tresh
  use IO_m,          ONLY:io_control,manage_action,OP_RD,REP,RD_CL_IF_END,mk_dir
  use com,           ONLY:msg,of_open_close,jobstr,jobdir,core_io_path
  use R_lattice,     ONLY:nqbz,nqibz,bz_samp,qindx_S
  use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev,n_atoms
  use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing
- use interfaces,    ONLY:LINEAR_ALGEBRA_driver
+ use interfaces,    ONLY:LINEAR_ALGEBRA_driver,ELPH_alloc
  use linear_algebra,ONLY:DIAGO,USE_LK
  use stderr,        ONLY:intc
  use stderr,        ONLY:intc
@@ -70,7 +70,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  ! Mean value of displacements
  !
  integer            :: ic,ia,Ham_Index
- real(SP)           :: ph_E_gamma,pol_vector_gamma(n_atoms*3,n_atoms,3)
+ real(SP)           :: ph_E_gamma,PH_pol_vector_gamma(ph_modes,n_atoms,3)
  complex(SP), allocatable :: mean_u(:,:,:)
  !
  !Mean value of Phonons Number
@@ -143,7 +143,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  io_err=io_ELPH(ID,'gkkp')
  if (io_err/=0) call error('El-Ph database not found')
  !
- call elph_global_alloc('gkkp')
+ call ELPH_alloc('dV',GKKP=GKKP)
  !
  ! Hamiltonian Loop
  !==================
@@ -170,10 +170,10 @@ subroutine ELPH_Hamiltonian(en,k,q)
        call io_control(ACTION=IO_ACT,SEC=(/iq_ibz+1/),ID=ID)
        io_err=io_ELPH(ID,'gkkp')
        iq_ibz_db=iq_ibz
-       if (iq_ibz==1) pol_vector_gamma=pol_vector
+       if (iq_ibz==1) PH_pol_vector_gamma=PH_pol_vector(iq_ibz,:,:,:)
      endif
      !
-     ph_E=sqrt(abs(ph_freqs_sq(iq_ibz,il)))
+     ph_E=sqrt(abs(PH_freqs_sq(iq_ibz,il)))
      !
      if (iH==1) elph_Mat(iHp,iHp)=en%E(ibp,ok_ibz,1)+ph_E
      !
@@ -191,7 +191,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
        ik_bz_gkkp=k%k_table(ok_ibz,sop_tab(sop_inv(iq_s-nsym/2),ok_s))
      endif
      !
-     elph_Mat(iH,iHp)=q_weight*conjg(elph_gkkp(il,ibp_gkkp,ib_gkkp,ik_bz_gkkp))/sqrt(2._SP*ph_E)
+     elph_Mat(iH,iHp)=q_weight*conjg(GKKP%dVc(il,ibp_gkkp,ib_gkkp,ik_bz_gkkp,1))/sqrt(2._SP*ph_E)
      !
      elph_Mat(iHp,iH)=conjg( elph_Mat(iH,iHp) )
      !
@@ -373,14 +373,14 @@ subroutine ELPH_Hamiltonian(en,k,q)
        Ham_Index=0
        do il=elph_branches(1),elph_branches(2)
          !
-         ph_E_gamma=sqrt( MAX ( ph_freqs_sq(1,il), 0.) )
+         ph_E_gamma=sqrt( MAX ( PH_freqs_sq(1,il), 0.) )
          if ( ph_E_gamma < epsilon(1._SP)) cycle
          !
          Ham_Index=Ham_Index+No_PH_basis_size
          !
          do ib=elph_Ham_bands(1),elph_Ham_bands(2)
            mean_u(ia,ic,iH)=mean_u(ia,ic,iH)+&
-&            1./sqrt(real(2*nqbz*ph_E_gamma))*pol_vector_gamma(il,ia,ic)*(conjg(elph_Mat(ib,iH))*elph_Mat(Ham_Index+ib,iH)+&
+&            1./sqrt(real(2*nqbz*ph_E_gamma))*PH_pol_vector_gamma(il,ia,ic)*(conjg(elph_Mat(ib,iH))*elph_Mat(Ham_Index+ib,iH)+&
 &                                                                         conjg(elph_Mat(Ham_Index+ib,iH))*elph_Mat(ib,iH))
            mean_u(ia,ic,iH)=real( mean_u(ia,ic,iH) )
          enddo
@@ -433,10 +433,11 @@ subroutine ELPH_Hamiltonian(en,k,q)
          !
          do il=elph_branches(1),elph_branches(2)
            !
-           ph_E=sqrt( MAX ( ph_freqs_sq(iq_ibz,il), 0.) )
+           ph_E=sqrt( MAX ( PH_freqs_sq(iq_ibz,il), 0.) )
            if ( ph_E < epsilon(1._SP) ) cycle
            !
-           mean_u_sq(ia,ic,iH) = mean_u_sq(ia,ic,iH)+1/(real(2*nqbz*ph_E))*conjg(pol_vector(il,ia,ic))*pol_vector(il,ia,ic)
+           mean_u_sq(ia,ic,iH) = mean_u_sq(ia,ic,iH)+1/(real(2*nqbz*ph_E))*&
+&                                conjg(PH_pol_vector(iq_ibz,il,ia,ic))*PH_pol_vector(iq_ibz,il,ia,ic)
            mean_u_sq(ia,ic,iH) = real( mean_u_sq(ia,ic,iH) )
          enddo  
        enddo
@@ -454,7 +455,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
 1 continue
  !
- call elph_global_free( )
+ call ELPH_alloc('FREE')
  YAMBO_FREE(elph_Ham_Table)
  YAMBO_FREE(elph_Mat)
  YAMBO_FREE(elph_E)

@@ -23,10 +23,10 @@
 !
 subroutine PH_of(q)
  !
+ use pars,           ONLY:SP
  use OUTPUT_simple,  ONLY:OUTPUT_add_column
  use RT_lifetimes,   ONLY:RT_PE_life,PE_linewidth
- use PHEL,           ONLY:PH_desc
- use ELPH,           ONLY:ph_freqs_sq,elph_branches
+ use ELPH,           ONLY:PH_freqs_sq,elph_branches,PHEL_desc,ELPH_desc,l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use R_lattice,      ONLY:nqibz,bz_samp
  use interfaces,     ONLY:DESC_write
  !
@@ -37,16 +37,20 @@ subroutine PH_of(q)
  ! Work Space
  !
  integer :: iq,il
+ real(SP):: ph_freq
  !
  call OUTPUT_add_column(what="reset",name="ph")
  call OUTPUT_add_column(what="open",name="ph")
  !
- call DESC_write('o ph','#',PH_desc)
+ call DESC_write('o ph','#',PHEL_desc)
+ call DESC_write('o ph','#',ELPH_desc)
  !
  do iq=1,nqibz
    do il=elph_branches(1),elph_branches(2)
      call OUTPUT_add_column(TITLES=(/"Q-point","Branch "/),I_VALUES=(/iq,il/))
-     call OUTPUT_add_column(TITLES=(/"Energy"/),R_VALUES=(/sqrt(abs(ph_freqs_sq(q%k_table(iq,1),il)))/),UNIT="meV")
+     if (l_GKKP_expanded_DB_exists) ph_freq=abs(sqrt(PH_freqs_sq(q%k_table(iq,1),il)))
+     if (l_GKKP_DB_exists         ) ph_freq=abs(sqrt(PH_freqs_sq(iq,il)))
+     call OUTPUT_add_column(TITLES=(/"Energy"/),R_VALUES=(/ph_freq/),UNIT="meV")
      call OUTPUT_add_column(TITLES=(/"Width(emit)"/),R_VALUES=(/RT_PE_life%emit(il,iq)/),UNIT="meV")
      call OUTPUT_add_column(TITLES=(/"Width(abs)"/),R_VALUES=(/RT_PE_life%abs(il,iq)/),UNIT="meV")
      !DEBUG> (FP)

@@ -47,18 +47,19 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        On_Mass_Shell_approx,QP_time_order_sign
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol,nqibz
- use ELPH,          ONLY:elph_nb,ph_freqs_sq,elph_gkkp,&
-&                        elph_global_free,QP_PH_n_G_bands,W_debye,elph_DW,&
-&                        elph_nDBs,E_k_p_q,elph_use_q_grid,&
-&                        setup_k_plus_q_levels,f_k_plus_q,elph_nDBs_used,&
+ use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,&
+&                        QP_PH_n_G_bands,PH_W_debye,&
+&                        elph_nQ,GKKP,elph_use_q_grid,&
+&                        setup_k_plus_q_levels,elph_nQ_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
-&                        elph_global_alloc,gsqF_energy_steps,eval_G_using_KK,ph_qpt,&
-&                        elph_branches,E_k_plus_q,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold,DW_deltaE_treshold
- use interfaces,    ONLY:QP_state_print
+&                        gsqF_energy_steps,eval_G_using_KK,PH_qpt,&
+&                        elph_branches,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold,DW_deltaE_treshold
+ use interfaces,    ONLY:QP_state_print,ELPH_alloc
  use functions,     ONLY:Fermi_fnc_derivative
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
+ !
  type(levels)  ::en
  type(bz_samp) ::k,q
  type(QP_t)    ::qp
@@ -66,13 +67,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! WorkSpace  
  !
  integer          ::iq_db,iq_bz,iq_loop,iq_db_ref,iq_s,iq_ibz,ik,ok,ik_bz,okbz,ib,ob,is,il,i_qp,i2,&
-&                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,live_timing_steps,iq_range(2)
+&                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,live_timing_steps
  type(w_samp)     ::Sc_W(qp%n_states)
  integer          ::io_err,ID,IO_ACT
  integer, external::io_ELPH
  character(schlen)::ch
  real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,factor,&
-&                   E_k_plus_q_at_gamma(elph_nb,k%nbz),elph_gkkp_sq,gsqF_damping,E_random_shift
+&                   elph_gkkp_sq,gsqF_damping,E_random_shift
  complex(SP)      ::delta_E
  logical          ::l_WRgFsq,l_GF_from_CA
  integer , allocatable :: q_each_cpu(:)
@@ -173,14 +174,14 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !============================
  !
  !             / ypp_ph            elph_use_q_grid=F
- ! elph_nDBs = | 
+ ! elph_nQ = | 
  !             \ nqibz             elph_use_q_grid=T
  !
  !                  / <user defined>    elph_use_q_grid=F
- ! elph_nDBs_used = | 
+ ! elph_nQ_used = | 
  !                  \ nqibz             elph_use_q_grid=T
  !
- !              / elph_nDBs_used   elph_use_q_grid=F
+ !              / elph_nQ_used     elph_use_q_grid=F
  ! nq_to_sum = | 
  !              \ nqbz             elph_use_q_grid=T
  !
@@ -193,9 +194,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    call rim_spherical(nq_to_sum,q%ptbz,q_weight,factor/real(nq_to_sum,SP),2,.TRUE.)
    call k_ibz2bz(q,'d',.TRUE.)
  else
-   nq_to_sum=elph_nDBs_used
+   nq_to_sum=elph_nQ_used
    YAMBO_ALLOC(q_weight,(nq_to_sum))
-   call rim_spherical(nq_to_sum,ph_qpt(:nq_to_sum,:),q_weight,factor/real(nq_to_sum,SP),2,.TRUE.)
+   call rim_spherical(nq_to_sum,PH_qpt(:nq_to_sum,:),q_weight,factor/real(nq_to_sum,SP),2,.TRUE.)
  endif
  !
  ! Timing steps
@@ -208,7 +209,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! g^2F(w) residuals Allocation
  !
- call elph_global_alloc('gFsq')
+ call ELPH_alloc('gFsq')
  !
  iq_db_ref=0
  !
@@ -232,7 +233,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    if (iq_db/=iabs(iq_db_ref)) then
      !
-     if (elph_use_q_grid)      IO_ACT=manage_action(RD_CL_IF_END,iq_ibz,1,nqibz)
+     if (     elph_use_q_grid) IO_ACT=manage_action(RD_CL_IF_END,iq_ibz,1,nqibz)
      if (.not.elph_use_q_grid) IO_ACT=manage_action(RD_CL_IF_END,iq_db,1,nq_to_sum)
      call io_control(ACTION=IO_ACT,SEC=(/iq_db+1/),ID=ID)
      io_err=io_ELPH(ID,'gkkp')
@@ -240,13 +241,11 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      !
      if (.not.elph_use_q_grid) then
        !
-       if (iq_bz==1) E_random_shift=E_k_p_q%E(en%nbf,1,1)-en%E(en%nbf,1,1)
+       if (iq_bz==1) E_random_shift=GKKP%E_kpq(iq_db)%E(en%nbf,1,1)-en%E(en%nbf,1,1)
        !
-       call setup_k_plus_q_levels(E_random_shift)
+       call setup_k_plus_q_levels(iq_db,E_random_shift)
        !
-       E_k_p_q%E(:,:,1)=E_k_plus_q(:,:,1)
-       !
-       call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt=' ')
+       call QP_apply((/1,elph_nb/),GKKP%E_kpq(iq_db),k,"G",msg_fmt=' ')
        !
      endif
      !
@@ -256,7 +255,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      !
      if (iq_db_ref==0) then
        call live_timing('El-Ph Sc [coeff]',live_timing_steps)
-       if (.not.elph_use_q_grid) E_k_plus_q_at_gamma(:,:)=E_k_p_q%E(:,:,1)
      endif
      !
      iq_db_ref=iq_db
@@ -317,7 +315,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        !
        do il=elph_branches(1),elph_branches(2)
          !
-         ph_E=sqrt(abs(ph_freqs_sq(iq_ibz,il)))
+         ph_E=sqrt(abs(PH_freqs_sq(iq_ibz,il)))
          !
          ! Skip modes @ Gamma (1st point is always gamma, either with random
          ! or uniform grids, as it is needed to evaluate the DW factor) 
@@ -331,8 +329,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          ! with q_YAMBO = - q_PW
          !
-         elph_gkkp_sq=conjg(elph_gkkp(il,ob_gkkp,ib_gkkp,ik_bz_gkkp))*&
-&                           elph_gkkp(il,ob_gkkp,ib_gkkp,ik_bz_gkkp)/2._SP/ph_E
+         elph_gkkp_sq=conjg(GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1))*&
+&                           GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1)/2._SP/ph_E
          !
          ! Frequency Loop
          !
@@ -346,9 +344,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
              f_occ=en%f(ob,ok,1)/spin_occ
              one_minus_2f_occ=(1._SP-2._SP*f_occ)
            else
-             delta_E         =Sc_W(i_qp)%p(iw)-E_k_p_q%E(ob,ik_bz,1)
-             delta_E_at_gamma=en%E(ib,ik,1)   -E_k_plus_q_at_gamma(ob,ik_bz)
-             f_occ=f_k_plus_q(ob,ik_bz,1)/spin_occ
+             delta_E         =Sc_W(i_qp)%p(iw)-GKKP%E_kpq(iq_db)%E(ob,ik_bz,1)
+             delta_E_at_gamma=en%E(ib,ik,1)   -GKKP%E_kpq(1)%E(ob,ik_bz,1)
+             f_occ=GKKP%E_kpq(iq_db)%f(ob,ik_bz,1)/spin_occ
              one_minus_2f_occ=(1._SP-2._SP*f_occ)
            endif
            !
@@ -402,7 +400,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          ! (b) Debye Waller Term
          !
          gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)-1._SP/2._SP*&
-&                                    2._SP*elph_DW(il,ib,ob,ik_bz)/delta_E_at_gamma*q_weight(iq_loop)/2._SP/ph_E
+&                                    2._SP*GKKP%dVr(il,ib,ob,ik_bz,1)/delta_E_at_gamma*q_weight(iq_loop)/2._SP/ph_E
          !                          /\
          !                           |
          !                           this 2 is to be consistent with AC definition (see Eq. 5, PRB 31, 2163)
@@ -419,7 +417,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! Debye energy
  !
- call msg('nr','[Ph] Debye energy         ',(/W_debye*HA2EV,W_debye*HA2THZ/),"[ev/ThZ]")
+ call msg('nr','[Ph] Debye energy         ',(/PH_W_debye*HA2EV,PH_W_debye*HA2THZ/),"[ev/ThZ]")
  !
  ! Here I use the Cardona-Allen g^2 F functions to evaluate their integrated value.
  ! I also calculate the full frequency dependent self-energy
@@ -430,68 +428,24 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  if (l_WRgFsq) then
    !
-   ! AndreaM, March 2015.
-   !
-   ! In the iq_loop loop the q=1 is read by ALL cpu's. This is in order
-   ! to get the DW elements written only for q=0. This means that all cpu's has the ph_freqs_sq(1,:)
-   ! 
-   ph_freqs_sq(1,:)=ph_freqs_sq(1,:)/PAR_COM_Q_INDEX%n_CPU
-   !
-   ! AndreaM, Feb 2017
-   !
-   ! In addition to the gamma point also other points can be read by 2 cpu's in the case of uniform grids
-   ! as the BZ points are distributed.
-   ! The only case where the Q is read only by one cpu (of the PAR_COM_Q_A2A comm) is when all the star is assigned to 
-   ! that cpu
-   !
-   if (elph_use_q_grid) then
-     !
-     q_each_cpu=0
-     do iq_ibz=2,q%nibz
-       do iq_s=1,q%nstar(iq_ibz)
-         if ( PAR_IND_Q_bz%element_1D(sum(q%nstar(:iq_ibz-1))+iq_s) ) q_each_cpu(iq_ibz)=1
-       enddo
-     enddo
-     !
-     call PP_redux_wait(q_each_cpu,COMM=PAR_COM_Q_INDEX%COMM)
-     !
-     do iq_ibz=2,q%nibz
-       if (q_each_cpu(iq_ibz)>0) ph_freqs_sq(iq_ibz,:)=ph_freqs_sq(iq_ibz,:)/q_each_cpu(iq_ibz)
-     enddo
-     !
+   if (master_cpu) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+     io_err=io_ELPH(ID,'gFsq')
    endif
-   !
-   call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
-   !
-   iq_range=(/nq_to_sum,1/)
-   do iq_loop=1,nq_to_sum
-     if (PAR_Q_bz_index(iq_loop)>0) then
-       iq_range(1)=min(iq_range(1),iq_loop)
-       iq_range(2)=max(iq_range(2),iq_loop)
-     endif
-   enddo
-   !
-   call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
-   !
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-   io_err=io_ELPH(ID,'gFsq')
-   !
    call PP_redux_wait
-   !
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
-   !
-   do iq_loop=iq_range(1),iq_range(2)
+   do iq_loop=1,nq_to_sum
+     if (.not.PAR_IND_Q_bz%element_1D(iq_loop)) cycle
      call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/iq_loop+1/),ID=ID)
      io_err=io_ELPH(ID,'gFsq')
    enddo
-   !
    call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
    !
  endif
  !
  ! CLEAN
  !
- call elph_global_free()
+ call ELPH_alloc('FREE')
  YAMBO_FREE(q_each_cpu)
  YAMBO_FREE(q_weight)
  do i_qp=1,qp%n_states

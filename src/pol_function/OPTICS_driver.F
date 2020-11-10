@@ -40,7 +40,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
 &                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
-&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X
+&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,master_cpu
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use TDDFT,         ONLY:FXC_desc,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
@@ -49,6 +49,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
 &                        X_setup_headers
  use interfaces,    ONLY:WF_load,WF_free,DESC_write,WF_load
  use matrix,        ONLY:MATRIX_reset
+ use IO_m,          ONLY:IO_and_Messaging_switch
  !
 #include<memory.h>
  !
@@ -164,8 +165,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    if(.not.l_rpa_IP) call X_setup_file_names(iq,'inv',trim(FXC_type),'dyson',ig=i_G_shift)
    if(     l_rpa_IP) call X_setup_file_names(iq,'ip','','',ig=i_G_shift)
    !
-   ! ... open ...
+   ! ... permissions ...
+   if (iq==1) call IO_and_Messaging_switch("+output SAVE",CONDITION=master_cpu)
    !
+   ! ... open ...
    call of_open_close(eps_file_name,'ot')
    if (     eval_eels)  call of_open_close(eel_file_name,'ot')
    if (.not.eval_eels)  eel_file_name=' '
@@ -173,6 +176,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    if (.not.eval_alpha) alpha_file_name=' '
    if (     l_bs_fxc)   call of_open_close(fxc_file_name,'ot')
    if (.not.l_bs_fxc)   fxc_file_name=' '
+   if (iq==1) call IO_and_Messaging_switch("+output RESTORE")
    !
    ! Initial Messages
    !

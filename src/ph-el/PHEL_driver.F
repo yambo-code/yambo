@@ -28,7 +28,9 @@ subroutine PHEL_driver(E,k,q)
  !DEBUG<
  use electrons,           ONLY:levels,n_sp_pol,E_fine_grid
  use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc
- use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,elph_global_free,phel_gkkp_expanded_sq
+ use interfaces,          ONLY:ELPH_alloc
+ use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,&
+&                              l_GKKP_hosts_bare_dV
  use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode
  use parallel_m,          ONLY:PARs_PH_Q_ibz,PARs_PH_K_bz 
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_global_indexes
@@ -47,7 +49,7 @@ subroutine PHEL_driver(E,k,q)
  ! Work Space
  !
  integer             ::i_err,iq,ID
- integer, external   ::ELPH_expanded_databases_check,io_PH
+ integer, external   ::io_PH
  type(E_fine_grid)   ::E_FG
  !
  call section('*',"Phonon Lifetimes")
@@ -57,6 +59,7 @@ subroutine PHEL_driver(E,k,q)
  ! ...DbGd
  PH_DbGd_points    =k%FGibz%N
  l_PH_uses_E_FineGd=PH_DbGd_points>0
+ l_GKKP_hosts_bare_dV=index(PH_Self_Energy_mode,"bare")>0
  !
  ! ... BZ Setup
  call k_build_up_BZ_tables(q)
@@ -78,25 +81,17 @@ subroutine PHEL_driver(E,k,q)
  !
  ! El-Ph databases check
  !=======================
- i_err=ELPH_expanded_databases_check(QP_PH_n_G_bands)
- if (i_err<0) then
-   call error("Extended GKKP databases absent or damaged")
- endif
+ call ELPH_databases_check(QP_PH_n_G_bands)
+ !
+ if (.not.any((/l_GKKP_DB_exists,l_GKKP_expanded_DB_exists/))) call error("GKKP databases absent or damaged")
  !
  ! Q/K grid remapping
  !====================
- call ELPH_Q_databases_map(k,q)
+ call ELPH_databases_grids_map(k,q)
  !
  ! El-Ph databases I/O
  !=====================
- if (trim(PH_Self_Energy_mode)=="dressed-dressed") then
-   call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ square")
- else if (trim(PH_Self_Energy_mode)=="bare-bare")  then
-   call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ bare square")
- else
-   call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ")
-   call ELPH_expanded_databases_load(E,k,q,(/1,QP_PH_n_G_bands/),"IBZ bare")
- endif
+ call ELPH_databases_load(GKKP_pe_sq,E,k,q,(/1,QP_PH_n_G_bands/),"Q-sym Q-IBZ K-BZ",PH_Self_Energy_mode)
  !
  !...acoustic branches
  !
@@ -137,7 +132,7 @@ subroutine PHEL_driver(E,k,q)
  call live_timing('Phonon Lifetimes',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
  do iq=1,nqibz
    if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
-   call PHEL_lifetimes(iq,E,k,q,(/1,QP_PH_n_G_bands/),k%FGibz,E_FG)
+   call PHEL_Lifetimes(iq,E,k,q,(/1,QP_PH_n_G_bands/),k%FGibz,E_FG)
  enddo
  call live_timing( )
  !
@@ -162,11 +157,10 @@ subroutine PHEL_driver(E,k,q)
    subroutine CLEAN()
      call RT_ALL_lifetimes_free(  )
      call RT_ALL_occupations_free(  )
-     call elph_global_free( )
-     YAMBO_FREE(phel_gkkp_expanded_sq)
      !DEBUG> (FP)
      YAMBO_FREE(PE_linewidth)
      !DEBUG<
+     call ELPH_alloc('FREE',GKKP=GKKP_pe_sq)
    end subroutine
    !
 end subroutine PHEL_driver

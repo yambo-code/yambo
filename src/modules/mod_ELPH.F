@@ -23,75 +23,70 @@
 !
 module ELPH
  !
- use pars,       ONLY:SP,rZERO,schlen
- use electrons,  ONLY:levels
- use D_lattice,  ONLY:n_atoms_species
+ use pars,           ONLY:SP,rZERO,schlen
+ use electrons,      ONLY:levels,E_reset
+ use descriptors,    ONLY:IO_desc
  !
-#include<memory.h>
+ implicit none
  !
- integer   :: ph_modes
- integer   :: elph_nb
- integer   :: elph_nk_bz
- integer   :: elph_nDBs
- integer   :: elph_nDBs_used
- integer   :: elph_branches(2)
- real(SP)  :: W_debye
- logical   :: elph_use_q_grid
+ ! Dumensions
+ integer   :: ph_modes=0
+ integer   :: elph_nb=0
+ integer   :: elph_nk_bz=0
+ integer   :: elph_nQ=0
+ integer   :: elph_nQ_used=0
+ integer   :: elph_branches(2)=0
+ !
+ logical   :: elph_use_q_grid=.TRUE.
  logical   :: elph_grids_are_expanded=.FALSE.
+ !
+ ! QP props
  real(SP),    allocatable :: QP_OMS_Fan(:)
  real(SP),    allocatable :: QP_DW(:)
- real(SP),    allocatable :: ph_kpt_bz(:,:)
- real(SP),    allocatable :: ph_qpt(:,:)
- real(SP),    allocatable :: ph_freqs_sq(:,:)
- complex(SP), allocatable :: pol_vector(:,:,:)
  !
- ! Phonon assisted energy levels
- !
- real(SP),    allocatable :: E_k_plus_q(:,:,:)
- real(SP),    allocatable :: f_k_plus_q(:,:,:)
- type(levels), SAVE       :: E_k_p_q
- !
- ! GKKP Matrix Elements and derived quantities
- !
- type GKKP_me
-   !
-   character(schlen)        :: KIND="none" ! dV, dV_bare, dV_sq, DW, dV_bare_sq
-   !
-   ! dVr/c(Nb,Nb,Nmodes,Nk)
-   real(SP),    allocatable :: dVr(:,:,:,:)
-   complex(SP), allocatable :: dVc(:,:,:,:)
-   !
-   integer                  :: Nb=0
-   integer                  :: Nmodes=0
-   integer                  :: Nk=0
-   !
- end type
- !
- real(SP),    allocatable :: elph_DW(:,:,:,:)
- complex(SP), allocatable :: elph_gkkp(:,:,:,:)
- complex(SP), allocatable :: elph_gkkp_bare(:,:,:,:)
- !
- ! ... Q-parallelization  and GKKP
- real(SP),    allocatable :: elph_gkkp_expanded_sq(:,:,:,:,:)
- real(SP),    allocatable :: phel_gkkp_expanded_sq(:,:,:,:,:)
- !
- integer,     allocatable :: Q_io_map(:)
- integer,     allocatable :: K_io_map(:)
- !
- ! Phonon properties
- !
+ ! PHONON props 
+ real(SP)                 :: PH_W_debye=rZERO
+ real(SP),    allocatable :: PH_kpt_bz(:,:)
+ real(SP),    allocatable :: PH_qpt(:,:)
+ real(SP),    allocatable :: PH_freqs_sq(:,:)
+ complex(SP), allocatable :: PH_pol_vector(:,:,:,:)
  real(SP),    allocatable :: PH_Q_modulus(:)
  real(SP),    allocatable :: PH_acoustic_speed(:,:)
  logical,     allocatable :: PH_acoustic_branch(:)
  !
- ! El_h Hamiltonian
+ ! GKKP Matrix Elements and derived quantities
+ type GKKP_me
+   !
+   character(schlen)        :: KIND="none" ! dV, dV_bare, dV_sq, DW, dV_bare_sq
+   !
+   ! dVr/c(Nmodes,Nb,Nb,Nk,Nq)
+   real(SP),    allocatable :: dVr(:,:,:,:,:)
+   complex(SP), allocatable :: dVc(:,:,:,:,:)
+   !
+   ! Phonon assisted energy/occupation levels
+   type(levels),allocatable :: E_kpq(:)
+   !
+   integer                  :: Nq_mem=0
+   integer                  :: Nk_mem=0
+   integer                  :: Nb(2)=0
+   integer                  :: Nmodes(2)=0
+   !
+ end type
  !
+ type(GKKP_me), SAVE :: GKKP
+ type(GKKP_me), SAVE :: GKKP_bare
+ type(GKKP_me), SAVE :: GKKP_ep_sq
+ type(GKKP_me), SAVE :: GKKP_pe_sq
+ !
+ integer,     allocatable :: Q_io_map(:)
+ integer,     allocatable :: K_io_map(:)
+ !
+ ! El_h Hamiltonian
  integer   :: elph_Ham_bands(2)
  integer   :: elph_Ham_ik
  real(SP)  :: RES_tresh
  ! 
  ! gFsq matrices
- !
  integer              :: gsqF_energy_steps
  real(SP),allocatable :: gsqF_fan(:,:,:,:)
  real(SP),allocatable :: gsqF_dw(:,:,:)
@@ -100,115 +95,36 @@ module ELPH
  real(SP),allocatable :: gsqF_life_f(:,:,:,:)
  !
  ! el-ph Self-Energy
- !
  integer   :: QP_PH_n_G_bands
  logical   :: eval_G_using_KK ! Perform KK of the spectral function
  real(SP)  :: FAN_deltaE_treshold
  real(SP)  :: DW_deltaE_treshold
  real(SP)  :: MAX_gkkp=rZERO
  !
+ ! Descriptors
+ type(IO_desc) :: ELPH_desc
+ type(IO_desc) :: PHEL_desc
+ !
+ ! Databases
+ logical :: l_GKKP_hosts_bare_dV=.FALSE.
+ logical :: l_GKKP_DB_exists=.FALSE.
+ logical :: l_GKKP_expanded_DB_exists=.FALSE.
+ !
  contains
    !
-   subroutine elph_global_alloc(what)
-     use parallel_m,ONLY:PAR_nQ_bz
-     use QP_m,      ONLY:QP_n_states
-     use R_lattice, ONLY:nkbz
-     character(*)      ::what
-     !
-     select case (trim(what))
-       !
-       case ('gFsq')
-         !
-         if (.not.allocated(gsqF_fan)) then
-           if (.not.eval_G_using_KK) then
-             YAMBO_ALLOC(gsqF_fan,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
-             YAMBO_ALLOC(gsqF_ca_corr,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
-             gsqF_fan=rZERO
-             gsqF_ca_corr=rZERO
-           endif
-           YAMBO_ALLOC(gsqF_dw,(QP_n_states,PAR_nQ_bz,ph_modes))
-           YAMBO_ALLOC(gsqF_life_bose,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
-           YAMBO_ALLOC(gsqF_life_f,(QP_n_states,PAR_nQ_bz,ph_modes,gsqF_energy_steps))
-           gsqF_dw=rZERO
-           gsqF_life_bose=rZERO
-           gsqF_life_f=rZERO
-         endif
-         !
-       case ('gkkp')
-         !
-         if (.not.allocated(elph_gkkp)) then
-           YAMBO_ALLOC(elph_gkkp,(ph_modes,elph_nb,elph_nb,nkbz))
-           YAMBO_ALLOC(elph_DW,(ph_modes,elph_nb,elph_nb,nkbz))
-           YAMBO_ALLOC(f_k_plus_q,(elph_nb,nkbz,1))
-         endif
-         !
-       case ('gkkp_plus_bare')
-         !
-         if (.not.allocated(elph_gkkp)) then
-           YAMBO_ALLOC(elph_gkkp,(ph_modes,elph_nb,elph_nb,nkbz))
-           YAMBO_ALLOC(elph_DW,(ph_modes,elph_nb,elph_nb,nkbz))
-           YAMBO_ALLOC(f_k_plus_q,(elph_nb,nkbz,1))
-           YAMBO_ALLOC(elph_gkkp_bare,(ph_modes,elph_nb,elph_nb,nkbz))
-         endif
-         !
-     end select
-     !
-     if (.not.allocated(ph_freqs_sq)) then
-       YAMBO_ALLOC(ph_freqs_sq,(elph_nDBs,ph_modes))
-       ph_freqs_sq=rZERO
-       YAMBO_ALLOC(E_k_plus_q,(elph_nb,nkbz,1))
-       YAMBO_ALLOC(PH_Q_modulus,(elph_nDBs))
-       YAMBO_ALLOC(PH_acoustic_speed,(elph_nDBs,ph_modes))
-       YAMBO_ALLOC(PH_acoustic_branch,(ph_modes))
-       YAMBO_ALLOC(pol_vector,(ph_modes,sum(n_atoms_species),3))
-       PH_Q_modulus=rZERO
-       PH_acoustic_speed=rZERO
-       PH_acoustic_branch=.FALSE.
-     endif
-     !
-     if (.not.allocated(ph_qpt)) then
-       YAMBO_ALLOC(ph_qpt,(elph_nDBs,3))
-       YAMBO_ALLOC(ph_kpt_bz,(nkbz,3))
-     endif
-     !
-   end subroutine
-   !
-   subroutine elph_global_free()
-     YAMBO_FREE(gsqF_fan)
-     YAMBO_FREE(gsqF_dw)
-     YAMBO_FREE(gsqF_ca_corr)
-     YAMBO_FREE(gsqF_life_bose)
-     YAMBO_FREE(gsqF_life_f)
-     YAMBO_FREE(elph_gkkp)
-     YAMBO_FREE(elph_gkkp_bare)
-     YAMBO_FREE(elph_DW)
-     YAMBO_FREE(f_k_plus_q)
-     YAMBO_FREE(ph_freqs_sq)
-     YAMBO_FREE(E_k_plus_q)
-     YAMBO_FREE(pol_vector)
-     YAMBO_FREE(ph_qpt)
-     YAMBO_FREE(ph_kpt_bz)
-     YAMBO_FREE(PH_Q_modulus)
-     YAMBO_FREE(PH_acoustic_speed)
-     YAMBO_FREE(PH_acoustic_branch)
-   end subroutine
-   !
-   subroutine setup_k_plus_q_levels(E)
-     !
+   subroutine setup_k_plus_q_levels(iq,E)
      use electrons,  ONLY:spin_occ
      use D_lattice,  ONLY:Tel
      use R_lattice,  ONLY:nkbz
      use functions,  ONLY:Fermi_fnc
-     !
      real(SP)    ::E
-     integer     ::ib,ik
-     do ib=1,elph_nb
+     integer     ::iq,ib,ik
+     do ib=GKKP%Nb(1),GKKP%Nb(2)
        do ik=1,nkbz
-         E_k_plus_q(ib,ik,1)=E_k_plus_q(ib,ik,1)-E
-         f_k_plus_q(ib,ik,1)=spin_occ*Fermi_fnc(E_k_plus_q(ib,ik,1),Tel)
+         GKKP%E_kpq(iq)%E(ib,ik,1)=GKKP%E_kpq(iq)%E(ib,ik,1)-E
+         GKKP%E_kpq(iq)%f(ib,ik,1)=spin_occ*Fermi_fnc(GKKP%E_kpq(iq)%E(ib,ik,1),Tel)
        enddo 
      enddo
-     !
    end subroutine
    !
 end module ELPH

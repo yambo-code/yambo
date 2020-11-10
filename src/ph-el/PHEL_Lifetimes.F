@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
+subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  !
  ! This routine computes the phonon lifetimes. 
  ! Presently, only one approximation route from the phononic KBE to 
@@ -36,7 +36,8 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  use RT_occupations, ONLY:RT_ph_occ,RT_el_occ,RT_ho_occ,RT_life_occ
  use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life,PE_linewidth
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch,phel_gkkp_expanded_sq
+ use ELPH,           ONLY:PH_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch,GKKP_pe_sq,&
+&                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_eh_bands,PARs_PH_Q_ibz
  use QP_m,           ONLY:QP_G_damp
  use LIVE_t,         ONLY:live_timing
@@ -82,7 +83,8 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
    !
    do il=elph_branches(1),elph_branches(2)
      !
-     ph_freq=abs(sqrt(ph_freqs_sq(q%k_table(iq,1),il)))
+     if (l_GKKP_expanded_DB_exists) ph_freq=abs(sqrt(PH_freqs_sq(q%k_table(iq,1),il)))
+     if (l_GKKP_DB_exists         ) ph_freq=abs(sqrt(PH_freqs_sq(iq,il)))
      !
      if (iq==1 .and. PH_acoustic_branch(il)) cycle
      !
@@ -95,7 +97,7 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
          !
          if ( .not. PARs_PH_eh_bands%IND%element_1D( B_mat_index(i_n,i_np,bands) ) ) cycle
          !
-         !if (sqrt(phel_gkkp_expanded_sq(i_n,i_np,il,iq_mem,ikbz))<MAX_gkkp*cutoff) cycle
+         if (sqrt(GKKP_pe_sq%dVr(il,i_np,i_n,ikbz,iq_mem))<MAX_gkkp*cutoff) cycle
          !
          ! At equilibrium, only metals or band gaps < E_debye can give non-zero ph lifetimes
          !
@@ -129,7 +131,7 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
          ! [NOTE]  Variable pre_factor below contains pi since it *shouldn't* come later from the hyperbolic secant FT.
          ! [NOTE2] Variable pre_factor below contains 1/(Nk_bz*N_FG_k) accounting for the double grid at each bz point.
          !
-         pre_factor=spin_occ*phel_gkkp_expanded_sq(i_n,i_np,il,iq_mem,ikbz)*pi/(k%nbz*k_FG%N_mapped(ik)*ph_freq)
+         pre_factor=spin_occ*GKKP_pe_sq%dVr(il,i_np,i_n,ikbz,iq_mem)*pi/(k%nbz*k_FG%N_mapped(ik)*ph_freq)
          !
          do ik_rim=k_FG%k_range(ik,1),k_FG%k_range(ik,2)
            !
@@ -207,4 +209,4 @@ subroutine PHEL_lifetimes(iq,E,k,q,bands,k_FG,E_FG)
    !
  enddo ! ikbz
  !
-end subroutine PHEL_lifetimes
+end subroutine PHEL_Lifetimes

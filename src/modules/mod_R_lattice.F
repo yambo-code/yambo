@@ -52,7 +52,7 @@ module R_lattice
  real(SP) :: b(3,3)
  real(SP) :: q0_def_norm, q0_shift_norm, smallest_q_norm
  real(SP),allocatable :: q_norm(:)
- character(schlen)    :: q_source="User defined / from ndb.kindx."
+ character(schlen)    :: q_source="is User defined and/or read from the database"
  character(schlen)    :: BZ_FineGd_mode="mixed" ! or "unexpanded"/"expanded"
  !
  type bz_fine_grid

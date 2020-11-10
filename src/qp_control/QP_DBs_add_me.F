@@ -39,7 +39,7 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERA
  ! Work Space
 
  logical    ::l_QP_db,CONDITION
- integer    ::N_states,i_s,i_d,i_sp
+ integer    ::N_states,i_s,i_sp
  type(QP_t) ::qp
  real(SP)   ::PRE_SIGN
  complex(SP)::dE
@@ -167,14 +167,16 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERA
    !
    subroutine ADD_descs(STATES,qp_in)
      use descriptors,  ONLY:IO_desc_element_duplicate
+     integer    :: i_d_in,i_d_out
      logical    :: STATES
      type(QP_t) :: qp_in
-     do i_d=1,qp_in%desc%n
-       if (     STATES.and.index(qp_in%desc%str(i_d),"QP @ state") == 0) cycle
-       if (.not.STATES.and.index(qp_in%desc%str(i_d),"QP @ state") >  0) cycle
-       if (len_trim(qp_in%desc%str(i_d)) == 0) cycle
+     do i_d_in=1,qp_in%desc%n
+       if (     STATES.and.index(qp_in%desc%str(i_d_in),"QP @ state") == 0) cycle
+       if (.not.STATES.and.index(qp_in%desc%str(i_d_in),"QP @ state") >  0) cycle
+       if (len_trim(qp_in%desc%str(i_d_in)) == 0) cycle
        qp%desc%n=qp%desc%n+1
-       call IO_desc_element_duplicate(qp_in%desc,qp%desc,i_d,qp%desc%n)
+       i_d_out=qp%desc%n
+       call IO_desc_element_duplicate(qp_in%desc,qp%desc,i_d_in,i_d_out)
      enddo
    end subroutine
 end subroutine

@@ -238,6 +238,13 @@ module interfaces
      type(QP_t),optional ::qp              
    end subroutine
    !
+   subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
+     use ELPH,          ONLY:GKKP_me
+     character(*)      :: what
+     type(GKKP_me), optional:: GKKP
+     integer,       optional:: Nb(2),Nk_mem,Nm(2),Nq_mem
+   end subroutine
+   !
  end interface
  !
  interface WF_shift_kpoint

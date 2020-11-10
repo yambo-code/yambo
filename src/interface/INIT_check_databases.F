@@ -54,11 +54,11 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  integer          :: lnstr
  character(lnstr) :: instr
  integer          :: INIT
- integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err
+ integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err
  !
  ! Workspace
  !
- integer           :: i1,io_ID,io_err,io_DIP_err,io_WF_err,io_KB_abinit_err,io_KB_pwscf_err,io_ATMPROJ_pwscf_err
+ integer           :: i_io,io_ID,io_err,io_DIP_err,io_WF_err,io_KB_abinit_err,io_KB_pwscf_err,io_ATMPROJ_pwscf_err
  !
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
@@ -205,19 +205,19 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  if (io_DIP_err==0) OSTNTS_Vnl_included= Dip%Vnl_included
  if (io_DIP_err/=0) OSTNTS_Vnl_included= (io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
  !
- do i1=1,4 ! Xx Xs Xd Xp
+ do i_io=1,4 ! Xx Xs Xd Xp
    ! .a
-   X(i1)%ib=(/1,en%nb/)
+   X(i_io)%ib=(/1,en%nb/)
    ! .b
-   X(i1)%Vnl_included=OSTNTS_Vnl_included
+   X(i_io)%Vnl_included=OSTNTS_Vnl_included
  enddo
  !
  if (nqibz>0) then
    if (trim(code_branch)=="devel-cumulant") BS_q=(/1,nqibz/)
-   do i1=1,4 ! Xx Xs Xd Xp
-     X(i1)%iq=(/1,nqibz/)
+   do i_io=1,4 ! Xx Xs Xd Xp
+     X(i_io)%iq=(/1,nqibz/)
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
-     io_X_err(i1)=io_X(X(i1),Xw(i1),io_ID)
+     io_X_err(i_io)=io_X(X(i_io),Xw(i_io),io_ID)
    enddo
  endif
  !
@@ -250,13 +250,9 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
 #if defined _ELPH 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_ELPH_err=io_ELPH(io_ID,'gkkp')
- !
- if (io_ELPH_err/=0) then
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
-   io_ELPH_err=io_ELPH(io_ID,'gkkp_expanded')
- endif
- !
+ io_ELPH_err(1)=io_ELPH(io_ID,'gkkp')
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_ELPH_err(2)=io_ELPH(io_ID,'gkkp_expanded')
 #endif
  !
  ! RT 

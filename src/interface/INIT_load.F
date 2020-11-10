@@ -102,7 +102,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
 #if defined _ELPH 
- use ELPH,          ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
+ use ELPH,          ONLY:QP_PH_n_G_bands,elph_nQ_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
 #if defined _OPENMP
@@ -216,7 +216,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BoseCut', '[BOSE] Finite T Bose function cutoff',bose_E_cut,verb_level=V_general)
 #if defined _ELPH 
  call it('f',defs,'BSEscatt', '[KPT] Compute extended k/q scatering',verb_level=V_kpt)
- call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nDBs_used,verb_level=V_kpt) 
+ call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level=V_kpt) 
 #endif
  call it('f',defs,'WFbuffIO','[IO] Wave-functions buffered I/O',verb_level=V_io) 
  call it('f',defs,'NoDiagSC','New setup for non-diagonal supercells',verb_level=V_general) 

@@ -33,7 +33,8 @@ subroutine ELPH_acoustic_phonon_properties(q)
  use pars,           ONLY:schlen,rZERO,SP
  use vec_operate,    ONLY:v_norm
  use R_lattice,      ONLY:bz_samp
- use ELPH,           ONLY:ph_freqs_sq,ph_modes,PH_acoustic_branch,PH_acoustic_speed,PH_Q_modulus
+ use ELPH,           ONLY:PH_freqs_sq,ph_modes,PH_acoustic_branch,PH_acoustic_speed,PH_Q_modulus,&
+&                         elph_nQ,l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use stderr,         ONLY:intc
  use com,            ONLY:msg
  !
@@ -50,27 +51,35 @@ subroutine ELPH_acoustic_phonon_properties(q)
  ! Acoustic Branches
  !-------------------
  aco_string=" "
- GAMMA_E_ph=abs( sqrt(ph_freqs_sq(1,:)) )
+ GAMMA_E_ph=abs( sqrt(PH_freqs_sq(1,:)) )
  do il=1,ph_modes
    delta_E=GAMMA_E_ph(il)-minval(GAMMA_E_ph)
    if (delta_E<0.01/HA2EV) then
-     ph_freqs_sq(1,il)=rZERO
      if (.not.any(PH_acoustic_branch)) aco_string=trim(intc(il))
      if (     any(PH_acoustic_branch)) aco_string=trim(aco_string)//" - "//trim(intc(il))
      PH_acoustic_branch(il)=.TRUE.
+     !DEBUG_AM>
+     !PH_freqs_sq(1,il)=rZERO
+     !DEBUG_AM<
    endif
  enddo
+ !
+ !DEBUG_AM>
+ PH_acoustic_branch     =.FALSE.
+ PH_acoustic_branch(1:3)=.TRUE.
+ !DEBUG_AM<
  !
  ! PH speeds
  !-----------
  call k_ibz2bz(q,'c',.TRUE.)  
  !
- do iq=2,q%nbz
+ PH_acoustic_speed=rZERO
+ do iq=2,elph_nQ
    do il=1,ph_modes
-     PH_acoustic_speed(iq,il)=rZERO
-     PH_Q_modulus(iq)=v_norm(q%ptbz(iq,:))
+     if (l_GKKP_expanded_DB_exists) PH_Q_modulus(iq)=v_norm(q%ptbz(iq,:))
+     if (l_GKKP_DB_exists         ) PH_Q_modulus(iq)=v_norm(q%ptbz(iq,:))
      if (.not.PH_acoustic_branch(il)) cycle
-     PH_acoustic_speed(iq,il)=sqrt(ph_freqs_sq(iq,il))/PH_Q_modulus(iq)
+     PH_acoustic_speed(iq,il)=sqrt(abs(PH_freqs_sq(iq,il)))/PH_Q_modulus(iq)
    enddo
  enddo 
  !

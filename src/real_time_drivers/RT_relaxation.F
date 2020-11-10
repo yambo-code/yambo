@@ -163,7 +163,7 @@ subroutine RT_relaxation(E,k,q,Time)
      !
      if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
      !
-     call PHEL_lifetimes(iq,E,k,q,RT_bands,RTibz,RT_levels)
+     call PHEL_Lifetimes(iq,E,k,q,RT_bands,RTibz,RT_levels)
      !
    enddo
    !

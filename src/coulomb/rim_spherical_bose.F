@@ -47,7 +47,7 @@ subroutine rim_spherical_bose(Np,points,p_weight,radius,power,il,MULTIPLY_BY_Q)
  !   with Wi = 1/vol*\int_Si d3q/q^power
  !
  use pars,          ONLY:SP,pi,DP
- use ELPH,          ONLY:elph_acustic_velocity,ph_freqs_sq
+ use ELPH,          ONLY:elph_acustic_velocity,PH_freqs_sq
  use electrons,     ONLY:spin_occ
  use vec_operate,   ONLY:v_norm
  use D_lattice,     ONLY:alat
@@ -118,7 +118,7 @@ subroutine rim_spherical_bose(Np,points,p_weight,radius,power,il,MULTIPLY_BY_Q)
      p_weight(ip)=p_weight(ip)+f_bose/spin_occ/v_norm(qr(ir,:)+pt_cc(:))**power*box_vol/real(N_out)
    enddo
    p_weight(ip)=p_weight(ip)/sphere_vol/real(Np)
-   if(ph_freqs_sq(ip,il)>0._SP) p_weight(ip)=p_weight(ip)/bose_f(sqrt(ph_freqs_sq(ip,il)))*spin_occ
+   if(PH_freqs_sq(ip,il)>0._SP) p_weight(ip)=p_weight(ip)/bose_f(sqrt(PH_freqs_sq(ip,il)))*spin_occ
    !
    if (MULTIPLY_BY_Q) p_weight(ip)=p_weight(ip)*v_norm(pt_cc)**power
    !

@@ -43,10 +43,9 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
  use electrons,      ONLY:levels,spin_occ,n_full_bands
  use R_lattice,      ONLY:bz_samp,qindx_S,nqbz,q_sstar
  use real_time,      ONLY:RT_bands
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp,elph_gkkp_expanded_sq 
+ use ELPH,           ONLY:PH_freqs_sq,elph_branches,GKKP_ep_sq,MAX_gkkp
  use parallel_m,     ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_Xk_ibz_index
  use units,          ONLY:HA2EV
-
  use hamiltonian,    ONLY:B_mat_index
  use RT_occupations, ONLY:RT_el_occ,RT_life_occ,RT_ho_occ,RT_ph_occ
  use RT_lifetimes,   ONLY:RT_EP_emit_life,l_initial_equilibrium,RT_EP_abs_life,&
@@ -88,7 +87,7 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
    !
    do il=elph_branches(1),elph_branches(2)
      !
-     ph_freq=abs(sqrt(ph_freqs_sq(iqbz,il)))
+     ph_freq=abs(sqrt(PH_freqs_sq(iqbz,il)))
      !
      do i_n=RT_bands(1),RT_bands(2)
        !
@@ -111,9 +110,9 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
            !
          endif
          !
-         pre_factor=elph_gkkp_expanded_sq(i_n,i_np,il,iq_mem,ik_mem)/real(RTibz%N_mapped(ik_m_q))
+         if (sqrt(GKKP_ep_sq%dVr(il,i_n,i_np,ik_mem,iq_mem))<MAX_gkkp*cutoff) cycle
          !
-         if (sqrt(elph_gkkp_expanded_sq(i_n,i_np,il,iq_mem,ik_mem))<MAX_gkkp*cutoff) cycle
+         pre_factor=GKKP_ep_sq%dVr(il,i_n,i_np,ik_mem,iq_mem)/real(RTibz%N_mapped(ik_m_q))
          !
          do ik_rim=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
            !

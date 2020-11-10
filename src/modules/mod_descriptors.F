@@ -29,7 +29,7 @@ module descriptors
  !
  type IO_desc
    !
-   integer           :: n
+   integer           :: n=0
    integer           :: size(n_MAX_descs)
    logical           :: check(n_MAX_descs)
    character(2)      :: ops(10,n_MAX_descs)
@@ -108,9 +108,9 @@ module descriptors
    end subroutine
    !
    subroutine IO_desc_element_duplicate(desc_in,desc_out,i_d_in,i_d_out)
-     type(IO_desc),    intent(in)  :: desc_in
-     type(IO_desc),    intent(out) :: desc_out
-     integer,          intent(in)  :: i_d_in,i_d_out
+     type(IO_desc),    intent(in)    :: desc_in
+     type(IO_desc),    intent(inout) :: desc_out
+     integer,          intent(in)    :: i_d_in,i_d_out
      desc_out%size(i_d_out)   = desc_in%size(i_d_in)
      desc_out%term(i_d_out)   = desc_in%term(i_d_in)
      desc_out%str (i_d_out)   = desc_in%str(i_d_in)
@@ -138,6 +138,16 @@ module descriptors
      do i_d=1,desc_in%n
        call IO_desc_element_duplicate(desc_in,desc_out,i_d+off_,i_d)
      enddo
+   end subroutine
+   !
+   subroutine IO_desc_append(desc_in,desc_out)
+     type(IO_desc),    intent(in)    :: desc_in
+     type(IO_desc),    intent(inout) :: desc_out
+     integer  :: i_d
+     do i_d=1,desc_in%n
+       call IO_desc_element_duplicate(desc_in,desc_out,i_d,desc_out%n+i_d)
+     enddo
+     desc_out%n = desc_out%n+desc_in%n 
    end subroutine
    !
    subroutine IO_desc_reset(desc)

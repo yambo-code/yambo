@@ -1,5 +1,6 @@
 #if defined _YPP_ELPH
-ELPH_objects = ELPH_databases.o ELPH_eliashberg_dos.o \
-               ELPH_general_gFsq.o ELPH_excitonic_gkkp.o ELPH_atomic_amplitude.o ELPH_gkkp_expand.o
+ELPH_objects = ELPH_databases.o ELPH_databases_IO_elemental.o ELPH_databases_IO_pol_and_freqs.o ELPH_databases_IO_grids_check.o \
+               ELPH_databases_IO_transfer_and_write.o ELPH_databases_IO_gkkp_expand.o \
+               ELPH_eliashberg_dos.o ELPH_general_gFsq.o ELPH_excitonic_gkkp.o ELPH_atomic_amplitude.o 
 #endif
 objs = $(ELPH_objects)

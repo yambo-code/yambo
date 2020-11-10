@@ -61,7 +61,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode,BSK_mode
  use BS_solvers,     ONLY:BSS_mode,BSS_q0
 #if defined  _ELPH
- use ELPH,           ONLY:elph_nDBs,elph_nDBs_used
+ use ELPH,           ONLY:elph_nQ,elph_nQ_used
 #endif
 #if defined _SC
  use QP_m,           ONLY:QP_ng_Sx
@@ -98,7 +98,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(w_samp)     ::Xxcw
  type(levels)     ::en_sc
  !
- integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err,i_r
+ integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err,i_r
  !
  logical, external:: file_exists
  !
@@ -337,8 +337,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_real_time=runlevel_is_on('negf')
        ! GPL_EXCLUDE_START
        l_elel_scatt =runlevel_is_on('el_el_scatt')
-       l_elph_scatt=runlevel_is_on('el_ph_scatt')
-       l_phel_scatt=runlevel_is_on('ph_el_scatt')
        l_elphoton_scatt=runlevel_is_on('el_photon_scatt')
        ! GPL_EXCLUDE_END
 #endif
@@ -357,7 +355,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! Only in this case ioELPH_err is defined
          !
-         if (io_ELPH_err==0.or.l_real_time) then
+         if (io_ELPH_err(1)==0) then
            l_elph_corr=runlevel_is_on('el_ph_corr')
            l_phel_corr=runlevel_is_on('ph_el_corr')
          else
@@ -365,9 +363,17 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
            l_phel_corr=.FALSE.
            call switch_off_runlevel('el_ph_corr ph_el_corr',on_name=' ')
          endif
+         if (io_ELPH_err(2)==0) then
+           l_elph_scatt=runlevel_is_on('el_ph_scatt')
+           l_phel_scatt=runlevel_is_on('ph_el_scatt')
+         else
+           l_elph_scatt=.FALSE.
+           l_phel_scatt=.FALSE.
+           call switch_off_runlevel('el_ph_scatt ph_el_scatt',on_name=' ')
+         endif
          !
          ! GPL_EXCLUDE_START
-         l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.io_ELPH_err==0
+         l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.io_ELPH_err(1)==0
          ! GPL_EXCLUDE_END
        else
          l_elph_corr=runlevel_is_on('el_ph_corr')
@@ -443,7 +449,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
      if (.not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) l_elel_corr=.true.
 #if defined  _ELPH
-     elph_nDBs_used=elph_nDBs
+     elph_nQ_used=elph_nQ
 #endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
      !

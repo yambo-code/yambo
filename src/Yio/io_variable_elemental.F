@@ -79,11 +79,12 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  DUMP_= (read_is_on(ID) .and. (io_mode(ID)==DUMP))
  if (present(DO_NOT_DUMP)) DUMP_=.not.DO_NOT_DUMP
  !
- i_err=0
- VERIFY_= (read_is_on(ID) .and. (io_mode(ID)==VERIFY .and. present(OP)))
- !
  CHECK_=.false.
  if (present(CHECK)) CHECK_=CHECK
+ !
+ i_err=0
+ VERIFY_= (read_is_on(ID) .and. (io_mode(ID)==VERIFY .and. present(OP))) .or.&
+&         (read_is_on(ID) .and. (CHECK_.and.present(OP)))
  !
  WARN_ =.false.
  if (present(WARN )) WARN_ =WARN

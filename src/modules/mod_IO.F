@@ -422,8 +422,8 @@ module IO_m
      ! Assign a new unit if the unit is not already open
      !
      define_ID=any((/ACTION==OP_RD_CL, ACTION==OP_WR_CL,    &
-&                     ACTION==OP_APP_CL,ACTION==OP_RD,      &
-&                     ACTION==OP_APP,   ACTION==OP_WR/))
+&                    ACTION==OP_APP_CL,ACTION==OP_RD,      &
+&                    ACTION==OP_APP,   ACTION==OP_WR/))
      !
      if (  define_ID .and. (master_cpu .or. (.not.present(COMM))) ) then
        ID=-1
@@ -679,6 +679,14 @@ module IO_m
        if(.not.variable_exist) var_ID=-1
      endif
    end function
+   !
+   subroutine IO_return(ID,timing_string)
+     use timing_m,       ONLY:timing
+     integer          :: ID
+     character(*)     :: timing_string
+     call io_disconnect(ID=ID)
+     call timing(timing_string,OPR='stop')
+   end subroutine
    !
    subroutine deliver_IO_error_message(i_err,DB,STOP_it)
      !

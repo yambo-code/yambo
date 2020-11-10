@@ -97,7 +97,16 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
          !
          if ( .not. PARs_PH_eh_bands%IND%element_1D( B_mat_index(i_n,i_np,bands) ) ) cycle
          !
-         if (sqrt(GKKP_pe_sq%dVr(il,i_np,i_n,ikbz,iq_mem))<MAX_gkkp*cutoff) cycle
+         ! [NOTE]
+         ! In Yambo we have:
+         !    GKKP_YAMBO[i_n,i_np] = <i_n ik|g(q_YAMBO l r)|i_np ik-q_YAMBO>
+         ! In my notes (FP) we have:
+         !    GKKP_NOTES[i_np,i_n] = <i_n ik|g(q_YAMBO l r)|i_np ik-q_YAMBO>
+         ! Therefore:
+         !    GKKP_NOTES[i_np,i_n] = GKKP_YAMBO[i_n,i_np], 
+         ! which is what must go into the pre_factor of the lifetimes
+         !
+         if (sqrt(GKKP_pe_sq%dVr(il,i_n,i_np,ikbz,iq_mem))<MAX_gkkp*cutoff) cycle
          !
          ! At equilibrium, only metals or band gaps < E_debye can give non-zero ph lifetimes
          !
@@ -131,7 +140,7 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
          ! [NOTE]  Variable pre_factor below contains pi since it *shouldn't* come later from the hyperbolic secant FT.
          ! [NOTE2] Variable pre_factor below contains 1/(Nk_bz*N_FG_k) accounting for the double grid at each bz point.
          !
-         pre_factor=spin_occ*GKKP_pe_sq%dVr(il,i_np,i_n,ikbz,iq_mem)*pi/(k%nbz*k_FG%N_mapped(ik)*ph_freq)
+         pre_factor=spin_occ*GKKP_pe_sq%dVr(il,i_n,i_np,ikbz,iq_mem)*pi/(k%nbz*k_FG%N_mapped(ik)*ph_freq)
          !
          do ik_rim=k_FG%k_range(ik,1),k_FG%k_range(ik,2)
            !

@@ -38,7 +38,6 @@ module drivers
  !
  ! Real Time
  !
- logical :: l_photolum           =.FALSE.
  logical :: l_real_time          =.FALSE.
  logical :: l_sc_run             =.FALSE.
  logical :: l_sc_electric        =.FALSE.

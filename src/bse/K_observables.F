@@ -26,13 +26,11 @@ subroutine K_observables(WHAT,W)
  use pars,          ONLY:rZERO,cZERO
  use X_m,           ONLY:X_alloc,Epsilon_ii,Joint_DOS
  use frequency,     ONLY:w_samp
-#if defined _PL
- use PHOTOLUM,      ONLY:PL,PL_init
-#endif
  use BS_solvers,    ONLY:BSS_n_freqs
 #if defined _KERR
  use KERR,          ONLY:B_Hall
- use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_anomalous_Hall,l_BS_dichroism
+ use PHOTOLUM,      ONLY:PL,PL_init
+ use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_anomalous_Hall,l_BS_dichroism,l_BS_photolum
  use X_m,           ONLY:Epsilon_ij,X_magnons,X_dichroism
 #endif
  !
@@ -64,11 +62,11 @@ subroutine K_observables(WHAT,W)
      X_dichroism(:,1)=W%p(:)
    endif
    !
-#endif
-#if defined _PL
-   call PL_init( )
-   PL=rZERO
-   PL(:,1) = W%p(:)  
+   if(l_BS_photolum) then
+     call PL_init( )
+     PL=rZERO
+     PL(:,1) = W%p(:)  
+   endif
 #endif
    !
    call X_alloc("EPS",(/BSS_n_freqs,4/))
@@ -83,9 +81,7 @@ subroutine K_observables(WHAT,W)
    YAMBO_FREE(X_magnons)
    !
    YAMBO_FREE(X_dichroism)
-#endif
    !
-#if defined _PL
    YAMBO_FREE(PL)
 #endif
    !

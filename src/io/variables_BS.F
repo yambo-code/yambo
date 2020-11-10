@@ -55,10 +55,8 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  !
  ! PARS1
  !
- var_size=29
- if (ver_is_gt_or_eq(ID,(/3,0,9/)))      var_size=30
- if (ver_is_gt_or_eq(ID,revision=16339)) var_size=33
- if (iq>1)                               var_size=35
+ var_size=33
+ if (iq>1)  var_size=35
  !
  call IO_desc_reset(desc)
  !
@@ -69,7 +67,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
    call io_variable_elemental(ID,VAR="[K] Q-point",&
 &                             R1=BSqpts(:,iq),CHECK=.true.,OP=(/"==","==","=="/),DESCRIPTOR=desc)
  endif
- call io_variable_elemental(ID,VAR="[K] Dimension",I0=BS_K_dim,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+ call io_variable_elemental(ID,VAR="[K] Dimension",I0=BS_K_dim(1),CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  call io_variable_elemental(ID,VAR="[K] Bands",I1=BS_bands,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)
  call io_variable_elemental(ID,DB_L0=res_exch_disk,VAR="[K] Exchange",&
 &                           TERMINATOR="res",L0=BS_res_K_exchange,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)

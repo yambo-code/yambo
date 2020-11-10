@@ -38,8 +38,8 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  !
  implicit none
  !
- type(bz_samp) :: Xk
- integer       :: iq,i_T_grp
+ type(bz_samp),intent(in) :: Xk
+ integer,      intent(in) :: iq,i_T_grp
  !
  ! Work Space
  !
@@ -101,7 +101,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      ! G==0 term
      !
-     if(trim(L_kind)=="full") BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_R(1,i_T_el)
+     if(trim(L_kind)=="full") BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_opt(1,i_T_el,1)
      if(trim(L_kind)=="Lbar") BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=cZERO
      !
      ! G/=0 terms
@@ -152,7 +152,8 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        !$omp parallel do default(shared), private(i_g1,i_g2)
        do i_g1=2,BS_n_g_exch
          i_g2=g_rot(i_g1,sop_inv(i_s))
-         BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=BS_T_grp(i_T_grp_last_with_identity_sym)%O_x(i_g2,i_T_el_last_with_identity_sym)
+         BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=&
+         & BS_T_grp(i_T_grp_last_with_identity_sym)%O_x(i_g2,i_T_el_last_with_identity_sym)
        enddo
        !$omp end parallel do
        !

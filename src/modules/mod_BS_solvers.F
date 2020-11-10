@@ -25,7 +25,7 @@ module BS_solvers
  !
  use descriptors,    ONLY:IO_desc
  use pars,           ONLY:SP,schlen,lchlen
- use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block,n_BS_blks,BS_blk
+ use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_dim,BS_H_dim,BS_block,n_BS_blks,BS_blk
  use matrix,         ONLY:PAR_matrix
 #include <memory.h>
  !
@@ -140,7 +140,7 @@ module BS_solvers
  real(SP)   , allocatable :: BSS_eh_E_SOC_corr(:,:)
  complex(SP), allocatable :: BS_diagonal(:)
  complex(SP), allocatable :: BS_mat(:,:)
- complex(SP), allocatable :: BSS_dipoles(:)
+ complex(SP), allocatable :: BSS_dipoles_opt(:)
  complex(SP), allocatable :: BSS_eh_Z(:)
  !
  interface 
@@ -156,15 +156,16 @@ module BS_solvers
      type(X_t), optional::X
    end function
    !
-   integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,BsRr,BsE_corr,bsL_magn,bsR_magn,baL_magn,baR_magn,bsR_kerr,bsR_pl)
+   integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,BsRr,BsE_corr,&
+   &                                    bsL_magn,bsR_magn,bsR_kerr,bsR_pl)
      use pars,          ONLY:SP
      use X_m,           ONLY:X_t
      implicit none
      type(X_t),intent(in)         :: X_static
-     integer                      :: iq,ID
+     integer                      :: iq,ID,i_BS_mat
      complex(SP)        ,optional :: bsE(:),bsRl(:),bsRr(:)
      real(SP),   pointer,optional :: BsE_corr(:,:),bsR_pl(:,:)
-     complex(SP),pointer,optional :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:),baL_magn(:,:),baR_magn(:,:)
+     complex(SP),pointer,optional :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:)
    end function
    !
    integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)
@@ -185,13 +186,13 @@ module BS_solvers
    subroutine BSS_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
-     integer :: i_g
+     integer :: i_g,i_size
      logical :: W_is_allocated,Z_is_allocated,E_SOC_is_allocated
-     YAMBO_ALLOC(BSS_dipoles,(BS_H_dim))
-     BSS_dipoles = cZERO
-     YAMBO_ALLOC(BSS_eh_table,(BS_K_dim,5))
-     YAMBO_ALLOC(BSS_eh_E,(BS_K_dim))
-     YAMBO_ALLOC(BSS_eh_f,(BS_K_dim))
+     YAMBO_ALLOC(BSS_dipoles_opt,(BS_H_dim))
+     BSS_dipoles_opt = cZERO
+     YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,5))
+     YAMBO_ALLOC(BSS_eh_E,(BS_H_dim))
+     YAMBO_ALLOC(BSS_eh_f,(BS_H_dim))
      BSS_eh_table = 0
      BSS_eh_E     = rZERO
      BSS_eh_f     = rZERO
@@ -204,11 +205,11 @@ module BS_solvers
        if (.not.E_SOC_is_allocated) E_SOC_is_allocated = allocated(BS_T_grp(i_g)%E_SOC_corr)
      enddo
      if (W_is_allocated) then
-       YAMBO_ALLOC(BSS_eh_W,(BS_K_dim))
+       YAMBO_ALLOC(BSS_eh_W,(BS_H_dim))
        BSS_eh_W = rZERO
      endif
      if (Z_is_allocated) then
-       YAMBO_ALLOC(BSS_eh_Z,(BS_K_dim))
+       YAMBO_ALLOC(BSS_eh_Z,(BS_H_dim))
        BSS_eh_Z = cZERO
      endif
      if (E_SOC_is_allocated) then
@@ -219,19 +220,12 @@ module BS_solvers
    !
    subroutine BSS_free()
      YAMBO_FREE(BSS_eh_table)
-     YAMBO_FREE(BSS_dipoles)
+     YAMBO_FREE(BSS_dipoles_opt)
      YAMBO_FREE(BSS_eh_E)
      YAMBO_FREE(BSS_eh_W)
      YAMBO_FREE(BSS_eh_f)
      YAMBO_FREE(BSS_eh_Z)
      YAMBO_FREE(BSS_eh_E_SOC_corr)
-   end subroutine
-   !
-   subroutine BS_blks_free()
-     integer :: iB
-     do iB=1,n_BS_blks
-       YAMBO_FREE(BS_blk(iB)%mat)
-     enddo
    end subroutine
    !
    subroutine BS_HAYVEC_alloc(V)

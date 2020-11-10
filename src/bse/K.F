@@ -45,9 +45,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                       BS_nT_grps,BS_blks_free,&
+&                       BS_nT_grps,BS_blks_free,l_BS_ares_asymm,&
 &                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
-&                       BS_perturbative_SOC,BS_K_cutoff,BS_max_val
+&                       BS_perturbative_SOC,BS_K_cutoff,BS_max_val,BS_res_ares_dim
  use collision_el, ONLY:elemental_collision_free
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_WR,OP_APP_CL,DUMP,&
@@ -63,8 +63,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free
  use MAGNONS,        ONLY:BSS_MAGN_free
-#endif
-#if defined _PL
  use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
 #if defined _PAR_IO
@@ -244,14 +242,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call deliver_IO_error_message(io_X_err,'PP/Em1s')
    call warning('Bethe Salpter section skipped. Impossible to build the kernel.')
    n_BS_blks=0
-   call BS_blks_free()
+   call BS_blks_free(1)
    !
-#if defined _PL
-   call BSS_PL_free( )
-#endif
 #if defined _KERR
    call BSS_KERR_free( )
    call BSS_MAGN_free( )
+   call BSS_PL_free( )
 #endif
    !
    YAMBO_FREE(BS_W)
@@ -273,7 +269,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! Allocation
    !-----------
-   YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim))
+   YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim(1)))
    YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
    FXC_K_diagonal=0._SP
    FXC=cZERO
@@ -412,10 +408,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if (BS_LiveTiming_steps>= 0) i_steps=BS_Block_size(i_block)
    if (BS_LiveTiming_steps==-1) i_steps=1
    !
-   i_Tgrp_k=BS_blk(i_block)%iT_k
-   i_Tgrp_p=BS_blk(i_block)%iT_p
-   i_k     =BS_blk(i_block)%ik
-   i_p     =BS_blk(i_block)%ip
+   i_Tgrp_k   =BS_blk(i_block)%iT_k
+   i_Tgrp_p   =BS_blk(i_block)%iT_p
+   i_Tgrp_k_st=BS_blk(i_block)%iT_k_st
+   i_Tgrp_p_st=BS_blk(i_block)%iT_p_st
+   i_k        =BS_blk(i_block)%ik
+   i_p        =BS_blk(i_block)%ip
    !
    ! Exchange oscillators
    !----------------------
@@ -470,7 +468,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        select case (BS_blk(i_block)%mode)
        !
-       case ("R")
+       case ("R","A")
          !
          ! :::RESONANT TERM:::
          !=============================
@@ -488,12 +486,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
          !         
-       case ("C")
+       case ("C","Q")
          !
          ! :::COUPLING TERM:::
          !=============================
-         !
-         ! STILL TO FIX AT FINITE Q
          !
          ! Exchange
          if (BS_cpl_K_exchange) H_x=K_exchange_kernel_coupling(iq, BS_n_g_exch,              &
@@ -508,50 +504,22 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
          !
-       case ("A")
-         !
-         ! :::ANTI-RESONANT TERM:::
-         !=============================
-         !
-         ! STILL TO CODE AT FINITE Q
-         !
-         ! Exchange
-         if (BS_cpl_K_exchange) H_x=cZERO
-         !
-         ! ALDA
-         if (BS_K_is_ALDA)      H_x=H_x
-         !
-         ! Correlations
-         if (BS_cpl_K_corr)     H_c=cZERO
-         !
-       case ("Q")
-         !
-         ! :::ANTI-COUPLING TERM:::
-         !=============================
-         !
-         ! STILL TO CODE AT FINITE Q
-         !
-         ! Exchange
-         if (BS_cpl_K_exchange) H_x=cZERO
-         !
-         ! ALDA
-         if (BS_K_is_ALDA)      H_x=H_x
-         !
-         ! Correlations
-         if (BS_cpl_K_corr)     H_c=cZERO
-         !
        end select
        !
        ! We have to add a new mode in addition to resonant and coupling for finiteq,
        ! where the kernel is recomputed in the antiresonant case
        !
-       sqrt_f_itk=sqrt(BS_T_grp(i_Tgrp_k)%f(i_Tk))
-       sqrt_f_itp=sqrt(BS_T_grp(i_Tgrp_p)%f(i_Tp))
+       sqrt_f_itk=sqrt(cmplx(BS_T_grp(i_Tgrp_k)%f(i_Tk),kind=SP))
+       sqrt_f_itp=sqrt(cmplx(BS_T_grp(i_Tgrp_p)%f(i_Tp),kind=SP))
        !
-       if (BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=    sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-       if (BS_blk(i_block)%mode=="C") BS_blk(i_block)%mat(i_Tk,i_Tp)= cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-       if (BS_blk(i_block)%mode=="A") BS_blk(i_block)%mat(i_Tk,i_Tp)=    sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-       if (BS_blk(i_block)%mode=="Q") BS_blk(i_block)%mat(i_Tk,i_Tp)=-cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       if (l_BS_ares_asymm) then
+         BS_blk(i_block)%mat(i_Tk,i_Tp)=    sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       else
+         if (BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=    sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+         if (BS_blk(i_block)%mode=="C") BS_blk(i_block)%mat(i_Tk,i_Tp)= cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+         !if (BS_blk(i_block)%mode=="A") BS_blk(i_block)%mat(i_Tk,i_Tp)=    sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+         !if (BS_blk(i_block)%mode=="Q") BS_blk(i_block)%mat(i_Tk,i_Tp)=-cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       endif
        !
        BS_blk(i_block)%done(i_Tk,i_Tp)="t"
        !

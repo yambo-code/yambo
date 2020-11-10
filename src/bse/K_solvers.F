@@ -38,11 +38,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_m,           ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO
-#if defined _PL
- use drivers,        ONLY:l_photolum
- use PHOTOLUM,       ONLY:BSS_PL_free
-#endif
 #if defined _KERR
+ use BS,             ONLY:l_BS_photolum
+ use PHOTOLUM,       ONLY:BSS_PL_free
  use KERR,           ONLY:BSS_KERR_free
  use MAGNONS,        ONLY:BSS_MAGN_free
 #endif
@@ -84,9 +82,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  run_Slepc     = index(BSS_mode,'s')/=0
 #endif
  !
-#if defined _PL
- !
- if (l_photolum.and.run_Haydock) then
+#if defined _KERR
+ if (l_BS_photolum.and.run_Haydock) then
    call warning('PL currently implemented only using the diagonalization/inversion solver')
    run_Haydock  =.false.
  endif
@@ -162,11 +159,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #if defined _KERR
  call BSS_KERR_free( )
  call BSS_MAGN_free( )
-#endif
- !
-#if defined _PL
  call BSS_PL_free( )
 #endif
- call BS_blks_free( )
+ !
+ call BS_blks_free(1)
  !
 end subroutine

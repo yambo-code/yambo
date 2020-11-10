@@ -70,10 +70,12 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
  !
  ! Every block is at k (ibz) fixed
  !
- i_Tgrp_k=BS_blk(i_block)%iT_k
- i_Tgrp_p=BS_blk(i_block)%iT_p
- i_k     =BS_blk(i_block)%ik
- i_p     =BS_blk(i_block)%ip
+ i_Tgrp_k   =BS_blk(i_block)%iT_k
+ i_Tgrp_p   =BS_blk(i_block)%iT_p
+ i_Tgrp_k_st=BS_blk(i_block)%iT_k_st
+ i_Tgrp_p_st=BS_blk(i_block)%iT_p_st
+ i_k        =BS_blk(i_block)%ik
+ i_p        =BS_blk(i_block)%ip
  !
  ! Table allocation
  !------------------
@@ -118,7 +120,7 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
  O_todo_table=.false.
  !
  select case (BS_blk(i_block)%mode)
- case("R")
+ case("R","A")
    !
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
@@ -141,7 +143,7 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
      enddo
    enddo
    !
- case("C")
+ case("C","Q")
    !
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
@@ -169,7 +171,7 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
  call BS_oscillators_alloc(.FALSE.,0,.TRUE.,i_block)
  !
 #if !defined _CUDA
- !$omp parallel default(shared), private(i_Tk,i_Tp,H_pos, &
+ !$omp parallel default(shared), private(i_Tk,i_Tp, &
  !$omp &          i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_kp_s,i_s_star,&
  !$omp &          i_kmq_s,i_kmq_s_m1,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,i_s_mq_star,&
  !$omp &          i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,iq_W_bz,iq_W_s,ig_W,&
@@ -182,7 +184,7 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
  call elemental_collision_alloc(K_CORR_collision,NG=O_ng, TITLE="CORR_COLL")
  !
  select case (BS_blk(i_block)%mode)
- case("R")
+ case("R","A")
    !
 #if !defined _CUDA
    !$omp do collapse(2), schedule(dynamic)
@@ -214,7 +216,7 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
    !$omp end do
 #endif
    !
- case("C")
+ case("C","Q")
    !
 #if !defined _CUDA
    !$omp do collapse(2), schedule(dynamic)

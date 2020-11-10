@@ -31,9 +31,6 @@ subroutine INIT_activate()
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics
-#if defined _PL
- use drivers,        ONLY:l_photolum
-#endif
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:H_potential
 #endif
@@ -234,14 +231,6 @@ subroutine INIT_activate()
    !
  endif
  !
-#if defined _PL
- !
- ! PL
- !
- if (l_photolum) call initactivate(1,'PL_weights')
- !
-#endif
- !
  ! BSE
  !
  if (l_optics.and.l_bse) then
@@ -265,6 +254,7 @@ subroutine INIT_activate()
    !
 #if defined _KERR
    call initactivate(1,'BSEprop')
+   call initactivate(1,'PL_weights')
 #endif
    !
    call initactivate(1,'DrudeWBS Reflectivity')
@@ -303,7 +293,7 @@ subroutine INIT_activate()
    !
    ! Special project dependent variables
    !
-#if defined _PL 
+#if defined _KERR
    if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSPLInvTrs')
 #endif
 #if defined _ELPH 

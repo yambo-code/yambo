@@ -44,7 +44,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X
  use D_lattice,      ONLY:l_0D,l_1D,l_2D
 #if defined _KERR
- use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall
+ use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum
 #endif
 #if defined _RT
  use drivers,        ONLY:l_rt_carriers_in_use
@@ -109,6 +109,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  call TDDFT_do_X_W_typs(-1,X_tddft,Xw)
  !
+#if defined _KERR
+ ! PL is implemented only in velocity gauge
+ if (l_BS_photolum) global_gauge="velocity"
+#endif
+ !
  if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
    call warning(" Not a valid gauge in input. Switching to lenght gauge")
    global_gauge="length"
@@ -160,24 +165,26 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  BS_K_is_ALDA=l_alda_fxc
  !
  BS_dip_size=1
- l_BS_jdos   = index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP
  l_BS_abs    = (index(BSE_prop,'abs')/=0)
+ l_BS_jdos   = index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP
 #if defined _KERR
  l_BS_dichroism = (index(BSE_prop,'dich')/=0)
- l_BS_kerr   = (index(BSE_prop,'kerr')/=0)
- l_BS_trace  = (index(BSE_prop,'trace')/=0)
- l_BS_magnons= (index(BSE_prop,'magn')/=0) .and.n_spin>1
+ l_BS_kerr      = (index(BSE_prop,'kerr')/=0)
+ l_BS_photolum  = (index(BSE_prop,'photolum')/=0)
+ l_BS_trace     = (index(BSE_prop,'trace')/=0)
+ l_BS_magnons   = (index(BSE_prop,'magn')/=0) .and.n_spin>1
  if (l_BS_magnons.and.n_sp_pol==2) then
    l_BS_abs    = .false.
    l_BS_kerr   = .false.
    l_BS_trace  = .false.
    call warning(" n_sp_pol=2 and magnons requested. Spin flip BSE only is computed")
  endif
- if(l_BS_kerr) then
+ if (l_BS_kerr) then
    call parser('AnHall',l_BS_anomalous_Hall)
    BS_dip_size=2
  endif
- if(l_BS_trace) BS_dip_size=3
+ if (l_BS_photolum) l_BS_trace  = .false.
+ if (l_BS_trace) BS_dip_size=3
 #endif
  !
  ! Energy points
@@ -281,13 +288,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call DIPOLE_dimensions(Ken,Dip,BS_bands,BSS_q0)
    !
    ! ... EH space (no parallelization)
-   call K_Transitions_setup(iq,Ken,Xk,Dip,.FALSE.)
+   call K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
    !
    !... Parallel distribution
    call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
    !
    ! ... EH space (with parallelization) and Transition groups build-up
-   call K_Transitions_setup(iq,Ken,Xk,Dip,.TRUE.)
+   call K_Transitions_setup(iq,Ken,Xk,Dip)
    !
    !... Blocks build-up
    if (.not.l_rpa_IP) call K_blocks(iq)

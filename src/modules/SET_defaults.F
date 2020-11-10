@@ -74,7 +74,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers, ONLY:BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol, BSS_target_E, Slepc_shell
 #endif
- use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,l_BS_trace,&
+ use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BS_K_is_ALDA,BSE_mode,BSE_prop,L_kind,BS_K_cutoff,BS_perturbative_SOC
  use TDDFT,      ONLY:FXC_type,FXC_n_g_corr,&
@@ -89,9 +89,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
 #if defined _KERR
- use BS,         ONLY:l_BS_kerr,l_BS_anomalous_Hall
-#endif
-#if defined _PL
+ use BS,         ONLY:l_BS_anomalous_Hall
  use PHOTOLUM,   ONLY:PL_weights
 #endif
 #if defined _SC 
@@ -455,7 +453,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  TDDFT_mode=' '
  BSS_add_antiresonant=.FALSE.
  BSS_Wd=cZERO
- l_BS_trace=.false.
  l_drude=.false.
  BS_K_dim=0
  BS_K_cutoff=0.0000_SP
@@ -513,11 +510,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  GS_exx_SCREENING=0.0            ! no screening
  !
 #if defined _KERR
- l_BS_kerr=.false.
  l_BS_anomalous_Hall=.false.
-#endif
- !
-#if defined _PL
  PL_weights=(/1._SP,1._SP,1._SP/)
 #endif
  !

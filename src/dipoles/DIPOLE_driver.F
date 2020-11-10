@@ -64,7 +64,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use DIPOLES,        ONLY:P_square
 #endif
 #if defined _KERR
- use BS,             ONLY:BSE_prop,l_BS_magnons,l_BS_dichroism
+ use BS,             ONLY:BSE_prop,l_BS_magnons,l_BS_dichroism,l_BS_photolum
 #endif
 
 #if defined _KERR  
@@ -98,7 +98,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #if defined _KERR
  l_BS_magnons= (index(BSE_prop,'magn')/=0)
  l_BS_dichroism= (index(BSE_prop,'dich')/=0)
- if(l_BS_dichroism) Dip%bands_ordered=.false.
+ l_BS_photolum= (index(BSE_prop,'photolum')/=0)
+ if(l_BS_dichroism.or.l_BS_magnons) Dip%bands_ordered=.false.
 #endif
  !
 #if defined _NL
@@ -143,6 +144,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  call parser('PDirect'  ,Dip%force_v_g_space)
 #if defined _SC || defined _RT || defined _NL
  Dip%force_v_g_space=Dip%force_v_g_space.or.l_sc_run.or.l_real_time.or.l_nl_optics
+#endif
+#if defined _KERR
+ Dip%force_v_g_space=Dip%force_v_g_space.or.l_BS_photolum
 #endif
  Dip%force_v_g_space     =Dip%force_v_g_space.and.(.not.use_g_space_approach)
  use_dipole_transverse   =.true.
@@ -319,7 +323,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
     !
     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPk_ibz_A2A
     !
-    integer  :: ic,iv,i_sp_pol,i_sp_pol_inv,ik,ik_mem
+    integer  :: ic,iv,i_sp_pol,i_sp_pol_inv,i_sp_pol_tmp,ik,ik_mem
     !
     i_sp_pol_inv=1
     !
@@ -341,8 +345,11 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
         ! GPL_EXCLUDE_START 
         !
 #if defined _RT || defined _KERR
-        if (compute_Spin_dipoles) &
-        & call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+        if (compute_Spin_dipoles.and.i_sp_pol==1) then
+          do i_sp_pol_tmp=1,n_sp_pol
+            call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol_tmp),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+          enddo
+        endif
 #endif
 #if defined _RT
         if (compute_Spin_dipoles.and.n_spinor==2) &
@@ -395,8 +402,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
               !
 #if defined _RT || defined _KERR
               if (compute_Spin_dipoles) then
-                DIP_spin(1,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(1,ic,iv,ik_mem,i_sp_pol_inv))
-                DIP_spin(2,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(2,ic,iv,ik_mem,i_sp_pol_inv))
+                DIP_spin(1,iv,ic,ik_mem,i_sp_pol_inv)= conjg(DIP_spin(1,ic,iv,ik_mem,i_sp_pol))
+                DIP_spin(2,iv,ic,ik_mem,i_sp_pol_inv)= conjg(DIP_spin(2,ic,iv,ik_mem,i_sp_pol))
                 DIP_spin(3,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(3,ic,iv,ik_mem,i_sp_pol))
               endif
 #endif

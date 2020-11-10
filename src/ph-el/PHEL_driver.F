@@ -59,7 +59,7 @@ subroutine PHEL_driver(E,k,q)
  ! ...DbGd
  PH_DbGd_points    =k%FGibz%N
  l_PH_uses_E_FineGd=PH_DbGd_points>0
- l_GKKP_hosts_bare_dV=index(PH_Self_Energy_mode,"bare")>0
+ if ( index(PH_Self_Energy_mode,"bare")>0 ) l_GKKP_hosts_bare_dV = .true.
  !
  ! ... BZ Setup
  call k_build_up_BZ_tables(q)

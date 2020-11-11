@@ -144,6 +144,11 @@ subroutine PHEL_driver(E,k,q)
  !=======
  call PP_redux_wait(RT_PE_life%emit)
  call PP_redux_wait(RT_PE_life%abs)
+ !DEBUG> (FP)
+ call PP_redux_wait(RT_PE_life_interband)
+ call PP_redux_wait(RT_PE_life_intraband)
+ call PP_redux_wait(PE_linewidth)
+ !DEBUG<
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
  i_err=io_PH(ID)

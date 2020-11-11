@@ -213,9 +213,10 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
            PE_linewidth(il,iq_life)=PE_linewidth(il,iq_life) +TMP_linewidth*pre_factor
            ! Here we separate the interband and intraband (Drude) components of the Emit lifetimes
            if (i_np == i_n) then
-             RT_PE_life_intraband(il,iq_life)= RT_PE_life_intraband(il,iq_life) +TMP_Emit_lifetime*pre_factor
+             RT_PE_life_intraband(il,iq_life)= RT_PE_life_intraband(il,iq_life) +TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
            else
-             RT_PE_life_interband(il,iq_life)= RT_PE_life_interband(il,iq_life) +TMP_Emit_lifetime*pre_factor
+             RT_PE_life_interband(il,iq_life)= RT_PE_life_interband(il,iq_life) +TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
+           endif
            !DEBUG<
          enddo ! ik_rim i.e. (nk)
          !

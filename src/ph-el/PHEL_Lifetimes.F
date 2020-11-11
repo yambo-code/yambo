@@ -144,9 +144,9 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
          ! 2 from KBE collision integral, spin_occ=2 from ph-el self-energy (polarization bubble), pi from delta functions,
          ! 1/Nk from k-sum, (2*ph_freq)^-1 to correctly normalize Gkkp_sq.
          ! [NOTE]  Variable pre_factor below contains pi since it *shouldn't* come later from the hyperbolic secant FT.
-         ! [NOTE2] Variable pre_factor below contains 1/(Nk_bz*N_FG_k) accounting for the double grid at each bz point.
+         ! [NOTE2] Variable pre_factor below contains 1/(Nk_bz*N_FG_k*N_FG_k_m_q) accounting for the double grid at each bz point.
          !
-         pre_factor=spin_occ*GKKP_pe_sq%dVr(il,i_n,i_np,ikbz,iq_mem)*pi/(k%nbz*k_FG%N_mapped(ik)*ph_freq)
+         pre_factor=spin_occ*GKKP_pe_sq%dVr(il,i_n,i_np,ikbz,iq_mem)*pi/(k%nbz*k_FG%N_mapped(ik)*k_FG%N_mapped(ik_m_q)*ph_freq)
          !
          do ik_rim=k_FG%k_range(ik,1),k_FG%k_range(ik,2)
            !

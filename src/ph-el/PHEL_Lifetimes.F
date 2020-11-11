@@ -69,7 +69,7 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
 &            TMP_Emit_lifetime,TMP_Abs_lifetime,TMP_eh_lifetime,N_q,f_mkq,f_nk,&
 &            Hole_f_mkq,Hole_f_nk
  !DEBUG> (FP)
- real (SP) :: TMP_linewidth,TMP_interband,TMP_intraband
+ real (SP) :: TMP_linewidth
  !DEBUG<
  !
  iq_mem =PARs_PH_Q_ibz%table(iq)
@@ -157,8 +157,6 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
            TMP_eh_lifetime=rZERO
            !DEBUG> (FP)
            TMP_linewidth=rZERO
-           TMP_interband=rZERO
-           TMP_intraband=rZERO
            !DEBUG<
            !
            do ip_rim=k_FG%k_range(ik_m_q,1),k_FG%k_range(ik_m_q,2)
@@ -203,27 +201,24 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
              !
              !DEBUG> (FP) This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
              TMP_linewidth=TMP_linewidth +(f_mkq-f_nk)*D_res
-             ! Here we separate the Emit lifetime in intraband and interband contributions
-             if (i_n==i_np) then 
-               TMP_intraband = TMP_intraband+ f_nk*Hole_f_mkq*D_ares+Hole_f_nk*f_mkq*D_res
-             else
-               TMP_interband = TMP_interband+ f_nk*Hole_f_mkq*D_ares+Hole_f_nk*f_mkq*D_res
-             endif 
              !DEBUG<
            enddo ! ip_rim i.e. (mk-q)
            !
+           ! Phonon emission (stimulated and spontaneous)
+           RT_PE_life%emit(il,iq_life)=RT_PE_life%emit(il,iq_life)+TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
+           ! Phonon absorption
+           RT_PE_life%abs(il,iq_life) =RT_PE_life%abs(il,iq_life)+TMP_Abs_lifetime*pre_factor*N_q
+           !       
+           !DEBUG> (FP)
+           PE_linewidth(il,iq_life)=PE_linewidth(il,iq_life) +TMP_linewidth*pre_factor
+           ! Here we separate the interband and intraband (Drude) components of the Emit lifetimes
+           if (i_np == i_n) then
+             RT_PE_life_intraband(il,iq_life)= RT_PE_life_intraband(il,iq_life) +TMP_Emit_lifetime*pre_factor
+           else
+             RT_PE_life_interband(il,iq_life)= RT_PE_life_interband(il,iq_life) +TMP_Emit_lifetime*pre_factor
+           !DEBUG<
          enddo ! ik_rim i.e. (nk)
          !
-         ! Phonon emission (stimulated and spontaneous)
-         RT_PE_life%emit(il,iq_life)=RT_PE_life%emit(il,iq_life)+TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
-         ! Phonon absorption
-         RT_PE_life%abs(il,iq_life) =RT_PE_life%abs(il,iq_life)+TMP_Abs_lifetime*pre_factor*N_q
-         !       
-         !DEBUG> (FP)
-         PE_linewidth(il,iq_life)=PE_linewidth(il,iq_life) +TMP_linewidth*pre_factor
-         RT_PE_life_interband(il,iq_life)= RT_PE_life_interband(il,iq_life) +TMP_interband*pre_factor
-         RT_PE_life_intraband(il,iq_life)= RT_PE_life_intraband(il,iq_life) +TMP_intraband*pre_factor
-         !DEBUG<
        enddo ! i_np i.e. (mk-q)
        !
      enddo ! i_n i.e. (nk)

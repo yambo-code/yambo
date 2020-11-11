@@ -219,8 +219,9 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
          tmp_lifetimes(n_gamma  )=RT_carriers%GAMMA_EE%emit(i_RT)+RT_carriers%GAMMA_EE%emit_bare(i_RT)
        endif
        if (.not.l_OCCgroup_path) then
-         data_to_plot(3:n_gamma+2)=  tmp_lifetimes(1:n_gamma)    *HA2EV*1000._SP
-         data_to_plot(  n_gamma+3)=RT_carriers%NEQ_Lifetime(i_RT)*HA2EV*1000._SP
+         data_to_plot(2+1:2+n_gamma)=tmp_lifetimes(1:n_gamma)    *HA2EV*1000._SP
+         data_to_plot(    n_gamma+3)=RT_carriers%NEQ_Lifetime(i_RT)*HA2EV*1000._SP
+         n_output=n_gamma+3
        endif
      endif
      !
@@ -240,7 +241,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        endif
      else
        data_to_plot(2)=RT_carriers%OCC_el%dN(i_RT)
-       call msg('o '//trim(output_fname_short(1)),'',data_to_plot(:n_gamma+3),INDENT=-2,USE_TABS=.true.)
+       call msg('o '//trim(output_fname_short(1)),'',data_to_plot(:n_output),INDENT=-2,USE_TABS=.true.)
        call of_open_close(output_fname(1,i_RT))
      endif
      !

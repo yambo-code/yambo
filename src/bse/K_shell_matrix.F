@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_shell_matrix(slepc_mat)
+subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !
  ! Create a PETSC ShellMatrix and define the matrix-vector product
  ! function using the routine K_multiply_by_V 
@@ -30,7 +30,7 @@ subroutine K_shell_matrix(slepc_mat)
  !  K = |                       |
  !      | (-cI*K_c^*)  (-K_r^*) |
  !
- use BS,             ONLY:BS_H_dim, BS_nT_grps, BS_blk, n_BS_blks
+ use BS,             ONLY:BS_H_dim, BS_nT_grps, BS_blk, n_BS_blks, BS_mat_res_ares_dim
  use BS_solvers,     ONLY:Slepc_v,BS_HAYVEC_alloc
  !
 #include <petsc/finclude/petscsys.h>
@@ -47,11 +47,15 @@ subroutine K_shell_matrix(slepc_mat)
  !
 #include <memory.h>
  !
+ integer, intent(in)  :: i_BS_mat
+ Mat,     intent(out) :: slepc_mat
+ !
  integer          :: i_B, i_r, i_c, i_Tk, i_Tp
  PetscFortranInt  :: SL_H_dim,SL_K_dim
- Mat              :: slepc_mat
  PetscErrorCode   :: ierr
  external K_multiply_by_V_slepc
+ !
+ if (BS_mat_res_ares_dim==2) call error(" Slepc with shells and multiple BS_mat not coded")
  !
  SL_H_dim=BS_H_dim
  !

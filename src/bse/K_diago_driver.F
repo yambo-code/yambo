@@ -201,9 +201,9 @@ subroutine K_diago_driver(iq,W,X_static)
      if(l_slepc) then
        ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
        ! using the K_multiply_by_V function used in the Haydock method
-       if (     Slepc_shell) call K_shell_matrix(slepc_mat)
+       if (     Slepc_shell) call K_shell_matrix(i_BS_mat,slepc_mat)
        ! 2. Here we create a distributed PETSC matrix from the BS_blks
-       if (.not.Slepc_shell) call K_stored_in_a_slepc_matrix(slepc_mat)
+       if (.not.Slepc_shell) call K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
      endif
 #endif
      !
@@ -375,7 +375,11 @@ subroutine K_diago_driver(iq,W,X_static)
          YAMBO_ALLOC(BS_E_real,(BSS_n_eig))
 #if defined _SLEPC && !defined _SLEPC_OFF
          if(l_slepc) then
-           YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
+           if (BS_K_coupling) then
+             YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
+           else
+             YAMBO_ALLOC(BS_mat,(BS_K_dim(i_BS_mat),BSS_n_eig))
+           endif
          endif
 #endif
          if(BSS_perturbative_width.and..not.allocated(BS_corrections)) then

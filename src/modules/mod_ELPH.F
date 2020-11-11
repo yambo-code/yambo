@@ -37,7 +37,7 @@ module ELPH
  integer   :: elph_nQ_used=0
  integer   :: elph_branches(2)=0
  !
- logical   :: elph_use_q_grid=.TRUE.
+ logical   :: elph_use_q_grid=.FALSE.
  logical   :: elph_grids_are_expanded=.FALSE.
  !
  ! QP props

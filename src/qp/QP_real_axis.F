@@ -41,6 +41,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
 &                        PAR_nG_bands,PAR_nQ_bz
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
 &                        PARALLEL_WF_distribute,QP_state_print
+ use matrix_operate,ONLY:mat_transpose
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use wave_func,     ONLY:WF
  use DIPOLES,       ONLY:DIPOLE_t
@@ -49,7 +50,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,QP_Sc_steps,&
 &                        QP_n_W_freqs_redux,e2et,h2ht
- use X_m,           ONLY:X_alloc,X_mat,X_t
+ use X_m,           ONLY:X_alloc,X_mat,X_t,X_par
  use functions,     ONLY:bose_decay
  use R_lattice,     ONLY:qindx_S,bz_samp,nqibz
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev,mag_syms
@@ -70,10 +71,11 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  ! WorkSpace
  !
  type(elemental_collision) ::scattering_main,scattering_prime
- type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
- integer          ::i1,i2,i3,i4,i_or,iqbz,iqibz,ib,i_err,i_q_to_start,iqs,&
-&                   io_err,X_id,WID,IO_ACT,timing_steps,i_q_mem,X_range(2),i_qp,i_qp_mem,i_q_W_mem,i_b_mem
- complex(SP)      :: lrhotw(X%ng),X_mat_ws(X%ng,X%ng),W_dummy
+ type(w_samp)     :: Sc_W(qp%n_states),X_life_W(q%nibz)
+ integer          :: i1,i2,i3,i4,i_or,iqbz,iqibz,ib,i_err,i_q_to_start,iqs,&
+&                    io_err,X_id,WID,IO_ACT,timing_steps,i_q_mem,X_range(2),i_qp,i_qp_mem,i_q_W_mem,i_b_mem
+ integer          :: X_rows1,X_rows2,X_cols1,X_cols2
+ complex(SP)      :: lrhotw(X%ng),W_dummy
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
  integer, external   ::io_X,io_QP_and_GF,X_dielectric_matrix,QP_life_transitions
@@ -365,12 +367,27 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    endif
    !
    if (iqs>nsym/(i_time_rev+1) .and. (i_space_inv==0.or.mag_syms) .and..not.X_is_TR_rotated) then
-     X_is_TR_rotated=.true.
+     !
      do i3=X_range(1),X_range(2)
-       forall(i1=1:X%ng,i2=1:X%ng) X_mat_ws(i2,i1)=X_mat(i1,i2,i3)
-       X_mat(:,:,i3)=X_mat_ws(:,:)
+       call mat_transpose(X_mat(:,:,i3))
      enddo
+     X_is_TR_rotated=.true.
    endif
+   !
+   ! mapping of X_par from X_mat
+   ! TO BE completed (avoiding reference to X_mat in the following)
+   !
+   if (.not. allocated(X_par) ) allocate(X_par(1))
+   call X_PARALLEL_alloc(X_par(1),X%ng,Xw%n_freqs,"X")
+   !
+   ! Useful when GPU porting will be introduced
+   ! X_blc_p=> DEV_VAR(X_par%blc)
+   !
+   X_rows1=X_par(1)%rows(1)
+   X_rows2=X_par(1)%rows(2)
+   X_cols1=X_par(1)%cols(1)
+   X_cols2=X_par(1)%cols(2)
+   !
    !
    qp_loop: do i_qp=1,QP_n_states
      !
@@ -435,8 +452,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
          !
          i2=life_W_table(iqibz,QP_n_W_freqs)
          !
-         do i3=1,X%ng
-           lrhotw(i3)=V_dot_V_omp(X%ng,scattering_main%rhotw,X_mat(:,i3,i2+X_range(1)-1))
+         do i3=X_cols1,X_cols2
+           lrhotw(i3)=V_dot_V_omp(X_rows2-X_rows1+1,scattering_main%rhotw(X_rows1:X_rows2),&
+&                                 X_mat(X_rows1:X_rows2,i3,i2+X_range(1)-1))
          enddo
          !
          ! To compensate the Tel/w divergence of the Bose function at finite
@@ -447,7 +465,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
          ! 
          qp%E(i_qp)=qp%E(i_qp)-2._SP*cI*pi*&
 &                   (life_Fe+life_Fh)*bose_decay( real(X_life_W(iqibz)%p(i2)) )*&
-&                   Vstar_dot_V_omp(X%ng,scattering_prime%rhotw,lrhotw)
+&                   Vstar_dot_V_omp(X_cols2-X_cols1+1,scattering_prime%rhotw(X_cols1:X_cols2),&
+&                                   lrhotw(X_cols1:X_cols2))
          !
        else ! .not.l_life
          !
@@ -455,23 +474,27 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
          !
          do i2=1,QP_n_W_freqs
            W_dummy=cZERO
-!$omp parallel do default(shared), private(i3,i4), reduction(+:W_dummy), collapse(2)
-           do i3=1,X%ng
-             do i4=1,X%ng
-               W_dummy=W_dummy+scattering_main%rhotw(i3)*X_mat(i3,i4,i2+X_range(1)-1)*conjg(scattering_prime%rhotw(i4))
+           !
+           !$omp parallel do default(shared), private(i3,i4), reduction(+:W_dummy), collapse(2)
+           do i4=X_cols1,X_cols2
+             do i3=X_rows1,X_rows2
+               W_dummy=W_dummy+scattering_main%rhotw(i3)*X_mat(i3,i4,i2+X_range(1)-1)*&
+&                              conjg(scattering_prime%rhotw(i4))
              enddo
            enddo
-!$omp end parallel do
+           !
            QP_W(i_qp_mem,i_q_W_mem,i_b_mem,i2)=-4._SP/spin_occ*W_dummy
          enddo
 #else
          do i2=1,QP_n_W_freqs
            !
-           do i3=1,X%ng
-             lrhotw(i3)=V_dot_V(X%ng,scattering_main%rhotw,X_mat(:,i3,i2+X_range(1)-1))
+           do i3=X_cols1,X_cols2
+             lrhotw(i3)=V_dot_V(X_rows2-X_rows1+1,scattering_main%rhotw(X_rows1:X_rows2),&
+&                               X_mat(X_rows1:X_rows2,i3,i2+X_range(1)-1))
            enddo
            !
-           W_dummy=Vstar_dot_V_omp(X%ng,scattering_prime%rhotw,lrhotw)
+           W_dummy=Vstar_dot_V_omp(X_cols2-X_cols1+1,scattering_prime%rhotw(X_cols1:X_cols2),&
+&                                  lrhotw(X_cols1:X_cols2))
            !
            QP_W(i_qp_mem,i_q_W_mem,i_b_mem,i2)=-4._SP/spin_occ*W_dummy
            !

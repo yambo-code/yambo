@@ -591,14 +591,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
        else if (l_sc_sex.or.l_cohsex.or.(l_sc_coh.and.COHSEX_use_empties)) then
          !
-         call M_by_V('N', X%ng, X_par(iq_mem)%blc(:,:,X_range(1)), conjg(iscp%rhotw), local_rhotw)
+         call M_by_V('N', X%ng, X_mat(:,:,X_range(1)), conjg(iscp%rhotw), local_rhotw)
          !
          pre_factor=0.0_SP
+         !
          !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor)
          do ig1=X_rows1,X_rows2
            pre_factor=pre_factor+isc%rhotw(ig1)*local_rhotw(ig1)
          enddo
-         !$omp end parallel do
 
          !
          ! SEX

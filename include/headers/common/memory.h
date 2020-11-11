@@ -22,7 +22,7 @@
  MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
  
 */
- use memory, ONLY:MEM_err,MEM_msg,MEM_count,MEM_global_mesg,IPL
+ use memory,     ONLY:MEM_err,MEM_msg,MEM_count,MEM_global_mesg,IPL
  implicit none
  
  integer(IPL) :: Sz

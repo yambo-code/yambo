@@ -64,12 +64,12 @@ subroutine electrons_dos(Xk,Xen)
  ! E Double Grid
  !===============
  !
- l_DbGD=Xen%nb_FineGd>0
+ l_DbGD=Xen%FG%nb>0
  !
- if (l_DbGd) DOS_bands(2)=min(DOS_bands(2),Xen%nb_FineGd)
+ if (l_DbGd) DOS_bands(2)=min(DOS_bands(2),Xen%FG%nb)
  !
  call QP_state_table_setup(Xen)
- call QP_apply(DOS_bands,Xen,Xk,'G',msg_fmt='s')
+ call QP_apply(DOS_bands,Xen,Xk,'G',msg_fmt='rs')
  !
  ! Setup
  !=======
@@ -96,7 +96,7 @@ subroutine electrons_dos(Xk,Xen)
  if (l_PROJECT_atom) then
    YAMBO_ALLOC(PDOS_fac_v,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_sp_pol))
    call electrons_pdos_factors((/1,Xk%nibz/),DOS_bands,PDOS_fac_v)
-   PDOS_fac_p(DOS_bands(1):DOS_bands(2),1:Xk%nibz,1:n_spinor) => PDOS_fac_v
+   PDOS_fac_p(DOS_bands(1):DOS_bands(2),1:Xk%nibz,1:n_sp_pol) => PDOS_fac_v
  endif
  !
  if (n_spinor==2) then

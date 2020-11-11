@@ -48,6 +48,9 @@ subroutine TIMING_overview(list,main_name)
  real(DP)           :: total_time(ncpu),min_max_time(2)
  character(lchlen)  :: clock_name
  !
+ integer,  allocatable :: tmp_int(:)
+ real(SP), allocatable :: tmp_real(:)
+ !
  integer, allocatable :: sorted_times_index(:)
  real(SP),allocatable :: sorted_times(:)
  !
@@ -78,6 +81,9 @@ subroutine TIMING_overview(list,main_name)
    call PP_redux_wait(n_clocks)
    !
    allocate(list_all_cpu%clock(sum(n_clocks)))
+   allocate(tmp_int(sum(n_clocks)))
+   allocate(tmp_real(sum(n_clocks)))
+   !
    list_all_cpu%name=list%name
    list_all_cpu%nclock=sum(n_clocks)
    do i=1,list_all_cpu%nclock 
@@ -96,9 +102,19 @@ subroutine TIMING_overview(list,main_name)
      endif
    enddo
    !
-   call PP_redux_wait(list_all_cpu%clock(:)%total_time)
-   call PP_redux_wait(list_all_cpu%clock(:)%call_number)
-   call PP_redux_wait(list_all_cpu%clock(:)%cpu_id)
+   tmp_real(:)=list_all_cpu%clock(:)%total_time
+   call PP_redux_wait(tmp_real)
+   list_all_cpu%clock(:)%total_time=tmp_real(:)
+   !
+   tmp_int(:)=list_all_cpu%clock(:)%call_number
+   call PP_redux_wait(tmp_int)
+   list_all_cpu%clock(:)%call_number=tmp_int
+   !
+   tmp_int(:)=list_all_cpu%clock(:)%cpu_id
+   call PP_redux_wait(tmp_int)
+   list_all_cpu%clock(:)%cpu_id=tmp_int(:)
+   !
+   deallocate(tmp_int,tmp_real)
    !
    do i=1,list_all_cpu%nclock 
      if (list_all_cpu%clock(i)%cpu_id<=0) cycle

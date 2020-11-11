@@ -30,8 +30,11 @@ cat <<EOF > .git/hooks/pre-commit
 #!/bin/bash
 sbin/yambo_versions_update.tcsh r
 git add configure
+if [ -e include/version.inc ]   ; then  git add include/version.inc ;     fi
 if [ -e config/version.m4 ]     ; then  git add config/version.m4 ;     fi
 if [ -e config/version.m4_gpl ] ; then  git add config/version.m4_gpl ; fi
+if [ -e config/version/version.m4 ]     ; then  git add config/version/version.m4 ;     fi
+if [ -e config/version/version.m4_gpl ] ; then  git add config/version/version.m4_gpl ; fi
 EOF
 chmod +x .git/hooks/pre-commit
 #
@@ -68,7 +71,7 @@ if [ -f .check_configure ]; then
   cp configure configure_save
   autoconf configure.ac > configure
   rm -fr autom4te.cache
-  if [ \$(diff configure configure_save | head -c 5) ]; then
+  if [ ! \$(cmp -s configure configure_save) ]; then
     echo "configure automatically updated after merge"
     rm configure_save
     git commit -m "Automatic commit: configure regenerated after merge"  --no-edit
@@ -91,7 +94,7 @@ if [ -f .check_configure ]; then
   cp configure configure_save
   autoconf configure.ac > configure
   rm -fr autom4te.cache
-  if [ \$(diff configure configure_save | head -c 5) ]; then
+  if [ ! \$(cmp -s configure configure_save) ]; then
     echo "configure automatically updated after merge"
     rm configure_save
     git add configure

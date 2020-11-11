@@ -25,7 +25,7 @@ uncompress-stamp:
 
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	cat $(prefix)/config/setup $(srcdir)/lib/blacs/Bmake.inc_lib > Bmake.inc ; \
+	cat $(compdir)/config/setup $(srcdir)/lib/blacs/Bmake.inc_lib > Bmake.inc ; \
 	cp  $(srcdir)/lib/blacs/Makefile.lib  Makefile );  \
 	fi
 	touch configure-stamp

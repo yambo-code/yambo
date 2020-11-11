@@ -59,7 +59,7 @@ subroutine QP_apply_QP(i_ACTION,bands,en,k,qp)
  !
  ! Interpolation
  !
- call QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
+ if (.not.QP_action(i_ACTION)%plan(7)) call QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  !
  ! FIT?
  !

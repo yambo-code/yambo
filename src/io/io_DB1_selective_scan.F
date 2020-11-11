@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a)
+integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode)
  !
  ! Do a selective (only variables specified in what) or a 
  ! global I/O of the DB1 database located in the path
@@ -44,10 +44,11 @@ integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a)
  character(*)      :: DB1_path,what
  real(SP),optional :: db1_a(3,3)
  real(SP),optional :: db1_alat(3)
+ integer ,optional :: COM_mode
  !
  ! WorkSpace
  !
- integer           :: ID,i_io,i1,i2,is
+ integer           :: ID,i_io,i1,i2,is,COM_here
  integer, external :: io_DB1
  character(lchlen) :: core_io_path_save
  !
@@ -61,9 +62,14 @@ integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a)
  !
  ! When all the informations in the DB1 need to be reloaded
  ! I can use also a complete database.
+ !
+ COM_here=NONE
+ if (present(COM_mode)) then
+   COM_here=COM_mode
+ endif
  ! 
  if (what/='all') then
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,ID=ID)
+   call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,ID=ID)
    io_DB1_selective_scan =io_connect(desc="db1",type=0,ID=ID)
    if (io_DB1_selective_scan/=0) then 
      call io_disconnect(ID=ID)
@@ -94,7 +100,7 @@ integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a)
    !
    ! DB1
    !
-   call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
+   call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=COM_here,MODE=DUMP,ID=ID)
    io_DB1_selective_scan=io_DB1(E,k,ID)
    !
  endif

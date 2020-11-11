@@ -50,6 +50,8 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  if(l_kpoints) then
    call msg('nr','IBZ '//trim(what)//'-points ',k%nibz)
    call msg('rn','BZ  '//trim(what)//'-points ',k%nbz)
+   call msg('r','K/Q-points units:')
+   call msg('rn','rlu = crystal or reduced units; cc = cartesian coordinates; iku = interal k-units ')
  endif
  !
  do ik=k_range(1),k_range(2)
@@ -70,9 +72,9 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
      if (ik<=nXkibz .or. trim(what)=="Q") call msg('r',trim(dumb_ch1)//' : weight       ',Xk%weights(ik) )
      if(trim(what)=="K") call msg('r','      : wf components',wf_nc_k(ik) )
      if (ik<=nXkibz .or. (trim(what)=="Q")) then
+       if (fat_log) call msg('r','      : point-iku    ',k%pt(ik,:),' [iku] ')
        if (fat_log) call msg('r','      : point-cc     ',k_cc,' [cc] ')
-       if (fat_log) call msg('r','      : point-alat   ',k_al,' [alat] ')
-       call msg('r','      : point-iku    ',k%pt(ik,:),' [iku] ')
+       call msg('r','      : point-rlu    ',k_al,' [rlu] ')
      endif
    endif
    !

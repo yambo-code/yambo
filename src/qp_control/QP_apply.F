@@ -200,7 +200,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
  if (en%nbf==en%nbm) then
    !
    call QP_apply_gap_report(en,"coarse-grid")
-   if (allocated(en%E_FineGd)) call QP_apply_gap_report(en,"FineGd")
+   if (allocated(en%FG%E)) call QP_apply_gap_report(en,"FineGd")
    call msg('r','')
    !
  endif
@@ -227,7 +227,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
     do i_spin=1,n_sp_pol
       Ego(i_spin)=minval(E%Eo(E%nbf+1,:,i_spin))-maxval(E%Eo(E%nbf,:,i_spin))
       if (title=="FineGd") then
-        Eg(i_spin)=minval(E%E_FineGd(E%nbf+1,:,i_spin))-maxval(E%E_FineGd(E%nbf,:,i_spin))
+        Eg(i_spin)=minval(E%FG%E(E%nbf+1,:,i_spin))-maxval(E%FG%E(E%nbf,:,i_spin))
       else
         Eg(i_spin)=minval(E%E(E%nbf+1,:,i_spin))-maxval(E%E(E%nbf,:,i_spin))
       endif

@@ -48,7 +48,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  ! Work Space
  !
- integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2),i_a,n_axis,Nk_path,last_ik
+ integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2),i_a,Nk_path,last_ik
  real(SP)              :: io_Time,tmp_lifetimes(6),data_to_plot(9),k_al(3),k_cc(3),axis(3,3),&
 &                         data_to_plot_cumulative(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,9),O(3)
  character(schlen)     :: titles(9),specs(9,2),dumb_ch(2)
@@ -83,8 +83,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !======================================
  call k_special( )
  call k_circuit_made_of_special_points( BANDS_path, 1 )
- n_axis=3
- call PROJECTION_axis(n_axis,axis,O)
+ call PROJECTION_axis(axis,O)
  if ( CIRCUIT_k%nbz>0 ) then
    call c2a(v_in=O,mode='ki2c')
    do i_a=1,3
@@ -209,14 +208,14 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      !
      if (n_gamma>0) then
        if (l_elph_lifetimes) then
-         tmp_lifetimes(1)=RT_carriers%dGAMMA_E_P_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,3)
-         tmp_lifetimes(2)=RT_carriers%dGAMMA_E_P_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,4)
-         tmp_lifetimes(3)=RT_carriers%dGAMMA_E_P_El_Abs(i_RT)  +RT_carriers%GAMMA_bare(i_RT,5)
-         tmp_lifetimes(4)=RT_carriers%dGAMMA_E_P_El_Abs(i_RT)  +RT_carriers%GAMMA_bare(i_RT,6)
+         tmp_lifetimes(1)=RT_carriers%dGAMMA_E_P_Hole(i_RT)+RT_carriers%GAMMA_bare(i_RT,3)
+         tmp_lifetimes(2)=RT_carriers%dGAMMA_E_P_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,4)
+         tmp_lifetimes(3)=RT_carriers%dGAMMA_E_P_Ho_Abs(i_RT)+RT_carriers%GAMMA_bare(i_RT,5)
+         tmp_lifetimes(4)=RT_carriers%dGAMMA_E_P_El_Abs(i_RT)+RT_carriers%GAMMA_bare(i_RT,6)
        endif
        if (l_elel_scatt) then
-         tmp_lifetimes(n_gamma-1)=RT_carriers%dGAMMA_E_E_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,1)
-         tmp_lifetimes(n_gamma  )=RT_carriers%dGAMMA_E_E_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,2)
+         tmp_lifetimes(n_gamma-1)=RT_carriers%dGAMMA_E_E_Hole(i_RT)+RT_carriers%GAMMA_bare(i_RT,1)
+         tmp_lifetimes(n_gamma  )=RT_carriers%dGAMMA_E_E_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,2)
        endif
        if (.not.l_OCCgroup_path) then
          data_to_plot(3:n_gamma+2)=  tmp_lifetimes(1:n_gamma)    *HA2EV*1000._SP

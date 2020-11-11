@@ -327,7 +327,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    ! Time step update
    !=======================
-   call RT_time_step_update( )
+   call RT_time_step_update( E )
    !
    ! GPL_EXCLUDE_END
    !
@@ -398,7 +398,7 @@ subroutine RT_driver(E,X,k,q,Dip)
        !
        call PP_redux_wait()
        !
-       if (NE_i_time>=LT_pump_steps.and.LT_pump) then
+       if (NE_i_time>LT_pump_steps+1.and.LT_pump) then
          LT_pump=.FALSE.
          call live_timing( )
          call live_timing('[RT] Dynamics (pump-free region) ',NE_steps-LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP) 

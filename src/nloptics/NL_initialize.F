@@ -282,8 +282,8 @@ subroutine NL_initialize(E,k,q)
  !
  RT_dyn_step=RT_step
  OBS_RT_IO_t%INTERVAL_time     =RT_step
- OBS_RT_IO_t%INTERVAL_time_SAVE=RT_step
- call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
+ OBS_RT_IO_t%INTERVAL_time_INPUT=RT_step
+ call SETUP_RT_IO_type(OBS_RT_IO_t,who="OBS",what="INIT")
  YAMBO_ALLOC(OBS_RT_IO_t%Time,(NE_steps))
  do NE_i_time=1,NE_steps
    Time=real(NE_i_time-1,SP)*RT_step

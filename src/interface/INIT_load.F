@@ -77,12 +77,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _RT
  use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,     &
-&                        CACHE_OBS_INTERVAL_time_SAVE
+&                        CACHE_OBS_INTERVAL_time_INPUT
  use stderr,        ONLY:intc
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
-&                        NE_tot_time,RT_life_extrap_times_SAVE,RT_bands,         &
+&                        NE_tot_time,RT_life_extrap_times_INPUT,RT_bands,         &
 &                        RT_ave_dephasing,RT_eh_en,RT_scatt_tresh,Gr_kind,       &
-&                        NE_MEM_treshold,NE_time_step_update_jump_SAVE,          &
+&                        NE_MEM_treshold,NE_time_step_update_jump_INPUT,          &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
 &                        RT_MAX_step,RT_RTA_temp,RT_RTA_chem,RAD_magnification,  &
@@ -433,24 +433,24 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'NETime',      '[RT] Simulation Time',NE_tot_time,unit=Time_unit(2))
  call it(defs,'dTupdateTime','[RT] Initial Time for deltaT update (active only if non-zero) ',NE_initial_time_step_update,&
 &                            unit=Time_unit(1),verb_level=V_real_time)
- call it(defs,'dTupdateJump','[RT] Time betweem two deltaT updates',  NE_time_step_update_jump_SAVE,&
+ call it(defs,'dTupdateJump','[RT] Time betweem two deltaT updates',  NE_time_step_update_jump_INPUT,&
 &                            unit=Time_unit(1),verb_level=V_real_time)
  call it(defs,'dTupdateTresh','[RT][o/o] Treshold of deltaT updates',  NE_step_update_treshold ,verb_level=V_real_time)
  call it(defs,'dT_MAX',      '[RT] Maximum value for the time-dependent dT',  RT_MAX_step ,verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/EXPn/INV" "SIMPLE/RK2/RK4/HEUN" "RWA") ',&
 &              Integrator_name)
  !
- IO_times=(/CARR_RT_IO_t%INTERVAL_time_SAVE,GF_RT_IO_t%INTERVAL_time_SAVE,OUTPUT_RT_IO_t%INTERVAL_time_SAVE/)
+ IO_times=(/CARR_RT_IO_t%INTERVAL_time_INPUT,GF_RT_IO_t%INTERVAL_time_INPUT,OUTPUT_RT_IO_t%INTERVAL_time_INPUT/)
  call it(defs,'IOtime',      '[RT] Time between two consecutive I/O (CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
- CARR_RT_IO_t%INTERVAL_time_SAVE  =IO_times(1)
- GF_RT_IO_t%INTERVAL_time_SAVE    =IO_times(2)
- OUTPUT_RT_IO_t%INTERVAL_time_SAVE=IO_times(3)
+ CARR_RT_IO_t%INTERVAL_time_INPUT  =IO_times(1)
+ GF_RT_IO_t%INTERVAL_time_INPUT    =IO_times(2)
+ OUTPUT_RT_IO_t%INTERVAL_time_INPUT=IO_times(3)
  !
- IO_times(1:2)=(/CACHE_OBS_INTERVAL_time_SAVE,OBS_RT_IO_t%INTERVAL_time_SAVE/)
+ IO_times(1:2)=(/CACHE_OBS_INTERVAL_time_INPUT,OBS_RT_IO_t%INTERVAL_time_INPUT/)
  call it(defs,'IOCachetime', '[RT] Time between two consecutive (caching - I/O) of OBSERVABLES',IO_times(1:2),unit=Time_unit(1),&
  &       verb_level=V_real_time)
- CACHE_OBS_INTERVAL_time_SAVE  =IO_times(1)
- OBS_RT_IO_t%INTERVAL_time_SAVE=IO_times(2)
+ CACHE_OBS_INTERVAL_time_INPUT  =IO_times(1)
+ OBS_RT_IO_t%INTERVAL_time_INPUT=IO_times(2)
  !
  call it(defs,'RTehEny',     '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
  !
@@ -473,7 +473,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it('f',defs,'LifeExtrapolation',    '[RT] Skipped Lifetimes are extrapolated')
  call it(defs,'LifeExtrapSteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
-&                                  RT_life_extrap_times_SAVE,unit=Time_unit(1))
+&                                  RT_life_extrap_times_INPUT,unit=Time_unit(1))
  call it('f',defs,'RelaxTimeApprox',    '[RT] Skipped Lifetimes are extrapolated',Verb_level=V_real_time)
  call it(defs,'RTAtemp',   '[RT] Temperatures for relaxation time approximation',&
 &              RT_RTA_temp,unit=T_unit,Verb_level=V_real_time)
@@ -627,6 +627,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'DipoleEtresh',   '[DIP] Treshold in the definition of R=P/deltaE',Dip%Energy_treshold,&
 &                                                                               verb_level=V_resp,unit=E_unit)
  call it(defs,'DipApproach',    '[DIP] [G-space v/R-space x/Covariant/Shifted grids]',Dip%approach,verb_level=V_resp)
+ call it(defs,'DipComputed',    '[DIP] [default R P V; extra P2 Spin Orb]',Dip%computed,verb_level=V_resp)
  call it(defs,'ShiftedPaths',   '[DIP] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
  call it('f',defs,'DipPDirect', '[DIP] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
  call it('f',defs,'DipBandsALL','[DIP] Compute all bands range, not only valence and conduction',verb_level=V_resp)

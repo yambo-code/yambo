@@ -28,13 +28,16 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  ! the kernel/collision integral is available:
  !   - Time Scales Separation + QuasiParticle Approximation (TSQP)
  !
+ !DEBUG> (FP)
+ use RT_lifetimes,   ONLY:PE_linewidth,RT_PE_life_interband,RT_PE_life_intraband
+ !DEBUG<
  use pars,           ONLY:SP,cI,pi,rZERO
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ,E_fine_grid
  use hamiltonian,    ONLY:B_mat_index
  use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid
  use RT_occupations, ONLY:RT_ph_occ,RT_el_occ,RT_ho_occ,RT_life_occ
- use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life,PE_linewidth
+ use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
  use ELPH,           ONLY:PH_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch,GKKP_pe_sq,&
 &                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
@@ -64,7 +67,10 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  ! ... lifetime related quantities ...
  real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,&
 &            TMP_Emit_lifetime,TMP_Abs_lifetime,TMP_eh_lifetime,N_q,f_mkq,f_nk,&
-&            Hole_f_mkq,Hole_f_nk,TMP_linewidth
+&            Hole_f_mkq,Hole_f_nk
+ !DEBUG> (FP)
+ real (SP) :: TMP_linewidth,TMP_interband,TMP_intraband
+ !DEBUG<
  !
  iq_mem =PARs_PH_Q_ibz%table(iq)
  iq_life=iq
@@ -151,6 +157,8 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
            TMP_eh_lifetime=rZERO
            !DEBUG> (FP)
            TMP_linewidth=rZERO
+           TMP_interband=rZERO
+           TMP_intraband=rZERO
            !DEBUG<
            !
            do ip_rim=k_FG%k_range(ik_m_q,1),k_FG%k_range(ik_m_q,2)
@@ -195,6 +203,12 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
              !
              !DEBUG> (FP) This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
              TMP_linewidth=TMP_linewidth +(f_mkq-f_nk)*D_res
+             ! Here we separate the Emit lifetime in intraband and interband contributions
+             if (i_n==i_np) then 
+               TMP_intraband = TMP_intraband+ TMP_Emit_lifetime
+             else
+               TMP_interband = TMP_interband+ TMP_Emit_lifetime
+             endif 
              !DEBUG<
            enddo ! ip_rim i.e. (mk-q)
            !
@@ -207,6 +221,8 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
          !       
          !DEBUG> (FP)
          PE_linewidth(il,iq_life)=PE_linewidth(il,iq_life) +TMP_linewidth*pre_factor
+         RT_PE_life_interband(il,iq_life)= RT_PE_life_interband(il,iq_life) +TMP_interband*pre_factor
+         RT_PE_life_intraband(il,iq_life)= RT_PE_life_intraband(il,iq_life) +TMP_intraband*pre_factor
          !DEBUG<
        enddo ! i_np i.e. (mk-q)
        !

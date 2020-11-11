@@ -58,6 +58,8 @@ module RT_lifetimes
  type(RT_obj_lifetime) :: RT_obj_EE_life,RT_obj_EP_emit_life,RT_obj_EH_life,RT_obj_PE_life,RT_obj_EP_abs_life
  !DEBUG> (FP)
  real(SP), allocatable :: PE_linewidth(:,:)
+ real(SP), allocatable :: RT_PE_life_interband(:,:)
+ real(SP), allocatable :: RT_PE_life_intraband(:,:)
  !DEBUG<
  !
  ! Lifetimes (REFERENCE)

@@ -205,9 +205,9 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
              TMP_linewidth=TMP_linewidth +(f_mkq-f_nk)*D_res
              ! Here we separate the Emit lifetime in intraband and interband contributions
              if (i_n==i_np) then 
-               TMP_intraband = TMP_intraband+ TMP_Emit_lifetime
+               TMP_intraband = TMP_intraband+ f_nk*Hole_f_mkq*D_ares+Hole_f_nk*f_mkq*D_res
              else
-               TMP_interband = TMP_interband+ TMP_Emit_lifetime
+               TMP_interband = TMP_interband+ f_nk*Hole_f_mkq*D_ares+Hole_f_nk*f_mkq*D_res
              endif 
              !DEBUG<
            enddo ! ip_rim i.e. (mk-q)

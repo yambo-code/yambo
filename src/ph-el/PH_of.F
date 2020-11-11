@@ -57,16 +57,16 @@ subroutine PH_of(q)
      call OUTPUT_add_column(TITLES=(/"Width(emit)"/),R_VALUES=(/RT_PE_life%emit(il,iq)/),UNIT="meV")
      call OUTPUT_add_column(TITLES=(/"Width(abs)"/),R_VALUES=(/RT_PE_life%abs(il,iq)/),UNIT="meV")
      !DEBUG> (FP)
-     call OUTPUT_add_column(TITLES=(/"[DEBUG] Width(retarded)"/),R_VALUES=(/PE_linewidth(il,iq)/),UNIT="meV")
-     call OUTPUT_add_column(TITLES=(/"[DEBUG] Width(interband)"/),R_VALUES=(/RT_PE_life_interband(il,iq)/),UNIT="meV")
-     call OUTPUT_add_column(TITLES=(/"[DEBUG] Width(intraband)"/),R_VALUES=(/RT_PE_life_intraband(il,iq)/),UNIT="meV")
+     call OUTPUT_add_column(TITLES=(/"Width(retarded)"/),R_VALUES=(/PE_linewidth(il,iq)/),UNIT="meV")
+     call OUTPUT_add_column(TITLES=(/"Width(interb.)"/),R_VALUES=(/RT_PE_life_interband(il,iq)/),UNIT="meV")
+     call OUTPUT_add_column(TITLES=(/"Width(intrab.)"/),R_VALUES=(/RT_PE_life_intraband(il,iq)/),UNIT="meV")
      !DEBUG<
      call OUTPUT_add_column(ORDER=(/"Q-point","Branch ","Energy "/))
      call OUTPUT_add_column(ORDER=(/"Width(emit)","Width(abs) "/))
      !DEBUG>
-     call OUTPUT_add_column(ORDER=(/"[DEBUG] Width(retarded)"/))
-     call OUTPUT_add_column(ORDER=(/"[DEBUG] Width(interband)"/))
-     call OUTPUT_add_column(ORDER=(/"[DEBUG] Width(intraband)"/))
+     call OUTPUT_add_column(ORDER=(/"Width(retarded)"/))
+     call OUTPUT_add_column(ORDER=(/"Width(interb.)"/))
+     call OUTPUT_add_column(ORDER=(/"Width(intrab.)"/))
      !DEBUG<
      call OUTPUT_add_column(what="write")
    enddo

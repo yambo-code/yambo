@@ -83,7 +83,6 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  CALL PARALLEL_structure(4,(/"q ","g ","qp","b "/))
  !
-
  call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Q_INDEX,&
 &                                        COMM_index_2=PAR_COM_RL_INDEX,&
 &                                        COMM_index_3=PAR_COM_QP_INDEX,&
@@ -91,9 +90,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
 &                                        COMM_A2A_1=PAR_COM_Q_A2A,&
 &                                        COMM_A2A_2=PAR_COM_RL_A2A,&
 &                                        COMM_A2A_3=PAR_COM_QP_A2A)
-
- 
-!   
+ !
  ! COMMs setup
  !
  call COMM_copy(PAR_COM_Q_A2A,PAR_COM_SE_WORLD)
@@ -291,15 +288,15 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  if (ncpu>1) then
    if (l_eval_collisions.and.io_COLLs) then
-   call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_INDEX%CPU_id==0)
+     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_INDEX%CPU_id==0)
    else 
-     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_SE_WORLD%CPU_id==0)
+     call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
    endif
  else
    call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
  endif
  !
- call IO_and_Messaging_switch("+output",CONDITION=PAR_COM_SE_WORLD%CPU_id==0)
+ call IO_and_Messaging_switch("+output",CONDITION=master_cpu)
  !
  call OPENMP_set_threads(n_threads_in=n_threads_SE)
  !

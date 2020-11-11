@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_stored_in_a_slepc_matrix(slepc_mat)
+subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  !
  ! Here I fill the kernel (coupling not yet included) in a slepc matrix to be
  ! used for diagonalization and/or invertion
@@ -31,7 +31,8 @@ subroutine K_stored_in_a_slepc_matrix(slepc_mat)
  !      | (-cI*K_c^*)  (-K_r^*) |
  !
  use pars,           ONLY:SP,cI,cONE
- use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling
+ use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
+ &                        BS_mat_res_ares_dim
  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
  !
 #include <petsc/finclude/petscsys.h>
@@ -48,15 +49,18 @@ subroutine K_stored_in_a_slepc_matrix(slepc_mat)
  !
  implicit none
  !
+ integer, intent(in)  :: i_BS_mat
+ Mat,     intent(out) :: slepc_mat
+ !
  complex(SP) :: E_plus_W
  integer     :: i_c,i_r,i_Tk,i_Tp,i_B
- Mat   :: slepc_mat
  PetscFortranComplex :: val
  PetscFortranInt     :: H_pos(2),SL_K_dim(2),SL_H_dim
  PetscErrorCode      :: ierr
  !
+ if(     BS_K_coupling) SL_H_dim=BS_H_dim
+ if(.not.BS_K_coupling) SL_H_dim=BS_K_dim(i_BS_mat)
  SL_K_dim=BS_K_dim
- SL_H_dim=BS_H_dim
  !
  ! Allocate the slepc Matrix
  !
@@ -71,6 +75,8 @@ subroutine K_stored_in_a_slepc_matrix(slepc_mat)
    !
    i_Tk  =BS_blk(i_B)%iT_k
    i_Tp  =BS_blk(i_B)%iT_p
+   !
+   if (i_BS_mat/=BS_blk(i_B)%ira_k .and. BS_mat_res_ares_dim==2) cycle
    !
    do i_r=1,BS_blk(i_B)%size(1)
      !
@@ -91,13 +97,16 @@ subroutine K_stored_in_a_slepc_matrix(slepc_mat)
          val = BS_blk(i_B)%mat(i_r,i_r)
          call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(1), val, INSERT_VALUES, ierr )
        case("A")
-         ! To be fixed
-         E_plus_W=BSS_eh_E(H_pos(1)+1)*cONE
+         E_plus_W=BSS_eh_E(H_pos(1)+1+BS_K_dim(1)*(i_BS_mat-1))*cONE
          if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
-            E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1)+1)
+           E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1)+BS_K_dim(1)*(i_BS_mat-1))
          endif
-         val = BS_blk(i_B)%mat(i_r,i_r)
-         call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(1)+SL_K_dim(1), val, INSERT_VALUES, ierr )
+         val = E_plus_W+real(BS_blk(i_B)%mat(i_r,i_r),SP) 
+         if(BS_mat_res_ares_dim==1) then
+           call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(1)+SL_K_dim(1), val, INSERT_VALUES, ierr )
+         else
+           call MatSetValue( slepc_mat, H_pos(1)            , H_pos(1)            , val, INSERT_VALUES, ierr )
+         endif
        case("Q")
          val = BS_blk(i_B)%mat(i_r,i_r)
          call MatSetValue( slepc_mat, H_pos(1)            , H_pos(1)+SL_K_dim(1), val, INSERT_VALUES, ierr )
@@ -122,8 +131,13 @@ subroutine K_stored_in_a_slepc_matrix(slepc_mat)
          call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+SL_K_dim(1), val, INSERT_VALUES, ierr )
          call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1), val, INSERT_VALUES, ierr )
        case("A")
-         call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1),       val , INSERT_VALUES, ierr )
-         call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1), conjg(val), INSERT_VALUES, ierr )
+         if(BS_mat_res_ares_dim==1) then
+           call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1),       val , INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1), conjg(val), INSERT_VALUES, ierr )
+         else
+           call MatSetValue( slepc_mat, H_pos(1)            , H_pos(2)            ,       val , INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(2)            , H_pos(1)            , conjg(val), INSERT_VALUES, ierr )
+         endif
        case("Q")
          call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2), val, INSERT_VALUES, ierr )
          call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim(1), val, INSERT_VALUES, ierr )

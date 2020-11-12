@@ -448,7 +448,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BS_cpl_mode='none'
  L_kind='Lbar'
  BSE_mode='retarded'
- BSE_prop='alpha'
+ BSE_prop='abs'
  BSK_mode=' '
  TDDFT_mode=' '
  BSS_add_antiresonant=.FALSE.

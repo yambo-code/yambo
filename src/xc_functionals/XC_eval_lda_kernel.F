@@ -29,7 +29,6 @@ subroutine XC_eval_lda_kernel(v1rho,v2rho2)
  use FFT_m,          ONLY:fft_size
  use BS,             ONLY:l_BS_magnons
  use D_lattice,      ONLY:DL_vol
- use vec_operate,    ONLY:v_norm
  !
  implicit none
  !

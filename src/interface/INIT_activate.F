@@ -252,8 +252,8 @@ subroutine INIT_activate()
    call initactivate(1,'EvPolarization FrSndOrd')
 #endif
    !
-#if defined _KERR
    call initactivate(1,'BSEprop')
+#if defined _KERR
    call initactivate(1,'PL_weights')
 #endif
    !

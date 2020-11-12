@@ -101,12 +101,10 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  !=====
  TDDFT_ALDA_R_space=V_dot_V_omp(fft_size*n_spinor,rhotwr1,rhotwr2)
  !
- ! tddft_alda_r_space'd be spin_occ/DL_vol/Nq*real(fft_size,SP)*cdotc 
- ! but it is multiplied by Co
- !
- !  Co=4._SP*pi*spin_occ/DL_vol/real(q%nbz,SP)
- !
- ! in K
+ ! tddft_alda_r_space should be mutiplied by X, it is mutiplied by Co in K
+ ! X  = fft_size*spin_occ/DL_vol/Nq 
+ ! Co =     4*pi*spin_occ/DL_vol/Nq
+ ! --> X/Co = fft_size/4/pi
  !
  TDDFT_ALDA_R_space=TDDFT_ALDA_R_space*real(fft_size,SP)/4._SP/pi
  !

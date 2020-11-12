@@ -28,7 +28,7 @@ subroutine PHEL_driver(E,k,q)
  use RT_lifetimes,        ONLY:PE_linewidth,RT_PE_life_interband,RT_PE_life_intraband
  !DEBUG<
  use electrons,           ONLY:levels,n_sp_pol,E_fine_grid
- use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc
+ use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc,bz_fine_grid
  use interfaces,          ONLY:ELPH_alloc
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,&
 &                              l_GKKP_hosts_bare_dV
@@ -103,7 +103,7 @@ subroutine PHEL_driver(E,k,q)
  l_PH_uses_E_FineGd=PH_DbGd_points>0
  if (.not.l_PH_uses_E_FineGd) then
    call bz_samp_FineGd_alloc(k_FG,k_n)
-   call bz_samp_FineGd_default(k_n,k)
+   call bz_samp_FineGd_default(k_FG,k)
  endif  
  !
 #else
@@ -124,7 +124,7 @@ subroutine PHEL_driver(E,k,q)
  call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)
  call RT_EL_occupations_alloc((/1,QP_PH_n_G_bands/),k_FG%N)
  call RT_PH_occupations_alloc(elph_branches,nqibz)
- if (l_RT_uses_E_FineGd .or. l_PH_uese_E_FineGd) then
+ if (l_RT_uses_E_FineGd .or. l_PH_uses_E_FineGd) then
    YAMBO_ALLOC(E_FG%E,(QP_PH_n_G_bands,k_FG%N,n_sp_pol))
    YAMBO_ALLOC(E_FG%W,(QP_PH_n_G_bands,k_FG%N,n_sp_pol))
  else

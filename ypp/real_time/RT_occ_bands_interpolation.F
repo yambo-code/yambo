@@ -305,8 +305,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    if (l_RT_lifetimes  ) operation="lifetimes"
    if (l_RT_occupations) operation="occupations"
    ! 
-   call PROJECTION_plot(trim(operation)//"_electrons", n_T_steps, (/1,1/), OBS_K=integrated_dF_elecs, TIME=RT_time ) 
-   call PROJECTION_plot(trim(operation)//"_holes", n_T_steps, (/1,1/), OBS_K=integrated_dF_holes, TIME=RT_time ) 
+   call PROJECTION_plot(trim(operation)//"_electrons", n_T_steps,n_spin, (/1,1/), OBS_K=integrated_dF_elecs, TIME=RT_time ) 
+   call PROJECTION_plot(trim(operation)//"_holes", n_T_steps,n_spin, (/1,1/), OBS_K=integrated_dF_holes, TIME=RT_time ) 
    !
  endif
  !

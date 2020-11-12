@@ -64,16 +64,15 @@ module YPP_interfaces
      logical   ,optional:: LIST_only
    end subroutine
    !
-   subroutine PROJECTION_plot( what, N , bands, W, TIME, OBS_K, OBS_B)
+   subroutine PROJECTION_plot( what, N , Ns, bands, W, TIME, OBS_K, OBS_B)
      use pars,           ONLY:SP
      use YPPm,           ONLY:PROJECT_depth
      use interpolate,    ONLY:GRID_k
-     use electrons,      ONLY:n_spin
      character(*)       :: what
-     integer            :: N,bands(2)
+     integer            :: N,Ns,bands(2)
      real(SP)  ,optional:: W(N),TIME(N)
-     real(SP)  ,optional:: OBS_K(GRID_k%nbz/PROJECT_depth,N,n_spin)
-     real(SP)  ,optional:: OBS_B(bands(1):bands(2),GRID_k%nbz/PROJECT_depth,n_spin)
+     real(SP)  ,optional:: OBS_K(GRID_k%nbz/PROJECT_depth,N,Ns)
+     real(SP)  ,optional:: OBS_B(bands(1):bands(2),GRID_k%nbz/PROJECT_depth,Ns)
    end subroutine
    !
  end interface

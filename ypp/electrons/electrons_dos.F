@@ -261,7 +261,7 @@ subroutine electrons_dos(Xk,Xen)
    ! ...data
    !
    if (l_PROJECT_line) then
-     call PROJECTION_plot( "DOS", DOS_E_steps, DOS_bands, W=dos_E, OBS_K=el_dos ) 
+     call PROJECTION_plot( "DOS", DOS_E_steps, n_spin, DOS_bands, W=dos_E, OBS_K=el_dos ) 
    else
      do i_E=1,DOS_E_steps
        if (n_spin==1) call msg('o dos','',(/dos_E(i_E)*HA2EV,el_dos(i_E,1,i_f)/),INDENT=-2,USE_TABS=.true.)

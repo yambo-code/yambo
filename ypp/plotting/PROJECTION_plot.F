@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
+subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B)
  !
  use pars,           ONLY:SP,schlen
  use vec_operate,    ONLY:c2a,v_norm
@@ -35,29 +35,29 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
  use YPPm,           ONLY:PROJECT_depth,l_PROJECT_line,CIRCUIT_k_label,PROJECT_threshold,&
 &                         l_PROJECT_plane,PROJECT_plane_X,PROJECT_plane_Y,PROJECT_steps
  use interpolate,    ONLY:GRID_k
- use electrons,      ONLY:n_spin
  use stderr,         ONLY:intc,real2ch,STRING_remove
  !
 #include<memory.h>
  !
  character(*)       :: what
- integer            :: N,bands(2)
+ integer            :: N,Ns,bands(2)
  real(SP)  ,optional:: W(N),TIME(N)
- real(SP)  ,optional:: OBS_K(GRID_k%nbz/PROJECT_depth,N,n_spin)
- real(SP)  ,optional:: OBS_B(bands(1):bands(2),GRID_k%nbz/PROJECT_depth,n_spin)
+ real(SP)  ,optional:: OBS_K(GRID_k%nbz/PROJECT_depth,N,Ns)
+ real(SP)  ,optional:: OBS_B(bands(1):bands(2),GRID_k%nbz/PROJECT_depth,Ns)
  !
  ! Work Space
  !
  character(schlen)  :: of_name,titles(max(3,bands(2)+2)),k_label,extension
  integer            :: ik,i_N,is,ik_plane,ib,ik_path
  real(SP)           :: O(3),k(3),kdist(GRID_k%nbz),max_OBS,projection(2),W_or_T
- logical            :: label_printed,l_DOS,l_BANDS,l_OCC,l_GAMMA
+ logical            :: label_printed,l_DOS,l_BANDS,l_OCC,l_GAMMA,l_DIP
  !
  ! Allocation
  !============
  !
  l_DOS    = what=="DOS"
  l_BANDS  = what=="BANDS"
+ l_DIP    = what=="DIPOLES"
  l_OCC    = index(what,"occupations")>0
  l_GAMMA  = index(what,"lifetimes")>0
  !
@@ -124,10 +124,10 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
          label_printed=.TRUE.
        endif
        !
-       if (n_spin==1) then
+       if (Ns==1) then
          call msg('o '//trim(of_name),'',(/kdist(ik_path),W_or_T,OBS_K(ik_path,i_N,1)/),&
 &                 INDENT=-2,USE_TABS=.true.,after_msg=k_label)
-       else if (n_spin==2) then
+       else if (Ns==2) then
          call msg('o '//trim(of_name),'',(/kdist(ik_path),W_or_T,OBS_K(ik_path,i_N,:),  &
 &                            OBS_K(ik_path,i_N,1)+OBS_K(ik_path,i_N,2)/),&
 &                            INDENT=-2,USE_TABS=.true.,after_msg=k_label)
@@ -154,6 +154,7 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
    !
    do i_N=1,N
      !
+     if (l_DIP)   of_name="dipoles_projected" 
      if (l_BANDS) of_name="bands_projected" 
      if (l_OCC.or.l_GAMMA) of_name=what//"_projected" 
      !
@@ -198,6 +199,8 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
        if (index(what,"_electrons")>0) titles(3)=trim(titles(3))//" (e)"
        if (index(what,"_holes")>0    ) titles(3)=trim(titles(3))//" (h)"
        call msg('o '//trim(of_name),'#',titles(:3),INDENT=0,USE_TABS=.true.)    
+     else if (l_OCC) then
+       titles(3)="|<v|R|c>.DIP_dir|^2"
      endif
      call msg('o '//trim(of_name),'#')
      !
@@ -221,7 +224,7 @@ subroutine PROJECTION_plot( what, N, bands, W, TIME, OBS_K, OBS_B)
        if (l_BANDS) then
          call msg('o '//trim(of_name),'',(/projection,OBS_B(bands(1):bands(2),ik_plane,1)*HA2EV/),INDENT=-2,USE_TABS=.true.,&
   &               after_msg=k_label)
-       else if (l_OCC.or.l_GAMMA) then
+       else if (l_OCC.or.l_GAMMA.or.l_DIP) then
          call msg('o '//trim(of_name),'',(/projection,OBS_K(ik_plane,i_N,1)/),INDENT=-2,USE_TABS=.true.,&
   &               after_msg=k_label)
        endif

@@ -143,6 +143,7 @@ subroutine OUTPUT_add_column(what,name,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
    if (COL(i_t)%KIND=="I") o_I_values(COL(i_t)%POS)=COL(i_t)%I_value
  enddo
  !
+ write (*,*) N_columns,N_columns_ordered
  do i_t=1,N_columns_ordered
    if (o_KINDS(i_t)=="I") call msg('string','',o_I_values(i_t),USE_TABS=.TRUE.,MSG_string=MSG_string(i_t))
    if (o_KINDS(i_t)=="R") call msg('string','',o_R_values(i_t),USE_TABS=.TRUE.,MSG_string=MSG_string(i_t))

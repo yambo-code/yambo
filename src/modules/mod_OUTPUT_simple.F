@@ -74,7 +74,7 @@ module OUTPUT_simple
      character(*) :: what
      integer      :: ic
      if (what=="row".or.what=="reset") then
-       do ic=1,N_columns
+       do ic=1,N_MAX_columns
          COL(ic)%POS=0
          COL(ic)%title=" "
          COL(ic)%KIND=" "
@@ -83,9 +83,9 @@ module OUTPUT_simple
        enddo
        N_columns = 0
        N_columns_ordered = 0
+       TITLES_ordered=.FALSE.
      endif
      if (what=="reset") then
-       TITLES_ordered=.FALSE.
        TITLES_dumped=.FALSE.
        filename = " "
        filename_short= " "

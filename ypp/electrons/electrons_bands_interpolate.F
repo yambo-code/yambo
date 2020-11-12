@@ -72,7 +72,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  !
  if(GRID) then
    !
-   if (.not.l_PROJECT_plane.and..not.l_PROJECT_line) call INTERPOLATION_driver_create_grid(INTERP_grid)
+   if (.not.l_PROJECT_plane.and..not.l_PROJECT_line) call INTERPOLATION_create_the_grid(INTERP_grid)
    call INTERPOLATION_driver_seed("E_INTERP_grid",ID_bands(1),BANDS_range,Xk,SEED_E=Xen,NEAREST=NEAREST)
    call INTERPOLATION_driver_do("E_INTERP_grid",ID_bands(1),GRID_k,OUT_E=GRID_E)
    !

@@ -149,6 +149,13 @@ module YPPm
  real(SP), allocatable ::v2plot2D(:,:)
  real(SP)              ::current_dir(3)=(/1.,1.,1./)
  !
+ ! Dipoles
+ !
+ logical      ::l_dipoles
+ integer      ::DIPOLES_bands(2)
+ real(SP)     ::DIPOLES_E_range(2)
+ real(SP)     ::DIPOLES_direction(3)=(/1._SP,0._SP,0._SP/)
+ !
  ! Exc/SP Properties
  !
  logical      ::l_excitons
@@ -280,7 +287,6 @@ module YPPm
      character(*)          ::form
      real(SP),    optional ::wk(nk)
      character(*),optional ::coo_out
-     !
    end subroutine
    !
    subroutine excitons_degeneracy_average(N,BS_E_degs,R,C,VERB)

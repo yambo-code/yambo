@@ -30,6 +30,7 @@ subroutine PROJECTION_perpendicular_sampling( K, versor )
  use YPPm,           ONLY:PROJECT_depth
  use interpolate,    ONLY:GRID_k
  use com,            ONLY:msg
+ use LIVE_t,         ONLY:live_timing
  !
  implicit none
  !
@@ -43,11 +44,15 @@ subroutine PROJECTION_perpendicular_sampling( K, versor )
  !
  GRID_k%nbz=K%nbz*PROJECT_depth
  allocate(GRID_k%pt(GRID_k%nbz,3))
+ allocate(GRID_k%ptbz(GRID_k%nbz,3))
  !
  if (PROJECT_depth==1) then
-   GRID_k%pt=K%pt
+   GRID_k%pt  =K%pt
+   GRID_k%ptbz=K%pt
    return
  endif
+ !
+ call live_timing('[PROJECT] Perpendicular sampling',2*K%nbz)
  !
  ! Step#1: find the min/max distance between the plane and the BZ border
  !
@@ -61,6 +66,7 @@ subroutine PROJECTION_perpendicular_sampling( K, versor )
      if (component<min_max_component(1)) min_max_component(1)=component
      if (component>min_max_component(2)) min_max_component(2)=component
    enddo
+   call live_timing(steps=1)
  enddo
  !
  ! Step#2: Fill the projection
@@ -77,7 +83,11 @@ subroutine PROJECTION_perpendicular_sampling( K, versor )
      i_k=(i_k_line-1)*PROJECT_depth+i_k_versor
      GRID_k%pt(i_k,:)=k_trial
    enddo
+   call live_timing(steps=1)
  enddo 
+ GRID_k%ptbz=GRID_k%pt
+ !
+ call live_timing()
  !
  call msg("sr","[PROJECT] Direction  _|_ circuit       :",versor,"[iku]")
  call msg("sr","[PROJECT] Perpendicular extension      :",min_max_component,"[iku]")

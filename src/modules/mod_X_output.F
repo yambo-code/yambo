@@ -40,8 +40,11 @@ module X_output
  contains
    !
    subroutine X_write_messages_before_headers(iq,GreenF,Vnl_included,ordering)
+     !
      use drivers,   ONLY:l_chi,l_bss
      use global_XC, ONLY:X_E_xc_string,X_WF_xc_string,K_E_xc_string,K_WF_xc_string
+     use DIPOLES,   ONLY:DIP_desc
+     !
      integer      :: iq
      logical      :: Vnl_included,GreenF
      character(2)      :: ordering
@@ -76,6 +79,7 @@ module X_output
      !
      ! Fine Grid
      !
+     call DESC_write(trim(files),'#',DIP_desc)
      call DESC_write(trim(files),'#',FineGd_desc)
      !
    end subroutine

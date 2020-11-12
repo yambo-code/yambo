@@ -23,8 +23,9 @@
 !
 module DIPOLES
  !
- use pars,  ONLY:SP,lchlen,schlen
- use units, ONLY:HA2EV
+ use pars,          ONLY:SP,lchlen,schlen
+ use units,         ONLY:HA2EV
+ use descriptors,   ONLY:IO_desc
  !
 #include <memory.h>
  !
@@ -43,6 +44,10 @@ module DIPOLES
  !
  integer                  :: num_shifted_grids
  logical                  :: eval_OVERLAPS
+ ! 
+ ! Descriptor
+ !
+ type(IO_desc)            :: DIP_desc
  !
  ! Allocs
  !

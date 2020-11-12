@@ -119,7 +119,7 @@ subroutine electrons_dos(Xk,Xen)
    if (l_PROJECT_atom) call warning(" PDOS and interpolation not yet implemented")
    !
    if (.not.l_PROJECT_line) then
-     call INTERPOLATION_driver_create_grid(INTERP_grid)
+     call INTERPOLATION_create_the_grid(INTERP_grid)
      N_files=2
    endif
    !

@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INIT_ypp(E,instr,FINALIZE)
+subroutine INIT_ypp(E,Dip,instr,FINALIZE)
  !
  use units,          ONLY:FS2AUT
  use YPPm,           ONLY:l_plot,l_SOC_map,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,BSiq,&
-&                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,&
+&                         l_free_hole,l_fix_syms,l_excitons,l_dipoles,l_exc_wf,&
 &                         l_amplitude,l_bands,l_bz_grids,l_current,BANDS_bands,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
@@ -47,6 +47,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use LIVE_t,         ONLY:live_timing_is_on
  use parser_m,       ONLY:PARSER_array
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
+ use DIPOLES,        ONLY:DIPOLE_t
 #if defined _YPP_SC
  use YPPm,           ONLY:l_mean_potential
  use SC,             ONLY:SC_bands
@@ -78,6 +79,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #include<memory.h>
  !
  type(levels)     ::E
+ type(DIPOLE_t)   ::Dip
  character(*)     ::instr
  logical          ::FINALIZE
  !
@@ -88,7 +90,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  integer          ::i1,i2,ID,io_err,i_cycle
  character(schlen)::rstr_piece(60) 
  !
- integer, external::io_RIM,io_COL_CUT,io_ATMPROJ_pwscf
+ integer, external::io_RIM,io_COL_CUT,io_ATMPROJ_pwscf,io_DIPOLES
  logical, external::file_exists 
  !
 #if defined _YPP_SC
@@ -97,7 +99,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  integer          ::io_SC_err
 #endif
 #if defined _YPP_RT
- integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit
+ integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit,io_DIPOLES
  integer          ::io_RT_G_err,io_RT_OBS_err,io_KB_pwscf_err,io_KB_abinit_err
 #endif
 #if defined _YPP_NL
@@ -181,6 +183,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_err=io_COL_CUT(ID) 
+ !
+ Dip%ib= (/1,E%nb/)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_err=io_DIPOLES(Dip,ID)
  !
  ! Defaults->Defs + Initialization
  !
@@ -300,6 +306,12 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
        ! GPL_EXCLUDE_END
        !
+     endif
+     if ( trim(rstr_piece(i1)) == 'dipoles') then
+       l_electrons=STRING_match(rstr_piece(i1+1),'el')
+       l_excitons =STRING_match(rstr_piece(i1+1),'exc')
+       if (l_electrons) call initactivate(1,'electrons')
+       if (l_excitons ) call initactivate(1,'excitons')
      endif
      if ( trim(rstr_piece(i1)) == 'electrons') then
        !
@@ -494,6 +506,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')
  l_position         = runlevel_is_on('position').and.runlevel_is_on('electrons')
 #endif
+ l_dipoles =runlevel_is_on('dipoles')
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
  l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
@@ -588,12 +601,17 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_SOC_map)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map bands_buffer")
  !
  if (l_electrons) then
-   if (l_dos.or.l_bands) call INIT_QP_ctl_switch('G')
-   if (l_dos           ) call initactivate(1,"PROJECT_mode PROJECT_path PROJECT_steps PROJECT_depth PROJECT_threshold")
-   if (         l_bands) call initactivate(1,"PROJECT_mode PROJECT_threshold")
+   if (l_dos.or.l_bands.or.l_dipoles) call INIT_QP_ctl_switch('G')
+   if (l_dos.or.l_dipoles) call initactivate(1,"PROJECT_mode PROJECT_path PROJECT_steps PROJECT_depth PROJECT_threshold")
+   if (         l_bands  ) call initactivate(1,"PROJECT_mode PROJECT_threshold")
+   if (l_dipoles) then
+     call initactivate(1,"DIP_E_range DIP_bands DIP_direction cooOut")
+   endif
+   if (l_dos.or.l_dipoles) then
+     call initactivate(1,"INTERP_mode INTERP_Grid INTERP_Shell_Fac INTERP_NofNN")
+   endif
    if (l_dos) then
      call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands DOSUsesOcc")
-     call initactivate(1,"INTERP_mode INTERP_Grid INTERP_Shell_Fac INTERP_NofNN")
      call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
    endif
  endif
@@ -674,11 +692,11 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_excitons) then
    call initactivate(1,"States En_treshold Res_treshold BSQindex")
-   if (l_amplitude) then
+   if (l_amplitude.or.l_dipoles) then
      call INIT_QP_ctl_switch('G')
      call initactivate(1,"DipWeight")
    endif
-   if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step Weight_treshold")
+   if (l_exc_wf.or.l_amplitude.or.l_dipoles) call initactivate(1,"Degen_Step Weight_treshold")
    if (l_exc_wf.and.(.not.l_free_hole.and..not.l_average_eh)) call initactivate(1,"Cells Hole Dimension") 
    if (l_exc_wf.and.(l_free_hole.or.l_average_eh)) call initactivate(1,"WFMult") 
    if (l_exc_wf.and.l_average_eh) call initactivate(1,"WFAverage")
@@ -800,7 +818,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    !
    subroutine before_infile_write_setup 
      !
-     use YPPm,           ONLY:DOS_bands,SOC_bands_to_map
+     use YPPm,           ONLY:DOS_bands,SOC_bands_to_map,DIPOLES_bands
      use electrons,      ONLY:n_bands
      !
      ! After DB reading/stdin logicals I propose here values for the input file
@@ -808,6 +826,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      SOC_bands_to_map=(/ 1, n_bands /)
      BANDS_bands=(/1,n_bands/)
      DOS_bands=(/1,n_bands/)
+     DIPOLES_bands=Dip%ib
      !
    end subroutine
    !

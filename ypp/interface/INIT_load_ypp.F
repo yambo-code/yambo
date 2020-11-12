@@ -23,7 +23,6 @@
 !
 subroutine INIT_ypp_load(defs)
  !
- use units
  use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,V_RL,&
 &                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics,V_io
@@ -37,9 +36,9 @@ subroutine INIT_ypp_load(defs)
 &                        BZ_FineGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
 &                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,PROJECT_path,QP_DB_to_expand,&
 &                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
-&                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,&
+&                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,DIPOLES_direction,&
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
-&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,&
+&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,DIPOLES_E_range,DIPOLES_bands,&
 &                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_depth,PROJECT_steps,PROJECT_threshold
  use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
@@ -84,11 +83,11 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'Random_Grid','[R] Random grids')
  call it('r',defs,'High_Symm',  '[R] High_Symmetry points and paths') 
  !
- call it('r',defs,'amplitude', '[R] Amplitude')
+ call it('r',defs,'amplitude',    '[R] Amplitude')
  call it('r',defs,'plot',         '[R] Plot')
  call it('r',defs,'density',      '[R] Density')
  call it('r',defs,'current',      '[R] Current')
- call it('r',defs,'bnds',        '[R] Bands')
+ call it('r',defs,'bnds',         '[R] Bands')
  call it('r',defs,'wavefunction', '[R] Wavefunction')
 #if defined _YPP_ELPH
  call it('r',defs,'eliashberg',   '[R] Eliashberg')
@@ -134,7 +133,7 @@ subroutine INIT_ypp_load(defs)
  !
 #if defined _YPP_NL
  call it('r',defs,'NL_X',     '[R] NonLinear Optics Response Post-Processing')
- call it('r',defs,'NL_exc',     '[R] NonLinear Optics Excitation Post-Processing')
+ call it('r',defs,'NL_exc',   '[R] NonLinear Optics Excitation Post-Processing')
 #endif
  !
  ! Variables...
@@ -252,6 +251,12 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'ExpandPts',    ' Expand the internal q/k points in the BZ') 
  call it('f',defs,'DipWeight',    ' Weight the contribution to the exciton WFs with the dipoles') 
  !
+ ! DIPOLES
+ !
+ call it(defs,'DIP_E_range',   'E/h pairs energy window',DIPOLES_E_range,E_unit)
+ call it(defs,'DIP_direction', 'Field direction versor',DIPOLES_direction)
+ call it(defs,'DIP_bands',     'E/h pairs bands selection',DIPOLES_bands)
+ !
  ! Excitons
  !
  call it(defs,'Res_treshold', 'Select states above this optical strength treshold (max normalized to 1.)',&
@@ -364,7 +369,6 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'TimeStep','Time step',RT_conf%delta_T,unit=Time_unit(1))
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',RT_conf%damping)
  call it(defs,'DampFactor','Damping parameter',RT_conf%damp_factor,unit=E_unit) 
-! call it(defs,'MaxContr','Maximum cotribution (%) to excitation',NL_ExcMaxContribution,verb_level=V_real_time) 
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
  call it('f',defs,'PrintExc','Print excited states functions')
  !

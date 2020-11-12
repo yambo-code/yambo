@@ -234,9 +234,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
        if(     l_col_cut) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
      endif
      !
-!    Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
-!&                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
-     !
      Epsilon_ii(:,1:2)=1._SP+Alpha(:,1:2)
      !
    endif

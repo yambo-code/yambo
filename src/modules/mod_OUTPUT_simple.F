@@ -54,12 +54,11 @@ module OUTPUT_simple
      logical     ,optional :: PARSER_call
    end subroutine
    !
-   subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
+   subroutine OUTPUT_add_column(what,name,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
      use pars,  ONLY:SP
      character(*) , OPTIONAL :: what
      character(*) , OPTIONAL :: name
      character(*) , OPTIONAL :: TITLES(:)
-     character(*) , OPTIONAL :: VAL_TITLES(:)
      integer      , OPTIONAL :: I_VALUES(:)
      real(SP)     , OPTIONAL :: R_VALUES(:)
      character(*) , OPTIONAL :: ORDER(:)
@@ -68,5 +67,29 @@ module OUTPUT_simple
    end subroutine
    !
  end interface
+ !
+ contains
+   !
+   subroutine OUTPUT_reset(what)
+     character(*) :: what
+     integer      :: ic
+     if (what=="row".or.what=="reset") then
+       do ic=1,N_columns
+         COL(ic)%POS=0
+         COL(ic)%title=" "
+         COL(ic)%KIND=" "
+         COL(ic)%I_value=0
+         COL(ic)%R_value=0.
+       enddo
+       N_columns = 0
+       N_columns_ordered = 0
+     endif
+     if (what=="reset") then
+       TITLES_ordered=.FALSE.
+       TITLES_dumped=.FALSE.
+       filename = " "
+       filename_short= " "
+     endif
+   end subroutine
  !
 end module

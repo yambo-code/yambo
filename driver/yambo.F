@@ -178,7 +178,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  driver_now= l_sta_X.or.l_dyn_X.or.l_dipoles.or.l_real_time.or.l_sc_run.or.l_nl_optics
  !
- if (driver_now) call DIPOLE_driver(DIPen, Xk, q, X(i_X_kind), Dip)
+ if (driver_now) call DIPOLE_driver(DIPen, Xk, q, Dip)
  if (driver_now) call mem_manager_report
  !
  ! OPTICS

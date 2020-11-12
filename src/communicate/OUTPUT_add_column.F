@@ -21,11 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
+subroutine OUTPUT_add_column(what,name,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
  !
  use pars,                ONLY:SP,schlen,lchlen
  use OUTPUT_simple,       ONLY:COL,N_columns,filename,filename_short,OUTPUT_unit_conversion,&
-&                              TITLES_dumped,N_MAX_columns,TITLES_ordered,N_columns_ordered
+&                              TITLES_dumped,N_MAX_columns,TITLES_ordered,N_columns_ordered,&
+&                              OUTPUT_reset
  use com,                 ONLY:msg,of_open_close
  use stderr,              ONLY:STRING_same
  !
@@ -34,7 +35,6 @@ subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,I_VALUES,R_VALUES,ORDER
  character(*) , OPTIONAL :: what
  character(*) , OPTIONAL :: name
  character(*) , OPTIONAL :: TITLES(:)
- character(*) , OPTIONAL :: VAL_TITLES(:)
  integer      , OPTIONAL :: I_VALUES(:)
  real(SP)     , OPTIONAL :: R_VALUES(:)
  character(*) , OPTIONAL :: ORDER(:)
@@ -43,7 +43,8 @@ subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,I_VALUES,R_VALUES,ORDER
  !
  ! Work Space
  !
- integer           :: N,M,i_t,i_o
+ integer           :: N,M,i_t,i_o,i_COL
+ logical           :: NEW_COL
  real(SP)          :: o_R_values(N_MAX_columns)
  integer           :: o_I_values(N_MAX_columns)
  character(1)      :: o_KINDS(N_MAX_columns)
@@ -56,63 +57,44 @@ subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,I_VALUES,R_VALUES,ORDER
  endif
  !
  if (present(what)) then
-   if (what=="reset".or.what=="close".or.what=="open") then
-     N_columns=0
-     N_columns_ordered=0
-     TITLES_ordered=.FALSE.
-     TITLES_dumped=.FALSE.
-   endif
    if (what=="close") call of_open_close(filename)
-   if (what=="open")  call of_open_close(filename,'ot')
+   if (what=="open" ) call of_open_close(filename,'ot')
+   if (what=="reset".or.what=="close") call OUTPUT_reset("reset")
  endif
  !
  if (present(TITLES)) then
    N=size(TITLES)
    do i_t=1,N
-     N_columns=N_columns+1
-     N_columns_ordered=N_columns_ordered+1
-     COL(N_columns)%title=TITLES(i_t)
-     COL(N_columns)%POS=N_columns
+     NEW_COL=.TRUE.
+     i_COL=N_columns+1
+     do i_o=1,N
+       if (STRING_same(trim(TITLES(i_t)),trim(COL(i_o)%title))) then
+         i_COL=i_o
+         NEW_COL=.FALSE.
+       endif
+     enddo
+     if (NEW_COL) then
+       N_columns=N_columns+1
+       N_columns_ordered=N_columns_ordered+1
+     endif
+     COL(i_COL)%title=TITLES(i_t)
+     COL(i_COL)%POS=i_COL
      if (present(I_VALUES)) then
-       COL(N_columns)%I_value=I_VALUES(i_t)
-       COL(N_columns)%KIND="I"
+       COL(i_COL)%I_value=I_VALUES(i_t)
+       COL(i_COL)%KIND="I"
      endif
      if (present(R_VALUES)) then
        if (present(UNIT)) then
-         COL(N_columns)%title=trim(COL(N_columns)%title)//" ["//UNIT//"]"
+         COL(i_COL)%title=trim(COL(i_COL)%title)//" ["//UNIT//"]"
          if (present(KIND)) then
            call OUTPUT_unit_conversion(rVAR=R_VALUES(i_t),DESC=UNIT,KIND=KIND)
          else
            call OUTPUT_unit_conversion(rVAR=R_VALUES(i_t),DESC=UNIT)
          endif
        endif
-       COL(N_columns)%R_value=R_VALUES(i_t)
-       COL(N_columns)%KIND="R"
+       COL(i_COL)%R_value=R_VALUES(i_t)
+       COL(i_COL)%KIND="R"
      endif
-   enddo
- endif
- !
- if (present(VAL_TITLES).and.(present(R_VALUES).or.present(I_VALUES))) then
-   N=size(VAL_TITLES)
-   do i_t=1,N
-     do i_o=1,N
-       if (STRING_same(trim(VAL_TITLES(i_t)),trim(COL(i_o)%title))) then
-         if (present(R_VALUES)) then
-           if (present(UNIT)) then
-             if (present(KIND)) then
-               call OUTPUT_unit_conversion(rVAR=R_VALUES(i_t),DESC=UNIT,KIND=KIND)
-             else
-               call OUTPUT_unit_conversion(rVAR=R_VALUES(i_t),DESC=UNIT)
-             endif
-           endif
-           COL(i_o)%R_value=R_VALUES(i_t)
-           COL(i_o)%KIND="R"
-         else
-           COL(i_o)%I_value=I_VALUES(i_t)
-           COL(i_o)%KIND="I"
-         endif
-       endif
-     enddo
    enddo
  endif
  !
@@ -167,8 +149,6 @@ subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,I_VALUES,R_VALUES,ORDER
  enddo
  call msg('o '//filename_short,' ',MSG_string(:N_columns_ordered),INDENT=-2,USE_TABS=.TRUE.)
  !
- N_columns=0
- N_columns_ordered=0
- TITLES_ordered=.FALSE.
+ call OUTPUT_reset("row")
  !
 end subroutine

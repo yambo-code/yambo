@@ -44,6 +44,7 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_eh_bands,PARs_PH_Q_ibz
  use QP_m,           ONLY:QP_G_damp
  use LIVE_t,         ONLY:live_timing
+ use PHEL,           ONLY:l_PH_uses_E_FineGd
  !
  implicit none
  !
@@ -82,10 +83,17 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
    !
    if (.not.PARs_PH_K_bz%IND%element_1D(ikbz)) cycle
    !
-   ! Obtain k-q in the ibz from k in the bz and q in the ibz
+#if defined _RT
+   ! Obtain k-q in the ibz from k in the bz and q in the ibz: 
    ik_m_q =k%sstar(qindx_X(iq,ikbz,1),1)
-   ! Obtain k in the ibz from k in the bz
+   ! Obtain k in the ibz from k in the bz: 
    ik = k%sstar(ikbz,1)
+#else
+   ! Obtain k-q in the bz from k in the bz and q in the ibz
+   ik_m_q = qindx_X(iq,ikbz,1)
+   ! Use k in the bz
+   ik = ikbz
+#endif
    !
    do il=elph_branches(1),elph_branches(2)
      !
@@ -125,7 +133,7 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
            !
          endif
          !
-         if (.not. l_RT_uses_E_FineGd) then
+         if (.not. l_RT_uses_E_FineGd .and. .not. l_PH_uses_E_FineGd) then
            !
 #if defined _RT
            if(E_FG%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. E_FG%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
@@ -161,7 +169,7 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
            !
            do ip_rim=k_FG%k_range(ik_m_q,1),k_FG%k_range(ik_m_q,2)
              !
-             if (l_RT_uses_E_FineGd) then
+             if (l_RT_uses_E_FineGd .or. l_PH_uses_E_FineGd) then
                ! 
 #if defined _RT
                if(E_FG%E(i_np,ip_rim,1)<RT_eh_en(1) .or. E_FG%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle

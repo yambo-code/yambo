@@ -167,6 +167,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  BS_dip_size=1
  l_BS_abs    = (index(BSE_prop,'abs')/=0)
  l_BS_jdos   = index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP
+ l_BS_dichroism = .false.
+ l_BS_kerr      = .false.
+ l_BS_photolum  = .false.
+ l_BS_trace     = .false.
+ l_BS_magnons   = .false.
 #if defined _KERR
  l_BS_dichroism = (index(BSE_prop,'dich')/=0)
  l_BS_kerr      = (index(BSE_prop,'kerr')/=0)

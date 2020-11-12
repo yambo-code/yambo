@@ -347,8 +347,10 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  !
  if (.not.BSS_add_antiresonant.and.BS_not_const_eh_f.and..not.BS_K_coupling) then
    call warning('Fractional e/h occupations but resonant only mode selected in input.')
-   BSE_mode='retarded'
-   BSS_add_antiresonant=.true.
+   !! This is not neeeded since now occupations are used in the form (f_v-f_c)
+   !! It waas needed with the old version f_v(1-f_c)
+   !BSE_mode='retarded'
+   !BSS_add_antiresonant=.true.
  endif
  !
  l_BS_ares_asymm=l_BS_ares_asymm.and.trim(BSE_mode)/="resonant"

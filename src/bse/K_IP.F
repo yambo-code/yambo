@@ -42,7 +42,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,&
 &                        Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind,BS_bands,&
- &                       BS_dip_size,l_BS_jdos,l_BS_trace,BS_res_ares_dim
+ &                       BS_dip_size,l_BS_jdos,l_BS_trace,BS_res_ares_dim,&
+ &                       l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
@@ -50,7 +51,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use timing_m,      ONLY:timing
 #if defined _KERR
  use vec_operate,   ONLY:rot_v_xy_plane
- use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum
+ use BS,            ONLY:l_BS_anomalous_Hall
  use KERR,          ONLY:A_drude,B_Hall
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
  use X_m,           ONLY:X_magnons,Epsilon_ij,X_dichroism
@@ -229,19 +230,17 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      ! Absorption, PL & KERR
      !
-     if(iq==1) then
-       !
-       DIP_expanded=DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,DIP_kind,Xk)
-       DIP_projected(1)=dot_product(field_dir(:,1),DIP_expanded)
-       if(BS_dip_size>1) DIP_projected(2)=dot_product(field_dir(:,2),DIP_expanded)
-       if(BS_dip_size>2) DIP_projected(3)=dot_product(field_dir(:,3),DIP_expanded)
-       !
-     else
-       !
-       if(trim(global_gauge)=="length")   call scatter_Bamp(BSE_scatt)
-       if(trim(global_gauge)=="velocity") call scatter_Bamp_using_the_gradient(BSE_scatt,"o")
-       DIP_projected(1)=-conjg(BSE_scatt%rhotw(1))
-       !
+     if(l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum) then
+       if(iq==1) then
+         DIP_expanded=DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,DIP_kind,Xk)
+         DIP_projected(1)=dot_product(field_dir(:,1),DIP_expanded)
+         if(BS_dip_size>1) DIP_projected(2)=dot_product(field_dir(:,2),DIP_expanded)
+         if(BS_dip_size>2) DIP_projected(3)=dot_product(field_dir(:,3),DIP_expanded)
+       else
+         if(trim(global_gauge)=="length")   call scatter_Bamp(BSE_scatt)
+         if(trim(global_gauge)=="velocity") call scatter_Bamp_using_the_gradient(BSE_scatt,"o")
+         DIP_projected(1)=-conjg(BSE_scatt%rhotw(1))
+       endif
      endif
      !
 #if defined _KERR
@@ -299,9 +298,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      ! Absorption, & KERR
      !
-     BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg_fac*conjg(DIP_projected(:BS_dip_size))
-     if (BS_K_coupling.and..not.BS_res_ares_dim==2) &
-     &  BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
+     if(l_BS_abs.or.l_BS_kerr) then
+       BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg_fac*conjg(DIP_projected(:BS_dip_size))
+       if (BS_K_coupling.and..not.BS_res_ares_dim==2) &
+       &  BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
+     endif
      !
 #if defined _KERR
      ! Dichroism

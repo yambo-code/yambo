@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details):
+! Authors (see AUTHORS file for details): DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -52,7 +52,7 @@ subroutine el_magnetization(en,Xk,magn)
  !
  ! Work Space
  !
- integer :: isym,ifft,ib,ik,i_sp_pol,i_wf
+ integer :: isym,ifft,ib,ik,i_sp_pol,i_wf,t_rev_fac
  real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ
  !
 #if defined _RT
@@ -129,13 +129,15 @@ subroutine el_magnetization(en,Xk,magn)
  do isym=1,nsym
    ! The magnetization, like the spin, is a pseudo-vector:
    ! i.e. is invariant under spatial inversion but changes under T-rev
+   t_rev_fac=+1
+   if( isym> nsym/(1+i_time_rev) ) t_rev_fac=-1
+   !
    if (n_spinor==2) then
      tmp_sop(:,:)=dl_sop(:,:,isym)*m3det(dl_sop(:,:,isym))
-     if( isym> nsym/(1+i_time_rev) ) tmp_sop(:,:)=-tmp_sop(:,:)
      forall(ifft=1:fft_size) magn(ifft,:)=magn(ifft,:)+ &
-&                            matmul(tmp_sop, cv(fft_rot_r(ifft,isym),:)/real(nsym,SP))
+&            t_rev_fac*matmul(tmp_sop, cv(fft_rot_r(ifft,isym),:)/real(nsym,SP))
    else
-     magn(:,3)=magn(:,3)+cv(fft_rot_r(:,isym),3)/real(nsym,SP)
+     magn(:,3)=magn(:,3)+t_rev_fac*cv(fft_rot_r(:,isym),3)/real(nsym,SP)
    endif
    !
  enddo

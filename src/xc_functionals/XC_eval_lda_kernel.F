@@ -55,10 +55,10 @@ subroutine XC_eval_lda_kernel(v1rho,v2rho2)
    ! Magnons Fxc
    else
      do ifft=1,fft_size
-       mod_mag=v_norm(magn(ifft,:))
-       if(mod_mag< 1.E-6_SP) one_over_magn=0._SP
-       if(mod_mag>=1.E-6_SP) one_over_magn=1._SP/mod_mag
-       ! Here 1,1 means +- and 22 -+ (or viceversa, to be checked)
+       mod_mag=abs(magn(ifft,3))
+       if(mod_mag< 1.E-8_SP) one_over_magn=0._SP
+       if(mod_mag>=1.E-8_SP) one_over_magn=1._SP/mod_mag
+       ! Here 1,1 means -+ and 22 +-
        ! This happens because in the yambo convention the left indexes "v sigma_v, c sigma_c, k" are inverted
        ! with respect to the standard convention, i.e. "c sigma_c, v sigma_v, k"
        ! As a result f_\up\dn,\dn\up is in yambo f_\dn\up,\dn\up and so on

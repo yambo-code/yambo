@@ -249,7 +249,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          call xc_f90_lda_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), v1rho(1,1))
          forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(v1rho(i2,i1),SP)
        case(2)
-         !if ( (l_BS_magnons.and.n_sp_pol==2) .or. n_spinor==2) &
          call xc_f90_lda_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), v1rho(1,1))
          call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), v2rho2(1,1))
          ! Yambo internal for Kxc
@@ -265,8 +264,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
        case(1)
          call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
          if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.and.ixc==1) then
-         !GAUPBE short energy part of the x potential,factor 2 in vx2 for
-         !consistency qith QE
+           !GAUPBE short energy part of the x potential,factor 2 in vx2 for
+           !consistency qith QE
            v1rho=v1rho-EXX_FRACTION*vx1
            v1sigma=v1sigma-(EXX_FRACTION*vx2)/2._DP
          endif

@@ -506,6 +506,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
      enddo bands_loop
    enddo qp_loop
    !
+   call X_PARALLEL_alloc(X_par(1),0,0,"CLEAN")
+   !
    if (.not.l_life) then
      !
      QP_W_er(iqbz,:)=Xw%er
@@ -561,6 +563,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
      call W_reset(Sc_W(i_qp))
    enddo
  endif
+ !
+ if (allocated(X_par)) deallocate(X_par)
  !
  call X_alloc('X')
  call WF_free(WF)

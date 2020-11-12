@@ -32,7 +32,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  */
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="BZ Grid generator";
- options[*i_opt].long_desc[0]="<string>=(k)pt,(q)pt,(s)hifted,(h)igh symmetry,(r)andom";
+ options[*i_opt].long_desc[0]="<string>=(k)pt,(q)pt,(s)hifted,(h)igh symmetry,(r)andom,r(e)gular";
  options[*i_opt].long_opt="grid";
  options[*i_opt].short_opt='k';
  options[*i_opt].bin="ypp";
@@ -138,9 +138,9 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp ypp_ph";
  /* GPL_EXCLUDE_START */
 #if defined _YPP_ELPH  
- options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(e)lias,(g)kkp";
+ options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(i)nterpolate,(e)lias,(g)kkp";
 #else
- options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave";
+ options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(i)nterpolate";
 #endif
  /* GPL_EXCLUDE_END */
  /* GPL_INCLUDE_START 

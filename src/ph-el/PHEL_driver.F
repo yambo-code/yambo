@@ -48,19 +48,17 @@ subroutine PHEL_driver(E,k,q)
  !
  ! Work Space
  !
- integer             ::i_err,iq,ID
+ integer             ::i_err,iq,ID,k_n
  integer, external   ::io_PH
  type(E_fine_grid)   ::E_FG
+ type(bz_fine_grid)  ::k_FG
  !
  call section('*',"Phonon Lifetimes")
  !
  ! Setup
  !=======
- ! ...DbGd
- PH_DbGd_points    =k%FGibz%N
- l_PH_uses_E_FineGd=PH_DbGd_points>0
- if ( index(PH_Self_Energy_mode,"bare")>0 ) l_GKKP_hosts_bare_dV = .true.
  !
+ if ( index(PH_Self_Energy_mode,"bare")>0 ) l_GKKP_hosts_bare_dV = .true.
  ! ... BZ Setup
  call k_build_up_BZ_tables(q)
  !
@@ -97,30 +95,45 @@ subroutine PHEL_driver(E,k,q)
  !
  call ELPH_acoustic_phonon_properties(q)
  !
+#if !defined _RT 
+ ! ...DbGd in the full BZ
+ k_FG = k%FGbz
+ k_n  = k%nbz
+ PH_DbGd_points    =k_FG%N
+ l_PH_uses_E_FineGd=PH_DbGd_points>0
+ if (.not.l_PH_uses_E_FineGd) then
+   call bz_samp_FineGd_alloc(k_FG,k_n)
+   call bz_samp_FineGd_default(k_n,k)
+ endif  
+ !
+#else
  ! Maps into the RT kinds
  !========================
- ! ... grid
+ ! ... grid in the IBZ
+ k_FG = k%FGibz
+ k_n  = k%nibz
  l_RT_uses_E_FineGd=k%FGibz%N>0
  if (.not.l_RT_uses_E_FineGd) then
-   call bz_samp_FineGd_alloc(k%FGibz,k%nibz)
-   call bz_samp_FineGd_default(k%FGibz,k)
+   call bz_samp_FineGd_alloc(k_FG,k_n)
+   call bz_samp_FineGd_default(k_FG,k)
  endif
+#endif
  !
  ! ... allocs
  Life_MEM_steps=1
  call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)
- call RT_EL_occupations_alloc((/1,QP_PH_n_G_bands/),k%FGibz%N)
+ call RT_EL_occupations_alloc((/1,QP_PH_n_G_bands/),k_FG%N)
  call RT_PH_occupations_alloc(elph_branches,nqibz)
- if (l_RT_uses_E_FineGd) then
-   YAMBO_ALLOC(E_FG%E,(QP_PH_n_G_bands,k%FGibz%N,n_sp_pol))
-   YAMBO_ALLOC(E_FG%W,(QP_PH_n_G_bands,k%FGibz%N,n_sp_pol))
+ if (l_RT_uses_E_FineGd .or. l_PH_uese_E_FineGd) then
+   YAMBO_ALLOC(E_FG%E,(QP_PH_n_G_bands,k_FG%N,n_sp_pol))
+   YAMBO_ALLOC(E_FG%W,(QP_PH_n_G_bands,k_FG%N,n_sp_pol))
  else
-   YAMBO_ALLOC(E_FG%E,(QP_PH_n_G_bands,k%nibz,n_sp_pol))
-   YAMBO_ALLOC(E_FG%W,(QP_PH_n_G_bands,k%nibz,n_sp_pol))
+   YAMBO_ALLOC(E_FG%E,(QP_PH_n_G_bands,k_n,n_sp_pol))
+   YAMBO_ALLOC(E_FG%W,(QP_PH_n_G_bands,k_n,n_sp_pol))
  endif
  !
  ! ... occupations & levels
- call RT_occupations_and_levels_init((/1,QP_PH_n_G_bands/),E,k,q,k%FGibz,E_FG)
+ call RT_occupations_and_levels_init((/1,QP_PH_n_G_bands/),E,k,q,k_FG,E_FG)
  !
  ! Loop
  !======
@@ -136,7 +149,7 @@ subroutine PHEL_driver(E,k,q)
  call live_timing('Phonon Lifetimes',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
  do iq=1,nqibz
    if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
-   call PHEL_Lifetimes(iq,E,k,q,(/1,QP_PH_n_G_bands/),k%FGibz,E_FG)
+   call PHEL_Lifetimes(iq,E,k,q,(/1,QP_PH_n_G_bands/),k_FG,E_FG)
  enddo
  call live_timing( )
  !

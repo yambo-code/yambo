@@ -212,13 +212,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !------------
  !
  if (.not.allocated(X_par)) then
-  !
-  if (io_RESPONSE) then
-    allocate(X_par(1))
-  else
-    allocate(X_par(PAR_nQ_ibz))
-  endif
-  !
+   !
+   if (io_RESPONSE) then
+     allocate(X_par(1))
+   else
+     allocate(X_par(PAR_nQ_ibz))
+   endif
+   !
  endif
  !
  if (l_sc_coh.or.l_sc_sex.or.l_cohsex.or.l_sc_srpa) then
@@ -648,6 +648,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
    enddo QP_loop
    !
+   if (io_RESPONSE) call X_PARALLEL_alloc(X_par(iq_mem),0,0,"CLEAN")
+   !
  enddo Q_loop 
  !
  call live_timing()
@@ -661,11 +663,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      YAMBO_FREE(eet_factor)
    endif
  endif
+ !
  l_X_alloc=.true.
 #if defined _SC
  l_X_alloc=l_sc_run.and.io_RESPONSE
 #endif
  if(l_X_alloc) call X_alloc('X')
+ if(allocated(X_par)) deallocate(X_par)
  !
  call timing('GW(ppa)',OPR='stop')
  !

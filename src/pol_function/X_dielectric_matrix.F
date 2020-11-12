@@ -34,7 +34,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,myid,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD,&
 &                        PAR_COM_X_WORLD_RL_resolved
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
@@ -45,7 +45,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 &                        PARALLEL_WF_index,WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset
- use cuda_m
  !
 #include<memory.h>
  !
@@ -58,7 +57,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  ! Work Space
  !
- integer              :: n,iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles,iw_X_mat
+ integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles,iw_X_mat
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X,X_eh_setup
  character(1)         :: sec_mode
@@ -264,10 +263,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 &              X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)=X_par(iq_mem)%blc(:,:,iw)
        endif
        !
-       do n = 1,X%ng
-        call PP_redux_wait(X_mat(:,n,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
-       enddo
-     !
+       call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
+       !
      enddo
      !
 #if defined _PAR_IO
@@ -293,7 +290,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    endif
    !
    ! CLEAN (2)
-   ! 
+   !
    if (io_RESPONSE) call X_PARALLEL_alloc(X_par(iq_mem),0,0,"CLEAN")
    YAMBO_FREE(X_par_lower_triangle%blc)
    call MATRIX_reset(X_par_lower_triangle)
@@ -314,7 +311,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    YAMBO_FREE(X_mat)
 #endif
    deallocate(X_par)
-  endif
+ endif
  if (allocated(FXC)) then
    YAMBO_FREE(FXC)
  endif

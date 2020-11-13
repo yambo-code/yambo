@@ -32,7 +32,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
- use BS,             ONLY:BS_perturbative_SOC,BS_mat_res_ares_dim,l_BS_abs
+ use BS,             ONLY:BS_perturbative_SOC,BS_mat_res_ares_dim,l_BS_abs,l_BS_jdos,l_BS_esort
  use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor,diam_term_exact,BSS_eels_to_eps
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:bare_qpg
@@ -98,20 +98,26 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    !
    do i_pert_SOC=1,n_SOC
      !
-     nVAR=1
-     E_sorted(i1,nVAR,2)=EXC_E(1)
+     if(l_BS_esort) then
+       nVAR=1
+       E_sorted(i1,nVAR,2)=EXC_E(1)
+     endif
      !
-     Joint_DOS(:,2)=Joint_DOS(:,2)-ares_fac/(W%p(:)-EXC_E(i_pert_SOC))
-     if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
-       Joint_DOS(:,2)=Joint_DOS(:,2)+1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+     if(l_BS_jdos) then
+       Joint_DOS(:,2)=Joint_DOS(:,2)-ares_fac/(W%p(:)-EXC_E(i_pert_SOC))
+       if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
+         Joint_DOS(:,2)=Joint_DOS(:,2)+1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+       endif
      endif
      !
      ! Note the use of a causal expression here needed to avoid any
      ! distinction between the resonant and antiresonant e/h Green's functions.
      !
      if(l_BS_abs) then
-       if(i1<1000) E_sorted(i1,nVAR+1:nVAR+1,1)=BS_R_right(i1)
-       nVAR=nVAR+1
+       if(l_BS_esort) then
+         if(i1<1000) E_sorted(i1,nVAR+1:nVAR+1,1)=BS_R_right(i1)
+         nVAR=nVAR+1
+       endif
        res_abs=BS_R_left(i1)*BS_R_right(i1)*ares_fac
        Epsilon_ii(:,2)=Epsilon_ii(:,2)-res_abs/(W%p(:)-EXC_E(i_pert_SOC))
        if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
@@ -124,8 +130,10 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
      !
 #if defined _KERR
      if(l_BS_kerr) then
-       if(i1<1000) E_sorted(i1,nVAR+1:nVAR+1,1)=BS_R_right_kerr(i1)
-       nVAR=nVAR+1
+       if(l_BS_esort) then
+         if(i1<1000) E_sorted(i1,nVAR+1:nVAR+1,1)=BS_R_right_kerr(i1)
+         nVAR=nVAR+1
+       endif
        res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)*ares_fac
        Epsilon_ij(:,2)=Epsilon_ij(:,2)-res_kerr/(W%p(:)-EXC_E(i_pert_SOC))
        if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
@@ -161,8 +169,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  if (BS_mat_res_ares_dim/=i_BS_mat) return
  !
- call PP_redux_wait(Joint_DOS(:,2) )
- call PP_redux_wait(E_sorted(:,:,2) )
+ if(l_BS_jdos)  call PP_redux_wait(Joint_DOS(:,2) )
+ if(l_BS_esort) call PP_redux_wait(E_sorted(:,:,2) )
  !
  if(l_BS_abs) then
    call PP_redux_wait(Epsilon_ii(:,2))
@@ -197,9 +205,11 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !============
  if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W%p(:)**2
  !
- Joint_DOS(:,2)=Joint_DOS(:,2)*Co_factor !/(4._SP*pi) is needed for the correct Jdos
- !                                       ! However it is commented for now since all test-suite
- !                                       ! references needs to be updated before insterting it
+ if(l_BS_jdos) then
+   Joint_DOS(:,2)=Joint_DOS(:,2)*Co_factor !/(4._SP*pi) is needed for the correct Jdos
+ !                                         ! However it is commented for now since all test-suite
+ !                                         ! references needs to be updated before insterting it
+ endif
  !
 #if defined _KERR
  !

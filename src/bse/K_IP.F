@@ -42,7 +42,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,&
 &                        Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind,BS_bands,&
- &                       BS_dip_size,l_BS_jdos,l_BS_trace,BS_res_ares_dim,BS_K_dim,BS_H_dim,&
+ &                       BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_res_ares_dim,BS_K_dim,BS_H_dim,&
  &                       l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
@@ -67,7 +67,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Work space
  !
  integer           ::ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol_c,i_sp_pol_v,i_T_g,i_T,&
- &                   n_SOC,i_pert_SOC,io_err,i_res_ares,H_pos,i1,i2,nVAR,sort_indx(min(1000,BS_H_dim))
+ &                   n_SOC,i_pert_SOC,io_err,i_res_ares,H_pos,i1,i2,nVAR,EDIM,sort_indx(min(1000,BS_H_dim))
  real(SP)          ::conjg_fac,Z_,E_,f_,vtmpR(min(1000,BS_H_dim))
  logical           ::dip_v,dip_r
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
@@ -223,8 +223,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      if (     BS_perturbative_SOC) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
-     nVAR=1
-     if(H_pos<1000) E_sorted(H_pos,nVAR,1)=E_plus_W0
+     if(l_BS_esort) then
+       nVAR=1
+       if(H_pos<1000) E_sorted(H_pos,nVAR,1)=E_plus_W0
+     endif
      !
      ! c1.Compute "dipoles"
      !=====================
@@ -304,8 +306,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! Absorption, & KERR
      !
      if(l_BS_abs.or.l_BS_kerr) then
-       if(H_pos<1000) E_sorted(H_pos,nVAR+1:nVAR+BS_dip_size,1)=conjg_fac*conjg(DIP_projected(:BS_dip_size))
-       nVAR=nVAR+BS_dip_size
+       if(l_BS_esort) then
+         if(H_pos<1000) E_sorted(H_pos,nVAR+1:nVAR+BS_dip_size,1)=conjg_fac*conjg(DIP_projected(:BS_dip_size))
+         nVAR=nVAR+BS_dip_size
+       endif
        BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg_fac*conjg(DIP_projected(:BS_dip_size))
        if (BS_K_coupling.and..not.BS_res_ares_dim==2) &
        &  BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
@@ -314,16 +318,20 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 #if defined _KERR
      ! Dichroism
      if(l_BS_dichroism) then
-       if(H_pos<1000) E_sorted(H_pos,nVAR+1:nVAR+BS_dip_size,1)=conjg(DIP_projected_dich(:BS_dip_size))
-       nVAR=nVAR+BS_dip_size
+       if(l_BS_esort) then
+         if(H_pos<1000) E_sorted(H_pos,nVAR+1:nVAR+BS_dip_size,1)=conjg(DIP_projected_dich(:BS_dip_size))
+         nVAR=nVAR+BS_dip_size
+       endif
        BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,1)=conjg(DIP_projected_dich(:BS_dip_size))
        if (BS_K_coupling.and..not.BS_res_ares_dim==2) &
        & BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,2)=DIP_projected_dich(:BS_dip_size)
      endif
      ! Magnons
      if (l_BS_magnons) then                                      ! This is the right R residual associated to (eps_c\dn-eps_v\up)
-         if(H_pos<1000) E_sorted(H_pos,nVAR+1:nVAR+2,1)=(/conjg(DIP_Splus),conjg(DIP_Smins)/)
-         nVAR=nVAR+2
+         if(l_BS_esort) then
+           if(H_pos<1000) E_sorted(H_pos,nVAR+1:nVAR+2,1)=(/conjg(DIP_Splus),conjg(DIP_Smins)/)
+           nVAR=nVAR+2
+         endif
          BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
          BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Smins)   ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
                                                                  !      or the right R residual associated to (eps_c\dn-eps_v\up)
@@ -407,11 +415,16 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      do i_pert_SOC=1,n_SOC
        !
-       Epsilon_ii(:,3)=Epsilon_ii(:,3)-res_abs/(W_bss%p(:)-E_plus_W(i_pert_SOC))
-       if (l_BS_jdos) Joint_DOS(:,3) =Joint_DOS(:,3) -1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC))
-       if ((BSS_add_antiresonant.or.BS_K_coupling).and..not.BS_res_ares_dim==2) then
-         Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res_abs)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
-         if (l_BS_jdos) Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+       if (l_BS_jdos) then
+         Joint_DOS(:,3) =Joint_DOS(:,3) -1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC))
+         if ((BSS_add_antiresonant.or.BS_K_coupling).and..not.BS_res_ares_dim==2) &
+         &  Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+       endif
+       !
+       if (l_BS_abs) then
+         Epsilon_ii(:,3)=Epsilon_ii(:,3)-res_abs/(W_bss%p(:)-E_plus_W(i_pert_SOC))
+         if ((BSS_add_antiresonant.or.BS_K_coupling).and..not.BS_res_ares_dim==2) &
+         &  Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res_abs)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
        endif
        !
        if(abs(E_plus_W(i_pert_SOC))>0._SP) then
@@ -487,12 +500,16 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if (l_BS_jdos) then
    call PP_redux_wait( Joint_DOS(:,3),COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( Joint_DOS(:,3),COMM=PAR_COM_eh_INDEX%COMM )
+ endif
+ !
+ if(l_BS_esort) then
    call PP_redux_wait( E_sorted(:,:,1) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( E_sorted(:,:,1) ,COMM=PAR_COM_eh_INDEX%COMM )
-   vtmpR=real(E_sorted(:min(BS_H_dim,1000),1,1),SP)
-   call sort(arrin=vtmpR,indx=sort_indx)
+   EDIM=min(BS_H_dim,1000)
+   vtmpR=real(E_sorted(:EDIM,1,1),SP)
+   call sort(arrin=vtmpR(:EDIM),indx=sort_indx(:EDIM))
    do i1=1,nVAR
-     vtmpC=E_sorted(:min(BS_H_dim,1000),i1,1)
+     vtmpC=E_sorted(:EDIM,i1,1)
      do i2=1,min(BS_H_dim,1000)
        E_sorted(i2,i1,1)=vtmpC(sort_indx(i2))
      enddo

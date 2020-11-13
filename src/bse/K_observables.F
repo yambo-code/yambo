@@ -27,7 +27,7 @@ subroutine K_observables(WHAT,W)
  use X_m,           ONLY:X_alloc,Epsilon_ii,Joint_DOS,E_sorted
  use frequency,     ONLY:w_samp
  use BS_solvers,    ONLY:BSS_n_freqs
- use BS,            ONLY:BS_H_dim,l_BS_abs
+ use BS,            ONLY:BS_H_dim,l_BS_abs,l_BS_jdos,l_BS_esort
 #if defined _KERR
  use BS_solvers,    ONLY:B_Hall
  use PHOTOLUM,      ONLY:PL,PL_init
@@ -72,13 +72,19 @@ subroutine K_observables(WHAT,W)
    !
    if(l_BS_abs) then
      call X_alloc("EPS",(/BSS_n_freqs,4/))
-     Epsilon_ii(:,1)   =W%p(:)
+     Epsilon_ii(:,1)=W%p(:)
    endif
    !
-   YAMBO_ALLOC(Joint_DOS,(BSS_n_freqs,4))
-   Joint_DOS(:,1)    =W%p(:)
+   if(l_BS_jdos) then
+     YAMBO_ALLOC(Joint_DOS,(BSS_n_freqs,4))
+     Joint_DOS=cZERO
+     Joint_DOS(:,1)=W%p(:)
+   endif
    !
-   YAMBO_ALLOC(E_sorted,(1000,2,4))
+   if(l_BS_esort) then
+     YAMBO_ALLOC(E_sorted,(1000,2,4))
+     E_sorted=cZERO
+   endif
    !
  else if (WHAT=="FREE") then
    !

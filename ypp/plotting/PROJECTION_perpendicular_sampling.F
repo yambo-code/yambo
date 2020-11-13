@@ -44,11 +44,9 @@ subroutine PROJECTION_perpendicular_sampling( K, versor )
  !
  GRID_k%nbz=K%nbz*PROJECT_depth
  allocate(GRID_k%pt(GRID_k%nbz,3))
- allocate(GRID_k%ptbz(GRID_k%nbz,3))
  !
  if (PROJECT_depth==1) then
    GRID_k%pt  =K%pt
-   GRID_k%ptbz=K%pt
    return
  endif
  !
@@ -85,7 +83,6 @@ subroutine PROJECTION_perpendicular_sampling( K, versor )
    enddo
    call live_timing(steps=1)
  enddo 
- GRID_k%ptbz=GRID_k%pt
  !
  call live_timing()
  !

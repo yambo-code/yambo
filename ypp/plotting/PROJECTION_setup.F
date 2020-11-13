@@ -86,7 +86,7 @@ subroutine PROJECTION_setup( what ,bands )
    call msg("sr","          Direction#2 // plane      ",axis(2,:),"[iku]")
    call msg("sr","          Direction  _|_ plane      ",axis(3,:),"[iku]")
    call msg("sr","          Plane Origin              ",O,"[iku]")
-  !
+   !
    call live_timing('[PROJECT] Points output file',PROJECT_steps+1)
    !
    output_fname="plane_points"

@@ -86,6 +86,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  integer          :: i_np,pole_p,poles_f,ID2
  real(SP)         :: bose_PPA_E, edigits(2), rdigits 
  complex(SP), allocatable :: MPA_Xo(:)
+ logical          :: isdiagonal
  character(len=99):: str
  !
  integer, external::io_X,io_MPA,QP_state_extract
@@ -249,7 +250,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      poles_f=0
      !
-     !$omp parallel default(shared), private(ig1,ig2,pole_p,i_np,MPA_Xo), &
+     !$omp parallel default(shared), private(ig1,ig2,pole_p,i_np,MPA_Xo,isdiagonal), &
      !$omp &        reduction(+:poles_f)
      !
      YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
@@ -258,12 +259,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      do ig2=1,X%ng
        do ig1=1,X%ng
          !
-         MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)*isc%gamp(ig1,ig2) 
-         if (ig1==ig2) MPA_Xo(:) = real(MPA_Xo(:),SP)
+         MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)!*isc%gamp(ig1,ig2) 
          !
-         call mpa_RE_solver(X%mpa_npoles, MPA_freqs, MPA_Xo, MPA_R_mat(ig1,ig2,:), MPA_E_mat(ig1,ig2,:),edigits,rdigits)
-         !
-         if (ig1==ig2) MPA_R_mat(ig1,ig2,:) = real(MPA_R_mat(ig1,ig2,:),SP)
+         isdiagonal = .false.
+         if (ig1==ig2) isdiagonal = .true.
+         call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_mat(ig1,ig2,:),MPA_E_mat(ig1,ig2,:),isdiagonal,edigits,rdigits)
          !
 #ifdef _DARIO
          write(11,*) 'ER lost digits: ', edigits, rdigits
@@ -402,7 +402,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
                  endif
                endif
                !
-               ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*&
+               ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2)) *isc%gamp(ig1,ig2)  *&
 &                                 (sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np))) *MPA_R_mat(ig1,ig2,i_np))*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_(i_w)-E_kmq &
 &                                             +sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np))+&

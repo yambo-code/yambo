@@ -201,18 +201,22 @@ module R_lattice
      !
      if(  index(what,"X")/=0 .or. index(what,"ALL")/=0) then
        YAMBO_ALLOC(qindx_X,(nqibz,nXkbz,2))
+       qindx_X=0
      endif
      !
      if( (index(what,"S")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform) then
        YAMBO_ALLOC(qindx_S,(QP_states_k(2),nqbz,2))
+       qindx_S=0
      endif
      !
      if( (index(what,"B")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform .and. bse_scattering) then
        YAMBO_ALLOC(qindx_B,(nXkbz,nXkbz,2))
+       qindx_B=0
      endif
      !
      if( (index(what,"C")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform .and. coll_scattering) then
        YAMBO_ALLOC(qindx_C,(nXkbz,nXkbz,2))
+       qindx_C=0
      endif
      !
    end subroutine

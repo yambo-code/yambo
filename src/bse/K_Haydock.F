@@ -41,7 +41,7 @@ subroutine K_Haydock(iq,W)
                              PAR_COM_eh_INDEX
  use timing_m,       ONLY:timing
 #if defined _KERR
- use KERR,           ONLY:B_Hall
+ use BS_solvers,     ONLY:B_Hall
  use BS,             ONLY:l_BS_kerr,l_BS_anomalous_Hall
 #endif
  use descriptors,    ONLY:IO_desc_add

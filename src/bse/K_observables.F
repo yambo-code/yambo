@@ -24,11 +24,12 @@
 subroutine K_observables(WHAT,W)
  !
  use pars,          ONLY:rZERO,cZERO
- use X_m,           ONLY:X_alloc,Epsilon_ii,Joint_DOS
+ use X_m,           ONLY:X_alloc,Epsilon_ii,Joint_DOS,E_sorted
  use frequency,     ONLY:w_samp
  use BS_solvers,    ONLY:BSS_n_freqs
+ use BS,            ONLY:BS_H_dim,l_BS_abs
 #if defined _KERR
- use KERR,          ONLY:B_Hall
+ use BS_solvers,    ONLY:B_Hall
  use PHOTOLUM,      ONLY:PL,PL_init
  use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_anomalous_Hall,l_BS_dichroism,l_BS_photolum
  use X_m,           ONLY:Epsilon_ij,X_magnons,X_dichroism
@@ -69,9 +70,15 @@ subroutine K_observables(WHAT,W)
    endif
 #endif
    !
-   call X_alloc("EPS",(/BSS_n_freqs,4/))
-   Epsilon_ii(:,1)   =W%p(:)
+   if(l_BS_abs) then
+     call X_alloc("EPS",(/BSS_n_freqs,4/))
+     Epsilon_ii(:,1)   =W%p(:)
+   endif
+   !
+   YAMBO_ALLOC(Joint_DOS,(BSS_n_freqs,4))
    Joint_DOS(:,1)    =W%p(:)
+   !
+   YAMBO_ALLOC(E_sorted,(1000,2,4))
    !
  else if (WHAT=="FREE") then
    !
@@ -86,6 +93,9 @@ subroutine K_observables(WHAT,W)
 #endif
    !
    call X_alloc("EPS")
+   !
+   YAMBO_FREE(Joint_DOS)
+   YAMBO_FREE(E_sorted)
    !
  endif
  !

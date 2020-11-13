@@ -53,7 +53,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
- use KERR,           ONLY:BSS_KERR_free
  use BS,             ONLY:l_BS_photolum
  use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:BSS_PL_free,PL
@@ -434,14 +433,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #if defined _KERR
      if (l_BS_photolum) call BSS_PL_free( )
 #endif
-     !
-     ! GPL_EXCLUDE_START
-     !
-#if defined _KERR
-     call BSS_KERR_free( )
-#endif
-     !
-     ! GPL_EXCLUDE_END
      !
      call LOCAL_TYP_clean(K_INV_EPS)
 #if defined _KERR

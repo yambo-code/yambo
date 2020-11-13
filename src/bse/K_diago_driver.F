@@ -30,9 +30,9 @@ subroutine K_diago_driver(iq,W,X_static)
  use pars,           ONLY:SP
  use stderr,         ONLY:intc
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
-&                         BS_mat_res_ares_dim,l_BS_ares_asymm !,BS_Blocks_symmetrize_K,&
+&                         BS_mat_res_ares_dim,l_BS_ares_asymm,l_BS_abs !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E
  use X_m,            ONLY:X_t
  use electrons,      ONLY:n_sp_pol
  use frequency,      ONLY:w_samp
@@ -64,7 +64,6 @@ subroutine K_diago_driver(iq,W,X_static)
 #endif
 #if defined _KERR
  use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum
- use KERR,           ONLY:BSS_KERR_free
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
@@ -95,7 +94,6 @@ subroutine K_diago_driver(iq,W,X_static)
  !==============================================
  !
  real(SP),allocatable    :: BS_E_real(:)
- complex(SP),allocatable :: BS_E(:)
  real(SP)   ,pointer     :: BS_E_SOC_corr(:,:) => null()
  complex(SP),allocatable :: BS_corrections(:,:)
  !
@@ -108,8 +106,8 @@ subroutine K_diago_driver(iq,W,X_static)
  ! Residuals, different for each response function
  !=================================================
  !
- complex(SP),allocatable :: BS_R_left(:)   
- complex(SP),allocatable :: BS_R_right(:)
+ complex(SP),pointer     :: BS_R_left(:)         => null()
+ complex(SP),pointer     :: BS_R_right(:)        => null()
  !
  real(SP),   pointer     :: BS_R_PL(:,:)         => null()
  !
@@ -256,7 +254,7 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        call K_diago_overlap_matrix(BS_V_left,BS_V_right,BS_overlap)
        !
-       call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
+       if(l_BS_abs   )  call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
        !
 #if defined _KERR
        if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
@@ -266,7 +264,7 @@ subroutine K_diago_driver(iq,W,X_static)
        !
      else
        !
-       call K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right)
+       if(l_BS_abs)     call K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right)
        !
 #if defined _KERR
        if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
@@ -329,7 +327,6 @@ subroutine K_diago_driver(iq,W,X_static)
  !
 #if defined _KERR
  call BSS_PL_free( )
- call BSS_KERR_free( )
  call BSS_MAGN_free( )
 #endif
  !
@@ -349,8 +346,10 @@ subroutine K_diago_driver(iq,W,X_static)
          YAMBO_ALLOC(BS_corrections,(2/n_sp_pol,BSS_n_eig))
          YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
        endif
-       YAMBO_ALLOC(BS_R_left,(BSS_n_eig))
-       YAMBO_ALLOC(BS_R_right,(BSS_n_eig))
+       if (l_BS_abs) then
+         YAMBO_ALLOC_P(BS_R_left,(BSS_n_eig))
+         YAMBO_ALLOC_P(BS_R_right,(BSS_n_eig))
+       endif
        !
 #if defined _KERR
        if (l_BS_kerr) then
@@ -396,12 +395,12 @@ subroutine K_diago_driver(iq,W,X_static)
      YAMBO_FREE(BS_E)
      YAMBO_FREE(BS_E_real)
      YAMBO_FREE(BS_corrections)
-     YAMBO_FREE(BS_R_right)
-     YAMBO_FREE(BS_R_left)
      YAMBO_FREE(BS_V_right)
      YAMBO_FREE(BS_V_left)
      YAMBO_FREE_P(BS_overlap)
      YAMBO_FREE_P(BS_E_SOC_corr)
+     YAMBO_FREE_P(BS_R_right)
+     YAMBO_FREE_P(BS_R_left)
 #if defined _KERR
      YAMBO_FREE_P(BS_R_right_kerr)
      YAMBO_FREE_P(BS_R_right_magn)

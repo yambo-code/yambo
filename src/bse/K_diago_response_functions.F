@@ -27,18 +27,18 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
  !
  use pars,           ONLY:cZERO,cONE,SP,pi,rZERO
- use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule
+ use X_m,            ONLY:Epsilon_ii,Joint_DOS,E_sorted,X_drude_term,global_gauge,skip_cond_sum_rule
  use electrons,      ONLY:n_sp_pol
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
- use BS,             ONLY:BS_perturbative_SOC,BS_mat_res_ares_dim
+ use BS,             ONLY:BS_perturbative_SOC,BS_mat_res_ares_dim,l_BS_abs
  use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor,diam_term_exact,BSS_eels_to_eps
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:bare_qpg
  !
 #if defined _KERR
- use KERR,           ONLY:B_Hall
+ use BS_solvers,     ONLY:B_Hall
  use X_m,            ONLY:Epsilon_ij,X_magnons
  use PHOTOLUM,       ONLY:PL,PL_prefactor
  use BS,             ONLY:l_BS_kerr,l_BS_anomalous_Hall,l_BS_magnons,l_BS_photolum
@@ -49,7 +49,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  type(w_samp),intent(in)  :: W
  integer,     intent(in)  :: iq,i_BS_mat
  complex(SP), intent(in)  :: BS_E(BSS_n_eig)
- complex(SP), intent(in)  :: BS_R_left(BSS_n_eig),BS_R_right(BSS_n_eig)
+ complex(SP), pointer, intent(in) :: BS_R_left(:),BS_R_right(:)
  real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
  complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
  complex(SP), pointer, intent(in) :: BS_R_right_kerr(:)
@@ -59,7 +59,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  type(PP_indexes)     ::px
  !
- integer              :: i1,i_pert_SOC,n_SOC,ares_fac
+ integer              :: i1,i_pert_SOC,n_SOC,ares_fac,nVAR
  complex(SP)          :: para_term_w0,diam_term_used,EXC_E(2/n_sp_pol),res_abs
  !
 #if defined _KERR
@@ -98,25 +98,34 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    !
    do i_pert_SOC=1,n_SOC
      !
-     ! Note the use of a causal expression here needed to avoid any
-     ! distinction between the resonant and antiresonant e/h Green's functions.
-     !
-     res_abs=BS_R_left(i1)*BS_R_right(i1)*ares_fac
-     Epsilon_ii(:,2)=Epsilon_ii(:,2)-res_abs/(W%p(:)-EXC_E(i_pert_SOC))
-     if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
-       Epsilon_ii(:,2)=Epsilon_ii(:,2)+conjg(res_abs)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
-     endif
-     !
-     if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+res_abs*EXC_E(i_pert_SOC)/bare_qpg(1,1)**2
-     if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+res_abs/EXC_E(i_pert_SOC)
+     nVAR=1
+     E_sorted(i1,nVAR,2)=EXC_E(1)
      !
      Joint_DOS(:,2)=Joint_DOS(:,2)-ares_fac/(W%p(:)-EXC_E(i_pert_SOC))
      if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
        Joint_DOS(:,2)=Joint_DOS(:,2)+1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
      endif
      !
+     ! Note the use of a causal expression here needed to avoid any
+     ! distinction between the resonant and antiresonant e/h Green's functions.
+     !
+     if(l_BS_abs) then
+       if(i1<1000) E_sorted(i1,nVAR+1:nVAR+1,1)=BS_R_right(i1)
+       nVAR=nVAR+1
+       res_abs=BS_R_left(i1)*BS_R_right(i1)*ares_fac
+       Epsilon_ii(:,2)=Epsilon_ii(:,2)-res_abs/(W%p(:)-EXC_E(i_pert_SOC))
+       if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
+         Epsilon_ii(:,2)=Epsilon_ii(:,2)+conjg(res_abs)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+       endif
+       !
+       if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+res_abs*EXC_E(i_pert_SOC)/bare_qpg(1,1)**2
+       if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+res_abs/EXC_E(i_pert_SOC)
+     endif
+     !
 #if defined _KERR
      if(l_BS_kerr) then
+       if(i1<1000) E_sorted(i1,nVAR+1:nVAR+1,1)=BS_R_right_kerr(i1)
+       nVAR=nVAR+1
        res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)*ares_fac
        Epsilon_ij(:,2)=Epsilon_ij(:,2)-res_kerr/(W%p(:)-EXC_E(i_pert_SOC))
        if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
@@ -124,6 +133,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        endif
      endif
      if(l_BS_magnons) then
+       if(i1<1000) E_sorted(i1,nVAR+1:nVAR+2,1)=BS_R_right_kerr(i1)
+       nVAR=nVAR+2
        res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
        X_magnons(:,1,2)=X_magnons(:,1,2)-res_magn(1)/(W%p(:)-EXC_E(i_pert_SOC))
        X_magnons(:,2,2)=X_magnons(:,2,2)-res_magn(2)/(W%p(:)-EXC_E(i_pert_SOC))
@@ -150,10 +161,14 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  if (BS_mat_res_ares_dim/=i_BS_mat) return
  !
- call PP_redux_wait(Epsilon_ii(:,2))
  call PP_redux_wait(Joint_DOS(:,2) )
- call PP_redux_wait(para_term_w0)
- if (BSS_add_antiresonant) para_term_w0=para_term_w0+conjg(para_term_w0)
+ call PP_redux_wait(E_sorted(:,:,2) )
+ !
+ if(l_BS_abs) then
+   call PP_redux_wait(Epsilon_ii(:,2))
+   call PP_redux_wait(para_term_w0)
+   if (BSS_add_antiresonant) para_term_w0=para_term_w0+conjg(para_term_w0)
+ endif
  !
 #if defined _KERR
  if(l_BS_photolum) then

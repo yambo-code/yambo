@@ -27,26 +27,26 @@ subroutine K_output_file(iq,mode)
  use units,     ONLY:HA2EV
  use drivers,   ONLY:l_col_cut
  use BS_solvers,ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,&
-&                    BSS_n_freqs,K_diago_in_BS_mat
- use BS,        ONLY:BSE_mode,BS_K_is_ALDA,BSqpts
- use X_m,       ONLY:Epsilon_ii,Joint_DOS,eval_alpha,eps_2_alpha,alpha_dim,OPTICS_eels
+&                    BSS_n_freqs,K_diago_in_BS_mat  
+ use BS,        ONLY:l_BS_abs,BSE_mode,BS_K_is_ALDA,BSqpts,BS_H_dim,BS_dip_size,l_BS_esort,l_BS_jdos
+ use X_m,       ONLY:Epsilon_ii,Joint_DOS,E_sorted,eval_alpha,eps_2_alpha,alpha_dim,OPTICS_eels
  use com,       ONLY:msg,of_open_close
  use parser_m,  ONLY:parser
  use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,jdos_file_name,&
-&                    eel_file_name,alpha_file_name,refl_file_name,&
+&                    eel_file_name,alpha_file_name,refl_file_name,esort_file_name,&
 &                    X_write_messages_before_headers,X_write_q_plus_g
  use R_lattice, ONLY:bare_qpg,q_norm
  use interfaces,ONLY:DESC_write
 #if defined _KERR
  use pars,      ONLY:cI
- use electrons, ONLY:spin_occ
+ use electrons, ONLY:spin_occ,n_spinor
  use R_lattice, ONLY:nkbz
  use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,HBAR_SI
  use BS,        ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum
  use X_m,       ONLY:Epsilon_ij,X_magnons,X_dichroism
  use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name,dichr_file_name,&
  &                   magp_file_name,magm_file_name
- use KERR,      ONLY:B_Hall,A_drude
+ use BS_solvers,ONLY:B_Hall,A_drude
  use X_output,  ONLY:pl_file_name
  use PHOTOLUM,  ONLY:PL
 #endif
@@ -60,13 +60,14 @@ subroutine K_output_file(iq,mode)
  character(2)      :: ordering
  character(2)      :: title_mode
  character(10)     :: name_
- integer           :: iw,n_output_data,n_headers
+ integer           :: iw,i1,i2,i_IP_BSE,n_IP_BSE,n_output_data,n_headers,iopt(2),imag(2),idic(2)
  real(SP)          :: output_data(7),w(BSS_n_freqs)
  complex(SP)       :: eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3),alpha_factor
 #if defined _KERR
  complex(SP)       :: beta(BSS_n_freqs,3)
 #endif
- logical           :: eval_eels,eval_reflectivity,l_Haydock,l_Diago,l_Inversion,l_Slepc,l_IP,l_INIT,l_print_col4,l_print_jdos
+ logical           :: eval_eels,eval_reflectivity,l_Haydock,l_Diago,l_Inversion,l_Slepc,l_IP,l_INIT,&
+ &                    l_print_col4,l_print_jdos,l_print_esort
  !
  l_INIT      = index(mode,"open")/=0
  l_Haydock   = index(mode,"Haydock")/=0
@@ -97,14 +98,20 @@ subroutine K_output_file(iq,mode)
  !
  ! EELS / ALPHA / REFLECTIVITY logicals
  !
- eval_eels= OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
- eval_alpha=eval_alpha .and. ((l_col_cut) .or. (eval_eels) )
- !
- call parser('Reflectivity',eval_reflectivity)
- eval_reflectivity=eval_reflectivity .and. .not. eval_alpha
+ if (l_BS_abs) then
+   eval_eels= OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
+   eval_alpha=eval_alpha .and. ((l_col_cut) .or. (eval_eels) )
+   call parser('Reflectivity',eval_reflectivity)
+   eval_reflectivity=eval_reflectivity .and. .not. eval_alpha
+ else
+   eval_eels=.false.
+   eval_alpha=.false.
+   eval_reflectivity=.false.
+ endif
  !
  l_print_col4=l_Haydock.or.(l_Inversion.and..not.K_diago_in_BS_mat)
- l_print_jdos=.not.(l_Inversion.or.l_Haydock)
+ l_print_jdos =(.not.(l_Inversion.or.l_Haydock)) .and. l_BS_jdos
+ l_print_esort=(.not.(l_Inversion.or.l_Haydock)) .and. l_BS_esort
  !
  n_headers=5
  if (l_print_col4) n_headers=7
@@ -113,8 +120,7 @@ subroutine K_output_file(iq,mode)
  title_mode='Ot'
  if (l_INIT) title_mode='ot'
  !
- call of_open_close(eps_file_name,title_mode)
- !
+ if (l_BS_abs) call of_open_close(eps_file_name,title_mode)
  if (eval_reflectivity) call of_open_close(refl_file_name,title_mode)
  if (eval_eels)         call of_open_close(eel_file_name,title_mode)
  if (eval_alpha)        call of_open_close(alpha_file_name,title_mode)
@@ -132,7 +138,8 @@ subroutine K_output_file(iq,mode)
    call of_open_close(magm_file_name,title_mode)
  endif
 #endif
- if(l_print_jdos) call of_open_close(jdos_file_name,title_mode)
+ if(l_print_jdos)  call of_open_close(jdos_file_name,title_mode)
+ if(l_print_esort) call of_open_close(esort_file_name,title_mode)
  !
  call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1)
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
@@ -158,19 +165,20 @@ subroutine K_output_file(iq,mode)
  !
  ! Diamagnetic term
  !
- call msg('o eps','#','Diamagnetic term',INDENT=0,USE_TABS=.TRUE.)
- !
- n_output_data=2
- if(l_IP) n_output_data=1
- headers(:2)=(/'A [nel]','A0[nel]'/)
- call msg("o eps",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
- !
- A_drude(:)=A_drude(:)/real(nkbz,SP)*spin_occ
- output_data(1)=real(A_drude(2))
- output_data(2)=real(A_drude(1))
- if (l_IP) output_data(1)=output_data(2)
- call msg('o eps','#',output_data(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
- call msg('o eps','#')
+ if(l_BS_abs) then
+   call msg('o eps','#','Diamagnetic term',INDENT=0,USE_TABS=.TRUE.)
+   n_output_data=2
+   if(l_IP) n_output_data=1
+   headers(:2)=(/'A [nel]','A0[nel]'/)
+   call msg("o eps",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
+   !
+   A_drude(:)=A_drude(:)/real(nkbz,SP)*spin_occ
+   output_data(1)=real(A_drude(2))
+   output_data(2)=real(A_drude(1))
+   if (l_IP) output_data(1)=output_data(2)
+   call msg('o eps','#',output_data(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
+   call msg('o eps','#')
+ endif
  !
  if(l_BS_kerr .and. eval_alpha) then
    ! Alpha units
@@ -210,8 +218,10 @@ subroutine K_output_file(iq,mode)
  !
  ! Headers
  !
- call X_setup_headers('EPS')
- call msg("o eps",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
+ if(l_BS_abs) then
+   call X_setup_headers('EPS')
+   call msg("o eps",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
+ endif
  !
  if (eval_reflectivity) then 
    call X_setup_headers('REFL')
@@ -500,16 +510,19 @@ subroutine K_output_file(iq,mode)
      !
    enddo
    !
-   ! magnons Smp
-   !
-   do iw=1,BSS_n_freqs 
-     output_data(1:5)=(/real(X_magnons(iw,2,1))*HA2EV,aimag(X_magnons(iw,2,2)),real(X_magnons(iw,2,2)),&
-&                  aimag(X_magnons(iw,2,3)),real(X_magnons(iw,2,3))/)
-     if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(X_magnons(iw,2,4)),real(X_magnons(iw,2,4))/)
-     if (l_IP) output_data(2:3)=output_data(4:5)
-     call msg('o Smp','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+   if (n_spinor==2) then
      !
-   enddo
+     ! magnons Smp
+     !
+     do iw=1,BSS_n_freqs 
+       output_data(1:5)=(/real(X_magnons(iw,2,1))*HA2EV,aimag(X_magnons(iw,2,2)),real(X_magnons(iw,2,2)),&
+&                    aimag(X_magnons(iw,2,3)),real(X_magnons(iw,2,3))/)
+       if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(X_magnons(iw,2,4)),real(X_magnons(iw,2,4))/)
+       if (l_IP) output_data(2:3)=output_data(4:5)
+       call msg('o Smp','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+     enddo
+     !
+   endif
    !
  endif
  !
@@ -538,15 +551,16 @@ subroutine K_output_file(iq,mode)
  !------------
  !
  if (l_print_jdos) then
-   ! 
+   !
+   n_output_data=5
+   if (l_IP) n_output_data=3
+   !
    do iw=1,BSS_n_freqs
      !
      ! Joint DOS: 2 (int) 3 (non int)
      !
      output_data(1:5)=(/w(iw),aimag(Joint_DOS(iw,2)),real(Joint_DOS(iw,2)),aimag(Joint_DOS(iw,3)),real(Joint_DOS(iw,3))/)
-     !
-     n_output_data=5
-     if (l_IP) then ; n_output_data=3 ; output_data(2:3)=output_data(4:5) ; endif
+     if (l_IP) output_data(2:3)=output_data(4:5)
      !
      call msg("o jdos",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
      !
@@ -554,16 +568,56 @@ subroutine K_output_file(iq,mode)
    !
  endif
  !
+ if (l_print_esort) then
+   !
+   n_output_data=1
+   if(l_BS_abs) then
+     iopt(:)=(/n_output_data+1,n_output_data+BS_dip_size/)
+     headers(iopt(1):iopt(2))="|x_i|^2"
+     n_output_data=n_output_data+BS_dip_size
+   endif
+#if defined _KERR
+   if (l_BS_magnons) then
+     imag(:)=(/n_output_data+1,n_output_data+2/)
+     headers(imag(1):imag(2))=(/"|Scv+|^2","|Scv-|^2"/)
+     n_output_data=n_output_data+2
+   endif
+   if (l_BS_dichroism) then
+     idic(:)=(/n_output_data+1,n_output_data+BS_dip_size/)
+     headers(idic(1):idic(2))="|L_i|^2"
+     n_output_data=n_output_data+BS_dip_size
+   endif
+#endif
+   !
+   n_IP_BSE=2
+   if (l_IP) n_IP_BSE=1
+   !
+   do i_IP_BSE=1,n_IP_BSE
+     ! E_sorted(:,:,2) (int) ; E_sorted(:,:,1) (non int)
+     call msg("o Esort",'#')
+     call msg("o Esort",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
+     call msg("o Esort",'#')
+     do i1=1,min(BS_H_dim,1000)
+       output_data(1)=real(E_sorted(i1,1,i_IP_BSE))
+       output_data(2:n_output_data)=abs(E_sorted(i1,2:n_output_data,i_IP_BSE))
+       call msg("o Esort",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
+     enddo
+   enddo
+   !
+ endif
+ !
  call CLOSE_the_files( )
  !
- contains 
+ contains
    !
    subroutine CLOSE_the_files( )
      !
-     call of_open_close(eps_file_name)
-     call of_open_close(refl_file_name)
-     call of_open_close(eel_file_name)
-     call of_open_close(alpha_file_name)
+     if(l_BS_abs) then
+       call of_open_close(eps_file_name)
+       call of_open_close(refl_file_name)
+       call of_open_close(eel_file_name)
+       call of_open_close(alpha_file_name)
+     endif
      !
 #if defined _KERR
      if(l_BS_photolum) then
@@ -585,9 +639,9 @@ subroutine K_output_file(iq,mode)
        call of_open_close(dichr_file_name)
      endif
 #endif
-
      !
-     if(l_print_jdos) call of_open_close(jdos_file_name)
+     if(l_print_jdos)  call of_open_close(jdos_file_name)
+     if(l_print_esort) call of_open_close(esort_file_name)
      !
    end subroutine
    !

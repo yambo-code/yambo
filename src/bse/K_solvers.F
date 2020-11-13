@@ -41,7 +41,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #if defined _KERR
  use BS,             ONLY:l_BS_photolum
  use PHOTOLUM,       ONLY:BSS_PL_free
- use KERR,           ONLY:BSS_KERR_free
  use MAGNONS,        ONLY:BSS_MAGN_free
 #endif
  !
@@ -157,7 +156,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  ! CLEAN (final)
  !
 #if defined _KERR
- call BSS_KERR_free( )
  call BSS_MAGN_free( )
  call BSS_PL_free( )
 #endif

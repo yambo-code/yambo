@@ -61,7 +61,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use parallel_m,    ONLY:myid,ncpu,PP_redux_wait
  !
 #if defined _KERR
- use KERR,           ONLY:BSS_KERR_free
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
@@ -245,7 +244,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call BS_blks_free(1)
    !
 #if defined _KERR
-   call BSS_KERR_free( )
    call BSS_MAGN_free( )
    call BSS_PL_free( )
 #endif

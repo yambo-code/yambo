@@ -108,7 +108,7 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_V_left,BS_V
  ! Workspace
  !
  type(PP_indexes)     ::px
- integer              ::i_lambda,i_eh,i_he
+ integer              ::i_lambda
  complex(SP)          ::tmp_res(BS_H_dim,2)
  complex(SP)          ::BS_R_tmp(2,BSS_n_eig)       
  !
@@ -125,12 +125,13 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_V_left,BS_V
  tmp_res(:,1) = conjg(BSS_dipoles_magn(1,:))*sqrt(cmplx(BSS_eh_f(:),SP)) 
  tmp_res(:,2) = conjg(BSS_dipoles_magn(2,:))*sqrt(cmplx(BSS_eh_f(:),SP)) 
  !
- do i_eh=1,BS_H_dim
-   if (allocated(BSS_eh_Z)) tmp_res(i_eh,:)=tmp_res(i_eh,:)*sqrt(BSS_eh_Z(i_eh))
- enddo
+ if (allocated(BSS_eh_Z)) then
+   tmp_res(:,1)=tmp_res(:,1)*sqrt(BSS_eh_Z(:))
+   tmp_res(:,2)=tmp_res(:,2)*sqrt(BSS_eh_Z(:))
+ endif
  !
  do i_lambda=1,BSS_n_eig
-   if (.not.px%element_1D(i_eh)) cycle
+   if (.not.px%element_1D(i_lambda)) cycle
    !
    BS_R_right(1,i_lambda)=V_dot_V_omp(BS_H_dim,tmp_res(:,1),BS_V_right(:,i_lambda))
    BS_R_right(2,i_lambda)=V_dot_V_omp(BS_H_dim,tmp_res(:,2),BS_V_right(:,i_lambda))
@@ -150,13 +151,14 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_V_left,BS_V
  tmp_res(:,1) =       BSS_dipoles_magn(1,:) *sqrt(cmplx(BSS_eh_f(:),SP)) 
  tmp_res(:,2) =       BSS_dipoles_magn(2,:) *sqrt(cmplx(BSS_eh_f(:),SP)) 
  !
- do i_eh=1,BS_H_dim
-   if (allocated(BSS_eh_Z)) tmp_res(i_eh,:)=tmp_res(i_eh,:)*sqrt(BSS_eh_Z(i_eh))
- enddo
+ if (allocated(BSS_eh_Z)) then
+   tmp_res(:,1)=tmp_res(:,1)*sqrt(BSS_eh_Z(:))
+   tmp_res(:,2)=tmp_res(:,2)*sqrt(BSS_eh_Z(:))
+ endif
  !
  do i_lambda=1,BSS_n_eig
    !
-   if (.not.px%element_1D(i_eh)) cycle
+   if (.not.px%element_1D(i_lambda)) cycle
    !
    BS_R_tmp(1,i_lambda)=Vstar_dot_V_omp(BS_H_dim,BS_V_left(:,i_lambda),tmp_res(:,1))
    BS_R_tmp(2,i_lambda)=Vstar_dot_V_omp(BS_H_dim,BS_V_left(:,i_lambda),tmp_res(:,2))
@@ -173,8 +175,10 @@ subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_V_left,BS_V
  BS_R_left=cZERO
  !
  call live_timing('MAG L x overlap',px%n_of_elements(myid+1))
+ !
  do i_lambda=1,BSS_n_eig
-   if (.not.px%element_1D(i_eh)) cycle
+   !
+   if (.not.px%element_1D(i_lambda)) cycle
    !
    BS_R_left(1,i_lambda)=V_dot_V_omp(BSS_n_eig,BS_overlap(i_lambda,:),BS_R_tmp(1,:))
    BS_R_left(2,i_lambda)=V_dot_V_omp(BSS_n_eig,BS_overlap(i_lambda,:),BS_R_tmp(2,:))

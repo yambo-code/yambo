@@ -84,7 +84,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
      endif
      !
      if (K_INV_EPS%err(iw)/=0) then
-       K_INV_EPS%err(iw)=EPS_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_opt,gauge_factor,&
+       K_INV_EPS%err(iw)=EPS_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_opt(1,:),gauge_factor,&
 &                                                       Epsilon_ii(iw,2),Lo(:,iw,:))
      endif
      !
@@ -170,21 +170,21 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
      if(i_L_==1) then
        if (K_slk%kind=="SLK") then
 #if defined _SCALAPACK
-         call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,BSS_dipoles_opt,V)
+         call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,BSS_dipoles_opt(1,:),V)
 #endif
        else
-         call M_by_V('n',BS_H_dim,Mm1,BSS_dipoles_opt,V)
+         call M_by_V('n',BS_H_dim,Mm1,BSS_dipoles_opt(1,:),V)
        endif
-       Epsilon_ii(iw,2)=gauge_factor*Vstar_dot_V(BS_H_dim,BSS_dipoles_opt,V)
+       Epsilon_ii(iw,2)=gauge_factor*Vstar_dot_V(BS_H_dim,BSS_dipoles_opt(1,:),V)
      else if(i_L_==2) then
        if (K_slk%kind=="SLK") then
 #if defined _SCALAPACK
-         call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,conjg(BSS_dipoles_opt),V)
+         call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,conjg(BSS_dipoles_opt(1,:)),V)
 #endif
        else
-         call M_by_V('n',BS_H_dim,Mm1,conjg(BSS_dipoles_opt),V)
+         call M_by_V('n',BS_H_dim,Mm1,conjg(BSS_dipoles_opt(1,:)),V)
        endif
-       Epsilon_ii(iw,2)=Epsilon_ii(iw,2)+gauge_factor*Vstar_dot_V(BS_H_dim,conjg(BSS_dipoles_opt),V)
+       Epsilon_ii(iw,2)=Epsilon_ii(iw,2)+gauge_factor*Vstar_dot_V(BS_H_dim,conjg(BSS_dipoles_opt(1,:)),V)
      endif
    end subroutine
    !

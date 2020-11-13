@@ -29,20 +29,20 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use LIVE_t,        ONLY:live_timing
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:msg
- use vec_operate,   ONLY:v_norm
+ use vec_operate,   ONLY:v_norm,sort
  use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg,q0_def_norm,qindx_X
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
  use interfaces,    ONLY:WF_load,WF_free
  use electrons,     ONLY:levels,spin_occ,spin,nel,n_sp_pol
  use X_m,           ONLY:Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
-&                        X_drude_term,global_gauge,   &
+&                        X_drude_term,global_gauge,E_sorted,   &
 &                        skip_cond_sum_rule,l_drude
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,&
 &                        Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind,BS_bands,&
- &                       BS_dip_size,l_BS_jdos,l_BS_trace,BS_res_ares_dim,&
+ &                       BS_dip_size,l_BS_jdos,l_BS_trace,BS_res_ares_dim,BS_K_dim,BS_H_dim,&
  &                       l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
@@ -52,7 +52,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 #if defined _KERR
  use vec_operate,   ONLY:rot_v_xy_plane
  use BS,            ONLY:l_BS_anomalous_Hall
- use KERR,          ONLY:A_drude,B_Hall
+ use BS_solvers,    ONLY:A_drude,B_Hall
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
  use X_m,           ONLY:X_magnons,Epsilon_ij,X_dichroism
  use units,         ONLY:SPEED_OF_LIGHT
@@ -67,11 +67,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Work space
  !
  integer           ::ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol_c,i_sp_pol_v,i_T_g,i_T,&
- &                   n_SOC,i_pert_SOC,io_err,i_res_ares
- real(SP)          ::conjg_fac,Z_,E_,f_
+ &                   n_SOC,i_pert_SOC,io_err,i_res_ares,H_pos,i1,i2,nVAR,sort_indx(min(1000,BS_H_dim))
+ real(SP)          ::conjg_fac,Z_,E_,f_,vtmpR(min(1000,BS_H_dim))
  logical           ::dip_v,dip_r
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
-&                    para_term_w0,diam_term_used
+&                    para_term_w0,diam_term_used,vtmpC(min(1000,BS_H_dim))
  !
 #if defined _KERR
  real(SP)          ::f_PL,res_PL
@@ -191,6 +191,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      i_sp_pol_c = BS_T_grp(i_T_g)%table(i_T,4)
      i_sp_pol_v = BS_T_grp(i_T_g)%table(i_T,5)
      !
+     H_pos=sum(BS_T_grp(BS_T_grp(i_T_g)%i_T_ref:i_T_g-1)%size)+i_T+(BS_T_grp(i_T_g)%i_res_ares-1)*BS_K_dim(1)
+     !
      if(iq/=1) then
        !
        ok_bz=qindx_X(iq,ik_bz,1)
@@ -220,6 +222,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (.not.BS_perturbative_SOC) E_plus_W=E_plus_W0
      !
      if (     BS_perturbative_SOC) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
+     !
+     nVAR=1
+     if(H_pos<1000) E_sorted(H_pos,nVAR,1)=E_plus_W0
      !
      ! c1.Compute "dipoles"
      !=====================
@@ -299,6 +304,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! Absorption, & KERR
      !
      if(l_BS_abs.or.l_BS_kerr) then
+       if(H_pos<1000) E_sorted(H_pos,nVAR+1:nVAR+BS_dip_size,1)=conjg_fac*conjg(DIP_projected(:BS_dip_size))
+       nVAR=nVAR+BS_dip_size
        BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg_fac*conjg(DIP_projected(:BS_dip_size))
        if (BS_K_coupling.and..not.BS_res_ares_dim==2) &
        &  BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
@@ -307,12 +314,16 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 #if defined _KERR
      ! Dichroism
      if(l_BS_dichroism) then
+       if(H_pos<1000) E_sorted(H_pos,nVAR+1:nVAR+BS_dip_size,1)=conjg(DIP_projected_dich(:BS_dip_size))
+       nVAR=nVAR+BS_dip_size
        BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,1)=conjg(DIP_projected_dich(:BS_dip_size))
        if (BS_K_coupling.and..not.BS_res_ares_dim==2) &
        & BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,2)=DIP_projected_dich(:BS_dip_size)
      endif
      ! Magnons
      if (l_BS_magnons) then                                      ! This is the right R residual associated to (eps_c\dn-eps_v\up)
+         if(H_pos<1000) E_sorted(H_pos,nVAR+1:nVAR+2,1)=(/conjg(DIP_Splus),conjg(DIP_Smins)/)
+         nVAR=nVAR+2
          BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
          BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Smins)   ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
                                                                  !      or the right R residual associated to (eps_c\dn-eps_v\up)
@@ -465,16 +476,28 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! ALL 2 ALL
  !==============
  !
- call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
- call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
- !
- if (l_BS_jdos) then
-   call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_eh_INDEX%COMM )
+ if (l_BS_abs) then
+   call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
+   !
+   call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_eh_INDEX%COMM )
  endif
  !
- call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
- call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_eh_INDEX%COMM )
+ if (l_BS_jdos) then
+   call PP_redux_wait( Joint_DOS(:,3),COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( Joint_DOS(:,3),COMM=PAR_COM_eh_INDEX%COMM )
+   call PP_redux_wait( E_sorted(:,:,1) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( E_sorted(:,:,1) ,COMM=PAR_COM_eh_INDEX%COMM )
+   vtmpR=real(E_sorted(:min(BS_H_dim,1000),1,1),SP)
+   call sort(arrin=vtmpR,indx=sort_indx)
+   do i1=1,nVAR
+     vtmpC=E_sorted(:min(BS_H_dim,1000),i1,1)
+     do i2=1,min(BS_H_dim,1000)
+       E_sorted(i2,i1,1)=vtmpC(sort_indx(i2))
+     enddo
+   enddo
+ endif
  !
 #if defined _KERR
  if(l_BS_kerr) then
@@ -520,26 +543,35 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if (l_BS_jdos) Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor !/(4._SP*pi) This factor is needed for the correct Jdos
  !                                                          ! However it is commented for now since all test-suite
  !                                                          ! references needs to be updated before insterting it
- if (trim(global_gauge)=='velocity') then
-   if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
-   if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
+ !
+ if (l_BS_abs) then
+   !
+   if (trim(global_gauge)=='velocity') then
+     if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
+     if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
+   endif
+   !
+   if (trim(global_gauge)=='length'  ) Epsilon_ii(:,3)=Co_factor* Epsilon_ii(:,3)                / bare_qpg(iq,1)**2
+   if (trim(global_gauge)=='velocity') Epsilon_ii(:,3)=Co_factor*(Epsilon_ii(:,3)-diam_term_used)/W_bss%p(:)**2
+   !
+   ! Drude term
+   !
+   if (l_drude           ) X_drude_term(:)=       -drude_GreenF(:)       *4._SP*pi/ bare_qpg(iq,1)**2
+   if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W_bss%p(:)**2
+   !
+   Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
+   !
  endif
- !
- if (trim(global_gauge)=='length'  ) Epsilon_ii(:,3)=Co_factor* Epsilon_ii(:,3)                / bare_qpg(iq,1)**2
- if (trim(global_gauge)=='velocity') Epsilon_ii(:,3)=Co_factor*(Epsilon_ii(:,3)-diam_term_used)/W_bss%p(:)**2
- !
- ! Drude term
- !
- if (l_drude           ) X_drude_term(:)=       -drude_GreenF(:)       *4._SP*pi/ bare_qpg(iq,1)**2
- if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W_bss%p(:)**2
- !
- Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
  !
 #if defined _KERR
  !
- ! Eq.(1.12) PRB 48, 11705 (1993)
- !
- A_drude(1)=para_term_w0-diam_term_exact
+ if (l_BS_abs) then
+   !
+   ! Eq.(1.12) PRB 48, 11705 (1993)
+   !
+   A_drude(1)=para_term_w0-diam_term_exact
+   !
+ endif
  !
  if (l_BS_kerr) then
    !

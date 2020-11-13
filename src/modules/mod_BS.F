@@ -59,6 +59,7 @@ module BS
  logical :: l_BS_photolum
  logical :: l_BS_magnons
  logical :: l_BS_dichroism
+ logical :: l_BS_esort
  logical :: l_BS_anomalous_hall
  logical :: l_BS_ares_asymm ! For cases where the ares block is not -R*:
                             ! - n_sp_pol==2 finite Q or magnons, Res and Ares are independent: --> no coupling = diag 2 BSE matricies

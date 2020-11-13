@@ -253,7 +253,7 @@ module interfaces
      type(w_samp),intent(in)  :: W
      integer,     intent(in)  :: iq,i_BS_mat
      complex(SP), intent(in)  :: BS_E(BSS_n_eig)
-     complex(SP), intent(in)  :: BS_R_left(BSS_n_eig),BS_R_right(BSS_n_eig)
+     complex(SP), pointer, intent(in) :: BS_R_left(:),BS_R_right(:)
      real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
      complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
      complex(SP), pointer, intent(in) :: BS_R_right_kerr(:)

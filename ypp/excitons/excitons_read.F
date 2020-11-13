@@ -101,8 +101,8 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    !
    ! Allocation of energies and residuals, then also eigenvector
    !
-   YAMBO_ALLOC(BS_R_right,(BSS_n_eig))
-   YAMBO_ALLOC(BS_R_left,(BSS_n_eig))
+   YAMBO_ALLOC_P(BS_R_right,(BSS_n_eig))
+   YAMBO_ALLOC_P(BS_R_left,(BSS_n_eig))
    YAMBO_ALLOC(BS_E,(BSS_n_eig))
    if(en%nb_SOC/=0) then
      YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
@@ -157,8 +157,8 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    !
    ! CLEAN
    !
-   YAMBO_FREE(BS_R_left)
-   YAMBO_FREE(BS_R_right)
+   YAMBO_FREE_P(BS_R_left)
+   YAMBO_FREE_P(BS_R_right)
    YAMBO_FREE(BS_E)
    YAMBO_FREE(BSS_eh_table)
    YAMBO_FREE(BS_mat)

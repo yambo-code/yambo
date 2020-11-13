@@ -203,14 +203,14 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
      endif
      !
      if(i_res_ares==1) then
-       residual=BSS_dipoles_opt(i_res)*conjg(BSS_dipoles_opt(i_res))
+       residual=BSS_dipoles_opt(1,i_res)*conjg(BSS_dipoles_opt(1,i_res))
        if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
        if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_res,iw_ref,1)
        Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i_res,:,1)
      endif     
      !
      if ((BSS_add_antiresonant.or.BS_K_coupling).and.BS_res_ares_dim==1) then
-       residual=conjg(BSS_dipoles_opt(i_Lo_trans))*BSS_dipoles_opt(i_Lo_trans)
+       residual=conjg(BSS_dipoles_opt(1,i_Lo_trans))*BSS_dipoles_opt(1,i_Lo_trans)
        if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_Lo_trans,iw_ref,i_Lo)
        Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
      endif

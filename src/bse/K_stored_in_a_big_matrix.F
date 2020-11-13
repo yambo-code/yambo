@@ -140,17 +140,17 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
  !
  if (BS_K_coupling) then
    !
-   do i_r=1,BS_K_dim(1)
-     do i_c=i_r+1,BS_K_dim(1)
-       BS_mat(i_c,i_r+BS_K_dim(1))=BS_mat(i_r,i_c+BS_K_dim(1))
-     enddo
-   enddo
+   !do i_r=1,BS_K_dim(1)
+   !  do i_c=i_r+1,BS_K_dim(1)
+   !    BS_mat(i_c,i_r+BS_K_dim(1))=BS_mat(i_r,i_c+BS_K_dim(1))
+   !  enddo
+   !enddo
    !
    ! If Coupling the half lower part of K is empty
    ! Filling the anti-resonant and anti-coupling parts
    !
    if(.not.l_BS_ares_asymm) then
-     forall(i_r=1:BS_K_dim(1),i_c=1:BS_K_dim(1))
+     forall(i_r=1:BS_K_dim(2),i_c=1:BS_K_dim(2))
        ! Anti-Coupling
        BS_mat(i_r+BS_K_dim(1),i_c)=-conjg(BS_mat(i_r,i_c+BS_K_dim(1)))
        ! Anti-resonant
@@ -158,11 +158,11 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
      end forall
    else
      ! Anti-Coupling
-     do i_r=1,BS_K_dim(1)
-       do i_c=i_r+1,BS_K_dim(1)
-         BS_mat(i_c+BS_K_dim(1),i_r)=BS_mat(i_r+BS_K_dim(1),i_c)
-       enddo
-     enddo
+     !do i_r=1,BS_K_dim(1)
+     !  do i_c=i_r+1,BS_K_dim(1)
+     !    BS_mat(i_c+BS_K_dim(1),i_r)=BS_mat(i_r+BS_K_dim(1),i_c)
+     !  enddo
+     !enddo
      ! Anti-resonant
      do i_r=BS_K_dim(1)+1,BS_K_dim(1)+BS_K_dim(2)
        do i_c=i_r+1,BS_K_dim(1)+BS_K_dim(2)

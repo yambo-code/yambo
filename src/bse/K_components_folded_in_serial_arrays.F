@@ -37,12 +37,11 @@ subroutine K_components_folded_in_serial_arrays(iq)
  use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,&
 &                         BSS_dipoles_opt,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BSS_alloc
  use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_T_grp,BS_K_coupling,BS_perturbative_SOC,&
-&                         BS_res_ares_dim
+&                         BS_res_ares_dim,l_BS_abs
  use timing_m,       ONLY:timing
  !
 #if defined _KERR
  use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum
- use KERR,           ONLY:BSS_dipoles_kerr,BSS_KERR_alloc
  use MAGNONS,        ONLY:BSS_dipoles_magn,BSS_MAGN_alloc
  use DICHROISM,      ONLY:BSS_dipoles_dich,BSS_DICH_alloc
  use PHOTOLUM,       ONLY:BSS_dipoles_PL,BSS_PL_alloc,BSS_PL_f,PL_weights
@@ -71,7 +70,6 @@ subroutine K_components_folded_in_serial_arrays(iq)
    call BSS_alloc( )
    !
 #if defined _KERR
-   call BSS_KERR_alloc( )
    call BSS_MAGN_alloc( )
    call BSS_DICH_alloc( )
    !
@@ -129,11 +127,9 @@ subroutine K_components_folded_in_serial_arrays(iq)
          endif
 #endif
          !
-         BSS_dipoles_opt(H_pos)=BS_T_grp(i_g)%dipoles_opt(1,i_Tr,i_res_ares_solver)
+         if (l_BS_abs) BSS_dipoles_opt(:,H_pos)=BS_T_grp(i_g)%dipoles_opt(:,i_Tr,i_res_ares_solver)
          !
 #if defined _KERR
-         if (l_BS_kerr) BSS_dipoles_kerr(H_pos)=BS_T_grp(i_g)%dipoles_opt(2,i_Tr,i_res_ares_solver)
-         !
          if (l_BS_magnons) BSS_dipoles_magn(:,H_pos)=BS_T_grp(i_g)%dipoles_mag(:,i_Tr,i_res_ares_solver)
          !
          if (l_BS_dichroism) BSS_dipoles_dich(:,H_pos)=BS_T_grp(i_g)%dipoles_dic(:,i_c,i_res_ares_solver)
@@ -166,15 +162,12 @@ subroutine K_components_folded_in_serial_arrays(iq)
      call PP_redux_wait(BSS_eh_Z,COMM=PAR_COM_eh_INDEX%COMM)
    endif
    !
-   call PP_redux_wait(BSS_dipoles_opt,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait(BSS_dipoles_opt,COMM=PAR_COM_eh_INDEX%COMM)
-   !
-#if defined _KERR
-   if (l_BS_kerr) then
-     call PP_redux_wait(BSS_dipoles_kerr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-     call PP_redux_wait(BSS_dipoles_kerr,COMM=PAR_COM_eh_INDEX%COMM)
+   if (l_BS_abs) then
+     call PP_redux_wait(BSS_dipoles_opt,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+     call PP_redux_wait(BSS_dipoles_opt,COMM=PAR_COM_eh_INDEX%COMM)
    endif
    !
+#if defined _KERR
    if (l_BS_magnons) then
      call PP_redux_wait(BSS_dipoles_magn,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
      call PP_redux_wait(BSS_dipoles_magn,COMM=PAR_COM_eh_INDEX%COMM)

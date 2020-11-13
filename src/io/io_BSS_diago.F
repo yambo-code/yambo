@@ -39,9 +39,9 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  !
  type(X_t),intent(inout)        :: X_static
  integer                        :: iq,ID,i_BS_mat
- complex(SP)        , optional  :: bsE(:),bsRl(:),bsRr(:)
+ complex(SP)        , optional  :: bsE(:)
  real(SP)   ,pointer, optional  :: BsE_corr(:,:),bsR_pl(:,:)
- complex(SP),pointer, optional  :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:)
+ complex(SP),pointer, optional  :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
  !
  ! Work Space
  !

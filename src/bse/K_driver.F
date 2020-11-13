@@ -37,7 +37,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
 &                         BS_W_is_diagonal,BS_res_mode,BS_n_g_W,BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSE_mode,BSE_prop,BS_Blocks_and_Transitions_free,l_BSE_minimize_memory,BSqpts,L_kind,&
 &                         BS_perturbative_SOC,l_BSK_IO_triangular,BS_dip_size,l_BS_abs,l_BS_jdos,l_BS_trace,&
-&                         l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum
+&                         l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss,l_col_cut
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k,PARALLEL_default_mode
@@ -168,6 +168,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  BS_dip_size=1
  l_BS_abs    = (index(BSE_prop,'abs')/=0)
  l_BS_jdos   = index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP
+ l_BS_esort  = (index(BSE_prop,'esort')/=0) !index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP
  l_BS_dichroism = .false.
  l_BS_kerr      = .false.
  l_BS_photolum  = .false.

@@ -33,6 +33,8 @@ module BS_solvers
  !==================
  real(SP)    :: Co_factor
  complex(SP) :: diam_term_exact
+ complex(SP) :: A_drude(2)
+ complex(SP) :: B_Hall(2)
  !
  ! Haydock
  !========== 
@@ -137,11 +139,13 @@ module BS_solvers
  real(SP)   , allocatable :: BSS_eh_E(:)
  real(SP)   , allocatable :: BSS_eh_f(:)
  real(SP)   , allocatable :: BSS_eh_W(:)
+ complex(SP), allocatable :: BSS_eh_Z(:)
  real(SP)   , allocatable :: BSS_eh_E_SOC_corr(:,:)
+ complex(SP), allocatable :: BSS_dipoles_opt(:,:)
+ !
+ complex(SP), allocatable :: BS_E(:)
  complex(SP), allocatable :: BS_diagonal(:)
  complex(SP), allocatable :: BS_mat(:,:)
- complex(SP), allocatable :: BSS_dipoles_opt(:)
- complex(SP), allocatable :: BSS_eh_Z(:)
  !
  interface 
    !
@@ -163,9 +167,9 @@ module BS_solvers
      implicit none
      type(X_t),intent(in)         :: X_static
      integer                      :: iq,ID,i_BS_mat
-     complex(SP)        ,optional :: bsE(:),bsRl(:),bsRr(:)
+     complex(SP)        ,optional :: bsE(:)
      real(SP),   pointer,optional :: BsE_corr(:,:),bsR_pl(:,:)
-     complex(SP),pointer,optional :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:)
+     complex(SP),pointer,optional :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
    end function
    !
    integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)
@@ -186,16 +190,19 @@ module BS_solvers
    subroutine BSS_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
+     use BS,        ONLY:BS_dip_size,l_BS_abs
      integer :: i_g,i_size
      logical :: W_is_allocated,Z_is_allocated,E_SOC_is_allocated
-     YAMBO_ALLOC(BSS_dipoles_opt,(BS_H_dim))
-     BSS_dipoles_opt = cZERO
      YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,5))
      YAMBO_ALLOC(BSS_eh_E,(BS_H_dim))
      YAMBO_ALLOC(BSS_eh_f,(BS_H_dim))
      BSS_eh_table = 0
      BSS_eh_E     = rZERO
      BSS_eh_f     = rZERO
+     if (l_BS_abs) then
+       YAMBO_ALLOC(BSS_dipoles_opt,(BS_dip_size,BS_H_dim))
+       BSS_dipoles_opt = cZERO
+     endif
      W_is_allocated     = .FALSE.
      Z_is_allocated     = .FALSE.
      E_SOC_is_allocated = .FALSE.

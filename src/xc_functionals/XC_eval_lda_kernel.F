@@ -54,7 +54,7 @@ subroutine XC_eval_lda_kernel(v1rho,v2rho2)
    ! Magnons Fxc
    else
      do ifft=1,fft_size
-       mod_mag=abs(magn(ifft,3))
+       mod_mag=abs(magn(ifft,3))*real(fft_size,SP)/DL_vol
        if(mod_mag< 1.E-8_SP) one_over_magn=0._SP
        if(mod_mag>=1.E-8_SP) one_over_magn=1._SP/mod_mag
        ! Here 1,1 means -+ and 22 +-

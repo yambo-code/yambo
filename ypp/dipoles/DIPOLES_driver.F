@@ -29,7 +29,8 @@ subroutine DIPOLES_driver(k,E,q,Dip)
  use YPPm,           ONLY:DIPOLES_bands,DIPOLES_E_range,DIPOLES_direction,K_transform,coo_out,INTERP_grid,&
 &                         l_PROJECT_plane,l_PROJECT_line,PROJECT_depth
  use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset,DIP_alloc,DIP_iR,DIP_desc
- use parallel_int,   ONLY:PARALLEL_global_indexes
+ use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,PAR_DIPk_ibz_index
+ use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait
  use QP_CTL_m,       ONLY:QP_apply
  use vec_operate,    ONLY:v_norm
  use interfaces,     ONLY:DESC_write
@@ -45,7 +46,7 @@ subroutine DIPOLES_driver(k,E,q,Dip)
  !
  ! Work Space
  !
- integer     :: io_err,ik,ic,iv,is,ikbz,ID,NK,ik_plane
+ integer     :: io_err,ik,ic,iv,is,ikbz,ID,NK,ik_plane,ik_mem
  complex(SP) :: DIP_projected
  real(SP)    :: delta_E,v(3),DIP_accumulated(1,k%nibz,1)
  real(SP), allocatable :: DIP_plane(:,:,:)
@@ -57,6 +58,10 @@ subroutine DIPOLES_driver(k,E,q,Dip)
  if (l_PROJECT_line) then
    call warning("Line Projection not possible in DIPOLES mode. Switched off")
    l_PROJECT_line=.FALSE.
+ endif
+ if (l_PROJECT_plane.and.all((/INTERP_grid>0/))) then
+   call warning("Plane Projection and Interpolation not simultaneously possible. Interpolation Switched off")
+   INTERP_grid=-1
  endif
  call PROJECTION_setup("DIPOLES",(/1,1/))
  !
@@ -74,30 +79,33 @@ subroutine DIPOLES_driver(k,E,q,Dip)
  DIPOLES_direction=DIPOLES_direction/v_norm(DIPOLES_direction)
  !
  ! ... Loop
- !
  DIP_accumulated=rZERO
- !
  do ik=1,k%nibz
+   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+   ik_mem=PAR_DIPk_ibz_index(ik)
    do iv=DIPOLES_bands(1),E%nbm
+     if (.not.PAR_IND_CON_BANDS_DIP%element_1D(iv)) cycle
      do ic=E%nbf+1,DIPOLES_bands(2)
+       if (.not.PAR_IND_VAL_BANDS_DIP%element_1D(ic)) cycle
        do is=1,n_spin
          delta_E=E%E(ic,ik,is)-E%E(iv,ik,is)
          if (DIPOLES_E_range(1)>0. .and. delta_E<DIPOLES_E_range(1)) cycle
          if (DIPOLES_E_range(2)>0. .and. delta_E>DIPOLES_E_range(2)) cycle
-         DIP_projected=dot_product(DIPOLES_direction,DIP_iR(:,ic,iv,ik,is))
+         DIP_projected=dot_product(DIPOLES_direction,DIP_iR(:,ic,iv,ik_mem,is))
          DIP_accumulated(1,ik,1)=DIP_accumulated(1,ik,1)+abs(DIP_projected)**2._SP
-         !
        enddo
      enddo
    enddo
  enddo
+ !
+ call PP_redux_wait( DIP_accumulated(1,:,1))
  !
  !... Normalization
  DIP_accumulated=DIP_accumulated/maxval( DIP_accumulated )
  !
  ! ... INTERPOLATION
  if (all(INTERP_grid>0)) call INTERPOLATION_create_the_grid(INTERP_grid)
- if (allocated(GRID_k%ptbz)) then
+ if (allocated(GRID_k%pt)) then
    !
    call INTERPOLATION_driver_seed("DIPOLES",ID,(/1,1/),k,SEED_R3=DIP_accumulated)
    call INTERPOLATION_driver_do("DIPOLES",ID,GRID_k)

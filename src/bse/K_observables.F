@@ -82,7 +82,7 @@ subroutine K_observables(WHAT,W)
    endif
    !
    if(l_BS_esort) then
-     YAMBO_ALLOC(E_sorted,(1000,2,4))
+     YAMBO_ALLOC(E_sorted,(1000,9,2))
      E_sorted=cZERO
    endif
    !

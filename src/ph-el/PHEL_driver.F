@@ -95,28 +95,29 @@ subroutine PHEL_driver(E,k,q)
  !
  call ELPH_acoustic_phonon_properties(q)
  !
-#if !defined _RT 
+#if !defined _RT
  ! ...DbGd in the full BZ
+ PH_DbGd_points    =k%FGbz%N
+ l_PH_uses_E_FineGd=PH_DbGd_points>0
+ write (*,*) k%ptbz
+ if (.not.l_RT_uses_E_FineGd) then
+   call bz_samp_FineGd_alloc(k%FGbz,k%nbz)
+   call bz_samp_FineGd_default(k%FGbz,k,k%nbz)
+ endif
  k_FG = k%FGbz
  k_n  = k%nbz
- PH_DbGd_points    =k_FG%N
- l_PH_uses_E_FineGd=PH_DbGd_points>0
- if (.not.l_PH_uses_E_FineGd) then
-   call bz_samp_FineGd_alloc(k_FG,k_n)
-   call bz_samp_FineGd_default(k_FG,k)
- endif  
- !
 #else
+ !
  ! Maps into the RT kinds
  !========================
  ! ... grid in the IBZ
- k_FG = k%FGibz
- k_n  = k%nibz
  l_RT_uses_E_FineGd=k%FGibz%N>0
  if (.not.l_RT_uses_E_FineGd) then
-   call bz_samp_FineGd_alloc(k_FG,k_n)
-   call bz_samp_FineGd_default(k_FG,k)
+   call bz_samp_FineGd_alloc(k%FGibz,k%nibz)
+   call bz_samp_FineGd_default(k%FGibz,k)
  endif
+ k_FG = k%FGibz
+ k_n  = k%nibz
 #endif
  !
  ! ... allocs

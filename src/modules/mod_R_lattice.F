@@ -258,18 +258,33 @@ module R_lattice
      FG%N_mapped=0
    end subroutine
    !
-   subroutine bz_samp_FineGd_default(FG,k)
+   subroutine bz_samp_FineGd_default(FG,k,nk)
      type(bz_fine_grid)::FG
      type(bz_samp)     ::k
-     integer           ::ik
-     FG%N=k%nibz
-     do ik=1,k%nibz
-       FG%pt(ik,:)=k%pt(ik,:)
+     integer           ::ik,ic
+     integer, optional ::nk 
+     !
+     if ( .not. present(nk) ) then
+       nk = k%nibz
+     endif
+     !
+     if (nk>k%nibz) call k_ibz2bz(k,'i',.false.)
+     !
+     FG%N=nk
+     do ik=1,nk
+       !
+       if ( nk>k%nibz ) then
+         FG%pt(ik,:)=k%ptbz(ik,:)
+         FG%weights(ik)=1._SP
+       else
+         FG%pt(ik,:)=k%pt(ik,:)
+         FG%weights(ik)=k%weights(ik)
+       endif
+       !
        FG%k_range(ik,:)=ik
        FG%E_map(ik)=ik
        FG%k_map(ik)=ik
        FG%N_mapped(ik)=1
-       FG%weights(ik)=k%weights(ik)
      enddo
    end subroutine
    !

@@ -135,7 +135,7 @@ subroutine K_output_file(iq,mode)
  if(l_BS_photolum)  call of_open_close(pl_file_name,title_mode)
  if(l_BS_magnons) then
    call of_open_close(magp_file_name,title_mode)
-   call of_open_close(magm_file_name,title_mode)
+   if(n_spinor==2) call of_open_close(magm_file_name,title_mode)
  endif
 #endif
  if(l_print_jdos)  call of_open_close(jdos_file_name,title_mode)
@@ -269,10 +269,12 @@ subroutine K_output_file(iq,mode)
    if (l_Diago.or.l_Slepc) call msg("o Spm",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (l_IP) call msg("o Spm",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    !
-   call X_setup_headers('Smp')
-   if (l_Haydock.or.l_Inversion) call msg("o Smp",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (l_Diago.or.l_Slepc) call msg("o Smp",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
-   if (l_IP) call msg("o Smp",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+   if(n_spinor==2) then
+     call X_setup_headers('Smp')
+     if (l_Haydock.or.l_Inversion) call msg("o Smp",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+     if (l_Diago.or.l_Slepc) call msg("o Smp",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (l_IP) call msg("o Smp",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+   endif
    !
  endif
  !

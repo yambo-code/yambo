@@ -76,53 +76,58 @@ contains
    complex(SP),  intent(in)     :: z(2)
    complex(SP),  intent(inout)  :: E
    ! 
-   if(abs(E)<10*epsilon(1._SP)) then
+   if(NAN(abs(E)) .or. abs(E)<0.000001_SP) then
      E=abs(z(2))-cI*epsilon(1._SP)   
    elseif(real(E)>0._SP) then     
      E = sqrt(E)
    else
-     E = sqrt(-E)
+     E = sqrt(-conjg(E))
+     !E = 1._SP
    endif
    if(real(E)<0._SP) E=-E
    if(aimag(E)>-epsilon(1._SP)) E=real(E,SP)-cI*epsilon(1._SP)
+   !E=real(E,SP)-cI*epsilon(1._SP)
    !
  end subroutine mpa_cond1
  !
- subroutine mpa_cond(np, z, E)
+ subroutine mpa_cond(np, npr, z, E)
    !
    integer,  intent(in)         :: np
+   integer,  intent(out)        :: npr
    complex(SP),  intent(in)     :: z(2*np)
    complex(SP),  intent(inout)  :: E(np)
    !
    integer     :: i, j
+   complex(SP) :: Eaux(np)
+   real(SP)    :: thr=0.00001_SP
    ! 
-   if(abs(E(1))<10*epsilon(1._SP)) then 
-     E(1) = 0.5*abs(z(2))-cI*epsilon(1._SP)
-   elseif(real(E(1))>0._SP) then
-     E(1) = sqrt(E(1))
-   else
-     E(1) = sqrt(-E(1))
-   endif
-   if(real(E(1))<0._SP) E(1)=-E(1)
-   if(aimag(E(1))>-epsilon(1._SP)) E(1)=real(E(1),SP)-cI*epsilon(1._SP)
-   !
-   do i=2,np
-     if(abs(E(i))<10*epsilon(1._SP)) then 
-       E(i) = abs(z(i))-cI*epsilon(1._SP)
-     elseif(real(E(i))>0._SP) then
-       E(i) = sqrt(E(i))
-     else
-       E(i) = sqrt(-E(i))
-     endif
-     if(real(E(i))<0._SP) E(i)=-E(i)
-     if(aimag(E(i))>-epsilon(1._SP)) E(i)=real(E(i),SP)-cI*epsilon(1._SP)
-     !
+   npr=np
+   ! 
+   do i=1,np
+    ! if(abs(E(i))<thr) then 
+    !   npr=npr-1
+    ! elseif(real(E(i))>0._SP) then
+    !   Eaux(i) = sqrt(E(i))
+    ! else
+    !   Eaux(i) = sqrt(-conjg(E(i)))
+    ! endif
+    ! if(real(Eaux(i))<0._SP) Eaux(i)=-Eaux(i)
+    ! if(aimag(Eaux(i))>-epsilon(1._SP)) Eaux(i)=real(Eaux(i),SP)-cI*epsilon(1._SP)
+    ! !
+    Eaux(i)=sqrt(E(i))
+    Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(E(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
      do j=2,i-1
-       if(abs(real(E(i),SP)-real(E(j),SP))<0.0001_SP) then
-         E(i)=0.5*(real(E(j))+real(E(j-1)))-cI*epsilon(1._SP)
+       if(abs(real(Eaux(i),SP)-real(Eaux(j),SP))<thr) then
+         npr=npr-1
+         Eaux(j)=real(Eaux(j),SP)+cI*max(aimag(Eaux(j)),aimag(Eaux(i)))
          !exit
        endif
      enddo
+   enddo
+   !
+   E(1:npr)=Eaux(1:npr)
+   do i=np,npr+1,-1
+     E(i)=cmplx(1._Sp,-1._SP)
    enddo
    !
  end subroutine mpa_cond
@@ -139,15 +144,6 @@ contains
    ! 
 !----General cond------------------------------------------------
    E = (x(1)*z(1)**2 -x(2)*z(2)**2 )/(x(1)-x(2))
-!   if(abs(E)<10*epsilon(1._SP)) then
-!     E=1._SP-cI*epsilon(1._SP)   
-!   elseif(real(E)>0._SP) then     
-!     E = sqrt(E)
-!   else
-!     E = sqrt(-E)
-!   endif
-!   if(real(E)<0._SP) E=-E
-!   if(aimag(E)>-epsilon(1._SP)) E=real(E,SP)-cI*epsilon(1._SP)
    call mpa_cond1(z, E)
    !R = x(1)*(z(1)**2-E**2)/(2._SP*E) 
    R = x(2)*(z(2)**2-E**2)/(2._SP*E) 
@@ -167,6 +163,20 @@ contains
    !
  end subroutine mpa_RE_1p_solver
  !
+ subroutine mpa_E_1p_solver(z, x, E) 
+   !
+   ! analytical form of the 1 pole solution
+   !
+   implicit none
+   !
+   complex(SP),  intent(in)     :: z(2)
+   complex(SP),  intent(in)     :: x(2)
+   complex(SP),  intent(out)    :: E
+   ! 
+   E = (x(1)*z(1)**2 -x(2)*z(2)**2 )/(x(1)-x(2))
+   call mpa_cond1(z, E)
+   !
+ end subroutine mpa_E_1p_solver
  !
  subroutine mpa_RQ_2p_solver(w, x, r, q) 
    implicit none
@@ -355,6 +365,45 @@ contains
    !                                                                
  end subroutine mpa_RQ_3p_solver
  !
+ subroutine mpa_R_fit(np,npr, w, xq, R, E)
+   implicit none
+   integer,      intent(in)        :: np, npr
+   complex(SP),  intent(in)        :: w(2*np)
+   complex(SP),  intent(in)        :: xq(2*np), E(np)
+   complex(SP),  intent(out)       :: R(np)
+   ! 
+   complex(SP)                     :: A(2*np,npr), B(2*np)
+   integer                         :: i, k, info, rank, lwork, lwmax 
+   parameter                       (lwmax=1000)
+   real(SP)                        :: rcond
+   integer                         :: iwork(3*npr*0+11*npr)
+   real(SP)                        :: S(npr), rwork(10*npr+2*npr*25+8*npr*0+3*25+26*26)
+   complex(SP)                     :: work(lwmax)
+   ! 
+   do k = 1, 2*np
+     B(k) = xq(k)
+     do i = 1, npr
+       A(k,i) = 2._SP*E(i)/(w(k)**2 -E(i)**2)
+     enddo
+   enddo 
+   ! 
+   rcond=-1._SP
+#ifdef _DOUBLE
+   call zgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,-1,   rwork,iwork,info)
+   lwork=min(lwmax,int(work(1)))
+   call zgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,lwork,rwork,iwork,info)
+#else
+   call cgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,-1,   rwork,iwork,info)
+   lwork=min(lwmax,int(work(1)))
+   call cgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,lwork,rwork,iwork,info)
+#endif
+   ! 
+   R=B(1:npr)
+   do i=np,npr+1,-1
+     R(i)=0._SP
+   enddo
+   ! 
+ end subroutine mpa_R_fit
  !
  subroutine mpa_R_solver(np, w, xq, R, E, rcond)
    implicit none
@@ -388,9 +437,10 @@ contains
    ! 
  end subroutine mpa_R_solver
  ! 
- subroutine mpa_E_solver(np, z, xq, E, rcond)
+ subroutine mpa_E_solver(np, npr, z, xq, E, rcond)
    implicit none
    integer,      intent(in)        :: np
+   integer,      intent(out)       :: npr
    complex(SP),  intent(in)        :: z(2*np)
    complex(SP),  intent(in)        :: xq(2*np)
    complex(SP),  intent(out)       :: E(np)
@@ -479,32 +529,41 @@ contains
    ! here we need to force real(E) to be positive.
    ! This is because of the way the residue integral is performed, later.
    ! 
-   call mpa_cond(np, z, E)
+   call mpa_cond(np, npr, z, E)
+   !E=sqrt(E)
+   !E=max(abs(real(E,SP)),abs(aimag(E)))-cI*min(abs(real(E,SP)),abs(aimag(E)))
    ! 
  end subroutine mpa_E_solver
  !
  !
- subroutine mpa_RE_solver(np, w, x, R, E,edigits,rdigits) ! version 2.1
+ subroutine mpa_RE_solver(np, w, x, R, E,isdiagonal,edigits,rdigits) ! version 2.1
    implicit none
    !
    integer,      intent(in)     :: np
    complex(SP),  intent(in)     :: w(2*np), x(2*np)
    complex(SP),  intent(out)    :: R(np), E(np)
+   logical,      intent(in)     :: isdiagonal
    real(SP),     intent(out)    :: edigits(2),rdigits
+   ! 
+   integer                      :: npr
    ! 
    select case(np)
    case(1)
-     call mpa_RE_1p_solver(w, x, R(1), E(1))
+     !call mpa_RE_1p_solver(w, x, R(1), E(1))
+     call mpa_E_1p_solver(w, x, E(1))
+     call mpa_R_fit(1, 1, w, x, R, E)
    !case(2)
    !  call mpa_RQ_2p_solver(w, x, R, E)
    !case(3)
    !  call mpa_RQ_3p_solver(w, x, R, E)
    case default
      !
-     call mpa_E_solver(np, w**2, x, E, edigits)
-     call mpa_R_solver(np, w, x, R, E, rdigits)
-     edigits=log10(1._SP/edigits)
-     rdigits=log10(1._SP/rdigits)
+     call mpa_E_solver(np, npr, w**2, x, E, edigits)
+     !call mpa_R_solver(np, w, x, R, E, rdigits)
+     if(npr<np)  write(*,*) 'Reduce number of poles::::: ', npr
+     call mpa_R_fit(np, npr, w, x, R, E)
+     !edigits=log10(1._SP/edigits)
+     !rdigits=log10(1._SP/rdigits)
      !
    end select
    ! 

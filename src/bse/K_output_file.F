@@ -565,7 +565,8 @@ subroutine K_output_file(iq,mode)
      !
      ! Joint DOS: 2 (int) 3 (non int)
      !
-     output_data(1:5)=(/w(iw),aimag(Joint_DOS(iw,2)),real(Joint_DOS(iw,2)),aimag(Joint_DOS(iw,3)),real(Joint_DOS(iw,3))/)
+     output_data(1:5)=(/real(Joint_DOS(iw,1))*HA2EV,aimag(Joint_DOS(iw,2)), &
+     &                  real(Joint_DOS(iw,2)),aimag(Joint_DOS(iw,3)),real(Joint_DOS(iw,3))/)
      if (l_IP) output_data(2:3)=output_data(4:5)
      !
      call msg("o jdos",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)

@@ -99,8 +99,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    do i_pert_SOC=1,n_SOC
      !
      if(l_BS_esort) then
+       if(i1<1000) E_sorted(i1,1,2)=EXC_E(1)
        nVAR=1
-       E_sorted(i1,nVAR,2)=EXC_E(1)
      endif
      !
      if(l_BS_jdos) then

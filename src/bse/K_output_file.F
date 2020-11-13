@@ -296,25 +296,29 @@ subroutine K_output_file(iq,mode)
  ! ABSORPTION
  !------------
  !
- do iw=1,BSS_n_freqs
+ if (l_BS_abs) then
    !
-   ! Epsilon_ii: 2 (int) 3 (non int) 4 (n-1 Haydock/inv shifted)
+   do iw=1,BSS_n_freqs
+     !
+     ! Epsilon_ii: 2 (int) 3 (non int) 4 (n-1 Haydock/inv shifted)
+     !
+     w(:)    =real(Epsilon_ii(:,1))*HA2EV
+     eps(:,1)=Epsilon_ii(:,2)+1._SP
+     eps(:,2)=Epsilon_ii(:,3)+1._SP
+     if (l_print_col4) eps(:,3)=Epsilon_ii(:,4)+1._SP
+     !
+     ! Haydock n-1 iteration / Inversion with diagonal shift from BSE matrix
+     !
+     output_data(1:5)=(/w(iw),aimag(eps(iw,1)),real(eps(iw,1)),aimag(eps(iw,2)),real(eps(iw,2))/)
+     n_output_data=5
+     if (l_print_col4) then ; n_output_data=7 ; output_data(6:7)=(/aimag(eps(iw,3)),real(eps(iw,3))/) ; endif
+     if (l_IP)         then ; n_output_data=3 ; output_data(2:3)=output_data(4:5)                     ; endif
+     !
+     call msg("o eps",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
+     !
+   enddo
    !
-   w(:)    =real(Epsilon_ii(:,1))*HA2EV
-   eps(:,1)=Epsilon_ii(:,2)+1._SP
-   eps(:,2)=Epsilon_ii(:,3)+1._SP
-   if (l_print_col4) eps(:,3)=Epsilon_ii(:,4)+1._SP
-   !
-   ! Haydock n-1 iteration / Inversion with diagonal shift from BSE matrix
-   !
-   output_data(1:5)=(/w(iw),aimag(eps(iw,1)),real(eps(iw,1)),aimag(eps(iw,2)),real(eps(iw,2))/)
-   n_output_data=5
-   if (l_print_col4) then ; n_output_data=7 ; output_data(6:7)=(/aimag(eps(iw,3)),real(eps(iw,3))/) ; endif
-   if (l_IP)         then ; n_output_data=3 ; output_data(2:3)=output_data(4:5)                     ; endif
-   !
-   call msg("o eps",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
-   !
- enddo
+ endif
  !
  ! REFLECTIVITY
  !--------------

@@ -86,7 +86,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  type(elemental_collision):: BSE_scatt
  !
  !
- call section('=','Independent Particles absorption @q'//trim(intc(iq)))
+ call section('=','Independent Particles properties @q'//trim(intc(iq)))
  !
  if (l_bs_fxc) return
  !
@@ -172,7 +172,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    dip_v=.true.
  endif
  !
- if (l_rpa_IP.or.iq>1) call live_timing('IP absorption',PAR_BS_nT_col_grps)
+ if (l_rpa_IP.or.iq>1) call live_timing('IP properties',PAR_BS_nT_col_grps)
  !
  do i_T_g=1,BS_nT_grps
    !

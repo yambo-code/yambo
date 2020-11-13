@@ -141,7 +141,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        endif
      endif
      if(l_BS_magnons) then
-       if(i1<1000) E_sorted(i1,nVAR+1:nVAR+2,1)=BS_R_right_kerr(i1)
+       if(i1<1000) E_sorted(i1,nVAR+1:nVAR+2,1)=BS_R_right_magn(:,i1)
        nVAR=nVAR+2
        res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
        X_magnons(:,1,2)=X_magnons(:,1,2)-res_magn(1)/(W%p(:)-EXC_E(i_pert_SOC))
@@ -191,19 +191,21 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  endif
 #endif
  !
- if (trim(global_gauge)=='velocity') then
-   if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
-   if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
+ if(l_BS_abs) then
+   if (trim(global_gauge)=='velocity') then
+     if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
+     if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
+   endif
+   !
+   if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)= (Epsilon_ii(:,2)               )*Co_factor/bare_qpg(iq,1)**2
+   if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)= (Epsilon_ii(:,2)-diam_term_used)*Co_factor/  W%p(:)  **2
+   !
+   if(BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
+   !
+   ! Drude term
+   !============
+   if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W%p(:)**2
  endif
- !
- if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)= (Epsilon_ii(:,2)               )*Co_factor/bare_qpg(iq,1)**2
- if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)= (Epsilon_ii(:,2)-diam_term_used)*Co_factor/  W%p(:)  **2
- !
- if(BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
- !
- ! Drude term
- !============
- if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W%p(:)**2
  !
  if(l_BS_jdos) then
    Joint_DOS(:,2)=Joint_DOS(:,2)*Co_factor !/(4._SP*pi) is needed for the correct Jdos

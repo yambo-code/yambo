@@ -117,6 +117,7 @@ subroutine DIPOLES_driver(k,E,q,Dip)
      do ikbz=1,GRID_k%nbz
        ik_plane=PROJECTION_k_on_the_path_or_plane(ikbz)
        if (ik_plane==0) cycle
+       if (INTERP_obj(ID)%INTERP(1,ikbz,1)<0._SP) cycle
        DIP_plane(ik_plane,1,1)=DIP_plane(ik_plane,1,1)+INTERP_obj(ID)%INTERP(1,ikbz,1)
      enddo
    endif

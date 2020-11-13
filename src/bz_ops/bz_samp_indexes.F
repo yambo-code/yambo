@@ -45,7 +45,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  use pars,           ONLY:SP,lchlen,zero_dfl
  use drivers,        ONLY:l_bse,l_elel_scatt
  use com,            ONLY:msg
- use parallel_int,   ONLY:PP_redux_wait
+ use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
  use electrons,      ONLY:n_sp_pol
@@ -68,11 +69,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  type(bz_samp)::k,Xk,q
  !
- !Work Space
+ ! Work Space
  !
- integer, external :: G_index
- !
- character(lchlen) :: string
  integer :: io_db,io_err
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,iqs,iks,id
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3),q_step(3)
@@ -81,8 +79,10 @@ subroutine bz_samp_indexes(k,Xk,q)
 #if defined _ELPH
  logical :: bse_setup_scatt
 #endif
+ integer, external    :: G_index
+ character(lchlen)    :: string
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
- !
+ type(PP_indexes)     :: px
  integer, external    :: io_QINDX 
  !
  call section('*','Transferred momenta grid')
@@ -210,7 +210,6 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  call qindx_alloc('XB')
  !
- qindx_X=0
  if ( bse_scattering) qindx_B=0
  !
  ! X indexes
@@ -226,7 +225,10 @@ subroutine bz_samp_indexes(k,Xk,q)
  if (coll_scattering) string=trim(string)//' + COLL'
  call msg('nr',trim(string))
  !
- call live_timing('X indexes',max(1,Xk%nbz/n_threads))
+ ! ... PARALLEL and timing
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/Xk%nbz/))
+ call live_timing('X indexes',max(1,px%n_of_elements(myid+1)/n_threads))
  !
  if(Xk_grid_new_mapping) call k_find_smallest_q(Xk%ptbz,q_step,Xk%nbz)
  !
@@ -235,6 +237,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  !$omp do
  do ikbz=1,Xk%nbz
+   !
+   if (.not.px%element_1D(ikbz)) cycle 
    !
    do ikbz_p=1,Xk%nbz
      !
@@ -285,6 +289,10 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  call live_timing()
  !
+ ! ... PARALLEL redux
+ call PP_redux_wait(qindx_X(:,:,1))
+ call PP_redux_wait(qindx_X(:,:,2))
+ !
  if (any(qindx_X==0)) then
    call bz_X_only_exit('Null transition detected [qindx_X]. Gamma point only.')
    goto 1
@@ -306,9 +314,6 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  call qindx_alloc('SC')
  !
- qindx_S=0
- if (coll_scattering) qindx_C=0
- !
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo
  !
@@ -327,6 +332,8 @@ subroutine bz_samp_indexes(k,Xk,q)
    if (iks/=1.and..not.coll_scattering) cycle
    !
    do ikbz_p=1,k%nbz
+     !
+     if (.not.px%element_1D(ikbz_p)) cycle 
      !
      if(Xk_grid_new_mapping) then
        !
@@ -376,6 +383,14 @@ subroutine bz_samp_indexes(k,Xk,q)
  !$omp end parallel
  !
  call live_timing()
+ !
+ ! ... PARALLEL redux
+ call PP_redux_wait(qindx_S(:,:,1))
+ call PP_redux_wait(qindx_S(:,:,2))
+ if (coll_scattering) then
+   call PP_redux_wait(qindx_C(:,:,1))
+   call PP_redux_wait(qindx_C(:,:,2))
+ endif
  !
  if (.not.connected_grids) call msg('rsn','[RL indx] X & Total k-grids are not connected')
  !

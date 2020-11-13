@@ -44,7 +44,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
- use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,&
+ use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
@@ -207,6 +207,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_RL) 
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
+ call it(defs,'K_grids', '[KPT] Select the grids (X=response, S=sigma, C=collisions, B=bse) [default X S C B]',&
+&             k_GRIDS_string,verb_level=V_kpt)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt)
  call it(defs,'Nelectro','Electrons number',nel,verb_level=V_general)
@@ -238,10 +240,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! I/O
  !
  call it(defs,'DBsIOoff', &
-&             '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,OBS,W,SC,BS,ALL)',&
+&             '[IO] List of DB with NO I/O. DB=(DIP,X,W,HF,COLLs,GF,J,OBS,CARRIERs,SC,BS,ALL)',&
 &             DBs_IO_control_string,verb_level=V_io)
  call it(defs,'DBsFRAGpm', &
-&             '[IO] Space-separated list of +DB to FRAG and -DB to NOT FRAG. DB=(DIP,X,W,HF,COLLS,K,BS,QINDX,RT,ELPH,SC,ALL)',&
+&             '[IO] List of +DB to FRAG and -DB to NOT FRAG. DB=(DIP,X,W,HF,BS,QINDX,ALL)',&
 &             DBs_FRAG_control_string,verb_level=V_io)
  !
  ! S_xc

@@ -141,8 +141,10 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        endif
      endif
      if(l_BS_magnons) then
-       if(i1<1000) E_sorted(i1,nVAR+1:nVAR+2,1)=BS_R_right_magn(:,i1)
-       nVAR=nVAR+2
+       if(l_BS_esort) then
+         if(i1<1000) E_sorted(i1,nVAR+1:nVAR+2,1)=BS_R_right_magn(:,i1)
+         nVAR=nVAR+2
+       endif
        res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
        X_magnons(:,1,2)=X_magnons(:,1,2)-res_magn(1)/(W%p(:)-EXC_E(i_pert_SOC))
        X_magnons(:,2,2)=X_magnons(:,2,2)-res_magn(2)/(W%p(:)-EXC_E(i_pert_SOC))

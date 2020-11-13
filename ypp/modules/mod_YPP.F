@@ -39,9 +39,11 @@ module YPPm
  logical  :: l_q_grid
  logical  :: l_shifted_grid
  logical  :: l_random_grid
+ logical  :: l_regular_grid
  logical  :: l_high_sym_pts
  integer  :: N_path_pts
  integer  :: BZ_random_nkpts
+ integer  :: K_grid(3)
  real(SP) :: alat_used_for_output
  character(schlen) :: coo_in
  character(schlen) :: coo_out

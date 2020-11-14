@@ -34,7 +34,7 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
  use parallel_m,     ONLY:PP_redux_wait
  use BS,             ONLY:BS_K_coupling,n_BS_blks,BS_mat_res_ares_dim,&
 &                         l_BS_ares_asymm,BS_blks_free
- use BS_solvers,     ONLY:BS_mat,BS_blk,BS_H_dim,BS_K_dim,BSS_add_antiresonant,&
+ use BS_solvers,     ONLY:BS_mat,BS_blk,BS_H_dim,BS_K_dim,&
 &                         BSS_perturbative_width,run_inversion,run_Haydock,&
 &                         BSS_eh_E,BSS_eh_W
  use timing_m,       ONLY:timing
@@ -98,7 +98,7 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
            BS_mat(H_pos(1)            ,H_pos(2)            )=       Mij
            ! The resonant block is hermitial
            BS_mat(H_pos(2)            ,H_pos(1)            )= conjg(Mij)
-         if (.not.l_BS_ares_asymm.and.(BSS_add_antiresonant.or.BS_K_coupling)) then
+         if ((.not.l_BS_ares_asymm).and.BS_K_coupling) then
            ! The anti-resonant block is A=-R*
            BS_mat(H_pos(1)+BS_K_dim(1),H_pos(2)+BS_K_dim(1))=-conjg(Mij)
            ! The anti-resonant block is hermitian

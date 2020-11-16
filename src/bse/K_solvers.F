@@ -42,6 +42,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use BS,             ONLY:l_BS_photolum
  use PHOTOLUM,       ONLY:BSS_PL_free
  use MAGNONS,        ONLY:BSS_MAGN_free
+ use DICHROISM,      ONLY:BSS_DICH_free
 #endif
  !
 #include<memory.h>
@@ -130,6 +131,11 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  ! CLEAN: diago/invertion workspace
  !
  call BSS_free( )
+#if defined _KERR
+ call BSS_MAGN_free( )
+ call BSS_DICH_free( )
+ call BSS_PL_free( )
+#endif
  !
  ! CLEAN: BS_mat
  !
@@ -154,11 +160,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  endif
  !
  ! CLEAN (final)
- !
-#if defined _KERR
- call BSS_MAGN_free( )
- call BSS_PL_free( )
-#endif
  !
  call BS_blks_free(1)
  !

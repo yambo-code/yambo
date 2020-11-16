@@ -59,8 +59,8 @@ subroutine K_components_folded_in_serial_arrays(iq)
  !========================
  ! BSS COMPONENTS SECTION
  !========================
- ! 
- if (allocated(BSS_dipoles_opt)) return
+ !
+ if (allocated(BSS_eh_table)) return
    !
    call timing('BSE components folding',OPR='start')
    !
@@ -72,7 +72,6 @@ subroutine K_components_folded_in_serial_arrays(iq)
 #if defined _KERR
    call BSS_MAGN_alloc( )
    call BSS_DICH_alloc( )
-   !
    call BSS_PL_alloc( )
 #endif
    !

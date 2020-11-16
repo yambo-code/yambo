@@ -32,7 +32,7 @@ subroutine PHEL_driver(E,k,q)
  use interfaces,          ONLY:ELPH_alloc
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,&
 &                              l_GKKP_hosts_bare_dV
- use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode,PH_Grid_Check_Transitions
+ use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode
  use parallel_m,          ONLY:PARs_PH_Q_ibz,PARs_PH_K_bz 
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_global_indexes
  use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free                        
@@ -100,6 +100,7 @@ subroutine PHEL_driver(E,k,q)
  PH_DbGd_points    =k%FGbz%N
  l_PH_uses_E_FineGd=PH_DbGd_points>0
  if (.not.l_RT_uses_E_FineGd) then
+   call k_ibz2bz(k,'i',.true.)
    call bz_samp_FineGd_alloc(k%FGbz,k%nbz)
    call bz_samp_FineGd_default(k%FGbz,k,k%nbz)
  endif
@@ -138,11 +139,11 @@ subroutine PHEL_driver(E,k,q)
  ! Transitions activated by phonon scattering
  !========================
  !
- call live_timing('Ph-el scattering list',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par) 
+ !call live_timing('Ph-el scattering list',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par) 
  !
- call PH_Grid_Check_Transitions((/1,QP_PH_n_G_bands/),E,k,q,k_FG,E_FG)
+ call PH_Grid_Check_Transitions(E,k,q,(/1,QP_PH_n_G_bands/),k_FG,E_FG)
  !
- call live_timing( )
+ !call live_timing( )
  !
  ! Loop
  !======
@@ -158,10 +159,10 @@ subroutine PHEL_driver(E,k,q)
  !DEBUG<
  !
  call live_timing('Phonon Lifetimes',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
- !do iq=1,nqibz
- !  if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
- !  call PHEL_Lifetimes(iq,E,k,q,(/1,QP_PH_n_G_bands/),k_FG,E_FG)
- !enddo
+ do iq=1,nqibz
+   if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
+   call PHEL_Lifetimes(iq,E,k,q,(/1,QP_PH_n_G_bands/),k_FG,E_FG)
+ enddo
  call live_timing( )
  !
  ! Redux

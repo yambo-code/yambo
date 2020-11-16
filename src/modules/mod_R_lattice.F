@@ -268,8 +268,6 @@ module R_lattice
        nk = k%nibz
      endif
      !
-     if (nk>k%nibz) call k_ibz2bz(k,'i',.true.)
-     !
      FG%N=nk
      do ik=1,nk
        !

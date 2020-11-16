@@ -23,15 +23,18 @@
 !
 module PHEL
  !
- use pars,           ONLY:schlen
+ use pars,           ONLY:SP,schlen
  !
  integer          :: PH_DbGd_points=0
  logical          :: l_PH_uses_E_FineGd=.FALSE.
  character(schlen):: PH_Self_Energy_mode="dressed-dressed" ! "bare-dressed" (="dressed-bare") / "bare-bare"
  !
  type phel_scatterings
-   real(SP)    :: transitions(3)  ! Number of transitions: 1-> accepted, 2-> total, 3-> ratio
-   integer, allocatable  :: table(:,5) ! Indices of accepted transitions: 1-> il, 2-> iq, 3-> ik, 4-> i_n, 5-> i_np
+   integer               :: transitions(2)  ! Number of transitions: 1-> accepted, 2-> total
+   real(SP)              :: ratio           ! accepted/total
+   integer, allocatable  :: transitions_at_q(:,:)
+   real(SP), allocatable :: ratio_at_q(:)
+   integer, allocatable  :: table(:,:) ! Indices of accepted transitions: 1-> il, 2-> iq, 3-> ik, 4->ip, 5-> i_n, 6-> i_np
  end type phel_scatterings
  !
 end module

@@ -44,8 +44,8 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
  ! 
  ! Work Space
  !
- integer          :: i1,i2,l_indent,i1_limits(2)
- character(lchlen):: msgfmt,lch,yaml_mesg,yaml_val(size(val))
+ integer          :: i1,i2,l_indent,i1_limits(2),nm
+ character(lchlen):: msgfmt,lch,yaml_mesg,yaml_val(size(val)),mesg_plus
  logical          :: l_tabs,OUT_msg,REP_msg,LOG_msg,STD_msg,&
 &                    l_new_line(2) !left and right
 #if defined _YAML_OUTPUT
@@ -79,7 +79,8 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
  !
  if (present(MSG_string)) then
    if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then
-     write (MSG_string,trim(msgfmt)) mesg//": ",(trim(val(i2)),i2=1,size(val))
+     call add_the_semi_column(mesg,nm,mesg_plus)
+     write (MSG_string,trim(msgfmt)) mesg_plus(1:nm),(trim(val(i2)),i2=1,size(val))
    else
      write (MSG_string,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
    endif
@@ -89,7 +90,8 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
    if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then
-     write (of_unit(i1),trim(msgfmt)) mesg//": ",(trim(val(i2)),i2=1,size(val))
+     call add_the_semi_column(mesg,nm,mesg_plus)
+     write (of_unit(i1),trim(msgfmt)) mesg_plus(1:nm),(trim(val(i2)),i2=1,size(val))
    else
      write (of_unit(i1),trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
    endif
@@ -128,9 +130,13 @@ subroutine add_the_semi_column(string,n,string_plus)
  implicit none
  character(*)      :: string
  character(lchlen) :: string_plus
- integer           :: n
+ integer           :: n,ic
  n=len_trim(string)
  string_plus=string
+ do ic=n,1,-1
+   if (string(ic:ic)/=" ".and.string(ic:ic)/=":") exit
+   if (string(ic:ic)==":") return
+ enddo
  if (n>0) then
    string_plus=string//": "
    n=len(string)+2

@@ -82,7 +82,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  integer, external    :: G_index
  character(lchlen)    :: string(2)
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
- type(PP_indexes)     :: px
+ type(PP_indexes)     :: PAR_IND_Xk,PAR_IND_k
  integer, external    :: io_QINDX 
  !
  call section('*','Transferred momenta grid and indexing')
@@ -200,8 +200,6 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    if (q%nbz/=Xk%nbz) then
      call bz_X_only_exit('[RL indx] Q BZ pts are /= from X grid BS pts. Gamma point only.')
-     X_scattering=.FALSE.
-     sigma_scattering=.FALSE.
    else
      if(     Xk_grid_new_mapping) call define_q_map_new(q%ptbz(:,:),(/0._SP,0._SP,0._SP/))
      if(.not.Xk_grid_new_mapping) call define_q_map    (q%ptbz(:,:),(/0._SP,0._SP,0._SP/))
@@ -210,8 +208,6 @@ subroutine bz_samp_indexes(k,Xk,q)
  else
    !
    call bz_X_only_exit('[RL indx] X grid is not uniform. Gamma point only.')
-   X_scattering=.FALSE.
-   sigma_scattering=.FALSE.
    !
  endif
  !
@@ -234,9 +230,11 @@ subroutine bz_samp_indexes(k,Xk,q)
  if ( bse_scattering)  string(1)=trim(string(1))//' + BSE'
  if (coll_scattering)  string(2)=trim(string(2))//' + COLL'
  !
- ! ... PARALLEL 
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/Xk%nbz/))
+ ! ... PARALLEL (Xk) 
+ call PP_indexes_reset(PAR_IND_Xk)
+ call PARALLEL_index(PAR_IND_Xk,(/Xk%nbz/))
+ call PP_indexes_reset(PAR_IND_k)
+ call PARALLEL_index(PAR_IND_k,(/k%nbz/))
  !
  if (X_scattering) then
    !
@@ -245,7 +243,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    ! X/BSE
    !------
-   call live_timing(trim(string(1))//' [eval]',max(1,px%n_of_elements(myid+1)/n_threads))
+   call live_timing(trim(string(1))//' [eval]',max(1,PAR_IND_Xk%n_of_elements(myid+1)/n_threads))
    !
    if (Xk_grid_new_mapping) call k_find_smallest_q(Xk%ptbz,q_step,Xk%nbz)
    !
@@ -255,7 +253,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    !$omp do
    do ikbz=1,Xk%nbz
      !
-     if (.not.px%element_1D(ikbz)) cycle 
+     if (.not.PAR_IND_Xk%element_1D(ikbz)) cycle 
      !
      do ikbz_p=1,Xk%nbz
        !
@@ -321,7 +319,6 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    if (any(qindx_X==0)) then
      call bz_X_only_exit('Null transition detected [qindx_X]. Gamma point only.')
-     sigma_scattering=.FALSE.
    endif
    !
  endif
@@ -366,7 +363,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      !
      do ikbz_p=1,k%nbz
        !
-       if (.not.px%element_1D(ikbz_p)) cycle 
+       if (.not.PAR_IND_k%element_1D(ikbz_p)) cycle 
        !
        if(Xk_grid_new_mapping) then
          !
@@ -434,12 +431,19 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    K_LOOP: do ikbz=1,k%nbz
      ikibz=k%sstar(ikbz,1)
-     if (any(qindx_S(ikibz,:,:)==0)) then
+     if (any(qindx_S(ikibz,:,:)==0)) then 
        call bz_X_only_exit('Null transition detected [qindx_S]. Gamma point only.')
        exit K_LOOP
      endif
    enddo K_LOOP
  endif
+ !
+ ! Grids string update
+ !
+ k_GRIDS_string="X"
+ if (bse_scattering  ) k_GRIDS_string=trim(k_GRIDS_string)//" B"
+ if (coll_scattering ) k_GRIDS_string=trim(k_GRIDS_string)//" C"
+ if (sigma_scattering) k_GRIDS_string=trim(k_GRIDS_string)//" S"
  !
  ! Before writing the new DB I need to wait that all cores are done
  ! with checking DB which was present before
@@ -458,7 +462,8 @@ subroutine bz_samp_indexes(k,Xk,q)
    YAMBO_FREE(q%ptbz)
  endif
  call PP_redux_wait()
- call PP_indexes_reset(px)
+ call PP_indexes_reset(PAR_IND_Xk)
+ call PP_indexes_reset(PAR_IND_k)
  !
  call timing('bz_samp_indexes',OPR='stop')
  !
@@ -639,6 +644,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      call q_shadows(.true.)
      Xk_grid_is_uniform=.false.
      bse_scattering=.false.
+     sigma_scattering=.FALSE.
      do i1=1,Xk%nbz
        qindx_X(1,i1,1)=i1
        qindx_X(1,i1,2)=1

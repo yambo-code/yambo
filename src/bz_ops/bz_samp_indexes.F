@@ -75,7 +75,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,iqs,iks,id
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3),q_step(3)
  real(SP):: E_empty(1,q%nibz,n_sp_pol)
- logical :: connected_grids,user_defined_qpts
+ logical :: connected_grids,user_defined_qpts,user_grids
 #if defined _ELPH
  logical :: bse_setup_scatt
 #endif
@@ -96,11 +96,17 @@ subroutine bz_samp_indexes(k,Xk,q)
  call parser('BSEscatt',bse_setup_scatt)
  if (.not.bse_scattering ) bse_scattering =elph_use_q_grid.or.bse_setup_scatt.or.trim(q_source)=="Electron-Phonon databases"
 #endif
- if (index(k_GRIDS_string,"B")==0.and.bse_scattering  ) bse_scattering=.FALSE.
- if (index(k_GRIDS_string,"C")==0.and.coll_scattering ) coll_scattering=.FALSE.
- if (index(k_GRIDS_string,"X")==0.and.X_scattering    ) X_scattering=.FALSE.
- if (index(k_GRIDS_string,"S")==0.and.sigma_scattering) sigma_scattering=.FALSE.
- if (len_trim(k_GRIDS_string)==0) k_GRIDS_string="none"
+ !
+ ! ... User defined
+ call parser('K_grids', user_grids)
+ if (user_grids) then
+   if (index(k_GRIDS_string,"B")==0.and.bse_scattering  ) bse_scattering=.FALSE.
+   if (index(k_GRIDS_string,"C")==0.and.coll_scattering ) coll_scattering=.FALSE.
+   if (index(k_GRIDS_string,"X")==0.and.X_scattering    ) X_scattering=.FALSE.
+   if (index(k_GRIDS_string,"S")==0.and.sigma_scattering) sigma_scattering=.FALSE.
+   if (len_trim(k_GRIDS_string)==0) k_GRIDS_string="none"
+   call k_GRIDS_update( )
+ endif
  !
  if (bse_scattering)  X_scattering    =.TRUE.
  if (coll_scattering) sigma_scattering=.TRUE.
@@ -440,10 +446,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  ! Grids string update
  !
- k_GRIDS_string="X"
- if (bse_scattering  ) k_GRIDS_string=trim(k_GRIDS_string)//" B"
- if (coll_scattering ) k_GRIDS_string=trim(k_GRIDS_string)//" C"
- if (sigma_scattering) k_GRIDS_string=trim(k_GRIDS_string)//" S"
+ call k_GRIDS_update( )
  !
  ! Before writing the new DB I need to wait that all cores are done
  ! with checking DB which was present before
@@ -468,6 +471,17 @@ subroutine bz_samp_indexes(k,Xk,q)
  call timing('bz_samp_indexes',OPR='stop')
  !
  contains 
+   !
+   subroutine k_GRIDS_update()
+     !
+     ! Grids string update
+     !
+     k_GRIDS_string="X"
+     if (bse_scattering  ) k_GRIDS_string=trim(k_GRIDS_string)//" B"
+     if (coll_scattering ) k_GRIDS_string=trim(k_GRIDS_string)//" C"
+     if (sigma_scattering) k_GRIDS_string=trim(k_GRIDS_string)//" S"
+     !
+   end subroutine 
    !
    subroutine k_grid_shift(v)
      implicit none

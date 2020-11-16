@@ -70,7 +70,7 @@ module X_m
  !
  ! Absorption & Polarizability
  !
- complex(SP), allocatable :: E_sorted(:,:,:)
+ complex(SP), allocatable :: BS_E_sorted(:,:,:)
  complex(SP), allocatable :: Epsilon_ii(:,:)
  complex(SP), allocatable :: Epsilon_ij(:,:)
  complex(SP), allocatable :: Joint_DOS(:,:) 

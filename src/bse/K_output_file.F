@@ -29,7 +29,7 @@ subroutine K_output_file(iq,mode)
  use BS_solvers,ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,&
 &                    BSS_n_freqs,K_diago_in_BS_mat  
  use BS,        ONLY:l_BS_abs,BSE_mode,BS_K_is_ALDA,BSqpts,BS_H_dim,BS_dip_size,l_BS_esort,l_BS_jdos
- use X_m,       ONLY:Epsilon_ii,Joint_DOS,E_sorted,eval_alpha,eps_2_alpha,alpha_dim,OPTICS_eels
+ use X_m,       ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,eval_alpha,eps_2_alpha,alpha_dim,OPTICS_eels
  use com,       ONLY:msg,of_open_close
  use parser_m,  ONLY:parser
  use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,jdos_file_name,&
@@ -60,7 +60,7 @@ subroutine K_output_file(iq,mode)
  character(2)      :: ordering
  character(2)      :: title_mode
  character(10)     :: name_
- integer           :: iw,i1,i2,i_IP_BSE,n_IP_BSE,n_output_data,n_headers,iopt(2),imag(2),idic(2)
+ integer           :: iw,i1,i2,i_IP_BSE,n_IP_BSE,n_output_data,n_headers
  real(SP)          :: output_data(7),w(BSS_n_freqs)
  complex(SP)       :: eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3),alpha_factor
 #if defined _KERR
@@ -579,19 +579,16 @@ subroutine K_output_file(iq,mode)
    !
    n_output_data=1
    if(l_BS_abs) then
-     iopt(:)=(/n_output_data+1,n_output_data+BS_dip_size/)
-     headers(iopt(1):iopt(2))="|x_i|^2"
+     headers(n_output_data+1:n_output_data+BS_dip_size)="|x_i|^2"
      n_output_data=n_output_data+BS_dip_size
    endif
 #if defined _KERR
    if (l_BS_magnons) then
-     imag(:)=(/n_output_data+1,n_output_data+2/)
-     headers(imag(1):imag(2))=(/"|Scv+|^2","|Scv-|^2"/)
+     headers(n_output_data+1:n_output_data+2)=(/"|Scv+|^2","|Scv-|^2"/)
      n_output_data=n_output_data+2
    endif
    if (l_BS_dichroism) then
-     idic(:)=(/n_output_data+1,n_output_data+BS_dip_size/)
-     headers(idic(1):idic(2))="|L_i|^2"
+     headers(n_output_data+1:n_output_data+BS_dip_size)="|L_i|^2"
      n_output_data=n_output_data+BS_dip_size
    endif
 #endif
@@ -600,13 +597,13 @@ subroutine K_output_file(iq,mode)
    if (l_IP) n_IP_BSE=1
    !
    do i_IP_BSE=1,n_IP_BSE
-     ! E_sorted(:,:,2) (int) ; E_sorted(:,:,1) (non int)
+     ! BS_E_sorted(:,:,2) (int) ; BS_E_sorted(:,:,1) (non int)
      call msg("o Esort",'#')
      call msg("o Esort",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
      call msg("o Esort",'#')
      do i1=1,min(BS_H_dim,1000)
-       output_data(1)=real(E_sorted(i1,1,i_IP_BSE))
-       output_data(2:n_output_data)=abs(E_sorted(i1,2:n_output_data,i_IP_BSE))
+       output_data(1)=real(BS_E_sorted(i1,1,i_IP_BSE))*HA2EV
+       output_data(2:n_output_data)=abs(BS_E_sorted(i1,2:n_output_data,i_IP_BSE))
        call msg("o Esort",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
      enddo
    enddo

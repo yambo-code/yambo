@@ -27,7 +27,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
  !
  use pars,           ONLY:cZERO,cONE,SP,pi,rZERO
- use X_m,            ONLY:Epsilon_ii,Joint_DOS,E_sorted,X_drude_term,global_gauge,skip_cond_sum_rule
+ use X_m,            ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,X_drude_term,global_gauge,skip_cond_sum_rule
  use electrons,      ONLY:n_sp_pol
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset
@@ -99,7 +99,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    do i_pert_SOC=1,n_SOC
      !
      if(l_BS_esort) then
-       if(i1<1000) E_sorted(i1,1,2)=EXC_E(1)
+       if(i1<1000) BS_E_sorted(i1,1,2)=EXC_E(1)
        nVAR=1
      endif
      !
@@ -115,7 +115,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
      !
      if(l_BS_abs) then
        if(l_BS_esort) then
-         if(i1<1000) E_sorted(i1,nVAR+1:nVAR+1,1)=BS_R_right(i1)
+         if(i1<1000) BS_E_sorted(i1,nVAR+1:nVAR+1,2)=BS_R_right(i1)
          nVAR=nVAR+1
        endif
        res_abs=BS_R_left(i1)*BS_R_right(i1)*ares_fac
@@ -131,7 +131,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
 #if defined _KERR
      if(l_BS_kerr) then
        if(l_BS_esort) then
-         if(i1<1000) E_sorted(i1,nVAR+1:nVAR+1,1)=BS_R_right_kerr(i1)
+         if(i1<1000) BS_E_sorted(i1,nVAR+1:nVAR+1,2)=BS_R_right_kerr(i1)
          nVAR=nVAR+1
        endif
        res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)*ares_fac
@@ -142,7 +142,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
      endif
      if(l_BS_magnons) then
        if(l_BS_esort) then
-         if(i1<1000) E_sorted(i1,nVAR+1:nVAR+2,1)=BS_R_right_magn(:,i1)
+         if(i1<1000) BS_E_sorted(i1,nVAR+1:nVAR+2,2)=BS_R_right_magn(:,i1)
          nVAR=nVAR+2
        endif
        res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
@@ -172,7 +172,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  if (BS_mat_res_ares_dim/=i_BS_mat) return
  !
  if(l_BS_jdos)  call PP_redux_wait(Joint_DOS(:,2) )
- if(l_BS_esort) call PP_redux_wait(E_sorted(:,:,2) )
+ if(l_BS_esort) call PP_redux_wait(BS_E_sorted(:,:,2) )
  !
  if(l_BS_abs) then
    call PP_redux_wait(Epsilon_ii(:,2))

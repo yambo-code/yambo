@@ -603,6 +603,7 @@ subroutine K_output_file(iq,mode)
      call msg("o Esort",'#')
      do i1=1,min(BS_H_dim,1000)
        output_data(1)=real(BS_E_sorted(i1,1,i_IP_BSE))*HA2EV
+       if (output_data(1)==0._SP) cycle
        output_data(2:n_output_data)=abs(BS_E_sorted(i1,2:n_output_data,i_IP_BSE))
        call msg("o Esort",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
      enddo

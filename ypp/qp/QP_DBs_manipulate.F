@@ -40,7 +40,7 @@ subroutine QP_DBs_manipulate( E )
  !
  integer                 :: i_qp,i_db,i_d,i_err,ID,n_GROUNDS,i_c
  integer,    external    :: io_QP_and_GF
- character(schlen)       :: QP_merged_name,QP_db_kind,ACTION
+ character(schlen)       :: QP_merged_name,QP_db_kind,ACTION,kind_to_add
  logical,           allocatable :: plan_EWZG(:,:)
  type(QP_t),        allocatable :: qp(:)
  !
@@ -121,11 +121,16 @@ subroutine QP_DBs_manipulate( E )
    !
    QP_db_kind=" "
    do i_d=1,qp(i_qp)%desc%n
-     if (index(qp(i_qp)%desc%sval(i_d),"Real")>0)    QP_db_kind=trim(QP_db_kind)//"_gw_real_axis"
-     if (index(qp(i_qp)%desc%sval(i_d),"Fan")>0)     QP_db_kind=trim(QP_db_kind)//"_el_ph"
-     if (index(qp(i_qp)%desc%sval(i_d),"Lamb")>0)    QP_db_kind=trim(QP_db_kind)//"_el_photon"
-     if (index(qp(i_qp)%desc%sval(i_d),"PPA")>0)     QP_db_kind=trim(QP_db_kind)//"_gw_ppa"
-     if (index(qp(i_qp)%desc%sval(i_d),"COHSEX")>0)  QP_db_kind=trim(QP_db_kind)//"_gw_cohsex"
+     kind_to_add=" "
+     if (index(qp(i_qp)%desc%sval(i_d),"Real")>0)    kind_to_add="_gw_real_axis"
+     if (index(qp(i_qp)%desc%sval(i_d),"Fan")>0)     kind_to_add="_el_ph"
+     if (index(qp(i_qp)%desc%sval(i_d),"Lamb")>0)    kind_to_add="_el_photon"
+     if (index(qp(i_qp)%desc%sval(i_d),"PPA")>0)     kind_to_add="_gw_ppa"
+     ! DEBUG [AM] To be ADDED
+     !if (index(qp(i_qp)%desc%sval(i_d),"COHSEX")>0)  kind_to_add="_gw_cohsex"
+     ! DEBUG [AM] To be ADDED
+     if (len_trim(kind_to_add)==0) cycle
+     if (index(QP_db_kind,trim(kind_to_add))==0)     QP_db_kind=trim(QP_db_kind)//trim(kind_to_add)
    enddo
    !
    QP_merged_name='QP_merged_'//trim(intc(i_qp))//trim(QP_db_kind)

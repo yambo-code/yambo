@@ -29,4 +29,9 @@ module PHEL
  logical          :: l_PH_uses_E_FineGd=.FALSE.
  character(schlen):: PH_Self_Energy_mode="dressed-dressed" ! "bare-dressed" (="dressed-bare") / "bare-bare"
  !
+ type phel_scatterings
+   real(SP)    :: transitions(3)  ! Number of transitions: 1-> accepted, 2-> total, 3-> ratio
+   integer, allocatable  :: table(:,5) ! Indices of accepted transitions: 1-> il, 2-> iq, 3-> ik, 4-> i_n, 5-> i_np
+ end type phel_scatterings
+ !
 end module

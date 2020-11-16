@@ -23,7 +23,7 @@
 !
 subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
  !
- ! This routine computes the phonon lifetimes. 
+ ! This routine computes the phonon lifetimes in and out of equilibrium. 
  ! Presently, only one approximation route from the phononic KBE to 
  ! the kernel/collision integral is available:
  !   - Time Scales Separation + QuasiParticle Approximation (TSQP)
@@ -78,6 +78,8 @@ subroutine PHEL_Lifetimes(iq,E,k,q,bands,k_FG,E_FG)
 #if defined _RT
  iq_life=iq_mem
 #endif
+ !
+ ! #if !defined _RT call PH_Double_Grid_setup
  !
  do ikbz=1,k%nbz
    !

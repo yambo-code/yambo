@@ -272,22 +272,18 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        ! In optics q=0 requires a special treatment due to the non analytic behaviour
        ! This is not needed for magnons.
        ! However to follow the same structure in K_IP.F fow WFs load / DIPOLE_IO here I keep it
+       ! The implementation with scatter can be used to double check the spin dipoles
        !
        if(iq==1) then
-         !
          DIP_expanded   = DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,"DIP_S",Xk)
-         !
        else
-         !
          call scatter_Bamp_spin(BSE_scatt,'x')
-         DIP_expanded(1)=-BSE_scatt%rhotw(1)
+         DIP_expanded(1)=-conjg(BSE_scatt%rhotw(1))
          call scatter_Bamp_spin(BSE_scatt,'y')
-         DIP_expanded(2)=-BSE_scatt%rhotw(1)
-         !The following is commented because it is not used at present
-         !BSE_scatt%os(4)=(i_sp_pol)
-         !call scatter_Bamp_spin(BSE_scatt,'z')
-         !DIP_expanded(3)=-BSE_scatt%rhotw(1)
-         !
+         DIP_expanded(2)=-conjg(BSE_scatt%rhotw(1))
+         !The following is not used at present
+         call scatter_Bamp_spin(BSE_scatt,'z')
+         DIP_expanded(3)=-conjg(BSE_scatt%rhotw(1))
        endif
        !
        ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_c), to get <c|S-|v>(i_sp_pol_v) = conjg(<v|S+|c>(i_sp_pol_c))
@@ -629,10 +625,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    call DIP_alloc('DIP_P_spinor')
  endif
  !
- !if(iq>1) then
+ if(iq>1) then
    call elemental_collision_free(BSE_scatt)
    call WF_free(WF)
- !endif
+ endif
  !
  if (l_rpa_IP) then
    !

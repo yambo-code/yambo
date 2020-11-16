@@ -145,8 +145,7 @@ subroutine INIT_activate()
  !
  !XX
  !
- if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs VXCRLvcs')  
- if (l_HF_and_locXC) call initactivate(1,'UseNLCC')  
+ if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs VXCRLvcs UseNLCC')  
  !
  ! Kernels
  !
@@ -171,7 +170,7 @@ subroutine INIT_activate()
    ! GPL_EXCLUDE_END
    !
    ! ALDA/LRC Tddft
-   if (l_alda_fxc) call initactivate(1,'FxcGRLc')
+   if (l_alda_fxc) call initactivate(1,'FxcGRLc UseNLCC')
    if (l_lrc_fxc)  call initactivate(1,'LRC_alpha LRC_beta')
    if (l_pf_fxc)   call initactivate(1,'PF_alpha')
    !
@@ -485,7 +484,7 @@ subroutine INIT_activate()
    !
    if( index(H_potential,"IP")>0 )  call initactivate(1,'HARRLvcs ALLGHAR')
    if( index(H_potential,"HARTREE")>0 .or. index(H_potential,"DEFAULT")>0)  call initactivate(1,'HARRLvcs ALLGHAR')
-   if( index(H_potential,"GS_XC")>0   .or. index(H_potential,"DEFAULT")>0 ) call initactivate(1,'VXCRLvcs')
+   if( index(H_potential,"GS_XC")>0   .or. index(H_potential,"DEFAULT")>0 ) call initactivate(1,'VXCRLvcs UseNLCC')
    !
    if (l_eval_collisions) then
      if( STRING_match(trim(H_potential),"SEX").or.&

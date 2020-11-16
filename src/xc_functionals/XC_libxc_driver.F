@@ -45,7 +45,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  use libxc_funcs_m,  ONLY:XC_GGA_X_PBE, XC_GGA_C_PBE
  use interfaces,     ONLY:el_density_and_current
- use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc
+ use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc,PP_nlcc_free
  !
 #include<memory.h>
  !
@@ -124,7 +124,12 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  endif
 #endif
  !
+ ! non-linear core corrections (NLCC)
+ ! to be improved for yambo_rt, otherwise this is done at each time step
+ !
+ call XC_nlcc_setup()
  if (pp_has_nlcc) rho(:)=rho(:)+real(pp_rho_nlcc(:),SP)
+ call PP_nlcc_free()
  !
  if(n_spin==1) spin_rho_SP(:,1)=rho(:)
  if(n_spin> 1) then

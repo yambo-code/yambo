@@ -59,11 +59,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #endif
  use deviceXlib_m,  ONLY:dev_memcpy,dev_memset
  use cuda_m,        ONLY:have_cuda
-#ifdef _CUDA
+ !
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
-#endif
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -431,7 +430,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            if (X_is_TR_rotated) then
              !
              !DEV_CUF kernel do(2)
-             !DEV_OMP parallel do default(shared), private(ig1,ig2), collaspe(2)
+             !DEV_OMP parallel do default(shared), private(ig1,ig2), collapse(2)
              !
              do ig2=X_cols1,X_cols2
              do ig1=X_rows1,X_rows2
@@ -442,7 +441,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            else
              !
              !DEV_CUF kernel do(2)
-             !DEV_OMP parallel do default(shared), private(ig1,ig2), collaspe(2)
+             !DEV_OMP parallel do default(shared), private(ig1,ig2), collapse(2)
              !
              do ig2=X_cols1,X_cols2
              do ig1=X_rows1,X_rows2

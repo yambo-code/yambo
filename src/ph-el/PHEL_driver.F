@@ -99,7 +99,7 @@ subroutine PHEL_driver(E,k,q)
  ! ...DbGd in the full BZ
  PH_DbGd_points    =k%FGbz%N
  l_PH_uses_E_FineGd=PH_DbGd_points>0
- if (.not.l_RT_uses_E_FineGd) then
+ if (.not.l_PH_uses_E_FineGd) then
    call k_ibz2bz(k,'i',.true.)
    call bz_samp_FineGd_alloc(k%FGbz,k%nbz)
    call bz_samp_FineGd_default(k%FGbz,k,k%nbz)
@@ -158,12 +158,12 @@ subroutine PHEL_driver(E,k,q)
  RT_PE_life_intraband = rZERO
  !DEBUG<
  !
- call live_timing('Phonon Lifetimes',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
- do iq=1,nqibz
-   if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
-   call PHEL_Lifetimes(iq,E,k,q,(/1,QP_PH_n_G_bands/),k_FG,E_FG)
- enddo
- call live_timing( )
+ !call live_timing('Phonon Lifetimes',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
+ !do iq=1,nqibz
+ !  if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
+ !  call PHEL_Lifetimes(iq,E,k,q,(/1,QP_PH_n_G_bands/),k_FG,E_FG)
+ !enddo
+ !call live_timing( )
  !
  ! Redux
  !=======

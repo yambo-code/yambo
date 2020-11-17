@@ -28,7 +28,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  ! This change makes the code much faster as it avoids the use of all
  ! double-grid kpts in the two spheres (k and kp).
  !
- use pars,           ONLY:SP,rZERO
+ use pars,           ONLY:SP
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,E_fine_grid
  use hamiltonian,    ONLY:B_mat_index
@@ -68,9 +68,10 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  !
  n_loops=2
  n_indices_table = 6 ! il,iq,ik_rim,ip_rim,i_n,i_np
- ! 
- allocate( phel_info%transitions_at_q(nqibz,2) )
- allocate( phel_info%ratio_at_q(nqibz) )
+ !
+ YAMBO_ALLOC( phel_info%transitions_at_q, (nqibz,2) )
+ YAMBO_ALLOC( phel_info%ratio_at_q, (nqibz) )
+ phel_info%ratio_at_q       = 0
  !
  ! Loop to allocate phel_table
  !========================
@@ -81,20 +82,17 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
      if (phel_info%transitions(1)==0) then 
        call warning(' No phel scattering possible !')
      else
-       allocate( phel_info%table( phel_info%transitions(1),n_indices_table ) )
+       YAMBO_ALLOC( phel_info%table, (phel_info%transitions(1),n_indices_table) )
      endif
      !
    endif
    !
-   phel_info%transitions      = rZERO
-   phel_info%transitions_at_q = rZERO
-   phel_info%ratio_at_q       = rZERO
+   phel_info%transitions      = 0
+   phel_info%transitions_at_q = 0
    ! 
    ! Main loop over iq in the ibz
    !========================
    do iq=1,nqibz
-     !
-     if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
      !
      ! Inner loop over ik in the bz
      !========================
@@ -144,18 +142,11 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
                !
              endif
              !
-             if (i_loop==1.and.iq==2.and.il==1.and.ikbz==1.and.i_n==1.and.i_np==1) then
-               write (*,*) k_FG%k_range(ik,1),k_FG%k_range(ik,2)
-             endif
              ! Loops over fine grid kpoints ik_rim and ip_rim
              !================================================    
              do ik_rim=k_FG%k_range(ik,1),k_FG%k_range(ik,2)
                !
                do ip_rim=k_FG%k_range(ik_m_q,1),k_FG%k_range(ik_m_q,2)
-                 if (i_loop==1.and.iq==2.and.il==1.and.ikbz==1.and.i_n==1.and.i_np==1) then
-                   write (*,*) ik_rim,ip_rim
-                   write (*,*) 'Pippo'
-                 endif
                  !
                  ! ... when using the fine grid ...
                  if (l_RT_uses_E_FineGd .or. l_PH_uses_E_FineGd) then
@@ -199,30 +190,29 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
        !
        enddo ! il
        !
-       call live_timing( steps=1 )
-       !
      enddo ! ikbz
      ! 
-     call PP_redux_wait(phel_info%transitions_at_q)
-     phel_info%ratio_at_q(iq) = float(phel_info%transitions_at_q(iq,1))/float(phel_info%transitions_at_q(iq,2))*100._SP
-     call msg('nrsn','DbGd@q['//trim(intc(iq))//'] k->k-q (trans %, broad eV)]',&
-&                      (/phel_info%ratio_at_q(iq),broad_factor*QP_G_damp*HA2EV/))
-     !
    enddo ! iq
    !
  enddo ! i_loop
  !
  call PP_redux_wait(phel_info%transitions)
+ call PP_redux_wait(phel_info%transitions_at_q)
  !
- do i_loop=1,10
-  write (*,*) phel_info%table(i_loop,:)
+ ! Output info
+ !===============
+ do iq=1,nqibz
+   phel_info%ratio_at_q(iq) = float(phel_info%transitions_at_q(iq,1))/float(phel_info%transitions(2))*100._SP
+   call msg('nrsn','DbGd@q['//trim(intc(iq))//'] k->k-q (trans %, broad eV)]',&
+&          (/phel_info%ratio_at_q(iq),broad_factor*QP_G_damp*HA2EV/))
  enddo
  !
  phel_info%ratio = float(phel_info%transitions(1))/float(phel_info%transitions(2))*100._SP
- call msg('nrsn','DbGd_total (trans n_tot, trans %, broad eV)',&
+ call msg('nrsn','DbGd_total (trans n_done, trans %, broad eV)',&
 &             (/float(phel_info%transitions(1)),phel_info%ratio,broad_factor*QP_G_damp*HA2EV/))
  !
- deallocate( phel_info%transitions_at_q )
- deallocate( phel_info%ratio_at_q )
+ YAMBO_FREE( phel_info%transitions_at_q )
+ YAMBO_FREE( phel_info%ratio_at_q )
+ YAMBO_FREE( phel_info%table )
  !
 end subroutine PH_Grid_Check_Transitions

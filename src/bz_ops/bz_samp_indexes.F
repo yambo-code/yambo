@@ -88,8 +88,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  call section('*','Transferred momenta grid and indexing')
  !========================================================
  ! .... which GRIDS?
- X_scattering    =.TRUE.
- sigma_scattering=.TRUE.
+ X_scattering    =index(k_GRIDS_string,"X")>0
+ sigma_scattering=index(k_GRIDS_string,"S")>0
  bse_scattering  =l_bse .and. (index(BS_res_mode,'c')/=0.or.index(BS_cpl_mode,'c')/=0)
  coll_scattering =l_elel_scatt
 #if defined _ELPH

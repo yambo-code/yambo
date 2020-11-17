@@ -53,6 +53,9 @@ subroutine DIPOLES_driver(k,E,q,Dip)
  !
  call section('*','Dipole Properties')
  !====================================
+ ! ... Apply QP corrections
+ call QP_apply(DIPOLES_bands,E,k,'G',msg_fmt='rs')
+ !
  !... PROJECTION setup
  call PROJECTION_setup("setup")
  if (l_PROJECT_line) then
@@ -72,9 +75,6 @@ subroutine DIPOLES_driver(k,E,q,Dip)
  ! ... IO
  call DIPOLE_dimensions(E,Dip,DIPOLES_bands,(/0._SP,0._SP,0._SP/))
  call DIPOLE_IO(k,e,Dip,'read ',io_err,'DIP')
- !
- ! ... Apply QP corrections
- call QP_apply(DIPOLES_bands,E,k,'G',msg_fmt='rs')
  !
  DIPOLES_direction=DIPOLES_direction/v_norm(DIPOLES_direction)
  !

@@ -56,8 +56,6 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  ! Clean-up
  !
  if (mode=="CLEAN") then
-   YAMBO_FREE(X_par%blc)
-   YAMBO_FREE(X_par%blc_d)
    call MATRIX_reset(X_par)
    return
  endif

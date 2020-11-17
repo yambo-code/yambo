@@ -58,7 +58,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  ! Work space
  !
- integer              :: ib1,ib2,ik,nk_G_IO
+ integer              :: ib1,ib2,ik,nk_G_IO,nk_SERIAL
  logical              :: CONSECUTIVE
  !
  CALL PARALLEL_structure(4,(/"k ","b ","q ","qp"/))
@@ -86,11 +86,15 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
 #if defined _PAR_IO
  CONSECUTIVE=.TRUE.
 #endif
+ nk_SERIAL=Xk%nibz
+ if (allocated(PAR_IND_Xk_ibz%weight_1D)) then
+   nk_SERIAL=sum( PAR_IND_Xk_ibz%weight_1D )
+ endif
  call PARALLEL_index(PAR_IND_Xk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=CONSECUTIVE,NO_EMPTIES=.TRUE.)
  PAR_IND_Xk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
  !
  call PARALLEL_live_message("K(ibz)",ENVIRONMENT="Real_Time",&
-&                           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz,&
+&                           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=nk_SERIAL,&
 &                           NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
  !
  !.........................................................................

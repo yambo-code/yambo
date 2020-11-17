@@ -115,11 +115,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
 &                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,              &
 &                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
-&                     RT_Efit_lifetimes,l_update_SOC,                                     &
+&                     RT_Efit_lifetimes,l_update_SOC,RT_step_manual_prefactor,            &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
 &                     RAD_prefactor,i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,           &
 &                     RT_is_statically_dephased,RT_is_dynamically_dephased,               &
-&                     RT_deph_deg_thresh,RT_deph_cv_only,                                 &
+&                     RT_deph_deg_thresh,RT_deph_cv_only,NE_time_step_update_manual,      &
 &                     NE_time_step_update_last_point,NE_time_step_update_jump,NE_time_step_update_jump_INPUT, &
 &                     NE_initial_time_step_update,NE_step_update_treshold
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
@@ -589,6 +589,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! RT current 
  !
+ RT_step_manual_prefactor=0._SP
  RT_step=0.010*FS2AUT
  NE_steps=1
  NE_time=0._SP
@@ -599,6 +600,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NE_time_step_update_jump_INPUT  = 0._SP
  NE_initial_time_step_update    = 0._SP
  NE_step_update_treshold        = 0.1_SP
+ NE_time_step_update_manual     =-1.0_SP
  !
  CACHE_OBS_steps      = 0
  CACHE_OBS_steps_now  = 0

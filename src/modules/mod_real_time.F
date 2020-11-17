@@ -72,6 +72,7 @@ module real_time
  real(SP)              :: RT_step             ! Elemental step used to define dimensions and time-points
  real(SP)              :: RT_dyn_step = 0._SP ! On-the-fly time-step
  real(SP)              :: RT_MAX_step =-1._SP*FS2AUT ! MAX value of the dynamical RT step value
+ real(SP)              :: RT_step_manual_prefactor
  !
  ! ... NE dynamics ...
  !
@@ -83,6 +84,7 @@ module real_time
  real(SP) :: NE_time_step_update_jump_INPUT
  real(SP) :: NE_initial_time_step_update         ! Time above which the time-step is dynamically updated (0. means no update)
  real(SP) :: NE_step_update_treshold             ! Time-step update treshold
+ real(SP) :: NE_time_step_update_manual          ! Time at which the time step is updated with a manual pre-factor
  !
  integer  :: NE_i_time=1 ! = NE_time/RT_step+1
  integer  :: NE_steps    ! Still relative to RT_step

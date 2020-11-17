@@ -114,11 +114,11 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
      ! distinction between the resonant and antiresonant e/h Green's functions.
      !
      if(l_BS_abs) then
+       res_abs=BS_R_left(i1)*BS_R_right(i1)*ares_fac
        if(l_BS_esort) then
-         if(i1<1000) BS_E_sorted(i1,nVAR+1:nVAR+1,2)=BS_R_right(i1)
+         if(i1<1000) BS_E_sorted(i1,nVAR+1:nVAR+1,2)=res_abs
          nVAR=nVAR+1
        endif
-       res_abs=BS_R_left(i1)*BS_R_right(i1)*ares_fac
        Epsilon_ii(:,2)=Epsilon_ii(:,2)-res_abs/(W%p(:)-EXC_E(i_pert_SOC))
        if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
          Epsilon_ii(:,2)=Epsilon_ii(:,2)+conjg(res_abs)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
@@ -130,22 +130,22 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
      !
 #if defined _KERR
      if(l_BS_kerr) then
+       res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)*ares_fac
        if(l_BS_esort) then
-         if(i1<1000) BS_E_sorted(i1,nVAR+1:nVAR+1,2)=BS_R_right_kerr(i1)
+         if(i1<1000) BS_E_sorted(i1,nVAR+1:nVAR+1,2)=res_kerr
          nVAR=nVAR+1
        endif
-       res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)*ares_fac
        Epsilon_ij(:,2)=Epsilon_ij(:,2)-res_kerr/(W%p(:)-EXC_E(i_pert_SOC))
        if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
          Epsilon_ij(:,2)=Epsilon_ij(:,2)+conjg(res_kerr)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
      endif
      if(l_BS_magnons) then
+       res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
        if(l_BS_esort) then
-         if(i1<1000) BS_E_sorted(i1,nVAR+1:nVAR+2,2)=BS_R_right_magn(:,i1)
+         if(i1<1000) BS_E_sorted(i1,nVAR+1:nVAR+2,2)=res_magn
          nVAR=nVAR+2
        endif
-       res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
        X_magnons(:,1,2)=X_magnons(:,1,2)-res_magn(1)/(W%p(:)-EXC_E(i_pert_SOC))
        X_magnons(:,2,2)=X_magnons(:,2,2)-res_magn(2)/(W%p(:)-EXC_E(i_pert_SOC))
        if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then

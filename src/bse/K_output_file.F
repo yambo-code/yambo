@@ -579,17 +579,21 @@ subroutine K_output_file(iq,mode)
    !
    n_output_data=1
    if(l_BS_abs) then
-     headers(n_output_data+1:n_output_data+BS_dip_size)="|x_i|^2"
-     n_output_data=n_output_data+BS_dip_size
+     headers(n_output_data+1:n_output_data+1)="abs"
+     n_output_data=n_output_data+1
    endif
 #if defined _KERR
-   if (l_BS_magnons) then
-     headers(n_output_data+1:n_output_data+2)=(/"|Scv+|^2","|Scv-|^2"/)
-     n_output_data=n_output_data+2
+   if (l_BS_kerr) then
+     headers(n_output_data+1:n_output_data+1)="kerr"
+     n_output_data=n_output_data+1
    endif
    if (l_BS_dichroism) then
-     headers(n_output_data+1:n_output_data+BS_dip_size)="|L_i|^2"
-     n_output_data=n_output_data+BS_dip_size
+     headers(n_output_data+1:n_output_data+1)="dich"
+     n_output_data=n_output_data+1
+   endif
+   if (l_BS_magnons) then
+     headers(n_output_data+1:n_output_data+2)=(/"S+-","S-+"/)
+     n_output_data=n_output_data+2
    endif
 #endif
    !

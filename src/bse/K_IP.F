@@ -302,10 +302,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! Absorption, & KERR
      !
      if(l_BS_abs.or.l_BS_kerr) then
-       if(l_BS_esort) then
-         if(H_pos<1000) BS_E_sorted(H_pos,nVAR+1:nVAR+BS_dip_size,1)=conjg_fac*conjg(DIP_projected(:BS_dip_size))
-         nVAR=nVAR+BS_dip_size
-       endif
        BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg_fac*conjg(DIP_projected(:BS_dip_size))
        if (BS_K_coupling.and..not.BS_res_ares_dim==2) &
        &  BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
@@ -314,20 +310,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 #if defined _KERR
      ! Dichroism
      if(l_BS_dichroism) then
-       if(l_BS_esort) then
-         if(H_pos<1000) BS_E_sorted(H_pos,nVAR+1:nVAR+BS_dip_size,1)=conjg(DIP_projected_dich(:BS_dip_size))
-         nVAR=nVAR+BS_dip_size
-       endif
        BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,1)=conjg(DIP_projected_dich(:BS_dip_size))
        if (BS_K_coupling.and..not.BS_res_ares_dim==2) &
        & BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,2)=DIP_projected_dich(:BS_dip_size)
      endif
      ! Magnons
      if (l_BS_magnons) then                                      ! This is the right R residual associated to (eps_c\dn-eps_v\up)
-         if(l_BS_esort) then
-           if(H_pos<1000) BS_E_sorted(H_pos,nVAR+1:nVAR+2,1)=(/conjg(DIP_Splus),conjg(DIP_Smins)/)
-           nVAR=nVAR+2
-         endif
          BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
          BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Smins)   ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
                                                                  !      or the right R residual associated to (eps_c\dn-eps_v\up)
@@ -351,18 +339,28 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      ! Residuals DIP_cv * DIP_vc
      !
-     res_abs=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
-     if(l_BS_trace) then
-       res_abs=res_abs+BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1))
-       res_abs=res_abs+BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1))
-       res_abs=res_abs/3._SP
+     if(l_BS_abs) then
+       res_abs=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
+       if(l_BS_trace) then
+         res_abs=res_abs+BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1))
+         res_abs=res_abs+BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1))
+         res_abs=res_abs/3._SP
+       endif
+       res_abs=res_abs*f_*Z_*E_
+       if(l_BS_esort) then
+         if(H_pos<1000) BS_E_sorted(H_pos,nVAR+1:nVAR+1,1)=res_abs
+         nVAR=nVAR+1
+       endif
      endif
-     res_abs=res_abs*f_*Z_*E_
      !
 #if defined _KERR
      if (l_BS_kerr) then
        res_kerr=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1))
        res_kerr=res_kerr*Z_*E_*f_
+       if(l_BS_esort) then
+         if(H_pos<1000) BS_E_sorted(H_pos,nVAR+1:nVAR+1,1)=res_kerr
+         nVAR=nVAR+1
+       endif
      endif
      !
      if (l_BS_photolum) then
@@ -384,6 +382,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          res_dich=res_dich/3._SP
        endif
        res_dich=res_dich*f_*Z_/(q0_def_norm*cI)                    !       f_ = occupations
+       if(l_BS_esort) then
+         if(H_pos<1000) BS_E_sorted(H_pos,nVAR+1:nVAR+1,1)=res_dich
+         nVAR=nVAR+1
+       endif
      endif
      !
      ! Magnons
@@ -394,6 +396,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (l_BS_magnons) then
        res_magn(:)=BS_T_grp(i_T_g)%dipoles_mag(:,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_mag(:,i_T,1))
        res_magn=res_magn*f_*Z_
+       if(l_BS_esort) then
+         if(H_pos<1000) BS_E_sorted(H_pos,nVAR+1:nVAR+2,1)=res_magn
+         nVAR=nVAR+2
+       endif
      endif
 #endif
      !

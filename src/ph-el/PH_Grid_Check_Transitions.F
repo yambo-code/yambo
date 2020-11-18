@@ -40,7 +40,8 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  use parallel_int,   ONLY:PP_redux_wait
  use QP_m,           ONLY:QP_G_damp
  use LIVE_t,         ONLY:live_timing
- use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_scatterings
+ use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,&
+ &                        phel_scatterings_alloc,phel_scatterings_free
  use com,            ONLY:msg
  use stderr,         ONLY:intc
  !
@@ -54,11 +55,11 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  !
  ! Work Space ...
  !
- type(phel_scatterings):: phel_info
+ !type(phel_scatterings):: phel_info
  logical               :: l_phel_allowed
  real(SP)              :: ph_freq,Delta_Broad
  real(SP)              :: broad_factor=3._SP
- integer               :: i_loop,n_loops,n_indices_table
+ integer               :: i_loop,n_loops
  ! ... band/branch index ...
  integer               :: il,i_n,i_np
  ! ... BZ index ...
@@ -67,11 +68,8 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  real(SP) :: DELTA_E,DELTA_W
  !
  n_loops=2
- n_indices_table = 6 ! il,iq,ik_rim,ip_rim,i_n,i_np
  !
- YAMBO_ALLOC( phel_info%transitions_at_q, (nqibz,2) )
- YAMBO_ALLOC( phel_info%ratio_at_q, (nqibz) )
- phel_info%ratio_at_q       = 0
+ phel_scatterings_alloc(phel_info,nqibz)
  !
  call live_timing('Ph-el scattering list',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par*2)
  !
@@ -177,7 +175,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
                    phel_info%transitions_at_q(iq,1) = phel_info%transitions_at_q(iq,1)+1
                    !
                    if (i_loop==2 .and. allocated(phel_info%table) ) &
-&                    phel_info%table(phel_info%transitions(1),:)= (/il,iq,ik_rim,ip_rim,i_n,i_np/)
+&                    phel_info%table(phel_info%transitions(1),:)= (/il,iq,ik,ik_rim,ip_rim,i_n,i_np/)
                    !
                  endif
                  !
@@ -219,8 +217,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  call msg('nrsn','DbGd_total (trans n_done, trans %, broad eV)',&
 &             (/float(phel_info%transitions(1)),phel_info%ratio,broad_factor*QP_G_damp*HA2EV/))
  !
- YAMBO_FREE( phel_info%transitions_at_q )
- YAMBO_FREE( phel_info%ratio_at_q )
- YAMBO_FREE( phel_info%table )
+ phel_scatterings_free(phel_info,1)
+ phel_scattering_free(phel_info,2)
  !
 end subroutine PH_Grid_Check_Transitions

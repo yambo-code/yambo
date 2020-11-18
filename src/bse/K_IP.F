@@ -29,6 +29,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use LIVE_t,        ONLY:live_timing
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:msg
+ use units,         ONLY:HA2EV
  use vec_operate,   ONLY:v_norm,sort,degeneration_finder
  use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg,q0_def_norm,qindx_X
  use stderr,        ONLY:intc
@@ -517,10 +518,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    allocate(first_el(EDIM));   allocate(n_of_el(EDIM))
    vtmpR=real(BS_E_sorted(:EDIM,1,1),SP)
    call sort(arrin=vtmpR,indx=sort_indx)
-   call degeneration_finder(vtmpR,EDIM,first_el,n_of_el,n_deg_grp,1.E-5_SP,Include_single_values=.TRUE.)
+   ! Threshold is 1meV
+   call degeneration_finder(vtmpR,EDIM,first_el,n_of_el,n_deg_grp,0.001_SP/HA2EV,Include_single_values=.TRUE.)
    do i_VAR=1,nVAR
      vtmpC=BS_E_sorted(:EDIM,i_VAR,1)
-     BS_E_sorted(:EDIM,i_VAR,1)=cZERO
+     BS_E_sorted(:,i_VAR,1)=cZERO
      do i_grp=1,n_deg_grp
        do i_cv=first_el(i_grp),first_el(i_grp)+n_of_el(i_grp)-1
          BS_E_sorted(i_grp,i_VAR,1)=BS_E_sorted(i_grp,i_VAR,1)+vtmpC(sort_indx(i_cv))

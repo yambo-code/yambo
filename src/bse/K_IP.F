@@ -29,7 +29,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use LIVE_t,        ONLY:live_timing
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:msg
- use vec_operate,   ONLY:v_norm,sort
+ use vec_operate,   ONLY:v_norm,sort,degeneration_finder
  use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg,q0_def_norm,qindx_X
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
@@ -67,11 +67,16 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Work space
  !
  integer           ::ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol_c,i_sp_pol_v,i_T_g,i_T,&
- &                   n_SOC,i_pert_SOC,io_err,i_res_ares,H_pos,i1,i2,nVAR,EDIM,sort_indx(min(1000,BS_H_dim))
- real(SP)          ::conjg_fac,Z_,E_,f_,vtmpR(min(1000,BS_H_dim))
+ &                   n_SOC,i_pert_SOC,io_err,i_res_ares,H_pos
+ real(SP)          ::conjg_fac,Z_,E_,f_
  logical           ::dip_v,dip_r
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
-&                    para_term_w0,diam_term_used,vtmpC(min(1000,BS_H_dim))
+&                    para_term_w0,diam_term_used
+ !
+ integer  :: i_VAR,i_grp,i_cv,nVAR,EDIM,n_deg_grp
+ real(SP), allocatable     :: vtmpR(:)
+ complex(SP), allocatable  :: vtmpC(:)
+ integer, allocatable      :: sort_indx(:),first_el(:),n_of_el(:)
  !
 #if defined _KERR
  real(SP)          ::f_PL,res_PL
@@ -508,12 +513,19 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    call PP_redux_wait( BS_E_sorted(:,:,1) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( BS_E_sorted(:,:,1) ,COMM=PAR_COM_eh_INDEX%COMM )
    EDIM=min(BS_H_dim,1000)
+   allocate(vtmpR(EDIM));   allocate(vtmpC(EDIM));   allocate(sort_indx(EDIM))
+   allocate(first_el(EDIM));   allocate(n_of_el(EDIM))
    vtmpR=real(BS_E_sorted(:EDIM,1,1),SP)
-   call sort(arrin=vtmpR(:EDIM),indx=sort_indx(:EDIM))
-   do i1=1,nVAR
-     vtmpC=BS_E_sorted(:EDIM,i1,1)
-     do i2=1,min(BS_H_dim,1000)
-       BS_E_sorted(i2,i1,1)=vtmpC(sort_indx(i2))
+   call sort(arrin=vtmpR,indx=sort_indx)
+   call degeneration_finder(vtmpR,EDIM,first_el,n_of_el,n_deg_grp,1.E-5_SP,Include_single_values=.TRUE.)
+   do i_VAR=1,nVAR
+     vtmpC=BS_E_sorted(:EDIM,i_VAR,1)
+     BS_E_sorted(:EDIM,i_VAR,1)=cZERO
+     do i_grp=1,n_deg_grp
+       do i_cv=first_el(i_grp),first_el(i_grp)+n_of_el(i_grp)-1
+         BS_E_sorted(i_grp,i_VAR,1)=BS_E_sorted(i_grp,i_VAR,1)+vtmpC(sort_indx(i_cv))
+       enddo
+       BS_E_sorted(i_grp,i_VAR,1)=BS_E_sorted(i_grp,i_VAR,1)/real(n_of_el(i_grp),SP)
      enddo
    enddo
  endif

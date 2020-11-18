@@ -68,7 +68,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Work space
  !
  integer           ::ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol_c,i_sp_pol_v,i_T_g,i_T,&
- &                   n_SOC,i_pert_SOC,io_err,i_res_ares,H_pos
+ &                   n_SOC,i_pert_SOC,io_err,i_res_ares,i_E_sort,i_E_max
  real(SP)          ::conjg_fac,Z_,E_,f_
  logical           ::dip_v,dip_r
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
@@ -180,6 +180,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (l_rpa_IP.or.iq>1) call live_timing('IP properties',PAR_BS_nT_col_grps)
  !
+ i_E_sort=0
+ !
  do i_T_g=1,BS_nT_grps
    !
    if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle
@@ -196,8 +198,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ic    = BS_T_grp(i_T_g)%table(i_T,3)
      i_sp_pol_c = BS_T_grp(i_T_g)%table(i_T,4)
      i_sp_pol_v = BS_T_grp(i_T_g)%table(i_T,5)
-     !
-     H_pos=sum(BS_T_grp(BS_T_grp(i_T_g)%i_T_ref:i_T_g-1)%size)+i_T+(BS_T_grp(i_T_g)%i_res_ares-1)*BS_K_dim(1)
      !
      if(iq/=1) then
        !
@@ -229,9 +229,20 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      if (     BS_perturbative_SOC) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
-     if(l_BS_esort) then
+     if(l_BS_esort.and.i_res_ares==1) then
        nVAR=1
-       if(H_pos<1000) BS_E_sorted(H_pos,nVAR,1)=E_plus_W0
+       if( any(real(BS_E_sorted(:,nVAR,1))==0._SP) )  then
+         i_E_sort=i_E_sort+1
+         BS_E_sorted(i_E_sort,nVAR,1)=E_plus_W0
+       else
+         i_E_max=maxloc(real(BS_E_sorted(:,nVAR,1)),1)
+         if(real(E_plus_W0)<real(BS_E_sorted(i_E_max,nVAR,1))) then
+           i_E_sort=i_E_max
+           BS_E_sorted(i_E_sort,nVAR,1)=E_plus_W0
+         else
+           i_E_sort=-1
+         endif
+       endif
      endif
      !
      ! c1.Compute "dipoles"
@@ -353,8 +364,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          res_abs=res_abs/3._SP
        endif
        res_abs=res_abs*f_*Z_*E_
-       if(l_BS_esort) then
-         if(H_pos<1000) BS_E_sorted(H_pos,nVAR+1:nVAR+1,1)=res_abs
+       if(l_BS_esort.and.i_res_ares==1) then
+         if(i_E_sort>0) BS_E_sorted(i_E_sort,nVAR+1:nVAR+1,1)=res_abs
          nVAR=nVAR+1
        endif
      endif
@@ -363,8 +374,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (l_BS_kerr) then
        res_kerr=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1))
        res_kerr=res_kerr*Z_*E_*f_
-       if(l_BS_esort) then
-         if(H_pos<1000) BS_E_sorted(H_pos,nVAR+1:nVAR+1,1)=res_kerr
+       if(l_BS_esort.and.i_res_ares==1) then
+         if(i_E_sort>0) BS_E_sorted(i_E_sort,nVAR+1:nVAR+1,1)=res_kerr
          nVAR=nVAR+1
        endif
      endif
@@ -388,8 +399,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          res_dich=res_dich/3._SP
        endif
        res_dich=res_dich*f_*Z_/(q0_def_norm*cI)                    !       f_ = occupations
-       if(l_BS_esort) then
-         if(H_pos<1000) BS_E_sorted(H_pos,nVAR+1:nVAR+1,1)=res_dich
+       if(l_BS_esort.and.i_res_ares==1) then
+         if(i_E_sort>0) BS_E_sorted(i_E_sort,nVAR+1:nVAR+1,1)=res_dich
          nVAR=nVAR+1
        endif
      endif
@@ -402,8 +413,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (l_BS_magnons) then
        res_magn(:)=BS_T_grp(i_T_g)%dipoles_mag(:,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_mag(:,i_T,1))
        res_magn=res_magn*f_*Z_
-       if(l_BS_esort) then
-         if(H_pos<1000) BS_E_sorted(H_pos,nVAR+1:nVAR+2,1)=res_magn
+       if(l_BS_esort.and.i_res_ares==1) then
+         if(i_E_sort>0) BS_E_sorted(i_E_sort,nVAR+1:nVAR+2,1)=res_magn
          nVAR=nVAR+2
        endif
      endif

@@ -73,6 +73,8 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  YAMBO_ALLOC( phel_info%ratio_at_q, (nqibz) )
  phel_info%ratio_at_q       = 0
  !
+ call live_timing('Ph-el scattering list',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par*2)
+ !
  ! Loop to allocate phel_table
  !========================
  do i_loop=1,n_loops
@@ -93,6 +95,8 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
    ! Main loop over iq in the ibz
    !========================
    do iq=1,nqibz
+     !
+     if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
      !
      ! Inner loop over ik in the bz
      !========================
@@ -190,6 +194,8 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
        !
        enddo ! il
        !
+       call live_timing( steps=1 )
+       !
      enddo ! ikbz
      ! 
    enddo ! iq
@@ -198,6 +204,8 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  !
  call PP_redux_wait(phel_info%transitions)
  call PP_redux_wait(phel_info%transitions_at_q)
+ !
+ call live_timing( )
  !
  ! Output info
  !===============

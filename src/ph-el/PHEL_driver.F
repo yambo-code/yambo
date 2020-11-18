@@ -139,11 +139,7 @@ subroutine PHEL_driver(E,k,q)
  ! Transitions activated by phonon scattering
  !========================
  !
- !call live_timing('Ph-el scattering list',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par) 
- !
  call PH_Grid_Check_Transitions(E,k,q,(/1,QP_PH_n_G_bands/),k_FG,E_FG)
- !
- !call live_timing( )
  !
  ! Loop
  !======
@@ -158,12 +154,12 @@ subroutine PHEL_driver(E,k,q)
  RT_PE_life_intraband = rZERO
  !DEBUG<
  !
- !call live_timing('Phonon Lifetimes',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
- !do iq=1,nqibz
- !  if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
- !  call PHEL_Lifetimes(iq,E,k,q,(/1,QP_PH_n_G_bands/),k_FG,E_FG)
- !enddo
- !call live_timing( )
+ call live_timing('Phonon Lifetimes',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
+ do iq=1,nqibz
+   if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
+   call PHEL_Lifetimes(iq,E,k,q,(/1,QP_PH_n_G_bands/),k_FG,E_FG)
+ enddo
+ call live_timing( )
  !
  ! Redux
  !=======

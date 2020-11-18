@@ -99,27 +99,25 @@ contains
    !
    integer     :: i, j
    complex(SP) :: Eaux(np)
-   real(SP)    :: thr=0.00001_SP
+   real(SP)    :: wmax, thr=0.00001_SP
    ! 
    npr=np
+   wmax=maxval(real(z,SP))
    ! 
-   do i=1,np
-    ! if(abs(E(i))<thr) then 
-    !   npr=npr-1
-    ! elseif(real(E(i))>0._SP) then
-    !   Eaux(i) = sqrt(E(i))
-    ! else
-    !   Eaux(i) = sqrt(-conjg(E(i)))
-    ! endif
-    ! if(real(Eaux(i))<0._SP) Eaux(i)=-Eaux(i)
-    ! if(aimag(Eaux(i))>-epsilon(1._SP)) Eaux(i)=real(Eaux(i),SP)-cI*epsilon(1._SP)
-    ! !
-    Eaux(i)=sqrt(E(i))
-    Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(E(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
+   do i=1,npr
+     Eaux(i)=sqrt(E(i))
+     Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
+     if(real(Eaux(i),SP)>wmax) then
+       Eaux(i)=sqrt(E(npr))
+       Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
+       npr=npr-1
+     endif
      do j=2,i-1
        if(abs(real(Eaux(i),SP)-real(Eaux(j),SP))<thr) then
-         npr=npr-1
          Eaux(j)=real(Eaux(j),SP)+cI*max(aimag(Eaux(j)),aimag(Eaux(i)))
+         Eaux(i)=sqrt(E(npr))
+         Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
+         npr=npr-1
          !exit
        endif
      enddo

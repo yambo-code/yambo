@@ -25,6 +25,8 @@ module PHEL
  !
  use pars,           ONLY:SP,schlen
  !
+#include<memory.h>
+ !
  integer          :: PH_DbGd_points=0
  logical          :: l_PH_uses_E_FineGd=.FALSE.
  character(schlen):: PH_Self_Energy_mode="dressed-dressed" ! "bare-dressed" (="dressed-bare") / "bare-bare"

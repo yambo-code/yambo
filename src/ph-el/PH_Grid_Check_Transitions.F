@@ -69,7 +69,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  !
  n_loops=2
  !
- phel_scatterings_alloc(phel_info,nqibz)
+ call phel_scatterings_alloc(phel_info,nqibz)
  !
  call live_timing('Ph-el scattering list',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par*2)
  !
@@ -82,7 +82,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
      if (phel_info%transitions(1)==0) then 
        call warning(' No phel scattering possible !')
      else
-       YAMBO_ALLOC( phel_info%table, (phel_info%transitions(1),n_indices_table) )
+       call phel_scatterings_alloc(phel_info,nqibz) ! This allocates phel_info%table
      endif
      !
    endif
@@ -217,7 +217,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  call msg('nrsn','DbGd_total (trans n_done, trans %, broad eV)',&
 &             (/float(phel_info%transitions(1)),phel_info%ratio,broad_factor*QP_G_damp*HA2EV/))
  !
- phel_scatterings_free(phel_info,1)
- phel_scattering_free(phel_info,2)
+ call phel_scatterings_free(phel_info,1)
+ call phel_scatterings_free(phel_info,2)
  !
 end subroutine PH_Grid_Check_Transitions

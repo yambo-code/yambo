@@ -85,7 +85,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  DEFINE_BSK_COMMON_INDEXES
  integer    :: i_block,O_ng_shift,IO_ACT,&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
-&              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4)
+&              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4),i_andrea
  complex(SP):: Co,H_x,H_c
  real(SP)   :: sqrt_f_itk,sqrt_f_itp
  real(SP), allocatable :: BS_max_val_CPU(:)

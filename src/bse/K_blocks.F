@@ -49,7 +49,7 @@ subroutine K_blocks(iq)
  !
  ! YAMBO_PAR_ALLOC
  !
- integer :: HOST_SIZE(1),LOCAL_SIZE(1),TMP_SIZE,TMP_DIM(2)
+ integer(IPL) :: HOST_SIZE(1),TMP_SIZE,LOCAL_SIZE(1)
  complex(SP), allocatable :: BS_MAT(:)
  !
  ! Work Space
@@ -69,13 +69,10 @@ subroutine K_blocks(iq)
  ! Define blocks parameters
  n_BS_blks=0
  TMP_SIZE=0
- TMP_DIM=0
  i_T_start=1
  j_T_start=1
  do i_T=1,BS_nT_grps
-   TMP_DIM(1)=TMP_DIM(1)+BS_T_grp(i_T)%size
    do j_T=1,BS_nT_grps
-     if (i_T==1) TMP_DIM(2)=TMP_DIM(2)+BS_T_grp(j_T)%size
      !
      i_res_ares=BS_T_grp(i_T)%i_res_ares
      j_res_ares=BS_T_grp(j_T)%i_res_ares
@@ -89,7 +86,7 @@ subroutine K_blocks(iq)
      do i_block=1,n_new_blocks
        iB = n_BS_blks + i_block
        BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
-       TMP_SIZE=TMP_SIZE+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
+       TMP_SIZE=TMP_SIZE+int(BS_T_grp(i_T)%size*BS_T_grp(j_T)%size,IPL)
        if (BS_res_ares_dim==1) then
          if (i_block==1) BS_blk(iB)%mode="R"
          if (i_block==2) BS_blk(iB)%mode="C"

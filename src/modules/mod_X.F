@@ -189,6 +189,7 @@ module X_m
          ! and the matrix itself
          !
          YAMBO_FREE(X_mat)
+         YAMBO_FREE(X_mat_d)
          !
        end select
      endif

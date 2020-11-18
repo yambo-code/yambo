@@ -223,14 +223,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! ALLOCATION
  !------------
  !
-!if (.not.allocated(X_par)) then
-!  !
-!  if (io_RESPONSE) then
-!    allocate(X_par(1))
-!  else
-!    allocate(X_par(PAR_nQ_ibz))
-!  endif
-!  !
+!if (.not.allocated(X_par).and.io_RESPONSE) then
+!  allocate(X_par(1))
 !endif
  !
  if (l_sc_coh.or.l_sc_sex.or.l_cohsex.or.l_sc_srpa) then

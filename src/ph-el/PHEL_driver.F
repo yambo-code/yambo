@@ -48,7 +48,7 @@ subroutine PHEL_driver(E,k,q)
  !
  ! Work Space
  !
- integer             ::i_err,iq,ID,k_n
+ integer             ::i_err,ID,k_n
  integer, external   ::io_PH
  type(E_fine_grid)   ::E_FG
  type(bz_fine_grid)  ::k_FG
@@ -136,13 +136,13 @@ subroutine PHEL_driver(E,k,q)
  ! ... occupations & levels
  call RT_occupations_and_levels_init((/1,QP_PH_n_G_bands/),E,k,q,k_FG,E_FG)
  !
- ! Transitions activated by phonon scattering
- !========================
+ ! Select allowed transitions for phonon scatterings
+ !===================================================
  !
  call PH_Grid_Check_Transitions(E,k,q,(/1,QP_PH_n_G_bands/),k_FG,E_FG)
  !
- ! Loop
- !======
+ ! Calculation of the lifetimes
+ !==============================
  l_initial_equilibrium=.TRUE. 
  !
  !DEBUG> (FP)
@@ -154,12 +154,7 @@ subroutine PHEL_driver(E,k,q)
  RT_PE_life_intraband = rZERO
  !DEBUG<
  !
- call live_timing('Phonon Lifetimes',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
- do iq=1,nqibz
-   if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
-   call PHEL_Lifetimes(iq,E,k,q,(/1,QP_PH_n_G_bands/),k_FG,E_FG)
- enddo
- call live_timing( )
+ call PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  !
  ! Redux
  !=======

@@ -61,7 +61,7 @@ subroutine K_output_file(iq,mode)
  character(2)      :: title_mode
  character(10)     :: name_
  integer           :: iw,i1,i2,i_IP_BSE,n_IP_BSE,n_output_data,n_headers
- real(SP)          :: output_data(7),w(BSS_n_freqs)
+ real(SP)          :: output_data(9),w(BSS_n_freqs)
  complex(SP)       :: eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3),alpha_factor
 #if defined _KERR
  complex(SP)       :: beta(BSS_n_freqs,3)
@@ -606,9 +606,9 @@ subroutine K_output_file(iq,mode)
      call msg("o Esort",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
      call msg("o Esort",'#')
      do i1=1,min(BS_H_dim,1000)
-       output_data(1)=real(BS_E_sorted(i1,1,i_IP_BSE))*HA2EV
+       output_data(1)=real(BS_E_sorted(i1,1,i_IP_BSE),SP)*HA2EV
        if (output_data(1)==0._SP) cycle
-       output_data(2:n_output_data)=abs(BS_E_sorted(i1,2:n_output_data,i_IP_BSE))
+       output_data(2:n_output_data)=real(BS_E_sorted(i1,2:n_output_data,i_IP_BSE),SP)
        call msg("o Esort",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
      enddo
    enddo

@@ -58,7 +58,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  !type(phel_scatterings):: phel_info
  logical               :: l_phel_allowed
  real(SP)              :: ph_freq,Delta_Broad
- real(SP)              :: broad_factor=3._SP
+ real(SP)              :: broad_factor=3._SP !8000._SP
  integer               :: i_loop,n_loops
  ! ... band/branch index ...
  integer               :: il,i_n,i_np
@@ -166,7 +166,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
                  ! Select energy-allowed transitions
                  !=================================== 
                  Delta_Broad = broad_factor*QP_G_damp+DELTA_W
-                 l_phel_allowed = (DELTA_E > ph_freq - Delta_Broad .and. DELTA_E < ph_freq + Delta_Broad ) .or. &
+                 l_phel_allowed = (DELTA_E >  ph_freq - Delta_Broad .and. DELTA_E <  ph_freq + Delta_Broad ) .or. &
 &                                 (DELTA_E > -ph_freq - Delta_Broad .and. DELTA_E < -ph_freq + Delta_Broad )
                  !
                  if (l_phel_allowed) then
@@ -200,6 +200,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
    !
  enddo ! i_loop
  !
+ phel_info%PAR_Ntransitions = phel_info%transitions(1)
  call PP_redux_wait(phel_info%transitions)
  call PP_redux_wait(phel_info%transitions_at_q)
  !
@@ -218,6 +219,5 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
 &             (/float(phel_info%transitions(1)),phel_info%ratio,broad_factor*QP_G_damp*HA2EV/))
  !
  call phel_scatterings_free(phel_info,1)
- call phel_scatterings_free(phel_info,2)
  !
 end subroutine PH_Grid_Check_Transitions

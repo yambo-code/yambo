@@ -47,7 +47,7 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_eh_bands,PARs_PH_Q_ibz
  use QP_m,           ONLY:QP_G_damp
  use LIVE_t,         ONLY:live_timing
- use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info
+ use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,phel_scatterings_free
  !
  implicit none
  !
@@ -77,11 +77,11 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  real (SP) :: TMP_linewidth
  !DEBUG<
  !
- call live_timing('Phonon Lifetimes',phel_info%transitions(1))
+ call live_timing('Phonon Lifetimes',phel_info%PAR_Ntransitions)
  !
  ! Main loop over allowed transitions
  !====================================
- do it=1,phel_info%transitions(1)
+ do it=1,phel_info%PAR_Ntransitions
    !
    ! Indices of allowed transition
    il     = phel_info%table(it,1) ! phonon branch
@@ -227,6 +227,8 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    call live_timing( steps=1 )
    !
  enddo
+ !
+ call phel_scatterings_free(phel_info,2)
  !
  call live_timing( )
  !

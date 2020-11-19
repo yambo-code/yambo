@@ -33,6 +33,7 @@ module PHEL
  !
  type phel_scatterings
    integer               :: transitions(2)=0  ! Number of transitions: 1-> accepted, 2-> total
+   integer               :: PAR_Ntransitions  ! Number of accepted transition per process
    real(SP)              :: ratio             ! accepted/total
    integer, allocatable  :: transitions_at_q(:,:)
    real(SP), allocatable :: ratio_at_q(:)

@@ -181,7 +181,6 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  if(l_BS_jdos)  call PP_redux_wait(Joint_DOS(:,2) )
  !
-
  if(l_BS_esort) then
    call PP_redux_wait(BS_E_sorted(:,:,2) )
    EDIM=min(BSS_n_eig,1000)
@@ -200,9 +199,6 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        BS_E_sorted(i_grp,i_VAR,2)=BS_E_sorted(i_grp,i_VAR,2)/real(n_of_exc(i_grp),SP)
      enddo
    enddo
- endif
-
- if(l_BS_esort) then
  endif
  !
  if(l_BS_abs) then

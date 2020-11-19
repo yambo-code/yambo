@@ -23,7 +23,7 @@
 !
 subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
- use pars,          ONLY:SP,IP,pi,cZERO,cI
+ use pars,          ONLY:SP,IP,pi,cZERO,cONE,cI
  use IO_m,          ONLY:io_DIP
  use frequency,     ONLY:w_samp
  use LIVE_t,        ONLY:live_timing
@@ -44,7 +44,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind,BS_bands,&
  &                       BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_res_ares_dim,BS_K_dim,BS_H_dim,&
- &                       l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum
+ &                       l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
+ &                       BS_mat_res_ares_dim
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
@@ -68,15 +69,15 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Work space
  !
  integer           ::ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol_c,i_sp_pol_v,i_T_g,i_T,&
- &                   n_SOC,i_pert_SOC,io_err,i_res_ares,i_E_sort,i_E_max
- real(SP)          ::conjg_fac,Z_,E_,f_
+ &                   n_SOC,i_pert_SOC,io_err,i_res_ares,i_E_sort
+ real(SP)          ::conjg_fac,f_
  logical           ::dip_v,dip_r
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
-&                    para_term_w0,diam_term_used
+&                    para_term_w0,diam_term_used,Z_,E_
  !
  integer  :: i_VAR,i_grp,i_cv,nVAR,EDIM,n_deg_grp
  real(SP), allocatable     :: vtmpR(:)
- complex(SP), allocatable  :: vtmpC(:)
+ complex(SP), allocatable  :: BS_E_sorted_tmp(:,:)
  integer, allocatable      :: sort_indx(:),first_el(:),n_of_el(:)
  !
 #if defined _KERR
@@ -178,9 +179,21 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    dip_v=.true.
  endif
  !
- if (l_rpa_IP.or.iq>1) call live_timing('IP properties',PAR_BS_nT_col_grps)
+ if(l_BS_esort) then
+   EDIM=BS_K_dim(1)
+   if (BS_mat_res_ares_dim==2.or.BS_K_coupling) EDIM=BS_K_dim(1)+BS_K_dim(2)
+   nVAR=1
+   if(l_BS_abs) nVAR=nVAR+1
+#if defined _KERR
+   if(l_BS_kerr)      nVAR=nVAR+1
+   if(l_BS_dichroism) nVAR=nVAR+1
+   if(l_BS_magnons)   nVAR=nVAR+2
+#endif
+   YAMBO_ALLOC(BS_E_sorted_tmp,(EDIM,nVAR))
+   BS_E_sorted_tmp=cZERO
+ endif
  !
- i_E_sort=0
+ if (l_rpa_IP.or.iq>1) call live_timing('IP properties',PAR_BS_nT_col_grps)
  !
  do i_T_g=1,BS_nT_grps
    !
@@ -231,18 +244,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      if(l_BS_esort.and.i_res_ares==1) then
        nVAR=1
-       if( any(real(BS_E_sorted(:,nVAR,1))==0._SP) )  then
-         i_E_sort=i_E_sort+1
-         BS_E_sorted(i_E_sort,nVAR,1)=E_plus_W0
-       else
-         i_E_max=maxloc(real(BS_E_sorted(:,nVAR,1)),1)
-         if(real(E_plus_W0)<real(BS_E_sorted(i_E_max,nVAR,1))) then
-           i_E_sort=i_E_max
-           BS_E_sorted(i_E_sort,nVAR,1)=E_plus_W0
-         else
-           i_E_sort=-1
-         endif
-       endif
+       i_E_sort=sum(BS_T_grp(BS_T_grp(i_T_g)%i_T_ref:i_T_g-1)%size)+i_T !+(i_res_ares-1)*BS_K_dim(1)
+       BS_E_sorted_tmp(i_E_sort,nVAR)=E_plus_W0
      endif
      !
      ! c1.Compute "dipoles"
@@ -348,8 +351,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! c.3 Residuals from "Dipoles"
      !==============================
      !
-     Z_=1._SP
-     E_=1._SP
+     Z_=cONE
+     E_=cONE
      f_=BS_T_grp(i_T_g)%f_RES(i_T)
      if (allocated(BS_T_grp(i_T_g)%Z))                                      Z_=BS_T_grp(i_T_g)%Z(i_T)
      if (allocated(BS_T_grp(i_T_g)%W) .and. trim(global_gauge)=="velocity") E_=E_plus_W0/conjg(E_plus_W0)
@@ -365,7 +368,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
        res_abs=res_abs*f_*Z_*E_
        if(l_BS_esort.and.i_res_ares==1) then
-         if(i_E_sort>0) BS_E_sorted(i_E_sort,nVAR+1:nVAR+1,1)=res_abs
+         BS_E_sorted_tmp(i_E_sort,nVAR+1:nVAR+1)=res_abs
          nVAR=nVAR+1
        endif
      endif
@@ -375,7 +378,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        res_kerr=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1))
        res_kerr=res_kerr*Z_*E_*f_
        if(l_BS_esort.and.i_res_ares==1) then
-         if(i_E_sort>0) BS_E_sorted(i_E_sort,nVAR+1:nVAR+1,1)=res_kerr
+         BS_E_sorted_tmp(i_E_sort,nVAR+1:nVAR+1)=res_kerr
          nVAR=nVAR+1
        endif
      endif
@@ -386,7 +389,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
        f_PL=BS_T_grp(i_T_g)%f_PL(i_T,1)
        P_weighted(:)=BS_T_grp(i_T_g)%dipoles_opt(:,i_T,1)*PL_weights(:)
-       res_PL=dot_product(P_weighted,P_weighted)*f_PL*Z_*E_
+       res_PL=real(dot_product(P_weighted,P_weighted)*f_PL*Z_*E_)
      endif
      !
      ! Dichroism
@@ -400,7 +403,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
        res_dich=res_dich*f_*Z_/(q0_def_norm*cI)                    !       f_ = occupations
        if(l_BS_esort.and.i_res_ares==1) then
-         if(i_E_sort>0) BS_E_sorted(i_E_sort,nVAR+1:nVAR+1,1)=res_dich
+         BS_E_sorted_tmp(i_E_sort,nVAR+1:nVAR+1)=res_dich
          nVAR=nVAR+1
        endif
      endif
@@ -414,7 +417,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        res_magn(:)=BS_T_grp(i_T_g)%dipoles_mag(:,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_mag(:,i_T,1))
        res_magn=res_magn*f_*Z_
        if(l_BS_esort.and.i_res_ares==1) then
-         if(i_E_sort>0) BS_E_sorted(i_E_sort,nVAR+1:nVAR+2,1)=res_magn
+         BS_E_sorted_tmp(i_E_sort,nVAR+1:nVAR+2)=res_magn
          nVAR=nVAR+2
        endif
      endif
@@ -522,25 +525,29 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  endif
  !
  if(l_BS_esort) then
-   call PP_redux_wait( BS_E_sorted(:,:,1) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait( BS_E_sorted(:,:,1) ,COMM=PAR_COM_eh_INDEX%COMM )
-   EDIM=min(BS_H_dim,1000)
-   allocate(vtmpR(EDIM));   allocate(vtmpC(EDIM));   allocate(sort_indx(EDIM))
-   allocate(first_el(EDIM));   allocate(n_of_el(EDIM))
-   vtmpR=real(BS_E_sorted(:EDIM,1,1),SP)
+   call PP_redux_wait( BS_E_sorted_tmp ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( BS_E_sorted_tmp ,COMM=PAR_COM_eh_INDEX%COMM )
+   YAMBO_ALLOC(vtmpR,(EDIM)); YAMBO_ALLOC(sort_indx,(EDIM))
+   vtmpR=real(BS_E_sorted_tmp(:,1),SP)
    call sort(arrin=vtmpR,indx=sort_indx)
+   EDIM=min(BS_H_dim,10000)
+   allocate(first_el(EDIM)); allocate(n_of_el(EDIM))
    ! Threshold is 1meV
-   call degeneration_finder(vtmpR,EDIM,first_el,n_of_el,n_deg_grp,0.001_SP/HA2EV,Include_single_values=.TRUE.)
+   call degeneration_finder(vtmpR(:EDIM),EDIM,first_el,n_of_el,n_deg_grp,0.001_SP/HA2EV,Include_single_values=.TRUE.)
+   EDIM=min(BS_H_dim,1000)
    do i_VAR=1,nVAR
-     vtmpC=BS_E_sorted(:EDIM,i_VAR,1)
      BS_E_sorted(:,i_VAR,1)=cZERO
      do i_grp=1,n_deg_grp
+       if(i_grp>EDIM) cycle
        do i_cv=first_el(i_grp),first_el(i_grp)+n_of_el(i_grp)-1
-         BS_E_sorted(i_grp,i_VAR,1)=BS_E_sorted(i_grp,i_VAR,1)+vtmpC(sort_indx(i_cv))
+         BS_E_sorted(i_grp,i_VAR,1)=BS_E_sorted(i_grp,i_VAR,1)+BS_E_sorted_tmp(sort_indx(i_cv),i_VAR)
        enddo
        BS_E_sorted(i_grp,i_VAR,1)=BS_E_sorted(i_grp,i_VAR,1)/real(n_of_el(i_grp),SP)
      enddo
    enddo
+   deallocate(first_el);   deallocate(n_of_el)
+   YAMBO_FREE(vtmpR);      YAMBO_FREE(sort_indx)
+   YAMBO_FREE(BS_E_sorted_tmp)
  endif
  !
 #if defined _KERR

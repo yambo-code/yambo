@@ -49,7 +49,7 @@ subroutine electrons_bands(Xk,Xen)
 #include<memory.h>
  !
  type(bz_samp), intent(inout) :: Xk
- type(levels),  intent(in)    :: Xen
+ type(levels),  intent(inout) :: Xen
  !
  ! Work Space
  !

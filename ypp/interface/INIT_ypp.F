@@ -753,7 +753,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  ! GPL_EXCLUDE_START
  !
 #if defined _YPP_RT
- l_flag=l_flag.or.l_RT_bands
+ l_flag=l_flag.or.l_RT_bands.or.l_RT_G_two_times
 #endif
  !
  ! GPL_EXCLUDE_END

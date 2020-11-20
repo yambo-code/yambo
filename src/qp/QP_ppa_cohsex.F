@@ -138,7 +138,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! Diagonal Gz
      else if (ig1 == ig2 .and. g2_mod_2D < 1.e-5) then
      !
-     if(ig1 < RIM_W_ng .and. ig2 < RIM_W_ng) then
+     if(ig1 <= RIM_W_ng .and. ig2 <= RIM_W_ng) then
        Tab_NG(ig1,ig2) = 2
      else
        Tab_NG(ig1,ig2) = 3
@@ -147,7 +147,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! Diagonal Gxy 
      else if ( ig1 == ig2 .and. g2_mod_2D > 1.e-5) then
      !
-     if(ig1 < RIM_W_ng .and. ig2 < RIM_W_ng) then
+     if(ig1 <= RIM_W_ng .and. ig2 <= RIM_W_ng) then
        Tab_NG(ig1,ig2) = 4
      else
        Tab_NG(ig1,ig2) = 5
@@ -156,7 +156,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! Wing Gz
      else if ((ig1 == 1 .and. g2_mod_2D < 1.e-5).or.(ig2 == 1 .and. g1_mod_2D < 1.e-5)) then
      !
-     if(ig1 < RIM_W_ng .and. ig2 < RIM_W_ng) then
+     if(ig1 <= RIM_W_ng .and. ig2 <= RIM_W_ng) then
        Tab_NG(ig1,ig2) = 6
      else
        Tab_NG(ig1,ig2) = 7
@@ -165,7 +165,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! Wing Gxy 
      else if ((ig1 == 1 .and. g2_mod_2D > 1.e-5).or.(ig2 == 1 .and. g1_mod_2D > 1.e-5)) then
      !
-     if(ig1 < RIM_W_ng .and. ig2 < RIM_W_ng) then
+     if(ig1 <= RIM_W_ng .and. ig2 <= RIM_W_ng) then
        Tab_NG(ig1,ig2) = 8
      else
        Tab_NG(ig1,ig2) = 9
@@ -174,7 +174,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! Body Gz
      else if (ig1 /= ig2 .and. g1_mod_2D < 1.e-5 .and. g2_mod_2D < 1.e-5) then
      !
-     if(ig1 < RIM_W_ng .and. ig2 < RIM_W_ng) then
+     if(ig1 <= RIM_W_ng .and. ig2 <= RIM_W_ng) then
        Tab_NG(ig1,ig2) = 10
      else
        Tab_NG(ig1,ig2) = 11
@@ -183,7 +183,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! Body Gxy 
      else
      !
-     if(ig1 < RIM_W_ng .and. ig2 < RIM_W_ng) then
+     if(ig1 <= RIM_W_ng .and. ig2 <= RIM_W_ng) then
        Tab_NG(ig1,ig2) = 12
      else
        Tab_NG(ig1,ig2) = 13
@@ -687,7 +687,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !
            dc(i_w) = cmplx(dp_dummy,kind=SP)
            !
-           QP_Sc_G(i_qp,i_w,:) = QP_Sc_G(i_qp,i_w,:) + cmplx(dp_vdummy,kind=SP)
+!!! AG DBG
+           QP_Sc_G(i_qp,i_w,:) = QP_Sc_G(i_qp,i_w,:)+cmplx(dp_vdummy,kind=SP)
+!!! AG DBG
            !
          enddo
 #endif
@@ -729,8 +731,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        do i_w=1,QP_dSc_steps
          !
          dp_dummy=0.0_DP
+         dp_vdummy=0.0_DP
          !
-         !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:dp_dummy)
+         !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:dp_dummy,dp_vdummy)
          do ig2=1,X%ng
            do ig1=1,X%ng
              !
@@ -741,11 +744,23 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                         QP_ppa_EET_terminator(W_(i_w),E,isc%is,PPA_E,ig1,ig2,isc%qs(2),&
 &                                               eet_cutoff0(1),eet_cutoff1(1)),kind=DP)
              !
+!!! AG DBG
+             !Collect the Sc in QP_Sc_G
+             !
+             dp_vdummy(Tab_NG(ig1,ig2))=dp_vdummy(Tab_NG(ig1,ig2))+cmplx(4._SP/spin_occ*pi* &
+&                         PPA_R*eet_factor(ig1,ig2)*QP_ppa_EET_terminator(W_(i_w),E,isc%is,&
+&                               PPA_E,ig1,ig2,isc%qs(2),eet_cutoff0(1),eet_cutoff1(1)),kind=DP)
+!!! AG DBG
+             !
            enddo
          enddo
          !$omp end parallel do
          !
          QP_Sc(i_qp,i_w)=QP_Sc(i_qp,i_w)+cmplx(dp_dummy,kind=SP)
+         !
+!!! AG DBG
+         QP_Sc_G(i_qp,i_w,:) = QP_Sc_G(i_qp,i_w,:)+cmplx(dp_vdummy,kind=SP)
+!!! AG DBG
          !
        enddo
        !

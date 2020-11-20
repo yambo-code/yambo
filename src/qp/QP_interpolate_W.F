@@ -482,7 +482,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  !
  implicit none
  type(bz_samp) :: q
- real(SP)      :: f_coeff(6,RIM_W_ng,RIM_W_ng,q%nibz,2)
+ real(DP)      :: f_coeff(6,RIM_W_ng,RIM_W_ng,q%nibz,2)
  real(SP)      :: delta_q(3,2)
  complex(SP)   :: vX(5,q%nibz,RIM_W_ng,RIM_W_ng,2)
  integer       :: idx_q(RIM_W_ng,q%nibz,5),idx_G(RIM_W_ng,q%nibz,5),idx_is(RIM_W_ng,q%nibz,5)
@@ -512,7 +512,13 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  call k_ibz2bz(q,'i',.true.)
  !
  !Allocate indexes
- n_indx_steps = k_grid(1:2)/2-1
+ if (delta_q(1,1) > delta_q(2,2)) then
+   n_indx_steps(1) = min(k_grid(1),k_grid(2))/2-1
+   n_indx_steps(2) = max(k_grid(1),k_grid(2))/2-1
+ else
+   n_indx_steps(1) = max(k_grid(1),k_grid(2))/2-1
+   n_indx_steps(2) = min(k_grid(1),k_grid(2))/2-1
+ end if
  npoints = (n_indx_steps)*2+1
  allocate(indexes(max(npoints(1),npoints(2)),4,2))
  call msg('r', "npoints_x = ", npoints(1))
@@ -592,6 +598,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
            if (find == 2) exit
            !
          end do
+         if (find /= 2) call error('I have not find n.n. for the plotting of W')
          !Rename index variables
          iq  = indexes(i,1,i_dir)
          is  = indexes(i,2,i_dir)
@@ -601,11 +608,12 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
          !-Third: Evaluate numerical f,vc,W-
          !----------------------------------
          !Evaluate vslab
-         vslab = 4*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+         vslab = 4._DP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
          !Evaluate func
-         func = bare_qpg(iq,ig1)*bare_qpg(iq,ig2)/(4*pi)*vX(1,iq,ig1,ig2,iomega)/(vX(1,iq,ig1,ig2,iomega)+1)
+         func = bare_qpg(iq,ig1)*bare_qpg(iq,ig2)/(4._DP*pi)*vX(1,iq,ig1,ig2,iomega)/(vX(1,iq,ig1,ig2,iomega)+1._DP)
          !Evaluate W
          W_sampl = -vX(1,iq,ig1,ig2,iomega)*vslab
+         !W_sampl = vslab*func*vslab/(1._DP-func*vslab)
          !
          !Get q output in cc
          !
@@ -675,7 +683,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
                call c2a(b_in=b,v_in=q_out,mode='ki2c')
                q_out_norm = v_norm(q_out)*vecsign1*vecsign2
                write(out_unit_W_fit(i_dir),"(I5, E15.6, E15.6, E15.6,E15.6, E15.6, E15.6, E15.6)") &
-&                                     i, q_out(1),q_out(2),q_out(3), q_out_norm, 0.0, 0.0, W_sampl
+&                                     i, q_out(1),q_out(2),q_out(3), q_out_norm, 0.0, 0.0, -W_sampl
                cycle
              end if
              !
@@ -706,7 +714,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
              !
              func = f_coeff_loc(1)+q_sampl(1)*(f_coeff_loc(2)+q_sampl(1)*f_coeff_loc(4))&
 &                                 +q_sampl(2)*(f_coeff_loc(3)+q_sampl(2)*f_coeff_loc(6)&
-&                                 +2_SP*q_sampl(1)*f_coeff_loc(5))
+&                                 +2_DP*q_sampl(1)*f_coeff_loc(5))
              !
              W_sampl = vslab/r1*func*vslab/r1/(1-vslab/r1*func)
              !

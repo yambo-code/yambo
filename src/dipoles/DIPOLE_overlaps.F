@@ -37,6 +37,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
 &                            PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,           &
 &                            PAR_IND_OVLPk_ibz,PAR_COM_DIPk_ibz_INDEX,PP_redux_wait
  use interfaces,        ONLY:WF_shift_kpoint,WF_symm_kpoint,eval_G_minus_G
+ use timing_m,          ONLY:timing
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -55,6 +56,8 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  attributes(device):: WF_symm,WF_shifted,WF_ik,WF_ikp
 #endif
  logical           :: USE_shifted_wf
+ !
+ call timing("DIPOLE_overlaps",OPR="start")
  !
  call k_find_smallest_g0(g0_idx,g0_length)
  iG0=max(maxval(g0_idx(:,1)),maxval(g0_idx(:,2)))
@@ -177,5 +180,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  YAMBO_FREE(WF_ikp)
  !
  call WF_free(WF)
+ !
+ call timing("DIPOLE_overlaps",OPR="stop")
  !
 end subroutine Dipole_Overlaps

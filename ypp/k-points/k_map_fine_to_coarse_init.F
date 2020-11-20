@@ -236,6 +236,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
      FineGd_k%nibz=FineGd_k%nbz
      FineGd_k%pt=FineGd_k%ptbz
      FineGd_E%nk=FineGd_k%nibz
+     BZ_FineGd_mode="expanded"
    else
      call msg('lr','found duplicates. Expansion ignored. Switching to unexpanded mode')
      BZ_FineGd_mode="unexpanded"

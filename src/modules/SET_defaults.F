@@ -140,7 +140,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use timing_m,    ONLY:timing_allocate,nclockx
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
- use cuda_m,      ONLY:have_cuda
+ use cuda_m,      ONLY:cuda_setup,have_cuda
  !
  implicit none
  !
@@ -155,6 +155,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ! GPL_EXCLUDE_START
  include 'branch.inc'
  ! GPL_EXCLUDE_END
+ !
  !
  call set_real_printed_length()
  !
@@ -179,6 +180,14 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  call OPENMP_initialize( )
  call OPENMP_update(master_thread)
  !
+ ! Node name
+ !
+ call CREATE_hosts_COMM( )
+ !
+ ! CUDA environment defs
+ !
+ call cuda_setup()
+ !
  ! Stack Size 
  !
  call remove_stack_limit()
@@ -195,10 +204,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  call MEM_element_init(MEMs,N_MEM_max)
  call MEM_element_init(LARGE_MEMs,N_MEM_SAVE_max)
- !
- ! Node name
- !
- call CREATE_hosts_COMM( )
  !
  ! ZEROs 
  !

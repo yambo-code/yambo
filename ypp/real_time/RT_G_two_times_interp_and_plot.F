@@ -25,6 +25,7 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  !
  use pars,           ONLY:SP
  use com,            ONLY:of_open_close
+ use YPP_interfaces, ONLY:k_special
  use YPPm,           ONLY:BANDS_path,BANDS_steps,CIRCUIT_k,USER_k
  use real_time,      ONLY:RT_nk
  use YPP_real_time,  ONLY:RT_conf,GreenF_T_and_W,l_RT_G_two_times
@@ -60,7 +61,7 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  !
  call k_ibz2bz(kpt,'iku',.TRUE.)
  !
- call k_special(.FALSE.)
+ call k_special()
  !
  call k_circuit_driver( BANDS_path, BANDS_steps )
  !
@@ -73,8 +74,10 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  call section('=','Plotting')
  !============================================================================= 
  !
- call plot_interpolated_values(kpt,en,0._SP,CIRCUIT_k,(/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"interpolated","G_k_w")
- call plot_interpolated_values(kpt,en,0._SP,USER_k,   (/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"built_in",    "G_k_w")
+ if(CIRCUIT_k%nbz>0) call plot_interpolated_values(kpt,en,0._SP,CIRCUIT_k,&
+ &                                                  (/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"interpolated","G_k_w")
+ if(   USER_k%nbz>0) call plot_interpolated_values(kpt,en,0._SP,USER_k,   &
+ &                                                  (/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"built_in",    "G_k_w")
  !
  call INTERPOLATION_driver_end(0)
  !

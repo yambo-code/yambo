@@ -27,7 +27,7 @@ subroutine DIPOLES_driver(k,E,q,Dip)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin
  use YPPm,           ONLY:DIPOLES_bands,DIPOLES_E_range,DIPOLES_direction,K_transform,coo_out,INTERP_grid,&
-&                         l_PROJECT_plane,l_PROJECT_line,PROJECT_depth
+&                         l_PROJECT_plane,l_PROJECT_line,PROJECT_N_par
  use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset,DIP_alloc,DIP_iR,DIP_desc
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,PAR_DIPk_ibz_index
  use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait
@@ -35,7 +35,7 @@ subroutine DIPOLES_driver(k,E,q,Dip)
  use vec_operate,    ONLY:v_norm
  use interfaces,     ONLY:DESC_write
  use OUTPUT_simple,  ONLY:OUTPUT_add_column
- use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_k_on_the_path_or_plane,PROJECTION_plot
+ use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_plot
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k,INTERP_obj
  !
 #include<memory.h>
@@ -50,6 +50,7 @@ subroutine DIPOLES_driver(k,E,q,Dip)
  complex(SP) :: DIP_projected
  real(SP)    :: delta_E,v(3),DIP_accumulated(1,k%nibz,1)
  real(SP), allocatable :: DIP_plane(:,:,:)
+ integer,  external    :: PROJECTION_k_on_the_path_or_plane
  !
  call section('*','Dipole Properties')
  !====================================
@@ -112,7 +113,7 @@ subroutine DIPOLES_driver(k,E,q,Dip)
    !
    ! ... PROJECTION
    if (l_PROJECT_plane) then
-     YAMBO_ALLOC(DIP_plane,(GRID_k%nbz/PROJECT_depth,1,1))
+     YAMBO_ALLOC(DIP_plane,(PROJECT_N_par,1,1))
      DIP_plane=rZERO
      do ikbz=1,GRID_k%nbz
        ik_plane=PROJECTION_k_on_the_path_or_plane(ikbz)

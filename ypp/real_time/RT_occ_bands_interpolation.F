@@ -31,10 +31,10 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use com,            ONLY:msg,of_open_close
  use YPPm,           ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,BANDS_bands,&
-&                         CIRCUIT_E_db,CIRCUIT_k_label,l_PROJECT_line,l_PROJECT_plane,PROJECT_depth
+&                         CIRCUIT_E_db,CIRCUIT_k_label,l_PROJECT_line,l_PROJECT_plane,PROJECT_N_par
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time,integrated_Nel,integrated_Nhole
- use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_k_on_the_path_or_plane,PROJECTION_plot,k_special
- use stderr,         ONLY:real2ch,intc,STRING_remove
+ use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_plot,k_special
+ use stderr,         ONLY:real2ch,intc,STRING_remove,STRING_same
  use vec_operate,    ONLY:iku_v_norm
  use RT_control,     ONLY:RT_apply,RT_carriers_object,RT_carriers_to_RT_k,RT_carriers_to_RT_E
  use RT_output_m,    ONLY:RT_desc,Gr_desc,TIME_STEP_desc
@@ -56,25 +56,28 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  type(levels)          :: CIRCUIT_E,CIRCUIT_dE,RT_E
  real(SP)              :: Max_occ,values(3+2*(n_spinor-1))
  real(SP), allocatable :: integrated_dF_elecs(:,:,:),integrated_dF_holes(:,:,:)
- character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation,extension,k_label
- logical               :: WARN_negative_electrons_df,WARN_positive_holes_df,is_PROJECTED
+ character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation,extension,k_label,sec_name
+ logical               :: WARN_negative_electrons_df,WARN_positive_holes_df,is_PROJECTED,is_INTERPOLATED
  integer               :: ib,ik,i_RT,i_T,n_values,ID_circuit,ID_spin,ID_magn,ID_bands(3),ID_grid,ik_path
  logical, external     :: file_exists
+ integer, external     :: PROJECTION_k_on_the_path_or_plane
  !
- call section('*','Interpolation tool')
- !=====================================
+ ! Logicals & Sectioning...
+ sec_name="Levels"
+ is_INTERPOLATED = .not.STRING_same(trim(INTERP_mode),"none")
+ is_PROJECTED    =l_PROJECT_line.or.l_PROJECT_plane ! => No Energies Interpolation needed!
+ if (l_PROJECT_line  ) sec_name="Line projected"
+ if (l_PROJECT_plane ) sec_name="Plane projected"
+ if (l_RT_lifetimes  ) sec_name=trim(sec_name)//" Lifetimes"
+ if (l_RT_occupations) sec_name=trim(sec_name)//" Occupations"
+ if (     is_INTERPOLATED) call section('*','Interpolation and plotting:'//trim(sec_name))
+ if (.not.is_INTERPOLATED) call section('*','Plotting:'//trim(sec_name))
  !
- if(all(INTERP_grid>0).or.BANDS_steps<=0) then
-   call error(" Interpolation of occupations/lifetimes only on a band circuit")
- endif
- !
- if(n_sp_pol>1) then
-   call error('Occupations for spin polarized systems not implemented')
- endif
- !
- if (l_RT_lifetimes .and. .not.allocated(RT_carriers%NEQ_Lifetime)  ) then
-   call error('No scattering => no Lifetimes')
- endif
+ ! Checks...
+ if (is_INTERPOLATED.and.all(INTERP_grid>0)) call error("Interpolation of occupations/lifetimes only on a band circuit")
+ if (.not.is_INTERPOLATED .and. .not.is_PROJECTED) call error("Interpolation-free only in PROJECT mode")
+ if (n_sp_pol>1) call error('Occupations for spin polarized systems not implemented')
+ if (l_RT_lifetimes .and. .not.allocated(RT_carriers%NEQ_Lifetime)  ) call error('No scattering => no Lifetimes')
  !
  if (BANDS_bands(1)<RT_bands(1).or.BANDS_bands(2)>RT_bands(2)) then
    BANDS_bands(1)=max(BANDS_bands(1),RT_bands(1))
@@ -96,17 +99,15 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  call PROJECTION_setup("setup")
  call PROJECTION_setup( "BANDS", BANDS_bands )
  !
- is_PROJECTED=l_PROJECT_line.or.l_PROJECT_plane
  if (is_PROJECTED) then
-   YAMBO_ALLOC(integrated_dF_elecs,(GRID_k%nbz/PROJECT_depth,n_T_steps,n_spin))
-   YAMBO_ALLOC(integrated_dF_holes,(GRID_k%nbz/PROJECT_depth,n_T_steps,n_spin))
+   YAMBO_ALLOC(integrated_dF_elecs,(PROJECT_N_par,n_T_steps,n_spin))
+   YAMBO_ALLOC(integrated_dF_holes,(PROJECT_N_par,n_T_steps,n_spin))
    integrated_dF_elecs=rZERO
    integrated_dF_holes=rZERO
  endif
  !
- call section('=',"Interpolation")
- !================================
- !
+ call section('=',"Real-Time components maps")
+ !============================================
  ! Map the RT k in RT_k...
  call RT_carriers_to_RT_k(RT_k)
  call k_ibz2bz(RT_k,'iku',.TRUE.)
@@ -114,17 +115,22 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  ! ... and Eo in RT_E...
  call RT_carriers_to_RT_E(en,RT_E,"Eo")
  !
- ! Perform the energies interpolation
- !====================================
- call electrons_bands_interpolate(RT_E,RT_k,RT_bands,ID_bands,CIRCUIT_E,CIRCUIT_dE=CIRCUIT_dE)
- !
- ! Perform interpolation of spinorial factors and magnetization
- !==============================================================
- if (n_spinor>1) call electrons_spin_and_magn_interpolate("S",k,CIRCUIT_k,RT_bands,ID_spin,ID_magn)
+ if (.not.is_PROJECTED.and.is_INTERPOLATED) then
+   !
+   call section('=',"Levels interpolation")
+   !
+   ! Perform the energies interpolation
+   !====================================
+   call electrons_bands_interpolate(RT_E,RT_k,RT_bands,ID_bands,CIRCUIT_E,CIRCUIT_dE=CIRCUIT_dE)
+   !
+   ! Perform interpolation of spinorial factors and magnetization
+   !==============================================================
+   if (n_spinor>1) call electrons_spin_and_magn_interpolate("S",k,CIRCUIT_k,RT_bands,ID_spin,ID_magn)
+   !
+ endif
  !
  ! Output: bands on circuit
  !==========================
- !
  headings(1)="|k|"
  if (l_RT_lifetimes  ) headings(3)='Widths [meV]'
  if (l_RT_occupations) headings(3)='Occ'
@@ -138,7 +144,6 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  ! Perform the occupations interpolation
  !======================================
- !
  YAMBO_ALLOC(integrated_Nel,(n_T_steps,2))
  YAMBO_ALLOC(integrated_Nhole,(n_T_steps,2))
  integrated_Nel  =rZERO
@@ -147,7 +152,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  WARN_negative_electrons_df=.FALSE.
  WARN_positive_holes_df=.FALSE.
  !
- if (trim(INTERP_mode)=="NN") call live_timing('Time Interpolation(s)',n_T_steps)
+ if (trim(INTERP_mode)=="NN".and.N_T_steps==1) call live_timing('Time Interpolation(s)',n_T_steps)
  !
  do i_T=1,n_T_steps
    !
@@ -165,17 +170,18 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    enddo
    Max_occ=maxval(abs(RT_carriers%OCC_el%dN))
    !
-   if (l_RT_occupations) operation="df_on_circuit"
-   if (l_RT_lifetimes)   operation="W_on_circuit"
-     operation=trim(operation)//" Time "//trim(intc(i_T))//"/"//trim(intc(n_T_steps))
+   extension="circuit"
+   if (is_PROJECTED)     extension="project_grid"
+   if (l_RT_occupations) operation="df_on_"//trim(extension)
+   if (l_RT_lifetimes)   operation="W_on_"//trim(extension)
+   operation=trim(operation)//" Time "//trim(intc(i_T))//"/"//trim(intc(n_T_steps))
    !
    if (is_PROJECTED) then
-     if (l_RT_occupations) operation="df_on_grid"
-     if (l_RT_lifetimes)   operation="W_on_grid"
-     operation=trim(operation)//" Time "//trim(intc(i_T))//"/"//trim(intc(n_T_steps))
-     call INTERPOLATION_driver_seed(trim(operation),ID_grid,RT_bands,RT_k,SEED_RT=RT_carriers,&
-&                                   QUIET=trim(INTERP_mode)=="NN")
-     call INTERPOLATION_driver_do(trim(operation),ID_grid,GRID_k)
+     if (is_INTERPOLATED) then
+       call INTERPOLATION_driver_seed(trim(operation),ID_grid,RT_bands,RT_k,SEED_RT=RT_carriers,&
+&                                     QUIET=trim(INTERP_mode)=="NN".and.N_T_steps>1)
+       call INTERPOLATION_driver_do(trim(operation),ID_grid,GRID_k)
+     endif
      do ik=1,GRID_k%nbz
        ik_path=PROJECTION_k_on_the_path_or_plane(ik)
        if (ik_path==0) cycle
@@ -190,19 +196,17 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
        enddo
      enddo
      if (l_RT_occupations) call EVAL_integrated_occupations(ID_grid)
+     !
+     if (is_INTERPOLATED) call INTERPOLATION_driver_end(ID_grid)
+     if (trim(INTERP_mode)=="NN".and.N_T_steps==1) call live_timing(steps=1)
+     !
+     cycle
+     !
    else
      call INTERPOLATION_driver_seed(trim(operation),ID_circuit,RT_bands,RT_k,SEED_RT=RT_carriers,&
-&                                   QUIET=trim(INTERP_mode)=="NN")
+&                                   QUIET=trim(INTERP_mode)=="NN".and.N_T_steps>1)
      call INTERPOLATION_driver_do(trim(operation),ID_circuit,CIRCUIT_k)
      if (l_RT_occupations) call EVAL_integrated_occupations(ID_circuit)
-   endif
-   !
-   if (is_PROJECTED) then
-     !
-     call INTERPOLATION_driver_end(ID_grid)
-     !
-     if (trim(INTERP_mode)=="NN") call live_timing(steps=1)
-     cycle
    endif
    !
    ! OUTPUT
@@ -292,7 +296,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    !
  enddo
  !
- if (trim(INTERP_mode)=="NN") call live_timing()
+ if (trim(INTERP_mode)=="NN".and.N_T_steps==1) call live_timing()
  !
  if (WARN_negative_electrons_df) call warning("[INTERPOLATION] Found negative electron occupations")
  if (WARN_positive_holes_df)     call warning("[INTERPOLATION] Found positive hole occupations")

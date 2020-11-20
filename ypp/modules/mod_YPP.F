@@ -70,18 +70,20 @@ module YPPm
  !
  ! Projection mode
  !
- type(bz_samp)     :: SLICE_k
- type(levels)      :: SLICE_E
- character(schlen) :: PROJECT_mode="none" ! ATOM,LINE,PLANE
- character(schlen) :: PROJECT_path="none" 
- integer           :: PROJECT_steps=-1
- integer           :: PROJECT_depth=-1
- real(SP)          :: PROJECT_threshold=5.
- real(SP)          :: PROJECT_plane_X(3)
- real(SP)          :: PROJECT_plane_Y(3)
- logical           :: l_PROJECT_atom
- logical           :: l_PROJECT_line
- logical           :: l_PROJECT_plane
+ type(bz_samp)        :: SLICE_k
+ type(levels)         :: SLICE_E
+ character(schlen)    :: PROJECT_mode="none" ! ATOM,LINE,PLANE
+ character(schlen)    :: PROJECT_path="none" 
+ integer              :: PROJECT_steps=-1
+ integer              :: PROJECT_N_par=0
+ integer              :: PROJECT_N_perp=1
+ real(SP)             :: PROJECT_threshold=5.
+ real(SP)             :: PROJECT_plane_X(3)
+ real(SP)             :: PROJECT_plane_Y(3)
+ integer, allocatable :: PROJECT_k_map(:)
+ logical              :: l_PROJECT_atom
+ logical              :: l_PROJECT_line
+ logical              :: l_PROJECT_plane
  ! 
  ! DOS
  !

@@ -28,11 +28,10 @@ subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B)
  use units,          ONLY:HA2EV,AUT2FS
  use com,            ONLY:msg,of_open_close
  use LIVE_t,         ONLY:live_timing
- use YPP_interfaces, ONLY:PROJECTION_k_on_the_path_or_plane
 #if defined _YPP_RT
  use YPP_real_time,  ONLY:integrated_Nel,integrated_Nhole
 #endif
- use YPPm,           ONLY:PROJECT_depth,l_PROJECT_line,CIRCUIT_k_label,PROJECT_threshold,&
+ use YPPm,           ONLY:l_PROJECT_line,CIRCUIT_k_label,PROJECT_threshold,PROJECT_N_par,&
 &                         l_PROJECT_plane,PROJECT_plane_X,PROJECT_plane_Y,PROJECT_steps
  use interpolate,    ONLY:GRID_k
  use stderr,         ONLY:intc,real2ch,STRING_remove
@@ -42,8 +41,8 @@ subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B)
  character(*)       :: what
  integer            :: N,Ns,bands(2)
  real(SP)  ,optional:: W(N),TIME(N)
- real(SP)  ,optional:: OBS_K(GRID_k%nbz/PROJECT_depth,N,Ns)
- real(SP)  ,optional:: OBS_B(bands(1):bands(2),GRID_k%nbz/PROJECT_depth,Ns)
+ real(SP)  ,optional:: OBS_K(PROJECT_N_par,N,Ns)
+ real(SP)  ,optional:: OBS_B(bands(1):bands(2),PROJECT_N_par,Ns)
  !
  ! Work Space
  !
@@ -51,10 +50,10 @@ subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B)
  integer            :: ik,i_N,is,ik_plane,ib,ik_path
  real(SP)           :: O(3),k(3),kdist(GRID_k%nbz),max_OBS,projection(2),W_or_T
  logical            :: label_printed,l_DOS,l_BANDS,l_OCC,l_GAMMA,l_DIP
+ integer, external  :: PROJECTION_k_on_the_path_or_plane
  !
  ! Allocation
  !============
- !
  l_DOS    = what=="DOS"
  l_BANDS  = what=="BANDS"
  l_DIP    = what=="DIPOLES"
@@ -98,7 +97,7 @@ subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B)
      of_name="dos"
    endif
    !
-   call live_timing('Printing the projected '//what,GRID_k%nbz/PROJECT_depth)
+   call live_timing('Printing the projected '//what,PROJECT_N_par)
    !
    max_OBS=maxval(OBS_K)
    !
@@ -150,7 +149,7 @@ subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B)
  if (l_PROJECT_plane) then
    !================
    !
-   call live_timing('Printing the projected '//what,GRID_k%nbz/PROJECT_depth*N)
+   call live_timing('Printing the projected '//what,PROJECT_N_par*N)
    !
    do i_N=1,N
      !
@@ -207,6 +206,7 @@ subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B)
      do ik=1,GRID_k%nbz
        !
        ik_plane=PROJECTION_k_on_the_path_or_plane(ik)
+       !
        if (ik_plane==0) cycle
        !
        k=GRID_k%pt(ik,:)

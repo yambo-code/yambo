@@ -66,31 +66,15 @@ module YPP_interfaces
    !
    subroutine PROJECTION_plot( what, N , Ns, bands, W, TIME, OBS_K, OBS_B)
      use pars,           ONLY:SP
-     use YPPm,           ONLY:PROJECT_depth
+     use YPPm,           ONLY:PROJECT_N_par
      use interpolate,    ONLY:GRID_k
      character(*)       :: what
      integer            :: N,Ns,bands(2)
      real(SP)  ,optional:: W(N),TIME(N)
-     real(SP)  ,optional:: OBS_K(GRID_k%nbz/PROJECT_depth,N,Ns)
-     real(SP)  ,optional:: OBS_B(bands(1):bands(2),GRID_k%nbz/PROJECT_depth,Ns)
+     real(SP)  ,optional:: OBS_K(PROJECT_N_par,N,Ns)
+     real(SP)  ,optional:: OBS_B(bands(1):bands(2),PROJECT_N_par,Ns)
    end subroutine
    !
  end interface
  !
- contains
-   !
-   integer function PROJECTION_k_on_the_path_or_plane(ik)
-     use YPPm,          ONLY:PROJECT_depth
-     integer :: ik
-     if (PROJECT_depth==1) then
-       PROJECTION_k_on_the_path_or_plane=ik
-       return
-     endif
-     if (mod(ik,PROJECT_depth)/=1) then
-       PROJECTION_k_on_the_path_or_plane=0
-       return
-     endif
-     PROJECTION_k_on_the_path_or_plane=ik/PROJECT_depth+1
-   end function
-   !
 end module YPP_interfaces

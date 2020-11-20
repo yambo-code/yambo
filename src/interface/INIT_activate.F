@@ -133,7 +133,7 @@ subroutine INIT_activate()
 #endif
  !
  !
- if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'NonPDirs')
+ if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'NonPDirs MolPos')
  !
  !RIM
  !

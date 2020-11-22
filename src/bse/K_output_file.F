@@ -28,7 +28,8 @@ subroutine K_output_file(iq,mode)
  use drivers,   ONLY:l_col_cut
  use BS_solvers,ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,&
 &                    BSS_n_freqs,K_diago_in_BS_mat  
- use BS,        ONLY:l_BS_abs,BSE_mode,BS_K_is_ALDA,BSqpts,BS_H_dim,BS_dip_size,l_BS_esort,l_BS_jdos
+ use BS,        ONLY:l_BS_abs,BSE_mode,BS_K_is_ALDA,BSqpts,BS_H_dim,BS_dip_size,l_BS_esort,&
+ &                   l_BS_jdos,BS_K_coupling
  use X_m,       ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,eval_alpha,eps_2_alpha,alpha_dim,OPTICS_eels
  use com,       ONLY:msg,of_open_close
  use parser_m,  ONLY:parser
@@ -60,7 +61,7 @@ subroutine K_output_file(iq,mode)
  character(2)      :: ordering
  character(2)      :: title_mode
  character(10)     :: name_
- integer           :: iw,i1,i2,i_IP_BSE,n_IP_BSE,n_output_data,n_headers
+ integer           :: iw,i1,i2,i_IP_BSE,n_IP_BSE,E_size,n_output_data,n_headers
  real(SP)          :: output_data(9),w(BSS_n_freqs)
  complex(SP)       :: eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3),alpha_factor
 #if defined _KERR
@@ -578,6 +579,7 @@ subroutine K_output_file(iq,mode)
  if (l_print_esort) then
    !
    n_output_data=1
+   headers(1)="E [eV]"
    if(l_BS_abs) then
      headers(n_output_data+1:n_output_data+1)="abs"
      n_output_data=n_output_data+1
@@ -600,16 +602,27 @@ subroutine K_output_file(iq,mode)
    n_IP_BSE=2
    if (l_IP) n_IP_BSE=1
    !
+   E_size=1
+   !
    do i_IP_BSE=1,n_IP_BSE
      ! BS_E_sorted(:,:,2) (int) ; BS_E_sorted(:,:,1) (non int)
+     if (BS_K_coupling.and.i_IP_BSE==2) then
+       do i1=n_output_data+1,3,-1
+         headers(i1)=headers(i1-1)
+       enddo
+       E_size=2
+       headers(1)="Re(E) [eV]"
+       headers(2)="Im(E) [eV]"
+     endif
      call msg("o Esort",'#')
-     call msg("o Esort",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
+     call msg("o Esort",'#',headers(:n_output_data+E_size-1),INDENT=0,USE_TABS=.TRUE.)
      call msg("o Esort",'#')
      do i1=1,min(BS_H_dim,1000)
-       output_data(1)=real(BS_E_sorted(i1,1,i_IP_BSE),SP)*HA2EV
+       if(E_size==1) output_data(1)=real(BS_E_sorted(i1,1,i_IP_BSE),SP)*HA2EV
+       if(E_size==2) output_data(1:2)=(/real(BS_E_sorted(i1,1,i_IP_BSE),SP),aimag(BS_E_sorted(i1,1,i_IP_BSE))/)*HA2EV
        if (output_data(1)==0._SP) cycle
-       output_data(2:n_output_data)=real(BS_E_sorted(i1,2:n_output_data,i_IP_BSE),SP)
-       call msg("o Esort",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
+       output_data(E_size+1:n_output_data+E_size-1)=real(BS_E_sorted(i1,2:n_output_data,i_IP_BSE),SP)
+       call msg("o Esort",'',output_data(:n_output_data+E_size-1),INDENT=-2,USE_TABS=.TRUE.)
      enddo
    enddo
    !

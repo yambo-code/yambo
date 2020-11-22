@@ -37,13 +37,13 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:bare_qpg
  use units,          ONLY:HA2EV
- use vec_operate,    ONLY:degeneration_finder
+ use vec_operate,    ONLY:degeneration_finder,sort
  !
 #if defined _KERR
  use BS_solvers,     ONLY:B_Hall
  use X_m,            ONLY:Epsilon_ij,X_magnons
  use PHOTOLUM,       ONLY:PL,PL_prefactor
- use BS,             ONLY:l_BS_kerr,l_BS_anomalous_Hall,l_BS_magnons,l_BS_photolum
+ use BS,             ONLY:l_BS_kerr,l_BS_anomalous_Hall,l_BS_magnons,l_BS_photolum,l_BS_dichroism
 #endif
  !
  implicit none
@@ -66,8 +66,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  integer  :: i_VAR,i_grp,i_lambda,nVAR,EDIM,n_deg_grp
  real(SP), allocatable     :: vtmpR(:)
- complex(SP), allocatable  :: vtmpC(:)
- integer, allocatable      :: first_exc(:),n_of_exc(:)
+ complex(SP), allocatable  :: BS_E_sorted_tmp(:,:)
+ integer, allocatable      :: sort_indx(:),first_exc(:),n_of_exc(:)
  !
 #if defined _KERR
  complex(SP)          :: gauge_factor,res_kerr,res_magn(2)
@@ -77,6 +77,19 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  ares_fac=(-1)**(i_BS_mat-1)
  !
  if( BS_perturbative_SOC.and.n_sp_pol==1) n_SOC=2
+ !
+ if(l_BS_esort.and.i_BS_mat==1) then
+   EDIM=BSS_n_eig
+   nVAR=1
+   if(l_BS_abs) nVAR=nVAR+1
+#if defined _KERR
+   if(l_BS_kerr)      nVAR=nVAR+1
+   if(l_BS_dichroism) nVAR=nVAR+1
+   if(l_BS_magnons)   nVAR=nVAR+2
+#endif
+   allocate(BS_E_sorted_tmp(EDIM,nVAR))
+   BS_E_sorted_tmp=cZERO
+ endif
  !
  para_term_w0=cZERO
  !
@@ -105,9 +118,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    !
    do i_pert_SOC=1,n_SOC
      !
-     if(l_BS_esort) then
-       i_lambda=i1+(i_BS_mat-1)*BSS_n_eig
-       if(i_lambda<1000) BS_E_sorted(i_lambda,1,2)=EXC_E(1)
+     if(l_BS_esort.and.i_BS_mat==1) then
+       BS_E_sorted_tmp(i1,1)=EXC_E(1)
        nVAR=1
      endif
      !
@@ -118,13 +130,10 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        endif
      endif
      !
-     ! Note the use of a causal expression here needed to avoid any
-     ! distinction between the resonant and antiresonant e/h Green's functions.
-     !
      if(l_BS_abs) then
        res_abs=BS_R_left(i1)*BS_R_right(i1)*ares_fac
-       if(l_BS_esort) then
-         if(i_lambda<1000) BS_E_sorted(i_lambda,nVAR+1:nVAR+1,2)=res_abs
+       if(l_BS_esort.and.i_BS_mat==1) then
+         BS_E_sorted_tmp(i1,nVAR+1:nVAR+1)=res_abs
          nVAR=nVAR+1
        endif
        Epsilon_ii(:,2)=Epsilon_ii(:,2)-res_abs/(W%p(:)-EXC_E(i_pert_SOC))
@@ -139,8 +148,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
 #if defined _KERR
      if(l_BS_kerr) then
        res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)*ares_fac
-       if(l_BS_esort) then
-         if(i_lambda<1000) BS_E_sorted(i_lambda,nVAR+1:nVAR+1,2)=res_kerr
+       if(l_BS_esort.and.i_BS_mat==1) then
+         BS_E_sorted_tmp(i1,nVAR+1:nVAR+1)=res_kerr
          nVAR=nVAR+1
        endif
        Epsilon_ij(:,2)=Epsilon_ij(:,2)-res_kerr/(W%p(:)-EXC_E(i_pert_SOC))
@@ -150,8 +159,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
      endif
      if(l_BS_magnons) then
        res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
-       if(l_BS_esort) then
-         if(i_lambda<1000) BS_E_sorted(i_lambda,nVAR+1:nVAR+2,2)=res_magn
+       if(l_BS_esort.and.i_BS_mat==1) then
+         BS_E_sorted_tmp(i1,nVAR+1:nVAR+2)=res_magn
          nVAR=nVAR+2
        endif
        X_magnons(:,1,2)=X_magnons(:,1,2)-res_magn(1)/(W%p(:)-EXC_E(i_pert_SOC))
@@ -177,29 +186,36 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  call PP_indexes_reset(px)
  !
- if (BS_mat_res_ares_dim/=i_BS_mat) return
- !
- if(l_BS_jdos)  call PP_redux_wait(Joint_DOS(:,2) )
- !
- if(l_BS_esort) then
-   call PP_redux_wait(BS_E_sorted(:,:,2) )
-   EDIM=min(BSS_n_eig,1000)
-   allocate(vtmpR(EDIM));   allocate(vtmpC(EDIM));
+ if(l_BS_esort.and.i_BS_mat==1) then
+   call PP_redux_wait(BS_E_sorted_tmp )
+   allocate(vtmpR(EDIM)); allocate(sort_indx(EDIM))
+   vtmpR=real(BS_E_sorted_tmp(:,1),SP)
+   call sort(arrin=vtmpR,indx=sort_indx)
+   do i1=1,EDIM
+     if(vtmpR(i1)>0._SP) exit
+   enddo
+   i1=max(1,i1-100)
+   EDIM=min(BSS_n_eig-i1+1,10000)
    allocate(first_exc(EDIM));   allocate(n_of_exc(EDIM))
-   vtmpR=real(BS_E_sorted(:EDIM,1,2),SP)
    ! Threshold is 1meV
-   call degeneration_finder(vtmpR,EDIM,first_exc,n_of_exc,n_deg_grp,0.001_SP/HA2EV,Include_single_values=.TRUE.)
+   call degeneration_finder(vtmpR(i1:i1-1+EDIM),EDIM,first_exc,n_of_exc,n_deg_grp,0.001_SP/HA2EV,Include_single_values=.TRUE.)
+   EDIM=min(BSS_n_eig-i1+1,1000)
    do i_VAR=1,nVAR
-     vtmpC=BS_E_sorted(:EDIM,i_VAR,2)
      BS_E_sorted(:,i_VAR,2)=cZERO
      do i_grp=1,n_deg_grp
-       do i_lambda=first_exc(i_grp),first_exc(i_grp)+n_of_exc(i_grp)-1
-         BS_E_sorted(i_grp,i_VAR,2)=BS_E_sorted(i_grp,i_VAR,2)+vtmpC(i_lambda)
+       if(i_grp>EDIM) cycle
+       do i_lambda=first_exc(i_grp)+i1-1,first_exc(i_grp)+n_of_exc(i_grp)-1+i1-1
+         BS_E_sorted(i_grp,i_VAR,2)=BS_E_sorted(i_grp,i_VAR,2)+BS_E_sorted_tmp(sort_indx(i_lambda),i_VAR)
        enddo
        BS_E_sorted(i_grp,i_VAR,2)=BS_E_sorted(i_grp,i_VAR,2)/real(n_of_exc(i_grp),SP)
      enddo
    enddo
+   deallocate(BS_E_sorted_tmp)
  endif
+ !
+ if (BS_mat_res_ares_dim/=i_BS_mat) return
+ !
+ if(l_BS_jdos)  call PP_redux_wait(Joint_DOS(:,2) )
  !
  if(l_BS_abs) then
    call PP_redux_wait(Epsilon_ii(:,2))

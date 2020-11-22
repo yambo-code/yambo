@@ -60,11 +60,11 @@ subroutine K_blocks(iq)
  real(SP)     :: N_Ts_total,N_Ts_local
  !
  if (.not.BS_K_coupling) n_new_blocks=1
- if (     BS_K_coupling) n_new_blocks=2/BS_mat_res_ares_dim
+ if (     BS_K_coupling) n_new_blocks=2/BS_res_ares_dim
  !
  ! Count the blocks
  n_BS_blks=count(PAR_IND_T_ordered%element_2D)
- allocate(BS_blk(n_BS_blks*n_new_blocks*BS_mat_res_ares_dim))
+ allocate(BS_blk(n_BS_blks*n_new_blocks*BS_res_ares_dim))
  !
  ! Define blocks parameters
  n_BS_blks=0
@@ -145,8 +145,8 @@ subroutine K_blocks(iq)
  ! REPORT
  !========
  !
- if(BS_mat_res_ares_dim==1) call msg('rsn','[BSK] Size (resonant)',BS_K_dim(1))
- if(BS_mat_res_ares_dim==2) call msg('rsn','[BSK] Size (resonant)',BS_K_dim)
+ if(BS_res_ares_dim==1) call msg('rsn','[BSK] Size (resonant)',BS_K_dim(1))
+ if(BS_res_ares_dim==2) call msg('rsn','[BSK] Size (res,ares)',BS_K_dim)
  call msg('rsn','[BSK]         (total)',BS_H_dim)
  call msg('rsn','[BSK] Matricies      ',BS_mat_res_ares_dim)
  !

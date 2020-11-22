@@ -73,7 +73,7 @@ module BS
  integer :: BS_H_dim
  integer :: BS_mat_res_ares_dim ! If resonant and non-resonant part are not related
  integer :: BS_res_ares_dim     ! If resonant and non-resonant part are not related
- integer :: BS_IO_dim(2,2)
+ integer :: BS_IO_dim(2,4)
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier

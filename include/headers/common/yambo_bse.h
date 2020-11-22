@@ -31,9 +31,10 @@ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \
 
 #define FILL_BSK_COMMON_INDEXES \
      NEWLINE \
-     H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk NEWLINE \
-     H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp NEWLINE \
-     NEWLINE \
+     H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& NEWLINE \
+     &              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) NEWLINE \
+     H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& NEWLINE \
+     &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) NEWLINE \
      if (H_pos(1)>H_pos(2)) cycle NEWLINE \
      NEWLINE \
      i_k_bz  = BS_T_grp(i_Tgrp_k)%table(i_Tk,1) NEWLINE \

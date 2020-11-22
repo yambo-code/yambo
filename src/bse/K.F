@@ -87,7 +87,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
 &              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4),i_andrea
  complex(SP):: Co,H_x,H_c
- real(SP)   :: sqrt_f_itk,sqrt_f_itp
+ complex(SP):: sqrt_f_itk,sqrt_f_itp
  real(SP), allocatable :: BS_max_val_CPU(:)
  !
  complex(SP),   external ::TDDFT_ALDA_R_space
@@ -468,8 +468,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        case ("R","A")
          !
-         ! :::RESONANT TERM:::
-         !=============================
+         ! :::RESONANT/ANTI-RESONANT TERM:::
+         !===================================
          !
          ! Exchange
          if (BS_res_K_exchange) H_x=K_exchange_kernel_resonant(iq, BS_n_g_exch,               &

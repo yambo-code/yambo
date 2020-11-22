@@ -47,7 +47,7 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
  ! Work Space
  !
  complex(SP) :: Mij
- integer     :: i_Tk,i_Tp,i_r,i_c,H_pos(2),shift,i_B
+ integer     :: i_Tk,i_Tp,i_r,i_c,H_pos(2),H_shift(2),i_B
  !
  if (allocated(BS_mat)) return
  !
@@ -68,6 +68,9 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
    !
    if (i_BS_mat/=BS_blk(i_B)%ira_k .and. BS_mat_res_ares_dim==2) cycle
    !
+   H_shift(1)=(BS_blk(i_B)%ira_k-1)*BS_K_dim(1)
+   H_shift(2)=(BS_blk(i_B)%ira_p-1)*BS_K_dim(1)
+   !
    do i_r=1,BS_blk(i_B)%size(1)
      !
      H_pos(1)=BS_blk(i_B)%coordinate(1)+i_r-1
@@ -78,18 +81,16 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
        !
        ! Then the upper triangle of each block and direct symmetrization
        !
-       if (H_pos(1)>H_pos(2)) cycle
+       if (H_pos(1)+H_shift(1)>H_pos(2)+H_shift(2)) cycle
        !
        Mij=BS_blk(i_B)%mat(i_r,i_c)
        !
        ! Add energies to the diagonal
        !
-       if(H_pos(1)==H_pos(2).and.(BS_blk(i_B)%mode=="R".or.BS_blk(i_B)%mode=="A")) then
-         if (BS_blk(i_B)%mode=="R") shift=0
-         if (BS_blk(i_B)%mode=="A") shift=BS_K_dim(1)*(i_BS_mat-1)
-         Mij=real(Mij)+BSS_eh_E(H_pos(1)+shift)*cONE
+       if(H_pos(1)+H_shift(1)==H_pos(2)+H_shift(2)) then
+         Mij=real(Mij)+BSS_eh_E(H_pos(1)+H_shift(1))*cONE
          if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
-           Mij=Mij+cI*BSS_eh_W(H_pos(1)+shift)
+           Mij=Mij+cI*BSS_eh_W(H_pos(1)+H_shift(1))
          endif
        endif
        !
@@ -115,7 +116,7 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
          endif
        case("A")
          ! The anti-resonant block is hermitial
-         if(BS_mat_res_ares_dim==1) then         
+         if(BS_mat_res_ares_dim==1) then
            BS_mat(H_pos(1)+BS_K_dim(1),H_pos(2)+BS_K_dim(1))=       Mij
            BS_mat(H_pos(2)+BS_K_dim(1),H_pos(1)+BS_K_dim(1))= conjg(Mij)
          else
@@ -125,7 +126,7 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
        case("Q")
            BS_mat(H_pos(1)+BS_K_dim(1),H_pos(2)            )=       Mij
            ! Coupling from anti-coupling: the whole BSE matrix is Pseudo-HErmitian
-           BS_mat(H_pos(2)            ,H_pos(2)+BS_K_dim(1) )=-conjg(Mij)
+           BS_mat(H_pos(2)            ,H_pos(1)+BS_K_dim(1) )=-conjg(Mij)
        end select
        !
      enddo

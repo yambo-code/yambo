@@ -181,7 +181,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if(l_BS_esort) then
    EDIM=BS_K_dim(1)
-   if (BS_mat_res_ares_dim==2.or.BS_K_coupling) EDIM=BS_K_dim(1)+BS_K_dim(2)
    nVAR=1
    if(l_BS_abs) nVAR=nVAR+1
 #if defined _KERR
@@ -530,11 +529,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    YAMBO_ALLOC(vtmpR,(EDIM)); YAMBO_ALLOC(sort_indx,(EDIM))
    vtmpR=real(BS_E_sorted_tmp(:,1),SP)
    call sort(arrin=vtmpR,indx=sort_indx)
-   EDIM=min(BS_H_dim,10000)
+   EDIM=min(BS_K_dim(1),10000)
    allocate(first_el(EDIM)); allocate(n_of_el(EDIM))
    ! Threshold is 1meV
    call degeneration_finder(vtmpR(:EDIM),EDIM,first_el,n_of_el,n_deg_grp,0.001_SP/HA2EV,Include_single_values=.TRUE.)
-   EDIM=min(BS_H_dim,1000)
+   EDIM=min(BS_K_dim(1),1000)
    do i_VAR=1,nVAR
      BS_E_sorted(:,i_VAR,1)=cZERO
      do i_grp=1,n_deg_grp

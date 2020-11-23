@@ -40,7 +40,7 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  use pars,           ONLY:SP,pi,cZERO
  use FFT_m,          ONLY:fft_size
  use xc_functionals, ONLY:F_xc
- use BS,             ONLY:l_BS_magnons,l_BS_ares_asymm
+ use BS,             ONLY:l_BS_magnons
  use wrapper_omp,    ONLY:V_dot_V_omp
  use electrons,      ONLY:n_spinor,n_sp_pol,n_spin
  use timing_m,       ONLY:timing
@@ -75,7 +75,7 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  !
  rhotwr1=conjg(WF_symm1)*WF_symm2
  !
- if (mode=="RES".or.l_BS_ares_asymm) then
+ if (mode=="RES") then
    call WF_apply_symm(isp,WF_symm1) 
    call WF_apply_symm(osp,WF_symm2)
    i_sp_fxc(2)=isp(4)

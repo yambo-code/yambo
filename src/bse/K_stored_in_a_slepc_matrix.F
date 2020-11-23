@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): HM
+! Authors (see AUTHORS file for details): HM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -32,7 +32,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  !
  use pars,           ONLY:SP,cI,cONE
  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
- &                        BS_mat_res_ares_dim
+ &                        BS_mat_res_ares_dim,l_BS_ares_asymm
  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
  !
 #include <petsc/finclude/petscsys.h>
@@ -52,9 +52,8 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  integer, intent(in)  :: i_BS_mat
  Mat,     intent(out) :: slepc_mat
  !
- complex(SP) :: E_plus_W
- integer     :: i_c,i_r,i_Tk,i_Tp,i_B
- PetscFortranComplex :: val
+ integer     :: i_c,i_r,i_Tk,i_Tp,i_B,H_shift(2)
+ PetscFortranComplex :: Mij
  PetscFortranInt     :: H_pos(2),SL_K_dim(2),SL_H_dim
  PetscErrorCode      :: ierr
  !
@@ -71,6 +70,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  ! 
  ! filling of the slepc_mat
  !
+ !
  do i_B=1,n_BS_blks
    !
    i_Tk  =BS_blk(i_B)%iT_k
@@ -78,69 +78,67 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
    !
    if (i_BS_mat/=BS_blk(i_B)%ira_k .and. BS_mat_res_ares_dim==2) cycle
    !
+   H_shift(1)=(BS_blk(i_B)%ira_k-1)*BS_K_dim(1)
+   H_shift(2)=(BS_blk(i_B)%ira_p-1)*BS_K_dim(1)
+   !
    do i_r=1,BS_blk(i_B)%size(1)
      !
-     H_pos(1)=BS_blk(i_B)%coordinate(1)+i_r-2
-     !
-     ! First the diagonal
-     !
-     if (i_Tk==i_Tp) then
-       select case(BS_blk(i_B)%mode)
-       case("R")
-         E_plus_W=BSS_eh_E(H_pos(1)+1)*cONE
-         if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
-            E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1)+1)
-         endif
-         val = E_plus_W+real(BS_blk(i_B)%mat(i_r,i_r),SP)
-         call MatSetValue( slepc_mat, H_pos(1),             H_pos(1), val, INSERT_VALUES, ierr )
-       case("C")
-         val = BS_blk(i_B)%mat(i_r,i_r)
-         call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(1), val, INSERT_VALUES, ierr )
-       case("A")
-         E_plus_W=BSS_eh_E(H_pos(1)+1+BS_K_dim(1)*(i_BS_mat-1))*cONE
-         if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
-           E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1)+BS_K_dim(1)*(i_BS_mat-1))
-         endif
-         val = E_plus_W+real(BS_blk(i_B)%mat(i_r,i_r),SP) 
-         if(BS_mat_res_ares_dim==1) then
-           call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(1)+SL_K_dim(1), val, INSERT_VALUES, ierr )
-         else
-           call MatSetValue( slepc_mat, H_pos(1)            , H_pos(1)            , val, INSERT_VALUES, ierr )
-         endif
-       case("Q")
-         val = BS_blk(i_B)%mat(i_r,i_r)
-         call MatSetValue( slepc_mat, H_pos(1)            , H_pos(1)+SL_K_dim(1), val, INSERT_VALUES, ierr )
-       end select
-       !
-     endif
-     !
-     ! Then the upper triangle of each block
+     H_pos(1)=BS_blk(i_B)%coordinate(1)+i_r-1
      !
      do i_c=1,BS_blk(i_B)%size(2)
        !
-       H_pos(2)=BS_blk(i_B)%coordinate(2)+i_c-2
+       H_pos(2)=BS_blk(i_B)%coordinate(2)+i_c-1
        !
-       if (H_pos(1)>=H_pos(2)) cycle
+       ! Then the upper triangle of each block and direct symmetrization
        !
-       val = BS_blk(i_B)%mat(i_r,i_c)
+       if (H_pos(1)+H_shift(1)>H_pos(2)+H_shift(2)) cycle
+       !
+       Mij=BS_blk(i_B)%mat(i_r,i_c)
+       !
+       ! Add energies to the diagonal
+       !
+       if(H_pos(1)+H_shift(1)==H_pos(2)+H_shift(2)) then
+         Mij=real(Mij)+BSS_eh_E(H_pos(1)+H_shift(1))*cONE
+         if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
+           Mij=Mij+cI*BSS_eh_W(H_pos(1)+H_shift(1))
+         endif
+       endif
+       !
+       H_pos=H_pos-1
+       !
        select case(BS_blk(i_B)%mode)
        case("R")
-         call MatSetValue( slepc_mat, H_pos(1), H_pos(2),       val , INSERT_VALUES, ierr )
-         call MatSetValue( slepc_mat, H_pos(2), H_pos(1), conjg(val), INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
+           ! The resonant block is hermitial
+           call MatSetValue( slepc_mat, H_pos(2), H_pos(1), conjg(Mij), INSERT_VALUES, ierr )
+         if ((.not.l_BS_ares_asymm).and.BS_K_coupling) then
+           ! The anti-resonant block is A=-R*
+           call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1),-conjg(Mij), INSERT_VALUES, ierr )
+           ! The anti-resonant block is hermitian
+           call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1),       Mij, INSERT_VALUES, ierr )
+         endif
        case("C")
-         call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+SL_K_dim(1), val, INSERT_VALUES, ierr )
-         call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1), val, INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
+           ! Anti-coupling from coupling: the whole BSE matrix is Pseudo-HErmitian
+           call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1),-conjg(Mij), INSERT_VALUES, ierr )
+         if (.not.l_BS_ares_asymm) then
+           ! The coupling block and the anti-coupling block are symmetric
+           call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2),-conjg(Mij), INSERT_VALUES, ierr )
+         endif
        case("A")
+         ! The anti-resonant block is hermitial
          if(BS_mat_res_ares_dim==1) then
-           call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1),       val , INSERT_VALUES, ierr )
-           call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1), conjg(val), INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1), conjg(Mij), INSERT_VALUES, ierr )
          else
-           call MatSetValue( slepc_mat, H_pos(1)            , H_pos(2)            ,       val , INSERT_VALUES, ierr )
-           call MatSetValue( slepc_mat, H_pos(2)            , H_pos(1)            , conjg(val), INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(2), H_pos(1), conjg(Mij), INSERT_VALUES, ierr )
          endif
        case("Q")
-         call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2), val, INSERT_VALUES, ierr )
-         call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim(1), val, INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
+           ! Coupling from anti-coupling: the whole BSE matrix is Pseudo-HErmitian
+           call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim(1),-conjg(Mij), INSERT_VALUES, ierr )
        end select
        !
      enddo
@@ -149,10 +147,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
    !
  enddo
  !
- if (BS_K_coupling) call error('BSE coupling with slepc not implemented')
- !
  call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  !
 end subroutine K_stored_in_a_slepc_matrix
-

@@ -30,7 +30,8 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !  K = |                       |
  !      | (-cI*K_c^*)  (-K_r^*) |
  !
- use BS,             ONLY:BS_H_dim, BS_nT_grps, BS_blk, n_BS_blks, BS_mat_res_ares_dim
+ use BS,             ONLY:BS_H_dim, BS_nT_grps, BS_blk, n_BS_blks, BS_mat_res_ares_dim, &
+ &                        BS_Blocks_symmetrize_K,BS_K_coupling
  use BS_solvers,     ONLY:Slepc_v,BS_HAYVEC_alloc
  !
 #include <petsc/finclude/petscsys.h>
@@ -56,6 +57,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  external K_multiply_by_V_slepc
  !
  if (BS_mat_res_ares_dim==2) call error(" Slepc with shells and multiple BS_mat not coded")
+ if (BS_K_coupling)          call error(" Slepc with shells and coupling not coded")
  !
  SL_H_dim=BS_H_dim
  !
@@ -82,23 +84,6 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !
  ! Allocate BS stuff
  !
- do i_B=1,n_BS_blks
-   !
-   i_Tk  =BS_blk(i_B)%iT_k
-   i_Tp  =BS_blk(i_B)%iT_p
-   !
-   if (i_Tk==i_Tp) then
-     do i_r=1,BS_blk(i_B)%size(1)
-       ! make the diagonal of the matrix real
-       BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
-       ! make the matrix hermitian
-       do i_c=i_r,BS_blk(i_B)%size(2)
-         BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
-       enddo
-     enddo
-     !
-   endif
-   !
- enddo
+ call BS_Blocks_symmetrize_K()
  !
 end subroutine K_shell_matrix

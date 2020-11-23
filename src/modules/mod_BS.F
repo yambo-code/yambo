@@ -388,20 +388,28 @@ module BS
        i_Tk  =BS_blk(i_B)%iT_k
        i_Tp  =BS_blk(i_B)%iT_p
        !
-       ! Resonant part (mode ==R) is hermitian
-       ! Coupling part (mode ==A) is symmetric
+       ! Coupling part (mode ==C) is symmetric
        !
        if (i_Tk/=i_Tp) cycle
        !
-       do i_r=1,BS_blk(i_B)%size(1)
-         do i_c=i_r+1,BS_blk(i_B)%size(2)
-           if (BS_blk(i_B)%mode=="R") then
+       select case(BS_blk(i_B)%mode)
+       case("R","A")
+         ! Resonant ("R") and anti-resonant ("A") parts are hermitian
+         do i_r=1,BS_blk(i_B)%size(1)
+           do i_c=i_r+1,BS_blk(i_B)%size(2)
              BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
-           else
-             BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)
-           endif
+           enddo
          enddo
-       enddo
+       case("C","Q")
+         if (l_BS_ares_asymm) cycle
+         ! Coupling ("C") and anti-coupling ("Q") are symmetric
+         ! if l_BS_ares_asymm=.true.
+         do i_r=1,BS_blk(i_B)%size(1)
+           do i_c=i_r+1,BS_blk(i_B)%size(2)
+             BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
+           enddo
+         enddo
+       end select
        !
      enddo
      !

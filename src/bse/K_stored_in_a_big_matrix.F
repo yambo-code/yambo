@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM MG
+! Authors (see AUTHORS file for details): AM MG DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -47,19 +47,17 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
  ! Work Space
  !
  complex(SP) :: Mij
- integer     :: i_Tk,i_Tp,i_r,i_c,H_pos(2),H_shift(2),i_B
+ integer     :: i_Tk,i_Tp,i_r,i_c,H_pos(2),H_shift(2),i_B,BS_mat_dim
  !
  if (allocated(BS_mat)) return
  !
  call timing('BSE matrix filling',OPR='start')
  !
- if (BS_K_coupling) then
-   YAMBO_ALLOC(BS_mat,(BS_H_dim,BS_H_dim))
-   BS_mat    = cZERO
- else
-   YAMBO_ALLOC(BS_mat,(BS_K_dim(i_BS_mat),BS_K_dim(i_BS_mat)))
-   BS_mat    = cZERO
- endif
+ if (     BS_K_coupling) BS_mat_dim=BS_H_dim
+ if (.not.BS_K_coupling) BS_mat_dim=BS_K_dim(i_BS_mat)
+ !
+ YAMBO_ALLOC(BS_mat,(BS_mat_dim,BS_mat_dim))
+ BS_mat    = cZERO
  !
  do i_B=1,n_BS_blks
    !
@@ -143,9 +141,7 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
  ! BS_mat lives in the entire world.
  !
  call timing('BSE matrix (REDUX)',OPR='start')
- !
  call PP_redux_wait(BS_mat)
- !
  call timing('BSE matrix (REDUX)',OPR='stop')
  !
  ! After the folding the %mat's are (in some cases) not needed anymore 

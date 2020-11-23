@@ -64,7 +64,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  type(X_t)         :: X_tddft,X_oscillators
  integer           :: iq,Max_G_m_G,iG_BSE,iGo_BSE
  type(w_samp)      :: W_bss 
- logical           :: l_bs_q
  !
  ! GPL_EXCLUDE_START
  !
@@ -72,20 +71,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
 #endif
  !
- call parser('BSEQptR',l_bs_q)
  call parser('BSKTriangIO',l_BSK_IO_triangular)
- !
- if (.not.l_bs_q) BS_q=(/1,1/)
- !
- if ( (.not.(BS_q(1)==1.and.BS_q(2)==1)) .and. (trim(BSE_mode)=='coupling') ) then
-   call error(' Finite q and coupling not implemented')
- endif
- !
- ! GPL_EXCLUDE_END
- !
- ! GPL_INCLUDE_START
- !BS_q=(/1,1/)
- ! GPL_INCLUDE_END
  !
  ! Need to convert eels to epsilon ? (part A)
  !===========================================

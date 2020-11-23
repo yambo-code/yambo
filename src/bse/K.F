@@ -79,6 +79,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Work Space ...
  !
  character(schlen) :: section_title
+ character(1)      :: mode_now
  !
  ! ... Kernel loop
  !
@@ -434,7 +435,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol_c,i_k_sp_pol_v,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
    !$omp &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol_c,i_p_sp_pol_v,i_p_s,is_p,os_p,i_kp_s, &
    !$omp &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
-   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t, &
+   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,mode_now, &
    !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c)
 #endif
    !
@@ -464,9 +465,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        H_x=cZERO
        H_c=cZERO
        !
-       select case (BS_blk(i_block)%mode)
+       mode_now=BS_blk(i_block)%mode
+       if(l_BS_ares_asymm) mode_now="F"
        !
-       case ("R","A")
+       select case (mode_now)
+       !
+       case ("R","A","F")
          !
          ! :::RESONANT/ANTI-RESONANT TERM:::
          !===================================

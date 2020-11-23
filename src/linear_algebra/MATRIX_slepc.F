@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): HM
+! Authors (see AUTHORS file for details): HM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -30,6 +30,8 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
  !
  use pars,          ONLY : SP,schlen
  use com,           ONLY : msg
+ use parser_m,      ONLY : parser
+ use stderr,        ONLY : intc
  !
  ! headers
  !
@@ -78,26 +80,26 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
  PetscInt       :: nev, ncv, mpd, maxit, its, nconv, n, i, j
  PetscInt       :: idx(2)
  PetscScalar    :: kr, ki
- PetscScalar, pointer :: xsr(:), xsi(:)
+ PetscScalar, pointer :: xsr(:), xsi(:), xsr_left(:), xsi_left(:)
  PetscScalar, pointer :: M(:,:)          !pointer to matrix
- Vec            ::  xr, xi, vout
+ Vec            ::  xr, xi, xr_left, xi_left, voutr, vouti, voutr_left, vouti_left
  PetscViewer    ::  viewer, hdf5v
  PetscMPIInt    ::  rank
- VecScatter     ::  ctx
+ VecScatter     ::  ctxr, ctxi, ctxr_left, ctxi_left
+ !
+ logical           :: l_target_energy
  character(len=30) :: rowfmt
  !
  ! Non hermitian not implemented yet!
- !
- if (present(V_left)) then
-   call error( 'diagonalisation of non-hermitian matrices with SLEPC is not implemented in yambo yet' )
-   call exit(0)
- endif
  !
  call MatGetSize(M_slepc,n,j,ierr)
  call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
  call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
  !
- call MatCreateVecs(M_slepc,xr,xi,ierr)
+ !if(.not.present(V_left)) call MatCreateVecs(M_slepc,xr,xi,ierr)
+ !if(     present(V_left)) call MatCreateVecs(M_slepc,xr,xr_left,xi,xi_left,ierr)
+ if(.not.present(V_left)) call MatCreateVecs(M_slepc,xr,ierr)
+ if(     present(V_left)) call MatCreateVecs(M_slepc,xr,xr_left,ierr)
  !
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Create the eigensolver and display info
@@ -108,15 +110,24 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
  !
  !Set operators. In this case, it is a standard eigenvalue problem
  !
- call EPSSetOperators(eps,M_slepc,PETSC_NULL_MAT,ierr)
- call EPSSetProblemType(eps,EPS_HEP,ierr)
+ call EPSSetOperators(eps,M_slepc,PETSC_NULL_MAT,ierr) 
+ if(     present(V_left)) then
+   ! To do: to check if it can be cast in the form of a generalized hermitian problem
+   call EPSSetProblemType(eps,EPS_NHEP,ierr)
+   call EPSSetTwoSided(eps,PETSC_TRUE,ierr)
+   call EPSSetFromOptions(eps,ierr)
+ else
+   call EPSSetProblemType(eps,EPS_HEP,ierr)
+ endif
  !
- if (real(target_energy,SP) .ne. 0) then
-   call msg( 'nr', '[SLEPC] Criterion is target energy       ', real(target_energy,SP) )
+ call parser('BSSEnTarget',l_target_energy)
+ !
+ if (l_target_energy) then
+   call msg( 'ns', '[SLEPC] Criterion is target energy       ', real(target_energy,SP) )
    call EPSSetTarget(eps,target_energy,ierr)
    call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
  else
-   call msg( 'nr', '[SLEPC] Criterion is smaller eigenvalues')
+   call msg( 'ns', '[SLEPC] Criterion is smaller eigenvalues')
    call EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr)
  endif
  !
@@ -135,7 +146,7 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
  else if (extraction == 'refined_harmonic')  then
    extr = EPS_REFINED_HARMONIC
  endif
- call msg( 'r', '[SLEPC] Extraction method                ', extraction)
+ call msg( 's', '[SLEPC] Extraction method                ', extraction)
  !
  call EPSSetExtraction(eps, extr, ierr)
  !
@@ -153,6 +164,7 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
  else
    ncv = PETSC_DECIDE
  endif 
+
  call EPSSetDimensions(eps,nev,ncv,PETSC_DECIDE,ierr)
  !
  call EPSSetTolerances(eps,slepc_tol,PETSC_DECIDE, ierr)
@@ -163,9 +175,9 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
  !call EPSGetType(eps,tname,ierr)
  call EPSGetTolerances(eps,tol,maxit,ierr)
  !
- call msg( 'r', '[SLEPC] Number of requested eigenvalues   ', int(nev) )
- call msg( 'r', '[SLEPC] Stopping condition tolerance      ', real(tol,SP) )
- call msg( 'r', '[SLEPC] Stopping condition max iterations ', int(maxit) )
+ call msg( 's', '[SLEPC] Number of requested eigenvalues   ', int(nev) )
+ call msg( 's', '[SLEPC] Stopping condition tolerance      ', real(tol,SP) )
+ call msg( 's', '[SLEPC] Stopping condition max iterations ', int(maxit) )
 
  !Set monitor
  call EPSMonitorSet(eps,MyEPSMonitor,0,PETSC_NULL_FUNCTION,ierr)
@@ -176,21 +188,24 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  call EPSSolve(eps,ierr)
  call EPSGetIterationNumber(eps,its,ierr)
- call msg( 'r', '[SLEPC] Number of iterations              ', int(its) )
+ call msg( 's', '[SLEPC] Number of iterations              ', int(its) )
  call EPSGetDimensions(eps,nev,ncv,mpd,ierr)
- call msg( 'r', '[SLEPC] Number of eigenvalues        [NEV]', int(nev) )
- call msg( 'r', '[SLEPC]                              [NCV]', int(ncv) )
- call msg( 'r', '[SLEPC]                              [MPD]', int(mpd) )
+ call msg( 's', '[SLEPC] Number of eigenvalues        [NEV]', int(nev) )
+ call msg( 's', '[SLEPC]                              [NCV]', int(ncv) )
+ call msg( 's', '[SLEPC]                              [MPD]', int(mpd) )
 
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Display solution and clean up
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !
  call EPSGetConverged(eps,nconv,ierr)
- call msg( 'rn', '[SLEPC] Number of converged states        ', int(nconv))
+ call msg( 'sn', '[SLEPC] Number of converged states        ', int(nconv))
  if ( nconv < n_eig ) then
+   call warning(' [SLEPC] requested '//trim(intc(n_eig))//' but converged '//trim(intc(nconv))//' eigenvalues')
    n_eig = nconv
  endif
+ !
+ if (n_eig==0) call error(' [SLEPC] 0 eigenvectors converged')
  !
  !free the M_slepc matrix
  call MatDestroy(M_slepc,ierr)
@@ -200,41 +215,91 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
  !
  !calculate eigenvalues and relative errors
  !
- if (nconv.gt.0) then
-   !
-   do i=0,nev-1
-     !Get converged eigenpairs: i-th eigenvalue is stored in kr
-     !(real part) and ki (imaginary part)
+ do i=0,n_eig-1
+   !Get converged eigenpairs: i-th eigenvalue is stored in kr
+   !(real part) and ki (imaginary part)
+   if(present(V_left)) then
      !call EPSGetEigenpair(eps,i,kr,ki,xr,xi,ierr)
      call EPSGetEigenpair(eps,i,kr,PETSC_NULL_SCALAR,xr,PETSC_NULL_VEC,ierr)
-     !
-     !save the eigenvalues and eigenvectors in the matrix of the hamiltonian
-     if(present(E_real)) E_real(i+1) = real(kr,SP)
-     !  
-     ! this is to write the vector to hdf5 directly
-     !call VecView(xr,hdf5v,ierr)
-     !  
+     !call EPSGetLeftEigenvector(eps,i,xr_left,xi_left,ierr)
+     call EPSGetLeftEigenvector(eps,i,xr_left,PETSC_NULL_VEC,ierr)
+   else
+     call EPSGetEigenpair(eps,i,kr,PETSC_NULL_SCALAR,xr,PETSC_NULL_VEC,ierr)
+   endif
+   !
+   !save the eigenvalues and eigenvectors in the matrix of the hamiltonian
+   if(present(E_real)) E_real(i+1) = real(kr,SP)
+   if(present(E_cmpl)) E_cmpl(i+1) = cmplx(kr,kind=SP)
+   !
+   ! this is to write the vector to hdf5 directly
+   !call VecView(xr,hdf5v,ierr)
+   !
+   if (present(V_left)) then
      !save the eigenvectors
-     call VecScatterCreateToAll(xr,ctx,vout,ierr);
+     call VecScatterCreateToAll(xr,ctxr,voutr,ierr)
+     !call VecScatterCreateToAll(xi,ctxi,vouti,ierr)
      ! scatter as many times as you need
-     call VecScatterBegin(ctx,xr,vout,INSERT_VALUES,SCATTER_FORWARD,ierr);
-     call VecScatterEnd(ctx,xr,vout,INSERT_VALUES,SCATTER_FORWARD,ierr);
-     !  
-     call VecGetArrayReadF90(vout,xsr,ierr)
-     V_right(:, i+1) = xsr
-     call VecRestoreArrayReadF90(vout,xsr,ierr)
+     call VecScatterBegin(ctxr,xr,voutr,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     call VecScatterEnd(ctxr,xr,voutr,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     !call VecScatterBegin(ctxi,xi,vouti,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     !call VecScatterEnd(ctxi,xi,vouti,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !
-   enddo
+     call VecGetArrayReadF90(voutr,xsr,ierr)
+     !call VecGetArrayReadF90(vouti,xsi,ierr)
+     V_right(:, i+1) = cmplx(xsr,kind=SP)
+     call VecRestoreArrayReadF90(voutr,xsr,ierr)
+     !call VecRestoreArrayReadF90(vouti,xsi,ierr)
+     !
+     !save the eigenvectors
+     call VecScatterCreateToAll(xr_left,ctxr_left,voutr_left,ierr)
+     !call VecScatterCreateToAll(xi_left,ctxi_left,vouti_left,ierr)
+     ! scatter as many times as you need
+     call VecScatterBegin(ctxr_left,xr_left,voutr_left,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     call VecScatterEnd(ctxr_left,xr_left,voutr_left,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     !call VecScatterBegin(ctxi_left,xi_left,vouti_left,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     !call VecScatterEnd(ctxi_left,xi_left,vouti_left,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     !
+     call VecGetArrayReadF90(voutr_left,xsr_left,ierr)
+     !call VecGetArrayReadF90(vouti_left,xsi_left,ierr)
+     V_left(:, i+1) = cmplx(xsr_left,kind=SP)
+     call VecRestoreArrayReadF90(voutr_left,xsr_left,ierr)
+     !call VecRestoreArrayReadF90(vouti_left,xsi_left,ierr)
+   else
+     !save the eigenvectors
+     call VecScatterCreateToAll(xr,ctxr,voutr,ierr)
+     ! scatter as many times as you need
+     call VecScatterBegin(ctxr,xr,voutr,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     call VecScatterEnd(ctxr,xr,voutr,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     !
+     call VecGetArrayReadF90(voutr,xsr,ierr)
+     V_right(:, i+1) = xsr
+     call VecRestoreArrayReadF90(voutr,xsr,ierr)
+   endif
    !
-   ! destroy scatter context and local vector when no longer needed
-   call VecScatterDestroy(ctx,ierr);
-   call VecDestroy(vout,ierr);
-   !
+ enddo
+ !
+ ! destroy scatter context and local vector when no longer needed
+ if (present(V_left)) then
+   call VecScatterDestroy(ctxr,ierr)
+   call VecDestroy(voutr,ierr)
+   !call VecScatterDestroy(ctxi,ierr)
+   !call VecDestroy(vouti,ierr)
+   call VecScatterDestroy(ctxr_left,ierr)
+   call VecDestroy(voutr_left,ierr)
+   !call VecScatterDestroy(ctxi_left,ierr)
+   !call VecDestroy(vouti_left,ierr)
+ else
+   call VecScatterDestroy(ctxr,ierr)
+   call VecDestroy(voutr,ierr)
  endif
  !
  call EPSDestroy(eps,ierr)
+ if (present(V_left)) then
+   call VecDestroy(xr_left,ierr)
+   !call VecDestroy(xi_left,ierr)
+ endif
  call VecDestroy(xr,ierr)
- call VecDestroy(xi,ierr)
+ !call VecDestroy(xi,ierr)
  call SlepcFinalize(ierr)
  !
 end subroutine
@@ -243,6 +308,7 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
  ! 
  ! Monitor the convergence of the iterative diagonalization
  ! 
+ use units,         ONLY:HA2EV
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  !
@@ -275,7 +341,11 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
  ! write the number of converged eigenvalues
  call msg('s', '[SLEPC] Iteration #'// trim(intc(its))// ' - converged States '&
 &           // trim(intc(nconv)) //' - error ', errest(nconv+1))
-
+ !
+ ! DEBUG <
+ !write(*,*) eigr(:nconv)*HA2EV
+ ! DEBUG >
+ !
  ierr = 0
  !
 end subroutine

@@ -206,7 +206,7 @@ subroutine rim(mode)
    else
      !
      call msg('r', "Evaluating integrals for q = ", iq)
-     call rim_integrate_w(iq,qr,N_out,N_out_G)
+     call rim_integrate_w(iq,qr,N_out,N_out_G,em1_anis)
      !
    endif
    call live_timing(steps=1)

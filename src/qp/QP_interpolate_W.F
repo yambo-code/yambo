@@ -477,7 +477,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
 &                        deliver_IO_error_message,OP_WR_CL,REP,VERIFY
  use stderr,        ONLY:STRING_split
- use D_lattice,     ONLY:alat
+ use D_lattice,     ONLY:alat,a
  use matrix_operate, ONLY:m3inv,mat_transpose
  !
  implicit none
@@ -688,8 +688,8 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
              end if
              !
              !func = f_coeff(1,1,1,1)*exp(-f_coeff(2,1,1,1)*iku_v_norm(q_sampl))
-             func = f_coeff(1,1,1,1,iomega)*exp(-sqrt(f_coeff(2,1,1,1,iomega)**2*q_sampl(1)**2+&
-&                                                     f_coeff(3,1,1,1,iomega)**2*q_sampl(2)**2))
+             func = f_coeff(1,1,1,1,iomega)*exp(-sqrt(f_coeff(2,1,1,1,iomega)**2*(q_sampl(2)+a(2,1)/a(1,1)*q_sampl(1))**2+&
+&                                                     f_coeff(3,1,1,1,iomega)**2*(q_sampl(1)+a(1,2)/a(2,2)*q_sampl(2))**2))
              W_sampl = vslab*func*vslab/r1/(1-vslab*func)
              func = func*iku_v_norm(q_sampl)**2
              !

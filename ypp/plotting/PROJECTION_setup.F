@@ -75,7 +75,7 @@ subroutine PROJECTION_setup( what ,bands )
  ! GRID creation
  !===============
  if (l_PROJECT_line) then
-   PROJECT_N_par=PROJECT_steps+1
+   PROJECT_N_par=CIRCUIT_k%nbz
    call PROJECTION_perpendicular_sampling(CIRCUIT_k,axis(3,:))
  endif
  !

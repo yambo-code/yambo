@@ -79,7 +79,6 @@ subroutine PROJECTION_perpendicular_sampling( K, versor )
  !
  call live_timing('[PROJECT] Perpendicular sampling: filling',K%nbz)
  !
- !
  GRID_k%nbz=K%nbz*PROJECT_N_perp
  allocate(GRID_k%pt(GRID_k%nbz,3))
  GRID_k%pt=0._SP

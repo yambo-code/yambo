@@ -87,7 +87,6 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  character(len=30) :: rowfmt
  character(schlen) :: extraction
-
  !
  ! Non hermitian not implemented yet!
  !
@@ -95,10 +94,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
  call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
  !
- !if(.not.present(V_left)) call MatCreateVecs(M_slepc,xr,xi,ierr)
- !if(     present(V_left)) call MatCreateVecs(M_slepc,xr,xr_left,xi,xi_left,ierr)
- if(.not.present(V_left)) call MatCreateVecs(M_slepc,xr,ierr)
- if(     present(V_left)) call MatCreateVecs(M_slepc,xr,xr_left,ierr)
+ call MatCreateVecs(M_slepc,xr,xr_left,ierr)
  !
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Create the eigensolver and display info
@@ -294,12 +290,8 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  endif
  !
  call EPSDestroy(eps,ierr)
- if (present(V_left)) then
-   call VecDestroy(xr_left,ierr)
-   !call VecDestroy(xi_left,ierr)
- endif
  call VecDestroy(xr,ierr)
- !call VecDestroy(xi,ierr)
+ call VecDestroy(xr_left,ierr)
  call SlepcFinalize(ierr)
  !
 end subroutine

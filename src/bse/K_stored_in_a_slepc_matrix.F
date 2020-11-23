@@ -84,11 +84,11 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
    !
    do i_r=1,BS_blk(i_B)%size(1)
      !
-     H_pos(1)=BS_blk(i_B)%coordinate(1)+i_r-1
+     H_pos(1)=BS_blk(i_B)%coordinate(1)+i_r-2
      !
      do i_c=1,BS_blk(i_B)%size(2)
        !
-       H_pos(2)=BS_blk(i_B)%coordinate(2)+i_c-1
+       H_pos(2)=BS_blk(i_B)%coordinate(2)+i_c-2
        !
        ! Then the upper triangle of each block and direct symmetrization
        !
@@ -100,13 +100,11 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
        ! Add energies to the diagonal
        !
        if(H_pos(1)+H_shift(1)==H_pos(2)+H_shift(2)) then
-         Mij=real(Mij)+BSS_eh_E(H_pos(1)+H_shift(1))*cONE
+         Mij=real(Mij)+BSS_eh_E(H_pos(1)+H_shift(1)+1)*cONE
          if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
-           Mij=Mij+cI*BSS_eh_W(H_pos(1)+H_shift(1))
+           Mij=Mij+cI*BSS_eh_W(H_pos(1)+H_shift(1)+1)
          endif
        endif
-       !
-       H_pos=H_pos-1
        !
        select case(BS_blk(i_B)%mode)
        case("R")
@@ -117,7 +115,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
            ! The anti-resonant block is A=-R*
            call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1),-conjg(Mij), INSERT_VALUES, ierr )
            ! The anti-resonant block is hermitian
-           call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1),       Mij, INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1),      -Mij, INSERT_VALUES, ierr )
          endif
        case("C")
            call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )

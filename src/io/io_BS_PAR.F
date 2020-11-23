@@ -154,6 +154,9 @@ subroutine io_BS_PAR_init(iq,X,ID)
      BS_IO_dim(:,3) = (/BS_K_dim(2),BS_K_dim(1)/)
      dim_names(:,4) = [character(schlen) :: 'complex', 'BS_K_dim2', 'BS_K_dim2']
      BS_IO_dim(:,4) = (/BS_K_dim(2),BS_K_dim(2)/)
+   else if (BS_K_coupling) then
+     dim_names(:,2) = [character(schlen) :: 'complex', 'BS_K_dim1', 'BS_K_dim1']
+     BS_IO_dim(:,2) = (/BS_K_dim(1),BS_K_dim(1)/)
    endif
    !
  endif

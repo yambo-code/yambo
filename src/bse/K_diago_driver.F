@@ -59,8 +59,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use slepcepsdef
  use petscmatdef
  !
- use BS_solvers,     ONLY:BSS_slepc_extraction,Slepc_shell,BSS_slepc_ncv,&
-&                         BSS_slepc_tol,BSS_target_E,Slepc_v,BS_HAYVEC_free
+ use BS_solvers,     ONLY:BSS_slepc_matrix,Slepc_v,BS_HAYVEC_free
 #endif
 #if defined _KERR
  use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum
@@ -76,7 +75,7 @@ subroutine K_diago_driver(iq,W,X_static)
  ! Work Space
  !
  integer       :: i_BS_mat
- logical       :: K_is_not_hermitian,l_diago,l_slepc
+ logical       :: K_is_not_hermitian,l_diago,l_slepc,l_target_energy
  character(1)  :: sec
  character(5)  :: Solver
  !
@@ -85,9 +84,6 @@ subroutine K_diago_driver(iq,W,X_static)
 #if defined _SLEPC && !defined _SLEPC_OFF
  Mat                   :: slepc_mat
  PetscErrorCode        :: ierr
- PetscFortranInt       :: slepc_ncv
- PetscReal             :: slepc_tol
- PetscScalar           :: slepc_target_E
 #endif
  !
  ! Excitonic hamiltonian, residuals independent
@@ -199,9 +195,9 @@ subroutine K_diago_driver(iq,W,X_static)
      if(l_slepc) then
        ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
        ! using the K_multiply_by_V function used in the Haydock method
-       if (     Slepc_shell) call K_shell_matrix(i_BS_mat,slepc_mat)
+       if (.not.BSS_slepc_matrix) call K_shell_matrix(i_BS_mat,slepc_mat)
        ! 2. Here we create a distributed PETSC matrix from the BS_blks
-       if (.not.Slepc_shell) call K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
+       if (     BSS_slepc_matrix) call K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
      endif
 #endif
      !
@@ -221,8 +217,7 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
 #if defined _SLEPC && !defined _SLEPC_OFF
-       if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
-  &                                  BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
+       if(l_slepc) call MATRIX_slepc(slepc_mat,l_target_energy,BSS_n_eig,BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
 #endif
        !
        if (BSS_write_eig_2_db) BS_mat=BS_V_right
@@ -231,8 +226,7 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
 #if defined _SLEPC && !defined _SLEPC_OFF
-       if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
-  &                                  BS_mat,E_real=BS_E_real)
+       if(l_slepc) call MATRIX_slepc(slepc_mat,l_target_energy,BSS_n_eig,BS_mat,E_real=BS_E_real)
 #endif
        !
        BS_E=cmplx(BS_E_real,0._SP,SP)
@@ -417,6 +411,10 @@ subroutine K_diago_driver(iq,W,X_static)
 #if defined _SLEPC && !defined _SLEPC_OFF
    subroutine K_slepc_local_init()
      !
+     ! Here we will have two options to initialize the slepc matrix:
+     call parser('BSSSlepcMatrix',BSS_slepc_matrix)
+     call parser('BSSEnTarget',l_target_energy)
+     !
      ! Number of states for partial diagonalization
      !================================================
      if (BSS_n_eig==0) then
@@ -438,13 +436,6 @@ subroutine K_diago_driver(iq,W,X_static)
        BSS_n_eig = 1
      endif
      !
-     ! Here we will have two options to initialize the slepc matrix:
-     call parser('BSSSlepcShell',Slepc_shell)
-     !
-     slepc_ncv      = BSS_slepc_ncv
-     slepc_tol      = BSS_slepc_tol
-     slepc_target_E = BSS_target_E
-     !
      call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
      !
    end subroutine K_slepc_local_init
@@ -453,7 +444,7 @@ subroutine K_diago_driver(iq,W,X_static)
      ! 
      use parallel_m,  ONLY:PAR_IND_T_Haydock
      !
-     if (Slepc_shell) then
+     if (.not.BSS_slepc_matrix) then
        call BS_HAYVEC_free(Slepc_v%Vi)
        call BS_HAYVEC_free(Slepc_v%Vo) 
        deallocate(Slepc_v%Vi)

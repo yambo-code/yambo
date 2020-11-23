@@ -53,7 +53,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig
 #if defined _SLEPC && !defined _SLEPC_OFF
- use BS_solvers,    ONLY:BSS_target_E,BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol
+ use BS_solvers,    ONLY:BSS_slepc_target_E,BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit
 #endif
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits,FXC_PF_alpha
@@ -324,11 +324,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs')
 #if defined _SLEPC && !defined _SLEPC_OFF
- call it(defs,'BSSNEig',    '[SLEPC] Number of eigenvalues to compute',BSS_n_eig)
- call it(defs,'BSSEnTarget','[SLEPC] Target energy to find eigenvalues',BSS_target_E,E_unit,verb_level=V_resp)
- call it(defs,'BSSSlepcExtraction' , '[SLEPC] Extraction technique (ritz|harmonic)',BSS_slepc_extraction,verb_level=V_resp)
- call it(defs,'BSSSlepcNCV', '[SLEPC] Dimension of the subspace',BSS_slepc_ncv,verb_level=V_resp)
- call it(defs,'BSSSlepcTol', '[SLEPC] Tolerance for the iterative solver',BSS_slepc_tol,verb_level=V_resp)
+ call it(defs,'BSSNEig',       '[SLEPC] Number of eigenvalues to compute',BSS_n_eig)
+ call it(defs,'BSSEnTarget',   '[SLEPC] Target energy to find eigenvalues',BSS_slepc_target_E,E_unit,verb_level=V_resp)
+ call it(defs,'BSSSlepcMaxIt', '[SLEPC] Maximum number of iterations',BSS_slepc_maxit,verb_level=V_resp)
+ call it(defs,'BSSSlepcExtrac','[SLEPC] Extraction technique (ritz|harmonic)',BSS_slepc_extraction,verb_level=V_resp)
+ call it(defs,'BSSSlepcNCV',   '[SLEPC] Dimension of the subspace',BSS_slepc_ncv,verb_level=V_resp)
+ call it(defs,'BSSSlepcTol',   '[SLEPC] Tolerance for the iterative solver',BSS_slepc_tol,verb_level=V_resp)
+ call it('f',defs,'BSSSlepcMatrix','[SLEPC] Store slepc matrix, faster but more memory consuming',verb_level=V_resp)
 #endif
 #if !defined _SC
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)

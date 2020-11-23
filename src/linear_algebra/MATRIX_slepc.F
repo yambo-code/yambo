@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
+subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cmpl)
  !
  ! 10/06/2016 HM
  ! Use slepc to obtain the first few eigenpairs of a large matrix
@@ -30,8 +30,9 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
  !
  use pars,          ONLY : SP,schlen
  use com,           ONLY : msg
- use parser_m,      ONLY : parser
  use stderr,        ONLY : intc
+ use BS_solvers,    ONLY : BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_maxit,&
+ &                         BSS_slepc_tol,BSS_slepc_target_E
  !
  ! headers
  !
@@ -55,16 +56,13 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
  !
  ! arguments
  !
+ Mat                         :: M_slepc
+ logical                     :: l_target_energy
  integer                     :: n_eig         ! number of eigenvalues to compute
  complex(SP)                 :: V_right(:,:)  ! right eigenvalues
  complex(SP),  optional      :: V_left(:,:)   ! left eigenvalues
  complex(SP),  optional      :: E_cmpl(:)     ! complex eigenvalues
  real(SP),     optional      :: E_real(:)     ! real eigenvalues
- character(schlen)           :: extraction    ! extraction method for the eigenvalues
- !
- PetscScalar                 :: target_energy
- PetscReal                   :: slepc_tol
- PetscFortranInt             :: slepc_ncv
  ! 
  ! internal variables
  !
@@ -72,10 +70,10 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
  !
  external :: MyEPSMonitor !function to monitor the convergence
  ! 
- Mat            :: M_slepc
  EPS            :: eps
  EPSExtraction  :: extr
  PetscReal      :: tol, ferror
+ PetscScalar    :: target_energy
  PetscErrorCode ::ierr
  PetscInt       :: nev, ncv, mpd, maxit, its, nconv, n, i, j
  PetscInt       :: idx(2)
@@ -87,8 +85,9 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
  PetscMPIInt    ::  rank
  VecScatter     ::  ctxr, ctxi, ctxr_left, ctxi_left
  !
- logical           :: l_target_energy
  character(len=30) :: rowfmt
+ character(schlen) :: extraction
+
  !
  ! Non hermitian not implemented yet!
  !
@@ -120,10 +119,9 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
    call EPSSetProblemType(eps,EPS_HEP,ierr)
  endif
  !
- call parser('BSSEnTarget',l_target_energy)
- !
  if (l_target_energy) then
-   call msg( 'ns', '[SLEPC] Criterion is target energy       ', real(target_energy,SP) )
+   target_energy=BSS_slepc_target_E
+   call msg( 'ns', '[SLEPC] Criterion is target energy        ', BSS_slepc_target_E )
    call EPSSetTarget(eps,target_energy,ierr)
    call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
  else
@@ -131,6 +129,9 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
    call EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr)
  endif
  !
+ call msg( 's', '[SLEPC] Extraction method                 ',BSS_slepc_extraction)
+ !
+ extraction=BSS_slepc_extraction
  if      (extraction == 'ritz')              then
    extr = EPS_RITZ
  else if (extraction == 'harmonic')          then
@@ -146,7 +147,6 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
  else if (extraction == 'refined_harmonic')  then
    extr = EPS_REFINED_HARMONIC
  endif
- call msg( 's', '[SLEPC] Extraction method                ', extraction)
  !
  call EPSSetExtraction(eps, extr, ierr)
  !
@@ -158,16 +158,16 @@ subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_t
  ! Set solver parameters at runtime
  !
  nev = n_eig
- !if ( (present(slepc_ncv)) .and. (slepc_ncv.ne.0) ) then
- if ( slepc_ncv.ne.0 ) then
-   ncv = slepc_ncv
- else
-   ncv = PETSC_DECIDE
- endif 
-
+ if ( BSS_slepc_ncv/=0 ) ncv = BSS_slepc_ncv
+ if ( BSS_slepc_ncv==0 ) ncv = PETSC_DECIDE
+ !
  call EPSSetDimensions(eps,nev,ncv,PETSC_DECIDE,ierr)
  !
- call EPSSetTolerances(eps,slepc_tol,PETSC_DECIDE, ierr)
+ if ( BSS_slepc_maxit/=0 ) maxit = BSS_slepc_maxit
+ if ( BSS_slepc_maxit==0 ) maxit = PETSC_DECIDE
+ !
+ tol      = BSS_slepc_tol
+ call EPSSetTolerances(eps,tol,maxit, ierr)
  !
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Optional: Get some information from the solver and display it

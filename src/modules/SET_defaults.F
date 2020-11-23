@@ -73,7 +73,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
  use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _SLEPC_OFF
- use BS_solvers, ONLY:BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol, BSS_target_E, Slepc_shell
+ use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
@@ -481,10 +481,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
 #if defined _SLEPC && !defined _SLEPC_OFF
  BSS_slepc_extraction='ritz'
+ BSS_slepc_maxit=0
  BSS_slepc_ncv=0
  BSS_slepc_tol=1E-6_SP
- BSS_target_E=0
- Slepc_shell=.TRUE.
+ BSS_slepc_target_E=0._SP
 #endif
  !
  ! TDDFT

@@ -125,7 +125,7 @@ contains
    !
    E(1:npr)=Eaux(1:npr)
    do i=np,npr+1,-1
-     E(i)=cmplx(1._Sp,-1._SP)
+     E(i)=1._Sp-cI*epsilon(1._SP)
    enddo
    !
  end subroutine mpa_cond

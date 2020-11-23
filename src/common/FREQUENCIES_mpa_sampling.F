@@ -127,15 +127,24 @@
                w(np)=real(w2,SP)+cZERO+uni
                lp=log(-1._SP+np)/log(2._SP)
                r=mod(np-1,2**lp)
-               do i=2,2*r
-                 w(np+i)=w1+ws*(i-1)/2._SP**(lp+1)
-                 w(i)=real(w(np+i),SP)+uni 
-               enddo
-               !
-               do i=2*r+1,np-1
-                 w(np+i)=w1+ws*(i-1-r)/2._SP**(lp)
-                 w(i)=real(w(np+i),SP)+uni 
-               enddo
+               if (r>0) then
+                 do i=2,2*r
+                   w(np+i)=w1+ws*(i-1)/2._SP**(lp+1)
+                   w(i)=real(w(np+i),SP)+uni 
+                 enddo
+                 !
+                 do i=2*r+1,np-1
+                   w(np+i)=w1+ws*(i-1-r)/2._SP**(lp)
+                   w(i)=real(w(np+i),SP)+uni 
+                 enddo
+               else
+                 w(np+2)=w1+ws/2._SP**(lp+1)
+                 w(2)=real(w(np+2),SP)+uni 
+                 do i=2*r+3,np-1
+                   w(np+i)=w1+ws*(i-2-r)/2._SP**(lp)
+                   w(i)=real(w(np+i),SP)+uni 
+                 enddo
+               endif  
                !
            end select
          case('1l') !1line

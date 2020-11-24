@@ -58,7 +58,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  !type(phel_scatterings):: phel_info
  logical               :: l_phel_allowed
  real(SP)              :: ph_freq,Delta_Broad
- real(SP)              :: broad_factor=3._SP !8000._SP
+ real(SP)              :: broad_factor=3._SP
  integer               :: i_loop,n_loops
  ! ... band/branch index ...
  integer               :: il,i_n,i_np
@@ -169,6 +169,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
                  l_phel_allowed = (DELTA_E >  ph_freq - Delta_Broad .and. DELTA_E <  ph_freq + Delta_Broad ) .or. &
 &                                 (DELTA_E > -ph_freq - Delta_Broad .and. DELTA_E < -ph_freq + Delta_Broad )
                  !
+                 !l_phel_allowed = .true.
                  if (l_phel_allowed) then
                    !
                    phel_info%transitions(1)         = phel_info%transitions(1)+1

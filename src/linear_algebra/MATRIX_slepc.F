@@ -32,13 +32,14 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  use com,           ONLY : msg
  use stderr,        ONLY : intc
  use BS_solvers,    ONLY : BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_maxit,&
- &                         BSS_slepc_tol,BSS_slepc_target_E
+ &                         BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_precondition
  !
  ! headers
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
+#include <petsc/finclude/petscpc.h>
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
  !
@@ -71,10 +72,18 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  external :: MyEPSMonitor !function to monitor the convergence
  ! 
  EPS            :: eps
+ ST             :: st    ! spectral transformation context
+ KSP            :: ksp
+ PC             :: pc
+ !
+ STType         :: strun
+ KSPType        :: ksprun
+ PCType         :: pcrun
+ !
  EPSExtraction  :: extr
  PetscReal      :: tol, ferror
  PetscScalar    :: target_energy
- PetscErrorCode ::ierr
+ PetscErrorCode :: ierr
  PetscInt       :: nev, ncv, mpd, maxit, its, nconv, n, i, j
  PetscInt       :: idx(2)
  PetscScalar    :: kr, ki
@@ -86,7 +95,6 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  VecScatter     ::  ctxr, ctxi, ctxr_left, ctxi_left
  !
  character(len=30) :: rowfmt
- character(schlen) :: extraction
  !
  ! Non hermitian not implemented yet!
  !
@@ -109,11 +117,65 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  if(     present(V_left)) then
    ! To do: to check if it can be cast in the form of a generalized hermitian problem
    call EPSSetProblemType(eps,EPS_NHEP,ierr)
-   call EPSSetTwoSided(eps,PETSC_TRUE,ierr)
    call EPSSetFromOptions(eps,ierr)
+   call EPSSetTwoSided(eps,PETSC_TRUE,ierr)
  else
    call EPSSetProblemType(eps,EPS_HEP,ierr)
  endif
+ !
+ call msg( 's', '[SLEPC] Approach                          ',EPSKRYLOVSCHUR)
+ !
+ ! See end of file for options
+ !
+ ! * Krylov subspaces: EPSKRYLOVSCHUR, STPPRECOND not accepted,
+ !                        STSINVERT + KSPPREONLY+ PCJACOBI gives wrong eigenvalues. Too strong (?)
+ !                                  +  KSPBCGS  + PCJACOBI works fine
+ !
+ ! * Generalized-Davidson: EPSGD, RIGHT VECTORS ONLY
+ !                       STPPRECOND + KSPPREONLY + PCJACOBY very fast for few eigenvectors
+ !
+ ! * Jacob-Davidson: EPSJD, NOT WORKING WITH KSP PREONLY
+ !                    STPPRECOND + KSPCG SUPER-SLOW + PCJACOBY super slow
+ !
+ call EPSSetType(eps,EPSKRYLOVSCHUR,ierr)
+ !
+ if (BSS_slepc_precondition/="none") then
+   !
+   strun=STSINVERT
+   ksprun=KSPBCGS
+   pcrun=PCJACOBI
+   !
+   if(index(BSS_slepc_precondition,KSPPREONLY)/=0)  ksprun=KSPPREONLY
+   if(index(BSS_slepc_precondition,KSPBCGS)/=0)  ksprun=KSPBCGS
+   if(index(BSS_slepc_precondition,PCJACOBI)/=0) pcrun=PCJACOBI
+   !
+   BSS_slepc_precondition=trim(ksprun)//"+"//trim(pcrun)
+   !
+   call msg( 's', '[SLEPC] Precondition method               ',BSS_slepc_precondition)
+   !
+   call EPSGetST(eps,st,ierr)
+   call STGetKSP(st,ksp,ierr)
+   call KSPGetPC(ksp,pc,ierr)
+   !
+   call STSetType(st,strun,ierr)
+   call KSPSetType(ksp,ksprun,ierr)
+   call PCSetType(pc,pcrun,ierr)
+   !
+ endif
+ !
+ call msg( 's', '[SLEPC] Extraction method                 ',BSS_slepc_extraction)
+ !
+ if (BSS_slepc_extraction == 'ritz')              extr = EPS_RITZ
+ if (BSS_slepc_extraction == 'harmonic')          extr = EPS_HARMONIC         
+ if (BSS_slepc_extraction == 'harmonic_relative') extr = EPS_HARMONIC_RELATIVE
+ if (BSS_slepc_extraction == 'harmonic_right')    extr = EPS_HARMONIC_RIGHT
+ if (BSS_slepc_extraction == 'harmonic_largest')  extr = EPS_HARMONIC_LARGEST
+ if (BSS_slepc_extraction == 'refined')           extr = EPS_REFINED
+ if (BSS_slepc_extraction == 'refined_harmonic')  extr = EPS_REFINED_HARMONIC
+ !
+ call EPSSetExtraction(eps, extr, ierr)
+ !
+ call msg( 's', '[SLEPC] Number of requested eigenvalues   ', n_eig ) 
  !
  if (l_target_energy) then
    target_energy=BSS_slepc_target_E
@@ -124,32 +186,6 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    call msg( 'ns', '[SLEPC] Criterion is smaller eigenvalues')
    call EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr)
  endif
- !
- call msg( 's', '[SLEPC] Extraction method                 ',BSS_slepc_extraction)
- !
- extraction=BSS_slepc_extraction
- if      (extraction == 'ritz')              then
-   extr = EPS_RITZ
- else if (extraction == 'harmonic')          then
-   extr = EPS_HARMONIC         
- else if (extraction == 'harmonic_relative') then
-   extr = EPS_HARMONIC_RELATIVE
- else if (extraction == 'harmonic_right')    then
-   extr = EPS_HARMONIC_RIGHT
- else if (extraction == 'harmonic_largest')  then
-   extr = EPS_HARMONIC_LARGEST
- else if (extraction == 'refined')           then
-   extr = EPS_REFINED
- else if (extraction == 'refined_harmonic')  then
-   extr = EPS_REFINED_HARMONIC
- endif
- !
- call EPSSetExtraction(eps, extr, ierr)
- !
- !set type of problem
- !call EPSSetType(eps,EPSLAPACK,ierr)
- !call EPSSetType(eps,EPSKRYLOVSCHUR,ierr)
-
  !
  ! Set solver parameters at runtime
  !
@@ -171,7 +207,6 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !call EPSGetType(eps,tname,ierr)
  call EPSGetTolerances(eps,tol,maxit,ierr)
  !
- call msg( 's', '[SLEPC] Number of requested eigenvalues   ', int(nev) )
  call msg( 's', '[SLEPC] Stopping condition tolerance      ', real(tol,SP) )
  call msg( 's', '[SLEPC] Stopping condition max iterations ', int(maxit) )
 
@@ -341,3 +376,137 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
  ierr = 0
  !
 end subroutine
+!
+!
+ !
+ ! eps type
+ !============
+ !EPSPOWER       "power"
+ !EPSSUBSPACE    "subspace"
+ !EPSARNOLDI     "arnoldi"
+ !EPSLANCZOS     "lanczos"         ! RIGHT VECTORS ONLY
+ !EPSKRYLOVSCHUR "krylovschur"     ! NO STPPRECOND, WITH STSINVERT+KSPPREONY + PCJACOBY gives wrong eigenvalues. Too strong (?)
+                                   !                     STSINVERT+KSPBCGS + PCHYPRE (+ BOOMERANG)
+ !EPSGD          "gd"              ! RIGHT VECTORS ONLY, PREONLY, VERY FAST FOR FEW EIGEN
+ !EPSJD          "jd"              ! NOT WORKING WITH KSP PREONLY, WITH KSPCG SUPE-SLOW
+ !EPSRQCG        "rqcg"            ! HERMITIAN ONLY
+ !EPSLOBPCG      "lobpcg"          ! HERMITIAN ONLY
+ !EPSCISS        "ciss"
+ !EPSLYAPII      "lyapii"
+ !EPSLAPACK      "lapack"
+ !EPSARPACK      "arpack"
+ !EPSBLZPACK     "blzpack"
+ !EPSTRLAN       "trlan"
+ !EPSBLOPEX      "blopex"
+ !EPSPRIMME      "primme"
+ !EPSFEAST       "feast"
+ !EPSSCALAPACK   "scalapack"
+ !EPSELPA        "elpa"
+ !EPSELEMENTAL   "elemental"
+ !
+ !
+ ! ksp type
+ !============
+ !KSPRICHARDSON "richardson"
+ !KSPCHEBYSHEV  "chebyshev"
+ !KSPCG         "cg"
+ !KSPGROPPCG    "groppcg"
+ !KSPPIPECG     "pipecg"
+ !KSPPIPECGRR   "pipecgrr"
+ !KSPPIPELCG     "pipelcg"
+ !KSPPIPEPRCG    "pipeprcg"
+ !KSPPIPECG2     "pipecg2"
+ !  KSPCGNE       "cgne"
+ !  KSPNASH       "nash"
+ !  KSPSTCG       "stcg"
+ !  KSPGLTR       "gltr"
+ !    KSPCGNASH  PETSC_DEPRECATED_MACRO("GCC warning \"KSPCGNASH macro is deprecated use KSPNASH (since version 3.11)\"")  "nash"
+ !    KSPCGSTCG  PETSC_DEPRECATED_MACRO("GCC warning \"KSPCGSTCG macro is deprecated use KSPSTCG (since version 3.11)\"")  "stcg"
+ !    KSPCGGLTR  PETSC_DEPRECATED_MACRO("GCC warning \"KSPCGGLTR macro is deprecated use KSPSGLTR (since version 3.11)\"") "gltr"
+ !KSPFCG        "fcg"
+ !KSPPIPEFCG    "pipefcg"
+ !KSPGMRES      "gmres"
+ !KSPPIPEFGMRES "pipefgmres"
+ !  KSPFGMRES     "fgmres"
+ !  KSPLGMRES     "lgmres"
+ !  KSPDGMRES     "dgmres"
+ !  KSPPGMRES     "pgmres"
+ !KSPTCQMR      "tcqmr"
+ !KSPBCGS       "bcgs"
+ !  KSPIBCGS      "ibcgs"
+ !  KSPFBCGS      "fbcgs"
+ !  KSPFBCGSR     "fbcgsr"
+ !  KSPBCGSL      "bcgsl"
+ !  KSPPIPEBCGS   "pipebcgs"
+ !KSPCGS        "cgs"
+ !KSPTFQMR      "tfqmr"
+ !KSPCR         "cr"
+ !KSPPIPECR     "pipecr"
+ !KSPLSQR       "lsqr"
+ !KSPPREONLY    "preonly"
+ !KSPQCG        "qcg"
+ !KSPBICG       "bicg"
+ !KSPMINRES     "minres"
+ !KSPSYMMLQ     "symmlq"
+ !KSPLCD        "lcd"
+ !KSPPYTHON     "python"
+ !KSPGCR        "gcr"
+ !KSPPIPEGCR    "pipegcr"
+ !KSPTSIRM      "tsirm"
+ !KSPCGLS       "cgls"
+ !KSPFETIDP     "fetidp"
+ !KSPHPDDM      "hpddm"
+ !
+ !
+ ! pc type
+ !============
+ !PCNONE            "none"
+ !PCJACOBI          "jacobi"
+ !PCSOR             "sor"
+ !PCLU              "lu"
+ !PCSHELL           "shell"
+ !PCBJACOBI         "bjacobi"
+ !PCMG              "mg"
+ !PCEISENSTAT       "eisenstat"
+ !PCILU             "ilu"
+ !PCICC             "icc"
+ !PCASM             "asm"
+ !PCGASM            "gasm"
+ !PCKSP             "ksp"
+ !PCCOMPOSITE       "composite"
+ !PCREDUNDANT       "redundant"
+ !PCSPAI            "spai"
+ !PCNN              "nn"
+ !PCCHOLESKY        "cholesky"
+ !PCPBJACOBI        "pbjacobi"
+ !PCVPBJACOBI       "vpbjacobi"
+ !PCMAT             "mat"
+ !PCHYPRE           "hypre"
+ !PCPARMS           "parms"
+ !PCFIELDSPLIT      "fieldsplit"
+ !PCTFS             "tfs"
+ !PCML              "ml"
+ !PCGALERKIN        "galerkin"
+ !PCEXOTIC          "exotic"
+ !PCCP              "cp"
+ !PCBFBT            "bfbt"
+ !PCLSC             "lsc"
+ !PCPYTHON          "python"
+ !PCPFMG            "pfmg"
+ !PCSYSPFMG         "syspfmg"
+ !PCREDISTRIBUTE    "redistribute"
+ !PCSVD             "svd"
+ !PCGAMG            "gamg"
+ !PCCHOWILUVIENNACL "chowiluviennacl"
+ !PCROWSCALINGVIENNACL "rowscalingviennacl"
+ !PCSAVIENNACL      "saviennacl"
+ !PCBDDC            "bddc"
+ !PCKACZMARZ        "kaczmarz"
+ !PCTELESCOPE       "telescope"
+ !PCPATCH           "patch"
+ !PCLMVM            "lmvm"
+ !PCHMG             "hmg"
+ !PCDEFLATION       "deflation"
+ !PCHPDDM           "hpddm"
+ !PCHARA            "hara"
+

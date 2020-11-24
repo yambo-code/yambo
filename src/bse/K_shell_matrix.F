@@ -67,7 +67,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  allocate(Slepc_v%Vi(BS_nT_grps))
  allocate(Slepc_v%Vo(BS_nT_grps))
  call BS_HAYVEC_alloc(Slepc_v%Vi)
- call BS_HAYVEC_alloc(Slepc_v%Vo) 
+ call BS_HAYVEC_alloc(Slepc_v%Vo)
  !
  ! Allocate slepc shell matrix
  !
@@ -79,7 +79,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  call MatShellSetOperation(slepc_mat,MATOP_MULT,K_multiply_by_V_slepc,ierr)
- call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_TRUE,ierr)
+ if(.not.BS_K_coupling) call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_TRUE,ierr)
  call MatSetUp(slepc_mat,ierr)
  !
  ! Allocate BS stuff

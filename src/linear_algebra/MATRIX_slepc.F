@@ -187,8 +187,8 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  call msg( 's', '[SLEPC] Number of iterations              ', int(its) )
  call EPSGetDimensions(eps,nev,ncv,mpd,ierr)
  call msg( 's', '[SLEPC] Number of eigenvalues        [NEV]', int(nev) )
- call msg( 's', '[SLEPC]                              [NCV]', int(ncv) )
- call msg( 's', '[SLEPC]                              [MPD]', int(mpd) )
+ call msg( 's', '[SLEPC] Max. subspace size of solver [NCV]', int(ncv) )
+ call msg( 's', '[SLEPC] Max. allowed dim             [MPD]', int(mpd) )
 
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Display solution and clean up

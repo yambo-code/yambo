@@ -32,7 +32,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,E_fine_grid
  use hamiltonian,    ONLY:B_mat_index
- use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid,nqibz
+ use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid,nqibz,nkDg
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
  use ELPH,           ONLY:PH_freqs_sq,elph_branches,PH_acoustic_branch,&
 &                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
@@ -59,7 +59,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  logical               :: l_phel_allowed
  real(SP)              :: ph_freq,Delta_Broad
  real(SP)              :: broad_factor=3._SP
- integer               :: i_loop,n_loops
+ integer               :: i_loop,n_loops,nk_FG_per_kpt,k_FG_range_end,p_FG_range_end
  ! ... band/branch index ...
  integer               :: il,i_n,i_np
  ! ... BZ index ...
@@ -68,6 +68,18 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  real(SP) :: DELTA_E,DELTA_W
  !
  n_loops=2
+ !
+ ! Select the double grid subset to use
+ !=====================================
+ if (nkDg < 0 .or. nkDg > k_FG%N) then
+   nk_FG_per_kpt = -1
+ else
+   if (nkDg == 0) then 
+     nk_FG_per_kpt=0
+   else
+     nk_FG_per_kpt=ceiling(float(nkDg)/float(k%nbz))
+   endif
+ endif
  !
  call phel_scatterings_alloc(phel_info,nqibz)
  !
@@ -113,6 +125,21 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
        ! Use k in the bz
        ik = ikbz
 #endif
+       !
+       if (nk_FG_per_kpt==-1) then 
+         k_FG_range_end = k_FG%k_range(ik,2)
+         p_FG_range_end = k_FG%k_range(ik_m_q,2)
+       endif
+       !
+       if (nk_FG_per_kpt==0) then 
+         k_FG_range_end = k_FG%k_range(ik,1)
+         p_FG_range_end = k_FG%k_range(ik_m_q,1)
+       endif      
+       !
+       if (nk_FG_per_kpt>0) then 
+         k_FG_range_end = k_FG%k_range(ik,1)+nk_FG_per_kpt
+         p_FG_range_end = k_FG%k_range(ik_m_q,1)+nk_FG_per_kpt
+       endif
        !
        ! Loop over il, i.e., phonon branches
        !====================================    

@@ -266,6 +266,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _PHEL
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
+ call it(defs,'KNumDgSubset' '[PHEL-DG] Size of subset of double grid k-points',nkDg)
 #else
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit,verb_level=V_qp)
 #endif

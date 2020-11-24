@@ -56,7 +56,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
-&                     cutoff_presets,k_map
+&                     cutoff_presets,k_map,nkDg
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
  use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
@@ -514,6 +514,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
 #if defined _PL
  PL_weights=(/1._SP,1._SP,1._SP/)
+#endif
+ !
+#if defined _PHEL
+ nkDg=-1
 #endif
  !
 #if defined _ELPH 

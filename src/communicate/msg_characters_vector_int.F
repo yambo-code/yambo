@@ -111,8 +111,9 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
  if (.not.write_to_log.or.(.not.STD_msg.and..not.LOG_msg)) return
  !
  msgfmt=composed_fmt('a',-size(val),.false.,-1)
-  if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then
-   write (lch,trim(msgfmt)) mesg//": ",(trim(val(i2)),i2=1,size(val))
+ if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then
+   call add_the_semi_column(mesg,nm,mesg_plus)
+   write (lch,trim(msgfmt)) mesg_plus(1:nm),(trim(val(i2)),i2=1,size(val))
  else
    write (lch,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
  endif

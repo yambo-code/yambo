@@ -49,7 +49,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  ! Work Space
  !
  integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2),i_a,Nk_path,last_ik
- real(SP)              :: io_Time,tmp_lifetimes(6),data_to_plot(9),k_al(3),k_cc(3),axis(3,3),&
+ real(SP)              :: io_Time,tmp_lifetimes(6),data_to_plot(9),k_al(3),k_cc(3),axis(3,3),E_carrier,&
 &                         data_to_plot_cumulative(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,9),O(3)
  character(schlen)     :: titles(9),specs(9,2),dumb_ch(2)
  character(lchlen)     :: output_fname_short(2),output_fname(2,RT_carriers%nstates)
@@ -128,8 +128,10 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  endif
  !
  if (l_OCCgroup_path) then
-   n_output=3
+   n_output=7
    titles(2:3) =(/'Delta_Occ[Ho]','Delta_Occ[El]'/)
+   titles(4:5) =(/'<E_Holes>[eV]','<E_Elecs>[eV]'/)
+   titles(6:7) =(/'<Var_Holes>[eV]','<Var_Elecs>[eV]'/)
  endif
  !
  n_gamma=0
@@ -167,7 +169,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    !
    data_to_plot(1)               =io_TIME/FS2AUT
    data_to_plot_cumulative(:,:,1)=io_TIME/FS2AUT
-   if (l_OCCgroup_path) data_to_plot(2:3)=rZERO
+   if (l_OCCgroup_path) data_to_plot(2:7)=rZERO
    !
    RT_loop: do i_RT=1,RT_carriers%nstates
      !
@@ -234,10 +236,15 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
          last_ik=ik_RT
          Nk_path=Nk_path+1
        endif
-       if (RT_carriers%E_bare(i_RT)+RT_carriers%delta_E(i_RT)<=0.) then
+       E_carrier=RT_carriers%E_bare(i_RT)+RT_carriers%delta_E(i_RT)
+       if (E_carrier<=0.) then
          data_to_plot(2)=data_to_plot(2)+RT_carriers%OCC_el%dN(i_RT)*RT_carriers%k_weight(ik_RT)
+         data_to_plot(4)=data_to_plot(4)+RT_carriers%OCC_el%dN(i_RT)*RT_carriers%k_weight(ik_RT)*E_carrier
+         data_to_plot(6)=data_to_plot(6)+RT_carriers%OCC_el%dN(i_RT)*RT_carriers%k_weight(ik_RT)*E_carrier**2.
        else
          data_to_plot(3)=data_to_plot(3)+RT_carriers%OCC_el%dN(i_RT)*RT_carriers%k_weight(ik_RT)
+         data_to_plot(5)=data_to_plot(5)+RT_carriers%OCC_el%dN(i_RT)*RT_carriers%k_weight(ik_RT)*E_carrier
+         data_to_plot(7)=data_to_plot(7)+RT_carriers%OCC_el%dN(i_RT)*RT_carriers%k_weight(ik_RT)*E_carrier**2.
        endif
      else
        data_to_plot(2)=RT_carriers%OCC_el%dN(i_RT)
@@ -267,8 +274,23 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    if (l_OCCgroup_path) then
      output_fname_short(1)='YPP-RT_cumulative_occupations'
      if (i_T==1) output_fname(1,1)=output_fname_short(1)
+     if (abs(data_to_plot(2))>0.) then
+       data_to_plot(4)=data_to_plot(4)/data_to_plot(2)
+       data_to_plot(6)=sqrt(data_to_plot(6)/data_to_plot(2)-data_to_plot(4)**2.)
+     else
+       data_to_plot(4)=rZERO
+       data_to_plot(6)=rZERO
+     endif
+     if (abs(data_to_plot(2))>0.) then
+       data_to_plot(5)=data_to_plot(5)/data_to_plot(3)
+       data_to_plot(7)=sqrt(data_to_plot(7)/data_to_plot(3)-data_to_plot(5)**2.)
+     else
+       data_to_plot(5)=rZERO
+       data_to_plot(7)=rZERO
+     endif
      call open_file( output_fname(1,1),output_fname_short(1))
-     call msg('o '//trim(output_fname_short(1)),'',(/data_to_plot(1),data_to_plot(2:3)/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(output_fname_short(1)),'',(/data_to_plot(1),data_to_plot(2:3),&
+&                                                    data_to_plot(4:7)*HA2EV/),INDENT=-2,USE_TABS=.true.)
      call of_open_close(output_fname(1,1))
    endif
    !

@@ -38,7 +38,7 @@ module PHEL
    integer, allocatable  :: transitions_at_q(:,:)
    real(SP), allocatable :: ratio_at_q(:)
    integer, allocatable  :: table(:,:) ! Indices of accepted transitions: 
-  end type phel_scatterings           ! 1-> il, 2-> iq, 3-> ikbz, 4-> ik, 5-> ip, 6-> ik_fg, 7->ip_fg, 8-> i_n, 9-> i_np
+  end type phel_scatterings           ! 1-> il, 2-> iq, 3-> ikbz, 4-> ik_fg, 5->ip_fg, 6-> i_n, 7-> i_np
  !
  type(phel_scatterings)  :: phel_info
  !
@@ -48,7 +48,7 @@ contains
     !
     type(phel_scatterings) :: phel_info
     integer :: nk
-    integer :: n_indices_table = 9
+    integer :: n_indices_table = 7
     !
     if (phel_info%transitions(1)/=0 .and. .not. allocated(phel_info%table) ) then
       YAMBO_ALLOC( phel_info%table, (phel_info%transitions(1),n_indices_table) )

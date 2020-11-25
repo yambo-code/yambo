@@ -213,7 +213,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
                    phel_info%transitions_at_q(iq,1) = phel_info%transitions_at_q(iq,1)+1
                    !
                    if (i_loop==2 .and. allocated(phel_info%table) ) &
-&                    phel_info%table(phel_info%transitions(1),:)= (/il,iq,ikbz,ik,ik_m_q,ik_rim,ip_rim,i_n,i_np/)
+&                    phel_info%table(phel_info%transitions(1),:)= (/il,iq,ikbz,ik_rim,ip_rim,i_n,i_np/)
                    !
                  endif
                  !

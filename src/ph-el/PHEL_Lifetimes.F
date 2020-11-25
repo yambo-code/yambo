@@ -87,12 +87,22 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    il     = phel_info%table(it,1) ! phonon branch
    iq     = phel_info%table(it,2) ! phonon momentum (ibz)
    ikbz   = phel_info%table(it,3) ! electron momentum (bz)
-   ik     = phel_info%table(it,4) ! electron momentum (ibz or bz)
-   ik_m_q = phel_info%table(it,5) ! scattered momentum (ibz or bz)
-   ik_rim = phel_info%table(it,6) ! fine grid elec. momentum
-   ip_rim = phel_info%table(it,7) ! fine grid scattered elec. momentum
-   i_n    = phel_info%table(it,8) ! electronic band
-   i_np   = phel_info%table(it,9) ! electronic band
+   ik_rim = phel_info%table(it,4) ! fine grid elec. momentum
+   ip_rim = phel_info%table(it,5) ! fine grid scattered elec. momentum
+   i_n    = phel_info%table(it,6) ! electronic band
+   i_np   = phel_info%table(it,7) ! electronic band
+   !
+#if defined _RT
+   ! Obtain k-q in the ibz from k in the bz and q in the ibz: 
+   ik_m_q =k%sstar(qindx_X(iq,ikbz,1),1)
+   ! Obtain k in the ibz from k in the bz: 
+   ik = k%sstar(ikbz,1)
+#else
+   ! Obtain k-q in the bz from k in the bz and q in the ibz
+   ik_m_q = qindx_X(iq,ikbz,1)
+   ! Use k in the bz
+   ik = ikbz
+#endif
    !
    ! Index for q-parallelised quantities
    iq_mem =PARs_PH_Q_ibz%table(iq)

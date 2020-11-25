@@ -32,7 +32,8 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  use com,           ONLY : msg
  use stderr,        ONLY : intc
  use BS_solvers,    ONLY : BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_maxit,&
- &                         BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_precondition
+ &                         BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_precondition,&
+ &                         BSS_slepc_approach
  !
  ! headers
  !
@@ -76,9 +77,10 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  KSP            :: ksp
  PC             :: pc
  !
- STType         :: strun
- KSPType        :: ksprun
- PCType         :: pcrun
+ EPSType        :: epskind
+ STType         :: stkind
+ KSPType        :: kspkind
+ PCType         :: pckind
  !
  EPSExtraction  :: extr
  PetscReal      :: tol, ferror
@@ -123,8 +125,6 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    call EPSSetProblemType(eps,EPS_HEP,ierr)
  endif
  !
- call msg( 's', '[SLEPC] Approach                          ',EPSKRYLOVSCHUR)
- !
  ! See end of file for options
  !
  ! * Krylov subspaces: EPSKRYLOVSCHUR, STPPRECOND not accepted,
@@ -137,19 +137,41 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! * Jacob-Davidson: EPSJD, NOT WORKING WITH KSP PREONLY
  !                    STPPRECOND + KSPCG SUPER-SLOW + PCJACOBY super slow
  !
- call EPSSetType(eps,EPSKRYLOVSCHUR,ierr)
+ ! Default
+ epskind=EPSKRYLOVSCHUR
+ ! From user
+ if(BSS_slepc_approach=="Krylov-Schur")          epskind=EPSKRYLOVSCHUR
+ if(BSS_slepc_approach=="Generalized-Davidson")  epskind=EPSGD
+ if(BSS_slepc_approach=="Jacob-Davidson")        epskind=EPSJD
+ !if(BSS_slepc_approach=="Scalapack")             epskind=EPSSCALAPACK
+ !if(BSS_slepc_approach=="ELPA")                  epskind=EPSELPA
+ ! In case input is mispelled fallback to Krylov-Schur
+ if (epskind==EPSKRYLOVSCHUR) BSS_slepc_approach="Krylov-Schur"
+ !
+ call msg( 's', '[SLEPC] Approach                          ',BSS_slepc_approach)
+ !
+ call EPSSetType(eps,epskind,ierr)
  !
  if (BSS_slepc_precondition/="none") then
    !
-   strun=STSINVERT
-   ksprun=KSPBCGS
-   pcrun=PCJACOBI
+   if (epskind==EPSKRYLOVSCHUR) stkind=STSINVERT
+   if (epskind==EPSGD)          stkind=STPRECOND
+   if (epskind==EPSJD)          stkind=STPRECOND
    !
-   if(index(BSS_slepc_precondition,KSPPREONLY)/=0)  ksprun=KSPPREONLY
-   if(index(BSS_slepc_precondition,KSPBCGS)/=0)  ksprun=KSPBCGS
-   if(index(BSS_slepc_precondition,PCJACOBI)/=0) pcrun=PCJACOBI
+   ! Default
+   if (stkind==STSINVERT)                           kspkind=KSPBCGS
+   if (stkind==STPRECOND .and. epskind==EPSGD)      kspkind=KSPPREONLY
+   if (stkind==STPRECOND .and. epskind==EPSJD)      kspkind=KSPBCGS
+   ! From user
+   if(index(BSS_slepc_precondition,KSPPREONLY)/=0)  kspkind=KSPPREONLY
+   if(index(BSS_slepc_precondition,KSPBCGS)/=0)     kspkind=KSPBCGS
    !
-   BSS_slepc_precondition=trim(ksprun)//"+"//trim(pcrun)
+   ! Default
+   pckind=PCJACOBI
+   ! From user
+   if(index(BSS_slepc_precondition,PCJACOBI)/=0)    pckind=PCJACOBI
+   !
+   BSS_slepc_precondition=trim(kspkind)//"+"//trim(pckind)
    !
    call msg( 's', '[SLEPC] Precondition method               ',BSS_slepc_precondition)
    !
@@ -157,9 +179,9 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    call STGetKSP(st,ksp,ierr)
    call KSPGetPC(ksp,pc,ierr)
    !
-   call STSetType(st,strun,ierr)
-   call KSPSetType(ksp,ksprun,ierr)
-   call PCSetType(pc,pcrun,ierr)
+   call STSetType(st,stkind,ierr)
+   call KSPSetType(ksp,kspkind,ierr)
+   call PCSetType(pc,pckind,ierr)
    !
  endif
  !
@@ -385,7 +407,7 @@ end subroutine
  !EPSSUBSPACE    "subspace"
  !EPSARNOLDI     "arnoldi"
  !EPSLANCZOS     "lanczos"         ! RIGHT VECTORS ONLY
- !EPSKRYLOVSCHUR "krylovschur"     ! NO STPPRECOND, WITH STSINVERT+KSPPREONY + PCJACOBY gives wrong eigenvalues. Too strong (?)
+ !EPSKRYLOVSCHUR "krylovschur"     ! NO STPPRECOND, WITH STSINVERT+KSPPREONLY + PCJACOBY gives wrong eigenvalues. Too strong (?)
                                    !                     STSINVERT+KSPBCGS + PCHYPRE (+ BOOMERANG)
  !EPSGD          "gd"              ! RIGHT VECTORS ONLY, PREONLY, VERY FAST FOR FEW EIGEN
  !EPSJD          "jd"              ! NOT WORKING WITH KSP PREONLY, WITH KSPCG SUPE-SLOW
@@ -403,6 +425,16 @@ end subroutine
  !EPSSCALAPACK   "scalapack"
  !EPSELPA        "elpa"
  !EPSELEMENTAL   "elemental"
+ !
+ !
+ ! st type
+ !===========
+ ! STSHELL     "shell"
+ ! STSHIFT     "shift"
+ ! STSINVERT   "sinvert"
+ ! STCAYLEY    "cayley"
+ ! STPRECOND   "precond"
+ ! STFILTER    "filter"
  !
  !
  ! ksp type

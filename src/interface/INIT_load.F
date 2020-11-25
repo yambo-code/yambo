@@ -54,7 +54,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig
 #if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers,    ONLY:BSS_slepc_target_E,BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit,&
- &                       BSS_slepc_precondition
+ &                       BSS_slepc_precondition,BSS_slepc_approach
 #endif
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits,FXC_PF_alpha
@@ -325,6 +325,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs')
 #if defined _SLEPC && !defined _SLEPC_OFF
+ call it(defs,'BSSSlepcApproach','[SLEPC] Approach ("Krylov-Schur","Generalized-Davidson","Jacob-Davidson")',BSS_slepc_approach)
  call it(defs,'BSSNEig',       '[SLEPC] Number of eigenvalues to compute',BSS_n_eig)
  call it(defs,'BSSEnTarget',   '[SLEPC] Target energy to find eigenvalues',BSS_slepc_target_E,E_unit,verb_level=V_resp)
  call it(defs,'BSSSlepcMaxIt', '[SLEPC] Maximum number of iterations',BSS_slepc_maxit,verb_level=V_resp)

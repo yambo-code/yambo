@@ -105,8 +105,9 @@ module BS_solvers
  !
  ! Solvers (Slepc)
  !=========
- character(schlen):: BSS_slepc_extraction   !choose slepc eigenvalue extraction method (ritz,harmonic)
+ character(schlen):: BSS_slepc_approach     !choose slepc approach ("Krylov-Schur","Generalized-Davidson","Jacob-Davidson")
  character(schlen):: BSS_slepc_precondition !choose slepc eigenvalue precondition method (none,bcgs+jacobi)
+ character(schlen):: BSS_slepc_extraction   !choose slepc eigenvalue extraction method (ritz,harmonic)
  integer          :: BSS_slepc_ncv        !dimension of the subspace
  integer          :: BSS_slepc_maxit      !maximum number of iterations
  real(SP)         :: BSS_slepc_tol        !tolerance for the iterative solver

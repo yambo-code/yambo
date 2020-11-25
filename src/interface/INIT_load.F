@@ -44,7 +44,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
- use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,&
+ use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,nkDg,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
@@ -266,7 +266,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _PHEL
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
- call it(defs,'KNumDgSubset' '[PHEL-DG] Size of subset of double grid k-points',nkDg)
+ call it(defs,'KNumDgSubset', '[PHEL-DG] Size of subset of double grid k-points',nkDg)
 #else
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit,verb_level=V_qp)
 #endif

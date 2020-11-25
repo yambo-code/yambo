@@ -50,7 +50,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  type(levels),      intent(in) :: E
  type(bz_samp),     intent(in) :: k,q
  integer,           intent(in) :: bands(2)
- type(bz_fine_grid),intent(in) :: k_FG
+ type(bz_fine_grid),intent(inout) :: k_FG
  type(E_fine_grid) ,intent(in) :: E_FG
  !
  ! Work Space ...
@@ -71,13 +71,19 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  !
  ! Select the double grid subset to use
  !=====================================
- if (nkDg < 0 .or. nkDg > k_FG%N) then
+ if (k_FG%N.le.k%nbz) then
    nk_FG_per_kpt = -1
  else
-   if (nkDg == 0) then 
-     nk_FG_per_kpt=0
+   if (nkDg<0.or.nkDg>k_FG%N-k%nbz) then
+     nk_FG_per_kpt = -1
    else
-     nk_FG_per_kpt=ceiling(float(nkDg)/float(k%nbz))
+     if (nkDg == 0) then 
+       l_RT_uses_E_FineGd=.false.
+       l_PH_uses_E_FineGd=.false.
+       nk_FG_per_kpt=0
+     else
+       nk_FG_per_kpt=ceiling(float(nkDg)/float(k%nbz))
+     endif
    endif
  endif
  !
@@ -134,11 +140,15 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
        if (nk_FG_per_kpt==0) then 
          k_FG_range_end = k_FG%k_range(ik,1)
          p_FG_range_end = k_FG%k_range(ik_m_q,1)
+         k_FG%N_mapped(ik) = 1
+         k_FG%N_mapped(ik_m_q) = 1
        endif      
        !
        if (nk_FG_per_kpt>0) then 
          k_FG_range_end = k_FG%k_range(ik,1)+nk_FG_per_kpt
          p_FG_range_end = k_FG%k_range(ik_m_q,1)+nk_FG_per_kpt
+         k_FG%N_mapped(ik) = 1+nk_FG_per_kpt
+         k_FG%N_mapped(ik_m_q) = 1+nk_FG_per_kpt
        endif
        !
        ! Loop over il, i.e., phonon branches
@@ -173,9 +183,9 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
              !
              ! Loops over fine grid kpoints ik_rim and ip_rim
              !================================================    
-             do ik_rim=k_FG%k_range(ik,1),k_FG%k_range(ik,2)
+             do ik_rim=k_FG%k_range(ik,1),k_FG_range_end
                !
-               do ip_rim=k_FG%k_range(ik_m_q,1),k_FG%k_range(ik_m_q,2)
+               do ip_rim=k_FG%k_range(ik_m_q,1),p_FG_range_end
                  !
                  ! ... when using the fine grid ...
                  if (l_RT_uses_E_FineGd .or. l_PH_uses_E_FineGd) then

@@ -55,9 +55,10 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  PetscFortranInt  :: SL_H_dim,SL_K_dim
  PetscErrorCode   :: ierr
  external K_multiply_by_V_slepc
+ external K_multiply_by_V_transpose_slepc
  !
  if (BS_mat_res_ares_dim==2) call error(" Slepc with shells and multiple BS_mat not coded")
- if (BS_K_coupling)          call error(" Slepc with shells and coupling not coded")
+ !if (BS_K_coupling)          call error(" Slepc with shells and coupling not coded")
  !
  SL_H_dim=BS_H_dim
  !
@@ -79,7 +80,12 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  call MatShellSetOperation(slepc_mat,MATOP_MULT,K_multiply_by_V_slepc,ierr)
- if(.not.BS_K_coupling) call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_TRUE,ierr)
+ if(BS_K_coupling) then
+   call MatShellSetOperation(slepc_mat,MATOP_MULT_TRANSPOSE,K_multiply_by_V_transpose_slepc,ierr)
+   call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_FALSE,ierr)
+ else
+   call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_TRUE,ierr)
+ endif
  call MatSetUp(slepc_mat,ierr)
  !
  ! Allocate BS stuff

@@ -65,7 +65,7 @@ subroutine interpolate_W(X,Xw,q)
 !!! AG DBG
  !
  !
- debug = .true.
+ debug = .false.
  call timing('RIM-W-coeff',OPR='start')
  call k_ibz2bz(q,'a',.true.)
  allocate(f_coeff(6,RIM_W_ng,RIM_W_ng,q%nibz,2),stat=MEM_err)

@@ -111,7 +111,7 @@ subroutine K_output_file(iq,mode)
  endif
  !
  l_print_col4=l_Haydock.or.(l_Inversion.and..not.K_diago_in_BS_mat)
- l_print_jdos =(.not.(l_Inversion.or.l_Haydock)) .and. l_BS_jdos
+ l_print_jdos =(.not. l_Inversion              ) .and. l_BS_jdos
  l_print_esort=(.not.(l_Inversion.or.l_Haydock)) .and. l_BS_esort
  !
  n_headers=5
@@ -423,7 +423,7 @@ subroutine K_output_file(iq,mode)
    ! eps_xy
    !
    do iw=1,BSS_n_freqs 
-     output_data(1:5)=(/w(iw),aimag(Epsilon_ij(iw,2)),real(Epsilon_ij(iw,2)),&
+     output_data(1:5)=(/real(Epsilon_ij(iw,1))*HA2EV,aimag(Epsilon_ij(iw,2)),real(Epsilon_ij(iw,2)),&
 &                  aimag(Epsilon_ij(iw,3)),real(Epsilon_ij(iw,3))/)
      n_output_data=5
      if (l_print_col4) then ; n_output_data=7 ; output_data(6:7)=(/aimag(Epsilon_ij(iw,4)),real(Epsilon_ij(iw,4))/) ; endif
@@ -462,7 +462,7 @@ subroutine K_output_file(iq,mode)
      !
    endif
    !
-   if(.not.eval_alpha) then
+   if(l_BS_abs.and..not.eval_alpha) then
      !
      ! Kerr parameters
      !

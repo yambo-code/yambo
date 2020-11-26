@@ -153,8 +153,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  BS_dip_size=1
  l_BS_abs    = (index(BSE_prop,'abs')/=0)
- l_BS_jdos   = index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP
- l_BS_esort  = (index(BSE_prop,'esrt')/=0) !index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP
+ l_BS_jdos   = (index(BSE_prop,'jdos')/=0).or. (index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP)
+ l_BS_esort  = (index(BSE_prop,'esrt')/=0).and.(index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP)
  l_BS_dichroism = .false.
  l_BS_kerr      = .false.
  l_BS_photolum  = .false.

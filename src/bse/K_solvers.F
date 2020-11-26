@@ -27,19 +27,19 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use X_m,            ONLY:X_t,Joint_DOS
+ use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BSS_mode,BSS_desc,BSS_free,BS_mat,&
 &                         run_Haydock,run_inversion,run_Diago
 #if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers,     ONLY:run_Slepc
 #endif
  use BS,             ONLY:BS_not_const_eh_f,BSE_mode,BS_K_has_been_calculated_loaded,&
- &                       BS_blks_free,l_BS_jdos
+ &                       BS_blks_free,l_BS_jdos,l_BS_abs
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_m,           ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO
 #if defined _KERR
- use BS,             ONLY:l_BS_photolum
+ use BS,             ONLY:l_BS_photolum,l_BS_kerr,l_BS_magnons
  use PHOTOLUM,       ONLY:BSS_PL_free
  use MAGNONS,        ONLY:BSS_MAGN_free
  use DICHROISM,      ONLY:BSS_DICH_free
@@ -112,12 +112,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  if (run_Slepc) call K_diago_driver(iq,W_bss,X_static)
 #endif
  !
- ! No JDOS in Inversion/Hadydock
- !
- if (l_BS_jdos) then
-   YAMBO_FREE(Joint_DOS)
- endif
- !
  ! Inversion
  !
  if (run_inversion) then 
@@ -149,13 +143,12 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
    if (run_inversion) BSS_desc%n=BSS_desc%n-3
    !
-   stop_Haydock = (BS_not_const_eh_f.and.index(BSE_mode,'coupling')>0)
-   if (stop_Haydock) call warning('Fractional occupations and coupling still unsupported (Haydock)')
-   !
-   if(.not.stop_Haydock) then
-     call K_output_file(iq,"open Haydock")
-     call K_Haydock(iq,W_bss)
-   endif
+   if(l_BS_jdos)    call K_Haydock(iq,W_bss,"jdos")
+   if(l_BS_abs)     call K_Haydock(iq,W_bss,"abs")
+#if defined _KERR
+   if(l_BS_kerr)    call K_Haydock(iq,W_bss,"kerr")
+   if(l_BS_magnons) call K_Haydock(iq,W_bss,"magnons")
+#endif
    !
  endif
  !

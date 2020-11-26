@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)  
+integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Vnm1,Vn,Vnp1,Cf)  
  !
  use pars,          ONLY:SP
  use BS,            ONLY:BS_identifier,BS_H_dim
@@ -30,22 +30,13 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_
 &                        io_bulk,io_status,io_sec,io_header
  use timing_m,      ONLY:timing
  !
- ! GPL_EXCLUDE_START
- !
-#if defined _KERR
- use BS,            ONLY:l_BS_kerr
-#endif
- !
- ! GPL_EXCLUDE_END
- !
- !
  implicit none
  !
  integer             :: ID,it
  real(SP)            :: reached_treshold,Bf(it+1),Af(it)
+ character(*)        :: mode
  complex(SP)         :: Vnm1(BS_H_dim),Vn(BS_H_dim)
  complex(SP),optional:: Cf(it+1),Vnp1(BS_H_dim)
- complex(SP),optional:: Cf_kerr(it+1)
  !
  ! Work Space
  !
@@ -53,7 +44,7 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_
  !
  call timing('io_BSS_Haydock',OPR='start')
  !
- io_BSS_Haydock=io_connect(desc='Haydock_restart',type=2,ID=ID)
+ io_BSS_Haydock=io_connect(desc='Haydock_'//trim(mode)//'_restart',type=2,ID=ID)
  !
  if (io_BSS_Haydock<0) goto 1
  !
@@ -110,18 +101,6 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_
      call io_bulk(ID,'C_factors',VAR_SZ=(/2,it+1/))
      call io_bulk(ID,C1=Cf)
    endif
-   !
-   ! GPL_EXCLUDE_START
-   !
-#if defined _KERR
-   if(present(Cf_kerr).and.l_BS_kerr) then
-     call io_bulk(ID,'C_factors_kerr',VAR_SZ=(/2,it+1/))
-     call io_bulk(ID,C1=Cf_kerr)
-   endif
-#endif
-   !
-   ! GPL_EXCLUDE_END
-   !
    !
    ! Vnp1 - optional
    !

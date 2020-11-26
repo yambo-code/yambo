@@ -79,6 +79,7 @@ subroutine K_observables(WHAT,W)
      YAMBO_ALLOC(Joint_DOS,(BSS_n_freqs,4))
      Joint_DOS=cZERO
      Joint_DOS(:,1)=W%p(:)
+     write(*,*) "allocated jdos"
    endif
    !
    if(l_BS_esort) then

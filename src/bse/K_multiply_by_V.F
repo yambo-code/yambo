@@ -171,7 +171,9 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par)
  !
  integer         ::i_B,i_Tk,i_Tp,i_g
  complex(SP)     ::alpha
- ! 
+ !
+ ! The factor cI is needed for the coupling when l_BS_ares_asymm=.false.
+ !
  alpha=-real(iter_par,SP)*cI
  !
  forall(i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g)) Vo(i_g)%fragment = cZERO

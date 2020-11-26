@@ -76,7 +76,7 @@ subroutine rim(mode)
  !
  if (RIM_id_epsm1_reference<0.or.RIM_id_epsm1_reference>3) RIM_id_epsm1_reference=0
  if (RIM_id_epsm1_reference==0) em1_anis=0.
- if (RIM_id_epsm1_reference>0 ) em1_anis=em1_anis/em1_anis(RIM_id_epsm1_reference)
+ if (RIM_id_epsm1_reference>0 .and. mode == "x") em1_anis=em1_anis/em1_anis(RIM_id_epsm1_reference)
  !
  ! Filling the small BZ with the random grid
  !===========================================
@@ -206,7 +206,8 @@ subroutine rim(mode)
    else
      !
      call msg('r', "Evaluating integrals for q = ", iq)
-     call rim_integrate_w(iq,qr,N_out,N_out_G,em1_anis)
+     call rim_integrate_w(iq,qr,N_out,em1_anis)
+     call msg('r', "Anisotropy = ", em1_anis)
      !
    endif
    call live_timing(steps=1)

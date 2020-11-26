@@ -193,8 +193,8 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
  !
  integer  :: i1,i1min,i2,i2max,i3
  real(DP) :: func,vslab(RIM_n_rand_pts,RIM_W_ng)
- real(DP) :: r1,rfac,RIM_acc,RIM_acc_anis,tmp
- real(SP) :: slab_vz1,slab_vplane1,slab_vz2,slab_vplane2,lcut,pre_factor
+ real(DP) :: r1,rfac,RIM_acc,RIM_acc_anis
+ real(SP) :: slab_vz1,slab_vplane1,slab_vz2,slab_vplane2,lcut,pre_factor,anis_fact
  !
  rfac=8._SP*k_grid_uc_vol/real(N_out)/(2._SP*pi)**4
  !
@@ -203,8 +203,6 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
  else
   call error('RIM-W without cutoff slab has not been implemented')
  end if
- !
- RIM_W(iq,:,:)=0.
  !
  !Evaluate vslab
  !
@@ -266,9 +264,9 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
    !Regularization
    if (slab_vplane1 < 1.e-5) then
      vslab(i1,1) = sqrt(4._DP*pi*(1.-exp(-q0_def_norm*lcut))/q0_def_norm**2)
-     tmp = rfac*f_coeff(1,1,1,1,1)*(4*pi*lcut)**2
-     RIM_acc = RIM_acc + tmp
-     RIM_acc_anis = RIM_acc_anis + tmp*dot_product(em1_anis,(qr(:,i1)*2._DP*pi/alat(:))**2)/r1**2
+     RIM_acc = RIM_acc + rfac*f_coeff(1,1,1,1,1)*(4*pi*lcut)**2
+     RIM_acc_anis = RIM_acc_anis + rfac*f_coeff(1,1,1,1,1)*(4*pi*lcut)**2 &
+&                   *0.5_SP*(em1_anis(idir(2))+em1_anis(idir(3)))
      cycle
    end if
    !
@@ -280,9 +278,11 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
 &                                      (f_coeff(3,1,1,1,1)*(qr(1,i1)+a(2,1)/a(1,1)*qr(2,i1)))**2))
    !
    !Evaluate W
-   tmp = rfac*vslab(i1,1)*func*vslab(i1,1)/(r1**2*(1-vslab(i1,1)*func))
-   RIM_acc = RIM_acc + tmp
-   RIM_acc_anis = RIM_acc_anis + tmp*dot_product(em1_anis,(qr(:,i1)*2._DP*pi/alat(:))**2)/r1**2
+   RIM_acc = RIM_acc + rfac*vslab(i1,1)*func*vslab(i1,1)/(r1**2*(1-vslab(i1,1)*func))
+   !Anisotropy contribution
+   anis_fact=dot_product(em1_anis,(2._SP*pi*qr(:,i1)/(alat(:)*r1))**2)
+   func = func*anis_fact
+   RIM_acc_anis = RIM_acc_anis + rfac*vslab(i1,1)*func*vslab(i1,1)/(r1**2*(1-vslab(i1,1)*func))
    !
    !Store the square root of vslab
    vslab(i1,1) = sqrt(vslab(i1,1))/r1

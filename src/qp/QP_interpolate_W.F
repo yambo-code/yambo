@@ -26,7 +26,8 @@ subroutine interpolate_W(X,Xw,q)
  use pars,          ONLY:SP,pi,zero_dfl,schlen
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
-&                        RIM_W_is_diagonal,RIM_W,RIM_W_d,f_coeff,cut_is_slab,idir,RIM_W_E
+&                        RIM_W_is_diagonal,RIM_W,RIM_W_d,f_coeff,cut_is_slab,idir,RIM_W_E,&
+&                        RIM_id_epsm1_reference,RIM_epsm1
  use memory,        ONLY:MEM_err
  use vec_operate,   ONLY:c2a,v_is_zero,v_norm
  use X_m,           ONLY:X_mat,X_t,X_alloc
@@ -49,7 +50,7 @@ subroutine interpolate_W(X,Xw,q)
  integer     :: iq1,ig1,iq2,ig2,iq,ig,igr,igc,ig2max,iomega
  integer     :: iq_ibz,is,find,nn,i,iq_to_start,idm,ng_tmp
  integer     :: idx_q(RIM_W_ng,q%nibz,5),idx_G(RIM_W_ng,q%nibz,5),idx_is(RIM_W_ng,q%nibz,5)
- real(SP)    :: f_func(5),lcut, v(5), D_det,PPA_E_RIM,dummy(2)
+ real(SP)    :: f_func(5),lcut, v(5), D_det,PPA_E_RIM,dummy(2),anis_factor,em1_anis(3)
  complex(SP) :: vX(5,q%nibz,RIM_W_ng,RIM_W_ng,2)
  real(SP)    :: qpG(3,5),delta_q(3,2),qpG_trial(3),v1(3),delta_q_cc(3),gr_2d_mod,gc_2d_mod
  integer     :: ID, io_err, ng_save,G_max_ibz(q%nibz)
@@ -64,7 +65,7 @@ subroutine interpolate_W(X,Xw,q)
 !!! AG DBG
  !
  !
- debug = .false.
+ debug = .true.
  call timing('RIM-W-coeff',OPR='start')
  call k_ibz2bz(q,'a',.true.)
  allocate(f_coeff(6,RIM_W_ng,RIM_W_ng,q%nibz,2),stat=MEM_err)
@@ -334,6 +335,12 @@ subroutine interpolate_W(X,Xw,q)
  !
  D_det = a(1,1)*a(2,2)-a(1,2)*a(2,1)
  !
+ !Anisotropy initialization
+ em1_anis=RIM_epsm1(:)-1._SP
+ !
+ if (RIM_id_epsm1_reference<0.or.RIM_id_epsm1_reference>3) RIM_id_epsm1_reference=0
+ if (RIM_id_epsm1_reference==0) em1_anis=0.
+ !
  do iomega=1,2
  do igr=1,RIM_W_ng
   !
@@ -362,14 +369,26 @@ subroutine interpolate_W(X,Xw,q)
       ! q == 0 terms must be tratened separately
       if (iq1 == 1 .and. igr == 1 .and. igc == 1) then
         !
-        f_coeff(1,igr,igc,iq1,iomega) = vX(1,iq1,igr,igc,iomega)*(4*pi) / &
-&                                ( bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2*pi*alat(idir(1)))**2 )
+        if(RIM_id_epsm1_reference/=0 .and. iomega==1) then
+          !vX is included in the anis_factor
+          f_coeff(1,igr,igc,iq1,iomega)=(4*pi)/(bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2*pi*alat(idir(1)))**2)
+        else
+          f_coeff(1,igr,igc,iq1,iomega) = vX(1,iq1,igr,igc,iomega)*(4*pi) / &
+&                                  (bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2*pi*alat(idir(1)))**2)
+        end if
         !
         do nn=2,3
           idm = MOD(nn+1,2)+1
           call c2a(b,delta_q(:,idm),delta_q_cc,'ka2c')
-          f_coeff(nn,igr,igc,iq1,iomega) = -1._SP/delta_q(idm,idm)*log(f_func(nn)/ &
-&                                 ( v_norm(delta_q_cc)**2*f_coeff(1,iq1,igc,iq1,iomega)) )
+          if(RIM_id_epsm1_reference/=0 .and. iomega==1) then
+            anis_factor=dot_product(em1_anis,delta_q_cc**2)
+            f_coeff(nn,igr,igc,iq1,iomega)=-1._SP/delta_q(idm,idm)*log(f_func(nn)/ &
+&                                 (f_coeff(1,iq1,igc,iq1,iomega)*anis_factor))
+          else
+            f_coeff(nn,igr,igc,iq1,iomega)=-1._SP/delta_q(idm,idm)*log(f_func(nn)/ &
+&                                 (v_norm(delta_q_cc)**2*f_coeff(1,iq1,igc,iq1,iomega)))
+          end if
+
         enddo
         !
       else
@@ -437,10 +456,14 @@ subroutine interpolate_W(X,Xw,q)
    do ig1=1,RIM_W_ng
      !
      if(ig1==1.and.ig2==1) then
-       dummy(:) = f_coeff(1,1,1,1,:)
+       dummy(:) = f_coeff(1,1,1,1,:)  
+       if (RIM_id_epsm1_reference/=0) then
+         dummy(1) = dummy(1)*0.5*(em1_anis(idir(2))+em1_anis(idir(3)))
+       end if
+     
      else
-       dummy(:) =  f_coeff(1,ig1,ig2,1,:)+X%q0(1)*10._SP*(f_coeff(2,ig1,ig2,1,:)+f_coeff(3,ig1,ig2,1,:)&!
-&                                        +X%q0(2)*10._SP*(f_coeff(4,ig1,ig2,1,:)+f_coeff(6,ig1,ig2,1,:)&
+       dummy(:) =  f_coeff(1,ig1,ig2,1,:)+1.E-4*(f_coeff(2,ig1,ig2,1,:)+f_coeff(3,ig1,ig2,1,:)&
+&                                        +1.E-4*(f_coeff(4,ig1,ig2,1,:)+f_coeff(6,ig1,ig2,1,:)&
                                          +2._SP*f_coeff(5,ig1,ig2,1,:)))
        dummy(:) = dummy(:)*4._SP*pi/(bare_qpg(1,ig1)*bare_qpg(1,ig2))
        dummy(:) = dummy/(1-dummy)
@@ -469,7 +492,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  use pars,          ONLY:SP,pi,zero_dfl,schlen,DP
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
-&                        RIM_W,q0_def_norm,cut_is_slab,idir,k_grid
+&                        RIM_W,q0_def_norm,cut_is_slab,idir,k_grid,RIM_id_epsm1_reference,RIM_epsm1
  use memory,        ONLY:MEM_err
  use vec_operate,   ONLY:c2a,v_is_zero,v_norm,iku_v_norm
  use X_m,           ONLY:X_mat,X_t,X_alloc
@@ -493,7 +516,8 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  integer  :: Np, i, ig1, ig2, iqibz, is, gmax, nn, igr, igc, pos, i_dir,vecsign1,vecsign2
  real(SP) :: dq, q_sampl(3), func, lcut,slab_vz1, slab_vplane1,slab_vz2,symminv(3,3),&
 &            slab_vplane2, W_sampl,pre_factor,r1,vslab,q_num_norm,q_out_norm,f_coeff_loc(6)
- real(SP) :: g1_2D_mod, g2_2D_mod, qpGr(3), qpGc(3), idx_q1, q_out(3),q_num(3),qpG_trial(3)
+ real(SP) :: g1_2D_mod, g2_2D_mod, qpGr(3), qpGc(3), idx_q1, q_out(3),q_num(3),qpG_trial(3)&
+&            ,anis_fact,em1_anis(3)
  character(schlen):: str_piece1, str_piece2
  character(1) :: dir(2),omega_str(2)
  integer, allocatable :: indexes(:,:,:)
@@ -510,6 +534,12 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  out_unit_W_fit=(/200,300/)
  out_unit_W_num=(/400,500/)
  call k_ibz2bz(q,'i',.true.)
+ !
+ !Anisotropy initialization
+ em1_anis=RIM_epsm1(:)-1._SP
+ !
+ if (RIM_id_epsm1_reference<0.or.RIM_id_epsm1_reference>3) RIM_id_epsm1_reference=0
+ if (RIM_id_epsm1_reference==0) em1_anis=0.
  !
  !Allocate indexes
  if (delta_q(1,1) > delta_q(2,2)) then
@@ -612,8 +642,8 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
          !Evaluate func
          func = bare_qpg(iq,ig1)*bare_qpg(iq,ig2)/(4._DP*pi)*vX(1,iq,ig1,ig2,iomega)/(vX(1,iq,ig1,ig2,iomega)+1._DP)
          !Evaluate W
-         W_sampl = -vX(1,iq,ig1,ig2,iomega)*vslab
-         !W_sampl = vslab*func*vslab/(1._DP-func*vslab)
+         !W_sampl = -vX(1,iq,ig1,ig2,iomega)*vslab
+         W_sampl = vslab*func*vslab/(1._DP-func*vslab)
          !
          !Get q output in cc
          !
@@ -623,7 +653,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
          !Write output
          !   
          write(out_unit_W_num(i_dir),"(I4, E15.6, E15.6,E15.6,E15.6, E15.6, E15.6, E15.6)") &
-&                         i, q_num(1),q_num(2),q_num(3),q_num_norm,vslab, func, W_sampl
+&                         i, q_num(1),q_num(2),q_num(3),q_num_norm,vslab, func, -W_sampl
 
          !-------------------------------
          !-Third: Evaluate fitted f,vc,W-
@@ -679,6 +709,9 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
              !
              if (iku_v_norm(q_sampl) < 1.e-5) then
                W_sampl = f_coeff(1,ig1,ig2,iq,iomega)*(2*pi*alat(idir(1)))**2
+               if(RIM_id_epsm1_reference /= 0 .and. iomega == 1) then
+                 W_sampl = W_sampl*em1_anis(i_dir)
+               end if
                q_out = q_sampl
                call c2a(b_in=b,v_in=q_out,mode='ki2c')
                q_out_norm = v_norm(q_out)*vecsign1*vecsign2
@@ -687,9 +720,12 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
                cycle
              end if
              !
-             !func = f_coeff(1,1,1,1)*exp(-f_coeff(2,1,1,1)*iku_v_norm(q_sampl))
              func = f_coeff(1,1,1,1,iomega)*exp(-sqrt(f_coeff(2,1,1,1,iomega)**2*(q_sampl(2)+a(2,1)/a(1,1)*q_sampl(1))**2+&
 &                                                     f_coeff(3,1,1,1,iomega)**2*(q_sampl(1)+a(1,2)/a(2,2)*q_sampl(2))**2))
+             if(RIM_id_epsm1_reference /= 0 .and. iomega == 1) then
+               anis_fact = dot_product(em1_anis,(2._SP*pi*q_sampl/alat)**2)/iku_v_norm(q_sampl)**2
+               func = func*anis_fact
+             end if
              W_sampl = vslab*func*vslab/r1/(1-vslab*func)
              func = func*iku_v_norm(q_sampl)**2
              !
@@ -750,7 +786,7 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  use pars,          ONLY:SP,pi,zero_dfl,schlen,DP
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
-&                        RIM_W,q0_def_norm,cut_is_slab,idir,k_grid
+&                        RIM_W,q0_def_norm,cut_is_slab,idir,k_grid,RIM_id_epsm1_reference,RIM_epsm1
  use memory,        ONLY:MEM_err
  use vec_operate,   ONLY:c2a,v_is_zero,v_norm,iku_v_norm
  use X_m,           ONLY:X_mat,X_t,X_alloc
@@ -758,12 +794,12 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
 &                        deliver_IO_error_message,OP_WR_CL,REP,VERIFY
  use stderr,        ONLY:STRING_split
- use D_lattice,     ONLY:alat
+ use D_lattice,     ONLY:alat,a
  use matrix_operate, ONLY:m3inv,mat_transpose
  !
  implicit none
  type(bz_samp) :: q
- real(SP)      :: f_coeff(6,RIM_W_ng,RIM_W_ng,q%nibz)
+ real(DP)      :: f_coeff(6,RIM_W_ng,RIM_W_ng,q%nibz,2)
  real(SP)      :: delta_q(3,2)
  complex(SP)   :: vX(5,q%nibz,RIM_W_ng,RIM_W_ng)
  integer       :: idx_q(RIM_W_ng,q%nibz,5),idx_G(RIM_W_ng,q%nibz,5),idx_is(RIM_W_ng,q%nibz,5)
@@ -774,7 +810,8 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  integer  :: Np, i1,i2, ig1, ig2, iqibz, is, gmax, nn, igr, igc, pos, i_dir
  real(SP) :: dq, q_sampl(3), func, lcut,slab_vz1, slab_vplane1,slab_vz2,symminv(3,3),&
 &            slab_vplane2, W_sampl,pre_factor,r1,vslab,q_num_norm,q_out_norm,f_coeff_loc(6)
- real(SP) :: g1_2D_mod, g2_2D_mod, qpGr(3), qpGc(3), idx_q1, q_out(3),q_num(3),qpG_trial(3),q_point(3)
+ real(SP) :: g1_2D_mod, g2_2D_mod, qpGr(3), qpGc(3), idx_q1, q_out(3),q_num(3),qpG_trial(3),q_point(3),&
+&            anis_fact,em1_anis(3)
  character(schlen):: str_piece1, str_piece2
  character(1) :: dir(2)
  integer, allocatable :: indexes(:,:,:)
@@ -792,8 +829,20 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  out_unit_W_num=7000
  call k_ibz2bz(q,'i',.true.)
  !
+ !Anisotropy initialization
+ em1_anis=RIM_epsm1(:)-1._SP
+ !
+ if (RIM_id_epsm1_reference<0.or.RIM_id_epsm1_reference>3) RIM_id_epsm1_reference=0
+ if (RIM_id_epsm1_reference==0) em1_anis=0.
+ !
  !Allocate indexes
- n_indx_steps = k_grid(1:2)/2-1
+ if (delta_q(1,1) > delta_q(2,2)) then
+   n_indx_steps(1) = min(k_grid(1),k_grid(2))/2-1
+   n_indx_steps(2) = max(k_grid(1),k_grid(2))/2-1
+ else
+   n_indx_steps(1) = max(k_grid(1),k_grid(2))/2-1
+   n_indx_steps(2) = min(k_grid(1),k_grid(2))/2-1
+ end if
  npoints = (n_indx_steps)*2+1
  !allocate(indexes(max(npoints(1),npoints(2)),4,2))
  !call msg('r', "npoints_x = ", npoints(1))
@@ -880,13 +929,14 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
          !Evaluate func
          func = bare_qpg(iq,ig1)*bare_qpg(iq,ig2)/(4*pi)*vX(1,iq,ig1,ig2)/(vX(1,iq,ig1,ig2)+1)
          !Evaluate W
-         W_sampl = -vX(1,iq,ig1,ig2)*vslab
+         !W_sampl = -vX(1,iq,ig1,ig2)*vslab
+         W_sampl = vslab*func*vslab/(1._SP-func*vslab)
          !
          !Write output
          !
          q_num = q_num*2*pi/alat
          write(out_unit_W_num,"(I4, E15.6, E15.6,E15.6, E15.6, E15.6, E15.6)") &
-&                            i1,q_num(1),q_num(2),q_num(3),vslab,func,W_sampl
+&                            i1,q_num(1),q_num(2),q_num(3),vslab,func,-W_sampl
 
          !-------------------------------
          !-Third: Evaluate fitted f,vc,W-
@@ -955,7 +1005,10 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
            if (iq == 1 .and. ig1 == 1 .and. ig2 == 1) then
              !
              if (iku_v_norm(q_sampl) < 1.e-5) then
-               W_sampl = f_coeff(1,ig1,ig2,iq)*(2*pi*alat(idir(1)))**2
+               W_sampl = f_coeff(1,ig1,ig2,iq,1)*(2*pi*alat(idir(1)))**2
+               if(RIM_id_epsm1_reference /= 0) then
+                 W_sampl = W_sampl*0.5*(em1_anis(idir(2))+em1_anis(idir(3)))
+               end if
                q_out = q_sampl
                call c2a(b_in=b,v_in=q_out,mode='ki2c')
                q_out_norm = v_norm(q_out)
@@ -964,29 +1017,33 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
                cycle
              end if
              !
-             !func = f_coeff(1,1,1,1)*exp(-f_coeff(2,1,1,1)*iku_v_norm(q_sampl))
-             func = f_coeff(1,1,1,1)*exp(-sqrt(f_coeff(2,1,1,1)**2*q_sampl(1)**2+f_coeff(3,1,1,1)**2*q_sampl(2)**2))
+             func = f_coeff(1,1,1,1,1)*exp(-sqrt(f_coeff(2,1,1,1,1)**2*(q_sampl(2)+a(2,1)/a(1,1)*q_sampl(1))**2+&
+&                                                f_coeff(3,1,1,1,1)**2*(q_sampl(1)+a(1,2)/a(2,2)*q_sampl(2))**2))
+             if(RIM_id_epsm1_reference /= 0) then
+               anis_fact = dot_product(em1_anis,(2._SP*pi*q_sampl/alat)**2)/iku_v_norm(q_sampl)**2
+               func = func*anis_fact
+             end if
              W_sampl = vslab*func*vslab/r1/(1-vslab*func)
              func = func*iku_v_norm(q_sampl)**2
              !
            else
              !Transform f_coeff from iBZ to BZ
              call m3inv(rl_sop(:,:,is),symminv)
-             f_coeff_loc(1) = f_coeff(1,ig1,ig2,iq)
-             f_coeff_loc(2) = symminv(1,1)*f_coeff(2,ig1,ig2,iq)+symminv(2,1)*f_coeff(3,ig1,ig2,iq)
-             f_coeff_loc(3) = symminv(1,2)*f_coeff(2,ig1,ig2,iq)+symminv(2,2)*f_coeff(3,ig1,ig2,iq)
+             f_coeff_loc(1) = f_coeff(1,ig1,ig2,iq,1)
+             f_coeff_loc(2) = symminv(1,1)*f_coeff(2,ig1,ig2,iq,1)+symminv(2,1)*f_coeff(3,ig1,ig2,iq,1)
+             f_coeff_loc(3) = symminv(1,2)*f_coeff(2,ig1,ig2,iq,1)+symminv(2,2)*f_coeff(3,ig1,ig2,iq,1)
 
-             f_coeff_loc(4) = symminv(1,1)*symminv(1,1)*f_coeff(4,ig1,ig2,iq)&
-                             +symminv(1,1)*symminv(2,1)*f_coeff(5,ig1,ig2,iq)*2&
-                             +symminv(2,1)*symminv(2,1)*f_coeff(6,ig1,ig2,iq)
+             f_coeff_loc(4) = symminv(1,1)*symminv(1,1)*f_coeff(4,ig1,ig2,iq,1)&
+                             +symminv(1,1)*symminv(2,1)*f_coeff(5,ig1,ig2,iq,1)*2&
+                             +symminv(2,1)*symminv(2,1)*f_coeff(6,ig1,ig2,iq,1)
 
-             f_coeff_loc(5) = symminv(1,1)*symminv(1,2)*f_coeff(4,ig1,ig2,iq)&
-                             +(symminv(1,1)*symminv(2,2)+symminv(1,2)*symminv(2,1))*f_coeff(5,ig1,ig2,iq)&
-                             +symminv(2,1)*symminv(2,2)*f_coeff(6,ig1,ig2,iq)
+             f_coeff_loc(5) = symminv(1,1)*symminv(1,2)*f_coeff(4,ig1,ig2,iq,1)&
+                             +(symminv(1,1)*symminv(2,2)+symminv(1,2)*symminv(2,1))*f_coeff(5,ig1,ig2,iq,1)&
+                             +symminv(2,1)*symminv(2,2)*f_coeff(6,ig1,ig2,iq,1)
 
-             f_coeff_loc(6) = symminv(1,2)*symminv(1,2)*f_coeff(4,ig1,ig2,iq)&
-                             +symminv(1,2)*symminv(2,2)*f_coeff(5,ig1,ig2,iq)*2&
-                             +symminv(2,2)*symminv(2,2)*f_coeff(6,ig1,ig2,iq)
+             f_coeff_loc(6) = symminv(1,2)*symminv(1,2)*f_coeff(4,ig1,ig2,iq,1)&
+                             +symminv(1,2)*symminv(2,2)*f_coeff(5,ig1,ig2,iq,1)*2&
+                             +symminv(2,2)*symminv(2,2)*f_coeff(6,ig1,ig2,iq,1)
              !
              func = f_coeff_loc(1)+q_sampl(1)*(f_coeff_loc(2)+q_sampl(1)*f_coeff_loc(4))&
 &                                 +q_sampl(2)*(f_coeff_loc(3)+q_sampl(2)*f_coeff_loc(6)&

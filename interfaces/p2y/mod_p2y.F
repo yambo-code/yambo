@@ -850,7 +850,7 @@ contains
       if (ierr/=0) call errore('qexml_read_xc','IOTK error',abs(ierr))
       !
       if (trim(pw_dft)=="B3LYP") call warning('For a full compatible B3LYP calculation consider to use input_dft=B3LYP-V1R')
-      if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
+      if(pw_lda_plus_u) call error(' LDA+U. Hubbard correction is not considered in yambo.')
       GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
       if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
         GS_xc_KIND = 3
@@ -889,7 +889,7 @@ contains
       if (ierr/=0) call errore('qexsd_read_xc','fmt error',abs(ierr))
       !
       if (trim(pw_dft)=="B3LYP") call warning('For a full compatible B3LYP calculation consider to use input_dft=B3LYP-V1R')
-      if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
+      if(pw_lda_plus_u) call error(' LDA+U. Hubbard correction is not considered in yambo.')
       GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
       if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
         GS_xc_KIND = 3

@@ -59,19 +59,19 @@ subroutine K_Haydock(iq,W,mode)
  integer            ::it,it_on_disk,i_g,ID,io_err,i_desc_acc,i_desc_iter
  integer, parameter ::Max_iterations=1000
  type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:),V0(:),V_tmp(:)
- complex(SP),allocatable :: Cf(:)
- complex(SP),allocatable :: Vn_f(:),Vnm1_f(:),Vnp1_f(:) 
+ complex(SP), pointer :: Vn_f(:),Vnm1_f(:),Vnp1_f(:)
+ complex(SP), allocatable :: Cf(:) 
  !
 #if defined _KERR
  type(Haydock_vector),allocatable :: V0_right(:)
 #endif
  !
  real(SP)           ::reached_threshold
- real(SP)           ::Bf(Max_iterations),Af(Max_iterations)
- integer            ::ItParity,HAYVEC_size
+ real(SP)           ::Bf(Max_iterations+1),Af(Max_iterations)
+ integer            ::ItParity,HAYVEC_size,Cf_size
  complex(SP)        ::v0_mod_
  character(schlen)  ::dumb_ch
- logical            ::use_cpl_scheme,velocity_correction,use_left_and_right
+ logical            ::use_cpl_scheme,velocity_correction,use_left_and_right,Haydock_converged
  logical, external  ::STOP_now
  character(1)       ::sec
  !
@@ -104,8 +104,10 @@ subroutine K_Haydock(iq,W,mode)
  velocity_correction= trim(global_gauge)=="velocity" .and. (trim(mode)=="abs" .or. trim(mode)=="kerr")
  !
  if (.not.l_BS_ares_asymm) HAYVEC_size = BS_K_dim(1)
- if (     l_BS_ares_asymm) HAYVEC_size = BS_H_dim
-
+ if (     l_BS_ares_asymm) then
+   if(.not.BS_K_coupling) HAYVEC_size = BS_K_dim(1)
+   if(     BS_K_coupling) HAYVEC_size = BS_H_dim
+ endif
  !
  ! Allocate Haydock vectors:
  !
@@ -124,9 +126,9 @@ subroutine K_Haydock(iq,W,mode)
  endif
 #endif
  !
- if (use_cpl_scheme) then
-   YAMBO_ALLOC(Cf,(Max_iterations+1))
- end if
+ Cf_size=2
+ if (use_cpl_scheme) Cf_size=Max_iterations+1
+ YAMBO_ALLOC(Cf,(Cf_size))
  !
  allocate(Vn(BS_nT_grps))
  allocate(Vnp1(BS_nT_grps))
@@ -138,32 +140,25 @@ subroutine K_Haydock(iq,W,mode)
  ! Haydock Coefficients and restart vector from disk
  !=================================================
  it_on_disk=0
+ reached_threshold=0._SP
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
- allocate(Vn_f(BS_K_dim(1)),Vnm1_f(BS_K_dim(1)))
+ io_err=io_BSS_Haydock(ID,1,reached_threshold,mode,Af(1),Bf(:2),Cf(:2),Vnm1_f,Vn_f,Vnp1_f)
  !
- if (use_cpl_scheme) then
-   allocate(Vnp1_f(BS_K_dim(1)))
-   io_err=io_BSS_Haydock(ID,1,reached_threshold,mode,Af(1),Bf(:2),Vnm1_f,Vn_f,Vnp1=Vnp1_f,Cf=Cf(:2))   
- else
-   io_err=io_BSS_Haydock(ID,1,reached_threshold,mode,Af(1),Bf(:2),Vnm1_f,Vn_f)
- endif
- !
- if (io_err>0) then 
+ if (io_err>0) then
    !
-   it_on_disk=io_err 
+   YAMBO_ALLOC_P(Vn_f,(HAYVEC_size))
+   YAMBO_ALLOC_P(Vnm1_f,(HAYVEC_size))
+   if (use_cpl_scheme) then
+     YAMBO_ALLOC_P(Vnp1_f,(HAYVEC_size))
+   endif
+   !
+   it_on_disk=io_err
+   if (use_cpl_scheme) Cf_size=it_on_disk+1
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
-   if (use_cpl_scheme) then 
-     ! 
-     io_err=io_BSS_Haydock(ID,it_on_disk,reached_threshold,mode,Af(:it_on_disk),&
-&                   Bf(:it_on_disk+1),Vnm1_f,Vn_f,Vnp1=Vnp1_f,Cf=Cf(:it_on_disk+1))
-     !
-   else
-     !
-     io_err=io_BSS_Haydock(ID,it_on_disk,reached_threshold,mode,Af(:it_on_disk),&
-     &      Bf(:it_on_disk+1),Vnm1_f,Vn_f)
-     call msg('s','[Haydock] Restart DB with accuracy ',reached_threshold)
-     !
-   end if
+   io_err=io_BSS_Haydock(ID,it_on_disk,reached_threshold,mode,Af(:it_on_disk),&
+&                   Bf(:it_on_disk+1),Cf(:Cf_size),Vnm1_f,Vn_f,Vnp1_f)
+   !
+   call msg('s','[Haydock] Restart DB with accuracy ',reached_threshold)
    !  
    call PP_bcast(Af,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)  
    call PP_bcast(Af,0,COMM=PAR_COM_eh_INDEX%COMM)  
@@ -177,18 +172,22 @@ subroutine K_Haydock(iq,W,mode)
      call HAYVEC_scatter(Vnp1,Vnp1_f,HAYVEC_size)
    endif
    !
+   YAMBO_FREE_P(Vnm1_f)
+   YAMBO_FREE_P(Vn_f)
+   if (use_cpl_scheme) then
+     YAMBO_FREE_P(Vnp1_f)
+   endif
+   !
  end if
- deallocate(Vnm1_f,Vn_f)
- if (use_cpl_scheme) deallocate(Vnp1_f)
  !
  ! Update Descriptions
  !=====================
  call IO_desc_add(BSS_desc,kind="s",str=" ",S=" ")
  !
  call IO_desc_add(BSS_desc,kind="r",str='[Haydock] Accuracy (requested)',term='o/o',R=(/Haydock_threshold/))
- call IO_desc_add(BSS_desc,kind="r",str='[Haydock] Accuracy (reached)',term='o/o',R=(/0._SP/))
+ call IO_desc_add(BSS_desc,kind="r",str='[Haydock] Accuracy (reached)',term='o/o',R=(/reached_threshold/))
  i_desc_acc=BSS_desc%n
- call IO_desc_add(BSS_desc,kind="i",str='[Haydock] Iterations',I=(/0/))
+ call IO_desc_add(BSS_desc,kind="i",str='[Haydock] Iterations',I=(/it_on_disk/))
  i_desc_iter=BSS_desc%n
  !
  call msg('r','Accuracy (requested) [o/o]',Haydock_threshold)
@@ -264,46 +263,42 @@ subroutine K_Haydock(iq,W,mode)
    deallocate(V_tmp)
  endif
  !
- if (use_cpl_scheme) then ! [***] Initialization non Hermitian case
+ if (it_on_disk==0) then
    !
-   ! Before starting iterate one needs
-   !
-   ! | Vm > =     |q->0>/(<q->0| F (H |q->0>))
-   ! | Vmp1 > = H |Vm>
-   !
-   ItParity = (-1)**it_on_disk
-   if (it_on_disk==0) then
-      Cf= cZERO
-      !
-      call K_multiply_by_V(V0,Vnp1,ItParity)
-      call K_dot_product(v0_mod_,V0,Vnp1)
-      write(*,*) "v0_mod= ",v0_mod_
-      if(.not.l_BS_ares_asymm) Haydock_v0_mod=sqrt(2*real(v0_mod_))
-      if(     l_BS_ares_asymm) Haydock_v0_mod=sqrt(  real(v0_mod_))
+   if (use_cpl_scheme) then ! [***] Initialization non Hermitian case
+     !
+     ! Before starting iterate one needs
+     !
+     ! | Vm > =     |q->0>/(<q->0| F (H |q->0>))
+     ! | Vmp1 > = H |Vm>
+     !
+     Cf= cZERO
+     !
+     call K_multiply_by_V(V0,Vnp1,1)
+     call K_dot_product(v0_mod_,V0,Vnp1)
+     if(.not.l_BS_ares_asymm) Haydock_v0_mod=sqrt(2*real(v0_mod_))
+     if(     l_BS_ares_asymm) Haydock_v0_mod=sqrt(  real(v0_mod_))
+     !
 #if defined _KERR
-      if(use_left_and_right) call K_dot_product(v0_mod_,V0_right,Vnp1)
+     if(use_left_and_right) call K_dot_product(v0_mod_,V0_right,Vnp1)
 #endif
-      if(.not.l_BS_ares_asymm) Cf(1)= 2*cI*aimag(v0_mod_)/Haydock_v0_mod**2
-      if(     l_BS_ares_asymm) Cf(1)=            v0_mod_ /Haydock_v0_mod**2
-      !
-      do i_g=1,BS_nT_grps
-        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-        Vn(i_g)%fragment   = V0(i_g)%fragment/Haydock_v0_mod
-        Vnp1(i_g)%fragment = Vnp1(i_g)%fragment/Haydock_v0_mod
-      enddo
-   else
-      !   Haydock_v0_mod = Bf(1)
-      !   Bf(1) = 0._SP
-   endif
-   !
- else ! [***] Initialization Hermitian case
-   !
-   ! it=1:|Vm>=|q->0>/(<q->0|q->0>)^(1/2)
-   !
-   call K_dot_product(v0_mod_,V0,V0) 
-   Haydock_v0_mod=sqrt(real(v0_mod_,SP))
-   !
-   if (it_on_disk==0) then
+     !
+     if(.not.l_BS_ares_asymm) Cf(1)= 2*cI*aimag(v0_mod_)/Haydock_v0_mod**2
+     if(     l_BS_ares_asymm) Cf(1)=            v0_mod_ /Haydock_v0_mod**2
+     !
+     do i_g=1,BS_nT_grps
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+       Vn(i_g)%fragment   = V0(i_g)%fragment/Haydock_v0_mod
+       Vnp1(i_g)%fragment = Vnp1(i_g)%fragment/Haydock_v0_mod
+     enddo
+     !
+   else ! [***] Initialization Hermitian case
+     !
+     ! it=1:|Vm>=|q->0>/(<q->0|q->0>)^(1/2)
+     !
+     call K_dot_product(v0_mod_,V0,V0) 
+     Haydock_v0_mod=sqrt(real(v0_mod_,SP))
+     !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        Vn(i_g)%fragment  = V0(i_g)%fragment/Haydock_v0_mod
@@ -378,7 +373,6 @@ subroutine K_Haydock(iq,W,mode)
        !
        ! A(n) = <Vm|Vm+1>
        call K_dot_product(v0_mod_,Vn,Vnp1) 
-       write(*,*) "Af ",v0_mod_
        Af(it)=real(v0_mod_,SP)
        !
      endif
@@ -448,15 +442,10 @@ subroutine K_Haydock(iq,W,mode)
      !
    endif
    !
-   write(*,*) " coefficients ",Af(it),Bf(it+1),Cf(it)
-   !
    if (it>2) then
      !
-     if (use_cpl_scheme) then 
-       call build_L_and_check_convergence(it,Af(:it),Bf(:it+1),Cf(:it))
-     else
-       call build_L_and_check_convergence(it,Af(:it),Bf(:it+1))
-     end if
+     if (use_cpl_scheme) Cf_size=it
+     call build_L_and_check_convergence(it,Af(:it),Bf(:it+1),Cf(:Cf_size))
      !
      BSS_desc%rval(1,i_desc_acc) =reached_threshold
      BSS_desc%ival(1,i_desc_iter)=it
@@ -464,8 +453,8 @@ subroutine K_Haydock(iq,W,mode)
      call K_output_file(iq,"Haydock")
      dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy '//&
 &            trim(real2ch(reached_threshold))//'|'//trim(real2ch(Haydock_threshold))
-     if (tty_size>0.and.it_on_disk==0) call LIVE_message(dumb_ch,"r","","%s")
-     if (tty_size>0.and.it_on_disk> 0) call LIVE_message(dumb_ch,"n","","%s")
+     if (tty_size>0.and.(it_on_disk==0.or. it_on_disk< it-1)) call LIVE_message(dumb_ch,"r","","%s")
+     if (tty_size>0.and.(it_on_disk> 0.and.it_on_disk==it-1)) call LIVE_message(dumb_ch,"n","","%s")
      if (tty_size<0) call LIVE_message(dumb_ch,"n","","%s")
    else
      !
@@ -476,34 +465,43 @@ subroutine K_Haydock(iq,W,mode)
      !
    endif
    !
-   ! Haydock Coefficients and restart vectors to disk
-   !--------------------------------------------------
-   if ( mod(it,Haydock_iterIO)==0 .or. &
-&       (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
-&       STOP_now(.FALSE.)    ) then
+   Haydock_converged=(reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. STOP_now(.FALSE.)
+   !
+   if ( mod(it,Haydock_iterIO)==0 .or. Haydock_converged) then
+     !
+     ! Haydock Coefficients and restart vectors to disk
+     !--------------------------------------------------
+     !
+     YAMBO_ALLOC_P(Vn_f,(HAYVEC_size))
+     YAMBO_ALLOC_P(Vnm1_f,(HAYVEC_size))
+     if (use_cpl_scheme) then
+       YAMBO_ALLOC_P(Vnp1_f,(HAYVEC_size))
+     endif
      !
      call HAYVEC_gather(Vnm1,Vnm1_f,HAYVEC_size)
      call HAYVEC_gather(Vn,Vn_f,HAYVEC_size)
-     if (use_cpl_scheme) call HAYVEC_gather(Vnp1,Vnp1_f,HAYVEC_size) 
-     !  
-     call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
      if (use_cpl_scheme) then
-       Bf(1) = Haydock_v0_mod
-       io_err=io_BSS_Haydock(ID,it,reached_threshold,mode,Af(:it),Bf(:it+1),Vnm1_f,Vn_f,Cf=Cf(:it+1),Vnp1=Vnp1_f)
-       Bf(1) = 0._SP
-     else
-       io_err=io_BSS_Haydock(ID,it,reached_threshold,mode,Af(:it),Bf(:it+1),Vnm1_f,Vn_f)
-     end if
+       call HAYVEC_gather(Vnp1,Vnp1_f,HAYVEC_size) 
+       Cf_size=it+1
+     endif
      !
-     if (master_cpu) deallocate(Vn_f, Vnm1_f)
-     if (master_cpu.and.use_cpl_scheme) deallocate(Vnp1_f) 
+     call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
+     io_err=io_BSS_Haydock(ID,it,reached_threshold,mode,Af(:it),Bf(:it+1),Cf(:Cf_size),Vnm1_f,Vn_f,Vnp1_f)
+     !
+     YAMBO_FREE_P(Vn_f)
+     YAMBO_FREE_P(Vnm1_f)
+     if (use_cpl_scheme) then
+       YAMBO_FREE_P(Vnp1_f)
+     endif
+     !
    endif
    !
-   if ( (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
-&       STOP_now(.FALSE.)) then
+   if (Haydock_converged) then
+     !
      call msg('r','Accuracy (reached)   [o/o]',reached_threshold)
      call msg('r','Iterations                ',it)
      exit
+     !
    endif
    !
  enddo
@@ -534,10 +532,12 @@ subroutine K_Haydock(iq,W,mode)
  contains
    !
    subroutine build_L_and_check_convergence(it,Af,Bf,Cf)
+     !
      implicit none
-     integer,    intent(in)          :: it
-     real(SP),   intent(in)          :: Bf(it+1),Af(it)
-     complex(SP),intent(in),optional :: Cf(it)
+     !
+     integer,    intent(in) :: it
+     real(SP),   intent(in) :: Bf(it+1),Af(it)
+     complex(SP),intent(in) :: Cf(Cf_size)
      !
      ! Work Space
      !
@@ -742,12 +742,11 @@ subroutine K_Haydock(iq,W,mode)
      use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_T_groups, &
                              PAR_COM_eh_INDEX,PP_redux_wait
      type(Haydock_vector),intent(in) :: V(BS_nT_grps)
-     integer,                intent(in)  :: fullV_size
-     complex(SP),allocatable,intent(out) :: fullV(:)
+     integer,    intent(in)  :: fullV_size
+     complex(SP),intent(out) :: fullV(fullV_size)
      ! ws: 
      integer                 :: istart_g,istop_g
      !
-     YAMBO_ALLOC(fullV,(fullV_size))
      fullV = cZERO
      istop_g = 0
      !
@@ -763,7 +762,6 @@ subroutine K_Haydock(iq,W,mode)
      call PP_redux_wait( fullV ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
      call PP_redux_wait( fullV ,COMM=PAR_COM_eh_INDEX%COMM )
      !
-     if (.not.master_cpu) deallocate(fullV)
    end subroutine HAYVEC_gather  
    !
    subroutine HAYVEC_scatter(V,fullV,fullV_size)

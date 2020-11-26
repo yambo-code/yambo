@@ -175,15 +175,15 @@ module BS_solvers
      complex(SP),pointer,optional :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
    end function
    !
-   integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Vnm1,Vn,Vnp1,Cf)
+   integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)
      use pars,          ONLY:SP
      use BS,            ONLY:BS_H_dim
      implicit none
      integer             :: ID,it
      character(*)        :: mode
      real(SP)            :: reached_treshold,Bf(it+1),Af(it)
-     complex(SP)         :: Vnm1(BS_H_dim),Vn(BS_H_dim)
-     complex(SP),optional:: Cf(it+1),Vnp1(BS_H_dim)
+     complex(SP)         :: Cf(:)
+     complex(SP),pointer :: Vnm1(:),Vn(:),Vnp1(:)
    end function
    !
  end interface

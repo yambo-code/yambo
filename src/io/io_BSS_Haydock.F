@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Vnm1,Vn,Vnp1,Cf)  
+integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)  
  !
  use pars,          ONLY:SP
  use BS,            ONLY:BS_identifier,BS_H_dim
- use BS_solvers,    ONLY:BSS_q0
+ use BS_solvers,    ONLY:BSS_q0,Haydock_v0_mod
  use IO_m,          ONLY:io_connect,io_disconnect,io_elemental,&
 &                        io_bulk,io_status,io_sec,io_header
  use timing_m,      ONLY:timing
@@ -33,10 +33,10 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Vnm1,Vn,Vnp1,C
  implicit none
  !
  integer             :: ID,it
- real(SP)            :: reached_treshold,Bf(it+1),Af(it)
  character(*)        :: mode
- complex(SP)         :: Vnm1(BS_H_dim),Vn(BS_H_dim)
- complex(SP),optional:: Cf(it+1),Vnp1(BS_H_dim)
+ real(SP)            :: reached_treshold,Bf(it+1),Af(it)
+ complex(SP)         :: Cf(:)
+ complex(SP),pointer :: Vnm1(:),Vn(:),Vnp1(:)
  !
  ! Work Space
  !
@@ -58,8 +58,7 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Vnm1,Vn,Vnp1,C
    call io_elemental(ID,VAR=&
 &       " Haydock Iteration                ",I0=it,DB_I0=it_on_disk)
    call io_elemental(ID,VAR=&
-&       " Haydock reached Treshold         ",R0=reached_treshold,&
-&                                            DB_R0=reached_treshold)
+&       " Haydock reached Treshold         ",R0=reached_treshold,DB_R0=reached_treshold)
    call io_elemental(ID,VAR=&
 &       " Field direction                  ",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
    !
@@ -78,6 +77,9 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Vnm1,Vn,Vnp1,C
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
+   call io_bulk(ID,'Haydock_v0_mod',VAR_SZ=(/1/))
+   call io_bulk(ID,R0=Haydock_v0_mod)
+   !
    ! Vnm1
    !
    call io_bulk(ID,'Vnm1',VAR_SZ=(/2,BS_H_dim/))
@@ -92,19 +94,20 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Vnm1,Vn,Vnp1,C
    !
    call io_bulk(ID,'A_factors',VAR_SZ=(/it/))
    call io_bulk(ID,R1=Af)
+   !
    call io_bulk(ID,'B_factors',VAR_SZ=(/it+1/))
    call io_bulk(ID,R1=Bf)
    !
-   ! Cf optional
+   ! Cf used only for coupling
    !
-   if (present(Cf)) then 
+   if (size(Cf)>2) then 
      call io_bulk(ID,'C_factors',VAR_SZ=(/2,it+1/))
      call io_bulk(ID,C1=Cf)
    endif
    !
-   ! Vnp1 - optional
+   ! Vnp1 used only for coupling
    !
-   if (present(Vnp1)) then
+   if (associated(Vnp1)) then
      call io_bulk(ID,'Vnp1',VAR_SZ=(/2,BS_H_dim/))
      call io_bulk(ID,C1=Vnp1)
    endif

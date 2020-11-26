@@ -42,7 +42,7 @@ subroutine electrons_bands(Xk,Xen)
  use D_lattice,      ONLY:lattice
  use com,            ONLY:msg 
  use parser_m,       ONLY:parser
- use interpolate,    ONLY:electrons_bands_interpolate,GRID_k,INTERP_mode,INTERP_shell_factor
+ use interpolate,    ONLY:electrons_bands_interpolate,GRID_k,INTERP_shell_factor
  use QP_CTL_m,       ONLY:QP_apply
  use interfaces,     ONLY:OCCUPATIONS_Fermi
  !
@@ -58,18 +58,10 @@ subroutine electrons_bands(Xk,Xen)
  real(SP)              :: dEf
  logical               :: BANDS_built_in,BANDS_interpolated,GRID_interpolate
  logical, external     :: file_exists
- character(schlen)     :: INTERP_mode_save
- real(SP)              :: INTERP_shell_factor_save
  !
  ! Apply QP corrections
  !====================== 
- INTERP_mode_save        =INTERP_mode
- INTERP_shell_factor_save=INTERP_shell_factor
- !
  call QP_apply(BANDS_bands,Xen,Xk,'G',msg_fmt='rs')
- !
- INTERP_mode        =INTERP_mode_save
- INTERP_shell_factor=INTERP_shell_factor_save
  !
  ! IBZ => BZ: need to be done here as QP_apply cleans the %ptbz allocation
  !

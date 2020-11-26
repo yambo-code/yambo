@@ -129,8 +129,8 @@ subroutine DIPOLES_driver(k,E,q,Dip)
  if (.not.l_PROJECT_plane) then
    !
    ! ... Print
-   call OUTPUT_add_column(what="reset",name="electronic_dipoles")
-   call OUTPUT_add_column(what="open",name="electronic_dipoles")
+   call OUTPUT_add_column("electronic_dipoles",action="reset")
+   call OUTPUT_add_column("electronic_dipoles",action="open")
    call DESC_write('o electronic_dipoles','#',DIP_desc)
    !
    NK=k%nbz
@@ -145,16 +145,16 @@ subroutine DIPOLES_driver(k,E,q,Dip)
        ik=k%sstar(ikbz,1)
      endif
      call K_transform(v,'iku')
-     call OUTPUT_add_column(TITLES=(/"k_x ("//trim(coo_out)//")",&
+     call OUTPUT_add_column("electronic_dipoles",TITLES=(/"k_x ("//trim(coo_out)//")",&
 &                                    "k_y ("//trim(coo_out)//")","k_z ("//trim(coo_out)//")"/),R_VALUES=v)
      if (allocated(GRID_k%pt)) then
-       call OUTPUT_add_column(TITLES=(/"|<v|R|c>.DIP_dir|^2"/),R_values=(/INTERP_obj(ID)%INTERP(1,ikbz,1)/))
+       call OUTPUT_add_column("electronic_dipoles",TITLES=(/"|<v|R|c>.DIP_dir|^2"/),R_values=(/INTERP_obj(ID)%INTERP(1,ikbz,1)/))
      else
-       call OUTPUT_add_column(TITLES=(/"|<v|R|c>.DIP_dir|^2"/),R_values=(/DIP_accumulated(1,ik,1)/))
+       call OUTPUT_add_column("electronic_dipoles",TITLES=(/"|<v|R|c>.DIP_dir|^2"/),R_values=(/DIP_accumulated(1,ik,1)/))
      endif
-     call OUTPUT_add_column(what="write")
+     call OUTPUT_add_column("electronic_dipoles",action="write")
    enddo
-   call OUTPUT_add_column(what="close")
+   call OUTPUT_add_column("electronic_dipoles",action="close")
    !
  endif
  !

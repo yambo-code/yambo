@@ -268,12 +268,13 @@ subroutine K_Haydock(iq,W,mode)
      Cf= cZERO
      !
      call K_multiply_by_V(V0,Vnp1,1)
-     call K_dot_product(v0_mod_,V0,Vnp1)
+     call K_dot_product(v0_mod_,V0,Vnp1,1)
      if(.not.l_BS_ares_asymm) Haydock_v0_mod=sqrt(2*real(v0_mod_))
      if(     l_BS_ares_asymm) Haydock_v0_mod=sqrt(  real(v0_mod_))
      !
+     if(.not.use_left_and_right) call K_dot_product(v0_mod_,V0,Vnp1,0)
 #if defined _KERR
-     if(use_left_and_right) call K_dot_product(v0_mod_,V0_right,Vnp1)
+     if(     use_left_and_right) call K_dot_product(v0_mod_,V0_right,Vnp1,0)
 #endif
      !
      if(.not.l_BS_ares_asymm) Cf(1)= 2*cI*aimag(v0_mod_)/Haydock_v0_mod**2
@@ -289,7 +290,7 @@ subroutine K_Haydock(iq,W,mode)
      !
      ! it=1:|Vm>=|q->0>/(<q->0|q->0>)^(1/2)
      !
-     call K_dot_product(v0_mod_,V0,V0) 
+     call K_dot_product(v0_mod_,V0,V0,1) 
      Haydock_v0_mod=sqrt(real(v0_mod_,SP))
      !
      do i_g=1,BS_nT_grps
@@ -314,7 +315,7 @@ subroutine K_Haydock(iq,W,mode)
      !
      ! A(n) = <Vm|Vm+1>
      !
-     call K_dot_product(v0_mod_,Vn,Vnp1) 
+     call K_dot_product(v0_mod_,Vn,Vnp1,1) 
      Af(it)=real(v0_mod_,SP)
      !
      !|Vm+1> = |Vm+1> - A(n)|Vm> - B(n)|Vm-1>
@@ -327,7 +328,7 @@ subroutine K_Haydock(iq,W,mode)
      !
      ! B(n+1)= <Vm+1|Vm+1>^(1/2)
      !
-     call K_dot_product(v0_mod_,Vnp1,Vnp1) 
+     call K_dot_product(v0_mod_,Vnp1,Vnp1,1) 
      Bf(it+1)=sqrt(real(v0_mod_,SP))
      if( Bf(it+1)==(Bf(it+1)+1._SP) ) call error('Bf=NaN likely because some eigenvalue of the BSE is negative.')
      !
@@ -360,10 +361,10 @@ subroutine K_Haydock(iq,W,mode)
      else
        !
        !|Vm+1> = H |Vm>
-       call  K_multiply_by_V(Vn,Vnp1,1)
+       !call  K_multiply_by_V(Vn,Vnp1,1)
        !
-       ! A(n) = <Vm|Vm+1>
-       call K_dot_product(v0_mod_,Vn,Vnp1) 
+       ! A(n) = <Vm+1|F|Vm+1>
+       call K_dot_product(v0_mod_,Vnp1,Vnp1,1) 
        Af(it)=real(v0_mod_,SP)
        !
      endif
@@ -400,7 +401,7 @@ subroutine K_Haydock(iq,W,mode)
      !       = (2*Re(<Vm|Vmp1>))^(1/2) by symmetry, 
      !          where the dot_product is just on eh pair space 
      !
-     call K_dot_product(v0_mod_,Vn,Vnp1) 
+     call K_dot_product(v0_mod_,Vn,Vnp1,1) 
      if (.not.l_BS_ares_asymm) Bf(it+1)=sqrt(2*real(v0_mod_,SP))
      if (     l_BS_ares_asymm) Bf(it+1)=sqrt(  real(v0_mod_,SP))
      ! Simple test for INF
@@ -416,9 +417,11 @@ subroutine K_Haydock(iq,W,mode)
        Vn(i_g)%fragment    =Vn(i_g)%fragment/Bf(it+1)
      enddo
      !
-     if (.not.use_left_and_right) call K_dot_product(v0_mod_,V0,Vn) 
+     ! This is working, despite the call of K_dot_prodict with 1 here
+     ! From equations I would have expected 0 to be needed ...
+     if (.not.use_left_and_right) call K_dot_product(v0_mod_,V0,Vn,1)
 #if defined _KERR
-     if (     use_left_and_right) call K_dot_product(v0_mod_,V0_right,Vn) 
+     if (     use_left_and_right) call K_dot_product(v0_mod_,V0_right,Vn,1) 
 #endif
      !
      if (.not.l_BS_ares_asymm) then

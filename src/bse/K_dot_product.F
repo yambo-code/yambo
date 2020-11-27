@@ -21,9 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_dot_product(dot,V,W)
+subroutine K_dot_product(dot,V,W,i_kind)
  !
  ! Dot product between distributed vectors 
+ ! i_kind==1 -->        F dot product
+ ! i_kind==0 --> standard dot product
  !
  use pars,           ONLY:SP,cZERO
  use BS_solvers,     ONLY:Haydock_vector
@@ -33,8 +35,9 @@ subroutine K_dot_product(dot,V,W)
  !
  implicit none
  !
- complex(SP),          intent(out):: dot
+ integer,              intent(in) :: i_kind
  type(Haydock_vector), intent(in) :: V(BS_nT_grps),W(BS_nT_grps)
+ complex(SP),          intent(out):: dot
  !
  ! Workspace
  !
@@ -49,11 +52,9 @@ subroutine K_dot_product(dot,V,W)
  !
  do i_T_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle
-   dot = dot + (-1)**(BS_T_grp(i_T_g)%i_res_ares-1) &
+   dot = dot + ((-1)**(BS_T_grp(i_T_g)%i_res_ares-1))**i_kind &
    &     *Vstar_dot_V_omp(BS_T_grp(i_T_g)%size,V(i_T_g)%fragment,W(i_T_g)%fragment)
  enddo
- !
- !stop
  !
  ! Reduce all
  !

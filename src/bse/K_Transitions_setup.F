@@ -289,9 +289,10 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  !
 #if defined _RT
  call parser('ForceEqTrans',FORCE_EQ_trans)
+ call parser('ImposeAres',l_BS_ares_asymm)
 #endif
  !
- l_BS_ares_asymm=(iq/=1)
+ l_BS_ares_asymm=l_BS_ares_asymm.or.(iq/=1)
 #if defined _KERR
  l_BS_ares_asymm=(l_BS_ares_asymm.or.l_BS_photolum.or.(l_BS_magnons.and.n_sp_pol==2))
 #endif

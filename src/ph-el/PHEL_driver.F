@@ -31,7 +31,7 @@ subroutine PHEL_driver(E,k,q)
  use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc,bz_fine_grid
  use interfaces,          ONLY:ELPH_alloc
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,&
-&                              l_GKKP_hosts_bare_dV
+&                              l_GKKP_hosts_bare_dV,elph_nb
  use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode
  use parallel_m,          ONLY:PARs_PH_Q_ibz,PARs_PH_K_bz 
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_global_indexes
@@ -79,7 +79,7 @@ subroutine PHEL_driver(E,k,q)
  !
  ! El-Ph databases check
  !=======================
- call ELPH_databases_check(QP_PH_n_G_bands)
+ call ELPH_databases_check(elph_nb)
  !
  if (.not.any((/l_GKKP_DB_exists,l_GKKP_expanded_DB_exists/))) call error("GKKP databases absent or damaged")
  !
@@ -89,7 +89,7 @@ subroutine PHEL_driver(E,k,q)
  !
  ! El-Ph databases I/O
  !=====================
- call ELPH_databases_load(GKKP_pe_sq,E,k,q,(/1,QP_PH_n_G_bands/),"Q-sym Q-IBZ K-BZ",PH_Self_Energy_mode)
+ call ELPH_databases_load(GKKP_pe_sq,E,k,q,(/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/),"Q-sym Q-IBZ K-BZ",PH_Self_Energy_mode)
  !
  !...acoustic branches
  !
@@ -123,23 +123,23 @@ subroutine PHEL_driver(E,k,q)
  ! ... allocs
  Life_MEM_steps=1
  call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)
- call RT_EL_occupations_alloc((/1,QP_PH_n_G_bands/),k_FG%N)
+ call RT_EL_occupations_alloc((/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/),k_FG%N)
  call RT_PH_occupations_alloc(elph_branches,nqibz)
  if (l_RT_uses_E_FineGd .or. l_PH_uses_E_FineGd) then
-   YAMBO_ALLOC(E_FG%E,(QP_PH_n_G_bands,k_FG%N,n_sp_pol))
-   YAMBO_ALLOC(E_FG%W,(QP_PH_n_G_bands,k_FG%N,n_sp_pol))
+   YAMBO_ALLOC(E_FG%E,(elph_nb,k_FG%N,n_sp_pol))
+   YAMBO_ALLOC(E_FG%W,(elph_nb,k_FG%N,n_sp_pol))
  else
-   YAMBO_ALLOC(E_FG%E,(QP_PH_n_G_bands,k_n,n_sp_pol))
-   YAMBO_ALLOC(E_FG%W,(QP_PH_n_G_bands,k_n,n_sp_pol))
+   YAMBO_ALLOC(E_FG%E,(elph_nb,k_n,n_sp_pol))
+   YAMBO_ALLOC(E_FG%W,(elph_nb,k_n,n_sp_pol))
  endif
  !
  ! ... occupations & levels
- call RT_occupations_and_levels_init((/1,QP_PH_n_G_bands/),E,k,q,k_FG,E_FG)
+ call RT_occupations_and_levels_init((/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/),E,k,q,k_FG,E_FG)
  !
  ! Select allowed transitions for phonon scatterings
  !===================================================
  !
- call PH_Grid_Check_Transitions(E,k,q,(/1,QP_PH_n_G_bands/),k_FG,E_FG)
+ call PH_Grid_Check_Transitions(E,k,q,(/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/),k_FG,E_FG)
  !
  ! Calculation of the lifetimes
  !==============================

@@ -119,7 +119,7 @@ integer function io_ELPH(ID,what)
    call def_variable_elemental(ID,"",0,0,1)
    !
    if (io_mode(ID)==DUMP.or.write_is_on(ID)) then
-     QP_PH_n_G_bands=elph_nb
+     QP_PH_n_G_bands=(/1,elph_nb/)
      elph_Ham_bands =(/1,elph_nb/)
      elph_branches  =(/1,ph_modes/)
    endif

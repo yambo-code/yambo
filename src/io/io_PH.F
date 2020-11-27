@@ -52,13 +52,14 @@ integer function io_PH(ID)
    call def_variable_elemental(ID,"CH_PHEL_PARAMETERS",1,0,0)
    call io_variable_elemental(ID,VAR="[PHEL] Self-Energy mode",CH0=PH_Self_Energy_mode,DESCRIPTOR=PHEL_desc,&
 &                                CHECK=.TRUE.,OP=(/"=="/))
-   call def_variable_elemental(ID,"PHEL_PARAMETERS",8,SP,0)
+   call def_variable_elemental(ID,"PHEL_PARAMETERS",9,SP,0)
    call io_variable_elemental(ID,VAR="[PH  ] Branches",I0=ph_modes,TERMINATOR="all",CHECK=.TRUE.,OP=(/"=="/))
    call io_variable_elemental(ID,VAR="[PHEL] Branches",I1=elph_branches,DESCRIPTOR=PHEL_desc,&
 &                                TERMINATOR="used",CHECK=.TRUE.,OP=(/"==","=="/))
    call io_variable_elemental(ID,VAR="[PHEL] G Damping",R0=QP_G_damp,DESCRIPTOR=PHEL_desc,&
 &                                TERMINATOR="eV",UNIT=HA2EV,CHECK=.TRUE.,OP=(/"=="/))
-   call io_variable_elemental(ID,VAR="[PHEL] X Bands",I0=QP_PH_n_G_bands,DESCRIPTOR=PHEL_desc,CHECK=.TRUE.,OP=(/"=="/))
+   call io_variable_elemental(ID,VAR="[PHEL] X Bands",I1=QP_PH_n_G_bands,DESCRIPTOR=PHEL_desc,&
+&                                TERMINATOR="used",CHECK=.TRUE.,OP=(/"==","=="/))
    call io_variable_elemental(ID,VAR="[PHEL] X DbGd points",I0=PH_DbGd_points,DESCRIPTOR=PHEL_desc,CHECK=.TRUE.,OP=(/"=="/))
    call io_variable_elemental(ID,VAR="[PHEL] X DbGd points subset",I0=nkDg,DESCRIPTOR=PHEL_desc,CHECK=.TRUE.,OP=(/"=="/)) 
    call io_variable_elemental(ID,VAR="[PHEL] X DbGd support",L0=l_PH_uses_E_FineGd,DESCRIPTOR=PHEL_desc,CHECK=.TRUE.,OP=(/"=="/))

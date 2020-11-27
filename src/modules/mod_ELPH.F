@@ -44,7 +44,7 @@ module ELPH
  real(SP),    allocatable :: QP_OMS_Fan(:)
  real(SP),    allocatable :: QP_DW(:)
  !
- ! PHONON props 
+ ! PHONON props
  real(SP)                 :: PH_W_debye=rZERO
  real(SP),    allocatable :: PH_kpt_bz(:,:)
  real(SP),    allocatable :: PH_qpt(:,:)
@@ -85,7 +85,7 @@ module ELPH
  integer   :: elph_Ham_bands(2)
  integer   :: elph_Ham_ik
  real(SP)  :: RES_tresh
- ! 
+ !
  ! gFsq matrices
  integer              :: gsqF_energy_steps
  real(SP),allocatable :: gsqF_fan(:,:,:,:)
@@ -95,7 +95,7 @@ module ELPH
  real(SP),allocatable :: gsqF_life_f(:,:,:,:)
  !
  ! el-ph Self-Energy
- integer   :: QP_PH_n_G_bands
+ integer   :: QP_PH_n_G_bands(2)=0
  logical   :: eval_G_using_KK ! Perform KK of the spectral function
  real(SP)  :: FAN_deltaE_treshold
  real(SP)  :: DW_deltaE_treshold
@@ -123,7 +123,7 @@ module ELPH
        do ik=1,nkbz
          GKKP%E_kpq(iq)%E(ib,ik,1)=GKKP%E_kpq(iq)%E(ib,ik,1)-E
          GKKP%E_kpq(iq)%f(ib,ik,1)=spin_occ*Fermi_fnc(GKKP%E_kpq(iq)%E(ib,ik,1),Tel)
-       enddo 
+       enddo
      enddo
    end subroutine
    !

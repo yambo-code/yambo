@@ -35,7 +35,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
 &                         l_angular_momentum,l_position,l_mean_potential
  use xc_functionals, ONLY:magn
  use interfaces,     ONLY:WF_load,WF_free
- use parallel_int,   ONLY:PARALLEL_WF_index,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  !
 #include<memory.h>
  !

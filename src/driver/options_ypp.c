@@ -151,6 +151,14 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].section="Plots";
  options[*i_opt].char_var=1;
  *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="Dipole properties";
+ options[*i_opt].long_opt="dipoles";
+ options[*i_opt].bin="ypp";
+ options[*i_opt].long_desc[0]="<string>=(exc)itonic,(el)ectronic";
+ options[*i_opt].yambo_string="dipoles";
+ options[*i_opt].section="Plots";
+ options[*i_opt].char_var=1;
+ *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Free hole position in the excitonic plot";
  options[*i_opt].long_opt="freehole";
  options[*i_opt].bin="ypp";

@@ -23,7 +23,7 @@
 !
 module R_lattice
  !
- use pars,        ONLY:SP,schlen, IP
+ use pars,        ONLY:SP,schlen,IP
  use descriptors, ONLY:IO_desc
  !
 #include<dev_defs.h>
@@ -31,12 +31,13 @@ module R_lattice
  !
  ! K lattice
  !
- integer  :: k_grid(3)
- integer  :: k_grid_dim
- real(SP) :: k_grid_uc_vol
- real(SP) :: k_grid_b(3,3)
- logical  :: Xk_grid_is_uniform
- logical  :: Xk_grid_new_mapping
+ integer           :: k_grid(3)
+ integer           :: k_grid_dim
+ real(SP)          :: k_grid_uc_vol
+ real(SP)          :: k_grid_b(3,3)
+ logical           :: Xk_grid_is_uniform
+ logical           :: Xk_grid_new_mapping
+ character(schlen) :: k_GRIDS_string="X S B C"
  !
  ! Q/K-sampling
  !
@@ -116,6 +117,8 @@ module R_lattice
  integer  :: QP_states_k(2)
  logical  :: bse_scattering
  logical  :: coll_scattering
+ logical  :: X_scattering
+ logical  :: sigma_scattering
  integer, allocatable :: qindx_X(:,:,:)
  integer, allocatable :: qindx_B(:,:,:)
  integer, allocatable :: qindx_S(:,:,:)
@@ -200,20 +203,24 @@ module R_lattice
      !
      character(*), intent(in) :: what
      !
-     if(  index(what,"X")/=0 .or. index(what,"ALL")/=0) then
+     if(  (index(what,"X")/=0 .or. index(what,"ALL")/=0) .and. X_scattering) then
        YAMBO_ALLOC(qindx_X,(nqibz,nXkbz,2))
+       qindx_X=0
      endif
      !
-     if( (index(what,"S")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform) then
+     if( (index(what,"S")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform .and. sigma_scattering) then
        YAMBO_ALLOC(qindx_S,(QP_states_k(2),nqbz,2))
+       qindx_S=0
      endif
      !
      if( (index(what,"B")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform .and. bse_scattering) then
        YAMBO_ALLOC(qindx_B,(nXkbz,nXkbz,2))
+       qindx_B=0
      endif
      !
      if( (index(what,"C")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform .and. coll_scattering) then
        YAMBO_ALLOC(qindx_C,(nXkbz,nXkbz,2))
+       qindx_C=0
      endif
      !
    end subroutine

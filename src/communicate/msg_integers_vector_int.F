@@ -76,7 +76,7 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,MSG_st
  i1_limits=(/1,-1/)
  if(OUT_msg) i1_limits=(/1,max_open_ofs/)
  if(REP_msg) i1_limits=(/repfile_index,repfile_index/)
-
+ !
  if (present(MSG_string)) then
    call add_the_semi_column(mesg,nm,mesg_plus)
    if (len_trim(after_msg_)==0) write (MSG_string,trim(msgfmt)) mesg_plus(1:nm),val
@@ -113,7 +113,6 @@ subroutine msg_integers_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,MSG_st
  ! Write to logfile or to report
  !
  if (.not.write_to_log.or.(.not.STD_msg.and..not.LOG_msg)) return
-
  !
  msgfmt=composed_fmt(trim(gen_fmt(val)),-size(val),.false.,-1)
  !

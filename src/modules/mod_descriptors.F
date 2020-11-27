@@ -126,9 +126,9 @@ module descriptors
    end subroutine
    !
    subroutine IO_desc_duplicate(desc_in,desc_out,offset)
-     type(IO_desc),    intent(in)  :: desc_in
-     type(IO_desc),    intent(out) :: desc_out
-     integer,optional, intent(in)  :: offset
+     type(IO_desc),    intent(in)    :: desc_in
+     type(IO_desc),    intent(inout) :: desc_out
+     integer,optional, intent(in)    :: offset
      integer  :: i_d,off_
      off_=0
      if (present(offset)) then
@@ -136,7 +136,7 @@ module descriptors
      endif
      desc_out%n    = desc_in%n + off_
      do i_d=1,desc_in%n
-       call IO_desc_element_duplicate(desc_in,desc_out,i_d+off_,i_d)
+       call IO_desc_element_duplicate(desc_in,desc_out,i_d,i_d+off_)
      enddo
    end subroutine
    !

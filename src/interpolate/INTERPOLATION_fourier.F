@@ -32,7 +32,7 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,NK,ID)
  use vec_operate,       ONLY:c2a
  use timing_m,          ONLY:timing
  use LIVE_t,            ONLY:live_timing
- use parallel_m,        ONLY:PP_indexes,PP_indexes_reset
+ use parallel_m,        ONLY:PP_indexes,PP_indexes_reset,myid
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_index 
  !
  implicit none
@@ -62,7 +62,7 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,NK,ID)
  endif
  VALUES=rZERO
  !
- if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolate@"//trim(INTERP_obj(ID)%what)//" Fourier",nshells)
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolate@"//trim(INTERP_obj(ID)%what)//" Fourier",px%n_of_elements(myid+1))
  !
  do ik=1,Nk
    F_star=cZERO

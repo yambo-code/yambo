@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
+subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  ! Presently there exist two gauges: (i ) the length   which uses <r>            
  !                                   (ii) the velocity which uses <v>=<p-[x,Vnl]> 
@@ -41,7 +41,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use drivers,        ONLY:l_optics,l_real_time,l_sc_run,l_nl_optics
  use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:levels,n_sp_pol
- use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_DIP
  use R_lattice,      ONLY:bz_samp
  use DIPOLES,        ONLY:DIP_alloc,DIPOLE_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
@@ -69,12 +68,11 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  type(bz_samp), intent(inout) :: Xk,Xq
  type(levels),  intent(inout) :: Xen
- type(X_t),     intent(in)    :: X
  type(DIPOLE_t),intent(inout) :: Dip
  !
  ! Work Space
  !
- integer           :: ik,i_sp_pol,io_err,ib(2)
+ integer           :: ik,io_err
  logical           :: use_dipole_transverse,idir_not_done(3)
  !
  call timing('Dipoles',OPR='start')
@@ -99,13 +97,14 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  ! Setup logicals 
  !================
- !
  use_g_space_approach        = trim(Dip%approach)=='G-space v'
  use_real_space_approach     = trim(Dip%approach)=='R-space x'
  use_covariant_approach      = trim(Dip%approach)=='Covariant'
  use_shifted_grids_approach  = trim(Dip%approach)=='Shifted grids'
  !
+#if defined _SC || defined _RT || defined _NL
  compute_P2_dipoles          = index(Dip%computed,"P2")  /=0 .or. l_sc_run .or. l_real_time
+#endif
 #if defined _RT
  compute_Spin_dipoles        = index(Dip%computed,"Spin")/=0 .or. (l_real_time .and. n_spin>1)
  compute_Orb_dipoles         = index(Dip%computed,"Orb") /=0 .or. (l_real_time .and. n_spin>1)
@@ -130,7 +129,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  if (compute_Spin_dipoles) Dip%computed=trim(Dip%computed)//' Spin'
  if (compute_Orb_dipoles)  Dip%computed=trim(Dip%computed)//' Orb'
  !
- if(use_covariant_approach)  eval_OVERLAPS=.true.
+ if (use_covariant_approach)  eval_OVERLAPS=.true.
  !
  ! Dipole dimensions to be fixed
  !
@@ -287,15 +286,15 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
         !
 #if defined _RT
         !
-        if (compute_Orb_dipoles) &
-        & call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,:),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+        if (compute_Orb_dipoles) then
+          call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,:),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+        endif
         if (compute_Spin_dipoles) then
           call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
           if (n_spinor==2) call PP_redux_wait(DIP_P_spinor(:,:,:,:,:,ik_mem),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         endif
         !
 #endif
-        !
 #if defined _SC || defined _RT || defined _NL
         !
         if (compute_P2_dipoles) call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
@@ -303,7 +302,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #endif
         !
         ! GPL_EXCLUDE_END 
-        !
         !
         ! Symmetrization 
         !================
@@ -318,8 +316,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
             ! GPL_EXCLUDE_START 
             !
 #if defined _RT
-            if (compute_Orb_dipoles) &
-            & DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)),0. ,SP)
+            if (compute_Orb_dipoles) then
+              DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)),0. ,SP)
+            endif
             if (compute_Spin_dipoles) then
               DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
               if(n_spinor==2) &
@@ -327,8 +326,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
             endif
 #endif
 #if defined _SC || defined _RT
-            if (compute_P2_dipoles) &
-&             P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+            if (compute_P2_dipoles) then
+              P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+            endif
 #endif
             ! GPL_EXCLUDE_END  
             !
@@ -342,8 +342,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
               ! GPL_EXCLUDE_START 
               !
 #if defined _RT
-              if (compute_Orb_dipoles) &
-              & DIP_orbital(:,iv,ic,ik_mem,i_sp_pol,:)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,:))
+              if (compute_Orb_dipoles) then
+                DIP_orbital(:,iv,ic,ik_mem,i_sp_pol,:)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,:))
+              endif
               if (compute_Spin_dipoles) then
                 DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
                 if (n_spinor==2) &

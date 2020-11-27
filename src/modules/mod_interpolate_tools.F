@@ -97,15 +97,15 @@ module interpolate_tools
      !
    end subroutine
    !
-   subroutine init_ID(ID,bands,k,operation,seed_kind)
+   subroutine init_ID(ID,dims,k,operation,seed_kind)
      !
      use R_lattice,   ONLY:bz_samp
      !
-     integer      , intent(in) :: ID,bands(2)
+     integer      , intent(in) :: ID,dims(2)
      type(bz_samp), intent(in) :: k
      character(*) , intent(in) :: operation,seed_kind
      !
-     INTERP_obj(ID)%nb=bands
+     INTERP_obj(ID)%nb=dims
      INTERP_obj(ID)%nk=k%nibz
      INTERP_obj(ID)%in_use=.TRUE.
      INTERP_obj(ID)%use_NN=trim(INTERP_mode)=="NN"
@@ -121,7 +121,7 @@ module interpolate_tools
      INTERP_obj(ID)%weights=k%weights
      !
      YAMBO_FREE(INTERP_obj(ID)%SEED)
-     YAMBO_ALLOC(INTERP_obj(ID)%SEED,(bands(1):bands(2),k%nibz,INTERP_obj(ID)%D))
+     YAMBO_ALLOC(INTERP_obj(ID)%SEED,(dims(1):dims(2),k%nibz,INTERP_obj(ID)%D))
      INTERP_obj(ID)%SEED=rZERO
      !
    end subroutine init_ID

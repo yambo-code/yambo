@@ -51,6 +51,7 @@ module QP_m
  logical           :: QP_dSc_test
  logical           :: GWo_SC_done
  logical           :: COHSEX_use_empties
+ logical           :: l_QP_symmetrize=.FALSE.
  logical           :: l_GW_terminator=.FALSE.
  logical           :: l_update_W=.FALSE.
  logical           :: On_Mass_Shell_approx

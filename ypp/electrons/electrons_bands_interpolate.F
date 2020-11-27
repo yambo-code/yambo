@@ -25,7 +25,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  !
  use pars,           ONLY:SP
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,CIRCUIT_k,BANDS_from_db,&
-&                         CIRCUIT_E_db,l_PROJECT_plane,l_PROJECT_line
+&                         CIRCUIT_E_db,l_PROJECT_plane,l_PROJECT_line,INTERP_input_mode
  use electrons,      ONLY:levels,n_sp_pol
 #if defined _YPP_RT
  use YPP_real_time,  ONLY:l_RT_occupations,l_RT_lifetimes
@@ -50,9 +50,8 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  integer               :: ib,ik,i_sp_pol
  !
  NN=.FALSE.
+ if(INTERP_input_mode=='NN') NN=.TRUE.
  GRID   =.FALSE.
- !
- if(trim(INTERP_mode)=='NN') NN=.TRUE.
  !
  if (any(BANDS_range<=0))                call error(" Wrong bands range")
  !

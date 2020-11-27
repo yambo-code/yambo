@@ -28,7 +28,7 @@ subroutine PH_of(q)
  !DEBUG<
  use pars,           ONLY:SP
  use OUTPUT_simple,  ONLY:OUTPUT_add_column
- use RT_lifetimes,   ONLY:RT_PE_life,PE_linewidth
+ use RT_lifetimes,   ONLY:RT_PE_life
  use ELPH,           ONLY:PH_freqs_sq,elph_branches,PHEL_desc,ELPH_desc,l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use R_lattice,      ONLY:nqibz,bz_samp
  use interfaces,     ONLY:DESC_write
@@ -53,20 +53,20 @@ subroutine PH_of(q)
      call OUTPUT_add_column("ph",TITLES=(/"Q-point","Branch "/),I_VALUES=(/iq,il/))
      if (l_GKKP_expanded_DB_exists) ph_freq=abs(sqrt(PH_freqs_sq(q%k_table(iq,1),il)))
      if (l_GKKP_DB_exists         ) ph_freq=abs(sqrt(PH_freqs_sq(iq,il)))
-     call OUTPUT_add_column(TITLES=(/"Energy"/),R_VALUES=(/ph_freq/),UNIT="meV")
-     call OUTPUT_add_column(TITLES=(/"Width(emit)"/),R_VALUES=(/RT_PE_life%emit(il,iq)/),UNIT="meV")
-     call OUTPUT_add_column(TITLES=(/"Width(abs)"/),R_VALUES=(/RT_PE_life%abs(il,iq)/),UNIT="meV")
+     call OUTPUT_add_column("ph",TITLES=(/"Energy"/),R_VALUES=(/ph_freq/),UNIT="meV")
+     call OUTPUT_add_column("ph",TITLES=(/"Width(emit)"/),R_VALUES=(/RT_PE_life%emit(il,iq)/),UNIT="meV")
+     call OUTPUT_add_column("ph",TITLES=(/"Width(abs)"/),R_VALUES=(/RT_PE_life%abs(il,iq)/),UNIT="meV")
      !DEBUG> (FP)
-     call OUTPUT_add_column(TITLES=(/"Width(retarded)"/),R_VALUES=(/PE_linewidth(il,iq)/),UNIT="meV")
-     call OUTPUT_add_column(TITLES=(/"Width(interb.)"/),R_VALUES=(/RT_PE_life_interband(il,iq)/),UNIT="meV")
-     call OUTPUT_add_column(TITLES=(/"Width(intrab.)"/),R_VALUES=(/RT_PE_life_intraband(il,iq)/),UNIT="meV")
+     call OUTPUT_add_column("ph",TITLES=(/"Width(retarded)"/),R_VALUES=(/PE_linewidth(il,iq)/),UNIT="meV")
+     call OUTPUT_add_column("ph",TITLES=(/"Width(interb.)"/),R_VALUES=(/RT_PE_life_interband(il,iq)/),UNIT="meV")
+     call OUTPUT_add_column("ph",TITLES=(/"Width(intrab.)"/),R_VALUES=(/RT_PE_life_intraband(il,iq)/),UNIT="meV")
      !DEBUG<
-     call OUTPUT_add_column(ORDER=(/"Q-point","Branch ","Energy "/))
-     call OUTPUT_add_column(ORDER=(/"Width(emit)","Width(abs) "/))
+     call OUTPUT_add_column("ph",ORDER=(/"Q-point","Branch ","Energy "/))
+     call OUTPUT_add_column("ph",ORDER=(/"Width(emit)","Width(abs) "/))
      !DEBUG>
-     call OUTPUT_add_column(ORDER=(/"Width(retarded)"/))
-     call OUTPUT_add_column(ORDER=(/"Width(interb.)"/))
-     call OUTPUT_add_column(ORDER=(/"Width(intrab.)"/))
+     call OUTPUT_add_column("ph",ORDER=(/"Width(retarded)"/))
+     call OUTPUT_add_column("ph",ORDER=(/"Width(interb.)"/))
+     call OUTPUT_add_column("ph",ORDER=(/"Width(intrab.)"/))
      !DEBUG<
      call OUTPUT_add_column("ph",action="write")
    enddo

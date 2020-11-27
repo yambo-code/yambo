@@ -23,7 +23,7 @@
 !
 integer function io_QINDX(Xk,q,io_db)
  !
- use pars,           ONLY:SP,IP,LP
+ use pars,           ONLY:SP,IP
  use R_lattice,      ONLY:nqibz,nqbz,qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,QP_states_k,nXkibz,qindx_alloc,&
 &                         Xk_grid_is_uniform,bz_samp,nXkbz,coll_scattering,q_pt,&

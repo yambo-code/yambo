@@ -24,7 +24,7 @@
 subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !
  ! LOGICALS
- use parallel_m,    ONLY:l_par_X_T,l_par_RT,l_par_SE,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_NL
+ use parallel_m,    ONLY:l_par_RT,l_par_SE,l_par_X_G,l_par_X_G_finite_q,l_par_NL
 #if defined _QED
  use parallel_m,    ONLY:l_par_SC
 #endif
@@ -38,7 +38,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  use parallel_m,    ONLY:PAR_Dip_ib,PAR_Dip_ib_lim,PAR_X_ib,PAR_X_iq,PAR_n_c_bands,PAR_n_v_bands
  ! WORLDS
  use parallel_m,    ONLY:PAR_COM_WORLD,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved,COMM_copy
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
+ use parallel_int,  ONLY:PARALLEL_index,PARALLEL_live_message
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,l_X_terminator
 #if defined _QED
@@ -90,8 +90,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !==========
  ! Logicals
  !==========
- l_par_DIP          =ENVIRONMENT=="DIPOLES"
- l_par_X_T          =ENVIRONMENT=="Response_T_space"
  l_par_X_G_finite_q =ENVIRONMENT=="Response_G_space_and_IO"
  l_par_X_G          =ENVIRONMENT=="Response_G_space"
  l_par_SE           =ENVIRONMENT=="Self_Energy"
@@ -165,7 +163,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  if (      ENVIRONMENT=="ScaLapacK")           call PARALLEL_global_ScaLapack( )
 #endif
 #if defined _ELPH
- if (      ENVIRONMENT=="Phonon_Self_Energy")  call PARALLEL_global_Phonon_Self_Energy(E,Xk,q)
+ if (      ENVIRONMENT=="Phonon_Self_Energy")  call PARALLEL_global_Phonon_Self_Energy( )
 #endif
  !
  !==============================================================================

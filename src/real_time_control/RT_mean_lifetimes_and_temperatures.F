@@ -28,7 +28,8 @@ subroutine RT_mean_lifetimes_and_temperatures( LIFE, LIFE_ref )
  use RT_lifetimes,   ONLY:RT_lifetime,l_RT_lifetimes_Tfit
  use real_time,      ONLY:RTibz,RT_nk,RT_bands
  use electrons,      ONLY:spin_occ,n_full_bands
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
+ use parallel_int,   ONLY:PP_redux_wait
  use units,          ONLY:HA2KEL
  !
  implicit none

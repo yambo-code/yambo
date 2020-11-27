@@ -24,7 +24,7 @@
 subroutine PARALLEL_global_Response_T(Xk,X_type)
  !
  use R_lattice,     ONLY:bz_samp,nXkbz,nXkibz
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
+ use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use IO_m,          ONLY:IO_and_Messaging_switch
  use BS,            ONLY:BS_nT_at_k,BS_nT_grps
  use openmp,        ONLY:n_threads_K,OPENMP_set_threads
@@ -93,7 +93,7 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  YAMBO_ALLOC(PAR_Xk_ibz_index,(nXkibz))
  call PAR_build_index(PAR_IND_Xk_ibz,nXkibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
  YAMBO_ALLOC(PAR_Xk_bz_index,(nXkbz))
- call distribute_BZk_using_IBZk(PAR_COM_Xk_ibz_INDEX,Xk,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
+ call PARALLEL_distribute_BZk_using_IBZk(PAR_COM_Xk_ibz_INDEX,Xk,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
 &                                                       PAR_IND_Xk_bz, PAR_IND_Xk_bz_ID,&
 &                                                       PAR_Xk_bz_index,PAR_Xk_nbz)
  !

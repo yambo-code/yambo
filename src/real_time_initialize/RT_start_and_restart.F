@@ -47,11 +47,11 @@ subroutine RT_start_and_restart(E,k,q)
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,&
 &                         G_lesser_reference,rho_reference,magn_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,NE_time,RT_levels,&
-&                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
+&                         RT_P,RT_step,dG_lesser,NE_i_time,RT_dyn_step,&
 &                         Gr_kind,l_RT_is_WFfree,RT_TIME_status,RTibz,&
 &                         RT_nk,G_lesser,RT_eh_en,G_MEM_steps,RT_bands,&
 &                         NE_time_step_update_jump,l_velocity_gauge_corr
- use RT_lifetimes,   ONLY:RT_life_extrap_times
+ use RT_lifetimes,   ONLY:RT_life_extrap_times,l_RT_iterative_ELPH_lifetimes
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,&
@@ -60,7 +60,8 @@ subroutine RT_start_and_restart(E,k,q)
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
  use H_interfaces,   ONLY:V_real_space_to_H
- use parallel_m,     ONLY:PP_redux_wait,PAR_G_k_range
+ use parallel_m,     ONLY:PAR_G_k_range
+ use parallel_int,   ONLY:PP_redux_wait
  use RT_output_m,    ONLY:RT_desc,TIME_STEP_desc,Gr_desc
  !
 #include<memory.h>
@@ -143,9 +144,11 @@ subroutine RT_start_and_restart(E,k,q)
  !
  RESTART = io_err(4)==0.and.io_err(5)==0.and.io_err(8)==0
  !
+#if defined _ELPH_ITERATIVE
  !  4. The THETA (no CCA mode)
  !
- if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = RESTART.and.(io_err(7)==0)
+ if (l_RT_iterative_ELPH_lifetimes) RESTART = RESTART.and.(io_err(7)==0)
+#endif
  !
  ! In case I restart I need to copy the databases in the WD
  !
@@ -193,7 +196,8 @@ subroutine RT_start_and_restart(E,k,q)
      G_lesser(:,:,:,i_mem)=G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2))+dG_lesser(:,:,:,i_mem)
    enddo
    !
-   if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
+#if defined _ELPH_ITERATIVE
+   if (l_RT_iterative_ELPH_lifetimes) then
      do ik=1,RT_nk
        IO_ACT=manage_action(RD_CL_IF_END,ik,FIRST=1,LAST=RT_nk)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),MODE=VERIFY,ID=ID(7))
@@ -201,7 +205,8 @@ subroutine RT_start_and_restart(E,k,q)
      enddo
    endif
    !
-   if(.not.l_RT_CCA_Kernel) call RT_ELPH_zeroing()
+   if( l_RT_iterative_ELPH_lifetimes) call RT_ELPH_zeroing()
+#endif
    !
    ! Last thing to do is to update the planned time sampling time (if needed)
    !
@@ -215,18 +220,18 @@ subroutine RT_start_and_restart(E,k,q)
    !
    call msg( 'nr','---RESTART report---')
    !
-   call msg('s','[RESTART] Number of steps done    [o/o]',real(NE_i_time)/real(NE_steps)*100._SP)
-   call msg('r','Number of steps done         [o/o]',real(NE_i_time)/real(NE_steps)*100._SP)
-   call msg('r','Time reached                  [fs]',real(NE_i_time-1)*RT_step*AUT2FS)
-   call msg('r','Time step                     [fs]',RT_dyn_step*AUT2FS)
+   call msg('s','[RESTART] Number of steps done         ',real(NE_i_time)/real(NE_steps)*100._SP,"[o/o]")
+   call msg('r','Number of steps done              ',real(NE_i_time)/real(NE_steps)*100._SP,"[o/o]")
+   call msg('r','Time reached                      ',real(NE_i_time-1)*RT_step*AUT2FS,"[fs]")
+   call msg('r','Time step                         ',RT_dyn_step*AUT2FS,"[fs]")
    !
-   call msg('r',  'dT Update Interval            [fs]',NE_time_step_update_jump*AUT2FS)
-   call msg('r',  'Lifetimes inter/intr times    [fs]',RT_life_extrap_times*AUT2FS)
-   call msg('r',  'T cache step  of J,P,M        [fs]',CACHE_OBS_INTERVAL_time*AUT2FS)
-   call msg('r',  'T between I/O of J,P,M        [fs]',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
-   call msg('r',  '          I/O of carriers     [fs]',CARR_RT_IO_t%INTERVAL_time*AUT2FS)
-   call msg('r',  '          I/O of   GFs        [fs]',GF_RT_IO_t%INTERVAL_time*AUT2FS)
-   call msg('r',  '               outputs        [fs]',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  'dT Update Interval                ',NE_time_step_update_jump*AUT2FS,"[fs]")
+   call msg('r',  'Lifetimes inter/intr times        ',RT_life_extrap_times*AUT2FS,"[fs]")
+   call msg('r',  'T cache step  of J,P,M            ',CACHE_OBS_INTERVAL_time*AUT2FS,"[fs]")
+   call msg('r',  'T between I/O of J,P,M            ',OBS_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
+   call msg('r',  '          I/O of carriers         ',CARR_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
+   call msg('r',  '          I/O of   GFs            ',GF_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
+   call msg('r',  '               outputs            ',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
    !
  endif
  !

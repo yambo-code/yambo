@@ -28,7 +28,8 @@ subroutine K_dot_product(dot,V,W)
  use pars,           ONLY:SP,cZERO
  use BS_solvers,     ONLY:Haydock_vector
  use BS,             ONLY:BS_nT_grps,BS_T_grp
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_T_groups,PAR_COM_Xk_ibz_INDEX,PAR_COM_eh_INDEX
+ use parallel_m,     ONLY:PAR_IND_T_groups,PAR_COM_Xk_ibz_INDEX,PAR_COM_eh_INDEX
+ use parallel_int,   ONLY:PP_redux_wait
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
  !
  implicit none

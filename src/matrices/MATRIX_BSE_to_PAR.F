@@ -28,7 +28,8 @@ subroutine MATRIX_BSE_to_PAR( M_bse , M_slk )
  use pars,           ONLY:SP
  use SLK_m,          ONLY:SLK_POOL,n_pools
  use BS,             ONLY:BS_block,n_BS_blks,BS_K_dim,BS_K_coupling
- use parallel_m,     ONLY:PP_redux_wait,ncpu,myid
+ use parallel_m,     ONLY:ncpu,myid
+ use parallel_int,   ONLY:PP_redux_wait
  use matrix,         ONLY:PAR_matrix
  !
  implicit none
@@ -250,7 +251,7 @@ subroutine MATRIX_BSE_to_PAR( M_bse , M_slk )
    !
    subroutine elemental_transfer(mode)
      !
-     use parallel_m, ONLY:PP_send_and_receive
+     use parallel_int, ONLY:PP_send_and_receive
      character(*) :: mode
      complex(SP)  :: M_tmp(K_coo(1):K_coo(2),K_coo(3):K_coo(4))
      !

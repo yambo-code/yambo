@@ -40,7 +40,8 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
  use timing_m,       ONLY:timing
  use electrons,      ONLY:levels
  use hamiltonian,    ONLY:H_rotation,E_reference
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
+ use parallel_int,   ONLY:PP_redux_wait
  use real_time,      ONLY:RT_levels,Ho_plus_Sigma,RTibz,RT_bands,&
 &                         l_RT_uses_E_FineGd,l_RT_update_Energies,l_RT_rotate_DM,&
 &                         RT_nbands,l_NE_with_fields

@@ -26,6 +26,7 @@ module OUTPUT_simple
  use pars,  ONLY:SP,schlen,lchlen,rZERO
  !
  integer, parameter       :: N_MAX_columns=30
+ integer, parameter       :: N_MAX_files  =30
  !
  type COLt
    integer            :: POS=0
@@ -35,13 +36,17 @@ module OUTPUT_simple
    real(SP)           :: I_value=0
  end type
  !
- logical              :: TITLES_ordered=.FALSE.
- logical              :: TITLES_dumped=.FALSE.
- integer              :: N_columns = 0
- integer              :: N_columns_ordered = 0
- character(lchlen)    :: filename = " "
- character(schlen)    :: filename_short= " "
- type(COLt)           :: COL(N_MAX_columns)
+ type OUTt
+   logical            :: TITLES_ordered=.FALSE.
+   logical            :: TITLES_dumped=.FALSE.
+   integer            :: N_columns = 0
+   integer            :: N_columns_ordered = 0
+   character(lchlen)  :: filename = " "
+   character(schlen)  :: filename_short= " "
+   type(COLt)         :: COL(N_MAX_columns)
+ end type
+ !
+ type(OUTt):: OUT_file(N_MAX_files)
  !
  interface
    !
@@ -54,12 +59,11 @@ module OUTPUT_simple
      logical     ,optional :: PARSER_call
    end subroutine
    !
-   subroutine OUTPUT_add_column(what,name,TITLES,VAL_TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
+   subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
      use pars,  ONLY:SP
-     character(*) , OPTIONAL :: what
-     character(*) , OPTIONAL :: name
+     character(*)            :: file
+     character(*) , OPTIONAL :: action
      character(*) , OPTIONAL :: TITLES(:)
-     character(*) , OPTIONAL :: VAL_TITLES(:)
      integer      , OPTIONAL :: I_VALUES(:)
      real(SP)     , OPTIONAL :: R_VALUES(:)
      character(*) , OPTIONAL :: ORDER(:)
@@ -68,5 +72,32 @@ module OUTPUT_simple
    end subroutine
    !
  end interface
+ !
+ contains
+   !
+   subroutine OUTPUT_reset(file,action)
+     character(*) :: file,action
+     integer      :: ic,i_f
+     do i_f=1,N_MAX_files
+       if (file/="all".and.index(OUT_file(i_f)%filename_short,file)==0) cycle
+       if (action=="row".or.action=="reset") then
+         do ic=1,N_MAX_columns
+           OUT_file(i_f)%COL(ic)%POS=0
+           OUT_file(i_f)%COL(ic)%title=" "
+           OUT_file(i_f)%COL(ic)%KIND=" "
+           OUT_file(i_f)%COL(ic)%I_value=0
+           OUT_file(i_f)%COL(ic)%R_value=0.
+         enddo
+         OUT_file(i_f)%N_columns = 0
+         OUT_file(i_f)%N_columns_ordered = 0
+         OUT_file(i_f)%TITLES_ordered=.FALSE.
+       endif
+       if (action=="reset") then
+         OUT_file(i_f)%TITLES_dumped=.FALSE.
+         OUT_file(i_f)%filename = " "
+         OUT_file(i_f)%filename_short= " "
+       endif
+     enddo
+   end subroutine
  !
 end module

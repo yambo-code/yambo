@@ -50,17 +50,13 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                         dG_lesser,NE_tot_time,&
 &                         i_MEM_prev,i_MEM_now,RT_is_dynamically_dephased,&
 &                         l_RT_update_Energies,l_NE_with_fields,l_update_SOC,l_velocity_gauge_corr
-#if defined _PHEL
- use PH_real_time,    ONLY:RT_PHEL_alloc,RT_PHEL_free
-#endif
  use plasma,          ONLY:PLASMA_free,EH_gas
  use com,             ONLY:msg
  use fields,          ONLY:A_tot,Efield
  use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element,COLLISIONS_have_HARTREE
  use QP_CTL_m,        ONLY:QP_apply
- use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast,PP_redux_wait,&
-&                          PAR_COM_Xk_ibz_INDEX
+ use parallel_int,    ONLY:PP_bcast,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PAR_COM_Xk_ibz_INDEX
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  use units,           ONLY:FS2AUT
  use RT_lifetimes,    ONLY:l_initial_equilibrium
@@ -120,18 +116,18 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  call section('+','Initialization')
  !#################################
  !
- ! Parallel reset...
+ ! Check if RT_bands respect levels degeneracy...
+ call LEVELS_respect_degenerations(RT_bands,E,.FALSE.)
  !
+ ! Parallel reset...
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
  !
  ! The K-grid must be defined at the very beginning to provide PARALLEL_global_indexes with the right k-weights
  !============
- !
  call RT_k_grid(E,k,q)
  !
  ! Parallel Setups
  !=================
- !
  call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
  if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) then
    call PARALLEL_SND_RCV_plan( PAR_COM_Xk_ibz_INDEX,  PAR_COM_Xk_ibz_INDEX%n_CPU)
@@ -139,12 +135,10 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  ! QP & carriers corrections
  !===========================
- !
  call QP_apply(RT_bands,E,k,     "G",msg_fmt='rs')
  !
  ! Dipoles
  !=========
- !
  call DIPOLE_dimensions(E,Dip,RT_bands,(/0._SP,0._SP,0._SP/))
  call DIPOLE_IO(k,E,Dip,'read ',io_err,'RT')
  !
@@ -164,7 +158,6 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  ! Dipoles & WF dimensions
  !=========================
- !
  call WF_and_dipole_dimensions(X)
  !
  ! WFs loading
@@ -192,9 +185,6 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  call RT_alloc(E,"all")
  call RT_control_alloc("all")
-#if defined _PHEL
- if (l_phel_scatt) call RT_PHEL_alloc("phonons")
-#endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -375,9 +365,6 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    subroutine CLOSE_and_clean( )
      call RT_free( )
      call RT_control_free("all")
-#if defined _PHEL
-     if (l_phel_scatt) call RT_PHEL_free("all")
-#endif
      call WF_free(WF)
      !
      ! GPL_EXCLUDE_START

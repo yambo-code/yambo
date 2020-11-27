@@ -23,8 +23,9 @@
 !
 subroutine RT_Lifetimes_merge_inter_k(LIFE)
  !
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,N_SND_RCV_operations,SND_RCV_op,&
-&                         PAR_COM_Xk_ibz_INDEX,PP_send_and_receive
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,N_SND_RCV_operations,SND_RCV_op,&
+&                         PAR_COM_Xk_ibz_INDEX
+ use parallel_int,   ONLY:PP_redux_wait,PP_send_and_receive 
  use real_time,      ONLY:RTibz
  use R_lattice,      ONLY:nkibz
  use RT_lifetimes,   ONLY:RT_lifetime

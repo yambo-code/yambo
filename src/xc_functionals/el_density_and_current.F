@@ -55,7 +55,8 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  use FFT_m,         ONLY:fftw_plan
 #endif
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
+ use parallel_m,    ONLY:PAR_IND_WF_linear,PAR_COM_density
+ use parallel_int,  ONLY:PP_redux_wait
  use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp
  use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm, becsum
 #if defined _RT

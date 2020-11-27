@@ -28,13 +28,12 @@ subroutine ELPH_atomic_amplitude(q)
  use com,                 ONLY:msg
  use R_lattice,           ONLY:bz_samp,RL_vol,RIM_n_rand_pts
  use D_lattice,           ONLY:n_atoms
- use ELPH,                ONLY:ph_modes,ph_freqs_sq,&
-&                              elph_nDBs,elph_use_q_grid,&
-&                              elph_global_free,pol_vector,ph_qpt
+ use ELPH,                ONLY:ph_modes,PH_freqs_sq,elph_nQ,elph_use_q_grid,&
+&                              PH_pol_vector,PH_qpt
  use IO_m,                ONLY:io_control,manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use stderr,              ONLY:intc
  use functions,           ONLY:bose_f
- use interfaces,          ONLY:LINEAR_ALGEBRA_driver
+ use interfaces,          ONLY:LINEAR_ALGEBRA_driver,ELPH_alloc
  use linear_algebra,      ONLY:DIAGO,USE_LK
 #include<memory.h>
  type(bz_samp)::q
@@ -68,7 +67,7 @@ subroutine ELPH_atomic_amplitude(q)
  endif
  call msg('s','sane')
  !
- nq_to_sum=elph_nDBs
+ nq_to_sum=elph_nQ
  if (elph_use_q_grid) nq_to_sum=q%nibz
  !
  ! calculate Q weight due to symmetry
@@ -84,7 +83,7 @@ subroutine ELPH_atomic_amplitude(q)
    q_weight=q%weights(iq)
  else
    if (RIM_n_rand_pts>0) call msg('s','Using RIM with '//trim(intc(RIM_n_rand_pts))//' point')
-   call rim_spherical(nq_to_sum,ph_qpt(1:nq_to_sum,1:3),q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),2,.TRUE.)
+   call rim_spherical(nq_to_sum,PH_qpt(1:nq_to_sum,1:3),q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),2,.TRUE.)
  endif
  !
  mean_ui_uj=(0.,0.)
@@ -97,15 +96,15 @@ subroutine ELPH_atomic_amplitude(q)
    call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID)
    io_err=io_ELPH(ID,'no_matrix_elements')  
    !
-   if (.not.allocated(pol_vector)) then
+   if (.not.allocated(PH_pol_vector)) then
      call warning('Polarization vectors not found!')
-     call elph_global_free()
+     call ELPH_alloc('FREE')
      return
    endif
    !
    do im=1,ph_modes
      !
-     omega = sqrt( MAX( ph_freqs_sq(iq,im),0. ) )
+     omega = sqrt( MAX( PH_freqs_sq(iq,im),0. ) )
      !
      if (omega<1.E-10) cycle
      !
@@ -113,7 +112,7 @@ subroutine ELPH_atomic_amplitude(q)
        do i=1,3
          do j=1,3
            mean_ui_uj(is,i,j)=mean_ui_uj(is,i,j)+q_weight(iq)*1./2./omega*&
-&                             conjg(pol_vector(im,is,i))*pol_vector(im,is,j)*&
+&                             conjg(PH_pol_vector(iq,im,is,i))*PH_pol_vector(iq,im,is,j)*&
 &                             (bose_f(omega)+1.)
            mean_ui_uj(is,i,j)=real ( mean_ui_uj(is,i,j) )
          enddo
@@ -141,6 +140,6 @@ subroutine ELPH_atomic_amplitude(q)
  !CLEAN
  !
  YAMBO_FREE(q_weight)
- call elph_global_free()
+ call ELPH_alloc('FREE')
  !
 end subroutine

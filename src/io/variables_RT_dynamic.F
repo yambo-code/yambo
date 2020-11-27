@@ -45,33 +45,32 @@ integer function variables_RT_dynamic(ID)
  !
  call def_variable_elemental(ID,VAR="RT_TIMEs_NOW",VAR_SZ=5,VAR_KIND=SP,MENU=0) 
  call io_variable_elemental(ID,&
-&    VAR=" [RT] Time step         (now)[fs]",R0=RT_dyn_step,DB_R0=RT_dyn_step,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
+&    VAR=" [RT] Time step(now)",R0=RT_dyn_step,DB_R0=RT_dyn_step,WARN=.true.,OP=(/"=="/),TERMINATOR="[fs]",UNIT=AUT2FS,&
 &    DESCRIPTOR=RT_desc)
  call io_variable_elemental(ID,&
-&    VAR=" [RT] NE time          (done)[fs]",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,DESCRIPTOR=RT_desc)
+&    VAR=" [RT] NE time(done)",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,DESCRIPTOR=RT_desc,TERMINATOR="[fs]")
  call io_variable_elemental(ID,&
-&    VAR=" [RT] NE steps         (done)[fs]",I0=NE_i_time,WARN=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
+&    VAR=" [RT] NE steps(done)",I0=NE_i_time,WARN=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,TERMINATOR="[fs]")
  !
  ! GPL_EXCLUDE_START
  !
- call io_variable_elemental(ID,&
-&    VAR=" [RT] Lif Extr Inte/Intr(now)[fs]",R1=RT_life_extrap_times,DB_R1=RT_life_extrap_times,&
-&    DESCRIPTOR=RT_desc,UNIT=AUT2FS)
+ call io_variable_elemental(ID,VAR=" [RT] Lif Extr Inte/Intr(now)",R1=RT_life_extrap_times,DB_R1=RT_life_extrap_times,&
+&    DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
  !
  ! Delta T Update
  !   
  call def_variable_elemental(ID,VAR="DELTA_T_UPDATE",VAR_SZ=6,VAR_KIND=SP,MENU=0) 
  call io_variable_elemental(ID,L0=l_Update_Time_Step,DB_L0=l_disk_flag,&
-&    VAR=' [dT] Time-Dependent Time step   ',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=AUT2FS)
+&    VAR=' [dT] Time-Dependent Time step',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=AUT2FS)
  if (l_disk_flag) then
    call io_variable_elemental(ID,R0=NE_initial_time_step_update,&
-&    VAR=' [dT] Starting Time          [fs]',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=AUT2FS)
+&    VAR=' [dT] Starting Time',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
    call io_variable_elemental(ID,R0=NE_time_step_update_jump_INPUT,&
-&    VAR=' [dT] Update interval        [fs]',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=AUT2FS)
+&    VAR=' [dT] Update interval',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
    call io_variable_elemental(ID,R0=NE_step_update_treshold,&
-&    VAR=' [dT] Update interval tresh [o/o]',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
+&    VAR=' [dT] Update interval tresh',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,TERMINATOR="[o/o]")
    call io_variable_elemental(ID,R0=RT_MAX_step,&
-&    VAR=' [dT] Max step in dynamics   [fs]',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=AUT2FS)
+&    VAR=' [dT] Max step in dynamics',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
  endif
  ! ... for RESTART purposes...
  call io_variable_elemental(ID,R0=NE_time_step_update_jump, DB_R0=NE_time_step_update_jump,CHECK=.FALSE.)

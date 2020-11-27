@@ -42,10 +42,10 @@ subroutine RT_initialize(E,k,q)
 &                         TIME_adjust,SAVE_G_history,CACHE_OBS_INTERVAL_time
  use RT_occupations, ONLY:l_RT_relax_time_approx
  use RT_lifetimes,   ONLY:RT_life_extrap_times,RT_life_extrap_times_INPUT,l_RT_lifetimes_extrapolation,&
-&                         Life_MEM_steps,l_RT_lifetimes_Tfit
+&                         Life_MEM_steps,l_RT_lifetimes_Tfit,l_RT_skip_ph_abs_lifetimes,l_RT_iterative_ELPH_lifetimes
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,Gr_kind,       &
-&                         RAD_LifeTime,l_RT_CCA_Kernel,Phase_LifeTime,         &
+&                         RAD_LifeTime,Phase_LifeTime,         &
 &                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_FineGd,DbGd_EE_Nk_table,    &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
 &                         l_RT_update_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
@@ -59,9 +59,11 @@ subroutine RT_initialize(E,k,q)
 &                         l_P_integrating_J,l_RT_rotate_DM,RT_deph_cv_only,RTibz
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:Bose_Temp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
  use parser_m,       ONLY:parser
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait,PAR_G_k_range
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_G_k_range
+ use parallel_int,   ONLY:PP_redux_wait
  !
 #include<memory.h>
  !
@@ -107,11 +109,12 @@ subroutine RT_initialize(E,k,q)
  !..lifetimes
  call parser('LifeExtrapolation',    l_RT_lifetimes_extrapolation)
  call parser('LifeFitTemp',          l_RT_lifetimes_Tfit)
- !
  call parser('RelaxTimeApprox',      l_RT_relax_time_approx)
  call parser('RTzeroTempRef',        l_RT_eq_is_zero_temp)
  call parser('RTEqScatt',            l_RT_include_eq_scatt)
+ call parser('RTskipPHabs',          l_RT_skip_ph_abs_lifetimes)
  !
+ if (.not.l_RT_skip_ph_abs_lifetimes) l_RT_skip_ph_abs_lifetimes=.not.(Bose_Temp>0..or.l_phel_scatt)
  !
  !...evals
  call parser('RTEvalEnergy',         eval_energy)
@@ -121,7 +124,11 @@ subroutine RT_initialize(E,k,q)
  !
  !...drivers
  !
- l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
+#if defined _ELPH_ITERATIVE
+ l_RT_iterative_ELPH_lifetimes  =l_Full_RT_T_evolution.and.l_elph_scatt
+#else
+ l_RT_iterative_ELPH_lifetimes  = .FALSE.
+#endif
  !
  ! GPL_EXCLUDE_END
  !
@@ -165,7 +172,7 @@ subroutine RT_initialize(E,k,q)
  !==================
  ! radiative/phase, polaronic based
  !
- call section('=','Dephasing matrix setup')
+ call section('+P','Dephasing matrix setup')
  !
  call RT_Dephasing_Matrix(E)
  !
@@ -341,23 +348,7 @@ subroutine RT_initialize(E,k,q)
  ! Electron-phonon
  ! ===============
  !
- if (l_elph_scatt) then
-   !
-   call section('=','El-Ph matrix elements loading and setup')
-   !                 =======================================
-   call RT_ELPH_initialize(E,k,q)
-   !
- endif
- !
-#if defined _PHEL
- if (l_phel_scatt) then
-   !
-   call section('=','Ph-El matrix elements loading and setup')
-   !                 =======================================
-   call RT_PHEL_initialize(k,q)
-   !
- endif
-#endif
+ if (l_elph_scatt) call RT_ELPH_initialize(E,k,q)
  !
 #endif
  !
@@ -385,30 +376,30 @@ subroutine RT_initialize(E,k,q)
  !
  call msg( 'r','---General---')
  call msg( 'r', 'Integrator                 ',trim(Integrator_name))
- call msg( 'r', 'Simulation time        [fs]',NE_tot_time*AUT2FS)
- call msg( 'r', 'Basic time step        [fs]',RT_step*AUT2FS)
+ call msg( 'r', 'Simulation time            ',NE_tot_time*AUT2FS,"[fs]")
+ call msg( 'r', 'Basic time step            ',RT_step*AUT2FS,"[fs]")
  call msg( 'r', '           steps           ',NE_steps)
  !
  ! GPL_EXCLUDE_START
  !
- call msg( 'r', '      time step   (now)[fs]',RT_dyn_step*AUT2FS)
+ call msg( 'r', '      time step   (now)    ',RT_dyn_step*AUT2FS,"[fs]")
  !
  if (NE_initial_time_step_update>0.) then
    call msg( 'r','---Time Step Update---')
-   call msg( 'r', 'Initial time           [fs]',NE_initial_time_step_update*AUT2FS)
-   call msg( 'r', 'Time Interval          [fs]',NE_time_step_update_jump*AUT2FS)
-   call msg( 'r', 'Treshold              [o/o]',NE_step_update_treshold)
-   call msg( 'r',  'dT maximum value      [fs]',RT_MAX_step*AUT2FS)
+   call msg( 'r', 'Initial time               ',NE_initial_time_step_update*AUT2FS,"[fs]")
+   call msg( 'r', 'Time Interval              ',NE_time_step_update_jump*AUT2FS,"[fs]")
+   call msg( 'r', 'Treshold                   ',NE_step_update_treshold,"[o/o]")
+   call msg( 'r',  'dT maximum value          ',RT_MAX_step*AUT2FS,"[fs]")
  endif
  !
  call msg( 'r','---Memory---')
- call msg( 'r', 'Memory depth(G)        [fs]',T_memory*AUT2FS)
+ call msg( 'r', 'Memory depth(G)            ',T_memory*AUT2FS,"[fs]")
  call msg( 'r', 'Memory steps(G)            ',G_MEM_steps)
  !
  if (RT_is_statically_dephased) then
    call msg( 'nr','---Lifetimes---')
    if (all(RT_life_extrap_times>0)) then
-     call msg( 'r', 'Point groups (inter/intra) [fs]',RT_life_extrap_times*AUT2FS)
+     call msg( 'r', 'Point groups (inter/intra)     ',RT_life_extrap_times*AUT2FS,"[fs]")
      call msg( 'r', 'Extrapolation                  ',l_RT_lifetimes_extrapolation)
      call msg( 'r', 'Memory steps                   ',Life_MEM_steps)
    endif
@@ -440,11 +431,11 @@ subroutine RT_initialize(E,k,q)
  ! GPL_EXCLUDE_END
  !
  call msg( 'nr','---I/O---')
- call                          msg('r', 'T cache step  of J,P,M [fs]',CACHE_OBS_INTERVAL_time*AUT2FS)
- call                          msg('r', 'T between I/O of   OBS [fs]',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
- call                          msg('r', 'T between I/O of   CAR [fs]',CARR_RT_IO_t%INTERVAL_time*AUT2FS)
- call                          msg('r', '          I/O of   GFs [fs]',GF_RT_IO_t%INTERVAL_time*AUT2FS)
- call                          msg('r', '               outputs [fs]',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
+ call                          msg('r', 'T cache step  of J,P,M     ',CACHE_OBS_INTERVAL_time*AUT2FS,"[fs]")
+ call                          msg('r', 'T between I/O of   OBS     ',OBS_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
+ call                          msg('r', 'T between I/O of   CAR     ',CARR_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
+ call                          msg('r', '          I/O of   GFs     ',GF_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
+ call                          msg('r', '               outputs     ',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
  if (l_use_collisions)    call msg( 'r','Extended collisions   [I/O]',io_COLLs)
  !
  ! GPL_EXCLUDE_START
@@ -459,10 +450,10 @@ subroutine RT_initialize(E,k,q)
  !
  call msg( 'nr','---Retarded GF---')
  call msg( 'r', 'Retarded Green`s function  ',Gr_kind)
- call msg( 'r', '        Energy ref  (c)[eV]',QP_ctl_user(3,1)%Wc_E_ref*HA2EV)
- call msg( 'r', '                    (v)[eV]',QP_ctl_user(3,1)%Wv_E_ref*HA2EV)
- call msg( 'r', '        Analytic term (c)[eV,adim,eV^-1]',QP_ctl_user(3,1)%Wc)
- call msg( 'r', '                      (v)[eV,adim,eV^-1]',QP_ctl_user(3,1)%Wv)
+ call msg( 'r', '        Energy ref  (c)    ',QP_ctl_user(3,1)%Wc_E_ref*HA2EV,"[eV]")
+ call msg( 'r', '                    (v)    ',QP_ctl_user(3,1)%Wv_E_ref*HA2EV,"[eV]")
+ call msg( 'r', '        Analytic term (c)               ',QP_ctl_user(3,1)%Wc,"[eV,adim,eV^-1]") 
+ call msg( 'r', '                      (v)               ',QP_ctl_user(3,1)%Wv,"[eV,adim,eV^-1]")
  !
  if ((l_elel_scatt.or.l_elph_scatt).and.(.not.l_RT_impose_N_dN.or.l_RT_impose_E)) then
    call msg( 'nr','---Conservation Rules---')
@@ -480,7 +471,7 @@ subroutine RT_initialize(E,k,q)
      call msg( 'r',  '      (DISTRIBUTED min-MAX)',(/minval(NK_cpu),maxval(NK_cpu)/))
    endif
    if (l_elel_scatt) then
-     call msg( 'r',  'Percentual used in e-e[o/o]',DbGd_EE_percent)
+     call msg( 'r',  'Percentual used in e-e     ',DbGd_EE_percent,"[o/o]")
      call msg( 'r',  'Max e-e scattering states  ',maxval(DbGd_EE_Nk_table))
    endif
  else
@@ -493,30 +484,35 @@ subroutine RT_initialize(E,k,q)
    call msg( 'nr','---Fields---')
    call msg('r','Gauge                       ',trim(global_gauge))
    !
-   !call msg('r','Pump/Probe periodicity  [fs]',EtoT(E=maxval(Efield(:)%W_step))*AUT2FS)
-   !call msg('r','Pump/Probe energy step  [eV]',maxval(Efield(:)%W_step)*HA2EV)
+   if (any(Efield(:)%W_step>0)) then
+     call msg('r','Pump/Probe periodicity',EtoT(E=maxval(Efield(:)%W_step))*AUT2FS,'[fs]')
+     call msg('r','Pump/Probe energy step',maxval(Efield(:)%W_step)*HA2EV,'[eV]')
+   endif
    !
    do i1=1,n_ext_fields
      MSG_ch="Field#"//trim(intc(i1))
      call msg('r', trim(MSG_ch)//' field                       '//trim(Efield(i1)%ef_name))
      call msg('r', trim(MSG_ch)//' polarization                '//trim(Efield(i1)%ef_pol))
-     call msg('r', trim(MSG_ch)//' energy window/period [eV/fs]',(/Efield(i1)%frequency*HA2EV,&
-&                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/))
-     call msg('r', trim(MSG_ch)//' elemental oscillation   [fs]',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))*AUT2FS)
-     call msg('r', trim(MSG_ch)//' width                   [fs]',Efield(i1)%width*AUT2FS)
+     call msg('r', trim(MSG_ch)//' energy window/period        ',(/Efield(i1)%frequency*HA2EV,&
+&                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/),'[eV/fs]')
+     call msg('r', trim(MSG_ch)//' elemental oscillation       ',EtoT(E=Efield(i1)%frequency(2)-&
+&                                                                       Efield(i1)%frequency(1))*AUT2FS,'[fs]')
+     call msg('r', trim(MSG_ch)//' width                       ',Efield(i1)%width*AUT2FS,'[fs]')
      call msg('r', trim(MSG_ch)//' energy steps                ',Efield(i1)%n_frequencies)
-     call msg('r', trim(MSG_ch)//' electric field         [V/m]',Efield(i1)%amplitude*AU2VMm1)
-     call msg('r', trim(MSG_ch)//' max intensity      [kW/cm^2]',Efield(i1)%intensity*AU2KWCMm2)
+     call msg('r', trim(MSG_ch)//' electric field              ',Efield(i1)%amplitude*AU2VMm1,'[V/m]')
+     call msg('r', trim(MSG_ch)//' max intensity               ',Efield(i1)%intensity*AU2KWCMm2,'[kW/cm^2]')
      !
      if( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='DELTA') ) then
-       call msg('r', trim(MSG_ch)//' max fluence        [nJ/cm^2]',Efield(i1)%fluence )
-       call msg('r', trim(MSG_ch)//' final time              [fs]',Efield(i1)%t_final*AUT2FS)
-       call msg('r', trim(MSG_ch)//' half maximum full width [fs]',Efield(i1)%width*2.*sqrt(2.*log(2.))*AUT2FS)
+       call msg('r', trim(MSG_ch)//' max fluence                 ',Efield(i1)%fluence,'[nJ/cm^2]')
+       call msg('r', trim(MSG_ch)//' final time                  ',Efield(i1)%t_final*AUT2FS,'[fs]')
+       call msg('r', trim(MSG_ch)//' half maximum full width     ',Efield(i1)%width*2.*sqrt(2.*log(2.))*AUT2FS,'[fs]')
      endif
      !
    enddo
    !
  endif
+ !
+ call section('-P',' ')
  !
  contains
    !

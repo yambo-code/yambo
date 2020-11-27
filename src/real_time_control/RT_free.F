@@ -25,16 +25,20 @@ subroutine RT_free( )
  !
  use R_lattice,      ONLY:bz_samp_FineGd_reset
  use DIPOLES,        ONLY:DIP_alloc
+ use interfaces,     ONLY:ELPH_alloc
+ use ELPH,           ONLY:Q_io_map,GKKP_ep_sq,GKKP_pe_sq
  use hamiltonian,    ONLY:H_free
  use xc_functionals, ONLY:E_xc
  use real_time,      ONLY:DbGd_EE_scatt_table,RT_TIME_status,REF_V_xc_sc,&
 &                         Ho_plus_Sigma,H_pseudo_eq,RT_Vnl_xc,HARTREE0,XC0,G_lesser_reference,&
 &                         dG_lesser,G_lesser,MEM_pointer,REF_V_xc_sc,REF_V_hartree_sc,rho_reference,&
 &                         magn_reference,DbGd_EE_scatt_table,RT_TIME_status,REF_V_xc_sc,&
-&                         RT_levels,q_weight_RT,THETA_matrix,THETA_matrix_index,&
-&                         elph_gkkp_expanded_sq,I1_matrix,RT_Deph_Matrix,Q_io_map,K_io_map,RTibz
+&                         RT_levels,I1_matrix,RT_Deph_Matrix,RTibz
  use RT_occupations, ONLY:RT_ALL_occupations_free
- use RT_lifetimes,   ONLY:RT_ALL_lifetimes_free
+#if defined _ELPH_ITERATIVE
+ use RT_iterative,   ONLY:THETA_matrix,THETA_matrix_index
+#endif
+ use RT_lifetimes,   ONLY:RT_ALL_lifetimes_free,q_weight_RT
  !
 #include<memory.h>
  !
@@ -73,15 +77,18 @@ subroutine RT_free( )
  YAMBO_FREE(MEM_pointer)
  !
  YAMBO_FREE(q_weight_RT)
+#if defined _ELPH_ITERATIVE
  YAMBO_FREE(THETA_matrix)
  YAMBO_FREE(THETA_matrix_index)
- YAMBO_FREE(elph_gkkp_expanded_sq)
+#endif
  YAMBO_FREE(I1_matrix)
  YAMBO_FREE(rho_reference)
  YAMBO_FREE(magn_reference)
  YAMBO_FREE(RT_Deph_Matrix)
  YAMBO_FREE(Q_io_map)
- YAMBO_FREE(K_io_map)
+ !
+ call ELPH_alloc('FREE',GKKP=GKKP_ep_sq)
+ call ELPH_alloc('FREE',GKKP=GKKP_pe_sq)
  !
  call bz_samp_FineGd_reset(RTibz)
  !

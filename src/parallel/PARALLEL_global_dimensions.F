@@ -31,7 +31,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  use BS,            ONLY:BS_bands,BS_nT_at_k
  use X_m,           ONLY:X_ng
 #if defined _ELPH
- use ELPH,          ONLY:elph_nDBs_used,QP_PH_n_G_bands,elph_use_q_grid
+ use ELPH,          ONLY:elph_nQ_used,QP_PH_n_G_bands,elph_use_q_grid
 #endif
 #if defined _SC
  use SC,            ONLY:SC_bands
@@ -109,7 +109,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
 #endif
 #if defined _ELPH
    if (l_elph_corr.and.elph_use_q_grid)         PAR_Q_bz_range=(/1,nqbz/)
-   if (l_elph_corr.and..not.elph_use_q_grid)    PAR_Q_bz_range=(/1,elph_nDBs_used/)
+   if (l_elph_corr.and..not.elph_use_q_grid)    PAR_Q_bz_range=(/1,elph_nQ_used/)
 #endif
  endif
  !
@@ -122,6 +122,14 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
      if (BS_nT_at_k(i_k)<PAR_EH_range.and.BS_nT_at_k(i_k)>0) PAR_EH_range=BS_nT_at_k(i_k)
    enddo
  endif
+ !
+ ! EH Bands 
+ !----------
+#if defined _ELPH
+ if (ENVIRONMENT=="Phonon_Self_Energy"              ) then
+    PAR_n_bands=(/1,QP_PH_n_G_bands**2/)
+ endif
+#endif
  !
  ! Generic Bands
  !---------------

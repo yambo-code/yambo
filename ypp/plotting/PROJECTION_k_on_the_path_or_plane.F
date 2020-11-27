@@ -1,4 +1,4 @@
-!
+! 
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
@@ -21,41 +21,20 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module ELPH_old
+integer function PROJECTION_k_on_the_path_or_plane(ik)
  !
- use pars,       ONLY:SP
+ use YPPm,          ONLY:PROJECT_N_perp
  !
-#include<memory.h>
+ integer :: ik
  !
- real(SP),    allocatable :: elph_DW_old(:,:,:,:)
- complex(SP), allocatable :: elph_gkkp_old(:,:,:,:)
- ! 
- contains
-   !
-   subroutine elph_global_alloc_old(what)
-     use R_lattice, ONLY:nkbz
-     use ELPH,      ONLY:ph_modes,elph_nb
-     character(*)      ::what
-     integer           ::alloc_err
-     !
-     select case (trim(what))
-       !
-       case ('gkkp')
-         !
-         if (.not.allocated(elph_gkkp_old)) then
-           YAMBO_ALLOC(elph_gkkp_old,(nkbz,ph_modes,elph_nb,elph_nb))
-           YAMBO_ALLOC(elph_DW_old,(nkbz,ph_modes,elph_nb,elph_nb))
-         endif
-         !
-     end select
-     !
-   end subroutine
-   !
-   subroutine elph_global_free_old()
-     if (allocated(elph_gkkp_old)) then
-       YAMBO_FREE(elph_gkkp_old)
-       YAMBO_FREE(elph_DW_old)
-     endif
-   end subroutine
-   !
-end module ELPH_old
+ if (PROJECT_N_perp==1) then
+   PROJECTION_k_on_the_path_or_plane=ik
+   return
+ endif
+ if (mod(ik,PROJECT_N_perp)/=1) then
+   PROJECTION_k_on_the_path_or_plane=0
+   return
+ endif
+ PROJECTION_k_on_the_path_or_plane=ik/PROJECT_N_perp+1
+ !
+end function

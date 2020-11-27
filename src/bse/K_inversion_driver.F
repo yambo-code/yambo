@@ -34,14 +34,14 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use R_lattice,      ONLY:bare_qpg,bz_samp
  use com,            ONLY:isec,msg
  use LIVE_t,         ONLY:live_timing
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index,PARALLEL_live_message
+ use parallel_m,     ONLY:PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
 &                         PAR_COM_SLK_INDEX_local
- use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message,MATRIX_duplicate
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
  use matrix,         ONLY:MATRIX_reset
  use timing_m,       ONLY:timing
 #if defined _SCALAPACK
- use interfaces,     ONLY:MATRIX_transfer
+ use interfaces,     ONLY:MATRIX_transfer,MATRIX_duplicate
  use parallel_m,     ONLY:linear_algebra_is_parallel
 #endif
 #if defined _RT
@@ -351,7 +351,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      !
      nw_conv=count(TYP%err==0)
      call msg('rs','[FULL INV@'//TYP%what//'] Frequencies DONE      ',nw_conv)
-     call msg('rs','[FULL INV@'//TYP%what//']                  [o/o]',real(nw_conv)/real(W%n_freqs)*100._SP)
+     call msg('rs','[FULL INV@'//TYP%what//']                       ',real(nw_conv)/real(W%n_freqs)*100._SP,"[o/o]")
      !
    end subroutine
    !

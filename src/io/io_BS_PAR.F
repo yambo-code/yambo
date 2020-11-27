@@ -25,7 +25,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  ! Intialize variables on BSE netcdf parallel file
  !
- use parallel_m,    ONLY:MPI_COMM_WORLD,PP_redux_wait
+ use parallel_m,    ONLY:MPI_COMM_WORLD
+ use parallel_int,  ONLY:PP_redux_wait
  use com,           ONLY:msg
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:intc

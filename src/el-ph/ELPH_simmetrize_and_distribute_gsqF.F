@@ -26,10 +26,11 @@ subroutine ELPH_simmetrize_and_distribute_gsqF(en)
  use electrons,     ONLY:levels
  use QP_m,          ONLY:QP_states_simmetrize
  use R_lattice,     ONLY:nqbz
- use parallel_m,    ONLY:PAR_COM_Q_A2A,PAR_COM_Q_A2A,PP_redux_wait,&
+ use parallel_int,  ONLY:PP_redux_wait
+ use parallel_m,    ONLY:PAR_COM_Q_A2A,PAR_COM_Q_A2A,&
 &                        PAR_Q_bz_index,PAR_IND_Q_bz
  use ELPH,          ONLY:gsqF_energy_steps,gsqF_ca_corr,gsqF_fan,gsqF_life_f,gsqF_life_bose,&
-&                        gsqF_dw,eval_G_using_KK,elph_branches,elph_nDBs_used,elph_use_q_grid
+&                        gsqF_dw,eval_G_using_KK,elph_branches,elph_nQ_used,elph_use_q_grid
  !
  implicit none
  type(levels)  ::en
@@ -39,7 +40,7 @@ subroutine ELPH_simmetrize_and_distribute_gsqF(en)
  integer            ::iw,iq_loop,iq_mem,il,nq
  !
  nq=nqbz
- if (.not.elph_use_q_grid) nq=elph_nDBs_used
+ if (.not.elph_use_q_grid) nq=elph_nQ_used
  !
  ! Degenerate bands average
  !

@@ -29,6 +29,7 @@ module real_time
  use global_XC,      ONLY:QP_SE_NONE
  use R_lattice,      ONLY:bz_fine_grid
  use RT_lifetimes,   ONLY:RT_obj_lifetime,RT_obj_lifetime_alloc,RT_obj_lifetime_free
+ use RT_occupations, ONLY:RT_obj_occupation,RT_obj_occupation_alloc,RT_obj_occupation_free
  use electrons,      ONLY:E_fine_grid
  !
 #include<memory.h>
@@ -162,7 +163,6 @@ module real_time
  logical                  :: l_update_SOC
  !
  ! Relaxation and Dissipation
- !
  !----------------------------
  logical                  :: l_RT_uses_E_FineGd
  logical                  :: l_RT_eq_is_zero_temp
@@ -171,22 +171,6 @@ module real_time
  logical,     allocatable :: DbGd_EE_scatt_table(:,:)  
  integer,     allocatable :: DbGd_EE_Nk_table(:,:)  
  real(SP)                 :: DbGd_EE_percent 
- !
- ! ELPH kernel...
- !----------------
- logical     :: l_RT_CCA_Kernel
- !
- ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
- !
- real(SP),    allocatable :: q_weight_RT(:,:,:)
- ! ... THETA matrix
- complex(SP), allocatable :: THETA_matrix(:,:,:,:)
- ! ... Q-parallelization  and GKKP
- real(SP),    allocatable :: elph_gkkp_expanded_sq(:,:,:,:,:)
- ! ... indexes ...
- integer,     allocatable :: THETA_matrix_index(:,:,:)
- integer,     allocatable :: Q_io_map(:)
- integer,     allocatable :: K_io_map(:)
  !
  ! Conservations
  !----------------------
@@ -284,8 +268,8 @@ module real_time
    !
    ! Occupations
    !
-   real(SP)   ,allocatable:: f_bare(:)       ! equilibrium occupations
-   real(SP)   ,allocatable:: delta_f(:)      ! change in the occupations
+   type(RT_obj_occupation):: OCC_el
+   type(RT_obj_occupation):: OCC_ph
    !
    ! Lifetimes
    !
@@ -317,10 +301,12 @@ module real_time
      YAMBO_ALLOC(RT%k_weight,(RT%nk))
      YAMBO_ALLOC(RT%table,(RT%nstates,4))
      YAMBO_ALLOC(RT%E_bare,(RT%nstates))
-     YAMBO_ALLOC(RT%f_bare,(RT%nstates))
      RT%table         =0
      RT%E_bare        =0._SP
-     RT%f_bare        =0._SP
+     RT%OCC_el%active =.TRUE.
+     RT%OCC_ph%active =l_phel_scatt
+     call RT_obj_occupation_alloc("El",RT%OCC_el,RT%nstates)
+     call RT_obj_occupation_alloc("Ph",RT%OCC_ph,RT%nstates)
      if (l_elel_scatt) then
        RT%GAMMA_EE%active=.TRUE.
        call RT_obj_lifetime_alloc("el-el",RT%GAMMA_EE,RT%nstates)
@@ -346,8 +332,6 @@ module real_time
        RT%NEQ_Lifetime=0._SP
      endif
      YAMBO_ALLOC(RT%delta_E,(RT%nstates))
-     YAMBO_ALLOC(RT%delta_f,(RT%nstates))
-     RT%delta_f=0._SP
      RT%delta_E=0._SP
    end subroutine
    !
@@ -357,13 +341,12 @@ module real_time
      RT%nb=0
      RT%nstates=0
      YAMBO_FREE(RT%E_bare)
-     YAMBO_FREE(RT%f_bare)
      YAMBO_FREE(RT%delta_E)
-     YAMBO_FREE(RT%delta_f)
      YAMBO_FREE(RT%NEQ_Lifetime)
      YAMBO_FREE(RT%kpt)
      YAMBO_FREE(RT%k_weight)
      YAMBO_FREE(RT%table)
+     call RT_obj_occupation_free(RT%OCC_el)
      call RT_obj_lifetime_free(RT%GAMMA_EE)
      call RT_obj_lifetime_free(RT%GAMMA_EP_abs)
      call RT_obj_lifetime_free(RT%GAMMA_EP_emit)

@@ -32,7 +32,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  use RT_control,    ONLY:CARR_RT_IO_t
  use parallel_m,    ONLY:PAR_G_k_range
  use real_time,     ONLY:RT_carriers,NE_i_time,l_elel_scatt,l_elph_scatt,&
-&                        l_elphoton_scatt,l_RT_CCA_Kernel,RT_potential
+&                        l_elphoton_scatt,RT_potential
  use YPP_real_time, ONLY:l_RTpump_energy,l_RTpump_kspace,l_RTpump_Fermi
  !
  implicit none
@@ -63,7 +63,6 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  l_elel_scatt    =.true.
  l_elph_scatt    =.true.
  l_elphoton_scatt=.true.
- l_RT_CCA_Kernel =.true.
  RT_potential    ="HARTREE+GS_xc"
  !
  call RT_k_grid(en,kpt,qpt)

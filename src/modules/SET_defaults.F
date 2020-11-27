@@ -112,7 +112,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     CACHE_OBS_steps,CACHE_OBS_steps_now,RT_NAN_found
  use RT_lifetimes,ONLY:RT_life_extrap_times
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,&
-&                     Gr_kind,two_alpha,l_RT_CCA_Kernel,RAD_LifeTime,Phase_LifeTime,&
+&                     Gr_kind,two_alpha,RAD_LifeTime,Phase_LifeTime,&
 &                     NE_tot_time,NE_MEM_treshold,RT_eh_en,l_update_SOC,&
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,&
 &                     i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,&
@@ -581,7 +581,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! RT dynamics 
  !
- l_RT_CCA_Kernel=.FALSE.
  l_update_SOC=.FALSE.
  !
  ! RT current 

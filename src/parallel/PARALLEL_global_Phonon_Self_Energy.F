@@ -21,84 +21,46 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_Phonon_Self_Energy(E,Xk,q)
+subroutine PARALLEL_global_Phonon_Self_Energy( )
  !
- use electrons,     ONLY:levels
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:nqibz,nXkbz
  use ELPH,          ONLY:QP_PH_n_G_bands
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use parallel_m,    ONLY:COMM_copy,PAR_build_index
- ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX,    &
-&                        PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A
- ! IND
- use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_Q_ibz
- ! INDEX
- use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Q_ibz_index
- ! DIMENSIONS
- use parallel_m,    ONLY:PAR_nQ_ibz,PAR_Xk_nibz
- ! ID's
- use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,      &
-&                        PAR_IND_Q_ibz_ID
+ use parallel_int,  ONLY:PARALLEL_assign_chains_and_COMMs,PARALLEL_scheme_initialize
+ use parallel_m,    ONLY:COMM_copy,PARs_PH_eh_bands,PARs_PH_Q_ibz,PARs_PH_K_bz,PAR_n_bands,&
+&                        PAR_K_range,PAR_Q_ibz_range
+ !
 #include<memory.h>
  !
- type(levels)         :: E
- type(bz_samp)        :: Xk,q
+ CALL PARALLEL_structure(3,(/"q","k","b"/))
  !
- ! Work space
- !
- logical              :: CONSECUTIVE
- !
- CALL PARALLEL_structure(3,(/"k","b","q"/))
- !
- call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
-&                                        COMM_index_2=PAR_COM_G_b_INDEX,&
-&                                        COMM_index_3=PAR_COM_Q_INDEX,&
-&                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
-&                                        COMM_A2A_2=PAR_COM_G_b_A2A)
+ call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PARs_PH_Q_ibz%COMM_i,&
+&                                        COMM_index_2=PARs_PH_K_bz%COMM_i,&
+&                                        COMM_index_3=PARs_PH_eh_bands%COMM_i,&
+&                                        COMM_A2A_1=PARs_PH_Q_ibz%COMM_a2a,&
+&                                        COMM_A2A_2=PARs_PH_K_bz%COMM_a2a)
  !
  ! COMMs setup
  !
  ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
  ! A2A when there is no internal distribution
  !
- if (PAR_COM_G_b_INDEX%n_CPU==1) then
-   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_A2A)
- endif
- !
- ! K-points (IBZ)
- !
- call PARALLEL_index(PAR_IND_Xk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
- PAR_IND_Xk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
- YAMBO_ALLOC(PAR_Xk_ibz_index,(Xk%nibz))
- call PAR_build_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
- !
- call PARALLEL_live_message("K(ibz)",ENVIRONMENT="Phonon_Self_Energy",&
-&         LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz,&
-&         NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
+ if (PARs_PH_eh_bands%COMM_i%n_CPU==1) call COMM_copy(PARs_PH_Q_ibz%COMM_a2a,PARs_PH_K_bz%COMM_a2a)
  !
  !.........................................................................
- ! X bands loop
+ !   "q" -> Q-points (IBZ)
  !.........................................................................
- call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',(/1,QP_PH_n_G_bands/))
- !
+ call PARALLEL_scheme_initialize("Q(ibz)","Phonon_Self_Energy",PARs_PH_Q_ibz,(/nqibz/),TABLE=.TRUE.)
+ PAR_Q_ibz_range=nqibz
  !.........................................................................
- !   "q" -> Q-points (BZ)
+ ! Eh bands loop
  !.........................................................................
- call PARALLEL_index(PAR_IND_Q_ibz,(/q%nibz/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
- PAR_IND_Q_ibz_ID=PAR_COM_Q_INDEX%CPU_id
- PAR_nQ_ibz=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)
- !
- YAMBO_ALLOC(PAR_Q_ibz_index,(q%nibz))
- call PAR_build_index(PAR_IND_Q_ibz,q%nibz,PAR_Q_ibz_index,PAR_nQ_ibz)
- !
- call PARALLEL_live_message("Q(ibz)",ENVIRONMENT="Phonon_Self_Energy",&
-&                           LOADED=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1),TOTAL=q%nibz,&
-&                           NCPU=PAR_COM_Q_INDEX%n_CPU)
- !
-! call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%my_CHAIN==1.or.&
-!&                                                 PAR_COM_Xk_ibz_INDEX%n_CPU==ncpu)
-! !
-! call OPENMP_set_threads(n_threads_in=n_threads_RT)
+ call PARALLEL_scheme_initialize("eh-bands","Phonon_Self_Energy",PARs_PH_eh_bands,&
+&                                (/QP_PH_n_G_bands/),MATRIX=.TRUE.)
+ PAR_n_bands=(/1,QP_PH_n_G_bands**2/)
+ !.........................................................................
+ ! K-points (BZ) for e-h pairs
+ !.........................................................................
+ call PARALLEL_scheme_initialize("K(bz)","Phonon_Self_Energy",PARs_PH_K_bz,(/nXkbz/),TABLE=.TRUE.)
+ PAR_K_range=nXkbz
  !
 end subroutine Parallel_global_Phonon_Self_Energy

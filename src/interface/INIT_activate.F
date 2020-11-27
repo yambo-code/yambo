@@ -141,7 +141,7 @@ subroutine INIT_activate()
  !
  !Setup
  !
- if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim NoDiagSC')
+ if (l_setup) call initactivate(1,'MaxGvecs K_grids IkSigLim IkXLim NoDiagSC')
 #if defined  _ELPH 
  if (l_setup) call initactivate(1,'BSEscatt')
 #endif
@@ -452,7 +452,7 @@ subroutine INIT_activate()
    !
 #if defined  _PHEL 
    !
-   if (l_phel_corr) call initactivate(1,'GphBRnge GDamping ElPhModes')
+   if (l_phel_corr) call initactivate(1,'ElecTemp BoseTemp PH_SE_mode GphBRnge GDamping ElPhModes')
   !
 #endif
 #if defined  _ELPH 
@@ -560,10 +560,11 @@ subroutine INIT_activate()
    !
    call initactivate(1,'RTskipImposeN RTeeImposeE InducedField')
    call initactivate(1,'Gauge VelGaugeCorr VelGaugeDiam PfromJ RTUpdateSOC RTUpdateE SaveGhistory')
-   call initactivate(1,'RTEqScatt RTImpForMet RTzeroTempRef RTEvalEnergy RTEvalEntropy')
+   call initactivate(1,'RTEqScatt RTImpForMet RTzeroTempRef RTskipPHabs RTEvalEnergy RTEvalEntropy')
    call initactivate(1,'dTupdateTime dTupdateJump dTupdateTresh dT_MAX')
-   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) &
-&    call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp RelaxTimeApprox RTAtemp RTAchem LifeFitTemp')
+   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) then
+     call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp RelaxTimeApprox RTAtemp RTAchem LifeFitTemp')
+   endif
    if (l_elph_scatt) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'EERimPerc')
    !

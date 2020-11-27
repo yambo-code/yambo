@@ -25,7 +25,8 @@ subroutine PARALLEL_Transitions_grouping()
  !
  use pars,          ONLY:SP
  use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_T_grp_1st_el
- use parallel_m,    ONLY:PAR_IND_eh,PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,&
+ use parallel_int,  ONLY:PP_redux_wait
+ use parallel_m,    ONLY:PAR_IND_eh,PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,&
 &                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_BS_T_grps_index,&
 &                        PAR_COM_Xk_ibz_INDEX
  use R_lattice,     ONLY:nXkibz

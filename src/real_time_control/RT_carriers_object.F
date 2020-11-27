@@ -88,7 +88,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      call RT_obj_alloc(RT)
      !
      RT%E_bare=0._SP
-     RT%f_bare=0._SP
+     RT%OCC_el%N_ref=0._SP
      !
      do i_k=1,K%nibz
        do i_k_RT=RTibz%k_range(i_k,1),RTibz%k_range(i_k,2)
@@ -109,12 +109,12 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        if(i_k_RT/=RTibz%k_range(i_k,1)) then
          iE_fg=RTibz%E_map(i_k_RT)
          RT%E_bare(i_RT)=E_reference%FG%E(i_b,iE_fg,i_spin)
-         if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%FG%f(i_b,iE_fg,i_spin)
-         if(     allocated(E%fo)) RT%f_bare(i_RT)=E%FG%f(i_b,iE_fg,i_spin)-E%FG%df(i_b,iE_fg,i_spin)
+         if(.not.allocated(E%fo)) RT%OCC_el%N_ref(i_RT)=E%FG%f(i_b,iE_fg,i_spin)
+         if(     allocated(E%fo)) RT%OCC_el%N_ref(i_RT)=E%FG%f(i_b,iE_fg,i_spin)-E%FG%df(i_b,iE_fg,i_spin)
        else
          RT%E_bare(i_RT)=E_reference%E(i_b,i_k,i_spin)
-         if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%f(i_b,i_k,i_spin)
-         if(     allocated(E%fo)) RT%f_bare(i_RT)=E%fo(i_b,i_k,i_spin)
+         if(.not.allocated(E%fo)) RT%OCC_el%N_ref(i_RT)=E%f(i_b,i_k,i_spin)
+         if(     allocated(E%fo)) RT%OCC_el%N_ref(i_RT)=E%fo(i_b,i_k,i_spin)
        endif
        !
      enddo
@@ -131,9 +131,9 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        ! Occupations
        !
        if (WHAT=="fill") then
-         RT%delta_f(i_RT)=RT_el_occ%dN(i_b,i_k_RT)
+         RT%OCC_el%dN(i_RT)=RT_el_occ%dN(i_b,i_k_RT)
        else if (WHAT=="dump".and.allocated(RT_el_occ%dN)) then
-         RT_el_occ%dN(i_b,i_k_RT)=RT%delta_f(i_RT)
+         RT_el_occ%dN(i_b,i_k_RT)=RT%OCC_el%dN(i_RT)
        endif
        !
        ! Energies
@@ -146,8 +146,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        if (WHAT=="fill") then
          !
-         f_occ =RT%f_bare(i_RT)/spin_occ
-         df_occ=RT%delta_f(i_RT)/spin_occ
+         f_occ =RT%OCC_el%N_ref(i_RT)/spin_occ
+         df_occ=RT%OCC_el%dN(i_RT)/spin_occ
          if(any((/RT_EP_emit_life%active,RT_EE_life%active,RT_EH_life%active/))) then
            Elec_lifetime=EMIT_RT_life_REF(i_b,i_k_RT)+EMIT_RT_life_dGAMMA(i_b,i_k_RT)
            Hole_lifetime=ABS_RT_life_REF(i_b,i_k_RT) +ABS_RT_life_dGAMMA(i_b,i_k_RT)
@@ -171,7 +171,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      call def_variable_bulk(DB_id,"RT_carriers_E_bare",7,(/RT%nstates/),SP)
      call  io_variable_bulk(DB_id,7,R1=RT%E_bare)
      call def_variable_bulk(DB_id,"RT_carriers_f_bare",8,(/RT%nstates/),SP)
-     call  io_variable_bulk(DB_id,8,R1=RT%f_bare)
+     call  io_variable_bulk(DB_id,8,R1=RT%OCC_el%N_ref)
      !
      call LOCAL_GAMMA_IO("bare",RT%GAMMA_EH,9)
      call LOCAL_GAMMA_IO("bare",RT%GAMMA_EE,11)
@@ -214,7 +214,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
      ! Occupations
      !
-     call C_F_POINTER(C_LOC(RT%delta_f), TMP_VAR, TMP_SIZE)
+     call C_F_POINTER(C_LOC(RT%OCC_el%dN), TMP_VAR, TMP_SIZE)
      call io_variable_bulk(DB_id,18,R2=TMP_VAR,IPOS=IPOS)
      !
      ! Lifetimes

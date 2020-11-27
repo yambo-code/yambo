@@ -262,11 +262,9 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  use BS,           ONLY:BS_K_dim,BS_H_dim,BS_nT_at_k,BSE_mode,    &
 &                       BS_K_coupling,BS_bands,BS_not_const_eh_f,            &
 &                       l_BS_ares_asymm,BS_res_ares_dim,BS_mat_res_ares_dim
+ use parser_m,     ONLY:parser
 #if defined _KERR
  use BS,           ONLY:l_BS_magnons,l_BS_photolum
-#endif
-#if defined _RT
- use parser_m,     ONLY:parser
 #endif
  !
 #include<memory.h>
@@ -289,9 +287,9 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  !
 #if defined _RT
  call parser('ForceEqTrans',FORCE_EQ_trans)
- call parser('ImposeAres',l_BS_ares_asymm)
 #endif
  !
+ call parser('ImposeAres',l_BS_ares_asymm)
  l_BS_ares_asymm=l_BS_ares_asymm.or.(iq/=1)
 #if defined _KERR
  l_BS_ares_asymm=(l_BS_ares_asymm.or.l_BS_photolum.or.(l_BS_magnons.and.n_sp_pol==2))

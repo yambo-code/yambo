@@ -350,6 +350,7 @@ subroutine K_Haydock(iq,W,mode)
      !
      ! [***] Non-Hermitian case: 
      !
+     !
      if (.not.l_BS_ares_asymm) then
        !
        ! A(n) = <Vm+1|F|Vm+1> (that is <Vm|HFH|Vm>), 
@@ -359,9 +360,6 @@ subroutine K_Haydock(iq,W,mode)
        Af(it)=0._SP
        !
      else
-       !
-       !|Vm+1> = H |Vm>
-       !call  K_multiply_by_V(Vn,Vnp1,1)
        !
        ! A(n) = <Vm+1|F|Vm+1>
        call K_dot_product(v0_mod_,Vnp1,Vnp1,1) 
@@ -417,11 +415,14 @@ subroutine K_Haydock(iq,W,mode)
        Vn(i_g)%fragment    =Vn(i_g)%fragment/Bf(it+1)
      enddo
      !
-     ! This is working, despite the call of K_dot_prodict with 1 here
-     ! From equations I would have expected 0 to be needed ...
-     if (.not.use_left_and_right) call K_dot_product(v0_mod_,V0,Vn,1)
+     ! From equations I expected the call K_dot_prodict(v0_mod_,V0,Vn,0) 
+     ! Check against algoritm expliting symmetry (u u*) instead works with K_dot_prodict(v0_mod_,V0,Vn,1) 
+     ! However the same does not work fo magnons. There must be some error somewhere else
+     ! probably related to the fact that the occupations are absorbed insied the definition of V0
+     ! and that they are negative in the anti-resonant channel 
+     if (.not.use_left_and_right) call K_dot_product(v0_mod_,V0,Vn,0)
 #if defined _KERR
-     if (     use_left_and_right) call K_dot_product(v0_mod_,V0_right,Vn,1) 
+     if (     use_left_and_right) call K_dot_product(v0_mod_,V0_right,Vn,0) 
 #endif
      !
      if (.not.l_BS_ares_asymm) then

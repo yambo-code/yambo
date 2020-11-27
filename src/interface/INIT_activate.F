@@ -385,7 +385,7 @@ subroutine INIT_activate()
          call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
        else
          call initactivate(1,'GWoIter GWIter SCEtresh')
-         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
+         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand QPsymmtrz')
        endif
      else if (l_life) then
        call initactivate(1,'GbndRnge') 
@@ -425,7 +425,7 @@ subroutine INIT_activate()
            call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
          else
            call initactivate(1,'GWoIter GWIter SCEtresh')
-           if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
+           if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand QPsymmtrz')
          endif
        endif
        !

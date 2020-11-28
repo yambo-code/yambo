@@ -73,7 +73,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
  X_t =cZERO
  UseTerminator = .false.  
  !
- coupling= Cf_size>2
+ coupling= Cf_size>1
  retarded= (trim(BSE_mode)=='retarded'.and..not.coupling)
  !
  i_eps(1)=2
@@ -137,7 +137,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
    if (coupling) then
      X_i(:,1) = -X_o(:2,1)
      X_i(:,2) = -Bf(2)*X_o(:2,2)*X_i(:,1)
-     YbyX(:) = X_i(:,1)*Cf(1) + X_i(:,2)*Cf(2)
+     YbyX(:) = -X_i(:,1)*Cf(1)+X_i(:,2)*Cf(2)
      do i1 = 2,it-1
        X_i(1,i1+1) = -Bf(i1+1)*X_o(1,i1+1)*X_i(1,i1)
        YbyX(1) = YbyX(1) + Cf(i1+1)*X_i(1,i1+1)

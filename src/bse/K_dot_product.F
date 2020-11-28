@@ -41,7 +41,7 @@ subroutine K_dot_product(dot,V,W,i_kind)
  !
  ! Workspace
  !
- integer       :: i_T_g
+ integer       :: i_T_g,i_factor
  !
  dot = cZERO
  ! 
@@ -52,8 +52,8 @@ subroutine K_dot_product(dot,V,W,i_kind)
  !
  do i_T_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle
-   dot = dot + ((-1)**(BS_T_grp(i_T_g)%i_res_ares-1))**i_kind &
-   &     *Vstar_dot_V_omp(BS_T_grp(i_T_g)%size,V(i_T_g)%fragment,W(i_T_g)%fragment)
+   i_factor= ( (-1)**(BS_T_grp(i_T_g)%i_res_ares-1) )**i_kind
+   dot=dot+ i_factor*Vstar_dot_V_omp(BS_T_grp(i_T_g)%size,V(i_T_g)%fragment,W(i_T_g)%fragment)
  enddo
  !
  ! Reduce all

@@ -441,8 +441,6 @@ subroutine K_diago_driver(iq,W,X_static)
    end subroutine K_slepc_local_init
    !
    subroutine K_slepc_local_free()
-     ! 
-     use parallel_m,  ONLY:PAR_IND_T_Haydock
      !
      if (.not.BSS_slepc_matrix) then
        call BS_HAYVEC_free(Slepc_v%Vi)
@@ -451,9 +449,6 @@ subroutine K_diago_driver(iq,W,X_static)
        deallocate(Slepc_v%Vo)
        call PARALLEL_Haydock_VEC_COMMs('reset')
      endif
-     !
-     ! This is allocated in K_Transitions setup
-     YAMBO_FREE(PAR_IND_T_Haydock%element_1D)
      !
    end subroutine K_slepc_local_free
 #endif

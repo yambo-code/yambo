@@ -106,11 +106,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  YAMBO_ALLOC(PAR_IND_WF_b_and_k%element_2D,(BS_bands(2),Xk%nibz))
  PAR_IND_WF_b_and_k%element_2D=.FALSE.
  !
- if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
-   YAMBO_ALLOC(PAR_IND_T_Haydock%element_1D,(BS_nT_grps))
-   PAR_IND_T_Haydock%element_1D=.FALSE.
- endif
- !
  nb(1)=Ken%nbf+1
  nb(2)=Ken%nbm
 !#if defined _RT

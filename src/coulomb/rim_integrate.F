@@ -306,8 +306,8 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
      !Evaluate func
      !
      func = f_coeff(1,1,i2,iq,1)+qr(1,i3)*(f_coeff(2,1,i2,iq,1)+qr(1,i3)*f_coeff(4,1,i2,iq,1))&
-&                             +qr(2,i3)*(f_coeff(3,1,i2,iq,1)+qr(2,i3)*f_coeff(6,1,i2,iq,1)&
-&                        +2_SP*qr(1,i3)*f_coeff(5,1,i2,iq,1))
+&                               +qr(2,i3)*(f_coeff(3,1,i2,iq,1)+qr(2,i3)*f_coeff(6,1,i2,iq,1)&
+&                               +2_SP*qr(1,i3)*f_coeff(5,1,i2,iq,1))
      !
      RIM_acc = RIM_acc + rfac*vslab(i3,1)**2*func*vslab(i3,i2)**2/(1-vslab(i3,1)*func*vslab(i3,i2))
    enddo

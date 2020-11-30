@@ -21,26 +21,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PHEL_double_grid_subset(k,q,k_FG,k_n)
+subroutine PHEL_double_grid_subset(k,k_FG,k_n)
  !
  ! Select double grid subset to be used in PHEL calculations
  !
- use R_lattice,      ONLY:nkDg,nk_FG_per_kpt
+ use R_lattice,      ONLY:bz_samp,bz_fine_grid,nkDg,nk_FG_per_kpt
  use PHEL,           ONLY:l_PH_uses_E_FineGd
  use real_time,      ONLY:l_RT_uses_E_FineGd
  !
 #include<memory.h>
  !
- type(bz_samp),     intent(in)    :: k,q
- type(bz_fine_grid),intent(inout) :: k_FG
- integer,           intent(in)    :: k_n
- !
+ type(bz_samp),     intent(in) :: k
+ type(bz_fine_grid),intent(in) :: k_FG
+ integer,           intent(in) :: k_n
  !
  ! Work Space ...
- !
- integer               :: k_FG_range_end,p_FG_range_end
- ! ... BZ index ...
- integer               :: iq,ikbz,ik,ik_m_q
  !
  ! Select the double grid subset to use
  !=====================================
@@ -50,9 +45,10 @@ subroutine PHEL_double_grid_subset(k,q,k_FG,k_n)
    ! 1.1 Sanity check
    if (k_FG%N.le.k_n) then
      nk_FG_per_kpt = -1
-   ! 1.2 No subset or incorrect value of nkDg provided
    else
+     ! 1.2 No subset or incorrect value of nkDg provided
      if (nkDg<0.or.nkDg>k_FG%N-k_n) then
+       nkDg=-1
        nk_FG_per_kpt = -1
      else
        ! 1.3 Do not use double grid at all
@@ -63,6 +59,7 @@ subroutine PHEL_double_grid_subset(k,q,k_FG,k_n)
        else
          ! 1.4 Use subset of fine grid
          nk_FG_per_kpt=ceiling(float(nkDg)/float(k_n))
+         nkDg = nk_FG_per_kpt*k_n
        endif
      endif
    endif

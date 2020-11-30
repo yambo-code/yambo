@@ -121,7 +121,7 @@ subroutine PHEL_driver(E,k,q)
 #endif
  !
  ! ... select fine grid subset
- call PHEL_double_grid_subset(k_FG,k_n)
+ call PHEL_double_grid_subset(k,k_FG,k_n)
  !
  ! ... allocs
  Life_MEM_steps=1

@@ -58,7 +58,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  logical               :: l_phel_allowed
  real(SP)              :: ph_freq,Delta_Broad
  real(SP)              :: broad_factor=3._SP
- integer               :: i_loop,n_loops,nk_FG_per_kpt,k_FG_range_end,p_FG_range_end
+ integer               :: i_loop,n_loops,k_FG_range_end,p_FG_range_end
  ! ... band/branch index ...
  integer               :: il,i_n,i_np
  ! ... BZ index ...

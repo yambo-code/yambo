@@ -48,6 +48,7 @@ module R_lattice
  integer  :: nXkbz
  integer  :: nXkibz
  integer  :: nkDg
+ integer  :: nk_FG_per_kpt
  real(SP) :: RL_vol
  real(SP) :: d3k_factor
  real(SP) :: d3q_factor

@@ -120,6 +120,9 @@ subroutine PHEL_driver(E,k,q)
  k_n  = k%nibz
 #endif
  !
+ ! ... select fine grid subset
+ call PHEL_double_grid_subset(k_FG,k_n)
+ !
  ! ... allocs
  Life_MEM_steps=1
  call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)

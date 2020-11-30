@@ -51,7 +51,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        BS_n_g_W,BS_n_g_exch,L_kind,BS_K_cutoff
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
-&                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig
+&                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig,Haydock_iterMAX
 #if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers,    ONLY:BSS_slepc_target_E,BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit,&
  &                       BSS_slepc_precondition,BSS_slepc_approach
@@ -316,7 +316,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BEnRange',  '[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange',  '[BSS] Damping range',BSS_dr,E_unit)
  call it(defs,'BSHayTrs',  '[BSS] Relative [o/o] Haydock threshold. Strict(>0)/Average(<0)',Haydock_threshold)
- call it(defs,'BSHayItr',  '[BSS] Iterations between IO for Haydock restart.',Haydock_iterIO,verb_level=V_resp)
+ call it(defs,'BSHayItrMAX','[BSS] MaX number of Haydock iterations.',Haydock_iterMAX,verb_level=V_resp)
+ call it(defs,'BSHayItrIO', '[BSS] Iterations between IO for Haydock restart.',Haydock_iterIO,verb_level=V_resp)
  call it(defs,'BSEPSInvTrs', '[BSS EPS] Inversion treshold. Relative[o/o](>0)/Absolute(<0)',K_INV_EPS%treshold)
  call it(defs,'BSPLInvTrs',  '[BSS PL] Inversion treshold',K_INV_PL%treshold)
  call it(defs,'BEnSteps',  '[BSS] Energy steps',BSS_n_freqs)

@@ -99,6 +99,7 @@ module BS_solvers
  !=========
  logical  :: Haydock_terminator
  integer  :: Haydock_iterIO
+ integer  :: Haydock_iterMAX
  real(SP) :: Haydock_threshold
  real(SP) :: Haydock_v0_mod
 #if defined _SLEPC && !defined _SLEPC_OFF

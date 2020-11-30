@@ -47,11 +47,11 @@ subroutine io_BS_PAR_init(iq,X,ID)
  integer, external :: variables_BS_more
  !
  logical :: def_var
- integer :: io_BS,    VAR_IDs(8),n_vars,i1,i2
+ integer :: io_BS,    VAR_IDs(6),n_vars,i1,i2
  type(IO_desc)     :: local_desc
  character(schlen) :: db_name
- character(lchlen) :: full_db_name,ch(4)
- character(schlen) :: dim_names(3,4)
+ character(lchlen) :: full_db_name,ch(3)
+ character(schlen) :: dim_names(3,3)
  !
  ! Connect to parallel netCDF file.
  !
@@ -114,13 +114,12 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  ch(1)="BSE_RESONANT"
  ch(2)="BSE_COUPLING"
- ch(3)="BSE_ANTI-COUPLING"
- ch(4)="BSE_ANTI-RESONANT"
- VAR_IDs=(/1,2,3,4,5,6,7,8/)
+ ch(3)="BSE_ANTI-RESONANT"
+ VAR_IDs=(/1,2,3,4,5,6/)
  !
  if (.not.BS_K_coupling) n_vars=1
  if (     BS_K_coupling) n_vars=2
- if ( l_BS_ares_asymm  ) n_vars=n_vars*2
+ if ( l_BS_ares_asymm  ) n_vars=n_vars+1
  !
  if(l_BSK_IO_triangular) then
    !
@@ -150,10 +149,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
    if(BS_res_ares_dim==2) then
      dim_names(:,2) = [character(schlen) :: 'complex', 'BS_K_dim1', 'BS_K_dim2']
      BS_IO_dim(:,2) = (/BS_K_dim(1),BS_K_dim(2)/)
-     dim_names(:,3) = [character(schlen) :: 'complex', 'BS_K_dim2', 'BS_K_dim1']
-     BS_IO_dim(:,3) = (/BS_K_dim(2),BS_K_dim(1)/)
-     dim_names(:,4) = [character(schlen) :: 'complex', 'BS_K_dim2', 'BS_K_dim2']
-     BS_IO_dim(:,4) = (/BS_K_dim(2),BS_K_dim(2)/)
+     dim_names(:,3) = [character(schlen) :: 'complex', 'BS_K_dim2', 'BS_K_dim2']
+     BS_IO_dim(:,3) = (/BS_K_dim(2),BS_K_dim(2)/)
    else if (BS_K_coupling) then
      dim_names(:,2) = [character(schlen) :: 'complex', 'BS_K_dim1', 'BS_K_dim1']
      BS_IO_dim(:,2) = (/BS_K_dim(1),BS_K_dim(1)/)
@@ -163,7 +160,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  do i1=1,n_vars
    i2=i1
-   if(i1==2 .and. BS_mat_res_ares_dim==2) then; i2=4; endif
+   if(i1==2 .and. BS_mat_res_ares_dim==2) then; i2=3; endif
    call def_variable_bulk(ID,trim(ch(i2)),       VAR_IDs(2*i2-1),&
            &               [2,BS_IO_dim(:,i2)],SP,dim_names(:,i2),par_io_kind='independent')
    call def_variable_bulk(ID,trim(ch(i2))//"_DONE",VAR_IDs(2*i2),&
@@ -236,10 +233,8 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
    VAR_IDs=(/1,2/)
  case("C")
    VAR_IDs=(/3,4/)
- case("Q")
-   VAR_IDs=(/5,6/)
  case("A")
-   VAR_IDs=(/7,8/)
+   VAR_IDs=(/5,6/)
  end select
  !
  ! Get dimensions

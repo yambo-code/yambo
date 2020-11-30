@@ -64,7 +64,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
  complex(SP) :: X_t(2)
  real(SP)    :: Av1, Av2
  integer, parameter :: RES = 3, ARES = 2, COUPL = 1, MIN_ITER = 10
- logical     :: UseTerminator
+ logical     :: UseTerminator,use_A4,use_A6
  logical     :: retarded, coupling
  !
  Co=Co_factor*Haydock_v0_mod**2
@@ -72,6 +72,8 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
  !
  X_t =cZERO
  UseTerminator = .false.  
+ use_A4=.false.    ! For debug pourposes
+ use_A6=.true.
  !
  coupling= Cf_size>1
  retarded= (trim(BSE_mode)=='retarded'.and..not.coupling)
@@ -135,18 +137,39 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
      if (retarded) X_o(4,i1)= 1._SP/(freq_axis(iw)+Af(i1)-Bf(i1+1)**2*X_o(4,i1+1))
    enddo
    if (coupling) then
-     X_i(:,1) = -X_o(:2,1)
-     X_i(:,2) = -Bf(2)*X_o(:2,2)*X_i(:,1)
-     YbyX(:) = -X_i(:,1)*Cf(1)+X_i(:,2)*Cf(2)
-     do i1 = 2,it-1
-       X_i(1,i1+1) = -Bf(i1+1)*X_o(1,i1+1)*X_i(1,i1)
-       YbyX(1) = YbyX(1) + Cf(i1+1)*X_i(1,i1+1)
-     end do
-     do i1 = 2,it-2
-       X_i(2,i1+1) = -Bf(i1+1)*X_o(2,i1+1)*X_i(2,i1)
-       YbyX(2) = YbyX(2) + Cf(i1+1)*X_i(2,i1+1)
-     end do
-     X_o(:2,1) = YbyX(:)
+     !
+     ! (A.4), for debug pourposes
+     if(use_A4) then
+       X_i(:,1) = (1-(freq_axis(iw)-Af(1))*X_o(:2,1))/Bf(2)
+       X_i(:,2) = (-Bf(2)*X_o(:2,1)-(freq_axis(iw)-Af(2))*X_i(:,1))/Bf(3)
+       YbyX(:) = X_i(:,1)*Cf(1)+X_i(:,2)*Cf(2)
+       do i1 = 2,it-1
+         X_i(1,i1+1) = (-Bf(i1+1)*X_i(1,i1-1)-(freq_axis(iw)-Af(i1+1))*X_i(1,i1))/Bf(i1+2)
+         YbyX(1) = YbyX(1) + Cf(i1+1)*X_i(1,i1+1)
+       end do
+       do i1 = 2,it-2
+         X_i(2,i1+1) = (-Bf(i1+1)*X_i(2,i1-1)-(freq_axis(iw)-Af(i1+1))*X_i(2,i1))/Bf(i1+2)
+         YbyX(2) = YbyX(2) + Cf(i1+1)*X_i(2,i1+1)
+       end do
+       X_o(:2,1) = YbyX(:)
+     endif
+     !
+     ! (A.6)
+     if(use_A6) then
+       X_i(:,1) = -X_o(:2,1)
+       X_i(:,2) = -Bf(2)*X_o(:2,2)*X_i(:,1)
+       YbyX(:) = X_i(:,1)*Cf(1)+X_i(:,2)*Cf(2)
+       do i1 = 2,it-1
+         X_i(1,i1+1) = -Bf(i1+1)*X_o(1,i1+1)*X_i(1,i1)
+         YbyX(1) = YbyX(1) + Cf(i1+1)*X_i(1,i1+1)
+       end do
+       do i1 = 2,it-2
+         X_i(2,i1+1) = -Bf(i1+1)*X_o(2,i1+1)*X_i(2,i1)
+         YbyX(2) = YbyX(2) + Cf(i1+1)*X_i(2,i1+1)
+       end do
+       X_o(:2,1) = YbyX(:)
+     endif
+     !
    endif
    !
    if(trim(global_gauge)=='velocity'.and.iw==0) then

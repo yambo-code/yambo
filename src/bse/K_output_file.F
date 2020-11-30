@@ -66,9 +66,10 @@ subroutine K_output_file(iq,mode)
  complex(SP)       :: eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3),alpha_factor
 #if defined _KERR
  complex(SP)       :: beta(BSS_n_freqs,3)
+ logical           :: l_kerr_out,l_dich_out,l_phot_out,l_magn_out
 #endif
  logical           :: eval_eels,eval_reflectivity,l_Haydock,l_Diago,l_Inversion,l_Slepc,l_IP,l_INIT,&
- &                    l_print_col4,l_print_jdos,l_print_esort
+ &                    l_print_col4,l_jdos_out,l_esrt_out,l_abs_out
  !
  l_INIT      = index(mode,"open")/=0
  l_Haydock   = index(mode,"Haydock")/=0
@@ -85,6 +86,18 @@ subroutine K_output_file(iq,mode)
  if (l_Inversion) name_="inv"
  if (l_IP)        name_="IP"
  !
+ l_esrt_out =l_BS_esort    .and.(.not.(l_Inversion.or.l_Haydock))
+ l_abs_out  =l_BS_abs      .and.((.not.l_Haydock).or.index(mode,"abs")>0 )
+ l_jdos_out =l_BS_jdos     .and.((.not.l_Haydock).or.index(mode,"jdos")>0).and.(.not.l_Inversion)
+#if defined _KERR
+ l_magn_out =l_BS_magnons  .and.((.not.l_Haydock).or.index(mode,"magn")>0).and.(.not.l_Inversion)
+ l_kerr_out =l_BS_kerr     .and.((.not.l_Haydock).or.index(mode,"kerr")>0)
+ l_dich_out =l_BS_dichroism.and.((.not.l_Haydock).or.index(mode,"dich")>0).and.(.not.l_Inversion)
+ l_phot_out =l_BS_photolum .and.l_Inversion
+#endif
+ !
+ l_print_col4=l_Haydock.or.(l_Inversion.and..not.K_diago_in_BS_mat)
+ !
  if (l_INIT) then
    if (l_IP) then
      call X_setup_file_names(iq,trim(name_),' ',' ')
@@ -99,7 +112,7 @@ subroutine K_output_file(iq,mode)
  !
  ! EELS / ALPHA / REFLECTIVITY logicals
  !
- if (l_BS_abs) then
+ if (l_abs_out) then
    eval_eels= OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
    eval_alpha=eval_alpha .and. ((l_col_cut) .or. (eval_eels) )
    call parser('Reflectivity',eval_reflectivity)
@@ -110,10 +123,6 @@ subroutine K_output_file(iq,mode)
    eval_reflectivity=.false.
  endif
  !
- l_print_col4=l_Haydock.or.(l_Inversion.and..not.K_diago_in_BS_mat)
- l_print_jdos =(.not. l_Inversion              ) .and. l_BS_jdos
- l_print_esort=(.not.(l_Inversion.or.l_Haydock)) .and. l_BS_esort
- !
  n_headers=5
  if (l_print_col4) n_headers=7
  if (l_IP) n_headers=3
@@ -121,26 +130,26 @@ subroutine K_output_file(iq,mode)
  title_mode='Ot'
  if (l_INIT) title_mode='ot'
  !
- if (l_BS_abs) call of_open_close(eps_file_name,title_mode)
+ if (l_abs_out)         call of_open_close(eps_file_name,title_mode)
  if (eval_reflectivity) call of_open_close(refl_file_name,title_mode)
  if (eval_eels)         call of_open_close(eel_file_name,title_mode)
  if (eval_alpha)        call of_open_close(alpha_file_name,title_mode)
  !
 #if defined _KERR
- if(l_BS_kerr) then
+ if(l_kerr_out) then
    call of_open_close(off_file_name,title_mode)
    if (.not.eval_alpha) call of_open_close(moke_file_name,title_mode)
    if (     eval_alpha) call of_open_close(beta_file_name,title_mode)
  endif
- if(l_BS_dichroism) call of_open_close(dichr_file_name,title_mode)
- if(l_BS_photolum)  call of_open_close(pl_file_name,title_mode)
- if(l_BS_magnons) then
+ if(l_dich_out) call of_open_close(dichr_file_name,title_mode)
+ if(l_phot_out) call of_open_close(pl_file_name,title_mode)
+ if(l_magn_out) then
    call of_open_close(magp_file_name,title_mode)
    if(n_spinor==2) call of_open_close(magm_file_name,title_mode)
  endif
 #endif
- if(l_print_jdos)  call of_open_close(jdos_file_name,title_mode)
- if(l_print_esort) call of_open_close(esort_file_name,title_mode)
+ if(l_jdos_out) call of_open_close(jdos_file_name,title_mode)
+ if(l_esrt_out) call of_open_close(esort_file_name,title_mode)
  !
  call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1)
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
@@ -166,7 +175,7 @@ subroutine K_output_file(iq,mode)
  !
  ! Diamagnetic term
  !
- if(l_BS_abs) then
+ if(l_abs_out) then
    call msg('o eps','#','Diamagnetic term',INDENT=0,USE_TABS=.TRUE.)
    n_output_data=2
    if(l_IP) n_output_data=1
@@ -181,13 +190,13 @@ subroutine K_output_file(iq,mode)
    call msg('o eps','#')
  endif
  !
- if(l_BS_kerr .and. eval_alpha) then
+ if(l_kerr_out .and. eval_alpha) then
    ! Alpha units
    call msg('o beta','#','Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0,USE_TABS=.true.)
    call msg('o beta','#')
  endif
  !
- if(l_BS_kerr) then
+ if(l_kerr_out) then
    !
    ! Hanomalous Hall term
    !
@@ -219,7 +228,7 @@ subroutine K_output_file(iq,mode)
  !
  ! Headers
  !
- if(l_BS_abs) then
+ if(l_abs_out) then
    call X_setup_headers('EPS')
    call msg("o eps",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
  endif
@@ -241,7 +250,7 @@ subroutine K_output_file(iq,mode)
  !
 #if defined _KERR
  !
- if(l_BS_kerr) then
+ if(l_kerr_out) then
    !
    call X_setup_headers('off')
    call msg("o off",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
@@ -258,12 +267,12 @@ subroutine K_output_file(iq,mode)
    !
  endif
  !
- if (l_BS_photolum) then
+ if (l_phot_out) then
    call X_setup_headers('PL')
    call msg("o pl_",'#',headers(:(n_headers-1)/2+1),INDENT=0,USE_TABS=.TRUE.)
  endif
  !
- if(l_BS_magnons) then
+ if(l_magn_out) then
    !
    call X_setup_headers('Spm ')
    if (l_Haydock.or.l_Inversion) call msg("o Spm",'#',headers,INDENT=0,USE_TABS=.TRUE.)
@@ -279,7 +288,7 @@ subroutine K_output_file(iq,mode)
    !
  endif
  !
- if(l_BS_dichroism) then
+ if(l_dich_out) then
    !
    call X_setup_headers('CD ')
    if (l_Haydock.or.l_Inversion) call msg("o CD",'#',headers,INDENT=0,USE_TABS=.TRUE.)
@@ -299,7 +308,7 @@ subroutine K_output_file(iq,mode)
  ! ABSORPTION
  !------------
  !
- if (l_BS_abs) then
+ if (l_abs_out) then
    !
    do iw=1,BSS_n_freqs
      !
@@ -402,7 +411,7 @@ subroutine K_output_file(iq,mode)
  !
  ! PHOTOLUMINESCENCE
  !--------------------
- if (l_BS_photolum) then
+ if (l_phot_out) then
    !
    do iw=1,BSS_n_freqs
      !
@@ -418,7 +427,7 @@ subroutine K_output_file(iq,mode)
  !
  ! KERR 
  !------
- if(l_BS_kerr) then
+ if(l_kerr_out) then
    !
    ! eps_xy
    !
@@ -462,7 +471,7 @@ subroutine K_output_file(iq,mode)
      !
    endif
    !
-   if(l_BS_abs.and..not.eval_alpha) then
+   if(l_abs_out.and..not.eval_alpha) then
      !
      ! Kerr parameters
      !
@@ -500,7 +509,7 @@ subroutine K_output_file(iq,mode)
  !
  ! MAGNONS
  !------
- if(l_BS_magnons) then
+ if(l_magn_out) then
    !
    ! magnons Spm
    !
@@ -535,7 +544,7 @@ subroutine K_output_file(iq,mode)
  !
  !  DICHROISM
  !------
- if(l_BS_dichroism) then
+ if(l_dich_out) then
    !
    n_output_data=5
    if (l_Haydock.or.l_Inversion) n_output_data=7
@@ -557,7 +566,7 @@ subroutine K_output_file(iq,mode)
  ! JOINT DOS
  !------------
  !
- if (l_print_jdos) then
+ if (l_jdos_out) then
    !
    n_output_data=5
    if (l_IP) n_output_data=3
@@ -576,24 +585,24 @@ subroutine K_output_file(iq,mode)
    !
  endif
  !
- if (l_print_esort) then
+ if (l_esrt_out) then
    !
    n_output_data=1
    headers(1)="E [eV]"
-   if(l_BS_abs) then
+   if(l_abs_out) then
      headers(n_output_data+1:n_output_data+1)="abs"
      n_output_data=n_output_data+1
    endif
 #if defined _KERR
-   if (l_BS_kerr) then
+   if (l_kerr_out) then
      headers(n_output_data+1:n_output_data+1)="kerr"
      n_output_data=n_output_data+1
    endif
-   if (l_BS_dichroism) then
+   if (l_dich_out) then
      headers(n_output_data+1:n_output_data+1)="dich"
      n_output_data=n_output_data+1
    endif
-   if (l_BS_magnons) then
+   if (l_magn_out) then
      headers(n_output_data+1:n_output_data+2)=(/"S+-","S-+"/)
      n_output_data=n_output_data+2
    endif
@@ -634,7 +643,7 @@ subroutine K_output_file(iq,mode)
    !
    subroutine CLOSE_the_files( )
      !
-     if(l_BS_abs) then
+     if(l_abs_out) then
        call of_open_close(eps_file_name)
        call of_open_close(refl_file_name)
        call of_open_close(eel_file_name)
@@ -642,28 +651,28 @@ subroutine K_output_file(iq,mode)
      endif
      !
 #if defined _KERR
-     if(l_BS_photolum) then
+     if(l_phot_out) then
        call of_open_close(pl_file_name)
      endif
      !
-     if(l_BS_kerr) then
+     if(l_kerr_out) then
        call of_open_close(off_file_name)
        call of_open_close(beta_file_name)
        call of_open_close(moke_file_name)
      endif
      !
-     if(l_BS_magnons) then
+     if(l_magn_out) then
        call of_open_close(magp_file_name)
        call of_open_close(magm_file_name)
      endif
      !
-     if(l_BS_dichroism) then
+     if(l_dich_out) then
        call of_open_close(dichr_file_name)
      endif
 #endif
      !
-     if(l_print_jdos)  call of_open_close(jdos_file_name)
-     if(l_print_esort) call of_open_close(esort_file_name)
+     if(l_jdos_out)  call of_open_close(jdos_file_name)
+     if(l_esrt_out) call of_open_close(esort_file_name)
      !
    end subroutine
    !

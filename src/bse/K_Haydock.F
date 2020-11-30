@@ -29,7 +29,8 @@ subroutine K_Haydock(iq,W,mode)
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
  use BS_solvers,     ONLY:BSS_desc,Haydock_threshold,io_BSS_Haydock,&
-&                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod,Haydock_iterIO
+&                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod, &
+&                         Haydock_iterIO,Haydock_iterMAX
  use BS,             ONLY:BS_K_Coupling,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,BS_K_dim,&
 &                         l_BS_ares_asymm,BS_H_dim
  use LIVE_t,         ONLY:LIVE_message
@@ -50,7 +51,6 @@ subroutine K_Haydock(iq,W,mode)
  ! Work Space
  !
  integer            ::it,it_on_disk,i_g,ID,io_err,i_desc_acc,i_desc_iter
- integer, parameter ::Max_iterations=1000
  type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:),V0(:),V_tmp(:)
  complex(SP), pointer :: Vn_f(:),Vnm1_f(:),Vnp1_f(:)
  complex(SP), allocatable :: Cf(:) 
@@ -60,7 +60,7 @@ subroutine K_Haydock(iq,W,mode)
 #endif
  !
  real(SP)           ::reached_threshold
- real(SP)           ::Bf(Max_iterations+1),Af(Max_iterations)
+ real(SP)           ::Bf(Haydock_iterMAX+1),Af(Haydock_iterMAX)
  integer            ::ItParity,HAYVEC_size,Cf_size
  complex(SP)        ::v0_mod_
  character(schlen)  ::dumb_ch
@@ -72,7 +72,7 @@ subroutine K_Haydock(iq,W,mode)
  !
  !integer           :: ID,io_err
  !
- call K_output_file(iq,"open Haydock")
+ call K_output_file(iq,"open Haydock "//trim(mode))
  !
  call PARALLEL_Haydock_VEC_COMMs('assign')
  !
@@ -124,7 +124,7 @@ subroutine K_Haydock(iq,W,mode)
  reached_threshold=0._SP
  !
  Cf_size=2
- if (use_cpl_scheme) Cf_size=Max_iterations+1
+ if (use_cpl_scheme) Cf_size=Haydock_iterMAX+1
  YAMBO_ALLOC(Cf,(Cf_size))
  !
  allocate(Vn(BS_nT_grps))
@@ -217,7 +217,8 @@ subroutine K_Haydock(iq,W,mode)
    if (trim(mode)=="jdos")                      V0(i_g)%fragment(:) = cONE
    if (trim(mode)=="abs".or.trim(mode)=="kerr") V0(i_g)%fragment(:) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
    if (trim(mode)=="magnons")                   V0(i_g)%fragment(:) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
-   V0(i_g)%fragment(:) = V0(i_g)%fragment(:)*sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP))
+   if (BS_T_grp(i_g)%i_res_ares==1) V0(i_g)%fragment(:) =  V0(i_g)%fragment(:)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
+   if (BS_T_grp(i_g)%i_res_ares==2) V0(i_g)%fragment(:) = -V0(i_g)%fragment(:)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
    if(velocity_correction) V_tmp(i_g)%fragment(:) = V0(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
  enddo
  ! 
@@ -236,7 +237,11 @@ subroutine K_Haydock(iq,W,mode)
    !
    do i_g=1,BS_nT_grps
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     if (trim(mode)=="kerr") V0_right(i_g)%fragment  =BS_T_grp(i_g)%dipoles_opt(2,:,1)*sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP))
+     if (trim(mode)=="kerr") V0_right(i_g)%fragment  =BS_T_grp(i_g)%dipoles_opt(2,:,1)&
+     if (BS_T_grp(i_g)%i_res_ares==1) V0_right(i_g)%fragment(:) =  V0_right(i_g)%fragment(:) &
+     &                                               *(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
+     if (BS_T_grp(i_g)%i_res_ares==2) V0_right(i_g)%fragment(:) = -V0_right(i_g)%fragment(:) &
+     &                                               *(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
      if(velocity_correction) V_tmp(i_g)%fragment(:) = V0_right(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
    enddo
    !
@@ -264,17 +269,16 @@ subroutine K_Haydock(iq,W,mode)
      !
      ! Before starting iterate one needs
      !
-     ! | Vn > =     |q->0>/(<q->0| F (H |q->0>))
+     ! | Vn > =     |V0>/(<V0|F(H|V0>))
      ! | Vnp1 > = H |Vn>
      !
      Cf= cZERO
      !
-     !
      call K_multiply_by_V(V0,Vnp1,1)
      call K_dot_product(v0_mod_,V0,Vnp1,1)
      !
-     ! For the coupling case if A = -R* (l_BS_ares_asymm=.true.), V0 = (u0, iu0*)
-     ! At each iteration however the relation changes V1= (u1,-iu1*),
+     ! For the coupling case if A = -R* (l_BS_ares_asymm=.true.), V0 = (u0, -iu0*)
+     ! At each iteration however the relation changes V1= (u1, iu1*),
      ! this is why the ItParity is needed 
      !
      if(.not.l_BS_ares_asymm) Haydock_v0_mod=sqrt(2*real(v0_mod_))
@@ -287,10 +291,15 @@ subroutine K_Haydock(iq,W,mode)
        Vnp1(i_g)%fragment = Vnp1(i_g)%fragment/Haydock_v0_mod
      enddo
      !
-     call K_dot_product(v0_mod_,V0,V0,1)
-     if(.not.l_BS_ares_asymm) Cf(1)=2*aimag(v0_mod_)
-     if(     l_BS_ares_asymm) Cf(1)=        v0_mod_
-     Cf(1)=Cf(1)*Haydock_v0_mod
+     ! <w0|u0>=<V0|F|V0>  since <w0|=<V0|F
+     ! Is it correct that also V0 was renormalized ??
+     if (.not.use_left_and_right) call K_dot_product(v0_mod_,V0,V0,1)
+#if defined _KERR
+     if (     use_left_and_right) call K_dot_product(v0_mod_,V0_right,V0,1)
+#endif
+     !
+     if(.not.l_BS_ares_asymm) Cf(1)=2*cI*aimag(v0_mod_)
+     if(     l_BS_ares_asymm) Cf(1)=           v0_mod_
      !
    else                           ! [***] Initialization Hermitian case
      !
@@ -310,7 +319,7 @@ subroutine K_Haydock(iq,W,mode)
  !
  ! [***] Loop ...
  !
- do it=it_on_disk+1,Max_iterations
+ do it=it_on_disk+1,Haydock_iterMAX
    !
    if (.not.use_cpl_scheme) then  ! [***] Hermitian case:
      !
@@ -445,7 +454,7 @@ subroutine K_Haydock(iq,W,mode)
      BSS_desc%rval(1,i_desc_acc) =reached_threshold
      BSS_desc%ival(1,i_desc_iter)=it
      !
-     call K_output_file(iq,"Haydock")
+     call K_output_file(iq,"Haydock "//trim(mode))
      dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy '//&
 &            trim(real2ch(reached_threshold))//'|'//trim(real2ch(Haydock_threshold))
      if (tty_size>0.and.(it_on_disk==0.or. it_on_disk< it-1)) call LIVE_message(dumb_ch,"r","","%s")

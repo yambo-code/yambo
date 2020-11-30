@@ -29,8 +29,8 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use com,                 ONLY:msg,core_io_path
  use it_m,                ONLY:nrnlvls,rnlvls,rstatus
  use LIVE_t,              ONLY:live_timing
- use parallel_m,          ONLY:ncpu,myid,PP_indexes,PP_indexes_reset,master_cpu
- use parallel_int,        ONLY:PARALLEL_wait,PARALLEL_index,PARALLEL_live_message
+ use parallel_m,          ONLY:ncpu,myid,PP_indexes,PP_indexes_reset
+ use parallel_int,        ONLY:PARALLEL_wait,PARALLEL_index,PARALLEL_live_message,PP_redux_wait
  use electrons,           ONLY:levels,E_reset,n_bands,n_sp_pol,n_spinor
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,io_WF, wf_nb_io_groups,wf_nb_io
@@ -171,12 +171,19 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  IO_write_save=IO_write
  IO_read_save =IO_read
- IO_write=.true.
- IO_read=.true.
  !
  ! IO
  !
  YAMBO_ALLOC(wf_disk,(wf_ncx,n_spinor,wf_nb_io))
+ !
+ ! Write the standard wf header
+ call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
+ io_err=io_WF(ID)
+ !
+ call PP_redux_wait()
+ !
+ IO_write=.true.
+ IO_read=.true.
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -197,17 +204,10 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
         !
         if (.not.PAR_IND_wfc_io%element_2D(ib_grp,ik)) cycle
         !
-        if (ifrag==1.and.ib_grp==1.and.master_cpu) then
-          !
-          ! Write the standard wf header
-          call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
-          io_err=io_WF(ID)
-        endif
-        !
-        ! Read a single wfc component from disk
-        !
+        ! Read a single wfc component from disk...
         call p2y_wf(wf_disk,i_sp_pol,ik,ib_grp)
         !
+        ! ... and write it
         call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
         io_err=io_WF(ID,wf_disk)
         !

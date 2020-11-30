@@ -85,6 +85,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,&
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
+#if defined _PHEL
+ use PHEL,       ONLY:l_extra_life
+#endif
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
@@ -518,6 +521,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
 #if defined _PHEL
  nkDg=-1
+ l_extra_life=.false.
 #endif
  !
 #if defined _ELPH 

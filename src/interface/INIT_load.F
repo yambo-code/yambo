@@ -118,7 +118,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use memory,        ONLY:MEM_treshold
 #endif
 #if defined _PHEL
- use PHEL,          ONLY:PH_Self_Energy_mode
+ use PHEL,          ONLY:PH_Self_Energy_mode,l_extra_life
 #endif
  !
  implicit none
@@ -269,6 +269,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _PHEL
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
  call it(defs,'KNumDgSubset', '[PHEL-DG] Size of subset of double grid k-points',nkDg)
+ call it('f',defs,'ExtraInfo', '[PHEL] Print more variables in the output file',verb_level=V_qp)
 #else
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit,verb_level=V_qp)
 #endif

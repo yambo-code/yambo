@@ -29,6 +29,7 @@ module PHEL
  !
  integer          :: PH_DbGd_points=0
  logical          :: l_PH_uses_E_FineGd=.FALSE.
+ logical          :: l_extra_life ! Adds interband, intraband, eq. linewidths to output 
  character(schlen):: PH_Self_Energy_mode="dressed-dressed" ! "bare-dressed" (="dressed-bare") / "bare-bare"
  !
  type phel_scatterings

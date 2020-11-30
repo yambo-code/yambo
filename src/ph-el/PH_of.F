@@ -24,14 +24,15 @@
 subroutine PH_of(q)
  !
  !DEBUG> (FP)
- use RT_lifetimes,   ONLY:PE_linewidth,RT_PE_life_interband,RT_PE_life_intraband
+ !use RT_lifetimes,   ONLY:PE_linewidth,RT_PE_life_interband,RT_PE_life_intraband
  !DEBUG<
  use pars,           ONLY:SP
  use OUTPUT_simple,  ONLY:OUTPUT_add_column
- use RT_lifetimes,   ONLY:RT_PE_life
+ use RT_lifetimes,   ONLY:RT_PE_life,RT_PE_extra
  use ELPH,           ONLY:PH_freqs_sq,elph_branches,PHEL_desc,ELPH_desc,l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use R_lattice,      ONLY:nqibz,bz_samp
  use interfaces,     ONLY:DESC_write
+ use PHEL,           ONLY:l_extra_life
  !
  implicit none
  !
@@ -56,17 +57,29 @@ subroutine PH_of(q)
      call OUTPUT_add_column("ph",TITLES=(/"Energy"/),R_VALUES=(/ph_freq/),UNIT="meV")
      call OUTPUT_add_column("ph",TITLES=(/"Width(emit)"/),R_VALUES=(/RT_PE_life%emit(il,iq)/),UNIT="meV")
      call OUTPUT_add_column("ph",TITLES=(/"Width(abs)"/),R_VALUES=(/RT_PE_life%abs(il,iq)/),UNIT="meV")
+     !
+     if (l_extra_life) then
+       call OUTPUT_add_column("ph",TITLES=(/"Width(retarded)"/),R_VALUES=(/RT_PE_extra%linewidth(il,iq)/),UNIT="meV")
+       call OUTPUT_add_column("ph",TITLES=(/"Width(interb.)"/),R_VALUES=(/RT_PE_extra%interband(il,iq)/),UNIT="meV")
+       call OUTPUT_add_column("ph",TITLES=(/"Width(intrab.)"/),R_VALUES=(/RT_PE_extra%intraband(il,iq)/),UNIT="meV")
+     endif
+     !
      !DEBUG> (FP)
-     call OUTPUT_add_column("ph",TITLES=(/"Width(retarded)"/),R_VALUES=(/PE_linewidth(il,iq)/),UNIT="meV")
-     call OUTPUT_add_column("ph",TITLES=(/"Width(interb.)"/),R_VALUES=(/RT_PE_life_interband(il,iq)/),UNIT="meV")
-     call OUTPUT_add_column("ph",TITLES=(/"Width(intrab.)"/),R_VALUES=(/RT_PE_life_intraband(il,iq)/),UNIT="meV")
+     !call OUTPUT_add_column("ph",TITLES=(/"Width(retarded)"/),R_VALUES=(/PE_linewidth(il,iq)/),UNIT="meV")
+     !call OUTPUT_add_column("ph",TITLES=(/"Width(interb.)"/),R_VALUES=(/RT_PE_life_interband(il,iq)/),UNIT="meV")
+     !call OUTPUT_add_column("ph",TITLES=(/"Width(intrab.)"/),R_VALUES=(/RT_PE_life_intraband(il,iq)/),UNIT="meV")
      !DEBUG<
      call OUTPUT_add_column("ph",ORDER=(/"Q-point","Branch ","Energy "/))
      call OUTPUT_add_column("ph",ORDER=(/"Width(emit)","Width(abs) "/))
+     if (l_extra_life) then
+       call OUTPUT_add_column("ph",ORDER=(/"Width(retarded)"/))
+       call OUTPUT_add_column("ph",ORDER=(/"Width(interb.)"/))
+       call OUTPUT_add_column("ph",ORDER=(/"Width(intrab.)"/))
+     endif
      !DEBUG>
-     call OUTPUT_add_column("ph",ORDER=(/"Width(retarded)"/))
-     call OUTPUT_add_column("ph",ORDER=(/"Width(interb.)"/))
-     call OUTPUT_add_column("ph",ORDER=(/"Width(intrab.)"/))
+     !call OUTPUT_add_column("ph",ORDER=(/"Width(retarded)"/))
+     !call OUTPUT_add_column("ph",ORDER=(/"Width(interb.)"/))
+     !call OUTPUT_add_column("ph",ORDER=(/"Width(intrab.)"/))
      !DEBUG<
      call OUTPUT_add_column("ph",action="write")
    enddo

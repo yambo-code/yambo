@@ -32,7 +32,7 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  !   -- Time Scales Separation + QuasiParticle Approximation (TSQP)
  !
  !DEBUG> (FP)
- use RT_lifetimes,   ONLY:PE_linewidth,RT_PE_life_interband,RT_PE_life_intraband
+ !use RT_lifetimes,   ONLY:PE_linewidth,RT_PE_life_interband,RT_PE_life_intraband
  !DEBUG<
  use pars,           ONLY:SP,cI,pi,rZERO
  use units,          ONLY:HA2EV
@@ -40,14 +40,14 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  use hamiltonian,    ONLY:B_mat_index
  use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid
  use RT_occupations, ONLY:RT_ph_occ,RT_el_occ,RT_ho_occ,RT_life_occ
- use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life
+ use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life,RT_extra_life
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
  use ELPH,           ONLY:PH_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch,GKKP_pe_sq,&
 &                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_eh_bands,PARs_PH_Q_ibz
  use QP_m,           ONLY:QP_G_damp
  use LIVE_t,         ONLY:live_timing
- use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,phel_scatterings_free
+ use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,phel_scatterings_free,l_extra_life
  !
  implicit none
  !
@@ -215,23 +215,37 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    !
    TMP_Emit_lifetime = f_nk*Hole_f_mkq*D_ares+Hole_f_nk*f_mkq*D_res
    TMP_Abs_lifetime  = f_nk*Hole_f_mkq*D_res +Hole_f_nk*f_mkq*D_ares
+   ! This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
+   if (l_extra_life) TMP_linewidth     = (f_mkq-f_nk)*D_res
    !DEBUG> (FP) This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
-   TMP_linewidth     = (f_mkq-f_nk)*D_res
+   !TMP_linewidth     = (f_mkq-f_nk)*D_res
    !DEBUG<
    !
    ! Phonon emission (stimulated and spontaneous)
    RT_PE_life%emit(il,iq_life)=RT_PE_life%emit(il,iq_life)+TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
    ! Phonon absorption
    RT_PE_life%abs(il,iq_life) =RT_PE_life%abs(il,iq_life)+TMP_Abs_lifetime*pre_factor*N_q
-   !       
-   !DEBUG> (FP)
-   PE_linewidth(il,iq_life)=PE_linewidth(il,iq_life) +TMP_linewidth*pre_factor
-   ! Interband and intraband (Drude) components of the Emit lifetimes
-   if (i_np == i_n) then
-     RT_PE_life_intraband(il,iq_life)= RT_PE_life_intraband(il,iq_life) +TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
-   else
-     RT_PE_life_interband(il,iq_life)= RT_PE_life_interband(il,iq_life) +TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
+   !    
+   if (l_extra_life) then
+     !
+     RT_PE_extra%linewidth(il,iq_life)=RT_PE_extra%linewidth(il,iq_life)+TMP_linewidth*pre_factor
+     ! Interband and intraband (Drude) components of the Emit lifetimes  
+     if (i_np == i_n) then
+       RT_PE_extra%intraband(il,iq_life)= RT_PE_extra%intraband(il,iq_life) +TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
+     else
+       RT_PE_extra%interband(il,iq_life)= RT_PE_extra%interband(il,iq_life) +TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
+     endif
+     !
    endif
+   !   
+   !DEBUG> (FP)
+   !PE_linewidth(il,iq_life)=PE_linewidth(il,iq_life) +TMP_linewidth*pre_factor
+   ! Interband and intraband (Drude) components of the Emit lifetimes
+   !if (i_np == i_n) then
+     !RT_PE_life_intraband(il,iq_life)= RT_PE_life_intraband(il,iq_life) +TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
+   !else
+     !RT_PE_life_interband(il,iq_life)= RT_PE_life_interband(il,iq_life) +TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
+   !endif
    !DEBUG<
    !
    call live_timing( steps=1 )

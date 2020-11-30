@@ -217,8 +217,9 @@ subroutine K_Haydock(iq,W,mode)
    if (trim(mode)=="jdos")                      V0(i_g)%fragment(:) = cONE
    if (trim(mode)=="abs".or.trim(mode)=="kerr") V0(i_g)%fragment(:) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
    if (trim(mode)=="magnons")                   V0(i_g)%fragment(:) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
-   if (BS_T_grp(i_g)%i_res_ares==1) V0(i_g)%fragment(:) =  V0(i_g)%fragment(:)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
-   if (BS_T_grp(i_g)%i_res_ares==2) V0(i_g)%fragment(:) = -V0(i_g)%fragment(:)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
+   V0(i_g)%fragment(:) =  V0(i_g)%fragment(:)**(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
+   if (BS_T_grp(i_g)%i_res_ares==1) V0(i_g)%fragment(:) =  V0(i_g)%fragment(:)
+   if (BS_T_grp(i_g)%i_res_ares==2) V0(i_g)%fragment(:) = -V0(i_g)%fragment(:)
    if(velocity_correction) V_tmp(i_g)%fragment(:) = V0(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
  enddo
  ! 
@@ -237,11 +238,10 @@ subroutine K_Haydock(iq,W,mode)
    !
    do i_g=1,BS_nT_grps
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     if (trim(mode)=="kerr") V0_right(i_g)%fragment  =BS_T_grp(i_g)%dipoles_opt(2,:,1)&
-     if (BS_T_grp(i_g)%i_res_ares==1) V0_right(i_g)%fragment(:) =  V0_right(i_g)%fragment(:) &
-     &                                               *(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
-     if (BS_T_grp(i_g)%i_res_ares==2) V0_right(i_g)%fragment(:) = -V0_right(i_g)%fragment(:) &
-     &                                               *(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
+     if (trim(mode)=="kerr") V0_right(i_g)%fragment  =BS_T_grp(i_g)%dipoles_opt(2,:,1)
+     V0_right(i_g)%fragment(:) =  V0_right(i_g)%fragment(:)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
+     if (BS_T_grp(i_g)%i_res_ares==1) V0_right(i_g)%fragment(:) =  V0_right(i_g)%fragment(:)
+     if (BS_T_grp(i_g)%i_res_ares==2) V0_right(i_g)%fragment(:) = -V0_right(i_g)%fragment(:)
      if(velocity_correction) V_tmp(i_g)%fragment(:) = V0_right(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
    enddo
    !

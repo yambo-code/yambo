@@ -66,12 +66,7 @@ module RT_lifetimes
  !-----------
  type(RT_lifetime)     :: RT_EE_life,RT_EP_emit_life,RT_EH_life,RT_PE_life,RT_EP_abs_life
  type(RT_obj_lifetime) :: RT_obj_EE_life,RT_obj_EP_emit_life,RT_obj_EH_life,RT_obj_PE_life,RT_obj_EP_abs_life
- type(RT_extra_life)   :: RT_PE_extra 
- !DEBUG> (FP)
- !real(SP), allocatable :: PE_linewidth(:,:)
- !real(SP), allocatable :: RT_PE_life_interband(:,:)
- !real(SP), allocatable :: RT_PE_life_intraband(:,:)
- !DEBUG<
+ type(RT_extra_lifetime)   :: RT_PE_extra 
  !
  ! Lifetimes (REFERENCE)
  !-----------
@@ -193,7 +188,7 @@ module RT_lifetimes
      YAMBO_FREE(LIFE%emit_save)
    end subroutine
    !
-   subroutine RT_extra_lifetime_alloc(LIFE)
+   subroutine RT_extra_lifetime_alloc(KIND,LIFE,D1,D2)
      character(*)      :: KIND
      type(RT_extra_lifetime) :: LIFE
      integer :: D1(2),D2
@@ -204,6 +199,9 @@ module RT_lifetimes
      YAMBO_ALLOC(LIFE%intraband,(D1(1):D1(2),D2))
      LIFE%KIND=KIND
      LIFE%active=.true.
+     LIFE%linewidth=rZERO
+     LIFE%interband=rZERO
+     LIFE%intraband=rZERO
    end subroutine
    !
    subroutine RT_extra_lifetime_free(LIFE)

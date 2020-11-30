@@ -23,23 +23,19 @@
 !
 subroutine PHEL_driver(E,k,q)
  !
- !DEBUG> (FP)
- !use PARS,                ONLY:rZERO
- !use RT_lifetimes,        ONLY:PE_linewidth,RT_PE_life_interband,RT_PE_life_intraband
- !DEBUG<
  use electrons,           ONLY:levels,n_sp_pol,E_fine_grid
  use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc,bz_fine_grid
  use interfaces,          ONLY:ELPH_alloc
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,&
 &                              l_GKKP_hosts_bare_dV,elph_nb
  use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode,l_extra_life
- use parallel_m,          ONLY:PARs_PH_Q_ibz,PARs_PH_K_bz 
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_global_indexes
- use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,&
+ use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,RT_extra_lifetime_alloc,Life_MEM_steps,&
  &                             RT_PE_extra,l_initial_equilibrium,RT_ALL_lifetimes_free                        
  use RT_occupations,      ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_ALL_occupations_free
  use real_time,           ONLY:l_RT_uses_E_FineGd
  use IO_m,                ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL
+ use parser_m,            ONLY:parser
  use LIVE_t,              ONLY:live_timing
  !
 #include<memory.h>
@@ -58,6 +54,8 @@ subroutine PHEL_driver(E,k,q)
  !
  ! Setup
  !=======
+ !
+ call parser('ExtraInfo',  l_extra_life)
  !
  if ( index(PH_Self_Energy_mode,"bare")>0 ) l_GKKP_hosts_bare_dV = .true.
  ! ... BZ Setup
@@ -128,7 +126,7 @@ subroutine PHEL_driver(E,k,q)
  Life_MEM_steps=1
  call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)
  if (l_extra_life) then
-   call RT_extra_lifetime_alloc("ph-el",RT_PE_extra)
+   call RT_extra_lifetime_alloc("ph-el",RT_PE_extra,elph_branches,nqibz)
  endif
  call RT_EL_occupations_alloc((/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/),k_FG%N)
  call RT_PH_occupations_alloc(elph_branches,nqibz)
@@ -152,15 +150,6 @@ subroutine PHEL_driver(E,k,q)
  !==============================
  l_initial_equilibrium=.TRUE. 
  !
- !DEBUG> (FP)
- YAMBO_ALLOC(PE_linewidth, (elph_branches(1):elph_branches(2),nqibz))
- PE_linewidth=rZERO
- YAMBO_ALLOC(RT_PE_life_interband, (elph_branches(1):elph_branches(2),nqibz))
- RT_PE_life_interband = rZERO
- YAMBO_ALLOC(RT_PE_life_intraband, (elph_branches(1):elph_branches(2),nqibz))
- RT_PE_life_intraband = rZERO
- !DEBUG<
- !
  call PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  !
  ! Redux
@@ -172,11 +161,6 @@ subroutine PHEL_driver(E,k,q)
    call PP_redux_wait(RT_PE_extra%interband)
    call PP_redux_wait(RT_PE_extra%intraband)
  endif
- !DEBUG> (FP)
- !call PP_redux_wait(RT_PE_life_interband)
- !call PP_redux_wait(RT_PE_life_intraband)
- !call PP_redux_wait(PE_linewidth)
- !DEBUG<
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
  i_err=io_PH(ID)
@@ -194,11 +178,6 @@ subroutine PHEL_driver(E,k,q)
    subroutine CLEAN()
      call RT_ALL_lifetimes_free(  )
      call RT_ALL_occupations_free(  )
-     !DEBUG> (FP)
-     !YAMBO_FREE(PE_linewidth)
-     !YAMBO_FREE(RT_PE_life_interband)
-     !YAMBO_FREE(RT_PE_life_intraband)
-     !DEBUG<
      call ELPH_alloc('FREE',GKKP=GKKP_pe_sq)
    end subroutine
    !

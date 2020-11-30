@@ -31,20 +31,17 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  ! The approximation route from the phononic KBE to the kernel/collision integral is:
  !   -- Time Scales Separation + QuasiParticle Approximation (TSQP)
  !
- !DEBUG> (FP)
- !use RT_lifetimes,   ONLY:PE_linewidth,RT_PE_life_interband,RT_PE_life_intraband
- !DEBUG<
  use pars,           ONLY:SP,cI,pi,rZERO
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ,E_fine_grid
  use hamiltonian,    ONLY:B_mat_index
  use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid
  use RT_occupations, ONLY:RT_ph_occ,RT_el_occ,RT_ho_occ,RT_life_occ
- use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life,RT_extra_life
+ use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life,RT_PE_extra
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
- use ELPH,           ONLY:PH_freqs_sq,elph_branches,MAX_gkkp,PH_acoustic_branch,GKKP_pe_sq,&
+ use ELPH,           ONLY:PH_freqs_sq,MAX_gkkp,PH_acoustic_branch,GKKP_pe_sq,&
 &                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
- use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_eh_bands,PARs_PH_Q_ibz
+ use parallel_m,     ONLY:PARs_PH_Q_ibz
  use QP_m,           ONLY:QP_G_damp
  use LIVE_t,         ONLY:live_timing
  use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,phel_scatterings_free,l_extra_life
@@ -73,9 +70,7 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,&
 &            TMP_Emit_lifetime,TMP_Abs_lifetime,TMP_eh_lifetime,N_q,f_mkq,f_nk,&
 &            Hole_f_mkq,Hole_f_nk
- !DEBUG> (FP)
  real (SP) :: TMP_linewidth
- !DEBUG<
  !
  call live_timing('Phonon Lifetimes',phel_info%PAR_Ntransitions)
  !
@@ -209,17 +204,12 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    TMP_Emit_lifetime=rZERO
    TMP_Abs_lifetime=rZERO
    TMP_eh_lifetime=rZERO
-   !DEBUG> (FP)
    TMP_linewidth=rZERO
-   !DEBUG<
    !
    TMP_Emit_lifetime = f_nk*Hole_f_mkq*D_ares+Hole_f_nk*f_mkq*D_res
    TMP_Abs_lifetime  = f_nk*Hole_f_mkq*D_res +Hole_f_nk*f_mkq*D_ares
    ! This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
    if (l_extra_life) TMP_linewidth     = (f_mkq-f_nk)*D_res
-   !DEBUG> (FP) This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
-   !TMP_linewidth     = (f_mkq-f_nk)*D_res
-   !DEBUG<
    !
    ! Phonon emission (stimulated and spontaneous)
    RT_PE_life%emit(il,iq_life)=RT_PE_life%emit(il,iq_life)+TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
@@ -238,16 +228,6 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
      !
    endif
    !   
-   !DEBUG> (FP)
-   !PE_linewidth(il,iq_life)=PE_linewidth(il,iq_life) +TMP_linewidth*pre_factor
-   ! Interband and intraband (Drude) components of the Emit lifetimes
-   !if (i_np == i_n) then
-     !RT_PE_life_intraband(il,iq_life)= RT_PE_life_intraband(il,iq_life) +TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
-   !else
-     !RT_PE_life_interband(il,iq_life)= RT_PE_life_interband(il,iq_life) +TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
-   !endif
-   !DEBUG<
-   !
    call live_timing( steps=1 )
    !
  enddo

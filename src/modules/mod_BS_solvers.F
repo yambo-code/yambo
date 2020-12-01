@@ -97,6 +97,7 @@ module BS_solvers
  !
  ! Solvers (Haydock)
  !=========
+ integer  :: HAYVEC_size
  logical  :: Haydock_terminator
  integer  :: Haydock_iterIO
  integer  :: Haydock_iterMAX
@@ -178,7 +179,6 @@ module BS_solvers
    !
    integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)
      use pars,          ONLY:SP
-     use BS,            ONLY:BS_H_dim
      implicit none
      integer             :: ID,it
      character(*)        :: mode

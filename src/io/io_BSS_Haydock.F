@@ -24,8 +24,8 @@
 integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)  
  !
  use pars,          ONLY:SP
- use BS,            ONLY:BS_identifier,BS_H_dim
- use BS_solvers,    ONLY:BSS_q0,Haydock_v0_mod
+ use BS,            ONLY:BS_identifier
+ use BS_solvers,    ONLY:BSS_q0,Haydock_v0_mod,HAYVEC_size
  use IO_m,          ONLY:io_connect,io_disconnect,io_elemental,&
 &                        io_bulk,io_status,io_sec,io_header
  use timing_m,      ONLY:timing
@@ -82,12 +82,12 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp
    !
    ! Vnm1
    !
-   call io_bulk(ID,'Vnm1',VAR_SZ=(/2,BS_H_dim/))
+   call io_bulk(ID,'Vnm1',VAR_SZ=(/2,HAYVEC_size/))
    call io_bulk(ID,C1=Vnm1)
    !
    ! Vn 
    !
-   call io_bulk(ID,'Vn',VAR_SZ=(/2,BS_H_dim/))
+   call io_bulk(ID,'Vn',VAR_SZ=(/2,HAYVEC_size/))
    call io_bulk(ID,C1=Vn)
    !
    ! Af,Bf
@@ -108,7 +108,7 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp
    ! Vnp1 used only for coupling
    !
    if (associated(Vnp1)) then
-     call io_bulk(ID,'Vnp1',VAR_SZ=(/2,BS_H_dim/))
+     call io_bulk(ID,'Vnp1',VAR_SZ=(/2,HAYVEC_size/))
      call io_bulk(ID,C1=Vnp1)
    endif
    !

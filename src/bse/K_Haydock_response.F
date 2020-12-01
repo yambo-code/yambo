@@ -35,6 +35,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
  use BS,             ONLY:l_BS_anomalous_Hall
 #endif
  use descriptors,    ONLY:IO_desc_add
+ use parser_m,       ONLY:parser
  !
  implicit none
  !
@@ -72,10 +73,11 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
  !
  X_t =cZERO
  UseTerminator = .false.  
- use_A4=.false.    ! For debug pourposes
- use_A6=.true.
  !
- coupling= Cf_size>1
+ call parser("UseA4",use_A4)    ! For debug pourposes
+ use_A6=.not.use_A4
+ !
+ coupling= Cf_size>2
  retarded= (trim(BSE_mode)=='retarded'.and..not.coupling)
  !
  i_eps(1)=2
@@ -180,8 +182,8 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
    !
    select case(trim(mode))
    case("jdos")
-     if (.not.retarded)  Joint_DOS(iw,i_eps(:))=-(X_o(1:2,1)           )
-     if (     retarded)  Joint_DOS(iw,i_eps(:))=-(X_o(1:2,1)-X_o(3:4,1))
+     if (.not.retarded)  Joint_DOS(iw,i_eps(:))=-(X_o(1:2,1)           )*Co
+     if (     retarded)  Joint_DOS(iw,i_eps(:))=-(X_o(1:2,1)-X_o(3:4,1))*Co
    case("abs")
      if (.not.retarded) Epsilon_ii(iw,i_eps(:))=-(X_o(1:2,1)           )
      if (     retarded) Epsilon_ii(iw,i_eps(:))=-(X_o(1:2,1)-X_o(3:4,1))

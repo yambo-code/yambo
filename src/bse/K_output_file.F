@@ -112,7 +112,7 @@ subroutine K_output_file(iq,mode)
  !
  ! EELS / ALPHA / REFLECTIVITY logicals
  !
- if (l_abs_out) then
+ if (l_abs_out.and. ((.not.l_Haydock).or.index(mode,"final")>0) ) then
    eval_eels= OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
    eval_alpha=eval_alpha .and. ((l_col_cut) .or. (eval_eels) )
    call parser('Reflectivity',eval_reflectivity)

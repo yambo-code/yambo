@@ -223,7 +223,6 @@ subroutine K_Haydock(iq,W,mode)
    if (BS_T_grp(i_g)%i_res_ares==2) then
      V0(i_g)%fragment(:) = -V0(i_g)%fragment(:)
      if (   trim(mode)=="jdos") V0(i_g)%fragment(:) =  V0(i_g)%fragment(:)*cI
-     V0(i_g)%fragment(:) = cZERO
    endif
    if(velocity_correction) V_tmp(i_g)%fragment(:) = V0(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
  enddo

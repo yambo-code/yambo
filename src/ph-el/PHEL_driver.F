@@ -126,9 +126,8 @@ subroutine PHEL_driver(E,k,q)
  ! ... allocs
  Life_MEM_steps=1
  call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)
- if (l_extra_life) then
-   call RT_extra_lifetime_alloc("ph-el",RT_PE_extra,elph_branches,nqibz)
- endif
+ if (l_extra_life) call RT_extra_lifetime_alloc("ph-el",RT_PE_extra,elph_branches,nqibz)
+ !
  call RT_EL_occupations_alloc((/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/),k_FG%N)
  call RT_PH_occupations_alloc(elph_branches,nqibz)
  if (l_RT_uses_E_FineGd .or. l_PH_uses_E_FineGd) then
@@ -145,7 +144,7 @@ subroutine PHEL_driver(E,k,q)
  ! Select allowed transitions for phonon scatterings
  !===================================================
  !
- call PH_Grid_Check_Transitions(E,k,q,(/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/),k_FG,E_FG)
+ call PH_Grid_Check_Transitions(k,q,(/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/),k_FG,E_FG)
  !
  ! Calculation of the lifetimes
  !==============================

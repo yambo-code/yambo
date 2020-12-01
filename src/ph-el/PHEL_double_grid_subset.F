@@ -54,8 +54,6 @@ subroutine PHEL_double_grid_subset(k,k_FG,k_n)
        ! 1.3 Do not use double grid at all
        if (nkDg == 0) then 
          nk_FG_per_kpt=0
-         l_RT_uses_E_FineGd = .false.
-         l_PH_uses_E_FineGd = .false.
        else
          ! 1.4 Use subset of fine grid
          nk_FG_per_kpt=ceiling(float(nkDg)/float(k_n))

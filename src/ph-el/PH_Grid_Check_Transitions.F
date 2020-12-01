@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
+subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  !
  ! Select the indices of the transitions Delta_E_{n,np,k,k_m_q} = ph_E_{ql} +- 3*QP_G_damp
  ! which actually contribute to the scattering. 
@@ -45,9 +45,6 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  use com,            ONLY:msg
  use stderr,         ONLY:intc
  !
-#include<memory.h>
- !
- type(levels),      intent(in) :: E
  type(bz_samp),     intent(in) :: k,q
  integer,           intent(in) :: bands(2)
  type(bz_fine_grid),intent(inout) :: k_FG
@@ -62,7 +59,7 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
  ! ... band/branch index ...
  integer               :: il,i_n,i_np
  ! ... BZ index ...
- integer               :: iq,ikbz,ik,ik_m_q,iq_mem,ik_rim,ip_rim,iq_life
+ integer               :: iq,ikbz,ik,ik_m_q,ik_rim,ip_rim
  ! ... energy related quantities ...
  real(SP) :: DELTA_E,DELTA_W
  !
@@ -115,26 +112,19 @@ subroutine PH_Grid_Check_Transitions(E,k,q,bands,k_FG,E_FG)
        !
        ! Fine grid subset selection
        !============================
-       ! No subset
-       if (nk_FG_per_kpt==-1) then 
-         k_FG_range_end = k_FG%k_range(ik,2)
-         p_FG_range_end = k_FG%k_range(ik_m_q,2)
-       endif
+       k_FG_range_end = k_FG%k_range(ik,2)
+       p_FG_range_end = k_FG%k_range(ik_m_q,2)
        !
-       ! No fine grid
-       if (nk_FG_per_kpt==0) then 
-         k_FG_range_end = k_FG%k_range(ik,1)
-         p_FG_range_end = k_FG%k_range(ik_m_q,1)
-         k_FG%N_mapped(ik) = 1
-         k_FG%N_mapped(ik_m_q) = 1
-       endif      
-       !
-       ! Select subset
-       if (nk_FG_per_kpt>0) then 
-         k_FG_range_end = k_FG%k_range(ik,1)+nk_FG_per_kpt
-         p_FG_range_end = k_FG%k_range(ik_m_q,1)+nk_FG_per_kpt
-         k_FG%N_mapped(ik) = 1+nk_FG_per_kpt
-         k_FG%N_mapped(ik_m_q) = 1+nk_FG_per_kpt
+       if ( l_RT_uses_E_FineGd .or. l_PH_uses_E_FineGd) then
+         !
+         ! Select subset
+         if (nk_FG_per_kpt>-1) then 
+           k_FG_range_end = k_FG%k_range(ik,1)+nk_FG_per_kpt
+           p_FG_range_end = k_FG%k_range(ik_m_q,1)+nk_FG_per_kpt
+           k_FG%N_mapped(ik) = 1+nk_FG_per_kpt
+           k_FG%N_mapped(ik_m_q) = 1+nk_FG_per_kpt
+         endif
+         !
        endif
        !
        ! Loop over il, i.e., phonon branches

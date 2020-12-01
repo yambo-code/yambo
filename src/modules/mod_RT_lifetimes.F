@@ -140,6 +140,7 @@ module RT_lifetimes
      integer :: D1(2),D2
      if (l_phel_scatt) then
        call RT_lifetime_alloc("ph-el",RT_PE_life,D1,D2)
+       call RT_extra_lifetime_alloc("ph-el",RT_PE_extra,D1,D2)
        call RT_lifetime_alloc("ph-el-REF",RT_PE_REF_life,D1,D2)
      endif
    end subroutine

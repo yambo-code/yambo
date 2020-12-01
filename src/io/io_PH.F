@@ -27,11 +27,11 @@ integer function io_PH(ID)
  use pars,                ONLY:SP
  use R_lattice,           ONLY:nqibz,nqbz,nkDg
  use QP_m,                ONLY:QP_G_damp
- use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode
+ use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode,l_extra_life
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,PH_freqs_sq,ph_modes,PHEL_desc
  use IO_m,                ONLY:io_connect,io_disconnect,io_sec,io_header,io_status,read_is_on,def_variable_elemental,&
 &                              DB_is_OK,io_variable_elemental,def_variable_bulk,io_variable_bulk
- use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps
+ use RT_lifetimes,        ONLY:RT_PE_life,RT_PE_extra,RT_lifetime_alloc,RT_extra_lifetime_alloc,Life_MEM_steps
  use descriptors,         ONLY:IO_desc_reset
  !
 #include<memory.h>
@@ -76,7 +76,10 @@ integer function io_PH(ID)
    if (read_is_on(ID)) then
      Life_MEM_steps=1
      call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)
-     YAMBO_ALLOC(PH_freqs_sq,(nqbz,ph_modes))
+     if (l_extra_life) call RT_extra_lifetime_alloc("ph_el",RT_PE_extra,elph_branches,nqibz)
+     if (.not.allocated(PH_freqs_sq)) then
+       YAMBO_ALLOC(PH_freqs_sq,(nqbz,ph_modes))
+     endif
    endif
    !
    call def_variable_bulk(ID,"PH_FREQ_SQ",1,(/nqbz,ph_modes/),SP)
@@ -87,6 +90,19 @@ integer function io_PH(ID)
    !
    call def_variable_bulk(ID,"PH_LIFE_ABS",3,(/elph_branches(2)-elph_branches(1)+1,nqibz/),SP)
    call io_variable_bulk(ID,3,R2=RT_PE_life%abs(:,:))
+   !
+   if (l_extra_life) then
+     !
+     call def_variable_bulk(ID,"PH_LIFE_EQ",4,(/elph_branches(2)-elph_branches(1)+1,nqibz/),SP)
+     call io_variable_bulk(ID,4,R2=RT_PE_extra%linewidth(:,:))
+     !
+     call def_variable_bulk(ID,"PH_LIFE_INTERBAND",5,(/elph_branches(2)-elph_branches(1)+1,nqibz/),SP)
+     call io_variable_bulk(ID,5,R2=RT_PE_extra%interband(:,:))
+     !
+     call def_variable_bulk(ID,"PH_LIFE_INTRABAND",6,(/elph_branches(2)-elph_branches(1)+1,nqibz/),SP)
+     call io_variable_bulk(ID,6,R2=RT_PE_extra%intraband(:,:))
+     !
+   endif
    !
  endif
  !

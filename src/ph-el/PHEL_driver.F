@@ -61,7 +61,14 @@ subroutine PHEL_driver(E,k,q)
  ! ... BZ Setup
  call k_build_up_BZ_tables(q)
  !
- ! ... Already calculated?
+ ! El-Ph databases check
+ !=======================
+ call ELPH_databases_check(elph_nb)
+ !
+ if (.not.any((/l_GKKP_DB_exists,l_GKKP_expanded_DB_exists/))) call error("GKKP databases absent or damaged")
+ !
+ ! Already calculated?
+ ! =====================
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
  i_err=io_PH(ID)
  if (i_err==0) then
@@ -75,12 +82,6 @@ subroutine PHEL_driver(E,k,q)
  ! Parallel Setup
  !===============
  call PARALLEL_global_indexes(E,k,q,"Phonon_Self_Energy")
- !
- ! El-Ph databases check
- !=======================
- call ELPH_databases_check(elph_nb)
- !
- if (.not.any((/l_GKKP_DB_exists,l_GKKP_expanded_DB_exists/))) call error("GKKP databases absent or damaged")
  !
  ! Q/K grid remapping
  !====================

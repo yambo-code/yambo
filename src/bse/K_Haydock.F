@@ -58,7 +58,7 @@ subroutine K_Haydock(iq,W,mode)
  complex(SP), allocatable :: Cf(:) 
  !
 #if defined _KERR
- type(Haydock_vector),allocatable :: V0_right(:)
+ type(Haydock_vector),allocatable :: W0(:)
 #endif
  !
  real(SP)           ::reached_threshold
@@ -116,8 +116,8 @@ subroutine K_Haydock(iq,W,mode)
  !
 #if defined _KERR
  if(use_left_and_right) then
-   allocate(V0_right(BS_nT_grps))
-   call BS_HAYVEC_alloc(V0_right)
+   allocate(W0(BS_nT_grps))
+   call BS_HAYVEC_alloc(W0)
  endif
 #endif
  !
@@ -203,7 +203,7 @@ subroutine K_Haydock(iq,W,mode)
      !
      V0(i_g)%fragment  = cZERO
 #if defined _KERR
-     if(use_left_and_right) V0_right(i_g)%fragment  = cZERO
+     if(use_left_and_right) W0(i_g)%fragment  = cZERO
 #endif
      if(velocity_correction) V_tmp(i_g)%fragment = cZERO
      !
@@ -238,21 +238,21 @@ subroutine K_Haydock(iq,W,mode)
    !
    do i_g=1,BS_nT_grps
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     if (trim(mode)=="kerr") V0_right(i_g)%fragment = cmplx(BS_T_grp(i_g)%dipoles_opt(2,:,1))
-     if (.not.trim(mode)=="jdos") V0_right(i_g)%fragment(:) = &
-     &                     V0_right(i_g)%fragment(:)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
-     if(velocity_correction) V_tmp(i_g)%fragment(:) = V0_right(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
+     if (trim(mode)=="kerr")      W0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(2,:,1)
+     if (.not.trim(mode)=="jdos") W0(i_g)%fragment(:) = &
+     &                     W0(i_g)%fragment(:)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
+     if(velocity_correction) V_tmp(i_g)%fragment(:) = W0(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
    enddo
    !
    do i_g = 1,BS_nT_grps
      if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 #if defined _MPI
      if(     velocity_correction) call PP_bcast(   V_tmp(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
-     if(.not.velocity_correction) call PP_bcast(V0_right(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+     if(.not.velocity_correction) call PP_bcast(W0(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
 #endif
    enddo
    !
-   if(velocity_correction) call K_multiply_by_V(V_tmp,V0_right,1)
+   if(velocity_correction) call K_multiply_by_V(V_tmp,W0,1)
    !
  endif
 #endif
@@ -298,7 +298,7 @@ subroutine K_Haydock(iq,W,mode)
      ! Is it correct that also V0 was renormalized ??
      if (.not.use_left_and_right) call K_dot_product(v0_mod_,V0,V0,1)
 #if defined _KERR
-     if (     use_left_and_right) call K_dot_product(v0_mod_,V0_right,V0,1)
+     if (     use_left_and_right) call K_dot_product(v0_mod_,W0,V0,1)
 #endif
      !
      if(.not.l_BS_ares_asymm) Cf(1)=2*cI*aimag(v0_mod_)
@@ -430,7 +430,7 @@ subroutine K_Haydock(iq,W,mode)
      !
      if (.not.use_left_and_right) call K_dot_product(v0_mod_,V0,Vn,1)
 #if defined _KERR
-     if (     use_left_and_right) call K_dot_product(v0_mod_,V0_right,Vn,1)
+     if (     use_left_and_right) call K_dot_product(v0_mod_,W0,Vn,1)
 #endif
      !
      if (.not.l_BS_ares_asymm) then
@@ -525,7 +525,7 @@ subroutine K_Haydock(iq,W,mode)
  if (use_cpl_scheme)  then
    call BS_HAYVEC_free(V0)
 #if defined _KERR
-   if (allocated(V0_right)) deallocate(V0_right)
+   if (allocated(W0)) deallocate(W0)
 #endif
    YAMBO_FREE(Cf)
  end if

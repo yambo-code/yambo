@@ -215,18 +215,19 @@ subroutine K_Haydock(iq,W,mode)
  !
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-   if (trim(mode)=="jdos")                      V0(i_g)%fragment(:) = cONE
-   if (trim(mode)=="abs".or.trim(mode)=="kerr") V0(i_g)%fragment(:) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
-   if (trim(mode)=="magnons")                   V0(i_g)%fragment(:) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
-   if (.not.trim(mode)=="jdos") V0(i_g)%fragment(:) = V0(i_g)%fragment(:)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
-   if(velocity_correction) V_tmp(i_g)%fragment(:) = V0(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
+   if (trim(mode)=="jdos")      V0(i_g)%fragment = cONE
+   if (trim(mode)=="abs")       V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1)
+   if (trim(mode)=="kerr")      V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(2,:,1)
+   if (trim(mode)=="magnons")   V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_mag(1,:,1)
+   if (.not.trim(mode)=="jdos") V0(i_g)%fragment = V0(i_g)%fragment*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
+   if(velocity_correction) V_tmp(i_g)%fragment = V0(i_g)%fragment/BS_T_grp(i_g)%E
  enddo
  ! 
  do i_g = 1,BS_nT_grps
    if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 #if defined _MPI
-   if(     velocity_correction) call PP_bcast(V_tmp(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
-   if(.not.velocity_correction) call PP_bcast(   V0(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+   if(     velocity_correction) call PP_bcast(V_tmp(i_g)%fragment,0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+   if(.not.velocity_correction) call PP_bcast(   V0(i_g)%fragment,0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
 #endif
  enddo
  !
@@ -237,17 +238,16 @@ subroutine K_Haydock(iq,W,mode)
    !
    do i_g=1,BS_nT_grps
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     if (trim(mode)=="kerr")      W0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(2,:,1)
-     if (.not.trim(mode)=="jdos") W0(i_g)%fragment(:) = &
-     &                     W0(i_g)%fragment(:)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
-     if(velocity_correction) V_tmp(i_g)%fragment(:) = W0(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
+     if (trim(mode)=="kerr")      W0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1)
+     if (.not.trim(mode)=="jdos") W0(i_g)%fragment = W0(i_g)%fragment*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
+     if(velocity_correction)   V_tmp(i_g)%fragment = W0(i_g)%fragment/BS_T_grp(i_g)%E
    enddo
    !
    do i_g = 1,BS_nT_grps
      if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 #if defined _MPI
-     if(     velocity_correction) call PP_bcast(   V_tmp(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
-     if(.not.velocity_correction) call PP_bcast(W0(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+     if(     velocity_correction) call PP_bcast(   V_tmp(i_g)%fragment,0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+     if(.not.velocity_correction) call PP_bcast(W0(i_g)%fragment,0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
 #endif
    enddo
    !

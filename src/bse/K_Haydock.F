@@ -32,7 +32,7 @@ subroutine K_Haydock(iq,W,mode)
 &                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod, &
 &                         Haydock_iterIO,Haydock_iterMAX,HAYVEC_size
  use BS,             ONLY:BS_K_Coupling,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,BS_K_dim,&
-&                         l_BS_ares_asymm,BS_H_dim
+&                         l_BS_ares_asymm,BS_H_dim,BS_mat_res_ares_dim
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
@@ -70,9 +70,7 @@ subroutine K_Haydock(iq,W,mode)
  logical, external  ::STOP_now
  character(1)       ::sec
  !
- ! I/O
- !
- !integer           :: ID,io_err
+ if (BS_mat_res_ares_dim==2) call error(" Haydock not coded for case  with two BSE matricies")
  !
  call K_output_file(iq,"open Haydock "//trim(mode))
  !
@@ -94,7 +92,7 @@ subroutine K_Haydock(iq,W,mode)
  use_cpl_scheme=BS_K_Coupling !.or.allocated(BS_T_grp(1)%Z)
 #if defined _KERR
  use_left_and_right=trim(mode)=="kerr".or.trim(mode)=="dichroism"
- use_cpl_scheme=BS_K_Coupling.or.use_left_and_right
+ !use_cpl_scheme=BS_K_Coupling.or.use_left_and_right
 #endif
  velocity_correction= trim(global_gauge)=="velocity" .and. (trim(mode)=="abs" .or. trim(mode)=="kerr")
  !
@@ -126,7 +124,7 @@ subroutine K_Haydock(iq,W,mode)
  reached_threshold=0._SP
  !
  Cf_size=2
- if (use_cpl_scheme) Cf_size=Haydock_iterMAX+1
+ if (use_cpl_scheme.or.use_left_and_right) Cf_size=Haydock_iterMAX+1
  YAMBO_ALLOC(Cf,(Cf_size))
  !
  allocate(Vn(BS_nT_grps))
@@ -161,13 +159,14 @@ subroutine K_Haydock(iq,W,mode)
    call PP_bcast(Af,0,COMM=PAR_COM_eh_INDEX%COMM)
    call PP_bcast(Bf,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    call PP_bcast(Bf,0,COMM=PAR_COM_eh_INDEX%COMM)
-   call HAYVEC_scatter(Vn,Vn_f,HAYVEC_size)
-   call HAYVEC_scatter(Vnm1,Vnm1_f,HAYVEC_size)
-   if (use_cpl_scheme) then
+   if (use_cpl_scheme.or.use_left_and_right) then
      call PP_bcast(Cf,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
      call PP_bcast(Cf,0,COMM=PAR_COM_eh_INDEX%COMM)
-     call HAYVEC_scatter(Vnp1,Vnp1_f,HAYVEC_size)
    endif
+   !
+   call HAYVEC_scatter(Vn,Vn_f,HAYVEC_size)
+   call HAYVEC_scatter(Vnm1,Vnm1_f,HAYVEC_size)
+   if (use_cpl_scheme) call HAYVEC_scatter(Vnp1,Vnp1_f,HAYVEC_size)
    !
    YAMBO_FREE_P(Vnm1_f)
    YAMBO_FREE_P(Vn_f)
@@ -283,13 +282,12 @@ subroutine K_Haydock(iq,W,mode)
      if(.not.l_BS_ares_asymm) Haydock_v0_mod=sqrt(2*real(v0_mod_))
      if(     l_BS_ares_asymm) Haydock_v0_mod=sqrt(  real(v0_mod_))
      !
-     ! DEBUG <
-     ! write(*,*) Haydock_v0_mod
-     ! DEBUG >
-     !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        V0(i_g)%fragment   = V0(i_g)%fragment/Haydock_v0_mod
+#if defined _KERR
+       if (use_left_and_right) W0(i_g)%fragment = W0(i_g)%fragment/Haydock_v0_mod
+#endif
        Vn(i_g)%fragment   = V0(i_g)%fragment
        Vnp1(i_g)%fragment = Vnp1(i_g)%fragment/Haydock_v0_mod
      enddo
@@ -301,8 +299,8 @@ subroutine K_Haydock(iq,W,mode)
      if (     use_left_and_right) call K_dot_product(v0_mod_,W0,V0,1)
 #endif
      !
-     if(.not.l_BS_ares_asymm) Cf(1)=2*cI*aimag(v0_mod_)
-     if(     l_BS_ares_asymm) Cf(1)=           v0_mod_
+     if(.not.l_BS_ares_asymm) Cf(1)=2*cI*aimag(v0_mod_) !*Haydock_v0_mod**2
+     if(     l_BS_ares_asymm) Cf(1)=           v0_mod_  !*Haydock_v0_mod**2
      !
    else                           ! [***] Initialization Hermitian case
      !
@@ -314,11 +312,26 @@ subroutine K_Haydock(iq,W,mode)
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        V0(i_g)%fragment  = V0(i_g)%fragment/Haydock_v0_mod
+#if defined _KERR
+       if (use_left_and_right) W0(i_g)%fragment = W0(i_g)%fragment/Haydock_v0_mod
+#endif
        Vn(i_g)%fragment  = V0(i_g)%fragment
      enddo
+     !
+#if defined _KERR
+     if (use_left_and_right) then
+       call K_dot_product(v0_mod_,W0,V0,1)
+       Cf(1)= v0_mod_ !*Haydock_v0_mod**2
+     endif
+#endif
+     !
    endif
    !
  endif
+ !
+ ! DEBUG <
+ ! write(*,*) "Haydock_v0_mod= ", Haydock_v0_mod
+ ! DEBUG >
  !
  ! [***] Loop ...
  !
@@ -362,6 +375,19 @@ subroutine K_Haydock(iq,W,mode)
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        Vn(i_g)%fragment  =Vnp1(i_g)%fragment/Bf(it+1)
      enddo
+     !
+#if defined _KERR
+     if (use_left_and_right) then
+       Cf_size=it+1
+       ! DEBUG <
+       !! check orthonotmality
+       !call K_dot_product(v0_mod_,V0,Vn,1)
+       !write(*,*) "Ortho check = ",v0_mod_
+       ! DEBUG
+       call K_dot_product(v0_mod_,W0,Vn,1)
+       Cf(it+1)= v0_mod_ !*Haydock_v0_mod**2
+     endif
+#endif
      !
    else                           ! [***] Non-Hermitian case:
      !
@@ -522,11 +548,15 @@ subroutine K_Haydock(iq,W,mode)
  call BS_HAYVEC_free(Vnm1)
  deallocate(Vn,Vnp1,Vnm1)
  !
- if (use_cpl_scheme)  then
-   call BS_HAYVEC_free(V0)
+ call BS_HAYVEC_free(V0)
+ deallocate(V0)
 #if defined _KERR
-   if (allocated(W0)) deallocate(W0)
+ if (use_left_and_right)  then
+   call BS_HAYVEC_free(W0)
+   deallocate(W0)
+ endif
 #endif
+ if (use_left_and_right.or.use_cpl_scheme)  then
    YAMBO_FREE(Cf)
  end if
  !

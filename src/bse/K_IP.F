@@ -70,7 +70,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  integer           ::ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol_c,i_sp_pol_v,i_T_g,i_T,&
  &                   n_SOC,i_pert_SOC,io_err,i_res_ares,i_E_sort
- real(SP)          ::conjg_fac,f_
+ real(SP)          ::f_
  logical           ::dip_v,dip_r
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
 &                    para_term_w0,diam_term_used,Z_,E_
@@ -166,14 +166,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  endif
  !
  if (trim(global_gauge)=='length'  ) then
-   conjg_fac=-1._SP
    DIP_kind ="DIP_iR"
    dip_r=.true.
    dip_v=.false.
    field_dir=field_dir*q0_def_norm
  endif
  if (trim(global_gauge)=='velocity') then
-   conjg_fac=+1._SP
    DIP_kind ="DIP_v"
    dip_r=.false.
    dip_v=.true.
@@ -250,15 +248,15 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! c1.Compute "dipoles"
      !=====================
      !
-     ! *length*   : DIP_projected(c,v,k) is    iq*<v|r|c> while I need    iq*<c|r|v> = -conjg(   iq*<v|r|c>)
-     ! *velocity* : DIP_projected(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> =  conjg(q_ver*<v|r|c>)
+     ! *length*   : DIP_projected(c,v,k) is     q*<v|r|c> while I need     q*<c|r|v> = conjg(    q*<v|r|c>)
+     ! *velocity* : DIP_projected(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> = conjg(q_ver*<v|r|c>)
      !              see definition of conjg_fac few lines before for the -1
      !
      ! Absorption, PL & KERR
      !
      if(l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum) then
        if(iq==1) then
-         DIP_expanded=DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,DIP_kind,Xk)
+         DIP_expanded=-cI*DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,DIP_kind,Xk)
          DIP_projected(1)=dot_product(field_dir(:,1),DIP_expanded)
          if(BS_dip_size>1) DIP_projected(2)=dot_product(field_dir(:,2),DIP_expanded)
          if(BS_dip_size>2) DIP_projected(3)=dot_product(field_dir(:,3),DIP_expanded)
@@ -321,7 +319,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! Absorption, & KERR
      !
      if(l_BS_abs.or.l_BS_kerr) then
-       BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg_fac*conjg(DIP_projected(:BS_dip_size))
+       BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
        if (BS_K_coupling.and..not.BS_res_ares_dim==2) &
        &  BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
      endif

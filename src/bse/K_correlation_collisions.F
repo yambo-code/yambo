@@ -44,7 +44,7 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
  use R_lattice,     ONLY:qindx_B,qindx_X,bz_samp
  use BS,            ONLY:O_ng,WF_phase,BS_bands,BS_res_K_corr,BS_cpl_K_corr,BS_blk,&
 &                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp,l_BS_magnons,&
-&                        BS_K_dim
+&                        BS_K_dim,l_BS_ares_asymm
  use electrons,     ONLY:n_sp_pol
  use collision_el,  ONLY:elemental_collision_free,elemental_collision_alloc
  use openmp,        ONLY:OPENMP_update,master_thread
@@ -62,6 +62,7 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
  !
  DEFINE_BSK_COMMON_INDEXES
  integer     :: i_s_star,i_s_mq_star,i_s_collision,N_kmq,N_pmq
+ character(1):: mode_now
  !
  logical, allocatable :: O_todo_table(:,:,:,:,:,:)
  !
@@ -120,8 +121,11 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
  BS_blk(i_block)%O_table=0
  O_todo_table=.false.
  !
- select case (BS_blk(i_block)%mode)
- case("R","A")
+ mode_now=BS_blk(i_block)%mode
+ if(l_BS_ares_asymm) mode_now="F"
+ !
+ select case (mode_now)
+ case("R","A","F")
    !
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
@@ -184,8 +188,8 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
  !
  call elemental_collision_alloc(K_CORR_collision,NG=O_ng, TITLE="CORR_COLL")
  !
- select case (BS_blk(i_block)%mode)
- case("R","A")
+ select case (mode_now)
+ case("R","A","F")
    !
 #if !defined _CUDA
    !$omp do collapse(2), schedule(dynamic)

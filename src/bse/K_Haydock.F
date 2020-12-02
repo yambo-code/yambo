@@ -219,11 +219,7 @@ subroutine K_Haydock(iq,W,mode)
    if (trim(mode)=="jdos")                      V0(i_g)%fragment(:) = cONE
    if (trim(mode)=="abs".or.trim(mode)=="kerr") V0(i_g)%fragment(:) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
    if (trim(mode)=="magnons")                   V0(i_g)%fragment(:) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
-   if (.not.trim(mode)=="jdos") V0(i_g)%fragment(:) =  V0(i_g)%fragment(:)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
-   if (BS_T_grp(i_g)%i_res_ares==2) then
-     V0(i_g)%fragment(:) = -V0(i_g)%fragment(:)
-     if (   trim(mode)=="jdos") V0(i_g)%fragment(:) =  V0(i_g)%fragment(:)*cI
-   endif
+   if (.not.trim(mode)=="jdos") V0(i_g)%fragment(:) = V0(i_g)%fragment(:)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
    if(velocity_correction) V_tmp(i_g)%fragment(:) = V0(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
  enddo
  ! 
@@ -242,11 +238,9 @@ subroutine K_Haydock(iq,W,mode)
    !
    do i_g=1,BS_nT_grps
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     if (trim(mode)=="kerr") V0_right(i_g)%fragment  =BS_T_grp(i_g)%dipoles_opt(2,:,1)
+     if (trim(mode)=="kerr") V0_right(i_g)%fragment = cmplx(BS_T_grp(i_g)%dipoles_opt(2,:,1))
      if (.not.trim(mode)=="jdos") V0_right(i_g)%fragment(:) = &
      &                     V0_right(i_g)%fragment(:)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES(:),kind=SP)))
-     if (     trim(mode)=="jdos") V0_right(i_g)%fragment(:) =  V0_right(i_g)%fragment(:)*cI
-     if (BS_T_grp(i_g)%i_res_ares==2) V0_right(i_g)%fragment(:) = -V0_right(i_g)%fragment(:)
      if(velocity_correction) V_tmp(i_g)%fragment(:) = V0_right(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
    enddo
    !
@@ -288,6 +282,10 @@ subroutine K_Haydock(iq,W,mode)
      !
      if(.not.l_BS_ares_asymm) Haydock_v0_mod=sqrt(2*real(v0_mod_))
      if(     l_BS_ares_asymm) Haydock_v0_mod=sqrt(  real(v0_mod_))
+     !
+     ! DEBUG <
+     ! write(*,*) Haydock_v0_mod
+     ! DEBUG >
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
@@ -448,7 +446,7 @@ subroutine K_Haydock(iq,W,mode)
    endif
    !
    ! DEBUG<
-   !write(*,*) it,"Af= ",Af(it)," ; Bf= ",Bf(it)," ; Cf= ",Cf(Cf_size-1)
+   ! write(*,*) it,"Af= ",Af(it)," ; Bf= ",Bf(it)," ; Cf= ",Cf(Cf_size-1)
    ! DEBUG>     
    !
    !

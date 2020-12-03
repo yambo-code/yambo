@@ -33,10 +33,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  use pars,         ONLY:SP
  use vec_operate,  ONLY:iku_v_norm
  use parallel_m,   ONLY:MPI_comm,PP_redux_wait,PP_indexes,PP_indexes_reset,myid
- use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,E_of_shell
-#ifdef _CUDA
- use R_lattice,    ONLY:G_m_G_d
-#endif
+ use R_lattice,    ONLY:G_m_G,G_m_G_d,g_vec,ng_in_shell,n_g_shells,E_of_shell
  use interfaces,   ONLY:PARALLEL_index,PARALLEL_live_message
  use timing_m,     ONLY:timing
 #include<memory.h>
@@ -216,7 +213,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
 #ifdef _CUDA
  YAMBO_FREE(G_m_G_d)
- allocate(G_m_G_d,source=G_m_G)
+ YAMBO_ALLOC_SOURCE(G_m_G_d,G_m_G)
 #endif
  !
  call timing("eval_G_minus_G",opr="stop")

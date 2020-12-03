@@ -163,6 +163,27 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  YAMBO_ALLOC(G_m_G,(iG_,iGo_))
  G_m_G=0
  !
+! * convert to g_vec to integer coords
+!   relative/crystal coords
+! * alloc alternative g_vec_crys array
+! * use internal conversion routines, if fast enough
+!
+! * define a map like  ig=imap(i,j,k)
+!   ig:  index of G-vect in the g_vec list, 
+!        i,j,k integer components
+! 
+! imap(:,:,:)=0
+! do ig = 1, Ng
+!   imap(g_vec_i(1,ig),g_vec_i(2,ig),g_vec_i(3,ig)) = ig
+! enddo
+!
+! * v1 becomes an integert triplet
+! * G_m_G(i1,i2) = imap(v1(1),v1(2),v1(3))
+!
+! * beware index ordering  g_vec(ng,3)...
+!   surely does not help
+!
+ !
  !$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
  do i2=1,iGo_
    !

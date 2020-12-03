@@ -168,6 +168,14 @@ integer function eval_G_minus_G(iG,iGo,COMM)
 ! * alloc alternative g_vec_crys array
 ! * use internal conversion routines, if fast enough
 !
+! g_vec looks to be iku, we want to have rlu
+! need in principle to call c2a(v_in,v_out,mode="ki2a")
+! but a better implementation is given in fft_setup.
+! 
+! it would probably be better to code a dedicated
+! iku2rlu, accepting multiple vectors, or to
+! extend c2a to acccept multiple vectors at the same time
+!
 ! * define a map like  ig=imap(i,j,k)
 !   ig:  index of G-vect in the g_vec list, 
 !        i,j,k integer components

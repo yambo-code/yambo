@@ -189,7 +189,126 @@ module BS_solvers
    !
  end interface
  !
+ interface BSS_resize
+   module procedure resizeR1
+   module procedure resizeR1p, resizeR2p
+   module procedure resizeC1,  resizeC2
+   module procedure resizeC1p, resizeC2p
+   module procedure resizeC22p
+ end interface
+
+ !
  contains
+   !
+   ! Start BSS_resize interface
+   !
+   subroutine resizeR1(VAR_R1)
+     !
+     real(SP), allocatable, intent(inout) :: VAR_R1(:)
+     real(SP)                             :: TMP_R1(BSS_n_eig)
+     !
+     TMP_R1=VAR_R1(:BSS_n_eig)
+     deallocate(VAR_R1)
+     allocate(VAR_R1(BSS_n_eig))
+     VAR_R1=TMP_R1
+     !
+   end subroutine resizeR1
+   !
+   subroutine resizeR1p(VAR_R1)
+     !
+     real(SP), pointer, intent(inout) :: VAR_R1(:)
+     real(SP)                         :: TMP_R1(BSS_n_eig)
+     !
+     TMP_R1=VAR_R1(:BSS_n_eig)
+     deallocate(VAR_R1)
+     allocate(VAR_R1(BSS_n_eig))
+     VAR_R1=TMP_R1
+     !
+   end subroutine resizeR1p
+   !
+   subroutine resizeR2p(VAR_R2)
+     !
+     real(SP), pointer, intent(inout) :: VAR_R2(:,:)
+     real(SP), allocatable            :: TMP_R2(:,:)
+     integer :: dim1
+     !
+     dim1=size(VAR_R2(:,1))
+     allocate(TMP_R2(dim1,BSS_n_eig))
+     TMP_R2=VAR_R2(:,:BSS_n_eig)
+     deallocate(VAR_r2); nullify(VAR_R2)
+     allocate(VAR_R2(dim1,BSS_n_eig))
+     VAR_R2=TMP_R2
+     !
+   end subroutine resizeR2p
+   !
+   subroutine resizeC1(VAR_C1)
+     !
+     complex(SP), allocatable, intent(inout) :: VAR_C1(:)
+     complex(SP)                             :: TMP_C1(BSS_n_eig)
+     !
+     TMP_C1=VAR_C1(:BSS_n_eig)
+     deallocate(VAR_C1)
+     allocate(VAR_C1(BSS_n_eig))
+     VAR_C1=TMP_C1
+     !
+   end subroutine resizeC1
+   !
+   subroutine resizeC1p(VAR_C1)
+     !
+     complex(SP), pointer, intent(inout) :: VAR_C1(:)
+     complex(SP)                         :: TMP_C1(BSS_n_eig)
+     !
+     TMP_C1=VAR_C1(:BSS_n_eig)
+     deallocate(VAR_C1); nullify(VAR_C1)
+     allocate(VAR_C1(BSS_n_eig))
+     VAR_C1=TMP_C1
+     !
+   end subroutine resizeC1p
+   !
+   subroutine resizeC2(VAR_C2)
+     !
+     complex(SP), allocatable, intent(inout) :: VAR_C2(:,:)
+     complex(SP), allocatable                :: TMP_C2(:,:)
+     integer :: dim1
+     !
+     dim1=size(VAR_C2(:,1))
+     allocate(TMP_C2(dim1,BSS_n_eig))
+     TMP_C2=VAR_C2(:,:BSS_n_eig)
+     deallocate(VAR_C2)
+     allocate(VAR_C2(dim1,BSS_n_eig))
+     VAR_C2=TMP_C2
+     !
+   end subroutine resizeC2
+   !
+   subroutine resizeC2p(VAR_C2)
+     !
+     complex(SP), pointer, intent(inout) :: VAR_C2(:,:)
+     complex(SP), allocatable            :: TMP_C2(:,:)
+     integer :: dim1
+     !
+     dim1=size(VAR_C2(:,1))
+     allocate(TMP_C2(dim1,BSS_n_eig))
+     TMP_C2=VAR_C2(:,:BSS_n_eig)
+     deallocate(VAR_C2); nullify(VAR_C2)
+     allocate(VAR_C2(dim1,BSS_n_eig))
+     VAR_C2=TMP_C2
+     !
+   end subroutine resizeC2p
+   !
+   subroutine resizeC22p(VAR_C22,both)
+     !
+     logical, intent(in)                 :: both
+     complex(SP), pointer, intent(inout) :: VAR_C22(:,:)
+     complex(SP)                         :: TMP_C22(BSS_n_eig,BSS_n_eig)
+     !
+     TMP_C22=VAR_C22(:BSS_n_eig,:BSS_n_eig)
+     deallocate(VAR_C22); nullify(VAR_C22)
+     allocate(VAR_C22(BSS_n_eig,BSS_n_eig))
+     VAR_C22=TMP_C22
+     !
+   end subroutine resizeC22p
+   !
+   ! End BSS_resize interface
    !
    subroutine BSS_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO

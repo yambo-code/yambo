@@ -30,7 +30,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use pars,           ONLY:SP
  use stderr,         ONLY:intc
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
-&                         BS_mat_res_ares_dim,l_BS_ares_asymm,l_BS_abs !,BS_Blocks_symmetrize_K,&
+&                         BS_mat_res_ares_dim,l_BS_abs !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E
  use X_m,            ONLY:X_t
@@ -74,7 +74,7 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  ! Work Space
  !
- integer       :: i_BS_mat
+ integer       :: i_BS_mat,Input_n_eig
  logical       :: K_is_not_hermitian,l_diago,l_slepc,l_target_energy
  character(1)  :: sec
  character(5)  :: Solver
@@ -150,6 +150,7 @@ subroutine K_diago_driver(iq,W,X_static)
      if(.not.BS_K_coupling) BSS_n_eig = BS_K_dim(i_BS_mat)
      if(     BS_K_coupling) BSS_n_eig = BS_H_dim
    endif
+   Input_n_eig=BSS_n_eig
    !
    ! Allocation (BS_R and BS_E)
    !===========================
@@ -235,6 +236,11 @@ subroutine K_diago_driver(iq,W,X_static)
      !
 #if defined _SLEPC && !defined _SLEPC_OFF
      !
+     ! BSS_n_eig could be lowered by MATRIX_slepc
+     if (Input_n_eig>BSS_n_eig) then
+       call K_slepc_resize_variables()
+     endif
+     !
      ! Destroy the matrix
      !============================
      if(l_slepc) call MatDestroy(slepc_mat,ierr)
@@ -246,7 +252,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !====================================
      if (K_is_not_hermitian) then
        !
-       call K_diago_overlap_matrix(BS_V_left,BS_V_right,BS_overlap)
+       call K_diago_overlap_matrix(BS_V_left(:,:BSS_n_eig),BS_V_right,BS_overlap)
        !
        if(l_BS_abs   )  call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
        !
@@ -409,11 +415,46 @@ subroutine K_diago_driver(iq,W,X_static)
    end subroutine local_free
    !
 #if defined _SLEPC && !defined _SLEPC_OFF
+   !
+   subroutine K_slepc_resize_variables()
+     !
+     use BS_solvers,   ONLY:BSS_resize
+     !
+     call warning(" resizing alla variables whose size depends on BSS_n_eig ")
+     if(allocated(BS_E))          call BSS_resize(BS_E)
+     !
+     if(allocated(BS_corrections)) call BSS_resize(BS_corrections)
+     if(associated(BS_E_SOC_corr)) call BSS_resize(BS_E_SOC_corr)
+     !
+     if(associated(BS_R_left) )    call BSS_resize(BS_R_left)
+     if(associated(BS_R_right))    call BSS_resize(BS_R_right)
+       !
+#if defined _KERR
+     if(associated(BS_R_right_kerr)) call BSS_resize(BS_R_right_kerr)
+     if(associated(BS_R_left_magn) ) call BSS_resize(BS_R_left_magn)
+     if(associated(BS_R_right_magn)) call BSS_resize(BS_R_right_magn)
+     if(associated(BS_R_PL)        ) call BSS_resize(BS_R_PL)
+#endif
+     !
+     if(allocated(BS_V_left))   call BSS_resize(BS_V_left)
+     if(allocated(BS_V_right))  call BSS_resize(BS_V_right)
+     if(associated(BS_overlap)) call BSS_resize(BS_overlap,.true.)
+     !
+     if(allocated(BS_E_real))   call BSS_resize(BS_E_real)
+     if(allocated(BS_mat))      call BSS_resize(BS_mat)
+     !
+   end subroutine
+   !
    subroutine K_slepc_local_init()
+     !
+     use com,           ONLY:msg
      !
      ! Here we will have two options to initialize the slepc matrix:
      call parser('BSSSlepcMatrix',BSS_slepc_matrix)
      call parser('BSSEnTarget',l_target_energy)
+     !
+     if (     BSS_slepc_matrix)  call msg( 's', '[SLEPC] BSE matrix stored by each core, faster alogorithm    ')
+     if (.not.BSS_slepc_matrix)  call msg( 's', '[SLEPC] BSE matrix distributed in memory, slower alogorithm  ')
      !
      ! Number of states for partial diagonalization
      !================================================

@@ -453,8 +453,8 @@ subroutine K_diago_driver(iq,W,X_static)
      call parser('BSSSlepcMatrix',BSS_slepc_matrix)
      call parser('BSSEnTarget',l_target_energy)
      !
-     if (     BSS_slepc_matrix)  call msg( 's', '[SLEPC] BSE matrix stored by each core, faster alogorithm    ')
-     if (.not.BSS_slepc_matrix)  call msg( 's', '[SLEPC] BSE matrix distributed in memory, slower alogorithm  ')
+     if (     BSS_slepc_matrix)  call msg( 's', '[SLEPC] Faster alogorithm but BSE matrix diuplicated over MPI tasks')
+     if (.not.BSS_slepc_matrix)  call msg( 's', '[SLEPC] Slower alogorithm but BSE matrix distributed over MPI tasks')
      !
      ! Number of states for partial diagonalization
      !================================================

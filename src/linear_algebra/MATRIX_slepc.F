@@ -96,6 +96,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  PetscMPIInt    ::  rank
  VecScatter     ::  ctxr, ctxi, ctxr_left, ctxi_left
  !
+ logical           :: l_precondition
  character(len=30) :: rowfmt
  !
  ! Non hermitian not implemented yet!
@@ -152,7 +153,9 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  call EPSSetType(eps,epskind,ierr)
  !
- if (BSS_slepc_precondition/="none") then
+ l_precondition=BSS_slepc_precondition/="none"
+ !
+ if (l_precondition) then
    !
    if (epskind==EPSKRYLOVSCHUR) stkind=STSINVERT
    if (epskind==EPSGD)          stkind=STPRECOND
@@ -199,9 +202,10 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  call msg( 's', '[SLEPC] Number of requested eigenvalues   ', n_eig ) 
  !
- if (l_target_energy) then
-   target_energy=BSS_slepc_target_E
-   call msg( 'ns', '[SLEPC] Criterion is target energy        ', BSS_slepc_target_E )
+ if (l_target_energy.or.l_precondition) then
+   target_energy=0._SP
+   if(l_target_energy) target_energy=BSS_slepc_target_E
+   call msg( 'ns', '[SLEPC] Criterion is target energy        ', real(target_energy,SP) )
    call EPSSetTarget(eps,target_energy,ierr)
    call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
  else

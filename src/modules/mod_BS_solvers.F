@@ -313,7 +313,7 @@ module BS_solvers
    subroutine BSS_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
-     use BS,        ONLY:BS_dip_size,l_BS_abs
+     use BS,        ONLY:BS_dip_size,l_BS_abs,l_BS_kerr,l_BS_dichroism
      integer :: i_g,i_size
      logical :: W_is_allocated,Z_is_allocated,E_SOC_is_allocated
      YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,5))
@@ -322,7 +322,7 @@ module BS_solvers
      BSS_eh_table = 0
      BSS_eh_E     = rZERO
      BSS_eh_f     = rZERO
-     if (l_BS_abs) then
+     if (l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism) then
        YAMBO_ALLOC(BSS_dipoles_opt,(BS_dip_size,BS_H_dim))
        BSS_dipoles_opt = cZERO
      endif

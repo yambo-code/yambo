@@ -30,7 +30,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use pars,           ONLY:SP
  use stderr,         ONLY:intc
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
-&                         BS_mat_res_ares_dim,l_BS_abs !,BS_Blocks_symmetrize_K,&
+&                         BS_mat_res_ares_dim,l_BS_optics !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E
  use X_m,            ONLY:X_t
@@ -254,7 +254,7 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        call K_diago_overlap_matrix(BS_V_left(:,:BSS_n_eig),BS_V_right,BS_overlap)
        !
-       if(l_BS_abs   )  call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
+       if(l_BS_optics )  call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
        !
 #if defined _KERR
        if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
@@ -264,7 +264,7 @@ subroutine K_diago_driver(iq,W,X_static)
        !
      else
        !
-       if(l_BS_abs)     call K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right)
+       if(l_BS_optics)  call K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right)
        !
 #if defined _KERR
        if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
@@ -346,7 +346,7 @@ subroutine K_diago_driver(iq,W,X_static)
          YAMBO_ALLOC(BS_corrections,(2/n_sp_pol,BSS_n_eig))
          YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
        endif
-       if (l_BS_abs) then
+       if (l_BS_optics) then
          YAMBO_ALLOC_P(BS_R_left,(BSS_n_eig))
          YAMBO_ALLOC_P(BS_R_right,(BSS_n_eig))
        endif

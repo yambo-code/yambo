@@ -59,6 +59,7 @@ module BS
  logical :: l_BS_photolum
  logical :: l_BS_magnons
  logical :: l_BS_dichroism
+ logical :: l_BS_optics
  logical :: l_BS_esort
  logical :: l_BS_anomalous_hall
  logical :: l_BS_ares_asymm ! For cases where the ares block is not -R*:
@@ -400,8 +401,7 @@ module BS
          enddo
        case("C","Q")
          if (l_BS_ares_asymm) cycle
-         ! Coupling ("C") and anti-coupling ("Q") are symmetric
-         ! if l_BS_ares_asymm=.true.
+         ! Coupling ("C") and anti-coupling ("Q") are symmetric if l_BS_ares_asymm=.true.
          do i_r=1,BS_blk(i_B)%size(1)
            do i_c=i_r+1,BS_blk(i_B)%size(2)
              BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)

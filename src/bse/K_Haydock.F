@@ -92,7 +92,8 @@ subroutine K_Haydock(iq,W,mode)
  use_cpl_scheme=BS_K_Coupling !.or.allocated(BS_T_grp(1)%Z)
 #if defined _KERR
  use_left_and_right=trim(mode)=="kerr".or.trim(mode)=="dichroism"
- !use_cpl_scheme=BS_K_Coupling.or.use_left_and_right
+ ! I need this for now since the conding in the resonant case of kerr is not working
+ use_cpl_scheme=BS_K_Coupling.or.use_left_and_right
 #endif
  velocity_correction= trim(global_gauge)=="velocity" .and. (trim(mode)=="abs" .or. trim(mode)=="kerr")
  !
@@ -219,7 +220,11 @@ subroutine K_Haydock(iq,W,mode)
    if (trim(mode)=="abs")       V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1)
    if (trim(mode)=="kerr")      V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(2,:,1)
    if (trim(mode)=="magnons")   V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_mag(1,:,1)
-   if (.not.trim(mode)=="jdos") V0(i_g)%fragment = V0(i_g)%fragment*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
+   if (trim(mode)=="jdos") then
+     V0(i_g)%fragment = V0(i_g)%fragment*sqrt(cmplx(BS_T_grp(i_g)%f_RES/abs(BS_T_grp(i_g)%f_RES),kind=SP))
+   else
+     V0(i_g)%fragment = V0(i_g)%fragment*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
+   endif
    if(velocity_correction) V_tmp(i_g)%fragment = V0(i_g)%fragment/BS_T_grp(i_g)%E
  enddo
  ! 
@@ -238,8 +243,8 @@ subroutine K_Haydock(iq,W,mode)
    !
    do i_g=1,BS_nT_grps
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     if (trim(mode)=="kerr")      W0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1)
-     if (.not.trim(mode)=="jdos") W0(i_g)%fragment = W0(i_g)%fragment*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
+     if (trim(mode)=="kerr")      W0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1) &
+     &                                       *(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
      if(velocity_correction)   V_tmp(i_g)%fragment = W0(i_g)%fragment/BS_T_grp(i_g)%E
    enddo
    !
@@ -272,7 +277,7 @@ subroutine K_Haydock(iq,W,mode)
      !
      Cf= cZERO
      !
-     call K_multiply_by_V(V0,Vnp1,1)
+     call K_multiply_by_V(V0,Vnp1,-1)
      call K_dot_product(v0_mod_,V0,Vnp1,1)
      !
      ! For the coupling case if A = -R* (l_BS_ares_asymm=.true.), V0 = (u0, -iu0*)
@@ -299,8 +304,8 @@ subroutine K_Haydock(iq,W,mode)
      if (     use_left_and_right) call K_dot_product(v0_mod_,W0,V0,1)
 #endif
      !
-     if(.not.l_BS_ares_asymm) Cf(1)=2*cI*aimag(v0_mod_) !*Haydock_v0_mod**2
-     if(     l_BS_ares_asymm) Cf(1)=           v0_mod_  !*Haydock_v0_mod**2
+     if(.not.l_BS_ares_asymm) Cf(1)=2*cI*aimag(v0_mod_)
+     if(     l_BS_ares_asymm) Cf(1)=           v0_mod_
      !
    else                           ! [***] Initialization Hermitian case
      !
@@ -321,7 +326,7 @@ subroutine K_Haydock(iq,W,mode)
 #if defined _KERR
      if (use_left_and_right) then
        call K_dot_product(v0_mod_,W0,V0,1)
-       Cf(1)= v0_mod_ !*Haydock_v0_mod**2
+       Cf(1)= v0_mod_
      endif
 #endif
      !
@@ -385,7 +390,7 @@ subroutine K_Haydock(iq,W,mode)
        !write(*,*) "Ortho check = ",v0_mod_
        ! DEBUG
        call K_dot_product(v0_mod_,W0,Vn,1)
-       Cf(it+1)= v0_mod_ !*Haydock_v0_mod**2
+       Cf(it+1)= v0_mod_
      endif
 #endif
      !
@@ -396,7 +401,7 @@ subroutine K_Haydock(iq,W,mode)
      if (.not.l_BS_ares_asymm) then
        ! A(n) =  0   by symmetry
        Af(it)=0._SP
-       ItParity=(-1)**it
+       ItParity=(-1)**(it+1)
      else
        call K_dot_product(v0_mod_,Vnp1,Vnp1,1)
        Af(it)=real(v0_mod_,SP)
@@ -463,8 +468,8 @@ subroutine K_Haydock(iq,W,mode)
        ! Using symmetry arguments
        ! Cf=(1-ItParity)Re(<dipoles|Vn>) + i*(1+ItParity)Im(<dipoles|Vn>)
        ! with all product evaluated just in the eh pairs subspace
-       Cf(it+1)=   ((1._SP-real(ItParity,SP))*real(v0_mod_,SP)) +&
-       &        cI*((1._SP+real(ItParity,SP))*aimag(v0_mod_))
+       Cf(it+1)=   ((1._SP+real(ItParity,SP))*real(v0_mod_,SP)) +&
+       &        cI*((1._SP-real(ItParity,SP))*aimag(v0_mod_))
      else
        Cf(it+1)=   v0_mod_
      endif

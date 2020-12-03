@@ -44,7 +44,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind,BS_bands,&
  &                       BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_res_ares_dim,BS_K_dim,BS_H_dim,&
- &                       l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
+ &                       l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,l_BS_optics,&
  &                       BS_mat_res_ares_dim
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
@@ -254,7 +254,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      ! Absorption, PL & KERR
      !
-     if(l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum) then
+     if(l_BS_optics) then
        if(iq==1) then
          DIP_expanded=-cI*DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,DIP_kind,Xk)
          DIP_projected(1)=dot_product(field_dir(:,1),DIP_expanded)
@@ -316,9 +316,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! c.2 Store Dipoles
      !====================
      !
-     ! Absorption, & KERR
+     ! Absorption, KERR, Dichroism, PL
      !
-     if(l_BS_abs.or.l_BS_kerr) then
+     if(l_BS_optics) then
        BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
        if (BS_K_coupling.and..not.BS_res_ares_dim==2) &
        &  BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)

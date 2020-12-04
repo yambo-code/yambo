@@ -66,7 +66,7 @@ subroutine K_Haydock(iq,W,mode)
  integer            ::ItParity,Cf_size
  complex(SP)        ::v0_mod_
  character(schlen)  ::dumb_ch
- logical            ::use_cpl_scheme,velocity_correction,use_left_and_right,Haydock_converged
+ logical            ::use_cpl_scheme,impose_res_scheme,use_left_and_right,velocity_correction,Haydock_converged
  logical, external  ::STOP_now
  character(1)       ::sec
  !
@@ -86,6 +86,8 @@ subroutine K_Haydock(iq,W,mode)
  !
  ! Use terminator?
  if (.not.Haydock_terminator) call parser('BSHayTer',Haydock_terminator)
+ ! Developer option
+ call parser('ImposeRes',impose_res_scheme)
  !
  ! Which approach
  use_left_and_right=.false.
@@ -93,7 +95,7 @@ subroutine K_Haydock(iq,W,mode)
 #if defined _KERR
  use_left_and_right=trim(mode)=="kerr".or.trim(mode)=="dichroism"
  ! I need this for now since the conding in the resonant case of kerr is not working
- use_cpl_scheme=BS_K_Coupling.or.use_left_and_right
+ use_cpl_scheme=BS_K_Coupling.or.(use_left_and_right.and..not.impose_res_scheme)
 #endif
  velocity_correction= trim(global_gauge)=="velocity" .and. (trim(mode)=="abs" .or. trim(mode)=="kerr")
  !
@@ -228,7 +230,7 @@ subroutine K_Haydock(iq,W,mode)
    !if (BS_T_grp(i_g)%i_res_ares==2) V0(i_g)%fragment = -V0(i_g)%fragment
    if(velocity_correction) V_tmp(i_g)%fragment = V0(i_g)%fragment/BS_T_grp(i_g)%E
  enddo
- ! 
+ !
  do i_g = 1,BS_nT_grps
    if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 #if defined _MPI
@@ -253,8 +255,8 @@ subroutine K_Haydock(iq,W,mode)
    do i_g = 1,BS_nT_grps
      if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 #if defined _MPI
-     if(     velocity_correction) call PP_bcast(   V_tmp(i_g)%fragment,0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
-     if(.not.velocity_correction) call PP_bcast(W0(i_g)%fragment,0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+     if(     velocity_correction) call PP_bcast(V_tmp(i_g)%fragment,0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+     if(.not.velocity_correction) call PP_bcast(   W0(i_g)%fragment,0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
 #endif
    enddo
    !

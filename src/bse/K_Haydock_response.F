@@ -113,7 +113,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
  end if
  !
  iw_start=1
- if(trim(global_gauge)=='velocity') iw_start=0
+ if(trim(global_gauge)=='velocity'.and. any(Af/=0._SP)) iw_start=0
  !
  freq_axis(0 )=cZERO
  freq_axis(1:)=W%p(:)

@@ -287,7 +287,7 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  ! Here we will have two options to initialize the slepc matrix:
  call parser('BSSSlepcMatrix',BSS_slepc_matrix)
  !
- ! Debug Flags without the code works in default mode
+ ! Developer options. Without the code works in default mode
  ! With the user can switch to experimental coding
  call parser('ImposeAsym',l_BS_ares_asymm)
  call parser('ImposeSymm',l_BS_ares_symm)

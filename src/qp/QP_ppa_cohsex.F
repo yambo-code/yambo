@@ -26,7 +26,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Plasmon Pole & COHSEX Correlation Self-Energy
  !
- use pars,          ONLY:DP,SP,pi,schlen,cZERO,cI
+ use pars,          ONLY:DP,SP,pi,schlen,cZERO,cI,cONE
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
@@ -80,7 +80,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                    i_qp_to_start,iq_to_start,is,iq_mem,io_err,ID,IO_ACT,timing_steps
  integer          :: iw
  integer          :: X_range1,X_range2
- integer          :: X_rows1,X_rows2,X_cols1,X_cols2
+ integer          :: X_rows1,X_rows2,X_cols1,X_cols2,X_nrows,X_ncols
  !
  character(schlen):: ch,SECTION_name,W_name
  logical          :: X_is_TR_rotated,l_X_alloc
@@ -221,11 +221,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  endif
  !
  if (l_sc_coh.or.l_sc_sex.or.l_cohsex.or.l_sc_srpa) then
-   !if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,1/))
    if (io_RESPONSE) call X_PARALLEL_alloc(X_par(1),X%ng,1,"X")
    YAMBO_ALLOC(dc,(2))
  else
-   !if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,2/))
    if (io_RESPONSE) call X_PARALLEL_alloc(X_par(1),X%ng,2,"X")
    YAMBO_ALLOC(W_,(QP_dSc_steps))
    YAMBO_ALLOC(dc,(QP_dSc_steps))
@@ -353,6 +351,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    X_rows2=X_par(iq_mem)%rows(2)
    X_cols1=X_par(iq_mem)%cols(1)
    X_cols2=X_par(iq_mem)%cols(2)
+   X_nrows=X_rows2-X_rows1+1
+   X_ncols=X_cols2-X_cols1+1
    !
    call MATRIX_duplicate("none",M_in=X_par(iq_mem),M_out=X_par_loc)
    call dev_memcpy(X_par_loc%blc, X_par(iq_mem)%blc)
@@ -401,7 +401,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        iscs_save(2,:3)=isc%qs
        isc%os=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
        isc%qs=(/1,1,1/)
-
+       !
        call DEV_SUB(scatter_Bamp)(isc)
        if (have_cuda) call dev_memcpy(isc%rhotw,isc%rhotw_d)
        !
@@ -605,7 +605,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          ! performed on the host
          !
-         call M_by_V('N', X%ng, X_par(iq_mem)%blc(:,:,X_range1), conjg(iscp%rhotw), local_rhotw)
+         local_rhotw=cZERO
+         !call M_by_V('N', X%ng, X_par(iq_mem)%blc(:,:,X_range1), conjg(iscp%rhotw), local_rhotw)
+         !
+         call M_by_V('N',X_nrows,X_ncols, cONE,X_par(iq_mem)%blc(:,:,X_range1),X_nrows,&
+&                        conjg(iscp%rhotw(X_cols1:X_cols2)),1,cZERO,local_rhotw(X_rows1:X_rows2),1)
          !
          pre_factor=0.0_SP
          !

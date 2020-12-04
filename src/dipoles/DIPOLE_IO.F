@@ -84,6 +84,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
    io_err=io_err+io_Overlaps(Dip,ID_S)
  endif
+
  !
  ! Master node bcast matrix dimensions for the other cores
  !
@@ -171,9 +172,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
 #if !defined _PAR_IO
        if (i_cpu/=PAR_COM_X_WORLD%CPU_id+1) cycle
 #endif
-       do ik=1,Xk%nbz
+       do ik=1,Xk%nibz
          i_fragment=ik+(i_sp_pol-1)*Xk%nibz
-         if ((.not.PAR_K_scheme%IND_bz%element_1D(ik)).and.writing) cycle
+         if ((.not.PAR_K_scheme%IND_ibz%element_1D(ik)).and.writing) cycle
          if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing) cycle
 #if !defined _PAR_IO
          IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol,PAR_K_scheme%IND_ibz)

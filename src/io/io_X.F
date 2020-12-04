@@ -228,7 +228,12 @@ if (any((/io_sec(ID,:)==2*iq+1/))) then
     !
   else if(read_is_on(ID)) then
     !
-    if (.not.allocated(X_mat).and..not.allocated(X_par)) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+    if (.not.allocated(X_par)) then
+      if (.not.allocated(X_mat)) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+    !else
+    !  if (.not.allocated(X_par(1)%blc)) &
+    !    call X_PARALLEL_alloc(X_par(1),X%ng,Xw%n_freqs,"X")
+    endif
     !
     if (allocated(X_mat)) then
       call def_variable_bulk(ID,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)

@@ -448,17 +448,11 @@ subroutine K_diago_driver(iq,W,X_static)
    subroutine K_slepc_local_init()
      !
      use com,           ONLY:msg
-     logical :: l_BS_ares_asymm
      !
-     ! Here we will have two options to initialize the slepc matrix:
-     call parser('BSSSlepcMatrix',BSS_slepc_matrix)
      call parser('BSSEnTarget',l_target_energy)
-     call parser('ImposeAres',l_BS_ares_asymm)
      !
      if (     BSS_slepc_matrix)  call msg( 's', '[SLEPC] Faster alogorithm but BSE matrix diuplicated over MPI tasks')
      if (.not.BSS_slepc_matrix)  call msg( 's', '[SLEPC] Slower alogorithm but BSE matrix distributed over MPI tasks')
-     !
-     BSS_slepc_double_grp=BS_K_coupling.and. .not.(BSS_slepc_matrix.or.l_BS_ares_asymm)
      !
      ! Number of states for partial diagonalization
      !================================================

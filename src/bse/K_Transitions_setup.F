@@ -253,9 +253,9 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  use R_lattice,    ONLY:qindx_X,bz_samp
  use electrons,    ONLY:levels,n_sp_pol
  use DIPOLES,      ONLY:DIPOLE_t
- use BS_solvers,   ONLY:BSS_add_antiresonant
+ use BS_solvers,   ONLY:BSS_add_antiresonant,BSS_mode,BSS_slepc_double_grp,BSS_slepc_matrix
  use BS,           ONLY:BS_K_dim,BS_H_dim,BS_nT_at_k,BSE_mode,    &
-&                       BS_K_coupling,BS_bands,BS_not_const_eh_f,            &
+&                       BS_K_coupling,BS_bands,BS_not_const_eh_f,BS_K_coupling,  &
 &                       l_BS_ares_asymm,BS_res_ares_dim,BS_mat_res_ares_dim
  use parser_m,     ONLY:parser
 #if defined _KERR
@@ -274,7 +274,7 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  ! Work Space
  !
  real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
- logical      :: FORCE_EQ_trans
+ logical      :: FORCE_EQ_trans,l_BS_ares_symm,l_slepc_special
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,ib1,ib2,isp1,&
  &               i_star,nb(2),BS_nT_at_k_tmp(Xk%nibz*2),i_res_ares
  !
@@ -284,10 +284,24 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  call parser('ForceEqTrans',FORCE_EQ_trans)
 #endif
  !
- call parser('ImposeAres',l_BS_ares_asymm)
+ ! Here we will have two options to initialize the slepc matrix:
+ call parser('BSSSlepcMatrix',BSS_slepc_matrix)
+ !
+ ! Debug Flags without the code works in default mode
+ ! With the user can switch to experimental coding
+ call parser('ImposeAsym',l_BS_ares_asymm)
+ call parser('ImposeSymm',l_BS_ares_symm)
+ !
  l_BS_ares_asymm=l_BS_ares_asymm.or.(iq/=1)
 #if defined _KERR
  l_BS_ares_asymm=(l_BS_ares_asymm.or.l_BS_photolum.or.(l_BS_magnons.and.n_sp_pol==2))
+#endif
+#if defined _SLEPC && !defined _SLEPC_OFF
+ ! Special case, slepc with distributed matrix need doubling of the number of occupations
+ l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling.and. (.not.BSS_slepc_matrix)
+ ! The doubling is activated unless explicily imposed by imput to keep the symmetric case
+ l_BS_ares_asymm=l_BS_ares_asymm .or. (l_slepc_special.and..not.l_BS_ares_symm)
+ BSS_slepc_double_grp=(.not.l_BS_ares_asymm).and.l_slepc_special
 #endif
  !
  BS_K_dim=0

@@ -28,12 +28,14 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! This routine can be called from within Matrix_driver.F but should be kept in
  ! a separate source file for clarity.
  !
- use pars,          ONLY : SP,schlen
+ use pars,          ONLY : SP,schlen,cI
+ use units,         ONLY : HA2EV
  use com,           ONLY : msg
  use stderr,        ONLY : intc
+ use BS,            ONLY : l_BS_ares_asymm,BS_K_dim
  use BS_solvers,    ONLY : BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_maxit,&
  &                         BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_precondition,&
- &                         BSS_slepc_approach
+ &                         BSS_slepc_approach,BSS_slepc_double_grp
  !
  ! headers
  !
@@ -205,7 +207,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  if (l_target_energy.or.l_precondition) then
    target_energy=0._SP
    if(l_target_energy) target_energy=BSS_slepc_target_E
-   call msg( 'ns', '[SLEPC] Criterion is target energy        ', real(target_energy,SP) )
+   call msg( 'ns', '[SLEPC] Criterion is target energy        ', real(target_energy,SP)*HA2EV,'[eV]')
    call EPSSetTarget(eps,target_energy,ierr)
    call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
  else
@@ -304,6 +306,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
      call VecGetArrayReadF90(voutr,xsr,ierr)
      !call VecGetArrayReadF90(vouti,xsi,ierr)
      V_right(:, i+1) = cmplx(xsr,kind=SP)
+     !if (BSS_slepc_double_grp) V_right(BS_K_dim(1)+1:,i+1) =cI*V_right(BS_K_dim(1)+1:,i+1)
      call VecRestoreArrayReadF90(voutr,xsr,ierr)
      !call VecRestoreArrayReadF90(vouti,xsi,ierr)
      !
@@ -319,6 +322,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
      call VecGetArrayReadF90(voutr_left,xsr_left,ierr)
      !call VecGetArrayReadF90(vouti_left,xsi_left,ierr)
      V_left(:, i+1) = cmplx(xsr_left,kind=SP)
+     !if (BSS_slepc_double_grp) V_left(BS_K_dim(1)+1:,i+1) =cI*V_left(BS_K_dim(1)+1:,i+1)
      call VecRestoreArrayReadF90(voutr_left,xsr_left,ierr)
      !call VecRestoreArrayReadF90(vouti_left,xsi_left,ierr)
    else
@@ -361,9 +365,12 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
  ! 
  ! Monitor the convergence of the iterative diagonalization
  ! 
+ use pars,          ONLY:SP
  use units,         ONLY:HA2EV
  use com,           ONLY:msg
  use stderr,        ONLY:intc
+ use BS,            ONLY:BS_H_dim
+ use BS_solvers,    ONLY:Slepc_v
  !
  ! headers
  !
@@ -391,12 +398,27 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
  PetscReal      :: re,errest(*)
  PetscMPIInt    :: rank
  !
+ real(SP)       :: maxerror(2)
+ !
+ if(nconv==0) then
+   maxerror=real(errest(nconv+1:nconv+2),SP)
+ else
+   if(nconv< BS_H_dim) maxerror=real(errest(nconv:nconv+1),SP)
+   if(nconv==BS_H_dim) maxerror=real(errest(nconv-1:nconv),SP)
+ endif
+ !
  ! write the number of converged eigenvalues
  call msg('s', '[SLEPC] Iteration #'// trim(intc(its))// ' - converged States '&
-&           // trim(intc(nconv)) //' - error ', errest(nconv+1))
+&           // trim(intc(nconv)) //' - error ', maxerror)
+ !
+ !Slepc_v%it=0 !Slepc_v%it+1 !its
  !
  ! DEBUG <
- !write(*,*) eigr(:nconv)*HA2EV
+ !if (nconv>0) then
+ !  write(*,*) eigr(:nconv)*HA2EV
+ !  write(*,*) " "
+ !  write(*,*) errest(:nconv)
+ !endif
  ! DEBUG >
  !
  ierr = 0

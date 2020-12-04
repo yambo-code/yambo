@@ -35,7 +35,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
  ! 
  use pars,           ONLY:SP,cONE,cZERO,cI
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_T_Haydock,PAR_COM_T_Haydock
- use BS_solvers,     ONLY:Haydock_vector
+ use BS_solvers,     ONLY:Haydock_vector,BSS_Slepc_double_grp
  use BS,             ONLY:BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,l_BS_ares_asymm
  use wrapper,        ONLY:M_by_V
  !
@@ -49,7 +49,8 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
  integer         ::i_B,i_Tk,i_Tp,i_g
  complex(SP)     ::alpha
  ! 
- alpha=-real(iter_par,SP)*cI
+ if(.not.BSS_Slepc_double_grp) alpha=-real(iter_par,SP)*cI
+ if(     BSS_Slepc_double_grp) alpha=-real(iter_par,SP)
  !
  forall(i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g)) Vo(i_g)%fragment = cZERO
  !
@@ -158,7 +159,7 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par)
  ! 
  use pars,           ONLY:SP,cONE,cZERO,cI
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_T_Haydock,PAR_COM_T_Haydock
- use BS_solvers,     ONLY:Haydock_vector
+ use BS_solvers,     ONLY:Haydock_vector,BSS_Slepc_double_grp
  use BS,             ONLY:BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,l_BS_ares_asymm
  use wrapper,        ONLY:M_by_V
  !
@@ -174,7 +175,8 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par)
  !
  ! The factor cI is needed for the coupling when l_BS_ares_asymm=.false.
  !
- alpha=-real(iter_par,SP)*cI
+ if(.not.BSS_Slepc_double_grp) alpha=-real(iter_par,SP)*cI
+ if(     BSS_Slepc_double_grp) alpha=-real(iter_par,SP)
  !
  forall(i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g)) Vo(i_g)%fragment = cZERO
  !

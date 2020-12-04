@@ -59,7 +59,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use slepcepsdef
  use petscmatdef
  !
- use BS_solvers,     ONLY:BSS_slepc_matrix,Slepc_v,BS_HAYVEC_free
+ use BS_solvers,     ONLY:BSS_slepc_matrix,BSS_slepc_double_grp,Slepc_v,BS_HAYVEC_free
 #endif
 #if defined _KERR
  use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum
@@ -252,7 +252,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !====================================
      if (K_is_not_hermitian) then
        !
-       call K_diago_overlap_matrix(BS_V_left(:,:BSS_n_eig),BS_V_right,BS_overlap)
+       call K_diago_overlap_matrix(BS_V_left,BS_V_right,BS_overlap)
        !
        if(l_BS_optics )  call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
        !
@@ -448,13 +448,17 @@ subroutine K_diago_driver(iq,W,X_static)
    subroutine K_slepc_local_init()
      !
      use com,           ONLY:msg
+     logical :: l_BS_ares_asymm
      !
      ! Here we will have two options to initialize the slepc matrix:
      call parser('BSSSlepcMatrix',BSS_slepc_matrix)
      call parser('BSSEnTarget',l_target_energy)
+     call parser('ImposeAres',l_BS_ares_asymm)
      !
      if (     BSS_slepc_matrix)  call msg( 's', '[SLEPC] Faster alogorithm but BSE matrix diuplicated over MPI tasks')
      if (.not.BSS_slepc_matrix)  call msg( 's', '[SLEPC] Slower alogorithm but BSE matrix distributed over MPI tasks')
+     !
+     BSS_slepc_double_grp=BS_K_coupling.and. .not.(BSS_slepc_matrix.or.l_BS_ares_asymm)
      !
      ! Number of states for partial diagonalization
      !================================================
@@ -485,7 +489,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if (.not.BSS_slepc_matrix) then
        call BS_HAYVEC_free(Slepc_v%Vi)
-       call BS_HAYVEC_free(Slepc_v%Vo) 
+       call BS_HAYVEC_free(Slepc_v%Vo)
        deallocate(Slepc_v%Vi)
        deallocate(Slepc_v%Vo)
        call PARALLEL_Haydock_VEC_COMMs('reset')

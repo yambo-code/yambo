@@ -225,6 +225,7 @@ subroutine K_Haydock(iq,W,mode)
    else
      V0(i_g)%fragment = V0(i_g)%fragment*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
    endif
+   !if (BS_T_grp(i_g)%i_res_ares==2) V0(i_g)%fragment = -V0(i_g)%fragment
    if(velocity_correction) V_tmp(i_g)%fragment = V0(i_g)%fragment/BS_T_grp(i_g)%E
  enddo
  ! 
@@ -245,6 +246,7 @@ subroutine K_Haydock(iq,W,mode)
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
      if (trim(mode)=="kerr")      W0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1) &
      &                                       *(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
+     !if (BS_T_grp(i_g)%i_res_ares==2) W0(i_g)%fragment = -W0(i_g)%fragment
      if(velocity_correction)   V_tmp(i_g)%fragment = W0(i_g)%fragment/BS_T_grp(i_g)%E
    enddo
    !

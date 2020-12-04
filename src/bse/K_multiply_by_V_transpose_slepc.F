@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
+subroutine K_multiply_by_V_transpose_slepc(slepc_mat,vi,vo,ierr)
  !
  ! Interface with the K_multiply_by_V from the Haydock method
  ! This function has to take the same arguments as MatMult from PETSC
@@ -54,7 +54,6 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  Vec                  :: vi,vo,x
  Mat                  :: slepc_mat
  !
- complex(SP)          :: norm
  integer              :: fac
  integer              :: n, i_g, i_g_start, i_c, start_index, start_index_dg
  !
@@ -88,17 +87,17 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !
  ! fac needed for K_multiply_by_v
  fac=1
- if(BSS_Slepc_double_grp) fac=(-1)**(Slepc_v%it(1)+1)
+ if(BSS_Slepc_double_grp) fac=(-1)**(Slepc_v%it(2)+1)
  ! use the haydock routine to calculate the BSE auxiliaxy hamiltonian matrix-vector product
  ! Slepc_v%Vo = H Slepc_v%Vi
- call K_multiply_by_V( Slepc_v%Vi, Slepc_v%Vo,fac)
+ call K_multiply_by_V_transpose( Slepc_v%Vi, Slepc_v%Vo,fac )
  !
  ! copy output vector Vo -> vo (distributed)
  !
  ! fac needed for expanding vo to anti-resonant block
  if(BSS_Slepc_double_grp) then
-   Slepc_v%it(1)=Slepc_v%it(1)+1
-   fac=(-1)**(Slepc_v%it(1)+1)
+   Slepc_v%it(2)=Slepc_v%it(2)+1
+   fac=(-1)**(Slepc_v%it(2)+1)
  endif
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
@@ -121,4 +120,4 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  call VecAssemblyBegin(vo,ierr)
  call VecAssemblyEnd(vo,ierr)
  !
-end subroutine K_multiply_by_V_slepc
+end subroutine K_multiply_by_V_transpose_slepc

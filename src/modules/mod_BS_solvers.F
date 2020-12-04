@@ -39,9 +39,7 @@ module BS_solvers
  ! Haydock
  !========== 
  type Haydock_vector
-   !
    complex(SP), allocatable :: fragment(:)
-   !
  end type Haydock_vector
  !
 #if defined _SLEPC && !defined _SLEPC_OFF
@@ -49,10 +47,9 @@ module BS_solvers
  ! Slepc
  !==========
  type Slepc_vector
-   !
+   integer :: it(2)
    type(Haydock_vector), allocatable :: Vi(:)
    type(Haydock_vector), allocatable :: Vo(:)
-   !
  end type Slepc_vector
  !
  type(Slepc_vector) :: Slepc_v
@@ -115,6 +112,7 @@ module BS_solvers
  real(SP)         :: BSS_slepc_tol        !tolerance for the iterative solver
  real(SP)         :: BSS_slepc_target_E   !find eigenvalues close to this energy
  logical          :: BSS_slepc_matrix     !use a shell matrix for slepc
+ logical          :: BSS_slepc_double_grp !duplicate the number of groups for slepc shells solver
 #endif
  !
  ! Solvers (Inversion)

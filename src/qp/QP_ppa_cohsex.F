@@ -48,7 +48,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,G_m_G_d,nqibz
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
- use wrapper,       ONLY:M_by_V
+ use wrapper,       ONLY:M_by_V,V_dot_V
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
 &                        PARALLEL_WF_distribute,QP_state_print,MATRIX_transpose,MATRIX_duplicate
  use matrix,        ONLY:PAR_matrix
@@ -57,7 +57,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use parallel_m,    ONLY:PAR_COM_QP_A2A
  use SC,            ONLY:it_now,it_to_start
 #endif
- use deviceXlib_m,  ONLY:dev_memcpy,dev_memset
+ use deviceXlib_m,  ONLY:dev_memcpy,dev_memset,dev_conjg
  use cuda_m,        ONLY:have_cuda
  !
  use drivers,       ONLY:Finite_Tel
@@ -87,13 +87,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  real(SP)         :: eet_cutoff0_sp(n_sp_pol),eet_cutoff0,eet_cutoff1_sp(n_sp_pol),eet_cutoff1
  real(SP)         :: X_ppaE,bose_PPA_E,eet_energy
  real(SP)         :: E_kmq,f_kmq,PPA_E
- complex(SP)      :: PPA_R,local_rhotw(X%ng),pre_factor
+ complex(SP)      :: PPA_R,pre_factor
  complex(SP)      :: W_i,lW,QP_ppa_EET
  real(DP)         :: dp_dummy_r,dp_dummy_i
  complex(DP)      :: dp_dummy,ctmp
  !
  complex(SP), allocatable          :: W_(:),dc(:)
  complex(SP), allocatable DEV_ATTR :: eet_factor(:,:)
+ complex(SP), allocatable DEV_ATTR :: local_rhotw(:), conjg_iscp_rhotw(:)
  type(elemental_collision), target :: isc,iscp
  !
  complex(SP), pointer DEV_ATTR :: isc_rhotw_p(:)
@@ -227,8 +228,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    YAMBO_ALLOC(W_,(QP_dSc_steps))
    YAMBO_ALLOC(dc,(QP_dSc_steps))
  endif
+ YAMBO_ALLOC(local_rhotw,(X%ng))
+ YAMBO_ALLOC(conjg_iscp_rhotw,(X%ng))
  !
  call PP_redux_wait
+ !
  !
  timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
 &             PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)*&
@@ -534,6 +538,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          iscp%rhotw=isc%rhotw
          if (have_cuda) call dev_memcpy(iscp%rhotw_d, iscp%rhotw)
        endif
+       call dev_memcpy(conjg_iscp_rhotw,iscp%rhotw_d)
+       call dev_conjg(conjg_iscp_rhotw)
        !
        dc=cZERO
        !
@@ -546,7 +552,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !
            do ig2=X_cols1,X_cols2
            do ig1=X_rows1,X_rows2
-              eet_factor(ig1,ig2)=eet_factor(ig1,ig2)-isc_rhotw_p(ig1)*conjg(iscp_rhotw_p(ig2))
+              eet_factor(ig1,ig2)=eet_factor(ig1,ig2)-isc_rhotw_p(ig1)*conjg_iscp_rhotw(ig2)
            enddo
            enddo
            !
@@ -590,11 +596,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                endif
              endif
              !
-             ctmp = -4._SP/spin_occ*pi*isc_rhotw_p(ig1)*conjg(iscp_rhotw_p(ig2))*(-PPA_R)*&
+             ctmp = -4._SP/spin_occ*pi*isc_rhotw_p(ig1)*conjg_iscp_rhotw(ig2)*(-PPA_R)*&
 &                   ( (spin_occ-f_kmq+bose_PPA_E)/(W_i-E_kmq-PPA_E)+&
 &                     (f_kmq+bose_PPA_E)/(conjg(W_i)-E_kmq+PPA_E))
              !
-!             ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
+!             ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg_iscp%rhotw(ig2)*(-PPA_R)*&
 !&                   ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
 !&                     (f_kmq+bose_f(PPA_E))/(conjg(W_(i_w))-E_kmq+PPA_E))
              !
@@ -618,18 +624,19 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
        else if (l_sc_sex.or.l_cohsex.or.(l_sc_coh.and.COHSEX_use_empties)) then
          !
-         ! performed on the host
+!         call M_by_V('N',X_nrows,X_ncols, cONE,X_par(iq_mem)%blc(:,:,X_range1),X_nrows,&
+!&                        conjg(iscp%rhotw(X_cols1:X_cols2)),1,cZERO,local_rhotw(X_rows1:X_rows2),1)
+         call M_by_V('N',X_nrows,X_ncols, cONE, X_blc_p(:,:,X_range1),X_nrows,&
+&                        conjg_iscp_rhotw(X_cols1:X_cols2),1,cZERO,local_rhotw(X_rows1:X_rows2),1)
          !
-         local_rhotw=cZERO
-         call M_by_V('N',X_nrows,X_ncols, cONE,X_par(iq_mem)%blc(:,:,X_range1),X_nrows,&
-&                        conjg(iscp%rhotw(X_cols1:X_cols2)),1,cZERO,local_rhotw(X_rows1:X_rows2),1)
+         !pre_factor=0.0_SP
          !
-         pre_factor=0.0_SP
-         !
-         !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor)
-         do ig1=X_rows1,X_rows2
-           pre_factor=pre_factor+isc%rhotw(ig1)*local_rhotw(ig1)
-         enddo
+         !!DEV_CUF kernel do
+         !!DEV_OMP parallel do default(shared), private(ig1), reduction(+:pre_factor)
+         !do ig1=X_rows1,X_rows2
+         !  pre_factor=pre_factor+isc%rhotw(ig1)*local_rhotw(ig1)
+         !enddo
+         pre_factor=V_dot_V(X_nrows,isc_rhotw_p(X_rows1:X_rows2),local_rhotw(X_rows1:X_rows2))
 
          !
          ! SEX
@@ -711,7 +718,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  YAMBO_FREE(dc)
  YAMBO_FREE(W_)
- YAMBO_FREE(eet_factor)
+ YAMBO_FREE(local_rhotw)
+ YAMBO_FREE(conjg_iscp_rhotw)
  !
  l_X_alloc=.true.
 #if defined _SC

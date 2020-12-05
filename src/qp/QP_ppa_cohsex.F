@@ -95,7 +95,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), allocatable          :: W_(:),dc(:)
  complex(SP), allocatable DEV_ATTR :: eet_factor(:,:)
  type(elemental_collision), target :: isc,iscp
- type(PAR_matrix),          target :: X_par_loc
  !
  complex(SP), pointer DEV_ATTR :: isc_rhotw_p(:)
  complex(SP), pointer DEV_ATTR :: iscp_rhotw_p(:)
@@ -246,7 +245,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    io_err=io_X(X,Xw,ID)
  endif
  !
- ! indexes to be used with X_par_loc (i.e. also when using X_blc_p)
+ ! indexes to be used with X_par (i.e. also when using X_blc_p)
  ! X_mat_range(1:2) were used with X_mat, instead
  !
  X_range1=1
@@ -354,15 +353,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    X_nrows=X_rows2-X_rows1+1
    X_ncols=X_cols2-X_cols1+1
    !
-   call MATRIX_duplicate("none",M_in=X_par(iq_mem),M_out=X_par_loc)
-   call dev_memcpy(X_par_loc%blc, X_par(iq_mem)%blc)
-   !
    if (have_cuda) then
-     YAMBO_ALLOC_SOURCE(X_par_loc%blc_d,X_par_loc%blc)
+     YAMBO_ALLOC_SOURCE(X_par(iq_mem)%blc_d,X_par(iq_mem)%blc)
    endif
-   !if (have_cuda) call dev_memcpy(X_par_loc%blc_d, X_par_loc%blc)
-   !
-   X_blc_p=> DEV_VAR(X_par_loc%blc)
+   X_blc_p=> DEV_VAR(X_par(iq_mem)%blc)
    !
    if(l_ppa.and.l_GW_terminator) then
      YAMBO_ALLOC(eet_factor,(X_rows1:X_rows2,X_cols1:X_cols2))
@@ -449,32 +443,53 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        else
          !
          dp_dummy = 0.0_DP
+         dp_dummy_r = 0.0_DP
+         dp_dummy_i = 0.0_DP
          !
          if (X_is_TR_rotated) then
            !
-           !$omp parallel do default(shared), private(ig1,ig2), &
-           !$omp &           reduction(+:dp_dummy), collapse(2)
+           !DEV_CUF kernel do(2)
+           !DEV_OMP parallel do default(shared), private(ig1,ig2,ctmp), &
+           !DEV_OMP &           reduction(+:dp_dummy), collapse(2)
+           !
            do ig2=X_cols1,X_cols2
            do ig1=X_rows1,X_rows2
-               dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))* &
-&                                X_par_loc%blc(ig1,ig2,X_range1),kind=DP)
+             ctmp=cmplx(2._SP*pi*isc_rhotw_p(DEV_VAR(G_m_G)(ig2,ig1))* &
+&                       X_blc_p(ig1,ig2,X_range1),kind=DP)
+#ifdef _CUDA
+             dp_dummy_r=dp_dummy_r+real(ctmp,DP)
+             dp_dummy_i=dp_dummy_i+imag(ctmp)
+#else
+             dp_dummy=dp_dummy+ctmp
+#endif
            enddo
            enddo
            !
          else
            !
-           !$omp parallel do default(shared), private(ig1,ig2), &
-           !$omp &           reduction(+:dp_dummy), collapse(2)
+           !DEV_CUF kernel do(2)
+           !DEV_OMP parallel do default(shared), private(ig1,ig2,ctmp), &
+           !DEV_OMP &           reduction(+:dp_dummy), collapse(2)
+           !
            do ig2=X_cols1,X_cols2
            do ig1=X_rows1,X_rows2
-               dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*&
-&                       X_par_loc%blc(ig1,ig2,X_range1),kind=DP)
+             ctmp=cmplx(2._SP*pi*isc_rhotw_p(DEV_VAR(G_m_G)(ig1,ig2))*&
+&                       X_blc_p(ig1,ig2,X_range1),kind=DP)
+#ifdef _CUDA
+             dp_dummy_r=dp_dummy_r+real(ctmp,DP)
+             dp_dummy_i=dp_dummy_i+imag(ctmp)
+#else
+             dp_dummy=dp_dummy+ctmp
+#endif
            enddo
            enddo
            !
          endif
          !
+         if (have_cuda) dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)
+         !
          dc(1) = cmplx(dp_dummy,kind=SP)
+         !
          !
          ! Bug spotted by D.V. (April 2014). HEAD_QP_cpu is defined differently when
          ! the _SC flag is used. The point is that in SE calculations HEAD_QP_cpu is used
@@ -593,10 +608,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            enddo
            enddo
            !
-#ifdef _CUDA
-           dp_dummy%re = dp_dummy_r
-           dp_dummy%im = dp_dummy_i
-#endif
+           if (have_cuda) dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)
            !
            dc(i_w) = cmplx(dp_dummy,kind=SP)
            !
@@ -609,8 +621,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          ! performed on the host
          !
          local_rhotw=cZERO
-         !call M_by_V('N', X%ng, X_par(iq_mem)%blc(:,:,X_range1), conjg(iscp%rhotw), local_rhotw)
-         !
          call M_by_V('N',X_nrows,X_ncols, cONE,X_par(iq_mem)%blc(:,:,X_range1),X_nrows,&
 &                        conjg(iscp%rhotw(X_cols1:X_cols2)),1,cZERO,local_rhotw(X_rows1:X_rows2),1)
          !
@@ -680,10 +690,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          enddo
          enddo
          !
-#ifdef _CUDA
-         dp_dummy%re = dp_dummy_r
-         dp_dummy%im = dp_dummy_i
-#endif
+         if (have_cuda) dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)
          !
          QP_Sc(i_qp,i_w)=QP_Sc(i_qp,i_w)+cmplx(dp_dummy,kind=SP)
          !
@@ -694,7 +701,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    enddo QP_loop
    !
    YAMBO_FREE(eet_factor)
-   call MATRIX_duplicate("free",M_out=X_par_loc)
+   YAMBO_FREE(X_par(iq_mem)%blc_d)
    !
  enddo Q_loop 
  !
@@ -710,10 +717,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #if defined _SC
  l_X_alloc=l_sc_run.and.io_RESPONSE
 #endif
- if(l_X_alloc) call X_alloc('X')
- call X_PARALLEL_alloc(X_par_loc,0,0,"CLEAN")
- call X_PARALLEL_alloc(X_par,0,0,"CLEAN")
- if (allocated(X_par)) deallocate(X_par)
+ if(l_X_alloc) then
+   call X_PARALLEL_alloc(X_par,0,0,"CLEAN")
+   if (allocated(X_par)) deallocate(X_par)
+ endif
+ call X_alloc('X')
  !
  call timing('GW(ppa)',OPR='stop')
  !

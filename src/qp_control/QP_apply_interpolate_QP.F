@@ -84,7 +84,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
    !
    call k_expand(QP_k)
    !
-   call INTERPOLATION_driver_seed(trim(what)//"_from_DB",ID,bands,QP_k,SEED_QP=qp,NEAREST=QP_action(i_ACTION)%plan(4))
+   call INTERPOLATION_driver_seed(trim(what)//"_from_DB",ID,bands,QP_k,SEED_QP=qp,NN=QP_action(i_ACTION)%plan(4))
    call INTERPOLATION_driver_do(trim(what)//"_from_DB",ID,k,FineGrid="BARE")
    !
    call QP_transfer('appl')

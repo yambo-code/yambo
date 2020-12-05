@@ -157,7 +157,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
     nb_max=    nb(2)
     if (HAS_DBGD) nb_max_FineGd=min(nb(2),E%FG%nb)
     !
-    call INTERPOLATION_driver_seed(OBJ//"_from_DB",ID,nb,RT_k,SEED_RT=RT_carriers,NEAREST=.not.l_B)
+    call INTERPOLATION_driver_seed(OBJ//"_from_DB",ID,nb,RT_k,SEED_RT=RT_carriers,NN=.not.l_B)
     !
     call INTERPOLATION_driver_do(OBJ//"_from_DB",ID,K)
     !

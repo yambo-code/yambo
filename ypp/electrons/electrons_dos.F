@@ -123,7 +123,7 @@ subroutine electrons_dos(Xk,Xen)
      N_files=2
    endif
    !
-   call INTERPOLATION_driver_seed("E_on_built_in",IDe,DOS_bands,Xk,SEED_E=Xen,NEAREST=.FALSE.)
+   call INTERPOLATION_driver_seed("E_on_built_in",IDe,DOS_bands,Xk,SEED_E=Xen,NN=.FALSE.)
    call INTERPOLATION_driver_do("E_on_built_in",IDe,GRID_k,OUT_E=GRID_E)
    !
    call INTERPOLATION_driver_seed("f_on_built_in",IDf,DOS_bands,Xk,SEED_E=Xen,QUIET=.TRUE.)

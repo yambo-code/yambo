@@ -357,7 +357,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    call MATRIX_duplicate("none",M_in=X_par(iq_mem),M_out=X_par_loc)
    call dev_memcpy(X_par_loc%blc, X_par(iq_mem)%blc)
    !
-   if (have_cuda) call dev_memcpy(X_par_loc%blc_d, X_par_loc%blc)
+   if (have_cuda) then
+     YAMBO_ALLOC_SOURCE(X_par_loc%blc_d,X_par_loc%blc)
+   endif
+   !if (have_cuda) call dev_memcpy(X_par_loc%blc_d, X_par_loc%blc)
    !
    X_blc_p=> DEV_VAR(X_par_loc%blc)
    !

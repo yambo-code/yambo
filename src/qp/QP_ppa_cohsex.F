@@ -1,4 +1,3 @@
-
 !
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
@@ -269,9 +268,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      iq_mem=PAR_Q_ibz_index(iqibz)
      if (io_RESPONSE) iq_mem=1
      !
-     !X_mat_range=(/1,Xw%n_freqs/)
-     !if (.not.io_RESPONSE) X_mat_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
-     !
      ! GAMP
      !
      call DEV_SUB(scatter_Gamp)(isc,'c')
@@ -404,7 +400,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        isc%qs=(/1,1,1/)
        !
        call DEV_SUB(scatter_Bamp)(isc)
-       if (have_cuda) call dev_memcpy(isc%rhotw,isc%rhotw_d)
        !
        if (l_GW_terminator) then
          !
@@ -423,7 +418,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              !
              !DEV_CUF kernel do(2)
              !DEV_OMP parallel do default(shared), private(ig1,ig2), collapse(2)
-             !
              do ig2=X_cols1,X_cols2
              do ig1=X_rows1,X_rows2
                eet_factor(ig1,ig2)=isc_rhotw_p(DEV_VAR(G_m_G)(ig2,ig1))
@@ -434,7 +428,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              !
              !DEV_CUF kernel do(2)
              !DEV_OMP parallel do default(shared), private(ig1,ig2), collapse(2)
-             !
              do ig2=X_cols1,X_cols2
              do ig1=X_rows1,X_rows2
                eet_factor(ig1,ig2)=isc_rhotw_p(DEV_VAR(G_m_G)(ig1,ig2))
@@ -528,17 +521,16 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        isc%os(1)=ib
        !
        call DEV_SUB(scatter_Bamp)(isc)
-       if (have_cuda) call dev_memcpy(isc%rhotw, isc%rhotw_d)
        iscp%os=isc%os
        !
        if (any(isc%is/=iscp%is)) then
          call DEV_SUB(scatter_Bamp)(iscp)
-         if (have_cuda) call dev_memcpy(iscp%rhotw, iscp%rhotw_d)
        else
-         iscp%rhotw=isc%rhotw
-         if (have_cuda) call dev_memcpy(iscp%rhotw_d, iscp%rhotw)
+         !iscp%rhotw=isc%rhotw
+         call dev_memcpy(iscp_rhotw_p, isc_rhotw_p)
        endif
-       call dev_memcpy(conjg_iscp_rhotw,iscp%rhotw_d)
+       !conjg_iscp_rhotw=conjg(iscp%rhotw)
+       call dev_memcpy(conjg_iscp_rhotw,iscp_rhotw_p)
        call dev_conjg(conjg_iscp_rhotw)
        !
        dc=cZERO
@@ -624,18 +616,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
        else if (l_sc_sex.or.l_cohsex.or.(l_sc_coh.and.COHSEX_use_empties)) then
          !
-!         call M_by_V('N',X_nrows,X_ncols, cONE,X_par(iq_mem)%blc(:,:,X_range1),X_nrows,&
-!&                        conjg(iscp%rhotw(X_cols1:X_cols2)),1,cZERO,local_rhotw(X_rows1:X_rows2),1)
          call M_by_V('N',X_nrows,X_ncols, cONE, X_blc_p(:,:,X_range1),X_nrows,&
 &                        conjg_iscp_rhotw(X_cols1:X_cols2),1,cZERO,local_rhotw(X_rows1:X_rows2),1)
          !
-         !pre_factor=0.0_SP
-         !
-         !!DEV_CUF kernel do
-         !!DEV_OMP parallel do default(shared), private(ig1), reduction(+:pre_factor)
-         !do ig1=X_rows1,X_rows2
-         !  pre_factor=pre_factor+isc%rhotw(ig1)*local_rhotw(ig1)
-         !enddo
          pre_factor=V_dot_V(X_nrows,isc_rhotw_p(X_rows1:X_rows2),local_rhotw(X_rows1:X_rows2))
 
          !

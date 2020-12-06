@@ -173,7 +173,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    call elemental_collision_free(isc)
    call elemental_collision_free(iscp)
-   call elemental_collision_alloc(isc,NG=QP_ng_Sx,NG_GAMP=(/QP_ng_Sx,1/),TITLE="HF")
+   call elemental_collision_alloc(isc,NG=QP_ng_Sx,GAMP_NG=(/QP_ng_Sx,1/),TITLE="HF")
    call elemental_collision_alloc(iscp,NG=QP_ng_Sx,TITLE="HF")
    !
    YAMBO_ALLOC(local_rhotw,(QP_ng_Sx))

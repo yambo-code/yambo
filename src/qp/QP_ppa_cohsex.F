@@ -188,16 +188,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,n_WF_bands_to_load/),(/1,k%nibz/),title=trim(ch))
  !
- ! Elemental Collisions
- !====================== 
- isc%iqref=0
- call elemental_collision_alloc(isc,NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="GW")
- call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="GW")
- !
- isc_gamp_p => DEV_VAR(isc%gamp)
- isc_rhotw_p => DEV_VAR(isc%rhotw)
- iscp_rhotw_p => DEV_VAR(iscp%rhotw)
- !
  call timing('GW(ppa)',OPR='start')
  !
  ! Plasmon-Pole/Static interaction DB I/O
@@ -230,6 +220,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  endif
  YAMBO_ALLOC(local_rhotw,(X%ng))
  YAMBO_ALLOC(conjg_iscp_rhotw,(X%ng))
+ !
+ ! Elemental Collisions
+ !====================== 
+ isc%iqref=0
+ call elemental_collision_alloc(isc,NG=isc%ngrho,TITLE="GW")
+ call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="GW")
+ !
+ isc_rhotw_p => DEV_VAR(isc%rhotw)
+ iscp_rhotw_p => DEV_VAR(iscp%rhotw)
  !
  call PP_redux_wait
  !
@@ -269,11 +268,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      iq_mem=PAR_Q_ibz_index(iqibz)
      if (io_RESPONSE) iq_mem=1
      !
-     ! GAMP
-     !
-     call DEV_SUB(scatter_Gamp)(isc,'c')
-     if (have_cuda) call dev_memcpy(isc%gamp,isc%gamp_d)
-     !
      ! I/O
      !
      if (io_RESPONSE) then
@@ -312,12 +306,23 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
        else
          !
+         ! GAMP
+         !
+         ! update alloc
+         call elemental_collision_alloc(isc,GAMP_ROWS=X_par(1)%rows,GAMP_COLS=X_par(1)%cols)
+         !
+         call DEV_SUB(scatter_Gamp)(isc,'c')
+         if (have_cuda) call dev_memcpy(isc%gamp,isc%gamp_d)
+         !
          !$omp parallel do default(shared), private(ig1,ig2)
          do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
          do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
            X_par(iq_mem)%blc(ig1,ig2,X_range1)=X_par(iq_mem)%blc(ig1,ig2,X_range1)*isc%gamp(ig1,ig2)
          enddo
          enddo
+         !
+         YAMBO_FREE(isc%gamp)
+         YAMBO_FREE(isc%gamp_d)
          !
        endif
        !
@@ -359,9 +364,19 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    endif
    X_blc_p=> DEV_VAR(X_par(iq_mem)%blc)
    !
+   ! GAMP
+   !
+   if(l_ppa) then
+     ! update alloc
+     call elemental_collision_alloc(isc,GAMP_ROWS=X_par(1)%rows,GAMP_COLS=X_par(1)%cols)
+     call DEV_SUB(scatter_Gamp)(isc,'c')
+     isc_gamp_p => DEV_VAR(isc%gamp)
+   endif
+   !
    if(l_ppa.and.l_GW_terminator) then
      YAMBO_ALLOC(eet_factor,(X_rows1:X_rows2,X_cols1:X_cols2))
    endif
+
    !
    ! main QP loop
    !
@@ -639,7 +654,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
      enddo ! loop on scattering states
      !
-     if(l_GW_terminator) then
+     if(l_ppa.and.l_GW_terminator) then
        !
        forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
        !
@@ -692,6 +707,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    enddo QP_loop
    !
    YAMBO_FREE(eet_factor)
+   YAMBO_FREE(isc%gamp)
+   YAMBO_FREE(isc%gamp_d)
    YAMBO_FREE(X_par(iq_mem)%blc_d)
    !
  enddo Q_loop 

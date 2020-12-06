@@ -51,7 +51,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use wrapper,       ONLY:M_by_V,V_dot_V
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
 &                        PARALLEL_WF_distribute,QP_state_print,MATRIX_transpose,MATRIX_duplicate
- use matrix,        ONLY:PAR_matrix
+ use matrix,        ONLY:PAR_matrix,MATRIX_reset
  use timing_m,      ONLY:timing
 #if defined _SC
  use parallel_m,    ONLY:PAR_COM_QP_A2A
@@ -710,7 +710,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  l_X_alloc=l_sc_run.and.io_RESPONSE
 #endif
  if(l_X_alloc) then
-   call X_PARALLEL_alloc(X_par,0,0,"CLEAN")
+   do iq_mem = 1,size(X_par)
+     call MATRIX_reset(X_par(iq_mem))
+   enddo
    if (allocated(X_par)) deallocate(X_par)
  endif
  call X_alloc('X')

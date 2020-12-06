@@ -110,11 +110,8 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
 
  gamp_p => DEV_VAR(isc%gamp)
  !
-#ifdef _CUDA_LOC
- !$cuf kernel do(2)
-#else
- !$omp parallel do default(shared), private(i1,i2,ig1,ig2,l_RIM), collapse(2)
-#endif
+ !DEV_CUF kernel do(2)
+ !DEV_OMP parallel do default(shared), private(i1,i2,ig1,ig2,l_RIM), collapse(2)
  !
  do i1=1,ng1
    do i2=1,ng2

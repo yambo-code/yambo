@@ -153,7 +153,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  iG_= ng_in_shell(iG_shell)
  eval_G_minus_G=iG_
- if (iGo==0) iGo_=iG_
+ if (iGo==0) iGo_=iG_ 
  !
  ! Fill the actual G_m_G matrix
  !
@@ -189,6 +189,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
 !   surely does not help
 !
  !
+ !print *, g_vec(127,:)
  v2(:)=g_vec(1,:)-g_vec(1,:)
  G_m_G(1,1)=G_index(v2,.false.) 
  G_m_G(1,1)=0
@@ -214,10 +215,10 @@ integer function eval_G_minus_G(iG,iGo,COMM)
      v1(:)=g_vec(i1,:)-g_vec(i2,:)
      G_m_G(i1,i2)=imap(nint(v1(1)),nint(v1(2)),nint(v1(3)))
      !G_m_G(i1,i2)=G_index(v1,.false.) 
-     print *,"i1,i2"
-     print *, i1,i2
-     print *,"index"
-     print *, G_m_G(i1,i2)
+     !print *,"i1,i2"
+     !print *, i1,i2
+     !print *,"index"
+     !print *, G_m_G(i1,i2)
    enddo
  enddo
  !$omp end parallel do

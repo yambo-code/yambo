@@ -195,6 +195,15 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  print *,g_vec(4,:)
  print *,g_vec(30,:)
  call c2a(nvec=iG_,v_in=g_vec(1:iG_,1:3),mode="ki2a")
+ !
+ allocate(imap(iG_,iG_,iG_))
+ imap(:,:,:)=0
+ do i1 = 1, iG_
+   imap(nint(g_vec(i1,1)),nint(g_vec(i1,2)),nint(g_vec(i1,3))) = i1
+ enddo
+ print *,"imap(v1)"
+ print *,imap(nint(g_vec(1,1)),nint(g_vec(2,2)),nint(g_vec(1,3)))
+ !
  print *,'done'
  print *,g_vec(1,:)
  print *,g_vec(2,:)
@@ -202,26 +211,15 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  print *,g_vec(4,:)
  print *,g_vec(30,:)
  !
- allocate (imap(iG_,iG_,iG_))
- imap(:,:,:)=0
- do i1 = 1, iG_
-   imap(nint(g_vec(i1,1)),nint(g_vec(i1,2)),nint(g_vec(i1,3))) = i1
- enddo
- print *,"imap(v1)"
- print *,imap(nint(g_vec(1,1)),nint(g_vec(2,2)),nint(g_vec(1,3)))
- print *,"imap(v2)"
- print *,imap(nint(g_vec(2,1)),nint(g_vec(2,2)),nint(g_vec(1,3)))
- print *,"imap(v3)"
- print *,imap(nint(g_vec(3,1)),nint(g_vec(3,2)),nint(g_vec(3,3)))
- print *,"imap(v1)"
- print *, nint(g_vec(2,3))
- print *,imap(nint(g_vec(3,1)),nint(g_vec(3,2)),nint(g_vec(2,3)))
- print *,"imap(v2)"
- print *,imap(nint(g_vec(5,1)),nint(g_vec(5,2)),nint(g_vec(5,3)))
- print *,"imap(v3)"
- print *,imap(nint(g_vec(30,1)),nint(g_vec(30,2)),nint(g_vec(30,3)))
+ call c2a(nvec=iG_,v_in=g_vec(1:iG_,1:3),mode="ka2i") 
  !
- call c2a(nvec=iG_,v_in=g_vec(1:iG_,1:3),mode="ka2i")
+ print *,'done'
+ print *,g_vec(1,:)
+ print *,g_vec(2,:)
+ print *,g_vec(3,:)
+ print *,g_vec(4,:)
+ print *,g_vec(30,:)
+ !
  !$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
  do i2=1,iGo_
    !
@@ -238,14 +236,6 @@ integer function eval_G_minus_G(iG,iGo,COMM)
    enddo
  enddo
  !$omp end parallel do
- !
- call c2a(nvec=iG_,v_in=g_vec(1:iG_,1:3),mode="ka2i")
- print *,'done'
- print *,g_vec(1,:)
- print *,g_vec(2,:)
- print *,g_vec(3,:)
- print *,g_vec(4,:)
- print *,g_vec(30,:)
  ! 
  if (present(COMM)) call PP_redux_wait(G_m_G,COMM=COMM%COMM)
  !

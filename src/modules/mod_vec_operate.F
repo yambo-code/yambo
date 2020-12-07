@@ -319,10 +319,10 @@ module vec_operate
      !
      if (present(v_out)) then
        v_out=transpose(matmul(mat,transpose(u)))
-       if (index(mode,'2i')/=0) v_out(1:nvec,1:3)=matmul(v_out(1:nvec,1:3),n_m1) ! * -> iku
+       if (index(mode,'2i')/=0) v_out(1:nvec,1:3)=matmul(v_out(1:nvec,1:3),n_m1(:,:)) ! * -> iku
      else
        v_in=transpose(matmul(mat,transpose(u)))
-       if (index(mode,'2i')/=0) v_in(1:nvec,1:3)=matmul(v_in(1:nvec,1:3),n_m1) ! * -> iku
+       if (index(mode,'2i')/=0) v_in(1:nvec,1:3)=matmul(v_in(1:nvec,1:3),n_m1(:,:)) ! * -> iku
      endif
    end subroutine c2a_vec
    !

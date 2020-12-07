@@ -46,7 +46,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  integer :: i1,i2,is
  integer :: iG_shell,iGo_shell,iG_shell_0,iG_shell_max,iG_,iGo_,iG_alloc,iGo_alloc
  real(SP):: E_iG, E_iGo, E_max
- real(SP):: v1(3)
+ real(SP):: v1(3),v2(3)
  real(SP), allocatable :: E_G_m_G(:,:),imap(:,:,:)
  type(PP_indexes) :: PAR_IND_G
  !
@@ -189,37 +189,18 @@ integer function eval_G_minus_G(iG,iGo,COMM)
 !   surely does not help
 !
  !
- print *,g_vec(1,:)
- print *,g_vec(2,:)
- print *,g_vec(3,:)
- print *,g_vec(4,:)
- print *,g_vec(30,:)
+ v2(:)=g_vec(1,:)-g_vec(1,:)
+ G_m_G(1,1)=G_index(v2,.false.) 
+ G_m_G(1,1)=0
+ ! 
  call c2a(nvec=iG_,v_in=g_vec(1:iG_,1:3),mode="ki2a")
- !
+ ! 
  allocate(imap(iG_,iG_,iG_))
  imap(:,:,:)=0
  do i1 = 1, iG_
    imap(nint(g_vec(i1,1)),nint(g_vec(i1,2)),nint(g_vec(i1,3))) = i1
  enddo
- print *,"imap(v1)"
- print *,imap(nint(g_vec(1,1)),nint(g_vec(2,2)),nint(g_vec(1,3)))
- !
- print *,'done'
- print *,g_vec(1,:)
- print *,g_vec(2,:)
- print *,g_vec(3,:)
- print *,g_vec(4,:)
- print *,g_vec(30,:)
- !
- call c2a(nvec=iG_,v_in=g_vec(1:iG_,1:3),mode="ka2i") 
- !
- print *,'done'
- print *,g_vec(1,:)
- print *,g_vec(2,:)
- print *,g_vec(3,:)
- print *,g_vec(4,:)
- print *,g_vec(30,:)
- !
+ ! 
  !$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
  do i2=1,iGo_
    !
@@ -231,12 +212,18 @@ integer function eval_G_minus_G(iG,iGo,COMM)
    do i1=1,iG_
      !
      v1(:)=g_vec(i1,:)-g_vec(i2,:)
-     G_m_G(i1,i2)=G_index(v1,.false.)
-     !
+     G_m_G(i1,i2)=imap(nint(v1(1)),nint(v1(2)),nint(v1(3)))
+     !G_m_G(i1,i2)=G_index(v1,.false.) 
+     print *,"i1,i2"
+     print *, i1,i2
+     print *,"index"
+     print *, G_m_G(i1,i2)
    enddo
  enddo
  !$omp end parallel do
  ! 
+ call c2a(nvec=iG_,v_in=g_vec(1:iG_,1:3),mode="ka2i")
+ !
  if (present(COMM)) call PP_redux_wait(G_m_G,COMM=COMM%COMM)
  !
  call PP_indexes_reset(PAR_IND_G)

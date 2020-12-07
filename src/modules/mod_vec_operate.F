@@ -276,9 +276,8 @@ module vec_operate
      !
      ! Scale factor if input vector is in iku
      !     
-     n=reshape((/1._SP,0._SP,0._SP,0._SP,1._SP,0._SP,0._SP,0._SP,1._SP/),(/3,3/))
-     n_m1=reshape((/1._SP,0._SP,0._SP,0._SP,1._SP,0._SP,0._SP,0._SP,1._SP/),(/3,3/))
-
+     n(:,:)=0
+     n_m1(:,:)=0
      do i =1, 3
        if (index(mode,'r')/=0) n(i,i)=alat(i)
        if (index(mode,'k')/=0) n(i,i)=2._SP*pi/alat(i)
@@ -287,27 +286,10 @@ module vec_operate
      !
      ! u is rlu or cc (no iku)
      !
-     print *,"alat"
-     print *,alat
-     print *,"n"
-     print *,n(:,:)
-     print *,"a_here"
-     print *,a_here
      u(:,:)=v_in(:,:)
-     print *,"u before matmul"
-     print *,u(1,:)
-     print *,u(2,:)
-     print *,u(3,:)
-     print *,u(4,:)
-     print *,u(30,:)
-     if (index(mode,'i2')/=0) u(:,:)=matmul(v_in(:,:),n(:,:)) ! iku -> cc
      !
-     print *,"u after matmul"
-     print *,u(1,:)
-     print *,u(2,:)
-     print *,u(3,:)
-     print *,u(4,:)
-     print *,u(30,:)
+     if (index(mode,'i2')/=0) u(:,:)=matmul(v_in(1:nvec,1:3),n(1:3,1:3)) ! iku -> cc
+     !
      ! i2c/c2i
      mat=reshape((/1._SP,0._SP,0._SP,0._SP,1._SP,0._SP,0._SP,0._SP,1._SP/),(/3,3/))
      !
@@ -319,10 +301,10 @@ module vec_operate
      !
      if (present(v_out)) then
        v_out=transpose(matmul(mat,transpose(u)))
-       if (index(mode,'2i')/=0) v_out(1:nvec,1:3)=matmul(v_out(1:nvec,1:3),n_m1(:,:)) ! * -> iku
+       if (index(mode,'2i')/=0) v_out(:,:)=matmul(v_out(1:nvec,1:3),n_m1(:,:)) ! * -> iku
      else
        v_in=transpose(matmul(mat,transpose(u)))
-       if (index(mode,'2i')/=0) v_in(1:nvec,1:3)=matmul(v_in(1:nvec,1:3),n_m1(:,:)) ! * -> iku
+       if (index(mode,'2i')/=0) v_in(:,:)=matmul(v_in(1:nvec,1:3),n_m1(:,:)) ! * -> iku
      endif
    end subroutine c2a_vec
    !

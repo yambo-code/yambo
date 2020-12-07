@@ -36,7 +36,7 @@ module vec_operate
  end interface
  !
  interface c2a
-   module procedure  c2a_scal, c2a_vec
+   module procedure  c2a_scal,c2a_vec
  end interface
  !
  contains
@@ -190,7 +190,7 @@ module vec_operate
      !
    end subroutine rot_v_xy_plane
    !
-   subroutine c2a_scal(b_in,v_in,v_out,mode)
+   subroutine c2a_scal(b_in,v_in,v_out,mode) !_scal
      !
      ! mode = 'k/r c2a' 'k/r a2c' (cc  <-> rlu)
      ! mode = 'k/r i2a' 'k/r a2i' (iku <-> rlu)
@@ -243,7 +243,7 @@ module vec_operate
        v_in=matmul(mat,u) 
        if (index(mode,'2i')/=0) v_in(:)=v_in(:)/n(:) ! * -> iku
      endif
-   end subroutine c2a_scal
+   end subroutine c2a_scal 
    !
    subroutine c2a_vec(b_in,nvec,v_in,v_out,mode)
      !
@@ -275,7 +275,10 @@ module vec_operate
      endif
      !
      ! Scale factor if input vector is in iku
-     !
+     !     
+     n=reshape((/1._SP,0._SP,0._SP,0._SP,1._SP,0._SP,0._SP,0._SP,1._SP/),(/3,3/))
+     n_m1=reshape((/1._SP,0._SP,0._SP,0._SP,1._SP,0._SP,0._SP,0._SP,1._SP/),(/3,3/))
+
      do i =1, 3
        if (index(mode,'r')/=0) n(i,i)=alat(i)
        if (index(mode,'k')/=0) n(i,i)=2._SP*pi/alat(i)
@@ -284,9 +287,27 @@ module vec_operate
      !
      ! u is rlu or cc (no iku)
      !
-     u=v_in
-     if (index(mode,'i2')/=0) u(1:nvec,1:3)=matmul(v_in(:,:),n(:,:)) ! iku -> cc
+     print *,"alat"
+     print *,alat
+     print *,"n"
+     print *,n(:,:)
+     print *,"a_here"
+     print *,a_here
+     u(:,:)=v_in(:,:)
+     print *,"u before matmul"
+     print *,u(1,:)
+     print *,u(2,:)
+     print *,u(3,:)
+     print *,u(4,:)
+     print *,u(30,:)
+     if (index(mode,'i2')/=0) u(:,:)=matmul(v_in(:,:),n(:,:)) ! iku -> cc
      !
+     print *,"u after matmul"
+     print *,u(1,:)
+     print *,u(2,:)
+     print *,u(3,:)
+     print *,u(4,:)
+     print *,u(30,:)
      ! i2c/c2i
      mat=reshape((/1._SP,0._SP,0._SP,0._SP,1._SP,0._SP,0._SP,0._SP,1._SP/),(/3,3/))
      !

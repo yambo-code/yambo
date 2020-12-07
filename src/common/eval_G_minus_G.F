@@ -31,7 +31,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  ! in such a way that G_m_G(iG,j) exists for all j
  !
  use pars,         ONLY:SP
- use vec_operate,  ONLY:iku_v_norm
+ use vec_operate,  ONLY:iku_v_norm, c2a
  use parallel_m,   ONLY:MPI_comm,PP_redux_wait,PP_indexes,PP_indexes_reset,myid
  use R_lattice,    ONLY:G_m_G,G_m_G_d,g_vec,ng_in_shell,n_g_shells,E_of_shell
  use interfaces,   ONLY:PARALLEL_index,PARALLEL_live_message
@@ -47,7 +47,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  integer :: iG_shell,iGo_shell,iG_shell_0,iG_shell_max,iG_,iGo_,iG_alloc,iGo_alloc
  real(SP):: E_iG, E_iGo, E_max
  real(SP):: v1(3)
- real(SP), allocatable :: E_G_m_G(:,:)
+ real(SP), allocatable :: E_G_m_G(:,:),imap(:,:,:)
  type(PP_indexes) :: PAR_IND_G
  !
  integer, external :: G_index
@@ -162,7 +162,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
 ! * convert to g_vec to integer coords
 !   relative/crystal coords
-! * alloc alternative g_vec_crys array
+! * alloc alternative g_vec array
 ! * use internal conversion routines, if fast enough
 !
 ! g_vec looks to be iku, we want to have rlu
@@ -189,6 +189,39 @@ integer function eval_G_minus_G(iG,iGo,COMM)
 !   surely does not help
 !
  !
+ print *,g_vec(1,:)
+ print *,g_vec(2,:)
+ print *,g_vec(3,:)
+ print *,g_vec(4,:)
+ print *,g_vec(30,:)
+ call c2a(nvec=iG_,v_in=g_vec(1:iG_,1:3),mode="ki2a")
+ print *,'done'
+ print *,g_vec(1,:)
+ print *,g_vec(2,:)
+ print *,g_vec(3,:)
+ print *,g_vec(4,:)
+ print *,g_vec(30,:)
+ !
+ allocate (imap(iG_,iG_,iG_))
+ imap(:,:,:)=0
+ do i1 = 1, iG_
+   imap(nint(g_vec(i1,1)),nint(g_vec(i1,2)),nint(g_vec(i1,3))) = i1
+ enddo
+ print *,"imap(v1)"
+ print *,imap(nint(g_vec(1,1)),nint(g_vec(2,2)),nint(g_vec(1,3)))
+ print *,"imap(v2)"
+ print *,imap(nint(g_vec(2,1)),nint(g_vec(2,2)),nint(g_vec(1,3)))
+ print *,"imap(v3)"
+ print *,imap(nint(g_vec(3,1)),nint(g_vec(3,2)),nint(g_vec(3,3)))
+ print *,"imap(v1)"
+ print *, nint(g_vec(2,3))
+ print *,imap(nint(g_vec(3,1)),nint(g_vec(3,2)),nint(g_vec(2,3)))
+ print *,"imap(v2)"
+ print *,imap(nint(g_vec(5,1)),nint(g_vec(5,2)),nint(g_vec(5,3)))
+ print *,"imap(v3)"
+ print *,imap(nint(g_vec(30,1)),nint(g_vec(30,2)),nint(g_vec(30,3)))
+ !
+ call c2a(nvec=iG_,v_in=g_vec(1:iG_,1:3),mode="ka2i")
  !$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
  do i2=1,iGo_
    !
@@ -205,6 +238,14 @@ integer function eval_G_minus_G(iG,iGo,COMM)
    enddo
  enddo
  !$omp end parallel do
+ !
+ call c2a(nvec=iG_,v_in=g_vec(1:iG_,1:3),mode="ka2i")
+ print *,'done'
+ print *,g_vec(1,:)
+ print *,g_vec(2,:)
+ print *,g_vec(3,:)
+ print *,g_vec(4,:)
+ print *,g_vec(30,:)
  ! 
  if (present(COMM)) call PP_redux_wait(G_m_G,COMM=COMM%COMM)
  !

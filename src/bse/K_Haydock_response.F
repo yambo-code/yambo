@@ -20,7 +20,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
+subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_threshold)
  !
  use pars,           ONLY:SP,schlen,cI,cZERO,cONE,pi
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule
@@ -41,6 +41,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
  !
  type(w_samp),intent(in) :: W
  integer,     intent(in) :: iq,it,Cf_size
+ character(*),intent(in) :: scheme
  character(*),intent(in) :: mode
  real(SP),    intent(in) :: Bf(it+1),Af(it)
  complex(SP), intent(in) :: Cf(Cf_size)
@@ -57,7 +58,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
  complex(SP) :: gauge_factor
  complex(SP) :: freq_axis(0:W%n_freqs)
  !
- complex(SP) :: X_o(4,it), YbyX(2)
+ complex(SP) :: X_o(2,it), X_a(2,it), YbyX(2)
  complex(SP),allocatable :: X_i(:,:)
  !
  ! related to terminator
@@ -66,7 +67,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
  real(SP)    :: Av1, Av2
  integer, parameter :: RES = 3, ARES = 2, COUPL = 1, MIN_ITER = 10
  logical     :: UseTerminator,use_A4,use_A6
- logical     :: retarded, coupling
+ logical     :: retarded,use_Cf
  !
  Co=Co_factor*Haydock_v0_mod**2
  reached_threshold=0._SP
@@ -77,8 +78,8 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
  call parser("UseA4",use_A4)    ! For debug pourposes
  use_A6=.not.use_A4
  !
- coupling= Cf_size>2
- retarded= (trim(BSE_mode)=='retarded'.and..not.coupling)
+ use_Cf=Cf_size>2
+ retarded= (trim(BSE_mode)=='retarded') .and.(trim(scheme)=="hermitian")
  !
  i_eps(1)=2
  i_eps(2)=4
@@ -86,12 +87,23 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
  para_term_w0  =cZERO
  diam_term_used=cZERO
  !
+ ! DEBUG <
+ !tmp_tresh=0._SP
+ !if (Cf_size>2 ) then
+ !  do i1=1,it
+ !    tmp_tresh=tmp_tresh+Cf(i1)*conjg(Cf(i1))
+ !  enddo
+ !  write(100,*) "Projection of W0 on q_i is equal to ",tmp_tresh
+ !endif
+ ! DEBUG >
+ !
  if(.not.trim(global_gauge)=='velocity') gauge_factor=cONE*Co/bare_qpg(iq,1)**2
  !
  if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
- if (coupling) allocate(X_i(2,it))
+ if (use_Cf) allocate(X_i(2,it))
  if (Useterminator) then 
-   if (.not.coupling) then
+   select case(scheme)
+   case("hermitian")
      Av1 = 0._SP
      Av2 = 0._SP
      do i1 = 1, it
@@ -100,7 +112,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
      end do
      Av1 = Av1/it
      Av2 = Av2/it
-   else
+   case("pseudo-herm")
      Av1 = 0._SP
      Av2 = 0._SP
      do i1 = 2,it+1,2
@@ -109,7 +121,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
      end do
      Av1 = Av1/(it/2+mod(it,2))
      Av2 = Av2/(it/2)
-   end if
+   end select
  end if
  !
  iw_start=1
@@ -119,31 +131,38 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
  freq_axis(1:)=W%p(:)
  !
  do iw=iw_start,W%n_freqs
+   !
    X_o=cZERO
+   !
    if (UseTerminator) then 
-     if (.not.coupling) then
+     select case(scheme)
+     case("hermitian")
        X_t(1) = terminator(freq_axis(iw), Av1,Av2, RES)
-       if (retarded) X_t(2) = terminator(freq_axis(iw),-Av1,Av2,ARES)
-     endif
-     if (coupling.and.(mod(it,2)==0)) X_t(1) = terminator(freq_axis(iw),Av1,Av2,COUPL)
-     if (coupling.and.(mod(it,2)==1)) X_t(1) = terminator(freq_axis(iw),Av2,Av1,COUPL)
+       if (retarded) X_t(2) = -terminator(conjg(freq_axis(iw)),-Av1,Av2,ARES)
+     case("pseudo-herm")
+       if ((mod(it,2)==0)) X_t(1) = terminator(freq_axis(iw),Av1,Av2,COUPL)
+       if ((mod(it,2)==1)) X_t(1) = terminator(freq_axis(iw),Av2,Av1,COUPL)
+     end select
    endif
+   !
    X_o(1:2,it) = 1._SP/(freq_axis(iw)-Af(it)-Bf(it+1)**2*X_t(1))
-   if (retarded) X_o(3:4,it)= 1._SP/(freq_axis(iw)+Af(it)-Bf(it+1)**2*X_t(2))
+   if (retarded) X_a(1:2,it)= -1._SP/(conjg(freq_axis(iw))+Af(it)+Bf(it+1)**2*X_t(2))
    do i1=it-1,1,-1
      X_o(1,i1) = 1._SP/(freq_axis(iw)-Af(i1)-Bf(i1+1)**2*X_o(1,i1+1) )
-     if (retarded) X_o(3,i1)= 1._SP/(freq_axis(iw)+Af(i1)-Bf(i1+1)**2*X_o(3,i1+1))
+     if (retarded) X_a(1,i1)= -1._SP/(conjg(freq_axis(iw))+Af(i1)+Bf(i1+1)**2*X_a(1,i1+1))
    enddo
    do i1=it-2,1,-1
      X_o(2,i1) = 1._SP/(freq_axis(iw)-Af(i1)-Bf(i1+1)**2*X_o(2,i1+1) )
-     if (retarded) X_o(4,i1)= 1._SP/(freq_axis(iw)+Af(i1)-Bf(i1+1)**2*X_o(4,i1+1))
+     if (retarded) X_a(2,i1)= -1._SP/(conjg(freq_axis(iw))+Af(i1)+Bf(i1+1)**2*X_a(2,i1+1))
    enddo
-   if (coupling) then
+   !
+   if (use_Cf) then
      !
      ! (A.4), for debug pourposes
+     ! to be fixed ...
      if(use_A4) then
-       X_i(:,1) = (1-(freq_axis(iw)-Af(1))*X_o(:2,1))/Bf(2)
-       X_i(:,2) = (-Bf(2)*X_o(:2,1)-(freq_axis(iw)-Af(2))*X_i(:,1))/Bf(3)
+       X_i(:,1) = (1-(freq_axis(iw)-Af(1))*X_o(:,1))/Bf(2)
+       X_i(:,2) = (-Bf(2)*X_o(:,1)-(freq_axis(iw)-Af(2))*X_i(:,1))/Bf(3)
        YbyX(:) = X_i(:,1)*Cf(1)+X_i(:,2)*Cf(2)
        do i1 = 2,it-1
          X_i(1,i1+1) = (-Bf(i1+1)*X_i(1,i1-1)-(freq_axis(iw)-Af(i1+1))*X_i(1,i1))/Bf(i1+2)
@@ -153,47 +172,66 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
          X_i(2,i1+1) = (-Bf(i1+1)*X_i(2,i1-1)-(freq_axis(iw)-Af(i1+1))*X_i(2,i1))/Bf(i1+2)
          YbyX(2) = YbyX(2) + Cf(i1+1)*X_i(2,i1+1)
        end do
-       X_o(:2,1) = YbyX(:)
+       X_o(:,1) = YbyX(:)
      endif
      !
      ! (A.6)
      if(use_A6) then
-       X_i(:,1) = -X_o(:2,1)
-       X_i(:,2) = -Bf(2)*X_o(:2,2)*X_i(:,1)
-       YbyX(:) = X_i(:,1)*Cf(1)+X_i(:,2)*Cf(2)
+       !
+       X_o= conjg(X_o)
+       X_i(:,1)= X_o(:,1)
+       X_i(:,2)= Bf(2)*X_o(:,2)*X_i(:,1)
+       YbyX(:) =  Cf(1)*X_i(:,1)+Cf(2)*X_i(:,2)
        do i1 = 2,it-1
-         X_i(1,i1+1) = -Bf(i1+1)*X_o(1,i1+1)*X_i(1,i1)
+         X_i(1,i1+1) = Bf(i1+1)*X_o(1,i1+1)*X_i(1,i1)
          YbyX(1) = YbyX(1) + Cf(i1+1)*X_i(1,i1+1)
        end do
        do i1 = 2,it-2
-         X_i(2,i1+1) = -Bf(i1+1)*X_o(2,i1+1)*X_i(2,i1)
+         X_i(2,i1+1) = Bf(i1+1)*X_o(2,i1+1)*X_i(2,i1)
          YbyX(2) = YbyX(2) + Cf(i1+1)*X_i(2,i1+1)
        end do
-       X_o(:2,1) = YbyX(:)
+       X_o(:,1) = conjg(YbyX(:))
+       !
+       if (retarded) then
+         X_a= conjg(X_a)
+         X_i(:,1)= X_a(:,1)
+         X_i(:,2)= Bf(2)*X_a(:,2)*X_i(:,1)
+         YbyX(:) = Cf(1)*X_i(:,1)+Cf(2)*X_i(:,2)
+         do i1 = 2,it-1
+           X_i(1,i1+1) = Bf(i1+1)*X_a(1,i1+1)*X_i(1,i1)
+           YbyX(1) = YbyX(1) + Cf(i1+1)*X_i(1,i1+1)
+         end do
+         do i1 = 2,it-2
+           X_i(2,i1+1) = Bf(i1+1)*X_a(2,i1+1)*X_i(2,i1)
+           YbyX(2) = YbyX(2) + Cf(i1+1)*X_i(2,i1+1)
+         end do
+         X_a(:,1) = YbyX(:)
+       endif
+       !
+     endif
+     !
+     if (retarded) then
+       X_o(1,:)=X_o(1,:)+X_a(1,:)
+       X_o(2,:)=X_o(2,:)+X_a(2,:)
      endif
      !
    endif
    !
    if(trim(global_gauge)=='velocity'.and.iw==0) then
-     if (.not.retarded) para_term_w0(:)=X_o(1:2,1)
-     if (     retarded) para_term_w0(:)=X_o(1:2,1)-X_o(3:4,1)
+     para_term_w0(:)=X_o(1:2,1)
      cycle
    endif
    !
    select case(trim(mode))
    case("jdos")
-     if (.not.retarded)  Joint_DOS(iw,i_eps(:))=-(X_o(1:2,1)           )*Co
-     if (     retarded)  Joint_DOS(iw,i_eps(:))=-(X_o(1:2,1)-X_o(3:4,1))*Co
+     Joint_DOS(iw,i_eps(:))=  -X_o(1:2,1)*Co
    case("abs")
-     if (.not.retarded) Epsilon_ii(iw,i_eps(:))=-(X_o(1:2,1)           )
-     if (     retarded) Epsilon_ii(iw,i_eps(:))=-(X_o(1:2,1)-X_o(3:4,1))
+     Epsilon_ii(iw,i_eps(:))= -X_o(1:2,1)
 #if defined _KERR
    case("kerr")
-     if (.not.retarded) Epsilon_ij(iw,i_eps(:))=-(X_o(1:2,1)           )
-     if (     retarded) Epsilon_ij(iw,i_eps(:))=-(X_o(1:2,1)-X_o(3:4,1))
+     Epsilon_ij(iw,i_eps(:))= -X_o(1:2,1)
    case("magnons")
-     if (.not.retarded) X_magnons(iw,1,i_eps(:))=-(X_o(1:2,1)           )*Co/(4._SP*pi)
-     if (     retarded) X_magnons(iw,1,i_eps(:))=-(X_o(1:2,1)-X_o(3:4,1))*Co/(4._SP*pi)
+     X_magnons(iw,1,i_eps(:))=-X_o(1:2,1)*Co/(4._SP*pi)
 #endif
    end select
    !
@@ -261,7 +299,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,W,Af,Bf,Cf,reached_threshold)
    !
  enddo
  !
- if (coupling) deallocate(X_i)
+ if (use_Cf) deallocate(X_i)
  !
  contains
    !

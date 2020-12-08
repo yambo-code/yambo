@@ -66,7 +66,7 @@ subroutine K_Haydock(iq,W,mode)
  integer            ::ItParity,Cf_size
  complex(SP)        ::v0_mod_
  character(schlen)  ::dumb_ch
- logical            ::impose_res_scheme,use_left_and_right,velocity_correction,Haydock_converged(2),tmp_converged
+ logical            ::impose_pseudo_herm_scheme,use_left_and_right,velocity_correction,Haydock_converged(2),tmp_converged
  logical, external  ::STOP_now
  character(1)       ::sec
  character(11)      ::scheme
@@ -89,17 +89,15 @@ subroutine K_Haydock(iq,W,mode)
  ! Use terminator?
  if (.not.Haydock_terminator) call parser('BSHayTer',Haydock_terminator)
  ! Developer option
- call parser('ImposeRes',impose_res_scheme)
+ call parser('ImposePseudoHerm',impose_pseudo_herm_scheme)
  !
  ! Which approach
  use_left_and_right=.false.
  scheme="hermitian"
- if(BS_K_Coupling) scheme="pseudo-herm"
- !if(BS_K_Coupling.or.allocated(BS_T_grp(1)%Z)) scheme="pseudo-herm"
+ if(BS_K_Coupling.or.impose_pseudo_herm_scheme) scheme="pseudo-herm"
+ !if(BS_K_Coupling.or.impose_pseudo_herm_scheme.or.allocated(BS_T_grp(1)%Z)) scheme="pseudo-herm"
 #if defined _KERR
  use_left_and_right=trim(mode)=="kerr".or.trim(mode)=="dichroism"
- ! I need this for now since the conding in the resonant case of kerr is not working
- if(BS_K_Coupling.or.(use_left_and_right.and..not.impose_res_scheme)) scheme="pseudo-herm"
 #endif
  velocity_correction= trim(global_gauge)=="velocity" .and. (trim(mode)=="abs" .or. trim(mode)=="kerr")
  !

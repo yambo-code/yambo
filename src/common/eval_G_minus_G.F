@@ -46,8 +46,8 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  integer :: i1,i2,is
  integer :: iG_shell,iGo_shell,iG_shell_0,iG_shell_max,iG_,iGo_,iG_alloc,iGo_alloc
  real(SP):: E_iG, E_iGo, E_max
- real(SP):: v1(3),v2(3)
- real(SP), allocatable :: E_G_m_G(:,:),imap(:,:,:)
+ real(SP):: v1(3),v2(3),v1_rlu(3)
+ real(SP), allocatable :: E_G_m_G(:,:),imap(:,:,:),g_vec_rlu(:,:)
  type(PP_indexes) :: PAR_IND_G
  !
  integer, external :: G_index
@@ -189,19 +189,18 @@ integer function eval_G_minus_G(iG,iGo,COMM)
 !   surely does not help
 !
  !
- !print *, g_vec(127,:)
- v2(:)=g_vec(1,:)-g_vec(1,:)
- G_m_G(1,1)=G_index(v2,.false.) 
- G_m_G(1,1)=0
- ! 
- call c2a(nvec=iG_,v_in=g_vec(1:iG_,1:3),mode="ki2a")
+ !v2(:)=g_vec(1,:)-g_vec(1,:)
+ !G_m_G(1,1)=G_index(v2,.false.) 
+ !G_m_G(1,1)=0
+ !
+ allocate(g_vec_rlu(iG_,3)) 
+ call c2a(nvec=iG_,v_in=g_vec(1:iG_,1:3),v_out=g_vec_rlu(1:iG_,1:3),mode="ki2a")
  ! 
  allocate(imap(iG_,iG_,iG_))
- imap(:,:,:)=0
  do i1 = 1, iG_
-   imap(nint(g_vec(i1,1)),nint(g_vec(i1,2)),nint(g_vec(i1,3))) = i1
+   imap(nint(g_vec_rlu(i1,1)),nint(g_vec_rlu(i1,2)),nint(g_vec_rlu(i1,3))) = i1
  enddo
- ! 
+ !  
  !$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
  do i2=1,iGo_
    !
@@ -212,18 +211,15 @@ integer function eval_G_minus_G(iG,iGo,COMM)
    !
    do i1=1,iG_
      !
+     v1_rlu(:)=g_vec_rlu(i1,:)-g_vec_rlu(i2,:)
      v1(:)=g_vec(i1,:)-g_vec(i2,:)
-     G_m_G(i1,i2)=imap(nint(v1(1)),nint(v1(2)),nint(v1(3)))
-     !G_m_G(i1,i2)=G_index(v1,.false.) 
-     !print *,"i1,i2"
-     !print *, i1,i2
-     !print *,"index"
-     !print *, G_m_G(i1,i2)
+     G_m_G(i1,i2)=imap(nint(v1_rlu(1)),nint(v1_rlu(2)),nint(v1_rlu(3)))
+     if(G_m_G(i1,i2)==0) then
+      G_m_G(i1,i2)=G_index(v1,.false.) 
+     endif
    enddo
  enddo
  !$omp end parallel do
- ! 
- call c2a(nvec=iG_,v_in=g_vec(1:iG_,1:3),mode="ka2i")
  !
  if (present(COMM)) call PP_redux_wait(G_m_G,COMM=COMM%COMM)
  !
@@ -235,6 +231,12 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  YAMBO_ALLOC_SOURCE(G_m_G_d,G_m_G)
 #endif
  !
+ print *,"ok1"
+ deallocate(g_vec_rlu)
+ deallocate(imap)
+ print *,"ok2"
+ !
  call timing("eval_G_minus_G",opr="stop")
  !
+ print *,"ok3"
 end function

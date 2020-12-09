@@ -191,9 +191,9 @@ integer function eval_G_minus_G(iG,iGo,COMM)
 !   surely does not help
 !
  !
- !v2(:)=g_vec(1,:)-g_vec(1,:)
- !G_m_G(1,1)=G_index(v2,.false.) 
- !G_m_G(1,1)=0
+ v2(:)=g_vec(1,:)-g_vec(1,:)
+ G_m_G(1,1)=G_index(v2,.false.) 
+ G_m_G(1,1)=0
  !
  YAMBO_ALLOC(g_vec_rlu, (size(g_vec,1),3)) 
  YAMBO_ALLOC(ig_vec_rlu, (size(g_vec,1),3)) 
@@ -212,7 +212,9 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  do i1 = 1, size(g_vec,1)
    imap(ig_vec_rlu(i1,1),ig_vec_rlu(i1,2),ig_vec_rlu(i1,3)) = i1
  enddo
- !  
+ ! 
+ !$omp end parallel do 
+ !
  !$omp parallel do default(shared), private(i2,i1,iv1_rlu), schedule(dynamic)
  do i2=1,iGo_
    !

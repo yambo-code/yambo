@@ -21,9 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)  
+integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)  
  !
  use pars,          ONLY:SP
+ use stderr,        ONLY:intc
  use BS,            ONLY:BS_identifier
  use BS_solvers,    ONLY:BSS_q0,Haydock_v0_mod,HAYVEC_size
  use IO_m,          ONLY:io_connect,io_disconnect,io_elemental,&
@@ -32,7 +33,7 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp
  !
  implicit none
  !
- integer             :: ID,it
+ integer             :: ID,iq,it
  character(*)        :: mode
  real(SP)            :: reached_treshold,Bf(it+1),Af(it)
  complex(SP)         :: Cf(:)
@@ -44,7 +45,7 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp
  !
  call timing('io_BSS_Haydock',OPR='start')
  !
- io_BSS_Haydock=io_connect(desc='Haydock_'//trim(mode)//'_restart',type=2,ID=ID)
+ io_BSS_Haydock=io_connect(desc='Haydock_Q'//trim(intc(iq))//'_'//trim(mode)//'_restart',type=2,ID=ID)
  !
  if (io_BSS_Haydock<0) goto 1
  !

@@ -145,7 +145,7 @@ subroutine K_Haydock(iq,W,mode)
  ! Haydock Coefficients and restart vector from disk
  !=================================================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
- io_err=io_BSS_Haydock(ID,1,reached_threshold,mode,Af(1),Bf(:2),Cf(:2),Vnm1_f,Vn_f,Vnp1_f)
+ io_err=io_BSS_Haydock(ID,iq,1,reached_threshold,mode,Af(1),Bf(:2),Cf(:2),Vnm1_f,Vn_f,Vnp1_f)
  !
  if (io_err>0) then
    !
@@ -158,7 +158,7 @@ subroutine K_Haydock(iq,W,mode)
    it_on_disk=io_err
    if (scheme=="pseudo-herm") Cf_size=it_on_disk
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
-   io_err=io_BSS_Haydock(ID,it_on_disk,reached_threshold,mode,Af(:it_on_disk),&
+   io_err=io_BSS_Haydock(ID,iq,it_on_disk,reached_threshold,mode,Af(:it_on_disk),&
 &                   Bf(:it_on_disk+1),Cf(:Cf_size),Vnm1_f,Vn_f,Vnp1_f)
    !
    call msg('s','[Haydock] Restart DB with accuracy ',reached_threshold)
@@ -537,7 +537,7 @@ subroutine K_Haydock(iq,W,mode)
      endif
      !
      call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
-     io_err=io_BSS_Haydock(ID,it,reached_threshold,mode,Af(:it),Bf(:it+1),Cf(:Cf_size),Vnm1_f,Vn_f,Vnp1_f)
+     io_err=io_BSS_Haydock(ID,iq,it,reached_threshold,mode,Af(:it),Bf(:it+1),Cf(:Cf_size),Vnm1_f,Vn_f,Vnp1_f)
      !
      YAMBO_FREE_P(Vn_f)
      YAMBO_FREE_P(Vnm1_f)

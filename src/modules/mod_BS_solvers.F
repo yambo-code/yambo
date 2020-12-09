@@ -175,10 +175,10 @@ module BS_solvers
      complex(SP),pointer,optional :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
    end function
    !
-   integer function io_BSS_Haydock(ID,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)
+   integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)
      use pars,          ONLY:SP
      implicit none
-     integer             :: ID,it
+     integer             :: ID,iq,it
      character(*)        :: mode
      real(SP)            :: reached_treshold,Bf(it+1),Af(it)
      complex(SP)         :: Cf(:)

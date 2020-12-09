@@ -99,6 +99,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
      call msg("s","Complete BSE file found in "//trim(io_file(ID))//". Loading kernel.")
    else
      call msg("s","Partial BSE file found in "//trim(io_file(ID))//". Not accepted in reading mode.")
+     return
    endif
  endif
  !
@@ -176,7 +177,7 @@ subroutine io_BS_PAR_free(ID,l_kernel_complete)
  !
  use parallel_m,    ONLY:PP_redux_wait
  use BS,            ONLY:l_BSE_kernel_complete,BS_K_has_been_calculated_loaded
- use IO_m,          ONLY:io_disconnect
+ use IO_m,          ONLY:io_disconnect,io_BS_K
  !
  implicit none
  !
@@ -189,7 +190,7 @@ subroutine io_BS_PAR_free(ID,l_kernel_complete)
  call PP_redux_wait()
  !
  BS_K_has_been_calculated_loaded=l_kernel_complete
- l_BSE_kernel_complete          =l_kernel_complete
+ l_BSE_kernel_complete          =l_kernel_complete.and.io_BS_K
  !
  io_BS=variables_BS_more(ID,'end')
  !

@@ -52,6 +52,7 @@ integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,
  if (any((/io_sec(ID,:)==1/))) then
    !
    io_BSS_Haydock=io_header(ID,XC_KIND="K_E force",GAUGE=.TRUE.,IMPOSE_GAUGE=.TRUE.)
+   if (io_BSS_Haydock<0) goto 1
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
    call io_elemental(ID,VAR=&
@@ -64,13 +65,12 @@ integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,
 &       " Field direction                  ",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
-   !
-   ! ioBSS_Haydock due to the header
-   !
-   if (io_BSS_Haydock<0) goto 1
-   !
    io_BSS_Haydock=io_status(ID)
-   if (io_BSS_Haydock<0) goto 1
+   !
+   if (io_BSS_Haydock<0) then
+     reached_treshold=0._SP
+     goto 1
+   endif
    !
    io_BSS_Haydock=it_on_disk
    !

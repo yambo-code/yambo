@@ -279,7 +279,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  !
  call X_alloc('X',(/X%ng,X%ng,QP_n_W_freqs_redux/))
  !
- call elemental_collision_alloc(scattering_main,NG=X%ng,NG_GAMP=(/X%ng,X%ng/),TITLE="GW")
+ call elemental_collision_alloc(scattering_main,NG=X%ng,GAMP_NG=(/X%ng,X%ng/),TITLE="GW")
  call elemental_collision_alloc(scattering_prime,NG=X%ng,TITLE="GW")
  !
  QP_Sc=cZERO

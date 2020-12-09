@@ -161,7 +161,7 @@ module interpolate
    end subroutine electrons_bands_interpolate
    !
    subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
-&                                       NEAREST,QUIET,SERIAL)
+&                                       NN,QUIET,SERIAL)
      use pars,        ONLY:SP
      use real_time,   ONLY:RT_t
      use R_lattice,   ONLY:bz_samp
@@ -176,7 +176,7 @@ module interpolate
      type(RT_t),    intent(in),    optional :: SEED_RT
      type(QP_t),    intent(in),    optional :: SEED_QP
      type(levels),  intent(in),    optional :: SEED_E
-     logical,       intent(in),    optional :: NEAREST
+     logical,       intent(in),    optional :: NN
      logical,       intent(in),    optional :: QUIET
      logical,       intent(in),    optional :: SERIAL
    end subroutine INTERPOLATION_driver_seed

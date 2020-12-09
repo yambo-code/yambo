@@ -98,16 +98,12 @@ module X_output
        message(6) = com_compose_msg(pre='# ',body='Off-diagonal Polarizability @ Q('//trim(intc(iq))//')',post='q->0 direction')
        message(7) = com_compose_msg(pre='# ',body='moke parameters @ Q('//trim(intc(iq))//')',post='q->0 direction')
        message(8) = com_compose_msg(pre='# ',body='Reflectivity @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(9) = com_compose_msg(pre='# ',body='Joint density of states @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(10)= com_compose_msg(pre='# ',body='Magnons (S+-) @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(11)= com_compose_msg(pre='# ',body='Magnons (S-+) @ Q('//trim(intc(iq))//')',post='q->0 direction')
      else  if (iq/=1.and.ig==1) then
        message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//')',post='iku')
        message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')',post='iku')
        message(3) = com_compose_msg(pre='# ',body='Polarizability ( -<<X>> ) ['//trim(alpha_dim)//&
 &                                   ' @ Q('//trim(intc(iq))//')',post='iku')
        message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')',post='iku')
-       message(9) = com_compose_msg(pre='# ',body='Joint density of states @ Q('//trim(intc(iq))//')',post='iku')
      else  if (ig/=1) then
        message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//') + G('//trim(intc(ig))//')',post='iku')
        message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//'',post='iku')
@@ -115,6 +111,9 @@ module X_output
 &                                   ' @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//')',post='iku')
        message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')',post='iku')
      endif
+     message(9) = ' Joint density of states @ Q('//trim(intc(iq))//')'
+     message(10)= ' Magnons (S+-) @ Q('//trim(intc(iq))//')'
+     message(11)= ' Magnons (S-+) @ Q('//trim(intc(iq))//')'
      call msg("o eps_q",trim(message(1)),Q_plus_G_pt,INDENT=0)
      call msg("o eel_q",trim(message(2)),Q_plus_G_pt,INDENT=0)
      call msg("o alpha",trim(message(3)),Q_plus_G_pt,INDENT=0)
@@ -123,9 +122,9 @@ module X_output
      call msg("o beta",trim(message(6)),Q_plus_G_pt,INDENT=0)
      call msg("o moke",trim(message(7)),Q_plus_G_pt,INDENT=0)
      call msg("o refl",trim(message(8)),Q_plus_G_pt,INDENT=0)
-     call msg("o jdos",trim(message(9)),0._SP,INDENT=0)
-     call msg("o Spm",trim(message(10)),0._SP,INDENT=0)
-     call msg("o Smp",trim(message(11)),0._SP,INDENT=0)
+     call msg("o jdos","#",trim(message(9)),INDENT=0)
+     call msg("o Spm" ,"#",trim(message(10)),INDENT=0)
+     call msg("o Smp" ,"#",trim(message(11)),INDENT=0)
      call msg('o eps refl eel fxc alpha off moke Spm Smp CD','#')
      !
    end subroutine

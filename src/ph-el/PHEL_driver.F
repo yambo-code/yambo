@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM FP
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -24,18 +24,18 @@
 subroutine PHEL_driver(E,k,q)
  !
  use electrons,           ONLY:levels,n_sp_pol,E_fine_grid
- use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc
+ use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc,bz_fine_grid
  use interfaces,          ONLY:ELPH_alloc
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,&
-&                              l_GKKP_hosts_bare_dV
- use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode
- use parallel_m,          ONLY:PARs_PH_Q_ibz,PARs_PH_K_bz 
+&                              l_GKKP_hosts_bare_dV,elph_nb
+ use PHEL,                ONLY:l_PH_uses_E_FineGd,PH_Self_Energy_mode,PHEL_free
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_global_indexes
- use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free
+ use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,RT_extra_lifetime_alloc,Life_MEM_steps,&
+&                              RT_PE_extra,l_initial_equilibrium,RT_ALL_lifetimes_free                        
  use RT_occupations,      ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_ALL_occupations_free
  use real_time,           ONLY:l_RT_uses_E_FineGd
+ use com,                 ONLY:fat_log
  use IO_m,                ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL
- use LIVE_t,              ONLY:live_timing
  !
 #include<memory.h>
  !
@@ -44,23 +44,27 @@ subroutine PHEL_driver(E,k,q)
  !
  ! Work Space
  !
- integer             ::i_err,iq,ID
+ integer             ::i_err,ID,nk_CG
  integer, external   ::io_PH
  type(E_fine_grid)   ::E_FG
+ type(bz_fine_grid)  ::k_FG
  !
  call section('*',"Phonon Lifetimes")
  !
  ! Setup
  !=======
- ! ...DbGd
- PH_DbGd_points    =k%FGibz%N
- l_PH_uses_E_FineGd=PH_DbGd_points>0
- l_GKKP_hosts_bare_dV=index(PH_Self_Energy_mode,"bare")>0
- !
+ if ( index(PH_Self_Energy_mode,"bare")>0 ) l_GKKP_hosts_bare_dV = .true.
  ! ... BZ Setup
  call k_build_up_BZ_tables(q)
  !
- ! ... Already calculated?
+ ! El-Ph databases check
+ !=======================
+ call ELPH_databases_check(elph_nb)
+ !
+ if (.not.any((/l_GKKP_DB_exists,l_GKKP_expanded_DB_exists/))) call error("GKKP databases absent or damaged")
+ !
+ ! Already calculated?
+ ! =====================
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
  i_err=io_PH(ID)
  if (i_err==0) then
@@ -75,19 +79,13 @@ subroutine PHEL_driver(E,k,q)
  !===============
  call PARALLEL_global_indexes(E,k,q,"Phonon_Self_Energy")
  !
- ! El-Ph databases check
- !=======================
- call ELPH_databases_check(QP_PH_n_G_bands)
- !
- if (.not.any((/l_GKKP_DB_exists,l_GKKP_expanded_DB_exists/))) call error("GKKP databases absent or damaged")
- !
  ! Q/K grid remapping
  !====================
  call ELPH_databases_grids_map(k,q)
  !
  ! El-Ph databases I/O
  !=====================
- call ELPH_databases_load(GKKP_pe_sq,E,k,q,(/1,QP_PH_n_G_bands/),"Q-sym Q-IBZ K-BZ",PH_Self_Energy_mode)
+ call ELPH_databases_load(GKKP_pe_sq,E,k,q,(/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/),"Q-sym Q-IBZ K-BZ",PH_Self_Energy_mode)
  !
  !...acoustic branches
  !
@@ -95,43 +93,66 @@ subroutine PHEL_driver(E,k,q)
  !
  ! Maps into the RT kinds
  !========================
- ! ... grid
+#if defined _RT
+ ! ... grid in the IBZ
  l_RT_uses_E_FineGd=k%FGibz%N>0
  if (.not.l_RT_uses_E_FineGd) then
    call bz_samp_FineGd_alloc(k%FGibz,k%nibz)
    call bz_samp_FineGd_default(k%FGibz,k)
  endif
+ k_FG = k%FGibz
+ nk_CG= k%nibz
+#else
+ ! ...DbGd in the full BZ
+ l_PH_uses_E_FineGd=k%FGbz%N>0
+ call k_ibz2bz(k,'i',.true.)
+ if (.not.l_PH_uses_E_FineGd) then
+   call bz_samp_FineGd_alloc(k%FGbz,k%nbz)
+   call bz_samp_FineGd_default(k%FGbz,k,k%nbz)
+ endif
+ k_FG = k%FGbz
+ nk_CG= k%nbz
+#endif
+ !
+ ! ... select fine grid subset
+ call PHEL_double_grid_subset(k,k_FG,nk_CG)
  !
  ! ... allocs
  Life_MEM_steps=1
  call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)
- call RT_EL_occupations_alloc((/1,QP_PH_n_G_bands/),k%FGibz%N)
+ if (fat_log) call RT_extra_lifetime_alloc("ph-el",RT_PE_extra,elph_branches,nqibz)
+ !
+ call RT_EL_occupations_alloc((/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/),k_FG%N)
  call RT_PH_occupations_alloc(elph_branches,nqibz)
- if (l_RT_uses_E_FineGd) then
-   YAMBO_ALLOC(E_FG%E,(QP_PH_n_G_bands,k%FGibz%N,n_sp_pol))
-   YAMBO_ALLOC(E_FG%W,(QP_PH_n_G_bands,k%FGibz%N,n_sp_pol))
+ if (l_RT_uses_E_FineGd .or. l_PH_uses_E_FineGd) then
+   YAMBO_ALLOC(E_FG%E,(elph_nb,k_FG%N,n_sp_pol))
+   YAMBO_ALLOC(E_FG%W,(elph_nb,k_FG%N,n_sp_pol))
  else
-   YAMBO_ALLOC(E_FG%E,(QP_PH_n_G_bands,k%nibz,n_sp_pol))
-   YAMBO_ALLOC(E_FG%W,(QP_PH_n_G_bands,k%nibz,n_sp_pol))
+   YAMBO_ALLOC(E_FG%E,(elph_nb,nk_CG,n_sp_pol))
+   YAMBO_ALLOC(E_FG%W,(elph_nb,nk_CG,n_sp_pol))
  endif
  !
  ! ... occupations & levels
- call RT_occupations_and_levels_init((/1,QP_PH_n_G_bands/),E,k,q,k%FGibz,E_FG)
+ call RT_occupations_and_levels_init(QP_PH_n_G_bands,E,k,q,k_FG,E_FG)
  !
- ! Loop
- !======
- l_initial_equilibrium=.TRUE.
- call live_timing('Phonon Lifetimes',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
- do iq=1,nqibz
-   if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
-   call PHEL_Lifetimes(iq,E,k,q,(/1,QP_PH_n_G_bands/),k%FGibz,E_FG)
- enddo
- call live_timing( )
+ ! Select allowed transitions for phonon scatterings
+ !===================================================
+ call PH_Grid_Check_Transitions(k,q,QP_PH_n_G_bands,k_FG,E_FG)
+ !
+ ! Calculation of the lifetimes
+ !==============================
+ l_initial_equilibrium=.TRUE. 
+ call PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  !
  ! Redux
  !=======
  call PP_redux_wait(RT_PE_life%emit)
  call PP_redux_wait(RT_PE_life%abs)
+ if (fat_log) then
+   call PP_redux_wait(RT_PE_extra%linewidth)
+   call PP_redux_wait(RT_PE_extra%interband)
+   call PP_redux_wait(RT_PE_extra%intraband)
+ endif
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
  i_err=io_PH(ID)
@@ -150,6 +171,7 @@ subroutine PHEL_driver(E,k,q)
      call RT_ALL_lifetimes_free(  )
      call RT_ALL_occupations_free(  )
      call ELPH_alloc('FREE',GKKP=GKKP_pe_sq)
+     call PHEL_free( )
    end subroutine
    !
 end subroutine PHEL_driver

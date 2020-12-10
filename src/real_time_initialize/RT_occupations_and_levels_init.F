@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM FP
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -45,18 +45,29 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
  ! Work Space
  !
  real(SP):: Energy(n_sp_pol),kpt(3),f_occ(n_sp_pol),f_occ_ref(n_sp_pol),ph_freq,Width(n_sp_pol)
- integer :: ik,ik_FG,iE_FG,ib,ik_RT,il,iq,iqbz
+ integer :: ik,ik_FG,iE_FG,ib,ik_RT,il,iq,iqbz,nk,ik_ibz
+ logical :: l_use_BZ
  !
  call RT_occupation_clean(RT_el_occ)
  call RT_occupation_clean(RT_ph_occ)
  call RT_occupation_clean(RT_ho_occ)
  call RT_occupation_clean(RT_life_occ)
  !
+ l_use_BZ = allocated(k%ptbz) .and. size(k_FG%k_range,1)==k%nbz
+ if ( l_use_BZ ) then 
+   nk = k%nbz
+ else
+   nk = k%nibz
+ endif
+ !
  ! El/Ho Occupations 
  !===================
  do ib=bands(1),bands(2)
-   do ik=1,k%nibz
+   do ik=1,nk
      !
+     ik_ibz = ik
+     if (l_use_BZ) ik_ibz = k%sstar(ik,1)
+     ! 
      do ik_RT=k_FG%k_range(ik,1),k_FG%k_range(ik,2)
        !
        if (ik_RT/=k_FG%k_range(ik,1)) then
@@ -64,9 +75,9 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
          ik_FG=k_FG%k_map(ik_RT)
          iE_FG=k_FG%E_map(ik_RT)
          !
-         if (allocated(E%W))  E%FG%W(ib,iE_FG,:)     = abs(E%W(ib,ik,:))
+         if (allocated(E%W))  E%FG%W(ib,iE_FG,:)     = abs(E%W(ib,ik_ibz,:))
          !
-         kpt       = k%FGibz%pt(ik_FG,:)
+         kpt       = k_FG%pt(ik_FG,:)
          Energy    = E%FG%E(ib,iE_FG,:)
          f_occ     = E%FG%f(ib,iE_FG,:)
          f_occ_ref = f_occ
@@ -74,13 +85,19 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
          if (allocated(E%fo)) f_occ_ref = E%FG%f(ib,iE_FG,:)-E%FG%df(ib,iE_FG,:)
          if (allocated(E%W))  Width     = abs(E%FG%W(ib,iE_FG,:))
        else
-         kpt       = k%pt(ik,:)
-         Energy    = E%E(ib,ik,:)
-         f_occ     = E%f(ib,ik,:)
+         !
+         if (l_use_BZ) then
+           kpt     =  k%ptbz(ik,:)
+         else
+           kpt     = k%pt(ik_ibz,:)
+         endif
+         !
+         Energy    = E%E(ib,ik_ibz,:)
+         f_occ     = E%f(ib,ik_ibz,:)
          f_occ_ref = f_occ
          Width     = 0._SP
-         if (allocated(E%fo)) f_occ_ref = E%fo(ib,ik,:)
-         if (allocated(E%W))  Width     = abs(E%W(ib,ik,:))
+         if (allocated(E%fo)) f_occ_ref = E%fo(ib,ik_ibz,:)
+         if (allocated(E%W))  Width     = abs(E%W(ib,ik_ibz,:))
          !
        endif
        !

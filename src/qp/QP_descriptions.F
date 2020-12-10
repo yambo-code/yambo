@@ -185,7 +185,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      !
      call IO_desc_add(qp%desc,str='El-Ph correlation',kind='l',L=l_elph_corr)
      !
-     call IO_desc_add(qp%desc,str='El-Ph Sc. G bands',SZ=2,kind='i',I=(/1,QP_PH_n_G_bands/))
+     call IO_desc_add(qp%desc,str='El-Ph Sc. G bands',SZ=2,kind='i',I=(/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/))
      !
      if (ver_is_gt_or_eq(-1,(/3,2,2/))) then
        call IO_desc_add(qp%desc,str='El-Ph phonon branches',SZ=2,kind='i',I=elph_branches)

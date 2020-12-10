@@ -55,8 +55,8 @@ subroutine PARALLEL_global_Phonon_Self_Energy( )
  ! Eh bands loop
  !.........................................................................
  call PARALLEL_scheme_initialize("eh-bands","Phonon_Self_Energy",PARs_PH_eh_bands,&
-&                                (/QP_PH_n_G_bands/),MATRIX=.TRUE.)
- PAR_n_bands=(/1,QP_PH_n_G_bands**2/)
+&                                (/QP_PH_n_G_bands(2)-QP_PH_n_G_bands(1)+1/),MATRIX=.TRUE.)
+ PAR_n_bands=(/1,(QP_PH_n_G_bands(2)-QP_PH_n_G_bands(1)+1)**2/)
  !.........................................................................
  ! K-points (BZ) for e-h pairs
  !.........................................................................

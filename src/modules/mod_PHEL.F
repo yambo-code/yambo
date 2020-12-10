@@ -23,10 +23,28 @@
 !
 module PHEL
  !
- use pars,           ONLY:schlen
+ use pars,           ONLY:SP,schlen
  !
- integer          :: PH_DbGd_points=0
- logical          :: l_PH_uses_E_FineGd=.FALSE.
+#include<memory.h>
+ !
  character(schlen):: PH_Self_Energy_mode="dressed-dressed" ! "bare-dressed" (="dressed-bare") / "bare-bare"
  !
+ ! ... Double-grid
+ integer              :: PH_DbGd_points=-1
+ logical              :: l_PH_uses_E_FineGd=.FALSE.
+ !
+ ! ... Scatterings
+ type phel_scatterings
+   integer               :: N=0        ! Number of accepted transitions
+   integer, allocatable  :: table(:,:) ! Indices of accepted transitions: 
+ end type phel_scatterings             ! 1-> PH_freqs_CG, 2-> ikbz, 3-> ik_fg, 4->ip_fg, 5-> i_n, 6-> i_np
+ !
+ type(phel_scatterings)  :: phel_info
+ !
+ contains
+   !
+   subroutine PHEL_free( )
+      YAMBO_FREE(phel_info%table)
+   end subroutine
+   !
 end module

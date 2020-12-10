@@ -111,9 +111,10 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  call k_build_up_BZ_tables(k)
  call k_expand(k)
  !
- if (QP_PH_n_G_bands<=0.or.QP_PH_n_G_bands>elph_nb) QP_PH_n_G_bands=elph_nb
+ if (QP_PH_n_G_bands(2)<=0.or.QP_PH_n_G_bands(2)>elph_nb) QP_PH_n_G_bands=(/1,elph_nb/)
+ if (QP_PH_n_G_bands(1)<=0.or.QP_PH_n_G_bands(1)>elph_nb) QP_PH_n_G_bands=(/1,elph_nb/)
  !
- call msg('r', '[GW/El-Ph] Bands range       ',(/1,QP_PH_n_G_bands/))
+ call msg('r', '[GW/El-Ph] Bands range       ',(/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/))
  if (trim(QP_solver)=='n') &
 &  call msg('r', '[GW/El-Ph] G damping         ',QP_G_damp*HA2EV,"[eV]")
  !
@@ -273,7 +274,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      okbz=0
      ok  =0
      !
-     do ob=1,QP_PH_n_G_bands
+     do ob=QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)
        !
        if (.not.PAR_IND_G_b%element_1D(ob)) cycle
        !

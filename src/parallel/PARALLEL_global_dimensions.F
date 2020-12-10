@@ -127,7 +127,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !----------
 #if defined _ELPH
  if (ENVIRONMENT=="Phonon_Self_Energy"              ) then
-    PAR_n_bands=(/1,QP_PH_n_G_bands**2/)
+    PAR_n_bands=(/1,(QP_PH_n_G_bands(2)-QP_PH_n_G_bands(1)+1)**2/)
  endif
 #endif
  !
@@ -144,7 +144,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
    if (l_sc_run)           PAR_n_bands=SC_bands
 #endif
 #if defined _ELPH
-   if (l_elph_corr)        PAR_n_bands=(/1,QP_PH_n_G_bands/)
+   if (l_elph_corr)        PAR_n_bands=(/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/)
 #endif
  endif
 #if defined _RT

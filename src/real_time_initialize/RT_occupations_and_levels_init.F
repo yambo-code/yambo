@@ -53,7 +53,7 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
  call RT_occupation_clean(RT_ho_occ)
  call RT_occupation_clean(RT_life_occ)
  !
- l_use_BZ = allocated(k%ptbz) .and. k_FG%N==k%nbz
+ l_use_BZ = allocated(k%ptbz) .and. size(k_FG%k_range,1)==k%nbz
  if ( l_use_BZ ) then 
    nk = k%nbz
  else

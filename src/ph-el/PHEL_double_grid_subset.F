@@ -21,51 +21,55 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PHEL_double_grid_subset(k,k_FG,k_n)
+subroutine PHEL_double_grid_subset(k,k_FG,nk_CG)
  !
  ! Select double grid subset to be used in PHEL calculations
  !
- use R_lattice,      ONLY:bz_samp,bz_fine_grid,nkDg,nk_FG_per_kpt
- use PHEL,           ONLY:l_PH_uses_E_FineGd
+ use R_lattice,      ONLY:bz_samp,bz_fine_grid
+ use PHEL,           ONLY:l_PH_uses_E_FineGd,PH_DbGd_points
  use real_time,      ONLY:l_RT_uses_E_FineGd
+ use com,            ONLY:msg
  !
-#include<memory.h>
+ implicit none
  !
- type(bz_samp),     intent(in) :: k
- type(bz_fine_grid),intent(in) :: k_FG
- integer,           intent(in) :: k_n
+ type(bz_samp),     intent(in)    :: k
+ type(bz_fine_grid),intent(inout) :: k_FG
+ integer,           intent(in)    :: nk_CG
+ ! 
+ ! Workspace
  !
- ! Work Space ...
+ logical :: FG_is_sane=.TRUE.
+ integer :: N_FG_per_K_average,ik
  !
- ! Select the double grid subset to use
- !=====================================
+ if (.not.l_PH_uses_E_FineGd .and..not. l_RT_uses_E_FineGd) return
+ if (PH_DbGd_points<0) return
  !
- ! 1. Fine grid is used
- if (l_PH_uses_E_FineGd .or. l_RT_uses_E_FineGd) then
-   ! 1.1 Sanity check
-   if (k_FG%N.le.k_n) then
-     nk_FG_per_kpt = -1
-   else
-     ! 1.2 No subset or incorrect value of nkDg provided
-     if (nkDg<0.or.nkDg>k_FG%N-k_n) then
-       nkDg=-1
-       nk_FG_per_kpt = -1
-     else
-       ! 1.3 Do not use double grid at all
-       if (nkDg == 0) then 
-         nk_FG_per_kpt=0
-       else
-         ! 1.4 Use subset of fine grid
-         nk_FG_per_kpt=ceiling(float(nkDg)/float(k_n))
-         nkDg = nk_FG_per_kpt*k_n
-       endif
-     endif
-   endif
- ! 2. Fine grid is not used
- else
-   nkDg=-1
-   nk_FG_per_kpt=-1
+ N_FG_per_K_average=ceiling(float(PH_DbGd_points)/float(nk_CG))
+ !
+ ! Sanity check
+ if (PH_DbGd_points<0.or.PH_DbGd_points>k_FG%N) FG_is_sane=.FALSE.
+ if (any(k_FG%N_mapped<N_FG_per_K_average))     FG_is_sane=.FALSE. 
+ !
+ if (.not.FG_is_sane) then
+   call warning("[PHEL] Fine Grid does not match user requests. DbGd support switched off")
+   PH_DbGd_points=-1
+   l_PH_uses_E_FineGd=.FALSE.
+   l_RT_uses_E_FineGd=.FALSE.
+   return
  endif
+ !
+ N_FG_per_K_average=ceiling(float(PH_DbGd_points)/float(nk_CG))
+ !
+ ! Use subset 
+ !
+ PH_DbGd_points=0
+ do ik=1,nk_CG
+   k_FG%N_mapped(ik) =N_FG_per_K_average
+   k_FG%k_range(ik,:)=k_FG%k_range(ik,1)+(/0,N_FG_per_K_average-1/)
+   PH_DbGd_points=PH_DbGd_points+k_FG%N_mapped(ik)
+ enddo
+ !
+ call msg('nrn','DbGd points used, read',(/PH_DbGd_points,k_FG%N/))   
  !
 end subroutine PHEL_double_grid_subset
  

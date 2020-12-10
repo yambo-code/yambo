@@ -44,7 +44,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
- use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,nkDg,k_GRIDS_string,&
+ use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
@@ -118,7 +118,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use memory,        ONLY:MEM_treshold
 #endif
 #if defined _PHEL
- use PHEL,          ONLY:PH_Self_Energy_mode,l_extra_life
+ use PHEL,          ONLY:PH_Self_Energy_mode,PH_DbGd_points
 #endif
  !
  implicit none
@@ -268,8 +268,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _PHEL
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
- call it(defs,'KNumDgSubset', '[PHEL-DG] Size of subset of double grid k-points',nkDg)
- call it('f',defs,'ExtraInfo', '[PHEL] Print more variables in the output file',verb_level=V_qp)
+ call it(defs,'PHDbGdsize', '[PHEL] Size of subset of double grid k-points',PH_DbGd_points)
 #else
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit,verb_level=V_qp)
 #endif

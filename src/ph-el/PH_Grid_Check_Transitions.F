@@ -30,9 +30,9 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  !
  use pars,           ONLY:SP
  use units,          ONLY:HA2EV
- use electrons,      ONLY:levels,E_fine_grid
+ use electrons,      ONLY:E_fine_grid
  use hamiltonian,    ONLY:B_mat_index
- use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid,nqibz,nk_FG_per_kpt
+ use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid,nqibz
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
  use ELPH,           ONLY:PH_freqs_sq,elph_branches,PH_acoustic_branch,&
 &                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
@@ -40,60 +40,57 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  use parallel_int,   ONLY:PP_redux_wait
  use QP_m,           ONLY:QP_G_damp
  use LIVE_t,         ONLY:live_timing
- use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,&
- &                        phel_scatterings_alloc,phel_scatterings_free
+ use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info
  use com,            ONLY:msg
  use stderr,         ONLY:intc
  !
- type(bz_samp),     intent(in) :: k,q
- integer,           intent(in) :: bands(2)
+#include<memory.h>
+ !
+ type(bz_samp),     intent(in)    :: k,q
+ integer,           intent(in)    :: bands(2)
  type(bz_fine_grid),intent(inout) :: k_FG
- type(E_fine_grid) ,intent(in) :: E_FG
+ type(E_fine_grid) ,intent(in)    :: E_FG
  !
  ! Work Space ...
  !
  logical               :: l_phel_allowed
- real(SP)              :: ph_freq,Delta_Broad
+ real(SP)              :: ph_freq,Delta_Broad,ratio
  real(SP)              :: broad_factor=3._SP
- integer               :: i_loop,n_loops,k_FG_range_end,p_FG_range_end
+ integer               :: i_loop
  ! ... band/branch index ...
  integer               :: il,i_n,i_np
  ! ... BZ index ...
- integer               :: iq,ikbz,ik,ik_m_q,ik_rim,ip_rim
+ integer               :: iq,ikbz,ik,ik_m_q,ik_rim,ip_rim,N_yes(nqibz),N_tot(nqibz)
  ! ... energy related quantities ...
  real(SP) :: DELTA_E,DELTA_W
  !
- n_loops=2
- !
- call phel_scatterings_alloc(phel_info,nqibz)
- !
- call live_timing('Ph-el scattering list',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par*2)
+ call section("+","Phonon mediated scattering analysis")
  !
  ! Loop to allocate phel_table
- !========================
- do i_loop=1,n_loops
+ !=============================
+ do i_loop=1,2
    !
-   if (i_loop==2) then
-     !
-     if (phel_info%transitions(1)==0) then 
-       call warning(' No phel scattering possible !')
-     else
-       call phel_scatterings_alloc(phel_info,nqibz) ! This allocates phel_info%table
-     endif
-     !
+   !
+   if (i_loop==1) then
+     call live_timing('Compatibility scan',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
+   else
+     if (phel_info%N==0) call error('No allowed scattering found')
+     YAMBO_ALLOC(phel_info%table,(phel_info%N,7) )
+     call live_timing('Compatibility fill',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
    endif
    !
-   phel_info%transitions      = 0
-   phel_info%transitions_at_q = 0
+   phel_info%N = 0
+   N_tot       = 0
+   N_yes       = 0
    ! 
    ! Main loop over iq in the ibz
-   !========================
+   !==============================
    do iq=1,nqibz
      !
      if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
      !
      ! Inner loop over ik in the bz
-     !========================
+     !==============================
      do ikbz=1,k%nbz
        !
        if (.not.PARs_PH_K_bz%IND%element_1D(ikbz)) cycle
@@ -110,23 +107,6 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
        ik = ikbz
 #endif
        !
-       ! Fine grid subset selection
-       !============================
-       k_FG_range_end = k_FG%k_range(ik,2)
-       p_FG_range_end = k_FG%k_range(ik_m_q,2)
-       !
-       if ( l_RT_uses_E_FineGd .or. l_PH_uses_E_FineGd) then
-         !
-         ! Select subset
-         if (nk_FG_per_kpt>-1) then 
-           k_FG_range_end = k_FG%k_range(ik,1)+nk_FG_per_kpt
-           p_FG_range_end = k_FG%k_range(ik_m_q,1)+nk_FG_per_kpt
-           k_FG%N_mapped(ik) = 1+nk_FG_per_kpt
-           k_FG%N_mapped(ik_m_q) = 1+nk_FG_per_kpt
-         endif
-         !
-       endif
-       !
        ! Loop over il, i.e., phonon branches
        !====================================    
        do il=elph_branches(1),elph_branches(2)
@@ -137,7 +117,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
          if (iq==1 .and. PH_acoustic_branch(il)) cycle
          !
          ! Loops over i_n, i_np, i.e., electronic bands
-         !====================================    
+         !==============================================
          do i_n=bands(1),bands(2)
            !
            do i_np=bands(1),bands(2)
@@ -159,9 +139,9 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
              !
              ! Loops over fine grid kpoints ik_rim and ip_rim
              !================================================    
-             do ik_rim=k_FG%k_range(ik,1),k_FG_range_end
+             do ik_rim=k_FG%k_range(ik,1),k_FG%k_range(ik,2)
                !
-               do ip_rim=k_FG%k_range(ik_m_q,1),p_FG_range_end
+               do ip_rim=k_FG%k_range(ik_m_q,1),k_FG%k_range(ik_m_q,2)
                  !
                  ! ... when using the fine grid ...
                  if (l_RT_uses_E_FineGd .or. l_PH_uses_E_FineGd) then
@@ -182,19 +162,16 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
                  l_phel_allowed = (DELTA_E >  ph_freq - Delta_Broad .and. DELTA_E <  ph_freq + Delta_Broad ) .or. &
 &                                 (DELTA_E > -ph_freq - Delta_Broad .and. DELTA_E < -ph_freq + Delta_Broad )
                  !
-                 !l_phel_allowed = .true.
                  if (l_phel_allowed) then
                    !
-                   phel_info%transitions(1)         = phel_info%transitions(1)+1
-                   phel_info%transitions_at_q(iq,1) = phel_info%transitions_at_q(iq,1)+1
+                   phel_info%N  = phel_info%N+1
+                   N_yes(iq)    = N_yes(iq)+1
                    !
-                   if (i_loop==2 .and. allocated(phel_info%table) ) &
-&                    phel_info%table(phel_info%transitions(1),:)= (/il,iq,ikbz,ik_rim,ip_rim,i_n,i_np/)
+                   if (i_loop==2) phel_info%table(phel_info%N,:)= (/il,iq,ikbz,ik_rim,ip_rim,i_n,i_np/)
                    !
                  endif
                  !
-                 phel_info%transitions(2) = phel_info%transitions(2)+1
-                 phel_info%transitions_at_q(iq,2) = phel_info%transitions_at_q(iq,2)+1
+                 N_tot(iq) = N_tot(iq)+1
                  !
                enddo ! ip_rim i.e. (mk-q)
                !
@@ -203,7 +180,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
            enddo ! i_np i.e. (mk-q) 
            !
          enddo ! i_n i.e. (nk)
-       !
+         !
        enddo ! il
        !
        call live_timing( steps=1 )
@@ -212,26 +189,24 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
      ! 
    enddo ! iq
    !
+   call live_timing( )
+   !
  enddo ! i_loop
- !
- phel_info%PAR_Ntransitions = phel_info%transitions(1)
- call PP_redux_wait(phel_info%transitions)
- call PP_redux_wait(phel_info%transitions_at_q)
- !
- call live_timing( )
  !
  ! Output info
  !===============
  do iq=1,nqibz
-   phel_info%ratio_at_q(iq) = float(phel_info%transitions_at_q(iq,1))/float(phel_info%transitions(2))*100._SP
-   call msg('nrsn','DbGd@q['//trim(intc(iq))//'] k->k-q (trans %, broad eV)]',&
-&          (/phel_info%ratio_at_q(iq),broad_factor*QP_G_damp*HA2EV/))
+   ratio = 0._SP
+   if (N_tot(iq)>0) ratio = float(N_yes(iq))/float(N_tot(iq))*100._SP
+   call msg('r','DbGd@q['//trim(intc(iq))//'] k->k-q (trans %, broad eV)]',(/ratio,broad_factor*QP_G_damp*HA2EV/))
  enddo
  !
- phel_info%ratio = float(phel_info%transitions(1))/float(phel_info%transitions(2))*100._SP
- call msg('nrsn','DbGd_total (trans n_done, trans %, broad eV)',&
-&             (/float(phel_info%transitions(1)),phel_info%ratio,broad_factor*QP_G_damp*HA2EV/))
- !
- call phel_scatterings_free(phel_info,1)
+ N_yes=phel_info%N
+ N_tot(1)=sum(N_tot)
+ call PP_redux_wait(N_yes)
+ call PP_redux_wait(N_tot)
+ ratio = 0._SP
+ if (N_tot(1)>0) ratio = float(N_yes(1))/float(N_tot(1))*100._SP
+ call msg('nrsn','Total DbGd k->k-q (trans %, broad eV)]',(/ratio,broad_factor*QP_G_damp*HA2EV/))
  !
 end subroutine PH_Grid_Check_Transitions

@@ -24,10 +24,11 @@
 integer function io_PH(ID)
  !
  use units,               ONLY:HA2EV
+ use com,                 ONLY:fat_log
  use pars,                ONLY:SP
- use R_lattice,           ONLY:nqibz,nqbz,nkDg
+ use R_lattice,           ONLY:nqibz,nqbz
  use QP_m,                ONLY:QP_G_damp
- use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode,l_extra_life
+ use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,PH_freqs_sq,ph_modes,PHEL_desc
  use IO_m,                ONLY:io_connect,io_disconnect,io_sec,io_header,io_status,read_is_on,def_variable_elemental,&
 &                              DB_is_OK,io_variable_elemental,def_variable_bulk,io_variable_bulk
@@ -61,7 +62,6 @@ integer function io_PH(ID)
    call io_variable_elemental(ID,VAR="[PHEL] X Bands",I1=QP_PH_n_G_bands,DESCRIPTOR=PHEL_desc,&
 &                                TERMINATOR="used",CHECK=.TRUE.,OP=(/"==","=="/))
    call io_variable_elemental(ID,VAR="[PHEL] X DbGd points",I0=PH_DbGd_points,DESCRIPTOR=PHEL_desc,CHECK=.TRUE.,OP=(/"=="/))
-   call io_variable_elemental(ID,VAR="[PHEL] X DbGd points subset",I0=nkDg,DESCRIPTOR=PHEL_desc,CHECK=.TRUE.,OP=(/"=="/)) 
    call io_variable_elemental(ID,VAR="[PHEL] X DbGd support",L0=l_PH_uses_E_FineGd,DESCRIPTOR=PHEL_desc,CHECK=.TRUE.,OP=(/"=="/))
    call def_variable_elemental(ID,"",0,0,1)
    io_PH=io_status(ID)
@@ -76,7 +76,7 @@ integer function io_PH(ID)
    if (read_is_on(ID)) then
      Life_MEM_steps=1
      call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)
-     if (l_extra_life) call RT_extra_lifetime_alloc("ph_el",RT_PE_extra,elph_branches,nqibz)
+     if (fat_log) call RT_extra_lifetime_alloc("ph_el",RT_PE_extra,elph_branches,nqibz)
      if (.not.allocated(PH_freqs_sq)) then
        YAMBO_ALLOC(PH_freqs_sq,(nqbz,ph_modes))
      endif
@@ -91,7 +91,7 @@ integer function io_PH(ID)
    call def_variable_bulk(ID,"PH_LIFE_ABS",3,(/elph_branches(2)-elph_branches(1)+1,nqibz/),SP)
    call io_variable_bulk(ID,3,R2=RT_PE_life%abs(:,:))
    !
-   if (l_extra_life) then
+   if (fat_log) then
      !
      call def_variable_bulk(ID,"PH_LIFE_EQ",4,(/elph_branches(2)-elph_branches(1)+1,nqibz/),SP)
      call io_variable_bulk(ID,4,R2=RT_PE_extra%linewidth(:,:))

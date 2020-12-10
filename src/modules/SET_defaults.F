@@ -56,7 +56,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
-&                     cutoff_presets,k_map,nkDg
+&                     cutoff_presets,k_map
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
  use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
@@ -84,9 +84,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,&
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
-#endif
-#if defined _PHEL
- use PHEL,       ONLY:l_extra_life
 #endif
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
@@ -517,11 +514,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
 #if defined _PL
  PL_weights=(/1._SP,1._SP,1._SP/)
-#endif
- !
-#if defined _PHEL
- nkDg=-1
- l_extra_life=.false.
 #endif
  !
 #if defined _ELPH 

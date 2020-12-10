@@ -34,7 +34,6 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  use pars,           ONLY:SP,cI,pi,rZERO
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ,E_fine_grid
- use hamiltonian,    ONLY:B_mat_index
  use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid
  use RT_occupations, ONLY:RT_ph_occ,RT_el_occ,RT_ho_occ,RT_life_occ
  use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life,RT_PE_extra
@@ -44,7 +43,8 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  use parallel_m,     ONLY:PARs_PH_Q_ibz
  use QP_m,           ONLY:QP_G_damp
  use LIVE_t,         ONLY:live_timing
- use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,phel_scatterings_free,l_extra_life
+ use com,            ONLY:fat_log
+ use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info
  !
  implicit none
  !
@@ -72,11 +72,11 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
 &            Hole_f_mkq,Hole_f_nk
  real (SP) :: TMP_linewidth
  !
- call live_timing('Phonon Lifetimes',phel_info%PAR_Ntransitions)
+ call live_timing('Phonon Lifetimes',phel_info%N)
  !
  ! Main loop over allowed transitions
  !====================================
- do it=1,phel_info%PAR_Ntransitions
+ do it=1,phel_info%N
    !
    ! Indices of allowed transition
    il     = phel_info%table(it,1) ! phonon branch
@@ -209,14 +209,14 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    TMP_Emit_lifetime = f_nk*Hole_f_mkq*D_ares+Hole_f_nk*f_mkq*D_res
    TMP_Abs_lifetime  = f_nk*Hole_f_mkq*D_res +Hole_f_nk*f_mkq*D_ares
    ! This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
-   if (l_extra_life) TMP_linewidth     = (f_mkq-f_nk)*D_res
+   if (fat_log) TMP_linewidth     = (f_mkq-f_nk)*D_res
    !
    ! Phonon emission (stimulated and spontaneous)
    RT_PE_life%emit(il,iq_life)=RT_PE_life%emit(il,iq_life)+TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
    ! Phonon absorption
    RT_PE_life%abs(il,iq_life) =RT_PE_life%abs(il,iq_life)+TMP_Abs_lifetime*pre_factor*N_q
    !    
-   if (l_extra_life) then
+   if (fat_log) then
      !
      RT_PE_extra%linewidth(il,iq_life)=RT_PE_extra%linewidth(il,iq_life)+TMP_linewidth*pre_factor
      ! Interband and intraband (Drude) components of the Emit lifetimes  
@@ -231,8 +231,6 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    call live_timing( steps=1 )
    !
  enddo
- !
- call phel_scatterings_free(phel_info,2)
  !
  call live_timing( )
  !

@@ -27,67 +27,24 @@ module PHEL
  !
 #include<memory.h>
  !
- integer          :: PH_DbGd_points=0
- logical          :: l_PH_uses_E_FineGd=.FALSE.
- logical          :: l_extra_life ! Adds interband, intraband, eq. linewidths to output 
  character(schlen):: PH_Self_Energy_mode="dressed-dressed" ! "bare-dressed" (="dressed-bare") / "bare-bare"
  !
+ ! ... Double-grid
+ integer              :: PH_DbGd_points=-1
+ logical              :: l_PH_uses_E_FineGd=.FALSE.
+ !
+ ! ... Scatterings
  type phel_scatterings
-   integer               :: transitions(2)=0  ! Number of transitions: 1-> accepted, 2-> total
-   integer               :: PAR_Ntransitions  ! Number of accepted transition per process
-   real(SP)              :: ratio             ! accepted/total
-   integer, allocatable  :: transitions_at_q(:,:)
-   real(SP), allocatable :: ratio_at_q(:)
+   integer               :: N=0        ! Number of accepted transitions
    integer, allocatable  :: table(:,:) ! Indices of accepted transitions: 
-  end type phel_scatterings           ! 1-> il, 2-> iq, 3-> ikbz, 4-> ik_fg, 5->ip_fg, 6-> i_n, 7-> i_np
+ end type phel_scatterings             ! 1-> PH_freqs_CG, 2-> ikbz, 3-> ik_fg, 4->ip_fg, 5-> i_n, 6-> i_np
  !
  type(phel_scatterings)  :: phel_info
  !
-contains
-  !
-  subroutine phel_scatterings_alloc(phel_info,nk)
-    !
-    type(phel_scatterings) :: phel_info
-    integer :: nk
-    integer :: n_indices_table = 7
-    !
-    if (phel_info%transitions(1)/=0 .and. .not. allocated(phel_info%table) ) then
-      YAMBO_ALLOC( phel_info%table, (phel_info%transitions(1),n_indices_table) )
-    endif 
-    !
-    if (allocated( phel_info%transitions_at_q )) return
-    !
-    YAMBO_ALLOC( phel_info%transitions_at_q, (nk,2) )
-    YAMBO_ALLOC( phel_info%ratio_at_q, (nk) )
-    !
-    phel_info%transitions_at_q = 0
-    phel_info%ratio_at_q       = 0
-    !
-  end subroutine
-  !
-  subroutine phel_scatterings_free(phel_info,what)
-    !
-    type(phel_scatterings) :: phel_info
-    integer                :: what
-    !
-    if (what==1) then
-      !
-      if (allocated( phel_info%transitions_at_q )) then
-        YAMBO_FREE( phel_info%transitions_at_q )
-      endif
-      !
-      if (allocated( phel_info%ratio_at_q )) then
-        YAMBO_FREE( phel_info%ratio_at_q )
-      endif
-      !
-    endif
-    !
-    if ( what==2 ) then
-      if (allocated( phel_info%table)) then
-        YAMBO_FREE( phel_info%table )
-      endif
-    endif 
-    !
-  end subroutine
- ! 
+ contains
+   !
+   subroutine PHEL_free( )
+      YAMBO_FREE(phel_info%table)
+   end subroutine
+   !
 end module

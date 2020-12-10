@@ -47,8 +47,6 @@ module R_lattice
  integer  :: nkibz
  integer  :: nXkbz
  integer  :: nXkibz
- integer  :: nkDg
- integer  :: nk_FG_per_kpt
  real(SP) :: RL_vol
  real(SP) :: d3k_factor
  real(SP) :: d3q_factor
@@ -272,22 +270,18 @@ module R_lattice
      type(bz_samp)     ::k
      integer           ::ik,ic
      integer, optional ::nk 
-     !
-     if ( .not. present(nk) ) then
-       nk = k%nibz
+     if ( .not.present(nk) ) then
+       nk=k%nibz
      endif
-     !
      FG%N=nk
      do ik=1,nk
-       !
-       if ( nk>k%nibz ) then
+       if (nk>k%nibz) then
          FG%pt(ik,:)=k%ptbz(ik,:)
          FG%weights(ik)=1._SP
        else
          FG%pt(ik,:)=k%pt(ik,:)
          FG%weights(ik)=k%weights(ik)
        endif
-       !
        FG%k_range(ik,:)=ik
        FG%E_map(ik)=ik
        FG%k_map(ik)=ik

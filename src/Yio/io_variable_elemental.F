@@ -329,7 +329,6 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    if (read_is_on(ID).and.i_err/=0) then
      if (CHECK_) ch=STRING_pack("*ERR* ",VAR)
      if (WARN_ ) ch=STRING_pack("*WRN* ",VAR)
-     msg_where="s"
    endif
    msg_=com_compose_msg(pre=" ",body=trim(ch))
    if(present(I0) .or.present(I1)) call msg(msg_where,msg_,i_db(1:SZ),after_msg=TERMINATOR)

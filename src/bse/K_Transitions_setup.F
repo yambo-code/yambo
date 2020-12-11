@@ -299,10 +299,21 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
 #if defined _SLEPC && !defined _SLEPC_OFF
  ! Special case, slepc with distributed matrix need doubling of the number of occupations
  l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling.and. (.not.BSS_slepc_matrix)
- ! The doubling is activated unless explicily imposed by imput to keep the symmetric case
+ ! The doubling is activated unless explicily imposed by input since slepc
+ ! with shells requires the extended K_multiply_by_V for the non hermitian algorithm
+ ! Slepc are not (yet) able to deal with a pseudo-hermitian algorith 
  l_BS_ares_asymm=l_BS_ares_asymm .or. (l_slepc_special.and..not.l_BS_ares_symm)
  BSS_slepc_double_grp=(.not.l_BS_ares_asymm).and.l_slepc_special
 #endif
+ !
+ l_BS_ares_asymm=l_BS_ares_asymm.and.trim(BSE_mode)/="resonant"
+ !
+ BS_res_ares_dim=1
+ BS_mat_res_ares_dim=1
+ if (l_BS_ares_asymm) then
+   BS_res_ares_dim=2
+   if (.not.BS_K_coupling) BS_mat_res_ares_dim=2
+ endif
  !
  BS_K_dim=0
  BS_nT_at_k_tmp=0
@@ -315,7 +326,7 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
 ! if(all(Ken%nbc/=0)) nb=Ken%nbc
 !#endif
  !
- do i_res_ares=1,2
+ do i_res_ares=1,BS_res_ares_dim
    do i_sp_c=1,n_sp_pol
      i_sp_v=i_sp_c
 #if defined _KERR
@@ -359,15 +370,6 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
    !! It waas needed with the old version f_v(1-f_c)
    !BSE_mode='retarded'
    !BSS_add_antiresonant=.true.
- endif
- !
- l_BS_ares_asymm=l_BS_ares_asymm.and.trim(BSE_mode)/="resonant"
- !
- BS_res_ares_dim=1
- BS_mat_res_ares_dim=1
- if (l_BS_ares_asymm) then
-   BS_res_ares_dim=2
-   if (.not.BS_K_coupling) BS_mat_res_ares_dim=2
  endif
  !
  YAMBO_ALLOC(BS_nT_at_k,(Xk%nibz*BS_res_ares_dim))

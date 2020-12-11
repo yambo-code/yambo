@@ -370,6 +370,7 @@ subroutine interpolate_W(X,Xw,q)
         !
         if(RIM_id_epsm1_reference/=0 .and. iomega==1) then
           !vX is included in the anis_factor
+          call msg('r',"This is the anysotropy case")
           f_coeff(1,igr,igc,iq1,iomega)=(4*pi)/(bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2*pi*alat(idir(1)))**2)
         else
           f_coeff(1,igr,igc,iq1,iomega) = vX(1,iq1,igr,igc,iomega)*(4*pi) / &
@@ -436,7 +437,7 @@ subroutine interpolate_W(X,Xw,q)
  !
 !!! AG DBG
  if (debug) call check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
- !if (debug) call check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
+ if (debug) call check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  if (debug) then
    close (unit=out_unit_G)
    close (unit=out_unit_qpG_in)
@@ -648,7 +649,7 @@ subroutine check_W_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
          !Evaluate func
          func = bare_qpg(iq,ig1)*bare_qpg(iq,ig2)/(4._DP*pi)*vX(1,iq,ig1,ig2,iomega)/(vX(1,iq,ig1,ig2,iomega)+1._DP)
          !Evaluate W
-         W_sampl = -vX(1,iq,ig1,ig2,iomega)*vslab
+         W_sampl = vX(1,iq,ig1,ig2,iomega)*vslab
          !W_sampl = vslab*func*vslab/(1._DP-func*vslab)
          !
          !Get q output in cc
@@ -822,12 +823,12 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  character(1) :: dir(2)
  integer, allocatable :: indexes(:,:,:)
  integer :: q_nn, Gr_nn, Gc_nn, n_indx_steps(2)
- integer :: iq_trial,iq_ibz_trial,is_trial,ig_trial
+ integer :: iq_trial,iq_ibz_trial,is_trial,ig_trial,ii1
  real(SP)  :: first_neighbour(26,3)
  integer   :: inn1,inn2,inn3,ic
  real(SP)  :: v1_norm(2)
  !
- Np = 21
+ Np = 301
  dq = 1./(Np-1)
  gmax = RIM_W_ng
  lcut=alat(idir(1))/2._SP
@@ -842,13 +843,15 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  if (RIM_id_epsm1_reference==0) em1_anis=0.
  !
  !Allocate indexes
- if (delta_q(1,1) > delta_q(2,2)) then
-   n_indx_steps(1) = min(k_grid(1),k_grid(2))/2-1
-   n_indx_steps(2) = max(k_grid(1),k_grid(2))/2-1
- else
-   n_indx_steps(1) = max(k_grid(1),k_grid(2))/2-1
-   n_indx_steps(2) = min(k_grid(1),k_grid(2))/2-1
- end if
+ !if (delta_q(1,1) > delta_q(2,2)) then
+ !  n_indx_steps(1) = min(k_grid(1),k_grid(2))/2-1
+ !  n_indx_steps(2) = max(k_grid(1),k_grid(2))/2-1
+ !else
+ !  n_indx_steps(1) = max(k_grid(1),k_grid(2))/2-1
+ !  n_indx_steps(2) = min(k_grid(1),k_grid(2))/2-1
+ !end if
+ n_indx_steps(1) = 1
+ n_indx_steps(2) = 1
  npoints = (n_indx_steps)*2+1
  !allocate(indexes(max(npoints(1),npoints(2)),4,2))
  !call msg('r', "npoints_x = ", npoints(1))
@@ -872,19 +875,20 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
      !# Get the indexes of the q points #
      !###################################
      !
-     do i1=1,q%nbz
+     do i1=1,npoints(1)
+     do ii1=1,npoints(2)
        !
        !do i2=1,npoints(2)
          !
          !First: get the (q+Gr,q+Gc) points
          !
-         !q_num = (/0.,0.,0./)
-         !q_num(1:2) = delta_q(1,:)*(i1-1-n_indx_steps(1))&
-!&                    +delta_q(2,:)*(i2-1-n_indx_steps(2))
+         q_num = (/0.,0.,0./)
+         q_num(1:2) = delta_q(1,:)*(i1-1-n_indx_steps(1))&
+&                    +delta_q(2,:)*(ii1-1-n_indx_steps(2))
          !
-         !call c2a(b_in=b,v_in=q_num,mode='ka2i')
+         call c2a(b_in=b,v_in=q_num,mode='ka2i')
          !
-         q_num = q%ptbz(i1,:)
+         !q_num = q%ptbz(i1,:)
          qpGr  = q_num + g_vec(igr,:)
          qpGc  = q_num + g_vec(igc,:)
          !
@@ -1072,6 +1076,7 @@ subroutine check_W_2D_interpolation(q,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
          end do loop
          end do
          !
+     end do
      end do
      !
      !Close output files

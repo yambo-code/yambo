@@ -289,7 +289,7 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
      BS_K_has_been_calculated_loaded=l_kernel_complete
      l_BSE_kernel_complete          =l_kernel_complete
    endif
-   if((write_is_on(ID).and.master_cpu).or.read_is_on(ID)) then
+   if((write_is_on(ID_head).and.master_cpu).or.read_is_on(ID_head)) then
      io_BS=variables_BS_more(ID_head,'end')
      call io_disconnect(ID_head)
    endif

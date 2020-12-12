@@ -43,7 +43,7 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
  !
  ! Work space
  !
- integer           :: i_file,i_block,io_BS_err,IO_ACT,OP_MD_CL,ID_now
+ integer           :: i_file,i_block,io_BS_err,IO_ACT,ID_now
  real(SP)          :: BS_K_cutoff_inp
  character(schlen) :: timing_string,IO_mode
  !
@@ -72,7 +72,7 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
  l_BSE_restart=.false.
  l_partial_kernel_loaded=.false.
  IO_mode="full"   ! Full loads BS_blk%done from header & BS_blk%mat from BS_PAR 
- OP_MD_CL=OP_RD_CL
+ IO_ACT=OP_RD_CL
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,ID=ID_head)
  io_BS_err=io_BS_header(iq,X,ID_head,IO_mode)
@@ -141,22 +141,20 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
      ! If my compression level now is different from existing one
      if(BS_K_cutoff_inp/=BS_K_cutoff) then
        call msg("s","Performing extra compression requested from input.")
-       !! switch from reading to writing mode
-       !call io_control(ACTION=RD_CL,COM=REP,ID=ID_head)
-       !call io_BS_PAR_free(ID_head,ID,"compressed_head",.true.)
        BS_K_cutoff=BS_K_cutoff_inp
-       !call io_control(ACTION=OP_APP,COM=REP,ID=ID_head)
-       !io_BS_err=io_BS_header(iq,X,ID_head,"connect")
        ! Perform compression
        call K_compress(iq,ID_compr)
        call K_compressed_IO(iq,io_BS_err,"write")
-       OP_MD_CL=OP_APP_CL
+       ! Open HEAD in write mode
+       call io_control(ACTION=OP_APP,COM=REP,ID=ID_head)
+       io_BS_err=io_BS_header(iq,X,ID_head,"connect")
+       IO_ACT=WR_CL
      endif
    endif
    !
  endif
  !
- call io_control(ACTION=OP_MD_CL,COM=REP,ID=ID_head)
+ call io_control(ACTION=IO_ACT,COM=REP,ID=ID_head)
  call io_control(ACTION=RD_CL,COM=REP,ID=ID)
  if(     l_BSE_kernel_complete) call io_BS_PAR_free(ID_head,ID,IO_mode,.true.)
  if(.not.l_BSE_kernel_complete) call io_BS_PAR_free(ID_head,ID,IO_mode,.false.)

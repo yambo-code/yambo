@@ -207,7 +207,7 @@ module interfaces
      real(SP),    pointer     :: BS_R_PL(:,:)
    end subroutine
    !
-   subroutine QP_DBs_merge(N,DBs,plan,N_qp,qp,OP,PRE_FAC,MAP)
+   subroutine QP_DBs_merge(N,DBs,plan,N_qp,qp,OP,PRE_FAC,MAP,FILES)
      use pars, ONLY:SP
      use QP_m, ONLY:QP_t
      implicit none
@@ -218,6 +218,7 @@ module interfaces
      character(*),optional:: OP(N)
      real(SP)    ,optional:: PRE_FAC(N)
      integer     ,optional:: MAP(N)
+     character(*),optional:: FILES(N)
    end subroutine QP_DBs_merge
    !
    integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode)

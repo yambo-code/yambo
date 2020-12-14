@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
+subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP,FILES)
  !
  use pars,           ONLY:SP
  use QP_m,           ONLY:QP_t,QP_copy
@@ -40,6 +40,7 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
  character(*),optional:: OP(n_dbs)
  real(SP)    ,optional:: PRE_FAC(n_dbs)
  integer     ,optional:: MAP(n_dbs)
+ character(*),optional:: FILES(n_dbs)
  !
  ! Work Space
  !
@@ -71,7 +72,7 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
    call WHAT_update(i_db)
    call QP_copy(qp2merge(i_db), qp( n_GROUNDS ), WHAT, trim(OP(i_db)),PRE_FAC(i_db) )
    call ADD_the_DB_desc( N_GROUNDS, 1, i_db )
-   call IO_desc_duplicate(qp2merge(i_db)%desc,qp( n_GROUNDS )%desc,offset=2)
+   call IO_desc_duplicate(qp2merge(i_db)%desc,qp( n_GROUNDS )%desc,offset=3)
    !
    do i_db_p=i_db+1,n_dbs
      !
@@ -138,16 +139,21 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
    end subroutine
    !
    subroutine ADD_the_DB_desc( j_db, i_desc, current_db )
-     integer :: j_db,i_desc,current_db
-     qp( j_db )%desc%str ( i_desc)="==> QP Database Number"
-     qp( j_db )%desc%ival( 1,i_desc)=current_db
-     qp( j_db )%desc%size( i_desc)= 1
-     qp( j_db )%desc%kind( i_desc)="i"
-     qp( j_db )%desc%str ( i_desc+1)="==> QP Database Operation"
-     qp( j_db )%desc%sval( i_desc+1)=trim(OP(current_db))//trim(real2ch(PRE_FAC(current_db)))//"x"//WHAT
-     qp( j_db )%desc%size( i_desc+1)= 1
-     qp( j_db )%desc%kind( i_desc+1)="s"
-     qp( j_db )%desc%n=qp( j_db )%desc%n+2
+     integer :: j_db,i_desc,current_db,j_desc
+     j_desc=max(i_desc,1)
+     qp( j_db )%desc%str ( j_desc)=":: QP Database Number"
+     qp( j_db )%desc%ival( 1,j_desc)=current_db
+     qp( j_db )%desc%size( j_desc)= 1
+     qp( j_db )%desc%kind( j_desc)="i"
+     qp( j_db )%desc%str ( j_desc+1)=":: QP Database Operation"
+     qp( j_db )%desc%sval( j_desc+1)=trim(OP(current_db))//trim(real2ch(PRE_FAC(current_db)))//"x"//WHAT
+     qp( j_db )%desc%size( j_desc+1)= 1
+     qp( j_db )%desc%kind( j_desc+1)="s"
+     qp( j_db )%desc%str ( j_desc+2)=":: QP Database file"
+     qp( j_db )%desc%sval( j_desc+2)=trim(FILES(current_db))
+     qp( j_db )%desc%size( j_desc+2)= 1
+     qp( j_db )%desc%kind( j_desc+2)="s"
+     qp( j_db )%desc%n=qp( j_db )%desc%n+3
    end subroutine
    !
    logical function have_same_k(qp1,qp2)

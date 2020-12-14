@@ -31,7 +31,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use IO_m,           ONLY:io_control,OP_RD_CL
- use ELPH,           ONLY:PH_freqs_sq,GKKP,ph_modes,MAX_gkkp,Q_io_map,GKKP_me,K_io_map,elph_nb,&
+ use ELPH,           ONLY:PH_freqs_sq,GKKP,ph_modes,MAX_gkkp,Q_io_map,GKKP_me,K_io_map,&
 &                         l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,elph_nQ,GKKP_bare
  use interfaces,     ONLY:ELPH_alloc
  use parallel_int,   ONLY:PP_redux_wait
@@ -49,7 +49,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  !
  ! Work Space
  !
- integer             ::iq,ID,io_err,ik,i_n,i_np,ik_bz,ik_mem,iq_mem,NK,NQ,NB2sym(2),iq_s,idb,iq_ibz
+ integer             ::iq,ID,io_err,ik,i_n,i_np,ik_bz,ik_mem,iq_mem,NK,NQ,iq_s,idb,iq_ibz
  real(SP)            ::ph_Esq_local(elph_nQ,ph_modes)
  real(SP),allocatable::MAX_gkkp_expanded_at_kpq(:,:),GKKP_to_sym(:,:,:)
  integer, external   ::io_ELPH
@@ -79,12 +79,8 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  !
  ! Allocation
  !============
- NB2sym=(/1,elph_nb/)
- !DEBUG_AM>
- NB2sym=n_bands
- !DEBUG_AM<
  YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nbz,elph_nQ))
- YAMBO_ALLOC(GKKP_to_sym,(ph_modes,NB2sym(2),NB2sym(2)))
+ YAMBO_ALLOC(GKKP_to_sym,(ph_modes,n_bands(2),n_bands(2)))
  if (l_Q_IBZ) NQ=PARs_PH_Q_ibz%N_par
  if (l_Q_BZ ) NQ=PAR_nQ_bz
  if (l_K_IBZ) NK=PAR_Xk_nibz
@@ -123,17 +119,21 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
      ik=k%sstar(ik_bz,1)
      !
      l_cycle=.FALSE.
+     !DEBUG-AM
      !if (l_K_BZ)  l_cycle=.not.PAR_IND_Xk_bz%element_1D(ik) ! TO CODE
+     !DEBUG-AM
      if (l_K_IBZ) l_cycle=k%sstar(ik_bz,2)/=1.or..not.PAR_IND_Xk_ibz%element_1D(ik)
      if (l_cycle) cycle
      !
      if (l_Q_IBZ) iq_mem = PARs_PH_Q_ibz%table(iq)
      if (l_Q_BZ ) iq_mem = PAR_Q_bz_index(iq)
      if (l_K_IBZ) ik_mem = PAR_Xk_ibz_index(ik)
+     !DEBUG-AM
      if (l_K_BZ)  ik_mem = ik_bz ! PAR_Xk_ibz_index(ik_bz)! TO CODE
+     !DEBUG-AM
      !
-     do i_n=1,NB2sym(2)
-       do i_np=1,NB2sym(2)
+     do i_n=1,n_bands(2)
+       do i_np=1,n_bands(2)
          !
          ! There has been a key error in the definition of the el-ph SE of the BKE (Eq. 30_9_11.18)
          ! where the band indexes have been exchanged. Instead of doing a global change of the notes
@@ -153,7 +153,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
        enddo
      enddo
      !
-     call ELPH_databases_symmetrize(sym_mode,E,k,q,ik_bz,iq,NB2sym,GKKP_to_sym)
+     call ELPH_databases_symmetrize(sym_mode,E,k,q,ik_bz,iq,n_bands,GKKP_to_sym)
      !
      GKKP_sq%dVr(:,:,:,ik_mem,iq_mem)=GKKP_to_sym(:,n_bands(1):n_bands(2),n_bands(1):n_bands(2))
      !

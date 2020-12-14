@@ -61,10 +61,6 @@ subroutine RT_ELPH_Q_weights(q)
      !
      if (ph_E>0._SP) q_weight_RT(iq,il,:)=1._SP/ph_E/float(q%nbz)
      !
-     !DEBUG_AM>
-     if (PH_acoustic_branch(il).and.iq==1) q_weight_RT(iq,il,:)=0._SP
-     !DEBUG_AM<
-     !
      if (PH_acoustic_branch(il).and.iq>1) q_weight_RT(iq,il,2)=1._SP/ph_E/float(q%nbz)/PH_Q_modulus(iq)
      !
      if (RIM_n_rand_pts>0.and.PH_acoustic_branch(il)) then

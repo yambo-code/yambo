@@ -53,8 +53,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        PARALLEL_WF_distribute,QP_state_print,MATRIX_transpose,MATRIX_duplicate
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
  use timing_m,      ONLY:timing
+ use parallel_m,    ONLY:PAR_COM_RL_A2A
 #if defined _SC
- use parallel_m,    ONLY:PAR_COM_QP_A2A
  use SC,            ONLY:it_now,it_to_start
 #endif
  use deviceXlib_m,  ONLY:dev_memcpy,dev_memset,dev_conjg
@@ -504,20 +504,25 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          dc(1) = cmplx(dp_dummy,kind=SP)
          !
          !
-         ! Bug spotted by D.V. (April 2014). HEAD_QP_cpu is defined differently when
+         ! DV: Bug spotted in April 2014. HEAD_QP_cpu is defined differently when
          ! the _SC flag is used. The point is that in SE calculations HEAD_QP_cpu is used
          ! in cases where no band loops are done (like here). In _SC instead 
          ! it is needed for a different purpose. This is why I use PAR_COM_QP_A2A%CPU_id in this case.
          !
-#if defined _SC
-         if (l_sc_run) then
-           if (PAR_COM_QP_A2A%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
-         else
-#endif
-           if (HEAD_QP_cpu)              QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
-#if defined _SC
-         endif
-#endif
+         ! AF: After the inclusion of G-parallelism, the communicator to use
+         ! here (both SC and ordinary runs) has become   PAR_COM_RL_A2A
+         !
+!#if defined _SC
+!         if (l_sc_run) then
+!           if (PAR_COM_QP_A2A%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+!         else
+!#endif
+!           if (HEAD_QP_cpu)              QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+!#if defined _SC
+!         endif
+!#endif
+         !
+         if (PAR_COM_RL_A2A%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
          !
          dc=cZERO
          !
@@ -665,7 +670,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          dp_dummy=0.0_DP
          !
          !DEV_CUF kernel do(2)
-         !DEV_OMP parallel do default(shared),private(ig1,ig2,PPA_E,PPA_R), &
+         !DEV_OMP parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,QP_ppa_EET,ctmp), &
          !DEV_OMP &        reduction(+:dp_dummy), collapse(2)
          !
          do ig2=X_cols1,X_cols2
@@ -695,6 +700,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !
          enddo
          enddo
+         !DEV_OMP end parallel do
          !
          if (have_cuda) dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)
          !

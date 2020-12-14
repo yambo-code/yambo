@@ -96,7 +96,7 @@ subroutine electrons_dos(Xk,Xen)
  if (l_PROJECT_atom) then
    YAMBO_ALLOC(PDOS_fac_v,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_sp_pol))
    call electrons_pdos_factors((/1,Xk%nibz/),DOS_bands,PDOS_fac_v)
-   PDOS_fac_p(DOS_bands(1):DOS_bands(2),1:Xk%nibz,1:n_spinor) => PDOS_fac_v
+   PDOS_fac_p(DOS_bands(1):DOS_bands(2),1:Xk%nibz,1:n_sp_pol) => PDOS_fac_v
  endif
  !
  if (n_spinor==2) then

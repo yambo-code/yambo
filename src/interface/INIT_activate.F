@@ -159,7 +159,7 @@ subroutine INIT_activate()
  if (l_optics.and.l_bse)           call initactivate(1,'BSKmod Lkind')
  if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
  !
- if (l_dipoles) call initactivate(1,'DipBands DipBandsALL DipQpt DipApproach DipPDirect ShiftedPaths')
+ if (l_dipoles) call initactivate(1,'DipBands DipBandsALL DipQpt DipApproach DipComputed DipPDirect ShiftedPaths')
 #if defined _NL || defined _ELECTRIC
  if (l_dipoles) call initactivate(1,'EvPolarization')
 #endif
@@ -212,7 +212,7 @@ subroutine INIT_activate()
    !
    ! Dipoles & Gauges
    !
-   call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge')
+   call initactivate(1,'DipApproach DipComputed DipPDirect ShiftedPaths Gauge')
    !
  endif
  !

@@ -233,9 +233,10 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
      !
    endif
    !
+   if (ik_local>1) value_k=value_k+iku_v_norm(LOCAL_k%pt(ik_local,:)-LOCAL_k%pt(ik_local-1,:))
+   !
    do i_point=1,n_points
      !
-     if (ik_local>1.and.i_point==1) value_k=value_k+iku_v_norm(LOCAL_k%pt(ik_local,:)-LOCAL_k%pt(ik_local-1,:))
      !
      call K_transform(tmp_k(:,i_point),'iku')
      !

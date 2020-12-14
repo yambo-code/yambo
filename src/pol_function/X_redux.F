@@ -71,6 +71,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  type(PAR_matrix) :: K_FXC
  type(PAR_matrix), target      :: BUFFER,KERNEL,Xo
  complex(SP), pointer DEV_ATTR :: BUFFER_blc_d(:,:,:)
+
  !
  ! Setup 
  !
@@ -81,11 +82,17 @@ subroutine X_redux(iq,X_par,Xw,X)
  call PP_redux_wait(COMM=PAR_COM_X_WORLD%COMM)
  !
  ! compute X on GPU if compiled with GPU support,
- ! unless GPU-usage is switchoff from input
+ ! unless GPU-usage is switch-off from input
+ ! 
+ ! Main logic:
+ ! if SLK are present .and. ncpu_SLK >1 .and. CUDA => SLK on CPU
+ ! otherwise a problem is obtained since SLK doesn't work on GPU yet
  !
  compute_on_gpu=have_cuda.and.X_use_gpu
- if (have_cuda) call msg('s','[LA] X compute_on_gpu ',compute_on_gpu )
  !
+ if (PAR_COM_SLK%n_CPU>=4.and.have_cuda) compute_on_gpu=.false.
+ !
+ if (have_cuda) call msg('s','[LA] X compute_on_gpu ',compute_on_gpu )
  !
  ! ... and frequencies distribution
  !         ========================

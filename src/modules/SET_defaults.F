@@ -38,7 +38,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     l_X_terminator,X_terminator_E,global_gauge,&
 &                     Chi_linalg_mode,X_use_lin_sys,X_use_gpu,X_DbGd_percentual
  use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
-&                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach
+&                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
+&                     compute_P2_dipoles,compute_Spin_dipoles,compute_Orb_dipoles
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
@@ -139,7 +140,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use timing_m,    ONLY:timing_allocate,nclockx
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
- use cuda_m,      ONLY:have_cuda
+ use cuda_m,      ONLY:cuda_setup,have_cuda
  !
  implicit none
  !
@@ -154,6 +155,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ! GPL_EXCLUDE_START
  include 'branch.inc'
  ! GPL_EXCLUDE_END
+ !
  !
  call set_real_printed_length()
  !
@@ -178,6 +180,14 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  call OPENMP_initialize( )
  call OPENMP_update(master_thread)
  !
+ ! Node name
+ !
+ call CREATE_hosts_COMM( )
+ !
+ ! CUDA environment defs
+ !
+ call cuda_setup()
+ !
  ! Stack Size 
  !
  call remove_stack_limit()
@@ -194,10 +204,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  call MEM_element_init(MEMs,N_MEM_max)
  call MEM_element_init(LARGE_MEMs,N_MEM_SAVE_max)
- !
- ! Node name
- !
- call CREATE_hosts_COMM( )
  !
  ! ZEROs 
  !
@@ -362,6 +368,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use_covariant_approach     = .FALSE.
  use_real_space_approach    = .FALSE.
  use_g_space_approach       = .TRUE.
+ compute_P2_dipoles         = .FALSE.
+ compute_Spin_dipoles       = .FALSE.
+ compute_Orb_dipoles        = .FALSE.
  use_X_DbGd=.FALSE.
  X_DbGd_percentual=1.
  eps_2_alpha=1._SP

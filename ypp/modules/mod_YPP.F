@@ -39,9 +39,11 @@ module YPPm
  logical  :: l_q_grid
  logical  :: l_shifted_grid
  logical  :: l_random_grid
+ logical  :: l_regular_grid
  logical  :: l_high_sym_pts
  integer  :: N_path_pts
  integer  :: BZ_random_nkpts
+ integer  :: K_grid(3)
  real(SP) :: alat_used_for_output
  character(schlen) :: coo_in
  character(schlen) :: coo_out
@@ -157,6 +159,7 @@ module YPPm
  logical      ::l_amplitude
  logical      ::l_spin
  logical      ::l_free_hole
+ logical      ::l_average_eh
  logical      ::l_angular_momentum
  logical      ::l_position
  integer      ::ncell(3) 
@@ -167,7 +170,8 @@ module YPPm
  real(SP)     ::EXCITON_Res_treshold
  real(SP)     ::EXCITON_weight_treshold   
  real(SP)     ::WF_multiplier   
- character(schlen)    ::state_ctl 
+ character(schlen)    :: AVE_exc
+ character(schlen)    :: state_ctl 
  integer              :: EXCITONS_n_user_states=0
  integer, allocatable :: EXCITONS_user_indexes(:)
  type EXCITON_spin

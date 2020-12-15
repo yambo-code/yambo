@@ -71,8 +71,9 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP,FIL
    !
    call WHAT_update(i_db)
    call QP_copy(qp2merge(i_db), qp( n_GROUNDS ), WHAT, trim(OP(i_db)),PRE_FAC(i_db) )
-   call ADD_the_DB_desc( N_GROUNDS, 1, i_db )
-   call IO_desc_duplicate(qp2merge(i_db)%desc,qp( n_GROUNDS )%desc,offset=3)
+   call ADD_the_DB_desc( N_GROUNDS, 0, i_db )
+   call PREAPPEND_the_DB_desc( qp2merge(i_db), i_db )
+   call IO_desc_duplicate(qp2merge(i_db)%desc,qp( n_GROUNDS )%desc,offset=2)
    !
    do i_db_p=i_db+1,n_dbs
      !
@@ -112,6 +113,7 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP,FIL
          !
          call WHAT_update( i_db_p)
          call ADD_the_DB_desc( GROUND(i_db_p), qp(GROUND(i_db_p))%desc%n , i_db_p )
+         call PREAPPEND_the_DB_desc( qp2merge(i_db_p), i_db_p )
          !
          call QP_DBs_add_me(qp( GROUND(i_db_p) ),qp2merge(i_db_p) ,plan_EWZG(i_db_p,:), &
 &                           SAME_states, SAME_desc,trim(OP(i_db_p)),PRE_FAC(i_db_p))
@@ -138,22 +140,25 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP,FIL
      if (plan_EWZG(j_db,4)) WHAT=trim(WHAT)//"G"
    end subroutine
    !
+   subroutine PREAPPEND_the_DB_desc( qp, current_db )
+     type(QP_t)::qp
+     integer   ::i_desc,current_db
+     do i_desc=1,qp%desc%n
+       qp%desc%str(i_desc)="[DB #"//trim(intc(current_db))//"] "//trim(qp%desc%str(i_desc))
+     enddo
+   end subroutine
+   !
    subroutine ADD_the_DB_desc( j_db, i_desc, current_db )
-     integer :: j_db,i_desc,current_db,j_desc
-     j_desc=max(i_desc,1)
-     qp( j_db )%desc%str ( j_desc)=":: QP Database Number"
-     qp( j_db )%desc%ival( 1,j_desc)=current_db
-     qp( j_db )%desc%size( j_desc)= 1
-     qp( j_db )%desc%kind( j_desc)="i"
-     qp( j_db )%desc%str ( j_desc+1)=":: QP Database Operation"
-     qp( j_db )%desc%sval( j_desc+1)=trim(OP(current_db))//trim(real2ch(PRE_FAC(current_db)))//"x"//WHAT
-     qp( j_db )%desc%size( j_desc+1)= 1
-     qp( j_db )%desc%kind( j_desc+1)="s"
-     qp( j_db )%desc%str ( j_desc+2)=":: QP Database file"
-     qp( j_db )%desc%sval( j_desc+2)=trim(FILES(current_db))
-     qp( j_db )%desc%size( j_desc+2)= 1
-     qp( j_db )%desc%kind( j_desc+2)="s"
-     qp( j_db )%desc%n=qp( j_db )%desc%n+3
+     integer :: j_db,i_desc,current_db
+     qp( j_db )%desc%str ( i_desc+1)="[DB #"//trim(intc(current_db))//"] Database"
+     qp( j_db )%desc%sval( i_desc+1)=trim(FILES(current_db))
+     qp( j_db )%desc%size( i_desc+1)= 1
+     qp( j_db )%desc%kind( i_desc+1)="s"
+     qp( j_db )%desc%str ( i_desc+2)="[DB #"//trim(intc(current_db))//"] Database Operation"
+     qp( j_db )%desc%sval( i_desc+2)=trim(OP(current_db))//trim(real2ch(PRE_FAC(current_db)))//"x"//WHAT
+     qp( j_db )%desc%size( i_desc+2)= 1
+     qp( j_db )%desc%kind( i_desc+2)="s"
+     qp( j_db )%desc%n=qp( j_db )%desc%n+2
    end subroutine
    !
    logical function have_same_k(qp1,qp2)

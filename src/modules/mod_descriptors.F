@@ -107,10 +107,11 @@ module descriptors
      !
    end subroutine
    !
-   subroutine IO_desc_element_duplicate(desc_in,desc_out,i_d_in,i_d_out)
-     type(IO_desc),    intent(in)    :: desc_in
-     type(IO_desc),    intent(inout) :: desc_out
-     integer,          intent(in)    :: i_d_in,i_d_out
+   subroutine IO_desc_element_duplicate(desc_in,desc_out,i_d_in,i_d_out,PREPEND)
+     type(IO_desc),         intent(in)    :: desc_in
+     type(IO_desc),         intent(inout) :: desc_out
+     integer,               intent(in)    :: i_d_in,i_d_out
+     character(*),optional, intent(in)    :: PREPEND
      desc_out%size(i_d_out)   = desc_in%size(i_d_in)
      desc_out%term(i_d_out)   = desc_in%term(i_d_in)
      desc_out%str (i_d_out)   = desc_in%str(i_d_in)
@@ -125,10 +126,11 @@ module descriptors
      desc_out%lval(i_d_out)   = desc_in%lval(i_d_in)
    end subroutine
    !
-   subroutine IO_desc_duplicate(desc_in,desc_out,offset)
-     type(IO_desc),    intent(in)    :: desc_in
-     type(IO_desc),    intent(inout) :: desc_out
-     integer,optional, intent(in)    :: offset
+   subroutine IO_desc_duplicate(desc_in,desc_out,offset,PREPEND)
+     type(IO_desc),    intent(in)        :: desc_in
+     type(IO_desc),    intent(inout)     :: desc_out
+     integer,optional, intent(in)        :: offset
+     character(*),optional, intent(in)   :: PREPEND
      integer  :: i_d,off_
      off_=0
      if (present(offset)) then
@@ -136,16 +138,17 @@ module descriptors
      endif
      desc_out%n    = desc_in%n + off_
      do i_d=1,desc_in%n
-       call IO_desc_element_duplicate(desc_in,desc_out,i_d,i_d+off_)
+       call IO_desc_element_duplicate(desc_in,desc_out,i_d,i_d+off_,PREPEND=PREPEND)
      enddo
    end subroutine
    !
-   subroutine IO_desc_append(desc_in,desc_out)
-     type(IO_desc),    intent(in)    :: desc_in
-     type(IO_desc),    intent(inout) :: desc_out
+   subroutine IO_desc_append(desc_in,desc_out,PREPEND)
+     type(IO_desc),    intent(in)      :: desc_in
+     type(IO_desc),    intent(inout)   :: desc_out
+     character(*),optional, intent(in) :: PREPEND
      integer  :: i_d
      do i_d=1,desc_in%n
-       call IO_desc_element_duplicate(desc_in,desc_out,i_d,desc_out%n+i_d)
+       call IO_desc_element_duplicate(desc_in,desc_out,i_d,desc_out%n+i_d,PREPEND=PREPEND)
      enddo
      desc_out%n = desc_out%n+desc_in%n 
    end subroutine

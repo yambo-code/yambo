@@ -118,7 +118,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  X%ordering="R"
  if (.not.FXC_is_retarded) X%ordering="r"
  !
- YAMBO_ALLOC(X_poles,(BS_K_dim))
+ YAMBO_ALLOC(X_poles,(BS_K_dim(1)))
  X_poles=FXC_K_diagonal
  !
  ! GPL_EXCLUDE_END

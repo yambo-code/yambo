@@ -23,13 +23,17 @@
 !
 subroutine K_observables(WHAT,W)
  !
- use pars,          ONLY:cZERO
- use X_m,           ONLY:X_alloc,Epsilon_ij,Epsilon_ii,Joint_DOS
+ use pars,          ONLY:rZERO,cZERO
+ use X_m,           ONLY:X_alloc,Epsilon_ii,Joint_DOS,BS_E_sorted
  use frequency,     ONLY:w_samp
-#if defined _PL
- use PHOTOLUM,      ONLY:PL,PL_init
-#endif
  use BS_solvers,    ONLY:BSS_n_freqs
+ use BS,            ONLY:BS_H_dim,l_BS_abs,l_BS_jdos,l_BS_esort
+#if defined _KERR
+ use BS_solvers,    ONLY:B_Hall
+ use PHOTOLUM,      ONLY:PL,PL_init
+ use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_anomalous_Hall,l_BS_dichroism,l_BS_photolum
+ use X_m,           ONLY:Epsilon_ij,X_magnons,X_dichroism
+#endif
  !
 #include<memory.h>
  !
@@ -39,30 +43,65 @@ subroutine K_observables(WHAT,W)
  if (WHAT=="ALLOC") then
    !
 #if defined _KERR
-   YAMBO_ALLOC(Epsilon_ij,(BSS_n_freqs,4))
-   Epsilon_ij=cZERO
-   Epsilon_ij(:,1)=W%p(:)
-#endif
-#if defined _PL
-   call PL_init( )
-   PL(:,1) = W%p(:)  
+   if(l_BS_kerr) then
+     YAMBO_ALLOC(Epsilon_ij,(BSS_n_freqs,4))
+     Epsilon_ij=cZERO
+     Epsilon_ij(:,1)=W%p(:)
+   endif
+   if(l_BS_anomalous_Hall) B_Hall=cZERO
+   !
+   if(l_BS_magnons) then
+     YAMBO_ALLOC(X_magnons,(BSS_n_freqs,2,4))
+     X_magnons=cZERO
+     X_magnons(:,1,1)=W%p(:)
+     X_magnons(:,2,1)=W%p(:)
+   endif
+   !
+   if(l_BS_dichroism) then
+     YAMBO_ALLOC(X_dichroism,(BSS_n_freqs,4))
+     X_dichroism=cZERO
+     X_dichroism(:,1)=W%p(:)
+   endif
+   !
+   if(l_BS_photolum) then
+     call PL_init( )
+     PL=rZERO
+     PL(:,1) = W%p(:)  
+   endif
 #endif
    !
-   call X_alloc("EPS",(/BSS_n_freqs,4/))
-   Epsilon_ii(:,1)   =W%p(:)
-   Joint_DOS(:,1)    =W%p(:)
+   if(l_BS_abs) then
+     call X_alloc("EPS",(/BSS_n_freqs,4/))
+     Epsilon_ii(:,1)=W%p(:)
+   endif
+   !
+   if(l_BS_jdos) then
+     YAMBO_ALLOC(Joint_DOS,(BSS_n_freqs,4))
+     Joint_DOS=cZERO
+     Joint_DOS(:,1)=W%p(:)
+   endif
+   !
+   if(l_BS_esort) then
+     YAMBO_ALLOC(BS_E_sorted,(1000,9,2))
+     BS_E_sorted=cZERO
+   endif
    !
  else if (WHAT=="FREE") then
    !
 #if defined _KERR
    YAMBO_FREE(Epsilon_ij)
-#endif
    !
-#if defined _PL
+   YAMBO_FREE(X_magnons)
+   !
+   YAMBO_FREE(X_dichroism)
+   !
    YAMBO_FREE(PL)
 #endif
    !
    call X_alloc("EPS")
+   !
+   YAMBO_FREE(Joint_DOS)
+   YAMBO_FREE(BS_E_sorted)
    !
  endif
  !

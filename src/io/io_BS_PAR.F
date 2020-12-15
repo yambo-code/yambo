@@ -135,7 +135,8 @@ integer function io_BS_PAR_init(iq,ID,mode)
  use com,           ONLY:msg
  use pars,          ONLY:IP,IPL,SP,schlen,lchlen,max_io_vars_open
  use BS,            ONLY:BS_K_dim,BS_IO_dim,BS_K_coupling,l_BSE_restart,l_BSE_kernel_complete,&
-&                        BSK_IO_mode,MAX_BSK_LIN_SIZE,BS_lin_size_compressed,BS_K_cutoff
+&                        BSK_IO_mode,MAX_BSK_LIN_SIZE,BS_lin_size_compressed,BS_K_cutoff,     &
+&                        BS_mat_res_ares_dim,l_BS_ares_asymm,BS_res_ares_dim
  use IO_m,          ONLY:io_connect,def_variable_bulk,io_BS_K,io_file,write_is_on,read_is_on
  !
  implicit none
@@ -145,11 +146,11 @@ integer function io_BS_PAR_init(iq,ID,mode)
  !
  ! Workspace
  !
- character(schlen) :: db_name,ch_tmp,dim_names(3),BSK_IO_local
+ character(schlen) :: db_name,ch_tmp,dim_names(3,3),BSK_IO_local
  character(lchlen) :: ch(8,max_io_vars_open)
  logical           :: def_var, io_var
  integer(IPL)      :: BS_lin_size
- integer           :: VAR_IDs(max_io_vars_open), n_vars, i1, i_rep,i_var, BSK_n_dims,n_replica
+ integer           :: n_vars, i1,i2, i_rep,i_var, BSK_n_dims,n_replica
  !
  io_BS_PAR_init=-1
  !
@@ -168,7 +169,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
  !
  if( read_is_on(ID).and.index(mode,"compressed")/=0) then
    ch_tmp="Compressed BSE file found"
-   if(trim(mode)=="compressed_head") ch_tmp=ch_tmp//", initializing head "
+   if(trim(mode)=="compressed_head") ch_tmp=trim(ch_tmp)//", initializing head "
    if(trim(mode)=="compressed_mat" ) ch_tmp="Compressed BSE file, initializing mat "
    if(io_BS_PAR_init==0) call msg("s",trim(ch_tmp),trim(io_file(ID)))
    if(io_BS_PAR_init/=0.or.trim(mode)=="compressed_check") return
@@ -188,16 +189,16 @@ integer function io_BS_PAR_init(iq,ID,mode)
  !
  ! Define vars
  !
+ !
+ dim_names(1,:)  =  'complex'
+ !
  ch(1,:)="BSE_RESONANT"
  ch(2,:)="BSE_COUPLING"
  ch(3,:)="BSE_ANTI-RESONANT"
- ch(4,:)="BSE_ANTI-COUPLING"
  !
- dim_names(1)  =  'complex'
- !
- if (.not.BS_K_coupling)           n_vars=1
- if (     BS_K_coupling.and.iq==1) n_vars=2
- if (     BS_K_coupling.and.iq/=1) n_vars=4
+ if (.not.BS_K_coupling) n_vars=1
+ if (     BS_K_coupling) n_vars=2
+ if ( l_BS_ares_asymm  ) n_vars=n_vars+1
  !
  BSK_IO_local=trim(BSK_IO_mode)
  if(index(mode,"compressed")/=0 ) BSK_IO_local=trim(mode)
@@ -210,28 +211,30 @@ integer function io_BS_PAR_init(iq,ID,mode)
    BSK_n_dims=1
    !
    if(trim(BSK_IO_local)=="1D_linear" .or. trim(BSK_IO_local)=="compressed_head" ) then
-     dim_names(2:3)=[ 'BS_K_linearized1', 'BS_K_linearized2' ]
-     BS_LIN_size=int(BS_K_dim,kind=IPL)*int(BS_K_dim+1,kind=IPL)/int(2,kind=IPL)
+     dim_names(2:3,1)=[ 'BS_K_linearized1', 'BS_K_linearized2' ]
+     BS_LIN_size=int(BS_K_dim(1),kind=IPL)*int(BS_K_dim(1)+1,kind=IPL)/int(2,kind=IPL)
    endif
    if(trim(BSK_IO_local)=="compressed_mat") then
-     dim_names(2:3)=[ 'BS_K_compressed1', 'BS_K_compressed2' ]
+     dim_names(2:3,1)=[ 'BS_K_compressed1', 'BS_K_compressed2' ]
      BS_LIN_size=BS_lin_size_compressed
    endif
    !
    if(trim(BSK_IO_local)=="1D_linear" )                                                 ch_tmp="_LINEARIZED"
    if(trim(BSK_IO_local)=="compressed_mat" .or. trim(BSK_IO_local)=="compressed_head" ) ch_tmp="_COMPRESSED"
-   BS_IO_dim=int(min(int(MAX_BSK_LIN_size,IPL),BS_lin_size),IP)
+   BS_IO_dim(:,1)=int(min(int(MAX_BSK_LIN_size,IPL),BS_lin_size),IP)
    !
    n_replica=1+int(BS_LIN_size/int(MAX_BSK_LIN_size,IPL),IP)
    do i_rep=1,n_replica
-     do i_var=1,n_vars
-       i1=i_var+n_vars*(i_rep-1)
+     do i2=1,n_vars
+       i1=i2+n_vars*(i_rep-1)
+       i_var=i2
+       if(i2==2 .and. BS_mat_res_ares_dim==2) then; i_var=3; endif
        ch(i_var,i_rep)=trim(ch(i_var,i_rep))//trim(ch_tmp)//trim(intc(i_rep))
      enddo
    enddo
    BS_LIN_size=BS_LIN_size-int(MAX_BSK_LIN_size,IPL)*int(n_replica-1,IPL)
    !
-   BS_IO_dim(2)=int(BS_LIN_size,IP)
+   BS_IO_dim(2,1)=int(BS_LIN_size,IP)
    !
  case("2D_standard")
    !
@@ -240,26 +243,37 @@ integer function io_BS_PAR_init(iq,ID,mode)
    BSK_n_dims=2
    n_replica=1
    !
-   dim_names(2:3) = ['BS_K_dim', 'BS_K_dim']
+   dim_names(2:3,1) = ['BS_K_dim1', 'BS_K_dim1']
+   BS_IO_dim(:,1) = (/BS_K_dim(1),BS_K_dim(1)/)
    !
-   BS_IO_dim = BS_K_dim
+   if(BS_res_ares_dim==2) then
+     dim_names(2:3,2) = ['BS_K_dim1', 'BS_K_dim2']
+     BS_IO_dim(:,2) = (/BS_K_dim(1),BS_K_dim(2)/)
+     dim_names(2:3,3) = ['BS_K_dim2', 'BS_K_dim2']
+     BS_IO_dim(:,3) = (/BS_K_dim(2),BS_K_dim(2)/)
+   else if (BS_K_coupling) then
+     dim_names(2:3,2) = ['BS_K_dim1', 'BS_K_dim1']
+     BS_IO_dim(:,2) = (/BS_K_dim(1),BS_K_dim(1)/)
+   endif
    !
  end select
  !
  do i_rep=1,n_replica
-   do i_var=1,n_vars
-     i1=i_var+n_vars*(i_rep-1)
+   do i2=1,n_vars
+     i1=i2+n_vars*(i_rep-1)
+     i_var=i2
+     if(i2==2 .and. BS_mat_res_ares_dim==2) then; i_var=3; endif
      if( (trim(BSK_IO_local)=="1D_linear".or.trim(BSK_IO_local)=="compressed_mat".or.trim(BSK_IO_local)=="compressed_head") &
      &   .and.i_rep==n_replica.and.i_rep>1) then
-       dim_names(2)=dim_names(3)
-       BS_IO_dim(1)=BS_IO_dim(2)
+       dim_names(2,i_var)=dim_names(3,i_var)
+       BS_IO_dim(1,i_var)=BS_IO_dim(2,i_var)
      endif
      if(trim(mode)=="full" .or. trim(mode)=="compressed_mat") &
      &  call def_variable_bulk(ID,trim(ch(i_var,i_rep)),         1+(i_var-1)*2+(i_rep-1)*8,&
-     &               [2,BS_IO_dim(1:BSK_n_dims)],SP,dim_names(1:BSK_n_dims+1),par_io_kind='independent')
+     &               [2,BS_IO_dim(1:BSK_n_dims,i_var)],SP,dim_names(1:BSK_n_dims+1,i_var),par_io_kind='independent')
      if(                        trim(mode)=="compressed_head") &
      &  call def_variable_bulk(ID,trim(ch(i_var,i_rep))//"_DONE",2+(i_var-1)*2+(i_rep-1)*8,&
-     &                  BS_IO_dim(1:BSK_n_dims) , 0,dim_names(2:BSK_n_dims+1),par_io_kind='independent')
+     &                  BS_IO_dim(1:BSK_n_dims,i_var) , 0,dim_names(2:BSK_n_dims+1,i_var),par_io_kind='independent')
    enddo
  enddo
  !
@@ -287,7 +301,7 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
  if(trim(mode)=="compressed_head".or.trim(mode)=="full") then
    if(write_is_on(ID)) then
      BS_K_has_been_calculated_loaded=l_kernel_complete
-     l_BSE_kernel_complete          =l_kernel_complete
+     l_BSE_kernel_complete          =l_kernel_complete.and.io_BS_K
    endif
    if((write_is_on(ID_head).and.master_cpu).or.read_is_on(ID_head)) then
      io_BS=variables_BS_more(ID_head,'end')
@@ -295,7 +309,7 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
    endif
    if(read_is_on(ID)) then
      BS_K_has_been_calculated_loaded=l_kernel_complete
-     l_BSE_kernel_complete          =l_kernel_complete
+     l_BSE_kernel_complete          =l_kernel_complete.and.io_BS_K
    endif
  endif
  !
@@ -349,8 +363,6 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
    VAR_IDs=(/3,4/)
  case("A")
    VAR_IDs=(/5,6/)
- case("Q")
-   VAR_IDs=(/7,8/)
  end select
  !
  ! Get lower bound coordinates in 2D matrix
@@ -367,7 +379,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
      !
      if(trim(mode)=="compressed_mat") then
        idx = BS_blk(i_block)%idx_compr(i2)
-       imax= int(count(BS_blk(i_block)%done(:,i2)=="t"),IPL)
+       imax= count(BS_blk(i_block)%done(:,i2)=="t")
      else
        ! tmp coordinate in 2D matrix, runs from x2 to x2 + SIZE -1
        n2  = (x2+i2-1)
@@ -415,7 +427,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
      lwrite(2)=trim(mode)=="full"
      lwrite(3)=trim(mode)=="compressed_mat"
      !
-     if(idx1+imax-1<=MAX_BSK_LIN_size) then
+     if(idx1+int(imax,IPL)-1<=MAX_BSK_LIN_size) then
        ! Block is all in one variable
        ID_now(1)=VAR_IDs(2)+(i_rep(1)-1)*8
        ID_now(2)=VAR_IDs(1)+(i_rep(1)-1)*8

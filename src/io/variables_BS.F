@@ -68,7 +68,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  endif
  !
  call def_variable_elemental(ID,"Dimension",1,IP+100,0)
- call io_variable_elemental(ID,VAR="[K] Dimension",I0=BS_K_dim,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+ call io_variable_elemental(ID,VAR="[K] Dimension",I0=BS_K_dim(1),CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  !
  call def_variable_elemental(ID,"Bands",2,IP+100,0)
  call io_variable_elemental(ID,VAR="[K] Bands",I1=BS_bands,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)

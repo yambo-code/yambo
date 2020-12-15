@@ -38,7 +38,6 @@ module drivers
  !
  ! Real Time
  !
- logical :: l_photolum           =.FALSE.
  logical :: l_real_time          =.FALSE.
  logical :: l_sc_run             =.FALSE.
  logical :: l_sc_electric        =.FALSE.
@@ -81,8 +80,6 @@ module drivers
  logical :: l_dipoles            =.FALSE.
  logical :: l_bse                =.FALSE.
  logical :: l_bss                =.FALSE.
- logical :: l_kerr               =.FALSE.
- logical :: l_anomalous_Hall     =.FALSE.
  !
  ! ... and the kernel
  !

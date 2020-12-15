@@ -45,8 +45,8 @@ subroutine WF_alloc(WF)
    WF%N=0
    N_total=0
    do i_sp_pol=WF%sp_pol(1),WF%sp_pol(2)
-     do ib=WF%b(1),WF%b(2)
-       do ik=WF%k(1),WF%k(2)
+     do ik=WF%k(1),WF%k(2)
+       do ib=WF%b(1),WF%b(2)
          N_total=N_total+1
          if (states_to_load(ib,ik,i_sp_pol)) WF%N=WF%N+1
        enddo

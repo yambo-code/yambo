@@ -58,7 +58,7 @@ subroutine K_diagonal(iq,what)
      !
      if (K_slk%kind=="SLK".and.index(what,"add_E")>0)then
        !
-       if (i_r<=BS_K_dim) then
+       if (i_r<=BS_K_dim(1)) then
          K_slk%blc(i_r,i_r,1)=K_slk%blc(i_r,i_r,1)+E_plus_W
        else if (cpl(i_r)) then
          K_slk%blc(i_r,i_r,1)=K_slk%blc(i_r,i_r,1)-conjg(E_plus_W)
@@ -66,7 +66,7 @@ subroutine K_diagonal(iq,what)
        !
      else if (.not.K_slk%kind=="SLK".and.index(what,"rm_E")>0)then
        !
-       if (i_r<=BS_K_dim) then
+       if (i_r<=BS_K_dim(1)) then
          BS_mat(i_r,i_r)=BS_mat(i_r,i_r)-E_plus_W
        else if (cpl(i_r)) then
          BS_mat(i_r,i_r)= BS_mat(i_r,i_r)+conjg(E_plus_W)
@@ -90,12 +90,12 @@ subroutine K_diagonal(iq,what)
    do i_r=rows(1),rows(2)
      !
      if (.not.cpl(i_r)) f_r=sqrt(BSS_eh_f(i_r))
-     if (     cpl(i_r)) f_r=sqrt(BSS_eh_f(i_r-BS_K_dim))
+     if (     cpl(i_r)) f_r=sqrt(BSS_eh_f(i_r-BS_K_dim(1)))
      !
      do i_c=cols(1),cols(2)
        !
        if (.not.cpl(i_c)) f_c=sqrt(BSS_eh_f(i_c))
-       if (     cpl(i_c)) f_c=sqrt(BSS_eh_f(i_c-BS_K_dim))
+       if (     cpl(i_c)) f_c=sqrt(BSS_eh_f(i_c-BS_K_dim(1)))
        !
        pre_factor=1/cI
        if (.not.cpl(i_r).and..not.cpl(i_c)) pre_factor= 1
@@ -129,7 +129,7 @@ subroutine K_diagonal(iq,what)
    !
    if (.not.K_diago_in_BS_mat) then
      !
-     YAMBO_ALLOC(BS_diagonal,(BS_K_dim))
+     YAMBO_ALLOC(BS_diagonal,(BS_K_dim(1)))
      BS_diagonal=cZERO
      !
      if (rows(1)<=rows(2)) then
@@ -155,7 +155,7 @@ subroutine K_diagonal(iq,what)
    !
    logical function cpl(I)
      integer :: I
-     cpl=index(BSE_mode,'coupling')>0.and.I>BS_K_dim
+     cpl=index(BSE_mode,'coupling')>0.and.I>BS_K_dim(1)
    end function
    !
 end subroutine K_diagonal

@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DS
+! Authors (see AUTHORS file for details): AM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,24 +21,28 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine XC_eval_gga_kernel(v1rho,v1sigma,v2rho2,v2rhosigma,v2sigma2)
+module MAGNONS
  !
- ! Expression to be derived ...
- ! 
- use pars,           ONLY:DP
- use electrons,      ONLY:n_spin
- use FFT_m,          ONLY:fft_size
- use xc_functionals, ONLY:xc_spin
+ use pars,       ONLY:SP
+ use BS,         ONLY:l_BS_magnons
  !
- implicit none
+#include<memory.h>
  !
- real(DP),intent(in) :: v1rho(n_spin,fft_size),v1sigma(xc_spin(1),fft_size)
- real(DP),intent(in) :: v2rho2(xc_spin(1),fft_size),v2rhosigma(xc_spin(1)*n_spin,fft_size),v2sigma2(xc_spin(1)*n_spin,fft_size)
+ complex(SP), allocatable :: BSS_dipoles_magn(:,:)
  !
- call warning(' Fxc not coded for GGA. Using LDA part only of the functional ')
- !
- call XC_eval_lda_kernel(v1rho,v2rho2)
- !
-end subroutine XC_eval_gga_kernel
-
-
+ contains
+   !
+   subroutine BSS_MAGN_alloc( )
+     use pars,       ONLY:cZERO
+     use BS,         ONLY:BS_H_dim
+     if (.not.l_BS_magnons) return
+     YAMBO_ALLOC(BSS_dipoles_magn,(2,BS_H_dim))
+     BSS_dipoles_magn = cZERO
+   end subroutine
+   !
+   subroutine BSS_MAGN_free( )
+     if (.not.l_BS_magnons) return
+     YAMBO_FREE(BSS_dipoles_magn)
+   end subroutine
+   !
+end module

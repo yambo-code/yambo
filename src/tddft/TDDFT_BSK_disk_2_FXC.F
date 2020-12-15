@@ -89,7 +89,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  ! Kernel 2 FXC
  !
- YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim))
+ YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim(1)))
  YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,W%n_freqs))
  O_x_dim=maxval(BS_nT_at_k)
  FXC_K_diagonal=0._SP

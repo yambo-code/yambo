@@ -34,7 +34,6 @@ subroutine XCo_driver(E,k,Xk,q)
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening,EXT_NONE,WF_kind,&
 &                        global_XC_string,WF_perturbation,WF_xc_functional
- use pseudo,        ONLY:PP_nlcc_free
 #if defined _SC
  use hamiltonian,   ONLY:l_sc_V_is_local
  use global_XC,     ONLY:H_SE_FOCK,H_SE_HARTREE,H_SE_COH,H_SE_SEX
@@ -168,10 +167,6 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  if (l_Vxc) then
    !
-   ! non-linear core corrections (NLCC)
-   !
-   call XC_nlcc_setup()
-   !
    call XCo_local(E,Xk)
    !
    if (.not.l_screen_hyb) then
@@ -180,8 +175,6 @@ subroutine XCo_driver(E,k,Xk,q)
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_sex 
      call QP_XCo_free(l_screen_hyb=.true.)
    endif
-   !
-   call PP_nlcc_free()
    !
  endif
  !

@@ -67,7 +67,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
  !
  YAMBO_ALLOC(BS_nT_at_k,(Xk%nibz))
  BS_nT_at_k=0
- do neh1=1,BS_K_dim
+ do neh1=1,BS_K_dim(1)
    ik_ibz=Xk%sstar(BSS_eh_table(neh1,1),1)
    BS_nT_at_k(ik_ibz)= BS_nT_at_k(ik_ibz)+1
  enddo

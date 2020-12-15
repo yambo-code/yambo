@@ -237,7 +237,7 @@ contains
      call qexsd_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
      if (ierr/=0) call errore('qexsd_read_ions','fmt problem I',ABS(ierr))
      call qexsd_read_symmetry(nsym=nsym_, ierr=ierr)
-     if (ierr/=0) call errore('qexsd_read_symmetry','fmt problem',ABS(ierr))
+     if (ierr/=0) call errore('qexsd_read_symmetry','fmt problem I',ABS(ierr))
      call qexsd_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,&
 &                               ngm=ngm_, nr1=nr1_,nr2=nr2_,nr3=nr3_,&
 &                               ngms=ngms_, nr1s=nr1s_,nr2s=nr2s_,nr3s=nr3s_, ierr=ierr)
@@ -485,7 +485,7 @@ contains
       !
       call qexsd_read_symmetry(invsym=invsym_, trevsym=trevsym_, trasl=trasl_(:,1:nsym_), &
 &                              s=rsym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
-      if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
+      if (ierr/=0) call errore('qexml_read_symmetry','fmt problem II',ABS(ierr))
       !
       ! convert to integers
       !

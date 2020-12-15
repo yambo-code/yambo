@@ -137,7 +137,6 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
        ! It is my block
        !
        do i_block=i_block_ref_CPU+1,n_BS_blks
-       !do i_block=1,n_BS_blks
          !
          if(BS_blk(i_block)%iT_k/=i_Tgrp_k .or. BS_blk(i_block)%iT_p/=i_Tgrp_p) cycle
          !
@@ -167,8 +166,6 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
      !
      idx_tmp=idx_CPU
      do i_block=last_block_CPU+1,n_BS_blks
-     !idx_tmp=0
-     !do i_block=1,n_BS_blks
        !
        x1=BS_blk(i_block)%coordinate(1)
        x2=BS_blk(i_block)%coordinate(2)

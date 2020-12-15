@@ -414,8 +414,10 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  call PP_redux_wait()
  !
- call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/5/),ID=io_db)
- io_err=io_QINDX(Xk,q,io_db)
+ if (PAR_K_scheme%COM_ibz_A2A%CPU_id==0) then
+   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/5/),ID=io_db)
+   io_err=io_QINDX(Xk,q,io_db)
+ endif
  !
  !CLEAN
  !

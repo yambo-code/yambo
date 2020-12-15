@@ -33,8 +33,8 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  character(*)            :: ENVIRONMENT
  !
  ! Work Space
- ! 
- integer :: i_p,NC,BASIS,n_par_la
+ !
+ integer :: i_p,NC,BASIS,n_par_la,ncpu_now
  !
  ! Is there anything to do?
  !
@@ -61,8 +61,14 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
    CPU_structure(i_PAR_structure)%nCPU_lin_algebra_DIAGO=n_par_la
  endif
  !
- if (.not.PARALLEL_ENV_uses_default(i_PAR_structure).and.&
-&    product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))==ncpu) return
+ ncpu_now=product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))
+ if ((.not.PARALLEL_ENV_uses_default(i_PAR_structure)).and.ncpu_now==ncpu) return
+ !
+ if ((.not.PARALLEL_ENV_uses_default(i_PAR_structure)).and.ncpu_now/=ncpu.and.ENVIRONMENT=="BZ_Indexes") then
+   call warning("MPI for BZ indexes is "//trim(intc(ncpu_now))//&
+   &" while number of cores is"//trim(intc(ncpu))//". Assuming expert user.")
+   return
+ endif
  !
  call PARALLEL_live_message(trim(ENVIRONMENT)//' parallel ENVIRONMENT is incomplete. Switching to defaults')
  !

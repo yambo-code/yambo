@@ -283,8 +283,9 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
  !
  ! close BSE netcdf parallel file
  !
+ use pars,          ONLY:SP
  use parallel_m,    ONLY:PP_redux_wait,master_cpu
- use BS,            ONLY:l_BSE_kernel_complete,BS_K_has_been_calculated_loaded
+ use BS,            ONLY:l_BSE_kernel_complete,BS_K_has_been_calculated_loaded,BS_K_cutoff
  use IO_m,          ONLY:io_disconnect,read_is_on,write_is_on,io_BS_K
  !
  implicit none
@@ -301,7 +302,7 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
  if(trim(mode)=="compressed_head".or.trim(mode)=="full") then
    if(write_is_on(ID)) then
      BS_K_has_been_calculated_loaded=l_kernel_complete
-     l_BSE_kernel_complete          =l_kernel_complete.and.io_BS_K
+     l_BSE_kernel_complete          =l_kernel_complete.and.(io_BS_K.or.BS_K_cutoff>0._SP)
    endif
    if((write_is_on(ID_head).and.master_cpu).or.read_is_on(ID_head)) then
      io_BS=variables_BS_more(ID_head,'end')
@@ -309,7 +310,7 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
    endif
    if(read_is_on(ID)) then
      BS_K_has_been_calculated_loaded=l_kernel_complete
-     l_BSE_kernel_complete          =l_kernel_complete.and.io_BS_K
+     l_BSE_kernel_complete          =l_kernel_complete.and.(io_BS_K.or.BS_K_cutoff>0._SP)
    endif
  endif
  !

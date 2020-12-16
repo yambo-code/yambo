@@ -429,7 +429,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          ! eet_factor=cZERO
          call dev_memset(eet_factor,cZERO)
          !
-         if ( HEAD_QP_cpu ) then
+         ! MB: After the inclusion of G-parallelism, the communicator to use
+         ! here has become PAR_COM_RL_A2A. see below DV and AF comments
+         if (PAR_COM_RL_A2A%CPU_id==0) then 
            if (X_is_TR_rotated) then
              !
              !DEV_CUF kernel do(2)

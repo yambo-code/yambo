@@ -431,7 +431,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          ! MB: After the inclusion of G-parallelism, PAR_COM_G_b_INDEX can be different
          ! from HEAD_QP_cpu --> the right one to be used is PAR_COM_G_b_INDEX
-         if (PAR_COM_G_b_INDEX%CPU_id==0) then 
+         !
+         if (PAR_COM_G_b_INDEX%CPU_id==0) then
            if (X_is_TR_rotated) then
              !
              !DEV_CUF kernel do(2)
@@ -511,8 +512,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          ! in cases where no band loops are done (like here). In _SC instead 
          ! it is needed for a different purpose. This is why I use PAR_COM_QP_A2A%CPU_id in this case.
          !
-         ! AF: After the inclusion of G-parallelism, the communicator to use
-         ! here (both SC and ordinary runs) has become   PAR_COM_RL_A2A
+         ! AF,MB: After the inclusion of G-parallelism, the communicator to use
+         ! here (both SC and ordinary runs) has become   PAR_COM_G_b_INDEX
          !
 !#if defined _SC
 !         if (l_sc_run) then
@@ -524,7 +525,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 !         endif
 !#endif
          !
-         if (PAR_COM_RL_A2A%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+         if (PAR_COM_G_b_INDEX%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
          !
          dc=cZERO
          !

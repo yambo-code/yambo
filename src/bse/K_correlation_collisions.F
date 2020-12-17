@@ -43,7 +43,8 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
  use R_lattice,     ONLY:qindx_B,qindx_X,bz_samp,qindx_B_init,qindx_B_close,qindx_B_load
  use BS,            ONLY:O_ng,WF_phase,BS_bands,BS_res_K_corr,BS_cpl_K_corr,BS_blk,&
-&                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp,BS_K_is_ALDA
+&                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp,l_BS_magnons,&
+&                        BS_K_dim,l_BS_ares_asymm,BS_K_is_ALDA
  use electrons,     ONLY:n_sp_pol
  use collision_el,  ONLY:elemental_collision_free,elemental_collision_alloc
  use openmp,        ONLY:OPENMP_update,master_thread
@@ -62,6 +63,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  !
  DEFINE_BSK_COMMON_INDEXES
  integer     :: i_s_star,i_s_mq_star,i_s_collision,N_kmq,N_pmq
+ character(1):: mode_now
  !
  logical, allocatable :: O_todo_table(:,:,:,:,:,:)
  !
@@ -71,10 +73,12 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  !
  ! Every block is at k (ibz) fixed
  !
- i_Tgrp_k=BS_blk(i_block)%iT_k
- i_Tgrp_p=BS_blk(i_block)%iT_p
- i_k     =BS_blk(i_block)%ik
- i_p     =BS_blk(i_block)%ip
+ i_Tgrp_k   =BS_blk(i_block)%iT_k
+ i_Tgrp_p   =BS_blk(i_block)%iT_p
+ i_Tgrp_k_st=BS_blk(i_block)%iT_k_st
+ i_Tgrp_p_st=BS_blk(i_block)%iT_p_st
+ i_k        =BS_blk(i_block)%ik
+ i_p        =BS_blk(i_block)%ip
  !
  ! Table allocation
  !------------------
@@ -96,14 +100,17 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
      i_kmq   =Xk%sstar(i_kmq_bz,1)
      i_pmq   =Xk%sstar(i_pmq_bz,1)
      !
-     if( (BS_blk(i_block)%kp_table(1,i_kmq)/=0) .and. (BS_blk(i_block)%kp_table(2,i_pmq)/=0) ) cycle
+     i_kmq_t =BS_blk(i_block)%kp_table(1,i_kmq)
+     i_pmq_t =BS_blk(i_block)%kp_table(2,i_pmq)     
      !
-     if( BS_blk(i_block)%kp_table(1,i_kmq)==0 ) then
+     if( i_kmq_t/=0 .and. i_pmq_t/=0 ) cycle
+     !
+     if( i_kmq_t==0 ) then
        N_kmq=N_kmq+1
        BS_blk(i_block)%kp_table(1,i_kmq)=N_kmq
      endif
      !
-     if( BS_blk(i_block)%kp_table(2,i_pmq)==0 ) then
+     if( i_pmq_t==0 ) then
        N_pmq=N_pmq+1
        BS_blk(i_block)%kp_table(2,i_pmq)=N_pmq
      endif
@@ -118,52 +125,70 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  BS_blk(i_block)%O_table=0
  O_todo_table=.false.
  !
- do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
-   do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
-     !
-     FILL_BSK_COMMON_INDEXES
-     FILL_BSK_CORR_INDEXES
-     !
-     if(i_k_sp_pol/=i_p_sp_pol) cycle
-     !
-     select case (BS_blk(i_block)%mode)
-     case("R")
+#if !defined _OPENMP || defined _CUDA
+ i_p_bz_last=0  ; i_k_bz_last=0
+#endif
+ !
+ mode_now=BS_blk(i_block)%mode
+ if(l_BS_ares_asymm) mode_now="F"
+ !
+ !
+ select case (mode_now)
+ case("R","A","F")
+   !
+   do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
+     do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
+       !
+       FILL_BSK_COMMON_INDEXES
+       FILL_BSK_CORR_INDEXES
+       !
+       if(i_k_sp_pol_c/=i_p_sp_pol_c) cycle
        !
        ! v->v', i.e. k-q -> p-q=k-q_W-q transitions
        !
-       i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_v_p,i_p_sp_pol,i_s_mq_star,i_kp_mq_s)
-       call EVAL_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp_pol,i_kp_mq_s,i_s_collision)
+       i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_v_p,i_p_sp_pol_v,i_s_mq_star,i_kp_mq_s)
+       call EVAL_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp_pol_v,i_kp_mq_s,i_s_collision)
        !
        ! c->c', i.e. k -> p=k-q_w transitions
        !
-       i_s_collision=collision_star(i_p,i_kp_s,i_c_p,i_p_sp_pol,i_s_star,i_kp_s)
-       call EVAL_table(i_block,1,1,i_c_k,i_c_p,i_k_sp_pol,i_kp_s,i_s_collision)
+       i_s_collision=collision_star(i_p,i_kp_s,i_c_p,i_p_sp_pol_c,i_s_star,i_kp_s)
+       call EVAL_table(i_block,1,1,i_c_k,i_c_p,i_k_sp_pol_c,i_kp_s,i_s_collision)
        !
+     enddo
+   enddo
+   !
+ case("C","Q")
+   !
+   do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
+     do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        !
-     case("C")
+       FILL_BSK_COMMON_INDEXES
+       FILL_BSK_CORR_INDEXES
+       !
+       if(i_k_sp_pol_c/=i_p_sp_pol_v) cycle
        !
        ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
        !
-       i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_c_p,i_p_sp_pol,i_s_mq_star,i_kp_mq_s)
-       call EVAL_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp_pol,i_kp_mq_s,i_s_collision)
+       i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_c_p,i_p_sp_pol_c,i_s_mq_star,i_kp_mq_s)
+       call EVAL_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp_pol_v,i_kp_mq_s,i_s_collision)
        !
        ! c->v', i.e. k -> p=k-q_W transitions
        !
-       i_s_collision=collision_star(i_p,i_kp_s,i_v_p,i_p_sp_pol,i_s_star,i_kp_s)
-       call EVAL_table(i_block,1,1,i_c_k,i_v_p,i_k_sp_pol,i_kp_s,i_s_collision)
+       i_s_collision=collision_star(i_p,i_kp_s,i_v_p,i_p_sp_pol_v,i_s_star,i_kp_s)
+       call EVAL_table(i_block,1,1,i_c_k,i_v_p,i_k_sp_pol_c,i_kp_s,i_s_collision)
        !
-     end select
-     !
+     enddo
    enddo
- enddo
+   !
+ end select
  !
  call BS_oscillators_alloc(.FALSE.,0,.TRUE.,i_block)
  !
 #if !defined _CUDA
- !$omp parallel default(shared), private(i_Tk,i_Tp,H_pos, &
- !$omp &          i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_kp_s,i_s_star,&
+ !$omp parallel default(shared), private(i_Tk,i_Tp, &
+ !$omp &          i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_kp_s,i_s_star,H_pos,&
  !$omp &          i_kmq_s,i_kmq_s_m1,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,i_s_mq_star,&
- !$omp &          i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol,i_p_sp_pol,iq_W,iq_W_bz,iq_W_s,ig_W,&
+ !$omp &          i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,iq_W_bz,iq_W_s,ig_W,&
  !$omp &          i_kmq_t,i_pmq_t,i_k_bz_mem, &
  !$omp &          K_CORR_collision, i_s_collision)
 #endif
@@ -172,54 +197,76 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  !
  call elemental_collision_alloc(K_CORR_collision,NG=O_ng, TITLE="CORR_COLL")
  !
-#if !defined _CUDA
- !$omp do collapse(2), schedule(dynamic)
+#if !defined _OPENMP || defined _CUDA
+ i_p_bz_last=0  ; i_k_bz_last=0
 #endif
- do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
-   do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
-     !
-     FILL_BSK_COMMON_INDEXES
-     FILL_BSK_CORR_INDEXES
-     !
-     if(i_k_sp_pol/=i_p_sp_pol) cycle
-     !
-     select case (BS_blk(i_block)%mode)
-     case("R")
+ !
+ select case (mode_now)
+ case("R","A","F")
+   !
+#if !defined _CUDA
+   !$omp do collapse(2), schedule(dynamic)
+#endif
+   do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
+     do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
+       !
+       FILL_BSK_COMMON_INDEXES
+       FILL_BSK_CORR_INDEXES
+       !
+       if(i_k_sp_pol_c/=i_p_sp_pol_c) cycle
        !
        ! v->v', i.e. k-q -> p-q=k-q_W-q transitions
        !
        !
-       i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_v_p,i_p_sp_pol,i_s_mq_star,i_kp_mq_s)
-       call EVAL_collision(i_block,i_kmq,i_pmq,i_kmq_t,i_pmq_t,i_k_sp_pol,i_p_sp_pol,&
+       i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_v_p,i_p_sp_pol_v,i_s_mq_star,i_kp_mq_s)
+       call EVAL_collision(i_block,i_kmq,i_pmq,i_kmq_t,i_pmq_t,i_k_sp_pol_v,i_p_sp_pol_v,&
        &                                   i_v_k,i_v_p,iq_W,i_s_collision,K_CORR_collision)
        !
        ! c->c', i.e. k -> p=k-q_w transitions
        !
-       i_s_collision=collision_star(i_p,i_kp_s,i_c_p,i_p_sp_pol,i_s_star,i_kp_s)
-       call EVAL_collision(i_block,i_k,i_p,1,1,i_k_sp_pol,i_p_sp_pol,&
+       i_s_collision=collision_star(i_p,i_kp_s,i_c_p,i_p_sp_pol_c,i_s_star,i_kp_s)
+       call EVAL_collision(i_block,i_k,i_p,1,1,i_k_sp_pol_c,i_p_sp_pol_c,&
        &                        i_c_k,i_c_p,iq_W,i_s_collision,K_CORR_collision)
        !
-     case("C")
+     enddo
+   enddo
+#if !defined _CUDA
+   !$omp end do
+#endif
+   !
+ case("C","Q")
+   !
+#if !defined _CUDA
+   !$omp do collapse(2), schedule(dynamic)
+#endif
+   do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
+     do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
+       !
+       FILL_BSK_COMMON_INDEXES
+       FILL_BSK_CORR_INDEXES
+       !
+       if(i_k_sp_pol_c/=i_p_sp_pol_v) cycle
        !
        ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
        !
-       i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_c_p,i_p_sp_pol,i_s_mq_star,i_kp_mq_s)
-       call EVAL_collision(i_block,i_kmq,i_pmq,i_kmq_t,i_pmq_t,i_k_sp_pol,&
-       &                        i_p_sp_pol,i_v_k,i_c_p,iq_W,i_s_collision,K_CORR_collision)
+       i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_c_p,i_p_sp_pol_c,i_s_mq_star,i_kp_mq_s)
+       call EVAL_collision(i_block,i_kmq,i_pmq,i_kmq_t,i_pmq_t,i_k_sp_pol_v,&
+       &                        i_p_sp_pol_c,i_v_k,i_c_p,iq_W,i_s_collision,K_CORR_collision)
        !
        ! c->v', i.e. k -> p=k-q_W transitions
        !
-       i_s_collision=collision_star(i_p,i_kp_s,i_v_p,i_p_sp_pol,i_s_star,i_kp_s)
-       call EVAL_collision(i_block,i_k,i_p,1,1,i_k_sp_pol,i_p_sp_pol,&
+       i_s_collision=collision_star(i_p,i_kp_s,i_v_p,i_p_sp_pol_v,i_s_star,i_kp_s)
+       call EVAL_collision(i_block,i_k,i_p,1,1,i_k_sp_pol_c,i_p_sp_pol_v,&
        &                        i_c_k,i_v_p,iq_W,i_s_collision,K_CORR_collision)
        !
-     end select
-     !
+     enddo
    enddo
- enddo
+   !
 #if !defined _CUDA
- !$omp end do
+   !$omp end do
 #endif
+   !
+ end select
  !
  call elemental_collision_free(K_CORR_collision)
 #if !defined _CUDA

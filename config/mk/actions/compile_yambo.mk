@@ -18,6 +18,11 @@ yambo_electric: ext-libs
 	@+X2DO="yambo_electric"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_SCLIBS_LD)"; DRILIBS="$(YLIBDRIVER_LD)" ; ADF="-D_ELECTRIC -D_SC"; $(mk_yambo)
 yambo_kerr: ext-libs
 	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
+	@+LIBS2DO="$(YLIBDRIVER)"; NAME="yambo_kerr_driver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/lib/yambo/driver/src"; ADF="-D_KERR -D_yambo"; $(mk_external_yambo_lib)
+	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_KERR"; $(mk_src)
+	@+X2DO="yambo_kerr"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)" ; DRILIBS="$(YLIBDRIVER_LD)";ADF="-D_KERR"; $(mk_yambo)
+yambo_rt-kerr: ext-libs
+	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
 	@+LIBS2DO="$(YLIBDRIVER)"; NAME="yambo_kerr_driver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/lib/yambo/driver/src"; ADF="-D_RT -D_ELPH -D_KERR -D_yambo"; $(mk_external_yambo_lib)
 	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH -D_KERR"; $(mk_src)
 	@+X2DO="yambo_kerr"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)" ; DRILIBS="$(YLIBDRIVER_LD)";ADF="-D_RT -D_ELPH -D_KERR"; $(mk_yambo)

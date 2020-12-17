@@ -42,7 +42,7 @@ hdf5:
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_external_lib); fi
 netcdf: 
 	@+LIB2DO="netcdf"; $(download_external_lib)
-	@+if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf netcdff" ; \
+	@+if test "$(do_netcdf)" = yes ; then LIBS2DO="pnetcdf netcdf netcdff" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_external_lib); fi
 etsf_io: 
 	@+LIB2DO="etsf_io"; $(download_external_lib)

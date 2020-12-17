@@ -32,7 +32,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use DIPOLES,         ONLY:DIPOLE_t,DIP_rotated
  use vec_operate,     ONLY:v_norm,rot_v_xy_plane
 #if defined _KERR
- use drivers,         ONLY:l_kerr
+ use BS,              ONLY:l_BS_kerr
 #endif
  use RT_control,      ONLY:RT_output,RT_apply,CARR_RT_IO_t
  use IO_m,            ONLY:io_DIP
@@ -69,7 +69,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  l_RT_abs_YAMBO=.TRUE.
 #if defined _KERR
- l_kerr=.TRUE.
+ l_BS_kerr=.TRUE.
 #endif
  !
  ! Pre-setup of carrier components and Time evolution parameters

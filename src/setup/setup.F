@@ -38,6 +38,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed,bz_samp_duplicate_Fg
  use com,            ONLY:msg,fat_log
  use stderr,         ONLY:intc
+ use units,          ONLY:HA2EV
  use IO_m,           ONLY:REP,DUMP,NONE,io_control,OP_RD_CL
  use vec_operate,    ONLY:c2a,define_b_and_DL_vol
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
@@ -65,7 +66,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Work Space
  !
  real(SP)          :: Tel_SAVE,tmp_V(3)
- integer           :: i1,i2,i3,is,i_err,nbf_m_SAVE(2),ID,n_to_print
+ integer           :: i1,i2,i3,ik,is,i_err,nbf_m_SAVE(2),ID,n_to_print
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch
  integer, external :: k_lattice,io_Double_Grid
@@ -356,7 +357,12 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Energies report
  !
- if (l_setup.or.fat_log.or.index(code_bin,'ypp')>0) call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.FALSE.,.TRUE.)
+ if (l_setup.or.fat_log.or.index(code_bin,'ypp')>0) then
+   do ik=1,k%nibz
+     call REPORT_Energies(en%E,k,Xk,en%nb,(/ik,ik/),'E',.FALSE.,.TRUE.)
+     call REPORT_Energies(en%f/HA2EV,k,Xk,en%nb,(/ik,ik/),'occ',.FALSE.,.TRUE.)
+   enddo
+ endif
  !
  ! Once the occupations have been evaluated I dump Xen in Ken
  !

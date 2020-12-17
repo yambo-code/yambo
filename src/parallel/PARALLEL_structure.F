@@ -86,7 +86,7 @@ subroutine PARALLEL_structure(n_elements,ROLE)
        if (trim(ROLE(i_order))=="v" ) PHASE_space=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1
        if (trim(ROLE(i_order))=="w" ) PHASE_space=PAR_n_freqs
        !
-       if (PARALLEL_CPU_used(i_structure)>PHASE_space) then
+       if (PARALLEL_CPU_used(i_structure)>PHASE_space.and.trim(ROLE(i_order))/="eh") then
          USER_structure_msg=trim(intc(PARALLEL_CPU_used(i_structure)))//" CPU for "//&
 &                           trim(intc(PHASE_space))//" elements (ROLE is '"//trim(ROLE(i_order))//"')"
          call PARALLEL_check_phase_space(PHASE_space/PARALLEL_CPU_used(i_structure),MSG=trim(USER_structure_msg))

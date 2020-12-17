@@ -44,7 +44,7 @@ subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
    is=k%sstar(ik_bz,2)
    !
    do ok_bz=1,k%nbz
-     if (qindx_B(ik_bz,ok_bz,1)==iq_bz) then
+     if (qindx_B(ok_bz,ik_bz,1)==iq_bz) then
        ok=k%sstar(ok_bz,1)
        os=k%sstar(ok_bz,2)
        exit

@@ -27,25 +27,26 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use parser_m,       ONLY:parser
  use com,            ONLY:msg
  use stderr,         ONLY:STRING_remove,intc
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels,n_sp_pol,n_spin
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
  use DIPOLES,        ONLY:DIPOLE_t
  use IO_m,           ONLY:io_control,OP_RD_CL,REP
  use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_add_antiresonant,BSS_damp_reference,&
-&                         BSS_uses_DbGd,BSS_q0,BSS_eval_JDOS,BSS_eels_to_eps
+&                         BSS_uses_DbGd,BSS_q0,BSS_eels_to_eps
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BS_n_g_W,BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSE_mode,BS_Blocks_and_Transitions_free,l_BSE_minimize_memory,BSqpts,L_kind,&
-&                         BS_perturbative_SOC
+&                         BSE_mode,BSE_prop,BS_Blocks_and_Transitions_free,l_BSE_minimize_memory,BSqpts,L_kind,&
+&                         BS_perturbative_SOC,BS_dip_size,l_BS_abs,l_BS_jdos,l_BS_trace,&
+&                         l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,l_BS_optics
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss,l_col_cut
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k,PAR_K_scheme,l_BSE_PAR_incomplete,PARALLEL_default_mode
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k,PARALLEL_default_mode,PAR_K_scheme
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free
  use D_lattice,      ONLY:l_0D,l_1D,l_2D
 #if defined _KERR
- use drivers,        ONLY:l_kerr,l_anomalous_Hall
+ use BS,             ONLY:l_BS_anomalous_Hall
 #endif
 #if defined _RT
  use drivers,        ONLY:l_rt_carriers_in_use
@@ -64,7 +65,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  type(X_t)         :: X_tddft,X_oscillators
  integer           :: iq,Max_G_m_G,iG_BSE,iGo_BSE
  type(w_samp)      :: W_bss 
- logical           :: l_bs_q
  !
  ! I/O
  !
@@ -77,24 +77,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
 #if defined _RT 
  if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
 #endif
- !
- call parser('BSEQptR',l_bs_q)
- !
- if (.not.l_bs_q) BS_q=(/1,1/)
- !
- if ( (.not.(BS_q(1)==1.and.BS_q(2)==1)) .and. (trim(BSE_mode)=='coupling') ) then
-   call error(' Finite q and coupling not implemented')
- endif
- !
- ! GPL_EXCLUDE_END
- !
- ! GPL_INCLUDE_START
- !BS_q=(/1,1/)
- ! GPL_INCLUDE_END
- !
- ! Joint DOS
- !===========
- BSS_eval_JDOS = index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP
  !
  ! Need to convert eels to epsilon ? (part A)
  !===========================================
@@ -118,6 +100,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  call W_reset(W_bss)
  !
  call TDDFT_do_X_W_typs(-1,X_tddft,Xw)
+ !
+#if defined _KERR
+ ! PL is implemented only in velocity gauge
+ if (l_BS_photolum) global_gauge="velocity"
+#endif
  !
  if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
    call warning(" Not a valid gauge in input. Switching to lenght gauge")
@@ -168,10 +155,36 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  BSS_add_antiresonant=index(BSE_mode,'retarded')/=0
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  BS_K_is_ALDA=l_alda_fxc
+ !
+ BS_dip_size=1
+ l_BS_abs    = (index(BSE_prop,'abs')/=0)
+ l_BS_jdos   = (index(BSE_prop,'jdos')/=0).or. (index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP)
+ l_BS_esort  = (index(BSE_prop,'esrt')/=0).and.(index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP)
+ l_BS_dichroism = .false.
+ l_BS_kerr      = .false.
+ l_BS_photolum  = .false.
+ l_BS_trace     = .false.
+ l_BS_magnons   = .false.
 #if defined _KERR
- call parser('EvalKerr',l_kerr)
- if(l_kerr) call parser('AnHall',l_anomalous_Hall)
+ l_BS_dichroism = (index(BSE_prop,'dich')/=0)
+ l_BS_kerr      = (index(BSE_prop,'kerr')/=0)
+ l_BS_photolum  = (index(BSE_prop,'photolum')/=0)
+ l_BS_trace     = (index(BSE_prop,'trace')/=0)
+ l_BS_magnons   = (index(BSE_prop,'magn')/=0) .and.n_spin>1
+ if (l_BS_magnons.and.n_sp_pol==2) then
+   l_BS_abs    = .false.
+   l_BS_kerr   = .false.
+   l_BS_trace  = .false.
+   call warning(" n_sp_pol=2 and magnons requested. Spin flip BSE only is computed")
+ endif
+ if (l_BS_kerr) then
+   call parser('AnHall',l_BS_anomalous_Hall)
+   BS_dip_size=2
+ endif
+ if (l_BS_photolum) l_BS_trace  = .false.
+ if (l_BS_trace) BS_dip_size=3
 #endif
+ l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum
  !
  ! Energy points
  !===============
@@ -202,15 +215,17 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call msg('s','[BSE-W] Use all G-vectors of W ',BS_n_g_W)
  endif
  !
+ ! ... EH space (no parallelization)
+ !call K_compute_transitions_at_ik(1,Ken,Xk,Dip)
+ !
+ call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
+ !
  ! Compute qindx_B_max
  ! =====================
+ !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) then
    !
    ! Here I need the distribution over k
-   ! The distribution over k is later recomputed for each k-point inside the iq loop
-   ! However this should be not needed. Only the distribution over eh and b should be redone
-   !
-   call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
    call PARALLEL_SETUP_K_scheme("K")
    !
    ! here qindx_B is allocated
@@ -224,20 +239,16 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    qindx_B_max=maxval(qindx_B_max_CPU)
    YAMBO_FREE(qindx_B_max_CPU)
    !
-   if(l_BSE_PAR_incomplete) call qindx_free('B')
-   !
  endif
  !
  ! Tranferred momentum
  !======================
- !
  YAMBO_ALLOC(BSqpts,(3,BS_q(1):BS_q(2)))
+ !
  do iq=BS_q(1),BS_q(2)
+   !
    if (iq==1) BSqpts(:,iq) = BSS_q0
    if (iq/=1) BSqpts(:,iq) = q%pt(iq,:)
- enddo
- !
- do iq=BS_q(1),BS_q(2)
    !
    call section('*','Bethe Salpeter Equation @q'//trim(intc(iq)))
    !
@@ -288,13 +299,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call DIPOLE_dimensions(Ken,Dip,BS_bands,BSS_q0)
    !
    ! ... EH space (no parallelization)
-   call K_Transitions_setup(iq,Ken,Xk,Dip,.FALSE.)
+   call K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
    !
    !... Parallel distribution
-   call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
+   call PARALLEL_global_Response_T_transitions(Xk)
    !
    ! ... EH space (with parallelization) and Transition groups build-up
-   call K_Transitions_setup(iq,Ken,Xk,Dip,.TRUE.)
+   call K_Transitions_setup(iq,Ken,Xk,Dip)
    !
    !... Blocks build-up
    if (.not.l_rpa_IP) call K_blocks(iq)
@@ -351,12 +362,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    call BS_Blocks_and_Transitions_free( )
    !
-   !... Parallel distribution reset
-   call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators,RESET=.TRUE.)
-   !
  enddo
  !
+ !... Parallel distribution reset
+ call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators,RESET=.TRUE.)
+ !
  YAMBO_FREE(BSqpts)
- if(.not.l_BSE_PAR_incomplete) call qindx_free('B')
+ call qindx_free('B')
  !
 end subroutine

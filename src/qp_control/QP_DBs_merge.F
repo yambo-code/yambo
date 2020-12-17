@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP,FILES)
+subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,FILES)
  !
  use pars,           ONLY:SP
  use QP_m,           ONLY:QP_t,QP_copy
@@ -39,7 +39,6 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP,FIL
  type(QP_t),  optional:: qp(n_GROUNDS)
  character(*),optional:: OP(n_dbs)
  real(SP)    ,optional:: PRE_FAC(n_dbs)
- integer     ,optional:: MAP(n_dbs)
  character(*),optional:: FILES(n_dbs)
  !
  ! Work Space
@@ -63,17 +62,13 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP,FIL
    !
    n_GROUNDS=n_GROUNDS+1
    GROUND(i_db)=n_GROUNDS
-   if (present(MAP)) then
-     MAP(i_db)=n_GROUNDS
+   !
+   if (.not.just_COUNT) then
+     call WHAT_update(i_db)
+     call QP_copy(qp2merge(i_db), qp( n_GROUNDS ), WHAT, trim(OP(i_db)),PRE_FAC(i_db) )
+     call ADD_the_DB_desc( N_GROUNDS, i_db,"[DB #"//trim(intc(i_db))//"]")
+     call IO_desc_duplicate(qp2merge(i_db)%desc,qp( n_GROUNDS )%desc,offset=2,PREPEND="[DB #"//trim(intc(i_db))//"]")
    endif
-   !
-   if (just_COUNT) cycle
-   !
-   call WHAT_update(i_db)
-   call QP_copy(qp2merge(i_db), qp( n_GROUNDS ), WHAT, trim(OP(i_db)),PRE_FAC(i_db) )
-   call ADD_the_DB_desc( N_GROUNDS, 0, i_db )
-   call PREAPPEND_the_DB_desc( qp2merge(i_db), i_db )
-   call IO_desc_duplicate(qp2merge(i_db)%desc,qp( n_GROUNDS )%desc,offset=2)
    !
    do i_db_p=i_db+1,n_dbs
      !
@@ -104,17 +99,12 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP,FIL
      endif
      !
      if (CONDITION) then
-       if (present(MAP)) then
-         MAP(i_db_p)=GROUND(i_db)
-       endif
        MERGED(i_db_p)=.TRUE.
        GROUND(i_db_p)=GROUND(i_db)
        if (.not.just_COUNT) then
-         !
          call WHAT_update( i_db_p)
-         call ADD_the_DB_desc( GROUND(i_db_p), qp(GROUND(i_db_p))%desc%n , i_db_p )
+         call ADD_the_DB_desc( GROUND(i_db_p), i_db_p,"[DB #"//trim(intc(i_db_p))//"]")
          call PREAPPEND_the_DB_desc( qp2merge(i_db_p), i_db_p )
-         !
          call QP_DBs_add_me(qp( GROUND(i_db_p) ),qp2merge(i_db_p) ,plan_EWZG(i_db_p,:), &
 &                           SAME_states, SAME_desc,trim(OP(i_db_p)),PRE_FAC(i_db_p))
        endif
@@ -140,24 +130,25 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP,FIL
      if (plan_EWZG(j_db,4)) WHAT=trim(WHAT)//"G"
    end subroutine
    !
-   subroutine PREAPPEND_the_DB_desc( qp, current_db )
-     type(QP_t)::qp
+   subroutine PREAPPEND_the_DB_desc( qp_in, current_db )
+     type(QP_t)::qp_in
      integer   ::i_desc,current_db
-     do i_desc=1,qp%desc%n
-       qp%desc%str(i_desc)="[DB #"//trim(intc(current_db))//"] "//trim(qp%desc%str(i_desc))
+     do i_desc=1,qp_in%desc%n
+       qp_in%desc%str(i_desc)="[DB #"//trim(intc(current_db))//"] "//trim(qp_in%desc%str(i_desc))
      enddo
    end subroutine
    !
-   subroutine ADD_the_DB_desc( j_db, i_desc, current_db )
-     integer :: j_db,i_desc,current_db
-     qp( j_db )%desc%str ( i_desc+1)="[DB #"//trim(intc(current_db))//"] Database"
-     qp( j_db )%desc%sval( i_desc+1)=trim(FILES(current_db))
-     qp( j_db )%desc%size( i_desc+1)= 1
-     qp( j_db )%desc%kind( i_desc+1)="s"
-     qp( j_db )%desc%str ( i_desc+2)="[DB #"//trim(intc(current_db))//"] Database Operation"
-     qp( j_db )%desc%sval( i_desc+2)=trim(OP(current_db))//trim(real2ch(PRE_FAC(current_db)))//"x"//WHAT
-     qp( j_db )%desc%size( i_desc+2)= 1
-     qp( j_db )%desc%kind( i_desc+2)="s"
+   subroutine ADD_the_DB_desc( j_db,  current_db, PREPEND )
+     integer      :: j_db,current_db
+     character(*) :: PREPEND
+     qp( j_db )%desc%str ( qp( j_db)%desc%n+1)=PREPEND//"Database"
+     qp( j_db )%desc%sval( qp( j_db)%desc%n+1)=trim(FILES(current_db))
+     qp( j_db )%desc%size( qp( j_db)%desc%n+1)= 1
+     qp( j_db )%desc%kind( qp( j_db)%desc%n+1)="s"
+     qp( j_db )%desc%str ( qp( j_db)%desc%n+2)=PREPEND//"Database Operation"
+     qp( j_db )%desc%sval( qp( j_db)%desc%n+2)=trim(OP(current_db))//trim(real2ch(PRE_FAC(current_db)))//"x"//WHAT
+     qp( j_db )%desc%size( qp( j_db)%desc%n+2)= 1
+     qp( j_db )%desc%kind( qp( j_db)%desc%n+2)="s"
      qp( j_db )%desc%n=qp( j_db )%desc%n+2
    end subroutine
    !

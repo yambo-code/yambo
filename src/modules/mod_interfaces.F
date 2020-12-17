@@ -207,7 +207,7 @@ module interfaces
      real(SP),    pointer     :: BS_R_PL(:,:)
    end subroutine
    !
-   subroutine QP_DBs_merge(N,DBs,plan,N_qp,qp,OP,PRE_FAC,MAP,FILES)
+   subroutine QP_DBs_merge(N,DBs,plan,N_qp,qp,OP,PRE_FAC,FILES)
      use pars, ONLY:SP
      use QP_m, ONLY:QP_t
      implicit none
@@ -217,7 +217,6 @@ module interfaces
      type(QP_t),  optional:: qp(N_qp)
      character(*),optional:: OP(N)
      real(SP)    ,optional:: PRE_FAC(N)
-     integer     ,optional:: MAP(N)
      character(*),optional:: FILES(N)
    end subroutine QP_DBs_merge
    !

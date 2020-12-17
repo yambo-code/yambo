@@ -112,9 +112,14 @@ module descriptors
      type(IO_desc),         intent(inout) :: desc_out
      integer,               intent(in)    :: i_d_in,i_d_out
      character(*),optional, intent(in)    :: PREPEND
+     character(schlen)                    :: PREPEND_
+     PREPEND_=" "
+     if  (present(PREPEND)) then
+       PREPEND_=trim(PREPEND)
+     endif
      desc_out%size(i_d_out)   = desc_in%size(i_d_in)
      desc_out%term(i_d_out)   = desc_in%term(i_d_in)
-     desc_out%str (i_d_out)   = desc_in%str(i_d_in)
+     desc_out%str (i_d_out)   = trim(PREPEND_)//desc_in%str(i_d_in)
      desc_out%kind(i_d_out)   = desc_in%kind(i_d_in)
      desc_out%check(i_d_out)  = desc_in%check(i_d_in)
      desc_out%ops (:,i_d_out) = desc_in%ops(:,i_d_in)

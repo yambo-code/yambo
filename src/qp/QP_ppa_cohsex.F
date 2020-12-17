@@ -53,7 +53,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        PARALLEL_WF_distribute,QP_state_print,MATRIX_transpose,MATRIX_duplicate
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:PAR_COM_RL_A2A
+ use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_G_b_INDEX
 #if defined _SC
  use SC,            ONLY:it_now,it_to_start
 #endif
@@ -429,9 +429,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          ! eet_factor=cZERO
          call dev_memset(eet_factor,cZERO)
          !
-         ! MB: After the inclusion of G-parallelism, the communicator to use
-         ! here has become PAR_COM_RL_A2A. see below DV and AF comments
-         if (PAR_COM_RL_A2A%CPU_id==0) then 
+         ! MB: After the inclusion of G-parallelism, PAR_COM_G_b_INDEX can be different
+         ! from HEAD_QP_cpu --> the right one to be used is PAR_COM_G_b_INDEX
+         if (PAR_COM_G_b_INDEX%CPU_id==0) then 
            if (X_is_TR_rotated) then
              !
              !DEV_CUF kernel do(2)

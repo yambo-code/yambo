@@ -134,7 +134,6 @@ module wave_func
    !
    subroutine WF_copy(WF_in,WF_out)
      use electrons,  ONLY: n_spinor
-     use FFT_m,      ONLY: fft_size
      type(WAVEs):: WF_in,WF_out
      YAMBO_ALLOC(WF_out%c,(size(WF_in%c(:,1,1)),n_spinor,WF_in%N))
      YAMBO_ALLOC(WF_out%index,(WF_in%b(1):WF_in%b(2),WF_in%k(1):WF_in%k(2),WF_in%sp_pol(1):WF_in%sp_pol(2)))

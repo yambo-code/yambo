@@ -28,7 +28,8 @@ subroutine io_RT_components_header(ID,what,loading_carr_before_neq,l_carriers,l_
  use IO_m,           ONLY:io_header,io_status,frag_RT,read_is_on,&
 &                         def_variable_elemental,io_variable_elemental,&
 &                         def_variable_bulk,io_variable_bulk
- use real_time,      ONLY:q_weight_RT,RT_carriers,RT_obj_alloc
+ use RT_lifetimes,   ONLY:q_weight_RT
+ use real_time,      ONLY:RT_carriers,RT_obj_alloc
  use RT_control,     ONLY:SAVE_G_history
  !
  implicit none
@@ -51,7 +52,7 @@ subroutine io_RT_components_header(ID,what,loading_carr_before_neq,l_carriers,l_
      what_='carriers'
    endif
    !
-   io_RT_components=io_header(ID,IMPOSE_SN=(.not.l_carriers),CUTOFF=.true.,T_EL=.true.,FRAG=frag_RT)
+   io_RT_components=io_header(ID,IMPOSE_SN=(.not.l_carriers),CUTOFF=.true.,TEMP=.true.,FRAG=frag_RT)
    if (io_RT_components/=0) return
    !
    io_RT_components=variables_RT_static(ID,trim(what_),l_carriers)

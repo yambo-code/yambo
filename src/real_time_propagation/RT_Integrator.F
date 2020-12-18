@@ -113,7 +113,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
    !
    call RT_relaxation_logicals( )
    !
-   call RT_occupations(dG_tmp(:,:,:,i_step))
+   call RT_occupations_eval(dG_tmp(:,:,:,i_step))
    !
    ! GPL_EXCLUDE_END
    !
@@ -154,7 +154,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
  !
  ! Occupations @ T+dT
  !
- call RT_occupations(dG_new)
+ call RT_occupations_eval(dG_new)
  !
  ! GPL_EXCLUDE_END
  !

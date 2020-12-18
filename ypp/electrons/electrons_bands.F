@@ -31,25 +31,25 @@ subroutine electrons_bands(Xk,Xen)
  ! GRID_E       = interpolated @ GRID_k (if INTERP_grid>0)
  ! CIRCUIT_E_db = eventually read from GS SAVE
  !
- use pars,           ONLY:SP,rZERO
+ use pars,           ONLY:SP,rZERO,schlen
  use units,          ONLY:HA2EV
  use YPP_interfaces, ONLY:PROJECTION_plot,PROJECTION_setup,k_special
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
 &                         BANDS_path,BANDS_from_db,l_PROJECT_line,l_PROJECT_plane
- use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
+ use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset,n_spin
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
  use com,            ONLY:msg 
  use parser_m,       ONLY:parser
- use interpolate,    ONLY:electrons_bands_interpolate,GRID_k
+ use interpolate,    ONLY:electrons_bands_interpolate,GRID_k,INTERP_mode,INTERP_shell_factor
  use QP_CTL_m,       ONLY:QP_apply
  use interfaces,     ONLY:OCCUPATIONS_Fermi
  !
 #include<memory.h>
  !
  type(bz_samp), intent(inout) :: Xk
- type(levels),  intent(in)    :: Xen
+ type(levels),  intent(inout) :: Xen
  !
  ! Work Space
  !
@@ -58,10 +58,18 @@ subroutine electrons_bands(Xk,Xen)
  real(SP)              :: dEf
  logical               :: BANDS_built_in,BANDS_interpolated,GRID_interpolate
  logical, external     :: file_exists
+ character(schlen)     :: INTERP_mode_save
+ real(SP)              :: INTERP_shell_factor_save
  !
  ! Apply QP corrections
  !====================== 
+ INTERP_mode_save        =INTERP_mode
+ INTERP_shell_factor_save=INTERP_shell_factor
+ !
  call QP_apply(BANDS_bands,Xen,Xk,'G',msg_fmt='rs')
+ !
+ INTERP_mode        =INTERP_mode_save
+ INTERP_shell_factor=INTERP_shell_factor_save
  !
  ! IBZ => BZ: need to be done here as QP_apply cleans the %ptbz allocation
  !
@@ -127,13 +135,13 @@ subroutine electrons_bands(Xk,Xen)
  !
  if (GRID_interpolate.and.BANDS_bands(1)==1) call OCCUPATIONS_Fermi(GRID_E,GRID_k,mode="FERMI")
  !
- call msg("s",'Fermi Level  (BUILT-in bands) [eV]',Xen%E_Fermi*HA2EV)
+ call msg("s",'Fermi Level  (BUILT-in bands)     ',Xen%E_Fermi*HA2EV,"[eV]")
  !
  dEf=rZERO
  !
  if (BANDS_bands(1)==1) then
    dEf=-GRID_E%E_Fermi
-   call msg("s",'Correction             (GRID) [eV]',GRID_E%E_Fermi*HA2EV)
+   call msg("s",'Correction             (GRID)     ',GRID_E%E_Fermi*HA2EV,"[eV]")
  endif
  !
  call section('=','Bands output')
@@ -159,7 +167,7 @@ subroutine electrons_bands(Xk,Xen)
  if(BANDS_interpolated                   )  call plot_interpolated_values &
 &   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands")
  !
- if (l_PROJECT_plane) call PROJECTION_plot( "BANDS", 1, BANDS_bands, OBS_B=GRID_E%E ) 
+ if (l_PROJECT_plane) call PROJECTION_plot( "BANDS", 1, n_spin, BANDS_bands, OBS_B=GRID_E%E ) 
  !
  ! Close & Clean
  !

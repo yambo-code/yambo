@@ -23,8 +23,9 @@
 !
 module DIPOLES
  !
- use pars,  ONLY:SP,lchlen,schlen
- use units, ONLY:HA2EV
+ use pars,          ONLY:SP,lchlen,schlen
+ use units,         ONLY:HA2EV
+ use descriptors,   ONLY:IO_desc
  !
 #include <memory.h>
  !
@@ -43,6 +44,10 @@ module DIPOLES
  !
  integer                  :: num_shifted_grids
  logical                  :: eval_OVERLAPS
+ ! 
+ ! Descriptor
+ !
+ type(IO_desc)            :: DIP_desc
  !
  ! Allocs
  !
@@ -88,10 +93,6 @@ module DIPOLES
      !
      character(*)      :: what
      integer, optional :: d(:)
-     !
-     ! Work Space
-     !
-     integer :: err
      !
      if (present(d)) then
        select case(what)
@@ -202,7 +203,7 @@ module DIPOLES
    function DIP_rotated(ic,iv,ik_bz,i_sp_pol,what,kpt)
      !
      use pars,           ONLY:cZERO
-     use D_lattice,      ONLY:i_time_rev,dl_sop,sop_inv,nsym
+     use D_lattice,      ONLY:i_time_rev,dl_sop,nsym
      use parallel_m,     ONLY:PAR_K_scheme
      use R_lattice,      ONLY:bz_samp
      !
@@ -224,7 +225,6 @@ module DIPOLES
      is=kpt%sstar(ik_bz,2)
      !
      ik_mem    = PAR_K_scheme%ibz_index(ik)
-     !is = sop_inv( is )
      !
      DIP_in=cZERO
      if(trim(what)=="DIP_P" ) DIP_in=DIP_P(:,ic,iv,ik_mem,i_sp_pol)

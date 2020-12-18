@@ -33,7 +33,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  ! perform the diagonalization by using scalapack
  !
  use pars,           ONLY:SP
- use parallel_m,     ONLY:PP_redux_wait
+ use parallel_int,   ONLY:PP_redux_wait
  use SLK_m,          ONLY:SLK_POOL,SLK_ORTHO
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use matrix,         ONLY:PAR_matrix

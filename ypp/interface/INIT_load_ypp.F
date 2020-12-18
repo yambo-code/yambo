@@ -39,8 +39,9 @@ subroutine INIT_ypp_load(defs)
 &                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
 &                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,&
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
-&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,K_grid,&
-&                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_depth,PROJECT_steps,PROJECT_threshold
+&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,&
+&                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_N_perp,PROJECT_steps,PROJECT_threshold,&
+&                        DIPOLES_direction,DIPOLES_E_range,DIPOLES_bands
  use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
  use YPPm,          ONLY:Nel_fac
@@ -81,11 +82,11 @@ subroutine INIT_ypp_load(defs)
  !
  ! GPL_EXCLUDE_END
  !
- call it('r',defs,'Random_Grid','[R] Random grids')
- call it('r',defs,'High_Symm',  '[R] High_Symmetry points and paths') 
+ call it('r',defs,'Random_Grid', '[R] Random grids')
+ call it('r',defs,'High_Symm',   '[R] High_Symmetry points and paths') 
  call it('r',defs,'Regular_Grid','[R] Regular grid')
  !
- call it('r',defs,'amplitude', '[R] Amplitude')
+ call it('r',defs,'amplitude',    '[R] Amplitude')
  call it('r',defs,'plot',         '[R] Plot')
  call it('r',defs,'density',      '[R] Density')
  call it('r',defs,'current',      '[R] Current')
@@ -106,7 +107,6 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'QPDB_edit',    '[R] Generation/editing')
  call it('r',defs,'QPDB_merge',   '[R] Mergering')
  call it('r',defs,'QPDB_expand',  '[R] Symmetry expand')
- call it('r',defs,'fixsave', '[R] Convert WFs to new format')
  !
 #if defined _YPP_RT
  call it('r',defs,'RealTime',     '[R] TD Post-Processing')
@@ -137,7 +137,7 @@ subroutine INIT_ypp_load(defs)
  !
 #if defined _YPP_NL
  call it('r',defs,'NL_X',     '[R] NonLinear Optics Response Post-Processing')
- call it('r',defs,'NL_exc',     '[R] NonLinear Optics Excitation Post-Processing')
+ call it('r',defs,'NL_exc',   '[R] NonLinear Optics Excitation Post-Processing')
 #endif
  !
  ! Variables...
@@ -218,7 +218,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'PROJECT_mode',    'Instruct ypp how to project the DOS. ATOM, LINE, PLANE.',PROJECT_mode)
  call it(defs,'PROJECT_path',    'Project path. PLANE mode: 3 points in the plane. LINE mode: any series of points.',PROJECT_path)
  call it(defs,'PROJECT_steps',    'Project LINE/PLANE-axis steps.',PROJECT_steps)
- call it(defs,'PROJECT_depth',    'Project perpendicular direction divisions.',PROJECT_depth)
+ call it(defs,'PROJECT_depth',    'Project perpendicular direction divisions.',PROJECT_N_perp)
  call it(defs,'PROJECT_threshold','[o/o] Project threshold above which the project DOS is printed.',&
 &        PROJECT_threshold,verb_level=V_general)
  call it('f',defs,'BANDS_built_in', 'Print the bands of the generating points of the circuit using the nearest internal point')
@@ -254,8 +254,12 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'ListPts',      ' List the internal q/k points also in the parser format') 
  call it('f',defs,'ExpandPts',    ' Expand the internal q/k points in the BZ') 
  call it('f',defs,'DipWeight',    ' Weight the contribution to the exciton WFs with the dipoles') 
- call it('f',defs,'Shift01',      ' Generate k-points between 0 and 1 (similar to EPW and QE)') 
- call it(defs,'KGrid',     'K-points grid',K_grid)
+ !
+ ! DIPOLES
+ !
+ call it(defs,'DIP_E_range',   'E/h pairs energy window',DIPOLES_E_range,E_unit)
+ call it(defs,'DIP_direction', 'Field direction versor',DIPOLES_direction)
+ call it(defs,'DIP_bands',     'E/h pairs bands selection',DIPOLES_bands)
  !
  ! Excitons
  !
@@ -309,8 +313,8 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'PhBroad','Phonon broadening (Eliashberg & DOS)',ph_broad,E_unit)
  call it(defs,'EE_Fermi','External Fermi Level (Eliashberg)',elph_Ef,E_unit)
  call it(defs,'PhStps', 'Energy steps',elph_steps)
+ call it('f',defs,'GkkpReadBare','Read the bare gkkp')
  call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
- call it('f',defs,'GkkpConvert','Convert the gkkp to new I/O format')
  !
 #endif
  !
@@ -369,7 +373,6 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'TimeStep','Time step',RT_conf%delta_T,unit=Time_unit(1))
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',RT_conf%damping)
  call it(defs,'DampFactor','Damping parameter',RT_conf%damp_factor,unit=E_unit) 
-! call it(defs,'MaxContr','Maximum cotribution (%) to excitation',NL_ExcMaxContribution,verb_level=V_real_time) 
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
  call it('f',defs,'PrintExc','Print excited states functions')
  !

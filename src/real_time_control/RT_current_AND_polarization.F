@@ -46,7 +46,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use fields,         ONLY:gauge_field
  use DIPOLES,        ONLY:DIP_iR,DIP_v,DIP_spin,DIP_orbital
  use parallel_m,     ONLY:PAR_DIPk_nibz,PAR_G_k_range
- use RT_interfaces,  ONLY:RT_average_operator
+ use RT_operations,  ONLY:RT_average_operator
  !
  implicit none
  !

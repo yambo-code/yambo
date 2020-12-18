@@ -53,12 +53,14 @@ module drivers
  logical :: l_elphoton_corr      =.FALSE.
  logical :: l_elel_corr          =.FALSE.
  logical :: l_elph_corr          =.FALSE.
+ logical :: l_phel_corr          =.FALSE.
  !
  ! The non-eq. self-energy scattering "kind"
  !
  logical :: l_elphoton_scatt     =.FALSE.
  logical :: l_elel_scatt         =.FALSE.
  logical :: l_elph_scatt         =.FALSE.
+ logical :: l_phel_scatt         =.FALSE.
  !
  ! Electron-Phonon specific flags
  !

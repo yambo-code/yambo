@@ -25,7 +25,7 @@ subroutine PARALLEL_global_ScaLapacK( )
  !
  use linear_algebra,ONLY:INV
  use parallel_m,    ONLY:CPU_structure
- use interfaces,    ONLY:PARALLEL_assign_chains_and_COMMs
+ use parallel_int,  ONLY:PARALLEL_assign_chains_and_COMMs
  use SLK_m,         ONLY:SLK_COM_INDEX,SLK_COM_A2A
  !
  implicit none

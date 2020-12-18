@@ -169,7 +169,7 @@ subroutine K_inversion_restart(iq,W)
      enddo
      !
      call msg('rs','[BSE INV@'//TYP%what//'] Frequencies read         ',count(inv_err_db==0))
-     call msg('rs','[BSE INV@'//TYP%what//']                     [o/o]',real(count(inv_err_db==0))/real(W%n_freqs)*100._SP)
+     call msg('rs','[BSE INV@'//TYP%what//']                          ',real(count(inv_err_db==0))/real(W%n_freqs)*100._SP,"[o/o]")
      call msg('rs','[BSE INV@'//TYP%what//'] Frequencies used         ',W%n_freqs)
      !
      ! De/Allocate Epsilon_ii/PL

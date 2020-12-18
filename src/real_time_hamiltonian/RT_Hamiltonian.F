@@ -64,7 +64,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
 &                         l_update_SOC,l_velocity_gauge_corr
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A,PP_redux_wait,PAR_G_k_range
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A,PAR_G_k_range
+ use parallel_int,   ONLY:PP_redux_wait
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE

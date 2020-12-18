@@ -44,7 +44,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
- use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,&
+ use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
@@ -79,14 +79,15 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,     &
 &                        CACHE_OBS_INTERVAL_time_INPUT
  use stderr,        ONLY:intc
+ use RT_occupations,ONLY:RT_RTA_temp,RT_RTA_chem
+ use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
-&                        NE_tot_time,RT_life_extrap_times_INPUT,RT_bands,         &
+&                        NE_tot_time,RT_bands,         &
 &                        RT_ave_dephasing,RT_eh_en,RT_scatt_tresh,Gr_kind,       &
 &                        NE_MEM_treshold,NE_time_step_update_jump_INPUT,          &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
-&                        RT_MAX_step,RT_RTA_temp,RT_RTA_chem,RAD_magnification,  &
-&                        RT_deph_deg_thresh
+&                        RT_MAX_step,RAD_magnification,RT_deph_deg_thresh
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
@@ -101,7 +102,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
 #if defined _ELPH 
- use ELPH,          ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
+ use ELPH,          ONLY:QP_PH_n_G_bands,elph_nQ_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
 #if defined _OPENMP
@@ -115,6 +116,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _MEM_CHECK
  use memory,        ONLY:MEM_treshold
+#endif
+#if defined _PHEL
+ use PHEL,          ONLY:PH_Self_Energy_mode,PH_DbGd_points
 #endif
  !
  implicit none
@@ -162,6 +166,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! GPL_EXCLUDE_END
  !
+#if defined _PHEL
+ call it('r',defs,'ph_el_scatt','[R] Phonon-Electron Scattering')   
+#endif
 #if defined _RT
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
@@ -171,6 +178,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',    '[R] Electron-Phonon Correlation')   
+#endif
+#if defined _PHEL 
+ call it('r',defs,'ph_el_corr',    '[R] Phonon-Electron Correlation')   
 #endif
 #if defined _SC
  call it('r',defs,'el_el_corr',    '[R] Electron-Electron Correlation') 
@@ -197,6 +207,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_RL) 
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
+ call it(defs,'K_grids', '[KPT] Select the grids (X=response, S=sigma, C=collisions, B=bse) [default X S C B]',&
+&             k_GRIDS_string,verb_level=V_kpt)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt)
  call it(defs,'Nelectro','Electrons number',nel,verb_level=V_general)
@@ -206,7 +218,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BoseCut', '[BOSE] Finite T Bose function cutoff',bose_E_cut,verb_level=V_general)
 #if defined _ELPH 
  call it('f',defs,'BSEscatt', '[KPT] Compute extended k/q scatering',verb_level=V_kpt)
- call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nDBs_used,verb_level=V_kpt) 
+ call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level=V_kpt) 
 #endif
  call it('f',defs,'WFbuffIO','[IO] Wave-functions buffered I/O',verb_level=V_io) 
  call it('f',defs,'NoDiagSC','New setup for non-diagonal supercells',verb_level=V_general) 
@@ -228,10 +240,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! I/O
  !
  call it(defs,'DBsIOoff', &
-&             '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,OBS,W,SC,BS,ALL)',&
+&             '[IO] List of DB with NO I/O. DB=(DIP,X,W,HF,COLLs,GF,J,OBS,CARRIERs,SC,BS,ALL)',&
 &             DBs_IO_control_string,verb_level=V_io)
  call it(defs,'DBsFRAGpm', &
-&             '[IO] Space-separated list of +DB to FRAG and -DB to NOT FRAG. DB=(DIP,X,W,HF,COLLS,K,BS,QINDX,RT,ELPH,SC,ALL)',&
+&             '[IO] List of +DB to FRAG and -DB to NOT FRAG. DB=(DIP,X,W,HF,BS,QINDX,ALL)',&
 &             DBs_FRAG_control_string,verb_level=V_io)
  !
  ! S_xc
@@ -254,7 +266,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
  call it('f',defs,'UseEbands', '[GW] Force COHSEX to use empty bands',verb_level=V_qp)
 #endif
+#if defined _PHEL
+ call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
+ call it(defs,'PHDbGdsize', '[PHEL] Size of subset of double grid k-points',PH_DbGd_points)
+#else
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit,verb_level=V_qp)
+#endif
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
  call it(defs,'dScStep',  '[GW] Energy step to evaluate Z factors',QP_dSc_delta,E_unit,verb_level=V_qp)
  call it(defs,'DysSolver','[GW] Dyson Equation solver ("n","s","g")',QP_solver,protect=.FALSE.,case="a")
@@ -305,7 +322,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'Gauge' ,  '[BSE/X] Gauge (length|velocity)',global_gauge,verb_level=V_resp)
  call it('f',defs,'NoCondSumRule' ,'[BSE/X] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
  call it('f',defs,'MetDamp' ,      '[BSE] Define '//slash//'w+=sqrt('//slash//'w*('//slash//'w+i'//slash//'eta))',verb_level=V_resp)
- call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
+ call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(s)lepc/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
  call it(defs,'BSSInvPFratio','[BSS] Inversion solver. Ratio between the number of frequencies solved pert/full',&
 &        K_INV_EPS%PERT_FULL_ratio)
@@ -422,7 +439,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
- call it(defs,'RAD_prefactor','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
+ call it(defs,'RADmagnific','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
  call it(defs,'PhLifeTime', '[RT] Constant Dephasing Time',Phase_LifeTime,unit=Time_unit(1))
  call it(defs,'DephEThresh', '[RT] Threshold on the energy difference between two states to dephase them',&
          &   RT_deph_deg_thresh,unit=E_unit,Verb_level=V_real_time)
@@ -468,6 +485,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'RTEqScatt',     '[RT] Include Gamma0f0 term in scattering',Verb_level=V_real_time)
  call it('f',defs,'RTImpForMet',   '[RT] Impose structure optimized for metals',Verb_level=V_real_time)
  call it('f',defs,'RTzeroTempRef', '[RT] Use zero temperature Fermi districution as reference',Verb_level=V_real_time)
+ call it('f',defs,'RTskipPHabs',   '[RT] Skip e-p Lifetimes due to phonon absorption',Verb_level=V_real_time)
  !
  ! Scattering
  !
@@ -580,6 +598,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call INIT_QP_ctl_load(defs,3)
  !
  ! GPL_EXCLUDE_START
+ !
+#if defined _PHEL 
+ call it(defs,'PH_SE_mode','[PHEL] Self-Energy scattering mode ("bare-bare","dressed-bare","dressed-dressed")',PH_Self_Energy_mode)
+#endif
  !
 #if defined _RT
  !
@@ -772,6 +794,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        if (i_s==6) possible_fields='(k,b,q,qp)'  ! RT
        if (i_s==7) possible_fields='(p,d) '      ! SLK
        if (i_s==8) possible_fields='(w,k) '      ! NL
+       if (i_s==9) possible_fields='(q,k,b) '    ! PH_SE
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"
@@ -866,10 +889,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      !
      type(levels), intent(in) :: E_in
      !
-     logical :: is_def(10)
+     logical :: is_def(11)
      integer :: i1,bands(2),tmp_bands(2)
      !
-     if(initmode/=4) return
+     if (initmode/=4) return
      !
      is_def=.false.
      !
@@ -883,9 +906,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call parser('SCBands',  is_def(8))
      call parser('NLBands',  is_def(9))
      call parser('COLLBands',is_def(10))
+     call parser('el_photon_corr',is_def(11))
+     if (is_def(11)) call parser('life',is_def(11))
      !
      bands=-1
-     do i1=1,10
+     do i1=1,11
        if(.not.(is_def(i1))) cycle
        if(i1< 5) tmp_bands=X(i1)%ib
        if(i1==5) tmp_bands=Dip%ib
@@ -901,6 +926,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _RT || defined _SC || defined _NL
        if(i1==10) tmp_bands=COLL_bands
+#endif
+#if defined _QED
+       if(i1==11) tmp_bands=QP_n_G_bands
 #endif
        if(any((/bands==-1/))) then
          bands(1)=max(tmp_bands(1),   1   )

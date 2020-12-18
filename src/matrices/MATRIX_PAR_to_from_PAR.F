@@ -27,7 +27,8 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, ROWS_s, COLS_s,&
  use pars,           ONLY:SP
  use matrix,         ONLY:I_do_RCV,I_do_SND,TRANSFER_world,N_PAR_to_PAR_comms,&
 &                         PAR_to_PAR_comm_SAVE,PAR_to_PAR_comm_NAME,PAR_to_PAR_comm_SAVE_NAME,N_MAX_PAR_to_PAR_comms
- use parallel_m,     ONLY:PP_redux_wait,myid,COMM_reset,CREATE_the_COMM,COMM_copy,MPI_comm,ncpu
+ use parallel_m,     ONLY:myid,COMM_reset,CREATE_the_COMM,COMM_copy,MPI_comm,ncpu
+ use parallel_int,   ONLY:PP_redux_wait
  !
  implicit none
  !
@@ -126,8 +127,8 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, ROWS_s, COLS_s,&
    !
    subroutine elemental_transfer( )
      !
-     use parallel_m, ONLY:PP_send_and_receive
-     integer            ::CROP_s(4),CROP_r(4)
+     use parallel_int, ONLY:PP_send_and_receive
+     integer              ::CROP_s(4),CROP_r(4)
      !
      if (myid/=i_snd_world.and.myid/=i_rcv_world) return
      !

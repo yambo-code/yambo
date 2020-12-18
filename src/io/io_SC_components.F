@@ -49,7 +49,7 @@ integer function io_SC_components(what,E_sc,ID)
  !
  integer, external     :: variables_SC
  integer               :: ik,i_sp_pol,ib,i_sec,bands_to_load,VAR_SIZE
- logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_T_EL
+ logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_TEMP
  real(SP), allocatable :: E_tmp(:,:)
  !
  if (.not.io_SC) then
@@ -92,14 +92,14 @@ integer function io_SC_components(what,E_sc,ID)
  if (any((/io_sec(ID,:)==1/))) then
    !
    l_IMPOSE_SN=.not.l_V
-   l_T_EL=.false.
+   l_TEMP=.false.
 #if defined _ELPH
-   l_T_EL=.true.
+   l_TEMP=.true.
 #endif
    !
    if (any((/l_E,l_V,l_WF,l_MP/))) then
      if (write_is_on(ID).or.variable_exist(ID,"TEMPERATURES")) then
-       io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL,FRAG=frag_SC)
+       io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,TEMP=l_TEMP,FRAG=frag_SC)
      else
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,FRAG=frag_Sc)
      endif

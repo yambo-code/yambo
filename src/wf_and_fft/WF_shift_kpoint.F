@@ -27,7 +27,7 @@ subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k
  !
  use pars,          ONLY:SP,cZERO
  use electrons,     ONLY:n_spinor,n_sp_pol
- use R_lattice,     ONLY:G_m_G,G_m_G_d,k_map,bz_samp
+ use R_lattice,     ONLY:G_m_G,k_map,bz_samp
  use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
  use deviceXlib_m,  ONLY:dev_memcpy
  !

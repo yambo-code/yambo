@@ -29,7 +29,7 @@ subroutine cutoff_slab(q,is_cut)
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:bz_samp,g_vec,bare_qpg,k_grid_uc_vol
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset
- use interfaces,    ONLY:PARALLEL_index
+ use parallel_int,  ONLY:PARALLEL_index
 
 ! use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,nqibz
 ! use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,nqibz

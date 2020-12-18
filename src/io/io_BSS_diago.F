@@ -65,15 +65,12 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
    !
-   call io_elemental(ID,VAR=&
-&       " BSS|Eigenstates included     ",L0=BSS_write_eig_2_db,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="[BSS] Eigenstates included",L0=BSS_write_eig_2_db,CHECK=.true.,OP=(/"=="/))
    if(iq==1) then
-     call io_elemental(ID,VAR=&
-&       "    |Field direction          ",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
+     call io_elemental(ID,VAR="[BSS] Field direction",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
      if (allocated(BSqpts)) BSqpts(:,iq)=BSS_q0
    endif
-   call io_elemental(ID,VAR=&
-&       "    |Eigenstates computed     ",I0=BSS_n_eig,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="[BSS] Eigenstates computed     ",I0=BSS_n_eig,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    ! header return

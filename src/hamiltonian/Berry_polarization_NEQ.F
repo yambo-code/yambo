@@ -30,7 +30,8 @@ subroutine Berry_polarization_NEQ(Xen,Xk,V_bands,Polarization)
  use real_time,      ONLY:RT_bands
  use QP_m,           ONLY:QP_nk
  use electric,       ONLY:All_S_det,Sm1_plus,Sm1_minus
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_bz,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PAR_IND_Xk_bz,PAR_COM_Xk_ibz_INDEX
+ use parallel_int,   ONLY:PP_redux_wait
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif

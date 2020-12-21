@@ -203,7 +203,7 @@ integer function io_RT_components(what,ID)
  ! 3rd SECTION
  !=============
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if !defined _PAR_IO
  !
@@ -247,7 +247,7 @@ integer function io_RT_components(what,ID)
    !
  endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
  ! Current and Polarization
  !==========================

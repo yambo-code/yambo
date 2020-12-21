@@ -171,7 +171,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if(iq/=1) O_ng_shift=max(maxval(qindx_B(:,:,2)),O_ng_shift)
  endif
  !
- ! GPL_EXCLUDE_START
+ !
  !
  ! BS/FXC DB I/O
  !===============
@@ -184,7 +184,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  else
    !
-   ! GPL_EXCLUDE_END
+   !
    !
 #if defined _PAR_IO
    !
@@ -228,11 +228,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (io_BS_err==0) return
    !
-   ! GPL_EXCLUDE_START
+   !
    !
  endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
  ! Screened interaction
  !======================
@@ -260,7 +260,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call timing('X T_space Kernel',OPR='start')
  !
- ! GPL_EXCLUDE_START
+ !
  !
  ! TDDFT xc-kernel Setup
  !======================
@@ -278,7 +278,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
  ! Wave Functions
  !================
@@ -286,9 +286,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
  !
  section_title='-BSK'
- ! GPL_EXCLUDE_START
+ !
  if (l_bs_fxc) section_title='-BSK->Fxc'
- ! GPL_EXCLUDE_END
+ !
  !
  call WF_load(WF,max(O_ng,BS_n_g_exch),O_ng_shift,bands_to_load,(/1,Xk%nibz/),space='R',title=trim(section_title))
  !
@@ -605,12 +605,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (l_bs_fxc) then
    !
-   ! GPL_EXCLUDE_START
+   !
    !
    YAMBO_FREE(FXC)
    YAMBO_FREE(FXC_K_diagonal)
    !
-   ! GPL_EXCLUDE_END
+   !
    !
  else if (BS_K_is_ALDA) then
    YAMBO_FREE(F_xc)

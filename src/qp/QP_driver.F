@@ -75,10 +75,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  call parser('QPExpand'   ,l_QP_Expand)
  call parser('UseEbands',  COHSEX_use_empties)
  call parser('QPsymmtrz',   l_QP_symmetrize)
- ! GPL_EXCLUDE_START
+ !
  call parser('GreenF2QP',  use_GreenF_to_eval_QP)
  use_GreenF_Zoom=QP_G_Zoom_treshold>0._SP
- ! GPL_EXCLUDE_END
+ !
  call parser('ExtendOut',  l_extended_output)
  !
  if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.

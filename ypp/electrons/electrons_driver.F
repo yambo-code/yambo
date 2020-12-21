@@ -115,7 +115,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !===============
  if (l_mag) call electrons_magnetization(Xk,Xen)
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _YPP_MAGNETIC
  !
@@ -129,7 +129,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
 #endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
  ! CURRENT
  !=========

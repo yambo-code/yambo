@@ -166,12 +166,12 @@ subroutine INIT_activate()
  !
  if (l_optics.and.l_chi) then
    !
-   ! GPL_EXCLUDE_START
+   !
    !
    ! BS based TDDFT (BS fxc is only of q=0 0 0). BS_fxc db exist
    if(l_bs_fxc) call initactivate(1,'FxcGRLc FxcSVdig FxcRetarded')
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    ! ALDA/LRC Tddft
    if (l_alda_fxc) call initactivate(1,'FxcGRLc')
@@ -193,14 +193,14 @@ subroutine INIT_activate()
    !
    call INIT_QP_ctl_switch('X')
    !
-   ! GPL_EXCLUDE_START
+   !
    !
 #if defined _RT
    call INIT_RT_ctl_switch('X')
 #endif
    call initactivate(1,'Qdirection QShiftOrder')
    !
-   ! GPL_EXCLUDE_END
+   !
    !
  endif
  !
@@ -248,14 +248,14 @@ subroutine INIT_activate()
    !
    call INIT_QP_ctl_switch('K')
    !
-   ! GPL_EXCLUDE_START
+   !
    !
 #if defined _RT
    call INIT_RT_ctl_switch('K')
    call INIT_RT_ctl_switch('R')
 #endif
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    call initactivate(1,'NoCondSumRule MetDamp')
    !
@@ -269,12 +269,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
-   !GPL_EXCLUDE_START
    call initactivate(1,'BSEQptR BSEBands BSKCut BSEEhEny BSehWind')
-   !GPL_EXCLUDE_END
-   !GPL_INCLUDE_START
-   !call initactivate(1,'BSEBands BSKCut BSEEhEny BSehWind')
-   !GPL_INCLUDE_END
    !
 #if defined _RT
    call initactivate(1,'ForceEqTrans')
@@ -316,13 +311,13 @@ subroutine INIT_activate()
  if (l_em1s) then
    call INIT_QP_ctl_switch('X')
    !
-   ! GPL_EXCLUDE_START
+   !
    !
 #if defined _RT
    call INIT_RT_ctl_switch('X')
 #endif
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    call initactivate(1,'ShiftedPaths')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','GrFnTp','DmRnge','CGrdSp','EhEngy','LongDr','DrudeW'/))
@@ -335,13 +330,13 @@ subroutine INIT_activate()
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call INIT_QP_ctl_switch('X')
    !
-   ! GPL_EXCLUDE_START
+   !
    !
 #if defined _RT
    call INIT_RT_ctl_switch('X')
 #endif
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    call initactivate(1,'ShiftedPaths')
    if (l_ppa) then
@@ -360,13 +355,13 @@ subroutine INIT_activate()
  if (l_acfdt) then
    call INIT_QP_ctl_switch('X')
    !
-   ! GPL_EXCLUDE_START
+   !
    !
 #if defined _RT
    call INIT_RT_ctl_switch('X')
 #endif
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    call initactivate(1,'ShiftedPaths')
    call initactivate(1,'EXXRLvcs VXCRKvcs AC_n_LAM AC_n_FR AC_E_Rng')
@@ -398,14 +393,14 @@ subroutine INIT_activate()
      call INIT_QP_ctl_switch('X')
      call INIT_QP_ctl_switch('G')
      !
-     ! GPL_EXCLUDE_START
+     !
      !
 #if defined _RT
      call INIT_RT_ctl_switch('X')
      call INIT_RT_ctl_switch('G')
 #endif
      !
-     ! GPL_EXCLUDE_END
+     !
      !
      call initactivate(1,'BoseCut ShiftedPaths')
      !
@@ -460,7 +455,7 @@ subroutine INIT_activate()
  !
  ! El-Ph: Frohlich Hamiltonian
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _ELPH 
  !
@@ -470,7 +465,7 @@ subroutine INIT_activate()
  !
 #endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
 #if defined _SC || defined _RT
  !
@@ -508,7 +503,7 @@ subroutine INIT_activate()
  !
 #endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
 #if defined _SC 
  !
@@ -538,7 +533,7 @@ subroutine INIT_activate()
    !
    call INIT_QP_ctl_switch('G')
    !
-   ! GPL_EXCLUDE_START
+   !
    !
    call INIT_RT_ctl_switch('G')
    !
@@ -551,7 +546,7 @@ subroutine INIT_activate()
    if (l_elph_scatt) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'EERimPerc')
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime RAD_prefactor PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')

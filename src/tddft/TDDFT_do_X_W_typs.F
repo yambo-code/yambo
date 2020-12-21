@@ -77,7 +77,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  !
  if (iq<0) return
  !
- ! GPL_EXCLUDE_START
+ !
  !
  ! Fxc DB
  !
@@ -121,6 +121,6 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  YAMBO_ALLOC(X_poles,(BS_K_dim))
  X_poles=FXC_K_diagonal
  !
- ! GPL_EXCLUDE_END
+ !
  !
 end subroutine

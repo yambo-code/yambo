@@ -103,7 +103,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
    !
  endif
  !
- ! GPL_EXCLUDE_START
+ !
  !
  if(n_spin>1) then
    !
@@ -144,6 +144,6 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
    ! 
  endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
 end subroutine RT_current_AND_polarization

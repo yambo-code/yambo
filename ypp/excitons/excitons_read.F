@@ -60,7 +60,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  !
  if(l_check) then
    !
-   ! GPL_EXCLUDE_START
+   !
    !
    ! E SOC perturbative
    ! 
@@ -69,7 +69,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
      io_err=io_E_SOC_map(en,k,io_ID)
    endif
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    YAMBO_ALLOC(BSqpts,(3,iq))
    !

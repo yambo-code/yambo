@@ -117,7 +117,7 @@ integer function io_DIPOLES(Dip,ID)
    call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    call DIP_alloc('DIP_v' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    !
-   ! GPL_EXCLUDE_START
+   !
    !
 #if defined _RT
    if (compute_Orb_dipoles) &
@@ -131,7 +131,7 @@ integer function io_DIPOLES(Dip,ID)
    if (compute_P2_dipoles) call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
 #endif
    !
-   ! GPL_EXCLUDE_END
+   !
    !
  endif
  !
@@ -157,7 +157,7 @@ integer function io_DIPOLES(Dip,ID)
  call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
  call io_bulk(ID,C3=DIP_v(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _RT
  if (compute_Orb_dipoles) then
@@ -210,7 +210,7 @@ integer function io_DIPOLES(Dip,ID)
  endif
 #endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
 1 call io_disconnect(ID=ID)
  !

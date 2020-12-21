@@ -62,7 +62,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
    return
  endif
  !
- ! GPL_EXCLUDE_START
+ !
  !
  ! Carriers number
  !================
@@ -82,7 +82,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  OBSERVABLES(1:21)=(/NCarr(:),TFit(:),EfFit(:),Ener(:),Entr(:),TEntr(:),EnEntr(:)/)
  !
- ! GPL_EXCLUDE_END
+ !
  !
  call timing('RT observables',OPR='stop')
  !

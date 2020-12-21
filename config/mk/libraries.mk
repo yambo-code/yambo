@@ -36,10 +36,10 @@ PJ_RTLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
 
 PJ_PLLIBS    = $(BASIC_LIBS) interpolate real_time_control qp_control setup \
                tddft dipoles pol_function qp acfdt bse collisions hamiltonian sc \
-               real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
+               real_time_hamiltonian real_time_propagation real_time_common
 PJ_PLLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
                tddft dipoles pol_function qp acfdt bse hamiltonian collisions sc \
-               real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
+               real_time_hamiltonian real_time_propagation real_time_common
 
 PJ_NLLIBS    = $(PJ_RTLIBS) nloptics
 PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics

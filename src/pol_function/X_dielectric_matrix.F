@@ -66,6 +66,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  self_detect_E_range=.false.
  !
+ ! Some check
+ !
+ if(X%ib(2)>Xen%nb) call error("Too many bands required in X. Run DFT with more bands!")
+ !
  l_X_terminator = X_terminator_Kind/='none'
  if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') then
    call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))

@@ -33,7 +33,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
  use parser_m,      ONLY:parser
- use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
+ use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,QP_n_G_bands,&
 &                        QP_Vnl_xc,QP_n_states,QP_nb,QP_G_zoom_er,QP_G_Zoom_treshold,&
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,l_QP_symmetrize,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_SET_temperature_pre_factor,&
@@ -80,6 +80,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  use_GreenF_Zoom=QP_G_Zoom_treshold>0._SP
  !
  call parser('ExtendOut',  l_extended_output)
+ !
+ ! Some check
+ if (QP_n_G_bands(2)>en%nb) call error("Too many bands required in Green's function. Run DFT with more bands!")
  !
  if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
  !

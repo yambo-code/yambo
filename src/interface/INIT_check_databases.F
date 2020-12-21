@@ -237,14 +237,14 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_ATMPROJ_pwscf_err=io_ATMPROJ_pwscf(io_ID)
  !
- ! GPL_EXCLUDE_START
+ !
  !
  ! bs_fxc
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_BS_Fxc_err=io_BS_Fxc(1,Xxcw,io_ID,X=Xbsk)
  !
- ! GPL_EXCLUDE_END
+ !
  !
  ! ELPH 
  !

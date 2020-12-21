@@ -111,7 +111,7 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
      call io_bulk(ID,C1=bsRr)
    endif
    !
-   ! GPL_EXCLUDE_START
+   !
    !
    if(present(bsR_kerr)) then
      if(associated(bsR_kerr)) then
@@ -127,7 +127,7 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
      endif
    endif
    !
-   ! GPL_EXCLUDE_END
+   !
    !
  endif
  !

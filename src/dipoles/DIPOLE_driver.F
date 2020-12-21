@@ -175,7 +175,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    !
    if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,Dip)
    !
-   ! GPL_EXCLUDE_START 
+   ! 
    !
 #if defined _RT
    if (compute_Orb_dipoles)        call DIPOLE_orbital_magnetization(Xen,Xk,Dip)
@@ -183,7 +183,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    if (Compute_Spin_dipoles)       call DIPOLE_spin_magnetization(Xen,Xk,Dip)
 #endif
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    call DIPOLES_ppredux_and_symmetrize()
    !
@@ -234,7 +234,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
      DIP_P=cZERO
      DIP_v=cZERO
      !
-     ! GPL_EXCLUDE_START 
+     ! 
      !
 #if defined _RT
      if (compute_Orb_dipoles) then
@@ -262,7 +262,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
        DIP_S=cZERO
      endif
      !
-     ! GPL_EXCLUDE_END 
+     ! 
      !
    end subroutine DIPOLES_alloc
    !
@@ -283,7 +283,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
         call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         call PP_redux_wait( DIP_v(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         !
-        ! GPL_EXCLUDE_START 
+        ! 
         !
 #if defined _RT
         !
@@ -302,7 +302,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
         !
 #endif
         !
-        ! GPL_EXCLUDE_END 
+        ! 
         !
         !
         ! Symmetrization 
@@ -315,7 +315,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
             DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
             DIP_v (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_v(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
             !
-            ! GPL_EXCLUDE_START 
+            ! 
             !
 #if defined _RT
             if (compute_Orb_dipoles) &
@@ -330,7 +330,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
             if (compute_P2_dipoles) &
 &             P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #endif
-            ! GPL_EXCLUDE_END  
+            !  
             !
           endif
           do ic=iv+1,Dip%ib(2)
@@ -339,7 +339,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
               DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
               DIP_v (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_v (:,ic,iv,ik_mem,i_sp_pol))
               !
-              ! GPL_EXCLUDE_START 
+              ! 
               !
 #if defined _RT
               if (compute_Orb_dipoles) &
@@ -355,7 +355,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 &               P_square(iv,ic,ik_mem,i_sp_pol) =  conjg(P_square(ic,iv,ik_mem,i_sp_pol))
 #endif
               !
-              ! GPL_EXCLUDE_END 
+              ! 
               !
             endif
           enddo

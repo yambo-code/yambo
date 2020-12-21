@@ -30,11 +30,12 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_table,QP_state
  use YPP_interfaces, ONLY:PROJECTION_setup
- use YPPm,           ONLY:l_density,l_mag,v2plot,&
+ use YPPm,           ONLY:l_density,l_mag,v2plot,INTERP_input_mode,&
 &                         nr,l_sp_wf,DOS_bands,plot_title,l_dos,l_bands,l_current,&
 &                         l_angular_momentum,l_position,l_mean_potential
  use xc_functionals, ONLY:magn
  use interfaces,     ONLY:WF_load,WF_free,PARALLEL_WF_index,PARALLEL_global_indexes,PARALLEL_WF_distribute
+ use interpolate,    ONLY:INTERP_mode
  !
 #include<memory.h>
  !
@@ -92,6 +93,8 @@ subroutine electrons_driver(Xk,Xen,Xq)
    !
  endif
  !
+ INTERP_input_mode=INTERP_mode
+ !
  ! DOS 
  !=====
  if (l_dos)     call electrons_dos(Xk,Xen)
@@ -112,7 +115,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !===============
  if (l_mag) call electrons_magnetization(Xk,Xen)
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _YPP_MAGNETIC
  !
@@ -126,7 +129,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
 #endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
  ! CURRENT
  !=========

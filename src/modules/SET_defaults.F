@@ -23,9 +23,9 @@
 !
 subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
- ! GPL_EXCLUDE_START
+ !
  use debug,      ONLY:dbg
- ! GPL_EXCLUDE_END
+ !
  use pars,       ONLY:SP,cZERO
  use C_driver,   ONLY:code_branch
  use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
@@ -152,9 +152,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! Printed reals format lengths 
  !
- ! GPL_EXCLUDE_START
+ !
  include 'branch.inc'
- ! GPL_EXCLUDE_END
+ !
  !
  !
  call set_real_printed_length()
@@ -192,11 +192,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  call remove_stack_limit()
  !
- ! GPL_EXCLUDE_START
+ !
  ! Debug
  !
  call dbg('reset')
- ! GPL_EXCLUDE_END
+ !
  !
  ! Clocks
  !

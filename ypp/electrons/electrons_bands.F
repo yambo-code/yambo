@@ -31,7 +31,7 @@ subroutine electrons_bands(Xk,Xen)
  ! GRID_E       = interpolated @ GRID_k (if INTERP_grid>0)
  ! CIRCUIT_E_db = eventually read from GS SAVE
  !
- use pars,           ONLY:SP,rZERO
+ use pars,           ONLY:SP,rZERO,schlen
  use units,          ONLY:HA2EV
  use YPP_interfaces, ONLY:PROJECTION_plot,PROJECTION_setup,k_special
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,&
@@ -42,14 +42,14 @@ subroutine electrons_bands(Xk,Xen)
  use D_lattice,      ONLY:lattice
  use com,            ONLY:msg 
  use parser_m,       ONLY:parser
- use interpolate,    ONLY:electrons_bands_interpolate,GRID_k
+ use interpolate,    ONLY:electrons_bands_interpolate,GRID_k,INTERP_shell_factor
  use QP_CTL_m,       ONLY:QP_apply
  use interfaces,     ONLY:OCCUPATIONS_Fermi
  !
 #include<memory.h>
  !
  type(bz_samp), intent(inout) :: Xk
- type(levels),  intent(in)    :: Xen
+ type(levels),  intent(inout) :: Xen
  !
  ! Work Space
  !

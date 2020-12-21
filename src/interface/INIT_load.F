@@ -143,9 +143,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! ... derived
  !=============
  !
- !===============
- ! GPL RUNLEVELS
- !===============
  call it('r',defs,'chi',     '[R][CHI] Dyson equation for Chi.')
  call it('r',defs,'bse',     '[R][BSE] Bethe Salpeter Equation.')
  call it('r',defs,'tddft',   '[R][K] Use TDDFT kernel')
@@ -154,19 +151,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('r',defs,'em1d',    '[R][X] Dynamically Screened Interaction')
  call it('r',defs,'ppa',     '[R][Xp] Plasmon Pole Approximation for the Screened Interaction')
  !
- ! GPL_EXCLUDE_START
- !
- !===================
- ! NON GPL RUNLEVELS
- !===================
- !
- ! GPL_EXCLUDE_END
- !
-#if defined _RT
+#if defined _RT_SCATT
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
-#endif
-#if defined _RT 
  call it('r',defs,'el_photon_scatt','[R] Electron-Photon   Scattering')   
 #endif
 #if defined _ELPH 
@@ -262,10 +249,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'GEnRnge',  '[GW] GF energy range',QP_G_er,E_unit)
  call it(defs,'GEnMode',  '[GW] GF energy mode ("centered","absolute"). "Centered" around the bare energy',&
 &        GF_energy_range_mode,verb_level=V_qp)
- call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze)', GW_terminator_Kind)
+ call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze,"BRS" Berger-Reining-Sottile)', GW_terminator_Kind)
  call it(defs,'GTermEn',  '[GW] GW terminator energy (only for kind="BG")', GW_terminator_E,E_unit,verb_level=V_qp)
  call it('f',defs,'NewtDchk',  '[GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut', '[GW] Print all variables in the output file',verb_level=V_qp)
+ call it('f',defs,'QPsymmtrz', '[GW] Force symmetrization of states with the same energy',verb_level=V_qp)
  !
  ! Xs Xd Xp
  !
@@ -290,22 +278,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSKCut',  '[BSK] Cutoff on the BSE Kernel, 0=full 1=none',BS_K_cutoff,verb_level=V_resp)
  call it('f',defs,'BSKTriangIO' ,'[BSK] Write only the upper part of the BSE matrix with parallel I/O',verb_level=V_resp)
  !
- !GPL_INCLUDE_START
- !
- !call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX',BSK_mode,protect=.FALSE.)
- !
- ! GPL_INCLUDE_END
- !
- ! GPL_EXCLUDE_START
- !
  call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX/BSfxc',BSK_mode,protect=.FALSE.,case="A")
- !
- ! GPL_EXCLUDE_END
  !
  call it(defs,'Gauge' ,  '[BSE/X] Gauge (length|velocity)',global_gauge,verb_level=V_resp)
  call it('f',defs,'NoCondSumRule' ,'[BSE/X] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
  call it('f',defs,'MetDamp' ,      '[BSE] Define '//slash//'w+=sqrt('//slash//'w*('//slash//'w+i'//slash//'eta))',verb_level=V_resp)
- call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
+ call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(s)lepc/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
  call it(defs,'BSSInvPFratio','[BSS] Inversion solver. Ratio between the number of frequencies solved pert/full',&
 &        K_INV_EPS%PERT_FULL_ratio)
@@ -395,19 +373,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'GWIter',     '[GW] GW  self-consistent (evGW)  iterations on eigenvalues',GW_iterations)
  call it(defs,'GWoIter',    '[GW] GWo self-consistent (evGWo) iterations on eigenvalues',GWo_iterations)
  !
- ! GPL_EXCLUDE_START
- !
- !===================
- ! NON GPL VARIABLES
- !===================
- !
  ! S_xc
  !
  call it(defs,'GreenFTresh','[GW] [o/o] Treshold to define the new zoomed energy range',QP_G_Zoom_treshold,verb_level=V_qp)
  call it('f',defs,'QPExpand',   '[F GW] The QP corrections are expanded all over the BZ',verb_level=V_qp)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
  !
- ! GPL_EXCLUDE_END
+ !
  !
  call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
  !
@@ -579,7 +551,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call INIT_QP_ctl_load(defs,2)
  call INIT_QP_ctl_load(defs,3)
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _RT
  !
@@ -603,9 +575,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! BSE
  !
  call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',BS_eh_win,verb_level=V_resp)
- !GPL_EXCLUDE_START
+ !
  call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=0)
- !GPL_EXCLUDE_END
+ !
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,E_unit,verb_level=V_resp)
  !
  ! Xx
@@ -618,7 +590,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'AC_n_FR',  '[ACFDT] Integration frequency points',ACFDT_n_freqs)
  call it(defs,'AC_E_Rng', '[ACFDT] Imaginary axis 2nd & 3rd energy points',ACFDT_E_range,E_unit)
  !
- ! GPL_EXCLUDE_END
+ !
  !
  ! DIPOLES
  !
@@ -643,13 +615,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'FANdEtresh','[ELPH] Energy treshold for Fan denominator',FAN_deltaE_treshold,verb_level=V_qp,unit=E_unit)
  call it(defs,'DWdEtresh', '[ELPH] Energy treshold for DW denominator',DW_deltaE_treshold,verb_level=V_qp,unit=E_unit)
  !
- ! GPL_EXCLUDE_START
+ !
  !
  call it(defs,'ElPhHBRnge','[ELPH] Hamiltonian bands range',elph_Ham_bands)
  call it(defs,'ElPhHKpt',  '[ELPH] Hamiltonian k-point',elph_Ham_ik)
  call it(defs,'REStresh',  '[ELPH] Residual treshold to report in output files',RES_tresh)
  !
- ! GPL_EXCLUDE_END
+ !
  !
  call it('f',defs,'WRgFsq','[ELPH] Dump on file gFsq coefficients')
 #endif

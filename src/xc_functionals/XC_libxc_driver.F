@@ -214,7 +214,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  if (order==1) V_xc=0._SP
  if (order==2) F_xc=0._SP
  !
- ! GPL_EXCLUDE_START
+ !
  !
  if (FUNCTIONAL == XC_LDA_C_KP) then ! Special case, XC_LDA_C_KP not available from libxc
    select case(ORDER)
@@ -231,7 +231,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    return
  end if
  !
- ! GPL_EXCLUDE_END
+ !
  !
  do ixc = 1,2
    if (fnctl(ixc)%id == 0) cycle

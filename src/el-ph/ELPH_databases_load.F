@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM FP
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -147,7 +147,8 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
          elseif (l_bare) then
            GKKP_to_sym(:,i_n,i_np)=abs(GKKP_bare%dVc(:,i_np,i_n,K_io_map(ik_bz),1))**2
          elseif (l_mixed) then
-           GKKP_to_sym(:,i_n,i_np)=abs(GKKP%dVc(:,i_np,i_n,K_io_map(ik_bz),1)*GKKP_bare%dVc(:,i_np,i_n,K_io_map(ik_bz),1))
+           GKKP_to_sym(:,i_n,i_np)= &
+&          get_mixed_couplings(GKKP%dVc(:,i_np,i_n,K_io_map(ik_bz),1), GKKP_bare%dVc(:,i_np,i_n,K_io_map(ik_bz),1))
          endif
          !
        enddo
@@ -183,4 +184,13 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  call ELPH_alloc("FREE",GKKP=GKKP)
  call ELPH_alloc("FREE",GKKP=GKKP_bare)
  !
+ contains
+    ! Here we construct the asymmetric bare-dressed coupling expression (notes by FP 23_10_20)
+    function get_mixed_couplings(GKKP_dVc,GKKP_bare_dVc) result(GKKP_sq_eff)
+      complex(SP), intent(in) :: GKKP_dVc(ph_modes)
+      complex(SP), intent(in) :: GKKP_bare_dVc(ph_modes)
+      complex(SP)            :: GKKP_sq_eff(ph_modes)
+      GKKP_sq_eff = REALPART(GKKP_dVc)*REALPART(GKKP_bare_dVc)+IMAGPART(GKKP_dVc)*IMAGPART(GKKP_bare_dVc)
+    end function
+   !
 end subroutine ELPH_databases_load

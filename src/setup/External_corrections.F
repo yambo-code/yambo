@@ -30,14 +30,14 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  use BS,            ONLY:BS_bands
  use QP_CTL_m,      ONLY:QP_apply
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _RT
  use drivers,       ONLY:l_cohsex,l_real_time,l_ppa
  use RT_control,    ONLY:RT_apply
 #endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
@@ -52,13 +52,13 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !
  ! Work Space
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _RT
  logical       ::l_apply_RT_corrections
 #endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
  logical       ::l_apply_QP_corrections,l_dynamical
  integer       ::X_kind,bands_to_correct(2)
@@ -75,7 +75,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  if( l_dynamical .and. .not.l_ppa ) X_kind=4
  if (l_apply_QP_corrections) call QP_apply(X(X_kind)%ib,Xen,Xk,"X",msg_fmt='rs',main_section=.TRUE.)
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _RT
  l_apply_RT_corrections=l_apply_QP_corrections.and.        &
@@ -84,7 +84,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  if (l_apply_RT_corrections) call RT_apply(X(X_kind)%ib,Xen,Xk,what="X",VERBOSE=.true.)
 #endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
  ! 2) BSE
  ! ========
@@ -97,7 +97,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  l_apply_QP_corrections=(l_optics.and.l_bse.and..not.l_ppa).or.l_bss
  if (l_apply_QP_corrections) call QP_apply(BS_bands,Ken,Xk,"K",msg_fmt='rs',main_section=.TRUE.)
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _RT
  l_apply_RT_corrections=l_apply_QP_corrections.and..not.l_real_time
@@ -107,7 +107,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  endif
 #endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
  ! 3) Green's Function used to compute QP corrections
  ! ====================================================
@@ -118,14 +118,14 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  if (l_gw0.and.l_elph_corr) call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt='rs',main_section=.TRUE.)
 #endif
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _RT
  l_apply_RT_corrections=l_cohsex.or.l_ppa.or.l_gw0
  if (l_apply_RT_corrections) call RT_apply(bands_to_correct,en,k,what="G",VERBOSE=.true.)
 #endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
  call E_duplicate(en,DIPen)
  DIPen%nbf=minval((/en%nbf,Xen%nbf,Ken%nbf/))

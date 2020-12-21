@@ -37,6 +37,7 @@ module P2Ym
  !
  character(lchlen) :: index_filename
  character(lchlen) :: dftdata_fmt
+ character(lchlen) :: dftdata_dir
  !
  integer, public  :: pw_unit 
  integer, private :: i1,i2,ierr
@@ -67,6 +68,7 @@ contains
    ! data fmt detection
    !
    call p2y_get_dftdata_fmt(dftdata_fmt,indir)
+   dftdata_dir=trim(indir)
    !
    select case(trim(dftdata_fmt))
    case("pw_export","qexml","qexsd","qexsd-hdf5")
@@ -120,18 +122,18 @@ contains
    select case (trim(dftdata_fmt))
    case("pw_export")
       ! 
-      call pw_openindex(pw_unit,index_filename,ierr=ierr) 
+      call pw_openindex(pw_unit,index_filename,ierr=ierr)
       if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
    case("qexml")
       !
-      call qexml_init(pw_unit) 
+      call qexml_init(pw_unit,dir=indir)
       call qexml_openfile( index_filename, "read", .false., ierr)
       if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
    case("qexsd","qexsd-hdf5")
       !
-      call qexsd_init(pw_unit) 
+      call qexsd_init(pw_unit,dir=indir)
       call qexsd_openfile( index_filename, "read", .false., ierr)
       if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
@@ -237,7 +239,7 @@ contains
      call qexsd_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
      if (ierr/=0) call errore('qexsd_read_ions','fmt problem I',ABS(ierr))
      call qexsd_read_symmetry(nsym=nsym_, ierr=ierr)
-     if (ierr/=0) call errore('qexsd_read_symmetry','fmt problem',ABS(ierr))
+     if (ierr/=0) call errore('qexsd_read_symmetry','fmt problem I',ABS(ierr))
      call qexsd_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,&
 &                               ngm=ngm_, nr1=nr1_,nr2=nr2_,nr3=nr3_,&
 &                               ngms=ngms_, nr1s=nr1s_,nr2s=nr2s_,nr3s=nr3s_, ierr=ierr)
@@ -385,6 +387,12 @@ contains
    !
    ! init
    !
+   if (len_trim(dftdata_dir)>0) then
+     do i1=1,n_atomic_species
+        psfile(i1)=trim(dftdata_dir)//"/"//trim(psfile(i1))
+     enddo
+   endif
+   !
    YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
    n_atoms_species(:)=0
    do i1 = 1, nat_
@@ -485,7 +493,7 @@ contains
       !
       call qexsd_read_symmetry(invsym=invsym_, trevsym=trevsym_, trasl=trasl_(:,1:nsym_), &
 &                              s=rsym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
-      if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
+      if (ierr/=0) call errore('qexml_read_symmetry','fmt problem II',ABS(ierr))
       !
       ! convert to integers
       !
@@ -850,7 +858,7 @@ contains
       if (ierr/=0) call errore('qexml_read_xc','IOTK error',abs(ierr))
       !
       if (trim(pw_dft)=="B3LYP") call warning('For a full compatible B3LYP calculation consider to use input_dft=B3LYP-V1R')
-      if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
+      if(pw_lda_plus_u) call error(' LDA+U. Hubbard correction is not considered in yambo.')
       GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
       if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
         GS_xc_KIND = 3
@@ -889,7 +897,7 @@ contains
       if (ierr/=0) call errore('qexsd_read_xc','fmt error',abs(ierr))
       !
       if (trim(pw_dft)=="B3LYP") call warning('For a full compatible B3LYP calculation consider to use input_dft=B3LYP-V1R')
-      if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
+      if(pw_lda_plus_u) call error(' LDA+U. Hubbard correction is not considered in yambo.')
       GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
       if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
         GS_xc_KIND = 3

@@ -79,7 +79,7 @@ subroutine RT_Glesser_evolve(En,kpt,dG_old,dG_in,dG_out,dT,dTp)
    !
    if(.not.l_RT_RWA)           call RT_Dephasing_step(dG_out(:,:,ik),dG_old(:,:,ik),ik,dT)
    !
-   ! GPL_EXCLUDE_START
+   !
    !
    ! Carriers relaxation step:
    !
@@ -87,7 +87,7 @@ subroutine RT_Glesser_evolve(En,kpt,dG_old,dG_in,dG_out,dT,dTp)
    !
    call RT_Scattering_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    call RT_G_symmetrization(dG_out(:,:,ik),ik)
    !

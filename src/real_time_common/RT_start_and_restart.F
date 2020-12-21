@@ -75,11 +75,11 @@ subroutine RT_start_and_restart(E,k,q)
  character(schlen) :: db_name(8)
  integer, external :: io_RT_components
  !
- ! GPL_EXCLUDE_START
+ !
  !
  integer, external :: RT_Lifetimes_evaluation_plan
  !
- ! GPL_EXCLUDE_END
+ !
  !
  logical :: RESTART
  !
@@ -88,12 +88,12 @@ subroutine RT_start_and_restart(E,k,q)
  call RT_initialize_local_more()
  call RT_set_G_lesser()
  !
- ! GPL_EXCLUDE_START
+ !
  !
  call RT_initialize_local_occupations()
  call RT_set_occupations()
  !
- ! GPL_EXCLUDE_END
+ !
  !
  if(.not.l_RT_is_WFfree) then
    !
@@ -128,7 +128,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  RESTART=.FALSE.
  !
- ! GPL_EXCLUDE_START
+ !
  !
  db_name(4)='OBSERVABLES'
  db_name(5)='G'
@@ -244,7 +244,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
  endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
  if (.not.RESTART) NE_time=0._SP
  !
@@ -264,12 +264,12 @@ subroutine RT_start_and_restart(E,k,q)
  ! Pseudo potential terms needed for velocity gauge
  !==================================================
  !
- ! GPL_EXCLUDE_START
+ !
  if (l_velocity_gauge_corr) then
    call Pseudo_KB_G_to_R_space(k,E)
    call Pseudo_Hamiltonian(k,E,.true.)
  endif
- ! GPL_EXCLUDE_END
+ !
  !
  call msg('r','')
  !
@@ -288,7 +288,7 @@ subroutine RT_start_and_restart(E,k,q)
  ! Retarded Green Functions matrix
  ! ===============================
  !
- ! GPL_EXCLUDE_START
+ !
  !
  if (l_elph_scatt.or.l_elel_scatt) then
    !
@@ -307,7 +307,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
  endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
  call PP_redux_wait()
  !
@@ -342,7 +342,7 @@ subroutine RT_start_and_restart(E,k,q)
      !
    end subroutine
    !
-   ! GPL_EXCLUDE_START
+   !
    !
    !
    subroutine RT_initialize_local_occupations()
@@ -356,11 +356,11 @@ subroutine RT_start_and_restart(E,k,q)
      RT_delta_occupations      =rzero
      RT_life_delta_occupations =rzero
      !
-     ! GPL_EXCLUDE_END
+     !
      !
    end subroutine
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    subroutine RT_set_G_lesser()
      !
@@ -419,7 +419,7 @@ subroutine RT_start_and_restart(E,k,q)
      !
    end subroutine RT_set_G_lesser
    !
-   ! GPL_EXCLUDE_START
+   !
    !
    subroutine RT_set_occupations()
      !
@@ -472,6 +472,6 @@ subroutine RT_start_and_restart(E,k,q)
      !
    end subroutine RT_set_occupations
    !
-   ! GPL_EXCLUDE_END
+   !
    !
 end subroutine RT_start_and_restart

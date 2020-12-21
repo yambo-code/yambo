@@ -44,17 +44,9 @@ subroutine RT_k_grid(E,k,q)
  logical :: l_check(k%nibz,k%nibz)
  integer :: ik,ik_rim,iqbz,ik_m_q,ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
  ! 
- ! GPL_EXCLUDE_START
+ !
  !
  l_RT_uses_E_FineGd=k%FGibz%N>0.and.E%FG%nb>=RT_bands(2)
- !
- ! GPL_EXCLUDE_END
- !
- ! GPL_INCLUDE_START
- !
- !l_RT_uses_E_DbGd=.FALSE.
- !
- ! GPL_INCLUDE_END
  !
  ! No DbGd, trivial definitions
  !==============================
@@ -85,7 +77,7 @@ subroutine RT_k_grid(E,k,q)
    !
  endif
  !
- ! GPL_EXCLUDE_START
+ !
  !
  ! DbGd support
  !=============
@@ -161,6 +153,6 @@ subroutine RT_k_grid(E,k,q)
    !
  endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
 end subroutine RT_k_grid

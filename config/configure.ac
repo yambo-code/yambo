@@ -289,7 +289,7 @@ ACX_REPORT()
 AC_CONFIG_HEADERS([include/headers/common/have_malloc.h:include/headers/common/have_malloc.h.in])
 AC_CONFIG_FILES([config/setup config/mk/defs.mk config/report config/msg_ydb
                  src/wf_and_fft/sgfft.F
-                 sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh src/tools/.objects include/branch.inc
+                 sbin/make_makefile.sh sbin/objects_store.sh src/tools/.objects include/branch.inc
                  include/driver/editor.h include/driver/version.h])
 #
 AC_OUTPUT

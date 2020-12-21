@@ -35,7 +35,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  use parser_m,      ONLY:parser
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
 &                        QP_Vnl_xc,QP_n_states,QP_nb,QP_G_zoom_er,QP_G_Zoom_treshold,&
-&                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,&
+&                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,l_QP_symmetrize,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_SET_temperature_pre_factor,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
 &                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,l_update_W,&
@@ -74,13 +74,16 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  call parser('OnMassShell',On_Mass_Shell_approx)
  call parser('QPExpand'   ,l_QP_Expand)
  call parser('UseEbands',  COHSEX_use_empties)
- ! GPL_EXCLUDE_START
+ call parser('QPsymmtrz',   l_QP_symmetrize)
+ !
  call parser('GreenF2QP',  use_GreenF_to_eval_QP)
  use_GreenF_Zoom=QP_G_Zoom_treshold>0._SP
- ! GPL_EXCLUDE_END
+ !
  call parser('ExtendOut',  l_extended_output)
  !
  if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
+ !
+ if (l_QP_symmetrize) call warning("Symmetrize states with the same energy: in rare case this symmetrization can introduce errors")
  !
  l_GW_terminator=GW_terminator_Kind/='none'
  !

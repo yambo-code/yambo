@@ -107,7 +107,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
    !
    call RT_Glesser_evolve(E,k,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),delta_T1,delta_T3)
    !
-   ! GPL_EXCLUDE_START
+   !
    !
    ! ... Update of logicals before the occupations update
    !
@@ -115,7 +115,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
    !
    call RT_occupations(dG_tmp(:,:,:,i_step))
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    ! Fields @ T+dt2
    !
@@ -129,11 +129,11 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
    !
    call RT_Hamiltonian(dG_tmp(:,:,:,i_step),A_tmp(i_step),E,k)             ! The time specifications here is useless
    !
-   ! GPL_EXCLUDE_START
+   !
    !
    call RT_relaxation(E,k,q,NE_time+delta_T1)                                 ! since nothing explicitely depends on time
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    call timing('RT integrator',OPR='start')
    !
@@ -146,7 +146,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
  !
  call RT_build_dG_new()
  !
- ! GPL_EXCLUDE_START
+ !
  !
  ! Rotate the G_lesser in the instaneous basis
  !
@@ -156,7 +156,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
  !
  call RT_occupations(dG_new)
  !
- ! GPL_EXCLUDE_END
+ !
  !
  ! Fields @ T+dT
  !

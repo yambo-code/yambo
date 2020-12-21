@@ -55,7 +55,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    call RT_output(what=trim(what)//" curr pol")
    !
-   ! GPL_EXCLUDE_START
+   !
    !
    call RT_output(what=trim(what)//" carr magn")
    if (eval_energy)  call RT_output(what=trim(what)//" energy")
@@ -66,7 +66,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    if (l_elphoton_scatt)     call RT_output(trim(what)//' mean_RADlife')
    if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output(trim(what)//' N_dN_E')
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    ! Field(s)
    !==========
@@ -91,7 +91,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
      !
    endif
    !
-   ! GPL_EXCLUDE_START
+   !
    !
    NCarr =OBSERVABLES( 1: 3)
    TFit  =OBSERVABLES( 4: 5)
@@ -102,7 +102,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    EnEntr=OBSERVABLES(19:21)
    BGR   =OBSERVABLES(22:25)
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    call IO_and_Messaging_switch("-fragments_IO_log")
    call RT_databases_IO(E,.FALSE.)
@@ -115,7 +115,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    call RT_output('curr pol',TIME=NE_time*AUT2FS)
    !
-   ! GPL_EXCLUDE_START
+   !
    !
    ! Energetics and BGR
    !====================
@@ -139,7 +139,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
      !
    endif
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    ! Field(s)
    !==========

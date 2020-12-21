@@ -39,9 +39,11 @@ module YPPm
  logical  :: l_q_grid
  logical  :: l_shifted_grid
  logical  :: l_random_grid
+ logical  :: l_regular_grid
  logical  :: l_high_sym_pts
  integer  :: N_path_pts
  integer  :: BZ_random_nkpts
+ integer  :: K_grid(3)
  real(SP) :: alat_used_for_output
  character(schlen) :: coo_in
  character(schlen) :: coo_out
@@ -107,6 +109,7 @@ module YPPm
  integer               ::BANDS_steps
  character(lchlen)     ::CIRCUIT_E_DB_path  = "none"
  character(schlen)     ::BANDS_path  = " "
+ character(schlen)     ::INTERP_input_mode='BOLTZ'
  type(levels)          ::CIRCUIT_E_db
  integer               ::INTERP_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac

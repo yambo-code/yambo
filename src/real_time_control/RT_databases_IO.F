@@ -111,7 +111,7 @@ subroutine RT_databases_IO(E,DO_IT)
    !
  endif
  !
- ! GPL_EXCLUDE_START
+ !
  !
  ! Carriers 
  !=========
@@ -253,7 +253,7 @@ subroutine RT_databases_IO(E,DO_IT)
  if (write_CARR) call PP_bcast(CARR_RT_IO_t%last_point,0)
  if (write_G)    call PP_bcast(  GF_RT_IO_t%last_point,0)
  !
- ! GPL_EXCLUDE_END
+ !
  !
  call timing('RT databases IO',OPR='stop')
  !

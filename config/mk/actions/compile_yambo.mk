@@ -28,18 +28,18 @@ yambo_sc: ext-libs
 	@+X2DO="yambo_sc"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_SCLIBS_LD)" ; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_SC"; $(mk_yambo)
 yambo_pl: ext-libs
 	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
-	@+LIBS2DO="$(YLIBDRIVER)"; NAME="yambo_pl_driver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/lib/yambo/driver/src"; ADF="-D_RT -D_SC -D_ELPH -D_PL -D_yambo"; $(mk_external_yambo_lib)
-	@+LIBS2DO="$(PJ_PLLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_SC -D_ELPH -D_PL"; $(mk_src)
+	@+LIBS2DO="$(YLIBDRIVER)"; NAME="yambo_pl_driver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/lib/yambo/driver/src"; ADF="-D_RT -D_RT_SCATT -D_SC -D_ELPH -D_PL -D_yambo"; $(mk_external_yambo_lib)
+	@+LIBS2DO="$(PJ_PLLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_RT_SCATT -D_SC -D_ELPH -D_PL"; $(mk_src)
 	@+X2DO="yambo_pl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_PLLIBS_LD)" ; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_RT -D_SC -D_ELPH -D_PL"; $(mk_yambo)
 yambo_rt_gpl: ext-libs
 	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
-	@+LIBS2DO="$(YLIBDRIVER)"; NAME="yambo_rt_driver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/lib/yambo/driver/src"; ADF="-D_RT -D_ELPH -D_yambo"; $(mk_external_yambo_lib)
+	@+LIBS2DO="$(YLIBDRIVER)"; NAME="yambo_rt_gpl_driver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/lib/yambo/driver/src"; ADF="-D_RT -D_ELPH -D_yambo"; $(mk_external_yambo_lib)
 	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH"; $(mk_src)
-	@+X2DO="yambo_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)" ; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_RT -D_ELPH"; $(mk_yambo)
+	@+X2DO="yambo_rt_gpl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)" ; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_RT -D_ELPH"; $(mk_yambo)
 yambo_rt: ext-libs
 	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
-	@+LIBS2DO="$(YLIBDRIVER)"; NAME="yambo_rt_driver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/lib/yambo/driver/src"; ADF="-D_RT -D_ELPH -D_PHEL -D_yambo"; $(mk_external_yambo_lib)
-	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH -D_PHEL"; $(mk_src)
+	@+LIBS2DO="$(YLIBDRIVER)"; NAME="yambo_rt_driver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/lib/yambo/driver/src"; ADF="-D_RT -D_RT_SCATT -D_ELPH -D_PHEL -D_yambo"; $(mk_external_yambo_lib)
+	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_RT_SCATT -D_ELPH -D_PHEL"; $(mk_src)
 	@+X2DO="yambo_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)" ; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_RT -D_ELPH -D_PHEL"; $(mk_yambo)
 yambo_rt_iterative: ext-libs
 	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)

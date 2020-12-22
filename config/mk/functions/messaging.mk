@@ -12,6 +12,8 @@ define make_message
   echo -n " [nl-project]    "; for target in $(NL_PROJ); do echo -n " $$target" ; done;echo;\
   echo -n " [rtext-project] "; for target in $(RTE_PROJ); do echo -n " $$target" ; done;echo;\
   echo -n " [kerr-project]  "; for target in $(KERR_PROJ); do echo -n " $$target" ; done;echo;\
+  echo; echo " *** GPL components *** ";\
+  echo -n " [gpl]           "; for target in $(GPL); do echo -n " $$target" ; done;echo;\
   echo ; echo " *** Libraries ***";\
   echo -n " [libs]           int-libs ext-libs yambo-libs";echo;\
   echo -n " [int-libs]      "; for target in $(INT_LIBS); do echo -n " $$target" ; done;echo;\

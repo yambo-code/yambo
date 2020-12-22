@@ -62,17 +62,13 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  call section('-','BSE solver(s) @q'//trim(intc(iq)))
  !
- !
- !
  ! The TDDFT way 
- !
-! if (index(BSS_mode,'t')/=0) then
-!   call tddft_BSK_disk_2_FXC(iq,Xk,W_bss,X_static) 
-!   l_bs_fxc=.true.
-! endif
- !
- !
- !
+ ! DEBUG_AM
+ ! if (index(BSS_mode,'t')/=0) then
+ !   call tddft_BSK_disk_2_FXC(iq,Xk,W_bss,X_static) 
+ !   l_bs_fxc=.true.
+ ! endif
+ ! DEBUG_AM
  ! Solvers
  !
  run_Diago     = index(BSS_mode,'d')/=0

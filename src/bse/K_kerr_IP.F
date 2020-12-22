@@ -35,7 +35,8 @@ subroutine K_kerr_IP(iq,w,Dip,Xk)
  use R_lattice,      ONLY:bare_qpg,q0_def_norm,bz_samp
  use vec_operate,    ONLY:v_norm,rot_v_xy_plane
  use drivers,        ONLY:l_anomalous_Hall
- use parallel_m,     ONLY:PAR_BS_nT_col_grps,PP_redux_wait,&
+ use parallel_int,   ONLY:PP_redux_wait
+ use parallel_m,     ONLY:PAR_BS_nT_col_grps,&
 &                         PAR_IND_T_groups,PAR_COM_eh_INDEX,PAR_COM_Xk_ibz_INDEX
  !
  implicit none

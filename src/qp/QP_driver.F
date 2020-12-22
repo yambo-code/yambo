@@ -75,10 +75,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  call parser('QPExpand'   ,l_QP_Expand)
  call parser('UseEbands',  COHSEX_use_empties)
  call parser('QPsymmtrz',   l_QP_symmetrize)
- !
  call parser('GreenF2QP',  use_GreenF_to_eval_QP)
  use_GreenF_Zoom=QP_G_Zoom_treshold>0._SP
- !
  call parser('ExtendOut',  l_extended_output)
  !
  ! Some check
@@ -99,7 +97,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_elel_corr.and..not.l_life) return
 #endif
  !
- if (.not.l_elel_corr.and..not.l_elph_corr.and..not.l_elphoton_corr) then
+ if (.not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr/))) then
    call warning('e-p, e-e and e-photon correlation switched off')
    return
  endif
@@ -110,8 +108,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  ! Some checks for the self-consistent GW
  ! =======================================
- if (GW_iterations/=0.and.GWo_iterations/=0) &
- &   call error("Only one type of Self-Consistency at a time is possible, evGW or evGWo not both")
+ if (GW_iterations/=0.and.GWo_iterations/=0) then
+   call error("Only one type of Self-Consistency at a time is possible, evGW or evGWo not both")
+ endif
  if (GW_iterations/=0) l_update_W=.TRUE.
  !
  ! Setup Temperature pre-factor
@@ -143,8 +142,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  else if (trim(QP_solver)=='g') then
    call section('*','Dyson equation: full Green`s function')
    call msg('r', '[Green] Sc steps                                         ',QP_Sc_steps)
-   call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]',QP_G_er*HA2EV)
-   call msg('rn','[Green] Sc damping range                             [ev]',QP_G_dr*HA2EV)
+   call msg('r', '[Green] Sc energy range (centered in the bare value)     ',QP_G_er*HA2EV,"[eV]")
+   call msg('rn','[Green] Sc damping range                                 ',QP_G_dr*HA2EV,"[eV]")
    !
    call IO_desc_add(qp%desc,kind="s",str='GW solver',S="Full Green`s function",check=.TRUE.,ops=(/"=="/))
    !
@@ -380,13 +379,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  if (l_life) then
    !
+   ! GW Lifetimes 
+   !==============
    if (l_elel_corr)     call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
    !
 #if defined _QED
    !
    ! Radiative Lifetimes (Using <p>)
    !=================================
-   !
    if (l_elphoton_corr) call QED_Radiative_Lifetimes(en,k,q,qp,X,Dip)
    !
 #endif

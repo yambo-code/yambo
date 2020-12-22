@@ -29,15 +29,9 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_
  use IO_m,          ONLY:io_connect,io_disconnect,io_elemental,&
 &                        io_bulk,io_status,io_sec,io_header
  use timing_m,      ONLY:timing
- !
- !
- !
 #if defined _KERR
  use drivers,       ONLY:l_kerr
 #endif
- !
- !
- !
  !
  implicit none
  !
@@ -111,17 +105,12 @@ integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_
      call io_bulk(ID,C1=Cf)
    endif
    !
-   !
-   !
 #if defined _KERR
    if(present(Cf_kerr).and.l_kerr) then
      call io_bulk(ID,'C_factors_kerr',VAR_SZ=(/2,it+1/))
      call io_bulk(ID,C1=Cf_kerr)
    endif
 #endif
-   !
-   !
-   !
    !
    ! Vnp1 - optional
    !

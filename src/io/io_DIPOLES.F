@@ -70,7 +70,7 @@ integer function io_DIPOLES(Dip,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_DIPOLES=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,FRAG=frag_DIP)
+   io_DIPOLES=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,TEMP=.true.,FRAG=frag_DIP)
    if (io_DIPOLES/=0) goto 1
    !
    io_DIPOLES=variables_DIPOLES(Dip,ID)
@@ -117,8 +117,6 @@ integer function io_DIPOLES(Dip,ID)
    call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    call DIP_alloc('DIP_v' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    !
-   !
-   !
 #if defined _RT
    if (compute_Orb_dipoles) &
    & call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
@@ -130,8 +128,6 @@ integer function io_DIPOLES(Dip,ID)
 #if defined _SC || defined _RT
    if (compute_P2_dipoles) call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
 #endif
-   !
-   !
    !
  endif
  !
@@ -156,8 +152,6 @@ integer function io_DIPOLES(Dip,ID)
  write (VAR_name,'(3(a,i4.4))') 'DIP_v_k_',ik,'_spin_',i_sp_pol
  call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
  call io_bulk(ID,C3=DIP_v(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
- !
- !
  !
 #if defined _RT
  if (compute_Orb_dipoles) then
@@ -209,8 +203,6 @@ integer function io_DIPOLES(Dip,ID)
    !
  endif
 #endif
- !
- !
  !
 1 call io_disconnect(ID=ID)
  !

@@ -28,7 +28,8 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
  use hamiltonian,    ONLY:Hzero,E_reference,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
 &                         H_ref_bands,WF_G_max,WF_Go_indx
- use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_IND_WF_linear
+ use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_WF_linear
+ use parallel_int,   ONLY:PP_redux_wait
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp,nkibz
  use xc_functionals, ONLY:V_xc

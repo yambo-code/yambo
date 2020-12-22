@@ -27,7 +27,7 @@ subroutine WF_alloc(WF)
  use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx
  use FFT_m,         ONLY:fft_size
  use electrons,     ONLY:n_spinor
- use interfaces,    ONLY:PARALLEL_live_message
+ use parallel_int,  ONLY:PARALLEL_live_message
  use cuda_m,        ONLY:have_cuda
  !
 #include<memory.h>

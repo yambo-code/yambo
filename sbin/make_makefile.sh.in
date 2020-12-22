@@ -92,7 +92,7 @@ lock_file=`echo $lock_file  | sed "s/_DOUBLE//2"`;
 llibs="-L\$(libdir) $llibs"
 #
 idriver="@IFLAG@\$(libdir)/yambo/driver/include @IFLAG@\$(includedir)/driver"
-lf90include="@IFLAG@\$(includedir) @IFLAG@\$(modinclude) @IFLAG@\$(sysinclude) @IFLAG@\$(includedir)/headers/common @IFLAG@\$(includedir)/headers/parser \$(idriver)"
+lf90include="@IFLAG@\$(includedir) @IFLAG@\$(modinclude) @IFLAG@\$(includedir)/headers/common @IFLAG@\$(includedir)/headers/parser \$(idriver)"
 #
 llocal="-lqe_pseudo -lmath77 -lslatec -llocal"
 lPLA="\$(lscalapack) \$(lslepc) \$(lpetsc) \$(llapack) \$(lblacs) \$(lblas)"

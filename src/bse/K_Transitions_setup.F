@@ -61,15 +61,11 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  use drivers,      ONLY:l_photolum
 #endif
  !
- !
- !
 #if defined _RT
  use parser_m,     ONLY:parser
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel
 #endif
- !
- !
  !
 #include<memory.h>
  !
@@ -90,16 +86,12 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  real(SP):: f_eh_PL(2)
 #endif
  !
- !
- !
 #if defined _RT
  logical :: FORCE_EQ_trans
  !
  call parser('ForceEqTrans',FORCE_EQ_trans)
  ! 
 #endif
- !
- !
  !
  if (FILL_the_groups) then
    !
@@ -299,8 +291,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      ! f_eh  enter the excitonic Hamiltonian
      ! f_eh_RES enter the residual of the dielectric constant
      !
-     !
-     !
 #if defined _RT
      if (l_rt_carriers_in_use.and.allocated(Ken%fo)) then
        if (     FORCE_EQ_trans) f_eh_REF=(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
@@ -311,8 +301,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
        if (.not.NEQ_Residuals ) f_eh_RES=(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
      endif
 #endif
-     !
-     !
      !
      f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
      f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
@@ -334,8 +322,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      ! f_eh=0 transitions give no contribution to absorption and are not considered
      if ( f_eh_REF<=0._SP ) T_is_ok=.FALSE.
      !
-     !
-     !
 #if defined _RT
      !
      ! In case of population inversion, it may be problematic if f_eh>0. and f_eh_RES<0.
@@ -349,19 +335,13 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      if (.not.l_rt_carriers_in_use) then
 #endif
        !
-       !
-       !
        ! If I've included in valence states that are almost empty
        ! or in conduction states that are almost full, those are neglected
        if ( (f_e<=filled_tresh) .or. (f_h<=filled_tresh) ) T_is_ok=.FALSE.
        !
-       !
-       !
 #if defined _RT
      endif
 #endif
-     !
-     !
      !
      if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0._SP,&
 &              abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0._SP/))) T_is_ok=.FALSE.

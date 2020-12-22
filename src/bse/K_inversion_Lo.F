@@ -34,7 +34,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
 &                         BSS_eh_W,&
 &                         BSS_add_antiresonant,K_diago_in_BS_mat,BS_diagonal
  use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
  !
 #if defined _ELPH
@@ -83,8 +84,6 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !==================================
  call FREQUENCIES_set_reference_point(W%p,W%n_freqs,iw_ref)
  !
- !
- !
 #if defined _ELPH
  !
  ! Green Functions must be all mapped to the Xw range
@@ -96,8 +95,6 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  endif
  !
 #endif
- !
- !
  !
  if (     K_diago_in_BS_mat) n_loop=1
  if (.not.K_diago_in_BS_mat) n_loop=2
@@ -186,8 +183,6 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        !
      else 
        !
-       !
-       !
        ! Convoluted GFs
        !================
        call X_GreenF_convoluted(iq,transition,W_mins,E,k,Lo(i_res,:,1),"r")
@@ -197,8 +192,6 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
          call X_GreenF_convoluted(iq,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra")
          !
        endif
-       !
-       !
        !
      endif
      !

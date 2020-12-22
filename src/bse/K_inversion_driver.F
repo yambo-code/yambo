@@ -34,14 +34,14 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use R_lattice,      ONLY:bare_qpg,bz_samp
  use com,            ONLY:isec,msg
  use LIVE_t,         ONLY:live_timing
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index,PARALLEL_live_message
+ use parallel_m,     ONLY:PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
 &                         PAR_COM_SLK_INDEX_local
- use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message,MATRIX_duplicate
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
  use matrix,         ONLY:MATRIX_reset
  use timing_m,       ONLY:timing
 #if defined _SCALAPACK
- use interfaces,     ONLY:MATRIX_transfer
+ use interfaces,     ONLY:MATRIX_transfer,MATRIX_duplicate
  use parallel_m,     ONLY:linear_algebra_is_parallel
 #endif
 #if defined _RT
@@ -50,8 +50,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use stderr,         ONLY:intc
  use descriptors,    ONLY:IO_desc_add
  !
- !
- !
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free
 #endif
@@ -59,8 +57,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:BSS_PL_free,PL
 #endif
- !
- !
  !
 #include<memory.h>
  !
@@ -124,15 +120,11 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  FULL         = index(BSS_inversion_mode,'f')/=0
  PERTURBATIVE = index(BSS_inversion_mode,'p')/=0
  !
- !
- !
 #if defined _RT
  if (NEQ_Residuals.neqv.NEQ_Kernel) then
    call warning("[INV] Different occupation configurations for Kernel and Residuals not supported")
  endif
 #endif
- !
- !
  !
 #if defined _SCALAPACK
  ! 
@@ -351,7 +343,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      !
      nw_conv=count(TYP%err==0)
      call msg('rs','[FULL INV@'//TYP%what//'] Frequencies DONE      ',nw_conv)
-     call msg('rs','[FULL INV@'//TYP%what//']                  [o/o]',real(nw_conv)/real(W%n_freqs)*100._SP)
+     call msg('rs','[FULL INV@'//TYP%what//']                       ',real(nw_conv)/real(W%n_freqs)*100._SP,"[o/o]")
      !
    end subroutine
    !
@@ -421,13 +413,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      call BSS_PL_free( )
 #endif
      !
-     !
-     !
 #if defined _KERR
      call BSS_KERR_free( )
 #endif
-     !
-     !
      !
      call LOCAL_TYP_clean(K_INV_EPS)
 #if defined _PL

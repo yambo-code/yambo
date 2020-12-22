@@ -209,12 +209,9 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! Evaluate the xc functional
  !===========================
  !
- 
  if (order==0) E_xc=0._SP
  if (order==1) V_xc=0._SP
  if (order==2) F_xc=0._SP
- !
- !
  !
  if (FUNCTIONAL == XC_LDA_C_KP) then ! Special case, XC_LDA_C_KP not available from libxc
    select case(ORDER)
@@ -230,8 +227,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    end select
    return
  end if
- !
- !
  !
  do ixc = 1,2
    if (fnctl(ixc)%id == 0) cycle

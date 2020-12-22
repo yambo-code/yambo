@@ -153,7 +153,6 @@ module X_m
    !
    subroutine X_alloc(what,d)
      !
-     use electrons, ONLY:n_sp_pol,n_spinor
      use pars,      ONLY:cZERO
      !
      character(*)      :: what

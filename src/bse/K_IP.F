@@ -42,7 +42,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
 &                        Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind,BS_bands
- use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
+ use parallel_int,  ONLY:PP_redux_wait
+ use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use parser_m,      ONLY:parser
@@ -89,7 +90,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Polarizability ?
  !==================
  if (trim(alpha_dim)/='adim') then
-   call msg('r', 'Optical renormalization   [au]',eps_2_alpha)
+   call msg('r', 'Optical renormalization       ',eps_2_alpha,"[a.u.]")
    call msg('rn','Polarizability dimension      ',trim(alpha_dim))
  endif
  !

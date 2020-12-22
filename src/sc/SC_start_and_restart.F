@@ -145,7 +145,7 @@ subroutine SC_start_and_restart(X,E,Xk)
    !
    call msg('nr','[SC] Found   accuracy on density      ',rho_convergence)
    call msg('nr','[SC] Found   accuracy on magnetization',magn_convergence)
-   call msg('rn','[SC]                  on energies [ev]',E_convergence*HA2EV)
+   call msg('rn','[SC]                  on energies     ',E_convergence*HA2EV,"[eV]")
    l_SC_cycle=.not.(E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold.and.magn_convergence<SC_rho_threshold)
    !
    ! Even if the accuracy on DB is not small enough with 0 iterations
@@ -185,7 +185,7 @@ subroutine SC_start_and_restart(X,E,Xk)
    call msg('r' ,'[SC] N (N-1) order mixing             ',SC_cycle_mixing)
    call msg('r' ,'[SC] Imposed accuracy on density      ',SC_rho_threshold)
    if(n_spin>1) call msg('r' ,'[SC]                  on magnetization',SC_rho_threshold)
-   call msg('rn','[SC]                  on energies [ev]',SC_E_threshold*HA2EV)
+   call msg('rn','[SC]                  on energies     ',SC_E_threshold*HA2EV,"[eV]")
  endif
  if (l_sc_exx) then
    if (.not.l_oep_slater) &

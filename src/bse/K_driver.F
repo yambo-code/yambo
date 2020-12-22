@@ -39,8 +39,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
 &                         BS_perturbative_SOC,l_BSK_IO_triangular
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss,l_col_cut
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k,PARALLEL_default_mode
- use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,eval_G_minus_G
+ use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PARALLEL_default_mode
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use interfaces,     ONLY:eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X
  use D_lattice,      ONLY:l_0D,l_1D,l_2D
 #if defined _KERR
@@ -64,8 +65,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  integer           :: iq,Max_G_m_G,iG_BSE,iGo_BSE
  type(w_samp)      :: W_bss 
  logical           :: l_bs_q
- !
- !
  !
 #if defined _RT 
  if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
@@ -112,8 +111,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    global_gauge="length"
  endif
  !
- !
- !
  ! If the em1s DB has been calculated in the same run
  ! of a BS-Fxc kernel construction that l_bs_fxc is set .FALSE.
  !      =============
@@ -141,8 +138,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    endif
    !
  endif
- !
- !
  !
  ! Logicals (Drivers)
  !====================
@@ -290,8 +285,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    ! =================
    if (l_bss.and..not.l_rpa_IP) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
    !
-   !
-   !
    ! `TDDFT` SOLVER
    !
    if (index(BSS_mode,'t')/=0) then
@@ -315,8 +308,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
      call OPTICS_driver(Xen,Xk,q,W_bss,X_tddft,Dip) 
      !
    endif
-   !
-   !
    !
    ! CLEAN (OBSs)
    call K_observables("FREE",W_bss)

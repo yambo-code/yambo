@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): HM, DS
@@ -30,9 +30,6 @@ cat <<EOF > .git/hooks/pre-commit
 #!/bin/bash
 sbin/yambo_versions_update.tcsh r
 git add configure
-if [ -e include/version.inc ]   ; then  git add include/version.inc ;     fi
-if [ -e config/version.m4 ]     ; then  git add config/version.m4 ;     fi
-if [ -e config/version.m4_gpl ] ; then  git add config/version.m4_gpl ; fi
 if [ -e config/version/version.m4 ]     ; then  git add config/version/version.m4 ;     fi
 if [ -e config/version/version.m4_gpl ] ; then  git add config/version/version.m4_gpl ; fi
 EOF

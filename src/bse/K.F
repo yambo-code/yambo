@@ -58,7 +58,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:myid,ncpu,PP_redux_wait
+ use parallel_m,    ONLY:myid,ncpu
+ use parallel_int,  ONLY:PP_redux_wait
  !
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free
@@ -171,8 +172,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if(iq/=1) O_ng_shift=max(maxval(qindx_B(:,:,2)),O_ng_shift)
  endif
  !
- !
- !
  ! BS/FXC DB I/O
  !===============
  !
@@ -183,8 +182,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !io_BS_Fxc_err=io_BS_Fxc(iq,W_bss,ID,X=X)
    !
  else
-   !
-   !
    !
 #if defined _PAR_IO
    !
@@ -228,11 +225,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (io_BS_err==0) return
    !
-   !
-   !
  endif
- !
- !
  !
  ! Screened interaction
  !======================
@@ -260,8 +253,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call timing('X T_space Kernel',OPR='start')
  !
- !
- !
  ! TDDFT xc-kernel Setup
  !======================
  if (l_bs_fxc) then
@@ -278,17 +269,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- !
- !
  ! Wave Functions
  !================
  bands_to_load=BS_bands
  if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
  !
  section_title='-BSK'
- !
  if (l_bs_fxc) section_title='-BSK->Fxc'
- !
  !
  call WF_load(WF,max(O_ng,BS_n_g_exch),O_ng_shift,bands_to_load,(/1,Xk%nibz/),space='R',title=trim(section_title))
  !
@@ -605,12 +592,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (l_bs_fxc) then
    !
-   !
-   !
    YAMBO_FREE(FXC)
    YAMBO_FREE(FXC_K_diagonal)
-   !
-   !
    !
  else if (BS_K_is_ALDA) then
    YAMBO_FREE(F_xc)

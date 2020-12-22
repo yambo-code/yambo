@@ -30,7 +30,7 @@ subroutine INIT_activate()
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics
+&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
@@ -75,20 +75,25 @@ subroutine INIT_activate()
  ! CPU structure
  !
  if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa.or.l_life) then
-   if (l_em1s.or.l_em1d.or.l_ppa.or.l_life) then
-     call CPU_activate("X_and_IO")
-   else
-     call CPU_activate("X")
+   if (l_elel_corr) then
+     if (l_em1s.or.l_em1d.or.l_ppa.or.l_life) then
+       call CPU_activate("X_and_IO")
+     else
+       call CPU_activate("X")
+     endif
+     call initactivate(1,'X_Threads')
    endif
-   call CPU_activate("DIP")
-   call initactivate(1,'X_Threads DIP_Threads')
+   if (l_elel_corr.or.l_elphoton_corr) then
+     call CPU_activate("DIP")
+     call initactivate(1,'X_Threads DIP_Threads')
+   endif
  endif
  !
  if(l_sc_run) then
    call CPU_activate("X_and_IO")  ! Required for finite E-field, l_sc_exx, SC_up_W_iter
  endif
  !
- if ( (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions) ) then
+ if ( (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions.or.l_phel_corr) ) then
    call CPU_activate("SE")
    call initactivate(1,'SE_Threads')
  endif
@@ -128,9 +133,15 @@ subroutine INIT_activate()
    call initactivate(1,'X_Threads DIP_Threads K_Threads')
  endif
  !
+#if defined  _ELPH 
+ if (l_life.and.l_phel_corr) then
+   call CPU_activate("PH_SE")
+ endif
+#endif
+ !
  !Setup
  !
- if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim NoDiagSC')
+ if (l_setup) call initactivate(1,'MaxGvecs K_grids IkSigLim IkXLim NoDiagSC')
 #if defined  _ELPH 
  if (l_setup) call initactivate(1,'BSEscatt')
 #endif
@@ -166,12 +177,8 @@ subroutine INIT_activate()
  !
  if (l_optics.and.l_chi) then
    !
-   !
-   !
    ! BS based TDDFT (BS fxc is only of q=0 0 0). BS_fxc db exist
    if(l_bs_fxc) call initactivate(1,'FxcGRLc FxcSVdig FxcRetarded')
-   !
-   !
    !
    ! ALDA/LRC Tddft
    if (l_alda_fxc) call initactivate(1,'FxcGRLc')
@@ -193,18 +200,14 @@ subroutine INIT_activate()
    !
    call INIT_QP_ctl_switch('X')
    !
-   !
-   !
 #if defined _RT
    call INIT_RT_ctl_switch('X')
 #endif
    call initactivate(1,'Qdirection QShiftOrder')
    !
-   !
-   !
  endif
  !
- if (l_optics.or.l_life) then
+ if (l_optics.or.(l_life.and.l_elel_corr)) then
    !
    ! Double Grid
    !
@@ -248,14 +251,10 @@ subroutine INIT_activate()
    !
    call INIT_QP_ctl_switch('K')
    !
-   !
-   !
 #if defined _RT
    call INIT_RT_ctl_switch('K')
    call INIT_RT_ctl_switch('R')
 #endif
-   !
-   !
    !
    call initactivate(1,'NoCondSumRule MetDamp')
    !
@@ -311,13 +310,9 @@ subroutine INIT_activate()
  if (l_em1s) then
    call INIT_QP_ctl_switch('X')
    !
-   !
-   !
 #if defined _RT
    call INIT_RT_ctl_switch('X')
 #endif
-   !
-   !
    !
    call initactivate(1,'ShiftedPaths')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','GrFnTp','DmRnge','CGrdSp','EhEngy','LongDr','DrudeW'/))
@@ -330,13 +325,9 @@ subroutine INIT_activate()
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call INIT_QP_ctl_switch('X')
    !
-   !
-   !
 #if defined _RT
    call INIT_RT_ctl_switch('X')
 #endif
-   !
-   !
    !
    call initactivate(1,'ShiftedPaths')
    if (l_ppa) then
@@ -355,13 +346,9 @@ subroutine INIT_activate()
  if (l_acfdt) then
    call INIT_QP_ctl_switch('X')
    !
-   !
-   !
 #if defined _RT
    call INIT_RT_ctl_switch('X')
 #endif
-   !
-   !
    !
    call initactivate(1,'ShiftedPaths')
    call initactivate(1,'EXXRLvcs VXCRKvcs AC_n_LAM AC_n_FR AC_E_Rng')
@@ -393,14 +380,10 @@ subroutine INIT_activate()
      call INIT_QP_ctl_switch('X')
      call INIT_QP_ctl_switch('G')
      !
-     !
-     !
 #if defined _RT
      call INIT_RT_ctl_switch('X')
      call INIT_RT_ctl_switch('G')
 #endif
-     !
-     !
      !
      call initactivate(1,'BoseCut ShiftedPaths')
      !
@@ -426,7 +409,7 @@ subroutine INIT_activate()
        !
      endif
      !
-     if (l_life) then
+     if (l_life.and..not.l_phel_corr) then
        call initactivate(1,'LifeTrCG')
        if (l_elel_corr) call X_activate('Xd',(/'BndsRn','NGsBlk',&
 &                                     'DmRnge','CGrdSp',&
@@ -434,6 +417,11 @@ subroutine INIT_activate()
      endif
    endif
    !
+#if defined  _PHEL 
+   !
+   if (l_phel_corr) call initactivate(1,'ElecTemp BoseTemp PH_SE_mode GphBRnge GDamping ElPhModes PHDbGdsize')
+  !
+#endif
 #if defined  _ELPH 
    !
    if (l_elph_corr) then
@@ -455,8 +443,6 @@ subroutine INIT_activate()
  !
  ! El-Ph: Frohlich Hamiltonian
  !
- !
- !
 #if defined _ELPH 
  !
  if (l_elph_Hamiltonian) then
@@ -464,8 +450,6 @@ subroutine INIT_activate()
  endif
  !
 #endif
- !
- !
  !
 #if defined _SC || defined _RT
  !
@@ -503,8 +487,6 @@ subroutine INIT_activate()
  !
 #endif
  !
- !
- !
 #if defined _SC 
  !
  ! Self-Consistency
@@ -533,22 +515,19 @@ subroutine INIT_activate()
    !
    call INIT_QP_ctl_switch('G')
    !
-   !
-   !
    call INIT_RT_ctl_switch('G')
    !
    call initactivate(1,'RTskipImposeN RTeeImposeE InducedField')
    call initactivate(1,'Gauge VelGaugeCorr VelGaugeDiam PfromJ RTUpdateSOC RTUpdateE SaveGhistory')
-   call initactivate(1,'RTEqScatt RTImpForMet RTzeroTempRef RTEvalEnergy RTEvalEntropy')
+   call initactivate(1,'RTEqScatt RTImpForMet RTzeroTempRef RTskipPHabs RTEvalEnergy RTEvalEntropy')
    call initactivate(1,'dTupdateTime dTupdateJump dTupdateTresh dT_MAX')
-   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) &
-&    call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp RelaxTimeApprox RTAtemp RTAchem LifeFitTemp')
+   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) then
+     call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp RelaxTimeApprox RTAtemp RTAchem LifeFitTemp')
+   endif
    if (l_elph_scatt) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'EERimPerc')
    !
-   !
-   !
-   call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime RAD_prefactor PhLifeTime RTehEny ScattTresh') 
+   call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime RADmagnific PhLifeTime RTehEny ScattTresh') 
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
    call initactivate(1,'IOtime IOCachetime')
    !

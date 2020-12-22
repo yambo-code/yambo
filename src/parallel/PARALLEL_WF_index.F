@@ -31,7 +31,7 @@ subroutine PARALLEL_WF_index(COMM)
 &                          PP_indexes_reset,myid,PAR_COM_WORLD,MPI_comm,&
 &                          COMM_copy,PAR_COM_density
  use wave_func,       ONLY:states_to_load
- use parallel_m,      ONLY:PP_redux_wait
+ use parallel_int,    ONLY:PP_redux_wait
 #include<memory.h>
  !
  type(MPI_comm), optional :: COMM

@@ -31,7 +31,8 @@ module P2Ym
  use electrons,             ONLY : levels
  use R_lattice,             ONLY : bz_samp
  use mod_com2y,             ONLY : verboseIO
- use parallel_m,            ONLY : myid,PP_bcast   
+ use parallel_m,            ONLY : myid
+ use parallel_int,          ONLY : PP_bcast   
  ! 
 #include<memory.h>
  !

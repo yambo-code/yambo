@@ -32,14 +32,15 @@ subroutine section(mode,name)
  !      =  #     : increase level #
  !      =  r     : reset to zero level end exit
  !
- use pars,       ONLY:lchlen,schlen,DP
- use it_tools,   ONLY:ofiles_append
- use stderr,     ONLY:STRING_pack
- use LIVE_t,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,date_and_time_string
- use parallel_m, ONLY:PP_redux_wait,ncpu
- use com,        ONLY:msg,depth,isec,secnm,depth_SAVE_pp,isec_SAVE_pp,depth_SAVE_p,isec_SAVE_p,&
-&                     write_to_report,repfile_unit,repfile,previous_secmode
- use timing_m,   ONLY:timing_upto_now
+ use pars,            ONLY:lchlen,schlen,DP
+ use it_tools,        ONLY:ofiles_append
+ use stderr,          ONLY:STRING_pack
+ use LIVE_t,          ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,date_and_time_string
+ use parallel_m,      ONLY:ncpu
+ use parallel_int,    ONLY:PP_redux_wait
+ use com,             ONLY:msg,depth,isec,secnm,depth_SAVE_pp,isec_SAVE_pp,depth_SAVE_p,isec_SAVE_p,&
+&                          write_to_report,repfile_unit,repfile,previous_secmode
+ use timing_m,        ONLY:timing_upto_now
 #if defined _YAML_OUTPUT
  use pars,            ONLY:repfile_index
  use com,             ONLY:of_yaml_IDs,depth_yaml

@@ -62,8 +62,6 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
    return
  endif
  !
- !
- !
  ! Carriers number
  !================
  call RT_carriers_number(en,k,NCarr)
@@ -81,8 +79,6 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  call RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  !
  OBSERVABLES(1:21)=(/NCarr(:),TFit(:),EfFit(:),Ener(:),Entr(:),TEntr(:),EnEntr(:)/)
- !
- !
  !
  call timing('RT observables',OPR='stop')
  !

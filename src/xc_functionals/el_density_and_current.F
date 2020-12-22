@@ -55,7 +55,8 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  use FFT_m,         ONLY:fftw_plan
 #endif
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
+ use parallel_m,    ONLY:PAR_IND_WF_linear,PAR_COM_density
+ use parallel_int,  ONLY:PP_redux_wait
  use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp
  use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm, becsum
 #if defined _RT
@@ -63,7 +64,8 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  use timing_m,      ONLY:timing
 #endif
 #if defined _YPP_RT
- use real_time,     ONLY:RT_delta_occupations,RTibz
+ use RT_occupations,ONLY:RT_el_occ
+ use real_time,     ONLY:RTibz
 #endif
  !
 #include<memory.h>
@@ -138,16 +140,14 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
 #if defined _RT
        if(l_real_time.and.allocated(E%fo)) f_occ=E%fo(ib,ik,i_sp_pol) 
 #endif
-!
 #if defined _YPP_RT
        if(present(bands)) then
          f_occ=0._SP
          do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
-           f_occ=f_occ+RT_delta_occupations(ib,ik_RT)*RTibz%weights(ik_RT)
+           f_occ=f_occ+RT_el_occ%dN(ib,ik_RT)*RTibz%weights(ik_RT)
          enddo
        endif
 #endif
-!
        !
        i_wf=WF%index(ib,ik,i_sp_pol)
        !
@@ -231,7 +231,9 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  endif
  !
  if (l_rho) call PP_redux_wait(rho_no_sym,COMM=PAR_COM_density%COMM)
+ ! DEBUG>
  !if ( l_J ) call PP_redux_wait(J_no_sym  ,COMM=PAR_COM_density%COMM)
+ !DEBUG<
  !
  ! Symmetrization
  !

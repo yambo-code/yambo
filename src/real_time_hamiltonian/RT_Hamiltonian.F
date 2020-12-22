@@ -64,7 +64,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
 &                         l_update_SOC,l_velocity_gauge_corr
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A,PP_redux_wait,PAR_G_k_range
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A,PAR_G_k_range
+ use parallel_int,   ONLY:PP_redux_wait
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
@@ -137,8 +138,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      V_xc_sc=V_xc-REF_V_xc_sc
    endif
    !
-   !
-   !
    ! Update of SOC term
    !
    if(n_spinor==2 .and. l_update_SOC ) then
@@ -158,8 +157,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      !
    endif
    !
-   !
-   !
    ! Add H_nl_sc to Ho_plus_Sigma 
    !---------------------------------
    do ik=1,nXkibz 
@@ -169,9 +166,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
      !
      call V_real_space_to_H(ik,1,H_nl_sc,WF,'def+xc',V=V_hartree_sc,Vxc=V_xc_sc)
-     !
      if(n_spinor==2.and.l_update_soc) call Vgrad_real_space_to_H(ik,H_nl_sc,WF,V_scf_grad)
-     !
      !
      call PP_redux_wait(H_nl_sc,COMM=PAR_COM_Xk_ibz_A2A%COMM)
      !
@@ -253,13 +248,9 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
  endif
  !
- !
- !
  ! Pseudo potential terms needed for velocity gauge
  !==================================================
  if (l_velocity_gauge_corr) call Pseudo_Hamiltonian(k,E,.false.)
- !
- !
  !
  call timing('RT Hamiltonian',OPR='stop')
  !

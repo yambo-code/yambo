@@ -27,6 +27,7 @@ module BS_solvers
  use pars,           ONLY:SP,schlen,lchlen
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block,n_BS_blks,BS_blk
  use matrix,         ONLY:PAR_matrix
+ !
 #include <memory.h>
  !
  ! Epsilon factor

@@ -428,8 +428,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
  G_w=cZERO
  do ik_RT=1,RT_nk
-   ik=RTibz%k_map(ik_RT)
-   G_w(:)=G_w(:)+GreenF_T_and_W%F_W(:,ik_RT)*kpt%weights(ik)
+   G_w(:)=G_w(:)+GreenF_T_and_W%F_W(:,ik_RT)*RTibz%weights(ik_RT)
  enddo
  !
  do i_w=1,RT_conf%W_n_steps

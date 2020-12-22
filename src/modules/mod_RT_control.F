@@ -296,6 +296,23 @@ module RT_control
      !
    end subroutine
    !
+   subroutine RTibz_to_RT_k( K )
+     use R_lattice,      ONLY:bz_samp,bz_samp_reset
+     use real_time,      ONLY:RTibz
+     type(bz_samp) :: K
+     integer       :: ik
+     call bz_samp_reset(K)
+     K%units='i'
+     K%description="RT_GRID"
+     K%nibz=RTibz%N
+     YAMBO_ALLOC(K%pt,(K%nibz,3))
+     YAMBO_ALLOC(K%weights,(K%nibz))
+     do ik=1,K%nibz
+       K%pt(ik,:)   =RTibz%pt(ik,:)
+       K%weights(ik)=RTibz%weights(ik)
+     enddo
+   end subroutine
+   !
    subroutine RT_carriers_to_RT_k( K )
      use R_lattice,      ONLY:bz_samp,bz_samp_reset
      use real_time,      ONLY:RT_carriers

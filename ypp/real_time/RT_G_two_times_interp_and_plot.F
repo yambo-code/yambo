@@ -27,6 +27,7 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  use com,            ONLY:of_open_close
  use YPP_interfaces, ONLY:k_special
  use YPPm,           ONLY:BANDS_path,BANDS_steps,CIRCUIT_k,USER_k
+ use RT_control,     ONLY:RTibz_to_RT_k
  use real_time,      ONLY:RT_nk
  use YPP_real_time,  ONLY:RT_conf,GreenF_T_and_W,l_RT_G_two_times
  use electrons,      ONLY:levels
@@ -37,7 +38,7 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
 #include<memory.h>
  !
  type(levels)  :: en
- type(bz_samp) :: kpt,qpt
+ type(bz_samp) :: kpt,qpt,RT_k
  !
  ! Work space
  !
@@ -59,7 +60,9 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  call section('=',"Loading special Points for the "//trim(lattice)//" lattice")
  !============================================================================= 
  !
- call k_ibz2bz(kpt,'iku',.TRUE.)
+ call RTibz_to_RT_k(RT_k)
+ !
+ call k_ibz2bz(RT_k,'iku',.TRUE.)
  !
  call k_special()
  !
@@ -68,15 +71,15 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  call section('=','Interpolation@work: Circuit')
  !============================================================================= 
  !
- call INTERPOLATION_driver_seed("RT_G_w",ID_RT,(/1,RT_conf%W_n_steps/),kpt,SEED_R3=G_w_t_real)
+ call INTERPOLATION_driver_seed("RT_G_w",ID_RT,(/1,RT_conf%W_n_steps/),RT_k,SEED_R3=G_w_t_real)
  call INTERPOLATION_driver_do("RT_G_w",ID_RT,CIRCUIT_k)
  !
  call section('=','Plotting')
  !============================================================================= 
  !
- if(CIRCUIT_k%nbz>0) call plot_interpolated_values(kpt,en,0._SP,CIRCUIT_k,&
+ if(CIRCUIT_k%nbz>0) call plot_interpolated_values(RT_k,en,0._SP,CIRCUIT_k,&
  &                                                  (/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"interpolated","G_k_w")
- if(   USER_k%nbz>0) call plot_interpolated_values(kpt,en,0._SP,USER_k,   &
+ if(   USER_k%nbz>0) call plot_interpolated_values(RT_k,en,0._SP,USER_k,   &
  &                                                  (/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"built_in",    "G_k_w")
  !
  call INTERPOLATION_driver_end(0)

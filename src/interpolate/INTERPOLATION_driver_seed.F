@@ -29,8 +29,11 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  !  INTERPOLATION_BZ_coeff is the core of the interpolation
  !
  !  It is usally called for interpolation from the standard grid,
- !  In RT_occ_bands_interpolation / ypp/real_time/RT_dos_time_plot.F
+ !  In ypp/real_time  - RT_occ_bands_interpolation
+ !                    - RT_dos_time_plot.F
+ !                    - RT_G_two_times_interp_and_plot
  !  it is used to interpolate from the RT_k grid to a path
+ !  However this is done outside the interpolation driver giving the whole k grid via SEED_k 
  !
  !  INPUT:  SEED_k,Data_initial
  !  OUTPUT: ID,INTERP_obj(ID)%D,INTERP_obj(ID)%SEED

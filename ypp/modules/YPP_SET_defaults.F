@@ -209,7 +209,7 @@ subroutine YPP_SET_defaults()
  SOC_bands_buffer=1
  SOC_split=0.1_SP/HA2EV
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _YPP_RT
  !
@@ -265,6 +265,6 @@ subroutine YPP_SET_defaults()
  !
 #endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
 end subroutine YPP_SET_defaults

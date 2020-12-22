@@ -76,7 +76,7 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  ! ... Internal Defaults
  !
- call SET_defaults(instr,ind,od,com_dir)
+ call SET_defaults(instr,od,od,com_dir)
  !
  ! ... C_driver -> YPP information transfer
  !

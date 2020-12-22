@@ -323,11 +323,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_col_cut=runlevel_is_on('rim_cut')
        l_cohsex=runlevel_is_on('cohsex')
        !
-       ! GPL_EXCLUDE_START
+       !
        !
        l_acfdt=runlevel_is_on('acfdt')
        !
-       ! GPL_EXCLUDE_END
+       !
        !
 #if defined _SCALAPACK
        l_slk_test =runlevel_is_on('slktest')
@@ -335,11 +335,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _RT
        !
        l_real_time=runlevel_is_on('negf')
-       ! GPL_EXCLUDE_START
+       !
        l_elel_scatt =runlevel_is_on('el_el_scatt')
        l_elph_scatt=runlevel_is_on('el_ph_scatt')
        l_elphoton_scatt=runlevel_is_on('el_photon_scatt')
-       ! GPL_EXCLUDE_END
+       !
 #endif
 #if defined _SC && !defined _RT
        l_sc_run=runlevel_is_on('scrun')
@@ -364,14 +364,14 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
            call switch_off_runlevel('el_ph_corr',on_name=' ')
          endif
          !
-         ! GPL_EXCLUDE_START
+         !
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.io_ELPH_err==0
-         ! GPL_EXCLUDE_END
+         !
        else
          l_elph_corr=runlevel_is_on('el_ph_corr')
-         ! GPL_EXCLUDE_START
+         !
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
-         ! GPL_EXCLUDE_END
+         !
        endif
        l_elel_corr=runlevel_is_on('el_el_corr')
 #endif

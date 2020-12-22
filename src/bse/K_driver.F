@@ -65,7 +65,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  type(w_samp)      :: W_bss 
  logical           :: l_bs_q
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _RT 
  if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
@@ -79,12 +79,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  if ( (.not.(BS_q(1)==1.and.BS_q(2)==1)) .and. (trim(BSE_mode)=='coupling') ) then
    call error(' Finite q and coupling not implemented')
  endif
- !
- ! GPL_EXCLUDE_END
- !
- ! GPL_INCLUDE_START
- !BS_q=(/1,1/)
- ! GPL_INCLUDE_END
  !
  ! Joint DOS
  !===========
@@ -118,7 +112,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    global_gauge="length"
  endif
  !
- ! GPL_EXCLUDE_START
+ !
  !
  ! If the em1s DB has been calculated in the same run
  ! of a BS-Fxc kernel construction that l_bs_fxc is set .FALSE.
@@ -148,7 +142,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
  endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
  ! Logicals (Drivers)
  !====================
@@ -296,7 +290,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    ! =================
    if (l_bss.and..not.l_rpa_IP) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
    !
-   ! GPL_EXCLUDE_START
+   !
    !
    ! `TDDFT` SOLVER
    !
@@ -322,7 +316,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
      !
    endif
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    ! CLEAN (OBSs)
    call K_observables("FREE",W_bss)

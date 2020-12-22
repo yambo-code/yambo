@@ -50,7 +50,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use stderr,         ONLY:intc
  use descriptors,    ONLY:IO_desc_add
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free
@@ -60,7 +60,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use PHOTOLUM,       ONLY:BSS_PL_free,PL
 #endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
 #include<memory.h>
  !
@@ -124,7 +124,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  FULL         = index(BSS_inversion_mode,'f')/=0
  PERTURBATIVE = index(BSS_inversion_mode,'p')/=0
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _RT
  if (NEQ_Residuals.neqv.NEQ_Kernel) then
@@ -132,7 +132,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  endif
 #endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
 #if defined _SCALAPACK
  ! 
@@ -421,13 +421,13 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      call BSS_PL_free( )
 #endif
      !
-     ! GPL_EXCLUDE_START
+     !
      !
 #if defined _KERR
      call BSS_KERR_free( )
 #endif
      !
-     ! GPL_EXCLUDE_END
+     !
      !
      call LOCAL_TYP_clean(K_INV_EPS)
 #if defined _PL

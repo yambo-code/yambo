@@ -62,7 +62,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  call section('-','BSE solver(s) @q'//trim(intc(iq)))
  !
- ! GPL_EXCLUDE_START
+ !
  !
  ! The TDDFT way 
  !
@@ -71,7 +71,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 !   l_bs_fxc=.true.
 ! endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
  ! Solvers
  !

@@ -25,13 +25,13 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  !
  use pars,           ONLY:SP
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,CIRCUIT_k,BANDS_from_db,&
-&                         CIRCUIT_E_db,l_PROJECT_plane,l_PROJECT_line
+&                         CIRCUIT_E_db,l_PROJECT_plane,l_PROJECT_line,INTERP_input_mode
  use electrons,      ONLY:levels,n_sp_pol
 #if defined _YPP_RT
  use YPP_real_time,  ONLY:l_RT_occupations,l_RT_lifetimes
 #endif
  use R_lattice,      ONLY:bz_samp
- use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k
+ use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k,INTERP_mode
  !
  implicit none
  !
@@ -45,11 +45,12 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  !
  ! Work space
  !
- logical               :: l_interp_dE,NEAREST,GRID
+ logical               :: l_interp_dE,NN,GRID
  real(SP)              :: delta_align
  integer               :: ib,ik,i_sp_pol
  !
- NEAREST=.FALSE.
+ NN=.FALSE.
+ if(INTERP_input_mode=='NN') NN=.TRUE.
  GRID   =.FALSE.
  !
  if (any(BANDS_range<=0))                call error(" Wrong bands range")
@@ -73,18 +74,18 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  if(GRID) then
    !
    if (.not.l_PROJECT_plane.and..not.l_PROJECT_line) call INTERPOLATION_driver_create_grid(INTERP_grid)
-   call INTERPOLATION_driver_seed("E_INTERP_grid",ID_bands(1),BANDS_range,Xk,SEED_E=Xen,NEAREST=NEAREST)
+   call INTERPOLATION_driver_seed("E_INTERP_grid",ID_bands(1),BANDS_range,Xk,SEED_E=Xen,NN=NN)
    call INTERPOLATION_driver_do("E_INTERP_grid",ID_bands(1),GRID_k,OUT_E=GRID_E)
    !
  endif
  !
  if (BANDS_steps> 0) then
    !
-   call INTERPOLATION_driver_seed("E_K_PATH",ID_bands(2),BANDS_range,Xk,SEED_E=Xen,NEAREST=NEAREST)
+   call INTERPOLATION_driver_seed("E_K_PATH",ID_bands(2),BANDS_range,Xk,SEED_E=Xen,NN=NN)
    call INTERPOLATION_driver_do("E_K_PATH",ID_bands(2),CIRCUIT_k,OUT_E=CIRCUIT_E)
    !
    if (l_interp_dE) then
-     call INTERPOLATION_driver_seed("dE_K_PATH",ID_bands(3),BANDS_range,Xk,SEED_E=Xen,NEAREST=NEAREST)
+     call INTERPOLATION_driver_seed("dE_K_PATH",ID_bands(3),BANDS_range,Xk,SEED_E=Xen,NN=NN)
      call INTERPOLATION_driver_do("dE_K_PATH",ID_bands(3),CIRCUIT_k,OUT_E=CIRCUIT_dE)
    endif
    !

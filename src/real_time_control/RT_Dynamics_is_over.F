@@ -34,7 +34,7 @@ logical function RT_Dynamics_is_over()
  logical    ::STOP_now
  real(SP)   ::delta_T_left,delta_T_right      
  !
- call it_reset(0)
+ !call it_reset(0)
  call parser('STOP_NOW',STOP_now)
  !
  RT_Dynamics_is_over=.FALSE.

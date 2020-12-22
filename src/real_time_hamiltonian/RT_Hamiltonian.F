@@ -137,7 +137,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      V_xc_sc=V_xc-REF_V_xc_sc
    endif
    !
-   ! GPL_EXCLUDE_START
+   !
    !
    ! Update of SOC term
    !
@@ -158,7 +158,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      !
    endif
    !
-   ! GPL_EXCLUDE_END
+   !
    !
    ! Add H_nl_sc to Ho_plus_Sigma 
    !---------------------------------
@@ -169,9 +169,9 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
      !
      call V_real_space_to_H(ik,1,H_nl_sc,WF,'def+xc',V=V_hartree_sc,Vxc=V_xc_sc)
-     ! GPL_EXCLUDE_START
+     !
      if(n_spinor==2.and.l_update_soc) call Vgrad_real_space_to_H(ik,H_nl_sc,WF,V_scf_grad)
-     ! GPL_EXCLUDE_END
+     !
      !
      call PP_redux_wait(H_nl_sc,COMM=PAR_COM_Xk_ibz_A2A%COMM)
      !
@@ -231,13 +231,13 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !====================
  if (.not.l_RT_RWA) Ho_plus_Sigma=Ho_plus_Sigma+H_EQ
  !
- !GPL_EXCLUDE_START
+ !
  !
  ! Pseudo potential terms needed for velocity gauge
  !==================================================
  if (l_velocity_gauge_corr) call Pseudo_Hamiltonian(k,E,.false.)
  !
- !GPL_EXCLUDE_END
+ !
  !
  call timing('RT Hamiltonian',OPR='stop')
  !

@@ -164,7 +164,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
    !
 #endif
    !
-   ! GPL_EXCLUDE_START 
+   ! 
    !
 #if defined _SC || defined _RT
    if(l_eval_P2) then
@@ -182,7 +182,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
    endif
 #endif
    !
-   ! GPL_EXCLUDE_END 
+   ! 
    !
  enddo
  !

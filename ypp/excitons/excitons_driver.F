@@ -107,7 +107,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  if (l_exc_wf)     call exciton_WFs(Xk,BS_E_degs,iq)
  !
  !
- !GPL_EXCLUDE_START
+ !
  !
  ! Excitonic Eliashberg function 
  !================================
@@ -127,7 +127,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
 #endif
  !
- !GPL_EXCLUDE_END
+ !
  !
  ! CLEAN
  !

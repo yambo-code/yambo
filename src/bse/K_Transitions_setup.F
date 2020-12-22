@@ -61,7 +61,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  use drivers,      ONLY:l_photolum
 #endif
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _RT
  use parser_m,     ONLY:parser
@@ -69,7 +69,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel
 #endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
 #include<memory.h>
  !
@@ -90,7 +90,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  real(SP):: f_eh_PL(2)
 #endif
  !
- ! GPL_EXCLUDE_START
+ !
  !
 #if defined _RT
  logical :: FORCE_EQ_trans
@@ -99,7 +99,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  ! 
 #endif
  !
- ! GPL_EXCLUDE_END
+ !
  !
  if (FILL_the_groups) then
    !
@@ -299,7 +299,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      ! f_eh  enter the excitonic Hamiltonian
      ! f_eh_RES enter the residual of the dielectric constant
      !
-     ! GPL_EXCLUDE_START
+     !
      !
 #if defined _RT
      if (l_rt_carriers_in_use.and.allocated(Ken%fo)) then
@@ -312,7 +312,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      endif
 #endif
      !
-     ! GPL_EXCLUDE_END
+     !
      !
      f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
      f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
@@ -334,7 +334,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      ! f_eh=0 transitions give no contribution to absorption and are not considered
      if ( f_eh_REF<=0._SP ) T_is_ok=.FALSE.
      !
-     ! GPL_EXCLUDE_START
+     !
      !
 #if defined _RT
      !
@@ -349,19 +349,19 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      if (.not.l_rt_carriers_in_use) then
 #endif
        !
-       ! GPL_EXCLUDE_END
+       !
        !
        ! If I've included in valence states that are almost empty
        ! or in conduction states that are almost full, those are neglected
        if ( (f_e<=filled_tresh) .or. (f_h<=filled_tresh) ) T_is_ok=.FALSE.
        !
-       ! GPL_EXCLUDE_START
+       !
        !
 #if defined _RT
      endif
 #endif
      !
-     ! GPL_EXCLUDE_END
+     !
      !
      if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0._SP,&
 &              abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0._SP/))) T_is_ok=.FALSE.

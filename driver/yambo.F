@@ -231,8 +231,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (driver_now) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
  if (driver_now) call mem_manager_report
  !
- ! GPL_EXCLUDE_START
- !
  ! ACFDT
  !=======
  !
@@ -252,8 +250,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (driver_now) call mem_manager_report
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #if defined _RT
  !
@@ -279,8 +275,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
 #endif
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _ELPH
  !
  ! Electron-Phonon Hamiltonian
@@ -292,8 +286,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (driver_now) call mem_manager_report
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #if defined _SCALAPACK 
  !

@@ -215,7 +215,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          !
          DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho
          !
-         ! GPL_EXCLUDE_START
+         !
          !
          !======
          ! <P^2>
@@ -231,7 +231,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          if (compute_Spin_dipoles.and.n_spinor==2) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor
 #endif
          !
-         ! GPL_EXCLUDE_END
+         !
          !
          if(.not.(l_eval_dip_V.or.l_eval_dip_iR)) then
            cycle

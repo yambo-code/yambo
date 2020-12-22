@@ -35,6 +35,8 @@ subroutine ELPH_atomic_amplitude(q)
  use functions,           ONLY:bose_f
  use interfaces,          ONLY:LINEAR_ALGEBRA_driver,ELPH_alloc
  use linear_algebra,      ONLY:DIAGO,USE_LK
+ use stderr,              ONLY:intc
+ !
 #include<memory.h>
  type(bz_samp)::q
  !
@@ -44,10 +46,6 @@ subroutine ELPH_atomic_amplitude(q)
  complex(SP)       ::mean_ui_uj(n_atoms,3,3)
  real(SP)          ::omega,U_eigenvalues(3)
  real(SP),allocatable :: q_weight(:)
- !
- !TEMP>
- character(1), parameter :: atom_name(4)=(/'C','C','H','H'/)
- !TEMP<
  !
  !I/O
  !
@@ -80,7 +78,7 @@ subroutine ELPH_atomic_amplitude(q)
  !
  RIM_n_rand_pts=100000
  if (elph_use_q_grid) then
-   q_weight=q%weights(iq)
+   q_weight=q%weights
  else
    if (RIM_n_rand_pts>0) call msg('s','Using RIM with '//trim(intc(RIM_n_rand_pts))//' point')
    call rim_spherical(nq_to_sum,PH_qpt(1:nq_to_sum,1:3),q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),2,.TRUE.)
@@ -112,7 +110,7 @@ subroutine ELPH_atomic_amplitude(q)
        do i=1,3
          do j=1,3
            mean_ui_uj(is,i,j)=mean_ui_uj(is,i,j)+q_weight(iq)*1./2./omega*&
-&                             conjg(PH_pol_vector(iq,im,is,i))*PH_pol_vector(iq,im,is,j)*&
+&                             conjg(PH_pol_vector(im,is,i,iq))*PH_pol_vector(im,is,j,iq)*&
 &                             (bose_f(omega)+1.)
            mean_ui_uj(is,i,j)=real ( mean_ui_uj(is,i,j) )
          enddo
@@ -127,7 +125,7 @@ subroutine ELPH_atomic_amplitude(q)
    !
    call LINEAR_ALGEBRA_driver(DIAGO,M=mean_ui_uj(is,:,:),lib_in=USE_LK,E_real=U_eigenvalues)
    !
-   call msg('s','Atom '//trim(atom_name(is)))
+   call msg('s','Atom '//intc(is))
    call msg('s','Displacement  [a.u.]/A #1 ',sqrt(U_eigenvalues(1))*(/1._SP,BO2ANG/) )
    call msg('s','Normalized direction   #1 ',real(mean_ui_uj(is,:,1)))
    call msg('s','                       #2 ', sqrt(U_eigenvalues(2))*(/1._SP,BO2ANG/) )

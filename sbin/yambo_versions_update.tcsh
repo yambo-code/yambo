@@ -37,8 +37,6 @@ endif
 # Get current version & revision
 #
 set repo=`git remote -v | grep push`
-set gpl="yes"
-if ( "$repo" =~ *yambo-devel* ) set gpl="no"
 #
 set dummy="SVERSION="
 set version_old=`cat config/version/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
@@ -52,16 +50,10 @@ set dummy="SHASH="
 set hash_old=`cat config/version/version.m4 | grep $dummy | $awk '{gsub("="," ");split($0,frags);gsub("\"","",frags[2]);print frags[2]}'`
 set GPL_revision_old=$revision_old
 #
-if ( "$gpl" == "no" ) then
-  set dummy1=`git rev-list --count HEAD`
-  @ dummy1= $dummy1 + 10000 
-  if ( "$dummy1" >= "$revision_old" ) set revision_HEAD=`echo $dummy1`
-  if ( "$dummy1" <  "$revision_old" ) set revision_HEAD=`echo $revision_old`
-else
-  set dummy=`git rev-list --all --count HEAD`
-  set revision_HEAD=`echo $dummy`
-  @ revision_HEAD= $revision_HEAD + 74
-endif
+set dummy1=`git rev-list --count HEAD`
+@ dummy1= $dummy1 + 10000 
+if ( "$dummy1" >= "$revision_old" ) set revision_HEAD=`echo $dummy1`
+if ( "$dummy1" <  "$revision_old" ) set revision_HEAD=`echo $revision_old`
 set hash_HEAD=`git rev-parse --short HEAD`
 #
 echo "Detected version" $version_old"."$subver_old"."$patch_old "Rev.(CURRENT)" $revision_old "(HEAD)" $revision_HEAD "Hash" $hash_old
@@ -71,8 +63,7 @@ echo "Detected version" $version_old"."$subver_old"."$patch_old "Rev.(CURRENT)" 
 set version_new = $version_old
 set subver_new = $subver_old
 set patch_new = $patch_old
-if ( "$gpl" == "no"  ) set revision_new = $revision_old
-if ( "$gpl" == "yes" ) set revision_new = $GPL_revision_old
+set revision_new = $revision_old
 set hash_new = $hash_old
 #
 if ( "$argv[1]" == "v" ) then
@@ -96,13 +87,8 @@ endif
 #
 if ( "$argv[1]" != "save" ) then
   echo 
-  if ( "$gpl" == "yes" ) then
-    echo "v."$version_old"."$subver_old"."$patch_old " r."$GPL_revision_old " => " \
-         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new
-  else
-    echo "v."$version_old"."$subver_old"."$patch_old " r."$revision_old " h."$hash_old" => " \
-         "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h."$hash_new""
-  endif
+  echo "v."$version_old"."$subver_old"."$patch_old " r."$revision_old " h."$hash_old" => " \
+       "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h."$hash_new""
   echo 
 else
  set source_dir="yambo-"$version_new"."$subver_new"."$patch_new
@@ -124,10 +110,6 @@ endif
 #
 set use_rev_old=$revision_old
 set use_rev_new=$revision_new
-if ( "$gpl" == "yes" ) then
-  set use_rev_old=$GPL_revision_old
-  set use_rev_new=$revision_new
-endif
 #
 cat << EOF > ss.awk
 {
@@ -152,10 +134,6 @@ EOF
 if ( "$argv[1]" != "save" ) then
   $awk -f ss.awk ./config/version/version.m4
   mv NEW ./config/version/version.m4
-  if ( "$gpl" == "no" ) then
-    $awk -f ss.awk ./config/version/version.m4_gpl
-    mv NEW ./config/version/version.m4_gpl
-  endif
   $awk -f ss.awk configure
   mv NEW configure
   chmod a+x configure

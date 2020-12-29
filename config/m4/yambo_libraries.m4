@@ -28,19 +28,50 @@ DRIVER_INCS="-I$PWD/lib/yambo/driver/include/ -I$PWD/include/driver"
 AC_SUBST(DRIVER_INCS)
 
 AC_MSG_CHECKING([driver lib])
-cd lib/
-if ! test -d "yambo/driver/src"; then
- git clone git@github.com:yambo-code/yambo-libraries.git yambo
+
+if test -d "src/real_time_el-ph/"; then
+  #
+  # develop procedure
+  #
+  cd lib/
+  if ! test -d "yambo/driver/src"; then
+    git clone git@github.com:yambo-code/yambo-libraries.git yambo
+  else
+    cd yambo
+    git pull
+    cd ../
+  fi
+  cd ../
+  #
 else
- cd yambo
- git pull
- cd ../
+  #
+  # gpl procedure
+  #
+  if ! test -d "yambo/driver/src"; then
+    cd lib/yambo/
+    rm $TARBALL
+    URL="https://github.com/yambo-code/yambo-libraries/archive/0.0.1.tar.gz"
+    TARBALL="0.0.1.tar.gz"
+    if test -x $(command -v wget) ; then
+      wget --no-check-certificate -O ${TARBALL} ${URL} ;
+    elif test -x $(command -v curl) ; then
+      curl -L --progress-bar -o ${TARBALL} ${URL} ;
+    fi
+    if test ! -s $TARBALL ; then
+      echo "*** Unable to download ${TARBALL}. Test whether curl or wget is installed and working," ;
+      echo "*** if you have direct access to the internet." ;
+      echo "*** If not, download ${URL}${TARBALL} into folder lib and extract it" ;
+    else
+      echo "Extracting yambo internal library ${TARBALL}" ;
+      tar -xzf $TARBALL
+    fi
+    cd ../../
+  fi
+  #
 fi
-cd ../
 
 m4_include([lib/yambo/driver/config/version.m4])
 
 AC_MSG_RESULT([@ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL])
-
 
 ])

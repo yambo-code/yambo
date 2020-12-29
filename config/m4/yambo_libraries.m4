@@ -49,9 +49,11 @@ else
   #
   if ! test -d "yambo/driver/src"; then
     cd lib/yambo/
-    rm $TARBALL
-    URL="https://github.com/yambo-code/yambo-libraries/archive/0.0.1.tar.gz"
-    TARBALL="0.0.1.tar.gz"
+    VERSION="0.0.1"
+    TARBALL="${VERSION}.tar.gz"
+    URL="https://github.com/yambo-code/yambo-libraries/archive/${TARBALL}"
+    rm -rf $TARBALL
+    rm -rf yambo-libraries-${VERSION}
     if test -x $(command -v wget) ; then
       wget --no-check-certificate -O ${TARBALL} ${URL} ;
     elif test -x $(command -v curl) ; then
@@ -60,10 +62,13 @@ else
     if test ! -s $TARBALL ; then
       echo "*** Unable to download ${TARBALL}. Test whether curl or wget is installed and working," ;
       echo "*** if you have direct access to the internet." ;
-      echo "*** If not, download ${URL}${TARBALL} into folder lib and extract it" ;
+      echo "*** If not, download ${URL} into folder lib and extract it" ;
     else
       echo "Extracting yambo internal library ${TARBALL}" ;
       tar -xzf $TARBALL
+      rm -rf driver
+      mv yambo-libraries-${VERSION}/* ./
+      rm -rf yambo-libraries-${VERSION}
     fi
     cd ../../
   fi

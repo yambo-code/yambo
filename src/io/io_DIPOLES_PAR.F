@@ -83,7 +83,7 @@ integer function io_DIPOLES(Dip,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_DIPOLES=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,FRAG=frag_DIP)
+   io_DIPOLES=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,TEMP=.true.,FRAG=frag_DIP)
    if (io_DIPOLES/=0) goto 1
    !
    io_DIPOLES=variables_DIPOLES(Dip,ID)
@@ -122,8 +122,6 @@ integer function io_DIPOLES(Dip,ID)
    call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    call DIP_alloc('DIP_v' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    !
-   ! GPL_EXCLUDE_START
-   !
    if (compute_Orb_dipoles) &
    & call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz,2/))
    if (compute_Spin_dipoles) &
@@ -138,8 +136,6 @@ integer function io_DIPOLES(Dip,ID)
    if(l_BS_dichroism) then
      call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz,1/))
    endif
-   !
-   ! GPL_EXCLUDE_END
    !
  endif
  !
@@ -163,8 +159,6 @@ integer function io_DIPOLES(Dip,ID)
  VAR_name='DIP_v'
  if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
  if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_v(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
- !
- ! GPL_EXCLUDE_START
  !
  if (compute_Orb_dipoles) then
    !
@@ -231,8 +225,6 @@ integer function io_DIPOLES(Dip,ID)
    if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_orbital(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,1),IPOS=DIP_ipos)
    !
  endif
- !
- ! GPL_EXCLUDE_END
  !
 1 call io_disconnect(ID=ID)
  !

@@ -63,7 +63,7 @@ integer function io_HF_and_locXC(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_HF_and_locXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,&
+   io_HF_and_locXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,TEMP=.true.,&
 &                               XC_KIND="G_WF force",CUTOFF=l_col_cut,FRAG=frag_HF)
    !
    if (io_HF_and_locXC/=0) goto 1

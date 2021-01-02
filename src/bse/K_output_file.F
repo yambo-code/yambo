@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -38,7 +38,6 @@ subroutine K_output_file(iq,mode)
 &                    X_write_messages_before_headers,X_write_q_plus_g
  use R_lattice, ONLY:bare_qpg,q_norm
  use interfaces,ONLY:DESC_write
-#if defined _KERR
  use pars,      ONLY:cI
  use electrons, ONLY:spin_occ,n_spinor
  use R_lattice, ONLY:nkbz
@@ -50,7 +49,6 @@ subroutine K_output_file(iq,mode)
  use BS_solvers,ONLY:B_Hall,A_drude
  use X_output,  ONLY:pl_file_name
  use PHOTOLUM,  ONLY:PL
-#endif
  !
  implicit none
  integer      :: iq
@@ -64,10 +62,8 @@ subroutine K_output_file(iq,mode)
  integer           :: iw,i1,i2,i_IP_BSE,n_IP_BSE,E_size,n_output_data,n_headers
  real(SP)          :: output_data(9),w(BSS_n_freqs)
  complex(SP)       :: eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3),alpha_factor
-#if defined _KERR
  complex(SP)       :: beta(BSS_n_freqs,3)
  logical           :: l_kerr_out,l_dich_out,l_phot_out,l_magn_out
-#endif
  logical           :: eval_eels,eval_reflectivity,l_Haydock,l_Diago,l_Inversion,l_Slepc,l_IP,l_INIT,&
  &                    l_print_col4,l_jdos_out,l_esrt_out,l_abs_out
  !
@@ -89,12 +85,10 @@ subroutine K_output_file(iq,mode)
  l_esrt_out =l_BS_esort    .and.(.not.(l_Inversion.or.l_Haydock))
  l_abs_out  =l_BS_abs      .and.((.not.l_Haydock).or.index(mode,"abs")>0 )
  l_jdos_out =l_BS_jdos     .and.((.not.l_Haydock).or.index(mode,"jdos")>0).and.(.not.l_Inversion)
-#if defined _KERR
  l_magn_out =l_BS_magnons  .and.((.not.l_Haydock).or.index(mode,"magn")>0).and.(.not.l_Inversion)
  l_kerr_out =l_BS_kerr     .and.((.not.l_Haydock).or.index(mode,"kerr")>0)
  l_dich_out =l_BS_dichroism.and.((.not.l_Haydock).or.index(mode,"dich")>0).and.(.not.l_Inversion)
  l_phot_out =l_BS_photolum .and.l_Inversion
-#endif
  !
  l_print_col4=l_Haydock.or.(l_Inversion.and..not.K_diago_in_BS_mat)
  !
@@ -112,7 +106,7 @@ subroutine K_output_file(iq,mode)
  !
  ! EELS / ALPHA / REFLECTIVITY logicals
  !
- if (l_abs_out.and. ((.not.l_Haydock).or.index(mode,"final")>0) ) then
+ if (l_abs_out.and. ((.not.l_Haydock).or.index(mode,"final")>0) .or. l_INIT ) then
    eval_eels= OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
    eval_alpha=eval_alpha .and. ((l_col_cut) .or. (eval_eels) )
    call parser('Reflectivity',eval_reflectivity)
@@ -135,7 +129,6 @@ subroutine K_output_file(iq,mode)
  if (eval_eels)         call of_open_close(eel_file_name,title_mode)
  if (eval_alpha)        call of_open_close(alpha_file_name,title_mode)
  !
-#if defined _KERR
  if(l_kerr_out) then
    call of_open_close(off_file_name,title_mode)
    if (.not.eval_alpha) call of_open_close(moke_file_name,title_mode)
@@ -147,7 +140,6 @@ subroutine K_output_file(iq,mode)
    call of_open_close(magp_file_name,title_mode)
    if(n_spinor==2) call of_open_close(magm_file_name,title_mode)
  endif
-#endif
  if(l_jdos_out) call of_open_close(jdos_file_name,title_mode)
  if(l_esrt_out) call of_open_close(esort_file_name,title_mode)
  !
@@ -170,8 +162,6 @@ subroutine K_output_file(iq,mode)
    call msg('o alpha','#','Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0,USE_TABS=.true.)
    call msg('o alpha','#')
  endif
- !
-#if defined _KERR
  !
  ! Diamagnetic term
  !
@@ -222,9 +212,7 @@ subroutine K_output_file(iq,mode)
    call msg('o off','#',output_data(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
    call msg('o off','#')
    !
-  endif
-  !
-#endif
+ endif
  !
  ! Headers
  !
@@ -247,8 +235,6 @@ subroutine K_output_file(iq,mode)
    call X_setup_headers('ALPHA')
    call msg("o alpha",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
  endif
- !
-#if defined _KERR
  !
  if(l_kerr_out) then
    !
@@ -296,7 +282,6 @@ subroutine K_output_file(iq,mode)
    if (l_IP) call msg("o CD",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    !
  endif
-#endif
  !
  if (.not.l_Haydock) then
    call X_setup_headers('jdos')
@@ -361,6 +346,7 @@ subroutine K_output_file(iq,mode)
  !-----------------------
  !
  if (eval_eels) then
+   write(*,*)  "compute the eels ",BSS_n_freqs
    !
    eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,eps(:,1),eels(:,1)) 
    eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,eps(:,2),eels(:,2)) 
@@ -372,6 +358,7 @@ subroutine K_output_file(iq,mode)
      !
      output_data(1:5)=(/w(iw),aimag(eels(iw,1)),real(eels(iw,1)),aimag(eels(iw,2)),real(eels(iw,2))/)
      n_output_data=5
+     write(*,*) iw,output_data(1:5)
      if (l_print_col4) then ; n_output_data=7 ; output_data(6:7)=(/aimag(eels(iw,3)),real(eels(iw,3))/) ; endif
      if (l_IP)         then ; n_output_data=3 ; output_data(2:3)=output_data(4:5)                       ; endif
      call msg("o eel",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
@@ -406,8 +393,6 @@ subroutine K_output_file(iq,mode)
    enddo
    !
  endif
- !
-#if defined _KERR
  !
  ! PHOTOLUMINESCENCE
  !--------------------
@@ -561,8 +546,6 @@ subroutine K_output_file(iq,mode)
    !
  endif
  !
-#endif
- !
  ! JOINT DOS
  !------------
  !
@@ -593,7 +576,6 @@ subroutine K_output_file(iq,mode)
      headers(n_output_data+1:n_output_data+1)="abs"
      n_output_data=n_output_data+1
    endif
-#if defined _KERR
    if (l_kerr_out) then
      headers(n_output_data+1:n_output_data+1)="kerr"
      n_output_data=n_output_data+1
@@ -606,7 +588,6 @@ subroutine K_output_file(iq,mode)
      headers(n_output_data+1:n_output_data+2)=(/"S+-","S-+"/)
      n_output_data=n_output_data+2
    endif
-#endif
    !
    n_IP_BSE=2
    if (l_IP) n_IP_BSE=1
@@ -650,7 +631,6 @@ subroutine K_output_file(iq,mode)
        call of_open_close(alpha_file_name)
      endif
      !
-#if defined _KERR
      if(l_phot_out) then
        call of_open_close(pl_file_name)
      endif
@@ -669,7 +649,6 @@ subroutine K_output_file(iq,mode)
      if(l_dich_out) then
        call of_open_close(dichr_file_name)
      endif
-#endif
      !
      if(l_jdos_out)  call of_open_close(jdos_file_name)
      if(l_esrt_out) call of_open_close(esort_file_name)

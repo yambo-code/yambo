@@ -48,17 +48,11 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  use electrons,    ONLY:levels,n_sp_pol
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
-#if defined _KERR
  use BS,           ONLY:l_BS_magnons,l_BS_photolum
-#endif
- !
- ! GPL_EXCLUDE_START
  !
 #if defined _RT
  use parser_m,     ONLY:parser
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #include<memory.h>
  !
@@ -79,13 +73,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  !
  FORCE_EQ_trans=.true.
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _RT
  call parser('ForceEqTrans',FORCE_EQ_trans)
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  if (isec(3)/=0) sec="-"
  if (isec(3)==0) sec="+"
@@ -140,13 +130,11 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
            do i_sp_c=1,n_sp_pol
              i_sp_v=i_sp_c
              !
-#if defined _KERR
              if (l_BS_magnons.and.n_sp_pol==2) then
                if(i_res_ares==1.and.i_sp_c==1) cycle
                if(i_res_ares==2.and.i_sp_c==2) cycle
                i_sp_v=mod(i_sp_c,n_sp_pol)+1
              endif
-#endif
              !
              do i_star=1,Xk%nstar(ik)
                !
@@ -206,10 +194,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                !
                BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
                BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
-#if defined _KERR
+               !
                ! To be fixed
                if (l_BS_photolum) BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp,1) =f_eh_PL
-#endif
+               !
                BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
                !
                if (allocated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=&
@@ -258,9 +246,7 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
 &                       BS_K_coupling,BS_bands,BS_not_const_eh_f,BS_K_coupling,  &
 &                       l_BS_ares_asymm,BS_res_ares_dim,BS_mat_res_ares_dim
  use parser_m,     ONLY:parser
-#if defined _KERR
  use BS,           ONLY:l_BS_magnons,l_BS_photolum
-#endif
  !
 #include<memory.h>
  !
@@ -293,9 +279,8 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  call parser('ImposeSymm',l_BS_ares_symm)
  !
  l_BS_ares_asymm=l_BS_ares_asymm.or.(iq/=1)
-#if defined _KERR
  l_BS_ares_asymm=(l_BS_ares_asymm.or.l_BS_photolum.or.(l_BS_magnons.and.n_sp_pol==2))
-#endif
+ !
 #if defined _SLEPC && !defined _SLEPC_OFF
  ! Special case, slepc with distributed matrix need doubling of the number of occupations
  l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling.and. (.not.BSS_slepc_matrix)
@@ -329,13 +314,13 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  do i_res_ares=1,BS_res_ares_dim
    do i_sp_c=1,n_sp_pol
      i_sp_v=i_sp_c
-#if defined _KERR
+     !
      if (l_BS_magnons.and.n_sp_pol==2) then
        if(i_res_ares==1.and.i_sp_c==1) cycle
        if(i_res_ares==2.and.i_sp_c==2) cycle
        i_sp_v=mod(i_sp_c,n_sp_pol)+1
      endif
-#endif
+     !
      do ik=1,Xk%nibz
        do i_star=1,Xk%nstar(ik)
          !
@@ -390,10 +375,7 @@ logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,FORCE_EQ_tran
  use X_m,          ONLY:global_gauge
  use DIPOLES,      ONLY:DIPOLE_t
  use electrons,    ONLY:levels,n_sp_pol,filled_tresh,spin_occ
- use BS,           ONLY:BS_not_const_eh_f,BS_perturbative_SOC,BS_eh_en
-#if defined _KERR
- use BS,           ONLY:l_BS_magnons
-#endif
+ use BS,           ONLY:BS_not_const_eh_f,BS_perturbative_SOC,BS_eh_en,l_BS_magnons
 #if defined _RT
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel
@@ -409,25 +391,20 @@ logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,FORCE_EQ_tran
  !
  ! Work Space
  !
- logical :: l_magnons
  integer :: i_sp_v,iv_SOC(2/n_sp_pol),ic_SOC(2/n_sp_pol),pert_range(2/n_sp_pol,2)
  real(SP):: Eo_eh,E_v_SOC(2/n_sp_pol),E_c_SOC(2/n_sp_pol),f_eh_REF,f_e,f_h,f_check
  !
  T_is_ok=.TRUE.
- l_magnons=.false.
  !
  i_sp_v=i_sp_c
-#if defined _KERR
- l_magnons=l_BS_magnons
  if(l_BS_magnons) i_sp_v=mod(i_sp_c,n_sp_pol)+1
-#endif
  !
  E_eh= Ken%E(ic,ik ,i_sp_c)-Ken%E(iv,ikp,i_sp_v)
  if (     allocated(Ken%Eo)) Eo_eh= Ken%Eo(ic,ik ,i_sp_c)-Ken%Eo(iv,ikp,i_sp_v)
  if (.not.allocated(Ken%Eo)) Eo_eh= E_eh
  !
  ! Small energy transitions. Dipoles in length gauge are not defined
- if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length" .and. iq==1 .and..not.l_magnons) T_is_ok=.FALSE.
+ if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length" .and. iq==1 .and..not.l_BS_magnons) T_is_ok=.FALSE.
  !
  if( BS_perturbative_SOC ) then
    if(n_sp_pol==1) pert_range=reshape((/1,2,1,2/),(/2,2/))
@@ -452,8 +429,6 @@ logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,FORCE_EQ_tran
  ! f_eh  enter the excitonic Hamiltonian
  ! f_eh_RES enter the residual of the dielectric constant
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _RT
  if (l_rt_carriers_in_use.and.allocated(Ken%fo)) then
    if (     FORCE_EQ_trans) f_eh_REF=(Ken%fo(iv,ikp,i_sp_v)-Ken%fo(ic,ik ,i_sp_c))/spin_occ
@@ -465,8 +440,6 @@ logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,FORCE_EQ_tran
  endif
 #endif
  !
- ! GPL_EXCLUDE_END
- !
  if(i_res_ares==1) then
    f_e = (         Ken%f(iv,ikp,i_sp_v))/spin_occ
    f_h = (spin_occ-Ken%f(ic,ik ,i_sp_c))/spin_occ
@@ -475,9 +448,7 @@ logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,FORCE_EQ_tran
    f_h = (spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ
  endif
  !
-#if defined _KERR
  f_eh_PL = Ken%f(ic,ikp,i_sp_c)*(spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ/spin_occ
-#endif
  !
  ! A 0.001 % fractional occupation swiches on the particular treatment of finite temp. BSE 
  if ( abs(abs(f_eh_REF)-1._SP)> filled_tresh ) BS_not_const_eh_f=.TRUE.
@@ -485,8 +456,6 @@ logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,FORCE_EQ_tran
  ! f_eh<0 transitions are included in the anti-resonant part
  ! f_eh=0 transitions give no contribution to absorption and are not considered
  if ( f_eh_REF*(-1._SP)**(i_res_ares-1)<0._SP ) T_is_ok=.FALSE.
- !
- ! GPL_EXCLUDE_START
  !
 #if defined _RT
  !
@@ -501,19 +470,13 @@ logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,FORCE_EQ_tran
  if (.not.l_rt_carriers_in_use) then
 #endif
    !
-   ! GPL_EXCLUDE_END
-   !
    ! If I've included in valence states that are almost empty
    ! or in conduction states that are almost full, those are neglected
    if ( (f_e<=filled_tresh) .or. (f_h<=filled_tresh) ) T_is_ok=.FALSE.
    !
-   ! GPL_EXCLUDE_START
-   !
 #if defined _RT
  endif
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0._SP,&
 &              abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0._SP/))) T_is_ok=.FALSE.

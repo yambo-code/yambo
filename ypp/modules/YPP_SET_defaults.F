@@ -31,7 +31,8 @@ subroutine YPP_SET_defaults()
 &                         plot_title,PtsPath,seed_name,SOC_bands_buffer,SOC_bands_to_map,state_ctl ,V_value,&
 &                         WF_ref,what_to_write,SP,HA2EV,E_field,Nel_fac,DOS_bands,AVE_exc,l_interp,  &
 &                         BSiq,l_PROJECT_atom,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,&
-&                         EXCITON_Res_treshold,EXCITON_E_treshold,l_PROJECT_line,l_PROJECT_plane,K_grid
+&                         EXCITON_Res_treshold,EXCITON_E_treshold,l_PROJECT_line,l_PROJECT_plane,K_grid,&
+&                         DIPOLES_bands,DIPOLES_E_range
  use YPP_symm,       ONLY:wf_ng_cut
  use units,          ONLY:FS2AUT
  use interpolate,    ONLY:INTERP_shell_factor,interpls,max_interpls
@@ -151,6 +152,11 @@ subroutine YPP_SET_defaults()
  output_fname=' '
  plot_title=' '
  !
+ ! DIPOLES
+ !
+ DIPOLES_bands=(/1,n_bands/)
+ DIPOLES_E_range=-1./HA2EV
+ !
  ! EXC WF
  !
  l_spin=.false.
@@ -208,8 +214,6 @@ subroutine YPP_SET_defaults()
  SOC_bands_buffer=1
  SOC_split=0.1_SP/HA2EV
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _YPP_RT
  !
  !REMOVE SYMMETRIES
@@ -263,7 +267,5 @@ subroutine YPP_SET_defaults()
  B_psi=0._SP
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 end subroutine YPP_SET_defaults

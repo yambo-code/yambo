@@ -58,14 +58,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:myid,ncpu,PP_redux_wait
- !
-#if defined _KERR
+ use parallel_m,    ONLY:myid,ncpu
+ use parallel_int,  ONLY:PP_redux_wait
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
-#endif
-#if defined _PAR_IO
-#endif
  !
 #include<memory.h>
 #include<yambo_bse.h>
@@ -170,8 +166,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if(iq/=1) O_ng_shift=max(maxval(qindx_B(:,:,2)),O_ng_shift)
  endif
  !
- ! GPL_EXCLUDE_START
- !
  ! BS/FXC DB I/O
  !===============
  !
@@ -182,8 +176,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !io_BS_Fxc_err=io_BS_Fxc(iq,W_bss,ID,X=X)
    !
  else
-   !
-   ! GPL_EXCLUDE_END
    !
 #if defined _PAR_IO
    !
@@ -227,11 +219,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (io_BS_err==0) return
    !
-   ! GPL_EXCLUDE_START
-   !
  endif
- !
- ! GPL_EXCLUDE_END
  !
  ! Screened interaction
  !======================
@@ -243,11 +231,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call warning('Bethe Salpter section skipped. Impossible to build the kernel.')
    n_BS_blks=0
    call BS_blks_free(1)
-   !
-#if defined _KERR
    call BSS_MAGN_free( )
    call BSS_PL_free( )
-#endif
    !
    YAMBO_FREE(BS_W)
    !
@@ -256,8 +241,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
  call timing('X T_space Kernel',OPR='start')
- !
- ! GPL_EXCLUDE_START
  !
  ! TDDFT xc-kernel Setup
  !======================
@@ -275,17 +258,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- ! GPL_EXCLUDE_END
- !
  ! Wave Functions
  !================
  bands_to_load=BS_bands
  if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
  !
  section_title='-BSK'
- ! GPL_EXCLUDE_START
  if (l_bs_fxc) section_title='-BSK->Fxc'
- ! GPL_EXCLUDE_END
  !
  call WF_load(WF,max(O_ng,BS_n_g_exch),O_ng_shift,bands_to_load,(/1,Xk%nibz/),space='R',title=trim(section_title))
  !
@@ -572,12 +551,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (l_bs_fxc) then
    !
-   ! GPL_EXCLUDE_START
-   !
    YAMBO_FREE(FXC)
    YAMBO_FREE(FXC_K_diagonal)
-   !
-   ! GPL_EXCLUDE_END
    !
  else if (BS_K_is_ALDA) then
    YAMBO_FREE(F_xc)

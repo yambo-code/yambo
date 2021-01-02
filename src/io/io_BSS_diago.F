@@ -71,17 +71,13 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
    !
-   call io_elemental(ID,VAR=&
-&       " BSS|Eigenstates included     ",L0=BSS_write_eig_2_db,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="[BSS] Eigenstates included",L0=BSS_write_eig_2_db,CHECK=.true.,OP=(/"=="/))
    if(iq==1) then
-     call io_elemental(ID,VAR=&
-&       "    |Field direction          ",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
+     call io_elemental(ID,VAR="[BSS] Field direction",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
      if (allocated(BSqpts)) BSqpts(:,iq)=BSS_q0
    endif
-   call io_elemental(ID,VAR=&
-&       "    |Eigenstates computed     ",I0=BSS_n_eig,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,VAR=&
-&       "    |Number of BSE matricies  ",I0=BS_mat_res_ares_dim,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="[BSS] Eigenstates computed     ",I0=BSS_n_eig,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="[BSS] Number of BSE matricies  ",I0=BS_mat_res_ares_dim,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    ! header return
@@ -119,8 +115,6 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
      call io_bulk(ID,C1=bsRr)
    endif
    !
-   ! GPL_EXCLUDE_START
-   !
    if(present(bsL_magn)) then
      if(associated(bsL_magn)) then
        call io_bulk(ID,'BS_L_magn_Residuals',VAR_SZ=(/2,2,BSS_n_eig/))
@@ -148,8 +142,6 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
        call io_bulk(ID,R2=bsR_pl)
      endif
    endif
-   !
-   ! GPL_EXCLUDE_END
    !
  endif
  !

@@ -48,7 +48,8 @@ subroutine el_density_vbands(en,Xk,rho,VAL_BANDS)
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:nsym,i_time_rev
  use FFT_m,         ONLY:fft_size,fft_rot_r
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,PAR_Xk_nibz
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,PAR_Xk_nibz
+ use parallel_int,  ONLY:PP_redux_wait
  !
  implicit none
  type(bz_samp),intent(in)  :: Xk

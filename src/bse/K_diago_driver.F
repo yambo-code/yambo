@@ -61,11 +61,9 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  use BS_solvers,     ONLY:BSS_slepc_matrix,BSS_slepc_double_grp,Slepc_v,BS_HAYVEC_free
 #endif
-#if defined _KERR
  use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
-#endif
  !
 #include<memory.h>
  ! 
@@ -255,22 +253,16 @@ subroutine K_diago_driver(iq,W,X_static)
        call K_diago_overlap_matrix(BS_V_left,BS_V_right,BS_overlap)
        !
        if(l_BS_optics )  call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
-       !
-#if defined _KERR
        if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
        if(l_BS_magnons) call K_diago_non_herm_magnons_residual(BS_R_left_magn,BS_R_right_magn,BS_V_left,BS_V_right,BS_overlap)
        if(l_BS_photolum)call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap)
-#endif
        !
      else
        !
        if(l_BS_optics)  call K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right)
-       !
-#if defined _KERR
        if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
        if(l_BS_magnons) call K_diago_herm_magnons_residual(i_BS_mat,BS_R_left_magn,BS_R_right_magn)
        if(l_BS_photolum)call PL_diago_residual(BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)
-#endif
        !
      endif
      !
@@ -325,10 +317,8 @@ subroutine K_diago_driver(iq,W,X_static)
  if(l_slepc) call K_slepc_local_free()
 #endif
  !
-#if defined _KERR
  call BSS_PL_free( )
  call BSS_MAGN_free( )
-#endif
  !
  call timing(trim(Solver)//' Solver',OPR='stop')
  !
@@ -350,8 +340,6 @@ subroutine K_diago_driver(iq,W,X_static)
          YAMBO_ALLOC_P(BS_R_left,(BSS_n_eig))
          YAMBO_ALLOC_P(BS_R_right,(BSS_n_eig))
        endif
-       !
-#if defined _KERR
        if (l_BS_kerr) then
          YAMBO_ALLOC_P(BS_R_right_kerr,(BSS_n_eig))
        endif
@@ -362,7 +350,6 @@ subroutine K_diago_driver(iq,W,X_static)
        if(l_BS_photolum) then
          YAMBO_ALLOC_P(BS_R_PL,(2,BSS_n_eig))
        endif
-#endif
        !
      case("V")
        !
@@ -401,12 +388,10 @@ subroutine K_diago_driver(iq,W,X_static)
      YAMBO_FREE_P(BS_E_SOC_corr)
      YAMBO_FREE_P(BS_R_right)
      YAMBO_FREE_P(BS_R_left)
-#if defined _KERR
      YAMBO_FREE_P(BS_R_right_kerr)
      YAMBO_FREE_P(BS_R_right_magn)
      YAMBO_FREE_P(BS_R_left_magn)
      YAMBO_FREE_P(BS_R_PL)
-#endif
      !
      ! BS_mat must be cleaned as it contains the eigenvectors. 
      !
@@ -428,13 +413,11 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if(associated(BS_R_left) )    call BSS_resize(BS_R_left)
      if(associated(BS_R_right))    call BSS_resize(BS_R_right)
-       !
-#if defined _KERR
+     !
      if(associated(BS_R_right_kerr)) call BSS_resize(BS_R_right_kerr)
      if(associated(BS_R_left_magn) ) call BSS_resize(BS_R_left_magn)
      if(associated(BS_R_right_magn)) call BSS_resize(BS_R_right_magn)
      if(associated(BS_R_PL)        ) call BSS_resize(BS_R_PL)
-#endif
      !
      if(allocated(BS_V_left))   call BSS_resize(BS_V_left)
      if(allocated(BS_V_right))  call BSS_resize(BS_V_right)

@@ -127,7 +127,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  !
  ! Interpolation GRID INIT 
  !
- if (l_interp) call INTERPOLATION_driver_create_grid(INTERP_grid)
+ if (l_interp) call INTERPOLATION_create_the_grid(INTERP_grid)
  !
  ! T-D DOS
  !=========

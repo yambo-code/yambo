@@ -30,12 +30,10 @@ subroutine K_inversion_restart(iq,W)
  use parallel_m,     ONLY:PAR_COM_SLK_INDEX_local
  use com,            ONLY:msg
  use frequency,      ONLY:w_samp,W_reset
-#if defined _KERR
  use pars,           ONLY:rZERO
  use BS,             ONLY:l_BS_photolum
  use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:PL
-#endif
  !
 #include<memory.h>
  !
@@ -78,9 +76,7 @@ subroutine K_inversion_restart(iq,W)
    BSS_dr=W%dr
    !
    call elemental_restart(K_INV_EPS)
-#if defined _KERR
    if(l_BS_photolum) call elemental_restart(K_INV_PL)
-#endif
    !
    YAMBO_FREE(freq_table)
    !
@@ -92,7 +88,6 @@ subroutine K_inversion_restart(iq,W)
    K_INV_EPS%spectra(:,2:3)=Epsilon_ii(:,3:4)
    Epsilon_ii     =cZERO
    Epsilon_ii(:,1)=W%p(:)
-#if defined _KERR
    if(l_BS_photolum) then
      allocate(K_INV_PL%err(W%n_freqs),K_INV_PL%spectra(W%n_freqs,2))
      K_INV_PL%err    =-1
@@ -101,18 +96,15 @@ subroutine K_inversion_restart(iq,W)
      PL     =rZERO
      PL(:,1)=W%p(:)
    endif
-#endif
    !
  endif
  !
  allocate(K_INV_EPS%iw_full(W%n_freqs))
  K_INV_EPS%iw_full=0
-#if defined _KERR
  if(l_BS_photolum) then
    allocate(K_INV_PL%iw_full(W%n_freqs))
    K_INV_PL%iw_full=0
  endif
-#endif
  !
  contains
    !
@@ -166,17 +158,15 @@ subroutine K_inversion_restart(iq,W)
          if (TYP%what=="EPS") then
            TYP%spectra(iw,2:3)=Epsilon_ii(iabs(iw_tab),3:4)
          endif
-#if defined _KERR
          if(l_BS_photolum) then
            if (TYP%what=="PLS") TYP%spectra(iw,2)=PL(iabs(iw_tab),3)
          endif
-#endif
          TYP%err(iw)=-1
        endif
      enddo
      !
      call msg('rs','[BSE INV@'//TYP%what//'] Frequencies read         ',count(inv_err_db==0))
-     call msg('rs','[BSE INV@'//TYP%what//']                     [o/o]',real(count(inv_err_db==0))/real(W%n_freqs)*100._SP)
+     call msg('rs','[BSE INV@'//TYP%what//']                          ',real(count(inv_err_db==0))/real(W%n_freqs)*100._SP,"[o/o]")
      call msg('rs','[BSE INV@'//TYP%what//'] Frequencies used         ',W%n_freqs)
      !
      ! De/Allocate Epsilon_ii/PL
@@ -189,7 +179,6 @@ subroutine K_inversion_restart(iq,W)
        Epsilon_ii(:,3)=TYP%spectra(:,2)
        Epsilon_ii(:,4)=TYP%spectra(:,3)
      endif
-#if defined _KERR
      if(l_BS_photolum) then
        if (TYP%what=="PLS") then
          YAMBO_FREE(PL)
@@ -199,7 +188,6 @@ subroutine K_inversion_restart(iq,W)
          PL(:,3)=TYP%spectra(:,2)
        endif
      endif
-#endif
      !
      deallocate(inv_err_db,DB_spectra)
      !

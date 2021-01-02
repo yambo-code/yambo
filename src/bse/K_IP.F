@@ -46,20 +46,21 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  &                       BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_res_ares_dim,BS_K_dim,BS_H_dim,&
  &                       l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,l_BS_optics,&
  &                       BS_mat_res_ares_dim
- use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
+ use parallel_int,  ONLY:PP_redux_wait
+ use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use parser_m,      ONLY:parser
  use timing_m,      ONLY:timing
-#if defined _KERR
  use vec_operate,   ONLY:rot_v_xy_plane
  use BS,            ONLY:l_BS_anomalous_Hall
  use BS_solvers,    ONLY:A_drude,B_Hall
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
  use X_m,           ONLY:X_magnons,Epsilon_ij,X_dichroism
  use units,         ONLY:SPEED_OF_LIGHT
-#endif
+ !
 #include<memory.h>
+ !
  type(levels) ::Ken
  type(bz_samp)::Xk
  type(DIPOLE_t)::Dip
@@ -80,12 +81,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  complex(SP), allocatable  :: BS_E_sorted_tmp(:,:)
  integer, allocatable      :: sort_indx(:),first_el(:),n_of_el(:)
  !
-#if defined _KERR
  real(SP)          ::f_PL,res_PL
  complex(SP)       ::DIP_Splus,DIP_Smins,P_weighted(3)
  complex(SP)       ::res_kerr,res_magn(2),res_dich
  complex(SP)       ::DIP_projected_dich(BS_dip_size)
-#endif
  !
  character(6)             :: DIP_kind
  complex(SP)              :: DIP_projected(BS_dip_size),DIP_expanded(3)
@@ -104,7 +103,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Polarizability ?
  !==================
  if (trim(alpha_dim)/='adim') then
-   call msg('r', 'Optical renormalization   [au]',eps_2_alpha)
+   call msg('r', 'Optical renormalization       ',eps_2_alpha,"[a.u.]")
    call msg('rn','Polarizability dimension      ',trim(alpha_dim))
  endif
  !
@@ -151,8 +150,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    field_dir(:,1)=Dip%q0/v_norm(Dip%q0)
    !
-#if defined _KERR
-   !
    if(l_BS_kerr) call rot_v_xy_plane(-pi/2._SP,field_dir(:,1),v_out=field_dir(:,2))
    !
    if (l_BS_trace) then
@@ -160,8 +157,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      field_dir(:,2)=(/0._SP,1._SP,0._SP/)
      field_dir(:,3)=(/0._SP,0._SP,1._SP/)
    endif
-   !
-#endif
    !
  endif
  !
@@ -181,11 +176,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    EDIM=BS_K_dim(1)
    nVAR=1
    if(l_BS_abs) nVAR=nVAR+1
-#if defined _KERR
    if(l_BS_kerr)      nVAR=nVAR+1
    if(l_BS_dichroism) nVAR=nVAR+1
    if(l_BS_magnons)   nVAR=nVAR+2
-#endif
    YAMBO_ALLOC(BS_E_sorted_tmp,(EDIM,nVAR))
    BS_E_sorted_tmp=cZERO
  endif
@@ -267,8 +260,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
      endif
      !
-#if defined _KERR
-     !
      if (l_BS_dichroism) then
        if(iq==1) then   ! EM: "iq==1":  kpt=Gamma (molecules)
          DIP_expanded=DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,"DIP_L",Xk)
@@ -311,26 +302,23 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
      endif
      !
-#endif
-     !
      ! c.2 Store Dipoles
      !====================
      !
      ! Absorption, KERR, Dichroism, PL
-     !
      if(l_BS_optics) then
        BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
        if (BS_K_coupling.and..not.BS_res_ares_dim==2) &
        &  BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
      endif
      !
-#if defined _KERR
      ! Dichroism
      if(l_BS_dichroism) then
        BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,1)=conjg(DIP_projected_dich(:BS_dip_size))
        if (BS_K_coupling.and..not.BS_res_ares_dim==2) &
        & BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,2)=DIP_projected_dich(:BS_dip_size)
      endif
+     !
      ! Magnons
      if (l_BS_magnons) then                                      ! This is the right R residual associated to (eps_c\dn-eps_v\up)
          BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
@@ -343,7 +331,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
            BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Splus        ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
          endif
      endif
-#endif
      !
      ! c.3 Residuals from "Dipoles"
      !==============================
@@ -370,7 +357,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
      endif
      !
-#if defined _KERR
      if (l_BS_kerr) then
        res_kerr=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1))
        res_kerr=res_kerr*Z_*E_*f_
@@ -418,15 +404,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          nVAR=nVAR+2
        endif
      endif
-#endif
      !
      if ( abs(real(E_plus_W0)) < Dip%Energy_treshold .and. iq==1 .and. dip_r ) then
        res_abs =0._SP
-#if defined _KERR
        res_kerr=0._SP
        res_PL  =0._SP
        res_dich=0._SP
-#endif
      endif
      !
      ! d.Response functions and pert SOC loop     
@@ -454,8 +437,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
            if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+conjg(res_abs/E_plus_W(i_pert_SOC))
          endif
        endif
-       !
-#if defined _KERR
        !
        if (l_BS_kerr) then
          !
@@ -492,8 +473,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
            X_magnons(:,2,3)=X_magnons(:,2,3)+conjg(res_magn(1))/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
          endif
        endif
-       !
-#endif
        !
      enddo
      !
@@ -547,7 +526,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    YAMBO_FREE(BS_E_sorted_tmp)
  endif
  !
-#if defined _KERR
  if(l_BS_kerr) then
    call PP_redux_wait( Epsilon_ij(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( Epsilon_ij(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
@@ -570,7 +548,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
  endif
-#endif
  !
  if (trim(L_kind)=="full") then
    do i_T_g=1,BS_nT_grps
@@ -611,8 +588,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
  endif
  !
-#if defined _KERR
- !
  if (l_BS_abs) then
    !
    ! Eq.(1.12) PRB 48, 11705 (1993)
@@ -644,8 +619,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  endif
  !
  if (l_BS_magnons) X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)
- !
-#endif
  !
  ! CLEAN
  !

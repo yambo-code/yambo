@@ -37,8 +37,9 @@ subroutine K_Haydock(iq,W,mode)
  use stderr,         ONLY:tty_size,intc,real2ch
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
- use parallel_m,     ONLY:PAR_IND_T_groups,PP_bcast,PAR_IND_T_Haydock,PAR_COM_T_Haydock,PAR_COM_Xk_ibz_INDEX, &
-                             PAR_COM_eh_INDEX
+ use parallel_int,   ONLY:PP_bcast
+ use parallel_m,     ONLY:PAR_IND_T_groups,PAR_IND_T_Haydock,PAR_COM_T_Haydock,PAR_COM_Xk_ibz_INDEX, &
+                          PAR_COM_eh_INDEX
  use timing_m,       ONLY:timing
  use descriptors,    ONLY:IO_desc_add
  !
@@ -57,9 +58,7 @@ subroutine K_Haydock(iq,W,mode)
  complex(SP), pointer :: Vnp1_f(:) => null()
  complex(SP), allocatable :: Cf(:) 
  !
-#if defined _KERR
  type(Haydock_vector),allocatable :: W0(:)
-#endif
  !
  real(SP)           ::reached_threshold
  real(SP)           ::Bf(Haydock_iterMAX+1),Af(Haydock_iterMAX)
@@ -96,9 +95,7 @@ subroutine K_Haydock(iq,W,mode)
  scheme="hermitian"
  if(BS_K_Coupling.or.impose_pseudo_herm_scheme) scheme="pseudo-herm"
  !if(BS_K_Coupling.or.impose_pseudo_herm_scheme.or.allocated(BS_T_grp(1)%Z)) scheme="pseudo-herm"
-#if defined _KERR
  use_left_and_right=trim(mode)=="kerr".or.trim(mode)=="dichroism"
-#endif
  velocity_correction= trim(global_gauge)=="velocity" .and. (trim(mode)=="abs" .or. trim(mode)=="kerr")
  !
  call section(sec,'Haydock Solver for '//trim(mode)//' @q'//trim(intc(iq))//", scheme "//trim(scheme))
@@ -119,12 +116,10 @@ subroutine K_Haydock(iq,W,mode)
    call BS_HAYVEC_alloc(V_tmp)
  endif
  !
-#if defined _KERR
  if(use_left_and_right) then
    allocate(W0(BS_nT_grps))
    call BS_HAYVEC_alloc(W0)
  endif
-#endif
  !
  ItParity=1
  it_on_disk=0
@@ -194,7 +189,7 @@ subroutine K_Haydock(iq,W,mode)
  call IO_desc_add(BSS_desc,kind="i",str='[Haydock] Iterations',I=(/it_on_disk/))
  i_desc_iter=BSS_desc%n
  !
- call msg('r','Accuracy (requested) [o/o]',Haydock_threshold)
+ call msg('r','Accuracy (requested)      ',Haydock_threshold,"[o/o]")
  !
  ! Initialization of Haydock vectors and tridiagonal matrix elements
  !
@@ -209,9 +204,7 @@ subroutine K_Haydock(iq,W,mode)
      Vnp1(i_g)%fragment= cZERO
      !
      V0(i_g)%fragment  = cZERO
-#if defined _KERR
      if(use_left_and_right) W0(i_g)%fragment  = cZERO
-#endif
      if(velocity_correction) V_tmp(i_g)%fragment = cZERO
      !
    enddo
@@ -246,7 +239,6 @@ subroutine K_Haydock(iq,W,mode)
  !
  if(velocity_correction) call K_multiply_by_V(V_tmp,V0,1)
  !
-#if defined _KERR
  if(use_left_and_right) then
    !
    do i_g=1,BS_nT_grps
@@ -268,7 +260,6 @@ subroutine K_Haydock(iq,W,mode)
    if(velocity_correction) call K_multiply_by_V(V_tmp,W0,1)
    !
  endif
-#endif
  !
  if(velocity_correction) then
    call BS_HAYVEC_free(V_tmp)
@@ -299,9 +290,7 @@ subroutine K_Haydock(iq,W,mode)
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        V0(i_g)%fragment   = V0(i_g)%fragment/Haydock_v0_mod
-#if defined _KERR
        if (use_left_and_right) W0(i_g)%fragment = W0(i_g)%fragment/Haydock_v0_mod
-#endif
        Vn(i_g)%fragment   = V0(i_g)%fragment
        Vnp1(i_g)%fragment = Vnp1(i_g)%fragment/Haydock_v0_mod
      enddo
@@ -309,9 +298,7 @@ subroutine K_Haydock(iq,W,mode)
      ! <w0|u0>=<V0|F|V0>  since <w0|=<V0|F
      ! Is it correct that also V0 was renormalized ??
      if (.not.use_left_and_right) call K_dot_product(v0_mod_,V0,V0,1)
-#if defined _KERR
      if (     use_left_and_right) call K_dot_product(v0_mod_,W0,V0,1)
-#endif
      !
      if(.not.l_BS_ares_asymm) Cf(1)=2*cI*aimag(v0_mod_)
      if(     l_BS_ares_asymm) Cf(1)=           v0_mod_
@@ -326,18 +313,14 @@ subroutine K_Haydock(iq,W,mode)
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        V0(i_g)%fragment  = V0(i_g)%fragment/Haydock_v0_mod
-#if defined _KERR
        if (use_left_and_right) W0(i_g)%fragment = W0(i_g)%fragment/Haydock_v0_mod
-#endif
        Vn(i_g)%fragment  = V0(i_g)%fragment
      enddo
      !
-#if defined _KERR
      if (use_left_and_right) then
        call K_dot_product(v0_mod_,W0,V0,1)
        Cf(1)= v0_mod_
      endif
-#endif
      !
    endif
    !
@@ -396,13 +379,11 @@ subroutine K_Haydock(iq,W,mode)
      !write(100,*) "Ortho check = ",v0_mod_
      ! DEBUG
      !
-#if defined _KERR
      if (use_left_and_right) then
        Cf_size=it+1
        call K_dot_product(v0_mod_,W0,Vn,1)
        Cf(it+1)= v0_mod_
      endif
-#endif
      !
    else                           ! [***] Non-Hermitian case:
      !
@@ -470,9 +451,7 @@ subroutine K_Haydock(iq,W,mode)
      Cf_size=it+1
      !
      if (.not.use_left_and_right) call K_dot_product(v0_mod_,V0,Vn,1)
-#if defined _KERR
      if (     use_left_and_right) call K_dot_product(v0_mod_,W0,Vn,1)
-#endif
      !
      if (.not.l_BS_ares_asymm) then
        ! Using symmetry arguments
@@ -551,7 +530,7 @@ subroutine K_Haydock(iq,W,mode)
      !
      call K_output_file(iq,"Haydock final "//trim(mode))
      !
-     call msg('r','Accuracy (reached)   [o/o]',reached_threshold)
+     call msg('r','Accuracy (reached)        ',reached_threshold,"[o/o]")
      call msg('r','Iterations                ',it)
      exit
      !
@@ -569,12 +548,10 @@ subroutine K_Haydock(iq,W,mode)
  !
  call BS_HAYVEC_free(V0)
  deallocate(V0)
-#if defined _KERR
  if (use_left_and_right)  then
    call BS_HAYVEC_free(W0)
    deallocate(W0)
  endif
-#endif
  if (use_left_and_right.or.trim(scheme)=="pseudo-herm")  then
    YAMBO_FREE(Cf)
  end if
@@ -582,7 +559,7 @@ subroutine K_Haydock(iq,W,mode)
  call PARALLEL_Haydock_VEC_COMMs('reset')
  !
  call timing('Haydock Solver',OPR='stop')
-   !
+ !
 end subroutine
 !
 !
@@ -595,8 +572,9 @@ subroutine HAYVEC_gather(V,fullV,fullV_size)
  use pars,          ONLY:SP,cZERO
  use BS,            ONLY:BS_T_grp,BS_nT_grps
  use BS_solvers,    ONLY:Haydock_vector
+ use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_T_groups, &
-                         PAR_COM_eh_INDEX,PP_redux_wait
+                         PAR_COM_eh_INDEX
  !
  implicit none
  !
@@ -632,7 +610,8 @@ subroutine HAYVEC_scatter(V,fullV,fullV_size)
  use pars,          ONLY:SP
  use BS,            ONLY:BS_T_grp,BS_nT_grps
  use BS_solvers,    ONLY:Haydock_vector
- use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_eh_INDEX,PP_bcast,PAR_IND_T_Haydock
+ use parallel_int,  ONLY:PP_bcast
+ use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_eh_INDEX,PAR_IND_T_Haydock
  !
  implicit none
  !

@@ -23,17 +23,13 @@
 subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_threshold)
  !
  use pars,           ONLY:SP,schlen,cI,cZERO,cONE,pi
- use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule
+ use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule, &
+&                         X_magnons,Epsilon_ij
  use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp
- use BS,             ONLY:BSE_mode
+ use BS,             ONLY:BSE_mode,l_BS_anomalous_Hall
  use BS_solvers,     ONLY:BSS_eels_to_eps,Co_factor,diam_term_exact,Haydock_v0_mod,&
- &                        Haydock_terminator,Haydock_threshold
-#if defined _KERR
- use X_m,            ONLY:X_magnons,Epsilon_ij
- use BS_solvers,     ONLY:B_Hall
- use BS,             ONLY:l_BS_anomalous_Hall
-#endif
+ &                        Haydock_terminator,Haydock_threshold,B_Hall
  use descriptors,    ONLY:IO_desc_add
  use parser_m,       ONLY:parser
  !
@@ -227,12 +223,10 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
      Joint_DOS(iw,i_eps(:))=  -X_o(1:2,1)*Co
    case("abs")
      Epsilon_ii(iw,i_eps(:))= -X_o(1:2,1)
-#if defined _KERR
    case("kerr")
      Epsilon_ij(iw,i_eps(:))= -X_o(1:2,1)
    case("magnons")
      X_magnons(iw,1,i_eps(:))=-X_o(1:2,1)*Co/(4._SP*pi)
-#endif
    end select
    !
  enddo
@@ -247,16 +241,11 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
    if (trim(global_gauge)=="velocity") gauge_factor=Co/W%p(iw)**2
    !
    if (trim(mode)=="abs")  Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor
-#if defined _KERR
    if (trim(mode)=="kerr") Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+diam_term_used(:))*gauge_factor
-#endif
-   !
    if (trim(mode)=="abs") then
      if(BSS_eels_to_eps) Epsilon_ii(iw,i_eps(:))=(1._SP-Epsilon_ii(iw,i_eps(:)))**(-1)-1._SP
      Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*4._SP*pi/bare_qpg(iq,1)**2
    endif
-   !
-#if defined _KERR
    !
    ! I add the term describing the Anomalous Hall effect which is
    ! missing in the length gauge (this should be zero for systems with a gap)
@@ -270,8 +259,6 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
      endif
    endif
    !
-#endif
-   !
    select case(trim(mode))
    case("jdos")
      sums=( Joint_DOS(iw,2)+ Joint_DOS(iw,4))/2._SP
@@ -279,14 +266,12 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
    case("abs")
      sums=(Epsilon_ii(iw,2)+Epsilon_ii(iw,4))/2._SP
      diff= Epsilon_ii(iw,2)-Epsilon_ii(iw,4)
-#if defined _KERR
    case("kerr")
      sums=(Epsilon_ij(iw,2)+Epsilon_ij(iw,4))/2._SP
      diff= Epsilon_ij(iw,2)-Epsilon_ij(iw,4)
    case("magnons")
      sums=(X_magnons(iw,1,2)+X_magnons(iw,1,4))/2._SP
      diff= X_magnons(iw,1,2)-X_magnons(iw,1,4)
-#endif
    end select
    !
    update_thresh = abs(real(sums))>0._SP .and. abs(aimag(sums))>0._SP

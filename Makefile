@@ -44,6 +44,8 @@ changelog:
 	./sbin/gitchangelog.py > ChangeLog
 interfaces: ext-libs
 	for target in $(INTERFCS) ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+gpl: ext-libs
+	for target in $(GPL)      ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 core: ext-libs
 	for target in $(CORE)     ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 ph-project: ext-libs

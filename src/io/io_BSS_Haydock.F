@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -21,7 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)  
+integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)
+ !
+ ! DS: at each iteration the whole vectors are rewritten
+ !     The implementation should be changed taking advantage of variables of unlimited size
+ !     like done in the real-time project
  !
  use pars,          ONLY:SP
  use stderr,        ONLY:intc

@@ -25,7 +25,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  ! Intialize variables on BSE netcdf parallel file
  !
- use parallel_m,    ONLY:MPI_COMM_WORLD,PP_redux_wait
+ use parallel_m,    ONLY:MPI_COMM_WORLD
+ use parallel_int,  ONLY:PP_redux_wait
  use com,           ONLY:msg
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:intc
@@ -175,7 +176,7 @@ subroutine io_BS_PAR_free(ID,l_kernel_complete)
  !
  ! close BSE netcdf parallel file
  !
- use parallel_m,    ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_redux_wait
  use BS,            ONLY:l_BSE_kernel_complete,BS_K_has_been_calculated_loaded
  use IO_m,          ONLY:io_disconnect,io_BS_K
  !

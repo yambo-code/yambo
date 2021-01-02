@@ -1,8 +1,6 @@
-COMMON_objects = 
 #if defined _SC || _RT || _QED
 COMMON_objects =  io_COLLISIONS.o
 #endif
-SC_objects = 
 #if defined _SC
 SC_objects = load_SC_components.o io_SC_components.o variables_SC.o
 #endif
@@ -14,17 +12,17 @@ RT_objects = io_RT_components.o io_RT_components_G_lesser.o io_RT_components_hea
              io_RT_components_Reference.o io_RT_components_TIME_points.o \
              variables_RT_static.o variables_RT_dynamic.o io_KB_real_space.o
 #endif
-NL_objects =
 #if defined _NL 
 NL_objects = variables_NL.o io_NL.o
 #endif
-ELECTRIC_objects =
 #if defined _ELECTRIC 
 ELECTRIC_objects = io_Overlaps.o
 #endif
-ELPH_objects = 
 #if defined _ELPH 
-ELPH_objects = io_ELPH.o io_ELPH_old.o
+ELPH_objects = io_ELPH.o 
+#endif
+#if defined _PHEL 
+PHEL_objects = io_PH.o
 #endif
 PARIO_objects =
 SERIO_objects = io_BS.o
@@ -35,10 +33,10 @@ SERIO_objects = io_BS.o     io_DIPOLES.o     io_Overlaps.o
 #endif
 objs = ver_is_gt_or_eq.o \
        io_Vnl.o       io_E_SOC_map.o \
-       io_RIM.o       io_GROT.o     $(ELPH_objects) \
+       io_RIM.o       io_GROT.o     $(ELPH_objects) $(PHEL_objects) \
        io_QINDX.o    io_QP_and_GF.o   io_X.o \
        io_DB1.o       io_WF.o       io_KB_abinit.o   io_KB_pwscf.o   io_HF_and_locXC.o \
-       io_WF_old.o   io_KB_abinit_old.o   io_BS_Fxc.o  io_NLCC_pwscf.o \
+       io_BS_Fxc.o  io_NLCC_pwscf.o \
        io_ATMPROJ_pwscf.o  io_descriptors.o \
        io_BSS_diago.o  io_BSS_Haydock.o io_BSS_invert.o io_USPP_pwscf.o \
        io_header.o io_Double_Grid.o \

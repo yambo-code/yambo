@@ -30,20 +30,16 @@ integer function io_DIPOLES(Dip,ID)
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,io_DIP,&
 &                        io_variable_bulk,def_variable_bulk,read_is_on,io_header,io_extension,&
 &                        IO_NOT_ALLOWED
-#if defined _RT || defined _KERR
  use DIPOLES,       ONLY:DIP_spin,DIP_orbital,&
 &                        compute_Orb_dipoles,compute_Spin_dipoles
  use electrons,     ONLY:n_spinor
-#endif
 #if defined _RT
  use DIPOLES,       ONLY:DIP_P_spinor
 #endif
 #if defined _SC || defined _RT
  use DIPOLES,       ONLY:P_square,compute_P2_dipoles
 #endif
-#if defined _KERR
  use BS,            ONLY:l_BS_magnons,l_BS_dichroism
-#endif
  use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
  !
@@ -128,12 +124,10 @@ integer function io_DIPOLES(Dip,ID)
    !
    ! GPL_EXCLUDE_START
    !
-#if defined _RT || defined _KERR
    if (compute_Orb_dipoles) &
    & call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz,2/))
    if (compute_Spin_dipoles) &
    & call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
-#endif
 #if defined _RT
    if (compute_Spin_dipoles.and.n_spinor==2) &
    & call DIP_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
@@ -141,11 +135,9 @@ integer function io_DIPOLES(Dip,ID)
 #if defined _SC || defined _RT
    if (compute_P2_dipoles)  call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
 #endif
-#if defined _KERR
    if(l_BS_dichroism) then
      call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz,1/))
    endif
-#endif
    !
    ! GPL_EXCLUDE_END
    !
@@ -174,7 +166,6 @@ integer function io_DIPOLES(Dip,ID)
  !
  ! GPL_EXCLUDE_START
  !
-#if defined _RT || defined _KERR
  if (compute_Orb_dipoles) then
    !
    ! Itinerant magnetization
@@ -203,7 +194,6 @@ integer function io_DIPOLES(Dip,ID)
    if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_spin(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
    !
  endif
-#endif
  !
 #if defined _RT
  if (compute_Spin_dipoles.and.n_spinor==2) then
@@ -231,7 +221,6 @@ integer function io_DIPOLES(Dip,ID)
  endif
 #endif
  !
-#if defined _KERR
  if (l_BS_dichroism) then
    !
    ! Orbital magnetization
@@ -242,7 +231,6 @@ integer function io_DIPOLES(Dip,ID)
    if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_orbital(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,1),IPOS=DIP_ipos)
    !
  endif
-#endif
  !
  ! GPL_EXCLUDE_END
  !

@@ -90,10 +90,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
-#if defined _KERR
  use BS,         ONLY:l_BS_anomalous_Hall
  use PHOTOLUM,   ONLY:PL_weights
-#endif
 #if defined _SC 
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
@@ -515,10 +513,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  GS_exx_FRACTION=0.0             ! no EXX part  
  GS_exx_SCREENING=0.0            ! no screening
  !
-#if defined _KERR
  l_BS_anomalous_Hall=.false.
  PL_weights=(/1._SP,1._SP,1._SP/)
-#endif
  !
 #if defined _ELPH 
  !

@@ -2,9 +2,6 @@
 COMMON_objects =  io_COLLISIONS.o
 #endif
 #if defined _SC
-SC_objects = load_SC_components.o io_SC_components.o variables_SC.o
-#endif
-#if defined _MAGNETIC
 SC_objects = load_SC_components.o io_SC_components.o variables_SC.o io_KB_real_space.o
 #endif
 #if defined _RT 
@@ -15,7 +12,7 @@ RT_objects = io_RT_components.o io_RT_components_G_lesser.o io_RT_components_hea
 #if defined _NL 
 NL_objects = variables_NL.o io_NL.o
 #endif
-#if defined _ELECTRIC 
+#if defined _SC
 ELECTRIC_objects = io_Overlaps.o
 #endif
 #if defined _ELPH 

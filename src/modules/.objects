@@ -3,6 +3,8 @@ COMMON_objects = mod_collision_ext.o mod_plasma.o mod_COLL_interfaces.o mod_H_in
 #endif
 #if defined _SC
 SC_objects       = mod_SC.o
+ELECTRIC_objects = mod_fields.o mod_electric.o 
+MAGNETIC_objects = mod_magnetic.o
 #endif
 #if defined _RT
 RT_objects_post  = mod_fields.o mod_RT_output.o mod_RT_control.o mod_RT_operations.o
@@ -13,12 +15,6 @@ RT_objects_iterative  = mod_RT_iterative.o
 RT_objects_pre   = mod_RT_lifetimes.o mod_RT_occupations.o mod_real_time.o
 #if defined _NL
 NL_objects       = mod_fields.o mod_electric.o mod_nl_optics.o mod_NL_interfaces.o
-#endif
-#if defined _ELECTRIC
-ELECTRIC_objects = mod_fields.o mod_electric.o 
-#endif
-#if defined _MAGNETIC
-MAGNETIC_objects = mod_magnetic.o
 #endif
 #if defined _io_lib
 objs = mod_pars.o mod_stderr.o mod_parallel.o mod_parallel_interface.o  \

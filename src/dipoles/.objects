@@ -5,7 +5,7 @@ MAGN_objects = DIPOLE_orbital_magnetization.o
 #if defined _SC
 SC_objects = DIPOLE_SC_rotate.o
 #endif
-#if defined _NL | defined _ELECTRIC
+#if defined _NL | defined _SC
 NL_objects = Berry_polarization_EQ.o Ionic_polarization.o POLARIZATION_output.o           
 #endif
 objs = Build_Overlaps_Det_EQ.o $(SC_objects) $(MAGN_objects) $(NL_objects) \

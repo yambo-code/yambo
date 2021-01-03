@@ -136,7 +136,7 @@ module X_output
      call msg("o Spm" ,"#",trim(message(10)),INDENT=0)
      call msg("o Smp" ,"#",trim(message(11)),INDENT=0)
      !
-     call msg('o eps refl eel fxc alpha off moke Spm Smp CD','#')
+     call msg('o eps refl eel fxc alpha off moke jdos Spm Smp CD','#')
      !
    end subroutine
    !

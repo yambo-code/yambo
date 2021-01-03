@@ -364,7 +364,8 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  if (sum(BS_nT_at_k)==0) call   error(' The whole BSE has zero dimension !')
  !
  BS_H_dim=BS_K_dim(1)
- if (BS_mat_res_ares_dim==2.or.BS_K_coupling) BS_H_dim=BS_K_dim(1)+BS_K_dim(2)
+ if (BS_mat_res_ares_dim==2) BS_H_dim=BS_K_dim(1)+BS_K_dim(2)
+ if (BS_K_coupling)          BS_H_dim=2*BS_K_dim(1)
  !
 end subroutine
 !

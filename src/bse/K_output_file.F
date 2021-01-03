@@ -64,7 +64,7 @@ subroutine K_output_file(iq,mode)
  complex(SP)       :: eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3),alpha_factor
  complex(SP)       :: beta(BSS_n_freqs,3)
  logical           :: l_kerr_out,l_dich_out,l_phot_out,l_magn_out
- logical           :: eval_eels,eval_reflectivity,l_Haydock,l_Diago,l_Inversion,l_Slepc,l_IP,l_INIT,&
+ logical           :: eval_alpha_loc,eval_eels,eval_reflectivity,l_Haydock,l_Diago,l_Inversion,l_Slepc,l_IP,l_INIT,&
  &                    l_print_col4,l_jdos_out,l_esrt_out,l_abs_out
  !
  l_INIT      = index(mode,"open")/=0
@@ -106,14 +106,14 @@ subroutine K_output_file(iq,mode)
  !
  ! EELS / ALPHA / REFLECTIVITY logicals
  !
- if (l_abs_out.and. ((.not.l_Haydock).or.index(mode,"final")>0) .or. l_INIT ) then
+ if (l_abs_out.and. ((.not.l_Haydock).or.index(mode,"final")>0.or.l_INIT) ) then
    eval_eels= OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
-   eval_alpha=eval_alpha .and. ((l_col_cut) .or. (eval_eels) )
+   eval_alpha_loc=eval_alpha .and. ((l_col_cut) .or. (eval_eels) )
    call parser('Reflectivity',eval_reflectivity)
    eval_reflectivity=eval_reflectivity .and. .not. eval_alpha
  else
    eval_eels=.false.
-   eval_alpha=.false.
+   eval_alpha_loc=.false.
    eval_reflectivity=.false.
  endif
  !
@@ -127,12 +127,12 @@ subroutine K_output_file(iq,mode)
  if (l_abs_out)         call of_open_close(eps_file_name,title_mode)
  if (eval_reflectivity) call of_open_close(refl_file_name,title_mode)
  if (eval_eels)         call of_open_close(eel_file_name,title_mode)
- if (eval_alpha)        call of_open_close(alpha_file_name,title_mode)
+ if (eval_alpha_loc)    call of_open_close(alpha_file_name,title_mode)
  !
  if(l_kerr_out) then
    call of_open_close(off_file_name,title_mode)
-   if (.not.eval_alpha) call of_open_close(moke_file_name,title_mode)
-   if (     eval_alpha) call of_open_close(beta_file_name,title_mode)
+   if (.not.eval_alpha_loc) call of_open_close(moke_file_name,title_mode)
+   if (     eval_alpha_loc) call of_open_close(beta_file_name,title_mode)
  endif
  if(l_dich_out) call of_open_close(dichr_file_name,title_mode)
  if(l_phot_out) call of_open_close(pl_file_name,title_mode)
@@ -146,18 +146,18 @@ subroutine K_output_file(iq,mode)
  call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1)
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
  !
- call msg('o eps_q refl eel_q fxc alpha off beta moke jdos','#')
+ call msg('o eps_q refl eel_q fxc alpha off beta moke jdos Esort','#')
  !
  ! Description of the run and headers for output files:
  !
- call DESC_write('o eps_q refl eel_q fxc alpha off beta moke jdos','#',BSS_desc)
+ call DESC_write('o eps_q refl eel_q fxc alpha off beta moke jdos Esort','#',BSS_desc)
  !
  if (l_INIT) then 
    call CLOSE_the_files( )
    return
  endif
  !
- if(eval_alpha) then
+ if(eval_alpha_loc) then
    ! Alpha units
    call msg('o alpha','#','Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0,USE_TABS=.true.)
    call msg('o alpha','#')
@@ -180,7 +180,7 @@ subroutine K_output_file(iq,mode)
    call msg('o eps','#')
  endif
  !
- if(l_kerr_out .and. eval_alpha) then
+ if(l_kerr_out .and. eval_alpha_loc) then
    ! Alpha units
    call msg('o beta','#','Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0,USE_TABS=.true.)
    call msg('o beta','#')
@@ -231,7 +231,7 @@ subroutine K_output_file(iq,mode)
    call msg("o eel",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
  end if   
  !
- if (eval_alpha) then 
+ if (eval_alpha_loc) then 
    call X_setup_headers('ALPHA')
    call msg("o alpha",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
  endif
@@ -241,12 +241,12 @@ subroutine K_output_file(iq,mode)
    call X_setup_headers('off')
    call msg("o off",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
    !
-   if (eval_alpha) then 
+   if (eval_alpha_loc) then 
      call X_setup_headers('beta')
    call msg("o beta",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
    endif
    !
-   if (.not.eval_alpha)  then
+   if (.not.eval_alpha_loc)  then
      call X_setup_headers('moke')
      call msg("o moke",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
    endif
@@ -288,7 +288,7 @@ subroutine K_output_file(iq,mode)
    call msg("o jdos",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
  endif
  !
- call msg("o eps refl eel alpha off beta moke jdos pl_ Smp Spm",'#')
+ call msg("o eps refl eel alpha off beta moke jdos pl_ Smp Spm Esort",'#')
  !
  ! ABSORPTION
  !------------
@@ -346,7 +346,6 @@ subroutine K_output_file(iq,mode)
  !-----------------------
  !
  if (eval_eels) then
-   write(*,*)  "compute the eels ",BSS_n_freqs
    !
    eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,eps(:,1),eels(:,1)) 
    eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,eps(:,2),eels(:,2)) 
@@ -358,7 +357,6 @@ subroutine K_output_file(iq,mode)
      !
      output_data(1:5)=(/w(iw),aimag(eels(iw,1)),real(eels(iw,1)),aimag(eels(iw,2)),real(eels(iw,2))/)
      n_output_data=5
-     write(*,*) iw,output_data(1:5)
      if (l_print_col4) then ; n_output_data=7 ; output_data(6:7)=(/aimag(eels(iw,3)),real(eels(iw,3))/) ; endif
      if (l_IP)         then ; n_output_data=3 ; output_data(2:3)=output_data(4:5)                       ; endif
      call msg("o eel",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
@@ -370,7 +368,7 @@ subroutine K_output_file(iq,mode)
  ! POLARIZABILITY
  !----------------
  !
- if (eval_alpha) then
+ if (eval_alpha_loc) then
    !
    if(l_col_cut) then
      alpha_factor=eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
@@ -427,7 +425,7 @@ subroutine K_output_file(iq,mode)
    enddo
    !
    !
-   if(eval_alpha) then
+   if(eval_alpha_loc) then
      !
      ! beta=alpha_xy
      !
@@ -456,7 +454,7 @@ subroutine K_output_file(iq,mode)
      !
    endif
    !
-   if(l_abs_out.and..not.eval_alpha) then
+   if(l_abs_out.and..not.eval_alpha_loc) then
      !
      ! Kerr parameters
      !
@@ -595,7 +593,7 @@ subroutine K_output_file(iq,mode)
    E_size=1
    !
    do i_IP_BSE=1,n_IP_BSE
-     ! BS_E_sorted(:,:,2) (int) ; BS_E_sorted(:,:,1) (non int)
+     ! BS_E_sorted(:,:,2) (BSE) ; BS_E_sorted(:,:,1) (IP)
      if (BS_K_coupling.and.i_IP_BSE==2) then
        do i1=n_output_data+1,3,-1
          headers(i1)=headers(i1-1)
@@ -650,7 +648,7 @@ subroutine K_output_file(iq,mode)
        call of_open_close(dichr_file_name)
      endif
      !
-     if(l_jdos_out)  call of_open_close(jdos_file_name)
+     if(l_jdos_out) call of_open_close(jdos_file_name)
      if(l_esrt_out) call of_open_close(esort_file_name)
      !
    end subroutine

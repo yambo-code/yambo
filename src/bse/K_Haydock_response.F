@@ -154,8 +154,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
    !
    if (use_Cf) then
      !
-     ! (A.4), for debug pourposes
-     ! to be fixed ...
+     ! (A.4), for debug pourposes to be fixed ...
      if(use_A4) then
        X_i(:,1) = (1-(freq_axis(iw)-Af(1))*X_o(:,1))/Bf(2)
        X_i(:,2) = (-Bf(2)*X_o(:,1)-(freq_axis(iw)-Af(2))*X_i(:,1))/Bf(3)

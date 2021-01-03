@@ -49,7 +49,7 @@ subroutine K_dot_product(dot,V,W,i_kind)
  ! NOTE FOR DEVELOPERS:
  ! Anti-block contains the same vector components as the corresponding 
  ! res-block. Sum on all blocks will give twice the value in the case
- ! with coupling. So anti-blocks are skipped.
+ ! with coupling. So anti-blocks are skipped if BS_res_ares_dim=1
  !
  do i_T_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle

@@ -62,10 +62,10 @@ subroutine K_Haydock(iq,W,mode)
  !
  real(SP)           ::reached_threshold
  real(SP)           ::Bf(Haydock_iterMAX+1),Af(Haydock_iterMAX)
- integer            ::ItParity,Cf_size
+ integer            ::ItParity,Cf_size,Haydock_n_converged,Haydock_required_converged
  complex(SP)        ::v0_mod_
  character(schlen)  ::dumb_ch
- logical            ::impose_pseudo_herm_scheme,use_left_and_right,velocity_correction,Haydock_converged(2),tmp_converged
+ logical            ::impose_pseudo_herm_scheme,use_left_and_right,velocity_correction,tmp_converged
  logical, external  ::STOP_now
  character(1)       ::sec
  character(11)      ::scheme
@@ -81,7 +81,8 @@ subroutine K_Haydock(iq,W,mode)
  if (isec(2)/=0) sec="="
  if (isec(2)==0) sec="+"
  !
- Haydock_converged=.false.
+ Haydock_n_converged=0
+ Haydock_required_converged=2
  !
  call BS_Blocks_symmetrize_K()
  !
@@ -123,7 +124,7 @@ subroutine K_Haydock(iq,W,mode)
  !
  ItParity=1
  it_on_disk=0
- reached_threshold=0._SP
+ reached_threshold=100._SP
  !
  Cf_size=2
  if (trim(scheme)=="pseudo-herm".or.use_left_and_right) Cf_size=Haydock_iterMAX+1
@@ -216,16 +217,10 @@ subroutine K_Haydock(iq,W,mode)
  !
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-   if (trim(mode)=="jdos")      V0(i_g)%fragment = cONE
    if (trim(mode)=="abs")       V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1)
    if (trim(mode)=="kerr")      V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(2,:,1)
    if (trim(mode)=="magnons")   V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_mag(1,:,1)
-   if (trim(mode)=="jdos") then
-     V0(i_g)%fragment = V0(i_g)%fragment*sqrt(cmplx(BS_T_grp(i_g)%f_RES/abs(BS_T_grp(i_g)%f_RES),kind=SP))
-   else
-     V0(i_g)%fragment = V0(i_g)%fragment*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
-   endif
-   !if (BS_T_grp(i_g)%i_res_ares==2) V0(i_g)%fragment = -V0(i_g)%fragment
+   V0(i_g)%fragment = V0(i_g)%fragment*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
    if(velocity_correction) V_tmp(i_g)%fragment = V0(i_g)%fragment/BS_T_grp(i_g)%E
  enddo
  !
@@ -243,10 +238,9 @@ subroutine K_Haydock(iq,W,mode)
    !
    do i_g=1,BS_nT_grps
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     if (trim(mode)=="kerr")      W0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1) &
-     &                                       *(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
-     !if (BS_T_grp(i_g)%i_res_ares==2) W0(i_g)%fragment = -W0(i_g)%fragment
-     if(velocity_correction)   V_tmp(i_g)%fragment = W0(i_g)%fragment/BS_T_grp(i_g)%E
+     if (trim(mode)=="kerr") W0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1)
+     W0(i_g)%fragment = W0(i_g)%fragment*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
+     if(velocity_correction) V_tmp(i_g)%fragment = W0(i_g)%fragment/BS_T_grp(i_g)%E
    enddo
    !
    do i_g = 1,BS_nT_grps
@@ -491,14 +485,14 @@ subroutine K_Haydock(iq,W,mode)
    !write(*,*) it,"Af= ",Af(it)," ; Bf= ",Bf(it)," ; Cf= ",real(Cf(Cf_size-1)),aimag(Cf(Cf_size-1)),reached_threshold
    ! DEBUG>
    !
-   tmp_converged=(reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. STOP_now(.FALSE.)
+   tmp_converged=(reached_threshold<abs(Haydock_threshold)) .or. STOP_now(.FALSE.)
    !
-   if(Haydock_converged(1)) Haydock_converged(2)=tmp_converged
-   Haydock_converged(1)=tmp_converged
+   if(     tmp_converged) Haydock_n_converged=Haydock_n_converged+1
+   if(.not.tmp_converged) Haydock_n_converged=0
    !
    if ( mod(it,max(1,Haydock_iterIO/10))==0) call K_output_file(iq,"Haydock "//trim(mode))
    !
-   if ( mod(it,Haydock_iterIO)==0 .or. all(Haydock_converged)) then
+   if ( mod(it,Haydock_iterIO)==0 .or. Haydock_n_converged==Haydock_required_converged) then
      !
      ! Haydock Coefficients and restart vectors to disk
      !--------------------------------------------------
@@ -526,7 +520,7 @@ subroutine K_Haydock(iq,W,mode)
      !
    endif
    !
-   if (all(Haydock_converged)) then
+   if (Haydock_n_converged==Haydock_required_converged) then
      !
      call K_output_file(iq,"Haydock final "//trim(mode))
      !

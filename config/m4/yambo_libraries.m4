@@ -29,7 +29,7 @@ AC_SUBST(DRIVER_INCS)
 
 AC_MSG_CHECKING([driver lib])
 
-if test -d "src/real_time_el-ph/"; then
+if test -d "src/real_time_lifetimes/"; then
   #
   # develop procedure
   #

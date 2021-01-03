@@ -189,10 +189,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    !
    call DIPOLES_ppredux_and_symmetrize()
    !
-   if (l_BS_dichroism)             call DIPOLE_orb_magn_forCD(Xen,Xk,Dip)
-   !
 #if defined _RT
    if (compute_Orb_dipoles)        call DIPOLE_orbital_magnetization(Xen,Xk,Dip)
+#else
+   if (l_BS_dichroism)             call DIPOLE_orb_magn_forCD(Xen,Xk,Dip)
 #endif
    !
    call DIPOLES_ppredux_and_symmetrize_orbt()

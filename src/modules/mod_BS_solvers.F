@@ -101,7 +101,6 @@ module BS_solvers
  integer  :: Haydock_iterMAX
  real(SP) :: Haydock_threshold
  real(SP) :: Haydock_v0_mod
-#if defined _SLEPC && !defined _SLEPC_OFF
  !
  ! Solvers (Slepc)
  !=========
@@ -114,7 +113,6 @@ module BS_solvers
  real(SP)         :: BSS_slepc_target_E   !find eigenvalues close to this energy
  logical          :: BSS_slepc_matrix     !use a shell matrix for slepc
  logical          :: BSS_slepc_double_grp !duplicate the number of groups for slepc shells solver
-#endif
  !
  ! Solvers (Inversion)
  !=========

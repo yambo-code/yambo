@@ -59,9 +59,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use LIVE_t,         ONLY:live_timing
  use collision_ext,  ONLY:COH_COLL_element,HXC_COLL_element,COLLISIONS_have_HARTREE
  use electrons,      ONLY:Spin_magn
-#if defined _ELECTRIC
  use electric,       ONLY:ELECTRIC_alloc,ELECTRIC_free,W_electric
-#endif
  !
 #include<memory.h>
  !
@@ -80,9 +78,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:),magn_nm1(:,:)
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: H_nl_nm1(:,:,:,:)
-#if defined _ELECTRIC
  complex(SP), allocatable :: SC_R0(:,:,:,:)
-#endif
  !
  type(WAVEs)              :: WFo
  ! 
@@ -94,9 +90,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  integer, external        :: io_SC_components,X_dielectric_matrix
  logical, external        :: STOP_now
  !
-#if defined _ELECTRIC
  complex(SP) :: Initial_Pol(3),Pol(3)
-#endif
  !
  ! ws for states spread evaluation
  !
@@ -252,11 +246,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
  endif
  !
-#if defined _ELECTRIC
  ! Initial Polarization
  ! ====================
  if(l_sc_electric)  call Berry_polarization_NEQ(E,Xk,SC_R(:,1:E%nbf,:,:),Initial_Pol)
-#endif
  !
  ! SCF cycle & NSC shot
  !=====================
@@ -306,8 +298,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
    endif
    !
-#if defined _ELECTRIC
-   !
    ! Static Electric Field
    ! ========================
    !
@@ -317,8 +307,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      Pol=Pol-Initial_Pol
      !
    endif
-   !
-#endif
    ! 
    ! IO [V_xc]: this is the only DB that must be written on-fly
    !            Both WFs and Energies are written ay the end of the loop
@@ -368,9 +356,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
          !
        endif
        !
-#if defined _ELECTRIC
        if(l_sc_electric) H_nl_sc=H_nl_sc+W_electric(:,:,ik,i_sp_pol)
-#endif
+       !
        ! Add local V_xc
        !
        if (l_sc_XC_is_local.and..not.l_use_collisions)     call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'xc ',Vxc=V_xc_sc)
@@ -526,7 +513,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(magn_convergence))//'%'
      endif
      !
-#if defined _ELECTRIC
      if(l_sc_electric) then
        if(it==1) then
          dumb_ch= trim(dumb_ch) //'  Initial Pol;'
@@ -536,7 +522,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
           dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(sqrt(sum(real(Pol(:))**2))))
        endif
      endif
-#endif
      !
      if (.not.log_as_a_file.or.it_now==1) then
        if(it_now==it_to_start) call LIVE_message(dumb_ch ,"n","","%s")
@@ -672,7 +657,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        H_nl_nm1=cZERO
      endif
      !
-#if defined _ELECTRIC
      if(l_SC_electric) then
        call ELECTRIC_alloc(E)
        allocate(W_electric(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
@@ -680,7 +664,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      endif
      allocate(SC_R0(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("SC_R0",(/size(QP_Vnl_xc)/),(/2*SP/))
-#endif
      !
    end subroutine
    !
@@ -722,13 +705,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      if (.not.io_RESPONSE) call X_alloc('X')
      !
-#if defined _ELECTRIC
      if(l_SC_electric) then
        call ELECTRIC_free()
        deallocate(W_electric)
        call mem_est("W_electric")
      endif
-#endif
      !
    end subroutine
    !

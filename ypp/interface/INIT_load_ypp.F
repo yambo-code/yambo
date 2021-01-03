@@ -89,7 +89,7 @@ subroutine INIT_ypp_load(defs)
 #if defined _YPP_ELPH
  call it('r',defs,'eliashberg',   '[R] Eliashberg')
 #endif
-#if defined _YPP_MAGNETIC
+#if defined _YPP_SC
  call it('r',defs,'angular_m',    '[R] Canonical angular momentum')
  call it('r',defs,'position',     '[R] Average <r^n>, n given in the input')
 #endif
@@ -265,7 +265,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
  call it(defs,'BSQindex','Q-Index of the BS state(s)',BSiq)
  !
-#if defined _YPP_MAGNETIC
+#if defined _YPP_SC
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')
 #endif
  ! 

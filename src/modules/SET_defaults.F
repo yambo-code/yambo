@@ -124,7 +124,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     NL_verb_name,NL_bands,n_order,NL_desc
  use fields,     ONLY:Efield,Efield_reset
 #endif
-#if defined _MAGNETIC
+#if defined _SC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
 #endif
@@ -669,7 +669,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
 #endif
  !
-#if defined _MAGNETIC
+#if defined _SC
  !
  ! Magnetic
  !

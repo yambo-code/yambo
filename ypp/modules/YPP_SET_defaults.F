@@ -42,10 +42,7 @@ subroutine YPP_SET_defaults()
  use wave_func,      ONLY:wf_ng
  use LIVE_t,         ONLY:live_timing_is_on
 #if defined _YPP_SC
- use YPPm,           ONLY:l_mean_potential
-#endif
-#if defined _YPP_MAGNETIC
- use YPPm,           ONLY:B_field,B_psi,B_theta,l_angular_momentum,l_position
+ use YPPm,           ONLY:l_mean_potential,B_field,B_psi,B_theta,l_angular_momentum,l_position
 #endif
 #if defined _YPP_RT
  use YPP_real_time,  ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_BZ_width,&
@@ -254,7 +251,7 @@ subroutine YPP_SET_defaults()
  !
  ! ANGULAR MOMENTUM & ELECTRON DISPLACEMENT
  !
-#if defined _YPP_MAGNETIC
+#if defined _YPP_SC
  !
  l_angular_momentum=.false.
  l_position=.false.

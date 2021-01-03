@@ -34,7 +34,7 @@ subroutine INIT_activate()
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:H_potential
 #endif
-#if defined _MAGNETIC
+#if defined _SC
  use magnetic,       ONLY:MAG_landau
 #endif
 #if defined _RT
@@ -167,7 +167,7 @@ subroutine INIT_activate()
  if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
  !
  if (l_dipoles) call initactivate(1,'DipBands DipBandsALL DipQpt DipApproach DipComputed DipPDirect ShiftedPaths')
-#if defined _NL || defined _ELECTRIC
+#if defined _NL || defined _SC
  if (l_dipoles) call initactivate(1,'EvPolarization')
 #endif
  !
@@ -246,7 +246,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'NoCondSumRule MetDamp')
    !
-#if defined _NL || defined _ELECTRIC
+#if defined _NL || defined _SC
    call initactivate(1,'EvPolarization FrSndOrd')
 #endif
    !
@@ -537,7 +537,7 @@ subroutine INIT_activate()
  endif
 #endif
  !
-#if defined _MAGNETIC
+#if defined _SC
  !
  ! Magnetic
  !

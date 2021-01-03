@@ -32,14 +32,10 @@ integer function variables_SC(ID,what)
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_desc
  use hamiltonian,    ONLY:l_sc_V_is_local,H_ref_bands
  use IO_m,           ONLY:io_elemental,io_status,IO_INCOMPATIBLE_VAR,read_is_on
-#if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
-#endif
-#if defined _ELECTRIC
  use drivers,        ONLY:l_sc_electric
  use fields,         ONLY:Efield
-#endif
  use descriptors,    ONLY:IO_desc_reset
  use global_XC,      ONLY:H_SE_EXX,H_SE_FOCK,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXXC,H_SE_HARTREE
  !
@@ -134,7 +130,6 @@ integer function variables_SC(ID,what)
    if (l_NSC_shot) io_status(ID)=0
  endif
  !
-#if defined _MAGNETIC
  if (any((/SC_perturbation_disk==EXT_B_LANDAU,SC_perturbation_disk==EXT_B_PAULI,&
 &          SC_perturbation_disk==EXT_B_MAGNETISM/))) then
    !
@@ -165,10 +160,6 @@ integer function variables_SC(ID,what)
    !
  endif
  !
-#endif
- !
-#if defined _ELECTRIC
- !
  if(l_sc_electric) then
    call io_elemental(ID,VAR="ELECTRIC_hamiltonian",CH0="",VAR_SZ=1,MENU=0) 
    call io_elemental(ID,VAR='E_FIELD_parameters',VAR_SZ=4,MENU=0) 
@@ -178,8 +169,6 @@ integer function variables_SC(ID,what)
 &     WARN=.true.,OP=(/"==","==","=="/),DESCRIPTOR=SC_desc)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  endif
- !
-#endif
  !
  if (what/="carriers".and.what/="THETA".and.what/="OBS".and.what/="G".and.what/="REF") then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)

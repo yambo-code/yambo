@@ -80,19 +80,12 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! Magnetic logical setup
  !========================
  !
-#if defined _MAGNETIC
- !
  if (l_sc_magnetic) call MAG_initial_check()
  !
-#endif
- !
-#if defined _ELECTRIC
- !
- call ELECTR_initial_check(Xk)
- !
- if(.not.associated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
- !
-#endif
+ if(l_sc_electric) then
+   call ELECTR_initial_check(Xk)
+   if(.not.associated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
+ endif
  !
  ! Switch to the user defined potential (if appropriate)
  !========

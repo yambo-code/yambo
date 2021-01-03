@@ -64,7 +64,7 @@ subroutine ELECTR_initial_check(k)
  Efield(1)%t_initial     =0._SP
  Efield(1)%ef_pol        ="linear"
  !
- call Check_symmetries(Efield(1)%versor)
+ call Check_symmetries(Efield(1)%versor,"electric")
  !
  Dipole_approach='Covariant'
  !

@@ -96,10 +96,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha, &
 &                        NL_verb_name,n_order
 #endif 
-#if defined _NL | defined _ELECTRIC
+#if defined _NL | defined _SC
  use fields,        ONLY:Efield
 #endif 
-#if defined _MAGNETIC
+#if defined _SC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
 #if defined _ELPH 
@@ -524,11 +524,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
 #endif
  !
-#if defined _ELECTRIC
+#if defined _SC
  call it(defs,'ExtF_Dir',             '[NL ExtF] Versor',Efield(1)%versor)
  call it(defs,'ExtF_Int',             '[NL ExtF] Intensity',Efield(1)%intensity,unit=I_unit)
  call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_sc)
 #endif
+ !
 #if defined _SCALAPACK
  !
  ! SLK test
@@ -536,7 +537,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'SLKdim',  '[SLK] Matrix Dimension',SLK_test_H_dim)
 #endif
  !
-#if defined _MAGNETIC
+#if defined _SC
  call it(defs,'Hamiltonian',   '[MAG] Hamiltonian kind [pauli,landau,all]',MAG_hamiltonian_type,protect=.FALSE.)
  call it(defs,'B_Field',       '[MAG] Magnetic field modulus',MAG_B,unit=Bfield_unit)
  call it(defs,'B_psi',         '[MAG] Magnetic field psi angle',MAG_psi,unit=Angle_unit(1),verb_level=V_sc)

@@ -42,7 +42,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use FFT_m,          ONLY:fft_size
  use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,WF_free, &
+ use interfaces,     ONLY:el_density_and_current,el_magnetization,PARALLEL_global_indexes,WF_load,WF_free, &
 &                         PARALLEL_WF_distribute,PARALLEL_WF_index,LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
  use H_interfaces,   ONLY:V_real_space_to_H
  use com,            ONLY:msg

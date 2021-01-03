@@ -32,7 +32,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp,nkibz
  use xc_functionals, ONLY:V_xc
- use interfaces,     ONLY:el_density_and_current,WF_load
+ use interfaces,     ONLY:el_density_and_current,el_magnetization,WF_load
  use H_interfaces,   ONLY:V_real_space_to_H
  use timing_m,       ONLY:timing
 #if defined _SC
@@ -96,10 +96,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
 #if defined _SC
  if(l_sc_run) then
    call el_density_and_current(E,Xk,rho=rho_n,bands=H_ref_bands)
-   if(n_spin>1) then
-     if(H_ref_bands(1)==1) call el_magnetization(E,Xk,magn_n)
-     if(H_ref_bands(1)> 1) call error("SC_bands(1)>1 not coded for magnetic systems")
-   endif
+   if(n_spin>1) call el_magnetization(E,Xk,magn_n,bands=H_ref_bands)
  endif
 #endif
  !

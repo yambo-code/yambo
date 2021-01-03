@@ -44,7 +44,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
 &                         XC_HYB_GGA_XC_GAUPBE,XC_FACTOR
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  use libxc_funcs_m,  ONLY:XC_GGA_X_PBE, XC_GGA_C_PBE
- use interfaces,     ONLY:el_density_and_current
+ use interfaces,     ONLY:el_density_and_current,el_magnetization
  use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc
  !
 #include<memory.h>
